@@ -14,8 +14,8 @@ import { useAuthPermit } from "~/shared/nano-states";
 export const ShareButton = ({ projectId }: { projectId: Project["id"] }) => {
   const [authPermit] = useAuthPermit();
 
-  const shareDisabled = authPermit === "view";
-  const tooltipContent = shareDisabled
+  const isShareDisabled = authPermit === "view";
+  const tooltipContent = isShareDisabled
     ? "Only owner can share projects"
     : undefined;
 
@@ -23,7 +23,7 @@ export const ShareButton = ({ projectId }: { projectId: Project["id"] }) => {
     <FloatingPanelPopover modal>
       <FloatingPanelPopoverTrigger asChild>
         <Tooltip side="bottom" content={tooltipContent}>
-          <Button disabled={shareDisabled}>Share</Button>
+          <Button disabled={isShareDisabled}>Share</Button>
         </Tooltip>
       </FloatingPanelPopoverTrigger>
 

@@ -84,16 +84,16 @@ export const PublishButton = ({ project }: PublishButtonProps) => {
   const [isOpen, setIsOpen] = useIsPublishDialogOpen();
   const [authPermit] = useAuthPermit();
 
-  const publishDisabled = authPermit === "view";
-  const tooltipContent = publishDisabled
+  const isPublishDisabled = authPermit === "view";
+  const tooltipContent = isPublishDisabled
     ? "Only owner can publish projects"
     : undefined;
 
   return (
     <DeprecatedPopover open={isOpen} onOpenChange={setIsOpen}>
-      <DeprecatedPopoverTrigger asChild aria-label="Publish">
+      <DeprecatedPopoverTrigger aria-label="Publish">
         <Tooltip side="bottom" content={tooltipContent}>
-          <Button disabled={publishDisabled} color="positive">
+          <Button disabled={isPublishDisabled} color="positive">
             Publish
           </Button>
         </Tooltip>
