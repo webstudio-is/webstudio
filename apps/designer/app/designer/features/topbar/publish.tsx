@@ -2,18 +2,19 @@ import { useEffect, useState } from "react";
 import { useFetcher } from "@remix-run/react";
 import { ExternalLinkIcon } from "@webstudio-is/icons";
 import {
-  DeprecatedText2,
+  Text,
   Button,
   Flex,
-  DeprecatedLabel,
+  Label,
   Link,
-  DeprecatedPopover,
-  DeprecatedPopoverTrigger,
-  DeprecatedPopoverContent,
-  DeprecatedPopoverPortal,
   TextField,
   useId,
   Tooltip,
+  FloatingPanelPopover,
+  FloatingPanelAnchor,
+  FloatingPanelPopoverTrigger,
+  FloatingPanelPopoverContent,
+  FloatingPanelPopoverTitle,
 } from "@webstudio-is/design-system";
 import { useIsPublishDialogOpen } from "../../shared/nano-states";
 import type { Project } from "@webstudio-is/project";
@@ -33,12 +34,10 @@ const Content = ({ project }: PublishButtonProps) => {
   }, [domain]);
 
   return (
-    <DeprecatedPopoverContent
-      css={{ padding: theme.spacing[9] }}
-      hideArrow={true}
-      onFocusOutside={(event) => {
-        // Used to prevent closing when opened from the main dropdown menu
-        event.preventDefault();
+    <Flex
+      direction="column"
+      css={{
+        padding: theme.spacing[9],
       }}
     >
       <fetcher.Form method="post" action={restPublishPath()}>
@@ -52,31 +51,30 @@ const Content = ({ project }: PublishButtonProps) => {
                 gap: theme.spacing[0],
               }}
             >
-              <DeprecatedText2 truncate>
-                {new URL(getPublishedUrl(domain)).host}
-              </DeprecatedText2>
+              <Text truncate>{new URL(getPublishedUrl(domain)).host}</Text>
               <ExternalLinkIcon />
             </Link>
           )}
           <Flex gap="2" align="center">
             <input type="hidden" name="projectId" value={project.id} />
-            <DeprecatedLabel htmlFor={id}>Domain:</DeprecatedLabel>
+            <Label htmlFor={id}>Domain:</Label>
             <TextField id={id} name="domain" defaultValue={domain} />
           </Flex>
           {fetcher.data?.errors !== undefined && (
-            <DeprecatedText2 color="error">
-              {fetcher.data?.errors}
-            </DeprecatedText2>
+            <Text color="destructive">{fetcher.data?.errors}</Text>
           )}
-          <Button
-            state={fetcher.state !== "idle" ? "pending" : "auto"}
-            type="submit"
-          >
-            {fetcher.state !== "idle" ? "Publishing" : "Publish"}
-          </Button>
+          <Flex css={{ paddingTop: theme.spacing["2"] }}>
+            <Button
+              state={fetcher.state !== "idle" ? "pending" : "auto"}
+              type="submit"
+              css={{ flexGrow: 1 }}
+            >
+              {fetcher.state !== "idle" ? "Publishing" : "Publish"}
+            </Button>
+          </Flex>
         </Flex>
       </fetcher.Form>
-    </DeprecatedPopoverContent>
+    </Flex>
   );
 };
 
@@ -90,17 +88,21 @@ export const PublishButton = ({ project }: PublishButtonProps) => {
     : undefined;
 
   return (
-    <DeprecatedPopover open={isOpen} onOpenChange={setIsOpen}>
-      <DeprecatedPopoverTrigger aria-label="Publish">
+    <FloatingPanelPopover modal open={isOpen} onOpenChange={setIsOpen}>
+      <FloatingPanelAnchor>
         <Tooltip side="bottom" content={tooltipContent}>
-          <Button disabled={isPublishDisabled} color="positive">
-            Publish
-          </Button>
+          <FloatingPanelPopoverTrigger asChild>
+            <Button disabled={isPublishDisabled} color="positive">
+              Publish
+            </Button>
+          </FloatingPanelPopoverTrigger>
         </Tooltip>
-      </DeprecatedPopoverTrigger>
-      <DeprecatedPopoverPortal>
+      </FloatingPanelAnchor>
+
+      <FloatingPanelPopoverContent css={{ zIndex: theme.zIndices[1] }}>
         <Content project={project} />
-      </DeprecatedPopoverPortal>
-    </DeprecatedPopover>
+        <FloatingPanelPopoverTitle>Publish</FloatingPanelPopoverTitle>
+      </FloatingPanelPopoverContent>
+    </FloatingPanelPopover>
   );
 };

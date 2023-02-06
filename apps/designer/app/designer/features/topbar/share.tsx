@@ -4,6 +4,7 @@ import {
   FloatingPanelPopoverContent,
   FloatingPanelPopoverTitle,
   FloatingPanelPopoverTrigger,
+  FloatingPanelAnchor,
   theme,
   Tooltip,
 } from "@webstudio-is/design-system";
@@ -21,11 +22,13 @@ export const ShareButton = ({ projectId }: { projectId: Project["id"] }) => {
 
   return (
     <FloatingPanelPopover modal>
-      <FloatingPanelPopoverTrigger asChild>
+      <FloatingPanelAnchor>
         <Tooltip side="bottom" content={tooltipContent}>
-          <Button disabled={isShareDisabled}>Share</Button>
+          <FloatingPanelPopoverTrigger asChild>
+            <Button disabled={isShareDisabled}>Share</Button>
+          </FloatingPanelPopoverTrigger>
         </Tooltip>
-      </FloatingPanelPopoverTrigger>
+      </FloatingPanelAnchor>
 
       <FloatingPanelPopoverContent css={{ zIndex: theme.zIndices[1] }}>
         <ShareProjectContainer projectId={projectId} />
