@@ -7,6 +7,10 @@ import {
 } from "@webstudio-is/prisma-client";
 import { Env, type ImageMeta } from "../schema";
 import { formatAsset } from "../utils/format-asset";
+import {
+  authorizeProject,
+  type AppContext,
+} from "@webstudio-is/trpc-interface/server";
 
 const env = Env.parse(process.env);
 
@@ -28,9 +32,19 @@ type Options =
 
 export const createAssetWithLimit = async (
   projectId: Project["id"],
-  uploadAsset: () => Promise<Options>
+  uploadAsset: () => Promise<Options>,
+  context: AppContext
 ) => {
   let updated: { id: string } | undefined;
+
+  const canEdit = await authorizeProject.hasProjectPermit(
+    { projectId, permit: "edit" },
+    context
+  );
+
+  if (canEdit === false) {
+    throw new Error("You don't have access to create this project assets");
+  }
 
   try {
     /**

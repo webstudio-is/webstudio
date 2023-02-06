@@ -35,13 +35,23 @@ export const loader = async ({
     if (project === null) {
       throw json("Project not found", { status: 404 });
     }
-    const canvasData = await loadCanvasData(project, "prod", homePage.path);
+    const canvasData = await loadCanvasData(
+      {
+        project,
+        env: "prod",
+        pageIdOrPath: homePage.path,
+      },
+      context
+    );
 
     pages.push(canvasData);
 
     if (otherPages.length > 0) {
       for (const page of otherPages) {
-        const canvasData = await loadCanvasData(project, "prod", page.path);
+        const canvasData = await loadCanvasData(
+          { project, env: "prod", pageIdOrPath: page.path },
+          context
+        );
         pages.push(canvasData);
       }
     }

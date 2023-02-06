@@ -29,14 +29,10 @@ import type {
 } from "./types";
 import { usePersistentFetcher } from "~/shared/fetcher";
 import type { ActionData } from "~/designer/shared/assets";
-import {
-  FetcherData,
-  normalizeErrors,
-  toastUnknownFieldErrors,
-} from "~/shared/form-utils";
+import { normalizeErrors, toastUnknownFieldErrors } from "~/shared/form-utils";
 import { updateStateAssets } from "./update-asset-containers";
 
-export type UploadData = FetcherData<ActionData>;
+export type UploadData = ActionData;
 
 const toUploadingAssetsAndFormData = (
   type: AssetType,
@@ -112,14 +108,21 @@ type AssetsContext = {
 
 const Context = createContext<AssetsContext | undefined>(undefined);
 
-export const AssetsProvider = ({ children }: { children: ReactNode }) => {
+export const AssetsProvider = ({
+  children,
+  authToken,
+}: {
+  children: ReactNode;
+  authToken: string | undefined;
+}) => {
   const [project] = useProject();
   const assetContainers = useStore(assetContainersStore);
   const { submit: load, data: serverAssets } = useFetcher<Asset[]>();
   const submit = usePersistentFetcher();
   const assetContainersRef = useRef(assetContainers);
 
-  const action = project && restAssetsPath({ projectId: project.id });
+  const action =
+    project && restAssetsPath({ projectId: project.id, authToken });
   assetContainersRef.current = assetContainers;
 
   useEffect(() => {
@@ -153,7 +156,8 @@ export const AssetsProvider = ({ children }: { children: ReactNode }) => {
       load({}, { action, method: "put" });
     }
 
-    if (data.status === "error") {
+    const { errors } = data;
+    if (errors !== undefined) {
       // We don't know what's wrong, remove the "deleting" status from assets and wait for the load to fix it
       const assetContainers = assetContainersRef.current;
       const nextAssetContainers = assetContainers.map((assetContainer) => {
@@ -170,7 +174,7 @@ export const AssetsProvider = ({ children }: { children: ReactNode }) => {
 
       assetContainersStore.set(nextAssetContainers);
 
-      return toastUnknownFieldErrors(normalizeErrors(data.errors), []);
+      return toastUnknownFieldErrors(normalizeErrors(errors), []);
     }
   };
 
@@ -181,7 +185,7 @@ export const AssetsProvider = ({ children }: { children: ReactNode }) => {
       load({}, { action, method: "put" });
     }
 
-    if (data.status === "error" || data.errors !== undefined) {
+    if (data.errors !== undefined) {
       // We don't know what's wrong, remove uploading asset and wait for the load to fix it
       assetContainersStore.set(
         assetContainers.filter(

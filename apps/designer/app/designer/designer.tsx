@@ -306,7 +306,7 @@ export const Designer = ({
   });
 
   return (
-    <AssetsProvider>
+    <AssetsProvider authToken={authToken}>
       <ChromeWrapper isPreviewMode={isPreviewMode}>
         <Topbar
           gridArea="header"
