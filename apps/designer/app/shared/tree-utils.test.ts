@@ -12,17 +12,23 @@ import {
   cloneStyles,
   cloneStyleSources,
   cloneStyleSourceSelections,
+  createInstancesIndex,
+  findClosestDroppableTarget,
   findSubtree,
   findSubtreeLocalStyleSources,
 } from "./tree-utils";
 
 const expectString = expect.any(String) as unknown as string;
 
-const createInstance = (id: Instance["id"], children: Instance[]): Instance => {
+const createInstance = (
+  id: Instance["id"],
+  component: string,
+  children: Instance[]
+): Instance => {
   return {
     type: "instance",
     id,
-    component: "Box",
+    component,
     children: children,
   };
 };
@@ -77,31 +83,75 @@ const createStyleDecl = (styleSourceId: string): StyleDecl => {
   };
 };
 
+test("find closest droppable target", () => {
+  const rootInstance = createInstance("root", "Body", [
+    createInstance("box1", "Box", [
+      createInstance("box11", "Box", []),
+      createInstance("box12", "Box", []),
+      createInstance("box13", "Box", []),
+    ]),
+    createInstance("box2", "Box", [
+      createInstance("paragraph21", "Paragraph", [
+        createInstance("bold", "Bold", []),
+      ]),
+      createInstance("box22", "Box", []),
+    ]),
+    createInstance("box3", "Box", [
+      createInstance("box31", "Box", []),
+      createInstance("box32", "Box", []),
+      createInstance("box33", "Box", []),
+    ]),
+  ]);
+  const instancesIndex = createInstancesIndex(rootInstance);
+  expect(findClosestDroppableTarget(instancesIndex, "bold")).toEqual({
+    parentId: "box2",
+    position: 1,
+  });
+  expect(findClosestDroppableTarget(instancesIndex, "box3")).toEqual({
+    parentId: "box3",
+    position: 3,
+  });
+  expect(findClosestDroppableTarget(instancesIndex, "root")).toEqual({
+    parentId: "root",
+    position: 3,
+  });
+  expect(findClosestDroppableTarget(instancesIndex, undefined)).toEqual({
+    parentId: "root",
+    position: 3,
+  });
+});
+
 test("find subtree with all descendants and parent instance", () => {
-  const rootInstance: Instance = createInstance("root", [
-    createInstance("box1", []),
-    createInstance("box2", [
-      createInstance("box3", [
-        createInstance("child1", []),
-        createInstance("child2", [createInstance("descendant", [])]),
-        createInstance("child3", []),
+  const rootInstance: Instance = createInstance("root", "Box", [
+    createInstance("box1", "Box", []),
+    createInstance("box2", "Box", [
+      createInstance("box3", "Box", [
+        createInstance("child1", "Box", []),
+        createInstance("child2", "Box", [
+          createInstance("descendant", "Box", []),
+        ]),
+        createInstance("child3", "Box", []),
       ]),
     ]),
-    createInstance("box4", []),
+    createInstance("box4", "Box", []),
   ]);
 
   expect(findSubtree(rootInstance, "box3")).toEqual({
-    parentInstance: createInstance("box2", [
-      createInstance("box3", [
-        createInstance("child1", []),
-        createInstance("child2", [createInstance("descendant", [])]),
-        createInstance("child3", []),
+    parentInstance: createInstance("box2", "Box", [
+      createInstance("box3", "Box", [
+        createInstance("child1", "Box", []),
+        createInstance("child2", "Box", [
+          createInstance("descendant", "Box", []),
+        ]),
+        createInstance("child3", "Box", []),
       ]),
     ]),
-    targetInstance: createInstance("box3", [
-      createInstance("child1", []),
-      createInstance("child2", [createInstance("descendant", [])]),
-      createInstance("child3", []),
+    targetInstance: createInstance("box3", "Box", [
+      createInstance("child1", "Box", []),
+      createInstance("child2", "Box", [
+        createInstance("descendant", "Box", []),
+      ]),
+      createInstance("child3", "Box", []),
     ]),
     subtreeIds: new Set(["box3", "child1", "child2", "child3", "descendant"]),
   });
@@ -116,17 +166,19 @@ test("find subtree with all descendants and parent instance", () => {
 });
 
 test("clone instance tree and provide cloned ids map", () => {
-  const instance = createInstance("box", [
-    createInstance("child1", []),
-    createInstance("child2", [createInstance("descendant", [])]),
-    createInstance("child3", []),
+  const instance = createInstance("box", "Box", [
+    createInstance("child1", "Box", []),
+    createInstance("child2", "Box", [createInstance("descendant", "Box", [])]),
+    createInstance("child3", "Box", []),
   ]);
   const { clonedInstance, clonedInstanceIds } = cloneInstance(instance);
   expect(clonedInstance).toEqual(
-    createInstance(expectString, [
-      createInstance(expectString, []),
-      createInstance(expectString, [createInstance(expectString, [])]),
-      createInstance(expectString, []),
+    createInstance(expectString, "Box", [
+      createInstance(expectString, "Box", []),
+      createInstance(expectString, "Box", [
+        createInstance(expectString, "Box", []),
+      ]),
+      createInstance(expectString, "Box", []),
     ])
   );
   expect(clonedInstanceIds.get(instance.id)).toEqual(clonedInstance.id);

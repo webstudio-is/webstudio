@@ -8,8 +8,11 @@ export type InstanceInsertionSpec = {
 export const insertInstanceMutable = (
   rootInstance: Instance,
   instance: Instance,
-  spec: InstanceInsertionSpec
+  spec: undefined | InstanceInsertionSpec
 ): boolean => {
+  if (spec === undefined) {
+    return false;
+  }
   if (spec.parentId !== rootInstance.id) {
     for (const child of rootInstance.children) {
       if (child.type === "text") {
