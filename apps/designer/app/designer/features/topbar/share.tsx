@@ -17,7 +17,7 @@ export const ShareButton = ({ projectId }: { projectId: Project["id"] }) => {
   const [isShareOpen, setIsShareOpen] = useIsShareDialogOpen();
   const [authPermit] = useAuthPermit();
 
-  const isShareDisabled = authPermit === "view";
+  const isShareDisabled = authPermit !== "own";
   const tooltipContent = isShareDisabled
     ? "Only owner can share projects"
     : undefined;

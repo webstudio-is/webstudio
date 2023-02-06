@@ -82,7 +82,7 @@ export const PublishButton = ({ project }: PublishButtonProps) => {
   const [isOpen, setIsOpen] = useIsPublishDialogOpen();
   const [authPermit] = useAuthPermit();
 
-  const isPublishDisabled = authPermit === "view";
+  const isPublishDisabled = authPermit !== "own";
   const tooltipContent = isPublishDisabled
     ? "Only owner can publish projects"
     : undefined;
