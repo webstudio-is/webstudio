@@ -9,15 +9,11 @@ const template = ({
 }) => `// Generated from ${sourceFile}
 
 import { forwardRef } from "react";
-import { IconProps } from "../types";
+import type { IconProps } from "../types";
 
 // prettier-ignore
 export const ${componentName}Icon = forwardRef<SVGSVGElement, IconProps>(
-  ({ color = "currentColor", size: sizeName, ...props }, forwardedRef) => {
-    let size = "16";
-    if (sizeName === "big") {
-      size = "22";
-    }
+  ({ color = "currentColor", size = 16, ...props }, forwardedRef) => {
     return (
       ${jsx}
     );

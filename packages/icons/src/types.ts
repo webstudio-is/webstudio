@@ -7,7 +7,7 @@ import type {
 export interface IconProps extends SVGAttributes<SVGElement> {
   children?: never;
   color?: string;
-  size?: "small" | "big";
+  size?: number;
 }
 
 export type IconComponent = ForwardRefExoticComponent<
