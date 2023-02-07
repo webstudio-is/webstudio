@@ -222,27 +222,36 @@ const createPages = async (
 };
 
 const clonePage = async (
-  { projectId, source }: { projectId: Project["id"]; source: Page },
+  from: { projectId: Project["id"]; page: Page },
+  to: { projectId: Project["id"]; buildId: Build["id"] },
   context: AppContext,
   client: Prisma.TransactionClient = prisma
 ) => {
-  const treeId = source.treeId;
-  const tree = await db.tree.clone({ projectId, treeId }, context, client);
-  return { ...source, id: uuid(), treeId: tree.id };
+  const tree = await db.tree.clone(
+    { projectId: from.projectId, treeId: from.page.treeId },
+    to,
+    context,
+    client
+  );
+  return { ...from.page, id: uuid(), treeId: tree.id };
 };
 
 const clonePages = async (
-  { projectId, source }: { projectId: Project["id"]; source: Pages },
+  from: { projectId: Project["id"]; pages: Pages },
+  to: { projectId: Project["id"]; buildId: Build["id"] },
   context: AppContext,
   client: Prisma.TransactionClient = prisma
 ) => {
   const clones = [];
-  for (const page of source.pages) {
-    clones.push(await clonePage({ projectId, source: page }, context, client));
+  for (const page of from.pages.pages) {
+    clones.push(
+      await clonePage({ projectId: from.projectId, page }, to, context, client)
+    );
   }
   return Pages.parse({
     homePage: await clonePage(
-      { projectId, source: source.homePage },
+      { projectId: from.projectId, page: from.pages.homePage },
+      to,
       context,
       client
     ),
@@ -327,7 +336,11 @@ export async function create(
           client
         )
       : await clonePages(
-          { projectId: props.projectId, source: props.sourceBuild.pages },
+          {
+            projectId: props.sourceBuild.projectId,
+            pages: props.sourceBuild.pages,
+          },
+          { projectId: props.projectId, buildId: build.id },
           context,
           client
         );
