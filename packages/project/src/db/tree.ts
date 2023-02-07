@@ -157,15 +157,17 @@ export const loadById = async (
 };
 
 export const clone = async (
-  { projectId, treeId }: { projectId: Project["id"]; treeId: Tree["id"] },
+  from: { projectId: Project["id"]; treeId: Tree["id"] },
+  to: { projectId: Project["id"]; buildId: Project["id"] },
   context: AppContext,
   client: Prisma.TransactionClient = prisma
 ) => {
-  const tree = await loadById({ projectId, treeId }, context, client);
+  const tree = await loadById(from, context, client);
   if (tree === null) {
-    throw new Error(`Tree ${treeId} not found`);
+    throw new Error(`Tree ${from.projectId}/${from.treeId} not found`);
   }
-  return await create(tree, client);
+
+  return await create({ ...tree, ...to }, client);
 };
 
 export const patch = async (
