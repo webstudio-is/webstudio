@@ -16,16 +16,16 @@ const ToolbarStory = () => {
     <Toolbar css={{ gap: theme.spacing[5] }}>
       <ToolbarToggleGroup type="single" value="2">
         <ToolbarToggleItem value="1">
-          <PlayIcon />
+          <PlayIcon size={22} />
         </ToolbarToggleItem>
         <ToolbarToggleItem value="2">
-          <PlayIcon />
+          <PlayIcon size={22} />
         </ToolbarToggleItem>
       </ToolbarToggleGroup>
       <ToolbarSeparator />
       <ToolbarToggleGroup type="single">
         <ToolbarToggleItem value="3" focused>
-          <PlayIcon />
+          <PlayIcon size={22} />
         </ToolbarToggleItem>
       </ToolbarToggleGroup>
     </Toolbar>
