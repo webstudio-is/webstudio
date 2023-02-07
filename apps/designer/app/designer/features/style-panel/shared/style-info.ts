@@ -8,10 +8,15 @@ import type {
 } from "@webstudio-is/css-data";
 import { properties } from "@webstudio-is/css-data";
 import { utils } from "@webstudio-is/project";
-import type { Instance, Styles } from "@webstudio-is/project-build";
+import type {
+  Instance,
+  Styles,
+  StyleSource as StyleSourceType,
+} from "@webstudio-is/project-build";
 import {
   selectedInstanceBrowserStyleStore,
   selectedInstanceIdStore,
+  selectedStyleSourceStore,
   stylesIndexStore,
   useBreakpoints,
   useRootInstance,
@@ -75,13 +80,13 @@ for (const [property, value] of Object.entries(properties)) {
   }
 }
 
-export const getLocalStyle = (
-  stylesByInstanceId: Map<Instance["id"], Styles>,
+const getSelectedStyle = (
+  stylesByStyleSourceId: Map<StyleSourceType["id"], Styles>,
   breakpointId: string,
-  instanceId: string
+  styleSourceId: string
 ) => {
   const style: Style = {};
-  const instanceStyles = stylesByInstanceId.get(instanceId);
+  const instanceStyles = stylesByStyleSourceId.get(styleSourceId);
   if (instanceStyles === undefined) {
     return style;
   }
@@ -192,23 +197,26 @@ export const useStyleInfo = () => {
   const [selectedBreakpoint] = useSelectedBreakpoint();
   const selectedBreakpointId = selectedBreakpoint?.id;
   const selectedInstanceId = useStore(selectedInstanceIdStore);
+  const selectedStyleSource = useStore(selectedStyleSourceStore);
+  const selectedStyleSourceId = selectedStyleSource?.id;
   const browserStyle = useStore(selectedInstanceBrowserStyleStore);
   const [rootInstance] = useRootInstance();
-  const { stylesByInstanceId } = useStore(stylesIndexStore);
+  const { stylesByInstanceId, stylesByStyleSourceId } =
+    useStore(stylesIndexStore);
 
-  const localStyle = useMemo(() => {
+  const selectedStyle = useMemo(() => {
     if (
       selectedBreakpointId === undefined ||
-      selectedInstanceId === undefined
+      selectedStyleSourceId === undefined
     ) {
       return {};
     }
-    return getLocalStyle(
-      stylesByInstanceId,
+    return getSelectedStyle(
+      stylesByStyleSourceId,
       selectedBreakpointId,
-      selectedInstanceId
+      selectedStyleSourceId
     );
-  }, [stylesByInstanceId, selectedBreakpointId, selectedInstanceId]);
+  }, [stylesByStyleSourceId, selectedBreakpointId, selectedStyleSourceId]);
 
   const cascadedBreakpointIds = useMemo(
     () => getCascadedBreakpointIds(breakpoints, selectedBreakpointId),
@@ -256,7 +264,7 @@ export const useStyleInfo = () => {
       const computed = browserStyle?.[property];
       const inherited = inheritedInfo[property];
       const cascaded = cascadedInfo[property];
-      const local = localStyle?.[property];
+      const local = selectedStyle?.[property];
       const value = local ?? cascaded?.value ?? inherited?.value ?? computed;
       if (value) {
         styleInfoData[property] = {
@@ -268,7 +276,7 @@ export const useStyleInfo = () => {
       }
     }
     return styleInfoData;
-  }, [browserStyle, inheritedInfo, cascadedInfo, localStyle]);
+  }, [browserStyle, inheritedInfo, cascadedInfo, selectedStyle]);
 
   return styleInfoData;
 };
