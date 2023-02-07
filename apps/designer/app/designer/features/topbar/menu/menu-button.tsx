@@ -59,7 +59,7 @@ export const MenuButton = () => {
           <WebstudioIcon width="22" height="22" />
         </span>
         <span className={faceStyle({ back: true })}>
-          <HamburgerMenuIcon />
+          <HamburgerMenuIcon size={22} />
         </span>
       </span>
     </DropdownMenuTrigger>
