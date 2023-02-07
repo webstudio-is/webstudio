@@ -3,7 +3,6 @@ import {
   css,
   DropdownMenuTrigger,
   rawTheme,
-  theme,
   toggleItemStyle,
 } from "@webstudio-is/design-system";
 import { HamburgerMenuIcon, WebstudioIcon } from "@webstudio-is/icons";
@@ -23,14 +22,12 @@ const triggerStyle = css({
 const innerContainerStyle = css({
   width: "100%",
   height: "100%",
-  color: theme.colors.foregroundContrastMain,
   transformStyle: "preserve-3d",
   transition: "transform 200ms",
   transform: cssVars.use(containerTransformVar),
 });
 
 const faceStyle = css({
-  background: theme.colors.backgroundTopbar,
   display: "flex",
   alignItems: "center",
   justifyContent: "center",
