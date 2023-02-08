@@ -54,7 +54,7 @@ export const toggleItemStyle = css({
   background: "transparent",
 
   "&:focus-visible": toolbarItemFocusRing,
-  "&:hover, &[data-state='on']": {
+  "&:hover, &[data-state='on'], &[data-state='open']": {
     background: theme.colors.backgroundButtonHover,
   },
   variants: {

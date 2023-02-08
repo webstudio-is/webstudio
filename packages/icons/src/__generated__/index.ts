@@ -10,6 +10,7 @@ export * from "./chevron-filled-up";
 export * from "./dot";
 export * from "./eyecon-closed";
 export * from "./eyecon-open";
+export * from "./hamburger-menu";
 export * from "./info";
 export * from "./linked";
 export * from "./offline";

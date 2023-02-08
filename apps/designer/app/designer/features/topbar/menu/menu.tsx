@@ -1,4 +1,3 @@
-import { useState } from "react";
 import { useNavigate } from "@remix-run/react";
 import { isFeatureEnabled } from "@webstudio-is/feature-flags";
 import {
@@ -102,7 +101,6 @@ export const Menu = ({ publish }: MenuProps) => {
   const [, setIsShareOpen] = useIsShareDialogOpen();
   const [, setIsPublishOpen] = useIsPublishDialogOpen();
   const [isPreviewMode, setIsPreviewMode] = useIsPreviewMode();
-  const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [authPermit] = useAuthPermit();
 
   const isPublishDisabled = authPermit !== "own";
@@ -117,8 +115,8 @@ export const Menu = ({ publish }: MenuProps) => {
     : undefined;
 
   return (
-    <DropdownMenu open={isMenuOpen} onOpenChange={setIsMenuOpen}>
-      <MenuButton isOpen={isMenuOpen} />
+    <DropdownMenu>
+      <MenuButton />
       <DropdownMenuPortal>
         <DropdownMenuContent
           css={{ zIndex: theme.zIndices[1] }}
