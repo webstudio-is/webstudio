@@ -41,7 +41,6 @@ export const deleteAssets = async (
   const stillUsedNames = new Set(assetsByName.map((asset) => asset.name));
 
   for (const asset of assets) {
-    // don't delete file if some other asset is using it
     if (stillUsedNames.has(asset.name)) {
       continue;
     }
