@@ -1,6 +1,8 @@
 // These are the utils for manipulating "build" params.
 // "Build" means user generated content — what user builds.
 
+import serverEnv from "~/env/env.server";
+
 export type BuildMode = "edit" | "preview" | "published";
 export type BuildParams = ({ pagePath: string } | { pageId: string }) &
   ({ projectId: string } | { projectDomain: string }) & { mode: BuildMode };
@@ -33,7 +35,11 @@ const isLocalhost = (host: string) => {
 
 export const getBuildOrigin = (
   request: MinimalRequest,
-  env = process.env
+  env: {
+    BUILD_ORIGIN?: string;
+    VERCEL_ENV?: string;
+    VERCEL_URL?: string;
+  } = serverEnv
 ): string => {
   const { BUILD_ORIGIN } = env;
   if (BUILD_ORIGIN !== undefined && BUILD_ORIGIN !== "") {
@@ -42,7 +48,7 @@ export const getBuildOrigin = (
 
   // Local development special case
   const host = getRequestHost(request);
-  if (env.NODE_ENV === "development") {
+  if (process.env.NODE_ENV === "development") {
     if (isLocalhost(host)) {
       return `http://${host.split(".").pop()}`;
     }
@@ -69,7 +75,12 @@ export const getBuildOrigin = (
 
 export const getBuildParams = (
   request: MinimalRequest,
-  env = process.env
+  env: {
+    BUILD_REQUIRE_SUBDOMAIN?: string;
+    BUILD_ORIGIN?: string;
+    VERCEL_ENV?: string;
+    VERCEL_URL?: string;
+  } = serverEnv
 ): BuildParams | undefined => {
   const url = new URL(request.url);
 

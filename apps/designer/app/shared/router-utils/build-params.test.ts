@@ -24,7 +24,9 @@ describe("getBuildOrigin", () => {
   });
 
   test("Local development", () => {
-    const env = { NODE_ENV: "development" } as const;
+    const env = {} as const;
+    const saveNodeEnv = process.env.NODE_ENV;
+    process.env.NODE_ENV = "development";
     expect(getBuildOrigin(makeRequest("http://localhost"), env)).toBe(
       "http://localhost"
     );
@@ -34,6 +36,7 @@ describe("getBuildOrigin", () => {
     expect(getBuildOrigin(makeRequest("http://foo.localhost:1234"), env)).toBe(
       "http://localhost:1234"
     );
+    process.env.NODE_ENV = saveNodeEnv;
   });
 
   test("Vercel preview", () => {
@@ -50,7 +53,6 @@ describe("getBuildOrigin", () => {
 
 describe("getBuildParams", () => {
   const env = {
-    ...process.env,
     BUILD_ORIGIN: "https://foo.com",
   };
 
