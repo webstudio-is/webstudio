@@ -105,19 +105,7 @@ export const useInstanceStyles = (instanceId: undefined | Instance["id"]) => {
   return instanceStyles;
 };
 
-export const styleSourcesStore = atom<StyleSources>([]);
-export const styleSourcesIndexStore = computed(
-  styleSourcesStore,
-  (styleSources) => {
-    const styleSourcesById = new Map<StyleSource["id"], StyleSource>();
-    for (const styleSource of styleSources) {
-      styleSourcesById.set(styleSource.id, styleSource);
-    }
-    return {
-      styleSourcesById,
-    };
-  }
-);
+export const styleSourcesStore = atom<StyleSources>(new Map());
 /**
  * find all non-local style sources
  * scoped to current tree or whole project
@@ -128,17 +116,24 @@ export const availableStyleSourcesStore = shallowComputed(
     if (treeId === undefined) {
       return [];
     }
-    return styleSources.filter(
-      (styleSource) =>
-        styleSource.type !== "local" &&
-        (styleSource.treeId === treeId || styleSource.treeId === undefined)
-    );
+    const availableStylesSources: StyleSource[] = [];
+    for (const styleSource of styleSources.values()) {
+      if (styleSource.type === "local") {
+        continue;
+      }
+      if (styleSource.treeId === treeId || styleSource.treeId === undefined) {
+        availableStylesSources.push(styleSource);
+      }
+    }
+    return availableStylesSources;
   }
 );
 
-export const useSetStyleSources = (styleSources: StyleSources) => {
+export const useSetStyleSources = (
+  styleSources: [StyleSource["id"], StyleSource][]
+) => {
   useSyncInitializeOnce(() => {
-    styleSourcesStore.set(styleSources);
+    styleSourcesStore.set(new Map(styleSources));
   });
 };
 
@@ -250,21 +245,20 @@ export const selectedInstanceBrowserStyleStore = atom<undefined | Style>();
 export const selectedInstanceStyleSourcesStore = computed(
   [
     styleSourceSelectionsStore,
-    styleSourcesIndexStore,
+    styleSourcesStore,
     selectedInstanceIdStore,
     treeIdStore,
   ],
-  (styleSourceSelections, styleSourcesIndex, selectedInstanceId, treeId) => {
+  (styleSourceSelections, styleSources, selectedInstanceId, treeId) => {
     const styleSourceIds =
       styleSourceSelections.find(
         (styleSourceSelection) =>
           styleSourceSelection.instanceId === selectedInstanceId
       )?.values ?? [];
-    const { styleSourcesById } = styleSourcesIndex;
-    const selectedInstanceStyleSources: StyleSources = [];
+    const selectedInstanceStyleSources: StyleSource[] = [];
     let hasLocal = false;
     for (const styleSourceId of styleSourceIds) {
-      const styleSource = styleSourcesById.get(styleSourceId);
+      const styleSource = styleSources.get(styleSourceId);
       if (styleSource !== undefined) {
         selectedInstanceStyleSources.push(styleSource);
         if (styleSource.type === "local") {

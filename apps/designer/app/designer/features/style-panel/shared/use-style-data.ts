@@ -90,11 +90,7 @@ export const useStyleData = ({ selectedInstance, publish }: UseStyleData) => {
           const instanceId = selectedInstance.id;
           const breakpointId = selectedBreakpoint.id;
           const styleSourceId = selectedStyleSource.id;
-          replaceByOrAppendMutable(
-            styleSources,
-            selectedStyleSource,
-            (item) => item.id === styleSourceId
-          );
+          styleSources.set(selectedStyleSource.id, selectedStyleSource);
           const selections = selectedInstanceStyleSources.map(
             (styleSource) => styleSource.id
           );

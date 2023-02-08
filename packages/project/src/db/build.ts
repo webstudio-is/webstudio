@@ -6,14 +6,14 @@ import {
   Project,
 } from "@webstudio-is/prisma-client";
 import { Breakpoints } from "@webstudio-is/css-data";
-import { StyleSources } from "@webstudio-is/project-build";
 import * as db from ".";
 import { Build, Page, Pages } from "../shared/schema";
 import * as pagesUtils from "../shared/pages";
 import { parseStyles, serializeStyles } from "./styles";
 import type { AppContext } from "@webstudio-is/trpc-interface";
+import { parseStyleSources, serializeStyleSources } from "./style-sources";
 
-export const parseBuild = async (build: DbBuild): Promise<Build> => {
+const parseBuild = async (build: DbBuild): Promise<Build> => {
   const pages = Pages.parse(JSON.parse(build.pages));
   return {
     id: build.id,
@@ -24,7 +24,7 @@ export const parseBuild = async (build: DbBuild): Promise<Build> => {
     pages,
     breakpoints: Breakpoints.parse(JSON.parse(build.breakpoints)),
     styles: await parseStyles(build.projectId, build.styles),
-    styleSources: StyleSources.parse(JSON.parse(build.styleSources)),
+    styleSources: Array.from(parseStyleSources(build.styleSources)),
   };
 };
 
@@ -201,7 +201,7 @@ export const deletePage = async ({
 
 const createPages = async (
   { projectId, buildId }: { projectId: Project["id"]; buildId: Build["id"] },
-  context: AppContext,
+  _context: AppContext,
   client: Prisma.TransactionClient = prisma
 ) => {
   const tree = await db.tree.create(
@@ -322,7 +322,9 @@ export async function create(
         props.sourceBuild?.breakpoints ?? db.breakpoints.createValues()
       ),
       styles: serializeStyles(props.sourceBuild?.styles ?? []),
-      styleSources: JSON.stringify(props.sourceBuild?.styleSources ?? []),
+      styleSources: serializeStyleSources(
+        new Map(props.sourceBuild?.styleSources ?? [])
+      ),
       isDev: props.env === "dev",
       isProd: props.env === "prod",
     },

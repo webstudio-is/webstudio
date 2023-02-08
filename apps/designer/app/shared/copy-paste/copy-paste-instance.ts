@@ -5,7 +5,7 @@ import {
   Instance,
   Prop,
   Styles,
-  StyleSources,
+  StyleSource,
   StyleSourceSelections,
 } from "@webstudio-is/project-build";
 import { utils } from "@webstudio-is/project";
@@ -35,7 +35,7 @@ const InstanceData = z.object({
   instance: Instance,
   props: z.array(Prop),
   styleSourceSelections: StyleSourceSelections,
-  styleSources: StyleSources,
+  styleSources: z.array(StyleSource),
   styles: Styles,
 });
 
@@ -113,7 +113,9 @@ const pasteInstance = (data: InstanceData) => {
         props.set(prop.id, prop);
       }
       styleSourceSelections.push(...data.styleSourceSelections);
-      styleSources.push(...data.styleSources);
+      for (const styleSource of data.styleSources) {
+        styleSources.set(styleSource.id, styleSource);
+      }
       styles.push(...data.styles);
     }
   );

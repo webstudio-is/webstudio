@@ -4,8 +4,22 @@ import {
   authorizeProject,
   type AppContext,
 } from "@webstudio-is/trpc-interface/server";
-import { StyleSources } from "@webstudio-is/project-build";
+import { StyleSourcesList, StyleSources } from "@webstudio-is/project-build";
 import type { Build, Project } from "../shared/schema";
+
+export const parseStyleSources = (styleSourceString: string): StyleSources => {
+  const styleSourcesList = StyleSourcesList.parse(
+    JSON.parse(styleSourceString)
+  );
+  return new Map(styleSourcesList.map((item) => [item.id, item]));
+};
+
+export const serializeStyleSources = (styleSourcesMap: StyleSources) => {
+  const styleSourcesList: StyleSourcesList = Array.from(
+    styleSourcesMap.values()
+  );
+  return JSON.stringify(styleSourcesList);
+};
 
 export const patch = async (
   { buildId, projectId }: { buildId: Build["id"]; projectId: Project["id"] },
@@ -30,7 +44,7 @@ export const patch = async (
     return;
   }
 
-  const styleSources = StyleSources.parse(JSON.parse(build.styleSources));
+  const styleSources = parseStyleSources(build.styleSources);
 
   const patchedStyleSources = StyleSources.parse(
     applyPatches(styleSources, patches)
@@ -38,7 +52,7 @@ export const patch = async (
 
   await prisma.build.update({
     data: {
-      styleSources: JSON.stringify(patchedStyleSources),
+      styleSources: serializeStyleSources(patchedStyleSources),
     },
     where: {
       id_projectId: { projectId, id: buildId },
