@@ -24,6 +24,12 @@ const S3_KEYS = [
 
 const errors = [];
 
+console.log("===============================================");
+console.log("===============================================");
+console.log(process.env);
+console.log("===============================================");
+console.log("===============================================");
+
 REQUIRED_ENVS.map((env) => {
   if (!process.env[env])
     errors.push(`👉 The ${env} environment variable is required`);
