@@ -42,8 +42,8 @@ describe("getBuildOrigin", () => {
   test("Vercel preview", () => {
     const env = {
       ...process.env,
-      VERCEL_ENV: "preview",
-      VERCEL_URL: "bar.foo.com",
+      DEPLOYMENT_ENVIRONMENT: "preview",
+      DEPLOYMENT_URL: "bar.foo.com",
     };
     expect(getBuildOrigin(makeRequest("https://baz.com"), env)).toBe(
       "https://bar.foo.com"

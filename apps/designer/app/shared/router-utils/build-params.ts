@@ -35,8 +35,8 @@ const isLocalhost = (host: string) => {
 
 const defaultEnv = {
   BUILD_ORIGIN: serverEnv.BUILD_ORIGIN,
-  VERCEL_ENV: serverEnv.VERCEL_ENV,
-  VERCEL_URL: serverEnv.VERCEL_URL,
+  DEPLOYMENT_ENVIRONMENT: serverEnv.DEPLOYMENT_ENVIRONMENT,
+  DEPLOYMENT_URL: serverEnv.DEPLOYMENT_URL,
   BUILD_REQUIRE_SUBDOMAIN: serverEnv.BUILD_REQUIRE_SUBDOMAIN,
 };
 
@@ -44,8 +44,8 @@ export const getBuildOrigin = (
   request: MinimalRequest,
   env: {
     BUILD_ORIGIN?: string;
-    VERCEL_ENV?: string;
-    VERCEL_URL?: string;
+    DEPLOYMENT_ENVIRONMENT?: string;
+    DEPLOYMENT_URL?: string;
   } = defaultEnv
 ): string => {
   const { BUILD_ORIGIN } = env;
@@ -71,10 +71,11 @@ export const getBuildOrigin = (
 
   // Vercel preview special case
   if (
-    (env.VERCEL_ENV === "preview" || env.VERCEL_ENV === "development") &&
-    typeof env.VERCEL_URL === "string"
+    (env.DEPLOYMENT_ENVIRONMENT === "preview" ||
+      env.DEPLOYMENT_ENVIRONMENT === "development") &&
+    typeof env.DEPLOYMENT_URL === "string"
   ) {
-    return `https://${env.VERCEL_URL}`;
+    return `https://${env.DEPLOYMENT_URL}`;
   }
 
   throw new Error("Could not determine user content host");
@@ -85,8 +86,8 @@ export const getBuildParams = (
   env: {
     BUILD_REQUIRE_SUBDOMAIN?: string;
     BUILD_ORIGIN?: string;
-    VERCEL_ENV?: string;
-    VERCEL_URL?: string;
+    DEPLOYMENT_ENVIRONMENT?: string;
+    DEPLOYMENT_URL?: string;
   } = defaultEnv
 ): BuildParams | undefined => {
   const url = new URL(request.url);

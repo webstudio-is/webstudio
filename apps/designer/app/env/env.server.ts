@@ -25,11 +25,20 @@ const env = {
   BUILD_REQUIRE_SUBDOMAIN: process.env.BUILD_REQUIRE_SUBDOMAIN,
 
   PORT: process.env.PORT,
-
-  VERCEL_ENV: process.env.VERCEL_ENV,
-  VERCEL_URL: process.env.VERCEL_URL,
 } as const;
 
-export default env;
-
 export type ServerEnv = typeof env;
+
+type Mutable<T> = { -readonly [P in keyof T]: T[P] };
+const mutableEnv: Mutable<ServerEnv> = env;
+
+if (process.env.VERCEL !== undefined) {
+  if (env.DEPLOYMENT_ENVIRONMENT === undefined) {
+    mutableEnv.DEPLOYMENT_ENVIRONMENT = process.env.VERCEL_ENV;
+  }
+  if (env.DEPLOYMENT_URL === undefined) {
+    mutableEnv.DEPLOYMENT_URL = process.env.VERCEL_URL;
+  }
+}
+
+export default env;
