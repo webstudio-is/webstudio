@@ -170,8 +170,8 @@ export const cloneStyleSources = (
   subsetIds: Set<StyleSource["id"]>
 ) => {
   const clonedStyleSourceIds = new Map<Instance["id"], Instance["id"]>();
-  const clonedStyleSources: StyleSources = [];
-  for (const styleSource of styleSources) {
+  const clonedStyleSources: StyleSource[] = [];
+  for (const styleSource of styleSources.values()) {
     if (subsetIds.has(styleSource.id) === false) {
       continue;
     }
@@ -234,7 +234,7 @@ export const findSubtreeLocalStyleSources = (
   styleSourceSelections: StyleSourceSelections
 ) => {
   const localStyleSourceIds = new Set<StyleSource["id"]>();
-  for (const styleSource of styleSources) {
+  for (const styleSource of styleSources.values()) {
     if (styleSource.type === "local") {
       localStyleSourceIds.add(styleSource.id);
     }

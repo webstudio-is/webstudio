@@ -207,12 +207,12 @@ test("clone props with new ids and apply new instance ids", () => {
 });
 
 test("clone style sources with new ids within provided subset", () => {
-  const styleSources = [
-    createStyleSource("local", "local1"),
-    createStyleSource("local", "local2"),
-    createStyleSource("token", "token3"),
-    createStyleSource("local", "local4"),
-  ];
+  const styleSources = new Map([
+    ["local1", createStyleSource("local", "local1")],
+    ["local2", createStyleSource("local", "local2")],
+    ["token3", createStyleSource("token", "token3")],
+    ["local4", createStyleSource("local", "local4")],
+  ]);
   const subsetIds = new Set<StyleSource["id"]>(["local2", "token3"]);
   expect(cloneStyleSources(styleSources, subsetIds)).toEqual({
     clonedStyleSources: [
@@ -277,14 +277,14 @@ test("clone styles with appled new style source ids", () => {
 
 test("find subtree local style sources", () => {
   const subtreeIds = new Set(["instance2", "instance4"]);
-  const styleSources = [
-    createStyleSource("local", "local1"),
-    createStyleSource("local", "local2"),
-    createStyleSource("token", "token3"),
-    createStyleSource("local", "local4"),
-    createStyleSource("token", "token5"),
-    createStyleSource("local", "local6"),
-  ];
+  const styleSources = new Map([
+    ["local1", createStyleSource("local", "local1")],
+    ["local2", createStyleSource("local", "local2")],
+    ["token3", createStyleSource("token", "token3")],
+    ["local4", createStyleSource("local", "local4")],
+    ["token5", createStyleSource("token", "token5")],
+    ["local6", createStyleSource("local", "local6")],
+  ]);
   const styleSourceSelections = [
     createStyleSourceSelection("instance1", ["local1"]),
     createStyleSourceSelection("instance2", ["local2"]),

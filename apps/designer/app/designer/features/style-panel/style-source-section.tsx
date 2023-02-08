@@ -45,11 +45,7 @@ const createStyleSource = (name: string) => {
     (styleSources, styleSourceSelections) => {
       // set new style source and local if not set before
       for (const newStyleSource of newStyleSources) {
-        replaceByOrAppendMutable(
-          styleSources,
-          newStyleSource,
-          (styleSource) => styleSource.id === newStyleSource.id
-        );
+        styleSources.set(newStyleSource.id, newStyleSource);
       }
       replaceByOrAppendMutable(
         styleSourceSelections,
@@ -79,11 +75,7 @@ const addStyleSourceToInstace = (styleSourceId: StyleSource["id"]) => {
     (styleSources, styleSourceSelections) => {
       // set local style source if not set before
       for (const newStyleSource of selectedInstanceStyleSources) {
-        replaceByOrAppendMutable(
-          styleSources,
-          newStyleSource,
-          (styleSource) => styleSource.id === newStyleSource.id
-        );
+        styleSources.set(newStyleSource.id, newStyleSource);
       }
       replaceByOrAppendMutable(
         styleSourceSelections,
