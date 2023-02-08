@@ -1,6 +1,7 @@
 import slugify from "slugify";
 import { customAlphabet } from "nanoid";
 import { prisma, Prisma } from "@webstudio-is/prisma-client";
+import { cloneAssets } from "@webstudio-is/asset-uploader/server";
 import * as db from "./index";
 import {
   authorizeProject,
@@ -204,13 +205,16 @@ const clone = async (
       ? await db.build.loadByProjectId(project.id, "dev")
       : await db.build.loadByProjectId(project.id, "prod");
 
-  const projectId = uuid();
-  authorizeProject.registerProjectOwner({ projectId }, context);
+  const newProjectId = uuid();
+  await authorizeProject.registerProjectOwner(
+    { projectId: newProjectId },
+    context
+  );
 
   const clonedProject = await prisma.$transaction(async (client) => {
     const clonedProject = await client.project.create({
       data: {
-        id: projectId,
+        id: newProjectId,
         userId: userId,
         title: title ?? project.title,
         domain: generateDomain(project.title),
@@ -218,9 +222,21 @@ const clone = async (
     });
 
     await db.build.create(
-      { projectId: clonedProject.id, env: "dev", sourceBuild: build },
+      { projectId: newProjectId, env: "dev", sourceBuild: build },
       context,
       client
+    );
+
+    await cloneAssets(
+      {
+        fromProjectId: project.id,
+        toProjectId: newProjectId,
+
+        // Permission check on newProjectId will fail until this transaction is committed.
+        // We have to skip it, but it's ok because registerProjectOwner is right above
+        dontCheckEditPermission: true,
+      },
+      context
     );
 
     return clonedProject;

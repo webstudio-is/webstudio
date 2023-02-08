@@ -28,7 +28,7 @@ enum UploadStatus {
 }
 
 model Asset {
-  id          String       @default(uuid())
+  id          String       @default(uuid()) // not unique!
   projectId   String
   format      String
   size        Int
