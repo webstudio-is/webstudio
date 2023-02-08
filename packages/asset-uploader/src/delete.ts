@@ -35,7 +35,17 @@ export const deleteAssets = async (
 
   await deleteFromDb(props, context);
 
+  const assetsByName = await prisma.asset.findMany({
+    where: { name: { in: assets.map((asset) => asset.name) } },
+  });
+  const stillUsedNames = new Set(assetsByName.map((asset) => asset.name));
+
   for (const asset of assets) {
+    // don't delete file if some other asset is using it
+    if (stillUsedNames.has(asset.name)) {
+      continue;
+    }
+
     if (asset.location === "REMOTE") {
       await deleteFromS3(asset.name);
     } else {
