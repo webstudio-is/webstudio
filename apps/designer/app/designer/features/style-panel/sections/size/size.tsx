@@ -91,7 +91,18 @@ export const SizeSection = ({
         setProperty={setProperty}
         deleteProperty={deleteProperty}
       />
-
+      <PropertyName
+        label={styleConfigByName.aspectRatio.label}
+        property="aspectRatio"
+        style={style}
+        onReset={() => deleteProperty("aspectRatio")}
+      />
+      <TextControl
+        property={"aspectRatio"}
+        currentStyle={style}
+        setProperty={setProperty}
+        deleteProperty={deleteProperty}
+      />
       <PropertyName
         label={styleConfigByName.overflow.label}
         property="overflow"
