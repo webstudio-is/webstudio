@@ -1,7 +1,7 @@
 import { type ActionArgs, json } from "@remix-run/node";
 
 import { getBuildParams } from "~/shared/router-utils";
-import env from "~/env.server";
+import env from "~/env/env.public";
 import { sentryException } from "~/shared/sentry";
 import { generateCssText } from "~/shared/css-utils";
 import { createContext } from "~/shared/context.server";

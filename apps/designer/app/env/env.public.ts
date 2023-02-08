@@ -15,4 +15,4 @@ const env = {
 
 export default env;
 
-export type Env = typeof env;
+export type PublicEnv = typeof env;
