@@ -42,6 +42,7 @@ export const cloneAssets = async (
   });
 
   await client.asset.createMany({
+    // we intentionally keep old ids in order for all references in styles/props to work
     data: assets.map((asset) => ({ ...asset, projectId: toProjectId })),
   });
 };
