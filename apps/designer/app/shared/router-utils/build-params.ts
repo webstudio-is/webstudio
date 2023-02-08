@@ -33,13 +33,20 @@ const isLocalhost = (host: string) => {
   return domain === "localhost" || domain.endsWith(".localhost");
 };
 
+const defaultEnv = {
+  BUILD_ORIGIN: serverEnv.BUILD_ORIGIN,
+  VERCEL_ENV: serverEnv.VERCEL_ENV,
+  VERCEL_URL: serverEnv.VERCEL_URL,
+  BUILD_REQUIRE_SUBDOMAIN: serverEnv.BUILD_REQUIRE_SUBDOMAIN,
+};
+
 export const getBuildOrigin = (
   request: MinimalRequest,
   env: {
     BUILD_ORIGIN?: string;
     VERCEL_ENV?: string;
     VERCEL_URL?: string;
-  } = serverEnv
+  } = defaultEnv
 ): string => {
   const { BUILD_ORIGIN } = env;
   if (BUILD_ORIGIN !== undefined && BUILD_ORIGIN !== "") {
@@ -80,7 +87,7 @@ export const getBuildParams = (
     BUILD_ORIGIN?: string;
     VERCEL_ENV?: string;
     VERCEL_URL?: string;
-  } = serverEnv
+  } = defaultEnv
 ): BuildParams | undefined => {
   const url = new URL(request.url);
 
