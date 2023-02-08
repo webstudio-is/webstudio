@@ -2,6 +2,7 @@ import { nanoid } from "nanoid";
 import produce from "immer";
 import type {
   Instance,
+  Prop,
   Props,
   Styles,
   StyleSource,
@@ -149,8 +150,8 @@ export const cloneProps = (
   props: Props,
   clonedInstanceIds: Map<Instance["id"], Instance["id"]>
 ) => {
-  const clonedProps: Props = [];
-  for (const prop of props) {
+  const clonedProps: Prop[] = [];
+  for (const prop of props.values()) {
     const instanceId = clonedInstanceIds.get(prop.instanceId);
     if (instanceId === undefined) {
       continue;

@@ -188,14 +188,14 @@ test("clone instance tree and provide cloned ids map", () => {
 });
 
 test("clone props with new ids and apply new instance ids", () => {
-  const props = [
-    createProp("prop1", "instance1"),
-    createProp("prop2", "instance2"),
-    createProp("prop3", "instance1"),
-    createProp("prop4", "instance3"),
-    createProp("prop5", "instance1"),
-    createProp("prop6", "instance3"),
-  ];
+  const props = new Map([
+    ["prop1", createProp("prop1", "instance1")],
+    ["prop2", createProp("prop2", "instance2")],
+    ["prop3", createProp("prop3", "instance1")],
+    ["prop4", createProp("prop4", "instance3")],
+    ["prop5", createProp("prop5", "instance1")],
+    ["prop6", createProp("prop6", "instance3")],
+  ]);
   const clonedInstanceIds = new Map<Instance["id"], Instance["id"]>();
   clonedInstanceIds.set("instance2", "newInstance2");
   clonedInstanceIds.set("instance3", "newInstance3");

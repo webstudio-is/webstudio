@@ -10,15 +10,20 @@ export default {
 };
 
 export const NoProps: ComponentStory<typeof PropsPanel> = () => {
-  propsStore.set([
-    {
-      id: "disabled",
-      instanceId: "1",
-      name: "disabled",
-      type: "boolean",
-      value: true,
-    },
-  ]);
+  propsStore.set(
+    new Map([
+      [
+        "disabled",
+        {
+          id: "disabled",
+          instanceId: "1",
+          name: "disabled",
+          type: "boolean",
+          value: true,
+        },
+      ],
+    ])
+  );
   return (
     <PropsPanel
       selectedInstance={{
@@ -34,7 +39,7 @@ export const NoProps: ComponentStory<typeof PropsPanel> = () => {
 };
 
 export const RequiredProps: ComponentStory<typeof PropsPanel> = () => {
-  propsStore.set([]);
+  propsStore.set(new Map());
   return (
     <PropsPanel
       selectedInstance={{
@@ -50,7 +55,7 @@ export const RequiredProps: ComponentStory<typeof PropsPanel> = () => {
 };
 
 export const DefaultProps: ComponentStory<typeof PropsPanel> = () => {
-  propsStore.set([]);
+  propsStore.set(new Map());
   return (
     <PropsPanel
       selectedInstance={{
@@ -69,14 +74,19 @@ const meta = getComponentMetaProps("Button") ?? {};
 
 export const AllProps: ComponentStory<typeof PropsPanel> = () => {
   propsStore.set(
-    Object.entries(meta).map(([name, value]) => {
-      return {
-        id: name,
-        instanceId: "3",
-        name,
-        value: value?.defaultValue ?? "",
-      } as Prop;
-    })
+    new Map(
+      Object.entries(meta).map(([name, value]) => {
+        return [
+          name,
+          {
+            id: name,
+            instanceId: "3",
+            name,
+            value: value?.defaultValue ?? "",
+          } as Prop,
+        ];
+      })
+    )
   );
   return (
     <PropsPanel

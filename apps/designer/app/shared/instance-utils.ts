@@ -46,7 +46,11 @@ export const deleteInstance = (targetInstanceId: Instance["id"]) => {
         (child) => child.type === "instance" && child.id === targetInstanceId
       );
       // delete props and styles of deleted instance and its descendants
-      removeByMutable(props, (prop) => subtreeIds.has(prop.instanceId));
+      for (const prop of props.values()) {
+        if (subtreeIds.has(prop.instanceId)) {
+          props.delete(prop.id);
+        }
+      }
       removeByMutable(styleSourceSelections, (styleSourceSelection) =>
         subtreeIds.has(styleSourceSelection.instanceId)
       );

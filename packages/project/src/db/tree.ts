@@ -78,7 +78,7 @@ export const create = async (
       root: "",
       styles: "",
       instances: JSON.stringify(instances),
-      props: serializeProps(treeData.props),
+      props: serializeProps(new Map(treeData.props)),
       styleSelections: JSON.stringify(styleSourceSelections),
     },
   });
@@ -151,7 +151,7 @@ export const loadById = async (
   return {
     ...tree,
     root,
-    props,
+    props: Array.from(props),
     styleSourceSelections,
   };
 };

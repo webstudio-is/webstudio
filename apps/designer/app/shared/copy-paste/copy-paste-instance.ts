@@ -3,7 +3,7 @@ import { z } from "zod";
 import { useEffect } from "react";
 import {
   Instance,
-  Props,
+  Prop,
   Styles,
   StyleSources,
   StyleSourceSelections,
@@ -33,7 +33,7 @@ import { startCopyPaste } from "./copy-paste";
 
 const InstanceData = z.object({
   instance: Instance,
-  props: Props,
+  props: z.array(Prop),
   styleSourceSelections: StyleSourceSelections,
   styleSources: StyleSources,
   styles: Styles,
@@ -109,7 +109,9 @@ const pasteInstance = (data: InstanceData) => {
       utils.tree.insertInstanceMutable(rootInstance, data.instance, dropTarget);
       // append without checking existing
       // because all data already cloned with new ids
-      props.push(...data.props);
+      for (const prop of data.props) {
+        props.set(prop.id, prop);
+      }
       styleSourceSelections.push(...data.styleSourceSelections);
       styleSources.push(...data.styleSources);
       styles.push(...data.styles);

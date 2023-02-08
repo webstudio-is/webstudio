@@ -6,6 +6,7 @@ import type { AuthPermit } from "@webstudio-is/trpc-interface";
 import type { Asset } from "@webstudio-is/asset-uploader";
 import {
   Instance,
+  Prop,
   Props,
   Styles,
   StyleSource,
@@ -50,10 +51,10 @@ export const instancesIndexStore = computed(
   createInstancesIndex
 );
 
-export const propsStore = atom<Props>([]);
+export const propsStore = atom<Props>(new Map());
 export const propsIndexStore = computed(propsStore, (props) => {
-  const propsByInstanceId = new Map<Instance["id"], Props>();
-  for (const prop of props) {
+  const propsByInstanceId = new Map<Instance["id"], Prop[]>();
+  for (const prop of props.values()) {
     const { instanceId } = prop;
     let instanceProps = propsByInstanceId.get(instanceId);
     if (instanceProps === undefined) {
@@ -66,9 +67,9 @@ export const propsIndexStore = computed(propsStore, (props) => {
     propsByInstanceId,
   };
 });
-export const useSetProps = (props: Props) => {
+export const useSetProps = (props: [Prop["id"], Prop][]) => {
   useSyncInitializeOnce(() => {
-    propsStore.set(props);
+    propsStore.set(new Map(props));
   });
 };
 export const useInstanceProps = (instanceId: undefined | Instance["id"]) => {
