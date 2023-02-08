@@ -27,7 +27,7 @@ const env = {
   PORT: process.env.PORT,
 
   VERCEL_ENV: process.env.VERCEL_ENV,
-  VERCEL_URL: process.env.VERCEL_ENV,
+  VERCEL_URL: process.env.VERCEL_URL,
 } as const;
 
 export default env;
