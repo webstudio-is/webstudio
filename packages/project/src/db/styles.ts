@@ -38,7 +38,10 @@ const parseValue = (
   return styleValue;
 };
 
-export const parseStyles = async (stylesString: string) => {
+export const parseStyles = async (
+  projectId: Asset["projectId"],
+  stylesString: string
+) => {
   const storedStyles = StoredStyles.parse(JSON.parse(stylesString));
 
   const assetIds: string[] = [];
@@ -55,9 +58,8 @@ export const parseStyles = async (stylesString: string) => {
   // Load all assets
   const assets = await prisma.asset.findMany({
     where: {
-      id: {
-        in: assetIds,
-      },
+      id: { in: assetIds },
+      projectId,
     },
   });
   const assetsMap = new Map<string, Asset>();
@@ -130,7 +132,7 @@ export const patch = async (
   }
 
   // these styles are filtered by treeId
-  const styles = await parseStyles(build.styles);
+  const styles = await parseStyles(build.projectId, build.styles);
 
   const patchedStyles = Styles.parse(applyPatches(styles, patches));
 

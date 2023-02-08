@@ -23,7 +23,7 @@ export const parseBuild = async (build: DbBuild): Promise<Build> => {
     createdAt: build.createdAt.toISOString(),
     pages,
     breakpoints: Breakpoints.parse(JSON.parse(build.breakpoints)),
-    styles: await parseStyles(build.styles),
+    styles: await parseStyles(build.projectId, build.styles),
     styleSources: StyleSources.parse(JSON.parse(build.styleSources)),
   };
 };
