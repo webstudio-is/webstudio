@@ -9,11 +9,11 @@ const template = ({
 }) => `// Generated from ${sourceFile}
 
 import { forwardRef } from "react";
-import { IconProps } from "../types";
+import type { IconProps } from "../types";
 
 // prettier-ignore
 export const ${componentName}Icon = forwardRef<SVGSVGElement, IconProps>(
-  ({ color = "currentColor", ...props }, forwardedRef) => {
+  ({ color = "currentColor", size = 16, ...props }, forwardedRef) => {
     return (
       ${jsx}
     );
@@ -33,8 +33,8 @@ export const config: Config = {
   template,
   transformFilename,
   svgProps: {
-    width: "16",
-    height: "16",
+    width: "{size}",
+    height: "{size}",
     fill: "{color}",
     "{...props}": null,
     ref: "{forwardedRef}",

@@ -170,6 +170,12 @@ export const useCanvasStore = (publish: Publish) => {
         value: container.get(),
       });
     }
+    for (const [namespace, store] of clientStores) {
+      data.push({
+        namespace,
+        value: store.get(),
+      });
+    }
     publish({
       type: "sendStoreData",
       payload: {
