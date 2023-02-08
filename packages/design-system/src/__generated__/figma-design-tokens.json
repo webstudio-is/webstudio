@@ -450,9 +450,8 @@
           "description": "used for destructive button and accent color on destructive toast"
         },
         "notification": {
-          "value": "#ffefef",
-          "type": "color",
-          "description": "background for destructive toast"
+          "value": "#d53f45",
+          "type": "color"
         }
       },
       "success": {
@@ -887,6 +886,15 @@
           "type": "color",
           "description": "foreground color for flex-ui inherited elements"
         }
+      },
+      "text-more-subtle": {
+        "value": "#889096",
+        "type": "color",
+        "description": "for subtle text that needs to be even more subtle \nthan \"text-subtle\"\n\nused as the color for text on title tab triggers and the category label of the font item component"
+      },
+      "primary": {
+        "value": "#096cff",
+        "type": "color"
       }
     },
     "Brand": {
