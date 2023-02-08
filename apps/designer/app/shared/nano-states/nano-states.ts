@@ -117,6 +117,23 @@ export const styleSourcesIndexStore = computed(
     };
   }
 );
+/**
+ * find all non-local style sources
+ * scoped to current tree or whole project
+ */
+export const availableStyleSourcesStore = shallowComputed(
+  [styleSourcesStore, treeIdStore],
+  (styleSources, treeId) => {
+    if (treeId === undefined) {
+      return [];
+    }
+    return styleSources.filter(
+      (styleSource) =>
+        styleSource.type !== "local" &&
+        (styleSource.treeId === treeId || styleSource.treeId === undefined)
+    );
+  }
+);
 
 export const useSetStyleSources = (styleSources: StyleSources) => {
   useSyncInitializeOnce(() => {
@@ -133,7 +150,7 @@ export const useSetStyleSourceSelections = (
   });
 };
 
-const selectedStyleSourceIdStore = atom<undefined | StyleSource["id"]>(
+export const selectedStyleSourceIdStore = atom<undefined | StyleSource["id"]>(
   undefined
 );
 
@@ -173,6 +190,7 @@ export const stylesIndexStore = computed(
     }
 
     return {
+      stylesByStyleSourceId,
       stylesByInstanceId,
     };
   }
@@ -225,6 +243,7 @@ export const selectedInstanceStore = computed(
     return instancesIndex.instancesById.get(selectedInstanceId);
   }
 );
+
 export const selectedInstanceBrowserStyleStore = atom<undefined | Style>();
 
 export const selectedInstanceStyleSourcesStore = computed(
@@ -242,21 +261,24 @@ export const selectedInstanceStyleSourcesStore = computed(
       )?.values ?? [];
     const { styleSourcesById } = styleSourcesIndex;
     const selectedInstanceStyleSources: StyleSources = [];
-    // generate style source when selection is empty or not exist
-    // it is synchronized whenever instance style sources
-    // or styles are updated
-    if (styleSourceIds.length === 0 && treeId !== undefined) {
+    let hasLocal = false;
+    for (const styleSourceId of styleSourceIds) {
+      const styleSource = styleSourcesById.get(styleSourceId);
+      if (styleSource !== undefined) {
+        selectedInstanceStyleSources.push(styleSource);
+        if (styleSource.type === "local") {
+          hasLocal = true;
+        }
+      }
+    }
+    // generate style source when selection has not local style sources
+    // it is synchronized whenever instance style sources or styles are updated
+    if (hasLocal === false && treeId !== undefined) {
       selectedInstanceStyleSources.push({
         type: "local",
         treeId,
         id: nanoid(),
       });
-    }
-    for (const styleSourceId of styleSourceIds) {
-      const styleSource = styleSourcesById.get(styleSourceId);
-      if (styleSource !== undefined) {
-        selectedInstanceStyleSources.push(styleSource);
-      }
     }
     return selectedInstanceStyleSources;
   }

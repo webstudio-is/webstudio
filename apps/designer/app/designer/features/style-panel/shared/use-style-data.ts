@@ -102,7 +102,9 @@ export const useStyleData = ({ selectedInstance, publish }: UseStyleData) => {
             styleSourceSelections,
             {
               instanceId,
-              values: [...selections, styleSourceId],
+              values: selections.includes(styleSourceId)
+                ? selections
+                : [...selections, styleSourceId],
             },
             (styleSourceSelection) =>
               styleSourceSelection.instanceId === instanceId

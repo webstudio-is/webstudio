@@ -1,20 +1,20 @@
-import type { Publish } from "~/shared/pubsub";
-import { willRender } from "~/designer/shared/breakpoints";
+import { isFeatureEnabled } from "@webstudio-is/feature-flags";
 import {
+  theme,
   Box,
   Card,
   DeprecatedParagraph,
-  SearchField,
 } from "@webstudio-is/design-system";
 import type { Instance } from "@webstudio-is/project-build";
+import type { Publish } from "~/shared/pubsub";
+import { willRender } from "~/designer/shared/breakpoints";
 import { useStyleData } from "./shared/use-style-data";
 import { StyleSettings } from "./style-settings";
-import { useState } from "react";
 import {
   useCanvasWidth,
   useSelectedBreakpoint,
 } from "~/designer/shared/nano-states";
-import { theme } from "@webstudio-is/design-system";
+import { StyleSourcesSection } from "./style-source-section";
 
 type StylePanelProps = {
   publish: Publish;
@@ -30,7 +30,6 @@ export const StylePanel = ({ selectedInstance, publish }: StylePanelProps) => {
 
   const [breakpoint] = useSelectedBreakpoint();
   const [canvasWidth] = useCanvasWidth();
-  const [search, setSearch] = useState("");
 
   if (
     currentStyle === undefined ||
@@ -57,17 +56,17 @@ export const StylePanel = ({ selectedInstance, publish }: StylePanelProps) => {
 
   return (
     <>
-      <Box css={{ px: theme.spacing[9], py: theme.spacing[3] }}>
-        <SearchField
-          placeholder="Search"
-          onChange={(event) => {
-            setSearch(event.target.value);
+      {isFeatureEnabled("styleSourceInput") && (
+        <Box
+          css={{
+            px: theme.spacing[9],
+            pb: theme.spacing[9],
+            boxShadow: `0px 1px 0 ${theme.colors.panelOutline}`,
           }}
-          onCancel={() => {
-            setSearch("");
-          }}
-        />
-      </Box>
+        >
+          <StyleSourcesSection />
+        </Box>
+      )}
 
       <Box
         css={{
@@ -75,7 +74,7 @@ export const StylePanel = ({ selectedInstance, publish }: StylePanelProps) => {
         }}
       >
         <StyleSettings
-          search={search}
+          search=""
           currentStyle={currentStyle}
           setProperty={setProperty}
           deleteProperty={deleteProperty}
