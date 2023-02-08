@@ -9,6 +9,7 @@ import { callerLink } from "../trpc-caller-link";
 type SharedClientOptions = {
   url: string;
   token: string;
+  headers: Record<string, string>;
 };
 
 export const createTrpcProxyServiceClient = (
@@ -21,6 +22,7 @@ export const createTrpcProxyServiceClient = (
           url: options.url,
           headers: () => ({
             Authorization: options.token,
+            ...options.headers,
           }),
         }),
       ],
