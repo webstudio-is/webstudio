@@ -1,4 +1,5 @@
 import store, { type Change } from "immerhin";
+import { enableMapSet } from "immer";
 import type { WritableAtom } from "nanostores";
 import { useEffect } from "react";
 import { type Publish, subscribe } from "~/shared/pubsub";
@@ -16,6 +17,8 @@ import {
   hoveredInstanceOutlineStore,
   isPreviewModeStore,
 } from "~/shared/nano-states";
+
+enableMapSet();
 
 type StoreData = {
   namespace: string;
