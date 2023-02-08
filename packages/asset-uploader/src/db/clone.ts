@@ -12,6 +12,11 @@ export const cloneAssets = async (
   }: {
     fromProjectId: Project["id"];
     toProjectId: Project["id"];
+
+    /**
+     * Don't use unless absolutely have to (e.g. because of transactions)
+     * and unless it's obvious on the call site that permission is checked
+     */
     dontCheckEditPermission?: boolean;
   },
   context: AppContext,
