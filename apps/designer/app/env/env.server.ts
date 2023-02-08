@@ -1,3 +1,4 @@
+// @todo zod parse env, make explicit types i.e
 const env = {
   // Authentication
   DEV_LOGIN: process.env.DEV_LOGIN,
