@@ -32,14 +32,14 @@ export const parseProps = async (
 
   const assetsMap = new Map(assets.map((asset) => [asset.id, asset]));
 
-  const convertedProps: Props = [];
+  const convertedProps: Props = new Map();
   for (const prop of storedProps) {
     if (prop.type === "asset") {
       const assetId = prop.value;
       const asset = assetsMap.get(assetId);
 
       if (asset) {
-        convertedProps.push({
+        convertedProps.set(prop.id, {
           id: prop.id,
           instanceId: prop.instanceId,
           name: prop.name,
@@ -55,7 +55,7 @@ export const parseProps = async (
       continue;
     }
 
-    convertedProps.push(prop);
+    convertedProps.set(prop.id, prop);
   }
 
   return convertedProps;
@@ -63,7 +63,7 @@ export const parseProps = async (
 
 export const serializeProps = (props: Props) => {
   const storedProps: StoredProps = [];
-  for (const prop of props) {
+  for (const prop of props.values()) {
     if (prop.type === "asset") {
       storedProps.push({
         id: prop.id,

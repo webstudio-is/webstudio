@@ -1,8 +1,10 @@
 import { z } from "zod";
 import { Asset } from "@webstudio-is/asset-uploader";
 
+const PropId = z.string();
+
 const baseProp = {
-  id: z.string(),
+  id: PropId,
   instanceId: z.string(),
   name: z.string(),
   required: z.optional(z.boolean()),
@@ -53,6 +55,6 @@ export const Prop = z.union([
 
 export type Prop = z.infer<typeof Prop>;
 
-export const Props = z.array(Prop);
+export const Props = z.map(PropId, Prop);
 
 export type Props = z.infer<typeof Props>;

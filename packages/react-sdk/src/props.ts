@@ -1,10 +1,10 @@
 import { useMemo } from "react";
 import { atom, computed, type ReadableAtom } from "nanostores";
 import { useStore } from "@nanostores/react";
-import type { Instance, Props } from "@webstudio-is/project-build";
+import type { Instance, Prop, Props } from "@webstudio-is/project-build";
 import type { Asset } from "@webstudio-is/asset-uploader";
 
-type PropsByInstanceId = Map<Instance["id"], Props>;
+type PropsByInstanceId = Map<Instance["id"], Prop[]>;
 
 type PropsByInstanceIdStore = ReadableAtom<PropsByInstanceId>;
 
@@ -20,7 +20,7 @@ export const getPropsByInstanceIdStore = () => {
 
 export const getPropsByInstanceId = (props: Props) => {
   const propsByInstanceId: PropsByInstanceId = new Map();
-  for (const prop of props) {
+  for (const prop of props.values()) {
     let instanceProps = propsByInstanceId.get(prop.instanceId);
     if (instanceProps === undefined) {
       instanceProps = [];

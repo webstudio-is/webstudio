@@ -30,7 +30,9 @@ export const InstanceRoot = ({
     throw new Error("Tree is null");
   }
 
-  setPropsByInstanceIdStore(atom(getPropsByInstanceId(data.tree.props)));
+  setPropsByInstanceIdStore(
+    atom(getPropsByInstanceId(new Map(data.tree.props)))
+  );
 
   setParams(data.params ?? null);
 

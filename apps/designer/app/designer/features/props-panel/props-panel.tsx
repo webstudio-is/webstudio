@@ -26,10 +26,6 @@ import {
 import { type Publish } from "~/shared/pubsub";
 import { propsStore, useInstanceProps } from "~/shared/nano-states";
 import { CollapsibleSection, ComponentInfo } from "~/designer/shared/inspector";
-import {
-  removeByMutable,
-  replaceByOrAppendMutable,
-} from "~/shared/array-utils";
 import { Control } from "./control";
 import { usePropsLogic, type UserPropValue } from "./use-props-logic";
 import {
@@ -234,17 +230,13 @@ export const PropsPanel = ({ selectedInstance, publish }: PropsPanelProps) => {
 
     updateProps: (update) => {
       store.createTransaction([propsStore], (props) => {
-        replaceByOrAppendMutable(
-          props,
-          update,
-          (item) => item.id === update.id
-        );
+        props.set(update.id, update);
       });
     },
 
     deleteProp: (id) => {
       store.createTransaction([propsStore], (props) => {
-        removeByMutable(props, (prop) => prop.id === id);
+        props.delete(id);
       });
     },
   });
