@@ -1,4 +1,5 @@
 import { namespace } from "./namespace";
+import publicEnv from "~/env/env.public";
 import type { PublicEnv } from "~/env/env.public";
 
 // @todo remove once remix has a built-in way
@@ -9,8 +10,8 @@ export default new Proxy(
   {
     get(_target, prop) {
       if (typeof window === "undefined") {
-        return prop in process.env
-          ? process.env[prop as keyof PublicEnv]
+        return prop in publicEnv
+          ? publicEnv[prop as keyof PublicEnv]
           : undefined;
       }
       const env = (window[namespace as never] ?? {}) as unknown as PublicEnv;
