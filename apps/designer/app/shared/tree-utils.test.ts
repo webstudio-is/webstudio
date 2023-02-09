@@ -16,6 +16,7 @@ import {
   findClosestDroppableTarget,
   findSubtree,
   findSubtreeLocalStyleSources,
+  insertInstanceMutable,
   reparentInstanceMutable,
 } from "./tree-utils";
 
@@ -122,6 +123,67 @@ test("find closest droppable target", () => {
   });
 });
 
+test("insert instance into target", () => {
+  const rootInstance = createInstance("root", "Body", [
+    createInstance("box1", "Box", [
+      createInstance("box11", "Box", []),
+      createInstance("box12", "Box", []),
+      createInstance("box13", "Box", []),
+    ]),
+  ]);
+
+  let instancesIndex = createInstancesIndex(rootInstance);
+  insertInstanceMutable(
+    instancesIndex,
+    createInstance("inserted1", "Box", [
+      createInstance("inserted2", "Box", []),
+    ]),
+    {
+      parentId: "box1",
+      position: 1,
+    }
+  );
+  expect(rootInstance).toEqual(
+    createInstance("root", "Body", [
+      createInstance("box1", "Box", [
+        createInstance("box11", "Box", []),
+        createInstance("inserted1", "Box", [
+          createInstance("inserted2", "Box", []),
+        ]),
+        createInstance("box12", "Box", []),
+        createInstance("box13", "Box", []),
+      ]),
+    ])
+  );
+
+  instancesIndex = createInstancesIndex(rootInstance);
+  insertInstanceMutable(
+    instancesIndex,
+    createInstance("inserted3", "Box", [
+      createInstance("inserted4", "Box", []),
+    ]),
+    {
+      parentId: "box1",
+      position: "end",
+    }
+  );
+  expect(rootInstance).toEqual(
+    createInstance("root", "Body", [
+      createInstance("box1", "Box", [
+        createInstance("box11", "Box", []),
+        createInstance("inserted1", "Box", [
+          createInstance("inserted2", "Box", []),
+        ]),
+        createInstance("box12", "Box", []),
+        createInstance("box13", "Box", []),
+        createInstance("inserted3", "Box", [
+          createInstance("inserted4", "Box", []),
+        ]),
+      ]),
+    ])
+  );
+});
+
 test("reparent instance into target", () => {
   const rootInstance = createInstance("root", "Body", [
     createInstance("target", "Box", []),
@@ -132,6 +194,7 @@ test("reparent instance into target", () => {
     ]),
     createInstance("box2", "Box", []),
   ]);
+
   let instancesIndex = createInstancesIndex(rootInstance);
   reparentInstanceMutable(instancesIndex, "target", {
     parentId: "box1",

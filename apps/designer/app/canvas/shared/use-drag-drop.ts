@@ -23,7 +23,7 @@ import {
   getInstanceIdFromElement,
 } from "~/shared/dom-utils";
 import { publish, useSubscribe } from "~/shared/pubsub";
-import { reparentInstance } from "~/shared/instance-utils";
+import { insertInstance, reparentInstance } from "~/shared/instance-utils";
 
 declare module "~/shared/pubsub" {
   export interface PubsubMap {
@@ -285,15 +285,9 @@ export const useDragAndDrop = () => {
           component: dragItem.component,
         });
 
-        publish({
-          type: "insertInstance",
-          payload: {
-            instance,
-            dropTarget: {
-              parentId: dropTarget.data.id,
-              position: dropTarget.indexWithinChildren,
-            },
-          },
+        insertInstance(instance, {
+          parentId: dropTarget.data.id,
+          position: dropTarget.indexWithinChildren,
         });
       }
 

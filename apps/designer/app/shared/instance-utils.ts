@@ -13,9 +13,21 @@ import {
   DroppableTarget,
   findSubtree,
   findSubtreeLocalStyleSources,
+  insertInstanceMutable,
   reparentInstanceMutable,
 } from "./tree-utils";
 import { removeByMutable } from "./array-utils";
+
+export const insertInstance = (
+  instance: Instance,
+  dropTarget?: DroppableTarget
+) => {
+  store.createTransaction([rootInstanceContainer], (rootInstance) => {
+    const instancesIndex = createInstancesIndex(rootInstance);
+    insertInstanceMutable(instancesIndex, instance, dropTarget);
+  });
+  selectedInstanceIdStore.set(instance.id);
+};
 
 export const reparentInstance = (
   targetInstanceId: Instance["id"],
