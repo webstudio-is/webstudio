@@ -124,9 +124,6 @@ const SidePanel = ({
         bc: theme.colors.loContrast,
         height: "100%",
         ...css,
-        "&:first-of-type": {
-          borderRight: `1px solid  ${theme.colors.borderMain}`,
-        },
         "&:last-of-type": {
           borderLeft: `1px solid  ${theme.colors.borderMain}`,
         },

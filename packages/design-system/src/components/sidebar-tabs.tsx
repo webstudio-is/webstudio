@@ -47,9 +47,8 @@ const StyledTabsList = styled(TabsPrimitive.List, {
   flexDirection: "column",
   alignItems: "center",
   outline: "none",
-  '&[data-state="active"]': {
-    borderRight: `1px solid ${theme.colors.slate7}`,
-  },
+  borderRight: `1px solid  ${theme.colors.borderMain}`,
+  flexGrow: 1,
 });
 
 type TabsListPrimitiveProps = React.ComponentProps<typeof TabsPrimitive.List>;
