@@ -16,6 +16,7 @@ import {
   findClosestDroppableTarget,
   findSubtree,
   findSubtreeLocalStyleSources,
+  reparentInstanceMutable,
 } from "./tree-utils";
 
 const expectString = expect.any(String) as unknown as string;
@@ -119,6 +120,68 @@ test("find closest droppable target", () => {
     parentId: "root",
     position: 3,
   });
+});
+
+test("reparent instance into target", () => {
+  const rootInstance = createInstance("root", "Body", [
+    createInstance("target", "Box", []),
+    createInstance("box1", "Box", [
+      createInstance("box11", "Box", []),
+      createInstance("box12", "Box", []),
+      createInstance("box13", "Box", []),
+    ]),
+    createInstance("box2", "Box", []),
+  ]);
+  let instancesIndex = createInstancesIndex(rootInstance);
+  reparentInstanceMutable(instancesIndex, "target", {
+    parentId: "box1",
+    position: 1,
+  });
+  expect(rootInstance).toEqual(
+    createInstance("root", "Body", [
+      createInstance("box1", "Box", [
+        createInstance("box11", "Box", []),
+        createInstance("target", "Box", []),
+        createInstance("box12", "Box", []),
+        createInstance("box13", "Box", []),
+      ]),
+      createInstance("box2", "Box", []),
+    ])
+  );
+
+  instancesIndex = createInstancesIndex(rootInstance);
+  reparentInstanceMutable(instancesIndex, "target", {
+    parentId: "box1",
+    position: 3,
+  });
+  expect(rootInstance).toEqual(
+    createInstance("root", "Body", [
+      createInstance("box1", "Box", [
+        createInstance("box11", "Box", []),
+        createInstance("box12", "Box", []),
+        createInstance("target", "Box", []),
+        createInstance("box13", "Box", []),
+      ]),
+      createInstance("box2", "Box", []),
+    ])
+  );
+
+  instancesIndex = createInstancesIndex(rootInstance);
+  reparentInstanceMutable(instancesIndex, "target", {
+    parentId: "root",
+    position: "end",
+  });
+  expect(rootInstance).toEqual(
+    createInstance("root", "Body", [
+      createInstance("box1", "Box", [
+        createInstance("box11", "Box", []),
+        createInstance("box12", "Box", []),
+        createInstance("box13", "Box", []),
+      ]),
+      createInstance("box2", "Box", []),
+      createInstance("target", "Box", []),
+    ])
+  );
 });
 
 test("find subtree with all descendants and parent instance", () => {

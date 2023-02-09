@@ -1,32 +1,27 @@
 import { useCallback } from "react";
 import { useStore } from "@nanostores/react";
+import store from "immerhin";
 import { Flex } from "@webstudio-is/design-system";
 import type { Instance } from "@webstudio-is/project-build";
-import { type Publish } from "~/shared/pubsub";
 import {
   selectedInstanceIdStore,
   hoveredInstanceIdStore,
   useRootInstance,
+  rootInstanceContainer,
 } from "~/shared/nano-states";
+import {
+  createInstancesIndex,
+  reparentInstanceMutable,
+} from "~/shared/tree-utils";
 import { InstanceTree } from "~/designer/shared/tree";
 import { Header, CloseButton } from "../header";
 
-declare module "~/shared/pubsub" {
-  export interface PubsubMap {
-    reparentInstance: {
-      instanceId: Instance["id"];
-      dropTarget: { instanceId: Instance["id"]; position: number | "end" };
-    };
-  }
-}
-
 type NavigatorProps = {
-  publish: Publish;
   isClosable?: boolean;
   onClose?: () => void;
 };
 
-export const Navigator = ({ publish, isClosable, onClose }: NavigatorProps) => {
+export const Navigator = ({ isClosable, onClose }: NavigatorProps) => {
   const selectedInstanceId = useStore(selectedInstanceIdStore);
   const [rootInstance] = useRootInstance();
 
@@ -39,18 +34,15 @@ export const Navigator = ({ publish, isClosable, onClose }: NavigatorProps) => {
       itemId: string;
       dropTarget: { itemId: string; position: number | "end" };
     }) => {
-      publish({
-        type: "reparentInstance",
-        payload: {
-          instanceId: payload.itemId,
-          dropTarget: {
-            instanceId: payload.dropTarget.itemId,
-            position: payload.dropTarget.position,
-          },
-        },
+      store.createTransaction([rootInstanceContainer], (rootInstance) => {
+        const instancesIndex = createInstancesIndex(rootInstance);
+        reparentInstanceMutable(instancesIndex, payload.itemId, {
+          parentId: payload.dropTarget.itemId,
+          position: payload.dropTarget.position,
+        });
       });
     },
-    [publish]
+    []
   );
 
   const handleHover = useCallback((instance: Instance | undefined) => {

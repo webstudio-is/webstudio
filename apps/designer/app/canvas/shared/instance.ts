@@ -32,29 +32,6 @@ export const useInsertInstance = () => {
   });
 };
 
-export const useReparentInstance = () => {
-  useSubscribe("reparentInstance", ({ instanceId, dropTarget }) => {
-    const selectedInstanceId = selectedInstanceIdStore.get();
-    store.createTransaction([rootInstanceContainer], (rootInstance) => {
-      if (rootInstance === undefined) {
-        return;
-      }
-      utils.tree.reparentInstanceMutable(
-        rootInstance,
-        instanceId,
-        dropTarget.instanceId,
-        dropTarget.position
-      );
-    });
-
-    const rootInstance = rootInstanceContainer.get();
-    // Make the drag item the selected instance
-    if (selectedInstanceId !== instanceId && rootInstance !== undefined) {
-      selectedInstanceIdStore.set(instanceId);
-    }
-  });
-};
-
 export const usePublishTextEditingInstanceId = () => {
   const [editingInstanceId] = useTextEditingInstanceId();
   useEffect(() => {
