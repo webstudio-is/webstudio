@@ -8,8 +8,25 @@ import {
   styleSourceSelectionsStore,
   styleSourcesStore,
 } from "./nano-states";
-import { findSubtree, findSubtreeLocalStyleSources } from "./tree-utils";
+import {
+  createInstancesIndex,
+  DroppableTarget,
+  findSubtree,
+  findSubtreeLocalStyleSources,
+  reparentInstanceMutable,
+} from "./tree-utils";
 import { removeByMutable } from "./array-utils";
+
+export const reparentInstance = (
+  targetInstanceId: Instance["id"],
+  dropTarget: DroppableTarget
+) => {
+  store.createTransaction([rootInstanceContainer], (rootInstance) => {
+    const instancesIndex = createInstancesIndex(rootInstance);
+    reparentInstanceMutable(instancesIndex, targetInstanceId, dropTarget);
+  });
+  selectedInstanceIdStore.set(targetInstanceId);
+};
 
 export const deleteInstance = (targetInstanceId: Instance["id"]) => {
   store.createTransaction(

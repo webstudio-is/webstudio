@@ -1,5 +1,4 @@
 import { useLayoutEffect, useRef } from "react";
-import store from "immerhin";
 import { utils } from "@webstudio-is/project";
 import {
   type DropTarget,
@@ -15,7 +14,6 @@ import {
 } from "@webstudio-is/project-build";
 import { getComponentMeta } from "@webstudio-is/react-sdk";
 import {
-  rootInstanceContainer,
   useRootInstance,
   useTextEditingInstanceId,
 } from "~/shared/nano-states";
@@ -25,10 +23,7 @@ import {
   getInstanceIdFromElement,
 } from "~/shared/dom-utils";
 import { publish, useSubscribe } from "~/shared/pubsub";
-import {
-  createInstancesIndex,
-  reparentInstanceMutable,
-} from "~/shared/tree-utils";
+import { reparentInstance } from "~/shared/instance-utils";
 
 declare module "~/shared/pubsub" {
   export interface PubsubMap {
@@ -232,12 +227,9 @@ export const useDragAndDrop = () => {
       const { dropTarget, dragItem } = state.current;
 
       if (dropTarget && dragItem && isCanceled === false) {
-        store.createTransaction([rootInstanceContainer], (rootInstance) => {
-          const instancesIndex = createInstancesIndex(rootInstance);
-          reparentInstanceMutable(instancesIndex, dragItem.id, {
-            parentId: dropTarget.data.id,
-            position: dropTarget.indexWithinChildren,
-          });
+        reparentInstance(dragItem.id, {
+          parentId: dropTarget.data.id,
+          position: dropTarget.indexWithinChildren,
         });
       }
 

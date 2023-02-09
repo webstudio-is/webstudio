@@ -1,19 +1,14 @@
 import { useCallback } from "react";
 import { useStore } from "@nanostores/react";
-import store from "immerhin";
 import { Flex } from "@webstudio-is/design-system";
 import type { Instance } from "@webstudio-is/project-build";
 import {
   selectedInstanceIdStore,
   hoveredInstanceIdStore,
   useRootInstance,
-  rootInstanceContainer,
 } from "~/shared/nano-states";
-import {
-  createInstancesIndex,
-  reparentInstanceMutable,
-} from "~/shared/tree-utils";
 import { InstanceTree } from "~/designer/shared/tree";
+import { reparentInstance } from "~/shared/instance-utils";
 import { Header, CloseButton } from "../header";
 
 type NavigatorProps = {
@@ -34,12 +29,9 @@ export const Navigator = ({ isClosable, onClose }: NavigatorProps) => {
       itemId: string;
       dropTarget: { itemId: string; position: number | "end" };
     }) => {
-      store.createTransaction([rootInstanceContainer], (rootInstance) => {
-        const instancesIndex = createInstancesIndex(rootInstance);
-        reparentInstanceMutable(instancesIndex, payload.itemId, {
-          parentId: payload.dropTarget.itemId,
-          position: payload.dropTarget.position,
-        });
+      reparentInstance(payload.itemId, {
+        parentId: payload.dropTarget.itemId,
+        position: payload.dropTarget.position,
       });
     },
     []
