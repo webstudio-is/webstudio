@@ -101,6 +101,26 @@ export const findClosestDroppableTarget = (
   };
 };
 
+export const insertInstanceMutable = (
+  instancesIndex: InstancesIndex,
+  instance: Instance,
+  dropTarget?: DroppableTarget
+) => {
+  if (dropTarget === undefined) {
+    return;
+  }
+  const parentInstance = instancesIndex.instancesById.get(dropTarget.parentId);
+  if (parentInstance === undefined) {
+    return;
+  }
+  const { position } = dropTarget;
+  if (position === "end") {
+    parentInstance.children.push(instance);
+  } else {
+    parentInstance.children.splice(position, 0, instance);
+  }
+};
+
 export const reparentInstanceMutable = (
   instancesIndex: InstancesIndex,
   instanceId: Instance["id"],

@@ -16,6 +16,7 @@ import {
 } from "~/shared/nano-states";
 import { useSubscribe, type Publish } from "~/shared/pubsub";
 import { useCanvasRect, useZoom } from "~/designer/shared/nano-states";
+import { insertInstance } from "~/shared/instance-utils";
 import type { TabName } from "../../types";
 import { Header, CloseButton } from "../../header";
 import { ComponentThumb } from "./component-thumb";
@@ -177,10 +178,7 @@ export const TabContent = ({ publish, onSetActiveTab }: TabContentProps) => {
                 instancesIndexStore.get(),
                 selectedInstanceIdStore.get()
               );
-              publish({
-                type: "insertInstance",
-                payload: { instance, dropTarget },
-              });
+              insertInstance(instance, dropTarget);
             }}
           />
         ))}

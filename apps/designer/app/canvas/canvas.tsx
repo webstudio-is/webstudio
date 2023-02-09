@@ -15,10 +15,7 @@ import { publish } from "~/shared/pubsub";
 import { registerContainers, useCanvasStore } from "~/shared/sync";
 import { useSharedShortcuts } from "~/shared/shortcuts";
 import { useShortcuts } from "./shared/use-shortcuts";
-import {
-  useInsertInstance,
-  usePublishTextEditingInstanceId,
-} from "./shared/instance";
+import { usePublishTextEditingInstanceId } from "./shared/instance";
 import { useManageDesignModeStyles, GlobalStyles } from "./shared/styles";
 import { useTrackSelectedElement } from "./shared/use-track-selected-element";
 import { WrapperComponentDev } from "./features/wrapper-component";
@@ -87,7 +84,6 @@ const useElementsTree = () => {
 
 const DesignMode = () => {
   useManageDesignModeStyles();
-  useInsertInstance();
   useTrackSelectedElement();
   usePublishScrollState();
   useSubscribeScrollState();

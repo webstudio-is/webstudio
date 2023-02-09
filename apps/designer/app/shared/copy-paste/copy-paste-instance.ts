@@ -8,7 +8,6 @@ import {
   StyleSource,
   StyleSourceSelection,
 } from "@webstudio-is/project-build";
-import { utils } from "@webstudio-is/project";
 import {
   rootInstanceContainer,
   propsStore,
@@ -24,9 +23,11 @@ import {
   cloneStyles,
   cloneStyleSources,
   cloneStyleSourceSelections,
+  createInstancesIndex,
   findClosestDroppableTarget,
   findSubtree,
   findSubtreeLocalStyleSources,
+  insertInstanceMutable,
 } from "../tree-utils";
 import { deleteInstance } from "../instance-utils";
 import { startCopyPaste } from "./copy-paste";
@@ -103,12 +104,8 @@ const pasteInstance = (data: InstanceData) => {
       stylesStore,
     ],
     (rootInstance, props, styleSourceSelections, styleSources, styles) => {
-      if (rootInstance === undefined) {
-        return;
-      }
-      utils.tree.insertInstanceMutable(rootInstance, data.instance, dropTarget);
-      // append without checking existing
-      // because all data already cloned with new ids
+      const instancesIndex = createInstancesIndex(rootInstance);
+      insertInstanceMutable(instancesIndex, data.instance, dropTarget);
       for (const prop of data.props) {
         props.set(prop.id, prop);
       }

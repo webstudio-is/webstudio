@@ -7,6 +7,7 @@ import { useRootInstance, useDragAndDropState } from "~/shared/nano-states";
 import { InstanceTreeNode } from "~/designer/shared/tree";
 import {
   createInstancesIndex,
+  insertInstanceMutable,
   reparentInstanceMutable,
 } from "~/shared/tree-utils";
 
@@ -35,8 +36,8 @@ export const TreePrevew = () => {
     const instance: Instance = produce<Instance>((draft) => {
       const instancesIndex = createInstancesIndex(draft);
       if (isNew) {
-        utils.tree.insertInstanceMutable(
-          draft,
+        insertInstanceMutable(
+          instancesIndex,
           utils.tree.createInstance({ component: dragItemInstance.component }),
           {
             parentId: dropTargetInstanceId,
