@@ -1,6 +1,6 @@
 import type { Instance } from "./schema/instances";
 import type { Prop } from "./schema/props";
-import type { StyleSourceSelections } from "./schema/style-sources";
+import type { StyleSourceSelection } from "./schema/style-source-selections";
 
 export type Tree = {
   id: string;
@@ -8,5 +8,5 @@ export type Tree = {
   buildId: string;
   root: Instance;
   props: [Prop["id"], Prop][];
-  styleSourceSelections: StyleSourceSelections;
+  styleSourceSelections: [Instance["id"], StyleSourceSelection][];
 };

@@ -290,11 +290,17 @@ test("clone style sources with new ids within provided subset", () => {
 });
 
 test("clone style source selections with applied instance ids and style source ids", () => {
-  const styleSourceSelections = [
-    createStyleSourceSelection("instance1", ["local1", "token2"]),
-    createStyleSourceSelection("instance2", ["token3", "local4", "token5"]),
-    createStyleSourceSelection("instance3", ["local6"]),
-  ];
+  const styleSourceSelections = new Map([
+    [
+      "instance1",
+      createStyleSourceSelection("instance1", ["local1", "token2"]),
+    ],
+    [
+      "instance2",
+      createStyleSourceSelection("instance2", ["token3", "local4", "token5"]),
+    ],
+    ["instance3", createStyleSourceSelection("instance3", ["local6"])],
+  ]);
   const clonedStyleSourceIds = new Map<StyleSource["id"], StyleSource["id"]>([
     ["local1", "newLocal1"],
     ["local4", "newLocal4"],
@@ -348,13 +354,16 @@ test("find subtree local style sources", () => {
     ["token5", createStyleSource("token", "token5")],
     ["local6", createStyleSource("local", "local6")],
   ]);
-  const styleSourceSelections = [
-    createStyleSourceSelection("instance1", ["local1"]),
-    createStyleSourceSelection("instance2", ["local2"]),
-    createStyleSourceSelection("instance3", ["token3"]),
-    createStyleSourceSelection("instance4", ["local4", "token5"]),
-    createStyleSourceSelection("instance5", ["local6"]),
-  ];
+  const styleSourceSelections = new Map([
+    ["instance1", createStyleSourceSelection("instance1", ["local1"])],
+    ["instance2", createStyleSourceSelection("instance2", ["local2"])],
+    ["instance3", createStyleSourceSelection("instance3", ["token3"])],
+    [
+      "instance4",
+      createStyleSourceSelection("instance4", ["local4", "token5"]),
+    ],
+    ["instance5", createStyleSourceSelection("instance5", ["local6"])],
+  ]);
 
   expect(
     findSubtreeLocalStyleSources(

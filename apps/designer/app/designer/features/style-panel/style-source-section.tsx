@@ -16,10 +16,7 @@ import {
   styleSourceSelectionsStore,
   styleSourcesStore,
 } from "~/shared/nano-states";
-import {
-  removeByMutable,
-  replaceByOrAppendMutable,
-} from "~/shared/array-utils";
+import { removeByMutable } from "~/shared/array-utils";
 
 const createStyleSource = (name: string) => {
   const selectedInstanceId = selectedInstanceIdStore.get();
@@ -47,12 +44,7 @@ const createStyleSource = (name: string) => {
       for (const newStyleSource of newStyleSources) {
         styleSources.set(newStyleSource.id, newStyleSource);
       }
-      replaceByOrAppendMutable(
-        styleSourceSelections,
-        newStyleSourceSelection,
-        (styleSourceSelection) =>
-          styleSourceSelection.instanceId === selectedInstanceId
-      );
+      styleSourceSelections.set(selectedInstanceId, newStyleSourceSelection);
     }
   );
 };
@@ -77,12 +69,7 @@ const addStyleSourceToInstace = (styleSourceId: StyleSource["id"]) => {
       for (const newStyleSource of selectedInstanceStyleSources) {
         styleSources.set(newStyleSource.id, newStyleSource);
       }
-      replaceByOrAppendMutable(
-        styleSourceSelections,
-        newStyleSourceSelection,
-        (styleSourceSelection) =>
-          styleSourceSelection.instanceId === selectedInstanceId
-      );
+      styleSourceSelections.set(selectedInstanceId, newStyleSourceSelection);
     }
   );
 };
@@ -92,10 +79,11 @@ const removeStyleSourceFromInstance = (styleSourceId: StyleSource["id"]) => {
   store.createTransaction(
     [styleSourceSelectionsStore],
     (styleSourceSelections) => {
-      const styleSourceSelection = styleSourceSelections.find(
-        (styleSourceSelection) =>
-          styleSourceSelection.instanceId === selectedInstanceId
-      );
+      if (selectedInstanceId === undefined) {
+        return;
+      }
+      const styleSourceSelection =
+        styleSourceSelections.get(selectedInstanceId);
       if (styleSourceSelection === undefined) {
         return;
       }
@@ -112,10 +100,11 @@ const reorderStyleSources = (styleSourceIds: StyleSource["id"][]) => {
   store.createTransaction(
     [styleSourceSelectionsStore],
     (styleSourceSelections) => {
-      const styleSourceSelection = styleSourceSelections.find(
-        (styleSourceSelection) =>
-          styleSourceSelection.instanceId === selectedInstanceId
-      );
+      if (selectedInstanceId === undefined) {
+        return;
+      }
+      const styleSourceSelection =
+        styleSourceSelections.get(selectedInstanceId);
       if (styleSourceSelection === undefined) {
         return;
       }

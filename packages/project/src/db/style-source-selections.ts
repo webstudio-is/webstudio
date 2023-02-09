@@ -4,8 +4,32 @@ import {
   authorizeProject,
   type AppContext,
 } from "@webstudio-is/trpc-interface/server";
-import { StyleSourceSelections, type Tree } from "@webstudio-is/project-build";
+import {
+  StyleSourceSelectionsList,
+  StyleSourceSelections,
+  type Tree,
+} from "@webstudio-is/project-build";
 import type { Project } from "../shared/schema";
+
+export const parseStyleSourceSelections = (
+  styleSourceSelectionsString: string
+): StyleSourceSelections => {
+  const styleSourceSelectionsList = StyleSourceSelectionsList.parse(
+    JSON.parse(styleSourceSelectionsString)
+  );
+  return new Map(
+    styleSourceSelectionsList.map((item) => [item.instanceId, item])
+  );
+};
+
+export const serializeStyleSourceSelections = (
+  styleSourceSelectionsMap: StyleSourceSelections
+) => {
+  const styleSourceSelectionsList: StyleSourceSelectionsList = Array.from(
+    styleSourceSelectionsMap.values()
+  );
+  return JSON.stringify(styleSourceSelectionsList);
+};
 
 export const patch = async (
   { treeId, projectId }: { treeId: Tree["id"]; projectId: Project["id"] },
@@ -30,8 +54,8 @@ export const patch = async (
     return;
   }
 
-  const styleSourceSelections = StyleSourceSelections.parse(
-    JSON.parse(tree.styleSelections)
+  const styleSourceSelections = parseStyleSourceSelections(
+    tree.styleSelections
   );
 
   const patchedStyleSourceSelections = StyleSourceSelections.parse(
@@ -40,7 +64,9 @@ export const patch = async (
 
   await prisma.tree.update({
     data: {
-      styleSelections: JSON.stringify(patchedStyleSourceSelections),
+      styleSelections: serializeStyleSourceSelections(
+        patchedStyleSourceSelections
+      ),
     },
     where: {
       id_projectId: { projectId, id: treeId },

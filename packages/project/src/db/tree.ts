@@ -6,7 +6,6 @@ import {
   type InstancesItem,
   Instance,
   Instances,
-  StyleSourceSelections,
 } from "@webstudio-is/project-build";
 import { prisma, type Prisma } from "@webstudio-is/prisma-client";
 import { utils } from "../index";
@@ -16,6 +15,10 @@ import {
   authorizeProject,
   type AppContext,
 } from "@webstudio-is/trpc-interface/server";
+import {
+  parseStyleSourceSelections,
+  serializeStyleSourceSelections,
+} from "./style-source-selections";
 
 type TreeData = Omit<Tree, "id">;
 
@@ -67,9 +70,6 @@ export const create = async (
 
   const newTreeId = uuid();
 
-  const styleSourceSelections: StyleSourceSelections =
-    treeData.styleSourceSelections;
-
   return await client.tree.create({
     data: {
       id: newTreeId,
@@ -79,7 +79,9 @@ export const create = async (
       styles: "",
       instances: JSON.stringify(instances),
       props: serializeProps(new Map(treeData.props)),
-      styleSelections: JSON.stringify(styleSourceSelections),
+      styleSelections: serializeStyleSourceSelections(
+        new Map(treeData.styleSourceSelections)
+      ),
     },
   });
 };
@@ -144,15 +146,15 @@ export const loadById = async (
     context
   );
 
-  const styleSourceSelections = StyleSourceSelections.parse(
-    JSON.parse(tree.styleSelections)
+  const styleSourceSelections = parseStyleSourceSelections(
+    tree.styleSelections
   );
 
   return {
     ...tree,
     root,
     props: Array.from(props),
-    styleSourceSelections,
+    styleSourceSelections: Array.from(styleSourceSelections),
   };
 };
 

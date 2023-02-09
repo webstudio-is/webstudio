@@ -94,17 +94,12 @@ export const useStyleData = ({ selectedInstance, publish }: UseStyleData) => {
           const selections = selectedInstanceStyleSources.map(
             (styleSource) => styleSource.id
           );
-          replaceByOrAppendMutable(
-            styleSourceSelections,
-            {
-              instanceId,
-              values: selections.includes(styleSourceId)
-                ? selections
-                : [...selections, styleSourceId],
-            },
-            (styleSourceSelection) =>
-              styleSourceSelection.instanceId === instanceId
-          );
+          styleSourceSelections.set(instanceId, {
+            instanceId,
+            values: selections.includes(styleSourceId)
+              ? selections
+              : [...selections, styleSourceId],
+          });
 
           for (const update of updates) {
             if (update.operation === "set") {
