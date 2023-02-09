@@ -6,7 +6,7 @@ import {
   Prop,
   Styles,
   StyleSource,
-  StyleSourceSelections,
+  StyleSourceSelection,
 } from "@webstudio-is/project-build";
 import { utils } from "@webstudio-is/project";
 import {
@@ -34,7 +34,7 @@ import { startCopyPaste } from "./copy-paste";
 const InstanceData = z.object({
   instance: Instance,
   props: z.array(Prop),
-  styleSourceSelections: StyleSourceSelections,
+  styleSourceSelections: z.array(StyleSourceSelection),
   styleSources: z.array(StyleSource),
   styles: Styles,
 });
@@ -112,7 +112,12 @@ const pasteInstance = (data: InstanceData) => {
       for (const prop of data.props) {
         props.set(prop.id, prop);
       }
-      styleSourceSelections.push(...data.styleSourceSelections);
+      for (const styleSourceSelection of data.styleSourceSelections) {
+        styleSourceSelections.set(
+          styleSourceSelection.instanceId,
+          styleSourceSelection
+        );
+      }
       for (const styleSource of data.styleSources) {
         styleSources.set(styleSource.id, styleSource);
       }

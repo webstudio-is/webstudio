@@ -35,7 +35,7 @@ export const getStyleRules = (
   }
 
   const styleRules: StyleRule[] = [];
-  for (const { instanceId, values } of styleSourceSelections) {
+  for (const { instanceId, values } of styleSourceSelections.values()) {
     const styleRuleByBreakpointId = new Map<Breakpoint["id"], StyleRule>();
 
     for (const styleSourceId of values) {

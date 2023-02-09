@@ -11,6 +11,7 @@ import {
   Styles,
   StyleSource,
   StyleSources,
+  StyleSourceSelection,
   StyleSourceSelections,
   Tree,
 } from "@webstudio-is/project-build";
@@ -137,12 +138,14 @@ export const useSetStyleSources = (
   });
 };
 
-export const styleSourceSelectionsStore = atom<StyleSourceSelections>([]);
+export const styleSourceSelectionsStore = atom<StyleSourceSelections>(
+  new Map()
+);
 export const useSetStyleSourceSelections = (
-  styleSourceSelections: StyleSourceSelections
+  styleSourceSelections: [Instance["id"], StyleSourceSelection][]
 ) => {
   useSyncInitializeOnce(() => {
-    styleSourceSelectionsStore.set(styleSourceSelections);
+    styleSourceSelectionsStore.set(new Map(styleSourceSelections));
   });
 };
 
@@ -174,7 +177,7 @@ export const stylesIndexStore = computed(
     }
 
     const stylesByInstanceId = new Map<Instance["id"], Styles>();
-    for (const { instanceId, values } of styleSourceSelections) {
+    for (const { instanceId, values } of styleSourceSelections.values()) {
       const instanceStyles: Styles = [];
       for (const styleSourceId of values) {
         const styleSourceStyles = stylesByStyleSourceId.get(styleSourceId);
@@ -250,12 +253,12 @@ export const selectedInstanceStyleSourcesStore = computed(
     treeIdStore,
   ],
   (styleSourceSelections, styleSources, selectedInstanceId, treeId) => {
-    const styleSourceIds =
-      styleSourceSelections.find(
-        (styleSourceSelection) =>
-          styleSourceSelection.instanceId === selectedInstanceId
-      )?.values ?? [];
     const selectedInstanceStyleSources: StyleSource[] = [];
+    if (selectedInstanceId === undefined) {
+      return selectedInstanceStyleSources;
+    }
+    const styleSourceIds =
+      styleSourceSelections.get(selectedInstanceId)?.values ?? [];
     let hasLocal = false;
     for (const styleSourceId of styleSourceIds) {
       const styleSource = styleSources.get(styleSourceId);

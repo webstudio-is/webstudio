@@ -50,20 +50,29 @@ test("compute styles from different style sources", () => {
       value: { type: "keyword", value: "blue" },
     },
   ];
-  const styleSourceSelections: StyleSourceSelections = [
-    {
-      instanceId: "instance1",
-      values: ["styleSource1"],
-    },
-    {
-      instanceId: "instance2",
-      values: ["styleSource4", "styleSource5", "styleSource3"],
-    },
-    {
-      instanceId: "instance3",
-      values: ["styleSource6"],
-    },
-  ];
+  const styleSourceSelections: StyleSourceSelections = new Map([
+    [
+      "instance1",
+      {
+        instanceId: "instance1",
+        values: ["styleSource1"],
+      },
+    ],
+    [
+      "instance2",
+      {
+        instanceId: "instance2",
+        values: ["styleSource4", "styleSource5", "styleSource3"],
+      },
+    ],
+    [
+      "instance3",
+      {
+        instanceId: "instance3",
+        values: ["styleSource6"],
+      },
+    ],
+  ]);
 
   expect(getStyleRules(styles, styleSourceSelections)).toMatchInlineSnapshot(`
     [

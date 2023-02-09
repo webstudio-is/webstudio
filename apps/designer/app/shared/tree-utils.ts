@@ -7,6 +7,7 @@ import type {
   Styles,
   StyleSource,
   StyleSources,
+  StyleSourceSelection,
   StyleSourceSelections,
 } from "@webstudio-is/project-build";
 import { getComponentMeta } from "@webstudio-is/react-sdk";
@@ -190,8 +191,8 @@ export const cloneStyleSourceSelections = (
   clonedInstanceIds: Map<Instance["id"], Instance["id"]>,
   clonedStyleSourceIds: Map<Instance["id"], Instance["id"]>
 ) => {
-  const clonedStyleSourceSelections: StyleSourceSelections = [];
-  for (const styleSourceSelection of styleSourceSelections) {
+  const clonedStyleSourceSelections: StyleSourceSelection[] = [];
+  for (const styleSourceSelection of styleSourceSelections.values()) {
     const instanceId = clonedInstanceIds.get(styleSourceSelection.instanceId);
     if (instanceId === undefined) {
       continue;
@@ -241,7 +242,7 @@ export const findSubtreeLocalStyleSources = (
   }
 
   const subtreeLocalStyleSourceIds = new Set<StyleSource["id"]>();
-  for (const { instanceId, values } of styleSourceSelections) {
+  for (const { instanceId, values } of styleSourceSelections.values()) {
     // skip selections outside of subtree
     if (subtreeIds.has(instanceId) === false) {
       continue;

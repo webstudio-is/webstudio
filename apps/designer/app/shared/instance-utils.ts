@@ -51,9 +51,9 @@ export const deleteInstance = (targetInstanceId: Instance["id"]) => {
           props.delete(prop.id);
         }
       }
-      removeByMutable(styleSourceSelections, (styleSourceSelection) =>
-        subtreeIds.has(styleSourceSelection.instanceId)
-      );
+      for (const instanceId of subtreeIds) {
+        styleSourceSelections.delete(instanceId);
+      }
       for (const styleSourceId of subtreeLocalStyleSourceIds) {
         styleSources.delete(styleSourceId);
       }
