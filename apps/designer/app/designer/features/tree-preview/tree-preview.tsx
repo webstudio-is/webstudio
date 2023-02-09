@@ -1,11 +1,14 @@
 import produce from "immer";
-import type { Instance } from "@webstudio-is/project-build";
 import { useMemo } from "react";
-import { Flex } from "@webstudio-is/design-system";
+import type { Instance } from "@webstudio-is/project-build";
+import { theme, Flex } from "@webstudio-is/design-system";
+import { utils } from "@webstudio-is/project";
 import { useRootInstance, useDragAndDropState } from "~/shared/nano-states";
 import { InstanceTreeNode } from "~/designer/shared/tree";
-import { utils } from "@webstudio-is/project";
-import { theme } from "@webstudio-is/design-system";
+import {
+  createInstancesIndex,
+  reparentInstanceMutable,
+} from "~/shared/tree-utils";
 
 export const TreePrevew = () => {
   const [rootInstance] = useRootInstance();
@@ -29,7 +32,8 @@ export const TreePrevew = () => {
       utils.tree.findInstanceById(rootInstance, dragItemInstance.id) ===
       undefined;
 
-    const instance: Instance = produce((draft) => {
+    const instance: Instance = produce<Instance>((draft) => {
+      const instancesIndex = createInstancesIndex(draft);
       if (isNew) {
         utils.tree.insertInstanceMutable(
           draft,
@@ -40,12 +44,10 @@ export const TreePrevew = () => {
           }
         );
       } else {
-        utils.tree.reparentInstanceMutable(
-          draft,
-          dragItemInstance.id,
-          dropTargetInstanceId,
-          dropTargetPosition
-        );
+        reparentInstanceMutable(instancesIndex, dragItemInstance.id, {
+          parentId: dropTargetInstanceId,
+          position: dropTargetPosition,
+        });
       }
     })(rootInstance);
 

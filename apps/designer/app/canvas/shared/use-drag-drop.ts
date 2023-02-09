@@ -1,14 +1,5 @@
 import { useLayoutEffect, useRef } from "react";
-import {
-  useRootInstance,
-  useTextEditingInstanceId,
-} from "~/shared/nano-states";
 import { utils } from "@webstudio-is/project";
-import {
-  findInstanceByElement,
-  getInstanceElementById,
-  getInstanceIdFromElement,
-} from "~/shared/dom-utils";
 import {
   type DropTarget,
   type Point,
@@ -22,7 +13,17 @@ import {
   toBaseInstance,
 } from "@webstudio-is/project-build";
 import { getComponentMeta } from "@webstudio-is/react-sdk";
+import {
+  useRootInstance,
+  useTextEditingInstanceId,
+} from "~/shared/nano-states";
+import {
+  findInstanceByElement,
+  getInstanceElementById,
+  getInstanceIdFromElement,
+} from "~/shared/dom-utils";
 import { publish, useSubscribe } from "~/shared/pubsub";
+import { reparentInstance } from "~/shared/instance-utils";
 
 declare module "~/shared/pubsub" {
   export interface PubsubMap {
@@ -226,15 +227,9 @@ export const useDragAndDrop = () => {
       const { dropTarget, dragItem } = state.current;
 
       if (dropTarget && dragItem && isCanceled === false) {
-        publish({
-          type: "reparentInstance",
-          payload: {
-            instanceId: dragItem.id,
-            dropTarget: {
-              instanceId: dropTarget.data.id,
-              position: dropTarget.indexWithinChildren,
-            },
-          },
+        reparentInstance(dragItem.id, {
+          parentId: dropTarget.data.id,
+          position: dropTarget.indexWithinChildren,
         });
       }
 

@@ -1,12 +1,16 @@
 import { useEffect } from "react";
+import { useStore } from "@nanostores/react";
 import type { Instance, Prop, Styles } from "@webstudio-is/project-build";
 import { getBrowserStyle } from "@webstudio-is/react-sdk";
-import { publish, subscribe, subscribeAll } from "~/shared/pubsub";
+import { publish, subscribe } from "~/shared/pubsub";
 import {
   subscribeScrollState,
   subscribeWindowResize,
 } from "~/shared/dom-hooks";
-import { selectedInstanceBrowserStyleStore } from "~/shared/nano-states";
+import {
+  rootInstanceContainer,
+  selectedInstanceBrowserStyleStore,
+} from "~/shared/nano-states";
 
 declare module "~/shared/pubsub" {
   export interface PubsubMap {
@@ -56,6 +60,7 @@ export const SelectedInstanceConnector = ({
   instanceStyles: Styles;
   instanceProps: undefined | Prop[];
 }) => {
+  const rootInstance = useStore(rootInstanceContainer);
   useEffect(() => {
     const element = instanceElementRef.current;
     if (element === undefined) {
@@ -65,9 +70,6 @@ export const SelectedInstanceConnector = ({
     // effect close to rendered element also catches dnd remounts
     // so actual state is always provided here
     showOutline(element);
-
-    // ResizeObserver does not work for inline elements
-    const canObserve = getComputedStyle(element).display !== "inline";
 
     const resizeObserver = new ResizeObserver(() => {
       // contentRect has wrong x/y values for absolutely positioned element.
@@ -84,16 +86,6 @@ export const SelectedInstanceConnector = ({
     const parent = element?.parentElement;
     if (parent) {
       mutationObserver.observe(parent, { childList: true });
-    }
-
-    let unsubscribeTreeChange: undefined | (() => void);
-    if (canObserve === false) {
-      // recompute inline elements on tree changes
-      unsubscribeTreeChange = subscribeAll((type) => {
-        if (type === "insertInstance" || type === "reparentInstance") {
-          updateOutlineRect(element);
-        }
-      });
     }
 
     // hide rect when preview style is send
@@ -127,14 +119,19 @@ export const SelectedInstanceConnector = ({
     return () => {
       resizeObserver.disconnect();
       mutationObserver.disconnect();
-      unsubscribeTreeChange?.();
       unsubscribePreviewStyle();
       unsubscribeScrollState();
       unsubscribeWindowResize();
     };
-
+  }, [
+    instanceElementRef,
+    instance,
+    instanceStyles,
     // instance props may change dom element
-  }, [instanceElementRef, instance, instanceStyles, instanceProps]);
+    instanceProps,
+    // update on all changes in the tree in case ResizeObserver does ont work
+    rootInstance,
+  ]);
 
   return null;
 };

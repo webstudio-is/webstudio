@@ -18,7 +18,6 @@ import { useShortcuts } from "./shared/use-shortcuts";
 import {
   useInsertInstance,
   usePublishTextEditingInstanceId,
-  useReparentInstance,
 } from "./shared/instance";
 import { useManageDesignModeStyles, GlobalStyles } from "./shared/styles";
 import { useTrackSelectedElement } from "./shared/use-track-selected-element";
@@ -89,7 +88,6 @@ const useElementsTree = () => {
 const DesignMode = () => {
   useManageDesignModeStyles();
   useInsertInstance();
-  useReparentInstance();
   useTrackSelectedElement();
   usePublishScrollState();
   useSubscribeScrollState();

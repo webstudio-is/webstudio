@@ -57,9 +57,9 @@ const isInstanceDroppable = (instance: Instance) => {
   return meta?.type === "body" || meta?.type === "container";
 };
 
-type DroppableTarget = {
+export type DroppableTarget = {
   parentId: Instance["id"];
-  position: number;
+  position: number | "end";
 };
 
 export const findClosestDroppableTarget = (
@@ -98,6 +98,48 @@ export const findClosestDroppableTarget = (
     position:
       position === -1 ? droppableInstance.children.length : position + 1,
   };
+};
+
+export const reparentInstanceMutable = (
+  instancesIndex: InstancesIndex,
+  instanceId: Instance["id"],
+  dropTarget: DroppableTarget
+) => {
+  const prevParent = instancesIndex.parentInstancesById.get(instanceId);
+  const nextParent = instancesIndex.instancesById.get(dropTarget.parentId);
+  const instance = instancesIndex.instancesById.get(instanceId);
+  if (
+    prevParent === undefined ||
+    nextParent === undefined ||
+    instance === undefined
+  ) {
+    return;
+  }
+
+  const prevPosition = prevParent.children.findIndex(
+    (child) => child.type === "instance" && child.id === instanceId
+  );
+  if (prevPosition === -1) {
+    return;
+  }
+
+  // if parent is the same, we need to adjust the position
+  // to account for the removal of the instance.
+  let nextPosition = dropTarget.position;
+  if (
+    nextPosition !== "end" &&
+    prevParent.id === nextParent.id &&
+    prevPosition < nextPosition
+  ) {
+    nextPosition -= 1;
+  }
+
+  prevParent.children.splice(prevPosition, 1);
+  if (nextPosition === "end") {
+    nextParent.children.push(instance);
+  } else {
+    nextParent.children.splice(nextPosition, 0, instance);
+  }
 };
 
 export const findSubtree = (
