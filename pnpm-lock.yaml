@@ -286,7 +286,7 @@ importers:
       '@webstudio-is/jest-config': workspace:^
       '@webstudio-is/prisma-client': workspace:^
       '@webstudio-is/scripts': workspace:^
-      '@webstudio-is/trpc-interface': workspace:^0.24.0
+      '@webstudio-is/trpc-interface': workspace:^
       '@webstudio-is/tsconfig': workspace:^
       app-root-path: ^3.0.0
       jest: ^29.3.1
