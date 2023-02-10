@@ -27,16 +27,28 @@ const env = {
   BUILD_REQUIRE_SUBDOMAIN: process.env.BUILD_REQUIRE_SUBDOMAIN,
 
   PORT: process.env.PORT,
+
+  // Preview support
+  BRANCH_NAME: process.env.BRANCH_NAME,
 };
 
 export type ServerEnv = typeof env;
 
+// https://vercel.com/docs/concepts/projects/environment-variables#system-environment-variables
 if (process.env.VERCEL !== undefined) {
   if (env.DEPLOYMENT_ENVIRONMENT === undefined) {
     env.DEPLOYMENT_ENVIRONMENT = process.env.VERCEL_ENV;
   }
   if (env.DEPLOYMENT_URL === undefined) {
     env.DEPLOYMENT_URL = process.env.VERCEL_URL;
+  }
+
+  if (env.DEPLOYMENT_URL === undefined) {
+    env.DEPLOYMENT_URL = process.env.VERCEL_URL;
+  }
+
+  if (env.BRANCH_NAME === undefined) {
+    env.BRANCH_NAME = process.env.VERCEL_GIT_COMMIT_REF;
   }
 }
 
