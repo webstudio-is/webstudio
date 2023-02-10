@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { useStore } from "@nanostores/react";
 import { isFeatureEnabled } from "@webstudio-is/feature-flags";
 import type { StyleProperty } from "@webstudio-is/css-data";
 import { toValue } from "@webstudio-is/css-engine";
@@ -17,8 +18,7 @@ import {
   Separator,
 } from "@webstudio-is/design-system";
 import { UndoIcon } from "@webstudio-is/icons";
-import { utils } from "@webstudio-is/project";
-import { useBreakpoints, useRootInstance } from "~/shared/nano-states";
+import { instancesIndexStore, useBreakpoints } from "~/shared/nano-states";
 import { type StyleInfo, type StyleSource, getStyleSource } from "./style-info";
 
 const PropertyPopoverContent = ({
@@ -33,7 +33,7 @@ const PropertyPopoverContent = ({
   onReset: () => void;
 }) => {
   const [breakpoints] = useBreakpoints();
-  const [rootInstance] = useRootInstance();
+  const { instancesById } = useStore(instancesIndexStore);
 
   if (styleSource === "local") {
     return (
@@ -66,10 +66,7 @@ const PropertyPopoverContent = ({
 
             if (styleValueInfo?.inherited) {
               const { value, instanceId } = styleValueInfo.inherited;
-              const instance =
-                rootInstance === undefined
-                  ? undefined
-                  : utils.tree.findInstanceById(rootInstance, instanceId);
+              const instance = instancesById.get(instanceId);
               return (
                 <DeprecatedText2 key={property} color="hint">
                   Resetting will change {property} to inherited {toValue(value)}{" "}
@@ -108,10 +105,7 @@ const PropertyPopoverContent = ({
 
         if (styleValueInfo?.inherited) {
           const { instanceId } = styleValueInfo.inherited;
-          const instance =
-            rootInstance === undefined
-              ? undefined
-              : utils.tree.findInstanceById(rootInstance, instanceId);
+          const instance = instancesById.get(instanceId);
           return (
             <DeprecatedText2 key={property} color="hint">
               {property} value is inherited from {instance?.component}

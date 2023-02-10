@@ -1,4 +1,5 @@
 import { useLayoutEffect, useRef } from "react";
+import { useStore } from "@nanostores/react";
 import { utils } from "@webstudio-is/project";
 import {
   type DropTarget,
@@ -14,16 +15,16 @@ import {
 } from "@webstudio-is/project-build";
 import { getComponentMeta } from "@webstudio-is/react-sdk";
 import {
+  instancesIndexStore,
   useRootInstance,
   useTextEditingInstanceId,
 } from "~/shared/nano-states";
+import { publish, useSubscribe } from "~/shared/pubsub";
+import { insertInstance, reparentInstance } from "~/shared/instance-utils";
 import {
-  findInstanceByElement,
   getInstanceElementById,
   getInstanceIdFromElement,
 } from "~/shared/dom-utils";
-import { publish, useSubscribe } from "~/shared/pubsub";
-import { insertInstance, reparentInstance } from "~/shared/instance-utils";
 
 declare module "~/shared/pubsub" {
   export interface PubsubMap {
@@ -63,6 +64,7 @@ const initialState: {
 
 export const useDragAndDrop = () => {
   const [rootInstance] = useRootInstance();
+  const { instancesById } = useStore(instancesIndexStore);
   const [textEditingInstanceId] = useTextEditingInstanceId();
 
   const state = useRef({ ...initialState });
@@ -82,9 +84,9 @@ export const useDragAndDrop = () => {
 
   const dropHandlers = useDrop<Instance>({
     elementToData(element) {
+      const instanceId = getInstanceIdFromElement(element);
       const instance =
-        rootInstance !== undefined &&
-        findInstanceByElement(rootInstance, element);
+        instanceId === undefined ? undefined : instancesById.get(instanceId);
 
       return instance || false;
     },
@@ -164,7 +166,9 @@ export const useDragAndDrop = () => {
         return false;
       }
 
-      const instance = findInstanceByElement(rootInstance, element);
+      const instanceId = getInstanceIdFromElement(element);
+      const instance =
+        instanceId === undefined ? undefined : instancesById.get(instanceId);
 
       if (instance === undefined) {
         return false;
