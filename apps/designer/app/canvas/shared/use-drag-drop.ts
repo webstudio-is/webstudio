@@ -13,7 +13,7 @@ import {
   type BaseInstance,
   toBaseInstance,
 } from "@webstudio-is/project-build";
-import { getComponentMeta, idAttribute } from "@webstudio-is/react-sdk";
+import { getComponentMeta } from "@webstudio-is/react-sdk";
 import {
   instancesIndexStore,
   useRootInstance,
@@ -21,6 +21,10 @@ import {
 } from "~/shared/nano-states";
 import { publish, useSubscribe } from "~/shared/pubsub";
 import { insertInstance, reparentInstance } from "~/shared/instance-utils";
+import {
+  getInstanceElementById,
+  getInstanceIdFromElement,
+} from "~/shared/dom-utils";
 
 declare module "~/shared/pubsub" {
   export interface PubsubMap {
@@ -49,16 +53,6 @@ export type DragEndPayload = {
 };
 
 export type DragMovePayload = { canvasCoordinates: Point };
-
-const getInstanceElementById = (id: Instance["id"]) => {
-  return document.querySelector(`[${idAttribute}="${id}"]`);
-};
-
-const getInstanceIdFromElement = (
-  element: Element
-): Instance["id"] | undefined => {
-  return element.getAttribute(idAttribute) ?? undefined;
-};
 
 const initialState: {
   dropTarget: DropTarget<Instance> | undefined;
