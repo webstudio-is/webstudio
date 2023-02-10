@@ -195,7 +195,7 @@
       },
       "type": "typography"
     },
-    "Label - Title Case": {
+    "Labels - Title Case": {
       "value": {
         "fontFamily": "{fontFamilies.inter}",
         "fontWeight": "{fontWeights.inter-1}",
@@ -209,7 +209,7 @@
       },
       "type": "typography"
     },
-    "Label - Sentence case": {
+    "Labels - Sentence case": {
       "value": {
         "fontFamily": "{fontFamilies.inter}",
         "fontWeight": "{fontWeights.inter-1}",
@@ -223,7 +223,7 @@
       },
       "type": "typography"
     },
-    "Title": {
+    "Titles": {
       "value": {
         "fontFamily": "{fontFamilies.inter}",
         "fontWeight": "{fontWeights.inter-3}",
