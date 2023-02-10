@@ -22,6 +22,7 @@ export const createTrpcProxyServiceClient = (
           url: options.url,
           headers: () => ({
             Authorization: options.token,
+            // We use this header for SaaS preview service discovery proxy
             "x-branch-name": options.branchName,
           }),
         }),
