@@ -232,7 +232,7 @@
         "letterSpacing": "{letterSpacing.4}",
         "paragraphSpacing": "{paragraphSpacing.0}",
         "paragraphIndent": "{paragraphIndent.0}",
-        "textCase": "{textCase.none}",
+        "textCase": "{textCase.capitalize}",
         "textDecoration": "{textDecoration.none}"
       },
       "type": "typography"
