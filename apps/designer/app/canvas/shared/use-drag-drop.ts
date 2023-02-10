@@ -12,18 +12,15 @@ import {
   type BaseInstance,
   toBaseInstance,
 } from "@webstudio-is/project-build";
-import { getComponentMeta } from "@webstudio-is/react-sdk";
+import { getComponentMeta, idAttribute } from "@webstudio-is/react-sdk";
 import {
+  instancesIndexStore,
   useRootInstance,
   useTextEditingInstanceId,
 } from "~/shared/nano-states";
-import {
-  findInstanceByElement,
-  getInstanceElementById,
-  getInstanceIdFromElement,
-} from "~/shared/dom-utils";
 import { publish, useSubscribe } from "~/shared/pubsub";
 import { insertInstance, reparentInstance } from "~/shared/instance-utils";
+import { useStore } from "@nanostores/react";
 
 declare module "~/shared/pubsub" {
   export interface PubsubMap {
@@ -53,6 +50,16 @@ export type DragEndPayload = {
 
 export type DragMovePayload = { canvasCoordinates: Point };
 
+const getInstanceElementById = (id: Instance["id"]) => {
+  return document.querySelector(`[${idAttribute}="${id}"]`);
+};
+
+const getInstanceIdFromElement = (
+  element: Element
+): Instance["id"] | undefined => {
+  return element.getAttribute(idAttribute) ?? undefined;
+};
+
 const initialState: {
   dropTarget: DropTarget<Instance> | undefined;
   dragItem: BaseInstance | undefined;
@@ -63,6 +70,7 @@ const initialState: {
 
 export const useDragAndDrop = () => {
   const [rootInstance] = useRootInstance();
+  const { instancesById } = useStore(instancesIndexStore);
   const [textEditingInstanceId] = useTextEditingInstanceId();
 
   const state = useRef({ ...initialState });
@@ -82,9 +90,9 @@ export const useDragAndDrop = () => {
 
   const dropHandlers = useDrop<Instance>({
     elementToData(element) {
+      const instanceId = getInstanceIdFromElement(element);
       const instance =
-        rootInstance !== undefined &&
-        findInstanceByElement(rootInstance, element);
+        instanceId === undefined ? undefined : instancesById.get(instanceId);
 
       return instance || false;
     },
@@ -164,7 +172,9 @@ export const useDragAndDrop = () => {
         return false;
       }
 
-      const instance = findInstanceByElement(rootInstance, element);
+      const instanceId = getInstanceIdFromElement(element);
+      const instance =
+        instanceId === undefined ? undefined : instancesById.get(instanceId);
 
       if (instance === undefined) {
         return false;

@@ -3,16 +3,22 @@ import { useMemo } from "react";
 import type { Instance } from "@webstudio-is/project-build";
 import { theme, Flex } from "@webstudio-is/design-system";
 import { utils } from "@webstudio-is/project";
-import { useRootInstance, useDragAndDropState } from "~/shared/nano-states";
+import {
+  useRootInstance,
+  useDragAndDropState,
+  instancesIndexStore,
+} from "~/shared/nano-states";
 import { InstanceTreeNode } from "~/designer/shared/tree";
 import {
   createInstancesIndex,
   insertInstanceMutable,
   reparentInstanceMutable,
 } from "~/shared/tree-utils";
+import { useStore } from "@nanostores/react";
 
 export const TreePrevew = () => {
   const [rootInstance] = useRootInstance();
+  const { instancesById } = useStore(instancesIndexStore);
   const [dragAndDropState] = useDragAndDropState();
 
   const dragItemInstance = dragAndDropState.dragItem;
@@ -29,9 +35,7 @@ export const TreePrevew = () => {
       return null;
     }
 
-    const isNew =
-      utils.tree.findInstanceById(rootInstance, dragItemInstance.id) ===
-      undefined;
+    const isNew = instancesById.get(dragItemInstance.id) === undefined;
 
     const instance: Instance = produce<Instance>((draft) => {
       const instancesIndex = createInstancesIndex(draft);
@@ -65,6 +69,7 @@ export const TreePrevew = () => {
     };
   }, [
     rootInstance,
+    instancesById,
     dragItemInstance,
     dropTargetInstanceId,
     dropTargetPosition,
