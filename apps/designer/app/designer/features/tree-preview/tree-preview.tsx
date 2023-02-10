@@ -1,5 +1,6 @@
 import produce from "immer";
 import { useMemo } from "react";
+import { useStore } from "@nanostores/react";
 import type { Instance } from "@webstudio-is/project-build";
 import { theme, Flex } from "@webstudio-is/design-system";
 import { utils } from "@webstudio-is/project";
@@ -14,7 +15,6 @@ import {
   insertInstanceMutable,
   reparentInstanceMutable,
 } from "~/shared/tree-utils";
-import { useStore } from "@nanostores/react";
 
 export const TreePrevew = () => {
   const [rootInstance] = useRootInstance();

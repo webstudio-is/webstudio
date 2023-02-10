@@ -1,3 +1,5 @@
+import { useCallback } from "react";
+import { useStore } from "@nanostores/react";
 import {
   Tree,
   TreeItemLabel,
@@ -10,8 +12,6 @@ import {
 import type { Instance } from "@webstudio-is/project-build";
 import { getComponentMeta } from "@webstudio-is/react-sdk";
 import { utils } from "@webstudio-is/project";
-import { useCallback } from "react";
-import { useStore } from "@nanostores/react";
 import { instancesIndexStore } from "~/shared/nano-states";
 
 const instanceRelatedProps = {

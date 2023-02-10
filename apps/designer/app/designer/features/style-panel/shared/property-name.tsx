@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { useStore } from "@nanostores/react";
 import { isFeatureEnabled } from "@webstudio-is/feature-flags";
 import type { StyleProperty } from "@webstudio-is/css-data";
 import { toValue } from "@webstudio-is/css-engine";
@@ -19,7 +20,6 @@ import {
 import { UndoIcon } from "@webstudio-is/icons";
 import { instancesIndexStore, useBreakpoints } from "~/shared/nano-states";
 import { type StyleInfo, type StyleSource, getStyleSource } from "./style-info";
-import { useStore } from "@nanostores/react";
 
 const PropertyPopoverContent = ({
   properties,

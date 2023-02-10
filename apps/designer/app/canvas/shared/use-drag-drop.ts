@@ -1,4 +1,5 @@
 import { useLayoutEffect, useRef } from "react";
+import { useStore } from "@nanostores/react";
 import { utils } from "@webstudio-is/project";
 import {
   type DropTarget,
@@ -20,7 +21,6 @@ import {
 } from "~/shared/nano-states";
 import { publish, useSubscribe } from "~/shared/pubsub";
 import { insertInstance, reparentInstance } from "~/shared/instance-utils";
-import { useStore } from "@nanostores/react";
 
 declare module "~/shared/pubsub" {
   export interface PubsubMap {
