@@ -6,7 +6,6 @@ import type { StyleUpdates } from "@webstudio-is/project";
 import type { StyleProperty, StyleValue } from "@webstudio-is/css-data";
 import { type Publish } from "~/shared/pubsub";
 import {
-  selectedInstanceStyleSourcesStore,
   selectedStyleSourceStore,
   styleSourceSelectionsStore,
   styleSourcesStore,
@@ -61,8 +60,6 @@ export const useStyleData = ({ selectedInstance, publish }: UseStyleData) => {
   const publishUpdates = useCallback(
     (type: "update" | "preview", updates: StyleUpdates["updates"]) => {
       const selectedStyleSource = selectedStyleSourceStore.get();
-      const selectedInstanceStyleSources =
-        selectedInstanceStyleSourcesStore.get();
 
       if (
         updates.length === 0 ||
@@ -90,15 +87,16 @@ export const useStyleData = ({ selectedInstance, publish }: UseStyleData) => {
           const instanceId = selectedInstance.id;
           const breakpointId = selectedBreakpoint.id;
           const styleSourceId = selectedStyleSource.id;
+          // set only selected style source and update selection with it
+          // generated local style source will not be written if not selected
           styleSources.set(selectedStyleSource.id, selectedStyleSource);
-          const selections = selectedInstanceStyleSources.map(
-            (styleSource) => styleSource.id
-          );
+          const selectionValues =
+            styleSourceSelections.get(instanceId)?.values ?? [];
           styleSourceSelections.set(instanceId, {
             instanceId,
-            values: selections.includes(styleSourceId)
-              ? selections
-              : [...selections, styleSourceId],
+            values: selectionValues.includes(styleSourceId)
+              ? selectionValues
+              : [...selectionValues, styleSourceId],
           });
 
           for (const update of updates) {
