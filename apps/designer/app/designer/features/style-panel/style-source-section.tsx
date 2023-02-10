@@ -29,6 +29,7 @@ const createStyleSource = (name: string) => {
     id: nanoid(),
     name,
   };
+  // set style sources and selection along with generated local style source
   const newStyleSources = [...selectedInstanceStyleSources, newStyleSource];
   const newStyleSourceSelection: StyleSourceSelection = {
     instanceId: selectedInstanceId,
@@ -55,6 +56,7 @@ const addStyleSourceToInstace = (styleSourceId: StyleSource["id"]) => {
   if (selectedInstanceId === undefined) {
     return;
   }
+  // set style sources and selection along with generated local style source
   const newStyleSourceSelection: StyleSourceSelection = {
     instanceId: selectedInstanceId,
     values: [

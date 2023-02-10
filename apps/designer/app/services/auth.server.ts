@@ -8,11 +8,12 @@ import { sentryException } from "~/shared/sentry";
 import { AUTH_PROVIDERS } from "~/shared/session";
 import { authCallbackPath } from "~/shared/router-utils";
 import { getUserById, User } from "~/shared/db/user.server";
+import env from "~/env/env.server";
 
 const url =
-  process.env.DEPLOYMENT_ENVIRONMENT === "production"
-    ? process.env.DEPLOYMENT_URL
-    : `http://localhost:${process.env.PORT || 3000}`;
+  env.DEPLOYMENT_ENVIRONMENT === "production"
+    ? env.DEPLOYMENT_URL
+    : `http://localhost:${env.PORT || 3000}`;
 
 const strategyCallback = async ({
   profile,
@@ -41,11 +42,11 @@ export const authenticator = new Authenticator<User>(sessionStorage, {
   throwOnError: true,
 });
 
-if (process.env.GH_CLIENT_ID && process.env.GH_CLIENT_SECRET) {
+if (env.GH_CLIENT_ID && env.GH_CLIENT_SECRET) {
   const github = new GitHubStrategy(
     {
-      clientID: process.env.GH_CLIENT_ID,
-      clientSecret: process.env.GH_CLIENT_SECRET,
+      clientID: env.GH_CLIENT_ID,
+      clientSecret: env.GH_CLIENT_SECRET,
       callbackURL: `${url}${authCallbackPath({ provider: "github" })}`,
     },
     strategyCallback
@@ -53,11 +54,11 @@ if (process.env.GH_CLIENT_ID && process.env.GH_CLIENT_SECRET) {
   authenticator.use(github, "github");
 }
 
-if (process.env.GOOGLE_CLIENT_ID && process.env.GOOGLE_CLIENT_SECRET) {
+if (env.GOOGLE_CLIENT_ID && env.GOOGLE_CLIENT_SECRET) {
   const google = new GoogleStrategy(
     {
-      clientID: process.env.GOOGLE_CLIENT_ID,
-      clientSecret: process.env.GOOGLE_CLIENT_SECRET,
+      clientID: env.GOOGLE_CLIENT_ID,
+      clientSecret: env.GOOGLE_CLIENT_SECRET,
       callbackURL: `${url}${authCallbackPath({ provider: "google" })}`,
     },
     strategyCallback
@@ -65,12 +66,12 @@ if (process.env.GOOGLE_CLIENT_ID && process.env.GOOGLE_CLIENT_SECRET) {
   authenticator.use(google, "google");
 }
 
-if (process.env.DEV_LOGIN === "true") {
+if (env.DEV_LOGIN === "true") {
   authenticator.use(
     new FormStrategy(async ({ form }) => {
       const secret = form.get("secret");
 
-      if (secret === process.env.AUTH_SECRET?.slice(0, 4)) {
+      if (secret === env.AUTH_SECRET?.slice(0, 4)) {
         try {
           const user = await db.user.createOrLoginWithDev();
           return user;

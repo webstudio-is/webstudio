@@ -1,7 +1,7 @@
 import { type LoaderArgs, redirect, json } from "@remix-run/node";
 
 import { findAuthenticatedUser } from "~/services/auth.server";
-import env from "~/env.server";
+import env from "~/env/env.server";
 
 import { Login, links } from "~/auth";
 import { useLoginErrorMessage } from "~/shared/session";
@@ -36,13 +36,11 @@ export const loader = async ({ request }: LoaderArgs) => {
 
   return json(
     {
-      isDevLogin: process.env.DEV_LOGIN === "true",
+      isDevLogin: env.DEV_LOGIN === "true",
       env,
-      isGithubEnabled: Boolean(
-        process.env.GH_CLIENT_ID && process.env.GH_CLIENT_SECRET
-      ),
+      isGithubEnabled: Boolean(env.GH_CLIENT_ID && env.GH_CLIENT_SECRET),
       isGoogleEnabled: Boolean(
-        process.env.GOOGLE_CLIENT_ID && process.env.GOOGLE_CLIENT_SECRET
+        env.GOOGLE_CLIENT_ID && env.GOOGLE_CLIENT_SECRET
       ),
     },
     { headers }
