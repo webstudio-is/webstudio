@@ -57,7 +57,10 @@ const instanceRelatedProps = {
 } as const;
 
 export const InstanceTree = (
-  props: Omit<TreeProps<Instance>, keyof typeof instanceRelatedProps>
+  props: Omit<
+    TreeProps<Instance>,
+    keyof typeof instanceRelatedProps | "findItemById"
+  >
 ) => {
   const { instancesById } = useStore(instancesIndexStore);
   const findItemById = useCallback(
