@@ -3,7 +3,7 @@ import { Button, Flex, Tooltip } from "@webstudio-is/design-system";
 import env from "~/shared/env";
 import { theme } from "@webstudio-is/design-system";
 
-const isPreviewEnvironment = env.VERCEL_ENV === "preview";
+const isPreviewEnvironment = env.DEPLOYMENT_ENVIRONMENT === "preview";
 
 export const LoginButton = ({
   children,

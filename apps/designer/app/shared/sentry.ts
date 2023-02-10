@@ -9,7 +9,7 @@ export const initSentry = ({
     ? Sentry.init({
         dsn: env.SENTRY_DSN,
         tracesSampleRate: 1.0,
-        environment: env.VERCEL_ENV || "development",
+        environment: env.DEPLOYMENT_ENVIRONMENT || "development",
         integrations: integrations,
       })
     : () => null;

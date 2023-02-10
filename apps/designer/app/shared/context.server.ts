@@ -3,6 +3,7 @@ import { z } from "zod";
 import * as cryptoJson from "./crypto/crypto-json.server";
 import { authenticator } from "~/services/auth.server";
 import { trpcClient } from "~/services/trpc.server";
+import env from "~/env/env.server";
 
 const AuthReadToken = z.object({
   projectId: z.string(),
@@ -25,10 +26,7 @@ const createAuthorizationContext = async (
 
   if (authReadTokenRaw !== undefined) {
     authReadToken = AuthReadToken.parse(
-      await cryptoJson.decode(
-        authReadTokenRaw,
-        process.env.AUTH_SECRET ?? "NO-SECRET"
-      )
+      await cryptoJson.decode(authReadTokenRaw, env.AUTH_SECRET ?? "NO-SECRET")
     );
   }
 
@@ -44,7 +42,7 @@ const createAuthorizationContext = async (
 };
 
 export const createAuthReadToken = async (tokenData: AuthReadToken) => {
-  return cryptoJson.encode(tokenData, process.env.AUTH_SECRET ?? "NO-SECRET");
+  return cryptoJson.encode(tokenData, env.AUTH_SECRET ?? "NO-SECRET");
 };
 
 /**

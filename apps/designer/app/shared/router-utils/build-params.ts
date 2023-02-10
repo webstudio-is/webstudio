@@ -1,6 +1,8 @@
 // These are the utils for manipulating "build" params.
 // "Build" means user generated content — what user builds.
 
+import serverEnv from "~/env/env.server";
+
 export type BuildMode = "edit" | "preview" | "published";
 export type BuildParams = ({ pagePath: string } | { pageId: string }) &
   ({ projectId: string } | { projectDomain: string }) & { mode: BuildMode };
@@ -31,9 +33,20 @@ const isLocalhost = (host: string) => {
   return domain === "localhost" || domain.endsWith(".localhost");
 };
 
+const defaultEnv = {
+  BUILD_ORIGIN: serverEnv.BUILD_ORIGIN,
+  DEPLOYMENT_ENVIRONMENT: serverEnv.DEPLOYMENT_ENVIRONMENT,
+  DEPLOYMENT_URL: serverEnv.DEPLOYMENT_URL,
+  BUILD_REQUIRE_SUBDOMAIN: serverEnv.BUILD_REQUIRE_SUBDOMAIN,
+};
+
 export const getBuildOrigin = (
   request: MinimalRequest,
-  env = process.env
+  env: {
+    BUILD_ORIGIN?: string;
+    DEPLOYMENT_ENVIRONMENT?: string;
+    DEPLOYMENT_URL?: string;
+  } = defaultEnv
 ): string => {
   const { BUILD_ORIGIN } = env;
   if (BUILD_ORIGIN !== undefined && BUILD_ORIGIN !== "") {
@@ -42,7 +55,7 @@ export const getBuildOrigin = (
 
   // Local development special case
   const host = getRequestHost(request);
-  if (env.NODE_ENV === "development") {
+  if (process.env.NODE_ENV === "development") {
     if (isLocalhost(host)) {
       return `http://${host.split(".").pop()}`;
     }
@@ -58,10 +71,11 @@ export const getBuildOrigin = (
 
   // Vercel preview special case
   if (
-    (env.VERCEL_ENV === "preview" || env.VERCEL_ENV === "development") &&
-    typeof env.VERCEL_URL === "string"
+    (env.DEPLOYMENT_ENVIRONMENT === "preview" ||
+      env.DEPLOYMENT_ENVIRONMENT === "development") &&
+    typeof env.DEPLOYMENT_URL === "string"
   ) {
-    return `https://${env.VERCEL_URL}`;
+    return `https://${env.DEPLOYMENT_URL}`;
   }
 
   throw new Error("Could not determine user content host");
@@ -69,7 +83,12 @@ export const getBuildOrigin = (
 
 export const getBuildParams = (
   request: MinimalRequest,
-  env = process.env
+  env: {
+    BUILD_REQUIRE_SUBDOMAIN?: string;
+    BUILD_ORIGIN?: string;
+    DEPLOYMENT_ENVIRONMENT?: string;
+    DEPLOYMENT_URL?: string;
+  } = defaultEnv
 ): BuildParams | undefined => {
   const url = new URL(request.url);
 
