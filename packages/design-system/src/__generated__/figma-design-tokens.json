@@ -107,10 +107,14 @@
         "type": "fontWeights"
       },
       "manrope-7": {
-        "value": "Bold",
+        "value": "SemiBold",
         "type": "fontWeights"
       },
       "manrope-8": {
+        "value": "Bold",
+        "type": "fontWeights"
+      },
+      "manrope-9": {
         "value": "ExtraBold",
         "type": "fontWeights"
       }
@@ -375,6 +379,22 @@
       },
       "5": {
         "value": "6px",
+        "type": "borderRadius"
+      },
+      "6": {
+        "value": "8px",
+        "type": "borderRadius"
+      },
+      "7": {
+        "value": "9px",
+        "type": "borderRadius"
+      },
+      "8": {
+        "value": "16px",
+        "type": "borderRadius"
+      },
+      "9": {
+        "value": "17px",
         "type": "borderRadius"
       }
     },
@@ -678,6 +698,14 @@
         "dashboard": {
           "value": "#ededed",
           "type": "color"
+        },
+        "regular-button-selected": {
+          "value": "linear-gradient(180deg, #bffeec 0%, #fbfff6 100%)",
+          "type": "color"
+        },
+        "cta-button": {
+          "value": "linear-gradient(135deg, #4a4efa 0%, #bd2fdb 100%)",
+          "type": "color"
         }
       },
       "foreground": {
@@ -689,6 +717,10 @@
       "border": {
         "published": {
           "value": "#ebfffc",
+          "type": "color"
+        },
+        "full-gradient": {
+          "value": "linear-gradient(135deg, #92fddc 0%, #7d7ffb 31.94%, #ed72fe 64.24%, #fdd791 100%)",
           "type": "color"
         }
       }
@@ -925,7 +957,7 @@
       "Section Title": {
         "value": {
           "fontFamily": "{fontFamilies.manrope}",
-          "fontWeight": "{fontWeights.manrope-7}",
+          "fontWeight": "{fontWeights.manrope-8}",
           "lineHeight": "{lineHeights.6}",
           "fontSize": "{fontSizes.4}",
           "letterSpacing": "{letterSpacing.2}",
@@ -939,7 +971,7 @@
       "Large Title": {
         "value": {
           "fontFamily": "{fontFamilies.manrope}",
-          "fontWeight": "{fontWeights.manrope-7}",
+          "fontWeight": "{fontWeights.manrope-8}",
           "lineHeight": "{lineHeights.8}",
           "fontSize": "{fontSizes.6}",
           "letterSpacing": "{letterSpacing.1}",
@@ -982,7 +1014,7 @@
         "Hover": {
           "value": {
             "fontFamily": "{fontFamilies.manrope}",
-            "fontWeight": "{fontWeights.manrope-8}",
+            "fontWeight": "{fontWeights.manrope-9}",
             "lineHeight": "{lineHeights.9}",
             "fontSize": "{fontSizes.7}",
             "letterSpacing": "{letterSpacing.0}",
@@ -1012,9 +1044,39 @@
         "Hover": {
           "value": {
             "fontFamily": "{fontFamilies.manrope}",
-            "fontWeight": "{fontWeights.manrope-8}",
+            "fontWeight": "{fontWeights.manrope-9}",
             "lineHeight": "{lineHeights.8}",
             "fontSize": "{fontSizes.6}",
+            "letterSpacing": "{letterSpacing.1}",
+            "paragraphSpacing": "{paragraphSpacing.0}",
+            "paragraphIndent": "{paragraphIndent.0}",
+            "textCase": "{textCase.none}",
+            "textDecoration": "{textDecoration.none}"
+          },
+          "type": "typography"
+        }
+      },
+      "button": {
+        "regular": {
+          "value": {
+            "fontFamily": "{fontFamilies.manrope}",
+            "fontWeight": "{fontWeights.manrope-7}",
+            "lineHeight": "{lineHeights.5}",
+            "fontSize": "{fontSize.3}",
+            "letterSpacing": "{letterSpacing.2}",
+            "paragraphSpacing": "{paragraphSpacing.0}",
+            "paragraphIndent": "{paragraphIndent.0}",
+            "textCase": "{textCase.none}",
+            "textDecoration": "{textDecoration.none}"
+          },
+          "type": "typography"
+        },
+        "cta": {
+          "value": {
+            "fontFamily": "{fontFamilies.manrope}",
+            "fontWeight": "{fontWeights.manrope-8}",
+            "lineHeight": "{lineHeights.7}",
+            "fontSize": "{fontSizes.5}",
             "letterSpacing": "{letterSpacing.1}",
             "paragraphSpacing": "{paragraphSpacing.0}",
             "paragraphIndent": "{paragraphIndent.0}",
