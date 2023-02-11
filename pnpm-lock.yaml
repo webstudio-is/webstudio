@@ -591,7 +591,7 @@ importers:
   packages/fonts:
     specifiers:
       '@jest/globals': ^29.3.1
-      '@types/fontkit': ^2.0.0
+      '@types/fontkit': ^2.0.1
       '@webstudio-is/design-system': workspace:^
       '@webstudio-is/jest-config': workspace:^
       '@webstudio-is/scripts': workspace:^
@@ -604,7 +604,7 @@ importers:
       fontkit: 2.0.2
     devDependencies:
       '@jest/globals': 29.3.1
-      '@types/fontkit': 2.0.0
+      '@types/fontkit': 2.0.1
       '@webstudio-is/design-system': link:../design-system
       '@webstudio-is/jest-config': link:../jest-config
       '@webstudio-is/scripts': link:../scripts
@@ -10978,10 +10978,10 @@ packages:
     resolution: {integrity: sha512-WulqXMDUTYAXCjZnk6JtIHPigp55cVtDgDrO2gHRwhyJto21+1zbVCtOYB2L1F9w4qCQ0rOGWBnBe0FNTiEJIQ==}
     dev: true
 
-  /@types/fontkit/2.0.0:
-    resolution: {integrity: sha512-Qe+6szpPLTNsqkDFs2MScJyB51d5Hpobyg/T0QoUWO53WuNOTNLsV8fkE4QQPOJbhOMN5wlwmNeDdsh/e6Uqdg==}
+  /@types/fontkit/2.0.1:
+    resolution: {integrity: sha512-B5Jk560iAlWJ56yV1yBUH8Ek9LykCzb3N0FwJHtbH/Vmd/E1QN/Isen4SAtBb2UEWpZid4GjLm1Fih1xM0MbXA==}
     dependencies:
-      '@types/node': 18.11.9
+      '@types/node': 18.11.18
     dev: true
 
   /@types/fs-extra/9.0.13:

@@ -18,7 +18,7 @@
   },
   "devDependencies": {
     "@jest/globals": "^29.3.1",
-    "@types/fontkit": "^2.0.0",
+    "@types/fontkit": "^2.0.1",
     "@webstudio-is/design-system": "workspace:^",
     "@webstudio-is/jest-config": "workspace:^",
     "@webstudio-is/scripts": "workspace:^",

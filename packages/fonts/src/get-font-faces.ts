@@ -1,5 +1,5 @@
 import { FONT_FORMATS } from "./constants";
-import type { FontMeta, FontFormat } from "./schema";
+import type { FontMeta, FontFormat, FontMetaStatic } from "./schema";
 
 export type PartialFontAsset = {
   format: FontFormat;
@@ -9,13 +9,36 @@ export type PartialFontAsset = {
 
 export type FontFace = {
   fontFamily: string;
-  fontStyle: FontMeta["style"];
-  fontWeight: number;
   fontDisplay: "swap" | "auto" | "block" | "fallback" | "optional";
   src: string;
+  fontStyle?: FontMetaStatic["style"];
+  fontWeight?: number | string;
+  fontStretch?: string;
 };
 
-const formatFace = (asset: PartialFontAsset, format: string) => {
+const formatFace = (asset: PartialFontAsset, format: string): FontFace => {
+  // https://web.dev/variable-fonts/
+  if ("variationAxes" in asset.meta) {
+    const { variationAxes } = asset.meta;
+    const wght = "wght" in variationAxes ? variationAxes.wght : undefined;
+    const wdth = "wdth" in variationAxes ? variationAxes.wdth : undefined;
+    const fontStretch = wdth
+      ? { fontStretch: `${wdth.min}% ${wdth.max}%` }
+      : undefined;
+    const fontWeight = wght
+      ? { fontWeight: `${wght.min} ${wght.max}` }
+      : undefined;
+    return {
+      fontFamily: asset.meta.family,
+      fontDisplay: "swap",
+      src: [
+        `url('${asset.path}') format('${format}') tech('variations')`,
+        `url('${asset.path}') format('${format}')`,
+      ].join(", "),
+      ...fontStretch,
+      ...fontWeight,
+    };
+  }
   return {
     fontFamily: asset.meta.family,
     fontStyle: asset.meta.style,
@@ -25,8 +48,12 @@ const formatFace = (asset: PartialFontAsset, format: string) => {
   };
 };
 
-const getKey = (asset: PartialFontAsset) =>
-  asset.meta.family + asset.meta.style + asset.meta.weight;
+const getKey = (asset: PartialFontAsset) => {
+  if ("variationAxes" in asset.meta) {
+    return asset.meta.family + Object.values(asset.meta.variationAxes);
+  }
+  return asset.meta.family + asset.meta.style + asset.meta.weight;
+};
 
 export const getFontFaces = (
   assets: Array<PartialFontAsset>

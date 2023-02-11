@@ -130,8 +130,8 @@ export class PlaintextRule {
 
 export type FontFaceOptions = {
   fontFamily: string;
-  fontStyle: "normal" | "italic" | "oblique";
-  fontWeight: number;
+  fontStyle?: "normal" | "italic" | "oblique";
+  fontWeight?: number | string;
   fontDisplay: "swap" | "auto" | "block" | "fallback" | "optional";
   src: string;
 };
@@ -142,9 +142,16 @@ export class FontFaceRule {
     this.options = options;
   }
   get cssText() {
-    const { fontFamily, fontStyle, fontWeight, fontDisplay, src } =
-      this.options;
-    return `@font-face {\n  font-family: ${fontFamily}; font-style: ${fontStyle}; font-weight: ${fontWeight}; font-display: ${fontDisplay}; src: ${src};\n}`;
+    const decl = [];
+    let property: keyof FontFaceOptions;
+    for (property in this.options) {
+      const value = this.options[property];
+      if (value === undefined) {
+        continue;
+      }
+      decl.push(`${hyphenate(property)}: ${value}`);
+    }
+    return `@font-face {\n  ${decl.join("; ")};\n}`;
   }
 }
 
