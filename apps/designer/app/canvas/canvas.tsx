@@ -9,7 +9,6 @@ import {
   customComponentsMeta,
   setParams,
   type OnChangeChildren,
-  ReactSdkProvider,
 } from "@webstudio-is/react-sdk";
 import { publish } from "~/shared/pubsub";
 import { registerContainers, useCanvasStore } from "~/shared/sync";
@@ -79,21 +78,14 @@ const useElementsTree = () => {
       return;
     }
 
-    return (
-      <ReactSdkProvider
-        value={{
-          propsByInstanceIdStore,
-          assetsStore,
-        }}
-      >
-        {createElementsTree({
-          sandbox: true,
-          instance: rootInstance,
-          Component: WrapperComponentDev,
-          onChangeChildren,
-        })}
-      </ReactSdkProvider>
-    );
+    return createElementsTree({
+      sandbox: true,
+      instance: rootInstance,
+      propsByInstanceIdStore,
+      assetsStore,
+      Component: WrapperComponentDev,
+      onChangeChildren,
+    });
   }, [rootInstance, onChangeChildren]);
 };
 

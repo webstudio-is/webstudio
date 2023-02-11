@@ -9,5 +9,3 @@ export const ReactSdkContext = createContext<{
   propsByInstanceIdStore: atom(new Map()),
   assetsStore: atom(new Map()),
 });
-
-export const ReactSdkProvider = ReactSdkContext.Provider;
