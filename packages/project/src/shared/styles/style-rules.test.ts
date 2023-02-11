@@ -6,50 +6,71 @@ import type {
 import { getStyleRules } from "./style-rules";
 
 test("compute styles from different style sources", () => {
-  const styles: Styles = [
-    {
-      breakpointId: "a",
-      styleSourceId: "styleSource1",
-      property: "width",
-      value: { type: "unit", value: 10, unit: "px" },
-    },
-    {
-      breakpointId: "a",
-      styleSourceId: "styleSource2",
-      property: "display",
-      value: { type: "keyword", value: "block" },
-    },
-    {
-      breakpointId: "a",
-      styleSourceId: "styleSource4",
-      property: "color",
-      value: { type: "keyword", value: "green" },
-    },
-    {
-      breakpointId: "a",
-      styleSourceId: "styleSource4",
-      property: "width",
-      value: { type: "keyword", value: "min-content" },
-    },
-    {
-      breakpointId: "a",
-      styleSourceId: "styleSource3",
-      property: "color",
-      value: { type: "keyword", value: "red" },
-    },
-    {
-      breakpointId: "b",
-      styleSourceId: "styleSource5",
-      property: "color",
-      value: { type: "keyword", value: "orange" },
-    },
-    {
-      breakpointId: "a",
-      styleSourceId: "styleSource6",
-      property: "color",
-      value: { type: "keyword", value: "blue" },
-    },
-  ];
+  const styles: Styles = new Map([
+    [
+      "styleSource1:a:width",
+      {
+        breakpointId: "a",
+        styleSourceId: "styleSource1",
+        property: "width",
+        value: { type: "unit", value: 10, unit: "px" },
+      },
+    ],
+    [
+      "styleSource2:a:display",
+      {
+        breakpointId: "a",
+        styleSourceId: "styleSource2",
+        property: "display",
+        value: { type: "keyword", value: "block" },
+      },
+    ],
+    [
+      "styleSource4:a:color",
+      {
+        breakpointId: "a",
+        styleSourceId: "styleSource4",
+        property: "color",
+        value: { type: "keyword", value: "green" },
+      },
+    ],
+    [
+      "styleSource4:a:width",
+      {
+        breakpointId: "a",
+        styleSourceId: "styleSource4",
+        property: "width",
+        value: { type: "keyword", value: "min-content" },
+      },
+    ],
+    [
+      "styleSource3:a:color",
+      {
+        breakpointId: "a",
+        styleSourceId: "styleSource3",
+        property: "color",
+        value: { type: "keyword", value: "red" },
+      },
+    ],
+    [
+      "styleSource5:b:color",
+      {
+        breakpointId: "b",
+        styleSourceId: "styleSource5",
+        property: "color",
+        value: { type: "keyword", value: "orange" },
+      },
+    ],
+    [
+      "styleSource6:a:color",
+      {
+        breakpointId: "a",
+        styleSourceId: "styleSource6",
+        property: "color",
+        value: { type: "keyword", value: "blue" },
+      },
+    ],
+  ]);
   const styleSourceSelections: StyleSourceSelections = new Map([
     [
       "instance1",

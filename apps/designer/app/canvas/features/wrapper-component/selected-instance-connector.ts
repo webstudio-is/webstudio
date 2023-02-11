@@ -1,6 +1,6 @@
 import { useEffect } from "react";
 import { useStore } from "@nanostores/react";
-import type { Instance, Prop, Styles } from "@webstudio-is/project-build";
+import type { Instance, Prop, StyleDecl } from "@webstudio-is/project-build";
 import { getBrowserStyle } from "@webstudio-is/react-sdk";
 import { publish, subscribe } from "~/shared/pubsub";
 import {
@@ -57,7 +57,7 @@ export const SelectedInstanceConnector = ({
 }: {
   instanceElementRef: { current: undefined | HTMLElement };
   instance: Instance;
-  instanceStyles: Styles;
+  instanceStyles: StyleDecl[];
   instanceProps: undefined | Prop[];
 }) => {
   const rootInstance = useStore(rootInstanceContainer);

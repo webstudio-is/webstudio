@@ -54,7 +54,7 @@ export const generateCssText = async (
   }
 
   const styleRules = getStyleRules(
-    canvasData.build?.styles,
+    new Map(canvasData.build?.styles),
     new Map(canvasData.tree?.styleSourceSelections)
   );
   for (const { breakpointId, instanceId, style } of styleRules) {

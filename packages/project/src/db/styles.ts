@@ -3,7 +3,13 @@ import { type Patch, applyPatches } from "immer";
 import { prisma } from "@webstudio-is/prisma-client";
 import type { Asset } from "@webstudio-is/asset-uploader";
 import { formatAsset } from "@webstudio-is/asset-uploader/server";
-import { StoredStyles, Styles } from "@webstudio-is/project-build";
+import {
+  type StoredStyleDecl,
+  type StyleDecl,
+  getStyleDeclKey,
+  StoredStyles,
+  Styles,
+} from "@webstudio-is/project-build";
 import type { Build, Project } from "../shared/schema";
 import {
   authorizeProject,
@@ -11,7 +17,7 @@ import {
 } from "@webstudio-is/trpc-interface/server";
 
 const parseValue = (
-  styleValue: StoredStyles[number]["value"],
+  styleValue: StoredStyleDecl["value"],
   assetsMap: Map<string, Asset>
 ) => {
   if (styleValue.type === "image") {
@@ -67,14 +73,16 @@ export const parseStyles = async (
     assetsMap.set(asset.id, formatAsset(asset));
   }
 
-  const styles: Styles = storedStyles.map((styleDecl) => {
-    return {
-      styleSourceId: styleDecl.styleSourceId,
-      breakpointId: styleDecl.breakpointId,
-      property: styleDecl.property,
-      value: parseValue(styleDecl.value, assetsMap),
+  const styles: Styles = new Map();
+  for (const storedStyleDecl of storedStyles) {
+    const styleDecl = {
+      styleSourceId: storedStyleDecl.styleSourceId,
+      breakpointId: storedStyleDecl.breakpointId,
+      property: storedStyleDecl.property,
+      value: parseValue(storedStyleDecl.value, assetsMap),
     };
-  });
+    styles.set(getStyleDeclKey(styleDecl), styleDecl);
+  }
 
   return styles;
 };
@@ -82,7 +90,7 @@ export const parseStyles = async (
 /**
  * prepare value to store in db
  */
-const serializeValue = (styleValue: Styles[number]["value"]) => {
+const serializeValue = (styleValue: StyleDecl["value"]) => {
   if (styleValue.type === "image") {
     return {
       type: "image" as const,
@@ -97,14 +105,17 @@ const serializeValue = (styleValue: Styles[number]["value"]) => {
 };
 
 export const serializeStyles = (styles: Styles) => {
-  const storedStyles: StoredStyles = styles.map((styleDecl) => {
-    return {
-      breakpointId: styleDecl.breakpointId,
-      styleSourceId: styleDecl.styleSourceId,
-      property: styleDecl.property,
-      value: serializeValue(styleDecl.value),
-    };
-  });
+  const storedStyles: StoredStyles = Array.from(
+    styles.values(),
+    (styleDecl) => {
+      return {
+        breakpointId: styleDecl.breakpointId,
+        styleSourceId: styleDecl.styleSourceId,
+        property: styleDecl.property,
+        value: serializeValue(styleDecl.value),
+      };
+    }
+  );
   return JSON.stringify(storedStyles);
 };
 

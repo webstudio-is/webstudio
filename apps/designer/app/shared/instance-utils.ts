@@ -1,5 +1,5 @@
 import store from "immerhin";
-import { Instance } from "@webstudio-is/project-build";
+import type { Instance } from "@webstudio-is/project-build";
 import {
   rootInstanceContainer,
   propsStore,
@@ -86,9 +86,11 @@ export const deleteInstance = (targetInstanceId: Instance["id"]) => {
       for (const styleSourceId of subtreeLocalStyleSourceIds) {
         styleSources.delete(styleSourceId);
       }
-      removeByMutable(styles, (styleDecl) =>
-        subtreeLocalStyleSourceIds.has(styleDecl.styleSourceId)
-      );
+      for (const [styleDeclKey, styleDecl] of styles) {
+        if (subtreeLocalStyleSourceIds.has(styleDecl.styleSourceId)) {
+          styles.delete(styleDeclKey);
+        }
+      }
 
       selectedInstanceIdStore.set(parentInstance.id);
     }

@@ -7,7 +7,7 @@ import {
   selectedInstanceIdStore,
   useBreakpoints,
 } from "~/shared/nano-states";
-import type { Styles } from "@webstudio-is/project-build";
+import type { StyleDecl } from "@webstudio-is/project-build";
 import {
   getComponentMeta,
   getComponentNames,
@@ -159,7 +159,7 @@ export const useCssRules = ({
   instanceStyles,
 }: {
   instanceId: string;
-  instanceStyles: Styles;
+  instanceStyles: StyleDecl[];
 }) => {
   const [breakpoints] = useBreakpoints();
 

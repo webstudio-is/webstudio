@@ -8,6 +8,8 @@ import {
   Instance,
   Prop,
   Props,
+  StyleDecl,
+  StyleDeclKey,
   Styles,
   StyleSource,
   StyleSources,
@@ -86,11 +88,11 @@ export const useInstanceProps = (instanceId: undefined | Instance["id"]) => {
   return instanceProps;
 };
 
-export const stylesStore = atom<Styles>([]);
+export const stylesStore = atom<Styles>(new Map());
 
-export const useSetStyles = (styles: Styles) => {
+export const useSetStyles = (styles: [StyleDeclKey, StyleDecl][]) => {
   useSyncInitializeOnce(() => {
-    stylesStore.set(styles);
+    stylesStore.set(new Map(styles));
   });
 };
 export const useInstanceStyles = (instanceId: undefined | Instance["id"]) => {
@@ -165,8 +167,8 @@ export const selectedStyleSourceIdStore = atom<undefined | StyleSource["id"]>(
 export const stylesIndexStore = computed(
   [stylesStore, styleSourceSelectionsStore],
   (styles, styleSourceSelections) => {
-    const stylesByStyleSourceId = new Map<StyleSource["id"], Styles>();
-    for (const styleDecl of styles) {
+    const stylesByStyleSourceId = new Map<StyleSource["id"], StyleDecl[]>();
+    for (const styleDecl of styles.values()) {
       const { styleSourceId } = styleDecl;
       let styleSourceStyles = stylesByStyleSourceId.get(styleSourceId);
       if (styleSourceStyles === undefined) {
@@ -176,9 +178,9 @@ export const stylesIndexStore = computed(
       styleSourceStyles.push(styleDecl);
     }
 
-    const stylesByInstanceId = new Map<Instance["id"], Styles>();
+    const stylesByInstanceId = new Map<Instance["id"], StyleDecl[]>();
     for (const { instanceId, values } of styleSourceSelections.values()) {
-      const instanceStyles: Styles = [];
+      const instanceStyles: StyleDecl[] = [];
       for (const styleSourceId of values) {
         const styleSourceStyles = stylesByStyleSourceId.get(styleSourceId);
         if (styleSourceStyles) {

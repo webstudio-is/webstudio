@@ -4,6 +4,7 @@ import type {
   Instance,
   Prop,
   Props,
+  StyleDecl,
   Styles,
   StyleSource,
   StyleSources,
@@ -277,8 +278,8 @@ export const cloneStyles = (
   styles: Styles,
   clonedStyleSourceIds: Map<Instance["id"], Instance["id"]>
 ) => {
-  const clonedStyles: Styles = [];
-  for (const styleDecl of styles) {
+  const clonedStyles: StyleDecl[] = [];
+  for (const styleDecl of styles.values()) {
     const styleSourceId = clonedStyleSourceIds.get(styleDecl.styleSourceId);
     if (styleSourceId === undefined) {
       continue;

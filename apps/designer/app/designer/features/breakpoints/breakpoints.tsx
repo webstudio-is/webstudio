@@ -69,11 +69,13 @@ export const Breakpoints = () => {
     const [updatedBreakpoints] = store.createTransaction(
       [breakpointsContainer, stylesStore],
       (breakpoints, styles) => {
-        removeByMutable(breakpoints, ({ id }) => id === breakpointToDelete.id);
-        removeByMutable(
-          styles,
-          (style) => style.breakpointId === breakpointToDelete.id
-        );
+        const breakpointId = breakpointToDelete.id;
+        removeByMutable(breakpoints, ({ id }) => id === breakpointId);
+        for (const [styleDeclKey, styleDecl] of styles) {
+          if (styleDecl.breakpointId === breakpointId) {
+            styles.delete(styleDeclKey);
+          }
+        }
       }
     );
     if (breakpointToDelete === selectedBreakpoint) {

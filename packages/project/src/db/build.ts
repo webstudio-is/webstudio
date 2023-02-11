@@ -23,7 +23,7 @@ const parseBuild = async (build: DbBuild): Promise<Build> => {
     createdAt: build.createdAt.toISOString(),
     pages,
     breakpoints: Breakpoints.parse(JSON.parse(build.breakpoints)),
-    styles: await parseStyles(build.projectId, build.styles),
+    styles: Array.from(await parseStyles(build.projectId, build.styles)),
     styleSources: Array.from(parseStyleSources(build.styleSources)),
   };
 };
@@ -321,9 +321,9 @@ export async function create(
       breakpoints: JSON.stringify(
         props.sourceBuild?.breakpoints ?? db.breakpoints.createValues()
       ),
-      styles: serializeStyles(props.sourceBuild?.styles ?? []),
+      styles: serializeStyles(new Map(props.sourceBuild?.styles)),
       styleSources: serializeStyleSources(
-        new Map(props.sourceBuild?.styleSources ?? [])
+        new Map(props.sourceBuild?.styleSources)
       ),
       isDev: props.env === "dev",
       isProd: props.env === "prod",
