@@ -159,10 +159,15 @@ export const Tree = <Data extends { id: string }>({
     },
 
     getValidChildren: (element) => {
+      // NOTE:
+      //   redefining children like this will screw up automatic childrenOrientation detection
+      //   luckily we know the orientation and can define it manually below
       return Array.from(
         element.querySelectorAll(":scope > div > [data-drop-target-id]")
       );
     },
+
+    childrenOrientation: { type: "vertical", reverse: false },
   });
 
   const dragHandlers = useDrag<Data>({
