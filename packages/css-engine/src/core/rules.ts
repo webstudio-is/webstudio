@@ -142,16 +142,20 @@ export class FontFaceRule {
     this.options = options;
   }
   get cssText() {
-    const decl = [];
+    const decls = [];
     let property: keyof FontFaceOptions;
     for (property in this.options) {
       const value = this.options[property];
       if (value === undefined) {
         continue;
       }
-      decl.push(`${hyphenate(property)}: ${value}`);
+      const formattedValue =
+        property === "fontFamily" && /\s/.test(String(value))
+          ? `"${value}"`
+          : value;
+      decls.push(`${hyphenate(property)}: ${formattedValue}`);
     }
-    return `@font-face {\n  ${decl.join("; ")};\n}`;
+    return `@font-face {\n  ${decls.join("; ")};\n}`;
   }
 }
 

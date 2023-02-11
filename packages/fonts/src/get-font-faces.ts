@@ -17,7 +17,6 @@ export type FontFace = {
 };
 
 const formatFace = (asset: PartialFontAsset, format: string): FontFace => {
-  // https://web.dev/variable-fonts/
   if ("variationAxes" in asset.meta) {
     const { variationAxes } = asset.meta;
     const wght = "wght" in variationAxes ? variationAxes.wght : undefined;
@@ -30,11 +29,9 @@ const formatFace = (asset: PartialFontAsset, format: string): FontFace => {
       : undefined;
     return {
       fontFamily: asset.meta.family,
+      fontStyle: "normal",
       fontDisplay: "swap",
-      src: [
-        `url('${asset.path}') format('${format}') tech('variations')`,
-        `url('${asset.path}') format('${format}')`,
-      ].join(", "),
+      src: `url('${asset.path}') format('${format}')`,
       ...fontStretch,
       ...fontWeight,
     };
