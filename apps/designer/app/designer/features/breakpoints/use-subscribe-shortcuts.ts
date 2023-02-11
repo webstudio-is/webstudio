@@ -1,7 +1,6 @@
 import { useSubscribe } from "~/shared/pubsub";
 import { useBreakpoints } from "~/shared/nano-states";
-import { useZoom, useSelectedBreakpoint } from "../../shared/nano-states";
-import { minZoom } from "./zoom-setting";
+import { useSelectedBreakpoint } from "../../shared/nano-states";
 import { utils } from "@webstudio-is/project";
 
 export const useSubscribeSelectBreakpointFromShortcut = () => {
@@ -12,20 +11,5 @@ export const useSubscribeSelectBreakpointFromShortcut = () => {
     if (breakpoint) {
       setSelectedBreakpoint(breakpoint);
     }
-  });
-};
-
-const zoomStep = 20;
-
-export const useSubscribeZoomFromShortcut = () => {
-  const [zoom, setZoom] = useZoom();
-
-  useSubscribe("zoom", (direction) => {
-    if (direction === "zoomIn") {
-      setZoom(Math.min(zoom + zoomStep, 100));
-      return;
-    }
-
-    setZoom(Math.max(zoom - zoomStep, minZoom));
   });
 };

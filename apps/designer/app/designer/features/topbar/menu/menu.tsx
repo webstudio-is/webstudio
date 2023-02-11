@@ -34,6 +34,7 @@ import {
 import { deleteInstance } from "~/shared/instance-utils";
 import { MenuButton } from "./menu-button";
 import { useAuthPermit } from "~/shared/nano-states";
+import { zoomIn, zoomOut } from "~/shared/nano-states/breakpoints";
 
 const ThemeMenuItem = () => {
   if (isFeatureEnabled("dark") === false) {
@@ -204,27 +205,13 @@ export const Menu = ({ publish }: MenuProps) => {
               <ShortcutHint value={["cmd", "b"]} />
             </DropdownMenuItemRightSlot>
           </DropdownMenuItem>
-          <DropdownMenuItem
-            onSelect={() => {
-              publish({
-                type: "zoom",
-                payload: "zoomIn",
-              });
-            }}
-          >
+          <DropdownMenuItem onSelect={zoomIn}>
             Zoom in
             <DropdownMenuItemRightSlot>
               <ShortcutHint value={["+"]} />
             </DropdownMenuItemRightSlot>
           </DropdownMenuItem>
-          <DropdownMenuItem
-            onSelect={() => {
-              publish({
-                type: "zoom",
-                payload: "zoomOut",
-              });
-            }}
-          >
+          <DropdownMenuItem onSelect={zoomOut}>
             Zoom out
             <DropdownMenuItemRightSlot>
               <ShortcutHint value={["-"]} />

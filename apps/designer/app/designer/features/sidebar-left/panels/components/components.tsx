@@ -1,4 +1,5 @@
 import { type MouseEventHandler, useState } from "react";
+import { useStore } from "@nanostores/react";
 import { createPortal } from "react-dom";
 import type { Instance } from "@webstudio-is/project-build";
 import {
@@ -15,8 +16,9 @@ import {
   selectedInstanceIdStore,
 } from "~/shared/nano-states";
 import { useSubscribe, type Publish } from "~/shared/pubsub";
-import { useCanvasRect, useZoom } from "~/designer/shared/nano-states";
+import { useCanvasRect } from "~/designer/shared/nano-states";
 import { insertInstance } from "~/shared/instance-utils";
+import { zoomStore } from "~/shared/nano-states/breakpoints";
 import type { TabName } from "../../types";
 import { Header, CloseButton } from "../../header";
 import { ComponentThumb } from "./component-thumb";
@@ -92,7 +94,7 @@ export const TabContent = ({ publish, onSetActiveTab }: TabContentProps) => {
   const [point, setPoint] = useState<Point>({ x: 0, y: 0 });
 
   const [canvasRect] = useCanvasRect();
-  const [zoom] = useZoom();
+  const zoom = useStore(zoomStore);
 
   const toCanvasCoordinates = ({ x, y }: Point) => {
     if (canvasRect === undefined) {

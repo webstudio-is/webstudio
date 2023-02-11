@@ -18,10 +18,7 @@ import { Preview } from "./preview";
 import { ZoomSetting } from "./zoom-setting";
 import { TriggerButton } from "./trigger-button";
 import { WidthSetting } from "./width-setting";
-import {
-  useSubscribeSelectBreakpointFromShortcut,
-  useSubscribeZoomFromShortcut,
-} from "./use-subscribe-shortcuts";
+import { useSubscribeSelectBreakpointFromShortcut } from "./use-subscribe-shortcuts";
 import { ConfirmationDialog } from "./confirmation-dialog";
 import {
   breakpointsContainer,
@@ -44,7 +41,6 @@ export const Breakpoints = () => {
   const [breakpointPreview, setBreakpointPreview] =
     useState(selectedBreakpoint);
   useSubscribeSelectBreakpointFromShortcut();
-  useSubscribeZoomFromShortcut();
 
   useEffect(() => {
     setBreakpointPreview(selectedBreakpoint);

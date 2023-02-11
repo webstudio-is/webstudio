@@ -20,9 +20,6 @@ const selectedBreakpointContainer = atom<Breakpoint | undefined>();
 export const useSelectedBreakpoint = () =>
   useValue(selectedBreakpointContainer);
 
-const zoomContainer = atom<number>(100);
-export const useZoom = () => useValue(zoomContainer);
-
 const canvasWidthContainer = atom<number>(0);
 export const useCanvasWidth = () => useValue(canvasWidthContainer);
 

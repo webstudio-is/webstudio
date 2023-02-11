@@ -15,7 +15,6 @@ declare module "~/shared/pubsub" {
     cancelCurrentDrag: undefined;
     openBreakpointsMenu: undefined;
     selectBreakpointFromShortcut: number;
-    zoom: "zoomOut" | "zoomIn";
   }
 }
 
@@ -40,21 +39,6 @@ const publishSelectBreakpoint = ({ key }: HandlerEvent) => {
   });
 };
 
-const publishZoom = (event: HandlerEvent) => {
-  if (!event.key) {
-    throw new Error(
-      "`publishZoom` doesn't account for being called without a `key`"
-    );
-  }
-  if (event.preventDefault !== undefined) {
-    event.preventDefault();
-  }
-  publish({
-    type: "zoom",
-    payload: event.key === "-" ? "zoomOut" : "zoomIn",
-  });
-};
-
 const publishOpenBreakpointsMenu = () => {
   publish({ type: "openBreakpointsMenu" });
 };
@@ -72,7 +56,6 @@ export const useShortcuts = () => {
     preview: togglePreviewMode,
     breakpointsMenu: publishOpenBreakpointsMenu,
     breakpoint: publishSelectBreakpoint,
-    zoom: publishZoom,
     esc: publishCancelCurrentDrag,
   } as const;
 
@@ -119,7 +102,6 @@ export const useShortcuts = () => {
   useHotkeys(shortcuts.preview, shortcutHandlerMap.preview, options, []);
 
   useHotkeys(shortcuts.breakpoint, shortcutHandlerMap.breakpoint, options, []);
-  useHotkeys(shortcuts.zoom, shortcutHandlerMap.zoom, options, []);
   useHotkeys(
     shortcuts.breakpointsMenu,
     shortcutHandlerMap.breakpointsMenu,
