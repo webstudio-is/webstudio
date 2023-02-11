@@ -126,7 +126,7 @@ const denormalizeTree = (instances: z.infer<typeof Instances>) => {
 
 export const loadById = async (
   { projectId, treeId }: { projectId: Project["id"]; treeId: Tree["id"] },
-  context: AppContext,
+  _context: AppContext,
   client: Prisma.TransactionClient = prisma
 ): Promise<Tree | null> => {
   const tree = await client.tree.findUnique({
@@ -141,10 +141,7 @@ export const loadById = async (
   const instances = Instances.parse(JSON.parse(tree.instances));
   const root = Instance.parse(denormalizeTree(instances));
 
-  const props = await parseProps(
-    { propsString: tree.props, projectId },
-    context
-  );
+  const props = parseProps(tree.props);
 
   const styleSourceSelections = parseStyleSourceSelections(
     tree.styleSelections

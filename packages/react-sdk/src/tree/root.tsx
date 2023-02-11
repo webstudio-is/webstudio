@@ -7,7 +7,8 @@ import { WrapperComponent } from "./wrapper-component";
 import { registerComponents } from "../components";
 import { customComponents as defaultCustomComponents } from "../app/custom-components";
 import { setParams, type Params } from "../app/params";
-import { getPropsByInstanceId, setPropsByInstanceIdStore } from "../props";
+import { ReactSdkProvider } from "../context";
+import { getPropsByInstanceId } from "../props";
 
 export type Data = {
   tree: Tree | null;
@@ -30,16 +31,25 @@ export const InstanceRoot = ({
     throw new Error("Tree is null");
   }
 
-  setPropsByInstanceIdStore(
-    atom(getPropsByInstanceId(new Map(data.tree.props)))
-  );
-
   setParams(data.params ?? null);
 
   registerComponents(customComponents);
 
-  return createElementsTree({
-    instance: data.tree.root,
-    Component: Component ?? WrapperComponent,
-  });
+  return (
+    <ReactSdkProvider
+      value={{
+        propsByInstanceIdStore: atom(
+          getPropsByInstanceId(new Map(data.tree.props))
+        ),
+        assetsStore: atom(
+          new Map(data.assets.map((asset) => [asset.id, asset]))
+        ),
+      }}
+    >
+      {createElementsTree({
+        instance: data.tree.root,
+        Component: Component ?? WrapperComponent,
+      })}
+    </ReactSdkProvider>
+  );
 };

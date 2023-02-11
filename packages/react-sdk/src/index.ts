@@ -8,4 +8,4 @@ export {
   customComponentsMeta,
 } from "./app/custom-components";
 export type { MetaProps, WsComponentMeta } from "./components/component-type";
-export { setPropsByInstanceIdStore } from "./props";
+export { ReactSdkProvider } from "./context";
