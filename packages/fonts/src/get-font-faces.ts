@@ -19,19 +19,13 @@ export type FontFace = {
 const formatFace = (asset: PartialFontAsset, format: string): FontFace => {
   if ("variationAxes" in asset.meta) {
     const { wght, wdth } = asset.meta?.variationAxes ?? {};
-    const fontStretch = wdth
-      ? { fontStretch: `${wdth.min}% ${wdth.max}%` }
-      : undefined;
-    const fontWeight = wght
-      ? { fontWeight: `${wght.min} ${wght.max}` }
-      : undefined;
     return {
       fontFamily: asset.meta.family,
       fontStyle: "normal",
       fontDisplay: "swap",
       src: `url('${asset.path}') format('${format}')`,
-      ...fontStretch,
-      ...fontWeight,
+      fontStretch: wdth ? `${wdth.min}% ${wdth.max}%` : undefined,
+      fontWeight: wght ? `${wght.min} ${wght.max}` : undefined,
     };
   }
   return {
