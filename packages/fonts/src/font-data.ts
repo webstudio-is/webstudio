@@ -71,23 +71,19 @@ export const getFontData = (data: Uint8Array): FontData => {
   const subfamily =
     font.getName("preferredSubfamily") ?? font.getName("fontSubfamily");
   const family = normalizeFamily(originalFamily, subfamily);
-  const variationAxes =
-    Object.keys(font.variationAxes).length === 0
-      ? undefined
-      : font.variationAxes;
+  const isVariable = Object.keys(font.variationAxes).length !== 0;
 
-  if (variationAxes) {
+  if (isVariable) {
     return {
       format,
       family,
-      variationAxes,
+      variationAxes: font.variationAxes,
     };
   }
 
   return {
     format,
     family,
-    variationAxes,
     ...parseSubfamily(subfamily),
   };
 };
