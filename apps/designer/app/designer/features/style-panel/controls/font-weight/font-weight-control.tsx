@@ -5,6 +5,7 @@ import { useMemo } from "react";
 import { useAssets } from "~/designer/shared/assets";
 import type { ControlProps } from "../../style-sections";
 import { theme } from "@webstudio-is/design-system";
+import { isSupportedFontWeight } from "./is-supported-font-weight";
 
 type FontWeightItem = {
   label: string;
@@ -28,17 +29,16 @@ const useAvailableFontWeights = (
   return useMemo(() => {
     const found = allFontWeights.filter((option) => {
       return assetContainers.find((assetContainer) => {
-        if (assetContainer.status !== "uploaded") {
+        if (
+          assetContainer.status !== "uploaded" ||
+          assetContainer.asset.type !== "font"
+        ) {
           return false;
         }
-
-        const { asset } = assetContainer;
-
-        return (
-          "meta" in asset &&
-          "family" in asset.meta &&
-          asset.meta.family === currentFamily &&
-          String(asset.meta.weight) === option.weight
+        return isSupportedFontWeight(
+          assetContainer.asset,
+          option.weight,
+          currentFamily
         );
       });
     });

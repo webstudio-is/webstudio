@@ -1,4 +1,4 @@
-import type { FontFormat } from "./schema";
+import type { FontFormat, VariationAxes } from "./schema";
 import { create as createFontKit } from "fontkit";
 import { FontWeight, fontWeights } from "./font-weights";
 
@@ -7,6 +7,7 @@ declare module "fontkit" {
   export interface Font {
     type: string;
     getName: (name: string) => string;
+    variationAxes: VariationAxes;
   }
 }
 
@@ -22,7 +23,6 @@ export const parseSubfamily = (subfamily: string) => {
       break;
     }
   }
-
   let weight: FontWeight = "400";
   for (weight in fontWeights) {
     const { name } = fontWeights[weight];
@@ -51,12 +51,18 @@ export const normalizeFamily = (family: string, subfamily: string) => {
   return familyPartsNormalized.join(" ");
 };
 
-type FontData = {
+type FontDataStatic = {
   format: FontFormat;
   family: string;
   style: Style;
   weight: number;
 };
+type FontDataVariable = {
+  format: FontFormat;
+  family: string;
+  variationAxes: VariationAxes;
+};
+type FontData = FontDataStatic | FontDataVariable;
 
 export const getFontData = (data: Uint8Array): FontData => {
   const font = createFontKit(data as Buffer);
@@ -64,11 +70,20 @@ export const getFontData = (data: Uint8Array): FontData => {
   const originalFamily = font.getName("fontFamily");
   const subfamily =
     font.getName("preferredSubfamily") ?? font.getName("fontSubfamily");
-  const parsedSubfamily = parseSubfamily(subfamily);
   const family = normalizeFamily(originalFamily, subfamily);
+  const isVariable = Object.keys(font.variationAxes).length !== 0;
+
+  if (isVariable) {
+    return {
+      format,
+      family,
+      variationAxes: font.variationAxes,
+    };
+  }
+
   return {
     format,
     family,
-    ...parsedSubfamily,
+    ...parseSubfamily(subfamily),
   };
 };
