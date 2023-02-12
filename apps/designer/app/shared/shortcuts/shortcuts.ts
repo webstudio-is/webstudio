@@ -34,7 +34,7 @@ export const useSharedShortcuts = () => {
   );
 
   useHotkeys(
-    "=",
+    "Equal, alt+Equal",
     zoomIn,
     // prevent zoom while typing
     { enableOnFormTags: false, enableOnContentEditable: false },
@@ -42,7 +42,7 @@ export const useSharedShortcuts = () => {
   );
 
   useHotkeys(
-    "-",
+    "Minus, alt+Minus",
     zoomOut,
     // prevent zoom while typing
     { enableOnFormTags: false, enableOnContentEditable: false },
