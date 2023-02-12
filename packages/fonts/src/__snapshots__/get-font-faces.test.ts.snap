@@ -56,8 +56,9 @@ exports[`getFontFaces() variable font 1`] = `
     "fontDisplay": "swap",
     "fontFamily": "Inter",
     "fontStretch": "25% 151%",
+    "fontStyle": "normal",
     "fontWeight": "100 1000",
-    "src": "url('/fonts/inter.ttf') format('truetype') tech('variations'), url('/fonts/inter.ttf') format('truetype')",
+    "src": "url('/fonts/inter.ttf') format('truetype')",
   },
 ]
 `;
