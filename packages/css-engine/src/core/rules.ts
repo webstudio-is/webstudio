@@ -146,9 +146,7 @@ export class FontFaceRule {
     const { fontFamily, fontStyle, fontWeight, fontDisplay, src } =
       this.options;
     decls.push(
-      `font-family: ${
-        /\s/.test(String(fontFamily)) ? `"${fontFamily}"` : fontFamily
-      }`
+      `font-family: ${/\s/.test(fontFamily) ? `"${fontFamily}"` : fontFamily}`
     );
     decls.push(`font-style: ${fontStyle}`);
     decls.push(`font-weight: ${fontWeight}`);

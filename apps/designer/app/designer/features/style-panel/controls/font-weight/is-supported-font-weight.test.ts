@@ -1,11 +1,10 @@
 import { describe, test } from "@jest/globals";
 import { FontAsset } from "@webstudio-is/asset-uploader";
-import { nanoid } from "nanoid";
 import { isSupportedFontWeight } from "./is-supported-font-weight";
 
 const createServerAsset = (meta: FontAsset["meta"]): FontAsset => ({
-  id: nanoid(),
-  type: "font" as const,
+  id: "111",
+  type: "font",
   name: "test",
   location: "FS",
   projectId: "id",
