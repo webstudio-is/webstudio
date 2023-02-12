@@ -18,9 +18,7 @@ export type FontFace = {
 
 const formatFace = (asset: PartialFontAsset, format: string): FontFace => {
   if ("variationAxes" in asset.meta) {
-    const { variationAxes } = asset.meta;
-    const wght = "wght" in variationAxes ? variationAxes.wght : undefined;
-    const wdth = "wdth" in variationAxes ? variationAxes.wdth : undefined;
+    const { wght, wdth } = asset.meta?.variationAxes ?? {};
     const fontStretch = wdth
       ? { fontStretch: `${wdth.min}% ${wdth.max}%` }
       : undefined;
