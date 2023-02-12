@@ -29,7 +29,10 @@ const useAvailableFontWeights = (
   return useMemo(() => {
     const found = allFontWeights.filter((option) => {
       return assetContainers.find((assetContainer) => {
-        if (assetContainer.status !== "uploaded") {
+        if (
+          assetContainer.status !== "uploaded" ||
+          assetContainer.asset.type !== "font"
+        ) {
           return false;
         }
         return isSupportedFontWeight(
