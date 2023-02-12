@@ -47,7 +47,7 @@ const formatFace = (asset: PartialFontAsset, format: string): FontFace => {
 
 const getKey = (asset: PartialFontAsset) => {
   if ("variationAxes" in asset.meta) {
-    return asset.meta.family + Object.values(asset.meta.variationAxes);
+    return asset.meta.family + Object.values(asset.meta.variationAxes).join("");
   }
   return asset.meta.family + asset.meta.style + asset.meta.weight;
 };
@@ -57,7 +57,8 @@ export const getFontFaces = (
 ): Array<FontFace> => {
   const faces = new Map();
   for (const asset of assets) {
-    const face = faces.get(getKey(asset));
+    const assetKey = getKey(asset);
+    const face = faces.get(assetKey);
     const format = FONT_FORMATS.get(asset.format);
     if (format === undefined) {
       // Should never happen since we allow only uploading formats we support
@@ -66,7 +67,7 @@ export const getFontFaces = (
 
     if (face === undefined) {
       const face = formatFace(asset, format);
-      faces.set(getKey(asset), face);
+      faces.set(assetKey, face);
       continue;
     }
 
