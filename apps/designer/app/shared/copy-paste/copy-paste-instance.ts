@@ -128,7 +128,7 @@ const startCopyPasteInstance = () => {
   return startCopyPaste({
     version: "@webstudio/instance/v0.1",
     type: InstanceData,
-    allowAnyTarget: true,
+    allowAnyTarget: false,
 
     onCopy: () => {
       const selectedInstanceId = selectedInstanceIdStore.get();

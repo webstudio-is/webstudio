@@ -108,7 +108,7 @@ importers:
       babel-loader: ^8.2.5
       camelcase: ^6.3.0
       colord: ^2.9.3
-      css-tree: ^2.3.0
+      css-tree: ^2.3.1
       debug: ^4.3.4
       detect-font: ^0.1.5
       djb2a: ^2.0.0
@@ -194,7 +194,7 @@ importers:
       '@webstudio-is/trpc-interface': link:../../packages/trpc-interface
       camelcase: 6.3.0
       colord: 2.9.3
-      css-tree: 2.3.0
+      css-tree: 2.3.1
       debug: 4.3.4
       detect-font: 0.1.5
       djb2a: 2.0.0
@@ -346,7 +346,7 @@ importers:
       '@webstudio-is/scripts': workspace:^
       '@webstudio-is/tsconfig': workspace:^
       camelcase: ^6.3.0
-      css-tree: ^2.3.0
+      css-tree: ^2.3.1
       mdn-data: 2.0.30
       typescript: 4.7.4
       zod: ^3.19.1
@@ -356,7 +356,7 @@ importers:
       '@webstudio-is/scripts': link:../scripts
       '@webstudio-is/tsconfig': link:../tsconfig
       camelcase: 6.3.0
-      css-tree: 2.3.0
+      css-tree: 2.3.1
       mdn-data: 2.0.30
       typescript: 4.7.4
       zod: 3.19.1
@@ -13784,6 +13784,14 @@ packages:
   /css-tree/2.3.0:
     resolution: {integrity: sha512-1rg0LiK2MFi4R3/lVvnRokEWTZb30ljSAe5x+0HHkZ+OqZaAeiP8g8Eh91VmkyCtQn9vMgQRiaTDYgLBt+2Qyw==}
     engines: {node: ^10 || ^12.20.0 || ^14.13.0 || >=15.0.0, npm: '>=7.0.0'}
+    dependencies:
+      mdn-data: 2.0.30
+      source-map-js: 1.0.2
+    dev: true
+
+  /css-tree/2.3.1:
+    resolution: {integrity: sha512-6Fv1DV/TYw//QF5IzQdqsNDjx/wc8TrMBZsqjL9eW01tWb7R7k/mq+/VXfJCl7SoD5emsJop9cOByJZfs8hYIw==}
+    engines: {node: ^10 || ^12.20.0 || ^14.13.0 || >=15.0.0}
     dependencies:
       mdn-data: 2.0.30
       source-map-js: 1.0.2
