@@ -4,7 +4,7 @@ import warnOnce from "warn-once";
 import { getStyleDeclKey, type Instance } from "@webstudio-is/project-build";
 import type { StyleUpdates } from "@webstudio-is/project";
 import type { StyleProperty, StyleValue } from "@webstudio-is/css-data";
-import { type Publish } from "~/shared/pubsub";
+import type { Publish } from "~/shared/pubsub";
 import {
   selectedStyleSourceStore,
   styleSourceSelectionsStore,

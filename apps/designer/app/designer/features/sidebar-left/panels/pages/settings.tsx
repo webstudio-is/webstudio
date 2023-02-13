@@ -4,7 +4,7 @@ import { useDebouncedCallback } from "use-debounce";
 import { useUnmount } from "react-use";
 import slugify from "slugify";
 import { useFetcher } from "@remix-run/react";
-import { type Page } from "@webstudio-is/project";
+import type { Page } from "@webstudio-is/project";
 import {
   theme,
   Button,

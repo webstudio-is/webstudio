@@ -1,4 +1,4 @@
-import { createTRPCProxyClient } from "@trpc/client";
+import type { createTRPCProxyClient } from "@trpc/client";
 import { router } from "./trpc";
 import { authorizationRouter } from "./authorization-router";
 

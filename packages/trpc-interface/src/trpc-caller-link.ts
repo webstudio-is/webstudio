@@ -1,4 +1,4 @@
-import { AnyRouter } from "@trpc/server";
+import type { AnyRouter } from "@trpc/server";
 // eslint-disable-next-line import/no-internal-modules
 import { observable } from "@trpc/server/observable";
 import { TRPCClientError, TRPCLink } from "@trpc/client";

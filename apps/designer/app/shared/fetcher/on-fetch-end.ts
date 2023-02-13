@@ -1,4 +1,4 @@
-import { Fetcher } from "@remix-run/react";
+import type { Fetcher } from "@remix-run/react";
 import { useEffect, useRef } from "react";
 
 export const useOnFetchEnd = <Data>(

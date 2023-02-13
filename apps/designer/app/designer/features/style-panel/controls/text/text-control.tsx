@@ -2,7 +2,7 @@ import {
   CssValueInput,
   type IntermediateStyleValue,
 } from "../../shared/css-value-input";
-import { ControlProps } from "../../style-sections";
+import type { ControlProps } from "../../style-sections";
 import type { StyleValue } from "@webstudio-is/css-data";
 import { useState } from "react";
 import { Box, EnhancedTooltip } from "@webstudio-is/design-system";

@@ -15,7 +15,7 @@ import {
   DropdownMenuPortal,
   Tooltip,
 } from "@webstudio-is/design-system";
-import { type Publish } from "~/shared/pubsub";
+import type { Publish } from "~/shared/pubsub";
 import { ShortcutHint } from "./shortcut-hint";
 import {
   useIsShareDialogOpen,

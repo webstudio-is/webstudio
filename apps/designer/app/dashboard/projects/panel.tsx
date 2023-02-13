@@ -1,5 +1,5 @@
 import { Box, css, theme } from "@webstudio-is/design-system";
-import { type ComponentProps } from "react";
+import type { ComponentProps } from "react";
 
 const panelStyle = css({
   background: theme.colors.backgroundPanel,

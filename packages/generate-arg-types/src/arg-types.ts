@@ -1,4 +1,4 @@
-import { PropItem } from "react-docgen-typescript";
+import type { PropItem } from "react-docgen-typescript";
 
 export type FilterPredicate = (prop: PropItem) => boolean;
 

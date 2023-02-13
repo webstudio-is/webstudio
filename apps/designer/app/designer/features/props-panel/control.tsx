@@ -19,7 +19,7 @@ import { assetsStore } from "~/shared/nano-states";
 import { FloatingPanel } from "~/designer/shared/floating-panel";
 import { ImageManager } from "~/designer/shared/image-manager";
 import type { UserPropValue } from "./use-props-logic";
-import { type SetProperty } from "../style-panel/shared/use-style-data";
+import type { SetProperty } from "../style-panel/shared/use-style-data";
 
 const textControlTypes = [
   "text",

@@ -1,4 +1,4 @@
-import { AUTH_PROVIDERS } from "~/shared/session";
+import type { AUTH_PROVIDERS } from "~/shared/session";
 import type { Page, Project } from "@webstudio-is/project";
 import type { BuildMode } from "./build-params";
 import type { ThemeSetting } from "~/shared/theme";

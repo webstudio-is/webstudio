@@ -1,4 +1,4 @@
-import { type Breakpoint } from "@webstudio-is/css-data";
+import type { Breakpoint } from "@webstudio-is/css-data";
 import {
   DeprecatedParagraph,
   Flex,

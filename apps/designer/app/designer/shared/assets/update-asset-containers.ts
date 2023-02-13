@@ -1,6 +1,6 @@
 import deepEqual from "fast-deep-equal";
 import type { Asset } from "@webstudio-is/asset-uploader";
-import { AssetContainer, DeletingAssetContainer } from "./types";
+import type { AssetContainer, DeletingAssetContainer } from "./types";
 
 /**
  * Update local assets (containing optimistic data) with data from the server

@@ -2,7 +2,7 @@
  * Some helpers for stories
  */
 
-import { type ReactNode } from "react";
+import type { ReactNode } from "react";
 import { theme, css } from "../stitches.config";
 import { textVariants } from "./text";
 

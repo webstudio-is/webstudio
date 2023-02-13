@@ -1,6 +1,6 @@
 import { styled } from "../../stitches.config";
 import { Box } from "../box";
-import { Placement } from "../primitives/dnd";
+import type { Placement } from "../primitives/dnd";
 import { theme } from "../../stitches.config";
 
 const CIRCLE_SIZE = 8;

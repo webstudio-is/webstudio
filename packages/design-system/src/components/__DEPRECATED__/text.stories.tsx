@@ -1,4 +1,4 @@
-import { ComponentStory } from "@storybook/react";
+import type { ComponentStory } from "@storybook/react";
 import { DeprecatedText2 } from "./text2";
 
 export default {

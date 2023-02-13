@@ -5,7 +5,7 @@ import { restPatchPath } from "~/shared/router-utils";
 import { useEffect } from "react";
 import { enqueue, dequeue, queueStatus } from "./queue";
 import { useBeforeUnload } from "react-use";
-import { AuthPermit } from "@webstudio-is/trpc-interface";
+import type { AuthPermit } from "@webstudio-is/trpc-interface";
 
 // Periodic check for new entries to group them into one job/call in sync queue.
 const NEW_ENTRIES_INTERVAL = 1000;

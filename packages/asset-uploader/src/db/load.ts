@@ -1,5 +1,5 @@
 import { prisma, Project } from "@webstudio-is/prisma-client";
-import { Asset } from "../schema";
+import type { Asset } from "../schema";
 import { formatAsset } from "../utils/format-asset";
 import {
   authorizeProject,

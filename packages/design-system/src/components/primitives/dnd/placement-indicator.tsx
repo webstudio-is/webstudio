@@ -1,5 +1,5 @@
 import { Box } from "../../box";
-import { type Placement } from "./geometry-utils";
+import type { Placement } from "./geometry-utils";
 import { theme } from "../../../stitches.config";
 
 const placementStyle = {

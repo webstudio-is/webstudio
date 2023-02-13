@@ -19,8 +19,8 @@ import {
   NewPageIcon,
   PageIcon,
 } from "@webstudio-is/icons";
-import { type Page, type Pages } from "@webstudio-is/project";
-import { type Publish } from "~/shared/pubsub";
+import type { Page, Pages } from "@webstudio-is/project";
+import type { Publish } from "~/shared/pubsub";
 import {
   useCurrentPageId,
   usePages,

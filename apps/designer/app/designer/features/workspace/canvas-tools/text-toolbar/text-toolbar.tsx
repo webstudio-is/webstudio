@@ -1,7 +1,7 @@
 import { useRef, useEffect } from "react";
 import { useStore } from "@nanostores/react";
 import { computePosition, flip, offset, shift } from "@floating-ui/dom";
-import { type Publish } from "~/shared/pubsub";
+import type { Publish } from "~/shared/pubsub";
 import {
   type TextToolbarState,
   useTextToolbarState,

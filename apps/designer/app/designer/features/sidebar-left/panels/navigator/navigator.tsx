@@ -1,6 +1,6 @@
 import { ListNestedIcon } from "@webstudio-is/icons";
 import { Navigator } from "../../navigator";
-import { TabName } from "../../types";
+import type { TabName } from "../../types";
 
 type TabContentProps = {
   onSetActiveTab: (tabName: TabName) => void;

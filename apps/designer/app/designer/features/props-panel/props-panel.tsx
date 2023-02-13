@@ -23,7 +23,7 @@ import {
   ExclamationTriangleIcon,
   ChevronDownIcon,
 } from "@webstudio-is/icons";
-import { type Publish } from "~/shared/pubsub";
+import type { Publish } from "~/shared/pubsub";
 import { propsStore, useInstanceProps } from "~/shared/nano-states";
 import { CollapsibleSection, ComponentInfo } from "~/designer/shared/inspector";
 import { Control } from "./control";

@@ -1,6 +1,6 @@
 import { SYSTEM_FONTS } from "@webstudio-is/fonts";
 import { matchSorter } from "match-sorter";
-import { AssetContainer } from "../assets";
+import type { AssetContainer } from "../assets";
 
 export type Item = {
   label: string;

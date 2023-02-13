@@ -1,5 +1,5 @@
 import * as Sentry from "@sentry/remix";
-import { Extras, Integration } from "@sentry/types";
+import type { Extras, Integration } from "@sentry/types";
 import env from "~/shared/env";
 
 export const initSentry = ({

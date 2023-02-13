@@ -4,7 +4,7 @@ import {
   type AppContext,
 } from "@webstudio-is/trpc-interface/server";
 import { deleteFromDb } from "./db";
-import { Asset } from "./schema";
+import type { Asset } from "./schema";
 import { deleteFromFs } from "./targets/fs/delete";
 import { deleteFromS3 } from "./targets/s3/delete";
 import { formatAsset } from "./utils/format-asset";

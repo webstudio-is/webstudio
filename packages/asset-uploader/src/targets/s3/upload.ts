@@ -5,7 +5,7 @@ import {
   unstable_composeUploadHandlers as unstableComposeUploadHandlers,
   MaxPartSizeExceededError,
 } from "@remix-run/node";
-import { PutObjectCommandInput } from "@aws-sdk/client-s3";
+import type { PutObjectCommandInput } from "@aws-sdk/client-s3";
 import { Upload } from "@aws-sdk/lib-storage";
 import { Location } from "@webstudio-is/prisma-client";
 import { S3Env } from "../../schema";
