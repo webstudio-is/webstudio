@@ -10,7 +10,7 @@ import { properties } from "@webstudio-is/css-data";
 import { utils } from "@webstudio-is/project";
 import type {
   Instance,
-  Styles,
+  StyleDecl,
   StyleSource as StyleSourceType,
 } from "@webstudio-is/project-build";
 import {
@@ -81,7 +81,7 @@ for (const [property, value] of Object.entries(properties)) {
 }
 
 const getSelectedStyle = (
-  stylesByStyleSourceId: Map<StyleSourceType["id"], Styles>,
+  stylesByStyleSourceId: Map<StyleSourceType["id"], StyleDecl[]>,
   breakpointId: string,
   styleSourceId: string
 ) => {
@@ -121,7 +121,7 @@ export const getCascadedBreakpointIds = (
  * affecting current view
  */
 export const getCascadedInfo = (
-  stylesByInstanceId: Map<Instance["id"], Styles>,
+  stylesByInstanceId: Map<Instance["id"], StyleDecl[]>,
   instanceId: string,
   cascadedBreakpointIds: string[]
 ) => {
@@ -149,7 +149,7 @@ export const getCascadedInfo = (
  */
 export const getInheritedInfo = (
   rootInstance: Instance,
-  stylesByInstanceId: Map<Instance["id"], Styles>,
+  stylesByInstanceId: Map<Instance["id"], StyleDecl[]>,
   instanceId: string,
   cascadedBreakpointIds: string[],
   selectedBreakpointId: string

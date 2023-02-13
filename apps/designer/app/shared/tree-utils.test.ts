@@ -3,6 +3,7 @@ import type {
   Instance,
   Prop,
   StyleDecl,
+  Styles,
   StyleSource,
   StyleSourceSelection,
 } from "@webstudio-is/project-build";
@@ -73,7 +74,10 @@ const createStyleSourceSelection = (
   };
 };
 
-const createStyleDecl = (styleSourceId: string): StyleDecl => {
+const createStyleDecl = (
+  styleSourceId: string,
+  breakpointId: string
+): StyleDecl => {
   return {
     styleSourceId,
     breakpointId: "breakpointId",
@@ -389,21 +393,21 @@ test("clone style source selections with applied instance ids and style source i
 });
 
 test("clone styles with appled new style source ids", () => {
-  const styles = [
-    createStyleDecl("styleSource1"),
-    createStyleDecl("styleSource2"),
-    createStyleDecl("styleSource1"),
-    createStyleDecl("styleSource3"),
-    createStyleDecl("styleSource1"),
-    createStyleDecl("styleSource3"),
-  ];
+  const styles: Styles = new Map([
+    [`styleSource1:bp1:width`, createStyleDecl("styleSource1", "bp1")],
+    [`styleSource2:bp2:width`, createStyleDecl("styleSource2", "bp2")],
+    [`styleSource1:bp3:width`, createStyleDecl("styleSource1", "bp3")],
+    [`styleSource3:bp4:width`, createStyleDecl("styleSource3", "bp4")],
+    [`styleSource1:bp5:width`, createStyleDecl("styleSource1", "bp5")],
+    [`styleSource3:bp6:width`, createStyleDecl("styleSource3", "bp6")],
+  ]);
   const clonedStyleSourceIds = new Map<StyleSource["id"], StyleSource["id"]>();
   clonedStyleSourceIds.set("styleSource2", "newStyleSource2");
   clonedStyleSourceIds.set("styleSource3", "newStyleSource3");
   expect(cloneStyles(styles, clonedStyleSourceIds)).toEqual([
-    createStyleDecl("newStyleSource2"),
-    createStyleDecl("newStyleSource3"),
-    createStyleDecl("newStyleSource3"),
+    createStyleDecl("newStyleSource2", "bp2"),
+    createStyleDecl("newStyleSource3", "bp4"),
+    createStyleDecl("newStyleSource3", "bp6"),
   ]);
 });
 

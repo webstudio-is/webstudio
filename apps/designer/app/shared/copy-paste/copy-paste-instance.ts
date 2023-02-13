@@ -2,9 +2,10 @@ import store from "immerhin";
 import { z } from "zod";
 import { useEffect } from "react";
 import {
+  getStyleDeclKey,
   Instance,
   Prop,
-  Styles,
+  StyleDecl,
   StyleSource,
   StyleSourceSelection,
 } from "@webstudio-is/project-build";
@@ -37,7 +38,7 @@ const InstanceData = z.object({
   props: z.array(Prop),
   styleSourceSelections: z.array(StyleSourceSelection),
   styleSources: z.array(StyleSource),
-  styles: Styles,
+  styles: z.array(StyleDecl),
 });
 
 type InstanceData = z.infer<typeof InstanceData>;
@@ -118,7 +119,9 @@ const pasteInstance = (data: InstanceData) => {
       for (const styleSource of data.styleSources) {
         styleSources.set(styleSource.id, styleSource);
       }
-      styles.push(...data.styles);
+      for (const styleDecl of data.styles) {
+        styles.set(getStyleDeclKey(styleDecl), styleDecl);
+      }
     }
   );
   selectedInstanceIdStore.set(data.instance.id);

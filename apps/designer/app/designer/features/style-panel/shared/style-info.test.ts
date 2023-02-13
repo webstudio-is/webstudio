@@ -1,5 +1,5 @@
 import type { Breakpoint } from "@webstudio-is/css-data";
-import type { Instance, Styles } from "@webstudio-is/project-build";
+import type { Instance, StyleDecl } from "@webstudio-is/project-build";
 import {
   getCascadedBreakpointIds,
   getCascadedInfo,
@@ -36,7 +36,7 @@ const cascadedBreakpointIds = getCascadedBreakpointIds(
   selectedBreakpointId
 );
 
-const cascadingStylesByInstanceId = new Map<Instance["id"], Styles>();
+const cascadingStylesByInstanceId = new Map<Instance["id"], StyleDecl[]>();
 cascadingStylesByInstanceId.set(selectedInstanceId, [
   {
     breakpointId: "1",
@@ -92,7 +92,7 @@ const rootInstance: Instance = {
   ],
 };
 
-const inheritingStylesByInstanceId = new Map<Instance["id"], Styles>();
+const inheritingStylesByInstanceId = new Map<Instance["id"], StyleDecl[]>();
 inheritingStylesByInstanceId.set("1", [
   // should be inherited even from another breakpoint
   {

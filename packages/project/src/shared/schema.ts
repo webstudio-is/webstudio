@@ -1,6 +1,10 @@
 import { z, type ZodType } from "zod";
 import type { Breakpoints } from "@webstudio-is/css-data";
-import type { Styles, StyleSource } from "@webstudio-is/project-build";
+import type {
+  StyleDecl,
+  StyleDeclKey,
+  StyleSource,
+} from "@webstudio-is/project-build";
 import type { Data } from "@webstudio-is/react-sdk";
 
 const MIN_TITLE_LENGTH = 2;
@@ -99,7 +103,7 @@ export type Build = {
   isProd: boolean;
   pages: Pages;
   breakpoints: Breakpoints;
-  styles: Styles;
+  styles: [StyleDeclKey, StyleDecl][];
   styleSources: [StyleSource["id"], StyleSource][];
 };
 

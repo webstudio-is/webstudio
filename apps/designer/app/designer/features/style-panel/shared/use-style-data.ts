@@ -1,7 +1,7 @@
 import { useCallback } from "react";
 import store from "immerhin";
 import warnOnce from "warn-once";
-import type { Instance } from "@webstudio-is/project-build";
+import { getStyleDeclKey, type Instance } from "@webstudio-is/project-build";
 import type { StyleUpdates } from "@webstudio-is/project";
 import type { StyleProperty, StyleValue } from "@webstudio-is/css-data";
 import { type Publish } from "~/shared/pubsub";
@@ -12,10 +12,6 @@ import {
   stylesStore,
 } from "~/shared/nano-states";
 import { useSelectedBreakpoint } from "~/designer/shared/nano-states";
-import {
-  removeByMutable,
-  replaceByOrAppendMutable,
-} from "~/shared/array-utils";
 // @todo: must be removed, now it's only for compatibility with existing code
 import { parseCssValue } from "./parse-css-value";
 import { useStyleInfo } from "./style-info";
@@ -101,29 +97,22 @@ export const useStyleData = ({ selectedInstance, publish }: UseStyleData) => {
 
           for (const update of updates) {
             if (update.operation === "set") {
-              replaceByOrAppendMutable(
-                styles,
-                {
-                  breakpointId,
-                  styleSourceId,
-                  property: update.property,
-                  value: update.value,
-                },
-                (item) =>
-                  item.styleSourceId === styleSourceId &&
-                  item.breakpointId === breakpointId &&
-                  item.property === update.property
-              );
+              const styleDecl = {
+                breakpointId,
+                styleSourceId,
+                property: update.property,
+                value: update.value,
+              };
+              styles.set(getStyleDeclKey(styleDecl), styleDecl);
             }
 
             if (update.operation === "delete") {
-              removeByMutable(
-                styles,
-                (item) =>
-                  item.styleSourceId === styleSourceId &&
-                  item.breakpointId === breakpointId &&
-                  item.property === update.property
-              );
+              const styleDeclKey = getStyleDeclKey({
+                breakpointId,
+                styleSourceId,
+                property: update.property,
+              });
+              styles.delete(styleDeclKey);
             }
           }
         }
