@@ -16,6 +16,11 @@ const isAbsoluteUrl = (href: string) => {
   }
 };
 
+// Remix's check for absolute URL copied from here:
+// https://github.com/remix-run/react-router/blob/react-router-dom%406.8.0/packages/react-router-dom/index.tsx#L423-L424
+const isAbsoluteUrlRemix = (href: string) =>
+  /^[a-z+]+:\/\//i.test(href) || href.startsWith("//");
+
 type Props = Omit<ComponentProps<"a">, "href"> & { href?: string };
 
 type Ref = ElementRef<"a">;
@@ -29,14 +34,10 @@ export const wrapLinkComponent = (
     const isAbsolute = isAbsoluteUrl(href);
 
     // This is a workaround for a bug in Remix: https://github.com/remix-run/remix/issues/5440
-    //
     // It has a buggy absolute URL detection, which gives false positives on value like "//" or "http://"
-    // and causes entire app to crash.
-    //
-    // Condition is copied from Remix's code:
-    // https://github.com/remix-run/react-router/blob/react-router-dom%406.8.0/packages/react-router-dom/index.tsx#L423-L424
+    // and causes entire app to crash
     const willRemixTryToTreatAsAbsoluteAndCrash =
-      !isAbsolute && (/^[a-z+]+:\/\//i.test(href) || href.startsWith("//"));
+      isAbsolute === false && isAbsoluteUrlRemix(href);
 
     if (isAbsolute || willRemixTryToTreatAsAbsoluteAndCrash) {
       return (
