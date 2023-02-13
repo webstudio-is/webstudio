@@ -64,7 +64,7 @@ export const Breakpoints = () => {
     if (breakpointToDelete === undefined) {
       return;
     }
-    const [updatedBreakpoints] = store.createTransaction(
+    store.createTransaction(
       [breakpointsContainer, stylesStore],
       (breakpoints, styles) => {
         const breakpointId = breakpointToDelete.id;
@@ -76,10 +76,8 @@ export const Breakpoints = () => {
         }
       }
     );
-    if (breakpointToDelete === selectedBreakpoint) {
-      selectedBreakpointIdStore.set(
-        utils.breakpoints.sort(updatedBreakpoints)[0].id
-      );
+    if (breakpointToDelete.id === selectedBreakpoint.id) {
+      selectedBreakpointIdStore.set(undefined);
     }
 
     setBreakpointToDelete(undefined);
