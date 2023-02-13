@@ -1,13 +1,14 @@
 import { useMemo } from "react";
-import { useSelectedBreakpoint } from "~/designer/shared/nano-states";
 import { useBreakpoints } from "~/shared/nano-states";
 import { utils } from "@webstudio-is/project";
+import { useStore } from "@nanostores/react";
+import { selectedBreakpointStore } from "~/shared/nano-states/breakpoints";
 
 /**
  * Return the next breakpoint from the currently selected one, sorted by the `sort()`
  */
 export const useNextBreakpoint = () => {
-  const [selectedBreakpoint] = useSelectedBreakpoint();
+  const selectedBreakpoint = useStore(selectedBreakpointStore);
   const [breakpoints] = useBreakpoints();
 
   const sortedBreakpoints = useMemo(

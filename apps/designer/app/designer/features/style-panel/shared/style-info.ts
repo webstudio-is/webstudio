@@ -21,7 +21,7 @@ import {
   useBreakpoints,
   useRootInstance,
 } from "~/shared/nano-states";
-import { useSelectedBreakpoint } from "~/designer/shared/nano-states";
+import { selectedBreakpointStore } from "~/shared/nano-states/breakpoints";
 
 type CascadedValueInfo = {
   breakpointId: string;
@@ -194,7 +194,7 @@ export const getInheritedInfo = (
  */
 export const useStyleInfo = () => {
   const [breakpoints] = useBreakpoints();
-  const [selectedBreakpoint] = useSelectedBreakpoint();
+  const selectedBreakpoint = useStore(selectedBreakpointStore);
   const selectedBreakpointId = selectedBreakpoint?.id;
   const selectedInstanceId = useStore(selectedInstanceIdStore);
   const selectedStyleSource = useStore(selectedStyleSourceStore);

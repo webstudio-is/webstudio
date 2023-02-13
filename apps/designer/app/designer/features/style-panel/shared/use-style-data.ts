@@ -1,4 +1,5 @@
 import { useCallback } from "react";
+import { useStore } from "@nanostores/react";
 import store from "immerhin";
 import warnOnce from "warn-once";
 import { getStyleDeclKey, type Instance } from "@webstudio-is/project-build";
@@ -11,7 +12,7 @@ import {
   styleSourcesStore,
   stylesStore,
 } from "~/shared/nano-states";
-import { useSelectedBreakpoint } from "~/designer/shared/nano-states";
+import { selectedBreakpointStore } from "~/shared/nano-states/breakpoints";
 // @todo: must be removed, now it's only for compatibility with existing code
 import { parseCssValue } from "./parse-css-value";
 import { useStyleInfo } from "./style-info";
@@ -49,7 +50,7 @@ export type CreateBatchUpdate = () => {
 };
 
 export const useStyleData = ({ selectedInstance, publish }: UseStyleData) => {
-  const [selectedBreakpoint] = useSelectedBreakpoint();
+  const selectedBreakpoint = useStore(selectedBreakpointStore);
 
   const currentStyle = useStyleInfo();
 

@@ -1,16 +1,17 @@
 import { Options, useHotkeys } from "react-hotkeys-hook";
 import store from "immerhin";
 import { selectedInstanceIdStore } from "../nano-states";
-import { zoomIn, zoomOut } from "../nano-states/breakpoints";
+import {
+  zoomIn,
+  zoomOut,
+  selectBreakpointByOrderNumber,
+} from "../nano-states/breakpoints";
 import { deleteInstance } from "../instance-utils";
 
 export const shortcuts = {
   esc: "esc",
   preview: "meta+shift+p, ctrl+shift+p",
   breakpointsMenu: "meta+b, ctrl+b",
-  breakpoint: Array.from(new Array(9))
-    .map((_, index) => `meta+${index + 1}, ctrl+${index + 1}`)
-    .join(", "),
 } as const;
 
 export const options: Options = {
@@ -79,6 +80,18 @@ export const useSharedShortcuts = () => {
     (event) => {
       event.preventDefault();
       zoomOut();
+    },
+    { enableOnFormTags: true, enableOnContentEditable: true },
+    []
+  );
+
+  const breakpointShortcuts = Array.from(new Array(9))
+    .map((_, index) => `meta+${index + 1}, ctrl+${index + 1}`)
+    .join(", ");
+  useHotkeys(
+    breakpointShortcuts,
+    (event) => {
+      selectBreakpointByOrderNumber(Number.parseInt(event.key, 10));
     },
     { enableOnFormTags: true, enableOnContentEditable: true },
     []

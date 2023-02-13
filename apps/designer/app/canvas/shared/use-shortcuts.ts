@@ -13,29 +13,11 @@ declare module "~/shared/pubsub" {
   export interface PubsubMap {
     cancelCurrentDrag: undefined;
     openBreakpointsMenu: undefined;
-    selectBreakpointFromShortcut: number;
   }
 }
 
-type HandlerEvent = {
-  key?: string;
-  preventDefault?: () => void;
-};
-
 const togglePreviewMode = () => {
   isPreviewModeStore.set(!isPreviewModeStore.get());
-};
-
-const publishSelectBreakpoint = ({ key }: HandlerEvent) => {
-  if (!key) {
-    throw new Error(
-      "`publishSelectBreakpoint` doesn't account for being called without a `key`"
-    );
-  }
-  publish({
-    type: "selectBreakpointFromShortcut",
-    payload: parseInt(key, 10),
-  });
 };
 
 const publishOpenBreakpointsMenu = () => {
@@ -52,7 +34,6 @@ export const useShortcuts = () => {
   const shortcutHandlerMap = {
     preview: togglePreviewMode,
     breakpointsMenu: publishOpenBreakpointsMenu,
-    breakpoint: publishSelectBreakpoint,
     esc: publishCancelCurrentDrag,
   } as const;
 
@@ -94,7 +75,6 @@ export const useShortcuts = () => {
 
   useHotkeys(shortcuts.preview, shortcutHandlerMap.preview, options, []);
 
-  useHotkeys(shortcuts.breakpoint, shortcutHandlerMap.breakpoint, options, []);
   useHotkeys(
     shortcuts.breakpointsMenu,
     shortcutHandlerMap.breakpointsMenu,
@@ -105,7 +85,7 @@ export const useShortcuts = () => {
   useHotkeys(shortcuts.esc, shortcutHandlerMap.esc, options, []);
 
   // Shortcuts from the parent window
-  useSubscribe("shortcut", ({ name, key }) => {
-    shortcutHandlerMap[name]({ key });
+  useSubscribe("shortcut", ({ name }) => {
+    shortcutHandlerMap[name]();
   });
 };

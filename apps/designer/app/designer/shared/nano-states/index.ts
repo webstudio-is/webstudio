@@ -1,6 +1,5 @@
 import { atom, type WritableAtom } from "nanostores";
 import { useStore } from "@nanostores/react";
-import type { Breakpoint } from "@webstudio-is/css-data";
 import type { Pages, Project } from "@webstudio-is/project";
 import type { AssetContainer, DeletingAssetContainer } from "../assets";
 
@@ -15,10 +14,6 @@ export const useIsShareDialogOpen = () => useValue(isShareDialogOpenContainer);
 const isPublishDialogOpenContainer = atom<boolean>(false);
 export const useIsPublishDialogOpen = () =>
   useValue(isPublishDialogOpenContainer);
-
-const selectedBreakpointContainer = atom<Breakpoint | undefined>();
-export const useSelectedBreakpoint = () =>
-  useValue(selectedBreakpointContainer);
 
 const canvasWidthContainer = atom<number>(0);
 export const useCanvasWidth = () => useValue(canvasWidthContainer);
