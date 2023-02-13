@@ -1,6 +1,9 @@
 import { type ComponentProps, Fragment } from "react";
+import { ReadableAtom } from "nanostores";
 import { Scripts, ScrollRestoration } from "@remix-run/react";
 import type { Instance } from "@webstudio-is/project-build";
+import { ReactSdkContext } from "../context";
+import { Assets, PropsByInstanceId } from "../props";
 import { WrapperComponent } from "./wrapper-component";
 import { SessionStoragePolyfill } from "./session-storage-polyfill";
 
@@ -25,11 +28,15 @@ export type OnChangeChildren = (change: {
 export const createElementsTree = ({
   sandbox,
   instance,
+  propsByInstanceIdStore,
+  assetsStore,
   Component,
   onChangeChildren,
 }: {
   sandbox?: boolean;
   instance: Instance;
+  propsByInstanceIdStore: ReadableAtom<PropsByInstanceId>;
+  assetsStore: ReadableAtom<Assets>;
   Component: (props: ComponentProps<typeof WrapperComponent>) => JSX.Element;
   onChangeChildren?: OnChangeChildren;
 }) => {
@@ -50,7 +57,11 @@ export const createElementsTree = ({
       </Fragment>,
     ],
   });
-  return body;
+  return (
+    <ReactSdkContext.Provider value={{ propsByInstanceIdStore, assetsStore }}>
+      {body}
+    </ReactSdkContext.Provider>
+  );
 };
 
 const createInstanceChildrenElements = ({

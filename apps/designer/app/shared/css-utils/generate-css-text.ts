@@ -1,15 +1,16 @@
 import { json } from "@remix-run/node";
 import { db } from "@webstudio-is/project/server";
 import { addGlobalRules, getStyleRules } from "@webstudio-is/project";
-import { loadCanvasData } from "~/shared/db";
 import { createCssEngine } from "@webstudio-is/css-engine";
 import {
   getComponentMeta,
   getComponentNames,
   idAttribute,
 } from "@webstudio-is/react-sdk";
-import type { BuildParams } from "../router-utils";
 import type { AppContext } from "@webstudio-is/trpc-interface/server";
+import type { Asset } from "@webstudio-is/asset-uploader";
+import { loadCanvasData } from "~/shared/db";
+import type { BuildParams } from "../router-utils";
 
 export const generateCssText = async (
   buildParams: BuildParams,
@@ -37,7 +38,10 @@ export const generateCssText = async (
 
   const engine = createCssEngine({ name: "ssr" });
 
-  addGlobalRules(engine, canvasData);
+  const assets = new Map<Asset["id"], Asset>(
+    canvasData.assets.map((asset) => [asset.id, asset])
+  );
+  addGlobalRules(engine, { assets });
 
   for (const breakpoint of canvasData.build?.breakpoints ?? []) {
     engine.addMediaRule(breakpoint.id, breakpoint);

@@ -1,19 +1,23 @@
+import { computed } from "nanostores";
+import warnOnce from "warn-once";
+import { useMemo } from "react";
+import { useStore } from "@nanostores/react";
 import type { Instance, Prop } from "@webstudio-is/project-build";
 import { getComponentMetaProps } from "@webstudio-is/react-sdk";
-import warnOnce from "warn-once";
+import type { Asset } from "@webstudio-is/asset-uploader";
 import {
   Flex,
   DeprecatedLabel,
+  Checkbox,
   Radio,
   RadioGroup,
   Select,
   Switch,
   TextField,
 } from "@webstudio-is/design-system";
-import { FloatingPanel } from "~/designer/shared/floating-panel/";
+import { assetsStore } from "~/shared/nano-states";
+import { FloatingPanel } from "~/designer/shared/floating-panel";
 import { ImageManager } from "~/designer/shared/image-manager";
-import { Checkbox } from "@webstudio-is/design-system";
-import { Asset } from "@webstudio-is/asset-uploader";
 import type { UserPropValue } from "./use-props-logic";
 import { type SetProperty } from "../style-panel/shared/use-style-data";
 
@@ -143,11 +147,20 @@ const BooleanControl = ({
 );
 
 type ImageControlProps = {
-  asset: Asset | null;
+  assetId: undefined | Asset["id"];
   onChange: (asset: Asset) => void;
 };
 
-const ImageControl = ({ asset, onChange }: ImageControlProps) => {
+const ImageControl = ({ assetId, onChange }: ImageControlProps) => {
+  const assetStore = useMemo(() => {
+    return computed(assetsStore, (assets) => {
+      if (assetId === undefined) {
+        return undefined;
+      }
+      return assets.get(assetId);
+    });
+  }, [assetId]);
+  const asset = useStore(assetStore);
   return (
     <FloatingPanel
       title="Images"
@@ -216,15 +229,15 @@ export function Control({
   }
 
   if (component === "Image" && userProp.name === "src") {
-    const asset = userProp.type === "asset" ? userProp.value : null;
+    const assetId = userProp.type === "asset" ? userProp.value : undefined;
 
     return (
       <ImageControl
-        asset={asset}
-        onChange={(value) => {
-          onChangePropValue({ type: "asset", value });
+        assetId={assetId}
+        onChange={(asset) => {
+          onChangePropValue({ type: "asset", value: asset.id });
 
-          const { meta } = value;
+          const { meta } = asset;
           if ("width" in meta && "height" in meta) {
             // @todo: change on own type, pass width/hight separately
             const aspectRatio = meta.width / meta.height;
@@ -243,7 +256,7 @@ export function Control({
 
   if (userProp.type === "asset") {
     throw new Error(
-      `userProp with id "${userProp.value.id}" has asset but no control exists to process it`
+      `userProp with id "${userProp.value}" has asset but no control exists to process it`
     );
   }
 

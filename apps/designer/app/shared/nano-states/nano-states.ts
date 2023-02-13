@@ -208,14 +208,15 @@ export const assetContainersStore = atom<
 >([]);
 
 export const assetsStore = computed(assetContainersStore, (assetContainers) => {
-  const assets: Asset[] = [];
+  const assets = new Map<Asset["id"], Asset>();
   for (const assetContainer of assetContainers) {
     if (assetContainer.status === "uploaded") {
-      assets.push(assetContainer.asset);
+      assets.set(assetContainer.asset.id, assetContainer.asset);
     }
   }
   return assets;
 });
+export const assetsIndex = computed;
 
 export const useSetAssets = (assets: Asset[]) => {
   useSyncInitializeOnce(() => {

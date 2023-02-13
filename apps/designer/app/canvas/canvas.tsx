@@ -9,7 +9,6 @@ import {
   customComponentsMeta,
   setParams,
   type OnChangeChildren,
-  setPropsByInstanceIdStore,
 } from "@webstudio-is/react-sdk";
 import { publish } from "~/shared/pubsub";
 import { registerContainers, useCanvasStore } from "~/shared/sync";
@@ -21,6 +20,7 @@ import { useTrackSelectedElement } from "./shared/use-track-selected-element";
 import { WrapperComponentDev } from "./features/wrapper-component";
 import {
   propsIndexStore,
+  assetsStore,
   rootInstanceContainer,
   useBreakpoints,
   useRootInstance,
@@ -44,6 +44,11 @@ import { customComponents } from "./custom-components";
 import { useHoveredInstanceConnector } from "./hovered-instance-connector";
 
 registerContainers();
+
+const propsByInstanceIdStore = computed(
+  propsIndexStore,
+  (propsIndex) => propsIndex.propsByInstanceId
+);
 
 const useElementsTree = () => {
   const [rootInstance] = useRootInstance();
@@ -76,6 +81,8 @@ const useElementsTree = () => {
     return createElementsTree({
       sandbox: true,
       instance: rootInstance,
+      propsByInstanceIdStore,
+      assetsStore,
       Component: WrapperComponentDev,
       onChangeChildren,
     });
@@ -101,11 +108,6 @@ type CanvasProps = {
   data: CanvasData;
 };
 
-const propsByInstanceIdStore = computed(
-  propsIndexStore,
-  (propsIndex) => propsIndex.propsByInstanceId
-);
-
 export const Canvas = ({ data }: CanvasProps): JSX.Element | null => {
   if (data.build === null) {
     throw new Error("Build is null");
@@ -118,8 +120,6 @@ export const Canvas = ({ data }: CanvasProps): JSX.Element | null => {
   useSetAssets(data.assets);
   useSetBreakpoints(data.build.breakpoints);
   useSetProps(data.tree.props);
-  // inject props store to sdk
-  setPropsByInstanceIdStore(propsByInstanceIdStore);
   useSetStyles(data.build.styles);
   useSetStyleSources(data.build.styleSources);
   useSetStyleSourceSelections(data.tree.styleSourceSelections);

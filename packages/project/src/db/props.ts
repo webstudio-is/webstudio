@@ -1,5 +1,4 @@
-import warnOnce from "warn-once";
-import { type Tree, StoredProps, Props } from "@webstudio-is/project-build";
+import { type Tree, Props, PropsList } from "@webstudio-is/project-build";
 import { applyPatches, type Patch } from "immer";
 import { prisma } from "@webstudio-is/prisma-client";
 import type { Project } from "../shared/schema";
@@ -7,77 +6,15 @@ import {
   authorizeProject,
   type AppContext,
 } from "@webstudio-is/trpc-interface/server";
-import { loadByIds } from "@webstudio-is/asset-uploader/server";
 
-export const parseProps = async (
-  props: { propsString: string; projectId: Project["id"] },
-  context: AppContext
-) => {
-  const storedProps = StoredProps.parse(JSON.parse(props.propsString));
-
-  // find all asset ids in all props
-  const assetIds: string[] = [];
-
-  for (const prop of storedProps) {
-    if (prop.type === "asset") {
-      assetIds.push(prop.value);
-    }
-  }
-
-  // load all assets
-  const assets = await loadByIds(
-    { ids: assetIds, projectId: props.projectId },
-    context
-  );
-
-  const assetsMap = new Map(assets.map((asset) => [asset.id, asset]));
-
-  const convertedProps: Props = new Map();
-  for (const prop of storedProps) {
-    if (prop.type === "asset") {
-      const assetId = prop.value;
-      const asset = assetsMap.get(assetId);
-
-      if (asset) {
-        convertedProps.set(prop.id, {
-          id: prop.id,
-          instanceId: prop.instanceId,
-          name: prop.name,
-          required: prop.required,
-          type: prop.type,
-          value: asset,
-        });
-
-        continue;
-      }
-
-      warnOnce(true, `Asset with assetId "${assetId}" not found`);
-      continue;
-    }
-
-    convertedProps.set(prop.id, prop);
-  }
-
-  return convertedProps;
+export const parseProps = (propsString: string): Props => {
+  const propsList = PropsList.parse(JSON.parse(propsString));
+  return new Map(propsList.map((prop) => [prop.id, prop]));
 };
 
 export const serializeProps = (props: Props) => {
-  const storedProps: StoredProps = [];
-  for (const prop of props.values()) {
-    if (prop.type === "asset") {
-      storedProps.push({
-        id: prop.id,
-        instanceId: prop.instanceId,
-        name: prop.name,
-        required: prop.required,
-        type: prop.type,
-        value: prop.value.id,
-      });
-      continue;
-    }
-    storedProps.push(prop);
-  }
-  return JSON.stringify(storedProps);
+  const propsList: PropsList = Array.from(props.values());
+  return JSON.stringify(propsList);
 };
 
 export const patch = async (
@@ -102,11 +39,8 @@ export const patch = async (
   if (tree === null) {
     return;
   }
-  const props = await parseProps(
-    { propsString: tree.props, projectId },
-    context
-  );
-  const patchedProps = applyPatches(props, patches);
+  const props = parseProps(tree.props);
+  const patchedProps = Props.parse(applyPatches(props, patches));
 
   await prisma.tree.update({
     data: {

@@ -8,16 +8,20 @@ import {
 
 export const addGlobalRules = (
   engine: CssEngine,
-  { assets = [] }: { assets?: Array<Asset> }
+  { assets }: { assets: Map<Asset["id"], Asset> }
 ) => {
   // @todo we need to figure out all global resets while keeping
   // the engine aware of all of them.
   // Ideally, the user is somehow aware and in control of the reset
   engine.addPlaintextRule("html {margin: 0; height: 100%}");
 
-  const fontAssets = assets.filter((asset) =>
-    FONT_FORMATS.has(asset.format as FontFormat)
-  ) as Array<FontAsset>;
+  const fontAssets: Array<FontAsset> = [];
+  for (const asset of assets.values()) {
+    if (FONT_FORMATS.has(asset.format as FontFormat)) {
+      fontAssets.push(asset as FontAsset);
+    }
+  }
+
   const fontFaces = getFontFaces(fontAssets);
   for (const fontFace of fontFaces) {
     engine.addFontFaceRule(fontFace);
