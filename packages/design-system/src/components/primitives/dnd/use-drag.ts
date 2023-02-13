@@ -1,5 +1,5 @@
 import { useRef, useEffect, useMemo, useState } from "react";
-import { type Point } from "./geometry-utils";
+import type { Point } from "./geometry-utils";
 
 type State<Data> = {
   status: "pending" | "dragging" | "idle";

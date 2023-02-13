@@ -1,4 +1,4 @@
-import { ComponentStoryObj } from "@storybook/react";
+import type { ComponentStoryObj } from "@storybook/react";
 import { Control } from "./control";
 
 export default {

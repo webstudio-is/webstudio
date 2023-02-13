@@ -1,5 +1,5 @@
 import { prisma, type Project } from "@webstudio-is/prisma-client";
-import { Asset } from "../schema";
+import type { Asset } from "../schema";
 import {
   authorizeProject,
   type AppContext,

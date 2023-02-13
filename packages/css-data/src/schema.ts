@@ -1,5 +1,5 @@
 import { units } from "./__generated__/units";
-import { properties } from "./__generated__/properties";
+import type { properties } from "./__generated__/properties";
 import { z } from "zod";
 import { ImageAsset } from "@webstudio-is/asset-uploader";
 

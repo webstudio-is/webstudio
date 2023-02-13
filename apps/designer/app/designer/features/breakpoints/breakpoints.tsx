@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import store from "immerhin";
-import { type Breakpoint } from "@webstudio-is/css-data";
+import type { Breakpoint } from "@webstudio-is/css-data";
 import { useSubscribe } from "~/shared/pubsub";
 import {
   DropdownMenu,

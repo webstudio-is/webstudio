@@ -1,6 +1,6 @@
 // Story for image development, see https://github.com/webstudio-is/webstudio-designer/issues/387
 
-import React, { type ComponentProps, type HTMLAttributes } from "react";
+import type * as React from "react";
 import type { ComponentMeta, ComponentStory } from "@storybook/react";
 import { Image as ImagePrimitive, loaders } from "./";
 
@@ -13,7 +13,7 @@ export default {
   title: "Components/ImageDev",
 } as ComponentMeta<typeof ImagePrimitive>;
 
-type ImageProps = ComponentProps<typeof ImagePrimitive>;
+type ImageProps = React.ComponentProps<typeof ImagePrimitive>;
 
 /**
  * In case you need to test img with real cloudflare trasforms
@@ -34,7 +34,9 @@ const imageLoader = USE_CLOUDFLARE_IMAGE_TRANSFORM
 
 const ImageBase: ComponentStory<
   React.ForwardRefExoticComponent<
-    Omit<ImageProps, "loader"> & { style?: HTMLAttributes<"img">["style"] }
+    Omit<ImageProps, "loader"> & {
+      style?: React.HTMLAttributes<"img">["style"];
+    }
   >
 > = (args) => {
   const style = {

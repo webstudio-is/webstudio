@@ -1,10 +1,10 @@
 import { type ComponentProps, Fragment } from "react";
-import { ReadableAtom } from "nanostores";
+import type { ReadableAtom } from "nanostores";
 import { Scripts, ScrollRestoration } from "@remix-run/react";
 import type { Instance } from "@webstudio-is/project-build";
 import { ReactSdkContext } from "../context";
-import { Assets, PropsByInstanceId } from "../props";
-import { WrapperComponent } from "./wrapper-component";
+import type { Assets, PropsByInstanceId } from "../props";
+import type { WrapperComponent } from "./wrapper-component";
 import { SessionStoragePolyfill } from "./session-storage-polyfill";
 
 export type ChildrenUpdates = Array<

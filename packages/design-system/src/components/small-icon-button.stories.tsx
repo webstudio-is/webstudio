@@ -1,4 +1,4 @@
-import { type ComponentProps } from "react";
+import type { ComponentProps } from "react";
 import { MenuIcon, CrossIcon, TrashIcon } from "@webstudio-is/icons";
 import {
   SmallIconButton,

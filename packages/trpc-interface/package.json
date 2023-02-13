@@ -25,7 +25,7 @@
     "@webstudio-is/jest-config": "workspace:^",
     "@webstudio-is/scripts": "workspace:^",
     "@webstudio-is/tsconfig": "workspace:^",
-    "typescript": "4.7.4"
+    "typescript": "4.9.5"
   },
   "exports": {
     "./server": "./server.js"

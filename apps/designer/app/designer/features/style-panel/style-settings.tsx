@@ -11,10 +11,7 @@ import {
 import { CollapsibleSection } from "~/designer/shared/inspector";
 import { renderCategory, shouldRenderCategory } from "./style-sections";
 import { dependencies } from "./shared/dependencies";
-import {
-  type SetProperty,
-  type CreateBatchUpdate,
-} from "./shared/use-style-data";
+import type { SetProperty, CreateBatchUpdate } from "./shared/use-style-data";
 import type { StyleInfo } from "./shared/style-info";
 import type { RenderPropertyProps } from "./style-sections";
 

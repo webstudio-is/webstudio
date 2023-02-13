@@ -23,7 +23,7 @@ import {
   SubContent,
 } from "@radix-ui/react-dropdown-menu";
 import { CheckMarkIcon, DotIcon } from "@webstudio-is/icons";
-import { type ComponentProps } from "react";
+import type { ComponentProps } from "react";
 
 export const labelCss = css(textVariants.title, {
   color: theme.colors.foregroundMain,

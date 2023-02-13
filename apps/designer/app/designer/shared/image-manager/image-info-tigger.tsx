@@ -10,7 +10,7 @@ import {
 import { GearIcon, gearIconCssVars } from "@webstudio-is/icons";
 import { ImageInfo } from "./image-info";
 import { cssVars } from "@webstudio-is/css-vars";
-import { Asset } from "@webstudio-is/asset-uploader";
+import type { Asset } from "@webstudio-is/asset-uploader";
 import { theme } from "@webstudio-is/design-system";
 
 const triggerVisibilityVar = cssVars.define("trigger-visibility");

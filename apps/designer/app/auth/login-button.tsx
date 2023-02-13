@@ -1,4 +1,4 @@
-import React from "react";
+import type * as React from "react";
 import { Button, Flex, Tooltip } from "@webstudio-is/design-system";
 import env from "~/shared/env";
 import { theme } from "@webstudio-is/design-system";

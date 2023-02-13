@@ -1,4 +1,4 @@
-import { IconComponent } from "@webstudio-is/icons";
+import type { IconComponent } from "@webstudio-is/icons";
 import {
   DropdownMenu,
   DropdownMenuTrigger,

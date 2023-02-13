@@ -1,6 +1,6 @@
 import { applyPatches, type Patch } from "immer";
 import { v4 as uuid } from "uuid";
-import { z } from "zod";
+import type { z } from "zod";
 import {
   type Tree,
   type InstancesItem,

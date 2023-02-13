@@ -19,7 +19,7 @@ import {
   Dialog,
   DialogDescription,
 } from "./dialog";
-import { DashboardProject } from "@webstudio-is/prisma-client";
+import type { DashboardProject } from "@webstudio-is/prisma-client";
 import { ShareProjectContainer } from "~/shared/share-project";
 import { Title } from "@webstudio-is/project";
 

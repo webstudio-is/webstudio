@@ -1,5 +1,5 @@
 import { useRef, useMemo } from "react";
-import { type Point } from "./geometry-utils";
+import type { Point } from "./geometry-utils";
 
 // Time between frames of scroll animation in milliseconds
 const FRAME_PERIOD = 30;

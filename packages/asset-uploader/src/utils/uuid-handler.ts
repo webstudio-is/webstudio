@@ -1,4 +1,4 @@
-import { type UploadHandler as UnstableUploadHandler } from "@remix-run/node";
+import type { UploadHandler as UnstableUploadHandler } from "@remix-run/node";
 import { idsFormDataFieldName } from "../schema";
 import { toUint8Array } from "./to-uint8-array";
 

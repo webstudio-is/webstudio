@@ -1,7 +1,7 @@
 import { useStore } from "@nanostores/react";
 import { theme, Box, Flex, Toaster } from "@webstudio-is/design-system";
 import { useCanvasWidth } from "~/designer/shared/nano-states";
-import { type Publish } from "~/shared/pubsub";
+import type { Publish } from "~/shared/pubsub";
 import { selectedInstanceIdStore } from "~/shared/nano-states";
 import { zoomStore } from "~/shared/nano-states/breakpoints";
 import { CanvasTools } from "./canvas-tools";

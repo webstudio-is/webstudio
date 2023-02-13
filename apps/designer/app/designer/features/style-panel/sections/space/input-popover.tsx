@@ -7,14 +7,14 @@ import {
   DeprecatedPopoverPortal,
   styled,
 } from "@webstudio-is/design-system";
-import { StyleUpdate } from "@webstudio-is/project";
+import type { StyleUpdate } from "@webstudio-is/project";
 import type { StyleProperty, StyleValue } from "@webstudio-is/css-data";
 import {
   CssValueInput,
   type IntermediateStyleValue,
 } from "../../shared/css-value-input";
 import type { StyleSource } from "../../shared/style-info";
-import { StyleUpdateOptions } from "../../shared/use-style-data";
+import type { StyleUpdateOptions } from "../../shared/use-style-data";
 import { theme } from "@webstudio-is/design-system";
 
 const slideUpAndFade = keyframes({

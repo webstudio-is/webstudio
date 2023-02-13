@@ -1,4 +1,4 @@
-import { CssEngine } from "@webstudio-is/css-engine";
+import type { CssEngine } from "@webstudio-is/css-engine";
 import type { Asset, FontAsset } from "@webstudio-is/asset-uploader";
 import {
   type FontFormat,

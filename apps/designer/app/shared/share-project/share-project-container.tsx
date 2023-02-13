@@ -4,7 +4,7 @@ import type { AuthorizationTokensRouter } from "@webstudio-is/authorization-toke
 import { authorizationTokenPath, designerUrl } from "~/shared/router-utils";
 import { useEffect } from "react";
 import { useDebouncedCallback } from "use-debounce";
-import { Project } from "@webstudio-is/prisma-client";
+import type { Project } from "@webstudio-is/prisma-client";
 
 const trpc = createTrpcRemixProxy<AuthorizationTokensRouter>(
   authorizationTokenPath

@@ -1,5 +1,5 @@
 import type { ComponentMeta } from "@storybook/react";
-import React from "react";
+import type * as React from "react";
 import { SpaceLayout } from "./layout";
 
 export const Layout = (

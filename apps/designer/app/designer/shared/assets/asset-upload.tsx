@@ -1,7 +1,7 @@
 import { ChangeEvent, useRef } from "react";
 import { Button, Flex, Tooltip } from "@webstudio-is/design-system";
 import { UploadIcon } from "@webstudio-is/icons";
-import { type AssetType } from "@webstudio-is/asset-uploader";
+import type { AssetType } from "@webstudio-is/asset-uploader";
 import { FONT_MIME_TYPES } from "@webstudio-is/fonts";
 import { useAssets } from "./use-assets";
 import { useAuthPermit } from "~/shared/nano-states";

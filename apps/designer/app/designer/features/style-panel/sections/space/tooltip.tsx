@@ -3,7 +3,7 @@ import {
   Tooltip,
   useEnhancedTooltipProps,
 } from "@webstudio-is/design-system";
-import { SpaceStyleProperty } from "./types";
+import type { SpaceStyleProperty } from "./types";
 import { useDebounce } from "use-debounce";
 import { useState } from "react";
 

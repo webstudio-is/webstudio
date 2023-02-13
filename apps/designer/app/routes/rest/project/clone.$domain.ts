@@ -1,6 +1,6 @@
 import { redirect, type LoaderArgs } from "@remix-run/node";
 import { db as projectDb } from "@webstudio-is/project/server";
-import { type Project } from "@webstudio-is/project";
+import type { Project } from "@webstudio-is/project";
 import { findAuthenticatedUser } from "~/services/auth.server";
 import { designerPath, loginPath } from "~/shared/router-utils";
 import type { AppContext } from "@webstudio-is/trpc-interface/server";

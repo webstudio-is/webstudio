@@ -14,7 +14,7 @@ import {
   TrashIcon,
 } from "@webstudio-is/icons";
 import prettyBytes from "pretty-bytes";
-import { Asset } from "@webstudio-is/asset-uploader";
+import type { Asset } from "@webstudio-is/asset-uploader";
 import { Filename } from "./filename";
 import { theme } from "@webstudio-is/design-system";
 import { useAuthPermit } from "~/shared/nano-states";

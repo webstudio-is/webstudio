@@ -1,5 +1,5 @@
 import { css, Flex, Text, theme } from "@webstudio-is/design-system";
-import { type ComponentProps } from "react";
+import type { ComponentProps } from "react";
 
 const containerStyle = css({
   background: "linear-gradient(180deg, #E63CFE 0%, #FFAE3C 100%)",

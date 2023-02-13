@@ -1,5 +1,5 @@
 import { Outline } from "./outline";
-import { DropTargetChangePayload } from "~/canvas/shared/use-drag-drop";
+import type { DropTargetChangePayload } from "~/canvas/shared/use-drag-drop";
 import { Label } from "./label";
 
 export const DropTargetOutline = ({

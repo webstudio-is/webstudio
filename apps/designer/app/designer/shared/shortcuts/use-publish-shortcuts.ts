@@ -1,6 +1,6 @@
 import { useHotkeys } from "react-hotkeys-hook";
 import { shortcuts, options } from "~/shared/shortcuts";
-import { type Publish } from "~/shared/pubsub";
+import type { Publish } from "~/shared/pubsub";
 
 declare module "~/shared/pubsub" {
   export interface PubsubMap {

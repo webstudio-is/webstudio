@@ -9,7 +9,7 @@ import {
 import { useFilter } from "../assets/use-filter";
 import { ImageThumbnail } from "./image-thumbnail";
 import { matchSorter } from "match-sorter";
-import { ImageAsset } from "@webstudio-is/asset-uploader";
+import type { ImageAsset } from "@webstudio-is/asset-uploader";
 
 const filterItems = (search: string, items: AssetContainer[]) => {
   return matchSorter(items, search, {

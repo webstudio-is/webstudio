@@ -14,8 +14,8 @@
     "lint": "eslint ./src --ext .ts,.tsx --max-warnings 0"
   },
   "dependencies": {
-    "@webstudio-is/project": "workspace:^",
     "@webstudio-is/prisma-client": "workspace:^",
+    "@webstudio-is/project": "workspace:^",
     "@webstudio-is/trpc-interface": "workspace:^",
     "zod": "^3.19.1"
   },
@@ -25,7 +25,7 @@
     "@webstudio-is/scripts": "workspace:^",
     "@webstudio-is/tsconfig": "workspace:^",
     "jest": "^29.3.1",
-    "typescript": "4.7.4"
+    "typescript": "4.9.5"
   },
   "exports": {
     ".": {

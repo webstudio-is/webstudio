@@ -1,4 +1,4 @@
-import { type KeyboardEvent, type FocusEvent } from "react";
+import type { KeyboardEvent, FocusEvent } from "react";
 import { Box, styled } from "@webstudio-is/design-system";
 import { UploadingAnimation } from "./uploading-animation";
 import { ImageInfoTrigger, imageInfoTriggerCssVars } from "./image-info-tigger";

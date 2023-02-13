@@ -1,5 +1,5 @@
 import { describe, test } from "@jest/globals";
-import { FontAsset } from "@webstudio-is/asset-uploader";
+import type { FontAsset } from "@webstudio-is/asset-uploader";
 import { isSupportedFontWeight } from "./is-supported-font-weight";
 
 const createServerAsset = (meta: FontAsset["meta"]): FontAsset => ({
