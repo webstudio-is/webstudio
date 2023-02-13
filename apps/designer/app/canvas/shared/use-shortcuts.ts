@@ -1,5 +1,4 @@
 import { useHotkeys } from "react-hotkeys-hook";
-import store from "immerhin";
 import { getComponentMeta } from "@webstudio-is/react-sdk";
 import { shortcuts, options } from "~/shared/shortcuts";
 import { publish, useSubscribe } from "~/shared/pubsub";
@@ -51,8 +50,6 @@ export const useShortcuts = () => {
   const [editingInstanceId, setEditingInstanceId] = useTextEditingInstanceId();
 
   const shortcutHandlerMap = {
-    undo: store.undo.bind(store),
-    redo: store.redo.bind(store),
     preview: togglePreviewMode,
     breakpointsMenu: publishOpenBreakpointsMenu,
     breakpoint: publishSelectBreakpoint,
@@ -94,10 +91,6 @@ export const useShortcuts = () => {
     options,
     [setEditingInstanceId]
   );
-
-  useHotkeys(shortcuts.undo, shortcutHandlerMap.undo, options, []);
-
-  useHotkeys(shortcuts.redo, shortcutHandlerMap.redo, options, []);
 
   useHotkeys(shortcuts.preview, shortcutHandlerMap.preview, options, []);
 

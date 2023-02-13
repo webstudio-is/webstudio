@@ -1,4 +1,5 @@
 import { useNavigate } from "@remix-run/react";
+import store from "immerhin";
 import { isFeatureEnabled } from "@webstudio-is/feature-flags";
 import {
   theme,
@@ -133,27 +134,13 @@ export const Menu = ({ publish }: MenuProps) => {
             Dashboard
           </DropdownMenuItem>
           <DropdownMenuSeparator />
-          <DropdownMenuItem
-            onSelect={() => {
-              publish({
-                type: "shortcut",
-                payload: { name: "undo" },
-              });
-            }}
-          >
+          <DropdownMenuItem onSelect={() => store.undo()}>
             Undo
             <DropdownMenuItemRightSlot>
               <ShortcutHint value={["cmd", "z"]} />
             </DropdownMenuItemRightSlot>
           </DropdownMenuItem>
-          <DropdownMenuItem
-            onSelect={() => {
-              publish({
-                type: "shortcut",
-                payload: { name: "redo" },
-              });
-            }}
-          >
+          <DropdownMenuItem onSelect={() => store.redo()}>
             Redo
             <DropdownMenuItemRightSlot>
               <ShortcutHint value={["shift", "cmd", "z"]} />
