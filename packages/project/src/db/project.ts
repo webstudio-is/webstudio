@@ -8,7 +8,7 @@ import {
   type AppContext,
 } from "@webstudio-is/trpc-interface/server";
 import { v4 as uuid } from "uuid";
-import { Project, Projects, Title } from "../shared/schema";
+import { Project, Title } from "../shared/schema";
 
 const nanoid = customAlphabet("1234567890abcdefghijklmnopqrstuvwxyz");
 
@@ -35,7 +35,7 @@ export const loadById = async (
   }
 
   const data = await prisma.project.findUnique({
-    where: { id: projectId },
+    where: { id_isDeleted: { id: projectId, isDeleted: false } },
   });
 
   return Project.parse(data);
@@ -47,7 +47,9 @@ export const loadByDomain = async (
 ): Promise<Project | null> => {
   // The authorization system needs the project id to check if the user has access to the project
   const projectWithId = await prisma.project.findUnique({
-    where: { domain: domain.toLowerCase() },
+    where: {
+      domain_isDeleted: { domain: domain.toLowerCase(), isDeleted: false },
+    },
   });
 
   if (projectWithId === null) {
@@ -62,25 +64,6 @@ export const loadByDomain = async (
 
   // Otherwise, check if the user has access to the project
   return await loadById(projectWithId.id, context);
-};
-
-export const loadManyByCurrentUserId = async (
-  context: AppContext
-): Promise<Projects> => {
-  const userId = context.authorization.userId;
-  if (userId === undefined) {
-    throw new Error("The user must be authenticated to list projects");
-  }
-
-  const data = await prisma.project.findMany({
-    where: {
-      user: {
-        id: userId,
-      },
-    },
-  });
-
-  return Projects.parse(data);
 };
 
 const slugifyOptions = { lower: true, strict: true };
