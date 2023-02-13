@@ -9,7 +9,6 @@ import {
   type ChangeEvent,
   type ReactNode,
 } from "react";
-import { CheckMarkIcon } from "@webstudio-is/icons";
 // @todo:
 //   react-popper "is an internal utility, not intended for public usage"
 //   probably need to switch to @radix-ui/react-popover
@@ -29,6 +28,7 @@ import {
   itemIndicatorCss,
   labelCss,
   separatorCss,
+  MenuCheckedIcon,
 } from "./menu";
 
 const Listbox = styled(
@@ -69,7 +69,7 @@ const ListboxItemBase: ForwardRefRenderFunction<
     selectable = true,
     highlighted,
     children,
-    icon = <CheckMarkIcon />,
+    icon = <MenuCheckedIcon />,
     ...rest
   } = props;
   return (
