@@ -22,6 +22,7 @@ import {
   Arrow as BaseDropdownMenuArrow,
   SubContent,
 } from "@radix-ui/react-dropdown-menu";
+import { CheckMarkIcon, DotIcon } from "@webstudio-is/icons";
 import { type ComponentProps } from "react";
 
 export const labelCss = css(textVariants.title, {
@@ -133,3 +134,18 @@ export const DropdownMenuArrow = () => (
     </ArrowSgv>
   </BaseDropdownMenuArrow>
 );
+
+const setIconStyle = css({
+  color: theme.colors.foregroundPrimary,
+});
+
+// Icon for the "checked" state from Figma
+export const MenuCheckedIcon = () => <CheckMarkIcon />;
+
+// Icon for the "checked and set" state from Figma
+export const MenuCheckedAndSetIcon = () => (
+  <CheckMarkIcon className={setIconStyle()} />
+);
+
+// Icon for the "set dot" state from Figma
+export const MenuSetDotIcon = () => <DotIcon className={setIconStyle()} />;

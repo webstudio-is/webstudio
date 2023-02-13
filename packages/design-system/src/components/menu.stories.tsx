@@ -33,6 +33,7 @@ import {
   SelectSeparator,
   SelectGroup,
 } from "./select";
+import { MenuCheckedAndSetIcon, MenuSetDotIcon } from "./menu";
 import { TextField } from "./text-field";
 import { Button } from "./button";
 import {
@@ -48,6 +49,7 @@ import { StorySection } from "./storybook";
 const DropdownDemo = ({ withIndicator }: { withIndicator: boolean }) => {
   const [isApple, setIsApple] = useState(true);
   const [isOrange, setIsOrange] = useState(true);
+  const [isPeach, setIsPeach] = useState(true);
   const [radioValue, setRadioValue] = useState("apple");
 
   return (
@@ -102,9 +104,17 @@ const DropdownDemo = ({ withIndicator }: { withIndicator: boolean }) => {
             </DropdownMenuCheckboxItem>
             <DropdownMenuCheckboxItem
               checked={isOrange}
+              icon={<MenuCheckedAndSetIcon />}
               onSelect={() => setIsOrange(isOrange === false)}
             >
               Orange
+            </DropdownMenuCheckboxItem>
+            <DropdownMenuCheckboxItem
+              checked={isPeach}
+              icon={<MenuSetDotIcon />}
+              onSelect={() => setIsPeach(isPeach === false)}
+            >
+              Peach
             </DropdownMenuCheckboxItem>
 
             <DropdownMenuSeparator />
