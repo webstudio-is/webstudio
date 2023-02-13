@@ -35,7 +35,7 @@
     "@webstudio-is/storybook-config": "workspace:^",
     "@webstudio-is/tsconfig": "workspace:^",
     "jest": "^29.3.1",
-    "typescript": "4.7.4"
+    "typescript": "4.9.5"
   },
   "exports": "./lib/index.js",
   "types": "src/index.ts",

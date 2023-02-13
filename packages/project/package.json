@@ -14,6 +14,7 @@
     "lint": "eslint ./src --ext .ts,.tsx --max-warnings 0"
   },
   "dependencies": {
+    "@trpc/server": "^10.9.0",
     "@webstudio-is/asset-uploader": "workspace:^",
     "@webstudio-is/css-data": "workspace:^",
     "@webstudio-is/css-engine": "workspace:^",
@@ -28,8 +29,7 @@
     "slugify": "^1.6.5",
     "uuid": "^9.0.0",
     "warn-once": "^0.1.1",
-    "zod": "^3.19.1",
-    "@trpc/server": "^10.9.0"
+    "zod": "^3.19.1"
   },
   "devDependencies": {
     "@jest/globals": "^29.3.1",
@@ -38,7 +38,7 @@
     "@webstudio-is/scripts": "workspace:^",
     "@webstudio-is/tsconfig": "workspace:^",
     "jest": "^29.3.1",
-    "typescript": "4.7.4"
+    "typescript": "4.9.5"
   },
   "exports": {
     ".": {
