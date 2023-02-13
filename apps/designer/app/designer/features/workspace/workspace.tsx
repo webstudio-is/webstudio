@@ -1,9 +1,10 @@
-import { Box, Flex, Toaster } from "@webstudio-is/design-system";
-import { useCanvasWidth, useZoom } from "~/designer/shared/nano-states";
-import { CanvasTools } from "./canvas-tools";
+import { useStore } from "@nanostores/react";
+import { theme, Box, Flex, Toaster } from "@webstudio-is/design-system";
+import { useCanvasWidth } from "~/designer/shared/nano-states";
 import { type Publish } from "~/shared/pubsub";
-import { theme } from "@webstudio-is/design-system";
 import { selectedInstanceIdStore } from "~/shared/nano-states";
+import { zoomStore } from "~/shared/nano-states/breakpoints";
+import { CanvasTools } from "./canvas-tools";
 
 const workspaceStyle = {
   flexGrow: 1,
@@ -37,7 +38,7 @@ export const Workspace = ({
   onTransitionEnd,
   publish,
 }: WorkspaceProps) => {
-  const [zoom] = useZoom();
+  const zoom = useStore(zoomStore);
   const [canvasWidth] = useCanvasWidth();
 
   const handleWorkspaceClick = () => {

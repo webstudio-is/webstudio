@@ -139,7 +139,7 @@ importers:
       react-color: ^2.19.3
       react-dom: 17.0.2
       react-error-boundary: ^3.1.4
-      react-hotkeys-hook: ^4.3.4
+      react-hotkeys-hook: ^4.3.5
       react-test-renderer: ^17.0.2
       react-use: ^17.3.2
       relative-deps: ^1.0.7
@@ -221,7 +221,7 @@ importers:
       react-color: 2.19.3_react@17.0.2
       react-dom: 17.0.2_react@17.0.2
       react-error-boundary: 3.1.4_react@17.0.2
-      react-hotkeys-hook: 4.3.4_sfoxds7t5ydpegc3knd667wn6m
+      react-hotkeys-hook: 4.3.5_sfoxds7t5ydpegc3knd667wn6m
       react-use: 17.4.0_sfoxds7t5ydpegc3knd667wn6m
       remix-auth: 3.2.2_@remix-run+react@1.12.0
       remix-auth-form: 1.1.2_@remix-run+react@1.12.0
@@ -20298,8 +20298,8 @@ packages:
       - csstype
     dev: false
 
-  /react-hotkeys-hook/4.3.4_sfoxds7t5ydpegc3knd667wn6m:
-    resolution: {integrity: sha512-XV/tMK8n0joWa4tSklfddLUDirbu8T/H1hRPPm+UnfdT2ajp/jZPDh0q3L24nYjsCSwNIA6XFewYPguqrTIXkg==}
+  /react-hotkeys-hook/4.3.5_sfoxds7t5ydpegc3knd667wn6m:
+    resolution: {integrity: sha512-tfwTwKP3ga7n4naNS/JOByaEwEkTCoXYCepDuhXpj8mBx+sFszV5JecRWM2dv+PbOowmmBpHAFtTXTnG/p8UkQ==}
     peerDependencies:
       react: '>=16.8.1'
       react-dom: '>=16.8.1'

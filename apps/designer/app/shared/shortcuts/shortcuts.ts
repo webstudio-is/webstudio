@@ -1,5 +1,6 @@
 import { Options, useHotkeys } from "react-hotkeys-hook";
 import { selectedInstanceIdStore } from "../nano-states";
+import { zoomIn, zoomOut } from "../nano-states/breakpoints";
 import { deleteInstance } from "../instance-utils";
 
 export const shortcuts = {
@@ -11,7 +12,6 @@ export const shortcuts = {
   breakpoint: Array.from(new Array(9))
     .map((_, index) => `cmd+${index + 1}, ctrl+${index + 1}`)
     .join(", "),
-  zoom: "=, -",
 } as const;
 
 export const options: Options = {
@@ -30,6 +30,42 @@ export const useSharedShortcuts = () => {
     },
     // prevent instance deletion while deleting text
     { enableOnFormTags: false, enableOnContentEditable: false },
+    []
+  );
+
+  useHotkeys(
+    "equal",
+    zoomIn,
+    // prevent zoom while typing
+    { enableOnFormTags: false, enableOnContentEditable: false },
+    []
+  );
+
+  useHotkeys(
+    "meta+shift+equal",
+    (event) => {
+      event.preventDefault();
+      zoomIn();
+    },
+    { enableOnFormTags: true, enableOnContentEditable: true },
+    []
+  );
+
+  useHotkeys(
+    "minus",
+    zoomOut,
+    // prevent zoom while typing
+    { enableOnFormTags: false, enableOnContentEditable: false },
+    []
+  );
+
+  useHotkeys(
+    "meta+shift+minus",
+    (event) => {
+      event.preventDefault();
+      zoomOut();
+    },
+    { enableOnFormTags: true, enableOnContentEditable: true },
     []
   );
 };

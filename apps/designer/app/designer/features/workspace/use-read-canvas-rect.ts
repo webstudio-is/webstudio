@@ -1,7 +1,8 @@
 import { useCallback, useEffect, useState } from "react";
-import { useZoom } from "~/designer/shared/nano-states";
+import { useStore } from "@nanostores/react";
 import { useCanvasRect, useCanvasWidth } from "~/designer/shared/nano-states";
 import { useWindowResize } from "~/shared/dom-hooks";
+import { zoomStore } from "~/shared/nano-states/breakpoints";
 
 /**
  * Reads the canvas iframe dom rect and puts it into nano state
@@ -13,7 +14,7 @@ export const useReadCanvasRect = () => {
   );
   const [, setCanvasRect] = useCanvasRect();
   const [canvasWidth] = useCanvasWidth();
-  const [zoom] = useZoom();
+  const zoom = useStore(zoomStore);
   const [recalcFlag, forceRecalc] = useState(false);
   useWindowResize(() => {
     forceRecalc(!recalcFlag);

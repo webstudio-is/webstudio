@@ -1,11 +1,14 @@
-import { useZoom } from "~/designer/shared/nano-states";
-import { Slider, DeprecatedText2, Flex } from "@webstudio-is/design-system";
-import { theme } from "@webstudio-is/design-system";
-
-export const minZoom = 10;
+import { useStore } from "@nanostores/react";
+import {
+  theme,
+  Slider,
+  DeprecatedText2,
+  Flex,
+} from "@webstudio-is/design-system";
+import { minZoom, zoomStore } from "~/shared/nano-states/breakpoints";
 
 export const ZoomSetting = () => {
-  const [value, setValue] = useZoom();
+  const value = useStore(zoomStore);
   return (
     <Flex
       css={{ px: theme.spacing[11], py: theme.spacing[3] }}
@@ -18,7 +21,7 @@ export const ZoomSetting = () => {
           min={minZoom}
           value={value}
           onValueChange={([value]) => {
-            setValue(value);
+            zoomStore.set(value);
           }}
         />
         <DeprecatedText2>{value}%</DeprecatedText2>

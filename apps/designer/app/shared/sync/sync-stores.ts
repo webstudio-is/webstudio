@@ -17,6 +17,7 @@ import {
   hoveredInstanceOutlineStore,
   isPreviewModeStore,
 } from "~/shared/nano-states";
+import { synchronizedBreakpointsStores } from "~/shared/nano-states/breakpoints";
 
 enableMapSet();
 
@@ -62,6 +63,9 @@ export const registerContainers = () => {
   clientStores.set("hoveredInstanceIdStore", hoveredInstanceIdStore);
   clientStores.set("hoveredInstanceOutlineStore", hoveredInstanceOutlineStore);
   clientStores.set("isPreviewModeStore", isPreviewModeStore);
+  for (const [name, store] of synchronizedBreakpointsStores) {
+    clientStores.set(name, store);
+  }
 };
 
 const syncStoresChanges = (name: SyncEventSource, publish: Publish) => {
