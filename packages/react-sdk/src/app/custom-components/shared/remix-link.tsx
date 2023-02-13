@@ -34,7 +34,7 @@ export const wrapLinkComponent = (
     // and causes entire app to crash.
     //
     // Condition is copied from Remix's code:
-    // https://github.com/remix-run/remix/blob/9adf87c663207e687fbb8e89d2ee4868504fc52c/packages/remix-react/components.tsx#L293-L295
+    // https://github.com/remix-run/react-router/blob/react-router-dom%406.8.0/packages/react-router-dom/index.tsx#L423-L424
     const willRemixTryToTreatAsAbsoluteAndCrash =
       !isAbsolute && (/^[a-z+]+:\/\//i.test(href) || href.startsWith("//"));
 
