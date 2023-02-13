@@ -45,6 +45,14 @@ const KeywordValue = z.object({
 });
 export type KeywordValue = z.infer<typeof KeywordValue>;
 
+/**
+ * Valid unparsed css value
+ **/
+const UnparsedValue = z.object({
+  type: z.literal("unparsed"),
+  value: z.string(),
+});
+
 const FontFamilyValue = z.object({
   type: z.literal("fontFamily"),
   value: z.array(z.string()),
@@ -87,6 +95,7 @@ export const validStaticValueTypes = [
   "fontFamily",
   "rgb",
   "image",
+  "unparsed",
 ] as const;
 
 /**
@@ -98,6 +107,7 @@ const SharedStaticStyleValue = z.union([
   KeywordValue,
   FontFamilyValue,
   RgbValue,
+  UnparsedValue,
 ]);
 
 const ValidStaticStyleValue = z.union([ImageValue, SharedStaticStyleValue]);

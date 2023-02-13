@@ -25,9 +25,27 @@ export const isValid = (property: string, value: string): boolean => {
     return false;
   }
 
-  const matchResult = csstree.lexer.matchProperty(hyphenate(property), ast);
+  const cssPropertyName = hyphenate(property);
 
-  return matchResult.matched != null;
+  const matchResult = csstree.lexer.matchProperty(cssPropertyName, ast);
+
+  const isValid = matchResult.matched != null;
+
+  // @todo remove after fix https://github.com/csstree/csstree/issues/246
+  if (isValid && typeof CSSStyleValue !== "undefined") {
+    try {
+      CSSStyleValue.parse(cssPropertyName, value);
+    } catch {
+      warnOnce(
+        true,
+        `Css property "${property}" with value "${value}" is invalid according to CSSStyleValue.parse
+          but valid according to csstree.lexer.matchProperty.`
+      );
+      return false;
+    }
+  }
+
+  return isValid;
 };
 
 export const parseCssValue = (
@@ -117,13 +135,8 @@ export const parseCssValue = (
     }
   }
 
-  warnOnce(
-    true,
-    `Property "${property}" with value "${input}" is valid but can't be parsed.`
-  );
-
   return {
-    type: "invalid",
+    type: "unparsed",
     value: input,
   };
 };

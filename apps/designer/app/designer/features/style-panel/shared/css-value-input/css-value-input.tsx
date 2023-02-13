@@ -361,7 +361,17 @@ export const CssValueInput = ({
       value.type === "unit" || value.type === "intermediate"
         ? value.unit
         : undefined,
-    onChange: (unit) => onChangeComplete({ ...value, unit }, "unit-select"),
+    onChange: (unit) => {
+      if (value.type === "unit" || value.type === "intermediate") {
+        onChangeComplete({ ...value, unit }, "unit-select");
+        return;
+      }
+
+      onChangeComplete(
+        { type: "intermediate", value: toValue(value), unit },
+        "unit-select"
+      );
+    },
     onCloseAutoFocus(event) {
       // We don't want to focus the unit trigger when closing the select (no matter if unit was selected, clicked outside or esc was pressed)
       event.preventDefault();

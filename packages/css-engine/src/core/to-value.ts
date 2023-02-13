@@ -71,6 +71,10 @@ export const toValue = (
       .join(", ");
   }
 
+  if (value.type === "unparsed") {
+    return value.value;
+  }
+
   // Will give ts error in case of missing type
   assertUnreachable(value, `Unknown value type`);
 
