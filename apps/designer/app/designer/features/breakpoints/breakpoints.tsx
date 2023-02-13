@@ -3,6 +3,7 @@ import store from "immerhin";
 import type { Breakpoint } from "@webstudio-is/css-data";
 import { useSubscribe } from "~/shared/pubsub";
 import {
+  theme,
   DropdownMenu,
   DropdownMenuCheckboxItem,
   DropdownMenuContent,
@@ -12,13 +13,11 @@ import {
   DropdownMenuTrigger,
   DropdownMenuItemRightSlot,
 } from "@webstudio-is/design-system";
-import { useSelectedBreakpoint } from "../../shared/nano-states";
 import { BreakpointsEditor } from "./breakpoints-editor";
 import { Preview } from "./preview";
 import { ZoomSetting } from "./zoom-setting";
 import { TriggerButton } from "./trigger-button";
 import { WidthSetting } from "./width-setting";
-import { useSubscribeSelectBreakpointFromShortcut } from "./use-subscribe-shortcuts";
 import { ConfirmationDialog } from "./confirmation-dialog";
 import {
   breakpointsContainer,
@@ -27,7 +26,11 @@ import {
 } from "~/shared/nano-states";
 import { utils } from "@webstudio-is/project";
 import { removeByMutable } from "~/shared/array-utils";
-import { theme } from "@webstudio-is/design-system";
+import { useStore } from "@nanostores/react";
+import {
+  selectedBreakpointIdStore,
+  selectedBreakpointStore,
+} from "~/shared/nano-states/breakpoints";
 
 export const Breakpoints = () => {
   const [view, setView] = useState<
@@ -37,10 +40,9 @@ export const Breakpoints = () => {
     Breakpoint | undefined
   >();
   const [breakpoints] = useBreakpoints();
-  const [selectedBreakpoint, setSelectedBreakpoint] = useSelectedBreakpoint();
+  const selectedBreakpoint = useStore(selectedBreakpointStore);
   const [breakpointPreview, setBreakpointPreview] =
     useState(selectedBreakpoint);
-  useSubscribeSelectBreakpointFromShortcut();
 
   useEffect(() => {
     setBreakpointPreview(selectedBreakpoint);
@@ -62,7 +64,7 @@ export const Breakpoints = () => {
     if (breakpointToDelete === undefined) {
       return;
     }
-    const [updatedBreakpoints] = store.createTransaction(
+    store.createTransaction(
       [breakpointsContainer, stylesStore],
       (breakpoints, styles) => {
         const breakpointId = breakpointToDelete.id;
@@ -74,8 +76,8 @@ export const Breakpoints = () => {
         }
       }
     );
-    if (breakpointToDelete === selectedBreakpoint) {
-      setSelectedBreakpoint(utils.breakpoints.sort(updatedBreakpoints)[0]);
+    if (breakpointToDelete.id === selectedBreakpoint.id) {
+      selectedBreakpointIdStore.set(undefined);
     }
 
     setBreakpointToDelete(undefined);
@@ -144,7 +146,7 @@ export const Breakpoints = () => {
                       setBreakpointPreview(selectedBreakpoint);
                     }}
                     onSelect={() => {
-                      setSelectedBreakpoint(breakpoint);
+                      selectedBreakpointIdStore.set(breakpoint.id);
                     }}
                   >
                     {breakpoint.label}

@@ -1,13 +1,12 @@
+import { useStore } from "@nanostores/react";
 import { useCallback, useEffect } from "react";
-import {
-  useSelectedBreakpoint,
-  useCanvasWidth,
-} from "~/designer/shared/nano-states";
+import { useCanvasWidth } from "~/designer/shared/nano-states";
 import { useIsPreviewMode } from "~/shared/nano-states";
+import { selectedBreakpointStore } from "~/shared/nano-states/breakpoints";
 import { minWidth } from "./width-setting";
 
 export const useUpdateCanvasWidth = () => {
-  const [selectedBreakpoint] = useSelectedBreakpoint();
+  const selectedBreakpoint = useStore(selectedBreakpointStore);
   const [canvasWidth, setCanvasWidth] = useCanvasWidth();
   const [isPreviewMode] = useIsPreviewMode();
 

@@ -20,10 +20,7 @@ import { Topbar } from "./features/topbar";
 import designerStyles from "./designer.css";
 import { Footer } from "./features/footer";
 import { TreePrevew } from "./features/tree-preview";
-import {
-  useSubscribeBreakpoints,
-  useUpdateCanvasWidth,
-} from "./features/breakpoints";
+import { useUpdateCanvasWidth } from "./features/breakpoints";
 import {
   CanvasIframe,
   useReadCanvasRect,
@@ -262,7 +259,6 @@ export const Designer = ({
   authPermit,
 }: DesignerProps) => {
   useSetAuthPermit(authPermit);
-  useSubscribeBreakpoints();
   useSetProject(project);
   useSetTreeId(treeId);
   useSetPages(pages);

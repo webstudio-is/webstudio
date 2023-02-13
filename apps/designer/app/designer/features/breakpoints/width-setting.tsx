@@ -1,11 +1,14 @@
+import { useStore } from "@nanostores/react";
 import {
-  useCanvasWidth,
-  useSelectedBreakpoint,
-} from "~/designer/shared/nano-states";
-import { DeprecatedText2, Flex, Slider } from "@webstudio-is/design-system";
+  theme,
+  DeprecatedText2,
+  Flex,
+  Slider,
+} from "@webstudio-is/design-system";
 import { useIsPreviewMode } from "~/shared/nano-states";
+import { selectedBreakpointStore } from "~/shared/nano-states/breakpoints";
+import { useCanvasWidth } from "~/designer/shared/nano-states";
 import { useNextBreakpoint } from "./use-next-breakpoint";
-import { theme } from "@webstudio-is/design-system";
 
 // Doesn't make sense to allow resizing the canvas lower/higher than this.
 export const minWidth = 360;
@@ -13,7 +16,7 @@ export const maxWidth = 3000;
 
 export const WidthSetting = () => {
   const [canvasWidth, setCanvasWidth] = useCanvasWidth();
-  const [selectedBreakpoint] = useSelectedBreakpoint();
+  const selectedBreakpoint = useStore(selectedBreakpointStore);
   const nextBreakpoint = useNextBreakpoint();
   const [isPreviewMode] = useIsPreviewMode();
 

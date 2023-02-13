@@ -4,7 +4,7 @@ import type { Publish } from "~/shared/pubsub";
 
 declare module "~/shared/pubsub" {
   export interface PubsubMap {
-    shortcut: { name: keyof typeof shortcuts; key?: string };
+    shortcut: { name: keyof typeof shortcuts };
   }
 }
 
@@ -19,10 +19,10 @@ export const usePublishShortcuts = (publish: Publish) => {
     // eslint-disable-next-line react-hooks/rules-of-hooks
     useHotkeys(
       shortcuts[name],
-      (event) => {
+      () => {
         publish({
           type: "shortcut",
-          payload: { name, key: event.key },
+          payload: { name },
         });
       },
       options,

@@ -1,3 +1,4 @@
+import { useStore } from "@nanostores/react";
 import { isFeatureEnabled } from "@webstudio-is/feature-flags";
 import {
   theme,
@@ -7,13 +8,11 @@ import {
 } from "@webstudio-is/design-system";
 import type { Instance } from "@webstudio-is/project-build";
 import type { Publish } from "~/shared/pubsub";
+import { selectedBreakpointStore } from "~/shared/nano-states/breakpoints";
 import { willRender } from "~/designer/shared/breakpoints";
 import { useStyleData } from "./shared/use-style-data";
 import { StyleSettings } from "./style-settings";
-import {
-  useCanvasWidth,
-  useSelectedBreakpoint,
-} from "~/designer/shared/nano-states";
+import { useCanvasWidth } from "~/designer/shared/nano-states";
 import { StyleSourcesSection } from "./style-source-section";
 
 type StylePanelProps = {
@@ -28,7 +27,7 @@ export const StylePanel = ({ selectedInstance, publish }: StylePanelProps) => {
       publish,
     });
 
-  const [breakpoint] = useSelectedBreakpoint();
+  const breakpoint = useStore(selectedBreakpointStore);
   const [canvasWidth] = useCanvasWidth();
 
   if (
