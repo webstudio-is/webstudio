@@ -42,8 +42,11 @@ export const useSharedShortcuts = () => {
   );
 
   useHotkeys(
-    "ctrl+equal",
-    zoomIn,
+    "meta+shift+equal",
+    (event) => {
+      event.preventDefault();
+      zoomIn();
+    },
     { enableOnFormTags: true, enableOnContentEditable: true },
     []
   );
@@ -57,8 +60,11 @@ export const useSharedShortcuts = () => {
   );
 
   useHotkeys(
-    "ctrl+minus",
-    zoomOut,
+    "meta+shift+minus",
+    (event) => {
+      event.preventDefault();
+      zoomOut();
+    },
     { enableOnFormTags: true, enableOnContentEditable: true },
     []
   );
