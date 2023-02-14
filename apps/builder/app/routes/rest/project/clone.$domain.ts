@@ -14,11 +14,6 @@ const ensureProject = async (
   },
   context: AppContext
 ): Promise<Project> => {
-  const projects = await projectDb.project.loadManyByCurrentUserId(context);
-  if (projects.length !== 0) {
-    return projects[0];
-  }
-
   return await projectDb.project.cloneByDomain(domain, context);
 };
 

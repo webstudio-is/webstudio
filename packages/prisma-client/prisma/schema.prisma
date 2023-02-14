@@ -64,6 +64,9 @@ model Project {
   build     Build[]
   trees     Tree[]
   isDeleted Boolean  @default(false)
+
+  @@unique([id, isDeleted])
+  @@unique([domain, isDeleted])
 }
 
 model Build {
