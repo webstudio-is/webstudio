@@ -24,6 +24,8 @@ import {
   useTextFieldFocus,
   useCombobox,
   type CSS,
+  ComboboxLabel,
+  ComboboxSeparator,
 } from "@webstudio-is/design-system";
 import {
   forwardRef,
@@ -41,6 +43,8 @@ import {
 } from "./style-source";
 import { useSortable } from "./use-sortable";
 import { theme } from "@webstudio-is/design-system";
+import { matchSorter } from "match-sorter";
+import { StyleSourceBadge } from "./style-source-badge";
 
 type IntermediateItem = {
   id: string;
@@ -48,6 +52,7 @@ type IntermediateItem = {
   isEditable: boolean;
   state: ItemState;
   source: ItemSource;
+  isAdded?: boolean;
 };
 
 type TextFieldBaseWrapperProps<Item> = Omit<ComponentProps<"input">, "value"> &
@@ -181,7 +186,7 @@ type StyleSourceInputProps<Item> = {
   editingItem?: Item;
   onSelectAutocompleteItem?: (item: Item) => void;
   onRemoveItem?: (item: Item) => void;
-  onCreateItem?: (item: Item) => void;
+  onCreateItem?: (label: string) => void;
   onChangeItem?: (item: Item) => void;
   onSelectItem?: (item?: Item) => void;
   onEditItem?: (item?: Item) => void;
@@ -191,11 +196,51 @@ type StyleSourceInputProps<Item> = {
   css?: CSS;
 };
 
+const newItemId = "__NEW__";
+
+const matchOrSuggestToCreate = (
+  search: string,
+  items: IntermediateItem[],
+  itemToString: (item: IntermediateItem | null) => string
+): IntermediateItem[] => {
+  const matched = matchSorter(items, search, {
+    keys: [itemToString],
+  });
+  if (
+    search.trim() !== "" &&
+    itemToString(matched[0]).toLocaleLowerCase() !==
+      search.toLocaleLowerCase().trim()
+  ) {
+    matched.unshift({
+      id: newItemId,
+      label: search.trim(),
+      state: "unselected",
+      source: "token",
+      isEditable: true,
+      isAdded: false,
+    });
+  }
+  // skip already added values
+  return matched.filter((item) => item.isAdded === false).slice(0, 5);
+};
+
+const markAddedValues = <Item extends IntermediateItem>(
+  items: Item[],
+  value: Item[]
+) => {
+  const valueIds = new Set();
+  for (const item of value) {
+    valueIds.add(item.id);
+  }
+  return items.map((item) => ({ ...item, isAdded: valueIds.has(item.id) }));
+};
+
 export const StyleSourceInput = <Item extends IntermediateItem>(
   props: StyleSourceInputProps<Item>
 ) => {
   const value = props.value ?? [];
   const [label, setLabel] = useState("");
+
   const {
     items,
     getInputProps,
@@ -203,8 +248,8 @@ export const StyleSourceInput = <Item extends IntermediateItem>(
     getMenuProps,
     getItemProps,
     isOpen,
-  } = useCombobox({
-    items: props.items ?? [],
+  } = useCombobox<IntermediateItem>({
+    items: markAddedValues(props.items ?? [], value),
     value: {
       label,
       state: "unselected",
@@ -213,28 +258,31 @@ export const StyleSourceInput = <Item extends IntermediateItem>(
       isEditable: true,
     },
     selectedItem: undefined,
+    match: matchOrSuggestToCreate,
+    defaultHighlightedIndex: 0,
     itemToString: (item) => (item ? item.label : ""),
     onItemSelect(item) {
       setLabel("");
-      props.onSelectAutocompleteItem?.(item as Item);
+      if (item.id === newItemId) {
+        props.onCreateItem?.(item.label);
+      } else {
+        props.onSelectAutocompleteItem?.(item as Item);
+      }
     },
     onInputChange(label) {
       setLabel(label ?? "");
     },
   });
+
   const inputProps = getInputProps({
     onKeyDown(event) {
       if (event.key === "Backspace" && label === "") {
         props.onRemoveItem?.(value[value.length - 1]);
       }
     },
-    onKeyPress(event) {
-      if (event.key === "Enter" && label.trim() !== "") {
-        setLabel("");
-        props.onCreateItem?.({ label } as Item);
-      }
-    },
   });
+
+  let hasNewTokenItem = false;
 
   return (
     <ComboboxPopper>
@@ -259,13 +307,50 @@ export const StyleSourceInput = <Item extends IntermediateItem>(
           <ComboboxListbox {...getMenuProps()}>
             {isOpen &&
               items.map((item, index) => {
+                if (item.id === newItemId) {
+                  hasNewTokenItem = true;
+                  return (
+                    <>
+                      <ComboboxLabel>New Token</ComboboxLabel>
+                      <ComboboxListboxItem
+                        {...getItemProps({ item, index })}
+                        key={index}
+                        selectable={false}
+                      >
+                        <div>
+                          Create{" "}
+                          <StyleSourceBadge source="token">
+                            {item.label}
+                          </StyleSourceBadge>
+                        </div>
+                      </ComboboxListboxItem>
+                    </>
+                  );
+                }
+
+                const firstExistingItemIndex = hasNewTokenItem ? 1 : 0;
+                const label = index === firstExistingItemIndex && (
+                  <>
+                    {hasNewTokenItem && <ComboboxSeparator />}
+                    <ComboboxLabel>Existing Tokens</ComboboxLabel>
+                  </>
+                );
+                if (item.source === "local") {
+                  return;
+                }
                 return (
-                  <ComboboxListboxItem
-                    {...getItemProps({ item, index })}
-                    key={index}
-                  >
-                    {item.label}
-                  </ComboboxListboxItem>
+                  <>
+                    {label}
+                    <ComboboxListboxItem
+                      {...getItemProps({ item, index })}
+                      key={index}
+                      selectable={false}
+                    >
+                      <StyleSourceBadge source={item.source}>
+                        {item.label}
+                      </StyleSourceBadge>
+                    </ComboboxListboxItem>
+                  </>
                 );
               })}
           </ComboboxListbox>

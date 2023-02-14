@@ -5,7 +5,11 @@ import type {
   StyleSource,
   StyleSourceSelection,
 } from "@webstudio-is/project-build";
-import { ItemState, StyleSourceInput } from "./style-source";
+import {
+  type ItemSource,
+  type ItemState,
+  StyleSourceInput,
+} from "./style-source";
 import { useStore } from "@nanostores/react";
 import {
   availableStyleSourcesStore,
@@ -115,10 +119,18 @@ const reorderStyleSources = (styleSourceIds: StyleSource["id"][]) => {
   );
 };
 
+type StyleSourceInputItem = {
+  id: string;
+  label: string;
+  isEditable: boolean;
+  state: ItemState;
+  source: ItemSource;
+};
+
 const convertToInputItem = (
   styleSource: StyleSource,
   selectedStyleSource?: StyleSource["id"]
-) => {
+): StyleSourceInputItem => {
   const state: ItemState =
     selectedStyleSource === styleSource.id ? "selected" : "unselected";
   if (styleSource.type === "local") {
@@ -161,9 +173,7 @@ export const StyleSourcesSection = () => {
       <StyleSourceInput
         items={items}
         value={value}
-        onCreateItem={({ label }) => {
-          createStyleSource(label);
-        }}
+        onCreateItem={createStyleSource}
         onSelectAutocompleteItem={({ id }) => {
           addStyleSourceToInstace(id);
         }}
