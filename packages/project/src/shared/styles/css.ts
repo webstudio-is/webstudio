@@ -20,7 +20,7 @@ export const generateCssText = (data: Data) => {
   const assets = new Map<Asset["id"], Asset>(
     data.assets.map((asset) => [asset.id, asset])
   );
-  const breakpoints = data.build?.breakpoints ?? [];
+  const breakpoints = new Map(data.build?.breakpoints);
   const styles = new Map(data.build?.styles);
   const styleSourceSelections = new Map(data.tree?.styleSourceSelections);
 
@@ -28,7 +28,7 @@ export const generateCssText = (data: Data) => {
 
   addGlobalRules(engine, { assets });
 
-  for (const breakpoint of breakpoints) {
+  for (const breakpoint of breakpoints.values()) {
     engine.addMediaRule(breakpoint.id, breakpoint);
   }
 

@@ -71,7 +71,7 @@ export const GlobalStyles = () => {
   const assets = useStore(assetsStore);
 
   useIsomorphicLayoutEffect(() => {
-    for (const breakpoint of breakpoints) {
+    for (const breakpoint of breakpoints.values()) {
       cssEngine.addMediaRule(breakpoint.id, breakpoint);
     }
   }, [breakpoints]);
@@ -175,7 +175,7 @@ export const useCssRules = ({
       style[item.property] = item.value;
     }
 
-    for (const { id: breakpointId } of breakpoints) {
+    for (const breakpointId of breakpoints.keys()) {
       const style = stylePerBreakpoint.get(breakpointId) ?? {};
       const rule = getRule(instanceId, breakpointId);
       // It's the first time the rule is being used

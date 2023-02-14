@@ -1,26 +1,31 @@
 import { describe, test, expect } from "@jest/globals";
-import {
-  initialBreakpoints,
-  type BaseBreakpoint,
-} from "@webstudio-is/react-sdk";
+import type { Breakpoints } from "@webstudio-is/project-build";
+import { initialBreakpoints } from "@webstudio-is/react-sdk";
+import { nanoid } from "nanoid";
 import { sort } from "./sort";
 
 describe("Breakpoints sorting for visual rendering", () => {
   test("sort initial breakpoints", () => {
-    expect(sort(initialBreakpoints)).toStrictEqual(initialBreakpoints);
+    const breakpoints: Breakpoints = new Map();
+    for (const breakpoint of initialBreakpoints) {
+      const id = nanoid();
+      breakpoints.set(id, { ...breakpoint, id });
+    }
+
+    expect(sort(breakpoints)).toStrictEqual(Array.from(breakpoints.values()));
   });
 
   test("sort custom breakpoints", () => {
-    const breakpoints = [
-      { label: "0", minWidth: 0 },
-      { label: "3", minWidth: 3 },
-      { label: "2", minWidth: 2 },
-    ];
+    const breakpoints = new Map([
+      ["1", { id: "1", label: "0", minWidth: 0 }],
+      ["2", { id: "2", label: "3", minWidth: 3 }],
+      ["3", { id: "3", label: "2", minWidth: 2 }],
+    ]);
     const sortedBreakpoints = [
-      { label: "0", minWidth: 0 },
-      { label: "2", minWidth: 2 },
-      { label: "3", minWidth: 3 },
+      { id: "1", label: "0", minWidth: 0 },
+      { id: "3", label: "2", minWidth: 2 },
+      { id: "2", label: "3", minWidth: 3 },
     ];
-    expect(sort<BaseBreakpoint>(breakpoints)).toStrictEqual(sortedBreakpoints);
+    expect(sort(breakpoints)).toStrictEqual(sortedBreakpoints);
   });
 });

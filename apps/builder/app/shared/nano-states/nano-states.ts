@@ -6,6 +6,7 @@ import type { AuthPermit } from "@webstudio-is/trpc-interface";
 import type { Asset } from "@webstudio-is/asset-uploader";
 import type {
   Breakpoint,
+  Breakpoints,
   Instance,
   Prop,
   Props,
@@ -198,11 +199,13 @@ export const stylesIndexStore = computed(
   }
 );
 
-export const breakpointsContainer = atom<Breakpoint[]>([]);
+export const breakpointsContainer = atom<Breakpoints>(new Map());
 export const useBreakpoints = () => useValue(breakpointsContainer);
-export const useSetBreakpoints = (breakpoints: Breakpoint[]) => {
+export const useSetBreakpoints = (
+  breakpoints: [Breakpoint["id"], Breakpoint][]
+) => {
   useSyncInitializeOnce(() => {
-    breakpointsContainer.set(breakpoints);
+    breakpointsContainer.set(new Map(breakpoints));
   });
 };
 

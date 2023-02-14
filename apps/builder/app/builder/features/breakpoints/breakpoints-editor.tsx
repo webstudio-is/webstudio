@@ -12,7 +12,6 @@ import {
 } from "@webstudio-is/design-system";
 import { PlusIcon, TrashIcon } from "@webstudio-is/icons";
 import { breakpointsContainer, useBreakpoints } from "~/shared/nano-states";
-import { replaceByOrAppendMutable } from "~/shared/array-utils";
 
 type BreakpointEditorItemProps = {
   breakpoint: Breakpoint;
@@ -101,7 +100,7 @@ export const BreakpointsEditor = ({ onDelete }: BreakpointsEditorProps) => {
   const [breakpoints] = useBreakpoints();
   const [addedBreakpoints, setAddedBreakpoints] = useState<Breakpoint[]>([]);
   const storedBreakpoints = new Set<string>();
-  for (const breakpoint of breakpoints) {
+  for (const breakpoint of breakpoints.values()) {
     storedBreakpoints.add(breakpoint.id);
   }
   // filter out new breakpoints which are already store
@@ -139,18 +138,14 @@ export const BreakpointsEditor = ({ onDelete }: BreakpointsEditorProps) => {
           prefix={<PlusIcon />}
         />
       </Flex>
-      {[...breakpoints, ...newBreakpoints].map((breakpoint) => {
+      {[...breakpoints.values(), ...newBreakpoints].map((breakpoint) => {
         return (
           <BreakpointEditorItem
             key={breakpoint.id}
             breakpoint={breakpoint}
             onChange={(updatedBreakpoint) => {
               store.createTransaction([breakpointsContainer], (breakpoints) => {
-                replaceByOrAppendMutable(
-                  breakpoints,
-                  updatedBreakpoint,
-                  ({ id }) => id === updatedBreakpoint.id
-                );
+                breakpoints.set(updatedBreakpoint.id, updatedBreakpoint);
               });
             }}
             onDelete={onDelete}
