@@ -173,9 +173,7 @@ export const StyleSourcesSection = () => {
       <StyleSourceInput
         items={items}
         value={value}
-        onCreateItem={(label) => {
-          createStyleSource(label);
-        }}
+        onCreateItem={createStyleSource}
         onSelectAutocompleteItem={({ id }) => {
           addStyleSourceToInstace(id);
         }}

@@ -208,7 +208,8 @@ const matchOrSuggestToCreate = (
   });
   if (
     search.trim() !== "" &&
-    itemToString(matched[0]).toLocaleLowerCase() !== search.toLocaleLowerCase()
+    itemToString(matched[0]).toLocaleLowerCase() !==
+      search.toLocaleLowerCase().trim()
   ) {
     matched.unshift({
       id: newItemId,
