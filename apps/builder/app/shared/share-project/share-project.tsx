@@ -4,9 +4,9 @@ import {
   css,
   Flex,
   Label,
-  DeprecatedPopover,
-  DeprecatedPopoverContent,
-  DeprecatedPopoverTrigger,
+  Popover,
+  PopoverContent,
+  PopoverTrigger,
   rawTheme,
   Separator,
   Switch,
@@ -69,6 +69,7 @@ const Menu = ({
   onChangeName,
   onDelete,
 }: MenuProps) => {
+  const [isOpen, setIsOpen] = useState(false);
   const handleCheckedChange = (relation: Relation) => (checked: boolean) => {
     if (checked) {
       onChangePermission(relation);
@@ -76,15 +77,15 @@ const Menu = ({
   };
 
   return (
-    <DeprecatedPopover>
-      <DeprecatedPopoverTrigger asChild>
+    <Popover open={isOpen} onOpenChange={setIsOpen}>
+      <PopoverTrigger asChild>
         <Button
           prefix={<MenuIcon />}
           color="ghost"
           aria-label="Menu Button for options"
         ></Button>
-      </DeprecatedPopoverTrigger>
-      <DeprecatedPopoverContent>
+      </PopoverTrigger>
+      <PopoverContent css={{ zIndex: theme.zIndices[1] }}>
         <Item>
           <Label>Name</Label>
           <TextField
@@ -92,6 +93,11 @@ const Menu = ({
             value={name}
             onChange={(event) => {
               onChangeName(event.target.value);
+            }}
+            onKeyDown={(event) => {
+              if (event.key === "Enter") {
+                setIsOpen(false);
+              }
             }}
           />
         </Item>
@@ -133,8 +139,8 @@ const Menu = ({
             Delete Link
           </Button>
         </Item>
-      </DeprecatedPopoverContent>
-    </DeprecatedPopover>
+      </PopoverContent>
+    </Popover>
   );
 };
 
