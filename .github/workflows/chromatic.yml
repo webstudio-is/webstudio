@@ -11,11 +11,11 @@ jobs:
     strategy:
       matrix:
         project:
-          [designer-app, css-engine, design-system, icons, image, react-sdk]
+          [builder-app, css-engine, design-system, icons, image, react-sdk]
         include:
-          - project: designer-app
+          - project: builder-app
             chromaticSecretKey: CHROMATIC_DESIGNER_APP_TOKEN
-            workingDir: apps/designer
+            workingDir: apps/builder
 
           - project: css-engine
             chromaticSecretKey: CHROMATIC_CSS_ENGINE_TOKEN
@@ -38,7 +38,7 @@ jobs:
             workingDir: packages/react-sdk
 
     outputs:
-      designer-app: ${{ steps.deployed-url.outputs.designer-app }}
+      builder-app: ${{ steps.deployed-url.outputs.builder-app }}
       css-engine: ${{ steps.deployed-url.outputs.css-engine }}
       design-system: ${{ steps.deployed-url.outputs.design-system }}
       icons: ${{ steps.deployed-url.outputs.icons }}

@@ -1,10 +1,12 @@
-# Webstudio Designer
+# Webstudio Builder
 
-Webstudio Designer is a NoCode Visual Tool inspired by Webflow. It is the place where you can build your site or app visually.
+Webstudio Builder is a NoCode Visual Tool inspired by Webflow. It is the place
+where you can build your site or app visually.
 
 ## Contributing
 
-Don't hesitate to reach out of you have questions around contributing to the project.
+Don't hesitate to reach out of you have questions around contributing to the
+project.
 
 [Contributing guide](https://github.com/webstudio-is/webstudio/blob/main/docs/contributing.md)
 

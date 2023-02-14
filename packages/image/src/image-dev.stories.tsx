@@ -1,4 +1,4 @@
-// Story for image development, see https://github.com/webstudio-is/webstudio-designer/issues/387
+// Story for image development, see https://github.com/webstudio-is/webstudio-builder/issues/387
 
 import type * as React from "react";
 import type { ComponentMeta, ComponentStory } from "@storybook/react";

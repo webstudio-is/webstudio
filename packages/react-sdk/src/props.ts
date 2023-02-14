@@ -39,7 +39,7 @@ export const useInstanceProps = (instanceId: Instance["id"]) => {
   return instancePropsObject;
 };
 
-// this utility is be used for image component in both designer and preview
+// this utility is be used for image component in both builder and preview
 // so need to optimize rerenders with computed
 export const usePropAsset = (instanceId: Instance["id"], name: string) => {
   const { propsByInstanceIdStore, assetsStore } = useContext(ReactSdkContext);
