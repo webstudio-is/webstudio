@@ -96,6 +96,12 @@ export const ComboboxPopperContent = PopperContent;
 
 export const ComboboxPopperAnchor = PopperAnchor;
 
+type Match<Item> = (
+  search: string,
+  items: Item[],
+  itemToString: (item: Item | null) => string
+) => Item[];
+
 const defaultMatch = <Item,>(
   search: string,
   items: Array<Item>,
@@ -112,7 +118,7 @@ const useFilter = <Item,>({
 }: {
   items: Array<Item>;
   itemToString: (item: Item | null) => string;
-  match?: typeof defaultMatch;
+  match?: Match<Item>;
 }) => {
   const [filteredItems, setFilteredItems] = useState<Array<Item>>(items);
   const cachedItems = useRef(items);
@@ -152,7 +158,8 @@ type UseComboboxProps<Item> = UseDownshiftComboboxProps<Item> & {
     state: DownshiftState<Item>,
     changes: UseComboboxStateChangeOptions<Item>
   ) => Partial<UseComboboxStateChangeOptions<Item>>;
-  match?: typeof defaultMatch;
+  match?: Match<Item>;
+  defaultHighlightedIndex?: number;
 };
 
 export const comboboxStateChangeTypes = useDownshiftCombobox.stateChangeTypes;
@@ -167,6 +174,7 @@ export const useCombobox = <Item,>({
   onItemHighlight,
   stateReducer = (state, { changes }) => changes,
   match,
+  defaultHighlightedIndex = -1,
   ...rest
 }: UseComboboxProps<Item>) => {
   const [isOpen, setIsOpen] = useState(false);
@@ -184,7 +192,7 @@ export const useCombobox = <Item,>({
   const downshiftProps = useDownshiftCombobox({
     ...rest,
     items: filteredItems,
-    defaultHighlightedIndex: -1,
+    defaultHighlightedIndex,
     selectedItem: selectedItem ?? null, // Prevent downshift warning about switching controlled mode
     isOpen,
 

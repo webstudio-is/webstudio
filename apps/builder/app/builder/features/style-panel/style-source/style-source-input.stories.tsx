@@ -89,7 +89,7 @@ export const Basic: ComponentStory<typeof StyleSourceInput> = () => {
       css={{ width: 300 }}
       items={getItems()}
       value={value}
-      onCreateItem={({ label }) => {
+      onCreateItem={(label) => {
         createItem(label, value, setValue);
       }}
       onSelectAutocompleteItem={(item) => {
@@ -121,7 +121,7 @@ export const WithTruncatedItem: ComponentStory<
       css={{ width: 300 }}
       items={getItems()}
       value={value}
-      onCreateItem={({ label }) => {
+      onCreateItem={(label) => {
         createItem(label, value, setValue);
       }}
       onSelectAutocompleteItem={(item) => {
@@ -170,7 +170,7 @@ export const Complete: ComponentStory<typeof StyleSourceInput> = () => {
         );
       }}
       onEditItem={setEditingItem}
-      onCreateItem={({ label }) => {
+      onCreateItem={(label) => {
         createItem(label, value, setValue);
       }}
       onSelectAutocompleteItem={(item) => {
