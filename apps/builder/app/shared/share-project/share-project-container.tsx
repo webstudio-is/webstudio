@@ -2,7 +2,7 @@ import { ShareProject, LinkOptions } from "./share-project";
 import { createTrpcRemixProxy } from "~/shared/remix/trpc-remix-proxy";
 import type { AuthorizationTokensRouter } from "@webstudio-is/authorization-token";
 import { authorizationTokenPath, builderUrl } from "~/shared/router-utils";
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import { useDebouncedCallback } from "use-debounce";
 import type { Project } from "@webstudio-is/prisma-client";
 
@@ -11,11 +11,11 @@ const trpc = createTrpcRemixProxy<AuthorizationTokensRouter>(
 );
 
 const useShareProjectContainer = (projectId: Project["id"]) => {
-  const { data: links, load } = trpc.findMany.useQuery();
+  const { data, load } = trpc.findMany.useQuery();
   const { send: createToken } = trpc.create.useMutation();
   const { send: removeToken } = trpc.remove.useMutation();
   const { send: updateToken } = trpc.update.useMutation();
-
+  const [links, setLinks] = useState(data ?? []);
   useEffect(() => {
     if (projectId === undefined) {
       return;
@@ -24,16 +24,29 @@ const useShareProjectContainer = (projectId: Project["id"]) => {
     load({ projectId });
   }, [load, projectId]);
 
+  useEffect(() => {
+    setLinks(data ?? []);
+  }, [data, setLinks]);
+
   const handleChangeDebounced = useDebouncedCallback((link: LinkOptions) => {
     if (projectId === undefined) {
       return;
     }
-    updateToken({
+    const updatedLink = {
       projectId: projectId,
       token: link.token,
       relation: link.relation,
       name: link.name,
+    };
+    const updatedLinks = links.map((currentLink) => {
+      if (currentLink.token === updatedLink.token) {
+        return { ...currentLink, ...updatedLink };
+      }
+      return currentLink;
     });
+    // Optimistically set the links, otherwise checkbox will not move until we fetch an updated list.
+    setLinks(updatedLinks);
+    updateToken(updatedLink);
   }, 100);
 
   const handleDelete = (link: LinkOptions) => {
@@ -83,7 +96,7 @@ export const ShareProjectContainer = ({ projectId }: ShareButtonProps) => {
       onDelete={handleDelete}
       onCreate={handleCreate}
       builderUrl={({ authToken, mode }) =>
-      builderUrl({
+        builderUrl({
           projectId,
           origin: window.location.origin,
           authToken,
