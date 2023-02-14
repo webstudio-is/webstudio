@@ -1,10 +1,10 @@
-import type { Breakpoint } from "@webstudio-is/css-data";
+import type { Breakpoint } from "@webstudio-is/project-build";
 import {
+  theme,
   DeprecatedParagraph,
   Flex,
   DeprecatedText2,
 } from "@webstudio-is/design-system";
-import { theme } from "@webstudio-is/design-system";
 
 type PreviewProps = {
   breakpoint?: Breakpoint;

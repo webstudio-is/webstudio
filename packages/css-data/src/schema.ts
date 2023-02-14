@@ -152,15 +152,3 @@ export const CssRule = z.object({
 });
 
 export type CssRule = z.infer<typeof CssRule>;
-
-export const Breakpoint = z.object({
-  id: z.string(),
-  label: z.string(),
-  minWidth: z.number(),
-});
-
-export type Breakpoint = z.infer<typeof Breakpoint>;
-
-export const Breakpoints = z.array(Breakpoint);
-
-export type Breakpoints = z.infer<typeof Breakpoints>;

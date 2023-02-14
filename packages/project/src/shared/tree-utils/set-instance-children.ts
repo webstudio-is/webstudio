@@ -1,5 +1,4 @@
-import type { Breakpoint } from "@webstudio-is/css-data";
-import type { Instance, Text } from "@webstudio-is/project-build";
+import type { Breakpoint, Instance, Text } from "@webstudio-is/project-build";
 import type { ChildrenUpdates } from "@webstudio-is/react-sdk";
 import { createInstance, createInstanceId } from "./create-instance";
 import { findInstanceById } from "./find-instance";

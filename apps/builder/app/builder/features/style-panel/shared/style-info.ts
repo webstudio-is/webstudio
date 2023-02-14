@@ -1,14 +1,10 @@
 import { useMemo } from "react";
 import { useStore } from "@nanostores/react";
-import type {
-  Breakpoint,
-  Style,
-  StyleProperty,
-  StyleValue,
-} from "@webstudio-is/css-data";
+import type { Style, StyleProperty, StyleValue } from "@webstudio-is/css-data";
 import { properties } from "@webstudio-is/css-data";
 import { utils } from "@webstudio-is/project";
 import type {
+  Breakpoint,
   Instance,
   StyleDecl,
   StyleSource as StyleSourceType,

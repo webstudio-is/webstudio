@@ -5,6 +5,7 @@ import { nanoid } from "nanoid";
 import type { AuthPermit } from "@webstudio-is/trpc-interface";
 import type { Asset } from "@webstudio-is/asset-uploader";
 import type {
+  Breakpoint,
   Instance,
   Prop,
   Props,
@@ -17,7 +18,7 @@ import type {
   StyleSourceSelections,
   Tree,
 } from "@webstudio-is/project-build";
-import type { Breakpoint, Style } from "@webstudio-is/css-data";
+import type { Style } from "@webstudio-is/css-data";
 import type {
   DropTargetChangePayload,
   DragStartPayload,

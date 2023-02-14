@@ -1,7 +1,8 @@
 import { useEffect, useState } from "react";
+import { useStore } from "@nanostores/react";
 import store from "immerhin";
-import type { Breakpoint } from "@webstudio-is/css-data";
-import { useSubscribe } from "~/shared/pubsub";
+import type { Breakpoint } from "@webstudio-is/project-build";
+import { utils } from "@webstudio-is/project";
 import {
   theme,
   DropdownMenu,
@@ -13,6 +14,7 @@ import {
   DropdownMenuTrigger,
   DropdownMenuItemRightSlot,
 } from "@webstudio-is/design-system";
+import { useSubscribe } from "~/shared/pubsub";
 import { BreakpointsEditor } from "./breakpoints-editor";
 import { Preview } from "./preview";
 import { ZoomSetting } from "./zoom-setting";
@@ -24,9 +26,7 @@ import {
   stylesStore,
   useBreakpoints,
 } from "~/shared/nano-states";
-import { utils } from "@webstudio-is/project";
 import { removeByMutable } from "~/shared/array-utils";
-import { useStore } from "@nanostores/react";
 import {
   selectedBreakpointIdStore,
   selectedBreakpointStore,

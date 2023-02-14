@@ -1,5 +1,5 @@
 import { atom, computed } from "nanostores";
-import type { Breakpoint } from "@webstudio-is/css-data";
+import type { Breakpoint } from "@webstudio-is/project-build";
 import { utils } from "@webstudio-is/project";
 import { breakpointsContainer } from "./nano-states";
 
