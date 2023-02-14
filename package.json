@@ -6,7 +6,7 @@
   "scripts": {
     "": "For some reason remix build does not finish when run with turbo or pnpm recursively",
     "build-packages": "turbo run build  --filter='!./apps/*'",
-    "build": "pnpm build-packages && pnpm --filter=@webstudio-is/designer build",
+    "build": "pnpm build-packages && pnpm --filter=@webstudio-is/builder build",
     "checks": "turbo run checks",
     "dev": "turbo run dev --parallel",
     "format": "prettier --write \"**/*.{ts,tsx,md}\"",
@@ -14,7 +14,7 @@
     "storybook": "turbo run storybook:run",
     "storybook:build": "npm run build && turbo run storybook:build",
     "storybook:ds:build": "turbo run storybook:build --filter=@webstudio-is/design-system",
-    "migrations": "cd apps/designer && pnpm migrations --dev",
+    "migrations": "cd apps/builder && pnpm migrations --dev",
     "build-figma-tokens": "cd packages/design-system && pnpm build-figma-tokens",
     "prepare": "git config core.hooksPath .git/hooks/ && simple-git-hooks"
   },
