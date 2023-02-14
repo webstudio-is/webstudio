@@ -8,7 +8,7 @@ const polyfill = function () {
     sessionStorage.removeItem(key); // cleanup
   } catch (error) {
     alert(
-      'It looks like you have disabled cookies in your browser. Webstudio designer may not work properly.\n\nTo enable cookies, go to "Setting" > "Privacy and security" > "Cookies and other site data", and make sure neither "Block all cookies" nor "Block third-party cookies" are selected.\n\nRead more at https://support.google.com/chrome/answer/95647'
+      'It looks like you have disabled cookies in your browser. Webstudio builder may not work properly.\n\nTo enable cookies, go to "Setting" > "Privacy and security" > "Cookies and other site data", and make sure neither "Block all cookies" nor "Block third-party cookies" are selected.\n\nRead more at https://support.google.com/chrome/answer/95647'
     );
     const data = new Map();
     Object.defineProperty(window, "sessionStorage", {
