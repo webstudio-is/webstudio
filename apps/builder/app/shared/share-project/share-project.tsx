@@ -4,9 +4,9 @@ import {
   css,
   Flex,
   Label,
-  DeprecatedPopover,
-  DeprecatedPopoverContent,
-  DeprecatedPopoverTrigger,
+  Popover,
+  PopoverContent,
+  PopoverTrigger,
   rawTheme,
   Separator,
   Switch,
@@ -77,15 +77,15 @@ const Menu = ({
   };
 
   return (
-    <DeprecatedPopover open={isOpen} onOpenChange={setIsOpen}>
-      <DeprecatedPopoverTrigger asChild>
+    <Popover open={isOpen} onOpenChange={setIsOpen}>
+      <PopoverTrigger asChild>
         <Button
           prefix={<MenuIcon />}
           color="ghost"
           aria-label="Menu Button for options"
         ></Button>
-      </DeprecatedPopoverTrigger>
-      <DeprecatedPopoverContent>
+      </PopoverTrigger>
+      <PopoverContent css={{ zIndex: theme.zIndices[1] }}>
         <Item>
           <Label>Name</Label>
           <TextField
@@ -139,8 +139,8 @@ const Menu = ({
             Delete Link
           </Button>
         </Item>
-      </DeprecatedPopoverContent>
-    </DeprecatedPopover>
+      </PopoverContent>
+    </Popover>
   );
 };
 
