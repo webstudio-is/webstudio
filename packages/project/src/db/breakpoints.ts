@@ -5,14 +5,14 @@ import {
   type Breakpoints as DbBreakpoints,
   prisma,
 } from "@webstudio-is/prisma-client";
-import { Breakpoints } from "@webstudio-is/css-data";
+import { BreakpointsList } from "@webstudio-is/project-build";
 import type { Project } from "../shared/schema";
 import {
   authorizeProject,
   type AppContext,
 } from "@webstudio-is/trpc-interface/server";
 
-export const createValues = (): Breakpoints => {
+export const createValues = (): BreakpointsList => {
   return initialBreakpoints.map((breakpoint) => ({
     ...breakpoint,
     id: nanoid(),
@@ -45,8 +45,8 @@ export const patch = async (
   if (build === null) {
     return;
   }
-  const breakpoints = Breakpoints.parse(JSON.parse(build.breakpoints));
-  const patchedBreakpoints = Breakpoints.parse(
+  const breakpoints = BreakpointsList.parse(JSON.parse(build.breakpoints));
+  const patchedBreakpoints = BreakpointsList.parse(
     applyPatches(breakpoints, patches)
   );
 

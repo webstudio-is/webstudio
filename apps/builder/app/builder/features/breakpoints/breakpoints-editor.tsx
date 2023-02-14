@@ -2,8 +2,9 @@ import { useState } from "react";
 import { useDebouncedCallback } from "use-debounce";
 import { nanoid } from "nanoid";
 import store from "immerhin";
-import type { Breakpoint } from "@webstudio-is/css-data";
+import type { Breakpoint } from "@webstudio-is/project-build";
 import {
+  theme,
   Button,
   TextField,
   Flex,
@@ -12,7 +13,6 @@ import {
 import { PlusIcon, TrashIcon } from "@webstudio-is/icons";
 import { breakpointsContainer, useBreakpoints } from "~/shared/nano-states";
 import { replaceByOrAppendMutable } from "~/shared/array-utils";
-import { theme } from "@webstudio-is/design-system";
 
 type BreakpointEditorItemProps = {
   breakpoint: Breakpoint;

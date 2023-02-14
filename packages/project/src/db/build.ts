@@ -5,7 +5,7 @@ import {
   Prisma,
   Project,
 } from "@webstudio-is/prisma-client";
-import { Breakpoints } from "@webstudio-is/css-data";
+import { BreakpointsList } from "@webstudio-is/project-build";
 import * as db from ".";
 import { Build, Page, Pages } from "../shared/schema";
 import * as pagesUtils from "../shared/pages";
@@ -22,7 +22,7 @@ const parseBuild = async (build: DbBuild): Promise<Build> => {
     isProd: build.isProd,
     createdAt: build.createdAt.toISOString(),
     pages,
-    breakpoints: Breakpoints.parse(JSON.parse(build.breakpoints)),
+    breakpoints: BreakpointsList.parse(JSON.parse(build.breakpoints)),
     styles: Array.from(await parseStyles(build.projectId, build.styles)),
     styleSources: Array.from(parseStyleSources(build.styleSources)),
   };

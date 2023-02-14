@@ -1,6 +1,6 @@
 import { z, type ZodType } from "zod";
-import type { Breakpoints } from "@webstudio-is/css-data";
 import type {
+  Breakpoint,
   StyleDecl,
   StyleDeclKey,
   StyleSource,
@@ -102,7 +102,7 @@ export type Build = {
   isDev: boolean;
   isProd: boolean;
   pages: Pages;
-  breakpoints: Breakpoints;
+  breakpoints: Breakpoint[];
   styles: [StyleDeclKey, StyleDecl][];
   styleSources: [StyleSource["id"], StyleSource][];
 };

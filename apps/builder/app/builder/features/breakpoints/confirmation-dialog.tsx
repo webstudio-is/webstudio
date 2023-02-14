@@ -1,6 +1,10 @@
-import type { Breakpoint } from "@webstudio-is/css-data";
-import { Button, Flex, DeprecatedParagraph } from "@webstudio-is/design-system";
-import { theme } from "@webstudio-is/design-system";
+import type { Breakpoint } from "@webstudio-is/project-build";
+import {
+  theme,
+  Button,
+  Flex,
+  DeprecatedParagraph,
+} from "@webstudio-is/design-system";
 
 type ConfirmationDialogProps = {
   onAbort: () => void;

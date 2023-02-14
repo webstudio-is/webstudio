@@ -1,5 +1,6 @@
-import type { Breakpoint, Style } from "@webstudio-is/css-data";
+import type { Style } from "@webstudio-is/css-data";
 import type {
+  Breakpoint,
   StyleDecl,
   Styles,
   StyleSource,

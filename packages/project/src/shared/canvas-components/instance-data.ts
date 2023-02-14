@@ -1,9 +1,5 @@
-import type { Instance } from "@webstudio-is/project-build";
-import type {
-  StyleProperty,
-  StyleValue,
-  Breakpoint,
-} from "@webstudio-is/css-data";
+import type { Instance, Breakpoint } from "@webstudio-is/project-build";
+import type { StyleProperty, StyleValue } from "@webstudio-is/css-data";
 
 export type StyleUpdate =
   | {
