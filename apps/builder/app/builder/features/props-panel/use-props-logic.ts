@@ -16,14 +16,14 @@ export const getValueFromPropMeta = (propValue?: MetaProps[string]) => {
     value: `${propValue?.defaultValue ?? ""}`,
   };
 
-  if (propValue?.controlType === "boolean") {
+  if (propValue?.control === "boolean") {
     typedValue = {
       type: "boolean",
       value: propValue.defaultValue ?? false,
     };
   }
 
-  if (propValue?.controlType === "number") {
+  if (propValue?.control === "number") {
     typedValue = {
       type: "number",
       value: propValue.defaultValue ?? 0,

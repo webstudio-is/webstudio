@@ -24,7 +24,7 @@ const meta: WsComponentMeta = {
   presetStyle,
   props: MetaProps.parse({
     ...props,
-    src: { ...props.src, controlType: "imageUrl", label: "Source" },
+    src: { ...props.src, control: "imageUrl", label: "Source" },
   }),
   initialProps: ["src", "width", "height", "alt", "loading"],
 };

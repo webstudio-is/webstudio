@@ -6,28 +6,28 @@ const common = {
 };
 
 const Number = z.object({
-  controlType: z.literal("number"),
+  control: z.literal("number"),
   dataType: z.literal("number"),
   defaultValue: z.number().nullable(),
   ...common,
 });
 
 const Text = z.object({
-  controlType: z.literal("text"),
+  control: z.literal("text"),
   dataType: z.string(),
   defaultValue: z.string().nullable(),
   ...common,
 });
 
 const MultilineText = z.object({
-  controlType: z.literal("multilineText"),
+  control: z.literal("multilineText"),
   dataType: z.literal("string"),
   defaultValue: z.string().nullable(),
   ...common,
 });
 
 const Color = z.object({
-  controlType: z.literal("color"),
+  control: z.literal("color"),
   dataType: z.literal("string"),
   defaultValue: z.string().nullable(),
   ...common,
@@ -35,7 +35,7 @@ const Color = z.object({
 
 // @todo: rename to Switch
 const Boolean = z.object({
-  controlType: z.literal("boolean"),
+  control: z.literal("boolean"),
   dataType: z.literal("boolean"),
   defaultValue: z.boolean().nullable(),
   ...common,
@@ -43,7 +43,7 @@ const Boolean = z.object({
 
 // @todo: rename to RadioGroup or Radios
 const Radio = z.object({
-  controlType: z.literal("radio"),
+  control: z.literal("radio"),
   options: z.array(z.string()),
   dataType: z.literal("string"),
   defaultValue: z.string().nullable(),
@@ -51,7 +51,7 @@ const Radio = z.object({
 });
 
 const Select = z.object({
-  controlType: z.literal("select"),
+  control: z.literal("select"),
   options: z.array(z.string()),
   dataType: z.literal("string"),
   defaultValue: z.string().nullable(),
@@ -60,7 +60,7 @@ const Select = z.object({
 
 // @todo: rename to CheckboxGroup or Checkboxes
 const Check = z.object({
-  controlType: z.literal("check"),
+  control: z.literal("check"),
   options: z.array(z.string()),
   dataType: z.array(z.string()),
   defaultValue: z.array(z.string()).nullable(),
@@ -68,13 +68,13 @@ const Check = z.object({
 });
 
 const ImageUrl = z.object({
-  controlType: z.literal("imageUrl"),
+  control: z.literal("imageUrl"),
   dataType: z.literal("string"),
   defaultValue: z.string().nullable(),
   ...common,
 });
 
-export const PropMeta = z.discriminatedUnion("controlType", [
+export const PropMeta = z.discriminatedUnion("control", [
   Number,
   Text,
   MultilineText,

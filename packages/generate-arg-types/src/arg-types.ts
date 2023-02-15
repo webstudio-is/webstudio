@@ -44,13 +44,13 @@ const matchers = {
 };
 
 const toPropMeta = (
-  controlType: PropMeta["controlType"],
+  control: PropMeta["control"],
   dataType: string,
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   rest: any
 ) =>
   PropMeta.parse({
-    controlType,
+    control,
     dataType,
     ...rest,
   });

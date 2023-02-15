@@ -194,9 +194,9 @@ export function Control({
 
   // argType can be undefined in case of new property created
   const defaultValue = argType?.defaultValue ?? "";
-  const controlType = argType?.controlType ?? "text";
+  const control = argType?.control ?? "text";
 
-  if (controlType === "imageUrl") {
+  if (control === "imageUrl") {
     const assetId = userProp.type === "asset" ? userProp.value : undefined;
 
     return (
@@ -228,7 +228,7 @@ export function Control({
     );
   }
 
-  if (includes(textControlTypes, controlType)) {
+  if (includes(textControlTypes, control)) {
     const value = `${userProp.value}`;
 
     return (
@@ -240,12 +240,12 @@ export function Control({
             value,
           })
         }
-        type={controlType}
+        type={control}
       />
     );
   }
 
-  if (controlType === "boolean") {
+  if (control === "boolean") {
     const value = Boolean(userProp.value);
 
     return (
@@ -263,9 +263,9 @@ export function Control({
   }
 
   if (
-    argType?.controlType === "radio" ||
-    argType?.controlType === "check" ||
-    argType?.controlType === "select"
+    argType?.control === "radio" ||
+    argType?.control === "check" ||
+    argType?.control === "select"
   ) {
     const options = argType.options;
 
@@ -278,7 +278,7 @@ export function Control({
 
     const DEFAULT_OPTIONS: string[] = [];
 
-    if (controlType === "radio") {
+    if (control === "radio") {
       return (
         <RadioControl
           value={value}
@@ -289,12 +289,12 @@ export function Control({
             })
           }
           options={options ?? DEFAULT_OPTIONS}
-          type={controlType}
+          type={control}
         />
       );
     }
 
-    if (controlType === "check") {
+    if (control === "check") {
       return (
         <CheckboxControl
           value={value}
@@ -305,12 +305,12 @@ export function Control({
             })
           }
           options={options ?? DEFAULT_OPTIONS}
-          type={controlType}
+          type={control}
         />
       );
     }
 
-    if (controlType === "select") {
+    if (control === "select") {
       return (
         <SelectControl
           value={value}
@@ -321,17 +321,17 @@ export function Control({
             })
           }
           options={options ?? DEFAULT_OPTIONS}
-          type={controlType}
+          type={control}
         />
       );
     }
 
-    assertUnreachable(controlType, `Unknown control type ${controlType}`);
+    assertUnreachable(control, `Unknown control type ${control}`);
   }
 
   warnOnce(
     true,
-    `Control type "${controlType}" is not implemented for prop: "${userProp.name}" in component "${component}"`
+    `Control type "${control}" is not implemented for prop: "${userProp.name}" in component "${component}"`
   );
 
   return <NotImplemented />;
