@@ -1,5 +1,5 @@
 import { Link2Icon } from "@webstudio-is/icons";
-import type { WsComponentMeta, MetaProps } from "./component-type";
+import { type WsComponentMeta, MetaProps } from "./component-type";
 import props from "./__generated__/link.props.json";
 
 const presetStyle = {
@@ -20,7 +20,8 @@ const meta: WsComponentMeta = {
   Icon: Link2Icon,
   presetStyle,
   children: ["Link text you can edit"],
-  props: props as MetaProps,
+  props: MetaProps.parse(props),
+  initialProps: ["href"],
 };
 
 export default meta;

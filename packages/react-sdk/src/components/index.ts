@@ -1,3 +1,6 @@
+import { PropMeta } from "@webstudio-is/generate-arg-types";
+import type { WsComponentMeta, MetaProps } from "./component-type";
+
 import BodyMeta from "./body.ws";
 import BoxMeta from "./box.ws";
 import TextBlockMeta from "./text-block.ws";
@@ -31,8 +34,6 @@ import { Button } from "./button";
 import { Input } from "./input";
 import { Form } from "./form";
 import { Image } from "./image";
-
-import type { WsComponentMeta, MetaProps } from "./component-type";
 
 const meta = {
   Box: BoxMeta,
@@ -75,15 +76,10 @@ const components = {
 export type ComponentName = keyof typeof components;
 type RegisteredComponents = Partial<{
   // eslint-disable-next-line @typescript-eslint/ban-types
-  [p in ComponentName]: {};
-}>;
-
-type RegisteredComponentsMeta = Partial<{
-  [p in ComponentName]: Partial<WsComponentMeta>;
+  [name in ComponentName]: {};
 }>;
 
 let registeredComponents: RegisteredComponents | null = null;
-let registeredComponentsMeta: RegisteredComponentsMeta | null = null;
 
 const componentNames = Object.keys(components) as ComponentName[];
 
@@ -96,18 +92,6 @@ export const getComponentNames = (): ComponentName[] => {
   return [...uniqueNames.values()] as ComponentName[];
 };
 
-export const getComponentMeta = (name: string): undefined | WsComponentMeta => {
-  const componentMeta = meta[name as ComponentName];
-  if (registeredComponentsMeta != null && name in registeredComponentsMeta) {
-    return {
-      ...componentMeta,
-      ...registeredComponentsMeta[name as ComponentName],
-    };
-  }
-
-  return componentMeta;
-};
-
 export const getComponent = (
   name: string
 ): undefined | typeof components[ComponentName] => {
@@ -118,38 +102,74 @@ export const getComponent = (
     : components[name as ComponentName];
 };
 
-export const getComponentMetaProps = (name: string): undefined | MetaProps => {
-  const componentMeta = meta[name as ComponentName];
-  if (registeredComponentsMeta != null && name in registeredComponentsMeta) {
-    const registeredComponentMeta =
-      registeredComponentsMeta[name as ComponentName];
-    const allMetaPropKeys = new Set([
-      ...Object.keys(componentMeta?.props ?? {}),
-      // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-      ...Object.keys(registeredComponentMeta!.props!),
-    ]);
+const preprocessProps = (
+  defaults: WsComponentMeta,
+  overrides: Partial<WsComponentMeta>
+): MetaProps => {
+  if (overrides) {
+    const allNames = new Set([
+      ...Object.keys(defaults.props ?? {}),
+      ...Object.keys(overrides?.props ?? {}),
+    ]).values();
 
-    const props: MetaProps = {};
-    /**
-     * Merge props, taking non null defaultValue and required=true from meta
-     **/
-    for (const key of allMetaPropKeys.values()) {
-      props[key] = {
-        ...componentMeta?.props[key],
-        ...registeredComponentMeta?.props?.[key],
-        defaultValue:
-          registeredComponentMeta?.props?.[key]?.defaultValue ??
-          componentMeta?.props[key]?.defaultValue ??
-          null,
-        required:
-          registeredComponentMeta?.props?.[key]?.required ||
-          componentMeta?.props[key]?.required,
-      } as MetaProps[string];
+    const result: MetaProps = {};
+    for (const name of allNames) {
+      result[name] = PropMeta.parse({
+        ...defaults.props[name],
+        ...overrides?.props?.[name],
+      });
     }
-    return props;
+    return result;
   }
 
-  return componentMeta?.props;
+  return defaults.props;
+};
+
+const preprocessInitialProps = (
+  props: MetaProps,
+  defaults: WsComponentMeta,
+  overrides: Partial<WsComponentMeta>
+): Array<string> => {
+  const initialProps = overrides?.initialProps ?? defaults?.initialProps ?? [];
+  const requiredProps = props
+    ? Object.entries(props)
+        .filter(
+          ([name, value]) =>
+            value?.required && initialProps.includes(name) === false
+        )
+        .map(([name]) => name)
+    : [];
+
+  // order of initialProps must be preserved
+  return [...initialProps, ...requiredProps];
+};
+
+const preprocessMetas = (
+  defaults: Record<string, WsComponentMeta>,
+  overrides: Record<string, Partial<WsComponentMeta> | undefined>
+) => {
+  const result: Record<string, WsComponentMeta> = {};
+  for (const name of Object.keys(defaults)) {
+    const props = preprocessProps(defaults[name], overrides[name] ?? {});
+    const initialProps = preprocessInitialProps(
+      props,
+      defaults[name],
+      overrides[name] ?? {}
+    );
+    result[name] = {
+      ...defaults[name],
+      ...overrides[name],
+      props,
+      initialProps,
+    };
+  }
+  return result;
+};
+
+let currentMeta = preprocessMetas(meta, {});
+
+export const getComponentMeta = (name: string): WsComponentMeta | undefined => {
+  return currentMeta[name];
 };
 
 /**
@@ -162,7 +182,7 @@ export const registerComponents = (components: RegisteredComponents) => {
 };
 
 export const registerComponentsMeta = (
-  componentsMeta: RegisteredComponentsMeta
+  overrides: Record<string, Partial<WsComponentMeta> | undefined>
 ) => {
-  registeredComponentsMeta = componentsMeta;
+  currentMeta = preprocessMetas(meta, overrides);
 };

@@ -616,6 +616,7 @@ importers:
   packages/generate-arg-types:
     specifiers:
       '@types/fs-extra': ^9.0.13
+      '@webstudio-is/scripts': workspace:^
       '@webstudio-is/tsconfig': workspace:^
       esbuild: 0.15.13
       fast-glob: ^3.2.12
@@ -630,6 +631,7 @@ importers:
       react-docgen-typescript: 2.2.2_typescript@4.9.5
       zod: 3.19.1
     devDependencies:
+      '@webstudio-is/scripts': link:../scripts
       '@webstudio-is/tsconfig': link:../tsconfig
       esbuild: 0.15.13
       typescript: 4.9.5

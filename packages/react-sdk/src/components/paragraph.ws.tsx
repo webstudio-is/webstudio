@@ -1,5 +1,5 @@
 import { TextAlignLeftIcon } from "@webstudio-is/icons";
-import type { WsComponentMeta, MetaProps } from "./component-type";
+import { type WsComponentMeta, MetaProps } from "./component-type";
 import props from "./__generated__/paragraph.props.json";
 
 const meta: WsComponentMeta = {
@@ -7,7 +7,7 @@ const meta: WsComponentMeta = {
   label: "Paragraph",
   Icon: TextAlignLeftIcon,
   children: ["Pragraph you can edit"],
-  props: props as MetaProps,
+  props: MetaProps.parse(props),
 };
 
 export default meta;

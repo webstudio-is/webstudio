@@ -1,4 +1,5 @@
 import type { PropItem } from "react-docgen-typescript";
+import { PropMeta } from "./types";
 
 export type FilterPredicate = (prop: PropItem) => boolean;
 
@@ -6,7 +7,7 @@ const validAttributes = (prop: PropItem) => {
   if (prop.parent) {
     // Pass *HTML (both ButtonHTMLAttributes and HTMLAttributes), Aria, and SVG attributes through
     const matcher = /.?(HTML|SVG|Aria)Attributes/;
-    // TODO: Add a test for this
+    // @todo: Add a test for this
     return prop.parent.name.match(matcher);
   }
   // Always allow component's own props
@@ -34,8 +35,7 @@ export const propsToArgTypes = (
       result[propName] = argType;
     }
     return result;
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  }, {} as Record<string, any>);
+  }, {} as Record<string, PropMeta>);
 };
 
 const matchers = {
@@ -43,58 +43,56 @@ const matchers = {
   date: /Date$/,
 };
 
+const toPropMeta = (
+  controlType: PropMeta["controlType"],
+  dataType: string,
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  rest: any
+) =>
+  PropMeta.parse({
+    controlType,
+    dataType,
+    ...rest,
+  });
+
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
-export const getArgType = (propItem: any) => {
+export const getArgType = (propItem: any): PropMeta | undefined => {
   const { type, name } = propItem;
   if (!type) {
-    return undefined;
+    return;
   }
 
-  const overrides = {
+  const common = {
     defaultValue: propItem.defaultValue?.value ?? null,
-    options: propItem.options,
     required: propItem.required,
   };
 
   // args that end with background or color e.g. iconColor
-  if (matchers.color && matchers.color.test(name)) {
-    const controlType = propItem.type.name;
-
-    if (controlType === "string") {
-      return { ...overrides, type: "color" };
-    }
+  if (matchers.color && matchers.color.test(name) && type.name === "string") {
+    return toPropMeta("color", type.name, common);
   }
 
-  // args that end with date e.g. purchaseDate
-  if (matchers.date && matchers.date.test(name)) {
-    return { ...overrides, type: "date" };
-  }
-
-  switch (type?.name) {
-    case "array":
-      return { ...overrides, type: "object" };
+  switch (type.name) {
     case "boolean":
     case "Booleanish":
-      return { ...overrides, type: "boolean" };
-    case "string":
-      return { ...overrides, type: "text" };
+    case `boolean | "true" | "false" | "mixed"`:
+      return toPropMeta("boolean", "boolean", common);
     case "number":
-      return { ...overrides, type: "number" };
+      return toPropMeta("number", "number", common);
     case "enum": {
-      const { value } = type;
       // Remove additional quotes from enum values
       // @ts-expect-error Original type has `any` type
-      const values = value.map((val) => val.value.replace(/^"(.+)"$/, "$1"));
-      return {
-        ...overrides,
-        type: values?.length <= 5 ? "radio" : "select",
-        options: values,
-      };
+      const values = type.value.map((val) =>
+        val.value.replace(/^"(.*)"$/, "$1")
+      );
+      const control = values.length <= 5 ? "radio" : "select";
+      return toPropMeta(control, "string", { ...common, options: values });
     }
     case "function":
     case "symbol":
-      return null;
+      return;
     default:
-      return { ...overrides, type: "text" };
+      // @todo: we need some checks here. for example type.name can be "ImageLoader"
+      return toPropMeta("text", type.name, common);
   }
 };

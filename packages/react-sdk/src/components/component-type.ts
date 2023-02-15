@@ -2,8 +2,11 @@ import { z } from "zod";
 import type { FunctionComponent } from "react";
 import type { IconProps } from "@webstudio-is/icons";
 import type { Style } from "@webstudio-is/css-data";
+import { PropMeta } from "@webstudio-is/generate-arg-types";
 
-export type MetaProps = Partial<z.infer<typeof Props>>;
+export const MetaProps = z.record(PropMeta);
+
+export type MetaProps = Partial<z.infer<typeof MetaProps>>;
 
 export type WsComponentMeta = {
   /**
@@ -29,48 +32,6 @@ export type WsComponentMeta = {
   initialProps?: Array<string>;
 };
 
-const Props = z.record(
-  z.union([
-    z.object({
-      type: z.literal("number"),
-      required: z.boolean(),
-      defaultValue: z.number().nullable(),
-    }),
-
-    z.object({
-      type: z.literal("text"),
-      required: z.boolean(),
-      defaultValue: z.string().nullable(),
-    }),
-
-    z.object({
-      type: z.literal("color"),
-      required: z.boolean(),
-      defaultValue: z.string().nullable(),
-    }),
-
-    z.object({
-      type: z.literal("boolean"),
-      required: z.boolean(),
-      defaultValue: z.boolean().nullable(),
-    }),
-
-    z.object({
-      type: z.enum([
-        "radio",
-        "inline-radio",
-        "check",
-        "inline-check",
-        "multi-select",
-        "select",
-      ]),
-      required: z.boolean(),
-      options: z.array(z.string()),
-      defaultValue: z.string().nullable(),
-    }),
-  ])
-);
-
 export const WsComponentMeta = z.lazy(() =>
   z.object({
     type: z.enum([
@@ -85,7 +46,7 @@ export const WsComponentMeta = z.lazy(() =>
     Icon: z.any(),
     presetStyle: z.optional(z.any()),
     children: z.optional(z.array(z.string())),
-    props: Props,
+    props: MetaProps,
     initialProps: z.optional(z.array(z.string())),
   })
 );

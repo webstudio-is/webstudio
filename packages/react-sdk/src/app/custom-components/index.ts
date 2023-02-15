@@ -2,7 +2,7 @@ import { Image } from "./image";
 import { Link } from "./link";
 import { RichTextLink } from "./rich-text-link";
 import { imageProps } from "@webstudio-is/image";
-import type { MetaProps } from "../../components/component-type";
+import { MetaProps } from "../../components/component-type";
 
 export const customComponents = {
   Image,
@@ -12,6 +12,9 @@ export const customComponents = {
 
 export const customComponentsMeta = {
   Image: {
-    props: imageProps as MetaProps,
+    props: MetaProps.parse({
+      ...imageProps,
+      src: { ...imageProps.src, controlType: "imageUrl", label: "Source" },
+    }),
   },
 };

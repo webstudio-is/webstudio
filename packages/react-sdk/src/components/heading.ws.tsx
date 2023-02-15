@@ -1,5 +1,5 @@
 import { HeadingIcon } from "@webstudio-is/icons";
-import type { WsComponentMeta, MetaProps } from "./component-type";
+import { type WsComponentMeta, MetaProps } from "./component-type";
 import props from "./__generated__/heading.props.json";
 
 const meta: WsComponentMeta = {
@@ -7,7 +7,8 @@ const meta: WsComponentMeta = {
   label: "Heading",
   Icon: HeadingIcon,
   children: ["Heading you can edit"],
-  props: props as MetaProps,
+  props: MetaProps.parse(props),
+  initialProps: ["tag"],
 };
 
 export default meta;
