@@ -48,6 +48,15 @@ export const hasProjectPermit = async (
     return true;
   }
 
+  // Allow load webstudiois for clone
+  // @todo rethink permissions to allow everyone has access to various projects
+  if (
+    props.permit === "view" &&
+    props.projectId === "62154aaef0cb0860ccf85d6e"
+  ) {
+    return true;
+  }
+
   // Edge-case to allow access the project on the canvas
   if (
     props.permit === "view" &&
