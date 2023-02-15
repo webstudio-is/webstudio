@@ -329,7 +329,7 @@ const StyledSourceButton = styled(Box, {
   display: "inline-flex",
   borderRadius: theme.borderRadius[3],
   padding: theme.spacing[4],
-  minWidth: 32,
+  minWidth: theme.spacing[13],
   maxWidth: "100%",
   position: "relative",
   color: theme.colors.foregroundContrastMain,
