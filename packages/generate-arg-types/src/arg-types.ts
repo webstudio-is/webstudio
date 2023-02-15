@@ -21,9 +21,7 @@ export const propsToArgTypes = (
   const filterFn = filter ?? validAttributes;
   const entries = Object.entries(props);
   return entries.reduce((result, current) => {
-    // @todo need halp
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const [propName, prop] = current as any;
+    const [propName, prop] = current;
 
     // Filter out props
     if (!filterFn(prop)) {
@@ -43,24 +41,16 @@ const matchers = {
   date: /Date$/,
 };
 
-const toPropMeta = (
-  control: PropMeta["control"],
-  dataType: string,
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  rest: any
-) =>
+// eslint-disable-next-line @typescript-eslint/ban-types
+const toPropMeta = (control: PropMeta["control"], dataType: string, rest: {}) =>
   PropMeta.parse({
     control,
     dataType,
     ...rest,
   });
 
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
-export const getArgType = (propItem: any): PropMeta | undefined => {
+export const getArgType = (propItem: PropItem): PropMeta | undefined => {
   const { type, name } = propItem;
-  if (!type) {
-    return;
-  }
 
   const common = {
     defaultValue: propItem.defaultValue?.value ?? null,
@@ -80,10 +70,9 @@ export const getArgType = (propItem: any): PropMeta | undefined => {
     case "number":
       return toPropMeta("number", "number", common);
     case "enum": {
-      // Remove additional quotes from enum values
-      // @ts-expect-error Original type has `any` type
-      const values = type.value.map((val) =>
-        val.value.replace(/^"(.*)"$/, "$1")
+      const values = type.value.map(({ value }: { value: string }) =>
+        // remove additional quotes from enum values
+        value.replace(/^"(.*)"$/, "$1")
       );
       const control = values.length <= 5 ? "radio" : "select";
       return toPropMeta(control, "string", { ...common, options: values });
