@@ -55,7 +55,10 @@ type IntermediateItem = {
   isAdded?: boolean;
 };
 
-type TextFieldBaseWrapperProps<Item> = Omit<ComponentProps<"input">, "value"> &
+type TextFieldBaseWrapperProps<Item extends IntermediateItem> = Omit<
+  ComponentProps<"input">,
+  "value"
+> &
   Pick<
     ComponentProps<typeof TextFieldContainer>,
     "variant" | "state" | "css"
@@ -71,8 +74,8 @@ type TextFieldBaseWrapperProps<Item> = Omit<ComponentProps<"input">, "value"> &
     onEnableItem?: (item: Item) => void;
     onSort?: (items: Array<Item>) => void;
     onSelectItem?: (item?: Item) => void;
-    onEditItem?: (item?: Item) => void;
-    editingItem?: Item;
+    onEditItem?: (id?: Item["id"]) => void;
+    editingItemId?: Item["id"];
   };
 
 const TextFieldBase: ForwardRefRenderFunction<
@@ -100,7 +103,7 @@ const TextFieldBase: ForwardRefRenderFunction<
     onSort,
     onSelectItem,
     onEditItem,
-    editingItem,
+    editingItemId,
     ...textFieldProps
   } = props;
   const [internalInputRef, focusProps] = useTextFieldFocus({
@@ -130,12 +133,12 @@ const TextFieldBase: ForwardRefRenderFunction<
         <StyleSource
           id={item.id}
           isDragging={item.id === dragItemId}
-          isEditing={item.id === editingItem?.id}
+          isEditing={item.id === editingItemId}
           state={item.state}
           source={item.source}
           isEditable={item.isEditable}
           onChangeEditing={(isEditing) => {
-            onEditItem?.(isEditing ? item : undefined);
+            onEditItem?.(isEditing ? item.id : undefined);
           }}
           onChangeState={(state) => {
             if (state === "disabled") {
@@ -161,7 +164,7 @@ const TextFieldBase: ForwardRefRenderFunction<
       ))}
       {placementIndicator}
       {/* We want input to be the first element in DOM so it receives the focus first */}
-      {editingItem?.id === undefined && (
+      {editingItemId === undefined && (
         <TextFieldInput
           {...textFieldProps}
           value={label}
@@ -180,16 +183,16 @@ const TextFieldBase: ForwardRefRenderFunction<
 const TextField = forwardRef(TextFieldBase);
 TextField.displayName = "TextField";
 
-type StyleSourceInputProps<Item> = {
+type StyleSourceInputProps<Item extends IntermediateItem> = {
   items?: Array<Item>;
   value?: Array<Item>;
-  editingItem?: Item;
+  editingItemId?: Item["id"];
   onSelectAutocompleteItem?: (item: Item) => void;
   onRemoveItem?: (item: Item) => void;
   onCreateItem?: (label: string) => void;
   onChangeItem?: (item: Item) => void;
   onSelectItem?: (item?: Item) => void;
-  onEditItem?: (item?: Item) => void;
+  onEditItem?: (id?: Item["id"]) => void;
   onDisableItem?: (item: Item) => void;
   onEnableItem?: (item: Item) => void;
   onSort?: (items: Array<Item>) => void;
@@ -276,7 +279,11 @@ export const StyleSourceInput = <Item extends IntermediateItem>(
 
   const inputProps = getInputProps({
     onKeyDown(event) {
-      if (event.key === "Backspace" && label === "") {
+      if (
+        event.key === "Backspace" &&
+        label === "" &&
+        props.editingItemId === undefined
+      ) {
         props.onRemoveItem?.(value[value.length - 1]);
       }
     },
@@ -300,7 +307,7 @@ export const StyleSourceInput = <Item extends IntermediateItem>(
             label={label}
             value={value}
             css={props.css}
-            editingItem={props.editingItem}
+            editingItemId={props.editingItemId}
           />
         </ComboboxPopperAnchor>
         <ComboboxPopperContent align="start" sideOffset={5}>

@@ -148,14 +148,14 @@ export const Complete: ComponentStory<typeof StyleSourceInput> = () => {
       state: "disabled",
     },
   ]);
-  const [editingItem, setEditingItem] = useState<Item>();
+  const [editingItemId, setEditingItemId] = useState<undefined | Item["id"]>();
 
   return (
     <StyleSourceInput
       css={{ width: 300 }}
       items={getItems()}
       value={value}
-      editingItem={editingItem}
+      editingItemId={editingItemId}
       onSelectItem={(itemToSelect) => {
         setValue(
           value.map((item) => {
@@ -169,7 +169,7 @@ export const Complete: ComponentStory<typeof StyleSourceInput> = () => {
           })
         );
       }}
-      onEditItem={setEditingItem}
+      onEditItem={setEditingItemId}
       onCreateItem={(label) => {
         createItem(label, value, setValue);
       }}

@@ -290,6 +290,8 @@ const EditableText = ({
       css={{
         outline: "none",
         textOverflow: isEditing ? "clip" : "ellipsis",
+        userSelect: isEditing ? "auto" : "none",
+        cursor: isEditing ? "auto" : "default",
       }}
       {...handlers}
     >
@@ -327,6 +329,7 @@ const StyledSourceButton = styled(Box, {
   display: "inline-flex",
   borderRadius: theme.borderRadius[3],
   padding: theme.spacing[4],
+  minWidth: theme.spacing[13],
   maxWidth: "100%",
   position: "relative",
   color: theme.colors.foregroundContrastMain,
