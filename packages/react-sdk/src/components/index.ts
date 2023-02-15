@@ -135,7 +135,7 @@ const preprocessInitialProps = (
     ? Object.entries(props)
         .filter(
           ([name, value]) =>
-            value?.required && initialProps.includes(name) === false
+            value?.type.required && initialProps.includes(name) === false
         )
         .map(([name]) => name)
     : [];

@@ -158,7 +158,7 @@ const Property = ({
           placeholder="Property"
           readOnly={true}
           state={isInvalid ? "invalid" : undefined}
-          value={argType?.label ?? userProp.name}
+          value={argType?.name ?? userProp.name}
         />
       ) : (
         <Combobox

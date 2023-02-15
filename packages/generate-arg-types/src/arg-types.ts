@@ -41,47 +41,45 @@ const matchers = {
   date: /Date$/,
 };
 
-// eslint-disable-next-line @typescript-eslint/ban-types
-const toPropMeta = (control: PropMeta["control"], dataType: string, rest: {}) =>
-  PropMeta.parse({
-    control,
-    dataType,
-    ...rest,
-  });
-
 export const getArgType = (propItem: PropItem): PropMeta | undefined => {
   const { type, name } = propItem;
 
-  const common = {
+  const common = (typeName: string = type.name) => ({
+    name,
+    description: propItem.description,
     defaultValue: propItem.defaultValue?.value ?? null,
-    required: propItem.required,
-  };
+    type: { name: typeName, required: propItem.required },
+  });
 
   // args that end with background or color e.g. iconColor
   if (matchers.color && matchers.color.test(name) && type.name === "string") {
-    return toPropMeta("color", type.name, common);
+    return PropMeta.parse({ ...common(), control: "color" });
   }
 
   switch (type.name) {
     case "boolean":
     case "Booleanish":
-    case `boolean | "true" | "false" | "mixed"`:
-      return toPropMeta("boolean", "boolean", common);
+      return PropMeta.parse({ ...common("boolean"), control: "boolean" });
     case "number":
-      return toPropMeta("number", "number", common);
+      return PropMeta.parse({ ...common("number"), control: "number" });
     case "enum": {
       const values = type.value.map(({ value }: { value: string }) =>
         // remove additional quotes from enum values
         value.replace(/^"(.*)"$/, "$1")
       );
-      const control = values.length <= 5 ? "radio" : "select";
-      return toPropMeta(control, "string", { ...common, options: values });
+      return PropMeta.parse({
+        ...common("string"),
+        control: {
+          type: values.length <= 5 ? "radio" : "select",
+          options: values,
+        },
+      });
     }
     case "function":
     case "symbol":
       return;
     default:
       // @todo: we need some checks here. for example type.name can be "ImageLoader"
-      return toPropMeta("text", type.name, common);
+      return PropMeta.parse({ ...common(), control: "text" });
   }
 };

@@ -194,9 +194,11 @@ export function Control({
 
   // argType can be undefined in case of new property created
   const defaultValue = argType?.defaultValue ?? "";
-  const control = argType?.control ?? "text";
+  const rawControl = argType?.control || "text";
+  const control =
+    typeof rawControl === "string" ? { type: rawControl } : rawControl;
 
-  if (control === "file-image") {
+  if (control.type === "file-image") {
     const assetId = userProp.type === "asset" ? userProp.value : undefined;
 
     return (
@@ -228,7 +230,7 @@ export function Control({
     );
   }
 
-  if (includes(textControlTypes, control)) {
+  if (includes(textControlTypes, control.type)) {
     const value = `${userProp.value}`;
 
     return (
@@ -240,12 +242,12 @@ export function Control({
             value,
           })
         }
-        type={control}
+        type={control.type}
       />
     );
   }
 
-  if (control === "boolean") {
+  if (control.type === "boolean") {
     const value = Boolean(userProp.value);
 
     return (
@@ -263,13 +265,14 @@ export function Control({
   }
 
   if (
-    argType?.control === "radio" ||
-    argType?.control === "check" ||
-    argType?.control === "select" ||
-    argType?.control === "inline-check" ||
-    argType?.control === "inline-radio"
+    control.type === "radio" ||
+    control.type === "check" ||
+    control.type === "select" ||
+    control.type === "inline-check" ||
+    control.type === "inline-radio" ||
+    control.type === "multi-select"
   ) {
-    const options = argType.options;
+    const options = control.options;
 
     const value = `${userProp.value}`;
 
@@ -280,7 +283,7 @@ export function Control({
 
     const DEFAULT_OPTIONS: string[] = [];
 
-    if (control === "radio" || control === "inline-radio") {
+    if (control.type === "radio" || control.type === "inline-radio") {
       return (
         <RadioControl
           value={value}
@@ -297,9 +300,9 @@ export function Control({
     }
 
     if (
-      control === "check" ||
-      control === "inline-check" ||
-      control === "multi-select"
+      control.type === "check" ||
+      control.type === "inline-check" ||
+      control.type === "multi-select"
     ) {
       return (
         <CheckboxControl
@@ -316,7 +319,7 @@ export function Control({
       );
     }
 
-    if (control === "select") {
+    if (control.type === "select") {
       return (
         <SelectControl
           value={value}
@@ -327,22 +330,29 @@ export function Control({
             })
           }
           options={options ?? DEFAULT_OPTIONS}
-          type={control}
+          type={control.type}
         />
       );
     }
-
-    if (control === "object" || control === "date" || control === "range") {
-      return <NotImplemented />;
-    }
-
-    assertUnreachable(control, `Unknown control type ${control}`);
   }
+
+  if (
+    control.type === "object" ||
+    control.type === "date" ||
+    control.type === "range"
+  ) {
+    warnOnce(
+      true,
+      `Control type "${control.type}" is not implemented for prop: "${userProp.name}" in component "${component}"`
+    );
+    return <NotImplemented />;
+  }
+
+  assertUnreachable(control.type, `Unknown control type ${control.type}`);
 
   warnOnce(
     true,
-    `Control type "${control}" is not implemented for prop: "${userProp.name}" in component "${component}"`
+    `Control type "${control.type}" is not implemented for prop: "${userProp.name}" in component "${component}"`
   );
-
   return <NotImplemented />;
 }
