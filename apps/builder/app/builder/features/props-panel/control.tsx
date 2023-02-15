@@ -296,7 +296,11 @@ export function Control({
       );
     }
 
-    if (control === "check" || control === "inline-check") {
+    if (
+      control === "check" ||
+      control === "inline-check" ||
+      control === "multi-select"
+    ) {
       return (
         <CheckboxControl
           value={value}
@@ -328,12 +332,7 @@ export function Control({
       );
     }
 
-    if (
-      control === "object" ||
-      control === "date" ||
-      control === "range" ||
-      control === "multi-select"
-    ) {
+    if (control === "object" || control === "date" || control === "range") {
       return <NotImplemented />;
     }
 
