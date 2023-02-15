@@ -29,6 +29,9 @@ const Text = z.object({
   ...common,
 });
 
+// Discussed with Storybook team here:
+// https://discord.com/channels/486522875931656193/689023212519948302/1075001187776069682
+// https://github.com/storybookjs/storybook/issues/21100
 const MultilineText = z.object({
   control: z.literal("multiline-text"),
   dataType: z.literal("string"),
