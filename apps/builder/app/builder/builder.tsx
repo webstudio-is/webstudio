@@ -145,7 +145,7 @@ const Main = ({ children }: { children: JSX.Element | Array<JSX.Element> }) => (
 );
 
 type ChromeWrapperProps = {
-  children: Array<JSX.Element | null>;
+  children: Array<JSX.Element | null | false>;
   isPreviewMode: boolean;
 };
 
@@ -352,7 +352,7 @@ export const Builder = ({
             <Inspector publish={publish} />
           )}
         </SidePanel>
-        <Footer />
+        {isPreviewMode === false && <Footer />}
       </ChromeWrapper>
     </AssetsProvider>
   );
