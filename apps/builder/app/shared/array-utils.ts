@@ -11,16 +11,3 @@ export const removeByMutable = <Item>(
     }
   }
 };
-
-export const replaceByOrAppendMutable = <Item>(
-  array: Item[],
-  item: Item,
-  predicate: Predicate<Item>
-) => {
-  const matchedIndex = array.findIndex(predicate);
-  if (matchedIndex === -1) {
-    array.push(item);
-  } else {
-    array[matchedIndex] = item;
-  }
-};

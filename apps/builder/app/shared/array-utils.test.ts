@@ -1,5 +1,5 @@
 import { expect, test } from "@jest/globals";
-import { removeByMutable, replaceByOrAppendMutable } from "./array-utils";
+import { removeByMutable } from "./array-utils";
 
 test("removeByMutable", () => {
   const array = [
@@ -29,41 +29,6 @@ test("removeByMutable", () => {
     [
       {
         "param": 4,
-      },
-    ]
-  `);
-});
-
-test("replaceByOrAppendMutable", () => {
-  const array = [{ param: 1 }, { param: 2 }, { param: 3 }];
-  replaceByOrAppendMutable(array, { param: 6 }, (item) => item.param === 2);
-  expect(array).toMatchInlineSnapshot(`
-    [
-      {
-        "param": 1,
-      },
-      {
-        "param": 6,
-      },
-      {
-        "param": 3,
-      },
-    ]
-  `);
-  replaceByOrAppendMutable(array, { param: 8 }, (item) => item.param === 8);
-  expect(array).toMatchInlineSnapshot(`
-    [
-      {
-        "param": 1,
-      },
-      {
-        "param": 6,
-      },
-      {
-        "param": 3,
-      },
-      {
-        "param": 8,
       },
     ]
   `);

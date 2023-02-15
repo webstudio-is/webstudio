@@ -53,9 +53,7 @@ const PropertyPopoverContent = ({
 
             if (styleValueInfo?.cascaded) {
               const { value, breakpointId } = styleValueInfo.cascaded;
-              const breakpoint = breakpoints.find(
-                (item) => item.id === breakpointId
-              );
+              const breakpoint = breakpoints.get(breakpointId);
               return (
                 <DeprecatedText2 key={property} color="hint">
                   Resetting will change {property} to cascaded {toValue(value)}{" "}
@@ -93,9 +91,7 @@ const PropertyPopoverContent = ({
 
         if (styleValueInfo?.cascaded) {
           const { breakpointId } = styleValueInfo.cascaded;
-          const breakpoint = breakpoints.find(
-            (item) => item.id === breakpointId
-          );
+          const breakpoint = breakpoints.get(breakpointId);
           return (
             <DeprecatedText2 key={property} color="hint">
               {property} value is cascaded from {breakpoint?.label}

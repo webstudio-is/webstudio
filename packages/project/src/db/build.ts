@@ -5,12 +5,12 @@ import {
   Prisma,
   Project,
 } from "@webstudio-is/prisma-client";
-import { BreakpointsList } from "@webstudio-is/project-build";
+import type { AppContext } from "@webstudio-is/trpc-interface";
 import * as db from ".";
 import { Build, Page, Pages } from "../shared/schema";
 import * as pagesUtils from "../shared/pages";
+import { parseBreakpoints, serializeBreakpoints } from "./breakpoints";
 import { parseStyles, serializeStyles } from "./styles";
-import type { AppContext } from "@webstudio-is/trpc-interface";
 import { parseStyleSources, serializeStyleSources } from "./style-sources";
 
 const parseBuild = async (build: DbBuild): Promise<Build> => {
@@ -22,7 +22,7 @@ const parseBuild = async (build: DbBuild): Promise<Build> => {
     isProd: build.isProd,
     createdAt: build.createdAt.toISOString(),
     pages,
-    breakpoints: BreakpointsList.parse(JSON.parse(build.breakpoints)),
+    breakpoints: Array.from(parseBreakpoints(build.breakpoints)),
     styles: Array.from(await parseStyles(build.projectId, build.styles)),
     styleSources: Array.from(parseStyleSources(build.styleSources)),
   };
@@ -318,8 +318,8 @@ export async function create(
     data: {
       projectId: props.projectId,
       pages: JSON.stringify([]),
-      breakpoints: JSON.stringify(
-        props.sourceBuild?.breakpoints ?? db.breakpoints.createValues()
+      breakpoints: serializeBreakpoints(
+        new Map(props.sourceBuild?.breakpoints ?? db.breakpoints.createValues())
       ),
       styles: serializeStyles(new Map(props.sourceBuild?.styles)),
       styleSources: serializeStyleSources(

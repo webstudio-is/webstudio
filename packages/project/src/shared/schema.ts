@@ -102,7 +102,7 @@ export type Build = {
   isDev: boolean;
   isProd: boolean;
   pages: Pages;
-  breakpoints: Breakpoint[];
+  breakpoints: [Breakpoint["id"], Breakpoint][];
   styles: [StyleDeclKey, StyleDecl][];
   styleSources: [StyleSource["id"], StyleSource][];
 };

@@ -1,5 +1,5 @@
 import type {
-  Breakpoint,
+  Breakpoints,
   Instance,
   StyleDecl,
 } from "@webstudio-is/project-build";
@@ -9,28 +9,12 @@ import {
   getInheritedInfo,
 } from "./style-info";
 
-const breakpoints: Breakpoint[] = [
-  {
-    id: "1",
-    label: "1",
-    minWidth: 0,
-  },
-  {
-    id: "2",
-    label: "2",
-    minWidth: 768,
-  },
-  {
-    id: "3",
-    label: "3",
-    minWidth: 1280,
-  },
-  {
-    id: "4",
-    label: "4",
-    minWidth: 1920,
-  },
-];
+const breakpoints: Breakpoints = new Map([
+  ["1", { id: "1", label: "1", minWidth: 0 }],
+  ["2", { id: "2", label: "2", minWidth: 768 }],
+  ["3", { id: "3", label: "3", minWidth: 1280 }],
+  ["4", { id: "4", label: "4", minWidth: 1920 }],
+]);
 
 const selectedBreakpointId = "3";
 const selectedInstanceId = "3";
