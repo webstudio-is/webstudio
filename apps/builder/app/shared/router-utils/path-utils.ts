@@ -1,5 +1,6 @@
 import type { AUTH_PROVIDERS } from "~/shared/session";
-import type { Page, Project } from "@webstudio-is/project";
+import type { Page } from "@webstudio-is/project-build";
+import type { Project } from "@webstudio-is/project";
 import type { BuildMode } from "./build-params";
 import type { ThemeSetting } from "~/shared/theme";
 import env from "~/shared/env";

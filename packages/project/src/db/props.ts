@@ -1,7 +1,6 @@
 import { type Tree, Props, PropsList } from "@webstudio-is/project-build";
 import { applyPatches, type Patch } from "immer";
-import { prisma } from "@webstudio-is/prisma-client";
-import type { Project } from "../shared/schema";
+import { type Project, prisma } from "@webstudio-is/prisma-client";
 import {
   authorizeProject,
   type AppContext,

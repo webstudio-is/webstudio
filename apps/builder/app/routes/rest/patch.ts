@@ -1,8 +1,8 @@
 import type { ActionArgs } from "@remix-run/node";
-import type { Build, Project } from "@webstudio-is/project";
-import { db as projectDb } from "@webstudio-is/project/server";
 import type { SyncItem } from "immerhin";
-import type { Tree } from "@webstudio-is/project-build";
+import type { Build, Tree } from "@webstudio-is/project-build";
+import type { Project } from "@webstudio-is/project";
+import { db as projectDb } from "@webstudio-is/project/server";
 import { createContext } from "~/shared/context.server";
 
 type PatchData = {

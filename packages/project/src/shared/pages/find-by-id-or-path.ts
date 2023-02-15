@@ -1,4 +1,4 @@
-import type { Pages, Page } from "../schema";
+import type { Pages, Page } from "@webstudio-is/project-build";
 
 export const findByIdOrPath = (
   pages: Pages,

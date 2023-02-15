@@ -1,11 +1,14 @@
 import { type Patch, applyPatches } from "immer";
-import { prisma } from "@webstudio-is/prisma-client";
+import { type Project, prisma } from "@webstudio-is/prisma-client";
 import {
   authorizeProject,
   type AppContext,
 } from "@webstudio-is/trpc-interface/server";
-import { StyleSourcesList, StyleSources } from "@webstudio-is/project-build";
-import type { Build, Project } from "../shared/schema";
+import {
+  type Build,
+  StyleSourcesList,
+  StyleSources,
+} from "@webstudio-is/project-build";
 
 export const parseStyleSources = (styleSourceString: string): StyleSources => {
   const styleSourcesList = StyleSourcesList.parse(
