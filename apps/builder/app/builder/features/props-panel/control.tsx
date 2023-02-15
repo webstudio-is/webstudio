@@ -21,7 +21,7 @@ import { ImageManager } from "~/builder/shared/image-manager";
 import type { UserPropValue } from "./use-props-logic";
 import type { SetProperty } from "../style-panel/shared/use-style-data";
 
-const textControlTypes = ["text", "color", "number", "multilineText"] as const;
+const textControlTypes = ["text", "color", "number", "multiline-text"] as const;
 
 type TextControlProps = {
   type: typeof textControlTypes[number];
@@ -196,7 +196,7 @@ export function Control({
   const defaultValue = argType?.defaultValue ?? "";
   const control = argType?.control ?? "text";
 
-  if (control === "imageUrl") {
+  if (control === "file-image") {
     const assetId = userProp.type === "asset" ? userProp.value : undefined;
 
     return (
@@ -265,7 +265,9 @@ export function Control({
   if (
     argType?.control === "radio" ||
     argType?.control === "check" ||
-    argType?.control === "select"
+    argType?.control === "select" ||
+    argType?.control === "inline-check" ||
+    argType?.control === "inline-radio"
   ) {
     const options = argType.options;
 
@@ -278,7 +280,7 @@ export function Control({
 
     const DEFAULT_OPTIONS: string[] = [];
 
-    if (control === "radio") {
+    if (control === "radio" || control === "inline-radio") {
       return (
         <RadioControl
           value={value}
@@ -289,12 +291,12 @@ export function Control({
             })
           }
           options={options ?? DEFAULT_OPTIONS}
-          type={control}
+          type="radio"
         />
       );
     }
 
-    if (control === "check") {
+    if (control === "check" || control === "inline-check") {
       return (
         <CheckboxControl
           value={value}
@@ -305,7 +307,7 @@ export function Control({
             })
           }
           options={options ?? DEFAULT_OPTIONS}
-          type={control}
+          type="check"
         />
       );
     }
@@ -324,6 +326,15 @@ export function Control({
           type={control}
         />
       );
+    }
+
+    if (
+      control === "object" ||
+      control === "date" ||
+      control === "range" ||
+      control === "multi-select"
+    ) {
+      return <NotImplemented />;
     }
 
     assertUnreachable(control, `Unknown control type ${control}`);

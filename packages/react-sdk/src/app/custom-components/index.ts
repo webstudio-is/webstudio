@@ -14,7 +14,7 @@ export const customComponentsMeta = {
   Image: {
     props: MetaProps.parse({
       ...imageProps,
-      src: { ...imageProps.src, control: "imageUrl", label: "Source" },
+      src: { ...imageProps.src, control: "file-image", label: "Source" },
     }),
   },
 };
