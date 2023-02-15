@@ -1,3 +1,4 @@
+import { useState } from "react";
 import store from "immerhin";
 import { nanoid } from "nanoid";
 import { theme, DeprecatedText2 } from "@webstudio-is/design-system";
@@ -82,12 +83,12 @@ const addStyleSourceToInstace = (styleSourceId: StyleSource["id"]) => {
 
 const removeStyleSourceFromInstance = (styleSourceId: StyleSource["id"]) => {
   const selectedInstanceId = selectedInstanceIdStore.get();
+  if (selectedInstanceId === undefined) {
+    return;
+  }
   store.createTransaction(
     [styleSourceSelectionsStore],
     (styleSourceSelections) => {
-      if (selectedInstanceId === undefined) {
-        return;
-      }
       const styleSourceSelection =
         styleSourceSelections.get(selectedInstanceId);
       if (styleSourceSelection === undefined) {
@@ -117,6 +118,15 @@ const reorderStyleSources = (styleSourceIds: StyleSource["id"][]) => {
       styleSourceSelection.values = styleSourceIds;
     }
   );
+};
+
+const renameStyleSource = (id: StyleSource["id"], label: string) => {
+  store.createTransaction([styleSourcesStore], (styleSources) => {
+    const styleSource = styleSources.get(id);
+    if (styleSource?.type === "token") {
+      styleSource.name = label;
+    }
+  });
 };
 
 type StyleSourceInputItem = {
@@ -164,6 +174,10 @@ export const StyleSourcesSection = () => {
     convertToInputItem(styleSource, selectedStyleSource?.id)
   );
 
+  const [editingItemId, setEditingItemId] = useState<
+    undefined | StyleSource["id"]
+  >(undefined);
+
   return (
     <>
       <DeprecatedText2 css={{ py: theme.spacing[9] }} variant="label">
@@ -185,6 +199,15 @@ export const StyleSourcesSection = () => {
         }}
         onSelectItem={(selectedItem) => {
           selectedStyleSourceIdStore.set(selectedItem?.id);
+        }}
+        // style source renaming
+        editingItemId={editingItemId}
+        onEditItem={(id) => {
+          setEditingItemId(id);
+          selectedStyleSourceIdStore.set(id);
+        }}
+        onChangeItem={(item) => {
+          renameStyleSource(item.id, item.label);
         }}
       />
     </>
