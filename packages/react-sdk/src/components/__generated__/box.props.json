@@ -1,218 +1,260 @@
 {
   "slot": {
+    "controlType": "text",
+    "dataType": "string",
     "defaultValue": null,
-    "required": false,
-    "type": "text"
+    "required": false
   },
   "style": {
+    "controlType": "text",
+    "dataType": "CSSProperties",
     "defaultValue": null,
-    "required": false,
-    "type": "text"
+    "required": false
   },
   "title": {
+    "controlType": "text",
+    "dataType": "string",
     "defaultValue": null,
-    "required": false,
-    "type": "text"
+    "required": false
   },
   "defaultChecked": {
+    "controlType": "boolean",
+    "dataType": "boolean",
     "defaultValue": null,
-    "required": false,
-    "type": "boolean"
+    "required": false
   },
   "defaultValue": {
+    "controlType": "text",
+    "dataType": "string | number | readonly string[]",
     "defaultValue": null,
-    "required": false,
-    "type": "text"
+    "required": false
   },
   "suppressContentEditableWarning": {
+    "controlType": "boolean",
+    "dataType": "boolean",
     "defaultValue": null,
-    "required": false,
-    "type": "boolean"
+    "required": false
   },
   "suppressHydrationWarning": {
+    "controlType": "boolean",
+    "dataType": "boolean",
     "defaultValue": null,
-    "required": false,
-    "type": "boolean"
+    "required": false
   },
   "accessKey": {
+    "controlType": "text",
+    "dataType": "string",
     "defaultValue": null,
-    "required": false,
-    "type": "text"
+    "required": false
   },
   "className": {
+    "controlType": "text",
+    "dataType": "string",
     "defaultValue": null,
-    "required": false,
-    "type": "text"
+    "required": false
   },
   "contentEditable": {
+    "controlType": "text",
+    "dataType": "Booleanish | \"inherit\"",
     "defaultValue": null,
-    "required": false,
-    "type": "text"
+    "required": false
   },
   "contextMenu": {
+    "controlType": "text",
+    "dataType": "string",
     "defaultValue": null,
-    "required": false,
-    "type": "text"
+    "required": false
   },
   "dir": {
+    "controlType": "text",
+    "dataType": "string",
     "defaultValue": null,
-    "required": false,
-    "type": "text"
+    "required": false
   },
   "draggable": {
+    "controlType": "boolean",
+    "dataType": "boolean",
     "defaultValue": null,
-    "required": false,
-    "type": "boolean"
+    "required": false
   },
   "hidden": {
+    "controlType": "boolean",
+    "dataType": "boolean",
     "defaultValue": null,
-    "required": false,
-    "type": "boolean"
+    "required": false
   },
   "id": {
+    "controlType": "text",
+    "dataType": "string",
     "defaultValue": null,
-    "required": false,
-    "type": "text"
+    "required": false
   },
   "lang": {
+    "controlType": "text",
+    "dataType": "string",
     "defaultValue": null,
-    "required": false,
-    "type": "text"
+    "required": false
   },
   "placeholder": {
+    "controlType": "text",
+    "dataType": "string",
     "defaultValue": null,
-    "required": false,
-    "type": "text"
+    "required": false
   },
   "spellCheck": {
+    "controlType": "boolean",
+    "dataType": "boolean",
     "defaultValue": null,
-    "required": false,
-    "type": "boolean"
+    "required": false
   },
   "tabIndex": {
+    "controlType": "number",
+    "dataType": "number",
     "defaultValue": null,
-    "required": false,
-    "type": "number"
+    "required": false
   },
   "translate": {
-    "defaultValue": null,
+    "controlType": "radio",
     "options": ["yes", "no"],
-    "required": false,
-    "type": "radio"
+    "dataType": "string",
+    "defaultValue": null,
+    "required": false
   },
   "radioGroup": {
+    "controlType": "text",
+    "dataType": "string",
     "defaultValue": null,
-    "required": false,
-    "type": "text"
+    "required": false
   },
   "role": {
+    "controlType": "text",
+    "dataType": "AriaRole",
     "defaultValue": null,
-    "required": false,
-    "type": "text"
+    "required": false
   },
   "about": {
+    "controlType": "text",
+    "dataType": "string",
     "defaultValue": null,
-    "required": false,
-    "type": "text"
+    "required": false
   },
   "datatype": {
+    "controlType": "text",
+    "dataType": "string",
     "defaultValue": null,
-    "required": false,
-    "type": "text"
+    "required": false
   },
   "inlist": {
+    "controlType": "text",
+    "dataType": "any",
     "defaultValue": null,
-    "required": false,
-    "type": "text"
+    "required": false
   },
   "prefix": {
+    "controlType": "text",
+    "dataType": "string",
     "defaultValue": null,
-    "required": false,
-    "type": "text"
+    "required": false
   },
   "property": {
+    "controlType": "text",
+    "dataType": "string",
     "defaultValue": null,
-    "required": false,
-    "type": "text"
+    "required": false
   },
   "resource": {
+    "controlType": "text",
+    "dataType": "string",
     "defaultValue": null,
-    "required": false,
-    "type": "text"
+    "required": false
   },
   "typeof": {
+    "controlType": "text",
+    "dataType": "string",
     "defaultValue": null,
-    "required": false,
-    "type": "text"
+    "required": false
   },
   "vocab": {
+    "controlType": "text",
+    "dataType": "string",
     "defaultValue": null,
-    "required": false,
-    "type": "text"
+    "required": false
   },
   "autoCapitalize": {
+    "controlType": "text",
+    "dataType": "string",
     "defaultValue": null,
-    "required": false,
-    "type": "text"
+    "required": false
   },
   "autoCorrect": {
+    "controlType": "text",
+    "dataType": "string",
     "defaultValue": null,
-    "required": false,
-    "type": "text"
+    "required": false
   },
   "autoSave": {
+    "controlType": "text",
+    "dataType": "string",
     "defaultValue": null,
-    "required": false,
-    "type": "text"
+    "required": false
   },
   "color": {
+    "controlType": "color",
+    "dataType": "string",
     "defaultValue": null,
-    "required": false,
-    "type": "color"
+    "required": false
   },
   "itemProp": {
+    "controlType": "text",
+    "dataType": "string",
     "defaultValue": null,
-    "required": false,
-    "type": "text"
+    "required": false
   },
   "itemScope": {
+    "controlType": "boolean",
+    "dataType": "boolean",
     "defaultValue": null,
-    "required": false,
-    "type": "boolean"
+    "required": false
   },
   "itemType": {
+    "controlType": "text",
+    "dataType": "string",
     "defaultValue": null,
-    "required": false,
-    "type": "text"
+    "required": false
   },
   "itemID": {
+    "controlType": "text",
+    "dataType": "string",
     "defaultValue": null,
-    "required": false,
-    "type": "text"
+    "required": false
   },
   "itemRef": {
+    "controlType": "text",
+    "dataType": "string",
     "defaultValue": null,
-    "required": false,
-    "type": "text"
+    "required": false
   },
   "results": {
+    "controlType": "number",
+    "dataType": "number",
     "defaultValue": null,
-    "required": false,
-    "type": "number"
+    "required": false
   },
   "security": {
+    "controlType": "text",
+    "dataType": "string",
     "defaultValue": null,
-    "required": false,
-    "type": "text"
+    "required": false
   },
   "unselectable": {
-    "defaultValue": null,
+    "controlType": "radio",
     "options": ["on", "off"],
-    "required": false,
-    "type": "radio"
+    "dataType": "string",
+    "defaultValue": null,
+    "required": false
   },
   "inputMode": {
-    "defaultValue": null,
+    "controlType": "select",
     "options": [
       "text",
       "none",
@@ -223,195 +265,232 @@
       "numeric",
       "decimal"
     ],
-    "required": false,
-    "type": "select"
+    "dataType": "string",
+    "defaultValue": null,
+    "required": false
   },
   "is": {
+    "controlType": "text",
+    "dataType": "string",
     "defaultValue": null,
-    "required": false,
-    "type": "text"
+    "required": false
   },
   "aria-activedescendant": {
+    "controlType": "text",
+    "dataType": "string",
     "defaultValue": null,
-    "required": false,
-    "type": "text"
+    "required": false
   },
   "aria-atomic": {
+    "controlType": "boolean",
+    "dataType": "boolean",
     "defaultValue": null,
-    "required": false,
-    "type": "boolean"
+    "required": false
   },
   "aria-autocomplete": {
-    "defaultValue": null,
+    "controlType": "radio",
     "options": ["list", "none", "inline", "both"],
-    "required": false,
-    "type": "radio"
+    "dataType": "string",
+    "defaultValue": null,
+    "required": false
   },
   "aria-busy": {
+    "controlType": "boolean",
+    "dataType": "boolean",
     "defaultValue": null,
-    "required": false,
-    "type": "boolean"
+    "required": false
   },
   "aria-checked": {
+    "controlType": "boolean",
+    "dataType": "boolean",
     "defaultValue": null,
-    "required": false,
-    "type": "text"
+    "required": false
   },
   "aria-colcount": {
+    "controlType": "number",
+    "dataType": "number",
     "defaultValue": null,
-    "required": false,
-    "type": "number"
+    "required": false
   },
   "aria-colindex": {
+    "controlType": "number",
+    "dataType": "number",
     "defaultValue": null,
-    "required": false,
-    "type": "number"
+    "required": false
   },
   "aria-colspan": {
+    "controlType": "number",
+    "dataType": "number",
     "defaultValue": null,
-    "required": false,
-    "type": "number"
+    "required": false
   },
   "aria-controls": {
+    "controlType": "text",
+    "dataType": "string",
     "defaultValue": null,
-    "required": false,
-    "type": "text"
+    "required": false
   },
   "aria-current": {
+    "controlType": "text",
+    "dataType": "boolean | \"time\" | \"true\" | \"false\" | \"page\" | \"step\" | \"location\" | \"date\"",
     "defaultValue": null,
-    "required": false,
-    "type": "text"
+    "required": false
   },
   "aria-describedby": {
+    "controlType": "text",
+    "dataType": "string",
     "defaultValue": null,
-    "required": false,
-    "type": "text"
+    "required": false
   },
   "aria-details": {
+    "controlType": "text",
+    "dataType": "string",
     "defaultValue": null,
-    "required": false,
-    "type": "text"
+    "required": false
   },
   "aria-disabled": {
+    "controlType": "boolean",
+    "dataType": "boolean",
     "defaultValue": null,
-    "required": false,
-    "type": "boolean"
+    "required": false
   },
   "aria-dropeffect": {
-    "defaultValue": null,
+    "controlType": "select",
     "options": ["link", "none", "copy", "execute", "move", "popup"],
-    "required": false,
-    "type": "select"
+    "dataType": "string",
+    "defaultValue": null,
+    "required": false
   },
   "aria-errormessage": {
+    "controlType": "text",
+    "dataType": "string",
     "defaultValue": null,
-    "required": false,
-    "type": "text"
+    "required": false
   },
   "aria-expanded": {
+    "controlType": "boolean",
+    "dataType": "boolean",
     "defaultValue": null,
-    "required": false,
-    "type": "boolean"
+    "required": false
   },
   "aria-flowto": {
+    "controlType": "text",
+    "dataType": "string",
     "defaultValue": null,
-    "required": false,
-    "type": "text"
+    "required": false
   },
   "aria-grabbed": {
+    "controlType": "boolean",
+    "dataType": "boolean",
     "defaultValue": null,
-    "required": false,
-    "type": "boolean"
+    "required": false
   },
   "aria-haspopup": {
+    "controlType": "text",
+    "dataType": "boolean | \"dialog\" | \"menu\" | \"true\" | \"false\" | \"grid\" | \"listbox\" | \"tree\"",
     "defaultValue": null,
-    "required": false,
-    "type": "text"
+    "required": false
   },
   "aria-hidden": {
+    "controlType": "boolean",
+    "dataType": "boolean",
     "defaultValue": null,
-    "required": false,
-    "type": "boolean"
+    "required": false
   },
   "aria-invalid": {
+    "controlType": "text",
+    "dataType": "boolean | \"true\" | \"false\" | \"grammar\" | \"spelling\"",
     "defaultValue": null,
-    "required": false,
-    "type": "text"
+    "required": false
   },
   "aria-keyshortcuts": {
+    "controlType": "text",
+    "dataType": "string",
     "defaultValue": null,
-    "required": false,
-    "type": "text"
+    "required": false
   },
   "aria-label": {
+    "controlType": "text",
+    "dataType": "string",
     "defaultValue": null,
-    "required": false,
-    "type": "text"
+    "required": false
   },
   "aria-labelledby": {
+    "controlType": "text",
+    "dataType": "string",
     "defaultValue": null,
-    "required": false,
-    "type": "text"
+    "required": false
   },
   "aria-level": {
+    "controlType": "number",
+    "dataType": "number",
     "defaultValue": null,
-    "required": false,
-    "type": "number"
+    "required": false
   },
   "aria-live": {
-    "defaultValue": null,
+    "controlType": "radio",
     "options": ["off", "assertive", "polite"],
-    "required": false,
-    "type": "radio"
+    "dataType": "string",
+    "defaultValue": null,
+    "required": false
   },
   "aria-modal": {
+    "controlType": "boolean",
+    "dataType": "boolean",
     "defaultValue": null,
-    "required": false,
-    "type": "boolean"
+    "required": false
   },
   "aria-multiline": {
+    "controlType": "boolean",
+    "dataType": "boolean",
     "defaultValue": null,
-    "required": false,
-    "type": "boolean"
+    "required": false
   },
   "aria-multiselectable": {
+    "controlType": "boolean",
+    "dataType": "boolean",
     "defaultValue": null,
-    "required": false,
-    "type": "boolean"
+    "required": false
   },
   "aria-orientation": {
-    "defaultValue": null,
+    "controlType": "radio",
     "options": ["horizontal", "vertical"],
-    "required": false,
-    "type": "radio"
+    "dataType": "string",
+    "defaultValue": null,
+    "required": false
   },
   "aria-owns": {
+    "controlType": "text",
+    "dataType": "string",
     "defaultValue": null,
-    "required": false,
-    "type": "text"
+    "required": false
   },
   "aria-placeholder": {
+    "controlType": "text",
+    "dataType": "string",
     "defaultValue": null,
-    "required": false,
-    "type": "text"
+    "required": false
   },
   "aria-posinset": {
+    "controlType": "number",
+    "dataType": "number",
     "defaultValue": null,
-    "required": false,
-    "type": "number"
+    "required": false
   },
   "aria-pressed": {
+    "controlType": "boolean",
+    "dataType": "boolean",
     "defaultValue": null,
-    "required": false,
-    "type": "text"
+    "required": false
   },
   "aria-readonly": {
+    "controlType": "boolean",
+    "dataType": "boolean",
     "defaultValue": null,
-    "required": false,
-    "type": "boolean"
+    "required": false
   },
   "aria-relevant": {
-    "defaultValue": null,
+    "controlType": "select",
     "options": [
       "text",
       "additions",
@@ -424,72 +503,85 @@
       "text additions",
       "text removals"
     ],
-    "required": false,
-    "type": "select"
+    "dataType": "string",
+    "defaultValue": null,
+    "required": false
   },
   "aria-required": {
+    "controlType": "boolean",
+    "dataType": "boolean",
     "defaultValue": null,
-    "required": false,
-    "type": "boolean"
+    "required": false
   },
   "aria-roledescription": {
+    "controlType": "text",
+    "dataType": "string",
     "defaultValue": null,
-    "required": false,
-    "type": "text"
+    "required": false
   },
   "aria-rowcount": {
+    "controlType": "number",
+    "dataType": "number",
     "defaultValue": null,
-    "required": false,
-    "type": "number"
+    "required": false
   },
   "aria-rowindex": {
+    "controlType": "number",
+    "dataType": "number",
     "defaultValue": null,
-    "required": false,
-    "type": "number"
+    "required": false
   },
   "aria-rowspan": {
+    "controlType": "number",
+    "dataType": "number",
     "defaultValue": null,
-    "required": false,
-    "type": "number"
+    "required": false
   },
   "aria-selected": {
+    "controlType": "boolean",
+    "dataType": "boolean",
     "defaultValue": null,
-    "required": false,
-    "type": "boolean"
+    "required": false
   },
   "aria-setsize": {
+    "controlType": "number",
+    "dataType": "number",
     "defaultValue": null,
-    "required": false,
-    "type": "number"
+    "required": false
   },
   "aria-sort": {
-    "defaultValue": null,
+    "controlType": "radio",
     "options": ["none", "ascending", "descending", "other"],
-    "required": false,
-    "type": "radio"
+    "dataType": "string",
+    "defaultValue": null,
+    "required": false
   },
   "aria-valuemax": {
+    "controlType": "number",
+    "dataType": "number",
     "defaultValue": null,
-    "required": false,
-    "type": "number"
+    "required": false
   },
   "aria-valuemin": {
+    "controlType": "number",
+    "dataType": "number",
     "defaultValue": null,
-    "required": false,
-    "type": "number"
+    "required": false
   },
   "aria-valuenow": {
+    "controlType": "number",
+    "dataType": "number",
     "defaultValue": null,
-    "required": false,
-    "type": "number"
+    "required": false
   },
   "aria-valuetext": {
+    "controlType": "text",
+    "dataType": "string",
     "defaultValue": null,
-    "required": false,
-    "type": "text"
+    "required": false
   },
   "tag": {
-    "defaultValue": "div",
+    "controlType": "select",
     "options": [
       "div",
       "address",
@@ -502,7 +594,8 @@
       "nav",
       "section"
     ],
-    "required": false,
-    "type": "select"
+    "dataType": "string",
+    "defaultValue": "div",
+    "required": false
   }
 }
