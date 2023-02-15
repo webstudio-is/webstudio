@@ -1,5 +1,5 @@
 import { type Patch, applyPatches } from "immer";
-import { prisma } from "@webstudio-is/prisma-client";
+import { type Project, prisma } from "@webstudio-is/prisma-client";
 import {
   authorizeProject,
   type AppContext,
@@ -9,7 +9,6 @@ import {
   StyleSourceSelections,
   type Tree,
 } from "@webstudio-is/project-build";
-import type { Project } from "../shared/schema";
 
 export const parseStyleSourceSelections = (
   styleSourceSelectionsString: string

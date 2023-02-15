@@ -1,16 +1,16 @@
 import warnOnce from "warn-once";
 import { type Patch, applyPatches } from "immer";
-import { prisma } from "@webstudio-is/prisma-client";
+import { type Project, prisma } from "@webstudio-is/prisma-client";
 import type { Asset } from "@webstudio-is/asset-uploader";
 import { formatAsset } from "@webstudio-is/asset-uploader/server";
 import {
+  type Build,
   type StoredStyleDecl,
   type StyleDecl,
   getStyleDeclKey,
   StoredStyles,
   Styles,
 } from "@webstudio-is/project-build";
-import type { Build, Project } from "../shared/schema";
 import {
   authorizeProject,
   type AppContext,

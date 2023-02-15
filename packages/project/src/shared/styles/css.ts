@@ -1,12 +1,11 @@
 import { createCssEngine } from "@webstudio-is/css-engine";
 import type { Asset } from "@webstudio-is/asset-uploader";
-import type { Tree } from "@webstudio-is/project-build";
+import type { Build, Tree } from "@webstudio-is/project-build";
 import {
   getComponentMeta,
   getComponentNames,
   idAttribute,
 } from "@webstudio-is/react-sdk";
-import type { Build } from "../schema";
 import { addGlobalRules } from "./global-rules";
 import { getStyleRules } from "./style-rules";
 

@@ -1,11 +1,9 @@
 import { useCallback, useEffect, useMemo } from "react";
 import { type Publish, usePublish, useSubscribe } from "~/shared/pubsub";
-import {
-  type Pages,
-  utils as projectUtils,
-  type Project,
-} from "@webstudio-is/project";
+import { utils as projectUtils, type Project } from "@webstudio-is/project";
 import { theme, Box, type CSS, Flex, Grid } from "@webstudio-is/design-system";
+import type { AuthPermit } from "@webstudio-is/trpc-interface";
+import type { Pages } from "@webstudio-is/project-build";
 import { registerContainers, useBuilderStore } from "~/shared/sync";
 import { useSyncServer } from "./shared/sync/sync-server";
 // eslint-disable-next-line import/no-internal-modules
@@ -39,7 +37,6 @@ import { Navigator } from "./features/sidebar-left";
 import { getBuildUrl } from "~/shared/router-utils";
 import { useCopyPasteInstance } from "~/shared/copy-paste";
 import { AssetsProvider } from "./shared/assets";
-import type { AuthPermit } from "@webstudio-is/trpc-interface";
 
 registerContainers();
 export const links = () => {

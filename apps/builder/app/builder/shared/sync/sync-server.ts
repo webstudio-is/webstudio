@@ -1,6 +1,6 @@
 import { sync } from "immerhin";
-import type { Build, Project } from "@webstudio-is/project";
-import type { Tree } from "@webstudio-is/project-build";
+import type { Project } from "@webstudio-is/project";
+import type { Build, Tree } from "@webstudio-is/project-build";
 import { restPatchPath } from "~/shared/router-utils";
 import { useEffect } from "react";
 import { enqueue, dequeue, queueStatus } from "./queue";

@@ -1,6 +1,7 @@
 import type { LoaderArgs, ActionArgs } from "@remix-run/node";
 import { db } from "@webstudio-is/project/server";
-import { type Pages, utils, pathValidators } from "@webstudio-is/project";
+import { type Pages, pathValidators } from "@webstudio-is/project-build";
+import { utils } from "@webstudio-is/project";
 import { zfd } from "zod-form-data";
 import { z } from "zod";
 import { sentryException } from "~/shared/sentry";
