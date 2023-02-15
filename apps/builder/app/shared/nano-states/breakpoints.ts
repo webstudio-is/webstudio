@@ -24,10 +24,10 @@ export const selectedBreakpointIdStore = atom<undefined | Breakpoint["id"]>(
 export const selectedBreakpointStore = computed(
   [breakpointsContainer, selectedBreakpointIdStore],
   (breakpoints, selectedBreakpointId) => {
-    if (selectedBreakpointId === undefined) {
-      return undefined;
-    }
-    const matchedBreakpoint = breakpoints.get(selectedBreakpointId);
+    const matchedBreakpoint =
+      selectedBreakpointId === undefined
+        ? undefined
+        : breakpoints.get(selectedBreakpointId);
     // initially set first breakpoint as selected breakpoint
     const fallbackBreakpoint = utils.breakpoints.sort(breakpoints).at(0);
     return matchedBreakpoint ?? fallbackBreakpoint;
