@@ -1,7 +1,6 @@
-import { redirect, json, LoaderArgs } from "@remix-run/node";
+import { redirect, json, LoaderArgs, LinksFunction } from "@remix-run/node";
 import type { MetaFunction, ErrorBoundaryComponent } from "@remix-run/node";
 import { useLoaderData } from "@remix-run/react";
-import djb2a from "djb2a";
 import { InstanceRoot, Root } from "@webstudio-is/react-sdk";
 import { loadCanvasData } from "~/shared/db";
 import env, { type PublicEnv } from "~/env/env.public.server";
@@ -14,34 +13,21 @@ import {
   dashboardPath,
 } from "~/shared/router-utils";
 import { db } from "@webstudio-is/project/server";
-import type { DynamicLinksFunction } from "remix-utils";
 import type { CanvasData } from "@webstudio-is/project";
 import { customComponents } from "~/canvas/custom-components";
 import { createContext } from "~/shared/context.server";
 
 type Data = CanvasData & { env: PublicEnv; mode: BuildMode };
 
-export const dynamicLinks: DynamicLinksFunction<CanvasData> = ({
-  data,
-  location,
-}) => {
-  const searchParams = new URLSearchParams(location.search);
-  searchParams.set("pageId", data.page.id);
-
-  // Break cache in case of css has changed
-  const cssHash = djb2a(JSON.stringify(data.tree));
-  searchParams.set("css-hash", `${cssHash}`);
-
+export const links: LinksFunction = () => {
   return [
     {
       rel: "stylesheet",
-      href: `/s/css/?${searchParams}`,
+      href: `/s/css`,
       "data-webstudio": "ssr",
     },
   ];
 };
-
-export const handle = { dynamicLinks };
 
 export const meta: MetaFunction = ({ data }: { data: Data }) => {
   const { page } = data;

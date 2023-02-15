@@ -11,7 +11,6 @@ import type {
 import CatchAllContnet, {
   loader as catchAllloader,
   meta as catchAllmeta,
-  handle as catchAllHandle,
   ErrorBoundary as CatchAllErrorBoundary,
 } from "./$";
 
@@ -20,7 +19,6 @@ import CatchAllContnet, {
 
 export const meta: MetaFunction = (args) => catchAllmeta(args);
 export const loader = (args: LoaderArgs) => catchAllloader(args);
-export const handle = catchAllHandle;
 export const ErrorBoundary: ErrorBoundaryComponent = ({ error }) => (
   <CatchAllErrorBoundary error={error} />
 );

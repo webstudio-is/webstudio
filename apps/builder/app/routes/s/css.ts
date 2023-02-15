@@ -43,8 +43,11 @@ export const loader = async ({ request }: ActionArgs) => {
     return new Response(cssText, {
       headers: {
         "Content-Type": "text/css",
+        // We have no way with Remix links to know if the CSS has changed (no ?cache-breaker in url)
+        // we can add Last-Modified and change on Cache-Control: no-cache but this is used only for localhost publish
+        // And can be fully omitted for the Designer Canvas. (_Not an issue on SaaS as we know data at the build time_)
         // https://developer.mozilla.org/en-US/docs/Web/HTTP/Headers/Cache-Control
-        "Cache-Control": "public, max-age=31536000, immutable",
+        "Cache-Control": "no-store",
       },
     });
   } catch (error) {
