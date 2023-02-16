@@ -1,9 +1,8 @@
-import { redirect, json, LoaderArgs } from "@remix-run/node";
+import { redirect, json, LoaderArgs, LinksFunction } from "@remix-run/node";
 import type { MetaFunction, ErrorBoundaryComponent } from "@remix-run/node";
 import { useLoaderData } from "@remix-run/react";
-import djb2a from "djb2a";
 import { InstanceRoot, Root } from "@webstudio-is/react-sdk";
-import { loadCanvasData } from "~/shared/db";
+import { loadCanvasData, loadProductionCanvasData } from "~/shared/db";
 import env, { type PublicEnv } from "~/env/env.public.server";
 import { sentryException } from "~/shared/sentry";
 import { Canvas } from "~/canvas";
@@ -14,34 +13,21 @@ import {
   dashboardPath,
 } from "~/shared/router-utils";
 import { db } from "@webstudio-is/project/server";
-import type { DynamicLinksFunction } from "remix-utils";
 import type { CanvasData } from "@webstudio-is/project";
 import { customComponents } from "~/canvas/custom-components";
 import { createContext } from "~/shared/context.server";
 
 type Data = CanvasData & { env: PublicEnv; mode: BuildMode };
 
-export const dynamicLinks: DynamicLinksFunction<CanvasData> = ({
-  data,
-  location,
-}) => {
-  const searchParams = new URLSearchParams(location.search);
-  searchParams.set("pageId", data.page.id);
-
-  // Break cache in case of css has changed
-  const cssHash = djb2a(JSON.stringify(data.tree));
-  searchParams.set("css-hash", `${cssHash}`);
-
+export const links: LinksFunction = () => {
   return [
     {
       rel: "stylesheet",
-      href: `/s/css/?${searchParams}`,
+      href: `/s/css`,
       "data-webstudio": "ssr",
     },
   ];
 };
-
-export const handle = { dynamicLinks };
 
 export const meta: MetaFunction = ({ data }: { data: Data }) => {
   const { page } = data;
@@ -58,32 +44,62 @@ export const loader = async ({ request }: LoaderArgs): Promise<Data> => {
     throw redirect(dashboardPath());
   }
 
-  const { mode } = buildParams;
-
   const project = await db.project.loadByParams(buildParams, context);
 
   if (project === null) {
     throw json("Project not found", { status: 404 });
   }
 
-  const canvasData = await loadCanvasData(
-    {
-      project,
-      env: buildEnv,
-      pageIdOrPath:
-        "pageId" in buildParams ? buildParams.pageId : buildParams.pagePath,
-    },
-    context
-  );
-
-  if (canvasData === undefined) {
-    throw json("Page not found", { status: 404 });
-  }
+  const { mode } = buildParams;
 
   const params: CanvasData["params"] = {};
 
   if (env.RESIZE_ORIGIN != null) {
     params.resizeOrigin = env.RESIZE_ORIGIN;
+  }
+
+  if (buildEnv === "dev") {
+    const canvasData = await loadCanvasData(
+      {
+        project,
+        env: buildEnv,
+        pageIdOrPath:
+          "pageId" in buildParams ? buildParams.pageId : buildParams.pagePath,
+      },
+      context
+    );
+
+    if (canvasData === undefined) {
+      throw json("Page not found", { status: 404 });
+    }
+
+    return { ...canvasData, env, mode, params };
+  }
+
+  // For "prod" builds we emulate the published site behaviour, reusing the same data production site uses.
+  // https://github.com/webstudio-is/webstudio-builder/issues/929
+  // The code below only used on localhost "publish".
+  const pagesCanvasData = await loadProductionCanvasData(
+    { projectId: project.id },
+    context
+  );
+
+  if (!("pagePath" in buildParams)) {
+    throw json("pagePath must exists in buildParams in production mode", {
+      status: 404,
+    });
+  }
+
+  const pagePath = buildParams.pagePath === "/" ? "" : buildParams.pagePath;
+
+  const canvasData = pagesCanvasData.find(
+    (data) => data.page.path === pagePath
+  );
+
+  if (canvasData === undefined) {
+    throw json("Page not found", {
+      status: 404,
+    });
   }
 
   return { ...canvasData, env, mode, params };

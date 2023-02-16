@@ -11,17 +11,18 @@ import { getStyleRules } from "./style-rules";
 
 type Data = {
   assets: Asset[];
-  build?: Build;
-  tree?: Tree;
+  breakpoints?: Build["breakpoints"];
+  styles?: Build["styles"];
+  styleSourceSelections?: Tree["styleSourceSelections"];
 };
 
 export const generateCssText = (data: Data) => {
   const assets = new Map<Asset["id"], Asset>(
     data.assets.map((asset) => [asset.id, asset])
   );
-  const breakpoints = new Map(data.build?.breakpoints);
-  const styles = new Map(data.build?.styles);
-  const styleSourceSelections = new Map(data.tree?.styleSourceSelections);
+  const breakpoints = new Map(data.breakpoints);
+  const styles = new Map(data.styles);
+  const styleSourceSelections = new Map(data.styleSourceSelections);
 
   const engine = createCssEngine({ name: "ssr" });
 

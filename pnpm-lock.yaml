@@ -147,7 +147,6 @@ importers:
       remix-auth-form: ^1.1.2
       remix-auth-github: ^1.1.1
       remix-auth-google: ^1.1.0
-      remix-utils: ^4.1.0
       shallow-equal: ^3.0.0
       slugify: ^1.6.5
       typescript: 4.9.5
@@ -227,7 +226,6 @@ importers:
       remix-auth-form: 1.1.2_@remix-run+react@1.12.0
       remix-auth-github: 1.1.1_yc3vs22pubtmhv3yghgusrq624
       remix-auth-google: 1.1.0_7hezgflccoug2cpzfocojatbf4
-      remix-utils: 4.1.0_p52ca3tf56qhkz35kdbkqzg2b4
       shallow-equal: 3.0.0
       slugify: 1.6.5
       use-debounce: 9.0.2_react@17.0.2
@@ -15659,6 +15657,7 @@ packages:
   /intl-parse-accept-language/1.0.0:
     resolution: {integrity: sha512-YFMSV91JNBOSjw1cOfw2tup6hDP7mkz+2AUV7W1L1AM6ntgI75qC1ZeFpjPGMrWp+upmBRTX2fJWQ8c7jsUWpA==}
     engines: {node: '>=14'}
+    dev: true
 
   /invariant/2.2.4:
     resolution: {integrity: sha512-phJfQVBuaJM5raOpJjSfkiD6BpbCE4Ns//LaXl6wGYtUBY83nWS6Rf9tXm2e8VaK60JEjYldbPif/A2B1C2gNA==}
@@ -15669,6 +15668,7 @@ packages:
   /ip-regex/4.3.0:
     resolution: {integrity: sha512-B9ZWJxHHOHUhUjCPrMpLD4xEq35bUTClHM1S6CBU5ixQnkZmwipwgc96vAd7AAGM9TGHvJR+Uss+/Ak6UphK+Q==}
     engines: {node: '>=8'}
+    dev: true
 
   /ip/1.1.8:
     resolution: {integrity: sha512-PuExPYUiu6qMBQb4l06ecm6T6ujzhmh+MeJcW9wa89PoAz5pvd4zPgN5WJV104mb6S2T1AwNIAaB70JNrLQWhg==}
@@ -15927,6 +15927,7 @@ packages:
     engines: {node: '>=8'}
     dependencies:
       ip-regex: 4.3.0
+    dev: true
 
   /is-map/2.0.2:
     resolution: {integrity: sha512-cOZFQQozTha1f4MxLFzlgKYPTyj26picdZTx82hbc/Xf4K/tZOOXSCkMvU4pKioRXGDLJRn0GM7Upe7kR721yg==}
@@ -19974,27 +19975,6 @@ packages:
       uuid: 8.3.2
     dev: false
 
-  /remix-utils/4.1.0_p52ca3tf56qhkz35kdbkqzg2b4:
-    resolution: {integrity: sha512-Ii/+6bd56t2D3ADeXD4RGc3Ym7Yn/rA/n7GZ9naTjF+fire7vqsDhBPwhZV0gIJBLIbw8ZRUlIAg+Ia95+CLBA==}
-    engines: {node: '>=14'}
-    peerDependencies:
-      '@remix-run/react': ^1.1.1
-      '@remix-run/server-runtime': ^1.1.1
-      react: ^16.8.0 || ^17.0.0 || ^18.0.0
-      zod: ^3.19.1
-    dependencies:
-      '@remix-run/react': 1.12.0_sfoxds7t5ydpegc3knd667wn6m
-      intl-parse-accept-language: 1.0.0
-      is-ip: 3.1.0
-      react: 17.0.2
-      schema-dts: 1.1.0_typescript@4.9.5
-      type-fest: 2.19.0
-      uuid: 8.3.2
-      zod: 3.19.1
-    transitivePeerDependencies:
-      - typescript
-    dev: false
-
   /remix-utils/4.1.0_sxlvzljqaugd26575xxyuqvtmm:
     resolution: {integrity: sha512-Ii/+6bd56t2D3ADeXD4RGc3Ym7Yn/rA/n7GZ9naTjF+fire7vqsDhBPwhZV0gIJBLIbw8ZRUlIAg+Ia95+CLBA==}
     engines: {node: '>=14'}
@@ -20294,6 +20274,7 @@ packages:
       typescript: '>=4.1.0'
     dependencies:
       typescript: 4.9.5
+    dev: true
 
   /schema-utils/1.0.0:
     resolution: {integrity: sha512-i27Mic4KovM/lnGsy8whRCHhc7VicJajAjTrYg11K9zfZXnYIt4k5F+kZkwjnrhKzLic/HLU4j11mjsz2G/75g==}

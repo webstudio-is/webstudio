@@ -4,6 +4,57 @@ import { utils } from "@webstudio-is/project";
 import { loadByProject } from "@webstudio-is/asset-uploader/server";
 import type { AppContext } from "@webstudio-is/trpc-interface/server";
 
+export const loadProductionCanvasData = async (
+  props: {
+    projectId: Project["id"];
+  },
+  context: AppContext
+): Promise<CanvasData[]> => {
+  const pagesCanvasData: CanvasData[] = [];
+
+  const prodBuild = await projectDb.build.loadByProjectId(
+    props.projectId,
+    "prod"
+  );
+  if (prodBuild === undefined) {
+    throw new Error(
+      `Project ${props.projectId} not found or not published yet. Please contact us to get help.`
+    );
+  }
+  const {
+    pages: { homePage, pages: otherPages },
+  } = prodBuild;
+  const project = await projectDb.project.loadByParams(
+    { projectId: props.projectId },
+    context
+  );
+  if (project === null) {
+    throw new Error("Project not found");
+  }
+  const canvasData = await loadCanvasData(
+    {
+      project,
+      env: "prod",
+      pageIdOrPath: homePage.path,
+    },
+    context
+  );
+
+  pagesCanvasData.push(canvasData);
+
+  if (otherPages.length > 0) {
+    for (const page of otherPages) {
+      const canvasData = await loadCanvasData(
+        { project, env: "prod", pageIdOrPath: page.path },
+        context
+      );
+      pagesCanvasData.push(canvasData);
+    }
+  }
+
+  return pagesCanvasData;
+};
+
 export const loadCanvasData = async (
   props: {
     project: Project;
