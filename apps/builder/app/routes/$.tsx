@@ -2,7 +2,7 @@ import { redirect, json, LoaderArgs, LinksFunction } from "@remix-run/node";
 import type { MetaFunction, ErrorBoundaryComponent } from "@remix-run/node";
 import { useLoaderData } from "@remix-run/react";
 import { InstanceRoot, Root } from "@webstudio-is/react-sdk";
-import { loadCanvasData } from "~/shared/db";
+import { loadCanvasData, loadProductionCanvasData } from "~/shared/db";
 import env, { type PublicEnv } from "~/env/env.public.server";
 import { sentryException } from "~/shared/sentry";
 import { Canvas } from "~/canvas";
@@ -44,32 +44,58 @@ export const loader = async ({ request }: LoaderArgs): Promise<Data> => {
     throw redirect(dashboardPath());
   }
 
-  const { mode } = buildParams;
-
   const project = await db.project.loadByParams(buildParams, context);
 
   if (project === null) {
     throw json("Project not found", { status: 404 });
   }
 
-  const canvasData = await loadCanvasData(
-    {
-      project,
-      env: buildEnv,
-      pageIdOrPath:
-        "pageId" in buildParams ? buildParams.pageId : buildParams.pagePath,
-    },
-    context
-  );
-
-  if (canvasData === undefined) {
-    throw json("Page not found", { status: 404 });
-  }
+  const { mode } = buildParams;
 
   const params: CanvasData["params"] = {};
 
   if (env.RESIZE_ORIGIN != null) {
     params.resizeOrigin = env.RESIZE_ORIGIN;
+  }
+
+  if (buildEnv === "dev") {
+    const canvasData = await loadCanvasData(
+      {
+        project,
+        env: buildEnv,
+        pageIdOrPath:
+          "pageId" in buildParams ? buildParams.pageId : buildParams.pagePath,
+      },
+      context
+    );
+
+    if (canvasData === undefined) {
+      throw json("Page not found", { status: 404 });
+    }
+
+    return { ...canvasData, env, mode, params };
+  }
+
+  // Reuse saas data endpoint https://github.com/webstudio-is/webstudio-builder/issues/929
+  const canvasDataPages = await loadProductionCanvasData(
+    { projectId: project.id },
+    context
+  );
+
+  if (!("pagePath" in buildParams)) {
+    throw json("pagePath must exists in buildParams in production mode", {
+      status: 404,
+    });
+  }
+
+  const pagePath = buildParams.pagePath === "/" ? "" : buildParams.pagePath;
+
+  const canvasData = canvasDataPages.find((c) => c.page.path === pagePath);
+
+  if (canvasData === undefined) {
+    throw json("Page not found", {
+      status: 404,
+    });
   }
 
   return { ...canvasData, env, mode, params };
