@@ -1,5 +1,5 @@
 import { FontItalicIcon } from "@webstudio-is/icons";
-import { type WsComponentMeta, WsComponentPropsMeta } from "./component-type";
+import type { WsComponentMeta, WsComponentPropsMeta } from "./component-type";
 import props from "./__generated__/italic.props.json";
 
 const presetStyle = {
@@ -16,6 +16,6 @@ export const meta: WsComponentMeta = {
   presetStyle,
 };
 
-export const propsMeta = WsComponentPropsMeta.parse({
+export const propsMeta = {
   props,
-});
+} as WsComponentPropsMeta;

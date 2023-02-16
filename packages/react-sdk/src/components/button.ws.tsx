@@ -1,5 +1,5 @@
 import { ButtonIcon } from "@webstudio-is/icons";
-import { type WsComponentMeta, WsComponentPropsMeta } from "./component-type";
+import type { WsComponentMeta, WsComponentPropsMeta } from "./component-type";
 import props from "./__generated__/button.props.json";
 
 export const meta: WsComponentMeta = {
@@ -9,7 +9,7 @@ export const meta: WsComponentMeta = {
   children: ["Button text you can edit"],
 };
 
-export const propsMeta = WsComponentPropsMeta.parse({
+export const propsMeta = {
   props,
   initialProps: ["type"],
-});
+} as WsComponentPropsMeta;

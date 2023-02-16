@@ -6,7 +6,7 @@ import { PropMeta } from "@webstudio-is/generate-arg-types";
 
 // props are separated from the rest of the meta
 // so they can be exported separately and potentially tree-shaken
-export const WsComponentPropsMeta = z.object({
+const WsComponentPropsMeta = z.object({
   props: z.record(PropMeta),
   initialProps: z.array(z.string()).optional(),
 });
@@ -35,7 +35,7 @@ export type WsComponentMeta = {
   children?: Array<string>;
 };
 
-export const WsComponentMeta = z.object({
+const WsComponentMeta = z.object({
   type: z.enum([
     "body",
     "container",
