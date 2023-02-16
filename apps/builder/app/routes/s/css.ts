@@ -51,9 +51,10 @@ export const loader = async ({ request }: ActionArgs) => {
       return new Response(cssText, {
         headers: {
           "Content-Type": "text/css",
-          // We have no way with Remix links to know if the CSS has changed (no ?cache-breaker in url)
-          // we can add Last-Modified and change on Cache-Control: no-cache but this is used only for localhost publish
-          // And can be fully omitted for the Designer Canvas. (_Not an issue on SaaS as we know data at the build time_)
+          // We have no way with Remix links to know if CSS has changed (no ?cache-breaker in url)
+          // We can add Last-Modified and change Cache-Control: no-cache, but this is only used to publish on localhost.
+          // And can be completely omitted for Designer Canvas see https://github.com/webstudio-is/webstudio-builder/issues/1044
+          // This is not a problem on the published site, since we know the data at build time.
           // https://developer.mozilla.org/en-US/docs/Web/HTTP/Headers/Cache-Control
           "Cache-Control": "no-store",
         },
@@ -94,9 +95,10 @@ export const loader = async ({ request }: ActionArgs) => {
     return new Response(cssText, {
       headers: {
         "Content-Type": "text/css",
-        // We have no way with Remix links to know if the CSS has changed (no ?cache-breaker in url)
-        // we can add Last-Modified and change on Cache-Control: no-cache but this is used only for localhost publish
-        // And can be fully omitted for the Designer Canvas. (_Not an issue on SaaS as we know data at the build time_)
+        // We have no way with Remix links to know if CSS has changed (no ?cache-breaker in url)
+        // We can add Last-Modified and change Cache-Control: no-cache, but this is only used to publish on localhost.
+        // And can be completely omitted for Designer Canvas see https://github.com/webstudio-is/webstudio-builder/issues/1044
+        // This is not a problem on the published site, since we know the data at build time.
         // https://developer.mozilla.org/en-US/docs/Web/HTTP/Headers/Cache-Control
         "Cache-Control": "no-store",
       },
