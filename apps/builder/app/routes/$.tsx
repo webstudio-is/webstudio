@@ -76,9 +76,9 @@ export const loader = async ({ request }: LoaderArgs): Promise<Data> => {
     return { ...canvasData, env, mode, params };
   }
 
-  // For "prod" builds we emulate the SaaS behaviour, reusing the same data SaaS uses.
+  // For "prod" builds we emulate the published site behaviour, reusing the same data production site uses.
   // https://github.com/webstudio-is/webstudio-builder/issues/929
-  // This is used on localhost "publish".
+  // The code below only used on localhost "publish".
   const pagesCanvasData = await loadProductionCanvasData(
     { projectId: project.id },
     context
