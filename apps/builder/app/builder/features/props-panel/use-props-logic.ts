@@ -1,12 +1,8 @@
-import { useMemo, useState } from "react";
+import { useState } from "react";
 import { nanoid } from "nanoid";
-import warnOnce from "warn-once";
 import type { Instance, Prop } from "@webstudio-is/project-build";
-import type { MetaProps } from "@webstudio-is/react-sdk";
-import {
-  getComponentMeta,
-  getComponentMetaProps,
-} from "@webstudio-is/react-sdk";
+import type { WsComponentPropsMeta } from "@webstudio-is/react-sdk";
+import { getComponentPropsMeta } from "@webstudio-is/react-sdk";
 
 export type UserPropValue = Prop extends infer T
   ? T extends { value: unknown; type: unknown }
@@ -14,20 +10,22 @@ export type UserPropValue = Prop extends infer T
     : never
   : never;
 
-export const getValueFromPropMeta = (propValue?: MetaProps[string]) => {
+export const getValueFromPropMeta = (
+  propValue?: WsComponentPropsMeta["props"][string]
+) => {
   let typedValue: UserPropValue = {
     type: "string",
     value: `${propValue?.defaultValue ?? ""}`,
   };
 
-  if (propValue?.type === "boolean") {
+  if (propValue?.control === "boolean") {
     typedValue = {
       type: "boolean",
       value: propValue.defaultValue ?? false,
     };
   }
 
-  if (propValue?.type === "number") {
+  if (propValue?.control === "number") {
     typedValue = {
       type: "number",
       value: propValue.defaultValue ?? 0,
@@ -35,37 +33,6 @@ export const getValueFromPropMeta = (propValue?: MetaProps[string]) => {
   }
 
   return typedValue;
-};
-
-const getRequiredPropsList = (component: string) => {
-  const meta = getComponentMeta(component);
-  const metaProps = getComponentMetaProps(component) ?? {};
-
-  const initialProps = meta?.initialProps ?? [];
-  const requiredProps = [];
-  const propsWithDefaultValue = [];
-
-  for (const [prop, value] of Object.entries(metaProps)) {
-    if (value?.required) {
-      warnOnce(
-        value.defaultValue == null,
-        `Default value for required "${prop}" is required`
-      );
-      requiredProps.push(prop);
-    }
-    if (value?.defaultValue != null) {
-      propsWithDefaultValue.push(prop);
-    }
-  }
-
-  // deduplicate required props
-  return Array.from(
-    new Set<string>([
-      ...initialProps,
-      ...requiredProps,
-      ...propsWithDefaultValue,
-    ])
-  );
 };
 
 type UsePropsLogic = {
@@ -77,7 +44,7 @@ type UsePropsLogic = {
 
 const getPropFromMetaProps = (
   instanceId: Instance["id"],
-  metaProps: MetaProps,
+  metaProps: WsComponentPropsMeta["props"],
   name: string
 ) => {
   const metaPropValue = metaProps[name];
@@ -103,19 +70,15 @@ export const usePropsLogic = ({
 }: UsePropsLogic) => {
   const { id: instanceId, component } = selectedInstance;
 
-  const metaProps = useMemo(
-    () => getComponentMetaProps(component) ?? {},
-    [component]
-  );
-  const requiredPropsList = useMemo(
-    () => getRequiredPropsList(component),
-    [component]
-  );
-  const requiredPropsByName = new Map<string, Prop>();
-  for (const name of requiredPropsList) {
+  const meta = getComponentPropsMeta(component);
+  const metaProps = meta?.props ?? {};
+  const initialProps = meta?.initialProps ?? [];
+
+  const initialPropsByName = new Map<string, Prop>();
+  for (const name of initialProps) {
     const prop = getPropFromMetaProps(instanceId, metaProps, name);
     if (prop) {
-      requiredPropsByName.set(name, prop);
+      initialPropsByName.set(name, prop);
     }
   }
 
@@ -127,8 +90,8 @@ export const usePropsLogic = ({
 
   const propsById = new Map<string, Prop>();
   for (const prop of props) {
-    if (requiredPropsByName.has(prop.name)) {
-      requiredPropsByName.set(prop.name, prop);
+    if (initialPropsByName.has(prop.name)) {
+      initialPropsByName.set(prop.name, prop);
       continue;
     }
     if (addedPropsById.has(prop.id)) {
@@ -141,14 +104,14 @@ export const usePropsLogic = ({
   // maintain added props order until panel is closed
   // to prevent inputs jumping while user typing
   const userProps = [
-    ...requiredPropsByName.values(),
+    ...initialPropsByName.values(),
     ...propsById.values(),
     ...addedPropsById.values(),
   ];
 
   const handleChangePropName = (prop: Prop, name: string) => {
     // prevent changing name of required props
-    if (isRequired(prop)) {
+    if (initialProps.includes(prop.name)) {
       return;
     }
     const typedValue = getValueFromPropMeta(metaProps[name]);
@@ -161,7 +124,7 @@ export const usePropsLogic = ({
 
   const handleDeleteProp = (prop: Prop) => {
     // required prop should never be deleted
-    if (isRequired(prop)) {
+    if (initialProps.includes(prop.name)) {
       return;
     }
     const id = prop.id;
@@ -182,16 +145,12 @@ export const usePropsLogic = ({
     ]);
   };
 
-  const isRequired = (prop: Prop) => {
-    return prop.required || requiredPropsList.includes(prop.name);
-  };
-
   return {
     userProps,
     handleChangePropName,
     handleChangePropValue,
     handleDeleteProp,
     addEmptyProp,
-    isRequired,
+    initialProps,
   };
 };

@@ -1,5 +1,5 @@
 import { Link2Icon } from "@webstudio-is/icons";
-import type { WsComponentMeta, MetaProps } from "./component-type";
+import { type WsComponentMeta, WsComponentPropsMeta } from "./component-type";
 import props from "./__generated__/link.props.json";
 
 const presetStyle = {
@@ -14,13 +14,15 @@ const presetStyle = {
   },
 } as const;
 
-const meta: WsComponentMeta = {
+export const meta: WsComponentMeta = {
   type: "rich-text",
   label: "Link",
   Icon: Link2Icon,
   presetStyle,
   children: ["Link text you can edit"],
-  props: props as MetaProps,
 };
 
-export default meta;
+export const propsMeta = WsComponentPropsMeta.parse({
+  props,
+  initialProps: ["href"],
+});

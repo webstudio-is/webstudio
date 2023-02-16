@@ -1,7 +1,7 @@
 import { useState } from "react";
 import store from "immerhin";
 import type { Instance, Prop } from "@webstudio-is/project-build";
-import { getComponentMetaProps } from "@webstudio-is/react-sdk";
+import { getComponentPropsMeta } from "@webstudio-is/react-sdk";
 import {
   theme,
   Box,
@@ -135,7 +135,7 @@ const Property = ({
   required,
   existingProps,
 }: PropertyProps) => {
-  const metaProps = getComponentMetaProps(component) ?? {};
+  const metaProps = getComponentPropsMeta(component)?.props ?? {};
 
   const argType = metaProps[userProp.name as keyof typeof metaProps];
   const isInvalid =
@@ -158,7 +158,7 @@ const Property = ({
           placeholder="Property"
           readOnly={true}
           state={isInvalid ? "invalid" : undefined}
-          value={userProp.name}
+          value={argType?.name ?? userProp.name}
         />
       ) : (
         <Combobox
@@ -223,7 +223,7 @@ export const PropsPanel = ({ selectedInstance, publish }: PropsPanelProps) => {
     handleChangePropName,
     handleChangePropValue,
     handleDeleteProp,
-    isRequired,
+    initialProps,
   } = usePropsLogic({
     props: instanceProps,
     selectedInstance,
@@ -287,7 +287,7 @@ export const PropsPanel = ({ selectedInstance, publish }: PropsPanelProps) => {
               }
               setCssProperty={setCssProperty}
               onDelete={() => handleDeleteProp(userProp)}
-              required={isRequired(userProp)}
+              required={initialProps.includes(userProp.name)}
               existingProps={existingProps}
             />
           ))}

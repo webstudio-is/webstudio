@@ -1,5 +1,5 @@
 import { FormIcon } from "@webstudio-is/icons";
-import type { WsComponentMeta, MetaProps } from "./component-type";
+import { type WsComponentMeta, WsComponentPropsMeta } from "./component-type";
 import props from "./__generated__/form.props.json";
 
 const presetStyle = {
@@ -14,12 +14,13 @@ const presetStyle = {
   },
 } as const;
 
-const meta: WsComponentMeta = {
+export const meta: WsComponentMeta = {
   type: "container",
   label: "Form",
   Icon: FormIcon,
   presetStyle,
-  props: props as MetaProps,
 };
 
-export default meta;
+export const propsMeta = WsComponentPropsMeta.parse({
+  props,
+});

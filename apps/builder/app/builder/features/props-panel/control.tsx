@@ -3,7 +3,7 @@ import warnOnce from "warn-once";
 import { useMemo } from "react";
 import { useStore } from "@nanostores/react";
 import type { Instance, Prop } from "@webstudio-is/project-build";
-import { getComponentMetaProps } from "@webstudio-is/react-sdk";
+import { getComponentPropsMeta } from "@webstudio-is/react-sdk";
 import type { Asset } from "@webstudio-is/asset-uploader";
 import {
   Flex,
@@ -21,15 +21,7 @@ import { ImageManager } from "~/builder/shared/image-manager";
 import type { UserPropValue } from "./use-props-logic";
 import type { SetProperty } from "../style-panel/shared/use-style-data";
 
-const textControlTypes = [
-  "text",
-  "array",
-  "color",
-  "date",
-  "file",
-  "number",
-  "object",
-] as const;
+const textControlTypes = ["text", "color", "number", "multiline-text"] as const;
 
 type TextControlProps = {
   type: typeof textControlTypes[number];
@@ -49,13 +41,11 @@ const TextControl = ({ value, type, onChange }: TextControlProps) => (
   />
 );
 
-const checkboxControlTypes = ["check", "inline-check", "multi-select"] as const;
-
 type CheckboxControlProps = {
   value: string;
   onChange: (value: string) => void;
   options: Array<string>;
-  type: typeof checkboxControlTypes[number];
+  type: "check";
 };
 
 const CheckboxControl = ({
@@ -78,14 +68,11 @@ const CheckboxControl = ({
   </RadioGroup>
 );
 
-const radioControlTypes = ["radio", "inline-radio"] as const;
-
 type RadioControlProps = {
   value: string;
   onChange: (value: string) => void;
-
   options: Array<string>;
-  type: typeof radioControlTypes[number];
+  type: "radio";
 };
 
 const RadioControl = ({
@@ -201,34 +188,17 @@ export function Control({
   onChangePropValue,
   setCssProperty,
 }: ControlProps) {
-  const meta = getComponentMetaProps(component);
+  const meta = getComponentPropsMeta(component)?.props;
 
   const argType = meta?.[userProp.name];
 
   // argType can be undefined in case of new property created
   const defaultValue = argType?.defaultValue ?? "";
-  const type = argType?.type ?? "text";
+  const rawControl = argType?.control || "text";
+  const control =
+    typeof rawControl === "string" ? { type: rawControl } : rawControl;
 
-  if (type == null) {
-    warnOnce(
-      true,
-      `No control type for prop "${userProp.name}" component "${component}" found`
-    );
-    return <NotImplemented />;
-  }
-
-  if (typeof type !== "string") {
-    warnOnce(
-      true,
-      `Control type "${typeof type}" for prop "${
-        userProp.name
-      }" component "${component}" is not a string`
-    );
-
-    return <NotImplemented />;
-  }
-
-  if (component === "Image" && userProp.name === "src") {
+  if (control.type === "file-image") {
     const assetId = userProp.type === "asset" ? userProp.value : undefined;
 
     return (
@@ -260,7 +230,7 @@ export function Control({
     );
   }
 
-  if (includes(textControlTypes, type)) {
+  if (includes(textControlTypes, control.type)) {
     const value = `${userProp.value}`;
 
     return (
@@ -272,12 +242,12 @@ export function Control({
             value,
           })
         }
-        type={type}
+        type={control.type}
       />
     );
   }
 
-  if (type === "boolean") {
+  if (control.type === "boolean") {
     const value = Boolean(userProp.value);
 
     return (
@@ -295,14 +265,14 @@ export function Control({
   }
 
   if (
-    argType?.type === "radio" ||
-    argType?.type === "inline-radio" ||
-    argType?.type === "check" ||
-    argType?.type === "inline-check" ||
-    argType?.type === "multi-select" ||
-    argType?.type === "select"
+    control.type === "radio" ||
+    control.type === "check" ||
+    control.type === "select" ||
+    control.type === "inline-check" ||
+    control.type === "inline-radio" ||
+    control.type === "multi-select"
   ) {
-    const options = argType.options;
+    const options = control.options;
 
     const value = `${userProp.value}`;
 
@@ -313,7 +283,7 @@ export function Control({
 
     const DEFAULT_OPTIONS: string[] = [];
 
-    if (includes(radioControlTypes, type)) {
+    if (control.type === "radio" || control.type === "inline-radio") {
       return (
         <RadioControl
           value={value}
@@ -324,12 +294,16 @@ export function Control({
             })
           }
           options={options ?? DEFAULT_OPTIONS}
-          type={type}
+          type="radio"
         />
       );
     }
 
-    if (includes(checkboxControlTypes, type)) {
+    if (
+      control.type === "check" ||
+      control.type === "inline-check" ||
+      control.type === "multi-select"
+    ) {
       return (
         <CheckboxControl
           value={value}
@@ -340,12 +314,12 @@ export function Control({
             })
           }
           options={options ?? DEFAULT_OPTIONS}
-          type={type}
+          type="check"
         />
       );
     }
 
-    if (includes(selectControlTypes, type)) {
+    if (control.type === "select") {
       return (
         <SelectControl
           value={value}
@@ -356,18 +330,29 @@ export function Control({
             })
           }
           options={options ?? DEFAULT_OPTIONS}
-          type={type}
+          type={control.type}
         />
       );
     }
-
-    assertUnreachable(type, `Unknown control type ${type}`);
   }
+
+  if (
+    control.type === "object" ||
+    control.type === "date" ||
+    control.type === "range"
+  ) {
+    warnOnce(
+      true,
+      `Control type "${control.type}" is not implemented for prop: "${userProp.name}" in component "${component}"`
+    );
+    return <NotImplemented />;
+  }
+
+  assertUnreachable(control.type, `Unknown control type ${control.type}`);
 
   warnOnce(
     true,
-    `Control type "${type}" is not implemented for prop: "${userProp.name}" in component "${component}"`
+    `Control type "${control.type}" is not implemented for prop: "${userProp.name}" in component "${component}"`
   );
-
   return <NotImplemented />;
 }

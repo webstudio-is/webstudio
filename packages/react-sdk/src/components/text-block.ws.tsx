@@ -1,5 +1,5 @@
 import { TextIcon } from "@webstudio-is/icons";
-import type { WsComponentMeta, MetaProps } from "./component-type";
+import { type WsComponentMeta, WsComponentPropsMeta } from "./component-type";
 import props from "./__generated__/text-block.props.json";
 
 const presetStyle = {
@@ -10,13 +10,14 @@ const presetStyle = {
   },
 } as const;
 
-const meta: WsComponentMeta = {
+export const meta: WsComponentMeta = {
   type: "rich-text",
   label: "Text Block",
   Icon: TextIcon,
   presetStyle,
   children: ["Block of text you can edit"],
-  props: props as MetaProps,
 };
 
-export default meta;
+export const propsMeta = WsComponentPropsMeta.parse({
+  props,
+});

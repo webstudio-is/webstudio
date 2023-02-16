@@ -1,5 +1,5 @@
 import { ImageIcon } from "@webstudio-is/icons";
-import type { WsComponentMeta, MetaProps } from "./component-type";
+import { type WsComponentMeta, WsComponentPropsMeta } from "./component-type";
 import props from "./__generated__/image.props.json";
 
 const presetStyle = {
@@ -17,13 +17,17 @@ const presetStyle = {
   },
 } as const;
 
-const meta: WsComponentMeta = {
+export const meta: WsComponentMeta = {
   type: "embed",
   label: "Image",
   Icon: ImageIcon,
   presetStyle,
-  props: props as MetaProps,
-  initialProps: ["src", "width", "height", "alt", "loading"],
 };
 
-export default meta;
+export const propsMeta = WsComponentPropsMeta.parse({
+  props: {
+    ...props,
+    src: { ...props.src, control: "file-image", name: "Source" },
+  },
+  initialProps: ["src", "width", "height", "alt", "loading"],
+});

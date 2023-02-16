@@ -5,6 +5,10 @@ export * from "./pubsub";
 export * from "./app";
 export {
   customComponents,
-  customComponentsMeta,
+  customComponentMetas,
+  customComponentPropsMetas,
 } from "./app/custom-components";
-export type { MetaProps, WsComponentMeta } from "./components/component-type";
+export type {
+  WsComponentPropsMeta,
+  WsComponentMeta,
+} from "./components/component-type";
