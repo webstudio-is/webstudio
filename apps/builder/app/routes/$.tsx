@@ -92,7 +92,9 @@ export const loader = async ({ request }: LoaderArgs): Promise<Data> => {
 
   const pagePath = buildParams.pagePath === "/" ? "" : buildParams.pagePath;
 
-  const canvasData = canvasDataPages.find((c) => c.page.path === pagePath);
+  const canvasData = canvasDataPages.find(
+    (data) => data.page.path === pagePath
+  );
 
   if (canvasData === undefined) {
     throw json("Page not found", {
