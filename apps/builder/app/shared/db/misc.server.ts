@@ -1,6 +1,10 @@
 import { db } from "@webstudio-is/project/server";
 import { prisma } from "@webstudio-is/prisma-client";
 import type { AppContext } from "@webstudio-is/trpc-interface/server";
+import {
+  createBuild,
+  loadBuildByProjectId,
+} from "@webstudio-is/project-build/server";
 
 /**
  * Conceptually publishing is cloning all data that affects user site
@@ -28,10 +32,10 @@ export const publish = async (
     throw new Error(`Project "${projectId}" not found`);
   }
 
-  const devBuild = await db.build.loadByProjectId(projectId, "dev");
+  const devBuild = await loadBuildByProjectId(projectId, "dev");
 
   await prisma.$transaction(async (client) => {
-    await db.build.create(
+    await createBuild(
       { projectId: project.id, env: "prod", sourceBuild: devBuild },
       context,
       client

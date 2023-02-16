@@ -1,6 +1,8 @@
 import { describe, test, expect } from "@jest/globals";
-import type { Breakpoints } from "@webstudio-is/project-build";
-import { initialBreakpoints } from "@webstudio-is/react-sdk";
+import {
+  type Breakpoints,
+  initialBreakpoints,
+} from "@webstudio-is/project-build";
 import { nanoid } from "nanoid";
 import { sort } from "./sort";
 

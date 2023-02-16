@@ -1,9 +1,9 @@
 import { useCallback, useEffect, useMemo } from "react";
 import { type Publish, usePublish, useSubscribe } from "~/shared/pubsub";
-import { utils as projectUtils, type Project } from "@webstudio-is/project";
+import { type Pages, findPageByIdOrPath } from "@webstudio-is/project-build";
+import type { Project } from "@webstudio-is/project";
 import { theme, Box, type CSS, Flex, Grid } from "@webstudio-is/design-system";
 import type { AuthPermit } from "@webstudio-is/trpc-interface";
-import type { Pages } from "@webstudio-is/project-build";
 import { registerContainers, useBuilderStore } from "~/shared/sync";
 import { useSyncServer } from "./shared/sync/sync-server";
 // eslint-disable-next-line import/no-internal-modules
@@ -39,6 +39,7 @@ import { useCopyPasteInstance } from "~/shared/copy-paste";
 import { AssetsProvider } from "./shared/assets";
 
 registerContainers();
+
 export const links = () => {
   return [
     { rel: "stylesheet", href: interFont },
@@ -291,7 +292,7 @@ export const Builder = ({
   );
 
   const page = useMemo(() => {
-    const page = projectUtils.pages.findByIdOrPath(pages, pageId);
+    const page = findPageByIdOrPath(pages, pageId);
     if (page === undefined) {
       throw new Error(`Page with id ${pageId} not found`);
     }

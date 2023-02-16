@@ -1,9 +1,12 @@
 import type { CanvasData, Project } from "@webstudio-is/project";
-import * as buildDb from "@webstudio-is/project-build/server";
-import { utils } from "@webstudio-is/project";
+import {
+  loadBuildByProjectId,
+  loadTreeById,
+} from "@webstudio-is/project-build/server";
 import { db as projectDb } from "@webstudio-is/project/server";
 import { loadByProject } from "@webstudio-is/asset-uploader/server";
 import type { AppContext } from "@webstudio-is/trpc-interface/server";
+import { findPageByIdOrPath } from "@webstudio-is/project-build";
 
 export const loadProductionCanvasData = async (
   props: {
@@ -13,10 +16,7 @@ export const loadProductionCanvasData = async (
 ): Promise<CanvasData[]> => {
   const pagesCanvasData: CanvasData[] = [];
 
-  const prodBuild = await projectDb.build.loadByProjectId(
-    props.projectId,
-    "prod"
-  );
+  const prodBuild = await loadBuildByProjectId(props.projectId, "prod");
   if (prodBuild === undefined) {
     throw new Error(
       `Project ${props.projectId} not found or not published yet. Please contact us to get help.`
@@ -66,21 +66,21 @@ export const loadCanvasData = async (
 ): Promise<CanvasData> => {
   const build =
     props.env === "dev"
-      ? await projectDb.build.loadByProjectId(props.project.id, "dev")
-      : await projectDb.build.loadByProjectId(props.project.id, "prod");
+      ? await loadBuildByProjectId(props.project.id, "dev")
+      : await loadBuildByProjectId(props.project.id, "prod");
 
   if (build === undefined) {
     throw new Error("The project is not published");
   }
 
-  const page = utils.pages.findByIdOrPath(build.pages, props.pageIdOrPath);
+  const page = findPageByIdOrPath(build.pages, props.pageIdOrPath);
 
   if (page === undefined) {
     throw new Error(`Page ${props.pageIdOrPath} not found`);
   }
 
   const [tree, assets] = await Promise.all([
-    buildDb.loadTreeById(
+    loadTreeById(
       {
         projectId: props.project.id,
         treeId: page.treeId,

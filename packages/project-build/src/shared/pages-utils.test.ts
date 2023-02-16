@@ -1,5 +1,5 @@
 import { describe, test, expect } from "@jest/globals";
-import { findByIdOrPath } from "./find-by-id-or-path";
+import { findPageByIdOrPath } from "./pages-utils";
 
 const pages = {
   homePage: {
@@ -24,23 +24,23 @@ const pages = {
 
 describe("Find by id or path", () => {
   test("home page by id", () => {
-    const page = findByIdOrPath(pages, "home");
+    const page = findPageByIdOrPath(pages, "home");
     expect(page).toEqual(pages.homePage);
   });
   test("home page by path /", () => {
-    const page = findByIdOrPath(pages, "/");
+    const page = findPageByIdOrPath(pages, "/");
     expect(page).toEqual(pages.homePage);
   });
   test("home page by empty path", () => {
-    const page = findByIdOrPath(pages, "");
+    const page = findPageByIdOrPath(pages, "");
     expect(page).toEqual(pages.homePage);
   });
   test("find page by id", () => {
-    const page = findByIdOrPath(pages, "page1");
+    const page = findPageByIdOrPath(pages, "page1");
     expect(page).toEqual(pages.pages[0]);
   });
   test("find page by path", () => {
-    const page = findByIdOrPath(pages, "/page1");
+    const page = findPageByIdOrPath(pages, "/page1");
     expect(page).toEqual(pages.pages[0]);
   });
 });

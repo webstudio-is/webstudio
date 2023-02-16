@@ -1,13 +1,13 @@
 import { nanoid } from "nanoid";
 import { applyPatches, type Patch } from "immer";
-import { initialBreakpoints } from "@webstudio-is/react-sdk";
 import { type Project, prisma } from "@webstudio-is/prisma-client";
+import type { Build } from "../types";
 import {
-  type Build,
-  Breakpoint,
+  type Breakpoint,
   Breakpoints,
   BreakpointsList,
-} from "@webstudio-is/project-build";
+  initialBreakpoints,
+} from "../schema/breakpoints";
 import {
   authorizeProject,
   type AppContext,
@@ -25,7 +25,10 @@ export const serializeBreakpoints = (breakpointssMap: Breakpoints) => {
   return JSON.stringify(breakpointssList);
 };
 
-export const createValues = (): [Breakpoint["id"], Breakpoint][] => {
+export const createInitialBreakpoints = (): [
+  Breakpoint["id"],
+  Breakpoint
+][] => {
   return initialBreakpoints.map((breakpoint) => {
     const id = nanoid();
     return [
@@ -38,7 +41,7 @@ export const createValues = (): [Breakpoint["id"], Breakpoint][] => {
   });
 };
 
-export const patch = async (
+export const patchBreakpoints = async (
   { buildId, projectId }: { buildId: Build["id"]; projectId: Project["id"] },
   patches: Array<Patch>,
   context: AppContext

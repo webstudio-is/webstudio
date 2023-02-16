@@ -1,9 +1,17 @@
-import type { LoaderArgs, ActionArgs } from "@remix-run/node";
-import { db } from "@webstudio-is/project/server";
-import { type Pages, pathValidators } from "@webstudio-is/project-build";
-import { utils } from "@webstudio-is/project";
 import { zfd } from "zod-form-data";
 import { z } from "zod";
+import type { LoaderArgs, ActionArgs } from "@remix-run/node";
+import {
+  type Pages,
+  pathValidators,
+  findPageByIdOrPath,
+} from "@webstudio-is/project-build";
+import {
+  addPage,
+  deletePage,
+  editPage,
+  loadBuildByProjectId,
+} from "@webstudio-is/project-build/server";
 import { sentryException } from "~/shared/sentry";
 import type {
   CreatePageData,
@@ -49,20 +57,20 @@ const handlePut = async (
     meta: description !== undefined ? { description } : undefined,
   };
 
-  const devBuild = await db.build.loadByProjectId(projectId, "dev");
+  const devBuild = await loadBuildByProjectId(projectId, "dev");
 
-  const existingPage = utils.pages.findByIdOrPath(devBuild.pages, data.path);
+  const existingPage = findPageByIdOrPath(devBuild.pages, data.path);
   if (existingPage !== undefined) {
     return makeFieldError("path", `Already used for "${existingPage.name}"`);
   }
 
-  const updatedBuild = await db.build.addPage({
+  const updatedBuild = await addPage({
     projectId,
     buildId: devBuild.id,
     data,
   });
 
-  const newPage = utils.pages.findByIdOrPath(updatedBuild.pages, data.path);
+  const newPage = findPageByIdOrPath(updatedBuild.pages, data.path);
 
   if (newPage === undefined) {
     throw new Error("New page not found");
@@ -93,16 +101,16 @@ const handlePost = async (
     meta: description !== undefined ? { description } : undefined,
   };
 
-  const devBuild = await db.build.loadByProjectId(projectId, "dev");
+  const devBuild = await loadBuildByProjectId(projectId, "dev");
 
   if (data.path !== undefined) {
-    const existingPage = utils.pages.findByIdOrPath(devBuild.pages, data.path);
+    const existingPage = findPageByIdOrPath(devBuild.pages, data.path);
     if (existingPage !== undefined && existingPage.id !== id) {
       return makeFieldError("path", `Already used for "${existingPage.name}"`);
     }
   }
 
-  await db.build.editPage({
+  await editPage({
     projectId,
     buildId: devBuild.id,
     pageId: id,
@@ -124,13 +132,13 @@ const handleDelete = async (
   }
   const { id } = result.data;
 
-  const devBuild = await db.build.loadByProjectId(projectId, "dev");
+  const devBuild = await loadBuildByProjectId(projectId, "dev");
 
   if (devBuild.pages.homePage.id === id) {
     return makeFieldError("id", `Can't delete the home page`);
   }
 
-  await db.build.deletePage({
+  await deletePage({
     projectId,
     buildId: devBuild.id,
     pageId: id,
@@ -182,7 +190,7 @@ export const loader = async ({
       throw new Error(`Project ID required`);
     }
 
-    const prodBuild = await db.build.loadByProjectId(params.projectId, "prod");
+    const prodBuild = await loadBuildByProjectId(params.projectId, "prod");
 
     if (prodBuild === undefined) {
       throw new Error(

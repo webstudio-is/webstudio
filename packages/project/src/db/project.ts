@@ -1,13 +1,16 @@
 import slugify from "slugify";
 import { customAlphabet } from "nanoid";
+import { v4 as uuid } from "uuid";
 import { prisma, Prisma } from "@webstudio-is/prisma-client";
 import { cloneAssets } from "@webstudio-is/asset-uploader/server";
-import * as db from "./index";
 import {
   authorizeProject,
   type AppContext,
 } from "@webstudio-is/trpc-interface/server";
-import { v4 as uuid } from "uuid";
+import {
+  createBuild,
+  loadBuildByProjectId,
+} from "@webstudio-is/project-build/server";
 import { Project, Title } from "../shared/schema";
 
 const nanoid = customAlphabet("1234567890abcdefghijklmnopqrstuvwxyz");
@@ -105,7 +108,7 @@ export const create = async (
       },
     });
 
-    await db.build.create(
+    await createBuild(
       { projectId: project.id, env: "dev", sourceBuild: undefined },
       context,
       client
@@ -185,8 +188,8 @@ const clone = async (
 
   const build =
     env === "dev"
-      ? await db.build.loadByProjectId(project.id, "dev")
-      : await db.build.loadByProjectId(project.id, "prod");
+      ? await loadBuildByProjectId(project.id, "dev")
+      : await loadBuildByProjectId(project.id, "prod");
 
   const newProjectId = uuid();
   await authorizeProject.registerProjectOwner(
@@ -204,7 +207,7 @@ const clone = async (
       },
     });
 
-    await db.build.create(
+    await createBuild(
       { projectId: newProjectId, env: "dev", sourceBuild: build },
       context,
       client

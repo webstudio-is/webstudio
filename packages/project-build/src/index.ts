@@ -6,3 +6,4 @@ export * from "./schema/style-sources";
 export * from "./schema/style-source-selections";
 export * from "./schema/breakpoints";
 export * from "./types";
+export * from "./shared/pages-utils";

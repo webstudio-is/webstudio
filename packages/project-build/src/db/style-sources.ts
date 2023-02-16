@@ -4,11 +4,8 @@ import {
   authorizeProject,
   type AppContext,
 } from "@webstudio-is/trpc-interface/server";
-import {
-  type Build,
-  StyleSourcesList,
-  StyleSources,
-} from "@webstudio-is/project-build";
+import type { Build } from "../types";
+import { StyleSourcesList, StyleSources } from "../schema/style-sources";
 
 export const parseStyleSources = (styleSourceString: string): StyleSources => {
   const styleSourcesList = StyleSourcesList.parse(
@@ -24,7 +21,7 @@ export const serializeStyleSources = (styleSourcesMap: StyleSources) => {
   return JSON.stringify(styleSourcesList);
 };
 
-export const patch = async (
+export const patchStyleSources = async (
   { buildId, projectId }: { buildId: Build["id"]; projectId: Project["id"] },
   patches: Array<Patch>,
   context: AppContext
