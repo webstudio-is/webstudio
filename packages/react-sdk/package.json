@@ -1,6 +1,6 @@
 {
   "name": "@webstudio-is/react-sdk",
-  "version": "0.31.0",
+  "version": "0.32.0",
   "description": "Webstudio JavaScript / TypeScript API",
   "author": "Webstudio <github@webstudio.is>",
   "homepage": "https://webstudio.is",
@@ -28,7 +28,6 @@
     "@types/node": "^18.11.18",
     "@types/react": "^17.0.24",
     "@types/react-dom": "^17.0.9",
-    "@webstudio-is/generate-arg-types": "workspace:^",
     "@webstudio-is/jest-config": "workspace:^",
     "@webstudio-is/scripts": "workspace:^",
     "@webstudio-is/storybook-config": "workspace:^",
@@ -56,6 +55,7 @@
     "@nanostores/react": "^0.4.1",
     "@webstudio-is/asset-uploader": "workspace:^",
     "@webstudio-is/css-data": "workspace:^",
+    "@webstudio-is/generate-arg-types": "workspace:^",
     "@webstudio-is/icons": "workspace:^",
     "@webstudio-is/image": "workspace:^",
     "@webstudio-is/prisma-client": "workspace:^",
