@@ -1,6 +1,6 @@
 {
   "name": "@webstudio-is/generate-arg-types",
-  "version": "0.0.1",
+  "version": "0.31.0",
   "description": "Generate components property types",
   "author": "Webstudio <github@webstudio.is>",
   "homepage": "https://webstudio.is",
@@ -36,6 +36,6 @@
   "exports": "./lib/index.js",
   "types": "src/index.ts",
   "license": "MIT",
-  "private": true,
+  "private": false,
   "sideEffects": false
 }
