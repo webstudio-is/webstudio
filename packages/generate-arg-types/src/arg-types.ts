@@ -42,13 +42,14 @@ const matchers = {
 };
 
 export const getArgType = (propItem: PropItem): PropMeta | undefined => {
-  const { type, name } = propItem;
+  const { type, name, description, defaultValue } = propItem;
 
   const common = (typeName: string = type.name) => ({
-    name,
-    description: propItem.description,
-    defaultValue: propItem.defaultValue?.value ?? null,
     type: { name: typeName, required: propItem.required },
+    ...(defaultValue?.value == null
+      ? {}
+      : { defaultValue: defaultValue.value }),
+    ...(description ? { description } : {}),
   });
 
   // args that end with background or color e.g. iconColor

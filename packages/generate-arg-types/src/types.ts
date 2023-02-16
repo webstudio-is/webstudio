@@ -20,22 +20,22 @@ const common = {
   /**
    * Label for the control (may not match the property name)
    */
-  name: z.string(),
-  description: z.string().nullable(),
+  name: z.string().optional(),
+  description: z.string().optional(),
 };
 
 const Number = z.object({
   ...common,
   type: dataType("number"),
   control: controlType("number"),
-  defaultValue: z.number().nullable(),
+  defaultValue: z.number().optional(),
 });
 
 const Range = z.object({
   ...common,
   type: dataType("number"),
   control: controlType("range"),
-  defaultValue: z.number().nullable(),
+  defaultValue: z.number().optional(),
 });
 
 const Text = z.object({
@@ -48,7 +48,7 @@ const Text = z.object({
     required: z.boolean(),
   }),
   control: controlType("text"),
-  defaultValue: z.string().nullable(),
+  defaultValue: z.string().optional(),
 });
 
 // Discussed with Storybook team here:
@@ -58,63 +58,63 @@ const MultilineText = z.object({
   ...common,
   type: dataType("string"),
   control: controlType("multiline-text"),
-  defaultValue: z.string().nullable(),
+  defaultValue: z.string().optional(),
 });
 
 const Color = z.object({
   ...common,
   type: dataType("string"),
   control: controlType("color"),
-  defaultValue: z.string().nullable(),
+  defaultValue: z.string().optional(),
 });
 
 const Boolean = z.object({
   ...common,
   type: dataType("boolean"),
   control: controlType("boolean"),
-  defaultValue: z.boolean().nullable(),
+  defaultValue: z.boolean().optional(),
 });
 
 const Radio = z.object({
   ...common,
   type: dataType("string"),
   control: controlTypeWithOptions("radio"),
-  defaultValue: z.string().nullable(),
+  defaultValue: z.string().optional(),
 });
 
 const InlineRadio = z.object({
   ...common,
   type: dataType("string"),
   control: controlTypeWithOptions("inline-radio"),
-  defaultValue: z.string().nullable(),
+  defaultValue: z.string().optional(),
 });
 
 const Select = z.object({
   ...common,
   type: dataType("string"),
   control: controlTypeWithOptions("select"),
-  defaultValue: z.string().nullable(),
+  defaultValue: z.string().optional(),
 });
 
 const MultiSelect = z.object({
   ...common,
   type: dataType("string[]"),
   control: controlTypeWithOptions("multi-select"),
-  defaultValue: z.array(z.string()).nullable(),
+  defaultValue: z.array(z.string()).optional(),
 });
 
 const Check = z.object({
   ...common,
   type: dataType("string[]"),
   control: controlTypeWithOptions("check"),
-  defaultValue: z.array(z.string()).nullable(),
+  defaultValue: z.array(z.string()).optional(),
 });
 
 const InlineCheck = z.object({
   ...common,
   type: dataType("string[]"),
   control: controlTypeWithOptions("inline-check"),
-  defaultValue: z.array(z.string()).nullable(),
+  defaultValue: z.array(z.string()).optional(),
 });
 
 // @todo
@@ -124,7 +124,7 @@ const FileImage = z.object({
   ...common,
   type: dataType("string"),
   control: controlType("file-image"),
-  defaultValue: z.string().nullable(),
+  defaultValue: z.string().optional(),
 });
 
 // we neither generate object nor support it in props panel, listed here for completeness
@@ -135,7 +135,7 @@ const Object = z.object({
     required: z.boolean(),
   }),
   control: controlType("object"),
-  defaultValue: z.any().nullable(), // @todo maybe z.record(z.any())?
+  defaultValue: z.any().optional(), // @todo maybe z.record(z.any())?
   ...common,
 });
 
@@ -144,7 +144,7 @@ const Date = z.object({
   ...common,
   type: dataType("string"), // @todo not sure we should use string here and for defaultValue
   control: controlType("date"),
-  defaultValue: z.string().nullable(),
+  defaultValue: z.string().optional(),
   ...common,
 });
 
