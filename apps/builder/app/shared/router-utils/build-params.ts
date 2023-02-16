@@ -92,6 +92,8 @@ export const getBuildParams = (
 ): BuildParams | undefined => {
   const url = new URL(request.url);
 
+  // Having that we use Remix `export const links` and have no way to pass
+  // projectId and other params here, we need to get them from referer.
   if (url.pathname === "/s/css") {
     const referer = request.headers.get("referer");
     if (referer !== null) {

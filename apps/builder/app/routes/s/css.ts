@@ -60,7 +60,9 @@ export const loader = async ({ request }: ActionArgs) => {
       });
     }
 
-    // Production build
+    // For "prod" builds we emulate the SaaS behaviour, reusing the same data SaaS uses.
+    // https://github.com/webstudio-is/webstudio-builder/issues/929
+    // This is used on localhost "publish".
     const pages = await loadProductionCanvasData(
       { projectId: project.id },
       context
