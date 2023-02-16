@@ -10,7 +10,7 @@ export const loadProductionCanvasData = async (
   },
   context: AppContext
 ): Promise<CanvasData[]> => {
-  const pages: CanvasData[] = [];
+  const pagesCanvasData: CanvasData[] = [];
 
   const prodBuild = await projectDb.build.loadByProjectId(
     props.projectId,
@@ -40,7 +40,7 @@ export const loadProductionCanvasData = async (
     context
   );
 
-  pages.push(canvasData);
+  pagesCanvasData.push(canvasData);
 
   if (otherPages.length > 0) {
     for (const page of otherPages) {
@@ -48,11 +48,11 @@ export const loadProductionCanvasData = async (
         { project, env: "prod", pageIdOrPath: page.path },
         context
       );
-      pages.push(canvasData);
+      pagesCanvasData.push(canvasData);
     }
   }
 
-  return pages;
+  return pagesCanvasData;
 };
 
 export const loadCanvasData = async (

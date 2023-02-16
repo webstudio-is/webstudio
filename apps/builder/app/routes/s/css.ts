@@ -63,22 +63,24 @@ export const loader = async ({ request }: ActionArgs) => {
     // For "prod" builds we emulate the SaaS behaviour, reusing the same data SaaS uses.
     // https://github.com/webstudio-is/webstudio-builder/issues/929
     // This is used on localhost "publish".
-    const pages = await loadProductionCanvasData(
+    const pagesCanvasData = await loadProductionCanvasData(
       { projectId: project.id },
       context
     );
 
-    if (pages.length === 0) {
+    if (pagesCanvasData.length === 0) {
       throw json("Project not found or not published yet", { status: 404 });
     }
 
-    const canvasData = pages[0];
+    const canvasData = pagesCanvasData[0];
 
     const styleSourceSelections: Tree["styleSourceSelections"] = [];
 
-    for (const page of pages) {
-      if (page.tree?.styleSourceSelections) {
-        styleSourceSelections.push(...page.tree.styleSourceSelections);
+    for (const pageCanvasData of pagesCanvasData) {
+      if (pageCanvasData.tree?.styleSourceSelections) {
+        styleSourceSelections.push(
+          ...pageCanvasData.tree.styleSourceSelections
+        );
       }
     }
 

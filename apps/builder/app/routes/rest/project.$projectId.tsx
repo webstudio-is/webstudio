@@ -19,9 +19,12 @@ export const loader = async ({
 
     const context = await createContext(request, "prod");
 
-    const pages = await loadProductionCanvasData({ projectId }, context);
+    const pagesCanvasData = await loadProductionCanvasData(
+      { projectId },
+      context
+    );
 
-    return pages;
+    return pagesCanvasData;
   } catch (error) {
     // If a Response is thrown, we're rethrowing it for Remix to handle.
     // https://remix.run/docs/en/v1/api/conventions#throwing-responses-in-loaders

@@ -79,7 +79,7 @@ export const loader = async ({ request }: LoaderArgs): Promise<Data> => {
   // For "prod" builds we emulate the SaaS behaviour, reusing the same data SaaS uses.
   // https://github.com/webstudio-is/webstudio-builder/issues/929
   // This is used on localhost "publish".
-  const canvasDataPages = await loadProductionCanvasData(
+  const pagesCanvasData = await loadProductionCanvasData(
     { projectId: project.id },
     context
   );
@@ -92,7 +92,7 @@ export const loader = async ({ request }: LoaderArgs): Promise<Data> => {
 
   const pagePath = buildParams.pagePath === "/" ? "" : buildParams.pagePath;
 
-  const canvasData = canvasDataPages.find(
+  const canvasData = pagesCanvasData.find(
     (data) => data.page.path === pagePath
   );
 
