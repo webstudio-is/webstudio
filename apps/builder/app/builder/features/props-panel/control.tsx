@@ -3,7 +3,7 @@ import warnOnce from "warn-once";
 import { useMemo } from "react";
 import { useStore } from "@nanostores/react";
 import type { Instance, Prop } from "@webstudio-is/project-build";
-import { getComponentMeta } from "@webstudio-is/react-sdk";
+import { getComponentPropsMeta } from "@webstudio-is/react-sdk";
 import type { Asset } from "@webstudio-is/asset-uploader";
 import {
   Flex,
@@ -188,7 +188,7 @@ export function Control({
   onChangePropValue,
   setCssProperty,
 }: ControlProps) {
-  const meta = getComponentMeta(component)?.props;
+  const meta = getComponentPropsMeta(component)?.props;
 
   const argType = meta?.[userProp.name];
 

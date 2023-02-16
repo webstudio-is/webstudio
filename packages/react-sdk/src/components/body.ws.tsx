@@ -1,5 +1,5 @@
 import { BodyIcon } from "@webstudio-is/icons";
-import { type WsComponentMeta, MetaProps } from "./component-type";
+import { type WsComponentMeta, WsComponentPropsMeta } from "./component-type";
 import props from "./__generated__/body.props.json";
 
 const presetStyle = {
@@ -52,12 +52,13 @@ const presetStyle = {
   },
 } as const;
 
-const meta: WsComponentMeta = {
+export const meta: WsComponentMeta = {
   type: "body",
   label: "Body",
   Icon: BodyIcon,
-  props: MetaProps.parse(props),
   presetStyle,
 };
 
-export default meta;
+export const propsMeta = WsComponentPropsMeta.parse({
+  props,
+});

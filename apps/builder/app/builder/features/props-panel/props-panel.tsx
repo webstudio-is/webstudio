@@ -1,7 +1,7 @@
 import { useState } from "react";
 import store from "immerhin";
 import type { Instance, Prop } from "@webstudio-is/project-build";
-import { getComponentMeta } from "@webstudio-is/react-sdk";
+import { getComponentPropsMeta } from "@webstudio-is/react-sdk";
 import {
   theme,
   Box,
@@ -135,7 +135,7 @@ const Property = ({
   required,
   existingProps,
 }: PropertyProps) => {
-  const metaProps = getComponentMeta(component)?.props ?? {};
+  const metaProps = getComponentPropsMeta(component)?.props ?? {};
 
   const argType = metaProps[userProp.name as keyof typeof metaProps];
   const isInvalid =

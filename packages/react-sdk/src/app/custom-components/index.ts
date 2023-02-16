@@ -2,7 +2,7 @@ import { Image } from "./image";
 import { Link } from "./link";
 import { RichTextLink } from "./rich-text-link";
 import { imageProps } from "@webstudio-is/image";
-import { MetaProps } from "../../components/component-type";
+import { WsComponentPropsMeta } from "../../components/component-type";
 
 export const customComponents = {
   Image,
@@ -10,11 +10,14 @@ export const customComponents = {
   RichTextLink,
 };
 
-export const customComponentsMeta = {
-  Image: {
-    props: MetaProps.parse({
+export const customComponentPropsMetas = {
+  Image: WsComponentPropsMeta.parse({
+    props: {
       ...imageProps,
       src: { ...imageProps.src, control: "file-image", name: "Source" },
-    }),
-  },
+    },
+  }),
 };
+
+// just for completeness, maybe we add soemthing here later
+export const customComponentMetas = {};

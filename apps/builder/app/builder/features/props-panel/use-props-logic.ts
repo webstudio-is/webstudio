@@ -1,8 +1,8 @@
 import { useState } from "react";
 import { nanoid } from "nanoid";
 import type { Instance, Prop } from "@webstudio-is/project-build";
-import type { MetaProps } from "@webstudio-is/react-sdk";
-import { getComponentMeta } from "@webstudio-is/react-sdk";
+import type { WsComponentPropsMeta } from "@webstudio-is/react-sdk";
+import { getComponentPropsMeta } from "@webstudio-is/react-sdk";
 
 export type UserPropValue = Prop extends infer T
   ? T extends { value: unknown; type: unknown }
@@ -10,7 +10,9 @@ export type UserPropValue = Prop extends infer T
     : never
   : never;
 
-export const getValueFromPropMeta = (propValue?: MetaProps[string]) => {
+export const getValueFromPropMeta = (
+  propValue?: WsComponentPropsMeta["props"][string]
+) => {
   let typedValue: UserPropValue = {
     type: "string",
     value: `${propValue?.defaultValue ?? ""}`,
@@ -42,7 +44,7 @@ type UsePropsLogic = {
 
 const getPropFromMetaProps = (
   instanceId: Instance["id"],
-  metaProps: MetaProps,
+  metaProps: WsComponentPropsMeta["props"],
   name: string
 ) => {
   const metaPropValue = metaProps[name];
@@ -68,7 +70,7 @@ export const usePropsLogic = ({
 }: UsePropsLogic) => {
   const { id: instanceId, component } = selectedInstance;
 
-  const meta = getComponentMeta(component);
+  const meta = getComponentPropsMeta(component);
   const metaProps = meta?.props ?? {};
   const initialProps = meta?.initialProps ?? [];
 

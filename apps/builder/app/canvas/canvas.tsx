@@ -5,8 +5,10 @@ import type { CanvasData } from "@webstudio-is/project";
 import {
   createElementsTree,
   registerComponents,
-  registerComponentsMeta,
-  customComponentsMeta,
+  registerComponentPropsMetas,
+  registerComponentMetas,
+  customComponentMetas,
+  customComponentPropsMetas,
   setParams,
   type OnChangeChildren,
 } from "@webstudio-is/react-sdk";
@@ -129,8 +131,8 @@ export const Canvas = ({ data }: CanvasProps): JSX.Element | null => {
   const [isPreviewMode] = useIsPreviewMode();
 
   registerComponents(customComponents);
-
-  registerComponentsMeta(customComponentsMeta);
+  registerComponentMetas(customComponentMetas);
+  registerComponentPropsMetas(customComponentPropsMetas);
 
   // e.g. toggling preview is still needed in both modes
   useShortcuts();
