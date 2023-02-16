@@ -88,7 +88,6 @@
     "remix-auth-form": "^1.1.2",
     "remix-auth-github": "^1.1.1",
     "remix-auth-google": "^1.1.0",
-    "remix-utils": "^4.1.0",
     "shallow-equal": "^3.0.0",
     "slugify": "^1.6.5",
     "use-debounce": "^9.0.2",
