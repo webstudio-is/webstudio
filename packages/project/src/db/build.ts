@@ -7,7 +7,7 @@ import {
 } from "@webstudio-is/prisma-client";
 import type { AppContext } from "@webstudio-is/trpc-interface";
 import { type Build, type Page, Pages } from "@webstudio-is/project-build";
-import buildDb from "@webstudio-is/project-build/server";
+import * as buildDb from "@webstudio-is/project-build/server";
 import * as db from ".";
 import * as pagesUtils from "../shared/pages";
 import { parseBreakpoints, serializeBreakpoints } from "./breakpoints";
