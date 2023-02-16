@@ -12,11 +12,13 @@ import CatchAllContnet, {
   loader as catchAllloader,
   meta as catchAllmeta,
   ErrorBoundary as CatchAllErrorBoundary,
+  links as catchAlllinks,
 } from "./$";
 
 // We're wrapping functions in order for them to be distinct from the ones in $.tsx.
 // If they are the same, Remix may get confused, and don't load data on page transitions.
 
+export const links = catchAlllinks;
 export const meta: MetaFunction = (args) => catchAllmeta(args);
 export const loader = (args: LoaderArgs) => catchAllloader(args);
 export const ErrorBoundary: ErrorBoundaryComponent = ({ error }) => (
