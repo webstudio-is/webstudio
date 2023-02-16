@@ -1,5 +1,5 @@
 import { SquareIcon } from "@webstudio-is/icons";
-import { type WsComponentMeta, WsComponentPropsMeta } from "./component-type";
+import type { WsComponentMeta, WsComponentPropsMeta } from "./component-type";
 import props from "./__generated__/box.props.json";
 
 const presetStyle = {
@@ -16,7 +16,7 @@ export const meta: WsComponentMeta = {
   presetStyle,
 };
 
-export const propsMeta = WsComponentPropsMeta.parse({
+export const propsMeta = {
   props,
   initialProps: ["tag"],
-});
+} as WsComponentPropsMeta;
