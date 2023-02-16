@@ -827,13 +827,21 @@ importers:
     specifiers:
       '@webstudio-is/asset-uploader': workspace:^
       '@webstudio-is/css-data': workspace:^
+      '@webstudio-is/prisma-client': workspace:^
       '@webstudio-is/scripts': workspace:^
+      '@webstudio-is/trpc-interface': workspace:^
       '@webstudio-is/tsconfig': workspace:^
+      immer: ^9.0.12
+      nanoid: ^3.2.0
       typescript: 4.9.5
       zod: ^3.19.1
     dependencies:
       '@webstudio-is/asset-uploader': link:../asset-uploader
       '@webstudio-is/css-data': link:../css-data
+      '@webstudio-is/prisma-client': link:../prisma-client
+      '@webstudio-is/trpc-interface': link:../trpc-interface
+      immer: 9.0.15
+      nanoid: 3.3.4
       zod: 3.19.1
     devDependencies:
       '@webstudio-is/scripts': link:../scripts
@@ -13174,10 +13182,6 @@ packages:
     resolution: {integrity: sha512-ED3jP8saaweFTjeGX8HQPjeC1YYyZs98jGNZx6IiBvxW7JG5v492kamAQB3m2wop07CvU/RQmzcKr6bgcC5D/Q==}
     dev: false
 
-  /diff-sequences/29.3.1:
-    resolution: {integrity: sha512-hlM3QR272NXCi4pq+N4Kok4kOp6EsgOM3ZSpJI7Da3UAs+Ttsi8MRmB6trM/lhyzUxGfOgnpkHtgqm5Q/CTcfQ==}
-    engines: {node: ^14.15.0 || ^16.10.0 || >=18.0.0}
-
   /diff-sequences/29.4.2:
     resolution: {integrity: sha512-R6P0Y6PrsH3n4hUXxL3nns0rbRk6Q33js3ygJBeEpbzLzgcNuJ61+u0RXasFpTKISw99TxUzFnumSnRLsjhLaw==}
     engines: {node: ^14.15.0 || ^16.10.0 || >=18.0.0}
@@ -16347,7 +16351,7 @@ packages:
     engines: {node: ^14.15.0 || ^16.10.0 || >=18.0.0}
     dependencies:
       chalk: 4.1.2
-      diff-sequences: 29.3.1
+      diff-sequences: 29.4.2
       jest-get-type: 29.4.2
       pretty-format: 29.4.2
 
@@ -16448,7 +16452,7 @@ packages:
     engines: {node: ^14.15.0 || ^16.10.0 || >=18.0.0}
     dependencies:
       chalk: 4.1.2
-      jest-diff: 29.3.1
+      jest-diff: 29.4.2
       jest-get-type: 29.4.2
       pretty-format: 29.4.2
 

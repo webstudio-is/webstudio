@@ -7,6 +7,7 @@ import {
 } from "@webstudio-is/prisma-client";
 import type { AppContext } from "@webstudio-is/trpc-interface";
 import { type Build, type Page, Pages } from "@webstudio-is/project-build";
+import * as buildDb from "@webstudio-is/project-build/server";
 import * as db from ".";
 import * as pagesUtils from "../shared/pages";
 import { parseBreakpoints, serializeBreakpoints } from "./breakpoints";
@@ -112,8 +113,8 @@ export const addPage = async ({
     Partial<Omit<Page, "id" | "treeId" | "name" | "path">>;
 }) => {
   return updatePages({ projectId, buildId }, async (currentPages) => {
-    const tree = await db.tree.create(
-      db.tree.createTree({ projectId, buildId })
+    const tree = await buildDb.createTree(
+      buildDb.createNewTreeData({ projectId, buildId })
     );
 
     return {
@@ -190,7 +191,7 @@ export const deletePage = async ({
       throw new Error(`Page with id "${pageId}" not found`);
     }
 
-    await db.tree.deleteById({ projectId, treeId: page.treeId });
+    await buildDb.deleteTreeById({ projectId, treeId: page.treeId });
 
     return {
       homePage: currentPages.homePage,
@@ -204,8 +205,8 @@ const createPages = async (
   _context: AppContext,
   client: Prisma.TransactionClient = prisma
 ) => {
-  const tree = await db.tree.create(
-    db.tree.createTree({ projectId, buildId }),
+  const tree = await buildDb.createTree(
+    buildDb.createNewTreeData({ projectId, buildId }),
     client
   );
   return Pages.parse({
@@ -227,7 +228,7 @@ const clonePage = async (
   context: AppContext,
   client: Prisma.TransactionClient = prisma
 ) => {
-  const tree = await db.tree.clone(
+  const tree = await buildDb.cloneTree(
     { projectId: from.projectId, treeId: from.page.treeId },
     to,
     context,

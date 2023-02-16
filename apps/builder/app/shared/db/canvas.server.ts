@@ -1,6 +1,7 @@
 import type { CanvasData, Project } from "@webstudio-is/project";
-import { db as projectDb } from "@webstudio-is/project/server";
+import * as buildDb from "@webstudio-is/project-build/server";
 import { utils } from "@webstudio-is/project";
+import { db as projectDb } from "@webstudio-is/project/server";
 import { loadByProject } from "@webstudio-is/asset-uploader/server";
 import type { AppContext } from "@webstudio-is/trpc-interface/server";
 
@@ -79,7 +80,7 @@ export const loadCanvasData = async (
   }
 
   const [tree, assets] = await Promise.all([
-    projectDb.tree.loadById(
+    buildDb.loadTreeById(
       {
         projectId: props.project.id,
         treeId: page.treeId,
