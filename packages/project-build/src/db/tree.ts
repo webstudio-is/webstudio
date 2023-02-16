@@ -1,19 +1,15 @@
 import { applyPatches, type Patch } from "immer";
+import { nanoid } from "nanoid";
 import { v4 as uuid } from "uuid";
 import type { z } from "zod";
-import {
-  type Tree,
-  type InstancesItem,
-  Instance,
-  Instances,
-} from "@webstudio-is/project-build";
 import { type Project, type Prisma, prisma } from "@webstudio-is/prisma-client";
-import { utils } from "../index";
-import { parseProps, serializeProps } from "./props";
 import {
   authorizeProject,
   type AppContext,
 } from "@webstudio-is/trpc-interface/server";
+import type { Tree } from "../types";
+import { type InstancesItem, Instance, Instances } from "../schema/instances";
+import { parseProps, serializeProps } from "./props";
 import {
   parseStyleSourceSelections,
   serializeStyleSourceSelections,
@@ -39,14 +35,19 @@ const normalizeTree = (instance: Instance, instances: InstancesItem[]) => {
   }
 };
 
-export const createTree = ({
+export const createNewTreeData = ({
   projectId,
   buildId,
 }: {
   projectId: string;
   buildId: string;
 }): TreeData => {
-  const root = utils.tree.createInstance({ component: "Body" });
+  const root: Instance = {
+    type: "instance",
+    id: nanoid(),
+    component: "Body",
+    children: [],
+  };
   const instances: Instances = [];
   normalizeTree(root, instances);
 
@@ -59,7 +60,7 @@ export const createTree = ({
   };
 };
 
-export const create = async (
+export const createTree = async (
   treeData: TreeData,
   client: Prisma.TransactionClient = prisma
 ) => {
@@ -85,7 +86,7 @@ export const create = async (
   });
 };
 
-export const deleteById = async ({
+export const deleteTreeById = async ({
   projectId,
   treeId,
 }: {
@@ -123,7 +124,7 @@ const denormalizeTree = (instances: z.infer<typeof Instances>) => {
   return convertTree(instances[0]);
 };
 
-export const loadById = async (
+export const loadTreeById = async (
   { projectId, treeId }: { projectId: Project["id"]; treeId: Tree["id"] },
   _context: AppContext,
   client: Prisma.TransactionClient = prisma
@@ -154,21 +155,21 @@ export const loadById = async (
   };
 };
 
-export const clone = async (
+export const cloneTree = async (
   from: { projectId: Project["id"]; treeId: Tree["id"] },
   to: { projectId: Project["id"]; buildId: Project["id"] },
   context: AppContext,
   client: Prisma.TransactionClient = prisma
 ) => {
-  const tree = await loadById(from, context, client);
+  const tree = await loadTreeById(from, context, client);
   if (tree === null) {
     throw new Error(`Tree ${from.projectId}/${from.treeId} not found`);
   }
 
-  return await create({ ...tree, ...to }, client);
+  return await createTree({ ...tree, ...to }, client);
 };
 
-export const patch = async (
+export const patchTree = async (
   { treeId, projectId }: { treeId: Tree["id"]; projectId: Project["id"] },
   patches: Array<Patch>,
   context: AppContext
@@ -182,7 +183,7 @@ export const patch = async (
     throw new Error("You don't have edit access to this project");
   }
 
-  const tree = await loadById({ projectId, treeId }, context);
+  const tree = await loadTreeById({ projectId, treeId }, context);
   if (tree === null) {
     throw new Error(`Tree ${treeId} not found`);
   }

@@ -1,6 +1,7 @@
 import type { ActionArgs } from "@remix-run/node";
 import type { SyncItem } from "immerhin";
 import type { Build, Tree } from "@webstudio-is/project-build";
+import * as buildDb from "@webstudio-is/project-build/server";
 import type { Project } from "@webstudio-is/project";
 import { db as projectDb } from "@webstudio-is/project/server";
 import { createContext } from "~/shared/context.server";
@@ -35,9 +36,9 @@ export const action = async ({ request }: ActionArgs) => {
       const { namespace, patches } = change;
 
       if (namespace === "root") {
-        await projectDb.tree.patch({ treeId, projectId }, patches, context);
+        await buildDb.patchTree({ treeId, projectId }, patches, context);
       } else if (namespace === "styleSourceSelections") {
-        await projectDb.styleSourceSelections.patch(
+        await buildDb.patchStyleSourceSelections(
           { treeId, projectId },
           patches,
           context
@@ -51,7 +52,7 @@ export const action = async ({ request }: ActionArgs) => {
       } else if (namespace === "styles") {
         await projectDb.styles.patch({ buildId, projectId }, patches, context);
       } else if (namespace === "props") {
-        await projectDb.props.patch({ treeId, projectId }, patches, context);
+        await buildDb.patchProps({ treeId, projectId }, patches, context);
       } else if (namespace === "breakpoints") {
         await projectDb.breakpoints.patch(
           { buildId, projectId },

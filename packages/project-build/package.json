@@ -10,7 +10,8 @@
     ".": {
       "import": "./lib/index.js",
       "require": "./lib/cjs/index.cjs"
-    }
+    },
+    "./server": "./server.js"
   },
   "types": "src/index.ts",
   "files": [
@@ -28,6 +29,8 @@
   "dependencies": {
     "@webstudio-is/asset-uploader": "workspace:^",
     "@webstudio-is/css-data": "workspace:^",
+    "@webstudio-is/prisma-client": "workspace:^",
+    "nanoid": "^3.2.0",
     "zod": "^3.19.1"
   },
   "devDependencies": {

@@ -1,10 +1,11 @@
-import { type Tree, Props, PropsList } from "@webstudio-is/project-build";
 import { applyPatches, type Patch } from "immer";
 import { type Project, prisma } from "@webstudio-is/prisma-client";
 import {
   authorizeProject,
   type AppContext,
 } from "@webstudio-is/trpc-interface/server";
+import type { Tree } from "../types";
+import { Props, PropsList } from "../schema/props";
 
 export const parseProps = (propsString: string): Props => {
   const propsList = PropsList.parse(JSON.parse(propsString));
@@ -16,7 +17,7 @@ export const serializeProps = (props: Props) => {
   return JSON.stringify(propsList);
 };
 
-export const patch = async (
+export const patchProps = async (
   { treeId, projectId }: { treeId: Tree["id"]; projectId: Project["id"] },
   patches: Array<Patch>,
   context: AppContext
