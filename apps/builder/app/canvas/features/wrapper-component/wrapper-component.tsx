@@ -2,19 +2,21 @@ import type { MouseEvent, FormEvent } from "react";
 import { Suspense, lazy, useCallback, useMemo, useRef } from "react";
 import { useStore } from "@nanostores/react";
 import { useLexicalComposerContext } from "@lexical/react/LexicalComposerContext";
+import store from "immerhin";
 import type { Instance, Prop } from "@webstudio-is/project-build";
 import {
-  type OnChangeChildren,
   renderWrapperComponentChildren,
   getComponent,
   idAttribute,
 } from "@webstudio-is/react-sdk";
 import {
+  rootInstanceContainer,
   selectedInstanceIdStore,
   useInstanceProps,
   useInstanceStyles,
   useTextEditingInstanceId,
 } from "~/shared/nano-states";
+import { createInstancesIndex } from "~/shared/tree-utils";
 import { useCssRules } from "~/canvas/shared/styles";
 import { SelectedInstanceConnector } from "./selected-instance-connector";
 
@@ -46,13 +48,11 @@ type UserProps = Record<Prop["name"], string | number | boolean>;
 type WrapperComponentDevProps = {
   instance: Instance;
   children: Array<JSX.Element | string>;
-  onChangeChildren?: OnChangeChildren;
 };
 
 export const WrapperComponentDev = ({
   instance,
   children,
-  onChangeChildren,
 }: WrapperComponentDevProps) => {
   const instanceId = instance.id;
 
@@ -145,7 +145,13 @@ export const WrapperComponentDev = ({
           />
         }
         onChange={(updates) => {
-          onChangeChildren?.({ instanceId: instance.id, updates });
+          store.createTransaction([rootInstanceContainer], (rootInstance) => {
+            const { instancesById } = createInstancesIndex(rootInstance);
+            const instance = instancesById.get(instanceId);
+            if (instance) {
+              instance.children = updates;
+            }
+          });
         }}
         onSelectInstance={(instanceId) => {
           setTextEditingInstanceId(undefined);
