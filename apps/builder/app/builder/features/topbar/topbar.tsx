@@ -7,15 +7,16 @@ import {
   ToolbarSeparator,
   ToolbarToggleGroup,
 } from "@webstudio-is/design-system";
+import type { Page } from "@webstudio-is/project-build";
+import type { Project } from "@webstudio-is/project";
+import { theme } from "@webstudio-is/design-system";
+import { isFeatureEnabled } from "@webstudio-is/feature-flags";
 import { PreviewButton } from "./preview";
 import { ShareButton } from "./share";
 import { PublishButton } from "./publish";
 import { SyncStatus } from "./sync-status";
 import { Menu } from "./menu";
 import { Breakpoints } from "../breakpoints";
-import type { Page, Project } from "@webstudio-is/project";
-import { theme } from "@webstudio-is/design-system";
-import { isFeatureEnabled } from "@webstudio-is/feature-flags";
 import { ViewMode } from "./view-mode";
 
 const topbarContainerStyle = css({

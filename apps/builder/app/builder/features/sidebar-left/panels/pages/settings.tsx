@@ -4,7 +4,7 @@ import { useDebouncedCallback } from "use-debounce";
 import { useUnmount } from "react-use";
 import slugify from "slugify";
 import { useFetcher } from "@remix-run/react";
-import type { Page } from "@webstudio-is/project";
+import type { Page, Pages } from "@webstudio-is/project-build";
 import {
   theme,
   Button,
@@ -18,7 +18,7 @@ import {
   Tooltip,
 } from "@webstudio-is/design-system";
 import { ChevronDoubleLeftIcon, TrashIcon } from "@webstudio-is/icons";
-import { type Pages, utils as projectUtils } from "@webstudio-is/project";
+import { utils as projectUtils } from "@webstudio-is/project";
 import { usePages } from "~/builder/shared/nano-states";
 import { useOnFetchEnd, usePersistentFetcher } from "~/shared/fetcher";
 import {

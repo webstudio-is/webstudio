@@ -66,7 +66,7 @@ const useElementsTree = () => {
           instanceId,
           updates,
           rootInstance,
-          breakpoints[0].id
+          Array.from(breakpoints.values())[0].id
         );
       });
     },

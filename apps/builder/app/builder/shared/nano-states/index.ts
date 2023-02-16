@@ -1,6 +1,7 @@
 import { atom, type WritableAtom } from "nanostores";
 import { useStore } from "@nanostores/react";
-import type { Pages, Project } from "@webstudio-is/project";
+import type { Pages } from "@webstudio-is/project-build";
+import type { Project } from "@webstudio-is/project";
 import type { AssetContainer, DeletingAssetContainer } from "../assets";
 
 const useValue = <T>(atom: WritableAtom<T>) => {

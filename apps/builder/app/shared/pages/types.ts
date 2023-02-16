@@ -1,4 +1,4 @@
-import type { Page } from "@webstudio-is/project";
+import type { Page } from "@webstudio-is/project-build";
 import type { FetcherData } from "~/shared/form-utils";
 
 export type CreatePageData = FetcherData<{ page: Page }>;

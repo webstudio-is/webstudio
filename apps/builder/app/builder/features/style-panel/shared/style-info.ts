@@ -4,7 +4,7 @@ import type { Style, StyleProperty, StyleValue } from "@webstudio-is/css-data";
 import { properties } from "@webstudio-is/css-data";
 import { utils } from "@webstudio-is/project";
 import type {
-  Breakpoint,
+  Breakpoints,
   Instance,
   StyleDecl,
   StyleSource as StyleSourceType,
@@ -98,7 +98,7 @@ const getSelectedStyle = (
  * find all breakpoints which may affect current view
  */
 export const getCascadedBreakpointIds = (
-  breakpoints: Breakpoint[],
+  breakpoints: Breakpoints,
   selectedBreakpointId?: string
 ) => {
   const sortedBreakpoints = utils.breakpoints.sort(breakpoints);

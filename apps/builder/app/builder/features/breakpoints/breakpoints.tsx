@@ -26,7 +26,6 @@ import {
   stylesStore,
   useBreakpoints,
 } from "~/shared/nano-states";
-import { removeByMutable } from "~/shared/array-utils";
 import {
   selectedBreakpointIdStore,
   selectedBreakpointStore,
@@ -68,7 +67,7 @@ export const Breakpoints = () => {
       [breakpointsContainer, stylesStore],
       (breakpoints, styles) => {
         const breakpointId = breakpointToDelete.id;
-        removeByMutable(breakpoints, ({ id }) => id === breakpointId);
+        breakpoints.delete(breakpointId);
         for (const [styleDeclKey, styleDecl] of styles) {
           if (styleDecl.breakpointId === breakpointId) {
             styles.delete(styleDeclKey);
