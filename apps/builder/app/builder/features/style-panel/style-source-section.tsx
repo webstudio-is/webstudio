@@ -2,10 +2,7 @@ import { useState } from "react";
 import store from "immerhin";
 import { nanoid } from "nanoid";
 import { theme, DeprecatedText2 } from "@webstudio-is/design-system";
-import type {
-  StyleSource,
-  StyleSourceSelection,
-} from "@webstudio-is/project-build";
+import { getStyleDeclKey, type StyleSource } from "@webstudio-is/project-build";
 import {
   type ItemSource,
   type ItemState,
@@ -20,12 +17,14 @@ import {
   selectedStyleSourceStore,
   styleSourceSelectionsStore,
   styleSourcesStore,
+  stylesStore,
+  treeIdStore,
 } from "~/shared/nano-states";
 import { removeByMutable } from "~/shared/array-utils";
+import { cloneStyles } from "~/shared/tree-utils";
 
 const createStyleSource = (name: string) => {
   const selectedInstanceId = selectedInstanceIdStore.get();
-  const selectedInstanceStyleSources = selectedInstanceStyleSourcesStore.get();
   if (selectedInstanceId === undefined) {
     return;
   }
@@ -34,51 +33,46 @@ const createStyleSource = (name: string) => {
     id: nanoid(),
     name,
   };
-  // set style sources and selection along with generated local style source
-  const newStyleSources = [...selectedInstanceStyleSources, newStyleSource];
-  const newStyleSourceSelection: StyleSourceSelection = {
-    instanceId: selectedInstanceId,
-    values: [
-      ...selectedInstanceStyleSources.map((styleSource) => styleSource.id),
-      newStyleSource.id,
-    ],
-  };
   store.createTransaction(
     [styleSourcesStore, styleSourceSelectionsStore],
     (styleSources, styleSourceSelections) => {
-      // set new style source and local if not set before
-      for (const newStyleSource of newStyleSources) {
-        styleSources.set(newStyleSource.id, newStyleSource);
+      let styleSourceSelection = styleSourceSelections.get(selectedInstanceId);
+      if (styleSourceSelection === undefined) {
+        styleSourceSelection = {
+          instanceId: selectedInstanceId,
+          values: [],
+        };
+        styleSourceSelections.set(selectedInstanceId, styleSourceSelection);
       }
-      styleSourceSelections.set(selectedInstanceId, newStyleSourceSelection);
+      styleSourceSelection.values.push(newStyleSource.id);
+      styleSources.set(newStyleSource.id, newStyleSource);
     }
   );
+  selectedStyleSourceIdStore.set(newStyleSource.id);
 };
 
-const addStyleSourceToInstace = (styleSourceId: StyleSource["id"]) => {
+const addStyleSourceToInstace = (newStyleSourceId: StyleSource["id"]) => {
   const selectedInstanceId = selectedInstanceIdStore.get();
-  const selectedInstanceStyleSources = selectedInstanceStyleSourcesStore.get();
   if (selectedInstanceId === undefined) {
     return;
   }
-  // set style sources and selection along with generated local style source
-  const newStyleSourceSelection: StyleSourceSelection = {
-    instanceId: selectedInstanceId,
-    values: [
-      ...selectedInstanceStyleSources.map((styleSource) => styleSource.id),
-      styleSourceId,
-    ],
-  };
   store.createTransaction(
-    [styleSourcesStore, styleSourceSelectionsStore],
-    (styleSources, styleSourceSelections) => {
-      // set local style source if not set before
-      for (const newStyleSource of selectedInstanceStyleSources) {
-        styleSources.set(newStyleSource.id, newStyleSource);
+    [styleSourceSelectionsStore],
+    (styleSourceSelections) => {
+      let styleSourceSelection = styleSourceSelections.get(selectedInstanceId);
+      if (styleSourceSelection === undefined) {
+        styleSourceSelection = {
+          instanceId: selectedInstanceId,
+          values: [],
+        };
+        styleSourceSelections.set(selectedInstanceId, styleSourceSelection);
       }
-      styleSourceSelections.set(selectedInstanceId, newStyleSourceSelection);
+      if (styleSourceSelection.values.includes(newStyleSourceId) === false) {
+        styleSourceSelection.values.push(newStyleSourceId);
+      }
     }
   );
+  selectedStyleSourceIdStore.set(newStyleSourceId);
 };
 
 const removeStyleSourceFromInstance = (styleSourceId: StyleSource["id"]) => {
@@ -102,20 +96,77 @@ const removeStyleSourceFromInstance = (styleSourceId: StyleSource["id"]) => {
   );
 };
 
-const reorderStyleSources = (styleSourceIds: StyleSource["id"][]) => {
+const duplicateStyleSource = (styleSourceId: StyleSource["id"]) => {
   const selectedInstanceId = selectedInstanceIdStore.get();
+  if (selectedInstanceId === undefined) {
+    return;
+  }
+  const styleSources = styleSourcesStore.get();
+  // style source may not exist in store which means
+  // temporary generated local stye source was not applied yet
+  const styleSource = styleSources.get(styleSourceId);
+  if (styleSource === undefined || styleSource.type === "local") {
+    return;
+  }
+
+  const newStyleSource: StyleSource = {
+    type: "token",
+    id: nanoid(),
+    name: `${styleSource.name} (copy)`,
+  };
+  const clonedStyleSourceIds = new Map();
+  clonedStyleSourceIds.set(styleSourceId, newStyleSource.id);
+  const clonedStyles = cloneStyles(stylesStore.get(), clonedStyleSourceIds);
+
   store.createTransaction(
-    [styleSourceSelectionsStore],
-    (styleSourceSelections) => {
-      if (selectedInstanceId === undefined) {
+    [styleSourcesStore, stylesStore, styleSourceSelectionsStore],
+    (styleSources, styles, styleSourceSelections) => {
+      const styleSourceSelection =
+        styleSourceSelections.get(selectedInstanceId);
+      if (styleSourceSelection === undefined) {
         return;
       }
+      // put new style source after original one
+      const position = styleSourceSelection.values.indexOf(styleSourceId);
+      styleSourceSelection.values.splice(position + 1, 0, newStyleSource.id);
+      styleSources.set(newStyleSource.id, newStyleSource);
+      for (const styleDecl of clonedStyles) {
+        styles.set(getStyleDeclKey(styleDecl), styleDecl);
+      }
+    }
+  );
+
+  selectedStyleSourceIdStore.set(newStyleSource.id);
+
+  return newStyleSource.id;
+};
+
+const reorderStyleSources = (styleSourceIds: StyleSource["id"][]) => {
+  const selectedInstanceId = selectedInstanceIdStore.get();
+  const treeId = treeIdStore.get();
+  if (selectedInstanceId === undefined || treeId === undefined) {
+    return;
+  }
+  store.createTransaction(
+    [styleSourcesStore, styleSourceSelectionsStore],
+    (styleSources, styleSourceSelections) => {
       const styleSourceSelection =
         styleSourceSelections.get(selectedInstanceId);
       if (styleSourceSelection === undefined) {
         return;
       }
       styleSourceSelection.values = styleSourceIds;
+      // reoder may affect temporary generated and not yet applied
+      // local style source so add one when not found in style sources
+      for (const styleSourceId of styleSourceIds) {
+        if (styleSources.has(styleSourceId) === false) {
+          styleSources.set(styleSourceId, {
+            type: "local",
+            id: styleSourceId,
+            treeId,
+          });
+        }
+      }
     }
   );
 };
@@ -194,6 +245,12 @@ export const StyleSourcesSection = () => {
         onRemoveItem={({ id }) => {
           removeStyleSourceFromInstance(id);
         }}
+        onDuplicateItem={(id) => {
+          const newId = duplicateStyleSource(id);
+          if (newId !== undefined) {
+            setEditingItemId(newId);
+          }
+        }}
         onSort={(items) => {
           reorderStyleSources(items.map((item) => item.id));
         }}
@@ -204,7 +261,10 @@ export const StyleSourcesSection = () => {
         editingItemId={editingItemId}
         onEditItem={(id) => {
           setEditingItemId(id);
-          selectedStyleSourceIdStore.set(id);
+          // prevent deselect after renaming
+          if (id !== undefined) {
+            selectedStyleSourceIdStore.set(id);
+          }
         }}
         onChangeItem={(item) => {
           renameStyleSource(item.id, item.label);

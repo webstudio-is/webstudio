@@ -68,6 +68,7 @@ type TextFieldBaseWrapperProps<Item extends IntermediateItem> = Omit<
     disabled?: boolean;
     containerRef?: RefObject<HTMLDivElement>;
     inputRef?: RefObject<HTMLInputElement>;
+    onDuplicateItem: (id: Item["id"]) => void;
     onRemoveItem?: (item: Item) => void;
     onChangeItem?: (item: Item) => void;
     onDisableItem?: (item: Item) => void;
@@ -96,6 +97,7 @@ const TextFieldBase: ForwardRefRenderFunction<
     onKeyDown,
     label,
     value,
+    onDuplicateItem,
     onRemoveItem,
     onChangeItem,
     onDisableItem,
@@ -155,6 +157,7 @@ const TextFieldBase: ForwardRefRenderFunction<
             onEditItem?.();
             onChangeItem?.({ ...item, label });
           }}
+          onDuplicate={() => onDuplicateItem?.(item.id)}
           onRemove={() => {
             onRemoveItem?.(item);
           }}
@@ -172,7 +175,6 @@ const TextFieldBase: ForwardRefRenderFunction<
           disabled={disabled}
           onClick={onClick}
           ref={mergeRefs(internalInputRef, inputRef ?? null)}
-          autoFocus
           aria-label="New Style Source Input"
         />
       )}
@@ -189,6 +191,7 @@ type StyleSourceInputProps<Item extends IntermediateItem> = {
   editingItemId?: Item["id"];
   onSelectAutocompleteItem?: (item: Item) => void;
   onRemoveItem?: (item: Item) => void;
+  onDuplicateItem?: (id: Item["id"]) => void;
   onCreateItem?: (label: string) => void;
   onChangeItem?: (item: Item) => void;
   onSelectItem?: (item?: Item) => void;
@@ -284,7 +287,10 @@ export const StyleSourceInput = <Item extends IntermediateItem>(
         label === "" &&
         props.editingItemId === undefined
       ) {
-        props.onRemoveItem?.(value[value.length - 1]);
+        const item = value[value.length - 1];
+        if (item.source !== "local") {
+          props.onRemoveItem?.(item);
+        }
       }
     },
   });
@@ -298,6 +304,7 @@ export const StyleSourceInput = <Item extends IntermediateItem>(
           <TextField
             {...inputProps}
             onRemoveItem={props.onRemoveItem}
+            onDuplicateItem={props.onDuplicateItem}
             onChangeItem={props.onChangeItem}
             onSelectItem={props.onSelectItem}
             onEditItem={props.onEditItem}

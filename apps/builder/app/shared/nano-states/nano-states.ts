@@ -277,9 +277,9 @@ export const selectedInstanceStyleSourcesStore = computed(
       }
     }
     // generate style source when selection has not local style sources
-    // it is synchronized whenever instance style sources or styles are updated
+    // it is synchronized whenever styles are updated
     if (hasLocal === false && treeId !== undefined) {
-      selectedInstanceStyleSources.push({
+      selectedInstanceStyleSources.unshift({
         type: "local",
         treeId,
         id: nanoid(),
