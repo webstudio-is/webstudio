@@ -4,17 +4,17 @@ import { type Project, prisma } from "@webstudio-is/prisma-client";
 import type { Asset } from "@webstudio-is/asset-uploader";
 import { formatAsset } from "@webstudio-is/asset-uploader/server";
 import {
-  type Build,
+  authorizeProject,
+  type AppContext,
+} from "@webstudio-is/trpc-interface/server";
+import type { Build } from "../types";
+import {
   type StoredStyleDecl,
   type StyleDecl,
   getStyleDeclKey,
   StoredStyles,
   Styles,
-} from "@webstudio-is/project-build";
-import {
-  authorizeProject,
-  type AppContext,
-} from "@webstudio-is/trpc-interface/server";
+} from "../schema/styles";
 
 const parseValue = (
   styleValue: StoredStyleDecl["value"],
@@ -119,7 +119,7 @@ export const serializeStyles = (styles: Styles) => {
   return JSON.stringify(storedStyles);
 };
 
-export const patch = async (
+export const patchStyles = async (
   { buildId, projectId }: { buildId: Build["id"]; projectId: Project["id"] },
   patches: Array<Patch>,
   context: AppContext

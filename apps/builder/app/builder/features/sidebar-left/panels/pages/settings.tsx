@@ -4,7 +4,11 @@ import { useDebouncedCallback } from "use-debounce";
 import { useUnmount } from "react-use";
 import slugify from "slugify";
 import { useFetcher } from "@remix-run/react";
-import type { Page, Pages } from "@webstudio-is/project-build";
+import {
+  type Page,
+  type Pages,
+  findPageByIdOrPath,
+} from "@webstudio-is/project-build";
 import {
   theme,
   Button,
@@ -18,7 +22,6 @@ import {
   Tooltip,
 } from "@webstudio-is/design-system";
 import { ChevronDoubleLeftIcon, TrashIcon } from "@webstudio-is/icons";
-import { utils as projectUtils } from "@webstudio-is/project";
 import { usePages } from "~/builder/shared/nano-states";
 import { useOnFetchEnd, usePersistentFetcher } from "~/shared/fetcher";
 import {
@@ -171,15 +174,13 @@ const nameToPath = (pages: Pages | undefined, name: string) => {
     return path;
   }
 
-  if (projectUtils.pages.findByIdOrPath(pages, path) === undefined) {
+  if (findPageByIdOrPath(pages, path) === undefined) {
     return path;
   }
 
   let suffix = 1;
 
-  while (
-    projectUtils.pages.findByIdOrPath(pages, `${path}${suffix}`) !== undefined
-  ) {
+  while (findPageByIdOrPath(pages, `${path}${suffix}`) !== undefined) {
     suffix++;
   }
 
@@ -342,7 +343,7 @@ export const PageSettings = ({
   const fetcher = useFetcher<EditPageData>();
 
   const [pages] = usePages();
-  const page = pages && projectUtils.pages.findByIdOrPath(pages, pageId);
+  const page = pages && findPageByIdOrPath(pages, pageId);
 
   const isHomePage = page?.id === pages?.homePage.id;
 

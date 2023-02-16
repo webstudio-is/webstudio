@@ -1,13 +1,14 @@
 import { useLoaderData } from "@remix-run/react";
+import type { ShouldRevalidateFunction } from "@remix-run/react";
 import type { ErrorBoundaryComponent, LoaderArgs } from "@remix-run/node";
-import { type BuilderProps, Builder, links } from "~/builder";
+import { loadBuildByProjectId } from "@webstudio-is/project-build/server";
 import { db } from "@webstudio-is/project/server";
+import { authorizeProject } from "@webstudio-is/trpc-interface/server";
+import { createContext, createAuthReadToken } from "~/shared/context.server";
 import { ErrorMessage } from "~/shared/error";
 import { sentryException } from "~/shared/sentry";
 import { getBuildOrigin } from "~/shared/router-utils";
-import { createContext, createAuthReadToken } from "~/shared/context.server";
-import type { ShouldRevalidateFunction } from "@remix-run/react";
-import { authorizeProject } from "@webstudio-is/trpc-interface/server";
+import { type BuilderProps, Builder, links } from "~/builder";
 
 export { links };
 
@@ -41,7 +42,7 @@ export const loader = async ({
     throw new Error(`Project "${params.projectId}" not found`);
   }
 
-  const devBuild = await db.build.loadByProjectId(project.id, "dev");
+  const devBuild = await loadBuildByProjectId(project.id, "dev");
 
   const pages = devBuild.pages;
   const page =

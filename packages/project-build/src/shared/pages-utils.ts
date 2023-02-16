@@ -1,6 +1,6 @@
-import type { Pages, Page } from "@webstudio-is/project-build";
+import type { Pages, Page } from "../schema/pages";
 
-export const findByIdOrPath = (
+export const findPageByIdOrPath = (
   pages: Pages,
   idOrPath: string
 ): Page | undefined => {

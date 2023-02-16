@@ -6,13 +6,22 @@ import {
   Project,
 } from "@webstudio-is/prisma-client";
 import type { AppContext } from "@webstudio-is/trpc-interface";
-import { type Build, type Page, Pages } from "@webstudio-is/project-build";
-import * as buildDb from "@webstudio-is/project-build/server";
-import * as db from ".";
-import * as pagesUtils from "../shared/pages";
-import { parseBreakpoints, serializeBreakpoints } from "./breakpoints";
+import { findPageByIdOrPath } from "../shared/pages-utils";
+import type { Build } from "../types";
+import { type Page, Pages } from "../schema/pages";
+import {
+  createInitialBreakpoints,
+  parseBreakpoints,
+  serializeBreakpoints,
+} from "./breakpoints";
 import { parseStyles, serializeStyles } from "./styles";
 import { parseStyleSources, serializeStyleSources } from "./style-sources";
+import {
+  cloneTree,
+  createNewTreeData,
+  createTree,
+  deleteTreeById,
+} from "./tree";
 
 const parseBuild = async (build: DbBuild): Promise<Build> => {
   const pages = Pages.parse(JSON.parse(build.pages));
@@ -29,7 +38,7 @@ const parseBuild = async (build: DbBuild): Promise<Build> => {
   };
 };
 
-export const loadById = async ({
+export const loadBuildById = async ({
   projectId,
   buildId,
 }: {
@@ -49,16 +58,16 @@ export const loadById = async ({
   return parseBuild(build);
 };
 
-export async function loadByProjectId(
+export async function loadBuildByProjectId(
   projectId: Build["projectId"],
   env: "dev"
 ): Promise<Build>;
-export async function loadByProjectId(
+export async function loadBuildByProjectId(
   projectId: Build["projectId"],
   env: "prod"
 ): Promise<Build | undefined>;
 // eslint-disable-next-line func-style
-export async function loadByProjectId(
+export async function loadBuildByProjectId(
   projectId: Build["projectId"],
   env: "prod" | "dev"
 ): Promise<Build | undefined> {
@@ -89,7 +98,7 @@ const updatePages = async (
   { projectId, buildId }: { projectId: Project["id"]; buildId: Build["id"] },
   updater: (currentPages: Pages) => Promise<Pages>
 ) => {
-  const build = await loadById({ projectId, buildId });
+  const build = await loadBuildById({ projectId, buildId });
   const updatedPages = Pages.parse(await updater(build.pages));
   const updatedBuild = await prisma.build.update({
     where: {
@@ -113,9 +122,7 @@ export const addPage = async ({
     Partial<Omit<Page, "id" | "treeId" | "name" | "path">>;
 }) => {
   return updatePages({ projectId, buildId }, async (currentPages) => {
-    const tree = await buildDb.createTree(
-      buildDb.createNewTreeData({ projectId, buildId })
-    );
+    const tree = await createTree(createNewTreeData({ projectId, buildId }));
 
     return {
       homePage: currentPages.homePage,
@@ -146,7 +153,7 @@ export const editPage = async ({
   data: Partial<Omit<Page, "id" | "treeId">>;
 }) => {
   return updatePages({ projectId, buildId }, async (currentPages) => {
-    const currentPage = pagesUtils.findByIdOrPath(currentPages, pageId);
+    const currentPage = findPageByIdOrPath(currentPages, pageId);
     if (currentPage === undefined) {
       throw new Error(`Page with id "${pageId}" not found`);
     }
@@ -186,12 +193,12 @@ export const deletePage = async ({
       throw new Error("Cannot delete home page");
     }
 
-    const page = pagesUtils.findByIdOrPath(currentPages, pageId);
+    const page = findPageByIdOrPath(currentPages, pageId);
     if (page === undefined) {
       throw new Error(`Page with id "${pageId}" not found`);
     }
 
-    await buildDb.deleteTreeById({ projectId, treeId: page.treeId });
+    await deleteTreeById({ projectId, treeId: page.treeId });
 
     return {
       homePage: currentPages.homePage,
@@ -205,8 +212,8 @@ const createPages = async (
   _context: AppContext,
   client: Prisma.TransactionClient = prisma
 ) => {
-  const tree = await buildDb.createTree(
-    buildDb.createNewTreeData({ projectId, buildId }),
+  const tree = await createTree(
+    createNewTreeData({ projectId, buildId }),
     client
   );
   return Pages.parse({
@@ -228,7 +235,7 @@ const clonePage = async (
   context: AppContext,
   client: Prisma.TransactionClient = prisma
 ) => {
-  const tree = await buildDb.cloneTree(
+  const tree = await cloneTree(
     { projectId: from.projectId, treeId: from.page.treeId },
     to,
     context,
@@ -266,7 +273,7 @@ const clonePages = async (
  *   2. when we clone a project
  * We create "prod" build when we publish a dev build.
  */
-export async function create(
+export async function createBuild(
   props: {
     projectId: Build["projectId"];
     env: "prod";
@@ -275,7 +282,7 @@ export async function create(
   context: AppContext,
   client: Prisma.TransactionClient
 ): Promise<void>;
-export async function create(
+export async function createBuild(
   props: {
     projectId: Build["projectId"];
     env: "dev";
@@ -285,7 +292,7 @@ export async function create(
   client: Prisma.TransactionClient
 ): Promise<void>;
 // eslint-disable-next-line func-style
-export async function create(
+export async function createBuild(
   props: {
     projectId: Build["projectId"];
     env: "dev" | "prod";
@@ -320,7 +327,7 @@ export async function create(
       projectId: props.projectId,
       pages: JSON.stringify([]),
       breakpoints: serializeBreakpoints(
-        new Map(props.sourceBuild?.breakpoints ?? db.breakpoints.createValues())
+        new Map(props.sourceBuild?.breakpoints ?? createInitialBreakpoints())
       ),
       styles: serializeStyles(new Map(props.sourceBuild?.styles)),
       styleSources: serializeStyleSources(

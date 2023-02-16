@@ -1,9 +1,15 @@
 import type { ActionArgs } from "@remix-run/node";
 import type { SyncItem } from "immerhin";
 import type { Build, Tree } from "@webstudio-is/project-build";
-import * as buildDb from "@webstudio-is/project-build/server";
+import {
+  patchBreakpoints,
+  patchProps,
+  patchStyles,
+  patchStyleSources,
+  patchStyleSourceSelections,
+  patchTree,
+} from "@webstudio-is/project-build/server";
 import type { Project } from "@webstudio-is/project";
-import { db as projectDb } from "@webstudio-is/project/server";
 import { createContext } from "~/shared/context.server";
 
 type PatchData = {
@@ -36,29 +42,21 @@ export const action = async ({ request }: ActionArgs) => {
       const { namespace, patches } = change;
 
       if (namespace === "root") {
-        await buildDb.patchTree({ treeId, projectId }, patches, context);
+        await patchTree({ treeId, projectId }, patches, context);
       } else if (namespace === "styleSourceSelections") {
-        await buildDb.patchStyleSourceSelections(
+        await patchStyleSourceSelections(
           { treeId, projectId },
           patches,
           context
         );
       } else if (namespace === "styleSources") {
-        await projectDb.styleSources.patch(
-          { buildId, projectId },
-          patches,
-          context
-        );
+        await patchStyleSources({ buildId, projectId }, patches, context);
       } else if (namespace === "styles") {
-        await projectDb.styles.patch({ buildId, projectId }, patches, context);
+        await patchStyles({ buildId, projectId }, patches, context);
       } else if (namespace === "props") {
-        await buildDb.patchProps({ treeId, projectId }, patches, context);
+        await patchProps({ treeId, projectId }, patches, context);
       } else if (namespace === "breakpoints") {
-        await projectDb.breakpoints.patch(
-          { buildId, projectId },
-          patches,
-          context
-        );
+        await patchBreakpoints({ buildId, projectId }, patches, context);
       } else {
         return { errors: `Unknown namespace "${namespace}"` };
       }
