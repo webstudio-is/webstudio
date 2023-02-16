@@ -128,7 +128,8 @@ const FileImage = z.object({
 });
 
 // we neither generate object nor support it in props panel, listed here for completeness
-const Object = z.object({
+// can't use name "Object" for the variable because it causes bugs when Object.assign() is used in compiled output
+const ObjectType = z.object({
   ...common,
   type: z.object({
     name: z.string(), // @todo not sure what type should be here
@@ -162,7 +163,7 @@ export const PropMeta = z.union([
   Check,
   InlineCheck,
   FileImage,
-  Object,
+  ObjectType,
   Date,
 ]);
 
