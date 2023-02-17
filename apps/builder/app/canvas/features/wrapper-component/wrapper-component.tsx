@@ -53,10 +53,10 @@ const setDataCollapsed = (element?: HTMLElement) => {
   // if the elmenent needs spacers, because this is going to happen every time elemnt updates and
   // we don't want to trigger a reflow every time.
   element.removeAttribute(collapsedAttribute);
-  const collapsedHeight = element.offsetHeight === 0 ? "h" : "";
   const collapsedWidth = element.offsetWidth === 0 ? "w" : "";
+  const collapsedHeight = element.offsetHeight === 0 ? "h" : "";
   if (collapsedHeight || collapsedWidth) {
-    element.setAttribute(collapsedAttribute, collapsedHeight + collapsedWidth);
+    element.setAttribute(collapsedAttribute, collapsedWidth + collapsedHeight);
   }
 };
 

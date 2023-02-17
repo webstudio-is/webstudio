@@ -44,11 +44,16 @@ const helperStyles = [
     outline-offset: -1px;
   }`,
   // Has no width, will collapse
-  `[${idAttribute}]:where(:not(body)[${collapsedAttribute}~=w]) {
+  `[${idAttribute}]:where(:not(body)[${collapsedAttribute}="w"]) {
     padding-right: 50px;
   }`,
   // Has no height, will collapse
-  `[${idAttribute}]:where(:not(body)[${collapsedAttribute}~=h]) {
+  `[${idAttribute}]:where(:not(body)[${collapsedAttribute}="h"]) {
+    padding-top: 50px;
+  }`,
+  // Has no width, will collapse
+  `[${idAttribute}]:where(:not(body)[${collapsedAttribute}="wh"]) {
+    padding-right: 50px;
     padding-top: 50px;
   }`,
   `[${idAttribute}][contenteditable], [${idAttribute}]:focus {
