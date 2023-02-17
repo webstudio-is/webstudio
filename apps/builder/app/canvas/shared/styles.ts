@@ -57,7 +57,7 @@ const helperStyles = [
   `[${idAttribute}]:where(:not(body)[${collapsedAttribute}="h"]) {
     padding-top: 50px;
   }`,
-  // Has no width, will collapse
+  // Has no width or height, will collapse
   `[${idAttribute}]:where(:not(body)[${collapsedAttribute}="wh"]) {
     padding-right: 50px;
     padding-top: 50px;
@@ -71,18 +71,25 @@ const helperStyles = [
 ];
 
 const subscribePreviewMode = () => {
-  return isPreviewModeStore.subscribe((isPreviewMode) => {
-    if (isPreviewMode) {
-      helpersCssEngine.clear();
-      helpersCssEngine.render();
-      return;
-    }
+  let isRendered = false;
 
-    for (const style of helperStyles) {
-      helpersCssEngine.addPlaintextRule(style);
+  const unsubscribe = isPreviewModeStore.subscribe((isPreviewMode) => {
+    helpersCssEngine.setAttribute("media", isPreviewMode ? "not all" : "all");
+    if (isRendered === false) {
+      for (const style of helperStyles) {
+        helpersCssEngine.addPlaintextRule(style);
+      }
+      helpersCssEngine.render();
+      isRendered = true;
     }
-    helpersCssEngine.render();
   });
+
+  return () => {
+    helpersCssEngine.clear();
+    helpersCssEngine.render();
+    unsubscribe();
+    isRendered = false;
+  };
 };
 
 export const useManageDesignModeStyles = () => {

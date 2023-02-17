@@ -73,6 +73,12 @@ export class CssEngine {
   unmount() {
     this.#element.unmount();
   }
+  setAttribute() {
+    this.#element.setAttribute(...arguments);
+  }
+  getAttribute() {
+    this.#element.getAttribute(...arguments);
+  }
   get cssText() {
     if (this.#isDirty === false) {
       return this.#cssText;
