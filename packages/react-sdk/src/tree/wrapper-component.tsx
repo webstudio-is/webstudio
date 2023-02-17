@@ -54,3 +54,4 @@ export const WrapperComponent = ({
 
 export const idAttribute = "data-ws-id";
 export const componentAttribute = "data-ws-component";
+export const collapsedAttribute = "data-ws-collapsed";

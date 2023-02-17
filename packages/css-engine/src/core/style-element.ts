@@ -25,4 +25,14 @@ export class StyleElement {
       this.#element.textContent = cssText;
     }
   }
+  setAttribute(name: string, value: string) {
+    if (this.#element) {
+      this.#element.setAttribute(name, value);
+    }
+  }
+  getAttribute(name: string) {
+    if (this.#element) {
+      return this.#element.getAttribute(name);
+    }
+  }
 }

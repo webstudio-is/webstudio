@@ -4,11 +4,13 @@ import { useStore } from "@nanostores/react";
 import { addGlobalRules } from "@webstudio-is/project";
 import {
   assetsStore,
+  isPreviewModeStore,
   selectedInstanceIdStore,
   useBreakpoints,
 } from "~/shared/nano-states";
 import type { StyleDecl } from "@webstudio-is/project-build";
 import {
+  collapsedAttribute,
   getComponentMeta,
   getComponentNames,
   idAttribute,
@@ -30,21 +32,46 @@ import {
 import { useSubscribe } from "~/shared/pubsub";
 
 const cssEngine = createCssEngine({ name: "user-styles" });
-
-const voidElements =
-  "area, base, br, col, embed, hr, img, input, link, meta, source, track, wbr";
+const helpersCssEngine = createCssEngine({ name: "helpers" });
+const fontsAndDefaultsCssEngine = createCssEngine({
+  name: "fonts-and-defaults",
+});
+const presetStylesEngine = createCssEngine({ name: "presetStyles" });
 
 // Helper styles on for canvas in design mode
+// - Only instances that would collapse without helper should receive helper
+// - Helper is removed when any CSS property is changed on that instance that would prevent collapsing, so that helper is not needed
+// - Helper doesn't show on the preview or publish
+// - Helper goes away if an instance inserted as a child
+// - There is no need to set padding-right or padding-bottom if you just need a small div with a defined or layout-based size, as soon as div is not collapsing, helper should not apply
+// - Padding will be only added on the side that would collapse otherwise
+//
+// For example when I add a div, it is a block element, it grows automatically full width but has 0 height, in this case spacing helper with padidng-top: 50px should apply, so that it doesn't collapse.
+// If user sets `height: 100px` or does anything that would give it a height - we remove the helper padding right away, so user can actually see the height they set
+//
+// In other words we prevent elements from collapsing when they have 0 height or width by making them non-zero on canvas, but then we remove those paddings as soon as element doesn't collapse.
 const helperStyles = [
   // When double clicking into an element to edit text, it should not select the word.
   `[${idAttribute}] {
     user-select: none;
   }`,
-  `[${idAttribute}]:not(${voidElements}):not(body):empty {
+  // Using :where allows to prevent increasing specificity, so that helper is overwritten by user styles.
+  `[${idAttribute}]:where([${collapsedAttribute}]:not(body)) {
     outline: 1px dashed #555;
     outline-offset: -1px;
-    padding-top: 50px;
+  }`,
+  // Has no width, will collapse
+  `[${idAttribute}]:where(:not(body)[${collapsedAttribute}="w"]) {
     padding-right: 50px;
+  }`,
+  // Has no height, will collapse
+  `[${idAttribute}]:where(:not(body)[${collapsedAttribute}="h"]) {
+    padding-top: 50px;
+  }`,
+  // Has no width or height, will collapse
+  `[${idAttribute}]:where(:not(body)[${collapsedAttribute}="wh"]) {
+    padding-right: 50px;
+    padding-top: 50px;
   }`,
   `[${idAttribute}][contenteditable], [${idAttribute}]:focus {
     outline: 0;
@@ -54,17 +81,34 @@ const helperStyles = [
   }`,
 ];
 
+const subscribePreviewMode = () => {
+  let isRendered = false;
+
+  const unsubscribe = isPreviewModeStore.subscribe((isPreviewMode) => {
+    helpersCssEngine.setAttribute("media", isPreviewMode ? "not all" : "all");
+    if (isRendered === false) {
+      for (const style of helperStyles) {
+        helpersCssEngine.addPlaintextRule(style);
+      }
+      helpersCssEngine.render();
+      isRendered = true;
+    }
+  });
+
+  return () => {
+    helpersCssEngine.clear();
+    helpersCssEngine.render();
+    unsubscribe();
+    isRendered = false;
+  };
+};
+
 export const useManageDesignModeStyles = () => {
   useUpdateStyle();
   usePreviewStyle();
   useRemoveSsrStyles();
+  useEffect(subscribePreviewMode, []);
 };
-
-const helpersCssEngine = createCssEngine({ name: "helpers" });
-const fontsAndDefaultsCssEngine = createCssEngine({
-  name: "fonts-and-defaults",
-});
-const presetStylesEngine = createCssEngine({ name: "presetStyles" });
 
 export const GlobalStyles = () => {
   const [breakpoints] = useBreakpoints();
@@ -75,13 +119,6 @@ export const GlobalStyles = () => {
       cssEngine.addMediaRule(breakpoint.id, breakpoint);
     }
   }, [breakpoints]);
-
-  useIsomorphicLayoutEffect(() => {
-    for (const style of helperStyles) {
-      helpersCssEngine.addPlaintextRule(style);
-    }
-    helpersCssEngine.render();
-  }, []);
 
   useIsomorphicLayoutEffect(() => {
     fontsAndDefaultsCssEngine.clear();

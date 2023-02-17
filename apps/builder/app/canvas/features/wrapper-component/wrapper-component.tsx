@@ -1,4 +1,4 @@
-import type { MouseEvent, FormEvent } from "react";
+import { MouseEvent, FormEvent, useLayoutEffect } from "react";
 import { Suspense, lazy, useCallback, useMemo, useRef } from "react";
 import { useStore } from "@nanostores/react";
 import { useLexicalComposerContext } from "@lexical/react/LexicalComposerContext";
@@ -8,6 +8,7 @@ import {
   renderWrapperComponentChildren,
   getComponent,
   idAttribute,
+  collapsedAttribute,
 } from "@webstudio-is/react-sdk";
 import {
   rootInstanceContainer,
@@ -43,6 +44,24 @@ const ContentEditable = ({
   return <Component ref={ref} {...props} contentEditable={true} />;
 };
 
+const setDataCollapsed = (element?: HTMLElement) => {
+  if (element === undefined) {
+    return;
+  }
+  // When we remove this attribute, artifical helper spacers will be removed,
+  // then we synchronously calculate height/width to see if element would collapse
+  // then we add spacers back on the side that requires them right away.
+  // The idea is to not trigger a reflow while we are calculating offsets before we know
+  // if the elmenent needs spacers, because this is going to happen every time elemnt updates and
+  // we don't want to trigger a reflow every time.
+  element.removeAttribute(collapsedAttribute);
+  const collapsedWidth = element.offsetWidth === 0 ? "w" : "";
+  const collapsedHeight = element.offsetHeight === 0 ? "h" : "";
+  if (collapsedHeight || collapsedWidth) {
+    element.setAttribute(collapsedAttribute, collapsedWidth + collapsedHeight);
+  }
+};
+
 type UserProps = Record<Prop["name"], string | number | boolean>;
 
 type WrapperComponentDevProps = {
@@ -55,7 +74,7 @@ export const WrapperComponentDev = ({
   children,
 }: WrapperComponentDevProps) => {
   const instanceId = instance.id;
-
+  const instanceElementRef = useRef<HTMLElement>();
   const instanceStyles = useInstanceStyles(instanceId);
   useCssRules({ instanceId: instance.id, instanceStyles });
 
@@ -77,7 +96,9 @@ export const WrapperComponentDev = ({
     return result;
   }, [instanceProps]);
 
-  const instanceElementRef = useRef<HTMLElement>();
+  useLayoutEffect(() => {
+    setDataCollapsed(instanceElementRef.current);
+  });
 
   const readonlyProps =
     instance.component === "Input" ? { readOnly: true } : undefined;
