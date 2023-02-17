@@ -470,8 +470,9 @@
           "description": "used for destructive button and accent color on destructive toast"
         },
         "notification": {
-          "value": "#d53f45",
-          "type": "color"
+          "value": "#ffefef",
+          "type": "color",
+          "description": "background for destructive toast"
         }
       },
       "success": {
@@ -1152,6 +1153,13 @@
       "0": {
         "value": "0px",
         "type": "dimension"
+      }
+    },
+    "backgrond": {
+      "menu-hint": {
+        "value": "#dedede",
+        "type": "color",
+        "description": "For the background of the hint menu item."
       }
     }
   },
