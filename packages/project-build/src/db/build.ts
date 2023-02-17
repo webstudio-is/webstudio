@@ -99,7 +99,7 @@ const updatePages = async (
   updater: (currentPages: Pages) => Promise<Pages>
 ) => {
   const build = await loadBuildById({ projectId, buildId });
-  const updatedPages: Pages = await updater(build.pages);
+  const updatedPages = Pages.parse(await updater(build.pages));
   const updatedBuild = await prisma.build.update({
     where: {
       id_projectId: { projectId, id: buildId },
@@ -216,7 +216,7 @@ const createPages = async (
     createNewTreeData({ projectId, buildId }),
     client
   );
-  const pages: Pages = {
+  return Pages.parse({
     homePage: {
       id: nanoid(),
       name: "Home",
@@ -226,8 +226,7 @@ const createPages = async (
       treeId: tree.id,
     },
     pages: [],
-  };
-  return pages;
+  });
 };
 
 const clonePage = async (
@@ -257,7 +256,7 @@ const clonePages = async (
       await clonePage({ projectId: from.projectId, page }, to, context, client)
     );
   }
-  const pages: Pages = {
+  return Pages.parse({
     homePage: await clonePage(
       { projectId: from.projectId, page: from.pages.homePage },
       to,
@@ -265,8 +264,7 @@ const clonePages = async (
       client
     ),
     pages: clones,
-  };
-  return pages;
+  });
 };
 
 /*
