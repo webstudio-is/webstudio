@@ -13,25 +13,38 @@ const unitsList = Object.values(units).flat();
 
 export const parseIntermediateOrInvalidValue = (
   property: StyleProperty,
-  value: IntermediateStyleValue | InvalidValue
+  styleValue: IntermediateStyleValue | InvalidValue
 ): StyleValue => {
+  const value = styleValue.value.trim();
+
   // Try value with existing or fallback unit
-  const unit = "unit" in value ? value.unit ?? "px" : "px";
-  let styleInput = parseCssValue(property, `${value.value}${unit}`);
+  const unit = "unit" in styleValue ? styleValue.unit ?? "px" : "px";
+  let styleInput = parseCssValue(property, `${value}${unit}`);
 
   if (styleInput.type !== "invalid") {
     return styleInput;
   }
 
   // Probably value is already valid, use it
-  styleInput = parseCssValue(property, value.value);
+  styleInput = parseCssValue(property, value);
 
   if (styleInput.type !== "invalid") {
     return styleInput;
   }
 
+  if (unit === "number") {
+    // Most css props supports 0 as unitless value, but not other numbers.
+    // Its possible that we had { value: 0, unit: "number" } and value has changed
+    // Lets try to parse it as px value
+    styleInput = parseCssValue(property, `${value}px`);
+
+    if (styleInput.type !== "invalid") {
+      return styleInput;
+    }
+  }
+
   // Probably in kebab-case value will be valid
-  styleInput = parseCssValue(property, toKebabCase(value.value));
+  styleInput = parseCssValue(property, toKebabCase(value));
 
   if (styleInput.type !== "invalid") {
     return styleInput;
@@ -41,14 +54,23 @@ export const parseIntermediateOrInvalidValue = (
 
   // Try to extract/remove anything similar to unit value
   const unitRegex = new RegExp(`(?:${unitsList.join("|")})`, "g");
-  const matchedUnit = value.value.match(unitRegex)?.[0];
-  const unitlessValue = value.value.replace(unitRegex, "");
+  let matchedUnit = value.match(unitRegex)?.[0];
+
+  let unitlessValue = value.replace(unitRegex, "");
+
+  // If value ends with "-" it is probably a unitless value i.e. unit = number
+  if (unitlessValue.endsWith("-")) {
+    unitlessValue = unitlessValue.slice(0, -1).trim();
+    // If we have matched unit, use it, otherwise try unitless value
+    matchedUnit = matchedUnit === undefined ? "" : matchedUnit;
+  }
 
   // Try to evaluate math expression if possible
   const mathResult = evaluateMath(unitlessValue);
 
   if (mathResult != null) {
-    const unit = matchedUnit ?? ("unit" in value ? value.unit ?? "px" : "px");
+    const unit =
+      matchedUnit ?? ("unit" in styleValue ? styleValue.unit ?? "px" : "px");
     styleInput = parseCssValue(property, `${String(mathResult)}${unit}`);
 
     if (styleInput.type !== "invalid") {
@@ -67,6 +89,6 @@ export const parseIntermediateOrInvalidValue = (
   // or value is invalid
   return {
     type: "invalid",
-    value: value.value,
+    value: value,
   };
 };

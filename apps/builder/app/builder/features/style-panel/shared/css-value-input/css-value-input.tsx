@@ -35,6 +35,7 @@ import { useDebouncedCallback } from "use-debounce";
 import type { StyleSource } from "../style-info";
 import { toPascalCase } from "../keyword-utils";
 import { theme } from "@webstudio-is/design-system";
+import { isValid } from "../parse-css-value";
 
 // We increment by 10 when shift is pressed, by 0.1 when alt/option is pressed and by 1 by default.
 const calcNumberChange = (
@@ -357,6 +358,10 @@ export const CssValueInput = ({
 
   const [isUnitsOpen, unitSelectElement] = useUnitSelect({
     property,
+    showUnitless:
+      value.type === "unit" || value.type === "intermediate"
+        ? isValid(property, `${value.value}`)
+        : false,
     value:
       value.type === "unit" || value.type === "intermediate"
         ? value.unit

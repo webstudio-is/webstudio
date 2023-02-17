@@ -209,3 +209,116 @@ describe("Returns invalid if can't parse", () => {
     });
   });
 });
+
+describe("Value ending with `-` should be considered unitless", () => {
+  test("Unitless intermediate transformed to unitless", () => {
+    const result = parseIntermediateOrInvalidValue("lineHeight", {
+      type: "intermediate",
+      value: "10-",
+    });
+
+    expect(result).toEqual({
+      type: "unit",
+      value: 10,
+      unit: "number",
+    });
+  });
+
+  test("Unit intermediate transformed to unitless", () => {
+    const result = parseIntermediateOrInvalidValue("lineHeight", {
+      type: "intermediate",
+      value: "10-",
+      unit: "em",
+    });
+
+    expect(result).toEqual({
+      type: "unit",
+      value: 10,
+      unit: "number",
+    });
+  });
+
+  test("Unit intermediate with space transformed to unitless", () => {
+    const result = parseIntermediateOrInvalidValue("lineHeight", {
+      type: "intermediate",
+      value: "10 -",
+      unit: "em",
+    });
+
+    expect(result).toEqual({
+      type: "unit",
+      value: 10,
+      unit: "number",
+    });
+  });
+
+  test("Unit number intermediate transformed to unitless", () => {
+    const result = parseIntermediateOrInvalidValue("lineHeight", {
+      type: "intermediate",
+      value: "10",
+      unit: "number",
+    });
+
+    expect(result).toEqual({
+      type: "unit",
+      value: 10,
+      unit: "number",
+    });
+  });
+
+  test("Unitless expression transformed to unitless", () => {
+    const result = parseIntermediateOrInvalidValue("lineHeight", {
+      type: "intermediate",
+      value: "10 + 20 -",
+      unit: "px",
+    });
+
+    expect(result).toEqual({
+      type: "unit",
+      value: 30,
+      unit: "number",
+    });
+  });
+
+  test("Expression containing unit and unitless must be a unit", () => {
+    const result = parseIntermediateOrInvalidValue("lineHeight", {
+      type: "intermediate",
+      value: "10px + 20 -",
+      unit: "px",
+    });
+
+    expect(result).toEqual({
+      type: "unit",
+      value: 30,
+      unit: "px",
+    });
+  });
+
+  test("top with 0 should be unitless", () => {
+    const result = parseIntermediateOrInvalidValue("top", {
+      type: "intermediate",
+      value: "0-",
+      unit: "em",
+    });
+
+    expect(result).toEqual({
+      type: "unit",
+      value: 0,
+      unit: "number",
+    });
+  });
+
+  test("top with value 10 should have unit px", () => {
+    const result = parseIntermediateOrInvalidValue("top", {
+      type: "intermediate",
+      value: "10",
+      unit: "number",
+    });
+
+    expect(result).toEqual({
+      type: "unit",
+      value: 10,
+      unit: "px",
+    });
+  });
+});

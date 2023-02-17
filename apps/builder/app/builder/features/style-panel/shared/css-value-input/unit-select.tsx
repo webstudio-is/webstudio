@@ -24,6 +24,7 @@ const visibleLengthUnits = ["px", "em", "rem", "ch", "vw", "vh"] as const;
 type UseUnitSelectType = {
   property: string;
   value?: Unit;
+  showUnitless: boolean;
   onChange: (value: Unit) => void;
   onCloseAutoFocus: (event: Event) => void;
 };
@@ -31,6 +32,8 @@ type UseUnitSelectType = {
 export const useUnitSelect = ({
   property,
   value,
+  // edge-case, most css properties accept unitless value 0
+  showUnitless,
   onChange,
   onCloseAutoFocus,
 }: UseUnitSelectType): [boolean, JSX.Element | null] => {
@@ -50,8 +53,13 @@ export const useUnitSelect = ({
         options.push({ id: unit, label: unit.toLocaleUpperCase() });
       }
     }
+
+    if (showUnitless && !options.some((o) => o.id === "number")) {
+      options.push({ id: "number", label: "—" });
+    }
+
     return options;
-  }, [property]);
+  }, [property, showUnitless]);
 
   if (
     options.length === 0 ||
@@ -107,8 +115,9 @@ const UnitSelect = ({
       <SelectPrimitive.SelectTrigger asChild>
         <StyledTrigger variant="unit">
           <SelectPrimitive.Value>
-            {/* fallback to uppercased value for not listed units */}
-            {matchedOption?.label ?? value.toLocaleUpperCase()}
+            {/* fallback to uppercased value for not listed units, show - for number unit */}
+            {matchedOption?.label ??
+              (value === "number" ? "—" : value.toLocaleUpperCase())}
           </SelectPrimitive.Value>
         </StyledTrigger>
       </SelectPrimitive.SelectTrigger>

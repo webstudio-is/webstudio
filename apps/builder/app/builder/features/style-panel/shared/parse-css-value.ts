@@ -1,12 +1,7 @@
 import * as csstree from "css-tree";
 import hyphenate from "hyphenate-style-name";
-import type {
-  StyleProperty,
-  StyleValue,
-  Unit,
-  UnitGroup,
-} from "@webstudio-is/css-data";
-import { units, properties, keywordValues } from "@webstudio-is/css-data";
+import type { StyleProperty, StyleValue, Unit } from "@webstudio-is/css-data";
+import { units, keywordValues } from "@webstudio-is/css-data";
 import warnOnce from "warn-once";
 
 const cssTryParseValue = (input: string) => {
@@ -82,25 +77,20 @@ export const parseCssValue = (
   ) {
     // Try extract units from 1st children
     const first = ast.children.first;
-    const unitGroups = properties[property as keyof typeof properties]
-      .unitGroups as ReadonlyArray<UnitGroup>;
 
     if (first?.type === "Number") {
-      if (unitGroups.includes("number")) {
-        return {
-          type: "unit",
-          unit: "number",
-          value: Number(first.value),
-        };
-      }
-      return invalidValue;
+      return {
+        type: "unit",
+        unit: "number",
+        value: Number(first.value),
+      };
     }
 
     if (first?.type === "Dimension") {
       const unit = first.unit as typeof units[keyof typeof units][number];
-      for (const unitGroup of unitGroups) {
-        const possibleUnits = units[unitGroup] as ReadonlyArray<typeof unit>;
-        if (possibleUnits.includes(unit)) {
+
+      for (const unitGroup of Object.values(units)) {
+        if (unitGroup.includes(unit as never)) {
           return {
             type: "unit",
             unit: unit as Unit,
@@ -112,15 +102,13 @@ export const parseCssValue = (
     }
 
     if (first?.type === "Percentage") {
-      if (unitGroups.includes("percentage")) {
-        return {
-          type: "unit",
-          unit: "%",
-          value: Number(first.value),
-        };
-      }
-      return invalidValue;
+      return {
+        type: "unit",
+        unit: "%",
+        value: Number(first.value),
+      };
     }
+
     if (first?.type === "Identifier") {
       const values = keywordValues[
         property as keyof typeof keywordValues
@@ -131,7 +119,6 @@ export const parseCssValue = (
           value: input,
         };
       }
-      return invalidValue;
     }
   }
 
