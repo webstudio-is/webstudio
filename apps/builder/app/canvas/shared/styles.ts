@@ -9,6 +9,7 @@ import {
 } from "~/shared/nano-states";
 import type { StyleDecl } from "@webstudio-is/project-build";
 import {
+  collapsedAttribute,
   getComponentMeta,
   getComponentNames,
   idAttribute,
@@ -31,22 +32,6 @@ import { useSubscribe } from "~/shared/pubsub";
 
 const cssEngine = createCssEngine({ name: "user-styles" });
 
-const voidElements = [
-  "area",
-  "base",
-  "br",
-  "col",
-  "embed",
-  "hr",
-  "img",
-  "input",
-  "link",
-  "meta",
-  "source",
-  "track",
-  "wbr",
-];
-
 // Helper styles on for canvas in design mode
 const helperStyles = [
   // When double clicking into an element to edit text, it should not select the word.
@@ -54,11 +39,17 @@ const helperStyles = [
     user-select: none;
   }`,
   // Using :where allows to prevent increasing specificity, so that helper is overwritten by user styles.
-  `[${idAttribute}]:where(:not(${[...voidElements, "body"]}):empty) {
+  `[${idAttribute}]:where([${collapsedAttribute}]:not(body)) {
     outline: 1px dashed #555;
     outline-offset: -1px;
-    padding-top: 50px;
+  }`,
+  // Has no width, will collapse
+  `[${idAttribute}]:where(:not(body)[${collapsedAttribute}~=w]) {
     padding-right: 50px;
+  }`,
+  // Has no height, will collapse
+  `[${idAttribute}]:where(:not(body)[${collapsedAttribute}~=h]) {
+    padding-top: 50px;
   }`,
   `[${idAttribute}][contenteditable], [${idAttribute}]:focus {
     outline: 0;
