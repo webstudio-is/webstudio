@@ -49,10 +49,10 @@ export const Topbar = ({ gridArea, project, page, publish }: TopbarProps) => {
         <Text
           variant="labelTitleCase"
           color="contrast"
-          css={{ maxWidth: theme.spacing[20] }}
+          css={{ minWidth: theme.spacing[15], maxWidth: "80%" }}
           truncate
         >
-          {page.title}
+          {page.name}
         </Text>
       </Flex>
       <Flex grow align="center" justify="center">
