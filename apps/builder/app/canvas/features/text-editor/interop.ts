@@ -12,7 +12,6 @@ import {
 } from "lexical";
 import { $createLinkNode, $isLinkNode } from "@lexical/link";
 import type { Instance, Text } from "@webstudio-is/project-build";
-import type { ChildrenUpdates } from "@webstudio-is/react-sdk";
 import { utils } from "@webstudio-is/project";
 import { $isSpanNode, $setNodeSpan } from "./toolbar-connector";
 
@@ -28,7 +27,7 @@ const lexicalFormats = [
 
 const $writeUpdates = (
   node: ElementNode,
-  updates: ChildrenUpdates,
+  updates: Instance["children"],
   refs: Refs
 ) => {
   const children = node.getChildren();
@@ -40,8 +39,10 @@ const $writeUpdates = (
       updates.push({ type: "text", value: "\n" });
     }
     if ($isLinkNode(child)) {
-      const id = refs.get(child.getKey());
-      const childrenUpdates: ChildrenUpdates = [];
+      const key = child.getKey();
+      const id = refs.get(key) ?? utils.tree.createInstanceId();
+      refs.set(key, id);
+      const childrenUpdates: Instance["children"] = [];
       $writeUpdates(child, childrenUpdates, refs);
       updates.push({
         type: "instance",
@@ -58,12 +59,10 @@ const $writeUpdates = (
       let parentUpdates = updates;
       if ($isSpanNode(child)) {
         // prematurely generate span id to select it right after applying
-        const storedId = refs.get(`${child.getKey()}:span`);
-        const id = storedId ?? utils.tree.createInstanceId();
-        if (storedId == null) {
-          refs.set(`${child.getKey()}:span`, id);
-        }
-        const update: ChildrenUpdates[number] = {
+        const key = `${child.getKey()}:span`;
+        const id = refs.get(key) ?? utils.tree.createInstanceId();
+        refs.set(key, id);
+        const update: Instance["children"][number] = {
           type: "instance",
           id,
           component: "Span",
@@ -75,8 +74,10 @@ const $writeUpdates = (
       // convert all lexical formats
       for (const [format, component] of lexicalFormats) {
         if (child.hasFormat(format)) {
-          const id = refs.get(`${child.getKey()}:${format}`);
-          const update: ChildrenUpdates[number] = {
+          const key = `${child.getKey()}:${format}`;
+          const id = refs.get(key) ?? utils.tree.createInstanceId();
+          refs.set(key, id);
+          const update: Instance["children"][number] = {
             type: "instance",
             id,
             component,
@@ -92,7 +93,7 @@ const $writeUpdates = (
 };
 
 export const $convertToUpdates = (refs: Refs) => {
-  const updates: ChildrenUpdates = [];
+  const updates: Instance["children"] = [];
   const root = $getRoot();
   $writeUpdates(root, updates, refs);
   return updates;

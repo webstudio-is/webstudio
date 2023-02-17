@@ -2,7 +2,6 @@ import { Fragment } from "react";
 import type { Instance } from "@webstudio-is/project-build";
 import { getComponent } from "../components";
 import { useInstanceProps } from "../props";
-import type { OnChangeChildren } from "./create-elements-tree";
 
 const renderText = (text: string): Array<JSX.Element> => {
   const lines = text.split("\n");
@@ -30,12 +29,10 @@ export const renderWrapperComponentChildren = (
 type WrapperComponentProps = {
   instance: Instance;
   children: Array<JSX.Element | string>;
-  onChangeChildren?: OnChangeChildren;
 };
 
 export const WrapperComponent = ({
   instance,
-  onChangeChildren, // prevent it from passing to sdk component
   children,
   ...rest
 }: WrapperComponentProps) => {

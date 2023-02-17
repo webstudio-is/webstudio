@@ -1,6 +1,5 @@
-import { useCallback, useMemo } from "react";
+import { useMemo } from "react";
 import { computed } from "nanostores";
-import store from "immerhin";
 import type { CanvasData } from "@webstudio-is/project";
 import {
   createElementsTree,
@@ -10,7 +9,6 @@ import {
   customComponentMetas,
   customComponentPropsMetas,
   setParams,
-  type OnChangeChildren,
 } from "@webstudio-is/react-sdk";
 import { publish } from "~/shared/pubsub";
 import { registerContainers, useCanvasStore } from "~/shared/sync";
@@ -23,8 +21,6 @@ import { WrapperComponentDev } from "./features/wrapper-component";
 import {
   propsIndexStore,
   assetsStore,
-  rootInstanceContainer,
-  useBreakpoints,
   useRootInstance,
   useSetBreakpoints,
   useSetProps,
@@ -39,7 +35,6 @@ import {
 } from "~/shared/nano-states";
 import { usePublishScrollState } from "./shared/use-publish-scroll-state";
 import { useDragAndDrop } from "./shared/use-drag-drop";
-import { utils } from "@webstudio-is/project";
 import { useSubscribeBuilderReady } from "./shared/use-builder-ready";
 import { useCopyPasteInstance } from "~/shared/copy-paste";
 import { customComponents } from "./custom-components";
@@ -54,26 +49,6 @@ const propsByInstanceIdStore = computed(
 
 const useElementsTree = () => {
   const [rootInstance] = useRootInstance();
-  const [breakpoints] = useBreakpoints();
-
-  const onChangeChildren: OnChangeChildren = useCallback(
-    (change) => {
-      store.createTransaction([rootInstanceContainer], (rootInstance) => {
-        if (rootInstance === undefined) {
-          return;
-        }
-
-        const { instanceId, updates } = change;
-        utils.tree.setInstanceChildrenMutable(
-          instanceId,
-          updates,
-          rootInstance,
-          Array.from(breakpoints.values())[0].id
-        );
-      });
-    },
-    [breakpoints]
-  );
 
   return useMemo(() => {
     if (rootInstance === undefined) {
@@ -86,9 +61,8 @@ const useElementsTree = () => {
       propsByInstanceIdStore,
       assetsStore,
       Component: WrapperComponentDev,
-      onChangeChildren,
     });
-  }, [rootInstance, onChangeChildren]);
+  }, [rootInstance]);
 };
 
 const DesignMode = () => {

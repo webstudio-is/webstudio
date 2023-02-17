@@ -20,7 +20,6 @@ import { LinkPlugin } from "@lexical/react/LexicalLinkPlugin";
 import { nanoid } from "nanoid";
 import { createCssEngine } from "@webstudio-is/css-engine";
 import type { Instance } from "@webstudio-is/project-build";
-import type { ChildrenUpdates } from "@webstudio-is/react-sdk";
 import { idAttribute } from "@webstudio-is/react-sdk";
 import { ToolbarConnectorPlugin } from "./toolbar-connector";
 import { type Refs, $convertToLexical, $convertToUpdates } from "./interop";
@@ -116,7 +115,7 @@ const onError = (error: Error) => {
 type TextEditorProps = {
   instance: Instance;
   contentEditable: JSX.Element;
-  onChange: (updates: ChildrenUpdates) => void;
+  onChange: (updates: Instance["children"]) => void;
   onSelectInstance: (instanceId: string) => void;
 };
 
