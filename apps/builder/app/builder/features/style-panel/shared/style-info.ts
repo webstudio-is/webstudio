@@ -259,7 +259,6 @@ export const useStyleInfo = () => {
       // temporary solution until we start computing all styles from data
       const computed = browserStyle?.[property];
       const inherited = inheritedInfo[property];
-
       const cascaded = cascadedInfo[property];
       const local = selectedStyle?.[property];
       const value = local ?? cascaded?.value ?? inherited?.value ?? computed;
