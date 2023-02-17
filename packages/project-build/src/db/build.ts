@@ -1,4 +1,4 @@
-import { v4 as uuid } from "uuid";
+import { nanoid } from "nanoid";
 import {
   prisma,
   Build as DbBuild,
@@ -129,7 +129,7 @@ export const addPage = async ({
       pages: [
         ...currentPages.pages,
         {
-          id: uuid(),
+          id: nanoid(),
           treeId: tree.id,
           name: data.name,
           path: data.path,
@@ -218,7 +218,7 @@ const createPages = async (
   );
   return Pages.parse({
     homePage: {
-      id: uuid(),
+      id: nanoid(),
       name: "Home",
       path: "",
       title: "Home",
@@ -241,7 +241,7 @@ const clonePage = async (
     context,
     client
   );
-  return { ...from.page, id: uuid(), treeId: tree.id };
+  return { ...from.page, id: nanoid(), treeId: tree.id };
 };
 
 const clonePages = async (
