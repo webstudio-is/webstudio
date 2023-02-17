@@ -19,10 +19,14 @@ const searchParams = (params: Record<string, string | undefined | null>) => {
 export const builderPath = ({
   projectId,
   pageId,
+  authToken,
 }: {
   projectId: string;
   pageId?: string;
-}) => `/builder/${projectId}${searchParams({ pageId })}`;
+  authToken?: string;
+}) => {
+  return `/builder/${projectId}${searchParams({ pageId, authToken })}`;
+};
 
 export const builderUrl = (props: {
   projectId: string;
@@ -31,12 +35,11 @@ export const builderUrl = (props: {
   authToken?: string;
   mode?: "edit" | "preview";
 }) => {
-  const { projectId, pageId } = props;
-  const url = new URL(builderPath({ projectId, pageId }), props.origin);
-
-  if (props.authToken !== undefined) {
-    url.searchParams.set("authToken", props.authToken);
-  }
+  const { projectId, pageId, authToken } = props;
+  const url = new URL(
+    builderPath({ projectId, pageId, authToken }),
+    props.origin
+  );
 
   if (props.mode !== undefined) {
     url.searchParams.set("mode", props.mode);

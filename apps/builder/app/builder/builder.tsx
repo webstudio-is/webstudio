@@ -29,6 +29,7 @@ import {
   useDragAndDropState,
   useIsPreviewMode,
   useSetAuthPermit,
+  useSetAuthToken,
   useSetIsPreviewMode,
   useSetTreeId,
 } from "~/shared/nano-states";
@@ -256,6 +257,7 @@ export const Builder = ({
   authToken,
   authPermit,
 }: BuilderProps) => {
+  useSetAuthToken(authToken);
   useSetAuthPermit(authPermit);
   useSetProject(project);
   useSetTreeId(treeId);
