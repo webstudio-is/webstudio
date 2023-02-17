@@ -31,8 +31,21 @@ import { useSubscribe } from "~/shared/pubsub";
 
 const cssEngine = createCssEngine({ name: "user-styles" });
 
-const voidElements =
-  "area, base, br, col, embed, hr, img, input, link, meta, source, track, wbr";
+const voidElements = [
+  "area",
+  "base",
+  "br",
+  "col",
+  "embed",
+  "hr",
+  "img",
+  "input",
+  "link",
+  "meta",
+  "source",
+  "track",
+  "wbr",
+];
 
 // Helper styles on for canvas in design mode
 const helperStyles = [
@@ -40,7 +53,8 @@ const helperStyles = [
   `[${idAttribute}] {
     user-select: none;
   }`,
-  `[${idAttribute}]:not(${voidElements}):not(body):empty {
+  // Using :where allows to prevent increasing specificity, so that helper is overwritten by user styles.
+  `[${idAttribute}]:where(:not(${[...voidElements, "body"]}):empty) {
     outline: 1px dashed #555;
     outline-offset: -1px;
     padding-top: 50px;
