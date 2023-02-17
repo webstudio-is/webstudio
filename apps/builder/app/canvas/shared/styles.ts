@@ -4,6 +4,7 @@ import { useStore } from "@nanostores/react";
 import { addGlobalRules } from "@webstudio-is/project";
 import {
   assetsStore,
+  isPreviewModeStore,
   selectedInstanceIdStore,
   useBreakpoints,
 } from "~/shared/nano-states";
@@ -31,6 +32,11 @@ import {
 import { useSubscribe } from "~/shared/pubsub";
 
 const cssEngine = createCssEngine({ name: "user-styles" });
+const helpersCssEngine = createCssEngine({ name: "helpers" });
+const fontsAndDefaultsCssEngine = createCssEngine({
+  name: "fonts-and-defaults",
+});
+const presetStylesEngine = createCssEngine({ name: "presetStyles" });
 
 // Helper styles on for canvas in design mode
 const helperStyles = [
@@ -64,17 +70,27 @@ const helperStyles = [
   }`,
 ];
 
+const subscribePreviewMode = () => {
+  return isPreviewModeStore.subscribe((isPreviewMode) => {
+    if (isPreviewMode) {
+      helpersCssEngine.clear();
+      helpersCssEngine.render();
+      return;
+    }
+
+    for (const style of helperStyles) {
+      helpersCssEngine.addPlaintextRule(style);
+    }
+    helpersCssEngine.render();
+  });
+};
+
 export const useManageDesignModeStyles = () => {
   useUpdateStyle();
   usePreviewStyle();
   useRemoveSsrStyles();
+  useEffect(subscribePreviewMode, []);
 };
-
-const helpersCssEngine = createCssEngine({ name: "helpers" });
-const fontsAndDefaultsCssEngine = createCssEngine({
-  name: "fonts-and-defaults",
-});
-const presetStylesEngine = createCssEngine({ name: "presetStyles" });
 
 export const GlobalStyles = () => {
   const [breakpoints] = useBreakpoints();
@@ -85,13 +101,6 @@ export const GlobalStyles = () => {
       cssEngine.addMediaRule(breakpoint.id, breakpoint);
     }
   }, [breakpoints]);
-
-  useIsomorphicLayoutEffect(() => {
-    for (const style of helperStyles) {
-      helpersCssEngine.addPlaintextRule(style);
-    }
-    helpersCssEngine.render();
-  }, []);
 
   useIsomorphicLayoutEffect(() => {
     fontsAndDefaultsCssEngine.clear();
