@@ -1,9 +1,6 @@
 import { z } from "zod";
 
-const isValidClipboardEvent = (
-  event: ClipboardEvent,
-  options: { allowAnyTarget: boolean }
-) => {
+const isValidClipboardEvent = (event: ClipboardEvent) => {
   const selection = document.getSelection();
   if (selection?.type === "Range") {
     return false;
@@ -22,9 +19,10 @@ const isValidClipboardEvent = (
   // If cursor is in input,
   // don't copy (we may want to add more exceptions here in the future)
   if (
-    options.allowAnyTarget === false &&
-    (event.target instanceof HTMLInputElement ||
-      event.target instanceof HTMLTextAreaElement)
+    event.target instanceof HTMLInputElement ||
+    event.target instanceof HTMLTextAreaElement ||
+    (event.target instanceof HTMLElement &&
+      event.target.closest("[contenteditable]"))
   ) {
     return false;
   }
@@ -35,14 +33,13 @@ const isValidClipboardEvent = (
 type Props<Data> = {
   version: string;
   type: z.ZodType<Data>;
-  allowAnyTarget?: boolean;
   onCopy: () => undefined | Data;
   onCut: () => undefined | Data;
   onPaste: (data: Data) => void;
 };
 
 export const startCopyPaste = <Type>(props: Props<Type>) => {
-  const { version, type, allowAnyTarget = false } = props;
+  const { version, type } = props;
   const versionLiteral = version;
 
   const DataType = z.object({ [versionLiteral]: type });
@@ -65,7 +62,7 @@ export const startCopyPaste = <Type>(props: Props<Type>) => {
   const handleCopy = (event: ClipboardEvent) => {
     if (
       event.clipboardData === null ||
-      isValidClipboardEvent(event, { allowAnyTarget }) === false
+      isValidClipboardEvent(event) === false
     ) {
       return;
     }
@@ -83,7 +80,7 @@ export const startCopyPaste = <Type>(props: Props<Type>) => {
   const handleCut = (event: ClipboardEvent) => {
     if (
       event.clipboardData === null ||
-      isValidClipboardEvent(event, { allowAnyTarget }) === false
+      isValidClipboardEvent(event) === false
     ) {
       return;
     }
@@ -103,7 +100,7 @@ export const startCopyPaste = <Type>(props: Props<Type>) => {
       event.clipboardData === null ||
       // we might want a separate predicate for paste,
       // but for now the logic is the same
-      isValidClipboardEvent(event, { allowAnyTarget }) === false
+      isValidClipboardEvent(event) === false
     ) {
       return;
     }
