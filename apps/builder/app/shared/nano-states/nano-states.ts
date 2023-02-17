@@ -326,6 +326,14 @@ export const useSetAuthPermit = (authPermit: AuthPermit) => {
   });
 };
 
+const authTokenStore = atom<string | undefined>(undefined);
+export const useAuthToken = () => useValue(authTokenStore);
+export const useSetAuthToken = (authToken: string | undefined) => {
+  useSyncInitializeOnce(() => {
+    authTokenStore.set(authToken);
+  });
+};
+
 const selectedInstanceOutlineContainer = atom<{
   visible: boolean;
   rect?: DOMRect;

@@ -31,6 +31,7 @@ import type { TabName } from "../../types";
 import { CloseButton, Header } from "../../header";
 import { SettingsPanel } from "./settings-panel";
 import { NewPageSettings, PageSettings } from "./settings";
+import { useAuthToken } from "~/shared/nano-states";
 
 type TabContentProps = {
   onSetActiveTab: (tabName: TabName) => void;
@@ -232,6 +233,7 @@ const PagesPanel = ({
 export const TabContent = (props: TabContentProps) => {
   const [currentPageId] = useCurrentPageId();
   const [project] = useProject();
+  const [authToken] = useAuthToken();
 
   const navigate = useNavigate();
   const handleSelect = (pageId: "home" | Page["id"]) => {
@@ -242,6 +244,7 @@ export const TabContent = (props: TabContentProps) => {
       builderPath({
         projectId: project.id,
         pageId: pageId === "home" ? undefined : pageId,
+        authToken,
       })
     );
   };
