@@ -36,7 +36,7 @@ import {
 import { useClientSettings } from "./shared/client-settings";
 import { Navigator } from "./features/sidebar-left";
 import { getBuildUrl } from "~/shared/router-utils";
-import { useCopyPasteInstance } from "~/shared/copy-paste";
+import { useCopyPaste } from "~/shared/copy-paste";
 import { AssetsProvider } from "./shared/assets";
 
 registerContainers();
@@ -282,7 +282,7 @@ export const Builder = ({
   useSubscribeCanvasReady(publish);
   // We need to initialize this in both canvas and builder,
   // because the events will fire in either one, depending on where the focus is
-  useCopyPasteInstance();
+  useCopyPaste();
   useSetWindowTitle();
   const iframeRefCallback = useCallback(
     (ref) => {

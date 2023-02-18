@@ -1,1 +1,1 @@
-export * from "./copy-paste-instance";
+export { useCopyPaste } from "./use-copy-paste";

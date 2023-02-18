@@ -36,7 +36,7 @@ import {
 import { usePublishScrollState } from "./shared/use-publish-scroll-state";
 import { useDragAndDrop } from "./shared/use-drag-drop";
 import { useSubscribeBuilderReady } from "./shared/use-builder-ready";
-import { useCopyPasteInstance } from "~/shared/copy-paste";
+import { useCopyPaste } from "~/shared/copy-paste";
 import { customComponents } from "./custom-components";
 import { useHoveredInstanceConnector } from "./hovered-instance-connector";
 
@@ -74,7 +74,9 @@ const DesignMode = () => {
   useDragAndDrop();
   // We need to initialize this in both canvas and builder,
   // because the events will fire in either one, depending on where the focus is
-  useCopyPasteInstance();
+  // @todo we need to forward the events from canvas to builder and avoid importing this
+  // in both places
+  useCopyPaste();
   useHoveredInstanceConnector();
 
   return null;

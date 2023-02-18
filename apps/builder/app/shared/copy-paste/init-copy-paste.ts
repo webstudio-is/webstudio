@@ -1,5 +1,3 @@
-import { z } from "zod";
-
 const isValidClipboardEvent = (event: ClipboardEvent) => {
   const selection = document.getSelection();
   if (selection?.type === "Range") {
@@ -30,34 +28,15 @@ const isValidClipboardEvent = (event: ClipboardEvent) => {
   return true;
 };
 
-type Props<Data> = {
-  version: string;
-  type: z.ZodType<Data>;
-  onCopy: () => undefined | Data;
-  onCut: () => undefined | Data;
-  onPaste: (data: Data) => void;
+type Props = {
+  mimeType?: string;
+  onCopy: () => undefined | string;
+  onCut: () => undefined | string;
+  onPaste: (data: string) => void;
 };
 
-export const startCopyPaste = <Type>(props: Props<Type>) => {
-  const { version, type } = props;
-  const versionLiteral = version;
-
-  const DataType = z.object({ [versionLiteral]: type });
-
-  const serialize = (data: Type) => {
-    return JSON.stringify({ [versionLiteral]: data });
-  };
-
-  const deserialize = (text: string) => {
-    try {
-      const data = DataType.parse(JSON.parse(text));
-      // zod provides invalid type without versionLiteral
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      return (data as any)[versionLiteral] as Type;
-    } catch {
-      return;
-    }
-  };
+export const initCopyPaste = (props: Props) => {
+  const { mimeType = "application/json" } = props;
 
   const handleCopy = (event: ClipboardEvent) => {
     if (
@@ -74,7 +53,7 @@ export const startCopyPaste = <Type>(props: Props<Type>) => {
 
     // must prevent default, otherwise setData() will not work
     event.preventDefault();
-    event.clipboardData.setData("application/json", serialize(data));
+    event.clipboardData.setData(mimeType, data);
   };
 
   const handleCut = (event: ClipboardEvent) => {
@@ -92,7 +71,7 @@ export const startCopyPaste = <Type>(props: Props<Type>) => {
 
     // must prevent default, otherwise setData() will not work
     event.preventDefault();
-    event.clipboardData.setData("application/json", serialize(data));
+    event.clipboardData.setData(mimeType, data);
   };
 
   const handlePaste = (event: ClipboardEvent) => {
@@ -107,12 +86,7 @@ export const startCopyPaste = <Type>(props: Props<Type>) => {
 
     // this shouldn't matter, but just in case
     event.preventDefault();
-    const data = deserialize(event.clipboardData.getData("application/json"));
-    if (data === undefined) {
-      return;
-    }
-
-    props.onPaste(data);
+    props.onPaste(event.clipboardData.getData(mimeType));
   };
 
   document.addEventListener("copy", handleCopy);

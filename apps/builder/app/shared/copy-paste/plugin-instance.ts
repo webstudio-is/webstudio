@@ -1,6 +1,5 @@
 import store from "immerhin";
 import { z } from "zod";
-import { useEffect } from "react";
 import {
   getStyleDeclKey,
   Instance,
@@ -31,7 +30,9 @@ import {
   insertInstanceMutable,
 } from "../tree-utils";
 import { deleteInstance } from "../instance-utils";
-import { startCopyPaste } from "./copy-paste";
+import { initCopyPaste } from "./init-copy-paste";
+
+const version = "@webstudio/instance/v0.1";
 
 const InstanceData = z.object({
   instance: Instance,
@@ -91,7 +92,26 @@ const copyInstanceData = (targetInstanceId: string) => {
   };
 };
 
-const pasteInstance = (data: InstanceData) => {
+const stringify = (data: InstanceData) => {
+  return JSON.stringify({ [version]: data });
+};
+
+const ClipboardData = z.object({ [version]: InstanceData });
+
+const parse = (text: string): InstanceData | undefined => {
+  try {
+    const data = ClipboardData.parse(JSON.parse(text));
+    return data[version];
+  } catch {
+    return;
+  }
+};
+
+const onPaste = (clipboardData: string) => {
+  const data = parse(clipboardData);
+  if (data === undefined) {
+    return;
+  }
   const dropTarget = findClosestDroppableTarget(
     instancesIndexStore.get(),
     selectedInstanceIdStore.get()
@@ -127,38 +147,38 @@ const pasteInstance = (data: InstanceData) => {
   selectedInstanceIdStore.set(data.instance.id);
 };
 
-const startCopyPasteInstance = () => {
-  return startCopyPaste({
-    version: "@webstudio/instance/v0.1",
-    type: InstanceData,
-
-    onCopy: () => {
-      const selectedInstanceId = selectedInstanceIdStore.get();
-      if (selectedInstanceId === undefined) {
-        return;
-      }
-      return copyInstanceData(selectedInstanceId);
-    },
-
-    onCut: () => {
-      const selectedInstanceId = selectedInstanceIdStore.get();
-      if (selectedInstanceId === undefined) {
-        return;
-      }
-      const data = copyInstanceData(selectedInstanceId);
-      if (data === undefined) {
-        return;
-      }
-      deleteInstance(selectedInstanceId);
-      return data;
-    },
-
-    onPaste: pasteInstance,
-  });
+const onCopy = () => {
+  const selectedInstanceId = selectedInstanceIdStore.get();
+  if (selectedInstanceId === undefined) {
+    return;
+  }
+  const data = copyInstanceData(selectedInstanceId);
+  if (data === undefined) {
+    return;
+  }
+  return stringify(data);
 };
 
-export const useCopyPasteInstance = () => {
-  useEffect(() => {
-    return startCopyPasteInstance();
-  }, []);
+const onCut = () => {
+  const selectedInstanceId = selectedInstanceIdStore.get();
+  if (selectedInstanceId === undefined) {
+    return;
+  }
+  const data = copyInstanceData(selectedInstanceId);
+  if (data === undefined) {
+    return;
+  }
+  deleteInstance(selectedInstanceId);
+  if (data === undefined) {
+    return;
+  }
+  return stringify(data);
+};
+
+export const init = () => {
+  return initCopyPaste({
+    onCopy,
+    onCut,
+    onPaste,
+  });
 };
