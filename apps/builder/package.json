@@ -74,6 +74,8 @@
     "lodash.noop": "^3.0.1",
     "lodash.snakecase": "^4.1.1",
     "match-sorter": "^6.3.1",
+    "micromark": "^3.1.0",
+    "micromark-extension-gfm": "^2.0.1",
     "mitt": "^3.0.0",
     "nanoid": "^3.2.0",
     "nanostores": "^0.7.1",

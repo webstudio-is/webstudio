@@ -18,6 +18,8 @@ module.exports = {
     "djb2a",
     "nanostores",
     "@nanostores/react",
+    "micromark",
+    "micromark-extension-gfm",
   ],
   // appDirectory: "app",
   // assetsBuildDirectory: "public/build",

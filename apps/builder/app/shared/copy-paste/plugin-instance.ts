@@ -106,7 +106,10 @@ const parse = (text: string): InstanceData | undefined => {
   }
 };
 
+export const mimeType = "application/json";
+
 export const onPaste = (clipboardData: string) => {
+  console.log(111, clipboardData);
   const data = parse(clipboardData);
   if (data === undefined) {
     return;

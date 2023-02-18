@@ -89,7 +89,10 @@ export const initCopyPaste = (props: Props) => {
 
     // this shouldn't matter, but just in case
     event.preventDefault();
-    onPaste(event.clipboardData.getData(mimeType));
+    const data = event.clipboardData.getData(mimeType).trim();
+    if (data) {
+      onPaste(data);
+    }
   };
 
   if (onCopy) {
