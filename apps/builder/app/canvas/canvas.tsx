@@ -74,6 +74,8 @@ const DesignMode = () => {
   useDragAndDrop();
   // We need to initialize this in both canvas and builder,
   // because the events will fire in either one, depending on where the focus is
+  // @todo we need to forward the events from canvas to builder and avoid importing this
+  // in both places
   useCopyPaste();
   useHoveredInstanceConnector();
 
