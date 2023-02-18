@@ -5,7 +5,7 @@
   "description": "Webstudio Builder UI as a service",
   "scripts": {
     "build": "remix build",
-    "dev": "remix watch & node ./dev.js",
+    "dev": "NODE_ENV=development remix watch & NODE_ENV=development nodemon --require dotenv/config ./server-express.js --watch ./server-express.js",
     "start": "remix-serve build",
     "typecheck": "tsc",
     "lint": "eslint . --ext .ts,.tsx --max-warnings 0",

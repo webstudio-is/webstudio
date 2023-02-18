@@ -25,7 +25,4 @@ module.exports = {
     return ["../../packages/**/lib/**.js"];
   },
   ignoredRouteFiles: ["**/.*"],
-  future: {
-    unstable_dev: true,
-  },
 };
