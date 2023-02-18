@@ -41,7 +41,26 @@ export const loadProductionCanvasData = async (
     context
   );
 
-  pagesCanvasData.push(canvasData);
+  const styles = canvasData.build?.styles ?? [];
+
+  // Find all fonts referenced in styles
+  const fontFamilySet = new Set<string>();
+  for (const [, { value }] of styles) {
+    if (value.type === "fontFamily") {
+      for (const fontFamily of value.value) {
+        fontFamilySet.add(fontFamily);
+      }
+    }
+  }
+
+  // Filter unused font assets
+  const assets = canvasData.assets.filter(
+    (asset) =>
+      asset.type === "image" ||
+      (asset.type === "font" && fontFamilySet.has(asset.meta.family))
+  );
+
+  pagesCanvasData.push({ ...canvasData, assets });
 
   if (otherPages.length > 0) {
     for (const page of otherPages) {
@@ -49,7 +68,10 @@ export const loadProductionCanvasData = async (
         { project, env: "prod", pageIdOrPath: page.path },
         context
       );
-      pagesCanvasData.push(canvasData);
+      pagesCanvasData.push({
+        ...canvasData,
+        assets,
+      });
     }
   }
 
