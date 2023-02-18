@@ -30,7 +30,6 @@ import {
   insertInstanceMutable,
 } from "../tree-utils";
 import { deleteInstance } from "../instance-utils";
-import { initCopyPaste } from "./init-copy-paste";
 
 const version = "@webstudio/instance/v0.1";
 
@@ -107,7 +106,7 @@ const parse = (text: string): InstanceData | undefined => {
   }
 };
 
-const onPaste = (clipboardData: string) => {
+export const onPaste = (clipboardData: string) => {
   const data = parse(clipboardData);
   if (data === undefined) {
     return;
@@ -147,7 +146,7 @@ const onPaste = (clipboardData: string) => {
   selectedInstanceIdStore.set(data.instance.id);
 };
 
-const onCopy = () => {
+export const onCopy = () => {
   const selectedInstanceId = selectedInstanceIdStore.get();
   if (selectedInstanceId === undefined) {
     return;
@@ -159,7 +158,7 @@ const onCopy = () => {
   return stringify(data);
 };
 
-const onCut = () => {
+export const onCut = () => {
   const selectedInstanceId = selectedInstanceIdStore.get();
   if (selectedInstanceId === undefined) {
     return;
@@ -173,12 +172,4 @@ const onCut = () => {
     return;
   }
   return stringify(data);
-};
-
-export const init = () => {
-  return initCopyPaste({
-    onCopy,
-    onCut,
-    onPaste,
-  });
 };
