@@ -16,7 +16,7 @@ import {
   styleSourceSelectionsStore,
   styleSourcesStore,
   instancesIndexStore,
-} from "../../nano-states";
+} from "../nano-states";
 import {
   cloneInstance,
   cloneProps,
@@ -28,9 +28,9 @@ import {
   findSubtree,
   findSubtreeLocalStyleSources,
   insertInstanceMutable,
-} from "../../tree-utils";
-import { deleteInstance } from "../../instance-utils";
-import { initCopyPaste } from "../utils/init-copy-paste";
+} from "../tree-utils";
+import { deleteInstance } from "../instance-utils";
+import { initCopyPaste } from "./init-copy-paste";
 
 const version = "@webstudio/instance/v0.1";
 
