@@ -53,7 +53,7 @@ export const loadProductionCanvasData = async (
     }
   }
 
-  // Filter out all font assets that are not used
+  // Filter unused font assets
   const assets = canvasData.assets.filter(
     (asset) =>
       asset.type === "image" ||
