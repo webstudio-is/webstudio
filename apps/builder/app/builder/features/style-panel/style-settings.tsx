@@ -14,6 +14,12 @@ import { dependencies } from "./shared/dependencies";
 import type { SetProperty, CreateBatchUpdate } from "./shared/use-style-data";
 import type { StyleInfo } from "./shared/style-info";
 import type { RenderPropertyProps } from "./style-sections";
+import { useStore } from "@nanostores/react";
+import { selectedInstanceIdStore } from "~/shared/nano-states";
+import {
+  useParentInstanceId,
+  useInstanceStyleData,
+} from "./shared/style-instance-style-data";
 
 // Finds a property/value by using any available form: property, label, value
 const filterProperties = (
@@ -92,6 +98,13 @@ export type StyleSettingsProps = {
   search: string;
 };
 
+const useParentStyle = () => {
+  const selectedInstanceId = useStore(selectedInstanceIdStore);
+  const parentInstanceId = useParentInstanceId(selectedInstanceId);
+  const parentInstanceStyleData = useInstanceStyleData(parentInstanceId);
+  return parentInstanceStyleData;
+};
+
 export const StyleSettings = ({
   setProperty,
   deleteProperty,
@@ -102,6 +115,10 @@ export const StyleSettings = ({
   const isSearchMode = search.length !== 0;
   const all = [];
   let category: Category;
+
+  const parentStyle = useParentStyle();
+  // const isParent
+
   for (category in categories) {
     // @todo seems like properties are the exact strings and styleConfig.property is not?
     const categoryProperties = filterProperties(
@@ -156,7 +173,8 @@ export const StyleSettings = ({
       styleConfigsByCategory,
       moreStyleConfigsByCategory,
     };
-    if (shouldRenderCategory(categoryProps)) {
+
+    if (shouldRenderCategory(categoryProps, parentStyle)) {
       all.push(
         <CollapsibleSection
           isOpen={isSearchMode ? true : undefined}

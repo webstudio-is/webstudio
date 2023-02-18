@@ -2,7 +2,7 @@ import { Grid } from "@webstudio-is/design-system";
 import { toValue } from "@webstudio-is/css-engine";
 import { styleConfigByName } from "./shared/configs";
 import type { Category } from "@webstudio-is/react-sdk";
-import type { StyleProperty } from "@webstudio-is/css-data";
+import type { Style, StyleProperty } from "@webstudio-is/css-data";
 import type {
   SetProperty,
   DeleteProperty,
@@ -106,13 +106,13 @@ export const renderCategory = ({
   );
 };
 
-export const shouldRenderCategory = ({
-  currentStyle,
-  category,
-}: RenderCategoryProps) => {
+export const shouldRenderCategory = (
+  { currentStyle, category }: RenderCategoryProps,
+  parentStyle: Style
+) => {
   switch (category) {
     case "flexChild":
-      return toValue(currentStyle.display?.value).includes("flex");
+      return toValue(parentStyle.display).includes("flex");
     case "gridChild":
       return toValue(currentStyle.display?.value).includes("grid");
   }
