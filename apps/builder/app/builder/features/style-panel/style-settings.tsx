@@ -117,7 +117,6 @@ export const StyleSettings = ({
   let category: Category;
 
   const parentStyle = useParentStyle();
-  // const isParent
 
   for (category in categories) {
     // @todo seems like properties are the exact strings and styleConfig.property is not?
