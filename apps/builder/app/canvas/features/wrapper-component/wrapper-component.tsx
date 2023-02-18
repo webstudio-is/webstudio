@@ -1,4 +1,4 @@
-import { MouseEvent, FormEvent, useLayoutEffect } from "react";
+import type { MouseEvent, FormEvent } from "react";
 import { Suspense, lazy, useCallback, useMemo, useRef } from "react";
 import { useStore } from "@nanostores/react";
 import { useLexicalComposerContext } from "@lexical/react/LexicalComposerContext";
@@ -20,6 +20,7 @@ import {
 import { createInstancesIndex } from "~/shared/tree-utils";
 import { useCssRules } from "~/canvas/shared/styles";
 import { SelectedInstanceConnector } from "./selected-instance-connector";
+import { useIsomorphicLayoutEffect } from "react-use";
 
 const TextEditor = lazy(() => import("../text-editor"));
 
@@ -96,7 +97,7 @@ export const WrapperComponentDev = ({
     return result;
   }, [instanceProps]);
 
-  useLayoutEffect(() => {
+  useIsomorphicLayoutEffect(() => {
     setDataCollapsed(instanceElementRef.current);
   });
 
