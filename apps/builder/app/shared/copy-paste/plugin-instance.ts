@@ -92,7 +92,26 @@ const copyInstanceData = (targetInstanceId: string) => {
   };
 };
 
-const onPaste = (data: InstanceData) => {
+const stringify = (data: InstanceData) => {
+  return JSON.stringify({ [version]: data });
+};
+
+const ClipboardData = z.object({ [version]: InstanceData });
+
+const parse = (text: string): InstanceData | undefined => {
+  try {
+    const data = ClipboardData.parse(JSON.parse(text));
+    return data[version];
+  } catch {
+    return;
+  }
+};
+
+const onPaste = (clipboardData: string) => {
+  const data = parse(clipboardData);
+  if (data === undefined) {
+    return;
+  }
   const dropTarget = findClosestDroppableTarget(
     instancesIndexStore.get(),
     selectedInstanceIdStore.get()
@@ -128,27 +147,16 @@ const onPaste = (data: InstanceData) => {
   selectedInstanceIdStore.set(data.instance.id);
 };
 
-const stringify = (data: InstanceData) => {
-  return JSON.stringify({ [version]: data });
-};
-
-const ClipboardData = z.object({ [version]: InstanceData });
-
-const parse = (text: string): InstanceData | undefined => {
-  try {
-    const data = ClipboardData.parse(JSON.parse(text));
-    return data[version];
-  } catch {
-    return;
-  }
-};
-
 const onCopy = () => {
   const selectedInstanceId = selectedInstanceIdStore.get();
   if (selectedInstanceId === undefined) {
     return;
   }
-  return copyInstanceData(selectedInstanceId);
+  const data = copyInstanceData(selectedInstanceId);
+  if (data === undefined) {
+    return;
+  }
+  return stringify(data);
 };
 
 const onCut = () => {
@@ -161,13 +169,14 @@ const onCut = () => {
     return;
   }
   deleteInstance(selectedInstanceId);
-  return data;
+  if (data === undefined) {
+    return;
+  }
+  return stringify(data);
 };
 
 export const init = () => {
-  return initCopyPaste<InstanceData>({
-    parse,
-    stringify,
+  return initCopyPaste({
     onCopy,
     onCut,
     onPaste,

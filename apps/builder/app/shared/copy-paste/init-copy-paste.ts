@@ -28,17 +28,15 @@ const isValidClipboardEvent = (event: ClipboardEvent) => {
   return true;
 };
 
-type Props<Data> = {
-  format?: string;
-  parse: (text: string) => Data | undefined;
-  stringify: (data: Data) => string;
-  onCopy: () => undefined | Data;
-  onCut: () => undefined | Data;
-  onPaste: (data: Data) => void;
+type Props = {
+  mimeType?: string;
+  onCopy: () => undefined | string;
+  onCut: () => undefined | string;
+  onPaste: (data: string) => void;
 };
 
-export const initCopyPaste = <Type>(props: Props<Type>) => {
-  const { format = "application/json", parse, stringify } = props;
+export const initCopyPaste = (props: Props) => {
+  const { mimeType = "application/json" } = props;
 
   const handleCopy = (event: ClipboardEvent) => {
     if (
@@ -55,7 +53,7 @@ export const initCopyPaste = <Type>(props: Props<Type>) => {
 
     // must prevent default, otherwise setData() will not work
     event.preventDefault();
-    event.clipboardData.setData(format, stringify(data));
+    event.clipboardData.setData(mimeType, data);
   };
 
   const handleCut = (event: ClipboardEvent) => {
@@ -73,7 +71,7 @@ export const initCopyPaste = <Type>(props: Props<Type>) => {
 
     // must prevent default, otherwise setData() will not work
     event.preventDefault();
-    event.clipboardData.setData(format, stringify(data));
+    event.clipboardData.setData(mimeType, data);
   };
 
   const handlePaste = (event: ClipboardEvent) => {
@@ -88,12 +86,7 @@ export const initCopyPaste = <Type>(props: Props<Type>) => {
 
     // this shouldn't matter, but just in case
     event.preventDefault();
-    const data = parse(event.clipboardData.getData(format));
-    if (data === undefined) {
-      return;
-    }
-
-    props.onPaste(data);
+    props.onPaste(event.clipboardData.getData(mimeType));
   };
 
   document.addEventListener("copy", handleCopy);
