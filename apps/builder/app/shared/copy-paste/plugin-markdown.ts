@@ -21,7 +21,7 @@ const micromarkOptions = { extensions: [gfm()] };
 
 export const mimeType = "text/plain";
 
-// @todo List, ListItem, Definition, Code, Blockquote, Break, Image
+// @todo List, ListItem, Definition, Code, Blockquote
 const astTypeComponentMap: Record<string, Instance["component"]> = {
   paragraph: "Paragraph",
   heading: "Heading",

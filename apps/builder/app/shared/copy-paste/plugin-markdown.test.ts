@@ -68,4 +68,28 @@ describe("Plugin Markdown", () => {
       parseInstanceData(parse('![foo](/url "title")', options))
     ).toMatchSnapshot();
   });
+
+  test("hard line break", () => {
+    expect(
+      parseInstanceData(
+        parse(
+          `foo  
+      baz`,
+          options
+        )
+      )
+    ).toMatchSnapshot();
+  });
+
+  test("soft line break", () => {
+    expect(
+      parseInstanceData(
+        parse(
+          `foo
+      baz`,
+          options
+        )
+      )
+    ).toMatchSnapshot();
+  });
 });

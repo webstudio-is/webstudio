@@ -106,6 +106,29 @@ exports[`Plugin Markdown h6 1`] = `
 }
 `;
 
+exports[`Plugin Markdown hard line break 1`] = `
+{
+  "instances": [
+    {
+      "children": [
+        {
+          "type": "text",
+          "value": "foo",
+        },
+        {
+          "type": "text",
+          "value": "baz",
+        },
+      ],
+      "component": "Paragraph",
+      "id": "123",
+      "type": "instance",
+    },
+  ],
+  "props": [],
+}
+`;
+
 exports[`Plugin Markdown image 1`] = `
 {
   "instances": [
@@ -250,6 +273,26 @@ exports[`Plugin Markdown paragraph 1`] = `
         {
           "type": "text",
           "value": "xyz",
+        },
+      ],
+      "component": "Paragraph",
+      "id": "123",
+      "type": "instance",
+    },
+  ],
+  "props": [],
+}
+`;
+
+exports[`Plugin Markdown soft line break 1`] = `
+{
+  "instances": [
+    {
+      "children": [
+        {
+          "type": "text",
+          "value": "foo
+baz",
         },
       ],
       "component": "Paragraph",
