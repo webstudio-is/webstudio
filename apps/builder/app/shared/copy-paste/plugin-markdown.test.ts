@@ -96,4 +96,14 @@ describe("Plugin Markdown", () => {
   test("blockquote", () => {
     expect(parseInstanceData(parse("> bar", options))).toMatchSnapshot();
   });
+
+  test("inline code", () => {
+    expect(parseInstanceData(parse("`foo`", options))).toMatchSnapshot();
+  });
+
+  test("code", () => {
+    expect(
+      parseInstanceData(parse("```js meta\nfoo\n```", options))
+    ).toMatchSnapshot();
+  });
 });

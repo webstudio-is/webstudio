@@ -1,7 +1,7 @@
 import store from "immerhin";
 import { gfm } from "micromark-extension-gfm";
 import { fromMarkdown } from "mdast-util-from-markdown";
-import type { Instance, Prop } from "@webstudio-is/project-build";
+import { Code, Instance, Prop } from "@webstudio-is/project-build";
 import type { Root } from "mdast-util-from-markdown/lib";
 import { utils } from "@webstudio-is/project";
 import { nanoid } from "nanoid";
@@ -21,7 +21,7 @@ const micromarkOptions = { extensions: [gfm()] };
 
 export const mimeType = "text/plain";
 
-// @todo List, ListItem, Definition, Code, Blockquote
+// @todo List, ListItem, Definition, Strikethrough
 const astTypeComponentMap: Record<string, Instance["component"]> = {
   paragraph: "Paragraph",
   heading: "Heading",
@@ -30,6 +30,8 @@ const astTypeComponentMap: Record<string, Instance["component"]> = {
   link: "RichTextLink",
   image: "Image",
   blockquote: "Blockquote",
+  code: "Code",
+  inlineCode: "InlineCode",
 };
 
 type Options = { generateId?: typeof nanoid };
@@ -43,6 +45,14 @@ const toInstancesData = (
   const instances: Instance["children"] = [];
 
   for (const child of ast.children) {
+    if (child.type === "text") {
+      instances.push({
+        type: child.type,
+        value: child.value,
+      });
+      continue;
+    }
+
     const component = astTypeComponentMap[child.type];
     if (component) {
       const instance = utils.tree.createInstance({
@@ -81,6 +91,36 @@ const toInstancesData = (
           value: child.url,
         });
       }
+      if (child.type === "inlineCode") {
+        instance.children.push({
+          type: "text",
+          value: child.value,
+        });
+      }
+      if (child.type === "code") {
+        instance.children.push({
+          type: "text",
+          value: child.value,
+        });
+        if (child.lang) {
+          props.push({
+            id: generateId(),
+            type: "string",
+            name: "lang",
+            instanceId: instance.id,
+            value: child.lang,
+          });
+        }
+        if (child.meta) {
+          props.push({
+            id: generateId(),
+            type: "string",
+            name: "meta",
+            instanceId: instance.id,
+            value: child.meta,
+          });
+        }
+      }
       if ("title" in child && child.title) {
         props.push({
           id: generateId(),
@@ -100,13 +140,6 @@ const toInstancesData = (
           value: child.alt,
         });
       }
-    }
-
-    if (child.type === "text") {
-      instances.push({
-        type: "text",
-        value: child.value,
-      });
     }
   }
   return { instances, props };

@@ -78,6 +78,40 @@ exports[`Plugin Markdown bold 2 1`] = `
 }
 `;
 
+exports[`Plugin Markdown code 1`] = `
+{
+  "instances": [
+    {
+      "children": [
+        {
+          "type": "text",
+          "value": "foo",
+        },
+      ],
+      "component": "Code",
+      "id": "123",
+      "type": "instance",
+    },
+  ],
+  "props": [
+    {
+      "id": "123",
+      "instanceId": "123",
+      "name": "lang",
+      "type": "string",
+      "value": "js",
+    },
+    {
+      "id": "123",
+      "instanceId": "123",
+      "name": "meta",
+      "type": "string",
+      "value": "meta",
+    },
+  ],
+}
+`;
+
 exports[`Plugin Markdown h1 1`] = `
 {
   "instances": [
@@ -195,6 +229,32 @@ exports[`Plugin Markdown image 1`] = `
       "value": "foo",
     },
   ],
+}
+`;
+
+exports[`Plugin Markdown inline code 1`] = `
+{
+  "instances": [
+    {
+      "children": [
+        {
+          "children": [
+            {
+              "type": "text",
+              "value": "foo",
+            },
+          ],
+          "component": "InlineCode",
+          "id": "123",
+          "type": "instance",
+        },
+      ],
+      "component": "Paragraph",
+      "id": "123",
+      "type": "instance",
+    },
+  ],
+  "props": [],
 }
 `;
 
