@@ -21,7 +21,7 @@ const micromarkOptions = { extensions: [gfm()] };
 
 export const mimeType = "text/plain";
 
-// @todo Definition, Strikethrough
+// @todo Definition, Strikethrough, Table
 const astTypeComponentMap: Record<string, Instance["component"]> = {
   paragraph: "Paragraph",
   heading: "Heading",
@@ -34,6 +34,7 @@ const astTypeComponentMap: Record<string, Instance["component"]> = {
   inlineCode: "InlineCode",
   list: "List",
   listItem: "ListItem",
+  thematicBreak: "Separator",
 };
 
 type Options = { generateId?: typeof nanoid };

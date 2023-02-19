@@ -478,3 +478,17 @@ baz",
   "props": [],
 }
 `;
+
+exports[`Plugin Markdown thematic break | separator 1`] = `
+{
+  "instances": [
+    {
+      "children": [],
+      "component": "Separator",
+      "id": "123",
+      "type": "instance",
+    },
+  ],
+  "props": [],
+}
+`;

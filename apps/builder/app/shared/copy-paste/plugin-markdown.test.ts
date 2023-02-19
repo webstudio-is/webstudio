@@ -115,6 +115,10 @@ describe("Plugin Markdown", () => {
     expect(parseInstanceData(parse("3. one", options))).toMatchSnapshot();
   });
 
+  test("thematic break | separator", () => {
+    expect(parseInstanceData(parse("---", options))).toMatchSnapshot();
+  });
+
   // @todo For some reason doesn't work
   test.skip("strikethrough", () => {
     expect(
