@@ -2,7 +2,12 @@ import { useState } from "react";
 import store from "immerhin";
 import { nanoid } from "nanoid";
 import { theme, DeprecatedText2 } from "@webstudio-is/design-system";
-import { getStyleDeclKey, type StyleSource } from "@webstudio-is/project-build";
+import {
+  type Instance,
+  type StyleSource,
+  type StyleSourceSelections,
+  getStyleDeclKey,
+} from "@webstudio-is/project-build";
 import {
   type ItemSource,
   type ItemState,
@@ -23,6 +28,21 @@ import {
 import { removeByMutable } from "~/shared/array-utils";
 import { cloneStyles } from "~/shared/tree-utils";
 
+const getOrCreateStyleSourceSelectionMutable = (
+  styleSourceSelections: StyleSourceSelections,
+  selectedInstanceId: Instance["id"]
+) => {
+  let styleSourceSelection = styleSourceSelections.get(selectedInstanceId);
+  if (styleSourceSelection === undefined) {
+    styleSourceSelection = {
+      instanceId: selectedInstanceId,
+      values: [],
+    };
+    styleSourceSelections.set(selectedInstanceId, styleSourceSelection);
+  }
+  return styleSourceSelection;
+};
+
 const createStyleSource = (name: string) => {
   const selectedInstanceId = selectedInstanceIdStore.get();
   if (selectedInstanceId === undefined) {
@@ -36,14 +56,10 @@ const createStyleSource = (name: string) => {
   store.createTransaction(
     [styleSourcesStore, styleSourceSelectionsStore],
     (styleSources, styleSourceSelections) => {
-      let styleSourceSelection = styleSourceSelections.get(selectedInstanceId);
-      if (styleSourceSelection === undefined) {
-        styleSourceSelection = {
-          instanceId: selectedInstanceId,
-          values: [],
-        };
-        styleSourceSelections.set(selectedInstanceId, styleSourceSelection);
-      }
+      const styleSourceSelection = getOrCreateStyleSourceSelectionMutable(
+        styleSourceSelections,
+        selectedInstanceId
+      );
       styleSourceSelection.values.push(newStyleSource.id);
       styleSources.set(newStyleSource.id, newStyleSource);
     }
@@ -59,14 +75,10 @@ const addStyleSourceToInstace = (newStyleSourceId: StyleSource["id"]) => {
   store.createTransaction(
     [styleSourceSelectionsStore],
     (styleSourceSelections) => {
-      let styleSourceSelection = styleSourceSelections.get(selectedInstanceId);
-      if (styleSourceSelection === undefined) {
-        styleSourceSelection = {
-          instanceId: selectedInstanceId,
-          values: [],
-        };
-        styleSourceSelections.set(selectedInstanceId, styleSourceSelection);
-      }
+      const styleSourceSelection = getOrCreateStyleSourceSelectionMutable(
+        styleSourceSelections,
+        selectedInstanceId
+      );
       if (styleSourceSelection.values.includes(newStyleSourceId) === false) {
         styleSourceSelection.values.push(newStyleSourceId);
       }
@@ -139,6 +151,34 @@ const duplicateStyleSource = (styleSourceId: StyleSource["id"]) => {
   selectedStyleSourceIdStore.set(newStyleSource.id);
 
   return newStyleSource.id;
+};
+
+const convertLocalStyleSourceToToken = (styleSourceId: StyleSource["id"]) => {
+  const selectedInstanceId = selectedInstanceIdStore.get();
+  const treeId = treeIdStore.get();
+  if (selectedInstanceId === undefined || treeId === undefined) {
+    return;
+  }
+  const newStyleSource: StyleSource = {
+    type: "token",
+    id: styleSourceId,
+    name: "Local (Copy)",
+  };
+  store.createTransaction(
+    [styleSourcesStore, styleSourceSelectionsStore],
+    (styleSources, styleSourceSelections) => {
+      const styleSourceSelection = getOrCreateStyleSourceSelectionMutable(
+        styleSourceSelections,
+        selectedInstanceId
+      );
+      // generated local style source was not applied so put first
+      if (styleSourceSelection.values.includes(newStyleSource.id) === false) {
+        styleSourceSelection.values.unshift(newStyleSource.id);
+      }
+      styleSources.set(newStyleSource.id, newStyleSource);
+    }
+  );
+  selectedStyleSourceIdStore.set(newStyleSource.id);
 };
 
 const reorderStyleSources = (styleSourceIds: StyleSource["id"][]) => {
@@ -250,6 +290,10 @@ export const StyleSourcesSection = () => {
           if (newId !== undefined) {
             setEditingItemId(newId);
           }
+        }}
+        onConvertToToken={(id) => {
+          convertLocalStyleSourceToToken(id);
+          setEditingItemId(id);
         }}
         onSort={(items) => {
           reorderStyleSources(items.map((item) => item.id));
