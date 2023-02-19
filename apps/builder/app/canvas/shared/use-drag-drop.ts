@@ -25,6 +25,7 @@ import {
   getInstanceElementById,
   getInstanceIdFromElement,
 } from "~/shared/dom-utils";
+import { getInstanceAncestorsAndSelf } from "~/shared/tree-utils";
 
 declare module "~/shared/pubsub" {
   export interface PubsubMap {
@@ -64,7 +65,8 @@ const initialState: {
 
 export const useDragAndDrop = () => {
   const [rootInstance] = useRootInstance();
-  const { instancesById } = useStore(instancesIndexStore);
+  const instancesIndex = useStore(instancesIndexStore);
+  const { instancesById } = instancesIndex;
   const [textEditingInstanceId] = useTextEditingInstanceId();
 
   const state = useRef({ ...initialState });
@@ -103,7 +105,10 @@ export const useDragAndDrop = () => {
         return dropTarget;
       }
 
-      const path = utils.tree.getInstancePath(rootInstance, dropTarget.data.id);
+      const path = getInstanceAncestorsAndSelf(
+        instancesIndex,
+        dropTarget.data.id
+      );
       path.reverse();
 
       if (dropTarget.area !== "center") {

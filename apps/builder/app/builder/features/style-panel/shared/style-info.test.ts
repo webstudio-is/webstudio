@@ -3,6 +3,7 @@ import type {
   Instance,
   StyleDecl,
 } from "@webstudio-is/project-build";
+import { createInstancesIndex } from "~/shared/tree-utils";
 import {
   getCascadedBreakpointIds,
   getCascadedInfo,
@@ -145,9 +146,10 @@ test("compute cascaded styles", () => {
 });
 
 test("compute inherited styles", () => {
+  const instancesIndex = createInstancesIndex(rootInstance);
   expect(
     getInheritedInfo(
-      rootInstance,
+      instancesIndex,
       inheritingStylesByInstanceId,
       selectedInstanceId,
       cascadedBreakpointIds,

@@ -17,6 +17,7 @@ import {
   findClosestDroppableTarget,
   findSubtree,
   findSubtreeLocalStyleSources,
+  getInstanceAncestorsAndSelf,
   insertInstanceMutable,
   reparentInstanceMutable,
 } from "./tree-utils";
@@ -80,7 +81,7 @@ const createStyleDecl = (
 ): StyleDecl => {
   return {
     styleSourceId,
-    breakpointId: "breakpointId",
+    breakpointId,
     property: "width",
     value: {
       type: "keyword",
@@ -249,6 +250,36 @@ test("reparent instance into target", () => {
       createInstance("target", "Box", []),
     ])
   );
+});
+
+test("get path from instance and its ancestors", () => {
+  const rootInstance: Instance = createInstance("root", "Box", [
+    createInstance("box1", "Box", []),
+    createInstance("box2", "Box", [
+      createInstance("box3", "Box", [
+        createInstance("child1", "Box", []),
+        createInstance("child2", "Box", []),
+      ]),
+    ]),
+    createInstance("box4", "Box", []),
+  ]);
+  const instancesIndex = createInstancesIndex(rootInstance);
+
+  expect(getInstanceAncestorsAndSelf(instancesIndex, "box3")).toEqual([
+    rootInstance,
+
+    createInstance("box2", "Box", [
+      createInstance("box3", "Box", [
+        createInstance("child1", "Box", []),
+        createInstance("child2", "Box", []),
+      ]),
+    ]),
+
+    createInstance("box3", "Box", [
+      createInstance("child1", "Box", []),
+      createInstance("child2", "Box", []),
+    ]),
+  ]);
 });
 
 test("find subtree with all descendants and parent instance", () => {
