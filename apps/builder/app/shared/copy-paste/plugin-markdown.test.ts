@@ -62,4 +62,10 @@ describe("Plugin Markdown", () => {
       parseInstanceData(parse('[link](/uri "Title")', options))
     ).toMatchSnapshot();
   });
+
+  test("image", () => {
+    expect(
+      parseInstanceData(parse('![foo](/url "title")', options))
+    ).toMatchSnapshot();
+  });
 });

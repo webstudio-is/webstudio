@@ -106,6 +106,49 @@ exports[`Plugin Markdown h6 1`] = `
 }
 `;
 
+exports[`Plugin Markdown image 1`] = `
+{
+  "instances": [
+    {
+      "children": [
+        {
+          "children": [],
+          "component": "Image",
+          "id": "123",
+          "type": "instance",
+        },
+      ],
+      "component": "Paragraph",
+      "id": "123",
+      "type": "instance",
+    },
+  ],
+  "props": [
+    {
+      "id": "123",
+      "instanceId": "123",
+      "name": "src",
+      "type": "string",
+      "value": "/url",
+    },
+    {
+      "id": "123",
+      "instanceId": "123",
+      "name": "title",
+      "type": "string",
+      "value": "title",
+    },
+    {
+      "id": "123",
+      "instanceId": "123",
+      "name": "alt",
+      "type": "string",
+      "value": "foo",
+    },
+  ],
+}
+`;
+
 exports[`Plugin Markdown italic 1 1`] = `
 {
   "instances": [

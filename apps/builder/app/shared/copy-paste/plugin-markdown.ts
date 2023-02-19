@@ -28,6 +28,7 @@ const astTypeComponentMap: Record<string, Instance["component"]> = {
   strong: "Bold",
   emphasis: "Italic",
   link: "RichTextLink",
+  image: "Image",
 };
 
 type Options = { generateId?: typeof nanoid };
@@ -70,6 +71,15 @@ const toInstancesData = (
           value: child.url,
         });
       }
+      if (child.type === "image") {
+        props.push({
+          id: generateId(),
+          type: "string",
+          name: "src",
+          instanceId: instance.id,
+          value: child.url,
+        });
+      }
       if ("title" in child && child.title) {
         props.push({
           id: generateId(),
@@ -77,6 +87,16 @@ const toInstancesData = (
           name: "title",
           instanceId: instance.id,
           value: child.title,
+        });
+      }
+
+      if ("alt" in child && child.alt) {
+        props.push({
+          id: generateId(),
+          type: "string",
+          name: "alt",
+          instanceId: instance.id,
+          value: child.alt,
         });
       }
     }
@@ -96,6 +116,7 @@ export const parse = (clipboardData: string, options?: Options) => {
   if (ast.children.length === 0) {
     return;
   }
+  console.log(JSON.stringify(ast, null, 2));
   return toInstancesData(ast, options);
 };
 
