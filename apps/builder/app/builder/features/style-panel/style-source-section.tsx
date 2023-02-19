@@ -141,6 +141,38 @@ const duplicateStyleSource = (styleSourceId: StyleSource["id"]) => {
   return newStyleSource.id;
 };
 
+const convertLocalStyleSourceToToken = (styleSourceId: StyleSource["id"]) => {
+  const selectedInstanceId = selectedInstanceIdStore.get();
+  const treeId = treeIdStore.get();
+  if (selectedInstanceId === undefined || treeId === undefined) {
+    return;
+  }
+  const newStyleSource: StyleSource = {
+    type: "token",
+    id: styleSourceId,
+    name: "Local (Copy)",
+  };
+  store.createTransaction(
+    [styleSourcesStore, styleSourceSelectionsStore],
+    (styleSources, styleSourceSelections) => {
+      let styleSourceSelection = styleSourceSelections.get(selectedInstanceId);
+      if (styleSourceSelection === undefined) {
+        styleSourceSelection = {
+          instanceId: selectedInstanceId,
+          values: [],
+        };
+        styleSourceSelections.set(selectedInstanceId, styleSourceSelection);
+      }
+      // generated local style source was not applied so put first
+      if (styleSourceSelection.values.includes(newStyleSource.id) === false) {
+        styleSourceSelection.values.unshift(newStyleSource.id);
+      }
+      styleSources.set(newStyleSource.id, newStyleSource);
+    }
+  );
+  selectedStyleSourceIdStore.set(newStyleSource.id);
+};
+
 const reorderStyleSources = (styleSourceIds: StyleSource["id"][]) => {
   const selectedInstanceId = selectedInstanceIdStore.get();
   const treeId = treeIdStore.get();
@@ -250,6 +282,10 @@ export const StyleSourcesSection = () => {
           if (newId !== undefined) {
             setEditingItemId(newId);
           }
+        }}
+        onConvertToToken={(id) => {
+          convertLocalStyleSourceToToken(id);
+          setEditingItemId(id);
         }}
         onSort={(items) => {
           reorderStyleSources(items.map((item) => item.id));
