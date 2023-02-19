@@ -27,7 +27,7 @@ const astTypeComponentMap: Record<string, Instance["component"]> = {
   heading: "Heading",
   strong: "Bold",
   emphasis: "Italic",
-  link: "RichTextLink",
+  link: "Link",
   image: "Image",
   blockquote: "Blockquote",
   code: "Code",
@@ -207,6 +207,8 @@ export const onPaste = (clipboardData: string) => {
     [rootInstanceContainer, propsStore],
     (rootInstance, props) => {
       const instancesIndex = createInstancesIndex(rootInstance);
+      // We are inserting backwards, so we need to reverse the order
+      data.instances.reverse();
       for (const instance of data.instances) {
         if (instance.type !== "text") {
           insertInstanceMutable(instancesIndex, instance, dropTarget);
