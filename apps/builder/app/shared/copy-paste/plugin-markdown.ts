@@ -1,8 +1,8 @@
 import store from "immerhin";
 import { gfm } from "micromark-extension-gfm";
+import type { Root } from "mdast";
 import { fromMarkdown } from "mdast-util-from-markdown";
 import type { Instance, Prop } from "@webstudio-is/project-build";
-import type { Node, Root } from "mdast-util-from-markdown/lib";
 import { utils } from "@webstudio-is/project";
 import { nanoid } from "nanoid";
 import {
@@ -45,7 +45,7 @@ const createInstance = (
     props,
   }: {
     component: Instance["component"];
-    node: Node;
+    node: Root["children"][number];
     props: Array<Prop>;
   },
   options: Options
@@ -189,7 +189,6 @@ export const parse = (clipboardData: string, options?: Options) => {
   if (ast.children.length === 0) {
     return;
   }
-  console.log(JSON.stringify(ast, null, 2));
   return toInstancesData(ast, options);
 };
 
@@ -208,7 +207,9 @@ export const onPaste = (clipboardData: string) => {
     (rootInstance, props) => {
       const instancesIndex = createInstancesIndex(rootInstance);
       for (const instance of data.instances) {
-        insertInstanceMutable(instancesIndex, instance, dropTarget);
+        if (instance.type !== "text") {
+          insertInstanceMutable(instancesIndex, instance, dropTarget);
+        }
       }
       for (const prop of data.props) {
         props.set(prop.id, prop);
