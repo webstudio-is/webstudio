@@ -69,6 +69,7 @@ type TextFieldBaseWrapperProps<Item extends IntermediateItem> = Omit<
     containerRef?: RefObject<HTMLDivElement>;
     inputRef?: RefObject<HTMLInputElement>;
     onDuplicateItem: (id: Item["id"]) => void;
+    onConvertToToken: (id: Item["id"]) => void;
     onRemoveItem?: (item: Item) => void;
     onChangeItem?: (item: Item) => void;
     onDisableItem?: (item: Item) => void;
@@ -98,6 +99,7 @@ const TextFieldBase: ForwardRefRenderFunction<
     label,
     value,
     onDuplicateItem,
+    onConvertToToken,
     onRemoveItem,
     onChangeItem,
     onDisableItem,
@@ -158,6 +160,7 @@ const TextFieldBase: ForwardRefRenderFunction<
             onChangeItem?.({ ...item, label });
           }}
           onDuplicate={() => onDuplicateItem?.(item.id)}
+          onConvertToToken={() => onConvertToToken?.(item.id)}
           onRemove={() => {
             onRemoveItem?.(item);
           }}
@@ -192,6 +195,7 @@ type StyleSourceInputProps<Item extends IntermediateItem> = {
   onSelectAutocompleteItem?: (item: Item) => void;
   onRemoveItem?: (item: Item) => void;
   onDuplicateItem?: (id: Item["id"]) => void;
+  onConvertToToken?: (id: Item["id"]) => void;
   onCreateItem?: (label: string) => void;
   onChangeItem?: (item: Item) => void;
   onSelectItem?: (item?: Item) => void;
@@ -305,6 +309,7 @@ export const StyleSourceInput = <Item extends IntermediateItem>(
             {...inputProps}
             onRemoveItem={props.onRemoveItem}
             onDuplicateItem={props.onDuplicateItem}
+            onConvertToToken={props.onConvertToToken}
             onChangeItem={props.onChangeItem}
             onSelectItem={props.onSelectItem}
             onEditItem={props.onEditItem}
