@@ -2,7 +2,7 @@ import store from "immerhin";
 import { gfm } from "micromark-extension-gfm";
 import { fromMarkdown } from "mdast-util-from-markdown";
 import type { Instance, Prop } from "@webstudio-is/project-build";
-import type { Root } from "mdast-util-from-markdown/lib";
+import type { Node, Root } from "mdast-util-from-markdown/lib";
 import { utils } from "@webstudio-is/project";
 import { nanoid } from "nanoid";
 import {
@@ -21,7 +21,7 @@ const micromarkOptions = { extensions: [gfm()] };
 
 export const mimeType = "text/plain";
 
-// @todo List, ListItem, Definition, Strikethrough
+// @todo Definition, Strikethrough
 const astTypeComponentMap: Record<string, Instance["component"]> = {
   paragraph: "Paragraph",
   heading: "Heading",
@@ -32,9 +32,32 @@ const astTypeComponentMap: Record<string, Instance["component"]> = {
   blockquote: "Blockquote",
   code: "Code",
   inlineCode: "InlineCode",
+  list: "List",
+  listItem: "ListItem",
 };
 
 type Options = { generateId?: typeof nanoid };
+
+const createInstance = (
+  {
+    component,
+    node,
+    props,
+  }: {
+    component: Instance["component"];
+    node: Node;
+    props: Array<Prop>;
+  },
+  options: Options
+) => {
+  const { generateId = nanoid } = options;
+  return utils.tree.createInstance({
+    id: generateId(),
+    component,
+    children:
+      "children" in node ? toInstancesData(node, options, props).instances : [],
+  });
+};
 
 const toInstancesData = (
   ast: { children: Root["children"] },
@@ -55,14 +78,10 @@ const toInstancesData = (
 
     const component = astTypeComponentMap[child.type];
     if (component) {
-      const instance = utils.tree.createInstance({
-        id: generateId(),
-        component,
-        children:
-          "children" in child
-            ? toInstancesData(child, options, props).instances
-            : [],
-      });
+      const instance = createInstance(
+        { component, node: child, props },
+        options
+      );
       instances.push(instance);
       if (child.type === "heading") {
         props.push({
@@ -121,6 +140,27 @@ const toInstancesData = (
           });
         }
       }
+      if (child.type === "list") {
+        if (typeof child.ordered === "boolean") {
+          props.push({
+            id: generateId(),
+            type: "boolean",
+            name: "ordered",
+            instanceId: instance.id,
+            value: child.ordered,
+          });
+        }
+        if (typeof child.start === "number") {
+          props.push({
+            id: generateId(),
+            type: "number",
+            name: "start",
+            instanceId: instance.id,
+            value: child.start,
+          });
+        }
+      }
+
       if ("title" in child && child.title) {
         props.push({
           id: generateId(),

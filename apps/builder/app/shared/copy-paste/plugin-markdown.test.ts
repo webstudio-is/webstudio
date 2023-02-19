@@ -107,6 +107,14 @@ describe("Plugin Markdown", () => {
     ).toMatchSnapshot();
   });
 
+  test("list unordered", () => {
+    expect(parseInstanceData(parse("- one", options))).toMatchSnapshot();
+  });
+
+  test("list ordered", () => {
+    expect(parseInstanceData(parse("3. one", options))).toMatchSnapshot();
+  });
+
   // @todo For some reason doesn't work
   test.skip("strikethrough", () => {
     expect(
