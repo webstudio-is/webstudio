@@ -106,4 +106,11 @@ describe("Plugin Markdown", () => {
       parseInstanceData(parse("```js meta\nfoo\n```", options))
     ).toMatchSnapshot();
   });
+
+  // @todo For some reason doesn't work
+  test.skip("strikethrough", () => {
+    expect(
+      parseInstanceData(parse("~One~ ~~two~~ ~~~three~~~.", options))
+    ).toMatchSnapshot();
+  });
 });

@@ -1,7 +1,7 @@
 import store from "immerhin";
 import { gfm } from "micromark-extension-gfm";
 import { fromMarkdown } from "mdast-util-from-markdown";
-import { Code, Instance, Prop } from "@webstudio-is/project-build";
+import type { Instance, Prop } from "@webstudio-is/project-build";
 import type { Root } from "mdast-util-from-markdown/lib";
 import { utils } from "@webstudio-is/project";
 import { nanoid } from "nanoid";
@@ -130,7 +130,6 @@ const toInstancesData = (
           value: child.title,
         });
       }
-
       if ("alt" in child && child.alt) {
         props.push({
           id: generateId(),
