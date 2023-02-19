@@ -29,6 +29,7 @@ const astTypeComponentMap: Record<string, Instance["component"]> = {
   emphasis: "Italic",
   link: "RichTextLink",
   image: "Image",
+  blockquote: "Blockquote",
 };
 
 type Options = { generateId?: typeof nanoid };

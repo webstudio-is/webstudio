@@ -1,5 +1,31 @@
 // Jest Snapshot v1, https://goo.gl/fbAQLP
 
+exports[`Plugin Markdown blockquote 1`] = `
+{
+  "instances": [
+    {
+      "children": [
+        {
+          "children": [
+            {
+              "type": "text",
+              "value": "bar",
+            },
+          ],
+          "component": "Paragraph",
+          "id": "123",
+          "type": "instance",
+        },
+      ],
+      "component": "Blockquote",
+      "id": "123",
+      "type": "instance",
+    },
+  ],
+  "props": [],
+}
+`;
+
 exports[`Plugin Markdown bold 1 1`] = `
 {
   "instances": [

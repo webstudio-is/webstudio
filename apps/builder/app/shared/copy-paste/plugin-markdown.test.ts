@@ -92,4 +92,8 @@ describe("Plugin Markdown", () => {
       )
     ).toMatchSnapshot();
   });
+
+  test("blockquote", () => {
+    expect(parseInstanceData(parse("> bar", options))).toMatchSnapshot();
+  });
 });
