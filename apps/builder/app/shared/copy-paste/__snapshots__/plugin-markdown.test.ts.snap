@@ -322,7 +322,7 @@ exports[`Plugin Markdown link 1`] = `
               "value": "link",
             },
           ],
-          "component": "RichTextLink",
+          "component": "Link",
           "id": "123",
           "type": "instance",
         },
