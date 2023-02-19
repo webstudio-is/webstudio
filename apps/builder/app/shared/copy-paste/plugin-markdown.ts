@@ -21,22 +21,24 @@ const micromarkOptions = { extensions: [gfm()] };
 
 export const mimeType = "text/plain";
 
+// @todo List, ListItem, Definition, Code, Blockquote, Break, Image
 const astTypeComponentMap: Record<string, Instance["component"]> = {
   paragraph: "Paragraph",
   heading: "Heading",
   strong: "Bold",
   emphasis: "Italic",
+  link: "RichTextLink",
 };
 
 type Options = { generateId?: typeof nanoid };
 
 const toInstancesData = (
   ast: { children: Root["children"] },
-  options: Options = {}
+  options: Options = {},
+  props: Array<Prop> = []
 ): { instances: Instance["children"]; props: Array<Prop> } => {
   const { generateId = nanoid } = options;
   const instances: Instance["children"] = [];
-  const props: Array<Prop> = [];
 
   for (const child of ast.children) {
     const component = astTypeComponentMap[child.type];
@@ -45,16 +47,36 @@ const toInstancesData = (
         id: generateId(),
         component,
         children:
-          "children" in child ? toInstancesData(child, options).instances : [],
+          "children" in child
+            ? toInstancesData(child, options, props).instances
+            : [],
       });
       instances.push(instance);
-      if (component === "Heading" && "depth" in child) {
+      if (child.type === "heading") {
         props.push({
           id: generateId(),
           type: "string",
           name: "tag",
           instanceId: instance.id,
           value: `h${child.depth}`,
+        });
+      }
+      if (child.type === "link") {
+        props.push({
+          id: generateId(),
+          type: "string",
+          name: "href",
+          instanceId: instance.id,
+          value: child.url,
+        });
+      }
+      if ("title" in child && child.title) {
+        props.push({
+          id: generateId(),
+          type: "string",
+          name: "title",
+          instanceId: instance.id,
+          value: child.title,
         });
       }
     }

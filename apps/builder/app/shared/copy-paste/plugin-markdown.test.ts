@@ -56,4 +56,10 @@ describe("Plugin Markdown", () => {
   test("italic 2", () => {
     expect(parseInstanceData(parse("*italic*", options))).toMatchSnapshot();
   });
+
+  test("link", () => {
+    expect(
+      parseInstanceData(parse('[link](/uri "Title")', options))
+    ).toMatchSnapshot();
+  });
 });

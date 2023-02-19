@@ -158,6 +158,47 @@ exports[`Plugin Markdown italic 2 1`] = `
 }
 `;
 
+exports[`Plugin Markdown link 1`] = `
+{
+  "instances": [
+    {
+      "children": [
+        {
+          "children": [
+            {
+              "type": "text",
+              "value": "link",
+            },
+          ],
+          "component": "RichTextLink",
+          "id": "123",
+          "type": "instance",
+        },
+      ],
+      "component": "Paragraph",
+      "id": "123",
+      "type": "instance",
+    },
+  ],
+  "props": [
+    {
+      "id": "123",
+      "instanceId": "123",
+      "name": "href",
+      "type": "string",
+      "value": "/uri",
+    },
+    {
+      "id": "123",
+      "instanceId": "123",
+      "name": "title",
+      "type": "string",
+      "value": "Title",
+    },
+  ],
+}
+`;
+
 exports[`Plugin Markdown paragraph 1`] = `
 {
   "instances": [
