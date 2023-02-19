@@ -1,0 +1,178 @@
+// Jest Snapshot v1, https://goo.gl/fbAQLP
+
+exports[`Plugin Markdown bold 1 1`] = `
+{
+  "instances": [
+    {
+      "children": [
+        {
+          "children": [
+            {
+              "type": "text",
+              "value": "bold",
+            },
+          ],
+          "component": "Bold",
+          "id": "123",
+          "type": "instance",
+        },
+      ],
+      "component": "Paragraph",
+      "id": "123",
+      "type": "instance",
+    },
+  ],
+  "props": [],
+}
+`;
+
+exports[`Plugin Markdown bold 2 1`] = `
+{
+  "instances": [
+    {
+      "children": [
+        {
+          "children": [
+            {
+              "type": "text",
+              "value": "bold",
+            },
+          ],
+          "component": "Bold",
+          "id": "123",
+          "type": "instance",
+        },
+      ],
+      "component": "Paragraph",
+      "id": "123",
+      "type": "instance",
+    },
+  ],
+  "props": [],
+}
+`;
+
+exports[`Plugin Markdown h1 1`] = `
+{
+  "instances": [
+    {
+      "children": [
+        {
+          "type": "text",
+          "value": "heading",
+        },
+      ],
+      "component": "Heading",
+      "id": "123",
+      "type": "instance",
+    },
+  ],
+  "props": [
+    {
+      "id": "123",
+      "instanceId": "123",
+      "name": "tag",
+      "type": "string",
+      "value": "h1",
+    },
+  ],
+}
+`;
+
+exports[`Plugin Markdown h6 1`] = `
+{
+  "instances": [
+    {
+      "children": [
+        {
+          "type": "text",
+          "value": "heading",
+        },
+      ],
+      "component": "Heading",
+      "id": "123",
+      "type": "instance",
+    },
+  ],
+  "props": [
+    {
+      "id": "123",
+      "instanceId": "123",
+      "name": "tag",
+      "type": "string",
+      "value": "h6",
+    },
+  ],
+}
+`;
+
+exports[`Plugin Markdown italic 1 1`] = `
+{
+  "instances": [
+    {
+      "children": [
+        {
+          "children": [
+            {
+              "type": "text",
+              "value": "italic",
+            },
+          ],
+          "component": "Italic",
+          "id": "123",
+          "type": "instance",
+        },
+      ],
+      "component": "Paragraph",
+      "id": "123",
+      "type": "instance",
+    },
+  ],
+  "props": [],
+}
+`;
+
+exports[`Plugin Markdown italic 2 1`] = `
+{
+  "instances": [
+    {
+      "children": [
+        {
+          "children": [
+            {
+              "type": "text",
+              "value": "italic",
+            },
+          ],
+          "component": "Italic",
+          "id": "123",
+          "type": "instance",
+        },
+      ],
+      "component": "Paragraph",
+      "id": "123",
+      "type": "instance",
+    },
+  ],
+  "props": [],
+}
+`;
+
+exports[`Plugin Markdown paragraph 1`] = `
+{
+  "instances": [
+    {
+      "children": [
+        {
+          "type": "text",
+          "value": "xyz",
+        },
+      ],
+      "component": "Paragraph",
+      "id": "123",
+      "type": "instance",
+    },
+  ],
+  "props": [],
+}
+`;

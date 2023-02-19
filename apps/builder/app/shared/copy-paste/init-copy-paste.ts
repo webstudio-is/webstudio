@@ -28,15 +28,15 @@ const isValidClipboardEvent = (event: ClipboardEvent) => {
   return true;
 };
 
-type Props = {
+type Options = {
   mimeType?: string;
   onCopy?: () => undefined | string;
   onCut?: () => undefined | string;
   onPaste?: (data: string) => void;
 };
 
-export const initCopyPaste = (props: Props) => {
-  const { mimeType = "application/json", onCopy, onCut, onPaste } = props;
+export const initCopyPaste = (options: Options) => {
+  const { mimeType = "application/json", onCopy, onCut, onPaste } = options;
 
   const handleCopy = (event: ClipboardEvent) => {
     if (

@@ -97,9 +97,9 @@ const stringify = (data: InstanceData) => {
 
 const ClipboardData = z.object({ [version]: InstanceData });
 
-const parse = (text: string): InstanceData | undefined => {
+const parse = (clipboardData: string): InstanceData | undefined => {
   try {
-    const data = ClipboardData.parse(JSON.parse(text));
+    const data = ClipboardData.parse(JSON.parse(clipboardData));
     return data[version];
   } catch {
     return;
@@ -109,7 +109,6 @@ const parse = (text: string): InstanceData | undefined => {
 export const mimeType = "application/json";
 
 export const onPaste = (clipboardData: string) => {
-  console.log(111, clipboardData);
   const data = parse(clipboardData);
   if (data === undefined) {
     return;
