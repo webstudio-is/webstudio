@@ -9,6 +9,7 @@ import { callerLink } from "../trpc-caller-link";
 type SharedClientOptions = {
   url: string;
   token: string;
+  branchName: string | undefined;
 };
 
 export const createTrpcProxyServiceClient = (
@@ -21,6 +22,8 @@ export const createTrpcProxyServiceClient = (
           url: options.url,
           headers: () => ({
             Authorization: options.token,
+            // We use this header for SaaS preview service discovery proxy
+            "x-branch-name": options.branchName,
           }),
         }),
       ],

@@ -6,12 +6,9 @@ import {
   itemIndicatorCss,
   labelCss,
   separatorCss,
+  MenuCheckedIcon,
 } from "./menu";
-import {
-  CheckMarkIcon,
-  ChevronDownIcon,
-  ChevronUpIcon,
-} from "@webstudio-is/icons";
+import { ChevronDownIcon, ChevronUpIcon } from "@webstudio-is/icons";
 import { styled, theme } from "../stitches.config";
 
 const StyledTrigger = styled(SelectPrimitive.Trigger, {
@@ -101,7 +98,7 @@ export const SelectScrollDownButton = styled(
 );
 
 const SelectItemBase = (
-  { children, icon = <CheckMarkIcon />, ...props }: SelectItemProps,
+  { children, icon = <MenuCheckedIcon />, ...props }: SelectItemProps,
   forwardedRef: Ref<HTMLDivElement>
 ) => {
   return (

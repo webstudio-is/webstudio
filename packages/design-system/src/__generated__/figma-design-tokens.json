@@ -601,7 +601,7 @@
           "value": "#11181c",
           "type": "color"
         },
-        "designer": {
+        "builder": {
           "value": "#ffffff",
           "type": "color"
         }
@@ -1165,8 +1165,6 @@
   },
   "$themes": [],
   "$metadata": {
-    "tokenSetOrder": [
-      "global"
-    ]
+    "tokenSetOrder": ["global"]
   }
 }

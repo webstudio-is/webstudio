@@ -1,5 +1,5 @@
 import { units } from "./__generated__/units";
-import { properties } from "./__generated__/properties";
+import type { properties } from "./__generated__/properties";
 import { z } from "zod";
 import { ImageAsset } from "@webstudio-is/asset-uploader";
 
@@ -45,6 +45,14 @@ const KeywordValue = z.object({
 });
 export type KeywordValue = z.infer<typeof KeywordValue>;
 
+/**
+ * Valid unparsed css value
+ **/
+const UnparsedValue = z.object({
+  type: z.literal("unparsed"),
+  value: z.string(),
+});
+
 const FontFamilyValue = z.object({
   type: z.literal("fontFamily"),
   value: z.array(z.string()),
@@ -87,6 +95,7 @@ export const validStaticValueTypes = [
   "fontFamily",
   "rgb",
   "image",
+  "unparsed",
 ] as const;
 
 /**
@@ -98,6 +107,7 @@ const SharedStaticStyleValue = z.union([
   KeywordValue,
   FontFamilyValue,
   RgbValue,
+  UnparsedValue,
 ]);
 
 const ValidStaticStyleValue = z.union([ImageValue, SharedStaticStyleValue]);
@@ -142,15 +152,3 @@ export const CssRule = z.object({
 });
 
 export type CssRule = z.infer<typeof CssRule>;
-
-export const Breakpoint = z.object({
-  id: z.string(),
-  label: z.string(),
-  minWidth: z.number(),
-});
-
-export type Breakpoint = z.infer<typeof Breakpoint>;
-
-export const Breakpoints = z.array(Breakpoint);
-
-export type Breakpoints = z.infer<typeof Breakpoints>;

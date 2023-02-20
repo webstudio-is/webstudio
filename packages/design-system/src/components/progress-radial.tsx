@@ -1,5 +1,5 @@
 import React from "react";
-import { CSS } from "../stitches.config";
+import type { CSS } from "../stitches.config";
 import * as ProgressPrimitive from "@radix-ui/react-progress";
 import { Box } from "./box";
 

@@ -1,5 +1,7 @@
-import type { Breakpoint, Style } from "@webstudio-is/css-data";
+import type { Style } from "@webstudio-is/css-data";
 import type {
+  Breakpoint,
+  StyleDecl,
   Styles,
   StyleSource,
   StyleSourceSelections,
@@ -16,14 +18,14 @@ type StyleRule = {
  * and group by instance and breakpoint
  */
 export const getStyleRules = (
-  styles?: Styles,
-  styleSourceSelections?: StyleSourceSelections
+  styles: Styles,
+  styleSourceSelections: StyleSourceSelections
 ) => {
   if (styles === undefined || styleSourceSelections === undefined) {
     return [];
   }
-  const stylesByStyleSourceId = new Map<StyleSource["id"], Styles>();
-  for (const styleDecl of styles) {
+  const stylesByStyleSourceId = new Map<StyleSource["id"], StyleDecl[]>();
+  for (const styleDecl of styles.values()) {
     const { styleSourceId } = styleDecl;
     let styleSourceStyles = stylesByStyleSourceId.get(styleSourceId);
     // instance can be undefined when style is from other tree
@@ -35,7 +37,7 @@ export const getStyleRules = (
   }
 
   const styleRules: StyleRule[] = [];
-  for (const { instanceId, values } of styleSourceSelections) {
+  for (const { instanceId, values } of styleSourceSelections.values()) {
     const styleRuleByBreakpointId = new Map<Breakpoint["id"], StyleRule>();
 
     for (const styleSourceId of values) {

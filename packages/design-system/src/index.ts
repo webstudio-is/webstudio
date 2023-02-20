@@ -14,6 +14,7 @@ export * from "./components/dropdown-menu";
 export * from "./components/icon-button"; // mostly aligned, but needs a demo and to use tokens
 export * from "./components/dialog";
 export * from "./components/floating-panel-popover";
+export * from "./components/popover";
 export { MenuItemButton } from "./components/menu";
 export * from "./components/switch";
 export * from "./components/toolbar";

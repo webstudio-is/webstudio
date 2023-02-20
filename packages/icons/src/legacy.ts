@@ -4,7 +4,6 @@ export {
   FontItalicIcon,
   Link2Icon,
   PlusIcon,
-  HamburgerMenuIcon,
   DotsHorizontalIcon,
   CheckIcon,
   RocketIcon,

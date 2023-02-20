@@ -1,4 +1,4 @@
-import { StyleElement } from "./style-element";
+import type { StyleElement } from "./style-element";
 
 export class StyleSheet {
   #cssText = "";

@@ -1,6 +1,6 @@
 {
   "name": "@webstudio-is/css-engine",
-  "version": "0.24.0",
+  "version": "0.35.0",
   "description": "CSS Renderer for Webstudio",
   "author": "Webstudio <github@webstudio.is>",
   "homepage": "https://webstudio.is",
@@ -35,7 +35,7 @@
     "@webstudio-is/storybook-config": "workspace:^",
     "@webstudio-is/tsconfig": "workspace:^",
     "jest": "^29.3.1",
-    "typescript": "4.7.4"
+    "typescript": "4.9.5"
   },
   "exports": "./lib/index.js",
   "types": "src/index.ts",

@@ -1,6 +1,6 @@
 {
   "name": "@webstudio-is/react-sdk",
-  "version": "0.24.0",
+  "version": "0.35.0",
   "description": "Webstudio JavaScript / TypeScript API",
   "author": "Webstudio <github@webstudio.is>",
   "homepage": "https://webstudio.is",
@@ -10,7 +10,7 @@
     "build": "build-package",
     "build:args": "generate-arg-types './src/components/*.tsx !./src/**/*.stories.tsx !./src/**/*.ws.tsx' && prettier --write \"**/*.props.json\"",
     "typecheck": "tsc --noEmit",
-    "test": "NODE_OPTIONS=--experimental-vm-modules jest",
+    "test": "NODE_OPTIONS=--experimental-vm-modules jest --passWithNoTests",
     "lint": "eslint ./src --ext .ts,.tsx --max-warnings 0",
     "checks": "pnpm typecheck && pnpm lint && pnpm test",
     "storybook:run": "start-storybook -p 6006",
@@ -28,7 +28,6 @@
     "@types/node": "^18.11.18",
     "@types/react": "^17.0.24",
     "@types/react-dom": "^17.0.9",
-    "@webstudio-is/generate-arg-types": "workspace:^",
     "@webstudio-is/jest-config": "workspace:^",
     "@webstudio-is/scripts": "workspace:^",
     "@webstudio-is/storybook-config": "workspace:^",
@@ -41,7 +40,7 @@
     "react-dom": "^17.0.2",
     "remix-utils": "^4.1.0",
     "tsx": "^3.9.0",
-    "typescript": "4.7.4",
+    "typescript": "4.9.5",
     "zod": "^3.19.1"
   },
   "peerDependencies": {
@@ -56,6 +55,7 @@
     "@nanostores/react": "^0.4.1",
     "@webstudio-is/asset-uploader": "workspace:^",
     "@webstudio-is/css-data": "workspace:^",
+    "@webstudio-is/generate-arg-types": "workspace:^",
     "@webstudio-is/icons": "workspace:^",
     "@webstudio-is/image": "workspace:^",
     "@webstudio-is/prisma-client": "workspace:^",

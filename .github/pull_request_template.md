@@ -22,6 +22,6 @@
 ## Before merging
 
 - [ ] tested locally and on preview environment (preview dev login: 5de6)
-- [ ] updated [test cases](https://github.com/webstudio-is/webstudio-designer/blob/main/apps/designer/docs/test-cases.md) document
+- [ ] updated [test cases](https://github.com/webstudio-is/webstudio-builder/blob/main/apps/builder/docs/test-cases.md) document
 - [ ] added tests
-- [ ] if any new env variables are added, added them to `.env.example` and the `designer/env-check.js` if mandatory
+- [ ] if any new env variables are added, added them to `.env.example` and the `builder/env-check.js` if mandatory

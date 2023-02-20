@@ -1,5 +1,5 @@
 import { useMemo, useState } from "react";
-import { DropTarget, Placement } from "../primitives/dnd";
+import type { DropTarget, Placement } from "../primitives/dnd";
 import { getPlacementIndicatorAlignment } from "./tree-node";
 
 export type ShiftedDropTarget<Data> = {

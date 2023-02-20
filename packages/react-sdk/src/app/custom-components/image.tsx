@@ -44,12 +44,12 @@ export const Image = forwardRef<ElementRef<typeof defaultTag>, Props>(
     return (
       <WebstudioImage
         /**
-         * `key` is needed to recreate the image in case of asset change in designer,
+         * `key` is needed to recreate the image in case of asset change in builder,
          * this gives immediate feedback when an asset is changed.
          * Also, it visually fixes image distortion when another asset has a seriously different  aspectRatio
          * (we change aspectRatio CSS prop on asset change)
          *
-         * In non-designer mode, key on images are usually also a good idea,
+         * In non-builder mode, key on images are usually also a good idea,
          * prevents showing outdated images on route change.
          **/
         key={src}

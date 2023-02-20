@@ -34,6 +34,15 @@ export const StyleDecl = z.object({
 
 export type StyleDecl = z.infer<typeof StyleDecl>;
 
-export const Styles = z.array(StyleDecl);
+export type StyleDeclKey =
+  `${StyleDecl["styleSourceId"]}:${StyleDecl["breakpointId"]}:${StyleDecl["property"]}`;
+
+export const getStyleDeclKey = (
+  styleDecl: Omit<StyleDecl, "value">
+): StyleDeclKey => {
+  return `${styleDecl.styleSourceId}:${styleDecl.breakpointId}:${styleDecl.property}`;
+};
+
+export const Styles = z.map(z.string() as z.ZodType<StyleDeclKey>, StyleDecl);
 
 export type Styles = z.infer<typeof Styles>;

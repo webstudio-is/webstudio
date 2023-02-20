@@ -19,17 +19,10 @@ export const StyleSource = z.union([StyleSourceToken, StyleSourceLocal]);
 
 export type StyleSource = z.infer<typeof StyleSource>;
 
-export const StyleSources = z.array(StyleSource);
+export const StyleSourcesList = z.array(StyleSource);
+
+export type StyleSourcesList = z.infer<typeof StyleSourcesList>;
+
+export const StyleSources = z.map(StyleSourceId, StyleSource);
 
 export type StyleSources = z.infer<typeof StyleSources>;
-
-export const StyleSourceSelection = z.object({
-  instanceId: z.string(),
-  values: z.array(StyleSourceId),
-});
-
-export type StyleSourceSelection = z.infer<typeof StyleSourceSelection>;
-
-export const StyleSourceSelections = z.array(StyleSourceSelection);
-
-export type StyleSourceSelections = z.infer<typeof StyleSourceSelections>;

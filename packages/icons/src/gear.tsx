@@ -1,6 +1,6 @@
 import { cssVars } from "@webstudio-is/css-vars";
 import * as React from "react";
-import { IconProps } from "./types";
+import type { IconProps } from "./types";
 
 const fillVar = cssVars.define("fill");
 

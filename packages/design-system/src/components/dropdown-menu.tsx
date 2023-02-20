@@ -4,7 +4,7 @@ import {
   type ElementRef,
   type ReactNode,
 } from "react";
-import { CheckMarkIcon, ChevronFilledRightIcon } from "@webstudio-is/icons";
+import { ChevronFilledRightIcon } from "@webstudio-is/icons";
 import { styled } from "../stitches.config";
 import * as DropdownMenuPrimitive from "@radix-ui/react-dropdown-menu";
 import {
@@ -15,6 +15,7 @@ import {
   labelCss,
   itemIndicatorCss,
   subContentProps,
+  MenuCheckedIcon,
 } from "./menu";
 export { DropdownMenuArrow } from "./menu";
 
@@ -95,7 +96,7 @@ const StyledRadioItem = styled(DropdownMenuPrimitive.RadioItem, itemCss);
 export const DropdownMenuRadioItem = forwardRef<
   ElementRef<typeof StyledRadioItem>,
   ComponentProps<typeof StyledRadioItem> & { icon?: ReactNode }
->(({ children, icon = <CheckMarkIcon />, ...props }, forwardedRef) => (
+>(({ children, icon = <MenuCheckedIcon />, ...props }, forwardedRef) => (
   <StyledRadioItem withIndicator {...props} ref={forwardedRef}>
     <Indicator>{icon}</Indicator>
     {children}
@@ -107,7 +108,7 @@ const StyledCheckboxItem = styled(DropdownMenuPrimitive.CheckboxItem, itemCss);
 export const DropdownMenuCheckboxItem = forwardRef<
   ElementRef<typeof StyledCheckboxItem>,
   ComponentProps<typeof StyledCheckboxItem> & { icon?: ReactNode }
->(({ children, icon = <CheckMarkIcon />, ...props }, forwardedRef) => (
+>(({ children, icon = <MenuCheckedIcon />, ...props }, forwardedRef) => (
   <StyledCheckboxItem withIndicator {...props} ref={forwardedRef}>
     <Indicator>{icon}</Indicator>
     {children}

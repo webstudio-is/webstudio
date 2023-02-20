@@ -1,13 +1,17 @@
 import slugify from "slugify";
 import { customAlphabet } from "nanoid";
+import { v4 as uuid } from "uuid";
 import { prisma, Prisma } from "@webstudio-is/prisma-client";
-import * as db from "./index";
+import { cloneAssets } from "@webstudio-is/asset-uploader/server";
 import {
   authorizeProject,
   type AppContext,
 } from "@webstudio-is/trpc-interface/server";
-import { v4 as uuid } from "uuid";
-import { Project, Projects, Title } from "../shared/schema";
+import {
+  createBuild,
+  loadBuildByProjectId,
+} from "@webstudio-is/project-build/server";
+import { Project, Title } from "../shared/schema";
 
 const nanoid = customAlphabet("1234567890abcdefghijklmnopqrstuvwxyz");
 
@@ -34,7 +38,7 @@ export const loadById = async (
   }
 
   const data = await prisma.project.findUnique({
-    where: { id: projectId },
+    where: { id_isDeleted: { id: projectId, isDeleted: false } },
   });
 
   return Project.parse(data);
@@ -46,7 +50,9 @@ export const loadByDomain = async (
 ): Promise<Project | null> => {
   // The authorization system needs the project id to check if the user has access to the project
   const projectWithId = await prisma.project.findUnique({
-    where: { domain: domain.toLowerCase() },
+    where: {
+      domain_isDeleted: { domain: domain.toLowerCase(), isDeleted: false },
+    },
   });
 
   if (projectWithId === null) {
@@ -61,25 +67,6 @@ export const loadByDomain = async (
 
   // Otherwise, check if the user has access to the project
   return await loadById(projectWithId.id, context);
-};
-
-export const loadManyByCurrentUserId = async (
-  context: AppContext
-): Promise<Projects> => {
-  const userId = context.authorization.userId;
-  if (userId === undefined) {
-    throw new Error("The user must be authenticated to list projects");
-  }
-
-  const data = await prisma.project.findMany({
-    where: {
-      user: {
-        id: userId,
-      },
-    },
-  });
-
-  return Projects.parse(data);
 };
 
 const slugifyOptions = { lower: true, strict: true };
@@ -121,7 +108,7 @@ export const create = async (
       },
     });
 
-    await db.build.create(
+    await createBuild(
       { projectId: project.id, env: "dev", sourceBuild: undefined },
       context,
       client
@@ -201,26 +188,41 @@ const clone = async (
 
   const build =
     env === "dev"
-      ? await db.build.loadByProjectId(project.id, "dev")
-      : await db.build.loadByProjectId(project.id, "prod");
+      ? await loadBuildByProjectId(project.id, "dev")
+      : await loadBuildByProjectId(project.id, "prod");
 
-  const projectId = uuid();
-  authorizeProject.registerProjectOwner({ projectId }, context);
+  const newProjectId = uuid();
+  await authorizeProject.registerProjectOwner(
+    { projectId: newProjectId },
+    context
+  );
 
   const clonedProject = await prisma.$transaction(async (client) => {
     const clonedProject = await client.project.create({
       data: {
-        id: projectId,
+        id: newProjectId,
         userId: userId,
         title: title ?? project.title,
         domain: generateDomain(project.title),
       },
     });
 
-    await db.build.create(
-      { projectId: clonedProject.id, env: "dev", sourceBuild: build },
+    await createBuild(
+      { projectId: newProjectId, env: "dev", sourceBuild: build },
       context,
       client
+    );
+
+    await cloneAssets(
+      {
+        fromProjectId: project.id,
+        toProjectId: newProjectId,
+
+        // Permission check on newProjectId will fail until this transaction is committed.
+        // We have to skip it, but it's ok because registerProjectOwner is right above
+        dontCheckEditPermission: true,
+      },
+      context
     );
 
     return clonedProject;

@@ -1,6 +1,6 @@
 {
   "name": "@webstudio-is/css-vars",
-  "version": "0.24.0",
+  "version": "0.35.0",
   "description": "CSS vars utility",
   "author": "Webstudio <github@webstudio.is>",
   "homepage": "https://webstudio.is",
@@ -12,11 +12,10 @@
     "build": "build-package",
     "lint": "eslint ./src --ext .ts,.tsx --max-warnings 0"
   },
-  "dependencies": {},
   "devDependencies": {
     "@webstudio-is/scripts": "workspace:^",
     "@webstudio-is/tsconfig": "workspace:^",
-    "typescript": "4.7.4"
+    "typescript": "4.9.5"
   },
   "module": "./lib/index.js",
   "exports": {

@@ -1,4 +1,4 @@
-import { ComponentMeta } from "@storybook/react";
+import type { ComponentMeta } from "@storybook/react";
 import { useState, useRef } from "react";
 import { Box } from "../../box";
 import { styled } from "../../../stitches.config";

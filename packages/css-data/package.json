@@ -1,6 +1,6 @@
 {
   "name": "@webstudio-is/css-data",
-  "version": "0.24.0",
+  "version": "0.35.0",
   "description": "CSS Data",
   "author": "Webstudio <github@webstudio.is>",
   "homepage": "https://webstudio.is",
@@ -13,16 +13,15 @@
     "build:mdn-data": "tsx ./bin/mdn-data.ts ./src/__generated__ &&  prettier --write \"./src/__generated__/**/*.ts\"",
     "lint": "eslint ./src --ext .ts,.tsx --max-warnings 0"
   },
-  "dependencies": {},
   "devDependencies": {
     "@types/css-tree": "^2.0.0",
+    "@webstudio-is/asset-uploader": "workspace:^",
     "@webstudio-is/scripts": "workspace:^",
     "@webstudio-is/tsconfig": "workspace:^",
-    "@webstudio-is/asset-uploader": "workspace:^",
     "camelcase": "^6.3.0",
-    "css-tree": "^2.3.0",
+    "css-tree": "^2.3.1",
     "mdn-data": "2.0.30",
-    "typescript": "4.7.4",
+    "typescript": "4.9.5",
     "zod": "^3.19.1"
   },
   "peerDependencies": {

@@ -1,5 +1,5 @@
 import { FONT_FORMATS } from "./constants";
-import type { FontMeta, FontFormat } from "./schema";
+import type { FontMeta, FontFormat, FontMetaStatic } from "./schema";
 
 export type PartialFontAsset = {
   format: FontFormat;
@@ -9,13 +9,25 @@ export type PartialFontAsset = {
 
 export type FontFace = {
   fontFamily: string;
-  fontStyle: FontMeta["style"];
-  fontWeight: number;
   fontDisplay: "swap" | "auto" | "block" | "fallback" | "optional";
   src: string;
+  fontStyle?: FontMetaStatic["style"];
+  fontWeight?: number | string;
+  fontStretch?: string;
 };
 
-const formatFace = (asset: PartialFontAsset, format: string) => {
+const formatFace = (asset: PartialFontAsset, format: string): FontFace => {
+  if ("variationAxes" in asset.meta) {
+    const { wght, wdth } = asset.meta?.variationAxes ?? {};
+    return {
+      fontFamily: asset.meta.family,
+      fontStyle: "normal",
+      fontDisplay: "swap",
+      src: `url('${asset.path}') format('${format}')`,
+      fontStretch: wdth ? `${wdth.min}% ${wdth.max}%` : undefined,
+      fontWeight: wght ? `${wght.min} ${wght.max}` : undefined,
+    };
+  }
   return {
     fontFamily: asset.meta.family,
     fontStyle: asset.meta.style,
@@ -25,15 +37,20 @@ const formatFace = (asset: PartialFontAsset, format: string) => {
   };
 };
 
-const getKey = (asset: PartialFontAsset) =>
-  asset.meta.family + asset.meta.style + asset.meta.weight;
+const getKey = (asset: PartialFontAsset) => {
+  if ("variationAxes" in asset.meta) {
+    return asset.meta.family + Object.values(asset.meta.variationAxes).join("");
+  }
+  return asset.meta.family + asset.meta.style + asset.meta.weight;
+};
 
 export const getFontFaces = (
   assets: Array<PartialFontAsset>
 ): Array<FontFace> => {
   const faces = new Map();
   for (const asset of assets) {
-    const face = faces.get(getKey(asset));
+    const assetKey = getKey(asset);
+    const face = faces.get(assetKey);
     const format = FONT_FORMATS.get(asset.format);
     if (format === undefined) {
       // Should never happen since we allow only uploading formats we support
@@ -42,7 +59,7 @@ export const getFontFaces = (
 
     if (face === undefined) {
       const face = formatFace(asset, format);
-      faces.set(getKey(asset), face);
+      faces.set(assetKey, face);
       continue;
     }
 
