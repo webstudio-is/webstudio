@@ -103,7 +103,8 @@ export const ColorPicker = ({
   // @todo transparent icon can be better
   const background =
     rgbValue.a < 1
-      ? `repeating-conic-gradient(rgba(0,0,0,0.25) 0% 25%, transparent 0% 50%) 50% / 33.33% 33.33%, ${toValue(
+      ? // chessboard 5x5
+        `repeating-conic-gradient(rgba(0,0,0,0.25) 0% 25%, transparent 0% 50%) 0% 33.33% / 40% 40%, ${toValue(
           value
         )}`
       : toValue(value);
