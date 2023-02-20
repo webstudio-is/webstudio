@@ -19,7 +19,7 @@ import {
   instancesIndexStore,
   selectedInstanceIdStore,
 } from "~/shared/nano-states";
-import { useInstanceStyleData } from "./shared/style-instance-style-data";
+import { useInstanceStyleData } from "./shared/style-info";
 
 // Finds a property/value by using any available form: property, label, value
 const filterProperties = (
