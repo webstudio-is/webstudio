@@ -200,9 +200,9 @@ export type IntermediateStyleValue = {
   unit?: Unit;
 };
 
-type CssValueInputValue = StyleValue | IntermediateStyleValue;
+export type CssValueInputValue = StyleValue | IntermediateStyleValue;
 
-type ChangeReason =
+export type ChangeReason =
   | "enter"
   | "blur"
   | "unit-select"
