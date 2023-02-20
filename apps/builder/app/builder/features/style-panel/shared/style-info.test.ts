@@ -62,7 +62,7 @@ cascadingStylesByInstanceId.set(selectedInstanceId, [
 const rootInstance: Instance = {
   type: "instance",
   id: "1",
-  component: "Body",
+  component: "Box",
   children: [
     {
       type: "instance",
@@ -157,6 +157,13 @@ test("compute inherited styles", () => {
     )
   ).toMatchInlineSnapshot(`
     {
+      "boxSizing": {
+        "instanceId": "2",
+        "value": {
+          "type": "keyword",
+          "value": "border-box",
+        },
+      },
       "fontSize": {
         "instanceId": "1",
         "value": {
