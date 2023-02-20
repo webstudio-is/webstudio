@@ -14,10 +14,9 @@ import type {
 
 import {
   Box,
-  DeprecatedPopover,
-  DeprecatedPopoverTrigger,
-  DeprecatedPopoverContent,
-  DeprecatedPopoverPortal,
+  Popover,
+  PopoverTrigger,
+  PopoverContent,
   css,
 } from "@webstudio-is/design-system";
 import { toValue } from "@webstudio-is/css-engine";
@@ -111,12 +110,12 @@ export const ColorPicker = ({
       : toValue(value);
 
   const prefix = (
-    <DeprecatedPopover
+    <Popover
       modal
       open={displayColorPicker}
       onOpenChange={setDisplayColorPicker}
     >
-      <DeprecatedPopoverTrigger
+      <PopoverTrigger
         asChild
         aria-label="Open color picker"
         onClick={() => setDisplayColorPicker((shown) => !shown)}
@@ -130,27 +129,26 @@ export const ColorPicker = ({
             background,
           }}
         />
-      </DeprecatedPopoverTrigger>
-      <DeprecatedPopoverPortal>
-        <DeprecatedPopoverContent>
-          <SketchPicker
-            color={rgbValue}
-            onChange={(color: ColorResult) => {
-              onChange(colorResultToRgbValue(color.rgb));
-            }}
-            onChangeComplete={(color: ColorResult) => {
-              onChangeComplete({
-                value: colorResultToRgbValue(color.rgb),
-              });
-            }}
-            // @todo to remove both when we have preset colors
-            presetColors={[]}
-            className={pickerStyle()}
-            styles={defaultPickerStyles}
-          />
-        </DeprecatedPopoverContent>
-      </DeprecatedPopoverPortal>
-    </DeprecatedPopover>
+      </PopoverTrigger>
+
+      <PopoverContent>
+        <SketchPicker
+          color={rgbValue}
+          onChange={(color: ColorResult) => {
+            onChange(colorResultToRgbValue(color.rgb));
+          }}
+          onChangeComplete={(color: ColorResult) => {
+            onChangeComplete({
+              value: colorResultToRgbValue(color.rgb),
+            });
+          }}
+          // @todo to remove both when we have preset colors
+          presetColors={[]}
+          className={pickerStyle()}
+          styles={defaultPickerStyles}
+        />
+      </PopoverContent>
+    </Popover>
   );
 
   return (
