@@ -12,13 +12,14 @@ import {
 import { InstanceTreeNode } from "~/builder/shared/tree";
 import {
   createInstancesIndex,
+  getInstanceAncestorsAndSelf,
   insertInstanceMutable,
   reparentInstanceMutable,
 } from "~/shared/tree-utils";
 
 export const TreePrevew = () => {
   const [rootInstance] = useRootInstance();
-  const { instancesById } = useStore(instancesIndexStore);
+  const instancesIndex = useStore(instancesIndexStore);
   const [dragAndDropState] = useDragAndDropState();
 
   const dragItemInstance = dragAndDropState.dragItem;
@@ -35,6 +36,7 @@ export const TreePrevew = () => {
       return null;
     }
 
+    const { instancesById } = instancesIndex;
     const isNew = instancesById.get(dragItemInstance.id) === undefined;
 
     const instance: Instance = produce<Instance>((draft) => {
@@ -56,9 +58,10 @@ export const TreePrevew = () => {
       }
     })(rootInstance);
 
-    const dropTargetPath = utils.tree
-      .getInstancePath(rootInstance, dropTargetInstanceId)
-      .map((item) => item.id);
+    const dropTargetPath = getInstanceAncestorsAndSelf(
+      instancesIndex,
+      dropTargetInstanceId
+    ).map((item) => item.id);
 
     return {
       itemData: instance,
@@ -69,7 +72,7 @@ export const TreePrevew = () => {
     };
   }, [
     rootInstance,
-    instancesById,
+    instancesIndex,
     dragItemInstance,
     dropTargetInstanceId,
     dropTargetPosition,

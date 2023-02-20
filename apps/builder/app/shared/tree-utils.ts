@@ -28,7 +28,7 @@ const traverseInstances = (
   }
 };
 
-type InstancesIndex = {
+export type InstancesIndex = {
   rootInstanceId: undefined | Instance["id"];
   instancesById: Map<Instance["id"], Instance>;
   parentInstancesById: Map<Instance["id"], Instance>;
@@ -162,6 +162,20 @@ export const reparentInstanceMutable = (
   } else {
     nextParent.children.splice(nextPosition, 0, instance);
   }
+};
+
+export const getInstanceAncestorsAndSelf = (
+  instancesIndex: InstancesIndex,
+  instanceId: Instance["id"]
+) => {
+  const { instancesById, parentInstancesById } = instancesIndex;
+  const path = [];
+  let instance = instancesById.get(instanceId);
+  while (instance) {
+    path.unshift(instance);
+    instance = parentInstancesById.get(instance.id);
+  }
+  return path;
 };
 
 export const findSubtree = (

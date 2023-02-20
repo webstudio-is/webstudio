@@ -10,14 +10,18 @@ import type {
   StyleSource as StyleSourceType,
 } from "@webstudio-is/project-build";
 import {
+  instancesIndexStore,
   selectedInstanceBrowserStyleStore,
   selectedInstanceIdStore,
   selectedStyleSourceStore,
   stylesIndexStore,
   useBreakpoints,
-  useRootInstance,
 } from "~/shared/nano-states";
 import { selectedBreakpointStore } from "~/shared/nano-states/breakpoints";
+import {
+  type InstancesIndex,
+  getInstanceAncestorsAndSelf,
+} from "~/shared/tree-utils";
 
 type CascadedValueInfo = {
   breakpointId: string;
@@ -144,15 +148,18 @@ export const getCascadedInfo = (
  * including active breakpoints
  */
 export const getInheritedInfo = (
-  rootInstance: Instance,
+  instancesIndex: InstancesIndex,
   stylesByInstanceId: Map<Instance["id"], StyleDecl[]>,
   instanceId: string,
   cascadedBreakpointIds: string[],
   selectedBreakpointId: string
 ) => {
   const inheritedStyle: InheritedProperties = {};
-  const ancestors = utils.tree.getInstancePath(rootInstance, instanceId);
-  for (const ancestorInstance of ancestors) {
+  const ancestorsAndSelf = getInstanceAncestorsAndSelf(
+    instancesIndex,
+    instanceId
+  );
+  for (const ancestorInstance of ancestorsAndSelf) {
     // skip current element
     if (ancestorInstance.id === instanceId) {
       continue;
@@ -196,7 +203,7 @@ export const useStyleInfo = () => {
   const selectedStyleSource = useStore(selectedStyleSourceStore);
   const selectedStyleSourceId = selectedStyleSource?.id;
   const browserStyle = useStore(selectedInstanceBrowserStyleStore);
-  const [rootInstance] = useRootInstance();
+  const instancesIndex = useStore(instancesIndexStore);
   const { stylesByInstanceId, stylesByStyleSourceId } =
     useStore(stylesIndexStore);
 
@@ -221,21 +228,20 @@ export const useStyleInfo = () => {
 
   const inheritedInfo = useMemo(() => {
     if (
-      rootInstance === undefined ||
       selectedBreakpointId === undefined ||
       selectedInstanceId === undefined
     ) {
       return {};
     }
     return getInheritedInfo(
-      rootInstance,
+      instancesIndex,
       stylesByInstanceId,
       selectedInstanceId,
       cascadedBreakpointIds,
       selectedBreakpointId
     );
   }, [
-    rootInstance,
+    instancesIndex,
     stylesByInstanceId,
     cascadedBreakpointIds,
     selectedBreakpointId,

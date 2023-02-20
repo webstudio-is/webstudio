@@ -1,13 +1,17 @@
+import { useMemo } from "react";
 import { useStore } from "@nanostores/react";
 import { ChevronRightIcon } from "@webstudio-is/icons";
 import {
+  theme,
   DeprecatedButton,
   Flex,
   DeprecatedText2,
 } from "@webstudio-is/design-system";
-import { theme } from "@webstudio-is/design-system";
-import { selectedInstanceIdStore } from "~/shared/nano-states";
-import { useSelectedInstancePath } from "~/builder/shared/instance/use-selected-instance-path";
+import {
+  instancesIndexStore,
+  selectedInstanceIdStore,
+} from "~/shared/nano-states";
+import { getInstanceAncestorsAndSelf } from "~/shared/tree-utils";
 
 type BreadcrumbProps = {
   children: JSX.Element | string;
@@ -35,8 +39,16 @@ const Breadcrumb = ({ children, onClick }: BreadcrumbProps) => {
 };
 
 export const Breadcrumbs = () => {
+  const instancesIndex = useStore(instancesIndexStore);
   const selectedInstanceId = useStore(selectedInstanceIdStore);
-  const selectedInstancePath = useSelectedInstancePath(selectedInstanceId);
+
+  const selectedInstancePath = useMemo(() => {
+    if (selectedInstanceId === undefined) {
+      return [];
+    }
+    return getInstanceAncestorsAndSelf(instancesIndex, selectedInstanceId);
+  }, [selectedInstanceId, instancesIndex]);
+
   return (
     <Flex align="center" css={{ height: "100%" }}>
       {selectedInstancePath.length === 0 ? (
