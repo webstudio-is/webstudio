@@ -282,3 +282,69 @@ export const useStyleInfo = () => {
 
   return styleInfoData;
 };
+
+export const useInstanceStyleData = (
+  instanceId: Instance["id"] | undefined
+) => {
+  const instancesIndex = useStore(instancesIndexStore);
+  const { stylesByInstanceId } = useStore(stylesIndexStore);
+  const [breakpoints] = useBreakpoints();
+  const selectedBreakpoint = useStore(selectedBreakpointStore);
+  const selectedBreakpointId = selectedBreakpoint?.id;
+
+  const cascadedBreakpointIds = useMemo(
+    () => getCascadedBreakpointIds(breakpoints, selectedBreakpointId),
+    [breakpoints, selectedBreakpointId]
+  );
+
+  const selfAndCascadeInfo = useMemo(() => {
+    if (instanceId === undefined || selectedBreakpointId === undefined) {
+      return {};
+    }
+    return getCascadedInfo(stylesByInstanceId, instanceId, [
+      ...cascadedBreakpointIds,
+      selectedBreakpointId,
+    ]);
+  }, [
+    stylesByInstanceId,
+    instanceId,
+    cascadedBreakpointIds,
+    selectedBreakpointId,
+  ]);
+
+  const inheritedInfo = useMemo(() => {
+    if (selectedBreakpointId === undefined || instanceId === undefined) {
+      return {};
+    }
+    return getInheritedInfo(
+      instancesIndex,
+      stylesByInstanceId,
+      instanceId,
+      cascadedBreakpointIds,
+      selectedBreakpointId
+    );
+  }, [
+    instancesIndex,
+    stylesByInstanceId,
+    cascadedBreakpointIds,
+    selectedBreakpointId,
+    instanceId,
+  ]);
+
+  const styleData = useMemo(() => {
+    const styleData: Style = {};
+    for (const property of styleProperties) {
+      // temporary solution until we start computing all styles from data
+      const inherited = inheritedInfo[property];
+      const cascaded = selfAndCascadeInfo[property];
+      const value = cascaded?.value ?? inherited?.value;
+
+      if (value) {
+        styleData[property] = value;
+      }
+    }
+    return styleData;
+  }, [selfAndCascadeInfo, inheritedInfo]);
+
+  return styleData;
+};
