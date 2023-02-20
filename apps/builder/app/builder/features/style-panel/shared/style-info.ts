@@ -297,7 +297,7 @@ export const useInstanceStyleData = (
     [breakpoints, selectedBreakpointId]
   );
 
-  const selftAndCascadeInfo = useMemo(() => {
+  const selfAndCascadeInfo = useMemo(() => {
     if (instanceId === undefined || selectedBreakpointId === undefined) {
       return {};
     }
@@ -336,7 +336,7 @@ export const useInstanceStyleData = (
     for (const property of styleProperties) {
       // temporary solution until we start computing all styles from data
       const inherited = inheritedInfo[property];
-      const cascaded = selftAndCascadeInfo[property];
+      const cascaded = selfAndCascadeInfo[property];
       const value = cascaded?.value ?? inherited?.value;
 
       if (value) {
@@ -344,7 +344,7 @@ export const useInstanceStyleData = (
       }
     }
     return styleData;
-  }, [selftAndCascadeInfo, inheritedInfo]);
+  }, [selfAndCascadeInfo, inheritedInfo]);
 
   return styleData;
 };
