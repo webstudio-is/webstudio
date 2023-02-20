@@ -25,7 +25,7 @@ export const action = async ({ request }: ActionArgs) => {
         method: "PUT",
         headers,
         body: JSON.stringify({
-          origin: url.origin,
+          webstudioApi: url.origin,
           projectId,
           domain,
         }),
