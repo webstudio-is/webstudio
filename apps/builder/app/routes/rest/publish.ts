@@ -27,7 +27,7 @@ export const action = async ({ request }: ActionArgs) => {
         body: JSON.stringify({
           builderApiOrigin: url.origin,
           projectId,
-          domain,
+          projectName: domain,
         }),
       });
       const text = await response.text();
