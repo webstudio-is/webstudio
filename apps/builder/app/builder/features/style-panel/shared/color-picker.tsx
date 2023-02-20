@@ -72,7 +72,7 @@ const colorResultToRgbValue = (rgb: RgbaColor | RGBColor): RgbValue => {
   };
 };
 
-const styleValueToRgbColor = (value: CssColorPickerValueInput): RgbaColor => {
+const styleValueToRgbaColor = (value: CssColorPickerValueInput): RgbaColor => {
   const color = colord(
     value.type === "intermediate" ? value.value : toValue(value)
   ).toRgb();
@@ -98,16 +98,26 @@ export const ColorPicker = ({
 }: ColorPickerProps) => {
   const [displayColorPicker, setDisplayColorPicker] = useState(false);
 
-  const rgbValue = styleValueToRgbColor(intermediateValue ?? value);
+  const currentValue = intermediateValue ?? value;
+
+  const rgbValue = styleValueToRgbaColor(currentValue);
+
+  // Change prefix color in sync with color picker, don't change during input changed
+  const prefixColor =
+    currentValue.type === "keyword" || currentValue.type === "rgb"
+      ? currentValue
+      : value;
+
+  const prefixColorRgba = styleValueToRgbaColor(prefixColor);
 
   // @todo transparent icon can be better
   const background =
-    rgbValue.a < 1
+    prefixColorRgba.a < 1
       ? // chessboard 5x5
         `repeating-conic-gradient(rgba(0,0,0,0.22) 0% 25%, transparent 0% 50%) 0% 33.33% / 40% 40%, ${toValue(
-          value
+          prefixColor
         )}`
-      : toValue(value);
+      : toValue(prefixColor);
 
   const prefix = (
     <Popover
