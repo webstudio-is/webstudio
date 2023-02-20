@@ -25,13 +25,8 @@ export const ColorControl = ({
   const styleInfo = currentStyle[property];
 
   let value = currentStyle[property]?.value ?? {
-    // provide default value to avoid control hiding
-    // when value is recomputed
-    type: "rgb" as const,
-    r: 0,
-    g: 0,
-    b: 0,
-    alpha: 0,
+    type: "keyword" as const,
+    value: "black",
   };
 
   const setValue = setProperty(property);

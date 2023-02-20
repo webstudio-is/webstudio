@@ -104,6 +104,12 @@ export const ColorPicker = ({
 
   const rgbValue = styleValueToRgbColor(intermediateValue ?? value);
 
+  // @todo transparent icon can be better
+  const background =
+    rgbValue.a === 0
+      ? "repeating-conic-gradient(#808080 0% 25%, transparent 0% 50%) 50% / 33.33% 33.33%"
+      : toValue(value);
+
   const prefix = (
     <DeprecatedPopover
       modal
@@ -121,7 +127,7 @@ export const ColorPicker = ({
             width: theme.spacing[10],
             height: theme.spacing[10],
             borderRadius: 2,
-            background: toValue(value),
+            background,
           }}
         />
       </DeprecatedPopoverTrigger>
