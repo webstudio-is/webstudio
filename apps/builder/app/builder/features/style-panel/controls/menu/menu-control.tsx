@@ -41,12 +41,15 @@ export const MenuControl = ({
       };
     })
     .filter((item) => item.icon);
-  let variant: "default" | "set" | "inherited" = "default";
+  let variant: "default" | "set" | "inherited" | "preset" = "default";
   if (styleSource === "local") {
     variant = "set";
   }
   if (styleSource === "remote") {
     variant = "inherited";
+  }
+  if (styleSource === "preset") {
+    variant = "preset";
   }
   return (
     <IconButtonWithMenu

@@ -10,14 +10,19 @@ import type {
   StyleSource as StyleSourceType,
 } from "@webstudio-is/project-build";
 import {
+  instancesIndexStore,
   selectedInstanceBrowserStyleStore,
   selectedInstanceIdStore,
   selectedStyleSourceStore,
   stylesIndexStore,
   useBreakpoints,
-  useRootInstance,
 } from "~/shared/nano-states";
 import { selectedBreakpointStore } from "~/shared/nano-states/breakpoints";
+import {
+  type InstancesIndex,
+  getInstanceAncestorsAndSelf,
+} from "~/shared/tree-utils";
+import { getComponentMeta } from "@webstudio-is/react-sdk";
 
 type CascadedValueInfo = {
   breakpointId: string;
@@ -42,6 +47,7 @@ export type StyleValueInfo = {
   local?: StyleValue;
   cascaded?: CascadedValueInfo;
   inherited?: InheritedValueInfo;
+  preset?: StyleValue;
 };
 
 export type StyleInfo = {
@@ -65,6 +71,11 @@ export const getStyleSource = (
       return "remote";
     }
   }
+  for (const info of styleValueInfos) {
+    if (info?.preset !== undefined) {
+      return "preset";
+    }
+  }
   return "default";
 };
 
@@ -86,9 +97,9 @@ const getSelectedStyle = (
   if (instanceStyles === undefined) {
     return style;
   }
-  for (const styleItem of instanceStyles) {
-    if (styleItem.breakpointId === breakpointId) {
-      style[styleItem.property] = styleItem.value;
+  for (const styleDecl of instanceStyles) {
+    if (styleDecl.breakpointId === breakpointId) {
+      style[styleDecl.property] = styleDecl.value;
     }
   }
   return style;
@@ -127,11 +138,11 @@ export const getCascadedInfo = (
     return cascadedStyle;
   }
   for (const breakpointId of cascadedBreakpointIds) {
-    for (const styleItem of instanceStyles) {
-      if (styleItem.breakpointId === breakpointId) {
-        cascadedStyle[styleItem.property] = {
+    for (const styleDecl of instanceStyles) {
+      if (styleDecl.breakpointId === breakpointId) {
+        cascadedStyle[styleDecl.property] = {
           breakpointId,
-          value: styleItem.value,
+          value: styleDecl.value,
         };
       }
     }
@@ -139,20 +150,37 @@ export const getCascadedInfo = (
   return cascadedStyle;
 };
 
+const getPresetStyle = (
+  instancesIndex: InstancesIndex,
+  instanceId: undefined | Instance["id"]
+) => {
+  if (instanceId === undefined) {
+    return;
+  }
+  const instance = instancesIndex.instancesById.get(instanceId);
+  if (instance === undefined) {
+    return;
+  }
+  return getComponentMeta(instance.component)?.presetStyle;
+};
+
 /**
  * extract all inheritable styles from ancestor instances
  * including active breakpoints
  */
 export const getInheritedInfo = (
-  rootInstance: Instance,
+  instancesIndex: InstancesIndex,
   stylesByInstanceId: Map<Instance["id"], StyleDecl[]>,
   instanceId: string,
   cascadedBreakpointIds: string[],
   selectedBreakpointId: string
 ) => {
   const inheritedStyle: InheritedProperties = {};
-  const ancestors = utils.tree.getInstancePath(rootInstance, instanceId);
-  for (const ancestorInstance of ancestors) {
+  const ancestorsAndSelf = getInstanceAncestorsAndSelf(
+    instancesIndex,
+    instanceId
+  );
+  for (const ancestorInstance of ancestorsAndSelf) {
     // skip current element
     if (ancestorInstance.id === instanceId) {
       continue;
@@ -167,16 +195,26 @@ export const getInheritedInfo = (
       continue;
     }
 
+    const presetStyle = getPresetStyle(instancesIndex, ancestorInstance.id);
+    if (presetStyle) {
+      for (const [styleProperty, styleValue] of Object.entries(presetStyle)) {
+        inheritedStyle[styleProperty as StyleProperty] = {
+          instanceId: ancestorInstance.id,
+          value: styleValue,
+        };
+      }
+    }
+
     // extract styles from all active breakpoints
     for (const breakpointId of cascadedAndSelectedBreakpointIds) {
-      for (const styleItem of ancestorInstanceStyles) {
+      for (const styleDecl of ancestorInstanceStyles) {
         if (
-          styleItem.breakpointId === breakpointId &&
-          inheritableProperties.has(styleItem.property)
+          styleDecl.breakpointId === breakpointId &&
+          inheritableProperties.has(styleDecl.property)
         ) {
-          inheritedStyle[styleItem.property] = {
+          inheritedStyle[styleDecl.property] = {
             instanceId: ancestorInstance.id,
-            value: styleItem.value,
+            value: styleDecl.value,
           };
         }
       }
@@ -196,7 +234,7 @@ export const useStyleInfo = () => {
   const selectedStyleSource = useStore(selectedStyleSourceStore);
   const selectedStyleSourceId = selectedStyleSource?.id;
   const browserStyle = useStore(selectedInstanceBrowserStyleStore);
-  const [rootInstance] = useRootInstance();
+  const instancesIndex = useStore(instancesIndexStore);
   const { stylesByInstanceId, stylesByStyleSourceId } =
     useStore(stylesIndexStore);
 
@@ -221,21 +259,20 @@ export const useStyleInfo = () => {
 
   const inheritedInfo = useMemo(() => {
     if (
-      rootInstance === undefined ||
       selectedBreakpointId === undefined ||
       selectedInstanceId === undefined
     ) {
       return {};
     }
     return getInheritedInfo(
-      rootInstance,
+      instancesIndex,
       stylesByInstanceId,
       selectedInstanceId,
       cascadedBreakpointIds,
       selectedBreakpointId
     );
   }, [
-    rootInstance,
+    instancesIndex,
     stylesByInstanceId,
     cascadedBreakpointIds,
     selectedBreakpointId,
@@ -253,26 +290,104 @@ export const useStyleInfo = () => {
     );
   }, [stylesByInstanceId, selectedInstanceId, cascadedBreakpointIds]);
 
+  const presetStyle = useMemo(() => {
+    return getPresetStyle(instancesIndex, selectedInstanceId);
+  }, [instancesIndex, selectedInstanceId]);
+
   const styleInfoData = useMemo(() => {
     const styleInfoData: StyleInfo = {};
     for (const property of styleProperties) {
       // temporary solution until we start computing all styles from data
       const computed = browserStyle?.[property];
+      const preset = presetStyle?.[property];
       const inherited = inheritedInfo[property];
       const cascaded = cascadedInfo[property];
       const local = selectedStyle?.[property];
-      const value = local ?? cascaded?.value ?? inherited?.value ?? computed;
+      const value =
+        local ?? cascaded?.value ?? inherited?.value ?? preset ?? computed;
       if (value) {
         styleInfoData[property] = {
           value,
           local,
           cascaded,
           inherited,
+          preset,
         };
       }
     }
     return styleInfoData;
-  }, [browserStyle, inheritedInfo, cascadedInfo, selectedStyle]);
+  }, [browserStyle, presetStyle, inheritedInfo, cascadedInfo, selectedStyle]);
 
   return styleInfoData;
+};
+
+export const useInstanceStyleData = (
+  instanceId: Instance["id"] | undefined
+) => {
+  const instancesIndex = useStore(instancesIndexStore);
+  const { stylesByInstanceId } = useStore(stylesIndexStore);
+  const [breakpoints] = useBreakpoints();
+  const selectedBreakpoint = useStore(selectedBreakpointStore);
+  const selectedBreakpointId = selectedBreakpoint?.id;
+
+  const presetStyle = useMemo(() => {
+    return getPresetStyle(instancesIndex, instanceId);
+  }, [instancesIndex, instanceId]);
+
+  const cascadedBreakpointIds = useMemo(
+    () => getCascadedBreakpointIds(breakpoints, selectedBreakpointId),
+    [breakpoints, selectedBreakpointId]
+  );
+
+  const selfAndCascadeInfo = useMemo(() => {
+    if (instanceId === undefined || selectedBreakpointId === undefined) {
+      return {};
+    }
+    return getCascadedInfo(stylesByInstanceId, instanceId, [
+      ...cascadedBreakpointIds,
+      selectedBreakpointId,
+    ]);
+  }, [
+    stylesByInstanceId,
+    instanceId,
+    cascadedBreakpointIds,
+    selectedBreakpointId,
+  ]);
+
+  const inheritedInfo = useMemo(() => {
+    if (selectedBreakpointId === undefined || instanceId === undefined) {
+      return {};
+    }
+    return getInheritedInfo(
+      instancesIndex,
+      stylesByInstanceId,
+      instanceId,
+      cascadedBreakpointIds,
+      selectedBreakpointId
+    );
+  }, [
+    instancesIndex,
+    stylesByInstanceId,
+    cascadedBreakpointIds,
+    selectedBreakpointId,
+    instanceId,
+  ]);
+
+  const styleData = useMemo(() => {
+    const styleData: Style = {};
+    for (const property of styleProperties) {
+      // temporary solution until we start computing all styles from data
+      const preset = presetStyle?.[property];
+      const inherited = inheritedInfo[property];
+      const cascaded = selfAndCascadeInfo[property];
+      const value = cascaded?.value ?? inherited?.value ?? preset;
+
+      if (value) {
+        styleData[property] = value;
+      }
+    }
+    return styleData;
+  }, [presetStyle, selfAndCascadeInfo, inheritedInfo]);
+
+  return styleData;
 };

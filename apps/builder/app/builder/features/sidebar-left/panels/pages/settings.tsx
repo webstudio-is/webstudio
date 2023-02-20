@@ -342,8 +342,33 @@ export const PageSettings = ({
 
   const fetcher = useFetcher<EditPageData>();
 
-  const [pages] = usePages();
+  const [pages, setPages] = usePages();
   const page = pages && findPageByIdOrPath(pages, pageId);
+
+  // Updating client side store like that is a temporary solution
+  // We want to switch pages to immerhin: https://github.com/webstudio-is/webstudio-builder/issues/1084
+  const updateOnClient = (page: Page) => {
+    if (pages === undefined) {
+      return;
+    }
+    if (pages.homePage.id === page.id) {
+      setPages({ homePage: page, pages: pages.pages });
+      return;
+    }
+    setPages({
+      homePage: pages.homePage,
+      pages: pages.pages.map((item) => (item.id === page.id ? page : item)),
+    });
+  };
+  const deleteOnClient = (pageId: Page["id"]) => {
+    if (pages === undefined) {
+      return;
+    }
+    setPages({
+      homePage: pages.homePage,
+      pages: pages.pages.filter((item) => item.id !== pageId),
+    });
+  };
 
   const isHomePage = page?.id === pages?.homePage.id;
 
@@ -396,6 +421,8 @@ export const PageSettings = ({
       (data) => {
         if (data.status === "error") {
           toastUnknownFieldErrors(normalizeErrors(data.errors), []);
+        } else {
+          updateOnClient(data.page);
         }
       }
     );
@@ -404,6 +431,8 @@ export const PageSettings = ({
   useOnFetchEnd(fetcher, (data) => {
     if (data.status === "error") {
       setUnsavedValues({ ...submittedValues, ...unsavedValues });
+    } else {
+      updateOnClient(data.page);
     }
     setSubmittedValues({});
   });
@@ -417,6 +446,8 @@ export const PageSettings = ({
       (data) => {
         if (data.status === "error") {
           toastUnknownFieldErrors(normalizeErrors(data.errors), []);
+        } else {
+          deleteOnClient(pageId);
         }
       }
     );

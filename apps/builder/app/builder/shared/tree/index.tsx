@@ -13,9 +13,9 @@ import type { Instance } from "@webstudio-is/project-build";
 import { getComponentMeta } from "@webstudio-is/react-sdk";
 import { utils } from "@webstudio-is/project";
 import { instancesIndexStore } from "~/shared/nano-states";
+import { getInstanceAncestorsAndSelf } from "~/shared/tree-utils";
 
 const instanceRelatedProps = {
-  getItemPath: utils.tree.getInstancePath,
   getItemPathWithPositions: utils.tree.getInstancePathWithPositions,
   canLeaveParent(item: Instance) {
     const meta = getComponentMeta(item.component);
@@ -59,18 +59,33 @@ const instanceRelatedProps = {
 export const InstanceTree = (
   props: Omit<
     TreeProps<Instance>,
-    keyof typeof instanceRelatedProps | "findItemById"
+    keyof typeof instanceRelatedProps | "findItemById" | "getItemPath"
   >
 ) => {
-  const { instancesById } = useStore(instancesIndexStore);
+  const instancesIndex = useStore(instancesIndexStore);
+  const { instancesById } = instancesIndex;
+
   const findItemById = useCallback(
     (_rootInstance: Instance, instanceId: Instance["id"]) => {
       return instancesById.get(instanceId);
     },
     [instancesById]
   );
+
+  const getItemPath = useCallback(
+    (_rootInstance: Instance, instanceId: Instance["id"]) => {
+      return getInstanceAncestorsAndSelf(instancesIndex, instanceId);
+    },
+    [instancesIndex]
+  );
+
   return (
-    <Tree {...props} {...instanceRelatedProps} findItemById={findItemById} />
+    <Tree
+      {...props}
+      {...instanceRelatedProps}
+      findItemById={findItemById}
+      getItemPath={getItemPath}
+    />
   );
 };
 

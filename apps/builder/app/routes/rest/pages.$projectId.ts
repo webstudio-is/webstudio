@@ -110,14 +110,20 @@ const handlePost = async (
     }
   }
 
-  await editPage({
+  const updatedBuild = await editPage({
     projectId,
     buildId: devBuild.id,
     pageId: id,
     data,
   });
 
-  return { status: "ok" };
+  const updatedPage = findPageByIdOrPath(updatedBuild.pages, id);
+
+  if (updatedPage === undefined) {
+    throw new Error("Updated page not found");
+  }
+
+  return { status: "ok", page: updatedPage };
 };
 
 const DeletePageInput = zfd.formData({ id: z.string() });
