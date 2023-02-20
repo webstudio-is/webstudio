@@ -28,25 +28,26 @@ const isValidClipboardEvent = (event: ClipboardEvent) => {
   return true;
 };
 
-type Props = {
+type Options = {
   mimeType?: string;
-  onCopy: () => undefined | string;
-  onCut: () => undefined | string;
-  onPaste: (data: string) => void;
+  onCopy?: () => undefined | string;
+  onCut?: () => undefined | string;
+  onPaste?: (data: string) => void;
 };
 
-export const initCopyPaste = (props: Props) => {
-  const { mimeType = "application/json" } = props;
+export const initCopyPaste = (options: Options) => {
+  const { mimeType = "application/json", onCopy, onCut, onPaste } = options;
 
   const handleCopy = (event: ClipboardEvent) => {
     if (
+      onCopy === undefined ||
       event.clipboardData === null ||
       isValidClipboardEvent(event) === false
     ) {
       return;
     }
 
-    const data = props.onCopy();
+    const data = onCopy();
     if (data === undefined) {
       return;
     }
@@ -58,13 +59,14 @@ export const initCopyPaste = (props: Props) => {
 
   const handleCut = (event: ClipboardEvent) => {
     if (
+      onCut === undefined ||
       event.clipboardData === null ||
       isValidClipboardEvent(event) === false
     ) {
       return;
     }
 
-    const data = props.onCut();
+    const data = onCut();
     if (data === undefined) {
       return;
     }
@@ -76,6 +78,7 @@ export const initCopyPaste = (props: Props) => {
 
   const handlePaste = (event: ClipboardEvent) => {
     if (
+      onPaste === undefined ||
       event.clipboardData === null ||
       // we might want a separate predicate for paste,
       // but for now the logic is the same
@@ -86,16 +89,31 @@ export const initCopyPaste = (props: Props) => {
 
     // this shouldn't matter, but just in case
     event.preventDefault();
-    props.onPaste(event.clipboardData.getData(mimeType));
+    const data = event.clipboardData.getData(mimeType).trim();
+    if (data) {
+      onPaste(data);
+    }
   };
 
-  document.addEventListener("copy", handleCopy);
-  document.addEventListener("cut", handleCut);
-  document.addEventListener("paste", handlePaste);
+  if (onCopy) {
+    document.addEventListener("copy", handleCopy);
+  }
+  if (onCut) {
+    document.addEventListener("cut", handleCut);
+  }
+  if (onPaste) {
+    document.addEventListener("paste", handlePaste);
+  }
 
   return () => {
-    document.removeEventListener("copy", handleCopy);
-    document.removeEventListener("cut", handleCut);
-    document.removeEventListener("paste", handlePaste);
+    if (onCopy) {
+      document.removeEventListener("copy", handleCopy);
+    }
+    if (onCut) {
+      document.removeEventListener("cut", handleCut);
+    }
+    if (onPaste) {
+      document.removeEventListener("paste", handlePaste);
+    }
   };
 };

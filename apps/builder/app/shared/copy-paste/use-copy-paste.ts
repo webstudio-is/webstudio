@@ -1,13 +1,12 @@
 import { useEffect } from "react";
+import { initCopyPaste } from "./init-copy-paste";
 import * as plugins from "./plugins";
 
 const initPlugins = () => {
   const cleanups: Array<() => void> = [];
 
   for (const plugin of Object.values(plugins)) {
-    if (plugin.init) {
-      cleanups.push(plugin.init());
-    }
+    cleanups.push(initCopyPaste(plugin));
   }
 
   return () => {
