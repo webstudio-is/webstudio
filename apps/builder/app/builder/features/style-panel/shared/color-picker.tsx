@@ -72,7 +72,7 @@ const colorResultToRgbValue = (rgb: RgbaColor | RGBColor): RgbValue => {
   };
 };
 
-const styleValueToRgbColor = (value: CssColorPickerValueInput): RGBColor => {
+const styleValueToRgbColor = (value: CssColorPickerValueInput): RgbaColor => {
   const color = colord(
     value.type === "intermediate" ? value.value : toValue(value)
   ).toRgb();
@@ -102,8 +102,10 @@ export const ColorPicker = ({
 
   // @todo transparent icon can be better
   const background =
-    rgbValue.a === 0
-      ? "repeating-conic-gradient(#808080 0% 25%, transparent 0% 50%) 50% / 33.33% 33.33%"
+    rgbValue.a < 1
+      ? `repeating-conic-gradient(rgba(0,0,0,0.25) 0% 25%, transparent 0% 50%) 50% / 33.33% 33.33%, ${toValue(
+          value
+        )}`
       : toValue(value);
 
   const prefix = (
@@ -122,6 +124,7 @@ export const ColorPicker = ({
             margin: theme.spacing[3],
             width: theme.spacing[10],
             height: theme.spacing[10],
+            backgroundBlendMode: "difference",
             borderRadius: 2,
             background,
           }}
