@@ -1,6 +1,5 @@
 import { useStore } from "@nanostores/react";
 import { properties, Style, StyleProperty } from "@webstudio-is/css-data";
-import { utils } from "@webstudio-is/project";
 import type { Instance } from "@webstudio-is/project-build";
 import { useMemo } from "react";
 import {
@@ -85,24 +84,4 @@ export const useInstanceStyleData = (
   }, [selftAndCascadeInfo, inheritedInfo]);
 
   return styleData;
-};
-
-export const useParentInstanceId = (instanceId: Instance["id"] | undefined) => {
-  const [rootInstance] = useRootInstance();
-
-  if (instanceId === undefined) {
-    return undefined;
-  }
-
-  if (rootInstance === undefined) {
-    return undefined;
-  }
-
-  const ancestorsAndSelf = utils.tree.getInstancePath(rootInstance, instanceId);
-
-  if (ancestorsAndSelf.length < 2) {
-    return undefined;
-  }
-
-  return ancestorsAndSelf[ancestorsAndSelf.length - 2].id;
 };
