@@ -260,12 +260,35 @@ const pathToName = (path: string[], type: string) => {
   return camelCase(withoutType, { locale: false });
 };
 
+const detectBrokenLinks = (data: unknown) => {
+  const brokenLinks: string[] = [];
+  const testForBrokenLink = (path: string[], type: string, value: unknown) => {
+    if (typeof value === "string" && /^{.+}$/.test(value)) {
+      brokenLinks.push([type, ...path].join(" > "));
+    }
+  };
+  traverse(data, [], (path, type, value) => {
+    if (typeof value === "object" && value !== null) {
+      for (const [key, val] of Object.entries(value)) {
+        testForBrokenLink([...path, key], type, val);
+      }
+    } else {
+      testForBrokenLink(path, type, value);
+    }
+  });
+  if (brokenLinks.length > 0) {
+    throw new Error(`Broken links found:\n${brokenLinks.join("\n")}`);
+  }
+};
+
 const main = () => {
   execSync(`token-transformer ${SOURCE_FILE} ${TMP_OUTPUT_FILE}`, {
     stdio: "inherit",
   });
 
   const data = JSON.parse(readFileSync(TMP_OUTPUT_FILE, "utf-8"));
+
+  detectBrokenLinks(data);
 
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const byType = new Map<string, Record<string, any>>();
