@@ -3,19 +3,19 @@
     "menu drop shadow": {
       "value": [
         {
-          "color": "#0000001a",
-          "type": "dropShadow",
-          "x": 0,
-          "y": 2,
-          "blur": 7,
-          "spread": 0
-        },
-        {
           "color": "#00000026",
           "type": "dropShadow",
           "x": 0,
           "y": 5,
           "blur": 17,
+          "spread": 0
+        },
+        {
+          "color": "#0000001a",
+          "type": "dropShadow",
+          "x": 0,
+          "y": 2,
+          "blur": 7,
           "spread": 0
         }
       ],
@@ -116,6 +116,14 @@
       },
       "manrope-9": {
         "value": "ExtraBold",
+        "type": "fontWeights"
+      },
+      "roboto-mono-3": {
+        "value": "Regular",
+        "type": "fontWeights"
+      },
+      "inter-4": {
+        "value": "Semi Bold",
         "type": "fontWeights"
       }
     },
@@ -604,6 +612,10 @@
         "builder": {
           "value": "#ffffff",
           "type": "color"
+        },
+        "designer": {
+          "value": "#ffffff",
+          "type": "color"
         }
       },
       "spacing": {
@@ -959,6 +971,22 @@
         "value": "#00894a",
         "type": "color",
         "description": "Success color that is dark enough for text. Same color as background/success"
+      },
+      "grid-controls": {
+        "dot": {
+          "value": "#c7c7c7",
+          "type": "color",
+          "description": "color for flex control ui elements"
+        },
+        "dot-hover": {
+          "value": "#707375",
+          "type": "color"
+        },
+        "flex-hover": {
+          "value": "#96c7f2",
+          "type": "color",
+          "description": "color for hovered state of flex control ui elements"
+        }
       }
     },
     "Brand": {
@@ -1161,10 +1189,46 @@
         "type": "color",
         "description": "For the background of the hint menu item."
       }
+    },
+    "fontSize": {
+      "0": {
+        "value": "8",
+        "type": "fontSizes"
+      },
+      "1": {
+        "value": "10",
+        "type": "fontSizes"
+      },
+      "2": {
+        "value": "12",
+        "type": "fontSizes"
+      },
+      "3": {
+        "value": "16",
+        "type": "fontSizes"
+      },
+      "4": {
+        "value": "20",
+        "type": "fontSizes"
+      },
+      "5": {
+        "value": "32",
+        "type": "fontSizes"
+      },
+      "6": {
+        "value": "48",
+        "type": "fontSizes"
+      },
+      "7": {
+        "value": "360",
+        "type": "fontSizes"
+      }
     }
   },
   "$themes": [],
   "$metadata": {
-    "tokenSetOrder": ["global"]
+    "tokenSetOrder": [
+      "global"
+    ]
   }
 }
