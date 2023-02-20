@@ -1,5 +1,4 @@
 import { useState } from "react";
-// import { colord, type RgbaColor } from "colord";
 import { colord, extend, RgbaColor } from "colord";
 // eslint-disable-next-line import/no-internal-modules
 import namesPlugin from "colord/plugins/names";
