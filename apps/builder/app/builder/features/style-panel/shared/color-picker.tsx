@@ -1,8 +1,6 @@
 import { useState } from "react";
-import { colord, extend, RgbaColor } from "colord";
-// eslint-disable-next-line import/no-internal-modules
+import { colord, extend, type RgbaColor } from "colord";
 import namesPlugin from "colord/plugins/names";
-
 import { ColorResult, RGBColor, SketchPicker } from "react-color";
 import type {
   InvalidValue,
@@ -11,7 +9,6 @@ import type {
   StyleProperty,
   StyleValue,
 } from "@webstudio-is/css-data";
-
 import {
   Box,
   Popover,
