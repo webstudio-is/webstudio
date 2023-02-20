@@ -1,8 +1,12 @@
 import { useState } from "react";
 // import { colord, type RgbaColor } from "colord";
-import type { RgbaColor } from "colord";
+import { colord, extend, RgbaColor } from "colord";
+// eslint-disable-next-line import/no-internal-modules
+import namesPlugin from "colord/plugins/names";
+
 import { ColorResult, RGBColor, SketchPicker } from "react-color";
 import type {
+  InvalidValue,
   KeywordValue,
   RgbValue,
   StyleProperty,
@@ -21,7 +25,10 @@ import { toValue } from "@webstudio-is/css-engine";
 import { theme } from "@webstudio-is/design-system";
 import type { StyleSource } from "./style-info";
 import { CssValueInput } from "./css-value-input";
-import type { CssValueInputValue } from "./css-value-input/css-value-input";
+import type { IntermediateStyleValue } from "./css-value-input/css-value-input";
+
+// To support color names
+extend([namesPlugin]);
 
 const pickerStyle = css({
   padding: theme.spacing[5],
@@ -41,13 +48,20 @@ const defaultPickerStyles = {
   },
 };
 
+export type CssColorPickerValueInput =
+  | RgbValue
+  | KeywordValue
+  | IntermediateStyleValue;
+
 type ColorPickerProps = {
-  onChange: (value: CssValueInputValue | undefined) => void;
-  onChangeComplete: (event: { value: StyleValue }) => void;
+  onChange: (value: CssColorPickerValueInput | undefined) => void;
+  onChangeComplete: (event: {
+    value: RgbValue | KeywordValue | InvalidValue;
+  }) => void;
   onHighlight: (value: StyleValue | undefined) => void;
   onAbort: () => void;
-  intermediateValue: CssValueInputValue | undefined;
-  value: RgbValue;
+  intermediateValue: CssColorPickerValueInput | undefined;
+  value: RgbValue | KeywordValue;
   styleSource: StyleSource;
   keywords?: Array<KeywordValue>;
   property: StyleProperty;
@@ -63,12 +77,16 @@ const colorResultToRgbValue = (rgb: RgbaColor | RGBColor): RgbValue => {
   };
 };
 
-const rgbValueToRgbColor = (rgb: RgbValue): RGBColor => {
+const styleValueToRgbColor = (value: CssColorPickerValueInput): RGBColor => {
+  const color = colord(
+    value.type === "intermediate" ? value.value : toValue(value)
+  ).toRgb();
+
   return {
-    r: rgb.r,
-    g: rgb.g,
-    b: rgb.b,
-    a: rgb.alpha,
+    r: color.r,
+    g: color.g,
+    b: color.b,
+    a: color.a,
   };
 };
 
@@ -85,8 +103,7 @@ export const ColorPicker = ({
 }: ColorPickerProps) => {
   const [displayColorPicker, setDisplayColorPicker] = useState(false);
 
-  // const stringValue = intermediateValue?.stringValue ?? toValue(value);
-  const rgbValue = rgbValueToRgbColor(value);
+  const rgbValue = styleValueToRgbColor(intermediateValue ?? value);
 
   const prefix = (
     <DeprecatedPopover
@@ -139,9 +156,39 @@ export const ColorPicker = ({
       value={value}
       intermediateValue={intermediateValue}
       keywords={keywords}
-      onChange={onChange}
+      onChange={(styleValue) => {
+        if (
+          styleValue?.type === "rgb" ||
+          styleValue?.type === "keyword" ||
+          styleValue?.type === "intermediate" ||
+          styleValue === undefined
+        ) {
+          onChange(styleValue);
+          return;
+        }
+
+        onChange({
+          type: "intermediate",
+          value: toValue(styleValue),
+        });
+      }}
       onHighlight={onHighlight}
-      onChangeComplete={onChangeComplete}
+      onChangeComplete={({ value }) => {
+        if (
+          value.type === "rgb" ||
+          value.type === "keyword" ||
+          value.type === "invalid"
+        ) {
+          onChangeComplete({ value });
+        }
+
+        onChangeComplete({
+          value: {
+            type: "invalid",
+            value: toValue(value),
+          },
+        });
+      }}
       onAbort={onAbort}
     />
   );

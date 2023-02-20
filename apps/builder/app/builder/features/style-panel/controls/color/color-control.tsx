@@ -1,12 +1,14 @@
 import { Flex } from "@webstudio-is/design-system";
 import { toValue } from "@webstudio-is/css-engine";
 import type { ControlProps } from "../../style-sections";
-import { ColorPicker } from "../../shared/color-picker";
+import {
+  ColorPicker,
+  CssColorPickerValueInput,
+} from "../../shared/color-picker";
 import { colord } from "colord";
 import { getStyleSource } from "../../shared/style-info";
 import { styleConfigByName } from "../../shared/configs";
-import type { StyleValue } from "@webstudio-is/css-data";
-import type { IntermediateStyleValue } from "../../shared/css-value-input";
+
 import { useState } from "react";
 
 export const ColorControl = ({
@@ -16,9 +18,8 @@ export const ColorControl = ({
   setProperty,
   deleteProperty,
 }: ControlProps) => {
-  const [intermediateValue, setIntermediateValue] = useState<
-    StyleValue | IntermediateStyleValue
-  >();
+  const [intermediateValue, setIntermediateValue] =
+    useState<CssColorPickerValueInput>();
 
   const { items: defaultItems } = styleConfigByName[property];
   const styleInfo = currentStyle[property];
@@ -35,7 +36,7 @@ export const ColorControl = ({
 
   const setValue = setProperty(property);
 
-  if (value.type !== "rgb") {
+  if (value.type !== "rgb" && value.type !== "keyword") {
     // Support previously set colors
     const colordValue = colord(toValue(value));
 

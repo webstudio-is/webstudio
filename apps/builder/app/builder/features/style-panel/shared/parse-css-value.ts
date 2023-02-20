@@ -3,6 +3,7 @@ import hyphenate from "hyphenate-style-name";
 import type { StyleProperty, StyleValue, Unit } from "@webstudio-is/css-data";
 import { units, keywordValues } from "@webstudio-is/css-data";
 import warnOnce from "warn-once";
+import { colord } from "colord";
 
 const cssTryParseValue = (input: string) => {
   try {
@@ -119,6 +120,21 @@ export const parseCssValue = (
           value: input,
         };
       }
+    }
+  }
+
+  // Probably a color (we can use csstree.lexer.matchProperty(cssPropertyName, ast) to extract the type but this looks much simpler)
+  if (property.toLocaleLowerCase().includes("color")) {
+    const mayBeColor = colord(input);
+    if (mayBeColor.isValid()) {
+      const rgb = mayBeColor.toRgb();
+      return {
+        type: "rgb",
+        alpha: rgb.a,
+        r: rgb.r,
+        g: rgb.g,
+        b: rgb.b,
+      };
     }
   }
 

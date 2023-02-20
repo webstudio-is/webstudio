@@ -104,4 +104,33 @@ describe("Parse CSS value", () => {
       });
     });
   });
+
+  describe("Colors", () => {
+    test("Color rgba values", () => {
+      expect(parseCssValue("backgroundColor", "rgba(0,0,0,0)")).toEqual({
+        type: "rgb",
+        alpha: 0,
+        b: 0,
+        g: 0,
+        r: 0,
+      });
+    });
+
+    test("Color rgba values", () => {
+      expect(parseCssValue("backgroundColor", "#00220011")).toEqual({
+        type: "rgb",
+        alpha: 0.07,
+        b: 0,
+        g: 34,
+        r: 0,
+      });
+    });
+
+    test("Color rgba values", () => {
+      expect(parseCssValue("color", "red")).toEqual({
+        type: "keyword",
+        value: "red",
+      });
+    });
+  });
 });

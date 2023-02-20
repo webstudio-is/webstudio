@@ -322,3 +322,36 @@ describe("Value ending with `-` should be considered unitless", () => {
     });
   });
 });
+
+describe("Colors", () => {
+  test("color with value rgba(0,0,0,0)", () => {
+    const result = parseIntermediateOrInvalidValue("color", {
+      type: "intermediate",
+      value: "rgba(10,20,30,0.5)",
+    });
+
+    expect(result).toEqual({
+      type: "rgb",
+      alpha: 0.5,
+      r: 10,
+      g: 20,
+      b: 30,
+    });
+  });
+
+  test("color with value rgba(0,0,0,0)", () => {
+    const result = parseIntermediateOrInvalidValue("color", {
+      type: "intermediate",
+      value: "rgba(10,20,30,0.5)",
+      unit: "px",
+    });
+
+    expect(result).toEqual({
+      type: "rgb",
+      alpha: 0.5,
+      r: 10,
+      g: 20,
+      b: 30,
+    });
+  });
+});
