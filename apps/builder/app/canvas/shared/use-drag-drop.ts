@@ -25,7 +25,10 @@ import {
   getInstanceElementById,
   getInstanceIdFromElement,
 } from "~/shared/dom-utils";
-import { getInstanceAncestorsAndSelf } from "~/shared/tree-utils";
+import {
+  findClosestRichTextInstance,
+  getInstanceAncestorsAndSelf,
+} from "~/shared/tree-utils";
 
 declare module "~/shared/pubsub" {
   export interface PubsubMap {
@@ -189,22 +192,11 @@ export const useDragAndDrop = () => {
         return false;
       }
 
-      // When trying to drag an inline instance, drag its parent instead
-      if (getComponentMeta(instance.component)?.type === "rich-text-child") {
-        const nonInlineParent = utils.tree.findClosestNonInlineParent(
-          rootInstance,
-          instance.id
-        );
-        if (
-          nonInlineParent !== undefined &&
-          rootInstance.id !== nonInlineParent.id
-        ) {
-          return nonInlineParent;
-        }
-        return false;
-      }
-
-      return instance;
+      // When trying to drag an instance inside editor, drag the editor instead
+      return (
+        findClosestRichTextInstance(instancesIndexStore.get(), instance.id) ??
+        instance
+      );
     },
     onStart({ data: instance }) {
       state.current.dragItem = instance;
