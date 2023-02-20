@@ -347,7 +347,7 @@ export const PageSettings = ({
 
   // Updating client side store like that is a temporary solution
   // We want to switch pages to immerhin: https://github.com/webstudio-is/webstudio-builder/issues/1084
-  const updateAtClientSide = (page: Page) => {
+  const updateOnClient = (page: Page) => {
     if (pages === undefined) {
       return;
     }
@@ -360,7 +360,7 @@ export const PageSettings = ({
       pages: pages.pages.map((item) => (item.id === page.id ? page : item)),
     });
   };
-  const deleteAtClientSide = (pageId: Page["id"]) => {
+  const deleteOnClient = (pageId: Page["id"]) => {
     if (pages === undefined) {
       return;
     }
@@ -422,7 +422,7 @@ export const PageSettings = ({
         if (data.status === "error") {
           toastUnknownFieldErrors(normalizeErrors(data.errors), []);
         } else {
-          updateAtClientSide(data.page);
+          updateOnClient(data.page);
         }
       }
     );
@@ -432,7 +432,7 @@ export const PageSettings = ({
     if (data.status === "error") {
       setUnsavedValues({ ...submittedValues, ...unsavedValues });
     } else {
-      updateAtClientSide(data.page);
+      updateOnClient(data.page);
     }
     setSubmittedValues({});
   });
@@ -447,7 +447,7 @@ export const PageSettings = ({
         if (data.status === "error") {
           toastUnknownFieldErrors(normalizeErrors(data.errors), []);
         } else {
-          deleteAtClientSide(pageId);
+          deleteOnClient(pageId);
         }
       }
     );
