@@ -8,7 +8,6 @@ import {
 import { colord } from "colord";
 import { getStyleSource } from "../../shared/style-info";
 import { styleConfigByName } from "../../shared/configs";
-
 import { useState } from "react";
 
 export const ColorControl = ({
