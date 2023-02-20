@@ -56,21 +56,21 @@ const createInstance = (
     id: generateId(),
     component,
     children:
-      "children" in node ? toInstancesData(node, options, props).instances : [],
+      "children" in node ? toInstanceData(node, options, props).children : [],
   });
 };
 
-const toInstancesData = (
+const toInstanceData = (
   ast: { children: Root["children"] },
   options: Options = {},
   props: Array<Prop> = []
-): { instances: Instance["children"]; props: Array<Prop> } => {
+): { children: Instance["children"]; props: Array<Prop> } => {
   const { generateId = nanoid } = options;
-  const instances: Instance["children"] = [];
+  const children: Instance["children"] = [];
 
   for (const child of ast.children) {
     if (child.type === "text") {
-      instances.push({
+      children.push({
         type: child.type,
         value: child.value,
       });
@@ -83,7 +83,7 @@ const toInstancesData = (
         { component, node: child, props },
         options
       );
-      instances.push(instance);
+      children.push(instance);
       if (child.type === "heading") {
         props.push({
           id: generateId(),
@@ -182,7 +182,7 @@ const toInstancesData = (
       }
     }
   }
-  return { instances, props };
+  return { children, props };
 };
 
 export const parse = (clipboardData: string, options?: Options) => {
@@ -190,7 +190,7 @@ export const parse = (clipboardData: string, options?: Options) => {
   if (ast.children.length === 0) {
     return;
   }
-  return toInstancesData(ast, options);
+  return toInstanceData(ast, options);
 };
 
 export const onPaste = (clipboardData: string) => {
@@ -208,10 +208,10 @@ export const onPaste = (clipboardData: string) => {
     (rootInstance, props) => {
       const instancesIndex = createInstancesIndex(rootInstance);
       // We are inserting backwards, so we need to reverse the order
-      data.instances.reverse();
-      for (const instance of data.instances) {
-        if (instance.type !== "text") {
-          insertInstanceMutable(instancesIndex, instance, dropTarget);
+      data.children.reverse();
+      for (const child of data.children) {
+        if (child.type === "instance") {
+          insertInstanceMutable(instancesIndex, child, dropTarget);
         }
       }
       for (const prop of data.props) {

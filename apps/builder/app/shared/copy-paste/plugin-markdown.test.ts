@@ -3,25 +3,23 @@ import { Instance, Prop } from "@webstudio-is/project-build";
 import { parse } from "./plugin-markdown";
 
 const parseInstanceData = (data?: {
-  instances: Instance["children"];
+  children: Instance["children"];
   props: Array<Prop>;
 }) => {
   if (data === undefined) {
     return;
   }
-  const { instances, props } = data;
-  for (const instance of instances) {
-    if ("id" in instance) {
-      Instance.parse(instance);
-    }
-    if ("children" in instance) {
-      parseInstanceData({ instances: instance.children, props });
+  const { children, props } = data;
+  for (const child of children) {
+    if (child.type === "instance") {
+      Instance.parse(child);
+      parseInstanceData({ children: child.children, props });
     }
   }
   for (const prop of props) {
     Prop.parse(prop);
   }
-  return { instances, props };
+  return { children, props };
 };
 
 const options = { generateId: () => "123" };
@@ -30,7 +28,7 @@ describe("Plugin Markdown", () => {
   test("paragraph", () => {
     expect(parseInstanceData(parse("xyz", options))).toMatchInlineSnapshot(`
       {
-        "instances": [
+        "children": [
           {
             "children": [
               {
@@ -52,7 +50,7 @@ describe("Plugin Markdown", () => {
     expect(parseInstanceData(parse("# heading", options)))
       .toMatchInlineSnapshot(`
       {
-        "instances": [
+        "children": [
           {
             "children": [
               {
@@ -82,7 +80,7 @@ describe("Plugin Markdown", () => {
     expect(parseInstanceData(parse("###### heading", options)))
       .toMatchInlineSnapshot(`
       {
-        "instances": [
+        "children": [
           {
             "children": [
               {
@@ -112,7 +110,7 @@ describe("Plugin Markdown", () => {
     expect(parseInstanceData(parse("__bold__", options)))
       .toMatchInlineSnapshot(`
       {
-        "instances": [
+        "children": [
           {
             "children": [
               {
@@ -141,7 +139,7 @@ describe("Plugin Markdown", () => {
     expect(parseInstanceData(parse("**bold**", options)))
       .toMatchInlineSnapshot(`
       {
-        "instances": [
+        "children": [
           {
             "children": [
               {
@@ -170,7 +168,7 @@ describe("Plugin Markdown", () => {
     expect(parseInstanceData(parse("_italic_", options)))
       .toMatchInlineSnapshot(`
       {
-        "instances": [
+        "children": [
           {
             "children": [
               {
@@ -199,7 +197,7 @@ describe("Plugin Markdown", () => {
     expect(parseInstanceData(parse("*italic*", options)))
       .toMatchInlineSnapshot(`
       {
-        "instances": [
+        "children": [
           {
             "children": [
               {
@@ -228,7 +226,7 @@ describe("Plugin Markdown", () => {
     expect(parseInstanceData(parse('[link](/uri "Title")', options)))
       .toMatchInlineSnapshot(`
       {
-        "instances": [
+        "children": [
           {
             "children": [
               {
@@ -272,7 +270,7 @@ describe("Plugin Markdown", () => {
     expect(parseInstanceData(parse('![foo](/url "title")', options)))
       .toMatchInlineSnapshot(`
       {
-        "instances": [
+        "children": [
           {
             "children": [
               {
@@ -325,7 +323,7 @@ describe("Plugin Markdown", () => {
       )
     ).toMatchInlineSnapshot(`
       {
-        "instances": [
+        "children": [
           {
             "children": [
               {
@@ -358,7 +356,7 @@ describe("Plugin Markdown", () => {
       )
     ).toMatchInlineSnapshot(`
       {
-        "instances": [
+        "children": [
           {
             "children": [
               {
@@ -380,7 +378,7 @@ describe("Plugin Markdown", () => {
   test("blockquote", () => {
     expect(parseInstanceData(parse("> bar", options))).toMatchInlineSnapshot(`
       {
-        "instances": [
+        "children": [
           {
             "children": [
               {
@@ -408,7 +406,7 @@ describe("Plugin Markdown", () => {
   test("inline code", () => {
     expect(parseInstanceData(parse("`foo`", options))).toMatchInlineSnapshot(`
       {
-        "instances": [
+        "children": [
           {
             "children": [
               {
@@ -437,7 +435,7 @@ describe("Plugin Markdown", () => {
     expect(parseInstanceData(parse("```js meta\nfoo\n```", options)))
       .toMatchInlineSnapshot(`
       {
-        "instances": [
+        "children": [
           {
             "children": [
               {
@@ -473,7 +471,7 @@ describe("Plugin Markdown", () => {
   test("list unordered", () => {
     expect(parseInstanceData(parse("- one", options))).toMatchInlineSnapshot(`
       {
-        "instances": [
+        "children": [
           {
             "children": [
               {
@@ -516,7 +514,7 @@ describe("Plugin Markdown", () => {
   test("list ordered", () => {
     expect(parseInstanceData(parse("3. one", options))).toMatchInlineSnapshot(`
       {
-        "instances": [
+        "children": [
           {
             "children": [
               {
@@ -566,7 +564,7 @@ describe("Plugin Markdown", () => {
   test("thematic break | separator", () => {
     expect(parseInstanceData(parse("---", options))).toMatchInlineSnapshot(`
       {
-        "instances": [
+        "children": [
           {
             "children": [],
             "component": "Separator",
