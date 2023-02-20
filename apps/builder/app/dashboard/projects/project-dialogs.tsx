@@ -294,7 +294,7 @@ export const DeleteProjectDialog = ({
         label={
           <>
             Confirm by typing{" "}
-            <Text as="span" color="destructive" variant="labelSentenceCase">
+            <Text as="span" color="destructive" variant="labelsSentenceCase">
               {title}
             </Text>{" "}
             below
