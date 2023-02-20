@@ -273,7 +273,7 @@ const writeToFile = (fileName: string, constant: string, data: unknown) => {
 const keywordValues = (() => {
   const result: { [prop: string]: Array<string> } = {};
 
-  for (let property in filteredProperties) {
+  for (const property in filteredProperties) {
     const keywords = new Set<string>();
     walkSyntax(filteredProperties[property].syntax, (node) => {
       if (node.type === "Keyword") {

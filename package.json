@@ -41,7 +41,13 @@
     "yarn": "This project is configured to use pnpm"
   },
   "nano-staged": {
-    "*.{ts,tsx,js,json,css,md}": "prettier --write"
+    "*.{ts,tsx}": [
+      "eslint --fix",
+      "prettier --write"
+    ],
+    "*.{js,json,css,md}": [
+      "prettier --write"
+    ]
   },
   "prettier": {},
   "resolutions": {

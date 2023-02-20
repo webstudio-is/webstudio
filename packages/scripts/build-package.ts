@@ -1,4 +1,5 @@
 #!/usr/bin/env tsx
+/* eslint-disable no-console */
 
 import { rm, cp } from "node:fs/promises";
 import { join } from "node:path";

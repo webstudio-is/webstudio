@@ -50,6 +50,8 @@ module.exports = {
         allow: [
           "**/server",
           "@lexical/react/*",
+          "css-tree/**",
+          "mdn-data/**",
           "__generated__/*",
           "react-hot-toast/headless",
         ],
