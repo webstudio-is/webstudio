@@ -104,7 +104,7 @@ export const ColorPicker = ({
   const background =
     rgbValue.a < 1
       ? // chessboard 5x5
-        `repeating-conic-gradient(rgba(0,0,0,0.25) 0% 25%, transparent 0% 50%) 0% 33.33% / 40% 40%, ${toValue(
+        `repeating-conic-gradient(rgba(0,0,0,0.22) 0% 25%, transparent 0% 50%) 0% 33.33% / 40% 40%, ${toValue(
           value
         )}`
       : toValue(value);
