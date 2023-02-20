@@ -316,7 +316,7 @@ export const useStyleInfo = () => {
       }
     }
     return styleInfoData;
-  }, [browserStyle, inheritedInfo, cascadedInfo, selectedStyle]);
+  }, [browserStyle, presetStyle, inheritedInfo, cascadedInfo, selectedStyle]);
 
   return styleInfoData;
 };
