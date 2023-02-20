@@ -39,12 +39,15 @@ const Cell = ({
     return null;
   }
 
-  let origin: "set" | "inherited" | "unset" = "unset";
+  let origin: "set" | "inherited" | "preset" | "unset" = "unset";
   if (styleSource === "local") {
     origin = "set";
   }
   if (styleSource === "remote") {
     origin = "inherited";
+  }
+  if (styleSource === "preset") {
+    origin = "preset";
   }
 
   return (
