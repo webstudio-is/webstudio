@@ -14,28 +14,31 @@ export const fontFamilies = {
 } as const;
 
 export const lineHeights = {
-  "0": "8px",
-  "1": "10px",
-  "2": "11px",
-  "3": "12px",
-  "4": "16px",
-  "5": "22px",
+  "0": "16px",
+  "1": "8px",
+  "2": "12px",
+  "3": "10px",
+  "4": "39px",
+  "5": "11px",
   "6": "27px",
-  "7": "39px",
-  "8": "58px",
+  "7": "58px",
+  "8": "22px",
   "9": "360px",
 } as const;
 
 export const fontWeights = {
   inter0: 400,
   inter1: 500,
-  inter2: 600,
+  inter2: 700,
   inter3: 700,
   robotoMono4: 400,
-  manrope5: 200,
+  manrope5: 700,
   manrope6: 400,
-  manrope7: 700,
-  manrope8: 800,
+  manrope7: 600,
+  manrope8: 200,
+  manrope9: 800,
+  robotoMono3: 400,
+  inter4: 600,
 } as const;
 
 export const fontSizes = {
@@ -47,14 +50,22 @@ export const fontSizes = {
   "5": "32px",
   "6": "48px",
   "7": "360px",
+  fontSize0: "8px",
+  fontSize1: "10px",
+  fontSize2: "12px",
+  fontSize3: "16px",
+  fontSize4: "20px",
+  fontSize5: "32px",
+  fontSize6: "48px",
+  fontSize7: "360px",
 } as const;
 
 export const letterSpacing = {
-  "0": "-0.05em",
-  "1": "-0.02em",
+  "0": "0.005em",
+  "1": "0.01em",
   "2": "0em",
-  "3": "0.005em",
-  "4": "0.01em",
+  "3": "-0.02em",
+  "4": "-0.05em",
 } as const;
 
 export const paragraphSpacing = { "0": 0 } as const;
@@ -71,7 +82,7 @@ export const typography = {
     textDecoration: "none",
     textIndent: "0px",
   },
-  labelTitleCase: {
+  labelsTitleCase: {
     fontFamily:
       "Inter Variable, InterVariable, Inter, -apple-system, system-ui, sans-serif",
     fontWeight: 500,
@@ -82,7 +93,7 @@ export const typography = {
     textDecoration: "none",
     textIndent: "0px",
   },
-  labelSentenceCase: {
+  labelsSentenceCase: {
     fontFamily:
       "Inter Variable, InterVariable, Inter, -apple-system, system-ui, sans-serif",
     fontWeight: 500,
@@ -93,14 +104,14 @@ export const typography = {
     textDecoration: "none",
     textIndent: "0px",
   },
-  title: {
+  titles: {
     fontFamily:
       "Inter Variable, InterVariable, Inter, -apple-system, system-ui, sans-serif",
     fontWeight: 700,
     fontSize: "12px",
     lineHeight: "16px",
     letterSpacing: "0.01em",
-    textTransform: "none",
+    textTransform: "capitalize",
     textDecoration: "none",
     textIndent: "0px",
   },
@@ -250,6 +261,26 @@ export const typography = {
     textDecoration: "none",
     textIndent: "0px",
   },
+  brandButtonRegular: {
+    fontFamily: "Manrope Variable, ManropeVariable, Manrope, sans-serif",
+    fontWeight: 600,
+    fontSize: "16px",
+    lineHeight: "22px",
+    letterSpacing: "0em",
+    textTransform: "none",
+    textDecoration: "none",
+    textIndent: "0px",
+  },
+  brandButtonCta: {
+    fontFamily: "Manrope Variable, ManropeVariable, Manrope, sans-serif",
+    fontWeight: 700,
+    fontSize: "32px",
+    lineHeight: "39px",
+    letterSpacing: "-0.02em",
+    textTransform: "none",
+    textDecoration: "none",
+    textIndent: "0px",
+  },
 } as const;
 
 export const textCase = {
@@ -267,6 +298,10 @@ export const borderRadius = {
   "3": "4px",
   "4": "5px",
   "5": "6px",
+  "6": "8px",
+  "7": "9px",
+  "8": "16px",
+  "9": "17px",
 } as const;
 
 export const color = {
@@ -284,7 +319,7 @@ export const color = {
   backgroundNeutralNotification: "#ffffff",
   backgroundNeutralDark: "#7e868c",
   backgroundDestructiveMain: "#de3339",
-  backgroundDestructiveNotification: "#d53f45",
+  backgroundDestructiveNotification: "#ffefef",
   backgroundSuccessMain: "#00894a",
   backgroundSuccessNotification: "#e9f9ee",
   backgroundAlertMain: "#f5d90a",
@@ -299,6 +334,7 @@ export const color = {
   backgroundInheritedHover: "#ffdcc3",
   backgroundInputSelected: "#b7d9f8",
   backgroundInputDisabled: "#f8f8f8",
+  backgroundInputHighlight: "#b7d9f8",
   backgroundButtonHover: "#ffffff17",
   backgroundButtonPressed: "#0000001c",
   backgroundButtonDisabled: "#dfe3e6",
@@ -308,6 +344,7 @@ export const color = {
   backgroundItemMenuItemHover: "#d3d3d3",
   backgroundTooltipMain: "#11181c",
   backgroundTooltipBuilder: "#ffffff",
+  backgroundTooltipDesigner: "#ffffff",
   backgroundSpacingTopBottom: "#f1f3f5",
   backgroundSpacingLeftRight: "#eceef0",
   backgroundSpacingHover: "#d7dbdf",
@@ -324,6 +361,12 @@ export const color = {
     "linear-gradient(90deg, #00894a00 0%, #00894a 31.87%)",
   backgroundCanvas: "#c7c7c7",
   backgroundTopbar: "#2d2d2d",
+  backgroundGradientPrimary:
+    "linear-gradient(135deg, #1774ff 0%, #bd2fdb 100%)",
+  backgroundGradientVertical:
+    "linear-gradient(180deg, #096cff 0%, #096cff 0.01%, #bd2fdb 100%)",
+  backgroundGradientHorizontal:
+    "linear-gradient(90deg, #4a4efa 0%, #bd2fdb 100%)",
   brandBackgroundProjectCardFront:
     "linear-gradient(0deg, #fbf8ff 0%, #e2e2e2 100%)",
   brandBackgroundProjectCardBack:
@@ -333,8 +376,15 @@ export const color = {
   brandBackgroundGradient: "linear-gradient(180deg, #e63cfe 0%, #ffae3c 100%)",
   brandBackgroundPublishedContrast: "#ebfffc",
   brandBackgroundDashboard: "#ededed",
+  brandBackgroundRegularButtonSelected:
+    "linear-gradient(180deg, #bffeec 0%, #fbfff6 100%)",
+  brandBackgroundCtaButton: "linear-gradient(135deg, #4a4efa 0%, #bd2fdb 100%)",
   brandForegroundPublished: "#00894a",
   brandBorderPublished: "#ebfffc",
+  brandBorderFullGradient:
+    "linear-gradient(135deg, #92fddc 0%, #7d7ffb 31.94%, #ed72fe 64.24%, #fdd791 100%)",
+  brandBorderNavbar:
+    "linear-gradient(90deg, #39fbbb00 0%, #39fbbb 20%, #4a4efa 40.03%, #e63cfe 60.02%, #ffae3c 80.04%, #ffae3c00 100%, #ffae3c00 100%)",
   borderMain: "#c1c8cd",
   borderFocus: "#096cff",
   borderMenuInner: "#fcfcfc",
@@ -358,7 +408,7 @@ export const color = {
   foregroundCategoryLabel: "#889096",
   foregroundTextSubtle: "#687076",
   foregroundDestructive: "#de3339",
-  foregroundSuccess: "#00894a",
+  foregroundSuccess: "#00b661",
   foregroundInfo: "#096cff",
   foregroundDisabled: "#c1c8cd",
   foregroundHiddenItem: "#7e868c",
@@ -372,10 +422,15 @@ export const color = {
   foregroundInheritedFlexUi: "#fa934e",
   foregroundTextMoreSubtle: "#889096",
   foregroundPrimary: "#096cff",
+  foregroundSuccessText: "#00894a",
+  foregroundGridControlsDot: "#c7c7c7",
+  foregroundGridControlsDotHover: "#707375",
+  foregroundGridControlsFlexHover: "#96c7f2",
   maintenanceLight: "#ededed",
   maintenanceMedium: "#c7c7c7",
   maintenanceDark: "#858585",
   maintenanceSpacerViz: "#f9c6c6",
+  backgrondMenuHint: "#dedede",
 } as const;
 
 export const borderWidth = { "0": 1, "1": 2 } as const;

@@ -25,7 +25,7 @@ import {
 import { CheckMarkIcon, DotIcon } from "@webstudio-is/icons";
 import type { ComponentProps } from "react";
 
-export const labelCss = css(textVariants.title, {
+export const labelCss = css(textVariants.titles, {
   color: theme.colors.foregroundMain,
   mx: theme.spacing[3],
   padding: theme.spacing[3],
@@ -43,7 +43,7 @@ export const itemIndicatorCss = css({
 });
 
 const itemMargin = theme.spacing[3];
-export const itemCss = css(textVariants.labelTitleCase, {
+export const itemCss = css(textVariants.labelsTitleCase, {
   outline: "none",
   cursor: "default",
   position: "relative",

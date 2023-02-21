@@ -18,7 +18,7 @@ const sectionStyle = css({
     },
   },
 });
-const titleStyle = css(textVariants.title, {
+const titleStyle = css(textVariants.titles, {
   marginTop: 0,
   marginBottom: theme.spacing[5],
   color: theme.colors.foregroundMain,

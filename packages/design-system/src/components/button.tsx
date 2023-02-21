@@ -109,7 +109,7 @@ const StyledButton = styled("button", {
   },
 });
 
-const TextContainer = styled("span", textVariants.labelTitleCase, {
+const TextContainer = styled("span", textVariants.labelsTitleCase, {
   padding: `0 ${theme.spacing[2]}`,
 });
 

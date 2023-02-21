@@ -47,13 +47,13 @@ export const TextArea = styled("textarea", {
       "1": {
         borderRadius: theme.borderRadius[4],
         fontSize: theme.deprecatedFontSize[3],
-        lineHeight: theme.lineHeight[3],
+        lineHeight: theme.deprecatedLineHeight[3],
         px: theme.spacing[3],
       },
       "2": {
         borderRadius: theme.borderRadius[4],
         fontSize: theme.deprecatedFontSize[3],
-        lineHeight: theme.lineHeight[4],
+        lineHeight: theme.deprecatedLineHeight[4],
         px: theme.spacing[3],
       },
       "3": {

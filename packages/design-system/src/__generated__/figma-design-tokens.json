@@ -5,18 +5,18 @@
         {
           "color": "#00000026",
           "type": "dropShadow",
-          "x": "0",
-          "y": "5",
-          "blur": "17",
-          "spread": "0"
+          "x": 0,
+          "y": 5,
+          "blur": 17,
+          "spread": 0
         },
         {
           "color": "#0000001a",
           "type": "dropShadow",
-          "x": "0",
-          "y": "2",
-          "blur": "7",
-          "spread": "0"
+          "x": 0,
+          "y": 2,
+          "blur": 7,
+          "spread": 0
         }
       ],
       "type": "boxShadow"
@@ -37,27 +37,27 @@
     },
     "lineHeights": {
       "0": {
-        "value": "8",
-        "type": "lineHeights"
-      },
-      "1": {
-        "value": "10",
-        "type": "lineHeights"
-      },
-      "2": {
-        "value": "11",
-        "type": "lineHeights"
-      },
-      "3": {
-        "value": "12",
-        "type": "lineHeights"
-      },
-      "4": {
         "value": "16",
         "type": "lineHeights"
       },
+      "1": {
+        "value": "8",
+        "type": "lineHeights"
+      },
+      "2": {
+        "value": "12",
+        "type": "lineHeights"
+      },
+      "3": {
+        "value": "10",
+        "type": "lineHeights"
+      },
+      "4": {
+        "value": "39",
+        "type": "lineHeights"
+      },
       "5": {
-        "value": "22",
+        "value": "11",
         "type": "lineHeights"
       },
       "6": {
@@ -65,11 +65,11 @@
         "type": "lineHeights"
       },
       "7": {
-        "value": "39",
+        "value": "58",
         "type": "lineHeights"
       },
       "8": {
-        "value": "58",
+        "value": "22",
         "type": "lineHeights"
       },
       "9": {
@@ -87,7 +87,7 @@
         "type": "fontWeights"
       },
       "inter-2": {
-        "value": "Semi Bold",
+        "value": "Bold",
         "type": "fontWeights"
       },
       "inter-3": {
@@ -99,7 +99,7 @@
         "type": "fontWeights"
       },
       "manrope-5": {
-        "value": "ExtraLight",
+        "value": "Bold",
         "type": "fontWeights"
       },
       "manrope-6": {
@@ -107,11 +107,23 @@
         "type": "fontWeights"
       },
       "manrope-7": {
-        "value": "Bold",
+        "value": "SemiBold",
         "type": "fontWeights"
       },
       "manrope-8": {
+        "value": "ExtraLight",
+        "type": "fontWeights"
+      },
+      "manrope-9": {
         "value": "ExtraBold",
+        "type": "fontWeights"
+      },
+      "roboto-mono-3": {
+        "value": "Regular",
+        "type": "fontWeights"
+      },
+      "inter-4": {
+        "value": "Semi Bold",
         "type": "fontWeights"
       }
     },
@@ -151,11 +163,11 @@
     },
     "letterSpacing": {
       "0": {
-        "value": "-5%",
+        "value": "0.5%",
         "type": "letterSpacing"
       },
       "1": {
-        "value": "-2%",
+        "value": "1%",
         "type": "letterSpacing"
       },
       "2": {
@@ -163,11 +175,11 @@
         "type": "letterSpacing"
       },
       "3": {
-        "value": "0.5%",
+        "value": "-2%",
         "type": "letterSpacing"
       },
       "4": {
-        "value": "1%",
+        "value": "-5%",
         "type": "letterSpacing"
       }
     },
@@ -181,9 +193,9 @@
       "value": {
         "fontFamily": "{fontFamilies.inter}",
         "fontWeight": "{fontWeights.inter-0}",
-        "lineHeight": "{lineHeights.4}",
-        "fontSize": "{fontSizes.2}",
-        "letterSpacing": "{letterSpacing.3}",
+        "lineHeight": "{lineHeights.0}",
+        "fontSize": "{fontSize.2}",
+        "letterSpacing": "{letterSpacing.0}",
         "paragraphSpacing": "{paragraphSpacing.0}",
         "paragraphIndent": "{paragraphIndent.0}",
         "textCase": "{textCase.none}",
@@ -191,13 +203,13 @@
       },
       "type": "typography"
     },
-    "Label - Title Case": {
+    "Labels - Title Case": {
       "value": {
         "fontFamily": "{fontFamilies.inter}",
         "fontWeight": "{fontWeights.inter-1}",
-        "lineHeight": "{lineHeights.4}",
-        "fontSize": "{fontSizes.2}",
-        "letterSpacing": "{letterSpacing.3}",
+        "lineHeight": "{lineHeights.0}",
+        "fontSize": "{fontSize.2}",
+        "letterSpacing": "{letterSpacing.0}",
         "paragraphSpacing": "{paragraphSpacing.0}",
         "paragraphIndent": "{paragraphIndent.0}",
         "textCase": "{textCase.capitalize}",
@@ -205,13 +217,13 @@
       },
       "type": "typography"
     },
-    "Label - Sentence case": {
+    "Labels - Sentence case": {
       "value": {
         "fontFamily": "{fontFamilies.inter}",
         "fontWeight": "{fontWeights.inter-1}",
-        "lineHeight": "{lineHeights.4}",
-        "fontSize": "{fontSizes.2}",
-        "letterSpacing": "{letterSpacing.3}",
+        "lineHeight": "{lineHeights.0}",
+        "fontSize": "{fontSize.2}",
+        "letterSpacing": "{letterSpacing.0}",
         "paragraphSpacing": "{paragraphSpacing.0}",
         "paragraphIndent": "{paragraphIndent.0}",
         "textCase": "{textCase.none}",
@@ -219,16 +231,16 @@
       },
       "type": "typography"
     },
-    "Title": {
+    "Titles": {
       "value": {
         "fontFamily": "{fontFamilies.inter}",
-        "fontWeight": "{fontWeights.inter-3}",
-        "lineHeight": "{lineHeights.4}",
-        "fontSize": "{fontSizes.2}",
-        "letterSpacing": "{letterSpacing.4}",
+        "fontWeight": "{fontWeights.inter-2}",
+        "lineHeight": "{lineHeights.0}",
+        "fontSize": "{fontSize.2}",
+        "letterSpacing": "{letterSpacing.1}",
         "paragraphSpacing": "{paragraphSpacing.0}",
         "paragraphIndent": "{paragraphIndent.0}",
-        "textCase": "{textCase.none}",
+        "textCase": "{textCase.capitalize}",
         "textDecoration": "{textDecoration.none}"
       },
       "type": "typography"
@@ -237,9 +249,9 @@
       "value": {
         "fontFamily": "{fontFamilies.inter}",
         "fontWeight": "{fontWeights.inter-0}",
-        "lineHeight": "{lineHeights.2}",
-        "fontSize": "{fontSizes.1}",
-        "letterSpacing": "{letterSpacing.4}",
+        "lineHeight": "{lineHeights.5}",
+        "fontSize": "{fontSize.1}",
+        "letterSpacing": "{letterSpacing.1}",
         "paragraphSpacing": "{paragraphSpacing.0}",
         "paragraphIndent": "{paragraphIndent.0}",
         "textCase": "{textCase.none}",
@@ -252,9 +264,9 @@
       "value": {
         "fontFamily": "{fontFamilies.inter}",
         "fontWeight": "{fontWeights.inter-1}",
-        "lineHeight": "{lineHeights.0}",
-        "fontSize": "{fontSizes.0}",
-        "letterSpacing": "{letterSpacing.4}",
+        "lineHeight": "{lineHeights.1}",
+        "fontSize": "{fontSize.0}",
+        "letterSpacing": "{letterSpacing.1}",
         "paragraphSpacing": "{paragraphSpacing.0}",
         "paragraphIndent": "{paragraphIndent.0}",
         "textCase": "{textCase.none}",
@@ -266,8 +278,8 @@
       "value": {
         "fontFamily": "{fontFamilies.inter}",
         "fontWeight": "{fontWeights.inter-1}",
-        "lineHeight": "{lineHeights.3}",
-        "fontSize": "{fontSizes.1}",
+        "lineHeight": "{lineHeights.2}",
+        "fontSize": "{fontSize.1}",
         "letterSpacing": "{letterSpacing.2}",
         "paragraphSpacing": "{paragraphSpacing.0}",
         "paragraphIndent": "{paragraphIndent.0}",
@@ -279,10 +291,10 @@
     "Mono": {
       "value": {
         "fontFamily": "{fontFamilies.roboto-mono}",
-        "fontWeight": "{fontWeights.roboto-mono-4}",
-        "lineHeight": "{lineHeights.4}",
-        "fontSize": "{fontSizes.2}",
-        "letterSpacing": "{letterSpacing.4}",
+        "fontWeight": "{fontWeights.roboto-mono-3}",
+        "lineHeight": "{lineHeights.0}",
+        "fontSize": "{fontSize.2}",
+        "letterSpacing": "{letterSpacing.1}",
         "paragraphSpacing": "{paragraphSpacing.0}",
         "paragraphIndent": "{paragraphIndent.0}",
         "textCase": "{textCase.none}",
@@ -294,9 +306,9 @@
       "value": {
         "fontFamily": "{fontFamilies.inter}",
         "fontWeight": "{fontWeights.inter-1}",
-        "lineHeight": "{lineHeights.7}",
-        "fontSize": "{fontSizes.5}",
-        "letterSpacing": "{letterSpacing.3}",
+        "lineHeight": "{lineHeights.4}",
+        "fontSize": "{fontSize.5}",
+        "letterSpacing": "{letterSpacing.0}",
         "paragraphSpacing": "{paragraphSpacing.0}",
         "paragraphIndent": "{paragraphIndent.0}",
         "textCase": "{textCase.none}",
@@ -307,10 +319,10 @@
     "Space Section Unit Text": {
       "value": {
         "fontFamily": "{fontFamilies.inter}",
-        "fontWeight": "{fontWeights.inter-2}",
-        "lineHeight": "{lineHeights.0}",
-        "fontSize": "{fontSizes.0}",
-        "letterSpacing": "{letterSpacing.4}",
+        "fontWeight": "{fontWeights.inter-4}",
+        "lineHeight": "{lineHeights.1}",
+        "fontSize": "{fontSize.0}",
+        "letterSpacing": "{letterSpacing.1}",
         "paragraphSpacing": "{paragraphSpacing.0}",
         "paragraphIndent": "{paragraphIndent.0}",
         "textCase": "{textCase.uppercase}",
@@ -322,9 +334,9 @@
       "value": {
         "fontFamily": "{fontFamilies.inter}",
         "fontWeight": "{fontWeights.inter-1}",
-        "lineHeight": "{lineHeights.1}",
-        "fontSize": "{fontSizes.1}",
-        "letterSpacing": "{letterSpacing.4}",
+        "lineHeight": "{lineHeights.3}",
+        "fontSize": "{fontSize.1}",
+        "letterSpacing": "{letterSpacing.1}",
         "paragraphSpacing": "{paragraphSpacing.0}",
         "paragraphIndent": "{paragraphIndent.0}",
         "textCase": "{textCase.none}",
@@ -375,6 +387,22 @@
       },
       "5": {
         "value": "6px",
+        "type": "borderRadius"
+      },
+      "6": {
+        "value": "8px",
+        "type": "borderRadius"
+      },
+      "7": {
+        "value": "9px",
+        "type": "borderRadius"
+      },
+      "8": {
+        "value": "16px",
+        "type": "borderRadius"
+      },
+      "9": {
+        "value": "17px",
         "type": "borderRadius"
       }
     },
@@ -450,8 +478,9 @@
           "description": "used for destructive button and accent color on destructive toast"
         },
         "notification": {
-          "value": "#d53f45",
-          "type": "color"
+          "value": "#ffefef",
+          "type": "color",
+          "description": "background for destructive toast"
         }
       },
       "success": {
@@ -529,6 +558,11 @@
           "value": "#f8f8f8",
           "type": "color",
           "description": "background for disabled text fields"
+        },
+        "highlight": {
+          "value": "#b7d9f8",
+          "type": "color",
+          "description": "background color for highlighted/selected text"
         }
       },
       "button": {
@@ -576,6 +610,10 @@
           "type": "color"
         },
         "builder": {
+          "value": "#ffffff",
+          "type": "color"
+        },
+        "designer": {
           "value": "#ffffff",
           "type": "color"
         }
@@ -644,6 +682,23 @@
         "value": "#2d2d2d",
         "type": "color",
         "description": "For the Builder UI top bar background color."
+      },
+      "gradient": {
+        "primary": {
+          "value": "linear-gradient(135deg, #1774ff 0%, #bd2fdb 100%)",
+          "type": "color",
+          "description": "For buttons and other larger UI elements that use a brand gradient. (experimental)"
+        },
+        "vertical": {
+          "value": "linear-gradient(180deg, #096cff 0%, #096cff 0.01%, #bd2fdb 100%)",
+          "type": "color",
+          "description": "For vertically-oriented elements in the Builder UI that use a brand gradient background. "
+        },
+        "horizontal": {
+          "value": "linear-gradient(90deg, #4a4efa 0%, #bd2fdb 100%)",
+          "type": "color",
+          "description": "For horizontally-oriented elements in the Builder UI that use a brand gradient background. "
+        }
       }
     },
     "brand": {
@@ -678,6 +733,14 @@
         "dashboard": {
           "value": "#ededed",
           "type": "color"
+        },
+        "regular-button-selected": {
+          "value": "linear-gradient(180deg, #bffeec 0%, #fbfff6 100%)",
+          "type": "color"
+        },
+        "cta-button": {
+          "value": "linear-gradient(135deg, #4a4efa 0%, #bd2fdb 100%)",
+          "type": "color"
         }
       },
       "foreground": {
@@ -689,6 +752,14 @@
       "border": {
         "published": {
           "value": "#ebfffc",
+          "type": "color"
+        },
+        "full-gradient": {
+          "value": "linear-gradient(135deg, #92fddc 0%, #7d7ffb 31.94%, #ed72fe 64.24%, #fdd791 100%)",
+          "type": "color"
+        },
+        "navbar": {
+          "value": "linear-gradient(90deg, #39fbbb00 0%, #39fbbb 20%, #4a4efa 40.03%, #e63cfe 60.02%, #ffae3c 80.04%, #ffae3c00 100%, #ffae3c00 100%)",
           "type": "color"
         }
       }
@@ -820,9 +891,9 @@
         "description": "destructive foreground color. Used in input field, text field, search area, & toast"
       },
       "success": {
-        "value": "#00894a",
+        "value": "#00b661",
         "type": "color",
-        "description": "success foreground color. Used in toast"
+        "description": "A brighter success color for use with icons and text against a dark bg. Not for use with text against light bg."
       },
       "info": {
         "value": "#096cff",
@@ -895,6 +966,27 @@
       "primary": {
         "value": "#096cff",
         "type": "color"
+      },
+      "success-text": {
+        "value": "#00894a",
+        "type": "color",
+        "description": "Success color that is dark enough for text. Same color as background/success"
+      },
+      "grid-controls": {
+        "dot": {
+          "value": "#c7c7c7",
+          "type": "color",
+          "description": "color for flex control ui elements"
+        },
+        "dot-hover": {
+          "value": "#707375",
+          "type": "color"
+        },
+        "flex-hover": {
+          "value": "#96c7f2",
+          "type": "color",
+          "description": "color for hovered state of flex control ui elements"
+        }
       }
     },
     "Brand": {
@@ -902,10 +994,10 @@
         "value": {
           "color": "#1717171a",
           "type": "dropShadow",
-          "x": "0",
-          "y": "4",
-          "blur": "4",
-          "spread": "0"
+          "x": 0,
+          "y": 4,
+          "blur": 4,
+          "spread": 0
         },
         "type": "boxShadow",
         "description": "elevation for small things within the dashboard"
@@ -914,10 +1006,10 @@
         "value": {
           "color": "#1717171a",
           "type": "dropShadow",
-          "x": "0",
-          "y": "8",
-          "blur": "16",
-          "spread": "0"
+          "x": 0,
+          "y": 8,
+          "blur": 16,
+          "spread": 0
         },
         "type": "boxShadow",
         "description": "elevation for big things within the dashboard"
@@ -925,9 +1017,9 @@
       "Section Title": {
         "value": {
           "fontFamily": "{fontFamilies.manrope}",
-          "fontWeight": "{fontWeights.manrope-7}",
+          "fontWeight": "{fontWeights.manrope-5}",
           "lineHeight": "{lineHeights.6}",
-          "fontSize": "{fontSizes.4}",
+          "fontSize": "{fontSize.4}",
           "letterSpacing": "{letterSpacing.2}",
           "paragraphSpacing": "{paragraphSpacing.0}",
           "paragraphIndent": "{paragraphIndent.0}",
@@ -939,10 +1031,10 @@
       "Large Title": {
         "value": {
           "fontFamily": "{fontFamilies.manrope}",
-          "fontWeight": "{fontWeights.manrope-7}",
-          "lineHeight": "{lineHeights.8}",
-          "fontSize": "{fontSizes.6}",
-          "letterSpacing": "{letterSpacing.1}",
+          "fontWeight": "{fontWeights.manrope-5}",
+          "lineHeight": "{lineHeights.7}",
+          "fontSize": "{fontSize.6}",
+          "letterSpacing": "{letterSpacing.3}",
           "paragraphSpacing": "{paragraphSpacing.0}",
           "paragraphIndent": "{paragraphIndent.0}",
           "textCase": "{textCase.none}",
@@ -954,8 +1046,8 @@
         "value": {
           "fontFamily": "{fontFamilies.manrope}",
           "fontWeight": "{fontWeights.manrope-6}",
-          "lineHeight": "{lineHeights.5}",
-          "fontSize": "{fontSizes.3}",
+          "lineHeight": "{lineHeights.8}",
+          "fontSize": "{fontSize.3}",
           "letterSpacing": "{letterSpacing.2}",
           "paragraphSpacing": "{paragraphSpacing.0}",
           "paragraphIndent": "{paragraphIndent.0}",
@@ -968,10 +1060,10 @@
         "Default": {
           "value": {
             "fontFamily": "{fontFamilies.manrope}",
-            "fontWeight": "{fontWeights.manrope-5}",
+            "fontWeight": "{fontWeights.manrope-8}",
             "lineHeight": "{lineHeights.9}",
-            "fontSize": "{fontSizes.7}",
-            "letterSpacing": "{letterSpacing.0}",
+            "fontSize": "{fontSize.7}",
+            "letterSpacing": "{letterSpacing.4}",
             "paragraphSpacing": "{paragraphSpacing.0}",
             "paragraphIndent": "{paragraphIndent.0}",
             "textCase": "{textCase.none}",
@@ -982,10 +1074,10 @@
         "Hover": {
           "value": {
             "fontFamily": "{fontFamilies.manrope}",
-            "fontWeight": "{fontWeights.manrope-8}",
+            "fontWeight": "{fontWeights.manrope-9}",
             "lineHeight": "{lineHeights.9}",
-            "fontSize": "{fontSizes.7}",
-            "letterSpacing": "{letterSpacing.0}",
+            "fontSize": "{fontSize.7}",
+            "letterSpacing": "{letterSpacing.4}",
             "paragraphSpacing": "{paragraphSpacing.0}",
             "paragraphIndent": "{paragraphIndent.0}",
             "textCase": "{textCase.none}",
@@ -999,9 +1091,9 @@
           "value": {
             "fontFamily": "{fontFamilies.manrope}",
             "fontWeight": "{fontWeights.manrope-6}",
-            "lineHeight": "{lineHeights.8}",
-            "fontSize": "{fontSizes.6}",
-            "letterSpacing": "{letterSpacing.1}",
+            "lineHeight": "{lineHeights.7}",
+            "fontSize": "{fontSize.6}",
+            "letterSpacing": "{letterSpacing.3}",
             "paragraphSpacing": "{paragraphSpacing.0}",
             "paragraphIndent": "{paragraphIndent.0}",
             "textCase": "{textCase.none}",
@@ -1012,10 +1104,40 @@
         "Hover": {
           "value": {
             "fontFamily": "{fontFamilies.manrope}",
-            "fontWeight": "{fontWeights.manrope-8}",
+            "fontWeight": "{fontWeights.manrope-9}",
+            "lineHeight": "{lineHeights.7}",
+            "fontSize": "{fontSize.6}",
+            "letterSpacing": "{letterSpacing.3}",
+            "paragraphSpacing": "{paragraphSpacing.0}",
+            "paragraphIndent": "{paragraphIndent.0}",
+            "textCase": "{textCase.none}",
+            "textDecoration": "{textDecoration.none}"
+          },
+          "type": "typography"
+        }
+      },
+      "button": {
+        "regular": {
+          "value": {
+            "fontFamily": "{fontFamilies.manrope}",
+            "fontWeight": "{fontWeights.manrope-7}",
             "lineHeight": "{lineHeights.8}",
-            "fontSize": "{fontSizes.6}",
-            "letterSpacing": "{letterSpacing.1}",
+            "fontSize": "{fontSize.3}",
+            "letterSpacing": "{letterSpacing.2}",
+            "paragraphSpacing": "{paragraphSpacing.0}",
+            "paragraphIndent": "{paragraphIndent.0}",
+            "textCase": "{textCase.none}",
+            "textDecoration": "{textDecoration.none}"
+          },
+          "type": "typography"
+        },
+        "cta": {
+          "value": {
+            "fontFamily": "{fontFamilies.manrope}",
+            "fontWeight": "{fontWeights.manrope-5}",
+            "lineHeight": "{lineHeights.4}",
+            "fontSize": "{fontSize.5}",
+            "letterSpacing": "{letterSpacing.3}",
             "paragraphSpacing": "{paragraphSpacing.0}",
             "paragraphIndent": "{paragraphIndent.0}",
             "textCase": "{textCase.none}",
@@ -1060,10 +1182,53 @@
         "value": "0px",
         "type": "dimension"
       }
+    },
+    "backgrond": {
+      "menu-hint": {
+        "value": "#dedede",
+        "type": "color",
+        "description": "For the background of the hint menu item."
+      }
+    },
+    "fontSize": {
+      "0": {
+        "value": "8",
+        "type": "fontSizes"
+      },
+      "1": {
+        "value": "10",
+        "type": "fontSizes"
+      },
+      "2": {
+        "value": "12",
+        "type": "fontSizes"
+      },
+      "3": {
+        "value": "16",
+        "type": "fontSizes"
+      },
+      "4": {
+        "value": "20",
+        "type": "fontSizes"
+      },
+      "5": {
+        "value": "32",
+        "type": "fontSizes"
+      },
+      "6": {
+        "value": "48",
+        "type": "fontSizes"
+      },
+      "7": {
+        "value": "360",
+        "type": "fontSizes"
+      }
     }
   },
   "$themes": [],
   "$metadata": {
-    "tokenSetOrder": ["global"]
+    "tokenSetOrder": [
+      "global"
+    ]
   }
 }

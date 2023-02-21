@@ -8,7 +8,7 @@ import { forwardRef } from "react";
 import { textVariants } from "./text";
 import { styled, theme } from "../stitches.config";
 
-const StyledLabel = styled("label", textVariants.labelSentenceCase, {
+const StyledLabel = styled("label", textVariants.labelsSentenceCase, {
   boxSizing: "border-box",
   flexShrink: 0,
   py: theme.spacing[2],

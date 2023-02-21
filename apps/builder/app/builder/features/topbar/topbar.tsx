@@ -47,7 +47,7 @@ export const Topbar = ({ gridArea, project, page, publish }: TopbarProps) => {
       </Flex>
       <Flex css={{ width: theme.spacing[30], px: theme.spacing[9] }}>
         <Text
-          variant="labelTitleCase"
+          variant="labelsTitleCase"
           color="contrast"
           css={{ minWidth: theme.spacing[15], maxWidth: "80%" }}
           truncate

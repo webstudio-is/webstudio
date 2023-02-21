@@ -254,10 +254,12 @@ const {
       sans: figma.fontFamilies.inter,
       mono: figma.fontFamilies.robotoMono,
     },
-    fontSize: figma.fontSizes,
-    lineHeight: figma.lineHeights,
-    fontWeight: figma.fontWeights,
-    letterSpacing: figma.letterSpacing,
+
+    // @todo: should we use these tokens?
+    // fontSize: figma.fontSizes,
+    // lineHeight: figma.lineHeights,
+    // fontWeight: figma.fontWeights,
+    // letterSpacing: figma.letterSpacing,
 
     opacity: {
       1: "0.4",

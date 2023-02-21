@@ -14,7 +14,7 @@ type TitleProps = {
   css?: CSS;
 };
 
-const Container = styled("div", textVariants.title, {
+const Container = styled("div", textVariants.titles, {
   display: "flex",
   alignItems: "center",
   justifyContent: "space-between",
