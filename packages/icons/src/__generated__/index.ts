@@ -1,4 +1,5 @@
 export * from "./auto-scroll";
+export * from "./blockquote";
 export * from "./chevron-big-down";
 export * from "./chevron-big-left";
 export * from "./chevron-big-right";
