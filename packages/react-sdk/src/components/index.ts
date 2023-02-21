@@ -20,6 +20,7 @@ import { meta as ImageMeta } from "./image.ws";
 import { meta as BlockquoteMeta } from "./blockquote.ws";
 import { meta as ListMeta } from "./list.ws";
 import { meta as ListItemMeta } from "./list-item.ws";
+import { meta as SeparatorMeta } from "./separator.ws";
 
 // these are huge JSON objects that we want to be tree-shaken when not used!
 import { propsMeta as BodyMetaPropsMeta } from "./body.ws";
@@ -41,6 +42,7 @@ import { propsMeta as ImageMetaPropsMeta } from "./image.ws";
 import { propsMeta as BlockquotePropsMeta } from "./blockquote.ws";
 import { propsMeta as ListPropsMeta } from "./list.ws";
 import { propsMeta as ListItemPropsMeta } from "./list-item.ws";
+import { propsMeta as SeparatorPropsMeta } from "./separator.ws";
 
 import { Body } from "./body";
 import { Box } from "./box";
@@ -61,6 +63,7 @@ import { Image } from "./image";
 import { Blockquote } from "./blockquote";
 import { List } from "./list";
 import { ListItem } from "./list-item";
+import { Separator } from "./separator";
 
 const defaultMetas: Record<string, WsComponentMeta> = {
   Box: BoxMeta,
@@ -82,6 +85,7 @@ const defaultMetas: Record<string, WsComponentMeta> = {
   Blockquote: BlockquoteMeta,
   List: ListMeta,
   ListItem: ListItemMeta,
+  Separator: SeparatorMeta,
 };
 
 let currentMetas = defaultMetas;
@@ -120,6 +124,7 @@ const defaultPropsMetas: Record<string, WsComponentPropsMeta> = {
   Blockquote: BlockquotePropsMeta,
   List: ListPropsMeta,
   ListItem: ListItemPropsMeta,
+  Separator: SeparatorPropsMeta,
 };
 
 let registeredPropsMetas: Record<string, Partial<WsComponentPropsMeta>> = {};
@@ -177,6 +182,7 @@ const defaultComponents = {
   Blockquote,
   List,
   ListItem,
+  Separator,
 } as const;
 
 export type ComponentName = keyof typeof defaultComponents;

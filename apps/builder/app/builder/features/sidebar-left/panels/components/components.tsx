@@ -110,7 +110,8 @@ export const TabContent = ({ publish, onSetActiveTab }: TabContentProps) => {
       meta?.type === "container" ||
       meta?.type === "control" ||
       meta?.type === "embed" ||
-      meta?.type === "rich-text"
+      meta?.type === "rich-text" ||
+      meta?.type === "void"
     );
   });
 
