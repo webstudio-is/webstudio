@@ -1,5 +1,5 @@
 {
-  "packageManager": "pnpm@7.18.2",
+  "packageManager": "pnpm@7.27.1",
   "name": "turbo",
   "version": "0.0.0",
   "private": true,
@@ -37,7 +37,7 @@
   },
   "engines": {
     "node": "16",
-    "pnpm": "7.18",
+    "pnpm": "7.27",
     "yarn": "This project is configured to use pnpm"
   },
   "nano-staged": {
