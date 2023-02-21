@@ -28,8 +28,7 @@ export type WsComponentMeta = {
     | "control"
     | "embed"
     | "rich-text"
-    | "rich-text-child"
-    | "void";
+    | "rich-text-child";
   label: string;
   Icon: FunctionComponent<IconProps>;
   presetStyle?: Style;
@@ -44,7 +43,6 @@ const WsComponentMeta = z.object({
     "embed",
     "rich-text",
     "rich-text-child",
-    "void",
   ]),
   label: z.string(),
   Icon: z.any(),
