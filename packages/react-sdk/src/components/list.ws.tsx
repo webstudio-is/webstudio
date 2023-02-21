@@ -27,5 +27,5 @@ export const meta: WsComponentMeta = {
 
 export const propsMeta = {
   props,
-  initialProps: ["type", "ordered", "starts", "reversed"],
+  initialProps: ["ordered", "type", "starts", "reversed"],
 } as WsComponentPropsMeta;
