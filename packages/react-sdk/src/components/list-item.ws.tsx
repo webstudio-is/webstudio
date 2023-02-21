@@ -11,5 +11,4 @@ export const meta: WsComponentMeta = {
 
 export const propsMeta = {
   props,
-  initialProps: ["tag"],
 } as WsComponentPropsMeta;

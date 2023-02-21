@@ -20,6 +20,13 @@
     },
     "control": "text"
   },
+  "value": {
+    "type": {
+      "name": "string | number | readonly string[]",
+      "required": false
+    },
+    "control": "text"
+  },
   "defaultChecked": {
     "type": {
       "name": "boolean",
@@ -739,37 +746,5 @@
       "required": false
     },
     "control": "text"
-  },
-  "reversed": {
-    "type": {
-      "name": "boolean",
-      "required": false
-    },
-    "control": "boolean"
-  },
-  "start": {
-    "type": {
-      "name": "number",
-      "required": false
-    },
-    "control": "number"
-  },
-  "type": {
-    "type": {
-      "name": "string",
-      "required": false
-    },
-    "control": {
-      "type": "radio",
-      "options": ["a", "i", "1", "A", "I"]
-    }
-  },
-  "ordered": {
-    "type": {
-      "name": "boolean",
-      "required": false
-    },
-    "control": "boolean",
-    "defaultValue": false
   }
 }

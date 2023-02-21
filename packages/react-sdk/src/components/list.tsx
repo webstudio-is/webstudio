@@ -5,14 +5,20 @@ import {
   type ComponentProps,
 } from "react";
 
-const defaultTag = "ul";
+const unorderedTag = "ul";
+const orderedTag = "ol";
 
-type Props = ComponentProps<typeof defaultTag>;
+type Props = ComponentProps<typeof unorderedTag> &
+  ComponentProps<typeof orderedTag> & {
+    ordered: boolean;
+  };
 
-export const List = forwardRef<ElementRef<typeof defaultTag>, Props>(
-  (props, ref) => {
-    return createElement(defaultTag, { ...props, ref });
-  }
-);
+export const List = forwardRef<
+  ElementRef<typeof unorderedTag | typeof orderedTag>,
+  Props
+>(({ ordered = false, ...props }, ref) => {
+  const tag = ordered ? orderedTag : unorderedTag;
+  return createElement(tag, { ...props, ref });
+});
 
 List.displayName = "List";

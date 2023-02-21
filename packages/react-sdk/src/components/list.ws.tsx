@@ -27,5 +27,5 @@ export const meta: WsComponentMeta = {
 
 export const propsMeta = {
   props,
-  initialProps: ["tag"],
+  initialProps: ["type", "ordered", "starts", "reversed"],
 } as WsComponentPropsMeta;
