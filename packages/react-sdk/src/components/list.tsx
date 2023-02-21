@@ -10,7 +10,7 @@ const orderedTag = "ol";
 
 type Props = ComponentProps<typeof unorderedTag> &
   ComponentProps<typeof orderedTag> & {
-    ordered: boolean;
+    ordered?: boolean;
   };
 
 export const List = forwardRef<
