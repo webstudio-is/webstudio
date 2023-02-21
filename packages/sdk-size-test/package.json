@@ -4,7 +4,7 @@
   "private": true,
   "sideEffects": false,
   "scripts": {
-    "build-test": "remix build && du -sh  ./public",
+    "build-test": "rm -rf ./public && remix build && du -sh  ./public",
     "typecheck": "tsc -b"
   },
   "dependencies": {
