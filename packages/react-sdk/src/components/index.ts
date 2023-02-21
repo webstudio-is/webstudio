@@ -18,6 +18,8 @@ import { meta as InputMeta } from "./input.ws";
 import { meta as FormMeta } from "./form.ws";
 import { meta as ImageMeta } from "./image.ws";
 import { meta as BlockquoteMeta } from "./blockquote.ws";
+import { meta as ListMeta } from "./list.ws";
+import { meta as ListItemMeta } from "./list-item.ws";
 
 // these are huge JSON objects that we want to be tree-shaken when not used!
 import { propsMeta as BodyMetaPropsMeta } from "./body.ws";
@@ -37,6 +39,8 @@ import { propsMeta as InputMetaPropsMeta } from "./input.ws";
 import { propsMeta as FormMetaPropsMeta } from "./form.ws";
 import { propsMeta as ImageMetaPropsMeta } from "./image.ws";
 import { propsMeta as BlockquotePropsMeta } from "./blockquote.ws";
+import { propsMeta as ListPropsMeta } from "./list.ws";
+import { propsMeta as ListItemPropsMeta } from "./list-item.ws";
 
 import { Body } from "./body";
 import { Box } from "./box";
@@ -55,6 +59,8 @@ import { Input } from "./input";
 import { Form } from "./form";
 import { Image } from "./image";
 import { Blockquote } from "./blockquote";
+import { List } from "./list";
+import { ListItem } from "./list-item";
 
 const defaultMetas: Record<string, WsComponentMeta> = {
   Box: BoxMeta,
@@ -74,6 +80,8 @@ const defaultMetas: Record<string, WsComponentMeta> = {
   Form: FormMeta,
   Image: ImageMeta,
   Blockquote: BlockquoteMeta,
+  List: ListMeta,
+  ListItem: ListItemMeta,
 };
 
 let currentMetas = defaultMetas;
@@ -110,6 +118,8 @@ const defaultPropsMetas: Record<string, WsComponentPropsMeta> = {
   Form: FormMetaPropsMeta,
   Image: ImageMetaPropsMeta,
   Blockquote: BlockquotePropsMeta,
+  List: ListPropsMeta,
+  ListItem: ListItemPropsMeta,
 };
 
 let registeredPropsMetas: Record<string, Partial<WsComponentPropsMeta>> = {};
@@ -165,6 +175,8 @@ const defaultComponents = {
   Form,
   Image,
   Blockquote,
+  List,
+  ListItem,
 } as const;
 
 export type ComponentName = keyof typeof defaultComponents;
