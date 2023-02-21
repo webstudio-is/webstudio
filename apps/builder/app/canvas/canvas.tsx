@@ -1,4 +1,4 @@
-import { useMemo } from "react";
+import { useMemo, Fragment } from "react";
 import { computed } from "nanostores";
 import type { CanvasData } from "@webstudio-is/project";
 import {
@@ -130,7 +130,8 @@ export const Canvas = ({
     return (
       <>
         <GlobalStyles />
-        {elements}
+        {/* Without fragment elements will be recreated in DesignMode */}
+        <Fragment key="elements">{elements}</Fragment>
       </>
     );
   }
@@ -139,7 +140,7 @@ export const Canvas = ({
     <>
       <GlobalStyles />
       <DesignMode />
-      {elements}
+      <Fragment key="elements">{elements}</Fragment>
     </>
   );
 };

@@ -7,6 +7,8 @@ import { sentryException } from "~/shared/sentry";
 import { createContext } from "~/shared/context.server";
 import { loadCanvasData, loadProductionCanvasData } from "~/shared/db";
 import type { Tree } from "@webstudio-is/project-build";
+import { createCssEngine } from "@webstudio-is/css-engine";
+import { helperStyles } from "~/canvas/shared/styles";
 
 export const loader = async ({ request }: ActionArgs) => {
   try {
@@ -48,7 +50,12 @@ export const loader = async ({ request }: ActionArgs) => {
         styleSourceSelections: canvasData.tree?.styleSourceSelections,
       });
 
-      return new Response(cssText, {
+      const engine = createCssEngine({ name: "ssr" });
+      for (const style of helperStyles) {
+        engine.addPlaintextRule(style);
+      }
+
+      return new Response(`${cssText}\n${engine.cssText}`, {
         headers: {
           "Content-Type": "text/css",
           // We have no way with Remix links to know if CSS has changed (no ?cache-breaker in url)
