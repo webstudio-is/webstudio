@@ -1,27 +1,36 @@
 import { Flex } from "@webstudio-is/design-system";
 import { toValue } from "@webstudio-is/css-engine";
 import type { ControlProps } from "../../style-sections";
-import { ColorPicker } from "../../shared/color-picker";
+import {
+  ColorPicker,
+  CssColorPickerValueInput,
+} from "../../shared/color-picker";
 import { colord } from "colord";
+import { getStyleSource } from "../../shared/style-info";
+import { styleConfigByName } from "../../shared/configs";
+import { useState } from "react";
 
 export const ColorControl = ({
   property,
+  items,
   currentStyle,
   setProperty,
+  deleteProperty,
 }: ControlProps) => {
+  const [intermediateValue, setIntermediateValue] =
+    useState<CssColorPickerValueInput>();
+
+  const { items: defaultItems } = styleConfigByName[property];
+  const styleInfo = currentStyle[property];
+
   let value = currentStyle[property]?.value ?? {
-    // provide default value to avoid control hiding
-    // when value is recomputed
-    type: "rgb" as const,
-    r: 0,
-    g: 0,
-    b: 0,
-    alpha: 0,
+    type: "keyword" as const,
+    value: "black",
   };
 
   const setValue = setProperty(property);
 
-  if (value.type !== "rgb") {
+  if (value.type !== "rgb" && value.type !== "keyword") {
     // Support previously set colors
     const colordValue = colord(toValue(value));
 
@@ -50,12 +59,40 @@ export const ColorControl = ({
   return (
     <Flex align="center" css={{ gridColumn: "2/4" }} gap="1">
       <ColorPicker
-        id={property}
+        property={property}
         value={value}
-        onChange={(value) => {
-          setValue(value, { isEphemeral: true });
+        styleSource={getStyleSource(styleInfo)}
+        keywords={(items ?? defaultItems).map((item) => ({
+          type: "keyword",
+          value: item.name,
+        }))}
+        intermediateValue={intermediateValue}
+        onChange={(styleValue) => {
+          setIntermediateValue(styleValue);
+
+          if (styleValue === undefined) {
+            deleteProperty(property, { isEphemeral: true });
+            return;
+          }
+
+          if (styleValue.type !== "intermediate") {
+            setValue(styleValue, { isEphemeral: true });
+          }
         }}
-        onChangeComplete={setValue}
+        onHighlight={(styleValue) => {
+          if (styleValue !== undefined) {
+            setValue(styleValue, { isEphemeral: true });
+          } else {
+            deleteProperty(property, { isEphemeral: true });
+          }
+        }}
+        onChangeComplete={({ value }) => {
+          setValue(value);
+          setIntermediateValue(undefined);
+        }}
+        onAbort={() => {
+          deleteProperty(property, { isEphemeral: true });
+        }}
       />
     </Flex>
   );

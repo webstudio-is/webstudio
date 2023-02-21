@@ -52,6 +52,7 @@ module.exports = {
           "@lexical/react/*",
           "__generated__/*",
           "react-hot-toast/headless",
+          "colord/plugins/*",
         ],
       },
     ],

@@ -1,19 +1,30 @@
 import { useState } from "react";
-import { colord, type RgbaColor } from "colord";
+import { colord, extend, type RgbaColor } from "colord";
+import namesPlugin from "colord/plugins/names";
 import { ColorResult, RGBColor, SketchPicker } from "react-color";
-import type { RgbValue } from "@webstudio-is/css-data";
-
+import type {
+  InvalidValue,
+  KeywordValue,
+  RgbValue,
+  StyleProperty,
+  StyleValue,
+} from "@webstudio-is/css-data";
 import {
   Box,
-  DeprecatedPopover,
-  DeprecatedPopoverTrigger,
-  DeprecatedPopoverContent,
-  DeprecatedPopoverPortal,
-  TextField,
+  Popover,
+  PopoverTrigger,
+  PopoverContent,
   css,
+  rawTheme,
 } from "@webstudio-is/design-system";
 import { toValue } from "@webstudio-is/css-engine";
 import { theme } from "@webstudio-is/design-system";
+import type { StyleSource } from "./style-info";
+import { CssValueInput } from "./css-value-input";
+import type { IntermediateStyleValue } from "./css-value-input/css-value-input";
+
+// To support color names
+extend([namesPlugin]);
 
 const pickerStyle = css({
   padding: theme.spacing[5],
@@ -33,11 +44,23 @@ const defaultPickerStyles = {
   },
 };
 
+export type CssColorPickerValueInput =
+  | RgbValue
+  | KeywordValue
+  | IntermediateStyleValue;
+
 type ColorPickerProps = {
-  onChange: (value: RgbValue) => void;
-  onChangeComplete: (value: RgbValue) => void;
-  value: RgbValue;
-  id: string;
+  onChange: (value: CssColorPickerValueInput | undefined) => void;
+  onChangeComplete: (event: {
+    value: RgbValue | KeywordValue | InvalidValue;
+  }) => void;
+  onHighlight: (value: StyleValue | undefined) => void;
+  onAbort: () => void;
+  intermediateValue: CssColorPickerValueInput | undefined;
+  value: RgbValue | KeywordValue;
+  styleSource: StyleSource;
+  keywords?: Array<KeywordValue>;
+  property: StyleProperty;
 };
 
 const colorResultToRgbValue = (rgb: RgbaColor | RGBColor): RgbValue => {
@@ -50,83 +73,108 @@ const colorResultToRgbValue = (rgb: RgbaColor | RGBColor): RgbValue => {
   };
 };
 
-const rgbValueToRgbColor = (rgb: RgbValue): RGBColor => {
+const styleValueToRgbaColor = (value: CssColorPickerValueInput): RgbaColor => {
+  const color = colord(
+    value.type === "intermediate" ? value.value : toValue(value)
+  ).toRgb();
+
   return {
-    r: rgb.r,
-    g: rgb.g,
-    b: rgb.b,
-    a: rgb.alpha,
+    r: color.r,
+    g: color.g,
+    b: color.b,
+    a: color.a,
   };
+};
+
+const whiteColor = { r: 255, g: 255, b: 255, a: 1 };
+const borderColorSwatch = colord(rawTheme.colors.borderColorSwatch).toRgb();
+const transparent = colord("transparent").toRgb();
+
+const distance = (a: RgbaColor, b: RgbaColor) => {
+  // Use Euclidian distance, if will not give good results use https://zschuessler.github.io/DeltaE/
+  return Math.sqrt(
+    Math.pow(a.r / 255 - b.r / 255, 2) +
+      Math.pow(a.g / 255 - b.g / 255, 2) +
+      Math.pow(a.b / 255 - b.b / 255, 2) +
+      Math.pow(a.a - b.a, 2)
+  );
+};
+
+const lerp = (a: number, b: number, t: number) => {
+  return a * (1 - t) + b * t;
+};
+
+const lerpColor = (a: RgbaColor, b: RgbaColor, t: number) => {
+  return {
+    r: lerp(a.r, b.r, t),
+    g: lerp(a.g, b.g, t),
+    b: lerp(a.b, b.b, t),
+    a: lerp(a.a, b.a, t),
+  };
+};
+
+const clamp = (value: number, min: number, max: number) => {
+  return Math.min(Math.max(value, min), max);
 };
 
 export const ColorPicker = ({
   value,
+  intermediateValue,
   onChange,
   onChangeComplete,
-  id,
+  onHighlight,
+  onAbort,
+  styleSource,
+  keywords,
+  property,
 }: ColorPickerProps) => {
   const [displayColorPicker, setDisplayColorPicker] = useState(false);
-  const [intermediateValue, setIntermediateValue] = useState<
-    | {
-        /**
-         * TextField value
-         */
-        stringValue: string;
-        /**
-         * Color picker value
-         */
-        rgbValue: RGBColor;
-        state: "invalid" | undefined;
-      }
-    | undefined
-  >(undefined);
 
-  const onInputChangeComplete = (source: "enter" | "blur") => {
-    if (intermediateValue === undefined) {
-      return;
-    }
+  const currentValue = intermediateValue ?? value;
 
-    const colordValue = colord(intermediateValue.stringValue);
-    if (colordValue.isValid()) {
-      const rgb = colordValue.toRgb();
-      onChangeComplete({
-        type: "rgb",
-        r: rgb.r,
-        g: rgb.g,
-        b: rgb.b,
-        alpha: rgb.a,
-      });
-      setIntermediateValue(undefined);
-      return;
-    }
+  const rgbValue = styleValueToRgbaColor(currentValue);
 
-    // We don't store invalid values in the CSS data, below is the only way we can show errors.
-    // See for details: https://github.com/webstudio-is/webstudio-builder/issues/564
-    // Anyway same behavior has Webflow - shows an error state on "Enter", and resets on Blur
+  // Change prefix color in sync with color picker, don't change during input changed
+  const prefixColor =
+    currentValue.type === "keyword" || currentValue.type === "rgb"
+      ? currentValue
+      : value;
 
-    // In case of "Enter" click show that the value is invalid
-    if (source === "enter") {
-      setIntermediateValue({
-        ...intermediateValue,
-        state: "invalid",
-      });
-      return;
-    }
+  const prefixColorRgba = styleValueToRgbaColor(prefixColor);
 
-    // In case of blur, just reset to external value
-    setIntermediateValue(undefined);
-  };
+  // @todo transparent icon can be better
+  const background =
+    prefixColorRgba.a < 1
+      ? // chessboard 5x5
+        `repeating-conic-gradient(rgba(0,0,0,0.22) 0% 25%, transparent 0% 50%) 0% 33.33% / 40% 40%, ${toValue(
+          prefixColor
+        )}`
+      : toValue(prefixColor);
 
-  const stringValue = intermediateValue?.stringValue ?? toValue(value);
-  const rgbValue = intermediateValue?.rgbValue ?? rgbValueToRgbColor(value);
+  const distanceToStartDrawBorder = 0.15;
+
+  // White color is invisible on white background, so we need to draw border
+  // the more color is white the more border is visible
+  const borderColor = colord(
+    lerpColor(
+      transparent,
+      borderColorSwatch,
+      clamp(
+        (distanceToStartDrawBorder - distance(whiteColor, prefixColorRgba)) /
+          distanceToStartDrawBorder,
+        0,
+        1
+      )
+    )
+  ).toRgbString();
 
   const prefix = (
-    <DeprecatedPopover
+    <Popover
       modal
       open={displayColorPicker}
       onOpenChange={setDisplayColorPicker}
     >
-      <DeprecatedPopoverTrigger
+      <PopoverTrigger
         asChild
         aria-label="Open color picker"
         onClick={() => setDisplayColorPicker((shown) => !shown)}
@@ -136,61 +184,77 @@ export const ColorPicker = ({
             margin: theme.spacing[3],
             width: theme.spacing[10],
             height: theme.spacing[10],
+            backgroundBlendMode: "difference",
             borderRadius: 2,
-            background: toValue(value),
+            background,
+            borderColor,
+            borderStyle: "solid",
           }}
         />
-      </DeprecatedPopoverTrigger>
-      <DeprecatedPopoverPortal>
-        <DeprecatedPopoverContent>
-          <SketchPicker
-            color={rgbValue}
-            onChange={(color: ColorResult) => {
-              setIntermediateValue({
-                stringValue: toValue(colorResultToRgbValue(color.rgb)),
-                rgbValue: color.rgb,
-                state: undefined,
-              });
-              onChange(colorResultToRgbValue(color.rgb));
-            }}
-            onChangeComplete={(color: ColorResult) => {
-              setIntermediateValue(undefined);
-              onChangeComplete(colorResultToRgbValue(color.rgb));
-            }}
-            // @todo to remove both when we have preset colors
-            presetColors={[]}
-            className={pickerStyle()}
-            styles={defaultPickerStyles}
-          />
-        </DeprecatedPopoverContent>
-      </DeprecatedPopoverPortal>
-    </DeprecatedPopover>
+      </PopoverTrigger>
+
+      <PopoverContent>
+        <SketchPicker
+          color={rgbValue}
+          onChange={(color: ColorResult) => {
+            onChange(colorResultToRgbValue(color.rgb));
+          }}
+          onChangeComplete={(color: ColorResult) => {
+            onChangeComplete({
+              value: colorResultToRgbValue(color.rgb),
+            });
+          }}
+          // @todo to remove both when we have preset colors
+          presetColors={[]}
+          className={pickerStyle()}
+          styles={defaultPickerStyles}
+        />
+      </PopoverContent>
+    </Popover>
   );
 
   return (
-    <TextField
-      onChange={(event) => {
-        setIntermediateValue({
-          stringValue: event.target.value,
-          rgbValue: rgbValue,
-          state: undefined,
-        });
-      }}
-      onBlur={() => {
-        if (displayColorPicker) {
+    <CssValueInput
+      styleSource={styleSource}
+      icon={prefix}
+      property={property}
+      value={value}
+      intermediateValue={intermediateValue}
+      keywords={keywords}
+      onChange={(styleValue) => {
+        if (
+          styleValue?.type === "rgb" ||
+          styleValue?.type === "keyword" ||
+          styleValue?.type === "intermediate" ||
+          styleValue === undefined
+        ) {
+          onChange(styleValue);
           return;
         }
-        onInputChangeComplete("blur");
+
+        onChange({
+          type: "intermediate",
+          value: toValue(styleValue),
+        });
       }}
-      value={stringValue}
-      state={intermediateValue?.state}
-      id={id}
-      prefix={prefix}
-      onKeyDown={(event) => {
-        if (event.key === "Enter") {
-          onInputChangeComplete("enter");
+      onHighlight={onHighlight}
+      onChangeComplete={({ value }) => {
+        if (
+          value.type === "rgb" ||
+          value.type === "keyword" ||
+          value.type === "invalid"
+        ) {
+          onChangeComplete({ value });
         }
+
+        onChangeComplete({
+          value: {
+            type: "invalid",
+            value: toValue(value),
+          },
+        });
       }}
+      onAbort={onAbort}
     />
   );
 };

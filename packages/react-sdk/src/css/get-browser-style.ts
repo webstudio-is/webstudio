@@ -1,5 +1,5 @@
 import { detectFont } from "detect-font";
-import type { Style, StyleValue, Unit } from "@webstudio-is/css-data";
+import { keywordValues, Style, StyleValue, Unit } from "@webstudio-is/css-data";
 import { properties, units } from "@webstudio-is/css-data";
 
 const unitsList = Object.values(units).flat();
@@ -16,9 +16,20 @@ const parseValue = (
     value = "transparent";
   }
   if (Number.isNaN(number)) {
+    const values = keywordValues[
+      property as keyof typeof keywordValues
+    ] as ReadonlyArray<string>;
+
+    if (values?.includes(value)) {
+      return {
+        type: "keyword",
+        value: value,
+      };
+    }
+
     return {
-      type: "keyword",
-      value,
+      type: "unparsed",
+      value: value,
     };
   }
 
