@@ -31,6 +31,7 @@ export const fontWeights = {
   inter1: 500,
   inter2: 700,
   inter3: 700,
+  inter4: 600,
   robotoMono4: 400,
   manrope5: 700,
   manrope6: 400,
@@ -38,26 +39,6 @@ export const fontWeights = {
   manrope8: 200,
   manrope9: 800,
   robotoMono3: 400,
-  inter4: 600,
-} as const;
-
-export const fontSizes = {
-  "0": "8px",
-  "1": "10px",
-  "2": "12px",
-  "3": "16px",
-  "4": "20px",
-  "5": "32px",
-  "6": "48px",
-  "7": "360px",
-  fontSize0: "8px",
-  fontSize1: "10px",
-  fontSize2: "12px",
-  fontSize3: "16px",
-  fontSize4: "20px",
-  fontSize5: "32px",
-  fontSize6: "48px",
-  fontSize7: "360px",
 } as const;
 
 export const letterSpacing = {
@@ -298,10 +279,6 @@ export const borderRadius = {
   "3": "4px",
   "4": "5px",
   "5": "6px",
-  "6": "8px",
-  "7": "9px",
-  "8": "16px",
-  "9": "17px",
 } as const;
 
 export const color = {
@@ -376,15 +353,8 @@ export const color = {
   brandBackgroundGradient: "linear-gradient(180deg, #e63cfe 0%, #ffae3c 100%)",
   brandBackgroundPublishedContrast: "#ebfffc",
   brandBackgroundDashboard: "#ededed",
-  brandBackgroundRegularButtonSelected:
-    "linear-gradient(180deg, #bffeec 0%, #fbfff6 100%)",
-  brandBackgroundCtaButton: "linear-gradient(135deg, #4a4efa 0%, #bd2fdb 100%)",
   brandForegroundPublished: "#00894a",
   brandBorderPublished: "#ebfffc",
-  brandBorderFullGradient:
-    "linear-gradient(135deg, #92fddc 0%, #7d7ffb 31.94%, #ed72fe 64.24%, #fdd791 100%)",
-  brandBorderNavbar:
-    "linear-gradient(90deg, #39fbbb00 0%, #39fbbb 20%, #4a4efa 40.03%, #e63cfe 60.02%, #ffae3c 80.04%, #ffae3c00 100%, #ffae3c00 100%)",
   borderMain: "#c1c8cd",
   borderFocus: "#096cff",
   borderMenuInner: "#fcfcfc",
@@ -436,5 +406,16 @@ export const color = {
 export const borderWidth = { "0": 1, "1": 2 } as const;
 
 export const dimension = { paragraphIndent0: "0px" } as const;
+
+export const fontSizes = {
+  fontSize0: "8px",
+  fontSize1: "10px",
+  fontSize2: "12px",
+  fontSize3: "16px",
+  fontSize4: "20px",
+  fontSize5: "32px",
+  fontSize6: "48px",
+  fontSize7: "360px",
+} as const;
 
 export const other = { tokenSetOrder0: "global" } as const;

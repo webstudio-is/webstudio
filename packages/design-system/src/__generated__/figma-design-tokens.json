@@ -94,6 +94,10 @@
         "value": "Bold",
         "type": "fontWeights"
       },
+      "inter-4": {
+        "value": "Semi Bold",
+        "type": "fontWeights"
+      },
       "roboto-mono-4": {
         "value": "Regular",
         "type": "fontWeights"
@@ -121,44 +125,6 @@
       "roboto-mono-3": {
         "value": "Regular",
         "type": "fontWeights"
-      },
-      "inter-4": {
-        "value": "Semi Bold",
-        "type": "fontWeights"
-      }
-    },
-    "fontSizes": {
-      "0": {
-        "value": "8",
-        "type": "fontSizes"
-      },
-      "1": {
-        "value": "10",
-        "type": "fontSizes"
-      },
-      "2": {
-        "value": "12",
-        "type": "fontSizes"
-      },
-      "3": {
-        "value": "16",
-        "type": "fontSizes"
-      },
-      "4": {
-        "value": "20",
-        "type": "fontSizes"
-      },
-      "5": {
-        "value": "32",
-        "type": "fontSizes"
-      },
-      "6": {
-        "value": "48",
-        "type": "fontSizes"
-      },
-      "7": {
-        "value": "360",
-        "type": "fontSizes"
       }
     },
     "letterSpacing": {
@@ -387,22 +353,6 @@
       },
       "5": {
         "value": "6px",
-        "type": "borderRadius"
-      },
-      "6": {
-        "value": "8px",
-        "type": "borderRadius"
-      },
-      "7": {
-        "value": "9px",
-        "type": "borderRadius"
-      },
-      "8": {
-        "value": "16px",
-        "type": "borderRadius"
-      },
-      "9": {
-        "value": "17px",
         "type": "borderRadius"
       }
     },
@@ -733,14 +683,6 @@
         "dashboard": {
           "value": "#ededed",
           "type": "color"
-        },
-        "regular-button-selected": {
-          "value": "linear-gradient(180deg, #bffeec 0%, #fbfff6 100%)",
-          "type": "color"
-        },
-        "cta-button": {
-          "value": "linear-gradient(135deg, #4a4efa 0%, #bd2fdb 100%)",
-          "type": "color"
         }
       },
       "foreground": {
@@ -752,14 +694,6 @@
       "border": {
         "published": {
           "value": "#ebfffc",
-          "type": "color"
-        },
-        "full-gradient": {
-          "value": "linear-gradient(135deg, #92fddc 0%, #7d7ffb 31.94%, #ed72fe 64.24%, #fdd791 100%)",
-          "type": "color"
-        },
-        "navbar": {
-          "value": "linear-gradient(90deg, #39fbbb00 0%, #39fbbb 20%, #4a4efa 40.03%, #e63cfe 60.02%, #ffae3c 80.04%, #ffae3c00 100%, #ffae3c00 100%)",
           "type": "color"
         }
       }
