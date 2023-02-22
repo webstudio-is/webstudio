@@ -1,6 +1,6 @@
 import { DashIcon } from "@webstudio-is/icons";
 import type { WsComponentMeta, WsComponentPropsMeta } from "./component-type";
-import props from "./__generated__/blockquote.props.json";
+import { props } from "./__generated__/separator.props";
 
 const presetStyle = {
   height: {
@@ -25,7 +25,7 @@ export const meta: WsComponentMeta = {
   children: [],
 };
 
-export const propsMeta = {
+export const propsMeta: WsComponentPropsMeta = {
   props,
   initialProps: [],
-} as WsComponentPropsMeta;
+};
