@@ -10,7 +10,9 @@ const defaultTag = "code";
 
 export const displayVarNamespace = cssVars.unique("code-display");
 
-const displayVar = cssVars.define(displayVarNamespace, true);
+const blockStyle = {
+  [cssVars.define(displayVarNamespace, true)]: "block",
+};
 
 type Props = Omit<ComponentProps<typeof defaultTag>, "inline"> & {
   inline?: boolean;
@@ -21,7 +23,7 @@ export const Code = forwardRef<ElementRef<typeof defaultTag>, Props>(
   ({ inline = false, ...props }, ref) => {
     // @todo in the future we should expose the inline prop a an attribute
     // and define the display style in `presetStyle` in meta.
-    const style = inline ? undefined : { [displayVar]: "block" };
+    const style = inline ? undefined : blockStyle;
     return createElement(defaultTag, { ...props, style, ref });
   }
 );
