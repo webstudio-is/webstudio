@@ -279,10 +279,6 @@ export const borderRadius = {
   "3": "4px",
   "4": "5px",
   "5": "6px",
-  "6": "8px",
-  "7": "9px",
-  "8": "16px",
-  "9": "17px",
 } as const;
 
 export const color = {
