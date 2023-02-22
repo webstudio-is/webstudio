@@ -39,7 +39,7 @@ export const getComponentNames = (): ComponentName[] => {
     ...Object.keys(registeredComponents || {}),
   ]);
 
-  return [...uniqueNames.values()] as ComponentName[];
+  return Array.from(uniqueNames) as ComponentName[];
 };
 
 /**
