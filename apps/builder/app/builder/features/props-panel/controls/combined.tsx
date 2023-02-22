@@ -71,6 +71,70 @@ export const renderControl = ({
     return <FileImageControl meta={meta} prop={prop} {...rest} />;
   }
 
+  // Type in meta can be changed at some point without updating props in DB that are still using the old type
+  // In this case meta and prop will mismatch, but we try to guess a matching control based just on the prop type
+  if (prop) {
+    if (prop.type === "string") {
+      return (
+        <TextControl
+          meta={{
+            ...meta,
+            defaultValue: undefined,
+            control: "text",
+            type: "string",
+          }}
+          prop={prop}
+          {...rest}
+        />
+      );
+    }
+
+    if (prop.type === "number") {
+      return (
+        <NumberControl
+          meta={{
+            ...meta,
+            defaultValue: undefined,
+            control: "number",
+            type: "number",
+          }}
+          prop={prop}
+          {...rest}
+        />
+      );
+    }
+
+    if (prop.type === "boolean") {
+      return (
+        <BooleanControl
+          meta={{
+            ...meta,
+            defaultValue: undefined,
+            control: "boolean",
+            type: "boolean",
+          }}
+          prop={prop}
+          {...rest}
+        />
+      );
+    }
+
+    if (prop.type === "asset") {
+      return (
+        <FileImageControl
+          meta={{
+            ...meta,
+            defaultValue: undefined,
+            control: "file-image",
+            type: "string",
+          }}
+          prop={prop}
+          {...rest}
+        />
+      );
+    }
+  }
+
   throw new Error(
     `Unsupported combination of prop and control: name=${rest.propName}, type=${prop?.type}, control=${meta.control}`
   );
