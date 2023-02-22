@@ -1,45 +1,36 @@
 import { CodeIcon } from "@webstudio-is/icons";
 import type { WsComponentMeta, WsComponentPropsMeta } from "./component-type";
-import props from "./__generated__/heading.props.json";
+import { displayVarNamespace } from "./code";
+import props from "./__generated__/code.props.json";
 
-const presetStyle = {
-  paddingTop: {
-    type: "keyword",
-    value: "0.2em",
-  },
-  paddingBottom: {
-    type: "keyword",
-    value: "0.2em",
+const presetStyle: WsComponentMeta["presetStyle"] = {
+  display: {
+    type: "var",
+    value: displayVarNamespace,
+    fallbacks: [
+      {
+        type: "keyword",
+        value: "inline-block",
+      },
+    ],
   },
   paddingLeft: {
     type: "keyword",
-    value: "0.4em",
+    value: "0.2em",
   },
   paddingRight: {
     type: "keyword",
-    value: "0.4em",
-  },
-  margin: {
-    type: "keyword",
-    value: "0",
-  },
-  whiteSpace: {
-    type: "keyword",
-    value: "break-spaces",
+    value: "0.2em",
   },
   backgroundColor: {
     type: "keyword",
     value: "#eee",
   },
-  borderRadius: {
-    type: "keyword",
-    value: "3px",
-  },
   fontFamily: {
     type: "keyword",
     value: "monospace",
   },
-} as const;
+};
 
 export const meta: WsComponentMeta = {
   type: "rich-text",
@@ -51,5 +42,5 @@ export const meta: WsComponentMeta = {
 
 export const propsMeta = {
   props,
-  initialProps: [],
+  initialProps: ["inline", "lang", "meta"],
 } as WsComponentPropsMeta;

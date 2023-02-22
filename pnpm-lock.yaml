@@ -1240,6 +1240,9 @@ importers:
       '@webstudio-is/css-data':
         specifier: workspace:^
         version: link:../css-data
+      '@webstudio-is/css-vars':
+        specifier: workspace:^
+        version: link:../css-vars
       '@webstudio-is/generate-arg-types':
         specifier: workspace:^
         version: link:../generate-arg-types
