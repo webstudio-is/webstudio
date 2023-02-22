@@ -7,7 +7,6 @@ jobs:
     timeout-minutes: 20
 
     env:
-      NODE_ENV: test
       DATABASE_URL: postgres://
       AUTH_SECRET: test
 

@@ -1,0 +1,39 @@
+{
+  "name": "@webstudio-is/sdk-size-test",
+  "version": "0.22.0",
+  "private": true,
+  "sideEffects": false,
+  "scripts": {
+    "build": "rm -rf ./public && rm -rf ./functions && remix build && size-limit",
+    "typecheck": "tsc --noEmit"
+  },
+  "size-limit": [
+    {
+      "path": "public/build/*.js",
+      "limit": "126 kB",
+      "gzip": false
+    },
+    {
+      "path": "functions/*.js",
+      "limit": "240 kB",
+      "gzip": false
+    }
+  ],
+  "dependencies": {
+    "@remix-run/cloudflare-pages": "1.12.0",
+    "@remix-run/react": "1.12.0",
+    "@webstudio-is/project": "workspace:^",
+    "@webstudio-is/project-build": "workspace:^",
+    "@webstudio-is/react-sdk": "workspace:^",
+    "react": "^17.0.2",
+    "react-dom": "^17.0.2"
+  },
+  "devDependencies": {
+    "@remix-run/dev": "1.12.0",
+    "@size-limit/file": "^8.2.4",
+    "@types/react": "17.0.47",
+    "@types/react-dom": "^17.0.9",
+    "size-limit": "^8.2.4",
+    "typescript": "4.9.5"
+  }
+}

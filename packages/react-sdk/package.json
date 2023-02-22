@@ -67,8 +67,10 @@
     "warn-once": "^0.1.1"
   },
   "exports": {
-    "import": "./lib/index.js",
-    "require": "./lib/cjs/index.cjs"
+    ".": {
+      "import": "./lib/index.js",
+      "require": "./lib/cjs/index.cjs"
+    }
   },
   "types": "src/index.ts",
   "files": [

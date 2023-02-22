@@ -59,7 +59,7 @@ export const authorizationTokenPath = (method: string) =>
   `/rest/authorization-token/${method}`;
 
 export const loginPath = (params: {
-  error?: typeof AUTH_PROVIDERS[keyof typeof AUTH_PROVIDERS];
+  error?: (typeof AUTH_PROVIDERS)[keyof typeof AUTH_PROVIDERS];
   message?: string;
   returnTo?: string;
 }) => `/login${searchParams(params)}`;

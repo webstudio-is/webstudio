@@ -8,6 +8,7 @@ import { registerComponents } from "../components";
 import { customComponents as defaultCustomComponents } from "../app/custom-components";
 import { setParams, type Params } from "../app/params";
 import { getPropsByInstanceId } from "../props";
+import type { GetComponent } from "../components/components-utils";
 
 export type Data = {
   tree: Tree | null;
@@ -19,12 +20,14 @@ type RootProps = {
   data: Data;
   Component?: (props: ComponentProps<typeof WrapperComponent>) => JSX.Element;
   customComponents?: Parameters<typeof registerComponents>[0];
+  getComponent: GetComponent;
 };
 
 export const InstanceRoot = ({
   data,
   Component,
   customComponents = defaultCustomComponents,
+  getComponent,
 }: RootProps): JSX.Element | null => {
   if (data.tree === null) {
     throw new Error("Tree is null");
@@ -41,5 +44,6 @@ export const InstanceRoot = ({
     ),
     assetsStore: atom(new Map(data.assets.map((asset) => [asset.id, asset]))),
     Component: Component ?? WrapperComponent,
+    getComponent,
   });
 };
