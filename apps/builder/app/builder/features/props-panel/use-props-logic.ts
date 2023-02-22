@@ -60,29 +60,22 @@ const getStartingProp = (
 };
 
 const getDefaultMetaForType = (type: Prop["type"]): PropMeta => {
-  if (type === "string") {
-    return { type: "string", control: "text", required: false };
+  switch (type) {
+    case "string":
+      return { type: "string", control: "text", required: false };
+    case "number":
+      return { type: "number", control: "number", required: false };
+    case "boolean":
+      return { type: "boolean", control: "boolean", required: false };
+    case "asset":
+      return { type: "string", control: "file-image", required: false };
+    case "string[]":
+      throw new Error(
+        "A prop with type string[] must have a meta, we can't provide a default one because we need a list of options"
+      );
+    default:
+      throw new Error(`Usupported data type: ${type}`);
   }
-
-  if (type === "number") {
-    return { type: "number", control: "number", required: false };
-  }
-
-  if (type === "boolean") {
-    return { type: "boolean", control: "boolean", required: false };
-  }
-
-  if (type === "asset") {
-    return { type: "string", control: "file-image", required: false };
-  }
-
-  if (type === "string[]") {
-    throw new Error(
-      "A prop with type string[] must have a meta, we can't provide a default one because we need a list of options"
-    );
-  }
-
-  throw new Error(`Usupported data type: ${type}`);
 };
 
 type UsePropsLogicInput = {
