@@ -8,7 +8,7 @@ import { registerComponents } from "../components";
 import { customComponents as defaultCustomComponents } from "../app/custom-components";
 import { setParams, type Params } from "../app/params";
 import { getPropsByInstanceId } from "../props";
-import type { GetComponent } from "../components";
+import type { GetComponent } from "../components/components-utils";
 
 export type Data = {
   tree: Tree | null;

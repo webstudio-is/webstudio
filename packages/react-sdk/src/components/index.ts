@@ -1,6 +1,6 @@
 import { PropMeta } from "@webstudio-is/generate-arg-types";
 import type { WsComponentMeta, WsComponentPropsMeta } from "./component-type";
-
+import type { ComponentName } from "./components-utils";
 import { meta as BodyMeta } from "./body.ws";
 import { meta as BoxMeta } from "./box.ws";
 import { meta as TextBlockMeta } from "./text-block.ws";
@@ -45,28 +45,6 @@ import { propsMeta as ListPropsMeta } from "./list.ws";
 import { propsMeta as ListItemPropsMeta } from "./list-item.ws";
 import { propsMeta as SeparatorPropsMeta } from "./separator.ws";
 import { propsMeta as CodePropsMeta } from "./code.ws";
-
-import { Body } from "./body";
-import { Box } from "./box";
-import { TextBlock } from "./text-block";
-import { Heading } from "./heading";
-import { Paragraph } from "./paragraph";
-import { Link } from "./link";
-import { RichTextLink } from "./rich-text-link";
-import { Span } from "./span";
-import { Bold } from "./bold";
-import { Italic } from "./italic";
-import { Superscript } from "./superscript";
-import { Subscript } from "./subscript";
-import { Button } from "./button";
-import { Input } from "./input";
-import { Form } from "./form";
-import { Image } from "./image";
-import { Blockquote } from "./blockquote";
-import { List } from "./list";
-import { ListItem } from "./list-item";
-import { Separator } from "./separator";
-import { Code } from "./code";
 
 const defaultMetas: Record<string, WsComponentMeta> = {
   Box: BoxMeta,
@@ -170,89 +148,12 @@ export const registerComponentPropsMetas = (
   currentPropsMetas = undefined;
 };
 
-const defaultComponents = {
-  Box,
-  Body,
-  TextBlock,
-  Heading,
-  Paragraph,
-  Link,
-  RichTextLink,
-  Span,
-  Bold,
-  Italic,
-  Superscript,
-  Subscript,
-  Button,
-  Input,
-  Form,
-  Image,
-  Blockquote,
-  List,
-  ListItem,
-  Separator,
-  Code,
-} as const;
-
-export type ComponentName = keyof typeof defaultPropsMetasRaw;
 type RegisteredComponents = Partial<{
   // eslint-disable-next-line @typescript-eslint/ban-types
   [name in ComponentName]: {};
 }>;
 
-let registeredComponents: RegisteredComponents | null = null;
-
-const componentNames = [
-  "Box",
-  "Body",
-  "TextBlock",
-  "Heading",
-  "Paragraph",
-  "Link",
-  "RichTextLink",
-  "Span",
-  "Bold",
-  "Italic",
-  "Superscript",
-  "Subscript",
-  "Button",
-  "Input",
-  "Form",
-  "Image",
-  "Blockquote",
-  "List",
-  "ListItem",
-] as const;
-
-type Equals<X, Y> = (<T>() => T extends X ? 1 : 2) extends <T>() => T extends Y
-  ? 1
-  : 2
-  ? true
-  : false;
-
-const typesEqual = <A, B>(a: Equals<A, B>) => undefined;
-typesEqual<ComponentName, typeof componentNames[number]>(true);
-
-export const getComponentNames = (): ComponentName[] => {
-  const uniqueNames = new Set([
-    ...componentNames,
-    ...Object.keys(registeredComponents || {}),
-  ]);
-
-  return [...uniqueNames.values()] as ComponentName[];
-};
-
-export const getComponent = (
-  name: string
-): undefined | typeof defaultComponents[ComponentName] => {
-  return registeredComponents != null && name in registeredComponents
-    ? (registeredComponents[
-        name as ComponentName
-      ] as typeof defaultComponents[ComponentName])
-    : defaultComponents[name as ComponentName];
-};
-
-export type GetComponent = typeof getComponent;
+export let registeredComponents: RegisteredComponents | null = null;
 
 /**
  *  @todo: Allow register any component.

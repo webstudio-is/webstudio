@@ -5,7 +5,7 @@ import type {
 } from "@remix-run/cloudflare";
 import { useLoaderData } from "@remix-run/react";
 import { InstanceRoot, Root } from "@webstudio-is/react-sdk";
-import { getComponent } from "../page-components/main";
+import { getComponent } from "../page-components/page-main";
 
 export const meta: MetaFunction = () => {
   return { title: "test" };

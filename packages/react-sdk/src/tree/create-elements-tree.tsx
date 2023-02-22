@@ -2,7 +2,7 @@ import { type ComponentProps, Fragment } from "react";
 import type { ReadableAtom } from "nanostores";
 import { Scripts, ScrollRestoration } from "@remix-run/react";
 import type { Instance } from "@webstudio-is/project-build";
-import type { GetComponent } from "../components";
+import type { GetComponent } from "../components/components-utils";
 import { ReactSdkContext } from "../context";
 import type { Assets, PropsByInstanceId } from "../props";
 import type { WrapperComponent } from "./wrapper-component";

@@ -4,6 +4,7 @@ export * from "./components";
 export * from "./pubsub";
 export * from "./app";
 export * from "./components/components";
+export * from "./components/components-utils";
 export {
   customComponents,
   customComponentMetas,

@@ -1,6 +1,6 @@
 import { Fragment } from "react";
 import type { Instance } from "@webstudio-is/project-build";
-import type { GetComponent } from "../components";
+import type { GetComponent } from "../components/components-utils";
 import { useInstanceProps } from "../props";
 
 const renderText = (text: string): Array<JSX.Element> => {
