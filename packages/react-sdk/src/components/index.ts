@@ -153,7 +153,7 @@ type RegisteredComponents = Partial<{
   [name in ComponentName]: {};
 }>;
 
-export let registeredComponents: RegisteredComponents | null = null;
+export let registeredComponents: RegisteredComponents | undefined = undefined;
 
 /**
  *  @todo: Allow register any component.
