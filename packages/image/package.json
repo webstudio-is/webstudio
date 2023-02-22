@@ -19,7 +19,8 @@
   },
   "dependencies": {
     "react": "^17.0.2",
-    "warn-once": "^0.1.1"
+    "warn-once": "^0.1.1",
+    "@webstudio-is/generate-arg-types": "workspace:^"
   },
   "devDependencies": {
     "@jest/globals": "^29.3.1",
@@ -27,7 +28,6 @@
     "@storybook/react": "^6.5.14",
     "@storybook/testing-library": "^0.0.13",
     "@types/react": "^17.0.24",
-    "@webstudio-is/generate-arg-types": "workspace:^",
     "@webstudio-is/jest-config": "workspace:^",
     "@webstudio-is/scripts": "workspace:^",
     "@webstudio-is/storybook-config": "workspace:^",
