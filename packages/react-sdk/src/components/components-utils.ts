@@ -36,6 +36,12 @@ type Equals<X, Y> = (<T>() => T extends X ? 1 : 2) extends <T>() => T extends Y
   : false;
 
 const typesEqual = <A, B>(a: Equals<A, B>) => undefined;
+
+/**
+ * Typecheck that
+ * - all component names are included in the componentNames array
+ * - there are no nonexistent component names in the componentNames array
+ **/
 typesEqual<ComponentName, typeof componentNames[number]>(true);
 
 export const getComponentNames = (): ComponentName[] => {
@@ -47,6 +53,10 @@ export const getComponentNames = (): ComponentName[] => {
   return [...uniqueNames.values()] as ComponentName[];
 };
 
+/**
+ * Now used only in builder app
+ * @todo Consider using the same approach in the builder app as in the published apps . A dynamic import is needed
+ */
 export const getComponent = (
   name: string
 ): undefined | typeof components[ComponentName] => {
@@ -57,6 +67,11 @@ export const getComponent = (
     : components[name as ComponentName];
 };
 
+/**
+ * The application imports only the components it uses and uses
+ * getComponent = createGetComponent({ Box, BlaBla })to pass them to RootInstance
+ * see example /packages/sdk-size-test/app/routes/$.tsx
+ **/
 export const createGetComponent = (comps: Partial<typeof components>) => {
   return (name: string) => {
     return registeredComponents != null && name in registeredComponents

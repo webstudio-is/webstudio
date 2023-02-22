@@ -1,3 +1,10 @@
+/**
+ * This file should contain all the components that we use in the production published app
+ *
+ * The application imports only the components it uses and uses
+ * getComponent = createGetComponent({ Box, BlaBla })to pass them to RootInstance
+ * see example /packages/sdk-size-test/app/routes/$.tsx
+ */
 import { Body } from "./body";
 import { Box } from "./box";
 import { TextBlock } from "./text-block";
