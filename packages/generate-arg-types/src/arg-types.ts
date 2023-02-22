@@ -99,9 +99,9 @@ export const getArgType = (propItem: PropItem): PropMeta | undefined => {
         // @todo: we need some checks here. for example type.name can be "ImageLoader"
         return makePropMeta("string", "text");
     }
-  } catch (e) {
+  } catch (error) {
     // eslint-disable-next-line no-console
     console.log("Error while parsing prop:", propItem);
-    throw e;
+    throw error;
   }
 };
