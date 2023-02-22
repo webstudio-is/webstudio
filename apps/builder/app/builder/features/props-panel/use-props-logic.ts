@@ -193,7 +193,7 @@ export const usePropsLogic = ({
   }
 
   const handleAdd = (propName: string) => {
-    const propMeta = meta.props[propName];
+    const propMeta = unprocessedKnown.get(propName);
     if (propMeta === undefined) {
       throw new Error(`Attempting to add a prop not lised in remainingProps`);
     }
