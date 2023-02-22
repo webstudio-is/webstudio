@@ -354,22 +354,6 @@
       "5": {
         "value": "6px",
         "type": "borderRadius"
-      },
-      "6": {
-        "value": "8px",
-        "type": "borderRadius"
-      },
-      "7": {
-        "value": "9px",
-        "type": "borderRadius"
-      },
-      "8": {
-        "value": "16px",
-        "type": "borderRadius"
-      },
-      "9": {
-        "value": "17px",
-        "type": "borderRadius"
       }
     },
     "white": {
