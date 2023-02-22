@@ -24,3 +24,5 @@ export { Image } from "./image";
 export { Blockquote } from "./blockquote";
 export { List } from "./list";
 export { ListItem } from "./list-item";
+export { Separator } from "./separator";
+export { Code } from "./code";
