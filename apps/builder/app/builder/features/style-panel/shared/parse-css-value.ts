@@ -88,7 +88,7 @@ export const parseCssValue = (
     }
 
     if (first?.type === "Dimension") {
-      const unit = first.unit as typeof units[keyof typeof units][number];
+      const unit = first.unit as (typeof units)[keyof typeof units][number];
 
       for (const unitGroup of Object.values(units)) {
         if (unitGroup.includes(unit as never)) {

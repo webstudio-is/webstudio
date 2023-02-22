@@ -2,6 +2,7 @@ import { type ComponentProps, Fragment } from "react";
 import type { ReadableAtom } from "nanostores";
 import { Scripts, ScrollRestoration } from "@remix-run/react";
 import type { Instance } from "@webstudio-is/project-build";
+import type { GetComponent } from "../components/components-utils";
 import { ReactSdkContext } from "../context";
 import type { Assets, PropsByInstanceId } from "../props";
 import type { WrapperComponent } from "./wrapper-component";
@@ -13,16 +14,19 @@ export const createElementsTree = ({
   propsByInstanceIdStore,
   assetsStore,
   Component,
+  getComponent,
 }: {
   sandbox?: boolean;
   instance: Instance;
   propsByInstanceIdStore: ReadableAtom<PropsByInstanceId>;
   assetsStore: ReadableAtom<Assets>;
   Component: (props: ComponentProps<typeof WrapperComponent>) => JSX.Element;
+  getComponent: GetComponent;
 }) => {
   const children = createInstanceChildrenElements({
     Component,
     children: instance.children,
+    getComponent,
   });
   const body = createInstanceElement({
     Component,
@@ -35,6 +39,7 @@ export const createElementsTree = ({
         <Scripts />
       </Fragment>,
     ],
+    getComponent,
   });
   return (
     <ReactSdkContext.Provider value={{ propsByInstanceIdStore, assetsStore }}>
@@ -46,9 +51,11 @@ export const createElementsTree = ({
 const createInstanceChildrenElements = ({
   children,
   Component,
+  getComponent,
 }: {
   children: Instance["children"];
   Component: (props: ComponentProps<typeof WrapperComponent>) => JSX.Element;
+  getComponent: GetComponent;
 }) => {
   const elements = [];
   for (const child of children) {
@@ -59,11 +66,13 @@ const createInstanceChildrenElements = ({
     const children = createInstanceChildrenElements({
       children: child.children,
       Component,
+      getComponent,
     });
     const element = createInstanceElement({
       instance: child,
       Component,
       children,
+      getComponent,
     });
     elements.push(element);
   }
@@ -74,15 +83,18 @@ const createInstanceElement = ({
   Component,
   instance,
   children = [],
+  getComponent,
 }: {
   instance: Instance;
   Component: (props: ComponentProps<typeof WrapperComponent>) => JSX.Element;
   children?: Array<JSX.Element | string>;
+  getComponent: GetComponent;
 }) => {
   const props = {
     instance,
     children,
     key: instance.id,
+    getComponent,
   };
 
   return <Component {...props} />;

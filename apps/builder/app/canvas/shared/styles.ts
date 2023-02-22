@@ -160,7 +160,7 @@ const toVarStyleWithFallback = (instanceId: string, style: Style): Style => {
     }
     if (
       validStaticValueTypes.includes(
-        value.type as typeof validStaticValueTypes[number]
+        value.type as (typeof validStaticValueTypes)[number]
       )
     ) {
       dynamicStyle[property] = {

@@ -9,6 +9,7 @@ import {
   customComponentMetas,
   customComponentPropsMetas,
   setParams,
+  type GetComponent,
 } from "@webstudio-is/react-sdk";
 import { publish } from "~/shared/pubsub";
 import { registerContainers, useCanvasStore } from "~/shared/sync";
@@ -47,7 +48,7 @@ const propsByInstanceIdStore = computed(
   (propsIndex) => propsIndex.propsByInstanceId
 );
 
-const useElementsTree = () => {
+const useElementsTree = (getComponent: GetComponent) => {
   const [rootInstance] = useRootInstance();
 
   return useMemo(() => {
@@ -61,8 +62,9 @@ const useElementsTree = () => {
       propsByInstanceIdStore,
       assetsStore,
       Component: WrapperComponentDev,
+      getComponent,
     });
-  }, [rootInstance]);
+  }, [rootInstance, getComponent]);
 };
 
 const DesignMode = () => {
@@ -84,9 +86,13 @@ const DesignMode = () => {
 
 type CanvasProps = {
   data: CanvasData;
+  getComponent: GetComponent;
 };
 
-export const Canvas = ({ data }: CanvasProps): JSX.Element | null => {
+export const Canvas = ({
+  data,
+  getComponent,
+}: CanvasProps): JSX.Element | null => {
   if (data.build === null) {
     throw new Error("Build is null");
   }
@@ -114,7 +120,7 @@ export const Canvas = ({ data }: CanvasProps): JSX.Element | null => {
   useShortcuts();
   useSharedShortcuts();
 
-  const elements = useElementsTree();
+  const elements = useElementsTree(getComponent);
 
   if (elements === undefined) {
     return null;

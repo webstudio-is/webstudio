@@ -5,8 +5,8 @@
   "private": true,
   "scripts": {
     "": "For some reason remix build does not finish when run with turbo or pnpm recursively",
-    "build-packages": "turbo run build  --filter='!./apps/*'",
-    "build": "pnpm build-packages && pnpm --filter=@webstudio-is/builder build",
+    "build-packages": "pnpm run --recursive --parallel --filter='!./apps/*' --filter='!./packages/sdk-size-test' build",
+    "build": "pnpm build-packages && pnpm --filter=@webstudio-is/sdk-size-test build && pnpm --filter=@webstudio-is/builder build",
     "checks": "turbo run checks",
     "dev": "turbo run dev --parallel",
     "format": "prettier --write \"**/*.{ts,tsx,md}\"",
@@ -29,7 +29,7 @@
     "@webstudio-is/eslint-config-custom": "workspace:^",
     "chromatic": "^6.11.4",
     "nano-staged": "^0.8.0",
-    "prettier": "2.7.1",
+    "prettier": "2.8.4",
     "simple-git-hooks": "^2.8.1",
     "tsx": "^3.9.0",
     "turbo": "^1.7.0",
@@ -43,7 +43,19 @@
   "nano-staged": {
     "*.{ts,tsx,js,json,css,md}": "prettier --write"
   },
-  "prettier": {},
+  "prettier": {
+    "overrides": [
+      {
+        "files": [
+          "*.ts",
+          "*.tsx"
+        ],
+        "options": {
+          "parser": "babel-ts"
+        }
+      }
+    ]
+  },
   "resolutions": {
     "esbuild": "0.15.13",
     "react-dom": "17.0.2",

@@ -8,6 +8,8 @@ export * from "./chevron-filled-down";
 export * from "./chevron-filled-left";
 export * from "./chevron-filled-right";
 export * from "./chevron-filled-up";
+export * from "./code";
+export * from "./dash";
 export * from "./dot";
 export * from "./eyecon-closed";
 export * from "./eyecon-open";

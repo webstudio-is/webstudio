@@ -12,7 +12,6 @@ jobs:
     runs-on: ubuntu-latest
 
     env:
-      NODE_ENV: test
       DATABASE_URL: postgres://
       AUTH_SECRET: test
 

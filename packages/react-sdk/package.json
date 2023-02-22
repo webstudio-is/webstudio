@@ -55,6 +55,7 @@
     "@nanostores/react": "^0.4.1",
     "@webstudio-is/asset-uploader": "workspace:^",
     "@webstudio-is/css-data": "workspace:^",
+    "@webstudio-is/css-vars": "workspace:^",
     "@webstudio-is/generate-arg-types": "workspace:^",
     "@webstudio-is/icons": "workspace:^",
     "@webstudio-is/image": "workspace:^",
@@ -66,8 +67,10 @@
     "warn-once": "^0.1.1"
   },
   "exports": {
-    "import": "./lib/index.js",
-    "require": "./lib/cjs/index.cjs"
+    ".": {
+      "import": "./lib/index.js",
+      "require": "./lib/cjs/index.cjs"
+    }
   },
   "types": "src/index.ts",
   "files": [

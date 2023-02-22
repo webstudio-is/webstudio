@@ -1,6 +1,6 @@
 import { Fragment } from "react";
 import type { Instance } from "@webstudio-is/project-build";
-import { getComponent } from "../components";
+import type { GetComponent } from "../components/components-utils";
 import { useInstanceProps } from "../props";
 
 const renderText = (text: string): Array<JSX.Element> => {
@@ -29,11 +29,13 @@ export const renderWrapperComponentChildren = (
 type WrapperComponentProps = {
   instance: Instance;
   children: Array<JSX.Element | string>;
+  getComponent: GetComponent;
 };
 
 export const WrapperComponent = ({
   instance,
   children,
+  getComponent,
   ...rest
 }: WrapperComponentProps) => {
   const instanceProps = useInstanceProps(instance.id);

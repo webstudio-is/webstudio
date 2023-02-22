@@ -1,6 +1,13 @@
 let counter = -1;
 
-const define = <Name extends string>(name: Name) => {
+const unique = <Name extends string>(name: Name) => {
+  return `${name}-${++counter}` as const;
+};
+
+const define = <Name extends string>(name: Name, unique = false) => {
+  if (unique) {
+    return `--${name}` as const;
+  }
   return `--${name}-${++counter}` as const;
 };
 
@@ -24,4 +31,4 @@ const use = <Args extends string[]>(...args: Args) => {
   return `var(${args.join(", ") as Join<Args, ", ">})` as const;
 };
 
-export const cssVars = { define, use };
+export const cssVars = { define, use, unique };
