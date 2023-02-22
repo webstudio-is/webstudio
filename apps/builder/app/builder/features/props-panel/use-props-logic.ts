@@ -102,7 +102,7 @@ type UsePropsLogicOutput = {
    */
   optionalProps: PropAndMeta[];
   /**
-   * Remaining props that can be added
+   * List of remaining props still available to add
    */
   remainingProps: NameAndLabel[];
   handleAdd: (propName: string) => void;
