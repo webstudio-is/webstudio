@@ -98,7 +98,7 @@ type UsePropsLogicOutput = {
    */
   initialProps: PropAndMeta[];
   /**
-   * Optional props that were added
+   * Optional props that were added by user
    */
   optionalProps: PropAndMeta[];
   /**
