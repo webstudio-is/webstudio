@@ -48,6 +48,7 @@ const recalculate = () => {
     }
 
     // Find all Leaf like elements
+    // Leaf like elements are elements that have no children or all children are absolute or fixed
     if (element.childElementCount === 0) {
       elementsToRecalculate.push(element);
     }
