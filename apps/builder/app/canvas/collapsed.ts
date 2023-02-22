@@ -80,6 +80,7 @@ const recalculate = () => {
 
   // 1. Remove all collapsed attributes
   baseElement.parentElement?.removeAttribute(collapsedAttribute);
+  baseElement.removeAttribute(collapsedAttribute);
   for (const elt of baseElement.querySelectorAll(`[${collapsedAttribute}]`)) {
     elt.removeAttribute(collapsedAttribute);
   }
