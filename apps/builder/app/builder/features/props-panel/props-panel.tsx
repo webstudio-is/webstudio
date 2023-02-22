@@ -21,7 +21,7 @@ import {
   useStyleData,
   type SetProperty as SetCssProperty,
 } from "~/builder/features/style-panel/shared/use-style-data";
-import { CombinedControl } from "./controls/combined";
+import { renderControl } from "./controls/combined";
 import { usePropsLogic, type NameAndLabel } from "./use-props-logic";
 import { type PropMeta, type PropValue, getLabel } from "./shared";
 
@@ -103,11 +103,12 @@ const Property = ({
   setCssProperty: SetCssProperty;
 }) => (
   <Box css={{ mb: theme.spacing[9] }}>
-    <CombinedControl
-      meta={meta}
-      prop={prop}
-      propName={propName}
-      onChange={(propValue, asset) => {
+    {renderControl({
+      meta,
+      prop,
+      propName,
+      onDelete,
+      onChange: (propValue, asset) => {
         onChange(propValue);
 
         // @todo: better way to do this?
@@ -124,9 +125,8 @@ const Property = ({
             value: asset.meta.width / asset.meta.height,
           });
         }
-      }}
-      onDelete={onDelete}
-    />
+      },
+    })}
   </Box>
 );
 

@@ -8,7 +8,7 @@ import { BooleanControl } from "./boolean";
 import { FileImageControl } from "./file-image";
 import type { ControlProps } from "../shared";
 
-export const CombinedControl = ({
+export const renderControl = ({
   meta,
   prop,
   ...rest
