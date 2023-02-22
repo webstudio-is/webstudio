@@ -38,6 +38,15 @@ const recalculate = () => {
     if (!(element instanceof HTMLElement)) {
       continue;
     }
+
+    if (element.tagName === "_IMG") {
+      // Images should not collapse, and have a fallback.
+      // The issue that unloaded image has 0 width and height until explicitly set,
+      // so at the moment new Image added we detect it as collapsed.
+      // Skip it for now.
+      continue;
+    }
+
     // Find all Leaf like elements
     if (element.childElementCount === 0) {
       elementsToRecalculate.push(element);
