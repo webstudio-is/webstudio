@@ -9,6 +9,16 @@ export type PropAndMeta = { prop?: Prop; propName: string; meta: PropMeta };
 export type NameAndLabel = { name: string; label?: string };
 
 // The value we set prop to when it's added
+//
+// If undefined is returned,
+// we will not add a prop in storage until we get an onChange from control.
+//
+// User may have this experience:
+//   - they added a prop but didn't touch the control
+//   - they closed props panel
+//   - when they open props panel again, the prop is not there
+//
+// We want to avoid this if possible, but for some types like "asset" we can't
 export const getStartingValue = (meta: PropMeta): PropValue | undefined => {
   if (meta.type === "string" && meta.control !== "file-image") {
     return {
@@ -37,17 +47,6 @@ export const getStartingValue = (meta: PropMeta): PropValue | undefined => {
       value: meta.defaultValue ?? [],
     };
   }
-
-  // If undefined is returned,
-  // we will not add a prop in storage until we get an onChange from control.
-  //
-  // User may have this experience:
-  //   - they added a prop but didn't touch the control
-  //   - they closed props panel
-  //   - when they open props panel again, the prop is not there
-  //
-  // We want to avoid this if possible, but for some types like "asset" we can't
-  return undefined;
 };
 
 const getStartingProp = (
