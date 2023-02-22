@@ -192,7 +192,7 @@ export const PropsPanel = ({
             />
           ))}
 
-          {logic.optionalProps.map(({ prop, propName, meta }) => (
+          {logic.addedProps.map(({ prop, propName, meta }) => (
             <Property
               key={propName}
               propName={propName}
