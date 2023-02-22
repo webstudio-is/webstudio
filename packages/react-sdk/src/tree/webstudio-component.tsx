@@ -13,7 +13,7 @@ const renderText = (text: string): Array<JSX.Element> => {
   ));
 };
 
-export const renderWrapperComponentChildren = (
+export const renderWebstudioComponentChildren = (
   children: Array<JSX.Element | string> | undefined
 ): Array<JSX.Element | string | Array<JSX.Element | string>> | undefined => {
   // Some elements like input can't have children
@@ -26,18 +26,18 @@ export const renderWrapperComponentChildren = (
   });
 };
 
-type WrapperComponentProps = {
+type WebstudioComponentProps = {
   instance: Instance;
   children: Array<JSX.Element | string>;
   getComponent: GetComponent;
 };
 
-export const WrapperComponent = ({
+export const WebstudioComponent = ({
   instance,
   children,
   getComponent,
   ...rest
-}: WrapperComponentProps) => {
+}: WebstudioComponentProps) => {
   const instanceProps = useInstanceProps(instance.id);
   const props = {
     ...instanceProps,
@@ -50,7 +50,9 @@ export const WrapperComponent = ({
     return <></>;
   }
   return (
-    <Component {...props}>{renderWrapperComponentChildren(children)}</Component>
+    <Component {...props}>
+      {renderWebstudioComponentChildren(children)}
+    </Component>
   );
 };
 

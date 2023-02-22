@@ -5,7 +5,7 @@ import type { Instance } from "@webstudio-is/project-build";
 import type { GetComponent } from "../components/components-utils";
 import { ReactSdkContext } from "../context";
 import type { Assets, PropsByInstanceId } from "../props";
-import type { WrapperComponent } from "./wrapper-component";
+import type { WebstudioComponent } from "./webstudio-component";
 import { SessionStoragePolyfill } from "./session-storage-polyfill";
 
 export const createElementsTree = ({
@@ -20,7 +20,7 @@ export const createElementsTree = ({
   instance: Instance;
   propsByInstanceIdStore: ReadableAtom<PropsByInstanceId>;
   assetsStore: ReadableAtom<Assets>;
-  Component: (props: ComponentProps<typeof WrapperComponent>) => JSX.Element;
+  Component: (props: ComponentProps<typeof WebstudioComponent>) => JSX.Element;
   getComponent: GetComponent;
 }) => {
   const children = createInstanceChildrenElements({
@@ -54,7 +54,7 @@ const createInstanceChildrenElements = ({
   getComponent,
 }: {
   children: Instance["children"];
-  Component: (props: ComponentProps<typeof WrapperComponent>) => JSX.Element;
+  Component: (props: ComponentProps<typeof WebstudioComponent>) => JSX.Element;
   getComponent: GetComponent;
 }) => {
   const elements = [];
@@ -86,7 +86,7 @@ const createInstanceElement = ({
   getComponent,
 }: {
   instance: Instance;
-  Component: (props: ComponentProps<typeof WrapperComponent>) => JSX.Element;
+  Component: (props: ComponentProps<typeof WebstudioComponent>) => JSX.Element;
   children?: Array<JSX.Element | string>;
   getComponent: GetComponent;
 }) => {

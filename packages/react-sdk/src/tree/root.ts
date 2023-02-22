@@ -3,7 +3,7 @@ import { atom } from "nanostores";
 import type { Tree } from "@webstudio-is/project-build";
 import type { Asset } from "@webstudio-is/asset-uploader";
 import { createElementsTree } from "./create-elements-tree";
-import { WrapperComponent } from "./wrapper-component";
+import { WebstudioComponent } from "./webstudio-component";
 import { registerComponents } from "../components";
 import { customComponents as defaultCustomComponents } from "../app/custom-components";
 import { setParams, type Params } from "../app/params";
@@ -18,7 +18,7 @@ export type Data = {
 
 type RootProps = {
   data: Data;
-  Component?: (props: ComponentProps<typeof WrapperComponent>) => JSX.Element;
+  Component?: (props: ComponentProps<typeof WebstudioComponent>) => JSX.Element;
   customComponents?: Parameters<typeof registerComponents>[0];
   getComponent: GetComponent;
 };
@@ -43,7 +43,7 @@ export const InstanceRoot = ({
       getPropsByInstanceId(new Map(data.tree.props))
     ),
     assetsStore: atom(new Map(data.assets.map((asset) => [asset.id, asset]))),
-    Component: Component ?? WrapperComponent,
+    Component: Component ?? WebstudioComponent,
     getComponent,
   });
 };

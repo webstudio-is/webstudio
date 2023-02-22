@@ -18,7 +18,7 @@ import { useShortcuts } from "./shared/use-shortcuts";
 import { usePublishTextEditingInstanceId } from "./shared/instance";
 import { useManageDesignModeStyles, GlobalStyles } from "./shared/styles";
 import { useTrackSelectedElement } from "./shared/use-track-selected-element";
-import { WrapperComponentDev } from "./features/wrapper-component";
+import { WebstudioComponentDev } from "./features/webstudio-component";
 import {
   propsIndexStore,
   assetsStore,
@@ -61,7 +61,7 @@ const useElementsTree = (getComponent: GetComponent) => {
       instance: rootInstance,
       propsByInstanceIdStore,
       assetsStore,
-      Component: WrapperComponentDev,
+      Component: WebstudioComponentDev,
       getComponent,
     });
   }, [rootInstance, getComponent]);

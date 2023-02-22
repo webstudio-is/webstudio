@@ -5,7 +5,7 @@ import { useLexicalComposerContext } from "@lexical/react/LexicalComposerContext
 import store from "immerhin";
 import type { Instance, Prop } from "@webstudio-is/project-build";
 import {
-  renderWrapperComponentChildren,
+  renderWebstudioComponentChildren,
   idAttribute,
   collapsedAttribute,
 } from "@webstudio-is/react-sdk";
@@ -65,17 +65,17 @@ const setDataCollapsed = (element?: HTMLElement) => {
 
 type UserProps = Record<Prop["name"], Prop["value"]>;
 
-type WrapperComponentDevProps = {
+type WebstudioComponentDevProps = {
   instance: Instance;
   children: Array<JSX.Element | string>;
   getComponent: GetComponent;
 };
 
-export const WrapperComponentDev = ({
+export const WebstudioComponentDev = ({
   instance,
   children,
   getComponent,
-}: WrapperComponentDevProps) => {
+}: WebstudioComponentDevProps) => {
   const instanceId = instance.id;
   const instanceElementRef = useRef<HTMLElement>();
   const instanceStyles = useInstanceStyles(instanceId);
@@ -148,7 +148,7 @@ export const WrapperComponentDev = ({
       {/* Component includes many types and it's hard to provide right ref type with useRef */}
       {/* eslint-disable-next-line @typescript-eslint/no-explicit-any */}
       <Component {...props} ref={instanceElementRef as any}>
-        {renderWrapperComponentChildren(children)}
+        {renderWebstudioComponentChildren(children)}
       </Component>
     </>
   );
