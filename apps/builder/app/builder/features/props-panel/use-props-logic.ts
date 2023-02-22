@@ -165,7 +165,7 @@ export const usePropsLogic = ({
   // names of the props added by the user during the lifetime of the hook
   const [newNames, setNewNames] = useState<Prop["name"][]>([]);
 
-  const oldOptional: PropAndMeta[] = [...unprocessedSaved.values()]
+  const oldOptional: PropAndMeta[] = Array.from(unprocessedSaved.values())
     .filter((prop) => newNames.includes(prop.name) === false)
     .map((prop) => {
       const known = getAndDelete(unprocessedKnown, prop.name);
@@ -230,7 +230,7 @@ export const usePropsLogic = ({
   return {
     initialProps,
     optionalProps: [...oldOptional, ...newOptional],
-    remainingProps: [...unprocessedKnown.entries()].map(
+    remainingProps: Array.from(unprocessedKnown.entries()).map(
       ([name, { label }]) => ({ name, label })
     ),
     handleAdd,
