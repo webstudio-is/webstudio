@@ -68,8 +68,9 @@ export const getComponent = (
 };
 
 /**
- * The application imports only the components it uses and uses
- * getComponent = createGetComponent({ Box, BlaBla })to pass them to RootInstance
+ * The application imports only the components it uses, then pass them to createGetComponent i.e.
+ * getComponent = createGetComponent({ Box, BlaBla })
+ * <RootInstance data={data} getComponent={getComponent} />
  * see example /packages/sdk-size-test/app/routes/$.tsx
  **/
 export const createGetComponent = (comps: Partial<typeof components>) => {

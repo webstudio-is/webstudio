@@ -9,6 +9,6 @@ const handleRequest = createPagesFunctionHandler({
   getLoadContext: (context) => context.env,
 });
 
-export function onRequest(context) {
+export const onRequest = (context) => {
   return handleRequest(context);
-}
+};

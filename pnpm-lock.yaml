@@ -1368,9 +1368,6 @@ importers:
 
   packages/sdk-size-test:
     dependencies:
-      '@remix-run/cloudflare':
-        specifier: 1.12.0
-        version: 1.12.0(@cloudflare/workers-types@3.19.0)
       '@remix-run/cloudflare-pages':
         specifier: 1.12.0
         version: 1.12.0(@cloudflare/workers-types@3.19.0)
@@ -1396,12 +1393,18 @@ importers:
       '@remix-run/dev':
         specifier: 1.12.0
         version: 1.12.0
+      '@size-limit/file':
+        specifier: ^8.2.4
+        version: 8.2.4(size-limit@8.2.4)
       '@types/react':
         specifier: 17.0.47
         version: 17.0.47
       '@types/react-dom':
         specifier: ^17.0.9
         version: 17.0.9
+      size-limit:
+        specifier: ^8.2.4
+        version: 8.2.4
       typescript:
         specifier: 4.9.5
         version: 4.9.5
@@ -4976,7 +4979,7 @@ packages:
       react-refresh: 0.11.0
       schema-utils: 3.1.1
       source-map: 0.7.4
-      webpack: 5.75.0(esbuild@0.14.54)
+      webpack: 5.75.0
     dev: true
 
   /@prisma/client@4.9.0(prisma@4.9.0):
@@ -6404,6 +6407,16 @@ packages:
     dependencies:
       '@sinonjs/commons': 1.8.5
 
+  /@size-limit/file@8.2.4(size-limit@8.2.4):
+    resolution: {integrity: sha512-xLuF97W7m7lxrRJvqXRlxO/4t7cpXtfxOnjml/t4aRVUCMXLdyvebRr9OM4jjoK8Fmiz8jomCbETUCI3jVhLzA==}
+    engines: {node: ^14.0.0 || ^16.0.0 || >=18.0.0}
+    peerDependencies:
+      size-limit: 8.2.4
+    dependencies:
+      semver: 7.3.8
+      size-limit: 8.2.4
+    dev: true
+
   /@stitches/react@1.2.8(react@17.0.2):
     resolution: {integrity: sha512-9g9dWI4gsSVe8bNLlb+lMkBYsnIKCZTmvqvDG+Avnn69XfmHZKiaMrx7cgTaddq7aTPPmXiTsbFcUy0xgI4+wA==}
     peerDependencies:
@@ -7314,7 +7327,7 @@ packages:
       react: 17.0.2
       react-dom: 17.0.2(react@17.0.2)
       typescript: 4.9.5
-      webpack: 5.75.0(esbuild@0.14.54)
+      webpack: 5.75.0
     transitivePeerDependencies:
       - '@storybook/mdx2-csf'
       - bluebird
@@ -7597,7 +7610,7 @@ packages:
       react-docgen-typescript: 2.2.2(typescript@4.9.5)
       tslib: 2.5.0
       typescript: 4.9.5
-      webpack: 5.75.0(esbuild@0.14.54)
+      webpack: 5.75.0
     transitivePeerDependencies:
       - supports-color
     dev: true
@@ -10110,6 +10123,11 @@ packages:
 
   /builtin-status-codes@3.0.0:
     resolution: {integrity: sha512-HpGFw18DgFWlncDfjTa2rcQ4W88O1mC8e8yZ2AvQY5KDaktSTwo+KRf6nHK6FRI5FyRyb/5T6+TSxfP7QyGsmQ==}
+
+  /bytes-iec@3.1.1:
+    resolution: {integrity: sha512-fey6+4jDK7TFtFg/klGSvNKJctyU7n2aQdnM+CO0ruLPbqqMOM8Tio0Pc+deqUeVKX1tL5DQep1zQ7+37aTAsA==}
+    engines: {node: '>= 0.8'}
+    dev: true
 
   /bytes@3.0.0:
     resolution: {integrity: sha512-pMhOfFDPiv9t5jjIXkHosWmkSyQbvsgEVNkz0ERHbuLh2T/7j4Mqqpz523Fe8MVY89KC6Sh/QfS2sM+SjgFDcw==}
@@ -13328,7 +13346,7 @@ packages:
       array-union: 2.1.0
       dir-glob: 3.0.1
       fast-glob: 3.2.12
-      ignore: 5.2.0
+      ignore: 5.2.4
       merge2: 1.4.1
       slash: 3.0.0
 
@@ -13773,11 +13791,11 @@ packages:
   /ignore@5.2.0:
     resolution: {integrity: sha512-CmxgYGiEPCLhfLnpPp1MoRmifwEIOgjcHXxOBjv7mY96c+eWScsOP9c112ZyLdWHi0FxHjI+4uVhKYp/gcdRmQ==}
     engines: {node: '>= 4'}
+    dev: false
 
   /ignore@5.2.4:
     resolution: {integrity: sha512-MAb38BcSbH0eHNBxn7ql2NH/kX33OkB3lZ1BNdh7ENeRChHTYsTvWrMubiIAMNS2llXEEgZ1MUOBtXChP3kaFQ==}
     engines: {node: '>= 4'}
-    dev: true
 
   /immediate@3.0.6:
     resolution: {integrity: sha512-XXOFtyqDjNDAQxVfYxuF7g9Il/IbWmmlQg2MYKOH8ExIT1qg6xc4zyS3HaEEATgs1btfzxq15ciUiY7gjSXRGQ==}
@@ -15182,6 +15200,11 @@ packages:
       immediate: 3.0.6
     dev: false
 
+  /lilconfig@2.0.6:
+    resolution: {integrity: sha512-9JROoBW7pobfsx+Sq2JsASvCo6Pfo6WWoUW79HuB1BCoBXD4PLWJPqDF6fNj67pqBYTbAHkE57M1kS/+L1neOg==}
+    engines: {node: '>=10'}
+    dev: true
+
   /lines-and-columns@1.2.4:
     resolution: {integrity: sha512-7ylylesZQ/PV29jhEDl3Ufjo6ZX7gCqJr5F7PKrqc93v7fzSymt1BpwEU8nAUXs8qzzvqhbjhK5QZg6Mt/HkBg==}
 
@@ -16277,6 +16300,12 @@ packages:
       to-regex: 3.0.2
     transitivePeerDependencies:
       - supports-color
+
+  /nanospinner@1.1.0:
+    resolution: {integrity: sha512-yFvNYMig4AthKYfHFl1sLj7B2nkHL4lzdig4osvl9/LdGbXwrdFRoqBS98gsEsOakr0yH+r5NZ/1Y9gdVB8trA==}
+    dependencies:
+      picocolors: 1.0.0
+    dev: true
 
   /nanostores@0.7.1:
     resolution: {integrity: sha512-7HenoVpZOjRudHCmAVWKloBTk3+Ozw49KuRWq/pNlEIIVS3x9dID+I5z3Rhjxl1muhHwv4dFhpT+0FebT9jvaA==}
@@ -18741,6 +18770,19 @@ packages:
 
   /sisteransi@1.0.5:
     resolution: {integrity: sha512-bLGGlR1QxBcynn2d5YmDX4MGjlZvy2MRBDRNHLJ8VI6l6+9FUiyTFNJ0IveOSP0bcXgVDPRcfGqA0pjaqUpfVg==}
+
+  /size-limit@8.2.4:
+    resolution: {integrity: sha512-Un16nSreD1v2CYwSorattiJcHuAWqXvg4TsGgzpjnoByqQwsSfCIEQHuaD14HNStzredR8cdsO9oGH91ibypTA==}
+    engines: {node: ^14.0.0 || ^16.0.0 || >=18.0.0}
+    hasBin: true
+    dependencies:
+      bytes-iec: 3.1.1
+      chokidar: 3.5.3
+      globby: 11.1.0
+      lilconfig: 2.0.6
+      nanospinner: 1.1.0
+      picocolors: 1.0.0
+    dev: true
 
   /slash@2.0.0:
     resolution: {integrity: sha512-ZYKh3Wh2z1PpEXWr0MpSBZ0V6mZHAQfYevttO11c51CaWjGTaadiKZ+wVt1PbMlDV5qhMFslpZCemhwOK7C89A==}
