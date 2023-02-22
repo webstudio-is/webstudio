@@ -1,19 +1,19 @@
 {
   "packageManager": "pnpm@7.27.1",
-  "name": "turbo",
+  "name": "@webstudio-is/monorepo",
   "version": "0.0.0",
   "private": true,
   "scripts": {
     "": "For some reason remix build does not finish when run with turbo or pnpm recursively",
     "build-packages": "pnpm run --recursive --parallel --filter='!./apps/*' --filter='!./packages/sdk-size-test' build",
     "build": "pnpm build-packages && pnpm --filter=@webstudio-is/sdk-size-test build && pnpm --filter=@webstudio-is/builder build",
-    "checks": "turbo run checks",
-    "dev": "turbo run dev --parallel",
+    "checks": "pnpm run --recursive --parallel checks",
+    "dev": "pnpm run --recursive --parallel dev",
     "format": "prettier --write \"**/*.{ts,tsx,md}\"",
     "build-storybook": "build-storybook",
-    "storybook": "turbo run storybook:run",
-    "storybook:build": "npm run build && turbo run storybook:build",
-    "storybook:ds:build": "turbo run storybook:build --filter=@webstudio-is/design-system",
+    "storybook": "pnpm run --recursive --parallel storybook:run",
+    "storybook:build": "npm run build && pnpm run --recursive storybook:build",
+    "storybook:ds:build": "pnpm run --filter=@webstudio-is/design-system storybook:build",
     "migrations": "cd apps/builder && pnpm migrations --dev",
     "build-figma-tokens": "cd packages/design-system && pnpm build-figma-tokens",
     "prepare": "git config core.hooksPath .git/hooks/ && simple-git-hooks"
@@ -32,7 +32,6 @@
     "prettier": "2.8.4",
     "simple-git-hooks": "^2.8.1",
     "tsx": "^3.9.0",
-    "turbo": "^1.7.0",
     "typescript": "4.9.5"
   },
   "engines": {
