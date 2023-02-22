@@ -3,6 +3,7 @@ export * from "./tree";
 export * from "./components";
 export * from "./pubsub";
 export * from "./app";
+export * from "./components/components";
 export {
   customComponents,
   customComponentMetas,

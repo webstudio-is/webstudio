@@ -6,10 +6,10 @@ import store from "immerhin";
 import type { Instance, Prop } from "@webstudio-is/project-build";
 import {
   renderWrapperComponentChildren,
-  getComponent,
   idAttribute,
   collapsedAttribute,
 } from "@webstudio-is/react-sdk";
+import type { GetComponent } from "@webstudio-is/react-sdk";
 import {
   rootInstanceContainer,
   selectedInstanceIdStore,
@@ -29,7 +29,7 @@ const ContentEditable = ({
   elementRef,
   ...props
 }: {
-  Component: NonNullable<ReturnType<typeof getComponent>>;
+  Component: NonNullable<ReturnType<GetComponent>>;
   elementRef: { current: undefined | HTMLElement };
 }) => {
   const [editor] = useLexicalComposerContext();
@@ -68,11 +68,13 @@ type UserProps = Record<Prop["name"], string | number | boolean>;
 type WrapperComponentDevProps = {
   instance: Instance;
   children: Array<JSX.Element | string>;
+  getComponent: GetComponent;
 };
 
 export const WrapperComponentDev = ({
   instance,
   children,
+  getComponent,
 }: WrapperComponentDevProps) => {
   const instanceId = instance.id;
   const instanceElementRef = useRef<HTMLElement>();

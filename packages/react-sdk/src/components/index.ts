@@ -108,7 +108,7 @@ export const registerComponentMetas = (
   currentMetas = result;
 };
 
-const defaultPropsMetas: Record<string, WsComponentPropsMeta> = {
+const defaultPropsMetasRaw = {
   Box: BoxMetaPropsMeta,
   Body: BodyMetaPropsMeta,
   TextBlock: TextBlockMetaPropsMeta,
@@ -130,7 +130,10 @@ const defaultPropsMetas: Record<string, WsComponentPropsMeta> = {
   ListItem: ListItemPropsMeta,
   Separator: SeparatorPropsMeta,
   Code: CodePropsMeta,
-};
+} as const;
+
+const defaultPropsMetas: Record<string, WsComponentPropsMeta> =
+  defaultPropsMetasRaw;
 
 let registeredPropsMetas: Record<string, Partial<WsComponentPropsMeta>> = {};
 
@@ -191,7 +194,7 @@ const defaultComponents = {
   Code,
 } as const;
 
-export type ComponentName = keyof typeof defaultComponents;
+export type ComponentName = keyof typeof defaultPropsMetasRaw;
 type RegisteredComponents = Partial<{
   // eslint-disable-next-line @typescript-eslint/ban-types
   [name in ComponentName]: {};
@@ -199,7 +202,36 @@ type RegisteredComponents = Partial<{
 
 let registeredComponents: RegisteredComponents | null = null;
 
-const componentNames = Object.keys(defaultComponents) as ComponentName[];
+const componentNames = [
+  "Box",
+  "Body",
+  "TextBlock",
+  "Heading",
+  "Paragraph",
+  "Link",
+  "RichTextLink",
+  "Span",
+  "Bold",
+  "Italic",
+  "Superscript",
+  "Subscript",
+  "Button",
+  "Input",
+  "Form",
+  "Image",
+  "Blockquote",
+  "List",
+  "ListItem",
+] as const;
+
+type Equals<X, Y> = (<T>() => T extends X ? 1 : 2) extends <T>() => T extends Y
+  ? 1
+  : 2
+  ? true
+  : false;
+
+const typesEqual = <A, B>(a: Equals<A, B>) => undefined;
+typesEqual<ComponentName, typeof componentNames[number]>(true);
 
 export const getComponentNames = (): ComponentName[] => {
   const uniqueNames = new Set([
@@ -219,6 +251,8 @@ export const getComponent = (
       ] as typeof defaultComponents[ComponentName])
     : defaultComponents[name as ComponentName];
 };
+
+export type GetComponent = typeof getComponent;
 
 /**
  *  @todo: Allow register any component.

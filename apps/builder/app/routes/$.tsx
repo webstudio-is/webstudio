@@ -1,7 +1,7 @@
 import { redirect, json, LoaderArgs, LinksFunction } from "@remix-run/node";
 import type { MetaFunction, ErrorBoundaryComponent } from "@remix-run/node";
 import { useLoaderData } from "@remix-run/react";
-import { InstanceRoot, Root } from "@webstudio-is/react-sdk";
+import { InstanceRoot, Root, getComponent } from "@webstudio-is/react-sdk";
 import { loadCanvasData, loadProductionCanvasData } from "~/shared/db";
 import env, { type PublicEnv } from "~/env/env.public.server";
 import { sentryException } from "~/shared/sentry";
@@ -116,8 +116,14 @@ const Content = () => {
 
   const Outlet =
     data.mode === "edit"
-      ? () => <Canvas data={data} />
-      : () => <InstanceRoot data={data} customComponents={customComponents} />;
+      ? () => <Canvas data={data} getComponent={getComponent} />
+      : () => (
+          <InstanceRoot
+            data={data}
+            getComponent={getComponent}
+            customComponents={customComponents}
+          />
+        );
 
   // @todo This is non-standard for Remix, is there a better way?
   // Maybe there is a way to tell remix to use the right outlet somehow and avoid passing it?
