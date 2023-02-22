@@ -1,4 +1,4 @@
-import { useMemo, Fragment } from "react";
+import { useMemo, Fragment, useEffect } from "react";
 import { computed } from "nanostores";
 import type { CanvasData } from "@webstudio-is/project";
 import {
@@ -34,12 +34,14 @@ import {
   useSetAssets,
   useSetTreeId,
 } from "~/shared/nano-states";
+import { subscribe } from "~/shared/pubsub";
 import { usePublishScrollState } from "./shared/use-publish-scroll-state";
 import { useDragAndDrop } from "./shared/use-drag-drop";
 import { useSubscribeBuilderReady } from "./shared/use-builder-ready";
 import { useCopyPaste } from "~/shared/copy-paste";
 import { customComponents } from "./custom-components";
 import { useHoveredInstanceConnector } from "./hovered-instance-connector";
+import { setDataCollapsed } from "./collapsed";
 
 registerContainers();
 
@@ -119,6 +121,29 @@ export const Canvas = ({
   // e.g. toggling preview is still needed in both modes
   useShortcuts();
   useSharedShortcuts();
+
+  useEffect(() => {
+    const instanceId = data.tree?.root.id;
+    if (instanceId !== undefined) {
+      setDataCollapsed(instanceId);
+    }
+  });
+
+  useEffect(() => {
+    return subscribe("sendStoreChanges", ({ source, changes }) => {
+      for (const change of changes) {
+        if (change.namespace === "styleSourceSelections") {
+          for (const patch of change.patches) {
+            const instanceId = patch.value?.instanceId;
+
+            if (typeof instanceId === "string") {
+              setDataCollapsed(instanceId);
+            }
+          }
+        }
+      }
+    });
+  }, [data.tree?.root.id]);
 
   const elements = useElementsTree(getComponent);
 
