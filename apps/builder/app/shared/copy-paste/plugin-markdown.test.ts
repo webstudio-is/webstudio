@@ -416,7 +416,7 @@ describe("Plugin Markdown", () => {
                     "value": "foo",
                   },
                 ],
-                "component": "InlineCode",
+                "component": "Code",
                 "id": "123",
                 "type": "instance",
               },
@@ -426,7 +426,15 @@ describe("Plugin Markdown", () => {
             "type": "instance",
           },
         ],
-        "props": [],
+        "props": [
+          {
+            "id": "123",
+            "instanceId": "123",
+            "name": "inline",
+            "type": "boolean",
+            "value": true,
+          },
+        ],
       }
     `);
   });
@@ -449,6 +457,13 @@ describe("Plugin Markdown", () => {
           },
         ],
         "props": [
+          {
+            "id": "123",
+            "instanceId": "123",
+            "name": "inline",
+            "type": "boolean",
+            "value": false,
+          },
           {
             "id": "123",
             "instanceId": "123",

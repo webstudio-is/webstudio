@@ -31,7 +31,7 @@ const astTypeComponentMap: Record<string, Instance["component"]> = {
   image: "Image",
   blockquote: "Blockquote",
   code: "Code",
-  inlineCode: "InlineCode",
+  inlineCode: "Code",
   list: "List",
   listItem: "ListItem",
   thematicBreak: "Separator",
@@ -116,11 +116,25 @@ const toInstanceData = (
           type: "text",
           value: child.value,
         });
+        props.push({
+          id: generateId(),
+          type: "boolean",
+          name: "inline",
+          instanceId: instance.id,
+          value: true,
+        });
       }
       if (child.type === "code") {
         instance.children.push({
           type: "text",
           value: child.value,
+        });
+        props.push({
+          id: generateId(),
+          type: "boolean",
+          name: "inline",
+          instanceId: instance.id,
+          value: false,
         });
         if (child.lang) {
           props.push({
@@ -190,7 +204,8 @@ export const parse = (clipboardData: string, options?: Options) => {
   if (ast.children.length === 0) {
     return;
   }
-  return toInstanceData(ast, options);
+  const data = toInstanceData(ast, options);
+  return data;
 };
 
 export const onPaste = (clipboardData: string) => {
