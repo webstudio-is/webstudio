@@ -250,7 +250,7 @@ const computeInitialProps = (
     ? Object.entries(props)
         .filter(
           ([name, value]) =>
-            value?.type.required && initialProps.includes(name) === false
+            value?.required && initialProps.includes(name) === false
         )
         .map(([name]) => name)
     : [];

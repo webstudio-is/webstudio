@@ -10,13 +10,8 @@ export const customComponents = {
   RichTextLink,
 };
 
-export const customComponentPropsMetas = {
-  Image: {
-    props: {
-      ...imageProps,
-      src: { ...imageProps.src, control: "file-image", name: "Source" },
-    },
-  } as WsComponentPropsMeta,
+export const customComponentPropsMetas: Record<string, WsComponentPropsMeta> = {
+  Image: { props: imageProps },
 };
 
 // just for completeness, maybe we add soemthing here later
