@@ -38,7 +38,15 @@ export const getStartingValue = (meta: PropMeta): PropValue | undefined => {
     };
   }
 
-  // In this case we will not add a prop in storage until we get onChange from control
+  // If undefined is returned,
+  // we will not add a prop in storage until we get an onChange from control.
+  //
+  // User may have this experience:
+  //   - they added a prop but didn't touch the control
+  //   - they closed props panel
+  //   - when they open props panel again, the prop is not there
+  //
+  // We want to avoid this if possible, but for some types like "asset" we can't
   return undefined;
 };
 
@@ -136,7 +144,22 @@ export const usePropsLogic = ({
       );
     }
 
-    return { prop: saved, propName: name, meta: known };
+    let prop = saved;
+
+    // For initial props, if prop is not saved, we want to show default value if available.
+    //
+    // Important to not use getStartingProp if default is not available
+    // beacuse user may have this experience:
+    //   - they open props panel of an Image
+    //   - they see 0 in the control for "width"
+    //   - where 0 is a fallback when no default is available
+    //   - they think that width is set to 0, but it's actually not set at all
+    //
+    if (prop === undefined && known.defaultValue !== undefined) {
+      prop = getStartingProp(instance.id, known, name);
+    }
+
+    return { prop, propName: name, meta: known };
   });
 
   // names of the props added by the user during the lifetime of the hook
