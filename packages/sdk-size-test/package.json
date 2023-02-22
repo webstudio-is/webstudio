@@ -4,8 +4,8 @@
   "private": true,
   "sideEffects": false,
   "scripts": {
-    "build-test": "rm -rf ./public && remix build && du -sh  ./public",
-    "typecheck": "tsc -b"
+    "build": "rm -rf ./public && remix build && du -sh  ./public",
+    "typecheck": "tsc --noEmit"
   },
   "dependencies": {
     "@remix-run/cloudflare": "1.12.0",
@@ -19,7 +19,6 @@
   },
   "devDependencies": {
     "@remix-run/dev": "1.12.0",
-    "@remix-run/eslint-config": "1.12.0",
     "@types/react": "17.0.47",
     "@types/react-dom": "^17.0.9",
     "typescript": "4.9.5"
