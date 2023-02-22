@@ -1,239 +1,167 @@
-import { useState } from "react";
 import store from "immerhin";
 import type { Instance, Prop } from "@webstudio-is/project-build";
-import { getComponentPropsMeta } from "@webstudio-is/react-sdk";
 import {
   theme,
   Box,
   Button,
-  Grid,
-  TextField,
-  Tooltip,
   useCombobox,
   ComboboxPopper,
   ComboboxPopperContent,
   ComboboxPopperAnchor,
   ComboboxListbox,
   ComboboxListboxItem,
-  DeprecatedIconButton,
+  TextField,
+  SmallIconButton,
 } from "@webstudio-is/design-system";
-import {
-  PlusIcon,
-  TrashIcon,
-  ExclamationTriangleIcon,
-  ChevronDownIcon,
-} from "@webstudio-is/icons";
+import { ChevronDownIcon, PlusIcon } from "@webstudio-is/icons";
 import type { Publish } from "~/shared/pubsub";
 import { propsStore, useInstanceProps } from "~/shared/nano-states";
 import { CollapsibleSection, ComponentInfo } from "~/builder/shared/inspector";
-import { Control } from "./control";
-import { usePropsLogic, type UserPropValue } from "./use-props-logic";
 import {
   useStyleData,
-  type SetProperty,
-} from "../style-panel/shared/use-style-data";
+  type SetProperty as SetCssProperty,
+} from "~/builder/features/style-panel/shared/use-style-data";
+import { renderControl } from "./controls/combined";
+import { usePropsLogic, type NameAndLabel } from "./use-props-logic";
+import { type PropMeta, type PropValue, getLabel } from "./shared";
 
-type ComboboxProps = {
-  isReadonly: boolean;
-  isInvalid: boolean;
-  items: Array<string>;
-  value: string;
-  onItemSelect: (value: string | null) => void;
-  onSubmit: (value: string) => void;
-  onInput: (value: string) => void;
-};
+import { useState } from "react";
+
+const itemToString = (item: NameAndLabel | null) =>
+  item ? getLabel(item, item.name) : "";
 
 const Combobox = ({
-  isReadonly,
-  isInvalid,
-  items: itemsProp,
-  value,
+  items,
   onItemSelect,
-  onSubmit,
-  onInput,
-}: ComboboxProps) => {
-  const {
+}: {
+  items: NameAndLabel[];
+  onItemSelect: (item: NameAndLabel) => void;
+}) => {
+  const [inputValue, setInputValue] = useState("");
+
+  const combobox = useCombobox<NameAndLabel>({
     items,
-    getInputProps,
-    getComboboxProps,
-    getToggleButtonProps,
-    getMenuProps,
-    getItemProps,
-    isOpen,
-  } = useCombobox({
-    items: itemsProp,
-    value,
-    selectedItem: value,
-    itemToString: (item) => item ?? "",
+    itemToString,
     onItemSelect,
+    selectedItem: undefined,
+
+    // this weird handling of value is needed to work around a limitation in useCombobox
+    // where it doesn't allow to leave both `value` and `selectedItem` empty/uncontrolled
+    value: { name: "", label: inputValue },
+    onInputChange: (value) => setInputValue(value ?? ""),
   });
 
   return (
     <ComboboxPopper>
-      <Box {...getComboboxProps()}>
+      <div {...combobox.getComboboxProps()}>
         <ComboboxPopperAnchor>
           <TextField
-            {...getInputProps({
-              onKeyPress: (event) => {
-                if (event.key === "Enter") {
-                  onSubmit(event.currentTarget.value);
-                }
-              },
-              onInput: (event) => {
-                onInput(event.currentTarget.value);
-              },
-            })}
-            name="prop"
+            {...combobox.getInputProps()}
             placeholder="Property"
-            readOnly={isReadonly}
-            state={isInvalid ? "invalid" : undefined}
             suffix={
-              <DeprecatedIconButton {...getToggleButtonProps()}>
-                <ChevronDownIcon />
-              </DeprecatedIconButton>
+              <SmallIconButton
+                {...combobox.getToggleButtonProps()}
+                icon={<ChevronDownIcon />}
+              />
             }
           />
         </ComboboxPopperAnchor>
-        <ComboboxPopperContent align="start" sideOffset={5}>
-          <ComboboxListbox {...getMenuProps()}>
-            {isOpen &&
-              items.map((item, index) => {
-                return (
-                  <ComboboxListboxItem
-                    {...getItemProps({ item, index })}
-                    key={index}
-                  >
-                    {item}
-                  </ComboboxListboxItem>
-                );
-              })}
+        <ComboboxPopperContent align="end" sideOffset={5}>
+          <ComboboxListbox {...combobox.getMenuProps()}>
+            {combobox.isOpen &&
+              combobox.items.map((item, index) => (
+                <ComboboxListboxItem
+                  key={item.name}
+                  selectable={false}
+                  {...combobox.getItemProps({ item, index })}
+                >
+                  {itemToString(item)}
+                </ComboboxListboxItem>
+              ))}
           </ComboboxListbox>
         </ComboboxPopperContent>
-      </Box>
+      </div>
     </ComboboxPopper>
   );
 };
 
-type PropertyProps = {
-  userProp: Prop;
-  component: Instance["component"];
-  onChangePropName: (name: string) => void;
-  onChangePropValue: (value: UserPropValue) => void;
-  onDelete: () => void;
-  setCssProperty: SetProperty;
-  required: boolean;
-  existingProps: string[];
-};
-
 const Property = ({
-  userProp,
+  meta,
+  prop,
+  propName,
   component,
-  onChangePropName,
-  onChangePropValue,
+  onChange,
   onDelete,
   setCssProperty,
-  required,
-  existingProps,
-}: PropertyProps) => {
-  const metaProps = getComponentPropsMeta(component)?.props ?? {};
+}: {
+  prop: Prop | undefined;
+  propName: string;
+  meta: PropMeta;
+  component: Instance["component"];
+  onChange: (value: PropValue) => void;
+  onDelete?: () => void;
+  setCssProperty: SetCssProperty;
+}) => (
+  <Box css={{ mb: theme.spacing[9] }}>
+    {renderControl({
+      meta,
+      prop,
+      propName,
+      onDelete,
+      onChange: (propValue, asset) => {
+        onChange(propValue);
 
-  const argType = metaProps[userProp.name as keyof typeof metaProps];
-  const isInvalid =
-    userProp.name != null &&
-    userProp.name.length > 0 &&
-    typeof argType === "undefined" &&
-    !userProp.name.match(/^data-(.)+/);
+        // @todo: better way to do this?
+        if (
+          component === "Image" &&
+          propName === "src" &&
+          asset &&
+          "width" in asset.meta &&
+          "height" in asset.meta
+        ) {
+          setCssProperty("aspectRatio")({
+            type: "unit",
+            unit: "number",
+            value: asset.meta.width / asset.meta.height,
+          });
+        }
+      },
+    })}
+  </Box>
+);
 
-  const allProps = Object.keys(metaProps).filter(
-    (propName) => existingProps.includes(propName) === false
-  );
+const AddPropertyForm = ({
+  availableProps,
+  onPropSelected,
+}: {
+  availableProps: NameAndLabel[];
+  onPropSelected: (propName: string) => void;
+}) => (
+  <Box css={{ mb: theme.spacing[9] }}>
+    <Combobox
+      items={availableProps}
+      onItemSelect={(item) => onPropSelected(item.name)}
+    />
+  </Box>
+);
 
-  const [error, setError] = useState<string | undefined>(undefined);
-
-  return (
-    <>
-      {required ? (
-        <TextField
-          name="prop"
-          placeholder="Property"
-          readOnly={true}
-          state={isInvalid ? "invalid" : undefined}
-          value={argType?.name ?? userProp.name}
-        />
-      ) : (
-        <Combobox
-          items={allProps}
-          value={userProp.name}
-          onItemSelect={(name) => {
-            if (name != null) {
-              setError(undefined);
-              onChangePropName(name);
-            }
-          }}
-          onSubmit={(name) => {
-            if (existingProps.includes(name) === false) {
-              setError(undefined);
-              onChangePropName(name);
-              return;
-            }
-            setError(`Property "${name}" is already exists`);
-          }}
-          onInput={() => {
-            setError(undefined);
-          }}
-          isInvalid={isInvalid || error !== undefined}
-          isReadonly={required}
-        />
-      )}
-      {isInvalid || error !== undefined ? (
-        <Tooltip content={error ?? `Invalid property name: ${userProp.name}`}>
-          <ExclamationTriangleIcon width={12} height={12} />
-        </Tooltip>
-      ) : (
-        // requires matching complex union
-        // skip for now and fix types later
-        <Control
-          component={component}
-          userProp={userProp}
-          onChangePropValue={onChangePropValue}
-          setCssProperty={setCssProperty}
-        />
-      )}
-      {required ? (
-        <Box />
-      ) : (
-        <Button color="ghost" onClick={onDelete} prefix={<TrashIcon />} />
-      )}
-    </>
-  );
-};
-
-type PropsPanelProps = {
+export const PropsPanel = ({
+  selectedInstance,
+  publish,
+}: {
   publish: Publish;
   selectedInstance: Instance;
-};
+}) => {
+  const [addingProp, setAddingProp] = useState(false);
 
-export const PropsPanel = ({ selectedInstance, publish }: PropsPanelProps) => {
-  const instanceId = selectedInstance.id;
-  const instanceProps = useInstanceProps(instanceId);
-
-  const {
-    userProps,
-    addEmptyProp,
-    handleChangePropName,
-    handleChangePropValue,
-    handleDeleteProp,
-    initialProps,
-  } = usePropsLogic({
-    props: instanceProps,
-    selectedInstance,
-
-    updateProps: (update) => {
+  const logic = usePropsLogic({
+    props: useInstanceProps(selectedInstance.id),
+    instance: selectedInstance,
+    updateProp: (update) => {
       store.createTransaction([propsStore], (props) => {
         props.set(update.id, update);
       });
     },
-
     deleteProp: (id) => {
       store.createTransaction([propsStore], (props) => {
         props.delete(id);
@@ -241,57 +169,62 @@ export const PropsPanel = ({ selectedInstance, publish }: PropsPanelProps) => {
     },
   });
 
-  const { setProperty: setCssProperty } = useStyleData({
-    selectedInstance,
-    publish,
-  });
-
-  const addButton = (
-    <Button
-      color="ghost"
-      onClick={(event) => {
-        event.preventDefault();
-        addEmptyProp();
-      }}
-      prefix={<PlusIcon />}
-    />
-  );
-
-  const existingProps = userProps.map((userProp) => userProp.name);
+  const styleData = useStyleData({ selectedInstance, publish });
 
   return (
     <Box>
       <Box css={{ p: theme.spacing[9] }}>
         <ComponentInfo selectedInstance={selectedInstance} />
       </Box>
-      <CollapsibleSection
-        label="Properties"
-        rightSlot={addButton}
-        isOpenDefault
-      >
-        <Grid
-          gap={1}
-          css={{
-            gridTemplateColumns: "1fr minmax(0, 1fr) auto",
-            alignItems: "center",
-          }}
-        >
-          {userProps.map((userProp) => (
+      <CollapsibleSection label="Properties" isOpenDefault>
+        <div>
+          {logic.initialProps.map(({ prop, propName, meta }) => (
             <Property
-              key={userProp.id}
-              userProp={userProp}
+              key={propName}
+              propName={propName}
+              prop={prop}
+              meta={meta}
               component={selectedInstance.component}
-              onChangePropName={(name) => handleChangePropName(userProp, name)}
-              onChangePropValue={(value) =>
-                handleChangePropValue(userProp, value)
+              onChange={(value) =>
+                logic.handleChange({ prop, propName }, value)
               }
-              setCssProperty={setCssProperty}
-              onDelete={() => handleDeleteProp(userProp)}
-              required={initialProps.includes(userProp.name)}
-              existingProps={existingProps}
+              setCssProperty={styleData.setProperty}
             />
           ))}
-        </Grid>
+
+          {logic.addedProps.map(({ prop, propName, meta }) => (
+            <Property
+              key={propName}
+              propName={propName}
+              prop={prop}
+              meta={meta}
+              component={selectedInstance.component}
+              onChange={(value) =>
+                logic.handleChange({ prop, propName }, value)
+              }
+              onDelete={() => logic.handleDelete({ prop, propName })}
+              setCssProperty={styleData.setProperty}
+            />
+          ))}
+
+          {addingProp && (
+            <AddPropertyForm
+              availableProps={logic.remainingProps}
+              onPropSelected={(propName) => {
+                setAddingProp(false);
+                logic.handleAdd(propName);
+              }}
+            />
+          )}
+
+          <Button
+            color="neutral"
+            prefix={<PlusIcon />}
+            onClick={() => setAddingProp(true)}
+          >
+            Add property
+          </Button>
+        </div>
       </CollapsibleSection>
     </Box>
   );

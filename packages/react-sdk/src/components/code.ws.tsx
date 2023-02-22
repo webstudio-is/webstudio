@@ -1,7 +1,7 @@
 import { CodeIcon } from "@webstudio-is/icons";
 import type { WsComponentMeta, WsComponentPropsMeta } from "./component-type";
 import { displayVarNamespace } from "./code";
-import props from "./__generated__/code.props.json";
+import { props } from "./__generated__/code.props";
 
 const presetStyle: WsComponentMeta["presetStyle"] = {
   display: {
@@ -40,7 +40,7 @@ export const meta: WsComponentMeta = {
   children: ["Code you can edit"],
 };
 
-export const propsMeta = {
+export const propsMeta: WsComponentPropsMeta = {
   props,
   initialProps: ["inline", "lang", "meta"],
-} as WsComponentPropsMeta;
+};

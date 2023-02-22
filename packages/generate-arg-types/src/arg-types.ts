@@ -44,43 +44,64 @@ const matchers = {
 export const getArgType = (propItem: PropItem): PropMeta | undefined => {
   const { type, name, description, defaultValue } = propItem;
 
-  const common = (typeName: string = type.name) => ({
-    type: { name: typeName, required: propItem.required },
-    ...(defaultValue?.value == null
-      ? {}
-      : { defaultValue: defaultValue.value }),
-    ...(description ? { description } : {}),
-  });
+  // eslint-disable-next-line @typescript-eslint/ban-types
+  const makePropMeta = (type: string, control: string, extra?: {}) =>
+    PropMeta.parse({
+      type,
+      required: propItem.required,
+      control,
+      ...(defaultValue?.value == null
+        ? {}
+        : { defaultValue: defaultValue.value }),
+      ...(description ? { description } : {}),
+      ...extra,
+    });
 
   // args that end with background or color e.g. iconColor
-  if (matchers.color && matchers.color.test(name) && type.name === "string") {
-    return PropMeta.parse({ ...common(), control: "color" });
+  if (matchers.color.test(name) && type.name === "string") {
+    return makePropMeta("string", "color");
   }
 
-  switch (type.name) {
-    case "boolean":
-    case "Booleanish":
-      return PropMeta.parse({ ...common("boolean"), control: "boolean" });
-    case "number":
-      return PropMeta.parse({ ...common("number"), control: "number" });
-    case "enum": {
-      const values = type.value.map(({ value }: { value: string }) =>
-        // remove additional quotes from enum values
-        value.replace(/^"(.*)"$/, "$1")
-      );
-      return PropMeta.parse({
-        ...common("string"),
-        control: {
-          type: values.length <= 5 ? "radio" : "select",
-          options: values,
-        },
-      });
+  try {
+    switch (type.name) {
+      case "boolean":
+      case "Booleanish":
+        return makePropMeta("boolean", "boolean");
+      case "number":
+        return makePropMeta("number", "number");
+      case "string | number":
+      case "number | string":
+        if (defaultValue?.value === "") {
+          return makePropMeta("number", "number", { defaultValue: undefined });
+        } else if (
+          defaultValue?.value == null ||
+          typeof defaultValue.value === "number"
+        ) {
+          return makePropMeta("number", "number");
+        } else {
+          return makePropMeta("string", "text");
+        }
+      case "enum": {
+        const options = type.value.map(({ value }: { value: string }) =>
+          // remove additional quotes from enum values
+          value.replace(/^"(.*)"$/, "$1")
+        );
+        return makePropMeta(
+          "string",
+          options.length <= 5 ? "radio" : "select",
+          { options }
+        );
+      }
+      case "function":
+      case "symbol":
+        return;
+      default:
+        // @todo: we need some checks here. for example type.name can be "ImageLoader"
+        return makePropMeta("string", "text");
     }
-    case "function":
-    case "symbol":
-      return;
-    default:
-      // @todo: we need some checks here. for example type.name can be "ImageLoader"
-      return PropMeta.parse({ ...common(), control: "text" });
+  } catch (error) {
+    // eslint-disable-next-line no-console
+    console.log("Error while parsing prop:", propItem);
+    throw error;
   }
 };

@@ -1,6 +1,6 @@
 import { BlockquoteIcon } from "@webstudio-is/icons";
 import type { WsComponentMeta, WsComponentPropsMeta } from "./component-type";
-import props from "./__generated__/blockquote.props.json";
+import { props } from "./__generated__/blockquote.props";
 
 const presetStyle = {
   margin: {
@@ -49,7 +49,7 @@ export const meta: WsComponentMeta = {
   children: ["Blockquote you can edit"],
 };
 
-export const propsMeta = {
+export const propsMeta: WsComponentPropsMeta = {
   props,
   initialProps: ["tag"],
-} as WsComponentPropsMeta;
+};

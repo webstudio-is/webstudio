@@ -63,7 +63,7 @@ const setDataCollapsed = (element?: HTMLElement) => {
   }
 };
 
-type UserProps = Record<Prop["name"], string | number | boolean>;
+type UserProps = Record<Prop["name"], Prop["value"]>;
 
 type WrapperComponentDevProps = {
   instance: Instance;

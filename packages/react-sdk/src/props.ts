@@ -28,7 +28,7 @@ export const useInstanceProps = (instanceId: Instance["id"]) => {
   const { propsByInstanceIdStore } = useContext(ReactSdkContext);
   const propsByInstanceId = useStore(propsByInstanceIdStore);
   const instanceProps = propsByInstanceId.get(instanceId);
-  const instancePropsObject: Record<string, number | string | boolean> = {};
+  const instancePropsObject: Record<Prop["name"], Prop["value"]> = {};
   if (instanceProps) {
     for (const prop of instanceProps) {
       if (prop.type !== "asset") {

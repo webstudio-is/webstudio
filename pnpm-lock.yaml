@@ -993,6 +993,9 @@ importers:
 
   packages/image:
     dependencies:
+      '@webstudio-is/generate-arg-types':
+        specifier: workspace:^
+        version: link:../generate-arg-types
       react:
         specifier: ^17.0.2
         version: 17.0.2
@@ -1018,9 +1021,6 @@ importers:
       '@types/react':
         specifier: 17.0.47
         version: 17.0.47
-      '@webstudio-is/generate-arg-types':
-        specifier: workspace:^
-        version: link:../generate-arg-types
       '@webstudio-is/jest-config':
         specifier: workspace:^
         version: link:../jest-config
@@ -5202,7 +5202,7 @@ packages:
       react-refresh: 0.11.0
       schema-utils: 3.1.1
       source-map: 0.7.4
-      webpack: 5.75.0(esbuild@0.14.54)
+      webpack: 5.75.0
     dev: true
 
   /@prisma/client@4.9.0(prisma@4.9.0):
@@ -7568,7 +7568,7 @@ packages:
       react: 17.0.2
       react-dom: 17.0.2(react@17.0.2)
       typescript: 4.9.5
-      webpack: 5.75.0(esbuild@0.14.54)
+      webpack: 5.75.0
     transitivePeerDependencies:
       - '@storybook/mdx2-csf'
       - bluebird
@@ -7851,7 +7851,7 @@ packages:
       react-docgen-typescript: 2.2.2(typescript@4.9.5)
       tslib: 2.5.0
       typescript: 4.9.5
-      webpack: 5.75.0(esbuild@0.14.54)
+      webpack: 5.75.0
     transitivePeerDependencies:
       - supports-color
     dev: true

@@ -11,7 +11,7 @@
     "checks": "pnpm typecheck && pnpm lint && pnpm test",
     "dev": "build-package --watch",
     "build": "build-package",
-    "build:args": "generate-arg-types './src/*.tsx !./src/**/*.stories.tsx !./src/**/*.ws.tsx' && prettier --write \"**/*.props.json\"",
+    "build:args": "generate-arg-types './src/*.tsx !./src/**/*.stories.tsx !./src/**/*.ws.tsx' && prettier --write \"**/*.props.ts\"",
     "lint": "eslint ./src --ext .ts,.tsx --max-warnings 0",
     "storybook:run": "start-storybook -p 6006",
     "storybook:build": "build-storybook",
@@ -19,7 +19,8 @@
   },
   "dependencies": {
     "react": "^17.0.2",
-    "warn-once": "^0.1.1"
+    "warn-once": "^0.1.1",
+    "@webstudio-is/generate-arg-types": "workspace:^"
   },
   "devDependencies": {
     "@jest/globals": "^29.3.1",
@@ -27,7 +28,6 @@
     "@storybook/react": "^6.5.14",
     "@storybook/testing-library": "^0.0.13",
     "@types/react": "^17.0.24",
-    "@webstudio-is/generate-arg-types": "workspace:^",
     "@webstudio-is/jest-config": "workspace:^",
     "@webstudio-is/scripts": "workspace:^",
     "@webstudio-is/storybook-config": "workspace:^",
