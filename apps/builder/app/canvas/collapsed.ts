@@ -91,6 +91,14 @@ const recalculate = () => {
   }
 };
 
+/**
+ * When we add elements or edit element styles, a situation arises where an element can collapse.
+ * I.e. get either 0 width or 0 height or both.
+ * We need the user to be able to select such elements anyway.
+ * We try to find the minimum set of elements that will prevent any of the canvas elements from collapsing.
+ * For such elements we set collapsedAttribute and then style helpers add padding to
+ * prevent collapsing.
+ **/
 export const setDataCollapsed = (instanceId: string) => {
   instanceIdSet.add(instanceId);
 
@@ -99,19 +107,4 @@ export const setDataCollapsed = (instanceId: string) => {
   recalculate();
 
   rafHandle = requestAnimationFrame(recalculate);
-
-  // When we remove this attribute, artifical helper spacers will be removed,
-  // then we synchronously calculate height/width to see if element would collapse
-  // then we add spacers back on the side that requires them right away.
-  // The idea is to not trigger a reflow while we are calculating offsets before we know
-  // if the elmenent needs spacers, because this is going to happen every time elemnt updates and
-  // we don't want to trigger a reflow every time.
-  /*
-  element.removeAttribute(collapsedAttribute);
-  const collapsedWidth = element.offsetWidth === 0 ? "w" : "";
-  const collapsedHeight = element.offsetHeight === 0 ? "h" : "";
-  if (collapsedHeight || collapsedWidth) {
-    element.setAttribute(collapsedAttribute, collapsedWidth + collapsedHeight);
-  }
-  */
 };
