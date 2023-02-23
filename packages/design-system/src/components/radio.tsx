@@ -1,102 +1,82 @@
-import React from "react";
-import { styled, CSS, VariantProps } from "../stitches.config";
-import * as RadioGroupPrimitive from "@radix-ui/react-radio-group";
-import { theme } from "../stitches.config";
+/**
+ * Implementation of the "Radio" component from:
+ * https://www.figma.com/file/sfCE7iLS0k25qCxiifQNLE/%F0%9F%93%9A-Webstudio-Library?node-id=1794%3A5804
+ */
 
-export const RadioGroup = styled(RadioGroupPrimitive.Root, {
-  display: "flex",
-});
+import { forwardRef, type ComponentProps, type Ref } from "react";
+import * as Primitive from "@radix-ui/react-radio-group";
+import { type CSS, css, theme } from "../stitches.config";
 
-const StyledIndicator = styled(RadioGroupPrimitive.Indicator, {
-  alignItems: "center",
-  display: "flex",
-  height: "100%",
-  justifyContent: "center",
-  width: "100%",
+export { CheckboxAndLabel as RadioAndLabel } from "./checkbox";
+
+const itemStyles = css({
+  all: "unset", // reset <button>
+
+  width: theme.spacing[9],
+  height: theme.spacing[9],
+  display: "block",
   position: "relative",
-  "&::after": {
-    content: '""',
-    display: "block",
-    width: theme.spacing[4],
-    height: theme.spacing[4],
-    borderRadius: "50%",
-    backgroundColor: theme.colors.blue9,
-  },
-});
+  borderRadius: theme.borderRadius.round,
 
-const StyledRadio = styled(RadioGroupPrimitive.Item, {
-  all: "unset",
-  boxSizing: "border-box",
-  userSelect: "none",
+  "&:focus-visible": {
+    outline: `2px solid ${theme.colors.borderFocus}`,
+  },
+
   "&::before": {
+    content: "''",
+    display: "block",
+    position: "absolute",
     boxSizing: "border-box",
-  },
-  "&::after": {
-    boxSizing: "border-box",
-  },
-  alignItems: "center",
-  appearance: "none",
-  display: "inline-flex",
-  justifyContent: "center",
-  lineHeight: "1",
-  margin: "0",
-  outline: "none",
-  padding: "0",
-  textDecoration: "none",
-  WebkitTapHighlightColor: "rgba(0,0,0,0)",
-
-  borderRadius: "50%",
-  color: theme.colors.hiContrast,
-  boxShadow: `inset 0 0 0 1px ${theme.colors.slate7}`,
-  overflow: "hidden",
-  "@hover": {
-    "&:hover": {
-      boxShadow: `inset 0 0 0 1px ${theme.colors.slate8}`,
-    },
-  },
-  "&:focus": {
-    outline: "none",
-    borderColor: theme.colors.red7,
-    boxShadow: `inset 0 0 0 1px ${theme.colors.blue9}, 0 0 0 1px ${theme.colors.blue9}`,
+    width: "13.3px",
+    height: "13.3px",
+    inset: "1.35px",
+    borderRadius: theme.borderRadius.round,
+    background: theme.colors.backgroundControls,
+    border: `1.3px solid ${theme.colors.foregroundMain}`,
   },
 
-  variants: {
-    size: {
-      "1": {
-        width: theme.spacing[9],
-        height: theme.spacing[9],
-      },
-      "2": {
-        width: theme.spacing[11],
-        height: theme.spacing[11],
-
-        [`& ${StyledIndicator}`]: {
-          "&::after": {
-            width: theme.spacing[9],
-            height: theme.spacing[9],
-          },
-        },
-      },
-    },
+  "&[data-state=checked]::before": {
+    borderColor: theme.colors.foregroundPrimary,
+    background: "transparent",
   },
-  defaultVariants: {
-    size: "1",
+
+  "&[data-state=checked]::after": {
+    content: "''",
+    display: "block",
+    position: "absolute",
+    width: "5.3px",
+    height: "5.3px",
+    inset: "5.35px",
+    borderRadius: theme.borderRadius.round,
+    background: theme.colors.foregroundPrimary,
+  },
+
+  // [data-state] is needed to make sure the specificity
+  // is higher than the above selectors
+  "&[data-state]:disabled::before": {
+    borderColor: theme.colors.foregroundDisabled,
+  },
+  "&[data-state]:disabled::after": {
+    background: theme.colors.foregroundDisabled,
   },
 });
 
-type RadioVariants = VariantProps<typeof StyledRadio>;
-type RadioGroupItemPrimitiveProps = React.ComponentProps<
-  typeof RadioGroupPrimitive.Item
->;
-type RadioProps = RadioGroupItemPrimitiveProps & RadioVariants & { css?: CSS };
-
-export const Radio = React.forwardRef<
-  React.ElementRef<typeof StyledRadio>,
-  RadioProps
->((props, forwardedRef) => (
-  <StyledRadio {...props} ref={forwardedRef}>
-    <StyledIndicator />
-  </StyledRadio>
-));
-
+export const Radio = forwardRef(
+  (
+    {
+      className,
+      css,
+      ...props
+    }: ComponentProps<typeof Primitive.Item> & { css?: CSS },
+    ref: Ref<HTMLButtonElement>
+  ) => (
+    <Primitive.Item
+      className={itemStyles({ className, css })}
+      {...props}
+      ref={ref}
+    />
+  )
+);
 Radio.displayName = "Radio";
+
+export const RadioGroup = Primitive.Root;
