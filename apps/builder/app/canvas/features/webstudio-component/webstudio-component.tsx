@@ -1,6 +1,5 @@
 import type { MouseEvent, FormEvent } from "react";
 import { Suspense, lazy, useCallback, useMemo, useRef } from "react";
-import { useIsomorphicLayoutEffect } from "react-use";
 import { useStore } from "@nanostores/react";
 import { useLexicalComposerContext } from "@lexical/react/LexicalComposerContext";
 import store from "immerhin";
