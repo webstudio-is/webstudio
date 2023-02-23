@@ -89,15 +89,11 @@ const recalculate = () => {
   }
 
   /**
-   *  Selector to find element itself or common ancestor
-   *  (finding common ancestor is suboptimal solution but it almost never happens)
+   *  Selector to find elements common ancestor
    **/
-  const elementSelector =
-    instanceIds.length === 1
-      ? `[${idAttribute}="${instanceIds[0]}"]`
-      : `[${idAttribute}]${instanceIds
-          .map((instanceId) => `:has([${idAttribute}="${instanceId}"])`)
-          .join("")}`;
+  const elementSelector = `[${idAttribute}]${instanceIds
+    .map((instanceId) => `:has([${idAttribute}="${instanceId}"])`)
+    .join("")}`;
 
   const elements: Element[] = [];
 
