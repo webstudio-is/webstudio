@@ -4,7 +4,7 @@
   "private": true,
   "sideEffects": false,
   "scripts": {
-    "build": "rm -rf ./public && rm -rf ./functions && remix build && size-limit",
+    "size-test": "rm -rf ./public && rm -rf ./functions && remix build && size-limit",
     "typecheck": "tsc --noEmit"
   },
   "size-limit": [
