@@ -88,7 +88,7 @@ export const getArgType = (propItem: PropItem): PropMeta | undefined => {
         );
         return makePropMeta(
           "string",
-          options.length <= 5 ? "radio" : "select",
+          options.length <= 3 ? "radio" : "select",
           { options }
         );
       }

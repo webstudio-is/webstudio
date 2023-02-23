@@ -6,12 +6,13 @@ import type {
   ForwardRefExoticComponent,
 } from "react";
 import { forwardRef } from "react";
+import type { Link as BaseLink } from "../../../components/link";
 
 const isAbsoluteUrl = (href: string) => {
   try {
     new URL(href);
     return true;
-  } catch (e) {
+  } catch {
     return false;
   }
 };
@@ -21,7 +22,7 @@ const isAbsoluteUrl = (href: string) => {
 const isAbsoluteUrlRemix = (href: string) =>
   /^[a-z+]+:\/\//i.test(href) || href.startsWith("//");
 
-type Props = Omit<ComponentProps<"a">, "href"> & { href?: string };
+type Props = ComponentProps<typeof BaseLink>;
 
 type Ref = ElementRef<"a">;
 
@@ -41,7 +42,7 @@ export const wrapLinkComponent = (
 
     if (isAbsolute || willRemixTryToTreatAsAbsoluteAndCrash) {
       return (
-        <a
+        <BaseLink
           {...props}
           href={willRemixTryToTreatAsAbsoluteAndCrash ? "" : href}
           ref={ref}
