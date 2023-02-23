@@ -5,6 +5,11 @@ on:
     branches:
       - main
 
+env:
+  TURBO_REMOTE_ONLY: true
+  TURBO_TEAM: <FILL_THIS_IN>
+  TURBO_TOKEN: ${{ secrets.TURBO_TOKEN }}
+
 jobs:
   publish:
     timeout-minutes: 20

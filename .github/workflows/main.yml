@@ -2,6 +2,11 @@ name: Main workflow
 
 on: [push]
 
+env:
+  TURBO_REMOTE_ONLY: true
+  TURBO_TEAM: <FILL_THIS_IN>
+  TURBO_TOKEN: ${{ secrets.TURBO_TOKEN }}
+
 jobs:
   checks:
     timeout-minutes: 20
