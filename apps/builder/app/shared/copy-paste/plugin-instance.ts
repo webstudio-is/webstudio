@@ -16,6 +16,8 @@ import {
   styleSourceSelectionsStore,
   styleSourcesStore,
   instancesIndexStore,
+  instancesStore,
+  patchInstancesMutable,
 } from "../nano-states";
 import {
   cloneInstance,
@@ -117,15 +119,16 @@ export const onPaste = (clipboardData: string) => {
     instancesIndexStore.get(),
     selectedInstanceIdStore.get()
   );
+  const rootInstance = rootInstanceContainer.get();
   store.createTransaction(
     [
-      rootInstanceContainer,
+      instancesStore,
       propsStore,
       styleSourceSelectionsStore,
       styleSourcesStore,
       stylesStore,
     ],
-    (rootInstance, props, styleSourceSelections, styleSources, styles) => {
+    (instances, props, styleSourceSelections, styleSources, styles) => {
       const instancesIndex = createInstancesIndex(rootInstance);
       insertInstanceMutable(instancesIndex, data.instance, dropTarget);
       for (const prop of data.props) {
@@ -143,6 +146,7 @@ export const onPaste = (clipboardData: string) => {
       for (const styleDecl of data.styles) {
         styles.set(getStyleDeclKey(styleDecl), styleDecl);
       }
+      patchInstancesMutable(rootInstance, instances);
     }
   );
   selectedInstanceIdStore.set(data.instance.id);
