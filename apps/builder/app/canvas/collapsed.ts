@@ -1,7 +1,19 @@
-import { collapsedAttribute } from "@webstudio-is/react-sdk";
+import { collapsedAttribute, idAttribute } from "@webstudio-is/react-sdk";
+import {
+  getCascadedBreakpointIds,
+  getCascadedInfo,
+  getPresetStyle,
+} from "~/builder/features/style-panel/shared/style-info";
+import {
+  breakpointsContainer,
+  instancesIndexStore,
+  stylesIndexStore,
+} from "~/shared/nano-states";
+import { selectedBreakpointStore } from "~/shared/nano-states/breakpoints";
 import { subscribe } from "~/shared/pubsub";
 
 const instanceIdSet = new Set<string>();
+
 let rafHandle: number;
 
 // Do not add collapsed paddings for void elements
@@ -28,6 +40,47 @@ const replacedHtmlElements = ["IFRAME", "VIDEO", "EMBED", "IMG"];
 
 const skipElementsSet = new Set([...voidHtmlElements, ...replacedHtmlElements]);
 
+const getInstanceSize = (instanceId: string) => {
+  const breakpoints = breakpointsContainer.get();
+  const selectedBreakpoint = selectedBreakpointStore.get();
+  const { stylesByInstanceId } = stylesIndexStore.get();
+  const instancesIndex = instancesIndexStore.get();
+  const selectedBreakpointId = selectedBreakpoint?.id;
+
+  if (selectedBreakpointId === undefined) {
+    return {
+      width: undefined,
+      height: undefined,
+    };
+  }
+
+  const cascadedBreakpointIds = getCascadedBreakpointIds(
+    breakpoints,
+    selectedBreakpointId
+  );
+
+  const presetStyle = getPresetStyle(instancesIndex, instanceId);
+
+  const cascadedStyle = getCascadedInfo(stylesByInstanceId, instanceId, [
+    ...cascadedBreakpointIds,
+    selectedBreakpointId,
+  ]);
+
+  const widthStyle = cascadedStyle?.width?.value ?? presetStyle?.width;
+  const heightStyle = cascadedStyle?.height?.value ?? presetStyle?.height;
+
+  return {
+    width:
+      widthStyle !== undefined && widthStyle.type === "unit"
+        ? widthStyle.value
+        : undefined,
+    height:
+      heightStyle !== undefined && heightStyle.type === "unit"
+        ? heightStyle.value
+        : undefined,
+  };
+};
+
 const recalculate = () => {
   const instanceIds = Array.from(instanceIdSet);
   instanceIdSet.clear();
@@ -41,9 +94,9 @@ const recalculate = () => {
    **/
   const elementSelector =
     instanceIds.length === 1
-      ? `[data-ws-id="${instanceIds[0]}"]`
-      : `[data-ws-id]${instanceIds
-          .map((instanceId) => `:has([data-ws-id="${instanceId}"])`)
+      ? `[${idAttribute}="${instanceIds[0]}"]`
+      : `[${idAttribute}]${instanceIds
+          .map((instanceId) => `:has([${idAttribute}="${instanceId}"])`)
           .join("")}`;
 
   const elements: Element[] = [];
@@ -54,7 +107,7 @@ const recalculate = () => {
     document.body;
   elements.push(baseElement);
 
-  const descendants = baseElement.querySelectorAll("[data-ws-id]");
+  const descendants = baseElement.querySelectorAll(`[${idAttribute}]`);
   elements.push(...descendants);
 
   const elementsToRecalculate: HTMLElement[] = [];
@@ -115,8 +168,18 @@ const recalculate = () => {
   const collapsedElements = new Map<HTMLElement, string>();
 
   for (const element of elementsToRecalculate) {
-    const collapsedWidth = element.offsetWidth === 0 ? "w" : "";
-    const collapsedHeight = element.offsetHeight === 0 ? "h" : "";
+    const elementInstanceId = element.getAttribute(idAttribute);
+
+    if (elementInstanceId === null) {
+      throw new Error(`Element ${idAttribute} has no instance id`);
+    }
+
+    const elementSize = getInstanceSize(elementInstanceId);
+
+    const collapsedWidth =
+      element.offsetWidth === 0 && elementSize.width === undefined ? "w" : "";
+    const collapsedHeight =
+      element.offsetHeight === 0 && elementSize.height === undefined ? "h" : "";
 
     if (collapsedHeight || collapsedWidth) {
       collapsedElements.set(element, collapsedWidth + collapsedHeight);
