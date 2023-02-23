@@ -122,11 +122,11 @@ export const Canvas = ({
   useSharedShortcuts();
 
   useEffect(() => {
-    const instanceId = data.tree?.root.id;
-    if (instanceId !== undefined) {
-      setDataCollapsed(instanceId);
+    const rootInstanceId = data.tree?.instances[0]?.[0];
+    if (rootInstanceId !== undefined) {
+      setDataCollapsed(rootInstanceId);
     }
-  });
+  }, []);
 
   useEffect(subscribeCollapsedToPubSub, []);
 
