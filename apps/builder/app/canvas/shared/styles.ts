@@ -50,7 +50,7 @@ const presetStylesEngine = createCssEngine({ name: "presetStyles" });
 // If user sets `height: 100px` or does anything that would give it a height - we remove the helper padding right away, so user can actually see the height they set
 //
 // In other words we prevent elements from collapsing when they have 0 height or width by making them non-zero on canvas, but then we remove those paddings as soon as element doesn't collapse.
-const helperStyles = [
+export const helperStyles = [
   // When double clicking into an element to edit text, it should not select the word.
   `[${idAttribute}] {
     user-select: none;
@@ -58,7 +58,7 @@ const helperStyles = [
   // Using :where allows to prevent increasing specificity, so that helper is overwritten by user styles.
   `[${idAttribute}]:where([${collapsedAttribute}]:not(body)) {
     outline: 1px dashed #555;
-    outline-offset: -1px;
+    outline-offset: -0.5px;
   }`,
   // Has no width, will collapse
   `[${idAttribute}]:where(:not(body)[${collapsedAttribute}="w"]) {

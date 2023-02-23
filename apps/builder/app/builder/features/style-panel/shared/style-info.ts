@@ -150,7 +150,7 @@ export const getCascadedInfo = (
   return cascadedStyle;
 };
 
-const getPresetStyle = (
+export const getPresetStyle = (
   instancesIndex: InstancesIndex,
   instanceId: undefined | Instance["id"]
 ) => {

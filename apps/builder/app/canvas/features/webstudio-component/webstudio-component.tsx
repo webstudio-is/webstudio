@@ -7,7 +7,6 @@ import type { Instance, Prop } from "@webstudio-is/project-build";
 import {
   renderWebstudioComponentChildren,
   idAttribute,
-  collapsedAttribute,
 } from "@webstudio-is/react-sdk";
 import type { GetComponent } from "@webstudio-is/react-sdk";
 import {
@@ -20,7 +19,6 @@ import {
 import { createInstancesIndex } from "~/shared/tree-utils";
 import { useCssRules } from "~/canvas/shared/styles";
 import { SelectedInstanceConnector } from "./selected-instance-connector";
-import { useIsomorphicLayoutEffect } from "react-use";
 
 const TextEditor = lazy(() => import("../text-editor"));
 
@@ -43,24 +41,6 @@ const ContentEditable = ({
   );
 
   return <Component ref={ref} {...props} contentEditable={true} />;
-};
-
-const setDataCollapsed = (element?: HTMLElement) => {
-  if (element === undefined) {
-    return;
-  }
-  // When we remove this attribute, artifical helper spacers will be removed,
-  // then we synchronously calculate height/width to see if element would collapse
-  // then we add spacers back on the side that requires them right away.
-  // The idea is to not trigger a reflow while we are calculating offsets before we know
-  // if the elmenent needs spacers, because this is going to happen every time elemnt updates and
-  // we don't want to trigger a reflow every time.
-  element.removeAttribute(collapsedAttribute);
-  const collapsedWidth = element.offsetWidth === 0 ? "w" : "";
-  const collapsedHeight = element.offsetHeight === 0 ? "h" : "";
-  if (collapsedHeight || collapsedWidth) {
-    element.setAttribute(collapsedAttribute, collapsedWidth + collapsedHeight);
-  }
 };
 
 type UserProps = Record<Prop["name"], Prop["value"]>;
@@ -98,10 +78,6 @@ export const WebstudioComponentDev = ({
     }
     return result;
   }, [instanceProps]);
-
-  useIsomorphicLayoutEffect(() => {
-    setDataCollapsed(instanceElementRef.current);
-  });
 
   const readonlyProps =
     instance.component === "Input" ? { readOnly: true } : undefined;

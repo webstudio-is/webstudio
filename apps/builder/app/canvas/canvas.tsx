@@ -1,4 +1,4 @@
-import { useMemo } from "react";
+import { useMemo, Fragment, useEffect } from "react";
 import { computed } from "nanostores";
 import type { CanvasData } from "@webstudio-is/project";
 import {
@@ -40,6 +40,7 @@ import { useSubscribeBuilderReady } from "./shared/use-builder-ready";
 import { useCopyPaste } from "~/shared/copy-paste";
 import { customComponents } from "./custom-components";
 import { useHoveredInstanceConnector } from "./hovered-instance-connector";
+import { setDataCollapsed, subscribeCollapsedToPubSub } from "./collapsed";
 
 registerContainers();
 
@@ -120,6 +121,15 @@ export const Canvas = ({
   useShortcuts();
   useSharedShortcuts();
 
+  useEffect(() => {
+    const instanceId = data.tree?.root.id;
+    if (instanceId !== undefined) {
+      setDataCollapsed(instanceId);
+    }
+  });
+
+  useEffect(subscribeCollapsedToPubSub, []);
+
   const elements = useElementsTree(getComponent);
 
   if (elements === undefined) {
@@ -130,7 +140,8 @@ export const Canvas = ({
     return (
       <>
         <GlobalStyles />
-        {elements}
+        {/* Without fragment elements will be recreated in DesignMode */}
+        <Fragment key="elements">{elements}</Fragment>
       </>
     );
   }
@@ -139,7 +150,7 @@ export const Canvas = ({
     <>
       <GlobalStyles />
       <DesignMode />
-      {elements}
+      <Fragment key="elements">{elements}</Fragment>
     </>
   );
 };

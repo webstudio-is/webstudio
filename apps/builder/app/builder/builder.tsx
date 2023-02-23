@@ -38,6 +38,7 @@ import { Navigator } from "./features/sidebar-left";
 import { getBuildUrl } from "~/shared/router-utils";
 import { useCopyPaste } from "~/shared/copy-paste";
 import { AssetsProvider } from "./shared/assets";
+import { minWidth } from "./features/breakpoints/width-setting";
 
 registerContainers();
 
@@ -74,7 +75,7 @@ const useNavigatorLayout = () => {
   // We need to render the detached state only once the setting was actually loaded from local storage.
   // Otherwise we may show the detached state because its the default and then hide it immediately.
   const [clientSettings, _, isLoaded] = useClientSettings();
-  return isLoaded ? clientSettings.navigatorLayout : "docked";
+  return isLoaded ? clientSettings.navigatorLayout : "undocked";
 };
 
 const useSubscribeCanvasReady = (publish: Publish) => {
@@ -333,6 +334,7 @@ export const Builder = ({
               css={{
                 height: "100%",
                 width: "100%",
+                minWidth,
               }}
             />
           </Workspace>
