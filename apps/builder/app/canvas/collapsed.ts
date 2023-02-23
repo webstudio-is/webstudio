@@ -89,7 +89,7 @@ const recalculate = () => {
   }
 
   /**
-   *  Selector to find elements common ancestor
+   *  Selector to find elements common ancestors
    **/
   const elementSelector = `[${idAttribute}]${instanceIds
     .map((instanceId) => `:has([${idAttribute}="${instanceId}"])`)
@@ -97,7 +97,7 @@ const recalculate = () => {
 
   const elements: Element[] = [];
 
-  // Element itself or common ancestor or body
+  // Element itself or last common ancestor or body
   const baseElement =
     Array.from(document.querySelectorAll(elementSelector)).pop() ??
     document.body;
@@ -208,7 +208,7 @@ export const setDataCollapsed = (instanceId: string) => {
 
 /**
  * For optimisation reasons try to extract instanceId of changed elements from pubsub
- * In that case we just check the subtree + parent of changed element to find collapsed elements
+ * In that case we just check the subtree of parent/common ancestor of changed elements to find collapsed elements
  **/
 export const subscribeCollapsedToPubSub = () =>
   subscribe("sendStoreChanges", ({ source, changes }) => {
