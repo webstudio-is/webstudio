@@ -3,6 +3,30 @@ import { collapsedAttribute } from "@webstudio-is/react-sdk";
 const instanceIdSet = new Set<string>();
 let rafHandle: number;
 
+// Do not add collapsed paddings for void elements
+// https://developer.mozilla.org/en-US/docs/Glossary/Void_element
+const voidHtmlElements = [
+  "AREA",
+  "BASE",
+  "BR",
+  "COL",
+  "EMBED",
+  "HR",
+  "IMG",
+  "INPUT",
+  "LINK",
+  "META",
+  "SOURCE",
+  "TRACK",
+  "WBR",
+];
+
+// Do not add collapsed paddings for replaced elements as at the moment we add them they don't have real size
+// https://developer.mozilla.org/en-US/docs/Web/CSS/Replaced_element
+const replacedHtmlElements = ["IFRAME", "VIDEO", "EMBED", "IMG"];
+
+const skipElementsSet = new Set([...voidHtmlElements, ...replacedHtmlElements]);
+
 const recalculate = () => {
   const instanceIds = Array.from(instanceIdSet);
   instanceIdSet.clear();
@@ -14,18 +38,19 @@ const recalculate = () => {
    *  Selector to find element itself or common ancestor
    *  (finding common ancestor is suboptimal solution but it almost never happens)
    **/
-  const eltSelector =
+  const elementSelector =
     instanceIds.length === 1
-      ? `[data-ws-id=${instanceIds[0]}]`
+      ? `[data-ws-id="${instanceIds[0]}"]`
       : `[data-ws-id]${instanceIds
-          .map((instanceId) => `:has([data-ws-id=${instanceId}])`)
+          .map((instanceId) => `:has([data-ws-id="${instanceId}"])`)
           .join("")}`;
 
   const elements: Element[] = [];
 
   // Element itself or common ancestor or body
   const baseElement =
-    Array.from(document.querySelectorAll(eltSelector)).pop() ?? document.body;
+    Array.from(document.querySelectorAll(elementSelector)).pop() ??
+    document.body;
   elements.push(baseElement);
 
   const descendants = baseElement.querySelectorAll("[data-ws-id]");
@@ -39,7 +64,7 @@ const recalculate = () => {
       continue;
     }
 
-    if (element.tagName === "IMG") {
+    if (skipElementsSet.has(element.tagName)) {
       // Images should not collapse, and have a fallback.
       // The issue that unloaded image has 0 width and height until explicitly set,
       // so at the moment new Image added we detect it as collapsed.
@@ -53,17 +78,15 @@ const recalculate = () => {
       elementsToRecalculate.push(element);
     }
 
-    const elementPosution = window.getComputedStyle(element).position;
+    const elementPosition = window.getComputedStyle(element).position;
 
-    if (elementPosution === "absolute" || elementPosution === "fixed") {
-      if (element.parentElement) {
+    if (element.parentElement) {
+      if (elementPosition === "absolute" || elementPosition === "fixed") {
         parentsWithAbsoluteChildren.set(
           element.parentElement,
           parentsWithAbsoluteChildren.get(element.parentElement) ?? 0
         );
-      }
-    } else {
-      if (element.parentElement) {
+      } else {
         parentsWithAbsoluteChildren.set(element.parentElement, 1);
       }
     }
@@ -81,8 +104,10 @@ const recalculate = () => {
   // 1. Remove all collapsed attributes
   baseElement.parentElement?.removeAttribute(collapsedAttribute);
   baseElement.removeAttribute(collapsedAttribute);
-  for (const elt of baseElement.querySelectorAll(`[${collapsedAttribute}]`)) {
-    elt.removeAttribute(collapsedAttribute);
+  for (const element of baseElement.querySelectorAll(
+    `[${collapsedAttribute}]`
+  )) {
+    element.removeAttribute(collapsedAttribute);
   }
 
   // 2. Calculate collapsed state
@@ -116,7 +141,7 @@ export const setDataCollapsed = (instanceId: string) => {
 
   cancelAnimationFrame(rafHandle);
 
-  recalculate();
-
-  rafHandle = requestAnimationFrame(recalculate);
+  rafHandle = requestAnimationFrame(() => {
+    recalculate();
+  });
 };

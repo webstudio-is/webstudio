@@ -143,7 +143,7 @@ export const Canvas = ({
         }
       }
     });
-  }, [data.tree?.root.id]);
+  }, []);
 
   const elements = useElementsTree(getComponent);
 
