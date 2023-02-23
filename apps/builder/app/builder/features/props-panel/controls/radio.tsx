@@ -4,6 +4,7 @@ import {
   Button,
   RadioGroup,
   Radio,
+  RadioAndLabel,
   Label,
 } from "@webstudio-is/design-system";
 import { TrashIcon } from "@webstudio-is/icons";
@@ -23,16 +24,15 @@ export const RadioControl = ({
       <Label>{getLabel(meta, propName)}</Label>
       <Flex gap="1" justify="between">
         <RadioGroup
-          css={{ flexDirection: "column" }}
           name="value"
           value={prop?.value}
           onValueChange={(value) => onChange({ type: "string", value })}
         >
           {meta.options.map((value) => (
-            <Flex align="center" gap="1" key={value}>
+            <RadioAndLabel key={value}>
               <Radio value={value} />
               <Text>{value}</Text>
-            </Flex>
+            </RadioAndLabel>
           ))}
         </RadioGroup>
         {onDelete && (
