@@ -34,14 +34,13 @@ import {
   useSetAssets,
   useSetTreeId,
 } from "~/shared/nano-states";
-import { subscribe } from "~/shared/pubsub";
 import { usePublishScrollState } from "./shared/use-publish-scroll-state";
 import { useDragAndDrop } from "./shared/use-drag-drop";
 import { useSubscribeBuilderReady } from "./shared/use-builder-ready";
 import { useCopyPaste } from "~/shared/copy-paste";
 import { customComponents } from "./custom-components";
 import { useHoveredInstanceConnector } from "./hovered-instance-connector";
-import { setDataCollapsed } from "./collapsed";
+import { setDataCollapsed, subscribeCollapsedToPubSub } from "./collapsed";
 
 registerContainers();
 
@@ -129,21 +128,7 @@ export const Canvas = ({
     }
   });
 
-  useEffect(() => {
-    return subscribe("sendStoreChanges", ({ source, changes }) => {
-      for (const change of changes) {
-        if (change.namespace === "styleSourceSelections") {
-          for (const patch of change.patches) {
-            const instanceId = patch.value?.instanceId;
-
-            if (typeof instanceId === "string") {
-              setDataCollapsed(instanceId);
-            }
-          }
-        }
-      }
-    });
-  }, []);
+  useEffect(subscribeCollapsedToPubSub, []);
 
   const elements = useElementsTree(getComponent);
 

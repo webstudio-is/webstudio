@@ -1,4 +1,5 @@
 import { collapsedAttribute } from "@webstudio-is/react-sdk";
+import { subscribe } from "~/shared/pubsub";
 
 const instanceIdSet = new Set<string>();
 let rafHandle: number;
@@ -145,3 +146,22 @@ export const setDataCollapsed = (instanceId: string) => {
     recalculate();
   });
 };
+
+/**
+ * For optimisation reasons try to extract instanceId of changed elements from pubsub
+ * In that case we just check the subtree + parent of changed element to find collapsed elements
+ **/
+export const subscribeCollapsedToPubSub = () =>
+  subscribe("sendStoreChanges", ({ source, changes }) => {
+    for (const change of changes) {
+      if (change.namespace === "styleSourceSelections") {
+        for (const patch of change.patches) {
+          const instanceId = patch.value?.instanceId;
+
+          if (typeof instanceId === "string") {
+            setDataCollapsed(instanceId);
+          }
+        }
+      }
+    }
+  });
