@@ -126,7 +126,7 @@ export const Canvas = ({
     if (rootInstanceId !== undefined) {
       setDataCollapsed(rootInstanceId);
     }
-  }, []);
+  });
 
   useEffect(subscribeCollapsedToPubSub, []);
 
