@@ -17,4 +17,5 @@ jobs:
       - name: Lost Pixel
         uses: lost-pixel/lost-pixel@next
         env:
+          LOST_PIXEL_CONFIG_DIR: packages/design-system
           LOST_PIXEL_API_KEY: ${{ secrets.LOST_PIXEL_API_KEY }}
