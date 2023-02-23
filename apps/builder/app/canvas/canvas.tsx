@@ -24,8 +24,8 @@ import {
   assetsStore,
   useRootInstance,
   useSetBreakpoints,
+  useSetInstances,
   useSetProps,
-  useSetRootInstance,
   useSetStyles,
   useSetStyleSources,
   useSetStyleSourceSelections,
@@ -108,7 +108,7 @@ export const Canvas = ({
   useSetStyles(data.build.styles);
   useSetStyleSources(data.build.styleSources);
   useSetStyleSourceSelections(data.tree.styleSourceSelections);
-  useSetRootInstance(data.tree.root);
+  useSetInstances(data.tree.instances);
   setParams(data.params ?? null);
   useCanvasStore(publish);
   const [isPreviewMode] = useIsPreviewMode();

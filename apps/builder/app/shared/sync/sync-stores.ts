@@ -4,7 +4,7 @@ import type { WritableAtom } from "nanostores";
 import { useEffect } from "react";
 import { type Publish, subscribe } from "~/shared/pubsub";
 import {
-  rootInstanceContainer,
+  instancesStore,
   propsStore,
   breakpointsContainer,
   stylesStore,
@@ -48,7 +48,7 @@ const clientStores = new Map<string, WritableAtom<unknown>>();
 export const registerContainers = () => {
   // synchronize patches
   store.register("breakpoints", breakpointsContainer);
-  store.register("root", rootInstanceContainer);
+  store.register("instances", instancesStore);
   store.register("styles", stylesStore);
   store.register("styleSources", styleSourcesStore);
   store.register("styleSourceSelections", styleSourceSelectionsStore);

@@ -1,6 +1,11 @@
 import type { ComponentProps } from "react";
 import { atom } from "nanostores";
-import type { Tree } from "@webstudio-is/project-build";
+import type {
+  Instance,
+  Instances,
+  InstancesItem,
+  Tree,
+} from "@webstudio-is/project-build";
 import type { Asset } from "@webstudio-is/asset-uploader";
 import { createElementsTree } from "./create-elements-tree";
 import { WebstudioComponent } from "./webstudio-component";
@@ -23,6 +28,29 @@ type RootProps = {
   getComponent: GetComponent;
 };
 
+const denormalizeTree = (instances: Instances) => {
+  const convertTree = (instance: InstancesItem) => {
+    const legacyInstance: Instance = {
+      type: "instance",
+      id: instance.id,
+      component: instance.component,
+      children: [],
+    };
+    for (const child of instance.children) {
+      if (child.type === "id") {
+        const childInstance = instances.get(child.value);
+        if (childInstance) {
+          legacyInstance.children.push(convertTree(childInstance));
+        }
+      } else {
+        legacyInstance.children.push(child);
+      }
+    }
+    return legacyInstance;
+  };
+  return convertTree(Array.from(instances.values())[0]);
+};
+
 export const InstanceRoot = ({
   data,
   Component,
@@ -38,7 +66,7 @@ export const InstanceRoot = ({
   registerComponents(customComponents);
 
   return createElementsTree({
-    instance: data.tree.root,
+    instance: denormalizeTree(new Map(data.tree.instances)),
     propsByInstanceIdStore: atom(
       getPropsByInstanceId(new Map(data.tree.props))
     ),

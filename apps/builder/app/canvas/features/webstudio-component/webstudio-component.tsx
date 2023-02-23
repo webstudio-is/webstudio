@@ -1,5 +1,6 @@
 import type { MouseEvent, FormEvent } from "react";
 import { Suspense, lazy, useCallback, useMemo, useRef } from "react";
+import { useIsomorphicLayoutEffect } from "react-use";
 import { useStore } from "@nanostores/react";
 import { useLexicalComposerContext } from "@lexical/react/LexicalComposerContext";
 import store from "immerhin";
@@ -10,6 +11,8 @@ import {
 } from "@webstudio-is/react-sdk";
 import type { GetComponent } from "@webstudio-is/react-sdk";
 import {
+  instancesStore,
+  patchInstancesMutable,
   rootInstanceContainer,
   selectedInstanceIdStore,
   useInstanceProps,
@@ -145,12 +148,14 @@ export const WebstudioComponentDev = ({
           />
         }
         onChange={(updates) => {
-          store.createTransaction([rootInstanceContainer], (rootInstance) => {
+          const rootInstance = rootInstanceContainer.get();
+          store.createTransaction([instancesStore], (instances) => {
             const { instancesById } = createInstancesIndex(rootInstance);
             const instance = instancesById.get(instanceId);
             if (instance) {
               instance.children = updates;
             }
+            patchInstancesMutable(rootInstance, instances);
           });
         }}
         onSelectInstance={(instanceId) => {

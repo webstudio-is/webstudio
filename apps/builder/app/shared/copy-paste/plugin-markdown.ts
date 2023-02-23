@@ -12,6 +12,8 @@ import {
 } from "../tree-utils";
 import {
   instancesIndexStore,
+  instancesStore,
+  patchInstancesMutable,
   propsStore,
   rootInstanceContainer,
   selectedInstanceIdStore,
@@ -218,20 +220,19 @@ export const onPaste = (clipboardData: string) => {
     instancesIndexStore.get(),
     selectedInstanceIdStore.get()
   );
-  store.createTransaction(
-    [rootInstanceContainer, propsStore],
-    (rootInstance, props) => {
-      const instancesIndex = createInstancesIndex(rootInstance);
-      // We are inserting backwards, so we need to reverse the order
-      data.children.reverse();
-      for (const child of data.children) {
-        if (child.type === "instance") {
-          insertInstanceMutable(instancesIndex, child, dropTarget);
-        }
-      }
-      for (const prop of data.props) {
-        props.set(prop.id, prop);
+  const rootInstance = rootInstanceContainer.get();
+  store.createTransaction([instancesStore, propsStore], (instances, props) => {
+    const instancesIndex = createInstancesIndex(rootInstance);
+    // We are inserting backwards, so we need to reverse the order
+    data.children.reverse();
+    for (const child of data.children) {
+      if (child.type === "instance") {
+        insertInstanceMutable(instancesIndex, child, dropTarget);
       }
     }
-  );
+    for (const prop of data.props) {
+      props.set(prop.id, prop);
+    }
+    patchInstancesMutable(rootInstance, instances);
+  });
 };
