@@ -58,6 +58,12 @@ export const useSetInstances = (
   });
 };
 
+/**
+ * this is temporary utility to map rootInstance changes
+ * to normalized instances
+ *
+ * later its usages should be rewritten with direct instances mutations
+ */
 export const patchInstancesMutable = (
   rootInstance: undefined | Instance,
   instances: Instances
