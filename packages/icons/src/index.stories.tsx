@@ -1,10 +1,16 @@
 import * as icons from "./index";
 import * as legacyIcons from "./legacy";
 
-export const Icons = () => {
+export const Icons = ({ testColor }: { testColor: boolean }) => {
   return (
     <>
-      <div style={{ display: "flex", flexWrap: "wrap" }}>
+      <div
+        style={{
+          display: "flex",
+          flexWrap: "wrap",
+          ...(testColor ? { color: "red" } : {}),
+        }}
+      >
         {Object.entries(icons).map(
           // eslint-disable-next-line @typescript-eslint/no-explicit-any
           ([name, Icon]: [string, any]) => {
@@ -53,4 +59,10 @@ export const Icons = () => {
 export default {
   title: "All Icons",
   component: Icons,
+  argTypes: {
+    testColor: {
+      name: "Test color",
+      defaultValue: false,
+    },
+  },
 };
