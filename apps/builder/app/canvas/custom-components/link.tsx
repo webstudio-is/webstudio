@@ -46,10 +46,11 @@ export const preserveBuildParams = (href: string, sourceSearch: string) => {
   return `${url.pathname}${search === "" ? "" : `?${search}`}`;
 };
 
+// @todo this copy-paste has to go away, along with this wrapper component
 type Props = Omit<ComponentProps<"a">, "href" | "target"> & {
   href?: string;
   target?: "self" | "blank" | "parent" | "top";
-  preload?: "none" | "prefetch" | "prerender";
+  prefetch?: "none" | "intent" | "render";
 };
 
 type Ref = ElementRef<"a">;
