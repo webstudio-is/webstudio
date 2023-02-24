@@ -26,7 +26,7 @@ const checkboxStyles = css({
     outline: `2px solid ${theme.colors.borderFocus}`,
   },
 
-  "&[data-state=checked]": {
+  "&[data-state=checked], &[data-state=indeterminate]": {
     color: theme.colors.foregroundPrimary,
   },
 
