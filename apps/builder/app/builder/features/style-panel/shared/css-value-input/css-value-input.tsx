@@ -232,14 +232,15 @@ const initialValue: IntermediateStyleValue = {
   value: "",
 };
 
-const itemToString = (item: CssValueInputValue | null) =>
-  item === null
+const itemToString = (item: CssValueInputValue | null) => {
+  return item === null
     ? ""
     : item.type === "keyword"
     ? toPascalCase(item.value)
     : item.type === "intermediate" || item.type === "unit"
     ? String(item.value)
     : toValue(item);
+};
 
 const match = <Item,>(
   search: string,
