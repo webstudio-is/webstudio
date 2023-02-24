@@ -48,7 +48,7 @@ export const callerLink = <TemplateRouter extends AnyRouter>(
             });
             observer.complete();
           })
-          .catch((cause) => observer.error(TRPCClientError.from(cause)));
+          .catch((error) => observer.error(TRPCClientError.from(error)));
 
         return () => {
           // nothing to cancel

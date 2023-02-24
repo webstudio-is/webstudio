@@ -12,7 +12,7 @@ const readLocal = (): Array<Name> => {
   try {
     const flags = localStorage.getItem("features");
     return parse(flags);
-  } catch (_error) {
+  } catch {
     // Not having feature in localStorage or not having localStorage implemented, both should not throw.
   }
   return [];

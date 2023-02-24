@@ -30,9 +30,9 @@ try {
   ) {
     localStorage.debug = env.DEBUG;
   }
-} catch (e) {
+} catch (error) {
   // eslint-disable-next-line no-console
-  console.warn("Failed to set localStorage.debug due to Error:", e);
+  console.warn("Failed to set localStorage.debug due to Error:", error);
 }
 
 hydrate(<RemixBrowser />, document);
