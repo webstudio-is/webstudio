@@ -5,7 +5,7 @@ import { StorySection, StoryGrid } from "./storybook";
 export default {
   title: "Library/Checkbox",
   parameters: {
-    // to make the the white background in the control visible
+    // to make the white background in the control visible
     backgrounds: { default: "Panel" },
   },
 };
