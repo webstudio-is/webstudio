@@ -303,7 +303,7 @@ export const keywordValues = {
     "color",
     "luminosity",
   ],
-  backgroundClip: ["border-box", "padding-box", "content-box"],
+  backgroundClip: ["border-box", "padding-box", "content-box", "text"],
   backgroundColor: [
     "transparent",
     "aliceblue",
