@@ -233,7 +233,6 @@ const initialValue: IntermediateStyleValue = {
 };
 
 const itemToString = (item: CssValueInputValue | null) => {
-  console.log(item);
   return item === null
     ? ""
     : item.type === "keyword"
