@@ -4,6 +4,7 @@
  */
 
 import { forwardRef, type ComponentProps, type Ref } from "react";
+import { RadioUncheckedIcon, RadioCheckedIcon } from "@webstudio-is/icons";
 import * as Primitive from "@radix-ui/react-radio-group";
 import { type CSS, css, theme } from "../stitches.config";
 
@@ -11,55 +12,61 @@ export { CheckboxAndLabel as RadioAndLabel } from "./checkbox";
 
 const itemStyles = css({
   all: "unset", // reset <button>
-
   width: theme.spacing[9],
   height: theme.spacing[9],
   display: "block",
   position: "relative",
   borderRadius: theme.borderRadius.round,
+  color: theme.colors.foregroundMain,
 
   "&:focus-visible": {
     outline: `2px solid ${theme.colors.borderFocus}`,
   },
 
-  "&::before": {
+  "&[data-state=checked]": {
+    color: theme.colors.foregroundPrimary,
+  },
+
+  // [data-state] is needed to make selector specificity higher
+  "&[data-state]:disabled": {
+    color: theme.colors.foregroundDisabled,
+  },
+
+  "&:not(:disabled)::before": {
     content: "''",
     display: "block",
     position: "absolute",
-    boxSizing: "border-box",
-    width: "13.3px",
-    height: "13.3px",
-    inset: "1.35px",
+    width: theme.spacing[7],
+    height: theme.spacing[7],
+    top: theme.spacing[2],
+    left: theme.spacing[2],
     borderRadius: theme.borderRadius.round,
     background: theme.colors.backgroundControls,
-    border: `1.3px solid ${theme.colors.foregroundMain}`,
-  },
-
-  "&[data-state=checked]::before": {
-    borderColor: theme.colors.foregroundPrimary,
-    background: "transparent",
-  },
-
-  "&[data-state=checked]::after": {
-    content: "''",
-    display: "block",
-    position: "absolute",
-    width: "5.3px",
-    height: "5.3px",
-    inset: "5.35px",
-    borderRadius: theme.borderRadius.round,
-    background: theme.colors.foregroundPrimary,
-  },
-
-  // [data-state] is needed to make sure the specificity
-  // is higher than the above selectors
-  "&[data-state]:disabled::before": {
-    borderColor: theme.colors.foregroundDisabled,
-  },
-  "&[data-state]:disabled::after": {
-    background: theme.colors.foregroundDisabled,
   },
 });
+
+const iconStyles = css({ position: "relative" });
+
+// We need this component basicslly just to get access to "data-state".
+// We could render both icons and hide one using CSS,
+// but that probably will be less performant.
+const Button = forwardRef(
+  (
+    props: ComponentProps<"button"> & {
+      "data-state"?: "checked" | "unchecked";
+    },
+    ref: Ref<HTMLButtonElement>
+  ) => (
+    <button {...props} ref={ref}>
+      {props["data-state"] === "checked" ? (
+        <RadioCheckedIcon className={iconStyles()} />
+      ) : (
+        <RadioUncheckedIcon className={iconStyles()} />
+      )}
+    </button>
+  )
+);
+Button.displayName = "Button";
 
 export const Radio = forwardRef(
   (
@@ -74,7 +81,10 @@ export const Radio = forwardRef(
       className={itemStyles({ className, css })}
       {...props}
       ref={ref}
-    />
+      asChild
+    >
+      <Button />
+    </Primitive.Item>
   )
 );
 Radio.displayName = "Radio";
