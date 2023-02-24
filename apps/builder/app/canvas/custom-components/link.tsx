@@ -11,10 +11,10 @@ import { preserveSearchBuildParams } from "~/shared/router-utils";
 const isAbsoluteUrl = (href: string) => {
   try {
     new URL(href);
-    return true;
-  } catch (e) {
+  } catch {
     return false;
   }
+  return true;
 };
 
 export const preserveBuildParams = (href: string, sourceSearch: string) => {
@@ -33,7 +33,7 @@ export const preserveBuildParams = (href: string, sourceSearch: string) => {
     sourceSearchParams = new URLSearchParams(sourceSearch);
 
     // eslint-disable-next-line no-empty
-  } catch (e) {}
+  } catch {}
 
   if (url === undefined || sourceSearchParams === undefined) {
     return href;
@@ -46,7 +46,12 @@ export const preserveBuildParams = (href: string, sourceSearch: string) => {
   return `${url.pathname}${search === "" ? "" : `?${search}`}`;
 };
 
-type Props = Omit<ComponentProps<"a">, "href"> & { href?: string };
+// @todo this copy-paste has to go away, along with this wrapper component
+type Props = Omit<ComponentProps<"a">, "href" | "target"> & {
+  href?: string;
+  target?: "self" | "blank" | "parent" | "top";
+  prefetch?: "none" | "intent" | "render";
+};
 
 type Ref = ElementRef<"a">;
 

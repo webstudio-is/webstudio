@@ -22,7 +22,7 @@ const read = (): Settings => {
   let settingsString;
   try {
     settingsString = localStorage.getItem(namespace);
-  } catch (_error) {
+  } catch {
     // We don't need to handle this one.
   }
 
