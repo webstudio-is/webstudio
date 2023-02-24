@@ -103,7 +103,7 @@ export const props: Record<string, PropMeta> = {
     description:
       "Indicates whether inputting text could trigger display of one or more predictions of the user's intended value for an input and specifies how predictions would be\npresented if they are made.",
     required: false,
-    control: "radio",
+    control: "select",
     type: "string",
     options: ["list", "none", "inline", "both"],
   },
@@ -405,7 +405,7 @@ export const props: Record<string, PropMeta> = {
     description:
       "Indicates if items in a table or grid are sorted in ascending or descending order.",
     required: false,
-    control: "radio",
+    control: "select",
     type: "string",
     options: ["none", "ascending", "descending", "other"],
   },
@@ -439,7 +439,7 @@ export const props: Record<string, PropMeta> = {
   start: { required: false, control: "number", type: "number" },
   type: {
     required: false,
-    control: "radio",
+    control: "select",
     type: "string",
     options: ["a", "i", "1", "A", "I"],
   },
