@@ -1,3 +1,4 @@
+name: Visual Regression Tests
 on: [push]
 
 jobs:
@@ -14,8 +15,7 @@ jobs:
         run: pnpm storybook:ds:build
 
       - name: Lost Pixel
-        uses: lost-pixel/lost-pixel@v2.23.0
+        uses: lost-pixel/lost-pixel@v3.1.0
         env:
-          S3_ACCESS_KEY: ${{ secrets.S3_ACCESS_KEY }}
-          S3_SECRET_KEY: ${{ secrets.S3_SECRET_KEY }}
           LOST_PIXEL_CONFIG_DIR: packages/design-system
+          LOST_PIXEL_API_KEY: ${{ secrets.LOST_PIXEL_API_KEY }}
