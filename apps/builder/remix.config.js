@@ -23,6 +23,7 @@ module.exports = {
     "character-entities",
     /mdast-/,
     "unist-util-stringify-position",
+    "partysocket",
   ],
   // appDirectory: "app",
   // assetsBuildDirectory: "public/build",

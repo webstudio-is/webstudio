@@ -1,7 +1,8 @@
+import PartySocket from "partysocket";
 import store, { type Change } from "immerhin";
 import { enableMapSet } from "immer";
 import type { WritableAtom } from "nanostores";
-import { useEffect } from "react";
+import { useEffect, useRef } from "react";
 import { type Publish, subscribe } from "~/shared/pubsub";
 import {
   instancesStore,
@@ -68,7 +69,11 @@ export const registerContainers = () => {
   }
 };
 
-const syncStoresChanges = (name: SyncEventSource, publish: Publish) => {
+const syncStoresChanges = (
+  name: SyncEventSource,
+  publish: Publish,
+  socket?: PartySocket
+) => {
   const unsubscribeRemoteChanges = subscribe(
     "sendStoreChanges",
     ({ source, changes }) => {
@@ -76,23 +81,25 @@ const syncStoresChanges = (name: SyncEventSource, publish: Publish) => {
       if (source === name) {
         return;
       }
-      store.createTransactionFromChanges(changes, "remote");
+      store.createTransactionFromChanges(changes, name);
     }
   );
 
   const unsubscribeStoreChanges = store.subscribe(
     (_transactionId, changes, source) => {
       // prevent sending remote patches back
-      if (source === "remote") {
-        return;
+      if (source !== name) {
+        publish({
+          type: "sendStoreChanges",
+          payload: {
+            source: name,
+            changes,
+          },
+        });
       }
-      publish({
-        type: "sendStoreChanges",
-        payload: {
-          source: name,
-          changes,
-        },
-      });
+      if (source !== "remote") {
+        socket?.send(JSON.stringify(changes));
+      }
     }
   );
 
@@ -202,9 +209,41 @@ export const useCanvasStore = (publish: Publish) => {
 };
 
 export const useBuilderStore = (publish: Publish) => {
+  const socketRef = useRef<PartySocket>(
+    new PartySocket({
+      host: "localhost:1999",
+      room: "my-room",
+      startClosed: true,
+    })
+  );
+
+  useEffect(() => {
+    const socket = socketRef.current;
+    socket.reconnect();
+    socket.addEventListener("message", (message) => {
+      console.log("message");
+      const changes: Change[] = JSON.parse(message.data);
+      store.createTransactionFromChanges(changes, "remote");
+      publish({
+        type: "sendStoreChanges",
+        payload: {
+          source: "builder",
+          changes,
+        },
+      });
+    });
+    return () => {
+      socket.close();
+    };
+  }, []);
+
   useEffect(() => {
     const unsubscribeStoresState = syncStoresState("builder", publish);
-    const unsubscribeStoresChanges = syncStoresChanges("builder", publish);
+    const unsubscribeStoresChanges = syncStoresChanges(
+      "builder",
+      publish,
+      socketRef.current
+    );
 
     return () => {
       unsubscribeStoresState();

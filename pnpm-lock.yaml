@@ -239,6 +239,9 @@ importers:
       nanostores:
         specifier: ^0.7.1
         version: 0.7.1
+      partysocket:
+        specifier: 0.0.0-12aec08
+        version: 0.0.0-12aec08
       pretty-bytes:
         specifier: ^6.0.0
         version: 6.0.0
@@ -390,6 +393,9 @@ importers:
       jest:
         specifier: ^29.3.1
         version: 29.3.1
+      partykit:
+        specifier: 0.0.0-12aec08
+        version: 0.0.0-12aec08
       prettier:
         specifier: ^2.8.4
         version: 2.8.4
@@ -4318,6 +4324,11 @@ packages:
     resolution: {integrity: sha512-a5rouOhbkLHJZeXQZs5QppI8DwFsAyK7gzCIg6sWVTZnF5WxN0oQ85iEgSIjvQaHPbAAHDJ2WwKwP07CWv8SUA==}
     dev: false
 
+  /@edge-runtime/primitives@2.0.5:
+    resolution: {integrity: sha512-jETA9w1MDTf2n0KMYl9b2eZqG7FZXSTaiB8y4CpMwZOD/0ZL/HBdq9Pj48o1c2jbvlDWjxxsn0NaoPWsqBCUGg==}
+    engines: {node: '>=14'}
+    dev: true
+
   /@edge-runtime/vm@1.0.1:
     resolution: {integrity: sha512-kkPeYBCGgeoyBxKdHwRy8zKtpGFS3aviPnDaRKNx/NaWFr/EwG8TTdv9T+VP3JzuFC48me0VF4fnnIEARrI/7Q==}
     dependencies:
@@ -5202,7 +5213,7 @@ packages:
       react-refresh: 0.11.0
       schema-utils: 3.1.1
       source-map: 0.7.4
-      webpack: 5.75.0
+      webpack: 5.75.0(esbuild@0.14.54)
     dev: true
 
   /@prisma/client@4.9.0(prisma@4.9.0):
@@ -7392,7 +7403,7 @@ packages:
       typescript: 4.9.5
       unfetch: 4.2.0
       util-deprecate: 1.0.2
-      webpack: 5.75.0
+      webpack: 5.75.0(esbuild@0.14.54)
 
   /@storybook/core-common@6.5.14(react-dom@17.0.2)(react@17.0.2)(typescript@4.9.5):
     resolution: {integrity: sha512-MrxhYXYrtN6z/+tydjPkCIwDQm5q8Jx+w4TPdLKBZu7vzfp6T3sT12Ym96j9MJ42CvE4vSDl/Njbw6C0D+yEVw==}
@@ -7568,7 +7579,7 @@ packages:
       react: 17.0.2
       react-dom: 17.0.2(react@17.0.2)
       typescript: 4.9.5
-      webpack: 5.75.0
+      webpack: 5.75.0(esbuild@0.14.54)
     transitivePeerDependencies:
       - '@storybook/mdx2-csf'
       - bluebird
@@ -7851,7 +7862,7 @@ packages:
       react-docgen-typescript: 2.2.2(typescript@4.9.5)
       tslib: 2.5.0
       typescript: 4.9.5
-      webpack: 5.75.0
+      webpack: 5.75.0(esbuild@0.14.54)
     transitivePeerDependencies:
       - supports-color
     dev: true
@@ -9687,6 +9698,10 @@ packages:
   /aproba@2.0.0:
     resolution: {integrity: sha512-lYe4Gx7QT+MKGbDsA+Z+he/Wtef0BiwDOlK/XkBrdfsh9J/jPPXbX0tE9x9cl27Tmu5gg3QUbUrQYa/y+KOHPQ==}
 
+  /arch@2.2.0:
+    resolution: {integrity: sha512-Of/R0wqp83cgHozfIYLbBMnej79U/SVGOOyuB3VVFv1NRM/PSFMK12x9KVtiYzJqmnU5WR2qp0Z5rHb7sWGnFQ==}
+    dev: true
+
   /are-we-there-yet@1.1.7:
     resolution: {integrity: sha512-nxwy40TuMiUGqMyRHgCSWZ9FM4VAoRP4xUYSTv5ImRog+h9yISPbVH7H8fASCIzYn9wlEv4zvFL7uKDMCFQm3g==}
     dependencies:
@@ -10844,6 +10859,15 @@ packages:
     resolution: {integrity: sha512-ZksGS2xpa/bYkNzN3BAw1wEjsLV/ZKOf/CCrJ/QOBsxx6fOARIkwTutxp1XIOIohi6HKmOFjMoK/XaqDVUpEEw==}
     engines: {node: '>= 12'}
     dev: false
+
+  /clipboardy@3.0.0:
+    resolution: {integrity: sha512-Su+uU5sr1jkUy1sGRpLKjKrvEOVXgSgiSInwa/qeID6aJ07yh+5NWc3h2QfjHjBnfX4LhtFcuAWKUsJ3r+fjbg==}
+    engines: {node: ^12.20.0 || ^14.13.1 || >=16.0.0}
+    dependencies:
+      arch: 2.2.0
+      execa: 5.1.1
+      is-wsl: 2.2.0
+    dev: true
 
   /cliui@6.0.0:
     resolution: {integrity: sha512-t6wbgtoCXvAzst7QgXxJYqPt0usEfbgQdftEPbLL/cvv6HPE5VgvqCuAIDR0NgU52ds6rFwqrgakNLrHEjCbrQ==}
@@ -17255,6 +17279,19 @@ packages:
   /parseurl@1.3.3:
     resolution: {integrity: sha512-CiyeOxFT/JZyN5m0z9PfXw4SCBJ6Sygz1Dpl0wqjlhDEGGBP1GnsUVEL0p63hoG1fcj3fHynXi9NYO4nWOL+qQ==}
     engines: {node: '>= 0.8'}
+
+  /partykit@0.0.0-12aec08:
+    resolution: {integrity: sha512-8M+E9A7/Dm7ncNVFDhKc/rzzlpj9nCX2AC2GLyBzQuiHja5HhWU6bYsoyVYEbd6Z5BjF3GFA5r0II4+AupYZrQ==}
+    hasBin: true
+    dependencies:
+      '@edge-runtime/primitives': 2.0.5
+      clipboardy: 3.0.0
+      esbuild: 0.15.13
+    dev: true
+
+  /partysocket@0.0.0-12aec08:
+    resolution: {integrity: sha512-ElQw9oEInf2Cdn02MFVZ/dsCIoXnuA+0PS6brxcaX54hIHJH6zyaqB0j/byJT+3o7M8EEymoGqf5zdCKkg96GQ==}
+    dev: false
 
   /pascal-case@3.1.2:
     resolution: {integrity: sha512-uWlGT3YSnK9x3BQJaOdcZwrnV6hPpd8jFH1/ucpiLRPh/2zCVJKS19E4GvYHvaCcACn3foXZ0cLB9Wrx1KGe5g==}
