@@ -1,6 +1,6 @@
 import type { Style, StyleProperty, StyleValue } from "@webstudio-is/css-data";
-import hyphenate from "hyphenate-style-name";
 import { toValue } from "./to-value";
+import { toProperty } from "./to-property";
 
 class StylePropertyMap {
   #styleMap: Map<StyleProperty, StyleValue | undefined> = new Map();
@@ -37,7 +37,7 @@ class StylePropertyMap {
       if (value === undefined) {
         continue;
       }
-      block.push(`${hyphenate(property)}: ${toValue(value)}`);
+      block.push(`${toProperty(property)}: ${toValue(value)}`);
     }
     this.#string = block.join("; ");
     this.#isDirty = false;
