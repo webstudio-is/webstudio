@@ -5,10 +5,6 @@ import type { AppContext } from "@webstudio-is/trpc-interface/server";
 import type { Tree } from "../types";
 import { parseInstances, serializeInstances } from "./instances";
 import { parseProps, serializeProps } from "./props";
-import {
-  parseStyleSourceSelections,
-  serializeStyleSourceSelections,
-} from "./style-source-selections";
 
 type TreeData = Omit<Tree, "id">;
 
@@ -36,7 +32,6 @@ export const createNewTreeData = ({
       ],
     ],
     props: [],
-    styleSourceSelections: [],
   };
 };
 
@@ -55,9 +50,6 @@ export const createTree = async (
       styles: "",
       instances: serializeInstances(new Map(treeData.instances)),
       props: serializeProps(new Map(treeData.props)),
-      styleSelections: serializeStyleSourceSelections(
-        new Map(treeData.styleSourceSelections)
-      ),
     },
   });
 };
@@ -92,9 +84,6 @@ export const loadTreeById = async (
 
   const instances = parseInstances(tree.instances);
   const props = parseProps(tree.props);
-  const styleSourceSelections = parseStyleSourceSelections(
-    tree.styleSelections
-  );
 
   return {
     id: tree.id,
@@ -102,7 +91,6 @@ export const loadTreeById = async (
     buildId: tree.buildId,
     instances: Array.from(instances),
     props: Array.from(props),
-    styleSourceSelections: Array.from(styleSourceSelections),
   };
 };
 

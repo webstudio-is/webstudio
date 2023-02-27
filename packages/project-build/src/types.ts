@@ -16,6 +16,7 @@ export type Build = {
   breakpoints: [Breakpoint["id"], Breakpoint][];
   styles: [StyleDeclKey, StyleDecl][];
   styleSources: [StyleSource["id"], StyleSource][];
+  styleSourceSelections: [Instance["id"], StyleSourceSelection][];
 };
 
 export type Tree = {
@@ -24,5 +25,4 @@ export type Tree = {
   buildId: string;
   instances: [InstancesItem["id"], InstancesItem][];
   props: [Prop["id"], Prop][];
-  styleSourceSelections: [Instance["id"], StyleSourceSelection][];
 };

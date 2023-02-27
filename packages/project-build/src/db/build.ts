@@ -17,6 +17,10 @@ import {
 import { parseStyles, serializeStyles } from "./styles";
 import { parseStyleSources, serializeStyleSources } from "./style-sources";
 import {
+  parseStyleSourceSelections,
+  serializeStyleSourceSelections,
+} from "./style-source-selections";
+import {
   cloneTree,
   createNewTreeData,
   createTree,
@@ -35,6 +39,9 @@ const parseBuild = async (build: DbBuild): Promise<Build> => {
     breakpoints: Array.from(parseBreakpoints(build.breakpoints)),
     styles: Array.from(await parseStyles(build.projectId, build.styles)),
     styleSources: Array.from(parseStyleSources(build.styleSources)),
+    styleSourceSelections: Array.from(
+      parseStyleSourceSelections(build.styleSourceSelections)
+    ),
   };
 };
 
@@ -200,6 +207,8 @@ export const deletePage = async ({
 
     await deleteTreeById({ projectId, treeId: page.treeId });
 
+    // @todo cleanup style source selections of deleted instances
+
     return {
       homePage: currentPages.homePage,
       pages: currentPages.pages.filter((page) => page.id !== pageId),
@@ -332,6 +341,9 @@ export async function createBuild(
       styles: serializeStyles(new Map(props.sourceBuild?.styles)),
       styleSources: serializeStyleSources(
         new Map(props.sourceBuild?.styleSources)
+      ),
+      styleSourceSelections: serializeStyleSourceSelections(
+        new Map(props.sourceBuild?.styleSourceSelections)
       ),
       isDev: props.env === "dev",
       isProd: props.env === "prod",
