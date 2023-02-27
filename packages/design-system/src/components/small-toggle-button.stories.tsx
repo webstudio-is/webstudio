@@ -24,9 +24,9 @@ export const Demo = ({
         {smallToggleButtonVariants.map((variant) => (
           <StoryGrid
             css={
-              variant !== "contrast"
+              variant === "contrast"
                 ? {
-                    backgroundColor: theme.colors.backgroundPanel,
+                    backgroundColor: theme.colors.backgroundActive,
                     padding: theme.spacing[5],
                   }
                 : {
@@ -70,9 +70,9 @@ export const Demo = ({
         {smallToggleButtonVariants.map((variant) => (
           <StoryGrid
             css={
-              variant !== "contrast"
+              variant === "contrast"
                 ? {
-                    backgroundColor: theme.colors.backgroundPanel,
+                    backgroundColor: theme.colors.backgroundActive,
                     padding: theme.spacing[5],
                   }
                 : {
@@ -139,6 +139,6 @@ export default {
   title: "Library/Small Toggle Button",
   parameters: {
     // to make the variant=contrast visible
-    backgrounds: { default: "Maintenance Medium" },
+    backgrounds: { default: "Panel" },
   },
 };
