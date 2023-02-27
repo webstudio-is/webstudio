@@ -9,104 +9,43 @@ import {
   type ComponentProps,
   type ReactNode,
 } from "react";
-import { css, theme, type CSS } from "../stitches.config";
+import type { CSS } from "../stitches.config";
 
-export const smallIconButtonVariants = [
-  "normal",
-  "contrast",
-  "destructive",
-] as const;
+import { SmallButton, smallButtonVariants } from "./primitives/small-button";
 
-export const smallIconButtonStates = ["auto", "default", "hover"] as const;
+export const smallIconButtonVariants = smallButtonVariants;
 
-const defaultColors = {
-  normal: theme.colors.foregroundSubtle,
-  destructive: theme.colors.foregroundSubtle,
-  contrast: theme.colors.foregroundContrastMain,
-};
-
-const hoverColors = {
-  normal: theme.colors.foregroundMain,
-  destructive: theme.colors.foregroundDestructive,
-  contrast: theme.colors.foregroundContrastMain,
-};
-
-const focusColors = {
-  normal: theme.colors.borderFocus,
-  destructive: theme.colors.borderFocus,
-  contrast: theme.colors.borderContrast,
-};
-
-const perVariantStyle = (variant: typeof smallIconButtonVariants[number]) => ({
-  "&[data-state=auto], &[data-state=default]": {
-    color: defaultColors[variant],
-  },
-  "&[data-state=auto]:hover, &[data-state=hover]": {
-    color: hoverColors[variant],
-  },
-  "&[data-focused=true], &:focus-visible": {
-    borderRadius: theme.borderRadius[3],
-    outline: `2px solid ${focusColors[variant]}`,
-  },
-});
-
-const styles = css({
-  all: "unset",
-  width: theme.spacing[9],
-  height: theme.spacing[9],
-  variants: {
-    variant: {
-      normal: perVariantStyle("normal"),
-      contrast: perVariantStyle("contrast"),
-      destructive: perVariantStyle("destructive"),
-    },
-  },
-});
+/**
+ * data-state from Radix, might be set when <SmallIconButton> is asChild
+ * https://www.radix-ui.com/docs/primitives/components/popover#trigger
+ * we don't mind about "closed" state considering it as no-state
+ **/
+export const smallIconButtonStates = ["open"] as const;
 
 type Props = {
   icon: ReactNode;
-  variant?: typeof smallIconButtonVariants[number];
-  state?: typeof smallIconButtonStates[number];
+  variant?: (typeof smallIconButtonVariants)[number];
+  state?: (typeof smallIconButtonStates)[number];
   focused?: boolean;
   css?: CSS;
-
   // might be set when <SmallIconButton> is asChild
-  "data-state"?: string;
+  "data-state"?: (typeof smallIconButtonStates)[number];
 } & Omit<ComponentProps<"button">, "children">;
 
 export const SmallIconButton = forwardRef(
   (
-    {
-      state,
-      focused,
-      variant,
-      icon,
-      css,
-      className,
-      "data-state": dataState,
-      ...restProps
-    }: Props,
+    { state, "data-state": dataState, focused, icon, ...restProps }: Props,
     ref: Ref<HTMLButtonElement>
   ) => {
-    // when button is used as a trigger for something that opens
-    // <SomeTrigger asChild><SmallIconButton /></SomeTrigger>
-    let finalState = dataState === "open" ? "hover" : undefined;
-
-    // "state" wins over "data-state"
-    if (state !== undefined) {
-      finalState = state;
-    }
-
     return (
-      <button
+      <SmallButton
         {...restProps}
-        className={styles({ css, className, variant })}
-        data-state={finalState ?? "auto"}
+        data-state={state ?? dataState}
         data-focused={focused}
         ref={ref}
       >
         {icon}
-      </button>
+      </SmallButton>
     );
   }
 );
