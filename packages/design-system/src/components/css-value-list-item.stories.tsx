@@ -18,9 +18,10 @@ import { StorySection, StoryGrid } from "./storybook";
 
 export default {
   component: CssValueListItem,
-  args: { hidden: false, labelColor: "default" },
+  args: { hidden: false, labelColor: "default", focused: false },
   argTypes: {
     hidden: { control: "boolean" },
+    focused: { control: "boolean" },
     labelColor: {
       options: ["default", "preset", "local", "remote"],
       type: "inline-radio",
@@ -76,6 +77,7 @@ const ListItem = (props: {
 
 export const Declarative = (props: {
   hidden: boolean;
+  focused: boolean;
   labelColor: "default";
 }) => {
   const [pressed, onPressedChange] = React.useState(false);
@@ -93,6 +95,7 @@ export const Declarative = (props: {
               }
               thumbnail={<Thumbnail />}
               hidden={props.hidden}
+              focused={props.focused}
               buttons={
                 <>
                   <SmallToggleButton

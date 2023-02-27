@@ -21,7 +21,7 @@ const Item = styled(Flex, {
   paddingRight: theme.spacing[9],
   height: theme.spacing[13],
   width: theme.spacing[30],
-  "&:focus-visible, &[data-focused], &[data-state=open]": {
+  "&:focus-visible, &[data-focused=true], &[data-state=open]": {
     borderRadius: theme.borderRadius[3],
     outline: `2px solid ${theme.colors.borderFocus}`,
     backgroundColor: theme.colors.backgroundHover,
@@ -72,7 +72,7 @@ export const CssValueListItem = forwardRef(
     <Item
       ref={ref}
       align="center"
-      data-focused={focused ? focused : undefined}
+      data-focused={focused}
       data-state={state ?? dataState}
       {...rest}
       tabIndex={0}
