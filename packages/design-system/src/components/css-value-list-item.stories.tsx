@@ -14,6 +14,7 @@ import {
   FloatingPanelPopoverContent,
   FloatingPanelPopoverTrigger,
 } from "./floating-panel-popover";
+import { StorySection, StoryGrid } from "./storybook";
 
 export default {
   component: CssValueListItem,
@@ -33,6 +34,46 @@ const Thumbnail = styled("div", {
   backgroundImage: "linear-gradient(yellow, red)",
 });
 
+const ListItem = (props: {
+  hidden: boolean;
+  labelColor: "default" | "preset" | "local" | "remote";
+  state: undefined | "open";
+  focused: undefined | boolean;
+}) => {
+  const [pressed, onPressedChange] = React.useState(false);
+
+  return (
+    <CssValueListItem
+      label={
+        <Label disabled={props.hidden} color={props.labelColor}>
+          Image
+        </Label>
+      }
+      thumbnail={<Thumbnail />}
+      hidden={props.hidden}
+      state={props.state}
+      focused={props.focused}
+      buttons={
+        <>
+          <SmallToggleButton
+            pressed={pressed}
+            onPressedChange={onPressedChange}
+            variant="normal"
+            tabIndex={0}
+            icon={pressed ? <EyeconClosedIcon /> : <EyeconOpenIcon />}
+          />
+
+          <SmallIconButton
+            variant="destructive"
+            tabIndex={0}
+            icon={<SubtractIcon />}
+          />
+        </>
+      }
+    />
+  );
+};
+
 export const Declarative = (props: {
   hidden: boolean;
   labelColor: "default";
@@ -40,38 +81,82 @@ export const Declarative = (props: {
   const [pressed, onPressedChange] = React.useState(false);
 
   return (
-    <FloatingPanelPopover>
-      <FloatingPanelPopoverTrigger asChild>
-        <CssValueListItem
-          label={
-            <Label disabled={props.hidden} color={props.labelColor}>
-              Image
-            </Label>
-          }
-          thumbnail={<Thumbnail />}
-          hidden={props.hidden}
-          buttons={
-            <>
-              <SmallToggleButton
-                pressed={pressed}
-                onPressedChange={onPressedChange}
-                variant="normal"
-                tabIndex={0}
-                icon={pressed ? <EyeconClosedIcon /> : <EyeconOpenIcon />}
-              />
+    <>
+      <StorySection title="Configurable">
+        <FloatingPanelPopover>
+          <FloatingPanelPopoverTrigger asChild>
+            <CssValueListItem
+              label={
+                <Label disabled={props.hidden} color={props.labelColor}>
+                  Image
+                </Label>
+              }
+              thumbnail={<Thumbnail />}
+              hidden={props.hidden}
+              buttons={
+                <>
+                  <SmallToggleButton
+                    pressed={pressed}
+                    onPressedChange={onPressedChange}
+                    variant="normal"
+                    tabIndex={0}
+                    icon={pressed ? <EyeconClosedIcon /> : <EyeconOpenIcon />}
+                  />
 
-              <SmallIconButton
-                variant="destructive"
-                tabIndex={0}
-                icon={<SubtractIcon />}
+                  <SmallIconButton
+                    variant="destructive"
+                    tabIndex={0}
+                    icon={<SubtractIcon />}
+                  />
+                </>
+              }
+            />
+          </FloatingPanelPopoverTrigger>
+          <FloatingPanelPopoverContent>
+            <div className={css({ p: theme.spacing[10] })()}>Content</div>
+          </FloatingPanelPopoverContent>
+        </FloatingPanelPopover>
+      </StorySection>
+
+      <StorySection title="Variants">
+        <StoryGrid>
+          {(["default", "preset", "local", "remote"] as const).map(
+            (labelColor) => (
+              <ListItem
+                key={labelColor}
+                hidden={false}
+                labelColor={labelColor}
+                state={undefined}
+                focused={false}
               />
-            </>
-          }
-        />
-      </FloatingPanelPopoverTrigger>
-      <FloatingPanelPopoverContent>
-        <div className={css({ p: theme.spacing[10] })()}>Content</div>
-      </FloatingPanelPopoverContent>
-    </FloatingPanelPopover>
+            )
+          )}
+
+          {(["default", "preset", "local", "remote"] as const).map(
+            (labelColor) => (
+              <ListItem
+                key={labelColor}
+                hidden={true}
+                labelColor={labelColor}
+                state={undefined}
+                focused={false}
+              />
+            )
+          )}
+
+          {(["default", "preset", "local", "remote"] as const).map(
+            (labelColor) => (
+              <ListItem
+                key={labelColor}
+                hidden={false}
+                labelColor={labelColor}
+                state={"open"}
+                focused={false}
+              />
+            )
+          )}
+        </StoryGrid>
+      </StorySection>
+    </>
   );
 };

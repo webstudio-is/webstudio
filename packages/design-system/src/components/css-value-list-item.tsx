@@ -51,7 +51,7 @@ type Props = ComponentProps<typeof Item> & {
   buttons?: React.ReactElement;
   // to support Radix trigger childAs
   ["data-state"]?: "open";
-  // Storybook purposes
+  // for Storybook purposes
   focused?: boolean;
   state?: "open";
 };
@@ -72,7 +72,7 @@ export const CssValueListItem = forwardRef(
     <Item
       ref={ref}
       align="center"
-      data-focused={focused}
+      data-focused={focused ? focused : undefined}
       data-state={state ?? dataState}
       {...rest}
       tabIndex={0}
