@@ -3,12 +3,7 @@
  * https://www.figma.com/file/sfCE7iLS0k25qCxiifQNLE/%F0%9F%93%9A-Webstudio-Library?node-id=4%3A3236&t=Nn8L5VPCruHNv1no-0
  */
 
-import {
-  forwardRef,
-  type Ref,
-  type ComponentProps,
-  type ReactNode,
-} from "react";
+import { forwardRef, type ComponentProps, type ReactNode } from "react";
 import type { CSS } from "../stitches.config";
 import * as TogglePrimitive from "@radix-ui/react-toggle";
 import { SmallButton } from "./primitives/small-button";
@@ -24,9 +19,9 @@ type Props = {
   disabled?: boolean;
   onPressedChange?(pressed: boolean): void;
   css?: CSS;
-} & Omit<ComponentProps<"button">, "children">;
+} & Omit<ComponentProps<typeof TogglePrimitive.Root>, "children">;
 
-export const SmallToggleButton = forwardRef(
+export const SmallToggleButton = forwardRef<HTMLButtonElement, Props>(
   (
     {
       focused,
@@ -36,20 +31,20 @@ export const SmallToggleButton = forwardRef(
       onPressedChange,
       disabled,
       ...restProps
-    }: Props,
-    ref: Ref<HTMLButtonElement>
+    },
+    ref
   ) => {
     return (
       <TogglePrimitive.Root
         asChild
+        ref={ref}
         defaultPressed={defaultPressed}
         pressed={pressed}
         onPressedChange={onPressedChange}
         disabled={disabled}
+        {...restProps}
       >
-        <SmallButton {...restProps} data-focused={focused} ref={ref}>
-          {icon}
-        </SmallButton>
+        <SmallButton data-focused={focused}>{icon}</SmallButton>
       </TogglePrimitive.Root>
     );
   }
