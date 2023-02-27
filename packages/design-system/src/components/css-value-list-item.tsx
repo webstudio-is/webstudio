@@ -88,12 +88,12 @@ export const CssValueListItem = forwardRef(
 
       <Flex
         gap={2}
-        onClick={(e) => {
-          if (e.target !== e.currentTarget) {
+        onClick={(event) => {
+          if (event.target !== event.currentTarget) {
             // Having that CSSValueListItem is a button itself, prevent propagate click events
             // from descendants of button wrapper.
             // e.target === e.currentTarget means that click was between buttons in a gap
-            e.stopPropagation();
+            event.stopPropagation();
           }
         }}
       >
