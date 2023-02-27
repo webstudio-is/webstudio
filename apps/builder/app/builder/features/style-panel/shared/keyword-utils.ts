@@ -6,6 +6,7 @@ export const toPascalCase = (keyword: string) => {
   const label = keyword
     .replace(/-/g, " ")
     .split(" ")
+    .filter(Boolean)
     .map((word) => {
       return word[0].toUpperCase() + word.slice(1);
     })

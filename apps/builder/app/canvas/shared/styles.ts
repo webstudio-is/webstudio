@@ -163,6 +163,13 @@ const toVarStyleWithFallback = (instanceId: string, style: Style): Style => {
         value.type as (typeof validStaticValueTypes)[number]
       )
     ) {
+      // We don't want to wrap backgroundClip into a var, because it's not supported by CSS variables
+      // It's fine because we don't need to update it dynamically via CSS variables during preview changes
+      // we renrender it anyway when CSS update happens
+      if (property === "backgroundClip") {
+        dynamicStyle[property] = value;
+        continue;
+      }
       dynamicStyle[property] = {
         type: "var",
         value: toVarNamespace(instanceId, property),

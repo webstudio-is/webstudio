@@ -16,7 +16,7 @@ const units = {
 };
 
 type Property = keyof typeof properties;
-type Value = typeof properties[Property] & { alsoAppliesTo?: Array<string> };
+type Value = (typeof properties)[Property] & { alsoAppliesTo?: Array<string> };
 
 const inheritValue = {
   type: "keyword",
@@ -224,7 +224,6 @@ let property: Property;
 
 for (property in filteredProperties) {
   const config = filteredProperties[property];
-
   // collect node types to improve parsing of css values
   const unitGroups = new Set<string>();
   walkSyntax(config.syntax, (node) => {
@@ -270,8 +269,13 @@ const writeToFile = (fileName: string, constant: string, data: unknown) => {
   fs.writeFileSync(path.join(targetDir, fileName), content, "utf8");
 };
 
+// Non-standard properties are just missing in mdn data
+const nonStandardValues = {
+  "background-clip": ["text"],
+};
+
 const keywordValues = (() => {
-  const result: { [prop: string]: Array<string> } = {};
+  const result = {};
 
   for (let property in filteredProperties) {
     const keywords = new Set<string>();
@@ -280,6 +284,9 @@ const keywordValues = (() => {
         keywords.add(node.name);
       }
     });
+    if (property in nonStandardValues) {
+      keywords.add.apply(keywords, nonStandardValues[property]);
+    }
     if (keywords.size !== 0) {
       result[camelCase(property)] = Array.from(keywords);
     }
