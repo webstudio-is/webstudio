@@ -7,7 +7,7 @@ import type { IconProps } from "../types";
 export const CheckboxCheckedFilledIcon = forwardRef<SVGSVGElement, IconProps>(
   ({ color = "currentColor", size = 16, ...props }, forwardedRef) => {
     return (
-      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 16 16" width={size} height={size} fill={color} {...props} ref={forwardedRef}><path fillRule="evenodd" d="M2.218 3.092C2 3.52 2 4.08 2 5.2v5.6c0 1.12 0 1.68.218 2.108a2 2 0 0 0 .874.874C3.52 14 4.08 14 5.2 14h5.6c1.12 0 1.68 0 2.108-.218a2 2 0 0 0 .874-.874C14 12.48 14 11.92 14 10.8V5.2c0-1.12 0-1.68-.218-2.108a2 2 0 0 0-.874-.874C12.48 2 11.92 2 10.8 2H5.2c-1.12 0-1.68 0-2.108.218a2 2 0 0 0-.874.874Zm9.598 3.224a.8.8 0 0 0-1.132-1.132L6.75 9.12 5.316 7.684a.8.8 0 1 0-1.132 1.132l2 2a.8.8 0 0 0 1.132 0l4.5-4.5Z" clipRule="evenodd" /></svg>
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 16 16" width={size} height={size} fill={color} {...props} ref={forwardedRef}><path fillRule="evenodd" d="M1.592 2.56c-.242.474-.242 1.095-.242 2.337v6.206c0 1.242 0 1.863.242 2.337.212.417.551.756.968.968.474.242 1.095.242 2.337.242h6.206c1.242 0 1.863 0 2.337-.242.417-.212.756-.551.968-.968.242-.474.242-1.095.242-2.337V4.897c0-1.242 0-1.863-.242-2.337a2.217 2.217 0 0 0-.968-.968c-.474-.242-1.095-.242-2.337-.242H4.897c-1.242 0-1.863 0-2.337.242a2.217 2.217 0 0 0-.968.968Zm10.637 3.573a.887.887 0 1 0-1.254-1.254l-4.36 4.36-1.59-1.589A.887.887 0 0 0 3.77 8.904l2.217 2.217a.887.887 0 0 0 1.254 0l4.987-4.988Z" clipRule="evenodd" /></svg>
     );
   }
 );
