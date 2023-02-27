@@ -21,9 +21,18 @@ const Item = styled(Flex, {
   paddingRight: theme.spacing[9],
   height: theme.spacing[13],
   width: theme.spacing[30],
+  position: "relative",
+
   "&:focus-visible, &[data-focused=true], &[data-state=open]": {
-    borderRadius: theme.borderRadius[3],
-    outline: `2px solid ${theme.colors.borderFocus}`,
+    "&:after": {
+      borderRadius: theme.borderRadius[3],
+      outline: `2px solid ${theme.colors.borderFocus}`,
+      position: "absolute",
+      content: '""',
+      inset: "0 4px",
+      pointerEvents: "none",
+    },
+
     backgroundColor: theme.colors.backgroundHover,
   },
   "&:hover": {
