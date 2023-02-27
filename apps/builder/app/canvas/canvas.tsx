@@ -107,7 +107,7 @@ export const Canvas = ({
   useSetProps(data.tree.props);
   useSetStyles(data.build.styles);
   useSetStyleSources(data.build.styleSources);
-  useSetStyleSourceSelections(data.tree.styleSourceSelections);
+  useSetStyleSourceSelections(data.build.styleSourceSelections);
   useSetInstances(data.tree.instances);
   setParams(data.params ?? null);
   useCanvasStore(publish);

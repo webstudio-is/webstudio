@@ -6,7 +6,6 @@ import { getBuildParams } from "~/shared/router-utils";
 import { sentryException } from "~/shared/sentry";
 import { createContext } from "~/shared/context.server";
 import { loadCanvasData, loadProductionCanvasData } from "~/shared/db";
-import type { Tree } from "@webstudio-is/project-build";
 import { createCssEngine } from "@webstudio-is/css-engine";
 import { helperStyles } from "~/canvas/shared/styles";
 
@@ -47,7 +46,7 @@ export const loader = async ({ request }: ActionArgs) => {
         assets: canvasData.assets,
         breakpoints: canvasData.build?.breakpoints,
         styles: canvasData.build?.styles,
-        styleSourceSelections: canvasData.tree?.styleSourceSelections,
+        styleSourceSelections: canvasData.build?.styleSourceSelections,
       });
 
       const engine = createCssEngine({ name: "ssr" });
@@ -82,21 +81,11 @@ export const loader = async ({ request }: ActionArgs) => {
 
     const canvasData = pagesCanvasData[0];
 
-    const styleSourceSelections: Tree["styleSourceSelections"] = [];
-
-    for (const pageCanvasData of pagesCanvasData) {
-      if (pageCanvasData.tree?.styleSourceSelections) {
-        styleSourceSelections.push(
-          ...pageCanvasData.tree.styleSourceSelections
-        );
-      }
-    }
-
     const cssText = generateCssText({
       assets: canvasData.assets,
       breakpoints: canvasData.build?.breakpoints,
       styles: canvasData.build?.styles,
-      styleSourceSelections,
+      styleSourceSelections: canvasData.build?.styleSourceSelections,
     });
 
     return new Response(cssText, {

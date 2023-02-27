@@ -45,7 +45,7 @@ export const action = async ({ request }: ActionArgs) => {
         await patchInstances({ treeId, projectId }, patches, context);
       } else if (namespace === "styleSourceSelections") {
         await patchStyleSourceSelections(
-          { treeId, projectId },
+          { buildId, projectId },
           patches,
           context
         );

@@ -1,6 +1,6 @@
 import { createCssEngine } from "@webstudio-is/css-engine";
 import type { Asset } from "@webstudio-is/asset-uploader";
-import type { Build, Tree } from "@webstudio-is/project-build";
+import type { Build } from "@webstudio-is/project-build";
 import {
   getComponentMeta,
   getComponentNames,
@@ -13,7 +13,7 @@ type Data = {
   assets: Asset[];
   breakpoints?: Build["breakpoints"];
   styles?: Build["styles"];
-  styleSourceSelections?: Tree["styleSourceSelections"];
+  styleSourceSelections?: Build["styleSourceSelections"];
 };
 
 export const generateCssText = (data: Data) => {
