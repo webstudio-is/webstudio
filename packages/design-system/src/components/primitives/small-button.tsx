@@ -79,8 +79,8 @@ const styles = css({
 type Props = {
   children: ReactNode;
   variant?: (typeof smallButtonVariants)[number];
-  ["data-state"]?: (typeof smallButtonStates)[number];
-  ["data-focused"]?: boolean;
+  "data-state"?: (typeof smallButtonStates)[number];
+  "data-focused"?: boolean;
   css?: CSS;
 } & Omit<ComponentProps<"button">, "children">;
 

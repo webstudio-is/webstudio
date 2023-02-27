@@ -50,7 +50,7 @@ type Props = ComponentProps<typeof Item> & {
   thumbnail: React.ReactElement;
   buttons?: React.ReactElement;
   // to support Radix trigger childAs
-  ["data-state"]?: "open";
+  "data-state"?: "open";
   // for Storybook purposes
   focused?: boolean;
   state?: "open";
