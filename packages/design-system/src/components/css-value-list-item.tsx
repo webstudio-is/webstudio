@@ -27,9 +27,10 @@ const Item = styled(Flex, {
     "&:after": {
       borderRadius: theme.borderRadius[3],
       outline: `2px solid ${theme.colors.borderFocus}`,
+      outlineOffset: "-2px",
       position: "absolute",
       content: '""',
-      inset: "0 4px",
+      inset: "0 2px",
       pointerEvents: "none",
     },
 
