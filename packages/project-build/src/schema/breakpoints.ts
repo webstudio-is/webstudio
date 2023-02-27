@@ -21,7 +21,7 @@ export type Breakpoints = z.infer<typeof Breakpoints>;
 type BaseBreakpoint = Pick<Breakpoint, "label" | "minWidth">;
 
 export const initialBreakpoints: BaseBreakpoint[] = [
-  { label: "Mobile", minWidth: 0 },
+  { label: "Base", minWidth: 0 },
   { label: "Tablet", minWidth: 768 },
   { label: "Laptop", minWidth: 1024 },
   { label: "Desktop", minWidth: 1280 },
