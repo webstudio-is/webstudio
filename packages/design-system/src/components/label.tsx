@@ -19,13 +19,14 @@ const StyledLabel = styled("label", textVariants.labelsSentenceCase, {
     outline: `2px solid ${theme.colors.blue10}`,
   },
 
+  "&[aria-disabled=true]": {
+    color: theme.colors.foregroundDisabled,
+  },
+
   variants: {
     color: {
       default: {
         color: theme.colors.foregroundMain,
-        "&[aria-disabled=true]": {
-          color: theme.colors.foregroundDisabled,
-        },
       },
       preset: {
         px: theme.spacing[3],

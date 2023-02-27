@@ -3,7 +3,7 @@
  */
 
 import type { ReactNode } from "react";
-import { theme, css } from "../stitches.config";
+import { theme, css, type CSS } from "../stitches.config";
 import { textVariants } from "./text";
 
 const sectionStyle = css({
@@ -48,7 +48,9 @@ const gridStyle = css({
 export const StoryGrid = ({
   children,
   horizontal,
+  css,
 }: {
   children: ReactNode;
   horizontal?: boolean;
-}) => <div className={gridStyle({ horizontal })}>{children}</div>;
+  css?: CSS;
+}) => <div className={gridStyle({ horizontal, css })}>{children}</div>;
