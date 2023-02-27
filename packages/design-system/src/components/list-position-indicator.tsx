@@ -20,14 +20,14 @@ const CircleOutline = styled(Box, {
   position: "absolute",
   borderRadius: "50%",
   pointerEvents: "none",
-  bc: theme.colors.loContrast,
+  bc: theme.colors.borderContrast,
 });
 
 const Circle = styled(Box, {
   width: CIRCLE_SIZE,
   height: CIRCLE_SIZE,
   position: "absolute",
-  border: `solid ${theme.colors.blue10}`,
+  border: `solid ${theme.colors.backgroundPrimary}`,
   borderWidth: 2,
   borderRadius: "50%",
   pointerEvents: "none",
@@ -36,9 +36,9 @@ const Circle = styled(Box, {
 const Line = styled(Box, {
   boxSizing: "content-box",
   position: "absolute",
-  background: theme.colors.blue10,
+  background: theme.colors.backgroundPrimary,
   pointerEvents: "none",
-  outline: `solid ${theme.colors.loContrast}`,
+  outline: `solid ${theme.colors.borderContrast}`,
   outlineWidth: OUTLINE_WIDTH,
 });
 
