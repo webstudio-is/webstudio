@@ -20,6 +20,7 @@ import {
   parseStyleSourceSelections,
   serializeStyleSourceSelections,
 } from "./style-source-selections";
+import { parseProps, serializeProps } from "./props";
 import {
   cloneTree,
   createNewTreeData,
@@ -42,6 +43,7 @@ const parseBuild = async (build: DbBuild): Promise<Build> => {
     styleSourceSelections: Array.from(
       parseStyleSourceSelections(build.styleSourceSelections)
     ),
+    props: Array.from(parseProps(build.props)),
   };
 };
 
@@ -208,6 +210,7 @@ export const deletePage = async ({
     await deleteTreeById({ projectId, treeId: page.treeId });
 
     // @todo cleanup style source selections of deleted instances
+    // @todo cleanup props of deleted instances
 
     return {
       homePage: currentPages.homePage,
@@ -345,6 +348,7 @@ export async function createBuild(
       styleSourceSelections: serializeStyleSourceSelections(
         new Map(props.sourceBuild?.styleSourceSelections)
       ),
+      props: serializeProps(new Map(props.sourceBuild?.props)),
       isDev: props.env === "dev",
       isProd: props.env === "prod",
     },

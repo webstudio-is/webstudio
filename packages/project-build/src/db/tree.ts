@@ -4,7 +4,6 @@ import { type Project, type Prisma, prisma } from "@webstudio-is/prisma-client";
 import type { AppContext } from "@webstudio-is/trpc-interface/server";
 import type { Tree } from "../types";
 import { parseInstances, serializeInstances } from "./instances";
-import { parseProps, serializeProps } from "./props";
 
 type TreeData = Omit<Tree, "id">;
 
@@ -31,7 +30,6 @@ export const createNewTreeData = ({
         },
       ],
     ],
-    props: [],
   };
 };
 
@@ -49,7 +47,6 @@ export const createTree = async (
       root: "",
       styles: "",
       instances: serializeInstances(new Map(treeData.instances)),
-      props: serializeProps(new Map(treeData.props)),
     },
   });
 };
@@ -83,14 +80,12 @@ export const loadTreeById = async (
   }
 
   const instances = parseInstances(tree.instances);
-  const props = parseProps(tree.props);
 
   return {
     id: tree.id,
     projectId: tree.projectId,
     buildId: tree.buildId,
     instances: Array.from(instances),
-    props: Array.from(props),
   };
 };
 
