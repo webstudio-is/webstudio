@@ -1,8 +1,3 @@
-/**
- * Implementation of the "Small Icon Button" component from:
- * https://www.figma.com/file/sfCE7iLS0k25qCxiifQNLE/%F0%9F%93%9A-Webstudio-Library?node-id=4%3A3171
- */
-
 import {
   forwardRef,
   type Ref,
