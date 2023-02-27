@@ -22,28 +22,9 @@ type Props = {
 } & Omit<ComponentProps<typeof TogglePrimitive.Root>, "children">;
 
 export const SmallToggleButton = forwardRef<HTMLButtonElement, Props>(
-  (
-    {
-      focused,
-      icon,
-      defaultPressed,
-      pressed,
-      onPressedChange,
-      disabled,
-      ...restProps
-    },
-    ref
-  ) => {
+  ({ focused, icon, ...restProps }, ref) => {
     return (
-      <TogglePrimitive.Root
-        asChild
-        ref={ref}
-        defaultPressed={defaultPressed}
-        pressed={pressed}
-        onPressedChange={onPressedChange}
-        disabled={disabled}
-        {...restProps}
-      >
+      <TogglePrimitive.Root asChild ref={ref} {...restProps}>
         <SmallButton data-focused={focused}>{icon}</SmallButton>
       </TogglePrimitive.Root>
     );
