@@ -1,6 +1,7 @@
 import type { ComponentProps } from "react";
 import { atom } from "nanostores";
 import type {
+  Build,
   Instance,
   Instances,
   InstancesItem,
@@ -17,6 +18,7 @@ import type { GetComponent } from "../components/components-utils";
 
 export type Data = {
   tree: Tree | null;
+  build: Build | null;
   assets: Array<Asset>;
   params?: Params;
 };
@@ -57,8 +59,8 @@ export const InstanceRoot = ({
   customComponents = defaultCustomComponents,
   getComponent,
 }: RootProps): JSX.Element | null => {
-  if (data.tree === null) {
-    throw new Error("Tree is null");
+  if (data.tree === null || data.build === null) {
+    throw new Error("Tree and build are required");
   }
 
   setParams(data.params ?? null);
@@ -68,7 +70,7 @@ export const InstanceRoot = ({
   return createElementsTree({
     instance: denormalizeTree(new Map(data.tree.instances)),
     propsByInstanceIdStore: atom(
-      getPropsByInstanceId(new Map(data.tree.props))
+      getPropsByInstanceId(new Map(data.build.props))
     ),
     assetsStore: atom(new Map(data.assets.map((asset) => [asset.id, asset]))),
     Component: Component ?? WebstudioComponent,

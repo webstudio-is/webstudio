@@ -54,7 +54,7 @@ export const action = async ({ request }: ActionArgs) => {
       } else if (namespace === "styles") {
         await patchStyles({ buildId, projectId }, patches, context);
       } else if (namespace === "props") {
-        await patchProps({ treeId, projectId }, patches, context);
+        await patchProps({ buildId, projectId }, patches, context);
       } else if (namespace === "breakpoints") {
         await patchBreakpoints({ buildId, projectId }, patches, context);
       } else {

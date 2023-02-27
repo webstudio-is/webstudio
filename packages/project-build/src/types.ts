@@ -17,6 +17,7 @@ export type Build = {
   styles: [StyleDeclKey, StyleDecl][];
   styleSources: [StyleSource["id"], StyleSource][];
   styleSourceSelections: [Instance["id"], StyleSourceSelection][];
+  props: [Prop["id"], Prop][];
 };
 
 export type Tree = {
@@ -24,5 +25,4 @@ export type Tree = {
   projectId: string;
   buildId: string;
   instances: [InstancesItem["id"], InstancesItem][];
-  props: [Prop["id"], Prop][];
 };

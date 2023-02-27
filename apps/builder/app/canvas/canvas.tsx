@@ -104,7 +104,7 @@ export const Canvas = ({
   useSetTreeId(data.tree.id);
   useSetAssets(data.assets);
   useSetBreakpoints(data.build.breakpoints);
-  useSetProps(data.tree.props);
+  useSetProps(data.build.props);
   useSetStyles(data.build.styles);
   useSetStyleSources(data.build.styleSources);
   useSetStyleSourceSelections(data.build.styleSourceSelections);
