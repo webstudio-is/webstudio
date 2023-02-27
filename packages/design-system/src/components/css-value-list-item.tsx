@@ -1,10 +1,4 @@
-import {
-  type ComponentProps,
-  // type FocusEvent,
-  forwardRef,
-  // type KeyboardEvent,
-  Ref,
-} from "react";
+import { type ComponentProps, forwardRef, Ref } from "react";
 import { styled } from "../stitches.config";
 import { Flex } from "./flex";
 import { theme } from "../stitches.config";
@@ -22,6 +16,7 @@ const ThumbHolder = styled("div", {
 });
 
 const Item = styled(Flex, {
+  userSelect: "none",
   backgroundColor: theme.colors.backgroundPanel,
   paddingRight: theme.spacing[9],
   height: theme.spacing[13],
@@ -91,7 +86,19 @@ export const CssValueListItem = forwardRef(
 
       <Flex grow={true} />
 
-      <Flex gap={2}>{buttons}</Flex>
+      <Flex
+        gap={2}
+        onClick={(e) => {
+          if (e.target !== e.currentTarget) {
+            // Having that CSSValueListItem is a button itself, prevent propagate click events
+            // from descendants of button wrapper.
+            // e.target === e.currentTarget means that click was between buttons in a gap
+            e.stopPropagation();
+          }
+        }}
+      >
+        {buttons}
+      </Flex>
     </Item>
   )
 );
