@@ -1,8 +1,8 @@
 import type { KeyboardEvent as ReactKeyboardEvent } from "react";
 import { useState, useMemo, useRef, useCallback, useEffect } from "react";
 import { createPortal } from "react-dom";
+import { ListPositionIndicator } from "../list-position-indicator";
 import { TreeNode, INDENT, TreeItemRenderProps } from "./tree-node";
-import { PlacementIndicator } from "./placement-indicator";
 import {
   type DropTarget,
   useHold,
@@ -291,7 +291,12 @@ export const Tree = <Data extends { id: string }>({
 
       {shiftedDropTarget?.placement &&
         createPortal(
-          <PlacementIndicator placement={shiftedDropTarget.placement} />,
+          <ListPositionIndicator
+            x={shiftedDropTarget.placement.x}
+            y={shiftedDropTarget.placement.y}
+            length={shiftedDropTarget.placement.length}
+            withNub
+          />,
           document.body
         )}
     </Box>
