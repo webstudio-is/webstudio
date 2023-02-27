@@ -2,7 +2,7 @@
 import { TooltipProvider } from "@radix-ui/react-tooltip";
 import { Outlet } from "@remix-run/react";
 import { setEnv } from "@webstudio-is/feature-flags";
-import { withSentryRouting } from "@sentry/remix";
+import { withSentry } from "@sentry/remix";
 import { ErrorBoundary } from "@sentry/remix";
 import env from "./shared/env";
 import { PersistentFetcherProvider } from "./shared/fetcher";
@@ -22,7 +22,7 @@ const RootWithErrorBoundary = (props: OutletProps) => (
   </ErrorBoundary>
 );
 
-export default withSentryRouting(
+export default withSentry(
   // withSentryRouteTracing() expects a type from component that is not necessary true.
   RootWithErrorBoundary as () => JSX.Element
 );
