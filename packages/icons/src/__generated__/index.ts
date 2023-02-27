@@ -1,5 +1,8 @@
 export * from "./auto-scroll";
 export * from "./blockquote";
+export * from "./checkbox-checked-filled";
+export * from "./checkbox-empty";
+export * from "./checkbox-mixed-filled";
 export * from "./chevron-big-down";
 export * from "./chevron-big-left";
 export * from "./chevron-big-right";
@@ -20,6 +23,8 @@ export * from "./list-item";
 export * from "./list";
 export * from "./offline";
 export * from "./play";
+export * from "./radio-checked";
+export * from "./radio-unchecked";
 export * from "./scroll";
 export * from "./subscript";
 export * from "./superscript";

@@ -11,7 +11,7 @@ import { styled, theme } from "../stitches.config";
 const StyledLabel = styled("label", textVariants.labelsSentenceCase, {
   boxSizing: "border-box",
   flexShrink: 0,
-  py: theme.spacing[2],
+  py: theme.spacing[1],
   border: "1px solid transparent",
   borderRadius: theme.borderRadius[3],
 
