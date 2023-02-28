@@ -14,9 +14,7 @@ import { useEffect } from "react";
 const workspaceStyle = {
   flexGrow: 1,
   background: theme.colors.gray3,
-  // scroll behaviour should be derived from the iframe
-  overflow: "hidden",
-  scrollbarGutter: "stable",
+  overflow: "scroll",
   position: "relative",
 };
 
@@ -30,6 +28,7 @@ const zoomStyle = {
 const canvasContainerStyle = {
   position: "relative",
   height: "100%",
+  overflow: "hidden",
 };
 
 const useSetWorkspaceRect = () => {
