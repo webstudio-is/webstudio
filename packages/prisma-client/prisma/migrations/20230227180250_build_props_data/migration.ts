@@ -76,15 +76,7 @@ export default async () => {
         hasNext = builds.length === chunkSize;
 
         for (const build of builds) {
-          // deduplicate badly migrated data
-          const props = Array.from(
-            new Map(
-              (propsByBuildId.get(build.id) ?? []).map((item) => [
-                item.instanceId,
-                item,
-              ])
-            ).values()
-          );
+          const props = propsByBuildId.get(build.id) ?? [];
           build.props = JSON.stringify(props);
         }
         await Promise.all(
