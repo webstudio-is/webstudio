@@ -1,8 +1,11 @@
 import { useStore } from "@nanostores/react";
 import { useCallback, useEffect, useRef } from "react";
-import { useCanvasWidth, useWorkspaceRect } from "~/builder/shared/nano-states";
+import { useCanvasWidth } from "~/builder/shared/nano-states";
 import { useIsPreviewMode } from "~/shared/nano-states";
-import { selectedBreakpointStore } from "~/shared/nano-states/breakpoints";
+import {
+  selectedBreakpointStore,
+  workspaceRectStore,
+} from "~/shared/nano-states/breakpoints";
 import { useNextBreakpoint } from "./use-next-breakpoint";
 import { minWidth } from "./width-setting";
 
@@ -11,7 +14,7 @@ export const useUpdateCanvasWidth = () => {
   const [canvasWidth, setCanvasWidth] = useCanvasWidth();
   const [isPreviewMode] = useIsPreviewMode();
   const nextBreakpoint = useNextBreakpoint();
-  const [workspaceRect] = useWorkspaceRect();
+  const workspaceRect = useStore(workspaceRectStore);
 
   // We don't won't workspace rect resize observer to trigger canvas width update.
   // We only need the initial workspace width here.

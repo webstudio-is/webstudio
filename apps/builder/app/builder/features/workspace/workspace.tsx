@@ -1,9 +1,12 @@
 import { useStore } from "@nanostores/react";
 import { theme, Box, Flex, Toaster } from "@webstudio-is/design-system";
-import { useCanvasWidth, useWorkspaceRect } from "~/builder/shared/nano-states";
+import { useCanvasWidth } from "~/builder/shared/nano-states";
 import type { Publish } from "~/shared/pubsub";
 import { selectedInstanceIdStore } from "~/shared/nano-states";
-import { zoomStore } from "~/shared/nano-states/breakpoints";
+import {
+  workspaceRectStore,
+  zoomStore,
+} from "~/shared/nano-states/breakpoints";
 import { CanvasTools } from "./canvas-tools";
 import { useMeasure } from "react-use";
 import { useEffect } from "react";
@@ -30,15 +33,15 @@ const canvasContainerStyle = {
 };
 
 const useSetWorkspaceRect = () => {
-  const [, setWorkspaceRect] = useWorkspaceRect();
+  const workspaceRect = useStore(workspaceRectStore);
   const [ref, rect] = useMeasure<HTMLDivElement>();
   useEffect(() => {
     if (rect.width === 0 || rect.height === 0) {
       return;
     }
     // Little lie to safe the trouble of importing the type it uses everywhere.
-    setWorkspaceRect(rect as DOMRect);
-  }, [setWorkspaceRect, rect]);
+    workspaceRectStore.set(rect as DOMRect);
+  }, [workspaceRect, rect]);
   return ref;
 };
 
