@@ -37,7 +37,6 @@ import { Navigator } from "./features/sidebar-left";
 import { getBuildUrl } from "~/shared/router-utils";
 import { useCopyPaste } from "~/shared/copy-paste";
 import { AssetsProvider } from "./shared/assets";
-import { minWidth } from "./features/breakpoints/width-setting";
 
 registerContainers();
 
@@ -332,7 +331,7 @@ export const Builder = ({
               css={{
                 height: "100%",
                 width: "100%",
-                minWidth,
+                //minWidth,
               }}
             />
           </Workspace>

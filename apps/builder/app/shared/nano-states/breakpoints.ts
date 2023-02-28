@@ -50,3 +50,5 @@ export const synchronizedBreakpointsStores = [
   ["zoomStore", zoomStore],
   ["selectedBreakpointId", selectedBreakpointIdStore],
 ] as const;
+
+export const workspaceRectStore = atom<DOMRect | undefined>();
