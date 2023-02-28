@@ -142,7 +142,6 @@ export const patchStyles = async (
     return;
   }
 
-  // these styles are filtered by treeId
   const styles = await parseStyles(build.projectId, build.styles);
 
   const patchedStyles = Styles.parse(applyPatches(styles, patches));

@@ -32,7 +32,6 @@ import {
   useSubscribeScrollState,
   useIsPreviewMode,
   useSetAssets,
-  useSetTreeId,
 } from "~/shared/nano-states";
 import { usePublishScrollState } from "./shared/use-publish-scroll-state";
 import { useDragAndDrop } from "./shared/use-drag-drop";
@@ -101,7 +100,6 @@ export const Canvas = ({
     throw new Error("Tree is null");
   }
   const isBuilderReady = useSubscribeBuilderReady();
-  useSetTreeId(data.tree.id);
   useSetAssets(data.assets);
   useSetBreakpoints(data.build.breakpoints);
   useSetProps(data.build.props);

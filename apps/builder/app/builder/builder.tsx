@@ -31,7 +31,6 @@ import {
   useSetAuthPermit,
   useSetAuthToken,
   useSetIsPreviewMode,
-  useSetTreeId,
 } from "~/shared/nano-states";
 import { useClientSettings } from "./shared/client-settings";
 import { Navigator } from "./features/sidebar-left";
@@ -261,7 +260,6 @@ export const Builder = ({
   useSetAuthToken(authToken);
   useSetAuthPermit(authPermit);
   useSetProject(project);
-  useSetTreeId(treeId);
   useSetPages(pages);
   useSetCurrentPageId(pageId);
   const [publish, publishRef] = usePublish();

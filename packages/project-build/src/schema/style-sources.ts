@@ -5,14 +5,12 @@ const StyleSourceId = z.string();
 const StyleSourceToken = z.object({
   type: z.literal("token"),
   id: StyleSourceId,
-  treeId: z.string().optional(),
   name: z.string(),
 });
 
 const StyleSourceLocal = z.object({
   type: z.literal("local"),
   id: StyleSourceId,
-  treeId: z.string(),
 });
 
 export const StyleSource = z.union([StyleSourceToken, StyleSourceLocal]);
