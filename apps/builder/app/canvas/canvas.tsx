@@ -107,7 +107,7 @@ export const Canvas = ({
   useSetStyles(data.build.styles);
   useSetStyleSources(data.build.styleSources);
   useSetStyleSourceSelections(data.build.styleSourceSelections);
-  useSetInstances(data.tree.instances);
+  useSetInstances(data.build.instances);
   useSetSelectedPage(data.page);
   setParams(data.params ?? null);
   useCanvasStore(publish);

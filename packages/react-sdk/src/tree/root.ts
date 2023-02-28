@@ -76,7 +76,7 @@ export const InstanceRoot = ({
 
   registerComponents(customComponents);
   const instance = denormalizeTree(
-    new Map(data.tree.instances),
+    new Map(data.build.instances),
     data.page.rootInstanceId
   );
   if (instance === undefined) {
