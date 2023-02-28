@@ -3,7 +3,7 @@ import { styled, type Rect } from "@webstudio-is/design-system";
 import type { Instance } from "@webstudio-is/project-build";
 import { getComponentMeta } from "@webstudio-is/react-sdk";
 import { theme } from "@webstudio-is/design-system";
-import { renderLabel } from "~/builder/shared/tree";
+import { getInstanceLabel } from "~/builder/shared/tree";
 
 type LabelPosition = "top" | "inside" | "bottom";
 type LabelRefCallback = (element: HTMLElement | null) => void;
@@ -73,7 +73,7 @@ const LabelContainer = styled(
 );
 
 type LabelProps = {
-  instance: Instance;
+  instance: { label?: string; component: Instance["component"] };
   instanceRect: Rect;
 };
 
@@ -86,7 +86,7 @@ export const Label = ({ instance, instanceRect }: LabelProps) => {
   return (
     <LabelContainer position={position} ref={labelRef}>
       <meta.Icon width="1em" height="1em" />
-      {renderLabel(instance, meta)}
+      {getInstanceLabel(instance, meta)}
     </LabelContainer>
   );
 };

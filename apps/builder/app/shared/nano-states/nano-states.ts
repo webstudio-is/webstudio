@@ -387,7 +387,7 @@ export const hoveredInstanceIdStore = atom<undefined | Instance["id"]>(
   undefined
 );
 export const hoveredInstanceOutlineStore = atom<
-  undefined | { component: string; rect: DOMRect }
+  undefined | { instanceId: Instance["id"]; rect: DOMRect }
 >(undefined);
 
 export const isPreviewModeStore = atom<boolean>(false);

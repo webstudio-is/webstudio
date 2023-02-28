@@ -2,6 +2,7 @@ import { createCssEngine } from "@webstudio-is/css-engine";
 import type { Asset } from "@webstudio-is/asset-uploader";
 import type { Build } from "@webstudio-is/project-build";
 import {
+  componentAttribute,
   getComponentMeta,
   getComponentNames,
   idAttribute,
@@ -36,7 +37,7 @@ export const generateCssText = (data: Data) => {
     const meta = getComponentMeta(component);
     const presetStyle = meta?.presetStyle;
     if (presetStyle !== undefined) {
-      engine.addStyleRule(`[data-ws-component=${component}]`, {
+      engine.addStyleRule(`[${componentAttribute}=${component}]`, {
         style: presetStyle,
       });
     }

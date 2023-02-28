@@ -55,7 +55,7 @@ const instanceRelatedProps = {
     return (
       <TreeItemBody {...props} selectionEvent="focus">
         <TreeItemLabel prefix={<meta.Icon />}>
-          {renderLabel(props.itemData, meta)}
+          {getInstanceLabel(props.itemData, meta)}
         </TreeItemLabel>
       </TreeItemBody>
     );
@@ -105,6 +105,9 @@ export const InstanceTreeNode = (
   />
 );
 
-export const renderLabel = (instance: Instance, meta: WsComponentMeta) => {
+export const getInstanceLabel = (
+  instance: { label?: string },
+  meta: WsComponentMeta
+) => {
   return instance.label ? humanizeString(instance.label) : meta.label;
 };
