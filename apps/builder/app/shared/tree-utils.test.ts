@@ -62,7 +62,6 @@ const createStyleSource = (
   return {
     type,
     id,
-    treeId: "",
   };
 };
 

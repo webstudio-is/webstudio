@@ -20,7 +20,6 @@ import type {
   StyleSources,
   StyleSourceSelection,
   StyleSourceSelections,
-  Tree,
 } from "@webstudio-is/project-build";
 import type { Style } from "@webstudio-is/css-data";
 import type {
@@ -38,13 +37,6 @@ import { createInstancesIndex } from "../tree-utils";
 const useValue = <T>(atom: WritableAtom<T>) => {
   const value = useStore(atom);
   return [value, atom.set] as const;
-};
-
-export const treeIdStore = atom<undefined | Tree["id"]>(undefined);
-export const useSetTreeId = (treeId: Tree["id"]) => {
-  useSyncInitializeOnce(() => {
-    treeIdStore.set(treeId);
-  });
 };
 
 export const instancesStore = atom<Map<InstancesItem["id"], InstancesItem>>(
@@ -196,19 +188,14 @@ export const styleSourcesStore = atom<StyleSources>(new Map());
  * scoped to current tree or whole project
  */
 export const availableStyleSourcesStore = shallowComputed(
-  [styleSourcesStore, treeIdStore],
-  (styleSources, treeId) => {
-    if (treeId === undefined) {
-      return [];
-    }
+  [styleSourcesStore],
+  (styleSources) => {
     const availableStylesSources: StyleSource[] = [];
     for (const styleSource of styleSources.values()) {
       if (styleSource.type === "local") {
         continue;
       }
-      if (styleSource.treeId === treeId || styleSource.treeId === undefined) {
-        availableStylesSources.push(styleSource);
-      }
+      availableStylesSources.push(styleSource);
     }
     return availableStylesSources;
   }
@@ -333,13 +320,8 @@ export const selectedInstanceStore = computed(
 export const selectedInstanceBrowserStyleStore = atom<undefined | Style>();
 
 export const selectedInstanceStyleSourcesStore = computed(
-  [
-    styleSourceSelectionsStore,
-    styleSourcesStore,
-    selectedInstanceIdStore,
-    treeIdStore,
-  ],
-  (styleSourceSelections, styleSources, selectedInstanceId, treeId) => {
+  [styleSourceSelectionsStore, styleSourcesStore, selectedInstanceIdStore],
+  (styleSourceSelections, styleSources, selectedInstanceId) => {
     const selectedInstanceStyleSources: StyleSource[] = [];
     if (selectedInstanceId === undefined) {
       return selectedInstanceStyleSources;
@@ -358,10 +340,9 @@ export const selectedInstanceStyleSourcesStore = computed(
     }
     // generate style source when selection has not local style sources
     // it is synchronized whenever styles are updated
-    if (hasLocal === false && treeId !== undefined) {
+    if (hasLocal === false) {
       selectedInstanceStyleSources.unshift({
         type: "local",
-        treeId,
         id: nanoid(),
       });
     }
