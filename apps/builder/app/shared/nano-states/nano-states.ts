@@ -97,6 +97,7 @@ export const patchInstancesMutable = (
   }
 };
 
+// @todo will be removed soon
 const denormalizeTree = (
   instances: Instances,
   rootInstanceId: Instance["id"]
@@ -106,6 +107,7 @@ const denormalizeTree = (
       type: "instance",
       id: instance.id,
       component: instance.component,
+      label: instance.label,
       children: [],
     };
     for (const child of instance.children) {

@@ -5,6 +5,7 @@ import { z } from "zod";
 export type BaseInstance = {
   id: string;
   component: string;
+  label?: string;
 };
 
 export type Instance = BaseInstance & {
@@ -38,6 +39,7 @@ export const InstancesItem = z.object({
   type: z.literal("instance"),
   id: InstanceId,
   component: z.string(),
+  label: z.string().optional(),
   children: z.array(z.union([Id, Text])),
 });
 
@@ -56,6 +58,7 @@ export const Instance: z.ZodType<Instance> = z.lazy(() =>
     type: z.literal("instance"),
     id: z.string(),
     component: z.string(),
+    label: z.string().optional(),
     children: z.array(z.union([Instance, Text])),
   })
 );
