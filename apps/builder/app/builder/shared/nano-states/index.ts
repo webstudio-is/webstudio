@@ -19,6 +19,9 @@ export const useIsPublishDialogOpen = () =>
 const canvasWidthContainer = atom<number>(0);
 export const useCanvasWidth = () => useValue(canvasWidthContainer);
 
+const workspaceRectContainer = atom<DOMRect | undefined>();
+export const useWorkspaceRect = () => useValue(workspaceRectContainer);
+
 const canvasRectContainer = atom<DOMRect | undefined>();
 export const useCanvasRect = () => useValue(canvasRectContainer);
 
