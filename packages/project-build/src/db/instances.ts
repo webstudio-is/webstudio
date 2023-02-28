@@ -1,10 +1,9 @@
 import { applyPatches, type Patch } from "immer";
-import { type Project, prisma } from "@webstudio-is/prisma-client";
+import { type Project, type Build, prisma } from "@webstudio-is/prisma-client";
 import {
   authorizeProject,
   type AppContext,
 } from "@webstudio-is/trpc-interface/server";
-import type { Tree } from "../types";
 import { Instances, InstancesList } from "../schema/instances";
 
 export const parseInstances = (instancesString: string): Instances => {
@@ -18,7 +17,7 @@ export const serializeInstances = (instances: Instances) => {
 };
 
 export const patchInstances = async (
-  { treeId, projectId }: { treeId: Tree["id"]; projectId: Project["id"] },
+  { buildId, projectId }: { buildId: Build["id"]; projectId: Project["id"] },
   patches: Array<Patch>,
   context: AppContext
 ) => {
@@ -31,23 +30,23 @@ export const patchInstances = async (
     throw new Error("You don't have edit access to this project");
   }
 
-  const tree = await prisma.tree.findUnique({
+  const build = await prisma.build.findUnique({
     where: {
-      id_projectId: { projectId, id: treeId },
+      id_projectId: { projectId, id: buildId },
     },
   });
-  if (tree === null) {
+  if (build === null) {
     return;
   }
-  const instances = parseInstances(tree.instances);
+  const instances = parseInstances(build.instances);
   const patchedInstances = Instances.parse(applyPatches(instances, patches));
 
-  await prisma.tree.update({
+  await prisma.build.update({
     data: {
       instances: serializeInstances(patchedInstances),
     },
     where: {
-      id_projectId: { projectId, id: treeId },
+      id_projectId: { projectId, id: buildId },
     },
   });
 };

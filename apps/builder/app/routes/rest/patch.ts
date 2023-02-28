@@ -42,7 +42,7 @@ export const action = async ({ request }: ActionArgs) => {
       const { namespace, patches } = change;
 
       if (namespace === "instances") {
-        await patchInstances({ treeId, projectId }, patches, context);
+        await patchInstances({ buildId, projectId }, patches, context);
       } else if (namespace === "styleSourceSelections") {
         await patchStyleSourceSelections(
           { buildId, projectId },

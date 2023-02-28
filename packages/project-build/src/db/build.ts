@@ -7,7 +7,7 @@ import {
 } from "@webstudio-is/prisma-client";
 import type { AppContext } from "@webstudio-is/trpc-interface";
 import { findPageByIdOrPath } from "../shared/pages-utils";
-import type { Build, Tree } from "../types";
+import type { Build } from "../types";
 import { type Page, Pages } from "../schema/pages";
 import {
   createInitialBreakpoints,
@@ -21,6 +21,7 @@ import {
   serializeStyleSourceSelections,
 } from "./style-source-selections";
 import { parseProps, serializeProps } from "./props";
+import { parseInstances, serializeInstances } from "./instances";
 import { cloneTree, createTree, deleteTreeById } from "./tree";
 
 const parseBuild = async (build: DbBuild): Promise<Build> => {
@@ -39,6 +40,7 @@ const parseBuild = async (build: DbBuild): Promise<Build> => {
       parseStyleSourceSelections(build.styleSourceSelections)
     ),
     props: Array.from(parseProps(build.props)),
+    instances: Array.from(parseInstances(build.instances)),
   };
 };
 
@@ -115,7 +117,7 @@ const updatePages = async (
   return parseBuild(updatedBuild);
 };
 
-const createNewPageInstances = (): Tree["instances"] => {
+const createNewPageInstances = (): Build["instances"] => {
   const instanceId = nanoid();
   return [
     [
@@ -146,7 +148,6 @@ export const addPage = async ({
     const tree = await createTree({
       projectId,
       buildId,
-      instances,
     });
 
     return {
@@ -227,8 +228,9 @@ export const deletePage = async ({
 
     await deleteTreeById({ projectId, treeId: page.treeId });
 
-    // @todo cleanup style source selections of deleted instances
-    // @todo cleanup props of deleted instances
+    // @todo cleanup style source selections of deleted pages
+    // @todo cleanup props of deleted pages
+    // @todo cleanup instances of deleted pages
 
     return {
       homePage: currentPages.homePage,
@@ -248,7 +250,6 @@ const createPages = async (
     {
       projectId,
       buildId,
-      instances,
     },
     client
   );
@@ -374,6 +375,7 @@ export async function createBuild(
         new Map(props.sourceBuild?.styleSourceSelections)
       ),
       props: serializeProps(new Map(props.sourceBuild?.props)),
+      instances: serializeInstances(new Map(props.sourceBuild?.instances)),
       isDev: props.env === "dev",
       isProd: props.env === "prod",
     },
