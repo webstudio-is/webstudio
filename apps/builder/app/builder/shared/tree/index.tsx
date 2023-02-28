@@ -10,10 +10,14 @@ import {
   type TreeItemRenderProps,
 } from "@webstudio-is/design-system";
 import type { Instance } from "@webstudio-is/project-build";
-import { getComponentMeta } from "@webstudio-is/react-sdk";
+import {
+  getComponentMeta,
+  type WsComponentMeta,
+} from "@webstudio-is/react-sdk";
 import { utils } from "@webstudio-is/project";
 import { instancesIndexStore } from "~/shared/nano-states";
 import { getInstanceAncestorsAndSelf } from "~/shared/tree-utils";
+import { humanizeString } from "~/shared/string-utils";
 
 const instanceRelatedProps = {
   getItemPathWithPositions: utils.tree.getInstancePathWithPositions,
@@ -50,7 +54,9 @@ const instanceRelatedProps = {
     }
     return (
       <TreeItemBody {...props} selectionEvent="focus">
-        <TreeItemLabel prefix={<meta.Icon />}>{meta.label}</TreeItemLabel>
+        <TreeItemLabel prefix={<meta.Icon />}>
+          {renderLabel(props.itemData, meta)}
+        </TreeItemLabel>
       </TreeItemBody>
     );
   },
@@ -98,3 +104,7 @@ export const InstanceTreeNode = (
     renderItem={instanceRelatedProps.renderItem}
   />
 );
+
+export const renderLabel = (instance: Instance, meta: WsComponentMeta) => {
+  return instance.label ? humanizeString(instance.label) : meta.label;
+};
