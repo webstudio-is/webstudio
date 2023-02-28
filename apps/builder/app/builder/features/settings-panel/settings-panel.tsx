@@ -19,7 +19,10 @@ export const SettingsPanel = ({ selectedInstance }: SettingsPanelProps) => {
           placeholder={label}
           defaultValue={selectedInstance.label}
           onChange={(event) => {
-            set({ setting: "label", value: event.target.value });
+            const { value } = event.target;
+            if (value.trim()) {
+              set({ setting: "label", value });
+            }
           }}
         />
       </Flex>
