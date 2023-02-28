@@ -4,15 +4,13 @@ import {
   theme,
   useId,
   TextArea,
-  Box,
 } from "@webstudio-is/design-system";
 import {
   type ControlProps,
   getLabel,
-  RemovePropButton,
-  Label,
   useLocalValue,
-  DefaultControlLayout,
+  VerticalLayout,
+  HorizontalLayout,
 } from "../shared";
 
 type ImplementationProps = {
@@ -30,32 +28,18 @@ const AsInput = ({
   onChange,
   onDelete,
 }: ImplementationProps) => {
-  const [localValue, setLocalValue] = useLocalValue(value);
+  const localValue = useLocalValue(value, onChange);
 
   return (
-    <Flex
-      css={{ height: theme.spacing[13] }}
-      justify="between"
-      align="center"
-      gap="2"
-    >
-      <Label htmlFor={id}>{label}</Label>
-      <Flex align="center" gap="2">
-        <TextField
-          id={id}
-          value={localValue}
-          onChange={(event) => setLocalValue(event.target.value)}
-          // @todo: shold we worry about unmout without blur and loosing the changes?
-          onBlur={() => {
-            if (localValue !== value) {
-              onChange(localValue);
-            }
-          }}
-          css={{ width: 120 }}
-        />
-        {onDelete && <RemovePropButton onClick={onDelete} />}
-      </Flex>
-    </Flex>
+    <HorizontalLayout label={label} id={id} onDelete={onDelete}>
+      <TextField
+        id={id}
+        value={localValue.value}
+        onChange={(event) => localValue.set(event.target.value)}
+        onBlur={localValue.save}
+        css={{ width: 120 }}
+      />
+    </HorizontalLayout>
   );
 };
 
@@ -69,26 +53,21 @@ const AsTextarea = ({
   onDelete,
   rows,
 }: ImplementationProps & { rows: number }) => {
-  const [localValue, setLocalValue] = useLocalValue(value);
+  const localValue = useLocalValue(value, onChange);
   const height = rows * TEXTAREA_LINE_HEIGHT;
 
   return (
-    <DefaultControlLayout label={label} id={id} onDelete={onDelete}>
+    <VerticalLayout label={label} id={id} onDelete={onDelete}>
       <Flex css={{ px: theme.spacing[2] }}>
         <TextArea
           id={id}
-          value={localValue}
-          onChange={(event) => setLocalValue(event.target.value)}
-          // @todo: shold we worry about unmout without blur and loosing the changes?
-          onBlur={() => {
-            if (localValue !== value) {
-              onChange(localValue);
-            }
-          }}
+          value={localValue.value}
+          onChange={(event) => localValue.set(event.target.value)}
+          onBlur={localValue.save}
           css={{ flexGrow: 1, height, minHeight: height }}
         />
       </Flex>
-    </DefaultControlLayout>
+    </VerticalLayout>
   );
 };
 

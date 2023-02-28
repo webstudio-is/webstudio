@@ -27,7 +27,6 @@ import {
 import { renderControl } from "./controls/combined";
 import { usePropsLogic, type NameAndLabel } from "./use-props-logic";
 import { type PropMeta, type PropValue, getLabel } from "./shared";
-
 import { useState } from "react";
 import {
   getComponentPropsMeta,

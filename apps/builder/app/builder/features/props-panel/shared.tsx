@@ -3,6 +3,7 @@ import {
   type ReactNode,
   useRef,
   useState,
+  useEffect,
 } from "react";
 import type { WsComponentPropsMeta } from "@webstudio-is/react-sdk";
 import type { Prop } from "@webstudio-is/project-build";
@@ -15,6 +16,7 @@ import {
   Tooltip,
   Box,
   Flex,
+  theme,
 } from "@webstudio-is/design-system";
 import { humanizeString } from "~/shared/string-utils";
 
@@ -69,13 +71,10 @@ export const Label = ({
   return truncated ? <Tooltip content={children}>{label}</Tooltip> : label;
 };
 
-/**
- * Return `[localValue, setLocalValue]` where `localValue` contains:
- *  - either the latest `savedValue`
- *  - or the latest value set via `setLocalValue`
- * (whichever changed most recently)
- */
-export const useLocalValue = <Type,>(savedValue: Type) => {
+export const useLocalValue = <Type,>(
+  savedValue: Type,
+  handleSave: (value: Type) => void
+) => {
   const [localValue, setLocalValue] = useState(savedValue);
 
   // Not using an effect to avoid re-rendering
@@ -86,20 +85,50 @@ export const useLocalValue = <Type,>(savedValue: Type) => {
     setPreviousSavedValue(savedValue);
   }
 
-  return [localValue, setLocalValue] as const;
+  const save = () => {
+    if (localValue !== savedValue) {
+      handleSave(localValue);
+    }
+  };
+
+  // onBlur will not trigger if control is unmounted when props panel is closed or similar.
+  // So we're saving at the unmount
+  const saveRef = useRef(save);
+  saveRef.current = save;
+  useEffect(() => () => saveRef.current(), []);
+
+  return {
+    /**
+     * Contains:
+     *  - either the latest `savedValue`
+     *  - or the latest value set via `set()`
+     * (whichever changed most recently)
+     */
+    value: localValue,
+    /**
+     * Should be called on onChange or similar event
+     */
+    set: setLocalValue,
+    /**
+     * Should be called on onBlur or similar event
+     */
+    save,
+  };
 };
 
-export const DefaultControlLayout = ({
-  label,
-  id,
-  onDelete,
-  children,
-}: {
+type LayoutProps = {
   label: string;
   id: string;
   onDelete?: () => void;
   children: ReactNode;
-}) => (
+};
+
+export const VerticalLayout = ({
+  label,
+  id,
+  onDelete,
+  children,
+}: LayoutProps) => (
   <Box>
     <Flex align="center" gap="1" justify="between">
       <Label htmlFor={id}>{label}</Label>
@@ -107,4 +136,24 @@ export const DefaultControlLayout = ({
     </Flex>
     {children}
   </Box>
+);
+
+export const HorizontalLayout = ({
+  label,
+  id,
+  onDelete,
+  children,
+}: LayoutProps) => (
+  <Flex
+    css={{ height: theme.spacing[13] }}
+    justify="between"
+    align="center"
+    gap="2"
+  >
+    <Label htmlFor={id}>{label}</Label>
+    <Flex align="center" gap="2">
+      {children}
+      {onDelete && <RemovePropButton onClick={onDelete} />}
+    </Flex>
+  </Flex>
 );
