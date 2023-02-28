@@ -56,6 +56,15 @@ const StyledLabel = styled("label", textVariants.labelsSentenceCase, {
         },
       },
     },
+    truncate: {
+      true: {
+        whiteSpace: "nowrap",
+        overflow: "hidden",
+        textOverflow: "ellipsis",
+        flexBasis: 0,
+        flexGrow: 1,
+      },
+    },
   },
 
   defaultVariants: {
@@ -66,13 +75,14 @@ const StyledLabel = styled("label", textVariants.labelsSentenceCase, {
 type Props = ComponentProps<typeof StyledLabel> & {
   color?: "default" | "preset" | "local" | "remote";
   disabled?: boolean;
+  truncate?: boolean;
   children: ReactNode;
 };
 
 export const Label = forwardRef((props: Props, ref: Ref<HTMLLabelElement>) => {
-  const { color, disabled, children, ...rest } = props;
+  const { disabled, children, ...rest } = props;
   return (
-    <StyledLabel ref={ref} color={color} aria-disabled={disabled} {...rest}>
+    <StyledLabel ref={ref} aria-disabled={disabled} {...rest}>
       {children}
     </StyledLabel>
   );
