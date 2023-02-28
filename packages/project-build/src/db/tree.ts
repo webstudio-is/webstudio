@@ -1,4 +1,3 @@
-import { nanoid } from "nanoid";
 import { v4 as uuid } from "uuid";
 import { type Project, type Prisma, prisma } from "@webstudio-is/prisma-client";
 import type { AppContext } from "@webstudio-is/trpc-interface/server";
@@ -6,32 +5,6 @@ import type { Tree } from "../types";
 import { parseInstances, serializeInstances } from "./instances";
 
 type TreeData = Omit<Tree, "id">;
-
-export const createNewTreeData = ({
-  projectId,
-  buildId,
-}: {
-  projectId: string;
-  buildId: string;
-}): TreeData => {
-  const instanceId = nanoid();
-
-  return {
-    projectId,
-    buildId,
-    instances: [
-      [
-        instanceId,
-        {
-          type: "instance",
-          id: instanceId,
-          component: "Body",
-          children: [],
-        },
-      ],
-    ],
-  };
-};
 
 export const createTree = async (
   treeData: TreeData,

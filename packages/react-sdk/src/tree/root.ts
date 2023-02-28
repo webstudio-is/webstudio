@@ -5,6 +5,7 @@ import type {
   Instance,
   Instances,
   InstancesItem,
+  Page,
   Tree,
 } from "@webstudio-is/project-build";
 import type { Asset } from "@webstudio-is/asset-uploader";
@@ -17,6 +18,7 @@ import { getPropsByInstanceId } from "../props";
 import type { GetComponent } from "../components/components-utils";
 
 export type Data = {
+  page: Page;
   tree: Tree | null;
   build: Build | null;
   assets: Array<Asset>;
@@ -30,7 +32,10 @@ type RootProps = {
   getComponent: GetComponent;
 };
 
-const denormalizeTree = (instances: Instances) => {
+const denormalizeTree = (
+  instances: Instances,
+  rootInstanceId: Instance["id"]
+) => {
   const convertTree = (instance: InstancesItem) => {
     const legacyInstance: Instance = {
       type: "instance",
@@ -50,7 +55,11 @@ const denormalizeTree = (instances: Instances) => {
     }
     return legacyInstance;
   };
-  return convertTree(Array.from(instances.values())[0]);
+  const rootInstance = instances.get(rootInstanceId);
+  if (rootInstance === undefined) {
+    return undefined;
+  }
+  return convertTree(rootInstance);
 };
 
 export const InstanceRoot = ({
@@ -66,9 +75,15 @@ export const InstanceRoot = ({
   setParams(data.params ?? null);
 
   registerComponents(customComponents);
-
+  const instance = denormalizeTree(
+    new Map(data.tree.instances),
+    data.page.rootInstanceId
+  );
+  if (instance === undefined) {
+    return null;
+  }
   return createElementsTree({
-    instance: denormalizeTree(new Map(data.tree.instances)),
+    instance,
     propsByInstanceIdStore: atom(
       getPropsByInstanceId(new Map(data.build.props))
     ),

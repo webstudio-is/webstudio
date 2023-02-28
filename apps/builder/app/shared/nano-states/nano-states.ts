@@ -11,6 +11,7 @@ import type {
   Instance,
   Instances,
   InstancesItem,
+  Page,
   Prop,
   Props,
   StyleDecl,
@@ -37,6 +38,13 @@ import { createInstancesIndex } from "../tree-utils";
 const useValue = <T>(atom: WritableAtom<T>) => {
   const value = useStore(atom);
   return [value, atom.set] as const;
+};
+
+export const selectedPageStore = atom<undefined | Page>(undefined);
+export const useSetSelectedPage = (page: Page) => {
+  useSyncInitializeOnce(() => {
+    selectedPageStore.set(page);
+  });
 };
 
 export const instancesStore = atom<Map<InstancesItem["id"], InstancesItem>>(
@@ -89,7 +97,10 @@ export const patchInstancesMutable = (
   }
 };
 
-const denormalizeTree = (instances: Instances): undefined | Instance => {
+const denormalizeTree = (
+  instances: Instances,
+  rootInstanceId: Instance["id"]
+): undefined | Instance => {
   const convertTree = (instance: InstancesItem) => {
     const legacyInstance: Instance = {
       type: "instance",
@@ -109,16 +120,22 @@ const denormalizeTree = (instances: Instances): undefined | Instance => {
     }
     return legacyInstance;
   };
-  const rootInstance = Array.from(instances.values())[0];
+  const rootInstance = instances.get(rootInstanceId);
   if (rootInstance === undefined) {
     return;
   }
   return convertTree(rootInstance);
 };
 
-export const rootInstanceContainer = computed(instancesStore, (instances) => {
-  return denormalizeTree(instances);
-});
+export const rootInstanceContainer = computed(
+  [instancesStore, selectedPageStore],
+  (instances, selectedPage) => {
+    if (selectedPage === undefined) {
+      return undefined;
+    }
+    return denormalizeTree(instances, selectedPage.rootInstanceId);
+  }
+);
 export const useRootInstance = () => {
   const value = useStore(rootInstanceContainer);
   return [value] as const;

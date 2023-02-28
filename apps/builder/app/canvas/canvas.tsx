@@ -32,6 +32,7 @@ import {
   useSubscribeScrollState,
   useIsPreviewMode,
   useSetAssets,
+  useSetSelectedPage,
 } from "~/shared/nano-states";
 import { usePublishScrollState } from "./shared/use-publish-scroll-state";
 import { useDragAndDrop } from "./shared/use-drag-drop";
@@ -107,6 +108,7 @@ export const Canvas = ({
   useSetStyleSources(data.build.styleSources);
   useSetStyleSourceSelections(data.build.styleSourceSelections);
   useSetInstances(data.tree.instances);
+  useSetSelectedPage(data.page);
   setParams(data.params ?? null);
   useCanvasStore(publish);
   const [isPreviewMode] = useIsPreviewMode();
@@ -120,7 +122,7 @@ export const Canvas = ({
   useSharedShortcuts();
 
   useEffect(() => {
-    const rootInstanceId = data.tree?.instances[0]?.[0];
+    const rootInstanceId = data.page.rootInstanceId;
     if (rootInstanceId !== undefined) {
       setDataCollapsed(rootInstanceId);
     }

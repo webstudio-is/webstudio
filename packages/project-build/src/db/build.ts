@@ -7,7 +7,7 @@ import {
 } from "@webstudio-is/prisma-client";
 import type { AppContext } from "@webstudio-is/trpc-interface";
 import { findPageByIdOrPath } from "../shared/pages-utils";
-import type { Build } from "../types";
+import type { Build, Tree } from "../types";
 import { type Page, Pages } from "../schema/pages";
 import {
   createInitialBreakpoints,
@@ -21,12 +21,7 @@ import {
   serializeStyleSourceSelections,
 } from "./style-source-selections";
 import { parseProps, serializeProps } from "./props";
-import {
-  cloneTree,
-  createNewTreeData,
-  createTree,
-  deleteTreeById,
-} from "./tree";
+import { cloneTree, createTree, deleteTreeById } from "./tree";
 
 const parseBuild = async (build: DbBuild): Promise<Build> => {
   const pages = Pages.parse(JSON.parse(build.pages));
@@ -120,6 +115,21 @@ const updatePages = async (
   return parseBuild(updatedBuild);
 };
 
+const createNewPageInstances = (): Tree["instances"] => {
+  const instanceId = nanoid();
+  return [
+    [
+      instanceId,
+      {
+        type: "instance",
+        id: instanceId,
+        component: "Body",
+        children: [],
+      },
+    ],
+  ];
+};
+
 export const addPage = async ({
   projectId,
   buildId,
@@ -131,7 +141,13 @@ export const addPage = async ({
     Partial<Omit<Page, "id" | "treeId" | "name" | "path">>;
 }) => {
   return updatePages({ projectId, buildId }, async (currentPages) => {
-    const tree = await createTree(createNewTreeData({ projectId, buildId }));
+    const instances = createNewPageInstances();
+    const [rootInstanceId] = instances[0];
+    const tree = await createTree({
+      projectId,
+      buildId,
+      instances,
+    });
 
     return {
       homePage: currentPages.homePage,
@@ -140,6 +156,7 @@ export const addPage = async ({
         {
           id: nanoid(),
           treeId: tree.id,
+          rootInstanceId,
           name: data.name,
           path: data.path,
           title: data.title ?? data.name,
@@ -170,6 +187,7 @@ export const editPage = async ({
     const updatedPage: Page = {
       id: currentPage.id,
       treeId: currentPage.treeId,
+      rootInstanceId: currentPage.rootInstanceId,
       name: data.name ?? currentPage.name,
       path: data.path ?? currentPage.path,
       title: data.title ?? currentPage.title,
@@ -224,8 +242,14 @@ const createPages = async (
   _context: AppContext,
   client: Prisma.TransactionClient = prisma
 ) => {
+  const instances = createNewPageInstances();
+  const [rootInstanceId] = instances[0];
   const tree = await createTree(
-    createNewTreeData({ projectId, buildId }),
+    {
+      projectId,
+      buildId,
+      instances,
+    },
     client
   );
   return Pages.parse({
@@ -236,9 +260,10 @@ const createPages = async (
       title: "Home",
       meta: {},
       treeId: tree.id,
+      rootInstanceId,
     },
     pages: [],
-  });
+  } satisfies Pages);
 };
 
 const clonePage = async (
@@ -276,7 +301,7 @@ const clonePages = async (
       client
     ),
     pages: clones,
-  });
+  } satisfies Pages);
 };
 
 /*
