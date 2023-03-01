@@ -1,6 +1,14 @@
-import { TrashIcon } from "@webstudio-is/icons";
-import { TextField, Button, Label, Flex } from "@webstudio-is/design-system";
-import { type ControlProps, getLabel } from "../shared";
+import { TextField, useId } from "@webstudio-is/design-system";
+import {
+  type ControlProps,
+  getLabel,
+  useLocalValue,
+  HorizontalLayout,
+} from "../shared";
+
+// @todo:
+//   use ColorPicker (need to refactor it first,
+//   as it's currently tailored to work with styles only)
 
 export const ColorControl = ({
   meta,
@@ -8,26 +16,31 @@ export const ColorControl = ({
   propName,
   onChange,
   onDelete,
-}: ControlProps<"color", "string">) => (
-  <div>
-    <Label>{getLabel(meta, propName)}</Label>
-    <Flex gap="1">
+}: ControlProps<"color", "string">) => {
+  const id = useId();
+
+  const localValue = useLocalValue(prop?.value ?? "", (value) =>
+    onChange({ type: "string", value })
+  );
+
+  return (
+    <HorizontalLayout
+      label={getLabel(meta, propName)}
+      id={id}
+      onDelete={onDelete}
+    >
       <TextField
-        name={propName}
-        value={prop?.value ?? ""}
-        onChange={(event) => {
-          onChange({ type: "string", value: event.target.value });
+        id={id}
+        value={localValue.value}
+        onChange={(event) => localValue.set(event.target.value)}
+        onBlur={localValue.save}
+        onKeyDown={(event) => {
+          if (event.key === "Enter") {
+            localValue.save();
+          }
         }}
-        css={{ flexGrow: 1 }}
+        css={{ width: 120 }}
       />
-      {onDelete && (
-        <Button
-          color="ghost"
-          prefix={<TrashIcon />}
-          onClick={onDelete}
-          css={{ flexShrink: 1 }}
-        />
-      )}
-    </Flex>
-  </div>
-);
+    </HorizontalLayout>
+  );
+};
