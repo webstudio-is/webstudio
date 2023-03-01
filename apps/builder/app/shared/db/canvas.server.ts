@@ -22,6 +22,8 @@ export const loadProductionCanvasData = async (
     {
       project,
       env: "prod",
+      // For the production build, we don't care which page will be in the CanvasData.page property
+      // Use the default page, since it always exists
       pageIdOrPath: "/",
     },
     context
@@ -45,8 +47,6 @@ export const loadProductionCanvasData = async (
       asset.type === "image" ||
       (asset.type === "font" && fontFamilySet.has(asset.meta.family))
   );
-
-  // console.log({ otherPages: otherPages.length });
 
   return {
     ...canvasData,
