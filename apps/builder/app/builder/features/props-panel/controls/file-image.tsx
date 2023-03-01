@@ -1,12 +1,11 @@
 import { useMemo } from "react";
 import { computed } from "nanostores";
 import { useStore } from "@nanostores/react";
-import { Button, Label, Flex } from "@webstudio-is/design-system";
-import { TrashIcon } from "@webstudio-is/icons";
+import { Button } from "@webstudio-is/design-system";
 import { assetsStore } from "~/shared/nano-states";
 import { FloatingPanel } from "~/builder/shared/floating-panel";
 import { ImageManager } from "~/builder/shared/image-manager";
-import { type ControlProps, getLabel } from "../shared";
+import { type ControlProps, getLabel, VerticalLayout } from "../shared";
 
 export const FileImageControl = ({
   meta,
@@ -25,32 +24,21 @@ export const FileImageControl = ({
   const asset = useStore(assetStore);
 
   return (
-    <div>
-      <Label>{getLabel(meta, propName)}</Label>
-      <Flex gap="1">
-        <FloatingPanel
-          title="Images"
-          content={
-            <ImageManager
-              onChange={(asset) =>
-                onChange({ type: "asset", value: asset.id }, asset)
-              }
-            />
-          }
-        >
-          <Button color="neutral" css={{ flexGrow: 1, overflow: "hidden" }}>
-            {asset?.name ?? "Choose image"}
-          </Button>
-        </FloatingPanel>
-        {onDelete && (
-          <Button
-            color="ghost"
-            prefix={<TrashIcon />}
-            onClick={onDelete}
-            css={{ flexShrink: 1 }}
+    <VerticalLayout label={getLabel(meta, propName)} onDelete={onDelete}>
+      <FloatingPanel
+        title="Images"
+        content={
+          <ImageManager
+            onChange={(asset) =>
+              onChange({ type: "asset", value: asset.id }, asset)
+            }
           />
-        )}
-      </Flex>
-    </div>
+        }
+      >
+        <Button color="neutral" css={{ width: "100%" }}>
+          {asset?.name ?? "Choose image"}
+        </Button>
+      </FloatingPanel>
+    </VerticalLayout>
   );
 };
