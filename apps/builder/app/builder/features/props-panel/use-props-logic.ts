@@ -204,7 +204,7 @@ export const usePropsLogic = ({
   const handleChange = ({ prop, propName }: PropOrName, value: PropValue) => {
     updateProp(
       prop === undefined
-        ? { id: nanoid(), instanceId: instanceId, name: propName, ...value }
+        ? { id: nanoid(), instanceId, name: propName, ...value }
         : { ...prop, ...value }
     );
   };
