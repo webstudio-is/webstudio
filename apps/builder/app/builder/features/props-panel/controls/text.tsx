@@ -64,7 +64,7 @@ const AsTextarea = ({
 
   return (
     <VerticalLayout label={label} id={id} onDelete={onDelete}>
-      <Flex css={{ px: theme.spacing[2] }}>
+      <Flex css={{ py: theme.spacing[2] }}>
         <TextArea
           id={id}
           value={localValue.value}

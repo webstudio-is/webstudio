@@ -73,7 +73,7 @@ export const Label = ({
 
 export const useLocalValue = <Type,>(
   savedValue: Type,
-  handleSave: (value: Type) => void
+  onSave: (value: Type) => void
 ) => {
   const [localValue, setLocalValue] = useState(savedValue);
 
@@ -87,7 +87,7 @@ export const useLocalValue = <Type,>(
 
   const save = () => {
     if (localValue !== savedValue) {
-      handleSave(localValue);
+      onSave(localValue);
     }
   };
 
