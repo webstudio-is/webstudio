@@ -219,9 +219,10 @@ const useScrollIntoView = (
 ) => {
   const isDraggingRef = useRef(isDragging);
   isDraggingRef.current = isDragging;
-
   const isDropTargetRef = useRef(isDropTarget);
   isDropTargetRef.current = isDropTarget;
+  const elementRef = useRef(element);
+  elementRef.current = element;
 
   // Scroll the selected button into view when selected from canvas.
   useEffect(() => {
@@ -230,7 +231,7 @@ const useScrollIntoView = (
       isDraggingRef.current === false &&
       isDropTargetRef.current === false
     ) {
-      element?.scrollIntoView({
+      elementRef.current?.scrollIntoView({
         behavior: "smooth",
         block: "nearest",
       });
