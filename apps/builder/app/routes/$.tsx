@@ -92,17 +92,15 @@ export const loader = async ({ request }: LoaderArgs): Promise<Data> => {
 
   const pagePath = buildParams.pagePath === "/" ? "" : buildParams.pagePath;
 
-  const canvasData = pagesCanvasData.find(
-    (data) => data.page.path === pagePath
-  );
+  const page = pagesCanvasData.pages.find((page) => page.path === pagePath);
 
-  if (canvasData === undefined) {
+  if (page === undefined) {
     throw json("Page not found", {
       status: 404,
     });
   }
 
-  return { ...canvasData, env, mode, params };
+  return { ...pagesCanvasData, page, env, mode, params };
 };
 
 export const ErrorBoundary: ErrorBoundaryComponent = ({ error }) => {
