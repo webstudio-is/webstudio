@@ -1,4 +1,4 @@
-import type { MouseEvent, FormEvent } from "react";
+import { MouseEvent, FormEvent, useEffect } from "react";
 import { Suspense, lazy, useCallback, useMemo, useRef } from "react";
 import { useStore } from "@nanostores/react";
 import { useLexicalComposerContext } from "@lexical/react/LexicalComposerContext";
@@ -82,6 +82,18 @@ export const WebstudioComponentDev = ({
     return result;
   }, [instanceProps]);
 
+  const isSelected = selectedInstanceId === instanceId;
+
+  // Scroll the selected instance into view when selected from navigator.
+  useEffect(() => {
+    if (isSelected) {
+      instanceElementRef.current?.scrollIntoView({
+        behavior: "smooth",
+        block: "nearest",
+      });
+    }
+  }, [isSelected]);
+
   const readonlyProps =
     instance.component === "Input" ? { readOnly: true } : undefined;
 
@@ -116,7 +128,7 @@ export const WebstudioComponentDev = ({
 
   const instanceElement = (
     <>
-      {selectedInstanceId === instance.id && (
+      {isSelected && (
         <SelectedInstanceConnector
           instanceElementRef={instanceElementRef}
           instance={instance}
