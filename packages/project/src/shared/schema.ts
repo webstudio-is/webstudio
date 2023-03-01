@@ -23,4 +23,4 @@ export type Project = z.infer<typeof Project>;
 export const Projects = z.array(Project);
 export type Projects = z.infer<typeof Projects>;
 
-export type CanvasData = Data;
+export type CanvasData = Data & { pages: Data["page"][] };

@@ -75,17 +75,11 @@ export const loader = async ({ request }: ActionArgs) => {
       context
     );
 
-    if (pagesCanvasData.length === 0) {
-      throw json("Project not found or not published yet", { status: 404 });
-    }
-
-    const canvasData = pagesCanvasData[0];
-
     const cssText = generateCssText({
-      assets: canvasData.assets,
-      breakpoints: canvasData.build?.breakpoints,
-      styles: canvasData.build?.styles,
-      styleSourceSelections: canvasData.build?.styleSourceSelections,
+      assets: pagesCanvasData.assets,
+      breakpoints: pagesCanvasData.build?.breakpoints,
+      styles: pagesCanvasData.build?.styles,
+      styleSourceSelections: pagesCanvasData.build?.styleSourceSelections,
     });
 
     return new Response(cssText, {
