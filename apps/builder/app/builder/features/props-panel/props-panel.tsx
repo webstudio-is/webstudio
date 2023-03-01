@@ -3,7 +3,6 @@ import type { Instance, Prop } from "@webstudio-is/project-build";
 import {
   theme,
   Box,
-  Button,
   useCombobox,
   ComboboxPopper,
   ComboboxPopperContent,
@@ -15,6 +14,7 @@ import {
   Separator,
   Flex,
   Text,
+  CSS,
 } from "@webstudio-is/design-system";
 import { ChevronDownIcon, PlusIcon } from "@webstudio-is/icons";
 import type { Publish } from "~/shared/pubsub";
@@ -37,8 +37,8 @@ import {
 const itemToString = (item: NameAndLabel | null) =>
   item ? getLabel(item, item.name) : "";
 
-const Row = ({ children }: { children: React.ReactNode }) => (
-  <Flex css={{ px: theme.spacing[9] }} gap="2" direction="column">
+const Row = ({ children, css }: { children: React.ReactNode; css?: CSS }) => (
+  <Flex css={{ px: theme.spacing[9], ...css }} gap="2" direction="column">
     {children}
   </Flex>
 );
@@ -168,12 +168,12 @@ const AddPropertyForm = ({
   availableProps: NameAndLabel[];
   onPropSelected: (propName: string) => void;
 }) => (
-  <Box css={{ mb: theme.spacing[9] }}>
+  <Flex css={{ height: theme.spacing[13] }} direction="column" justify="center">
     <Combobox
       items={availableProps}
       onItemSelect={(item) => onPropSelected(item.name)}
     />
-  </Box>
+  </Flex>
 );
 
 // A UI componet with minimum logic that can be demoed in Storybook etc.
@@ -195,11 +195,13 @@ export const PropsPanelUI = ({
       <Row>
         <InstanceInfo componentMeta={componentMeta} />
       </Row>
-      <Box
-        // @todo: make this Box a `gap` or something
-        css={{ height: theme.spacing[3] }}
-      />
-      <Row>
+
+      <Row
+        css={{
+          paddingTop: theme.spacing[3],
+          paddingBottom: theme.spacing[5],
+        }}
+      >
         {logic.initialProps.map(({ prop, propName, meta }) => (
           <Property
             key={propName}
@@ -214,12 +216,20 @@ export const PropsPanelUI = ({
       </Row>
 
       <Separator />
-
-      {/* @todo: 
-            need to refactor or add a new CollapsibleSection, 
-            this one has a wrong layout/design 
-       */}
-      <CollapsibleSection label="Properties" isOpenDefault>
+      <CollapsibleSection
+        label="Properties"
+        isOpenDefault
+        rightSlot={
+          <SmallIconButton
+            icon={<PlusIcon />}
+            onClick={(event) => {
+              // to prevent the section from collapsing/expanding
+              event.stopPropagation();
+              setAddingProp(true);
+            }}
+          />
+        }
+      >
         <Flex gap="2" direction="column">
           {logic.addedProps.map(({ prop, propName, meta }) => (
             <Property
@@ -245,16 +255,9 @@ export const PropsPanelUI = ({
               }}
             />
           )}
-
-          <Button
-            color="neutral"
-            prefix={<PlusIcon />}
-            onClick={() => setAddingProp(true)}
-          >
-            Add property
-          </Button>
         </Flex>
       </CollapsibleSection>
+      <Separator />
     </Box>
   );
 };
