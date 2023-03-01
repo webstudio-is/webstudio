@@ -1,6 +1,11 @@
 import type { Instance } from "@webstudio-is/project-build";
 import store from "immerhin";
-import { type KeyboardEventHandler, useRef } from "react";
+import {
+  type KeyboardEventHandler,
+  useRef,
+  useEffect,
+  useCallback,
+} from "react";
 import { instancesStore } from "~/shared/nano-states";
 
 type SettingUpdate = { label?: string };
@@ -17,20 +22,23 @@ export const useSettingsLogic = ({
     changes.current.label = value || undefined;
   };
 
-  const updateLabel = () => {
+  const updateLabel = useCallback(() => {
     store.createTransaction([instancesStore], (instances) => {
       const instance = instances.get(selectedInstance.id);
       if (instance !== undefined) {
         instance.label = changes.current.label;
       }
     });
-  };
+  }, [selectedInstance]);
 
   const handleKeyDown: KeyboardEventHandler = (event) => {
     if (event.key === "Enter") {
       updateLabel();
     }
   };
+
+  // Save changes when unmounting, e.g. when switiching to another tab
+  useEffect(() => updateLabel, [updateLabel]);
 
   return {
     setLabel,
