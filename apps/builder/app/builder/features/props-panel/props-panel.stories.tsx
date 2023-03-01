@@ -273,6 +273,7 @@ export const Story = () => {
       <PropsPanel
         propsLogic={logic}
         component="Button"
+        instanceLabel="My Button"
         componentMeta={componentMeta}
         setCssProperty={() => () => undefined}
       />

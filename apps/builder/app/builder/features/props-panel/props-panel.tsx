@@ -33,6 +33,7 @@ import {
   getComponentMeta,
   type WsComponentMeta,
 } from "@webstudio-is/react-sdk";
+import { getInstanceLabel } from "~/builder/shared/tree";
 
 const itemToString = (item: NameAndLabel | null) =>
   item ? getLabel(item, item.name) : "";
@@ -44,18 +45,20 @@ const Row = ({ children, css }: { children: ReactNode; css?: CSS }) => (
 );
 
 const InstanceInfo = ({
-  componentMeta,
+  meta,
+  label,
 }: {
-  componentMeta: WsComponentMeta;
+  label: string;
+  meta: WsComponentMeta;
 }) => (
   <Flex
     gap="1"
     css={{ height: theme.spacing[13], color: theme.colors.foregroundSubtle }}
     align="center"
   >
-    <componentMeta.Icon />{" "}
+    <meta.Icon />{" "}
     <Text truncate variant="labelsSentenceCase">
-      {componentMeta.label}
+      {label}
     </Text>
   </Flex>
 );
@@ -180,11 +183,13 @@ const AddPropertyForm = ({
 export const PropsPanel = ({
   propsLogic: logic,
   component,
+  instanceLabel,
   componentMeta,
   setCssProperty,
 }: {
   propsLogic: ReturnType<typeof usePropsLogic>;
   component: Instance["component"];
+  instanceLabel: string;
   componentMeta: WsComponentMeta;
   setCssProperty: SetCssProperty;
 }) => {
@@ -193,7 +198,7 @@ export const PropsPanel = ({
   return (
     <Box css={{ paddingTop: theme.spacing[3] }}>
       <Row>
-        <InstanceInfo componentMeta={componentMeta} />
+        <InstanceInfo meta={componentMeta} label={instanceLabel} />
       </Row>
 
       <Row
@@ -300,10 +305,13 @@ export const PropsPanelContainer = ({
     },
   });
 
+  const instanceLabel = getInstanceLabel(instance, componentMeta);
+
   return (
     <PropsPanel
       propsLogic={logic}
       component={instance.component}
+      instanceLabel={instanceLabel}
       componentMeta={componentMeta}
       setCssProperty={setCssProperty}
     />
