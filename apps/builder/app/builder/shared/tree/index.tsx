@@ -10,7 +10,10 @@ import {
   type TreeItemRenderProps,
 } from "@webstudio-is/design-system";
 import type { Instance } from "@webstudio-is/project-build";
-import { getComponentMeta } from "@webstudio-is/react-sdk";
+import {
+  getComponentMeta,
+  type WsComponentMeta,
+} from "@webstudio-is/react-sdk";
 import { utils } from "@webstudio-is/project";
 import { instancesIndexStore } from "~/shared/nano-states";
 import { getInstanceAncestorsAndSelf } from "~/shared/tree-utils";
@@ -50,7 +53,9 @@ const instanceRelatedProps = {
     }
     return (
       <TreeItemBody {...props} selectionEvent="focus">
-        <TreeItemLabel prefix={<meta.Icon />}>{meta.label}</TreeItemLabel>
+        <TreeItemLabel prefix={<meta.Icon />}>
+          {getInstanceLabel(props.itemData, meta)}
+        </TreeItemLabel>
       </TreeItemBody>
     );
   },
@@ -98,3 +103,10 @@ export const InstanceTreeNode = (
     renderItem={instanceRelatedProps.renderItem}
   />
 );
+
+export const getInstanceLabel = (
+  instance: { label?: string },
+  meta: WsComponentMeta
+) => {
+  return instance.label || meta.label;
+};
