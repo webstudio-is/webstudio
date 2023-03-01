@@ -12,6 +12,8 @@ export const useIsTruncated = (ref: RefObject<HTMLElement>, text: string) => {
       // https://stackoverflow.com/a/10017343/478603
       setIsTruncated(offsetWidth < scrollWidth);
     }
+
+    // ref is in dependencies just to make eslint happy
   }, [ref, text]);
 
   return isTruncated;
