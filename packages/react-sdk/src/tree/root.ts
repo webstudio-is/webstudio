@@ -6,7 +6,6 @@ import type {
   Instances,
   InstancesItem,
   Page,
-  Tree,
 } from "@webstudio-is/project-build";
 import type { Asset } from "@webstudio-is/asset-uploader";
 import { createElementsTree } from "./create-elements-tree";
@@ -19,8 +18,7 @@ import type { GetComponent } from "../components/components-utils";
 
 export type Data = {
   page: Page;
-  tree: Tree | null;
-  build: Build | null;
+  build: Build;
   assets: Array<Asset>;
   params?: Params;
 };
@@ -68,10 +66,6 @@ export const InstanceRoot = ({
   customComponents = defaultCustomComponents,
   getComponent,
 }: RootProps): JSX.Element | null => {
-  if (data.tree === null || data.build === null) {
-    throw new Error("Tree and build are required");
-  }
-
   setParams(data.params ?? null);
 
   registerComponents(customComponents);

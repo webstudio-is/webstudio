@@ -1,6 +1,6 @@
 import { sync } from "immerhin";
 import type { Project } from "@webstudio-is/project";
-import type { Build, Tree } from "@webstudio-is/project-build";
+import type { Build } from "@webstudio-is/project-build";
 import { restPatchPath } from "~/shared/router-utils";
 import { useEffect } from "react";
 import { enqueue, dequeue, queueStatus } from "./queue";
@@ -41,7 +41,6 @@ const useErrorCheck = () => {
 };
 
 const useNewEntriesCheck = ({
-  treeId,
   buildId,
   projectId,
   authToken,
@@ -68,7 +67,6 @@ const useNewEntriesCheck = ({
           method: "post",
           body: JSON.stringify({
             transactions,
-            treeId,
             buildId,
             projectId,
           }),
@@ -77,12 +75,11 @@ const useNewEntriesCheck = ({
     }, NEW_ENTRIES_INTERVAL);
 
     return () => clearInterval(intervalId);
-  }, [treeId, buildId, projectId, authToken, authPermit]);
+  }, [buildId, projectId, authToken, authPermit]);
 };
 
 type UserSyncServerProps = {
   buildId: Build["id"];
-  treeId: Tree["id"];
   projectId: Project["id"];
   authToken: string | undefined;
   authPermit: AuthPermit;
