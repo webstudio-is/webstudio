@@ -64,4 +64,40 @@ describe("Convert WS CSS Values to native CSS strings", () => {
     );
     expect(value).toBe("Courier New");
   });
+
+  test("array", () => {
+    const value = toValue({
+      type: "layers",
+      value: [
+        {
+          type: "keyword",
+          value: "auto",
+        },
+        { type: "unit", value: 10, unit: "px" },
+        { type: "unparsed", value: "calc(10px)" },
+        {
+          type: "image",
+          value: {
+            type: "asset",
+            value: {
+              type: "image",
+              path: "foo.png",
+
+              id: "1234567890",
+              projectId: "",
+              format: "",
+              size: 1212,
+              name: "img",
+              description: "",
+              location: "REMOTE",
+              createdAt: "",
+              meta: { width: 1, height: 2 },
+            },
+          },
+        },
+      ],
+    });
+
+    expect(value).toBe("auto,10px,calc(10px),url(foo.png) /* id=1234567890 */");
+  });
 });

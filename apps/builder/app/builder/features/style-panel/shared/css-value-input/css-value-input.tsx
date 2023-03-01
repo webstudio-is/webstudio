@@ -236,7 +236,7 @@ const itemToString = (item: CssValueInputValue | null) => {
   return item === null
     ? ""
     : item.type === "keyword"
-    ? toPascalCase(item.value)
+    ? toPascalCase(toValue(item))
     : item.type === "intermediate" || item.type === "unit"
     ? String(item.value)
     : toValue(item);

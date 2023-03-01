@@ -3,7 +3,6 @@ import { useStore } from "@nanostores/react";
 import type { Pages } from "@webstudio-is/project-build";
 import type { Project } from "@webstudio-is/project";
 import type { AssetContainer, DeletingAssetContainer } from "../assets";
-import { minWidth } from "~/builder/features/breakpoints/width-setting";
 
 const useValue = <T>(atom: WritableAtom<T>) => {
   const value = useStore(atom);
@@ -17,7 +16,7 @@ const isPublishDialogOpenContainer = atom<boolean>(false);
 export const useIsPublishDialogOpen = () =>
   useValue(isPublishDialogOpenContainer);
 
-const canvasWidthContainer = atom<number>(minWidth);
+const canvasWidthContainer = atom<number>(0);
 export const useCanvasWidth = () => useValue(canvasWidthContainer);
 
 const canvasRectContainer = atom<DOMRect | undefined>();

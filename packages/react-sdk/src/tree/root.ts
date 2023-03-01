@@ -5,7 +5,7 @@ import type {
   Instance,
   Instances,
   InstancesItem,
-  Tree,
+  Page,
 } from "@webstudio-is/project-build";
 import type { Asset } from "@webstudio-is/asset-uploader";
 import { createElementsTree } from "./create-elements-tree";
@@ -17,8 +17,8 @@ import { getPropsByInstanceId } from "../props";
 import type { GetComponent } from "../components/components-utils";
 
 export type Data = {
-  tree: Tree | null;
-  build: Build | null;
+  page: Page;
+  build: Build;
   assets: Array<Asset>;
   params?: Params;
 };
@@ -30,7 +30,10 @@ type RootProps = {
   getComponent: GetComponent;
 };
 
-const denormalizeTree = (instances: Instances) => {
+const denormalizeTree = (
+  instances: Instances,
+  rootInstanceId: Instance["id"]
+) => {
   const convertTree = (instance: InstancesItem) => {
     const legacyInstance: Instance = {
       type: "instance",
@@ -50,7 +53,11 @@ const denormalizeTree = (instances: Instances) => {
     }
     return legacyInstance;
   };
-  return convertTree(Array.from(instances.values())[0]);
+  const rootInstance = instances.get(rootInstanceId);
+  if (rootInstance === undefined) {
+    return undefined;
+  }
+  return convertTree(rootInstance);
 };
 
 export const InstanceRoot = ({
@@ -59,16 +66,18 @@ export const InstanceRoot = ({
   customComponents = defaultCustomComponents,
   getComponent,
 }: RootProps): JSX.Element | null => {
-  if (data.tree === null || data.build === null) {
-    throw new Error("Tree and build are required");
-  }
-
   setParams(data.params ?? null);
 
   registerComponents(customComponents);
-
+  const instance = denormalizeTree(
+    new Map(data.build.instances),
+    data.page.rootInstanceId
+  );
+  if (instance === undefined) {
+    return null;
+  }
   return createElementsTree({
-    instance: denormalizeTree(new Map(data.tree.instances)),
+    instance,
     propsByInstanceIdStore: atom(
       getPropsByInstanceId(new Map(data.build.props))
     ),

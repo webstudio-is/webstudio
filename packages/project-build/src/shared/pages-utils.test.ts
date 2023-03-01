@@ -1,4 +1,5 @@
 import { describe, test, expect } from "@jest/globals";
+import type { Page } from "../schema/pages";
 import { findPageByIdOrPath } from "./pages-utils";
 
 const pages = {
@@ -7,18 +8,18 @@ const pages = {
     path: "/",
     name: "Home",
     title: "Home",
-    treeId: "tree-1",
+    rootInstanceId: "instance-1",
     meta: {},
-  },
+  } satisfies Page,
   pages: [
     {
       id: "page1",
       path: "/page1",
       name: "Page",
       title: "Page",
-      treeId: "tree-1",
+      rootInstanceId: "instance-1",
       meta: {},
-    },
+    } satisfies Page,
   ],
 };
 
