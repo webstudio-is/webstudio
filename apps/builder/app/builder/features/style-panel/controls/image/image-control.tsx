@@ -16,10 +16,7 @@ export const ImageControl = ({
 
   const setValue = setProperty(property);
 
-  const valueAssets =
-    styleValue.type === "image"
-      ? styleValue.value.filter((image) => image.type === "asset")
-      : [];
+  const valueAsset = styleValue.type === "image" ? styleValue.value : undefined;
 
   return (
     <FloatingPanel
@@ -29,13 +26,13 @@ export const ImageControl = ({
           onChange={(asset) => {
             setValue({
               type: "image",
-              value: [{ type: "asset", value: asset }],
+              value: { type: "asset", value: asset },
             });
           }}
         />
       }
     >
-      <TextField defaultValue={valueAssets?.[0]?.value.name} />
+      <TextField defaultValue={valueAsset?.value.name} />
     </FloatingPanel>
   );
 };
