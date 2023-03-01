@@ -1,14 +1,13 @@
 import {
-  Text,
-  Flex,
-  Button,
+  Box,
   RadioGroup,
   Radio,
   RadioAndLabel,
-  Label,
+  useId,
+  theme,
 } from "@webstudio-is/design-system";
-import { TrashIcon } from "@webstudio-is/icons";
-import { type ControlProps, getLabel } from "../shared";
+import { humanizeString } from "~/shared/string-utils";
+import { type ControlProps, getLabel, VerticalLayout, Label } from "../shared";
 
 export const RadioControl = ({
   meta,
@@ -17,33 +16,30 @@ export const RadioControl = ({
   onChange,
   onDelete,
 }: ControlProps<"radio" | "inline-radio", "string">) => {
-  // @todo: handle the case when `value` contains something that isn't in `options`?
+  // making sure that the current value is in the list of options
+  const options =
+    prop === undefined || meta.options.includes(prop.value)
+      ? meta.options
+      : [prop.value, ...meta.options];
+
+  const id = useId();
 
   return (
-    <div>
-      <Label>{getLabel(meta, propName)}</Label>
-      <Flex gap="1" justify="between">
+    <VerticalLayout label={getLabel(meta, propName)} onDelete={onDelete}>
+      <Box css={{ paddingTop: theme.spacing[2] }}>
         <RadioGroup
           name="value"
           value={prop?.value}
           onValueChange={(value) => onChange({ type: "string", value })}
         >
-          {meta.options.map((value) => (
+          {options.map((value) => (
             <RadioAndLabel key={value}>
-              <Radio value={value} />
-              <Text>{value}</Text>
+              <Radio value={value} id={`${id}:${value}`} />
+              <Label htmlFor={`${id}:${value}`}>{humanizeString(value)}</Label>
             </RadioAndLabel>
           ))}
         </RadioGroup>
-        {onDelete && (
-          <Button
-            color="ghost"
-            prefix={<TrashIcon />}
-            onClick={onDelete}
-            css={{ flexShrink: 1 }}
-          />
-        )}
-      </Flex>
-    </div>
+      </Box>
+    </VerticalLayout>
   );
 };

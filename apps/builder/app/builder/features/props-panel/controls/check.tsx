@@ -1,12 +1,12 @@
 import {
-  Text,
-  Flex,
+  Box,
   Checkbox,
-  Button,
-  Label,
+  CheckboxAndLabel,
+  useId,
+  theme,
 } from "@webstudio-is/design-system";
-import { TrashIcon } from "@webstudio-is/icons";
-import { type ControlProps, getLabel } from "../shared";
+import { humanizeString } from "~/shared/string-utils";
+import { type ControlProps, getLabel, VerticalLayout, Label } from "../shared";
 
 const add = (array: string[], item: string) => {
   if (array.includes(item)) {
@@ -29,16 +29,21 @@ export const CheckControl = ({
   onChange,
   onDelete,
 }: ControlProps<"check" | "inline-check" | "multi-select", "string[]">) => {
-  // @todo: handle the case when `value` contains something that isn't in `options`?
-
   const value = prop?.value ?? [];
 
+  // making sure that the current value is in the list of options
+  const options = value.reduce(
+    (result, item) => (result.includes(item) ? result : [item, ...result]),
+    meta.options
+  );
+
+  const id = useId();
+
   return (
-    <div>
-      <Label>{getLabel(meta, propName)}</Label>
-      <Flex gap="1" justify="between">
-        {meta.options.map((option) => (
-          <Flex align="center" gap="1" key={option}>
+    <VerticalLayout label={getLabel(meta, propName)} onDelete={onDelete}>
+      <Box css={{ paddingTop: theme.spacing[2] }}>
+        {options.map((option) => (
+          <CheckboxAndLabel key={option}>
             <Checkbox
               checked={value.includes(option)}
               onCheckedChange={(checked) => {
@@ -47,19 +52,12 @@ export const CheckControl = ({
                   value: checked ? add(value, option) : remove(value, option),
                 });
               }}
+              id={`${id}:${option}`}
             />
-            <Text>{value}</Text>
-          </Flex>
+            <Label htmlFor={`${id}:${option}`}>{humanizeString(option)}</Label>
+          </CheckboxAndLabel>
         ))}
-        {onDelete && (
-          <Button
-            color="ghost"
-            prefix={<TrashIcon />}
-            onClick={onDelete}
-            css={{ flexShrink: 1 }}
-          />
-        )}
-      </Flex>
-    </div>
+      </Box>
+    </VerticalLayout>
   );
 };

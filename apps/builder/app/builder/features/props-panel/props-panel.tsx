@@ -3,7 +3,6 @@ import type { Instance, Prop } from "@webstudio-is/project-build";
 import {
   theme,
   Box,
-  Button,
   useCombobox,
   ComboboxPopper,
   ComboboxPopperContent,
@@ -12,11 +11,15 @@ import {
   ComboboxListboxItem,
   TextField,
   SmallIconButton,
+  Separator,
+  Flex,
+  Text,
+  CSS,
 } from "@webstudio-is/design-system";
 import { ChevronDownIcon, PlusIcon } from "@webstudio-is/icons";
 import type { Publish } from "~/shared/pubsub";
 import { propsStore, useInstanceProps } from "~/shared/nano-states";
-import { CollapsibleSection, ComponentInfo } from "~/builder/shared/inspector";
+import { CollapsibleSection } from "~/builder/shared/inspector";
 import {
   useStyleData,
   type SetProperty as SetCssProperty,
@@ -24,11 +27,41 @@ import {
 import { renderControl } from "./controls/combined";
 import { usePropsLogic, type NameAndLabel } from "./use-props-logic";
 import { type PropMeta, type PropValue, getLabel } from "./shared";
-
-import { useState } from "react";
+import { useState, type ReactNode } from "react";
+import {
+  getComponentPropsMeta,
+  getComponentMeta,
+  type WsComponentMeta,
+} from "@webstudio-is/react-sdk";
+import { getInstanceLabel } from "~/builder/shared/tree";
 
 const itemToString = (item: NameAndLabel | null) =>
   item ? getLabel(item, item.name) : "";
+
+const Row = ({ children, css }: { children: ReactNode; css?: CSS }) => (
+  <Flex css={{ px: theme.spacing[9], ...css }} gap="2" direction="column">
+    {children}
+  </Flex>
+);
+
+const InstanceInfo = ({
+  meta,
+  label,
+}: {
+  label: string;
+  meta: WsComponentMeta;
+}) => (
+  <Flex
+    gap="1"
+    css={{ height: theme.spacing[13], color: theme.colors.foregroundSubtle }}
+    align="center"
+  >
+    <meta.Icon />{" "}
+    <Text truncate variant="labelsSentenceCase">
+      {label}
+    </Text>
+  </Flex>
+);
 
 const Combobox = ({
   items,
@@ -85,6 +118,10 @@ const Combobox = ({
   );
 };
 
+// @todo:
+//   at this point we need the <Property> wrapper only because
+//   of complicated `onChange` inside.
+//   need to refactor this somehow
 const Property = ({
   meta,
   prop,
@@ -101,34 +138,31 @@ const Property = ({
   onChange: (value: PropValue) => void;
   onDelete?: () => void;
   setCssProperty: SetCssProperty;
-}) => (
-  <Box css={{ mb: theme.spacing[9] }}>
-    {renderControl({
-      meta,
-      prop,
-      propName,
-      onDelete,
-      onChange: (propValue, asset) => {
-        onChange(propValue);
+}) =>
+  renderControl({
+    meta,
+    prop,
+    propName,
+    onDelete,
+    onChange: (propValue, asset) => {
+      onChange(propValue);
 
-        // @todo: better way to do this?
-        if (
-          component === "Image" &&
-          propName === "src" &&
-          asset &&
-          "width" in asset.meta &&
-          "height" in asset.meta
-        ) {
-          setCssProperty("aspectRatio")({
-            type: "unit",
-            unit: "number",
-            value: asset.meta.width / asset.meta.height,
-          });
-        }
-      },
-    })}
-  </Box>
-);
+      // @todo: better way to do this?
+      if (
+        component === "Image" &&
+        propName === "src" &&
+        asset &&
+        "width" in asset.meta &&
+        "height" in asset.meta
+      ) {
+        setCssProperty("aspectRatio")({
+          type: "unit",
+          unit: "number",
+          value: asset.meta.width / asset.meta.height,
+        });
+      }
+    },
+  });
 
 const AddPropertyForm = ({
   availableProps,
@@ -137,73 +171,83 @@ const AddPropertyForm = ({
   availableProps: NameAndLabel[];
   onPropSelected: (propName: string) => void;
 }) => (
-  <Box css={{ mb: theme.spacing[9] }}>
+  <Flex css={{ height: theme.spacing[13] }} direction="column" justify="center">
     <Combobox
       items={availableProps}
       onItemSelect={(item) => onPropSelected(item.name)}
     />
-  </Box>
+  </Flex>
 );
 
+// A UI componet with minimum logic that can be demoed in Storybook etc.
 export const PropsPanel = ({
-  selectedInstance,
-  publish,
+  propsLogic: logic,
+  component,
+  instanceLabel,
+  componentMeta,
+  setCssProperty,
 }: {
-  publish: Publish;
-  selectedInstance: Instance;
+  propsLogic: ReturnType<typeof usePropsLogic>;
+  component: Instance["component"];
+  instanceLabel: string;
+  componentMeta: WsComponentMeta;
+  setCssProperty: SetCssProperty;
 }) => {
   const [addingProp, setAddingProp] = useState(false);
 
-  const logic = usePropsLogic({
-    props: useInstanceProps(selectedInstance.id),
-    instance: selectedInstance,
-    updateProp: (update) => {
-      store.createTransaction([propsStore], (props) => {
-        props.set(update.id, update);
-      });
-    },
-    deleteProp: (id) => {
-      store.createTransaction([propsStore], (props) => {
-        props.delete(id);
-      });
-    },
-  });
-
-  const styleData = useStyleData({ selectedInstance, publish });
-
   return (
-    <Box>
-      <Box css={{ p: theme.spacing[9] }}>
-        <ComponentInfo selectedInstance={selectedInstance} />
-      </Box>
-      <CollapsibleSection label="Properties" isOpenDefault>
-        <div>
-          {logic.initialProps.map(({ prop, propName, meta }) => (
-            <Property
-              key={propName}
-              propName={propName}
-              prop={prop}
-              meta={meta}
-              component={selectedInstance.component}
-              onChange={(value) =>
-                logic.handleChange({ prop, propName }, value)
-              }
-              setCssProperty={styleData.setProperty}
-            />
-          ))}
+    <Box css={{ paddingTop: theme.spacing[3] }}>
+      <Row>
+        <InstanceInfo meta={componentMeta} label={instanceLabel} />
+      </Row>
 
+      <Row
+        css={{
+          paddingTop: theme.spacing[3],
+          paddingBottom: theme.spacing[5],
+        }}
+      >
+        {logic.initialProps.map(({ prop, propName, meta }) => (
+          <Property
+            key={propName}
+            propName={propName}
+            prop={prop}
+            meta={meta}
+            component={component}
+            onChange={(value) => logic.handleChange({ prop, propName }, value)}
+            setCssProperty={setCssProperty}
+          />
+        ))}
+      </Row>
+
+      <Separator />
+      <CollapsibleSection
+        label="Properties"
+        isOpenDefault
+        rightSlot={
+          <SmallIconButton
+            icon={<PlusIcon />}
+            onClick={(event) => {
+              // to prevent the section from collapsing/expanding
+              event.stopPropagation();
+              setAddingProp(true);
+            }}
+          />
+        }
+      >
+        <Flex gap="2" direction="column">
           {logic.addedProps.map(({ prop, propName, meta }) => (
             <Property
               key={propName}
               propName={propName}
               prop={prop}
               meta={meta}
-              component={selectedInstance.component}
+              component={component}
               onChange={(value) =>
                 logic.handleChange({ prop, propName }, value)
               }
               onDelete={() => logic.handleDelete({ prop, propName })}
-              setCssProperty={styleData.setProperty}
+              setCssProperty={setCssProperty}
             />
           ))}
 
@@ -216,16 +260,60 @@ export const PropsPanel = ({
               }}
             />
           )}
-
-          <Button
-            color="neutral"
-            prefix={<PlusIcon />}
-            onClick={() => setAddingProp(true)}
-          >
-            Add property
-          </Button>
-        </div>
+        </Flex>
       </CollapsibleSection>
+      <Separator />
     </Box>
+  );
+};
+
+export const PropsPanelContainer = ({
+  selectedInstance: instance,
+  publish,
+}: {
+  publish: Publish;
+  selectedInstance: Instance;
+}) => {
+  const propsMeta = getComponentPropsMeta(instance.component);
+  if (propsMeta === undefined) {
+    throw new Error(`Could not get meta for compoent "${instance.component}"`);
+  }
+
+  const componentMeta = getComponentMeta(instance.component);
+  if (componentMeta === undefined) {
+    throw new Error(`Could not get meta for compoent "${instance.component}"`);
+  }
+
+  const { setProperty: setCssProperty } = useStyleData({
+    selectedInstance: instance,
+    publish,
+  });
+
+  const logic = usePropsLogic({
+    props: useInstanceProps(instance.id),
+    meta: propsMeta,
+    instanceId: instance.id,
+    updateProp: (update) => {
+      store.createTransaction([propsStore], (props) => {
+        props.set(update.id, update);
+      });
+    },
+    deleteProp: (id) => {
+      store.createTransaction([propsStore], (props) => {
+        props.delete(id);
+      });
+    },
+  });
+
+  const instanceLabel = getInstanceLabel(instance, componentMeta);
+
+  return (
+    <PropsPanel
+      propsLogic={logic}
+      component={instance.component}
+      instanceLabel={instanceLabel}
+      componentMeta={componentMeta}
+      setCssProperty={setCssProperty}
+    />
   );
 };

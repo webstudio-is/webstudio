@@ -1,6 +1,5 @@
-import { Button, Select, Label, Flex } from "@webstudio-is/design-system";
-import { TrashIcon } from "@webstudio-is/icons";
-import { type ControlProps, getLabel } from "../shared";
+import { Flex, theme, useId, Select } from "@webstudio-is/design-system";
+import { type ControlProps, getLabel, VerticalLayout } from "../shared";
 
 export const SelectControl = ({
   meta,
@@ -9,28 +8,26 @@ export const SelectControl = ({
   onChange,
   onDelete,
 }: ControlProps<"select", "string">) => {
-  // @todo: handle the case when `value` contains something that isn't in `options`?
+  const id = useId();
+  const label = getLabel(meta, propName);
+
+  // making sure that the current value is in the list of options
+  const options =
+    prop === undefined || meta.options.includes(prop.value)
+      ? meta.options
+      : [prop.value, ...meta.options];
 
   return (
-    <div>
-      <Label>{getLabel(meta, propName)}</Label>
-      <Flex gap="1">
+    <VerticalLayout label={label} id={id} onDelete={onDelete}>
+      <Flex css={{ py: theme.spacing[2] }}>
         <Select
-          name={propName}
+          id={id}
           value={prop?.value}
-          options={meta.options}
+          options={options}
           onChange={(value) => onChange({ type: "string", value })}
           css={{ flexGrow: 1 }}
         />
-        {onDelete && (
-          <Button
-            color="ghost"
-            prefix={<TrashIcon />}
-            onClick={onDelete}
-            css={{ flexShrink: 1 }}
-          />
-        )}
       </Flex>
-    </div>
+    </VerticalLayout>
   );
 };

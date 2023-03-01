@@ -14,7 +14,7 @@ import {
   EnhancedTooltipProvider,
 } from "@webstudio-is/design-system";
 import { StylePanel } from "~/builder/features/style-panel";
-import { PropsPanel } from "~/builder/features/props-panel";
+import { PropsPanelContainer } from "~/builder/features/props-panel";
 import { FloatingPanelProvider } from "~/builder/shared/floating-panel";
 import { theme } from "@webstudio-is/design-system";
 import { selectedInstanceStore } from "~/shared/nano-states";
@@ -73,7 +73,7 @@ export const Inspector = ({ publish }: InspectorProps) => {
             <StylePanel publish={publish} selectedInstance={selectedInstance} />
           </TabsContent>
           <TabsContent value="props" css={contentStyle}>
-            <PropsPanel
+            <PropsPanelContainer
               publish={publish}
               key={selectedInstance.id /* Re-render when instance changes */}
               selectedInstance={selectedInstance}

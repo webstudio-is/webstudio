@@ -66,6 +66,7 @@ export { Flex } from "./components/flex";
 export { Grid } from "./components/grid";
 export * from "./components/primitives/dnd";
 export * from "./components/primitives/numeric-gesture-control";
+export * from "./components/primitives/is-truncated";
 
 // Deprecated
 

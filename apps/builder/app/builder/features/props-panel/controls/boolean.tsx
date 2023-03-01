@@ -1,6 +1,5 @@
-import { Button, Switch, Label, Flex } from "@webstudio-is/design-system";
-import { TrashIcon } from "@webstudio-is/icons";
-import { type ControlProps, getLabel } from "../shared";
+import { Switch, useId } from "@webstudio-is/design-system";
+import { type ControlProps, getLabel, HorizontalLayout } from "../shared";
 
 export const BooleanControl = ({
   meta,
@@ -8,18 +7,20 @@ export const BooleanControl = ({
   propName,
   onChange,
   onDelete,
-}: ControlProps<"boolean", "boolean">) => (
-  <div>
-    <Label>{getLabel(meta, propName)}</Label>
-    <Flex justify="between">
+}: ControlProps<"boolean", "boolean">) => {
+  const id = useId();
+
+  return (
+    <HorizontalLayout
+      id={id}
+      label={getLabel(meta, propName)}
+      onDelete={onDelete}
+    >
       <Switch
-        name={propName}
+        id={id}
         checked={prop?.value ?? false}
         onCheckedChange={(value) => onChange({ type: "boolean", value })}
       />
-      {onDelete && (
-        <Button color="ghost" prefix={<TrashIcon />} onClick={onDelete} />
-      )}
-    </Flex>
-  </div>
-);
+    </HorizontalLayout>
+  );
+};

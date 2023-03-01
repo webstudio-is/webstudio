@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { nanoid } from "nanoid";
 import type { Instance, Prop } from "@webstudio-is/project-build";
-import { getComponentPropsMeta } from "@webstudio-is/react-sdk";
+import type { WsComponentPropsMeta } from "@webstudio-is/react-sdk";
 import type { PropMeta, PropValue } from "./shared";
 
 type PropOrName = { prop?: Prop; propName: string };
@@ -79,7 +79,8 @@ const getDefaultMetaForType = (type: Prop["type"]): PropMeta => {
 
 type UsePropsLogicInput = {
   props: Prop[];
-  instance: Instance;
+  meta: WsComponentPropsMeta;
+  instanceId: Instance["id"];
   updateProp: (update: Prop) => void;
   deleteProp: (id: Prop["id"]) => void;
 };
@@ -109,19 +110,15 @@ const getAndDelete = <Value>(map: Map<string, Value>, key: string) => {
 };
 
 /**
- * usePropsLogic expects that key={instance.id} is used on the ancestor component
+ * usePropsLogic expects that key={instanceId} is used on the ancestor component
  */
 export const usePropsLogic = ({
   props: savedProps,
-  instance,
+  meta,
+  instanceId,
   updateProp,
   deleteProp,
 }: UsePropsLogicInput): UsePropsLogicOutput => {
-  const meta = getComponentPropsMeta(instance.component);
-  if (meta === undefined) {
-    throw new Error(`Could not get meta for compoent "${instance.component}"`);
-  }
-
   // we will delete items from these maps as we categorize the props
   const unprocessedSaved = new Map(savedProps.map((prop) => [prop.name, prop]));
   const unprocessedKnown = new Map(Object.entries(meta.props));
@@ -148,7 +145,7 @@ export const usePropsLogic = ({
     //   - they think that width is set to 0, but it's actually not set at all
     //
     if (prop === undefined && known.defaultValue !== undefined) {
-      prop = getStartingProp(instance.id, known, name);
+      prop = getStartingProp(instanceId, known, name);
     }
 
     return { prop, propName: name, meta: known };
@@ -197,7 +194,7 @@ export const usePropsLogic = ({
     if (propMeta === undefined) {
       throw new Error(`Attempting to add a prop not lised in remainingProps`);
     }
-    const prop = getStartingProp(instance.id, propMeta, propName);
+    const prop = getStartingProp(instanceId, propMeta, propName);
     if (prop) {
       updateProp(prop);
     }
@@ -207,7 +204,7 @@ export const usePropsLogic = ({
   const handleChange = ({ prop, propName }: PropOrName, value: PropValue) => {
     updateProp(
       prop === undefined
-        ? { id: nanoid(), instanceId: instance.id, name: propName, ...value }
+        ? { id: nanoid(), instanceId, name: propName, ...value }
         : { ...prop, ...value }
     );
   };

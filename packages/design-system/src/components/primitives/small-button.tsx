@@ -69,6 +69,9 @@ const styles = css({
       destructive: perVariantStyle("destructive"),
     },
   },
+  defaultVariants: {
+    variant: "normal",
+  },
 });
 
 type Props = {
