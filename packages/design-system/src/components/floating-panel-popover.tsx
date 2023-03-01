@@ -9,6 +9,7 @@ export const FloatingPanelPopover = Primitive.Root;
 const contentStyles = css(floatingPanelStyles, {
   minWidth: theme.spacing[28],
   maxWidth: "max-content",
+  maxHeight: "80vh",
 });
 
 export const FloatingPanelPopoverContent = React.forwardRef(
