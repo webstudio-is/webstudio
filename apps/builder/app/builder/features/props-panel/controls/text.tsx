@@ -37,12 +37,18 @@ const AsInput = ({
         value={localValue.value}
         onChange={(event) => localValue.set(event.target.value)}
         onBlur={localValue.save}
+        onKeyDown={(event) => {
+          if (event.key === "Enter") {
+            localValue.save();
+          }
+        }}
         css={{ width: 120 }}
       />
     </HorizontalLayout>
   );
 };
 
+// @todo: TextArea should support `rows` prop
 const TEXTAREA_LINE_HEIGHT = 16;
 
 const AsTextarea = ({

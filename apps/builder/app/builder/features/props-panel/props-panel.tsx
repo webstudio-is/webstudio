@@ -38,10 +38,10 @@ const itemToString = (item: NameAndLabel | null) =>
   item ? getLabel(item, item.name) : "";
 
 const Row = ({ children }: { children: React.ReactNode }) => (
-  <Box css={{ px: theme.spacing[9] }}>{children}</Box>
+  <Flex css={{ px: theme.spacing[9] }} gap="2" direction="column">
+    {children}
+  </Flex>
 );
-
-// const RowsSeparator = () => <Separator css={{ my: theme.spacing[5] }} />;
 
 const InstanceInfo = ({
   componentMeta,
@@ -115,6 +115,10 @@ const Combobox = ({
   );
 };
 
+// @todo:
+//   at this point we need the <Property> wrapper only because
+//   of complicated `onChange` inside.
+//   need to refactor this somehow
 const Property = ({
   meta,
   prop,
@@ -131,34 +135,31 @@ const Property = ({
   onChange: (value: PropValue) => void;
   onDelete?: () => void;
   setCssProperty: SetCssProperty;
-}) => (
-  <Box css={{ mb: theme.spacing[9] }}>
-    {renderControl({
-      meta,
-      prop,
-      propName,
-      onDelete,
-      onChange: (propValue, asset) => {
-        onChange(propValue);
+}) =>
+  renderControl({
+    meta,
+    prop,
+    propName,
+    onDelete,
+    onChange: (propValue, asset) => {
+      onChange(propValue);
 
-        // @todo: better way to do this?
-        if (
-          component === "Image" &&
-          propName === "src" &&
-          asset &&
-          "width" in asset.meta &&
-          "height" in asset.meta
-        ) {
-          setCssProperty("aspectRatio")({
-            type: "unit",
-            unit: "number",
-            value: asset.meta.width / asset.meta.height,
-          });
-        }
-      },
-    })}
-  </Box>
-);
+      // @todo: better way to do this?
+      if (
+        component === "Image" &&
+        propName === "src" &&
+        asset &&
+        "width" in asset.meta &&
+        "height" in asset.meta
+      ) {
+        setCssProperty("aspectRatio")({
+          type: "unit",
+          unit: "number",
+          value: asset.meta.width / asset.meta.height,
+        });
+      }
+    },
+  });
 
 const AddPropertyForm = ({
   availableProps,
@@ -213,8 +214,13 @@ export const PropsPanelUI = ({
       </Row>
 
       <Separator />
+
+      {/* @todo: 
+            need to refactor or add a new CollapsibleSection, 
+            this one has a wrong layout/design 
+       */}
       <CollapsibleSection label="Properties" isOpenDefault>
-        <div>
+        <Flex gap="2" direction="column">
           {logic.addedProps.map(({ prop, propName, meta }) => (
             <Property
               key={propName}
@@ -247,7 +253,7 @@ export const PropsPanelUI = ({
           >
             Add property
           </Button>
-        </div>
+        </Flex>
       </CollapsibleSection>
     </Box>
   );
