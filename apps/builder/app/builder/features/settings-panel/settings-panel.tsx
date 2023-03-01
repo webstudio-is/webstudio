@@ -20,7 +20,7 @@ export const SettingsPanel = ({ selectedInstance }: SettingsPanelProps) => {
           defaultValue={selectedInstance.label}
           onChange={(event) => {
             const { value } = event.target;
-            value.trim() ? set("label", value) : set("label", undefined);
+            set("label", value.trim() || undefined);
           }}
         />
       </Flex>
