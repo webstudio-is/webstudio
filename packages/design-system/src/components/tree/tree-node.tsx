@@ -209,6 +209,36 @@ const ItemContainer = styled(Flex, {
   },
 });
 
+const useScrollIntoView = (
+  element: HTMLElement | null,
+  {
+    isDragging,
+    isDropTarget,
+    isSelected,
+  }: { isDragging: boolean; isDropTarget: boolean; isSelected: boolean }
+) => {
+  const isDraggingRef = useRef(isDragging);
+  isDraggingRef.current = isDragging;
+  const isDropTargetRef = useRef(isDropTarget);
+  isDropTargetRef.current = isDropTarget;
+  const elementRef = useRef(element);
+  elementRef.current = element;
+
+  // Scroll the selected button into view when selected from canvas.
+  useEffect(() => {
+    if (
+      isSelected &&
+      isDraggingRef.current === false &&
+      isDropTargetRef.current === false
+    ) {
+      elementRef.current?.scrollIntoView({
+        behavior: "smooth",
+        block: "nearest",
+      });
+    }
+  }, [isSelected]);
+};
+
 export type TreeItemRenderProps<Data extends { id: string }> = {
   dropTargetItemId?: string;
   onMouseEnter?: (item: Data) => void;
@@ -282,15 +312,11 @@ export const TreeItemBody = <Data extends { id: string }>({
   const isDragging = dropTargetItemId !== undefined;
   const isDropTarget = dropTargetItemId === itemData.id;
 
-  // Scroll the selected button into view when selected from canvas.
-  useEffect(() => {
-    if (isSelected && isDragging === false && isDropTarget === false) {
-      itemButtonRef.current?.scrollIntoView({
-        behavior: "smooth",
-        block: "nearest",
-      });
-    }
-  }, [isSelected, isDragging, isDropTarget]);
+  useScrollIntoView(itemButtonRef.current, {
+    isSelected,
+    isDragging,
+    isDropTarget,
+  });
 
   return (
     <ItemContainer
