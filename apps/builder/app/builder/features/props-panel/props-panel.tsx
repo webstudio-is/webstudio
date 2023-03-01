@@ -27,7 +27,7 @@ import {
 import { renderControl } from "./controls/combined";
 import { usePropsLogic, type NameAndLabel } from "./use-props-logic";
 import { type PropMeta, type PropValue, getLabel } from "./shared";
-import { useState } from "react";
+import { useState, type ReactNode } from "react";
 import {
   getComponentPropsMeta,
   getComponentMeta,
@@ -37,7 +37,7 @@ import {
 const itemToString = (item: NameAndLabel | null) =>
   item ? getLabel(item, item.name) : "";
 
-const Row = ({ children, css }: { children: React.ReactNode; css?: CSS }) => (
+const Row = ({ children, css }: { children: ReactNode; css?: CSS }) => (
   <Flex css={{ px: theme.spacing[9], ...css }} gap="2" direction="column">
     {children}
   </Flex>
