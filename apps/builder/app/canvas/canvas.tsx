@@ -94,12 +94,6 @@ export const Canvas = ({
   data,
   getComponent,
 }: CanvasProps): JSX.Element | null => {
-  if (data.build === null) {
-    throw new Error("Build is null");
-  }
-  if (data.tree === null) {
-    throw new Error("Tree is null");
-  }
   const isBuilderReady = useSubscribeBuilderReady();
   useSetAssets(data.assets);
   useSetBreakpoints(data.build.breakpoints);

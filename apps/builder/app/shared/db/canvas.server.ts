@@ -1,8 +1,5 @@
 import type { CanvasData, Project } from "@webstudio-is/project";
-import {
-  loadBuildByProjectId,
-  loadTreeById,
-} from "@webstudio-is/project-build/server";
+import { loadBuildByProjectId } from "@webstudio-is/project-build/server";
 import { db as projectDb } from "@webstudio-is/project/server";
 import { loadByProject } from "@webstudio-is/asset-uploader/server";
 import type { AppContext } from "@webstudio-is/trpc-interface/server";
@@ -101,26 +98,10 @@ export const loadCanvasData = async (
     throw new Error(`Page ${props.pageIdOrPath} not found`);
   }
 
-  const [tree, assets] = await Promise.all([
-    loadTreeById(
-      {
-        projectId: props.project.id,
-        treeId: page.treeId,
-      },
-      context
-    ),
-
-    loadByProject(props.project.id, context),
-  ]);
-
-  if (tree === null) {
-    throw new Error(`Tree not found for project ${props.project.id}`);
-  }
+  const assets = await loadByProject(props.project.id, context);
 
   return {
     build,
-    tree,
-    buildId: build.id,
     page,
     assets,
   };

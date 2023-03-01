@@ -237,7 +237,6 @@ export type BuilderProps = {
   project: Project;
   pages: Pages;
   pageId: string;
-  treeId: string;
   buildId: string;
   buildOrigin: string;
   authReadToken: string;
@@ -249,7 +248,6 @@ export const Builder = ({
   project,
   pages,
   pageId,
-  treeId,
   buildId,
   buildOrigin,
   authReadToken,
@@ -265,7 +263,6 @@ export const Builder = ({
   useBuilderStore(publish);
   useSyncServer({
     buildId,
-    treeId,
     projectId: project.id,
     authToken,
     authPermit,

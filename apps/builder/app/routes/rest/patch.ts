@@ -1,6 +1,6 @@
 import type { ActionArgs } from "@remix-run/node";
 import type { SyncItem } from "immerhin";
-import type { Build, Tree } from "@webstudio-is/project-build";
+import type { Build } from "@webstudio-is/project-build";
 import {
   patchBreakpoints,
   patchProps,
@@ -14,17 +14,12 @@ import { createContext } from "~/shared/context.server";
 
 type PatchData = {
   transactions: Array<SyncItem>;
-  treeId: Tree["id"];
   buildId: Build["id"];
   projectId: Project["id"];
 };
 
 export const action = async ({ request }: ActionArgs) => {
-  const { treeId, buildId, projectId, transactions }: PatchData =
-    await request.json();
-  if (treeId === undefined) {
-    return { errors: "Tree id required" };
-  }
+  const { buildId, projectId, transactions }: PatchData = await request.json();
   if (buildId === undefined) {
     return { errors: "Build id required" };
   }

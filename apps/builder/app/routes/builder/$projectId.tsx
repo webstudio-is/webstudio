@@ -45,8 +45,6 @@ export const loader = async ({
   const devBuild = await loadBuildByProjectId(project.id, "dev");
 
   const pages = devBuild.pages;
-  const page =
-    pages.pages.find((page) => page.id === pageIdParam) ?? pages.homePage;
 
   const authReadToken = await createAuthReadToken({ projectId: project.id });
   const authToken = url.searchParams.get("authToken") ?? undefined;
@@ -55,7 +53,6 @@ export const loader = async ({
     project,
     pages,
     pageId: pageIdParam || devBuild.pages.homePage.id,
-    treeId: page.treeId,
     buildId: devBuild.id,
     buildOrigin: getBuildOrigin(request),
     authReadToken,
