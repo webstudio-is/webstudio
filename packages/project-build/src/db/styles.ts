@@ -19,7 +19,44 @@ import {
 const parseValue = (
   styleValue: StoredStyleDecl["value"],
   assetsMap: Map<string, Asset>
-) => {
+): StyleDecl["value"] => {
+  if (styleValue.type === "layers") {
+    return {
+      type: "layers" as const,
+      value: styleValue.value.map((style) => {
+        if (style.type === "image") {
+          const item = style.value;
+          const asset = assetsMap.get(item.value);
+          if (asset === undefined) {
+            warnOnce(true, `Asset with assetId "${item.value}" not found`);
+
+            return {
+              type: "invalid" as const,
+              value: JSON.stringify(styleValue.value),
+            };
+          }
+
+          if (asset.type !== "image") {
+            warnOnce(true, `Asset with assetId "${item.value}" not an image`);
+            return {
+              type: "invalid" as const,
+              value: JSON.stringify(styleValue.value),
+            };
+          }
+
+          return {
+            type: "image" as const,
+            value: {
+              type: "asset" as const,
+              value: asset,
+            },
+          };
+        }
+        return style;
+      }),
+    };
+  }
+
   if (styleValue.type === "image") {
     const item = styleValue.value;
     const asset = assetsMap.get(item.value);
@@ -66,6 +103,17 @@ export const parseStyles = async (
         assetIds.push(item.value);
       }
     }
+
+    if (styleValue.type === "layers") {
+      for (const layer of styleValue.value) {
+        if (layer.type === "image") {
+          const item = layer.value;
+          if (item.type === "asset") {
+            assetIds.push(item.value);
+          }
+        }
+      }
+    }
   }
 
   // Load all assets
@@ -97,7 +145,9 @@ export const parseStyles = async (
 /**
  * prepare value to store in db
  */
-const serializeValue = (styleValue: StyleDecl["value"]) => {
+const serializeValue = (
+  styleValue: StyleDecl["value"]
+): StoredStyleDecl["value"] => {
   if (styleValue.type === "image") {
     const asset = styleValue.value;
     return {
@@ -109,6 +159,26 @@ const serializeValue = (styleValue: StyleDecl["value"]) => {
       },
     };
   }
+  if (styleValue.type === "layers") {
+    return {
+      type: "layers" as const,
+      value: styleValue.value.map((item) => {
+        if (item.type === "image") {
+          const asset = item.value;
+          return {
+            type: "image" as const,
+            value: {
+              type: asset.type,
+              // only asset id is stored in db
+              value: asset.value.id,
+            },
+          };
+        }
+        return item;
+      }),
+    };
+  }
+
   return styleValue;
 };
 

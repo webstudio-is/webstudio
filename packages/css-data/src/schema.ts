@@ -30,7 +30,7 @@ const Unit = z.union([
 
 export type Unit = z.infer<typeof Unit>;
 
-const UnitValue = z.object({
+export const UnitValue = z.object({
   type: z.literal("unit"),
   unit: Unit,
   value: z.number(),
@@ -38,7 +38,7 @@ const UnitValue = z.object({
 
 export type UnitValue = z.infer<typeof UnitValue>;
 
-const KeywordValue = z.object({
+export const KeywordValue = z.object({
   type: z.literal("keyword"),
   // @todo use exact type
   value: z.string(),
@@ -48,7 +48,7 @@ export type KeywordValue = z.infer<typeof KeywordValue>;
 /**
  * Valid unparsed css value
  **/
-const UnparsedValue = z.object({
+export const UnparsedValue = z.object({
   type: z.literal("unparsed"),
   value: z.string(),
 });
@@ -77,7 +77,7 @@ export type ImageValue = z.infer<typeof ImageValue>;
 
 // We want to be able to render the invalid value
 // and show it is invalid visually, without saving it to the db
-const InvalidValue = z.object({
+export const InvalidValue = z.object({
   type: z.literal("invalid"),
   value: z.string(),
 });
@@ -91,11 +91,15 @@ export type UnsetValue = z.infer<typeof UnsetValue>;
 
 // To support background layers https://developer.mozilla.org/en-US/docs/Web/CSS/background
 // and similar comma separated css properties
-const ArrayValue = z.object({
+// InvalidValue used in case of asset not found
+export const LayersValue = z.object({
   type: z.literal("layers"),
-  value: z.array(z.union([UnitValue, KeywordValue, UnparsedValue, ImageValue])),
+  value: z.array(
+    z.union([UnitValue, KeywordValue, UnparsedValue, ImageValue, InvalidValue])
+  ),
 });
-export type ArrayValue = z.infer<typeof ArrayValue>;
+
+export type LayersValue = z.infer<typeof LayersValue>;
 
 export const TupleValueItem = z.union([UnitValue, KeywordValue, UnparsedValue]);
 export type TupleValueItem = z.infer<typeof TupleValueItem>;
@@ -104,6 +108,7 @@ export const TupleValue = z.object({
   type: z.literal("tuple"),
   value: z.array(TupleValueItem),
 });
+
 export type TupleValue = z.infer<typeof TupleValue>;
 
 /**
@@ -118,7 +123,7 @@ export const validStaticValueTypes = [
   "rgb",
   "image",
   "unparsed",
-  "array",
+  "layers",
   "tuple",
 ] as const;
 
@@ -132,11 +137,14 @@ const SharedStaticStyleValue = z.union([
   FontFamilyValue,
   RgbValue,
   UnparsedValue,
-  ArrayValue,
   TupleValue,
 ]);
 
-const ValidStaticStyleValue = z.union([ImageValue, SharedStaticStyleValue]);
+const ValidStaticStyleValue = z.union([
+  ImageValue,
+  LayersValue,
+  SharedStaticStyleValue,
+]);
 
 export type ValidStaticStyleValue = z.infer<typeof ValidStaticStyleValue>;
 

@@ -36,6 +36,10 @@ const Thumbnail = styled("div", {
   backgroundImage: "linear-gradient(yellow, red)",
 });
 
+const Panel = styled("div", {
+  width: theme.spacing[30],
+});
+
 const ListItem = (props: {
   hidden: boolean;
   labelColor: "default" | "preset" | "local" | "remote";
@@ -84,7 +88,7 @@ export const Declarative = (props: {
   const [pressed, onPressedChange] = React.useState(false);
 
   return (
-    <>
+    <Panel>
       <StorySection title="Configurable">
         <FloatingPanelPopover>
           <FloatingPanelPopoverTrigger asChild>
@@ -161,6 +165,6 @@ export const Declarative = (props: {
           )}
         </StoryGrid>
       </StorySection>
-    </>
+    </Panel>
   );
 };

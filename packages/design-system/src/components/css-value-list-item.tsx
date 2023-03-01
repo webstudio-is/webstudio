@@ -20,7 +20,6 @@ const Item = styled(Flex, {
   backgroundColor: theme.colors.backgroundPanel,
   paddingRight: theme.spacing[9],
   height: theme.spacing[13],
-  width: theme.spacing[30],
   position: "relative",
 
   "&:focus-visible, &[data-focused=true], &[data-state=open]": {
@@ -34,6 +33,7 @@ const Item = styled(Flex, {
       pointerEvents: "none",
     },
 
+    outline: "none",
     backgroundColor: theme.colors.backgroundHover,
   },
   "&:hover": {
