@@ -12,18 +12,11 @@ export const useSettingsLogic = ({
 }) => {
   const changes = useRef<SettingUpdate>({});
 
-  const set = (
-    setting: keyof SettingUpdate,
-    value: SettingUpdate[keyof SettingUpdate]
-  ) => {
-    switch (setting) {
-      case "label": {
-        changes.current[setting] = value;
-      }
-    }
+  const setLabel = (value: SettingUpdate[keyof SettingUpdate]) => {
+    changes.current.label = value || undefined;
   };
 
-  const update = () => {
+  const updateLabel = () => {
     store.createTransaction([instancesStore], (instances) => {
       const instance = instances.get(selectedInstance.id);
       if (instance !== undefined) {
@@ -34,13 +27,13 @@ export const useSettingsLogic = ({
 
   const handleKeyDown: KeyboardEventHandler = (event) => {
     if (event.key === "Enter") {
-      update();
+      updateLabel();
     }
   };
 
   return {
-    set,
-    handleBlur: update,
+    setLabel,
+    handleBlur: updateLabel,
     handleKeyDown,
   };
 };

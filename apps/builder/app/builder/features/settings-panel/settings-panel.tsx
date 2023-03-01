@@ -8,7 +8,7 @@ type SettingsPanelProps = {
 };
 
 export const SettingsPanel = ({ selectedInstance }: SettingsPanelProps) => {
-  const { set, handleBlur, handleKeyDown } = useSettingsLogic({
+  const { setLabel, handleBlur, handleKeyDown } = useSettingsLogic({
     selectedInstance,
   });
   const label = getComponentMeta(selectedInstance.component)?.label;
@@ -22,8 +22,7 @@ export const SettingsPanel = ({ selectedInstance }: SettingsPanelProps) => {
           placeholder={label}
           defaultValue={selectedInstance.label}
           onChange={(event) => {
-            const { value } = event.target;
-            set("label", value.trim() || undefined);
+            setLabel(event.target.value.trim());
           }}
         />
       </Flex>
