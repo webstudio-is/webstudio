@@ -20,9 +20,3 @@ export type Build = {
   props: [Prop["id"], Prop][];
   instances: [InstancesItem["id"], InstancesItem][];
 };
-
-export type Tree = {
-  id: string;
-  projectId: string;
-  buildId: string;
-};

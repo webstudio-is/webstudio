@@ -1,6 +1,5 @@
 import { z } from "zod";
 import type { Data } from "@webstudio-is/react-sdk";
-import type { Build } from "@webstudio-is/project-build";
 
 const MIN_TITLE_LENGTH = 2;
 
@@ -24,6 +23,4 @@ export type Project = z.infer<typeof Project>;
 export const Projects = z.array(Project);
 export type Projects = z.infer<typeof Projects>;
 
-export type CanvasData = Data & {
-  buildId: Build["id"];
-};
+export type CanvasData = Data;
