@@ -118,7 +118,7 @@ export const useLocalValue = <Type,>(
 
 type LayoutProps = {
   label: string;
-  id: string;
+  id?: string;
   onDelete?: () => void;
   children: ReactNode;
 };
