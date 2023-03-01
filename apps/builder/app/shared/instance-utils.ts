@@ -9,12 +9,14 @@ import {
   styleSourcesStore,
   instancesStore,
   patchInstancesMutable,
+  selectedPageStore,
 } from "./nano-states";
 import {
   createInstancesIndex,
   DroppableTarget,
-  findSubtree,
+  findParentInstance,
   findSubtreeLocalStyleSources,
+  findTreeInstances,
   insertInstanceMutable,
   reparentInstanceMutable,
 } from "./tree-utils";
@@ -47,7 +49,12 @@ export const reparentInstance = (
 };
 
 export const deleteInstance = (targetInstanceId: Instance["id"]) => {
-  const rootInstance = rootInstanceContainer.get();
+  const rootInstanceId = selectedPageStore.get()?.rootInstanceId;
+  // @todo tell user they can't delete root
+  if (targetInstanceId === rootInstanceId) {
+    return;
+  }
+
   store.createTransaction(
     [
       instancesStore,
@@ -57,17 +64,8 @@ export const deleteInstance = (targetInstanceId: Instance["id"]) => {
       stylesStore,
     ],
     (instances, props, styleSourceSelections, styleSources, styles) => {
-      if (rootInstance === undefined) {
-        return;
-      }
-      // @todo tell user they can't delete root
-      if (targetInstanceId === rootInstance?.id) {
-        return;
-      }
-      const { parentInstance, subtreeIds } = findSubtree(
-        rootInstance,
-        targetInstanceId
-      );
+      const parentInstance = findParentInstance(instances, targetInstanceId);
+      const subtreeIds = findTreeInstances(instances, targetInstanceId);
       const subtreeLocalStyleSourceIds = findSubtreeLocalStyleSources(
         subtreeIds,
         styleSources,
@@ -79,8 +77,11 @@ export const deleteInstance = (targetInstanceId: Instance["id"]) => {
 
       removeByMutable(
         parentInstance.children,
-        (child) => child.type === "instance" && child.id === targetInstanceId
+        (child) => child.type === "id" && child.value === targetInstanceId
       );
+      for (const instanceId of subtreeIds) {
+        instances.delete(instanceId);
+      }
       // delete props and styles of deleted instance and its descendants
       for (const prop of props.values()) {
         if (subtreeIds.has(prop.instanceId)) {
@@ -100,7 +101,6 @@ export const deleteInstance = (targetInstanceId: Instance["id"]) => {
       }
 
       selectedInstanceIdStore.set(parentInstance.id);
-      patchInstancesMutable(rootInstance, instances);
     }
   );
 };

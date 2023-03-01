@@ -69,9 +69,7 @@ export const patchInstancesMutable = (
   instances: Instances
 ) => {
   const oldInstancesIndex = createInstancesIndex(rootInstance);
-  const deletedInstanceIds = new Set<Instance["id"]>(instances.keys());
   for (const oldInstance of oldInstancesIndex.instancesById.values()) {
-    deletedInstanceIds.delete(oldInstance.id);
     const instance = instances.get(oldInstance.id);
     const convertedOldInstance: InstancesItem = {
       type: "instance",
@@ -91,9 +89,6 @@ export const patchInstancesMutable = (
       continue;
     }
     instances.set(oldInstance.id, convertedOldInstance);
-  }
-  for (const deletedId of deletedInstanceIds) {
-    instances.delete(deletedId);
   }
 };
 
