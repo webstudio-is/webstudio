@@ -19,7 +19,7 @@ export type AppliesTo = Properties[StyleProperty]["appliesTo"];
 
 export type UnitGroup = keyof typeof units;
 
-type UnitEnum = typeof units[UnitGroup][number];
+type UnitEnum = (typeof units)[UnitGroup][number];
 
 const Unit = z.union([
   // expected tuple with at least single element
@@ -70,7 +70,7 @@ export type RgbValue = z.infer<typeof RgbValue>;
 
 export const ImageValue = z.object({
   type: z.literal("image"),
-  value: z.array(z.object({ type: z.literal("asset"), value: ImageAsset })),
+  value: z.object({ type: z.literal("asset"), value: ImageAsset }),
 });
 
 export type ImageValue = z.infer<typeof ImageValue>;
@@ -89,6 +89,14 @@ const UnsetValue = z.object({
 });
 export type UnsetValue = z.infer<typeof UnsetValue>;
 
+// To support background layers https://developer.mozilla.org/en-US/docs/Web/CSS/background
+// and similar comma separated css properties
+const ArrayValue = z.object({
+  type: z.literal("layers"),
+  value: z.array(z.union([UnitValue, KeywordValue, UnparsedValue, ImageValue])),
+});
+export type ArrayValue = z.infer<typeof ArrayValue>;
+
 export const validStaticValueTypes = [
   "unit",
   "keyword",
@@ -96,6 +104,7 @@ export const validStaticValueTypes = [
   "rgb",
   "image",
   "unparsed",
+  "array",
 ] as const;
 
 /**
@@ -108,6 +117,7 @@ const SharedStaticStyleValue = z.union([
   FontFamilyValue,
   RgbValue,
   UnparsedValue,
+  ArrayValue,
 ]);
 
 const ValidStaticStyleValue = z.union([ImageValue, SharedStaticStyleValue]);

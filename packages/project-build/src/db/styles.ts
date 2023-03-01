@@ -21,24 +21,32 @@ const parseValue = (
   assetsMap: Map<string, Asset>
 ) => {
   if (styleValue.type === "image") {
+    const item = styleValue.value;
+    const asset = assetsMap.get(item.value);
+
+    if (asset === undefined) {
+      warnOnce(true, `Asset with assetId "${item.value}" not found`);
+
+      return {
+        type: "invalid" as const,
+        value: JSON.stringify(styleValue.value),
+      };
+    }
+
+    if (asset.type !== "image") {
+      warnOnce(true, `Asset with assetId "${item.value}" not an image`);
+      return {
+        type: "invalid" as const,
+        value: JSON.stringify(styleValue.value),
+      };
+    }
+
     return {
       type: "image" as const,
-      value: styleValue.value.flatMap((item) => {
-        const asset = assetsMap.get(item.value);
-        if (asset === undefined) {
-          warnOnce(true, `Asset with assetId "${item.value}" not found`);
-          return [];
-        }
-        if (asset.type === "image") {
-          return [
-            {
-              type: "asset" as const,
-              value: asset,
-            },
-          ];
-        }
-        return [];
-      }),
+      value: {
+        type: "asset" as const,
+        value: asset,
+      },
     };
   }
   return styleValue;
@@ -53,10 +61,9 @@ export const parseStyles = async (
   const assetIds: string[] = [];
   for (const { value: styleValue } of storedStyles) {
     if (styleValue.type === "image") {
-      for (const item of styleValue.value) {
-        if (item.type === "asset") {
-          assetIds.push(item.value);
-        }
+      const item = styleValue.value;
+      if (item.type === "asset") {
+        assetIds.push(item.value);
       }
     }
   }
@@ -92,13 +99,14 @@ export const parseStyles = async (
  */
 const serializeValue = (styleValue: StyleDecl["value"]) => {
   if (styleValue.type === "image") {
+    const asset = styleValue.value;
     return {
       type: "image" as const,
-      value: styleValue.value.map((asset) => ({
+      value: {
         type: asset.type,
         // only asset id is stored in db
         value: asset.value.id,
-      })),
+      },
     };
   }
   return styleValue;

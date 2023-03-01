@@ -7,7 +7,7 @@ import {
 
 const StoredImageValue = z.object({
   type: z.literal("image"),
-  value: z.array(z.object({ type: z.literal("asset"), value: z.string() })),
+  value: z.object({ type: z.literal("asset"), value: z.string() }),
 });
 
 export const StoredStyleDecl = z.object({
