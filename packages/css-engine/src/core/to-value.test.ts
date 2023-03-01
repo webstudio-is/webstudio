@@ -67,7 +67,7 @@ describe("Convert WS CSS Values to native CSS strings", () => {
 
   test("array", () => {
     const value = toValue({
-      type: "array",
+      type: "layers",
       value: [
         {
           type: "keyword",

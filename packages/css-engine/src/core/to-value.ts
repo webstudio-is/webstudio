@@ -70,7 +70,7 @@ export const toValue = (
     return value.value;
   }
 
-  if (value.type === "array") {
+  if (value.type === "layers") {
     return value.value.map((v) => toValue(v, options)).join(",");
   }
 

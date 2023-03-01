@@ -89,8 +89,10 @@ const UnsetValue = z.object({
 });
 export type UnsetValue = z.infer<typeof UnsetValue>;
 
+// To support background layers https://developer.mozilla.org/en-US/docs/Web/CSS/background
+// and similar comma separated css properties
 const ArrayValue = z.object({
-  type: z.literal("array"),
+  type: z.literal("layers"),
   value: z.array(z.union([UnitValue, KeywordValue, UnparsedValue, ImageValue])),
 });
 export type ArrayValue = z.infer<typeof ArrayValue>;
