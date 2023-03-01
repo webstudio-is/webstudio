@@ -13,6 +13,7 @@ export const useSettingsLogic = ({
   const changes = useRef<SettingUpdate>({});
 
   const setLabel = (value: SettingUpdate[keyof SettingUpdate]) => {
+    // Empty string should be replaced with `undefined` so that we can render default label
     changes.current.label = value || undefined;
   };
 
