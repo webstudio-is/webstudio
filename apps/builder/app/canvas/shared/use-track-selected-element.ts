@@ -8,6 +8,7 @@ import {
 } from "~/shared/nano-states";
 import { publish } from "~/shared/pubsub";
 import { findClosestRichTextInstance } from "~/shared/tree-utils";
+import { componentAttribute } from "@webstudio-is/react-sdk";
 
 declare module "~/shared/pubsub" {
   export interface PubsubMap {
@@ -45,7 +46,7 @@ export const useTrackSelectedElement = () => {
       // If we click on an element that is not a component, we search for a parent component.
       if (element.dataset.wsComponent === undefined) {
         const instanceElement = element.closest<HTMLElement>(
-          "[data-ws-component]"
+          `[${componentAttribute}]`
         );
         if (instanceElement === null) {
           return;

@@ -9,10 +9,7 @@ export const DropTargetOutline = ({
 }) => {
   return (
     <Outline rect={dropTarget.rect}>
-      <Label
-        component={dropTarget.instance.component}
-        instanceRect={dropTarget.rect}
-      />
+      <Label instance={dropTarget.instance} instanceRect={dropTarget.rect} />
     </Outline>
   );
 };

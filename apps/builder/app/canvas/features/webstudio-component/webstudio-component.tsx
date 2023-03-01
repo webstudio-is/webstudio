@@ -7,6 +7,7 @@ import type { Instance, Prop } from "@webstudio-is/project-build";
 import {
   renderWebstudioComponentChildren,
   idAttribute,
+  componentAttribute,
 } from "@webstudio-is/react-sdk";
 import type { GetComponent } from "@webstudio-is/react-sdk";
 import {
@@ -97,7 +98,7 @@ export const WebstudioComponentDev = ({
     // we should replace id, data-component and data-id with "data-ws"=instance.id and grab the rest always over the id
     // for this we need to also make search by id fast
     id: instance.id,
-    "data-ws-component": instance.component,
+    [componentAttribute]: instance.component,
     [idAttribute]: instance.id,
     onClick: (event: MouseEvent) => {
       if (

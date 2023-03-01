@@ -2,6 +2,7 @@ import { useStore } from "@nanostores/react";
 import {
   hoveredInstanceIdStore,
   hoveredInstanceOutlineStore,
+  instancesStore,
   selectedInstanceIdStore,
   useTextEditingInstanceId,
 } from "~/shared/nano-states";
@@ -13,12 +14,16 @@ export const HoveredInstanceOutline = () => {
   const hoveredInstanceId = useStore(hoveredInstanceIdStore);
   const instanceOutline = useStore(hoveredInstanceOutlineStore);
   const [textEditingInstanceId] = useTextEditingInstanceId();
+  const instances = useStore(instancesStore);
 
   const isEditingText = textEditingInstanceId !== undefined;
   const isHoveringSelectedInstance = selectedInstanceId === hoveredInstanceId;
+  const instance = hoveredInstanceId
+    ? instances.get(hoveredInstanceId)
+    : undefined;
 
   if (
-    hoveredInstanceId === undefined ||
+    instance === undefined ||
     instanceOutline === undefined ||
     isHoveringSelectedInstance ||
     isEditingText
@@ -28,10 +33,7 @@ export const HoveredInstanceOutline = () => {
 
   return (
     <Outline rect={instanceOutline.rect}>
-      <Label
-        component={instanceOutline.component}
-        instanceRect={instanceOutline.rect}
-      />
+      <Label instance={instance} instanceRect={instanceOutline.rect} />
     </Outline>
   );
 };
