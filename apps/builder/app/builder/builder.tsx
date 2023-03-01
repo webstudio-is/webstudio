@@ -31,14 +31,12 @@ import {
   useSetAuthPermit,
   useSetAuthToken,
   useSetIsPreviewMode,
-  useSetTreeId,
 } from "~/shared/nano-states";
 import { useClientSettings } from "./shared/client-settings";
 import { Navigator } from "./features/sidebar-left";
 import { getBuildUrl } from "~/shared/router-utils";
 import { useCopyPaste } from "~/shared/copy-paste";
 import { AssetsProvider } from "./shared/assets";
-import { minWidth } from "./features/breakpoints/width-setting";
 
 registerContainers();
 
@@ -239,7 +237,6 @@ export type BuilderProps = {
   project: Project;
   pages: Pages;
   pageId: string;
-  treeId: string;
   buildId: string;
   buildOrigin: string;
   authReadToken: string;
@@ -251,7 +248,6 @@ export const Builder = ({
   project,
   pages,
   pageId,
-  treeId,
   buildId,
   buildOrigin,
   authReadToken,
@@ -261,14 +257,12 @@ export const Builder = ({
   useSetAuthToken(authToken);
   useSetAuthPermit(authPermit);
   useSetProject(project);
-  useSetTreeId(treeId);
   useSetPages(pages);
   useSetCurrentPageId(pageId);
   const [publish, publishRef] = usePublish();
   useBuilderStore(publish);
   useSyncServer({
     buildId,
-    treeId,
     projectId: project.id,
     authToken,
     authPermit,
@@ -334,7 +328,7 @@ export const Builder = ({
               css={{
                 height: "100%",
                 width: "100%",
-                minWidth,
+                //minWidth,
               }}
             />
           </Workspace>

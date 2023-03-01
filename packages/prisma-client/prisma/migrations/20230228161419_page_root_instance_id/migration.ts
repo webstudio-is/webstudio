@@ -1,15 +1,23 @@
 import { PrismaClient } from "./client";
 
-type PropId = string;
 type InstanceId = string;
 type BuildId = string;
+type TreeId = string;
 
-type Prop = {
-  id: PropId;
-  instanceId: InstanceId;
+type Instance = {
+  id: InstanceId;
 };
 
-type Props = Prop[];
+type Page = {
+  id: string;
+  treeId: TreeId;
+  rootInstanceId: InstanceId;
+};
+
+type Pages = {
+  homePage: Page;
+  pages: Page[];
+};
 
 export default async () => {
   const client = new PrismaClient({
@@ -19,7 +27,10 @@ export default async () => {
 
   await client.$transaction(
     async (prisma) => {
-      let propsByBuildId = new Map<BuildId, Props>();
+      let rootInstanceIdByBuildId = new Map<
+        `${BuildId}:${TreeId}`,
+        InstanceId
+      >();
 
       const chunkSize = 1000;
       let cursor: undefined | { id: string; projectId: string } = undefined;
@@ -45,9 +56,12 @@ export default async () => {
 
         for (const tree of trees) {
           try {
-            const treeProps: Props = JSON.parse(tree.props);
-            const buildProps = propsByBuildId.get(tree.buildId) ?? [];
-            propsByBuildId.set(tree.buildId, [...buildProps, ...treeProps]);
+            const instances: Instance[] = JSON.parse(tree.instances);
+            const rootInstanceId = instances[0].id;
+            rootInstanceIdByBuildId.set(
+              `${tree.buildId}:${tree.id}`,
+              rootInstanceId
+            );
           } catch {
             console.info(`Tree ${tree.id} cannot be converted`);
           }
@@ -76,14 +90,23 @@ export default async () => {
         hasNext = builds.length === chunkSize;
 
         for (const build of builds) {
-          const props = propsByBuildId.get(build.id) ?? [];
-          build.props = JSON.stringify(props);
+          const { homePage, pages }: Pages = JSON.parse(build.pages);
+          homePage.rootInstanceId = rootInstanceIdByBuildId.get(
+            `${build.id}:${homePage.treeId}`
+          ) as string;
+          for (const page of pages) {
+            page.rootInstanceId = rootInstanceIdByBuildId.get(
+              `${build.id}:${page.treeId}`
+            ) as string;
+          }
+          build.pages = JSON.stringify({ homePage, pages });
         }
+
         await Promise.all(
-          builds.map(({ id, projectId, props }) =>
+          builds.map(({ id, projectId, pages }) =>
             prisma.build.update({
               where: { id_projectId: { id, projectId } },
-              data: { props },
+              data: { pages },
             })
           )
         );

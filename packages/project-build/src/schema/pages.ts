@@ -14,7 +14,7 @@ const commonPageFields = {
   name: z.string().refine((val) => val !== "", "Can't be empty"),
   title: Title,
   meta: z.record(z.string(), z.string()),
-  treeId: z.string(),
+  rootInstanceId: z.string(),
 } as const;
 
 const HomePage = z.object({

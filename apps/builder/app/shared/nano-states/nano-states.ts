@@ -11,6 +11,7 @@ import type {
   Instance,
   Instances,
   InstancesItem,
+  Page,
   Prop,
   Props,
   StyleDecl,
@@ -20,7 +21,6 @@ import type {
   StyleSources,
   StyleSourceSelection,
   StyleSourceSelections,
-  Tree,
 } from "@webstudio-is/project-build";
 import type { Style } from "@webstudio-is/css-data";
 import type {
@@ -40,10 +40,10 @@ const useValue = <T>(atom: WritableAtom<T>) => {
   return [value, atom.set] as const;
 };
 
-export const treeIdStore = atom<undefined | Tree["id"]>(undefined);
-export const useSetTreeId = (treeId: Tree["id"]) => {
+export const selectedPageStore = atom<undefined | Page>(undefined);
+export const useSetSelectedPage = (page: Page) => {
   useSyncInitializeOnce(() => {
-    treeIdStore.set(treeId);
+    selectedPageStore.set(page);
   });
 };
 
@@ -97,7 +97,10 @@ export const patchInstancesMutable = (
   }
 };
 
-const denormalizeTree = (instances: Instances): undefined | Instance => {
+const denormalizeTree = (
+  instances: Instances,
+  rootInstanceId: Instance["id"]
+): undefined | Instance => {
   const convertTree = (instance: InstancesItem) => {
     const legacyInstance: Instance = {
       type: "instance",
@@ -117,16 +120,22 @@ const denormalizeTree = (instances: Instances): undefined | Instance => {
     }
     return legacyInstance;
   };
-  const rootInstance = Array.from(instances.values())[0];
+  const rootInstance = instances.get(rootInstanceId);
   if (rootInstance === undefined) {
     return;
   }
   return convertTree(rootInstance);
 };
 
-export const rootInstanceContainer = computed(instancesStore, (instances) => {
-  return denormalizeTree(instances);
-});
+export const rootInstanceContainer = computed(
+  [instancesStore, selectedPageStore],
+  (instances, selectedPage) => {
+    if (selectedPage === undefined) {
+      return undefined;
+    }
+    return denormalizeTree(instances, selectedPage.rootInstanceId);
+  }
+);
 export const useRootInstance = () => {
   const value = useStore(rootInstanceContainer);
   return [value] as const;
@@ -196,19 +205,14 @@ export const styleSourcesStore = atom<StyleSources>(new Map());
  * scoped to current tree or whole project
  */
 export const availableStyleSourcesStore = shallowComputed(
-  [styleSourcesStore, treeIdStore],
-  (styleSources, treeId) => {
-    if (treeId === undefined) {
-      return [];
-    }
+  [styleSourcesStore],
+  (styleSources) => {
     const availableStylesSources: StyleSource[] = [];
     for (const styleSource of styleSources.values()) {
       if (styleSource.type === "local") {
         continue;
       }
-      if (styleSource.treeId === treeId || styleSource.treeId === undefined) {
-        availableStylesSources.push(styleSource);
-      }
+      availableStylesSources.push(styleSource);
     }
     return availableStylesSources;
   }
@@ -333,13 +337,8 @@ export const selectedInstanceStore = computed(
 export const selectedInstanceBrowserStyleStore = atom<undefined | Style>();
 
 export const selectedInstanceStyleSourcesStore = computed(
-  [
-    styleSourceSelectionsStore,
-    styleSourcesStore,
-    selectedInstanceIdStore,
-    treeIdStore,
-  ],
-  (styleSourceSelections, styleSources, selectedInstanceId, treeId) => {
+  [styleSourceSelectionsStore, styleSourcesStore, selectedInstanceIdStore],
+  (styleSourceSelections, styleSources, selectedInstanceId) => {
     const selectedInstanceStyleSources: StyleSource[] = [];
     if (selectedInstanceId === undefined) {
       return selectedInstanceStyleSources;
@@ -358,10 +357,9 @@ export const selectedInstanceStyleSourcesStore = computed(
     }
     // generate style source when selection has not local style sources
     // it is synchronized whenever styles are updated
-    if (hasLocal === false && treeId !== undefined) {
+    if (hasLocal === false) {
       selectedInstanceStyleSources.unshift({
         type: "local",
-        treeId,
         id: nanoid(),
       });
     }

@@ -1,15 +1,16 @@
 import { PrismaClient } from "./client";
 
-type PropId = string;
 type InstanceId = string;
 type BuildId = string;
 
-type Prop = {
-  id: PropId;
-  instanceId: InstanceId;
-};
+type Child =
+  | { type: "text"; value: string }
+  | { type: "id"; value: InstanceId };
 
-type Props = Prop[];
+type Instance = {
+  id: InstanceId;
+  children: Child[];
+};
 
 export default async () => {
   const client = new PrismaClient({
@@ -19,7 +20,7 @@ export default async () => {
 
   await client.$transaction(
     async (prisma) => {
-      let propsByBuildId = new Map<BuildId, Props>();
+      let instancesByBuildId = new Map<BuildId, Instance[]>();
 
       const chunkSize = 1000;
       let cursor: undefined | { id: string; projectId: string } = undefined;
@@ -45,9 +46,12 @@ export default async () => {
 
         for (const tree of trees) {
           try {
-            const treeProps: Props = JSON.parse(tree.props);
-            const buildProps = propsByBuildId.get(tree.buildId) ?? [];
-            propsByBuildId.set(tree.buildId, [...buildProps, ...treeProps]);
+            const treeInstances: Instance[] = JSON.parse(tree.instances);
+            const buildInstances = instancesByBuildId.get(tree.buildId) ?? [];
+            instancesByBuildId.set(tree.buildId, [
+              ...buildInstances,
+              ...treeInstances,
+            ]);
           } catch {
             console.info(`Tree ${tree.id} cannot be converted`);
           }
@@ -76,14 +80,15 @@ export default async () => {
         hasNext = builds.length === chunkSize;
 
         for (const build of builds) {
-          const props = propsByBuildId.get(build.id) ?? [];
-          build.props = JSON.stringify(props);
+          const instances = instancesByBuildId.get(build.id) ?? [];
+          build.instances = JSON.stringify(instances);
         }
+
         await Promise.all(
-          builds.map(({ id, projectId, props }) =>
+          builds.map(({ id, projectId, instances }) =>
             prisma.build.update({
               where: { id_projectId: { id, projectId } },
-              data: { props },
+              data: { instances },
             })
           )
         );

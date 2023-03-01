@@ -18,11 +18,5 @@ export type Build = {
   styleSources: [StyleSource["id"], StyleSource][];
   styleSourceSelections: [Instance["id"], StyleSourceSelection][];
   props: [Prop["id"], Prop][];
-};
-
-export type Tree = {
-  id: string;
-  projectId: string;
-  buildId: string;
   instances: [InstancesItem["id"], InstancesItem][];
 };

@@ -32,7 +32,7 @@ import {
   useSubscribeScrollState,
   useIsPreviewMode,
   useSetAssets,
-  useSetTreeId,
+  useSetSelectedPage,
 } from "~/shared/nano-states";
 import { usePublishScrollState } from "./shared/use-publish-scroll-state";
 import { useDragAndDrop } from "./shared/use-drag-drop";
@@ -94,21 +94,15 @@ export const Canvas = ({
   data,
   getComponent,
 }: CanvasProps): JSX.Element | null => {
-  if (data.build === null) {
-    throw new Error("Build is null");
-  }
-  if (data.tree === null) {
-    throw new Error("Tree is null");
-  }
   const isBuilderReady = useSubscribeBuilderReady();
-  useSetTreeId(data.tree.id);
   useSetAssets(data.assets);
   useSetBreakpoints(data.build.breakpoints);
   useSetProps(data.build.props);
   useSetStyles(data.build.styles);
   useSetStyleSources(data.build.styleSources);
   useSetStyleSourceSelections(data.build.styleSourceSelections);
-  useSetInstances(data.tree.instances);
+  useSetInstances(data.build.instances);
+  useSetSelectedPage(data.page);
   setParams(data.params ?? null);
   useCanvasStore(publish);
   const [isPreviewMode] = useIsPreviewMode();
@@ -122,7 +116,7 @@ export const Canvas = ({
   useSharedShortcuts();
 
   useEffect(() => {
-    const rootInstanceId = data.tree?.instances[0]?.[0];
+    const rootInstanceId = data.page.rootInstanceId;
     if (rootInstanceId !== undefined) {
       setDataCollapsed(rootInstanceId);
     }
