@@ -8,14 +8,17 @@ type SettingsPanelProps = {
 };
 
 export const SettingsPanel = ({ selectedInstance }: SettingsPanelProps) => {
-  const { set, handlers } = useSettingsLogic({ selectedInstance });
+  const { set, handleBlur, handleKeyDown } = useSettingsLogic({
+    selectedInstance,
+  });
   const label = getComponentMeta(selectedInstance.component)?.label;
   return (
     <Flex css={{ px: theme.spacing[9] }}>
       <Flex gap="1" direction="column" grow>
         <Label>Instance Name</Label>
         <TextField
-          {...handlers}
+          onBlur={handleBlur}
+          onKeyDown={handleKeyDown}
           placeholder={label}
           defaultValue={selectedInstance.label}
           onChange={(event) => {

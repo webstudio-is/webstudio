@@ -32,7 +32,7 @@ export const useSettingsLogic = ({
     });
   };
 
-  const onKeyDown: KeyboardEventHandler = (event) => {
+  const handleKeyDown: KeyboardEventHandler = (event) => {
     if (event.key === "Enter") {
       update();
     }
@@ -40,6 +40,7 @@ export const useSettingsLogic = ({
 
   return {
     set,
-    handlers: { onBlur: update, onKeyDown },
+    handleBlur: update,
+    handleKeyDown,
   };
 };
