@@ -17,7 +17,6 @@ import {
 import { utils } from "@webstudio-is/project";
 import { instancesIndexStore } from "~/shared/nano-states";
 import { getInstanceAncestorsAndSelf } from "~/shared/tree-utils";
-import { humanizeString } from "~/shared/string-utils";
 
 const instanceRelatedProps = {
   getItemPathWithPositions: utils.tree.getInstancePathWithPositions,
@@ -109,5 +108,5 @@ export const getInstanceLabel = (
   instance: { label?: string },
   meta: WsComponentMeta
 ) => {
-  return instance.label ? humanizeString(instance.label) : meta.label;
+  return instance.label || meta.label;
 };
