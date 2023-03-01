@@ -282,6 +282,16 @@ export const TreeItemBody = <Data extends { id: string }>({
   const isDragging = dropTargetItemId !== undefined;
   const isDropTarget = dropTargetItemId === itemData.id;
 
+  // Scroll the selected button into view when selected from canvas.
+  useEffect(() => {
+    if (isSelected && isDragging === false && isDropTarget === false) {
+      itemButtonRef.current?.scrollIntoView({
+        behavior: "smooth",
+        block: "nearest",
+      });
+    }
+  }, [isSelected, isDragging, isDropTarget]);
+
   return (
     <ItemContainer
       onMouseEnter={onMouseEnter && (() => onMouseEnter(itemData))}
