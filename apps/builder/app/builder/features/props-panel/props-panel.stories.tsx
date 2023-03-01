@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { ButtonIcon } from "@webstudio-is/icons";
-import { PropsPanelUI } from "./props-panel";
+import { PropsPanel } from "./props-panel";
 import { usePropsLogic } from "./use-props-logic";
 import type { Prop } from "@webstudio-is/project-build";
 import type {
@@ -270,7 +270,7 @@ export const Story = () => {
 
   return (
     <div style={{ width: 240, border: "dashed 3px #e3e3e3" }}>
-      <PropsPanelUI
+      <PropsPanel
         propsLogic={logic}
         component="Button"
         componentMeta={componentMeta}

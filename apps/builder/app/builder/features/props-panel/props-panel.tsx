@@ -177,7 +177,7 @@ const AddPropertyForm = ({
 );
 
 // A UI componet with minimum logic that can be demoed in Storybook etc.
-export const PropsPanelUI = ({
+export const PropsPanel = ({
   propsLogic: logic,
   component,
   componentMeta,
@@ -262,7 +262,7 @@ export const PropsPanelUI = ({
   );
 };
 
-export const PropsPanel = ({
+export const PropsPanelContainer = ({
   selectedInstance: instance,
   publish,
 }: {
@@ -301,7 +301,7 @@ export const PropsPanel = ({
   });
 
   return (
-    <PropsPanelUI
+    <PropsPanel
       propsLogic={logic}
       component={instance.component}
       componentMeta={componentMeta}
