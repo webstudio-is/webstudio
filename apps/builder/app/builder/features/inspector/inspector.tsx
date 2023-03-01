@@ -18,6 +18,7 @@ import { PropsPanel } from "~/builder/features/props-panel";
 import { FloatingPanelProvider } from "~/builder/shared/floating-panel";
 import { theme } from "@webstudio-is/design-system";
 import { selectedInstanceStore } from "~/shared/nano-states";
+import { SettingsPanel } from "../settings-panel";
 
 type InspectorProps = {
   publish: Publish;
@@ -55,17 +56,17 @@ export const Inspector = ({ publish }: InspectorProps) => {
       skipDelayDuration={0}
     >
       <FloatingPanelProvider container={tabsRef}>
-        <Flex as={Tabs} defaultValue="style" ref={tabsRef}>
+        <Flex as={Tabs} defaultValue="style" grow ref={tabsRef}>
           <TabsList>
             <TabsTrigger value="style">
               <DeprecatedText2>Style</DeprecatedText2>
             </TabsTrigger>
             {/* @note: events would be part of props */}
             <TabsTrigger value="props">
-              <DeprecatedText2>Props</DeprecatedText2>
+              <DeprecatedText2>Properties</DeprecatedText2>
             </TabsTrigger>
-            <TabsTrigger value="inspect">
-              <DeprecatedText2>Inspect</DeprecatedText2>
+            <TabsTrigger value="settings">
+              <DeprecatedText2>Settings</DeprecatedText2>
             </TabsTrigger>
           </TabsList>
           <TabsContent value="style" css={contentStyle}>
@@ -77,6 +78,9 @@ export const Inspector = ({ publish }: InspectorProps) => {
               key={selectedInstance.id /* Re-render when instance changes */}
               selectedInstance={selectedInstance}
             />
+          </TabsContent>
+          <TabsContent value="settings" css={contentStyle}>
+            <SettingsPanel selectedInstance={selectedInstance} />
           </TabsContent>
         </Flex>
       </FloatingPanelProvider>

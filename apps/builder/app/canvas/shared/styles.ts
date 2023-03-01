@@ -11,6 +11,7 @@ import {
 import type { StyleDecl } from "@webstudio-is/project-build";
 import {
   collapsedAttribute,
+  componentAttribute,
   getComponentMeta,
   getComponentNames,
   idAttribute,
@@ -132,9 +133,12 @@ export const GlobalStyles = () => {
       const meta = getComponentMeta(component);
       const presetStyle = meta?.presetStyle;
       if (presetStyle !== undefined) {
-        presetStylesEngine.addStyleRule(`[data-ws-component=${component}]`, {
-          style: presetStyle,
-        });
+        presetStylesEngine.addStyleRule(
+          `[${componentAttribute}=${component}]`,
+          {
+            style: presetStyle,
+          }
+        );
       }
     }
     presetStylesEngine.render();

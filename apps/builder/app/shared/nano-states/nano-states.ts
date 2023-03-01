@@ -97,6 +97,7 @@ export const patchInstancesMutable = (
   }
 };
 
+// @todo will be removed soon
 const denormalizeTree = (
   instances: Instances,
   rootInstanceId: Instance["id"]
@@ -106,6 +107,7 @@ const denormalizeTree = (
       type: "instance",
       id: instance.id,
       component: instance.component,
+      label: instance.label,
       children: [],
     };
     for (const child of instance.children) {
@@ -385,7 +387,7 @@ export const hoveredInstanceIdStore = atom<undefined | Instance["id"]>(
   undefined
 );
 export const hoveredInstanceOutlineStore = atom<
-  undefined | { component: string; rect: DOMRect }
+  undefined | { instanceId: Instance["id"]; rect: DOMRect }
 >(undefined);
 
 export const isPreviewModeStore = atom<boolean>(false);
