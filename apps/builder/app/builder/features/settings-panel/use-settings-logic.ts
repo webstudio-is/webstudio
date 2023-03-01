@@ -3,21 +3,22 @@ import store from "immerhin";
 import { type KeyboardEventHandler, useRef } from "react";
 import { instancesStore } from "~/shared/nano-states";
 
-type SettingUpdate = { setting: "label"; value: string };
+type SettingUpdate = { label?: string };
 
 export const useSettingsLogic = ({
   selectedInstance,
 }: {
   selectedInstance: Instance;
 }) => {
-  const changes = useRef<Map<SettingUpdate["setting"], SettingUpdate["value"]>>(
-    new Map()
-  );
+  const changes = useRef<SettingUpdate>({});
 
-  const set = ({ setting, value }: SettingUpdate) => {
+  const set = (
+    setting: keyof SettingUpdate,
+    value: SettingUpdate[keyof SettingUpdate]
+  ) => {
     switch (setting) {
       case "label": {
-        changes.current.set(setting, value);
+        changes.current[setting] = value;
       }
     }
   };
@@ -26,7 +27,7 @@ export const useSettingsLogic = ({
     store.createTransaction([instancesStore], (instances) => {
       const instance = instances.get(selectedInstance.id);
       if (instance !== undefined) {
-        instance.label = changes.current.get("label");
+        instance.label = changes.current.label;
       }
     });
   };
