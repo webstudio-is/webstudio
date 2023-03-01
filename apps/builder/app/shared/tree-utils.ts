@@ -242,7 +242,7 @@ const traverseInstancesMap = (
     return;
   }
   callback(instance);
-  for (const child of instance?.children) {
+  for (const child of instance.children) {
     if (child.type === "id") {
       traverseInstancesMap(instances, child.value, callback);
     }
