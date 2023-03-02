@@ -1,16 +1,15 @@
+import { useStore } from "@nanostores/react";
 import { Flex, Label, TextField, theme } from "@webstudio-is/design-system";
-import type { Instance } from "@webstudio-is/project-build";
 import { getComponentMeta } from "@webstudio-is/react-sdk";
+import { selectedInstanceStore } from "~/shared/nano-states";
 import { useSettingsLogic } from "./use-settings-logic";
 
-type SettingsPanelProps = {
-  selectedInstance: Instance;
-};
-
-export const SettingsPanel = ({ selectedInstance }: SettingsPanelProps) => {
-  const { setLabel, handleBlur, handleKeyDown } = useSettingsLogic({
-    selectedInstance,
-  });
+export const SettingsPanel = () => {
+  const { setLabel, handleBlur, handleKeyDown } = useSettingsLogic();
+  const selectedInstance = useStore(selectedInstanceStore);
+  if (selectedInstance === undefined) {
+    return null;
+  }
   const label = getComponentMeta(selectedInstance.component)?.label;
   return (
     <Flex css={{ px: theme.spacing[9] }}>

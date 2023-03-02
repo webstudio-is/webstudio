@@ -1,4 +1,3 @@
-import type { Instance } from "@webstudio-is/project-build";
 import store from "immerhin";
 import {
   type KeyboardEventHandler,
@@ -6,18 +5,12 @@ import {
   useEffect,
   useCallback,
 } from "react";
-import { instancesStore } from "~/shared/nano-states";
+import { instancesStore, selectedInstanceStore } from "~/shared/nano-states";
 
 type SettingUpdate = { label?: string };
 
-export const useSettingsLogic = ({
-  selectedInstance,
-}: {
-  selectedInstance: Instance;
-}) => {
+export const useSettingsLogic = () => {
   const changes = useRef<SettingUpdate>({});
-  const selectedInstanceRef = useRef(selectedInstance);
-  selectedInstanceRef.current = selectedInstance;
 
   const setLabel = (value: SettingUpdate[keyof SettingUpdate]) => {
     // Empty string should be replaced with `undefined` so that we can render default label
@@ -25,13 +18,17 @@ export const useSettingsLogic = ({
   };
 
   const updateLabel = useCallback(() => {
+    const selectedInstance = selectedInstanceStore.get();
+    if (selectedInstance === undefined) {
+      return;
+    }
     store.createTransaction([instancesStore], (instances) => {
-      const instance = instances.get(selectedInstanceRef.current.id);
+      const instance = instances.get(selectedInstance.id);
       if (instance !== undefined) {
         instance.label = changes.current.label;
       }
     });
-  }, [selectedInstanceRef]);
+  }, []);
 
   const handleKeyDown: KeyboardEventHandler = (event) => {
     if (event.key === "Enter") {
