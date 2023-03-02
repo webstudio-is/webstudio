@@ -1,6 +1,8 @@
 import { test, expect } from "@jest/globals";
 import type {
   Instance,
+  Instances,
+  InstancesItem,
   Prop,
   StyleDecl,
   Styles,
@@ -16,8 +18,10 @@ import {
   createInstancesIndex,
   findClosestDroppableTarget,
   findClosestRichTextInstance,
+  findParentInstance,
   findSubtree,
   findSubtreeLocalStyleSources,
+  findTreeInstances,
   getInstanceAncestorsAndSelf,
   insertInstanceMutable,
   reparentInstanceMutable,
@@ -36,6 +40,22 @@ const createInstance = (
     component,
     children: children,
   };
+};
+
+const createInstancePair = (
+  id: Instance["id"],
+  component: string,
+  children: InstancesItem["children"]
+): [Instance["id"], InstancesItem] => {
+  return [
+    id,
+    {
+      type: "instance",
+      id,
+      component,
+      children,
+    },
+  ];
 };
 
 const createProp = (id: string, instanceId: string): Prop => {
@@ -348,6 +368,50 @@ test("find subtree with all descendants and parent instance", () => {
   });
 
   expect(findSubtree(rootInstance, "root").parentInstance).toEqual(undefined);
+});
+
+test("find parent instance", () => {
+  const instances: Instances = new Map([
+    createInstancePair("1", "Body", [{ type: "id", value: "3" }]),
+    // this is outside of subtree
+    createInstancePair("2", "Box", []),
+    // these should be matched
+    createInstancePair("3", "Box", [
+      { type: "id", value: "4" },
+      { type: "id", value: "5" },
+    ]),
+    createInstancePair("4", "Box", []),
+    createInstancePair("5", "Box", []),
+    // this one is from other tree
+    createInstancePair("6", "Box", []),
+  ]);
+  expect(findParentInstance(instances, "4")).toEqual({
+    type: "instance",
+    id: "3",
+    component: "Box",
+    children: [
+      { type: "id", value: "4" },
+      { type: "id", value: "5" },
+    ],
+  });
+});
+
+test("find all tree instances", () => {
+  const instances: Instances = new Map([
+    createInstancePair("1", "Body", [{ type: "id", value: "3" }]),
+    // this is outside of subtree
+    createInstancePair("2", "Box", []),
+    // these should be matched
+    createInstancePair("3", "Box", [
+      { type: "id", value: "4" },
+      { type: "id", value: "5" },
+    ]),
+    createInstancePair("4", "Box", []),
+    createInstancePair("5", "Box", []),
+    // this one is from other tree
+    createInstancePair("6", "Box", []),
+  ]);
+  expect(findTreeInstances(instances, "3")).toEqual(new Set(["3", "4", "5"]));
 });
 
 test("clone instance tree and provide cloned ids map", () => {
