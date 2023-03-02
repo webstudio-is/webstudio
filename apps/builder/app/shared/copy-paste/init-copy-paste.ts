@@ -1,3 +1,5 @@
+import { textEditingInstanceIdStore } from "../nano-states";
+
 const isValidClipboardEvent = (event: ClipboardEvent) => {
   const selection = document.getSelection();
   if (selection?.type === "Range") {
@@ -77,6 +79,9 @@ export const initCopyPaste = (options: Options) => {
   };
 
   const handlePaste = (event: ClipboardEvent) => {
+    if (textEditingInstanceIdStore.get()) {
+      return;
+    }
     if (
       onPaste === undefined ||
       event.clipboardData === null ||
