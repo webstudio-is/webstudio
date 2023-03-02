@@ -22,6 +22,7 @@ import {
   insertInstancesCopyMutable,
   insertInstancesMutable,
   insertPropsCopyMutable,
+  insertStylesCopyMutable,
   insertStyleSourcesCopyMutable,
   insertStyleSourceSelectionsCopyMutable,
   reparentInstanceMutable,
@@ -602,6 +603,32 @@ test("insert style source selections copy and apply new instance ids and style s
         "token5",
       ]),
     ],
+  ]);
+});
+
+test("insert styles copy and apply new style source ids", () => {
+  const styles: Styles = new Map([
+    [`styleSource1:bp1:width`, createStyleDecl("styleSource1", "bp1")],
+    [`styleSource2:bp2:width`, createStyleDecl("styleSource2", "bp2")],
+    [`styleSource1:bp3:width`, createStyleDecl("styleSource1", "bp3")],
+    [`styleSource3:bp4:width`, createStyleDecl("styleSource3", "bp4")],
+  ]);
+  const copiedStyles = [
+    createStyleDecl("styleSource2", "bp2"),
+    createStyleDecl("styleSource3", "bp4"),
+  ];
+  const copiedStyleSourceIds = new Map<StyleSource["id"], StyleSource["id"]>([
+    ["styleSource2", "newStyleSource2"],
+    ["styleSource3", "newStyleSource3"],
+  ]);
+  insertStylesCopyMutable(styles, copiedStyles, copiedStyleSourceIds);
+  expect(Array.from(styles.entries())).toEqual([
+    [`styleSource1:bp1:width`, createStyleDecl("styleSource1", "bp1")],
+    [`styleSource2:bp2:width`, createStyleDecl("styleSource2", "bp2")],
+    [`styleSource1:bp3:width`, createStyleDecl("styleSource1", "bp3")],
+    [`styleSource3:bp4:width`, createStyleDecl("styleSource3", "bp4")],
+    [`newStyleSource2:bp2:width`, createStyleDecl("newStyleSource2", "bp2")],
+    [`newStyleSource3:bp4:width`, createStyleDecl("newStyleSource3", "bp4")],
   ]);
 });
 
