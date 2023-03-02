@@ -16,6 +16,8 @@ export const useSettingsLogic = ({
   selectedInstance: Instance;
 }) => {
   const changes = useRef<SettingUpdate>({});
+  const selectedInstanceRef = useRef(selectedInstance);
+  selectedInstanceRef.current = selectedInstance;
 
   const setLabel = (value: SettingUpdate[keyof SettingUpdate]) => {
     // Empty string should be replaced with `undefined` so that we can render default label
@@ -24,12 +26,12 @@ export const useSettingsLogic = ({
 
   const updateLabel = useCallback(() => {
     store.createTransaction([instancesStore], (instances) => {
-      const instance = instances.get(selectedInstance.id);
+      const instance = instances.get(selectedInstanceRef.current.id);
       if (instance !== undefined) {
         instance.label = changes.current.label;
       }
     });
-  }, [selectedInstance]);
+  }, [selectedInstanceRef]);
 
   const handleKeyDown: KeyboardEventHandler = (event) => {
     if (event.key === "Enter") {
