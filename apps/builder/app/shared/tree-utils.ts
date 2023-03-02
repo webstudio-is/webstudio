@@ -1,6 +1,6 @@
 import { nanoid } from "nanoid";
-import produce from "immer";
-import type {
+import {
+  getStyleDeclKey,
   Instance,
   Instances,
   InstancesItem,
@@ -191,34 +191,6 @@ export const findClosestRichTextInstance = (
     );
 };
 
-export const findSubtree = (
-  rootInstance: Instance,
-  targetInstanceId: Instance["id"]
-) => {
-  const instancesById = new Map<Instance["id"], Instance>();
-  const parentInstancesById = new Map<Instance["id"], Instance>();
-  const subtreeIds = new Set<Instance["id"]>();
-
-  traverseInstances(rootInstance, (child, instance) => {
-    // add target instance
-    if (child.id === targetInstanceId) {
-      subtreeIds.add(child.id);
-      parentInstancesById.set(child.id, instance);
-      instancesById.set(child.id, child);
-    }
-    // add all descendants of target instance
-    if (subtreeIds.has(instance.id)) {
-      subtreeIds.add(child.id);
-    }
-  });
-
-  return {
-    parentInstance: parentInstancesById.get(targetInstanceId),
-    targetInstance: instancesById.get(targetInstanceId),
-    subtreeIds,
-  };
-};
-
 export const findParentInstance = (
   instances: Instances,
   instanceId: Instance["id"]
@@ -258,88 +230,6 @@ export const findTreeInstances = (
     subtreeIds.add(instance.id);
   });
   return subtreeIds;
-};
-
-export const cloneInstance = (targetInstance: Instance) => {
-  const clonedInstanceIds = new Map<Instance["id"], Instance["id"]>();
-  const clonedInstance = produce((targetInstance) => {
-    const newId = nanoid();
-    clonedInstanceIds.set(targetInstance.id, newId);
-    targetInstance.id = newId;
-    traverseInstances(targetInstance, (instance) => {
-      const newId = nanoid();
-      clonedInstanceIds.set(instance.id, newId);
-      instance.id = newId;
-    });
-  })(targetInstance);
-  return {
-    clonedInstanceIds,
-    clonedInstance,
-  };
-};
-
-export const cloneProps = (
-  props: Props,
-  clonedInstanceIds: Map<Instance["id"], Instance["id"]>
-) => {
-  const clonedProps: Prop[] = [];
-  for (const prop of props.values()) {
-    const instanceId = clonedInstanceIds.get(prop.instanceId);
-    if (instanceId === undefined) {
-      continue;
-    }
-    clonedProps.push({
-      ...prop,
-      id: nanoid(),
-      instanceId,
-    });
-  }
-  return clonedProps;
-};
-
-export const cloneStyleSources = (
-  styleSources: StyleSources,
-  subsetIds: Set<StyleSource["id"]>
-) => {
-  const clonedStyleSourceIds = new Map<Instance["id"], Instance["id"]>();
-  const clonedStyleSources: StyleSource[] = [];
-  for (const styleSource of styleSources.values()) {
-    if (subsetIds.has(styleSource.id) === false) {
-      continue;
-    }
-    const newId = nanoid();
-    clonedStyleSourceIds.set(styleSource.id, newId);
-    clonedStyleSources.push({
-      ...styleSource,
-      id: newId,
-    });
-  }
-  return { clonedStyleSources, clonedStyleSourceIds };
-};
-
-export const cloneStyleSourceSelections = (
-  styleSourceSelections: StyleSourceSelections,
-  clonedInstanceIds: Map<Instance["id"], Instance["id"]>,
-  clonedStyleSourceIds: Map<Instance["id"], Instance["id"]>
-) => {
-  const clonedStyleSourceSelections: StyleSourceSelection[] = [];
-  for (const styleSourceSelection of styleSourceSelections.values()) {
-    const instanceId = clonedInstanceIds.get(styleSourceSelection.instanceId);
-    if (instanceId === undefined) {
-      continue;
-    }
-    // preserve style source id when not cloned
-    // which means it is non-local style source
-    const values = styleSourceSelection.values.map(
-      (styleSourceId) =>
-        clonedStyleSourceIds.get(styleSourceId) ?? styleSourceId
-    );
-    clonedStyleSourceSelections.push({
-      values,
-      instanceId,
-    });
-  }
-  return clonedStyleSourceSelections;
 };
 
 export const cloneStyles = (
@@ -387,4 +277,148 @@ export const findSubtreeLocalStyleSources = (
   }
 
   return subtreeLocalStyleSourceIds;
+};
+
+export const insertInstancesMutable = (
+  instances: Instances,
+  insertedInstances: InstancesItem[],
+  dropTarget: undefined | DroppableTarget
+) => {
+  if (dropTarget === undefined) {
+    return;
+  }
+  const parentInstance = instances.get(dropTarget.parentId);
+  if (parentInstance === undefined) {
+    return;
+  }
+
+  let treeRootInstanceId: undefined | Instance["id"] = undefined;
+  for (const instance of insertedInstances) {
+    if (treeRootInstanceId === undefined) {
+      treeRootInstanceId = instance.id;
+    }
+    instances.set(instance.id, instance);
+  }
+  if (treeRootInstanceId === undefined) {
+    return;
+  }
+
+  const { position } = dropTarget;
+  const dropTargetChild: InstancesItem["children"][number] = {
+    type: "id",
+    value: treeRootInstanceId,
+  };
+  if (position === "end") {
+    parentInstance.children.push(dropTargetChild);
+  } else {
+    parentInstance.children.splice(position, 0, dropTargetChild);
+  }
+};
+
+export const insertInstancesCopyMutable = (
+  instances: Instances,
+  copiedInstances: InstancesItem[],
+  dropTarget: undefined | DroppableTarget
+) => {
+  const copiedInstanceIds = new Map<Instance["id"], Instance["id"]>();
+  const copiedInstancesWithNewIds: InstancesItem[] = [];
+  for (const instance of copiedInstances) {
+    const newInstanceId = nanoid();
+    copiedInstanceIds.set(instance.id, newInstanceId);
+  }
+
+  for (const instance of copiedInstances) {
+    copiedInstancesWithNewIds.push({
+      ...instance,
+      id: copiedInstanceIds.get(instance.id) ?? instance.id,
+      children: instance.children.map((child) => {
+        if (child.type === "id") {
+          return {
+            type: "id",
+            value: copiedInstanceIds.get(child.value) ?? child.value,
+          };
+        }
+        return child;
+      }),
+    });
+  }
+
+  insertInstancesMutable(instances, copiedInstancesWithNewIds, dropTarget);
+
+  return copiedInstanceIds;
+};
+
+export const insertStyleSourcesCopyMutable = (
+  styleSources: StyleSources,
+  copiedStyleSources: StyleSource[]
+) => {
+  // store map of old ids to new ids to copy dependant data
+  const copiedStyleSourceIds = new Map<StyleSource["id"], StyleSource["id"]>();
+  for (const styleSource of copiedStyleSources) {
+    const newStyleSourceId = nanoid();
+    copiedStyleSourceIds.set(styleSource.id, newStyleSourceId);
+    styleSources.set(newStyleSourceId, {
+      ...styleSource,
+      id: newStyleSourceId,
+    });
+  }
+  return copiedStyleSourceIds;
+};
+
+export const insertPropsCopyMutable = (
+  props: Props,
+  copiedProps: Prop[],
+  copiedInstanceIds: Map<Instance["id"], Instance["id"]>
+) => {
+  for (const prop of copiedProps) {
+    const newInstanceId =
+      copiedInstanceIds.get(prop.instanceId) ?? prop.instanceId;
+    const newPropId = nanoid();
+    props.set(newPropId, {
+      ...prop,
+      id: newPropId,
+      instanceId: newInstanceId,
+    });
+  }
+};
+
+export const insertStyleSourceSelectionsCopyMutable = (
+  styleSourceSelections: StyleSourceSelections,
+  copiedStyleSourceSelections: StyleSourceSelection[],
+  copiedInstanceIds: Map<Instance["id"], Instance["id"]>,
+  copiedStyleSourceIds: Map<StyleSource["id"], StyleSource["id"]>
+) => {
+  for (const styleSourceSelection of copiedStyleSourceSelections) {
+    // preserve ids when no new id provided
+    // for example for non-local style source
+    const newInstanceId =
+      copiedInstanceIds.get(styleSourceSelection.instanceId) ??
+      styleSourceSelection.instanceId;
+    const newValues = styleSourceSelection.values.map(
+      (styleSourceId) =>
+        copiedStyleSourceIds.get(styleSourceId) ?? styleSourceId
+    );
+    styleSourceSelections.set(newInstanceId, {
+      instanceId: newInstanceId,
+      values: newValues,
+    });
+  }
+};
+
+export const insertStylesCopyMutable = (
+  styles: Styles,
+  copiedStyles: StyleDecl[],
+  copiedStyleSourceIds: Map<StyleSource["id"], StyleSource["id"]>
+) => {
+  for (const styleDecl of copiedStyles) {
+    // preserve ids when no new id provided
+    const newStyleSourceId =
+      copiedStyleSourceIds.get(styleDecl.styleSourceId) ??
+      styleDecl.styleSourceId;
+    const styleDeclCopy = {
+      ...styleDecl,
+      styleSourceId: newStyleSourceId,
+    };
+    styles.set(getStyleDeclKey(styleDeclCopy), styleDeclCopy);
+  }
 };
