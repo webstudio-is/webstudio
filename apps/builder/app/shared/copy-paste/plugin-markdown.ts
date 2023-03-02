@@ -29,10 +29,13 @@ const astTypeComponentMap: Record<string, Instance["component"]> = {
   heading: "Heading",
   strong: "Bold",
   emphasis: "Italic",
-  link: "Link",
+  link: "RichTextLink",
+  // @todo image should not be rendered inside paragraph
+  // we need to either have RichTextImage or support Image inside RichText
   image: "Image",
   blockquote: "Blockquote",
   code: "Code",
+  // @todo same problem as with image
   inlineCode: "Code",
   list: "List",
   listItem: "ListItem",
