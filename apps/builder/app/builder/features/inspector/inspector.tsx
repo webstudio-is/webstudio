@@ -80,7 +80,7 @@ export const Inspector = ({ publish }: InspectorProps) => {
             />
           </TabsContent>
           <TabsContent value="settings" css={contentStyle}>
-            <SettingsPanel selectedInstance={selectedInstance} />
+            <SettingsPanel />
           </TabsContent>
         </Flex>
       </FloatingPanelProvider>
