@@ -1,5 +1,3 @@
-import { textEditingInstanceIdStore } from "../nano-states";
-
 const isValidClipboardEvent = (event: ClipboardEvent) => {
   const selection = document.getSelection();
   if (selection?.type === "Range") {
@@ -79,9 +77,6 @@ export const initCopyPaste = (options: Options) => {
   };
 
   const handlePaste = (event: ClipboardEvent) => {
-    if (textEditingInstanceIdStore.get()) {
-      return;
-    }
     if (
       onPaste === undefined ||
       event.clipboardData === null ||
@@ -107,7 +102,9 @@ export const initCopyPaste = (options: Options) => {
     document.addEventListener("cut", handleCut);
   }
   if (onPaste) {
-    document.addEventListener("paste", handlePaste);
+    // Capture is required so we get the element before content-editable removes it
+    // This way we can detect when we are inside content-editable and ignore the event
+    document.addEventListener("paste", handlePaste, { capture: true });
   }
 
   return () => {
