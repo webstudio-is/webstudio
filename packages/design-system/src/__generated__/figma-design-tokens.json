@@ -921,6 +921,16 @@
           "type": "color",
           "description": "color for hovered state of flex control ui elements"
         }
+      },
+      "icon": {
+        "secondary": {
+          "value": "#c1c8cd",
+          "type": "color"
+        },
+        "main": {
+          "value": "#11181c",
+          "type": "color"
+        }
       }
     },
     "Brand": {
