@@ -396,6 +396,8 @@ export const color = {
   foregroundGridControlsDot: "#c7c7c7",
   foregroundGridControlsDotHover: "#707375",
   foregroundGridControlsFlexHover: "#96c7f2",
+  foregroundIconSecondary: "#c1c8cd",
+  foregroundIconMain: "#11181c",
   maintenanceLight: "#ededed",
   maintenanceMedium: "#c7c7c7",
   maintenanceDark: "#858585",
