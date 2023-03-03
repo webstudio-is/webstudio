@@ -3,13 +3,12 @@ import { css, theme } from "../stitches.config";
 import { Box } from "./box";
 import { Grid } from "./grid";
 
-const positions = `
-  0-0 0-50 0-100
-  50-0 50-50 50-100
-  100-0 100-50 100-100
-`
-  .split(/\s/)
-  .filter(Boolean);
+// prettier-ignore
+const positions = [
+  [0, 0],   [50, 0],   [100, 0],
+  [0, 50],  [50, 50], [100, 50],
+  [0, 100], [50, 100], [100, 100],
+];
 
 const containerStyle = css({
   padding: theme.spacing[4],
@@ -61,6 +60,7 @@ const useKeyboard = ({
   focusedPosition?: Position;
   onSelect: (position: Position) => void;
 }) => {
+  // -50 is to prevent the focus to be on the first item when the grid is not focused
   const [top, setTop] = useState(focusedPosition?.top ?? -50);
   const [left, setLeft] = useState(focusedPosition?.left ?? 0);
 
@@ -91,7 +91,7 @@ const useKeyboard = ({
     }
   };
 
-  return { handleKeyDown, focusedKey: `${top}-${left}` };
+  return { handleKeyDown, focusedKey: `${left}-${top}` };
 };
 
 type PositionGridProps = {
@@ -123,16 +123,21 @@ export const PositionGrid = ({
       data-focused={focused}
       className={containerStyle()}
     >
-      {positions.map((position) => (
-        <Box
-          key={position}
-          data-selected={
-            `${selectedPosition?.top}-${selectedPosition?.left}` === position
-          }
-          data-focused={focusedKey === position}
-          className={dotStyle()}
-        />
-      ))}
+      {positions.map(([left, top]) => {
+        const selectedKey = `${selectedPosition?.left}-${selectedPosition?.top}`;
+        const positionKey = `${left}-${top}`;
+        return (
+          <Box
+            key={positionKey}
+            data-selected={selectedKey === positionKey}
+            data-focused={focusedKey === positionKey}
+            className={dotStyle()}
+            onClick={() => {
+              onSelect({ left, top });
+            }}
+          />
+        );
+      })}
     </Grid>
   );
 };

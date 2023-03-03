@@ -14,8 +14,19 @@ export const PositionGrid = () => {
   });
   return (
     <Flex gap="3">
-      <PositionGridComponent onSelect={action("onSelect")} />
-      <PositionGridComponent focused onSelect={action("onSelect")} />
+      <PositionGridComponent
+        onSelect={(position) => {
+          setSelectedPosition(position);
+          action("onSelect")(position);
+        }}
+      />
+      <PositionGridComponent
+        focused
+        onSelect={(position) => {
+          setSelectedPosition(position);
+          action("onSelect")(position);
+        }}
+      />
       <PositionGridComponent
         focused
         selectedPosition={selectedPosition}
