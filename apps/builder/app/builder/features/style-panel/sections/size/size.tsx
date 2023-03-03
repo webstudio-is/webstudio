@@ -4,7 +4,7 @@ import { Grid } from "@webstudio-is/design-system";
 import { styleConfigByName } from "../../shared/configs";
 import type { RenderCategoryProps } from "../../style-sections";
 import { PropertyName } from "../../shared/property-name";
-import { TextControl } from "../../controls";
+import { SelectControl, TextControl } from "../../controls";
 import { ToggleGroupControl } from "../../controls/toggle/toggle-control";
 import {
   EyeconOpenIcon,
@@ -137,6 +137,18 @@ export const SizeSection = ({
         onValueChange={(value) =>
           setProperty("overflow")({ type: "keyword", value })
         }
+      />
+      <PropertyName
+        label={styleConfigByName.objectFit.label}
+        property="objectFit"
+        style={style}
+        onReset={() => deleteProperty("objectFit")}
+      />
+      <SelectControl
+        property="objectFit"
+        currentStyle={style}
+        setProperty={setProperty}
+        deleteProperty={deleteProperty}
       />
     </Grid>
   );
