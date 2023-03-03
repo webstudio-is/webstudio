@@ -49,12 +49,6 @@ export const reparentInstance = (
 };
 
 export const deleteInstance = (targetInstanceId: Instance["id"]) => {
-  const rootInstanceId = selectedPageStore.get()?.rootInstanceId;
-  // @todo tell user they can't delete root
-  if (targetInstanceId === rootInstanceId) {
-    return;
-  }
-
   store.createTransaction(
     [
       instancesStore,
@@ -71,14 +65,15 @@ export const deleteInstance = (targetInstanceId: Instance["id"]) => {
         styleSources,
         styleSourceSelections
       );
-      if (parentInstance === undefined) {
-        return;
+
+      // may not exist when delete root
+      if (parentInstance) {
+        removeByMutable(
+          parentInstance.children,
+          (child) => child.type === "id" && child.value === targetInstanceId
+        );
       }
 
-      removeByMutable(
-        parentInstance.children,
-        (child) => child.type === "id" && child.value === targetInstanceId
-      );
       for (const instanceId of subtreeIds) {
         instances.delete(instanceId);
       }
@@ -100,7 +95,22 @@ export const deleteInstance = (targetInstanceId: Instance["id"]) => {
         }
       }
 
-      selectedInstanceIdStore.set(parentInstance.id);
+      if (parentInstance) {
+        selectedInstanceIdStore.set(parentInstance.id);
+      }
     }
   );
+};
+
+export const deleteSelectedInstance = () => {
+  const selectedInstanceId = selectedInstanceIdStore.get();
+  const rootInstanceId = selectedPageStore.get()?.rootInstanceId;
+  // @todo tell user they can't delete root
+  if (
+    selectedInstanceId === undefined ||
+    selectedInstanceId === rootInstanceId
+  ) {
+    return;
+  }
+  deleteInstance(selectedInstanceId);
 };

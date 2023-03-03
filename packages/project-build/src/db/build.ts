@@ -234,10 +234,6 @@ export const deletePage = async ({
       throw new Error(`Page with id "${pageId}" not found`);
     }
 
-    // @todo cleanup style source selections of deleted pages
-    // @todo cleanup props of deleted pages
-    // @todo cleanup instances of deleted pages
-
     return {
       homePage: currentPages.homePage,
       pages: currentPages.pages.filter((page) => page.id !== pageId),
