@@ -113,10 +113,7 @@ export const WebstudioComponentDev = ({
     [componentAttribute]: instance.component,
     [idAttribute]: instance.id,
     onClick: (event: MouseEvent) => {
-      if (
-        instance.component === "Link" ||
-        instance.component === "RichTextLink"
-      ) {
+      if ((event.target as HTMLElement).closest("a")) {
         event.preventDefault();
       }
     },
