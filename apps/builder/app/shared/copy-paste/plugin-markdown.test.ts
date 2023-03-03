@@ -236,7 +236,7 @@ describe("Plugin Markdown", () => {
                     "value": "link",
                   },
                 ],
-                "component": "Link",
+                "component": "RichTextLink",
                 "id": "123",
                 "type": "instance",
               },

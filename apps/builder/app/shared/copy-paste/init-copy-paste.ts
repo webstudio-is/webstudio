@@ -102,7 +102,9 @@ export const initCopyPaste = (options: Options) => {
     document.addEventListener("cut", handleCut);
   }
   if (onPaste) {
-    document.addEventListener("paste", handlePaste);
+    // Capture is required so we get the element before content-editable removes it
+    // This way we can detect when we are inside content-editable and ignore the event
+    document.addEventListener("paste", handlePaste, { capture: true });
   }
 
   return () => {
@@ -113,7 +115,7 @@ export const initCopyPaste = (options: Options) => {
       document.removeEventListener("cut", handleCut);
     }
     if (onPaste) {
-      document.removeEventListener("paste", handlePaste);
+      document.removeEventListener("paste", handlePaste, { capture: true });
     }
   };
 };

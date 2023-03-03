@@ -1,9 +1,7 @@
-import { forwardRef, type ElementRef, type ComponentProps } from "react";
+import { forwardRef } from "react";
 import { Link } from "./link";
 
-type Props = ComponentProps<typeof Link>;
-
-export const RichTextLink = forwardRef<ElementRef<"a">, Props>((props, ref) => (
+export const RichTextLink: typeof Link = forwardRef((props, ref) => (
   <Link {...props} ref={ref} />
 ));
 
