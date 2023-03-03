@@ -21,6 +21,7 @@ export * from "./components/toolbar";
 export * from "./components/two-rows-icon-button-container";
 export * from "./components/small-icon-button";
 export * from "./components/list-position-indicator";
+export * from "./components/position-grid";
 
 // Not aligned
 
