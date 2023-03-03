@@ -115,7 +115,7 @@ export const initCopyPaste = (options: Options) => {
       document.removeEventListener("cut", handleCut);
     }
     if (onPaste) {
-      document.removeEventListener("paste", handlePaste);
+      document.removeEventListener("paste", handlePaste, { capture: true });
     }
   };
 };
