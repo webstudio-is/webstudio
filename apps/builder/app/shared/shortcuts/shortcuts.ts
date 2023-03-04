@@ -1,12 +1,11 @@
 import { Options, useHotkeys } from "react-hotkeys-hook";
 import store from "immerhin";
-import { selectedInstanceIdStore } from "../nano-states";
 import {
   zoomIn,
   zoomOut,
   selectBreakpointByOrderNumber,
 } from "../nano-states/breakpoints";
-import { deleteInstance } from "../instance-utils";
+import { deleteSelectedInstance } from "../instance-utils";
 
 export const shortcuts = {
   esc: "esc",
@@ -37,13 +36,7 @@ export const useSharedShortcuts = () => {
 
   useHotkeys(
     "backspace, delete",
-    () => {
-      const selectedInstanceId = selectedInstanceIdStore.get();
-      if (selectedInstanceId === undefined) {
-        return;
-      }
-      deleteInstance(selectedInstanceId);
-    },
+    deleteSelectedInstance,
     // prevent instance deletion while deleting text
     { enableOnFormTags: false, enableOnContentEditable: false },
     []
