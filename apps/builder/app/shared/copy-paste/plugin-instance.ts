@@ -181,7 +181,12 @@ export const onCopy = () => {
 
 export const onCut = () => {
   const selectedInstanceId = selectedInstanceIdStore.get();
-  if (selectedInstanceId === undefined) {
+  const rootInstanceId = selectedPageStore.get()?.rootInstanceId;
+  // @todo tell user they can't delete root
+  if (
+    selectedInstanceId === undefined ||
+    selectedInstanceId === rootInstanceId
+  ) {
     return;
   }
   const data = getTreeData(selectedInstanceId);
