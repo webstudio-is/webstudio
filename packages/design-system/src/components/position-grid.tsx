@@ -11,6 +11,7 @@ const positions = [
 ];
 
 const containerStyle = css({
+  background: theme.colors.backgroundControls,
   padding: theme.spacing[4],
   width: "fit-content",
   borderRadius: theme.borderRadius[4],

@@ -305,6 +305,9 @@ export const useStyleInfo = () => {
       const local = selectedStyle?.[property];
       const value =
         local ?? cascaded?.value ?? inherited?.value ?? preset ?? computed;
+      if (property === "objectPosition") {
+        console.log({ value, local, cascaded, inherited, preset, computed });
+      }
       if (value) {
         styleInfoData[property] = {
           value,

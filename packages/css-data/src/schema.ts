@@ -97,6 +97,15 @@ const ArrayValue = z.object({
 });
 export type ArrayValue = z.infer<typeof ArrayValue>;
 
+const PositionValue = z.object({
+  type: z.literal("position"),
+  value: z.object({
+    x: UnitValue,
+    y: UnitValue,
+  }),
+});
+export type PositionValue = z.infer<typeof PositionValue>;
+
 export const validStaticValueTypes = [
   "unit",
   "keyword",
@@ -105,6 +114,7 @@ export const validStaticValueTypes = [
   "image",
   "unparsed",
   "array",
+  "position",
 ] as const;
 
 /**
@@ -118,6 +128,7 @@ const SharedStaticStyleValue = z.union([
   RgbValue,
   UnparsedValue,
   ArrayValue,
+  PositionValue,
 ]);
 
 const ValidStaticStyleValue = z.union([ImageValue, SharedStaticStyleValue]);

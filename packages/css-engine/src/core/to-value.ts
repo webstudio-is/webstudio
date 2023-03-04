@@ -74,6 +74,10 @@ export const toValue = (
     return value.value.map((v) => toValue(v, options)).join(",");
   }
 
+  if (value.type === "position") {
+    return `${toValue(value.value.x)} ${toValue(value.value.y)}`;
+  }
+
   // Will give ts error in case of missing type
   assertUnreachable(value, `Unknown value type`);
 
