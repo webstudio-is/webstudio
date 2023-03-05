@@ -23,8 +23,12 @@ export type Data = {
   params?: Params;
 };
 
+export type RootPropsData = Omit<Data, "build"> & {
+  build: Pick<Data["build"], "instances" | "props">;
+};
+
 type RootProps = {
-  data: Data;
+  data: RootPropsData;
   Component?: (props: ComponentProps<typeof WebstudioComponent>) => JSX.Element;
   customComponents?: Parameters<typeof registerComponents>[0];
   getComponent: GetComponent;
