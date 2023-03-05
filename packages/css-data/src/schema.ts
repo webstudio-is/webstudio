@@ -97,14 +97,14 @@ const ArrayValue = z.object({
 });
 export type ArrayValue = z.infer<typeof ArrayValue>;
 
-const PositionValue = z.object({
-  type: z.literal("position"),
-  value: z.object({
-    x: UnitValue,
-    y: UnitValue,
-  }),
+export const TupleValueItem = z.union([UnitValue, KeywordValue, UnparsedValue]);
+export type TupleValueItem = z.infer<typeof TupleValueItem>;
+
+export const TupleValue = z.object({
+  type: z.literal("tuple"),
+  value: z.array(TupleValueItem),
 });
-export type PositionValue = z.infer<typeof PositionValue>;
+export type TupleValue = z.infer<typeof TupleValue>;
 
 export const validStaticValueTypes = [
   "unit",
@@ -114,7 +114,7 @@ export const validStaticValueTypes = [
   "image",
   "unparsed",
   "array",
-  "position",
+  "tuple",
 ] as const;
 
 /**
@@ -128,7 +128,7 @@ const SharedStaticStyleValue = z.union([
   RgbValue,
   UnparsedValue,
   ArrayValue,
-  PositionValue,
+  TupleValue,
 ]);
 
 const ValidStaticStyleValue = z.union([ImageValue, SharedStaticStyleValue]);

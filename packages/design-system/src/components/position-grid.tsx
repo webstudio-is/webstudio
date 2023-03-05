@@ -10,6 +10,27 @@ const positions = [
   [0, 100], [50, 100], [100, 100],
 ];
 
+type Position = { top: number; left: number };
+type MixedPosition = { top: number | string; left: number | string };
+
+const keywordNumberMap: Record<string, number> = {
+  left: 0,
+  top: 0,
+  center: 50,
+  right: 100,
+  bottom: 100,
+};
+
+const toNumericPosition = (position?: MixedPosition) => {
+  if (position === undefined) {
+    return;
+  }
+  return {
+    left: keywordNumberMap[position.left] ?? position.left,
+    top: keywordNumberMap[position.top] ?? position.top,
+  };
+};
+
 const containerStyle = css({
   background: theme.colors.backgroundControls,
   padding: theme.spacing[4],
@@ -51,8 +72,6 @@ const dotStyle = css({
     outlineOffset: -2,
   },
 });
-
-type Position = { top: number; left: number };
 
 const useKeyboard = ({
   onSelect,
@@ -97,7 +116,7 @@ const useKeyboard = ({
 
 type PositionGridProps = {
   focusedPosition?: Position;
-  selectedPosition?: Position;
+  selectedPosition?: MixedPosition;
   focused?: boolean;
   onSelect: (position: Position) => void;
 };
@@ -117,6 +136,7 @@ export const PositionGrid = ({
     onSelect,
     focusedPosition,
   });
+  const numericSelectedPosition = toNumericPosition(selectedPosition);
   return (
     <Grid
       tabIndex={0}
@@ -125,7 +145,7 @@ export const PositionGrid = ({
       className={containerStyle()}
     >
       {positions.map(([left, top]) => {
-        const selectedKey = `${selectedPosition?.left}-${selectedPosition?.top}`;
+        const selectedKey = `${numericSelectedPosition?.left}-${numericSelectedPosition?.top}`;
         const positionKey = `${left}-${top}`;
         return (
           <Box

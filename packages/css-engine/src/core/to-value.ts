@@ -74,8 +74,8 @@ export const toValue = (
     return value.value.map((v) => toValue(v, options)).join(",");
   }
 
-  if (value.type === "position") {
-    return `${toValue(value.value.x)} ${toValue(value.value.y)}`;
+  if (value.type === "tuple") {
+    return `${toValue(value.value[0])} ${toValue(value.value[1])}`;
   }
 
   // Will give ts error in case of missing type

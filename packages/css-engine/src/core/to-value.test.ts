@@ -101,13 +101,13 @@ describe("Convert WS CSS Values to native CSS strings", () => {
     expect(value).toBe("auto,10px,calc(10px),url(foo.png) /* id=1234567890 */");
   });
 
-  test("position", () => {
+  test("tuple", () => {
     const value = toValue({
-      type: "position",
-      value: {
-        x: { type: "unit", value: 10, unit: "px" },
-        y: { type: "unit", value: 20, unit: "px" },
-      },
+      type: "tuple",
+      value: [
+        { type: "unit", value: 10, unit: "px" },
+        { type: "unit", value: 20, unit: "px" },
+      ],
     });
     expect(value).toBe("10px 20px");
   });
