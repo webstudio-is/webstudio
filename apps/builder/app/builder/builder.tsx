@@ -1,6 +1,10 @@
 import { useCallback, useEffect, useMemo } from "react";
 import { type Publish, usePublish, useSubscribe } from "~/shared/pubsub";
-import { type Pages, findPageByIdOrPath } from "@webstudio-is/project-build";
+import {
+  type Build,
+  type Pages,
+  findPageByIdOrPath,
+} from "@webstudio-is/project-build";
 import type { Project } from "@webstudio-is/project";
 import { theme, Box, type CSS, Flex, Grid } from "@webstudio-is/design-system";
 import type { AuthPermit } from "@webstudio-is/trpc-interface";
@@ -30,7 +34,13 @@ import {
   useIsPreviewMode,
   useSetAuthPermit,
   useSetAuthToken,
+  useSetBreakpoints,
+  useSetInstances,
   useSetIsPreviewMode,
+  useSetProps,
+  useSetStyles,
+  useSetStyleSources,
+  useSetStyleSourceSelections,
 } from "~/shared/nano-states";
 import { useClientSettings } from "./shared/client-settings";
 import { Navigator } from "./features/sidebar-left";
@@ -237,7 +247,7 @@ export type BuilderProps = {
   project: Project;
   pages: Pages;
   pageId: string;
-  buildId: string;
+  build: Build;
   buildOrigin: string;
   authReadToken: string;
   authToken?: string;
@@ -248,12 +258,19 @@ export const Builder = ({
   project,
   pages,
   pageId,
-  buildId,
+  build,
   buildOrigin,
   authReadToken,
   authToken,
   authPermit,
 }: BuilderProps) => {
+  useSetBreakpoints(build.breakpoints);
+  useSetProps(build.props);
+  useSetStyles(build.styles);
+  useSetStyleSources(build.styleSources);
+  useSetStyleSourceSelections(build.styleSourceSelections);
+  useSetInstances(build.instances);
+
   useSetAuthToken(authToken);
   useSetAuthPermit(authPermit);
   useSetProject(project);
@@ -262,7 +279,7 @@ export const Builder = ({
   const [publish, publishRef] = usePublish();
   useBuilderStore(publish);
   useSyncServer({
-    buildId,
+    buildId: build.id,
     projectId: project.id,
     authToken,
     authPermit,
