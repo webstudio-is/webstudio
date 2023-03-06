@@ -136,9 +136,11 @@ export const PropertyName = ({
     (styleSource === "local" || styleSource === "remote");
 
   const labelElement = (
-    <Label color={styleSource} truncate>
-      {label}
-    </Label>
+    <Flex shrink>
+      <Label color={styleSource} truncate>
+        {label}
+      </Label>
+    </Flex>
   );
 
   if (isPopoverEnabled) {
