@@ -15,9 +15,19 @@ const ThumbHolder = styled("div", {
   height: theme.spacing[10],
 });
 
-const Item = styled(Flex, {
+/**
+ * Should be a button as otherwise radix trigger doesn't work with keyboard interactions
+ */
+const Item = styled("button", {
+  appearance: "none",
+  width: "100%",
+  border: "none",
+  display: "flex",
+  alignItems: "center",
+  justifyContent: "start",
   userSelect: "none",
   backgroundColor: theme.colors.backgroundPanel,
+  padding: 0,
   paddingRight: theme.spacing[9],
   height: theme.spacing[13],
   position: "relative",
@@ -77,11 +87,10 @@ export const CssValueListItem = forwardRef(
       "data-state": dataState,
       ...rest
     }: Props,
-    ref: Ref<HTMLDivElement>
+    ref: Ref<HTMLButtonElement>
   ) => (
     <Item
       ref={ref}
-      align="center"
       data-focused={focused}
       data-state={state ?? dataState}
       {...rest}
