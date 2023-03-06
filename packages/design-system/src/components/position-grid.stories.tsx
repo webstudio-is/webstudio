@@ -9,8 +9,8 @@ export default {
 
 export const PositionGrid = () => {
   const [selectedPosition, setSelectedPosition] = useState({
-    top: 50,
-    left: 50,
+    y: 50,
+    x: 50,
   });
   return (
     <Flex gap="3">
@@ -42,7 +42,7 @@ export const PositionGrid = () => {
           setSelectedPosition(position);
           action("onSelect")(position);
         }}
-        focusedPosition={{ top: 0, left: 0 }}
+        focusedPosition={{ y: 0, x: 0 }}
       />
     </Flex>
   );
