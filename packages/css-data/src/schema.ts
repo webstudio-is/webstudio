@@ -106,6 +106,11 @@ export const TupleValue = z.object({
 });
 export type TupleValue = z.infer<typeof TupleValue>;
 
+/**
+ * All StyleValue types that going to need wrapping into a CSS variable when rendered
+ * on canvas inside builder.
+ * Values like InvalidValue, UnsetValue, VarValue don't need to be wrapped
+ */
 export const validStaticValueTypes = [
   "unit",
   "keyword",
