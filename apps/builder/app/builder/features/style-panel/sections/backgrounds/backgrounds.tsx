@@ -19,7 +19,6 @@ import {
 import { useState } from "react";
 import { PropertyName } from "../../shared/property-name";
 import type { StyleInfo } from "../../shared/style-info";
-import type { DeleteProperty } from "../../shared/use-style-data";
 import { ColorControl } from "../../controls/color/color-control";
 import {
   getLayerCount,
