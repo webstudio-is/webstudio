@@ -1,3 +1,8 @@
+/**
+ * Will be fully rewritten in next iteration,
+ * as of now just implement feature parity with old backgrounds section
+ **/
+
 import type { StyleValue } from "@webstudio-is/css-data";
 import { theme, Flex, Grid, Label } from "@webstudio-is/design-system";
 import { ImageControl, TextControl } from "../../controls";
