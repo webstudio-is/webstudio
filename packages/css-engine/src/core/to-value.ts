@@ -71,11 +71,11 @@ export const toValue = (
   }
 
   if (value.type === "layers") {
-    return value.value.map((v) => toValue(v, options)).join(",");
+    return value.value.map((value) => toValue(value, options)).join(",");
   }
 
   if (value.type === "tuple") {
-    return `${toValue(value.value[0])} ${toValue(value.value[1])}`;
+    return value.value.map((value) => toValue(value, options)).join(" ");
   }
 
   // Will give ts error in case of missing type

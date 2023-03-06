@@ -107,8 +107,10 @@ describe("Convert WS CSS Values to native CSS strings", () => {
       value: [
         { type: "unit", value: 10, unit: "px" },
         { type: "unit", value: 20, unit: "px" },
+        { type: "unit", value: 30, unit: "px" },
+        { type: "unit", value: 40, unit: "px" },
       ],
     });
-    expect(value).toBe("10px 20px");
+    expect(value).toBe("10px 20px 30px 40px");
   });
 });
