@@ -26,7 +26,9 @@ import {
   deleteLayer,
   setLayerProperty,
   type SetBackgroundProperty,
+  type DeleteBackgroundProperty,
   getLayerBackgroundStyleInfo,
+  deleteLayerProperty,
 } from "./background-layers";
 import { BackgroundContent } from "./background-content";
 import { getLayerName, LayerThumbnail } from "./background-thumbnail";
@@ -34,6 +36,7 @@ import { getLayerName, LayerThumbnail } from "./background-thumbnail";
 const Layer = (props: {
   layerStyle: StyleInfo;
   setProperty: SetBackgroundProperty;
+  deleteProperty: DeleteBackgroundProperty;
   deleteLayer: () => void;
 }) => {
   const [hidden, setHidden] = useState(false);
@@ -45,6 +48,7 @@ const Layer = (props: {
         <BackgroundContent
           currentStyle={props.layerStyle}
           setProperty={props.setProperty}
+          deleteProperty={props.deleteProperty}
         />
       }
     >
@@ -103,6 +107,14 @@ export const BackgroundsSection = ({
             currentStyle,
             createBatchUpdate
           )}
+          deleteProperty={(property, options) => {
+            deleteLayerProperty(
+              layerNum,
+              currentStyle,
+              deleteProperty,
+              createBatchUpdate
+            )(property, options);
+          }}
         />
       ))}
 

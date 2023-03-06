@@ -2,6 +2,7 @@ import type { LayersValue, StyleValue } from "@webstudio-is/css-data";
 import type { StyleInfo, StyleValueInfo } from "../../shared/style-info";
 import type {
   CreateBatchUpdate,
+  DeleteProperty,
   StyleUpdateOptions,
 } from "../../shared/use-style-data";
 
@@ -38,7 +39,7 @@ export const layeredBackgroundProps = Object.keys(
   layeredBackgroundPropsDefaults
 ) as (keyof typeof layeredBackgroundPropsDefaults)[];
 
-type LayeredBackgroundProperty = (typeof layeredBackgroundProps)[number];
+export type LayeredBackgroundProperty = (typeof layeredBackgroundProps)[number];
 
 export const isBackgroundLayeredProperty = (
   prop: string
@@ -113,6 +114,26 @@ export const getLayerBackgroundStyleInfo = (
 
   return result;
 };
+
+export type DeleteBackgroundProperty = ReturnType<typeof deleteLayerProperty>;
+
+export const deleteLayerProperty =
+  (
+    layerNum: number,
+    style: StyleInfo,
+    deleteProperty: DeleteProperty,
+    createBatchUpdate: CreateBatchUpdate
+  ) =>
+  (propertyName: LayeredBackgroundProperty, options?: StyleUpdateOptions) => {
+    if (options?.isEphemeral) {
+      deleteProperty(propertyName, options);
+      return;
+    }
+
+    setLayerProperty(layerNum, style, createBatchUpdate)(propertyName)(
+      layeredBackgroundPropsDefaults[propertyName]
+    );
+  };
 
 export type SetBackgroundProperty = ReturnType<typeof setLayerProperty>;
 
