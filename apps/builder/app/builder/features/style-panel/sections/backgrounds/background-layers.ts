@@ -1,4 +1,4 @@
-import type { LayersValue } from "@webstudio-is/css-data";
+import type { LayersValue, StyleValue } from "@webstudio-is/css-data";
 import type { StyleInfo, StyleValueInfo } from "../../shared/style-info";
 import type {
   CreateBatchUpdate,
@@ -19,11 +19,32 @@ export const layeredBackgroundPropsDefaults = {
 
 export type BackgroundStyleValue = LayersValue["value"][number];
 
+export const isBackgroundStyleValue = (
+  style: StyleValue
+): style is BackgroundStyleValue => {
+  if (
+    style.type === "unit" ||
+    style.type === "keyword" ||
+    style.type === "unparsed" ||
+    style.type === "image" ||
+    style.type === "invalid"
+  ) {
+    return true;
+  }
+  return false;
+};
+
 export const layeredBackgroundProps = Object.keys(
   layeredBackgroundPropsDefaults
 ) as (keyof typeof layeredBackgroundPropsDefaults)[];
 
-type LayeredBackgroundProps = (typeof layeredBackgroundProps)[number];
+type LayeredBackgroundProperty = (typeof layeredBackgroundProps)[number];
+
+export const isBackgroundLayeredProperty = (
+  prop: string
+): prop is LayeredBackgroundProperty => {
+  return layeredBackgroundProps.includes(prop as LayeredBackgroundProperty);
+};
 
 const getPropertyLayerCount = (style: StyleValueInfo) => {
   if (style.value.type === "layers") {
@@ -46,33 +67,58 @@ export const getLayerCount = (style: StyleInfo) => {
   );
 };
 
-export const getLayerBackgroundProps = (layerNum: number, style: StyleInfo) => {
+export const getLayerBackgroundStyleInfo = (
+  layerNum: number,
+  style: StyleInfo
+): StyleInfo => {
   const layerCount = getLayerCount(style);
   if (layerNum >= layerCount) {
     throw new Error(`${layerNum} is out of bounds`);
   }
 
-  const result: Record<LayeredBackgroundProps, BackgroundStyleValue> = {
-    ...layeredBackgroundPropsDefaults,
-  };
+  const result: StyleInfo = {};
+
+  for (const [property, value] of Object.entries(
+    layeredBackgroundPropsDefaults
+  )) {
+    result[property as LayeredBackgroundProperty] = { value };
+  }
 
   for (const property of layeredBackgroundProps) {
     const styleValue = style[property];
 
-    const propertyStyle = styleValue?.value;
+    const valueStyle = styleValue?.value;
+    const localStyle = styleValue?.local;
+    const cascadedStyle = styleValue?.cascaded;
 
-    if (propertyStyle?.type === "layers") {
-      const styleValue = propertyStyle.value[layerNum];
-      result[property] = styleValue;
+    if (valueStyle?.type === "layers") {
+      const styleValue = valueStyle.value[layerNum];
+      // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+      result[property]!["value"] = styleValue;
+    }
+    if (localStyle?.type === "layers") {
+      const styleValue = localStyle.value[layerNum];
+      // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+      result[property]!["local"] = styleValue;
+    }
+    if (cascadedStyle?.value.type === "layers") {
+      const styleValue = cascadedStyle.value.value[layerNum];
+      // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+      result[property]!["cascaded"] = {
+        breakpointId: cascadedStyle.breakpointId,
+        value: styleValue,
+      };
     }
   }
 
   return result;
 };
 
+export type SetBackgroundProperty = ReturnType<typeof setLayerProperty>;
+
 export const setLayerProperty =
   (layerNum: number, style: StyleInfo, createBatchUpdate: CreateBatchUpdate) =>
-  (propertyName: LayeredBackgroundProps) =>
+  (propertyName: LayeredBackgroundProperty) =>
   (newValue: BackgroundStyleValue, options?: StyleUpdateOptions) => {
     const batch = createBatchUpdate();
 

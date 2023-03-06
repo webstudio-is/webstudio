@@ -25,7 +25,11 @@ import {
   layeredBackgroundProps,
   addLayer,
   deleteLayer,
+  setLayerProperty,
+  type SetBackgroundProperty,
+  getLayerBackgroundStyleInfo,
 } from "./background-layers";
+import { BackgroundContent } from "./background-content";
 
 /*
 Stackable: !default!
@@ -63,15 +67,27 @@ const Thumbnail = styled("div", {
   backgroundImage: "linear-gradient(yellow, red)",
 });
 
-const Layer = (props: { currentStyle: StyleInfo; deleteLayer: () => void }) => {
+const Layer = (props: {
+  layerStyle: StyleInfo;
+  setProperty: SetBackgroundProperty;
+  deleteLayer: () => void;
+}) => {
   const [hidden, setHidden] = useState(false);
 
   return (
-    <FloatingPanel title="Images" content={<div>HELLO</div>}>
+    <FloatingPanel
+      title="Images"
+      content={
+        <BackgroundContent
+          currentStyle={props.layerStyle}
+          setProperty={props.setProperty}
+        />
+      }
+    >
       <CssValueListItem
         label={
           <PropertyName
-            style={props.currentStyle}
+            style={props.layerStyle}
             property={layeredBackgroundProps}
             label="Image"
             onReset={props.deleteLayer}
@@ -107,8 +123,6 @@ export const BackgroundsSection = ({
   deleteProperty,
   currentStyle,
   createBatchUpdate,
-  styleConfigsByCategory,
-  moreStyleConfigsByCategory,
 }: RenderCategoryProps) => {
   const layersCount = getLayerCount(currentStyle);
 
@@ -118,8 +132,13 @@ export const BackgroundsSection = ({
       {Array.from(Array(layersCount).keys()).map((layerNum) => (
         <Layer
           key={layerNum}
-          currentStyle={currentStyle}
+          layerStyle={getLayerBackgroundStyleInfo(layerNum, currentStyle)}
           deleteLayer={deleteLayer(layerNum, currentStyle, createBatchUpdate)}
+          setProperty={setLayerProperty(
+            layerNum,
+            currentStyle,
+            createBatchUpdate
+          )}
         />
       ))}
 
