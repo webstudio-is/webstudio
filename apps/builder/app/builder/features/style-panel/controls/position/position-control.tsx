@@ -27,12 +27,14 @@ const toTuple = (
     return parsedValue.data;
   }
 
-  const parsedValueX = TupleValueItem.parse(valueX);
-  const parsedValueY = TupleValueItem.parse(valueY);
+  const parsedValueX = valueX
+    ? TupleValueItem.parse(valueX)
+    : ({ type: "unit", value: 0, unit: "px" } as const);
+  const parsedValueY = valueY ? TupleValueItem.parse(valueY) : parsedValueX;
 
   return {
     type: "tuple" as const,
-    value: [parsedValueX, parsedValueY ?? parsedValueX],
+    value: [parsedValueX, parsedValueY],
   };
 };
 
