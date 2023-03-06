@@ -25,12 +25,12 @@ type BackgroundContentProps = {
 };
 
 const safeDeleteProperty = (deleteProperty: DeleteBackgroundProperty) => {
-  const result: DeleteProperty = (property) => {
+  const result: DeleteProperty = (property, options) => {
     // isBackgroundLayeredProperty is typeguard and ts don't understand === false
     if (!isBackgroundLayeredProperty(property)) {
       throw new Error("");
     }
-    return deleteProperty(property);
+    return deleteProperty(property, options);
   };
   return result;
 };
