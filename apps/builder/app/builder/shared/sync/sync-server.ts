@@ -62,6 +62,7 @@ const useNewEntriesCheck = ({
         return;
       }
 
+      /*
       enqueue(() =>
         fetch(restPatchPath({ authToken }), {
           method: "post",
@@ -72,6 +73,7 @@ const useNewEntriesCheck = ({
           }),
         })
       );
+              */
     }, NEW_ENTRIES_INTERVAL);
 
     return () => clearInterval(intervalId);
