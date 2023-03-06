@@ -174,7 +174,12 @@ export const deleteLayer =
       }
 
       newPropertyStyle.value.splice(layerNum, 1);
-      batch.setProperty(property)(newPropertyStyle);
+
+      if (newPropertyStyle.value.length === 0) {
+        batch.deleteProperty(property);
+      } else {
+        batch.setProperty(property)(newPropertyStyle);
+      }
     }
     batch.publish();
   };
