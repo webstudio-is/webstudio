@@ -2,6 +2,7 @@ import type { RenderCategoryProps } from "../../style-sections";
 import { styleConfigByName } from "../../shared/configs";
 import { FloatingPanel } from "~/builder/shared/floating-panel";
 import {
+  Button,
   CssValueListItem,
   Flex,
   Grid,
@@ -20,6 +21,7 @@ import { PropertyName } from "../../shared/property-name";
 import type { StyleInfo } from "../../shared/style-info";
 import type { DeleteProperty } from "../../shared/use-style-data";
 import { ColorControl } from "../../controls/color/color-control";
+import { getLayerCount, layeredBackgroundProps } from "./background-layers";
 
 /*
 Stackable: !default!
@@ -50,22 +52,6 @@ background-color
 // const setLayeredProperty = (property: string, layerIndex) => (value: string) => {}
 
 // Transform existing style to layered style
-
-const layeredBackgroundPropsDefaults = {
-  backgroundAttachment: "scroll",
-  backgroundClip: "border-box",
-  backgroundBlendMode: "normal",
-  backgroundImage: "none",
-  backgroundOrigin: "padding-box",
-  backgroundPositionX: "0%",
-  backgroundPositionY: "0%",
-  backgroundRepeat: "repeat",
-  backgroundSize: "auto",
-} as const;
-
-const layeredBackgroundProps = Object.keys(
-  layeredBackgroundPropsDefaults
-) as (keyof typeof layeredBackgroundPropsDefaults)[];
 
 const Thumbnail = styled("div", {
   width: theme.spacing[10],
@@ -122,23 +108,18 @@ export const BackgroundsSection = ({
   setProperty,
   deleteProperty,
   currentStyle,
+  createBatchUpdate,
   styleConfigsByCategory,
   moreStyleConfigsByCategory,
 }: RenderCategoryProps) => {
-  /*
-  console.log({
-    backgroundImage: currentStyle.backgroundImage,
-    backgroundPosition: currentStyle.backgroundPositionX,
-  });
-  */
+  const layersCount = getLayerCount(currentStyle);
 
   const { items } = styleConfigByName["backgroundColor"];
-
   return (
     <Flex gap={1} direction="column">
       <Layer currentStyle={currentStyle} deleteProperty={deleteProperty} />
 
-      <Flex css={{ px: theme.spacing[9] }}>
+      <Flex css={{ px: theme.spacing[9] }} direction="column" gap={2}>
         <Grid css={{ gridTemplateColumns: "4fr 6fr" }}>
           <PropertyName
             style={currentStyle}
@@ -155,6 +136,7 @@ export const BackgroundsSection = ({
             deleteProperty={deleteProperty}
           />
         </Grid>
+        <Button color="neutral">Add layer</Button>
       </Flex>
     </Flex>
   );
