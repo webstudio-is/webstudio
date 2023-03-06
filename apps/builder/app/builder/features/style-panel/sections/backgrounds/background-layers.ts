@@ -121,9 +121,9 @@ export const setLayerProperty =
       if (propertyChanged) {
         batch.setProperty(property)(newPropertyStyle);
       }
-
-      batch.publish(options);
     }
+
+    batch.publish(options);
   };
 
 export const addLayer = (
@@ -136,3 +136,45 @@ export const addLayer = (
     value: "none",
   });
 };
+
+export const deleteLayer =
+  (layerNum: number, style: StyleInfo, createBatchUpdate: CreateBatchUpdate) =>
+  () => {
+    const layerCount = getLayerCount(style);
+
+    const batch = createBatchUpdate();
+
+    for (const property of layeredBackgroundProps) {
+      const styleValue = style[property];
+
+      const propertyStyle = styleValue?.local;
+
+      // If property is not defined, try copy from cascade or set empty
+      let newPropertyStyle: LayersValue;
+
+      if (propertyStyle?.type === "layers") {
+        newPropertyStyle = structuredClone(propertyStyle);
+      } else if (styleValue?.cascaded?.value.type === "layers") {
+        newPropertyStyle = structuredClone(styleValue?.cascaded?.value);
+      } else {
+        newPropertyStyle = { type: "layers", value: [] };
+      }
+
+      // All layers must have the same number of layers
+      if (newPropertyStyle.value.length < layerCount) {
+        newPropertyStyle.value = newPropertyStyle.value.concat(
+          new Array(layerCount - newPropertyStyle.value.length).fill(
+            layeredBackgroundPropsDefaults[property]
+          )
+        );
+      }
+
+      if (newPropertyStyle.value.length > layerCount) {
+        newPropertyStyle.value = newPropertyStyle.value.slice(0, layerCount);
+      }
+
+      newPropertyStyle.value.splice(layerNum, 1);
+      batch.setProperty(property)(newPropertyStyle);
+    }
+    batch.publish();
+  };

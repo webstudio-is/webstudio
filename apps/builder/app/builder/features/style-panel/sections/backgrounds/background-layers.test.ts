@@ -38,7 +38,7 @@ describe("setLayerProperty", () => {
           styleInfo[propertyName] = { value: newValue, local: newValue };
         },
       deleteProperty: (propertyName: string) => {
-        // changedProps.push([propertyName, undefined]);
+        // not used
       },
       publish: (options?: unknown) => {
         published = true;
@@ -146,7 +146,7 @@ describe("setLayerProperty", () => {
           styleInfo[propertyName] = { value: newValue, local: newValue };
         },
       deleteProperty: (propertyName: string) => {
-        // changedProps.push([propertyName, undefined]);
+        // not used
       },
       publish: (options?: unknown) => {
         published = true;
