@@ -47,7 +47,14 @@ const PropertyPopoverContent = ({
           </Button>
         </Flex>
         <Separator />
-        <Box css={{ px: theme.spacing[4], py: theme.spacing[3] }}>
+        <Box
+          css={{
+            px: theme.spacing[4],
+            py: theme.spacing[3],
+            // @todo this info looks undone, limit width as a fast fix for huge text like in backgrounds
+            maxWidth: theme.spacing[30],
+          }}
+        >
           {properties.map((property) => {
             const styleValueInfo = style[property];
 

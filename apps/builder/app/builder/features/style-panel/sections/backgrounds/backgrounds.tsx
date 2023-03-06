@@ -31,41 +31,24 @@ import {
 } from "./background-layers";
 import { BackgroundContent } from "./background-content";
 
-/*
-Stackable: !default!
-
-background-attachment: !scroll!, fixed, local
-
-background-clip: !border-box!, padding-box, content-box, text
-
-background-blend-mode: !normal!, multiply, screen, overlay, darken, lighten, color-dodge, color-burn, hard-light, soft-light, difference, exclusion, hue, saturation, color, luminosity
-
-background-image: url, linear-gradient, radial-gradient, repeating-linear-gradient, repeating-radial-gradient etc
-
-background-origin: border-box, !padding-box!, content-box
-
-background-position-x: !0%!, left, center, right, x[unit]
-background-position-y: !0%!, top, center, bottom, y[unit]
-
-background-repeat-x,
-background-repeat-y: !repeat!, space, round, no-repeat
-
-background-size: cover, contain, !auto!, x[unit] y[unit]
-
-Not stackable:
-
-background-color
-*/
-
-// const setLayeredProperty = (property: string, layerIndex) => (value: string) => {}
-
-// Transform existing style to layered style
-
 const Thumbnail = styled("div", {
   width: theme.spacing[10],
   height: theme.spacing[10],
   backgroundImage: "linear-gradient(yellow, red)",
 });
+
+const getLayerName = (styleInfo: StyleInfo) => {
+  const backgroundStyle = styleInfo.backgroundImage?.value;
+  if (backgroundStyle?.type === "image") {
+    return backgroundStyle.value.value.name;
+  }
+
+  if (backgroundStyle?.type === "unparsed") {
+    return "Gradient";
+  }
+
+  return "None";
+};
 
 const Layer = (props: {
   layerStyle: StyleInfo;
@@ -89,7 +72,7 @@ const Layer = (props: {
           <PropertyName
             style={props.layerStyle}
             property={layeredBackgroundProps}
-            label="Image"
+            label={getLayerName(props.layerStyle)}
             onReset={props.deleteLayer}
           />
         }

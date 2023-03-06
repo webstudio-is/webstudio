@@ -44,6 +44,34 @@ const safeSetProperty = (setBackgroundProperty: SetBackgroundProperty) => {
   return result;
 };
 
+/*
+@todo remove comment after section done
+
+Stackable: !default!
+
+background-attachment: !scroll!, fixed, local
+
+background-clip: !border-box!, padding-box, content-box, text
+
+background-blend-mode: !normal!, multiply, screen, overlay, darken, lighten, color-dodge, color-burn, hard-light, soft-light, difference, exclusion, hue, saturation, color, luminosity
+
+background-image: url, linear-gradient, radial-gradient, repeating-linear-gradient, repeating-radial-gradient etc
+
+background-origin: border-box, !padding-box!, content-box
+
+background-position-x: !0%!, left, center, right, x[unit]
+background-position-y: !0%!, top, center, bottom, y[unit]
+
+background-repeat-x,
+background-repeat-y: !repeat!, space, round, no-repeat
+
+background-size: cover, contain, !auto!, x[unit] y[unit]
+
+Not stackable:
+
+background-color
+*/
+
 export const BackgroundContent = (props: BackgroundContentProps) => {
   const setProperty = safeSetProperty(props.setProperty);
   const eltRef = useRef<HTMLDivElement>(null);
