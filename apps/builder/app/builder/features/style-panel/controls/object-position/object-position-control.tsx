@@ -2,7 +2,7 @@ import { Flex, IconButton } from "@webstudio-is/design-system";
 import type { ControlProps } from "../../style-sections";
 import { FloatingPanel } from "~/builder/shared/floating-panel";
 import { MenuIcon } from "@webstudio-is/icons";
-import { Position } from "../position/position";
+import { PositionControl } from "../position/position-control";
 
 export const ObjectPositionControl = ({
   property,
@@ -15,7 +15,7 @@ export const ObjectPositionControl = ({
       <FloatingPanel
         title="Object Position"
         content={
-          <Position
+          <PositionControl
             property={property}
             currentStyle={currentStyle}
             setProperty={setProperty}

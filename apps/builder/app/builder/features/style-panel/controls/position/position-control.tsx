@@ -7,7 +7,7 @@ import { Flex, Label, PositionGrid, theme } from "@webstudio-is/design-system";
 import type { ControlProps } from "../../style-sections";
 import { styleConfigByName } from "../../shared/configs";
 import { getStyleSource } from "../../shared/style-info";
-import { CssValueInputContainer } from "../../shared/css-value-input";
+import { CssValueInputContainer } from "./css-value-input-container";
 import type { SetValue } from "../../shared/use-style-data";
 
 const toPosition = (value: TupleValue) => {
@@ -36,7 +36,7 @@ const toTuple = (
   };
 };
 
-export const Position = ({
+export const PositionControl = ({
   currentStyle,
   property,
   setProperty,

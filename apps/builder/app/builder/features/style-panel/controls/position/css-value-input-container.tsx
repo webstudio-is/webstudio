@@ -1,9 +1,12 @@
 import { ComponentProps, useState } from "react";
 import type { StyleValue, StyleProperty } from "@webstudio-is/css-data";
 import { Box, EnhancedTooltip } from "@webstudio-is/design-system";
-import { CssValueInput, type IntermediateStyleValue } from ".";
-import type { StyleSource } from "../style-info";
-import type { DeleteProperty, SetValue } from "../use-style-data";
+import {
+  CssValueInput,
+  type IntermediateStyleValue,
+} from "../../shared/css-value-input";
+import type { StyleSource } from "../../shared/style-info";
+import type { DeleteProperty, SetValue } from "../../shared/use-style-data";
 
 type CssValueInputContainerProps = {
   property: StyleProperty;
