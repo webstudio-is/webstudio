@@ -3,13 +3,7 @@ import {
   type StyleValue,
   TupleValueItem,
 } from "@webstudio-is/css-data";
-import {
-  Box,
-  Flex,
-  Label,
-  PositionGrid,
-  theme,
-} from "@webstudio-is/design-system";
+import { Flex, Label, PositionGrid, theme } from "@webstudio-is/design-system";
 import type { ControlProps } from "../../style-sections";
 import { styleConfigByName } from "../../shared/configs";
 import { getStyleSource } from "../../shared/style-info";
