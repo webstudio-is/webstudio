@@ -1,5 +1,4 @@
 import type { RenderCategoryProps } from "../../style-sections";
-// import { renderProperty } from "../../style-sections";
 import { styleConfigByName } from "../../shared/configs";
 import { FloatingPanel } from "~/builder/shared/floating-panel";
 import {
@@ -133,14 +132,12 @@ export const BackgroundsSection = ({
   });
   */
 
-  console.log(currentStyle.backgroundColor);
-  // @todo make CSSValueListItems as a button
   const { items } = styleConfigByName["backgroundColor"];
 
   return (
     <Flex gap={1} direction="column">
       <Layer currentStyle={currentStyle} deleteProperty={deleteProperty} />
-      {/* styleConfigsByCategory.map((entry) => renderProperty(entry)) */}
+
       <Flex css={{ px: theme.spacing[9] }}>
         <Grid css={{ gridTemplateColumns: "4fr 6fr" }}>
           <PropertyName

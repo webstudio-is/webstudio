@@ -135,7 +135,11 @@ export const PropertyName = ({
     isFeatureEnabled("propertyReset") &&
     (styleSource === "local" || styleSource === "remote");
 
-  const labelElement = <Label color={styleSource}>{label}</Label>;
+  const labelElement = (
+    <Label color={styleSource} truncate>
+      {label}
+    </Label>
+  );
 
   if (isPopoverEnabled) {
     return (
