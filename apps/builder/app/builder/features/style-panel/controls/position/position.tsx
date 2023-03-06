@@ -12,8 +12,8 @@ import type { SetValue } from "../../shared/use-style-data";
 
 const toPosition = (value: TupleValue) => {
   return {
-    left: value.value[0].value,
-    top: value.value[1].value,
+    x: value.value[0].value,
+    y: value.value[1].value,
   };
 };
 
@@ -73,12 +73,12 @@ export const Position = ({
       <Flex gap="6">
         <PositionGrid
           selectedPosition={toPosition(value)}
-          onSelect={({ left, top }) => {
+          onSelect={({ x, y }) => {
             setValue({
               type: "tuple",
               value: [
-                { type: "unit", value: left, unit: "%" },
-                { type: "unit", value: top, unit: "%" },
+                { type: "unit", value: x, unit: "%" },
+                { type: "unit", value: y, unit: "%" },
               ],
             });
           }}
