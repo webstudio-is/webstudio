@@ -7,7 +7,6 @@ import {
   Flex,
   Grid,
   SmallIconButton,
-  styled,
   theme,
 } from "@webstudio-is/design-system";
 import { SmallToggleButton } from "@webstudio-is/design-system";
@@ -30,25 +29,7 @@ import {
   getLayerBackgroundStyleInfo,
 } from "./background-layers";
 import { BackgroundContent } from "./background-content";
-
-const Thumbnail = styled("div", {
-  width: theme.spacing[10],
-  height: theme.spacing[10],
-  backgroundImage: "linear-gradient(yellow, red)",
-});
-
-const getLayerName = (styleInfo: StyleInfo) => {
-  const backgroundStyle = styleInfo.backgroundImage?.value;
-  if (backgroundStyle?.type === "image") {
-    return backgroundStyle.value.value.name;
-  }
-
-  if (backgroundStyle?.type === "unparsed") {
-    return "Gradient";
-  }
-
-  return "None";
-};
+import { getLayerName, LayerThumbnail } from "./background-thumbnail";
 
 const Layer = (props: {
   layerStyle: StyleInfo;
@@ -59,7 +40,7 @@ const Layer = (props: {
 
   return (
     <FloatingPanel
-      title="Images"
+      title="Background"
       content={
         <BackgroundContent
           currentStyle={props.layerStyle}
@@ -76,7 +57,7 @@ const Layer = (props: {
             onReset={props.deleteLayer}
           />
         }
-        thumbnail={<Thumbnail />}
+        thumbnail={<LayerThumbnail layerStyle={props.layerStyle} />}
         hidden={hidden}
         buttons={
           <>
