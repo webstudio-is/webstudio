@@ -65,6 +65,9 @@ importers:
       '@fontsource/roboto-mono':
         specifier: ^4.5.10
         version: 4.5.10
+      '@lexical/headless':
+        specifier: ^0.6.0
+        version: 0.6.0(lexical@0.6.0)
       '@lexical/link':
         specifier: ^0.6.0
         version: 0.6.0(lexical@0.6.0)
@@ -5712,6 +5715,14 @@ packages:
       lexical: 0.6.0
     dependencies:
       '@lexical/utils': 0.6.0(lexical@0.6.0)
+      lexical: 0.6.0
+    dev: false
+
+  /@lexical/headless@0.6.0(lexical@0.6.0):
+    resolution: {integrity: sha512-d8JH0voJ9R771Rk+pRrzyDpHEvyDY0HYnGz6k8AHib1Dqq0u8UVfQzmDi3rwGrFmAZaxBNYnOh9DHdc9AAtYow==}
+    peerDependencies:
+      lexical: 0.6.0
+    dependencies:
       lexical: 0.6.0
     dev: false
 

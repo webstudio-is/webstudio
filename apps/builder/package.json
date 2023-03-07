@@ -22,6 +22,7 @@
     "@fontsource/inter": "^4.5.15",
     "@fontsource/manrope": "^4.5.13",
     "@fontsource/roboto-mono": "^4.5.10",
+    "@lexical/headless": "^0.6.0",
     "@lexical/link": "^0.6.0",
     "@lexical/react": "^0.6.0",
     "@lexical/selection": "^0.6.0",

@@ -19,7 +19,11 @@ import { OnChangePlugin } from "@lexical/react/LexicalOnChangePlugin";
 import { LinkPlugin } from "@lexical/react/LexicalLinkPlugin";
 import { nanoid } from "nanoid";
 import { createCssEngine } from "@webstudio-is/css-engine";
-import type { Instance } from "@webstudio-is/project-build";
+import type {
+  Instance,
+  Instances,
+  InstancesList,
+} from "@webstudio-is/project-build";
 import { idAttribute } from "@webstudio-is/react-sdk";
 import { ToolbarConnectorPlugin } from "./toolbar-connector";
 import { type Refs, $convertToLexical, $convertToUpdates } from "./interop";
@@ -113,14 +117,16 @@ const onError = (error: Error) => {
 };
 
 type TextEditorProps = {
-  instance: Instance;
+  rootInstanceId: Instance["id"];
+  instances: Instances;
   contentEditable: JSX.Element;
-  onChange: (updates: Instance["children"]) => void;
+  onChange: (instancesList: InstancesList) => void;
   onSelectInstance: (instanceId: string) => void;
 };
 
 export const TextEditor = ({
-  instance,
+  rootInstanceId,
+  instances,
   contentEditable,
   onChange,
   onSelectInstance,
@@ -160,7 +166,7 @@ export const TextEditor = ({
       // text editor is unmounted when change properties in side panel
       // so assume new nodes don't need to preserve instance id
       // and store only initial references
-      $convertToLexical(instance, refs);
+      $convertToLexical(instances, rootInstanceId, refs);
     },
     nodes: [LinkNode],
     onError,
@@ -190,7 +196,10 @@ export const TextEditor = ({
         ignoreSelectionChange={true}
         onChange={(editorState) => {
           editorState.read(() => {
-            onChange($convertToUpdates(refs));
+            const treeRootInstance = instances.get(rootInstanceId);
+            if (treeRootInstance) {
+              onChange($convertToUpdates(treeRootInstance, refs));
+            }
           });
         }}
       />
