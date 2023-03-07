@@ -18,7 +18,6 @@ export {
   ButtonIcon,
   HeadingIcon,
   TextIcon,
-  SquareIcon,
   CrossCircledIcon,
   CheckCircledIcon,
 } from "@radix-ui/react-icons";
