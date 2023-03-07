@@ -1,6 +1,7 @@
 import { useMemo, Fragment, useEffect } from "react";
 import { computed } from "nanostores";
 import type { CanvasData } from "@webstudio-is/project";
+import type { Instance } from "@webstudio-is/project-build";
 import {
   createElementsTree,
   registerComponents,
@@ -23,12 +24,6 @@ import {
   propsIndexStore,
   assetsStore,
   useRootInstance,
-  useSetBreakpoints,
-  useSetInstances,
-  useSetProps,
-  useSetStyles,
-  useSetStyleSources,
-  useSetStyleSourceSelections,
   useSubscribeScrollState,
   useIsPreviewMode,
   useSetAssets,
@@ -49,17 +44,22 @@ const propsByInstanceIdStore = computed(
   (propsIndex) => propsIndex.propsByInstanceId
 );
 
+const temporaryRootInstance: Instance = {
+  type: "instance",
+  id: "temporaryRootInstance",
+  component: "Body",
+  children: [],
+};
+
 const useElementsTree = (getComponent: GetComponent) => {
   const [rootInstance] = useRootInstance();
 
   return useMemo(() => {
-    if (rootInstance === undefined) {
-      return;
-    }
-
     return createElementsTree({
       sandbox: true,
-      instance: rootInstance,
+      // fallback to temporary root instance to render scripts
+      // and receive real data from builder
+      instance: rootInstance ?? temporaryRootInstance,
       propsByInstanceIdStore,
       assetsStore,
       Component: WebstudioComponentDev,
@@ -96,12 +96,6 @@ export const Canvas = ({
 }: CanvasProps): JSX.Element | null => {
   const isBuilderReady = useSubscribeBuilderReady();
   useSetAssets(data.assets);
-  useSetBreakpoints(data.build.breakpoints);
-  useSetProps(data.build.props);
-  useSetStyles(data.build.styles);
-  useSetStyleSources(data.build.styleSources);
-  useSetStyleSourceSelections(data.build.styleSourceSelections);
-  useSetInstances(data.build.instances);
   useSetSelectedPage(data.page);
   setParams(data.params ?? null);
   useCanvasStore(publish);

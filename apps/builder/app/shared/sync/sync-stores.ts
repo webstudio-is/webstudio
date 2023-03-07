@@ -31,6 +31,7 @@ type SyncEventSource = "canvas" | "builder";
 
 declare module "~/shared/pubsub" {
   export interface PubsubMap {
+    canvasStoreReady: void;
     sendStoreData: {
       // distinct source to avoid infinite loop
       source: SyncEventSource;
@@ -170,15 +171,7 @@ const syncStoresState = (name: SyncEventSource, publish: Publish) => {
 
 export const useCanvasStore = (publish: Publish) => {
   useEffect(() => {
-    // immerhin data is sent only initially so not part of syncStoresState
-    // expect data to be populated by the time effect is called
     const data = [];
-    for (const [namespace, container] of store.containers) {
-      data.push({
-        namespace,
-        value: container.get(),
-      });
-    }
     for (const [namespace, store] of clientStores) {
       data.push({
         namespace,
@@ -196,6 +189,10 @@ export const useCanvasStore = (publish: Publish) => {
     const unsubscribeStoresState = syncStoresState("canvas", publish);
     const unsubscribeStoresChanges = syncStoresChanges("canvas", publish);
 
+    publish({
+      type: "canvasStoreReady",
+    });
+
     return () => {
       unsubscribeStoresState();
       unsubscribeStoresChanges();
@@ -205,10 +202,30 @@ export const useCanvasStore = (publish: Publish) => {
 
 export const useBuilderStore = (publish: Publish) => {
   useEffect(() => {
+    const unsubscribeCanvasStoreReady = subscribe("canvasStoreReady", () => {
+      // immerhin data is sent only initially so not part of syncStoresState
+      // expect data to be populated by the time effect is called
+      const data = [];
+      for (const [namespace, container] of store.containers) {
+        data.push({
+          namespace,
+          value: container.get(),
+        });
+      }
+      publish({
+        type: "sendStoreData",
+        payload: {
+          source: "builder",
+          data,
+        },
+      });
+    });
+
     const unsubscribeStoresState = syncStoresState("builder", publish);
     const unsubscribeStoresChanges = syncStoresChanges("builder", publish);
 
     return () => {
+      unsubscribeCanvasStoreReady();
       unsubscribeStoresState();
       unsubscribeStoresChanges();
     };

@@ -53,7 +53,7 @@ export const loader = async ({
     project,
     pages,
     pageId: pageIdParam || devBuild.pages.homePage.id,
-    buildId: devBuild.id,
+    build: devBuild,
     buildOrigin: getBuildOrigin(request),
     authReadToken,
     authToken,
