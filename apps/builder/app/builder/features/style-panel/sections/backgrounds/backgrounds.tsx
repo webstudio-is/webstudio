@@ -97,7 +97,7 @@ export const BackgroundsSection = ({
   const { items } = styleConfigByName["backgroundColor"];
   return (
     <Flex gap={1} direction="column">
-      {Array.from(Array(layersCount).keys()).map((layerNum) => (
+      {Array.from(Array(layersCount), (_, layerNum) => (
         <Layer
           key={layerNum}
           layerStyle={getLayerBackgroundStyleInfo(layerNum, currentStyle)}
@@ -107,14 +107,12 @@ export const BackgroundsSection = ({
             currentStyle,
             createBatchUpdate
           )}
-          deleteProperty={(property, options) => {
-            deleteLayerProperty(
-              layerNum,
-              currentStyle,
-              deleteProperty,
-              createBatchUpdate
-            )(property, options);
-          }}
+          deleteProperty={deleteLayerProperty(
+            layerNum,
+            currentStyle,
+            deleteProperty,
+            createBatchUpdate
+          )}
         />
       ))}
 

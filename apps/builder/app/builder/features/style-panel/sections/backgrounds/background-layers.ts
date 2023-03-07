@@ -165,7 +165,7 @@ export const setLayerProperty =
         newPropertyStyle = { type: "layers", value: [] };
       }
 
-      // All layers must have the same number of layers
+      // All background properties must have the same number of layers
       if (newPropertyStyle.value.length < layerCount) {
         propertyChanged = true;
         newPropertyStyle.value = newPropertyStyle.value.concat(

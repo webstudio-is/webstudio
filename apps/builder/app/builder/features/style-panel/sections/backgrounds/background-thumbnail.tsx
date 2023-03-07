@@ -63,10 +63,6 @@ export const LayerThumbnail = (props: { layerStyle: StyleInfo }) => {
     const asset = backgroundImageStyle.value.value;
     const remoteLocation = asset.location === "REMOTE";
 
-    // Avoid image flickering on switching from preview to asset (during upload)
-    // Possible optimisation, we can set it to "sync" only if asset.path has changed or add isNew prop to UploadedAssetContainer
-    const decoding = "sync";
-
     const loader = remoteLocation
       ? loaders.cloudflareImageLoader({
           resizeOrigin: env.RESIZE_ORIGIN,
@@ -77,7 +73,6 @@ export const LayerThumbnail = (props: { layerStyle: StyleInfo }) => {
       <StyledWebstudioImage
         key={asset.id}
         loader={loader}
-        decoding={decoding}
         src={asset.path}
         width={theme.spacing[10]}
         optimize={true}
