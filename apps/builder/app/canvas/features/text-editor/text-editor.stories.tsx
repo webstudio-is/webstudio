@@ -4,10 +4,14 @@ import type { ComponentStory, ComponentMeta } from "@storybook/react";
 import { action } from "@storybook/addon-actions";
 import { Box } from "@webstudio-is/design-system";
 import { useSubscribe, publish } from "~/shared/pubsub";
-import { utils } from "@webstudio-is/project";
 import type { TextToolbarState } from "~/builder/shared/nano-states";
 import { TextEditor } from "./text-editor";
 import { theme } from "@webstudio-is/design-system";
+import type {
+  Instance,
+  Instances,
+  InstancesItem,
+} from "@webstudio-is/project-build";
 
 export default {
   component: TextEditor,
@@ -22,6 +26,37 @@ type Format =
   | "link"
   | "span"
   | "clear";
+
+const createInstancePair = (
+  id: Instance["id"],
+  component: string,
+  children: InstancesItem["children"]
+): [Instance["id"], InstancesItem] => {
+  return [
+    id,
+    {
+      type: "instance",
+      id,
+      component,
+      children,
+    },
+  ];
+};
+
+const instances: Instances = new Map([
+  createInstancePair("1", "TextBlock", [
+    { type: "text", value: "Paragraph you can edit " },
+    { type: "id", value: "2" },
+    { type: "id", value: "3" },
+    { type: "id", value: "5" },
+  ]),
+  createInstancePair("2", "Bold", [{ type: "text", value: "very bold text " }]),
+  createInstancePair("3", "Bold", [{ type: "id", value: "4" }]),
+  createInstancePair("4", "Italic", [
+    { type: "text", value: "with small italic" },
+  ]),
+  createInstancePair("5", "Bold", [{ type: "text", value: " subtext" }]),
+]);
 
 export const Basic: ComponentStory<typeof TextEditor> = ({ onChange }) => {
   const [state, setState] = useState<null | TextToolbarState>(null);
@@ -41,7 +76,10 @@ export const Basic: ComponentStory<typeof TextEditor> = ({ onChange }) => {
       <button
         disabled={state == null}
         style={{ fontWeight: state?.isBold ? "bold" : "normal" }}
-        onClick={() => setFormat("bold")}
+        onClick={(event) => {
+          event.preventDefault();
+          setFormat("bold");
+        }}
       >
         Bold
       </button>
@@ -97,29 +135,8 @@ export const Basic: ComponentStory<typeof TextEditor> = ({ onChange }) => {
         }}
       >
         <TextEditor
-          instance={utils.tree.createInstance({
-            component: "TextBlock",
-            children: [
-              { type: "text", value: "Paragraph you can edit " },
-              utils.tree.createInstance({
-                component: "Bold",
-                children: [{ type: "text", value: "very bold text " }],
-              }),
-              utils.tree.createInstance({
-                component: "Bold",
-                children: [
-                  utils.tree.createInstance({
-                    component: "Italic",
-                    children: [{ type: "text", value: "with small italic" }],
-                  }),
-                ],
-              }),
-              utils.tree.createInstance({
-                component: "Bold",
-                children: [{ type: "text", value: " subtext" }],
-              }),
-            ],
-          })}
+          rootInstanceId={"1"}
+          instances={instances}
           contentEditable={<ContentEditable />}
           onChange={onChange}
           onSelectInstance={(instanceId) =>

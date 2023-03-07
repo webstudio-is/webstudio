@@ -12,16 +12,14 @@ import {
 import type { GetComponent } from "@webstudio-is/react-sdk";
 import {
   instancesStore,
-  patchInstancesMutable,
-  rootInstanceContainer,
   selectedInstanceIdStore,
   useInstanceProps,
   useInstanceStyles,
   useTextEditingInstanceId,
 } from "~/shared/nano-states";
-import { createInstancesIndex } from "~/shared/tree-utils";
 import { useCssRules } from "~/canvas/shared/styles";
 import { SelectedInstanceConnector } from "./selected-instance-connector";
+import { findTreeInstances } from "~/shared/tree-utils";
 
 const TextEditor = lazy(() => import("../text-editor"));
 
@@ -63,6 +61,7 @@ export const WebstudioComponentDev = ({
   const instanceElementRef = useRef<HTMLElement>();
   const instanceStyles = useInstanceStyles(instanceId);
   useCssRules({ instanceId: instance.id, instanceStyles });
+  const instances = useStore(instancesStore);
 
   const [editingInstanceId, setTextEditingInstanceId] =
     useTextEditingInstanceId();
@@ -148,7 +147,8 @@ export const WebstudioComponentDev = ({
   return (
     <Suspense fallback={instanceElement}>
       <TextEditor
-        instance={instance}
+        rootInstanceId={instance.id}
+        instances={instances}
         contentEditable={
           <ContentEditable
             {...props}
@@ -156,15 +156,17 @@ export const WebstudioComponentDev = ({
             Component={Component}
           />
         }
-        onChange={(updates) => {
-          const rootInstance = rootInstanceContainer.get();
+        onChange={(instancesList) => {
           store.createTransaction([instancesStore], (instances) => {
-            const { instancesById } = createInstancesIndex(rootInstance);
-            const instance = instancesById.get(instanceId);
-            if (instance) {
-              instance.children = updates;
+            const deletedTreeIds = findTreeInstances(instances, instance.id);
+            for (const updatedInstance of instancesList) {
+              instances.set(updatedInstance.id, updatedInstance);
+              // exclude reused instances
+              deletedTreeIds.delete(updatedInstance.id);
             }
-            patchInstancesMutable(rootInstance, instances);
+            for (const instanceId of deletedTreeIds) {
+              instances.delete(instanceId);
+            }
           });
         }}
         onSelectInstance={(instanceId) => {

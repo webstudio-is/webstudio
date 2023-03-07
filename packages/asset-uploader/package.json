@@ -37,7 +37,10 @@
     "zod": "^3.19.1"
   },
   "exports": {
-    ".": "./lib/index.js",
+    ".": {
+      "import": "./lib/index.js",
+      "require": "./lib/cjs/index.cjs"
+    },
     "./server": "./server.js"
   },
   "types": "src/index.ts",
