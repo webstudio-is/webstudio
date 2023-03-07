@@ -109,20 +109,21 @@ export const ErrorBoundary: ErrorBoundaryComponent = ({ error }) => {
   return <ErrorMessage message={message} />;
 };
 
-const Content = () => {
+const Outlet = () => {
   const data = useLoaderData<Data>();
 
-  const Outlet =
-    data.mode === "edit"
-      ? () => <Canvas data={data} getComponent={getComponent} />
-      : () => (
-          <InstanceRoot
-            data={data}
-            getComponent={getComponent}
-            customComponents={customComponents}
-          />
-        );
+  return data.mode === "edit" ? (
+    <Canvas data={data} getComponent={getComponent} />
+  ) : (
+    <InstanceRoot
+      data={data}
+      getComponent={getComponent}
+      customComponents={customComponents}
+    />
+  );
+};
 
+const Content = () => {
   // @todo This is non-standard for Remix, is there a better way?
   // Maybe there is a way to tell remix to use the right outlet somehow and avoid passing it?
   return <Root Outlet={Outlet} />;
