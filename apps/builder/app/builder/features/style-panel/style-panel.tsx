@@ -55,18 +55,15 @@ export const StylePanel = ({ selectedInstance, publish }: StylePanelProps) => {
 
   return (
     <>
-      {isFeatureEnabled("styleSourceInput") && (
-        <Box
-          css={{
-            px: theme.spacing[9],
-            pb: theme.spacing[9],
-            boxShadow: `0px 1px 0 ${theme.colors.panelOutline}`,
-          }}
-        >
-          <StyleSourcesSection />
-        </Box>
-      )}
-
+      <Box
+        css={{
+          px: theme.spacing[9],
+          pb: theme.spacing[9],
+          boxShadow: `0px 1px 0 ${theme.colors.panelOutline}`,
+        }}
+      >
+        <StyleSourcesSection />
+      </Box>
       <Box
         css={{
           overflow: "auto",
