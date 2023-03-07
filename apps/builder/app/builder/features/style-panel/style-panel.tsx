@@ -1,5 +1,4 @@
 import { useStore } from "@nanostores/react";
-import { isFeatureEnabled } from "@webstudio-is/feature-flags";
 import {
   theme,
   Box,

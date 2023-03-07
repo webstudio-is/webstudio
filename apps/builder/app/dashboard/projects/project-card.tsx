@@ -14,7 +14,6 @@ import { MenuIcon } from "@webstudio-is/icons";
 import type { DashboardProject } from "@webstudio-is/prisma-client";
 import { KeyboardEvent, useEffect, useRef, useState } from "react";
 import { builderPath, getPublishedUrl } from "~/shared/router-utils";
-import { isFeatureEnabled } from "@webstudio-is/feature-flags";
 import {
   RenameProjectDialog,
   DeleteProjectDialog,
