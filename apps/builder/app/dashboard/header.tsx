@@ -19,7 +19,7 @@ import type { User } from "~/shared/db/user.server";
 const containerStyle = css({
   px: theme.spacing[13],
   bc: theme.colors.backgroundPanel,
-  height: theme.spacing[17],
+  height: theme.spacing[15],
   boxShadow: theme.shadows.brandElevationBig,
 });
 
@@ -33,8 +33,8 @@ const Menu = ({ user }: { user: User }) => {
   return (
     <DropdownMenu>
       <DropdownMenuTrigger asChild>
-        <Button color="ghost" aria-label="Menu Button">
-          <Flex gap="1" align="center" css={{ height: theme.spacing[11] }}>
+        <Button color="ghost" aria-label="Menu Button" css={{ height: "100%" }}>
+          <Flex gap="1" align="center">
             <Avatar
               src={user?.image || undefined}
               fallback={getAvatarLetter(title)}
