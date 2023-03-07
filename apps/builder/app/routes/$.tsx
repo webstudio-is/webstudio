@@ -112,9 +112,11 @@ export const ErrorBoundary: ErrorBoundaryComponent = ({ error }) => {
 const Outlet = () => {
   const data = useLoaderData<Data>();
 
-  return data.mode === "edit" ? (
-    <Canvas data={data} getComponent={getComponent} />
-  ) : (
+  if (data.mode === "edit") {
+    return <Canvas data={data} getComponent={getComponent} />;
+  }
+
+  return (
     <InstanceRoot
       data={data}
       getComponent={getComponent}
