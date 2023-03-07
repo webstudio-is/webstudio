@@ -139,9 +139,9 @@ export const getBuildUrl = ({
 
   if (env.BUILD_REQUIRE_SUBDOMAIN) {
     url.host = `${project.domain}.${url.host}`;
-  } else {
-    url.searchParams.set("projectId", project.id);
   }
+
+  url.searchParams.set("projectId", project.id);
 
   if (mode) {
     url.searchParams.set("mode", mode);
