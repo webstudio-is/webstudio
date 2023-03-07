@@ -112,9 +112,7 @@ const Menu = ({
       <DropdownMenuContent align="end">
         <DropdownMenuItem onSelect={onDuplicate}>Duplicate</DropdownMenuItem>
         <DropdownMenuItem onSelect={onRename}>Rename</DropdownMenuItem>
-        {isFeatureEnabled("share2") && (
-          <DropdownMenuItem onSelect={onShare}>Share</DropdownMenuItem>
-        )}
+        <DropdownMenuItem onSelect={onShare}>Share</DropdownMenuItem>
         <DropdownMenuItem onSelect={onDelete}>Delete</DropdownMenuItem>
       </DropdownMenuContent>
     </DropdownMenu>
