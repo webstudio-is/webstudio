@@ -86,6 +86,11 @@ export const getLayerBackgroundStyleInfo = (
   }
 
   for (const property of layeredBackgroundProps) {
+    const resultProperty = result[property];
+    if (resultProperty === undefined) {
+      throw new Error(`Property ${property} is not defined`);
+    }
+
     const styleValue = style[property];
 
     const valueStyle = styleValue?.value;
@@ -94,18 +99,15 @@ export const getLayerBackgroundStyleInfo = (
 
     if (valueStyle?.type === "layers") {
       const styleValue = valueStyle.value[layerNum];
-      // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-      result[property]!["value"] = styleValue;
+      resultProperty["value"] = styleValue;
     }
     if (localStyle?.type === "layers") {
       const styleValue = localStyle.value[layerNum];
-      // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-      result[property]!["local"] = styleValue;
+      resultProperty["local"] = styleValue;
     }
     if (cascadedStyle?.value.type === "layers") {
       const styleValue = cascadedStyle.value.value[layerNum];
-      // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-      result[property]!["cascaded"] = {
+      resultProperty["cascaded"] = {
         breakpointId: cascadedStyle.breakpointId,
         value: styleValue,
       };

@@ -14,7 +14,7 @@ import type {
 } from "@webstudio-is/css-data";
 
 // @todo remove at node18
-globalThis.structuredClone = (v) => JSON.parse(JSON.stringify(v));
+globalThis.structuredClone = (value) => JSON.parse(JSON.stringify(value));
 
 describe("setLayerProperty", () => {
   test("should work", () => {
@@ -52,17 +52,21 @@ describe("setLayerProperty", () => {
     expect(published).toBe(true);
 
     // All props changed if layer wasn't defined
-    expect(changedProps.map((v) => v[0])).toEqual(layeredBackgroundProps);
-    // All prop layers are set and have length 1
-    expect(changedProps.map((v) => v[1].value.length)).toEqual(
-      layeredBackgroundProps.map(() => 1)
+    expect(changedProps.map((changedProp) => changedProp[0])).toEqual(
+      layeredBackgroundProps
     );
+    // All prop layers are set and have length 1
+    expect(
+      changedProps.map((changedProp) => changedProp[1].value.length)
+    ).toEqual(layeredBackgroundProps.map(() => 1));
 
     changedProps = [];
 
     // Single property change if layer exists and has no errors should not touch all properties
     setProperty("backgroundRepeat")({ type: "keyword", value: "no-repeat" });
-    expect(changedProps.map((v) => v[0])).toEqual(["backgroundRepeat"]);
+    expect(changedProps.map((changedProp) => changedProp[0])).toEqual([
+      "backgroundRepeat",
+    ]);
 
     changedProps = [];
 
@@ -73,7 +77,7 @@ describe("setLayerProperty", () => {
     };
     setProperty("backgroundRepeat")({ type: "keyword", value: "no-repeat" });
 
-    expect(changedProps.map((v) => v[0])).toEqual([
+    expect(changedProps.map((changedProp) => changedProp[0])).toEqual([
       "backgroundClip",
       "backgroundRepeat",
     ]);
@@ -96,12 +100,14 @@ describe("setLayerProperty", () => {
 
     setProperty("backgroundRepeat")({ type: "keyword", value: "no-repeat" });
 
-    expect(changedProps.map((v) => v[0])).toEqual([
+    expect(changedProps.map((changedProp) => changedProp[0])).toEqual([
       "backgroundClip",
       "backgroundRepeat",
     ]);
 
-    expect(changedProps.map((v) => v[1].value.length)).toEqual([1, 1]);
+    expect(
+      changedProps.map((changedProp) => changedProp[1].value.length)
+    ).toEqual([1, 1]);
   });
 
   test("should work with cascade", () => {
@@ -159,19 +165,21 @@ describe("setLayerProperty", () => {
 
     expect(published).toBe(true);
 
-    expect(changedProps.map((v) => v[0])).toEqual(layeredBackgroundProps);
+    expect(changedProps.map((changedProp) => changedProp[0])).toEqual(
+      layeredBackgroundProps
+    );
 
     // All prop layers are set and have length 2 (copied from cascaded)
-    expect(changedProps.map((v) => v[1].value.length)).toEqual(
-      layeredBackgroundProps.map(() => 2)
-    );
+    expect(
+      changedProps.map((changedProp) => changedProp[1].value.length)
+    ).toEqual(layeredBackgroundProps.map(() => 2));
 
     changedProps = [];
 
     addLayer(styleInfo, createBatchUpdate);
 
-    expect(changedProps.map((v) => v[1].value.length)).toEqual(
-      layeredBackgroundProps.map(() => 3)
-    );
+    expect(
+      changedProps.map((changedProp) => changedProp[1].value.length)
+    ).toEqual(layeredBackgroundProps.map(() => 3));
   });
 });

@@ -33,7 +33,9 @@ const safeDeleteProperty = (deleteProperty: DeleteBackgroundProperty) => {
   const result: DeleteProperty = (property, options) => {
     // isBackgroundLayeredProperty is typeguard and ts don't understand === false
     if (!isBackgroundLayeredProperty(property)) {
-      throw new Error("");
+      throw new Error(
+        `Property ${property} should be background style property`
+      );
     }
     return deleteProperty(property, options);
   };
@@ -44,7 +46,9 @@ const safeSetProperty = (setBackgroundProperty: SetBackgroundProperty) => {
   const result: SetProperty = (property) => {
     // isBackgroundLayeredProperty is typeguard and ts don't understand === false
     if (!isBackgroundLayeredProperty(property)) {
-      throw new Error("");
+      throw new Error(
+        `Property ${property} should be background style property`
+      );
     }
     return (style: string | StyleValue, options?: StyleUpdateOptions) => {
       if (typeof style === "string") {
@@ -93,15 +97,20 @@ export const BackgroundContent = (props: BackgroundContentProps) => {
   const setProperty = safeSetProperty(props.setProperty);
   const deleteProperty = safeDeleteProperty(props.deleteProperty);
 
-  const eltRef = useRef<HTMLDivElement>(null);
+  const elementRef = useRef<HTMLDivElement>(null);
 
   return (
-    <Flex css={{ p: theme.spacing[9] }} direction="column" gap={2} ref={eltRef}>
+    <Flex
+      css={{ p: theme.spacing[9] }}
+      direction="column"
+      gap={2}
+      ref={elementRef}
+    >
       <Grid css={{ gridTemplateColumns: "4fr 6fr" }} align="center" gap={2}>
         <Label color="default" truncate>
           Image
         </Label>
-        <FloatingPanelProvider container={eltRef}>
+        <FloatingPanelProvider container={elementRef}>
           <ImageControl
             setProperty={setProperty}
             deleteProperty={deleteProperty}
