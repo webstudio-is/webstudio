@@ -14,6 +14,7 @@ const componentNames = Object.keys({
   Heading: 1,
   Paragraph: 1,
   Link: 1,
+  LinkBlock: 1,
   RichTextLink: 1,
   Span: 1,
   Bold: 1,

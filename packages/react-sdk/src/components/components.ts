@@ -11,6 +11,7 @@ export { TextBlock } from "./text-block";
 export { Heading } from "./heading";
 export { Paragraph } from "./paragraph";
 export { Link } from "./link";
+export { LinkBlock } from "./link-block";
 export { RichTextLink } from "./rich-text-link";
 export { Span } from "./span";
 export { Bold } from "./bold";

@@ -7,6 +7,7 @@ import { meta as TextBlockMeta } from "./text-block.ws";
 import { meta as HeadingMeta } from "./heading.ws";
 import { meta as ParagraphMeta } from "./paragraph.ws";
 import { meta as LinkMeta } from "./link.ws";
+import { meta as LinkBlockMeta } from "./link-block.ws";
 import { meta as RichTextLinkMeta } from "./rich-text-link.ws";
 import { meta as SpanMeta } from "./span.ws";
 import { meta as BoldMeta } from "./bold.ws";
@@ -30,6 +31,7 @@ import { propsMeta as TextBlockMetaPropsMeta } from "./text-block.ws";
 import { propsMeta as HeadingMetaPropsMeta } from "./heading.ws";
 import { propsMeta as ParagraphMetaPropsMeta } from "./paragraph.ws";
 import { propsMeta as LinkMetaPropsMeta } from "./link.ws";
+import { propsMeta as LinkBlockPropsMeta } from "./link-block.ws";
 import { propsMeta as RichTextLinkMetaPropsMeta } from "./rich-text-link.ws";
 import { propsMeta as SpanMetaPropsMeta } from "./span.ws";
 import { propsMeta as BoldMetaPropsMeta } from "./bold.ws";
@@ -53,6 +55,7 @@ const defaultMetas: Record<string, WsComponentMeta> = {
   Heading: HeadingMeta,
   Paragraph: ParagraphMeta,
   Link: LinkMeta,
+  LinkBlock: LinkBlockMeta,
   RichTextLink: RichTextLinkMeta,
   Span: SpanMeta,
   Bold: BoldMeta,
@@ -93,6 +96,7 @@ const defaultPropsMetasRaw = {
   Heading: HeadingMetaPropsMeta,
   Paragraph: ParagraphMetaPropsMeta,
   Link: LinkMetaPropsMeta,
+  LinkBlock: LinkBlockPropsMeta,
   RichTextLink: RichTextLinkMetaPropsMeta,
   Span: SpanMetaPropsMeta,
   Bold: BoldMetaPropsMeta,

@@ -16,7 +16,7 @@ const presetStyle = {
 
 export const meta: WsComponentMeta = {
   type: "rich-text",
-  label: "Link",
+  label: "Link Text",
   Icon: Link2Icon,
   presetStyle,
   children: ["Link text you can edit"],
