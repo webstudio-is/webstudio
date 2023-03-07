@@ -64,11 +64,9 @@ const expectedRefs = new Map([
 ]);
 
 test("convert instances to lexical", async () => {
-  // console.dir(rootInstance, { depth: null });
   const refs: Refs = new Map();
   const editor = createHeadlessEditor({
     nodes: [LinkNode],
-    onError: console.error,
   });
   await new Promise<void>((resolve) => {
     editor.update(
@@ -166,11 +164,9 @@ test("convert instances to lexical", async () => {
 });
 
 test("convert lexical to instances updates", async () => {
-  // console.dir(rootInstance, { depth: null });
   const refs: Refs = new Map();
   const editor = createHeadlessEditor({
     nodes: [LinkNode],
-    onError: console.error,
   });
   await new Promise<void>((resolve) => {
     editor.update(
