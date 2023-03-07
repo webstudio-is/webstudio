@@ -31,10 +31,13 @@ type UseStyleData = {
 
 export type StyleUpdateOptions = { isEphemeral: boolean };
 
-// @todo: style must have StyleValue type always
-export type SetProperty = (
-  property: StyleProperty
-) => (style: string | StyleValue, options?: StyleUpdateOptions) => void;
+// @todo: style must have StyleValue type always, get rid of string.
+export type SetValue = (
+  style: string | StyleValue,
+  options?: StyleUpdateOptions
+) => void;
+
+export type SetProperty = (property: StyleProperty) => SetValue;
 
 export type DeleteProperty = (
   property: StyleProperty,

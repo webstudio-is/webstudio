@@ -97,6 +97,20 @@ const ArrayValue = z.object({
 });
 export type ArrayValue = z.infer<typeof ArrayValue>;
 
+export const TupleValueItem = z.union([UnitValue, KeywordValue, UnparsedValue]);
+export type TupleValueItem = z.infer<typeof TupleValueItem>;
+
+export const TupleValue = z.object({
+  type: z.literal("tuple"),
+  value: z.array(TupleValueItem),
+});
+export type TupleValue = z.infer<typeof TupleValue>;
+
+/**
+ * All StyleValue types that going to need wrapping into a CSS variable when rendered
+ * on canvas inside builder.
+ * Values like InvalidValue, UnsetValue, VarValue don't need to be wrapped
+ */
 export const validStaticValueTypes = [
   "unit",
   "keyword",
@@ -105,6 +119,7 @@ export const validStaticValueTypes = [
   "image",
   "unparsed",
   "array",
+  "tuple",
 ] as const;
 
 /**
@@ -118,6 +133,7 @@ const SharedStaticStyleValue = z.union([
   RgbValue,
   UnparsedValue,
   ArrayValue,
+  TupleValue,
 ]);
 
 const ValidStaticStyleValue = z.union([ImageValue, SharedStaticStyleValue]);

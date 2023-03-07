@@ -28,6 +28,8 @@ export const action = async ({ request }: ActionArgs) => {
           builderApiOrigin: url.origin,
           projectId,
           projectName: domain,
+          // To support preview deployments
+          branchName: env.BRANCH_NAME,
         }),
       });
       const text = await response.text();
