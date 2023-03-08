@@ -19,7 +19,10 @@ export const useSettingsLogic = () => {
 
   const updateLabel = useCallback(() => {
     const selectedInstance = selectedInstanceStore.get();
-    if (selectedInstance === undefined) {
+    if (
+      selectedInstance === undefined ||
+      changes.current.label === selectedInstance.label
+    ) {
       return;
     }
     store.createTransaction([instancesStore], (instances) => {
