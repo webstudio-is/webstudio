@@ -282,6 +282,7 @@ export const findSubtreeLocalStyleSources = (
 export const insertInstancesMutable = (
   instances: Instances,
   insertedInstances: InstancesItem[],
+  rootIds: Instance["id"][],
   dropTarget: undefined | DroppableTarget
 ) => {
   if (dropTarget === undefined) {
@@ -304,14 +305,16 @@ export const insertInstancesMutable = (
   }
 
   const { position } = dropTarget;
-  const dropTargetChild: InstancesItem["children"][number] = {
-    type: "id",
-    value: treeRootInstanceId,
-  };
+  const dropTargetChildren: InstancesItem["children"] = rootIds.map(
+    (instanceId) => ({
+      type: "id",
+      value: instanceId,
+    })
+  );
   if (position === "end") {
-    parentInstance.children.push(dropTargetChild);
+    parentInstance.children.push(...dropTargetChildren);
   } else {
-    parentInstance.children.splice(position, 0, dropTargetChild);
+    parentInstance.children.splice(position, 0, ...dropTargetChildren);
   }
 };
 
@@ -343,7 +346,13 @@ export const insertInstancesCopyMutable = (
     });
   }
 
-  insertInstancesMutable(instances, copiedInstancesWithNewIds, dropTarget);
+  insertInstancesMutable(
+    instances,
+    copiedInstancesWithNewIds,
+    // consider the first instance as the root
+    [copiedInstancesWithNewIds[0].id],
+    dropTarget
+  );
 
   return copiedInstanceIds;
 };
