@@ -17,7 +17,7 @@ export const SettingsPanel = () => {
         <Label>Instance Name</Label>
         <TextField
           /* Key is required, otherwise when label is undefined, previous value stayed */
-          key={selectedInstance.label}
+          key={selectedInstance.id}
           onBlur={handleBlur}
           onKeyDown={handleKeyDown}
           placeholder={label}
