@@ -14,7 +14,9 @@ import type {
 } from "@webstudio-is/css-data";
 
 // @todo remove at node18
-globalThis.structuredClone = (value) => JSON.parse(JSON.stringify(value));
+globalThis.structuredClone = (value) => {
+  return value === undefined ? undefined : JSON.parse(JSON.stringify(value));
+};
 
 describe("setLayerProperty", () => {
   test("should work", () => {

@@ -29,17 +29,16 @@ type BackgroundContentProps = {
   deleteProperty: DeleteBackgroundProperty;
 };
 
-const safeDeleteProperty = (deleteProperty: DeleteBackgroundProperty) => {
-  const result: DeleteProperty = (property, options) => {
-    // isBackgroundLayeredProperty is typeguard and ts don't understand === false
-    if (!isBackgroundLayeredProperty(property)) {
-      throw new Error(
-        `Property ${property} should be background style property`
-      );
+const safeDeleteProperty = (
+  deleteProperty: DeleteBackgroundProperty
+): DeleteProperty => {
+  return (property, options) => {
+    const isLayered = isBackgroundLayeredProperty(property);
+    if (isLayered) {
+      return deleteProperty(property, options);
     }
-    return deleteProperty(property, options);
+    throw new Error(`Property ${property} should be background style property`);
   };
-  return result;
 };
 
 const safeSetProperty = (setBackgroundProperty: SetBackgroundProperty) => {
