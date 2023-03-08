@@ -4,7 +4,16 @@
  **/
 
 import type { StyleValue } from "@webstudio-is/css-data";
-import { theme, Flex, Grid, Label } from "@webstudio-is/design-system";
+import {
+  theme,
+  Flex,
+  Grid,
+  Label,
+  ToggleGroup,
+  ToggleGroupItem,
+  Separator,
+  styled,
+} from "@webstudio-is/design-system";
 import { ImageControl, TextControl } from "../../controls";
 import type { StyleInfo } from "../../shared/style-info";
 import type {
@@ -21,7 +30,8 @@ import {
 } from "./background-layers";
 
 import { FloatingPanelProvider } from "~/builder/shared/floating-panel";
-import { useRef } from "react";
+import { useRef, useState } from "react";
+import { BackgroundSize } from "./background-size";
 
 type BackgroundContentProps = {
   currentStyle: StyleInfo;
@@ -75,6 +85,7 @@ background-image: url, linear-gradient, radial-gradient, repeating-linear-gradie
 
 background-clip: !border-box!, padding-box, content-box, text
 background-origin: border-box, !padding-box!, content-box
+
 background-size: cover, contain, !auto!, x[unit] y[unit]
 
 background-position-x: !0%!, left, center, right, x[unit]
@@ -92,118 +103,165 @@ Not stackable:
 background-color
 */
 
+const detectImageOrGradientToggle = (currentStyle: StyleInfo) => {
+  if (currentStyle?.backgroundImage?.value.type === "image") {
+    return "image";
+  }
+
+  if (currentStyle?.backgroundImage?.value.type === "keyword") {
+    // The only allowed keyword is none
+    return "image";
+  }
+
+  return "gradient";
+};
+
+const isImageOrGradient = (value: string): value is "image" | "gradient" => {
+  return value === "image" || value === "gradient";
+};
+
+const BackgroundSection = styled("div", {
+  mx: theme.spacing[9],
+  my: theme.spacing[6],
+});
+
 export const BackgroundContent = (props: BackgroundContentProps) => {
   const setProperty = safeSetProperty(props.setProperty);
   const deleteProperty = safeDeleteProperty(props.deleteProperty);
 
   const elementRef = useRef<HTMLDivElement>(null);
+  const [imageGradientToggle, setImageGradientToggle] = useState<
+    "image" | "gradient"
+  >(() => detectImageOrGradientToggle(props.currentStyle));
 
   return (
-    <Flex
-      css={{ p: theme.spacing[9] }}
-      direction="column"
-      gap={2}
-      ref={elementRef}
-    >
-      <Grid css={{ gridTemplateColumns: "4fr 6fr" }} align="center" gap={2}>
-        <Label color="default" truncate>
-          Image
-        </Label>
-        <FloatingPanelProvider container={elementRef}>
-          <ImageControl
+    <>
+      <BackgroundSection ref={elementRef}>
+        <Flex justify="center">
+          <ToggleGroup
+            type="single"
+            value={imageGradientToggle}
+            onValueChange={(value) => {
+              if (isImageOrGradient(value)) {
+                setImageGradientToggle(value);
+              }
+            }}
+          >
+            <ToggleGroupItem value={"image"}>
+              <Flex css={{ px: theme.spacing[2] }}>Image</Flex>
+            </ToggleGroupItem>
+            <ToggleGroupItem value={"gradient"}>
+              <Flex css={{ px: theme.spacing[2] }}>Gradient</Flex>
+            </ToggleGroupItem>
+          </ToggleGroup>
+        </Flex>
+      </BackgroundSection>
+
+      <Separator css={{ gridColumn: "span 2" }} />
+
+      <BackgroundSection>
+        <Grid css={{ gridTemplateColumns: "4fr 6fr" }} align="center" gap={2}>
+          <Label color="default" truncate>
+            Image
+          </Label>
+
+          <FloatingPanelProvider container={elementRef}>
+            <ImageControl
+              setProperty={setProperty}
+              deleteProperty={deleteProperty}
+              currentStyle={props.currentStyle}
+              property="backgroundImage"
+            />
+          </FloatingPanelProvider>
+
+          <Label color="default" truncate>
+            Clip
+          </Label>
+
+          <TextControl
             setProperty={setProperty}
             deleteProperty={deleteProperty}
             currentStyle={props.currentStyle}
-            property="backgroundImage"
+            property="backgroundClip"
           />
-        </FloatingPanelProvider>
 
-        <Label color="default" truncate>
-          Clip
-        </Label>
+          <Label color="default" truncate>
+            Origin
+          </Label>
 
-        <TextControl
+          <TextControl
+            setProperty={setProperty}
+            deleteProperty={deleteProperty}
+            currentStyle={props.currentStyle}
+            property="backgroundOrigin"
+          />
+        </Grid>
+
+        <BackgroundSize
           setProperty={setProperty}
           deleteProperty={deleteProperty}
           currentStyle={props.currentStyle}
-          property="backgroundClip"
         />
 
-        <Label color="default" truncate>
-          Origin
-        </Label>
+        <Grid
+          css={{ gridTemplateColumns: "4fr 6fr", mt: theme.spacing[4] }}
+          align="center"
+          gap={2}
+        >
+          <Label color="default" truncate>
+            Position X
+          </Label>
 
-        <TextControl
-          setProperty={setProperty}
-          deleteProperty={deleteProperty}
-          currentStyle={props.currentStyle}
-          property="backgroundOrigin"
-        />
+          <TextControl
+            setProperty={setProperty}
+            deleteProperty={deleteProperty}
+            currentStyle={props.currentStyle}
+            property="backgroundPositionX"
+          />
 
-        <Label color="default" truncate>
-          Size
-        </Label>
+          <Label color="default" truncate>
+            Position Y
+          </Label>
 
-        <TextControl
-          setProperty={setProperty}
-          deleteProperty={deleteProperty}
-          currentStyle={props.currentStyle}
-          property="backgroundSize"
-        />
+          <TextControl
+            setProperty={setProperty}
+            deleteProperty={deleteProperty}
+            currentStyle={props.currentStyle}
+            property="backgroundPositionY"
+          />
 
-        <Label color="default" truncate>
-          Position X
-        </Label>
+          <Label color="default" truncate>
+            Repeat
+          </Label>
 
-        <TextControl
-          setProperty={setProperty}
-          deleteProperty={deleteProperty}
-          currentStyle={props.currentStyle}
-          property="backgroundPositionX"
-        />
+          <TextControl
+            setProperty={setProperty}
+            deleteProperty={deleteProperty}
+            currentStyle={props.currentStyle}
+            property="backgroundRepeat"
+          />
 
-        <Label color="default" truncate>
-          Position Y
-        </Label>
+          <Label color="default" truncate>
+            Attachment
+          </Label>
+          <TextControl
+            setProperty={setProperty}
+            deleteProperty={deleteProperty}
+            currentStyle={props.currentStyle}
+            property="backgroundAttachment"
+          />
 
-        <TextControl
-          setProperty={setProperty}
-          deleteProperty={deleteProperty}
-          currentStyle={props.currentStyle}
-          property="backgroundPositionY"
-        />
-
-        <Label color="default" truncate>
-          Repeat
-        </Label>
-
-        <TextControl
-          setProperty={setProperty}
-          deleteProperty={deleteProperty}
-          currentStyle={props.currentStyle}
-          property="backgroundRepeat"
-        />
-
-        <Label color="default" truncate>
-          Attachment
-        </Label>
-        <TextControl
-          setProperty={setProperty}
-          deleteProperty={deleteProperty}
-          currentStyle={props.currentStyle}
-          property="backgroundAttachment"
-        />
-
-        <Label color="default" truncate>
-          Blend mode
-        </Label>
-        <TextControl
-          setProperty={setProperty}
-          deleteProperty={deleteProperty}
-          currentStyle={props.currentStyle}
-          property="backgroundBlendMode"
-        />
-      </Grid>
-    </Flex>
+          <Label color="default" truncate>
+            Blend mode
+          </Label>
+          <TextControl
+            setProperty={setProperty}
+            deleteProperty={deleteProperty}
+            currentStyle={props.currentStyle}
+            property="backgroundBlendMode"
+          />
+        </Grid>
+      </BackgroundSection>
+    </>
   );
 };

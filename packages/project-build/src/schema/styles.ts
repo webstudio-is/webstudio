@@ -8,6 +8,7 @@ import {
   KeywordValue,
   UnparsedValue,
   InvalidValue,
+  TupleValue,
 } from "@webstudio-is/css-data";
 
 const StoredImageValue = z.object({
@@ -23,6 +24,7 @@ const StoredLayersValue = z.object({
       KeywordValue,
       UnparsedValue,
       StoredImageValue,
+      TupleValue,
       InvalidValue,
     ])
   ),

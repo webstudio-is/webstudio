@@ -1,0 +1,77 @@
+import { Grid, Label, Select, theme } from "@webstudio-is/design-system";
+import { toValue } from "@webstudio-is/css-engine";
+import { TextControl } from "../../controls";
+import { styleConfigByName } from "../../shared/configs";
+import { toPascalCase } from "../../shared/keyword-utils";
+import { parseCssValue } from "../../shared/parse-css-value";
+import type { ControlProps } from "../../style-sections";
+
+export const BackgroundSize = (
+  props: Omit<ControlProps, "property" | "items">
+) => {
+  const property = "backgroundSize";
+  const { items: defaultItems } = styleConfigByName[property];
+
+  const items = [...defaultItems, { name: "custom", label: "Custom" }];
+
+  const value = props.currentStyle[property]?.value;
+
+  return (
+    <>
+      <Grid
+        css={{ gridTemplateColumns: "4fr 6fr", mt: theme.spacing[5] }}
+        align="center"
+        gap={2}
+      >
+        <Label color="default" truncate>
+          Size
+        </Label>
+
+        <Select
+          // show empty field instead of radix placeholder
+          // like css value input does
+          placeholder=""
+          options={(items ?? defaultItems).map(({ name }) => name)}
+          getLabel={(name) => {
+            return toPascalCase(name);
+          }}
+          value={toValue(value)}
+          onChange={(name) => {
+            const value = parseCssValue(property, name);
+            props.setProperty(property)(value);
+          }}
+        />
+      </Grid>
+
+      <Grid
+        css={{ mt: theme.spacing[4] }}
+        align="center"
+        columns={2}
+        gapX={2}
+        gapY={1}
+      >
+        <Label color="default" truncate>
+          Width
+        </Label>
+
+        <Label color="default" truncate>
+          Height
+        </Label>
+
+        <TextControl
+          setProperty={props.setProperty}
+          deleteProperty={props.deleteProperty}
+          currentStyle={props.currentStyle}
+          property={property}
+        />
+
+        <TextControl
+          setProperty={props.setProperty}
+          deleteProperty={props.deleteProperty}
+          currentStyle={props.currentStyle}
+          property={property}
+        />
+      </Grid>
+    </>
+  );
+};
