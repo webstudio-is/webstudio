@@ -16,6 +16,8 @@ export const SettingsPanel = () => {
       <Flex gap="1" direction="column" grow>
         <Label>Instance Name</Label>
         <TextField
+          /* Key is required, otherwise when label is undefined, previous value stayed */
+          key={selectedInstance.id}
           onBlur={handleBlur}
           onKeyDown={handleKeyDown}
           placeholder={label}
