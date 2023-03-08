@@ -101,7 +101,9 @@
     "zod-form-data": "^1.2.1"
   },
   "devDependencies": {
-    "@babel/core": "^7.20.2",
+    "@babel/core": "^7.21.0",
+    "@babel/plugin-transform-typescript": "^7.21.0",
+    "@babel/preset-typescript": "^7.21.0",
     "@jest/globals": "^29.3.1",
     "@remix-run/dev": "1.12.0",
     "@storybook/addon-actions": "6.5.14",
@@ -129,7 +131,7 @@
     "@webstudio-is/jest-config": "workspace:^",
     "@webstudio-is/storybook-config": "workspace:^",
     "@webstudio-is/tsconfig": "workspace:^",
-    "babel-loader": "^8.2.5",
+    "babel-loader": "^9.1.2",
     "css-tree": "^2.3.0",
     "dotenv": "^16.0.0",
     "esbuild-node-externals": "^1.4.1",

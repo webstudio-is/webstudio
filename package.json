@@ -59,9 +59,19 @@
   "resolutions": {
     "esbuild": "0.15.13",
     "react-dom": "17.0.2",
-    "@types/react": "17.0.47"
+    "@types/react": "17.0.47",
+    "babel-loader": "^9.1.2",
+    "@babel/core": "^7.21.0",
+    "@babel/preset-typescript": "^7.21.0",
+    "@babel/plugin-transform-typescript": "^7.21.0"
   },
   "pnpm": {
+    "overrides": {
+      "babel-loader": "^9.1.2",
+      "@babel/core": "^7.21.0",
+      "@babel/preset-typescript": "^7.21.0",
+      "@babel/plugin-transform-typescript": "^7.21.0"
+    },
     "patchedDependencies": {
       "@storybook/builder-webpack5@6.5.14": "patches/@storybook__builder-webpack5@6.5.14.patch"
     }
