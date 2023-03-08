@@ -4,9 +4,10 @@ import {
   FloatingPanel,
   FloatingPanelProvider,
 } from "~/builder/shared/floating-panel";
-import { useRef } from "react";
+import { useRef, useState } from "react";
+import type { StyleValue } from "@webstudio-is/css-data";
 
-const currentStyle = getLayerBackgroundStyleInfo(0, {
+const defaultCurrentStyle = getLayerBackgroundStyleInfo(0, {
   backgroundImage: {
     value: {
       type: "layers",
@@ -17,10 +18,22 @@ const currentStyle = getLayerBackgroundStyleInfo(0, {
 const deleteProperty = () => () => {
   // do nothing
 };
-const setProperty = deleteProperty;
 
 export const BackgroundContentStory = () => {
   const eltRef = useRef<HTMLDivElement>(null);
+
+  const [currentStyle, setCurrentStyle] = useState(defaultCurrentStyle);
+
+  const setProperty = (propertyName: string) => (style: StyleValue) => {
+    setCurrentStyle({
+      ...currentStyle,
+      [propertyName]: {
+        value: style,
+        local: style,
+      },
+    });
+  };
+
   return (
     <>
       <div ref={eltRef} style={{ marginLeft: "400px" }}></div>
@@ -32,7 +45,7 @@ export const BackgroundContentStory = () => {
           content={
             <BackgroundContent
               currentStyle={currentStyle}
-              deleteProperty={setProperty}
+              deleteProperty={deleteProperty}
               setProperty={setProperty}
             />
           }

@@ -12,9 +12,18 @@ export const BackgroundSize = (
   const property = "backgroundSize";
   const { items: defaultItems } = styleConfigByName[property];
 
-  const items = [...defaultItems, { name: "custom", label: "Custom" }];
+  const selectOptions = [
+    ...defaultItems,
+    { name: "custom", label: "Custom" },
+  ].map(({ name }) => name);
 
-  const value = props.currentStyle[property]?.value;
+  const styleValue = props.currentStyle[property]?.value;
+
+  const selectValue =
+    styleValue?.type === "keyword" ? toValue(styleValue) : "custom";
+
+  const sizeCustomDisabled = styleValue?.type === "keyword";
+  const sizeCustomOptions = [{ name: "auto", label: "Auto" }];
 
   return (
     <>
@@ -31,14 +40,22 @@ export const BackgroundSize = (
           // show empty field instead of radix placeholder
           // like css value input does
           placeholder=""
-          options={(items ?? defaultItems).map(({ name }) => name)}
-          getLabel={(name) => {
-            return toPascalCase(name);
-          }}
-          value={toValue(value)}
+          options={selectOptions}
+          getLabel={toPascalCase}
+          value={selectValue}
           onChange={(name) => {
-            const value = parseCssValue(property, name);
-            props.setProperty(property)(value);
+            if (name === "custom") {
+              props.setProperty(property)({
+                type: "tuple",
+                value: [
+                  { type: "keyword", value: "auto" },
+                  { type: "keyword", value: "auto" },
+                ],
+              });
+            } else {
+              const cssValue = parseCssValue(property, name);
+              props.setProperty(property)(cssValue);
+            }
           }}
         />
       </Grid>
@@ -50,15 +67,17 @@ export const BackgroundSize = (
         gapX={2}
         gapY={1}
       >
-        <Label color="default" truncate>
+        <Label color="default" disabled={sizeCustomDisabled} truncate>
           Width
         </Label>
 
-        <Label color="default" truncate>
+        <Label color="default" disabled={sizeCustomDisabled} truncate>
           Height
         </Label>
 
         <TextControl
+          items={sizeCustomOptions}
+          disabled={sizeCustomDisabled}
           setProperty={props.setProperty}
           deleteProperty={props.deleteProperty}
           currentStyle={props.currentStyle}
@@ -66,6 +85,8 @@ export const BackgroundSize = (
         />
 
         <TextControl
+          items={sizeCustomOptions}
+          disabled={sizeCustomDisabled}
           setProperty={props.setProperty}
           deleteProperty={props.deleteProperty}
           currentStyle={props.currentStyle}

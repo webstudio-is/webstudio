@@ -14,7 +14,7 @@ import {
   Separator,
   styled,
 } from "@webstudio-is/design-system";
-import { ImageControl, TextControl } from "../../controls";
+import { ImageControl, SelectControl, TextControl } from "../../controls";
 import type { StyleInfo } from "../../shared/style-info";
 import type {
   DeleteProperty,
@@ -178,7 +178,7 @@ export const BackgroundContent = (props: BackgroundContentProps) => {
             Clip
           </Label>
 
-          <TextControl
+          <SelectControl
             setProperty={setProperty}
             deleteProperty={deleteProperty}
             currentStyle={props.currentStyle}
@@ -189,7 +189,7 @@ export const BackgroundContent = (props: BackgroundContentProps) => {
             Origin
           </Label>
 
-          <TextControl
+          <SelectControl
             setProperty={setProperty}
             deleteProperty={deleteProperty}
             currentStyle={props.currentStyle}

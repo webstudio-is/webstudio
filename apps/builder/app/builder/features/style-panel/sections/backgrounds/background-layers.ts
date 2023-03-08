@@ -28,6 +28,7 @@ export const isBackgroundStyleValue = (
     style.type === "keyword" ||
     style.type === "unparsed" ||
     style.type === "image" ||
+    style.type === "tuple" ||
     style.type === "invalid"
   ) {
     return true;
