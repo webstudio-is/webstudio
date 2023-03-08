@@ -236,6 +236,7 @@ test("insert instances tree into target", () => {
       ]),
       createInstancesItem("inserted2", "Box", []),
     ],
+    ["inserted1"],
     {
       parentId: "box1",
       position: 1,
@@ -266,6 +267,7 @@ test("insert instances tree into target", () => {
       ]),
       createInstancesItem("inserted4", "Box", []),
     ],
+    ["inserted3"],
     {
       parentId: "box1",
       position: "end",

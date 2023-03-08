@@ -2,20 +2,20 @@ import store from "immerhin";
 import { gfm } from "micromark-extension-gfm";
 import type { Root } from "mdast";
 import { fromMarkdown } from "mdast-util-from-markdown";
-import type { Instance, Prop } from "@webstudio-is/project-build";
-import { utils } from "@webstudio-is/project";
+import type {
+  Instance,
+  InstancesItem,
+  Prop,
+} from "@webstudio-is/project-build";
 import { nanoid } from "nanoid";
 import {
-  createInstancesIndex,
   findClosestDroppableTarget,
-  insertInstanceMutable,
+  insertInstancesMutable,
 } from "../tree-utils";
 import {
   instancesIndexStore,
   instancesStore,
-  patchInstancesMutable,
   propsStore,
-  rootInstanceContainer,
   selectedInstanceIdStore,
 } from "../nano-states";
 
@@ -44,164 +44,150 @@ const astTypeComponentMap: Record<string, Instance["component"]> = {
 
 type Options = { generateId?: typeof nanoid };
 
-const createInstance = (
-  {
-    component,
-    node,
-    props,
-  }: {
-    component: Instance["component"];
-    node: Root["children"][number];
-    props: Array<Prop>;
-  },
-  options: Options
-) => {
-  const { generateId = nanoid } = options;
-  return utils.tree.createInstance({
-    id: generateId(),
-    component,
-    children:
-      "children" in node ? toInstanceData(node, options, props).children : [],
-  });
-};
-
 const toInstanceData = (
+  instances: InstancesItem[],
+  props: Prop[],
   ast: { children: Root["children"] },
-  options: Options = {},
-  props: Array<Prop> = []
-): { children: Instance["children"]; props: Array<Prop> } => {
+  options: Options = {}
+): InstancesItem["children"] => {
   const { generateId = nanoid } = options;
-  const children: Instance["children"] = [];
+  const children: InstancesItem["children"] = [];
 
   for (const child of ast.children) {
     if (child.type === "text") {
-      children.push({
-        type: child.type,
-        value: child.value,
-      });
+      children.push({ type: "text", value: child.value });
       continue;
     }
 
     const component = astTypeComponentMap[child.type];
-    if (component) {
-      const instance = createInstance(
-        { component, node: child, props },
-        options
-      );
-      children.push(instance);
-      if (child.type === "heading") {
-        props.push({
-          id: generateId(),
-          type: "string",
-          name: "tag",
-          instanceId: instance.id,
-          value: `h${child.depth}`,
-        });
-      }
-      if (child.type === "link") {
-        props.push({
-          id: generateId(),
-          type: "string",
-          name: "href",
-          instanceId: instance.id,
-          value: child.url,
-        });
-      }
-      if (child.type === "image") {
-        props.push({
-          id: generateId(),
-          type: "string",
-          name: "src",
-          instanceId: instance.id,
-          value: child.url,
-        });
-      }
-      if (child.type === "inlineCode") {
-        instance.children.push({
-          type: "text",
-          value: child.value,
-        });
-        props.push({
-          id: generateId(),
-          type: "boolean",
-          name: "inline",
-          instanceId: instance.id,
-          value: true,
-        });
-      }
-      if (child.type === "code") {
-        instance.children.push({
-          type: "text",
-          value: child.value,
-        });
-        props.push({
-          id: generateId(),
-          type: "boolean",
-          name: "inline",
-          instanceId: instance.id,
-          value: false,
-        });
-        if (child.lang) {
-          props.push({
-            id: generateId(),
-            type: "string",
-            name: "lang",
-            instanceId: instance.id,
-            value: child.lang,
-          });
-        }
-        if (child.meta) {
-          props.push({
-            id: generateId(),
-            type: "string",
-            name: "meta",
-            instanceId: instance.id,
-            value: child.meta,
-          });
-        }
-      }
-      if (child.type === "list") {
-        if (typeof child.ordered === "boolean") {
-          props.push({
-            id: generateId(),
-            type: "boolean",
-            name: "ordered",
-            instanceId: instance.id,
-            value: child.ordered,
-          });
-        }
-        if (typeof child.start === "number") {
-          props.push({
-            id: generateId(),
-            type: "number",
-            name: "start",
-            instanceId: instance.id,
-            value: child.start,
-          });
-        }
-      }
+    if (component === undefined) {
+      continue;
+    }
+    const instance: InstancesItem = {
+      type: "instance",
+      id: generateId(),
+      component,
+      children:
+        "children" in child
+          ? toInstanceData(instances, props, child, options)
+          : [],
+    };
+    instances.push(instance);
+    children.push({ type: "id", value: instance.id });
 
-      if ("title" in child && child.title) {
+    if (child.type === "heading") {
+      props.push({
+        id: generateId(),
+        type: "string",
+        name: "tag",
+        instanceId: instance.id,
+        value: `h${child.depth}`,
+      });
+    }
+    if (child.type === "link") {
+      props.push({
+        id: generateId(),
+        type: "string",
+        name: "href",
+        instanceId: instance.id,
+        value: child.url,
+      });
+    }
+    if (child.type === "image") {
+      props.push({
+        id: generateId(),
+        type: "string",
+        name: "src",
+        instanceId: instance.id,
+        value: child.url,
+      });
+    }
+    if (child.type === "inlineCode") {
+      instance.children.push({
+        type: "text",
+        value: child.value,
+      });
+      props.push({
+        id: generateId(),
+        type: "boolean",
+        name: "inline",
+        instanceId: instance.id,
+        value: true,
+      });
+    }
+    if (child.type === "code") {
+      instance.children.push({
+        type: "text",
+        value: child.value,
+      });
+      props.push({
+        id: generateId(),
+        type: "boolean",
+        name: "inline",
+        instanceId: instance.id,
+        value: false,
+      });
+      if (child.lang) {
         props.push({
           id: generateId(),
           type: "string",
-          name: "title",
+          name: "lang",
           instanceId: instance.id,
-          value: child.title,
+          value: child.lang,
         });
       }
-      if ("alt" in child && child.alt) {
+      if (child.meta) {
         props.push({
           id: generateId(),
           type: "string",
-          name: "alt",
+          name: "meta",
           instanceId: instance.id,
-          value: child.alt,
+          value: child.meta,
         });
       }
     }
+    if (child.type === "list") {
+      if (typeof child.ordered === "boolean") {
+        props.push({
+          id: generateId(),
+          type: "boolean",
+          name: "ordered",
+          instanceId: instance.id,
+          value: child.ordered,
+        });
+      }
+      if (typeof child.start === "number") {
+        props.push({
+          id: generateId(),
+          type: "number",
+          name: "start",
+          instanceId: instance.id,
+          value: child.start,
+        });
+      }
+    }
+
+    if ("title" in child && child.title) {
+      props.push({
+        id: generateId(),
+        type: "string",
+        name: "title",
+        instanceId: instance.id,
+        value: child.title,
+      });
+    }
+    if ("alt" in child && child.alt) {
+      props.push({
+        id: generateId(),
+        type: "string",
+        name: "alt",
+        instanceId: instance.id,
+        value: child.alt,
+      });
+    }
   }
-  return { children, props };
+
+  return children;
 };
 
 export const parse = (clipboardData: string, options?: Options) => {
@@ -209,8 +195,14 @@ export const parse = (clipboardData: string, options?: Options) => {
   if (ast.children.length === 0) {
     return;
   }
-  const data = toInstanceData(ast, options);
-  return data;
+  const instances: InstancesItem[] = [];
+  const props: Prop[] = [];
+  const children = toInstanceData(instances, props, ast, options);
+  // assume text is not top level
+  const rootIds = children.flatMap((child) =>
+    child.type === "id" ? [child.value] : []
+  );
+  return { props, instances, rootIds };
 };
 
 export const onPaste = (clipboardData: string) => {
@@ -223,19 +215,10 @@ export const onPaste = (clipboardData: string) => {
     instancesIndexStore.get(),
     selectedInstanceIdStore.get()
   );
-  const rootInstance = rootInstanceContainer.get();
   store.createTransaction([instancesStore, propsStore], (instances, props) => {
-    const instancesIndex = createInstancesIndex(rootInstance);
-    // We are inserting backwards, so we need to reverse the order
-    data.children.reverse();
-    for (const child of data.children) {
-      if (child.type === "instance") {
-        insertInstanceMutable(instancesIndex, child, dropTarget);
-      }
-    }
+    insertInstancesMutable(instances, data.instances, data.rootIds, dropTarget);
     for (const prop of data.props) {
       props.set(prop.id, prop);
     }
-    patchInstancesMutable(rootInstance, instances);
   });
 };
