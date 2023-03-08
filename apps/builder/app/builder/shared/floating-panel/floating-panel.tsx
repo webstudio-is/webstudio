@@ -71,13 +71,7 @@ export const FloatingPanel = ({
     useLogic(onOpenChange);
   return (
     <FloatingPanelPopover open={isOpen} onOpenChange={handleOpenChange} modal>
-      <FloatingPanelPopoverTrigger
-        asChild
-        ref={triggerRef}
-        onClick={() => {
-          handleOpenChange(true);
-        }}
-      >
+      <FloatingPanelPopoverTrigger asChild ref={triggerRef}>
         {children}
       </FloatingPanelPopoverTrigger>
       <FloatingPanelPopoverContent

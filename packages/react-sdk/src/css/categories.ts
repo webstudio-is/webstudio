@@ -124,6 +124,7 @@ const backgrounds = [
   "backgroundPositionY",
   "backgroundRepeat",
   "backgroundSize",
+  "backgroundBlendMode",
 ] as const;
 
 const borders = [

@@ -36,19 +36,24 @@ const Thumbnail = styled("div", {
   backgroundImage: "linear-gradient(yellow, red)",
 });
 
+const Panel = styled("div", {
+  width: theme.spacing[30],
+});
+
 const ListItem = (props: {
   hidden: boolean;
   labelColor: "default" | "preset" | "local" | "remote";
   state: undefined | "open";
   focused: undefined | boolean;
+  label?: React.ReactNode;
 }) => {
   const [pressed, onPressedChange] = React.useState(false);
 
   return (
     <CssValueListItem
       label={
-        <Label disabled={props.hidden} color={props.labelColor}>
-          Image
+        <Label disabled={props.hidden} color={props.labelColor} truncate>
+          {props.label ?? "Image"}
         </Label>
       }
       thumbnail={<Thumbnail />}
@@ -84,7 +89,7 @@ export const Declarative = (props: {
   const [pressed, onPressedChange] = React.useState(false);
 
   return (
-    <>
+    <Panel>
       <StorySection title="Configurable">
         <FloatingPanelPopover>
           <FloatingPanelPopoverTrigger asChild>
@@ -120,6 +125,23 @@ export const Declarative = (props: {
             <div className={css({ p: theme.spacing[10] })()}>Content</div>
           </FloatingPanelPopoverContent>
         </FloatingPanelPopover>
+      </StorySection>
+
+      <StorySection title="Overflows">
+        <StoryGrid>
+          {(["default", "preset", "local", "remote"] as const).map(
+            (labelColor) => (
+              <ListItem
+                key={labelColor}
+                hidden={false}
+                labelColor={labelColor}
+                state={undefined}
+                focused={false}
+                label="Very long text, very long text"
+              />
+            )
+          )}
+        </StoryGrid>
       </StorySection>
 
       <StorySection title="Variants">
@@ -161,6 +183,6 @@ export const Declarative = (props: {
           )}
         </StoryGrid>
       </StorySection>
-    </>
+    </Panel>
   );
 };

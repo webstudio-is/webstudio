@@ -15,6 +15,7 @@ type CollapsibleSectionProps = {
   isOpenDefault?: boolean;
   isOpen?: boolean;
   rightSlot?: JSX.Element;
+  fullWidth?: boolean;
 };
 
 const stateContainer = atom<{ [label: string]: boolean }>({});
@@ -38,6 +39,7 @@ export const CollapsibleSection = ({
   isOpenDefault = false,
   isOpen,
   rightSlot,
+  fullWidth = false,
 }: CollapsibleSectionProps) => {
   const [isOpenByUser, setIsOpenByUser] = useOpenState(label, isOpenDefault);
   const isOpenFinal = isOpen === undefined ? isOpenByUser : isOpen;
@@ -80,7 +82,8 @@ export const CollapsibleSection = ({
             gap="3"
             direction="column"
             css={{
-              p: theme.spacing[9],
+              pb: theme.spacing[9],
+              px: fullWidth ? 0 : theme.spacing[9],
               paddingTop: 0,
               "&:empty": {
                 display: "none",
