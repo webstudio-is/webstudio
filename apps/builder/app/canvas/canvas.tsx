@@ -36,6 +36,7 @@ import { useCopyPaste } from "~/shared/copy-paste";
 import { customComponents } from "./custom-components";
 import { useHoveredInstanceConnector } from "./hovered-instance-connector";
 import { setDataCollapsed, subscribeCollapsedToPubSub } from "./collapsed";
+import { useWindowResizeDebounced } from "~/shared/dom-hooks";
 
 registerContainers();
 
@@ -110,6 +111,13 @@ export const Canvas = ({
   useSharedShortcuts();
 
   useEffect(() => {
+    const rootInstanceId = data.page.rootInstanceId;
+    if (rootInstanceId !== undefined) {
+      setDataCollapsed(rootInstanceId);
+    }
+  });
+
+  useWindowResizeDebounced(() => {
     const rootInstanceId = data.page.rootInstanceId;
     if (rootInstanceId !== undefined) {
       setDataCollapsed(rootInstanceId);
