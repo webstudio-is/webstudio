@@ -162,7 +162,7 @@ export const setLayerProperty =
       const styleValue = style[property];
 
       // If property is not defined, try copy from cascade or set empty
-      let newPropertyStyle: LayersValue = getLayersValue(styleValue);
+      const newPropertyStyle: LayersValue = getLayersValue(styleValue);
 
       const missingLayerCount = layerCount - newPropertyStyle.value.length;
 
