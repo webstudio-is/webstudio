@@ -159,7 +159,9 @@ export const useList = ({
         }
       },
       onBlur(event: FocusEvent) {
-        const isFocusWithin = event.currentTarget.contains(event.relatedTarget);
+        const isFocusWithin =
+          event.relatedTarget instanceof Node &&
+          event.currentTarget.contains(event.relatedTarget);
         if (isFocusWithin === false) {
           onSelect(-1);
         }

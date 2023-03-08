@@ -80,6 +80,8 @@ jobs:
 
       - uses: ./.github/actions/ci-setup
 
+      - run: DATABASE_URL="-" AUTH_SECRET="-" pnpm build
+
       - name: Chromatic
         id: chromatic
         uses: chromaui/action@v1
