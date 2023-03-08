@@ -15,7 +15,16 @@ const createAuthorizationContext = async (
   request: Request,
   buildEnv: AppContext["authorization"]["buildEnv"]
 ): Promise<AppContext["authorization"]> => {
-  const url = new URL(request.url);
+  const originUrl = new URL(request.url);
+  let url = originUrl;
+
+  // In case of css use referrer as url to extract tokens from canvas iframe href
+  if (originUrl.pathname === "/s/css") {
+    const referer = request.headers.get("referer");
+    if (referer !== null) {
+      url = new URL(referer);
+    }
+  }
 
   const authReadTokenRaw = url.searchParams.get("authReadToken") ?? undefined;
   const authToken = url.searchParams.get("authToken") ?? url.hostname;
