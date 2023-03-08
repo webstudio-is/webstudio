@@ -9,12 +9,6 @@
       "dependsOn": ["^checks"],
       "outputs": []
     },
-    "dev": {
-      "persistent": true
-    },
-    "storybook:run": {
-      "persistent": true
-    },
     "storybook:build": {
       "dependsOn": ["@webstudio-is/icons#build"],
       "cache": false
