@@ -127,7 +127,6 @@
     "@webstudio-is/jest-config": "workspace:^",
     "@webstudio-is/storybook-config": "workspace:^",
     "@webstudio-is/tsconfig": "workspace:^",
-    "babel-loader": "^9.1.2",
     "css-tree": "^2.3.0",
     "dotenv": "^16.0.0",
     "esbuild-node-externals": "^1.4.1",
