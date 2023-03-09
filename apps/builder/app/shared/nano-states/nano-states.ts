@@ -75,6 +75,7 @@ export const patchInstancesMutable = (
       type: "instance",
       id: oldInstance.id,
       component: oldInstance.component,
+      label: oldInstance.label,
       children: oldInstance.children.map((child) => {
         if (child.type === "text") {
           return child;
