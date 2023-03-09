@@ -2,13 +2,22 @@ import { forwardRef, type ElementRef, type ComponentProps } from "react";
 
 const defaultTag = "button";
 
-type ButtonProps = ComponentProps<typeof defaultTag>;
+type ButtonProps = ComponentProps<typeof defaultTag> & { innerText?: string };
 
 export const Button = forwardRef<ElementRef<typeof defaultTag>, ButtonProps>(
-  (props, ref) => <button {...props} ref={ref} />
+  (
+    {
+      type = "submit",
+      innerText = "Edit Inner Text in Properties",
+      children,
+      ...props
+    },
+    ref
+  ) => (
+    <button type={type} {...props} ref={ref}>
+      {children ? children : innerText}
+    </button>
+  )
 );
 
-Button.defaultProps = {
-  type: "submit", // Match the platform default
-};
 Button.displayName = "Button";
