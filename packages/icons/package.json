@@ -16,9 +16,7 @@
     "storybook:build": "build-storybook"
   },
   "devDependencies": {
-    "@storybook/jest": "^0.0.10",
     "@storybook/react": "^6.5.14",
-    "@storybook/testing-library": "^0.0.13",
     "@svgo/jsx": "^0.4.2",
     "@types/react": "^17.0.24",
     "@webstudio-is/scripts": "workspace:^",
