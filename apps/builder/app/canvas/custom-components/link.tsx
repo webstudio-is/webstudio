@@ -47,9 +47,10 @@ export const preserveBuildParams = (href: string, sourceSearch: string) => {
 };
 
 // @todo this copy-paste has to go away, along with this wrapper component
+// changing this requires an update in react-sdk/components/link
 type Props = Omit<ComponentProps<"a">, "href" | "target"> & {
   href?: string;
-  target?: "self" | "blank" | "parent" | "top";
+  target?: "_self" | "_blank" | "_parent" | "_top";
   prefetch?: "none" | "intent" | "render";
 };
 
