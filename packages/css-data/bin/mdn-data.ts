@@ -165,12 +165,7 @@ type FilteredProperties = { [property in Property]: Value };
 
 const filteredProperties: FilteredProperties = (() => {
   // A list of properties we don't want to show
-  const ignoreProperties = [
-    "all",
-    "-webkit-line-clamp",
-    "--*",
-    "background-position",
-  ];
+  const ignoreProperties = ["all", "-webkit-line-clamp", "--*"];
   let property: Property;
   const result = {} as FilteredProperties;
   for (property in properties) {

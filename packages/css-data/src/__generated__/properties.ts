@@ -253,6 +253,16 @@ export const properties = {
     popularity: 0.0847006,
     appliesTo: "allElements",
   },
+  backgroundPosition: {
+    unitGroups: ["length", "percentage"],
+    inherited: false,
+    initial: {
+      type: "keyword",
+      value: "0% 0%",
+    },
+    popularity: 0.76724967,
+    appliesTo: "allElements",
+  },
   backgroundPositionX: {
     unitGroups: ["length", "percentage"],
     inherited: false,

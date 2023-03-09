@@ -66,11 +66,7 @@ export const PositionControl = ({
   };
 
   return (
-    <Flex
-      direction="column"
-      gap="1"
-      css={{ px: theme.spacing[9], py: theme.spacing[5] }}
-    >
+    <Flex direction="column" gap="1">
       <Label>Position</Label>
       <Flex gap="6">
         <PositionGrid
@@ -85,7 +81,11 @@ export const PositionControl = ({
             });
           }}
         />
-        <Flex direction="column" justify="between">
+        <Flex
+          css={{ my: theme.spacing[3] }}
+          direction="column"
+          justify="between"
+        >
           <Flex align="center" gap="2">
             <Label>Left</Label>
             <CssValueInputContainer

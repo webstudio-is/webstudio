@@ -14,7 +14,12 @@ import {
   Separator,
   styled,
 } from "@webstudio-is/design-system";
-import { ImageControl, SelectControl, TextControl } from "../../controls";
+import {
+  ImageControl,
+  SelectControl,
+  TextControl,
+  PositionControl,
+} from "../../controls";
 import type { StyleInfo } from "../../shared/style-info";
 import type {
   DeleteProperty,
@@ -125,6 +130,10 @@ const BackgroundSection = styled("div", {
   my: theme.spacing[6],
 });
 
+const Spacer = styled("div", {
+  height: theme.spacing[5],
+});
+
 export const BackgroundContent = (props: BackgroundContentProps) => {
   const setProperty = safeSetProperty(props.setProperty);
   const deleteProperty = safeDeleteProperty(props.deleteProperty);
@@ -197,10 +206,21 @@ export const BackgroundContent = (props: BackgroundContentProps) => {
           />
         </Grid>
 
+        <Spacer />
+
         <BackgroundSize
           setProperty={setProperty}
           deleteProperty={deleteProperty}
           currentStyle={props.currentStyle}
+        />
+
+        <Spacer />
+
+        <PositionControl
+          setProperty={setProperty}
+          deleteProperty={deleteProperty}
+          currentStyle={props.currentStyle}
+          property="backgroundPosition"
         />
 
         <Grid
@@ -208,28 +228,6 @@ export const BackgroundContent = (props: BackgroundContentProps) => {
           align="center"
           gap={2}
         >
-          <Label color="default" truncate>
-            Position X
-          </Label>
-
-          <TextControl
-            setProperty={setProperty}
-            deleteProperty={deleteProperty}
-            currentStyle={props.currentStyle}
-            property="backgroundPositionX"
-          />
-
-          <Label color="default" truncate>
-            Position Y
-          </Label>
-
-          <TextControl
-            setProperty={setProperty}
-            deleteProperty={deleteProperty}
-            currentStyle={props.currentStyle}
-            property="backgroundPositionY"
-          />
-
           <Label color="default" truncate>
             Repeat
           </Label>
