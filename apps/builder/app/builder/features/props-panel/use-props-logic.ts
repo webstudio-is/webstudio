@@ -101,6 +101,10 @@ type UsePropsLogicOutput = {
   handleAdd: (propName: string) => void;
   handleChange: (prop: PropOrName, value: PropValue) => void;
   handleDelete: (prop: PropOrName) => void;
+  /**
+   * Delete the prop, but keep it in the list of added props
+   */
+  handleSoftDelete: (prop: Prop) => void;
 };
 
 const getAndDelete = <Value>(map: Map<string, Value>, key: string) => {
@@ -216,6 +220,10 @@ export const usePropsLogic = ({
     setNewNames((prev) => prev.filter((name) => propName !== name));
   };
 
+  const handleSoftDelete = (prop: Prop) => {
+    deleteProp(prop.id);
+  };
+
   return {
     initialProps,
     addedProps: [...oldAdded, ...newAdded],
@@ -225,5 +233,6 @@ export const usePropsLogic = ({
     handleAdd,
     handleChange,
     handleDelete,
+    handleSoftDelete,
   };
 };

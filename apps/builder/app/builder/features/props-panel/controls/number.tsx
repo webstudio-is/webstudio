@@ -12,12 +12,16 @@ export const NumberControl = ({
   propName,
   onChange,
   onDelete,
+  onSoftDelete,
 }: ControlProps<"number", "number">) => {
   const id = useId();
 
   const localValue = useLocalValue(prop ? prop.value : "", (value) => {
     if (typeof value === "number") {
       onChange({ type: "number", value });
+    }
+    if (value === "") {
+      onSoftDelete();
     }
   });
 
