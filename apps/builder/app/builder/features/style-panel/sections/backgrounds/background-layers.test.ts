@@ -4,7 +4,7 @@ import {
   addLayer,
 } from "./background-layers";
 
-import { describe, test } from "@jest/globals";
+import { describe, test, expect } from "@jest/globals";
 import type { StyleInfo } from "../../shared/style-info";
 import type { CreateBatchUpdate } from "../../shared/use-style-data";
 import type {

@@ -1,4 +1,4 @@
-import { describe, test } from "@jest/globals";
+import { describe, test, expect } from "@jest/globals";
 import { toProperty } from "./to-property";
 
 describe("toProperty", () => {
