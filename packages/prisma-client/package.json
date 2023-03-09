@@ -25,7 +25,10 @@
     "typescript": "4.9.5",
     "zod": "^3.19.1"
   },
-  "exports": "./lib/index.js",
+  "exports": {
+    "source": "./src/index.ts",
+    "import": "./lib/index.js"
+  },
   "types": "src/index.ts",
   "license": "MIT",
   "private": false,

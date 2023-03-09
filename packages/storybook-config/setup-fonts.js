@@ -4,6 +4,6 @@
 // import "@webstudio-is/storybook-config/setup-fonts";
 
 // this adds <style> tags to the <head> of the document
-require("@fontsource/inter/variable.css");
-require("@fontsource/manrope/variable.css");
-require("@fontsource/roboto-mono");
+import "@fontsource/inter/variable.css";
+import "@fontsource/manrope/variable.css";
+import "@fontsource/roboto-mono";

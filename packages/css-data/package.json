@@ -28,6 +28,7 @@
     "zod": "^3.19.1"
   },
   "exports": {
+    "source": "./src/index.ts",
     "import": "./lib/index.js",
     "require": "./lib/cjs/index.cjs"
   },

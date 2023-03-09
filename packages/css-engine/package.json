@@ -23,7 +23,7 @@
   },
   "devDependencies": {
     "@jest/globals": "^29.3.1",
-    "@storybook/react": "^6.5.14",
+    "@storybook/react": "^6.5.16",
     "@types/hyphenate-style-name": "^1.0.0",
     "@types/react": "^17.0.24",
     "@types/react-dom": "^17.0.9",
@@ -35,7 +35,10 @@
     "jest": "^29.3.1",
     "typescript": "4.9.5"
   },
-  "exports": "./lib/index.js",
+  "exports": {
+    "source": "./src/index.ts",
+    "import": "./lib/index.js"
+  },
   "types": "src/index.ts",
   "files": [
     "lib/*",

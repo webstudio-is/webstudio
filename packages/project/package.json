@@ -42,6 +42,7 @@
   },
   "exports": {
     ".": {
+      "source": "./src/index.ts",
       "import": "./lib/index.js",
       "require": "./lib/cjs/index.cjs"
     },
