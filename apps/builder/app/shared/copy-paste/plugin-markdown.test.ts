@@ -1,4 +1,4 @@
-import { describe, expect } from "@jest/globals";
+import { describe, test, expect } from "@jest/globals";
 import { InstancesItem, Prop } from "@webstudio-is/project-build";
 import { parse } from "./plugin-markdown";
 
