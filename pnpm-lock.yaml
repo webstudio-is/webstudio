@@ -308,19 +308,8 @@ importers:
         specifier: 1.12.0
         version: 1.12.0(@remix-run/serve@1.12.0)
       '@storybook/react':
-<<<<<<< HEAD
-        specifier: ^6.5.14
-        version: 6.5.14(@babel/core@7.21.0)(esbuild@0.14.47)(react-dom@17.0.2)(react@17.0.2)(require-from-string@2.0.2)(typescript@4.9.5)
-=======
         specifier: ^6.5.16
         version: 6.5.16(@babel/core@7.21.0)(esbuild@0.14.47)(react-dom@17.0.2)(react@17.0.2)(require-from-string@2.0.2)(typescript@4.9.5)
-      '@testing-library/react':
-        specifier: ^12.1.5
-        version: 12.1.5(react-dom@17.0.2)(react@17.0.2)
-      '@testing-library/react-hooks':
-        specifier: ^8.0.1
-        version: 8.0.1(@types/react@17.0.47)(react-dom@17.0.2)(react-test-renderer@17.0.2)(react@17.0.2)
->>>>>>> 8bb1a56a (Migrate storybook to vite)
       '@types/css-tree':
         specifier: ^2.0.0
         version: 2.0.0
@@ -544,13 +533,8 @@ importers:
         specifier: ^29.3.1
         version: 29.3.1
       '@storybook/react':
-<<<<<<< HEAD
-        specifier: ^6.5.14
-        version: 6.5.14(@babel/core@7.21.0)(react-dom@17.0.2)(react@17.0.2)(require-from-string@2.0.2)(typescript@4.9.5)
-=======
         specifier: ^6.5.16
         version: 6.5.16(@babel/core@7.21.0)(react-dom@17.0.2)(react@17.0.2)(require-from-string@2.0.2)(typescript@4.9.5)
->>>>>>> 8bb1a56a (Migrate storybook to vite)
       '@types/hyphenate-style-name':
         specifier: ^1.0.0
         version: 1.0.0
@@ -757,24 +741,9 @@ importers:
       '@jest/globals':
         specifier: ^29.3.1
         version: 29.3.1
-<<<<<<< HEAD
-      '@storybook/react':
-        specifier: ^6.5.14
-        version: 6.5.14(@babel/core@7.21.0)(react-dom@17.0.2)(react@17.0.2)(require-from-string@2.0.2)(typescript@4.9.5)
-=======
-      '@storybook/addon-actions':
-        specifier: ^6.5.16
-        version: 6.5.16(react-dom@17.0.2)(react@17.0.2)
-      '@storybook/jest':
-        specifier: ^0.0.10
-        version: 0.0.10(react-dom@17.0.2)(react@17.0.2)
       '@storybook/react':
         specifier: ^6.5.16
         version: 6.5.16(@babel/core@7.21.0)(react-dom@17.0.2)(react@17.0.2)(require-from-string@2.0.2)(typescript@4.9.5)
-      '@storybook/testing-library':
-        specifier: ^0.0.13
-        version: 0.0.13(react-dom@17.0.2)(react@17.0.2)
->>>>>>> 8bb1a56a (Migrate storybook to vite)
       '@testing-library/react-hooks':
         specifier: ^8.0.1
         version: 8.0.1(@types/react@17.0.47)(react-dom@17.0.2)(react@17.0.2)
@@ -966,13 +935,8 @@ importers:
         version: 17.0.2(react@17.0.2)
     devDependencies:
       '@storybook/react':
-<<<<<<< HEAD
-        specifier: ^6.5.14
-        version: 6.5.14(@babel/core@7.21.0)(react-dom@17.0.2)(react@17.0.2)(require-from-string@2.0.2)(typescript@4.9.5)
-=======
         specifier: ^6.5.16
         version: 6.5.16(@babel/core@7.21.0)(react-dom@17.0.2)(react@17.0.2)(require-from-string@2.0.2)(typescript@4.9.5)
->>>>>>> 8bb1a56a (Migrate storybook to vite)
       '@svgo/jsx':
         specifier: ^0.4.2
         version: 0.4.2
@@ -1014,13 +978,8 @@ importers:
         specifier: ^29.3.1
         version: 29.3.1
       '@storybook/react':
-<<<<<<< HEAD
-        specifier: ^6.5.14
-        version: 6.5.14(@babel/core@7.21.0)(react-dom@17.0.2)(react@17.0.2)(require-from-string@2.0.2)(typescript@4.9.5)
-=======
         specifier: ^6.5.16
         version: 6.5.16(@babel/core@7.21.0)(react-dom@17.0.2)(react@17.0.2)(require-from-string@2.0.2)(typescript@4.9.5)
->>>>>>> 8bb1a56a (Migrate storybook to vite)
       '@types/react':
         specifier: 17.0.47
         version: 17.0.47
@@ -1293,13 +1252,8 @@ importers:
         specifier: 1.12.0
         version: 1.12.0
       '@storybook/react':
-<<<<<<< HEAD
-        specifier: ^6.5.14
-        version: 6.5.14(@babel/core@7.21.0)(esbuild@0.15.13)(react-dom@17.0.2)(react@17.0.2)(require-from-string@2.0.2)(typescript@4.9.5)
-=======
         specifier: ^6.5.16
         version: 6.5.16(@babel/core@7.21.0)(esbuild@0.15.13)(react-dom@17.0.2)(react@17.0.2)(require-from-string@2.0.2)(typescript@4.9.5)
->>>>>>> 8bb1a56a (Migrate storybook to vite)
       '@types/node':
         specifier: ^18.11.18
         version: 18.11.18
@@ -1426,13 +1380,8 @@ importers:
         specifier: ^4.5.10
         version: 4.5.10
       '@storybook/addon-essentials':
-<<<<<<< HEAD
-        specifier: ^6.5.14
-        version: 6.5.14(@babel/core@7.21.0)(@storybook/builder-webpack5@6.5.14)(react-dom@17.0.2)(react@17.0.2)(typescript@4.9.5)(webpack@5.75.0)
-=======
         specifier: ^6.5.16
         version: 6.5.16(@babel/core@7.21.0)(eslint@8.4.1)(react-dom@17.0.2)(react@17.0.2)(typescript@4.9.5)(webpack@5.75.0)
->>>>>>> 8bb1a56a (Migrate storybook to vite)
       '@storybook/addon-links':
         specifier: ^6.5.16
         version: 6.5.16(react-dom@17.0.2)(react@17.0.2)
@@ -4304,20 +4253,6 @@ packages:
       chalk: 4.1.2
     dev: false
 
-<<<<<<< HEAD
-=======
-  /@jest/types@27.5.1:
-    resolution: {integrity: sha512-Cx46iJ9QpwQTjIdq5VJu2QTMMs3QlEjI0x1QbBP5W1+nMzyc2XmimiRR/CbX9TO0cPTeUlxWMOu8mslYsJ8DEw==}
-    engines: {node: ^10.13.0 || ^12.13.0 || ^14.15.0 || >=15.0.0}
-    dependencies:
-      '@types/istanbul-lib-coverage': 2.0.4
-      '@types/istanbul-reports': 3.0.1
-      '@types/node': 18.13.0
-      '@types/yargs': 16.0.4
-      chalk: 4.1.2
-    dev: true
-
->>>>>>> 8bb1a56a (Migrate storybook to vite)
   /@jest/types@29.3.1:
     resolution: {integrity: sha512-d0S0jmmTpjnhCmNpApgX3jrUZgZ22ivKJRvL2lli5hpCRoNnp1f85r2/wpKfXuYu8E7Jjh1hGfhPyup1NM5AmA==}
     engines: {node: ^14.15.0 || ^16.10.0 || >=18.0.0}
@@ -4629,7 +4564,7 @@ packages:
   /@manypkg/find-root@1.1.0:
     resolution: {integrity: sha512-mki5uBvhHzO8kYYix/WRy2WX8S3B5wdVSc9D6KcU5lQNglP2yt58/VfLuAK49glRXChosY8ap2oJ1qgma3GUVA==}
     dependencies:
-      '@babel/runtime': 7.20.13
+      '@babel/runtime': 7.19.4
       '@types/node': 12.20.55
       find-up: 4.1.0
       fs-extra: 8.1.0
@@ -6261,6 +6196,7 @@ packages:
       ts-dedent: 2.2.0
       util-deprecate: 1.0.2
       uuid-browser: 3.1.0
+    dev: false
 
   /@storybook/addon-backgrounds@6.5.16(react-dom@17.0.2)(react@17.0.2):
     resolution: {integrity: sha512-t7qooZ892BruhilFmzYPbysFwpULt/q4zYXNSmKVbAYta8UVvitjcU4F18p8FpWd9WvhiTr0SDlyhNZuzvDfug==}
@@ -6465,13 +6401,8 @@ packages:
       - webpack-command
     dev: false
 
-<<<<<<< HEAD
-  /@storybook/addon-links@6.5.14(react-dom@17.0.2)(react@17.0.2):
-    resolution: {integrity: sha512-Q4gNVFi3PqJH/YYmYJ6xX7a2VPZYs8QV97fMIjdg7/k4FLelSRj7QfsHc7jO2RGG2qQpenapO569jFoVNAW4/Q==}
-=======
   /@storybook/addon-links@6.5.16(react-dom@17.0.2)(react@17.0.2):
     resolution: {integrity: sha512-P/mmqK57NGXnR0i3d/T5B0rIt0Lg8Yq+qionRr3LK3AwG/4yGnYt4GNomLEknn/eEwABYq1Q/Z1aOpgIhNdq5A==}
->>>>>>> 8bb1a56a (Migrate storybook to vite)
     peerDependencies:
       react: ^16.8.0 || ^17.0.0 || ^18.0.0
       react-dom: ^16.8.0 || ^17.0.0 || ^18.0.0
@@ -6481,19 +6412,11 @@ packages:
       react-dom:
         optional: true
     dependencies:
-<<<<<<< HEAD
-      '@storybook/addons': 6.5.14(react-dom@17.0.2)(react@17.0.2)
-      '@storybook/client-logger': 6.5.14
-      '@storybook/core-events': 6.5.14
-      '@storybook/csf': 0.0.2--canary.4566f4d.1
-      '@storybook/router': 6.5.14(react-dom@17.0.2)(react@17.0.2)
-=======
       '@storybook/addons': 6.5.16(react-dom@17.0.2)(react@17.0.2)
       '@storybook/client-logger': 6.5.16
       '@storybook/core-events': 6.5.16
       '@storybook/csf': 0.0.2--canary.4566f4d.1
       '@storybook/router': 6.5.16(react-dom@17.0.2)(react@17.0.2)
->>>>>>> 8bb1a56a (Migrate storybook to vite)
       '@types/qs': 6.9.7
       core-js: 3.23.3
       global: 4.4.0
@@ -6620,6 +6543,7 @@ packages:
       react: 17.0.2
       react-dom: 17.0.2(react@17.0.2)
       regenerator-runtime: 0.13.11
+    dev: false
 
   /@storybook/addons@6.5.16(react-dom@17.0.2)(react@17.0.2):
     resolution: {integrity: sha512-p3DqQi+8QRL5k7jXhXmJZLsE/GqHqyY6PcoA1oNTJr0try48uhTGUOYkgzmqtDaa/qPFO5LP+xCPzZXckGtquQ==}
@@ -6666,6 +6590,7 @@ packages:
       telejson: 6.0.8
       ts-dedent: 2.2.0
       util-deprecate: 1.0.2
+    dev: false
 
   /@storybook/api@6.5.16(react-dom@17.0.2)(react@17.0.2):
     resolution: {integrity: sha512-HOsuT8iomqeTMQJrRx5U8nsC7lJTwRr1DhdD0SzlqL4c80S/7uuCy4IZvOt4sYQjOzW5fOo/kamcoBXyLproTA==}
@@ -6774,7 +6699,7 @@ packages:
       '@types/node': 16.18.11
       '@types/webpack': 4.41.32
       autoprefixer: 9.8.8
-      babel-loader: 8.3.0(@babel/core@7.21.0)(webpack@4.46.0)
+      babel-loader: 9.1.2(@babel/core@7.21.0)(webpack@4.46.0)
       case-sensitive-paths-webpack-plugin: 2.4.0
       core-js: 3.23.3
       css-loader: 3.6.0(webpack@4.46.0)
@@ -6840,6 +6765,7 @@ packages:
       core-js: 3.23.3
       ts-dedent: 2.2.0
       util-deprecate: 1.0.2
+    dev: false
 
   /@storybook/channels@6.5.16:
     resolution: {integrity: sha512-VylzaWQZaMozEwZPJdyJoz+0jpDa8GRyaqu9TGG6QGv+KU5POoZaGLDkRE7TzWkyyP0KQLo80K99MssZCpgSeg==}
@@ -6883,6 +6809,7 @@ packages:
     dependencies:
       core-js: 3.23.3
       global: 4.4.0
+    dev: false
 
   /@storybook/client-logger@6.5.16:
     resolution: {integrity: sha512-pxcNaCj3ItDdicPTXTtmYJE3YC1SjxFrBmHcyrN+nffeNyiMuViJdOOZzzzucTUG0wcOOX8jaSyak+nnHg5H1Q==}
@@ -7127,6 +7054,7 @@ packages:
     resolution: {integrity: sha512-PLu0M8Mqt9ruN5RupgcFKHEybiSm3CdWQyylWO5FRGg+WZV3BCm0aI8ujvO1GAm+YEi57Lull+M9d6NUycTpRg==}
     dependencies:
       core-js: 3.23.3
+    dev: false
 
   /@storybook/core-events@6.5.16:
     resolution: {integrity: sha512-qMZQwmvzpH5F2uwNUllTPg6eZXr2OaYZQRRN8VZJiuorZzDNdAFmiVWMWdkThwmyLEJuQKXxqCL8lMj/7PPM+g==}
@@ -7298,44 +7226,8 @@ packages:
       - react-dom
       - supports-color
 
-<<<<<<< HEAD
-  /@storybook/manager-webpack4@6.5.14(react-dom@17.0.2)(react@17.0.2)(typescript@4.9.5):
-    resolution: {integrity: sha512-ixfJuaG0eiOlxn4i+LJNRUZkm+3WMsiaGUm0hw2XHF0pW3cBIA/+HyzkEwVh/fROHbsOERTkjNl0Ygl12Imw9w==}
-=======
-  /@storybook/expect@27.5.2-0:
-    resolution: {integrity: sha512-cP99mhWN/JeCp7VSIiymvj5tmuMY050iFohvp8Zq+kewKsBSZ6/qpTJAGCCZk6pneTcp4S0Fm5BSqyxzbyJ3gw==}
-    dependencies:
-      '@types/jest': 29.4.0
-    dev: true
-
-  /@storybook/instrumenter@6.5.14(react-dom@17.0.2)(react@17.0.2):
-    resolution: {integrity: sha512-R0yyXObz5j9HWIC33EiqscFt825Q02BNi/m8K+oYNCCqJHKhrB9ZXWfQVBcKj4BSpDttNABtJifngDkkz8J8QA==}
-    dependencies:
-      '@storybook/addons': 6.5.14(react-dom@17.0.2)(react@17.0.2)
-      '@storybook/client-logger': 6.5.14
-      '@storybook/core-events': 6.5.14
-      core-js: 3.23.3
-      global: 4.4.0
-    transitivePeerDependencies:
-      - react
-      - react-dom
-    dev: true
-
-  /@storybook/jest@0.0.10(react-dom@17.0.2)(react@17.0.2):
-    resolution: {integrity: sha512-qeYLIplpcOUQXboJde5pRCjTvkGmF80jEszRUoNYCNcEPfC2sMK68Wq6Ct8EQj3CoEdJqsK54O2YYh+7D9S+ag==}
-    dependencies:
-      '@storybook/expect': 27.5.2-0
-      '@storybook/instrumenter': 6.5.14(react-dom@17.0.2)(react@17.0.2)
-      '@testing-library/jest-dom': 5.16.5
-      jest-mock: 27.5.1
-    transitivePeerDependencies:
-      - react
-      - react-dom
-    dev: true
-
   /@storybook/manager-webpack4@6.5.16(react-dom@17.0.2)(react@17.0.2)(typescript@4.9.5):
     resolution: {integrity: sha512-5VJZwmQU6AgdsBPsYdu886UKBHQ9SJEnFMaeUxKEclXk+iRsmbzlL4GHKyVd6oGX/ZaecZtcHPR6xrzmA4Ziew==}
->>>>>>> 8bb1a56a (Migrate storybook to vite)
     peerDependencies:
       react: ^16.8.0 || ^17.0.0 || ^18.0.0
       react-dom: ^16.8.0 || ^17.0.0 || ^18.0.0
@@ -7355,7 +7247,7 @@ packages:
       '@storybook/ui': 6.5.16(react-dom@17.0.2)(react@17.0.2)
       '@types/node': 16.18.11
       '@types/webpack': 4.41.32
-      babel-loader: 8.3.0(@babel/core@7.21.0)(webpack@4.46.0)
+      babel-loader: 9.1.2(@babel/core@7.21.0)(webpack@4.46.0)
       case-sensitive-paths-webpack-plugin: 2.4.0
       chalk: 4.1.2
       core-js: 3.23.3
@@ -7762,6 +7654,7 @@ packages:
       react: 17.0.2
       react-dom: 17.0.2(react@17.0.2)
       regenerator-runtime: 0.13.11
+    dev: false
 
   /@storybook/router@6.5.16(react-dom@17.0.2)(react@17.0.2):
     resolution: {integrity: sha512-ZgeP8a5YV/iuKbv31V8DjPxlV4AzorRiR8OuSt/KqaiYXNXlOoQDz/qMmiNcrshrfLpmkzoq7fSo4T8lWo2UwQ==}
@@ -7876,22 +7769,6 @@ packages:
       - webpack-command
     dev: true
 
-<<<<<<< HEAD
-=======
-  /@storybook/testing-library@0.0.13(react-dom@17.0.2)(react@17.0.2):
-    resolution: {integrity: sha512-vRMeIGer4EjJkTgI8sQyK9W431ekPWYCWL//OmSDJ64IT3h7FnW7Xg6p+eqM3oII98/O5pcya5049GxnjaPtxw==}
-    dependencies:
-      '@storybook/client-logger': 6.5.14
-      '@storybook/instrumenter': 6.5.14(react-dom@17.0.2)(react@17.0.2)
-      '@testing-library/dom': 8.14.0
-      '@testing-library/user-event': 13.5.0(@testing-library/dom@8.14.0)
-      ts-dedent: 2.2.0
-    transitivePeerDependencies:
-      - react
-      - react-dom
-    dev: true
-
->>>>>>> 8bb1a56a (Migrate storybook to vite)
   /@storybook/theming@6.5.14(react-dom@17.0.2)(react@17.0.2):
     resolution: {integrity: sha512-3ff6RLZGaIil/AFJ0/BRlE2hhdPrC5v6wGbRfroZVmGldRCxio/7+KAA3LH6cuHnjK5MeBcCBaHuxzXqGmbEFw==}
     peerDependencies:
@@ -7904,6 +7781,7 @@ packages:
       react: 17.0.2
       react-dom: 17.0.2(react@17.0.2)
       regenerator-runtime: 0.13.11
+    dev: false
 
   /@storybook/theming@6.5.16(react-dom@17.0.2)(react@17.0.2):
     resolution: {integrity: sha512-hNLctkjaYLRdk1+xYTkC1mg4dYz2wSv6SqbLpcKMbkPHTE0ElhddGPHQqB362md/w9emYXNkt1LSMD8Xk9JzVQ==}
@@ -8403,15 +8281,6 @@ packages:
       '@types/yargs-parser': 21.0.0
     dev: false
 
-<<<<<<< HEAD
-=======
-  /@types/yargs@16.0.4:
-    resolution: {integrity: sha512-T8Yc9wt/5LbJyCaLiHPReJa0kApcIgJ7Bn735GjItUfh08Z1pJvu8QZqb9s+mMvKV6WUQRV7K2R46YbjMXTTJw==}
-    dependencies:
-      '@types/yargs-parser': 21.0.0
-    dev: true
-
->>>>>>> 8bb1a56a (Migrate storybook to vite)
   /@types/yargs@17.0.13:
     resolution: {integrity: sha512-9sWaruZk2JGxIQU+IhI1fhPYRcQ0UuTNuKuCW9bR5fp7qi2Llf7WDzNa17Cy7TKnh3cdxDOiyTu6gaLS0eDatg==}
     dependencies:
@@ -9047,12 +8916,32 @@ packages:
     dependencies:
       ajv: 6.12.6
 
+  /ajv-formats@2.1.1(ajv@8.12.0):
+    resolution: {integrity: sha512-Wx0Kx52hxE7C18hkMEggYlEifqWZtYaRgouJor+WMdPnQyEK13vgEWyVNup7SoeeoLMsr4kf5h6dOW11I15MUA==}
+    peerDependencies:
+      ajv: ^8.0.0
+    peerDependenciesMeta:
+      ajv:
+        optional: true
+    dependencies:
+      ajv: 8.12.0
+    dev: true
+
   /ajv-keywords@3.5.2(ajv@6.12.6):
     resolution: {integrity: sha512-5p6WTN0DdTGVQk6VjcEju19IgaHudalcfabD7yhDGeA6bcQnmL+CpveLJq/3hvfwd1aof6L386Ougkx6RfyMIQ==}
     peerDependencies:
       ajv: ^6.9.1
     dependencies:
       ajv: 6.12.6
+
+  /ajv-keywords@5.1.0(ajv@8.12.0):
+    resolution: {integrity: sha512-YCS/JNFAUyr5vAuhk1DWm1CBxRHW9LbJ2ozWeemrIqpbsqKjHVxYPyi5GC0rjZIT5JxJ3virVTS8wk4i/Z+krw==}
+    peerDependencies:
+      ajv: ^8.8.2
+    dependencies:
+      ajv: 8.12.0
+      fast-deep-equal: 3.1.3
+    dev: true
 
   /ajv@6.12.6:
     resolution: {integrity: sha512-j3fVLgvTo527anyYyJOGTYJbG+vnnQYvE0m5mmkc1TK+nxAppkCLMIL0aZ4dblVCNoGShhm+kzE4ZUykBoMg4g==}
@@ -9061,6 +8950,15 @@ packages:
       fast-json-stable-stringify: 2.1.0
       json-schema-traverse: 0.4.1
       uri-js: 4.4.1
+
+  /ajv@8.12.0:
+    resolution: {integrity: sha512-sRu1kpcO9yLtYxBKvqfTeh9KzZEwO3STyX1HT+4CaDzC6HpTGYhIhPIzj9XuKU7KYDwnaeh5hcOwjy1QuJzBPA==}
+    dependencies:
+      fast-deep-equal: 3.1.3
+      json-schema-traverse: 1.0.0
+      require-from-string: 2.0.2
+      uri-js: 4.4.1
+    dev: true
 
   /ajv@8.6.3:
     resolution: {integrity: sha512-SMJOdDP6LqTkD0Uq8qLi+gMwSt0imXLSV080qFVwJCpH9U6Mb+SUGHAXM0KNbcBPguytWyvFxcHgMLe2D2XSpw==}
@@ -9459,6 +9357,19 @@ packages:
       webpack: 5.75.0
     dev: false
 
+  /babel-loader@9.1.2(@babel/core@7.21.0)(webpack@4.46.0):
+    resolution: {integrity: sha512-mN14niXW43tddohGl8HPu5yfQq70iUThvFL/4QzESA7GcZoC0eVOhvWdQ8+3UlSjaDE9MVtsW9mxDY07W7VpVA==}
+    engines: {node: '>= 14.15.0'}
+    peerDependencies:
+      '@babel/core': ^7.12.0
+      webpack: '>=5'
+    dependencies:
+      '@babel/core': 7.21.0
+      find-cache-dir: 3.3.2
+      schema-utils: 4.0.0
+      webpack: 4.46.0
+    dev: true
+
   /babel-plugin-add-react-displayname@0.0.5:
     resolution: {integrity: sha512-LY3+Y0XVDYcShHHorshrDbt4KFWL4bSeniCtl4SYZbask+Syngk1uMPCeN9+nSiZo6zX5s0RTq/J9Pnaaf/KHw==}
     dev: true
@@ -9521,7 +9432,7 @@ packages:
     peerDependencies:
       '@babel/core': ^7.0.0-0
     dependencies:
-      '@babel/compat-data': 7.21.0
+      '@babel/compat-data': 7.20.14
       '@babel/core': 7.21.0
       '@babel/helper-define-polyfill-provider': 0.3.3(@babel/core@7.21.0)
       semver: 6.3.0
@@ -10450,7 +10361,7 @@ packages:
     dev: false
 
   /concat-map@0.0.1:
-    resolution: {integrity: sha1-2Klr13/Wjfd5OnMDajug1UBdR3s=}
+    resolution: {integrity: sha512-/Srv4dswyQNBfohGpz9o6Yb3Gz3SrUDqBH5rTuhGR7ahtlbYKnVxw2bCFMRljaA7EXHaXZ8wsHdodFvbkhKmqg==}
 
   /concat-stream@1.6.2:
     resolution: {integrity: sha512-27HBghJxjiZtIk3Ycvn/4kbJk/1uZuJFfuPEns6LaEvpvG1f0hTea8lilrouyo9mVc2GWdcEZ8OLoGmSADlrCw==}
@@ -13860,6 +13771,7 @@ packages:
     dependencies:
       is-object: 1.0.2
       is-window: 1.0.2
+    dev: false
 
   /is-element@0.1.0:
     resolution: {integrity: sha512-qtlzvwm4bPrI6hBRHBhLWgp/fUeDaeCBRcT8eHhI7yP1C2g45AilloSAmbPgeAMm3InTgMy6z3ZImq9byMlYXg==}
@@ -13971,6 +13883,7 @@ packages:
 
   /is-object@1.0.2:
     resolution: {integrity: sha512-2rRIahhZr2UWb45fIOuvZGpFtz0TyOZLf32KxBbSoUCeZR495zCKlWUKKUByk3geS2eAs7ZAABt0Y/Rx0GiQGA==}
+    dev: false
 
   /is-plain-obj@2.1.0:
     resolution: {integrity: sha512-YWnfyRwxL/+SsrWYfOpUtz5b3YD+nyfkHvjbcanzk8zgyO4ASD67uVMRt8k5bM4lLMDnXfriRhOpemw+NfT1eA==}
@@ -14079,6 +13992,7 @@ packages:
 
   /is-window@1.0.2:
     resolution: {integrity: sha512-uj00kdXyZb9t9RcAUAwMZAnkBUwdYGhYlt7djMXhfyhUCzwNba50tIiBKR7q0l7tdoBtFVw/3JmLY6fI3rmZmg==}
+    dev: false
 
   /is-windows@1.0.2:
     resolution: {integrity: sha512-eXK1UInq2bPmjyX6e3VHIzMLobc4J94i4AWn+Hpq3OU5KkrRC96OAcR3PRJ/pGu6m8TRnBHP9dkXQVsT/COVIA==}
@@ -14492,17 +14406,6 @@ packages:
       slash: 3.0.0
       stack-utils: 2.0.6
 
-<<<<<<< HEAD
-=======
-  /jest-mock@27.5.1:
-    resolution: {integrity: sha512-K4jKbY1d4ENhbrG2zuPWaQBvDly+iZ2yAW+T1fATN78hc0sInwn7wZB8XtlNnvHug5RMwV897Xm4LqmPM4e2Og==}
-    engines: {node: ^10.13.0 || ^12.13.0 || ^14.15.0 || >=15.0.0}
-    dependencies:
-      '@jest/types': 27.5.1
-      '@types/node': 18.13.0
-    dev: true
-
->>>>>>> 8bb1a56a (Migrate storybook to vite)
   /jest-mock@29.3.1:
     resolution: {integrity: sha512-H8/qFDtDVMFvFP4X8NuOT3XRDzOUTz+FeACjufHzsOIBAxivLqkB1PoLCaJx9iPPQ8dZThHPp/G3WRWyMgA3JA==}
     engines: {node: ^14.15.0 || ^16.10.0 || >=18.0.0}
@@ -14837,7 +14740,6 @@ packages:
 
   /json-schema-traverse@1.0.0:
     resolution: {integrity: sha512-NM8/P9n3XjXhIZn1lLhkFaACTOURQXjWhV4BA/RnOv8xvgqtqpAX9IO4mRQxSx1Rlo4tqzeqb0sOlruaOy3dug==}
-    dev: false
 
   /json-stable-stringify-without-jsonify@1.0.1:
     resolution: {integrity: sha512-Bdboy+l7tA3OGW6FjyFHWkP5LuByj1Tk33Ljyq0axyzdk9//JSi2u3fP1QSmd1KNwq6VOKYGlAu87CisVir6Pw==}
@@ -16864,6 +16766,7 @@ packages:
     engines: {node: '>=10'}
     dependencies:
       '@babel/runtime': 7.20.13
+    dev: false
 
   /pony-cause@2.1.4:
     resolution: {integrity: sha512-6jNyaeEi1I4rGD338qmNmx2yLg8N/JZJZU8JCrqDtfxCEYZttfuN6AnKhBGfMyTydW4t2iBioxDzKeZJC2mJVw==}
@@ -17084,24 +16987,6 @@ packages:
       lodash: 4.17.21
       renderkid: 2.0.7
     dev: true
-
-<<<<<<< HEAD
-  /pretty-error@4.0.0:
-    resolution: {integrity: sha512-AoJ5YMAcXKYxKhuJGdcvse+Voc6v1RgnsR3nWcYU7q4t6z0Q6T86sv5Zq8VIRbOWWFpvdGE83LtdSMNd+6Y0xw==}
-    dependencies:
-      lodash: 4.17.21
-      renderkid: 3.0.0
-    dev: false
-=======
-  /pretty-format@27.5.1:
-    resolution: {integrity: sha512-Qb1gy5OrP5+zDf2Bvnzdl3jsTf1qXVMazbvCoKhtKqVs4/YK4ozX4gKQJJVyNe+cajNPn0KoC0MC3FUmaHWEmQ==}
-    engines: {node: ^10.13.0 || ^12.13.0 || ^14.15.0 || >=15.0.0}
-    dependencies:
-      ansi-regex: 5.0.1
-      ansi-styles: 5.2.0
-      react-is: 17.0.2
-    dev: true
->>>>>>> 8bb1a56a (Migrate storybook to vite)
 
   /pretty-format@29.3.1:
     resolution: {integrity: sha512-FyLnmb1cYJV8biEIiRyzRFvs2lry7PPIvOqKVe1GCUEYg4YGmlx1qG9EJNMxArYm7piII4qb8UV1Pncq5dxmcg==}
@@ -17487,6 +17372,7 @@ packages:
       is-dom: 1.1.0
       prop-types: 15.8.1
       react: 17.0.2
+    dev: false
 
   /react-is@16.13.1:
     resolution: {integrity: sha512-24e6ynE2H+OKt4kqsOvNd8kBpV65zoxbA4BVsEOB3ARVWQki/DHzaUoC5KuON/BiccDaCCTZBuOcfZs70kR8bQ==}
@@ -18347,6 +18233,16 @@ packages:
       '@types/json-schema': 7.0.11
       ajv: 6.12.6
       ajv-keywords: 3.5.2(ajv@6.12.6)
+
+  /schema-utils@4.0.0:
+    resolution: {integrity: sha512-1edyXKgh6XnJsJSQ8mKWXnN/BVaIbFMLpouRUrXgVq7WYne5kw3MW7UPhO44uRXQSIpTSXoJbmrR2X0w9kUTyg==}
+    engines: {node: '>= 12.13.0'}
+    dependencies:
+      '@types/json-schema': 7.0.11
+      ajv: 8.12.0
+      ajv-formats: 2.1.1(ajv@8.12.0)
+      ajv-keywords: 5.1.0(ajv@8.12.0)
+    dev: true
 
   /screenfull@5.2.0:
     resolution: {integrity: sha512-9BakfsO2aUQN2K9Fdbj87RJIEZ82Q9IGim7FqM5OsebfoFC6ZHXgDq/KvniuLTPdeM8wY2o6Dj3WQ7KeQCj3cA==}
@@ -20032,6 +19928,7 @@ packages:
 
   /uuid-browser@3.1.0:
     resolution: {integrity: sha512-dsNgbLaTrd6l3MMxTtouOCFw4CBFc/3a+GgYA2YyrJvyQ1u6q4pcu3ktLoUZ/VN/Aw9WsauazbgsgdfVWgAKQg==}
+    dev: false
 
   /uuid@3.4.0:
     resolution: {integrity: sha512-HjSDRw6gZE5JMggctHBcjVak08+KEVhSIiDzFnT9S9aegmp85S/bReBVTb4QTFaRNptJ9kuYaNhnbNEOkbKb/A==}
