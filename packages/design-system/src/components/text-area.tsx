@@ -1,11 +1,10 @@
-import { styled } from "../stitches.config";
-import { theme } from "../stitches.config";
+import { styled, theme } from "../stitches.config";
+import { textVariants } from "./text";
 
 export const TextArea = styled("textarea", {
   // Reset
   appearance: "none",
   borderWidth: "0",
-  fontFamily: "inherit",
   margin: "0",
   outline: "none",
   padding: theme.spacing[3],
@@ -46,9 +45,8 @@ export const TextArea = styled("textarea", {
     size: {
       "1": {
         borderRadius: theme.borderRadius[4],
-        fontSize: theme.deprecatedFontSize[3],
-        lineHeight: theme.deprecatedLineHeight[3],
-        px: theme.spacing[3],
+        padding: theme.spacing[4],
+        ...textVariants.regular,
       },
       "2": {
         borderRadius: theme.borderRadius[4],

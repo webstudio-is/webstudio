@@ -19,7 +19,7 @@ export type AppliesTo = Properties[StyleProperty]["appliesTo"];
 
 export type UnitGroup = keyof typeof units;
 
-type UnitEnum = typeof units[UnitGroup][number];
+type UnitEnum = (typeof units)[UnitGroup][number];
 
 const Unit = z.union([
   // expected tuple with at least single element
@@ -30,7 +30,7 @@ const Unit = z.union([
 
 export type Unit = z.infer<typeof Unit>;
 
-const UnitValue = z.object({
+export const UnitValue = z.object({
   type: z.literal("unit"),
   unit: Unit,
   value: z.number(),
@@ -38,7 +38,7 @@ const UnitValue = z.object({
 
 export type UnitValue = z.infer<typeof UnitValue>;
 
-const KeywordValue = z.object({
+export const KeywordValue = z.object({
   type: z.literal("keyword"),
   // @todo use exact type
   value: z.string(),
@@ -48,7 +48,7 @@ export type KeywordValue = z.infer<typeof KeywordValue>;
 /**
  * Valid unparsed css value
  **/
-const UnparsedValue = z.object({
+export const UnparsedValue = z.object({
   type: z.literal("unparsed"),
   value: z.string(),
 });
@@ -70,14 +70,14 @@ export type RgbValue = z.infer<typeof RgbValue>;
 
 export const ImageValue = z.object({
   type: z.literal("image"),
-  value: z.array(z.object({ type: z.literal("asset"), value: ImageAsset })),
+  value: z.object({ type: z.literal("asset"), value: ImageAsset }),
 });
 
 export type ImageValue = z.infer<typeof ImageValue>;
 
 // We want to be able to render the invalid value
 // and show it is invalid visually, without saving it to the db
-const InvalidValue = z.object({
+export const InvalidValue = z.object({
   type: z.literal("invalid"),
   value: z.string(),
 });
@@ -89,6 +89,33 @@ const UnsetValue = z.object({
 });
 export type UnsetValue = z.infer<typeof UnsetValue>;
 
+// To support background layers https://developer.mozilla.org/en-US/docs/Web/CSS/background
+// and similar comma separated css properties
+// InvalidValue used in case of asset not found
+export const LayersValue = z.object({
+  type: z.literal("layers"),
+  value: z.array(
+    z.union([UnitValue, KeywordValue, UnparsedValue, ImageValue, InvalidValue])
+  ),
+});
+
+export type LayersValue = z.infer<typeof LayersValue>;
+
+export const TupleValueItem = z.union([UnitValue, KeywordValue, UnparsedValue]);
+export type TupleValueItem = z.infer<typeof TupleValueItem>;
+
+export const TupleValue = z.object({
+  type: z.literal("tuple"),
+  value: z.array(TupleValueItem),
+});
+
+export type TupleValue = z.infer<typeof TupleValue>;
+
+/**
+ * All StyleValue types that going to need wrapping into a CSS variable when rendered
+ * on canvas inside builder.
+ * Values like InvalidValue, UnsetValue, VarValue don't need to be wrapped
+ */
 export const validStaticValueTypes = [
   "unit",
   "keyword",
@@ -96,6 +123,8 @@ export const validStaticValueTypes = [
   "rgb",
   "image",
   "unparsed",
+  "layers",
+  "tuple",
 ] as const;
 
 /**
@@ -108,9 +137,14 @@ const SharedStaticStyleValue = z.union([
   FontFamilyValue,
   RgbValue,
   UnparsedValue,
+  TupleValue,
 ]);
 
-const ValidStaticStyleValue = z.union([ImageValue, SharedStaticStyleValue]);
+const ValidStaticStyleValue = z.union([
+  ImageValue,
+  LayersValue,
+  SharedStaticStyleValue,
+]);
 
 export type ValidStaticStyleValue = z.infer<typeof ValidStaticStyleValue>;
 

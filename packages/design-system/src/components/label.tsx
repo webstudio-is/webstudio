@@ -11,7 +11,7 @@ import { styled, theme } from "../stitches.config";
 const StyledLabel = styled("label", textVariants.labelsSentenceCase, {
   boxSizing: "border-box",
   flexShrink: 0,
-  py: theme.spacing[2],
+  py: theme.spacing[1],
   border: "1px solid transparent",
   borderRadius: theme.borderRadius[3],
 
@@ -19,13 +19,14 @@ const StyledLabel = styled("label", textVariants.labelsSentenceCase, {
     outline: `2px solid ${theme.colors.blue10}`,
   },
 
+  "&[aria-disabled=true]": {
+    color: theme.colors.foregroundDisabled,
+  },
+
   variants: {
     color: {
       default: {
         color: theme.colors.foregroundMain,
-        "&[aria-disabled=true]": {
-          color: theme.colors.foregroundDisabled,
-        },
       },
       preset: {
         px: theme.spacing[3],
@@ -55,6 +56,15 @@ const StyledLabel = styled("label", textVariants.labelsSentenceCase, {
         },
       },
     },
+    truncate: {
+      true: {
+        whiteSpace: "nowrap",
+        overflow: "hidden",
+        textOverflow: "ellipsis",
+        flexBasis: 0,
+        flexGrow: 1,
+      },
+    },
   },
 
   defaultVariants: {
@@ -65,13 +75,14 @@ const StyledLabel = styled("label", textVariants.labelsSentenceCase, {
 type Props = ComponentProps<typeof StyledLabel> & {
   color?: "default" | "preset" | "local" | "remote";
   disabled?: boolean;
+  truncate?: boolean;
   children: ReactNode;
 };
 
 export const Label = forwardRef((props: Props, ref: Ref<HTMLLabelElement>) => {
-  const { color, disabled, children, ...rest } = props;
+  const { disabled, children, ...rest } = props;
   return (
-    <StyledLabel ref={ref} color={color} aria-disabled={disabled} {...rest}>
+    <StyledLabel ref={ref} aria-disabled={disabled} {...rest}>
       {children}
     </StyledLabel>
   );

@@ -157,13 +157,6 @@ test("compute inherited styles", () => {
     )
   ).toMatchInlineSnapshot(`
     {
-      "boxSizing": {
-        "instanceId": "2",
-        "value": {
-          "type": "keyword",
-          "value": "border-box",
-        },
-      },
       "fontSize": {
         "instanceId": "1",
         "value": {

@@ -1,6 +1,6 @@
 import { InputIcon } from "@webstudio-is/icons";
 import type { WsComponentMeta, WsComponentPropsMeta } from "./component-type";
-import props from "./__generated__/input.props.json";
+import { props } from "./__generated__/input.props";
 
 export const meta: WsComponentMeta = {
   type: "control",
@@ -8,6 +8,6 @@ export const meta: WsComponentMeta = {
   Icon: InputIcon,
 };
 
-export const propsMeta = {
+export const propsMeta: WsComponentPropsMeta = {
   props,
-} as WsComponentPropsMeta;
+};

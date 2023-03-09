@@ -1,6 +1,10 @@
 import { useCallback, useEffect, useMemo } from "react";
 import { type Publish, usePublish, useSubscribe } from "~/shared/pubsub";
-import { type Pages, findPageByIdOrPath } from "@webstudio-is/project-build";
+import {
+  type Build,
+  type Pages,
+  findPageByIdOrPath,
+} from "@webstudio-is/project-build";
 import type { Project } from "@webstudio-is/project";
 import { theme, Box, type CSS, Flex, Grid } from "@webstudio-is/design-system";
 import type { AuthPermit } from "@webstudio-is/trpc-interface";
@@ -30,8 +34,13 @@ import {
   useIsPreviewMode,
   useSetAuthPermit,
   useSetAuthToken,
+  useSetBreakpoints,
+  useSetInstances,
   useSetIsPreviewMode,
-  useSetTreeId,
+  useSetProps,
+  useSetStyles,
+  useSetStyleSources,
+  useSetStyleSourceSelections,
 } from "~/shared/nano-states";
 import { useClientSettings } from "./shared/client-settings";
 import { Navigator } from "./features/sidebar-left";
@@ -74,7 +83,7 @@ const useNavigatorLayout = () => {
   // We need to render the detached state only once the setting was actually loaded from local storage.
   // Otherwise we may show the detached state because its the default and then hide it immediately.
   const [clientSettings, _, isLoaded] = useClientSettings();
-  return isLoaded ? clientSettings.navigatorLayout : "docked";
+  return isLoaded ? clientSettings.navigatorLayout : "undocked";
 };
 
 const useSubscribeCanvasReady = (publish: Publish) => {
@@ -238,8 +247,7 @@ export type BuilderProps = {
   project: Project;
   pages: Pages;
   pageId: string;
-  treeId: string;
-  buildId: string;
+  build: Build;
   buildOrigin: string;
   authReadToken: string;
   authToken?: string;
@@ -250,24 +258,28 @@ export const Builder = ({
   project,
   pages,
   pageId,
-  treeId,
-  buildId,
+  build,
   buildOrigin,
   authReadToken,
   authToken,
   authPermit,
 }: BuilderProps) => {
+  useSetBreakpoints(build.breakpoints);
+  useSetProps(build.props);
+  useSetStyles(build.styles);
+  useSetStyleSources(build.styleSources);
+  useSetStyleSourceSelections(build.styleSourceSelections);
+  useSetInstances(build.instances);
+
   useSetAuthToken(authToken);
   useSetAuthPermit(authPermit);
   useSetProject(project);
-  useSetTreeId(treeId);
   useSetPages(pages);
   useSetCurrentPageId(pageId);
   const [publish, publishRef] = usePublish();
   useBuilderStore(publish);
   useSyncServer({
-    buildId,
-    treeId,
+    buildId: build.id,
     projectId: project.id,
     authToken,
     authPermit,
@@ -333,6 +345,7 @@ export const Builder = ({
               css={{
                 height: "100%",
                 width: "100%",
+                //minWidth,
               }}
             />
           </Workspace>

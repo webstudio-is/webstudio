@@ -63,16 +63,19 @@ export const toValue = (
 
   if (value.type === "image") {
     // @todo image-set
-    return value.value
-      .map(
-        (imageAsset) =>
-          `url(${imageAsset.value.path}) /* id=${imageAsset.value.id} */`
-      )
-      .join(", ");
+    return `url(${value.value.value.path}) /* id=${value.value.value.id} */`;
   }
 
   if (value.type === "unparsed") {
     return value.value;
+  }
+
+  if (value.type === "layers") {
+    return value.value.map((value) => toValue(value, options)).join(",");
+  }
+
+  if (value.type === "tuple") {
+    return value.value.map((value) => toValue(value, options)).join(" ");
   }
 
   // Will give ts error in case of missing type

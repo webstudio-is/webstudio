@@ -1,6 +1,6 @@
 import { TextIcon } from "@webstudio-is/icons";
 import type { WsComponentMeta, WsComponentPropsMeta } from "./component-type";
-import props from "./__generated__/text-block.props.json";
+import { props } from "./__generated__/text-block.props";
 
 const presetStyle = {
   minHeight: {
@@ -18,6 +18,6 @@ export const meta: WsComponentMeta = {
   children: ["Block of text you can edit"],
 };
 
-export const propsMeta = {
+export const propsMeta: WsComponentPropsMeta = {
   props,
-} as WsComponentPropsMeta;
+};

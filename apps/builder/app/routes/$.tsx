@@ -1,7 +1,7 @@
 import { redirect, json, LoaderArgs, LinksFunction } from "@remix-run/node";
 import type { MetaFunction, ErrorBoundaryComponent } from "@remix-run/node";
 import { useLoaderData } from "@remix-run/react";
-import { InstanceRoot, Root } from "@webstudio-is/react-sdk";
+import { InstanceRoot, Root, getComponent } from "@webstudio-is/react-sdk";
 import { loadCanvasData, loadProductionCanvasData } from "~/shared/db";
 import env, { type PublicEnv } from "~/env/env.public.server";
 import { sentryException } from "~/shared/sentry";
@@ -92,17 +92,15 @@ export const loader = async ({ request }: LoaderArgs): Promise<Data> => {
 
   const pagePath = buildParams.pagePath === "/" ? "" : buildParams.pagePath;
 
-  const canvasData = pagesCanvasData.find(
-    (data) => data.page.path === pagePath
-  );
+  const page = pagesCanvasData.pages.find((page) => page.path === pagePath);
 
-  if (canvasData === undefined) {
+  if (page === undefined) {
     throw json("Page not found", {
       status: 404,
     });
   }
 
-  return { ...canvasData, env, mode, params };
+  return { ...pagesCanvasData, page, env, mode, params };
 };
 
 export const ErrorBoundary: ErrorBoundaryComponent = ({ error }) => {
@@ -111,14 +109,23 @@ export const ErrorBoundary: ErrorBoundaryComponent = ({ error }) => {
   return <ErrorMessage message={message} />;
 };
 
-const Content = () => {
+const Outlet = () => {
   const data = useLoaderData<Data>();
 
-  const Outlet =
-    data.mode === "edit"
-      ? () => <Canvas data={data} />
-      : () => <InstanceRoot data={data} customComponents={customComponents} />;
+  if (data.mode === "edit") {
+    return <Canvas data={data} getComponent={getComponent} />;
+  }
 
+  return (
+    <InstanceRoot
+      data={data}
+      getComponent={getComponent}
+      customComponents={customComponents}
+    />
+  );
+};
+
+const Content = () => {
   // @todo This is non-standard for Remix, is there a better way?
   // Maybe there is a way to tell remix to use the right outlet somehow and avoid passing it?
   return <Root Outlet={Outlet} />;

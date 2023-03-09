@@ -1,30 +1,25 @@
 import type { ActionArgs } from "@remix-run/node";
 import type { SyncItem } from "immerhin";
-import type { Build, Tree } from "@webstudio-is/project-build";
+import type { Build } from "@webstudio-is/project-build";
 import {
   patchBreakpoints,
   patchProps,
   patchStyles,
   patchStyleSources,
   patchStyleSourceSelections,
-  patchTree,
+  patchInstances,
 } from "@webstudio-is/project-build/server";
 import type { Project } from "@webstudio-is/project";
 import { createContext } from "~/shared/context.server";
 
 type PatchData = {
   transactions: Array<SyncItem>;
-  treeId: Tree["id"];
   buildId: Build["id"];
   projectId: Project["id"];
 };
 
 export const action = async ({ request }: ActionArgs) => {
-  const { treeId, buildId, projectId, transactions }: PatchData =
-    await request.json();
-  if (treeId === undefined) {
-    return { errors: "Tree id required" };
-  }
+  const { buildId, projectId, transactions }: PatchData = await request.json();
   if (buildId === undefined) {
     return { errors: "Build id required" };
   }
@@ -41,11 +36,11 @@ export const action = async ({ request }: ActionArgs) => {
     for await (const change of transaction.changes) {
       const { namespace, patches } = change;
 
-      if (namespace === "root") {
-        await patchTree({ treeId, projectId }, patches, context);
+      if (namespace === "instances") {
+        await patchInstances({ buildId, projectId }, patches, context);
       } else if (namespace === "styleSourceSelections") {
         await patchStyleSourceSelections(
-          { treeId, projectId },
+          { buildId, projectId },
           patches,
           context
         );
@@ -54,7 +49,7 @@ export const action = async ({ request }: ActionArgs) => {
       } else if (namespace === "styles") {
         await patchStyles({ buildId, projectId }, patches, context);
       } else if (namespace === "props") {
-        await patchProps({ treeId, projectId }, patches, context);
+        await patchProps({ buildId, projectId }, patches, context);
       } else if (namespace === "breakpoints") {
         await patchBreakpoints({ buildId, projectId }, patches, context);
       } else {

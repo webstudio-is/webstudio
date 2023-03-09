@@ -18,6 +18,12 @@ export * from "./components/popover";
 export { MenuItemButton } from "./components/menu";
 export * from "./components/switch";
 export * from "./components/toolbar";
+export * from "./components/two-rows-icon-button-container";
+export * from "./components/small-icon-button";
+export * from "./components/list-position-indicator";
+export * from "./components/position-grid";
+export * from "./components/small-toggle-button";
+export * from "./components/css-value-list-item";
 
 // Not aligned
 
@@ -63,6 +69,7 @@ export { Flex } from "./components/flex";
 export { Grid } from "./components/grid";
 export * from "./components/primitives/dnd";
 export * from "./components/primitives/numeric-gesture-control";
+export * from "./components/primitives/is-truncated";
 
 // Deprecated
 

@@ -37,6 +37,7 @@ import type {
 } from "~/shared/pages";
 import { restPagesPath } from "~/shared/router-utils";
 import { Header, HeaderSuffixSpacer } from "../../header";
+import { deleteInstance } from "~/shared/instance-utils";
 
 const Group = styled(Flex, {
   marginBottom: theme.spacing[9],
@@ -45,7 +46,7 @@ const Group = styled(Flex, {
 });
 
 const fieldNames = ["name", "path", "title", "description"] as const;
-type FieldName = typeof fieldNames[number];
+type FieldName = (typeof fieldNames)[number];
 type FormPage = Pick<Page, "name" | "path" | "title"> & {
   description: string;
 };
@@ -363,6 +364,10 @@ export const PageSettings = ({
   const deleteOnClient = (pageId: Page["id"]) => {
     if (pages === undefined) {
       return;
+    }
+    const page = pages.pages.find((item) => item.id === pageId);
+    if (page) {
+      deleteInstance(page.rootInstanceId);
     }
     setPages({
       homePage: pages.homePage,

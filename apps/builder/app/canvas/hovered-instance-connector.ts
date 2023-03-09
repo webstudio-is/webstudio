@@ -47,13 +47,12 @@ const startHoveredInstanceConnection = () => {
 
   // debounce is used to avoid laggy hover because of iframe message delay
   const updateHoveredRect = debounce((element: Element) => {
-    const component = element.getAttribute("data-ws-component") ?? undefined;
-    if (component === undefined) {
+    const instanceId = element.getAttribute(idAttribute) ?? undefined;
+    if (instanceId === undefined) {
       return;
     }
     hoveredInstanceOutlineStore.set({
-      // store component in outline to show correct label when hover over elements fast
-      component: component,
+      instanceId,
       rect: element.getBoundingClientRect(),
     });
   }, 50);

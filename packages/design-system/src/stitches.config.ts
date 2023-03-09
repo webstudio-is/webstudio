@@ -255,16 +255,14 @@ const {
       mono: figma.fontFamilies.robotoMono,
     },
 
-    // @todo: should we use these tokens?
-    // fontSize: figma.fontSizes,
-    // lineHeight: figma.lineHeights,
-    // fontWeight: figma.fontWeights,
-    // letterSpacing: figma.letterSpacing,
-
     opacity: {
       1: "0.4",
     },
     spacing,
+
+    /**
+     * Use instead: textVariants / textStyles / <Text />
+     */
     deprecatedFontSize: {
       1: "8px",
       2: "10px",
@@ -277,6 +275,10 @@ const {
       8: "35px",
       9: "59px",
     },
+
+    /**
+     * Use instead: textVariants / textStyles / <Text />
+     */
     deprecatedLineHeight: {
       1: "8px",
       2: "12px",
@@ -284,6 +286,7 @@ const {
       // Legacy - don't use unless specified in Figma
       4: "20px",
     },
+
     borderRadius: {
       1: "1px",
       2: "2px",

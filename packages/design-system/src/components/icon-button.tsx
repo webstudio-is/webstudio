@@ -26,6 +26,10 @@ export const IconButton = styled("button", {
     borderColor: "transparent",
     pointerEvents: "none",
   },
+  "&[data-state=open]": {
+    backgroundColor: theme.colors.blue10,
+    color: theme.colors.foregroundContrastMain,
+  },
 
   variants: {
     variant: {
@@ -73,7 +77,7 @@ export const IconButton = styled("button", {
       },
       active: {
         backgroundColor: theme.colors.blue10,
-        color: "White",
+        color: theme.colors.foregroundContrastMain,
         // non-interactive state because usually covered with overlay
       },
     },

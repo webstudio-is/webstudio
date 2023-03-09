@@ -59,7 +59,7 @@ export const authorizationTokenPath = (method: string) =>
   `/rest/authorization-token/${method}`;
 
 export const loginPath = (params: {
-  error?: typeof AUTH_PROVIDERS[keyof typeof AUTH_PROVIDERS];
+  error?: (typeof AUTH_PROVIDERS)[keyof typeof AUTH_PROVIDERS];
   message?: string;
   returnTo?: string;
 }) => `/login${searchParams(params)}`;
@@ -139,9 +139,9 @@ export const getBuildUrl = ({
 
   if (env.BUILD_REQUIRE_SUBDOMAIN) {
     url.host = `${project.domain}.${url.host}`;
-  } else {
-    url.searchParams.set("projectId", project.id);
   }
+
+  url.searchParams.set("projectId", project.id);
 
   if (mode) {
     url.searchParams.set("mode", mode);

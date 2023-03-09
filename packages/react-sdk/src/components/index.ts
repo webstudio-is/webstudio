@@ -1,12 +1,13 @@
 import { PropMeta } from "@webstudio-is/generate-arg-types";
 import type { WsComponentMeta, WsComponentPropsMeta } from "./component-type";
-
+import type { ComponentName } from "./components-utils";
 import { meta as BodyMeta } from "./body.ws";
 import { meta as BoxMeta } from "./box.ws";
 import { meta as TextBlockMeta } from "./text-block.ws";
 import { meta as HeadingMeta } from "./heading.ws";
 import { meta as ParagraphMeta } from "./paragraph.ws";
 import { meta as LinkMeta } from "./link.ws";
+import { meta as LinkBlockMeta } from "./link-block.ws";
 import { meta as RichTextLinkMeta } from "./rich-text-link.ws";
 import { meta as SpanMeta } from "./span.ws";
 import { meta as BoldMeta } from "./bold.ws";
@@ -20,6 +21,8 @@ import { meta as ImageMeta } from "./image.ws";
 import { meta as BlockquoteMeta } from "./blockquote.ws";
 import { meta as ListMeta } from "./list.ws";
 import { meta as ListItemMeta } from "./list-item.ws";
+import { meta as SeparatorMeta } from "./separator.ws";
+import { meta as CodeMeta } from "./code.ws";
 
 // these are huge JSON objects that we want to be tree-shaken when not used!
 import { propsMeta as BodyMetaPropsMeta } from "./body.ws";
@@ -28,6 +31,7 @@ import { propsMeta as TextBlockMetaPropsMeta } from "./text-block.ws";
 import { propsMeta as HeadingMetaPropsMeta } from "./heading.ws";
 import { propsMeta as ParagraphMetaPropsMeta } from "./paragraph.ws";
 import { propsMeta as LinkMetaPropsMeta } from "./link.ws";
+import { propsMeta as LinkBlockPropsMeta } from "./link-block.ws";
 import { propsMeta as RichTextLinkMetaPropsMeta } from "./rich-text-link.ws";
 import { propsMeta as SpanMetaPropsMeta } from "./span.ws";
 import { propsMeta as BoldMetaPropsMeta } from "./bold.ws";
@@ -41,26 +45,8 @@ import { propsMeta as ImageMetaPropsMeta } from "./image.ws";
 import { propsMeta as BlockquotePropsMeta } from "./blockquote.ws";
 import { propsMeta as ListPropsMeta } from "./list.ws";
 import { propsMeta as ListItemPropsMeta } from "./list-item.ws";
-
-import { Body } from "./body";
-import { Box } from "./box";
-import { TextBlock } from "./text-block";
-import { Heading } from "./heading";
-import { Paragraph } from "./paragraph";
-import { Link } from "./link";
-import { RichTextLink } from "./rich-text-link";
-import { Span } from "./span";
-import { Bold } from "./bold";
-import { Italic } from "./italic";
-import { Superscript } from "./superscript";
-import { Subscript } from "./subscript";
-import { Button } from "./button";
-import { Input } from "./input";
-import { Form } from "./form";
-import { Image } from "./image";
-import { Blockquote } from "./blockquote";
-import { List } from "./list";
-import { ListItem } from "./list-item";
+import { propsMeta as SeparatorPropsMeta } from "./separator.ws";
+import { propsMeta as CodePropsMeta } from "./code.ws";
 
 const defaultMetas: Record<string, WsComponentMeta> = {
   Box: BoxMeta,
@@ -69,6 +55,7 @@ const defaultMetas: Record<string, WsComponentMeta> = {
   Heading: HeadingMeta,
   Paragraph: ParagraphMeta,
   Link: LinkMeta,
+  LinkBlock: LinkBlockMeta,
   RichTextLink: RichTextLinkMeta,
   Span: SpanMeta,
   Bold: BoldMeta,
@@ -82,6 +69,8 @@ const defaultMetas: Record<string, WsComponentMeta> = {
   Blockquote: BlockquoteMeta,
   List: ListMeta,
   ListItem: ListItemMeta,
+  Separator: SeparatorMeta,
+  Code: CodeMeta,
 };
 
 let currentMetas = defaultMetas;
@@ -100,13 +89,14 @@ export const registerComponentMetas = (
   currentMetas = result;
 };
 
-const defaultPropsMetas: Record<string, WsComponentPropsMeta> = {
+const defaultPropsMetasRaw = {
   Box: BoxMetaPropsMeta,
   Body: BodyMetaPropsMeta,
   TextBlock: TextBlockMetaPropsMeta,
   Heading: HeadingMetaPropsMeta,
   Paragraph: ParagraphMetaPropsMeta,
   Link: LinkMetaPropsMeta,
+  LinkBlock: LinkBlockPropsMeta,
   RichTextLink: RichTextLinkMetaPropsMeta,
   Span: SpanMetaPropsMeta,
   Bold: BoldMetaPropsMeta,
@@ -120,7 +110,12 @@ const defaultPropsMetas: Record<string, WsComponentPropsMeta> = {
   Blockquote: BlockquotePropsMeta,
   List: ListPropsMeta,
   ListItem: ListItemPropsMeta,
-};
+  Separator: SeparatorPropsMeta,
+  Code: CodePropsMeta,
+} as const;
+
+const defaultPropsMetas: Record<string, WsComponentPropsMeta> =
+  defaultPropsMetasRaw;
 
 let registeredPropsMetas: Record<string, Partial<WsComponentPropsMeta>> = {};
 
@@ -157,56 +152,12 @@ export const registerComponentPropsMetas = (
   currentPropsMetas = undefined;
 };
 
-const defaultComponents = {
-  Box,
-  Body,
-  TextBlock,
-  Heading,
-  Paragraph,
-  Link,
-  RichTextLink,
-  Span,
-  Bold,
-  Italic,
-  Superscript,
-  Subscript,
-  Button,
-  Input,
-  Form,
-  Image,
-  Blockquote,
-  List,
-  ListItem,
-} as const;
-
-export type ComponentName = keyof typeof defaultComponents;
 type RegisteredComponents = Partial<{
   // eslint-disable-next-line @typescript-eslint/ban-types
   [name in ComponentName]: {};
 }>;
 
-let registeredComponents: RegisteredComponents | null = null;
-
-const componentNames = Object.keys(defaultComponents) as ComponentName[];
-
-export const getComponentNames = (): ComponentName[] => {
-  const uniqueNames = new Set([
-    ...componentNames,
-    ...Object.keys(registeredComponents || {}),
-  ]);
-
-  return [...uniqueNames.values()] as ComponentName[];
-};
-
-export const getComponent = (
-  name: string
-): undefined | typeof defaultComponents[ComponentName] => {
-  return registeredComponents != null && name in registeredComponents
-    ? (registeredComponents[
-        name as ComponentName
-      ] as typeof defaultComponents[ComponentName])
-    : defaultComponents[name as ComponentName];
-};
+export let registeredComponents: RegisteredComponents | undefined;
 
 /**
  *  @todo: Allow register any component.
@@ -250,7 +201,7 @@ const computeInitialProps = (
     ? Object.entries(props)
         .filter(
           ([name, value]) =>
-            value?.type.required && initialProps.includes(name) === false
+            value?.required && initialProps.includes(name) === false
         )
         .map(([name]) => name)
     : [];

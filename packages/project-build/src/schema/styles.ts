@@ -3,11 +3,29 @@ import {
   type StyleProperty,
   SharedStyleValue,
   ImageValue,
+  LayersValue,
+  UnitValue,
+  KeywordValue,
+  UnparsedValue,
+  InvalidValue,
 } from "@webstudio-is/css-data";
 
 const StoredImageValue = z.object({
   type: z.literal("image"),
-  value: z.array(z.object({ type: z.literal("asset"), value: z.string() })),
+  value: z.object({ type: z.literal("asset"), value: z.string() }),
+});
+
+const StoredLayersValue = z.object({
+  type: z.literal("layers"),
+  value: z.array(
+    z.union([
+      UnitValue,
+      KeywordValue,
+      UnparsedValue,
+      StoredImageValue,
+      InvalidValue,
+    ])
+  ),
 });
 
 export const StoredStyleDecl = z.object({
@@ -15,7 +33,7 @@ export const StoredStyleDecl = z.object({
   breakpointId: z.string(),
   // @todo can't figure out how to make property to be enum
   property: z.string() as z.ZodType<StyleProperty>,
-  value: z.union([StoredImageValue, SharedStyleValue]),
+  value: z.union([StoredImageValue, StoredLayersValue, SharedStyleValue]),
 });
 
 export type StoredStyleDecl = z.infer<typeof StoredStyleDecl>;
@@ -29,7 +47,7 @@ export const StyleDecl = z.object({
   breakpointId: z.string(),
   // @todo can't figure out how to make property to be enum
   property: z.string() as z.ZodType<StyleProperty>,
-  value: z.union([ImageValue, SharedStyleValue]),
+  value: z.union([ImageValue, LayersValue, SharedStyleValue]),
 });
 
 export type StyleDecl = z.infer<typeof StyleDecl>;

@@ -59,7 +59,7 @@ type FloatingPanelProps = {
   onOpenChange?: (isOpen: boolean) => void;
 };
 
-const contetnStyles = css({ width: theme.spacing[30] });
+const contentStyles = css({ width: theme.spacing[30] });
 
 export const FloatingPanel = ({
   title,
@@ -71,20 +71,14 @@ export const FloatingPanel = ({
     useLogic(onOpenChange);
   return (
     <FloatingPanelPopover open={isOpen} onOpenChange={handleOpenChange} modal>
-      <FloatingPanelPopoverTrigger
-        asChild
-        ref={triggerRef}
-        onClick={() => {
-          handleOpenChange(true);
-        }}
-      >
+      <FloatingPanelPopoverTrigger asChild ref={triggerRef}>
         {children}
       </FloatingPanelPopoverTrigger>
       <FloatingPanelPopoverContent
         sideOffset={sideOffset}
         side="left"
         align="start"
-        className={contetnStyles()}
+        className={contentStyles()}
       >
         {content}
         <FloatingPanelPopoverTitle>{title}</FloatingPanelPopoverTitle>

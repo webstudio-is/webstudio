@@ -1,6 +1,6 @@
 import { SubscriptIcon } from "@webstudio-is/icons";
 import type { WsComponentMeta, WsComponentPropsMeta } from "./component-type";
-import props from "./__generated__/subscript.props.json";
+import { props } from "./__generated__/subscript.props";
 
 export const meta: WsComponentMeta = {
   type: "rich-text-child",
@@ -8,6 +8,6 @@ export const meta: WsComponentMeta = {
   Icon: SubscriptIcon,
 };
 
-export const propsMeta = {
+export const propsMeta: WsComponentPropsMeta = {
   props,
-} as WsComponentPropsMeta;
+};

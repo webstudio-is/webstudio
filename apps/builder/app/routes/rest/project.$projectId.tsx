@@ -4,12 +4,10 @@ import { loadProductionCanvasData } from "~/shared/db";
 import type { CanvasData } from "@webstudio-is/project";
 import { createContext } from "~/shared/context.server";
 
-type PagesDetails = Array<CanvasData>;
-
 export const loader = async ({
   params,
   request,
-}: LoaderArgs): Promise<PagesDetails> => {
+}: LoaderArgs): Promise<CanvasData> => {
   try {
     const projectId = params.projectId ?? undefined;
 

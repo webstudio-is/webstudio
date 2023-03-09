@@ -1,10 +1,9 @@
 import { type Patch, applyPatches } from "immer";
-import { type Project, prisma } from "@webstudio-is/prisma-client";
+import { type Project, type Build, prisma } from "@webstudio-is/prisma-client";
 import {
   authorizeProject,
   type AppContext,
 } from "@webstudio-is/trpc-interface/server";
-import type { Tree } from "../types";
 import {
   StyleSourceSelectionsList,
   StyleSourceSelections,
@@ -31,7 +30,7 @@ export const serializeStyleSourceSelections = (
 };
 
 export const patchStyleSourceSelections = async (
-  { treeId, projectId }: { treeId: Tree["id"]; projectId: Project["id"] },
+  { buildId, projectId }: { buildId: Build["id"]; projectId: Project["id"] },
   patches: Array<Patch>,
   context: AppContext
 ) => {
@@ -44,31 +43,31 @@ export const patchStyleSourceSelections = async (
     throw new Error("You don't have edit access to this project");
   }
 
-  const tree = await prisma.tree.findUnique({
+  const build = await prisma.build.findUnique({
     where: {
-      id_projectId: { projectId, id: treeId },
+      id_projectId: { projectId, id: buildId },
     },
   });
-  if (tree === null) {
+  if (build === null) {
     return;
   }
 
   const styleSourceSelections = parseStyleSourceSelections(
-    tree.styleSelections
+    build.styleSourceSelections
   );
 
   const patchedStyleSourceSelections = StyleSourceSelections.parse(
     applyPatches(styleSourceSelections, patches)
   );
 
-  await prisma.tree.update({
+  await prisma.build.update({
     data: {
-      styleSelections: serializeStyleSourceSelections(
+      styleSourceSelections: serializeStyleSourceSelections(
         patchedStyleSourceSelections
       ),
     },
     where: {
-      id_projectId: { projectId, id: treeId },
+      id_projectId: { projectId, id: buildId },
     },
   });
 };

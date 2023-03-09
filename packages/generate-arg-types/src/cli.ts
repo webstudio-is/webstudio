@@ -4,7 +4,6 @@
 import path from "path";
 import { withCustomConfig } from "react-docgen-typescript";
 import fg from "fast-glob";
-
 import fs from "fs-extra";
 import { propsToArgTypes } from "./arg-types";
 
@@ -41,21 +40,23 @@ const tsConfigParser = withCustomConfig(tsConfigPath, options);
 
 // For each component file generate argTypes based on the propTypes
 componentFiles.forEach((filePath) => {
-  const generatedJsonDir = path.join(
-    path.dirname(filePath),
-    GENERATED_FILES_DIR
-  );
+  const generatedDir = path.join(path.dirname(filePath), GENERATED_FILES_DIR);
 
-  if (!fs.existsSync(generatedJsonDir)) {
-    fs.mkdirSync(generatedJsonDir, { recursive: true });
+  if (!fs.existsSync(generatedDir)) {
+    fs.mkdirSync(generatedDir, { recursive: true });
   }
 
-  const generateJsonFile = `${path.basename(filePath, ".tsx")}.props.json`;
-  const generateJsonPath = path.join(generatedJsonDir, generateJsonFile);
+  const generatedFile = `${path.basename(filePath, ".tsx")}.props.ts`;
+  const generatedPath = path.join(generatedDir, generatedFile);
 
   const res = tsConfigParser.parse(filePath);
   const argTypes = propsToArgTypes(res[0].props);
-  fs.ensureFileSync(generateJsonPath);
-  fs.writeJsonSync(generateJsonPath, argTypes, { spaces: 2 });
-  console.log(`Done generating argTypes for ${generateJsonPath}`);
+  fs.ensureFileSync(generatedPath);
+  fs.writeFileSync(
+    generatedPath,
+    `import type { PropMeta } from "@webstudio-is/generate-arg-types";\n\nexport const props: Record<string, PropMeta> = ${JSON.stringify(
+      argTypes
+    )}`
+  );
+  console.log(`Done generating argTypes for ${generatedPath}`);
 });

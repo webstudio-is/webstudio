@@ -65,3 +65,16 @@ export const useWindowResize = (onResize: () => void) => {
     };
   }, [onResize]);
 };
+
+export const useWindowResizeDebounced = (onResize: () => void) => {
+  useEffect(() => {
+    // Call on leading
+    emitter.on("resizeStart", onResize);
+    // and trailing edge
+    emitter.on("resizeEnd", onResize);
+    return () => {
+      emitter.on("resizeStart", onResize);
+      emitter.off("resizeEnd", onResize);
+    };
+  }, [onResize]);
+};

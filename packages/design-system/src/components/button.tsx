@@ -21,7 +21,7 @@ const colors = [
   "dark",
 ] as const;
 
-type ButtonColor = typeof colors[number];
+type ButtonColor = (typeof colors)[number];
 
 type ButtonState = "auto" | "hover" | "focus" | "pressed" | "pending";
 
@@ -111,6 +111,8 @@ const StyledButton = styled("button", {
 
 const TextContainer = styled("span", textVariants.labelsTitleCase, {
   padding: `0 ${theme.spacing[2]}`,
+  overflow: "hidden",
+  textOverflow: "ellipsis",
 });
 
 type ButtonProps = {

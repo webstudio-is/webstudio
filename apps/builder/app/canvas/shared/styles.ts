@@ -11,6 +11,7 @@ import {
 import type { StyleDecl } from "@webstudio-is/project-build";
 import {
   collapsedAttribute,
+  componentAttribute,
   getComponentMeta,
   getComponentNames,
   idAttribute,
@@ -50,7 +51,7 @@ const presetStylesEngine = createCssEngine({ name: "presetStyles" });
 // If user sets `height: 100px` or does anything that would give it a height - we remove the helper padding right away, so user can actually see the height they set
 //
 // In other words we prevent elements from collapsing when they have 0 height or width by making them non-zero on canvas, but then we remove those paddings as soon as element doesn't collapse.
-const helperStyles = [
+export const helperStyles = [
   // When double clicking into an element to edit text, it should not select the word.
   `[${idAttribute}] {
     user-select: none;
@@ -58,7 +59,7 @@ const helperStyles = [
   // Using :where allows to prevent increasing specificity, so that helper is overwritten by user styles.
   `[${idAttribute}]:where([${collapsedAttribute}]:not(body)) {
     outline: 1px dashed #555;
-    outline-offset: -1px;
+    outline-offset: -0.5px;
   }`,
   // Has no width, will collapse
   `[${idAttribute}]:where(:not(body)[${collapsedAttribute}="w"]) {
@@ -132,9 +133,12 @@ export const GlobalStyles = () => {
       const meta = getComponentMeta(component);
       const presetStyle = meta?.presetStyle;
       if (presetStyle !== undefined) {
-        presetStylesEngine.addStyleRule(`[data-ws-component=${component}]`, {
-          style: presetStyle,
-        });
+        presetStylesEngine.addStyleRule(
+          `[${componentAttribute}=${component}]`,
+          {
+            style: presetStyle,
+          }
+        );
       }
     }
     presetStylesEngine.render();
@@ -160,9 +164,16 @@ const toVarStyleWithFallback = (instanceId: string, style: Style): Style => {
     }
     if (
       validStaticValueTypes.includes(
-        value.type as typeof validStaticValueTypes[number]
+        value.type as (typeof validStaticValueTypes)[number]
       )
     ) {
+      // We don't want to wrap backgroundClip into a var, because it's not supported by CSS variables
+      // It's fine because we don't need to update it dynamically via CSS variables during preview changes
+      // we renrender it anyway when CSS update happens
+      if (property === "backgroundClip") {
+        dynamicStyle[property] = value;
+        continue;
+      }
       dynamicStyle[property] = {
         type: "var",
         value: toVarNamespace(instanceId, property),

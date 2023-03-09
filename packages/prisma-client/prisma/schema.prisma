@@ -62,7 +62,6 @@ model Project {
   user      User?    @relation(fields: [userId], references: [id])
   userId    String?
   build     Build[]
-  trees     Tree[]
   isDeleted Boolean  @default(false)
 
   @@unique([id, isDeleted])
@@ -76,29 +75,16 @@ model Build {
 
   project   Project @relation(fields: [projectId], references: [id])
   projectId String
-  trees     Tree[]
 
   isDev  Boolean // exctly one is true per project
   isProd Boolean // at most one is true per project (none if not published)
 
-  breakpoints  String @default("[]")
-  styles       String @default("[]")
-  styleSources String @default("[]")
-
-  @@id([id, projectId])
-}
-
-model Tree {
-  id              String  @default(uuid())
-  project         Project @relation(fields: [projectId], references: [id])
-  projectId       String
-  build           Build   @relation(fields: [buildId, projectId], references: [id, projectId])
-  buildId         String
-  root            String
-  instances       String  @default("[]")
-  props           String  @default("[]")
-  styles          String  @default("[]")
-  styleSelections String  @default("[]")
+  breakpoints           String @default("[]")
+  styles                String @default("[]")
+  styleSources          String @default("[]")
+  styleSourceSelections String @default("[]")
+  props                 String @default("[]")
+  instances             String @default("[]")
 
   @@id([id, projectId])
 }

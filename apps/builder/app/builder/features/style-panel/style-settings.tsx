@@ -185,6 +185,7 @@ export const StyleSettings = ({
           isOpen={isSearchMode ? true : undefined}
           label={categories[category].label}
           key={category}
+          fullWidth={category === "backgrounds"}
         >
           <>{renderCategory(categoryProps)}</>
         </CollapsibleSection>

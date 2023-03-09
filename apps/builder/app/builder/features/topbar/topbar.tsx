@@ -10,7 +10,6 @@ import {
 import type { Page } from "@webstudio-is/project-build";
 import type { Project } from "@webstudio-is/project";
 import { theme } from "@webstudio-is/design-system";
-import { isFeatureEnabled } from "@webstudio-is/feature-flags";
 import { PreviewButton } from "./preview";
 import { ShareButton } from "./share";
 import { PublishButton } from "./publish";
@@ -69,7 +68,7 @@ export const Topbar = ({ gridArea, project, page, publish }: TopbarProps) => {
         <ViewMode />
         <SyncStatus />
         <PreviewButton />
-        {isFeatureEnabled("share2") && <ShareButton projectId={project.id} />}
+        <ShareButton projectId={project.id} />
         <PublishButton project={project} />
       </ToolbarToggleGroup>
     </Toolbar>

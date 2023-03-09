@@ -23,7 +23,6 @@ import {
   styleSourceSelectionsStore,
   styleSourcesStore,
   stylesStore,
-  treeIdStore,
 } from "~/shared/nano-states";
 import { removeByMutable } from "~/shared/array-utils";
 import { cloneStyles } from "~/shared/tree-utils";
@@ -155,8 +154,7 @@ const duplicateStyleSource = (styleSourceId: StyleSource["id"]) => {
 
 const convertLocalStyleSourceToToken = (styleSourceId: StyleSource["id"]) => {
   const selectedInstanceId = selectedInstanceIdStore.get();
-  const treeId = treeIdStore.get();
-  if (selectedInstanceId === undefined || treeId === undefined) {
+  if (selectedInstanceId === undefined) {
     return;
   }
   const newStyleSource: StyleSource = {
@@ -183,8 +181,7 @@ const convertLocalStyleSourceToToken = (styleSourceId: StyleSource["id"]) => {
 
 const reorderStyleSources = (styleSourceIds: StyleSource["id"][]) => {
   const selectedInstanceId = selectedInstanceIdStore.get();
-  const treeId = treeIdStore.get();
-  if (selectedInstanceId === undefined || treeId === undefined) {
+  if (selectedInstanceId === undefined) {
     return;
   }
   store.createTransaction(
@@ -203,7 +200,6 @@ const reorderStyleSources = (styleSourceIds: StyleSource["id"][]) => {
           styleSources.set(styleSourceId, {
             type: "local",
             id: styleSourceId,
-            treeId,
           });
         }
       }

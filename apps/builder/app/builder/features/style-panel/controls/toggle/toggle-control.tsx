@@ -15,6 +15,7 @@ export type ToggleGroupControlProps = {
   onValueChange?: (value: string) => void;
 };
 
+// @todo refactor this control to follow the standard interface we otherwise have for all controls
 export const ToggleGroupControl = ({
   styleSource,
   value = "",

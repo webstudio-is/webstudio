@@ -28,6 +28,7 @@ export const WidthSetting = () => {
   const min = isPreviewMode
     ? minWidth
     : Math.max(minWidth, selectedBreakpoint.minWidth);
+
   const max = isPreviewMode
     ? maxWidth
     : Math.min(

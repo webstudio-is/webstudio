@@ -1,6 +1,6 @@
 {
   "name": "@webstudio-is/react-sdk",
-  "version": "0.35.0",
+  "version": "0.46.0",
   "description": "Webstudio JavaScript / TypeScript API",
   "author": "Webstudio <github@webstudio.is>",
   "homepage": "https://webstudio.is",
@@ -8,7 +8,7 @@
   "scripts": {
     "dev": "build-package --watch",
     "build": "build-package",
-    "build:args": "generate-arg-types './src/components/*.tsx !./src/**/*.stories.tsx !./src/**/*.ws.tsx' && prettier --write \"**/*.props.json\"",
+    "build:args": "generate-arg-types './src/components/*.tsx !./src/**/*.stories.tsx !./src/**/*.ws.tsx' && prettier --write \"**/*.props.ts\"",
     "typecheck": "tsc --noEmit",
     "test": "NODE_OPTIONS=--experimental-vm-modules jest --passWithNoTests",
     "lint": "eslint ./src --ext .ts,.tsx --max-warnings 0",
@@ -17,7 +17,7 @@
     "storybook:build": "build-storybook"
   },
   "devDependencies": {
-    "@babel/core": "^7.20.2",
+    "@babel/core": "^7.21.0",
     "@esbuild-kit/esm-loader": "^2.4.2",
     "@jest/globals": "^29.3.1",
     "@remix-run/node": "1.12.0",
@@ -32,7 +32,7 @@
     "@webstudio-is/scripts": "workspace:^",
     "@webstudio-is/storybook-config": "workspace:^",
     "@webstudio-is/tsconfig": "workspace:^",
-    "babel-loader": "^8.2.5",
+    "babel-loader": "^9.1.2",
     "esbuild": "^0.14.25",
     "esbuild-node-externals": "^1.4.1",
     "jest": "^29.3.1",
@@ -55,6 +55,7 @@
     "@nanostores/react": "^0.4.1",
     "@webstudio-is/asset-uploader": "workspace:^",
     "@webstudio-is/css-data": "workspace:^",
+    "@webstudio-is/css-vars": "workspace:^",
     "@webstudio-is/generate-arg-types": "workspace:^",
     "@webstudio-is/icons": "workspace:^",
     "@webstudio-is/image": "workspace:^",
@@ -66,8 +67,10 @@
     "warn-once": "^0.1.1"
   },
   "exports": {
-    "import": "./lib/index.js",
-    "require": "./lib/cjs/index.cjs"
+    ".": {
+      "import": "./lib/index.js",
+      "require": "./lib/cjs/index.cjs"
+    }
   },
   "types": "src/index.ts",
   "files": [

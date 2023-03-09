@@ -13,6 +13,8 @@ const iconsMap = {
   "<TrashIcon>": <TrashIcon />,
 } as const;
 
+const states = [undefined, ...smallIconButtonStates];
+
 export const Demo = ({
   icon,
   ...rest
@@ -28,7 +30,7 @@ export const Demo = ({
       <StoryGrid>
         {smallIconButtonVariants.map((variant) => (
           <StoryGrid horizontal key={variant}>
-            {smallIconButtonStates.map((state) => (
+            {states.map((state) => (
               <SmallIconButton
                 key={state}
                 title={`${variant} ${state}`}
@@ -46,7 +48,7 @@ export const Demo = ({
       <StoryGrid>
         {smallIconButtonVariants.map((variant) => (
           <StoryGrid horizontal key={variant}>
-            {smallIconButtonStates.map((state) => (
+            {states.map((state) => (
               <SmallIconButton
                 key={state}
                 title={`${variant} ${state}`}
@@ -73,8 +75,11 @@ Demo.argTypes = {
     control: { type: "inline-radio", options: smallIconButtonVariants },
   },
   state: {
-    defaultValue: "auto",
-    control: { type: "inline-radio", options: smallIconButtonStates },
+    defaultValue: undefined,
+    control: {
+      type: "inline-radio",
+      options: states,
+    },
   },
   focused: {
     defaultValue: false,

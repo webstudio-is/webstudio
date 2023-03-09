@@ -17,11 +17,11 @@ import {
 import { parseStyles, serializeStyles } from "./styles";
 import { parseStyleSources, serializeStyleSources } from "./style-sources";
 import {
-  cloneTree,
-  createNewTreeData,
-  createTree,
-  deleteTreeById,
-} from "./tree";
+  parseStyleSourceSelections,
+  serializeStyleSourceSelections,
+} from "./style-source-selections";
+import { parseProps, serializeProps } from "./props";
+import { parseInstances, serializeInstances } from "./instances";
 
 const parseBuild = async (build: DbBuild): Promise<Build> => {
   const pages = Pages.parse(JSON.parse(build.pages));
@@ -35,6 +35,11 @@ const parseBuild = async (build: DbBuild): Promise<Build> => {
     breakpoints: Array.from(parseBreakpoints(build.breakpoints)),
     styles: Array.from(await parseStyles(build.projectId, build.styles)),
     styleSources: Array.from(parseStyleSources(build.styleSources)),
+    styleSourceSelections: Array.from(
+      parseStyleSourceSelections(build.styleSourceSelections)
+    ),
+    props: Array.from(parseProps(build.props)),
+    instances: Array.from(parseInstances(build.instances)),
   };
 };
 
@@ -111,6 +116,21 @@ const updatePages = async (
   return parseBuild(updatedBuild);
 };
 
+const createNewPageInstances = (): Build["instances"] => {
+  const instanceId = nanoid();
+  return [
+    [
+      instanceId,
+      {
+        type: "instance",
+        id: instanceId,
+        component: "Body",
+        children: [],
+      },
+    ],
+  ];
+};
+
 export const addPage = async ({
   projectId,
   buildId,
@@ -119,26 +139,42 @@ export const addPage = async ({
   projectId: Project["id"];
   buildId: Build["id"];
   data: Pick<Page, "name" | "path"> &
-    Partial<Omit<Page, "id" | "treeId" | "name" | "path">>;
+    Partial<Omit<Page, "id" | "name" | "path">>;
 }) => {
-  return updatePages({ projectId, buildId }, async (currentPages) => {
-    const tree = await createTree(createNewTreeData({ projectId, buildId }));
+  const build = await loadBuildById({ projectId, buildId });
+  const currentPages = build.pages;
+  const currentInstances = build.instances;
 
-    return {
-      homePage: currentPages.homePage,
-      pages: [
-        ...currentPages.pages,
-        {
-          id: nanoid(),
-          treeId: tree.id,
-          name: data.name,
-          path: data.path,
-          title: data.title ?? data.name,
-          meta: data.meta ?? {},
-        },
-      ],
-    };
+  const instances = createNewPageInstances();
+  const [rootInstanceId] = instances[0];
+
+  const updatedPages = Pages.parse({
+    homePage: currentPages.homePage,
+    pages: [
+      ...currentPages.pages,
+      {
+        id: nanoid(),
+        rootInstanceId,
+        name: data.name,
+        path: data.path,
+        title: data.title ?? data.name,
+        meta: data.meta ?? {},
+      },
+    ],
+  } satisfies Pages);
+
+  const updatedBuild = await prisma.build.update({
+    where: {
+      id_projectId: { projectId, id: buildId },
+    },
+    data: {
+      pages: JSON.stringify(updatedPages),
+      instances: serializeInstances(
+        new Map([...currentInstances, ...instances])
+      ),
+    },
   });
+  return parseBuild(updatedBuild);
 };
 
 export const editPage = async ({
@@ -150,7 +186,7 @@ export const editPage = async ({
   projectId: Project["id"];
   buildId: Build["id"];
   pageId: Page["id"];
-  data: Partial<Omit<Page, "id" | "treeId">>;
+  data: Partial<Omit<Page, "id">>;
 }) => {
   return updatePages({ projectId, buildId }, async (currentPages) => {
     const currentPage = findPageByIdOrPath(currentPages, pageId);
@@ -160,7 +196,7 @@ export const editPage = async ({
 
     const updatedPage: Page = {
       id: currentPage.id,
-      treeId: currentPage.treeId,
+      rootInstanceId: currentPage.rootInstanceId,
       name: data.name ?? currentPage.name,
       path: data.path ?? currentPage.path,
       title: data.title ?? currentPage.title,
@@ -198,72 +234,10 @@ export const deletePage = async ({
       throw new Error(`Page with id "${pageId}" not found`);
     }
 
-    await deleteTreeById({ projectId, treeId: page.treeId });
-
     return {
       homePage: currentPages.homePage,
       pages: currentPages.pages.filter((page) => page.id !== pageId),
     };
-  });
-};
-
-const createPages = async (
-  { projectId, buildId }: { projectId: Project["id"]; buildId: Build["id"] },
-  _context: AppContext,
-  client: Prisma.TransactionClient = prisma
-) => {
-  const tree = await createTree(
-    createNewTreeData({ projectId, buildId }),
-    client
-  );
-  return Pages.parse({
-    homePage: {
-      id: nanoid(),
-      name: "Home",
-      path: "",
-      title: "Home",
-      meta: {},
-      treeId: tree.id,
-    },
-    pages: [],
-  });
-};
-
-const clonePage = async (
-  from: { projectId: Project["id"]; page: Page },
-  to: { projectId: Project["id"]; buildId: Build["id"] },
-  context: AppContext,
-  client: Prisma.TransactionClient = prisma
-) => {
-  const tree = await cloneTree(
-    { projectId: from.projectId, treeId: from.page.treeId },
-    to,
-    context,
-    client
-  );
-  return { ...from.page, id: nanoid(), treeId: tree.id };
-};
-
-const clonePages = async (
-  from: { projectId: Project["id"]; pages: Pages },
-  to: { projectId: Project["id"]; buildId: Build["id"] },
-  context: AppContext,
-  client: Prisma.TransactionClient = prisma
-) => {
-  const clones = [];
-  for (const page of from.pages.pages) {
-    clones.push(
-      await clonePage({ projectId: from.projectId, page }, to, context, client)
-    );
-  }
-  return Pages.parse({
-    homePage: await clonePage(
-      { projectId: from.projectId, page: from.pages.homePage },
-      to,
-      context,
-      client
-    ),
-    pages: clones,
   });
 };
 
@@ -298,7 +272,7 @@ export async function createBuild(
     env: "dev" | "prod";
     sourceBuild: Build | undefined;
   },
-  context: AppContext,
+  _context: AppContext,
   client: Prisma.TransactionClient
 ): Promise<void> {
   if (props.env === "dev") {
@@ -322,10 +296,31 @@ export async function createBuild(
     });
   }
 
-  const build = await client.build.create({
+  let newInstances: Build["instances"];
+  let newPages: Pages;
+  if (props.sourceBuild === undefined) {
+    newInstances = createNewPageInstances();
+    const [rootInstanceId] = newInstances[0];
+    newPages = Pages.parse({
+      homePage: {
+        id: nanoid(),
+        name: "Home",
+        path: "",
+        title: "Home",
+        meta: {},
+        rootInstanceId,
+      },
+      pages: [],
+    } satisfies Pages);
+  } else {
+    newInstances = props.sourceBuild.instances;
+    newPages = props.sourceBuild.pages;
+  }
+
+  await client.build.create({
     data: {
       projectId: props.projectId,
-      pages: JSON.stringify([]),
+      pages: JSON.stringify(newPages),
       breakpoints: serializeBreakpoints(
         new Map(props.sourceBuild?.breakpoints ?? createInitialBreakpoints())
       ),
@@ -333,34 +328,13 @@ export async function createBuild(
       styleSources: serializeStyleSources(
         new Map(props.sourceBuild?.styleSources)
       ),
+      styleSourceSelections: serializeStyleSourceSelections(
+        new Map(props.sourceBuild?.styleSourceSelections)
+      ),
+      props: serializeProps(new Map(props.sourceBuild?.props)),
+      instances: serializeInstances(new Map(newInstances)),
       isDev: props.env === "dev",
       isProd: props.env === "prod",
-    },
-  });
-
-  const pages =
-    props.sourceBuild === undefined
-      ? await createPages(
-          { projectId: props.projectId, buildId: build.id },
-          context,
-          client
-        )
-      : await clonePages(
-          {
-            projectId: props.sourceBuild.projectId,
-            pages: props.sourceBuild.pages,
-          },
-          { projectId: props.projectId, buildId: build.id },
-          context,
-          client
-        );
-
-  await client.build.update({
-    where: {
-      id_projectId: { projectId: props.projectId, id: build.id },
-    },
-    data: {
-      pages: JSON.stringify(pages),
     },
   });
 }

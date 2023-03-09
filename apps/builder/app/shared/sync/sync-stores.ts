@@ -4,13 +4,14 @@ import type { WritableAtom } from "nanostores";
 import { useEffect } from "react";
 import { type Publish, subscribe } from "~/shared/pubsub";
 import {
-  rootInstanceContainer,
+  instancesStore,
   propsStore,
   breakpointsContainer,
   stylesStore,
   styleSourcesStore,
   styleSourceSelectionsStore,
   assetContainersStore,
+  selectedPageStore,
   selectedInstanceIdStore,
   selectedInstanceBrowserStyleStore,
   hoveredInstanceIdStore,
@@ -30,6 +31,7 @@ type SyncEventSource = "canvas" | "builder";
 
 declare module "~/shared/pubsub" {
   export interface PubsubMap {
+    canvasStoreReady: void;
     sendStoreData: {
       // distinct source to avoid infinite loop
       source: SyncEventSource;
@@ -48,13 +50,14 @@ const clientStores = new Map<string, WritableAtom<unknown>>();
 export const registerContainers = () => {
   // synchronize patches
   store.register("breakpoints", breakpointsContainer);
-  store.register("root", rootInstanceContainer);
+  store.register("instances", instancesStore);
   store.register("styles", stylesStore);
   store.register("styleSources", styleSourcesStore);
   store.register("styleSourceSelections", styleSourceSelectionsStore);
   store.register("props", propsStore);
   // synchronize whole states
   clientStores.set("assetContainers", assetContainersStore);
+  clientStores.set("selectedPage", selectedPageStore);
   clientStores.set("selectedInstanceId", selectedInstanceIdStore);
   clientStores.set(
     "selectedInstanceBrowserStyle",
@@ -168,15 +171,7 @@ const syncStoresState = (name: SyncEventSource, publish: Publish) => {
 
 export const useCanvasStore = (publish: Publish) => {
   useEffect(() => {
-    // immerhin data is sent only initially so not part of syncStoresState
-    // expect data to be populated by the time effect is called
     const data = [];
-    for (const [namespace, container] of store.containers) {
-      data.push({
-        namespace,
-        value: container.get(),
-      });
-    }
     for (const [namespace, store] of clientStores) {
       data.push({
         namespace,
@@ -194,6 +189,10 @@ export const useCanvasStore = (publish: Publish) => {
     const unsubscribeStoresState = syncStoresState("canvas", publish);
     const unsubscribeStoresChanges = syncStoresChanges("canvas", publish);
 
+    publish({
+      type: "canvasStoreReady",
+    });
+
     return () => {
       unsubscribeStoresState();
       unsubscribeStoresChanges();
@@ -203,10 +202,30 @@ export const useCanvasStore = (publish: Publish) => {
 
 export const useBuilderStore = (publish: Publish) => {
   useEffect(() => {
+    const unsubscribeCanvasStoreReady = subscribe("canvasStoreReady", () => {
+      // immerhin data is sent only initially so not part of syncStoresState
+      // expect data to be populated by the time effect is called
+      const data = [];
+      for (const [namespace, container] of store.containers) {
+        data.push({
+          namespace,
+          value: container.get(),
+        });
+      }
+      publish({
+        type: "sendStoreData",
+        payload: {
+          source: "builder",
+          data,
+        },
+      });
+    });
+
     const unsubscribeStoresState = syncStoresState("builder", publish);
     const unsubscribeStoresChanges = syncStoresChanges("builder", publish);
 
     return () => {
+      unsubscribeCanvasStoreReady();
       unsubscribeStoresState();
       unsubscribeStoresChanges();
     };

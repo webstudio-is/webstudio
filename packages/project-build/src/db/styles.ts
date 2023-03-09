@@ -19,26 +19,71 @@ import {
 const parseValue = (
   styleValue: StoredStyleDecl["value"],
   assetsMap: Map<string, Asset>
-) => {
-  if (styleValue.type === "image") {
+): StyleDecl["value"] => {
+  if (styleValue.type === "layers") {
     return {
-      type: "image" as const,
-      value: styleValue.value.flatMap((item) => {
-        const asset = assetsMap.get(item.value);
-        if (asset === undefined) {
-          warnOnce(true, `Asset with assetId "${item.value}" not found`);
-          return [];
-        }
-        if (asset.type === "image") {
-          return [
-            {
+      type: "layers" as const,
+      value: styleValue.value.map((style) => {
+        if (style.type === "image") {
+          const item = style.value;
+          const asset = assetsMap.get(item.value);
+          if (asset === undefined) {
+            warnOnce(true, `Asset with assetId "${item.value}" not found`);
+
+            return {
+              type: "invalid" as const,
+              value: JSON.stringify(styleValue.value),
+            };
+          }
+
+          if (asset.type !== "image") {
+            warnOnce(true, `Asset with assetId "${item.value}" not an image`);
+            return {
+              type: "invalid" as const,
+              value: JSON.stringify(styleValue.value),
+            };
+          }
+
+          return {
+            type: "image" as const,
+            value: {
               type: "asset" as const,
               value: asset,
             },
-          ];
+          };
         }
-        return [];
+        return style;
       }),
+    };
+  }
+
+  if (styleValue.type === "image") {
+    const item = styleValue.value;
+    const asset = assetsMap.get(item.value);
+
+    if (asset === undefined) {
+      warnOnce(true, `Asset with assetId "${item.value}" not found`);
+
+      return {
+        type: "invalid" as const,
+        value: JSON.stringify(styleValue.value),
+      };
+    }
+
+    if (asset.type !== "image") {
+      warnOnce(true, `Asset with assetId "${item.value}" not an image`);
+      return {
+        type: "invalid" as const,
+        value: JSON.stringify(styleValue.value),
+      };
+    }
+
+    return {
+      type: "image" as const,
+      value: {
+        type: "asset" as const,
+        value: asset,
+      },
     };
   }
   return styleValue;
@@ -53,9 +98,19 @@ export const parseStyles = async (
   const assetIds: string[] = [];
   for (const { value: styleValue } of storedStyles) {
     if (styleValue.type === "image") {
-      for (const item of styleValue.value) {
-        if (item.type === "asset") {
-          assetIds.push(item.value);
+      const item = styleValue.value;
+      if (item.type === "asset") {
+        assetIds.push(item.value);
+      }
+    }
+
+    if (styleValue.type === "layers") {
+      for (const layer of styleValue.value) {
+        if (layer.type === "image") {
+          const item = layer.value;
+          if (item.type === "asset") {
+            assetIds.push(item.value);
+          }
         }
       }
     }
@@ -90,17 +145,40 @@ export const parseStyles = async (
 /**
  * prepare value to store in db
  */
-const serializeValue = (styleValue: StyleDecl["value"]) => {
+const serializeValue = (
+  styleValue: StyleDecl["value"]
+): StoredStyleDecl["value"] => {
   if (styleValue.type === "image") {
+    const asset = styleValue.value;
     return {
       type: "image" as const,
-      value: styleValue.value.map((asset) => ({
+      value: {
         type: asset.type,
         // only asset id is stored in db
         value: asset.value.id,
-      })),
+      },
     };
   }
+  if (styleValue.type === "layers") {
+    return {
+      type: "layers" as const,
+      value: styleValue.value.map((item) => {
+        if (item.type === "image") {
+          const asset = item.value;
+          return {
+            type: "image" as const,
+            value: {
+              type: asset.type,
+              // only asset id is stored in db
+              value: asset.value.id,
+            },
+          };
+        }
+        return item;
+      }),
+    };
+  }
+
   return styleValue;
 };
 
@@ -142,7 +220,6 @@ export const patchStyles = async (
     return;
   }
 
-  // these styles are filtered by treeId
   const styles = await parseStyles(build.projectId, build.styles);
 
   const patchedStyles = Styles.parse(applyPatches(styles, patches));

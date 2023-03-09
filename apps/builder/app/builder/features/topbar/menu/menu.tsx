@@ -28,11 +28,8 @@ import {
 } from "~/shared/theme";
 import { useClientSettings } from "~/builder/shared/client-settings";
 import { dashboardPath } from "~/shared/router-utils";
-import {
-  selectedInstanceIdStore,
-  useIsPreviewMode,
-} from "~/shared/nano-states";
-import { deleteInstance } from "~/shared/instance-utils";
+import { useIsPreviewMode } from "~/shared/nano-states";
+import { deleteSelectedInstance } from "~/shared/instance-utils";
 import { MenuButton } from "./menu-button";
 import { useAuthPermit } from "~/shared/nano-states";
 import { zoomIn, zoomOut } from "~/shared/nano-states/breakpoints";
@@ -167,15 +164,7 @@ export const Menu = ({ publish }: MenuProps) => {
           </DropdownMenuItem>
 
           */}
-          <DropdownMenuItem
-            onSelect={() => {
-              const selectedInstanceId = selectedInstanceIdStore.get();
-              if (selectedInstanceId === undefined) {
-                return;
-              }
-              deleteInstance(selectedInstanceId);
-            }}
-          >
+          <DropdownMenuItem onSelect={deleteSelectedInstance}>
             Delete
             <DropdownMenuItemRightSlot>
               <ShortcutHint value={["backspace"]} />

@@ -7,7 +7,7 @@ import {
 import { Image as WebstudioImage, loaders } from "@webstudio-is/image";
 import { Image as SdkImage } from "../../components/image";
 import { usePropAsset } from "../../props";
-import { idAttribute } from "../../tree/wrapper-component";
+import { idAttribute } from "../../tree/webstudio-component";
 import { getParams } from "../params";
 
 const defaultTag = "img";

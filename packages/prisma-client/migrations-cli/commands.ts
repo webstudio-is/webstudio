@@ -244,7 +244,7 @@ const up = async () => {
   if (locker) {
     try {
       await locker.getLock();
-    } catch (e) {
+    } catch (error) {
       throw new UserError(
         `Could not acquire lock!
 This means that another process is already running migrations. 
@@ -256,8 +256,8 @@ If you're sure no other process is running, please delete the lockfile:
 
   try {
     await umzug.up();
-  } catch (err) {
-    const originalError: unknown = err.cause || err;
+  } catch (error) {
+    const originalError: unknown = error.cause || error;
     const originalErrorString =
       (originalError instanceof Error && originalError.stack) ||
       inspect(originalError);
@@ -266,7 +266,7 @@ If you're sure no other process is running, please delete the lockfile:
     logger.error(originalErrorString);
     logger.error("");
 
-    const migrationName = (err.migration || undefined)?.name;
+    const migrationName = (error.migration || undefined)?.name;
     if (typeof migrationName === "string") {
       prismaMigrations.setFailed(migrationName, originalErrorString);
     }

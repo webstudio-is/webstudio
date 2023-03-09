@@ -7,12 +7,16 @@ import {
   selectedInstanceIdStore,
   styleSourceSelectionsStore,
   styleSourcesStore,
+  instancesStore,
+  patchInstancesMutable,
+  selectedPageStore,
 } from "./nano-states";
 import {
   createInstancesIndex,
   DroppableTarget,
-  findSubtree,
+  findParentInstance,
   findSubtreeLocalStyleSources,
+  findTreeInstances,
   insertInstanceMutable,
   reparentInstanceMutable,
 } from "./tree-utils";
@@ -22,9 +26,11 @@ export const insertInstance = (
   instance: Instance,
   dropTarget?: DroppableTarget
 ) => {
-  store.createTransaction([rootInstanceContainer], (rootInstance) => {
+  const rootInstance = rootInstanceContainer.get();
+  store.createTransaction([instancesStore], (instances) => {
     const instancesIndex = createInstancesIndex(rootInstance);
     insertInstanceMutable(instancesIndex, instance, dropTarget);
+    patchInstancesMutable(rootInstance, instances);
   });
   selectedInstanceIdStore.set(instance.id);
 };
@@ -33,9 +39,11 @@ export const reparentInstance = (
   targetInstanceId: Instance["id"],
   dropTarget: DroppableTarget
 ) => {
-  store.createTransaction([rootInstanceContainer], (rootInstance) => {
+  const rootInstance = rootInstanceContainer.get();
+  store.createTransaction([instancesStore], (instances) => {
     const instancesIndex = createInstancesIndex(rootInstance);
     reparentInstanceMutable(instancesIndex, targetInstanceId, dropTarget);
+    patchInstancesMutable(rootInstance, instances);
   });
   selectedInstanceIdStore.set(targetInstanceId);
 };
@@ -43,37 +51,32 @@ export const reparentInstance = (
 export const deleteInstance = (targetInstanceId: Instance["id"]) => {
   store.createTransaction(
     [
-      rootInstanceContainer,
+      instancesStore,
       propsStore,
       styleSourceSelectionsStore,
       styleSourcesStore,
       stylesStore,
     ],
-    (rootInstance, props, styleSourceSelections, styleSources, styles) => {
-      if (rootInstance === undefined) {
-        return;
-      }
-      // @todo tell user they can't delete root
-      if (targetInstanceId === rootInstance?.id) {
-        return;
-      }
-      const { parentInstance, subtreeIds } = findSubtree(
-        rootInstance,
-        targetInstanceId
-      );
+    (instances, props, styleSourceSelections, styleSources, styles) => {
+      const parentInstance = findParentInstance(instances, targetInstanceId);
+      const subtreeIds = findTreeInstances(instances, targetInstanceId);
       const subtreeLocalStyleSourceIds = findSubtreeLocalStyleSources(
         subtreeIds,
         styleSources,
         styleSourceSelections
       );
-      if (parentInstance === undefined) {
-        return;
+
+      // may not exist when delete root
+      if (parentInstance) {
+        removeByMutable(
+          parentInstance.children,
+          (child) => child.type === "id" && child.value === targetInstanceId
+        );
       }
 
-      removeByMutable(
-        parentInstance.children,
-        (child) => child.type === "instance" && child.id === targetInstanceId
-      );
+      for (const instanceId of subtreeIds) {
+        instances.delete(instanceId);
+      }
       // delete props and styles of deleted instance and its descendants
       for (const prop of props.values()) {
         if (subtreeIds.has(prop.instanceId)) {
@@ -92,7 +95,22 @@ export const deleteInstance = (targetInstanceId: Instance["id"]) => {
         }
       }
 
-      selectedInstanceIdStore.set(parentInstance.id);
+      if (parentInstance) {
+        selectedInstanceIdStore.set(parentInstance.id);
+      }
     }
   );
+};
+
+export const deleteSelectedInstance = () => {
+  const selectedInstanceId = selectedInstanceIdStore.get();
+  const rootInstanceId = selectedPageStore.get()?.rootInstanceId;
+  // @todo tell user they can't delete root
+  if (
+    selectedInstanceId === undefined ||
+    selectedInstanceId === rootInstanceId
+  ) {
+    return;
+  }
+  deleteInstance(selectedInstanceId);
 };

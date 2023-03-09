@@ -1,6 +1,6 @@
 import { Link2Icon } from "@webstudio-is/icons";
 import type { WsComponentMeta, WsComponentPropsMeta } from "./component-type";
-import props from "./__generated__/link.props.json";
+import { props } from "./__generated__/link.props";
 
 const presetStyle = {
   minHeight: {
@@ -16,13 +16,13 @@ const presetStyle = {
 
 export const meta: WsComponentMeta = {
   type: "rich-text",
-  label: "Link",
+  label: "Link Text",
   Icon: Link2Icon,
   presetStyle,
   children: ["Link text you can edit"],
 };
 
-export const propsMeta = {
+export const propsMeta: WsComponentPropsMeta = {
   props,
-  initialProps: ["href"],
-} as WsComponentPropsMeta;
+  initialProps: ["href", "target", "prefetch"],
+};

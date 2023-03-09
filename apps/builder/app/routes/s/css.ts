@@ -6,7 +6,8 @@ import { getBuildParams } from "~/shared/router-utils";
 import { sentryException } from "~/shared/sentry";
 import { createContext } from "~/shared/context.server";
 import { loadCanvasData, loadProductionCanvasData } from "~/shared/db";
-import type { Tree } from "@webstudio-is/project-build";
+import { createCssEngine } from "@webstudio-is/css-engine";
+import { helperStyles } from "~/canvas/shared/styles";
 
 export const loader = async ({ request }: ActionArgs) => {
   try {
@@ -45,10 +46,15 @@ export const loader = async ({ request }: ActionArgs) => {
         assets: canvasData.assets,
         breakpoints: canvasData.build?.breakpoints,
         styles: canvasData.build?.styles,
-        styleSourceSelections: canvasData.tree?.styleSourceSelections,
+        styleSourceSelections: canvasData.build?.styleSourceSelections,
       });
 
-      return new Response(cssText, {
+      const engine = createCssEngine({ name: "ssr" });
+      for (const style of helperStyles) {
+        engine.addPlaintextRule(style);
+      }
+
+      return new Response(`${cssText}\n${engine.cssText}`, {
         headers: {
           "Content-Type": "text/css",
           // We have no way with Remix links to know if CSS has changed (no ?cache-breaker in url)
@@ -69,27 +75,11 @@ export const loader = async ({ request }: ActionArgs) => {
       context
     );
 
-    if (pagesCanvasData.length === 0) {
-      throw json("Project not found or not published yet", { status: 404 });
-    }
-
-    const canvasData = pagesCanvasData[0];
-
-    const styleSourceSelections: Tree["styleSourceSelections"] = [];
-
-    for (const pageCanvasData of pagesCanvasData) {
-      if (pageCanvasData.tree?.styleSourceSelections) {
-        styleSourceSelections.push(
-          ...pageCanvasData.tree.styleSourceSelections
-        );
-      }
-    }
-
     const cssText = generateCssText({
-      assets: canvasData.assets,
-      breakpoints: canvasData.build?.breakpoints,
-      styles: canvasData.build?.styles,
-      styleSourceSelections,
+      assets: pagesCanvasData.assets,
+      breakpoints: pagesCanvasData.build?.breakpoints,
+      styles: pagesCanvasData.build?.styles,
+      styleSourceSelections: pagesCanvasData.build?.styleSourceSelections,
     });
 
     return new Response(cssText, {

@@ -1,6 +1,6 @@
 import { ImageIcon } from "@webstudio-is/icons";
 import type { WsComponentMeta, WsComponentPropsMeta } from "./component-type";
-import props from "./__generated__/image.props.json";
+import { props } from "./__generated__/image.props";
 
 const presetStyle = {
   // Otherwise on new image insert onto canvas it can overfit screen size multiple times
@@ -24,10 +24,15 @@ export const meta: WsComponentMeta = {
   presetStyle,
 };
 
-export const propsMeta = {
+export const propsMeta: WsComponentPropsMeta = {
   props: {
     ...props,
-    src: { ...props.src, control: "file-image", name: "Source" },
+    src: {
+      type: "string",
+      control: "file-image",
+      label: "Source",
+      required: false,
+    },
   },
   initialProps: ["src", "width", "height", "alt", "loading"],
-} as WsComponentPropsMeta;
+};

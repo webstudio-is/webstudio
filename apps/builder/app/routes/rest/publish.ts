@@ -25,9 +25,11 @@ export const action = async ({ request }: ActionArgs) => {
         method: "PUT",
         headers,
         body: JSON.stringify({
-          origin: url.origin,
+          builderApiOrigin: url.origin,
           projectId,
-          domain,
+          projectName: domain,
+          // To support preview deployments
+          branchName: env.BRANCH_NAME,
         }),
       });
       const text = await response.text();

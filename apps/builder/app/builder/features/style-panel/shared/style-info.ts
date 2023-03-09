@@ -150,7 +150,7 @@ export const getCascadedInfo = (
   return cascadedStyle;
 };
 
-const getPresetStyle = (
+export const getPresetStyle = (
   instancesIndex: InstancesIndex,
   instanceId: undefined | Instance["id"]
 ) => {
@@ -198,10 +198,12 @@ export const getInheritedInfo = (
     const presetStyle = getPresetStyle(instancesIndex, ancestorInstance.id);
     if (presetStyle) {
       for (const [styleProperty, styleValue] of Object.entries(presetStyle)) {
-        inheritedStyle[styleProperty as StyleProperty] = {
-          instanceId: ancestorInstance.id,
-          value: styleValue,
-        };
+        if (inheritableProperties.has(styleProperty)) {
+          inheritedStyle[styleProperty as StyleProperty] = {
+            instanceId: ancestorInstance.id,
+            value: styleValue,
+          };
+        }
       }
     }
 

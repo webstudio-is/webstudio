@@ -23,7 +23,7 @@ const strategyCallback = async ({
   try {
     const user = await db.user.createOrLoginWithOAuth(profile);
     return user;
-  } catch (error: unknown) {
+  } catch (error) {
     if (error instanceof Error) {
       sentryException({
         error,
@@ -75,7 +75,7 @@ if (env.DEV_LOGIN === "true") {
         try {
           const user = await db.user.createOrLoginWithDev();
           return user;
-        } catch (error: unknown) {
+        } catch (error) {
           if (error instanceof Error) {
             sentryException({
               error,

@@ -1,4 +1,5 @@
 import { useMemo } from "react";
+import deepEqual from "fast-deep-equal";
 import { atom, computed, type WritableAtom } from "nanostores";
 import { useStore } from "@nanostores/react";
 import { nanoid } from "nanoid";
@@ -8,6 +9,9 @@ import type {
   Breakpoint,
   Breakpoints,
   Instance,
+  Instances,
+  InstancesItem,
+  Page,
   Prop,
   Props,
   StyleDecl,
@@ -17,7 +21,6 @@ import type {
   StyleSources,
   StyleSourceSelection,
   StyleSourceSelections,
-  Tree,
 } from "@webstudio-is/project-build";
 import type { Style } from "@webstudio-is/css-data";
 import type {
@@ -37,19 +40,102 @@ const useValue = <T>(atom: WritableAtom<T>) => {
   return [value, atom.set] as const;
 };
 
-export const treeIdStore = atom<undefined | Tree["id"]>(undefined);
-export const useSetTreeId = (treeId: Tree["id"]) => {
+export const selectedPageStore = atom<undefined | Page>(undefined);
+export const useSetSelectedPage = (page: Page) => {
   useSyncInitializeOnce(() => {
-    treeIdStore.set(treeId);
+    selectedPageStore.set(page);
   });
 };
 
-export const rootInstanceContainer = atom<Instance | undefined>();
-export const useRootInstance = () => useValue(rootInstanceContainer);
-export const useSetRootInstance = (root: Instance) => {
+export const instancesStore = atom<Map<InstancesItem["id"], InstancesItem>>(
+  new Map()
+);
+export const useSetInstances = (
+  instances: [InstancesItem["id"], InstancesItem][]
+) => {
   useSyncInitializeOnce(() => {
-    rootInstanceContainer.set(root);
+    instancesStore.set(new Map(instances));
   });
+};
+
+/**
+ * this is temporary utility to map rootInstance changes
+ * to normalized instances
+ *
+ * later its usages should be rewritten with direct instances mutations
+ */
+export const patchInstancesMutable = (
+  rootInstance: undefined | Instance,
+  instances: Instances
+) => {
+  const oldInstancesIndex = createInstancesIndex(rootInstance);
+  for (const oldInstance of oldInstancesIndex.instancesById.values()) {
+    const instance = instances.get(oldInstance.id);
+    const convertedOldInstance: InstancesItem = {
+      type: "instance",
+      id: oldInstance.id,
+      component: oldInstance.component,
+      children: oldInstance.children.map((child) => {
+        if (child.type === "text") {
+          return child;
+        }
+        return {
+          type: "id",
+          value: child.id,
+        };
+      }),
+    };
+    if (deepEqual(convertedOldInstance, instance)) {
+      continue;
+    }
+    instances.set(oldInstance.id, convertedOldInstance);
+  }
+};
+
+// @todo will be removed soon
+const denormalizeTree = (
+  instances: Instances,
+  rootInstanceId: Instance["id"]
+): undefined | Instance => {
+  const convertTree = (instance: InstancesItem) => {
+    const legacyInstance: Instance = {
+      type: "instance",
+      id: instance.id,
+      component: instance.component,
+      label: instance.label,
+      children: [],
+    };
+    for (const child of instance.children) {
+      if (child.type === "id") {
+        const childInstance = instances.get(child.value);
+        if (childInstance) {
+          legacyInstance.children.push(convertTree(childInstance));
+        }
+      } else {
+        legacyInstance.children.push(child);
+      }
+    }
+    return legacyInstance;
+  };
+  const rootInstance = instances.get(rootInstanceId);
+  if (rootInstance === undefined) {
+    return;
+  }
+  return convertTree(rootInstance);
+};
+
+export const rootInstanceContainer = computed(
+  [instancesStore, selectedPageStore],
+  (instances, selectedPage) => {
+    if (selectedPage === undefined) {
+      return undefined;
+    }
+    return denormalizeTree(instances, selectedPage.rootInstanceId);
+  }
+);
+export const useRootInstance = () => {
+  const value = useStore(rootInstanceContainer);
+  return [value] as const;
 };
 export const instancesIndexStore = computed(
   rootInstanceContainer,
@@ -116,19 +202,14 @@ export const styleSourcesStore = atom<StyleSources>(new Map());
  * scoped to current tree or whole project
  */
 export const availableStyleSourcesStore = shallowComputed(
-  [styleSourcesStore, treeIdStore],
-  (styleSources, treeId) => {
-    if (treeId === undefined) {
-      return [];
-    }
+  [styleSourcesStore],
+  (styleSources) => {
     const availableStylesSources: StyleSource[] = [];
     for (const styleSource of styleSources.values()) {
       if (styleSource.type === "local") {
         continue;
       }
-      if (styleSource.treeId === treeId || styleSource.treeId === undefined) {
-        availableStylesSources.push(styleSource);
-      }
+      availableStylesSources.push(styleSource);
     }
     return availableStylesSources;
   }
@@ -253,13 +334,8 @@ export const selectedInstanceStore = computed(
 export const selectedInstanceBrowserStyleStore = atom<undefined | Style>();
 
 export const selectedInstanceStyleSourcesStore = computed(
-  [
-    styleSourceSelectionsStore,
-    styleSourcesStore,
-    selectedInstanceIdStore,
-    treeIdStore,
-  ],
-  (styleSourceSelections, styleSources, selectedInstanceId, treeId) => {
+  [styleSourceSelectionsStore, styleSourcesStore, selectedInstanceIdStore],
+  (styleSourceSelections, styleSources, selectedInstanceId) => {
     const selectedInstanceStyleSources: StyleSource[] = [];
     if (selectedInstanceId === undefined) {
       return selectedInstanceStyleSources;
@@ -278,10 +354,9 @@ export const selectedInstanceStyleSourcesStore = computed(
     }
     // generate style source when selection has not local style sources
     // it is synchronized whenever styles are updated
-    if (hasLocal === false && treeId !== undefined) {
+    if (hasLocal === false) {
       selectedInstanceStyleSources.unshift({
         type: "local",
-        treeId,
         id: nanoid(),
       });
     }
@@ -307,7 +382,7 @@ export const hoveredInstanceIdStore = atom<undefined | Instance["id"]>(
   undefined
 );
 export const hoveredInstanceOutlineStore = atom<
-  undefined | { component: string; rect: DOMRect }
+  undefined | { instanceId: Instance["id"]; rect: DOMRect }
 >(undefined);
 
 export const isPreviewModeStore = atom<boolean>(false);
@@ -348,9 +423,9 @@ const isScrollingContainer = atom<boolean>(false);
 export const useIsScrolling = () => useValue(isScrollingContainer);
 
 // We are editing the text of that instance in text editor.
-const textEditingInstanceIdContainer = atom<Instance["id"] | undefined>();
+export const textEditingInstanceIdStore = atom<Instance["id"] | undefined>();
 export const useTextEditingInstanceId = () =>
-  useValue(textEditingInstanceIdContainer);
+  useValue(textEditingInstanceIdStore);
 
 export type DragAndDropState = {
   isDragging: boolean;

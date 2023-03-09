@@ -27,7 +27,7 @@ export const SelectedInstanceOutline = () => {
 
   return (
     <Outline rect={rect}>
-      <Label component={selectedInstance.component} instanceRect={rect} />
+      <Label instance={selectedInstance} instanceRect={rect} />
     </Outline>
   );
 };

@@ -52,7 +52,7 @@ export const loader = async ({ request, params }: LoaderArgs) => {
     );
 
     return redirect(builderPath({ projectId: project.id }));
-  } catch (error: unknown) {
+  } catch (error) {
     if (error instanceof Error) {
       return { errors: error.message };
     }

@@ -19,7 +19,7 @@ export const action = async ({ request }: ActionArgs) => {
       successRedirect: returnTo,
       throwOnError: true,
     });
-  } catch (error: unknown) {
+  } catch (error) {
     // all redirects are basically errors and in that case we don't want to catch it
     if (error instanceof Response) {
       return error;
