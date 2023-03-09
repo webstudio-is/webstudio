@@ -14,8 +14,7 @@ export const props: Record<string, PropMeta> = {
     required: false,
     control: "select",
     type: "string",
-    defaultValue: "self",
-    options: ["self", "blank", "parent", "top"],
+    options: ["_self", "_blank", "_parent", "_top"],
   },
   type: { required: false, control: "text", type: "string" },
   referrerPolicy: {
