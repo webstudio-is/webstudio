@@ -11,7 +11,3 @@ const Template: ComponentStory<typeof ButtonPrimitive> = (args) => (
 );
 
 export const Button = Template.bind({});
-
-Button.args = {
-  children: "Test",
-};
