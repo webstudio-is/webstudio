@@ -46,6 +46,10 @@ export type ControlProps<Control, PropType> = {
   propName: string;
   onChange: (value: PropValue, asset?: Asset) => void;
   onDelete?: () => void;
+
+  // Should be called when we want to delete the prop,
+  // but want to keep it in the list until panel is closed
+  onSoftDelete: () => void;
 };
 
 export const getLabel = (meta: { label?: string }, fallback: string) =>

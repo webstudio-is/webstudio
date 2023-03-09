@@ -129,6 +129,7 @@ const Property = ({
   component,
   onChange,
   onDelete,
+  onSoftDelete,
   setCssProperty,
 }: {
   prop: Prop | undefined;
@@ -137,6 +138,7 @@ const Property = ({
   component: Instance["component"];
   onChange: (value: PropValue) => void;
   onDelete?: () => void;
+  onSoftDelete: () => void;
   setCssProperty: SetCssProperty;
 }) =>
   renderControl({
@@ -144,6 +146,7 @@ const Property = ({
     prop,
     propName,
     onDelete,
+    onSoftDelete,
     onChange: (propValue, asset) => {
       onChange(propValue);
 
@@ -215,6 +218,7 @@ export const PropsPanel = ({
             meta={meta}
             component={component}
             onChange={(value) => logic.handleChange({ prop, propName }, value)}
+            onSoftDelete={() => prop && logic.handleSoftDelete(prop)}
             setCssProperty={setCssProperty}
           />
         ))}
@@ -247,6 +251,7 @@ export const PropsPanel = ({
                 logic.handleChange({ prop, propName }, value)
               }
               onDelete={() => logic.handleDelete({ prop, propName })}
+              onSoftDelete={() => prop && logic.handleSoftDelete(prop)}
               setCssProperty={setCssProperty}
             />
           ))}
