@@ -20,6 +20,8 @@ const eventOptions = {
   passive: true,
 };
 
+const isHighlighting = () => getSelection()?.type === "Range";
+
 export const useTrackSelectedElement = () => {
   const selectedInstanceId = useStore(selectedInstanceIdStore);
   const [editingInstanceId, setEditingInstanceId] = useTextEditingInstanceId();
@@ -38,6 +40,12 @@ export const useTrackSelectedElement = () => {
 
   useEffect(() => {
     const handleClick = (event: MouseEvent) => {
+      // When user is selecting text inside content editable and mouse goes up
+      // on a different instance - we don't want to select a different instance
+      // because that would cancel the text selection.
+      if (isHighlighting()) {
+        return;
+      }
       // Notify in general that document was clicked
       // e.g. to hide the side panel
       publish({ type: "clickCanvas" });
@@ -75,7 +83,6 @@ export const useTrackSelectedElement = () => {
         }
         return;
       }
-
       selectedInstanceIdStore.set(id);
     };
 
