@@ -4,7 +4,6 @@ import { toValue } from "@webstudio-is/css-engine";
 import { useMemo } from "react";
 import { useAssets } from "~/builder/shared/assets";
 import type { ControlProps } from "../../style-sections";
-import { theme } from "@webstudio-is/design-system";
 import { isSupportedFontWeight } from "./is-supported-font-weight";
 
 type FontWeightItem = {
