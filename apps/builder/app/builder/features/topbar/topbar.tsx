@@ -1,5 +1,6 @@
-import type { Publish } from "~/shared/pubsub";
+import { useStore } from "@nanostores/react";
 import {
+  theme,
   css,
   Flex,
   Text,
@@ -7,9 +8,9 @@ import {
   ToolbarSeparator,
   ToolbarToggleGroup,
 } from "@webstudio-is/design-system";
-import type { Page } from "@webstudio-is/project-build";
 import type { Project } from "@webstudio-is/project";
-import { theme } from "@webstudio-is/design-system";
+import type { Publish } from "~/shared/pubsub";
+import { selectedPageStore } from "~/shared/nano-states";
 import { PreviewButton } from "./preview";
 import { ShareButton } from "./share";
 import { PublishButton } from "./publish";
@@ -28,11 +29,15 @@ const topbarContainerStyle = css({
 type TopbarProps = {
   gridArea: string;
   project: Project;
-  page: Page;
   publish: Publish;
 };
 
-export const Topbar = ({ gridArea, project, page, publish }: TopbarProps) => {
+export const Topbar = ({ gridArea, project, publish }: TopbarProps) => {
+  const page = useStore(selectedPageStore);
+  if (page === undefined) {
+    return null;
+  }
+
   return (
     <Toolbar className={topbarContainerStyle({ css: { gridArea } })}>
       <Flex grow={false} shrink={false}>
