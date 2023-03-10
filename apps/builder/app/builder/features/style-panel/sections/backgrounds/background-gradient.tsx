@@ -1,5 +1,5 @@
 import { TextArea, theme } from "@webstudio-is/design-system";
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { parseCssValue } from "../../shared/parse-css-value";
 import type { ControlProps } from "../../style-sections";
 
@@ -33,6 +33,22 @@ export const BackgroundGradient = (
     props.deleteProperty(property, { isEphemeral });
   };
 
+  const handleOnComplete = () => {
+    if (intermediateValue !== undefined) {
+      handleChange(intermediateValue, false);
+    }
+  };
+
+  const handleOnCompleteRef = useRef(handleOnComplete);
+  handleOnCompleteRef.current = handleOnComplete;
+
+  // Blur wouldn't fire if user clicks outside of the FloatingPanel
+  useEffect(() => {
+    return () => {
+      handleOnCompleteRef.current();
+    };
+  }, []);
+
   return (
     <TextArea
       css={{ minHeight: theme.spacing[14] }}
@@ -43,16 +59,10 @@ export const BackgroundGradient = (
       onChange={(event) => {
         handleChange(event.target.value, true);
       }}
-      onBlur={() => {
-        if (value !== undefined) {
-          handleChange(value, false);
-        }
-      }}
+      onBlur={handleOnComplete}
       onKeyDown={(event) => {
         if (event.key === "Enter") {
-          if (value !== undefined) {
-            handleChange(value, false);
-          }
+          handleOnComplete();
         }
       }}
     />
