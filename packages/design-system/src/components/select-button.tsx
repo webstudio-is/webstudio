@@ -40,7 +40,7 @@ const styles = css({
     [chevronColor]: theme.colors.foregroundMain,
   },
   "&:disabled": {
-    background: theme.colors.backgroundPanel,
+    background: theme.colors.backgroundInputDisabled,
     color: theme.colors.foregroundDisabled,
     [chevronColor]: theme.colors.borderMain,
   },
