@@ -1018,6 +1018,20 @@
         },
         "type": "typography"
       },
+      "small": {
+        "value": {
+          "fontFamily": "{fontFamilies.manrope}",
+          "fontWeight": "{fontWeights.manrope-7}",
+          "lineHeight": "{lineHeights.0}",
+          "fontSize": "{fontSize.2}",
+          "letterSpacing": "2%",
+          "paragraphSpacing": "{paragraphSpacing.0}",
+          "paragraphIndent": "{paragraphIndent.0}",
+          "textCase": "{textCase.none}",
+          "textDecoration": "{textDecoration.none}"
+        },
+        "type": "typography"
+      },
       "Thumbnail Large": {
         "Default": {
           "value": {
