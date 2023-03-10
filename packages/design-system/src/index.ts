@@ -25,6 +25,9 @@ export * from "./components/position-grid";
 export * from "./components/small-toggle-button";
 export * from "./components/css-value-list-item";
 export * from "./components/nested-icon-label";
+export * from "./components/text-area";
+export * from "./components/radio";
+export * from "./components/checkbox";
 
 // Not aligned
 
@@ -34,7 +37,6 @@ export { AccessibleIcon } from "@radix-ui/react-accessible-icon";
 export * from "./components/toggle-group";
 export * from "./components/progress-radial";
 export * from "./components/text-field";
-export * from "./components/text-area";
 export { SearchField } from "./components/search-field";
 export { Tabs, TabsContent, TabsList, TabsTrigger } from "./components/tabs";
 export {
@@ -54,8 +56,6 @@ export {
 export { Link } from "./components/link";
 export { Panel } from "./components/panel";
 export * from "./components/slider";
-export * from "./components/radio";
-export * from "./components/checkbox";
 export * from "./components/avatar";
 export * from "./components/icon-button-with-menu";
 export * from "./components/tree";
