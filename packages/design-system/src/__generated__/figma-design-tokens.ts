@@ -212,6 +212,16 @@ export const typography = {
     textDecoration: "none",
     textIndent: "0px",
   },
+  brandSmall: {
+    fontFamily: "Manrope Variable, ManropeVariable, Manrope, sans-serif",
+    fontWeight: 600,
+    fontSize: "12px",
+    lineHeight: "16px",
+    letterSpacing: "0.02em",
+    textTransform: "none",
+    textDecoration: "none",
+    textIndent: "0px",
+  },
   brandThumbnailLargeDefault: {
     fontFamily: "Manrope Variable, ManropeVariable, Manrope, sans-serif",
     fontWeight: 200,
