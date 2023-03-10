@@ -8,7 +8,7 @@ export * from "./components/title";
 export * from "./components/separator";
 export * from "./components/button";
 export * from "./components/label";
-export * from "./components/select"; // menu is aligned, but trigger is not
+export * from "./components/select";
 export * from "./components/combobox";
 export * from "./components/dropdown-menu";
 export * from "./components/icon-button"; // mostly aligned, but needs a demo and to use tokens
@@ -24,6 +24,7 @@ export * from "./components/list-position-indicator";
 export * from "./components/position-grid";
 export * from "./components/small-toggle-button";
 export * from "./components/css-value-list-item";
+export * from "./components/nested-icon-label";
 
 // Not aligned
 
