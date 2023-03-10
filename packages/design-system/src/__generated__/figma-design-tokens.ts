@@ -365,6 +365,8 @@ export const color = {
   brandBackgroundDashboard: "#ededed",
   brandForegroundPublished: "#00894a",
   brandBorderPublished: "#ebfffc",
+  brandBorderFullGradient:
+    "linear-gradient(135deg, #92fddc 0%, #7d7ffb 31.94%, #ed72fe 64.24%, #fdd791 100%)",
   borderMain: "#c1c8cd",
   borderFocus: "#096cff",
   borderMenuInner: "#fcfcfc",
