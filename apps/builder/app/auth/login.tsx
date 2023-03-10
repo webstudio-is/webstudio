@@ -91,7 +91,7 @@ export const Login = ({
           },
         }}
       >
-        <Text variant="bigTitle" color="main" as="h1">
+        <Text variant="brandMediumTitle" color="main" as="h1">
           Sign in
         </Text>
         <Flex direction="column" gap="4">
