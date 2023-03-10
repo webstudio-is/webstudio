@@ -695,6 +695,10 @@
         "published": {
           "value": "#ebfffc",
           "type": "color"
+        },
+        "full-gradient": {
+          "value": "linear-gradient(135deg, #92fddc 0%, #7d7ffb 31.94%, #ed72fe 64.24%, #fdd791 100%)",
+          "type": "color"
         }
       }
     },
