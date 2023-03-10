@@ -27,7 +27,10 @@
   "dependencies": {
     "isomorphic-fetch": "^3.0.0"
   },
-  "exports": "./lib/index.js",
+  "exports": {
+    "source": "./src/index.ts",
+    "import": "./lib/index.js"
+  },
   "types": "src/index.ts",
   "files": [
     "lib/*",

@@ -1,12 +1,11 @@
-import React from "react";
+import { Fragment, createElement } from "react";
 
 export default {
   title: "Webstudio Designer Repository",
 };
 
-export const Welcome = () => (
-  <>
-    <p>Welcome to the Webstudio Designer Repository</p>
-    <p>You can browse all of our storybooks here.</p>
-  </>
-);
+export const Welcome = () =>
+  createElement(Fragment, [
+    createElement("p", "Welcome to the Webstudio Designer Repository"),
+    createElement("p", "You can browse all of our storybooks here."),
+  ]);

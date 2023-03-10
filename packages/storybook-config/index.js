@@ -6,20 +6,6 @@ module.exports = {
     storyStoreV7: true,
   },
   core: {
-    builder: {
-      name: "webpack5",
-      options: {
-        lazyCompilation: true,
-        fsCache: true,
-      },
-    },
-  },
-  webpackFinal: async (config) => {
-    // fix packages modules withoot extensions
-    for (const rule of config.module.rules) {
-      rule.resolve = rule.resolve || {};
-      rule.resolve.fullySpecified = false;
-    }
-    return config;
+    builder: "@storybook/builder-vite",
   },
 };

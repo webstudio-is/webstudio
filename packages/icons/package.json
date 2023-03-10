@@ -16,7 +16,7 @@
     "storybook:build": "build-storybook"
   },
   "devDependencies": {
-    "@storybook/react": "^6.5.14",
+    "@storybook/react": "^6.5.16",
     "@svgo/jsx": "^0.4.2",
     "@types/react": "^17.0.24",
     "@webstudio-is/scripts": "workspace:^",
@@ -36,6 +36,7 @@
   },
   "module": "./lib/index.js",
   "exports": {
+    "source": "./src/index.ts",
     "import": "./lib/index.js",
     "require": "./lib/cjs/index.cjs"
   },

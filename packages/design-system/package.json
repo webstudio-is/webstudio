@@ -18,7 +18,7 @@
   },
   "devDependencies": {
     "@jest/globals": "^29.3.1",
-    "@storybook/react": "^6.5.14",
+    "@storybook/react": "^6.5.16",
     "@testing-library/react-hooks": "^8.0.1",
     "@types/lodash.merge": "^4.6.6",
     "@types/react": "^17.0.24",
@@ -79,7 +79,10 @@
     "token-transformer": "^0.0.28",
     "use-debounce": "^9.0.2"
   },
-  "exports": "./lib/index.js",
+  "exports": {
+    "source": "./src/index.ts",
+    "import": "./lib/index.js"
+  },
   "types": "src/index.ts",
   "files": [
     "lib/*",
