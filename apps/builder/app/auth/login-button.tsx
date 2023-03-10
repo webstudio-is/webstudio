@@ -18,6 +18,13 @@ const buttonStyle = css({
   backgroundOrigin: "border-box",
   backgroundClip: "padding-box, border-box",
   ...textVariants.brandButtonRegular,
+  "&:hover": {
+    boxShadow: theme.shadows.brandElevationBig,
+  },
+  "&:focus-visible": {
+    outline: `2px solid ${theme.colors.borderFocus}`,
+    outlineOffset: 1,
+  },
 });
 
 export const LoginButton = ({
