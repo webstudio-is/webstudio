@@ -171,21 +171,6 @@ const syncStoresState = (name: SyncEventSource, publish: Publish) => {
 
 export const useCanvasStore = (publish: Publish) => {
   useEffect(() => {
-    const data = [];
-    for (const [namespace, store] of clientStores) {
-      data.push({
-        namespace,
-        value: store.get(),
-      });
-    }
-    publish({
-      type: "sendStoreData",
-      payload: {
-        source: "canvas",
-        data,
-      },
-    });
-
     const unsubscribeStoresState = syncStoresState("canvas", publish);
     const unsubscribeStoresChanges = syncStoresChanges("canvas", publish);
 
@@ -210,6 +195,12 @@ export const useBuilderStore = (publish: Publish) => {
         data.push({
           namespace,
           value: container.get(),
+        });
+      }
+      for (const [namespace, store] of clientStores) {
+        data.push({
+          namespace,
+          value: store.get(),
         });
       }
       publish({

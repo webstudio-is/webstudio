@@ -41,11 +41,6 @@ const useValue = <T>(atom: WritableAtom<T>) => {
 };
 
 export const selectedPageStore = atom<undefined | Page>(undefined);
-export const useSetSelectedPage = (page: Page) => {
-  useSyncInitializeOnce(() => {
-    selectedPageStore.set(page);
-  });
-};
 
 export const instancesStore = atom<Map<InstancesItem["id"], InstancesItem>>(
   new Map()

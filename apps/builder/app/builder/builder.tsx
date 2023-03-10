@@ -30,8 +30,10 @@ import {
 } from "./features/workspace";
 import { usePublishShortcuts } from "./shared/shortcuts";
 import {
+  selectedPageStore,
   useDragAndDropState,
   useIsPreviewMode,
+  useSetAssets,
   useSetAuthPermit,
   useSetAuthToken,
   useSetBreakpoints,
@@ -47,6 +49,7 @@ import { Navigator } from "./features/sidebar-left";
 import { getBuildUrl } from "~/shared/router-utils";
 import { useCopyPaste } from "~/shared/copy-paste";
 import { AssetsProvider } from "./shared/assets";
+import type { Asset } from "@webstudio-is/asset-uploader";
 
 registerContainers();
 
@@ -248,6 +251,7 @@ export type BuilderProps = {
   pages: Pages;
   pageId: string;
   build: Build;
+  assets: Asset[];
   buildOrigin: string;
   authReadToken: string;
   authToken?: string;
@@ -259,6 +263,7 @@ export const Builder = ({
   pages,
   pageId,
   build,
+  assets,
   buildOrigin,
   authReadToken,
   authToken,
@@ -270,6 +275,8 @@ export const Builder = ({
   useSetStyleSources(build.styleSources);
   useSetStyleSourceSelections(build.styleSourceSelections);
   useSetInstances(build.instances);
+
+  useSetAssets(assets);
 
   useSetAuthToken(authToken);
   useSetAuthPermit(authPermit);
@@ -312,6 +319,8 @@ export const Builder = ({
     }
     return page;
   }, [pages, pageId]);
+
+  selectedPageStore.set(page);
 
   const canvasUrl = getBuildUrl({
     buildOrigin,

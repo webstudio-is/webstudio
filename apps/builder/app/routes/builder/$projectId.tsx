@@ -9,6 +9,7 @@ import { ErrorMessage } from "~/shared/error";
 import { sentryException } from "~/shared/sentry";
 import { getBuildOrigin } from "~/shared/router-utils";
 import { type BuilderProps, Builder, links } from "~/builder";
+import { loadByProject } from "@webstudio-is/asset-uploader/server";
 
 export { links };
 
@@ -43,6 +44,7 @@ export const loader = async ({
   }
 
   const devBuild = await loadBuildByProjectId(project.id, "dev");
+  const assets = await loadByProject(project.id, context);
 
   const pages = devBuild.pages;
 
@@ -54,6 +56,7 @@ export const loader = async ({
     pages,
     pageId: pageIdParam || devBuild.pages.homePage.id,
     build: devBuild,
+    assets,
     buildOrigin: getBuildOrigin(request),
     authReadToken,
     authToken,
