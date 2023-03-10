@@ -101,7 +101,7 @@ export const Login = ({
                 disabled={isGoogleEnabled === false}
                 icon={<GoogleIcon size={22} />}
               >
-                Login with Google
+                Sign in with Google
               </LoginButton>
             </Form>
             <Form action={authPath({ provider: "github" })} method="post">
@@ -109,7 +109,7 @@ export const Login = ({
                 disabled={isGithubEnabled === false}
                 icon={<GithubIcon size={22} />}
               >
-                Login with GitHub
+                Sign in with GitHub
               </LoginButton>
             </Form>
             {isSecretLoginEnabled && <SecretLogin />}

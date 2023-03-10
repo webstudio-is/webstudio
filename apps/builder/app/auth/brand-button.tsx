@@ -9,14 +9,13 @@ const buttonStyle = css({
   alignItems: "center",
   justifyContent: "center",
   gap: theme.spacing[5],
-  width: "fit-content",
   height: theme.spacing[15],
   px: theme.spacing[9],
   borderRadius: 12,
   border: "2px solid transparent",
   whiteSpace: "nowrap",
   backgroundImage: `
-    linear-gradient(${theme.colors.brandBackgroundProjectCardTextArea}, ${theme.colors.brandBackgroundProjectCardTextArea}), 
+    linear-gradient(${theme.colors.backgroundPanel}, ${theme.colors.backgroundPanel}), 
     ${theme.colors.brandBorderFullGradient}
   `,
   backgroundOrigin: "border-box",
