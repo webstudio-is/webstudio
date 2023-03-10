@@ -74,7 +74,6 @@ const PageValues = z.object({
 const getErrors = (values: Values, isHomePage: boolean): Errors => {
   const Validator = isHomePage ? HomePageValues : PageValues;
   const parsedResult = Validator.safeParse(values);
-  console.log(parsedResult);
   if (parsedResult.success) {
     return {};
   }
