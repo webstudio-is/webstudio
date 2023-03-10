@@ -4,10 +4,8 @@ import {
   json,
   TypedResponse,
 } from "@remix-run/node";
-
 import { findAuthenticatedUser } from "~/services/auth.server";
 import env from "~/env/env.server";
-
 import { Login, links } from "~/auth";
 import { useLoginErrorMessage } from "~/shared/session";
 import { dashboardPath } from "~/shared/router-utils";
@@ -57,7 +55,7 @@ export const loader = async ({
 
 const LoginRoute = () => {
   const errorMessage = useLoginErrorMessage();
-  const data = useLoaderData<ReturnType<typeof loader>>();
+  const data = useLoaderData<typeof loader>();
   return <Login {...data} errorMessage={errorMessage} />;
 };
 
