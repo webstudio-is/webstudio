@@ -1,6 +1,6 @@
 {
   "name": "@webstudio-is/icons",
-  "version": "0.46.0",
+  "version": "0.47.0",
   "description": "Webstudio Icons",
   "author": "Webstudio <github@webstudio.is>",
   "homepage": "https://webstudio.is",
@@ -16,9 +16,7 @@
     "storybook:build": "build-storybook"
   },
   "devDependencies": {
-    "@storybook/jest": "^0.0.10",
-    "@storybook/react": "^6.5.14",
-    "@storybook/testing-library": "^0.0.13",
+    "@storybook/react": "^6.5.16",
     "@svgo/jsx": "^0.4.2",
     "@types/react": "^17.0.24",
     "@webstudio-is/scripts": "workspace:^",
@@ -38,6 +36,7 @@
   },
   "module": "./lib/index.js",
   "exports": {
+    "source": "./src/index.ts",
     "import": "./lib/index.js",
     "require": "./lib/cjs/index.cjs"
   },

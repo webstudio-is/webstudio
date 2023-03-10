@@ -3,7 +3,11 @@ import { Suspense, lazy, useCallback, useMemo, useRef } from "react";
 import { useStore } from "@nanostores/react";
 import { useLexicalComposerContext } from "@lexical/react/LexicalComposerContext";
 import store from "immerhin";
-import type { Instance, Prop } from "@webstudio-is/project-build";
+import {
+  type Instance,
+  type Prop,
+  findTreeInstanceIds,
+} from "@webstudio-is/project-build";
 import {
   renderWebstudioComponentChildren,
   idAttribute,
@@ -19,7 +23,6 @@ import {
 } from "~/shared/nano-states";
 import { useCssRules } from "~/canvas/shared/styles";
 import { SelectedInstanceConnector } from "./selected-instance-connector";
-import { findTreeInstances } from "~/shared/tree-utils";
 
 const TextEditor = lazy(() => import("../text-editor"));
 
@@ -158,7 +161,7 @@ export const WebstudioComponentDev = ({
         }
         onChange={(instancesList) => {
           store.createTransaction([instancesStore], (instances) => {
-            const deletedTreeIds = findTreeInstances(instances, instance.id);
+            const deletedTreeIds = findTreeInstanceIds(instances, instance.id);
             for (const updatedInstance of instancesList) {
               instances.set(updatedInstance.id, updatedInstance);
               // exclude reused instances

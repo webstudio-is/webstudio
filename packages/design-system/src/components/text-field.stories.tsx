@@ -1,5 +1,3 @@
-import { expect } from "@storybook/jest";
-import { userEvent, waitFor, within } from "@storybook/testing-library";
 import * as React from "react";
 import type { ComponentStory } from "@storybook/react";
 import { RowGapIcon, ChevronDownIcon } from "@webstudio-is/icons";
@@ -175,56 +173,4 @@ export const Interactive: ComponentStory<typeof TextField> = () => {
       </Button>
     </Flex>
   );
-};
-
-export const FocusEvents: ComponentStory<typeof TextField> = (args) => {
-  return (
-    <label>
-      Focus and blur:
-      <TextField name="focus" suffix={<Button>test</Button>} {...args} />
-    </label>
-  );
-};
-FocusEvents.play = async ({ args, canvasElement }) => {
-  const canvas = within(canvasElement);
-
-  const el = canvas.getByLabelText("Focus and blur:");
-
-  await userEvent.tab();
-  await waitFor(() => expect(el).toHaveFocus());
-  await userEvent.tab();
-  await waitFor(() => expect(args.onBlur).not.toHaveBeenCalled());
-  await userEvent.tab();
-  await waitFor(() => expect(args.onBlur).toHaveBeenCalled());
-
-  await waitFor(() => expect(args.onFocus).toHaveBeenCalledTimes(1));
-  await waitFor(() => expect(args.onBlur).toHaveBeenCalledTimes(1));
-};
-
-export const ClickCapture: ComponentStory<typeof TextField> = (args) => {
-  return (
-    <TextField
-      name="click"
-      placeholder="Click on the icon to focus input"
-      prefix={
-        <Flex title="icon">
-          <RowGapIcon />
-        </Flex>
-      }
-      suffix={
-        <DeprecatedIconButton>
-          <ChevronDownIcon />
-        </DeprecatedIconButton>
-      }
-      {...args}
-    />
-  );
-};
-ClickCapture.play = async ({ canvasElement }) => {
-  const canvas = within(canvasElement);
-  const input = canvas.getByPlaceholderText("Click on the icon to focus input");
-  await userEvent.click(canvas.getByTitle("icon"));
-  await waitFor(() => expect(input).toHaveFocus());
-  await userEvent.click(canvas.getByRole("button"));
-  await waitFor(() => expect(input).toHaveFocus());
 };

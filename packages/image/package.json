@@ -1,6 +1,6 @@
 {
   "name": "@webstudio-is/image",
-  "version": "0.46.0",
+  "version": "0.47.0",
   "description": "Image optimization",
   "author": "Webstudio <github@webstudio.is>",
   "homepage": "https://webstudio.is",
@@ -18,15 +18,13 @@
     "generate-types": "generate-arg-types"
   },
   "dependencies": {
+    "@webstudio-is/generate-arg-types": "workspace:^",
     "react": "^17.0.2",
-    "warn-once": "^0.1.1",
-    "@webstudio-is/generate-arg-types": "workspace:^"
+    "warn-once": "^0.1.1"
   },
   "devDependencies": {
     "@jest/globals": "^29.3.1",
-    "@storybook/jest": "^0.0.10",
-    "@storybook/react": "^6.5.14",
-    "@storybook/testing-library": "^0.0.13",
+    "@storybook/react": "^6.5.16",
     "@types/react": "^17.0.24",
     "@webstudio-is/jest-config": "workspace:^",
     "@webstudio-is/scripts": "workspace:^",
@@ -41,6 +39,7 @@
   },
   "module": "./lib/index.js",
   "exports": {
+    "source": "./src/index.ts",
     "import": "./lib/index.js",
     "require": "./lib/cjs/index.cjs"
   },

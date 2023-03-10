@@ -17,7 +17,10 @@
     "@webstudio-is/scripts": "workspace:^",
     "@webstudio-is/tsconfig": "workspace:^"
   },
-  "exports": "./lib/index.js",
+  "exports": {
+    "source": "./src/index.ts",
+    "import": "./lib/index.js"
+  },
   "types": "src/index.ts",
   "files": [
     "lib/*",

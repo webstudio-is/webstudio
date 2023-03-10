@@ -1,4 +1,4 @@
-import { describe, test } from "@jest/globals";
+import { describe, test, expect } from "@jest/globals";
 import type { FontAsset } from "@webstudio-is/asset-uploader";
 import { isSupportedFontWeight } from "./is-supported-font-weight";
 
