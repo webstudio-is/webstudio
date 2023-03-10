@@ -96,20 +96,20 @@ export const Login = ({
         </Text>
         <Flex direction="column" gap="4">
           <Flex gap="3" direction="column">
-            <Form action={authPath({ provider: "github" })} method="post">
-              <LoginButton
-                disabled={isGithubEnabled === false}
-                icon={<GithubIcon size={22} />}
-              >
-                Login with GitHub
-              </LoginButton>
-            </Form>
             <Form action={authPath({ provider: "google" })} method="post">
               <LoginButton
                 disabled={isGoogleEnabled === false}
                 icon={<GoogleIcon size={22} />}
               >
                 Login with Google
+              </LoginButton>
+            </Form>
+            <Form action={authPath({ provider: "github" })} method="post">
+              <LoginButton
+                disabled={isGithubEnabled === false}
+                icon={<GithubIcon size={22} />}
+              >
+                Login with GitHub
               </LoginButton>
             </Form>
             {isSecretLoginEnabled && <SecretLogin />}
