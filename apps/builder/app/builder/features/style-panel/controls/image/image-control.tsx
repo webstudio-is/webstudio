@@ -32,7 +32,7 @@ export const ImageControl = ({
         />
       }
     >
-      <Button color="neutral" css={{ justifySelf: "right" }}>
+      <Button color="neutral" css={{ maxWidth: "100%", justifySelf: "right" }}>
         {valueAsset?.value.name ?? "Choose image..."}
       </Button>
     </FloatingPanel>

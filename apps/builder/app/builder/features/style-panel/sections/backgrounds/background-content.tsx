@@ -40,6 +40,7 @@ import {
   CrossSmallIcon,
 } from "@webstudio-is/icons";
 import { toValue } from "@webstudio-is/css-engine";
+import { BackgroundGradient } from "./background-gradient";
 
 type BackgroundContentProps = {
   currentStyle: StyleInfo;
@@ -143,18 +144,34 @@ export const BackgroundContent = (props: BackgroundContentProps) => {
 
       <BackgroundSection>
         <Grid css={{ gridTemplateColumns: "1fr 128px" }} align="center" gap={2}>
-          <Label color="default" truncate>
-            Image
-          </Label>
+          {imageGradientToggle === "image" && (
+            <>
+              <Label color="default" truncate>
+                Image
+              </Label>
 
-          <FloatingPanelProvider container={elementRef}>
-            <ImageControl
-              setProperty={setProperty}
-              deleteProperty={deleteProperty}
-              currentStyle={props.currentStyle}
-              property="backgroundImage"
-            />
-          </FloatingPanelProvider>
+              <FloatingPanelProvider container={elementRef}>
+                <ImageControl
+                  setProperty={setProperty}
+                  deleteProperty={deleteProperty}
+                  currentStyle={props.currentStyle}
+                  property="backgroundImage"
+                />
+              </FloatingPanelProvider>
+            </>
+          )}
+
+          {imageGradientToggle === "gradient" && (
+            <Flex css={{ gridColumn: "span 2" }} direction="column">
+              <Label color="default">Code</Label>
+
+              <BackgroundGradient
+                setProperty={setProperty}
+                deleteProperty={deleteProperty}
+                currentStyle={props.currentStyle}
+              />
+            </Flex>
+          )}
 
           <Label color="default" truncate>
             Clip
