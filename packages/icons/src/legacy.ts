@@ -13,7 +13,6 @@ export {
   DotFilledIcon,
   TriangleRightIcon,
   TriangleDownIcon,
-  CommitIcon,
   InputIcon,
   ButtonIcon,
   HeadingIcon,

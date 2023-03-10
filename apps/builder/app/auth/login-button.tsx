@@ -1,9 +1,24 @@
 import type * as React from "react";
-import { Button, Flex, Tooltip } from "@webstudio-is/design-system";
+import { css, Flex, textVariants, Tooltip } from "@webstudio-is/design-system";
 import env from "~/shared/env";
 import { theme } from "@webstudio-is/design-system";
 
 const isPreviewEnvironment = env.DEPLOYMENT_ENVIRONMENT === "preview";
+
+const buttonStyle = css({
+  width: "fit-content",
+  height: theme.spacing[15],
+  px: theme.spacing[9],
+  borderRadius: 12,
+  border: "2px solid transparent",
+  backgroundImage: `
+    linear-gradient(${theme.colors.brandBackgroundProjectCardTextArea}, ${theme.colors.brandBackgroundProjectCardTextArea}), 
+    ${theme.colors.brandBorderFullGradient}
+  `,
+  backgroundOrigin: "border-box",
+  backgroundClip: "padding-box, border-box",
+  ...textVariants.brandButtonRegular,
+});
 
 export const LoginButton = ({
   children,
@@ -22,18 +37,18 @@ export const LoginButton = ({
     isPreviewEnvironment && isDevLogin === false;
 
   const button = (
-    <Button
+    <button
       {...props}
       type="submit"
       disabled={disabled}
       color="neutral"
-      css={{ width: "100%" }}
+      className={buttonStyle()}
     >
       <Flex gap="2" align="center">
-        <Flex css={{ size: theme.spacing[10] }}>{icon}</Flex>
+        {icon}
         {children}
       </Flex>
-    </Button>
+    </button>
   );
 
   if (isSocialLoginInPreviewEnvironment) {
