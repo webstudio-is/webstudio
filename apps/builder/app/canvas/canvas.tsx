@@ -26,8 +26,6 @@ import {
   useRootInstance,
   useSubscribeScrollState,
   useIsPreviewMode,
-  useSetAssets,
-  useSetSelectedPage,
 } from "~/shared/nano-states";
 import { usePublishScrollState } from "./shared/use-publish-scroll-state";
 import { useDragAndDrop } from "./shared/use-drag-drop";
@@ -96,8 +94,6 @@ export const Canvas = ({
   getComponent,
 }: CanvasProps): JSX.Element | null => {
   const isBuilderReady = useSubscribeBuilderReady();
-  useSetAssets(data.assets);
-  useSetSelectedPage(data.page);
   setParams(data.params ?? null);
   useCanvasStore(publish);
   const [isPreviewMode] = useIsPreviewMode();
