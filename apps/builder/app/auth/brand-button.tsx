@@ -1,25 +1,43 @@
-import { css, Flex, textVariants, theme } from "@webstudio-is/design-system";
+import { css, textVariants, theme } from "@webstudio-is/design-system";
 import type { ComponentProps } from "react";
 
 const buttonStyle = css({
+  all: "unset",
+  boxSizing: "border-box",
+  minWidth: 0,
+  display: "inline-flex",
+  alignItems: "center",
+  justifyContent: "center",
+  gap: theme.spacing[5],
   width: "fit-content",
   height: theme.spacing[15],
   px: theme.spacing[9],
   borderRadius: 12,
   border: "2px solid transparent",
+  whiteSpace: "nowrap",
   backgroundImage: `
     linear-gradient(${theme.colors.brandBackgroundProjectCardTextArea}, ${theme.colors.brandBackgroundProjectCardTextArea}), 
     ${theme.colors.brandBorderFullGradient}
   `,
   backgroundOrigin: "border-box",
   backgroundClip: "padding-box, border-box",
+  color: theme.colors.foregroundMain,
+  boxShadow: theme.shadows.brandElevationSmall,
   ...textVariants.brandButtonRegular,
-  "&:hover:not(:disabled)": {
+  "&:hover": {
     boxShadow: theme.shadows.brandElevationBig,
   },
   "&:focus-visible": {
     outline: `2px solid ${theme.colors.borderFocus}`,
     outlineOffset: 1,
+  },
+  "&:disabled": {
+    boxShadow: "none",
+    color: theme.colors.foregroundDisabled,
+    borderColor: theme.colors.borderMain,
+    "& svg": {
+      opacity: "0.5",
+    },
   },
 });
 
@@ -29,11 +47,9 @@ type BrandButtonProps = ComponentProps<"button"> & {
 
 export const BrandButton = ({ icon, children, ...props }: BrandButtonProps) => {
   return (
-    <button {...props} type="submit" color="neutral" className={buttonStyle()}>
-      <Flex gap="2" align="center">
-        {icon}
-        {children}
-      </Flex>
+    <button {...props} type="submit" className={buttonStyle()}>
+      {icon}
+      {children}
     </button>
   );
 };
