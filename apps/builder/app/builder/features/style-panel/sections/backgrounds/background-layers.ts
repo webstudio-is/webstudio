@@ -13,8 +13,6 @@ export const layeredBackgroundPropsDefaults = {
   backgroundImage: { type: "keyword", value: "none" },
   backgroundOrigin: { type: "keyword", value: "padding-box" },
   backgroundPosition: { type: "unit", value: 0, unit: "%" },
-  // backgroundPositionX: { type: "unit", value: 0, unit: "%" },
-  // backgroundPositionY: { type: "unit", value: 0, unit: "%" },
   backgroundRepeat: { type: "keyword", value: "repeat" },
   backgroundSize: { type: "keyword", value: "auto" },
 } as const satisfies Record<string, BackgroundStyleValue>;
