@@ -6,6 +6,7 @@ import env from "~/shared/env";
 import { layeredBackgroundProps } from "./background-layers";
 import type { StyleProperty } from "@webstudio-is/css-data";
 import { toValue } from "@webstudio-is/css-engine";
+import { toPascalCase } from "../../shared/keyword-utils";
 
 const Thumbnail = styled("div", {
   width: theme.spacing[10],
@@ -45,14 +46,27 @@ const StyledWebstudioImage = styled(WebstudioImage, {
   },
 });
 
+const gradientNames = [
+  "conic-gradient",
+  "linear-gradient",
+  "radial-gradient",
+  "repeating-conic-gradient",
+  "repeating-linear-gradient",
+  "repeating-radial-gradient",
+];
+
 export const getLayerName = (layerStyle: StyleInfo) => {
   const backgroundImageStyle = layerStyle.backgroundImage?.value;
   if (backgroundImageStyle?.type === "image") {
-    return "Image"; // backgroundImageStyle.value.value.name;
+    return backgroundImageStyle.value.value.name;
   }
 
   if (backgroundImageStyle?.type === "unparsed") {
-    return "Gradient";
+    const gradientName = gradientNames.find((name) =>
+      backgroundImageStyle.value.includes(name)
+    );
+
+    return gradientName ? toPascalCase(gradientName) : "Gradient";
   }
 
   return "None";
