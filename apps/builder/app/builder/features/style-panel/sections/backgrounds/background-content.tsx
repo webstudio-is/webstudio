@@ -218,44 +218,48 @@ export const BackgroundContent = (props: BackgroundContentProps) => {
           align="center"
           gap={2}
         >
-          <Label color="default" truncate>
-            Repeat
-          </Label>
+          {imageGradientToggle === "image" && (
+            <>
+              <Label color="default" truncate>
+                Repeat
+              </Label>
 
-          <Flex css={{ justifySelf: "end" }}>
-            <ToggleGroupControl
-              styleSource={"default"}
-              onValueChange={(value) =>
-                setProperty("backgroundRepeat")({
-                  type: "keyword",
-                  value,
-                })
-              }
-              value={toValue(props.currentStyle.backgroundRepeat?.value)}
-              items={[
-                {
-                  child: <CrossSmallIcon />,
-                  label: "background-repeat: no-repeat",
-                  value: "no-repeat",
-                },
-                {
-                  child: <RepeatGridIcon />,
-                  label: "background-repeat: repeat",
-                  value: "repeat",
-                },
-                {
-                  child: <RepeatColumnIcon />,
-                  label: "background-repeat: repeat-y",
-                  value: "repeat-y",
-                },
-                {
-                  child: <RepeatRowIcon />,
-                  label: "background-repeat: repeat-x",
-                  value: "repeat-x",
-                },
-              ]}
-            />
-          </Flex>
+              <Flex css={{ justifySelf: "end" }}>
+                <ToggleGroupControl
+                  styleSource={"default"}
+                  onValueChange={(value) =>
+                    setProperty("backgroundRepeat")({
+                      type: "keyword",
+                      value,
+                    })
+                  }
+                  value={toValue(props.currentStyle.backgroundRepeat?.value)}
+                  items={[
+                    {
+                      child: <CrossSmallIcon />,
+                      label: "background-repeat: no-repeat",
+                      value: "no-repeat",
+                    },
+                    {
+                      child: <RepeatGridIcon />,
+                      label: "background-repeat: repeat",
+                      value: "repeat",
+                    },
+                    {
+                      child: <RepeatColumnIcon />,
+                      label: "background-repeat: repeat-y",
+                      value: "repeat-y",
+                    },
+                    {
+                      child: <RepeatRowIcon />,
+                      label: "background-repeat: repeat-x",
+                      value: "repeat-x",
+                    },
+                  ]}
+                />
+              </Flex>
+            </>
+          )}
 
           <Label color="default" truncate>
             Attachment
