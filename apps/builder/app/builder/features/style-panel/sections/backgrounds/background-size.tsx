@@ -5,7 +5,6 @@ import { toPascalCase } from "../../shared/keyword-utils";
 import { parseCssValue } from "../../shared/parse-css-value";
 import type { ControlProps } from "../../style-sections";
 import { CssValueInputContainer } from "../../controls/position/css-value-input-container";
-import { getStyleSource } from "../../shared/style-info";
 import { StyleValue, TupleValue, TupleValueItem } from "@webstudio-is/css-data";
 import type { SetValue } from "../../shared/use-style-data";
 
@@ -36,7 +35,7 @@ export const BackgroundSize = (
 
   const styleInfo = props.currentStyle[property];
   const styleValue = styleInfo?.value;
-  const styleSource = getStyleSource(styleInfo);
+  const styleSource = "default";
   const { items: defaultItems } = styleConfigByName[property];
 
   const selectOptions = [

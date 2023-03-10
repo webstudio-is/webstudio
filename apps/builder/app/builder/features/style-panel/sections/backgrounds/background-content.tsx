@@ -37,6 +37,14 @@ import {
 import { FloatingPanelProvider } from "~/builder/shared/floating-panel";
 import { useRef, useState } from "react";
 import { BackgroundSize } from "./background-size";
+import { ToggleGroupControl } from "../../controls/toggle/toggle-control";
+import {
+  RepeatGridIcon,
+  RepeatColumnIcon,
+  RepeatRowIcon,
+  CrossSmallIcon,
+} from "@webstudio-is/icons";
+import { toValue } from "@webstudio-is/css-engine";
 
 type BackgroundContentProps = {
   currentStyle: StyleInfo;
@@ -224,7 +232,7 @@ export const BackgroundContent = (props: BackgroundContentProps) => {
         />
 
         <Grid
-          css={{ gridTemplateColumns: "4fr 6fr", mt: theme.spacing[4] }}
+          css={{ gridTemplateColumns: "4fr 6fr", mt: theme.spacing[5] }}
           align="center"
           gap={2}
         >
@@ -232,27 +240,76 @@ export const BackgroundContent = (props: BackgroundContentProps) => {
             Repeat
           </Label>
 
-          <TextControl
-            setProperty={setProperty}
-            deleteProperty={deleteProperty}
-            currentStyle={props.currentStyle}
-            property="backgroundRepeat"
-          />
-
+          <Flex css={{ justifySelf: "end" }}>
+            <ToggleGroupControl
+              styleSource={"default"}
+              onValueChange={(value) =>
+                setProperty("backgroundRepeat")({
+                  type: "keyword",
+                  value,
+                })
+              }
+              value={toValue(props.currentStyle.backgroundRepeat?.value)}
+              items={[
+                {
+                  child: <CrossSmallIcon />,
+                  label: "background-repeat: no-repeat",
+                  value: "no-repeat",
+                },
+                {
+                  child: <RepeatGridIcon />,
+                  label: "background-repeat: repeat",
+                  value: "repeat",
+                },
+                {
+                  child: <RepeatColumnIcon />,
+                  label: "background-repeat: repeat-y",
+                  value: "repeat-y",
+                },
+                {
+                  child: <RepeatRowIcon />,
+                  label: "background-repeat: repeat-x",
+                  value: "repeat-x",
+                },
+              ]}
+            />
+          </Flex>
           <Label color="default" truncate>
             Attachment
           </Label>
+
+          <Flex css={{ justifySelf: "end" }}>
+            <ToggleGroup
+              type="single"
+              value={toValue(props.currentStyle.backgroundAttachment?.value)}
+              onValueChange={(value) => {
+                setProperty("backgroundAttachment")({
+                  type: "keyword",
+                  value,
+                });
+              }}
+            >
+              <ToggleGroupItem value={"scroll"}>
+                <Flex css={{ px: theme.spacing[3] }}>Scroll</Flex>
+              </ToggleGroupItem>
+              <ToggleGroupItem value={"fixed"}>
+                <Flex css={{ px: theme.spacing[3] }}>Fixed</Flex>
+              </ToggleGroupItem>
+            </ToggleGroup>
+          </Flex>
+
+          {/*
           <TextControl
             setProperty={setProperty}
             deleteProperty={deleteProperty}
             currentStyle={props.currentStyle}
             property="backgroundAttachment"
           />
-
+          */}
           <Label color="default" truncate>
             Blend mode
           </Label>
-          <TextControl
+          <SelectControl
             setProperty={setProperty}
             deleteProperty={deleteProperty}
             currentStyle={props.currentStyle}
