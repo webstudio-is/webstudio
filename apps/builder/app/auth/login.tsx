@@ -1,28 +1,21 @@
 import {
   AccessibleIcon,
   Box,
-  Button,
   css,
   Flex,
   globalCss,
   Text,
-  TextField,
   theme,
 } from "@webstudio-is/design-system";
-import {
-  CommitIcon,
-  GithubIcon,
-  GoogleIcon,
-  WebstudioIcon,
-} from "@webstudio-is/icons";
+import { GithubIcon, GoogleIcon, WebstudioIcon } from "@webstudio-is/icons";
 // eslint-disable-next-line import/no-internal-modules
 import interFont from "@fontsource/inter/variable.css";
 // eslint-disable-next-line import/no-internal-modules
 import manropeVariableFont from "@fontsource/manrope/variable.css";
 import { LoginButton } from "./login-button";
-import { Form, useLoaderData } from "@remix-run/react";
+import { Form } from "@remix-run/react";
 import { authPath } from "~/shared/router-utils";
-import { useState } from "react";
+import { SecretLogin } from "./secret-login";
 
 export const links = () => [
   { rel: "stylesheet", href: interFont },
@@ -58,10 +51,20 @@ const sidebarStyle = css({
   },
 });
 
-export const Login = ({ errorMessage }: { errorMessage: string }) => {
+type LoginProps = {
+  errorMessage?: string;
+  isGithubEnabled?: boolean;
+  isGoogleEnabled?: boolean;
+  isSecretLoginEnabled?: boolean;
+};
+
+export const Login = ({
+  errorMessage,
+  isGithubEnabled,
+  isGoogleEnabled,
+  isSecretLoginEnabled,
+}: LoginProps) => {
   globalStyles();
-  const [isDevLoginOpen, openDevLogin] = useState(false);
-  const data = useLoaderData();
   return (
     <Box className={layoutStyle()}>
       <Flex
@@ -95,7 +98,7 @@ export const Login = ({ errorMessage }: { errorMessage: string }) => {
           <Flex gap="3" direction="column">
             <Form action={authPath({ provider: "github" })} method="post">
               <LoginButton
-                disabled={data.isGithubEnabled === false}
+                disabled={isGithubEnabled === false}
                 icon={<GithubIcon size={22} />}
               >
                 Login with GitHub
@@ -103,47 +106,15 @@ export const Login = ({ errorMessage }: { errorMessage: string }) => {
             </Form>
             <Form action={authPath({ provider: "google" })} method="post">
               <LoginButton
-                disabled={data.isGoogleEnabled === false}
+                disabled={isGoogleEnabled === false}
                 icon={<GoogleIcon size={22} />}
               >
                 Login with Google
               </LoginButton>
             </Form>
-            {data.isDevLogin &&
-              (isDevLoginOpen ? (
-                <Flex
-                  as="form"
-                  action={authPath({ provider: "dev" })}
-                  method="post"
-                  css={{
-                    width: "fit-content",
-                    flexDirection: "row",
-                    gap: theme.spacing[5],
-                  }}
-                >
-                  <TextField
-                    name="secret"
-                    type="text"
-                    minLength={2}
-                    required
-                    autoFocus
-                    placeholder="Auth secret"
-                    css={{ flexGrow: 1 }}
-                  />
-                  <Button>Login</Button>
-                </Flex>
-              ) : (
-                <LoginButton
-                  disabled={data.isDevLogin === false}
-                  isDevLogin
-                  onClick={() => openDevLogin(true)}
-                  icon={<CommitIcon size={22} />}
-                >
-                  Login with Secret
-                </LoginButton>
-              ))}
+            {isSecretLoginEnabled && <SecretLogin />}
           </Flex>
-          {errorMessage.length ? (
+          {errorMessage ? (
             <Text align="center" color="destructive">
               {errorMessage}
             </Text>

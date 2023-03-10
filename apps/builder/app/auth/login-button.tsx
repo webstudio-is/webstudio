@@ -18,7 +18,7 @@ const buttonStyle = css({
   backgroundOrigin: "border-box",
   backgroundClip: "padding-box, border-box",
   ...textVariants.brandButtonRegular,
-  "&:hover": {
+  "&:hover:not(:disabled)": {
     boxShadow: theme.shadows.brandElevationBig,
   },
   "&:focus-visible": {
@@ -29,20 +29,20 @@ const buttonStyle = css({
 
 export const LoginButton = ({
   children,
-  isDevLogin = false,
-  disabled,
+  isSecretLogin = false,
+  disabled = false,
   icon,
   ...props
 }: {
   children: React.ReactChild;
-  isDevLogin?: boolean;
+  isSecretLogin?: boolean;
   onClick?: () => void;
-  disabled: boolean;
+  disabled?: boolean;
   icon: JSX.Element;
 }) => {
   const isSocialLoginInPreviewEnvironment =
-    isPreviewEnvironment && isDevLogin === false;
-
+    isPreviewEnvironment && isSecretLogin === false;
+  console.log(disabled);
   const button = (
     <button
       {...props}

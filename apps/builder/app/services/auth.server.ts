@@ -88,7 +88,7 @@ if (env.DEV_LOGIN === "true") {
         }
       }
 
-      throw new Error("The dev login code is incorrect");
+      throw new Error("Secret is incorrect");
     }),
     "dev"
   );
