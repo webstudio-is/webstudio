@@ -1,39 +1,30 @@
 import type * as React from "react";
-import { Button, Flex, Tooltip } from "@webstudio-is/design-system";
+import { Tooltip } from "@webstudio-is/design-system";
 import env from "~/shared/env";
-import { theme } from "@webstudio-is/design-system";
+import { BrandButton } from "./brand-button";
 
 const isPreviewEnvironment = env.DEPLOYMENT_ENVIRONMENT === "preview";
 
 export const LoginButton = ({
   children,
-  isDevLogin = false,
-  disabled,
+  isSecretLogin = false,
+  disabled = false,
   icon,
   ...props
 }: {
   children: React.ReactChild;
-  isDevLogin?: boolean;
+  isSecretLogin?: boolean;
   onClick?: () => void;
-  disabled: boolean;
+  disabled?: boolean;
   icon: JSX.Element;
 }) => {
   const isSocialLoginInPreviewEnvironment =
-    isPreviewEnvironment && isDevLogin === false;
+    isPreviewEnvironment && isSecretLogin === false;
 
   const button = (
-    <Button
-      {...props}
-      type="submit"
-      disabled={disabled}
-      color="neutral"
-      css={{ width: "100%" }}
-    >
-      <Flex gap="2" align="center">
-        <Flex css={{ size: theme.spacing[10] }}>{icon}</Flex>
-        {children}
-      </Flex>
-    </Button>
+    <BrandButton {...props} type="submit" disabled={disabled} icon={icon}>
+      {children}
+    </BrandButton>
   );
 
   if (isSocialLoginInPreviewEnvironment) {
