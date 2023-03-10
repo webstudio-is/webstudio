@@ -48,9 +48,6 @@ const AsInput = ({
   );
 };
 
-// @todo: TextArea should support `rows` prop
-const TEXTAREA_LINE_HEIGHT = 16;
-
 const AsTextarea = ({
   label,
   id,
@@ -60,7 +57,6 @@ const AsTextarea = ({
   rows,
 }: ImplementationProps & { rows: number }) => {
   const localValue = useLocalValue(value, onChange);
-  const height = rows * TEXTAREA_LINE_HEIGHT;
 
   return (
     <VerticalLayout label={label} id={id} onDelete={onDelete}>
@@ -70,7 +66,7 @@ const AsTextarea = ({
           value={localValue.value}
           onChange={(event) => localValue.set(event.target.value)}
           onBlur={localValue.save}
-          css={{ flexGrow: 1, height, minHeight: height }}
+          rows={rows ?? 1}
         />
       </Flex>
     </VerticalLayout>
