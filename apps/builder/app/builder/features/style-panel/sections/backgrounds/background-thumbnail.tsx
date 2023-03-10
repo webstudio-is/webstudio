@@ -3,11 +3,13 @@ import { styled, theme } from "@webstudio-is/design-system";
 import type { StyleInfo } from "../../shared/style-info";
 import brokenImage from "~/shared/images/broken-image-placeholder.svg";
 import env from "~/shared/env";
+import { layeredBackgroundProps } from "./background-layers";
+import type { StyleProperty } from "@webstudio-is/css-data";
+import { toValue } from "@webstudio-is/css-engine";
 
 const Thumbnail = styled("div", {
   width: theme.spacing[10],
   height: theme.spacing[10],
-  backgroundImage: "linear-gradient(yellow, red)",
 });
 
 const NoneThumbnail = styled("div", {
@@ -82,7 +84,13 @@ export const LayerThumbnail = (props: { layerStyle: StyleInfo }) => {
   }
 
   if (backgroundImageStyle?.type === "unparsed") {
-    return <Thumbnail />;
+    const cssStyle: { [property in StyleProperty]?: string } = {};
+
+    for (const property of layeredBackgroundProps) {
+      cssStyle[property] = toValue(props.layerStyle[property]?.value);
+    }
+
+    return <Thumbnail css={cssStyle} />;
   }
 
   return <NoneThumbnail />;
