@@ -42,7 +42,6 @@ export const LoginButton = ({
 }) => {
   const isSocialLoginInPreviewEnvironment =
     isPreviewEnvironment && isSecretLogin === false;
-  console.log(disabled);
   const button = (
     <button
       {...props}
