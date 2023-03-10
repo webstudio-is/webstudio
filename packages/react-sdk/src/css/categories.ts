@@ -121,8 +121,6 @@ const backgrounds = [
   "backgroundImage",
   "backgroundOrigin",
   "backgroundPosition",
-  // "backgroundPositionX",
-  // "backgroundPositionY",
   "backgroundRepeat",
   "backgroundSize",
   "backgroundBlendMode",
