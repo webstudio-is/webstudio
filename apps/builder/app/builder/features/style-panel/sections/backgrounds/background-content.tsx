@@ -14,12 +14,7 @@ import {
   Separator,
   styled,
 } from "@webstudio-is/design-system";
-import {
-  ImageControl,
-  SelectControl,
-  TextControl,
-  PositionControl,
-} from "../../controls";
+import { ImageControl, SelectControl, PositionControl } from "../../controls";
 import type { StyleInfo } from "../../shared/style-info";
 import type {
   DeleteProperty,
@@ -66,55 +61,25 @@ const safeDeleteProperty = (
 
 const safeSetProperty = (setBackgroundProperty: SetBackgroundProperty) => {
   const result: SetProperty = (property) => {
-    // isBackgroundLayeredProperty is typeguard and ts don't understand === false
-    if (!isBackgroundLayeredProperty(property)) {
-      throw new Error(
-        `Property ${property} should be background style property`
-      );
-    }
-    return (style: string | StyleValue, options?: StyleUpdateOptions) => {
-      if (typeof style === "string") {
-        throw new Error("style should be StyleValue and not a string");
-      }
+    if (isBackgroundLayeredProperty(property)) {
+      return (style: string | StyleValue, options?: StyleUpdateOptions) => {
+        if (typeof style === "string") {
+          throw new Error("style should be StyleValue and not a string");
+        }
 
-      // isBackgroundStyleValue is typeguard and ts don't understand === false
-      if (!isBackgroundStyleValue(style)) {
+        if (isBackgroundStyleValue(style)) {
+          return setBackgroundProperty(property)(style, options);
+        }
+
         throw new Error("Style should be valid BackgroundStyleValue");
-      }
+      };
+    }
 
-      return setBackgroundProperty(property)(style, options);
-    };
+    throw new Error(`Property ${property} should be background style property`);
   };
+
   return result;
 };
-
-/*
-@todo remove comment after section done
-
-Stackable: !default!
-
-
-background-image: url, linear-gradient, radial-gradient, repeating-linear-gradient, repeating-radial-gradient etc
-
-background-clip: !border-box!, padding-box, content-box, text
-background-origin: border-box, !padding-box!, content-box
-
-background-size: cover, contain, !auto!, x[unit] y[unit]
-
-background-position-x: !0%!, left, center, right, x[unit]
-background-position-y: !0%!, top, center, bottom, y[unit]
-
-background-repeat-x,
-background-repeat-y: !repeat!, space, round, no-repeat
-
-background-attachment: !scroll!, fixed, local
-
-background-blend-mode: !normal!, multiply, screen, overlay, darken, lighten, color-dodge, color-burn, hard-light, soft-light, difference, exclusion, hue, saturation, color, luminosity
-
-Not stackable:
-
-background-color
-*/
 
 const detectImageOrGradientToggle = (currentStyle: StyleInfo) => {
   if (currentStyle?.backgroundImage?.value.type === "image") {
@@ -122,7 +87,7 @@ const detectImageOrGradientToggle = (currentStyle: StyleInfo) => {
   }
 
   if (currentStyle?.backgroundImage?.value.type === "keyword") {
-    // The only allowed keyword is none
+    // The only allowed keyword for backgroundImage is none
     return "image";
   }
 
@@ -177,7 +142,7 @@ export const BackgroundContent = (props: BackgroundContentProps) => {
       <Separator css={{ gridColumn: "span 2" }} />
 
       <BackgroundSection>
-        <Grid css={{ gridTemplateColumns: "4fr 6fr" }} align="center" gap={2}>
+        <Grid css={{ gridTemplateColumns: "1fr 128px" }} align="center" gap={2}>
           <Label color="default" truncate>
             Image
           </Label>
@@ -232,7 +197,7 @@ export const BackgroundContent = (props: BackgroundContentProps) => {
         />
 
         <Grid
-          css={{ gridTemplateColumns: "4fr 6fr", mt: theme.spacing[5] }}
+          css={{ gridTemplateColumns: "1fr 128px", mt: theme.spacing[5] }}
           align="center"
           gap={2}
         >
@@ -274,6 +239,7 @@ export const BackgroundContent = (props: BackgroundContentProps) => {
               ]}
             />
           </Flex>
+
           <Label color="default" truncate>
             Attachment
           </Label>
@@ -298,17 +264,10 @@ export const BackgroundContent = (props: BackgroundContentProps) => {
             </ToggleGroup>
           </Flex>
 
-          {/*
-          <TextControl
-            setProperty={setProperty}
-            deleteProperty={deleteProperty}
-            currentStyle={props.currentStyle}
-            property="backgroundAttachment"
-          />
-          */}
           <Label color="default" truncate>
             Blend mode
           </Label>
+
           <SelectControl
             setProperty={setProperty}
             deleteProperty={deleteProperty}

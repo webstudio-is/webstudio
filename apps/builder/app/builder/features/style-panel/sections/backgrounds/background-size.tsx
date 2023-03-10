@@ -63,7 +63,7 @@ export const BackgroundSize = (
 
   return (
     <>
-      <Grid css={{ gridTemplateColumns: "4fr 6fr" }} align="center" gap={2}>
+      <Grid css={{ gridTemplateColumns: "1fr 128px" }} align="center" gap={2}>
         <Label color="default" truncate>
           Size
         </Label>
