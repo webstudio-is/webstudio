@@ -1,5 +1,7 @@
 import type { ComponentStory } from "@storybook/react";
+import { RowGapIcon } from "@webstudio-is/icons";
 import React from "react";
+import { NestedIconLabel } from "./nested-icon-label";
 import { Select, SelectOption } from "./select";
 
 export default {
@@ -14,24 +16,43 @@ export const Simple: ComponentStory<typeof Select> = () => {
   );
 };
 
-export const Ghost: ComponentStory<typeof Select> = () => {
+export const Placeholder: ComponentStory<typeof Select> = () => {
   return (
     <Select
-      name="fruit"
+      placeholder="Select fruit"
       options={["Apple", "Banana", "Orange"]}
-      defaultValue="Apple"
-      ghost
     />
   );
 };
 
+export const Disabled: ComponentStory<typeof Select> = () => {
+  return <Select disabled options={["Apple", "Banana", "Orange"]} />;
+};
+
 export const FullWidth: ComponentStory<typeof Select> = () => {
   return (
+    <div style={{ width: 200 }}>
+      <Select
+        name="fruit"
+        options={["Apple", "Banana", "Orange Orange Orange Orange Orange"]}
+        defaultValue="Apple"
+        fullWidth
+      />
+    </div>
+  );
+};
+
+export const WithNestedLabelIcon: ComponentStory<typeof Select> = () => {
+  return (
     <Select
+      prefix={
+        <NestedIconLabel>
+          <RowGapIcon />
+        </NestedIconLabel>
+      }
       name="fruit"
       options={["Apple", "Banana", "Orange"]}
       defaultValue="Apple"
-      fullWidth
     />
   );
 };
