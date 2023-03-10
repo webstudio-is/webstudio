@@ -204,34 +204,6 @@ export const findParentInstance = (
   }
 };
 
-const traverseInstancesMap = (
-  instances: Map<Instance["id"], InstancesItem>,
-  instanceId: Instance["id"],
-  callback: (instance: InstancesItem) => void
-) => {
-  const instance = instances.get(instanceId);
-  if (instance === undefined) {
-    return;
-  }
-  callback(instance);
-  for (const child of instance.children) {
-    if (child.type === "id") {
-      traverseInstancesMap(instances, child.value, callback);
-    }
-  }
-};
-
-export const findTreeInstances = (
-  instances: Instances,
-  rootInstanceId: Instance["id"]
-) => {
-  const subtreeIds = new Set<Instance["id"]>();
-  traverseInstancesMap(instances, rootInstanceId, (instance) => {
-    subtreeIds.add(instance.id);
-  });
-  return subtreeIds;
-};
-
 export const cloneStyles = (
   styles: Styles,
   clonedStyleSourceIds: Map<Instance["id"], Instance["id"]>

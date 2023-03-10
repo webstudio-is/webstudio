@@ -7,3 +7,4 @@ export * from "./schema/style-source-selections";
 export * from "./schema/breakpoints";
 export * from "./types";
 export * from "./shared/pages-utils";
+export * from "./shared/instances-utils";

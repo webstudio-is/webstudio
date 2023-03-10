@@ -1,5 +1,5 @@
 import store from "immerhin";
-import type { Instance } from "@webstudio-is/project-build";
+import { findTreeInstanceIds, Instance } from "@webstudio-is/project-build";
 import {
   rootInstanceContainer,
   propsStore,
@@ -16,7 +16,6 @@ import {
   DroppableTarget,
   findParentInstance,
   findSubtreeLocalStyleSources,
-  findTreeInstances,
   insertInstanceMutable,
   reparentInstanceMutable,
 } from "./tree-utils";
@@ -59,7 +58,7 @@ export const deleteInstance = (targetInstanceId: Instance["id"]) => {
     ],
     (instances, props, styleSourceSelections, styleSources, styles) => {
       const parentInstance = findParentInstance(instances, targetInstanceId);
-      const subtreeIds = findTreeInstances(instances, targetInstanceId);
+      const subtreeIds = findTreeInstanceIds(instances, targetInstanceId);
       const subtreeLocalStyleSourceIds = findSubtreeLocalStyleSources(
         subtreeIds,
         styleSources,

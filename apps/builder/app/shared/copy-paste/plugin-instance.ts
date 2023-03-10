@@ -1,6 +1,7 @@
 import store from "immerhin";
 import { z } from "zod";
 import {
+  findTreeInstanceIds,
   InstancesItem,
   Prop,
   StyleDecl,
@@ -20,7 +21,6 @@ import {
 import {
   findClosestDroppableTarget,
   findSubtreeLocalStyleSources,
-  findTreeInstances,
   insertInstancesCopyMutable,
   insertPropsCopyMutable,
   insertStylesCopyMutable,
@@ -49,7 +49,7 @@ const getTreeData = (targetInstanceId: string) => {
   }
 
   const instances = instancesStore.get();
-  const treeInstanceIds = findTreeInstances(instances, targetInstanceId);
+  const treeInstanceIds = findTreeInstanceIds(instances, targetInstanceId);
   const styleSources = styleSourcesStore.get();
   const styleSourceSelections = styleSourceSelectionsStore.get();
   const subtreeLocalStyleSourceIds = findSubtreeLocalStyleSources(
