@@ -15,6 +15,19 @@ import {
 } from "@webstudio-is/project-build";
 import { getComponentMeta } from "@webstudio-is/react-sdk";
 
+export const createComponentInstance = (
+  component: Instance["component"]
+): InstancesItem => {
+  const componentMeta = getComponentMeta(component);
+  return {
+    type: "instance",
+    id: nanoid(),
+    component,
+    children:
+      componentMeta?.children?.map((value) => ({ type: "text", value })) ?? [],
+  };
+};
+
 const traverseInstances = (
   instance: Instance,
   cb: (child: Instance, parent: Instance) => void
@@ -104,7 +117,7 @@ export const findClosestDroppableTarget = (
   };
 };
 
-export const insertInstanceMutable = (
+export const insertInstanceMutableDeprecated = (
   instancesIndex: InstancesIndex,
   instance: Instance,
   dropTarget?: DroppableTarget
@@ -124,7 +137,7 @@ export const insertInstanceMutable = (
   }
 };
 
-export const reparentInstanceMutable = (
+export const reparentInstanceMutableDeprecated = (
   instancesIndex: InstancesIndex,
   instanceId: Instance["id"],
   dropTarget: DroppableTarget
@@ -163,6 +176,48 @@ export const reparentInstanceMutable = (
     nextParent.children.push(instance);
   } else {
     nextParent.children.splice(nextPosition, 0, instance);
+  }
+};
+
+export const reparentInstanceMutable = (
+  instances: Instances,
+  instanceId: Instance["id"],
+  dropTarget: DroppableTarget
+) => {
+  const prevParent = findParentInstance(instances, instanceId);
+  const nextParent = instances.get(dropTarget.parentId);
+  const instance = instances.get(instanceId);
+  if (
+    prevParent === undefined ||
+    nextParent === undefined ||
+    instance === undefined
+  ) {
+    return;
+  }
+
+  const prevPosition = prevParent.children.findIndex(
+    (child) => child.type === "id" && child.value === instanceId
+  );
+  if (prevPosition === -1) {
+    return;
+  }
+
+  // if parent is the same, we need to adjust the position
+  // to account for the removal of the instance.
+  let nextPosition = dropTarget.position;
+  if (
+    nextPosition !== "end" &&
+    prevParent.id === nextParent.id &&
+    prevPosition < nextPosition
+  ) {
+    nextPosition -= 1;
+  }
+
+  const [child] = prevParent.children.splice(prevPosition, 1);
+  if (nextPosition === "end") {
+    nextParent.children.push(child);
+  } else {
+    nextParent.children.splice(nextPosition, 0, child);
   }
 };
 

@@ -17,7 +17,7 @@ import {
 } from "~/shared/nano-states";
 import { useSubscribe, type Publish } from "~/shared/pubsub";
 import { useCanvasRect } from "~/builder/shared/nano-states";
-import { insertInstance } from "~/shared/instance-utils";
+import { insertNewComponentInstance } from "~/shared/instance-utils";
 import { zoomStore } from "~/shared/nano-states/breakpoints";
 import type { TabName } from "../../types";
 import { Header, CloseButton } from "../../header";
@@ -173,14 +173,11 @@ export const TabContent = ({ publish, onSetActiveTab }: TabContentProps) => {
             component={component}
             onClick={() => {
               onSetActiveTab("none");
-              const instance = utils.tree.createInstance({
-                component,
-              });
               const dropTarget = findClosestDroppableTarget(
                 instancesIndexStore.get(),
                 selectedInstanceIdStore.get()
               );
-              insertInstance(instance, dropTarget);
+              insertNewComponentInstance(component, dropTarget);
             }}
           />
         ))}
