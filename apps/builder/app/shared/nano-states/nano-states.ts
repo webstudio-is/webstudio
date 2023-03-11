@@ -1,5 +1,4 @@
 import { useMemo } from "react";
-import deepEqual from "fast-deep-equal";
 import { atom, computed, type WritableAtom } from "nanostores";
 import { useStore } from "@nanostores/react";
 import { nanoid } from "nanoid";
@@ -77,41 +76,6 @@ export const useSetInstances = (
   useSyncInitializeOnce(() => {
     instancesStore.set(new Map(instances));
   });
-};
-
-/**
- * this is temporary utility to map rootInstance changes
- * to normalized instances
- *
- * later its usages should be rewritten with direct instances mutations
- */
-export const patchInstancesMutable = (
-  rootInstance: undefined | Instance,
-  instances: Instances
-) => {
-  const oldInstancesIndex = createInstancesIndex(rootInstance);
-  for (const oldInstance of oldInstancesIndex.instancesById.values()) {
-    const instance = instances.get(oldInstance.id);
-    const convertedOldInstance: InstancesItem = {
-      type: "instance",
-      id: oldInstance.id,
-      component: oldInstance.component,
-      label: oldInstance.label,
-      children: oldInstance.children.map((child) => {
-        if (child.type === "text") {
-          return child;
-        }
-        return {
-          type: "id",
-          value: child.id,
-        };
-      }),
-    };
-    if (deepEqual(convertedOldInstance, instance)) {
-      continue;
-    }
-    instances.set(oldInstance.id, convertedOldInstance);
-  }
 };
 
 // @todo will be removed soon

@@ -17,7 +17,6 @@ import {
   findParentInstance,
   findSubtreeLocalStyleSources,
   getInstanceAncestorsAndSelf,
-  insertInstanceMutable,
   insertInstancesCopyMutable,
   insertInstancesMutable,
   insertPropsCopyMutable,
@@ -153,67 +152,6 @@ test("find closest droppable target", () => {
   });
 });
 
-test("insert instance into target", () => {
-  const rootInstance = createInstance("root", "Body", [
-    createInstance("box1", "Box", [
-      createInstance("box11", "Box", []),
-      createInstance("box12", "Box", []),
-      createInstance("box13", "Box", []),
-    ]),
-  ]);
-
-  let instancesIndex = createInstancesIndex(rootInstance);
-  insertInstanceMutable(
-    instancesIndex,
-    createInstance("inserted1", "Box", [
-      createInstance("inserted2", "Box", []),
-    ]),
-    {
-      parentId: "box1",
-      position: 1,
-    }
-  );
-  expect(rootInstance).toEqual(
-    createInstance("root", "Body", [
-      createInstance("box1", "Box", [
-        createInstance("box11", "Box", []),
-        createInstance("inserted1", "Box", [
-          createInstance("inserted2", "Box", []),
-        ]),
-        createInstance("box12", "Box", []),
-        createInstance("box13", "Box", []),
-      ]),
-    ])
-  );
-
-  instancesIndex = createInstancesIndex(rootInstance);
-  insertInstanceMutable(
-    instancesIndex,
-    createInstance("inserted3", "Box", [
-      createInstance("inserted4", "Box", []),
-    ]),
-    {
-      parentId: "box1",
-      position: "end",
-    }
-  );
-  expect(rootInstance).toEqual(
-    createInstance("root", "Body", [
-      createInstance("box1", "Box", [
-        createInstance("box11", "Box", []),
-        createInstance("inserted1", "Box", [
-          createInstance("inserted2", "Box", []),
-        ]),
-        createInstance("box12", "Box", []),
-        createInstance("box13", "Box", []),
-        createInstance("inserted3", "Box", [
-          createInstance("inserted4", "Box", []),
-        ]),
-      ]),
-    ])
-  );
-});
-
 test("insert instances tree into target", () => {
   const instances = new Map([
     createInstancePair("root", "Body", [{ type: "id", value: "box1" }]),
@@ -296,64 +234,93 @@ test("insert instances tree into target", () => {
 });
 
 test("reparent instance into target", () => {
-  const rootInstance = createInstance("root", "Body", [
-    createInstance("target", "Box", []),
-    createInstance("box1", "Box", [
-      createInstance("box11", "Box", []),
-      createInstance("box12", "Box", []),
-      createInstance("box13", "Box", []),
+  const instances: Instances = new Map([
+    createInstancePair("root", "Body", [
+      { type: "id", value: "target" },
+      { type: "id", value: "box1" },
+      { type: "id", value: "box2" },
     ]),
-    createInstance("box2", "Box", []),
+    createInstancePair("target", "Box", []),
+    createInstancePair("box1", "Box", [
+      { type: "id", value: "box11" },
+      { type: "id", value: "box12" },
+      { type: "id", value: "box13" },
+    ]),
+    createInstancePair("box2", "Box", []),
+    createInstancePair("box11", "Box", []),
+    createInstancePair("box12", "Box", []),
+    createInstancePair("box13", "Box", []),
   ]);
 
-  let instancesIndex = createInstancesIndex(rootInstance);
-  reparentInstanceMutable(instancesIndex, "target", {
+  reparentInstanceMutable(instances, "target", {
     parentId: "box1",
     position: 1,
   });
-  expect(rootInstance).toEqual(
-    createInstance("root", "Body", [
-      createInstance("box1", "Box", [
-        createInstance("box11", "Box", []),
-        createInstance("target", "Box", []),
-        createInstance("box12", "Box", []),
-        createInstance("box13", "Box", []),
+  expect(instances).toEqual(
+    new Map([
+      createInstancePair("root", "Body", [
+        { type: "id", value: "box1" },
+        { type: "id", value: "box2" },
       ]),
-      createInstance("box2", "Box", []),
+      createInstancePair("target", "Box", []),
+      createInstancePair("box1", "Box", [
+        { type: "id", value: "box11" },
+        { type: "id", value: "target" },
+        { type: "id", value: "box12" },
+        { type: "id", value: "box13" },
+      ]),
+      createInstancePair("box2", "Box", []),
+      createInstancePair("box11", "Box", []),
+      createInstancePair("box12", "Box", []),
+      createInstancePair("box13", "Box", []),
     ])
   );
 
-  instancesIndex = createInstancesIndex(rootInstance);
-  reparentInstanceMutable(instancesIndex, "target", {
+  reparentInstanceMutable(instances, "target", {
     parentId: "box1",
     position: 3,
   });
-  expect(rootInstance).toEqual(
-    createInstance("root", "Body", [
-      createInstance("box1", "Box", [
-        createInstance("box11", "Box", []),
-        createInstance("box12", "Box", []),
-        createInstance("target", "Box", []),
-        createInstance("box13", "Box", []),
+  expect(instances).toEqual(
+    new Map([
+      createInstancePair("root", "Body", [
+        { type: "id", value: "box1" },
+        { type: "id", value: "box2" },
       ]),
-      createInstance("box2", "Box", []),
+      createInstancePair("target", "Box", []),
+      createInstancePair("box1", "Box", [
+        { type: "id", value: "box11" },
+        { type: "id", value: "box12" },
+        { type: "id", value: "target" },
+        { type: "id", value: "box13" },
+      ]),
+      createInstancePair("box2", "Box", []),
+      createInstancePair("box11", "Box", []),
+      createInstancePair("box12", "Box", []),
+      createInstancePair("box13", "Box", []),
     ])
   );
 
-  instancesIndex = createInstancesIndex(rootInstance);
-  reparentInstanceMutable(instancesIndex, "target", {
+  reparentInstanceMutable(instances, "target", {
     parentId: "root",
     position: "end",
   });
-  expect(rootInstance).toEqual(
-    createInstance("root", "Body", [
-      createInstance("box1", "Box", [
-        createInstance("box11", "Box", []),
-        createInstance("box12", "Box", []),
-        createInstance("box13", "Box", []),
+  expect(instances).toEqual(
+    new Map([
+      createInstancePair("root", "Body", [
+        { type: "id", value: "box1" },
+        { type: "id", value: "box2" },
+        { type: "id", value: "target" },
       ]),
-      createInstance("box2", "Box", []),
-      createInstance("target", "Box", []),
+      createInstancePair("target", "Box", []),
+      createInstancePair("box1", "Box", [
+        { type: "id", value: "box11" },
+        { type: "id", value: "box12" },
+        { type: "id", value: "box13" },
+      ]),
+      createInstancePair("box2", "Box", []),
+      createInstancePair("box11", "Box", []),
+      createInstancePair("box12", "Box", []),
+      createInstancePair("box13", "Box", []),
     ])
   );
 });

@@ -1,6 +1,5 @@
 import { useLayoutEffect, useRef } from "react";
 import { useStore } from "@nanostores/react";
-import { utils } from "@webstudio-is/project";
 import {
   type DropTarget,
   type Point,
@@ -20,7 +19,10 @@ import {
   useTextEditingInstanceId,
 } from "~/shared/nano-states";
 import { publish, useSubscribe } from "~/shared/pubsub";
-import { insertInstance, reparentInstance } from "~/shared/instance-utils";
+import {
+  insertNewComponentInstance,
+  reparentInstance,
+} from "~/shared/instance-utils";
 import {
   getInstanceElementById,
   getInstanceIdFromElement,
@@ -282,11 +284,7 @@ export const useDragAndDrop = () => {
       const { dropTarget, dragItem } = state.current;
 
       if (dropTarget && dragItem && isCanceled === false) {
-        const instance = utils.tree.createInstance({
-          component: dragItem.component,
-        });
-
-        insertInstance(instance, {
+        insertNewComponentInstance(dragItem.component, {
           parentId: dropTarget.data.id,
           position: dropTarget.indexWithinChildren,
         });
