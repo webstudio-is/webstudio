@@ -21,21 +21,27 @@ export const ToggleGroupItem = styled(ToggleGroupPrimitive.Item, {
   alignItems: "center",
   justifyContent: "center",
   marginLeft: 1,
-  borderRadius: 2,
   height: theme.spacing[11],
+  outline: "none",
   "&": {
     px: theme.spacing[3],
   },
   "&:first-child": {
     marginLeft: 0,
-    borderTopLeftRadius: 4,
-    borderBottomLeftRadius: 4,
+    borderTopLeftRadius: theme.spacing[3],
+    borderBottomLeftRadius: theme.spacing[3],
   },
-  "&:last-child": { borderTopRightRadius: 4, borderBottomRightRadius: 4 },
+  "&:last-child": {
+    borderTopRightRadius: theme.spacing[3],
+    borderBottomRightRadius: theme.spacing[3],
+  },
   "&:hover": { backgroundColor: theme.colors.slateA3 },
   // @note because the outline is outside of the element others can end up covering it
-  "&:focus": {
-    boxShadow: `0 0 0 ${theme.spacing[2]} ${theme.colors.blue10}`,
+  "&:focus-visible": {
+    outline: `2px solid ${theme.colors.borderFocus}`,
+    outlineOffset: "-2px",
+    borderRadius: theme.spacing[3],
+
     zIndex: 1,
   },
   "&[data-state=on]": { backgroundColor: theme.colors.slate5 },

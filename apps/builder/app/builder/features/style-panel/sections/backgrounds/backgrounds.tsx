@@ -117,7 +117,7 @@ export const BackgroundsSection = ({
       ))}
 
       <Flex css={{ px: theme.spacing[9] }} direction="column" gap={2}>
-        <Grid css={{ gridTemplateColumns: "4fr 6fr" }}>
+        <Grid css={{ gridTemplateColumns: "1fr 128px" }}>
           <PropertyName
             style={currentStyle}
             property={"backgroundColor"}

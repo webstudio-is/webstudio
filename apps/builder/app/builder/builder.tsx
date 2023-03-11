@@ -48,6 +48,7 @@ import { useCopyPaste } from "~/shared/copy-paste";
 import { AssetsProvider } from "./shared/assets";
 import type { Asset } from "@webstudio-is/asset-uploader";
 import { useSearchParams } from "@remix-run/react";
+import { useSyncInitializeOnce } from "~/shared/hook-utils";
 
 registerContainers();
 
@@ -259,7 +260,14 @@ export const Builder = ({
 
   const [searchParams] = useSearchParams();
   const pageId = searchParams.get("pageId") ?? build.pages.homePage.id;
-  selectedPageIdStore.set(pageId);
+
+  useSyncInitializeOnce(() => {
+    selectedPageIdStore.set(pageId);
+  });
+  useEffect(() => {
+    selectedPageIdStore.set(pageId);
+  }, [pageId]);
+
   useSetAssets(assets);
 
   useSetAuthToken(authToken);

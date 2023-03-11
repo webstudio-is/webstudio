@@ -57,7 +57,7 @@ export const ColorControl = ({
   }
 
   return (
-    <Flex align="center" css={{ gridColumn: "2/4" }} gap="1">
+    <Flex align="center" gap="1">
       <ColorPicker
         property={property}
         value={value}

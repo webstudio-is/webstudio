@@ -1,4 +1,4 @@
-import { TextField } from "@webstudio-is/design-system";
+import { Button } from "@webstudio-is/design-system";
 import type { ControlProps } from "../../style-sections";
 import { FloatingPanel } from "~/builder/shared/floating-panel";
 import { ImageManager } from "~/builder/shared/image-manager";
@@ -32,7 +32,9 @@ export const ImageControl = ({
         />
       }
     >
-      <TextField defaultValue={valueAsset?.value.name} />
+      <Button color="neutral" css={{ maxWidth: "100%", justifySelf: "right" }}>
+        {valueAsset?.value.name ?? "Choose image..."}
+      </Button>
     </FloatingPanel>
   );
 };

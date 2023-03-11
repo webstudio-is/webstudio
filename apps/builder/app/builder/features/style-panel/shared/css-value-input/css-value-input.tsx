@@ -218,6 +218,7 @@ type CssValueInputProps = {
    * Selected item in the dropdown
    */
   keywords?: Array<KeywordValue>;
+  disabled?: boolean;
   onChange: (value: CssValueInputValue | undefined) => void;
   onChangeComplete: (event: {
     value: StyleValue;
@@ -289,6 +290,7 @@ export const CssValueInput = ({
   keywords = [],
   onHighlight,
   onAbort,
+  disabled,
   ...props
 }: CssValueInputProps & { icon?: JSX.Element }) => {
   const value = props.intermediateValue ?? props.value ?? initialValue;
@@ -490,6 +492,7 @@ export const CssValueInput = ({
       <Box {...getComboboxProps()}>
         <ComboboxPopperAnchor>
           <TextField
+            disabled={disabled}
             {...inputProps}
             onFocus={() => {
               const isFocused = document.activeElement === inputRef.current;

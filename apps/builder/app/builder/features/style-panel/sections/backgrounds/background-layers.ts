@@ -12,8 +12,7 @@ export const layeredBackgroundPropsDefaults = {
   backgroundBlendMode: { type: "keyword", value: "normal" },
   backgroundImage: { type: "keyword", value: "none" },
   backgroundOrigin: { type: "keyword", value: "padding-box" },
-  backgroundPositionX: { type: "unit", value: 0, unit: "%" },
-  backgroundPositionY: { type: "unit", value: 0, unit: "%" },
+  backgroundPosition: { type: "unit", value: 0, unit: "%" },
   backgroundRepeat: { type: "keyword", value: "repeat" },
   backgroundSize: { type: "keyword", value: "auto" },
 } as const satisfies Record<string, BackgroundStyleValue>;
@@ -28,6 +27,7 @@ export const isBackgroundStyleValue = (
     style.type === "keyword" ||
     style.type === "unparsed" ||
     style.type === "image" ||
+    style.type === "tuple" ||
     style.type === "invalid"
   ) {
     return true;
