@@ -4,14 +4,15 @@ import type { WritableAtom } from "nanostores";
 import { useEffect } from "react";
 import { type Publish, subscribe } from "~/shared/pubsub";
 import {
+  pagesStore,
   instancesStore,
   propsStore,
   breakpointsContainer,
   stylesStore,
   styleSourcesStore,
   styleSourceSelectionsStore,
+  selectedPageIdStore,
   assetContainersStore,
-  selectedPageStore,
   selectedInstanceIdStore,
   selectedInstanceBrowserStyleStore,
   hoveredInstanceIdStore,
@@ -49,6 +50,7 @@ const clientStores = new Map<string, WritableAtom<unknown>>();
 
 export const registerContainers = () => {
   // synchronize patches
+  store.register("pages", pagesStore);
   store.register("breakpoints", breakpointsContainer);
   store.register("instances", instancesStore);
   store.register("styles", stylesStore);
@@ -56,8 +58,8 @@ export const registerContainers = () => {
   store.register("styleSourceSelections", styleSourceSelectionsStore);
   store.register("props", propsStore);
   // synchronize whole states
+  clientStores.set("selectedPageId", selectedPageIdStore);
   clientStores.set("assetContainers", assetContainersStore);
-  clientStores.set("selectedPage", selectedPageStore);
   clientStores.set("selectedInstanceId", selectedInstanceIdStore);
   clientStores.set(
     "selectedInstanceBrowserStyle",

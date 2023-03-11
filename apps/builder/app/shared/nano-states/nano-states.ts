@@ -12,6 +12,7 @@ import type {
   Instances,
   InstancesItem,
   Page,
+  Pages,
   Prop,
   Props,
   StyleDecl,
@@ -40,7 +41,32 @@ const useValue = <T>(atom: WritableAtom<T>) => {
   return [value, atom.set] as const;
 };
 
-export const selectedPageStore = atom<undefined | Page>(undefined);
+export const pagesStore = atom<undefined | Pages>(undefined);
+export const useSetPages = (pages: Pages) => {
+  useSyncInitializeOnce(() => {
+    pagesStore.set(pages);
+  });
+};
+
+export const selectedPageIdStore = atom<undefined | Page["id"]>(undefined);
+export const useSetSelectedPageId = (pageId: Page["id"]) => {
+  useSyncInitializeOnce(() => {
+    selectedPageIdStore.set(pageId);
+  });
+};
+
+export const selectedPageStore = computed(
+  [pagesStore, selectedPageIdStore],
+  (pages, selectedPageId) => {
+    if (pages === undefined) {
+      return undefined;
+    }
+    if (pages.homePage.id === selectedPageId) {
+      return pages.homePage;
+    }
+    return pages.pages.find((page) => page.id === selectedPageId);
+  }
+);
 
 export const instancesStore = atom<Map<InstancesItem["id"], InstancesItem>>(
   new Map()

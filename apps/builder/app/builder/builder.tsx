@@ -1,10 +1,6 @@
-import { useCallback, useEffect, useMemo } from "react";
+import { useCallback, useEffect } from "react";
 import { type Publish, usePublish, useSubscribe } from "~/shared/pubsub";
-import {
-  type Build,
-  type Pages,
-  findPageByIdOrPath,
-} from "@webstudio-is/project-build";
+import type { Build } from "@webstudio-is/project-build";
 import type { Project } from "@webstudio-is/project";
 import { theme, Box, type CSS, Flex, Grid } from "@webstudio-is/design-system";
 import type { AuthPermit } from "@webstudio-is/trpc-interface";
@@ -17,7 +13,7 @@ import robotoMonoFont from "@fontsource/roboto-mono/index.css";
 import { useSharedShortcuts } from "~/shared/shortcuts";
 import { SidebarLeft } from "./features/sidebar-left";
 import { Inspector } from "./features/inspector";
-import { usePages, useProject, useCurrentPageId } from "./shared/nano-states";
+import { useProject } from "./shared/nano-states";
 import { Topbar } from "./features/topbar";
 import builderStyles from "./builder.css";
 import { Footer } from "./features/footer";
@@ -30,7 +26,7 @@ import {
 } from "./features/workspace";
 import { usePublishShortcuts } from "./shared/shortcuts";
 import {
-  selectedPageStore,
+  selectedPageIdStore,
   useDragAndDropState,
   useIsPreviewMode,
   useSetAssets,
@@ -39,6 +35,7 @@ import {
   useSetBreakpoints,
   useSetInstances,
   useSetIsPreviewMode,
+  useSetPages,
   useSetProps,
   useSetStyles,
   useSetStyleSources,
@@ -50,6 +47,7 @@ import { getBuildUrl } from "~/shared/router-utils";
 import { useCopyPaste } from "~/shared/copy-paste";
 import { AssetsProvider } from "./shared/assets";
 import type { Asset } from "@webstudio-is/asset-uploader";
+import { useSearchParams } from "@remix-run/react";
 
 registerContainers();
 
@@ -66,20 +64,6 @@ const useSetProject = (project: Project) => {
   useEffect(() => {
     setProject(project);
   }, [project, setProject]);
-};
-
-const useSetPages = (pages: Pages) => {
-  const [, setPages] = usePages();
-  useEffect(() => {
-    setPages(pages);
-  }, [pages, setPages]);
-};
-
-const useSetCurrentPageId = (pageId: string) => {
-  const [, setCurrentPageId] = useCurrentPageId();
-  useEffect(() => {
-    setCurrentPageId(pageId);
-  }, [pageId, setCurrentPageId]);
 };
 
 const useNavigatorLayout = () => {
@@ -248,8 +232,6 @@ const NavigatorPanel = ({ isPreviewMode }: NavigatorPanelProps) => {
 
 export type BuilderProps = {
   project: Project;
-  pages: Pages;
-  pageId: string;
   build: Build;
   assets: Asset[];
   buildOrigin: string;
@@ -260,8 +242,6 @@ export type BuilderProps = {
 
 export const Builder = ({
   project,
-  pages,
-  pageId,
   build,
   assets,
   buildOrigin,
@@ -269,6 +249,7 @@ export const Builder = ({
   authToken,
   authPermit,
 }: BuilderProps) => {
+  useSetPages(build.pages);
   useSetBreakpoints(build.breakpoints);
   useSetProps(build.props);
   useSetStyles(build.styles);
@@ -276,13 +257,14 @@ export const Builder = ({
   useSetStyleSourceSelections(build.styleSourceSelections);
   useSetInstances(build.instances);
 
+  const [searchParams] = useSearchParams();
+  const pageId = searchParams.get("pageId") ?? build.pages.homePage.id;
+  selectedPageIdStore.set(pageId);
   useSetAssets(assets);
 
   useSetAuthToken(authToken);
   useSetAuthPermit(authPermit);
   useSetProject(project);
-  useSetPages(pages);
-  useSetCurrentPageId(pageId);
   const [publish, publishRef] = usePublish();
   useBuilderStore(publish);
   useSyncServer({
@@ -312,20 +294,10 @@ export const Builder = ({
     [publishRef, onRefReadCanvasWidth, onRefReadCanvas]
   );
 
-  const page = useMemo(() => {
-    const page = findPageByIdOrPath(pages, pageId);
-    if (page === undefined) {
-      throw new Error(`Page with id ${pageId} not found`);
-    }
-    return page;
-  }, [pages, pageId]);
-
-  selectedPageStore.set(page);
-
   const canvasUrl = getBuildUrl({
     buildOrigin,
     project,
-    page,
+    page: build.pages.homePage,
     mode: "edit",
     authReadToken,
   });
@@ -333,12 +305,7 @@ export const Builder = ({
   return (
     <AssetsProvider authToken={authToken}>
       <ChromeWrapper isPreviewMode={isPreviewMode}>
-        <Topbar
-          gridArea="header"
-          project={project}
-          publish={publish}
-          page={page}
-        />
+        <Topbar gridArea="header" project={project} publish={publish} />
         <Main>
           <Workspace onTransitionEnd={onTransitionEnd} publish={publish}>
             <CanvasIframe

@@ -24,7 +24,6 @@ export const loader = async ({
   const context = await createContext(request);
 
   const url = new URL(request.url);
-  const pageIdParam = url.searchParams.get("pageId");
 
   const project = await db.project.loadById(params.projectId, context);
 
@@ -46,15 +45,11 @@ export const loader = async ({
   const devBuild = await loadBuildByProjectId(project.id, "dev");
   const assets = await loadByProject(project.id, context);
 
-  const pages = devBuild.pages;
-
   const authReadToken = await createAuthReadToken({ projectId: project.id });
   const authToken = url.searchParams.get("authToken") ?? undefined;
 
   return {
     project,
-    pages,
-    pageId: pageIdParam || devBuild.pages.homePage.id,
     build: devBuild,
     assets,
     buildOrigin: getBuildOrigin(request),
@@ -85,7 +80,15 @@ export const shouldRevalidate: ShouldRevalidateFunction = ({
   nextUrl,
   defaultShouldRevalidate,
 }) => {
-  return currentUrl.href === nextUrl.href ? false : defaultShouldRevalidate;
+  const currentUrlCopy = new URL(currentUrl);
+  const nextUrlCopy = new URL(nextUrl);
+  // prevent revalidating data when pageId changes
+  // to not regenerate auth token and preserve canvas url
+  currentUrlCopy.searchParams.delete("pageId");
+  nextUrlCopy.searchParams.delete("pageId");
+  return currentUrlCopy.href === nextUrlCopy.href
+    ? false
+    : defaultShouldRevalidate;
 };
 
 export default BuilderRoute;

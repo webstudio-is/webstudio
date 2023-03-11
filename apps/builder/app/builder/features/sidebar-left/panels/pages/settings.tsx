@@ -1,5 +1,6 @@
 import { z } from "zod";
 import { useState, useCallback, ComponentProps } from "react";
+import { useStore } from "@nanostores/react";
 import { useDebouncedCallback } from "use-debounce";
 import { useUnmount } from "react-use";
 import slugify from "slugify";
@@ -26,7 +27,6 @@ import {
   Tooltip,
 } from "@webstudio-is/design-system";
 import { ChevronDoubleLeftIcon, TrashIcon } from "@webstudio-is/icons";
-import { usePages } from "~/builder/shared/nano-states";
 import { useOnFetchEnd, usePersistentFetcher } from "~/shared/fetcher";
 import {
   normalizeErrors,
@@ -41,6 +41,7 @@ import type {
 import { restPagesPath } from "~/shared/router-utils";
 import { Header, HeaderSuffixSpacer } from "../../header";
 import { deleteInstance } from "~/shared/instance-utils";
+import { pagesStore } from "~/shared/nano-states";
 
 const Group = styled(Flex, {
   marginBottom: theme.spacing[9],
@@ -226,12 +227,18 @@ export const NewPageSettings = ({
   onSuccess?: (page: Page) => void;
   projectId: string;
 }) => {
-  const [pages] = usePages();
+  const pages = useStore(pagesStore);
 
   const fetcher = useFetcher<CreatePageData>();
 
   useOnFetchEnd(fetcher, (data) => {
     if (data.status === "ok") {
+      if (pages !== undefined) {
+        pagesStore.set({
+          homePage: pages.homePage,
+          pages: [...pages.pages, data.page],
+        });
+      }
       onSuccess?.(data.page);
     }
   });
@@ -367,7 +374,7 @@ export const PageSettings = ({
 
   const fetcher = useFetcher<EditPageData>();
 
-  const [pages, setPages] = usePages();
+  const pages = useStore(pagesStore);
   const page = pages && findPageByIdOrPath(pages, pageId);
 
   // Updating client side store like that is a temporary solution
@@ -377,10 +384,10 @@ export const PageSettings = ({
       return;
     }
     if (pages.homePage.id === page.id) {
-      setPages({ homePage: page, pages: pages.pages });
+      pagesStore.set({ homePage: page, pages: pages.pages });
       return;
     }
-    setPages({
+    pagesStore.set({
       homePage: pages.homePage,
       pages: pages.pages.map((item) => (item.id === page.id ? page : item)),
     });
@@ -393,7 +400,7 @@ export const PageSettings = ({
     if (page) {
       deleteInstance(page.rootInstanceId);
     }
-    setPages({
+    pagesStore.set({
       homePage: pages.homePage,
       pages: pages.pages.filter((item) => item.id !== pageId),
     });
