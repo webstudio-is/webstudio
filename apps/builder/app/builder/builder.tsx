@@ -259,7 +259,10 @@ export const Builder = ({
 
   const [searchParams] = useSearchParams();
   const pageId = searchParams.get("pageId") ?? build.pages.homePage.id;
-  selectedPageIdStore.set(pageId);
+  useEffect(() => {
+    selectedPageIdStore.set(pageId);
+  }, [pageId]);
+
   useSetAssets(assets);
 
   useSetAuthToken(authToken);
