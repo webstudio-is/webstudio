@@ -13,6 +13,7 @@ import {
   ToggleGroupItem,
   Separator,
   styled,
+  Tooltip,
 } from "@webstudio-is/design-system";
 import { ImageControl, SelectControl, PositionControl } from "../../controls";
 import type { StyleInfo } from "../../shared/style-info";
@@ -38,6 +39,7 @@ import {
   RepeatColumnIcon,
   RepeatRowIcon,
   CrossSmallIcon,
+  InformationIcon,
 } from "@webstudio-is/icons";
 import { toValue } from "@webstudio-is/css-engine";
 import { BackgroundGradient } from "./background-gradient";
@@ -163,7 +165,28 @@ export const BackgroundContent = (props: BackgroundContentProps) => {
 
           {imageGradientToggle === "gradient" && (
             <Flex css={{ gridColumn: "span 2" }} direction="column">
-              <Label color="default">Code</Label>
+              <Label color="default">
+                <Flex align={"center"} gap={1}>
+                  Code
+                  <Tooltip
+                    variant="wrapped"
+                    content={
+                      <>
+                        Paste a CSS gradient, for example:
+                        <br />
+                        <br />
+                        linear-gradient(...)
+                        <br />
+                        <br />
+                        If pasting from figma, remove the “background” property
+                        name.
+                      </>
+                    }
+                  >
+                    <InformationIcon />
+                  </Tooltip>
+                </Flex>
+              </Label>
 
               <BackgroundGradient
                 setProperty={setProperty}

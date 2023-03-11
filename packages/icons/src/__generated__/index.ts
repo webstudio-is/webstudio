@@ -24,6 +24,7 @@ export * from "./github";
 export * from "./google";
 export * from "./hamburger-menu";
 export * from "./info";
+export * from "./information";
 export * from "./linked";
 export * from "./list-item";
 export * from "./list";

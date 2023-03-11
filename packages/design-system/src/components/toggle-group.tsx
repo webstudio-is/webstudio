@@ -21,7 +21,6 @@ export const ToggleGroupItem = styled(ToggleGroupPrimitive.Item, {
   alignItems: "center",
   justifyContent: "center",
   marginLeft: 1,
-  // borderRadius: 2,
   height: theme.spacing[11],
   outline: "none",
   "&": {

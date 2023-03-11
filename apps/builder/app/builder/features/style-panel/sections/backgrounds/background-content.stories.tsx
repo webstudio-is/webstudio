@@ -20,7 +20,7 @@ const deleteProperty = () => () => {
 };
 
 export const BackgroundContentStory = () => {
-  const eltRef = useRef<HTMLDivElement>(null);
+  const elementRef = useRef<HTMLDivElement>(null);
 
   const [currentStyle, setCurrentStyle] = useState(defaultCurrentStyle);
 
@@ -36,9 +36,9 @@ export const BackgroundContentStory = () => {
 
   return (
     <>
-      <div ref={eltRef} style={{ marginLeft: "400px" }}></div>
+      <div ref={elementRef} style={{ marginLeft: "400px" }}></div>
 
-      <FloatingPanelProvider container={eltRef}>
+      <FloatingPanelProvider container={elementRef}>
         <FloatingPanel
           open={true}
           title="Background"
