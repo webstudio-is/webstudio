@@ -168,6 +168,22 @@ export const ColorPicker = ({
     )
   ).toRgbString();
 
+  /**
+   * By default, the color can be transparent, but if the user chooses a color from the picker,
+   * we must set alpha = 1 otherwise all selected colors will be transparent.
+   */
+  const fixColor = (color: ColorResult) => {
+    const newColor = { ...color.rgb };
+
+    if (
+      currentValue.type === "keyword" &&
+      currentValue.value === "transparent"
+    ) {
+      newColor.a = 1;
+    }
+    return colorResultToRgbValue(newColor);
+  };
+
   const prefix = (
     <Popover
       modal
@@ -197,11 +213,15 @@ export const ColorPicker = ({
         <SketchPicker
           color={rgbValue}
           onChange={(color: ColorResult) => {
-            onChange(colorResultToRgbValue(color.rgb));
+            const newColor = fixColor(color);
+
+            onChange(newColor);
           }}
           onChangeComplete={(color: ColorResult) => {
+            const newColor = fixColor(color);
+
             onChangeComplete({
-              value: colorResultToRgbValue(color.rgb),
+              value: newColor,
             });
           }}
           // @todo to remove both when we have preset colors
