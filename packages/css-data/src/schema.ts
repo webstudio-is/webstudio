@@ -51,6 +51,8 @@ export type KeywordValue = z.infer<typeof KeywordValue>;
 export const UnparsedValue = z.object({
   type: z.literal("unparsed"),
   value: z.string(),
+  // For the builder we want to be able to hide background-image
+  hidden: z.boolean().optional(),
 });
 
 const FontFamilyValue = z.object({
@@ -71,6 +73,8 @@ export type RgbValue = z.infer<typeof RgbValue>;
 export const ImageValue = z.object({
   type: z.literal("image"),
   value: z.object({ type: z.literal("asset"), value: ImageAsset }),
+  // For the builder we want to be able to hide images
+  hidden: z.boolean().optional(),
 });
 
 export type ImageValue = z.infer<typeof ImageValue>;

@@ -15,7 +15,6 @@ import {
   EyeconClosedIcon,
   SubtractIcon,
 } from "@webstudio-is/icons";
-import { useState } from "react";
 import { PropertyName } from "../../shared/property-name";
 import type { StyleInfo } from "../../shared/style-info";
 import { ColorControl } from "../../controls/color/color-control";
@@ -39,7 +38,28 @@ const Layer = (props: {
   deleteProperty: DeleteBackgroundProperty;
   deleteLayer: () => void;
 }) => {
-  const [hidden, setHidden] = useState(false);
+  const backgrounImageStyle = props.layerStyle.backgroundImage?.value;
+  const hidden =
+    backgrounImageStyle?.type === "image" ||
+    backgrounImageStyle?.type === "unparsed"
+      ? Boolean(backgrounImageStyle.hidden)
+      : false;
+
+  const handleHiddenChange = (hidden: boolean) => {
+    if (
+      backgrounImageStyle?.type === "image" ||
+      backgrounImageStyle?.type === "unparsed"
+    ) {
+      props.setProperty("backgroundImage")({
+        ...backgrounImageStyle,
+        hidden,
+      });
+    }
+  };
+
+  const eyeButtonDisabled =
+    backgrounImageStyle?.type !== "image" &&
+    backgrounImageStyle?.type !== "unparsed";
 
   return (
     <FloatingPanel
@@ -66,8 +86,9 @@ const Layer = (props: {
         buttons={
           <>
             <SmallToggleButton
+              disabled={eyeButtonDisabled}
               pressed={hidden}
-              onPressedChange={setHidden}
+              onPressedChange={handleHiddenChange}
               variant="normal"
               tabIndex={0}
               icon={hidden ? <EyeconClosedIcon /> : <EyeconOpenIcon />}
