@@ -2,12 +2,16 @@ import { useEffect, useRef } from "react";
 import { useStore } from "@nanostores/react";
 import {
   instancesIndexStore,
-  selectedInstanceIdStore,
+  instancesStore,
+  selectedInstanceAddressStore,
   useRootInstance,
   useTextEditingInstanceId,
 } from "~/shared/nano-states";
 import { publish } from "~/shared/pubsub";
-import { findClosestRichTextInstance } from "~/shared/tree-utils";
+import {
+  findClosestRichTextInstance,
+  getInstanceAddress,
+} from "~/shared/tree-utils";
 import { componentAttribute } from "@webstudio-is/react-sdk";
 
 declare module "~/shared/pubsub" {
@@ -23,7 +27,8 @@ const eventOptions = {
 const isHighlighting = () => getSelection()?.type === "Range";
 
 export const useTrackSelectedElement = () => {
-  const selectedInstanceId = useStore(selectedInstanceIdStore);
+  const selectedInstanceAddress = useStore(selectedInstanceAddressStore);
+  const selectedInstanceId = selectedInstanceAddress?.[0];
   const [editingInstanceId, setEditingInstanceId] = useTextEditingInstanceId();
   const editingInstanceIdRef = useRef(editingInstanceId);
   editingInstanceIdRef.current = editingInstanceId;
@@ -32,6 +37,7 @@ export const useTrackSelectedElement = () => {
   useEffect(() => {
     if (
       editingInstanceIdRef.current !== undefined &&
+      // @todo compare instance addresses
       selectedInstanceId !== editingInstanceIdRef.current
     ) {
       setEditingInstanceId(undefined);
@@ -62,6 +68,7 @@ export const useTrackSelectedElement = () => {
         element = instanceElement;
       }
 
+      // @todo find rendered instance address
       const { id } = element;
 
       // Enable clicking inside of content editable without trying to select the element as an instance.
@@ -78,12 +85,16 @@ export const useTrackSelectedElement = () => {
           id
         );
         if (richTextInstance) {
-          selectedInstanceIdStore.set(richTextInstance.id);
+          selectedInstanceAddressStore.set(
+            getInstanceAddress(instancesStore.get(), richTextInstance.id)
+          );
           setEditingInstanceId(richTextInstance.id);
         }
         return;
       }
-      selectedInstanceIdStore.set(id);
+      selectedInstanceAddressStore.set(
+        getInstanceAddress(instancesStore.get(), id)
+      );
     };
 
     window.addEventListener("click", handleClick, eventOptions);

@@ -5,7 +5,7 @@ import { addGlobalRules } from "@webstudio-is/project";
 import {
   assetsStore,
   isPreviewModeStore,
-  selectedInstanceIdStore,
+  selectedInstanceAddressStore,
   useBreakpoints,
 } from "~/shared/nano-states";
 import type { StyleDecl } from "@webstudio-is/project-build";
@@ -263,7 +263,8 @@ const setCssVar = (id: string, property: string, value?: StyleValue) => {
 
 const useUpdateStyle = () => {
   useSubscribe("updateStyle", ({ id, updates }) => {
-    const selectedInstanceId = selectedInstanceIdStore.get();
+    const selectedInstanceAddress = selectedInstanceAddressStore.get();
+    const selectedInstanceId = selectedInstanceAddress?.[0];
     // Only update styles if they match the selected instance
     // It can potentially happen that we selected a difference instance right after we changed the style in style panel.
     if (id !== selectedInstanceId) {

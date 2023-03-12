@@ -1,4 +1,3 @@
-import { useMemo } from "react";
 import { useStore } from "@nanostores/react";
 import { ChevronRightIcon } from "@webstudio-is/icons";
 import {
@@ -8,10 +7,10 @@ import {
   DeprecatedText2,
 } from "@webstudio-is/design-system";
 import {
-  instancesIndexStore,
-  selectedInstanceIdStore,
+  instancesStore,
+  selectedInstanceAddressStore,
 } from "~/shared/nano-states";
-import { getInstanceAncestorsAndSelf } from "~/shared/tree-utils";
+import { getAncestorInstanceAddress } from "~/shared/tree-utils";
 
 type BreadcrumbProps = {
   children: JSX.Element | string;
@@ -39,33 +38,41 @@ const Breadcrumb = ({ children, onClick }: BreadcrumbProps) => {
 };
 
 export const Breadcrumbs = () => {
-  const instancesIndex = useStore(instancesIndexStore);
-  const selectedInstanceId = useStore(selectedInstanceIdStore);
-
-  const selectedInstancePath = useMemo(() => {
-    if (selectedInstanceId === undefined) {
-      return [];
-    }
-    return getInstanceAncestorsAndSelf(instancesIndex, selectedInstanceId);
-  }, [selectedInstanceId, instancesIndex]);
+  const instances = useStore(instancesStore);
+  const selectedInstanceAddress = useStore(selectedInstanceAddressStore);
 
   return (
     <Flex align="center" css={{ height: "100%" }}>
-      {selectedInstancePath.length === 0 ? (
+      {selectedInstanceAddress === undefined ? (
         <Breadcrumb>
           <DeprecatedText2>No instance selected</DeprecatedText2>
         </Breadcrumb>
       ) : (
-        selectedInstancePath.map((instance) => (
-          <Breadcrumb
-            key={instance.id}
-            onClick={() => {
-              selectedInstanceIdStore.set(instance.id);
-            }}
-          >
-            {instance.component}
-          </Breadcrumb>
-        ))
+        selectedInstanceAddress
+          // start breadcrumbs from the root
+          .slice()
+          .reverse()
+          .map((instanceId) => {
+            const instance = instances.get(instanceId);
+            if (instance === undefined) {
+              return;
+            }
+            return (
+              <Breadcrumb
+                key={instance.id}
+                onClick={() => {
+                  selectedInstanceAddressStore.set(
+                    getAncestorInstanceAddress(
+                      selectedInstanceAddress,
+                      instance.id
+                    )
+                  );
+                }}
+              >
+                {instance.component}
+              </Breadcrumb>
+            );
+          })
       )}
     </Flex>
   );

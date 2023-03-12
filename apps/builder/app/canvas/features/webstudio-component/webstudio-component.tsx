@@ -16,13 +16,14 @@ import {
 import type { GetComponent } from "@webstudio-is/react-sdk";
 import {
   instancesStore,
-  selectedInstanceIdStore,
+  selectedInstanceAddressStore,
   useInstanceProps,
   useInstanceStyles,
   useTextEditingInstanceId,
 } from "~/shared/nano-states";
 import { useCssRules } from "~/canvas/shared/styles";
 import { SelectedInstanceConnector } from "./selected-instance-connector";
+import { getInstanceAddress } from "~/shared/tree-utils";
 
 const TextEditor = lazy(() => import("../text-editor"));
 
@@ -68,7 +69,7 @@ export const WebstudioComponentDev = ({
 
   const [editingInstanceId, setTextEditingInstanceId] =
     useTextEditingInstanceId();
-  const selectedInstanceId = useStore(selectedInstanceIdStore);
+  const selectedInstanceAddress = useStore(selectedInstanceAddressStore);
 
   const instanceProps = useInstanceProps(instance.id);
   const userProps = useMemo(() => {
@@ -84,7 +85,8 @@ export const WebstudioComponentDev = ({
     return result;
   }, [instanceProps]);
 
-  const isSelected = selectedInstanceId === instanceId;
+  // @todo compare instance addresses
+  const isSelected = selectedInstanceAddress?.[0] === instanceId;
 
   // Scroll the selected instance into view when selected from navigator.
   useEffect(() => {
@@ -172,9 +174,12 @@ export const WebstudioComponentDev = ({
             }
           });
         }}
+        // @todo provide instance address
         onSelectInstance={(instanceId) => {
           setTextEditingInstanceId(undefined);
-          selectedInstanceIdStore.set(instanceId);
+          selectedInstanceAddressStore.set(
+            getInstanceAddress(instancesStore.get(), instanceId)
+          );
         }}
       />
     </Suspense>

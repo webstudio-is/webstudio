@@ -11,7 +11,7 @@ import {
 import {
   propsStore,
   stylesStore,
-  selectedInstanceIdStore,
+  selectedInstanceAddressStore,
   styleSourceSelectionsStore,
   styleSourcesStore,
   instancesIndexStore,
@@ -126,12 +126,19 @@ export const mimeType = "application/json";
 
 export const onPaste = (clipboardData: string) => {
   const data = parse(clipboardData);
-  if (data === undefined) {
+  const selectedPage = selectedPageStore.get();
+  if (data === undefined || selectedPage === undefined) {
     return;
   }
+  // paste to the root if nothing is selected
+  const instanceAddress = selectedInstanceAddressStore.get() ?? [
+    selectedPage.rootInstanceId,
+  ];
+  const [targetInstanceId] = instanceAddress;
   const dropTarget = findClosestDroppableTarget(
     instancesIndexStore.get(),
-    selectedInstanceIdStore.get()
+    // @todo accept instance address
+    targetInstanceId
   );
   store.createTransaction(
     [
@@ -162,16 +169,20 @@ export const onPaste = (clipboardData: string) => {
 
       // first item is guaranteed root of copied tree
       const copiedRootInstanceId = Array.from(copiedInstanceIds.values())[0];
-      selectedInstanceIdStore.set(copiedRootInstanceId);
+      selectedInstanceAddressStore.set([
+        copiedRootInstanceId,
+        ...instanceAddress,
+      ]);
     }
   );
 };
 
 export const onCopy = () => {
-  const selectedInstanceId = selectedInstanceIdStore.get();
-  if (selectedInstanceId === undefined) {
+  const selectedInstanceAddress = selectedInstanceAddressStore.get();
+  if (selectedInstanceAddress === undefined) {
     return;
   }
+  const [selectedInstanceId] = selectedInstanceAddress;
   const data = getTreeData(selectedInstanceId);
   if (data === undefined) {
     return;
@@ -180,20 +191,21 @@ export const onCopy = () => {
 };
 
 export const onCut = () => {
-  const selectedInstanceId = selectedInstanceIdStore.get();
+  const selectedInstanceAddress = selectedInstanceAddressStore.get();
+  if (selectedInstanceAddress === undefined) {
+    return;
+  }
+  const [selectedInstanceId] = selectedInstanceAddress;
   const rootInstanceId = selectedPageStore.get()?.rootInstanceId;
   // @todo tell user they can't delete root
-  if (
-    selectedInstanceId === undefined ||
-    selectedInstanceId === rootInstanceId
-  ) {
+  if (selectedInstanceId === rootInstanceId) {
     return;
   }
   const data = getTreeData(selectedInstanceId);
   if (data === undefined) {
     return;
   }
-  deleteInstance(selectedInstanceId);
+  deleteInstance(selectedInstanceAddress);
   if (data === undefined) {
     return;
   }

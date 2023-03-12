@@ -16,7 +16,7 @@ import {
 import { useStore } from "@nanostores/react";
 import {
   availableStyleSourcesStore,
-  selectedInstanceIdStore,
+  selectedInstanceAddressStore,
   selectedInstanceStyleSourcesStore,
   selectedStyleSourceIdStore,
   selectedStyleSourceStore,
@@ -43,10 +43,11 @@ const getOrCreateStyleSourceSelectionMutable = (
 };
 
 const createStyleSource = (name: string) => {
-  const selectedInstanceId = selectedInstanceIdStore.get();
-  if (selectedInstanceId === undefined) {
+  const selectedInstanceAddress = selectedInstanceAddressStore.get();
+  if (selectedInstanceAddress === undefined) {
     return;
   }
+  const [selectedInstanceId] = selectedInstanceAddress;
   const newStyleSource: StyleSource = {
     type: "token",
     id: nanoid(),
@@ -67,10 +68,11 @@ const createStyleSource = (name: string) => {
 };
 
 const addStyleSourceToInstace = (newStyleSourceId: StyleSource["id"]) => {
-  const selectedInstanceId = selectedInstanceIdStore.get();
-  if (selectedInstanceId === undefined) {
+  const selectedInstanceAddress = selectedInstanceAddressStore.get();
+  if (selectedInstanceAddress === undefined) {
     return;
   }
+  const [selectedInstanceId] = selectedInstanceAddress;
   store.createTransaction(
     [styleSourceSelectionsStore],
     (styleSourceSelections) => {
@@ -87,10 +89,11 @@ const addStyleSourceToInstace = (newStyleSourceId: StyleSource["id"]) => {
 };
 
 const removeStyleSourceFromInstance = (styleSourceId: StyleSource["id"]) => {
-  const selectedInstanceId = selectedInstanceIdStore.get();
-  if (selectedInstanceId === undefined) {
+  const selectedInstanceAddress = selectedInstanceAddressStore.get();
+  if (selectedInstanceAddress === undefined) {
     return;
   }
+  const [selectedInstanceId] = selectedInstanceAddress;
   store.createTransaction(
     [styleSourceSelectionsStore],
     (styleSourceSelections) => {
@@ -108,10 +111,11 @@ const removeStyleSourceFromInstance = (styleSourceId: StyleSource["id"]) => {
 };
 
 const duplicateStyleSource = (styleSourceId: StyleSource["id"]) => {
-  const selectedInstanceId = selectedInstanceIdStore.get();
-  if (selectedInstanceId === undefined) {
+  const selectedInstanceAddress = selectedInstanceAddressStore.get();
+  if (selectedInstanceAddress === undefined) {
     return;
   }
+  const [selectedInstanceId] = selectedInstanceAddress;
   const styleSources = styleSourcesStore.get();
   // style source may not exist in store which means
   // temporary generated local stye source was not applied yet
@@ -153,10 +157,11 @@ const duplicateStyleSource = (styleSourceId: StyleSource["id"]) => {
 };
 
 const convertLocalStyleSourceToToken = (styleSourceId: StyleSource["id"]) => {
-  const selectedInstanceId = selectedInstanceIdStore.get();
-  if (selectedInstanceId === undefined) {
+  const selectedInstanceAddress = selectedInstanceAddressStore.get();
+  if (selectedInstanceAddress === undefined) {
     return;
   }
+  const [selectedInstanceId] = selectedInstanceAddress;
   const newStyleSource: StyleSource = {
     type: "token",
     id: styleSourceId,
@@ -180,10 +185,11 @@ const convertLocalStyleSourceToToken = (styleSourceId: StyleSource["id"]) => {
 };
 
 const reorderStyleSources = (styleSourceIds: StyleSource["id"][]) => {
-  const selectedInstanceId = selectedInstanceIdStore.get();
-  if (selectedInstanceId === undefined) {
+  const selectedInstanceAddress = selectedInstanceAddressStore.get();
+  if (selectedInstanceAddress === undefined) {
     return;
   }
+  const [selectedInstanceId] = selectedInstanceAddress;
   store.createTransaction(
     [styleSourcesStore, styleSourceSelectionsStore],
     (styleSources, styleSourceSelections) => {
