@@ -67,6 +67,8 @@ export const toValue = (
   if (value.type === "image") {
     if (isEditMode && value.hidden) {
       // We assume that property is background-image and use this to hide background layers
+      // In the future we might want to have a more generic way to hide values
+      // i.e. have knowledge about property-name, as none is property specific
       return "none";
     }
 
@@ -77,6 +79,8 @@ export const toValue = (
   if (value.type === "unparsed") {
     if (isEditMode && value.hidden) {
       // We assume that property is background-image and use this to hide background layers
+      // In the future we might want to have a more generic way to hide values
+      // i.e. have knowledge about property-name, as none is property specific
       return "none";
     }
 

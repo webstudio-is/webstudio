@@ -39,7 +39,7 @@ const Layer = (props: {
   deleteLayer: () => void;
 }) => {
   const backgrounImageStyle = props.layerStyle.backgroundImage?.value;
-  const hidden =
+  const isHidden =
     backgrounImageStyle?.type === "image" ||
     backgrounImageStyle?.type === "unparsed"
       ? Boolean(backgrounImageStyle.hidden)
@@ -57,7 +57,7 @@ const Layer = (props: {
     }
   };
 
-  const eyeButtonDisabled =
+  const canDisable =
     backgrounImageStyle?.type !== "image" &&
     backgrounImageStyle?.type !== "unparsed";
 
@@ -82,16 +82,16 @@ const Layer = (props: {
           />
         }
         thumbnail={<LayerThumbnail layerStyle={props.layerStyle} />}
-        hidden={hidden}
+        hidden={isHidden}
         buttons={
           <>
             <SmallToggleButton
-              disabled={eyeButtonDisabled}
-              pressed={hidden}
+              disabled={canDisable}
+              pressed={isHidden}
               onPressedChange={handleHiddenChange}
               variant="normal"
               tabIndex={0}
-              icon={hidden ? <EyeconClosedIcon /> : <EyeconOpenIcon />}
+              icon={isHidden ? <EyeconClosedIcon /> : <EyeconOpenIcon />}
             />
 
             <SmallIconButton
