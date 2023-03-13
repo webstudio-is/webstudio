@@ -42,7 +42,7 @@ const AsInput = ({
             localValue.save();
           }
         }}
-        css={{ width: theme.spacing[24] }}
+        css={{ width: theme.spacing[22] }}
       />
     </HorizontalLayout>
   );
