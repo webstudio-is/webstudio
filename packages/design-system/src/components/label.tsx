@@ -8,6 +8,8 @@ import { forwardRef } from "react";
 import { textVariants } from "./text";
 import { styled, theme } from "../stitches.config";
 
+export const labelColors = ["default", "preset", "local", "remote"] as const;
+
 const StyledLabel = styled("label", textVariants.labelsSentenceCase, {
   boxSizing: "border-box",
   flexShrink: 0,
@@ -73,7 +75,7 @@ const StyledLabel = styled("label", textVariants.labelsSentenceCase, {
 });
 
 type Props = ComponentProps<typeof StyledLabel> & {
-  color?: "default" | "preset" | "local" | "remote";
+  color?: (typeof labelColors)[number];
   disabled?: boolean;
   truncate?: boolean;
   children: ReactNode;

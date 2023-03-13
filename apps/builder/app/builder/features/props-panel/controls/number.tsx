@@ -1,4 +1,4 @@
-import { TextField, useId } from "@webstudio-is/design-system";
+import { TextField, theme, useId } from "@webstudio-is/design-system";
 import {
   type ControlProps,
   getLabel,
@@ -48,7 +48,7 @@ export const NumberControl = ({
             localValue.save();
           }
         }}
-        css={{ width: 98 }}
+        css={{ width: theme.spacing[21] }}
       />
     </HorizontalLayout>
   );

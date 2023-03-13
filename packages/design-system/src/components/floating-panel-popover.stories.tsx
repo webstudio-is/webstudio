@@ -13,11 +13,11 @@ export default {
   title: "Library/Floating Panel/Popover",
 };
 
-const bodyStyles = css({
+const bodyStyle = css({
   padding: theme.spacing[9],
 });
 
-const descriptionStyles = css(textVariants.regular, {
+const descriptionStyle = css(textVariants.regular, {
   marginTop: 0,
   marginBottom: theme.spacing[9],
 });
@@ -34,8 +34,8 @@ const PopoverDemo = () => (
       <Button>Open</Button>
     </FloatingPanelPopoverTrigger>
     <FloatingPanelPopoverContent>
-      <div className={bodyStyles()}>
-        <p className={descriptionStyles()}>This is a description</p>
+      <div className={bodyStyle()}>
+        <p className={descriptionStyle()}>This is a description</p>
         <div className={buttonsStyle()}>
           <FloatingPanelPopoverClose asChild>
             <Button color="ghost">Cancel</Button>

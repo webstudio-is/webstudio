@@ -12,7 +12,7 @@ import {
 } from "@webstudio-is/icons";
 import { type CSS, css, theme, styled } from "../stitches.config";
 
-const checkboxStyles = css({
+const checkboxStyle = css({
   all: "unset", // reset <button>
 
   width: theme.spacing[9],
@@ -48,7 +48,7 @@ const checkboxStyles = css({
   },
 });
 
-const iconStyles = css({ position: "relative" });
+const iconStyle = css({ position: "relative" });
 
 const iconByState = {
   checked: CheckboxCheckedFilledIcon,
@@ -69,7 +69,7 @@ const Button = forwardRef(
     const Icon = iconByState[props["data-state"] ?? "unchecked"];
     return (
       <button {...props} ref={ref}>
-        <Icon className={iconStyles()} />
+        <Icon className={iconStyle()} />
       </button>
     );
   }
@@ -86,7 +86,7 @@ export const Checkbox = forwardRef(
     ref: Ref<HTMLButtonElement>
   ) => (
     <Primitive.Root
-      className={checkboxStyles({ className, css })}
+      className={checkboxStyle({ className, css })}
       {...props}
       ref={ref}
       asChild

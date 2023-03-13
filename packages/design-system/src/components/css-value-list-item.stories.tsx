@@ -186,3 +186,4 @@ export const Declarative = (props: {
     </Panel>
   );
 };
+Declarative.storyName = "CSS Value List Item";

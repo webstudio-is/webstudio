@@ -10,7 +10,7 @@ import { type CSS, css, theme } from "../stitches.config";
 const padding = theme.spacing[1];
 const thumbOffset = `calc(${padding} + ${theme.spacing[2]})`;
 
-const switchStyles = css({
+const switchStyle = css({
   all: "unset", // reset <button>
   boxSizing: "content-box",
   width: theme.spacing[11],
@@ -42,7 +42,7 @@ const switchStyles = css({
   },
 });
 
-const thumbStyles = css({
+const thumbStyle = css({
   width: theme.spacing[6],
   height: theme.spacing[6],
   borderRadius: theme.borderRadius.round,
@@ -66,11 +66,11 @@ export const Switch = forwardRef(
     ref: Ref<HTMLButtonElement>
   ) => (
     <Primitive.Root
-      className={switchStyles({ className, css })}
+      className={switchStyle({ className, css })}
       {...props}
       ref={ref}
     >
-      <Primitive.Thumb className={thumbStyles()} />
+      <Primitive.Thumb className={thumbStyle()} />
     </Primitive.Root>
   )
 );
