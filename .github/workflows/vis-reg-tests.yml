@@ -10,7 +10,7 @@ jobs:
       - uses: ./.github/actions/ci-setup
 
       - name: Build Storybook for Design System
-        run: pnpm storybook:ds:build
+        run: bash scripts/build-storybook.sh design-system
 
       - name: Lost Pixel
         uses: lost-pixel/lost-pixel@v3.1.0
@@ -25,7 +25,7 @@ jobs:
       - uses: ./.github/actions/ci-setup
 
       - name: Build Storybook for Builder
-        run: pnpm storybook:builder:build
+        run: bash scripts/build-storybook.sh design-system builder
 
       - name: Lost Pixel
         uses: lost-pixel/lost-pixel@v3.1.0
