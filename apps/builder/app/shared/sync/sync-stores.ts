@@ -13,7 +13,7 @@ import {
   styleSourceSelectionsStore,
   selectedPageIdStore,
   assetContainersStore,
-  selectedInstanceAddressStore,
+  selectedInstanceSelectorStore,
   selectedInstanceBrowserStyleStore,
   hoveredInstanceIdStore,
   hoveredInstanceOutlineStore,
@@ -60,7 +60,7 @@ export const registerContainers = () => {
   // synchronize whole states
   clientStores.set("selectedPageId", selectedPageIdStore);
   clientStores.set("assetContainers", assetContainersStore);
-  clientStores.set("selectedInstanceAddress", selectedInstanceAddressStore);
+  clientStores.set("selectedInstanceSelector", selectedInstanceSelectorStore);
   clientStores.set(
     "selectedInstanceBrowserStyle",
     selectedInstanceBrowserStyleStore

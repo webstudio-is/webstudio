@@ -15,7 +15,7 @@ import type { SetProperty, CreateBatchUpdate } from "./shared/use-style-data";
 import type { StyleInfo } from "./shared/style-info";
 import type { RenderPropertyProps } from "./style-sections";
 import { useStore } from "@nanostores/react";
-import { selectedInstanceAddressStore } from "~/shared/nano-states";
+import { selectedInstanceSelectorStore } from "~/shared/nano-states";
 import { useInstanceStyleData } from "./shared/style-info";
 
 // Finds a property/value by using any available form: property, label, value
@@ -96,8 +96,8 @@ export type StyleSettingsProps = {
 };
 
 const useParentStyle = () => {
-  const selectedInstanceAddress = useStore(selectedInstanceAddressStore);
-  const parentInstanceId = selectedInstanceAddress?.[1];
+  const selectedInstanceSelector = useStore(selectedInstanceSelectorStore);
+  const parentInstanceId = selectedInstanceSelector?.[1];
   const parentInstanceStyleData = useInstanceStyleData(parentInstanceId);
   return parentInstanceStyleData;
 };

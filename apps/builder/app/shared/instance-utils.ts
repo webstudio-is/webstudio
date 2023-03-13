@@ -3,7 +3,7 @@ import { findTreeInstanceIds, Instance } from "@webstudio-is/project-build";
 import {
   propsStore,
   stylesStore,
-  selectedInstanceAddressStore,
+  selectedInstanceSelectorStore,
   styleSourceSelectionsStore,
   styleSourcesStore,
   instancesStore,
@@ -11,13 +11,13 @@ import {
 } from "./nano-states";
 import {
   type DroppableTarget,
-  type InstanceAddress,
+  type InstanceSelector,
   createComponentInstance,
   findSubtreeLocalStyleSources,
-  getInstanceAddress,
+  getInstanceSelector,
   insertInstancesMutable,
   reparentInstanceMutable,
-  getAncestorInstanceAddress,
+  getAncestorInstanceSelector,
 } from "./tree-utils";
 import { removeByMutable } from "./array-utils";
 
@@ -29,8 +29,8 @@ export const insertNewComponentInstance = (
   store.createTransaction([instancesStore], (instances) => {
     insertInstancesMutable(instances, [instance], [instance.id], dropTarget);
   });
-  selectedInstanceAddressStore.set(
-    getInstanceAddress(instancesStore.get(), instance.id)
+  selectedInstanceSelectorStore.set(
+    getInstanceSelector(instancesStore.get(), instance.id)
   );
 };
 
@@ -41,16 +41,16 @@ export const reparentInstance = (
   store.createTransaction([instancesStore], (instances) => {
     reparentInstanceMutable(
       instances,
-      getInstanceAddress(instances, targetInstanceId),
+      getInstanceSelector(instances, targetInstanceId),
       dropTarget
     );
   });
-  selectedInstanceAddressStore.set(
-    getInstanceAddress(instancesStore.get(), targetInstanceId)
+  selectedInstanceSelectorStore.set(
+    getInstanceSelector(instancesStore.get(), targetInstanceId)
   );
 };
 
-export const deleteInstance = (instanceAddress: InstanceAddress) => {
+export const deleteInstance = (instanceSelector: InstanceSelector) => {
   store.createTransaction(
     [
       instancesStore,
@@ -60,7 +60,7 @@ export const deleteInstance = (instanceAddress: InstanceAddress) => {
       stylesStore,
     ],
     (instances, props, styleSourceSelections, styleSources, styles) => {
-      const [targetInstanceId, parentInstanceId] = instanceAddress;
+      const [targetInstanceId, parentInstanceId] = instanceSelector;
       const parentInstance =
         parentInstanceId === undefined
           ? undefined
@@ -102,8 +102,8 @@ export const deleteInstance = (instanceAddress: InstanceAddress) => {
       }
 
       if (parentInstance) {
-        selectedInstanceAddressStore.set(
-          getAncestorInstanceAddress(instanceAddress, parentInstance.id)
+        selectedInstanceSelectorStore.set(
+          getAncestorInstanceSelector(instanceSelector, parentInstance.id)
         );
       }
     }
@@ -111,14 +111,14 @@ export const deleteInstance = (instanceAddress: InstanceAddress) => {
 };
 
 export const deleteSelectedInstance = () => {
-  const selectedInstanceAddress = selectedInstanceAddressStore.get();
+  const selectedInstanceSelector = selectedInstanceSelectorStore.get();
   const rootInstanceId = selectedPageStore.get()?.rootInstanceId;
   // @todo tell user they can't delete root
   if (
-    selectedInstanceAddress === undefined ||
-    selectedInstanceAddress[0] === rootInstanceId
+    selectedInstanceSelector === undefined ||
+    selectedInstanceSelector[0] === rootInstanceId
   ) {
     return;
   }
-  deleteInstance(selectedInstanceAddress);
+  deleteInstance(selectedInstanceSelector);
 };

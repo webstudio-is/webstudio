@@ -13,7 +13,7 @@ import { utils } from "@webstudio-is/project";
 import { findClosestDroppableTarget } from "~/shared/tree-utils";
 import {
   instancesIndexStore,
-  selectedInstanceAddressStore,
+  selectedInstanceSelectorStore,
 } from "~/shared/nano-states";
 import { useSubscribe, type Publish } from "~/shared/pubsub";
 import { useCanvasRect } from "~/builder/shared/nano-states";
@@ -175,8 +175,8 @@ export const TabContent = ({ publish, onSetActiveTab }: TabContentProps) => {
               onSetActiveTab("none");
               const dropTarget = findClosestDroppableTarget(
                 instancesIndexStore.get(),
-                // @todo accept instance address
-                selectedInstanceAddressStore.get()?.[0]
+                // @todo accept instance Selector
+                selectedInstanceSelectorStore.get()?.[0]
               );
               insertNewComponentInstance(component, dropTarget);
             }}

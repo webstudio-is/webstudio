@@ -18,26 +18,26 @@ import { getComponentMeta } from "@webstudio-is/react-sdk";
 // slots can have multiple parents so instance should be addressed
 // with full rendered path to avoid double selections with slots
 // and support deletion of slot child from specific parent
-// address starts with target instance and ends with root
-export type InstanceAddress = Instance["id"][];
+// selector starts with target instance and ends with root
+export type InstanceSelector = Instance["id"][];
 
-// provide an address starting with ancestor id
+// provide a selector starting with ancestor id
 // useful to select parent instance or one of breadcrumbs instances
-export const getAncestorInstanceAddress = (
-  instanceAddress: InstanceAddress,
+export const getAncestorInstanceSelector = (
+  instanceSelector: InstanceSelector,
   ancestorId: Instance["id"]
-): undefined | InstanceAddress => {
-  const ancestorIndex = instanceAddress.indexOf(ancestorId);
+): undefined | InstanceSelector => {
+  const ancestorIndex = instanceSelector.indexOf(ancestorId);
   if (ancestorIndex === -1) {
     return undefined;
   }
-  return instanceAddress.slice(ancestorIndex);
+  return instanceSelector.slice(ancestorIndex);
 };
 
-// this utility is temporary solution to compute instance addresses
+// this utility is temporary solution to compute instance selectors
 // before all logic is migrated to get it from rendered context
 // @todo should be deleted before adding slots
-export const getInstanceAddress = (
+export const getInstanceSelector = (
   instances: Instances,
   instanceId: Instance["id"]
 ) => {
@@ -49,13 +49,13 @@ export const getInstanceAddress = (
       }
     }
   }
-  const address: InstanceAddress = [];
+  const selector: InstanceSelector = [];
   let currentInstanceId: undefined | Instance["id"] = instanceId;
   while (currentInstanceId) {
-    address.push(currentInstanceId);
+    selector.push(currentInstanceId);
     currentInstanceId = parentInstancesById.get(currentInstanceId);
   }
-  return address;
+  return selector;
 };
 
 export const createComponentInstance = (
@@ -224,10 +224,10 @@ export const reparentInstanceMutableDeprecated = (
 
 export const reparentInstanceMutable = (
   instances: Instances,
-  instanceAddress: InstanceAddress,
+  instanceSelector: InstanceSelector,
   dropTarget: DroppableTarget
 ) => {
-  const [instanceId, parentInstanceId] = instanceAddress;
+  const [instanceId, parentInstanceId] = instanceSelector;
   const prevParent =
     parentInstanceId === undefined
       ? undefined

@@ -12,7 +12,7 @@ import type {
 import {
   instancesIndexStore,
   selectedInstanceBrowserStyleStore,
-  selectedInstanceAddressStore,
+  selectedInstanceSelectorStore,
   selectedStyleSourceStore,
   stylesIndexStore,
   useBreakpoints,
@@ -232,7 +232,7 @@ export const useStyleInfo = () => {
   const [breakpoints] = useBreakpoints();
   const selectedBreakpoint = useStore(selectedBreakpointStore);
   const selectedBreakpointId = selectedBreakpoint?.id;
-  const selectedInstanceAddress = useStore(selectedInstanceAddressStore);
+  const selectedInstanceSelector = useStore(selectedInstanceSelectorStore);
   const selectedStyleSource = useStore(selectedStyleSourceStore);
   const selectedStyleSourceId = selectedStyleSource?.id;
   const browserStyle = useStore(selectedInstanceBrowserStyleStore);
@@ -262,15 +262,15 @@ export const useStyleInfo = () => {
   const inheritedInfo = useMemo(() => {
     if (
       selectedBreakpointId === undefined ||
-      selectedInstanceAddress === undefined
+      selectedInstanceSelector === undefined
     ) {
       return {};
     }
-    const [selectedInstanceId] = selectedInstanceAddress;
+    const [selectedInstanceId] = selectedInstanceSelector;
     return getInheritedInfo(
       instancesIndex,
       stylesByInstanceId,
-      // @todo accept instance address
+      // @todo accept instance selector
       selectedInstanceId,
       cascadedBreakpointIds,
       selectedBreakpointId
@@ -280,26 +280,26 @@ export const useStyleInfo = () => {
     stylesByInstanceId,
     cascadedBreakpointIds,
     selectedBreakpointId,
-    selectedInstanceAddress,
+    selectedInstanceSelector,
   ]);
 
   const cascadedInfo = useMemo(() => {
-    if (selectedInstanceAddress === undefined) {
+    if (selectedInstanceSelector === undefined) {
       return {};
     }
-    const [selectedInstanceId] = selectedInstanceAddress;
+    const [selectedInstanceId] = selectedInstanceSelector;
     return getCascadedInfo(
       stylesByInstanceId,
-      // @todo accept instance address
+      // @todo accept instance Selector
       selectedInstanceId,
       cascadedBreakpointIds
     );
-  }, [stylesByInstanceId, selectedInstanceAddress, cascadedBreakpointIds]);
+  }, [stylesByInstanceId, selectedInstanceSelector, cascadedBreakpointIds]);
 
   const presetStyle = useMemo(() => {
-    // @todo accept instance address
-    return getPresetStyle(instancesIndex, selectedInstanceAddress?.[0]);
-  }, [instancesIndex, selectedInstanceAddress]);
+    // @todo accept instance Selector
+    return getPresetStyle(instancesIndex, selectedInstanceSelector?.[0]);
+  }, [instancesIndex, selectedInstanceSelector]);
 
   const styleInfoData = useMemo(() => {
     const styleInfoData: StyleInfo = {};

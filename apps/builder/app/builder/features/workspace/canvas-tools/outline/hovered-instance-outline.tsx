@@ -3,23 +3,23 @@ import {
   hoveredInstanceIdStore,
   hoveredInstanceOutlineStore,
   instancesStore,
-  selectedInstanceAddressStore,
+  selectedInstanceSelectorStore,
   useTextEditingInstanceId,
 } from "~/shared/nano-states";
 import { Outline } from "./outline";
 import { Label } from "./label";
 
 export const HoveredInstanceOutline = () => {
-  const selectedInstanceAddress = useStore(selectedInstanceAddressStore);
+  const selectedInstanceSelector = useStore(selectedInstanceSelectorStore);
   const hoveredInstanceId = useStore(hoveredInstanceIdStore);
   const instanceOutline = useStore(hoveredInstanceOutlineStore);
   const [textEditingInstanceId] = useTextEditingInstanceId();
   const instances = useStore(instancesStore);
 
   const isEditingText = textEditingInstanceId !== undefined;
-  // @todo compare instance addresses
+  // @todo compare instance selectors
   const isHoveringSelectedInstance =
-    selectedInstanceAddress?.[0] === hoveredInstanceId;
+    selectedInstanceSelector?.[0] === hoveredInstanceId;
   const instance = hoveredInstanceId
     ? instances.get(hoveredInstanceId)
     : undefined;

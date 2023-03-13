@@ -10,13 +10,14 @@ import type {
   StyleSourceSelection,
 } from "@webstudio-is/project-build";
 import {
+  type InstanceSelector,
   cloneStyles,
   createInstancesIndex,
   findClosestDroppableTarget,
   findClosestRichTextInstance,
   findSubtreeLocalStyleSources,
-  getAncestorInstanceAddress,
-  getInstanceAddress,
+  getAncestorInstanceSelector,
+  getInstanceSelector,
   getInstanceAncestorsAndSelf,
   insertInstancesCopyMutable,
   insertInstancesMutable,
@@ -24,7 +25,6 @@ import {
   insertStylesCopyMutable,
   insertStyleSourcesCopyMutable,
   insertStyleSourceSelectionsCopyMutable,
-  InstanceAddress,
   reparentInstanceMutable,
 } from "./tree-utils";
 
@@ -116,14 +116,19 @@ const createStyleDecl = (
   };
 };
 
-test("get ancestor instance address", () => {
-  const instanceAddress: InstanceAddress = ["4", "3", "2", "1"];
-  expect(getAncestorInstanceAddress(instanceAddress, "2")).toEqual(["2", "1"]);
-  expect(getAncestorInstanceAddress(instanceAddress, "-1")).toEqual(undefined);
-  expect(getAncestorInstanceAddress(instanceAddress, "1")).toEqual(["1"]);
+test("get ancestor instance selector", () => {
+  const instanceSelector: InstanceSelector = ["4", "3", "2", "1"];
+  expect(getAncestorInstanceSelector(instanceSelector, "2")).toEqual([
+    "2",
+    "1",
+  ]);
+  expect(getAncestorInstanceSelector(instanceSelector, "-1")).toEqual(
+    undefined
+  );
+  expect(getAncestorInstanceSelector(instanceSelector, "1")).toEqual(["1"]);
 });
 
-test("get instance address", () => {
+test("get instance selector", () => {
   const instances: Instances = new Map([
     createInstancePair("root", "Box", [
       { type: "id", value: "box1" },
@@ -140,7 +145,7 @@ test("get instance address", () => {
     createInstancePair("child1", "Box", []),
     createInstancePair("child2", "Box", []),
   ]);
-  expect(getInstanceAddress(instances, "box3")).toEqual([
+  expect(getInstanceSelector(instances, "box3")).toEqual([
     "box3",
     "box2",
     "root",

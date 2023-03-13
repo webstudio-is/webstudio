@@ -1,13 +1,13 @@
 import { getComponentMeta, idAttribute } from "@webstudio-is/react-sdk";
 import {
   instancesStore,
-  selectedInstanceAddressStore,
+  selectedInstanceSelectorStore,
   textEditingInstanceIdStore,
 } from "~/shared/nano-states";
 import { publish } from "~/shared/pubsub";
 import {
-  type InstanceAddress,
-  getAncestorInstanceAddress,
+  type InstanceSelector,
+  getAncestorInstanceSelector,
 } from "~/shared/tree-utils";
 
 declare module "~/shared/pubsub" {
@@ -17,34 +17,34 @@ declare module "~/shared/pubsub" {
 }
 
 // traverse dom to the root and find all instances
-const getInstanceAddressFromElement = (element: Element) => {
-  const instanceAddress: InstanceAddress = [];
+const getInstanceSelectorFromElement = (element: Element) => {
+  const instanceSelector: InstanceSelector = [];
   let matched: undefined | Element =
     element.closest(`[${idAttribute}]`) ?? undefined;
   while (matched) {
     const instanceId = matched.getAttribute(idAttribute) ?? undefined;
     if (instanceId !== undefined) {
-      instanceAddress.push(instanceId);
+      instanceSelector.push(instanceId);
     }
     matched = matched.parentElement?.closest(`[${idAttribute}]`) ?? undefined;
   }
-  if (instanceAddress.length === 0) {
+  if (instanceSelector.length === 0) {
     return;
   }
-  return instanceAddress;
+  return instanceSelector;
 };
 
-const findClosestRichTextInstanceAddress = (
-  instanceAddress: InstanceAddress
+const findClosestRichTextInstanceSelector = (
+  instanceSelector: InstanceSelector
 ) => {
   const instances = instancesStore.get();
-  for (const instanceId of instanceAddress) {
+  for (const instanceId of instanceSelector) {
     const instance = instances.get(instanceId);
     if (
       instance !== undefined &&
       getComponentMeta(instance.component)?.type === "rich-text"
     ) {
-      return getAncestorInstanceAddress(instanceAddress, instanceId);
+      return getAncestorInstanceSelector(instanceSelector, instanceId);
     }
   }
   return;
@@ -77,27 +77,27 @@ export const subscribeInstanceSelection = () => {
       return;
     }
 
-    const instanceAddress = getInstanceAddressFromElement(element);
-    if (instanceAddress === undefined) {
+    const instanceSelector = getInstanceSelectorFromElement(element);
+    if (instanceSelector === undefined) {
       return;
     }
 
     // the first click in double click or the only one in regular click
     if (event.detail === 1) {
-      selectedInstanceAddressStore.set(instanceAddress);
+      selectedInstanceSelectorStore.set(instanceSelector);
       // reset text editor when another instance is selected
       textEditingInstanceIdStore.set(undefined);
     }
 
     // the second click in a double click.
     if (event.detail === 2) {
-      const richTextInstanceAddress =
-        findClosestRichTextInstanceAddress(instanceAddress);
+      const richTextInstanceSelector =
+        findClosestRichTextInstanceSelector(instanceSelector);
 
       // enable text editor when double click on its instance or one of its descendants
-      if (richTextInstanceAddress) {
-        selectedInstanceAddressStore.set(richTextInstanceAddress);
-        textEditingInstanceIdStore.set(richTextInstanceAddress[0]);
+      if (richTextInstanceSelector) {
+        selectedInstanceSelectorStore.set(richTextInstanceSelector);
+        textEditingInstanceIdStore.set(richTextInstanceSelector[0]);
       }
     }
   };

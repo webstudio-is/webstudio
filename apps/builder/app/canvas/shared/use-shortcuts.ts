@@ -3,7 +3,7 @@ import { getComponentMeta } from "@webstudio-is/react-sdk";
 import { shortcuts, options } from "~/shared/shortcuts";
 import { publish, useSubscribe } from "~/shared/pubsub";
 import {
-  selectedInstanceAddressStore,
+  selectedInstanceSelectorStore,
   selectedInstanceStore,
   useTextEditingInstanceId,
   isPreviewModeStore,
@@ -40,8 +40,8 @@ export const useShortcuts = () => {
   useHotkeys(
     "esc",
     () => {
-      const selectedInstanceAddress = selectedInstanceAddressStore.get();
-      if (selectedInstanceAddress === undefined) {
+      const selectedInstanceSelector = selectedInstanceSelectorStore.get();
+      if (selectedInstanceSelector === undefined) {
         return;
       }
       // Since we are in text editing mode, we want to first exit that mode without unselecting the instance.
@@ -49,7 +49,7 @@ export const useShortcuts = () => {
         setEditingInstanceId(undefined);
         return;
       }
-      selectedInstanceAddressStore.set(undefined);
+      selectedInstanceSelectorStore.set(undefined);
     },
     { ...options, enableOnContentEditable: true },
     [editingInstanceId]

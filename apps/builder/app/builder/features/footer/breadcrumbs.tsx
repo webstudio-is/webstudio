@@ -8,9 +8,9 @@ import {
 } from "@webstudio-is/design-system";
 import {
   instancesStore,
-  selectedInstanceAddressStore,
+  selectedInstanceSelectorStore,
 } from "~/shared/nano-states";
-import { getAncestorInstanceAddress } from "~/shared/tree-utils";
+import { getAncestorInstanceSelector } from "~/shared/tree-utils";
 
 type BreadcrumbProps = {
   children: JSX.Element | string;
@@ -39,16 +39,16 @@ const Breadcrumb = ({ children, onClick }: BreadcrumbProps) => {
 
 export const Breadcrumbs = () => {
   const instances = useStore(instancesStore);
-  const selectedInstanceAddress = useStore(selectedInstanceAddressStore);
+  const selectedInstanceSelector = useStore(selectedInstanceSelectorStore);
 
   return (
     <Flex align="center" css={{ height: "100%" }}>
-      {selectedInstanceAddress === undefined ? (
+      {selectedInstanceSelector === undefined ? (
         <Breadcrumb>
           <DeprecatedText2>No instance selected</DeprecatedText2>
         </Breadcrumb>
       ) : (
-        selectedInstanceAddress
+        selectedInstanceSelector
           // start breadcrumbs from the root
           .slice()
           .reverse()
@@ -61,9 +61,9 @@ export const Breadcrumbs = () => {
               <Breadcrumb
                 key={instance.id}
                 onClick={() => {
-                  selectedInstanceAddressStore.set(
-                    getAncestorInstanceAddress(
-                      selectedInstanceAddress,
+                  selectedInstanceSelectorStore.set(
+                    getAncestorInstanceSelector(
+                      selectedInstanceSelector,
                       instance.id
                     )
                   );

@@ -2,7 +2,7 @@ import { useStore } from "@nanostores/react";
 import { theme, Box, Flex, Toaster } from "@webstudio-is/design-system";
 import { useCanvasWidth } from "~/builder/shared/nano-states";
 import type { Publish } from "~/shared/pubsub";
-import { selectedInstanceAddressStore } from "~/shared/nano-states";
+import { selectedInstanceSelectorStore } from "~/shared/nano-states";
 import {
   workspaceRectStore,
   zoomStore,
@@ -60,7 +60,7 @@ export const Workspace = ({
   const workspaceRef = useSetWorkspaceRect();
 
   const handleWorkspaceClick = () => {
-    selectedInstanceAddressStore.set(undefined);
+    selectedInstanceSelectorStore.set(undefined);
   };
 
   return (

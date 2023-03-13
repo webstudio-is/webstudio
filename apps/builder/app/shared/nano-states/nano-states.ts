@@ -33,7 +33,7 @@ import type {
 } from "~/builder/shared/assets";
 import { useSyncInitializeOnce } from "../hook-utils";
 import { shallowComputed } from "../store-utils";
-import { createInstancesIndex, type InstanceAddress } from "../tree-utils";
+import { createInstancesIndex, type InstanceSelector } from "../tree-utils";
 
 const useValue = <T>(atom: WritableAtom<T>) => {
   const value = useStore(atom);
@@ -304,17 +304,17 @@ export const useSetAssets = (assets: Asset[]) => {
   });
 };
 
-export const selectedInstanceAddressStore = atom<undefined | InstanceAddress>(
+export const selectedInstanceSelectorStore = atom<undefined | InstanceSelector>(
   undefined
 );
 
 export const selectedInstanceStore = computed(
-  [instancesIndexStore, selectedInstanceAddressStore],
-  (instancesIndex, selectedInstanceAddress) => {
-    if (selectedInstanceAddress === undefined) {
+  [instancesIndexStore, selectedInstanceSelectorStore],
+  (instancesIndex, selectedInstanceSelector) => {
+    if (selectedInstanceSelector === undefined) {
       return;
     }
-    const [selectedInstanceId] = selectedInstanceAddress;
+    const [selectedInstanceId] = selectedInstanceSelector;
     return instancesIndex.instancesById.get(selectedInstanceId);
   }
 );
@@ -322,13 +322,17 @@ export const selectedInstanceStore = computed(
 export const selectedInstanceBrowserStyleStore = atom<undefined | Style>();
 
 export const selectedInstanceStyleSourcesStore = computed(
-  [styleSourceSelectionsStore, styleSourcesStore, selectedInstanceAddressStore],
-  (styleSourceSelections, styleSources, selectedInstanceAddress) => {
+  [
+    styleSourceSelectionsStore,
+    styleSourcesStore,
+    selectedInstanceSelectorStore,
+  ],
+  (styleSourceSelections, styleSources, selectedInstanceSelector) => {
     const selectedInstanceStyleSources: StyleSource[] = [];
-    if (selectedInstanceAddress === undefined) {
+    if (selectedInstanceSelector === undefined) {
       return selectedInstanceStyleSources;
     }
-    const [selectedInstanceId] = selectedInstanceAddress;
+    const [selectedInstanceId] = selectedInstanceSelector;
     const styleSourceIds =
       styleSourceSelections.get(selectedInstanceId)?.values ?? [];
     let hasLocal = false;
