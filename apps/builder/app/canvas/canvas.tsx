@@ -37,6 +37,7 @@ import { customComponents } from "./custom-components";
 import { useHoveredInstanceConnector } from "./hovered-instance-connector";
 import { setDataCollapsed, subscribeCollapsedToPubSub } from "./collapsed";
 import { useWindowResizeDebounced } from "~/shared/dom-hooks";
+import { subscribeInstanceSelection } from "./instance-selection";
 
 registerContainers();
 
@@ -82,6 +83,8 @@ const DesignMode = () => {
   // in both places
   useCopyPaste();
   useHoveredInstanceConnector();
+
+  useEffect(subscribeInstanceSelection, []);
 
   return null;
 };
