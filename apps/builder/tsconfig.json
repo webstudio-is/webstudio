@@ -7,7 +7,6 @@
     "**/*.tsx",
     "../../@types/**/*.d.ts"
   ],
-  "exclude": ["lostpixel.config.ts"],
   "compilerOptions": {
     "paths": { "~/*": ["app/*"] },
     "baseUrl": ".",
