@@ -401,7 +401,7 @@ export const PageSettings = ({
     }
     const page = pages.pages.find((item) => item.id === pageId);
     if (page) {
-      deleteInstance(page.rootInstanceId);
+      deleteInstance([page.rootInstanceId]);
     }
     pagesStore.set({
       homePage: pages.homePage,

@@ -18,7 +18,7 @@ import {
 } from "@webstudio-is/icons";
 import { useSubscribe } from "~/shared/pubsub";
 import { theme } from "@webstudio-is/design-system";
-import { selectedInstanceIdStore } from "~/shared/nano-states";
+import { selectedInstanceAddressStore } from "~/shared/nano-states";
 
 type Format =
   | "bold"
@@ -191,9 +191,9 @@ type TextToolbarProps = {
 
 export const TextToolbar = ({ publish }: TextToolbarProps) => {
   const [textToolbar] = useTextToolbarState();
-  const selectedInstanceId = useStore(selectedInstanceIdStore);
+  const selectedInstanceAddress = useStore(selectedInstanceAddressStore);
 
-  if (textToolbar == null || selectedInstanceId === undefined) {
+  if (textToolbar == null || selectedInstanceAddress === undefined) {
     return null;
   }
 

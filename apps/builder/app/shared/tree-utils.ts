@@ -15,6 +15,49 @@ import {
 } from "@webstudio-is/project-build";
 import { getComponentMeta } from "@webstudio-is/react-sdk";
 
+// slots can have multiple parents so instance should be addressed
+// with full rendered path to avoid double selections with slots
+// and support deletion of slot child from specific parent
+// address starts with target instance and ends with root
+export type InstanceAddress = Instance["id"][];
+
+// provide an address starting with ancestor id
+// useful to select parent instance or one of breadcrumbs instances
+export const getAncestorInstanceAddress = (
+  instanceAddress: InstanceAddress,
+  ancestorId: Instance["id"]
+): undefined | InstanceAddress => {
+  const ancestorIndex = instanceAddress.indexOf(ancestorId);
+  if (ancestorIndex === -1) {
+    return undefined;
+  }
+  return instanceAddress.slice(ancestorIndex);
+};
+
+// this utility is temporary solution to compute instance addresses
+// before all logic is migrated to get it from rendered context
+// @todo should be deleted before adding slots
+export const getInstanceAddress = (
+  instances: Instances,
+  instanceId: Instance["id"]
+) => {
+  const parentInstancesById = new Map<Instance["id"], Instance["id"]>();
+  for (const instance of instances.values()) {
+    for (const child of instance.children) {
+      if (child.type === "id") {
+        parentInstancesById.set(child.value, instance.id);
+      }
+    }
+  }
+  const address: InstanceAddress = [];
+  let currentInstanceId: undefined | Instance["id"] = instanceId;
+  while (currentInstanceId) {
+    address.push(currentInstanceId);
+    currentInstanceId = parentInstancesById.get(currentInstanceId);
+  }
+  return address;
+};
+
 export const createComponentInstance = (
   component: Instance["component"]
 ): InstancesItem => {
@@ -181,10 +224,14 @@ export const reparentInstanceMutableDeprecated = (
 
 export const reparentInstanceMutable = (
   instances: Instances,
-  instanceId: Instance["id"],
+  instanceAddress: InstanceAddress,
   dropTarget: DroppableTarget
 ) => {
-  const prevParent = findParentInstance(instances, instanceId);
+  const [instanceId, parentInstanceId] = instanceAddress;
+  const prevParent =
+    parentInstanceId === undefined
+      ? undefined
+      : instances.get(parentInstanceId);
   const nextParent = instances.get(dropTarget.parentId);
   const instance = instances.get(instanceId);
   if (
@@ -244,19 +291,6 @@ export const findClosestRichTextInstance = (
     .find(
       (instance) => getComponentMeta(instance.component)?.type === "rich-text"
     );
-};
-
-export const findParentInstance = (
-  instances: Instances,
-  instanceId: Instance["id"]
-) => {
-  for (const instance of instances.values()) {
-    for (const child of instance.children) {
-      if (child.type === "id" && child.value === instanceId) {
-        return instance;
-      }
-    }
-  }
 };
 
 export const cloneStyles = (

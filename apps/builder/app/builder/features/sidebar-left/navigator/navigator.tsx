@@ -3,13 +3,15 @@ import { useStore } from "@nanostores/react";
 import { Flex } from "@webstudio-is/design-system";
 import type { Instance } from "@webstudio-is/project-build";
 import {
-  selectedInstanceIdStore,
+  selectedInstanceAddressStore,
   hoveredInstanceIdStore,
   useRootInstance,
+  instancesStore,
 } from "~/shared/nano-states";
 import { InstanceTree } from "~/builder/shared/tree";
 import { reparentInstance } from "~/shared/instance-utils";
 import { Header, CloseButton } from "../header";
+import { getInstanceAddress } from "~/shared/tree-utils";
 
 type NavigatorProps = {
   isClosable?: boolean;
@@ -17,11 +19,14 @@ type NavigatorProps = {
 };
 
 export const Navigator = ({ isClosable, onClose }: NavigatorProps) => {
-  const selectedInstanceId = useStore(selectedInstanceIdStore);
+  const selectedInstanceAddress = useStore(selectedInstanceAddressStore);
+  const selectedInstanceId = selectedInstanceAddress?.[0];
   const [rootInstance] = useRootInstance();
 
   const handleSelect = useCallback((instanceId: Instance["id"]) => {
-    selectedInstanceIdStore.set(instanceId);
+    const instances = instancesStore.get();
+    const instanceAddress = getInstanceAddress(instances, instanceId);
+    selectedInstanceAddressStore.set(instanceAddress);
   }, []);
 
   const handleDragEnd = useCallback(
@@ -53,6 +58,7 @@ export const Navigator = ({ isClosable, onClose }: NavigatorProps) => {
       <Flex css={{ flexGrow: 1, flexDirection: "column" }}>
         <InstanceTree
           root={rootInstance}
+          // @todo accept and provide in callback instance address instead of just id
           selectedItemId={selectedInstanceId}
           onSelect={handleSelect}
           onHover={handleHover}

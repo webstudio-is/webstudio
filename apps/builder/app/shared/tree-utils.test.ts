@@ -14,8 +14,9 @@ import {
   createInstancesIndex,
   findClosestDroppableTarget,
   findClosestRichTextInstance,
-  findParentInstance,
   findSubtreeLocalStyleSources,
+  getAncestorInstanceAddress,
+  getInstanceAddress,
   getInstanceAncestorsAndSelf,
   insertInstancesCopyMutable,
   insertInstancesMutable,
@@ -23,6 +24,7 @@ import {
   insertStylesCopyMutable,
   insertStyleSourcesCopyMutable,
   insertStyleSourceSelectionsCopyMutable,
+  InstanceAddress,
   reparentInstanceMutable,
 } from "./tree-utils";
 
@@ -113,6 +115,37 @@ const createStyleDecl = (
     },
   };
 };
+
+test("get ancestor instance address", () => {
+  const instanceAddress: InstanceAddress = ["4", "3", "2", "1"];
+  expect(getAncestorInstanceAddress(instanceAddress, "2")).toEqual(["2", "1"]);
+  expect(getAncestorInstanceAddress(instanceAddress, "-1")).toEqual(undefined);
+  expect(getAncestorInstanceAddress(instanceAddress, "1")).toEqual(["1"]);
+});
+
+test("get instance address", () => {
+  const instances: Instances = new Map([
+    createInstancePair("root", "Box", [
+      { type: "id", value: "box1" },
+      { type: "id", value: "box2" },
+      { type: "id", value: "box4" },
+    ]),
+    createInstancePair("box1", "Box", []),
+    createInstancePair("box2", "Box", [{ type: "id", value: "box3" }]),
+    createInstancePair("box4", "Box", []),
+    createInstancePair("box3", "Box", [
+      { type: "id", value: "child1" },
+      { type: "id", value: "child2" },
+    ]),
+    createInstancePair("child1", "Box", []),
+    createInstancePair("child2", "Box", []),
+  ]);
+  expect(getInstanceAddress(instances, "box3")).toEqual([
+    "box3",
+    "box2",
+    "root",
+  ]);
+});
 
 test("find closest droppable target", () => {
   const rootInstance = createInstance("root", "Body", [
@@ -252,7 +285,7 @@ test("reparent instance into target", () => {
     createInstancePair("box13", "Box", []),
   ]);
 
-  reparentInstanceMutable(instances, "target", {
+  reparentInstanceMutable(instances, ["target", "root"], {
     parentId: "box1",
     position: 1,
   });
@@ -276,7 +309,7 @@ test("reparent instance into target", () => {
     ])
   );
 
-  reparentInstanceMutable(instances, "target", {
+  reparentInstanceMutable(instances, ["target", "box1", "root"], {
     parentId: "box1",
     position: 3,
   });
@@ -300,7 +333,7 @@ test("reparent instance into target", () => {
     ])
   );
 
-  reparentInstanceMutable(instances, "target", {
+  reparentInstanceMutable(instances, ["target", "box1", "root"], {
     parentId: "root",
     position: "end",
   });
@@ -377,32 +410,6 @@ test("find closest rich text to instance", () => {
   expect(findClosestRichTextInstance(instancesIndex, "box6")?.id).toEqual(
     undefined
   );
-});
-
-test("find parent instance", () => {
-  const instances: Instances = new Map([
-    createInstancePair("1", "Body", [{ type: "id", value: "3" }]),
-    // this is outside of subtree
-    createInstancePair("2", "Box", []),
-    // these should be matched
-    createInstancePair("3", "Box", [
-      { type: "id", value: "4" },
-      { type: "id", value: "5" },
-    ]),
-    createInstancePair("4", "Box", []),
-    createInstancePair("5", "Box", []),
-    // this one is from other tree
-    createInstancePair("6", "Box", []),
-  ]);
-  expect(findParentInstance(instances, "4")).toEqual({
-    type: "instance",
-    id: "3",
-    component: "Box",
-    children: [
-      { type: "id", value: "4" },
-      { type: "id", value: "5" },
-    ],
-  });
 });
 
 test("insert tree of instances copy and provide map from ids map", () => {

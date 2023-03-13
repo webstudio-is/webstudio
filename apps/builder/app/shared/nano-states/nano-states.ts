@@ -33,7 +33,7 @@ import type {
 } from "~/builder/shared/assets";
 import { useSyncInitializeOnce } from "../hook-utils";
 import { shallowComputed } from "../store-utils";
-import { createInstancesIndex } from "../tree-utils";
+import { createInstancesIndex, type InstanceAddress } from "../tree-utils";
 
 const useValue = <T>(atom: WritableAtom<T>) => {
   const value = useStore(atom);
@@ -304,15 +304,17 @@ export const useSetAssets = (assets: Asset[]) => {
   });
 };
 
-export const selectedInstanceIdStore = atom<undefined | Instance["id"]>(
+export const selectedInstanceAddressStore = atom<undefined | InstanceAddress>(
   undefined
 );
+
 export const selectedInstanceStore = computed(
-  [instancesIndexStore, selectedInstanceIdStore],
-  (instancesIndex, selectedInstanceId) => {
-    if (selectedInstanceId === undefined) {
+  [instancesIndexStore, selectedInstanceAddressStore],
+  (instancesIndex, selectedInstanceAddress) => {
+    if (selectedInstanceAddress === undefined) {
       return;
     }
+    const [selectedInstanceId] = selectedInstanceAddress;
     return instancesIndex.instancesById.get(selectedInstanceId);
   }
 );
@@ -320,12 +322,13 @@ export const selectedInstanceStore = computed(
 export const selectedInstanceBrowserStyleStore = atom<undefined | Style>();
 
 export const selectedInstanceStyleSourcesStore = computed(
-  [styleSourceSelectionsStore, styleSourcesStore, selectedInstanceIdStore],
-  (styleSourceSelections, styleSources, selectedInstanceId) => {
+  [styleSourceSelectionsStore, styleSourcesStore, selectedInstanceAddressStore],
+  (styleSourceSelections, styleSources, selectedInstanceAddress) => {
     const selectedInstanceStyleSources: StyleSource[] = [];
-    if (selectedInstanceId === undefined) {
+    if (selectedInstanceAddress === undefined) {
       return selectedInstanceStyleSources;
     }
+    const [selectedInstanceId] = selectedInstanceAddress;
     const styleSourceIds =
       styleSourceSelections.get(selectedInstanceId)?.values ?? [];
     let hasLocal = false;

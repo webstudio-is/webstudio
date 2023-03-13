@@ -16,7 +16,8 @@ import {
   instancesIndexStore,
   instancesStore,
   propsStore,
-  selectedInstanceIdStore,
+  selectedInstanceAddressStore,
+  selectedPageStore,
 } from "../nano-states";
 
 const micromarkOptions = { extensions: [gfm()] };
@@ -207,13 +208,19 @@ export const parse = (clipboardData: string, options?: Options) => {
 
 export const onPaste = (clipboardData: string) => {
   const data = parse(clipboardData);
-  if (data === undefined) {
+  const selectedPage = selectedPageStore.get();
+  if (data === undefined || selectedPage === undefined) {
     return;
   }
-
+  // paste to the root if nothing is selected
+  const instanceAddress = selectedInstanceAddressStore.get() ?? [
+    selectedPage.rootInstanceId,
+  ];
+  const [targetInstanceId] = instanceAddress;
   const dropTarget = findClosestDroppableTarget(
     instancesIndexStore.get(),
-    selectedInstanceIdStore.get()
+    // @todo accept instance address
+    targetInstanceId
   );
   store.createTransaction([instancesStore, propsStore], (instances, props) => {
     insertInstancesMutable(instances, data.instances, data.rootIds, dropTarget);
