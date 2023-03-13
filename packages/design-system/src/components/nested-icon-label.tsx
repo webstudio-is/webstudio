@@ -35,14 +35,12 @@ const colors = {
 } as const;
 
 const perColorStyle = (color: (typeof labelColors)[number]) => ({
-  "&[data-state=none], &[data-state=hover]": {
-    borderColor: colors[color].border,
+  "&:not([data-state=disabled])": {
     color: colors[color].icon,
-  },
-  "&[data-state=none]": {
+    borderColor: colors[color].border,
     background: colors[color].background,
   },
-  "&[data-state=none]:hover, &[data-state=hover]": {
+  "&:not([data-state=disabled]):hover, &[data-state=hover]": {
     background: colors[color].backgroundHover,
   },
   "&[data-state=disabled]": {
@@ -85,7 +83,7 @@ export const NestedIconLabel = forwardRef(
     <label
       {...props}
       className={style({ css, className, color })}
-      data-state={disabled ? "disabled" : hover ? "hover" : "none"}
+      data-state={disabled ? "disabled" : hover ? "hover" : undefined}
       ref={ref}
     />
   )
