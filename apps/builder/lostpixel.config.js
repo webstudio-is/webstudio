@@ -1,11 +1,6 @@
 import * as process from "process";
-import { CustomProjectConfig } from "lost-pixel";
 
-type StorybookShotsConfig = {
-  apiKey: string;
-};
-
-export const config: Partial<CustomProjectConfig> & StorybookShotsConfig = {
+export const config = {
   storybookShots: {
     storybookUrl: "apps/builder/storybook-static",
   },
