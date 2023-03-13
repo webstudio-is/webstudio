@@ -29,7 +29,7 @@ const getInstanceAddressFromElement = (element: Element) => {
     matched = matched.parentElement?.closest(`[${idAttribute}]`) ?? undefined;
   }
   if (instanceAddress.length === 0) {
-    return undefined;
+    return;
   }
   return instanceAddress;
 };
@@ -47,7 +47,7 @@ const findClosestRichTextInstanceAddress = (
       return getAncestorInstanceAddress(instanceAddress, instanceId);
     }
   }
-  return undefined;
+  return;
 };
 
 export const subscribeInstanceSelection = () => {

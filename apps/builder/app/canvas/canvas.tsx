@@ -84,12 +84,7 @@ const DesignMode = () => {
   useCopyPaste();
   useHoveredInstanceConnector();
 
-  useEffect(() => {
-    const unsubscribeInstanceSelection = subscribeInstanceSelection();
-    return () => {
-      unsubscribeInstanceSelection();
-    };
-  }, []);
+  useEffect(subscribeInstanceSelection, []);
 
   return null;
 };
