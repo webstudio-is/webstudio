@@ -14,6 +14,7 @@
     "storybook": "pnpm run --parallel --recursive storybook:run",
     "storybook:build": "npm run build && turbo run storybook:build",
     "storybook:ds:build": "turbo run storybook:build --filter=@webstudio-is/design-system",
+    "storybook:builder:build": "turbo run storybook:build --filter=@webstudio-is/builder",
     "migrations": "cd apps/builder && pnpm migrations --dev",
     "build-figma-tokens": "cd packages/design-system && pnpm build-figma-tokens",
     "prepare": "git config core.hooksPath .git/hooks/ && simple-git-hooks"
