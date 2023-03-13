@@ -7,17 +7,12 @@ import {
   findPageByIdOrPath,
 } from "@webstudio-is/project-build";
 import {
-  addPage,
   deletePage,
   editPage,
   loadBuildByProjectId,
 } from "@webstudio-is/project-build/server";
 import { sentryException } from "~/shared/sentry";
-import type {
-  CreatePageData,
-  DeletePageData,
-  EditPageData,
-} from "~/shared/pages";
+import type { DeletePageData, EditPageData } from "~/shared/pages";
 import { type FetcherData, makeFieldError } from "~/shared/form-utils";
 
 const nonEmptyString = z
@@ -40,44 +35,6 @@ const commonPageInput = {
   title: z.string().optional(),
   description: z.string().optional(),
 } as const;
-
-const CreatePageInput = zfd.formData(commonPageInput);
-
-const handlePut = async (
-  projectId: string,
-  request: Request
-): Promise<CreatePageData> => {
-  const result = CreatePageInput.safeParse(await request.formData());
-  if (result.success === false) {
-    return { status: "error", errors: result.error.formErrors };
-  }
-  const { description, ...restData } = result.data;
-  const data = {
-    ...restData,
-    meta: description !== undefined ? { description } : undefined,
-  };
-
-  const devBuild = await loadBuildByProjectId(projectId, "dev");
-
-  const existingPage = findPageByIdOrPath(devBuild.pages, data.path);
-  if (existingPage !== undefined) {
-    return makeFieldError("path", `Already used for "${existingPage.name}"`);
-  }
-
-  const updatedBuild = await addPage({
-    projectId,
-    buildId: devBuild.id,
-    data,
-  });
-
-  const newPage = findPageByIdOrPath(updatedBuild.pages, data.path);
-
-  if (newPage === undefined) {
-    throw new Error("New page not found");
-  }
-
-  return { status: "ok", page: newPage };
-};
 
 const EditPageInput = zfd.formData({
   id: z.string(),
@@ -160,10 +117,6 @@ export const action = async ({
   try {
     if (params.projectId === undefined) {
       throw new Error(`Project ID required`);
-    }
-
-    if (request.method === "PUT") {
-      return await handlePut(params.projectId, request);
     }
 
     if (request.method === "POST") {

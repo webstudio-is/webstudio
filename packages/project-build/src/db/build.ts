@@ -131,52 +131,6 @@ const createNewPageInstances = (): Build["instances"] => {
   ];
 };
 
-export const addPage = async ({
-  projectId,
-  buildId,
-  data,
-}: {
-  projectId: Project["id"];
-  buildId: Build["id"];
-  data: Pick<Page, "name" | "path"> &
-    Partial<Omit<Page, "id" | "name" | "path">>;
-}) => {
-  const build = await loadBuildById({ projectId, buildId });
-  const currentPages = build.pages;
-  const currentInstances = build.instances;
-
-  const instances = createNewPageInstances();
-  const [rootInstanceId] = instances[0];
-
-  const updatedPages = Pages.parse({
-    homePage: currentPages.homePage,
-    pages: [
-      ...currentPages.pages,
-      {
-        id: nanoid(),
-        rootInstanceId,
-        name: data.name,
-        path: data.path,
-        title: data.title ?? data.name,
-        meta: data.meta ?? {},
-      },
-    ],
-  } satisfies Pages);
-
-  const updatedBuild = await prisma.build.update({
-    where: {
-      id_projectId: { projectId, id: buildId },
-    },
-    data: {
-      pages: JSON.stringify(updatedPages),
-      instances: serializeInstances(
-        new Map([...currentInstances, ...instances])
-      ),
-    },
-  });
-  return parseBuild(updatedBuild);
-};
-
 export const editPage = async ({
   projectId,
   buildId,
