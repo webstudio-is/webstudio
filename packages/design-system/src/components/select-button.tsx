@@ -18,9 +18,9 @@ import { ChevronDownIcon } from "@webstudio-is/icons";
 import { cssVars } from "@webstudio-is/css-vars";
 
 const chevronColor = cssVars.define("chevron-color");
-const chevronStyles = css({ color: cssVars.use(chevronColor) });
+const chevronStyle = css({ color: cssVars.use(chevronColor) });
 
-const styles = css({
+const style = css({
   all: "unset", // reset <button>
   height: theme.spacing[12],
   boxSizing: "border-box",
@@ -53,7 +53,7 @@ const styles = css({
   },
 });
 
-const textStyles = css(textVariants.regular, {
+const textStyle = css(textVariants.regular, {
   overflow: "hidden",
   textOverflow: "ellipsis",
   whiteSpace: "nowrap",
@@ -75,12 +75,12 @@ export const SelectButton = forwardRef(
   ) => (
     <button
       {...rest}
-      className={styles({ css, className, fullWidth })}
+      className={style({ css, className, fullWidth })}
       ref={ref}
     >
       {prefix}
-      <span className={textStyles()}>{children}</span>
-      <ChevronDownIcon className={chevronStyles()} />
+      <span className={textStyle()}>{children}</span>
+      <ChevronDownIcon className={chevronStyle()} />
     </button>
   )
 );

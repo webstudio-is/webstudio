@@ -12,7 +12,7 @@ const PADDING_TOP = 6;
 const PADDING_BOTTOM = 4;
 const BORDER = 1;
 
-const styles = css(textVariants.regular, {
+const style = css(textVariants.regular, {
   lineHeight: `${LINE_HEIGHT}px`,
   color: theme.colors.foregroundMain,
   borderRadius: theme.borderRadius[4],
@@ -66,7 +66,7 @@ export const TextArea = forwardRef(
 
     return (
       <textarea
-        className={styles({
+        className={style({
           css: { height, minHeight: height, ...css },
           state,
           className,

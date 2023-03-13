@@ -60,7 +60,7 @@ type FloatingPanelProps = {
   onOpenChange?: (isOpen: boolean) => void;
 };
 
-const contentStyles = css({ width: theme.spacing[30] });
+const contentStyle = css({ width: theme.spacing[30] });
 
 export const FloatingPanel = ({
   title,
@@ -82,7 +82,7 @@ export const FloatingPanel = ({
         sideOffset={sideOffset}
         side="left"
         align="start"
-        className={contentStyles()}
+        className={contentStyle()}
       >
         {content}
         <FloatingPanelPopoverTitle>{title}</FloatingPanelPopoverTitle>

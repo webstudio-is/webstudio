@@ -55,7 +55,7 @@ const perVariantStyle = (variant: (typeof smallButtonVariants)[number]) => ({
   },
 });
 
-const styles = css({
+const style = css({
   all: "unset",
   width: theme.spacing[9],
   height: theme.spacing[9],
@@ -90,7 +90,7 @@ export const SmallButton = forwardRef(
     return (
       <button
         {...restProps}
-        className={styles({ css, className, variant })}
+        className={style({ css, className, variant })}
         ref={ref}
       >
         {children}

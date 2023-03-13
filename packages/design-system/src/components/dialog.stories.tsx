@@ -14,11 +14,11 @@ export default {
   title: "Library/Floating Panel/Dialog",
 };
 
-const bodyStyles = css({
+const bodyStyle = css({
   padding: theme.spacing[9],
 });
 
-const descriptionStyles = css(textVariants.regular, {
+const descriptionStyle = css(textVariants.regular, {
   marginTop: 0,
   marginBottom: theme.spacing[9],
 });
@@ -35,9 +35,9 @@ const DialogDemo = () => (
       <Button>Open</Button>
     </DialogTrigger>
     <DialogContent>
-      <div className={bodyStyles()}>
+      <div className={bodyStyle()}>
         <DialogDescription asChild>
-          <p className={descriptionStyles()}>This is a description</p>
+          <p className={descriptionStyle()}>This is a description</p>
         </DialogDescription>
         <div className={buttonsStyle()}>
           <DialogClose asChild>

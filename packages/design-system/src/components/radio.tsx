@@ -10,7 +10,7 @@ import { type CSS, css, theme } from "../stitches.config";
 
 export { CheckboxAndLabel as RadioAndLabel } from "./checkbox";
 
-const itemStyles = css({
+const itemStyle = css({
   all: "unset", // reset <button>
   width: theme.spacing[9],
   height: theme.spacing[9],
@@ -45,7 +45,7 @@ const itemStyles = css({
   },
 });
 
-const iconStyles = css({ position: "relative" });
+const iconStyle = css({ position: "relative" });
 
 // We need this component basicslly just to get access to "data-state".
 // We could render both icons and hide one using CSS,
@@ -59,9 +59,9 @@ const Button = forwardRef(
   ) => (
     <button {...props} ref={ref}>
       {props["data-state"] === "checked" ? (
-        <RadioCheckedIcon className={iconStyles()} />
+        <RadioCheckedIcon className={iconStyle()} />
       ) : (
-        <RadioUncheckedIcon className={iconStyles()} />
+        <RadioUncheckedIcon className={iconStyle()} />
       )}
     </button>
   )
@@ -78,7 +78,7 @@ export const Radio = forwardRef(
     ref: Ref<HTMLButtonElement>
   ) => (
     <Primitive.Item
-      className={itemStyles({ className, css })}
+      className={itemStyle({ className, css })}
       {...props}
       ref={ref}
       asChild

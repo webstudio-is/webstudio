@@ -6,7 +6,7 @@
 import { forwardRef, type ReactNode, type Ref } from "react";
 import { css, theme, type CSS } from "../stitches.config";
 
-const curveStyles = css({
+const curveStyle = css({
   fill: theme.colors.borderMain,
   alignSelf: "start",
   variants: { rotated: { true: { transform: "rotate(90deg)" } } },
@@ -18,13 +18,13 @@ const Curve = ({ rotated }: { rotated?: boolean }) => (
     height="10"
     viewBox="0 0 10 10"
     xmlns="http://www.w3.org/2000/svg"
-    className={curveStyles({ rotated })}
+    className={curveStyle({ rotated })}
   >
     <path d="M10 10V6C10 2.68629 7.31371 0 4 0H0V1H4C6.76142 1 9 3.23858 9 6V10H10Z" />
   </svg>
 );
 
-const styles = css({
+const style = css({
   display: "flex",
   flexDirection: "column",
   width: 19,
@@ -45,7 +45,7 @@ export const TwoRowsIconButtonContainer = forwardRef(
     },
     ref: Ref<HTMLDivElement>
   ) => (
-    <div ref={ref} className={styles({ className, css })}>
+    <div ref={ref} className={style({ className, css })}>
       <Curve />
       {children}
       <Curve rotated />

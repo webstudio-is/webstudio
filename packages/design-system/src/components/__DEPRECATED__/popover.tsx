@@ -2,7 +2,7 @@ import React from "react";
 import { CrossLargeIcon } from "@webstudio-is/icons";
 import * as PopoverPrimitive from "@radix-ui/react-popover";
 import { Box } from "../box";
-import { panelStyles } from "../panel";
+import { panelStyle } from "../panel";
 import { Flex } from "../flex";
 import { DeprecatedIconButton } from "./icon-button";
 import { DeprecatedText2 } from "./text2";
@@ -18,7 +18,7 @@ export const DeprecatedPopover = ({ children, ...props }: PopoverProps) => {
   return <PopoverPrimitive.Root {...props}>{children}</PopoverPrimitive.Root>;
 };
 
-const StyledContent = styled(PopoverPrimitive.Content, panelStyles, {
+const StyledContent = styled(PopoverPrimitive.Content, panelStyle, {
   backgroundColor: "white",
   minWidth: 200,
   minHeight: theme.spacing[13],

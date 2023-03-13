@@ -2,11 +2,11 @@ import React, { type ComponentProps, type Ref, type ReactNode } from "react";
 import * as Primitive from "@radix-ui/react-popover";
 import { css, theme, type CSS } from "../stitches.config";
 import { Title } from "./title";
-import { floatingPanelStyles, CloseButton, TitleSlot } from "./floating-panel";
+import { floatingPanelStyle, CloseButton, TitleSlot } from "./floating-panel";
 
 export const FloatingPanelPopover = Primitive.Root;
 
-const contentStyles = css(floatingPanelStyles, {
+const contentStyle = css(floatingPanelStyle, {
   minWidth: theme.spacing[28],
   maxWidth: "max-content",
   maxHeight: "80vh",
@@ -27,7 +27,7 @@ export const FloatingPanelPopoverContent = React.forwardRef(
       <Primitive.Content
         sideOffset={4}
         collisionPadding={4}
-        className={contentStyles({ className, css })}
+        className={contentStyle({ className, css })}
         {...props}
         ref={ref}
       >

@@ -50,7 +50,7 @@ const perColorStyle = (color: (typeof labelColors)[number]) => ({
   },
 });
 
-const styles = css({
+const style = css({
   display: "flex",
   width: theme.spacing[11],
   height: theme.spacing[11],
@@ -84,7 +84,7 @@ export const NestedIconLabel = forwardRef(
   ) => (
     <label
       {...props}
-      className={styles({ css, className, color })}
+      className={style({ css, className, color })}
       data-state={disabled ? "disabled" : hover ? "hover" : "none"}
       ref={ref}
     />
