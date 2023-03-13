@@ -17,14 +17,14 @@ jobs:
         env:
           LOST_PIXEL_CONFIG_DIR: packages/design-system
           LOST_PIXEL_API_KEY: ${{ secrets.LOST_PIXEL_API_KEY }}
-  build:
+  builder:
     timeout-minutes: 20
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v3
       - uses: ./.github/actions/ci-setup
 
-      - name: Build Storybook for Design System
+      - name: Build Storybook for Builder
         run: pnpm storybook:builder:build
 
       - name: Lost Pixel
