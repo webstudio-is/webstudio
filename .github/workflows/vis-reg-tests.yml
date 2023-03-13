@@ -10,7 +10,7 @@ jobs:
       - uses: ./.github/actions/ci-setup
 
       - name: Build Storybook for Design System
-        run: bash scripts/build-storybook.sh design-system
+        run: turbo run storybook:build --filter=@webstudio-is/design-system
 
       - name: Lost Pixel
         uses: lost-pixel/lost-pixel@v3.1.0
@@ -25,7 +25,7 @@ jobs:
       - uses: ./.github/actions/ci-setup
 
       - name: Build Storybook for Builder
-        run: bash scripts/build-storybook.sh builder
+        run: turbo run storybook:build --filter=@webstudio-is/builder
 
       - name: Lost Pixel
         uses: lost-pixel/lost-pixel@v3.1.0
