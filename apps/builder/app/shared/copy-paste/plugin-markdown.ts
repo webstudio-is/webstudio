@@ -16,7 +16,7 @@ import {
   instancesIndexStore,
   instancesStore,
   propsStore,
-  selectedInstanceAddressStore,
+  selectedInstanceSelectorStore,
   selectedPageStore,
 } from "../nano-states";
 
@@ -213,13 +213,13 @@ export const onPaste = (clipboardData: string) => {
     return;
   }
   // paste to the root if nothing is selected
-  const instanceAddress = selectedInstanceAddressStore.get() ?? [
+  const instanceSelector = selectedInstanceSelectorStore.get() ?? [
     selectedPage.rootInstanceId,
   ];
-  const [targetInstanceId] = instanceAddress;
+  const [targetInstanceId] = instanceSelector;
   const dropTarget = findClosestDroppableTarget(
     instancesIndexStore.get(),
-    // @todo accept instance address
+    // @todo accept instance selector
     targetInstanceId
   );
   store.createTransaction([instancesStore, propsStore], (instances, props) => {

@@ -16,7 +16,7 @@ import {
 import { useStore } from "@nanostores/react";
 import {
   availableStyleSourcesStore,
-  selectedInstanceAddressStore,
+  selectedInstanceSelectorStore,
   selectedInstanceStyleSourcesStore,
   selectedStyleSourceIdStore,
   selectedStyleSourceStore,
@@ -43,11 +43,11 @@ const getOrCreateStyleSourceSelectionMutable = (
 };
 
 const createStyleSource = (name: string) => {
-  const selectedInstanceAddress = selectedInstanceAddressStore.get();
-  if (selectedInstanceAddress === undefined) {
+  const selectedInstanceSelector = selectedInstanceSelectorStore.get();
+  if (selectedInstanceSelector === undefined) {
     return;
   }
-  const [selectedInstanceId] = selectedInstanceAddress;
+  const [selectedInstanceId] = selectedInstanceSelector;
   const newStyleSource: StyleSource = {
     type: "token",
     id: nanoid(),
@@ -68,11 +68,11 @@ const createStyleSource = (name: string) => {
 };
 
 const addStyleSourceToInstace = (newStyleSourceId: StyleSource["id"]) => {
-  const selectedInstanceAddress = selectedInstanceAddressStore.get();
-  if (selectedInstanceAddress === undefined) {
+  const selectedInstanceSelector = selectedInstanceSelectorStore.get();
+  if (selectedInstanceSelector === undefined) {
     return;
   }
-  const [selectedInstanceId] = selectedInstanceAddress;
+  const [selectedInstanceId] = selectedInstanceSelector;
   store.createTransaction(
     [styleSourceSelectionsStore],
     (styleSourceSelections) => {
@@ -89,11 +89,11 @@ const addStyleSourceToInstace = (newStyleSourceId: StyleSource["id"]) => {
 };
 
 const removeStyleSourceFromInstance = (styleSourceId: StyleSource["id"]) => {
-  const selectedInstanceAddress = selectedInstanceAddressStore.get();
-  if (selectedInstanceAddress === undefined) {
+  const selectedInstanceSelector = selectedInstanceSelectorStore.get();
+  if (selectedInstanceSelector === undefined) {
     return;
   }
-  const [selectedInstanceId] = selectedInstanceAddress;
+  const [selectedInstanceId] = selectedInstanceSelector;
   store.createTransaction(
     [styleSourceSelectionsStore],
     (styleSourceSelections) => {
@@ -111,11 +111,11 @@ const removeStyleSourceFromInstance = (styleSourceId: StyleSource["id"]) => {
 };
 
 const duplicateStyleSource = (styleSourceId: StyleSource["id"]) => {
-  const selectedInstanceAddress = selectedInstanceAddressStore.get();
-  if (selectedInstanceAddress === undefined) {
+  const selectedInstanceSelector = selectedInstanceSelectorStore.get();
+  if (selectedInstanceSelector === undefined) {
     return;
   }
-  const [selectedInstanceId] = selectedInstanceAddress;
+  const [selectedInstanceId] = selectedInstanceSelector;
   const styleSources = styleSourcesStore.get();
   // style source may not exist in store which means
   // temporary generated local stye source was not applied yet
@@ -157,11 +157,11 @@ const duplicateStyleSource = (styleSourceId: StyleSource["id"]) => {
 };
 
 const convertLocalStyleSourceToToken = (styleSourceId: StyleSource["id"]) => {
-  const selectedInstanceAddress = selectedInstanceAddressStore.get();
-  if (selectedInstanceAddress === undefined) {
+  const selectedInstanceSelector = selectedInstanceSelectorStore.get();
+  if (selectedInstanceSelector === undefined) {
     return;
   }
-  const [selectedInstanceId] = selectedInstanceAddress;
+  const [selectedInstanceId] = selectedInstanceSelector;
   const newStyleSource: StyleSource = {
     type: "token",
     id: styleSourceId,
@@ -185,11 +185,11 @@ const convertLocalStyleSourceToToken = (styleSourceId: StyleSource["id"]) => {
 };
 
 const reorderStyleSources = (styleSourceIds: StyleSource["id"][]) => {
-  const selectedInstanceAddress = selectedInstanceAddressStore.get();
-  if (selectedInstanceAddress === undefined) {
+  const selectedInstanceSelector = selectedInstanceSelectorStore.get();
+  if (selectedInstanceSelector === undefined) {
     return;
   }
-  const [selectedInstanceId] = selectedInstanceAddress;
+  const [selectedInstanceId] = selectedInstanceSelector;
   store.createTransaction(
     [styleSourcesStore, styleSourceSelectionsStore],
     (styleSources, styleSourceSelections) => {

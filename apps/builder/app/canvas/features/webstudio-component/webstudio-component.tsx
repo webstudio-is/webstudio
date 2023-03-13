@@ -16,14 +16,14 @@ import {
 import type { GetComponent } from "@webstudio-is/react-sdk";
 import {
   instancesStore,
-  selectedInstanceAddressStore,
+  selectedInstanceSelectorStore,
   useInstanceProps,
   useInstanceStyles,
   useTextEditingInstanceId,
 } from "~/shared/nano-states";
 import { useCssRules } from "~/canvas/shared/styles";
 import { SelectedInstanceConnector } from "./selected-instance-connector";
-import { getInstanceAddress } from "~/shared/tree-utils";
+import { getInstanceSelector } from "~/shared/tree-utils";
 
 const TextEditor = lazy(() => import("../text-editor"));
 
@@ -69,7 +69,7 @@ export const WebstudioComponentDev = ({
 
   const [editingInstanceId, setTextEditingInstanceId] =
     useTextEditingInstanceId();
-  const selectedInstanceAddress = useStore(selectedInstanceAddressStore);
+  const selectedInstanceSelector = useStore(selectedInstanceSelectorStore);
 
   const instanceProps = useInstanceProps(instance.id);
   const userProps = useMemo(() => {
@@ -85,8 +85,8 @@ export const WebstudioComponentDev = ({
     return result;
   }, [instanceProps]);
 
-  // @todo compare instance addresses
-  const isSelected = selectedInstanceAddress?.[0] === instanceId;
+  // @todo compare instance selectors
+  const isSelected = selectedInstanceSelector?.[0] === instanceId;
 
   // Scroll the selected instance into view when selected from navigator.
   useEffect(() => {
@@ -174,11 +174,11 @@ export const WebstudioComponentDev = ({
             }
           });
         }}
-        // @todo provide instance address
+        // @todo provide instance selector
         onSelectInstance={(instanceId) => {
           setTextEditingInstanceId(undefined);
-          selectedInstanceAddressStore.set(
-            getInstanceAddress(instancesStore.get(), instanceId)
+          selectedInstanceSelectorStore.set(
+            getInstanceSelector(instancesStore.get(), instanceId)
           );
         }}
       />

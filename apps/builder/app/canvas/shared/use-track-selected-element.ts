@@ -1,20 +1,20 @@
 import { useEffect } from "react";
 import { useStore } from "@nanostores/react";
 import {
-  selectedInstanceAddressStore,
+  selectedInstanceSelectorStore,
   textEditingInstanceIdStore,
 } from "~/shared/nano-states";
 
 export const useTrackSelectedElement = () => {
-  const selectedInstanceAddress = useStore(selectedInstanceAddressStore);
-  const selectedInstanceId = selectedInstanceAddress?.[0];
+  const selectedInstanceSelector = useStore(selectedInstanceSelectorStore);
+  const selectedInstanceId = selectedInstanceSelector?.[0];
 
   // @todo disable based on user input instead of tracking selected
   useEffect(() => {
     const editingInstanceId = textEditingInstanceIdStore.get();
     if (
       editingInstanceId !== undefined &&
-      // @todo compare instance addresses
+      // @todo compare instance selectors
       selectedInstanceId !== editingInstanceId
     ) {
       textEditingInstanceIdStore.set(undefined);
