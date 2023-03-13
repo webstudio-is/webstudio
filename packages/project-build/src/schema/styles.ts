@@ -8,11 +8,15 @@ import {
   KeywordValue,
   UnparsedValue,
   InvalidValue,
+  TupleValue,
 } from "@webstudio-is/css-data";
 
 const StoredImageValue = z.object({
   type: z.literal("image"),
   value: z.object({ type: z.literal("asset"), value: z.string() }),
+
+  // For the builder we want to be able to hide images
+  hidden: z.boolean().optional(),
 });
 
 const StoredLayersValue = z.object({
@@ -23,6 +27,7 @@ const StoredLayersValue = z.object({
       KeywordValue,
       UnparsedValue,
       StoredImageValue,
+      TupleValue,
       InvalidValue,
     ])
   ),

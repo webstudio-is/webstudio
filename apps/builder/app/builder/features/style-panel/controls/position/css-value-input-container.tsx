@@ -16,6 +16,7 @@ type CssValueInputContainerProps = {
   value?: StyleValue;
   setValue: SetValue;
   deleteProperty: DeleteProperty;
+  disabled?: boolean;
 };
 
 export const CssValueInputContainer = ({
@@ -26,6 +27,7 @@ export const CssValueInputContainer = ({
   value,
   setValue,
   deleteProperty,
+  disabled,
 }: CssValueInputContainerProps) => {
   const [intermediateValue, setIntermediateValue] = useState<
     StyleValue | IntermediateStyleValue
@@ -35,6 +37,7 @@ export const CssValueInputContainer = ({
     <EnhancedTooltip content={label}>
       <Box>
         <CssValueInput
+          disabled={disabled}
           styleSource={styleSource}
           property={property}
           value={value}

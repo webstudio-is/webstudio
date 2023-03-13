@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { useStore } from "@nanostores/react";
 import { useNavigate } from "@remix-run/react";
 import {
   DeprecatedIconButton,
@@ -21,17 +22,17 @@ import {
 } from "@webstudio-is/icons";
 import type { Page, Pages } from "@webstudio-is/project-build";
 import type { Publish } from "~/shared/pubsub";
-import {
-  useCurrentPageId,
-  usePages,
-  useProject,
-} from "~/builder/shared/nano-states";
+import { useProject } from "~/builder/shared/nano-states";
 import { builderPath } from "~/shared/router-utils";
 import type { TabName } from "../../types";
 import { CloseButton, Header } from "../../header";
 import { SettingsPanel } from "./settings-panel";
 import { NewPageSettings, PageSettings } from "./settings";
-import { useAuthToken } from "~/shared/nano-states";
+import {
+  pagesStore,
+  selectedPageIdStore,
+  useAuthToken,
+} from "~/shared/nano-states";
 
 type TabContentProps = {
   onSetActiveTab: (tabName: TabName) => void;
@@ -149,7 +150,7 @@ const PagesPanel = ({
   onEdit?: (pageId: string | undefined) => void;
   editingPageId?: string;
 }) => {
-  const [pages] = usePages();
+  const pages = useStore(pagesStore);
   const pagesTree = useMemo(() => pages && toTreeData(pages), [pages]);
 
   const renderItem = useCallback(
@@ -231,7 +232,7 @@ const PagesPanel = ({
 };
 
 export const TabContent = (props: TabContentProps) => {
-  const [currentPageId] = useCurrentPageId();
+  const currentPageId = useStore(selectedPageIdStore);
   const [project] = useProject();
   const [authToken] = useAuthToken();
 

@@ -1,4 +1,5 @@
 import { useMemo, Fragment, useEffect } from "react";
+import { useStore } from "@nanostores/react";
 import { computed } from "nanostores";
 import type { CanvasData } from "@webstudio-is/project";
 import type { Instance } from "@webstudio-is/project-build";
@@ -26,8 +27,7 @@ import {
   useRootInstance,
   useSubscribeScrollState,
   useIsPreviewMode,
-  useSetAssets,
-  useSetSelectedPage,
+  selectedPageStore,
 } from "~/shared/nano-states";
 import { usePublishScrollState } from "./shared/use-publish-scroll-state";
 import { useDragAndDrop } from "./shared/use-drag-drop";
@@ -96,8 +96,6 @@ export const Canvas = ({
   getComponent,
 }: CanvasProps): JSX.Element | null => {
   const isBuilderReady = useSubscribeBuilderReady();
-  useSetAssets(data.assets);
-  useSetSelectedPage(data.page);
   setParams(data.params ?? null);
   useCanvasStore(publish);
   const [isPreviewMode] = useIsPreviewMode();
@@ -109,16 +107,17 @@ export const Canvas = ({
   // e.g. toggling preview is still needed in both modes
   useShortcuts();
   useSharedShortcuts();
+  const selectedPage = useStore(selectedPageStore);
 
   useEffect(() => {
-    const rootInstanceId = data.page.rootInstanceId;
+    const rootInstanceId = selectedPage?.rootInstanceId;
     if (rootInstanceId !== undefined) {
       setDataCollapsed(rootInstanceId);
     }
   });
 
   useWindowResizeDebounced(() => {
-    const rootInstanceId = data.page.rootInstanceId;
+    const rootInstanceId = selectedPage?.rootInstanceId;
     if (rootInstanceId !== undefined) {
       setDataCollapsed(rootInstanceId);
     }

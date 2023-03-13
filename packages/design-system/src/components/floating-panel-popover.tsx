@@ -10,6 +10,7 @@ const contentStyles = css(floatingPanelStyles, {
   minWidth: theme.spacing[28],
   maxWidth: "max-content",
   maxHeight: "80vh",
+  overflowY: "auto",
 });
 
 export const FloatingPanelPopoverContent = React.forwardRef(

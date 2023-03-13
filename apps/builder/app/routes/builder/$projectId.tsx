@@ -9,6 +9,7 @@ import { ErrorMessage } from "~/shared/error";
 import { sentryException } from "~/shared/sentry";
 import { getBuildOrigin } from "~/shared/router-utils";
 import { type BuilderProps, Builder, links } from "~/builder";
+import { loadByProject } from "@webstudio-is/asset-uploader/server";
 
 export { links };
 
@@ -23,7 +24,6 @@ export const loader = async ({
   const context = await createContext(request);
 
   const url = new URL(request.url);
-  const pageIdParam = url.searchParams.get("pageId");
 
   const project = await db.project.loadById(params.projectId, context);
 
@@ -43,17 +43,15 @@ export const loader = async ({
   }
 
   const devBuild = await loadBuildByProjectId(project.id, "dev");
-
-  const pages = devBuild.pages;
+  const assets = await loadByProject(project.id, context);
 
   const authReadToken = await createAuthReadToken({ projectId: project.id });
   const authToken = url.searchParams.get("authToken") ?? undefined;
 
   return {
     project,
-    pages,
-    pageId: pageIdParam || devBuild.pages.homePage.id,
     build: devBuild,
+    assets,
     buildOrigin: getBuildOrigin(request),
     authReadToken,
     authToken,
@@ -82,7 +80,15 @@ export const shouldRevalidate: ShouldRevalidateFunction = ({
   nextUrl,
   defaultShouldRevalidate,
 }) => {
-  return currentUrl.href === nextUrl.href ? false : defaultShouldRevalidate;
+  const currentUrlCopy = new URL(currentUrl);
+  const nextUrlCopy = new URL(nextUrl);
+  // prevent revalidating data when pageId changes
+  // to not regenerate auth token and preserve canvas url
+  currentUrlCopy.searchParams.delete("pageId");
+  nextUrlCopy.searchParams.delete("pageId");
+  return currentUrlCopy.href === nextUrlCopy.href
+    ? false
+    : defaultShouldRevalidate;
 };
 
 export default BuilderRoute;

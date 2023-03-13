@@ -1,5 +1,6 @@
-import type { ZodError } from "zod";
+import { z } from "zod";
 import { useState, useCallback, ComponentProps } from "react";
+import { useStore } from "@nanostores/react";
 import { useDebouncedCallback } from "use-debounce";
 import { useUnmount } from "react-use";
 import slugify from "slugify";
@@ -8,6 +9,10 @@ import {
   type Page,
   type Pages,
   findPageByIdOrPath,
+  PageName,
+  HomePagePath,
+  PageTitle,
+  PagePath,
 } from "@webstudio-is/project-build";
 import {
   theme,
@@ -22,13 +27,11 @@ import {
   Tooltip,
 } from "@webstudio-is/design-system";
 import { ChevronDoubleLeftIcon, TrashIcon } from "@webstudio-is/icons";
-import { usePages } from "~/builder/shared/nano-states";
 import { useOnFetchEnd, usePersistentFetcher } from "~/shared/fetcher";
 import {
   normalizeErrors,
   toastUnknownFieldErrors,
   useIds,
-  useFetcherErrors,
 } from "~/shared/form-utils";
 import type {
   DeletePageData,
@@ -38,6 +41,7 @@ import type {
 import { restPagesPath } from "~/shared/router-utils";
 import { Header, HeaderSuffixSpacer } from "../../header";
 import { deleteInstance } from "~/shared/instance-utils";
+import { pagesStore } from "~/shared/nano-states";
 
 const Group = styled(Flex, {
   marginBottom: theme.spacing[9],
@@ -47,16 +51,42 @@ const Group = styled(Flex, {
 
 const fieldNames = ["name", "path", "title", "description"] as const;
 type FieldName = (typeof fieldNames)[number];
-type FormPage = Pick<Page, "name" | "path" | "title"> & {
-  description: string;
+type Values = {
+  [fieldName in FieldName]: string;
+};
+type Errors = {
+  [fieldName in FieldName]?: string[];
 };
 
-const toFormPage = (page: Page): FormPage => {
+const HomePageValues = z.object({
+  name: PageName,
+  path: HomePagePath,
+  title: PageTitle,
+  description: z.string().optional(),
+});
+
+const PageValues = z.object({
+  name: PageName,
+  path: PagePath,
+  title: PageTitle,
+  description: z.string().optional(),
+});
+
+const getErrors = (values: Values, isHomePage: boolean): Errors => {
+  const Validator = isHomePage ? HomePageValues : PageValues;
+  const parsedResult = Validator.safeParse(values);
+  if (parsedResult.success) {
+    return {};
+  }
+  return parsedResult.error.formErrors.fieldErrors;
+};
+
+const toFormPage = (page?: Page): Values => {
   return {
-    name: page.name,
-    path: page.path,
-    title: page.title,
-    description: page.meta.description ?? "",
+    name: page?.name ?? "",
+    path: page?.path ?? "",
+    title: page?.title ?? "",
+    description: page?.meta.description ?? "",
   };
 };
 
@@ -67,19 +97,19 @@ const FormFields = ({
   disabled,
   autoSelect,
   isHomePage,
+  errors,
   values,
   onChange,
-  fieldErrors,
 }: {
   disabled?: boolean;
   autoSelect?: boolean;
   isHomePage?: boolean;
-  values: FormPage;
+  errors: Errors;
+  values: Values;
   onChange: <Name extends FieldName>(event: {
     field: Name;
-    value: FormPage[Name];
+    value: Values[Name];
   }) => void;
-  fieldErrors: ZodError["formErrors"]["fieldErrors"];
 }) => {
   const fieldIds = useIds(fieldNames);
 
@@ -87,10 +117,10 @@ const FormFields = ({
     <>
       <Group>
         <DeprecatedLabel htmlFor={fieldIds.name}>Page Name</DeprecatedLabel>
-        <InputErrorsTooltip errors={fieldErrors.name}>
+        <InputErrorsTooltip errors={errors.name}>
           <TextField
             tabIndex={1}
-            state={fieldErrors.name && "invalid"}
+            state={errors.name && "invalid"}
             id={fieldIds.name}
             autoFocus
             onFocus={autoSelect ? autoSelectHandler : undefined}
@@ -107,10 +137,10 @@ const FormFields = ({
       {isHomePage !== true && (
         <Group>
           <DeprecatedLabel htmlFor={fieldIds.path}>Path</DeprecatedLabel>
-          <InputErrorsTooltip errors={fieldErrors.path}>
+          <InputErrorsTooltip errors={errors.path}>
             <TextField
               tabIndex={1}
-              state={fieldErrors.path && "invalid"}
+              state={errors.path && "invalid"}
               id={fieldIds.path}
               name="path"
               placeholder="/about"
@@ -125,10 +155,10 @@ const FormFields = ({
       )}
       <Group>
         <DeprecatedLabel htmlFor={fieldIds.title}>Title</DeprecatedLabel>
-        <InputErrorsTooltip errors={fieldErrors.title}>
+        <InputErrorsTooltip errors={errors.title}>
           <TextField
             tabIndex={1}
-            state={fieldErrors.title && "invalid"}
+            state={errors.title && "invalid"}
             id={fieldIds.title}
             name="title"
             placeholder="My awesome site - About"
@@ -144,10 +174,10 @@ const FormFields = ({
         <DeprecatedLabel htmlFor={fieldIds.description}>
           Description
         </DeprecatedLabel>
-        <InputErrorsTooltip errors={fieldErrors.description}>
+        <InputErrorsTooltip errors={errors.description}>
           <TextArea
             tabIndex={1}
-            state={fieldErrors.description && "invalid"}
+            state={errors.description && "invalid"}
             id={fieldIds.description}
             name="description"
             disabled={disabled}
@@ -197,35 +227,39 @@ export const NewPageSettings = ({
   onSuccess?: (page: Page) => void;
   projectId: string;
 }) => {
-  const [pages] = usePages();
+  const pages = useStore(pagesStore);
 
   const fetcher = useFetcher<CreatePageData>();
 
   useOnFetchEnd(fetcher, (data) => {
     if (data.status === "ok") {
+      if (pages !== undefined) {
+        pagesStore.set({
+          homePage: pages.homePage,
+          pages: [...pages.pages, data.page],
+        });
+      }
       onSuccess?.(data.page);
     }
   });
 
   const isSubmitting = fetcher.state !== "idle";
 
-  const { fieldErrors, resetFieldError } = useFetcherErrors({
-    fetcher,
-    fieldNames,
-  });
-
-  const [values, setValues] = useState<FormPage>({
+  const [values, setValues] = useState<Values>({
     name: "Untitled",
     path: nameToPath(pages, "Untitled"),
     title: "Untitled",
     description: "",
   });
+  const errors = getErrors(values, false);
 
   const handleSubmit = () => {
-    fetcher.submit(values, {
-      method: "put",
-      action: restPagesPath({ projectId }),
-    });
+    if (Object.keys(errors).length === 0) {
+      fetcher.submit(values, {
+        method: "put",
+        action: restPagesPath({ projectId }),
+      });
+    }
   };
 
   return (
@@ -233,14 +267,12 @@ export const NewPageSettings = ({
       onSubmit={handleSubmit}
       onClose={onClose}
       isSubmitting={isSubmitting}
-      fieldErrors={fieldErrors}
+      errors={errors}
       disabled={isSubmitting}
       values={values}
       onChange={({ field, value }) => {
-        resetFieldError(field);
         setValues((values) => {
           const changes = { [field]: value };
-
           if (field === "name") {
             if (values.path === nameToPath(pages, values.name)) {
               changes.path = nameToPath(pages, value);
@@ -249,7 +281,6 @@ export const NewPageSettings = ({
               changes.title = value;
             }
           }
-
           return { ...values, ...changes };
         });
       }}
@@ -317,7 +348,7 @@ const NewPageSettingsView = ({
   );
 };
 
-const toFormData = (page: Partial<FormPage> & { id: string }): FormData => {
+const toFormData = (page: Partial<Values> & { id: string }): FormData => {
   const formData = new FormData();
   for (const [key, value] of Object.entries(page)) {
     // @todo: handle "meta"
@@ -343,7 +374,7 @@ export const PageSettings = ({
 
   const fetcher = useFetcher<EditPageData>();
 
-  const [pages, setPages] = usePages();
+  const pages = useStore(pagesStore);
   const page = pages && findPageByIdOrPath(pages, pageId);
 
   // Updating client side store like that is a temporary solution
@@ -353,10 +384,10 @@ export const PageSettings = ({
       return;
     }
     if (pages.homePage.id === page.id) {
-      setPages({ homePage: page, pages: pages.pages });
+      pagesStore.set({ homePage: page, pages: pages.pages });
       return;
     }
-    setPages({
+    pagesStore.set({
       homePage: pages.homePage,
       pages: pages.pages.map((item) => (item.id === page.id ? page : item)),
     });
@@ -369,7 +400,7 @@ export const PageSettings = ({
     if (page) {
       deleteInstance(page.rootInstanceId);
     }
-    setPages({
+    pagesStore.set({
       homePage: pages.homePage,
       pages: pages.pages.filter((item) => item.id !== pageId),
     });
@@ -377,18 +408,21 @@ export const PageSettings = ({
 
   const isHomePage = page?.id === pages?.homePage.id;
 
-  const [unsavedValues, setUnsavedValues] = useState<Partial<FormPage>>({});
-  const [submittedValues, setSubmittedValues] = useState<Partial<FormPage>>({});
+  const [unsavedValues, setUnsavedValues] = useState<Partial<Values>>({});
+  const [submittedValues, setSubmittedValues] = useState<Partial<Values>>({});
 
-  const { fieldErrors, resetFieldError } = useFetcherErrors({
-    fetcher,
-    fieldNames: isHomePage
-      ? fieldNames.filter((name) => name !== "path")
-      : fieldNames,
-  });
+  const values: Values = {
+    ...toFormPage(page),
+    ...submittedValues,
+    ...unsavedValues,
+  };
+  const errors = getErrors(values, isHomePage);
 
   const handleSubmitDebounced = useDebouncedCallback(() => {
-    if (Object.keys(unsavedValues).length === 0) {
+    if (
+      Object.keys(unsavedValues).length === 0 ||
+      Object.keys(errors).length !== 0
+    ) {
       return;
     }
 
@@ -406,12 +440,14 @@ export const PageSettings = ({
   }, 1000);
 
   const handleChange = useCallback(
-    <Name extends FieldName>(event: { field: Name; value: FormPage[Name] }) => {
-      resetFieldError(event.field);
-      setUnsavedValues((values) => ({ ...values, [event.field]: event.value }));
+    <Name extends FieldName>(event: { field: Name; value: Values[Name] }) => {
+      setUnsavedValues((values) => ({
+        ...values,
+        [event.field]: event.value,
+      }));
       handleSubmitDebounced();
     },
-    [handleSubmitDebounced, resetFieldError]
+    [handleSubmitDebounced]
   );
 
   useUnmount(() => {
@@ -468,8 +504,8 @@ export const PageSettings = ({
       isHomePage={isHomePage}
       onClose={onClose}
       onDelete={hanldeDelete}
-      fieldErrors={fieldErrors}
-      values={{ ...toFormPage(page), ...submittedValues, ...unsavedValues }}
+      errors={errors}
+      values={values}
       onChange={handleChange}
     />
   );

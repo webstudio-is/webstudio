@@ -1,35 +1,31 @@
 import store from "immerhin";
 import { findTreeInstanceIds, Instance } from "@webstudio-is/project-build";
 import {
-  rootInstanceContainer,
   propsStore,
   stylesStore,
   selectedInstanceIdStore,
   styleSourceSelectionsStore,
   styleSourcesStore,
   instancesStore,
-  patchInstancesMutable,
   selectedPageStore,
 } from "./nano-states";
 import {
-  createInstancesIndex,
+  createComponentInstance,
   DroppableTarget,
   findParentInstance,
   findSubtreeLocalStyleSources,
-  insertInstanceMutable,
+  insertInstancesMutable,
   reparentInstanceMutable,
 } from "./tree-utils";
 import { removeByMutable } from "./array-utils";
 
-export const insertInstance = (
-  instance: Instance,
+export const insertNewComponentInstance = (
+  component: string,
   dropTarget?: DroppableTarget
 ) => {
-  const rootInstance = rootInstanceContainer.get();
+  const instance = createComponentInstance(component);
   store.createTransaction([instancesStore], (instances) => {
-    const instancesIndex = createInstancesIndex(rootInstance);
-    insertInstanceMutable(instancesIndex, instance, dropTarget);
-    patchInstancesMutable(rootInstance, instances);
+    insertInstancesMutable(instances, [instance], [instance.id], dropTarget);
   });
   selectedInstanceIdStore.set(instance.id);
 };
@@ -38,11 +34,8 @@ export const reparentInstance = (
   targetInstanceId: Instance["id"],
   dropTarget: DroppableTarget
 ) => {
-  const rootInstance = rootInstanceContainer.get();
   store.createTransaction([instancesStore], (instances) => {
-    const instancesIndex = createInstancesIndex(rootInstance);
-    reparentInstanceMutable(instancesIndex, targetInstanceId, dropTarget);
-    patchInstancesMutable(rootInstance, instances);
+    reparentInstanceMutable(instances, targetInstanceId, dropTarget);
   });
   selectedInstanceIdStore.set(targetInstanceId);
 };

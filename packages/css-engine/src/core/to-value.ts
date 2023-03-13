@@ -16,7 +16,8 @@ const assertUnreachable = (_arg: never, errorMessage: string) => {
 
 export const toValue = (
   value?: StyleValue,
-  options: ToCssOptions = defaultOptions
+  options: ToCssOptions = defaultOptions,
+  isEditMode?: boolean
 ): string => {
   if (value === undefined) {
     return "";
@@ -36,9 +37,11 @@ export const toValue = (
     return [...value.value, DEFAULT_FONT_FALLBACK].join(", ");
   }
   if (value.type === "var") {
+    // We use var() in edit mode only
+    const isEditMode = true;
     const fallbacks = [];
     for (const fallback of value.fallbacks) {
-      fallbacks.push(toValue(fallback, options));
+      fallbacks.push(toValue(fallback, options, isEditMode));
     }
     const fallbacksString =
       fallbacks.length > 0 ? `, ${fallbacks.join(", ")}` : "";
@@ -62,20 +65,38 @@ export const toValue = (
   }
 
   if (value.type === "image") {
+    if (isEditMode && value.hidden) {
+      // We assume that property is background-image and use this to hide background layers
+      // In the future we might want to have a more generic way to hide values
+      // i.e. have knowledge about property-name, as none is property specific
+      return "none";
+    }
+
     // @todo image-set
     return `url(${value.value.value.path}) /* id=${value.value.value.id} */`;
   }
 
   if (value.type === "unparsed") {
+    if (isEditMode && value.hidden) {
+      // We assume that property is background-image and use this to hide background layers
+      // In the future we might want to have a more generic way to hide values
+      // i.e. have knowledge about property-name, as none is property specific
+      return "none";
+    }
+
     return value.value;
   }
 
   if (value.type === "layers") {
-    return value.value.map((value) => toValue(value, options)).join(",");
+    return value.value
+      .map((value) => toValue(value, options, isEditMode))
+      .join(",");
   }
 
   if (value.type === "tuple") {
-    return value.value.map((value) => toValue(value, options)).join(" ");
+    return value.value
+      .map((value) => toValue(value, options, isEditMode))
+      .join(" ");
   }
 
   // Will give ts error in case of missing type

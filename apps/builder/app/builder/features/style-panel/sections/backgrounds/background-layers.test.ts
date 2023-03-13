@@ -49,7 +49,7 @@ describe("setLayerProperty", () => {
 
     const setProperty = setLayerProperty(0, styleInfo, createBatchUpdate);
 
-    setProperty("backgroundPositionX")({ type: "unit", value: 10, unit: "px" });
+    setProperty("backgroundPosition")({ type: "unit", value: 10, unit: "px" });
 
     expect(published).toBe(true);
 
@@ -163,7 +163,7 @@ describe("setLayerProperty", () => {
 
     const setProperty = setLayerProperty(0, styleInfo, createBatchUpdate);
 
-    setProperty("backgroundPositionX")({ type: "unit", value: 10, unit: "px" });
+    setProperty("backgroundPosition")({ type: "unit", value: 10, unit: "px" });
 
     expect(published).toBe(true);
 

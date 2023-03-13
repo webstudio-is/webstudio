@@ -41,8 +41,8 @@ const useSideOffset = ({
   return [triggerRef, sideOffset];
 };
 
-const useLogic = (onOpenChange?: (isOpen: boolean) => void) => {
-  const [isOpen, setIsOpen] = useState(false);
+const useLogic = (open?: boolean, onOpenChange?: (isOpen: boolean) => void) => {
+  const [isOpen, setIsOpen] = useState(Boolean(open));
   const [triggerRef, sideOffset] = useSideOffset({ isOpen });
   const handleOpenChange = (open: boolean) => {
     setIsOpen(open);
@@ -56,6 +56,7 @@ type FloatingPanelProps = {
   title: string;
   content: JSX.Element;
   children: JSX.Element;
+  open?: boolean;
   onOpenChange?: (isOpen: boolean) => void;
 };
 
@@ -65,10 +66,13 @@ export const FloatingPanel = ({
   title,
   content,
   children,
+  open,
   onOpenChange,
 }: FloatingPanelProps) => {
-  const { isOpen, handleOpenChange, triggerRef, sideOffset } =
-    useLogic(onOpenChange);
+  const { isOpen, handleOpenChange, triggerRef, sideOffset } = useLogic(
+    open,
+    onOpenChange
+  );
   return (
     <FloatingPanelPopover open={isOpen} onOpenChange={handleOpenChange} modal>
       <FloatingPanelPopoverTrigger asChild ref={triggerRef}>

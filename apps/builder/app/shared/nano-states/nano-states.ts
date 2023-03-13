@@ -1,5 +1,4 @@
 import { useMemo } from "react";
-import deepEqual from "fast-deep-equal";
 import { atom, computed, type WritableAtom } from "nanostores";
 import { useStore } from "@nanostores/react";
 import { nanoid } from "nanoid";
@@ -12,6 +11,7 @@ import type {
   Instances,
   InstancesItem,
   Page,
+  Pages,
   Prop,
   Props,
   StyleDecl,
@@ -40,12 +40,32 @@ const useValue = <T>(atom: WritableAtom<T>) => {
   return [value, atom.set] as const;
 };
 
-export const selectedPageStore = atom<undefined | Page>(undefined);
-export const useSetSelectedPage = (page: Page) => {
+export const pagesStore = atom<undefined | Pages>(undefined);
+export const useSetPages = (pages: Pages) => {
   useSyncInitializeOnce(() => {
-    selectedPageStore.set(page);
+    pagesStore.set(pages);
   });
 };
+
+export const selectedPageIdStore = atom<undefined | Page["id"]>(undefined);
+export const useSetSelectedPageId = (pageId: Page["id"]) => {
+  useSyncInitializeOnce(() => {
+    selectedPageIdStore.set(pageId);
+  });
+};
+
+export const selectedPageStore = computed(
+  [pagesStore, selectedPageIdStore],
+  (pages, selectedPageId) => {
+    if (pages === undefined) {
+      return undefined;
+    }
+    if (pages.homePage.id === selectedPageId) {
+      return pages.homePage;
+    }
+    return pages.pages.find((page) => page.id === selectedPageId);
+  }
+);
 
 export const instancesStore = atom<Map<InstancesItem["id"], InstancesItem>>(
   new Map()
@@ -56,41 +76,6 @@ export const useSetInstances = (
   useSyncInitializeOnce(() => {
     instancesStore.set(new Map(instances));
   });
-};
-
-/**
- * this is temporary utility to map rootInstance changes
- * to normalized instances
- *
- * later its usages should be rewritten with direct instances mutations
- */
-export const patchInstancesMutable = (
-  rootInstance: undefined | Instance,
-  instances: Instances
-) => {
-  const oldInstancesIndex = createInstancesIndex(rootInstance);
-  for (const oldInstance of oldInstancesIndex.instancesById.values()) {
-    const instance = instances.get(oldInstance.id);
-    const convertedOldInstance: InstancesItem = {
-      type: "instance",
-      id: oldInstance.id,
-      component: oldInstance.component,
-      label: oldInstance.label,
-      children: oldInstance.children.map((child) => {
-        if (child.type === "text") {
-          return child;
-        }
-        return {
-          type: "id",
-          value: child.id,
-        };
-      }),
-    };
-    if (deepEqual(convertedOldInstance, instance)) {
-      continue;
-    }
-    instances.set(oldInstance.id, convertedOldInstance);
-  }
 };
 
 // @todo will be removed soon
