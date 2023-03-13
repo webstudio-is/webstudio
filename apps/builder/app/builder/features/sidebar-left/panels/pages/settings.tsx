@@ -1,4 +1,5 @@
 import { z } from "zod";
+import store from "immerhin";
 import { useState, useCallback, ComponentProps } from "react";
 import { useStore } from "@nanostores/react";
 import { useDebouncedCallback } from "use-debounce";
@@ -33,15 +34,12 @@ import {
   toastUnknownFieldErrors,
   useIds,
 } from "~/shared/form-utils";
-import type {
-  DeletePageData,
-  EditPageData,
-  CreatePageData,
-} from "~/shared/pages";
+import type { DeletePageData, EditPageData } from "~/shared/pages";
 import { restPagesPath } from "~/shared/router-utils";
 import { Header, HeaderSuffixSpacer } from "../../header";
 import { deleteInstance } from "~/shared/instance-utils";
-import { pagesStore } from "~/shared/nano-states";
+import { instancesStore, pagesStore } from "~/shared/nano-states";
+import { nanoid } from "nanoid";
 
 const Group = styled(Flex, {
   marginBottom: theme.spacing[9],
@@ -221,29 +219,11 @@ const nameToPath = (pages: Pages | undefined, name: string) => {
 export const NewPageSettings = ({
   onClose,
   onSuccess,
-  projectId,
 }: {
-  onClose?: () => void;
-  onSuccess?: (page: Page) => void;
-  projectId: string;
+  onClose: () => void;
+  onSuccess: (pageId: Page["id"]) => void;
 }) => {
   const pages = useStore(pagesStore);
-
-  const fetcher = useFetcher<CreatePageData>();
-
-  useOnFetchEnd(fetcher, (data) => {
-    if (data.status === "ok") {
-      if (pages !== undefined) {
-        pagesStore.set({
-          homePage: pages.homePage,
-          pages: [...pages.pages, data.page],
-        });
-      }
-      onSuccess?.(data.page);
-    }
-  });
-
-  const isSubmitting = fetcher.state !== "idle";
 
   const [values, setValues] = useState<Values>({
     name: "Untitled",
@@ -255,10 +235,33 @@ export const NewPageSettings = ({
 
   const handleSubmit = () => {
     if (Object.keys(errors).length === 0) {
-      fetcher.submit(values, {
-        method: "put",
-        action: restPagesPath({ projectId }),
-      });
+      const pageId = nanoid();
+      store.createTransaction(
+        [pagesStore, instancesStore],
+        (pages, instances) => {
+          if (pages === undefined) {
+            return;
+          }
+          const rootInstanceId = nanoid();
+          pages.pages.push({
+            id: pageId,
+            name: values.name,
+            path: values.path,
+            title: values.title,
+            rootInstanceId,
+            meta: {
+              description: values.description,
+            },
+          });
+          instances.set(rootInstanceId, {
+            type: "instance",
+            id: rootInstanceId,
+            component: "Body",
+            children: [],
+          });
+        }
+      );
+      onSuccess(pageId);
     }
   };
 
@@ -266,9 +269,9 @@ export const NewPageSettings = ({
     <NewPageSettingsView
       onSubmit={handleSubmit}
       onClose={onClose}
-      isSubmitting={isSubmitting}
+      isSubmitting={false}
       errors={errors}
-      disabled={isSubmitting}
+      disabled={false}
       values={values}
       onChange={({ field, value }) => {
         setValues((values) => {

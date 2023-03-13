@@ -274,11 +274,10 @@ export const TabContent = (props: TabContentProps) => {
       <SettingsPanel isOpen={editingPageId !== undefined}>
         {editingPageId === newPageId && (
           <NewPageSettings
-            projectId={project.id}
             onClose={() => setEditingPageId(undefined)}
-            onSuccess={(page) => {
+            onSuccess={(pageId) => {
               setEditingPageId(undefined);
-              handleSelect(page.id);
+              handleSelect(pageId);
             }}
           />
         )}
