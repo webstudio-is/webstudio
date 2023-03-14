@@ -34,10 +34,10 @@ import { usePublishScrollState } from "./shared/use-publish-scroll-state";
 import { useDragAndDrop } from "./shared/use-drag-drop";
 import { useSubscribeBuilderReady } from "./shared/use-builder-ready";
 import { useCopyPaste } from "~/shared/copy-paste";
-import { useHoveredInstanceConnector } from "./hovered-instance-connector";
 import { setDataCollapsed, subscribeCollapsedToPubSub } from "./collapsed";
 import { useWindowResizeDebounced } from "~/shared/dom-hooks";
 import { subscribeInstanceSelection } from "./instance-selection";
+import { subscribeInstanceHovering } from "./instance-hovering";
 
 registerContainers();
 
@@ -82,9 +82,9 @@ const DesignMode = () => {
   // @todo we need to forward the events from canvas to builder and avoid importing this
   // in both places
   useCopyPaste();
-  useHoveredInstanceConnector();
 
   useEffect(subscribeInstanceSelection, []);
+  useEffect(subscribeInstanceHovering, []);
 
   return null;
 };

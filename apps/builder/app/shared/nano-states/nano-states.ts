@@ -371,11 +371,11 @@ export const selectedStyleSourceStore = computed(
   }
 );
 
-export const hoveredInstanceIdStore = atom<undefined | Instance["id"]>(
+export const hoveredInstanceSelectorStore = atom<undefined | InstanceSelector>(
   undefined
 );
 export const hoveredInstanceOutlineStore = atom<
-  undefined | { instanceId: Instance["id"]; rect: DOMRect }
+  undefined | { label?: string; component: string; rect: DOMRect }
 >(undefined);
 
 export const isPreviewModeStore = atom<boolean>(false);

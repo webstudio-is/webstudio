@@ -34,6 +34,16 @@ export const getAncestorInstanceSelector = (
   return instanceSelector.slice(ancestorIndex);
 };
 
+export const areInstanceSelectorsEqual = (
+  left?: InstanceSelector,
+  right?: InstanceSelector
+) => {
+  if (left === undefined || right === undefined) {
+    return false;
+  }
+  return left.join(",") === right.join(",");
+};
+
 // this utility is temporary solution to compute instance selectors
 // before all logic is migrated to get it from rendered context
 // @todo should be deleted before adding slots

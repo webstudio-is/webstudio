@@ -1,23 +1,26 @@
-import { useEffect } from "react";
 import debounce from "lodash.debounce";
 import { idAttribute } from "@webstudio-is/react-sdk";
 import {
-  hoveredInstanceIdStore,
+  hoveredInstanceSelectorStore,
   hoveredInstanceOutlineStore,
+  instancesStore,
 } from "~/shared/nano-states";
 import { subscribeScrollState } from "~/shared/dom-hooks";
+import {
+  getElementByInstanceSelector,
+  getInstanceSelectorFromElement,
+} from "~/shared/dom-utils";
 
 type TimeoutId = undefined | ReturnType<typeof setTimeout>;
 
-const startHoveredInstanceConnection = () => {
+export const subscribeInstanceHovering = () => {
   let hoveredElement: undefined | Element = undefined;
 
   const updateHoveredInstance = (element: Element) => {
-    const id = element.getAttribute(idAttribute) ?? undefined;
-    if (id === undefined) {
-      return;
+    const instanceSelector = getInstanceSelectorFromElement(element);
+    if (instanceSelector) {
+      hoveredInstanceSelectorStore.set(instanceSelector);
     }
-    hoveredInstanceIdStore.set(id);
   };
 
   let mouseOutTimeoutId: TimeoutId = undefined;
@@ -37,7 +40,7 @@ const startHoveredInstanceConnection = () => {
   const handleMouseOut = () => {
     mouseOutTimeoutId = setTimeout(() => {
       hoveredElement = undefined;
-      hoveredInstanceIdStore.set(undefined);
+      hoveredInstanceSelectorStore.set(undefined);
     }, 100);
   };
 
@@ -51,8 +54,14 @@ const startHoveredInstanceConnection = () => {
     if (instanceId === undefined) {
       return;
     }
+    const instances = instancesStore.get();
+    const instance = instances.get(instanceId);
+    if (instance === undefined) {
+      return;
+    }
     hoveredInstanceOutlineStore.set({
-      instanceId,
+      label: instance.label,
+      component: instance.component,
       rect: element.getBoundingClientRect(),
     });
   }, 50);
@@ -71,10 +80,12 @@ const startHoveredInstanceConnection = () => {
   });
 
   // update rect whenever hovered instance is changed
-  const unsubscribeHoveredInstanceId = hoveredInstanceIdStore.subscribe(
-    (id) => {
-      const element =
-        document.querySelector(`[${idAttribute}="${id}"]`) ?? undefined;
+  const unsubscribeHoveredInstanceId = hoveredInstanceSelectorStore.subscribe(
+    (instanceSelector) => {
+      if (instanceSelector === undefined) {
+        return;
+      }
+      const element = getElementByInstanceSelector(instanceSelector);
       if (element !== undefined) {
         updateHoveredRect(element);
       }
@@ -89,11 +100,4 @@ const startHoveredInstanceConnection = () => {
     clearTimeout(mouseOutTimeoutId);
     unsubscribeHoveredInstanceId();
   };
-};
-
-export const useHoveredInstanceConnector = () => {
-  useEffect(() => {
-    const disconnect = startHoveredInstanceConnection();
-    return disconnect;
-  }, []);
 };
