@@ -20,6 +20,10 @@ const backgroundImageStyle: LayersValue = {
       type: "unparsed",
       value: "linear-gradient(blue, red)",
     },
+    {
+      type: "keyword",
+      value: "none",
+    },
   ],
 };
 
