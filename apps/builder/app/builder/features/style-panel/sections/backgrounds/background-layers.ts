@@ -218,30 +218,24 @@ export const deleteLayer =
     for (const property of layeredBackgroundProps) {
       const styleValue = style[property];
 
-      const propertyStyle = styleValue?.local;
-
       // If property is not defined, try copy from cascade or set empty
-      let newPropertyStyle: LayersValue;
+      const newPropertyStyle: LayersValue = getLayersValue(styleValue);
 
-      if (propertyStyle?.type === "layers") {
-        newPropertyStyle = structuredClone(propertyStyle);
-      } else if (styleValue?.cascaded?.value.type === "layers") {
-        newPropertyStyle = structuredClone(styleValue?.cascaded?.value);
-      } else {
-        newPropertyStyle = { type: "layers", value: [] };
-      }
+      const missingLayerCount = layerCount - newPropertyStyle.value.length;
 
-      // All layers must have the same number of layers
-      if (newPropertyStyle.value.length < layerCount) {
-        newPropertyStyle.value = newPropertyStyle.value.concat(
-          new Array(layerCount - newPropertyStyle.value.length).fill(
-            structuredClone(layeredBackgroundPropsDefaults[property])
-          )
+      if (missingLayerCount < 0) {
+        // In theory this should never happen.
+        throw new Error(
+          `Layer count for property ${property} exceeds expected ${layerCount}`
         );
       }
 
-      if (newPropertyStyle.value.length > layerCount) {
-        newPropertyStyle.value = newPropertyStyle.value.slice(0, layerCount);
+      if (newPropertyStyle.value.length !== layerCount) {
+        // All background properties must have the same number of layers
+        const requiredLayers = new Array(missingLayerCount).fill(
+          structuredClone(layeredBackgroundPropsDefaults[property])
+        );
+        newPropertyStyle.value = newPropertyStyle.value.concat(requiredLayers);
       }
 
       newPropertyStyle.value.splice(layerNum, 1);

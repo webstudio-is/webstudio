@@ -55,7 +55,7 @@ const ItemButton = styled("button", {
     outline: "none",
     backgroundColor: theme.colors.backgroundHover,
   },
-  "&:hover": {
+  "&:hover, &[data-active=true]": {
     backgroundColor: theme.colors.backgroundHover,
 
     [`& ${DragHandleIconStyled}`]: {
@@ -83,6 +83,7 @@ type Props = ComponentProps<typeof ItemButton> & {
   // for Storybook purposes
   focused?: boolean;
   state?: "open";
+  active?: boolean;
 };
 
 const ItemWrapper = styled("div", {
@@ -111,6 +112,7 @@ export const CssValueListItem = forwardRef(
       buttons,
       focused,
       state,
+      active,
       "data-state": dataState,
       ...rest
     }: Props,
@@ -134,6 +136,7 @@ export const CssValueListItem = forwardRef(
           ref={ref}
           data-focused={focused}
           data-state={state ?? dataState}
+          data-active={active}
           {...rest}
           tabIndex={0}
         >

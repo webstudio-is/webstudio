@@ -78,13 +78,7 @@ const Layer = (props: {
       }
     >
       <CssValueListItem
-        css={
-          props.isHighlighted
-            ? {
-                backgroundColor: theme.colors.backgroundHover,
-              }
-            : undefined
-        }
+        active={props.isHighlighted}
         data-id={props.id}
         label={
           <PropertyName
