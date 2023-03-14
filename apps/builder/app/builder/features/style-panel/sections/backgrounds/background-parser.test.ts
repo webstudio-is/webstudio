@@ -118,4 +118,40 @@ describe("parseBackground", () => {
       }
     `);
   });
+
+  test("parse background partially copied background", () => {
+    expect(
+      parseBackground(
+        "linear-gradient(180deg, #11181C 0%, rgba(17, 24, 28, 0) 36.09%), linear-gradient(180deg, "
+      )
+    ).toMatchInlineSnapshot(`
+      {
+        "backgroundColor": undefined,
+        "backgroundImages": [
+          {
+            "type": "unparsed",
+            "value": "linear-gradient(180deg, #11181C 0%, rgba(17, 24, 28, 0) 36.09%)",
+          },
+        ],
+      }
+    `);
+  });
+
+  test("parse background partially commented", () => {
+    expect(
+      parseBackground(
+        "linear-gradient(180deg, rgba(230, 60, 254, 0.33) 0%, rgba(255, 174, 60, 0) 100%), /* radial-gradient(54.1% 95.83% at 100% 100%, #FFFFFF 0%, rgba(255, 255, 255, 0) 100%) */"
+      )
+    ).toMatchInlineSnapshot(`
+      {
+        "backgroundColor": undefined,
+        "backgroundImages": [
+          {
+            "type": "unparsed",
+            "value": "linear-gradient(180deg, rgba(230, 60, 254, 0.33) 0%, rgba(255, 174, 60, 0) 100%)",
+          },
+        ],
+      }
+    `);
+  });
 });
