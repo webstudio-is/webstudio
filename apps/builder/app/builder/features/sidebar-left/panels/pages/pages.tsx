@@ -268,7 +268,7 @@ export const TabContent = (props: TabContentProps) => {
             onDelete={() => {
               setEditingPageId(undefined);
               if (editingPageId === currentPageId) {
-                switchPage("home");
+                switchPage();
               }
             }}
             pageId={editingPageId}

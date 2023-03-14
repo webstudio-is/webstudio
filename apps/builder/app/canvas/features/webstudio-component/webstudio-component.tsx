@@ -24,7 +24,7 @@ import {
 import { useCssRules } from "~/canvas/shared/styles";
 import { SelectedInstanceConnector } from "./selected-instance-connector";
 import { getInstanceSelector } from "~/shared/tree-utils";
-import { useHandleLinkClick } from "./link";
+import { handleLinkClick } from "./link";
 
 const TextEditor = lazy(() => import("../text-editor"));
 
@@ -71,8 +71,6 @@ export const WebstudioComponentDev = ({
   const [editingInstanceId, setTextEditingInstanceId] =
     useTextEditingInstanceId();
   const selectedInstanceSelector = useStore(selectedInstanceSelectorStore);
-
-  const handleLinkClick = useHandleLinkClick();
 
   const instanceProps = useInstanceProps(instance.id);
   const userProps = useMemo(() => {

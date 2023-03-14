@@ -20,7 +20,7 @@ export const useCanvasWidth = () => useValue(canvasWidthContainer);
 const canvasRectContainer = atom<DOMRect | undefined>();
 export const useCanvasRect = () => useValue(canvasRectContainer);
 
-const projectContainer = atom<Project | undefined>();
+export const projectContainer = atom<Project | undefined>();
 export const useProject = () => useValue(projectContainer);
 
 export type TextToolbarState = {
