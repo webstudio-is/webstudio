@@ -20,7 +20,6 @@ import {
 import { Topbar } from "./features/topbar";
 import builderStyles from "./builder.css";
 import { Footer } from "./features/footer";
-import { TreePrevew } from "./features/tree-preview";
 import { useUpdateCanvasWidth } from "./features/breakpoints";
 import {
   CanvasIframe,
@@ -344,11 +343,7 @@ export const Builder = ({
           isPreviewMode={isPreviewMode}
           css={{ overflow: "hidden" }}
         >
-          {dragAndDropState.isDragging ? (
-            <TreePrevew />
-          ) : (
-            <Inspector publish={publish} />
-          )}
+          <Inspector publish={publish} />
         </SidePanel>
         {isPreviewMode === false && <Footer />}
         <BlockingAlerts />

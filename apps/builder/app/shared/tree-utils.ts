@@ -170,68 +170,6 @@ export const findClosestDroppableTarget = (
   };
 };
 
-export const insertInstanceMutableDeprecated = (
-  instancesIndex: InstancesIndex,
-  instance: Instance,
-  dropTarget?: DroppableTarget
-) => {
-  if (dropTarget === undefined) {
-    return;
-  }
-  const parentInstance = instancesIndex.instancesById.get(dropTarget.parentId);
-  if (parentInstance === undefined) {
-    return;
-  }
-  const { position } = dropTarget;
-  if (position === "end") {
-    parentInstance.children.push(instance);
-  } else {
-    parentInstance.children.splice(position, 0, instance);
-  }
-};
-
-export const reparentInstanceMutableDeprecated = (
-  instancesIndex: InstancesIndex,
-  instanceId: Instance["id"],
-  dropTarget: DroppableTarget
-) => {
-  const prevParent = instancesIndex.parentInstancesById.get(instanceId);
-  const nextParent = instancesIndex.instancesById.get(dropTarget.parentId);
-  const instance = instancesIndex.instancesById.get(instanceId);
-  if (
-    prevParent === undefined ||
-    nextParent === undefined ||
-    instance === undefined
-  ) {
-    return;
-  }
-
-  const prevPosition = prevParent.children.findIndex(
-    (child) => child.type === "instance" && child.id === instanceId
-  );
-  if (prevPosition === -1) {
-    return;
-  }
-
-  // if parent is the same, we need to adjust the position
-  // to account for the removal of the instance.
-  let nextPosition = dropTarget.position;
-  if (
-    nextPosition !== "end" &&
-    prevParent.id === nextParent.id &&
-    prevPosition < nextPosition
-  ) {
-    nextPosition -= 1;
-  }
-
-  prevParent.children.splice(prevPosition, 1);
-  if (nextPosition === "end") {
-    nextParent.children.push(instance);
-  } else {
-    nextParent.children.splice(nextPosition, 0, instance);
-  }
-};
-
 export const reparentInstanceMutable = (
   instances: Instances,
   instanceSelector: InstanceSelector,
