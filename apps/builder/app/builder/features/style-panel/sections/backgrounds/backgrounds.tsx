@@ -126,9 +126,9 @@ export const BackgroundsSection = ({
 
   const layers = useMemo(
     () =>
-      Array.from(Array(layersCount), (_, layerNum) => ({
-        id: `${layerNum}`,
-        index: layerNum,
+      Array.from(Array(layersCount), (_, index) => ({
+        id: `${index}`,
+        index,
       })),
     [layersCount]
   );
