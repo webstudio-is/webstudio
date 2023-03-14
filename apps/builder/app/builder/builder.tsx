@@ -306,7 +306,6 @@ export const Builder = ({
     buildOrigin,
     project,
     page: build.pages.homePage,
-    mode: "edit",
     authReadToken,
   });
 
