@@ -4,7 +4,7 @@ import { Flex } from "@webstudio-is/design-system";
 import type { Instance } from "@webstudio-is/project-build";
 import {
   selectedInstanceSelectorStore,
-  hoveredInstanceIdStore,
+  hoveredInstanceSelectorStore,
   useRootInstance,
   instancesStore,
 } from "~/shared/nano-states";
@@ -43,7 +43,13 @@ export const Navigator = ({ isClosable, onClose }: NavigatorProps) => {
   );
 
   const handleHover = useCallback((instance: Instance | undefined) => {
-    hoveredInstanceIdStore.set(instance?.id);
+    if (instance) {
+      const instances = instancesStore.get();
+      const instanceSelector = getInstanceSelector(instances, instance.id);
+      hoveredInstanceSelectorStore.set(instanceSelector);
+    } else {
+      hoveredInstanceSelectorStore.set(undefined);
+    }
   }, []);
 
   if (rootInstance === undefined) {

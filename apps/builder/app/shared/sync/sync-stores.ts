@@ -15,7 +15,7 @@ import {
   assetContainersStore,
   selectedInstanceSelectorStore,
   selectedInstanceBrowserStyleStore,
-  hoveredInstanceIdStore,
+  hoveredInstanceSelectorStore,
   hoveredInstanceOutlineStore,
   isPreviewModeStore,
 } from "~/shared/nano-states";
@@ -65,9 +65,9 @@ export const registerContainers = () => {
     "selectedInstanceBrowserStyle",
     selectedInstanceBrowserStyleStore
   );
-  clientStores.set("hoveredInstanceIdStore", hoveredInstanceIdStore);
-  clientStores.set("hoveredInstanceOutlineStore", hoveredInstanceOutlineStore);
-  clientStores.set("isPreviewModeStore", isPreviewModeStore);
+  clientStores.set("hoveredInstanceSelector", hoveredInstanceSelectorStore);
+  clientStores.set("hoveredInstanceOutline", hoveredInstanceOutlineStore);
+  clientStores.set("isPreviewMode", isPreviewModeStore);
   for (const [name, store] of synchronizedBreakpointsStores) {
     clientStores.set(name, store);
   }

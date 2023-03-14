@@ -1,4 +1,5 @@
-import { getComponentMeta, idAttribute } from "@webstudio-is/react-sdk";
+import { getComponentMeta } from "@webstudio-is/react-sdk";
+import { getInstanceSelectorFromElement } from "~/shared/dom-utils";
 import {
   instancesStore,
   selectedInstanceSelectorStore,
@@ -15,24 +16,6 @@ declare module "~/shared/pubsub" {
     clickCanvas: undefined;
   }
 }
-
-// traverse dom to the root and find all instances
-const getInstanceSelectorFromElement = (element: Element) => {
-  const instanceSelector: InstanceSelector = [];
-  let matched: undefined | Element =
-    element.closest(`[${idAttribute}]`) ?? undefined;
-  while (matched) {
-    const instanceId = matched.getAttribute(idAttribute) ?? undefined;
-    if (instanceId !== undefined) {
-      instanceSelector.push(instanceId);
-    }
-    matched = matched.parentElement?.closest(`[${idAttribute}]`) ?? undefined;
-  }
-  if (instanceSelector.length === 0) {
-    return;
-  }
-  return instanceSelector;
-};
 
 const findClosestRichTextInstanceSelector = (
   instanceSelector: InstanceSelector
