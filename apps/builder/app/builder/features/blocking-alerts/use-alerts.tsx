@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import { Alert } from "./alert";
 import { useWindowResizeDebounced } from "~/shared/dom-hooks";
+import { isFeatureEnabled } from "@webstudio-is/feature-flags";
 
 const useTooSmallMessage = () => {
   const [message, setMessage] = useState<string>();
@@ -21,7 +22,7 @@ const useTooSmallMessage = () => {
 const useUnsupportedBrowser = () => {
   const [message, setMessage] = useState<string>();
   useEffect(() => {
-    if ("chrome" in window) {
+    if ("chrome" in window || isFeatureEnabled("unsupportedBrowsers")) {
       return;
     }
     setMessage(
@@ -40,5 +41,6 @@ export const useAlerts = () => {
   if (message === undefined) {
     return null;
   }
+
   return <Alert message={message} />;
 };
