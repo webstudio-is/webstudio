@@ -139,24 +139,24 @@ export const deleteLayerProperty =
 
 export type SetBackgroundProperty = ReturnType<typeof setLayerProperty>;
 
+const getLayersValue = (styleValue?: StyleValueInfo) => {
+  const clonedStyleValue: StyleValueInfo | undefined =
+    structuredClone(styleValue);
+  if (clonedStyleValue?.local?.type === "layers") {
+    return clonedStyleValue.local;
+  }
+  if (clonedStyleValue?.cascaded?.value.type === "layers") {
+    return clonedStyleValue?.cascaded?.value;
+  }
+  return { type: "layers" as const, value: [] };
+};
+
 export const setLayerProperty =
   (layerNum: number, style: StyleInfo, createBatchUpdate: CreateBatchUpdate) =>
   (propertyName: LayeredBackgroundProperty) =>
   (newValue: BackgroundStyleValue, options?: StyleUpdateOptions) => {
     const batch = createBatchUpdate();
     const layerCount = Math.max(getLayerCount(style), layerNum + 1);
-
-    const getLayersValue = (styleValue?: StyleValueInfo) => {
-      const clonedStyleValue: StyleValueInfo | undefined =
-        structuredClone(styleValue);
-      if (clonedStyleValue?.local?.type === "layers") {
-        return clonedStyleValue.local;
-      }
-      if (clonedStyleValue?.cascaded?.value.type === "layers") {
-        return clonedStyleValue?.cascaded?.value;
-      }
-      return { type: "layers" as const, value: [] };
-    };
 
     for (const property of layeredBackgroundProps) {
       const styleValue = style[property];
@@ -218,30 +218,24 @@ export const deleteLayer =
     for (const property of layeredBackgroundProps) {
       const styleValue = style[property];
 
-      const propertyStyle = styleValue?.local;
-
       // If property is not defined, try copy from cascade or set empty
-      let newPropertyStyle: LayersValue;
+      const newPropertyStyle: LayersValue = getLayersValue(styleValue);
 
-      if (propertyStyle?.type === "layers") {
-        newPropertyStyle = structuredClone(propertyStyle);
-      } else if (styleValue?.cascaded?.value.type === "layers") {
-        newPropertyStyle = structuredClone(styleValue?.cascaded?.value);
-      } else {
-        newPropertyStyle = { type: "layers", value: [] };
-      }
+      const missingLayerCount = layerCount - newPropertyStyle.value.length;
 
-      // All layers must have the same number of layers
-      if (newPropertyStyle.value.length < layerCount) {
-        newPropertyStyle.value = newPropertyStyle.value.concat(
-          new Array(layerCount - newPropertyStyle.value.length).fill(
-            layeredBackgroundPropsDefaults[property]
-          )
+      if (missingLayerCount < 0) {
+        // In theory this should never happen.
+        throw new Error(
+          `Layer count for property ${property} exceeds expected ${layerCount}`
         );
       }
 
-      if (newPropertyStyle.value.length > layerCount) {
-        newPropertyStyle.value = newPropertyStyle.value.slice(0, layerCount);
+      if (newPropertyStyle.value.length !== layerCount) {
+        // All background properties must have the same number of layers
+        const requiredLayers = new Array(missingLayerCount).fill(
+          structuredClone(layeredBackgroundPropsDefaults[property])
+        );
+        newPropertyStyle.value = newPropertyStyle.value.concat(requiredLayers);
       }
 
       newPropertyStyle.value.splice(layerNum, 1);
@@ -254,3 +248,49 @@ export const deleteLayer =
     }
     batch.publish();
   };
+
+export const swapLayers = (
+  newIndex: number,
+  oldIndex: number,
+  style: StyleInfo,
+  createBatchUpdate: CreateBatchUpdate
+) => {
+  const batch = createBatchUpdate();
+  const layerCount = Math.max(getLayerCount(style), newIndex + 1, oldIndex + 1);
+
+  for (const property of layeredBackgroundProps) {
+    const styleValue = style[property];
+
+    // If property is not defined, try copy from cascade or set empty
+    const newPropertyStyle: LayersValue = getLayersValue(styleValue);
+
+    const missingLayerCount = layerCount - newPropertyStyle.value.length;
+
+    if (missingLayerCount < 0) {
+      // In theory this should never happen.
+      throw new Error(
+        `Layer count for property ${property} exceeds expected ${layerCount}`
+      );
+    }
+
+    if (newPropertyStyle.value.length !== layerCount) {
+      // All background properties must have the same number of layers
+      const requiredLayers = new Array(missingLayerCount).fill(
+        structuredClone(layeredBackgroundPropsDefaults[property])
+      );
+      newPropertyStyle.value = newPropertyStyle.value.concat(requiredLayers);
+    }
+
+    const newValue = [...newPropertyStyle.value];
+
+    newValue.splice(oldIndex, 1);
+
+    newValue.splice(newIndex, 0, newPropertyStyle.value[oldIndex]);
+
+    newPropertyStyle.value = newValue;
+
+    batch.setProperty(property)(newPropertyStyle);
+  }
+
+  batch.publish();
+};

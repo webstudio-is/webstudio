@@ -44,6 +44,7 @@ const ListItem = (props: {
   hidden: boolean;
   labelColor: "default" | "preset" | "local" | "remote";
   state: undefined | "open";
+  active: boolean;
   focused: undefined | boolean;
   label?: React.ReactNode;
 }) => {
@@ -60,6 +61,7 @@ const ListItem = (props: {
       hidden={props.hidden}
       state={props.state}
       focused={props.focused}
+      active={props.active}
       buttons={
         <>
           <SmallToggleButton
@@ -134,6 +136,7 @@ export const Declarative = (props: {
               <ListItem
                 key={labelColor}
                 hidden={false}
+                active={false}
                 labelColor={labelColor}
                 state={undefined}
                 focused={false}
@@ -151,6 +154,7 @@ export const Declarative = (props: {
               <ListItem
                 key={labelColor}
                 hidden={false}
+                active={false}
                 labelColor={labelColor}
                 state={undefined}
                 focused={false}
@@ -163,6 +167,7 @@ export const Declarative = (props: {
               <ListItem
                 key={labelColor}
                 hidden={true}
+                active={false}
                 labelColor={labelColor}
                 state={undefined}
                 focused={false}
@@ -175,6 +180,50 @@ export const Declarative = (props: {
               <ListItem
                 key={labelColor}
                 hidden={false}
+                active={false}
+                labelColor={labelColor}
+                state={"open"}
+                focused={false}
+              />
+            )
+          )}
+        </StoryGrid>
+      </StorySection>
+
+      <StorySection title="Active">
+        <StoryGrid>
+          {(["default", "preset", "local", "remote"] as const).map(
+            (labelColor) => (
+              <ListItem
+                key={labelColor}
+                hidden={false}
+                active={true}
+                labelColor={labelColor}
+                state={undefined}
+                focused={false}
+              />
+            )
+          )}
+
+          {(["default", "preset", "local", "remote"] as const).map(
+            (labelColor) => (
+              <ListItem
+                key={labelColor}
+                hidden={true}
+                active={true}
+                labelColor={labelColor}
+                state={undefined}
+                focused={false}
+              />
+            )
+          )}
+
+          {(["default", "preset", "local", "remote"] as const).map(
+            (labelColor) => (
+              <ListItem
+                key={labelColor}
+                hidden={false}
+                active={true}
                 labelColor={labelColor}
                 state={"open"}
                 focused={false}

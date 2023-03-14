@@ -28,11 +28,16 @@ import {
   type DeleteBackgroundProperty,
   getLayerBackgroundStyleInfo,
   deleteLayerProperty,
+  swapLayers,
 } from "./background-layers";
 import { BackgroundContent } from "./background-content";
 import { getLayerName, LayerThumbnail } from "./background-thumbnail";
+import { useSortable } from "./use-sortable";
+import { useMemo } from "react";
 
 const Layer = (props: {
+  id: string;
+  isHighlighted: boolean;
   layerStyle: StyleInfo;
   setProperty: SetBackgroundProperty;
   deleteProperty: DeleteBackgroundProperty;
@@ -73,6 +78,8 @@ const Layer = (props: {
       }
     >
       <CssValueListItem
+        active={props.isHighlighted}
+        data-id={props.id}
         label={
           <PropertyName
             style={props.layerStyle}
@@ -116,27 +123,62 @@ export const BackgroundsSection = ({
   const layersCount = getLayerCount(currentStyle);
 
   const { items } = styleConfigByName["backgroundColor"];
+
+  const layers = useMemo(
+    () =>
+      Array.from(Array(layersCount), (_, index) => ({
+        id: `${index}`,
+        index,
+      })),
+    [layersCount]
+  );
+
+  const { dragItemId, placementIndicator, sortableRefCallback } = useSortable({
+    items: layers,
+    onSort: (newIndex, oldIndex) => {
+      swapLayers(newIndex, oldIndex, currentStyle, createBatchUpdate);
+    },
+  });
+
   return (
     <Flex gap={1} direction="column">
-      {Array.from(Array(layersCount), (_, layerNum) => (
-        <Layer
-          key={layerNum}
-          layerStyle={getLayerBackgroundStyleInfo(layerNum, currentStyle)}
-          deleteLayer={deleteLayer(layerNum, currentStyle, createBatchUpdate)}
-          setProperty={setLayerProperty(
-            layerNum,
-            currentStyle,
-            createBatchUpdate
-          )}
-          deleteProperty={deleteLayerProperty(
-            layerNum,
-            currentStyle,
-            deleteProperty,
-            createBatchUpdate
-          )}
-        />
-      ))}
+      <Flex
+        gap={1}
+        direction="column"
+        ref={sortableRefCallback}
+        css={{
+          pointerEvents: dragItemId ? "none" : "auto",
+          // to make DnD work we have to disable scrolling using touch
+          touchAction: "none",
+        }}
+      >
+        {layers.map((layer) => (
+          <Layer
+            id={layer.id}
+            key={layer.id}
+            isHighlighted={dragItemId === layer.id}
+            layerStyle={getLayerBackgroundStyleInfo(layer.index, currentStyle)}
+            deleteLayer={deleteLayer(
+              layer.index,
+              currentStyle,
+              createBatchUpdate
+            )}
+            setProperty={setLayerProperty(
+              layer.index,
+              currentStyle,
+              createBatchUpdate
+            )}
+            deleteProperty={deleteLayerProperty(
+              layer.index,
+              currentStyle,
+              deleteProperty,
+              createBatchUpdate
+            )}
+          />
+        ))}
 
+        {placementIndicator}
+      </Flex>
       <Flex css={{ px: theme.spacing[9] }} direction="column" gap={2}>
         <Grid css={{ gridTemplateColumns: "1fr 128px" }}>
           <PropertyName
