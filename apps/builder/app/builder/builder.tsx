@@ -49,6 +49,7 @@ import { AssetsProvider } from "./shared/assets";
 import type { Asset } from "@webstudio-is/asset-uploader";
 import { useSearchParams } from "@remix-run/react";
 import { useSyncInitializeOnce } from "~/shared/hook-utils";
+import { useAlerts } from "./features/blocking-alerts";
 
 registerContainers();
 
@@ -301,6 +302,7 @@ export const Builder = ({
     },
     [publishRef, onRefReadCanvasWidth, onRefReadCanvas]
   );
+  const alerts = useAlerts();
 
   const canvasUrl = getBuildUrl({
     buildOrigin,
@@ -349,6 +351,7 @@ export const Builder = ({
           )}
         </SidePanel>
         {isPreviewMode === false && <Footer />}
+        {alerts}
       </ChromeWrapper>
     </AssetsProvider>
   );
