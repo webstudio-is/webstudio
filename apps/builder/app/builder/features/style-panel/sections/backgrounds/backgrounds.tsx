@@ -141,43 +141,44 @@ export const BackgroundsSection = ({
   });
 
   return (
-    <Flex
-      gap={1}
-      direction="column"
-      ref={sortableRefCallback}
-      css={{
-        pointerEvents: dragItemId ? "none" : "auto",
-        // to make DnD work we have to disable scrolling using touch
-        touchAction: "none",
-      }}
-    >
-      {layers.map((layer) => (
-        <Layer
-          id={layer.id}
-          key={layer.id}
-          isHighlighted={dragItemId === layer.id}
-          layerStyle={getLayerBackgroundStyleInfo(layer.index, currentStyle)}
-          deleteLayer={deleteLayer(
-            layer.index,
-            currentStyle,
-            createBatchUpdate
-          )}
-          setProperty={setLayerProperty(
-            layer.index,
-            currentStyle,
-            createBatchUpdate
-          )}
-          deleteProperty={deleteLayerProperty(
-            layer.index,
-            currentStyle,
-            deleteProperty,
-            createBatchUpdate
-          )}
-        />
-      ))}
+    <Flex gap={1} direction="column">
+      <Flex
+        gap={1}
+        direction="column"
+        ref={sortableRefCallback}
+        css={{
+          pointerEvents: dragItemId ? "none" : "auto",
+          // to make DnD work we have to disable scrolling using touch
+          touchAction: "none",
+        }}
+      >
+        {layers.map((layer) => (
+          <Layer
+            id={layer.id}
+            key={layer.id}
+            isHighlighted={dragItemId === layer.id}
+            layerStyle={getLayerBackgroundStyleInfo(layer.index, currentStyle)}
+            deleteLayer={deleteLayer(
+              layer.index,
+              currentStyle,
+              createBatchUpdate
+            )}
+            setProperty={setLayerProperty(
+              layer.index,
+              currentStyle,
+              createBatchUpdate
+            )}
+            deleteProperty={deleteLayerProperty(
+              layer.index,
+              currentStyle,
+              deleteProperty,
+              createBatchUpdate
+            )}
+          />
+        ))}
 
-      {placementIndicator}
-
+        {placementIndicator}
+      </Flex>
       <Flex css={{ px: theme.spacing[9] }} direction="column" gap={2}>
         <Grid css={{ gridTemplateColumns: "1fr 128px" }}>
           <PropertyName
