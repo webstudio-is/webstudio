@@ -110,16 +110,4 @@ describe("getBuildParams", () => {
       ).pagePath
     ).toBe("/abc/123");
   });
-
-  test("detects mode", () => {
-    expect(
-      getBuildParams(makeRequest("https://bar.foo.com?mode=edit"), env)?.mode
-    ).toBe("edit");
-    expect(
-      getBuildParams(makeRequest("https://bar.foo.com?mode=preview"), env)?.mode
-    ).toBe("preview");
-    expect(getBuildParams(makeRequest("https://bar.foo.com"), env)?.mode).toBe(
-      "published"
-    );
-  });
 });

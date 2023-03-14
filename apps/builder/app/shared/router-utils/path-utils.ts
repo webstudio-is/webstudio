@@ -1,7 +1,6 @@
 import type { AUTH_PROVIDERS } from "~/shared/session";
 import type { Page } from "@webstudio-is/project-build";
 import type { Project } from "@webstudio-is/project";
-import type { BuildMode } from "./build-params";
 import type { ThemeSetting } from "~/shared/theme";
 import env from "~/shared/env";
 
@@ -121,7 +120,6 @@ export const getBuildUrl = ({
   buildOrigin,
   project,
   page,
-  mode,
   // Hidden token for canvas (should not be visible in browser URL)
   authReadToken,
   // Token to share project
@@ -130,7 +128,6 @@ export const getBuildUrl = ({
   buildOrigin: string;
   project: Project;
   page: Page;
-  mode?: BuildMode;
   authReadToken?: string;
   authToken?: string;
 }) => {
@@ -142,10 +139,6 @@ export const getBuildUrl = ({
   }
 
   url.searchParams.set("projectId", project.id);
-
-  if (mode) {
-    url.searchParams.set("mode", mode);
-  }
 
   if (authReadToken) {
     url.searchParams.set("authReadToken", authReadToken);

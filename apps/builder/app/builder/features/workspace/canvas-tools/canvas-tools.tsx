@@ -16,6 +16,7 @@ import {
 import { useSubscribeTextToolbar, TextToolbar } from "./text-toolbar";
 import { useSubscribeInstanceRect } from "./hooks/use-subscribe-instance-rect";
 import { useSubscribeTextEditingInstanceId } from "./hooks/use-subscribe-editing-instance-id";
+import { useSubscribeSwitchPage } from "~/shared/pages";
 
 const toolsStyle = {
   position: "absolute",
@@ -38,6 +39,7 @@ export const CanvasTools = ({ publish }: CanvasToolsProps) => {
   useSubscribeScrollState();
   useSubscribeDragAndDropState();
   useSubscribeTextEditingInstanceId();
+  useSubscribeSwitchPage();
 
   const [isPreviewMode] = useIsPreviewMode();
   const [isScrolling] = useIsScrolling();

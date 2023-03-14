@@ -11,6 +11,7 @@ import {
   customComponentMetas,
   customComponentPropsMetas,
   setParams,
+  customComponents,
   type GetComponent,
 } from "@webstudio-is/react-sdk";
 import { publish } from "~/shared/pubsub";
@@ -33,7 +34,6 @@ import { usePublishScrollState } from "./shared/use-publish-scroll-state";
 import { useDragAndDrop } from "./shared/use-drag-drop";
 import { useSubscribeBuilderReady } from "./shared/use-builder-ready";
 import { useCopyPaste } from "~/shared/copy-paste";
-import { customComponents } from "./custom-components";
 import { useHoveredInstanceConnector } from "./hovered-instance-connector";
 import { setDataCollapsed, subscribeCollapsedToPubSub } from "./collapsed";
 import { useWindowResizeDebounced } from "~/shared/dom-hooks";

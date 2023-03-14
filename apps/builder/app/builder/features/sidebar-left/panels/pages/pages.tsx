@@ -1,6 +1,5 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useStore } from "@nanostores/react";
-import { useNavigate } from "@remix-run/react";
 import {
   DeprecatedIconButton,
   TreeItemLabel,
@@ -23,16 +22,12 @@ import {
 import type { Page, Pages } from "@webstudio-is/project-build";
 import type { Publish } from "~/shared/pubsub";
 import { useProject } from "~/builder/shared/nano-states";
-import { builderPath } from "~/shared/router-utils";
 import type { TabName } from "../../types";
 import { CloseButton, Header } from "../../header";
 import { SettingsPanel } from "./settings-panel";
 import { NewPageSettings, PageSettings } from "./settings";
-import {
-  pagesStore,
-  selectedPageIdStore,
-  useAuthToken,
-} from "~/shared/nano-states";
+import { pagesStore, selectedPageIdStore } from "~/shared/nano-states";
+import { useSwitchPage } from "~/shared/pages";
 
 type TabContentProps = {
   onSetActiveTab: (tabName: TabName) => void;
@@ -234,21 +229,7 @@ const PagesPanel = ({
 export const TabContent = (props: TabContentProps) => {
   const currentPageId = useStore(selectedPageIdStore);
   const [project] = useProject();
-  const [authToken] = useAuthToken();
-
-  const navigate = useNavigate();
-  const handleSelect = (pageId: "home" | Page["id"]) => {
-    if (project === undefined) {
-      return;
-    }
-    navigate(
-      builderPath({
-        projectId: project.id,
-        pageId: pageId === "home" ? undefined : pageId,
-        authToken,
-      })
-    );
-  };
+  const switchPage = useSwitchPage();
 
   const newPageId = "new-page";
   const [editingPageId, setEditingPageId] = useState<string>();
@@ -266,7 +247,7 @@ export const TabContent = (props: TabContentProps) => {
             current === newPageId ? undefined : newPageId
           )
         }
-        onSelect={handleSelect}
+        onSelect={switchPage}
         selectedPageId={currentPageId}
         onEdit={setEditingPageId}
         editingPageId={editingPageId}
@@ -277,7 +258,7 @@ export const TabContent = (props: TabContentProps) => {
             onClose={() => setEditingPageId(undefined)}
             onSuccess={(pageId) => {
               setEditingPageId(undefined);
-              handleSelect(pageId);
+              switchPage(pageId);
             }}
           />
         )}
@@ -287,7 +268,7 @@ export const TabContent = (props: TabContentProps) => {
             onDelete={() => {
               setEditingPageId(undefined);
               if (editingPageId === currentPageId) {
-                handleSelect("home");
+                switchPage();
               }
             }}
             pageId={editingPageId}
