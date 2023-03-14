@@ -24,6 +24,7 @@ import {
 import { useCssRules } from "~/canvas/shared/styles";
 import { SelectedInstanceConnector } from "./selected-instance-connector";
 import { getInstanceSelector } from "~/shared/tree-utils";
+import { useHandleLinkClick } from "./link";
 
 const TextEditor = lazy(() => import("../text-editor"));
 
@@ -71,6 +72,8 @@ export const WebstudioComponentDev = ({
     useTextEditingInstanceId();
   const selectedInstanceSelector = useStore(selectedInstanceSelectorStore);
 
+  const handleLinkClick = useHandleLinkClick();
+
   const instanceProps = useInstanceProps(instance.id);
   const userProps = useMemo(() => {
     const result: UserProps = {};
@@ -117,8 +120,8 @@ export const WebstudioComponentDev = ({
     [componentAttribute]: instance.component,
     [idAttribute]: instance.id,
     onClick: (event: MouseEvent) => {
-      if ((event.target as HTMLElement).closest("a")) {
-        event.preventDefault();
+      if (event.currentTarget instanceof HTMLAnchorElement) {
+        handleLinkClick(event);
       }
     },
     onSubmit: (event: FormEvent) => {
