@@ -1,6 +1,16 @@
+import type { Placement } from "../primitives/dnd";
+
 export type ItemId = string;
 
 export type ItemSelector = string[];
+
+export type ItemDropTarget<Item> = {
+  itemSelector: ItemSelector;
+  data: Item;
+  rect: DOMRect;
+  indexWithinChildren: number;
+  placement: Placement;
+};
 
 export const getElementByItemSelector = (
   root: undefined | Element,
@@ -16,6 +26,21 @@ export const getElementByItemSelector = (
     root?.querySelector(`${domSelector} [data-item-button-id="${itemId}"]`) ??
     undefined
   );
+};
+
+export const getItemSelectorFromElement = (element: Element) => {
+  const itemSelector: ItemSelector = [];
+  let matched: undefined | Element =
+    element.closest(`[data-drop-target-id]`) ?? undefined;
+  while (matched) {
+    const itemId = matched.getAttribute("data-drop-target-id") ?? undefined;
+    if (itemId !== undefined) {
+      itemSelector.push(itemId);
+    }
+    matched =
+      matched.parentElement?.closest(`[data-drop-target-id]`) ?? undefined;
+  }
+  return itemSelector;
 };
 
 export const areItemSelectorsEqual = (

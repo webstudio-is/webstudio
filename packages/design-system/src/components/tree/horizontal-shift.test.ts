@@ -1,7 +1,8 @@
 import { describe, test, expect } from "@jest/globals";
 import { renderHook, act } from "@testing-library/react-hooks";
-import type { DropTarget, Placement } from "../primitives/dnd";
+import type { Placement } from "../primitives/dnd";
 import { useHorizontalShift } from "./horizontal-shift";
+import type { ItemDropTarget, ItemId } from "./item-utils";
 import {
   canAcceptChild,
   getItemChildren,
@@ -80,16 +81,20 @@ const makeDrop = ({
   into: Item;
   after?: Item;
   placement?: Placement;
-}): DropTarget<Item> => ({
+}): ItemDropTarget<Item> => ({
+  itemSelector: getItemSelector(into.id),
   data: into,
   indexWithinChildren:
     after === undefined ? 0 : into.children.indexOf(after) + 1,
   placement,
-
-  // not used
-  element: null as unknown as HTMLElement,
   rect: null as unknown as DOMRect,
 });
+
+const getItemSelector = (itemId: ItemId) => {
+  return getItemPath(tree, itemId)
+    .reverse()
+    .map((item) => item.id);
+};
 
 const render = (
   {
@@ -97,13 +102,14 @@ const render = (
     dropTarget,
   }: {
     dragItem: Item | undefined;
-    dropTarget: DropTarget<Item> | undefined;
+    dropTarget: ItemDropTarget<Item> | undefined;
   },
   shift = -1
 ) => {
   const { result } = renderHook((props) => useHorizontalShift<Item>(props), {
     initialProps: {
-      dragItem,
+      dragItemSelector:
+        dragItem === undefined ? undefined : getItemSelector(dragItem.id),
       dropTarget,
       root: tree,
       getIsExpanded: (item: Item) => item.children.length > 0,
