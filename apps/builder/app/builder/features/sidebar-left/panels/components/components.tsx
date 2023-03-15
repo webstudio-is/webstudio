@@ -16,7 +16,10 @@ import {
   selectedInstanceSelectorStore,
 } from "~/shared/nano-states";
 import { useSubscribe, type Publish } from "~/shared/pubsub";
-import { useCanvasRect } from "~/builder/shared/nano-states";
+import {
+  useCanvasRect,
+  useEnabledCanvasPointerEvents,
+} from "~/builder/shared/nano-states";
 import { insertNewComponentInstance } from "~/shared/instance-utils";
 import { zoomStore } from "~/shared/nano-states/breakpoints";
 import type { TabName } from "../../types";
@@ -92,6 +95,7 @@ const elementToComponentName = (
 export const TabContent = ({ publish, onSetActiveTab }: TabContentProps) => {
   const [dragComponent, setDragComponent] = useState<Instance["component"]>();
   const [point, setPoint] = useState<Point>({ x: 0, y: 0 });
+  const [, toggleCanvasPointerEvents] = useEnabledCanvasPointerEvents();
 
   const [canvasRect] = useCanvasRect();
   const zoom = useStore(zoomStore);
@@ -134,6 +138,7 @@ export const TabContent = ({ publish, onSetActiveTab }: TabContentProps) => {
           dragItem: utils.tree.createInstance({ component: componentName }),
         },
       });
+      toggleCanvasPointerEvents(false);
     },
     onMove: (point) => {
       setPoint(point);
@@ -148,6 +153,7 @@ export const TabContent = ({ publish, onSetActiveTab }: TabContentProps) => {
         type: "dragEnd",
         payload: { origin: "panel", isCanceled },
       });
+      toggleCanvasPointerEvents(true);
     },
   });
 

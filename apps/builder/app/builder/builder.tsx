@@ -13,7 +13,10 @@ import robotoMonoFont from "@fontsource/roboto-mono/index.css";
 import { useSharedShortcuts } from "~/shared/shortcuts";
 import { SidebarLeft } from "./features/sidebar-left";
 import { Inspector } from "./features/inspector";
-import { useProject } from "./shared/nano-states";
+import {
+  useEnabledCanvasPointerEvents,
+  useProject,
+} from "./shared/nano-states";
 import { Topbar } from "./features/topbar";
 import builderStyles from "./builder.css";
 import { Footer } from "./features/footer";
@@ -302,6 +305,7 @@ export const Builder = ({
     },
     [publishRef, onRefReadCanvasWidth, onRefReadCanvas]
   );
+  const [isCanvasPointerEventsEnabled] = useEnabledCanvasPointerEvents();
 
   const canvasUrl = getBuildUrl({
     buildOrigin,
@@ -319,12 +323,7 @@ export const Builder = ({
             <CanvasIframe
               ref={iframeRefCallback}
               src={canvasUrl}
-              pointerEvents={
-                dragAndDropState.isDragging &&
-                dragAndDropState.origin === "panel"
-                  ? "none"
-                  : "all"
-              }
+              pointerEvents={isCanvasPointerEventsEnabled ? "all" : "none"}
               title={project.title}
               css={{
                 height: "100%",
