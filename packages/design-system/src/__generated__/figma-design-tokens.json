@@ -5,18 +5,18 @@
         {
           "color": "#00000026",
           "type": "dropShadow",
-          "x": 0,
-          "y": 5,
-          "blur": 17,
-          "spread": 0
+          "x": "0",
+          "y": "5",
+          "blur": "17",
+          "spread": "0"
         },
         {
           "color": "#0000001a",
           "type": "dropShadow",
-          "x": 0,
-          "y": 2,
-          "blur": 7,
-          "spread": 0
+          "x": "0",
+          "y": "2",
+          "blur": "7",
+          "spread": "0"
         }
       ],
       "type": "boxShadow"
@@ -478,7 +478,7 @@
           "type": "color"
         }
       },
-      "set": {
+      "local": {
         "main": {
           "value": "#e1f0ff",
           "type": "color"
@@ -488,7 +488,7 @@
           "type": "color"
         }
       },
-      "inherited": {
+      "remote": {
         "main": {
           "value": "#ffe8d7",
           "type": "color"
@@ -760,7 +760,7 @@
           "description": "color of child lines within the current item of the navigator item & pages panel item"
         }
       },
-      "set": {
+      "local": {
         "main": {
           "value": "#b7d9f8",
           "type": "color",
@@ -772,7 +772,7 @@
           "description": "border color of set elements within the flex controls ui"
         }
       },
-      "inherited": {
+      "remote": {
         "main": {
           "value": "#ffcca7",
           "type": "color",
@@ -872,7 +872,7 @@
           "description": "color to create a more subtle contrast over colored and dark backgrounds"
         }
       },
-      "set": {
+      "local": {
         "main": {
           "value": "#016ccc",
           "type": "color",
@@ -884,7 +884,7 @@
           "description": "foreground color for flex-ui set elements"
         }
       },
-      "inherited": {
+      "remote": {
         "main": {
           "value": "#b74900",
           "type": "color",
@@ -942,10 +942,10 @@
         "value": {
           "color": "#1717171a",
           "type": "dropShadow",
-          "x": 0,
-          "y": 4,
-          "blur": 4,
-          "spread": 0
+          "x": "0",
+          "y": "4",
+          "blur": "4",
+          "spread": "0"
         },
         "type": "boxShadow",
         "description": "elevation for small things within the dashboard"
@@ -954,10 +954,10 @@
         "value": {
           "color": "#1717171a",
           "type": "dropShadow",
-          "x": 0,
-          "y": 8,
-          "blur": 16,
-          "spread": 0
+          "x": "0",
+          "y": "8",
+          "blur": "16",
+          "spread": "0"
         },
         "type": "boxShadow",
         "description": "elevation for big things within the dashboard"
