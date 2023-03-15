@@ -6,7 +6,6 @@ import {
   findItemById,
   getItemChildren,
   getItemPath,
-  getItemPathWithPositions,
   Item,
   reparent,
 } from "./test-tree-data";
@@ -79,7 +78,6 @@ export const StressTest = ({ animate }: { animate: boolean }) => {
     <Flex css={{ width: 300, height: 500, flexDirection: "column" }}>
       <Tree
         findItemById={findItemById}
-        getItemPathWithPositions={getItemPathWithPositions}
         getItemPath={getItemPath}
         canAcceptChild={canAcceptChild}
         canLeaveParent={() => true}

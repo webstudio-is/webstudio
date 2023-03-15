@@ -21,10 +21,6 @@ export type TreeProps<Data extends { id: string }> = {
   canAcceptChild: (item: Data) => boolean;
   findItemById: (root: Data, id: string) => Data | undefined;
   getItemPath: (root: Data, id: string) => Data[];
-  getItemPathWithPositions: (
-    root: Data,
-    id: string
-  ) => Array<{ item: Data; position: number }>;
   getItemChildren: (item: Data) => Data[];
   renderItem: (props: TreeItemRenderProps<Data>) => React.ReactNode;
 
@@ -40,7 +36,6 @@ export type TreeProps<Data extends { id: string }> = {
 
 export const Tree = <Data extends { id: string }>({
   root,
-  getItemPathWithPositions,
   canLeaveParent,
   canAcceptChild,
   findItemById,
@@ -77,7 +72,6 @@ export const Tree = <Data extends { id: string }>({
     root,
     getIsExpanded,
     getItemPath,
-    getItemPathWithPositions,
     getItemChildren,
     canAcceptChild,
   });

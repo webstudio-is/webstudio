@@ -6,7 +6,7 @@ export type Item = {
   children: Item[];
 };
 
-export const getItemPathWithPositions = (tree: Item, itemId: string) => {
+export const getItemPath = (tree: Item, itemId: string) => {
   const path = [];
 
   const find = (item: Item) => {
@@ -21,21 +21,18 @@ export const getItemPathWithPositions = (tree: Item, itemId: string) => {
       }
       const found = find(child);
       if (found) {
-        path.push({ item: child, position: i });
+        path.push(child);
         return true;
       }
     }
   };
 
   if (find(tree)) {
-    path.push({ item: tree, position: 0 });
+    path.push(tree);
   }
 
   return path.reverse();
 };
-
-export const getItemPath = (tree: Item, id: string) =>
-  getItemPathWithPositions(tree, id).map(({ item }) => item);
 
 export const canAcceptChild = (item: Item) => item.canAcceptChildren;
 
