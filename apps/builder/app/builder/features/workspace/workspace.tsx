@@ -13,7 +13,7 @@ import { useEffect } from "react";
 
 const workspaceStyle = {
   flexGrow: 1,
-  background: theme.colors.gray3,
+  background: theme.colors.backgroundCanvas,
   overflow: "scroll",
   position: "relative",
 };
