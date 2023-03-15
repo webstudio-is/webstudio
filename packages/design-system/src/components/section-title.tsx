@@ -14,7 +14,6 @@ import { theme, css, type CSS } from "../stitches.config";
 import { Button } from "./button";
 import { textVariants } from "./text";
 import { cssVars } from "@webstudio-is/css-vars";
-import type { labelColors } from "./label";
 
 const addIconColor = cssVars.define("add-icon-color");
 
@@ -29,15 +28,14 @@ const containerStyle = css({
 
 const buttonStyle = css({
   all: "unset", // reset <button>
-  ...textVariants.titles,
+  display: "flex",
+  gap: theme.spacing[5],
+  alignItems: "center",
   width: "100%",
   height: "100%",
   boxSizing: "border-box",
   paddingLeft: theme.spacing[9],
-  paddingRight: theme.spacing[5],
-  overflow: "hidden",
-  textOverflow: "ellipsis",
-  whiteSpace: "nowrap",
+  paddingRight: theme.spacing[7],
   color: theme.colors.foregroundSubtle,
   cursor: "pointer",
   "&:hover, &:focus-visible, &[data-state=open]": {
@@ -58,10 +56,33 @@ const buttonStyle = css({
   },
 });
 
+const buttonTextStyle = css(textVariants.titles, {
+  overflow: "hidden",
+  textOverflow: "ellipsis",
+  whiteSpace: "nowrap",
+});
+
 const addButtonSlotStyle = css({
   position: "absolute",
   right: theme.spacing[6],
   top: theme.spacing[4],
+});
+
+const dotsSlotStyle = css({
+  display: "flex",
+});
+
+const dotStyle = css({
+  width: theme.spacing[4],
+  height: theme.spacing[4],
+  borderRadius: theme.borderRadius.round,
+  marginRight: -2,
+  variants: {
+    color: {
+      local: { backgroundColor: theme.colors.foregroundSetFlexUi },
+      remote: { backgroundColor: theme.colors.foregroundInheritedFlexUi },
+    },
+  },
 });
 
 export const SectionTitle = forwardRef(
@@ -75,13 +96,18 @@ export const SectionTitle = forwardRef(
       addIcon = <PlusIcon />,
       className,
       css,
+      children,
       ...props
     }: Omit<ComponentProps<"button">, "onClick"> & {
       isOpen: boolean;
       onClose: () => void;
       onOpen: () => void;
       onAdd?: () => void;
-      hasItems?: boolean | Array<Omit<(typeof labelColors)[number], "default">>;
+      /**
+       * If set to `true`, dots aren't shown,
+       * but still affects how isOpen is treated and whether onAdd is called on open.
+       */
+      hasItems?: boolean | Array<"local" | "remote">;
       addIcon?: ReactNode;
       css?: CSS;
     },
@@ -90,6 +116,8 @@ export const SectionTitle = forwardRef(
     const isEmpty =
       hasItems === false || (Array.isArray(hasItems) && hasItems.length === 0);
 
+    const dots = isOpen === false && Array.isArray(hasItems) ? hasItems : [];
+
     const state = isOpen && isEmpty === false ? "open" : "closed";
 
     return (
@@ -97,9 +125,10 @@ export const SectionTitle = forwardRef(
         <button
           className={buttonStyle({ hasAddIcon: onAdd !== undefined })}
           onClick={() => {
-            if (isOpen) {
+            if (isOpen && isEmpty === false) {
               onClose();
-            } else {
+            }
+            if (isOpen === false) {
               onOpen();
             }
             if (isEmpty) {
@@ -109,7 +138,16 @@ export const SectionTitle = forwardRef(
           data-state={state}
           ref={ref}
           {...props}
-        />
+        >
+          <div className={buttonTextStyle()}>{children}</div>
+          {dots.length > 0 && (
+            <div className={dotsSlotStyle()}>
+              {dots.map((color) => (
+                <div key={color} className={dotStyle({ color })} />
+              ))}
+            </div>
+          )}
+        </button>
         {onAdd && (
           <div className={addButtonSlotStyle()}>
             <Button
@@ -130,18 +168,3 @@ export const SectionTitle = forwardRef(
   }
 );
 SectionTitle.displayName = "SectionTitle";
-
-// const useTrackFocusVisible = () => {
-//   const [isFocused, setFocused] = useState(false);
-//   return {
-//     isFocused,
-//     hadnleFocus(event: FocusEvent<HTMLElement>) {
-//       if (event.currentTarget.matches(":focus-visible")) {
-//         setFocused(true);
-//       }
-//     },
-//     handleBlur() {
-//       setFocused(false);
-//     },
-//   };
-// };

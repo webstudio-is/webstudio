@@ -24,11 +24,28 @@ const Wrapped = ({
           isOpen={isOpen}
           onOpen={() => setOpen(true)}
           onClose={() => setOpen(false)}
+          hasItems={["local", "remote"]}
           {...props}
         />
       </div>
-      <Text variant="mono">{isOpen ? "Open" : "Closed"}</Text>
+      <Text variant="mono">
+        {isOpen ? "Open" : "Closed"}
+        {props.hasItems === false && ", Empty"}
+      </Text>
     </div>
+  );
+};
+
+const Empty = () => {
+  const [hasItems, setHasItems] = useState(false);
+  return (
+    <Wrapped
+      onAdd={() => setHasItems(true)}
+      initialIsOpen
+      hasItems={hasItems ? ["local"] : false}
+    >
+      Title
+    </Wrapped>
   );
 };
 
@@ -47,6 +64,9 @@ export const Demo = () => (
           Title
         </Wrapped>
       </StoryGrid>
+    </StorySection>
+    <StorySection title="Open, but empty">
+      <Empty />
     </StorySection>
     <StorySection title="Long title">
       <StoryGrid>
