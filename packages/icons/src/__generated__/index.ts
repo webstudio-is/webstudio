@@ -1,3 +1,4 @@
+export * from "./alert";
 export * from "./auto-scroll";
 export * from "./blockquote";
 export * from "./box-link";

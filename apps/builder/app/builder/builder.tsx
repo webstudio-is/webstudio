@@ -49,6 +49,7 @@ import { AssetsProvider } from "./shared/assets";
 import type { Asset } from "@webstudio-is/asset-uploader";
 import { useSearchParams } from "@remix-run/react";
 import { useSyncInitializeOnce } from "~/shared/hook-utils";
+import { BlockingAlerts } from "./features/blocking-alerts";
 
 registerContainers();
 
@@ -328,7 +329,6 @@ export const Builder = ({
               css={{
                 height: "100%",
                 width: "100%",
-                //minWidth,
               }}
             />
           </Workspace>
@@ -349,6 +349,7 @@ export const Builder = ({
           )}
         </SidePanel>
         {isPreviewMode === false && <Footer />}
+        <BlockingAlerts />
       </ChromeWrapper>
     </AssetsProvider>
   );
