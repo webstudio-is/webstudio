@@ -32,6 +32,19 @@ export const useSettingsLogic = () => {
     updates.current.push({ operation: "set", property: "label", value });
   };
 
+  // Gets updates by property and removes them from the list
+  const popUpdates = (property: Setting) => {
+    const remainingUpdates: Array<Operation> = [];
+    const searchedUpdates: Array<Operation> = [];
+    for (const update of updates.current) {
+      const array =
+        update.property === property ? searchedUpdates : remainingUpdates;
+      array.push(update);
+    }
+    updates.current = remainingUpdates;
+    return searchedUpdates;
+  };
+
   const updateLabel = useCallback(() => {
     const selectedInstance = selectedInstanceStore.get();
     if (selectedInstance === undefined) {
@@ -42,7 +55,8 @@ export const useSettingsLogic = () => {
       if (instance === undefined) {
         return;
       }
-      for (const update of updates.current) {
+      const labelUpdates = popUpdates("label");
+      for (const update of labelUpdates) {
         if (update.operation === "delete") {
           delete instance.label;
           continue;
