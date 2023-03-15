@@ -20,7 +20,6 @@ type NavigatorProps = {
 
 export const Navigator = ({ isClosable, onClose }: NavigatorProps) => {
   const selectedInstanceSelector = useStore(selectedInstanceSelectorStore);
-  const selectedInstanceId = selectedInstanceSelector?.[0];
   const [rootInstance] = useRootInstance();
 
   const handleSelect = useCallback((instanceId: Instance["id"]) => {
@@ -64,8 +63,8 @@ export const Navigator = ({ isClosable, onClose }: NavigatorProps) => {
       <Flex css={{ flexGrow: 1, flexDirection: "column" }}>
         <InstanceTree
           root={rootInstance}
-          // @todo accept and provide in callback instance selector instead of just id
-          selectedItemId={selectedInstanceId}
+          selectedItemSelector={selectedInstanceSelector}
+          // @todo provide in callback instance selector instead of just id
           onSelect={handleSelect}
           onHover={handleHover}
           onDragEnd={handleDragEnd}
