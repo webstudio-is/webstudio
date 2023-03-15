@@ -6,7 +6,6 @@ import {
   canAcceptChild,
   getItemChildren,
   getItemPath,
-  getItemPathWithPositions,
   Item,
 } from "./test-tree-data";
 
@@ -111,7 +110,6 @@ const render = (
       canAcceptChild,
       getItemChildren,
       getItemPath,
-      getItemPathWithPositions,
     },
   });
 
