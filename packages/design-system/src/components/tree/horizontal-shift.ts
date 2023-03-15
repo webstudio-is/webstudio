@@ -27,21 +27,14 @@ export const useHorizontalShift = <Data extends { id: string }>({
 }) => {
   const [horizontalShift, setHorizontalShift] = useState(0);
 
-  const dragItemDepth = useMemo(
-    () => dragItem && getItemPath(root, dragItem.id).length - 1,
-    [dragItem, root, getItemPath]
-  );
-
   // Here we want to allow user to shift placement line horizontally
   // but only if that corresponds to a meaningful position in the tree
   const shiftedDropTarget = useMemo<ShiftedDropTarget<Data> | undefined>(() => {
-    if (
-      dropTarget === undefined ||
-      dragItemDepth === undefined ||
-      dragItem === undefined
-    ) {
+    if (dropTarget === undefined || dragItem === undefined) {
       return undefined;
     }
+
+    const dragItemDepth = getItemPath(root, dragItem.id).length - 1;
 
     const { data, placement, indexWithinChildren } = dropTarget;
 
@@ -165,10 +158,10 @@ export const useHorizontalShift = <Data extends { id: string }>({
     return withoutShift;
   }, [
     dropTarget,
-    dragItemDepth,
     dragItem,
     root,
     horizontalShift,
+    getItemPath,
     canAcceptChild,
     getItemChildren,
     getIsExpanded,
