@@ -1,5 +1,5 @@
 /**
- * Implementation of the "Title" component from:
+ * Implementation of the "Title (title of: panel)" component from:
  * https://www.figma.com/file/sfCE7iLS0k25qCxiifQNLE/%F0%9F%93%9A-Webstudio-Library?node-id=2%3A12361
  */
 
