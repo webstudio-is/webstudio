@@ -1,1 +1,1 @@
-export { useAlerts } from "./use-alerts";
+export { BlockingAlerts } from "./blocking-alerts";

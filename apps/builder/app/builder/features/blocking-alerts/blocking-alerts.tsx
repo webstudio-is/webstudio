@@ -32,7 +32,7 @@ const useUnsupportedBrowser = () => {
   return message;
 };
 
-export const useAlerts = () => {
+export const BlockingAlerts = () => {
   // Takes the latest message, order matters
   const message = [useTooSmallMessage(), useUnsupportedBrowser()]
     .filter(Boolean)
