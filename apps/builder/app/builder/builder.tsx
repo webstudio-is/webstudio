@@ -13,7 +13,10 @@ import robotoMonoFont from "@fontsource/roboto-mono/index.css";
 import { useSharedShortcuts } from "~/shared/shortcuts";
 import { SidebarLeft } from "./features/sidebar-left";
 import { Inspector } from "./features/inspector";
-import { useProject } from "./shared/nano-states";
+import {
+  isCanvasPointerEventsEnabledStore,
+  useProject,
+} from "./shared/nano-states";
 import { Topbar } from "./features/topbar";
 import builderStyles from "./builder.css";
 import { Footer } from "./features/footer";
@@ -50,6 +53,7 @@ import type { Asset } from "@webstudio-is/asset-uploader";
 import { useSearchParams } from "@remix-run/react";
 import { useSyncInitializeOnce } from "~/shared/hook-utils";
 import { BlockingAlerts } from "./features/blocking-alerts";
+import { useStore } from "@nanostores/react";
 
 registerContainers();
 
@@ -302,6 +306,9 @@ export const Builder = ({
     },
     [publishRef, onRefReadCanvasWidth, onRefReadCanvas]
   );
+  const isCanvasPointerEventsEnabled = useStore(
+    isCanvasPointerEventsEnabledStore
+  );
 
   const canvasUrl = getBuildUrl({
     buildOrigin,
@@ -319,12 +326,7 @@ export const Builder = ({
             <CanvasIframe
               ref={iframeRefCallback}
               src={canvasUrl}
-              pointerEvents={
-                dragAndDropState.isDragging &&
-                dragAndDropState.origin === "panel"
-                  ? "none"
-                  : "all"
-              }
+              pointerEvents={isCanvasPointerEventsEnabled ? "auto" : "none"}
               title={project.title}
               css={{
                 height: "100%",

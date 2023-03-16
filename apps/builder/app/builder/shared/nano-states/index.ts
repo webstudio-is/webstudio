@@ -34,3 +34,5 @@ export type TextToolbarState = {
 };
 const textToolbarState = atom<undefined | TextToolbarState>();
 export const useTextToolbarState = () => useValue(textToolbarState);
+
+export const isCanvasPointerEventsEnabledStore = atom<boolean>(true);

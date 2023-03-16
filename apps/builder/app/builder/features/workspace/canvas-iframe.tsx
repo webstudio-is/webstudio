@@ -8,20 +8,20 @@ const iframeStyle = css({
       none: {
         pointerEvents: "none",
       },
-      all: {
-        pointerEvents: "all",
+      auto: {
+        pointerEvents: "auto",
       },
     },
   },
 });
 
 type CanvasIframeProps = {
-  pointerEvents: "all" | "none";
+  pointerEvents: "auto" | "none";
   css: CSS;
 } & JSX.IntrinsicElements["iframe"];
 
 export const CanvasIframe = forwardRef<HTMLIFrameElement, CanvasIframeProps>(
-  ({ pointerEvents = "all", css, ...rest }, ref) => {
+  ({ pointerEvents = "auto", css, ...rest }, ref) => {
     return (
       <iframe
         {...rest}
