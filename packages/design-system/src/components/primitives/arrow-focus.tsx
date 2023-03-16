@@ -35,80 +35,49 @@ const COLUMN_ATTRIBUTE = "data-focus-column";
 
 type FocusableElements = { elements: Element[]; currentIndex: number };
 
-const getFocusable = {
-  all(root, current) {
-    const elements = Array.from(root.querySelectorAll(focusableSelector("")));
-    return { elements, currentIndex: elements.indexOf(current) };
-  },
+type Filter =
+  | "all"
+  | "withinRow"
+  | "withinColumn"
+  | "firstPerRow"
+  | "firstPerColumn";
 
-  withinRow(root, current) {
-    const elements = Array.from(
-      root.querySelectorAll(
-        focusableSelector(
-          `[${ROW_ATTRIBUTE}="${current.getAttribute(ROW_ATTRIBUTE)}"]`
-        )
-      )
-    );
-    return { elements, currentIndex: elements.indexOf(current) };
-  },
-
-  withinColumn(root, current) {
-    const elements = Array.from(
-      root.querySelectorAll(
-        focusableSelector(
-          `[${COLUMN_ATTRIBUTE}="${current.getAttribute(COLUMN_ATTRIBUTE)}"]`
-        )
-      )
-    );
-    return { elements, currentIndex: elements.indexOf(current) };
-  },
-
-  firstPerRow(root, current) {
-    const firstPerRow = new Map<string, Element>();
-
-    for (const element of root.querySelectorAll(
-      focusableSelector(`[${ROW_ATTRIBUTE}]`)
-    )) {
-      firstPerRow.set(element.getAttribute(ROW_ATTRIBUTE) as string, element);
+const getFocusable = (
+  filter: Filter,
+  root: Element,
+  current: Element
+): FocusableElements => {
+  if (filter === "all" || filter === "withinRow" || filter === "withinColumn") {
+    let extraSelector = "";
+    if (filter !== "all") {
+      const attribute =
+        filter === "withinRow" ? ROW_ATTRIBUTE : COLUMN_ATTRIBUTE;
+      extraSelector = `[${attribute}="${current.getAttribute(attribute)}"]`;
     }
 
-    const currentRow = current.getAttribute(ROW_ATTRIBUTE);
+    const elements = Array.from(
+      root.querySelectorAll(focusableSelector(extraSelector))
+    );
 
-    return {
-      elements: Array.from(firstPerRow.values()),
-      currentIndex:
-        currentRow === null
-          ? -1
-          : Array.from(firstPerRow.keys()).indexOf(currentRow),
-    };
-  },
+    return { elements, currentIndex: elements.indexOf(current) };
+  }
 
-  firstPerColumn(root, current) {
-    const firstPerColumn = new Map<string, Element>();
+  const attribute = filter === "firstPerRow" ? ROW_ATTRIBUTE : COLUMN_ATTRIBUTE;
+  const map = new Map<string, Element>();
 
-    for (const element of root.querySelectorAll(
-      focusableSelector(`[${COLUMN_ATTRIBUTE}]`)
-    )) {
-      firstPerColumn.set(
-        element.getAttribute(COLUMN_ATTRIBUTE) as string,
-        element
-      );
-    }
+  for (const element of root.querySelectorAll(
+    focusableSelector(`[${attribute}]`)
+  )) {
+    map.set(element.getAttribute(attribute) as string, element);
+  }
 
-    const currentColumn = current.getAttribute(COLUMN_ATTRIBUTE);
-
-    return {
-      elements: Array.from(firstPerColumn.values()),
-      currentIndex:
-        currentColumn === null
-          ? -1
-          : Array.from(firstPerColumn.keys()).indexOf(currentColumn),
-    };
-  },
-} satisfies Record<
-  string,
-  (root: Element, current: Element) => FocusableElements
->;
+  return {
+    elements: Array.from(map.values()),
+    currentIndex: Array.from(map.keys()).indexOf(
+      current.getAttribute(attribute) as string
+    ),
+  };
+};
 
 const next = ({ elements, currentIndex }: FocusableElements) =>
   currentIndex === -1
@@ -140,7 +109,7 @@ export const handleArrowFocus = (event: KeyboardEvent) => {
   const hasRow = target.getAttribute(ROW_ATTRIBUTE) !== null;
   const hasColumn = target.getAttribute(COLUMN_ATTRIBUTE) !== null;
 
-  let filter: keyof typeof getFocusable = "all";
+  let filter: Filter = "all";
   if (axis === "horizontal") {
     if (hasRow) {
       filter = "withinRow";
@@ -155,7 +124,7 @@ export const handleArrowFocus = (event: KeyboardEvent) => {
     }
   }
 
-  const focusable = getFocusable[filter](event.currentTarget, target);
+  const focusable = getFocusable(filter, event.currentTarget, target);
 
   if (focusable.elements.length === 0) {
     return;
