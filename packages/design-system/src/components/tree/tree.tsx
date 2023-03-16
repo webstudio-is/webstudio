@@ -4,7 +4,6 @@ import { createPortal } from "react-dom";
 import { ListPositionIndicator } from "../list-position-indicator";
 import { TreeNode, INDENT, TreeItemRenderProps } from "./tree-node";
 import {
-  type DropTarget,
   useHold,
   useDrop,
   useDrag,
@@ -15,8 +14,10 @@ import { Box } from "../box";
 import { useHorizontalShift } from "./horizontal-shift";
 import {
   type ItemSelector,
+  type ItemDropTarget,
   areItemSelectorsEqual,
   getElementByItemSelector,
+  getItemSelectorFromElement,
 } from "./item-utils";
 
 export type TreeProps<Data extends { id: string }> = {
@@ -61,8 +62,10 @@ export const Tree = <Data extends { id: string }>({
 
   const rootRef = useRef<HTMLElement | null>(null);
 
-  const [dragItem, setDragItem] = useState<Data>();
-  const [dropTarget, setDropTarget] = useState<DropTarget<Data>>();
+  const [dragItemSelector, setDragItemSelector] = useState<
+    undefined | ItemSelector
+  >();
+  const [dropTarget, setDropTarget] = useState<ItemDropTarget<Data>>();
 
   const getDropTargetElement = useCallback(
     (id: string): HTMLElement | null | undefined =>
@@ -71,7 +74,7 @@ export const Tree = <Data extends { id: string }>({
   );
 
   const [shiftedDropTarget, setHorizontalShift] = useHorizontalShift({
-    dragItem,
+    dragItemSelector,
     dropTarget,
     root,
     getIsExpanded,
@@ -88,8 +91,8 @@ export const Tree = <Data extends { id: string }>({
     };
   };
 
-  const useHoldHandler = useHold<DropTarget<Data>>({
-    isEqual: (a, b) => a.data.id === b.data.id,
+  const useHoldHandler = useHold<ItemDropTarget<Data>>({
+    isEqual: (a, b) => areItemSelectorsEqual(a.itemSelector, b.itemSelector),
     holdTimeThreshold: 600,
     onHold: (dropTarget) => {
       if (
@@ -113,7 +116,7 @@ export const Tree = <Data extends { id: string }>({
     },
 
     swapDropTarget: (dropTarget) => {
-      if (dragItem === undefined || dropTarget === undefined) {
+      if (dragItemSelector === undefined || dropTarget === undefined) {
         return getFallbackDropTarget();
       }
 
@@ -129,8 +132,9 @@ export const Tree = <Data extends { id: string }>({
       }
 
       // Don't allow to drop inside drag item or any of its children
+      const [dragItemId] = dragItemSelector;
       const dragItemIndex = path.findIndex(
-        (instance) => instance.id === dragItem.id
+        (instance) => instance.id === dragItemId
       );
       if (dragItemIndex !== -1) {
         path.splice(0, dragItemIndex + 1);
@@ -152,8 +156,15 @@ export const Tree = <Data extends { id: string }>({
     },
 
     onDropTargetChange: (dropTarget) => {
-      useHoldHandler.setData(dropTarget);
-      setDropTarget(dropTarget);
+      const itemDropTarget = {
+        itemSelector: getItemSelectorFromElement(dropTarget.element),
+        data: dropTarget.data,
+        rect: dropTarget.rect,
+        indexWithinChildren: dropTarget.indexWithinChildren,
+        placement: dropTarget.placement,
+      };
+      useHoldHandler.setData(itemDropTarget);
+      setDropTarget(itemDropTarget);
     },
 
     getValidChildren: (element) => {
@@ -195,7 +206,11 @@ export const Tree = <Data extends { id: string }>({
     },
     onStart: ({ data }) => {
       onSelect?.(data.id);
-      setDragItem(data);
+      setDragItemSelector(
+        getItemPath(root, data.id)
+          .reverse()
+          .map((item) => item.id)
+      );
       dropHandlers.handleStart();
       autoScrollHandlers.setEnabled(true);
     },
@@ -207,9 +222,9 @@ export const Tree = <Data extends { id: string }>({
       setHorizontalShift(shifts);
     },
     onEnd: ({ isCanceled }) => {
-      if (shiftedDropTarget && dragItem && isCanceled === false) {
+      if (shiftedDropTarget && dragItemSelector && isCanceled === false) {
         onDragEnd({
-          itemId: dragItem.id,
+          itemId: dragItemSelector[0],
           dropTarget: {
             itemId: shiftedDropTarget.item.id,
             position: shiftedDropTarget.position,
@@ -219,7 +234,7 @@ export const Tree = <Data extends { id: string }>({
 
       autoScrollHandlers.setEnabled(false);
       setHorizontalShift(0);
-      setDragItem(undefined);
+      setDragItemSelector(undefined);
       setDropTarget(undefined);
       dropHandlers.handleEnd({ isCanceled });
       useHoldHandler.reset();
@@ -228,7 +243,7 @@ export const Tree = <Data extends { id: string }>({
 
   const autoScrollHandlers = useAutoScroll();
 
-  useDragCursor(dragItem !== undefined);
+  useDragCursor(dragItemSelector !== undefined);
 
   const keyboardNavigation = useKeyboardNavigation({
     root,

@@ -1,5 +1,6 @@
 import { useMemo, useState } from "react";
-import type { DropTarget, Placement } from "../primitives/dnd";
+import type { Placement } from "../primitives/dnd";
+import type { ItemDropTarget, ItemSelector } from "./item-utils";
 import { getPlacementIndicatorAlignment } from "./tree-node";
 
 export type ShiftedDropTarget<Data> = {
@@ -9,7 +10,7 @@ export type ShiftedDropTarget<Data> = {
 };
 
 export const useHorizontalShift = <Data extends { id: string }>({
-  dragItem,
+  dragItemSelector,
   dropTarget,
   root,
   getIsExpanded,
@@ -20,8 +21,8 @@ export const useHorizontalShift = <Data extends { id: string }>({
   getItemChildren: (item: Data) => Data[];
   canAcceptChild: (item: Data) => boolean;
   getItemPath: (root: Data, id: string) => Data[];
-  dragItem: Data | undefined;
-  dropTarget: DropTarget<Data> | undefined;
+  dragItemSelector: undefined | ItemSelector;
+  dropTarget: ItemDropTarget<Data> | undefined;
   root: Data;
   getIsExpanded: (item: Data) => boolean;
 }) => {
@@ -30,13 +31,18 @@ export const useHorizontalShift = <Data extends { id: string }>({
   // Here we want to allow user to shift placement line horizontally
   // but only if that corresponds to a meaningful position in the tree
   const shiftedDropTarget = useMemo<ShiftedDropTarget<Data> | undefined>(() => {
-    if (dropTarget === undefined || dragItem === undefined) {
+    if (dropTarget === undefined || dragItemSelector === undefined) {
       return undefined;
     }
 
-    const dragItemDepth = getItemPath(root, dragItem.id).length - 1;
+    const dragItemDepth = dragItemSelector.length - 1;
 
-    const { data, placement, indexWithinChildren } = dropTarget;
+    const {
+      itemSelector: dropItemSelector,
+      data,
+      placement,
+      indexWithinChildren,
+    } = dropTarget;
 
     const shiftPlacement = (depth: number) => {
       const shift = getPlacementIndicatorAlignment(depth);
@@ -54,10 +60,7 @@ export const useHorizontalShift = <Data extends { id: string }>({
       return { item: data, position: "end" };
     }
 
-    const dropTargetPath = getItemPath(root, data.id);
-    dropTargetPath.reverse();
-
-    const currentDepth = dropTargetPath.length;
+    const currentDepth = dropItemSelector.length;
     const desiredDepth = dragItemDepth + horizontalShift;
 
     const withoutShift = {
@@ -66,7 +69,11 @@ export const useHorizontalShift = <Data extends { id: string }>({
       placement: shiftPlacement(currentDepth),
     } as const;
 
-    const isDragItem = (item: Data | undefined) => item?.id === dragItem.id;
+    const [dragItemId] = dragItemSelector;
+    const isDragItem = (item: Data | undefined) => item?.id === dragItemId;
+
+    const dropTargetPath = getItemPath(root, data.id);
+    dropTargetPath.reverse();
 
     if (desiredDepth < currentDepth) {
       let shifted = 0;
@@ -158,7 +165,7 @@ export const useHorizontalShift = <Data extends { id: string }>({
     return withoutShift;
   }, [
     dropTarget,
-    dragItem,
+    dragItemSelector,
     root,
     horizontalShift,
     getItemPath,
