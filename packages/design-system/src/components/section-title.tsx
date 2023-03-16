@@ -14,6 +14,7 @@ import { theme, css, type CSS } from "../stitches.config";
 import { Button } from "./button";
 import { textVariants } from "./text";
 import { cssVars } from "@webstudio-is/css-vars";
+import { handleArrowFocus } from "./primitives/arrow-focus";
 
 const addIconColor = cssVars.define("add-icon-color");
 
@@ -121,7 +122,11 @@ export const SectionTitle = forwardRef(
     const state = isOpen && isEmpty === false ? "open" : "closed";
 
     return (
-      <div className={containerStyle({ className, css })} data-state={state}>
+      <div
+        className={containerStyle({ className, css })}
+        data-state={state}
+        onKeyDown={handleArrowFocus}
+      >
         <button
           className={buttonStyle({ hasAddIcon: onAdd !== undefined })}
           onClick={() => {
@@ -151,6 +156,7 @@ export const SectionTitle = forwardRef(
         {onAdd && (
           <div className={addButtonSlotStyle()}>
             <Button
+              tabIndex={-1}
               color="ghost"
               prefix={addIcon}
               css={{ color: cssVars.use(addIconColor) }}
