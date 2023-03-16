@@ -1,4 +1,5 @@
 import produce from "immer";
+import type { ItemSelector } from "./item-utils";
 
 export type Item = {
   id: string;
@@ -46,10 +47,10 @@ export const findItemById = (root: Item, id: string) => {
 export const reparent = (
   root: Item,
   {
-    itemId,
+    itemSelector,
     dropTarget,
   }: {
-    itemId: string;
+    itemSelector: ItemSelector;
     dropTarget: {
       itemId: string;
       position: number | "end";
@@ -57,6 +58,7 @@ export const reparent = (
   }
 ) =>
   produce(root, (draft) => {
+    const [itemId] = itemSelector;
     const path = getItemPath(draft, itemId);
     const item = path[path.length - 1];
     const currentParent = path[path.length - 2];

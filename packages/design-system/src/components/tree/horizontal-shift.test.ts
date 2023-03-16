@@ -144,7 +144,7 @@ test("drop target is empty or collapsed", () => {
   const result = render({ dragItem: box1, dropTarget });
 
   // parent doesn't change
-  expect(result?.item.id).toBe(box2.id);
+  expect(result?.itemSelector).toEqual(["box2", "root"]);
 
   // placement line geometry isn't provided
   expect(result?.placement).toBeUndefined();
@@ -157,7 +157,7 @@ test("placement line coordinates are always adjusted", () => {
   );
 
   // parent doesn't change
-  expect(result?.item.id).toBe(box3.id);
+  expect(result?.itemSelector).toEqual(["box3", "root"]);
 
   // placement line is adjusted to account for depth,
   // even though depth didn't change
@@ -175,11 +175,11 @@ test("shifting is relative to the drag item's depth", () => {
 
   // box2's depth is 1, so it's inserted without shifting
   const result1 = render({ dragItem: box2, dropTarget }, shift);
-  expect(result1?.item.id).toBe(tree.id);
+  expect(result1?.itemSelector).toEqual(["root"]);
 
   // box31's depth is 2, so it's inserted with shifting, to maintain the same depth
   const result2 = render({ dragItem: box31, dropTarget }, shift);
-  expect(result2?.item.id).toBe(box3.id);
+  expect(result2?.itemSelector).toEqual(["box3", "root"]);
   expect(result2?.position).toBe("end");
 });
 
@@ -189,7 +189,7 @@ describe("shifting to the left", () => {
       { dragItem: box1, dropTarget: makeDrop({ into: tree, after: box2 }) },
       -1
     );
-    expect(result?.item.id).toBe(tree.id);
+    expect(result?.itemSelector).toEqual(["root"]);
   });
 
   test("a shifting is possible only when we're at the bottom of the initial drop target", () => {
@@ -197,7 +197,7 @@ describe("shifting to the left", () => {
       { dragItem: box1, dropTarget: makeDrop({ into: box3, after: box31 }) },
       -1
     );
-    expect(result1?.item.id).toBe(box3.id);
+    expect(result1?.itemSelector).toEqual(["box3", "root"]);
   });
 
   test("when above the drag item, which is at the bottom, the shift is allowed", () => {
@@ -205,7 +205,7 @@ describe("shifting to the left", () => {
       { dragItem: box32, dropTarget: makeDrop({ into: box3, after: box31 }) },
       -1
     );
-    expect(result?.item.id).toBe(tree.id);
+    expect(result?.itemSelector).toEqual(["root"]);
     expect(result?.position).toBe(tree.children.indexOf(box3) + 1);
     expect(result?.placement).toEqual({
       ...makePlacement(),
@@ -221,7 +221,7 @@ describe("shifting to the left", () => {
     };
 
     const result1 = render(args, 0);
-    expect(result1?.item.id).toBe(tree.id);
+    expect(result1?.itemSelector).toEqual(["root"]);
     expect(result1?.position).toBe(tree.children.indexOf(box3) + 1);
     expect(result1?.placement).toEqual({
       ...makePlacement(),
@@ -230,7 +230,7 @@ describe("shifting to the left", () => {
     });
 
     const result2 = render(args, 1);
-    expect(result2?.item.id).toBe(box3.id);
+    expect(result2?.itemSelector).toEqual(["box3", "root"]);
     expect(result2?.position).toBe(box3.children.indexOf(box32) + 1);
     expect(result2?.placement).toEqual({
       ...makePlacement(),
@@ -247,7 +247,7 @@ describe("shifting to the left", () => {
       },
       -10
     );
-    expect(result?.item.id).toBe(box5.id);
+    expect(result?.itemSelector).toEqual(["box5", "root"]);
     expect(result?.position).toBe(box5.children.indexOf(box51) + 1);
   });
 });
@@ -258,7 +258,7 @@ describe("shifting to the right ", () => {
       { dragItem: box1, dropTarget: makeDrop({ into: tree, after: box2 }) },
       1
     );
-    expect(result?.item.id).toBe(tree.id);
+    expect(result?.itemSelector).toEqual(["root"]);
   });
 
   test("if there's an expanded item above, we shift inside it", () => {
@@ -268,10 +268,10 @@ describe("shifting to the right ", () => {
     };
 
     const result1 = render(args, 1);
-    expect(result1?.item.id).toBe(box3.id);
+    expect(result1?.itemSelector).toEqual(["box3", "root"]);
 
     const result2 = render(args, 2);
-    expect(result2?.item.id).toBe(box32.id);
+    expect(result2?.itemSelector).toEqual(["box32", "box3", "root"]);
   });
 
   test("you cannot move inside drag item by shifting", () => {
@@ -280,7 +280,7 @@ describe("shifting to the right ", () => {
       { dragItem: box3, dropTarget: makeDrop({ into: tree, after: box3 }) },
       3
     );
-    expect(result1?.item.id).toBe(tree.id);
+    expect(result1?.itemSelector).toEqual(["root"]);
 
     // drag item is inside the item above
     // we shift into the item above, but not inside the drag item
@@ -288,7 +288,7 @@ describe("shifting to the right ", () => {
       { dragItem: box32, dropTarget: makeDrop({ into: tree, after: box3 }) },
       3
     );
-    expect(result2?.item.id).toBe(box3.id);
+    expect(result2?.itemSelector).toEqual(["box3", "root"]);
     expect(result2?.position).toBe("end");
   });
 
@@ -297,7 +297,7 @@ describe("shifting to the right ", () => {
       { dragItem: box4, dropTarget: makeDrop({ into: tree, after: box4 }) },
       1
     );
-    expect(result?.item.id).toBe(box3.id);
+    expect(result?.itemSelector).toEqual(["box3", "root"]);
     expect(result?.position).toBe("end");
   });
 
@@ -309,6 +309,6 @@ describe("shifting to the right ", () => {
       },
       1
     );
-    expect(result?.item.id).toBe(tree.id);
+    expect(result?.itemSelector).toEqual(["root"]);
   });
 });

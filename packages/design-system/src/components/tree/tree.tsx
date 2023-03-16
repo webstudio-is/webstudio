@@ -35,7 +35,7 @@ export type TreeProps<Data extends { id: string }> = {
   onHover?: (item: Data | undefined) => void;
   animate?: boolean;
   onDragEnd: (event: {
-    itemId: string;
+    itemSelector: ItemSelector;
     dropTarget: { itemId: string; position: number | "end" };
   }) => void;
 };
@@ -224,9 +224,9 @@ export const Tree = <Data extends { id: string }>({
     onEnd: ({ isCanceled }) => {
       if (shiftedDropTarget && dragItemSelector && isCanceled === false) {
         onDragEnd({
-          itemId: dragItemSelector[0],
+          itemSelector: dragItemSelector,
           dropTarget: {
-            itemId: shiftedDropTarget.item.id,
+            itemId: shiftedDropTarget.itemSelector[0],
             position: shiftedDropTarget.position,
           },
         });
@@ -298,7 +298,7 @@ export const Tree = <Data extends { id: string }>({
           getIsExpanded={getIsExpanded}
           setIsExpanded={setIsExpanded}
           onExpandTransitionEnd={dropHandlers.handleDomMutation}
-          dropTargetItemId={shiftedDropTarget?.item?.id}
+          dropTargetItemId={shiftedDropTarget?.itemSelector[0]}
         />
       </Box>
 
