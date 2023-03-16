@@ -22,12 +22,12 @@ const focusableSelector = (extra: string) =>
 
 const keyToDirection: Record<
   string,
-  ["column" | "row", "+" | "-"] | undefined
+  ["vertical" | "horizontal", "+" | "-"] | undefined
 > = {
-  ArrowUp: ["column", "-"],
-  ArrowDown: ["column", "+"],
-  ArrowLeft: ["row", "-"],
-  ArrowRight: ["row", "+"],
+  ArrowUp: ["vertical", "-"],
+  ArrowDown: ["vertical", "+"],
+  ArrowLeft: ["horizontal", "-"],
+  ArrowRight: ["horizontal", "+"],
 };
 
 const ROW_ATTRIBUTE = "data-focus-row";
@@ -41,7 +41,7 @@ const getFocusable = {
     return { elements, currentIndex: elements.indexOf(current) };
   },
 
-  byRow(root, current) {
+  withinRow(root, current) {
     const elements = Array.from(
       root.querySelectorAll(
         focusableSelector(
@@ -52,7 +52,7 @@ const getFocusable = {
     return { elements, currentIndex: elements.indexOf(current) };
   },
 
-  byColumn(root, current) {
+  withinColumn(root, current) {
     const elements = Array.from(
       root.querySelectorAll(
         focusableSelector(
@@ -136,27 +136,26 @@ export const handleArrowFocus = (event: KeyboardEvent) => {
 
   const [axis, sign] = direction;
   const target = event.target as Element;
-  const root = event.currentTarget;
 
   const hasRow = target.getAttribute(ROW_ATTRIBUTE) !== null;
   const hasColumn = target.getAttribute(COLUMN_ATTRIBUTE) !== null;
 
   let filter: keyof typeof getFocusable = "all";
-  if (axis === "row") {
+  if (axis === "horizontal") {
     if (hasRow) {
-      filter = "byRow";
+      filter = "withinRow";
     } else if (hasColumn) {
       filter = "firstPerColumn";
     }
   } else {
     if (hasColumn) {
-      filter = "byColumn";
+      filter = "withinColumn";
     } else if (hasRow) {
       filter = "firstPerRow";
     }
   }
 
-  const focusable = getFocusable[filter](root, target);
+  const focusable = getFocusable[filter](event.currentTarget, target);
 
   if (focusable.elements.length === 0) {
     return;
