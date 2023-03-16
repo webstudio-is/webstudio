@@ -96,10 +96,12 @@ const previous = ({ elements, currentIndex }: FocusableElements) =>
 
 /**
  * Example:
- *   <div onKeyDown={handleArrowFocus}>
- *     <button />
- *     <button tabIndex={-1} />
- *   </div>
+ * ```
+ * <div onKeyDown={handleArrowFocus}>
+ *   <button />
+ *   <button tabIndex={-1} />
+ * </div>
+ * ```
  */
 export const handleArrowFocus = (event: KeyboardEvent) => {
   const direction = keyToDirection[event.key];
