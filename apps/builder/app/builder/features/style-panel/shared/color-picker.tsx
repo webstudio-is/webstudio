@@ -22,7 +22,8 @@ import { theme } from "@webstudio-is/design-system";
 import type { StyleSource } from "./style-info";
 import { CssValueInput } from "./css-value-input";
 import type { IntermediateStyleValue } from "./css-value-input/css-value-input";
-import { useEnabledCanvasPointerEvents } from "~/builder/shared/nano-states";
+import { isCanvasPointerEventsEnabledStore } from "~/builder/shared/nano-states";
+import { useStore } from "@nanostores/react";
 
 // To support color names
 extend([namesPlugin]);
@@ -101,12 +102,13 @@ const clamp = (value: number, min: number, max: number) => {
 
 // Dragging over canvas iframe with CORS policies will lead to loosing events and getting stuck in mousedown state.
 const useFixDragOverCanvas = () => {
-  const [isCanvasPointerEventsEnabled, toggleCanvasPointerEvents] =
-    useEnabledCanvasPointerEvents();
+  const isCanvasPointerEventsEnabled = useStore(
+    isCanvasPointerEventsEnabledStore
+  );
 
   useEffect(() => {
     const handleMouseUp = () => {
-      toggleCanvasPointerEvents(true);
+      isCanvasPointerEventsEnabledStore.set(true);
       removeEventListener("mouseup", handleMouseUp);
     };
     if (isCanvasPointerEventsEnabled === false) {
@@ -115,13 +117,13 @@ const useFixDragOverCanvas = () => {
     return () => {
       removeEventListener("mouseup", handleMouseUp);
     };
-  }, [isCanvasPointerEventsEnabled, toggleCanvasPointerEvents]);
+  }, [isCanvasPointerEventsEnabled]);
 
   const handleChange = (event: MouseEvent) => {
     // Prevents selection of text during drag.
     if (event.type === "mousedown") {
       event.preventDefault();
-      toggleCanvasPointerEvents(false);
+      isCanvasPointerEventsEnabledStore.set(false);
     }
   };
   return { handleChange };
@@ -264,49 +266,47 @@ export const ColorPicker = ({
   );
 
   return (
-    <>
-      <CssValueInput
-        styleSource={styleSource}
-        icon={prefix}
-        property={property}
-        value={value}
-        intermediateValue={intermediateValue}
-        keywords={keywords}
-        onChange={(styleValue) => {
-          if (
-            styleValue?.type === "rgb" ||
-            styleValue?.type === "keyword" ||
-            styleValue?.type === "intermediate" ||
-            styleValue === undefined
-          ) {
-            onChange(styleValue);
-            return;
-          }
+    <CssValueInput
+      styleSource={styleSource}
+      icon={prefix}
+      property={property}
+      value={value}
+      intermediateValue={intermediateValue}
+      keywords={keywords}
+      onChange={(styleValue) => {
+        if (
+          styleValue?.type === "rgb" ||
+          styleValue?.type === "keyword" ||
+          styleValue?.type === "intermediate" ||
+          styleValue === undefined
+        ) {
+          onChange(styleValue);
+          return;
+        }
 
-          onChange({
-            type: "intermediate",
-            value: toValue(styleValue),
-          });
-        }}
-        onHighlight={onHighlight}
-        onChangeComplete={({ value }) => {
-          if (
-            value.type === "rgb" ||
-            value.type === "keyword" ||
-            value.type === "invalid"
-          ) {
-            onChangeComplete({ value });
-          }
+        onChange({
+          type: "intermediate",
+          value: toValue(styleValue),
+        });
+      }}
+      onHighlight={onHighlight}
+      onChangeComplete={({ value }) => {
+        if (
+          value.type === "rgb" ||
+          value.type === "keyword" ||
+          value.type === "invalid"
+        ) {
+          onChangeComplete({ value });
+        }
 
-          onChangeComplete({
-            value: {
-              type: "invalid",
-              value: toValue(value),
-            },
-          });
-        }}
-        onAbort={onAbort}
-      />
-    </>
+        onChangeComplete({
+          value: {
+            type: "invalid",
+            value: toValue(value),
+          },
+        });
+      }}
+      onAbort={onAbort}
+    />
   );
 };
