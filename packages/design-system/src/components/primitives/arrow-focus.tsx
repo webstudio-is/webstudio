@@ -37,21 +37,25 @@ type FocusableElements = { elements: Element[]; currentIndex: number };
 
 type Filter =
   | "all"
-  | "withinRow"
-  | "withinColumn"
-  | "firstPerRow"
-  | "firstPerColumn";
+  | "within-row"
+  | "within-column"
+  | "first-per-row"
+  | "first-per-column";
 
 const getFocusable = (
   filter: Filter,
   root: Element,
   current: Element
 ): FocusableElements => {
-  if (filter === "all" || filter === "withinRow" || filter === "withinColumn") {
+  if (
+    filter === "all" ||
+    filter === "within-row" ||
+    filter === "within-column"
+  ) {
     let extraSelector = "";
     if (filter !== "all") {
       const attribute =
-        filter === "withinRow" ? ROW_ATTRIBUTE : COLUMN_ATTRIBUTE;
+        filter === "within-row" ? ROW_ATTRIBUTE : COLUMN_ATTRIBUTE;
       extraSelector = `[${attribute}="${current.getAttribute(attribute)}"]`;
     }
 
@@ -62,7 +66,8 @@ const getFocusable = (
     return { elements, currentIndex: elements.indexOf(current) };
   }
 
-  const attribute = filter === "firstPerRow" ? ROW_ATTRIBUTE : COLUMN_ATTRIBUTE;
+  const attribute =
+    filter === "first-per-row" ? ROW_ATTRIBUTE : COLUMN_ATTRIBUTE;
   const map = new Map<string, Element>();
 
   for (const element of root.querySelectorAll(
@@ -112,15 +117,15 @@ export const handleArrowFocus = (event: KeyboardEvent) => {
   let filter: Filter = "all";
   if (axis === "horizontal") {
     if (hasRow) {
-      filter = "withinRow";
+      filter = "within-row";
     } else if (hasColumn) {
-      filter = "firstPerColumn";
+      filter = "first-per-column";
     }
   } else {
     if (hasColumn) {
-      filter = "withinColumn";
+      filter = "within-column";
     } else if (hasRow) {
-      filter = "firstPerRow";
+      filter = "first-per-row";
     }
   }
 
