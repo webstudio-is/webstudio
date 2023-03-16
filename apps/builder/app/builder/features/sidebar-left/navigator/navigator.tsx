@@ -11,7 +11,10 @@ import {
 import { InstanceTree } from "~/builder/shared/tree";
 import { reparentInstance } from "~/shared/instance-utils";
 import { Header, CloseButton } from "../header";
-import { getInstanceSelector } from "~/shared/tree-utils";
+import {
+  getInstanceSelector,
+  type InstanceSelector,
+} from "~/shared/tree-utils";
 
 type NavigatorProps = {
   isClosable?: boolean;
@@ -30,10 +33,10 @@ export const Navigator = ({ isClosable, onClose }: NavigatorProps) => {
 
   const handleDragEnd = useCallback(
     (payload: {
-      itemId: string;
+      itemSelector: InstanceSelector;
       dropTarget: { itemId: string; position: number | "end" };
     }) => {
-      reparentInstance(payload.itemId, {
+      reparentInstance(payload.itemSelector[0], {
         parentId: payload.dropTarget.itemId,
         position: payload.dropTarget.position,
       });
