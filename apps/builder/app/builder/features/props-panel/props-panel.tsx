@@ -4,9 +4,9 @@ import {
   theme,
   Box,
   useCombobox,
-  ComboboxPopper,
-  ComboboxPopperContent,
-  ComboboxPopperAnchor,
+  Combobox,
+  ComboboxContent,
+  ComboboxAnchor,
   ComboboxListbox,
   ComboboxListboxItem,
   TextField,
@@ -63,7 +63,7 @@ const InstanceInfo = ({
   </Flex>
 );
 
-const Combobox = ({
+const PropsCombobox = ({
   items,
   onItemSelect,
 }: {
@@ -85,9 +85,9 @@ const Combobox = ({
   });
 
   return (
-    <ComboboxPopper>
+    <Combobox>
       <div {...combobox.getComboboxProps()}>
-        <ComboboxPopperAnchor>
+        <ComboboxAnchor>
           <TextField
             {...combobox.getInputProps()}
             placeholder="Property"
@@ -98,8 +98,8 @@ const Combobox = ({
               />
             }
           />
-        </ComboboxPopperAnchor>
-        <ComboboxPopperContent align="end" sideOffset={5}>
+        </ComboboxAnchor>
+        <ComboboxContent align="end" sideOffset={5}>
           <ComboboxListbox {...combobox.getMenuProps()}>
             {combobox.isOpen &&
               combobox.items.map((item, index) => (
@@ -112,9 +112,9 @@ const Combobox = ({
                 </ComboboxListboxItem>
               ))}
           </ComboboxListbox>
-        </ComboboxPopperContent>
+        </ComboboxContent>
       </div>
-    </ComboboxPopper>
+    </Combobox>
   );
 };
 
@@ -175,7 +175,7 @@ const AddPropertyForm = ({
   onPropSelected: (propName: string) => void;
 }) => (
   <Flex css={{ height: theme.spacing[13] }} direction="column" justify="center">
-    <Combobox
+    <PropsCombobox
       items={availableProps}
       onItemSelect={(item) => onPropSelected(item.name)}
     />
