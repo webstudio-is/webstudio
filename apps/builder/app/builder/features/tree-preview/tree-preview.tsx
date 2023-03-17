@@ -13,8 +13,8 @@ import { InstanceTreeNode } from "~/builder/shared/tree";
 import {
   createInstancesIndex,
   getInstanceAncestorsAndSelf,
-  insertInstanceMutable,
-  reparentInstanceMutable,
+  insertInstanceMutableDeprecated,
+  reparentInstanceMutableDeprecated,
 } from "~/shared/tree-utils";
 
 export const TreePrevew = () => {
@@ -42,7 +42,7 @@ export const TreePrevew = () => {
     const instance: Instance = produce<Instance>((draft) => {
       const instancesIndex = createInstancesIndex(draft);
       if (isNew) {
-        insertInstanceMutable(
+        insertInstanceMutableDeprecated(
           instancesIndex,
           utils.tree.createInstance({ component: dragItemInstance.component }),
           {
@@ -51,7 +51,7 @@ export const TreePrevew = () => {
           }
         );
       } else {
-        reparentInstanceMutable(instancesIndex, dragItemInstance.id, {
+        reparentInstanceMutableDeprecated(instancesIndex, dragItemInstance.id, {
           parentId: dropTargetInstanceId,
           position: dropTargetPosition,
         });

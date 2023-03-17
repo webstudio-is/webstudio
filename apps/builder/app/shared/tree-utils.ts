@@ -15,6 +15,72 @@ import {
 } from "@webstudio-is/project-build";
 import { getComponentMeta } from "@webstudio-is/react-sdk";
 
+// slots can have multiple parents so instance should be addressed
+// with full rendered path to avoid double selections with slots
+// and support deletion of slot child from specific parent
+// selector starts with target instance and ends with root
+export type InstanceSelector = Instance["id"][];
+
+// provide a selector starting with ancestor id
+// useful to select parent instance or one of breadcrumbs instances
+export const getAncestorInstanceSelector = (
+  instanceSelector: InstanceSelector,
+  ancestorId: Instance["id"]
+): undefined | InstanceSelector => {
+  const ancestorIndex = instanceSelector.indexOf(ancestorId);
+  if (ancestorIndex === -1) {
+    return undefined;
+  }
+  return instanceSelector.slice(ancestorIndex);
+};
+
+export const areInstanceSelectorsEqual = (
+  left?: InstanceSelector,
+  right?: InstanceSelector
+) => {
+  if (left === undefined || right === undefined) {
+    return false;
+  }
+  return left.join(",") === right.join(",");
+};
+
+// this utility is temporary solution to compute instance selectors
+// before all logic is migrated to get it from rendered context
+// @todo should be deleted before adding slots
+export const getInstanceSelector = (
+  instances: Instances,
+  instanceId: Instance["id"]
+) => {
+  const parentInstancesById = new Map<Instance["id"], Instance["id"]>();
+  for (const instance of instances.values()) {
+    for (const child of instance.children) {
+      if (child.type === "id") {
+        parentInstancesById.set(child.value, instance.id);
+      }
+    }
+  }
+  const selector: InstanceSelector = [];
+  let currentInstanceId: undefined | Instance["id"] = instanceId;
+  while (currentInstanceId) {
+    selector.push(currentInstanceId);
+    currentInstanceId = parentInstancesById.get(currentInstanceId);
+  }
+  return selector;
+};
+
+export const createComponentInstance = (
+  component: Instance["component"]
+): InstancesItem => {
+  const componentMeta = getComponentMeta(component);
+  return {
+    type: "instance",
+    id: nanoid(),
+    component,
+    children:
+      componentMeta?.children?.map((value) => ({ type: "text", value })) ?? [],
+  };
+};
+
 const traverseInstances = (
   instance: Instance,
   cb: (child: Instance, parent: Instance) => void
@@ -104,7 +170,7 @@ export const findClosestDroppableTarget = (
   };
 };
 
-export const insertInstanceMutable = (
+export const insertInstanceMutableDeprecated = (
   instancesIndex: InstancesIndex,
   instance: Instance,
   dropTarget?: DroppableTarget
@@ -124,7 +190,7 @@ export const insertInstanceMutable = (
   }
 };
 
-export const reparentInstanceMutable = (
+export const reparentInstanceMutableDeprecated = (
   instancesIndex: InstancesIndex,
   instanceId: Instance["id"],
   dropTarget: DroppableTarget
@@ -166,6 +232,52 @@ export const reparentInstanceMutable = (
   }
 };
 
+export const reparentInstanceMutable = (
+  instances: Instances,
+  instanceSelector: InstanceSelector,
+  dropTarget: DroppableTarget
+) => {
+  const [instanceId, parentInstanceId] = instanceSelector;
+  const prevParent =
+    parentInstanceId === undefined
+      ? undefined
+      : instances.get(parentInstanceId);
+  const nextParent = instances.get(dropTarget.parentId);
+  const instance = instances.get(instanceId);
+  if (
+    prevParent === undefined ||
+    nextParent === undefined ||
+    instance === undefined
+  ) {
+    return;
+  }
+
+  const prevPosition = prevParent.children.findIndex(
+    (child) => child.type === "id" && child.value === instanceId
+  );
+  if (prevPosition === -1) {
+    return;
+  }
+
+  // if parent is the same, we need to adjust the position
+  // to account for the removal of the instance.
+  let nextPosition = dropTarget.position;
+  if (
+    nextPosition !== "end" &&
+    prevParent.id === nextParent.id &&
+    prevPosition < nextPosition
+  ) {
+    nextPosition -= 1;
+  }
+
+  const [child] = prevParent.children.splice(prevPosition, 1);
+  if (nextPosition === "end") {
+    nextParent.children.push(child);
+  } else {
+    nextParent.children.splice(nextPosition, 0, child);
+  }
+};
+
 export const getInstanceAncestorsAndSelf = (
   instancesIndex: InstancesIndex,
   instanceId: Instance["id"]
@@ -189,19 +301,6 @@ export const findClosestRichTextInstance = (
     .find(
       (instance) => getComponentMeta(instance.component)?.type === "rich-text"
     );
-};
-
-export const findParentInstance = (
-  instances: Instances,
-  instanceId: Instance["id"]
-) => {
-  for (const instance of instances.values()) {
-    for (const child of instance.children) {
-      if (child.type === "id" && child.value === instanceId) {
-        return instance;
-      }
-    }
-  }
 };
 
 export const cloneStyles = (

@@ -14,12 +14,10 @@ import {
   getComponentMeta,
   type WsComponentMeta,
 } from "@webstudio-is/react-sdk";
-import { utils } from "@webstudio-is/project";
 import { instancesIndexStore } from "~/shared/nano-states";
 import { getInstanceAncestorsAndSelf } from "~/shared/tree-utils";
 
 const instanceRelatedProps = {
-  getItemPathWithPositions: utils.tree.getInstancePathWithPositions,
   canLeaveParent(item: Instance) {
     const meta = getComponentMeta(item.component);
     return meta?.type !== "rich-text-child";

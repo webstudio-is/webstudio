@@ -1,53 +1,56 @@
 import store from "immerhin";
 import { findTreeInstanceIds, Instance } from "@webstudio-is/project-build";
 import {
-  rootInstanceContainer,
   propsStore,
   stylesStore,
-  selectedInstanceIdStore,
+  selectedInstanceSelectorStore,
   styleSourceSelectionsStore,
   styleSourcesStore,
   instancesStore,
-  patchInstancesMutable,
   selectedPageStore,
 } from "./nano-states";
 import {
-  createInstancesIndex,
-  DroppableTarget,
-  findParentInstance,
+  type DroppableTarget,
+  type InstanceSelector,
+  createComponentInstance,
   findSubtreeLocalStyleSources,
-  insertInstanceMutable,
+  getInstanceSelector,
+  insertInstancesMutable,
   reparentInstanceMutable,
+  getAncestorInstanceSelector,
 } from "./tree-utils";
 import { removeByMutable } from "./array-utils";
 
-export const insertInstance = (
-  instance: Instance,
+export const insertNewComponentInstance = (
+  component: string,
   dropTarget?: DroppableTarget
 ) => {
-  const rootInstance = rootInstanceContainer.get();
+  const instance = createComponentInstance(component);
   store.createTransaction([instancesStore], (instances) => {
-    const instancesIndex = createInstancesIndex(rootInstance);
-    insertInstanceMutable(instancesIndex, instance, dropTarget);
-    patchInstancesMutable(rootInstance, instances);
+    insertInstancesMutable(instances, [instance], [instance.id], dropTarget);
   });
-  selectedInstanceIdStore.set(instance.id);
+  selectedInstanceSelectorStore.set(
+    getInstanceSelector(instancesStore.get(), instance.id)
+  );
 };
 
 export const reparentInstance = (
   targetInstanceId: Instance["id"],
   dropTarget: DroppableTarget
 ) => {
-  const rootInstance = rootInstanceContainer.get();
   store.createTransaction([instancesStore], (instances) => {
-    const instancesIndex = createInstancesIndex(rootInstance);
-    reparentInstanceMutable(instancesIndex, targetInstanceId, dropTarget);
-    patchInstancesMutable(rootInstance, instances);
+    reparentInstanceMutable(
+      instances,
+      getInstanceSelector(instances, targetInstanceId),
+      dropTarget
+    );
   });
-  selectedInstanceIdStore.set(targetInstanceId);
+  selectedInstanceSelectorStore.set(
+    getInstanceSelector(instancesStore.get(), targetInstanceId)
+  );
 };
 
-export const deleteInstance = (targetInstanceId: Instance["id"]) => {
+export const deleteInstance = (instanceSelector: InstanceSelector) => {
   store.createTransaction(
     [
       instancesStore,
@@ -57,7 +60,11 @@ export const deleteInstance = (targetInstanceId: Instance["id"]) => {
       stylesStore,
     ],
     (instances, props, styleSourceSelections, styleSources, styles) => {
-      const parentInstance = findParentInstance(instances, targetInstanceId);
+      const [targetInstanceId, parentInstanceId] = instanceSelector;
+      const parentInstance =
+        parentInstanceId === undefined
+          ? undefined
+          : instances.get(parentInstanceId);
       const subtreeIds = findTreeInstanceIds(instances, targetInstanceId);
       const subtreeLocalStyleSourceIds = findSubtreeLocalStyleSources(
         subtreeIds,
@@ -95,21 +102,23 @@ export const deleteInstance = (targetInstanceId: Instance["id"]) => {
       }
 
       if (parentInstance) {
-        selectedInstanceIdStore.set(parentInstance.id);
+        selectedInstanceSelectorStore.set(
+          getAncestorInstanceSelector(instanceSelector, parentInstance.id)
+        );
       }
     }
   );
 };
 
 export const deleteSelectedInstance = () => {
-  const selectedInstanceId = selectedInstanceIdStore.get();
+  const selectedInstanceSelector = selectedInstanceSelectorStore.get();
   const rootInstanceId = selectedPageStore.get()?.rootInstanceId;
   // @todo tell user they can't delete root
   if (
-    selectedInstanceId === undefined ||
-    selectedInstanceId === rootInstanceId
+    selectedInstanceSelector === undefined ||
+    selectedInstanceSelector[0] === rootInstanceId
   ) {
     return;
   }
-  deleteInstance(selectedInstanceId);
+  deleteInstance(selectedInstanceSelector);
 };

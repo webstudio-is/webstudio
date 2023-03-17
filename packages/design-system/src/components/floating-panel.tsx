@@ -9,7 +9,7 @@ import { css, theme } from "../stitches.config";
 import { Button } from "./button";
 import { Separator } from "./separator";
 
-export const floatingPanelStyles = css({
+export const floatingPanelStyle = css({
   border: `1px solid ${theme.colors.borderMain}`,
   boxShadow: theme.shadows.menuDropShadow,
   background: theme.colors.backgroundPanel,
@@ -23,13 +23,13 @@ export const floatingPanelStyles = css({
   },
 });
 
-const titleSlotStyles = css({
+const titleSlotStyle = css({
   // We put title at the bottom in DOM to make the close button last in the TAB order
   // But visually we want it to be first
   order: -1,
 });
 export const TitleSlot = ({ children }: { children: ReactNode }) => (
-  <div className={titleSlotStyles()}>
+  <div className={titleSlotStyle()}>
     {children}
     <Separator />
   </div>

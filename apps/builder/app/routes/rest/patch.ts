@@ -8,6 +8,7 @@ import {
   patchStyleSources,
   patchStyleSourceSelections,
   patchInstances,
+  patchPages,
 } from "@webstudio-is/project-build/server";
 import type { Project } from "@webstudio-is/project";
 import { createContext } from "~/shared/context.server";
@@ -36,7 +37,9 @@ export const action = async ({ request }: ActionArgs) => {
     for await (const change of transaction.changes) {
       const { namespace, patches } = change;
 
-      if (namespace === "instances") {
+      if (namespace === "pages") {
+        await patchPages({ buildId, projectId }, patches, context);
+      } else if (namespace === "instances") {
         await patchInstances({ buildId, projectId }, patches, context);
       } else if (namespace === "styleSourceSelections") {
         await patchStyleSourceSelections(

@@ -13,11 +13,14 @@ import { utils } from "@webstudio-is/project";
 import { findClosestDroppableTarget } from "~/shared/tree-utils";
 import {
   instancesIndexStore,
-  selectedInstanceIdStore,
+  selectedInstanceSelectorStore,
 } from "~/shared/nano-states";
 import { useSubscribe, type Publish } from "~/shared/pubsub";
-import { useCanvasRect } from "~/builder/shared/nano-states";
-import { insertInstance } from "~/shared/instance-utils";
+import {
+  isCanvasPointerEventsEnabledStore,
+  useCanvasRect,
+} from "~/builder/shared/nano-states";
+import { insertNewComponentInstance } from "~/shared/instance-utils";
 import { zoomStore } from "~/shared/nano-states/breakpoints";
 import type { TabName } from "../../types";
 import { Header, CloseButton } from "../../header";
@@ -134,6 +137,7 @@ export const TabContent = ({ publish, onSetActiveTab }: TabContentProps) => {
           dragItem: utils.tree.createInstance({ component: componentName }),
         },
       });
+      isCanvasPointerEventsEnabledStore.set(false);
     },
     onMove: (point) => {
       setPoint(point);
@@ -148,6 +152,7 @@ export const TabContent = ({ publish, onSetActiveTab }: TabContentProps) => {
         type: "dragEnd",
         payload: { origin: "panel", isCanceled },
       });
+      isCanvasPointerEventsEnabledStore.set(true);
     },
   });
 
@@ -173,14 +178,12 @@ export const TabContent = ({ publish, onSetActiveTab }: TabContentProps) => {
             component={component}
             onClick={() => {
               onSetActiveTab("none");
-              const instance = utils.tree.createInstance({
-                component,
-              });
               const dropTarget = findClosestDroppableTarget(
                 instancesIndexStore.get(),
-                selectedInstanceIdStore.get()
+                // @todo accept instance Selector
+                selectedInstanceSelectorStore.get()?.[0]
               );
-              insertInstance(instance, dropTarget);
+              insertNewComponentInstance(component, dropTarget);
             }}
           />
         ))}

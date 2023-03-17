@@ -2,7 +2,11 @@ import { z, type ZodType } from "zod";
 
 const MIN_TITLE_LENGTH = 2;
 
-const Title = z
+export const PageName = z
+  .string()
+  .refine((value) => value.trim() !== "", "Can't be empty");
+
+export const PageTitle = z
   .string()
   .refine(
     (val) => val.length >= MIN_TITLE_LENGTH,
@@ -11,17 +15,19 @@ const Title = z
 
 const commonPageFields = {
   id: z.string(),
-  name: z.string().refine((val) => val !== "", "Can't be empty"),
-  title: Title,
+  name: PageName,
+  title: PageTitle,
   meta: z.record(z.string(), z.string()),
   rootInstanceId: z.string(),
 } as const;
 
+export const HomePagePath = z
+  .string()
+  .refine((path) => path === "", "Home page path must be empty");
+
 const HomePage = z.object({
   ...commonPageFields,
-  path: z
-    .string()
-    .refine((path) => path === "", "Home page path must be empty"),
+  path: HomePagePath,
 });
 
 export const pathValidators = (
@@ -55,9 +61,11 @@ export const pathValidators = (
       "/build prefix is reserved for the system"
     );
 
+export const PagePath = pathValidators(z.string());
+
 const Page = z.object({
   ...commonPageFields,
-  path: pathValidators(z.string()),
+  path: PagePath,
 });
 
 export type Page = z.infer<typeof Page>;

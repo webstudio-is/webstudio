@@ -1,4 +1,5 @@
 import produce from "immer";
+import type { ItemSelector } from "./item-utils";
 
 export type Item = {
   id: string;
@@ -6,7 +7,7 @@ export type Item = {
   children: Item[];
 };
 
-export const getItemPathWithPositions = (tree: Item, itemId: string) => {
+export const getItemPath = (tree: Item, itemId: string) => {
   const path = [];
 
   const find = (item: Item) => {
@@ -21,21 +22,18 @@ export const getItemPathWithPositions = (tree: Item, itemId: string) => {
       }
       const found = find(child);
       if (found) {
-        path.push({ item: child, position: i });
+        path.push(child);
         return true;
       }
     }
   };
 
   if (find(tree)) {
-    path.push({ item: tree, position: 0 });
+    path.push(tree);
   }
 
   return path.reverse();
 };
-
-export const getItemPath = (tree: Item, id: string) =>
-  getItemPathWithPositions(tree, id).map(({ item }) => item);
 
 export const canAcceptChild = (item: Item) => item.canAcceptChildren;
 
@@ -49,10 +47,10 @@ export const findItemById = (root: Item, id: string) => {
 export const reparent = (
   root: Item,
   {
-    itemId,
+    itemSelector,
     dropTarget,
   }: {
-    itemId: string;
+    itemSelector: ItemSelector;
     dropTarget: {
       itemId: string;
       position: number | "end";
@@ -60,6 +58,7 @@ export const reparent = (
   }
 ) =>
   produce(root, (draft) => {
+    const [itemId] = itemSelector;
     const path = getItemPath(draft, itemId);
     const item = path[path.length - 1];
     const currentParent = path[path.length - 2];

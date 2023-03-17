@@ -2,7 +2,7 @@ import { useStore } from "@nanostores/react";
 import { theme, Box, Flex, Toaster } from "@webstudio-is/design-system";
 import { useCanvasWidth } from "~/builder/shared/nano-states";
 import type { Publish } from "~/shared/pubsub";
-import { selectedInstanceIdStore } from "~/shared/nano-states";
+import { selectedInstanceSelectorStore } from "~/shared/nano-states";
 import {
   workspaceRectStore,
   zoomStore,
@@ -13,7 +13,7 @@ import { useEffect } from "react";
 
 const workspaceStyle = {
   flexGrow: 1,
-  background: theme.colors.gray3,
+  background: theme.colors.backgroundCanvas,
   overflow: "scroll",
   position: "relative",
 };
@@ -60,7 +60,7 @@ export const Workspace = ({
   const workspaceRef = useSetWorkspaceRect();
 
   const handleWorkspaceClick = () => {
-    selectedInstanceIdStore.set(undefined);
+    selectedInstanceSelectorStore.set(undefined);
   };
 
   return (

@@ -5,7 +5,7 @@ import { Separator } from "./separator";
 
 export const Popover = Primitive.Root;
 
-const contentStyles = css({
+const contentStyle = css({
   border: `1px solid ${theme.colors.borderMain}`,
   boxShadow: `${theme.shadows.menuDropShadow}, inset 0 0 0 1px ${theme.colors.borderMenuInner}`,
   background: theme.colors.backgroundMenu,
@@ -52,7 +52,7 @@ export const PopoverContent = React.forwardRef(
       <Primitive.Content
         sideOffset={4}
         collisionPadding={4}
-        className={contentStyles({ className, css })}
+        className={contentStyle({ className, css })}
         {...props}
         ref={ref}
       >

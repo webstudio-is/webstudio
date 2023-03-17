@@ -16,13 +16,15 @@ import {
 import type { GetComponent } from "@webstudio-is/react-sdk";
 import {
   instancesStore,
-  selectedInstanceIdStore,
+  selectedInstanceSelectorStore,
   useInstanceProps,
   useInstanceStyles,
   useTextEditingInstanceId,
 } from "~/shared/nano-states";
 import { useCssRules } from "~/canvas/shared/styles";
 import { SelectedInstanceConnector } from "./selected-instance-connector";
+import { getInstanceSelector } from "~/shared/tree-utils";
+import { handleLinkClick } from "./link";
 
 const TextEditor = lazy(() => import("../text-editor"));
 
@@ -68,7 +70,7 @@ export const WebstudioComponentDev = ({
 
   const [editingInstanceId, setTextEditingInstanceId] =
     useTextEditingInstanceId();
-  const selectedInstanceId = useStore(selectedInstanceIdStore);
+  const selectedInstanceSelector = useStore(selectedInstanceSelectorStore);
 
   const instanceProps = useInstanceProps(instance.id);
   const userProps = useMemo(() => {
@@ -84,7 +86,8 @@ export const WebstudioComponentDev = ({
     return result;
   }, [instanceProps]);
 
-  const isSelected = selectedInstanceId === instanceId;
+  // @todo compare instance selectors
+  const isSelected = selectedInstanceSelector?.[0] === instanceId;
 
   // Scroll the selected instance into view when selected from navigator.
   useEffect(() => {
@@ -115,8 +118,8 @@ export const WebstudioComponentDev = ({
     [componentAttribute]: instance.component,
     [idAttribute]: instance.id,
     onClick: (event: MouseEvent) => {
-      if ((event.target as HTMLElement).closest("a")) {
-        event.preventDefault();
+      if (event.currentTarget instanceof HTMLAnchorElement) {
+        handleLinkClick(event);
       }
     },
     onSubmit: (event: FormEvent) => {
@@ -172,9 +175,12 @@ export const WebstudioComponentDev = ({
             }
           });
         }}
+        // @todo provide instance selector
         onSelectInstance={(instanceId) => {
           setTextEditingInstanceId(undefined);
-          selectedInstanceIdStore.set(instanceId);
+          selectedInstanceSelectorStore.set(
+            getInstanceSelector(instancesStore.get(), instanceId)
+          );
         }}
       />
     </Suspense>

@@ -51,6 +51,8 @@ export type KeywordValue = z.infer<typeof KeywordValue>;
 export const UnparsedValue = z.object({
   type: z.literal("unparsed"),
   value: z.string(),
+  // For the builder we want to be able to hide background-image
+  hidden: z.boolean().optional(),
 });
 
 const FontFamilyValue = z.object({
@@ -71,6 +73,8 @@ export type RgbValue = z.infer<typeof RgbValue>;
 export const ImageValue = z.object({
   type: z.literal("image"),
   value: z.object({ type: z.literal("asset"), value: ImageAsset }),
+  // For the builder we want to be able to hide images
+  hidden: z.boolean().optional(),
 });
 
 export type ImageValue = z.infer<typeof ImageValue>;
@@ -89,18 +93,6 @@ const UnsetValue = z.object({
 });
 export type UnsetValue = z.infer<typeof UnsetValue>;
 
-// To support background layers https://developer.mozilla.org/en-US/docs/Web/CSS/background
-// and similar comma separated css properties
-// InvalidValue used in case of asset not found
-export const LayersValue = z.object({
-  type: z.literal("layers"),
-  value: z.array(
-    z.union([UnitValue, KeywordValue, UnparsedValue, ImageValue, InvalidValue])
-  ),
-});
-
-export type LayersValue = z.infer<typeof LayersValue>;
-
 export const TupleValueItem = z.union([UnitValue, KeywordValue, UnparsedValue]);
 export type TupleValueItem = z.infer<typeof TupleValueItem>;
 
@@ -110,6 +102,25 @@ export const TupleValue = z.object({
 });
 
 export type TupleValue = z.infer<typeof TupleValue>;
+
+// To support background layers https://developer.mozilla.org/en-US/docs/Web/CSS/background
+// and similar comma separated css properties
+// InvalidValue used in case of asset not found
+export const LayersValue = z.object({
+  type: z.literal("layers"),
+  value: z.array(
+    z.union([
+      UnitValue,
+      KeywordValue,
+      UnparsedValue,
+      ImageValue,
+      TupleValue,
+      InvalidValue,
+    ])
+  ),
+});
+
+export type LayersValue = z.infer<typeof LayersValue>;
 
 /**
  * All StyleValue types that going to need wrapping into a CSS variable when rendered

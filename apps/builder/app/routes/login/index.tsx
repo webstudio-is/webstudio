@@ -1,12 +1,17 @@
-import { type LoaderArgs, redirect, json } from "@remix-run/node";
-
+import {
+  type LoaderArgs,
+  redirect,
+  json,
+  TypedResponse,
+} from "@remix-run/node";
 import { findAuthenticatedUser } from "~/services/auth.server";
 import env from "~/env/env.server";
-
 import { Login, links } from "~/auth";
 import { useLoginErrorMessage } from "~/shared/session";
 import { dashboardPath } from "~/shared/router-utils";
 import { returnToCookie } from "~/services/cookie.server";
+import { useLoaderData } from "@remix-run/react";
+import type { ComponentProps } from "react";
 
 export { links };
 
@@ -16,7 +21,9 @@ const comparePathnames = (pathnameOrUrlA: string, pathnameOrUrlB: string) => {
   return aPathname === bPathname;
 };
 
-export const loader = async ({ request }: LoaderArgs) => {
+export const loader = async ({
+  request,
+}: LoaderArgs): Promise<TypedResponse<ComponentProps<typeof Login>>> => {
   const user = await findAuthenticatedUser(request);
 
   const url = new URL(request.url);
@@ -28,7 +35,7 @@ export const loader = async ({ request }: LoaderArgs) => {
   }
 
   if (user) {
-    return redirect(returnTo);
+    throw redirect(returnTo);
   }
 
   const headers = new Headers();
@@ -36,8 +43,7 @@ export const loader = async ({ request }: LoaderArgs) => {
 
   return json(
     {
-      isDevLogin: env.DEV_LOGIN === "true",
-      env,
+      isSecretLoginEnabled: env.DEV_LOGIN === "true",
       isGithubEnabled: Boolean(env.GH_CLIENT_ID && env.GH_CLIENT_SECRET),
       isGoogleEnabled: Boolean(
         env.GOOGLE_CLIENT_ID && env.GOOGLE_CLIENT_SECRET
@@ -49,7 +55,8 @@ export const loader = async ({ request }: LoaderArgs) => {
 
 const LoginRoute = () => {
   const errorMessage = useLoginErrorMessage();
-  return <Login errorMessage={errorMessage} />;
+  const data = useLoaderData<typeof loader>();
+  return <Login {...data} errorMessage={errorMessage} />;
 };
 
 export default LoginRoute;

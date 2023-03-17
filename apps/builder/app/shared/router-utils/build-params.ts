@@ -3,25 +3,13 @@
 
 import serverEnv from "~/env/env.server";
 
-export type BuildMode = "edit" | "preview" | "published";
 export type BuildParams = ({ pagePath: string } | { pageId: string }) &
-  ({ projectId: string } | { projectDomain: string }) & { mode: BuildMode };
+  ({ projectId: string } | { projectDomain: string });
 
 // A subtype of Request. To make testing easier.
 type MinimalRequest = {
   url: string;
   headers: { get: (name: string) => string | null };
-};
-
-const modes = ["edit", "preview", "published"] as BuildMode[];
-export const getMode = (url: URL): BuildMode => {
-  const modeParam = url.searchParams.get("mode");
-  const mode =
-    modeParam === null ? "published" : modes.find((mode) => mode === modeParam);
-  if (mode === undefined) {
-    throw new Error(`Invalid mode "${modeParam}"`);
-  }
-  return mode;
 };
 
 export const getRequestHost = (request: MinimalRequest): string =>
@@ -100,13 +88,12 @@ export const getBuildParams = (
       // Try to get projectId from referrer
       const refererUrl = new URL(referer);
       const projectId = refererUrl.searchParams.get("projectId");
-      const mode = getMode(refererUrl);
       const pageId = url.searchParams.get("pageId") ?? undefined;
 
-      if (mode === "edit" && projectId !== null) {
+      if (projectId !== null) {
         return pageId === undefined
-          ? { projectId, mode, pagePath: refererUrl.pathname }
-          : { projectId, mode, pageId };
+          ? { projectId, pagePath: refererUrl.pathname }
+          : { projectId, pageId };
       }
     }
   }
@@ -119,8 +106,8 @@ export const getBuildParams = (
     const projectId = url.searchParams.get("projectId");
     if (projectId !== null && buildHost === requestHost) {
       return pageId === undefined
-        ? { projectId, mode: getMode(url), pagePath: url.pathname }
-        : { projectId, mode: getMode(url), pageId };
+        ? { projectId, pagePath: url.pathname }
+        : { projectId, pageId };
     }
   }
 
@@ -128,22 +115,7 @@ export const getBuildParams = (
   const baseHost = rest.join(".");
   if (baseHost === buildHost) {
     return pageId === undefined
-      ? { projectDomain, mode: getMode(url), pagePath: url.pathname }
-      : { projectDomain, mode: getMode(url), pageId };
-  }
-};
-
-export const preserveSearchBuildParams = (
-  source: URLSearchParams,
-  target: URLSearchParams
-): void => {
-  const mode = source.get("mode");
-  if (typeof mode === "string" && modes.includes(mode as BuildMode)) {
-    target.set("mode", mode);
-  }
-
-  const projectId = source.get("projectId");
-  if (projectId) {
-    target.set("projectId", projectId);
+      ? { projectDomain, pagePath: url.pathname }
+      : { projectDomain, pageId };
   }
 };

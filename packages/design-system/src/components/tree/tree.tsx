@@ -4,7 +4,6 @@ import { createPortal } from "react-dom";
 import { ListPositionIndicator } from "../list-position-indicator";
 import { TreeNode, INDENT, TreeItemRenderProps } from "./tree-node";
 import {
-  type DropTarget,
   useHold,
   useDrop,
   useDrag,
@@ -13,41 +12,43 @@ import {
 } from "../primitives/dnd";
 import { Box } from "../box";
 import { useHorizontalShift } from "./horizontal-shift";
+import {
+  type ItemSelector,
+  type ItemDropTarget,
+  areItemSelectorsEqual,
+  getElementByItemSelector,
+  getItemSelectorFromElement,
+} from "./item-utils";
 
 export type TreeProps<Data extends { id: string }> = {
   root: Data;
+  selectedItemSelector: undefined | ItemSelector;
 
   canLeaveParent: (item: Data) => boolean;
   canAcceptChild: (item: Data) => boolean;
   findItemById: (root: Data, id: string) => Data | undefined;
   getItemPath: (root: Data, id: string) => Data[];
-  getItemPathWithPositions: (
-    root: Data,
-    id: string
-  ) => Array<{ item: Data; position: number }>;
   getItemChildren: (item: Data) => Data[];
   renderItem: (props: TreeItemRenderProps<Data>) => React.ReactNode;
 
-  selectedItemId?: string;
   onSelect?: (itemId: string) => void;
   onHover?: (item: Data | undefined) => void;
   animate?: boolean;
   onDragEnd: (event: {
-    itemId: string;
+    itemSelector: ItemSelector;
     dropTarget: { itemId: string; position: number | "end" };
   }) => void;
 };
 
 export const Tree = <Data extends { id: string }>({
   root,
-  getItemPathWithPositions,
+  selectedItemSelector,
   canLeaveParent,
   canAcceptChild,
   findItemById,
   getItemPath,
   getItemChildren,
   renderItem,
-  selectedItemId,
   onSelect,
   onHover,
   animate,
@@ -55,15 +56,16 @@ export const Tree = <Data extends { id: string }>({
 }: TreeProps<Data>) => {
   const { getIsExpanded, setIsExpanded } = useExpandState({
     root,
-    selectedItemId,
-    getItemPath,
+    selectedItemSelector,
     getItemChildren,
   });
 
   const rootRef = useRef<HTMLElement | null>(null);
 
-  const [dragItem, setDragItem] = useState<Data>();
-  const [dropTarget, setDropTarget] = useState<DropTarget<Data>>();
+  const [dragItemSelector, setDragItemSelector] = useState<
+    undefined | ItemSelector
+  >();
+  const [dropTarget, setDropTarget] = useState<ItemDropTarget<Data>>();
 
   const getDropTargetElement = useCallback(
     (id: string): HTMLElement | null | undefined =>
@@ -72,12 +74,11 @@ export const Tree = <Data extends { id: string }>({
   );
 
   const [shiftedDropTarget, setHorizontalShift] = useHorizontalShift({
-    dragItem,
+    dragItemSelector,
     dropTarget,
     root,
     getIsExpanded,
     getItemPath,
-    getItemPathWithPositions,
     getItemChildren,
     canAcceptChild,
   });
@@ -90,8 +91,8 @@ export const Tree = <Data extends { id: string }>({
     };
   };
 
-  const useHoldHandler = useHold<DropTarget<Data>>({
-    isEqual: (a, b) => a.data.id === b.data.id,
+  const useHoldHandler = useHold<ItemDropTarget<Data>>({
+    isEqual: (a, b) => areItemSelectorsEqual(a.itemSelector, b.itemSelector),
     holdTimeThreshold: 600,
     onHold: (dropTarget) => {
       if (
@@ -115,7 +116,7 @@ export const Tree = <Data extends { id: string }>({
     },
 
     swapDropTarget: (dropTarget) => {
-      if (dragItem === undefined || dropTarget === undefined) {
+      if (dragItemSelector === undefined || dropTarget === undefined) {
         return getFallbackDropTarget();
       }
 
@@ -131,8 +132,9 @@ export const Tree = <Data extends { id: string }>({
       }
 
       // Don't allow to drop inside drag item or any of its children
+      const [dragItemId] = dragItemSelector;
       const dragItemIndex = path.findIndex(
-        (instance) => instance.id === dragItem.id
+        (instance) => instance.id === dragItemId
       );
       if (dragItemIndex !== -1) {
         path.splice(0, dragItemIndex + 1);
@@ -154,8 +156,15 @@ export const Tree = <Data extends { id: string }>({
     },
 
     onDropTargetChange: (dropTarget) => {
-      useHoldHandler.setData(dropTarget);
-      setDropTarget(dropTarget);
+      const itemDropTarget = {
+        itemSelector: getItemSelectorFromElement(dropTarget.element),
+        data: dropTarget.data,
+        rect: dropTarget.rect,
+        indexWithinChildren: dropTarget.indexWithinChildren,
+        placement: dropTarget.placement,
+      };
+      useHoldHandler.setData(itemDropTarget);
+      setDropTarget(itemDropTarget);
     },
 
     getValidChildren: (element) => {
@@ -197,7 +206,11 @@ export const Tree = <Data extends { id: string }>({
     },
     onStart: ({ data }) => {
       onSelect?.(data.id);
-      setDragItem(data);
+      setDragItemSelector(
+        getItemPath(root, data.id)
+          .reverse()
+          .map((item) => item.id)
+      );
       dropHandlers.handleStart();
       autoScrollHandlers.setEnabled(true);
     },
@@ -209,11 +222,11 @@ export const Tree = <Data extends { id: string }>({
       setHorizontalShift(shifts);
     },
     onEnd: ({ isCanceled }) => {
-      if (shiftedDropTarget && dragItem && isCanceled === false) {
+      if (shiftedDropTarget && dragItemSelector && isCanceled === false) {
         onDragEnd({
-          itemId: dragItem.id,
+          itemSelector: dragItemSelector,
           dropTarget: {
-            itemId: shiftedDropTarget.item.id,
+            itemId: shiftedDropTarget.itemSelector[0],
             position: shiftedDropTarget.position,
           },
         });
@@ -221,7 +234,7 @@ export const Tree = <Data extends { id: string }>({
 
       autoScrollHandlers.setEnabled(false);
       setHorizontalShift(0);
-      setDragItem(undefined);
+      setDragItemSelector(undefined);
       setDropTarget(undefined);
       dropHandlers.handleEnd({ isCanceled });
       useHoldHandler.reset();
@@ -230,13 +243,13 @@ export const Tree = <Data extends { id: string }>({
 
   const autoScrollHandlers = useAutoScroll();
 
-  useDragCursor(dragItem !== undefined);
+  useDragCursor(dragItemSelector !== undefined);
 
   const keyboardNavigation = useKeyboardNavigation({
     root,
     getItemChildren,
     findItemById,
-    selectedItemId,
+    selectedItemSelector,
     getIsExpanded,
     setIsExpanded,
     onEsc: dragHandlers.cancelCurrentDrag,
@@ -279,13 +292,13 @@ export const Tree = <Data extends { id: string }>({
           onSelect={onSelect}
           onMouseEnter={onMouseEnter}
           onMouseLeave={onMouseLeave}
-          selectedItemId={selectedItemId}
+          selectedItemId={selectedItemSelector?.[0]}
           itemData={root}
           level={0}
           getIsExpanded={getIsExpanded}
           setIsExpanded={setIsExpanded}
           onExpandTransitionEnd={dropHandlers.handleDomMutation}
-          dropTargetItemId={shiftedDropTarget?.item?.id}
+          dropTargetItemId={shiftedDropTarget?.itemSelector[0]}
         />
       </Box>
 
@@ -305,37 +318,40 @@ export const Tree = <Data extends { id: string }>({
 
 const useKeyboardNavigation = <Data extends { id: string }>({
   root,
+  selectedItemSelector,
   getItemChildren,
   findItemById,
-  selectedItemId,
   getIsExpanded,
   setIsExpanded,
   onEsc,
 }: {
   root: Data;
+  selectedItemSelector: undefined | ItemSelector;
   getItemChildren: (item: Data) => Data[];
   findItemById: (root: Data, id: string) => Data | undefined;
-  selectedItemId: string | undefined;
   getIsExpanded: (instance: Data) => boolean;
   setIsExpanded: (instance: Data, isExpanded: boolean) => void;
   onEsc: () => void;
 }) => {
   const selectedItem = useMemo(() => {
-    if (selectedItemId === undefined) {
+    if (selectedItemSelector === undefined) {
       return undefined;
     }
+    const [selectedItemId] = selectedItemSelector;
     return findItemById(root, selectedItemId);
-  }, [root, selectedItemId, findItemById]);
+  }, [root, selectedItemSelector, findItemById]);
 
   const flatCurrentlyExpandedTree = useMemo(() => {
-    const result = [] as string[];
-    const traverse = (instance: Data) => {
-      result.push(instance.id);
-      if (getIsExpanded(instance)) {
-        getItemChildren(instance).forEach(traverse);
+    const result: ItemSelector[] = [];
+    const traverse = (item: Data, itemSelector: ItemSelector) => {
+      result.push(itemSelector);
+      if (getIsExpanded(item)) {
+        for (const child of getItemChildren(item)) {
+          traverse(child, [child.id, ...itemSelector]);
+        }
       }
     };
-    traverse(root);
+    traverse(root, [root.id]);
     return result;
   }, [root, getIsExpanded, getItemChildren]);
 
@@ -359,7 +375,9 @@ const useKeyboardNavigation = <Data extends { id: string }>({
       event.preventDefault();
     }
     if (event.key === "ArrowUp") {
-      const index = flatCurrentlyExpandedTree.indexOf(selectedItem.id);
+      const index = flatCurrentlyExpandedTree.findIndex((itemSelector) =>
+        areItemSelectorsEqual(itemSelector, selectedItemSelector)
+      );
       if (index > 0) {
         setFocus(flatCurrentlyExpandedTree[index - 1], "changing");
         // prevent scrolling
@@ -367,7 +385,9 @@ const useKeyboardNavigation = <Data extends { id: string }>({
       }
     }
     if (event.key === "ArrowDown") {
-      const index = flatCurrentlyExpandedTree.indexOf(selectedItem.id);
+      const index = flatCurrentlyExpandedTree.findIndex((itemSelector) =>
+        areItemSelectorsEqual(itemSelector, selectedItemSelector)
+      );
       if (index < flatCurrentlyExpandedTree.length - 1) {
         setFocus(flatCurrentlyExpandedTree[index + 1], "changing");
         // prevent scrolling
@@ -380,9 +400,10 @@ const useKeyboardNavigation = <Data extends { id: string }>({
   };
 
   const setFocus = useCallback(
-    (itemId: string, reason: "restoring" | "changing") => {
-      const itemButton = rootRef.current?.querySelector(
-        `[data-item-button-id="${itemId}"]`
+    (itemSelector: ItemSelector, reason: "restoring" | "changing") => {
+      const itemButton = getElementByItemSelector(
+        rootRef.current ?? undefined,
+        itemSelector
       );
       if (itemButton instanceof HTMLElement) {
         itemButton.focus({ preventScroll: reason === "restoring" });
@@ -406,11 +427,11 @@ const useKeyboardNavigation = <Data extends { id: string }>({
       isRootChanged &&
       haveFocus === false &&
       hadFocus.current === true &&
-      selectedItemId !== undefined
+      selectedItemSelector !== undefined
     ) {
-      setFocus(selectedItemId, "restoring");
+      setFocus(selectedItemSelector, "restoring");
     }
-  }, [root, rootRef, selectedItemId, setFocus]);
+  }, [root, rootRef, selectedItemSelector, setFocus]);
 
   // onBlur doesn't fire when the activeElement is removed from the DOM
   useEffect(() => {
@@ -435,8 +456,8 @@ const useKeyboardNavigation = <Data extends { id: string }>({
 
       // When clicking anywhere else in the tree,
       // make sure the selected item doesn't loose focus.
-      if (selectedItemId !== undefined) {
-        setFocus(selectedItemId, "restoring");
+      if (selectedItemSelector !== undefined) {
+        setFocus(selectedItemSelector, "restoring");
       }
     },
     handleBlur() {
@@ -446,36 +467,32 @@ const useKeyboardNavigation = <Data extends { id: string }>({
 };
 
 const useExpandState = <Data extends { id: string }>({
-  selectedItemId,
+  selectedItemSelector,
   root,
-  getItemPath,
   getItemChildren,
 }: {
   root: Data;
-  getItemPath: (root: Data, id: string) => Data[];
   getItemChildren: (item: Data) => Data[];
-  selectedItemId?: string;
+  selectedItemSelector: undefined | ItemSelector;
 }) => {
   const [record, setRecord] = useState<Record<string, boolean>>({});
 
   // We want to automatically expand all parents of the selected instance whenever it changes
-  const prevSelectedItemId = useRef(selectedItemId);
-  const prevRoot = useRef(root);
+  const prevSelectedItemSelector = useRef(selectedItemSelector);
   useEffect(() => {
     if (
-      selectedItemId === prevSelectedItemId.current &&
-      prevRoot.current === root
+      areItemSelectorsEqual(
+        selectedItemSelector,
+        prevSelectedItemSelector.current
+      )
     ) {
       return;
     }
-    prevSelectedItemId.current = selectedItemId;
-    prevRoot.current = root;
-    if (selectedItemId === undefined) {
+    prevSelectedItemSelector.current = selectedItemSelector;
+    if (selectedItemSelector === undefined) {
       return;
     }
-    const path = getItemPath(root, selectedItemId).map(
-      (instance) => instance.id
-    );
+    const path = selectedItemSelector.slice().reverse();
     // Don't want to expand the selected instance itself
     path.pop();
     const toExpand = path.filter((id) => record[id] !== true);
@@ -489,7 +506,7 @@ const useExpandState = <Data extends { id: string }>({
       }
       return newRecord;
     });
-  }, [record, root, selectedItemId, getItemPath]);
+  }, [record, selectedItemSelector]);
 
   const getIsExpanded = useCallback(
     (instance: Data) => {

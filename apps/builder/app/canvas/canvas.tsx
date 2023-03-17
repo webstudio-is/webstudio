@@ -1,4 +1,5 @@
 import { useMemo, Fragment, useEffect } from "react";
+import { useStore } from "@nanostores/react";
 import { computed } from "nanostores";
 import type { CanvasData } from "@webstudio-is/project";
 import type { Instance } from "@webstudio-is/project-build";
@@ -10,6 +11,7 @@ import {
   customComponentMetas,
   customComponentPropsMetas,
   setParams,
+  customComponents,
   type GetComponent,
 } from "@webstudio-is/react-sdk";
 import { publish } from "~/shared/pubsub";
@@ -26,17 +28,16 @@ import {
   useRootInstance,
   useSubscribeScrollState,
   useIsPreviewMode,
-  useSetAssets,
-  useSetSelectedPage,
+  selectedPageStore,
 } from "~/shared/nano-states";
 import { usePublishScrollState } from "./shared/use-publish-scroll-state";
 import { useDragAndDrop } from "./shared/use-drag-drop";
 import { useSubscribeBuilderReady } from "./shared/use-builder-ready";
 import { useCopyPaste } from "~/shared/copy-paste";
-import { customComponents } from "./custom-components";
-import { useHoveredInstanceConnector } from "./hovered-instance-connector";
 import { setDataCollapsed, subscribeCollapsedToPubSub } from "./collapsed";
 import { useWindowResizeDebounced } from "~/shared/dom-hooks";
+import { subscribeInstanceSelection } from "./instance-selection";
+import { subscribeInstanceHovering } from "./instance-hovering";
 
 registerContainers();
 
@@ -81,7 +82,9 @@ const DesignMode = () => {
   // @todo we need to forward the events from canvas to builder and avoid importing this
   // in both places
   useCopyPaste();
-  useHoveredInstanceConnector();
+
+  useEffect(subscribeInstanceSelection, []);
+  useEffect(subscribeInstanceHovering, []);
 
   return null;
 };
@@ -96,8 +99,6 @@ export const Canvas = ({
   getComponent,
 }: CanvasProps): JSX.Element | null => {
   const isBuilderReady = useSubscribeBuilderReady();
-  useSetAssets(data.assets);
-  useSetSelectedPage(data.page);
   setParams(data.params ?? null);
   useCanvasStore(publish);
   const [isPreviewMode] = useIsPreviewMode();
@@ -109,16 +110,17 @@ export const Canvas = ({
   // e.g. toggling preview is still needed in both modes
   useShortcuts();
   useSharedShortcuts();
+  const selectedPage = useStore(selectedPageStore);
 
   useEffect(() => {
-    const rootInstanceId = data.page.rootInstanceId;
+    const rootInstanceId = selectedPage?.rootInstanceId;
     if (rootInstanceId !== undefined) {
       setDataCollapsed(rootInstanceId);
     }
   });
 
   useWindowResizeDebounced(() => {
-    const rootInstanceId = data.page.rootInstanceId;
+    const rootInstanceId = selectedPage?.rootInstanceId;
     if (rootInstanceId !== undefined) {
       setDataCollapsed(rootInstanceId);
     }

@@ -3,13 +3,18 @@ import { useStore } from "@nanostores/react";
 import { Flex } from "@webstudio-is/design-system";
 import type { Instance } from "@webstudio-is/project-build";
 import {
-  selectedInstanceIdStore,
-  hoveredInstanceIdStore,
+  selectedInstanceSelectorStore,
+  hoveredInstanceSelectorStore,
   useRootInstance,
+  instancesStore,
 } from "~/shared/nano-states";
 import { InstanceTree } from "~/builder/shared/tree";
 import { reparentInstance } from "~/shared/instance-utils";
 import { Header, CloseButton } from "../header";
+import {
+  getInstanceSelector,
+  type InstanceSelector,
+} from "~/shared/tree-utils";
 
 type NavigatorProps = {
   isClosable?: boolean;
@@ -17,19 +22,21 @@ type NavigatorProps = {
 };
 
 export const Navigator = ({ isClosable, onClose }: NavigatorProps) => {
-  const selectedInstanceId = useStore(selectedInstanceIdStore);
+  const selectedInstanceSelector = useStore(selectedInstanceSelectorStore);
   const [rootInstance] = useRootInstance();
 
   const handleSelect = useCallback((instanceId: Instance["id"]) => {
-    selectedInstanceIdStore.set(instanceId);
+    const instances = instancesStore.get();
+    const instanceSelector = getInstanceSelector(instances, instanceId);
+    selectedInstanceSelectorStore.set(instanceSelector);
   }, []);
 
   const handleDragEnd = useCallback(
     (payload: {
-      itemId: string;
+      itemSelector: InstanceSelector;
       dropTarget: { itemId: string; position: number | "end" };
     }) => {
-      reparentInstance(payload.itemId, {
+      reparentInstance(payload.itemSelector[0], {
         parentId: payload.dropTarget.itemId,
         position: payload.dropTarget.position,
       });
@@ -38,7 +45,13 @@ export const Navigator = ({ isClosable, onClose }: NavigatorProps) => {
   );
 
   const handleHover = useCallback((instance: Instance | undefined) => {
-    hoveredInstanceIdStore.set(instance?.id);
+    if (instance) {
+      const instances = instancesStore.get();
+      const instanceSelector = getInstanceSelector(instances, instance.id);
+      hoveredInstanceSelectorStore.set(instanceSelector);
+    } else {
+      hoveredInstanceSelectorStore.set(undefined);
+    }
   }, []);
 
   if (rootInstance === undefined) {
@@ -53,7 +66,8 @@ export const Navigator = ({ isClosable, onClose }: NavigatorProps) => {
       <Flex css={{ flexGrow: 1, flexDirection: "column" }}>
         <InstanceTree
           root={rootInstance}
-          selectedItemId={selectedInstanceId}
+          selectedItemSelector={selectedInstanceSelector}
+          // @todo provide in callback instance selector instead of just id
           onSelect={handleSelect}
           onHover={handleHover}
           onDragEnd={handleDragEnd}

@@ -1,54 +1,48 @@
 import { useMemo, useState } from "react";
-import type { DropTarget, Placement } from "../primitives/dnd";
+import type { Placement } from "../primitives/dnd";
+import type { ItemDropTarget, ItemSelector } from "./item-utils";
 import { getPlacementIndicatorAlignment } from "./tree-node";
 
-export type ShiftedDropTarget<Data> = {
-  item: Data;
+export type ShiftedDropTarget = {
+  itemSelector: ItemSelector;
   position: number | "end";
   placement?: Placement;
 };
 
 export const useHorizontalShift = <Data extends { id: string }>({
-  dragItem,
+  dragItemSelector,
   dropTarget,
   root,
   getIsExpanded,
   getItemPath,
-  getItemPathWithPositions,
   canAcceptChild,
   getItemChildren,
 }: {
   getItemChildren: (item: Data) => Data[];
   canAcceptChild: (item: Data) => boolean;
   getItemPath: (root: Data, id: string) => Data[];
-  getItemPathWithPositions: (
-    root: Data,
-    id: string
-  ) => Array<{ item: Data; position: number }>;
-  dragItem: Data | undefined;
-  dropTarget: DropTarget<Data> | undefined;
+  dragItemSelector: undefined | ItemSelector;
+  dropTarget: ItemDropTarget<Data> | undefined;
   root: Data;
   getIsExpanded: (item: Data) => boolean;
 }) => {
   const [horizontalShift, setHorizontalShift] = useState(0);
 
-  const dragItemDepth = useMemo(
-    () => dragItem && getItemPath(root, dragItem.id).length - 1,
-    [dragItem, root, getItemPath]
-  );
-
   // Here we want to allow user to shift placement line horizontally
   // but only if that corresponds to a meaningful position in the tree
-  const shiftedDropTarget = useMemo<ShiftedDropTarget<Data> | undefined>(() => {
-    if (
-      dropTarget === undefined ||
-      dragItemDepth === undefined ||
-      dragItem === undefined
-    ) {
+  const shiftedDropTarget = useMemo((): ShiftedDropTarget | undefined => {
+    if (dropTarget === undefined || dragItemSelector === undefined) {
       return undefined;
     }
 
-    const { data, placement, indexWithinChildren } = dropTarget;
+    const dragItemDepth = dragItemSelector.length - 1;
+
+    const {
+      itemSelector: dropItemSelector,
+      data,
+      placement,
+      indexWithinChildren,
+    } = dropTarget;
 
     const shiftPlacement = (depth: number) => {
       const shift = getPlacementIndicatorAlignment(depth);
@@ -63,27 +57,28 @@ export const useHorizontalShift = <Data extends { id: string }>({
     // In this case the placement line coordinates are meaningless in the context of the tree.
     // We're dropping the placement and not performing any shifting.
     if (placement.type === "inside-parent") {
-      return { item: data, position: "end" };
+      return { itemSelector: dropItemSelector, position: "end" };
     }
 
-    const dropTargetPath = getItemPathWithPositions(root, data.id);
-    dropTargetPath.reverse();
-
-    const currentDepth = dropTargetPath.length;
+    const currentDepth = dropItemSelector.length;
     const desiredDepth = dragItemDepth + horizontalShift;
 
     const withoutShift = {
-      item: data,
+      itemSelector: dropItemSelector,
       position: indexWithinChildren,
       placement: shiftPlacement(currentDepth),
     } as const;
 
-    const isDragItem = (item: Data | undefined) =>
-      typeof item === "object" && item.id === dragItem.id;
+    const [dragItemId] = dragItemSelector;
+    const isDragItem = (item: Data | undefined) => item?.id === dragItemId;
+
+    const dropTargetPath = getItemPath(root, data.id);
+    dropTargetPath.reverse();
 
     if (desiredDepth < currentDepth) {
       let shifted = 0;
       let newParent = data;
+      let newParentSelector = dropItemSelector;
       let newPosition = indexWithinChildren;
 
       const isAtTheBottom = (parent: Data, index: number) => {
@@ -95,18 +90,25 @@ export const useHorizontalShift = <Data extends { id: string }>({
         return indexCorrected === children.length;
       };
 
-      let potentialNewParent = dropTargetPath[shifted + 1];
-
-      while (
-        isAtTheBottom(newParent, newPosition) &&
-        typeof potentialNewParent === "object" &&
-        canAcceptChild(potentialNewParent.item) &&
-        shifted < currentDepth - desiredDepth
-      ) {
-        shifted++;
-        newPosition = dropTargetPath[shifted - 1].position + 1;
-        newParent = potentialNewParent.item;
-        potentialNewParent = dropTargetPath[shifted + 1];
+      // skip drop item
+      for (let index = 1; index < dropTargetPath.length; index += 1) {
+        const potentialNewParent = dropTargetPath[index];
+        if (
+          isAtTheBottom(newParent, newPosition) &&
+          canAcceptChild(potentialNewParent) &&
+          shifted < currentDepth - desiredDepth
+        ) {
+          shifted = index;
+          newParent = potentialNewParent;
+          newParentSelector = dropItemSelector.slice(index);
+          const child = dropTargetPath[index - 1];
+          const childPosition = getItemChildren(newParent).findIndex(
+            (item) => item.id === child.id
+          );
+          newPosition = childPosition + 1;
+          continue;
+        }
+        break;
       }
 
       if (shifted === 0) {
@@ -114,7 +116,7 @@ export const useHorizontalShift = <Data extends { id: string }>({
       }
 
       return {
-        item: newParent,
+        itemSelector: newParentSelector,
         position: newPosition,
         placement: shiftPlacement(currentDepth - shifted),
       };
@@ -123,6 +125,7 @@ export const useHorizontalShift = <Data extends { id: string }>({
     if (desiredDepth > currentDepth) {
       let shifted = 0;
       let newParent = data;
+      let newParentSelector = dropItemSelector;
 
       const findNextParent = (
         parent: Data,
@@ -141,12 +144,13 @@ export const useHorizontalShift = <Data extends { id: string }>({
       let potentialNewParent = findNextParent(data, indexWithinChildren - 1);
 
       while (
-        typeof potentialNewParent === "object" &&
+        potentialNewParent &&
         getIsExpanded(potentialNewParent) &&
         canAcceptChild(potentialNewParent) &&
         shifted < desiredDepth - currentDepth
       ) {
         newParent = potentialNewParent;
+        newParentSelector = [newParent.id, ...newParentSelector];
         potentialNewParent = findNextParent(newParent, "last");
         shifted++;
       }
@@ -156,7 +160,7 @@ export const useHorizontalShift = <Data extends { id: string }>({
       }
 
       return {
-        item: newParent,
+        itemSelector: newParentSelector,
         position: "end",
         placement: shiftPlacement(currentDepth + shifted),
       };
@@ -165,11 +169,10 @@ export const useHorizontalShift = <Data extends { id: string }>({
     return withoutShift;
   }, [
     dropTarget,
-    dragItemDepth,
-    dragItem,
-    getItemPathWithPositions,
+    dragItemSelector,
     root,
     horizontalShift,
+    getItemPath,
     canAcceptChild,
     getItemChildren,
     getIsExpanded,

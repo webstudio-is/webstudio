@@ -2,7 +2,7 @@ import React, { type ReactNode, type ComponentProps, type Ref } from "react";
 import * as Primitive from "@radix-ui/react-dialog";
 import { css, theme, keyframes, type CSS } from "../stitches.config";
 import { Title } from "./title";
-import { floatingPanelStyles, CloseButton, TitleSlot } from "./floating-panel";
+import { floatingPanelStyle, CloseButton, TitleSlot } from "./floating-panel";
 
 export const Dialog = Primitive.Root;
 export const DialogTrigger = Primitive.Trigger;
@@ -27,9 +27,9 @@ export const DialogContent = React.forwardRef(
   ) => {
     return (
       <Primitive.Portal>
-        <Primitive.Overlay className={overlayStyles()} />
+        <Primitive.Overlay className={overlayStyle()} />
         <Primitive.Content
-          className={contentStyles({ className, css })}
+          className={contentStyle({ className, css })}
           {...props}
           ref={forwardedRef}
         >
@@ -56,7 +56,7 @@ export const DialogTitle = ({
         </Primitive.Close>
       }
     >
-      <Primitive.Title className={titleStyles()}>{children}</Primitive.Title>
+      <Primitive.Title className={titleStyle()}>{children}</Primitive.Title>
     </Title>
   </TitleSlot>
 );
@@ -68,7 +68,7 @@ const overlayShow = keyframes({
   from: { opacity: 0 },
   to: { opacity: 1 },
 });
-const overlayStyles = css({
+const overlayStyle = css({
   backgroundColor: "rgba(17, 24, 28, 0.66)",
   position: "fixed",
   inset: 0,
@@ -79,7 +79,7 @@ const contentShow = keyframes({
   from: { opacity: 0, transform: "translate(-50%, -48%) scale(0.96)" },
   to: { opacity: 1, transform: "translate(-50%, -50%) scale(1)" },
 });
-const contentStyles = css(floatingPanelStyles, {
+const contentStyle = css(floatingPanelStyle, {
   position: "fixed",
   top: "50%",
   left: "50%",
@@ -91,7 +91,7 @@ const contentStyles = css(floatingPanelStyles, {
   animation: `${contentShow} 150ms ${theme.easing.easeOut}`,
 });
 
-const titleStyles = css({
+const titleStyle = css({
   // Resetting H2 styles (Primitive.Title is H2)
   all: "unset",
 });

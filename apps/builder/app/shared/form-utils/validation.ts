@@ -1,8 +1,5 @@
-import type { Fetcher } from "@remix-run/react";
 import { toast } from "@webstudio-is/design-system";
-import { useCallback, useState } from "react";
 import type { ZodError } from "zod";
-import { useOnFetchEnd } from "~/shared/fetcher";
 
 export type FetcherData<Payload> =
   | ({ status: "ok" } & Payload)
@@ -14,35 +11,6 @@ export const normalizeErrors = (
   typeof errors === "string"
     ? { formErrors: [errors], fieldErrors: {} }
     : errors;
-
-export const useFetcherErrors = <FieldName extends string>({
-  fetcher,
-  fieldNames,
-}: {
-  fetcher: Fetcher<FetcherData<unknown>>;
-  fieldNames?: readonly FieldName[];
-}): {
-  fieldErrors: ZodError["formErrors"]["fieldErrors"];
-  resetFieldError: (fieldName: FieldName) => void;
-} => {
-  const [fieldErrors, setFieldErrors] = useState<
-    ZodError["formErrors"]["fieldErrors"]
-  >({});
-
-  useOnFetchEnd(fetcher, (data) => {
-    if (data.status === "error") {
-      const errors = normalizeErrors(data.errors);
-      toastUnknownFieldErrors(errors, fieldNames);
-      setFieldErrors(errors.fieldErrors);
-    }
-  });
-
-  const resetFieldError = useCallback((fieldName: FieldName) => {
-    setFieldErrors(({ [fieldName]: _, ...rest }) => rest);
-  }, []);
-
-  return { fieldErrors, resetFieldError };
-};
 
 // Show a toast for each of formErrors
 // as well as fieldErrors which we cannot display near a corresponding field

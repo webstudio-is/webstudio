@@ -4,17 +4,18 @@ import type { WritableAtom } from "nanostores";
 import { useEffect } from "react";
 import { type Publish, subscribe } from "~/shared/pubsub";
 import {
+  pagesStore,
   instancesStore,
   propsStore,
   breakpointsContainer,
   stylesStore,
   styleSourcesStore,
   styleSourceSelectionsStore,
+  selectedPageIdStore,
   assetContainersStore,
-  selectedPageStore,
-  selectedInstanceIdStore,
+  selectedInstanceSelectorStore,
   selectedInstanceBrowserStyleStore,
-  hoveredInstanceIdStore,
+  hoveredInstanceSelectorStore,
   hoveredInstanceOutlineStore,
   isPreviewModeStore,
 } from "~/shared/nano-states";
@@ -49,6 +50,7 @@ const clientStores = new Map<string, WritableAtom<unknown>>();
 
 export const registerContainers = () => {
   // synchronize patches
+  store.register("pages", pagesStore);
   store.register("breakpoints", breakpointsContainer);
   store.register("instances", instancesStore);
   store.register("styles", stylesStore);
@@ -56,16 +58,16 @@ export const registerContainers = () => {
   store.register("styleSourceSelections", styleSourceSelectionsStore);
   store.register("props", propsStore);
   // synchronize whole states
+  clientStores.set("selectedPageId", selectedPageIdStore);
   clientStores.set("assetContainers", assetContainersStore);
-  clientStores.set("selectedPage", selectedPageStore);
-  clientStores.set("selectedInstanceId", selectedInstanceIdStore);
+  clientStores.set("selectedInstanceSelector", selectedInstanceSelectorStore);
   clientStores.set(
     "selectedInstanceBrowserStyle",
     selectedInstanceBrowserStyleStore
   );
-  clientStores.set("hoveredInstanceIdStore", hoveredInstanceIdStore);
-  clientStores.set("hoveredInstanceOutlineStore", hoveredInstanceOutlineStore);
-  clientStores.set("isPreviewModeStore", isPreviewModeStore);
+  clientStores.set("hoveredInstanceSelector", hoveredInstanceSelectorStore);
+  clientStores.set("hoveredInstanceOutline", hoveredInstanceOutlineStore);
+  clientStores.set("isPreviewMode", isPreviewModeStore);
   for (const [name, store] of synchronizedBreakpointsStores) {
     clientStores.set(name, store);
   }
@@ -171,21 +173,6 @@ const syncStoresState = (name: SyncEventSource, publish: Publish) => {
 
 export const useCanvasStore = (publish: Publish) => {
   useEffect(() => {
-    const data = [];
-    for (const [namespace, store] of clientStores) {
-      data.push({
-        namespace,
-        value: store.get(),
-      });
-    }
-    publish({
-      type: "sendStoreData",
-      payload: {
-        source: "canvas",
-        data,
-      },
-    });
-
     const unsubscribeStoresState = syncStoresState("canvas", publish);
     const unsubscribeStoresChanges = syncStoresChanges("canvas", publish);
 
@@ -210,6 +197,12 @@ export const useBuilderStore = (publish: Publish) => {
         data.push({
           namespace,
           value: container.get(),
+        });
+      }
+      for (const [namespace, store] of clientStores) {
+        data.push({
+          namespace,
+          value: store.get(),
         });
       }
       publish({

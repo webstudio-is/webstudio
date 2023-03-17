@@ -2,20 +2,33 @@ name: Visual Regression Tests
 on: [push]
 
 jobs:
-  build:
+  design-system:
     timeout-minutes: 20
-
     runs-on: ubuntu-latest
-
     steps:
       - uses: actions/checkout@v3
       - uses: ./.github/actions/ci-setup
 
       - name: Build Storybook for Design System
-        run: pnpm storybook:ds:build
+        run: pnpm turbo run storybook:build --filter=@webstudio-is/design-system
 
       - name: Lost Pixel
         uses: lost-pixel/lost-pixel@v3.1.0
         env:
           LOST_PIXEL_CONFIG_DIR: packages/design-system
+          LOST_PIXEL_API_KEY: ${{ secrets.LOST_PIXEL_API_KEY }}
+  builder:
+    timeout-minutes: 20
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+      - uses: ./.github/actions/ci-setup
+
+      - name: Build Storybook for Builder
+        run: pnpm turbo run storybook:build --filter=@webstudio-is/builder
+
+      - name: Lost Pixel
+        uses: lost-pixel/lost-pixel@v3.1.0
+        env:
+          LOST_PIXEL_CONFIG_DIR: apps/builder
           LOST_PIXEL_API_KEY: ${{ secrets.LOST_PIXEL_API_KEY }}

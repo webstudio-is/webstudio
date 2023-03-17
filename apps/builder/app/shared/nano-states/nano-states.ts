@@ -1,5 +1,4 @@
 import { useMemo } from "react";
-import deepEqual from "fast-deep-equal";
 import { atom, computed, type WritableAtom } from "nanostores";
 import { useStore } from "@nanostores/react";
 import { nanoid } from "nanoid";
@@ -12,6 +11,7 @@ import type {
   Instances,
   InstancesItem,
   Page,
+  Pages,
   Prop,
   Props,
   StyleDecl,
@@ -33,19 +33,39 @@ import type {
 } from "~/builder/shared/assets";
 import { useSyncInitializeOnce } from "../hook-utils";
 import { shallowComputed } from "../store-utils";
-import { createInstancesIndex } from "../tree-utils";
+import { createInstancesIndex, type InstanceSelector } from "../tree-utils";
 
 const useValue = <T>(atom: WritableAtom<T>) => {
   const value = useStore(atom);
   return [value, atom.set] as const;
 };
 
-export const selectedPageStore = atom<undefined | Page>(undefined);
-export const useSetSelectedPage = (page: Page) => {
+export const pagesStore = atom<undefined | Pages>(undefined);
+export const useSetPages = (pages: Pages) => {
   useSyncInitializeOnce(() => {
-    selectedPageStore.set(page);
+    pagesStore.set(pages);
   });
 };
+
+export const selectedPageIdStore = atom<undefined | Page["id"]>(undefined);
+export const useSetSelectedPageId = (pageId: Page["id"]) => {
+  useSyncInitializeOnce(() => {
+    selectedPageIdStore.set(pageId);
+  });
+};
+
+export const selectedPageStore = computed(
+  [pagesStore, selectedPageIdStore],
+  (pages, selectedPageId) => {
+    if (pages === undefined) {
+      return undefined;
+    }
+    if (pages.homePage.id === selectedPageId) {
+      return pages.homePage;
+    }
+    return pages.pages.find((page) => page.id === selectedPageId);
+  }
+);
 
 export const instancesStore = atom<Map<InstancesItem["id"], InstancesItem>>(
   new Map()
@@ -56,41 +76,6 @@ export const useSetInstances = (
   useSyncInitializeOnce(() => {
     instancesStore.set(new Map(instances));
   });
-};
-
-/**
- * this is temporary utility to map rootInstance changes
- * to normalized instances
- *
- * later its usages should be rewritten with direct instances mutations
- */
-export const patchInstancesMutable = (
-  rootInstance: undefined | Instance,
-  instances: Instances
-) => {
-  const oldInstancesIndex = createInstancesIndex(rootInstance);
-  for (const oldInstance of oldInstancesIndex.instancesById.values()) {
-    const instance = instances.get(oldInstance.id);
-    const convertedOldInstance: InstancesItem = {
-      type: "instance",
-      id: oldInstance.id,
-      component: oldInstance.component,
-      label: oldInstance.label,
-      children: oldInstance.children.map((child) => {
-        if (child.type === "text") {
-          return child;
-        }
-        return {
-          type: "id",
-          value: child.id,
-        };
-      }),
-    };
-    if (deepEqual(convertedOldInstance, instance)) {
-      continue;
-    }
-    instances.set(oldInstance.id, convertedOldInstance);
-  }
 };
 
 // @todo will be removed soon
@@ -319,15 +304,17 @@ export const useSetAssets = (assets: Asset[]) => {
   });
 };
 
-export const selectedInstanceIdStore = atom<undefined | Instance["id"]>(
+export const selectedInstanceSelectorStore = atom<undefined | InstanceSelector>(
   undefined
 );
+
 export const selectedInstanceStore = computed(
-  [instancesIndexStore, selectedInstanceIdStore],
-  (instancesIndex, selectedInstanceId) => {
-    if (selectedInstanceId === undefined) {
+  [instancesIndexStore, selectedInstanceSelectorStore],
+  (instancesIndex, selectedInstanceSelector) => {
+    if (selectedInstanceSelector === undefined) {
       return;
     }
+    const [selectedInstanceId] = selectedInstanceSelector;
     return instancesIndex.instancesById.get(selectedInstanceId);
   }
 );
@@ -335,12 +322,17 @@ export const selectedInstanceStore = computed(
 export const selectedInstanceBrowserStyleStore = atom<undefined | Style>();
 
 export const selectedInstanceStyleSourcesStore = computed(
-  [styleSourceSelectionsStore, styleSourcesStore, selectedInstanceIdStore],
-  (styleSourceSelections, styleSources, selectedInstanceId) => {
+  [
+    styleSourceSelectionsStore,
+    styleSourcesStore,
+    selectedInstanceSelectorStore,
+  ],
+  (styleSourceSelections, styleSources, selectedInstanceSelector) => {
     const selectedInstanceStyleSources: StyleSource[] = [];
-    if (selectedInstanceId === undefined) {
+    if (selectedInstanceSelector === undefined) {
       return selectedInstanceStyleSources;
     }
+    const [selectedInstanceId] = selectedInstanceSelector;
     const styleSourceIds =
       styleSourceSelections.get(selectedInstanceId)?.values ?? [];
     let hasLocal = false;
@@ -379,11 +371,11 @@ export const selectedStyleSourceStore = computed(
   }
 );
 
-export const hoveredInstanceIdStore = atom<undefined | Instance["id"]>(
+export const hoveredInstanceSelectorStore = atom<undefined | InstanceSelector>(
   undefined
 );
 export const hoveredInstanceOutlineStore = atom<
-  undefined | { instanceId: Instance["id"]; rect: DOMRect }
+  undefined | { label?: string; component: string; rect: DOMRect }
 >(undefined);
 
 export const isPreviewModeStore = atom<boolean>(false);
@@ -402,7 +394,7 @@ export const useSetAuthPermit = (authPermit: AuthPermit) => {
   });
 };
 
-const authTokenStore = atom<string | undefined>(undefined);
+export const authTokenStore = atom<string | undefined>(undefined);
 export const useAuthToken = () => useValue(authTokenStore);
 export const useSetAuthToken = (authToken: string | undefined) => {
   useSyncInitializeOnce(() => {

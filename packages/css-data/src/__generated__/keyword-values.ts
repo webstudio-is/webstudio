@@ -486,6 +486,7 @@ export const keywordValues = {
   ],
   backgroundImage: ["none"],
   backgroundOrigin: ["border-box", "padding-box", "content-box"],
+  backgroundPosition: ["left", "center", "right", "top", "bottom"],
   backgroundPositionX: ["center", "left", "right", "x-start", "x-end"],
   backgroundPositionY: ["center", "top", "bottom", "y-start", "y-end"],
   backgroundRepeat: [

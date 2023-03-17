@@ -3,11 +3,14 @@ import { styled, theme } from "@webstudio-is/design-system";
 import type { StyleInfo } from "../../shared/style-info";
 import brokenImage from "~/shared/images/broken-image-placeholder.svg";
 import env from "~/shared/env";
+import { layeredBackgroundProps } from "./background-layers";
+import type { StyleProperty } from "@webstudio-is/css-data";
+import { toValue } from "@webstudio-is/css-engine";
+import { toPascalCase } from "../../shared/keyword-utils";
 
 const Thumbnail = styled("div", {
   width: theme.spacing[10],
   height: theme.spacing[10],
-  backgroundImage: "linear-gradient(yellow, red)",
 });
 
 const NoneThumbnail = styled("div", {
@@ -43,14 +46,27 @@ const StyledWebstudioImage = styled(WebstudioImage, {
   },
 });
 
+const gradientNames = [
+  "conic-gradient",
+  "linear-gradient",
+  "radial-gradient",
+  "repeating-conic-gradient",
+  "repeating-linear-gradient",
+  "repeating-radial-gradient",
+];
+
 export const getLayerName = (layerStyle: StyleInfo) => {
   const backgroundImageStyle = layerStyle.backgroundImage?.value;
   if (backgroundImageStyle?.type === "image") {
-    return "Image"; // backgroundImageStyle.value.value.name;
+    return backgroundImageStyle.value.value.name;
   }
 
   if (backgroundImageStyle?.type === "unparsed") {
-    return "Gradient";
+    const gradientName = gradientNames.find((name) =>
+      backgroundImageStyle.value.includes(name)
+    );
+
+    return gradientName ? toPascalCase(gradientName) : "Gradient";
   }
 
   return "None";
@@ -82,7 +98,13 @@ export const LayerThumbnail = (props: { layerStyle: StyleInfo }) => {
   }
 
   if (backgroundImageStyle?.type === "unparsed") {
-    return <Thumbnail />;
+    const cssStyle: { [property in StyleProperty]?: string } = {};
+
+    for (const property of layeredBackgroundProps) {
+      cssStyle[property] = toValue(props.layerStyle[property]?.value);
+    }
+
+    return <Thumbnail css={cssStyle} />;
   }
 
   return <NoneThumbnail />;

@@ -3,7 +3,7 @@ import { typography as textVariants } from "../__generated__/figma-design-tokens
 
 export { textVariants };
 
-export const textStyles = css({
+export const textStyle = css({
   margin: 0, // in case it's used with <p>
   variants: {
     variant: textVariants,
@@ -39,4 +39,4 @@ export const textStyles = css({
   defaultVariants: { variant: "regular" },
 });
 
-export const Text = styled("div", textStyles);
+export const Text = styled("div", textStyle);

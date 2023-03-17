@@ -1,29 +1,27 @@
 import { useStore } from "@nanostores/react";
 import {
-  hoveredInstanceIdStore,
+  hoveredInstanceSelectorStore,
   hoveredInstanceOutlineStore,
-  instancesStore,
-  selectedInstanceIdStore,
+  selectedInstanceSelectorStore,
   useTextEditingInstanceId,
 } from "~/shared/nano-states";
+import { areInstanceSelectorsEqual } from "~/shared/tree-utils";
 import { Outline } from "./outline";
 import { Label } from "./label";
 
 export const HoveredInstanceOutline = () => {
-  const selectedInstanceId = useStore(selectedInstanceIdStore);
-  const hoveredInstanceId = useStore(hoveredInstanceIdStore);
+  const selectedInstanceSelector = useStore(selectedInstanceSelectorStore);
+  const hoveredInstanceSelector = useStore(hoveredInstanceSelectorStore);
   const instanceOutline = useStore(hoveredInstanceOutlineStore);
   const [textEditingInstanceId] = useTextEditingInstanceId();
-  const instances = useStore(instancesStore);
 
   const isEditingText = textEditingInstanceId !== undefined;
-  const isHoveringSelectedInstance = selectedInstanceId === hoveredInstanceId;
-  const instance = hoveredInstanceId
-    ? instances.get(hoveredInstanceId)
-    : undefined;
+  const isHoveringSelectedInstance = areInstanceSelectorsEqual(
+    selectedInstanceSelector,
+    hoveredInstanceSelector
+  );
 
   if (
-    instance === undefined ||
     instanceOutline === undefined ||
     isHoveringSelectedInstance ||
     isEditingText
@@ -33,7 +31,7 @@ export const HoveredInstanceOutline = () => {
 
   return (
     <Outline rect={instanceOutline.rect}>
-      <Label instance={instance} instanceRect={instanceOutline.rect} />
+      <Label instance={instanceOutline} instanceRect={instanceOutline.rect} />
     </Outline>
   );
 };

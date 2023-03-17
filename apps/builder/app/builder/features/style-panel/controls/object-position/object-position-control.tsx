@@ -1,4 +1,4 @@
-import { Flex, IconButton } from "@webstudio-is/design-system";
+import { Flex, IconButton, theme } from "@webstudio-is/design-system";
 import type { ControlProps } from "../../style-sections";
 import { FloatingPanel } from "~/builder/shared/floating-panel";
 import { MenuIcon } from "@webstudio-is/icons";
@@ -15,12 +15,14 @@ export const ObjectPositionControl = ({
       <FloatingPanel
         title="Object Position"
         content={
-          <PositionControl
-            property={property}
-            currentStyle={currentStyle}
-            setProperty={setProperty}
-            deleteProperty={deleteProperty}
-          />
+          <Flex css={{ px: theme.spacing[9], py: theme.spacing[5] }}>
+            <PositionControl
+              property={property}
+              currentStyle={currentStyle}
+              setProperty={setProperty}
+              deleteProperty={deleteProperty}
+            />
+          </Flex>
         }
       >
         <IconButton>

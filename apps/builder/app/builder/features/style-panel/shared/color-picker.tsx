@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { colord, extend, type RgbaColor } from "colord";
 import namesPlugin from "colord/plugins/names";
 import { ColorResult, RGBColor, SketchPicker } from "react-color";
@@ -22,6 +22,8 @@ import { theme } from "@webstudio-is/design-system";
 import type { StyleSource } from "./style-info";
 import { CssValueInput } from "./css-value-input";
 import type { IntermediateStyleValue } from "./css-value-input/css-value-input";
+import { isCanvasPointerEventsEnabledStore } from "~/builder/shared/nano-states";
+import { useStore } from "@nanostores/react";
 
 // To support color names
 extend([namesPlugin]);
@@ -42,25 +44,6 @@ const defaultPickerStyles = {
     // Workaround to allow overrides using className
     picker: { padding: "", background: "" },
   },
-};
-
-export type CssColorPickerValueInput =
-  | RgbValue
-  | KeywordValue
-  | IntermediateStyleValue;
-
-type ColorPickerProps = {
-  onChange: (value: CssColorPickerValueInput | undefined) => void;
-  onChangeComplete: (event: {
-    value: RgbValue | KeywordValue | InvalidValue;
-  }) => void;
-  onHighlight: (value: StyleValue | undefined) => void;
-  onAbort: () => void;
-  intermediateValue: CssColorPickerValueInput | undefined;
-  value: RgbValue | KeywordValue;
-  styleSource: StyleSource;
-  keywords?: Array<KeywordValue>;
-  property: StyleProperty;
 };
 
 const colorResultToRgbValue = (rgb: RgbaColor | RGBColor): RgbValue => {
@@ -117,6 +100,54 @@ const clamp = (value: number, min: number, max: number) => {
   return Math.min(Math.max(value, min), max);
 };
 
+// Dragging over canvas iframe with CORS policies will lead to loosing events and getting stuck in mousedown state.
+const useFixDragOverCanvas = () => {
+  const isCanvasPointerEventsEnabled = useStore(
+    isCanvasPointerEventsEnabledStore
+  );
+
+  useEffect(() => {
+    const handleMouseUp = () => {
+      isCanvasPointerEventsEnabledStore.set(true);
+      removeEventListener("mouseup", handleMouseUp);
+    };
+    if (isCanvasPointerEventsEnabled === false) {
+      addEventListener("mouseup", handleMouseUp);
+    }
+    return () => {
+      removeEventListener("mouseup", handleMouseUp);
+    };
+  }, [isCanvasPointerEventsEnabled]);
+
+  const handleChange = (event: MouseEvent) => {
+    // Prevents selection of text during drag.
+    if (event.type === "mousedown") {
+      event.preventDefault();
+      isCanvasPointerEventsEnabledStore.set(false);
+    }
+  };
+  return { handleChange };
+};
+
+export type CssColorPickerValueInput =
+  | RgbValue
+  | KeywordValue
+  | IntermediateStyleValue;
+
+type ColorPickerProps = {
+  onChange: (value: CssColorPickerValueInput | undefined) => void;
+  onChangeComplete: (event: {
+    value: RgbValue | KeywordValue | InvalidValue;
+  }) => void;
+  onHighlight: (value: StyleValue | undefined) => void;
+  onAbort: () => void;
+  intermediateValue: CssColorPickerValueInput | undefined;
+  value: RgbValue | KeywordValue;
+  styleSource: StyleSource;
+  keywords?: Array<KeywordValue>;
+  property: StyleProperty;
+};
+
 export const ColorPicker = ({
   value,
   intermediateValue,
@@ -129,6 +160,7 @@ export const ColorPicker = ({
   property,
 }: ColorPickerProps) => {
   const [displayColorPicker, setDisplayColorPicker] = useState(false);
+  const canvasFix = useFixDragOverCanvas();
 
   const currentValue = intermediateValue ?? value;
 
@@ -168,6 +200,22 @@ export const ColorPicker = ({
     )
   ).toRgbString();
 
+  /**
+   * By default, the color can be transparent, but if the user chooses a color from the picker,
+   * we must set alpha = 1 otherwise all selected colors will be transparent.
+   */
+  const fixColor = (color: ColorResult) => {
+    const newColor = { ...color.rgb };
+
+    if (
+      currentValue.type === "keyword" &&
+      currentValue.value === "transparent"
+    ) {
+      newColor.a = 1;
+    }
+    return colorResultToRgbValue(newColor);
+  };
+
   const prefix = (
     <Popover
       modal
@@ -196,12 +244,16 @@ export const ColorPicker = ({
       <PopoverContent>
         <SketchPicker
           color={rgbValue}
-          onChange={(color: ColorResult) => {
-            onChange(colorResultToRgbValue(color.rgb));
+          onChange={(color: ColorResult, event) => {
+            // SketchPicker event can be mouse event, type is wrong.
+            canvasFix.handleChange(event as unknown as MouseEvent);
+            const newColor = fixColor(color);
+            onChange(newColor);
           }}
           onChangeComplete={(color: ColorResult) => {
+            const newColor = fixColor(color);
             onChangeComplete({
-              value: colorResultToRgbValue(color.rgb),
+              value: newColor,
             });
           }}
           // @todo to remove both when we have preset colors
