@@ -36,8 +36,9 @@ export const BackgroundGradient = (
       value,
     });
 
-    // This is not same behaviour as CssValueInput has
-    // But it's so good to see immediate result on gradient changes until we will have a good gradient tool
+    // This doesn't have the same behavior as CssValueInput.
+    // However, it's great to see the immediate results when making gradient changes,
+    // especially until we have a better gradient tool.
     const newValue = parseCssValue(property, value);
 
     if (newValue.type === "unparsed") {
@@ -45,7 +46,7 @@ export const BackgroundGradient = (
       return;
     }
 
-    // Set edited layer as none, to see immediate result
+    // Set backgroundImage at layer to none if it's invalid
     props.setProperty(property)(
       { type: "keyword", value: "none" },
       { isEphemeral: true }
