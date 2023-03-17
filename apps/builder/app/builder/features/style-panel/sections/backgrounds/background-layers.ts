@@ -173,13 +173,13 @@ const normalizeLayers = (
   for (const property of layeredBackgroundProps) {
     const styleValue = style[property];
 
-    // If property is not defined, try copy from cascade or set empty
+    // If a property is not defined, try copying it from the cascade, or set it as empty.
     const newPropertyStyle: LayersValue = getLayersValue(styleValue);
 
     const missingLayerCount = layerCount - newPropertyStyle.value.length;
 
     if (missingLayerCount < 0) {
-      // In theory this should never happen.
+      // This should never happen.
       throw new Error(
         `Layer count for property ${property} exceeds expected ${layerCount}`
       );
@@ -219,7 +219,6 @@ export const setLayerProperty =
     const layerStyles = normalizeLayers(style, layerCount, batch);
 
     if (newValue.type === "layers") {
-      // Insert new layers if needed
       for (const property of layeredBackgroundProps) {
         const newPropertyStyle = layerStyles[property];
 
