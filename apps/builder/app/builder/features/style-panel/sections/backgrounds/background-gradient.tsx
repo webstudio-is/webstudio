@@ -1,4 +1,4 @@
-import type { InvalidValue } from "@webstudio-is/css-data";
+import type { InvalidValue, RgbValue } from "@webstudio-is/css-data";
 import { TextArea, theme } from "@webstudio-is/design-system";
 import { useEffect, useRef, useState } from "react";
 import { parseCssValue } from "../../shared/parse-css-value";
@@ -11,7 +11,9 @@ type IntermediateValue = {
 };
 
 export const BackgroundGradient = (
-  props: Omit<ControlProps, "property" | "items">
+  props: Omit<ControlProps, "property" | "items"> & {
+    setBackgroundColor: (color: RgbValue) => void;
+  }
 ) => {
   const property = "backgroundImage";
   const textAreaRef = useRef<HTMLTextAreaElement>(null);
@@ -55,11 +57,13 @@ export const BackgroundGradient = (
       return;
     }
 
-    const { backgroundImage /*, backgroundColor */ } = parseBackground(
+    const { backgroundImage, backgroundColor } = parseBackground(
       intermediateValue.value
     );
 
-    // @todo set backgroundColor
+    if (backgroundColor !== undefined) {
+      props.setBackgroundColor(backgroundColor);
+    }
 
     if (backgroundImage.type !== "invalid") {
       setIntermediateValue(undefined);

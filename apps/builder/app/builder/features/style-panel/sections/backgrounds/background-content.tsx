@@ -3,7 +3,7 @@
  * as of now just implement feature parity with old backgrounds section
  **/
 
-import type { StyleValue } from "@webstudio-is/css-data";
+import type { RgbValue, StyleValue } from "@webstudio-is/css-data";
 import {
   theme,
   Flex,
@@ -48,6 +48,7 @@ type BackgroundContentProps = {
   currentStyle: StyleInfo;
   setProperty: SetBackgroundProperty;
   deleteProperty: DeleteBackgroundProperty;
+  setBackgroundColor: (color: RgbValue) => void;
 };
 
 const safeDeleteProperty = (
@@ -192,6 +193,7 @@ export const BackgroundContent = (props: BackgroundContentProps) => {
                 setProperty={setProperty}
                 deleteProperty={deleteProperty}
                 currentStyle={props.currentStyle}
+                setBackgroundColor={props.setBackgroundColor}
               />
             </Flex>
           )}
