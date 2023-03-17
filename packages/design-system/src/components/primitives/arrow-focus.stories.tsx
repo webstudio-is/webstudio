@@ -60,58 +60,25 @@ export const Demo = () => {
 
       <StorySection title="List with nested controls">
         <ul onKeyDown={handleArrowFocus}>
-          <li>
-            <button {...setArrowFocusRow("1")} style={main}>
-              First
-            </button>
-            <div style={secondary}>
-              <button {...setArrowFocusRow("1")} tabIndex={-1}>
-                A
+          {["First", "Second", "Third", "Fourth"].map((row) => (
+            <li key={row}>
+              <button
+                {...setArrowFocusRow(row)}
+                style={main}
+                tabIndex={row === "First" ? 0 : -1}
+              >
+                {row}
               </button>
-              <button {...setArrowFocusRow("1")} tabIndex={-1}>
-                B
-              </button>
-            </div>
-          </li>
-          <li>
-            <button {...setArrowFocusRow("2")} tabIndex={-1} style={main}>
-              Second
-            </button>
-            <div style={secondary}>
-              <button {...setArrowFocusRow("2")} tabIndex={-1}>
-                A
-              </button>
-              <button {...setArrowFocusRow("2")} tabIndex={-1}>
-                B
-              </button>
-            </div>
-          </li>
-          <li>
-            <button {...setArrowFocusRow("3")} tabIndex={-1} style={main}>
-              Third
-            </button>
-            <div style={secondary}>
-              <button {...setArrowFocusRow("3")} tabIndex={-1}>
-                A
-              </button>
-              <button {...setArrowFocusRow("3")} tabIndex={-1}>
-                B
-              </button>
-            </div>
-          </li>
-          <li>
-            <button {...setArrowFocusRow("4")} tabIndex={-1} style={main}>
-              Fourth
-            </button>
-            <div style={secondary}>
-              <button {...setArrowFocusRow("4")} tabIndex={-1}>
-                A
-              </button>
-              <button {...setArrowFocusRow("4")} tabIndex={-1}>
-                B
-              </button>
-            </div>
-          </li>
+              <div style={secondary}>
+                <button {...setArrowFocusRow(row)} tabIndex={-1}>
+                  A
+                </button>
+                <button {...setArrowFocusRow(row)} tabIndex={-1}>
+                  B
+                </button>
+              </div>
+            </li>
+          ))}
         </ul>
       </StorySection>
 
