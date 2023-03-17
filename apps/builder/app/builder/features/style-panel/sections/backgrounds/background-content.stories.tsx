@@ -52,6 +52,9 @@ export const BackgroundContentStory = () => {
               currentStyle={currentStyle}
               deleteProperty={deleteProperty}
               setProperty={setProperty}
+              setBackgroundColor={(color) => {
+                setProperty("backgroundColor")(color);
+              }}
             />
           }
         >
