@@ -21,7 +21,6 @@ export const BackgroundGradient = (
   const styleInfo = props.currentStyle[property];
   const styleValue = styleInfo?.value;
 
-  // In gradient section we want to show gradient data only
   const [intermediateValue, setIntermediateValue] = useState<
     IntermediateValue | InvalidValue | undefined
   >(undefined);
