@@ -21,16 +21,16 @@ const colors = {
     icon: theme.colors.foregroundIconMain,
   },
   local: {
-    border: theme.colors.borderSetMain,
-    background: theme.colors.backgroundSetMain,
-    backgroundHover: theme.colors.backgroundSetHover,
-    icon: theme.colors.foregroundSetMain,
+    border: theme.colors.borderLocalMain,
+    background: theme.colors.backgroundLocalMain,
+    backgroundHover: theme.colors.backgroundLocalHover,
+    icon: theme.colors.foregroundLocalMain,
   },
   remote: {
-    border: theme.colors.borderInheritedMain,
-    background: theme.colors.backgroundInheritedMain,
-    backgroundHover: theme.colors.backgroundInheritedHover,
-    icon: theme.colors.foregroundInheritedMain,
+    border: theme.colors.borderRemoteMain,
+    background: theme.colors.backgroundRemoteMain,
+    backgroundHover: theme.colors.backgroundRemoteHover,
+    icon: theme.colors.foregroundRemoteMain,
   },
 } as const;
 
