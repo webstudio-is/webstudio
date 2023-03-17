@@ -10,10 +10,7 @@ export default {
 const Wrapped = ({
   initialIsOpen = false,
   ...props
-}: Omit<
-  ComponentProps<typeof SectionTitle>,
-  "onOpen" | "onClose" | "isOpen"
-> & {
+}: Omit<ComponentProps<typeof SectionTitle>, "onOpenChange" | "isOpen"> & {
   initialIsOpen?: boolean;
 }) => {
   const [isOpen, setOpen] = useState(initialIsOpen);
@@ -22,8 +19,7 @@ const Wrapped = ({
       <div style={{ width: 240, border: "dashed 3px #e3e3e3" }}>
         <SectionTitle
           isOpen={isOpen}
-          onOpen={() => setOpen(true)}
-          onClose={() => setOpen(false)}
+          onOpenChange={setOpen}
           hasItems={["local", "remote"]}
           {...props}
         />

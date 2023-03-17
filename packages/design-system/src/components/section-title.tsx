@@ -90,8 +90,7 @@ export const SectionTitle = forwardRef(
   (
     {
       isOpen,
-      onClose,
-      onOpen,
+      onOpenChange,
       onAdd,
       hasItems = true,
       addIcon = <PlusIcon />,
@@ -101,8 +100,7 @@ export const SectionTitle = forwardRef(
       ...props
     }: Omit<ComponentProps<"button">, "onClick"> & {
       isOpen: boolean;
-      onClose: () => void;
-      onOpen: () => void;
+      onOpenChange: (isOpen: boolean) => void;
       onAdd?: () => void;
       /**
        * If set to `true`, dots aren't shown,
@@ -131,10 +129,10 @@ export const SectionTitle = forwardRef(
           className={buttonStyle({ hasAddIcon: onAdd !== undefined })}
           onClick={() => {
             if (isOpen && isEmpty === false) {
-              onClose();
+              onOpenChange(false);
             }
             if (isOpen === false) {
-              onOpen();
+              onOpenChange(true);
             }
             if (isEmpty) {
               onAdd?.();
@@ -162,7 +160,7 @@ export const SectionTitle = forwardRef(
               css={{ color: cssVars.use(addIconColor) }}
               onClick={() => {
                 if (isOpen === false) {
-                  onOpen();
+                  onOpenChange(true);
                 }
                 onAdd();
               }}
