@@ -41,20 +41,20 @@ const StyledLabel = styled("label", textVariants.labelsSentenceCase, {
       },
       local: {
         px: theme.spacing[3],
-        backgroundColor: theme.colors.backgroundSetMain,
-        borderColor: theme.colors.borderSetMain,
-        color: theme.colors.foregroundSetMain,
+        backgroundColor: theme.colors.backgroundLocalMain,
+        borderColor: theme.colors.borderLocalMain,
+        color: theme.colors.foregroundLocalMain,
         "&:hover": {
-          backgroundColor: theme.colors.backgroundSetHover,
+          backgroundColor: theme.colors.backgroundLocalHover,
         },
       },
       remote: {
         px: theme.spacing[3],
-        backgroundColor: theme.colors.backgroundInheritedMain,
-        borderColor: theme.colors.borderInheritedMain,
-        color: theme.colors.foregroundInheritedMain,
+        backgroundColor: theme.colors.backgroundRemoteMain,
+        borderColor: theme.colors.borderRemoteMain,
+        color: theme.colors.foregroundRemoteMain,
         "&:hover": {
-          backgroundColor: theme.colors.backgroundInheritedHover,
+          backgroundColor: theme.colors.backgroundRemoteHover,
         },
       },
     },

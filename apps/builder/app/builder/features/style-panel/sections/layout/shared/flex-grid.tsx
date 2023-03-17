@@ -36,10 +36,10 @@ export const FlexGrid = ({
 
   let color = theme.colors.foregroundFlexUiMain;
   if (styleSource === "local") {
-    color = theme.colors.borderSetFlexUi;
+    color = theme.colors.borderLocalFlexUi;
   }
   if (styleSource === "remote") {
-    color = theme.colors.borderInheritedFlexUi;
+    color = theme.colors.borderRemoteFlexUi;
   }
 
   return (
@@ -61,7 +61,7 @@ export const FlexGrid = ({
         color,
         "&:focus-within": {
           outlineWidth: 2,
-          outlineColor: theme.colors.borderSetFlexUi,
+          outlineColor: theme.colors.borderLocalFlexUi,
         },
       }}
     >
