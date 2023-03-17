@@ -4,10 +4,10 @@ import { CrossIcon, CopyIcon } from "@webstudio-is/icons";
 import { StoryGrid } from "./storybook";
 
 export default {
-  title: "Library/Title/Of Panel",
+  title: "Library/Title",
 };
 
-export const Demo = () => (
+const TitleStory = () => (
   <StoryGrid>
     <Title>Without buttons</Title>
 
@@ -41,4 +41,4 @@ export const Demo = () => (
   </StoryGrid>
 );
 
-Demo.storyName = "Of Panel";
+export { TitleStory as Title };
