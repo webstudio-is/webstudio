@@ -221,7 +221,6 @@ export const setLayerProperty =
     if (newValue.type === "layers") {
       // Insert new layers if needed
       for (const property of layeredBackgroundProps) {
-        // If property is not defined, try copy from cascade or set empty
         const newPropertyStyle = layerStyles[property];
 
         const insertItems =
@@ -254,7 +253,6 @@ export const addLayer = (
   const layerStyles = normalizeLayers(style, layerCount, batch);
 
   for (const property of layeredBackgroundProps) {
-    // If property is not defined, try copy from cascade or set empty
     const newPropertyStyle = layerStyles[property];
 
     const newValue = [...newPropertyStyle.value];
@@ -304,7 +302,6 @@ export const swapLayers = (
   const layerStyles = normalizeLayers(style, layerCount, batch);
 
   for (const property of layeredBackgroundProps) {
-    // If property is not defined, try copy from cascade or set empty
     const newPropertyStyle = layerStyles[property];
 
     const newValue = [...newPropertyStyle.value];

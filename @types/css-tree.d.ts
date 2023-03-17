@@ -9,7 +9,6 @@ declare module "css-tree" {
     options:
       | import("@types/css-tree").WalkOptionsNoVisit
       | import("@types/css-tree").EnterOrLeaveFn
-    // | import("@types/css-tree").WalkOptions
   ): void;
 
   export function generate(
