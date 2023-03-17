@@ -52,9 +52,9 @@ export const parseBackground = (
           layers.push(csstree.generate(node));
         }
 
-        // If at level 0 depth and the next item is null, it's probably a backgroundColor written as rgba(x,y,z,a) or like
+        // If the depth is at level 0 and the next item is null, it's likely that the backgroundColor
+        // is written as rgba(x,y,z,a) or similar format.
         if (item.next === null && callDepth === 0) {
-          // Probably a color
           backgroundColorRaw = csstree.generate(node);
         }
 
@@ -62,7 +62,8 @@ export const parseBackground = (
       }
 
       if (node.type === "Hash" && item.next === null && callDepth === 0) {
-        // If at level 0 depth and the next item is null, it's probably a backgroundColor written as hex #XYZFGH
+        // If the depth is at level 0 and the next item is null, it's likely that the backgroundColor
+        // is written as hex #XYZFGH
         backgroundColorRaw = csstree.generate(node);
       }
     },
