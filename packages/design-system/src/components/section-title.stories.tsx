@@ -4,7 +4,7 @@ import { StoryGrid, StorySection } from "./storybook";
 import { useState, type ComponentProps } from "react";
 
 export default {
-  title: "Library/Title/Of Section",
+  title: "Library/Section Title",
 };
 
 const Wrapped = ({
@@ -86,4 +86,4 @@ export const Demo = () => (
   </>
 );
 
-Demo.storyName = "Of Section";
+Demo.storyName = "Section Title";

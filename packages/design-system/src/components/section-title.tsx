@@ -80,8 +80,8 @@ const dotStyle = css({
   marginRight: -2,
   variants: {
     color: {
-      local: { backgroundColor: theme.colors.foregroundSetFlexUi },
-      remote: { backgroundColor: theme.colors.foregroundInheritedFlexUi },
+      local: { backgroundColor: theme.colors.foregroundLocalFlexUi },
+      remote: { backgroundColor: theme.colors.foregroundRemoteFlexUi },
     },
   },
 });
