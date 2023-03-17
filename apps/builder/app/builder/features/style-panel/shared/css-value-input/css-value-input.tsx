@@ -318,8 +318,15 @@ export const CssValueInput = ({
       return;
     }
 
+    const parsedValue = parseIntermediateOrInvalidValue(property, value);
+
+    if (parsedValue.type === "invalid") {
+      props.onChange(parsedValue);
+      return;
+    }
+
     props.onChangeComplete({
-      value: parseIntermediateOrInvalidValue(property, value),
+      value: parsedValue,
       reason,
     });
   };
