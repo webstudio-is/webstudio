@@ -3,20 +3,19 @@ import { useStore } from "@nanostores/react";
 import {
   Box,
   Flex,
-  DeprecatedText2,
   Collapsible,
+  SectionTitle,
 } from "@webstudio-is/design-system";
-import { ChevronLeftIcon, ChevronRightIcon } from "@webstudio-is/icons";
 import { theme } from "@webstudio-is/design-system";
+import type { ComponentProps, ReactNode } from "react";
 
 type CollapsibleSectionProps = {
   label: string;
-  children: JSX.Element;
+  children: ReactNode;
   isOpenDefault?: boolean;
   isOpen?: boolean;
-  rightSlot?: JSX.Element;
   fullWidth?: boolean;
-};
+} & Pick<ComponentProps<typeof SectionTitle>, "onAdd" | "hasItems">;
 
 const stateContainer = atom<{ [label: string]: boolean }>({});
 
@@ -36,10 +35,11 @@ const useOpenState = (
 export const CollapsibleSection = ({
   label,
   children,
-  isOpenDefault = false,
+  isOpenDefault = true,
   isOpen,
-  rightSlot,
   fullWidth = false,
+  onAdd,
+  hasItems,
 }: CollapsibleSectionProps) => {
   const [isOpenByUser, setIsOpenByUser] = useOpenState(label, isOpenDefault);
   const isOpenFinal = isOpen === undefined ? isOpenByUser : isOpen;
@@ -50,33 +50,15 @@ export const CollapsibleSection = ({
           boxShadow: `0px 1px 0 ${theme.colors.panelOutline}`,
         }}
       >
-        <Collapsible.Trigger asChild>
-          <Flex
-            align="center"
-            gap="1"
-            justify="between"
-            css={{
-              py: theme.spacing[9],
-              px: theme.spacing[9],
-              color: theme.colors.hiContrast,
-              cursor: "default",
-              userSelect: "none",
-            }}
-          >
-            <DeprecatedText2 variant="label">{label}</DeprecatedText2>
-            <Flex
-              align="center"
-              justify="center"
-              css={{
-                marginRight: `-${theme.spacing[3]}`,
-                color: theme.colors.slate9,
-              }}
-            >
-              {rightSlot}
-              {isOpenFinal ? <ChevronLeftIcon /> : <ChevronRightIcon />}
-            </Flex>
-          </Flex>
-        </Collapsible.Trigger>
+        <SectionTitle
+          isOpen={isOpenFinal}
+          onOpenChange={setIsOpenByUser}
+          onAdd={onAdd}
+          hasItems={hasItems}
+        >
+          {label}
+        </SectionTitle>
+
         <Collapsible.Content asChild>
           <Flex
             gap="3"

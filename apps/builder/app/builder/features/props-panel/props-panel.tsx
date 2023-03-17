@@ -16,7 +16,7 @@ import {
   Text,
   CSS,
 } from "@webstudio-is/design-system";
-import { ChevronDownIcon, PlusIcon } from "@webstudio-is/icons";
+import { ChevronDownIcon } from "@webstudio-is/icons";
 import type { Publish } from "~/shared/pubsub";
 import { propsStore, useInstanceProps } from "~/shared/nano-states";
 import { CollapsibleSection } from "~/builder/shared/inspector";
@@ -89,6 +89,7 @@ const PropsCombobox = ({
       <div {...combobox.getComboboxProps()}>
         <ComboboxAnchor>
           <TextField
+            autoFocus
             {...combobox.getInputProps()}
             placeholder="Property"
             suffix={
@@ -198,6 +199,8 @@ export const PropsPanel = ({
 }) => {
   const [addingProp, setAddingProp] = useState(false);
 
+  const hasAddedProps = logic.addedProps.length > 0 || addingProp;
+
   return (
     <Box css={{ paddingTop: theme.spacing[3] }}>
       <Row>
@@ -227,45 +230,38 @@ export const PropsPanel = ({
       <Separator />
       <CollapsibleSection
         label="Properties"
-        isOpenDefault
-        rightSlot={
-          <SmallIconButton
-            icon={<PlusIcon />}
-            onClick={(event) => {
-              // to prevent the section from collapsing/expanding
-              event.stopPropagation();
-              setAddingProp(true);
-            }}
-          />
-        }
+        onAdd={() => setAddingProp(true)}
+        hasItems={hasAddedProps}
       >
-        <Flex gap="2" direction="column">
-          {logic.addedProps.map(({ prop, propName, meta }) => (
-            <Property
-              key={propName}
-              propName={propName}
-              prop={prop}
-              meta={meta}
-              component={component}
-              onChange={(value) =>
-                logic.handleChange({ prop, propName }, value)
-              }
-              onDelete={() => logic.handleDelete({ prop, propName })}
-              onSoftDelete={() => prop && logic.handleSoftDelete(prop)}
-              setCssProperty={setCssProperty}
-            />
-          ))}
+        {hasAddedProps && (
+          <Flex gap="2" direction="column">
+            {logic.addedProps.map(({ prop, propName, meta }) => (
+              <Property
+                key={propName}
+                propName={propName}
+                prop={prop}
+                meta={meta}
+                component={component}
+                onChange={(value) =>
+                  logic.handleChange({ prop, propName }, value)
+                }
+                onDelete={() => logic.handleDelete({ prop, propName })}
+                onSoftDelete={() => prop && logic.handleSoftDelete(prop)}
+                setCssProperty={setCssProperty}
+              />
+            ))}
 
-          {addingProp && (
-            <AddPropertyForm
-              availableProps={logic.remainingProps}
-              onPropSelected={(propName) => {
-                setAddingProp(false);
-                logic.handleAdd(propName);
-              }}
-            />
-          )}
-        </Flex>
+            {addingProp && (
+              <AddPropertyForm
+                availableProps={logic.remainingProps}
+                onPropSelected={(propName) => {
+                  setAddingProp(false);
+                  logic.handleAdd(propName);
+                }}
+              />
+            )}
+          </Flex>
+        )}
       </CollapsibleSection>
       <Separator />
     </Box>
