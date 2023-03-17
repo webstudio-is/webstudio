@@ -89,7 +89,10 @@ const getFocusable = (
   for (const element of root.querySelectorAll(
     focusableSelector(`[${attribute}]`)
   )) {
-    map.set(element.getAttribute(attribute) as string, element);
+    const id = element.getAttribute(attribute) as string;
+    if (map.has(id) === false) {
+      map.set(id, element);
+    }
   }
 
   return {
