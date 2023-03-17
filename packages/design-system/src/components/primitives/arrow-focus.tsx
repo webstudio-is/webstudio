@@ -30,8 +30,24 @@ const keyToDirection: Record<
   ArrowRight: ["horizontal", "+"],
 };
 
-const ROW_ATTRIBUTE = "data-focus-row";
-const COLUMN_ATTRIBUTE = "data-focus-column";
+const ROW_ATTRIBUTE = "data-arrow-focus-row";
+const COLUMN_ATTRIBUTE = "data-arrow-focus-column";
+
+/**
+ * Example: `<button {...setArrowFocusRow(1)}>`.
+ * The value can be any unique undetifier of the row
+ */
+export const setArrowFocusRow = (rowId: number | string) => ({
+  [ROW_ATTRIBUTE]: rowId,
+});
+
+/**
+ * Example: `<button {...setArrowFocusColumn(1)}>`.
+ * The value can be any unique undetifier of the column
+ */
+export const setArrowFocusColumn = (columnId: number | string) => ({
+  [COLUMN_ATTRIBUTE]: columnId,
+});
 
 type FocusableElements = { elements: Element[]; currentIndex: number };
 
