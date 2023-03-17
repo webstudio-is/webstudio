@@ -55,6 +55,8 @@ export const UnparsedValue = z.object({
   hidden: z.boolean().optional(),
 });
 
+export type UnparsedValue = z.infer<typeof UnparsedValue>;
+
 const FontFamilyValue = z.object({
   type: z.literal("fontFamily"),
   value: z.array(z.string()),

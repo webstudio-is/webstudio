@@ -1,6 +1,7 @@
-import type { StyleValue } from "@webstudio-is/css-data";
+import * as csstree from "css-tree";
 import { colord } from "colord";
 import { parseCssValue } from "../../shared/parse-css-value";
+import type { RgbValue, UnparsedValue } from "@webstudio-is/css-data";
 
 export const gradientNames = [
   "conic-gradient",
@@ -11,15 +12,8 @@ export const gradientNames = [
   "repeating-radial-gradient",
 ];
 
-/**
- * We are not trying to parse the CSS here, just split it into layers.
- * i.e. transform something like:
- * linear-gradient(180deg, #11181C 0%, rgba(17, 24, 28, 0) 36.09%), none, linear-gradient(180deg, rgba(230, 60, 254, 0.33) 0%, rgba(255, 174, 60, 0) 100%)
- * into this:
- * [linear-gradient(180deg, #11181C 0%, rgba(17, 24, 28, 0) 36.09%), linear-gradient(180deg, rgba(230, 60, 254, 0.33) 0%, rgba(255, 174, 60, 0) 100%)]
- */
 export const parseBackground = (background: string) => {
-  const tokensRe = /([,()]|\/\*|\*\/)/;
+  const layers: string[] = [];
 
   let tokenStream = background.trim();
 
@@ -27,82 +21,75 @@ export const parseBackground = (background: string) => {
     ? tokenStream.slice(0, -1)
     : tokenStream;
 
-  let parens = 0;
-  let comment = 0;
+  const cssAst = csstree.parse(tokenStream, { context: "value" });
 
-  let layer = "";
-  const layers = [];
+  let backgroundColorRaw: string | undefined;
 
-  while (tokenStream.length > 0) {
-    const match = tokensRe.exec(tokenStream);
+  let callDepth = 0;
 
-    if (match === null) {
-      layer += tokenStream;
+  csstree.walk(cssAst, {
+    enter: (node, item, list) => {
+      if (node.type === "Function") {
+        if (gradientNames.includes(node.name)) {
+          layers.push(csstree.generate(node));
+        }
+
+        // If at level 0 depth and the next item is null, it's probably a backgroundColor written as rgba(x,y,z,a) or like
+        if (item.next === null && callDepth === 0) {
+          // Probably a color
+          backgroundColorRaw = csstree.generate(node);
+        }
+
+        callDepth++;
+      }
+
+      if (node.type === "Hash" && item.next === null && callDepth === 0) {
+        // If at level 0 depth and the next item is null, it's probably a backgroundColor written as hex #XYZFGH
+        backgroundColorRaw = csstree.generate(node);
+      }
+    },
+    leave: (node, item, list) => {
+      if (node.type === "Function") {
+        callDepth--;
+      }
+    },
+  });
+
+  const backgroundImages: UnparsedValue[] = [];
+
+  for (const layer of layers) {
+    if (
+      gradientNames.some((gradientName) => layer.startsWith(gradientName)) ===
+      false
+    ) {
       break;
     }
 
-    const matched = tokenStream.slice(0, match.index);
-    const token = match[0];
+    const layerStyle = parseCssValue("backgroundImage", layer);
 
-    if (parens === 0 && comment === 0 && token === ",") {
-      layers.push((layer + matched).trim());
-      layer = "";
-    } else {
-      layer += matched + token;
+    if (layerStyle.type !== "unparsed") {
+      break;
     }
 
-    switch (token) {
-      case "(":
-        parens++;
-        break;
-      case ")":
-        parens--;
-        break;
-      case "/*":
-        comment++;
-        break;
-      case "*/":
-        comment--;
-        break;
+    backgroundImages.push(layerStyle);
+  }
+
+  let backgroundColor: RgbValue | undefined;
+
+  if (backgroundColorRaw !== undefined) {
+    const colordValue = colord(backgroundColorRaw);
+
+    if (colordValue.isValid()) {
+      const rgb = colordValue.toRgb();
+      backgroundColor = {
+        type: "rgb",
+        r: rgb.r,
+        g: rgb.g,
+        b: rgb.b,
+        alpha: rgb.a ?? 1,
+      };
     }
-
-    tokenStream = tokenStream.slice(match.index + token.length);
   }
 
-  if (parens === 0 && comment === 0) {
-    layers.push(layer.trim());
-  }
-
-  if (layers.length === 0) {
-    return;
-  }
-
-  const validGradientLayers = layers
-    .filter((layer) =>
-      gradientNames.some((gradientName) => layer.startsWith(gradientName))
-    )
-    .map((layer) => parseCssValue("backgroundImage", layer))
-    .filter((layer) => layer.type === "unparsed");
-
-  // Last layer can be a backgroundColor
-  const lastLayer = layers[layers.length - 1];
-  const colordValue = colord(lastLayer);
-
-  let backgroundColor: StyleValue | undefined;
-
-  if (colordValue.isValid()) {
-    const rgb = colordValue.toRgb();
-    backgroundColor = {
-      type: "rgb",
-      r: rgb.r,
-      g: rgb.g,
-      b: rgb.b,
-      alpha: rgb.a ?? 1,
-    };
-  }
-
-  return {
-    backgroundImages: validGradientLayers,
-    backgroundColor,
-  };
+  return { backgroundImages, backgroundColor };
 };
