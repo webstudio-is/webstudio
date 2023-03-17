@@ -81,7 +81,6 @@ export const Backgrounds = () => {
       });
     },
     publish: (options) => {
-      // do nothing
       if (options?.isEphemeral) {
         return;
       }
