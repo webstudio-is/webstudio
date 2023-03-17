@@ -1,7 +1,12 @@
 import * as csstree from "css-tree";
 import { colord } from "colord";
 import { parseCssValue } from "../../shared/parse-css-value";
-import type { RgbValue, UnparsedValue } from "@webstudio-is/css-data";
+import type {
+  InvalidValue,
+  LayersValue,
+  RgbValue,
+  UnparsedValue,
+} from "@webstudio-is/css-data";
 
 export const gradientNames = [
   "conic-gradient",
@@ -12,7 +17,12 @@ export const gradientNames = [
   "repeating-radial-gradient",
 ];
 
-export const parseBackground = (background: string) => {
+export const parseBackground = (
+  background: string
+): {
+  backgroundImage: LayersValue | InvalidValue;
+  backgroundColor: RgbValue | undefined;
+} => {
   const layers: string[] = [];
 
   let tokenStream = background.trim();
@@ -20,6 +30,14 @@ export const parseBackground = (background: string) => {
   tokenStream = tokenStream.endsWith(";")
     ? tokenStream.slice(0, -1)
     : tokenStream;
+
+  const cleanupKeywords = ["background:", "background-image:"];
+
+  for (const cleanupKeyword of cleanupKeywords) {
+    tokenStream = tokenStream.startsWith(cleanupKeyword)
+      ? tokenStream.slice(cleanupKeyword.length).trim()
+      : tokenStream;
+  }
 
   const cssAst = csstree.parse(tokenStream, { context: "value" });
 
@@ -91,5 +109,11 @@ export const parseBackground = (background: string) => {
     }
   }
 
-  return { backgroundImages, backgroundColor };
+  return {
+    backgroundImage:
+      backgroundImages.length > 0
+        ? { type: "layers", value: backgroundImages }
+        : { type: "invalid", value: background },
+    backgroundColor,
+  };
 };

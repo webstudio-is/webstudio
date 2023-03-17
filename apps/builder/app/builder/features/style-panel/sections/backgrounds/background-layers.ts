@@ -17,7 +17,7 @@ export const layeredBackgroundPropsDefaults = {
   backgroundSize: { type: "keyword", value: "auto" },
 } as const satisfies Record<string, BackgroundStyleValue>;
 
-export type BackgroundStyleValue = LayersValue["value"][number];
+export type BackgroundStyleValue = LayersValue | LayersValue["value"][number];
 
 export const isBackgroundStyleValue = (
   style: StyleValue
@@ -28,7 +28,8 @@ export const isBackgroundStyleValue = (
     style.type === "unparsed" ||
     style.type === "image" ||
     style.type === "tuple" ||
-    style.type === "invalid"
+    style.type === "invalid" ||
+    style.type === "layers"
   ) {
     return true;
   }
@@ -213,12 +214,32 @@ export const setLayerProperty =
   (propertyName: LayeredBackgroundProperty) =>
   (newValue: BackgroundStyleValue, options?: StyleUpdateOptions) => {
     const batch = createBatchUpdate();
-    const layerCount = Math.max(getLayerCount(style), layerNum + 1);
 
+    const layerCount = Math.max(getLayerCount(style), layerNum + 1);
     const layerStyles = normalizeLayers(style, layerCount, batch);
 
-    layerStyles[propertyName].value[layerNum] = newValue;
-    batch.setProperty(propertyName)(layerStyles[propertyName]);
+    if (newValue.type === "layers") {
+      // Insert new layers if needed
+      for (const property of layeredBackgroundProps) {
+        // If property is not defined, try copy from cascade or set empty
+        const newPropertyStyle = layerStyles[property];
+
+        const insertItems =
+          property === propertyName
+            ? newValue.value
+            : Array.from(
+                Array(newValue.value.length),
+                () => layeredBackgroundPropsDefaults[property]
+              );
+
+        newPropertyStyle.value.splice(layerNum, 1, ...insertItems);
+
+        batch.setProperty(property)(newPropertyStyle);
+      }
+    } else {
+      layerStyles[propertyName].value[layerNum] = newValue;
+      batch.setProperty(propertyName)(layerStyles[propertyName]);
+    }
 
     batch.publish(options);
   };

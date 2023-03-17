@@ -210,6 +210,119 @@ describe("setLayerProperty", () => {
         styleInfo.backgroundImage?.value.value[0].value
     ).toEqual("none");
   });
+
+  test("should insert mutiple layers", () => {
+    const cascaded: NonNullable<StyleInfo["backgroundImage"]>["cascaded"] = {
+      breakpointId: "mobile",
+      value: {
+        type: "layers",
+        value: [
+          {
+            type: "unparsed",
+            value: "linear-gradient(red, blue)",
+          },
+          {
+            type: "unparsed",
+            value: "linear-gradient(yellow, red)",
+          },
+        ],
+      },
+    };
+    const styleInfo: StyleInfo = {
+      backgroundImage: {
+        cascaded,
+        value: cascaded.value,
+      },
+    };
+
+    let published = false;
+
+    const createBatchUpdate: CreateBatchUpdate = () => ({
+      setProperty:
+        (propertyName: StyleProperty) => (newValue: string | StyleValue) => {
+          if (typeof newValue === "string") {
+            throw new Error("string is deprecated");
+          }
+
+          if (newValue.type !== "layers") {
+            throw new Error("newValue.type !== layers");
+          }
+
+          styleInfo[propertyName] = { value: newValue, local: newValue };
+        },
+      deleteProperty: (propertyName: string) => {
+        // not used
+      },
+      publish: (options?: unknown) => {
+        published = true;
+      },
+    });
+
+    const setProperty = setLayerProperty(1, styleInfo, createBatchUpdate);
+
+    setProperty("backgroundImage")({
+      type: "layers",
+      value: [
+        {
+          type: "unparsed",
+          value: "linear-gradient(blue, blue)",
+        },
+      ],
+    });
+
+    expect(published).toBe(true);
+
+    expect(styleInfo.backgroundImage?.value.type).toEqual("layers");
+    expect(styleInfo.backgroundImage?.value).toMatchInlineSnapshot(`
+      {
+        "type": "layers",
+        "value": [
+          {
+            "type": "unparsed",
+            "value": "linear-gradient(red, blue)",
+          },
+          {
+            "type": "unparsed",
+            "value": "linear-gradient(blue, blue)",
+          },
+        ],
+      }
+    `);
+
+    setProperty("backgroundImage")({
+      type: "layers",
+      value: [
+        {
+          type: "unparsed",
+          value: "linear-gradient(green, blue)",
+        },
+        {
+          type: "unparsed",
+          value: "linear-gradient(yellow, blue)",
+        },
+      ],
+    });
+
+    expect(styleInfo.backgroundImage?.value).toMatchInlineSnapshot(`
+      {
+        "type": "layers",
+        "value": [
+          {
+            "type": "unparsed",
+            "value": "linear-gradient(red, blue)",
+          },
+          {
+            "type": "unparsed",
+            "value": "linear-gradient(green, blue)",
+          },
+          {
+            "type": "unparsed",
+            "value": "linear-gradient(yellow, blue)",
+          },
+        ],
+      }
+    `);
+  });
 });
 
 describe("deleteLayer", () => {
