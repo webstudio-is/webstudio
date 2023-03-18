@@ -1,7 +1,7 @@
 import type { ComponentMeta } from "@storybook/react";
 import { useState } from "react";
 import { Tree } from "./tree";
-import { findItemById, getItemPath, Item, reparent } from "./test-tree-data";
+import { findItemById, Item, reparent } from "./test-tree-data";
 import { Flex } from "../flex";
 import { TreeItemLabel, TreeItemBody } from "./tree-node";
 import type { ItemSelector } from "./item-utils";
@@ -73,8 +73,6 @@ export const StressTest = ({ animate }: { animate: boolean }) => {
   return (
     <Flex css={{ width: 300, height: 500, flexDirection: "column" }}>
       <Tree
-        findItemById={findItemById}
-        getItemPath={getItemPath}
         canAcceptChild={(itemId) =>
           findItemById(root, itemId)?.canAcceptChildren ?? false
         }

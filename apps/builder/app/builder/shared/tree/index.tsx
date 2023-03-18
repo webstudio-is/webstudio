@@ -9,19 +9,16 @@ import {
   type TreeProps,
   type TreeItemRenderProps,
 } from "@webstudio-is/design-system";
-import type { Instance } from "@webstudio-is/project-build";
+import type { Instance, InstancesItem } from "@webstudio-is/project-build";
 import {
   getComponentMeta,
   type WsComponentMeta,
 } from "@webstudio-is/react-sdk";
-import { instancesIndexStore } from "~/shared/nano-states";
-import {
-  createInstancesIndex,
-  getInstanceAncestorsAndSelf,
-} from "~/shared/tree-utils";
+import { instancesStore } from "~/shared/nano-states";
+import { createInstancesIndex } from "~/shared/tree-utils";
 
 const instanceRelatedProps = {
-  renderItem(props: TreeItemRenderProps<Instance>) {
+  renderItem(props: TreeItemRenderProps<InstancesItem | Instance>) {
     const meta = getComponentMeta(props.itemData.component);
     if (meta === undefined) {
       return <></>;
@@ -60,70 +57,66 @@ const getInstanceChildren = (instance: undefined | Instance) => {
 
 export const InstanceTree = (
   props: Omit<
-    TreeProps<Instance>,
+    TreeProps<InstancesItem>,
     | keyof typeof instanceRelatedProps
-    | "findItemById"
-    | "getItemPath"
     | "canLeaveParent"
     | "canAcceptChild"
     | "getItemChildren"
   >
 ) => {
-  const instancesIndex = useStore(instancesIndexStore);
-  const { instancesById } = instancesIndex;
-
-  const findItemById = useCallback(
-    (_rootInstance: Instance, instanceId: Instance["id"]) => {
-      return instancesById.get(instanceId);
-    },
-    [instancesById]
-  );
-
-  const getItemPath = useCallback(
-    (_rootInstance: Instance, instanceId: Instance["id"]) => {
-      return getInstanceAncestorsAndSelf(instancesIndex, instanceId);
-    },
-    [instancesIndex]
-  );
+  const instances = useStore(instancesStore);
 
   const canLeaveParent = useCallback(
     (instanceId: Instance["id"]) => {
-      const instance = instancesIndex.instancesById.get(instanceId);
+      const instance = instances.get(instanceId);
       if (instance === undefined) {
         return false;
       }
       const meta = getComponentMeta(instance.component);
       return meta?.type !== "rich-text-child";
     },
-    [instancesIndex]
+    [instances]
   );
 
   const canAcceptChild = useCallback(
     (instanceId: Instance["id"]) => {
-      const instance = instancesIndex.instancesById.get(instanceId);
+      const instance = instances.get(instanceId);
       if (instance === undefined) {
         return false;
       }
       const meta = getComponentMeta(instance.component);
       return meta?.type === "body" || meta?.type === "container";
     },
-    [instancesIndex]
+    [instances]
   );
 
   const getItemChildren = useCallback(
     (instanceId: Instance["id"]) => {
-      const instance = instancesIndex.instancesById.get(instanceId);
-      return getInstanceChildren(instance);
+      const instance = instances.get(instanceId);
+      const children: InstancesItem[] = [];
+      if (instance === undefined) {
+        return children;
+      }
+
+      for (const child of instance.children) {
+        if (child.type !== "id") {
+          continue;
+        }
+        const childInstance = instances.get(child.value);
+        if (childInstance === undefined) {
+          continue;
+        }
+        children.push(childInstance);
+      }
+      return children;
     },
-    [instancesIndex]
+    [instances]
   );
 
   return (
     <Tree
       {...props}
       {...instanceRelatedProps}
-      findItemById={findItemById}
-      getItemPath={getItemPath}
       canLeaveParent={canLeaveParent}
       canAcceptChild={canAcceptChild}
       getItemChildren={getItemChildren}
