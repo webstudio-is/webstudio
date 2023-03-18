@@ -2,9 +2,10 @@ import { describe, test, expect } from "@jest/globals";
 import { renderHook, act } from "@testing-library/react-hooks";
 import type { Placement } from "../primitives/dnd";
 import { useHorizontalShift } from "./horizontal-shift";
-import type { ItemDropTarget, ItemId } from "./item-utils";
+import type { ItemDropTarget, ItemId, ItemSelector } from "./item-utils";
 import {
   canAcceptChild,
+  findItemById,
   getItemChildren,
   getItemPath,
   Item,
@@ -112,7 +113,8 @@ const render = (
         dragItem === undefined ? undefined : getItemSelector(dragItem.id),
       dropTarget,
       root: tree,
-      getIsExpanded: (item: Item) => item.children.length > 0,
+      getIsExpanded: (itemSelector: ItemSelector) =>
+        (findItemById(tree, itemSelector[0])?.children.length ?? 0) > 0,
       canAcceptChild,
       getItemChildren,
       getItemPath,
