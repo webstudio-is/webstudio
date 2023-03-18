@@ -31,6 +31,8 @@ export const parseBackground = (
     ? tokenStream.slice(0, -1)
     : tokenStream;
 
+  // The user can copy the whole style together with the name of the property from figma or any other tool.
+  // We need to remove the property name from the string.
   const cleanupKeywords = ["background:", "background-image:"];
 
   for (const cleanupKeyword of cleanupKeywords) {
@@ -43,7 +45,7 @@ export const parseBackground = (
 
   let backgroundColorRaw: string | undefined;
 
-  let callDepth = 0;
+  let nestingLevel = 0;
 
   csstree.walk(cssAst, {
     enter: (node, item, list) => {
@@ -54,14 +56,15 @@ export const parseBackground = (
 
         // If the depth is at level 0 and the next item is null, it's likely that the backgroundColor
         // is written as rgba(x,y,z,a) or similar format.
-        if (item.next === null && callDepth === 0) {
+        // nestingLevel is used as a fast way to check existance of parent Function node
+        if (item.next === null && nestingLevel === 0) {
           backgroundColorRaw = csstree.generate(node);
         }
 
-        callDepth++;
+        nestingLevel++;
       }
 
-      if (node.type === "Hash" && item.next === null && callDepth === 0) {
+      if (node.type === "Hash" && item.next === null && nestingLevel === 0) {
         // If the depth is at level 0 and the next item is null, it's likely that the backgroundColor
         // is written as hex #XYZFGH
         backgroundColorRaw = csstree.generate(node);
@@ -69,7 +72,7 @@ export const parseBackground = (
     },
     leave: (node, item, list) => {
       if (node.type === "Function") {
-        callDepth--;
+        nestingLevel--;
       }
     },
   });

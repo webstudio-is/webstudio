@@ -177,9 +177,7 @@ export const BackgroundsSection = ({
               deleteProperty,
               createBatchUpdate
             )}
-            setBackgroundColor={(color) =>
-              setProperty("backgroundColor")(color)
-            }
+            setBackgroundColor={setProperty("backgroundColor")}
           />
         ))}
 

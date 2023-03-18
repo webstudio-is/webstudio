@@ -153,7 +153,7 @@ const getLayersValue = (styleValue?: StyleValueInfo) => {
 };
 
 const isLayerStylesRecord = (value: {
-  [p in LayeredBackgroundProperty]?: LayersValue;
+  [property in LayeredBackgroundProperty]?: LayersValue;
 }): value is Record<LayeredBackgroundProperty, LayersValue> => {
   for (const property of layeredBackgroundProps) {
     if (value[property] === undefined) {
@@ -168,7 +168,8 @@ const normalizeLayers = (
   layerCount: number,
   batch: ReturnType<CreateBatchUpdate>
 ) => {
-  const layerStyles: { [p in LayeredBackgroundProperty]?: LayersValue } = {};
+  const layerStyle: { [property in LayeredBackgroundProperty]?: LayersValue } =
+    {};
 
   for (const property of layeredBackgroundProps) {
     const styleValue = style[property];
@@ -196,17 +197,17 @@ const normalizeLayers = (
       isStyleChanged = true;
     }
 
-    layerStyles[property] = newPropertyStyle;
+    layerStyle[property] = newPropertyStyle;
     if (isStyleChanged) {
       batch.setProperty(property)(newPropertyStyle);
     }
   }
 
-  if (!isLayerStylesRecord(layerStyles)) {
-    throw new Error("Invalid layer styles");
+  if (isLayerStylesRecord(layerStyle)) {
+    return layerStyle;
   }
 
-  return layerStyles;
+  throw new Error("Invalid layer styles");
 };
 
 export const setLayerProperty =
