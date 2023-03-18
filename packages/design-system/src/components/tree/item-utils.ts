@@ -4,9 +4,8 @@ export type ItemId = string;
 
 export type ItemSelector = string[];
 
-export type ItemDropTarget<Item> = {
+export type ItemDropTarget = {
   itemSelector: ItemSelector;
-  data: Item;
   rect: DOMRect;
   indexWithinChildren: number;
   placement: Placement;

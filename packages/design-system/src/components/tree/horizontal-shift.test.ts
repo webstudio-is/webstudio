@@ -76,9 +76,8 @@ const makeDrop = ({
   into: Item;
   after?: Item;
   placement?: Placement;
-}): ItemDropTarget<Item> => ({
+}): ItemDropTarget => ({
   itemSelector: getItemSelector(into.id),
-  data: into,
   indexWithinChildren:
     after === undefined ? 0 : into.children.indexOf(after) + 1,
   placement,
@@ -97,7 +96,7 @@ const render = (
     dropTarget,
   }: {
     dragItem: Item | undefined;
-    dropTarget: ItemDropTarget<Item> | undefined;
+    dropTarget: ItemDropTarget | undefined;
   },
   shift = -1
 ) => {
@@ -106,14 +105,12 @@ const render = (
       dragItemSelector:
         dragItem === undefined ? undefined : getItemSelector(dragItem.id),
       dropTarget,
-      root: tree,
       getIsExpanded: (itemSelector: ItemSelector) =>
         (findItemById(tree, itemSelector[0])?.children.length ?? 0) > 0,
       canAcceptChild: (itemId: ItemId) =>
         findItemById(tree, itemId)?.canAcceptChildren ?? false,
       getItemChildren: (itemId: ItemId) =>
         findItemById(tree, itemId)?.children ?? [],
-      getItemPath,
     },
   });
 
