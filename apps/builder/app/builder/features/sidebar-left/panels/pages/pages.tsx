@@ -59,18 +59,6 @@ const toTreeData = (pages: Pages): PagesTreeNode => {
   };
 };
 
-const staticTreeProps = {
-  getItemChildren(node: PagesTreeNode) {
-    if (node.type === "folder") {
-      return node.children;
-    }
-    return [];
-  },
-  getIsExpanded(_node: PagesTreeNode) {
-    return true;
-  },
-};
-
 const MenuButton = styled(DeprecatedIconButton, {
   color: theme.colors.hint,
   "&:hover, &:focus-visible": { color: theme.colors.hiContrast },
@@ -220,7 +208,13 @@ const PagesPanel = ({
         onSelect={onSelect}
         itemData={pagesTree}
         renderItem={renderItem}
-        {...staticTreeProps}
+        getItemChildren={(nodeId) => {
+          if (nodeId === pagesTree.id && pagesTree.type === "folder") {
+            return pagesTree.children;
+          }
+          return [];
+        }}
+        getIsExpanded={() => true}
       />
     </Box>
   );

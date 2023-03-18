@@ -3,13 +3,7 @@ import { renderHook, act } from "@testing-library/react-hooks";
 import type { Placement } from "../primitives/dnd";
 import { useHorizontalShift } from "./horizontal-shift";
 import type { ItemDropTarget, ItemId, ItemSelector } from "./item-utils";
-import {
-  canAcceptChild,
-  findItemById,
-  getItemChildren,
-  getItemPath,
-  Item,
-} from "./test-tree-data";
+import { findItemById, getItemPath, Item } from "./test-tree-data";
 
 const box1: Item = { canAcceptChildren: true, id: "box1", children: [] };
 const box2: Item = { canAcceptChildren: true, id: "box2", children: [] };
@@ -115,8 +109,10 @@ const render = (
       root: tree,
       getIsExpanded: (itemSelector: ItemSelector) =>
         (findItemById(tree, itemSelector[0])?.children.length ?? 0) > 0,
-      canAcceptChild,
-      getItemChildren,
+      canAcceptChild: (itemId: ItemId) =>
+        findItemById(tree, itemId)?.canAcceptChildren ?? false,
+      getItemChildren: (itemId: ItemId) =>
+        findItemById(tree, itemId)?.children ?? [],
       getItemPath,
     },
   });
