@@ -3,9 +3,9 @@ import {
   Box,
   TextField,
   useCombobox,
-  ComboboxPopper,
-  ComboboxPopperContent,
-  ComboboxPopperAnchor,
+  Combobox,
+  ComboboxContent,
+  ComboboxAnchor,
   ComboboxListbox,
   ComboboxListboxItem,
   numericScrubControl,
@@ -488,9 +488,9 @@ export const CssValueInput = ({
   );
 
   return (
-    <ComboboxPopper>
+    <Combobox>
       <Box {...getComboboxProps()}>
-        <ComboboxPopperAnchor>
+        <ComboboxAnchor>
           <TextField
             disabled={disabled}
             {...inputProps}
@@ -510,12 +510,8 @@ export const CssValueInput = ({
             suffix={suffix}
             css={{ cursor: "default" }}
           />
-        </ComboboxPopperAnchor>
-        <ComboboxPopperContent
-          align="start"
-          sideOffset={8}
-          collisionPadding={10}
-        >
+        </ComboboxAnchor>
+        <ComboboxContent align="start" sideOffset={8} collisionPadding={10}>
           <ComboboxListbox {...menuProps}>
             {isOpen &&
               items.map((item, index) => (
@@ -527,9 +523,9 @@ export const CssValueInput = ({
                 </ComboboxListboxItem>
               ))}
           </ComboboxListbox>
-        </ComboboxPopperContent>
+        </ComboboxContent>
       </Box>
-    </ComboboxPopper>
+    </Combobox>
   );
 };
 

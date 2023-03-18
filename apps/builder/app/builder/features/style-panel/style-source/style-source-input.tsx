@@ -16,9 +16,9 @@ import {
   Box,
   ComboboxListbox,
   ComboboxListboxItem,
-  ComboboxPopper,
-  ComboboxPopperAnchor,
-  ComboboxPopperContent,
+  Combobox,
+  ComboboxAnchor,
+  ComboboxContent,
   TextFieldContainer,
   TextFieldInput,
   useTextFieldFocus,
@@ -302,9 +302,9 @@ export const StyleSourceInput = <Item extends IntermediateItem>(
   let hasNewTokenItem = false;
 
   return (
-    <ComboboxPopper>
+    <Combobox>
       <Box {...getComboboxProps()}>
-        <ComboboxPopperAnchor>
+        <ComboboxAnchor>
           <TextField
             {...inputProps}
             onRemoveItem={props.onRemoveItem}
@@ -321,8 +321,8 @@ export const StyleSourceInput = <Item extends IntermediateItem>(
             css={props.css}
             editingItemId={props.editingItemId}
           />
-        </ComboboxPopperAnchor>
-        <ComboboxPopperContent align="start" sideOffset={5}>
+        </ComboboxAnchor>
+        <ComboboxContent align="start" sideOffset={5}>
           <ComboboxListbox {...getMenuProps()}>
             {isOpen &&
               items.map((item, index) => {
@@ -373,8 +373,8 @@ export const StyleSourceInput = <Item extends IntermediateItem>(
                 );
               })}
           </ComboboxListbox>
-        </ComboboxPopperContent>
+        </ComboboxContent>
       </Box>
-    </ComboboxPopper>
+    </Combobox>
   );
 };

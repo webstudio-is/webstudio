@@ -18,9 +18,9 @@ import {
 } from "./dropdown-menu";
 import {
   useCombobox,
-  ComboboxPopper,
-  ComboboxPopperContent,
-  ComboboxPopperAnchor,
+  Combobox,
+  ComboboxContent,
+  ComboboxAnchor,
   ComboboxListbox,
   ComboboxListboxItem,
   ComboboxLabel,
@@ -175,9 +175,9 @@ const ComboboxDemo = () => {
   const longItems = items.filter((item) => item === "Banana");
 
   return (
-    <ComboboxPopper>
+    <Combobox>
       <div {...getComboboxProps()}>
-        <ComboboxPopperAnchor>
+        <ComboboxAnchor>
           <TextField
             {...getInputProps()}
             placeholder="Enter: Apple"
@@ -187,8 +187,8 @@ const ComboboxDemo = () => {
               </DeprecatedIconButton>
             }
           />
-        </ComboboxPopperAnchor>
-        <ComboboxPopperContent align="end" sideOffset={5}>
+        </ComboboxAnchor>
+        <ComboboxContent align="end" sideOffset={5}>
           <ComboboxListbox {...getMenuProps()}>
             {roundItems.length > 0 && (
               <>
@@ -206,9 +206,9 @@ const ComboboxDemo = () => {
               </>
             )}
           </ComboboxListbox>
-        </ComboboxPopperContent>
+        </ComboboxContent>
       </div>
-    </ComboboxPopper>
+    </Combobox>
   );
 };
 

@@ -8,11 +8,13 @@ import {
   useRef,
   type ChangeEvent,
   type ReactNode,
+  Ref,
 } from "react";
 // @todo:
 //   react-popper "is an internal utility, not intended for public usage"
 //   probably need to switch to @radix-ui/react-popover
 import { Popper, PopperContent, PopperAnchor } from "@radix-ui/react-popper";
+import { Portal } from "@radix-ui/react-portal";
 import {
   type DownshiftState,
   type UseComboboxStateChangeOptions,
@@ -90,11 +92,18 @@ export const ComboboxListbox = Listbox;
 
 export const ComboboxListboxItem = forwardRef(ListboxItemBase);
 
-export const ComboboxPopper = Popper;
+export const Combobox = Popper;
 
-export const ComboboxPopperContent = PopperContent;
+export const ComboboxContent = forwardRef(
+  (props: ComponentProps<typeof PopperContent>, ref: Ref<HTMLDivElement>) => (
+    <Portal>
+      <PopperContent ref={ref} {...props} />
+    </Portal>
+  )
+);
+ComboboxContent.displayName = "ComboboxContent";
 
-export const ComboboxPopperAnchor = PopperAnchor;
+export const ComboboxAnchor = PopperAnchor;
 
 type Match<Item> = (
   search: string,
