@@ -258,10 +258,7 @@ const setCssVar = (id: string, property: string, value?: StyleValue) => {
     document.body.style.removeProperty(customProperty);
     return;
   }
-  document.body.style.setProperty(
-    customProperty,
-    toValue(value, undefined, true)
-  );
+  document.body.style.setProperty(customProperty, toValue(value, undefined));
 };
 
 const useUpdateStyle = () => {
