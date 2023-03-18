@@ -7,6 +7,7 @@ import { Flex } from "../flex";
 import { DeprecatedText2 } from "../__DEPRECATED__/text2";
 import { keyframes, styled } from "../../stitches.config";
 import { theme } from "../../stitches.config";
+import type { ItemId } from "./item-utils";
 
 export const INDENT = 16;
 const ITEM_HEIGHT = 32;
@@ -383,9 +384,9 @@ export const TreeItemLabel = ({
   </>
 );
 
-export type TreeNodeProps<Data extends { id: string }> = {
+export type TreeNodeProps<Data extends { id: ItemId }> = {
   itemData: Data;
-  getItemChildren: (item: Data) => Data[];
+  getItemChildren: (itemId: ItemId) => Data[];
   renderItem: (props: TreeItemRenderProps<Data>) => React.ReactNode;
 
   getIsExpanded: (item: Data) => boolean;
@@ -428,7 +429,7 @@ export const TreeNode = <Data extends { id: string }>({
 
   const collapsibleContentRef = useRef<HTMLDivElement>(null);
 
-  const itemChildren = getItemChildren(itemData);
+  const itemChildren = getItemChildren(itemData.id);
 
   const isAlwaysExpanded = level === 0;
   const isExpandable = itemChildren.length > 0;

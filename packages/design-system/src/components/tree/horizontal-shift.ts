@@ -1,6 +1,6 @@
 import { useMemo, useState } from "react";
 import type { Placement } from "../primitives/dnd";
-import type { ItemDropTarget, ItemSelector } from "./item-utils";
+import type { ItemDropTarget, ItemId, ItemSelector } from "./item-utils";
 import { getPlacementIndicatorAlignment } from "./tree-node";
 
 export type ShiftedDropTarget = {
@@ -9,7 +9,7 @@ export type ShiftedDropTarget = {
   placement?: Placement;
 };
 
-export const useHorizontalShift = <Data extends { id: string }>({
+export const useHorizontalShift = <Data extends { id: ItemId }>({
   dragItemSelector,
   dropTarget,
   root,
@@ -18,8 +18,8 @@ export const useHorizontalShift = <Data extends { id: string }>({
   canAcceptChild,
   getItemChildren,
 }: {
-  getItemChildren: (item: Data) => Data[];
-  canAcceptChild: (item: Data) => boolean;
+  getItemChildren: (itemId: ItemId) => Data[];
+  canAcceptChild: (itemId: ItemId) => boolean;
   getItemPath: (root: Data, id: string) => Data[];
   dragItemSelector: undefined | ItemSelector;
   dropTarget: ItemDropTarget<Data> | undefined;
@@ -82,7 +82,7 @@ export const useHorizontalShift = <Data extends { id: string }>({
       let newPosition = indexWithinChildren;
 
       const isAtTheBottom = (parent: Data, index: number) => {
-        const children = getItemChildren(parent);
+        const children = getItemChildren(parent.id);
 
         // There's a special case when the placement line is above the drag item.
         // For reparenting, above and below the drag item means the same.
@@ -95,14 +95,14 @@ export const useHorizontalShift = <Data extends { id: string }>({
         const potentialNewParent = dropTargetPath[index];
         if (
           isAtTheBottom(newParent, newPosition) &&
-          canAcceptChild(potentialNewParent) &&
+          canAcceptChild(potentialNewParent.id) &&
           shifted < currentDepth - desiredDepth
         ) {
           shifted = index;
           newParent = potentialNewParent;
           newParentSelector = dropItemSelector.slice(index);
           const child = dropTargetPath[index - 1];
-          const childPosition = getItemChildren(newParent).findIndex(
+          const childPosition = getItemChildren(newParent.id).findIndex(
             (item) => item.id === child.id
           );
           newPosition = childPosition + 1;
@@ -131,7 +131,7 @@ export const useHorizontalShift = <Data extends { id: string }>({
         parent: Data,
         position: number | "last"
       ): undefined | Data => {
-        const children = getItemChildren(parent);
+        const children = getItemChildren(parent.id);
         const index = position === "last" ? children.length - 1 : position;
 
         // There's a special case when the placement line is below the drag item.
@@ -146,7 +146,7 @@ export const useHorizontalShift = <Data extends { id: string }>({
       while (
         potentialNewParent &&
         getIsExpanded([potentialNewParent.id, ...newParentSelector]) &&
-        canAcceptChild(potentialNewParent) &&
+        canAcceptChild(potentialNewParent.id) &&
         shifted < desiredDepth - currentDepth
       ) {
         newParent = potentialNewParent;

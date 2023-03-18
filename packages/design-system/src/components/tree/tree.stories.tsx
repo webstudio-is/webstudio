@@ -1,14 +1,7 @@
 import type { ComponentMeta } from "@storybook/react";
 import { useState } from "react";
 import { Tree } from "./tree";
-import {
-  canAcceptChild,
-  findItemById,
-  getItemChildren,
-  getItemPath,
-  Item,
-  reparent,
-} from "./test-tree-data";
+import { findItemById, getItemPath, Item, reparent } from "./test-tree-data";
 import { Flex } from "../flex";
 import { TreeItemLabel, TreeItemBody } from "./tree-node";
 import type { ItemSelector } from "./item-utils";
@@ -82,9 +75,11 @@ export const StressTest = ({ animate }: { animate: boolean }) => {
       <Tree
         findItemById={findItemById}
         getItemPath={getItemPath}
-        canAcceptChild={canAcceptChild}
+        canAcceptChild={(itemId) =>
+          findItemById(root, itemId)?.canAcceptChildren ?? false
+        }
         canLeaveParent={() => true}
-        getItemChildren={getItemChildren}
+        getItemChildren={(itemId) => findItemById(root, itemId)?.children ?? []}
         animate={animate}
         root={root}
         selectedItemSelector={selectedItemSelector}
