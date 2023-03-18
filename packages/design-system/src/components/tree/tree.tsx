@@ -65,7 +65,7 @@ export const Tree = <Data extends { id: string }>({
   const [dragItemSelector, setDragItemSelector] = useState<
     undefined | ItemSelector
   >();
-  const [dropTarget, setDropTarget] = useState<ItemDropTarget<Data>>();
+  const [dropTarget, setDropTarget] = useState<ItemDropTarget>();
 
   const getDropTargetElement = useCallback(
     (id: string): HTMLElement | null | undefined =>
@@ -76,9 +76,7 @@ export const Tree = <Data extends { id: string }>({
   const [shiftedDropTarget, setHorizontalShift] = useHorizontalShift({
     dragItemSelector,
     dropTarget,
-    root,
     getIsExpanded,
-    getItemPath,
     getItemChildren,
     canAcceptChild,
   });
@@ -91,7 +89,7 @@ export const Tree = <Data extends { id: string }>({
     };
   };
 
-  const useHoldHandler = useHold<ItemDropTarget<Data>>({
+  const useHoldHandler = useHold<ItemDropTarget>({
     isEqual: (a, b) => areItemSelectorsEqual(a.itemSelector, b.itemSelector),
     holdTimeThreshold: 600,
     onHold: (dropTarget) => {
