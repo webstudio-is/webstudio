@@ -482,22 +482,22 @@ export const TreeNode = <Data extends { id: string }>({
       onOpenChange={(isOpen) => setIsExpanded?.(itemSelector, isOpen)}
       data-drop-target-id={itemData.id}
     >
-      {parentSelector !== undefined ||
-        (hideRoot !== true &&
-          renderItem({
-            dropTargetItemId,
-            onMouseEnter,
-            onMouseLeave,
-            itemData,
-            itemSelector,
-            parentIsSelected,
-            isSelected,
-            onSelect,
-            level,
-            isAlwaysExpanded,
-            shouldRenderExpandButton,
-            isExpanded,
-          }))}
+      {/* optionally prevent rendering root item */}
+      {(parentSelector !== undefined || hideRoot !== true) &&
+        renderItem({
+          dropTargetItemId,
+          onMouseEnter,
+          onMouseLeave,
+          itemData,
+          itemSelector,
+          parentIsSelected,
+          isSelected,
+          onSelect,
+          level,
+          isAlwaysExpanded,
+          shouldRenderExpandButton,
+          isExpanded,
+        })}
       {isExpandable && (
         <CollapsibleContent
           onAnimationEnd={handleAnimationEnd}
