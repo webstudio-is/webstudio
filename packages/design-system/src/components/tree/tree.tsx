@@ -32,8 +32,8 @@ export type TreeProps<Data extends { id: string }> = {
   getItemChildren: (itemId: ItemId) => Data[];
   renderItem: (props: TreeItemRenderProps<Data>) => React.ReactNode;
 
-  onSelect?: (itemId: string) => void;
-  onHover?: (item: Data | undefined) => void;
+  onSelect?: (itemSelector: ItemSelector) => void;
+  onHover?: (itemSelector: undefined | ItemSelector) => void;
   animate?: boolean;
   onDragEnd: (event: {
     itemSelector: ItemSelector;
@@ -206,12 +206,11 @@ export const Tree = <Data extends { id: string }>({
       return instance;
     },
     onStart: ({ data }) => {
-      onSelect?.(data.id);
-      setDragItemSelector(
-        getItemPath(root, data.id)
-          .reverse()
-          .map((item) => item.id)
-      );
+      const itemSelector = getItemPath(root, data.id)
+        .reverse()
+        .map((item) => item.id);
+      onSelect?.(itemSelector);
+      setDragItemSelector(itemSelector);
       dropHandlers.handleStart();
       autoScrollHandlers.setEnabled(true);
     },
@@ -255,13 +254,6 @@ export const Tree = <Data extends { id: string }>({
     onEsc: dragHandlers.cancelCurrentDrag,
   });
 
-  const [onMouseEnter, onMouseLeave] = useMemo(() => {
-    if (onHover === undefined) {
-      return [undefined, undefined];
-    }
-    return [(item: Data) => onHover(item), () => onHover(undefined)] as const;
-  }, [onHover]);
-
   return (
     <Box
       css={{
@@ -290,25 +282,14 @@ export const Tree = <Data extends { id: string }>({
           getItemChildren={getItemChildren}
           animate={animate}
           onSelect={onSelect}
-          onMouseEnter={onMouseEnter}
-          onMouseLeave={onMouseLeave}
-          selectedItemId={selectedItemSelector?.[0]}
+          onMouseEnter={onHover}
+          onMouseLeave={onHover}
+          selectedItemSelector={selectedItemSelector}
           itemData={root}
-          level={0}
-          getIsExpanded={(item) => {
-            const itemSelector = getItemPath(root, item.id)
-              .map((item) => item.id)
-              .reverse();
-            return getIsExpanded(itemSelector);
-          }}
-          setIsExpanded={(item, isExpanded) => {
-            const itemSelector = getItemPath(root, item.id)
-              .map((item) => item.id)
-              .reverse();
-            setIsExpanded(itemSelector, isExpanded);
-          }}
+          getIsExpanded={getIsExpanded}
+          setIsExpanded={setIsExpanded}
           onExpandTransitionEnd={dropHandlers.handleDomMutation}
-          dropTargetItemId={shiftedDropTarget?.itemSelector[0]}
+          dropTargetItemSelector={shiftedDropTarget?.itemSelector}
         />
       </Box>
 

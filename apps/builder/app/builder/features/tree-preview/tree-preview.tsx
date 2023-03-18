@@ -11,6 +11,7 @@ import {
 } from "~/shared/nano-states";
 import { InstanceTreeNode } from "~/builder/shared/tree";
 import {
+  type InstanceSelector,
   createInstancesIndex,
   getInstanceAncestorsAndSelf,
   insertInstanceMutableDeprecated,
@@ -58,6 +59,13 @@ export const TreePrevew = () => {
       }
     })(rootInstance);
 
+    const dragItemSelector = getInstanceAncestorsAndSelf(
+      createInstancesIndex(instance),
+      dropTargetInstanceId
+    )
+      .map((item) => item.id)
+      .reverse();
+
     const dropTargetPath = getInstanceAncestorsAndSelf(
       instancesIndex,
       dropTargetInstanceId
@@ -65,9 +73,9 @@ export const TreePrevew = () => {
 
     return {
       itemData: instance,
-      selectedItemId: dragItemInstance.id,
-      getIsExpanded: (instance: Instance) =>
-        dropTargetPath.includes(instance.id),
+      selectedItemSelector: dragItemSelector,
+      getIsExpanded: ([instanceId]: InstanceSelector) =>
+        dropTargetPath.includes(instanceId),
       animate: false,
     };
   }, [

@@ -6,6 +6,7 @@ import {
   TreeItemBody,
   TreeNode,
   type TreeItemRenderProps,
+  type ItemSelector,
   styled,
   Flex,
   Tooltip,
@@ -150,7 +151,7 @@ const PagesPanel = ({
           suffix={
             onEdit && (
               <ItemSuffix
-                isParentSelected={props.selectedItemId === props.itemData.id}
+                isParentSelected={props.parentIsSelected ?? false}
                 itemId={props.itemData.id}
                 editingItemId={editingPageId}
                 onEdit={onEdit}
@@ -167,6 +168,11 @@ const PagesPanel = ({
       );
     },
     [editingPageId, onEdit]
+  );
+
+  const selectTreeNode = useCallback(
+    ([pageId]: ItemSelector) => onSelect(pageId),
+    [onSelect]
   );
 
   if (pagesTree === undefined) {
@@ -204,8 +210,8 @@ const PagesPanel = ({
       />
       <TreeNode
         hideRoot
-        selectedItemId={selectedPageId}
-        onSelect={onSelect}
+        selectedItemSelector={[selectedPageId, pagesTree.id]}
+        onSelect={selectTreeNode}
         itemData={pagesTree}
         renderItem={renderItem}
         getItemChildren={(nodeId) => {

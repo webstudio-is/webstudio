@@ -83,13 +83,7 @@ export const StressTest = ({ animate }: { animate: boolean }) => {
         animate={animate}
         root={root}
         selectedItemSelector={selectedItemSelector}
-        onSelect={(instanceId) => {
-          setSelectedItemSelector(
-            getItemPath(root, instanceId)
-              .reverse()
-              .map((item) => item.id)
-          );
-        }}
+        onSelect={setSelectedItemSelector}
         renderItem={(props) => (
           <TreeItemBody {...props}>
             <TreeItemLabel>{props.itemData.id}</TreeItemLabel>

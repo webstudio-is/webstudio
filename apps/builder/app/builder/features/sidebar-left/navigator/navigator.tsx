@@ -1,20 +1,15 @@
 import { useCallback } from "react";
 import { useStore } from "@nanostores/react";
 import { Flex } from "@webstudio-is/design-system";
-import type { Instance } from "@webstudio-is/project-build";
 import {
   selectedInstanceSelectorStore,
   hoveredInstanceSelectorStore,
   useRootInstance,
-  instancesStore,
 } from "~/shared/nano-states";
 import { InstanceTree } from "~/builder/shared/tree";
 import { reparentInstance } from "~/shared/instance-utils";
+import type { InstanceSelector } from "~/shared/tree-utils";
 import { Header, CloseButton } from "../header";
-import {
-  getInstanceSelector,
-  type InstanceSelector,
-} from "~/shared/tree-utils";
 
 type NavigatorProps = {
   isClosable?: boolean;
@@ -24,12 +19,6 @@ type NavigatorProps = {
 export const Navigator = ({ isClosable, onClose }: NavigatorProps) => {
   const selectedInstanceSelector = useStore(selectedInstanceSelectorStore);
   const [rootInstance] = useRootInstance();
-
-  const handleSelect = useCallback((instanceId: Instance["id"]) => {
-    const instances = instancesStore.get();
-    const instanceSelector = getInstanceSelector(instances, instanceId);
-    selectedInstanceSelectorStore.set(instanceSelector);
-  }, []);
 
   const handleDragEnd = useCallback(
     (payload: {
@@ -44,16 +33,6 @@ export const Navigator = ({ isClosable, onClose }: NavigatorProps) => {
     []
   );
 
-  const handleHover = useCallback((instance: Instance | undefined) => {
-    if (instance) {
-      const instances = instancesStore.get();
-      const instanceSelector = getInstanceSelector(instances, instance.id);
-      hoveredInstanceSelectorStore.set(instanceSelector);
-    } else {
-      hoveredInstanceSelectorStore.set(undefined);
-    }
-  }, []);
-
   if (rootInstance === undefined) {
     return null;
   }
@@ -67,9 +46,8 @@ export const Navigator = ({ isClosable, onClose }: NavigatorProps) => {
         <InstanceTree
           root={rootInstance}
           selectedItemSelector={selectedInstanceSelector}
-          // @todo provide in callback instance selector instead of just id
-          onSelect={handleSelect}
-          onHover={handleHover}
+          onSelect={selectedInstanceSelectorStore.set}
+          onHover={hoveredInstanceSelectorStore.set}
           onDragEnd={handleDragEnd}
         />
       </Flex>
