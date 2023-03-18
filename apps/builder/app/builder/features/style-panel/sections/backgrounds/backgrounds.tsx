@@ -34,6 +34,7 @@ import { BackgroundContent } from "./background-content";
 import { getLayerName, LayerThumbnail } from "./background-thumbnail";
 import { useSortable } from "./use-sortable";
 import { useMemo } from "react";
+import type { RgbValue } from "@webstudio-is/css-data";
 
 const Layer = (props: {
   id: string;
@@ -42,6 +43,7 @@ const Layer = (props: {
   setProperty: SetBackgroundProperty;
   deleteProperty: DeleteBackgroundProperty;
   deleteLayer: () => void;
+  setBackgroundColor: (color: RgbValue) => void;
 }) => {
   const backgrounImageStyle = props.layerStyle.backgroundImage?.value;
   const isHidden =
@@ -74,6 +76,7 @@ const Layer = (props: {
           currentStyle={props.layerStyle}
           setProperty={props.setProperty}
           deleteProperty={props.deleteProperty}
+          setBackgroundColor={props.setBackgroundColor}
         />
       }
     >
@@ -174,6 +177,7 @@ export const BackgroundsSection = ({
               deleteProperty,
               createBatchUpdate
             )}
+            setBackgroundColor={setProperty("backgroundColor")}
           />
         ))}
 

@@ -3,6 +3,7 @@ import {
   setLayerProperty,
   addLayer,
   swapLayers,
+  deleteLayer,
 } from "./background-layers";
 
 import { describe, test, expect } from "@jest/globals";
@@ -36,9 +37,18 @@ describe("setLayerProperty", () => {
             throw new Error("newValue.type !== layers");
           }
 
-          changedProps.push([propertyName, newValue]);
+          const index = changedProps.findIndex(
+            ([property]) => property === propertyName
+          );
 
           styleInfo[propertyName] = { value: newValue, local: newValue };
+
+          if (index !== -1) {
+            changedProps[index] = [propertyName, newValue];
+            return;
+          }
+
+          changedProps.push([propertyName, newValue]);
         },
       deleteProperty: (propertyName: string) => {
         // not used
@@ -150,9 +160,18 @@ describe("setLayerProperty", () => {
             throw new Error("newValue.type !== layers");
           }
 
-          changedProps.push([propertyName, newValue]);
+          const index = changedProps.findIndex(
+            ([property]) => property === propertyName
+          );
 
           styleInfo[propertyName] = { value: newValue, local: newValue };
+
+          if (index !== -1) {
+            changedProps[index] = [propertyName, newValue];
+            return;
+          }
+
+          changedProps.push([propertyName, newValue]);
         },
       deleteProperty: (propertyName: string) => {
         // not used
@@ -184,7 +203,191 @@ describe("setLayerProperty", () => {
     expect(
       changedProps.map((changedProp) => changedProp[1].value.length)
     ).toEqual(layeredBackgroundProps.map(() => 3));
+
+    expect(
+      styleInfo.backgroundImage?.value.type === "layers" &&
+        styleInfo.backgroundImage?.value.value[0].type === "keyword" &&
+        styleInfo.backgroundImage?.value.value[0].value
+    ).toEqual("none");
   });
+
+  test("should insert mutiple layers", () => {
+    const cascaded: NonNullable<StyleInfo["backgroundImage"]>["cascaded"] = {
+      breakpointId: "mobile",
+      value: {
+        type: "layers",
+        value: [
+          {
+            type: "unparsed",
+            value: "linear-gradient(red, blue)",
+          },
+          {
+            type: "unparsed",
+            value: "linear-gradient(yellow, red)",
+          },
+        ],
+      },
+    };
+    const styleInfo: StyleInfo = {
+      backgroundImage: {
+        cascaded,
+        value: cascaded.value,
+      },
+    };
+
+    let published = false;
+
+    const createBatchUpdate: CreateBatchUpdate = () => ({
+      setProperty:
+        (propertyName: StyleProperty) => (newValue: string | StyleValue) => {
+          if (typeof newValue === "string") {
+            throw new Error("string is deprecated");
+          }
+
+          if (newValue.type !== "layers") {
+            throw new Error("newValue.type !== layers");
+          }
+
+          styleInfo[propertyName] = { value: newValue, local: newValue };
+        },
+      deleteProperty: (propertyName: string) => {
+        // not used
+      },
+      publish: (options?: unknown) => {
+        published = true;
+      },
+    });
+
+    const setProperty = setLayerProperty(1, styleInfo, createBatchUpdate);
+
+    setProperty("backgroundImage")({
+      type: "layers",
+      value: [
+        {
+          type: "unparsed",
+          value: "linear-gradient(blue, blue)",
+        },
+      ],
+    });
+
+    expect(published).toBe(true);
+
+    expect(styleInfo.backgroundImage?.value.type).toEqual("layers");
+    expect(styleInfo.backgroundImage?.value).toMatchInlineSnapshot(`
+      {
+        "type": "layers",
+        "value": [
+          {
+            "type": "unparsed",
+            "value": "linear-gradient(red, blue)",
+          },
+          {
+            "type": "unparsed",
+            "value": "linear-gradient(blue, blue)",
+          },
+        ],
+      }
+    `);
+
+    setProperty("backgroundImage")({
+      type: "layers",
+      value: [
+        {
+          type: "unparsed",
+          value: "linear-gradient(green, blue)",
+        },
+        {
+          type: "unparsed",
+          value: "linear-gradient(yellow, blue)",
+        },
+      ],
+    });
+
+    expect(styleInfo.backgroundImage?.value).toMatchInlineSnapshot(`
+      {
+        "type": "layers",
+        "value": [
+          {
+            "type": "unparsed",
+            "value": "linear-gradient(red, blue)",
+          },
+          {
+            "type": "unparsed",
+            "value": "linear-gradient(green, blue)",
+          },
+          {
+            "type": "unparsed",
+            "value": "linear-gradient(yellow, blue)",
+          },
+        ],
+      }
+    `);
+  });
+});
+
+describe("deleteLayer", () => {
+  const cascaded: NonNullable<StyleInfo["backgroundImage"]>["cascaded"] = {
+    breakpointId: "mobile",
+    value: {
+      type: "layers",
+      value: [
+        {
+          type: "unparsed",
+          value: "linear-gradient(red, blue)",
+        },
+        {
+          type: "unparsed",
+          value: "linear-gradient(yellow, red)",
+        },
+      ],
+    },
+  };
+  const styleInfo: StyleInfo = {
+    backgroundImage: {
+      cascaded,
+      value: cascaded.value,
+    },
+  };
+
+  let published = false;
+  const deletedProperties = new Set<string>();
+
+  const createBatchUpdate: CreateBatchUpdate = () => ({
+    setProperty:
+      (propertyName: StyleProperty) => (newValue: string | StyleValue) => {
+        if (typeof newValue === "string") {
+          throw new Error("string is deprecated");
+        }
+
+        if (newValue.type !== "layers") {
+          throw new Error("newValue.type !== layers");
+        }
+
+        styleInfo[propertyName] = { value: newValue, local: newValue };
+      },
+    deleteProperty: (propertyName: string) => {
+      // not used
+      deletedProperties.add(propertyName);
+    },
+    publish: (options?: unknown) => {
+      published = true;
+    },
+  });
+
+  deleteLayer(0, styleInfo, createBatchUpdate)();
+
+  expect(published).toBe(true);
+
+  expect(styleInfo.backgroundImage?.value).toEqual({
+    type: "layers",
+    value: [{ type: "unparsed", value: "linear-gradient(yellow, red)" }],
+  });
+
+  expect(deletedProperties.size).toBe(0);
+
+  deleteLayer(0, styleInfo, createBatchUpdate)();
+
+  expect(deletedProperties.size).toBe(layeredBackgroundProps.length);
 });
 
 describe("swapLayers", () => {

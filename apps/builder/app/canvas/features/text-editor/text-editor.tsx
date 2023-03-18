@@ -131,11 +131,13 @@ export const TextEditor = ({
   onChange,
   onSelectInstance,
 }: TextEditorProps) => {
-  const [paragraphClassName] = useState(() => nanoid());
-  const [italicClassName] = useState(() => nanoid());
+  // class names must be started with letter so we add a prefix
+  const [paragraphClassName] = useState(() => `a${nanoid()}`);
+  const [italicClassName] = useState(() => `a${nanoid()}`);
 
   useLayoutEffect(() => {
     const engine = createCssEngine({ name: "text-editor" });
+
     // reset paragraph styles and make it work inside <a>
     engine.addPlaintextRule(`
       .${paragraphClassName} { display: inline; margin: 0; }

@@ -4,6 +4,18 @@ declare module "css-tree" {
     options?: import("@types/css-tree").ParseOptions
   ): import("@types/css-tree").CssNode;
 
+  export function walk(
+    ast: import("@types/css-tree").CssNode,
+    options:
+      | import("@types/css-tree").WalkOptionsNoVisit
+      | import("@types/css-tree").EnterOrLeaveFn
+  ): void;
+
+  export function generate(
+    ast: import("@types/css-tree").CssNode,
+    options?: import("@types/css-tree").GenerateOptions
+  ): string;
+
   type Match =
     | {
         syntax: { type: "Property"; name: string };
