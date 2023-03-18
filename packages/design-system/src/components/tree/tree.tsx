@@ -289,7 +289,7 @@ export const Tree = <Data extends { id: string }>({
           getIsExpanded={getIsExpanded}
           setIsExpanded={setIsExpanded}
           onExpandTransitionEnd={dropHandlers.handleDomMutation}
-          dropTargetItemId={shiftedDropTarget?.itemSelector[0]}
+          dropTargetItemSelector={shiftedDropTarget?.itemSelector}
         />
       </Box>
 

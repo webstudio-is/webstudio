@@ -245,11 +245,11 @@ const useScrollIntoView = (
 };
 
 export type TreeItemRenderProps<Data extends { id: string }> = {
-  dropTargetItemId?: string;
   onMouseEnter?: (itemSelector: ItemSelector) => void;
   onMouseLeave?: (itemSelector: ItemSelector) => void;
   itemData: Data;
   itemSelector: ItemSelector;
+  dropTargetItemSelector?: ItemSelector;
   parentIsSelected?: boolean;
   isSelected?: boolean;
   onSelect?: (itemSelector: ItemSelector) => void;
@@ -264,7 +264,7 @@ export const TreeItemBody = <Data extends { id: string }>({
   onSelect,
   parentIsSelected = false,
   isSelected = false,
-  dropTargetItemId,
+  dropTargetItemSelector,
   onMouseEnter,
   onMouseLeave,
   itemData,
@@ -315,8 +315,11 @@ export const TreeItemBody = <Data extends { id: string }>({
       : { handleFocus: () => onSelect(itemSelector) };
   }, [selectionEvent, onSelect, itemSelector]);
 
-  const isDragging = dropTargetItemId !== undefined;
-  const isDropTarget = dropTargetItemId === itemData.id;
+  const isDragging = dropTargetItemSelector !== undefined;
+  const isDropTarget = areItemSelectorsEqual(
+    dropTargetItemSelector,
+    itemSelector
+  );
 
   useScrollIntoView(itemButtonRef.current, {
     isSelected,
@@ -399,15 +402,15 @@ export type TreeNodeProps<Data extends { id: ItemId }> = {
   onExpandTransitionEnd?: () => void;
 
   selectedItemSelector?: ItemSelector;
+  dropTargetItemSelector?: ItemSelector;
+  parentSelector?: ItemSelector;
+
   parentIsSelected?: boolean;
   onSelect?: (itemSelector: ItemSelector) => void;
   onMouseEnter?: (itemSelector: ItemSelector) => void;
   onMouseLeave?: (itemSelector: ItemSelector) => void;
 
-  parentSelector?: ItemSelector;
   animate?: boolean;
-  dropTargetItemId?: string;
-
   hideRoot?: boolean;
 };
 
@@ -427,7 +430,7 @@ export const TreeNode = <Data extends { id: string }>({
     onMouseEnter,
     onMouseLeave,
     onExpandTransitionEnd,
-    dropTargetItemId,
+    dropTargetItemSelector,
     renderItem,
     getItemChildren,
   } = commonProps;
@@ -485,7 +488,7 @@ export const TreeNode = <Data extends { id: string }>({
       {/* optionally prevent rendering root item */}
       {(parentSelector !== undefined || hideRoot !== true) &&
         renderItem({
-          dropTargetItemId,
+          dropTargetItemSelector,
           onMouseEnter,
           onMouseLeave,
           itemData,
