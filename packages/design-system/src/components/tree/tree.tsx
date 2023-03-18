@@ -55,8 +55,9 @@ export const Tree = <Data extends { id: string }>({
   onDragEnd,
 }: TreeProps<Data>) => {
   const { getIsExpanded, setIsExpanded } = useExpandState({
-    root,
     selectedItemSelector,
+    root,
+    findItemById,
     getItemChildren,
   });
 
@@ -97,9 +98,9 @@ export const Tree = <Data extends { id: string }>({
     onHold: (dropTarget) => {
       if (
         getItemChildren(dropTarget.data).length > 0 ||
-        getIsExpanded(dropTarget.data) === false
+        getIsExpanded(dropTarget.itemSelector) === false
       ) {
-        setIsExpanded(dropTarget.data, true);
+        setIsExpanded(dropTarget.itemSelector, true);
       }
     },
   });
@@ -248,7 +249,6 @@ export const Tree = <Data extends { id: string }>({
   const keyboardNavigation = useKeyboardNavigation({
     root,
     getItemChildren,
-    findItemById,
     selectedItemSelector,
     getIsExpanded,
     setIsExpanded,
@@ -295,8 +295,18 @@ export const Tree = <Data extends { id: string }>({
           selectedItemId={selectedItemSelector?.[0]}
           itemData={root}
           level={0}
-          getIsExpanded={getIsExpanded}
-          setIsExpanded={setIsExpanded}
+          getIsExpanded={(item) => {
+            const itemSelector = getItemPath(root, item.id)
+              .map((item) => item.id)
+              .reverse();
+            return getIsExpanded(itemSelector);
+          }}
+          setIsExpanded={(item, isExpanded) => {
+            const itemSelector = getItemPath(root, item.id)
+              .map((item) => item.id)
+              .reverse();
+            setIsExpanded(itemSelector, isExpanded);
+          }}
           onExpandTransitionEnd={dropHandlers.handleDomMutation}
           dropTargetItemId={shiftedDropTarget?.itemSelector[0]}
         />
@@ -320,7 +330,6 @@ const useKeyboardNavigation = <Data extends { id: string }>({
   root,
   selectedItemSelector,
   getItemChildren,
-  findItemById,
   getIsExpanded,
   setIsExpanded,
   onEsc,
@@ -328,24 +337,15 @@ const useKeyboardNavigation = <Data extends { id: string }>({
   root: Data;
   selectedItemSelector: undefined | ItemSelector;
   getItemChildren: (item: Data) => Data[];
-  findItemById: (root: Data, id: string) => Data | undefined;
-  getIsExpanded: (instance: Data) => boolean;
-  setIsExpanded: (instance: Data, isExpanded: boolean) => void;
+  getIsExpanded: (itemSelector: ItemSelector) => boolean;
+  setIsExpanded: (itemSelector: ItemSelector, isExpanded: boolean) => void;
   onEsc: () => void;
 }) => {
-  const selectedItem = useMemo(() => {
-    if (selectedItemSelector === undefined) {
-      return undefined;
-    }
-    const [selectedItemId] = selectedItemSelector;
-    return findItemById(root, selectedItemId);
-  }, [root, selectedItemSelector, findItemById]);
-
   const flatCurrentlyExpandedTree = useMemo(() => {
     const result: ItemSelector[] = [];
     const traverse = (item: Data, itemSelector: ItemSelector) => {
       result.push(itemSelector);
-      if (getIsExpanded(item)) {
+      if (getIsExpanded(itemSelector)) {
         for (const child of getItemChildren(item)) {
           traverse(child, [child.id, ...itemSelector]);
         }
@@ -359,18 +359,21 @@ const useKeyboardNavigation = <Data extends { id: string }>({
 
   const handleKeyDown = (event: ReactKeyboardEvent) => {
     // skip if nothing is selected in the tree
-    if (selectedItem === undefined) {
+    if (selectedItemSelector === undefined) {
       return;
     }
 
-    if (event.key === "ArrowRight" && getIsExpanded(selectedItem) === false) {
-      setIsExpanded(selectedItem, true);
+    if (
+      event.key === "ArrowRight" &&
+      getIsExpanded(selectedItemSelector) === false
+    ) {
+      setIsExpanded(selectedItemSelector, true);
     }
-    if (event.key === "ArrowLeft" && getIsExpanded(selectedItem)) {
-      setIsExpanded(selectedItem, false);
+    if (event.key === "ArrowLeft" && getIsExpanded(selectedItemSelector)) {
+      setIsExpanded(selectedItemSelector, false);
     }
     if (event.key === " ") {
-      setIsExpanded(selectedItem, !getIsExpanded(selectedItem));
+      setIsExpanded(selectedItemSelector, !getIsExpanded(selectedItemSelector));
       // prevent scrolling
       event.preventDefault();
     }
@@ -469,15 +472,18 @@ const useKeyboardNavigation = <Data extends { id: string }>({
 const useExpandState = <Data extends { id: string }>({
   selectedItemSelector,
   root,
+  findItemById,
   getItemChildren,
 }: {
-  root: Data;
-  getItemChildren: (item: Data) => Data[];
   selectedItemSelector: undefined | ItemSelector;
+  root: Data;
+  findItemById: (root: Data, id: string) => Data | undefined;
+  getItemChildren: (item: Data) => Data[];
 }) => {
   const [record, setRecord] = useState<Record<string, boolean>>({});
 
-  // We want to automatically expand all parents of the selected instance whenever it changes
+  // whenever selected instance is changed
+  // all its parents should be automatically expanded
   const prevSelectedItemSelector = useRef(selectedItemSelector);
   useEffect(() => {
     if (
@@ -492,39 +498,46 @@ const useExpandState = <Data extends { id: string }>({
     if (selectedItemSelector === undefined) {
       return;
     }
-    const path = selectedItemSelector.slice().reverse();
-    // Don't want to expand the selected instance itself
-    path.pop();
-    const toExpand = path.filter((id) => record[id] !== true);
-    if (toExpand.length === 0) {
-      return;
-    }
     setRecord((record) => {
       const newRecord = { ...record };
-      for (const id of toExpand) {
-        newRecord[id] = true;
+      let expanded = 0;
+      // do not expand the selected instance itself, start with parent
+      for (let index = 1; index < selectedItemSelector.length; index += 1) {
+        const key = selectedItemSelector.slice(index).join();
+        if (newRecord[key] !== true) {
+          newRecord[key] = true;
+          expanded += 1;
+        }
       }
-      return newRecord;
+      // prevent rerender if nothing new is expanded
+      return expanded === 0 ? record : newRecord;
     });
-  }, [record, selectedItemSelector]);
+  }, [selectedItemSelector]);
 
   const getIsExpanded = useCallback(
-    (instance: Data) => {
+    (itemSelector: ItemSelector) => {
       // root is always expanded
-      if (instance.id === root.id) {
+      if (itemSelector.length === 1) {
         return true;
+      }
+      const item = findItemById(root, itemSelector[0]);
+      if (item === undefined) {
+        return false;
       }
 
       return (
-        getItemChildren(instance).length > 0 && record[instance.id] === true
+        getItemChildren(item).length > 0 && record[itemSelector.join()] === true
       );
     },
-    [record, root, getItemChildren]
+    [record, root, findItemById, getItemChildren]
   );
 
-  const setIsExpanded = useCallback((instance: Data, expanded: boolean) => {
-    setRecord((record) => ({ ...record, [instance.id]: expanded }));
-  }, []);
+  const setIsExpanded = useCallback(
+    (itemSelector: ItemSelector, expanded: boolean) => {
+      setRecord((record) => ({ ...record, [itemSelector.join()]: expanded }));
+    },
+    []
+  );
 
   return { getIsExpanded, setIsExpanded };
 };

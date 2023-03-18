@@ -44,8 +44,8 @@ export const getItemSelectorFromElement = (element: Element) => {
 };
 
 export const areItemSelectorsEqual = (
-  left?: ItemSelector,
-  right?: ItemSelector
+  left: undefined | ItemSelector,
+  right: undefined | ItemSelector
 ) => {
   if (left === undefined || right === undefined) {
     return false;

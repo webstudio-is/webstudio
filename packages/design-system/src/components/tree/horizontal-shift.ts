@@ -24,7 +24,7 @@ export const useHorizontalShift = <Data extends { id: string }>({
   dragItemSelector: undefined | ItemSelector;
   dropTarget: ItemDropTarget<Data> | undefined;
   root: Data;
-  getIsExpanded: (item: Data) => boolean;
+  getIsExpanded: (itemSelector: ItemSelector) => boolean;
 }) => {
   const [horizontalShift, setHorizontalShift] = useState(0);
 
@@ -145,7 +145,7 @@ export const useHorizontalShift = <Data extends { id: string }>({
 
       while (
         potentialNewParent &&
-        getIsExpanded(potentialNewParent) &&
+        getIsExpanded([potentialNewParent.id, ...newParentSelector]) &&
         canAcceptChild(potentialNewParent) &&
         shifted < desiredDepth - currentDepth
       ) {
