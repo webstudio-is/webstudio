@@ -6,6 +6,7 @@ import {
   TreeItemBody,
   TreeNode,
   type TreeItemRenderProps,
+  type ItemSelector,
   styled,
   Flex,
   Tooltip,
@@ -28,7 +29,6 @@ import { SettingsPanel } from "./settings-panel";
 import { NewPageSettings, PageSettings } from "./settings";
 import { pagesStore, selectedPageIdStore } from "~/shared/nano-states";
 import { useSwitchPage } from "~/shared/pages";
-import type { ItemSelector } from "@webstudio-is/design-system/src/components/tree/item-utils";
 
 type TabContentProps = {
   onSetActiveTab: (tabName: TabName) => void;
