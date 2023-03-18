@@ -28,6 +28,7 @@ import { SettingsPanel } from "./settings-panel";
 import { NewPageSettings, PageSettings } from "./settings";
 import { pagesStore, selectedPageIdStore } from "~/shared/nano-states";
 import { useSwitchPage } from "~/shared/pages";
+import type { ItemSelector } from "@webstudio-is/design-system/src/components/tree/item-utils";
 
 type TabContentProps = {
   onSetActiveTab: (tabName: TabName) => void;
@@ -150,7 +151,7 @@ const PagesPanel = ({
           suffix={
             onEdit && (
               <ItemSuffix
-                isParentSelected={props.selectedItemId === props.itemData.id}
+                isParentSelected={props.parentIsSelected ?? false}
                 itemId={props.itemData.id}
                 editingItemId={editingPageId}
                 onEdit={onEdit}
@@ -167,6 +168,11 @@ const PagesPanel = ({
       );
     },
     [editingPageId, onEdit]
+  );
+
+  const selectTreeNode = useCallback(
+    ([pageId]: ItemSelector) => onSelect(pageId),
+    [onSelect]
   );
 
   if (pagesTree === undefined) {
@@ -204,8 +210,8 @@ const PagesPanel = ({
       />
       <TreeNode
         hideRoot
-        selectedItemId={selectedPageId}
-        onSelect={onSelect}
+        selectedItemSelector={[selectedPageId, pagesTree.id]}
+        onSelect={selectTreeNode}
         itemData={pagesTree}
         renderItem={renderItem}
         getItemChildren={(nodeId) => {

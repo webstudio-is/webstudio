@@ -7,7 +7,11 @@ import { Flex } from "../flex";
 import { DeprecatedText2 } from "../__DEPRECATED__/text2";
 import { keyframes, styled } from "../../stitches.config";
 import { theme } from "../../stitches.config";
-import type { ItemId } from "./item-utils";
+import {
+  type ItemId,
+  type ItemSelector,
+  areItemSelectorsEqual,
+} from "./item-utils";
 
 export const INDENT = 16;
 const ITEM_HEIGHT = 32;
@@ -242,12 +246,13 @@ const useScrollIntoView = (
 
 export type TreeItemRenderProps<Data extends { id: string }> = {
   dropTargetItemId?: string;
-  onMouseEnter?: (item: Data) => void;
-  onMouseLeave?: (item: Data) => void;
+  onMouseEnter?: (itemSelector: ItemSelector) => void;
+  onMouseLeave?: (itemSelector: ItemSelector) => void;
   itemData: Data;
+  itemSelector: ItemSelector;
   parentIsSelected?: boolean;
-  selectedItemId?: string;
-  onSelect?: (itemId: string) => void;
+  isSelected?: boolean;
+  onSelect?: (itemSelector: ItemSelector) => void;
   level: number;
   isAlwaysExpanded: boolean;
   shouldRenderExpandButton: boolean;
@@ -256,13 +261,14 @@ export type TreeItemRenderProps<Data extends { id: string }> = {
 
 export const TreeItemBody = <Data extends { id: string }>({
   isAlwaysExpanded,
-  selectedItemId,
   onSelect,
-  parentIsSelected,
+  parentIsSelected = false,
+  isSelected = false,
   dropTargetItemId,
   onMouseEnter,
   onMouseLeave,
   itemData,
+  itemSelector,
   level,
   shouldRenderExpandButton,
   isExpanded,
@@ -305,11 +311,10 @@ export const TreeItemBody = <Data extends { id: string }>({
       return {};
     }
     return selectionEvent === "click"
-      ? { handleClick: () => onSelect(itemData.id) }
-      : { handleFocus: () => onSelect(itemData.id) };
-  }, [selectionEvent, onSelect, itemData.id]);
+      ? { handleClick: () => onSelect(itemSelector) }
+      : { handleFocus: () => onSelect(itemSelector) };
+  }, [selectionEvent, onSelect, itemSelector]);
 
-  const isSelected = itemData.id === selectedItemId;
   const isDragging = dropTargetItemId !== undefined;
   const isDropTarget = dropTargetItemId === itemData.id;
 
@@ -321,8 +326,8 @@ export const TreeItemBody = <Data extends { id: string }>({
 
   return (
     <ItemContainer
-      onMouseEnter={onMouseEnter && (() => onMouseEnter(itemData))}
-      onMouseLeave={onMouseLeave && (() => onMouseLeave(itemData))}
+      onMouseEnter={onMouseEnter && (() => onMouseEnter(itemSelector))}
+      onMouseLeave={onMouseLeave && (() => onMouseLeave(itemSelector))}
       isSelected={isSelected}
       parentIsSelected={parentIsSelected}
       enableHoverState={isDragging === false}
@@ -389,17 +394,17 @@ export type TreeNodeProps<Data extends { id: ItemId }> = {
   getItemChildren: (itemId: ItemId) => Data[];
   renderItem: (props: TreeItemRenderProps<Data>) => React.ReactNode;
 
-  getIsExpanded: (item: Data) => boolean;
-  setIsExpanded?: (item: Data, expanded: boolean) => void;
+  getIsExpanded: (itemSelector: ItemSelector) => boolean;
+  setIsExpanded?: (itemSelector: ItemSelector, expanded: boolean) => void;
   onExpandTransitionEnd?: () => void;
 
-  selectedItemId?: string;
+  selectedItemSelector?: ItemSelector;
   parentIsSelected?: boolean;
-  onSelect?: (itemId: string) => void;
-  onMouseEnter?: (item: Data) => void;
-  onMouseLeave?: (item: Data) => void;
+  onSelect?: (itemSelector: ItemSelector) => void;
+  onMouseEnter?: (itemSelector: ItemSelector) => void;
+  onMouseLeave?: (itemSelector: ItemSelector) => void;
 
-  level?: number;
+  parentSelector?: ItemSelector;
   animate?: boolean;
   dropTargetItemId?: string;
 
@@ -408,16 +413,16 @@ export type TreeNodeProps<Data extends { id: ItemId }> = {
 
 export const TreeNode = <Data extends { id: string }>({
   itemData,
-  level = 0,
+  parentSelector,
   parentIsSelected,
-  hideRoot,
+  hideRoot = false,
   ...commonProps
 }: TreeNodeProps<Data>) => {
   const {
     getIsExpanded,
     animate = true,
     setIsExpanded,
-    selectedItemId,
+    selectedItemSelector,
     onSelect,
     onMouseEnter,
     onMouseLeave,
@@ -431,10 +436,21 @@ export const TreeNode = <Data extends { id: string }>({
 
   const itemChildren = getItemChildren(itemData.id);
 
-  const isAlwaysExpanded = level === 0;
+  const itemSelector = [itemData.id, ...(parentSelector ?? [])];
+
+  const isAlwaysExpanded =
+    // root is always expanded
+    parentSelector === undefined ||
+    // or root children when root is hidden
+    (hideRoot && parentSelector.length === 1);
+  let level = parentSelector?.length ?? 0;
+  // reduce level when root is hidden
+  if (hideRoot && level !== 0) {
+    level -= 1;
+  }
   const isExpandable = itemChildren.length > 0;
-  const isExpanded = getIsExpanded(itemData) || isAlwaysExpanded;
-  const isSelected = itemData.id === selectedItemId;
+  const isExpanded = getIsExpanded(itemSelector) || isAlwaysExpanded;
+  const isSelected = areItemSelectorsEqual(itemSelector, selectedItemSelector);
 
   const shouldRenderExpandButton = isExpandable && isAlwaysExpanded === false;
 
@@ -463,23 +479,25 @@ export const TreeNode = <Data extends { id: string }>({
   return (
     <Collapsible.Root
       open={isExpanded}
-      onOpenChange={(isOpen) => setIsExpanded?.(itemData, isOpen)}
+      onOpenChange={(isOpen) => setIsExpanded?.(itemSelector, isOpen)}
       data-drop-target-id={itemData.id}
     >
-      {hideRoot !== true &&
-        renderItem({
-          dropTargetItemId,
-          onMouseEnter,
-          onMouseLeave,
-          itemData,
-          parentIsSelected,
-          selectedItemId,
-          onSelect,
-          level,
-          isAlwaysExpanded,
-          shouldRenderExpandButton,
-          isExpanded,
-        })}
+      {parentSelector !== undefined ||
+        (hideRoot !== true &&
+          renderItem({
+            dropTargetItemId,
+            onMouseEnter,
+            onMouseLeave,
+            itemData,
+            itemSelector,
+            parentIsSelected,
+            isSelected,
+            onSelect,
+            level,
+            isAlwaysExpanded,
+            shouldRenderExpandButton,
+            isExpanded,
+          }))}
       {isExpandable && (
         <CollapsibleContent
           onAnimationEnd={handleAnimationEnd}
@@ -492,8 +510,9 @@ export const TreeNode = <Data extends { id: string }>({
               <TreeNode
                 key={child.id}
                 itemData={child}
-                level={hideRoot ? level : level + 1}
+                parentSelector={itemSelector}
                 parentIsSelected={isSelected || parentIsSelected}
+                hideRoot={hideRoot}
                 {...commonProps}
               />
             ))
