@@ -20,11 +20,7 @@ export const getElementByItemSelector = (
     .map((id) => `[data-drop-target-id="${id}"]`)
     .reverse()
     .join(" ");
-  const [itemId] = itemSelector;
-  return (
-    root?.querySelector(`${domSelector} [data-item-button-id="${itemId}"]`) ??
-    undefined
-  );
+  return root?.querySelector(domSelector) ?? undefined;
 };
 
 export const getItemSelectorFromElement = (element: Element) => {

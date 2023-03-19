@@ -27,8 +27,6 @@ export type TreeProps<Data extends { id: string }> = {
 
   canLeaveParent: (itemId: ItemId) => boolean;
   canAcceptChild: (itemId: ItemId) => boolean;
-  findItemById: (root: Data, id: string) => Data | undefined;
-  getItemPath: (root: Data, id: string) => Data[];
   getItemChildren: (itemId: ItemId) => Data[];
   renderItem: (props: TreeItemRenderProps<Data>) => React.ReactNode;
 
@@ -37,7 +35,7 @@ export type TreeProps<Data extends { id: string }> = {
   animate?: boolean;
   onDragEnd: (event: {
     itemSelector: ItemSelector;
-    dropTarget: { itemId: string; position: number | "end" };
+    dropTarget: { itemSelector: ItemSelector; position: number | "end" };
   }) => void;
 };
 
@@ -46,8 +44,6 @@ export const Tree = <Data extends { id: string }>({
   selectedItemSelector,
   canLeaveParent,
   canAcceptChild,
-  findItemById,
-  getItemPath,
   getItemChildren,
   renderItem,
   onSelect,
@@ -83,7 +79,7 @@ export const Tree = <Data extends { id: string }>({
 
   const getFallbackDropTarget = () => {
     return {
-      data: root,
+      data: [root.id],
       element: getDropTargetElement(root.id) as HTMLElement,
       final: true,
     };
@@ -103,15 +99,13 @@ export const Tree = <Data extends { id: string }>({
     },
   });
 
-  const dropHandlers = useDrop<Data>({
+  const dropHandlers = useDrop<ItemSelector>({
     emulatePointerAlwaysInRootBounds: true,
 
     placementPadding: 0,
 
     elementToData: (element) => {
-      const id = (element as HTMLElement).dataset.dropTargetId;
-      const instance = id && findItemById(root, id);
-      return instance || false;
+      return getItemSelectorFromElement(element);
     },
 
     swapDropTarget: (dropTarget) => {
@@ -119,45 +113,48 @@ export const Tree = <Data extends { id: string }>({
         return getFallbackDropTarget();
       }
 
-      if (dropTarget.data.id === root.id) {
+      // drop target is the root
+      if (dropTarget.data.length === 1) {
         return dropTarget;
       }
 
-      const path = getItemPath(root, dropTarget.data.id);
-      path.reverse();
+      const newDropItemSelector = dropTarget.data.slice();
 
       if (dropTarget.area === "top" || dropTarget.area === "bottom") {
-        path.shift();
+        newDropItemSelector.shift();
       }
 
       // Don't allow to drop inside drag item or any of its children
       const [dragItemId] = dragItemSelector;
-      const dragItemIndex = path.findIndex(
-        (instance) => instance.id === dragItemId
-      );
+      const dragItemIndex = newDropItemSelector.indexOf(dragItemId);
       if (dragItemIndex !== -1) {
-        path.splice(0, dragItemIndex + 1);
+        newDropItemSelector.splice(0, dragItemIndex + 1);
       }
 
-      const data = path.find((item) => canAcceptChild(item.id));
+      // select closest droppable
+      const ancestorIndex = newDropItemSelector.findIndex((itemId) =>
+        canAcceptChild(itemId)
+      );
+      if (ancestorIndex === -1) {
+        return getFallbackDropTarget();
+      }
+      newDropItemSelector.slice(ancestorIndex);
 
-      if (data === undefined) {
+      const element = getElementByItemSelector(
+        rootRef.current ?? undefined,
+        newDropItemSelector
+      );
+
+      if (element === undefined) {
         return getFallbackDropTarget();
       }
 
-      const element = getDropTargetElement(data.id);
-
-      if (element == null) {
-        return getFallbackDropTarget();
-      }
-
-      return { data, element, final: true };
+      return { data: newDropItemSelector, element, final: true };
     },
 
     onDropTargetChange: (dropTarget) => {
       const itemDropTarget = {
-        itemSelector: getItemSelectorFromElement(dropTarget.element),
-        data: dropTarget.data,
+        itemSelector: dropTarget.data,
         rect: dropTarget.rect,
         indexWithinChildren: dropTarget.indexWithinChildren,
         placement: dropTarget.placement,
@@ -178,35 +175,24 @@ export const Tree = <Data extends { id: string }>({
     childrenOrientation: { type: "vertical", reverse: false },
   });
 
-  const dragHandlers = useDrag<Data>({
+  const dragHandlers = useDrag<ItemSelector>({
     shiftDistanceThreshold: INDENT,
 
     elementToData: (element) => {
-      const dragItemElement = element.closest("[data-drag-item-id]");
-      if (!(dragItemElement instanceof HTMLElement)) {
-        return false;
-      }
-      const id = dragItemElement.dataset.dragItemId;
-      if (id === undefined || id === root.id) {
+      const dragItemSelector = getItemSelectorFromElement(element);
+      // tree root is not draggable
+      if (dragItemSelector.length === 1) {
         return false;
       }
 
-      const instance = findItemById(root, id);
-
-      if (instance === undefined) {
+      const [dragItemId] = dragItemSelector;
+      if (canLeaveParent(dragItemId) === false) {
         return false;
       }
 
-      if (canLeaveParent(instance.id) === false) {
-        return false;
-      }
-
-      return instance;
+      return dragItemSelector;
     },
-    onStart: ({ data }) => {
-      const itemSelector = getItemPath(root, data.id)
-        .reverse()
-        .map((item) => item.id);
+    onStart: ({ data: itemSelector }) => {
       onSelect?.(itemSelector);
       setDragItemSelector(itemSelector);
       dropHandlers.handleStart();
@@ -224,7 +210,7 @@ export const Tree = <Data extends { id: string }>({
         onDragEnd({
           itemSelector: dragItemSelector,
           dropTarget: {
-            itemId: shiftedDropTarget.itemSelector[0],
+            itemSelector: shiftedDropTarget.itemSelector,
             position: shiftedDropTarget.position,
           },
         });
@@ -384,10 +370,11 @@ const useKeyboardNavigation = <Data extends { id: string }>({
 
   const setFocus = useCallback(
     (itemSelector: ItemSelector, reason: "restoring" | "changing") => {
+      const [itemId] = itemSelector;
       const itemButton = getElementByItemSelector(
         rootRef.current ?? undefined,
         itemSelector
-      );
+      )?.querySelector(`[data-item-button-id="${itemId}"]`);
       if (itemButton instanceof HTMLElement) {
         itemButton.focus({ preventScroll: reason === "restoring" });
       }

@@ -2,9 +2,9 @@ import { useCallback } from "react";
 import { useStore } from "@nanostores/react";
 import { Flex } from "@webstudio-is/design-system";
 import {
+  rootInstanceStore,
   selectedInstanceSelectorStore,
   hoveredInstanceSelectorStore,
-  useRootInstance,
 } from "~/shared/nano-states";
 import { InstanceTree } from "~/builder/shared/tree";
 import { reparentInstance } from "~/shared/instance-utils";
@@ -18,15 +18,15 @@ type NavigatorProps = {
 
 export const Navigator = ({ isClosable, onClose }: NavigatorProps) => {
   const selectedInstanceSelector = useStore(selectedInstanceSelectorStore);
-  const [rootInstance] = useRootInstance();
+  const rootInstance = useStore(rootInstanceStore);
 
   const handleDragEnd = useCallback(
     (payload: {
       itemSelector: InstanceSelector;
-      dropTarget: { itemId: string; position: number | "end" };
+      dropTarget: { itemSelector: InstanceSelector; position: number | "end" };
     }) => {
       reparentInstance(payload.itemSelector[0], {
-        parentId: payload.dropTarget.itemId,
+        parentId: payload.dropTarget.itemSelector[0],
         position: payload.dropTarget.position,
       });
     },

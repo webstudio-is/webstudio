@@ -78,6 +78,16 @@ export const useSetInstances = (
   });
 };
 
+export const rootInstanceStore = computed(
+  [instancesStore, selectedPageStore],
+  (instances, selectedPage) => {
+    if (selectedPage === undefined) {
+      return undefined;
+    }
+    return instances.get(selectedPage.rootInstanceId);
+  }
+);
+
 // @todo will be removed soon
 const denormalizeTree = (
   instances: Instances,

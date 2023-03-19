@@ -52,7 +52,7 @@ export const reparent = (
   }: {
     itemSelector: ItemSelector;
     dropTarget: {
-      itemId: string;
+      itemSelector: ItemSelector;
       position: number | "end";
     };
   }
@@ -62,7 +62,7 @@ export const reparent = (
     const path = getItemPath(draft, itemId);
     const item = path[path.length - 1];
     const currentParent = path[path.length - 2];
-    const newParent = findItemById(draft, dropTarget.itemId);
+    const newParent = findItemById(draft, dropTarget.itemSelector[0]);
 
     if (
       item === undefined ||
