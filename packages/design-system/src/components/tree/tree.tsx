@@ -4,11 +4,13 @@ import { createPortal } from "react-dom";
 import { ListPositionIndicator } from "../list-position-indicator";
 import { TreeNode, INDENT, TreeItemRenderProps } from "./tree-node";
 import {
+  type Placement,
   useHold,
   useDrop,
   useDrag,
   useAutoScroll,
   useDragCursor,
+  computeIndicatorPlacement,
 } from "../primitives/dnd";
 import { Box } from "../box";
 import { useHorizontalShift } from "./horizontal-shift";
@@ -39,6 +41,19 @@ export type TreeProps<Data extends { id: string }> = {
   }) => void;
 };
 
+const sharedDropOptions = {
+  placementPadding: 0,
+  getValidChildren: (element: Element) => {
+    // NOTE:
+    //   redefining children like this will screw up automatic childrenOrientation detection
+    //   luckily we know the orientation and can define it manually below
+    return Array.from(
+      element.querySelectorAll(":scope > div > [data-drop-target-id]")
+    );
+  },
+  childrenOrientation: { type: "vertical", reverse: false },
+} as const;
+
 export const Tree = <Data extends { id: string }>({
   root,
   selectedItemSelector,
@@ -61,7 +76,10 @@ export const Tree = <Data extends { id: string }>({
   const [dragItemSelector, setDragItemSelector] = useState<
     undefined | ItemSelector
   >();
-  const [dropTarget, setDropTarget] = useState<ItemDropTarget>();
+  const [dropTarget, setDropTarget] = useState<undefined | ItemDropTarget>();
+  const [placementIndicator, setPlacementIndicator] = useState<
+    undefined | Placement
+  >();
 
   const getDropTargetElement = useCallback(
     (id: string): HTMLElement | null | undefined =>
@@ -72,6 +90,7 @@ export const Tree = <Data extends { id: string }>({
   const [shiftedDropTarget, setHorizontalShift] = useHorizontalShift({
     dragItemSelector,
     dropTarget,
+    placementIndicator,
     getIsExpanded,
     getItemChildren,
     canAcceptChild,
@@ -100,9 +119,9 @@ export const Tree = <Data extends { id: string }>({
   });
 
   const dropHandlers = useDrop<ItemSelector>({
-    emulatePointerAlwaysInRootBounds: true,
+    ...sharedDropOptions,
 
-    placementPadding: 0,
+    emulatePointerAlwaysInRootBounds: true,
 
     elementToData: (element) => {
       return getItemSelectorFromElement(element);
@@ -155,24 +174,18 @@ export const Tree = <Data extends { id: string }>({
     onDropTargetChange: (dropTarget) => {
       const itemDropTarget = {
         itemSelector: dropTarget.data,
-        rect: dropTarget.rect,
         indexWithinChildren: dropTarget.indexWithinChildren,
         placement: dropTarget.placement,
       };
       useHoldHandler.setData(itemDropTarget);
       setDropTarget(itemDropTarget);
+      const placementIndicator = computeIndicatorPlacement({
+        placement: dropTarget.placement,
+        element: dropTarget.element,
+        ...sharedDropOptions,
+      });
+      setPlacementIndicator(placementIndicator);
     },
-
-    getValidChildren: (element) => {
-      // NOTE:
-      //   redefining children like this will screw up automatic childrenOrientation detection
-      //   luckily we know the orientation and can define it manually below
-      return Array.from(
-        element.querySelectorAll(":scope > div > [data-drop-target-id]")
-      );
-    },
-
-    childrenOrientation: { type: "vertical", reverse: false },
   });
 
   const dragHandlers = useDrag<ItemSelector>({

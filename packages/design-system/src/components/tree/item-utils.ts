@@ -1,4 +1,4 @@
-import type { Placement } from "../primitives/dnd";
+import type { ChildrenOrientation } from "../primitives/dnd/geometry-utils";
 
 export type ItemId = string;
 
@@ -6,9 +6,12 @@ export type ItemSelector = string[];
 
 export type ItemDropTarget = {
   itemSelector: ItemSelector;
-  rect: DOMRect;
   indexWithinChildren: number;
-  placement: Placement;
+  placement: {
+    closestChildIndex: number;
+    indexAdjustment: number;
+    childrenOrientation: ChildrenOrientation;
+  };
 };
 
 export const getElementByItemSelector = (

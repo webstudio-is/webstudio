@@ -4,9 +4,13 @@ import { Box } from "../../box";
 import { styled } from "../../../stitches.config";
 import { useDrop, type DropTarget } from "./use-drop";
 import { useDrag } from "./use-drag";
-import { PlacementIndicator } from "./placement-indicator";
+import {
+  computeIndicatorPlacement,
+  PlacementIndicator,
+} from "./placement-indicator";
 import { useAutoScroll } from "./use-auto-scroll";
 import { theme } from "../../../stitches.config";
+import type { Placement } from "./geometry-utils";
 
 type ItemData = { id: string; text: string };
 
@@ -67,6 +71,9 @@ export const SortableList = ({
   ] as ItemData[]);
 
   const [dropTarget, setDropTarget] = useState<DropTarget<true>>();
+  const [placementIndicator, setPlacementIndicator] = useState<
+    undefined | Placement
+  >();
   const [dragItemId, setDragItemId] = useState<string>();
   const rootRef = useRef<HTMLUListElement | null>(null);
 
@@ -87,6 +94,12 @@ export const SortableList = ({
     },
     onDropTargetChange(dropTarget) {
       setDropTarget(dropTarget);
+      setPlacementIndicator(
+        computeIndicatorPlacement({
+          placement: dropTarget.placement,
+          element: dropTarget.element,
+        })
+      );
     },
   });
 
@@ -131,6 +144,7 @@ export const SortableList = ({
       autoScrollHandlers.setEnabled(false);
       setDragItemId(undefined);
       setDropTarget(undefined);
+      setPlacementIndicator(undefined);
     },
   });
 
@@ -183,7 +197,9 @@ export const SortableList = ({
           ))}
         </List>
       </Box>
-      {dropTarget && <PlacementIndicator placement={dropTarget.placement} />}
+      {placementIndicator && (
+        <PlacementIndicator placement={placementIndicator} />
+      )}
     </>
   );
 };
