@@ -12,6 +12,7 @@ export type ShiftedDropTarget = {
 export const useHorizontalShift = <Data extends { id: ItemId }>({
   dragItemSelector,
   dropTarget,
+  placementIndicator,
   getIsExpanded,
   canAcceptChild,
   getItemChildren,
@@ -20,6 +21,7 @@ export const useHorizontalShift = <Data extends { id: ItemId }>({
   canAcceptChild: (itemId: ItemId) => boolean;
   dragItemSelector: undefined | ItemSelector;
   dropTarget: ItemDropTarget | undefined;
+  placementIndicator: undefined | Placement;
   getIsExpanded: (itemSelector: ItemSelector) => boolean;
 }) => {
   const [horizontalShift, setHorizontalShift] = useState(0);
@@ -27,31 +29,31 @@ export const useHorizontalShift = <Data extends { id: ItemId }>({
   // Here we want to allow user to shift placement line horizontally
   // but only if that corresponds to a meaningful position in the tree
   const shiftedDropTarget = useMemo((): ShiftedDropTarget | undefined => {
-    if (dropTarget === undefined || dragItemSelector === undefined) {
+    if (
+      dropTarget === undefined ||
+      placementIndicator === undefined ||
+      dragItemSelector === undefined
+    ) {
       return undefined;
     }
 
     const dragItemDepth = dragItemSelector.length - 1;
 
-    const {
-      itemSelector: dropItemSelector,
-      placement,
-      indexWithinChildren,
-    } = dropTarget;
+    const { itemSelector: dropItemSelector, indexWithinChildren } = dropTarget;
 
     const shiftPlacement = (depth: number) => {
       const shift = getPlacementIndicatorAlignment(depth);
       return {
-        ...placement,
-        x: placement.x + shift,
-        length: placement.length - shift,
+        ...placementIndicator,
+        x: placementIndicator.x + shift,
+        length: placementIndicator.length - shift,
       };
     };
 
     // Placement type “inside-parent” means that useDrop() didn’t find any children.
     // In this case the placement line coordinates are meaningless in the context of the tree.
     // We're dropping the placement and not performing any shifting.
-    if (placement.type === "inside-parent") {
+    if (placementIndicator.type === "inside-parent") {
       return { itemSelector: dropItemSelector, position: "end" };
     }
 
@@ -160,6 +162,7 @@ export const useHorizontalShift = <Data extends { id: ItemId }>({
     return withoutShift;
   }, [
     dropTarget,
+    placementIndicator,
     dragItemSelector,
     horizontalShift,
     canAcceptChild,

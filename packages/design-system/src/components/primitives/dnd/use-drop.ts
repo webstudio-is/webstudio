@@ -25,7 +25,11 @@ type PartialDropTarget<Data> = {
 export type DropTarget<Data> = PartialDropTarget<Data> & {
   rect: DOMRect;
   indexWithinChildren: number;
-  placement: Placement;
+  placement: Placement & {
+    closestChildIndex: number;
+    indexAdjustment: number;
+    childrenOrientation: ChildrenOrientation;
+  };
 };
 
 // We pass around data, to avoid extra data lookups.
@@ -223,7 +227,12 @@ export const useDrop = <Data>(props: UseDropProps<Data>): UseDropHandlers => {
           ...partialDropTarget,
           rect: parentRect,
           indexWithinChildren,
-          placement,
+          placement: {
+            ...placement,
+            closestChildIndex,
+            indexAdjustment,
+            childrenOrientation,
+          },
         };
 
         state.current.dropTarget = dropTarget;

@@ -3,9 +3,13 @@ import React, { useState, useRef } from "react";
 import { Box } from "../../box";
 import { useDrop, type DropTarget } from "./use-drop";
 import { useDrag } from "./use-drag";
-import { PlacementIndicator } from "./placement-indicator";
+import {
+  computeIndicatorPlacement,
+  PlacementIndicator,
+} from "./placement-indicator";
 import { useAutoScroll } from "./use-auto-scroll";
 import { theme } from "../../../stitches.config";
+import type { Placement } from "./geometry-utils";
 
 const ROOT_ID = "root";
 
@@ -188,6 +192,9 @@ export const Canvas = () => {
   const [currentDropTarget, setCurrentDropTarget] = useState<
     DropTarget<string> | undefined
   >();
+  const [placementIndicator, setPlacementIndicator] = useState<
+    undefined | Placement
+  >();
   const [dragItemId, setDragItemId] = useState<string>();
 
   const rootRef = useRef<HTMLElement | null>(null);
@@ -247,6 +254,12 @@ export const Canvas = () => {
 
     onDropTargetChange(dropTarget) {
       setCurrentDropTarget(dropTarget);
+      setPlacementIndicator(
+        computeIndicatorPlacement({
+          placement: dropTarget.placement,
+          element: dropTarget.element,
+        })
+      );
     },
   });
 
@@ -313,6 +326,7 @@ export const Canvas = () => {
       autoScrollHandlers.setEnabled(false);
       setDragItemId(undefined);
       setCurrentDropTarget(undefined);
+      setPlacementIndicator(undefined);
     },
   });
 
@@ -345,8 +359,8 @@ export const Canvas = () => {
           <Items data={data} dragItemId={dragItemId} />
         </Box>
       </Box>
-      {currentDropTarget && (
-        <PlacementIndicator placement={currentDropTarget.placement} />
+      {placementIndicator && (
+        <PlacementIndicator placement={placementIndicator} />
       )}
     </>
   );

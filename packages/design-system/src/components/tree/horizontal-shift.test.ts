@@ -58,7 +58,7 @@ const tree: Item = {
   children: [box1, box2, box3, box4, heading, box5],
 };
 
-const makePlacement = (
+const makePlacementIndicator = (
   type: Placement["type"] = "next-to-child"
 ): Placement => ({
   type,
@@ -71,17 +71,18 @@ const makePlacement = (
 const makeDrop = ({
   into,
   after,
-  placement = makePlacement(),
 }: {
   into: Item;
   after?: Item;
-  placement?: Placement;
 }): ItemDropTarget => ({
   itemSelector: getItemSelector(into.id),
   indexWithinChildren:
     after === undefined ? 0 : into.children.indexOf(after) + 1,
-  placement,
-  rect: null as unknown as DOMRect,
+  placement: {
+    closestChildIndex: 0,
+    indexAdjustment: 0,
+    childrenOrientation: { type: "mixed" },
+  },
 });
 
 const getItemSelector = (itemId: ItemId) => {
@@ -94,9 +95,11 @@ const render = (
   {
     dragItem,
     dropTarget,
+    placementIndicator = makePlacementIndicator(),
   }: {
     dragItem: Item | undefined;
     dropTarget: ItemDropTarget | undefined;
+    placementIndicator?: Placement;
   },
   shift = -1
 ) => {
@@ -105,6 +108,7 @@ const render = (
       dragItemSelector:
         dragItem === undefined ? undefined : getItemSelector(dragItem.id),
       dropTarget,
+      placementIndicator,
       getIsExpanded: (itemSelector: ItemSelector) =>
         (findItemById(tree, itemSelector[0])?.children.length ?? 0) > 0,
       canAcceptChild: (itemId: ItemId) =>
@@ -134,9 +138,12 @@ test("if there's no dragItem or dropTarget returns undefined", () => {
 test("drop target is empty or collapsed", () => {
   const dropTarget = makeDrop({
     into: box2,
-    placement: makePlacement("inside-parent"),
   });
-  const result = render({ dragItem: box1, dropTarget });
+  const result = render({
+    dragItem: box1,
+    dropTarget,
+    placementIndicator: makePlacementIndicator("inside-parent"),
+  });
 
   // parent doesn't change
   expect(result?.itemSelector).toEqual(["box2", "root"]);
@@ -147,7 +154,10 @@ test("drop target is empty or collapsed", () => {
 
 test("placement line coordinates are always adjusted", () => {
   const result = render(
-    { dragItem: box31, dropTarget: makeDrop({ into: box3, after: box32 }) },
+    {
+      dragItem: box31,
+      dropTarget: makeDrop({ into: box3, after: box32 }),
+    },
     0
   );
 
@@ -157,7 +167,7 @@ test("placement line coordinates are always adjusted", () => {
   // placement line is adjusted to account for depth,
   // even though depth didn't change
   expect(result?.placement).toEqual({
-    ...makePlacement(),
+    ...makePlacementIndicator(),
     length: 260,
     x: 40,
   });
@@ -203,7 +213,7 @@ describe("shifting to the left", () => {
     expect(result?.itemSelector).toEqual(["root"]);
     expect(result?.position).toBe(tree.children.indexOf(box3) + 1);
     expect(result?.placement).toEqual({
-      ...makePlacement(),
+      ...makePlacementIndicator(),
       x: 24,
       length: 276,
     });
@@ -219,7 +229,7 @@ describe("shifting to the left", () => {
     expect(result1?.itemSelector).toEqual(["root"]);
     expect(result1?.position).toBe(tree.children.indexOf(box3) + 1);
     expect(result1?.placement).toEqual({
-      ...makePlacement(),
+      ...makePlacementIndicator(),
       x: 24,
       length: 276,
     });
@@ -228,7 +238,7 @@ describe("shifting to the left", () => {
     expect(result2?.itemSelector).toEqual(["box3", "root"]);
     expect(result2?.position).toBe(box3.children.indexOf(box32) + 1);
     expect(result2?.placement).toEqual({
-      ...makePlacement(),
+      ...makePlacementIndicator(),
       x: 40,
       length: 260,
     });
