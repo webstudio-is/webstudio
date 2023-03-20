@@ -98,6 +98,8 @@ export const useDrag = <DragItemData>(
     };
 
     const handlePointerMove = (event: PointerEvent) => {
+      // prevent text selecting while dragging
+      event.preventDefault();
       const {
         startDistanceThreashold = 3,
         onStart,

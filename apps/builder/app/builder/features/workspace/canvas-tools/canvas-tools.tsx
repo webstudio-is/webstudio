@@ -52,7 +52,9 @@ export const CanvasTools = ({ publish }: CanvasToolsProps) => {
     return (
       <Box css={toolsStyle}>
         <DropTargetOutline dropTarget={dragAndDropState.dropTarget} />
-        <PlacementIndicator placement={dragAndDropState.dropTarget.placement} />
+        {dragAndDropState.placementIndicator !== undefined && (
+          <PlacementIndicator placement={dragAndDropState.placementIndicator} />
+        )}
       </Box>
     );
   }

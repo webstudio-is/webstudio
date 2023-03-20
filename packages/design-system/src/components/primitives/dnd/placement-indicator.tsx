@@ -7,7 +7,7 @@ import {
   getPlacementInside,
   getPlacementNextTo,
 } from "./geometry-utils";
-import type { DropTarget } from "./use-drop";
+import { defaultGetValidChildren, DropTarget } from "./use-drop";
 
 const placementStyle = {
   boxSizing: "content-box",
@@ -34,7 +34,13 @@ const getStyle = (placement: Placement) => {
 };
 
 export const PlacementIndicator = ({ placement }: { placement: Placement }) => {
-  return <Box style={getStyle(placement)} css={placementStyle} />;
+  return (
+    <Box
+      data-placement-indicator
+      style={getStyle(placement)}
+      css={placementStyle}
+    />
+  );
 };
 
 type PlacementIndicatorOptions = {
@@ -59,7 +65,7 @@ export const computeIndicatorPlacement = (
   const {
     placement,
     element,
-    getValidChildren = (parent) => parent.children,
+    getValidChildren = defaultGetValidChildren,
   } = options;
   const parentRect = element.getBoundingClientRect();
   const children = getValidChildren(element);

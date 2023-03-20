@@ -1,10 +1,12 @@
 import { useState, useRef } from "react";
 import {
+  type Placement,
   PlacementIndicator,
   useDrag,
   useDragCursor,
   useDrop,
   type DropTarget,
+  computeIndicatorPlacement,
 } from "@webstudio-is/design-system";
 
 type UseSortable<Item> = {
@@ -15,11 +17,23 @@ type UseSortable<Item> = {
 const getItemId = (element: Element) =>
   element instanceof HTMLElement ? element.dataset?.id : undefined;
 
+const sharedDropOptions = {
+  getValidChildren(parent: Element) {
+    return [...parent.children].filter(
+      (child) => getItemId(child) !== undefined
+    );
+  },
+  childrenOrientation: { type: "horizontal", reverse: false },
+} as const;
+
 export const useSortable = <Item extends { id: string }>({
   items,
   onSort,
 }: UseSortable<Item>) => {
   const [dropTarget, setDropTarget] = useState<DropTarget<true>>();
+  const [placementIndicator, setPlacementIndicator] = useState<
+    undefined | Placement
+  >();
   const [dragItemId, setDragItemId] = useState<string>();
   const rootRef = useRef<HTMLDivElement | null>(null);
 
@@ -28,6 +42,7 @@ export const useSortable = <Item extends { id: string }>({
   // drop target is always root
   // we need useDrop only for dropTarget.placement & dropTarget.indexWithinChildren
   const useDropHandlers = useDrop<true>({
+    ...sharedDropOptions,
     elementToData() {
       return true;
     },
@@ -39,13 +54,14 @@ export const useSortable = <Item extends { id: string }>({
     },
     onDropTargetChange(dropTarget) {
       setDropTarget(dropTarget);
-    },
-    getValidChildren(parent) {
-      return [...parent.children].filter(
-        (child) => getItemId(child) !== undefined
+      setPlacementIndicator(
+        computeIndicatorPlacement({
+          ...sharedDropOptions,
+          placement: dropTarget.placement,
+          element: dropTarget.element,
+        })
       );
     },
-    childrenOrientation: { type: "horizontal", reverse: false },
   });
 
   const useDragHandlers = useDrag<string>({
@@ -98,8 +114,8 @@ export const useSortable = <Item extends { id: string }>({
     },
   });
 
-  const placementIndicator = dropTarget ? (
-    <PlacementIndicator placement={dropTarget.placement} />
+  const placementIndicatorElement = placementIndicator ? (
+    <PlacementIndicator placement={placementIndicator} />
   ) : undefined;
 
   const sortableRefCallback = (element: HTMLDivElement | null) => {
@@ -111,6 +127,6 @@ export const useSortable = <Item extends { id: string }>({
   return {
     sortableRefCallback,
     dragItemId,
-    placementIndicator,
+    placementIndicator: placementIndicatorElement,
   };
 };
