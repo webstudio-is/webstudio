@@ -65,6 +65,7 @@
     "@radix-ui/react-toolbar": "^1.0.2",
     "@radix-ui/react-tooltip": "^1.0.0",
     "@radix-ui/react-use-layout-effect": "^1.0.0",
+    "@react-aria/focus": "^3.11.0",
     "@react-aria/interactions": "^3.11.0",
     "@react-aria/utils": "^3.13.3",
     "@stitches/react": "^1.2.8",
@@ -75,7 +76,6 @@
     "immer": "^9.0.12",
     "lodash.merge": "^4.6.2",
     "match-sorter": "^6.3.1",
-    "react-aria": "^3.23.1",
     "react-hot-toast": "^2.3.0",
     "token-transformer": "^0.0.28",
     "use-debounce": "^9.0.2"

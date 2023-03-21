@@ -1,4 +1,4 @@
-import { FocusScope, useFocusManager } from "react-aria";
+import { FocusScope, useFocusManager } from "@react-aria/focus";
 import type { KeyboardEvent } from "react";
 
 type Render = (props: {
