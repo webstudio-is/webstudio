@@ -67,6 +67,7 @@ export const Borders = () => {
     },
     publish: (options) => {
       if (options?.isEphemeral) {
+        execCommands.current = [];
         return;
       }
 
