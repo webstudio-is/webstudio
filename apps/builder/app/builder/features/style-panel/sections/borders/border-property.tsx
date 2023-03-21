@@ -57,6 +57,11 @@ export const BorderProperty = ({
       allPropertyValuesAreEqual === false && individualModeIcon !== undefined
   );
 
+  /**
+   * We do not use shorthand properties such as borderWidth or borderRadius in our code.
+   * However, in the UI, we can display a single field, and in that case, we can use any property
+   * from the shorthand property set and pass it instead.
+   **/
   const firstPropertyName = borderProperties[0];
 
   const { items: borderPropertyItems } = styleConfigByName[firstPropertyName];
