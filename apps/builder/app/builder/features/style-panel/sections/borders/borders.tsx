@@ -15,7 +15,7 @@ export const BordersSection = ({
   createBatchUpdate,
 }: RenderCategoryProps) => {
   return (
-    <Flex css={{ px: theme.spacing[9] }} direction="column" gap={2}>
+    <Flex direction="column" gap={2}>
       <Grid css={{ gridTemplateColumns: "1fr 116px" }}>
         <PropertyName
           style={currentStyle}
