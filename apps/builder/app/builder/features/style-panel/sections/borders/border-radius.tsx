@@ -1,31 +1,31 @@
 import type { StyleProperty } from "@webstudio-is/css-data";
 import {
-  BorderWidthIndividualIcon,
-  BorderWidthTopIcon,
-  BorderWidthRightIcon,
-  BorderWidthBottomIcon,
-  BorderWidthLeftIcon,
+  BorderRadiusIndividualIcon,
+  BorderRadiusBottomRightIcon,
+  BorderRadiusTopLeftIcon,
+  BorderRadiusTopRightIcon,
+  BorderRadiusBottomLeftIcon,
 } from "@webstudio-is/icons";
 
 import type { RenderCategoryProps } from "../../style-sections";
 import { BorderProperty } from "./border-property";
 
 const borderPropertyOptions = {
-  borderTopWidth: {
-    icon: <BorderWidthTopIcon />,
+  borderTopLeftRadius: {
+    icon: <BorderRadiusTopLeftIcon />,
   },
-  borderRightWidth: {
-    icon: <BorderWidthRightIcon />,
+  borderTopRightRadius: {
+    icon: <BorderRadiusTopRightIcon />,
   },
-  borderLeftWidth: {
-    icon: <BorderWidthLeftIcon />,
+  borderBottomLeftRadius: {
+    icon: <BorderRadiusBottomLeftIcon />,
   },
-  borderBottomWidth: {
-    icon: <BorderWidthBottomIcon />,
+  borderBottomRightRadius: {
+    icon: <BorderRadiusBottomRightIcon />,
   },
 } as const satisfies Partial<{ [property in StyleProperty]: unknown }>;
 
-export const BorderWidth = (
+export const BorderRadius = (
   props: Pick<
     RenderCategoryProps,
     "currentStyle" | "setProperty" | "deleteProperty" | "createBatchUpdate"
@@ -37,9 +37,9 @@ export const BorderWidth = (
       setProperty={props.setProperty}
       deleteProperty={props.deleteProperty}
       createBatchUpdate={props.createBatchUpdate}
-      label="Width"
+      label="Radius"
       borderPropertyOptions={borderPropertyOptions}
-      individualModeIcon={<BorderWidthIndividualIcon />}
+      individualModeIcon={<BorderRadiusIndividualIcon />}
     />
   );
 };
