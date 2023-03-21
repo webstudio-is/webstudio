@@ -19,6 +19,8 @@ const styleInfoInitial: StyleInfo = {
 
 const Panel = styled("div", {
   width: theme.spacing[30],
+  boxSizing: "border-box",
+  padding: theme.spacing[9],
 });
 
 export const Borders = () => {

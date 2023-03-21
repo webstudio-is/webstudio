@@ -3,6 +3,7 @@ import {
   Grid,
   NestedIconLabel,
   ToggleButton,
+  theme,
 } from "@webstudio-is/design-system";
 import { CssValueInputContainer } from "../../controls/position/css-value-input-container";
 import { styleConfigByName } from "../../shared/configs";
@@ -115,9 +116,7 @@ export const BorderProperty = ({
     <Grid gap={1}>
       <Grid
         css={{
-          gridTemplateColumns: individualModeIcon
-            ? "1fr 80px max-content"
-            : "1fr 116px",
+          gridTemplateColumns: `1fr ${theme.spacing[20]} ${theme.spacing[12]}`,
         }}
         gap={2}
       >
@@ -128,7 +127,12 @@ export const BorderProperty = ({
           onReset={() => deleteAllProperties(firstPropertyName)}
         />
 
-        <Box css={{ visibility: showIndividualMode ? "hidden" : "visible" }}>
+        <Box
+          css={{
+            visibility: showIndividualMode ? "hidden" : "visible",
+            gridColumn: individualModeIcon ? `span 1` : `span 2`,
+          }}
+        >
           <CssValueInputContainer
             label={label}
             property={firstPropertyName}

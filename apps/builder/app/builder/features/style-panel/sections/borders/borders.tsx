@@ -1,4 +1,4 @@
-import { Flex, Grid } from "@webstudio-is/design-system";
+import { Box, Flex, Grid, theme } from "@webstudio-is/design-system";
 import { ColorControl } from "../../controls";
 import { styleConfigByName } from "../../shared/configs";
 import { PropertyName } from "../../shared/property-name";
@@ -17,7 +17,15 @@ export const BordersSection = ({
 }: RenderCategoryProps) => {
   return (
     <Flex direction="column" gap={2}>
-      <Grid css={{ gridTemplateColumns: "1fr 116px" }}>
+      <Grid
+        css={{
+          // Our aim is to maintain consistent styling throughout the property and align
+          // the input fields on the left-hand side
+          // See ./border-property.tsx for more details
+          gridTemplateColumns: `1fr ${theme.spacing[20]} ${theme.spacing[12]}`,
+        }}
+        gapX={2}
+      >
         <PropertyName
           style={currentStyle}
           property={"borderTopColor"}
@@ -25,13 +33,19 @@ export const BordersSection = ({
           onReset={() => deleteProperty("borderTopColor")}
         />
 
-        <ColorControl
-          property={"borderTopColor"}
-          items={borderColorItems}
-          currentStyle={currentStyle}
-          setProperty={setProperty}
-          deleteProperty={deleteProperty}
-        />
+        <Box
+          css={{
+            gridColumn: `span 2`,
+          }}
+        >
+          <ColorControl
+            property={"borderTopColor"}
+            items={borderColorItems}
+            currentStyle={currentStyle}
+            setProperty={setProperty}
+            deleteProperty={deleteProperty}
+          />
+        </Box>
       </Grid>
 
       <BorderStyle
