@@ -63,12 +63,18 @@ export const Demo = () => (
         <Wrapped onAdd={() => null} initialIsOpen />
       </StoryGrid>
     </StorySection>
-    <StorySection title="Open, with colored label">
+    <StorySection title="With colored label">
       <StoryGrid>
         <Wrapped hasItems={["local"]} initialIsOpen>
           <SectionTitleLabel color="local">Title</SectionTitleLabel>
         </Wrapped>
         <Wrapped hasItems={["local"]} onAdd={() => null} initialIsOpen>
+          <SectionTitleLabel color="local">Title</SectionTitleLabel>
+        </Wrapped>
+        <Wrapped hasItems={["local"]}>
+          <SectionTitleLabel color="local">Title</SectionTitleLabel>
+        </Wrapped>
+        <Wrapped hasItems={["local"]} onAdd={() => null}>
           <SectionTitleLabel color="local">Title</SectionTitleLabel>
         </Wrapped>
       </StoryGrid>
