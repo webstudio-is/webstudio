@@ -53,7 +53,8 @@ export const BorderProperty = ({
     ).size === 1;
 
   const [showIndividualMode, setShowIndividualMode] = useState(
-    () => !allPropertyValuesAreEqual && individualModeIcon !== undefined
+    () =>
+      allPropertyValuesAreEqual === false && individualModeIcon !== undefined
   );
 
   const firstPropertyName = borderProperties[0];
