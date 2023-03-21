@@ -33,22 +33,15 @@ export const BorderProperty = ({
   RenderCategoryProps,
   "currentStyle" | "setProperty" | "deleteProperty" | "createBatchUpdate"
 > & {
-  individualModeIcon: ReactNode;
+  individualModeIcon?: ReactNode;
   borderPropertyOptions: Partial<{
-    [property in StyleProperty]: { icon: ReactNode };
+    [property in StyleProperty]: { icon?: ReactNode };
   }>;
   label: string;
 }) => {
   const borderProperties = Object.keys(borderPropertyOptions) as Array<
     keyof typeof borderPropertyOptions
   >;
-
-  const { items: borderPropertyItems } = styleConfigByName["borderTopWidth"];
-
-  const borderWidthKeywords = borderPropertyItems.map((item) => ({
-    type: "keyword" as const,
-    value: item.name,
-  }));
 
   const allPropertyValuesAreEqual =
     new Set(
@@ -60,10 +53,17 @@ export const BorderProperty = ({
     ).size === 1;
 
   const [showIndividualMode, setShowIndividualMode] = useState(
-    () => !allPropertyValuesAreEqual
+    () => !allPropertyValuesAreEqual && individualModeIcon !== undefined
   );
 
   const firstPropertyName = borderProperties[0];
+
+  const { items: borderPropertyItems } = styleConfigByName[firstPropertyName];
+
+  const borderWidthKeywords = borderPropertyItems.map((item) => ({
+    type: "keyword" as const,
+    value: item.name,
+  }));
 
   /**
    * Find any property that has a value
@@ -103,7 +103,14 @@ export const BorderProperty = ({
 
   return (
     <Grid gap={1}>
-      <Grid css={{ gridTemplateColumns: "1fr 80px max-content" }} gap={2}>
+      <Grid
+        css={{
+          gridTemplateColumns: individualModeIcon
+            ? "1fr 80px max-content"
+            : "1fr 116px",
+        }}
+        gap={2}
+      >
         <PropertyName
           style={currentStyle}
           property={borderProperties}
@@ -123,12 +130,14 @@ export const BorderProperty = ({
           />
         </Box>
 
-        <ToggleButton
-          pressed={showIndividualMode}
-          onPressedChange={setShowIndividualMode}
-        >
-          {individualModeIcon}
-        </ToggleButton>
+        {individualModeIcon && (
+          <ToggleButton
+            pressed={showIndividualMode}
+            onPressedChange={setShowIndividualMode}
+          >
+            {individualModeIcon}
+          </ToggleButton>
+        )}
       </Grid>
       {showIndividualMode && (
         <Grid columns={2} gap={1}>

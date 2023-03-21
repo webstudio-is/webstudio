@@ -4,6 +4,7 @@ import { styleConfigByName } from "../../shared/configs";
 import { PropertyName } from "../../shared/property-name";
 import type { RenderCategoryProps } from "../../style-sections";
 import { BorderRadius } from "./border-radius";
+import { BorderStyle } from "./border-style";
 import { BorderWidth } from "./border-width";
 
 const { items: borderColorItems } = styleConfigByName["borderTopColor"];
@@ -32,12 +33,21 @@ export const BordersSection = ({
           deleteProperty={deleteProperty}
         />
       </Grid>
+
+      <BorderStyle
+        createBatchUpdate={createBatchUpdate}
+        currentStyle={currentStyle}
+        setProperty={setProperty}
+        deleteProperty={deleteProperty}
+      />
+
       <BorderWidth
         createBatchUpdate={createBatchUpdate}
         currentStyle={currentStyle}
         setProperty={setProperty}
         deleteProperty={deleteProperty}
       />
+
       <BorderRadius
         createBatchUpdate={createBatchUpdate}
         currentStyle={currentStyle}
