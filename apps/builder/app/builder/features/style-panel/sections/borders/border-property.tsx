@@ -52,6 +52,7 @@ export const BorderProperty = ({
       )
     ).size === 1;
 
+  // If individualModeIcon is not defined, we do not want to display individual properties at all.
   const [showIndividualMode, setShowIndividualMode] = useState(
     () =>
       allPropertyValuesAreEqual === false && individualModeIcon !== undefined
