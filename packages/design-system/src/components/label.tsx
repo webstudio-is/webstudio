@@ -10,7 +10,7 @@ import { styled, theme } from "../stitches.config";
 
 export const labelColors = ["default", "preset", "local", "remote"] as const;
 
-const StyledLabel = styled("label", textVariants.labelsSentenceCase, {
+const StyledLabel = styled("label", {
   boxSizing: "border-box",
   flexShrink: 0,
   py: theme.spacing[1],
@@ -67,15 +67,21 @@ const StyledLabel = styled("label", textVariants.labelsSentenceCase, {
         flexGrow: 1,
       },
     },
+    sectionTitle: {
+      true: textVariants.titles,
+      false: textVariants.labelsSentenceCase,
+    },
   },
 
   defaultVariants: {
     color: "default",
+    sectionTitle: false,
   },
 });
 
 type Props = ComponentProps<typeof StyledLabel> & {
   color?: (typeof labelColors)[number];
+  sectionTitle?: boolean;
   disabled?: boolean;
   truncate?: boolean;
   children: ReactNode;
