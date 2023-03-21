@@ -1,5 +1,5 @@
 /**
- * Implementation of the "Small Toggle Button" component from:
+ * Implementation of the "Toggle Button" component from:
  * https://www.figma.com/file/sfCE7iLS0k25qCxiifQNLE/%F0%9F%93%9A-Webstudio-Library?node-id=4-3199&t=lpT9jFuaiUnz1Foa-0
  */
 
