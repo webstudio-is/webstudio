@@ -1,4 +1,4 @@
-import { Flex, Grid, theme } from "@webstudio-is/design-system";
+import { Flex, Grid } from "@webstudio-is/design-system";
 import { ColorControl } from "../../controls";
 import { styleConfigByName } from "../../shared/configs";
 import { PropertyName } from "../../shared/property-name";
