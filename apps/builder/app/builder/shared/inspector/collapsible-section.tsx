@@ -5,6 +5,7 @@ import {
   Flex,
   Collapsible,
   SectionTitle,
+  SectionTitleLabel,
 } from "@webstudio-is/design-system";
 import { theme } from "@webstudio-is/design-system";
 import type { ComponentProps, ReactNode } from "react";
@@ -56,7 +57,7 @@ export const CollapsibleSection = ({
           onAdd={onAdd}
           hasItems={hasItems}
         >
-          {label}
+          <SectionTitleLabel>{label}</SectionTitleLabel>
         </SectionTitle>
 
         <Collapsible.Content asChild>

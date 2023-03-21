@@ -9,14 +9,17 @@ import {
   type ReactNode,
   type Ref,
   type ComponentProps,
+  createContext,
+  useContext,
 } from "react";
 import { theme, css, type CSS } from "../stitches.config";
 import { Button } from "./button";
-import { textVariants } from "./text";
 import { cssVars } from "@webstudio-is/css-vars";
 import { handleArrowFocus } from "./primitives/arrow-focus";
+import { Label } from "./label";
 
 const addIconColor = cssVars.define("add-icon-color");
+const labelTextColor = cssVars.define("label-text-color");
 
 const containerStyle = css({
   position: "relative",
@@ -37,10 +40,10 @@ const titleButtonStyle = css({
   boxSizing: "border-box",
   paddingLeft: theme.spacing[9],
   paddingRight: theme.spacing[7],
-  color: theme.colors.foregroundSubtle,
+  [labelTextColor]: theme.colors.foregroundSubtle,
   cursor: "pointer",
   "&:hover, &:focus-visible, &[data-state=open]": {
-    color: theme.colors.foregroundMain,
+    [labelTextColor]: theme.colors.foregroundMain,
   },
   "&:focus-visible::before": {
     content: "''",
@@ -55,12 +58,6 @@ const titleButtonStyle = css({
   variants: {
     hasAddButton: { true: { paddingRight: theme.spacing[16] } },
   },
-});
-
-const buttonTextStyle = css(textVariants.titles, {
-  overflow: "hidden",
-  textOverflow: "ellipsis",
-  whiteSpace: "nowrap",
 });
 
 const addButtonSlotStyle = css({
@@ -84,6 +81,10 @@ const dotStyle = css({
       remote: { backgroundColor: theme.colors.foregroundRemoteFlexUi },
     },
   },
+});
+
+const context = createContext<{ state: "open" | "closed" }>({
+  state: "closed",
 });
 
 export const SectionTitle = forwardRef(
@@ -142,7 +143,7 @@ export const SectionTitle = forwardRef(
           ref={ref}
           {...props}
         >
-          <div className={buttonTextStyle()}>{children}</div>
+          <context.Provider value={{ state }}>{children}</context.Provider>
           {dots.length > 0 && (
             <div className={dotsSlotStyle()}>
               {dots.map((color) => (
@@ -172,3 +173,36 @@ export const SectionTitle = forwardRef(
   }
 );
 SectionTitle.displayName = "SectionTitle";
+
+export const SectionTitleLabel = forwardRef(
+  (
+    {
+      css,
+      color,
+      ...props
+    }: Omit<ComponentProps<typeof Label>, "truncate" | "sectionTitle">,
+    ref: Ref<HTMLLabelElement>
+  ) => {
+    const { state } = useContext(context);
+
+    const textColorStyle =
+      state === "open" ? undefined : { color: cssVars.use(labelTextColor) };
+
+    return (
+      <Label
+        truncate
+        sectionTitle
+        color={state === "open" ? color : "default"}
+        css={{
+          cursor: "pointer",
+          flex: "0 1 auto",
+          ...textColorStyle,
+          ...css,
+        }}
+        {...props}
+        ref={ref}
+      />
+    );
+  }
+);
+SectionTitleLabel.displayName = "SectionTitleLabel";

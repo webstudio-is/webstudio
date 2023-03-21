@@ -1,4 +1,4 @@
-import { SectionTitle } from "./section-title";
+import { SectionTitle, SectionTitleLabel } from "./section-title";
 import { Text } from "./text";
 import { StoryGrid, StorySection } from "./storybook";
 import { useState, type ComponentProps } from "react";
@@ -27,7 +27,7 @@ const Wrapped = ({
           onAdd={onAdd}
           autoFocus={autoFocus}
         >
-          {children}
+          {children ?? <SectionTitleLabel>Title</SectionTitleLabel>}
         </SectionTitle>
       </div>
       <Text variant="mono">
@@ -45,9 +45,7 @@ const Empty = () => {
       onAdd={() => setHasItems(true)}
       initialIsOpen
       hasItems={hasItems ? ["local"] : false}
-    >
-      Title
-    </Wrapped>
+    />
   );
 };
 
@@ -55,34 +53,52 @@ export const Demo = () => (
   <>
     <StorySection title="Closed">
       <StoryGrid>
-        <Wrapped>Title</Wrapped>
-        <Wrapped onAdd={() => null}>Title</Wrapped>
+        <Wrapped />
+        <Wrapped onAdd={() => null} />
       </StoryGrid>
     </StorySection>
     <StorySection title="Open">
       <StoryGrid>
-        <Wrapped initialIsOpen>Title</Wrapped>
-        <Wrapped onAdd={() => null} initialIsOpen>
-          Title
+        <Wrapped initialIsOpen />
+        <Wrapped onAdd={() => null} initialIsOpen />
+      </StoryGrid>
+    </StorySection>
+    <StorySection title="Open, with colored label">
+      <StoryGrid>
+        <Wrapped hasItems={["local"]} initialIsOpen>
+          <SectionTitleLabel color="local">Title</SectionTitleLabel>
+        </Wrapped>
+        <Wrapped hasItems={["local"]} onAdd={() => null} initialIsOpen>
+          <SectionTitleLabel color="local">Title</SectionTitleLabel>
         </Wrapped>
       </StoryGrid>
     </StorySection>
     <StorySection title="Open, but empty">
-      <Empty />
+      <StoryGrid>
+        <Text>
+          Looks like closed while empty. When you try to open it, an item gets
+          added.
+        </Text>
+        <Empty />
+      </StoryGrid>
     </StorySection>
     <StorySection title="Long title">
       <StoryGrid>
-        <Wrapped>Some title so long that it cannot possibly fit</Wrapped>
+        <Wrapped>
+          <SectionTitleLabel>
+            Some title so long that it cannot possibly fit
+          </SectionTitleLabel>
+        </Wrapped>
         <Wrapped onAdd={() => null}>
-          Some title so long that it cannot possibly fit
+          <SectionTitleLabel>
+            Some title so long that it cannot possibly fit
+          </SectionTitleLabel>
         </Wrapped>
       </StoryGrid>
     </StorySection>
     <StorySection title="Focused (initially)">
       <StoryGrid>
-        <Wrapped onAdd={() => null} autoFocus>
-          Title
-        </Wrapped>
+        <Wrapped onAdd={() => null} autoFocus />
       </StoryGrid>
     </StorySection>
   </>
