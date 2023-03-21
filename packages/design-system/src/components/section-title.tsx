@@ -23,7 +23,7 @@ const containerStyle = css({
   height: theme.spacing[15],
   [addIconColor]: theme.colors.foregroundSubtle,
   "&:hover, &:has(:focus-visible), &[data-state=open]": {
-    [addIconColor]: theme.colors.foregroundMain,
+    [addIconColor]: theme.colors.foregroundIconMain,
   },
 });
 
