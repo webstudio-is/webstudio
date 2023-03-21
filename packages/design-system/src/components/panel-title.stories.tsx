@@ -1,21 +1,21 @@
-import { Title, TitleSuffixSpacer } from "./title";
+import { PanelTitle, TitleSuffixSpacer } from "./panel-title";
 import { Button } from "./button";
 import { CrossIcon, CopyIcon } from "@webstudio-is/icons";
 import { StoryGrid } from "./storybook";
 
 export default {
-  title: "Library/Title",
+  title: "Library/Panel Title",
 };
 
-const TitleStory = () => (
+export const Demo = () => (
   <StoryGrid>
-    <Title>Without buttons</Title>
+    <PanelTitle>Without buttons</PanelTitle>
 
-    <Title suffix={<Button prefix={<CrossIcon />} color="ghost" />}>
+    <PanelTitle suffix={<Button prefix={<CrossIcon />} color="ghost" />}>
       One icon button
-    </Title>
+    </PanelTitle>
 
-    <Title
+    <PanelTitle
       suffix={
         <>
           <Button prefix={<CrossIcon />} color="ghost" />
@@ -24,9 +24,9 @@ const TitleStory = () => (
       }
     >
       Many icon buttons
-    </Title>
+    </PanelTitle>
 
-    <Title
+    <PanelTitle
       suffix={
         <>
           <Button prefix={<CrossIcon />} color="ghost" />
@@ -37,8 +37,7 @@ const TitleStory = () => (
       }
     >
       Icon and regular buttons
-    </Title>
+    </PanelTitle>
   </StoryGrid>
 );
-
-export { TitleStory as Title };
+Demo.storyName = "Panel Title";
