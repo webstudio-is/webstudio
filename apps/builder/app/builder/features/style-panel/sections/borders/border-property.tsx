@@ -67,8 +67,11 @@ export const BorderProperty = ({
   }));
 
   /**
-   * Find any property that has a value
-   */
+   * If the property is displayed in a non-individual mode, we need to provide a value for it.
+   * In Webflow, an empty value is shown. In Figma, the "Mixed" keyword is shown.
+   * We have decided to show the first defined value, as it is difficult to determine a maximum value
+   * when there are keywords (such as "thin" or "thick") and different units involved.
+   **/
   const borderWidthStyleInfo = borderProperties
     .map((property) => currentStyle[property]?.value)
     .find((styleValue) => {
