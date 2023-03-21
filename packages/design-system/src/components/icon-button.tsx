@@ -28,6 +28,7 @@ export const IconButton = styled("button", {
     pointerEvents: "none",
   },
 
+  // https://www.radix-ui.com/docs/primitives/components/popover#trigger
   "&[data-state=open]": {
     borderColor: "transparent",
     backgroundColor: theme.colors.backgroundActive,
@@ -48,6 +49,16 @@ export const IconButton = styled("button", {
         },
         "&:disabled": {
           color: theme.colors.foregroundDisabled,
+        },
+        // According to the design https://www.figma.com/file/sfCE7iLS0k25qCxiifQNLE/%F0%9F%93%9A-Webstudio-Library?node-id=4-3199&t=lpT9jFuaiUnz1Foa-0
+        // only the default variant has different toggle state
+        // https://www.radix-ui.com/docs/primitives/components/toggle#root
+        "&[data-state=on]": {
+          backgroundColor: theme.colors.backgroundPresetMain,
+
+          "&:hover": {
+            backgroundColor: theme.colors.backgroundHover,
+          },
         },
       },
 
