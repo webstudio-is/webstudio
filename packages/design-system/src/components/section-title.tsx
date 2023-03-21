@@ -27,7 +27,7 @@ const containerStyle = css({
   },
 });
 
-const buttonStyle = css({
+const titleButtonStyle = css({
   all: "unset", // reset <button>
   display: "flex",
   gap: theme.spacing[5],
@@ -53,7 +53,7 @@ const buttonStyle = css({
     border: `2px solid ${theme.colors.borderFocus}`,
   },
   variants: {
-    hasAddIcon: { true: { paddingRight: theme.spacing[16] } },
+    hasAddButton: { true: { paddingRight: theme.spacing[16] } },
   },
 });
 
@@ -126,7 +126,7 @@ export const SectionTitle = forwardRef(
         onKeyDown={handleArrowFocus}
       >
         <button
-          className={buttonStyle({ hasAddIcon: onAdd !== undefined })}
+          className={titleButtonStyle({ hasAddButton: onAdd !== undefined })}
           onClick={() => {
             if (isOpen && isEmpty === false) {
               onOpenChange(false);
