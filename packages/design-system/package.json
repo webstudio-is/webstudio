@@ -75,6 +75,7 @@
     "immer": "^9.0.12",
     "lodash.merge": "^4.6.2",
     "match-sorter": "^6.3.1",
+    "react-aria": "^3.23.1",
     "react-hot-toast": "^2.3.0",
     "token-transformer": "^0.0.28",
     "use-debounce": "^9.0.2"

@@ -15,7 +15,7 @@ import {
 import { theme, css, type CSS } from "../stitches.config";
 import { Button } from "./button";
 import { cssVars } from "@webstudio-is/css-vars";
-import { handleArrowFocus } from "./primitives/arrow-focus";
+import { ArrowFocus } from "./primitives/arrow-focus";
 import { Label } from "./label";
 
 const addIconColor = cssVars.define("add-icon-color");
@@ -121,54 +121,60 @@ export const SectionTitle = forwardRef(
     const state = isOpen && isEmpty === false ? "open" : "closed";
 
     return (
-      <div
-        className={containerStyle({ className, css })}
-        data-state={state}
-        onKeyDown={handleArrowFocus}
-      >
-        <button
-          className={titleButtonStyle({ hasAddButton: onAdd !== undefined })}
-          onClick={() => {
-            if (isOpen && isEmpty === false) {
-              onOpenChange(false);
-            }
-            if (isOpen === false) {
-              onOpenChange(true);
-            }
-            if (isEmpty) {
-              onAdd?.();
-            }
-          }}
-          data-state={state}
-          ref={ref}
-          {...props}
-        >
-          <context.Provider value={{ state }}>{children}</context.Provider>
-          {dots.length > 0 && (
-            <div className={dotsSlotStyle()}>
-              {dots.map((color) => (
-                <div key={color} className={dotStyle({ color })} />
-              ))}
-            </div>
-          )}
-        </button>
-        {onAdd && (
-          <div className={addButtonSlotStyle()}>
-            <Button
-              tabIndex={-1}
-              color="ghost"
-              prefix={addIcon}
-              css={{ color: cssVars.use(addIconColor) }}
+      <ArrowFocus
+        render={({ handleKeyDown }) => (
+          <div
+            className={containerStyle({ className, css })}
+            data-state={state}
+            onKeyDown={handleKeyDown}
+          >
+            <button
+              className={titleButtonStyle({
+                hasAddButton: onAdd !== undefined,
+              })}
               onClick={() => {
+                if (isOpen && isEmpty === false) {
+                  onOpenChange(false);
+                }
                 if (isOpen === false) {
                   onOpenChange(true);
                 }
-                onAdd();
+                if (isEmpty) {
+                  onAdd?.();
+                }
               }}
-            />
+              data-state={state}
+              ref={ref}
+              {...props}
+            >
+              <context.Provider value={{ state }}>{children}</context.Provider>
+              {dots.length > 0 && (
+                <div className={dotsSlotStyle()}>
+                  {dots.map((color) => (
+                    <div key={color} className={dotStyle({ color })} />
+                  ))}
+                </div>
+              )}
+            </button>
+            {onAdd && (
+              <div className={addButtonSlotStyle()}>
+                <Button
+                  tabIndex={-1}
+                  color="ghost"
+                  prefix={addIcon}
+                  css={{ color: cssVars.use(addIconColor) }}
+                  onClick={() => {
+                    if (isOpen === false) {
+                      onOpenChange(true);
+                    }
+                    onAdd();
+                  }}
+                />
+              </div>
+            )}
           </div>
         )}
-      </div>
+      />
     );
   }
 );
