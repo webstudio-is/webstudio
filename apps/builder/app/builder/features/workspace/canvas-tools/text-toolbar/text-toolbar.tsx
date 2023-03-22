@@ -125,7 +125,7 @@ const Toolbar = ({ state, onToggle }: ToolbarProps) => {
       <Tooltip content="Bold">
         <IconButton
           aria-label="Bold"
-          variant={state.isBold ? "set" : "default"}
+          variant={state.isBold ? "local" : "default"}
           onClick={() => onToggle("bold")}
         >
           <FontBoldIcon />
@@ -135,7 +135,7 @@ const Toolbar = ({ state, onToggle }: ToolbarProps) => {
       <Tooltip content="Italic">
         <IconButton
           aria-label="Italic"
-          variant={state.isItalic ? "set" : "default"}
+          variant={state.isItalic ? "local" : "default"}
           onClick={() => onToggle("italic")}
         >
           <FontItalicIcon />
@@ -145,7 +145,7 @@ const Toolbar = ({ state, onToggle }: ToolbarProps) => {
       <Tooltip content="Superscript">
         <IconButton
           aria-label="Superscript"
-          variant={state.isSuperscript ? "set" : "default"}
+          variant={state.isSuperscript ? "local" : "default"}
           onClick={() => onToggle("superscript")}
         >
           <SuperscriptIcon />
@@ -155,7 +155,7 @@ const Toolbar = ({ state, onToggle }: ToolbarProps) => {
       <Tooltip content="Subscript">
         <IconButton
           aria-label="Subscript"
-          variant={state.isSubscript ? "set" : "default"}
+          variant={state.isSubscript ? "local" : "default"}
           onClick={() => onToggle("subscript")}
         >
           <SubscriptIcon />
@@ -165,7 +165,7 @@ const Toolbar = ({ state, onToggle }: ToolbarProps) => {
       <Tooltip content="Inline link">
         <IconButton
           aria-label="Inline link"
-          variant={state.isLink ? "set" : "default"}
+          variant={state.isLink ? "local" : "default"}
           onClick={() => onToggle("link")}
         >
           <Link2Icon />
@@ -175,7 +175,7 @@ const Toolbar = ({ state, onToggle }: ToolbarProps) => {
       <Tooltip content="Wrap with span">
         <IconButton
           aria-label="Wrap with span"
-          variant={state.isSpan ? "set" : "default"}
+          variant={state.isSpan ? "local" : "default"}
           onClick={() => onToggle("span")}
         >
           <BrushIcon />

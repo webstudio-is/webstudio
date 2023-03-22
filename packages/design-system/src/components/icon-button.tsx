@@ -1,3 +1,9 @@
+/**
+ * Implementation of the "Icon Button" component from:
+ * https://www.figma.com/file/sfCE7iLS0k25qCxiifQNLE/%F0%9F%93%9A-Webstudio-Library?node-id=4-3139
+ *
+ * Also used as "Toggle Button" (see toggle-button.tsx)
+ */
 import { styled } from "../stitches.config";
 import { theme } from "../stitches.config";
 
@@ -19,66 +25,83 @@ export const IconButton = styled("button", {
   height: 28,
   borderRadius: theme.borderRadius[3],
 
-  "&:focus-visible": {
-    outline: `2px solid ${theme.colors.blue10}`,
+  "&[data-focused=true], &:focus-visible": {
+    outline: `2px solid ${theme.colors.borderFocus}`,
   },
+
   "&:disabled": {
     borderColor: "transparent",
     pointerEvents: "none",
   },
+
+  // https://www.radix-ui.com/docs/primitives/components/popover#trigger
   "&[data-state=open]": {
-    backgroundColor: theme.colors.blue10,
+    borderColor: "transparent",
+    backgroundColor: theme.colors.backgroundActive,
     color: theme.colors.foregroundContrastMain,
+    "&:hover": {
+      borderColor: "transparent",
+      backgroundColor: theme.colors.backgroundActive,
+      color: theme.colors.foregroundContrastMain,
+    },
   },
 
   variants: {
     variant: {
       default: {
-        color: theme.colors.slate12,
+        color: theme.colors.foregroundMain,
         "&:hover": {
-          backgroundColor: theme.colors.slate6,
+          backgroundColor: theme.colors.backgroundHover,
         },
         "&:disabled": {
-          color: theme.colors.slate8,
+          color: theme.colors.foregroundDisabled,
+        },
+        // According to the design https://www.figma.com/file/sfCE7iLS0k25qCxiifQNLE/%F0%9F%93%9A-Webstudio-Library?node-id=4-3199&t=lpT9jFuaiUnz1Foa-0
+        // only the default variant has different toggle state
+        // https://www.radix-ui.com/docs/primitives/components/toggle#root
+        "&[data-state=on]": {
+          backgroundColor: theme.colors.backgroundPresetMain,
+
+          "&:hover": {
+            backgroundColor: theme.colors.backgroundHover,
+          },
         },
       },
+
       preset: {
-        backgroundColor: theme.colors.slate6,
-        borderColor: theme.colors.slate8,
-        color: theme.colors.slate12,
+        backgroundColor: theme.colors.backgroundPresetMain,
+        borderColor: theme.colors.borderMain,
+        color: theme.colors.foregroundMain,
         "&:hover": {
-          backgroundColor: theme.colors.slate8,
+          backgroundColor: theme.colors.backgroundPresetHover,
         },
         "&:disabled": {
-          color: theme.colors.slate8,
+          color: theme.colors.foregroundDisabled,
         },
       },
-      set: {
-        backgroundColor: theme.colors.blue4,
-        borderColor: theme.colors.blue6,
-        color: theme.colors.blue11,
+
+      local: {
+        backgroundColor: theme.colors.backgroundLocalMain,
+        borderColor: theme.colors.borderLocalMain,
+        color: theme.colors.foregroundLocalMain,
         "&:hover": {
-          backgroundColor: theme.colors.blue6,
+          backgroundColor: theme.colors.backgroundLocalHover,
         },
         "&:disabled": {
-          color: theme.colors.blue6,
+          color: theme.colors.foregroundDisabled,
         },
       },
-      inherited: {
-        backgroundColor: theme.colors.orange4,
-        borderColor: theme.colors.orange6,
-        color: theme.colors.orange11,
+
+      remote: {
+        backgroundColor: theme.colors.backgroundRemoteMain,
+        borderColor: theme.colors.borderRemoteMain,
+        color: theme.colors.foregroundRemoteMain,
         "&:hover": {
-          backgroundColor: theme.colors.orange6,
+          backgroundColor: theme.colors.backgroundRemoteHover,
         },
         "&:disabled": {
-          color: theme.colors.orange6,
+          color: theme.colors.foregroundDisabled,
         },
-      },
-      active: {
-        backgroundColor: theme.colors.blue10,
-        color: theme.colors.foregroundContrastMain,
-        // non-interactive state because usually covered with overlay
       },
     },
   },

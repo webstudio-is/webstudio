@@ -20,7 +20,7 @@ export const IconButtonWithMenu = ({
   onChange,
   onHover,
 }: {
-  variant: "default" | "preset" | "set" | "inherited" | "active";
+  variant: "default" | "preset" | "local" | "remote";
   icon?: JSX.Element;
   label?: string;
   value: string;

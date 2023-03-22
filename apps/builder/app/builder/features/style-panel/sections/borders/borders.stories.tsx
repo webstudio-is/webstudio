@@ -1,5 +1,5 @@
-import type { LayersValue } from "@webstudio-is/css-data";
 import { styled, theme } from "@webstudio-is/design-system";
+import { setEnv } from "@webstudio-is/feature-flags";
 import { useRef, useState } from "react";
 import type { StyleInfo } from "../../shared/style-info";
 import type {
@@ -7,38 +7,23 @@ import type {
   DeleteProperty,
   SetProperty,
 } from "../../shared/use-style-data";
-import { BackgroundsSection } from "./backgrounds";
-
-const backgroundImageStyle: LayersValue = {
-  type: "layers",
-  value: [
-    {
-      type: "unparsed",
-      value: "linear-gradient(red, yellow)",
-    },
-    {
-      type: "unparsed",
-      value: "linear-gradient(blue, red)",
-    },
-    {
-      type: "keyword",
-      value: "none",
-    },
-  ],
-};
+import { BordersSection } from "./borders";
+setEnv("*");
 
 const styleInfoInitial: StyleInfo = {
-  backgroundImage: {
-    value: backgroundImageStyle,
-    local: backgroundImageStyle,
+  borderTopColor: {
+    local: { type: "rgb", r: 0, g: 0, b: 0, alpha: 1 },
+    value: { type: "rgb", r: 0, g: 0, b: 0, alpha: 1 },
   },
 };
 
 const Panel = styled("div", {
   width: theme.spacing[30],
+  boxSizing: "border-box",
+  padding: theme.spacing[9],
 });
 
-export const Backgrounds = () => {
+export const Borders = () => {
   const [styleInfo, setStyleInfo] = useState(() => styleInfoInitial);
 
   const setProperty: SetProperty = (name) => (value, options) => {
@@ -96,12 +81,12 @@ export const Backgrounds = () => {
 
   return (
     <Panel>
-      <BackgroundsSection
+      <BordersSection
         currentStyle={styleInfo}
         setProperty={setProperty}
         deleteProperty={deleteProperty}
         createBatchUpdate={createBatchUpdate}
-        category={"backgrounds"}
+        category={"borders"}
         styleConfigsByCategory={[]}
         moreStyleConfigsByCategory={[]}
       />
@@ -110,6 +95,6 @@ export const Backgrounds = () => {
 };
 
 export default {
-  title: "Style/Background",
-  component: BackgroundsSection,
+  title: "Style/Borders",
+  component: BordersSection,
 };

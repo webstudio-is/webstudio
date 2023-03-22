@@ -20,7 +20,6 @@ export const ToggleGroupItem = styled(ToggleGroupPrimitive.Item, {
   lineHeight: 1,
   alignItems: "center",
   justifyContent: "center",
-  marginLeft: 1,
   height: theme.spacing[11],
   outline: "none",
   "&": {
