@@ -3,9 +3,11 @@ import { useStore } from "@nanostores/react";
 import {
   type DropTarget,
   type Point,
+  type Placement,
   useAutoScroll,
   useDrag,
   useDrop,
+  computeIndicatorPlacement,
 } from "@webstudio-is/design-system";
 import {
   type Instance,
@@ -38,6 +40,7 @@ declare module "~/shared/pubsub" {
     dragMove: DragMovePayload;
     dragStart: DragStartPayload;
     dropTargetChange: DropTargetChangePayload;
+    placementIndicatorChange: Placement;
   }
 }
 
@@ -68,6 +71,14 @@ const initialState: {
   dragItem: undefined,
 };
 
+const sharedDropOptions = {
+  getValidChildren: (parent: Element) => {
+    return Array.from(parent.children).filter(
+      (child) => getInstanceIdFromElement(child) !== undefined
+    );
+  },
+};
+
 export const useDragAndDrop = () => {
   const [rootInstance] = useRootInstance();
   const instancesIndex = useStore(instancesIndexStore);
@@ -90,6 +101,8 @@ export const useDragAndDrop = () => {
   };
 
   const dropHandlers = useDrop<Instance>({
+    ...sharedDropOptions,
+
     elementToData(element) {
       const instanceId = getInstanceIdFromElement(element);
       const instance =
@@ -161,12 +174,14 @@ export const useDragAndDrop = () => {
           instance: toBaseInstance(dropTarget.data),
         },
       });
-    },
-
-    getValidChildren: (parent) => {
-      return Array.from(parent.children).filter(
-        (child) => getInstanceIdFromElement(child) !== undefined
-      );
+      publish({
+        type: "placementIndicatorChange",
+        payload: computeIndicatorPlacement({
+          ...sharedDropOptions,
+          element: dropTarget.element,
+          placement: dropTarget.placement,
+        }),
+      });
     },
   });
 

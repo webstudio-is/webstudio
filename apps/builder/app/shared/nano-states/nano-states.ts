@@ -4,6 +4,7 @@ import { useStore } from "@nanostores/react";
 import { nanoid } from "nanoid";
 import type { AuthPermit } from "@webstudio-is/trpc-interface";
 import type { Asset } from "@webstudio-is/asset-uploader";
+import type { Placement } from "@webstudio-is/design-system";
 import type {
   Breakpoint,
   Breakpoints,
@@ -435,6 +436,7 @@ export type DragAndDropState = {
   origin?: "canvas" | "panel";
   dropTarget?: DropTargetChangePayload;
   dragItem?: DragStartPayload["dragItem"];
+  placementIndicator?: Placement;
 };
 const dragAndDropStateContainer = atom<DragAndDropState>({
   isDragging: false,
