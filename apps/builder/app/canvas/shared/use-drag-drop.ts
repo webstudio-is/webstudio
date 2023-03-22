@@ -166,7 +166,6 @@ export const useDragAndDrop = () => {
       publish({
         type: "dropTargetChange",
         payload: {
-          rect: dropTarget.rect,
           placement: dropTarget.placement,
           position: dropTarget.indexWithinChildren,
           instance: toBaseInstance(dropTarget.data),
