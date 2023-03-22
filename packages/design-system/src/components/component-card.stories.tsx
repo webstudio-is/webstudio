@@ -34,12 +34,17 @@ export const Demo = () => {
       </StorySection>
       <StorySection title="Labels">
         <StoryGrid horizontal>
+          <ComponentCard icon={<BoxIcon />} label="Single" tabIndex={1} />
           <ComponentCard
             icon={<BoxIcon />}
             label="Too many words"
             tabIndex={1}
           />
-          <ComponentCard icon={<BoxIcon />} label="Single" tabIndex={1} />
+          <ComponentCard
+            icon={<BoxIcon />}
+            label="Manylongwordstotruncate Manylongwordstotruncate"
+            tabIndex={1}
+          />
           <ComponentCard
             icon={<BoxIcon />}
             label="Truncatedlongword"

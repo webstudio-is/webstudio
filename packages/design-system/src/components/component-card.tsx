@@ -47,10 +47,8 @@ const textStyle = css({
 });
 
 const wordStyle = css(textVariants.small, {
-  display: "flex",
   flexGrow: 0,
   textAlign: "center",
-  justifyContent: "center",
   whiteSpace: "nowrap",
   textOverflow: "ellipsis",
   overflow: "hidden",
