@@ -36,13 +36,21 @@ const contentStyle = {
   overflow: "auto",
 };
 
+// separate component to avoid inspetor updates on drag when navigator is undocked
+const NavigatorTreePreview = () => {
+  const [dragAndDropState] = useDragAndDropState();
+  if (dragAndDropState.isDragging) {
+    return <NavigatorTree />;
+  }
+  return null;
+};
+
 export const Inspector = ({ publish, navigatorLayout }: InspectorProps) => {
   const selectedInstance = useStore(selectedInstanceStore);
-  const [dragAndDropState] = useDragAndDropState();
   const tabsRef = useRef<HTMLDivElement>(null);
 
-  if (dragAndDropState.isDragging && navigatorLayout === "undocked") {
-    return <NavigatorTree />;
+  if (navigatorLayout === "docked") {
+    return <NavigatorTreePreview />;
   }
 
   if (selectedInstance === undefined) {
