@@ -1,9 +1,10 @@
 /**
  * Implementation of the "Title (title of: section)" component from:
  * https://www.figma.com/file/sfCE7iLS0k25qCxiifQNLE/%F0%9F%93%9A-Webstudio-Library?node-id=2%3A12361
+ *
+ * Designed to be used with Collapsible.Trigger
  */
 
-import { PlusIcon } from "@webstudio-is/icons";
 import {
   forwardRef,
   type ReactNode,
@@ -18,15 +19,15 @@ import { cssVars } from "@webstudio-is/css-vars";
 import { ArrowFocus } from "./primitives/arrow-focus";
 import { Label } from "./label";
 
-const addIconColor = cssVars.define("add-icon-color");
+const buttonContentColor = cssVars.define("button-content-color");
 const labelTextColor = cssVars.define("label-text-color");
 
 const containerStyle = css({
   position: "relative",
   height: theme.spacing[15],
-  [addIconColor]: theme.colors.foregroundSubtle,
+  [buttonContentColor]: theme.colors.foregroundSubtle,
   "&:hover, &:has(:focus-visible), &[data-state=open]": {
-    [addIconColor]: theme.colors.foregroundIconMain,
+    [buttonContentColor]: theme.colors.foregroundIconMain,
   },
 });
 
@@ -56,11 +57,13 @@ const titleButtonStyle = css({
     border: `2px solid ${theme.colors.borderFocus}`,
   },
   variants: {
-    hasAddButton: { true: { paddingRight: theme.spacing[16] } },
+    // We assume that suffix is a <Button prefix={<Icon />} />
+    // (hard to support arbitrary width suffixes here, hopefully we'll never need to)
+    hasSuffix: { true: { paddingRight: theme.spacing[16] } },
   },
 });
 
-const addButtonSlotStyle = css({
+const suffixSlotStyle = css({
   position: "absolute",
   right: theme.spacing[6],
   top: theme.spacing[4],
@@ -90,91 +93,56 @@ const context = createContext<{ state: "open" | "closed" }>({
 export const SectionTitle = forwardRef(
   (
     {
-      isOpen,
-      onOpenChange,
-      onAdd,
-      hasItems = true,
-      addIcon = <PlusIcon />,
+      dots,
       className,
       css,
       children,
+      suffix,
       ...props
-    }: Omit<ComponentProps<"button">, "onClick"> & {
-      isOpen: boolean;
-      onOpenChange: (isOpen: boolean) => void;
-      onAdd?: () => void;
-      /**
-       * If set to `true`, dots aren't shown,
-       * but still affects how isOpen is treated and whether onAdd is called on open.
-       */
-      hasItems?: boolean | Array<"local" | "remote">;
-      addIcon?: ReactNode;
+    }: ComponentProps<"button"> & {
+      /** https://www.radix-ui.com/docs/primitives/components/collapsible#trigger */
+      "data-state"?: "open" | "closed";
+      dots?: Array<"local" | "remote">;
       css?: CSS;
+      /** Primarily for <SectionTitleButton> */
+      suffix?: ReactNode;
     },
     ref: Ref<HTMLButtonElement>
   ) => {
-    const isEmpty =
-      hasItems === false || (Array.isArray(hasItems) && hasItems.length === 0);
-
-    const dots = isOpen === false && Array.isArray(hasItems) ? hasItems : [];
-
-    const state = isOpen && isEmpty === false ? "open" : "closed";
+    const state = props["data-state"] ?? "closed";
+    const finalDots = state === "open" ? [] : dots ?? [];
 
     return (
-      <ArrowFocus
-        render={({ handleKeyDown }) => (
-          <div
-            className={containerStyle({ className, css })}
-            data-state={state}
-            onKeyDown={handleKeyDown}
-          >
-            <button
-              className={titleButtonStyle({
-                hasAddButton: onAdd !== undefined,
-              })}
-              onClick={() => {
-                if (isOpen && isEmpty === false) {
-                  onOpenChange(false);
-                }
-                if (isOpen === false) {
-                  onOpenChange(true);
-                }
-                if (isEmpty) {
-                  onAdd?.();
-                }
-              }}
+      <context.Provider value={{ state }}>
+        <ArrowFocus
+          render={({ handleKeyDown }) => (
+            <div
+              className={containerStyle({ className, css })}
               data-state={state}
-              ref={ref}
-              {...props}
+              onKeyDown={handleKeyDown}
             >
-              <context.Provider value={{ state }}>{children}</context.Provider>
-              {dots.length > 0 && (
-                <div className={dotsSlotStyle()}>
-                  {dots.map((color) => (
-                    <div key={color} className={dotStyle({ color })} />
-                  ))}
-                </div>
-              )}
-            </button>
-            {onAdd && (
-              <div className={addButtonSlotStyle()}>
-                <Button
-                  tabIndex={-1}
-                  color="ghost"
-                  prefix={addIcon}
-                  css={{ color: cssVars.use(addIconColor) }}
-                  onClick={() => {
-                    if (isOpen === false) {
-                      onOpenChange(true);
-                    }
-                    onAdd();
-                  }}
-                />
-              </div>
-            )}
-          </div>
-        )}
-      />
+              <button
+                className={titleButtonStyle({
+                  hasSuffix: suffix !== undefined,
+                })}
+                data-state={state}
+                ref={ref}
+                {...props}
+              >
+                {children}
+                {finalDots.length > 0 && (
+                  <div className={dotsSlotStyle()}>
+                    {finalDots.map((color) => (
+                      <div key={color} className={dotStyle({ color })} />
+                    ))}
+                  </div>
+                )}
+              </button>
+              {suffix && <div className={suffixSlotStyle()}>{suffix}</div>}
+            </div>
+          )}
+        />
+      </context.Provider>
     );
   }
 );
@@ -184,31 +152,73 @@ export const SectionTitleLabel = forwardRef(
   (
     {
       css,
-      color,
+      children,
       ...props
     }: Omit<ComponentProps<typeof Label>, "truncate" | "sectionTitle">,
     ref: Ref<HTMLLabelElement>
   ) => {
     const { state } = useContext(context);
 
-    const textColorStyle =
-      state === "open" ? undefined : { color: cssVars.use(labelTextColor) };
+    const commonCss = { flex: "0 1 auto" };
+
+    // When section is closed Label basically turns into an innert text
+    // https://github.com/webstudio-is/webstudio-builder/issues/1271#issuecomment-1478262629
+    if (state === "closed") {
+      return (
+        <Label
+          truncate
+          sectionTitle
+          color="default"
+          css={{
+            cursor: "inherit",
+            color: cssVars.use(labelTextColor),
+            ...commonCss,
+            ...css,
+          }}
+          ref={ref}
+        >
+          {children}
+        </Label>
+      );
+    }
+
+    const hasAction = Object.keys(props).some((prop) => prop.startsWith("on"));
 
     return (
       <Label
         truncate
         sectionTitle
-        color={state === "open" ? color : "default"}
+        // @todo: focus state styles in Label
+        tabIndex={hasAction ? -1 : undefined}
+        {...props}
         css={{
-          cursor: "pointer",
-          flex: "0 1 auto",
-          ...textColorStyle,
+          // if there's no action, use cursor of SectionTitle,
+          // otherwise use cursor of Label
+          cursor: hasAction ? undefined : "inherit",
+          ...commonCss,
           ...css,
         }}
-        {...props}
         ref={ref}
-      />
+      >
+        {children}
+      </Label>
     );
   }
 );
 SectionTitleLabel.displayName = "SectionTitleLabel";
+
+export const SectionTitleButton = forwardRef(
+  (
+    { css, ...props }: ComponentProps<typeof Button>,
+    ref: Ref<HTMLButtonElement>
+  ) => (
+    <Button
+      tabIndex={-1}
+      color="ghost"
+      {...props}
+      css={{ color: cssVars.use(buttonContentColor), ...css }}
+      ref={ref}
+    />
+  )
+);
+SectionTitleButton.displayName = "SectionTitleButton";

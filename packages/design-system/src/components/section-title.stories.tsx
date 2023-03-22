@@ -1,110 +1,108 @@
-import { SectionTitle, SectionTitleLabel } from "./section-title";
-import { Text } from "./text";
+import {
+  SectionTitle,
+  SectionTitleLabel,
+  SectionTitleButton,
+} from "./section-title";
 import { StoryGrid, StorySection } from "./storybook";
-import { useState, type ComponentProps } from "react";
+import type { ComponentProps } from "react";
+import { PlusIcon } from "@webstudio-is/icons";
 
 export default {
   title: "Library/Section Title",
 };
 
-const Wrapped = ({
-  initialIsOpen = false,
-  onAdd,
-  hasItems,
-  children,
-  autoFocus,
-}: Omit<ComponentProps<typeof SectionTitle>, "isOpen" | "onOpenChange"> & {
-  initialIsOpen?: boolean;
-}) => {
-  const [isOpen, setOpen] = useState(initialIsOpen);
-  return (
-    <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
-      <div style={{ width: 240, border: "dashed 3px #e3e3e3" }}>
-        <SectionTitle
-          isOpen={isOpen}
-          onOpenChange={setOpen}
-          hasItems={hasItems ?? ["local", "remote"]}
-          onAdd={onAdd}
-          autoFocus={autoFocus}
-        >
-          {children ?? <SectionTitleLabel>Title</SectionTitleLabel>}
-        </SectionTitle>
-      </div>
-      <Text variant="mono">
-        {isOpen ? "Open" : "Closed"}
-        {hasItems === false && ", Empty"}
-      </Text>
-    </div>
-  );
-};
+const Wrap = ({ children }: { children: React.ReactNode }) => (
+  <div style={{ width: 240, border: "dashed 3px #e3e3e3" }}>{children}</div>
+);
 
-const Empty = () => {
-  const [hasItems, setHasItems] = useState(false);
-  return (
-    <Wrapped
-      onAdd={() => setHasItems(true)}
-      initialIsOpen
-      hasItems={hasItems ? ["local"] : false}
-    />
-  );
-};
+const Variants = ({
+  state,
+}: {
+  state: ComponentProps<typeof SectionTitle>["data-state"];
+}) => (
+  <>
+    <Wrap>
+      <SectionTitle data-state={state}>
+        <SectionTitleLabel>Simplest</SectionTitleLabel>
+      </SectionTitle>
+    </Wrap>
+    <Wrap>
+      <SectionTitle
+        suffix={<SectionTitleButton prefix={<PlusIcon />} />}
+        data-state={state}
+      >
+        <SectionTitleLabel>With button</SectionTitleLabel>
+      </SectionTitle>
+    </Wrap>
+    <Wrap>
+      <SectionTitle
+        dots={["local", "remote"]}
+        suffix={<SectionTitleButton prefix={<PlusIcon />} />}
+        data-state={state}
+      >
+        <SectionTitleLabel>With dots</SectionTitleLabel>
+      </SectionTitle>
+    </Wrap>
+    <Wrap>
+      <SectionTitle
+        dots={["local"]}
+        suffix={<SectionTitleButton prefix={<PlusIcon />} />}
+        data-state={state}
+      >
+        <SectionTitleLabel
+          color="local"
+          onClick={() => null} // added to test focus of label
+        >
+          With label
+        </SectionTitleLabel>
+      </SectionTitle>
+    </Wrap>
+    <Wrap>
+      <SectionTitle
+        dots={["local", "remote"]}
+        suffix={<SectionTitleButton prefix={<PlusIcon />} />}
+        data-state={state}
+      >
+        <SectionTitleLabel>
+          Some title so long that it cannot possibly fit
+        </SectionTitleLabel>
+      </SectionTitle>
+    </Wrap>
+    <Wrap>
+      <SectionTitle data-state={state}>
+        <SectionTitleLabel>
+          Some title so long that it cannot possibly fit
+        </SectionTitleLabel>
+      </SectionTitle>
+    </Wrap>
+  </>
+);
 
 export const Demo = () => (
   <>
+    <StorySection title="Focused (intially)">
+      <StoryGrid>
+        <Wrap>
+          <SectionTitle
+            dots={["local", "remote"]}
+            suffix={<SectionTitleButton prefix={<PlusIcon />} />}
+            autoFocus
+          >
+            <SectionTitleLabel>Title</SectionTitleLabel>
+          </SectionTitle>
+        </Wrap>
+      </StoryGrid>
+    </StorySection>
+
     <StorySection title="Closed">
       <StoryGrid>
-        <Wrapped />
-        <Wrapped onAdd={() => null} />
+        <Variants state="closed" />
       </StoryGrid>
     </StorySection>
+
     <StorySection title="Open">
       <StoryGrid>
-        <Wrapped initialIsOpen />
-        <Wrapped onAdd={() => null} initialIsOpen />
-      </StoryGrid>
-    </StorySection>
-    <StorySection title="With colored label">
-      <StoryGrid>
-        <Wrapped hasItems={["local"]} initialIsOpen>
-          <SectionTitleLabel color="local">Title</SectionTitleLabel>
-        </Wrapped>
-        <Wrapped hasItems={["local"]} onAdd={() => null} initialIsOpen>
-          <SectionTitleLabel color="local">Title</SectionTitleLabel>
-        </Wrapped>
-        <Wrapped hasItems={["local"]}>
-          <SectionTitleLabel color="local">Title</SectionTitleLabel>
-        </Wrapped>
-        <Wrapped hasItems={["local"]} onAdd={() => null}>
-          <SectionTitleLabel color="local">Title</SectionTitleLabel>
-        </Wrapped>
-      </StoryGrid>
-    </StorySection>
-    <StorySection title="Open, but empty">
-      <StoryGrid>
-        <Text>
-          Looks like closed while empty. When you try to open it, an item gets
-          added.
-        </Text>
-        <Empty />
-      </StoryGrid>
-    </StorySection>
-    <StorySection title="Long title">
-      <StoryGrid>
-        <Wrapped>
-          <SectionTitleLabel>
-            Some title so long that it cannot possibly fit
-          </SectionTitleLabel>
-        </Wrapped>
-        <Wrapped onAdd={() => null}>
-          <SectionTitleLabel>
-            Some title so long that it cannot possibly fit
-          </SectionTitleLabel>
-        </Wrapped>
-      </StoryGrid>
-    </StorySection>
-    <StorySection title="Focused (initially)">
-      <StoryGrid>
-        <Wrapped onAdd={() => null} autoFocus />
+        <Variants state="open" />
       </StoryGrid>
     </StorySection>
   </>
