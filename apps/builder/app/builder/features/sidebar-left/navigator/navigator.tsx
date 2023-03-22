@@ -1,14 +1,16 @@
-import { useCallback } from "react";
+import { useCallback, useMemo } from "react";
 import { useStore } from "@nanostores/react";
-import { Flex } from "@webstudio-is/design-system";
+import { Flex, type ItemDropTarget } from "@webstudio-is/design-system";
 import {
   rootInstanceStore,
   selectedInstanceSelectorStore,
   hoveredInstanceSelectorStore,
+  useDragAndDropState,
+  instancesStore,
 } from "~/shared/nano-states";
 import { InstanceTree } from "~/builder/shared/tree";
 import { reparentInstance } from "~/shared/instance-utils";
-import type { InstanceSelector } from "~/shared/tree-utils";
+import { getInstanceSelector, InstanceSelector } from "~/shared/tree-utils";
 import { Header, CloseButton } from "../header";
 
 type NavigatorProps = {
@@ -18,7 +20,30 @@ type NavigatorProps = {
 
 export const Navigator = ({ isClosable, onClose }: NavigatorProps) => {
   const selectedInstanceSelector = useStore(selectedInstanceSelectorStore);
+  const instances = useStore(instancesStore);
   const rootInstance = useStore(rootInstanceStore);
+  const [state, setState] = useDragAndDropState();
+
+  const dragItemSelector = useMemo(() => {
+    if (state.dragItem?.id === undefined) {
+      return;
+    }
+    return getInstanceSelector(instances, state.dragItem.id);
+  }, [state.dragItem, instances]);
+
+  const dropTarget = useMemo((): undefined | ItemDropTarget => {
+    if (state.dropTarget === undefined) {
+      return;
+    }
+    return {
+      placement: state.dropTarget.placement,
+      indexWithinChildren: state.dropTarget.position,
+      itemSelector: getInstanceSelector(
+        instances,
+        state.dropTarget.instance.id
+      ),
+    };
+  }, [state.dropTarget, instances]);
 
   const handleDragEnd = useCallback(
     (payload: {
@@ -46,8 +71,33 @@ export const Navigator = ({ isClosable, onClose }: NavigatorProps) => {
         <InstanceTree
           root={rootInstance}
           selectedItemSelector={selectedInstanceSelector}
+          dragItemSelector={dragItemSelector}
+          dropTarget={dropTarget}
           onSelect={selectedInstanceSelectorStore.set}
           onHover={hoveredInstanceSelectorStore.set}
+          onDragItemChange={(dragItemSelector) => {
+            const instances = instancesStore.get();
+            const instance = instances.get(dragItemSelector[0]);
+            if (instance === undefined) {
+              return;
+            }
+            setState({ ...state, dragItem: instance });
+          }}
+          onDropTargetChange={(dropTarget) => {
+            const instances = instancesStore.get();
+            const instance = instances.get(dropTarget.itemSelector[0]);
+            if (instance === undefined) {
+              return;
+            }
+            setState({
+              ...state,
+              dropTarget: {
+                placement: dropTarget.placement,
+                position: dropTarget.indexWithinChildren,
+                instance,
+              },
+            });
+          }}
           onDragEnd={handleDragEnd}
         />
       </Flex>

@@ -4,7 +4,6 @@ import { createPortal } from "react-dom";
 import { ListPositionIndicator } from "../list-position-indicator";
 import { TreeNode, INDENT, TreeItemRenderProps } from "./tree-node";
 import {
-  type Placement,
   useHold,
   useDrop,
   useDrag,
@@ -26,6 +25,8 @@ import {
 export type TreeProps<Data extends { id: string }> = {
   root: Data;
   selectedItemSelector: undefined | ItemSelector;
+  dragItemSelector: undefined | ItemSelector;
+  dropTarget: undefined | ItemDropTarget;
 
   canLeaveParent: (itemId: ItemId) => boolean;
   canAcceptChild: (itemId: ItemId) => boolean;
@@ -35,6 +36,8 @@ export type TreeProps<Data extends { id: string }> = {
   onSelect?: (itemSelector: ItemSelector) => void;
   onHover?: (itemSelector: undefined | ItemSelector) => void;
   animate?: boolean;
+  onDropTargetChange: (dropTarget: ItemDropTarget) => void;
+  onDragItemChange: (itemSelector: ItemSelector) => void;
   onDragEnd: (event: {
     itemSelector: ItemSelector;
     dropTarget: { itemSelector: ItemSelector; position: number | "end" };
@@ -57,6 +60,8 @@ const sharedDropOptions = {
 export const Tree = <Data extends { id: string }>({
   root,
   selectedItemSelector,
+  dragItemSelector,
+  dropTarget,
   canLeaveParent,
   canAcceptChild,
   getItemChildren,
@@ -64,6 +69,8 @@ export const Tree = <Data extends { id: string }>({
   onSelect,
   onHover,
   animate,
+  onDropTargetChange,
+  onDragItemChange,
   onDragEnd,
 }: TreeProps<Data>) => {
   const { getIsExpanded, setIsExpanded } = useExpandState({
@@ -73,13 +80,23 @@ export const Tree = <Data extends { id: string }>({
 
   const rootRef = useRef<HTMLElement | null>(null);
 
-  const [dragItemSelector, setDragItemSelector] = useState<
-    undefined | ItemSelector
-  >();
-  const [dropTarget, setDropTarget] = useState<undefined | ItemDropTarget>();
-  const [placementIndicator, setPlacementIndicator] = useState<
-    undefined | Placement
-  >();
+  const placementIndicator = useMemo(() => {
+    if (dropTarget === undefined) {
+      return;
+    }
+    const element = getElementByItemSelector(
+      rootRef.current ?? undefined,
+      dropTarget.itemSelector
+    );
+    if (element === undefined) {
+      return;
+    }
+    return computeIndicatorPlacement({
+      placement: dropTarget.placement,
+      element,
+      ...sharedDropOptions,
+    });
+  }, [dropTarget]);
 
   const getDropTargetElement = useCallback(
     (id: string): HTMLElement | null | undefined =>
@@ -104,10 +121,14 @@ export const Tree = <Data extends { id: string }>({
     };
   };
 
-  const useHoldHandler = useHold<ItemDropTarget>({
-    isEqual: (a, b) => areItemSelectorsEqual(a.itemSelector, b.itemSelector),
+  const useHoldHandler = useHold({
+    data: dropTarget,
+    isEqual: (a, b) => areItemSelectorsEqual(a?.itemSelector, b?.itemSelector),
     holdTimeThreshold: 600,
     onHold: (dropTarget) => {
+      if (dropTarget === undefined) {
+        return;
+      }
       const [itemId] = dropTarget.itemSelector;
       if (
         getItemChildren(itemId).length > 0 ||
@@ -177,14 +198,7 @@ export const Tree = <Data extends { id: string }>({
         indexWithinChildren: dropTarget.indexWithinChildren,
         placement: dropTarget.placement,
       };
-      useHoldHandler.setData(itemDropTarget);
-      setDropTarget(itemDropTarget);
-      const placementIndicator = computeIndicatorPlacement({
-        placement: dropTarget.placement,
-        element: dropTarget.element,
-        ...sharedDropOptions,
-      });
-      setPlacementIndicator(placementIndicator);
+      onDropTargetChange(itemDropTarget);
     },
   });
 
@@ -207,7 +221,7 @@ export const Tree = <Data extends { id: string }>({
     },
     onStart: ({ data: itemSelector }) => {
       onSelect?.(itemSelector);
-      setDragItemSelector(itemSelector);
+      onDragItemChange(itemSelector);
       dropHandlers.handleStart();
       autoScrollHandlers.setEnabled(true);
     },
@@ -231,8 +245,6 @@ export const Tree = <Data extends { id: string }>({
 
       autoScrollHandlers.setEnabled(false);
       setHorizontalShift(0);
-      setDragItemSelector(undefined);
-      setDropTarget(undefined);
       dropHandlers.handleEnd({ isCanceled });
       useHoldHandler.reset();
     },

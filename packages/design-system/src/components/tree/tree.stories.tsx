@@ -4,7 +4,7 @@ import { Tree } from "./tree";
 import { findItemById, Item, reparent } from "./test-tree-data";
 import { Flex } from "../flex";
 import { TreeItemLabel, TreeItemBody } from "./tree-node";
-import type { ItemSelector } from "./item-utils";
+import type { ItemDropTarget, ItemSelector } from "./item-utils";
 
 export const StressTest = ({ animate }: { animate: boolean }) => {
   const [root, setRoot] = useState<Item>((): Item => {
@@ -69,6 +69,10 @@ export const StressTest = ({ animate }: { animate: boolean }) => {
   const [selectedItemSelector, setSelectedItemSelector] = useState<
     undefined | ItemSelector
   >();
+  const [dropTarget, setDropTarget] = useState<undefined | ItemDropTarget>();
+  const [dragItemSelector, setDragItemSelector] = useState<
+    undefined | ItemSelector
+  >();
 
   return (
     <Flex css={{ width: 300, height: 500, flexDirection: "column" }}>
@@ -81,7 +85,11 @@ export const StressTest = ({ animate }: { animate: boolean }) => {
         animate={animate}
         root={root}
         selectedItemSelector={selectedItemSelector}
+        dragItemSelector={dragItemSelector}
+        dropTarget={dropTarget}
         onSelect={setSelectedItemSelector}
+        onDropTargetChange={setDropTarget}
+        onDragItemChange={setDragItemSelector}
         renderItem={(props) => (
           <TreeItemBody {...props}>
             <TreeItemLabel>{props.itemData.id}</TreeItemLabel>

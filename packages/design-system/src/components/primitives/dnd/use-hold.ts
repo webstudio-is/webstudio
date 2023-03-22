@@ -1,6 +1,7 @@
-import { useMemo, useRef } from "react";
+import { useEffect, useMemo, useRef } from "react";
 
 type UseHoldProps<Data> = {
+  data: Data;
   isEqual: (a: Data, b: Data) => boolean;
   holdTimeThreshold: number;
   onHold: (data: Data) => void;
@@ -18,30 +19,30 @@ export const useHold = <Data>(props: UseHoldProps<Data>) => {
   // So we can put them in a ref and make useMemo below very efficient.
   const latestProps = useRef<UseHoldProps<Data>>(props);
 
+  useEffect(() => {
+    const data = props.data;
+    const { currentData } = state.current;
+    const { isEqual, holdTimeThreshold } = latestProps.current;
+
+    if (currentData !== undefined && isEqual(currentData, data)) {
+      return;
+    }
+
+    clearTimeout(state.current.timeoutId);
+
+    state.current.timeoutId = setTimeout(() => {
+      state.current.timeoutId = undefined;
+      latestProps.current.onHold(data);
+    }, holdTimeThreshold);
+  }, [props.data]);
+
   // We want to return a stable object to avoid re-renders when it's a dependency
-  return useMemo(
-    () => ({
-      setData(data: Data) {
-        const { currentData } = state.current;
-        const { isEqual, holdTimeThreshold } = latestProps.current;
-
-        if (currentData !== undefined && isEqual(currentData, data)) {
-          return;
-        }
-
-        clearTimeout(state.current.timeoutId);
-
-        state.current.timeoutId = setTimeout(() => {
-          state.current.timeoutId = undefined;
-          latestProps.current.onHold(data);
-        }, holdTimeThreshold);
-      },
-
+  return useMemo(() => {
+    return {
       reset() {
         clearTimeout(state.current.timeoutId);
         state.current = { currentData: undefined, timeoutId: undefined };
       },
-    }),
-    []
-  );
+    };
+  }, []);
 };

@@ -45,7 +45,6 @@ declare module "~/shared/pubsub" {
 }
 
 export type DropTargetChangePayload = {
-  rect: DropTarget<null>["rect"];
   placement: DropTarget<null>["placement"];
   position: number;
   instance: BaseInstance;
@@ -64,7 +63,7 @@ export type DragEndPayload = {
 export type DragMovePayload = { canvasCoordinates: Point };
 
 const initialState: {
-  dropTarget: DropTarget<Instance> | undefined;
+  dropTarget: DropTargetChangePayload | undefined;
   dragItem: BaseInstance | undefined;
 } = {
   dropTarget: undefined,
@@ -164,7 +163,6 @@ export const useDragAndDrop = () => {
     },
 
     onDropTargetChange(dropTarget) {
-      state.current.dropTarget = dropTarget;
       publish({
         type: "dropTargetChange",
         payload: {
@@ -246,8 +244,8 @@ export const useDragAndDrop = () => {
 
       if (dropTarget && dragItem && isCanceled === false) {
         reparentInstance(dragItem.id, {
-          parentId: dropTarget.data.id,
-          position: dropTarget.indexWithinChildren,
+          parentId: dropTarget.instance.id,
+          position: dropTarget.position,
         });
       }
 
@@ -291,6 +289,22 @@ export const useDragAndDrop = () => {
     autoScrollHandlers.handleMove(canvasCoordinates);
   });
 
+  useSubscribe("dropTargetChange", (dropTarget) => {
+    state.current.dropTarget = dropTarget;
+    const element = getInstanceElementById(dropTarget.instance.id) ?? undefined;
+    if (element === undefined) {
+      return;
+    }
+    publish({
+      type: "placementIndicatorChange",
+      payload: computeIndicatorPlacement({
+        ...sharedDropOptions,
+        element,
+        placement: dropTarget.placement,
+      }),
+    });
+  });
+
   useSubscribe("dragEnd", ({ origin, isCanceled }) => {
     if (origin === "panel") {
       dropHandlers.handleEnd({ isCanceled });
@@ -300,8 +314,8 @@ export const useDragAndDrop = () => {
 
       if (dropTarget && dragItem && isCanceled === false) {
         insertNewComponentInstance(dragItem.component, {
-          parentId: dropTarget.data.id,
-          position: dropTarget.indexWithinChildren,
+          parentId: dropTarget.instance.id,
+          position: dropTarget.position,
         });
       }
 
