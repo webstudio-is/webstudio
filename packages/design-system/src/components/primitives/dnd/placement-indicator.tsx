@@ -80,6 +80,7 @@ export const computeIndicatorPlacement = (
     children[neighbourChildIndex]?.getBoundingClientRect();
 
   let placementIndicator = getPlacementBetween(
+    parentRect,
     closestChildRect,
     neighbourChildRect
   );

@@ -8,15 +8,13 @@ import {
   useDragAndDropState,
   useSubscribeDragAndDropState,
 } from "~/shared/nano-states";
-import {
-  HoveredInstanceOutline,
-  SelectedInstanceOutline,
-  DropTargetOutline,
-} from "./outline";
+import { HoveredInstanceOutline, SelectedInstanceOutline } from "./outline";
 import { useSubscribeTextToolbar, TextToolbar } from "./text-toolbar";
 import { useSubscribeInstanceRect } from "./hooks/use-subscribe-instance-rect";
 import { useSubscribeTextEditingInstanceId } from "./hooks/use-subscribe-editing-instance-id";
 import { useSubscribeSwitchPage } from "~/shared/pages";
+import { Label } from "./outline/label";
+import { Outline } from "./outline/outline";
 
 const toolsStyle = {
   position: "absolute",
@@ -47,13 +45,20 @@ export const CanvasTools = ({ publish }: CanvasToolsProps) => {
 
   if (
     dragAndDropState.isDragging &&
-    dragAndDropState.dropTarget !== undefined
+    dragAndDropState.dropTarget !== undefined &&
+    dragAndDropState.placementIndicator !== undefined
   ) {
+    const { dropTarget, placementIndicator } = dragAndDropState;
     return (
       <Box css={toolsStyle}>
-        <DropTargetOutline dropTarget={dragAndDropState.dropTarget} />
-        {dragAndDropState.placementIndicator !== undefined && (
-          <PlacementIndicator placement={dragAndDropState.placementIndicator} />
+        <Outline rect={placementIndicator.parentRect}>
+          <Label
+            instance={dropTarget.instance}
+            instanceRect={placementIndicator.parentRect}
+          />
+        </Outline>
+        {placementIndicator !== undefined && (
+          <PlacementIndicator placement={placementIndicator} />
         )}
       </Box>
     );
