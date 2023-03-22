@@ -41,6 +41,18 @@ const LabelStory: ComponentStory<typeof Label> = ({
         </StoryGrid>
       </StorySection>
 
+      <StorySection title="Focused (initially)">
+        <StoryGrid horizontal>
+          <Label
+            color="local"
+            tabIndex={-1}
+            ref={(element) => element?.focus()}
+          >
+            Local
+          </Label>
+        </StoryGrid>
+      </StorySection>
+
       <StorySection title="With checkbox">
         <input id="checkbox1" type="checkbox"></input>
         <Label htmlFor="checkbox1">Label text</Label>

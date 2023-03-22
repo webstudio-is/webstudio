@@ -17,8 +17,10 @@ const StyledLabel = styled("label", {
   border: "1px solid transparent",
   borderRadius: theme.borderRadius[3],
 
+  // https://github.com/webstudio-is/webstudio-builder/issues/1271#issuecomment-1478436340
   "&:focus-visible": {
-    outline: `2px solid ${theme.colors.blue10}`,
+    outline: `2px solid ${theme.colors.borderFocus}`,
+    outlineOffset: 1,
   },
 
   "&[aria-disabled=true]": {

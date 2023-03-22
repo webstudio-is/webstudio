@@ -188,7 +188,6 @@ export const SectionTitleLabel = forwardRef(
       <Label
         truncate
         sectionTitle
-        // @todo: focus state styles in Label
         tabIndex={hasAction ? -1 : undefined}
         {...props}
         css={{
