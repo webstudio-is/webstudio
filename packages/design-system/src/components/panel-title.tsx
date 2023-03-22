@@ -1,6 +1,6 @@
 /**
- * Implementation of the "Title" component from:
- * https://www.figma.com/file/sfCE7iLS0k25qCxiifQNLE/%F0%9F%93%9A-Webstudio-Library?node-id=2%3A12361
+ * Implementation of the "Panel Title" component from:
+ * https://www.figma.com/file/sfCE7iLS0k25qCxiifQNLE/%F0%9F%93%9A-Webstudio-Library?node-id=2647-10046
  */
 
 import { forwardRef, type ReactNode, type Ref } from "react";
@@ -36,7 +36,7 @@ export const TitleSuffixSpacer = styled("div", {
   width: theme.spacing[5],
 });
 
-export const Title = forwardRef(
+export const PanelTitle = forwardRef(
   (
     { children, suffix, className, css }: TitleProps,
     ref: Ref<HTMLDivElement>
@@ -47,4 +47,4 @@ export const Title = forwardRef(
     </Container>
   )
 );
-Title.displayName = "Title";
+PanelTitle.displayName = "PanelTitle";

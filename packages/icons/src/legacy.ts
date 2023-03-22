@@ -3,7 +3,6 @@ export {
   FontBoldIcon,
   FontItalicIcon,
   Link2Icon,
-  PlusIcon,
   DotsHorizontalIcon,
   CheckIcon,
   RocketIcon,

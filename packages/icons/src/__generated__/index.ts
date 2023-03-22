@@ -43,6 +43,7 @@ export * from "./list-item";
 export * from "./list";
 export * from "./offline";
 export * from "./play";
+export * from "./plus";
 export * from "./radio-checked";
 export * from "./radio-unchecked";
 export * from "./repeat-column";
