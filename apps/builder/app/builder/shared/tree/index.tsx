@@ -15,7 +15,7 @@ import {
 import { instancesStore } from "~/shared/nano-states";
 
 const instanceRelatedProps = {
-  renderItem(props: TreeItemRenderProps<InstancesItem | Instance>) {
+  renderItem(props: TreeItemRenderProps<InstancesItem>) {
     const meta = getComponentMeta(props.itemData.component);
     if (meta === undefined) {
       return <></>;
