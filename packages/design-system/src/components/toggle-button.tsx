@@ -9,10 +9,7 @@ import * as TogglePrimitive from "@radix-ui/react-toggle";
 import { IconButton } from "./icon-button";
 
 type Props = {
-  variant?: Extract<
-    ComponentProps<typeof IconButton>["variant"],
-    { "@initial"?: unknown }
-  >["@initial"];
+  variant?: "default" | "preset" | "local" | "remote" | undefined;
   css?: CSS;
 } & ComponentProps<typeof TogglePrimitive.Root>;
 

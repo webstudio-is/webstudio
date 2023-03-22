@@ -1,3 +1,9 @@
+/**
+ * Implementation of the "Icon Button" component from:
+ * https://www.figma.com/file/sfCE7iLS0k25qCxiifQNLE/%F0%9F%93%9A-Webstudio-Library?node-id=4-3139
+ *
+ * Also used as "Toggle Button" (see toggle-button.tsx)
+ */
 import { styled } from "../stitches.config";
 import { theme } from "../stitches.config";
 
