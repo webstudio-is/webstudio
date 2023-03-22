@@ -16,21 +16,23 @@ const cardStyle = css({
   userSelect: "none",
   color: theme.colors.foregroundIconMain,
   cursor: "grab",
-  "&:hover": {
-    background: theme.colors.slate3,
+  background: theme.colors.backgroundPanel,
+  "&:hover, &[data-state=hover]": {
+    background: theme.colors.backgroundHover,
+  },
+  "&[data-state=disabled]": {
+    background: theme.colors.backgroundPanel,
+    color: theme.colors.foregroundDisabled,
+  },
+  "&:focus-visible, &[data-state=focus]": {
+    outline: `2px solid ${theme.colors.borderFocus}`,
+    outlineOffset: "-2px",
   },
   "& svg": {
     flexGrow: 0,
     marginTop: theme.spacing[7],
     width: 22,
     height: 22,
-  },
-  variants: {
-    state: {
-      dragging: {
-        background: theme.colors.slate3,
-      },
-    },
   },
 });
 
@@ -48,6 +50,7 @@ const wordStyle = css(textVariants.small, {
   display: "flex",
   flexGrow: 0,
   textAlign: "center",
+  justifyContent: "center",
   whiteSpace: "nowrap",
   textOverflow: "ellipsis",
   overflow: "hidden",
@@ -57,12 +60,18 @@ const wordStyle = css(textVariants.small, {
 type ComponentCardProps = {
   label: string;
   icon: JSX.Element;
+  state?: "hover" | "disabled" | "focus";
 } & ComponentProps<"div">;
 
 export const ComponentCard = forwardRef<ElementRef<"div">, ComponentCardProps>(
-  ({ icon, label, className, ...props }, ref) => {
+  ({ icon, label, className, state, ...props }, ref) => {
     return (
-      <div className={cardStyle({ className })} ref={ref} {...props}>
+      <div
+        className={cardStyle({ className })}
+        ref={ref}
+        data-state={state}
+        {...props}
+      >
         {icon}
         <div className={textStyle()}>
           {label

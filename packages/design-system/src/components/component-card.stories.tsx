@@ -1,5 +1,5 @@
 import { BoxIcon } from "@webstudio-is/icons";
-import { StoryGrid } from "./storybook";
+import { StoryGrid, StorySection } from "./storybook";
 import { ComponentCard } from "./component-card";
 
 export default {
@@ -9,11 +9,44 @@ export default {
 export const Demo = () => {
   return (
     <>
-      <StoryGrid horizontal>
-        <ComponentCard icon={<BoxIcon />} label="Too many words" />
-        <ComponentCard icon={<BoxIcon />} label="Single" />
-        <ComponentCard icon={<BoxIcon />} label="Truncatedlongword" />
-      </StoryGrid>
+      <StorySection title="States">
+        <StoryGrid horizontal>
+          <ComponentCard icon={<BoxIcon />} label="Box" tabIndex={1} />
+          <ComponentCard
+            icon={<BoxIcon />}
+            label="Box"
+            state="hover"
+            tabIndex={1}
+          />
+          <ComponentCard
+            icon={<BoxIcon />}
+            label="Box"
+            state="focus"
+            tabIndex={1}
+          />
+          <ComponentCard
+            icon={<BoxIcon />}
+            label="Box"
+            state="disabled"
+            tabIndex={1}
+          />
+        </StoryGrid>
+      </StorySection>
+      <StorySection title="Labels">
+        <StoryGrid horizontal>
+          <ComponentCard
+            icon={<BoxIcon />}
+            label="Too many words"
+            tabIndex={1}
+          />
+          <ComponentCard icon={<BoxIcon />} label="Single" tabIndex={1} />
+          <ComponentCard
+            icon={<BoxIcon />}
+            label="Truncatedlongword"
+            tabIndex={1}
+          />
+        </StoryGrid>
+      </StorySection>
     </>
   );
 };
