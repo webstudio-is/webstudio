@@ -1,3 +1,8 @@
+/**
+ * Implementation of the "Component Card" component from:
+ * https://www.figma.com/file/sfCE7iLS0k25qCxiifQNLE/%F0%9F%93%9A-Webstudio-Library?node-id=2608-8921
+ */
+
 import { forwardRef, type ElementRef, ComponentProps } from "react";
 import { textVariants } from "../";
 import { css, theme } from "../stitches.config";
