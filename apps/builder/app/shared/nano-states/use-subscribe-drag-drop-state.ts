@@ -14,6 +14,10 @@ export const useSubscribeDragAndDropState = () => {
     setState({ ...state, dropTarget });
   });
 
+  useSubscribe("placementIndicatorChange", (placementIndicator) => {
+    setState({ ...state, placementIndicator });
+  });
+
   useSubscribe("dragEnd", () => {
     setState({ isDragging: false });
   });

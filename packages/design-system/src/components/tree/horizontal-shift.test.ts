@@ -61,6 +61,7 @@ const tree: Item = {
 const makePlacementIndicator = (
   type: Placement["type"] = "next-to-child"
 ): Placement => ({
+  parentRect: { width: 0, height: 0, left: 0, top: 0 },
   type,
   direction: "horizontal",
   x: 0,

@@ -41,6 +41,7 @@ export const subscribeInstanceHovering = () => {
     mouseOutTimeoutId = setTimeout(() => {
       hoveredElement = undefined;
       hoveredInstanceSelectorStore.set(undefined);
+      hoveredInstanceOutlineStore.set(undefined);
     }, 100);
   };
 

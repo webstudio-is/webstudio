@@ -4,6 +4,12 @@ exports[`getPlacementInside childrenOrientation={ type: 'horizontal', reverse: f
 {
   "direction": "vertical",
   "length": 90,
+  "parentRect": {
+    "height": 100,
+    "left": 0,
+    "top": 0,
+    "width": 100,
+  },
   "type": "inside-parent",
   "x": 5,
   "y": 5,
@@ -14,6 +20,12 @@ exports[`getPlacementInside childrenOrientation={ type: 'horizontal', reverse: t
 {
   "direction": "vertical",
   "length": 90,
+  "parentRect": {
+    "height": 100,
+    "left": 0,
+    "top": 0,
+    "width": 100,
+  },
   "type": "inside-parent",
   "x": 5,
   "y": 5,
@@ -24,6 +36,12 @@ exports[`getPlacementInside childrenOrientation={ type: 'mixed' } 1`] = `
 {
   "direction": "horizontal",
   "length": 90,
+  "parentRect": {
+    "height": 100,
+    "left": 0,
+    "top": 0,
+    "width": 100,
+  },
   "type": "inside-parent",
   "x": 5,
   "y": 5,
@@ -34,6 +52,12 @@ exports[`getPlacementInside childrenOrientation={ type: 'vertical', reverse: fal
 {
   "direction": "horizontal",
   "length": 90,
+  "parentRect": {
+    "height": 100,
+    "left": 0,
+    "top": 0,
+    "width": 100,
+  },
   "type": "inside-parent",
   "x": 5,
   "y": 5,
@@ -44,6 +68,12 @@ exports[`getPlacementInside childrenOrientation={ type: 'vertical', reverse: tru
 {
   "direction": "horizontal",
   "length": 90,
+  "parentRect": {
+    "height": 100,
+    "left": 0,
+    "top": 0,
+    "width": 100,
+  },
   "type": "inside-parent",
   "x": 5,
   "y": 5,
@@ -54,6 +84,12 @@ exports[`getPlacementNextTo childrenOrientation={ type: 'horizontal', reverse: f
 {
   "direction": "vertical",
   "length": 292,
+  "parentRect": {
+    "height": 300,
+    "left": 0,
+    "top": 0,
+    "width": 300,
+  },
   "type": "next-to-child",
   "x": 2,
   "y": 4,
@@ -64,6 +100,12 @@ exports[`getPlacementNextTo childrenOrientation={ type: 'horizontal', reverse: f
 {
   "direction": "vertical",
   "length": 310,
+  "parentRect": {
+    "height": 300,
+    "left": 0,
+    "top": 0,
+    "width": 300,
+  },
   "type": "next-to-child",
   "x": -10,
   "y": -10,
@@ -74,6 +116,12 @@ exports[`getPlacementNextTo childrenOrientation={ type: 'horizontal', reverse: f
 {
   "direction": "vertical",
   "length": 300,
+  "parentRect": {
+    "height": 300,
+    "left": 0,
+    "top": 0,
+    "width": 300,
+  },
   "type": "next-to-child",
   "x": 0,
   "y": 0,
@@ -84,6 +132,12 @@ exports[`getPlacementNextTo childrenOrientation={ type: 'horizontal', reverse: f
 {
   "direction": "vertical",
   "length": 100,
+  "parentRect": {
+    "height": 300,
+    "left": 0,
+    "top": 0,
+    "width": 300,
+  },
   "type": "next-to-child",
   "x": 95,
   "y": 100,
@@ -94,6 +148,12 @@ exports[`getPlacementNextTo childrenOrientation={ type: 'horizontal', reverse: f
 {
   "direction": "vertical",
   "length": 292,
+  "parentRect": {
+    "height": 300,
+    "left": 0,
+    "top": 0,
+    "width": 300,
+  },
   "type": "next-to-child",
   "x": 298,
   "y": 4,
@@ -104,6 +164,12 @@ exports[`getPlacementNextTo childrenOrientation={ type: 'horizontal', reverse: f
 {
   "direction": "vertical",
   "length": 310,
+  "parentRect": {
+    "height": 300,
+    "left": 0,
+    "top": 0,
+    "width": 300,
+  },
   "type": "next-to-child",
   "x": 300,
   "y": -10,
@@ -114,6 +180,12 @@ exports[`getPlacementNextTo childrenOrientation={ type: 'horizontal', reverse: f
 {
   "direction": "vertical",
   "length": 300,
+  "parentRect": {
+    "height": 300,
+    "left": 0,
+    "top": 0,
+    "width": 300,
+  },
   "type": "next-to-child",
   "x": 300,
   "y": 0,
@@ -124,6 +196,12 @@ exports[`getPlacementNextTo childrenOrientation={ type: 'horizontal', reverse: f
 {
   "direction": "vertical",
   "length": 100,
+  "parentRect": {
+    "height": 300,
+    "left": 0,
+    "top": 0,
+    "width": 300,
+  },
   "type": "next-to-child",
   "x": 205,
   "y": 100,
@@ -134,6 +212,12 @@ exports[`getPlacementNextTo childrenOrientation={ type: 'horizontal', reverse: t
 {
   "direction": "vertical",
   "length": 292,
+  "parentRect": {
+    "height": 300,
+    "left": 0,
+    "top": 0,
+    "width": 300,
+  },
   "type": "next-to-child",
   "x": 298,
   "y": 4,
@@ -144,6 +228,12 @@ exports[`getPlacementNextTo childrenOrientation={ type: 'horizontal', reverse: t
 {
   "direction": "vertical",
   "length": 310,
+  "parentRect": {
+    "height": 300,
+    "left": 0,
+    "top": 0,
+    "width": 300,
+  },
   "type": "next-to-child",
   "x": 300,
   "y": -10,
@@ -154,6 +244,12 @@ exports[`getPlacementNextTo childrenOrientation={ type: 'horizontal', reverse: t
 {
   "direction": "vertical",
   "length": 300,
+  "parentRect": {
+    "height": 300,
+    "left": 0,
+    "top": 0,
+    "width": 300,
+  },
   "type": "next-to-child",
   "x": 300,
   "y": 0,
@@ -164,6 +260,12 @@ exports[`getPlacementNextTo childrenOrientation={ type: 'horizontal', reverse: t
 {
   "direction": "vertical",
   "length": 100,
+  "parentRect": {
+    "height": 300,
+    "left": 0,
+    "top": 0,
+    "width": 300,
+  },
   "type": "next-to-child",
   "x": 205,
   "y": 100,
@@ -174,6 +276,12 @@ exports[`getPlacementNextTo childrenOrientation={ type: 'horizontal', reverse: t
 {
   "direction": "vertical",
   "length": 292,
+  "parentRect": {
+    "height": 300,
+    "left": 0,
+    "top": 0,
+    "width": 300,
+  },
   "type": "next-to-child",
   "x": 2,
   "y": 4,
@@ -184,6 +292,12 @@ exports[`getPlacementNextTo childrenOrientation={ type: 'horizontal', reverse: t
 {
   "direction": "vertical",
   "length": 310,
+  "parentRect": {
+    "height": 300,
+    "left": 0,
+    "top": 0,
+    "width": 300,
+  },
   "type": "next-to-child",
   "x": -10,
   "y": -10,
@@ -194,6 +308,12 @@ exports[`getPlacementNextTo childrenOrientation={ type: 'horizontal', reverse: t
 {
   "direction": "vertical",
   "length": 300,
+  "parentRect": {
+    "height": 300,
+    "left": 0,
+    "top": 0,
+    "width": 300,
+  },
   "type": "next-to-child",
   "x": 0,
   "y": 0,
@@ -204,6 +324,12 @@ exports[`getPlacementNextTo childrenOrientation={ type: 'horizontal', reverse: t
 {
   "direction": "vertical",
   "length": 100,
+  "parentRect": {
+    "height": 300,
+    "left": 0,
+    "top": 0,
+    "width": 300,
+  },
   "type": "next-to-child",
   "x": 95,
   "y": 100,
@@ -214,6 +340,12 @@ exports[`getPlacementNextTo childrenOrientation={ type: 'mixed' } direction=back
 {
   "direction": "horizontal",
   "length": 292,
+  "parentRect": {
+    "height": 300,
+    "left": 0,
+    "top": 0,
+    "width": 300,
+  },
   "type": "next-to-child",
   "x": 4,
   "y": 2,
@@ -224,6 +356,12 @@ exports[`getPlacementNextTo childrenOrientation={ type: 'mixed' } direction=back
 {
   "direction": "horizontal",
   "length": 310,
+  "parentRect": {
+    "height": 300,
+    "left": 0,
+    "top": 0,
+    "width": 300,
+  },
   "type": "next-to-child",
   "x": -10,
   "y": -10,
@@ -234,6 +372,12 @@ exports[`getPlacementNextTo childrenOrientation={ type: 'mixed' } direction=back
 {
   "direction": "horizontal",
   "length": 300,
+  "parentRect": {
+    "height": 300,
+    "left": 0,
+    "top": 0,
+    "width": 300,
+  },
   "type": "next-to-child",
   "x": 0,
   "y": 0,
@@ -244,6 +388,12 @@ exports[`getPlacementNextTo childrenOrientation={ type: 'mixed' } direction=back
 {
   "direction": "horizontal",
   "length": 100,
+  "parentRect": {
+    "height": 300,
+    "left": 0,
+    "top": 0,
+    "width": 300,
+  },
   "type": "next-to-child",
   "x": 100,
   "y": 95,
@@ -254,6 +404,12 @@ exports[`getPlacementNextTo childrenOrientation={ type: 'mixed' } direction=forw
 {
   "direction": "horizontal",
   "length": 292,
+  "parentRect": {
+    "height": 300,
+    "left": 0,
+    "top": 0,
+    "width": 300,
+  },
   "type": "next-to-child",
   "x": 4,
   "y": 298,
@@ -264,6 +420,12 @@ exports[`getPlacementNextTo childrenOrientation={ type: 'mixed' } direction=forw
 {
   "direction": "horizontal",
   "length": 310,
+  "parentRect": {
+    "height": 300,
+    "left": 0,
+    "top": 0,
+    "width": 300,
+  },
   "type": "next-to-child",
   "x": -10,
   "y": 300,
@@ -274,6 +436,12 @@ exports[`getPlacementNextTo childrenOrientation={ type: 'mixed' } direction=forw
 {
   "direction": "horizontal",
   "length": 300,
+  "parentRect": {
+    "height": 300,
+    "left": 0,
+    "top": 0,
+    "width": 300,
+  },
   "type": "next-to-child",
   "x": 0,
   "y": 300,
@@ -284,6 +452,12 @@ exports[`getPlacementNextTo childrenOrientation={ type: 'mixed' } direction=forw
 {
   "direction": "horizontal",
   "length": 100,
+  "parentRect": {
+    "height": 300,
+    "left": 0,
+    "top": 0,
+    "width": 300,
+  },
   "type": "next-to-child",
   "x": 100,
   "y": 205,
@@ -294,6 +468,12 @@ exports[`getPlacementNextTo childrenOrientation={ type: 'vertical', reverse: fal
 {
   "direction": "horizontal",
   "length": 292,
+  "parentRect": {
+    "height": 300,
+    "left": 0,
+    "top": 0,
+    "width": 300,
+  },
   "type": "next-to-child",
   "x": 4,
   "y": 2,
@@ -304,6 +484,12 @@ exports[`getPlacementNextTo childrenOrientation={ type: 'vertical', reverse: fal
 {
   "direction": "horizontal",
   "length": 310,
+  "parentRect": {
+    "height": 300,
+    "left": 0,
+    "top": 0,
+    "width": 300,
+  },
   "type": "next-to-child",
   "x": -10,
   "y": -10,
@@ -314,6 +500,12 @@ exports[`getPlacementNextTo childrenOrientation={ type: 'vertical', reverse: fal
 {
   "direction": "horizontal",
   "length": 300,
+  "parentRect": {
+    "height": 300,
+    "left": 0,
+    "top": 0,
+    "width": 300,
+  },
   "type": "next-to-child",
   "x": 0,
   "y": 0,
@@ -324,6 +516,12 @@ exports[`getPlacementNextTo childrenOrientation={ type: 'vertical', reverse: fal
 {
   "direction": "horizontal",
   "length": 100,
+  "parentRect": {
+    "height": 300,
+    "left": 0,
+    "top": 0,
+    "width": 300,
+  },
   "type": "next-to-child",
   "x": 100,
   "y": 95,
@@ -334,6 +532,12 @@ exports[`getPlacementNextTo childrenOrientation={ type: 'vertical', reverse: fal
 {
   "direction": "horizontal",
   "length": 292,
+  "parentRect": {
+    "height": 300,
+    "left": 0,
+    "top": 0,
+    "width": 300,
+  },
   "type": "next-to-child",
   "x": 4,
   "y": 298,
@@ -344,6 +548,12 @@ exports[`getPlacementNextTo childrenOrientation={ type: 'vertical', reverse: fal
 {
   "direction": "horizontal",
   "length": 310,
+  "parentRect": {
+    "height": 300,
+    "left": 0,
+    "top": 0,
+    "width": 300,
+  },
   "type": "next-to-child",
   "x": -10,
   "y": 300,
@@ -354,6 +564,12 @@ exports[`getPlacementNextTo childrenOrientation={ type: 'vertical', reverse: fal
 {
   "direction": "horizontal",
   "length": 300,
+  "parentRect": {
+    "height": 300,
+    "left": 0,
+    "top": 0,
+    "width": 300,
+  },
   "type": "next-to-child",
   "x": 0,
   "y": 300,
@@ -364,6 +580,12 @@ exports[`getPlacementNextTo childrenOrientation={ type: 'vertical', reverse: fal
 {
   "direction": "horizontal",
   "length": 100,
+  "parentRect": {
+    "height": 300,
+    "left": 0,
+    "top": 0,
+    "width": 300,
+  },
   "type": "next-to-child",
   "x": 100,
   "y": 205,
@@ -374,6 +596,12 @@ exports[`getPlacementNextTo childrenOrientation={ type: 'vertical', reverse: tru
 {
   "direction": "horizontal",
   "length": 292,
+  "parentRect": {
+    "height": 300,
+    "left": 0,
+    "top": 0,
+    "width": 300,
+  },
   "type": "next-to-child",
   "x": 4,
   "y": 298,
@@ -384,6 +612,12 @@ exports[`getPlacementNextTo childrenOrientation={ type: 'vertical', reverse: tru
 {
   "direction": "horizontal",
   "length": 310,
+  "parentRect": {
+    "height": 300,
+    "left": 0,
+    "top": 0,
+    "width": 300,
+  },
   "type": "next-to-child",
   "x": -10,
   "y": 300,
@@ -394,6 +628,12 @@ exports[`getPlacementNextTo childrenOrientation={ type: 'vertical', reverse: tru
 {
   "direction": "horizontal",
   "length": 300,
+  "parentRect": {
+    "height": 300,
+    "left": 0,
+    "top": 0,
+    "width": 300,
+  },
   "type": "next-to-child",
   "x": 0,
   "y": 300,
@@ -404,6 +644,12 @@ exports[`getPlacementNextTo childrenOrientation={ type: 'vertical', reverse: tru
 {
   "direction": "horizontal",
   "length": 100,
+  "parentRect": {
+    "height": 300,
+    "left": 0,
+    "top": 0,
+    "width": 300,
+  },
   "type": "next-to-child",
   "x": 100,
   "y": 205,
@@ -414,6 +660,12 @@ exports[`getPlacementNextTo childrenOrientation={ type: 'vertical', reverse: tru
 {
   "direction": "horizontal",
   "length": 292,
+  "parentRect": {
+    "height": 300,
+    "left": 0,
+    "top": 0,
+    "width": 300,
+  },
   "type": "next-to-child",
   "x": 4,
   "y": 2,
@@ -424,6 +676,12 @@ exports[`getPlacementNextTo childrenOrientation={ type: 'vertical', reverse: tru
 {
   "direction": "horizontal",
   "length": 310,
+  "parentRect": {
+    "height": 300,
+    "left": 0,
+    "top": 0,
+    "width": 300,
+  },
   "type": "next-to-child",
   "x": -10,
   "y": -10,
@@ -434,6 +692,12 @@ exports[`getPlacementNextTo childrenOrientation={ type: 'vertical', reverse: tru
 {
   "direction": "horizontal",
   "length": 300,
+  "parentRect": {
+    "height": 300,
+    "left": 0,
+    "top": 0,
+    "width": 300,
+  },
   "type": "next-to-child",
   "x": 0,
   "y": 0,
@@ -444,6 +708,12 @@ exports[`getPlacementNextTo childrenOrientation={ type: 'vertical', reverse: tru
 {
   "direction": "horizontal",
   "length": 100,
+  "parentRect": {
+    "height": 300,
+    "left": 0,
+    "top": 0,
+    "width": 300,
+  },
   "type": "next-to-child",
   "x": 100,
   "y": 95,

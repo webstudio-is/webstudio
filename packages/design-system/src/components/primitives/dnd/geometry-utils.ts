@@ -12,6 +12,7 @@ export type ChildrenOrientation =
   | { type: "mixed"; reverse?: boolean };
 
 export type Placement = {
+  parentRect: Rect;
   type: "between-children" | "next-to-child" | "inside-parent";
   x: number;
   y: number;
@@ -69,6 +70,7 @@ export const getArea = (
 };
 
 export const getPlacementBetween = (
+  parentRect: Rect,
   a: Rect | undefined,
   b: Rect | undefined
 ): Placement | undefined => {
@@ -96,6 +98,7 @@ export const getPlacementBetween = (
     const minX = Math.min(a.left, b.left);
     const maxX = Math.max(a.left + a.width, b.left + b.width);
     return {
+      parentRect,
       type: "between-children",
       y: firstY.top + firstY.height + distanceY / 2,
       x: minX,
@@ -107,6 +110,7 @@ export const getPlacementBetween = (
   const minY = Math.min(a.top, b.top);
   const maxY = Math.max(a.top + a.height, b.top + b.height);
   return {
+    parentRect,
     type: "between-children",
     y: minY,
     x: firstX.left + firstX.width + distanceX / 2,
@@ -144,6 +148,7 @@ export const getPlacementNextTo = (
 
   if (side === "top") {
     return {
+      parentRect,
       type: "next-to-child",
       x: rect.left,
       y: rect.top - getMargin(rect.top),
@@ -154,6 +159,7 @@ export const getPlacementNextTo = (
 
   if (side === "bottom") {
     return {
+      parentRect,
       type: "next-to-child",
       x: rect.left,
       y:
@@ -167,6 +173,7 @@ export const getPlacementNextTo = (
 
   if (side === "left") {
     return {
+      parentRect,
       type: "next-to-child",
       x: rect.left - getMargin(rect.left),
       y: rect.top,
@@ -176,6 +183,7 @@ export const getPlacementNextTo = (
   }
 
   return {
+    parentRect,
     type: "next-to-child",
     x:
       rect.left +
@@ -195,6 +203,7 @@ export const getPlacementInside = (
   if (childrenOrientation.type === "horizontal") {
     const safePadding = Math.min(parentRect.width / 2, padding);
     return {
+      parentRect,
       type: "inside-parent",
       y: parentRect.top + safePadding,
       x: parentRect.left + safePadding,
@@ -205,6 +214,7 @@ export const getPlacementInside = (
 
   const safePadding = Math.min(parentRect.height / 2, padding);
   return {
+    parentRect,
     type: "inside-parent",
     y: parentRect.top + safePadding,
     x: parentRect.left + safePadding,

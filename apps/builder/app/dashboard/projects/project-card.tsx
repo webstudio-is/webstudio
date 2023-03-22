@@ -100,7 +100,6 @@ const Menu = ({
     <DropdownMenu open={isOpen} onOpenChange={setIsOpen}>
       <DropdownMenuTrigger asChild>
         <IconButton
-          variant={isOpen ? "active" : "default"}
           aria-label="Menu Button"
           tabIndex={tabIndex}
           css={{ alignSelf: "center" }}
