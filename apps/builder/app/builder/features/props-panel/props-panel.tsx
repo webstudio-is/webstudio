@@ -19,7 +19,7 @@ import {
 import { ChevronDownIcon } from "@webstudio-is/icons";
 import type { Publish } from "~/shared/pubsub";
 import { propsStore, useInstanceProps } from "~/shared/nano-states";
-import { CollapsibleSection } from "~/builder/shared/inspector";
+import { CollapsibleSectionWithAddButton } from "~/builder/shared/inspector";
 import {
   useStyleData,
   type SetProperty as SetCssProperty,
@@ -228,7 +228,7 @@ export const PropsPanel = ({
       </Row>
 
       <Separator />
-      <CollapsibleSection
+      <CollapsibleSectionWithAddButton
         label="Properties"
         onAdd={() => setAddingProp(true)}
         hasItems={hasAddedProps}
@@ -262,7 +262,7 @@ export const PropsPanel = ({
             )}
           </Flex>
         )}
-      </CollapsibleSection>
+      </CollapsibleSectionWithAddButton>
       <Separator />
     </Box>
   );
