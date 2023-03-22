@@ -37,7 +37,7 @@ export const Demo = () => {
           <ComponentCard icon={<BoxIcon />} label="Single" tabIndex={1} />
           <ComponentCard
             icon={<BoxIcon />}
-            label="Too many words"
+            label="Too many words too many"
             tabIndex={1}
           />
           <ComponentCard

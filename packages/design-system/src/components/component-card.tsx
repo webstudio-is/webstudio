@@ -6,7 +6,7 @@ const cardStyle = css({
   display: "flex",
   flexDirection: "column",
   alignItems: "center",
-  justifyContent: "center",
+  textAlign: "center",
   px: theme.spacing[3],
   width: theme.spacing[19],
   height: theme.spacing[19],
@@ -36,23 +36,20 @@ const cardStyle = css({
   },
 });
 
-const textStyle = css({
+const textContainerStyle = css({
   display: "flex",
-  flexAlign: "center",
-  justifyContent: "center",
   flexDirection: "column",
-  flexGrow: 0,
-  height: "2em",
+  justifyContent: "center",
+  flexGrow: 1,
   width: "100%",
 });
 
-const wordStyle = css(textVariants.small, {
-  flexGrow: 0,
-  textAlign: "center",
-  whiteSpace: "nowrap",
-  textOverflow: "ellipsis",
+const textStyle = css(textVariants.small, {
+  display: "-webkit-box",
+  WebkitLineClamp: 2,
+  WebkitBoxOrient: "vertical",
   overflow: "hidden",
-  width: "100%",
+  textOverflow: "ellipsis",
 });
 
 type ComponentCardProps = {
@@ -71,15 +68,9 @@ export const ComponentCard = forwardRef<ElementRef<"div">, ComponentCardProps>(
         {...props}
       >
         {icon}
-        <div className={textStyle()}>
-          {label
-            .split(/\s/)
-            .slice(0, 2)
-            .map((word, index) => (
-              <span className={wordStyle()} key={index}>
-                {word}
-              </span>
-            ))}
+
+        <div className={textContainerStyle()}>
+          <div className={textStyle()}>{label}</div>
         </div>
       </div>
     );
