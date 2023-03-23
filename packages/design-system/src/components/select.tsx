@@ -69,7 +69,7 @@ type TriggerPassThroughProps = Omit<
   ComponentProps<typeof Primitive.Trigger>,
   "onChange" | "value" | "defaultValue" | "asChild" | "prefix"
 > &
-  Omit<ComponentProps<typeof SelectButton>, "onChange">;
+  Omit<ComponentProps<typeof SelectButton>, "onChange" | "value">;
 
 export type SelectProps<Option = SelectOption> = TriggerPassThroughProps & {
   options: Option[];
@@ -142,5 +142,6 @@ const SelectBase = (
   );
 };
 
-export const Select = React.forwardRef(SelectBase);
-Select.displayName = "Select";
+export const Select = React.forwardRef(SelectBase) as <Option>(
+  props: SelectProps<Option> & { ref?: Ref<HTMLButtonElement> }
+) => JSX.Element | null;
