@@ -146,7 +146,11 @@ export const BackgroundContent = (props: BackgroundContentProps) => {
       <Separator css={{ gridColumn: "span 2" }} />
 
       <BackgroundSection>
-        <Grid css={{ gridTemplateColumns: "1fr 128px" }} align="center" gap={2}>
+        <Grid
+          css={{ gridTemplateColumns: `1fr ${theme.spacing[23]}` }}
+          align="center"
+          gap={2}
+        >
           {imageGradientToggle === "image" && (
             <>
               <Label color="default" truncate>
@@ -239,7 +243,10 @@ export const BackgroundContent = (props: BackgroundContentProps) => {
         />
 
         <Grid
-          css={{ gridTemplateColumns: "1fr 128px", mt: theme.spacing[5] }}
+          css={{
+            gridTemplateColumns: `1fr ${theme.spacing[23]}`,
+            mt: theme.spacing[5],
+          }}
           align="center"
           gap={2}
         >

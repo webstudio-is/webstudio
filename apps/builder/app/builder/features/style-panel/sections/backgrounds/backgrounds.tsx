@@ -2,7 +2,6 @@ import type { RenderCategoryProps } from "../../style-sections";
 import { styleConfigByName } from "../../shared/configs";
 import { FloatingPanel } from "~/builder/shared/floating-panel";
 import {
-  Button,
   CssValueListItem,
   Flex,
   Grid,
@@ -263,32 +262,28 @@ export const BackgroundsSection = ({
 
         {placementIndicator}
       </Flex>
-      <Flex css={{ px: theme.spacing[9] }} direction="column" gap={2}>
-        <Grid css={{ gridTemplateColumns: "1fr 128px" }}>
-          <PropertyName
-            style={currentStyle}
-            property={"backgroundColor"}
-            label={"Color"}
-            onReset={() => deleteProperty("backgroundColor")}
-          />
 
-          <ColorControl
-            property={"backgroundColor"}
-            items={items}
-            currentStyle={currentStyle}
-            setProperty={setProperty}
-            deleteProperty={deleteProperty}
-          />
-        </Grid>
-        <Button
-          color="neutral"
-          onClick={() => {
-            addLayer(currentStyle, createBatchUpdate);
-          }}
-        >
-          Add layer
-        </Button>
-      </Flex>
+      <Grid
+        css={{
+          px: theme.spacing[9],
+          gridTemplateColumns: `1fr ${theme.spacing[23]}`,
+        }}
+      >
+        <PropertyName
+          style={currentStyle}
+          property={"backgroundColor"}
+          label={"Color"}
+          onReset={() => deleteProperty("backgroundColor")}
+        />
+
+        <ColorControl
+          property={"backgroundColor"}
+          items={items}
+          currentStyle={currentStyle}
+          setProperty={setProperty}
+          deleteProperty={deleteProperty}
+        />
+      </Grid>
     </Flex>
   );
 };
