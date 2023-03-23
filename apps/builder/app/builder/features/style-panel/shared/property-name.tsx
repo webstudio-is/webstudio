@@ -183,13 +183,17 @@ export const PropertyName = ({
 
   return (
     <Flex align="center">
-      <Tooltip
-        content={label}
-        delayDuration={600}
-        disableHoverableContent={true}
-      >
-        {labelElement}
-      </Tooltip>
+      {typeof label === "string" ? (
+        <Tooltip
+          content={label}
+          delayDuration={600}
+          disableHoverableContent={true}
+        >
+          {labelElement}
+        </Tooltip>
+      ) : (
+        labelElement
+      )}
     </Flex>
   );
 };
