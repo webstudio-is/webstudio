@@ -30,6 +30,7 @@ export * from "./components/nested-icon-label";
 export * from "./components/text-area";
 export * from "./components/radio";
 export * from "./components/checkbox";
+export * from "./components/component-card";
 
 // Not aligned
 

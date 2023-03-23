@@ -7,7 +7,13 @@ import {
   getComponentMeta,
   getComponentNames,
 } from "@webstudio-is/react-sdk";
-import { theme, Flex, useDrag, type Point } from "@webstudio-is/design-system";
+import {
+  theme,
+  Flex,
+  useDrag,
+  type Point,
+  ComponentCard,
+} from "@webstudio-is/design-system";
 import { PlusIcon } from "@webstudio-is/icons";
 import { findClosestDroppableTarget } from "~/shared/tree-utils";
 import {
@@ -23,19 +29,26 @@ import { insertNewComponentInstance } from "~/shared/instance-utils";
 import { zoomStore } from "~/shared/nano-states/breakpoints";
 import type { TabName } from "../../types";
 import { Header, CloseButton } from "../../header";
-import { ComponentThumb } from "./component-thumb";
 
 type DraggableThumbProps = {
   onClick: MouseEventHandler<HTMLDivElement>;
   component: Instance["component"];
 };
 
-const DraggableThumb = ({ component, onClick }: DraggableThumbProps) => {
+const DraggableComponentCard = ({
+  component,
+  onClick,
+}: DraggableThumbProps) => {
+  const meta = getComponentMeta(component);
+  if (meta === undefined) {
+    return null;
+  }
   return (
-    <ComponentThumb
-      data-drag-component={component}
-      component={component}
+    <ComponentCard
       onClick={onClick}
+      data-drag-component={component}
+      label={meta.label}
+      icon={<meta.Icon />}
     />
   );
 };
@@ -47,24 +60,29 @@ const DragLayer = ({
   component: Instance["component"];
   point: Point;
 }) => {
+  const meta = getComponentMeta(component);
+  if (meta === undefined) {
+    return null;
+  }
+
   return createPortal(
     <Flex
       css={{
         position: "absolute",
         pointerEvents: "none",
-        zIndex: 1,
+        zIndex: theme.zIndices[1],
         left: 0,
         top: 0,
         width: "100%",
         height: "100%",
       }}
     >
-      <ComponentThumb
-        component={component}
+      <ComponentCard
+        label={meta.label}
+        icon={<meta.Icon />}
         style={{
           transform: `translate3d(${point.x}px, ${point.y}px, 0)`,
         }}
-        state="dragging"
       />
     </Flex>,
     document.body
@@ -172,7 +190,7 @@ export const TabContent = ({ publish, onSetActiveTab }: TabContentProps) => {
         ref={useDragHandlers.rootRef}
       >
         {listedComponentNames.map((component: Instance["component"]) => (
-          <DraggableThumb
+          <DraggableComponentCard
             key={component}
             component={component}
             onClick={() => {
