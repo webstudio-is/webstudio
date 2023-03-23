@@ -9,7 +9,6 @@ import {
 } from "@webstudio-is/react-sdk";
 import { theme, Flex, useDrag, type Point } from "@webstudio-is/design-system";
 import { PlusIcon } from "@webstudio-is/icons";
-import { utils } from "@webstudio-is/project";
 import { findClosestDroppableTarget } from "~/shared/tree-utils";
 import {
   instancesIndexStore,
@@ -133,8 +132,8 @@ export const TabContent = ({ publish, onSetActiveTab }: TabContentProps) => {
       publish({
         type: "dragStart",
         payload: {
-          origin: "panel",
-          dragItem: utils.tree.createInstance({ component: componentName }),
+          type: "insert",
+          dragComponent: componentName,
         },
       });
       isCanvasPointerEventsEnabledStore.set(false);
@@ -150,7 +149,7 @@ export const TabContent = ({ publish, onSetActiveTab }: TabContentProps) => {
       setDragComponent(undefined);
       publish({
         type: "dragEnd",
-        payload: { origin: "panel", isCanceled },
+        payload: { isCanceled },
       });
       isCanvasPointerEventsEnabledStore.set(true);
     },
