@@ -230,17 +230,6 @@ export const getInstanceAncestorsAndSelf = (
   return path;
 };
 
-export const findClosestRichTextInstance = (
-  instancesIndex: InstancesIndex,
-  instanceId: Instance["id"]
-) => {
-  return getInstanceAncestorsAndSelf(instancesIndex, instanceId)
-    .reverse()
-    .find(
-      (instance) => getComponentMeta(instance.component)?.type === "rich-text"
-    );
-};
-
 export const cloneStyles = (
   styles: Styles,
   clonedStyleSourceIds: Map<Instance["id"], Instance["id"]>

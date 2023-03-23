@@ -4,7 +4,7 @@ import { useStore } from "@nanostores/react";
 import { nanoid } from "nanoid";
 import type { AuthPermit } from "@webstudio-is/trpc-interface";
 import type { Asset } from "@webstudio-is/asset-uploader";
-import type { Placement } from "@webstudio-is/design-system";
+import type { ItemDropTarget, Placement } from "@webstudio-is/design-system";
 import type {
   Breakpoint,
   Breakpoints,
@@ -24,10 +24,7 @@ import type {
   StyleSourceSelections,
 } from "@webstudio-is/project-build";
 import type { Style } from "@webstudio-is/css-data";
-import type {
-  DropTargetChangePayload,
-  DragStartPayload,
-} from "~/canvas/shared/use-drag-drop";
+import type { DragStartPayload } from "~/canvas/shared/use-drag-drop";
 import type {
   AssetContainer,
   DeletingAssetContainer,
@@ -434,8 +431,8 @@ export const useTextEditingInstanceId = () =>
 export type DragAndDropState = {
   isDragging: boolean;
   origin?: "canvas" | "panel";
-  dropTarget?: DropTargetChangePayload;
-  dragItem?: DragStartPayload["dragItem"];
+  dropTarget?: ItemDropTarget;
+  dragPayload?: DragStartPayload;
   placementIndicator?: Placement;
 };
 const dragAndDropStateContainer = atom<DragAndDropState>({

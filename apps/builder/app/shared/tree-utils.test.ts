@@ -14,7 +14,6 @@ import {
   cloneStyles,
   createInstancesIndex,
   findClosestDroppableTarget,
-  findClosestRichTextInstance,
   findSubtreeLocalStyleSources,
   getAncestorInstanceSelector,
   getInstanceSelector,
@@ -391,30 +390,6 @@ test("get path from instance and its ancestors", () => {
       createInstance("child2", "Box", []),
     ]),
   ]);
-});
-
-test("find closest rich text to instance", () => {
-  const rootInstance: Instance = createInstance("root", "Box", [
-    createInstance("box1", "Box", []),
-    createInstance("paragraph2", "Paragraph", [
-      createInstance("italic3", "Italic", [
-        createInstance("bold4", "Bold", []),
-        createInstance("box5", "Box", []),
-      ]),
-    ]),
-    createInstance("box6", "Box", []),
-  ]);
-  const instancesIndex = createInstancesIndex(rootInstance);
-
-  expect(findClosestRichTextInstance(instancesIndex, "bold4")?.id).toEqual(
-    "paragraph2"
-  );
-  expect(findClosestRichTextInstance(instancesIndex, "paragraph2")?.id).toEqual(
-    "paragraph2"
-  );
-  expect(findClosestRichTextInstance(instancesIndex, "box6")?.id).toEqual(
-    undefined
-  );
 });
 
 test("insert tree of instances copy and provide map from ids map", () => {

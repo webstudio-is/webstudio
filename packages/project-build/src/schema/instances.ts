@@ -1,23 +1,11 @@
 import { z } from "zod";
 
-// This should be used when passing a lot of data is potentially costly.
-// For example, when passing data from an iframe.
-export type BaseInstance = {
+export type Instance = {
+  type: "instance";
   id: string;
   component: string;
   label?: string;
-};
-
-export type Instance = BaseInstance & {
-  type: "instance";
   children: Array<Instance | Text>;
-};
-
-export const toBaseInstance = (instance: Instance): BaseInstance => {
-  return {
-    id: instance.id,
-    component: instance.component,
-  };
 };
 
 export const Text = z.object({

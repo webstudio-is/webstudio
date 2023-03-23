@@ -1,3 +1,4 @@
+import { useStore } from "@nanostores/react";
 import type { Publish } from "~/shared/pubsub";
 import { Box } from "@webstudio-is/design-system";
 import { PlacementIndicator } from "@webstudio-is/design-system";
@@ -7,6 +8,7 @@ import {
   useSubscribeScrollState,
   useDragAndDropState,
   useSubscribeDragAndDropState,
+  instancesStore,
 } from "~/shared/nano-states";
 import { HoveredInstanceOutline, SelectedInstanceOutline } from "./outline";
 import { useSubscribeTextToolbar, TextToolbar } from "./text-toolbar";
@@ -42,6 +44,7 @@ export const CanvasTools = ({ publish }: CanvasToolsProps) => {
   const [isPreviewMode] = useIsPreviewMode();
   const [isScrolling] = useIsScrolling();
   const [dragAndDropState] = useDragAndDropState();
+  const instances = useStore(instancesStore);
 
   if (
     dragAndDropState.isDragging &&
@@ -49,11 +52,12 @@ export const CanvasTools = ({ publish }: CanvasToolsProps) => {
     dragAndDropState.placementIndicator !== undefined
   ) {
     const { dropTarget, placementIndicator } = dragAndDropState;
-    return (
+    const dropTargetInstance = instances.get(dropTarget.itemSelector[0]);
+    return dropTargetInstance ? (
       <Box css={toolsStyle}>
         <Outline rect={placementIndicator.parentRect}>
           <Label
-            instance={dropTarget.instance}
+            instance={dropTargetInstance}
             instanceRect={placementIndicator.parentRect}
           />
         </Outline>
@@ -61,7 +65,7 @@ export const CanvasTools = ({ publish }: CanvasToolsProps) => {
           <PlacementIndicator placement={placementIndicator} />
         )}
       </Box>
-    );
+    ) : null;
   }
 
   if (isPreviewMode || isScrolling) {
