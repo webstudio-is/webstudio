@@ -17,6 +17,7 @@ import {
 import { PlusIcon } from "@webstudio-is/icons";
 import { findClosestDroppableTarget } from "~/shared/tree-utils";
 import {
+  instancesIndexStore,
   instancesStore,
   selectedInstanceSelectorStore,
   selectedPageStore,
@@ -178,16 +179,10 @@ export const TabContent = ({ publish, onSetActiveTab }: TabContentProps) => {
             <ComponentCard
               onClick={() => {
                 onSetActiveTab("none");
-                const selectedPage = selectedPageStore.get();
-                if (selectedPage === undefined) {
-                  return;
-                }
                 const dropTarget = findClosestDroppableTarget(
-                  instancesStore.get(),
-                  // fallback to root as drop target
-                  selectedInstanceSelectorStore.get() ?? [
-                    selectedPage.rootInstanceId,
-                  ]
+                  instancesIndexStore.get(),
+                  // @todo accept instance Selector
+                  selectedInstanceSelectorStore.get()?.[0]
                 );
                 insertNewComponentInstance(component, dropTarget);
               }}
