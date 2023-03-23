@@ -11,7 +11,7 @@ import interFont from "@fontsource/inter/variable.css";
 // eslint-disable-next-line import/no-internal-modules
 import robotoMonoFont from "@fontsource/roboto-mono/index.css";
 import { useSharedShortcuts } from "~/shared/shortcuts";
-import { SidebarLeft } from "./features/sidebar-left";
+import { SidebarLeft, Navigator } from "./features/sidebar-left";
 import { Inspector } from "./features/inspector";
 import {
   isCanvasPointerEventsEnabledStore,
@@ -20,7 +20,6 @@ import {
 import { Topbar } from "./features/topbar";
 import builderStyles from "./builder.css";
 import { Footer } from "./features/footer";
-import { TreePrevew } from "./features/tree-preview";
 import { useUpdateCanvasWidth } from "./features/breakpoints";
 import {
   CanvasIframe,
@@ -30,7 +29,6 @@ import {
 import { usePublishShortcuts } from "./shared/shortcuts";
 import {
   selectedPageIdStore,
-  useDragAndDropState,
   useIsPreviewMode,
   useSetAssets,
   useSetAuthPermit,
@@ -44,8 +42,7 @@ import {
   useSetStyleSources,
   useSetStyleSourceSelections,
 } from "~/shared/nano-states";
-import { useClientSettings } from "./shared/client-settings";
-import { Navigator } from "./features/sidebar-left";
+import { type Settings, useClientSettings } from "./shared/client-settings";
 import { getBuildUrl } from "~/shared/router-utils";
 import { useCopyPaste } from "~/shared/copy-paste";
 import { AssetsProvider } from "./shared/assets";
@@ -155,7 +152,7 @@ const getChromeLayout = ({
   navigatorLayout,
 }: {
   isPreviewMode: boolean;
-  navigatorLayout: "docked" | "undocked";
+  navigatorLayout: Settings["navigatorLayout"];
 }) => {
   if (isPreviewMode) {
     return {
@@ -212,11 +209,15 @@ const ChromeWrapper = ({ children, isPreviewMode }: ChromeWrapperProps) => {
   );
 };
 
-type NavigatorPanelProps = { isPreviewMode: boolean };
+type NavigatorPanelProps = {
+  isPreviewMode: boolean;
+  navigatorLayout: "docked" | "undocked";
+};
 
-const NavigatorPanel = ({ isPreviewMode }: NavigatorPanelProps) => {
-  const navigatorLayout = useNavigatorLayout();
-
+const NavigatorPanel = ({
+  isPreviewMode,
+  navigatorLayout,
+}: NavigatorPanelProps) => {
   if (navigatorLayout === "docked") {
     return null;
   }
@@ -292,7 +293,6 @@ export const Builder = ({
   usePublishShortcuts(publish);
   const onRefReadCanvasWidth = useUpdateCanvasWidth();
   const { onRef: onRefReadCanvas, onTransitionEnd } = useReadCanvasRect();
-  const [dragAndDropState] = useDragAndDropState();
   useSubscribeCanvasReady(publish);
   // We need to initialize this in both canvas and builder,
   // because the events will fire in either one, depending on where the focus is
@@ -309,6 +309,8 @@ export const Builder = ({
   const isCanvasPointerEventsEnabled = useStore(
     isCanvasPointerEventsEnabledStore
   );
+
+  const navigatorLayout = useNavigatorLayout();
 
   const canvasUrl = getBuildUrl({
     buildOrigin,
@@ -338,17 +340,16 @@ export const Builder = ({
         <SidePanel gridArea="sidebar" isPreviewMode={isPreviewMode}>
           <SidebarLeft publish={publish} />
         </SidePanel>
-        <NavigatorPanel isPreviewMode={isPreviewMode} />
+        <NavigatorPanel
+          isPreviewMode={isPreviewMode}
+          navigatorLayout={navigatorLayout}
+        />
         <SidePanel
           gridArea="inspector"
           isPreviewMode={isPreviewMode}
           css={{ overflow: "hidden" }}
         >
-          {dragAndDropState.isDragging ? (
-            <TreePrevew />
-          ) : (
-            <Inspector publish={publish} />
-          )}
+          <Inspector publish={publish} navigatorLayout={navigatorLayout} />
         </SidePanel>
         {isPreviewMode === false && <Footer />}
         <BlockingAlerts />

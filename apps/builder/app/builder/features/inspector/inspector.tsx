@@ -17,11 +17,17 @@ import { StylePanel } from "~/builder/features/style-panel";
 import { PropsPanelContainer } from "~/builder/features/props-panel";
 import { FloatingPanelProvider } from "~/builder/shared/floating-panel";
 import { theme } from "@webstudio-is/design-system";
-import { selectedInstanceStore } from "~/shared/nano-states";
+import {
+  selectedInstanceStore,
+  useDragAndDropState,
+} from "~/shared/nano-states";
 import { SettingsPanel } from "../settings-panel";
+import { NavigatorTree } from "~/builder/shared/navigator-tree";
+import type { Settings } from "~/builder/shared/client-settings";
 
 type InspectorProps = {
   publish: Publish;
+  navigatorLayout: Settings["navigatorLayout"];
 };
 
 const contentStyle = {
@@ -30,9 +36,22 @@ const contentStyle = {
   overflow: "auto",
 };
 
-export const Inspector = ({ publish }: InspectorProps) => {
+// separate component to avoid inspetor updates on drag when navigator is undocked
+const NavigatorTreePreview = () => {
+  const [dragAndDropState] = useDragAndDropState();
+  if (dragAndDropState.isDragging) {
+    return <NavigatorTree />;
+  }
+  return null;
+};
+
+export const Inspector = ({ publish, navigatorLayout }: InspectorProps) => {
   const selectedInstance = useStore(selectedInstanceStore);
   const tabsRef = useRef<HTMLDivElement>(null);
+
+  if (navigatorLayout === "docked") {
+    return <NavigatorTreePreview />;
+  }
 
   if (selectedInstance === undefined) {
     return (

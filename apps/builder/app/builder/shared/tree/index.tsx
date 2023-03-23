@@ -1,11 +1,9 @@
-import { useCallback, useMemo } from "react";
+import { useCallback } from "react";
 import { useStore } from "@nanostores/react";
 import {
   Tree,
   TreeItemLabel,
   TreeItemBody,
-  TreeNode,
-  type TreeNodeProps,
   type TreeProps,
   type TreeItemRenderProps,
 } from "@webstudio-is/design-system";
@@ -15,10 +13,9 @@ import {
   type WsComponentMeta,
 } from "@webstudio-is/react-sdk";
 import { instancesStore } from "~/shared/nano-states";
-import { createInstancesIndex } from "~/shared/tree-utils";
 
 const instanceRelatedProps = {
-  renderItem(props: TreeItemRenderProps<InstancesItem | Instance>) {
+  renderItem(props: TreeItemRenderProps<InstancesItem>) {
     const meta = getComponentMeta(props.itemData.component);
     if (meta === undefined) {
       return <></>;
@@ -32,28 +29,6 @@ const instanceRelatedProps = {
     );
   },
 } as const;
-
-const getInstanceChildren = (instance: undefined | Instance) => {
-  if (instance === undefined) {
-    return [];
-  }
-  const meta = getComponentMeta(instance.component);
-
-  // We want to avoid calling .filter() unnecessarily, because this is a hot path for performance.
-  // We rely on the fact that only rich-text or rich-text-child components may have `string` children.
-  if (
-    meta?.type === "body" ||
-    meta?.type === "container" ||
-    meta?.type === "control" ||
-    meta?.type === "embed"
-  ) {
-    return instance.children as Instance[];
-  }
-
-  return instance.children.filter(
-    (child): child is Instance => child.type === "instance"
-  );
-};
 
 export const InstanceTree = (
   props: Omit<
@@ -120,30 +95,6 @@ export const InstanceTree = (
       canLeaveParent={canLeaveParent}
       canAcceptChild={canAcceptChild}
       getItemChildren={getItemChildren}
-    />
-  );
-};
-
-export const InstanceTreeNode = (
-  props: Omit<TreeNodeProps<Instance>, "getItemChildren" | "renderItem">
-) => {
-  const instancesIndex = useMemo(
-    () => createInstancesIndex(props.itemData),
-    [props.itemData]
-  );
-  const getItemChildren = useCallback(
-    (instanceId: Instance["id"]) => {
-      const instance = instancesIndex.instancesById.get(instanceId);
-      return getInstanceChildren(instance);
-    },
-    [instancesIndex]
-  );
-
-  return (
-    <TreeNode
-      {...props}
-      getItemChildren={getItemChildren}
-      renderItem={instanceRelatedProps.renderItem}
     />
   );
 };
