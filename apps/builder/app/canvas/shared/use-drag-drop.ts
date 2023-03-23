@@ -12,7 +12,7 @@ import {
 import { getComponentMeta } from "@webstudio-is/react-sdk";
 import {
   instancesStore,
-  useRootInstance,
+  selectedPageStore,
   useTextEditingInstanceId,
 } from "~/shared/nano-states";
 import { publish, useSubscribe } from "~/shared/pubsub";
@@ -22,7 +22,6 @@ import {
 } from "~/shared/instance-utils";
 import {
   getElementByInstanceSelector,
-  getInstanceElementById,
   getInstanceIdFromElement,
   getInstanceSelectorFromElement,
 } from "~/shared/dom-utils";
@@ -100,24 +99,26 @@ const sharedDropOptions = {
   },
 };
 
+const getDefaultDropTarget = () => {
+  const selectedPage = selectedPageStore.get();
+  if (selectedPage === undefined) {
+    throw new Error("Could not find selected page");
+  }
+  const rootInstanceSelector = [selectedPage.rootInstanceId];
+  const element = getElementByInstanceSelector(rootInstanceSelector);
+  // Should never happen
+  if (element === undefined) {
+    throw new Error("Could not find root instance element");
+  }
+  return { element, data: rootInstanceSelector };
+};
+
 export const useDragAndDrop = () => {
-  const [rootInstance] = useRootInstance();
   const [textEditingInstanceId] = useTextEditingInstanceId();
 
   const state = useRef({ ...initialState });
 
   const autoScrollHandlers = useAutoScroll({ fullscreen: true });
-
-  const getDefaultDropTarget = () => {
-    const element = rootInstance && getInstanceElementById(rootInstance.id);
-
-    // Should never happen
-    if (!element || !rootInstance) {
-      throw new Error("Could not find root instance element");
-    }
-
-    return { element, data: [rootInstance.id] };
-  };
 
   const dropHandlers = useDrop<InstanceSelector>({
     ...sharedDropOptions,
@@ -134,11 +135,7 @@ export const useDragAndDrop = () => {
     swapDropTarget(dropTarget) {
       const { dragPayload } = state.current;
 
-      if (
-        dropTarget === undefined ||
-        dragPayload === undefined ||
-        rootInstance === undefined
-      ) {
+      if (dropTarget === undefined || dragPayload === undefined) {
         return getDefaultDropTarget();
       }
 

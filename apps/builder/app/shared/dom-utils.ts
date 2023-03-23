@@ -2,10 +2,6 @@ import type { Instance } from "@webstudio-is/project-build";
 import { idAttribute } from "@webstudio-is/react-sdk";
 import type { InstanceSelector } from "./tree-utils";
 
-export const getInstanceElementById = (id: Instance["id"]) => {
-  return document.querySelector(`[${idAttribute}="${id}"]`);
-};
-
 export const getInstanceIdFromElement = (
   element: Element
 ): Instance["id"] | undefined => {
