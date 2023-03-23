@@ -42,6 +42,7 @@ const AsInput = ({
             localValue.save();
           }
         }}
+        // @todo: this width is correct, but TextField adds padding
         css={{ width: theme.spacing[22] }}
       />
     </HorizontalLayout>

@@ -48,6 +48,7 @@ export const NumberControl = ({
             localValue.save();
           }
         }}
+        // @todo: this width is correct, but TextField adds padding
         css={{ width: theme.spacing[21] }}
       />
     </HorizontalLayout>
