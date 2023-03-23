@@ -81,18 +81,18 @@ export const CollapsibleSectionBase = ({
 );
 
 export type CollapsibleSectionProps = Prettify<
-  Omit<CollapsibleSectionBaseProps, "isOpen" | "onOpenChange"> &
+  Omit<CollapsibleSectionBaseProps, "isOpen" | "onOpenChange" | "fullWidth"> &
     UseOpenStateProps & { categoryProps: RenderCategoryProps }
 >;
 
 export const CollapsibleSection = (props: CollapsibleSectionProps) => {
-  const { label, trigger, children, fullWidth } = props;
+  const { label, trigger, children } = props;
   const [isOpen, setIsOpen] = useOpenState(props);
   return (
     <CollapsibleSectionBase
       label={label}
       trigger={trigger}
-      fullWidth={fullWidth}
+      fullWidth={false}
       isOpen={isOpen}
       onOpenChange={setIsOpen}
     >
@@ -114,7 +114,7 @@ export const CollapsibleSectionWithAddButton = ({
    */
   hasItems?: boolean | ComponentProps<typeof SectionTitle>["dots"];
 }) => {
-  const { label, children, fullWidth } = props;
+  const { label, children } = props;
   const [isOpen, setIsOpen] = useOpenState(props);
 
   const isEmpty =
@@ -126,7 +126,7 @@ export const CollapsibleSectionWithAddButton = ({
   return (
     <CollapsibleSectionBase
       label={label}
-      fullWidth={fullWidth}
+      fullWidth={false}
       isOpen={isOpenFinal}
       onOpenChange={(nextIsOpen) => {
         setIsOpen(nextIsOpen);

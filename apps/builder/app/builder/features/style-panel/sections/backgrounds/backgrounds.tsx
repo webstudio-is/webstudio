@@ -128,7 +128,7 @@ const Layer = (props: {
 export const BackgroundsCollapsibleSection = (
   props: CollapsibleSectionProps
 ) => {
-  const { label, children, fullWidth } = props;
+  const { label, children } = props;
   const [isOpen, setIsOpen] = useOpenState(props);
 
   const layersStyleSource = getLayersStyleSource(
@@ -143,7 +143,7 @@ export const BackgroundsCollapsibleSection = (
   return (
     <CollapsibleSectionBase
       label={label}
-      fullWidth={fullWidth}
+      fullWidth
       isOpen={isOpen}
       onOpenChange={(nextIsOpen) => {
         setIsOpen(nextIsOpen);

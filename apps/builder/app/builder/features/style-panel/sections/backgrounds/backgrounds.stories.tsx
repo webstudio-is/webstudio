@@ -111,7 +111,6 @@ export const BackgroundsCollapsible = () => {
   return (
     <Panel>
       <BackgroundsCollapsibleSection
-        fullWidth
         label="Backgrounds"
         categoryProps={{
           currentStyle: styleInfo,
