@@ -180,7 +180,6 @@ export const BackgroundsCollapsibleSection = (
               </SectionTitleLabel>
             }
             onReset={(event) => {
-              // Reset all layers
               const { createBatchUpdate } = props.categoryProps;
               deleteLayers(createBatchUpdate);
               // Prevent the section from closing when the reset button is clicked.
