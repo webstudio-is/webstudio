@@ -6,6 +6,10 @@ import {
   CssValueListItem,
   Flex,
   Grid,
+  Label,
+  SectionTitle,
+  SectionTitleButton,
+  SectionTitleLabel,
   SmallIconButton,
   theme,
 } from "@webstudio-is/design-system";
@@ -14,6 +18,7 @@ import {
   EyeconOpenIcon,
   EyeconClosedIcon,
   SubtractIcon,
+  PlusIcon,
 } from "@webstudio-is/icons";
 import { PropertyName } from "../../shared/property-name";
 import type { StyleInfo } from "../../shared/style-info";
@@ -35,6 +40,11 @@ import { getLayerName, LayerThumbnail } from "./background-thumbnail";
 import { useSortable } from "./use-sortable";
 import { useMemo } from "react";
 import type { RgbValue } from "@webstudio-is/css-data";
+import {
+  CollapsibleSectionBase,
+  CollapsibleSectionProps,
+  useOpenState,
+} from "~/builder/shared/inspector/collapsible-section";
 
 const Layer = (props: {
   id: string;
@@ -84,12 +94,9 @@ const Layer = (props: {
         active={props.isHighlighted}
         data-id={props.id}
         label={
-          <PropertyName
-            style={props.layerStyle}
-            property={layeredBackgroundProps}
-            label={getLayerName(props.layerStyle)}
-            onReset={props.deleteLayer}
-          />
+          <Label truncate onReset={props.deleteLayer}>
+            {getLayerName(props.layerStyle)}
+          </Label>
         }
         thumbnail={<LayerThumbnail layerStyle={props.layerStyle} />}
         hidden={isHidden}
@@ -114,6 +121,75 @@ const Layer = (props: {
         }
       />
     </FloatingPanel>
+  );
+};
+
+export const BackgroundsCollapsibleSection = (
+  props: CollapsibleSectionProps
+) => {
+  const { label, children, fullWidth } = props;
+  const [isOpen, setIsOpen] = useOpenState(props);
+
+  const hasItems: ("local" | "remote")[] = [];
+
+  const isEmpty = false;
+
+  // If it's open but empty, we want it to look as closed
+  const isOpenFinal = isOpen && isEmpty === false;
+
+  const onAdd = () => {
+    /* @todo */
+  };
+
+  return (
+    <CollapsibleSectionBase
+      label={label}
+      fullWidth={fullWidth}
+      isOpen={isOpenFinal}
+      onOpenChange={(nextIsOpen) => {
+        setIsOpen(nextIsOpen);
+        if (isEmpty) {
+          onAdd?.();
+        }
+      }}
+      trigger={
+        <SectionTitle
+          dots={Array.isArray(hasItems) ? hasItems : []}
+          suffix={
+            <SectionTitleButton
+              prefix={<PlusIcon />}
+              onClick={() => {
+                if (isOpenFinal === false) {
+                  setIsOpen(true);
+                }
+                onAdd();
+              }}
+            />
+          }
+        >
+          <PropertyName
+            style={props.categoryProps.currentStyle}
+            property={layeredBackgroundProps}
+            label={
+              <SectionTitleLabel
+                color="local"
+                onClick={(event) => {
+                  // @todo add comment
+                  event.stopPropagation();
+                }}
+              >
+                {props.label}
+              </SectionTitleLabel>
+            }
+            onReset={() => {
+              // @todo reset
+            }}
+          />
+        </SectionTitle>
+      }
+    >
+      {children}
+    </CollapsibleSectionBase>
   );
 };
 

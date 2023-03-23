@@ -81,13 +81,13 @@ const StyledLabel = styled("label", {
   },
 });
 
-type Props = ComponentProps<typeof StyledLabel> & {
+type Props = {
   color?: (typeof labelColors)[number];
   sectionTitle?: boolean;
   disabled?: boolean;
   truncate?: boolean;
   children: ReactNode;
-};
+} & ComponentProps<typeof StyledLabel>;
 
 export const Label = forwardRef((props: Props, ref: Ref<HTMLLabelElement>) => {
   const { disabled, children, ...rest } = props;

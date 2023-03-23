@@ -9,7 +9,11 @@ import {
   styleConfigByName,
 } from "./shared/configs";
 import { CollapsibleSection } from "~/builder/shared/collapsible-section";
-import { renderCategory, shouldRenderCategory } from "./style-sections";
+import {
+  renderCategory,
+  shouldRenderCategory,
+  sections,
+} from "./style-sections";
 import { dependencies } from "./shared/dependencies";
 import type { SetProperty, CreateBatchUpdate } from "./shared/use-style-data";
 import type { StyleInfo } from "./shared/style-info";
@@ -175,15 +179,19 @@ export const StyleSettings = ({
     };
 
     if (shouldRenderCategory(categoryProps, parentStyle)) {
+      const Section =
+        sections[category].collapsibleSection ?? CollapsibleSection;
+
       all.push(
-        <CollapsibleSection
+        <Section
           isOpen={isSearchMode ? true : undefined}
           label={categories[category].label}
           key={category}
           fullWidth={category === "backgrounds"}
+          categoryProps={categoryProps}
         >
           <>{renderCategory(categoryProps)}</>
-        </CollapsibleSection>
+        </Section>
       );
     }
   }

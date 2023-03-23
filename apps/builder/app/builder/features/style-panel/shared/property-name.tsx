@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { type ReactElement, useState } from "react";
 import { useStore } from "@nanostores/react";
 import { isFeatureEnabled } from "@webstudio-is/feature-flags";
 import type { StyleProperty } from "@webstudio-is/css-data";
@@ -123,7 +123,7 @@ const PropertyPopoverContent = ({
 type PropertyNameProps = {
   style: StyleInfo;
   property: StyleProperty | StyleProperty[];
-  label: string;
+  label: string | ReactElement;
   onReset: () => void;
 };
 
@@ -142,13 +142,16 @@ export const PropertyName = ({
     isFeatureEnabled("propertyReset") &&
     (styleSource === "local" || styleSource === "remote");
 
-  const labelElement = (
-    <Flex shrink>
-      <Label color={styleSource} truncate>
-        {label}
-      </Label>
-    </Flex>
-  );
+  const labelElement =
+    typeof label === "string" ? (
+      <Flex shrink>
+        <Label color={styleSource} truncate>
+          {label}
+        </Label>
+      </Flex>
+    ) : (
+      label
+    );
 
   if (isPopoverEnabled) {
     return (

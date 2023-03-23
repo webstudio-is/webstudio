@@ -23,7 +23,9 @@ import {
   BordersSection,
   EffectsSection,
   OtherSection,
+  BackgroundsCollapsibleSection,
 } from "./sections";
+import type { CollapsibleSection } from "~/builder/shared/inspector/collapsible-section";
 
 export type ControlProps = {
   property: StyleProperty;
@@ -93,7 +95,7 @@ export const renderCategory = ({
   styleConfigsByCategory,
   moreStyleConfigsByCategory,
 }: RenderCategoryProps) => {
-  const Section = sections[category];
+  const Section = sections[category].section;
   return (
     <Section
       setProperty={setProperty}
@@ -121,18 +123,24 @@ export const shouldRenderCategory = (
   return true;
 };
 
-const sections: {
-  [Property in Category]: (props: RenderCategoryProps) => JSX.Element | null;
+export const sections: {
+  [Property in Category]: {
+    collapsibleSection?: typeof CollapsibleSection;
+    section: (props: RenderCategoryProps) => JSX.Element | null;
+  };
 } = {
-  layout: LayoutSection,
-  flexChild: FlexChildSection,
-  gridChild: GridChildSection,
-  space: SpaceSection,
-  size: SizeSection,
-  position: PositionSection,
-  typography: TypographySection,
-  backgrounds: BackgroundsSection,
-  borders: BordersSection,
-  effects: EffectsSection,
-  other: OtherSection,
+  layout: { section: LayoutSection },
+  flexChild: { section: FlexChildSection },
+  gridChild: { section: GridChildSection },
+  space: { section: SpaceSection },
+  size: { section: SizeSection },
+  position: { section: PositionSection },
+  typography: { section: TypographySection },
+  backgrounds: {
+    section: BackgroundsSection,
+    collapsibleSection: BackgroundsCollapsibleSection,
+  },
+  borders: { section: BordersSection },
+  effects: { section: EffectsSection },
+  other: { section: OtherSection },
 };
