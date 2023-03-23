@@ -430,7 +430,6 @@ export const useTextEditingInstanceId = () =>
 
 export type DragAndDropState = {
   isDragging: boolean;
-  origin?: "canvas" | "panel";
   dropTarget?: ItemDropTarget;
   dragPayload?: DragStartPayload;
   placementIndicator?: Placement;

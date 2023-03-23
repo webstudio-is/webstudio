@@ -67,7 +67,8 @@ export const SidebarLeft = ({ publish }: SidebarLeftProps) => {
             // We need the node to be rendered but hidden
             // to keep receiving the drag events.
             visibility:
-              dragAndDropState.isDragging && dragAndDropState.origin === "panel"
+              dragAndDropState.isDragging &&
+              dragAndDropState.dragPayload?.origin === "panel"
                 ? "hidden"
                 : "visible",
           }}

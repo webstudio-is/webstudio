@@ -126,6 +126,7 @@ export const TabContent = ({ publish, onSetActiveTab }: TabContentProps) => {
       publish({
         type: "dragStart",
         payload: {
+          origin: "panel",
           type: "insert",
           dragComponent: componentName,
         },
