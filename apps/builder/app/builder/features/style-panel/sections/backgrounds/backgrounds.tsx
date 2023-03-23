@@ -34,6 +34,7 @@ import {
   deleteLayerProperty,
   swapLayers,
   getLayersStyleSource,
+  deleteLayers,
 } from "./background-layers";
 import { BackgroundContent } from "./background-content";
 import { getLayerName, LayerThumbnail } from "./background-thumbnail";
@@ -154,11 +155,8 @@ export const BackgroundsCollapsibleSection = (
             <SectionTitleButton
               prefix={<PlusIcon />}
               onClick={() => {
-                if (isOpen) {
-                  const { currentStyle, createBatchUpdate } =
-                    props.categoryProps;
-                  addLayer(currentStyle, createBatchUpdate);
-                }
+                const { currentStyle, createBatchUpdate } = props.categoryProps;
+                addLayer(currentStyle, createBatchUpdate);
 
                 setIsOpen(true);
               }}
@@ -183,7 +181,8 @@ export const BackgroundsCollapsibleSection = (
             }
             onReset={(event) => {
               // Reset all layers
-              // @todo
+              const { createBatchUpdate } = props.categoryProps;
+              deleteLayers(createBatchUpdate);
               // Prevent the section from closing when the reset button is clicked.
               event.preventDefault();
             }}

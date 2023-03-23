@@ -160,6 +160,14 @@ export const getLayersStyleSource = (style: StyleInfo) => {
   return getStyleSource(...layeredBackgroundProps.map((prop) => style[prop]));
 };
 
+export const deleteLayers = (createBatchUpdate: CreateBatchUpdate) => {
+  const batch = createBatchUpdate();
+  for (const property of layeredBackgroundProps) {
+    batch.deleteProperty(property);
+  }
+  batch.publish();
+};
+
 const isLayerStylesRecord = (value: {
   [property in LayeredBackgroundProperty]?: LayersValue;
 }): value is Record<LayeredBackgroundProperty, LayersValue> => {
