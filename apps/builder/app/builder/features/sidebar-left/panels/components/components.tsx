@@ -1,4 +1,4 @@
-import { type MouseEventHandler, useState } from "react";
+import { useState } from "react";
 import { useStore } from "@nanostores/react";
 import { createPortal } from "react-dom";
 import type { Instance } from "@webstudio-is/project-build";
@@ -7,7 +7,13 @@ import {
   getComponentMeta,
   getComponentNames,
 } from "@webstudio-is/react-sdk";
-import { theme, Flex, useDrag, type Point } from "@webstudio-is/design-system";
+import {
+  theme,
+  Flex,
+  useDrag,
+  type Point,
+  ComponentCard,
+} from "@webstudio-is/design-system";
 import { PlusIcon } from "@webstudio-is/icons";
 import { findClosestDroppableTarget } from "~/shared/tree-utils";
 import {
@@ -23,22 +29,6 @@ import { insertNewComponentInstance } from "~/shared/instance-utils";
 import { zoomStore } from "~/shared/nano-states/breakpoints";
 import type { TabName } from "../../types";
 import { Header, CloseButton } from "../../header";
-import { ComponentThumb } from "./component-thumb";
-
-type DraggableThumbProps = {
-  onClick: MouseEventHandler<HTMLDivElement>;
-  component: Instance["component"];
-};
-
-const DraggableThumb = ({ component, onClick }: DraggableThumbProps) => {
-  return (
-    <ComponentThumb
-      data-drag-component={component}
-      component={component}
-      onClick={onClick}
-    />
-  );
-};
 
 const DragLayer = ({
   component,
@@ -47,24 +37,25 @@ const DragLayer = ({
   component: Instance["component"];
   point: Point;
 }) => {
+  const meta = getComponentMeta(component);
+  if (meta === undefined) {
+    return null;
+  }
+
   return createPortal(
     <Flex
+      // Container is used to position card
       css={{
         position: "absolute",
-        pointerEvents: "none",
-        zIndex: 1,
-        left: 0,
-        top: 0,
-        width: "100%",
-        height: "100%",
+        inset: 0,
       }}
     >
-      <ComponentThumb
-        component={component}
+      <ComponentCard
+        label={meta.label}
+        icon={<meta.Icon />}
         style={{
           transform: `translate3d(${point.x}px, ${point.y}px, 0)`,
         }}
-        state="dragging"
       />
     </Flex>,
     document.body
@@ -91,30 +82,33 @@ const elementToComponentName = (
   return listedComponentNames.find((component) => component === dragComponent);
 };
 
+const listedComponentNames = getComponentNames().filter((name) => {
+  const meta = getComponentMeta(name);
+  return (
+    meta?.type === "container" ||
+    meta?.type === "control" ||
+    meta?.type === "embed" ||
+    meta?.type === "rich-text"
+  );
+});
+
+const toCanvasCoordinates = (
+  { x, y }: Point,
+  zoom: number,
+  canvasRect?: DOMRect
+) => {
+  if (canvasRect === undefined) {
+    return { x: 0, y: 0 };
+  }
+  const scale = zoom / 100;
+  return { x: (x - canvasRect.x) / scale, y: (y - canvasRect.y) / scale };
+};
+
 export const TabContent = ({ publish, onSetActiveTab }: TabContentProps) => {
   const [dragComponent, setDragComponent] = useState<Instance["component"]>();
   const [point, setPoint] = useState<Point>({ x: 0, y: 0 });
-
   const [canvasRect] = useCanvasRect();
   const zoom = useStore(zoomStore);
-
-  const toCanvasCoordinates = ({ x, y }: Point) => {
-    if (canvasRect === undefined) {
-      return { x: 0, y: 0 };
-    }
-    const scale = zoom / 100;
-    return { x: (x - canvasRect.x) / scale, y: (y - canvasRect.y) / scale };
-  };
-
-  const listedComponentNames = getComponentNames().filter((name) => {
-    const meta = getComponentMeta(name);
-    return (
-      meta?.type === "container" ||
-      meta?.type === "control" ||
-      meta?.type === "embed" ||
-      meta?.type === "rich-text"
-    );
-  });
 
   const useDragHandlers = useDrag<Instance["component"]>({
     elementToData(element) {
@@ -142,7 +136,9 @@ export const TabContent = ({ publish, onSetActiveTab }: TabContentProps) => {
       setPoint(point);
       publish({
         type: "dragMove",
-        payload: { canvasCoordinates: toCanvasCoordinates(point) },
+        payload: {
+          canvasCoordinates: toCanvasCoordinates(point, zoom, canvasRect),
+        },
       });
     },
     onEnd({ isCanceled }) {
@@ -171,21 +167,29 @@ export const TabContent = ({ publish, onSetActiveTab }: TabContentProps) => {
         css={{ padding: theme.spacing[3], overflow: "auto" }}
         ref={useDragHandlers.rootRef}
       >
-        {listedComponentNames.map((component: Instance["component"]) => (
-          <DraggableThumb
-            key={component}
-            component={component}
-            onClick={() => {
-              onSetActiveTab("none");
-              const dropTarget = findClosestDroppableTarget(
-                instancesIndexStore.get(),
-                // @todo accept instance Selector
-                selectedInstanceSelectorStore.get()?.[0]
-              );
-              insertNewComponentInstance(component, dropTarget);
-            }}
-          />
-        ))}
+        {listedComponentNames.map((component: Instance["component"]) => {
+          const meta = getComponentMeta(component);
+          if (meta === undefined) {
+            return null;
+          }
+          return (
+            <ComponentCard
+              onClick={() => {
+                onSetActiveTab("none");
+                const dropTarget = findClosestDroppableTarget(
+                  instancesIndexStore.get(),
+                  // @todo accept instance Selector
+                  selectedInstanceSelectorStore.get()?.[0]
+                );
+                insertNewComponentInstance(component, dropTarget);
+              }}
+              data-drag-component={component}
+              label={meta.label}
+              icon={<meta.Icon />}
+              key={component}
+            />
+          );
+        })}
         {dragComponent && <DragLayer component={dragComponent} point={point} />}
       </Flex>
     </Flex>
