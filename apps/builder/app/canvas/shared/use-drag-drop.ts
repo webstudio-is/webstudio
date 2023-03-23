@@ -41,9 +41,15 @@ declare module "~/shared/pubsub" {
   }
 }
 
+type Origin = "canvas" | "panel";
+
 export type DragStartPayload =
-  | { type: "insert"; dragComponent: Instance["component"] }
-  | { type: "reparent"; dragInstanceSelector: InstanceSelector };
+  | { origin: Origin; type: "insert"; dragComponent: Instance["component"] }
+  | {
+      origin: Origin;
+      type: "reparent";
+      dragInstanceSelector: InstanceSelector;
+    };
 
 export type DragEndPayload = {
   isCanceled: boolean;
@@ -221,6 +227,7 @@ export const useDragAndDrop = () => {
         type: "dragStart",
         payload: {
           type: "reparent",
+          origin: "canvas",
           dragInstanceSelector,
         },
       });

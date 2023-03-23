@@ -48,7 +48,11 @@ export const NavigatorTree = () => {
       onDragItemChange={(dragInstanceSelector) => {
         setState({
           ...state,
-          dragPayload: { type: "reparent", dragInstanceSelector },
+          dragPayload: {
+            origin: "panel",
+            type: "reparent",
+            dragInstanceSelector,
+          },
         });
       }}
       onDropTargetChange={(dropTarget) => {
