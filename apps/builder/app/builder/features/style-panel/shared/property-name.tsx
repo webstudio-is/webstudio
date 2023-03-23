@@ -30,7 +30,7 @@ const PropertyPopoverContent = ({
   properties: StyleProperty[];
   style: StyleInfo;
   styleSource: StyleSource;
-  onReset: () => void;
+  onReset: React.MouseEventHandler<HTMLButtonElement>;
 }) => {
   const [breakpoints] = useBreakpoints();
   const instances = useStore(instancesStore);
@@ -124,7 +124,7 @@ type PropertyNameProps = {
   style: StyleInfo;
   property: StyleProperty | StyleProperty[];
   label: string | ReactElement;
-  onReset: () => void;
+  onReset: React.MouseEventHandler<HTMLButtonElement>;
 };
 
 export const PropertyName = ({

@@ -1,5 +1,6 @@
 import type { LayersValue } from "@webstudio-is/css-data";
 import { styled, theme } from "@webstudio-is/design-system";
+import { setEnv } from "@webstudio-is/feature-flags";
 import { useRef, useState } from "react";
 import type { StyleInfo } from "../../shared/style-info";
 import type {
@@ -7,7 +8,12 @@ import type {
   DeleteProperty,
   SetProperty,
 } from "../../shared/use-style-data";
-import { BackgroundsSection } from "./backgrounds";
+import {
+  BackgroundsSection,
+  BackgroundsCollapsibleSection,
+} from "./backgrounds";
+
+setEnv("*");
 
 const backgroundImageStyle: LayersValue = {
   type: "layers",
@@ -27,18 +33,11 @@ const backgroundImageStyle: LayersValue = {
   ],
 };
 
-const styleInfoInitial: StyleInfo = {
-  backgroundImage: {
-    value: backgroundImageStyle,
-    local: backgroundImageStyle,
-  },
-};
-
 const Panel = styled("div", {
   width: theme.spacing[30],
 });
 
-export const Backgrounds = () => {
+const useStyleInfo = (styleInfoInitial: StyleInfo) => {
   const [styleInfo, setStyleInfo] = useState(() => styleInfoInitial);
 
   const setProperty: SetProperty = (name) => (value, options) => {
@@ -93,6 +92,59 @@ export const Backgrounds = () => {
       execCommands.current = [];
     },
   });
+
+  return { styleInfo, setProperty, deleteProperty, createBatchUpdate };
+};
+
+export const BackgroundsCollapsible = () => {
+  const { styleInfo, setProperty, deleteProperty, createBatchUpdate } =
+    useStyleInfo({
+      backgroundImage: {
+        cascaded: {
+          value: backgroundImageStyle,
+          breakpointId: "mobile",
+        },
+        value: backgroundImageStyle,
+      },
+    });
+
+  return (
+    <Panel>
+      <BackgroundsCollapsibleSection
+        fullWidth
+        label="Backgrounds"
+        categoryProps={{
+          currentStyle: styleInfo,
+          setProperty,
+          deleteProperty,
+          createBatchUpdate,
+          category: "backgrounds",
+          styleConfigsByCategory: [],
+          moreStyleConfigsByCategory: [],
+        }}
+      >
+        <BackgroundsSection
+          currentStyle={styleInfo}
+          setProperty={setProperty}
+          deleteProperty={deleteProperty}
+          createBatchUpdate={createBatchUpdate}
+          category={"backgrounds"}
+          styleConfigsByCategory={[]}
+          moreStyleConfigsByCategory={[]}
+        />
+      </BackgroundsCollapsibleSection>
+    </Panel>
+  );
+};
+
+export const Backgrounds = () => {
+  const { styleInfo, setProperty, deleteProperty, createBatchUpdate } =
+    useStyleInfo({
+      backgroundImage: {
+        value: backgroundImageStyle,
+        local: backgroundImageStyle,
+      },
+    });
 
   return (
     <Panel>

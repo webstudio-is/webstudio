@@ -34,6 +34,7 @@ import {
   getLayerBackgroundStyleInfo,
   deleteLayerProperty,
   swapLayers,
+  getLayersStyleSource,
 } from "./background-layers";
 import { BackgroundContent } from "./background-content";
 import { getLayerName, LayerThumbnail } from "./background-thumbnail";
@@ -130,39 +131,37 @@ export const BackgroundsCollapsibleSection = (
   const { label, children, fullWidth } = props;
   const [isOpen, setIsOpen] = useOpenState(props);
 
-  const hasItems: ("local" | "remote")[] = [];
+  const layersStyleSource = getLayersStyleSource(
+    props.categoryProps.currentStyle
+  );
+  const dots: ("local" | "remote")[] = [];
 
-  const isEmpty = false;
-
-  // If it's open but empty, we want it to look as closed
-  const isOpenFinal = isOpen && isEmpty === false;
-
-  const onAdd = () => {
-    /* @todo */
-  };
+  if (layersStyleSource === "local" || layersStyleSource === "remote") {
+    dots.push(layersStyleSource);
+  }
 
   return (
     <CollapsibleSectionBase
       label={label}
       fullWidth={fullWidth}
-      isOpen={isOpenFinal}
+      isOpen={isOpen}
       onOpenChange={(nextIsOpen) => {
         setIsOpen(nextIsOpen);
-        if (isEmpty) {
-          onAdd?.();
-        }
       }}
       trigger={
         <SectionTitle
-          dots={Array.isArray(hasItems) ? hasItems : []}
+          dots={dots}
           suffix={
             <SectionTitleButton
               prefix={<PlusIcon />}
               onClick={() => {
-                if (isOpenFinal === false) {
-                  setIsOpen(true);
+                if (isOpen) {
+                  const { currentStyle, createBatchUpdate } =
+                    props.categoryProps;
+                  addLayer(currentStyle, createBatchUpdate);
                 }
-                onAdd();
+
+                setIsOpen(true);
               }}
             />
           }
@@ -172,17 +171,22 @@ export const BackgroundsCollapsibleSection = (
             property={layeredBackgroundProps}
             label={
               <SectionTitleLabel
-                color="local"
+                color={layersStyleSource}
                 onClick={(event) => {
-                  // @todo add comment
+                  // This code ensures that the onReset callback from PropertyName is triggered without closing the section.
+                  // To achieve this, stopPropagation is used instead of preventDefault.
+                  // Using preventDefault would prevent the Reset trigger from being triggered as well.
                   event.stopPropagation();
                 }}
               >
                 {props.label}
               </SectionTitleLabel>
             }
-            onReset={() => {
-              // @todo reset
+            onReset={(event) => {
+              // Reset all layers
+              // @todo
+              // Prevent the section from closing when the reset button is clicked.
+              event.preventDefault();
             }}
           />
         </SectionTitle>

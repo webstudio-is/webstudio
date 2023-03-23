@@ -1,5 +1,9 @@
 import type { LayersValue, StyleValue } from "@webstudio-is/css-data";
-import type { StyleInfo, StyleValueInfo } from "../../shared/style-info";
+import {
+  getStyleSource,
+  StyleInfo,
+  StyleValueInfo,
+} from "../../shared/style-info";
 import type {
   CreateBatchUpdate,
   DeleteProperty,
@@ -150,6 +154,10 @@ const getLayersValue = (styleValue?: StyleValueInfo) => {
     return clonedStyleValue?.cascaded?.value;
   }
   return { type: "layers" as const, value: [] };
+};
+
+export const getLayersStyleSource = (style: StyleInfo) => {
+  return getStyleSource(...layeredBackgroundProps.map((prop) => style[prop]));
 };
 
 const isLayerStylesRecord = (value: {
