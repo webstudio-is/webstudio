@@ -63,3 +63,5 @@ export const usePropAsset = (instanceId: Instance["id"], name: string) => {
   const asset = useStore(assetStore);
   return asset;
 };
+
+// @todo: handle "page" similarlly to "asset" above

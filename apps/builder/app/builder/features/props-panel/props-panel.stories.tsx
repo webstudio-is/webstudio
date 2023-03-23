@@ -2,11 +2,30 @@ import { useState } from "react";
 import { ButtonIcon } from "@webstudio-is/icons";
 import { PropsPanel } from "./props-panel";
 import { usePropsLogic } from "./use-props-logic";
+import { pagesStore } from "~/shared/nano-states";
 import type { Prop } from "@webstudio-is/project-build";
 import type {
   WsComponentMeta,
   WsComponentPropsMeta,
 } from "@webstudio-is/react-sdk";
+
+const page = (name: string, path: string) => ({
+  id: Math.random().toString(),
+  name,
+  title: name,
+  path,
+  meta: {},
+  rootInstanceId: "1",
+});
+
+pagesStore.set({
+  homePage: page("Home", "/"),
+  pages: [
+    page("About", "/about"),
+    page("Pricing", "/pricing"),
+    page("Contacts", "/contacts"),
+  ],
+});
 
 type PropMeta = WsComponentPropsMeta["props"][string];
 
@@ -42,6 +61,13 @@ const booleanProp = (label?: string): PropMeta => ({
 const colorProp = (label?: string): PropMeta => ({
   type: "string",
   control: "color",
+  required: false,
+  label,
+});
+
+const urlProp = (label?: string): PropMeta => ({
+  type: "string",
+  control: "url",
   required: false,
   label,
 });
@@ -126,6 +152,7 @@ const componentPropsMeta: WsComponentPropsMeta = {
     initialCheck: checkProp(),
     initialInlineCheck: inlineCheckProp(),
     initialMultiSelect: multiSelectProp(),
+    initialUrl: urlProp(),
     addedText: textProp(),
     addedShortText: shortTextProp(),
     addedNumber: numberProp(),
@@ -137,6 +164,8 @@ const componentPropsMeta: WsComponentPropsMeta = {
     addedCheck: checkProp(),
     addedInlineCheck: inlineCheckProp(),
     addedMultiSelect: multiSelectProp(),
+    addedUrlUrl: urlProp("Added URL (URL)"),
+    addedUrlPage: urlProp("Added URL (Page)"),
     availableText: textProp(),
     availableShortText: shortTextProp(),
     availableNumber: numberProp(),
@@ -148,6 +177,7 @@ const componentPropsMeta: WsComponentPropsMeta = {
     availableCheck: checkProp(),
     availableInlineCheck: inlineCheckProp(),
     availableMultiSelect: multiSelectProp(),
+    availableUrl: urlProp(),
   },
   initialProps: [
     "initialText",
@@ -161,6 +191,7 @@ const componentPropsMeta: WsComponentPropsMeta = {
     "initialCheck",
     "initialInlineCheck",
     "initialMultiSelect",
+    "initialUrl",
   ],
 };
 
@@ -241,6 +272,20 @@ const startingProps: Prop[] = [
     name: "addedMultiSelect",
     type: "string[]",
     value: ["one", "two"],
+  },
+  {
+    id: "11",
+    instanceId,
+    name: "addedUrlUrl",
+    type: "string",
+    value: "https://example.com",
+  },
+  {
+    id: "11",
+    instanceId,
+    name: "addedUrlPage",
+    type: "page",
+    value: pagesStore.get()?.pages[0].id ?? "",
   },
 ];
 
