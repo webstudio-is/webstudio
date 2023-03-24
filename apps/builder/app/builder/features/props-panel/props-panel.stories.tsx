@@ -208,14 +208,14 @@ const startingProps: Prop[] = [
     value: ["one", "two"],
   },
   {
-    id: "11",
+    id: "9",
     instanceId,
     name: "addedUrlUrl",
     type: "string",
     value: "https://example.com",
   },
   {
-    id: "11",
+    id: "10",
     instanceId,
     name: "addedUrlPage",
     type: "page",
