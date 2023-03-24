@@ -4,7 +4,7 @@ import { Scripts, ScrollRestoration } from "@remix-run/react";
 import type { Instance } from "@webstudio-is/project-build";
 import type { GetComponent } from "../components/components-utils";
 import { ReactSdkContext } from "../context";
-import type { Assets, PropsByInstanceId } from "../props";
+import type { Assets, Pages, PropsByInstanceId } from "../props";
 import type { WebstudioComponent } from "./webstudio-component";
 import { SessionStoragePolyfill } from "./session-storage-polyfill";
 
@@ -13,6 +13,7 @@ export const createElementsTree = ({
   instance,
   propsByInstanceIdStore,
   assetsStore,
+  pagesStore,
   Component,
   getComponent,
 }: {
@@ -20,6 +21,7 @@ export const createElementsTree = ({
   instance: Instance;
   propsByInstanceIdStore: ReadableAtom<PropsByInstanceId>;
   assetsStore: ReadableAtom<Assets>;
+  pagesStore: ReadableAtom<Pages>;
   Component: (props: ComponentProps<typeof WebstudioComponent>) => JSX.Element;
   getComponent: GetComponent;
 }) => {
@@ -42,7 +44,9 @@ export const createElementsTree = ({
     getComponent,
   });
   return (
-    <ReactSdkContext.Provider value={{ propsByInstanceIdStore, assetsStore }}>
+    <ReactSdkContext.Provider
+      value={{ propsByInstanceIdStore, assetsStore, pagesStore }}
+    >
       {body}
     </ReactSdkContext.Provider>
   );
