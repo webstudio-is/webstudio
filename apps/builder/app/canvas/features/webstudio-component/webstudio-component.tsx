@@ -7,6 +7,7 @@ import {
   type Instance,
   type Prop,
   findTreeInstanceIds,
+  Instances,
 } from "@webstudio-is/project-build";
 import {
   renderWebstudioComponentChildren,
@@ -22,8 +23,11 @@ import {
   useTextEditingInstanceId,
 } from "~/shared/nano-states";
 import { useCssRules } from "~/canvas/shared/styles";
+import {
+  areInstanceSelectorsEqual,
+  InstanceSelector,
+} from "~/shared/tree-utils";
 import { SelectedInstanceConnector } from "./selected-instance-connector";
-import { getInstanceSelector } from "~/shared/tree-utils";
 import { handleLinkClick } from "./link";
 
 const TextEditor = lazy(() => import("../text-editor"));
@@ -51,14 +55,47 @@ const ContentEditable = ({
 
 type UserProps = Record<Prop["name"], Prop["value"]>;
 
+// this utility is temporary solution to compute instance selectors
+// for rich text subtree which cannot have slots so its safe to traverse ancestors
+// until editor instance is reached
+//
+// once all lexical formats are replaced with elmenents it should be
+// straightforward to compute selectors from lexical tree
+const getInstanceSelector = (
+  instances: Instances,
+  rootInstanceSelector: InstanceSelector,
+  instanceId: Instance["id"]
+) => {
+  const parentInstancesById = new Map<Instance["id"], Instance["id"]>();
+  for (const instance of instances.values()) {
+    for (const child of instance.children) {
+      if (child.type === "id") {
+        parentInstancesById.set(child.value, instance.id);
+      }
+    }
+  }
+  const selector: InstanceSelector = [];
+  let currentInstanceId: undefined | Instance["id"] = instanceId;
+  while (currentInstanceId) {
+    selector.push(currentInstanceId);
+    currentInstanceId = parentInstancesById.get(currentInstanceId);
+    if (currentInstanceId === rootInstanceSelector[0]) {
+      return [...selector, ...rootInstanceSelector];
+    }
+  }
+  return undefined;
+};
+
 type WebstudioComponentDevProps = {
   instance: Instance;
+  instanceSelector: InstanceSelector;
   children: Array<JSX.Element | string>;
   getComponent: GetComponent;
 };
 
 export const WebstudioComponentDev = ({
   instance,
+  instanceSelector,
   children,
   getComponent,
 }: WebstudioComponentDevProps) => {
@@ -86,8 +123,10 @@ export const WebstudioComponentDev = ({
     return result;
   }, [instanceProps]);
 
-  // @todo compare instance selectors
-  const isSelected = selectedInstanceSelector?.[0] === instanceId;
+  const isSelected = areInstanceSelectorsEqual(
+    selectedInstanceSelector,
+    instanceSelector
+  );
 
   // Scroll the selected instance into view when selected from navigator.
   useEffect(() => {
@@ -146,6 +185,7 @@ export const WebstudioComponentDev = ({
     </>
   );
 
+  // @todo compare instance selectors
   if (editingInstanceId !== instance.id) {
     return instanceElement;
   }
@@ -153,7 +193,7 @@ export const WebstudioComponentDev = ({
   return (
     <Suspense fallback={instanceElement}>
       <TextEditor
-        rootInstanceId={instance.id}
+        rootInstanceSelector={instanceSelector}
         instances={instances}
         contentEditable={
           <ContentEditable
@@ -175,12 +215,15 @@ export const WebstudioComponentDev = ({
             }
           });
         }}
-        // @todo provide instance selector
         onSelectInstance={(instanceId) => {
           setTextEditingInstanceId(undefined);
-          selectedInstanceSelectorStore.set(
-            getInstanceSelector(instancesStore.get(), instanceId)
+          const instances = instancesStore.get();
+          const newSelectedSelector = getInstanceSelector(
+            instances,
+            instanceSelector,
+            instanceId
           );
+          selectedInstanceSelectorStore.set(newSelectedSelector);
         }}
       />
     </Suspense>

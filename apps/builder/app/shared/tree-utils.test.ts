@@ -16,7 +16,6 @@ import {
   findClosestDroppableTarget,
   findSubtreeLocalStyleSources,
   getAncestorInstanceSelector,
-  getInstanceSelector,
   getInstanceAncestorsAndSelf,
   insertInstancesCopyMutable,
   insertInstancesMutable,
@@ -125,30 +124,6 @@ test("get ancestor instance selector", () => {
     undefined
   );
   expect(getAncestorInstanceSelector(instanceSelector, "1")).toEqual(["1"]);
-});
-
-test("get instance selector", () => {
-  const instances: Instances = new Map([
-    createInstancePair("root", "Box", [
-      { type: "id", value: "box1" },
-      { type: "id", value: "box2" },
-      { type: "id", value: "box4" },
-    ]),
-    createInstancePair("box1", "Box", []),
-    createInstancePair("box2", "Box", [{ type: "id", value: "box3" }]),
-    createInstancePair("box4", "Box", []),
-    createInstancePair("box3", "Box", [
-      { type: "id", value: "child1" },
-      { type: "id", value: "child2" },
-    ]),
-    createInstancePair("child1", "Box", []),
-    createInstancePair("child2", "Box", []),
-  ]);
-  expect(getInstanceSelector(instances, "box3")).toEqual([
-    "box3",
-    "box2",
-    "root",
-  ]);
 });
 
 test("find closest droppable target", () => {

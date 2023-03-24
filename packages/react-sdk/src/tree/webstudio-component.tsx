@@ -28,6 +28,7 @@ export const renderWebstudioComponentChildren = (
 
 type WebstudioComponentProps = {
   instance: Instance;
+  instanceSelector: Instance["id"][];
   children: Array<JSX.Element | string>;
   getComponent: GetComponent;
 };
