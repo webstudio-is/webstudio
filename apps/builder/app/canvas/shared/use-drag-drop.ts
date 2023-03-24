@@ -10,11 +10,8 @@ import {
   computeIndicatorPlacement,
 } from "@webstudio-is/design-system";
 import { getComponentMeta } from "@webstudio-is/react-sdk";
-import {
-  instancesStore,
-  selectedPageStore,
-  useTextEditingInstanceId,
-} from "~/shared/nano-states";
+import { instancesStore, selectedPageStore } from "~/shared/nano-states";
+import { textEditingInstanceSelectorStore } from "~/shared/nano-states/instances";
 import { publish, useSubscribe } from "~/shared/pubsub";
 import {
   insertNewComponentInstance,
@@ -120,8 +117,6 @@ const getDefaultDropTarget = () => {
 };
 
 export const useDragAndDrop = () => {
-  const [textEditingInstanceId] = useTextEditingInstanceId();
-
   const state = useRef({ ...initialState });
 
   const autoScrollHandlers = useAutoScroll({ fullscreen: true });
@@ -212,7 +207,12 @@ export const useDragAndDrop = () => {
         return false;
       }
       // cannot drag while editing text
-      if (instanceSelector[0] === textEditingInstanceId) {
+      if (
+        areInstanceSelectorsEqual(
+          instanceSelector,
+          textEditingInstanceSelectorStore.get()
+        )
+      ) {
         return false;
       }
       // When trying to drag an instance inside editor, drag the editor instead
