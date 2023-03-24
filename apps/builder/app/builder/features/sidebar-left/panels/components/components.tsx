@@ -31,6 +31,7 @@ import { insertNewComponentInstance } from "~/shared/instance-utils";
 import { zoomStore } from "~/shared/nano-states/breakpoints";
 import type { TabName } from "../../types";
 import { Header, CloseButton } from "../../header";
+import { ArrowFocus } from "@webstudio-is/design-system";
 
 const DragLayer = ({
   component,
@@ -164,37 +165,45 @@ export const TabContent = ({ publish, onSetActiveTab }: TabContentProps) => {
         title="Add"
         suffix={<CloseButton onClick={() => onSetActiveTab("none")} />}
       />
-      <Flex
-        gap="1"
-        wrap="wrap"
-        css={{ padding: theme.spacing[3], overflow: "auto" }}
-        ref={useDragHandlers.rootRef}
-      >
-        {listedComponentNames.map((component: Instance["component"]) => {
-          const meta = getComponentMeta(component);
-          if (meta === undefined) {
-            return null;
-          }
-          return (
-            <ComponentCard
-              onClick={() => {
-                onSetActiveTab("none");
-                const dropTarget = findClosestDroppableTarget(
-                  instancesIndexStore.get(),
-                  // @todo accept instance Selector
-                  selectedInstanceSelectorStore.get()?.[0]
-                );
-                insertNewComponentInstance(component, dropTarget);
-              }}
-              data-drag-component={component}
-              label={meta.label}
-              icon={<meta.Icon />}
-              key={component}
-            />
-          );
-        })}
-        {dragComponent && <DragLayer component={dragComponent} point={point} />}
-      </Flex>
+      <ArrowFocus
+        render={({ handleKeyDown }) => (
+          <Flex
+            onKeyDown={handleKeyDown}
+            gap="1"
+            wrap="wrap"
+            css={{ padding: theme.spacing[3], overflow: "auto" }}
+            ref={useDragHandlers.rootRef}
+          >
+            {listedComponentNames.map((component: Instance["component"]) => {
+              const meta = getComponentMeta(component);
+              if (meta === undefined) {
+                return null;
+              }
+              return (
+                <ComponentCard
+                  onClick={() => {
+                    onSetActiveTab("none");
+                    const dropTarget = findClosestDroppableTarget(
+                      instancesIndexStore.get(),
+                      // @todo accept instance Selector
+                      selectedInstanceSelectorStore.get()?.[0]
+                    );
+                    insertNewComponentInstance(component, dropTarget);
+                  }}
+                  data-drag-component={component}
+                  label={meta.label}
+                  icon={<meta.Icon />}
+                  key={component}
+                  tabIndex={0}
+                />
+              );
+            })}
+            {dragComponent && (
+              <DragLayer component={dragComponent} point={point} />
+            )}
+          </Flex>
+        )}
+      />
     </Flex>
   );
 };
