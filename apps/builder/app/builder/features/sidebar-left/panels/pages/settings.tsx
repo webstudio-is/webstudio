@@ -408,8 +408,6 @@ export const PageSettings = ({
     });
   };
 
-  // Updating client side store like that is a temporary solution
-  // We want to switch pages to immerhin: https://github.com/webstudio-is/webstudio-builder/issues/1084
   const isHomePage = page?.id === pages?.homePage.id;
 
   const [unsavedValues, setUnsavedValues] = useState<Partial<Values>>({});
