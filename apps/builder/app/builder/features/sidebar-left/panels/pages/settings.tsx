@@ -373,7 +373,9 @@ const updatePage = (pageId: Page["id"], values: Partial<Values>) => {
       updatePageMutable(pages.homePage, values);
     }
     for (const page of pages.pages) {
-      updatePageMutable(page, values);
+      if (page.id === pageId) {
+        updatePageMutable(page, values);
+      }
     }
   });
 };
