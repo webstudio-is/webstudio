@@ -82,17 +82,6 @@ const radioProp = (options = defaultOptions, label?: string): PropMeta => ({
   label,
 });
 
-const inlineRadioProp = (
-  options = defaultOptions,
-  label?: string
-): PropMeta => ({
-  type: "string",
-  control: "inline-radio",
-  options,
-  required: false,
-  label,
-});
-
 const selectProp = (options = defaultOptions, label?: string): PropMeta => ({
   type: "string",
   control: "select",
@@ -104,28 +93,6 @@ const selectProp = (options = defaultOptions, label?: string): PropMeta => ({
 const checkProp = (options = defaultOptions, label?: string): PropMeta => ({
   type: "string[]",
   control: "check",
-  options,
-  required: false,
-  label,
-});
-
-const inlineCheckProp = (
-  options = defaultOptions,
-  label?: string
-): PropMeta => ({
-  type: "string[]",
-  control: "inline-check",
-  options,
-  required: false,
-  label,
-});
-
-const multiSelectProp = (
-  options = defaultOptions,
-  label?: string
-): PropMeta => ({
-  type: "string[]",
-  control: "multi-select",
   options,
   required: false,
   label,
@@ -147,11 +114,8 @@ const componentPropsMeta: WsComponentPropsMeta = {
     initialBoolean: booleanProp(),
     initialColor: colorProp(),
     initialRadio: radioProp(),
-    initialInlineRadio: inlineRadioProp(),
     initialSelect: selectProp(),
     initialCheck: checkProp(),
-    initialInlineCheck: inlineCheckProp(),
-    initialMultiSelect: multiSelectProp(),
     initialUrl: urlProp(),
     addedText: textProp(),
     addedShortText: shortTextProp(),
@@ -159,11 +123,8 @@ const componentPropsMeta: WsComponentPropsMeta = {
     addedBoolean: booleanProp(),
     addedColor: colorProp(),
     addedRadio: radioProp(),
-    addedInlineRadio: inlineRadioProp(),
     addedSelect: selectProp(),
     addedCheck: checkProp(),
-    addedInlineCheck: inlineCheckProp(),
-    addedMultiSelect: multiSelectProp(),
     addedUrlUrl: urlProp("Added URL (URL)"),
     addedUrlPage: urlProp("Added URL (Page)"),
     availableText: textProp(),
@@ -172,11 +133,8 @@ const componentPropsMeta: WsComponentPropsMeta = {
     availableBoolean: booleanProp(),
     availableColor: colorProp(),
     availableRadio: radioProp(),
-    availableInlineRadio: inlineRadioProp(),
     availableSelect: selectProp(),
     availableCheck: checkProp(),
-    availableInlineCheck: inlineCheckProp(),
-    availableMultiSelect: multiSelectProp(),
     availableUrl: urlProp(),
   },
   initialProps: [
@@ -186,11 +144,8 @@ const componentPropsMeta: WsComponentPropsMeta = {
     "initialBoolean",
     "initialColor",
     "initialRadio",
-    "initialInlineRadio",
     "initialSelect",
     "initialCheck",
-    "initialInlineCheck",
-    "initialMultiSelect",
     "initialUrl",
   ],
 };
@@ -239,13 +194,6 @@ const startingProps: Prop[] = [
     value: "two",
   },
   {
-    id: "6",
-    instanceId,
-    name: "addedInlineRadio",
-    type: "string",
-    value: "two",
-  },
-  {
     id: "7",
     instanceId,
     name: "addedSelect",
@@ -256,20 +204,6 @@ const startingProps: Prop[] = [
     id: "8",
     instanceId,
     name: "addedCheck",
-    type: "string[]",
-    value: ["one", "two"],
-  },
-  {
-    id: "9",
-    instanceId,
-    name: "addedInlineCheck",
-    type: "string[]",
-    value: ["one", "two"],
-  },
-  {
-    id: "10",
-    instanceId,
-    name: "addedMultiSelect",
     type: "string[]",
     value: ["one", "two"],
   },
