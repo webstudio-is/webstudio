@@ -44,30 +44,6 @@ export const areInstanceSelectorsEqual = (
   return left.join(",") === right.join(",");
 };
 
-// this utility is temporary solution to compute instance selectors
-// before all logic is migrated to get it from rendered context
-// @todo should be deleted before adding slots
-export const getInstanceSelector = (
-  instances: Instances,
-  instanceId: Instance["id"]
-) => {
-  const parentInstancesById = new Map<Instance["id"], Instance["id"]>();
-  for (const instance of instances.values()) {
-    for (const child of instance.children) {
-      if (child.type === "id") {
-        parentInstancesById.set(child.value, instance.id);
-      }
-    }
-  }
-  const selector: InstanceSelector = [];
-  let currentInstanceId: undefined | Instance["id"] = instanceId;
-  while (currentInstanceId) {
-    selector.push(currentInstanceId);
-    currentInstanceId = parentInstancesById.get(currentInstanceId);
-  }
-  return selector;
-};
-
 export const createComponentInstance = (
   component: Instance["component"]
 ): InstancesItem => {
