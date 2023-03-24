@@ -17,7 +17,6 @@ import {
 import { PlusIcon } from "@webstudio-is/icons";
 import { findClosestDroppableTarget } from "~/shared/tree-utils";
 import {
-  instancesIndexStore,
   instancesStore,
   selectedInstanceSelectorStore,
   selectedPageStore,
@@ -174,30 +173,38 @@ export const TabContent = ({ publish, onSetActiveTab }: TabContentProps) => {
             css={{ padding: theme.spacing[3], overflow: "auto" }}
             ref={useDragHandlers.rootRef}
           >
-            {listedComponentNames.map((component: Instance["component"]) => {
-              const meta = getComponentMeta(component);
-              if (meta === undefined) {
-                return null;
+            {listedComponentNames.map(
+              (component: Instance["component"], index) => {
+                const meta = getComponentMeta(component);
+                if (meta === undefined) {
+                  return null;
+                }
+                return (
+                  <ComponentCard
+                    onClick={() => {
+                      onSetActiveTab("none");
+                      const selectedPage = selectedPageStore.get();
+                      if (selectedPage === undefined) {
+                        return;
+                      }
+                      const dropTarget = findClosestDroppableTarget(
+                        instancesStore.get(),
+                        // fallback to root as drop target
+                        selectedInstanceSelectorStore.get() ?? [
+                          selectedPage.rootInstanceId,
+                        ]
+                      );
+                      insertNewComponentInstance(component, dropTarget);
+                    }}
+                    data-drag-component={component}
+                    label={meta.label}
+                    icon={<meta.Icon />}
+                    key={component}
+                    tabIndex={index === 0 ? 0 : -1}
+                  />
+                );
               }
-              return (
-                <ComponentCard
-                  onClick={() => {
-                    onSetActiveTab("none");
-                    const dropTarget = findClosestDroppableTarget(
-                      instancesIndexStore.get(),
-                      // @todo accept instance Selector
-                      selectedInstanceSelectorStore.get()?.[0]
-                    );
-                    insertNewComponentInstance(component, dropTarget);
-                  }}
-                  data-drag-component={component}
-                  label={meta.label}
-                  icon={<meta.Icon />}
-                  key={component}
-                  tabIndex={0}
-                />
-              );
-            })}
+            )}
             {dragComponent && (
               <DragLayer component={dragComponent} point={point} />
             )}
