@@ -25,8 +25,8 @@ export const NavigatorTree = () => {
       itemSelector: InstanceSelector;
       dropTarget: { itemSelector: InstanceSelector; position: number | "end" };
     }) => {
-      reparentInstance(payload.itemSelector[0], {
-        parentId: payload.dropTarget.itemSelector[0],
+      reparentInstance(payload.itemSelector, {
+        parentSelector: payload.dropTarget.itemSelector,
         position: payload.dropTarget.position,
       });
     },

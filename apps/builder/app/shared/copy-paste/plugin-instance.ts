@@ -14,11 +14,11 @@ import {
   selectedInstanceSelectorStore,
   styleSourceSelectionsStore,
   styleSourcesStore,
-  instancesIndexStore,
   instancesStore,
   selectedPageStore,
 } from "../nano-states";
 import {
+  type InstanceSelector,
   findClosestDroppableTarget,
   findSubtreeLocalStyleSources,
   insertInstancesCopyMutable,
@@ -41,13 +41,13 @@ const InstanceData = z.object({
 
 type InstanceData = z.infer<typeof InstanceData>;
 
-const getTreeData = (targetInstanceId: string) => {
-  const rootInstanceId = selectedPageStore.get()?.rootInstanceId;
+const getTreeData = (targetInstanceSelector: InstanceSelector) => {
   // @todo tell user they can't copy or cut root
-  if (targetInstanceId === rootInstanceId) {
+  if (targetInstanceSelector.length === 1) {
     return;
   }
 
+  const [targetInstanceId] = targetInstanceSelector;
   const instances = instancesStore.get();
   const treeInstanceIds = findTreeInstanceIds(instances, targetInstanceId);
   const styleSources = styleSourcesStore.get();
@@ -134,11 +134,9 @@ export const onPaste = (clipboardData: string) => {
   const instanceSelector = selectedInstanceSelectorStore.get() ?? [
     selectedPage.rootInstanceId,
   ];
-  const [targetInstanceId] = instanceSelector;
   const dropTarget = findClosestDroppableTarget(
-    instancesIndexStore.get(),
-    // @todo accept instance selector
-    targetInstanceId
+    instancesStore.get(),
+    instanceSelector
   );
   store.createTransaction(
     [
@@ -182,8 +180,7 @@ export const onCopy = () => {
   if (selectedInstanceSelector === undefined) {
     return;
   }
-  const [selectedInstanceId] = selectedInstanceSelector;
-  const data = getTreeData(selectedInstanceId);
+  const data = getTreeData(selectedInstanceSelector);
   if (data === undefined) {
     return;
   }
@@ -195,13 +192,11 @@ export const onCut = () => {
   if (selectedInstanceSelector === undefined) {
     return;
   }
-  const [selectedInstanceId] = selectedInstanceSelector;
-  const rootInstanceId = selectedPageStore.get()?.rootInstanceId;
   // @todo tell user they can't delete root
-  if (selectedInstanceId === rootInstanceId) {
+  if (selectedInstanceSelector.length === 1) {
     return;
   }
-  const data = getTreeData(selectedInstanceId);
+  const data = getTreeData(selectedInstanceSelector);
   if (data === undefined) {
     return;
   }

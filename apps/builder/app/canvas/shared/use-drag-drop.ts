@@ -304,13 +304,13 @@ export const useDragAndDrop = () => {
     if (dropTarget && dragPayload && isCanceled === false) {
       if (dragPayload.type === "insert") {
         insertNewComponentInstance(dragPayload.dragComponent, {
-          parentId: dropTarget.itemSelector[0],
+          parentSelector: dropTarget.itemSelector,
           position: dropTarget.indexWithinChildren,
         });
       }
       if (dragPayload.type === "reparent") {
-        reparentInstance(dragPayload.dragInstanceSelector[0], {
-          parentId: dropTarget.itemSelector[0],
+        reparentInstance(dragPayload.dragInstanceSelector, {
+          parentSelector: dropTarget.itemSelector,
           position: dropTarget.indexWithinChildren,
         });
       }

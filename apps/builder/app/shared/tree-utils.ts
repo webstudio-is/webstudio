@@ -122,52 +122,55 @@ export const createInstancesIndex = (
   };
 };
 
-const isInstanceDroppable = (instance: Instance) => {
+const isInstanceDroppable = (instance: InstancesItem) => {
   const meta = getComponentMeta(instance.component);
   return meta?.type === "body" || meta?.type === "container";
 };
 
 export type DroppableTarget = {
-  parentId: Instance["id"];
+  parentSelector: InstanceSelector;
   position: number | "end";
 };
 
 export const findClosestDroppableTarget = (
-  instancesIndex: InstancesIndex,
-  instanceId: undefined | Instance["id"]
-): undefined | DroppableTarget => {
-  const { instancesById, parentInstancesById } = instancesIndex;
-
-  if (instancesIndex.rootInstanceId === undefined) {
-    return;
-  }
-  // fallback to root instance
-  let droppableInstance = instancesById.get(
-    instanceId ?? instancesIndex.rootInstanceId
-  );
-  if (droppableInstance === undefined) {
-    return;
-  }
-  let position = -1;
-  while (isInstanceDroppable(droppableInstance) === false) {
-    const parentInstance = parentInstancesById.get(droppableInstance.id);
-    if (parentInstance === undefined) {
-      break;
-    }
-    // source of lookup in children
-    const sourceInstanceId = droppableInstance.id;
-    droppableInstance = parentInstance;
-    position = droppableInstance.children.findIndex(
-      (child) => child.type === "instance" && child.id === sourceInstanceId
-    );
-  }
-
-  return {
-    parentId: droppableInstance.id,
-    // put in the end when no position provided
-    position:
-      position === -1 ? droppableInstance.children.length : position + 1,
+  instances: Instances,
+  instanceSelector: InstanceSelector
+): DroppableTarget => {
+  // fallback to root as drop target when selector is stale
+  const rootDropTarget: DroppableTarget = {
+    parentSelector: [instanceSelector[instanceSelector.length - 1]],
+    position: "end",
   };
+  let position = -1;
+  let lastChild: undefined | InstancesItem = undefined;
+  for (const instanceId of instanceSelector) {
+    const instance = instances.get(instanceId);
+    if (instance === undefined) {
+      return rootDropTarget;
+    }
+    // find the index of child from selector
+    if (lastChild) {
+      const lastChildId = lastChild.id;
+      position = instance.children.findIndex(
+        (child) => child.type === "id" && child.value === lastChildId
+      );
+    }
+    lastChild = instance;
+    if (isInstanceDroppable(instance)) {
+      const parentSelector = getAncestorInstanceSelector(
+        instanceSelector,
+        instance.id
+      );
+      if (parentSelector === undefined) {
+        return rootDropTarget;
+      }
+      return {
+        parentSelector: parentSelector,
+        position: position === -1 ? "end" : position + 1,
+      };
+    }
+  }
+  return rootDropTarget;
 };
 
 export const reparentInstanceMutable = (
@@ -180,7 +183,7 @@ export const reparentInstanceMutable = (
     parentInstanceId === undefined
       ? undefined
       : instances.get(parentInstanceId);
-  const nextParent = instances.get(dropTarget.parentId);
+  const nextParent = instances.get(dropTarget.parentSelector[0]);
   const instance = instances.get(instanceId);
   if (
     prevParent === undefined ||
@@ -281,12 +284,9 @@ export const insertInstancesMutable = (
   instances: Instances,
   insertedInstances: InstancesItem[],
   rootIds: Instance["id"][],
-  dropTarget: undefined | DroppableTarget
+  dropTarget: DroppableTarget
 ) => {
-  if (dropTarget === undefined) {
-    return;
-  }
-  const parentInstance = instances.get(dropTarget.parentId);
+  const parentInstance = instances.get(dropTarget.parentSelector[0]);
   if (parentInstance === undefined) {
     return;
   }
@@ -319,7 +319,7 @@ export const insertInstancesMutable = (
 export const insertInstancesCopyMutable = (
   instances: Instances,
   copiedInstances: InstancesItem[],
-  dropTarget: undefined | DroppableTarget
+  dropTarget: DroppableTarget
 ) => {
   const copiedInstanceIds = new Map<Instance["id"], Instance["id"]>();
   const copiedInstancesWithNewIds: InstancesItem[] = [];

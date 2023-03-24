@@ -1,5 +1,5 @@
 import store from "immerhin";
-import { findTreeInstanceIds, Instance } from "@webstudio-is/project-build";
+import { findTreeInstanceIds } from "@webstudio-is/project-build";
 import {
   propsStore,
   stylesStore,
@@ -7,14 +7,12 @@ import {
   styleSourceSelectionsStore,
   styleSourcesStore,
   instancesStore,
-  selectedPageStore,
 } from "./nano-states";
 import {
   type DroppableTarget,
   type InstanceSelector,
   createComponentInstance,
   findSubtreeLocalStyleSources,
-  getInstanceSelector,
   insertInstancesMutable,
   reparentInstanceMutable,
   getAncestorInstanceSelector,
@@ -23,31 +21,26 @@ import { removeByMutable } from "./array-utils";
 
 export const insertNewComponentInstance = (
   component: string,
-  dropTarget?: DroppableTarget
+  dropTarget: DroppableTarget
 ) => {
   const instance = createComponentInstance(component);
   store.createTransaction([instancesStore], (instances) => {
     insertInstancesMutable(instances, [instance], [instance.id], dropTarget);
   });
-  selectedInstanceSelectorStore.set(
-    getInstanceSelector(instancesStore.get(), instance.id)
-  );
+  selectedInstanceSelectorStore.set([
+    instance.id,
+    ...dropTarget.parentSelector,
+  ]);
 };
 
 export const reparentInstance = (
-  targetInstanceId: Instance["id"],
+  targetInstanceSelector: InstanceSelector,
   dropTarget: DroppableTarget
 ) => {
   store.createTransaction([instancesStore], (instances) => {
-    reparentInstanceMutable(
-      instances,
-      getInstanceSelector(instances, targetInstanceId),
-      dropTarget
-    );
+    reparentInstanceMutable(instances, targetInstanceSelector, dropTarget);
   });
-  selectedInstanceSelectorStore.set(
-    getInstanceSelector(instancesStore.get(), targetInstanceId)
-  );
+  selectedInstanceSelectorStore.set(targetInstanceSelector);
 };
 
 export const deleteInstance = (instanceSelector: InstanceSelector) => {
@@ -112,11 +105,10 @@ export const deleteInstance = (instanceSelector: InstanceSelector) => {
 
 export const deleteSelectedInstance = () => {
   const selectedInstanceSelector = selectedInstanceSelectorStore.get();
-  const rootInstanceId = selectedPageStore.get()?.rootInstanceId;
   // @todo tell user they can't delete root
   if (
     selectedInstanceSelector === undefined ||
-    selectedInstanceSelector[0] === rootInstanceId
+    selectedInstanceSelector.length === 1
   ) {
     return;
   }

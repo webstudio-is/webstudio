@@ -152,40 +152,60 @@ test("get instance selector", () => {
 });
 
 test("find closest droppable target", () => {
-  const rootInstance = createInstance("root", "Body", [
-    createInstance("box1", "Box", [
-      createInstance("box11", "Box", []),
-      createInstance("box12", "Box", []),
-      createInstance("box13", "Box", []),
+  const instances = new Map([
+    createInstancePair("root", "Body", [
+      { type: "id", value: "box1" },
+      { type: "id", value: "box2" },
+      { type: "id", value: "box3" },
     ]),
-    createInstance("box2", "Box", [
-      createInstance("paragraph21", "Paragraph", [
-        createInstance("bold", "Bold", []),
-      ]),
-      createInstance("box22", "Box", []),
+    createInstancePair("box1", "Box", [
+      { type: "id", value: "box11" },
+      { type: "id", value: "box12" },
+      { type: "id", value: "box13" },
     ]),
-    createInstance("box3", "Box", [
-      createInstance("box31", "Box", []),
-      createInstance("box32", "Box", []),
-      createInstance("box33", "Box", []),
+    createInstancePair("box11", "Box", []),
+    createInstancePair("box12", "Box", []),
+    createInstancePair("box13", "Box", []),
+    createInstancePair("box2", "Box", [
+      { type: "id", value: "paragraph21" },
+      { type: "id", value: "box22" },
     ]),
+    createInstancePair("paragraph21", "Paragraph", [
+      { type: "id", value: "bold" },
+    ]),
+    createInstancePair("bold", "Bold", []),
+    createInstancePair("box22", "Box", []),
+    createInstancePair("box3", "Box", [
+      { type: "id", value: "box31" },
+      { type: "id", value: "box32" },
+      { type: "id", value: "box33" },
+    ]),
+    createInstancePair("box31", "Box", []),
+    createInstancePair("box32", "Box", []),
+    createInstancePair("box33", "Box", []),
   ]);
-  const instancesIndex = createInstancesIndex(rootInstance);
-  expect(findClosestDroppableTarget(instancesIndex, "bold")).toEqual({
-    parentId: "box2",
+  expect(
+    findClosestDroppableTarget(instances, [
+      "bold",
+      "paragraph21",
+      "box2",
+      "root",
+    ])
+  ).toEqual({
+    parentSelector: ["box2", "root"],
     position: 1,
   });
-  expect(findClosestDroppableTarget(instancesIndex, "box3")).toEqual({
-    parentId: "box3",
-    position: 3,
+  expect(findClosestDroppableTarget(instances, ["box3", "root"])).toEqual({
+    parentSelector: ["box3", "root"],
+    position: "end",
   });
-  expect(findClosestDroppableTarget(instancesIndex, "root")).toEqual({
-    parentId: "root",
-    position: 3,
+  expect(findClosestDroppableTarget(instances, ["root"])).toEqual({
+    parentSelector: ["root"],
+    position: "end",
   });
-  expect(findClosestDroppableTarget(instancesIndex, undefined)).toEqual({
-    parentId: "root",
-    position: 3,
+  expect(findClosestDroppableTarget(instances, ["box4", "root"])).toEqual({
+    parentSelector: ["root"],
+    position: "end",
   });
 });
 
@@ -212,7 +232,7 @@ test("insert instances tree into target", () => {
     ],
     ["inserted1"],
     {
-      parentId: "box1",
+      parentSelector: ["box1", "root"],
       position: 1,
     }
   );
@@ -243,7 +263,7 @@ test("insert instances tree into target", () => {
     ],
     ["inserted3"],
     {
-      parentId: "box1",
+      parentSelector: ["box1", "root"],
       position: "end",
     }
   );
@@ -290,7 +310,7 @@ test("reparent instance into target", () => {
   ]);
 
   reparentInstanceMutable(instances, ["target", "root"], {
-    parentId: "box1",
+    parentSelector: ["box1", "root"],
     position: 1,
   });
   expect(instances).toEqual(
@@ -314,7 +334,7 @@ test("reparent instance into target", () => {
   );
 
   reparentInstanceMutable(instances, ["target", "box1", "root"], {
-    parentId: "box1",
+    parentSelector: ["box1", "root"],
     position: 3,
   });
   expect(instances).toEqual(
@@ -338,7 +358,7 @@ test("reparent instance into target", () => {
   );
 
   reparentInstanceMutable(instances, ["target", "box1", "root"], {
-    parentId: "root",
+    parentSelector: ["root"],
     position: "end",
   });
   expect(instances).toEqual(
@@ -413,7 +433,7 @@ test("insert tree of instances copy and provide map from ids map", () => {
     instances,
     copiedInstances,
     {
-      parentId: "3",
+      parentSelector: ["3", "1"],
       position: 0,
     }
   );
