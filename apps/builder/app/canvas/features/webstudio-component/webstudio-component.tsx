@@ -79,7 +79,6 @@ const getInstanceSelector = (
   while (currentInstanceId) {
     selector.push(currentInstanceId);
     currentInstanceId = parentInstancesById.get(currentInstanceId);
-    console.log(currentInstanceId);
     if (currentInstanceId === rootInstanceSelector[0]) {
       return [...selector, ...rootInstanceSelector];
     }
