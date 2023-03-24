@@ -69,13 +69,47 @@ const PageValues = z.object({
   description: z.string().optional(),
 });
 
-const getErrors = (values: Values, isHomePage: boolean): Errors => {
+const isPathUnique = (
+  pages: Pages,
+  // undefined page id means new page
+  pageId: undefined | Page["id"],
+  path: string
+) => {
+  const list = [];
+  const set = new Set();
+  list.push(path);
+  set.add(path);
+  for (const page of pages.pages) {
+    if (page.id !== pageId) {
+      list.push(page.path);
+      set.add(page.path);
+    }
+  }
+  return list.length === set.size;
+};
+
+const validateValues = (
+  pages: undefined | Pages,
+  // undefined page id means new page
+  pageId: undefined | Page["id"],
+  values: Values,
+  isHomePage: boolean
+): Errors => {
   const Validator = isHomePage ? HomePageValues : PageValues;
   const parsedResult = Validator.safeParse(values);
-  if (parsedResult.success) {
-    return {};
+  const errors: Errors = {};
+  if (parsedResult.success === false) {
+    return parsedResult.error.formErrors.fieldErrors;
   }
-  return parsedResult.error.formErrors.fieldErrors;
+  if (
+    pages !== undefined &&
+    values.path !== undefined &&
+    isPathUnique(pages, pageId, values.path) === false
+  ) {
+    errors.path = errors.path ?? [];
+    errors.path.push("All paths must be unique");
+  }
+  return errors;
 };
 
 const toFormPage = (page?: Page): Values => {
@@ -230,7 +264,7 @@ export const NewPageSettings = ({
     title: "Untitled",
     description: "",
   });
-  const errors = getErrors(values, false);
+  const errors = validateValues(pages, undefined, values, false);
 
   const handleSubmit = () => {
     if (Object.keys(errors).length === 0) {
@@ -418,7 +452,7 @@ export const PageSettings = ({
     ...toFormPage(page),
     ...unsavedValues,
   };
-  const errors = getErrors(values, isHomePage);
+  const errors = validateValues(pages, pageId, values, isHomePage);
 
   const handleSubmitDebounced = useDebouncedCallback(() => {
     if (
