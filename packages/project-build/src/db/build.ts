@@ -6,9 +6,8 @@ import {
   Project,
 } from "@webstudio-is/prisma-client";
 import type { AppContext } from "@webstudio-is/trpc-interface";
-import { findPageByIdOrPath } from "../shared/pages-utils";
 import type { Build } from "../types";
-import { type Page, Pages } from "../schema/pages";
+import { Pages } from "../schema/pages";
 import {
   createInitialBreakpoints,
   parseBreakpoints,
@@ -99,23 +98,6 @@ export async function loadBuildByProjectId(
   return parseBuild(build);
 }
 
-const updatePages = async (
-  { projectId, buildId }: { projectId: Project["id"]; buildId: Build["id"] },
-  updater: (currentPages: Pages) => Promise<Pages>
-) => {
-  const build = await loadBuildById({ projectId, buildId });
-  const updatedPages = Pages.parse(await updater(build.pages));
-  const updatedBuild = await prisma.build.update({
-    where: {
-      id_projectId: { projectId, id: buildId },
-    },
-    data: {
-      pages: JSON.stringify(updatedPages),
-    },
-  });
-  return parseBuild(updatedBuild);
-};
-
 const createNewPageInstances = (): Build["instances"] => {
   const instanceId = nanoid();
   return [
@@ -129,32 +111,6 @@ const createNewPageInstances = (): Build["instances"] => {
       },
     ],
   ];
-};
-
-export const deletePage = async ({
-  projectId,
-  buildId,
-  pageId,
-}: {
-  projectId: Project["id"];
-  buildId: Build["id"];
-  pageId: Page["id"];
-}) => {
-  return updatePages({ projectId, buildId }, async (currentPages) => {
-    if (pageId === currentPages.homePage.id) {
-      throw new Error("Cannot delete home page");
-    }
-
-    const page = findPageByIdOrPath(currentPages, pageId);
-    if (page === undefined) {
-      throw new Error(`Page with id "${pageId}" not found`);
-    }
-
-    return {
-      homePage: currentPages.homePage,
-      pages: currentPages.pages.filter((page) => page.id !== pageId),
-    };
-  });
 };
 
 /*

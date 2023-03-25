@@ -27,18 +27,16 @@ import {
   Tooltip,
 } from "@webstudio-is/design-system";
 import { ChevronDoubleLeftIcon, TrashIcon } from "@webstudio-is/icons";
-import { usePersistentFetcher } from "~/shared/fetcher";
-import {
-  normalizeErrors,
-  toastUnknownFieldErrors,
-  useIds,
-} from "~/shared/form-utils";
-import type { DeletePageData } from "~/shared/pages";
-import { restPagesPath } from "~/shared/router-utils";
+import { useIds } from "~/shared/form-utils";
 import { Header, HeaderSuffixSpacer } from "../../header";
 import { deleteInstance } from "~/shared/instance-utils";
-import { instancesStore, pagesStore } from "~/shared/nano-states";
+import {
+  instancesStore,
+  pagesStore,
+  selectedPageIdStore,
+} from "~/shared/nano-states";
 import { nanoid } from "nanoid";
+import { removeByMutable } from "~/shared/array-utils";
 
 const Group = styled(Flex, {
   marginBottom: theme.spacing[9],
@@ -414,35 +412,37 @@ const updatePage = (pageId: Page["id"], values: Partial<Values>) => {
   });
 };
 
+const deletePage = (pageId: Page["id"]) => {
+  const pages = pagesStore.get();
+  // deselect page before deleting to avoid flash of content
+  if (selectedPageIdStore.get() === pageId) {
+    selectedPageIdStore.set(pages?.homePage.id);
+  }
+  const rootInstanceId = pages?.pages.find(
+    (page) => page.id === pageId
+  )?.rootInstanceId;
+  if (rootInstanceId !== undefined) {
+    deleteInstance([rootInstanceId]);
+  }
+  store.createTransaction([pagesStore], (pages) => {
+    if (pages === undefined) {
+      return;
+    }
+    removeByMutable(pages.pages, (page) => page.id === pageId);
+  });
+};
+
 export const PageSettings = ({
   onClose,
   onDelete,
   pageId,
-  projectId,
 }: {
   onClose?: () => void;
   onDelete?: () => void;
   pageId: string;
-  projectId: string;
 }) => {
-  const submitPersistently = usePersistentFetcher();
-
   const pages = useStore(pagesStore);
   const page = pages && findPageByIdOrPath(pages, pageId);
-
-  const deleteOnClient = (pageId: Page["id"]) => {
-    if (pages === undefined) {
-      return;
-    }
-    const page = pages.pages.find((item) => item.id === pageId);
-    if (page) {
-      deleteInstance([page.rootInstanceId]);
-    }
-    pagesStore.set({
-      homePage: pages.homePage,
-      pages: pages.pages.filter((item) => item.id !== pageId),
-    });
-  };
 
   const isHomePage = page?.id === pages?.homePage.id;
 
@@ -487,19 +487,7 @@ export const PageSettings = ({
   });
 
   const hanldeDelete = () => {
-    // We use submitPersistently instead of fetcher.submit
-    // because we don't want the request to be canceled when the component unmounts
-    submitPersistently<DeletePageData>(
-      { id: pageId },
-      { method: "delete", action: restPagesPath({ projectId }) },
-      (data) => {
-        if (data.status === "error") {
-          toastUnknownFieldErrors(normalizeErrors(data.errors), []);
-        } else {
-          deleteOnClient(pageId);
-        }
-      }
-    );
+    deletePage(pageId);
     onDelete?.();
   };
 
