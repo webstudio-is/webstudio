@@ -97,8 +97,12 @@ export type StyleSettingsProps = {
 
 const useParentStyle = () => {
   const selectedInstanceSelector = useStore(selectedInstanceSelectorStore);
-  const parentInstanceId = selectedInstanceSelector?.[1];
-  const parentInstanceStyleData = useInstanceStyleData(parentInstanceId);
+  const parentInstanceSelector =
+    // root does not have parent
+    selectedInstanceSelector?.length === 1
+      ? undefined
+      : selectedInstanceSelector?.slice(1);
+  const parentInstanceStyleData = useInstanceStyleData(parentInstanceSelector);
   return parentInstanceStyleData;
 };
 

@@ -12,11 +12,9 @@ import type {
 import {
   type InstanceSelector,
   cloneStyles,
-  createInstancesIndex,
   findClosestDroppableTarget,
   findSubtreeLocalStyleSources,
   getAncestorInstanceSelector,
-  getInstanceAncestorsAndSelf,
   insertInstancesCopyMutable,
   insertInstancesMutable,
   insertPropsCopyMutable,
@@ -29,19 +27,6 @@ import {
 const expectString = expect.any(String) as unknown as string;
 
 const createInstance = (
-  id: Instance["id"],
-  component: string,
-  children: Instance[]
-): Instance => {
-  return {
-    type: "instance",
-    id,
-    component,
-    children: children,
-  };
-};
-
-const createInstancesItem = (
   id: Instance["id"],
   component: string,
   children: InstancesItem["children"]
@@ -59,7 +44,7 @@ const createInstancePair = (
   component: string,
   children: InstancesItem["children"]
 ): [Instance["id"], InstancesItem] => {
-  return [id, createInstancesItem(id, component, children)];
+  return [id, createInstance(id, component, children)];
 };
 
 const createProp = (id: string, instanceId: string): Prop => {
@@ -200,10 +185,8 @@ test("insert instances tree into target", () => {
   insertInstancesMutable(
     instances,
     [
-      createInstancesItem("inserted1", "Box", [
-        { type: "id", value: "inserted2" },
-      ]),
-      createInstancesItem("inserted2", "Box", []),
+      createInstance("inserted1", "Box", [{ type: "id", value: "inserted2" }]),
+      createInstance("inserted2", "Box", []),
     ],
     ["inserted1"],
     {
@@ -231,10 +214,8 @@ test("insert instances tree into target", () => {
   insertInstancesMutable(
     instances,
     [
-      createInstancesItem("inserted3", "Box", [
-        { type: "id", value: "inserted4" },
-      ]),
-      createInstancesItem("inserted4", "Box", []),
+      createInstance("inserted3", "Box", [{ type: "id", value: "inserted4" }]),
+      createInstance("inserted4", "Box", []),
     ],
     ["inserted3"],
     {
@@ -357,36 +338,6 @@ test("reparent instance into target", () => {
   );
 });
 
-test("get path from instance and its ancestors", () => {
-  const rootInstance: Instance = createInstance("root", "Box", [
-    createInstance("box1", "Box", []),
-    createInstance("box2", "Box", [
-      createInstance("box3", "Box", [
-        createInstance("child1", "Box", []),
-        createInstance("child2", "Box", []),
-      ]),
-    ]),
-    createInstance("box4", "Box", []),
-  ]);
-  const instancesIndex = createInstancesIndex(rootInstance);
-
-  expect(getInstanceAncestorsAndSelf(instancesIndex, "box3")).toEqual([
-    rootInstance,
-
-    createInstance("box2", "Box", [
-      createInstance("box3", "Box", [
-        createInstance("child1", "Box", []),
-        createInstance("child2", "Box", []),
-      ]),
-    ]),
-
-    createInstance("box3", "Box", [
-      createInstance("child1", "Box", []),
-      createInstance("child2", "Box", []),
-    ]),
-  ]);
-});
-
 test("insert tree of instances copy and provide map from ids map", () => {
   const instances = new Map([
     createInstancePair("1", "Body", [
@@ -398,11 +349,11 @@ test("insert tree of instances copy and provide map from ids map", () => {
     createInstancePair("4", "Box", []),
   ]);
   const copiedInstances = [
-    createInstancesItem("2", "Box", [
+    createInstance("2", "Box", [
       { type: "id", value: "3" },
       { type: "text", value: "text" },
     ]),
-    createInstancesItem("3", "Box", []),
+    createInstance("3", "Box", []),
   ];
   const copiedInstanceIds = insertInstancesCopyMutable(
     instances,

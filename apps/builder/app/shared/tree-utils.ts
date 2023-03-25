@@ -195,20 +195,6 @@ export const reparentInstanceMutable = (
   }
 };
 
-export const getInstanceAncestorsAndSelf = (
-  instancesIndex: InstancesIndex,
-  instanceId: Instance["id"]
-) => {
-  const { instancesById, parentInstancesById } = instancesIndex;
-  const path = [];
-  let instance = instancesById.get(instanceId);
-  while (instance) {
-    path.unshift(instance);
-    instance = parentInstancesById.get(instance.id);
-  }
-  return path;
-};
-
 export const cloneStyles = (
   styles: Styles,
   clonedStyleSourceIds: Map<Instance["id"], Instance["id"]>

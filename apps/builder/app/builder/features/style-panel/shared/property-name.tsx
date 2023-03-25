@@ -18,7 +18,7 @@ import {
   Separator,
 } from "@webstudio-is/design-system";
 import { UndoIcon } from "@webstudio-is/icons";
-import { instancesIndexStore, useBreakpoints } from "~/shared/nano-states";
+import { instancesStore, useBreakpoints } from "~/shared/nano-states";
 import { type StyleInfo, type StyleSource, getStyleSource } from "./style-info";
 
 const PropertyPopoverContent = ({
@@ -33,7 +33,7 @@ const PropertyPopoverContent = ({
   onReset: () => void;
 }) => {
   const [breakpoints] = useBreakpoints();
-  const { instancesById } = useStore(instancesIndexStore);
+  const instances = useStore(instancesStore);
 
   if (styleSource === "local") {
     return (
@@ -71,7 +71,7 @@ const PropertyPopoverContent = ({
 
             if (styleValueInfo?.inherited) {
               const { value, instanceId } = styleValueInfo.inherited;
-              const instance = instancesById.get(instanceId);
+              const instance = instances.get(instanceId);
               return (
                 <DeprecatedText2 key={property} color="hint">
                   Resetting will change {property} to inherited {toValue(value)}{" "}
@@ -108,7 +108,7 @@ const PropertyPopoverContent = ({
 
         if (styleValueInfo?.inherited) {
           const { instanceId } = styleValueInfo.inherited;
-          const instance = instancesById.get(instanceId);
+          const instance = instances.get(instanceId);
           return (
             <DeprecatedText2 key={property} color="hint">
               {property} value is inherited from {instance?.component}
