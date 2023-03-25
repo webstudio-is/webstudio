@@ -77,9 +77,6 @@ export const authPath = ({
   provider: "google" | "github" | "dev";
 }) => `/auth/${provider}`;
 
-export const restPagesPath = ({ projectId }: { projectId: string }) =>
-  `/rest/pages/${projectId}`;
-
 export const restAssetsPath = ({
   projectId,
   authToken,

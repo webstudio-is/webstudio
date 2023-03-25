@@ -1,10 +1,6 @@
 import { toast } from "@webstudio-is/design-system";
 import type { ZodError } from "zod";
 
-export type FetcherData<Payload> =
-  | ({ status: "ok" } & Payload)
-  | { status: "error"; errors: string | ZodError["formErrors"] };
-
 export const normalizeErrors = (
   errors: string | ZodError["formErrors"]
 ): ZodError["formErrors"] =>
@@ -31,17 +27,4 @@ export const toastUnknownFieldErrors = (
       }
     }
   }
-};
-
-export const makeFieldError = <Payload>(
-  fieldName: string,
-  error: string
-): FetcherData<Payload> => {
-  return {
-    status: "error",
-    errors: {
-      formErrors: [],
-      fieldErrors: { [fieldName]: [error] },
-    },
-  };
 };
