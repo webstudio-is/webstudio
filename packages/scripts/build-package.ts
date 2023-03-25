@@ -16,7 +16,7 @@ await totalist("./src", (rel) => {
     if (
       rel.includes(".test.") ||
       rel.includes(".stories.") ||
-      rel.includes("_generated/")
+      rel.includes("__generated__/")
     ) {
       return;
     }
@@ -60,12 +60,14 @@ for (const rel of assets) {
 }
 
 if (
-  await access("./src/_generated")
+  await access("./src/__generated__")
     .then(() => true)
     .catch(() => false)
 ) {
-  await cp("./src/_generated", "./lib/_generated", { recursive: true });
-  await cp("./src/_generated", "./lib/cjs/_generated", { recursive: true });
+  await cp("./src/__generated__", "./lib/__generated__", { recursive: true });
+  await cp("./src/__generated__", "./lib/cjs/__generated__", {
+    recursive: true,
+  });
 }
 
 if (watch) {
