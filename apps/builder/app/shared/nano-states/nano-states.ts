@@ -423,11 +423,6 @@ export const useSelectedInstanceOutline = () =>
 const isScrollingContainer = atom<boolean>(false);
 export const useIsScrolling = () => useValue(isScrollingContainer);
 
-// We are editing the text of that instance in text editor.
-export const textEditingInstanceIdStore = atom<Instance["id"] | undefined>();
-export const useTextEditingInstanceId = () =>
-  useValue(textEditingInstanceIdStore);
-
 export type DragAndDropState = {
   isDragging: boolean;
   dropTarget?: ItemDropTarget;

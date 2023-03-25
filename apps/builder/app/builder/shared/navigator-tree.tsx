@@ -9,6 +9,7 @@ import {
 import type { InstanceSelector } from "~/shared/tree-utils";
 import { InstanceTree } from "./tree";
 import { reparentInstance } from "~/shared/instance-utils";
+import { textEditingInstanceSelectorStore } from "~/shared/nano-states/instances";
 
 export const NavigatorTree = () => {
   const selectedInstanceSelector = useStore(selectedInstanceSelectorStore);
@@ -33,6 +34,11 @@ export const NavigatorTree = () => {
     []
   );
 
+  const handleSelect = useCallback((instanceSelector: InstanceSelector) => {
+    selectedInstanceSelectorStore.set(instanceSelector);
+    textEditingInstanceSelectorStore.set(undefined);
+  }, []);
+
   if (rootInstance === undefined) {
     return null;
   }
@@ -43,7 +49,7 @@ export const NavigatorTree = () => {
       selectedItemSelector={selectedInstanceSelector}
       dragItemSelector={dragItemSelector}
       dropTarget={state.dropTarget}
-      onSelect={selectedInstanceSelectorStore.set}
+      onSelect={handleSelect}
       onHover={hoveredInstanceSelectorStore.set}
       onDragItemChange={(dragInstanceSelector) => {
         setState({

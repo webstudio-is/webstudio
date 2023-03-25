@@ -20,8 +20,8 @@ import {
   selectedInstanceSelectorStore,
   useInstanceProps,
   useInstanceStyles,
-  useTextEditingInstanceId,
 } from "~/shared/nano-states";
+import { textEditingInstanceSelectorStore } from "~/shared/nano-states/instances";
 import { useCssRules } from "~/canvas/shared/styles";
 import {
   areInstanceSelectorsEqual,
@@ -105,9 +105,10 @@ export const WebstudioComponentDev = ({
   useCssRules({ instanceId: instance.id, instanceStyles });
   const instances = useStore(instancesStore);
 
-  const [editingInstanceId, setTextEditingInstanceId] =
-    useTextEditingInstanceId();
   const selectedInstanceSelector = useStore(selectedInstanceSelectorStore);
+  const textEditingInstanceSelector = useStore(
+    textEditingInstanceSelectorStore
+  );
 
   const instanceProps = useInstanceProps(instance.id);
   const userProps = useMemo(() => {
@@ -185,8 +186,10 @@ export const WebstudioComponentDev = ({
     </>
   );
 
-  // @todo compare instance selectors
-  if (editingInstanceId !== instance.id) {
+  if (
+    areInstanceSelectorsEqual(textEditingInstanceSelector, instanceSelector) ===
+    false
+  ) {
     return instanceElement;
   }
 
@@ -216,13 +219,13 @@ export const WebstudioComponentDev = ({
           });
         }}
         onSelectInstance={(instanceId) => {
-          setTextEditingInstanceId(undefined);
           const instances = instancesStore.get();
           const newSelectedSelector = getInstanceSelector(
             instances,
             instanceSelector,
             instanceId
           );
+          textEditingInstanceSelectorStore.set(undefined);
           selectedInstanceSelectorStore.set(newSelectedSelector);
         }}
       />

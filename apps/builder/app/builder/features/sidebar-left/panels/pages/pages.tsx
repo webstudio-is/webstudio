@@ -22,7 +22,6 @@ import {
 } from "@webstudio-is/icons";
 import type { Page, Pages } from "@webstudio-is/project-build";
 import type { Publish } from "~/shared/pubsub";
-import { useProject } from "~/builder/shared/nano-states";
 import type { TabName } from "../../types";
 import { CloseButton, Header } from "../../header";
 import { SettingsPanel } from "./settings-panel";
@@ -228,13 +227,12 @@ const PagesPanel = ({
 
 export const TabContent = (props: TabContentProps) => {
   const currentPageId = useStore(selectedPageIdStore);
-  const [project] = useProject();
   const switchPage = useSwitchPage();
 
   const newPageId = "new-page";
   const [editingPageId, setEditingPageId] = useState<string>();
 
-  if (currentPageId === undefined || project === undefined) {
+  if (currentPageId === undefined) {
     return null;
   }
 
@@ -272,7 +270,6 @@ export const TabContent = (props: TabContentProps) => {
               }
             }}
             pageId={editingPageId}
-            projectId={project.id}
             key={editingPageId}
           />
         )}
