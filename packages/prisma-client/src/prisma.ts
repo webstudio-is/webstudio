@@ -1,4 +1,4 @@
-import { PrismaClient, Prisma } from "@prisma/client";
+import { PrismaClient, Prisma } from "./_generated";
 const { PrismaClientKnownRequestError, Decimal } = Prisma;
 
 declare global {

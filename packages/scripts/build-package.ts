@@ -1,6 +1,6 @@
 #!/usr/bin/env tsx
 
-import { rm, cp } from "node:fs/promises";
+import { rm, cp, access } from "node:fs/promises";
 import { join } from "node:path";
 import { totalist } from "totalist";
 import { build } from "esbuild";
@@ -13,7 +13,11 @@ const assets: string[] = [];
 
 await totalist("./src", (rel) => {
   if (rel.endsWith(".ts") || rel.endsWith(".tsx")) {
-    if (rel.includes(".test.") || rel.includes(".stories.")) {
+    if (
+      rel.includes(".test.") ||
+      rel.includes(".stories.") ||
+      rel.includes("_generated/")
+    ) {
       return;
     }
     entryPoints.push(join("src", rel));
@@ -53,6 +57,15 @@ await build({
 for (const rel of assets) {
   await cp(join("src", rel), join("lib", rel));
   await cp(join("src", rel), join("lib/cjs", rel));
+}
+
+if (
+  await access("./src/_generated")
+    .then(() => true)
+    .catch(() => false)
+) {
+  await cp("./src/_generated", "./lib/_generated", { recursive: true });
+  await cp("./src/_generated", "./lib/cjs/_generated", { recursive: true });
 }
 
 if (watch) {

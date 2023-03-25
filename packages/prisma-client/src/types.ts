@@ -1,4 +1,4 @@
-export { Location } from "@prisma/client";
+export { Location } from "./_generated";
 export type {
   User,
   Breakpoints,
@@ -7,4 +7,4 @@ export type {
   Asset,
   DashboardProject,
   AuthorizationToken,
-} from "@prisma/client";
+} from "./_generated";
