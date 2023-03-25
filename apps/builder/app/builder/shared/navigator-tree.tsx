@@ -30,6 +30,8 @@ export const NavigatorTree = () => {
         parentSelector: payload.dropTarget.itemSelector,
         position: payload.dropTarget.position,
       });
+      setState({ isDragging: false });
+      console.log(payload);
     },
     []
   );
@@ -65,6 +67,9 @@ export const NavigatorTree = () => {
         setState({ ...state, dropTarget });
       }}
       onDragEnd={handleDragEnd}
+      onCancel={() => {
+        setState({ isDragging: false });
+      }}
     />
   );
 };
