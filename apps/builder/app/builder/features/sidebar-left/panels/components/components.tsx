@@ -5,7 +5,12 @@ import {
   WsComponentMeta,
   componentCategories,
 } from "@webstudio-is/react-sdk";
-import { theme, Flex, ComponentCard } from "@webstudio-is/design-system";
+import {
+  theme,
+  Flex,
+  ComponentCard,
+  Tooltip,
+} from "@webstudio-is/design-system";
 import { PlusIcon } from "@webstudio-is/icons";
 import type { Publish } from "~/shared/pubsub";
 import type { TabName } from "../../types";
@@ -71,23 +76,25 @@ export const TabContent = ({ publish, onSetActiveTab }: TabContentProps) => {
                         return null;
                       }
                       return (
-                        <ComponentCard
-                          onClick={() => {
-                            onSetActiveTab("none");
-                            handleInsert(component);
-                          }}
-                          onKeyDown={(event) => {
-                            if (event.key === "Enter") {
+                        <Tooltip content={meta.label}>
+                          <ComponentCard
+                            onClick={() => {
                               onSetActiveTab("none");
                               handleInsert(component);
-                            }
-                          }}
-                          data-drag-component={component}
-                          label={meta.label}
-                          icon={<meta.Icon />}
-                          key={component}
-                          tabIndex={index === 0 ? 0 : -1}
-                        />
+                            }}
+                            onKeyDown={(event) => {
+                              if (event.key === "Enter") {
+                                onSetActiveTab("none");
+                                handleInsert(component);
+                              }
+                            }}
+                            data-drag-component={component}
+                            label={meta.label}
+                            icon={<meta.Icon />}
+                            key={component}
+                            tabIndex={index === 0 ? 0 : -1}
+                          />
+                        </Tooltip>
                       );
                     }
                   )}
