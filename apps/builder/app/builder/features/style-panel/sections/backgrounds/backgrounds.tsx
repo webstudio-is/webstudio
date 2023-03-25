@@ -157,7 +157,6 @@ export const BackgroundsCollapsibleSection = (
               onClick={() => {
                 const { currentStyle, createBatchUpdate } = props.categoryProps;
                 addLayer(currentStyle, createBatchUpdate);
-
                 setIsOpen(true);
               }}
             />
@@ -167,23 +166,13 @@ export const BackgroundsCollapsibleSection = (
             style={props.categoryProps.currentStyle}
             property={layeredBackgroundProps}
             label={
-              <SectionTitleLabel
-                color={layersStyleSource}
-                onClick={(event) => {
-                  // This code ensures that the onReset callback from PropertyName is triggered without closing the section.
-                  // To achieve this, stopPropagation is used instead of preventDefault.
-                  // Using preventDefault would prevent the Reset trigger from being triggered as well.
-                  event.stopPropagation();
-                }}
-              >
+              <SectionTitleLabel color={layersStyleSource}>
                 {props.label}
               </SectionTitleLabel>
             }
-            onReset={(event) => {
+            onReset={() => {
               const { createBatchUpdate } = props.categoryProps;
               deleteLayers(createBatchUpdate);
-              // Prevent the section from closing when the reset button is clicked.
-              event.preventDefault();
             }}
           />
         </SectionTitle>
