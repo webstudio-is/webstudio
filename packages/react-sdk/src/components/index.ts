@@ -1,5 +1,5 @@
 import { PropMeta } from "@webstudio-is/generate-arg-types";
-import type { WsComponentMeta, WsComponentPropsMeta } from "./component-type";
+import type { WsComponentMeta, WsComponentPropsMeta } from "./component-meta";
 import type { ComponentName } from "./components-utils";
 import { meta as BodyMeta } from "./body.ws";
 import { meta as BoxMeta } from "./box.ws";
@@ -48,6 +48,7 @@ import { propsMeta as ListItemPropsMeta } from "./list-item.ws";
 import { propsMeta as SeparatorPropsMeta } from "./separator.ws";
 import { propsMeta as CodePropsMeta } from "./code.ws";
 
+// @todo this list should not be hardcoded!
 const defaultMetas: Record<string, WsComponentMeta> = {
   Box: BoxMeta,
   Body: BodyMeta,
@@ -89,6 +90,7 @@ export const registerComponentMetas = (
   currentMetas = result;
 };
 
+// @todo this list should not be hardcoded!
 const defaultPropsMetasRaw = {
   Box: BoxMetaPropsMeta,
   Body: BodyMetaPropsMeta,

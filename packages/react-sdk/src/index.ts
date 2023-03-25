@@ -10,7 +10,8 @@ export {
   customComponentMetas,
   customComponentPropsMetas,
 } from "./app/custom-components";
-export type {
-  WsComponentPropsMeta,
-  WsComponentMeta,
-} from "./components/component-type";
+export {
+  type WsComponentPropsMeta,
+  type WsComponentMeta,
+  componentCategories,
+} from "./components/component-meta";

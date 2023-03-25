@@ -6,6 +6,8 @@ import {
   type ComponentName,
   getComponentMeta,
   getComponentNames,
+  WsComponentMeta,
+  componentCategories,
 } from "@webstudio-is/react-sdk";
 import {
   theme,
@@ -31,6 +33,7 @@ import { zoomStore } from "~/shared/nano-states/breakpoints";
 import type { TabName } from "../../types";
 import { Header, CloseButton } from "../../header";
 import { ArrowFocus } from "@webstudio-is/design-system";
+import { CollapsibleSection } from "~/builder/shared/inspector";
 
 const DragLayer = ({
   component,
@@ -71,7 +74,7 @@ type TabContentProps = {
 
 const elementToComponentName = (
   element: Element,
-  listedComponentNames: ComponentName[]
+  metasByComponentName: Map<ComponentName, WsComponentMeta>
 ) => {
   // If drag doesn't start on the button element directly but on one of its children,
   // we need to trace back to the button that has the data.
@@ -81,18 +84,32 @@ const elementToComponentName = (
     return;
   }
   const { dragComponent } = parentWithData.dataset;
-  return listedComponentNames.find((component) => component === dragComponent);
+  return metasByComponentName.has(dragComponent as ComponentName)
+    ? dragComponent
+    : undefined;
 };
 
-const listedComponentNames = getComponentNames().filter((name) => {
+const metasByComponentName: Map<ComponentName, WsComponentMeta> = new Map();
+const metasByCategory: Map<
+  WsComponentMeta["category"],
+  Array<WsComponentMeta>
+> = new Map();
+const componentNamesByMeta: Map<WsComponentMeta, ComponentName> = new Map();
+
+for (const name of getComponentNames()) {
   const meta = getComponentMeta(name);
-  return (
-    meta?.type === "container" ||
-    meta?.type === "control" ||
-    meta?.type === "embed" ||
-    meta?.type === "rich-text"
-  );
-});
+  if (meta?.category === undefined) {
+    continue;
+  }
+  let categoryMetas = metasByCategory.get(meta.category);
+  if (categoryMetas === undefined) {
+    categoryMetas = [];
+    metasByCategory.set(meta.category, categoryMetas);
+  }
+  categoryMetas.push(meta);
+  metasByComponentName.set(name, meta);
+  componentNamesByMeta.set(meta, name);
+}
 
 const toCanvasCoordinates = (
   { x, y }: Point,
@@ -116,7 +133,7 @@ export const TabContent = ({ publish, onSetActiveTab }: TabContentProps) => {
     elementToData(element) {
       const componentName = elementToComponentName(
         element,
-        listedComponentNames
+        metasByComponentName
       );
       if (componentName === undefined) {
         return false;
@@ -158,59 +175,71 @@ export const TabContent = ({ publish, onSetActiveTab }: TabContentProps) => {
     useDragHandlers.cancelCurrentDrag();
   });
 
+  const handleInsert = (component: ComponentName) => {
+    onSetActiveTab("none");
+    const selectedPage = selectedPageStore.get();
+    if (selectedPage === undefined) {
+      return;
+    }
+    const dropTarget = findClosestDroppableTarget(
+      instancesStore.get(),
+      // fallback to root as drop target
+      selectedInstanceSelectorStore.get() ?? [selectedPage.rootInstanceId]
+    );
+    insertNewComponentInstance(component, dropTarget);
+  };
+
   return (
     <Flex css={{ height: "100%", flexDirection: "column" }}>
       <Header
         title="Add"
         suffix={<CloseButton onClick={() => onSetActiveTab("none")} />}
       />
-      <ArrowFocus
-        render={({ handleKeyDown }) => (
-          <Flex
-            onKeyDown={handleKeyDown}
-            gap="1"
-            wrap="wrap"
-            css={{ padding: theme.spacing[3], overflow: "auto" }}
-            ref={useDragHandlers.rootRef}
-          >
-            {listedComponentNames.map(
-              (component: Instance["component"], index) => {
-                const meta = getComponentMeta(component);
-                if (meta === undefined) {
-                  return null;
-                }
-                return (
-                  <ComponentCard
-                    onClick={() => {
-                      onSetActiveTab("none");
-                      const selectedPage = selectedPageStore.get();
-                      if (selectedPage === undefined) {
-                        return;
+      <div ref={useDragHandlers.rootRef}>
+        {Array.from(componentCategories).map((category) => (
+          <CollapsibleSection label={category} key={category} fullWidth>
+            <ArrowFocus
+              render={({ handleKeyDown }) => (
+                <Flex
+                  onKeyDown={handleKeyDown}
+                  gap="2"
+                  wrap="wrap"
+                  css={{ px: theme.spacing[9], overflow: "auto" }}
+                >
+                  {(metasByCategory.get(category) ?? []).map(
+                    (meta: WsComponentMeta, index) => {
+                      const component = componentNamesByMeta.get(meta);
+                      if (component === undefined) {
+                        return null;
                       }
-                      const dropTarget = findClosestDroppableTarget(
-                        instancesStore.get(),
-                        // fallback to root as drop target
-                        selectedInstanceSelectorStore.get() ?? [
-                          selectedPage.rootInstanceId,
-                        ]
+                      return (
+                        <ComponentCard
+                          onClick={() => {
+                            handleInsert(component);
+                          }}
+                          onKeyDown={(event) => {
+                            if (event.key === "Enter") {
+                              handleInsert(component);
+                            }
+                          }}
+                          data-drag-component={component}
+                          label={meta.label}
+                          icon={<meta.Icon />}
+                          key={component}
+                          tabIndex={index === 0 ? 0 : -1}
+                        />
                       );
-                      insertNewComponentInstance(component, dropTarget);
-                    }}
-                    data-drag-component={component}
-                    label={meta.label}
-                    icon={<meta.Icon />}
-                    key={component}
-                    tabIndex={index === 0 ? 0 : -1}
-                  />
-                );
-              }
-            )}
-            {dragComponent && (
-              <DragLayer component={dragComponent} point={point} />
-            )}
-          </Flex>
-        )}
-      />
+                    }
+                  )}
+                  {dragComponent && (
+                    <DragLayer component={dragComponent} point={point} />
+                  )}
+                </Flex>
+              )}
+            />
+          </CollapsibleSection>
+        ))}
+      </div>
     </Flex>
   );
 };
