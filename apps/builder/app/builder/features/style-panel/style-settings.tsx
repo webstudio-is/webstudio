@@ -8,7 +8,7 @@ import {
   styleConfigs,
   styleConfigByName,
 } from "./shared/configs";
-import { CollapsibleSection } from "~/builder/shared/inspector";
+import { CollapsibleSection } from "~/builder/shared/collapsible-section";
 import { renderCategory, shouldRenderCategory } from "./style-sections";
 import { dependencies } from "./shared/dependencies";
 import type { SetProperty, CreateBatchUpdate } from "./shared/use-style-data";

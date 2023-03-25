@@ -1,7 +1,3 @@
-import { useState } from "react";
-import { useStore } from "@nanostores/react";
-import { createPortal } from "react-dom";
-import type { Instance } from "@webstudio-is/project-build";
 import {
   type ComponentName,
   getComponentMeta,
@@ -9,85 +5,14 @@ import {
   WsComponentMeta,
   componentCategories,
 } from "@webstudio-is/react-sdk";
-import {
-  theme,
-  Flex,
-  useDrag,
-  type Point,
-  ComponentCard,
-} from "@webstudio-is/design-system";
+import { theme, Flex, ComponentCard } from "@webstudio-is/design-system";
 import { PlusIcon } from "@webstudio-is/icons";
-import { findClosestDroppableTarget } from "~/shared/tree-utils";
-import {
-  instancesStore,
-  selectedInstanceSelectorStore,
-  selectedPageStore,
-} from "~/shared/nano-states";
-import { useSubscribe, type Publish } from "~/shared/pubsub";
-import {
-  isCanvasPointerEventsEnabledStore,
-  useCanvasRect,
-} from "~/builder/shared/nano-states";
-import { insertNewComponentInstance } from "~/shared/instance-utils";
-import { zoomStore } from "~/shared/nano-states/breakpoints";
+import type { Publish } from "~/shared/pubsub";
 import type { TabName } from "../../types";
 import { Header, CloseButton } from "../../header";
 import { ArrowFocus } from "@webstudio-is/design-system";
-import { CollapsibleSection } from "~/builder/shared/inspector";
-
-const DragLayer = ({
-  component,
-  point,
-}: {
-  component: Instance["component"];
-  point: Point;
-}) => {
-  const meta = getComponentMeta(component);
-  if (meta === undefined) {
-    return null;
-  }
-
-  return createPortal(
-    <Flex
-      // Container is used to position card
-      css={{
-        position: "absolute",
-        inset: 0,
-      }}
-    >
-      <ComponentCard
-        label={meta.label}
-        icon={<meta.Icon />}
-        style={{
-          transform: `translate3d(${point.x}px, ${point.y}px, 0)`,
-        }}
-      />
-    </Flex>,
-    document.body
-  );
-};
-
-type TabContentProps = {
-  onSetActiveTab: (tabName: TabName) => void;
-  publish: Publish;
-};
-
-const elementToComponentName = (
-  element: Element,
-  metasByComponentName: Map<ComponentName, WsComponentMeta>
-) => {
-  // If drag doesn't start on the button element directly but on one of its children,
-  // we need to trace back to the button that has the data.
-  const parentWithData = element.closest("[data-drag-component]");
-
-  if (!(parentWithData instanceof HTMLElement)) {
-    return;
-  }
-  const { dragComponent } = parentWithData.dataset;
-  return metasByComponentName.has(dragComponent as ComponentName)
-    ? dragComponent
-    : undefined;
-};
+import { CollapsibleSection } from "~/builder/shared/collapsible-section";
+import { useDraggable } from "./use-draggable";
 
 const metasByComponentName: Map<ComponentName, WsComponentMeta> = new Map();
 const metasByCategory: Map<
@@ -111,83 +36,16 @@ for (const name of getComponentNames()) {
   componentNamesByMeta.set(meta, name);
 }
 
-const toCanvasCoordinates = (
-  { x, y }: Point,
-  zoom: number,
-  canvasRect?: DOMRect
-) => {
-  if (canvasRect === undefined) {
-    return { x: 0, y: 0 };
-  }
-  const scale = zoom / 100;
-  return { x: (x - canvasRect.x) / scale, y: (y - canvasRect.y) / scale };
+type TabContentProps = {
+  onSetActiveTab: (tabName: TabName) => void;
+  publish: Publish;
 };
 
 export const TabContent = ({ publish, onSetActiveTab }: TabContentProps) => {
-  const [dragComponent, setDragComponent] = useState<Instance["component"]>();
-  const [point, setPoint] = useState<Point>({ x: 0, y: 0 });
-  const [canvasRect] = useCanvasRect();
-  const zoom = useStore(zoomStore);
-
-  const useDragHandlers = useDrag<Instance["component"]>({
-    elementToData(element) {
-      const componentName = elementToComponentName(
-        element,
-        metasByComponentName
-      );
-      if (componentName === undefined) {
-        return false;
-      }
-      return componentName;
-    },
-    onStart({ data: componentName }) {
-      setDragComponent(componentName);
-      publish({
-        type: "dragStart",
-        payload: {
-          origin: "panel",
-          type: "insert",
-          dragComponent: componentName,
-        },
-      });
-      isCanvasPointerEventsEnabledStore.set(false);
-    },
-    onMove: (point) => {
-      setPoint(point);
-      publish({
-        type: "dragMove",
-        payload: {
-          canvasCoordinates: toCanvasCoordinates(point, zoom, canvasRect),
-        },
-      });
-    },
-    onEnd({ isCanceled }) {
-      setDragComponent(undefined);
-      publish({
-        type: "dragEnd",
-        payload: { isCanceled },
-      });
-      isCanvasPointerEventsEnabledStore.set(true);
-    },
+  const { dragCard, handleInsert, draggableContainerRef } = useDraggable({
+    publish,
+    metasByComponentName,
   });
-
-  useSubscribe("cancelCurrentDrag", () => {
-    useDragHandlers.cancelCurrentDrag();
-  });
-
-  const handleInsert = (component: ComponentName) => {
-    onSetActiveTab("none");
-    const selectedPage = selectedPageStore.get();
-    if (selectedPage === undefined) {
-      return;
-    }
-    const dropTarget = findClosestDroppableTarget(
-      instancesStore.get(),
-      // fallback to root as drop target
-      selectedInstanceSelectorStore.get() ?? [selectedPage.rootInstanceId]
-    );
-    insertNewComponentInstance(component, dropTarget);
-  };
 
   return (
     <Flex css={{ height: "100%", flexDirection: "column" }}>
@@ -195,7 +53,7 @@ export const TabContent = ({ publish, onSetActiveTab }: TabContentProps) => {
         title="Add"
         suffix={<CloseButton onClick={() => onSetActiveTab("none")} />}
       />
-      <div ref={useDragHandlers.rootRef}>
+      <div ref={draggableContainerRef}>
         {Array.from(componentCategories).map((category) => (
           <CollapsibleSection label={category} key={category} fullWidth>
             <ArrowFocus
@@ -215,10 +73,12 @@ export const TabContent = ({ publish, onSetActiveTab }: TabContentProps) => {
                       return (
                         <ComponentCard
                           onClick={() => {
+                            onSetActiveTab("none");
                             handleInsert(component);
                           }}
                           onKeyDown={(event) => {
                             if (event.key === "Enter") {
+                              onSetActiveTab("none");
                               handleInsert(component);
                             }
                           }}
@@ -231,9 +91,7 @@ export const TabContent = ({ publish, onSetActiveTab }: TabContentProps) => {
                       );
                     }
                   )}
-                  {dragComponent && (
-                    <DragLayer component={dragComponent} point={point} />
-                  )}
+                  {dragCard}
                 </Flex>
               )}
             />
