@@ -131,44 +131,6 @@ const createNewPageInstances = (): Build["instances"] => {
   ];
 };
 
-export const editPage = async ({
-  projectId,
-  buildId,
-  pageId,
-  data,
-}: {
-  projectId: Project["id"];
-  buildId: Build["id"];
-  pageId: Page["id"];
-  data: Partial<Omit<Page, "id">>;
-}) => {
-  return updatePages({ projectId, buildId }, async (currentPages) => {
-    const currentPage = findPageByIdOrPath(currentPages, pageId);
-    if (currentPage === undefined) {
-      throw new Error(`Page with id "${pageId}" not found`);
-    }
-
-    const updatedPage: Page = {
-      id: currentPage.id,
-      rootInstanceId: currentPage.rootInstanceId,
-      name: data.name ?? currentPage.name,
-      path: data.path ?? currentPage.path,
-      title: data.title ?? currentPage.title,
-      meta: { ...currentPage.meta, ...data.meta },
-    };
-
-    return {
-      homePage:
-        updatedPage.id === currentPages.homePage.id
-          ? updatedPage
-          : currentPages.homePage,
-      pages: currentPages.pages.map((page) =>
-        page.id === updatedPage.id ? updatedPage : page
-      ),
-    };
-  });
-};
-
 export const deletePage = async ({
   projectId,
   buildId,

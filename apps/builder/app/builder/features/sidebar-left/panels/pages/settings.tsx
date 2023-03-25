@@ -5,7 +5,6 @@ import { useStore } from "@nanostores/react";
 import { useDebouncedCallback } from "use-debounce";
 import { useUnmount } from "react-use";
 import slugify from "slugify";
-import { useFetcher } from "@remix-run/react";
 import {
   type Page,
   type Pages,
@@ -28,13 +27,13 @@ import {
   Tooltip,
 } from "@webstudio-is/design-system";
 import { ChevronDoubleLeftIcon, TrashIcon } from "@webstudio-is/icons";
-import { useOnFetchEnd, usePersistentFetcher } from "~/shared/fetcher";
+import { usePersistentFetcher } from "~/shared/fetcher";
 import {
   normalizeErrors,
   toastUnknownFieldErrors,
   useIds,
 } from "~/shared/form-utils";
-import type { DeletePageData, EditPageData } from "~/shared/pages";
+import type { DeletePageData } from "~/shared/pages";
 import { restPagesPath } from "~/shared/router-utils";
 import { Header, HeaderSuffixSpacer } from "../../header";
 import { deleteInstance } from "~/shared/instance-utils";
@@ -70,13 +69,47 @@ const PageValues = z.object({
   description: z.string().optional(),
 });
 
-const getErrors = (values: Values, isHomePage: boolean): Errors => {
+const isPathUnique = (
+  pages: Pages,
+  // undefined page id means new page
+  pageId: undefined | Page["id"],
+  path: string
+) => {
+  const list = [];
+  const set = new Set();
+  list.push(path);
+  set.add(path);
+  for (const page of pages.pages) {
+    if (page.id !== pageId) {
+      list.push(page.path);
+      set.add(page.path);
+    }
+  }
+  return list.length === set.size;
+};
+
+const validateValues = (
+  pages: undefined | Pages,
+  // undefined page id means new page
+  pageId: undefined | Page["id"],
+  values: Values,
+  isHomePage: boolean
+): Errors => {
   const Validator = isHomePage ? HomePageValues : PageValues;
   const parsedResult = Validator.safeParse(values);
-  if (parsedResult.success) {
-    return {};
+  const errors: Errors = {};
+  if (parsedResult.success === false) {
+    return parsedResult.error.formErrors.fieldErrors;
   }
-  return parsedResult.error.formErrors.fieldErrors;
+  if (
+    pages !== undefined &&
+    values.path !== undefined &&
+    isPathUnique(pages, pageId, values.path) === false
+  ) {
+    errors.path = errors.path ?? [];
+    errors.path.push("All paths must be unique");
+  }
+  return errors;
 };
 
 const toFormPage = (page?: Page): Values => {
@@ -231,7 +264,7 @@ export const NewPageSettings = ({
     title: "Untitled",
     description: "",
   });
-  const errors = getErrors(values, false);
+  const errors = validateValues(pages, undefined, values, false);
 
   const handleSubmit = () => {
     if (Object.keys(errors).length === 0) {
@@ -351,15 +384,34 @@ const NewPageSettingsView = ({
   );
 };
 
-const toFormData = (page: Partial<Values> & { id: string }): FormData => {
-  const formData = new FormData();
-  for (const [key, value] of Object.entries(page)) {
-    // @todo: handle "meta"
-    if (typeof value === "string") {
-      formData.append(key, value);
+const updatePage = (pageId: Page["id"], values: Partial<Values>) => {
+  const updatePageMutable = (page: Page, values: Partial<Values>) => {
+    if (values.name !== undefined) {
+      page.name = values.name;
     }
-  }
-  return formData;
+    if (values.path !== undefined) {
+      page.path = values.path;
+    }
+    if (values.title !== undefined) {
+      page.title = values.title;
+    }
+    if (values.description !== undefined) {
+      page.meta.description = values.description;
+    }
+  };
+  store.createTransaction([pagesStore], (pages) => {
+    if (pages === undefined) {
+      return;
+    }
+    if (pages.homePage.id === pageId) {
+      updatePageMutable(pages.homePage, values);
+    }
+    for (const page of pages.pages) {
+      if (page.id === pageId) {
+        updatePageMutable(page, values);
+      }
+    }
+  });
 };
 
 export const PageSettings = ({
@@ -375,26 +427,9 @@ export const PageSettings = ({
 }) => {
   const submitPersistently = usePersistentFetcher();
 
-  const fetcher = useFetcher<EditPageData>();
-
   const pages = useStore(pagesStore);
   const page = pages && findPageByIdOrPath(pages, pageId);
 
-  // Updating client side store like that is a temporary solution
-  // We want to switch pages to immerhin: https://github.com/webstudio-is/webstudio-builder/issues/1084
-  const updateOnClient = (page: Page) => {
-    if (pages === undefined) {
-      return;
-    }
-    if (pages.homePage.id === page.id) {
-      pagesStore.set({ homePage: page, pages: pages.pages });
-      return;
-    }
-    pagesStore.set({
-      homePage: pages.homePage,
-      pages: pages.pages.map((item) => (item.id === page.id ? page : item)),
-    });
-  };
   const deleteOnClient = (pageId: Page["id"]) => {
     if (pages === undefined) {
       return;
@@ -412,14 +447,12 @@ export const PageSettings = ({
   const isHomePage = page?.id === pages?.homePage.id;
 
   const [unsavedValues, setUnsavedValues] = useState<Partial<Values>>({});
-  const [submittedValues, setSubmittedValues] = useState<Partial<Values>>({});
 
   const values: Values = {
     ...toFormPage(page),
-    ...submittedValues,
     ...unsavedValues,
   };
-  const errors = getErrors(values, isHomePage);
+  const errors = validateValues(pages, pageId, values, isHomePage);
 
   const handleSubmitDebounced = useDebouncedCallback(() => {
     if (
@@ -428,17 +461,7 @@ export const PageSettings = ({
     ) {
       return;
     }
-
-    // We're re-submitting the submittedValues because previous submit is going to be cancelled
-    // (normally, submittedValues are empty at this point)
-    const valuesToSubmit = { ...submittedValues, ...unsavedValues };
-
-    fetcher.submit(toFormData({ id: pageId, ...valuesToSubmit }), {
-      method: "post",
-      action: restPagesPath({ projectId }),
-    });
-
-    setSubmittedValues(valuesToSubmit);
+    updatePage(pageId, unsavedValues);
     setUnsavedValues({});
   }, 1000);
 
@@ -454,31 +477,13 @@ export const PageSettings = ({
   );
 
   useUnmount(() => {
-    if (Object.keys(unsavedValues).length === 0) {
+    if (
+      Object.keys(unsavedValues).length === 0 ||
+      Object.keys(errors).length !== 0
+    ) {
       return;
     }
-    // We use submitPersistently instead of fetcher.submit
-    // because we don't want the request to be canceled when the component unmounts
-    submitPersistently<EditPageData>(
-      toFormData({ id: pageId, ...submittedValues, ...unsavedValues }),
-      { method: "post", action: restPagesPath({ projectId }) },
-      (data) => {
-        if (data.status === "error") {
-          toastUnknownFieldErrors(normalizeErrors(data.errors), []);
-        } else {
-          updateOnClient(data.page);
-        }
-      }
-    );
-  });
-
-  useOnFetchEnd(fetcher, (data) => {
-    if (data.status === "error") {
-      setUnsavedValues({ ...submittedValues, ...unsavedValues });
-    } else {
-      updateOnClient(data.page);
-    }
-    setSubmittedValues({});
+    updatePage(pageId, unsavedValues);
   });
 
   const hanldeDelete = () => {
