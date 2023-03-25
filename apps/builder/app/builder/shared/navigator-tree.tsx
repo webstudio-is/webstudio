@@ -31,7 +31,6 @@ export const NavigatorTree = () => {
         position: payload.dropTarget.position,
       });
       setState({ isDragging: false });
-      console.log(payload);
     },
     []
   );
