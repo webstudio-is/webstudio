@@ -76,7 +76,7 @@ export const TabContent = ({ publish, onSetActiveTab }: TabContentProps) => {
                         return null;
                       }
                       return (
-                        <Tooltip content={meta.label}>
+                        <Tooltip content={meta.label} key={component}>
                           <ComponentCard
                             onClick={() => {
                               onSetActiveTab("none");
@@ -91,7 +91,6 @@ export const TabContent = ({ publish, onSetActiveTab }: TabContentProps) => {
                             data-drag-component={component}
                             label={meta.label}
                             icon={<meta.Icon />}
-                            key={component}
                             tabIndex={index === 0 ? 0 : -1}
                           />
                         </Tooltip>
