@@ -32,7 +32,7 @@ export const NavigatorTree = () => {
       });
       setState({ isDragging: false });
     },
-    []
+    [setState]
   );
 
   const handleSelect = useCallback((instanceSelector: InstanceSelector) => {
