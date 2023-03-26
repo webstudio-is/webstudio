@@ -1,5 +1,5 @@
 import store from "immerhin";
-import { findTreeInstanceIds } from "@webstudio-is/project-build";
+import { findTreeInstanceIdsExcludingSlotDescendants } from "@webstudio-is/project-build";
 import {
   propsStore,
   stylesStore,
@@ -53,12 +53,29 @@ export const deleteInstance = (instanceSelector: InstanceSelector) => {
       stylesStore,
     ],
     (instances, props, styleSourceSelections, styleSources, styles) => {
-      const [targetInstanceId, parentInstanceId] = instanceSelector;
-      const parentInstance =
+      let [targetInstanceId, parentInstanceId, grandparentInstanceId] =
+        instanceSelector;
+      let parentInstance =
         parentInstanceId === undefined
           ? undefined
           : instances.get(parentInstanceId);
-      const subtreeIds = findTreeInstanceIds(instances, targetInstanceId);
+
+      // delete parent fragment too if its last child is going to be deleted
+      // use case for slots: slot became empty and remove display: contents
+      // to be displayed properly on canvas
+      if (
+        parentInstance?.component === "Fragment" &&
+        parentInstance.children.length === 1 &&
+        grandparentInstanceId !== undefined
+      ) {
+        targetInstanceId = parentInstance.id;
+        parentInstance = instances.get(grandparentInstanceId);
+      }
+
+      const subtreeIds = findTreeInstanceIdsExcludingSlotDescendants(
+        instances,
+        targetInstanceId
+      );
       const subtreeLocalStyleSourceIds = findSubtreeLocalStyleSources(
         subtreeIds,
         styleSources,

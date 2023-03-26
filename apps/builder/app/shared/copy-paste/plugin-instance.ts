@@ -1,7 +1,7 @@
 import store from "immerhin";
 import { z } from "zod";
 import {
-  findTreeInstanceIds,
+  findTreeInstanceIdsExcludingSlotDescendants,
   InstancesItem,
   Prop,
   StyleDecl,
@@ -49,7 +49,10 @@ const getTreeData = (targetInstanceSelector: InstanceSelector) => {
 
   const [targetInstanceId] = targetInstanceSelector;
   const instances = instancesStore.get();
-  const treeInstanceIds = findTreeInstanceIds(instances, targetInstanceId);
+  const treeInstanceIds = findTreeInstanceIdsExcludingSlotDescendants(
+    instances,
+    targetInstanceId
+  );
   const styleSources = styleSourcesStore.get();
   const styleSourceSelections = styleSourceSelectionsStore.get();
   const subtreeLocalStyleSourceIds = findSubtreeLocalStyleSources(

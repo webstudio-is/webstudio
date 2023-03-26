@@ -149,6 +149,38 @@ export const findClosestDroppableTarget = (
   return rootDropTarget;
 };
 
+const getInstanceOrCreateFragmentIfNecessary = (
+  instances: Instances,
+  instanceId: Instance["id"]
+) => {
+  const instance = instances.get(instanceId);
+  if (instance === undefined) {
+    return;
+  }
+  // slot should accept only single child
+  // otherwise multiple slots will have to maintain own children
+  // here all slot children are wrapped with fragment instance
+  if (instance.component === "Slot") {
+    if (instance.children.length === 0) {
+      const id = nanoid();
+      const fragment: InstancesItem = {
+        type: "instance",
+        id,
+        component: "Fragment",
+        children: [],
+      };
+      instances.set(id, fragment);
+      instance.children.push({ type: "id", value: id });
+      return fragment;
+    }
+    // first slot child is always fragment
+    if (instance.children[0].type === "id") {
+      return instances.get(instance.children[0].value);
+    }
+  }
+  return instance;
+};
+
 export const reparentInstanceMutable = (
   instances: Instances,
   instanceSelector: InstanceSelector,
@@ -159,7 +191,10 @@ export const reparentInstanceMutable = (
     parentInstanceId === undefined
       ? undefined
       : instances.get(parentInstanceId);
-  const nextParent = instances.get(dropTarget.parentSelector[0]);
+  const nextParent = getInstanceOrCreateFragmentIfNecessary(
+    instances,
+    dropTarget.parentSelector[0]
+  );
   const instance = instances.get(instanceId);
   if (
     prevParent === undefined ||
@@ -248,7 +283,10 @@ export const insertInstancesMutable = (
   rootIds: Instance["id"][],
   dropTarget: DroppableTarget
 ) => {
-  const parentInstance = instances.get(dropTarget.parentSelector[0]);
+  const parentInstance = getInstanceOrCreateFragmentIfNecessary(
+    instances,
+    dropTarget.parentSelector[0]
+  );
   if (parentInstance === undefined) {
     return;
   }
