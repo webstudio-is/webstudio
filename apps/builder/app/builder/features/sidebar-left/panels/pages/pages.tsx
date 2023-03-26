@@ -207,8 +207,7 @@ const PagesPanel = ({
           </>
         }
       />
-      <TreeNode
-        hideRoot
+      <TreeNode<PagesTreeNode>
         selectedItemSelector={[selectedPageId, pagesTree.id]}
         onSelect={selectTreeNode}
         itemData={pagesTree}
@@ -219,6 +218,7 @@ const PagesPanel = ({
           }
           return [];
         }}
+        isItemHidden={(itemId) => itemId === pagesTree.id}
         getIsExpanded={() => true}
       />
     </Box>

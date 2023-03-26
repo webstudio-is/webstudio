@@ -31,6 +31,7 @@ export type TreeProps<Data extends { id: string }> = {
   canLeaveParent: (itemId: ItemId) => boolean;
   canAcceptChild: (itemId: ItemId) => boolean;
   getItemChildren: (itemId: ItemId) => Data[];
+  isItemHidden: (itemId: ItemId) => boolean;
   renderItem: (props: TreeItemRenderProps<Data>) => React.ReactNode;
 
   onSelect?: (itemSelector: ItemSelector) => void;
@@ -65,6 +66,7 @@ export const Tree = <Data extends { id: string }>({
   canLeaveParent,
   canAcceptChild,
   getItemChildren,
+  isItemHidden,
   renderItem,
   onSelect,
   onHover,
@@ -75,7 +77,6 @@ export const Tree = <Data extends { id: string }>({
 }: TreeProps<Data>) => {
   const { getIsExpanded, setIsExpanded } = useExpandState({
     selectedItemSelector,
-    getItemChildren,
   });
 
   const rootRef = useRef<HTMLElement | null>(null);
@@ -110,6 +111,7 @@ export const Tree = <Data extends { id: string }>({
     placementIndicator,
     getIsExpanded,
     getItemChildren,
+    isItemHidden,
     canAcceptChild,
   });
 
@@ -129,11 +131,7 @@ export const Tree = <Data extends { id: string }>({
       if (dropTarget === undefined) {
         return;
       }
-      const [itemId] = dropTarget.itemSelector;
-      if (
-        getItemChildren(itemId).length > 0 ||
-        getIsExpanded(dropTarget.itemSelector) === false
-      ) {
+      if (getIsExpanded(dropTarget.itemSelector) === false) {
         setIsExpanded(dropTarget.itemSelector, true);
       }
     },
@@ -257,6 +255,7 @@ export const Tree = <Data extends { id: string }>({
   const keyboardNavigation = useKeyboardNavigation({
     root,
     getItemChildren,
+    isItemHidden,
     selectedItemSelector,
     getIsExpanded,
     setIsExpanded,
@@ -289,6 +288,7 @@ export const Tree = <Data extends { id: string }>({
         <TreeNode
           renderItem={renderItem}
           getItemChildren={getItemChildren}
+          isItemHidden={isItemHidden}
           animate={animate}
           onSelect={onSelect}
           onMouseEnter={onHover}
@@ -320,6 +320,7 @@ const useKeyboardNavigation = <Data extends { id: string }>({
   root,
   selectedItemSelector,
   getItemChildren,
+  isItemHidden,
   getIsExpanded,
   setIsExpanded,
   onEsc,
@@ -327,6 +328,7 @@ const useKeyboardNavigation = <Data extends { id: string }>({
   root: Data;
   selectedItemSelector: undefined | ItemSelector;
   getItemChildren: (itemId: ItemId) => Data[];
+  isItemHidden: (itemId: ItemId) => boolean;
   getIsExpanded: (itemSelector: ItemSelector) => boolean;
   setIsExpanded: (itemSelector: ItemSelector, isExpanded: boolean) => void;
   onEsc: () => void;
@@ -335,7 +337,9 @@ const useKeyboardNavigation = <Data extends { id: string }>({
     const result: ItemSelector[] = [];
     const traverse = (itemSelector: ItemSelector) => {
       const [itemId] = itemSelector;
-      result.push(itemSelector);
+      if (isItemHidden(itemId) === false) {
+        result.push(itemSelector);
+      }
       if (getIsExpanded(itemSelector)) {
         for (const child of getItemChildren(itemId)) {
           traverse([child.id, ...itemSelector]);
@@ -344,7 +348,7 @@ const useKeyboardNavigation = <Data extends { id: string }>({
     };
     traverse([root.id]);
     return result;
-  }, [root, getIsExpanded, getItemChildren]);
+  }, [root, getIsExpanded, getItemChildren, isItemHidden]);
 
   const rootRef = useRef<HTMLDivElement>(null);
 
@@ -461,12 +465,10 @@ const useKeyboardNavigation = <Data extends { id: string }>({
   };
 };
 
-const useExpandState = <Data extends { id: string }>({
+const useExpandState = ({
   selectedItemSelector,
-  getItemChildren,
 }: {
   selectedItemSelector: undefined | ItemSelector;
-  getItemChildren: (itemId: ItemId) => Data[];
 }) => {
   const [record, setRecord] = useState<Record<string, boolean>>({});
 
@@ -508,14 +510,9 @@ const useExpandState = <Data extends { id: string }>({
       if (itemSelector.length === 1) {
         return true;
       }
-      const [itemId] = itemSelector;
-
-      return (
-        getItemChildren(itemId).length > 0 &&
-        record[itemSelector.join()] === true
-      );
+      return record[itemSelector.join()] === true;
     },
-    [record, getItemChildren]
+    [record]
   );
 
   const setIsExpanded = useCallback(
