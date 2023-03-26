@@ -44,6 +44,8 @@ const DragLayer = ({
       // Container is used to position card
       css={{
         position: "absolute",
+        // Prevents flickering between hover/outside mouse position
+        pointerEvents: "none",
         inset: 0,
       }}
     >
