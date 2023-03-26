@@ -116,6 +116,7 @@ const render = (
         findItemById(tree, itemId)?.canAcceptChildren ?? false,
       getItemChildren: (itemId: ItemId) =>
         findItemById(tree, itemId)?.children ?? [],
+      isItemHidden: (_itemId: ItemId) => false,
     },
   });
 

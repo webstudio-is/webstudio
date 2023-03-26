@@ -15,10 +15,12 @@ export const useHorizontalShift = <Data extends { id: ItemId }>({
   placementIndicator,
   getIsExpanded,
   canAcceptChild,
+  isItemHidden,
   getItemChildren,
 }: {
   getItemChildren: (itemId: ItemId) => Data[];
   canAcceptChild: (itemId: ItemId) => boolean;
+  isItemHidden: (itemId: ItemId) => boolean;
   dragItemSelector: undefined | ItemSelector;
   dropTarget: ItemDropTarget | undefined;
   placementIndicator: undefined | Placement;
@@ -36,8 +38,6 @@ export const useHorizontalShift = <Data extends { id: ItemId }>({
     ) {
       return undefined;
     }
-
-    const dragItemDepth = dragItemSelector.length - 1;
 
     const { itemSelector: dropItemSelector, indexWithinChildren } = dropTarget;
 
@@ -57,13 +57,21 @@ export const useHorizontalShift = <Data extends { id: ItemId }>({
       return { itemSelector: dropItemSelector, position: "end" };
     }
 
+    let dropHiddenCount = 0;
+    for (const itemId of dropItemSelector) {
+      if (isItemHidden(itemId)) {
+        dropHiddenCount += 1;
+      }
+    }
+
+    const dragItemDepth = dragItemSelector.length - 1;
     const currentDepth = dropItemSelector.length;
     const desiredDepth = dragItemDepth + horizontalShift;
 
     const withoutShift = {
       itemSelector: dropItemSelector,
       position: indexWithinChildren,
-      placement: shiftPlacement(currentDepth),
+      placement: shiftPlacement(currentDepth - dropHiddenCount),
     } as const;
 
     const [dragItemId] = dragItemSelector;
@@ -110,7 +118,7 @@ export const useHorizontalShift = <Data extends { id: ItemId }>({
       return {
         itemSelector: newParentSelector,
         position: newPosition,
-        placement: shiftPlacement(currentDepth - shifted),
+        placement: shiftPlacement(currentDepth - dropHiddenCount - shifted),
       };
     }
 
@@ -155,7 +163,7 @@ export const useHorizontalShift = <Data extends { id: ItemId }>({
       return {
         itemSelector: newParentSelector,
         position: "end",
-        placement: shiftPlacement(currentDepth + shifted),
+        placement: shiftPlacement(currentDepth - dropHiddenCount + shifted),
       };
     }
 
@@ -166,6 +174,7 @@ export const useHorizontalShift = <Data extends { id: ItemId }>({
     dragItemSelector,
     horizontalShift,
     canAcceptChild,
+    isItemHidden,
     getItemChildren,
     getIsExpanded,
   ]);

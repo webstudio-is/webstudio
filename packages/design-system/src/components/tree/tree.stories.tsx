@@ -32,22 +32,29 @@ export const StressTest = ({ animate }: { animate: boolean }) => {
               canAcceptChildren: true,
               children: [
                 {
-                  id: `box-${index}.0.0`,
+                  id: `hidden-${index}.0.0`,
                   canAcceptChildren: true,
+                  isHidden: true,
                   children: [
                     {
                       id: `box-${index}.0.0.0`,
                       canAcceptChildren: true,
                       children: [
                         {
-                          id: `heading-${index}.1`,
-                          canAcceptChildren: false,
-                          children: [],
-                        },
-                        {
-                          id: `paragraph-${index}.1`,
-                          canAcceptChildren: false,
-                          children: [],
+                          id: `box-${index}.0.0.0.0`,
+                          canAcceptChildren: true,
+                          children: [
+                            {
+                              id: `heading-${index}.1`,
+                              canAcceptChildren: false,
+                              children: [],
+                            },
+                            {
+                              id: `paragraph-${index}.1`,
+                              canAcceptChildren: false,
+                              children: [],
+                            },
+                          ],
                         },
                       ],
                     },
@@ -77,11 +84,18 @@ export const StressTest = ({ animate }: { animate: boolean }) => {
   return (
     <Flex css={{ width: 300, height: 500, flexDirection: "column" }}>
       <Tree
-        canAcceptChild={(itemId) =>
-          findItemById(root, itemId)?.canAcceptChildren ?? false
-        }
+        canAcceptChild={(itemId) => {
+          const item = findItemById(root, itemId);
+          return (
+            (item?.canAcceptChildren ?? false) &&
+            (item?.isHidden ?? false) === false
+          );
+        }}
         canLeaveParent={() => true}
         getItemChildren={(itemId) => findItemById(root, itemId)?.children ?? []}
+        isItemHidden={(itemSelector) =>
+          findItemById(root, itemSelector[0])?.isHidden ?? false
+        }
         animate={animate}
         root={root}
         selectedItemSelector={selectedItemSelector}
