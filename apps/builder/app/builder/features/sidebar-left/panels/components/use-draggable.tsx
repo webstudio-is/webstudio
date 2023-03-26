@@ -61,6 +61,8 @@ const DragLayer = ({
   );
 };
 
+export const dragItemAttribute = "data-drag-component";
+
 const toCanvasCoordinates = (
   { x, y }: Point,
   zoom: number,
@@ -73,21 +75,21 @@ const toCanvasCoordinates = (
   return { x: (x - canvasRect.x) / scale, y: (y - canvasRect.y) / scale };
 };
 
-const elementToComponentName = (
+export const elementToComponentName = (
   element: Element,
   metaByComponentName: Map<ComponentName, WsComponentMeta>
 ) => {
   // If drag doesn't start on the button element directly but on one of its children,
   // we need to trace back to the button that has the data.
-  const parentWithData = element.closest("[data-drag-component]");
+  const parentWithData = element.closest(`[${dragItemAttribute}]`);
 
-  if (!(parentWithData instanceof HTMLElement)) {
-    return;
+  if (parentWithData instanceof HTMLElement) {
+    const dragComponent = parentWithData.dataset.dragComponent as ComponentName;
+    if (metaByComponentName.has(dragComponent)) {
+      return dragComponent;
+    }
   }
-  const { dragComponent } = parentWithData.dataset;
-  return metaByComponentName.has(dragComponent as ComponentName)
-    ? dragComponent
-    : undefined;
+  return false;
 };
 
 export const useDraggable = ({
@@ -104,14 +106,7 @@ export const useDraggable = ({
 
   const dragHandlers = useDrag<Instance["component"]>({
     elementToData(element) {
-      const componentName = elementToComponentName(
-        element,
-        metaByComponentName
-      );
-      if (componentName === undefined) {
-        return false;
-      }
-      return componentName;
+      return elementToComponentName(element, metaByComponentName);
     },
     onStart({ data: componentName }) {
       setDragComponent(componentName);

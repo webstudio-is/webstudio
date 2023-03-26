@@ -1,3 +1,5 @@
+import { useMemo } from "react";
+import { usePress } from "@react-aria/interactions";
 import {
   type ComponentName,
   getComponentMeta,
@@ -10,15 +12,18 @@ import {
   Flex,
   ComponentCard,
   Tooltip,
+  ArrowFocus,
 } from "@webstudio-is/design-system";
 import { PlusIcon } from "@webstudio-is/icons";
 import type { Publish } from "~/shared/pubsub";
+import { CollapsibleSection } from "~/builder/shared/collapsible-section";
 import type { TabName } from "../../types";
 import { Header, CloseButton } from "../../header";
-import { ArrowFocus } from "@webstudio-is/design-system";
-import { CollapsibleSection } from "~/builder/shared/collapsible-section";
-import { useDraggable } from "./use-draggable";
-import { useMemo } from "react";
+import {
+  dragItemAttribute,
+  elementToComponentName,
+  useDraggable,
+} from "./use-draggable";
 
 const getMetaMaps = () => {
   const metaByComponentName: Map<ComponentName, WsComponentMeta> = new Map();
@@ -59,6 +64,18 @@ export const TabContent = ({ publish, onSetActiveTab }: TabContentProps) => {
     publish,
     metaByComponentName,
   });
+  const { pressProps } = usePress({
+    onPress(event) {
+      const component = elementToComponentName(
+        event.target,
+        metaByComponentName
+      );
+      if (component) {
+        onSetActiveTab("none");
+        handleInsert(component);
+      }
+    },
+  });
 
   return (
     <Flex css={{ height: "100%", flexDirection: "column" }}>
@@ -86,17 +103,8 @@ export const TabContent = ({ publish, onSetActiveTab }: TabContentProps) => {
                       return (
                         <Tooltip content={meta.label} key={component}>
                           <ComponentCard
-                            onClick={() => {
-                              onSetActiveTab("none");
-                              handleInsert(component);
-                            }}
-                            onKeyDown={(event) => {
-                              if (event.key === "Enter") {
-                                onSetActiveTab("none");
-                                handleInsert(component);
-                              }
-                            }}
-                            data-drag-component={component}
+                            {...pressProps}
+                            {...{ [dragItemAttribute]: component }}
                             label={meta.label}
                             icon={<meta.Icon />}
                             tabIndex={index === 0 ? 0 : -1}

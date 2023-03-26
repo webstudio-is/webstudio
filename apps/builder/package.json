@@ -30,6 +30,7 @@
     "@nanostores/react": "^0.4.1",
     "@radix-ui/react-select": "^1.0.0",
     "@radix-ui/react-tooltip": "^1.0.0",
+    "@react-aria/interactions": "^3.11.0",
     "@remix-run/node": "1.12.0",
     "@remix-run/react": "1.12.0",
     "@remix-run/serve": "1.12.0",
