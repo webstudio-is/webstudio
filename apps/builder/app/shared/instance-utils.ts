@@ -53,8 +53,9 @@ export const deleteInstance = (instanceSelector: InstanceSelector) => {
       stylesStore,
     ],
     (instances, props, styleSourceSelections, styleSources, styles) => {
-      let [targetInstanceId, parentInstanceId, grandparentInstanceId] =
-        instanceSelector;
+      let targetInstanceId = instanceSelector[0];
+      const parentInstanceId = instanceSelector[1];
+      const grandparentInstanceId = instanceSelector[2];
       let parentInstance =
         parentInstanceId === undefined
           ? undefined
