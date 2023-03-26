@@ -6,6 +6,8 @@ export type ComponentName = keyof typeof components;
 /**
  * We need to define component names manually here, instead of using Object.keys(components)
  * Otherwise every component would be included in the bundle, even if it is not used
+ *
+ * @todo this list should not be hardcoded!
  */
 const componentNames = Object.keys({
   Box: 1,

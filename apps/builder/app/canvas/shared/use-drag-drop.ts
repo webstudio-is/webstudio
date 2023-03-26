@@ -78,7 +78,7 @@ const findClosestDroppableInstanceSelector = (
     const instance = instances.get(instanceId);
     if (instance !== undefined) {
       const meta = getComponentMeta(instance.component);
-      if (meta?.type === "body" || meta?.type === "container") {
+      if (meta?.type === "container") {
         return getAncestorInstanceSelector(instanceSelector, instanceId);
       }
     }
