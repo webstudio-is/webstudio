@@ -60,7 +60,7 @@ export const InstanceTree = (
         return false;
       }
       const meta = getComponentMeta(instance.component);
-      return meta?.type === "body" || meta?.type === "container";
+      return meta?.type === "container";
     },
     [instances]
   );

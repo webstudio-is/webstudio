@@ -22,14 +22,12 @@ export const componentCategories = [
 
 const WsComponentMeta = z.object({
   category: z.enum(componentCategories).optional(),
-  // body - can accept other components with dnd but not listed
   // container - can accept other components with dnd
   // control - usually form controls like inputs, without children
   // embed - images, videos or other embeddable components, without children
   // rich-text - editable text component
   // rich-text-child - formatted text fragment, not listed in components list
   type: z.enum([
-    "body",
     "container",
     "control",
     "embed",

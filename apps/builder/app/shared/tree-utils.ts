@@ -100,7 +100,7 @@ export const createInstancesIndex = (
 
 const isInstanceDroppable = (instance: InstancesItem) => {
   const meta = getComponentMeta(instance.component);
-  return meta?.type === "body" || meta?.type === "container";
+  return meta?.type === "container";
 };
 
 export type DroppableTarget = {
