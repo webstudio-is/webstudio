@@ -18,28 +18,32 @@ import { Header, CloseButton } from "../../header";
 import { ArrowFocus } from "@webstudio-is/design-system";
 import { CollapsibleSection } from "~/builder/shared/collapsible-section";
 import { useDraggable } from "./use-draggable";
+import { useMemo } from "react";
 
-const metasByComponentName: Map<ComponentName, WsComponentMeta> = new Map();
-const metasByCategory: Map<
-  WsComponentMeta["category"],
-  Array<WsComponentMeta>
-> = new Map();
-const componentNamesByMeta: Map<WsComponentMeta, ComponentName> = new Map();
+const getMetaMaps = () => {
+  const metaByComponentName: Map<ComponentName, WsComponentMeta> = new Map();
+  const metaByCategory: Map<
+    WsComponentMeta["category"],
+    Array<WsComponentMeta>
+  > = new Map();
+  const componentNamesByMeta: Map<WsComponentMeta, ComponentName> = new Map();
 
-for (const name of getComponentNames()) {
-  const meta = getComponentMeta(name);
-  if (meta?.category === undefined) {
-    continue;
+  for (const name of getComponentNames()) {
+    const meta = getComponentMeta(name);
+    if (meta?.category === undefined) {
+      continue;
+    }
+    let categoryMetas = metaByCategory.get(meta.category);
+    if (categoryMetas === undefined) {
+      categoryMetas = [];
+      metaByCategory.set(meta.category, categoryMetas);
+    }
+    categoryMetas.push(meta);
+    metaByComponentName.set(name, meta);
+    componentNamesByMeta.set(meta, name);
   }
-  let categoryMetas = metasByCategory.get(meta.category);
-  if (categoryMetas === undefined) {
-    categoryMetas = [];
-    metasByCategory.set(meta.category, categoryMetas);
-  }
-  categoryMetas.push(meta);
-  metasByComponentName.set(name, meta);
-  componentNamesByMeta.set(meta, name);
-}
+  return { metaByComponentName, metaByCategory, componentNamesByMeta };
+};
 
 type TabContentProps = {
   onSetActiveTab: (tabName: TabName) => void;
@@ -47,9 +51,13 @@ type TabContentProps = {
 };
 
 export const TabContent = ({ publish, onSetActiveTab }: TabContentProps) => {
+  const { metaByComponentName, metaByCategory, componentNamesByMeta } = useMemo(
+    getMetaMaps,
+    []
+  );
   const { dragCard, handleInsert, draggableContainerRef } = useDraggable({
     publish,
-    metasByComponentName,
+    metaByComponentName,
   });
 
   return (
@@ -69,7 +77,7 @@ export const TabContent = ({ publish, onSetActiveTab }: TabContentProps) => {
                   wrap="wrap"
                   css={{ px: theme.spacing[9], overflow: "auto" }}
                 >
-                  {(metasByCategory.get(category) ?? []).map(
+                  {(metaByCategory.get(category) ?? []).map(
                     (meta: WsComponentMeta, index) => {
                       const component = componentNamesByMeta.get(meta);
                       if (component === undefined) {

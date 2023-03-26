@@ -75,7 +75,7 @@ const toCanvasCoordinates = (
 
 const elementToComponentName = (
   element: Element,
-  metasByComponentName: Map<ComponentName, WsComponentMeta>
+  metaByComponentName: Map<ComponentName, WsComponentMeta>
 ) => {
   // If drag doesn't start on the button element directly but on one of its children,
   // we need to trace back to the button that has the data.
@@ -85,17 +85,17 @@ const elementToComponentName = (
     return;
   }
   const { dragComponent } = parentWithData.dataset;
-  return metasByComponentName.has(dragComponent as ComponentName)
+  return metaByComponentName.has(dragComponent as ComponentName)
     ? dragComponent
     : undefined;
 };
 
 export const useDraggable = ({
   publish,
-  metasByComponentName,
+  metaByComponentName,
 }: {
   publish: Publish;
-  metasByComponentName: Map<ComponentName, WsComponentMeta>;
+  metaByComponentName: Map<ComponentName, WsComponentMeta>;
 }) => {
   const [dragComponent, setDragComponent] = useState<Instance["component"]>();
   const [point, setPoint] = useState<Point>({ x: 0, y: 0 });
@@ -106,7 +106,7 @@ export const useDraggable = ({
     elementToData(element) {
       const componentName = elementToComponentName(
         element,
-        metasByComponentName
+        metaByComponentName
       );
       if (componentName === undefined) {
         return false;
