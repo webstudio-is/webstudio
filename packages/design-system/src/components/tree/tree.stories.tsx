@@ -96,6 +96,10 @@ export const StressTest = ({ animate }: { animate: boolean }) => {
           </TreeItemBody>
         )}
         onDragEnd={(payload) => setRoot((root) => reparent(root, payload))}
+        onCancel={() => {
+          setDragItemSelector(undefined);
+          setDropTarget(undefined);
+        }}
       />
     </Flex>
   );

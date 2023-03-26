@@ -42,6 +42,7 @@ export type TreeProps<Data extends { id: string }> = {
     itemSelector: ItemSelector;
     dropTarget: { itemSelector: ItemSelector; position: number | "end" };
   }) => void;
+  onCancel: () => void;
 };
 
 const sharedDropOptions = {
@@ -72,6 +73,7 @@ export const Tree = <Data extends { id: string }>({
   onDropTargetChange,
   onDragItemChange,
   onDragEnd,
+  onCancel,
 }: TreeProps<Data>) => {
   const { getIsExpanded, setIsExpanded } = useExpandState({
     selectedItemSelector,
@@ -241,6 +243,8 @@ export const Tree = <Data extends { id: string }>({
             position: shiftedDropTarget.position,
           },
         });
+      } else {
+        onCancel();
       }
 
       autoScrollHandlers.setEnabled(false);
