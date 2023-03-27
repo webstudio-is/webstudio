@@ -82,7 +82,7 @@ export const CollapsibleSectionBase = ({
 
 export type CollapsibleSectionProps = Prettify<
   Omit<CollapsibleSectionBaseProps, "isOpen" | "onOpenChange" | "fullWidth"> &
-    UseOpenStateProps & { categoryProps: RenderCategoryProps }
+    UseOpenStateProps & { categoryProps?: RenderCategoryProps }
 >;
 
 export const CollapsibleSection = (props: CollapsibleSectionProps) => {

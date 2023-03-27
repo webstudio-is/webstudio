@@ -45,7 +45,7 @@ import {
   CollapsibleSectionBase,
   CollapsibleSectionProps,
   useOpenState,
-} from "~/builder/shared/inspector/collapsible-section";
+} from "~/builder/shared/collapsible-section";
 
 const Layer = (props: {
   id: string;
@@ -131,9 +131,13 @@ export const BackgroundsCollapsibleSection = (
   const { label, children } = props;
   const [isOpen, setIsOpen] = useOpenState(props);
 
-  const layersStyleSource = getLayersStyleSource(
-    props.categoryProps.currentStyle
-  );
+  const { categoryProps } = props;
+
+  if (categoryProps === undefined) {
+    // @todo will gone after refactor
+    throw new Error("Error");
+  }
+  const layersStyleSource = getLayersStyleSource(categoryProps.currentStyle);
   const dots: ("local" | "remote")[] = [];
 
   if (layersStyleSource === "local" || layersStyleSource === "remote") {
@@ -155,7 +159,7 @@ export const BackgroundsCollapsibleSection = (
             <SectionTitleButton
               prefix={<PlusIcon />}
               onClick={() => {
-                const { currentStyle, createBatchUpdate } = props.categoryProps;
+                const { currentStyle, createBatchUpdate } = categoryProps;
                 addLayer(currentStyle, createBatchUpdate);
                 setIsOpen(true);
               }}
@@ -163,7 +167,7 @@ export const BackgroundsCollapsibleSection = (
           }
         >
           <PropertyName
-            style={props.categoryProps.currentStyle}
+            style={categoryProps.currentStyle}
             property={layeredBackgroundProps}
             label={
               <SectionTitleLabel color={layersStyleSource}>
@@ -171,7 +175,7 @@ export const BackgroundsCollapsibleSection = (
               </SectionTitleLabel>
             }
             onReset={() => {
-              const { createBatchUpdate } = props.categoryProps;
+              const { createBatchUpdate } = categoryProps;
               deleteLayers(createBatchUpdate);
             }}
           />
