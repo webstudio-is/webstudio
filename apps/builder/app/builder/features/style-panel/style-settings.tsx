@@ -2,14 +2,16 @@ import hyphenate from "hyphenate-style-name";
 import { categories, type Category } from "@webstudio-is/react-sdk";
 import type { StyleProperty } from "@webstudio-is/css-data";
 import { toValue } from "@webstudio-is/css-engine";
-
 import {
   type StyleConfig,
   styleConfigs,
   styleConfigByName,
 } from "./shared/configs";
-import { CollapsibleSection } from "~/builder/shared/collapsible-section";
-import { renderCategory, shouldRenderCategory } from "./style-sections";
+import {
+  renderCategory,
+  shouldRenderCategory,
+  type RenderCategoryProps,
+} from "./style-sections";
 import { dependencies } from "./shared/dependencies";
 import type { SetProperty, CreateBatchUpdate } from "./shared/use-style-data";
 import type { StyleInfo } from "./shared/style-info";
@@ -17,6 +19,7 @@ import type { RenderPropertyProps } from "./style-sections";
 import { useStore } from "@nanostores/react";
 import { selectedInstanceSelectorStore } from "~/shared/nano-states";
 import { useInstanceStyleData } from "./shared/style-info";
+import React from "react";
 
 // Finds a property/value by using any available form: property, label, value
 const filterProperties = (
@@ -164,7 +167,7 @@ export const StyleSettings = ({
     if (styleConfigsByCategory.length === 0) {
       continue;
     }
-    const categoryProps = {
+    const categoryProps: RenderCategoryProps = {
       setProperty,
       deleteProperty,
       createBatchUpdate,
@@ -172,18 +175,15 @@ export const StyleSettings = ({
       category,
       styleConfigsByCategory,
       moreStyleConfigsByCategory,
+      label: categories[category].label,
+      isOpen: isSearchMode ? true : undefined,
     };
 
     if (shouldRenderCategory(categoryProps, parentStyle)) {
       all.push(
-        <CollapsibleSection
-          isOpen={isSearchMode ? true : undefined}
-          label={categories[category].label}
-          key={category}
-          fullWidth={category === "backgrounds"}
-        >
-          <>{renderCategory(categoryProps)}</>
-        </CollapsibleSection>
+        <React.Fragment key={category}>
+          {renderCategory(categoryProps)}
+        </React.Fragment>
       );
     }
   }

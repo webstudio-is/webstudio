@@ -7,10 +7,16 @@ import type { ComponentProps, ReactNode, Ref } from "react";
 import { forwardRef } from "react";
 import { textVariants } from "./text";
 import { styled, theme } from "../stitches.config";
+import { Label as RadixLabel } from "@radix-ui/react-label";
 
 export const labelColors = ["default", "preset", "local", "remote"] as const;
 
-const StyledLabel = styled("label", {
+const StyledLabel = styled(RadixLabel, {
+  all: "unset", // reset <button>
+  margin: 0,
+  WebkitAppearance: "none",
+  display: "block",
+
   boxSizing: "border-box",
   flexShrink: 0,
   py: theme.spacing[1],
@@ -28,6 +34,14 @@ const StyledLabel = styled("label", {
   },
 
   variants: {
+    // The "display: inline" property can cause sizing issues with the label in certain scenarios.
+    // However, in our case, the label is being used as a button.
+    // To ensure compatibility with form labels, we only set the "inline" property if the "htmlFor" attribute is present.
+    hasHtmlFor: {
+      true: {
+        display: "inline",
+      },
+    },
     color: {
       default: {
         color: theme.colors.foregroundMain,
@@ -81,19 +95,36 @@ const StyledLabel = styled("label", {
   },
 });
 
-type Props = ComponentProps<typeof StyledLabel> & {
+type Props = {
   color?: (typeof labelColors)[number];
   sectionTitle?: boolean;
   disabled?: boolean;
   truncate?: boolean;
   children: ReactNode;
-};
+} & ComponentProps<typeof StyledLabel>;
+
+export const isLabelButton = (color: Props["color"]) =>
+  color === "preset" || color === "local" || color === "remote";
 
 export const Label = forwardRef((props: Props, ref: Ref<HTMLLabelElement>) => {
   const { disabled, children, ...rest } = props;
+
+  // To enable keyboard accessibility for users who rely on the spacebar to activate the radix
+  // when using a preset, local, or remote color, we need to wrap the label with a button that has a "label" role.
+  // (Radix adds role="button" to the label)
+  const isButton = isLabelButton(props.color);
+
   return (
-    <StyledLabel ref={ref} aria-disabled={disabled} {...rest}>
-      {children}
+    <StyledLabel
+      ref={ref}
+      asChild={isButton}
+      // Label is exluded from tab order by default
+      tabIndex={props.tabIndex ?? (isButton ? -1 : undefined)}
+      hasHtmlFor={props.htmlFor !== undefined}
+      aria-disabled={disabled}
+      {...rest}
+    >
+      {isButton ? <button>{children}</button> : children}
     </StyledLabel>
   );
 });

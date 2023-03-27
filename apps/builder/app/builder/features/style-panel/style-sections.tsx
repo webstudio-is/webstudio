@@ -42,6 +42,8 @@ export type RenderCategoryProps = {
   category: Category;
   styleConfigsByCategory: Array<RenderPropertyProps>;
   moreStyleConfigsByCategory: Array<RenderPropertyProps>;
+  label: string;
+  isOpen?: boolean | undefined;
 };
 
 export type RenderPropertyProps = {
@@ -92,8 +94,11 @@ export const renderCategory = ({
   category,
   styleConfigsByCategory,
   moreStyleConfigsByCategory,
+  label,
+  isOpen,
 }: RenderCategoryProps) => {
   const Section = sections[category];
+
   return (
     <Section
       setProperty={setProperty}
@@ -103,6 +108,8 @@ export const renderCategory = ({
       category={category}
       styleConfigsByCategory={styleConfigsByCategory}
       moreStyleConfigsByCategory={moreStyleConfigsByCategory}
+      label={label}
+      isOpen={isOpen}
     />
   );
 };
@@ -121,7 +128,7 @@ export const shouldRenderCategory = (
   return true;
 };
 
-const sections: {
+export const sections: {
   [Property in Category]: (props: RenderCategoryProps) => JSX.Element | null;
 } = {
   layout: LayoutSection,

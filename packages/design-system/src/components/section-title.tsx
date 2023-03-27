@@ -13,25 +13,34 @@ import {
   createContext,
   useContext,
 } from "react";
-import { theme, css, type CSS } from "../stitches.config";
+import { theme, css, styled, type CSS } from "../stitches.config";
 import { Button } from "./button";
 import { cssVars } from "@webstudio-is/css-vars";
 import { ArrowFocus } from "./primitives/arrow-focus";
-import { Label } from "./label";
+import { Label, isLabelButton } from "./label";
 
 const buttonContentColor = cssVars.define("button-content-color");
 const labelTextColor = cssVars.define("label-text-color");
+
+const StyledButton = styled(Button, {});
 
 const containerStyle = css({
   position: "relative",
   height: theme.spacing[15],
   [buttonContentColor]: theme.colors.foregroundSubtle,
+  [labelTextColor]: theme.colors.foregroundSubtle,
+
   "&:hover, &:has(:focus-visible), &[data-state=open]": {
     [buttonContentColor]: theme.colors.foregroundIconMain,
+    [labelTextColor]: theme.colors.foregroundMain,
+  },
+  // Remove hover style from the label when the button is hovered
+  [`&:hover:where(:has(${StyledButton}:hover))`]: {
+    [labelTextColor]: theme.colors.foregroundSubtle,
   },
 });
 
-const titleButtonStyle = css({
+const titleButtonLayoutStyle = css({
   all: "unset", // reset <button>
   display: "flex",
   gap: theme.spacing[5],
@@ -41,11 +50,21 @@ const titleButtonStyle = css({
   boxSizing: "border-box",
   paddingLeft: theme.spacing[9],
   paddingRight: theme.spacing[7],
-  [labelTextColor]: theme.colors.foregroundSubtle,
-  cursor: "pointer",
-  "&:hover, &:focus-visible, &[data-state=open]": {
-    [labelTextColor]: theme.colors.foregroundMain,
+  variants: {
+    // We assume that suffix is a <Button prefix={<Icon />} />
+    // (hard to support arbitrary width suffixes here, hopefully we'll never need to)
+    hasSuffix: { true: { paddingRight: theme.spacing[16] } },
   },
+});
+
+const labelContainerStyle = css({
+  position: "absolute",
+  inset: 0,
+  pointerEvents: "none",
+});
+
+const titleButtonStyle = css(titleButtonLayoutStyle, {
+  cursor: "pointer",
   "&:focus-visible::before": {
     content: "''",
     position: "absolute",
@@ -55,11 +74,6 @@ const titleButtonStyle = css({
     right: theme.spacing[2],
     borderRadius: theme.borderRadius[4],
     border: `2px solid ${theme.colors.borderFocus}`,
-  },
-  variants: {
-    // We assume that suffix is a <Button prefix={<Icon />} />
-    // (hard to support arbitrary width suffixes here, hopefully we'll never need to)
-    hasSuffix: { true: { paddingRight: theme.spacing[16] } },
   },
 });
 
@@ -128,16 +142,30 @@ export const SectionTitle = forwardRef(
                 data-state={state}
                 ref={ref}
                 {...props}
-              >
-                {children}
-                {finalDots.length > 0 && (
-                  <div className={dotsSlotStyle()}>
-                    {finalDots.map((color) => (
-                      <div key={color} className={dotStyle({ color })} />
-                    ))}
-                  </div>
-                )}
-              </button>
+              ></button>
+
+              {/*
+                If the label is itself a button, we don't want to nest a button inside another button.
+                Therefore, we render the label in a layer above the SectionTitle button
+              */}
+              <div className={labelContainerStyle()}>
+                <div
+                  className={titleButtonLayoutStyle({
+                    hasSuffix: suffix !== undefined,
+                  })}
+                >
+                  {children}
+
+                  {finalDots.length > 0 && (
+                    <div className={dotsSlotStyle()}>
+                      {finalDots.map((color) => (
+                        <div key={color} className={dotStyle({ color })} />
+                      ))}
+                    </div>
+                  )}
+                </div>
+              </div>
+
               {suffix && <div className={suffixSlotStyle()}>{suffix}</div>}
             </div>
           )}
@@ -161,41 +189,25 @@ export const SectionTitleLabel = forwardRef(
 
     const commonCss = { flex: "0 1 auto" };
 
-    // When section is closed Label basically turns into an innert text
-    // https://github.com/webstudio-is/webstudio-builder/issues/1271#issuecomment-1478262629
-    if (state === "closed") {
-      return (
-        <Label
-          truncate
-          sectionTitle
-          color="default"
-          css={{
-            cursor: "inherit",
-            color: cssVars.use(labelTextColor),
-            ...commonCss,
-            ...css,
-          }}
-          ref={ref}
-        >
-          {children}
-        </Label>
-      );
-    }
+    const color = state === "closed" ? "default" : props.color;
 
-    const hasAction = Object.keys(props).some((prop) => prop.startsWith("on"));
+    const isButton = isLabelButton(color);
 
     return (
       <Label
         truncate
         sectionTitle
-        tabIndex={hasAction ? -1 : undefined}
         {...props}
+        color={color}
         css={{
-          // if there's no action, use cursor of SectionTitle,
-          // otherwise use cursor of Label
-          cursor: hasAction ? undefined : "inherit",
+          color: state === "closed" ? cssVars.use(labelTextColor) : undefined,
           ...commonCss,
           ...css,
+          // When we use a SectionTitle button, we can't directly render a label inside it.
+          // Instead, we need to render the label using a div that has position:absolute and pointer-events:none
+          // However, if the label itself is a button, we need to make sure that it remains clickable.
+          // @todo: move this logic to css
+          pointerEvents: isButton ? "all" : "inherit",
         }}
         ref={ref}
       >
@@ -211,7 +223,7 @@ export const SectionTitleButton = forwardRef(
     { css, ...props }: ComponentProps<typeof Button>,
     ref: Ref<HTMLButtonElement>
   ) => (
-    <Button
+    <StyledButton
       tabIndex={-1}
       color="ghost"
       {...props}

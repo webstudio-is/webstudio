@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, type ReactElement, type MouseEventHandler } from "react";
 import { useStore } from "@nanostores/react";
 import { isFeatureEnabled } from "@webstudio-is/feature-flags";
 import type { StyleProperty } from "@webstudio-is/css-data";
@@ -30,7 +30,7 @@ const PropertyPopoverContent = ({
   properties: StyleProperty[];
   style: StyleInfo;
   styleSource: StyleSource;
-  onReset: () => void;
+  onReset: MouseEventHandler<HTMLButtonElement>;
 }) => {
   const [breakpoints] = useBreakpoints();
   const instances = useStore(instancesStore);
@@ -123,8 +123,8 @@ const PropertyPopoverContent = ({
 type PropertyNameProps = {
   style: StyleInfo;
   property: StyleProperty | StyleProperty[];
-  label: string;
-  onReset: () => void;
+  label: string | ReactElement;
+  onReset: React.MouseEventHandler<HTMLButtonElement>;
 };
 
 export const PropertyName = ({
@@ -142,13 +142,16 @@ export const PropertyName = ({
     isFeatureEnabled("propertyReset") &&
     (styleSource === "local" || styleSource === "remote");
 
-  const labelElement = (
-    <Flex shrink>
-      <Label color={styleSource} truncate>
-        {label}
-      </Label>
-    </Flex>
-  );
+  const labelElement =
+    typeof label === "string" ? (
+      <Flex shrink>
+        <Label color={styleSource} truncate>
+          {label}
+        </Label>
+      </Flex>
+    ) : (
+      label
+    );
 
   if (isPopoverEnabled) {
     return (
@@ -180,13 +183,19 @@ export const PropertyName = ({
 
   return (
     <Flex align="center">
-      <Tooltip
-        content={label}
-        delayDuration={600}
-        disableHoverableContent={true}
-      >
-        {labelElement}
-      </Tooltip>
+      {typeof label === "string" ? (
+        <Tooltip
+          content={label}
+          delayDuration={600}
+          disableHoverableContent={true}
+        >
+          {labelElement}
+        </Tooltip>
+      ) : (
+        // It's on purpose to not wrap labelElement in Tooltip,
+        // it can be a complex element with its own tooltip or no tooltip at all like SectionTitle
+        labelElement
+      )}
     </Flex>
   );
 };

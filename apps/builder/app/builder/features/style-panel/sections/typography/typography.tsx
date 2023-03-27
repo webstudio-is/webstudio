@@ -36,14 +36,17 @@ import { ToggleGroupControl } from "../../controls/toggle/toggle-control";
 import { FloatingPanel } from "~/builder/shared/floating-panel";
 import { getStyleSource } from "../../shared/style-info";
 import { theme } from "@webstudio-is/design-system";
+import { CollapsibleSection } from "~/builder/shared/collapsible-section";
 
 export const TypographySection = (props: RenderCategoryProps) => {
   return (
-    <Flex css={{ gap: theme.spacing[7] }} direction="column">
-      <TypographySectionFont {...props} />
-      <TypographySectionSizing {...props} />
-      <TypographySectionAdvanced {...props} />
-    </Flex>
+    <CollapsibleSection label={props.label} isOpen={props.isOpen}>
+      <Flex css={{ gap: theme.spacing[7] }} direction="column">
+        <TypographySectionFont {...props} />
+        <TypographySectionSizing {...props} />
+        <TypographySectionAdvanced {...props} />
+      </Flex>
+    </CollapsibleSection>
   );
 };
 

@@ -11,6 +11,7 @@ import {
 import { theme } from "@webstudio-is/design-system";
 import type { ComponentProps, ReactNode } from "react";
 import { PlusIcon } from "@webstudio-is/icons";
+import type { Simplify } from "type-fest";
 
 type UseOpenStateProps = {
   label: string;
@@ -21,7 +22,7 @@ type UseOpenStateProps = {
 const stateContainer = atom<{ [label: string]: boolean }>({});
 
 // Preserves the open/close state even when component gets unmounted
-const useOpenState = ({
+export const useOpenState = ({
   label,
   isOpenDefault = true,
   isOpen: isOpenForced,
@@ -34,7 +35,7 @@ const useOpenState = ({
   return [isOpenForced === undefined ? isOpen : isOpenForced, setIsOpen];
 };
 
-type BaseProps = {
+type CollapsibleSectionBaseProps = {
   trigger?: ReactNode;
   children: ReactNode;
   fullWidth?: boolean;
@@ -43,14 +44,14 @@ type BaseProps = {
   onOpenChange: (value: boolean) => void;
 };
 
-const CollapsibleSectionBase = ({
+export const CollapsibleSectionBase = ({
   label,
   trigger,
   children,
   fullWidth = false,
   isOpen,
   onOpenChange,
-}: BaseProps) => (
+}: CollapsibleSectionBaseProps) => (
   <Collapsible.Root open={isOpen} onOpenChange={onOpenChange}>
     <Box css={{ boxShadow: `0px 1px 0 ${theme.colors.panelOutline}` }}>
       <Collapsible.Trigger asChild>
@@ -79,8 +80,10 @@ const CollapsibleSectionBase = ({
   </Collapsible.Root>
 );
 
-type CollapsibleSectionProps = Omit<BaseProps, "isOpen" | "onOpenChange"> &
-  UseOpenStateProps;
+type CollapsibleSectionProps = Simplify<
+  Omit<CollapsibleSectionBaseProps, "isOpen" | "onOpenChange"> &
+    UseOpenStateProps
+>;
 
 export const CollapsibleSection = (props: CollapsibleSectionProps) => {
   const { label, trigger, children, fullWidth } = props;
@@ -102,7 +105,7 @@ export const CollapsibleSectionWithAddButton = ({
   onAdd,
   hasItems = true,
   ...props
-}: Omit<CollapsibleSectionProps, "trigger"> & {
+}: Omit<CollapsibleSectionProps, "trigger" | "categoryProps"> & {
   onAdd: () => void;
 
   /**
@@ -111,7 +114,7 @@ export const CollapsibleSectionWithAddButton = ({
    */
   hasItems?: boolean | ComponentProps<typeof SectionTitle>["dots"];
 }) => {
-  const { label, children, fullWidth } = props;
+  const { label, children } = props;
   const [isOpen, setIsOpen] = useOpenState(props);
 
   const isEmpty =
@@ -123,7 +126,7 @@ export const CollapsibleSectionWithAddButton = ({
   return (
     <CollapsibleSectionBase
       label={label}
-      fullWidth={fullWidth}
+      fullWidth={false}
       isOpen={isOpenFinal}
       onOpenChange={(nextIsOpen) => {
         setIsOpen(nextIsOpen);
