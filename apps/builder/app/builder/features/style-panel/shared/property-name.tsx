@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, type ReactElement, type MouseEventHandler } from "react";
 import { useStore } from "@nanostores/react";
 import { isFeatureEnabled } from "@webstudio-is/feature-flags";
 import type { StyleProperty } from "@webstudio-is/css-data";
@@ -18,7 +18,7 @@ import {
   Separator,
 } from "@webstudio-is/design-system";
 import { UndoIcon } from "@webstudio-is/icons";
-import { instancesIndexStore, useBreakpoints } from "~/shared/nano-states";
+import { instancesStore, useBreakpoints } from "~/shared/nano-states";
 import { type StyleInfo, type StyleSource, getStyleSource } from "./style-info";
 
 const PropertyPopoverContent = ({
@@ -30,10 +30,10 @@ const PropertyPopoverContent = ({
   properties: StyleProperty[];
   style: StyleInfo;
   styleSource: StyleSource;
-  onReset: () => void;
+  onReset: MouseEventHandler<HTMLButtonElement>;
 }) => {
   const [breakpoints] = useBreakpoints();
-  const { instancesById } = useStore(instancesIndexStore);
+  const instances = useStore(instancesStore);
 
   if (styleSource === "local") {
     return (
@@ -71,7 +71,7 @@ const PropertyPopoverContent = ({
 
             if (styleValueInfo?.inherited) {
               const { value, instanceId } = styleValueInfo.inherited;
-              const instance = instancesById.get(instanceId);
+              const instance = instances.get(instanceId);
               return (
                 <DeprecatedText2 key={property} color="hint">
                   Resetting will change {property} to inherited {toValue(value)}{" "}
@@ -108,7 +108,7 @@ const PropertyPopoverContent = ({
 
         if (styleValueInfo?.inherited) {
           const { instanceId } = styleValueInfo.inherited;
-          const instance = instancesById.get(instanceId);
+          const instance = instances.get(instanceId);
           return (
             <DeprecatedText2 key={property} color="hint">
               {property} value is inherited from {instance?.component}
@@ -123,8 +123,8 @@ const PropertyPopoverContent = ({
 type PropertyNameProps = {
   style: StyleInfo;
   property: StyleProperty | StyleProperty[];
-  label: string;
-  onReset: () => void;
+  label: string | ReactElement;
+  onReset: React.MouseEventHandler<HTMLButtonElement>;
 };
 
 export const PropertyName = ({
@@ -142,13 +142,16 @@ export const PropertyName = ({
     isFeatureEnabled("propertyReset") &&
     (styleSource === "local" || styleSource === "remote");
 
-  const labelElement = (
-    <Flex shrink>
-      <Label color={styleSource} truncate>
-        {label}
-      </Label>
-    </Flex>
-  );
+  const labelElement =
+    typeof label === "string" ? (
+      <Flex shrink>
+        <Label color={styleSource} truncate>
+          {label}
+        </Label>
+      </Flex>
+    ) : (
+      label
+    );
 
   if (isPopoverEnabled) {
     return (
@@ -180,13 +183,19 @@ export const PropertyName = ({
 
   return (
     <Flex align="center">
-      <Tooltip
-        content={label}
-        delayDuration={600}
-        disableHoverableContent={true}
-      >
-        {labelElement}
-      </Tooltip>
+      {typeof label === "string" ? (
+        <Tooltip
+          content={label}
+          delayDuration={600}
+          disableHoverableContent={true}
+        >
+          {labelElement}
+        </Tooltip>
+      ) : (
+        // It's on purpose to not wrap labelElement in Tooltip,
+        // it can be a complex element with its own tooltip or no tooltip at all like SectionTitle
+        labelElement
+      )}
     </Flex>
   );
 };

@@ -2,9 +2,9 @@ import { test, expect } from "@jest/globals";
 import type {
   Breakpoints,
   Instance,
+  Instances,
   StyleDecl,
 } from "@webstudio-is/project-build";
-import { createInstancesIndex } from "~/shared/tree-utils";
 import {
   getCascadedBreakpointIds,
   getCascadedInfo,
@@ -19,14 +19,14 @@ const breakpoints: Breakpoints = new Map([
 ]);
 
 const selectedBreakpointId = "3";
-const selectedInstanceId = "3";
+const selectedInstanceSelector = ["3", "2", "1"];
 const cascadedBreakpointIds = getCascadedBreakpointIds(
   breakpoints,
   selectedBreakpointId
 );
 
 const cascadingStylesByInstanceId = new Map<Instance["id"], StyleDecl[]>();
-cascadingStylesByInstanceId.set(selectedInstanceId, [
+cascadingStylesByInstanceId.set(selectedInstanceSelector[0], [
   {
     breakpointId: "1",
     styleSourceId: "styleSourceId",
@@ -60,26 +60,35 @@ cascadingStylesByInstanceId.set(selectedInstanceId, [
   },
 ]);
 
-const rootInstance: Instance = {
-  type: "instance",
-  id: "1",
-  component: "Box",
-  children: [
+const instances: Instances = new Map([
+  [
+    "1",
+    {
+      type: "instance",
+      id: "1",
+      component: "Box",
+      children: [{ type: "id", value: "2" }],
+    },
+  ],
+  [
+    "2",
     {
       type: "instance",
       id: "2",
       component: "Box",
-      children: [
-        {
-          type: "instance",
-          id: "3",
-          component: "Box",
-          children: [],
-        },
-      ],
+      children: [{ type: "id", value: "3" }],
     },
   ],
-};
+  [
+    "3",
+    {
+      type: "instance",
+      id: "3",
+      component: "Box",
+      children: [],
+    },
+  ],
+]);
 
 const inheritingStylesByInstanceId = new Map<Instance["id"], StyleDecl[]>();
 inheritingStylesByInstanceId.set("1", [
@@ -121,7 +130,7 @@ test("compute cascaded styles", () => {
   expect(
     getCascadedInfo(
       cascadingStylesByInstanceId,
-      selectedInstanceId,
+      selectedInstanceSelector[0],
       cascadedBreakpointIds
     )
   ).toMatchInlineSnapshot(`
@@ -147,12 +156,11 @@ test("compute cascaded styles", () => {
 });
 
 test("compute inherited styles", () => {
-  const instancesIndex = createInstancesIndex(rootInstance);
   expect(
     getInheritedInfo(
-      instancesIndex,
+      instances,
       inheritingStylesByInstanceId,
-      selectedInstanceId,
+      selectedInstanceSelector,
       cascadedBreakpointIds,
       selectedBreakpointId
     )

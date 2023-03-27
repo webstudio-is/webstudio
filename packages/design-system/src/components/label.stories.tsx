@@ -1,6 +1,9 @@
 import type { ComponentStory } from "@storybook/react";
 import { StorySection, StoryGrid } from "./storybook";
 import { Label } from "./label";
+import { Box } from "./box";
+import * as Popover from "@radix-ui/react-popover";
+import { theme } from "../stitches.config";
 
 export default {
   title: "Library/Label",
@@ -16,9 +19,35 @@ const LabelStory: ComponentStory<typeof Label> = ({
   return (
     <>
       <StorySection title="Configurable">
-        <Label color={color} disabled={disabled}>
-          {children}
-        </Label>
+        <Box>
+          <Label color={color} disabled={disabled}>
+            {children}
+          </Label>
+        </Box>
+      </StorySection>
+
+      {/* Check that spacebar is working if color property is not default */}
+      <StorySection title="Configurable with Popover if color is not default">
+        <Box>
+          <Popover.Root>
+            <Popover.Trigger asChild>
+              <Label color={color} disabled={disabled}>
+                {children}
+              </Label>
+            </Popover.Trigger>
+            <Popover.Content side="bottom" align="center">
+              <Box
+                css={{
+                  backgroundColor: theme.colors.backgroundPanel,
+                  p: theme.spacing[10],
+                  my: theme.spacing[2],
+                }}
+              >
+                <input type="text" />
+              </Box>
+            </Popover.Content>
+          </Popover.Root>
+        </Box>
       </StorySection>
 
       <StorySection title="Colors">
@@ -43,11 +72,7 @@ const LabelStory: ComponentStory<typeof Label> = ({
 
       <StorySection title="Focused (initially)">
         <StoryGrid horizontal>
-          <Label
-            color="local"
-            tabIndex={-1}
-            ref={(element) => element?.focus()}
-          >
+          <Label color="local" ref={(element) => element?.focus()}>
             Local
           </Label>
         </StoryGrid>

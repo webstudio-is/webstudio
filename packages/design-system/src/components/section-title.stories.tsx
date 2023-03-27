@@ -49,12 +49,7 @@ const Variants = ({
         suffix={<SectionTitleButton prefix={<PlusIcon />} />}
         data-state={state}
       >
-        <SectionTitleLabel
-          color="local"
-          onClick={() => null} // added to test focus of label
-        >
-          With label
-        </SectionTitleLabel>
+        <SectionTitleLabel color="local">With label</SectionTitleLabel>
       </SectionTitle>
     </Wrap>
     <Wrap>

@@ -11,6 +11,7 @@ import {
   rootInstanceContainer,
   selectedInstanceBrowserStyleStore,
 } from "~/shared/nano-states";
+import { getAllElementsBoundingBox } from "~/shared/dom-utils";
 
 declare module "~/shared/pubsub" {
   export interface PubsubMap {
@@ -25,7 +26,7 @@ const updateOutlineRect = (element: HTMLElement) => {
   publish({
     type: "updateSelectedInstanceOutline",
     payload: {
-      rect: element.getBoundingClientRect(),
+      rect: getAllElementsBoundingBox(element),
     },
   });
 };
@@ -35,7 +36,7 @@ const showOutline = (element: HTMLElement) => {
     type: "updateSelectedInstanceOutline",
     payload: {
       visible: true,
-      rect: element.getBoundingClientRect(),
+      rect: getAllElementsBoundingBox(element),
     },
   });
 };

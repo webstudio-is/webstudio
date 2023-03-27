@@ -2,10 +2,13 @@ import type { RenderCategoryProps } from "../../style-sections";
 import { styleConfigByName } from "../../shared/configs";
 import { FloatingPanel } from "~/builder/shared/floating-panel";
 import {
-  Button,
   CssValueListItem,
   Flex,
   Grid,
+  Label,
+  SectionTitle,
+  SectionTitleButton,
+  SectionTitleLabel,
   SmallIconButton,
   theme,
 } from "@webstudio-is/design-system";
@@ -14,6 +17,7 @@ import {
   EyeconOpenIcon,
   EyeconClosedIcon,
   SubtractIcon,
+  PlusIcon,
 } from "@webstudio-is/icons";
 import { PropertyName } from "../../shared/property-name";
 import type { StyleInfo } from "../../shared/style-info";
@@ -29,12 +33,18 @@ import {
   getLayerBackgroundStyleInfo,
   deleteLayerProperty,
   swapLayers,
+  getLayersStyleSource,
+  deleteLayers,
 } from "./background-layers";
 import { BackgroundContent } from "./background-content";
 import { getLayerName, LayerThumbnail } from "./background-thumbnail";
 import { useSortable } from "./use-sortable";
 import { useMemo } from "react";
 import type { RgbValue } from "@webstudio-is/css-data";
+import {
+  CollapsibleSectionBase,
+  useOpenState,
+} from "~/builder/shared/collapsible-section";
 
 const Layer = (props: {
   id: string;
@@ -84,12 +94,9 @@ const Layer = (props: {
         active={props.isHighlighted}
         data-id={props.id}
         label={
-          <PropertyName
-            style={props.layerStyle}
-            property={layeredBackgroundProps}
-            label={getLayerName(props.layerStyle)}
-            onReset={props.deleteLayer}
-          />
+          <Label truncate onReset={props.deleteLayer}>
+            {getLayerName(props.layerStyle)}
+          </Label>
         }
         thumbnail={<LayerThumbnail layerStyle={props.layerStyle} />}
         hidden={isHidden}
@@ -117,12 +124,69 @@ const Layer = (props: {
   );
 };
 
-export const BackgroundsSection = ({
-  setProperty,
-  deleteProperty,
-  currentStyle,
-  createBatchUpdate,
-}: RenderCategoryProps) => {
+const BackgroundsCollapsibleSection = (
+  props: RenderCategoryProps & { children: React.ReactNode }
+) => {
+  const { label, children } = props;
+  const [isOpen, setIsOpen] = useOpenState(props);
+
+  if (props === undefined) {
+    // @todo will gone after refactor
+    throw new Error("Error");
+  }
+  const layersStyleSource = getLayersStyleSource(props.currentStyle);
+  const dots: ("local" | "remote")[] = [];
+
+  if (layersStyleSource === "local" || layersStyleSource === "remote") {
+    dots.push(layersStyleSource);
+  }
+
+  return (
+    <CollapsibleSectionBase
+      label={label}
+      fullWidth
+      isOpen={isOpen}
+      onOpenChange={(nextIsOpen) => {
+        setIsOpen(nextIsOpen);
+      }}
+      trigger={
+        <SectionTitle
+          dots={dots}
+          suffix={
+            <SectionTitleButton
+              prefix={<PlusIcon />}
+              onClick={() => {
+                const { currentStyle, createBatchUpdate } = props;
+                addLayer(currentStyle, createBatchUpdate);
+                setIsOpen(true);
+              }}
+            />
+          }
+        >
+          <PropertyName
+            style={props.currentStyle}
+            property={layeredBackgroundProps}
+            label={
+              <SectionTitleLabel color={layersStyleSource}>
+                {props.label}
+              </SectionTitleLabel>
+            }
+            onReset={() => {
+              const { createBatchUpdate } = props;
+              deleteLayers(createBatchUpdate);
+            }}
+          />
+        </SectionTitle>
+      }
+    >
+      {children}
+    </CollapsibleSectionBase>
+  );
+};
+
+export const BackgroundsSection = (props: RenderCategoryProps) => {
+  const { setProperty, deleteProperty, currentStyle, createBatchUpdate } =
+    props;
   const layersCount = getLayerCount(currentStyle);
 
   const { items } = styleConfigByName["backgroundColor"];
@@ -144,47 +208,66 @@ export const BackgroundsSection = ({
   });
 
   return (
-    <Flex gap={1} direction="column">
-      <Flex
-        gap={1}
-        direction="column"
-        ref={sortableRefCallback}
-        css={{
-          pointerEvents: dragItemId ? "none" : "auto",
-          // to make DnD work we have to disable scrolling using touch
-          touchAction: "none",
-        }}
-      >
-        {layers.map((layer) => (
-          <Layer
-            id={layer.id}
-            key={layer.id}
-            isHighlighted={dragItemId === layer.id}
-            layerStyle={getLayerBackgroundStyleInfo(layer.index, currentStyle)}
-            deleteLayer={deleteLayer(
-              layer.index,
-              currentStyle,
-              createBatchUpdate
-            )}
-            setProperty={setLayerProperty(
-              layer.index,
-              currentStyle,
-              createBatchUpdate
-            )}
-            deleteProperty={deleteLayerProperty(
-              layer.index,
-              currentStyle,
-              deleteProperty,
-              createBatchUpdate
-            )}
-            setBackgroundColor={setProperty("backgroundColor")}
-          />
-        ))}
+    <BackgroundsCollapsibleSection
+      setProperty={setProperty}
+      deleteProperty={deleteProperty}
+      createBatchUpdate={createBatchUpdate}
+      currentStyle={currentStyle}
+      category={props.category}
+      styleConfigsByCategory={props.styleConfigsByCategory}
+      moreStyleConfigsByCategory={props.moreStyleConfigsByCategory}
+      label={props.label}
+      isOpen={props.isOpen}
+    >
+      <Flex gap={1} direction="column">
+        <Flex
+          gap={1}
+          direction="column"
+          ref={sortableRefCallback}
+          css={{
+            pointerEvents: dragItemId ? "none" : "auto",
+            // to make DnD work we have to disable scrolling using touch
+            touchAction: "none",
+          }}
+        >
+          {layers.map((layer) => (
+            <Layer
+              id={layer.id}
+              key={layer.id}
+              isHighlighted={dragItemId === layer.id}
+              layerStyle={getLayerBackgroundStyleInfo(
+                layer.index,
+                currentStyle
+              )}
+              deleteLayer={deleteLayer(
+                layer.index,
+                currentStyle,
+                createBatchUpdate
+              )}
+              setProperty={setLayerProperty(
+                layer.index,
+                currentStyle,
+                createBatchUpdate
+              )}
+              deleteProperty={deleteLayerProperty(
+                layer.index,
+                currentStyle,
+                deleteProperty,
+                createBatchUpdate
+              )}
+              setBackgroundColor={setProperty("backgroundColor")}
+            />
+          ))}
 
-        {placementIndicator}
-      </Flex>
-      <Flex css={{ px: theme.spacing[9] }} direction="column" gap={2}>
-        <Grid css={{ gridTemplateColumns: "1fr 128px" }}>
+          {placementIndicator}
+        </Flex>
+
+        <Grid
+          css={{
+            px: theme.spacing[9],
+            gridTemplateColumns: `1fr ${theme.spacing[23]}`,
+          }}
+        >
           <PropertyName
             style={currentStyle}
             property={"backgroundColor"}
@@ -200,15 +283,7 @@ export const BackgroundsSection = ({
             deleteProperty={deleteProperty}
           />
         </Grid>
-        <Button
-          color="neutral"
-          onClick={() => {
-            addLayer(currentStyle, createBatchUpdate);
-          }}
-        >
-          Add layer
-        </Button>
       </Flex>
-    </Flex>
+    </BackgroundsCollapsibleSection>
   );
 };

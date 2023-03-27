@@ -29,7 +29,7 @@
     "nano-staged": "^0.8.0",
     "prettier": "2.8.4",
     "simple-git-hooks": "^2.8.1",
-    "tsx": "^3.12.1",
+    "tsx": "^3.12.6",
     "turbo": "^1.7.0",
     "typescript": "4.9.5"
   },

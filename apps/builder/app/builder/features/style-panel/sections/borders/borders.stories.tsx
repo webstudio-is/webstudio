@@ -87,6 +87,7 @@ export const Borders = () => {
         deleteProperty={deleteProperty}
         createBatchUpdate={createBatchUpdate}
         category={"borders"}
+        label={"Borders"}
         styleConfigsByCategory={[]}
         moreStyleConfigsByCategory={[]}
       />
