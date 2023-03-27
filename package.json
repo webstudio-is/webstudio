@@ -4,6 +4,7 @@
   "version": "0.0.0",
   "private": true,
   "scripts": {
+    "build-packages": "pnpm run --recursive --parallel --filter='!./apps/*' --filter='!./packages/sdk-size-test' build",
     "build": "turbo run build",
     "checks": "turbo run checks",
     "dev": "pnpm run --parallel --recursive dev",
