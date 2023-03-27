@@ -1,6 +1,6 @@
 import type { StyleProperty } from "@webstudio-is/css-data";
 import { toValue } from "@webstudio-is/css-engine";
-import { Grid } from "@webstudio-is/design-system";
+import { Flex, Grid } from "@webstudio-is/design-system";
 import { styleConfigByName } from "../../shared/configs";
 import type { RenderCategoryProps } from "../../style-sections";
 import { PropertyName } from "../../shared/property-name";
@@ -158,6 +158,8 @@ export const SizeSection = ({
           setProperty={setProperty}
           deleteProperty={deleteProperty}
         />
+      </Grid>
+      <Flex justify="between">
         <PropertyName
           label={styleConfigByName.objectPosition.label}
           property="objectPosition"
@@ -170,7 +172,7 @@ export const SizeSection = ({
           setProperty={setProperty}
           deleteProperty={deleteProperty}
         />
-      </Grid>
+      </Flex>
     </CollapsibleSection>
   );
 };
