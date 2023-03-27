@@ -11,6 +11,7 @@ import {
 import { theme } from "@webstudio-is/design-system";
 import type { ComponentProps, ReactNode } from "react";
 import { PlusIcon } from "@webstudio-is/icons";
+import type { Simplify } from "type-fest";
 
 type UseOpenStateProps = {
   label: string;
@@ -79,7 +80,7 @@ export const CollapsibleSectionBase = ({
   </Collapsible.Root>
 );
 
-type CollapsibleSectionProps = Prettify<
+type CollapsibleSectionProps = Simplify<
   Omit<CollapsibleSectionBaseProps, "isOpen" | "onOpenChange"> &
     UseOpenStateProps
 >;
