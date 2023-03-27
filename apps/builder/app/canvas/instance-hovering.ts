@@ -7,6 +7,7 @@ import {
 } from "~/shared/nano-states";
 import { subscribeScrollState } from "~/shared/dom-hooks";
 import {
+  getAllElementsBoundingBox,
   getElementByInstanceSelector,
   getInstanceSelectorFromElement,
 } from "~/shared/dom-utils";
@@ -63,7 +64,7 @@ export const subscribeInstanceHovering = () => {
     hoveredInstanceOutlineStore.set({
       label: instance.label,
       component: instance.component,
-      rect: element.getBoundingClientRect(),
+      rect: getAllElementsBoundingBox(element),
     });
   }, 50);
 
