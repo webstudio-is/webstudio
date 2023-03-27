@@ -328,12 +328,17 @@ export const insertInstancesCopyMutable = (
     copiedInstanceIds.set(instance.id, newInstanceId);
   }
 
+  const preservedChildren = new Set<Instance["id"]>();
+
   for (const instance of copiedInstances) {
     copiedInstancesWithNewIds.push({
       ...instance,
       id: copiedInstanceIds.get(instance.id) ?? instance.id,
       children: instance.children.map((child) => {
         if (child.type === "id") {
+          if (copiedInstanceIds.has(child.value) === false) {
+            preservedChildren.add(child.value);
+          }
           return {
             type: "id",
             value: copiedInstanceIds.get(child.value) ?? child.value,
@@ -342,6 +347,15 @@ export const insertInstancesCopyMutable = (
         return child;
       }),
     });
+  }
+
+  // slot descendants ids are preserved
+  // so need to prevent pasting slot inside itself
+  // to avoid circular tree
+  for (const instanceId of dropTarget.parentSelector) {
+    if (preservedChildren.has(instanceId)) {
+      return new Map();
+    }
   }
 
   insertInstancesMutable(
