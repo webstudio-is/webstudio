@@ -5,6 +5,7 @@ import {
   zoomOut,
   selectBreakpointByOrderNumber,
 } from "../nano-states/breakpoints";
+import { enterEditingMode, escapeSelection } from "../nano-states/instances";
 import { deleteSelectedInstance } from "../instance-utils";
 
 export const shortcuts = {
@@ -89,4 +90,8 @@ export const useSharedShortcuts = () => {
     { enableOnFormTags: true, enableOnContentEditable: true },
     []
   );
+
+  useHotkeys("enter", enterEditingMode, {}, []);
+
+  useHotkeys("esc", escapeSelection, { enableOnContentEditable: true }, []);
 };

@@ -4,6 +4,7 @@ import type { ItemSelector } from "./item-utils";
 export type Item = {
   id: string;
   canAcceptChildren: boolean;
+  isHidden?: boolean;
   children: Item[];
 };
 

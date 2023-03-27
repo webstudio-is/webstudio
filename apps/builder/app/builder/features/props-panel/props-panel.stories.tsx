@@ -108,6 +108,7 @@ const multiSelectProp = (
 const instanceId = "0";
 
 const componentMeta: WsComponentMeta = {
+  category: "general",
   type: "rich-text",
   label: "Button",
   Icon: ButtonIcon,

@@ -1,5 +1,6 @@
 import { useCallback } from "react";
 import { useStore } from "@nanostores/react";
+import type { Instance } from "@webstudio-is/project-build";
 import {
   hoveredInstanceSelectorStore,
   rootInstanceStore,
@@ -7,8 +8,9 @@ import {
   useDragAndDropState,
 } from "~/shared/nano-states";
 import type { InstanceSelector } from "~/shared/tree-utils";
-import { InstanceTree } from "./tree";
 import { reparentInstance } from "~/shared/instance-utils";
+import { textEditingInstanceSelectorStore } from "~/shared/nano-states/instances";
+import { InstanceTree } from "./tree";
 
 export const NavigatorTree = () => {
   const selectedInstanceSelector = useStore(selectedInstanceSelectorStore);
@@ -20,6 +22,8 @@ export const NavigatorTree = () => {
       ? state.dragPayload.dragInstanceSelector
       : undefined;
 
+  const isItemHidden = useCallback((_instanceId: Instance["id"]) => false, []);
+
   const handleDragEnd = useCallback(
     (payload: {
       itemSelector: InstanceSelector;
@@ -29,9 +33,15 @@ export const NavigatorTree = () => {
         parentSelector: payload.dropTarget.itemSelector,
         position: payload.dropTarget.position,
       });
+      setState({ isDragging: false });
     },
-    []
+    [setState]
   );
+
+  const handleSelect = useCallback((instanceSelector: InstanceSelector) => {
+    selectedInstanceSelectorStore.set(instanceSelector);
+    textEditingInstanceSelectorStore.set(undefined);
+  }, []);
 
   if (rootInstance === undefined) {
     return null;
@@ -43,7 +53,8 @@ export const NavigatorTree = () => {
       selectedItemSelector={selectedInstanceSelector}
       dragItemSelector={dragItemSelector}
       dropTarget={state.dropTarget}
-      onSelect={selectedInstanceSelectorStore.set}
+      isItemHidden={isItemHidden}
+      onSelect={handleSelect}
       onHover={hoveredInstanceSelectorStore.set}
       onDragItemChange={(dragInstanceSelector) => {
         setState({
@@ -59,6 +70,9 @@ export const NavigatorTree = () => {
         setState({ ...state, dropTarget });
       }}
       onDragEnd={handleDragEnd}
+      onCancel={() => {
+        setState({ isDragging: false });
+      }}
     />
   );
 };

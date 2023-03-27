@@ -8,6 +8,7 @@ import { textVariants } from "../";
 import { css, theme } from "../stitches.config";
 
 const cardStyle = css({
+  boxSizing: "border-box",
   display: "flex",
   flexDirection: "column",
   alignItems: "center",

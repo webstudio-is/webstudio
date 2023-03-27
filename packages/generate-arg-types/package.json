@@ -20,9 +20,8 @@
     "zod": "^3.19.1"
   },
   "devDependencies": {
-    "@webstudio-is/tsconfig": "workspace:^",
     "@webstudio-is/scripts": "workspace:^",
-    "esbuild": "^0.14.25",
+    "@webstudio-is/tsconfig": "workspace:^",
     "typescript": "4.9.5"
   },
   "files": [

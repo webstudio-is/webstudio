@@ -18,9 +18,7 @@ import { publish } from "~/shared/pubsub";
 import { registerContainers, useCanvasStore } from "~/shared/sync";
 import { useSharedShortcuts } from "~/shared/shortcuts";
 import { useShortcuts } from "./shared/use-shortcuts";
-import { usePublishTextEditingInstanceId } from "./shared/instance";
 import { useManageDesignModeStyles, GlobalStyles } from "./shared/styles";
-import { useTrackSelectedElement } from "./shared/use-track-selected-element";
 import { WebstudioComponentDev } from "./features/webstudio-component";
 import {
   propsIndexStore,
@@ -72,10 +70,8 @@ const useElementsTree = (getComponent: GetComponent) => {
 
 const DesignMode = () => {
   useManageDesignModeStyles();
-  useTrackSelectedElement();
   usePublishScrollState();
   useSubscribeScrollState();
-  usePublishTextEditingInstanceId();
   useDragAndDrop();
   // We need to initialize this in both canvas and builder,
   // because the events will fire in either one, depending on where the focus is

@@ -1,5 +1,5 @@
 import { CodeIcon } from "@webstudio-is/icons";
-import type { WsComponentMeta, WsComponentPropsMeta } from "./component-type";
+import type { WsComponentMeta, WsComponentPropsMeta } from "./component-meta";
 import { displayVarNamespace } from "./code";
 import { props } from "./__generated__/code.props";
 
@@ -33,6 +33,7 @@ const presetStyle: WsComponentMeta["presetStyle"] = {
 };
 
 export const meta: WsComponentMeta = {
+  category: "general",
   type: "rich-text",
   label: "Code",
   Icon: CodeIcon,

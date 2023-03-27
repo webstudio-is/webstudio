@@ -1,5 +1,5 @@
 import { ImageIcon } from "@webstudio-is/icons";
-import type { WsComponentMeta, WsComponentPropsMeta } from "./component-type";
+import type { WsComponentMeta, WsComponentPropsMeta } from "./component-meta";
 import { props } from "./__generated__/image.props";
 
 const presetStyle = {
@@ -18,6 +18,7 @@ const presetStyle = {
 } as const;
 
 export const meta: WsComponentMeta = {
+  category: "media",
   type: "embed",
   label: "Image",
   Icon: ImageIcon,

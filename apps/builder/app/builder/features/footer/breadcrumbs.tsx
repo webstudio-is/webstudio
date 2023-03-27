@@ -11,6 +11,7 @@ import {
   selectedInstanceSelectorStore,
 } from "~/shared/nano-states";
 import { getAncestorInstanceSelector } from "~/shared/tree-utils";
+import { textEditingInstanceSelectorStore } from "~/shared/nano-states/instances";
 
 type BreadcrumbProps = {
   children: JSX.Element | string;
@@ -67,6 +68,7 @@ export const Breadcrumbs = () => {
                       instance.id
                     )
                   );
+                  textEditingInstanceSelectorStore.set(undefined);
                 }}
               >
                 {instance.component}
