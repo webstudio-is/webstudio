@@ -25,7 +25,7 @@ import {
   OtherSection,
   BackgroundsCollapsibleSection,
 } from "./sections";
-import type { CollapsibleSection } from "~/builder/shared/inspector/collapsible-section";
+import type { CollapsibleSection } from "~/builder/shared/collapsible-section";
 
 export type ControlProps = {
   property: StyleProperty;
