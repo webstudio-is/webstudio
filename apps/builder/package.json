@@ -130,7 +130,6 @@
     "@webstudio-is/tsconfig": "workspace:^",
     "css-tree": "^2.3.0",
     "dotenv": "^16.0.0",
-    "esbuild-node-externals": "^1.4.1",
     "jest": "^29.3.1",
     "prettier": "^2.8.4",
     "react-test-renderer": "^17.0.2",
