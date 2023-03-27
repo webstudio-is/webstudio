@@ -71,7 +71,7 @@ export const resolveUrlProp = (
   name: string,
   propsByInstanceId: PropsByInstanceId,
   pages: Pages
-) => {
+): Page | string | undefined => {
   const instanceProps = propsByInstanceId.get(instanceId);
   if (instanceProps === undefined) {
     return;
@@ -100,18 +100,17 @@ export const resolveUrlProp = (
 
 // this utility is used for link component in both builder and preview
 // so need to optimize rerenders with computed
-export const usePropUrl = (
-  instanceId: Instance["id"],
-  name: string
-): Page | string | undefined => {
+export const usePropUrl = (instanceId: Instance["id"], name: string) => {
   const { propsByInstanceIdStore, pagesStore } = useContext(ReactSdkContext);
-  const pageStore = useMemo(() => {
-    return computed(
-      [propsByInstanceIdStore, pagesStore],
-      (propsByInstanceId, pages) =>
-        resolveUrlProp(instanceId, name, propsByInstanceId, pages)
-    );
-  }, [propsByInstanceIdStore, pagesStore, instanceId, name]);
+  const pageStore = useMemo(
+    () =>
+      computed(
+        [propsByInstanceIdStore, pagesStore],
+        (propsByInstanceId, pages) =>
+          resolveUrlProp(instanceId, name, propsByInstanceId, pages)
+      ),
+    [propsByInstanceIdStore, pagesStore, instanceId, name]
+  );
   return useStore(pageStore);
 };
 
