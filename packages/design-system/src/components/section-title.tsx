@@ -206,6 +206,7 @@ export const SectionTitleLabel = forwardRef(
           // When we use a SectionTitle button, we can't directly render a label inside it.
           // Instead, we need to render the label using a div that has position:absolute and pointer-events:none
           // However, if the label itself is a button, we need to make sure that it remains clickable.
+          // @todo: move this logic to css
           pointerEvents: isButton ? "all" : "inherit",
         }}
         ref={ref}

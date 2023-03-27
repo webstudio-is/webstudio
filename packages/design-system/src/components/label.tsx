@@ -34,6 +34,9 @@ const StyledLabel = styled(RadixLabel, {
   },
 
   variants: {
+    // The "display: inline" property can cause sizing issues with the label in certain scenarios.
+    // However, in our case, the label is being used as a button.
+    // To ensure compatibility with form labels, we only set the "inline" property if the "htmlFor" attribute is present.
     hasHtmlFor: {
       true: {
         display: "inline",

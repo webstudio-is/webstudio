@@ -192,6 +192,8 @@ export const PropertyName = ({
           {labelElement}
         </Tooltip>
       ) : (
+        // It's on purpose to not wrap labelElement in Tooltip,
+        // it can be a complex element with its own tooltip or no tooltip at all like SectionTitle
         labelElement
       )}
     </Flex>
