@@ -72,10 +72,13 @@ const BasePage = ({ prop, onChange, id }: BaseControlProps) => {
   );
 };
 
+// @todo: Section, Email, Phone, Attachment
+const modes = ["url", "page"] as const;
+type Mode = (typeof modes)[number];
 const baseControls = {
   url: BaseUrl,
   page: BasePage,
-} as const;
+} satisfies Record<Mode, unknown>;
 
 export const UrlControl = ({
   meta,
@@ -86,8 +89,7 @@ export const UrlControl = ({
 }: UrlControlProps) => {
   const initialMode = prop?.type === "page" ? "page" : "url";
 
-  // @todo: Section, Email, Phone, Attachment
-  const [mode, setMode] = useState<"url" | "page">(initialMode);
+  const [mode, setMode] = useState<Mode>(initialMode);
 
   const id = useId();
 
@@ -111,13 +113,18 @@ export const UrlControl = ({
         <ToggleGroup
           type="single"
           value={mode}
-          onValueChange={(nextMode) => setMode(nextMode as typeof mode)}
+          onValueChange={(value) => {
+            const asMode = modes.find((mode) => mode === value);
+            if (asMode) {
+              setMode(asMode);
+            }
+          }}
         >
-          <ToggleGroupItem value="url">
+          <ToggleGroupItem value={"url" satisfies Mode}>
             {/* @todo: tooltip */}
             <Link2Icon />
           </ToggleGroupItem>
-          <ToggleGroupItem value="page">
+          <ToggleGroupItem value={"page" satisfies Mode}>
             <PageIcon />
           </ToggleGroupItem>
         </ToggleGroup>

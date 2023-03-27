@@ -51,7 +51,7 @@ export const usePropAsset = (instanceId: Instance["id"], name: string) => {
       (propsByInstanceId, assets) => {
         const instanceProps = propsByInstanceId.get(instanceId);
         if (instanceProps === undefined) {
-          return undefined;
+          return;
         }
         for (const prop of instanceProps) {
           if (prop.type === "asset" && prop.name === name) {
@@ -73,37 +73,38 @@ export const usePropUrl = (
   name: string
 ): Page | string | undefined => {
   const { propsByInstanceIdStore, pagesStore } = useContext(ReactSdkContext);
-  const assetStore = useMemo(() => {
+  const pageStore = useMemo(() => {
     return computed(
       [propsByInstanceIdStore, pagesStore],
       (propsByInstanceId, pages) => {
         const instanceProps = propsByInstanceId.get(instanceId);
         if (instanceProps === undefined) {
-          return undefined;
+          return;
         }
         for (const prop of instanceProps) {
-          if (prop.name === name) {
-            if (prop.type === "page") {
-              return pages.get(prop.value);
-            }
-
-            if (prop.type === "string") {
-              for (const page of pages.values()) {
-                if (page.path === prop.value) {
-                  return page;
-                }
-              }
-              return prop.value;
-            }
-
-            return undefined;
+          if (prop.name !== name) {
+            continue;
           }
+
+          if (prop.type === "page") {
+            return pages.get(prop.value);
+          }
+
+          if (prop.type === "string") {
+            for (const page of pages.values()) {
+              if (page.path === prop.value) {
+                return page;
+              }
+            }
+            return prop.value;
+          }
+
+          return;
         }
       }
     );
   }, [propsByInstanceIdStore, pagesStore, instanceId, name]);
-  const asset = useStore(assetStore);
-  return asset;
+  return useStore(pageStore);
 };
 
 export const getInstanceIdFromComponentProps = (

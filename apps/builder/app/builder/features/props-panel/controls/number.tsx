@@ -41,13 +41,9 @@ export const NumberControl = ({
           id={id}
           type="number"
           value={localValue.value}
-          onChange={(event) => {
-            const asNumber = parseFloat(event.target.value);
-            localValue.set(
-              // just in case type="number" doesn't guarantee a number
-              Number.isNaN(asNumber) ? event.target.value : asNumber
-            );
-          }}
+          onChange={({ target: { valueAsNumber, value } }) =>
+            localValue.set(Number.isNaN(valueAsNumber) ? value : valueAsNumber)
+          }
           onBlur={localValue.save}
           onKeyDown={(event) => {
             if (event.key === "Enter") {

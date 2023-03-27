@@ -55,7 +55,7 @@ const temporaryRootInstance: Instance = {
 const useElementsTree = (getComponent: GetComponent) => {
   const [rootInstance] = useRootInstance();
 
-  const pagesStoreAsMap = useMemo(
+  const pagesMapStore = useMemo(
     () =>
       computed(pagesStore, (pages): Map<string, Page> => {
         if (pages === undefined) {
@@ -76,11 +76,11 @@ const useElementsTree = (getComponent: GetComponent) => {
       instance: rootInstance ?? temporaryRootInstance,
       propsByInstanceIdStore,
       assetsStore,
-      pagesStore: pagesStoreAsMap,
+      pagesStore: pagesMapStore,
       Component: WebstudioComponentDev,
       getComponent,
     });
-  }, [rootInstance, getComponent, pagesStoreAsMap]);
+  }, [rootInstance, getComponent, pagesMapStore]);
 };
 
 const DesignMode = () => {
