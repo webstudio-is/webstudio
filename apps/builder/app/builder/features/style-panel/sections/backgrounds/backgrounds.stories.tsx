@@ -8,10 +8,7 @@ import type {
   DeleteProperty,
   SetProperty,
 } from "../../shared/use-style-data";
-import {
-  BackgroundsSection,
-  BackgroundsCollapsibleSection,
-} from "./backgrounds";
+import { BackgroundsSection } from "./backgrounds";
 
 setEnv("*");
 
@@ -110,28 +107,16 @@ export const BackgroundsCollapsible = () => {
 
   return (
     <Panel>
-      <BackgroundsCollapsibleSection
+      <BackgroundsSection
+        currentStyle={styleInfo}
+        setProperty={setProperty}
+        deleteProperty={deleteProperty}
+        createBatchUpdate={createBatchUpdate}
+        category={"backgrounds"}
+        styleConfigsByCategory={[]}
+        moreStyleConfigsByCategory={[]}
         label="Backgrounds"
-        categoryProps={{
-          currentStyle: styleInfo,
-          setProperty,
-          deleteProperty,
-          createBatchUpdate,
-          category: "backgrounds",
-          styleConfigsByCategory: [],
-          moreStyleConfigsByCategory: [],
-        }}
-      >
-        <BackgroundsSection
-          currentStyle={styleInfo}
-          setProperty={setProperty}
-          deleteProperty={deleteProperty}
-          createBatchUpdate={createBatchUpdate}
-          category={"backgrounds"}
-          styleConfigsByCategory={[]}
-          moreStyleConfigsByCategory={[]}
-        />
-      </BackgroundsCollapsibleSection>
+      />
     </Panel>
   );
 };
@@ -155,6 +140,7 @@ export const Backgrounds = () => {
         category={"backgrounds"}
         styleConfigsByCategory={[]}
         moreStyleConfigsByCategory={[]}
+        label="Backgrounds"
       />
     </Panel>
   );
