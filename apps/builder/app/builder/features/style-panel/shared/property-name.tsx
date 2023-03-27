@@ -1,4 +1,4 @@
-import { type ReactElement, useState } from "react";
+import { useState, type ReactElement, type MouseEventHandler } from "react";
 import { useStore } from "@nanostores/react";
 import { isFeatureEnabled } from "@webstudio-is/feature-flags";
 import type { StyleProperty } from "@webstudio-is/css-data";
@@ -30,7 +30,7 @@ const PropertyPopoverContent = ({
   properties: StyleProperty[];
   style: StyleInfo;
   styleSource: StyleSource;
-  onReset: React.MouseEventHandler<HTMLButtonElement>;
+  onReset: MouseEventHandler<HTMLButtonElement>;
 }) => {
   const [breakpoints] = useBreakpoints();
   const instances = useStore(instancesStore);
