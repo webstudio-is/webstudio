@@ -66,6 +66,38 @@ export const usePropAsset = (instanceId: Instance["id"], name: string) => {
   return asset;
 };
 
+export const resolveUrlProp = (
+  instanceId: Instance["id"],
+  name: string,
+  propsByInstanceId: PropsByInstanceId,
+  pages: Pages
+) => {
+  const instanceProps = propsByInstanceId.get(instanceId);
+  if (instanceProps === undefined) {
+    return;
+  }
+  for (const prop of instanceProps) {
+    if (prop.name !== name) {
+      continue;
+    }
+
+    if (prop.type === "page") {
+      return pages.get(prop.value);
+    }
+
+    if (prop.type === "string") {
+      for (const page of pages.values()) {
+        if (page.path === prop.value) {
+          return page;
+        }
+      }
+      return prop.value;
+    }
+
+    return;
+  }
+};
+
 // this utility is used for link component in both builder and preview
 // so need to optimize rerenders with computed
 export const usePropUrl = (
@@ -76,32 +108,8 @@ export const usePropUrl = (
   const pageStore = useMemo(() => {
     return computed(
       [propsByInstanceIdStore, pagesStore],
-      (propsByInstanceId, pages) => {
-        const instanceProps = propsByInstanceId.get(instanceId);
-        if (instanceProps === undefined) {
-          return;
-        }
-        for (const prop of instanceProps) {
-          if (prop.name !== name) {
-            continue;
-          }
-
-          if (prop.type === "page") {
-            return pages.get(prop.value);
-          }
-
-          if (prop.type === "string") {
-            for (const page of pages.values()) {
-              if (page.path === prop.value) {
-                return page;
-              }
-            }
-            return prop.value;
-          }
-
-          return;
-        }
-      }
+      (propsByInstanceId, pages) =>
+        resolveUrlProp(instanceId, name, propsByInstanceId, pages)
     );
   }, [propsByInstanceIdStore, pagesStore, instanceId, name]);
   return useStore(pageStore);
