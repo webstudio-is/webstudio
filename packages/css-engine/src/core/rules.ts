@@ -106,15 +106,12 @@ export class MediaRule {
     let conditionText = "";
     const { minWidth, maxWidth } = this.options;
     if (minWidth !== undefined) {
-      conditionText = `min-width: ${minWidth}px`;
+      conditionText = ` and (min-width: ${minWidth}px)`;
     }
     if (maxWidth !== undefined) {
-      conditionText = `max-width: ${maxWidth}px`;
+      conditionText += ` and (max-width: ${maxWidth}px)`;
     }
-    if (conditionText) {
-      conditionText = `and (${conditionText}) `;
-    }
-    return `@media ${this.#mediaType} ${conditionText}{\n${rules.join(
+    return `@media ${this.#mediaType}${conditionText} {\n${rules.join(
       "\n"
     )}\n}`;
   }

@@ -6,6 +6,6 @@ import type { Breakpoints } from "@webstudio-is/project-build";
  */
 export const sort = (breakpoints: Breakpoints) => {
   return Array.from(breakpoints.values()).sort((breakpointA, breakpointB) => {
-    return breakpointA.minWidth - breakpointB.minWidth;
+    return (breakpointA.minWidth ?? 0) - (breakpointB.minWidth ?? 0);
   });
 };

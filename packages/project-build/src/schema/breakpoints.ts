@@ -5,7 +5,8 @@ const BreakpointId = z.string();
 export const Breakpoint = z.object({
   id: BreakpointId,
   label: z.string(),
-  minWidth: z.number(),
+  minWidth: z.number().optional(),
+  maxWidth: z.number().optional(),
 });
 
 export type Breakpoint = z.infer<typeof Breakpoint>;
