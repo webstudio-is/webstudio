@@ -50,6 +50,7 @@ export * from "./repeat-column";
 export * from "./repeat-grid";
 export * from "./repeat-row";
 export * from "./scroll";
+export * from "./slot-component";
 export * from "./subscript";
 export * from "./subtract";
 export * from "./superscript";
