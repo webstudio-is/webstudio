@@ -23,9 +23,7 @@ import {
   BordersSection,
   EffectsSection,
   OtherSection,
-  BackgroundsCollapsibleSection,
 } from "./sections";
-import type { CollapsibleSection } from "~/builder/shared/collapsible-section";
 
 export type ControlProps = {
   property: StyleProperty;
@@ -44,6 +42,8 @@ export type RenderCategoryProps = {
   category: Category;
   styleConfigsByCategory: Array<RenderPropertyProps>;
   moreStyleConfigsByCategory: Array<RenderPropertyProps>;
+  label: string;
+  isOpen?: boolean | undefined;
 };
 
 export type RenderPropertyProps = {
@@ -94,8 +94,11 @@ export const renderCategory = ({
   category,
   styleConfigsByCategory,
   moreStyleConfigsByCategory,
+  label,
+  isOpen,
 }: RenderCategoryProps) => {
-  const Section = sections[category].section;
+  const Section = sections[category];
+
   return (
     <Section
       setProperty={setProperty}
@@ -105,6 +108,8 @@ export const renderCategory = ({
       category={category}
       styleConfigsByCategory={styleConfigsByCategory}
       moreStyleConfigsByCategory={moreStyleConfigsByCategory}
+      label={label}
+      isOpen={isOpen}
     />
   );
 };
@@ -124,23 +129,17 @@ export const shouldRenderCategory = (
 };
 
 export const sections: {
-  [Property in Category]: {
-    collapsibleSection?: typeof CollapsibleSection;
-    section: (props: RenderCategoryProps) => JSX.Element | null;
-  };
+  [Property in Category]: (props: RenderCategoryProps) => JSX.Element | null;
 } = {
-  layout: { section: LayoutSection },
-  flexChild: { section: FlexChildSection },
-  gridChild: { section: GridChildSection },
-  space: { section: SpaceSection },
-  size: { section: SizeSection },
-  position: { section: PositionSection },
-  typography: { section: TypographySection },
-  backgrounds: {
-    section: BackgroundsSection,
-    collapsibleSection: BackgroundsCollapsibleSection,
-  },
-  borders: { section: BordersSection },
-  effects: { section: EffectsSection },
-  other: { section: OtherSection },
+  layout: LayoutSection,
+  flexChild: FlexChildSection,
+  gridChild: GridChildSection,
+  space: SpaceSection,
+  size: SizeSection,
+  position: PositionSection,
+  typography: TypographySection,
+  backgrounds: BackgroundsSection,
+  borders: BordersSection,
+  effects: EffectsSection,
+  other: OtherSection,
 };

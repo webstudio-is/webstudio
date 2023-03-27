@@ -85,7 +85,7 @@ export const TabContent = ({ publish, onSetActiveTab }: TabContentProps) => {
       />
       <div ref={draggableContainerRef}>
         {Array.from(componentCategories).map((category) => (
-          <CollapsibleSection label={category} key={category}>
+          <CollapsibleSection label={category} key={category} fullWidth>
             <ArrowFocus
               render={({ handleKeyDown }) => (
                 <Flex

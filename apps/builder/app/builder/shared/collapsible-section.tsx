@@ -11,7 +11,6 @@ import {
 import { theme } from "@webstudio-is/design-system";
 import type { ComponentProps, ReactNode } from "react";
 import { PlusIcon } from "@webstudio-is/icons";
-import type { RenderCategoryProps } from "~/builder/features/style-panel/style-sections";
 
 type UseOpenStateProps = {
   label: string;
@@ -80,19 +79,19 @@ export const CollapsibleSectionBase = ({
   </Collapsible.Root>
 );
 
-export type CollapsibleSectionProps = Prettify<
-  Omit<CollapsibleSectionBaseProps, "isOpen" | "onOpenChange" | "fullWidth"> &
-    UseOpenStateProps & { categoryProps?: RenderCategoryProps }
+type CollapsibleSectionProps = Prettify<
+  Omit<CollapsibleSectionBaseProps, "isOpen" | "onOpenChange"> &
+    UseOpenStateProps
 >;
 
 export const CollapsibleSection = (props: CollapsibleSectionProps) => {
-  const { label, trigger, children } = props;
+  const { label, trigger, children, fullWidth } = props;
   const [isOpen, setIsOpen] = useOpenState(props);
   return (
     <CollapsibleSectionBase
       label={label}
       trigger={trigger}
-      fullWidth={false}
+      fullWidth={fullWidth}
       isOpen={isOpen}
       onOpenChange={setIsOpen}
     >
