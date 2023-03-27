@@ -18,6 +18,7 @@ import {
   useLocalValue,
   VerticalLayout,
 } from "../shared";
+import type { Page } from "@webstudio-is/project-build";
 
 type UrlControlProps = ControlProps<"url", "string" | "page">;
 
@@ -51,6 +52,9 @@ const BaseUrl = ({ prop, onChange, id }: BaseControlProps) => {
   );
 };
 
+const getPageId = (page: Page) => page.id;
+const getPageName = (page: Page) => page.name;
+
 const BasePage = ({ prop, onChange, id }: BaseControlProps) => {
   const pages = useStore(pagesStore);
   const options = pages === undefined ? [] : [pages.homePage, ...pages.pages];
@@ -65,7 +69,8 @@ const BasePage = ({ prop, onChange, id }: BaseControlProps) => {
         id={id}
         value={value}
         options={options}
-        getLabel={(page) => page.name}
+        getLabel={getPageName}
+        getValue={getPageId}
         onChange={(page) => onChange({ type: "page", value: page.id })}
         fullWidth
       />
