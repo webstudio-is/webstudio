@@ -22,7 +22,6 @@
   "devDependencies": {
     "@webstudio-is/scripts": "workspace:^",
     "@webstudio-is/tsconfig": "workspace:^",
-    "esbuild": "^0.17.14",
     "typescript": "4.9.5"
   },
   "files": [
