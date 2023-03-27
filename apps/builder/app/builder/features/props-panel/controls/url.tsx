@@ -8,6 +8,7 @@ import {
   ToggleGroup,
   ToggleGroupItem,
   Select,
+  Tooltip,
 } from "@webstudio-is/design-system";
 import { Link2Icon, PageIcon } from "@webstudio-is/icons";
 import { useState } from "react";
@@ -121,11 +122,14 @@ export const UrlControl = ({
           }}
         >
           <ToggleGroupItem value={"url" satisfies Mode}>
-            {/* @todo: tooltip */}
-            <Link2Icon />
+            <Tooltip content="URL">
+              <Link2Icon />
+            </Tooltip>
           </ToggleGroupItem>
           <ToggleGroupItem value={"page" satisfies Mode}>
-            <PageIcon />
+            <Tooltip content="Page">
+              <PageIcon />
+            </Tooltip>
           </ToggleGroupItem>
         </ToggleGroup>
       </Flex>
