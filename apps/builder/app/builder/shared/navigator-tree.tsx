@@ -26,7 +26,7 @@ export const NavigatorTree = () => {
 
   const isItemHidden = useCallback(
     (instanceId: Instance["id"]) =>
-      // fragments is internal tool to group other instances
+      // fragment is internal component to group other instances
       // for example to support multiple children in slots
       instances.get(instanceId)?.component === "Fragment",
     [instances]
