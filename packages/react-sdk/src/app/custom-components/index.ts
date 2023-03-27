@@ -3,7 +3,7 @@ import { Link } from "./link";
 import { LinkBlock } from "./link-block";
 import { RichTextLink } from "./rich-text-link";
 import { imageProps } from "@webstudio-is/image";
-import type { WsComponentPropsMeta } from "../../components/component-type";
+import type { WsComponentPropsMeta } from "../../components/component-meta";
 
 export const customComponents = {
   Image,

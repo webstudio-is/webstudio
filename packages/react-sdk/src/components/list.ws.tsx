@@ -1,5 +1,5 @@
 import { ListIcon } from "@webstudio-is/icons";
-import type { WsComponentMeta, WsComponentPropsMeta } from "./component-type";
+import type { WsComponentMeta, WsComponentPropsMeta } from "./component-meta";
 import { props } from "./__generated__/list.props";
 
 const presetStyle = {
@@ -18,6 +18,7 @@ const presetStyle = {
 } as const;
 
 export const meta: WsComponentMeta = {
+  category: "typography",
   type: "container",
   label: "List",
   Icon: ListIcon,

@@ -3,6 +3,7 @@ import { theme, Box, Flex, Toaster } from "@webstudio-is/design-system";
 import { useCanvasWidth } from "~/builder/shared/nano-states";
 import type { Publish } from "~/shared/pubsub";
 import { selectedInstanceSelectorStore } from "~/shared/nano-states";
+import { textEditingInstanceSelectorStore } from "~/shared/nano-states/instances";
 import {
   workspaceRectStore,
   zoomStore,
@@ -61,6 +62,7 @@ export const Workspace = ({
 
   const handleWorkspaceClick = () => {
     selectedInstanceSelectorStore.set(undefined);
+    textEditingInstanceSelectorStore.set(undefined);
   };
 
   return (

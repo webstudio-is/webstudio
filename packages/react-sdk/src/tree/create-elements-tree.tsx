@@ -8,6 +8,8 @@ import type { Assets, Pages, PropsByInstanceId } from "../props";
 import type { WebstudioComponent } from "./webstudio-component";
 import { SessionStoragePolyfill } from "./session-storage-polyfill";
 
+type InstanceSelector = Instance["id"][];
+
 export const createElementsTree = ({
   sandbox,
   instance,
@@ -25,14 +27,17 @@ export const createElementsTree = ({
   Component: (props: ComponentProps<typeof WebstudioComponent>) => JSX.Element;
   getComponent: GetComponent;
 }) => {
+  const rootInstanceSelector = [instance.id];
   const children = createInstanceChildrenElements({
+    instanceSelector: rootInstanceSelector,
     Component,
     children: instance.children,
     getComponent,
   });
-  const body = createInstanceElement({
+  const root = createInstanceElement({
     Component,
     instance,
+    instanceSelector: rootInstanceSelector,
     children: [
       <Fragment key="children">
         {children}
@@ -47,16 +52,18 @@ export const createElementsTree = ({
     <ReactSdkContext.Provider
       value={{ propsByInstanceIdStore, assetsStore, pagesStore }}
     >
-      {body}
+      {root}
     </ReactSdkContext.Provider>
   );
 };
 
 const createInstanceChildrenElements = ({
+  instanceSelector,
   children,
   Component,
   getComponent,
 }: {
+  instanceSelector: InstanceSelector;
   children: Instance["children"];
   Component: (props: ComponentProps<typeof WebstudioComponent>) => JSX.Element;
   getComponent: GetComponent;
@@ -67,13 +74,16 @@ const createInstanceChildrenElements = ({
       elements.push(child.value);
       continue;
     }
+    const childInstanceSelector = [child.id, ...instanceSelector];
     const children = createInstanceChildrenElements({
+      instanceSelector: childInstanceSelector,
       children: child.children,
       Component,
       getComponent,
     });
     const element = createInstanceElement({
       instance: child,
+      instanceSelector: childInstanceSelector,
       Component,
       children,
       getComponent,
@@ -86,20 +96,24 @@ const createInstanceChildrenElements = ({
 const createInstanceElement = ({
   Component,
   instance,
+  instanceSelector,
   children = [],
   getComponent,
 }: {
   instance: Instance;
+  instanceSelector: InstanceSelector;
   Component: (props: ComponentProps<typeof WebstudioComponent>) => JSX.Element;
   children?: Array<JSX.Element | string>;
   getComponent: GetComponent;
 }) => {
-  const props = {
-    instance,
-    children,
-    key: instance.id,
-    getComponent,
-  };
-
-  return <Component {...props} />;
+  return (
+    <Component
+      key={instance.id}
+      instance={instance}
+      instanceSelector={instanceSelector}
+      getComponent={getComponent}
+    >
+      {children}
+    </Component>
+  );
 };

@@ -31,6 +31,7 @@ export * from "./components/text-area";
 export * from "./components/radio";
 export * from "./components/checkbox";
 export * from "./components/component-card";
+export * from "./components/primitives/arrow-focus";
 
 // Not aligned
 

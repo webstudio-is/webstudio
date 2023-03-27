@@ -395,6 +395,7 @@ export const TreeItemLabel = ({
 export type TreeNodeProps<Data extends { id: ItemId }> = {
   itemData: Data;
   getItemChildren: (itemId: ItemId) => Data[];
+  isItemHidden: (itemId: ItemId) => boolean;
   renderItem: (props: TreeItemRenderProps<Data>) => React.ReactNode;
 
   getIsExpanded: (itemSelector: ItemSelector) => boolean;
@@ -411,14 +412,15 @@ export type TreeNodeProps<Data extends { id: ItemId }> = {
   onMouseLeave?: (itemSelector: ItemSelector) => void;
 
   animate?: boolean;
-  hideRoot?: boolean;
+
+  level?: number;
 };
 
 export const TreeNode = <Data extends { id: string }>({
   itemData,
   parentSelector,
   parentIsSelected,
-  hideRoot = false,
+  level = 0,
   ...commonProps
 }: TreeNodeProps<Data>) => {
   const {
@@ -433,6 +435,7 @@ export const TreeNode = <Data extends { id: string }>({
     dropTargetItemSelector,
     renderItem,
     getItemChildren,
+    isItemHidden,
   } = commonProps;
 
   const collapsibleContentRef = useRef<HTMLDivElement>(null);
@@ -441,16 +444,12 @@ export const TreeNode = <Data extends { id: string }>({
 
   const itemSelector = [itemData.id, ...(parentSelector ?? [])];
 
-  const isAlwaysExpanded =
-    // root is always expanded
-    parentSelector === undefined ||
-    // or root children when root is hidden
-    (hideRoot && parentSelector.length === 1);
-  let level = parentSelector?.length ?? 0;
-  // reduce level when root is hidden
-  if (hideRoot && level !== 0) {
-    level -= 1;
+  const itemIsHidden = isItemHidden(itemData.id);
+  const isAlwaysExpanded = itemIsHidden;
+  if (itemIsHidden === false) {
+    level += 1;
   }
+
   const isExpandable = itemChildren.length > 0;
   const isExpanded = getIsExpanded(itemSelector) || isAlwaysExpanded;
   const isSelected = areItemSelectorsEqual(itemSelector, selectedItemSelector);
@@ -486,7 +485,7 @@ export const TreeNode = <Data extends { id: string }>({
       data-drop-target-id={itemData.id}
     >
       {/* optionally prevent rendering root item */}
-      {(parentSelector !== undefined || hideRoot !== true) &&
+      {itemIsHidden === false &&
         renderItem({
           dropTargetItemSelector,
           onMouseEnter,
@@ -515,7 +514,7 @@ export const TreeNode = <Data extends { id: string }>({
                 itemData={child}
                 parentSelector={itemSelector}
                 parentIsSelected={isSelected || parentIsSelected}
-                hideRoot={hideRoot}
+                level={level}
                 {...commonProps}
               />
             ))

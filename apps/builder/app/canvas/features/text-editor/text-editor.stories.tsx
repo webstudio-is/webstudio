@@ -135,7 +135,7 @@ export const Basic: ComponentStory<typeof TextEditor> = ({ onChange }) => {
         }}
       >
         <TextEditor
-          rootInstanceId={"1"}
+          rootInstanceSelector={["1"]}
           instances={instances}
           contentEditable={<ContentEditable />}
           onChange={onChange}
