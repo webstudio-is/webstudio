@@ -18,7 +18,6 @@
   },
   "devDependencies": {
     "@babel/core": "^7.21.0",
-    "@esbuild-kit/esm-loader": "^2.4.2",
     "@jest/globals": "^29.3.1",
     "@remix-run/node": "1.12.0",
     "@remix-run/react": "1.12.0",
@@ -31,8 +30,6 @@
     "@webstudio-is/scripts": "workspace:^",
     "@webstudio-is/storybook-config": "workspace:^",
     "@webstudio-is/tsconfig": "workspace:^",
-    "esbuild": "^0.14.25",
-    "esbuild-node-externals": "^1.4.1",
     "jest": "^29.3.1",
     "react": "^17.0.2",
     "react-dom": "^17.0.2",
