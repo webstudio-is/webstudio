@@ -16,7 +16,7 @@ import type {
 } from "@webstudio-is/css-data";
 
 // @todo remove at node18
-globalThis.structuredClone = (value) => {
+globalThis.structuredClone = (value: unknown) => {
   return value === undefined ? undefined : JSON.parse(JSON.stringify(value));
 };
 
