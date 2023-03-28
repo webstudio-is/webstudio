@@ -114,6 +114,13 @@ const FileImage = z.object({
   defaultValue: z.string().optional(),
 });
 
+const Url = z.object({
+  ...common,
+  control: z.literal("url"),
+  type: z.literal("string"),
+  defaultValue: z.string().optional(),
+});
+
 // we neither generate object nor support it in props panel, listed here for completeness
 // can't use name "Object" for the variable because it causes bugs when Object.assign() is used in compiled output
 const ObjectType = z.object({
@@ -150,6 +157,7 @@ export const PropMeta = z.union([
   Check,
   InlineCheck,
   FileImage,
+  Url,
   ObjectType,
   Date,
 ]);

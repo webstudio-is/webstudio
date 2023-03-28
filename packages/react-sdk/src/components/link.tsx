@@ -1,4 +1,5 @@
-import { forwardRef, type ElementRef, type ComponentProps } from "react";
+import { forwardRef, type ComponentProps } from "react";
+import { usePropUrl, getInstanceIdFromComponentProps } from "../props";
 
 // @todo props that come from remix link, shouldn't be here at all
 // - prefetch should be only on remix component and it already is
@@ -10,10 +11,15 @@ type Props = Omit<ComponentProps<"a">, "href" | "target"> & {
   prefetch?: "none" | "intent" | "render";
 };
 
-export const Link = forwardRef<ElementRef<"a">, Props>(
-  ({ href = "", ...props }, ref) => {
-    return <a {...props} href={href} ref={ref} />;
-  }
-);
+export const Link = forwardRef<HTMLAnchorElement, Props>((props, ref) => {
+  const href = usePropUrl(getInstanceIdFromComponentProps(props), "href");
+  return (
+    <a
+      {...props}
+      href={typeof href === "string" ? href : href?.path}
+      ref={ref}
+    />
+  );
+});
 
 Link.displayName = "Link";

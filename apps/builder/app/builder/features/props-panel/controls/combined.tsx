@@ -6,6 +6,7 @@ import { RadioControl } from "./radio";
 import { SelectControl } from "./select";
 import { BooleanControl } from "./boolean";
 import { FileImageControl } from "./file-image";
+import { UrlControl } from "./url";
 import type { ControlProps } from "../shared";
 
 export const renderControl = ({
@@ -71,6 +72,13 @@ export const renderControl = ({
     return <FileImageControl meta={meta} prop={prop} {...rest} />;
   }
 
+  if (
+    meta.control === "url" &&
+    (prop === undefined || prop.type === "string" || prop.type === "page")
+  ) {
+    return <UrlControl meta={meta} prop={prop} {...rest} />;
+  }
+
   // Type in meta can be changed at some point without updating props in DB that are still using the old type
   // In this case meta and prop will mismatch, but we try to guess a matching control based just on the prop type
   if (prop) {
@@ -126,6 +134,21 @@ export const renderControl = ({
             ...meta,
             defaultValue: undefined,
             control: "file-image",
+            type: "string",
+          }}
+          prop={prop}
+          {...rest}
+        />
+      );
+    }
+
+    if (prop.type === "page") {
+      return (
+        <UrlControl
+          meta={{
+            ...meta,
+            defaultValue: undefined,
+            control: "url",
             type: "string",
           }}
           prop={prop}

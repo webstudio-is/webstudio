@@ -1,59 +1,23 @@
-import { Link } from "@remix-run/react";
-import type {
-  ElementRef,
-  ComponentProps,
-  RefAttributes,
-  ForwardRefExoticComponent,
-} from "react";
+import { Link as RemixLink } from "@remix-run/react";
+import type { ComponentPropsWithoutRef } from "react";
 import { forwardRef } from "react";
-import type { Link as BaseLink } from "../../../components/link";
+import type { Link } from "../../../components/link";
+import { usePropUrl, getInstanceIdFromComponentProps } from "../../../props";
 
-const isAbsoluteUrl = (href: string) => {
-  try {
-    new URL(href);
-    return true;
-  } catch {
-    return false;
-  }
-};
+type LinkComponent = typeof Link;
+type LinkProps = ComponentPropsWithoutRef<LinkComponent>;
 
-// Remix's check for absolute URL copied from here:
-// https://github.com/remix-run/react-router/blob/react-router-dom%406.8.0/packages/react-router-dom/index.tsx#L423-L424
-const isAbsoluteUrlRemix = (href: string) =>
-  /^[a-z+]+:\/\//i.test(href) || href.startsWith("//");
+export const wrapLinkComponent = (BaseLink: LinkComponent) => {
+  const Component: LinkComponent = forwardRef((props: LinkProps, ref) => {
+    const href = usePropUrl(getInstanceIdFromComponentProps(props), "href");
 
-type Props = ComponentProps<typeof BaseLink>;
-
-type Ref = ElementRef<"a">;
-
-export const wrapLinkComponent = (
-  BaseLink: ForwardRefExoticComponent<Props & RefAttributes<Ref>>
-) => {
-  // We're not actually wrapping BaseLink (no way to wrap with Remix's Link),
-  // but this is still useful because we're making sure that props/ref types are compatible
-  const Component = forwardRef<Ref, Props>(({ href = "", ...props }, ref) => {
-    const isAbsolute = isAbsoluteUrl(href);
-
-    // This is a workaround for a bug in Remix: https://github.com/remix-run/remix/issues/5440
-    // It has a buggy absolute URL detection, which gives false positives on value like "//" or "http://"
-    // and causes entire app to crash
-    const willRemixTryToTreatAsAbsoluteAndCrash =
-      isAbsolute === false && isAbsoluteUrlRemix(href);
-
-    if (isAbsolute || willRemixTryToTreatAsAbsoluteAndCrash) {
-      return (
-        <BaseLink
-          {...props}
-          href={willRemixTryToTreatAsAbsoluteAndCrash ? "" : href}
-          ref={ref}
-        />
-      );
+    if (typeof href === "string" || href === undefined) {
+      return <BaseLink {...props} ref={ref} />;
     }
 
-    return <Link {...props} to={href} ref={ref} />;
+    return <RemixLink {...props} to={href.path} ref={ref} />;
   });
 
-  // This is the only part that we use from BaseLink at runtime
   Component.displayName = BaseLink.displayName;
 
   return Component;

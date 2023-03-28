@@ -2,11 +2,30 @@ import { useState } from "react";
 import { ButtonIcon } from "@webstudio-is/icons";
 import { PropsPanel } from "./props-panel";
 import { usePropsLogic } from "./use-props-logic";
+import { pagesStore } from "~/shared/nano-states";
 import type { Prop } from "@webstudio-is/project-build";
 import type {
   WsComponentMeta,
   WsComponentPropsMeta,
 } from "@webstudio-is/react-sdk";
+
+const page = (name: string, path: string) => ({
+  id: Math.random().toString(),
+  name,
+  title: name,
+  path,
+  meta: {},
+  rootInstanceId: "1",
+});
+
+pagesStore.set({
+  homePage: page("Home", "/"),
+  pages: [
+    page("About", "/about"),
+    page("Pricing", "/pricing"),
+    page("Contacts", "/contacts"),
+  ],
+});
 
 type PropMeta = WsComponentPropsMeta["props"][string];
 
@@ -46,22 +65,18 @@ const colorProp = (label?: string): PropMeta => ({
   label,
 });
 
+const urlProp = (label?: string): PropMeta => ({
+  type: "string",
+  control: "url",
+  required: false,
+  label,
+});
+
 const defaultOptions = ["one", "two", "three-the-very-long-one-so-much-long"];
 
 const radioProp = (options = defaultOptions, label?: string): PropMeta => ({
   type: "string",
   control: "radio",
-  options,
-  required: false,
-  label,
-});
-
-const inlineRadioProp = (
-  options = defaultOptions,
-  label?: string
-): PropMeta => ({
-  type: "string",
-  control: "inline-radio",
   options,
   required: false,
   label,
@@ -78,28 +93,6 @@ const selectProp = (options = defaultOptions, label?: string): PropMeta => ({
 const checkProp = (options = defaultOptions, label?: string): PropMeta => ({
   type: "string[]",
   control: "check",
-  options,
-  required: false,
-  label,
-});
-
-const inlineCheckProp = (
-  options = defaultOptions,
-  label?: string
-): PropMeta => ({
-  type: "string[]",
-  control: "inline-check",
-  options,
-  required: false,
-  label,
-});
-
-const multiSelectProp = (
-  options = defaultOptions,
-  label?: string
-): PropMeta => ({
-  type: "string[]",
-  control: "multi-select",
   options,
   required: false,
   label,
@@ -122,33 +115,28 @@ const componentPropsMeta: WsComponentPropsMeta = {
     initialBoolean: booleanProp(),
     initialColor: colorProp(),
     initialRadio: radioProp(),
-    initialInlineRadio: inlineRadioProp(),
     initialSelect: selectProp(),
     initialCheck: checkProp(),
-    initialInlineCheck: inlineCheckProp(),
-    initialMultiSelect: multiSelectProp(),
+    initialUrl: urlProp(),
     addedText: textProp(),
     addedShortText: shortTextProp(),
     addedNumber: numberProp(),
     addedBoolean: booleanProp(),
     addedColor: colorProp(),
     addedRadio: radioProp(),
-    addedInlineRadio: inlineRadioProp(),
     addedSelect: selectProp(),
     addedCheck: checkProp(),
-    addedInlineCheck: inlineCheckProp(),
-    addedMultiSelect: multiSelectProp(),
+    addedUrlUrl: urlProp("Added URL (URL)"),
+    addedUrlPage: urlProp("Added URL (Page)"),
     availableText: textProp(),
     availableShortText: shortTextProp(),
     availableNumber: numberProp(),
     availableBoolean: booleanProp(),
     availableColor: colorProp(),
     availableRadio: radioProp(),
-    availableInlineRadio: inlineRadioProp(),
     availableSelect: selectProp(),
     availableCheck: checkProp(),
-    availableInlineCheck: inlineCheckProp(),
-    availableMultiSelect: multiSelectProp(),
+    availableUrl: urlProp(),
   },
   initialProps: [
     "initialText",
@@ -157,11 +145,9 @@ const componentPropsMeta: WsComponentPropsMeta = {
     "initialBoolean",
     "initialColor",
     "initialRadio",
-    "initialInlineRadio",
     "initialSelect",
     "initialCheck",
-    "initialInlineCheck",
-    "initialMultiSelect",
+    "initialUrl",
   ],
 };
 
@@ -209,13 +195,6 @@ const startingProps: Prop[] = [
     value: "two",
   },
   {
-    id: "6",
-    instanceId,
-    name: "addedInlineRadio",
-    type: "string",
-    value: "two",
-  },
-  {
     id: "7",
     instanceId,
     name: "addedSelect",
@@ -232,16 +211,16 @@ const startingProps: Prop[] = [
   {
     id: "9",
     instanceId,
-    name: "addedInlineCheck",
-    type: "string[]",
-    value: ["one", "two"],
+    name: "addedUrlUrl",
+    type: "string",
+    value: "https://example.com",
   },
   {
     id: "10",
     instanceId,
-    name: "addedMultiSelect",
-    type: "string[]",
-    value: ["one", "two"],
+    name: "addedUrlPage",
+    type: "page",
+    value: pagesStore.get()?.pages[0].id ?? "",
   },
 ];
 
