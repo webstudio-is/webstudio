@@ -122,7 +122,7 @@ const PropertyPopoverContent = ({
 
 type PropertyNameProps = {
   style: StyleInfo;
-  property: StyleProperty | StyleProperty[];
+  property: StyleProperty | readonly StyleProperty[];
   label: string | ReactElement;
   onReset: React.MouseEventHandler<HTMLButtonElement>;
 };
