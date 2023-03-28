@@ -19,6 +19,7 @@ const colors = [
   "neutral",
   "ghost",
   "dark",
+  "gradient",
 ] as const;
 
 type ButtonColor = (typeof colors)[number];
@@ -32,6 +33,7 @@ const backgrounds: Record<ButtonColor, string> = {
   positive: theme.colors.backgroundSuccessMain,
   ghost: theme.colors.backgroundHover,
   dark: theme.colors.backgroundTopbar,
+  gradient: theme.colors.backgroundGradientPrimary,
 };
 
 const foregrounds: Record<ButtonColor, string> = {
@@ -41,11 +43,16 @@ const foregrounds: Record<ButtonColor, string> = {
   neutral: theme.colors.foregroundMain,
   ghost: theme.colors.foregroundMain,
   dark: theme.colors.foregroundContrastMain,
+  gradient: theme.colors.foregroundContrastMain,
 };
 
 // CSS supports multiple gradients as backgrounds but not multiple colors
-const backgroundColors = (base: string, overlay: string) =>
-  `linear-gradient(${overlay}, ${overlay}), linear-gradient(${base}, ${base})`;
+const backgroundColors = (base: string, overlay: string) => {
+  if (base === "$colors$backgroundGradientPrimary") {
+    return `linear-gradient(${overlay}, ${overlay}), ${base}`;
+  }
+  return `linear-gradient(${overlay}, ${overlay}), linear-gradient(${base}, ${base})`;
+};
 
 const perColorStyle = (variant: ButtonColor) => ({
   background: variant === "ghost" ? "transparent" : backgrounds[variant],
@@ -101,6 +108,7 @@ const StyledButton = styled("button", {
       neutral: perColorStyle("neutral"),
       ghost: perColorStyle("ghost"),
       dark: perColorStyle("dark"),
+      gradient: perColorStyle("gradient"),
     },
   },
 
