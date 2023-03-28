@@ -242,7 +242,6 @@ export type BuilderProps = {
   build: Build;
   assets: Asset[];
   buildOrigin: string;
-  authReadToken: string;
   authToken?: string;
   authPermit: AuthPermit;
 };
@@ -252,7 +251,6 @@ export const Builder = ({
   build,
   assets,
   buildOrigin,
-  authReadToken,
   authToken,
   authPermit,
 }: BuilderProps) => {
@@ -315,8 +313,6 @@ export const Builder = ({
   const canvasUrl = getBuildUrl({
     buildOrigin,
     project,
-    page: build.pages.homePage,
-    authReadToken,
   });
 
   return (

@@ -86,16 +86,16 @@ const DesignMode = () => {
 };
 
 type CanvasProps = {
-  data: CanvasData;
+  params: CanvasData["params"];
   getComponent: GetComponent;
 };
 
 export const Canvas = ({
-  data,
+  params,
   getComponent,
 }: CanvasProps): JSX.Element | null => {
   const isBuilderReady = useSubscribeBuilderReady();
-  setParams(data.params ?? null);
+  setParams(params ?? null);
   useCanvasStore(publish);
   const [isPreviewMode] = useIsPreviewMode();
 
