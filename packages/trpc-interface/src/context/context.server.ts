@@ -5,13 +5,6 @@ import type { TrpcInterfaceClient } from "../shared/shared-router";
  */
 type AuthorizationContext = {
   /**
-   * Canvas generally resides on a different domain,
-   * and we can't bridge a session with it because "Safari won't let us just do it.
-   * So we generate an encrypted token allowing read access to the project inside the canvas.
-   */
-  authReadToken: { projectId: string } | undefined;
-
-  /**
    * userId of the current authenticated user
    */
   userId: string | undefined;

@@ -4,7 +4,7 @@ import type { ErrorBoundaryComponent, LoaderArgs } from "@remix-run/node";
 import { loadBuildByProjectId } from "@webstudio-is/project-build/server";
 import { db } from "@webstudio-is/project/server";
 import { authorizeProject } from "@webstudio-is/trpc-interface/server";
-import { createContext, createAuthReadToken } from "~/shared/context.server";
+import { createContext } from "~/shared/context.server";
 import { ErrorMessage } from "~/shared/error";
 import { sentryException } from "~/shared/sentry";
 import { getBuildOrigin } from "~/shared/router-utils";
@@ -25,6 +25,7 @@ export const loader = async ({
 
   const url = new URL(request.url);
 
+  const start = Date.now();
   const project = await db.project.loadById(params.projectId, context);
 
   const authPermit =
@@ -45,7 +46,14 @@ export const loader = async ({
   const devBuild = await loadBuildByProjectId(project.id, "dev");
   const assets = await loadByProject(project.id, context);
 
-  const authReadToken = await createAuthReadToken({ projectId: project.id });
+  const end = Date.now();
+
+  const diff = end - start;
+
+  // we need to log timings to figure out how to speed up loading
+  // eslint-disable-next-line no-console
+  console.log(`Project ${project.id} is loaded in ${diff}ms`);
+
   const authToken = url.searchParams.get("authToken") ?? undefined;
 
   return {
@@ -53,7 +61,6 @@ export const loader = async ({
     build: devBuild,
     assets,
     buildOrigin: getBuildOrigin(request),
-    authReadToken,
     authToken,
     authPermit,
   };
