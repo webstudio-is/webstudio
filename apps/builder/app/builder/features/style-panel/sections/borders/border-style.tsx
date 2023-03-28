@@ -1,6 +1,21 @@
 import type { StyleProperty } from "@webstudio-is/css-data";
+import { toValue } from "@webstudio-is/css-engine";
+import {
+  Grid,
+  theme,
+  ToggleGroup,
+  ToggleGroupItem,
+  Tooltip,
+} from "@webstudio-is/design-system";
+import {
+  DashBorderIcon,
+  DashedBorderIcon,
+  DottedBorderIcon,
+  SmallXIcon,
+} from "@webstudio-is/icons";
+import { PropertyName } from "../../shared/property-name";
 import type { RenderCategoryProps } from "../../style-sections";
-import { BorderProperty } from "./border-property";
+import { deleteAllProperties, setAllProperties } from "./border-utils";
 
 const borderPropertyOptions = {
   borderTopStyle: {},
@@ -9,20 +24,83 @@ const borderPropertyOptions = {
   borderBottomStyle: {},
 } as const satisfies Partial<{ [property in StyleProperty]: unknown }>;
 
+const borderProperties = Object.keys(borderPropertyOptions) as Array<
+  keyof typeof borderPropertyOptions
+>;
+
+const borderStyleValues = [
+  { value: "none", icon: SmallXIcon },
+  { value: "solid", icon: DashBorderIcon },
+  { value: "dashed", icon: DashedBorderIcon },
+  { value: "dotted", icon: DottedBorderIcon },
+] as const;
+
 export const BorderStyle = (
   props: Pick<
     RenderCategoryProps,
     "currentStyle" | "setProperty" | "deleteProperty" | "createBatchUpdate"
   >
 ) => {
+  /**
+   * We do not use shorthand properties such as borderWidth or borderRadius in our code.
+   * However, in the UI, we can display a single field, and in that case, we can use any property
+   * from the shorthand property set and pass it instead.
+   **/
+  const firstPropertyName = borderProperties[0];
+
+  const deleteBorderProperties = deleteAllProperties(
+    borderProperties,
+    props.createBatchUpdate
+  );
+
+  const setBorderProperties = setAllProperties(
+    borderProperties,
+    props.createBatchUpdate
+  )(firstPropertyName);
+
+  const firstPropertyValue = toValue(
+    props.currentStyle[firstPropertyName]?.value ?? {
+      type: "keyword",
+      value: "none",
+    }
+  );
+
   return (
-    <BorderProperty
-      currentStyle={props.currentStyle}
-      setProperty={props.setProperty}
-      deleteProperty={props.deleteProperty}
-      createBatchUpdate={props.createBatchUpdate}
-      label="Style"
-      borderPropertyOptions={borderPropertyOptions}
-    />
+    <Grid
+      css={{
+        gridTemplateColumns: `1fr ${theme.spacing[20]} ${theme.spacing[12]}`,
+      }}
+      gap={2}
+    >
+      <PropertyName
+        style={props.currentStyle}
+        property={borderProperties}
+        label={"Style"}
+        onReset={() => deleteBorderProperties(firstPropertyName)}
+      />
+
+      <ToggleGroup
+        css={{
+          gridColumn: `span 2`,
+          justifySelf: "end",
+        }}
+        type="single"
+        value={firstPropertyValue}
+        onValueChange={(value) => {
+          setBorderProperties({
+            type: "keyword",
+            value,
+          });
+        }}
+      >
+        {borderStyleValues.map(({ value, icon: Icon }) => (
+          <ToggleGroupItem key={value} value={value}>
+            <Tooltip content="URL">
+              <Icon />
+            </Tooltip>
+          </ToggleGroupItem>
+        ))}
+      </ToggleGroup>
+    </Grid>
   );
 };

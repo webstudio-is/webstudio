@@ -42,6 +42,13 @@ export const BordersSection = (props: RenderCategoryProps) => {
   return (
     <CollapsibleSection label={props.label} isOpen={props.isOpen}>
       <Flex direction="column" gap={2}>
+        <BorderStyle
+          createBatchUpdate={createBatchUpdate}
+          currentStyle={currentStyle}
+          setProperty={setProperty}
+          deleteProperty={deleteProperty}
+        />
+
         <Grid
           css={{
             // Our aim is to maintain consistent styling throughout the property and align
@@ -72,13 +79,6 @@ export const BordersSection = (props: RenderCategoryProps) => {
             />
           </Box>
         </Grid>
-
-        <BorderStyle
-          createBatchUpdate={createBatchUpdate}
-          currentStyle={currentStyle}
-          setProperty={setProperty}
-          deleteProperty={deleteProperty}
-        />
 
         <BorderWidth
           createBatchUpdate={createBatchUpdate}
