@@ -26,10 +26,10 @@ const borderStyleProperties = [
 ] as const satisfies readonly StyleProperty[];
 
 const borderStyleValues = [
-  { value: "none", icon: SmallXIcon },
-  { value: "solid", icon: DashBorderIcon },
-  { value: "dashed", icon: DashedBorderIcon },
-  { value: "dotted", icon: DottedBorderIcon },
+  { value: "none", Icon: SmallXIcon },
+  { value: "solid", Icon: DashBorderIcon },
+  { value: "dashed", Icon: DashedBorderIcon },
+  { value: "dotted", Icon: DottedBorderIcon },
 ] as const;
 
 export const BorderStyle = (
@@ -90,7 +90,7 @@ export const BorderStyle = (
           });
         }}
       >
-        {borderStyleValues.map(({ value, icon: Icon }) => (
+        {borderStyleValues.map(({ value, Icon }) => (
           <ToggleGroupItem key={value} value={value}>
             <Tooltip content={toPascalCase(value)}>
               <Icon />
