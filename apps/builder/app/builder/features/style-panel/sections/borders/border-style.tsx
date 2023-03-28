@@ -13,6 +13,7 @@ import {
   DottedBorderIcon,
   SmallXIcon,
 } from "@webstudio-is/icons";
+import { toPascalCase } from "../../shared/keyword-utils";
 import { PropertyName } from "../../shared/property-name";
 import type { RenderCategoryProps } from "../../style-sections";
 import { deleteAllProperties, setAllProperties } from "./border-utils";
@@ -91,7 +92,7 @@ export const BorderStyle = (
       >
         {borderStyleValues.map(({ value, icon: Icon }) => (
           <ToggleGroupItem key={value} value={value}>
-            <Tooltip content="URL">
+            <Tooltip content={toPascalCase(value)}>
               <Icon />
             </Tooltip>
           </ToggleGroupItem>
