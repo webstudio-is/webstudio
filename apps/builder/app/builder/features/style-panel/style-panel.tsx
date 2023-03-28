@@ -8,11 +8,11 @@ import {
 import type { Instance } from "@webstudio-is/project-build";
 import type { Publish } from "~/shared/pubsub";
 import { selectedBreakpointStore } from "~/shared/nano-states/breakpoints";
-import { willRender } from "~/builder/shared/breakpoints";
 import { useStyleData } from "./shared/use-style-data";
 import { StyleSettings } from "./style-settings";
 import { useCanvasWidth } from "~/builder/shared/nano-states";
 import { StyleSourcesSection } from "./style-source-section";
+import { matchMedia } from "@webstudio-is/css-engine";
 
 type StylePanelProps = {
   publish: Publish;
@@ -37,7 +37,7 @@ export const StylePanel = ({ selectedInstance, publish }: StylePanelProps) => {
     return null;
   }
 
-  if (willRender(breakpoint, canvasWidth) === false) {
+  if (matchMedia(breakpoint, canvasWidth) === false) {
     return (
       <Box css={{ p: theme.spacing[5] }}>
         <Card css={{ p: theme.spacing[9], mt: theme.spacing[9] }}>
