@@ -6,20 +6,41 @@ import { PropertyName } from "../../shared/property-name";
 import type { RenderCategoryProps } from "../../style-sections";
 import { BorderRadius } from "./border-radius";
 import { BorderStyle } from "./border-style";
+import { deleteAllProperties, setAllProperties } from "./border-utils";
 import { BorderWidth } from "./border-width";
 
 const { items: borderColorItems } = styleConfigByName["borderTopColor"];
 
-export const BordersSection = ({
-  currentStyle,
-  setProperty,
-  deleteProperty,
-  createBatchUpdate,
-  label,
-  isOpen,
-}: RenderCategoryProps) => {
+const borderColorProperties = [
+  "borderTopColor",
+  "borderRightColor",
+  "borderBottomColor",
+  "borderLeftColor",
+] as const;
+
+export const BordersSection = (props: RenderCategoryProps) => {
+  const { currentStyle, setProperty, deleteProperty, createBatchUpdate } =
+    props;
+
+  /**
+   * We do not use shorthand properties such as borderWidth or borderRadius in our code.
+   * However, in the UI, we can display a single field, and in that case, we can use any property
+   * from the shorthand property set and pass it instead.
+   **/
+  const borderColorProperty = borderColorProperties[0];
+
+  const deleteAllBorderColorProperties = deleteAllProperties(
+    borderColorProperties,
+    createBatchUpdate
+  );
+
+  const setAllBorderColorProperties = setAllProperties(
+    borderColorProperties,
+    createBatchUpdate
+  );
+
   return (
-    <CollapsibleSection label={label} isOpen={isOpen}>
+    <CollapsibleSection label={props.label} isOpen={props.isOpen}>
       <Flex direction="column" gap={2}>
         <Grid
           css={{
@@ -32,9 +53,9 @@ export const BordersSection = ({
         >
           <PropertyName
             style={currentStyle}
-            property={"borderTopColor"}
+            property={borderColorProperty}
             label={"Color"}
-            onReset={() => deleteProperty("borderTopColor")}
+            onReset={() => deleteAllBorderColorProperties(borderColorProperty)}
           />
 
           <Box
@@ -43,11 +64,11 @@ export const BordersSection = ({
             }}
           >
             <ColorControl
-              property={"borderTopColor"}
+              property={borderColorProperty}
               items={borderColorItems}
               currentStyle={currentStyle}
-              setProperty={setProperty}
-              deleteProperty={deleteProperty}
+              setProperty={setAllBorderColorProperties}
+              deleteProperty={deleteAllBorderColorProperties}
             />
           </Box>
         </Grid>

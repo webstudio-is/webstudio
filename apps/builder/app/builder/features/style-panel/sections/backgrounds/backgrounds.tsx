@@ -130,10 +130,6 @@ const BackgroundsCollapsibleSection = (
   const { label, children } = props;
   const [isOpen, setIsOpen] = useOpenState(props);
 
-  if (props === undefined) {
-    // @todo will gone after refactor
-    throw new Error("Error");
-  }
   const layersStyleSource = getLayersStyleSource(props.currentStyle);
   const dots: ("local" | "remote")[] = [];
 

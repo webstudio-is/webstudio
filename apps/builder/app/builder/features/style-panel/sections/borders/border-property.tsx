@@ -11,9 +11,8 @@ import { PropertyName } from "../../shared/property-name";
 import { getStyleSource } from "../../shared/style-info";
 import type { RenderCategoryProps } from "../../style-sections";
 import { toValue } from "@webstudio-is/css-engine";
-
+import { deleteAllProperties, setAllProperties } from "./border-utils";
 import type { StyleProperty, UnitValue } from "@webstudio-is/css-data";
-import type { DeleteProperty, SetProperty } from "../../shared/use-style-data";
 import { type ReactNode, useState } from "react";
 
 const borderPropertyStyleValueDefault: UnitValue = {
@@ -96,21 +95,15 @@ export const BorderProperty = ({
     ...borderProperties.map((property) => currentStyle[property])
   );
 
-  const deleteAllProperties: DeleteProperty = (_propertyName, options) => {
-    const batch = createBatchUpdate();
-    for (const property of borderProperties) {
-      batch.deleteProperty(property);
-    }
-    batch.publish(options);
-  };
+  const deleteBorderProperties = deleteAllProperties(
+    borderProperties,
+    createBatchUpdate
+  );
 
-  const setAllProperties: ReturnType<SetProperty> = (value, options) => {
-    const batch = createBatchUpdate();
-    for (const property of borderProperties) {
-      batch.setProperty(property)(value);
-    }
-    batch.publish(options);
-  };
+  const setBorderProperties = setAllProperties(
+    borderProperties,
+    createBatchUpdate
+  )(firstPropertyName);
 
   return (
     <Grid gap={1}>
@@ -124,7 +117,7 @@ export const BorderProperty = ({
           style={currentStyle}
           property={borderProperties}
           label={label}
-          onReset={() => deleteAllProperties(firstPropertyName)}
+          onReset={() => deleteBorderProperties(firstPropertyName)}
         />
 
         <Box
@@ -139,8 +132,8 @@ export const BorderProperty = ({
             styleSource={borderWidthStyleSource}
             keywords={borderWidthKeywords}
             value={borderWidthStyleInfo}
-            setValue={setAllProperties}
-            deleteProperty={deleteAllProperties}
+            setValue={setBorderProperties}
+            deleteProperty={deleteBorderProperties}
           />
         </Box>
 

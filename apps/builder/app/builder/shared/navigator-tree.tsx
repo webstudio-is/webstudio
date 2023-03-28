@@ -3,18 +3,20 @@ import { useStore } from "@nanostores/react";
 import type { Instance } from "@webstudio-is/project-build";
 import {
   hoveredInstanceSelectorStore,
+  instancesStore,
   rootInstanceStore,
   selectedInstanceSelectorStore,
   useDragAndDropState,
 } from "~/shared/nano-states";
+import { textEditingInstanceSelectorStore } from "~/shared/nano-states/instances";
 import type { InstanceSelector } from "~/shared/tree-utils";
 import { reparentInstance } from "~/shared/instance-utils";
-import { textEditingInstanceSelectorStore } from "~/shared/nano-states/instances";
 import { InstanceTree } from "./tree";
 
 export const NavigatorTree = () => {
   const selectedInstanceSelector = useStore(selectedInstanceSelectorStore);
   const rootInstance = useStore(rootInstanceStore);
+  const instances = useStore(instancesStore);
   const [state, setState] = useDragAndDropState();
 
   const dragItemSelector =
@@ -22,7 +24,13 @@ export const NavigatorTree = () => {
       ? state.dragPayload.dragInstanceSelector
       : undefined;
 
-  const isItemHidden = useCallback((_instanceId: Instance["id"]) => false, []);
+  const isItemHidden = useCallback(
+    (instanceId: Instance["id"]) =>
+      // fragment is internal component to group other instances
+      // for example to support multiple children in slots
+      instances.get(instanceId)?.component === "Fragment",
+    [instances]
+  );
 
   const handleDragEnd = useCallback(
     (payload: {

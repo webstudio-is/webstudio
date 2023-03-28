@@ -338,6 +338,88 @@ test("reparent instance into target", () => {
   );
 });
 
+test("reparent instance into slot", () => {
+  const instances: Instances = new Map([
+    createInstancePair("root", "Body", [
+      { type: "id", value: "slot1" },
+      { type: "id", value: "box2" },
+      { type: "id", value: "box3" },
+    ]),
+    createInstancePair("slot1", "Slot", [{ type: "id", value: "fragment11" }]),
+    createInstancePair("fragment11", "Fragment", []),
+    createInstancePair("box2", "Box", [
+      { type: "id", value: "box21" },
+      { type: "id", value: "box22" },
+      { type: "id", value: "box23" },
+    ]),
+    createInstancePair("box21", "Box", []),
+    createInstancePair("box22", "Box", []),
+    createInstancePair("box23", "Box", []),
+    createInstancePair("slot3", "Slot", []),
+  ]);
+
+  // reuse existing fragment when drop into slot
+  reparentInstanceMutable(instances, ["box2", "root"], {
+    parentSelector: ["slot1", "root"],
+    position: "end",
+  });
+  expect(instances).toEqual(
+    new Map([
+      createInstancePair("root", "Body", [
+        { type: "id", value: "slot1" },
+        { type: "id", value: "box3" },
+      ]),
+      createInstancePair("slot1", "Slot", [
+        { type: "id", value: "fragment11" },
+      ]),
+      createInstancePair("fragment11", "Fragment", [
+        { type: "id", value: "box2" },
+      ]),
+      createInstancePair("box2", "Box", [
+        { type: "id", value: "box21" },
+        { type: "id", value: "box22" },
+        { type: "id", value: "box23" },
+      ]),
+      createInstancePair("box21", "Box", []),
+      createInstancePair("box22", "Box", []),
+      createInstancePair("box23", "Box", []),
+      createInstancePair("slot3", "Slot", []),
+    ])
+  );
+
+  // create new fragment when drop into empty slot
+  reparentInstanceMutable(instances, ["box2", "fragment11", "slot1", "root"], {
+    parentSelector: ["slot3", "root"],
+    position: "end",
+  });
+  expect(instances).toEqual(
+    new Map([
+      createInstancePair("root", "Body", [
+        { type: "id", value: "slot1" },
+        { type: "id", value: "box3" },
+      ]),
+      createInstancePair("slot1", "Slot", [
+        { type: "id", value: "fragment11" },
+      ]),
+      createInstancePair("fragment11", "Fragment", []),
+      createInstancePair("box2", "Box", [
+        { type: "id", value: "box21" },
+        { type: "id", value: "box22" },
+        { type: "id", value: "box23" },
+      ]),
+      createInstancePair("box21", "Box", []),
+      createInstancePair("box22", "Box", []),
+      createInstancePair("box23", "Box", []),
+      createInstancePair("slot3", "Slot", [
+        { type: "id", value: expectString },
+      ]),
+      createInstancePair(expectString, "Fragment", [
+        { type: "id", value: "box2" },
+      ]),
+    ])
+  );
+});
+
 test("insert tree of instances copy and provide map from ids map", () => {
   const instances = new Map([
     createInstancePair("1", "Body", [
