@@ -25,6 +25,7 @@ import {
   assetsStore,
   pagesStore,
   useRootInstance,
+  instancesStore,
   useSubscribeScrollState,
   useIsPreviewMode,
   selectedPageStore,
@@ -54,6 +55,13 @@ const temporaryRootInstance: Instance = {
 
 const useElementsTree = (getComponent: GetComponent) => {
   const [rootInstance] = useRootInstance();
+
+  // eslint-disable-next-line no-console
+  console.log({
+    assetsStore: assetsStore.get(),
+    pagesStore: pagesStore.get(),
+    instancesStore: instancesStore.get(),
+  });
 
   const pagesMapStore = useMemo(
     () =>
