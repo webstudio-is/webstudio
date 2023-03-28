@@ -25,6 +25,7 @@ import {
   assetsStore,
   pagesStore,
   useRootInstance,
+  instancesStore,
   useSubscribeScrollState,
   useIsPreviewMode,
   selectedPageStore,
@@ -54,6 +55,14 @@ const temporaryRootInstance: Instance = {
 
 const useElementsTree = (getComponent: GetComponent) => {
   const [rootInstance] = useRootInstance();
+
+  // @todo remove after https://github.com/webstudio-is/webstudio-builder/issues/1313 now its needed to be sure that no leaks exists
+  // eslint-disable-next-line no-console
+  console.log({
+    assetsStore: assetsStore.get().size,
+    pagesStore: pagesStore.get()?.pages.length ?? 0,
+    instancesStore: instancesStore.get().size,
+  });
 
   const pagesMapStore = useMemo(
     () =>
