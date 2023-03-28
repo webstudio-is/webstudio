@@ -1,12 +1,7 @@
 import { useRef, useEffect } from "react";
 import { useStore } from "@nanostores/react";
 import { computePosition, flip, offset, shift } from "@floating-ui/dom";
-import type { Publish } from "~/shared/pubsub";
-import {
-  type TextToolbarState,
-  useTextToolbarState,
-} from "~/builder/shared/nano-states";
-import { Flex, IconButton, Tooltip } from "@webstudio-is/design-system";
+import { theme, Flex, IconButton, Tooltip } from "@webstudio-is/design-system";
 import {
   FontBoldIcon,
   FontItalicIcon,
@@ -16,9 +11,12 @@ import {
   BrushIcon,
   CrossSmallIcon,
 } from "@webstudio-is/icons";
-import { useSubscribe } from "~/shared/pubsub";
-import { theme } from "@webstudio-is/design-system";
 import { selectedInstanceSelectorStore } from "~/shared/nano-states";
+import {
+  TextToolbarState,
+  textToolbarStore,
+} from "~/shared/nano-states/canvas";
+import type { Publish } from "~/shared/pubsub";
 
 type Format =
   | "bold"
@@ -31,17 +29,9 @@ type Format =
 
 declare module "~/shared/pubsub" {
   export interface PubsubMap {
-    showTextToolbar: TextToolbarState;
-    hideTextToolbar: void;
     formatTextToolbar: Format;
   }
 }
-
-export const useSubscribeTextToolbar = () => {
-  const [, setTextToolbar] = useTextToolbarState();
-  useSubscribe("showTextToolbar", setTextToolbar);
-  useSubscribe("hideTextToolbar", () => setTextToolbar(undefined));
-};
 
 const getRectForRelativeRect = (parent: DOMRect, rel: DOMRect) => {
   return {
@@ -65,6 +55,9 @@ const Toolbar = ({ state, onToggle }: ToolbarProps) => {
   const rootRef = useRef<HTMLDivElement | null>(null);
 
   useEffect(() => {
+    if (state.selectionRect === undefined) {
+      return;
+    }
     if (rootRef.current?.parentElement) {
       const floating = rootRef.current;
       const parent = rootRef.current.parentElement;
@@ -190,10 +183,13 @@ type TextToolbarProps = {
 };
 
 export const TextToolbar = ({ publish }: TextToolbarProps) => {
-  const [textToolbar] = useTextToolbarState();
+  const textToolbar = useStore(textToolbarStore);
   const selectedInstanceSelector = useStore(selectedInstanceSelectorStore);
 
-  if (textToolbar == null || selectedInstanceSelector === undefined) {
+  if (
+    textToolbar?.selectionRect === undefined ||
+    selectedInstanceSelector === undefined
+  ) {
     return null;
   }
 

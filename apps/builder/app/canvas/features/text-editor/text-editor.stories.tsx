@@ -1,17 +1,17 @@
-import { useState } from "react";
+import { useStore } from "@nanostores/react";
 import { ContentEditable } from "@lexical/react/LexicalContentEditable";
 import type { ComponentStory, ComponentMeta } from "@storybook/react";
 import { action } from "@storybook/addon-actions";
 import { Box } from "@webstudio-is/design-system";
-import { useSubscribe, publish } from "~/shared/pubsub";
-import type { TextToolbarState } from "~/builder/shared/nano-states";
-import { TextEditor } from "./text-editor";
 import { theme } from "@webstudio-is/design-system";
 import type {
   Instance,
   Instances,
   InstancesItem,
 } from "@webstudio-is/project-build";
+import { publish } from "~/shared/pubsub";
+import { textToolbarStore } from "~/shared/nano-states/canvas";
+import { TextEditor } from "./text-editor";
 
 export default {
   component: TextEditor,
@@ -59,13 +59,7 @@ const instances: Instances = new Map([
 ]);
 
 export const Basic: ComponentStory<typeof TextEditor> = ({ onChange }) => {
-  const [state, setState] = useState<null | TextToolbarState>(null);
-  useSubscribe("showTextToolbar", (event) => {
-    setState(event);
-  });
-  useSubscribe("hideTextToolbar", () => {
-    setState(null);
-  });
+  const state = useStore(textToolbarStore);
 
   const setFormat = (type: Format) => {
     publish({ type: "formatTextToolbar", payload: type });

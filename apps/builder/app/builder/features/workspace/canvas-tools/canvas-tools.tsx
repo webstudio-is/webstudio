@@ -11,7 +11,7 @@ import {
   instancesStore,
 } from "~/shared/nano-states";
 import { HoveredInstanceOutline, SelectedInstanceOutline } from "./outline";
-import { useSubscribeTextToolbar, TextToolbar } from "./text-toolbar";
+import { TextToolbar } from "./text-toolbar";
 import { useSubscribeInstanceRect } from "./hooks/use-subscribe-instance-rect";
 import { useSubscribeSwitchPage } from "~/shared/pages";
 import { Label } from "./outline/label";
@@ -34,7 +34,6 @@ type CanvasToolsProps = {
 export const CanvasTools = ({ publish }: CanvasToolsProps) => {
   // @todo try to setup cross-frame atoms to vaoid this
   useSubscribeInstanceRect();
-  useSubscribeTextToolbar();
   useSubscribeScrollState();
   useSubscribeDragAndDropState();
   useSubscribeSwitchPage();
