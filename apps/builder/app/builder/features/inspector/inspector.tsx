@@ -68,6 +68,29 @@ export const Inspector = ({ publish, navigatorLayout }: InspectorProps) => {
     );
   }
 
+  if (selectedInstance.component === "Slot") {
+    return (
+      <EnhancedTooltipProvider
+        delayDuration={1600}
+        disableHoverableContent={false}
+        skipDelayDuration={0}
+      >
+        <FloatingPanelProvider container={tabsRef}>
+          <Flex as={Tabs} defaultValue="settings" grow ref={tabsRef}>
+            <TabsList>
+              <TabsTrigger value="settings">
+                <DeprecatedText2>Settings</DeprecatedText2>
+              </TabsTrigger>
+            </TabsList>
+            <TabsContent value="settings" css={contentStyle}>
+              <SettingsPanel />
+            </TabsContent>
+          </Flex>
+        </FloatingPanelProvider>
+      </EnhancedTooltipProvider>
+    );
+  }
+
   return (
     <EnhancedTooltipProvider
       delayDuration={1600}

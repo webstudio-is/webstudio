@@ -468,6 +468,88 @@ test("insert tree of instances copy and provide map from ids map", () => {
   ]);
 });
 
+test("insert slot or do nothing when slot is cyclic", () => {
+  const instances = new Map([
+    createInstancePair("root", "Body", [
+      { type: "id", value: "slot" },
+      { type: "id", value: 'sibling",' },
+    ]),
+    createInstancePair("slot", "Slot", [{ type: "id", value: "fragment" }]),
+    createInstancePair("fragment", "Fragment", [
+      { type: "id", value: "child" },
+    ]),
+    createInstancePair("child", "Box", []),
+    createInstancePair("sibling", "Box", []),
+  ]);
+  const copiedInstances = [
+    createInstance("slot", "Slot", [{ type: "id", value: "fragment" }]),
+  ];
+
+  // insert slot own descendant
+  let copiedInstanceIds = insertInstancesCopyMutable(
+    instances,
+    copiedInstances,
+    {
+      parentSelector: ["child", "fragment", "slot", "root"],
+      position: "end",
+    }
+  );
+  expect(copiedInstanceIds).toEqual(new Map());
+  expect(Array.from(instances.entries())).toEqual([
+    createInstancePair("root", "Body", [
+      { type: "id", value: "slot" },
+      { type: "id", value: 'sibling",' },
+    ]),
+    createInstancePair("slot", "Slot", [{ type: "id", value: "fragment" }]),
+    createInstancePair("fragment", "Fragment", [
+      { type: "id", value: "child" },
+    ]),
+    createInstancePair("child", "Box", []),
+    createInstancePair("sibling", "Box", []),
+  ]);
+
+  // insert slot into itself
+  copiedInstanceIds = insertInstancesCopyMutable(instances, copiedInstances, {
+    parentSelector: ["slot", "root"],
+    position: "end",
+  });
+  expect(copiedInstanceIds).toEqual(new Map());
+  expect(Array.from(instances.entries())).toEqual([
+    createInstancePair("root", "Body", [
+      { type: "id", value: "slot" },
+      { type: "id", value: 'sibling",' },
+    ]),
+    createInstancePair("slot", "Slot", [{ type: "id", value: "fragment" }]),
+    createInstancePair("fragment", "Fragment", [
+      { type: "id", value: "child" },
+    ]),
+    createInstancePair("child", "Box", []),
+    createInstancePair("sibling", "Box", []),
+  ]);
+
+  // insert slot into sibling
+  copiedInstanceIds = insertInstancesCopyMutable(instances, copiedInstances, {
+    parentSelector: ["sibling", "root"],
+    position: "end",
+  });
+  expect(copiedInstanceIds).toEqual(new Map([["slot", expectString]]));
+  expect(Array.from(instances.entries())).toEqual([
+    createInstancePair("root", "Body", [
+      { type: "id", value: "slot" },
+      { type: "id", value: 'sibling",' },
+    ]),
+    createInstancePair("slot", "Slot", [{ type: "id", value: "fragment" }]),
+    createInstancePair("fragment", "Fragment", [
+      { type: "id", value: "child" },
+    ]),
+    createInstancePair("child", "Box", []),
+    createInstancePair("sibling", "Box", [{ type: "id", value: expectString }]),
+    createInstancePair(expectString, "Slot", [
+      { type: "id", value: "fragment" },
+    ]),
+  ]);
+});
+
 test("insert style sources copy with new ids and provide map from old ids", () => {
   const styleSources = new Map([
     ["local1", createStyleSource("local", "local1")],
