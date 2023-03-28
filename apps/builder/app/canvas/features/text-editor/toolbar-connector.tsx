@@ -13,7 +13,9 @@ import { $getNearestNodeOfType } from "@lexical/utils";
 import { $patchStyleText } from "@lexical/selection";
 import { LinkNode, TOGGLE_LINK_COMMAND } from "@lexical/link";
 import { useLexicalComposerContext } from "@lexical/react/LexicalComposerContext";
-import { useSubscribe, publish } from "~/shared/pubsub";
+import { useSubscribe } from "~/shared/pubsub";
+import { textToolbarStore } from "~/shared/nano-states/canvas";
+import { subscribeScrollState } from "~/shared/dom-hooks";
 
 const spanTriggerName = "--style-node-trigger";
 
@@ -80,6 +82,15 @@ const $isSelectedLink = (selection: RangeSelection) => {
   return $getNearestNodeOfType(selectedNode, LinkNode) != null;
 };
 
+const getSelectionClienRect = () => {
+  const nativeSelection = window.getSelection();
+  if (nativeSelection === null) {
+    return;
+  }
+  const domRange = nativeSelection.getRangeAt(0);
+  return domRange.getBoundingClientRect();
+};
+
 export const ToolbarConnectorPlugin = ({
   onSelectNode,
 }: {
@@ -91,36 +102,55 @@ export const ToolbarConnectorPlugin = ({
   // control toolbar state on data or selection updates
   const updateToolbar = useCallback(() => {
     const selection = $getSelection();
-    const nativeSelection = window.getSelection();
     if (
       $isRangeSelection(selection) &&
       selection.getTextContent().length !== 0 &&
-      nativeSelection != null &&
       isMouseDownRef.current === false
     ) {
-      const domRange = nativeSelection.getRangeAt(0);
-      const selectionRect = domRange.getBoundingClientRect();
+      const selectionRect = getSelectionClienRect();
       const isBold = selection.hasFormat("bold");
       const isItalic = selection.hasFormat("italic");
       const isSuperscript = selection.hasFormat("superscript");
       const isSubscript = selection.hasFormat("subscript");
       const isLink = $isSelectedLink(selection);
       const isSpan = $getSpanNodes(selection).length !== 0;
-      publish({
-        type: "showTextToolbar",
-        payload: {
-          selectionRect,
-          isBold,
-          isItalic,
-          isSuperscript,
-          isSubscript,
-          isLink,
-          isSpan,
-        },
+      textToolbarStore.set({
+        selectionRect,
+        isBold,
+        isItalic,
+        isSuperscript,
+        isSubscript,
+        isLink,
+        isSpan,
       });
     } else {
-      publish({ type: "hideTextToolbar" });
+      textToolbarStore.set(undefined);
     }
+  }, []);
+
+  useEffect(() => {
+    return subscribeScrollState({
+      onScrollStart: () => {
+        // hide toolbar on scroll start preserving all data
+        const textToolbar = textToolbarStore.get();
+        if (textToolbar) {
+          textToolbarStore.set({
+            ...textToolbar,
+            selectionRect: undefined,
+          });
+        }
+      },
+      onScrollEnd: () => {
+        // restore toolbar with new position
+        const textToolbar = textToolbarStore.get();
+        if (textToolbar) {
+          textToolbarStore.set({
+            ...textToolbar,
+            selectionRect: getSelectionClienRect(),
+          });
+        }
+      },
+    });
   }, []);
 
   // prevent showing toolbar when select with mouse
@@ -146,7 +176,7 @@ export const ToolbarConnectorPlugin = ({
   useEffect(() => {
     // hide toolbar when editor is unmounted
     return () => {
-      publish({ type: "hideTextToolbar" });
+      textToolbarStore.set(undefined);
     };
   }, []);
 
