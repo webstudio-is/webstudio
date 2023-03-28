@@ -213,9 +213,6 @@ importers:
       lodash.merge:
         specifier: ^4.6.2
         version: 4.6.2
-      lodash.noop:
-        specifier: ^3.0.1
-        version: 3.0.1
       lodash.snakecase:
         specifier: ^4.1.1
         version: 4.1.1
@@ -337,9 +334,6 @@ importers:
       '@types/lodash.merge':
         specifier: ^4.6.6
         version: 4.6.7
-      '@types/lodash.noop':
-        specifier: ^3.0.6
-        version: 3.0.7
       '@types/lodash.snakecase':
         specifier: ^4.1.6
         version: 4.1.7
@@ -8555,12 +8549,6 @@ packages:
       '@types/lodash': 4.14.182
     dev: true
 
-  /@types/lodash.noop@3.0.7:
-    resolution: {integrity: sha512-vaQ5DABJ4lDb58EVHnSTyOjkCem+Wj6QF0s8Ybhvt7kFyJCoRmjEajg6vg30jCN8CVZi89uRR5wqQWn724JQHg==}
-    dependencies:
-      '@types/lodash': 4.14.182
-    dev: true
-
   /@types/lodash.snakecase@4.1.7:
     resolution: {integrity: sha512-nv9M+JJokFyfZ9QmaWVXZu2DfT40K0GictZaA8SwXczp3oCzMkjp7PtvUBQyvdoG9SnlCpoRXZDIVwQRzJbd9A==}
     dependencies:
@@ -15136,10 +15124,6 @@ packages:
 
   /lodash.merge@4.6.2:
     resolution: {integrity: sha512-0KpjqXRVvrYyCsX1swR/XTK0va6VQkQM6MNo7PqW77ByjAhoARA8EfrP1N4+KlKj8YS0ZUCtRT/YUuhyYDujIQ==}
-    dev: false
-
-  /lodash.noop@3.0.1:
-    resolution: {integrity: sha512-TmYdmu/pebrdTIBDK/FDx9Bmfzs9x0sZG6QIJuMDTqEPfeciLcN13ij+cOd0i9vwJfBtbG9UQ+C7MkXgYxrIJg==}
     dev: false
 
   /lodash.snakecase@4.1.1:
