@@ -36,7 +36,7 @@ export const useUpdateCanvasWidth = () => {
       : maxWidthBelowNextBreakpoint;
 
     const width = Math.max(
-      selectedBreakpoint.minWidth,
+      selectedBreakpoint.minWidth ?? 0,
       initialMaxAvailableWidth,
       minWidth
     );

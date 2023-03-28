@@ -29,6 +29,45 @@ describe("CssEngine", () => {
 
   beforeEach(reset);
 
+  test("minWidth media rule", () => {
+    engine.addMediaRule("0", { minWidth: 0 });
+    engine.addStyleRule(".c1", {
+      style: { color: { type: "keyword", value: "red" } },
+      breakpoint: "0",
+    });
+    expect(engine.cssText).toMatchInlineSnapshot(`
+      "@media all and (min-width: 0px) {
+        .c1 { color: red }
+      }"
+    `);
+  });
+
+  test("maxWidth media rule", () => {
+    engine.addMediaRule("0", { maxWidth: 1000 });
+    engine.addStyleRule(".c1", {
+      style: { color: { type: "keyword", value: "red" } },
+      breakpoint: "0",
+    });
+    expect(engine.cssText).toMatchInlineSnapshot(`
+      "@media all and (max-width: 1000px) {
+        .c1 { color: red }
+      }"
+    `);
+  });
+
+  test("maxWidth and maxWith media rule", () => {
+    engine.addMediaRule("0", { maxWidth: 1000, minWidth: 360 });
+    engine.addStyleRule(".c1", {
+      style: { color: { type: "keyword", value: "red" } },
+      breakpoint: "0",
+    });
+    expect(engine.cssText).toMatchInlineSnapshot(`
+      "@media all and (min-width: 360px) and (max-width: 1000px) {
+        .c1 { color: red }
+      }"
+    `);
+  });
+
   test("use default media rule when there is no matching one registered", () => {
     engine.addStyleRule(".c", {
       style: style0,
