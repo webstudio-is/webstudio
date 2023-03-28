@@ -4,8 +4,6 @@ import { Box } from "@webstudio-is/design-system";
 import { PlacementIndicator } from "@webstudio-is/design-system";
 import {
   useIsPreviewMode,
-  useIsScrolling,
-  useSubscribeScrollState,
   useDragAndDropState,
   useSubscribeDragAndDropState,
   instancesStore,
@@ -34,12 +32,10 @@ type CanvasToolsProps = {
 export const CanvasTools = ({ publish }: CanvasToolsProps) => {
   // @todo try to setup cross-frame atoms to vaoid this
   useSubscribeInstanceRect();
-  useSubscribeScrollState();
   useSubscribeDragAndDropState();
   useSubscribeSwitchPage();
 
   const [isPreviewMode] = useIsPreviewMode();
-  const [isScrolling] = useIsScrolling();
   const [dragAndDropState] = useDragAndDropState();
   const instances = useStore(instancesStore);
 
@@ -65,7 +61,7 @@ export const CanvasTools = ({ publish }: CanvasToolsProps) => {
     ) : null;
   }
 
-  if (isPreviewMode || isScrolling) {
+  if (isPreviewMode) {
     return null;
   }
   return (

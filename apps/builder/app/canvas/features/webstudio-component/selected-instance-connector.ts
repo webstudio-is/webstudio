@@ -3,15 +3,13 @@ import { useStore } from "@nanostores/react";
 import type { Instance, Prop, StyleDecl } from "@webstudio-is/project-build";
 import { getBrowserStyle } from "@webstudio-is/react-sdk";
 import { publish, subscribe } from "~/shared/pubsub";
-import {
-  subscribeScrollState,
-  subscribeWindowResize,
-} from "~/shared/dom-hooks";
+import { subscribeWindowResize } from "~/shared/dom-hooks";
 import {
   rootInstanceContainer,
   selectedInstanceBrowserStyleStore,
 } from "~/shared/nano-states";
 import { getAllElementsBoundingBox } from "~/shared/dom-utils";
+import { subscribeScrollState } from "~/canvas/shared/scroll-state";
 
 declare module "~/shared/pubsub" {
   export interface PubsubMap {

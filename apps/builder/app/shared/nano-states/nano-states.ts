@@ -420,9 +420,6 @@ const selectedInstanceOutlineContainer = atom<{
 export const useSelectedInstanceOutline = () =>
   useValue(selectedInstanceOutlineContainer);
 
-const isScrollingContainer = atom<boolean>(false);
-export const useIsScrolling = () => useValue(isScrollingContainer);
-
 export type DragAndDropState = {
   isDragging: boolean;
   dropTarget?: ItemDropTarget;

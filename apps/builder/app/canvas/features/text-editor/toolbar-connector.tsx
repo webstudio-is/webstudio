@@ -15,7 +15,7 @@ import { LinkNode, TOGGLE_LINK_COMMAND } from "@lexical/link";
 import { useLexicalComposerContext } from "@lexical/react/LexicalComposerContext";
 import { useSubscribe } from "~/shared/pubsub";
 import { textToolbarStore } from "~/shared/nano-states/canvas";
-import { subscribeScrollState } from "~/shared/dom-hooks";
+import { subscribeScrollState } from "~/canvas/shared/scroll-state";
 
 const spanTriggerName = "--style-node-trigger";
 
