@@ -5,12 +5,12 @@ import {
   hoveredInstanceOutlineStore,
   instancesStore,
 } from "~/shared/nano-states";
-import { subscribeScrollState } from "~/shared/dom-hooks";
 import {
   getAllElementsBoundingBox,
   getElementByInstanceSelector,
   getInstanceSelectorFromElement,
 } from "~/shared/dom-utils";
+import { subscribeScrollState } from "./shared/scroll-state";
 
 type TimeoutId = undefined | ReturnType<typeof setTimeout>;
 

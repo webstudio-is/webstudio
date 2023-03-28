@@ -26,11 +26,9 @@ import {
   pagesStore,
   useRootInstance,
   instancesStore,
-  useSubscribeScrollState,
   useIsPreviewMode,
   selectedPageStore,
 } from "~/shared/nano-states";
-import { usePublishScrollState } from "./shared/use-publish-scroll-state";
 import { useDragAndDrop } from "./shared/use-drag-drop";
 import { useSubscribeBuilderReady } from "./shared/use-builder-ready";
 import { useCopyPaste } from "~/shared/copy-paste";
@@ -94,8 +92,6 @@ const useElementsTree = (getComponent: GetComponent) => {
 
 const DesignMode = () => {
   useManageDesignModeStyles();
-  usePublishScrollState();
-  useSubscribeScrollState();
   useDragAndDrop();
   // We need to initialize this in both canvas and builder,
   // because the events will fire in either one, depending on where the focus is
