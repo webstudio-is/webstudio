@@ -17,16 +17,12 @@ import { PropertyName } from "../../shared/property-name";
 import type { RenderCategoryProps } from "../../style-sections";
 import { deleteAllProperties, setAllProperties } from "./border-utils";
 
-const borderPropertyOptions = {
-  borderTopStyle: {},
-  borderRightStyle: {},
-  borderLeftStyle: {},
-  borderBottomStyle: {},
-} as const satisfies Partial<{ [property in StyleProperty]: unknown }>;
-
-const borderProperties = Object.keys(borderPropertyOptions) as Array<
-  keyof typeof borderPropertyOptions
->;
+const borderStyleProperties = [
+  "borderTopStyle",
+  "borderRightStyle",
+  "borderLeftStyle",
+  "borderBottomStyle",
+] as const satisfies readonly StyleProperty[];
 
 const borderStyleValues = [
   { value: "none", icon: SmallXIcon },
@@ -46,15 +42,15 @@ export const BorderStyle = (
    * However, in the UI, we can display a single field, and in that case, we can use any property
    * from the shorthand property set and pass it instead.
    **/
-  const firstPropertyName = borderProperties[0];
+  const firstPropertyName = borderStyleProperties[0];
 
   const deleteBorderProperties = deleteAllProperties(
-    borderProperties,
+    borderStyleProperties,
     props.createBatchUpdate
   );
 
   const setBorderProperties = setAllProperties(
-    borderProperties,
+    borderStyleProperties,
     props.createBatchUpdate
   )(firstPropertyName);
 
@@ -74,7 +70,7 @@ export const BorderStyle = (
     >
       <PropertyName
         style={props.currentStyle}
-        property={borderProperties}
+        property={borderStyleProperties}
         label={"Style"}
         onReset={() => deleteBorderProperties(firstPropertyName)}
       />
