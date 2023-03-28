@@ -50,7 +50,7 @@ export const loader = async ({
 
   const diff = end - start;
 
-  // we need to log timings to figure out how to speend up loading
+  // we need to log timings to figure out how to speed up loading
   // eslint-disable-next-line no-console
   console.log(`Project ${project.id} is loaded in ${diff}ms`);
 
