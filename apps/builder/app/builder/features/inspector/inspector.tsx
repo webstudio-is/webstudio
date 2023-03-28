@@ -1,4 +1,4 @@
-import { useRef } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useStore } from "@nanostores/react";
 import type { Publish } from "~/shared/pubsub";
 import {
@@ -49,6 +49,16 @@ export const Inspector = ({ publish, navigatorLayout }: InspectorProps) => {
   const selectedInstance = useStore(selectedInstanceStore);
   const tabsRef = useRef<HTMLDivElement>(null);
 
+  const [tab, setTab] = useState("style");
+
+  useEffect(() => {
+    if (selectedInstance?.component === "Slot") {
+      if (tab === "style" || tab === "props") {
+        setTab("settings");
+      }
+    }
+  }, [selectedInstance, tab]);
+
   if (navigatorLayout === "docked") {
     return <NavigatorTreePreview />;
   }
@@ -75,13 +85,19 @@ export const Inspector = ({ publish, navigatorLayout }: InspectorProps) => {
       skipDelayDuration={0}
     >
       <FloatingPanelProvider container={tabsRef}>
-        <Flex as={Tabs} defaultValue="style" grow ref={tabsRef}>
+        <Flex as={Tabs} grow ref={tabsRef} value={tab} onValueChange={setTab}>
           <TabsList>
-            <TabsTrigger value="style">
+            <TabsTrigger
+              value="style"
+              disabled={selectedInstance.component === "Slot"}
+            >
               <DeprecatedText2>Style</DeprecatedText2>
             </TabsTrigger>
             {/* @note: events would be part of props */}
-            <TabsTrigger value="props">
+            <TabsTrigger
+              value="props"
+              disabled={selectedInstance.component === "Slot"}
+            >
               <DeprecatedText2>Properties</DeprecatedText2>
             </TabsTrigger>
             <TabsTrigger value="settings">

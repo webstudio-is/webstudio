@@ -181,6 +181,22 @@ const getInstanceOrCreateFragmentIfNecessary = (
   return instance;
 };
 
+const getSlotFragmentSelector = (
+  instances: Instances,
+  instanceSelector: InstanceSelector
+) => {
+  const instance = instances.get(instanceSelector[0]);
+  if (
+    instance?.component !== "Slot" ||
+    instance.children.length === 0 ||
+    instance.children[0].type !== "id"
+  ) {
+    return;
+  }
+  // first slot child is always fragment
+  return [instance.children[0].value, ...instanceSelector];
+};
+
 export const reparentInstanceMutable = (
   instances: Instances,
   instanceSelector: InstanceSelector,
@@ -328,7 +344,7 @@ export const insertInstancesCopyMutable = (
     copiedInstanceIds.set(instance.id, newInstanceId);
   }
 
-  const preservedChildren = new Set<Instance["id"]>();
+  const preservedChildIds = new Set<Instance["id"]>();
 
   for (const instance of copiedInstances) {
     copiedInstancesWithNewIds.push({
@@ -337,7 +353,7 @@ export const insertInstancesCopyMutable = (
       children: instance.children.map((child) => {
         if (child.type === "id") {
           if (copiedInstanceIds.has(child.value) === false) {
-            preservedChildren.add(child.value);
+            preservedChildIds.add(child.value);
           }
           return {
             type: "id",
@@ -352,8 +368,12 @@ export const insertInstancesCopyMutable = (
   // slot descendants ids are preserved
   // so need to prevent pasting slot inside itself
   // to avoid circular tree
-  for (const instanceId of dropTarget.parentSelector) {
-    if (preservedChildren.has(instanceId)) {
+  const dropTargetSelector =
+    // consider slot fragment when check for cycles to avoid cases like pasting slot directly into slot
+    getSlotFragmentSelector(instances, dropTarget.parentSelector) ??
+    dropTarget.parentSelector;
+  for (const instanceId of dropTargetSelector) {
+    if (preservedChildIds.has(instanceId)) {
       return new Map();
     }
   }
