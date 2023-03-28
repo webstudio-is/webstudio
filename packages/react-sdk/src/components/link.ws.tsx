@@ -24,6 +24,13 @@ export const meta: WsComponentMeta = {
 };
 
 export const propsMeta: WsComponentPropsMeta = {
-  props,
+  props: {
+    ...props,
+    href: {
+      type: "string",
+      control: "url",
+      required: false,
+    },
+  },
   initialProps: ["href", "target", "prefetch"],
 };

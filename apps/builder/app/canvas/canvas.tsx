@@ -2,7 +2,7 @@ import { useMemo, Fragment, useEffect } from "react";
 import { useStore } from "@nanostores/react";
 import { computed } from "nanostores";
 import type { CanvasData } from "@webstudio-is/project";
-import type { Instance } from "@webstudio-is/project-build";
+import type { Instance, Page } from "@webstudio-is/project-build";
 import {
   createElementsTree,
   registerComponents,
@@ -23,6 +23,7 @@ import { WebstudioComponentDev } from "./features/webstudio-component";
 import {
   propsIndexStore,
   assetsStore,
+  pagesStore,
   useRootInstance,
   useSubscribeScrollState,
   useIsPreviewMode,
@@ -54,6 +55,19 @@ const temporaryRootInstance: Instance = {
 const useElementsTree = (getComponent: GetComponent) => {
   const [rootInstance] = useRootInstance();
 
+  const pagesMapStore = useMemo(
+    () =>
+      computed(pagesStore, (pages): Map<string, Page> => {
+        if (pages === undefined) {
+          return new Map();
+        }
+        return new Map(
+          [pages.homePage, ...pages.pages].map((page) => [page.id, page])
+        );
+      }),
+    []
+  );
+
   return useMemo(() => {
     return createElementsTree({
       sandbox: true,
@@ -62,10 +76,11 @@ const useElementsTree = (getComponent: GetComponent) => {
       instance: rootInstance ?? temporaryRootInstance,
       propsByInstanceIdStore,
       assetsStore,
+      pagesStore: pagesMapStore,
       Component: WebstudioComponentDev,
       getComponent,
     });
-  }, [rootInstance, getComponent]);
+  }, [rootInstance, getComponent, pagesMapStore]);
 };
 
 const DesignMode = () => {

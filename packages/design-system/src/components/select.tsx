@@ -1,5 +1,5 @@
 import * as Primitive from "@radix-ui/react-select";
-import React, { ReactNode, Ref, type ComponentProps } from "react";
+import React, { ReactNode, Ref, useMemo, type ComponentProps } from "react";
 import {
   menuCss,
   itemCss,
@@ -69,9 +69,9 @@ type TriggerPassThroughProps = Omit<
   ComponentProps<typeof Primitive.Trigger>,
   "onChange" | "value" | "defaultValue" | "asChild" | "prefix"
 > &
-  Omit<ComponentProps<typeof SelectButton>, "onChange">;
+  Omit<ComponentProps<typeof SelectButton>, "onChange" | "value">;
 
-export type SelectProps<Option = SelectOption> = TriggerPassThroughProps & {
+export type SelectProps<Option = SelectOption> = {
   options: Option[];
   defaultValue?: Option;
   value?: Option;
@@ -79,12 +79,28 @@ export type SelectProps<Option = SelectOption> = TriggerPassThroughProps & {
   open?: boolean;
   onOpenChange?: (open: boolean) => void;
   placeholder?: string;
-  getLabel?: (option: Option) => string | undefined;
-  getValue?: (option: Option) => string | undefined;
   children?: ReactNode;
+} & (Option extends string
+  ? {
+      getLabel?: (option: Option) => string | undefined;
+      getValue?: (option: Option) => string | undefined;
+    }
+  : {
+      getLabel: (option: Option) => string | undefined;
+      getValue: (option: Option) => string | undefined;
+    }) &
+  TriggerPassThroughProps;
+
+const defaultGetValue = (option: unknown) => {
+  if (typeof option === "string") {
+    return option;
+  }
+  throw new Error(
+    `Cannot automatically convert ${typeof option} to string. Provide a getValue/getLabel`
+  );
 };
 
-const SelectBase = (
+const SelectBase = <Option,>(
   {
     options,
     value,
@@ -93,21 +109,36 @@ const SelectBase = (
     onChange,
     onOpenChange,
     open,
-    getLabel = (option) => option,
-    getValue = (option) => option,
+    getLabel = defaultGetValue,
+    getValue = defaultGetValue,
     name,
     children,
     prefix,
     ...props
-  }: SelectProps,
+  }: SelectProps<Option>,
   forwardedRef: Ref<HTMLButtonElement>
 ) => {
+  const valueToOption = useMemo(() => {
+    const map = new Map<string, Option>();
+    for (const option of options) {
+      map.set(getValue(option) ?? "", option);
+    }
+    return map;
+  }, [options, getValue]);
+
   return (
     <Primitive.Root
       name={name}
-      value={value}
-      defaultValue={defaultValue}
-      onValueChange={onChange}
+      value={value === undefined ? undefined : getValue(value)}
+      defaultValue={
+        defaultValue === undefined ? undefined : getValue(defaultValue)
+      }
+      onValueChange={(value) => {
+        const option = valueToOption.get(value);
+        if (option !== undefined) {
+          onChange?.(option);
+        }
+      }}
       open={open}
       onOpenChange={onOpenChange}
     >
@@ -142,5 +173,6 @@ const SelectBase = (
   );
 };
 
-export const Select = React.forwardRef(SelectBase);
-Select.displayName = "Select";
+export const Select = React.forwardRef(SelectBase) as <Option>(
+  props: SelectProps<Option> & { ref?: Ref<HTMLButtonElement> }
+) => JSX.Element | null;

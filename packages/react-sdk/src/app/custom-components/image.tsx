@@ -1,24 +1,21 @@
 import {
   forwardRef,
   useMemo,
-  type ComponentProps,
+  type ComponentPropsWithoutRef,
   type ElementRef,
 } from "react";
 import { Image as WebstudioImage, loaders } from "@webstudio-is/image";
 import { Image as SdkImage } from "../../components/image";
-import { usePropAsset } from "../../props";
-import { idAttribute } from "../../tree/webstudio-component";
+import { usePropAsset, getInstanceIdFromComponentProps } from "../../props";
 import { getParams } from "../params";
 
 const defaultTag = "img";
 
-type Props = ComponentProps<typeof WebstudioImage> & { [idAttribute]: string };
+type Props = ComponentPropsWithoutRef<typeof WebstudioImage>;
 
 export const Image = forwardRef<ElementRef<typeof defaultTag>, Props>(
   (props, ref) => {
-    const componentId = props[idAttribute] as string;
-
-    const asset = usePropAsset(componentId, "src");
+    const asset = usePropAsset(getInstanceIdFromComponentProps(props), "src");
     const params = getParams();
 
     const loader = useMemo(() => {

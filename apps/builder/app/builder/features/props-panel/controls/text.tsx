@@ -32,18 +32,24 @@ const AsInput = ({
 
   return (
     <HorizontalLayout label={label} id={id} onDelete={onDelete}>
-      <TextField
-        id={id}
-        value={localValue.value}
-        onChange={(event) => localValue.set(event.target.value)}
-        onBlur={localValue.save}
-        onKeyDown={(event) => {
-          if (event.key === "Enter") {
-            localValue.save();
-          }
+      <Flex
+        css={{
+          // can't set width on TextField because it adds padding
+          width: theme.spacing[22],
         }}
-        css={{ width: theme.spacing[22] }}
-      />
+      >
+        <TextField
+          id={id}
+          value={localValue.value}
+          onChange={(event) => localValue.set(event.target.value)}
+          onBlur={localValue.save}
+          onKeyDown={(event) => {
+            if (event.key === "Enter") {
+              localValue.save();
+            }
+          }}
+        />
+      </Flex>
     </HorizontalLayout>
   );
 };
