@@ -1,5 +1,5 @@
+import { titleCase } from "title-case";
 import { Flex, theme, useId, Select } from "@webstudio-is/design-system";
-import { humanizeString } from "~/shared/string-utils";
 import { type ControlProps, getLabel, VerticalLayout } from "../shared";
 
 export const SelectControl = ({
@@ -25,7 +25,7 @@ export const SelectControl = ({
           id={id}
           value={prop?.value}
           options={options}
-          getLabel={humanizeString}
+          getLabel={titleCase}
           onChange={(value) => onChange({ type: "string", value })}
           fullWidth
         />

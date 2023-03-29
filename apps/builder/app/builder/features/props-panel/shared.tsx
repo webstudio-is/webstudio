@@ -1,3 +1,4 @@
+import { titleCase } from "title-case";
 import {
   type ComponentPropsWithoutRef,
   type ReactNode,
@@ -18,7 +19,6 @@ import {
   Flex,
   theme,
 } from "@webstudio-is/design-system";
-import { humanizeString } from "~/shared/string-utils";
 
 export type PropMeta = WsComponentPropsMeta["props"][string];
 
@@ -53,7 +53,7 @@ export type ControlProps<Control, PropType> = {
 };
 
 export const getLabel = (meta: { label?: string }, fallback: string) =>
-  meta.label || humanizeString(fallback);
+  meta.label || titleCase(fallback);
 
 export const RemovePropButton = (props: { onClick: () => void }) => (
   <SmallIconButton icon={<SubtractIcon />} variant="destructive" {...props} />

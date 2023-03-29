@@ -1,3 +1,4 @@
+import { titleCase } from "title-case";
 import {
   Box,
   Checkbox,
@@ -5,7 +6,6 @@ import {
   useId,
   theme,
 } from "@webstudio-is/design-system";
-import { humanizeString } from "~/shared/string-utils";
 import { type ControlProps, getLabel, VerticalLayout, Label } from "../shared";
 
 const add = (array: string[], item: string) => {
@@ -54,7 +54,7 @@ export const CheckControl = ({
               }}
               id={`${id}:${option}`}
             />
-            <Label htmlFor={`${id}:${option}`}>{humanizeString(option)}</Label>
+            <Label htmlFor={`${id}:${option}`}>{titleCase(option)}</Label>
           </CheckboxAndLabel>
         ))}
       </Box>
