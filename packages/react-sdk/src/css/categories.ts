@@ -10,15 +10,15 @@ const layout = [
   "justifyContent",
   "alignContent",
   // Grid
-  "justifyItems",
+  // "justifyItems",
   "rowGap",
   "columnGap",
-  "gridAutoFlow",
-  "gridAutoRows",
-  "gridAutoColumns",
-  "gridTemplateColumns",
-  "gridTemplateRows",
-  "gridTemplateAreas",
+  // "gridAutoFlow",
+  // "gridAutoRows",
+  // "gridAutoColumns",
+  // "gridTemplateColumns",
+  // "gridTemplateRows",
+  // "gridTemplateAreas",
 ] as const;
 
 const flexChild = [
@@ -82,36 +82,37 @@ const typography = [
   "color",
   "textAlign",
   "fontStyle",
-  "textDecorationColor",
+  // "textDecorationColor",
   "textDecorationLine",
-  "textDecorationStyle",
+  // "textDecorationStyle",
 
   "letterSpacing",
-  "textIndent",
+  // "textIndent",
 
-  "columnCount",
-  "columnGap",
-  "columnRuleStyle",
-  "columnRuleWidth",
-  "columnRuleColor",
+  // "columnCount",
+  // "columnGap",
+  // "columnRuleStyle",
+  // "columnRuleWidth",
+  // "columnRuleColor",
 
   "textTransform",
   "direction",
   "whiteSpace",
-  "textShadow",
+  // "textShadow",
 
   // More
-  "fontSizeAdjust",
-  "fontStretch",
-  "fontVariant",
-  "textAlignLast",
-  "textJustify",
+  // "fontSizeAdjust",
+  // "fontStretch",
+  // "fontVariant",
+  // "textAlignLast",
+  // "textJustify",
   "textOverflow",
-  "textSizeAdjust",
-  "verticalAlign",
-  "wordSpacing",
-  "wordBreak",
-  "wordWrap",
+  // "textSizeAdjust",
+  // "verticalAlign",
+  // "wordSpacing",
+  // "wordBreak",
+  // "wordWrap",
+  "hyphens",
 ] as const;
 
 const backgrounds = [
@@ -148,11 +149,11 @@ const borders = [
   "borderLeftWidth",
 
   // More
-  "borderImageSlice",
-  "borderImageWidth",
-  "borderImageOutset",
-  "borderImageRepeat",
-  "borderImageSource",
+  // "borderImageSlice",
+  // "borderImageWidth",
+  // "borderImageOutset",
+  // "borderImageRepeat",
+  // "borderImageSource",
 ] as const;
 
 const effects = [
