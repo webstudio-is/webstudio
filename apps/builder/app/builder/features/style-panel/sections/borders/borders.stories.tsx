@@ -89,6 +89,7 @@ export const Borders = () => {
         label={"Borders"}
         styleConfigsByCategory={[]}
         moreStyleConfigsByCategory={[]}
+        sources={Object.keys(styleInfo).length === 0 ? [] : ["local"]}
       />
     </Panel>
   );
