@@ -10,7 +10,8 @@
       "dependsOn": ["^checks"]
     },
     "storybook:build": {
-      "dependsOn": ["@webstudio-is/icons#build", "build"]
+      "dependsOn": ["@webstudio-is/icons#build", "build"],
+      "outputs": ["storybook-static/**"]
     },
     "size-test": {
       "dependsOn": ["^build"]
