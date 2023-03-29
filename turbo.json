@@ -1,17 +1,20 @@
 {
   "$schema": "https://turbo.build/schema.json",
+  "globalEnv": ["AUTH_SECRET", "DATABASE_URL"],
   "pipeline": {
     "build": {
       "dependsOn": ["^build"],
       "outputs": ["lib/**", "dist/**", "build/**", "api/**", "public/build/**"]
     },
     "checks": {
-      "dependsOn": ["^checks"],
-      "outputs": []
+      "dependsOn": ["^checks"]
     },
     "storybook:build": {
-      "dependsOn": ["@webstudio-is/icons#build"],
-      "cache": false
+      "dependsOn": ["build"],
+      "outputs": ["storybook-static/**"]
+    },
+    "size-test": {
+      "dependsOn": ["^build"]
     }
   }
 }
