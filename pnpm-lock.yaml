@@ -7437,49 +7437,8 @@ packages:
       webpack: 4.46.0
     dev: true
 
-<<<<<<< HEAD
   /@storybook/core-common@6.5.16(eslint@8.4.1)(react-dom@17.0.2)(react@17.0.2)(typescript@4.9.5):
     resolution: {integrity: sha512-2qtnKP3TTOzt2cp6LXKRTh7XrI9z5VanMnMTgeoFcA5ebnndD4V6BExQUdYPClE/QooLx6blUWNgS9dFEpjSqQ==}
-=======
-  /@storybook/core-client@6.5.14(react-dom@17.0.2)(react@17.0.2)(typescript@4.9.5)(webpack@5.75.0):
-    resolution: {integrity: sha512-d5mUgz1xSvrAdal8XKI5YOZOM/XUly90vis3DboeZRO58qSp+NH5xFYIBBED5qefDgmGU0Yv4rXHQlph96LSHQ==}
-    peerDependencies:
-      react: ^16.8.0 || ^17.0.0 || ^18.0.0
-      react-dom: ^16.8.0 || ^17.0.0 || ^18.0.0
-      typescript: '*'
-      webpack: '*'
-    peerDependenciesMeta:
-      typescript:
-        optional: true
-    dependencies:
-      '@storybook/addons': 6.5.14(react-dom@17.0.2)(react@17.0.2)
-      '@storybook/channel-postmessage': 6.5.14
-      '@storybook/channel-websocket': 6.5.14
-      '@storybook/client-api': 6.5.14(react-dom@17.0.2)(react@17.0.2)
-      '@storybook/client-logger': 6.5.14
-      '@storybook/core-events': 6.5.14
-      '@storybook/csf': 0.0.2--canary.4566f4d.1
-      '@storybook/preview-web': 6.5.14(react-dom@17.0.2)(react@17.0.2)
-      '@storybook/store': 6.5.14(react-dom@17.0.2)(react@17.0.2)
-      '@storybook/ui': 6.5.14(react-dom@17.0.2)(react@17.0.2)
-      airbnb-js-shims: 2.2.1
-      ansi-to-html: 0.6.15
-      core-js: 3.23.3
-      global: 4.4.0
-      lodash: 4.17.21
-      qs: 6.11.0
-      react: 17.0.2
-      react-dom: 17.0.2(react@17.0.2)
-      regenerator-runtime: 0.13.11
-      ts-dedent: 2.2.0
-      typescript: 4.9.5
-      unfetch: 4.2.0
-      util-deprecate: 1.0.2
-      webpack: 5.75.0
-
-  /@storybook/core-common@6.5.14(react-dom@17.0.2)(react@17.0.2)(typescript@4.9.5):
-    resolution: {integrity: sha512-MrxhYXYrtN6z/+tydjPkCIwDQm5q8Jx+w4TPdLKBZu7vzfp6T3sT12Ym96j9MJ42CvE4vSDl/Njbw6C0D+yEVw==}
->>>>>>> 47386b09 (Update Turborepo)
     peerDependencies:
       react: ^16.8.0 || ^17.0.0 || ^18.0.0
       react-dom: ^16.8.0 || ^17.0.0 || ^18.0.0
