@@ -14,7 +14,11 @@ import {
 } from "./style-sections";
 import { dependencies } from "./shared/dependencies";
 import type { SetProperty, CreateBatchUpdate } from "./shared/use-style-data";
-import type { StyleInfo } from "./shared/style-info";
+import {
+  type StyleInfo,
+  type StyleSource,
+  getStyleSource,
+} from "./shared/style-info";
 import type { RenderPropertyProps } from "./style-sections";
 import { useStore } from "@nanostores/react";
 import { selectedInstanceSelectorStore } from "~/shared/nano-states";
@@ -82,14 +86,6 @@ const appliesTo = (
   return true;
 };
 
-const didRender = (category: Category, property: StyleProperty): boolean => {
-  // We only want to render the first thing in space since the widget will be the way to set all margin and padding
-  if (category === "space" && property !== categories.space.properties[0]) {
-    return true;
-  }
-  return false;
-};
-
 export type StyleSettingsProps = {
   currentStyle: StyleInfo;
   setProperty: SetProperty;
@@ -131,6 +127,7 @@ export const StyleSettings = ({
     const { moreFrom } = categories[category];
     const styleConfigsByCategory: Array<RenderPropertyProps> = [];
     const moreStyleConfigsByCategory: Array<RenderPropertyProps> = [];
+    const sources = new Set<StyleSource>();
 
     for (const styleConfig of styleConfigs) {
       const { property } = styleConfig;
@@ -139,7 +136,7 @@ export const StyleSettings = ({
       const isApplicable = isSearchMode
         ? true
         : appliesTo(styleConfig, currentStyle);
-      const isRendered = didRender(category, property);
+
       const element = {
         property,
         setProperty,
@@ -148,8 +145,9 @@ export const StyleSettings = ({
         category,
       };
 
-      // @todo remove isRendered once space section is converted to a section
-      if (isInCategory && isApplicable && isRendered === false) {
+      if (isInCategory && isApplicable) {
+        sources.add(getStyleSource(currentStyle[property]));
+
         // We are making a separate array of properties which come after the "moreFrom"
         // so we can make them collapsable
         if (
@@ -175,6 +173,7 @@ export const StyleSettings = ({
       category,
       styleConfigsByCategory,
       moreStyleConfigsByCategory,
+      sources: Array.from(sources),
       label: categories[category].label,
       isOpen: isSearchMode ? true : undefined,
     };

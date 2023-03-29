@@ -9,7 +9,7 @@ import type {
   CreateBatchUpdate,
 } from "./shared/use-style-data";
 import { PropertyName } from "./shared/property-name";
-import type { StyleInfo } from "./shared/style-info";
+import type { StyleInfo, StyleSource } from "./shared/style-info";
 import * as controls from "./controls";
 import {
   LayoutSection,
@@ -42,6 +42,7 @@ export type RenderCategoryProps = {
   category: Category;
   styleConfigsByCategory: Array<RenderPropertyProps>;
   moreStyleConfigsByCategory: Array<RenderPropertyProps>;
+  sources: StyleSource[];
   label: string;
   isOpen?: boolean | undefined;
 };
@@ -94,6 +95,7 @@ export const renderCategory = ({
   category,
   styleConfigsByCategory,
   moreStyleConfigsByCategory,
+  sources,
   label,
   isOpen,
 }: RenderCategoryProps) => {
@@ -110,6 +112,7 @@ export const renderCategory = ({
       moreStyleConfigsByCategory={moreStyleConfigsByCategory}
       label={label}
       isOpen={isOpen}
+      sources={sources}
     />
   );
 };
