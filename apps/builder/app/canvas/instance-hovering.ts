@@ -2,9 +2,9 @@ import debounce from "lodash.debounce";
 import { idAttribute } from "@webstudio-is/react-sdk";
 import {
   hoveredInstanceSelectorStore,
-  hoveredInstanceOutlineStore,
   instancesStore,
 } from "~/shared/nano-states";
+import { hoveredInstanceOutlineStore } from "~/shared/nano-states/canvas";
 import {
   getAllElementsBoundingBox,
   getElementByInstanceSelector,
@@ -62,8 +62,7 @@ export const subscribeInstanceHovering = () => {
       return;
     }
     hoveredInstanceOutlineStore.set({
-      label: instance.label,
-      component: instance.component,
+      instanceId: instance.id,
       rect: getAllElementsBoundingBox(element),
     });
   }, 50);

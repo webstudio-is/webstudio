@@ -2,7 +2,7 @@ import { useEffect } from "react";
 import { useStore } from "@nanostores/react";
 import type { Instance, Prop, StyleDecl } from "@webstudio-is/project-build";
 import { getBrowserStyle } from "@webstudio-is/react-sdk";
-import { publish, subscribe } from "~/shared/pubsub";
+import { subscribe } from "~/shared/pubsub";
 import { subscribeWindowResize } from "~/shared/dom-hooks";
 import {
   rootInstanceContainer,
@@ -10,42 +10,17 @@ import {
 } from "~/shared/nano-states";
 import { getAllElementsBoundingBox } from "~/shared/dom-utils";
 import { subscribeScrollState } from "~/canvas/shared/scroll-state";
+import { selectedInstanceOutlineStore } from "~/shared/nano-states/canvas";
 
-declare module "~/shared/pubsub" {
-  export interface PubsubMap {
-    updateSelectedInstanceOutline: {
-      visible?: boolean;
-      rect?: DOMRect;
-    };
-  }
-}
-
-const updateOutlineRect = (element: HTMLElement) => {
-  publish({
-    type: "updateSelectedInstanceOutline",
-    payload: {
-      rect: getAllElementsBoundingBox(element),
-    },
-  });
-};
-
-const showOutline = (element: HTMLElement) => {
-  publish({
-    type: "updateSelectedInstanceOutline",
-    payload: {
-      visible: true,
-      rect: getAllElementsBoundingBox(element),
-    },
+const setOutline = (instanceId: Instance["id"], element: HTMLElement) => {
+  selectedInstanceOutlineStore.set({
+    instanceId,
+    rect: getAllElementsBoundingBox(element),
   });
 };
 
 const hideOutline = () => {
-  publish({
-    type: "updateSelectedInstanceOutline",
-    payload: {
-      visible: false,
-    },
-  });
+  selectedInstanceOutlineStore.set(undefined);
 };
 
 export const SelectedInstanceConnector = ({
@@ -68,19 +43,19 @@ export const SelectedInstanceConnector = ({
 
     // effect close to rendered element also catches dnd remounts
     // so actual state is always provided here
-    showOutline(element);
+    setOutline(instance.id, element);
 
     const resizeObserver = new ResizeObserver(() => {
       // contentRect has wrong x/y values for absolutely positioned element.
       // getBoundingClientRect is used instead.
-      updateOutlineRect(element);
+      setOutline(instance.id, element);
     });
     resizeObserver.observe(element);
 
     // detect movement of the element within same parent
     // React prevent remount when key stays the same
     const mutationObserver = new window.MutationObserver(() => {
-      updateOutlineRect(element);
+      setOutline(instance.id, element);
     });
     const parent = element?.parentElement;
     if (parent) {
@@ -99,7 +74,7 @@ export const SelectedInstanceConnector = ({
         hideOutline();
       },
       onScrollEnd() {
-        showOutline(element);
+        setOutline(instance.id, element);
       },
     });
 
@@ -108,7 +83,7 @@ export const SelectedInstanceConnector = ({
         hideOutline();
       },
       onResizeEnd() {
-        showOutline(element);
+        setOutline(instance.id, element);
       },
     });
 
