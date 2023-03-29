@@ -2,11 +2,6 @@ name: Chromatic
 
 on: [push]
 
-env:
-  TURBO_REMOTE_ONLY: true
-  TURBO_TEAM: <FILL_THIS_IN>
-  TURBO_TOKEN: ${{ secrets.TURBO_TOKEN }}
-
 jobs:
   chromatic:
     timeout-minutes: 20
