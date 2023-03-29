@@ -8,8 +8,8 @@ import type { SpaceStyleProperty, HoverTagret } from "./types";
 import { InputPopover } from "./input-popover";
 import { SpaceTooltip } from "./tooltip";
 import { getStyleSource } from "../../shared/style-info";
+import { StyleCollapsibleSection } from "../../shared/style-collapsible-section";
 import { useKeyboardNavigation } from "./keyboard";
-import { CollapsibleSection } from "~/builder/shared/collapsible-section";
 
 const Cell = ({
   isPopoverOpen,
@@ -93,6 +93,7 @@ export const SpaceSection = ({
   currentStyle,
   label,
   isOpen,
+  sources,
 }: RenderCategoryProps) => {
   const [hoverTarget, setHoverTarget] = useState<HoverTagret>();
 
@@ -141,7 +142,7 @@ export const SpaceSection = ({
   };
 
   return (
-    <CollapsibleSection label={label} isOpen={isOpen}>
+    <StyleCollapsibleSection label={label} isOpen={isOpen} sources={sources}>
       <SpaceLayout
         ref={layoutRef}
         onClick={() => setOpenProperty(hoverTarget?.property)}
@@ -175,6 +176,6 @@ export const SpaceSection = ({
           />
         )}
       />
-    </CollapsibleSection>
+    </StyleCollapsibleSection>
   );
 };

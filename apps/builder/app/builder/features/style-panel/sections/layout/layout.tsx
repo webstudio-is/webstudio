@@ -23,12 +23,12 @@ import { PropertyName } from "../../shared/property-name";
 import { styleConfigByName } from "../../shared/configs";
 import type { CreateBatchUpdate } from "../../shared/use-style-data";
 import { getStyleSource, type StyleInfo } from "../../shared/style-info";
+import { StyleCollapsibleSection } from "../../shared/style-collapsible-section";
 import {
   type IntermediateStyleValue,
   CssValueInput,
 } from "../../shared/css-value-input";
 import { theme } from "@webstudio-is/design-system";
-import { CollapsibleSection } from "~/builder/shared/collapsible-section";
 import { isFeatureEnabled } from "@webstudio-is/feature-flags";
 
 const GapLinked = ({
@@ -351,13 +351,18 @@ export const LayoutSection = ({
   styleConfigsByCategory,
   label: sectionLabel,
   isOpen,
+  sources,
 }: RenderCategoryProps) => {
   const displayValue = toValue(currentStyle.display?.value);
 
   const { label, items } = styleConfigByName.display;
 
   return (
-    <CollapsibleSection label={sectionLabel} isOpen={isOpen}>
+    <StyleCollapsibleSection
+      label={sectionLabel}
+      isOpen={isOpen}
+      sources={sources}
+    >
       <>
         <Grid css={{ gridTemplateColumns: "4fr 6fr" }}>
           <PropertyName
@@ -392,6 +397,6 @@ export const LayoutSection = ({
           )
         )}
       </>
-    </CollapsibleSection>
+    </StyleCollapsibleSection>
   );
 };

@@ -35,18 +35,22 @@ import {
 import { ToggleGroupControl } from "../../controls/toggle/toggle-control";
 import { FloatingPanel } from "~/builder/shared/floating-panel";
 import { getStyleSource } from "../../shared/style-info";
+import { StyleCollapsibleSection } from "../../shared/style-collapsible-section";
 import { theme } from "@webstudio-is/design-system";
-import { CollapsibleSection } from "~/builder/shared/collapsible-section";
 
 export const TypographySection = (props: RenderCategoryProps) => {
   return (
-    <CollapsibleSection label={props.label} isOpen={props.isOpen}>
+    <StyleCollapsibleSection
+      label={props.label}
+      isOpen={props.isOpen}
+      sources={props.sources}
+    >
       <Flex css={{ gap: theme.spacing[7] }} direction="column">
         <TypographySectionFont {...props} />
         <TypographySectionSizing {...props} />
         <TypographySectionAdvanced {...props} />
       </Flex>
-    </CollapsibleSection>
+    </StyleCollapsibleSection>
   );
 };
 

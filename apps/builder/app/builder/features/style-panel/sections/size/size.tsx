@@ -16,9 +16,9 @@ import {
   AutoScrollIcon,
 } from "@webstudio-is/icons";
 import { getStyleSource } from "../../shared/style-info";
+import { StyleCollapsibleSection } from "../../shared/style-collapsible-section";
 import { theme } from "@webstudio-is/design-system";
 import { ToggleGroupControl } from "../../controls/toggle/toggle-control";
-import { CollapsibleSection } from "~/builder/shared/collapsible-section";
 
 const SizeField = ({
   property,
@@ -56,9 +56,10 @@ export const SizeSection = ({
   deleteProperty,
   label,
   isOpen,
+  sources,
 }: RenderCategoryProps) => {
   return (
-    <CollapsibleSection label={label} isOpen={isOpen}>
+    <StyleCollapsibleSection label={label} isOpen={isOpen} sources={sources}>
       <Grid
         columns={2}
         css={{ columnGap: theme.spacing[5], rowGap: theme.spacing[7] }}
@@ -173,6 +174,6 @@ export const SizeSection = ({
           deleteProperty={deleteProperty}
         />
       </Flex>
-    </CollapsibleSection>
+    </StyleCollapsibleSection>
   );
 };

@@ -1,9 +1,9 @@
 import { Box, Flex, Grid, theme } from "@webstudio-is/design-system";
-import { CollapsibleSection } from "~/builder/shared/collapsible-section";
 import { ColorControl } from "../../controls";
 import { styleConfigByName } from "../../shared/configs";
 import { PropertyName } from "../../shared/property-name";
 import type { RenderCategoryProps } from "../../style-sections";
+import { StyleCollapsibleSection } from "../../shared/style-collapsible-section";
 import { BorderRadius } from "./border-radius";
 import { BorderStyle } from "./border-style";
 import { deleteAllProperties, setAllProperties } from "./border-utils";
@@ -40,7 +40,11 @@ export const BordersSection = (props: RenderCategoryProps) => {
   );
 
   return (
-    <CollapsibleSection label={props.label} isOpen={props.isOpen}>
+    <StyleCollapsibleSection
+      label={props.label}
+      isOpen={props.isOpen}
+      sources={props.sources}
+    >
       <Flex direction="column" gap={2}>
         <BorderStyle
           createBatchUpdate={createBatchUpdate}
@@ -94,6 +98,6 @@ export const BordersSection = (props: RenderCategoryProps) => {
           deleteProperty={deleteProperty}
         />
       </Flex>
-    </CollapsibleSection>
+    </StyleCollapsibleSection>
   );
 };
