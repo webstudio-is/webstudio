@@ -1,5 +1,6 @@
-import { Flex, Grid } from "@webstudio-is/design-system";
+import { Flex, Grid, theme } from "@webstudio-is/design-system";
 import { toValue } from "@webstudio-is/css-engine";
+import type { StyleProperty } from "@webstudio-is/css-data";
 import type { RenderCategoryProps } from "../../style-sections";
 import { ToggleGroupControl } from "../../controls/toggle/toggle-control";
 import { PropertyName } from "../../shared/property-name";
@@ -20,14 +21,22 @@ import {
 import { FloatingPanel } from "~/builder/shared/floating-panel";
 import { getStyleSource } from "../../shared/style-info";
 import { CollapsibleSection } from "../../shared/collapsible-section";
-import { theme } from "@webstudio-is/design-system";
+
+const properties: StyleProperty[] = [
+  "flexShrink",
+  "flexGrow",
+  "flexBasis",
+  "alignSelf",
+  "order",
+];
 
 export const FlexChildSection = (props: RenderCategoryProps) => {
   return (
     <CollapsibleSection
       label={props.label}
       isOpen={props.isOpen}
-      sources={props.sources}
+      currentStyle={props.currentStyle}
+      properties={properties}
     >
       <Flex css={{ flexDirection: "column", gap: theme.spacing[5] }}>
         <FlexChildSectionAlign {...props} />

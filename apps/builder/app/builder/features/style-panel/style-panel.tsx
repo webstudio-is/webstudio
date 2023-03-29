@@ -69,7 +69,6 @@ export const StylePanel = ({ selectedInstance, publish }: StylePanelProps) => {
         }}
       >
         <StyleSettings
-          search=""
           currentStyle={currentStyle}
           setProperty={setProperty}
           deleteProperty={deleteProperty}

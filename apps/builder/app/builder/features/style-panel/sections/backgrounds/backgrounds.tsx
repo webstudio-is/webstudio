@@ -40,11 +40,12 @@ import { BackgroundContent } from "./background-content";
 import { getLayerName, LayerThumbnail } from "./background-thumbnail";
 import { useSortable } from "./use-sortable";
 import { useMemo } from "react";
-import type { RgbValue } from "@webstudio-is/css-data";
+import type { RgbValue, StyleProperty } from "@webstudio-is/css-data";
 import {
   CollapsibleSectionBase,
   useOpenState,
 } from "~/builder/shared/collapsible-section";
+import { getDots } from "../../shared/collapsible-section";
 
 const Layer = (props: {
   id: string;
@@ -124,10 +125,22 @@ const Layer = (props: {
   );
 };
 
+const properties: StyleProperty[] = [
+  "backgroundAttachment",
+  "backgroundClip",
+  "backgroundColor",
+  "backgroundImage",
+  "backgroundOrigin",
+  "backgroundPosition",
+  "backgroundRepeat",
+  "backgroundSize",
+  "backgroundBlendMode",
+];
+
 const BackgroundsCollapsibleSection = (
   props: RenderCategoryProps & { children: React.ReactNode }
 ) => {
-  const { label, children, sources } = props;
+  const { label, children, currentStyle } = props;
   const [isOpen, setIsOpen] = useOpenState(props);
 
   const layersStyleSource = getLayersStyleSource(props.currentStyle);
@@ -142,9 +155,7 @@ const BackgroundsCollapsibleSection = (
       }}
       trigger={
         <SectionTitle
-          dots={sources.flatMap((source) =>
-            source === "local" || source === "remote" ? [source] : []
-          )}
+          dots={getDots(currentStyle, properties)}
           suffix={
             <SectionTitleButton
               prefix={<PlusIcon />}
@@ -182,7 +193,7 @@ export const BackgroundsSection = (props: RenderCategoryProps) => {
     props;
   const layersCount = getLayerCount(currentStyle);
 
-  const { items } = styleConfigByName["backgroundColor"];
+  const { items } = styleConfigByName("backgroundColor");
 
   const layers = useMemo(
     () =>
@@ -209,7 +220,6 @@ export const BackgroundsSection = (props: RenderCategoryProps) => {
       category={props.category}
       label={props.label}
       isOpen={props.isOpen}
-      sources={props.sources}
     >
       <Flex gap={1} direction="column">
         <Flex

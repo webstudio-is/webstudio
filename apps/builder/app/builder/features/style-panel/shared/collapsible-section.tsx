@@ -1,18 +1,36 @@
+import type { StyleProperty } from "@webstudio-is/css-data";
 import { SectionTitle, SectionTitleLabel } from "@webstudio-is/design-system";
 import type { ReactNode } from "react";
 import {
   CollapsibleSectionBase,
   useOpenState,
 } from "~/builder/shared/collapsible-section";
-import type { StyleSource } from "./style-info";
+import { getStyleSource, type StyleInfo } from "./style-info";
+
+export const getDots = (
+  currentStyle: StyleInfo,
+  properties: ReadonlyArray<StyleProperty>
+) => {
+  const dots = new Set<"local" | "remote">();
+
+  for (const property of properties) {
+    const source = getStyleSource(currentStyle[property]);
+    if (source === "local" || source === "remote") {
+      dots.add(source);
+    }
+  }
+
+  return Array.from(dots);
+};
 
 export const CollapsibleSection = (props: {
   label: string;
   children: ReactNode;
-  sources: StyleSource[];
+  currentStyle: StyleInfo;
+  properties: ReadonlyArray<StyleProperty>;
   isOpen?: boolean;
 }) => {
-  const { label, children, sources } = props;
+  const { label, children, currentStyle, properties } = props;
   const [isOpen, setIsOpen] = useOpenState(props);
 
   return (
@@ -21,11 +39,7 @@ export const CollapsibleSection = (props: {
       isOpen={isOpen}
       onOpenChange={setIsOpen}
       trigger={
-        <SectionTitle
-          dots={sources.flatMap((source) =>
-            source === "local" || source === "remote" ? [source] : []
-          )}
-        >
+        <SectionTitle dots={getDots(currentStyle, properties)}>
           <SectionTitleLabel>{label}</SectionTitleLabel>
         </SectionTitle>
       }

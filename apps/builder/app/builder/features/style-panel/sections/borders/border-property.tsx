@@ -65,7 +65,7 @@ export const BorderProperty = ({
    **/
   const firstPropertyName = borderProperties[0];
 
-  const { items: borderPropertyItems } = styleConfigByName[firstPropertyName];
+  const { items: borderPropertyItems } = styleConfigByName(firstPropertyName);
 
   const borderWidthKeywords = borderPropertyItems.map((item) => ({
     type: "keyword" as const,
@@ -156,7 +156,7 @@ export const BorderProperty = ({
                 </NestedIconLabel>
               }
               key={property}
-              label={styleConfigByName[property].label ?? ""}
+              label={styleConfigByName(property).label ?? ""}
               property={property}
               styleSource={getStyleSource(currentStyle[property])}
               keywords={borderWidthKeywords}

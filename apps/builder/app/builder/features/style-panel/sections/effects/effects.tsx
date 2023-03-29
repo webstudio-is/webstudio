@@ -33,11 +33,14 @@ const moreProperties: StyleProperty[] = [
   "transitionTimingFunction",
 ];
 
+const allProperties = [...properties, ...moreProperties];
+
 export const EffectsSection = (props: RenderCategoryProps) => (
   <CollapsibleSection
     label={props.label}
     isOpen={props.isOpen}
-    sources={props.sources}
+    currentStyle={props.currentStyle}
+    properties={allProperties}
   >
     {properties.map((property) => renderProperty({ ...props, property }))}
     <ShowMore

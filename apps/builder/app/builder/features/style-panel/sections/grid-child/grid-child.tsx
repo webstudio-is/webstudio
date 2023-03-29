@@ -17,7 +17,8 @@ export const GridChildSection = (props: RenderCategoryProps) => (
   <CollapsibleSection
     label={props.label}
     isOpen={props.isOpen}
-    sources={props.sources}
+    currentStyle={props.currentStyle}
+    properties={properties}
   >
     {properties.map((property) => renderProperty({ ...props, property }))}
   </CollapsibleSection>

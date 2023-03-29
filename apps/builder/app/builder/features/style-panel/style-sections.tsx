@@ -9,7 +9,7 @@ import type {
   CreateBatchUpdate,
 } from "./shared/use-style-data";
 import { PropertyName } from "./shared/property-name";
-import type { StyleInfo, StyleSource } from "./shared/style-info";
+import type { StyleInfo } from "./shared/style-info";
 import * as controls from "./controls";
 import {
   LayoutSection,
@@ -40,7 +40,6 @@ export type RenderCategoryProps = {
   createBatchUpdate: CreateBatchUpdate;
   currentStyle: StyleInfo;
   category: Category;
-  sources: StyleSource[];
   label: string;
   isOpen?: boolean | undefined;
 };
@@ -58,7 +57,7 @@ export const renderProperty = ({
   setProperty,
   deleteProperty,
 }: RenderPropertyProps) => {
-  const { label, control, items } = styleConfigByName[property];
+  const { label, control, items } = styleConfigByName(property);
   const Control = controls[control];
   if (!Control) {
     return null;
@@ -89,7 +88,6 @@ export const renderCategory = ({
   createBatchUpdate,
   currentStyle,
   category,
-  sources,
   label,
   isOpen,
 }: RenderCategoryProps) => {
@@ -104,7 +102,6 @@ export const renderCategory = ({
       category={category}
       label={label}
       isOpen={isOpen}
-      sources={sources}
     />
   );
 };

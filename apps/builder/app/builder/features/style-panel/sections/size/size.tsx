@@ -31,7 +31,7 @@ const SizeField = ({
   setProperty: RenderCategoryProps["setProperty"];
   deleteProperty: RenderCategoryProps["deleteProperty"];
 }) => {
-  const { label } = styleConfigByName[property];
+  const { label } = styleConfigByName(property);
   return (
     <Grid gap={1}>
       <PropertyName
@@ -50,16 +50,33 @@ const SizeField = ({
   );
 };
 
+const properties: StyleProperty[] = [
+  "width",
+  "height",
+  "minWidth",
+  "minHeight",
+  "maxWidth",
+  "maxHeight",
+  "overflow",
+  "objectFit",
+  "objectPosition",
+  "aspectRatio",
+];
+
 export const SizeSection = ({
   currentStyle: style,
   setProperty,
   deleteProperty,
   label,
   isOpen,
-  sources,
 }: RenderCategoryProps) => {
   return (
-    <CollapsibleSection label={label} isOpen={isOpen} sources={sources}>
+    <CollapsibleSection
+      label={label}
+      isOpen={isOpen}
+      currentStyle={style}
+      properties={properties}
+    >
       <Grid
         columns={2}
         css={{ columnGap: theme.spacing[5], rowGap: theme.spacing[7] }}
@@ -101,7 +118,7 @@ export const SizeSection = ({
           deleteProperty={deleteProperty}
         />
         <PropertyName
-          label={styleConfigByName.aspectRatio.label}
+          label={styleConfigByName("aspectRatio").label}
           property="aspectRatio"
           style={style}
           onReset={() => deleteProperty("aspectRatio")}
@@ -113,7 +130,7 @@ export const SizeSection = ({
           deleteProperty={deleteProperty}
         />
         <PropertyName
-          label={styleConfigByName.overflow.label}
+          label={styleConfigByName("overflow").label}
           property="overflow"
           style={style}
           onReset={() => deleteProperty("overflow")}
@@ -148,7 +165,7 @@ export const SizeSection = ({
           }
         />
         <PropertyName
-          label={styleConfigByName.objectFit.label}
+          label={styleConfigByName("objectFit").label}
           property="objectFit"
           style={style}
           onReset={() => deleteProperty("objectFit")}
@@ -162,7 +179,7 @@ export const SizeSection = ({
       </Grid>
       <Flex justify="between">
         <PropertyName
-          label={styleConfigByName.objectPosition.label}
+          label={styleConfigByName("objectPosition").label}
           property="objectPosition"
           style={style}
           onReset={() => deleteProperty("objectPosition")}

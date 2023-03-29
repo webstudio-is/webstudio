@@ -93,7 +93,6 @@ export const SpaceSection = ({
   currentStyle,
   label,
   isOpen,
-  sources,
 }: RenderCategoryProps) => {
   const [hoverTarget, setHoverTarget] = useState<HoverTagret>();
 
@@ -142,7 +141,12 @@ export const SpaceSection = ({
   };
 
   return (
-    <CollapsibleSection label={label} isOpen={isOpen} sources={sources}>
+    <CollapsibleSection
+      label={label}
+      isOpen={isOpen}
+      currentStyle={currentStyle}
+      properties={spacePropertiesNames}
+    >
       <SpaceLayout
         ref={layoutRef}
         onClick={() => setOpenProperty(hoverTarget?.property)}
