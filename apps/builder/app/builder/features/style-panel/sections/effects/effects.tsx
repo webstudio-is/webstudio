@@ -38,7 +38,6 @@ const allProperties = [...properties, ...moreProperties];
 export const EffectsSection = (props: RenderCategoryProps) => (
   <CollapsibleSection
     label={props.label}
-    isOpen={props.isOpen}
     currentStyle={props.currentStyle}
     properties={allProperties}
   >

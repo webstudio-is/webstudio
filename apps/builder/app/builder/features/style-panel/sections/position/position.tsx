@@ -17,7 +17,6 @@ const properties: StyleProperty[] = [
 export const PositionSection = (props: RenderCategoryProps) => (
   <CollapsibleSection
     label={props.label}
-    isOpen={props.isOpen}
     currentStyle={props.currentStyle}
     properties={properties}
   >

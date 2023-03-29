@@ -62,7 +62,6 @@ export const BordersSection = (props: RenderCategoryProps) => {
   return (
     <CollapsibleSection
       label={props.label}
-      isOpen={props.isOpen}
       currentStyle={currentStyle}
       properties={properties}
     >

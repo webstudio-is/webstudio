@@ -34,7 +34,6 @@ export const FlexChildSection = (props: RenderCategoryProps) => {
   return (
     <CollapsibleSection
       label={props.label}
-      isOpen={props.isOpen}
       currentStyle={props.currentStyle}
       properties={properties}
     >

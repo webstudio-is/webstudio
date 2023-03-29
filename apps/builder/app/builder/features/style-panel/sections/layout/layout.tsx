@@ -360,7 +360,6 @@ export const LayoutSection = ({
   deleteProperty,
   createBatchUpdate,
   label: sectionLabel,
-  isOpen,
 }: RenderCategoryProps) => {
   const displayValue = toValue(currentStyle.display?.value);
 
@@ -369,7 +368,6 @@ export const LayoutSection = ({
   return (
     <CollapsibleSection
       label={sectionLabel}
-      isOpen={isOpen}
       currentStyle={currentStyle}
       properties={properties}
     >

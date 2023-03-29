@@ -68,12 +68,10 @@ export const SizeSection = ({
   setProperty,
   deleteProperty,
   label,
-  isOpen,
 }: RenderCategoryProps) => {
   return (
     <CollapsibleSection
       label={label}
-      isOpen={isOpen}
       currentStyle={style}
       properties={properties}
     >

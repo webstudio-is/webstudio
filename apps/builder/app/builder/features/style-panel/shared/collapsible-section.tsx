@@ -28,7 +28,6 @@ export const CollapsibleSection = (props: {
   children: ReactNode;
   currentStyle: StyleInfo;
   properties: ReadonlyArray<StyleProperty>;
-  isOpen?: boolean;
 }) => {
   const { label, children, currentStyle, properties } = props;
   const [isOpen, setIsOpen] = useOpenState(props);

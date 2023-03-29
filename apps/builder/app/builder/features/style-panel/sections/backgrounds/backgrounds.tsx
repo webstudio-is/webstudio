@@ -219,7 +219,6 @@ export const BackgroundsSection = (props: RenderCategoryProps) => {
       currentStyle={currentStyle}
       category={props.category}
       label={props.label}
-      isOpen={props.isOpen}
     >
       <Flex gap={1} direction="column">
         <Flex

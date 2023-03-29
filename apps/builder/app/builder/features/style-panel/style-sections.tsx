@@ -41,7 +41,6 @@ export type RenderCategoryProps = {
   currentStyle: StyleInfo;
   category: Category;
   label: string;
-  isOpen?: boolean | undefined;
 };
 
 export type RenderPropertyProps = {
@@ -89,7 +88,6 @@ export const renderCategory = ({
   currentStyle,
   category,
   label,
-  isOpen,
 }: RenderCategoryProps) => {
   const Section = sections[category];
 
@@ -101,7 +99,6 @@ export const renderCategory = ({
       currentStyle={currentStyle}
       category={category}
       label={label}
-      isOpen={isOpen}
     />
   );
 };
