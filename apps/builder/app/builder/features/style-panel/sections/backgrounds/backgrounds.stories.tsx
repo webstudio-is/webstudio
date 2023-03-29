@@ -2,7 +2,7 @@ import type { LayersValue } from "@webstudio-is/css-data";
 import { styled, theme } from "@webstudio-is/design-system";
 import { setEnv } from "@webstudio-is/feature-flags";
 import { useRef, useState } from "react";
-import type { StyleInfo } from "../../shared/style-info";
+import { getStyleSource, StyleInfo } from "../../shared/style-info";
 import type {
   CreateBatchUpdate,
   DeleteProperty,
@@ -90,11 +90,15 @@ const useStyleInfo = (styleInfoInitial: StyleInfo) => {
     },
   });
 
-  return { styleInfo, setProperty, deleteProperty, createBatchUpdate };
+  const sources = Array.from(
+    new Set(Object.values(styleInfo).map((info) => getStyleSource(info)))
+  );
+
+  return { styleInfo, setProperty, deleteProperty, createBatchUpdate, sources };
 };
 
 export const BackgroundsCollapsible = () => {
-  const { styleInfo, setProperty, deleteProperty, createBatchUpdate } =
+  const { styleInfo, setProperty, deleteProperty, createBatchUpdate, sources } =
     useStyleInfo({
       backgroundImage: {
         cascaded: {
@@ -115,6 +119,7 @@ export const BackgroundsCollapsible = () => {
         category={"backgrounds"}
         styleConfigsByCategory={[]}
         moreStyleConfigsByCategory={[]}
+        sources={sources}
         label="Backgrounds"
       />
     </Panel>
@@ -122,7 +127,7 @@ export const BackgroundsCollapsible = () => {
 };
 
 export const Backgrounds = () => {
-  const { styleInfo, setProperty, deleteProperty, createBatchUpdate } =
+  const { styleInfo, setProperty, deleteProperty, createBatchUpdate, sources } =
     useStyleInfo({
       backgroundImage: {
         value: backgroundImageStyle,
@@ -140,6 +145,7 @@ export const Backgrounds = () => {
         category={"backgrounds"}
         styleConfigsByCategory={[]}
         moreStyleConfigsByCategory={[]}
+        sources={sources}
         label="Backgrounds"
       />
     </Panel>

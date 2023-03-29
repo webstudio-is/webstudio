@@ -127,15 +127,10 @@ const Layer = (props: {
 const BackgroundsCollapsibleSection = (
   props: RenderCategoryProps & { children: React.ReactNode }
 ) => {
-  const { label, children } = props;
+  const { label, children, sources } = props;
   const [isOpen, setIsOpen] = useOpenState(props);
 
   const layersStyleSource = getLayersStyleSource(props.currentStyle);
-  const dots: ("local" | "remote")[] = [];
-
-  if (layersStyleSource === "local" || layersStyleSource === "remote") {
-    dots.push(layersStyleSource);
-  }
 
   return (
     <CollapsibleSectionBase
@@ -147,7 +142,9 @@ const BackgroundsCollapsibleSection = (
       }}
       trigger={
         <SectionTitle
-          dots={dots}
+          dots={sources.flatMap((source) =>
+            source === "local" || source === "remote" ? [source] : []
+          )}
           suffix={
             <SectionTitleButton
               prefix={<PlusIcon />}
@@ -214,6 +211,7 @@ export const BackgroundsSection = (props: RenderCategoryProps) => {
       moreStyleConfigsByCategory={props.moreStyleConfigsByCategory}
       label={props.label}
       isOpen={props.isOpen}
+      sources={props.sources}
     >
       <Flex gap={1} direction="column">
         <Flex
