@@ -159,9 +159,6 @@ importers:
       '@webstudio-is/trpc-interface':
         specifier: workspace:^
         version: link:../../packages/trpc-interface
-      camelcase:
-        specifier: ^6.3.0
-        version: 6.3.0
       colord:
         specifier: ^2.9.3
         version: 2.9.3
@@ -198,24 +195,9 @@ importers:
       lexical:
         specifier: ^0.6.0
         version: 0.6.0
-      lodash:
-        specifier: 4.17.21
-        version: 4.17.21
-      lodash.capitalize:
-        specifier: ^4.2.1
-        version: 4.2.1
       lodash.debounce:
         specifier: ^4.0.8
         version: 4.0.8
-      lodash.memoize:
-        specifier: ^4.1.2
-        version: 4.1.2
-      lodash.merge:
-        specifier: ^4.6.2
-        version: 4.6.2
-      lodash.snakecase:
-        specifier: ^4.1.1
-        version: 4.1.1
       match-sorter:
         specifier: ^6.3.1
         version: 6.3.1
@@ -237,6 +219,9 @@ importers:
       nanostores:
         specifier: ^0.7.1
         version: 0.7.1
+      no-case:
+        specifier: ^3.0.4
+        version: 3.0.4
       pretty-bytes:
         specifier: ^6.0.0
         version: 6.0.0
@@ -276,6 +261,9 @@ importers:
       slugify:
         specifier: ^1.6.5
         version: 1.6.5
+      title-case:
+        specifier: ^3.0.3
+        version: 3.0.3
       use-debounce:
         specifier: ^9.0.2
         version: 9.0.2(react@17.0.2)
@@ -319,24 +307,9 @@ importers:
       '@types/hyphenate-style-name':
         specifier: ^1.0.0
         version: 1.0.0
-      '@types/lodash':
-        specifier: 4.14.182
-        version: 4.14.182
-      '@types/lodash.capitalize':
-        specifier: ^4.2.6
-        version: 4.2.7
       '@types/lodash.debounce':
         specifier: ^4.0.6
         version: 4.0.7
-      '@types/lodash.memoize':
-        specifier: ^4.1.6
-        version: 4.1.7
-      '@types/lodash.merge':
-        specifier: ^4.6.6
-        version: 4.6.7
-      '@types/lodash.snakecase':
-        specifier: ^4.1.6
-        version: 4.1.7
       '@types/react':
         specifier: 17.0.47
         version: 17.0.47
@@ -8525,32 +8498,14 @@ packages:
       '@types/node': 18.13.0
     dev: true
 
-  /@types/lodash.capitalize@4.2.7:
-    resolution: {integrity: sha512-NKtwU9vJFCx7Q6RYMAKQS0Vo2QUF81tyjvfYnhMxw8+ZMj8R4iv2zmLq5ARy28dGXuK0MqqWg45zGRuTnsnFag==}
-    dependencies:
-      '@types/lodash': 4.14.182
-    dev: true
-
   /@types/lodash.debounce@4.0.7:
     resolution: {integrity: sha512-X1T4wMZ+gT000M2/91SYj0d/7JfeNZ9PeeOldSNoE/lunLeQXKvkmIumI29IaKMotU/ln/McOIvgzZcQ/3TrSA==}
     dependencies:
       '@types/lodash': 4.14.182
     dev: true
 
-  /@types/lodash.memoize@4.1.7:
-    resolution: {integrity: sha512-lGN7WeO4vO6sICVpf041Q7BX/9k1Y24Zo3FY0aUezr1QlKznpjzsDk3T3wvH8ofYzoK0QupN9TWcFAFZlyPwQQ==}
-    dependencies:
-      '@types/lodash': 4.14.182
-    dev: true
-
   /@types/lodash.merge@4.6.7:
     resolution: {integrity: sha512-OwxUJ9E50gw3LnAefSHJPHaBLGEKmQBQ7CZe/xflHkyy/wH2zVyEIAKReHvVrrn7zKdF58p16We9kMfh7v0RRQ==}
-    dependencies:
-      '@types/lodash': 4.14.182
-    dev: true
-
-  /@types/lodash.snakecase@4.1.7:
-    resolution: {integrity: sha512-nv9M+JJokFyfZ9QmaWVXZu2DfT40K0GictZaA8SwXczp3oCzMkjp7PtvUBQyvdoG9SnlCpoRXZDIVwQRzJbd9A==}
     dependencies:
       '@types/lodash': 4.14.182
     dev: true
@@ -15111,23 +15066,11 @@ packages:
     resolution: {integrity: sha512-TwuEnCnxbc3rAvhf/LbG7tJUDzhqXyFnv3dtzLOPgCG/hODL7WFnsbwktkD7yUV0RrreP/l1PALq/YSg6VvjlA==}
     dev: true
 
-  /lodash.capitalize@4.2.1:
-    resolution: {integrity: sha512-kZzYOKspf8XVX5AvmQF94gQW0lejFVgb80G85bU4ZWzoJ6C03PQg3coYAUpSTpQWelrZELd3XWgHzw4Ck5kaIw==}
-    dev: false
-
   /lodash.debounce@4.0.8:
     resolution: {integrity: sha512-FT1yDzDYEoYWhnSGnpE/4Kj1fLZkDFyqRb7fNt6FdYOSxlUWAtp42Eh6Wb0rGIv/m9Bgo7x4GhQbm5Ys4SG5ow==}
 
-  /lodash.memoize@4.1.2:
-    resolution: {integrity: sha512-t7j+NzmgnQzTAYXcsHYLgimltOV1MXHtlOWf6GjL9Kj8GK5FInw5JotxvbOs+IvV1/Dzo04/fCGfLVs7aXb4Ag==}
-    dev: false
-
   /lodash.merge@4.6.2:
     resolution: {integrity: sha512-0KpjqXRVvrYyCsX1swR/XTK0va6VQkQM6MNo7PqW77ByjAhoARA8EfrP1N4+KlKj8YS0ZUCtRT/YUuhyYDujIQ==}
-    dev: false
-
-  /lodash.snakecase@4.1.1:
-    resolution: {integrity: sha512-QZ1d4xoBHYUeuouhEq3lk3Uq7ldgyFXGBhg04+oRLnIz8o9T65Eh+8YdroUwn846zchkA9yDsDl5CVVaV2nqYw==}
     dev: false
 
   /lodash.uniq@4.5.0:
@@ -15167,7 +15110,6 @@ packages:
     resolution: {integrity: sha512-7fm3l3NAF9WfN6W3JOmf5drwpVqX78JtoGJ3A6W0a6ZnldM41w2fV5D490psKFTpMds8TJse/eHLFFsNHHjHgg==}
     dependencies:
       tslib: 2.5.0
-    dev: true
 
   /lowercase-keys@2.0.0:
     resolution: {integrity: sha512-tqNXrS78oMOE73NMxK4EMLQsQowWf8jKooH9g7xPavRT706R6bkQJ6DY2Te7QukaZsulxa30wQ7bk0pm4XiHmA==}
@@ -16158,7 +16100,6 @@ packages:
     dependencies:
       lower-case: 2.0.2
       tslib: 2.5.0
-    dev: true
 
   /node-abi@3.22.0:
     resolution: {integrity: sha512-u4uAs/4Zzmp/jjsD9cyFYDXeISfUWaAVWshPmDZOFOv4Xl4SbzTXm53I04C2uRueYJ+0t5PEtLH/owbn2Npf/w==}
@@ -19291,6 +19232,12 @@ packages:
 
   /tinycolor2@1.4.2:
     resolution: {integrity: sha512-vJhccZPs965sV/L2sU4oRQVAos0pQXwsvTLkWYdqJ+a8Q5kPFzJTuOFwy7UniPli44NKQGAglksjvOcpo95aZA==}
+    dev: false
+
+  /title-case@3.0.3:
+    resolution: {integrity: sha512-e1zGYRvbffpcHIrnuqT0Dh+gEJtDaxDSoG4JAIpq4oDFyooziLBIiYQv0GBT4FUAnUop5uZ1hiIAj7oAF6sOCA==}
+    dependencies:
+      tslib: 2.5.0
     dev: false
 
   /tmp@0.0.33:
