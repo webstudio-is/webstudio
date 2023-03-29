@@ -19,12 +19,12 @@ import {
 } from "@webstudio-is/icons";
 import { FloatingPanel } from "~/builder/shared/floating-panel";
 import { getStyleSource } from "../../shared/style-info";
-import { StyleCollapsibleSection } from "../../shared/style-collapsible-section";
+import { CollapsibleSection } from "../../shared/collapsible-section";
 import { theme } from "@webstudio-is/design-system";
 
 export const FlexChildSection = (props: RenderCategoryProps) => {
   return (
-    <StyleCollapsibleSection
+    <CollapsibleSection
       label={props.label}
       isOpen={props.isOpen}
       sources={props.sources}
@@ -34,7 +34,7 @@ export const FlexChildSection = (props: RenderCategoryProps) => {
         <FlexChildSectionSizing {...props} />
         <FlexChildSectionOrder {...props} />
       </Flex>
-    </StyleCollapsibleSection>
+    </CollapsibleSection>
   );
 };
 

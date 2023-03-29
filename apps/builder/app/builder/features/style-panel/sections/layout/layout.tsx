@@ -23,7 +23,7 @@ import { PropertyName } from "../../shared/property-name";
 import { styleConfigByName } from "../../shared/configs";
 import type { CreateBatchUpdate } from "../../shared/use-style-data";
 import { getStyleSource, type StyleInfo } from "../../shared/style-info";
-import { StyleCollapsibleSection } from "../../shared/style-collapsible-section";
+import { CollapsibleSection } from "../../shared/collapsible-section";
 import {
   type IntermediateStyleValue,
   CssValueInput,
@@ -358,11 +358,7 @@ export const LayoutSection = ({
   const { label, items } = styleConfigByName.display;
 
   return (
-    <StyleCollapsibleSection
-      label={sectionLabel}
-      isOpen={isOpen}
-      sources={sources}
-    >
+    <CollapsibleSection label={sectionLabel} isOpen={isOpen} sources={sources}>
       <>
         <Grid css={{ gridTemplateColumns: "4fr 6fr" }}>
           <PropertyName
@@ -397,6 +393,6 @@ export const LayoutSection = ({
           )
         )}
       </>
-    </StyleCollapsibleSection>
+    </CollapsibleSection>
   );
 };

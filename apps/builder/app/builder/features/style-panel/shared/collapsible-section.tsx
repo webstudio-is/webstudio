@@ -6,7 +6,7 @@ import {
 } from "~/builder/shared/collapsible-section";
 import type { StyleSource } from "./style-info";
 
-export const StyleCollapsibleSection = (props: {
+export const CollapsibleSection = (props: {
   label: string;
   children: ReactNode;
   sources: StyleSource[];

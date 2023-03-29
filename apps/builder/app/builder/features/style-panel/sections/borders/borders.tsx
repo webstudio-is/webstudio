@@ -3,7 +3,7 @@ import { ColorControl } from "../../controls";
 import { styleConfigByName } from "../../shared/configs";
 import { PropertyName } from "../../shared/property-name";
 import type { RenderCategoryProps } from "../../style-sections";
-import { StyleCollapsibleSection } from "../../shared/style-collapsible-section";
+import { CollapsibleSection } from "../../shared/collapsible-section";
 import { BorderRadius } from "./border-radius";
 import { BorderStyle } from "./border-style";
 import { deleteAllProperties, setAllProperties } from "./border-utils";
@@ -40,7 +40,7 @@ export const BordersSection = (props: RenderCategoryProps) => {
   );
 
   return (
-    <StyleCollapsibleSection
+    <CollapsibleSection
       label={props.label}
       isOpen={props.isOpen}
       sources={props.sources}
@@ -98,6 +98,6 @@ export const BordersSection = (props: RenderCategoryProps) => {
           deleteProperty={deleteProperty}
         />
       </Flex>
-    </StyleCollapsibleSection>
+    </CollapsibleSection>
   );
 };
