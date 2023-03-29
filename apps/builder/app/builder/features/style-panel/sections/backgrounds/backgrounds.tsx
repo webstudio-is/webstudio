@@ -207,8 +207,6 @@ export const BackgroundsSection = (props: RenderCategoryProps) => {
       createBatchUpdate={createBatchUpdate}
       currentStyle={currentStyle}
       category={props.category}
-      styleConfigsByCategory={props.styleConfigsByCategory}
-      moreStyleConfigsByCategory={props.moreStyleConfigsByCategory}
       label={props.label}
       isOpen={props.isOpen}
       sources={props.sources}

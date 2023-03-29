@@ -87,8 +87,6 @@ export const Borders = () => {
         createBatchUpdate={createBatchUpdate}
         category={"borders"}
         label={"Borders"}
-        styleConfigsByCategory={[]}
-        moreStyleConfigsByCategory={[]}
         sources={Object.keys(styleInfo).length === 0 ? [] : ["local"]}
       />
     </Panel>

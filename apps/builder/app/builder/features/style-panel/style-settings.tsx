@@ -19,7 +19,6 @@ import {
   type StyleSource,
   getStyleSource,
 } from "./shared/style-info";
-import type { RenderPropertyProps } from "./style-sections";
 import { useStore } from "@nanostores/react";
 import { selectedInstanceSelectorStore } from "~/shared/nano-states";
 import { useInstanceStyleData } from "./shared/style-info";
@@ -124,9 +123,6 @@ export const StyleSettings = ({
       categories[category].properties,
       search
     );
-    const { moreFrom } = categories[category];
-    const styleConfigsByCategory: Array<RenderPropertyProps> = [];
-    const moreStyleConfigsByCategory: Array<RenderPropertyProps> = [];
     const sources = new Set<StyleSource>();
 
     for (const styleConfig of styleConfigs) {
@@ -137,42 +133,17 @@ export const StyleSettings = ({
         ? true
         : appliesTo(styleConfig, currentStyle);
 
-      const element = {
-        property,
-        setProperty,
-        deleteProperty,
-        currentStyle,
-        category,
-      };
-
       if (isInCategory && isApplicable) {
         sources.add(getStyleSource(currentStyle[property]));
-
-        // We are making a separate array of properties which come after the "moreFrom"
-        // so we can make them collapsable
-        if (
-          (property === moreFrom || moreStyleConfigsByCategory.length !== 0) &&
-          isSearchMode === false
-        ) {
-          moreStyleConfigsByCategory.push(element);
-          continue;
-        }
-
-        styleConfigsByCategory.push(element);
       }
     }
 
-    if (styleConfigsByCategory.length === 0) {
-      continue;
-    }
     const categoryProps: RenderCategoryProps = {
       setProperty,
       deleteProperty,
       createBatchUpdate,
       currentStyle,
       category,
-      styleConfigsByCategory,
-      moreStyleConfigsByCategory,
       sources: Array.from(sources),
       label: categories[category].label,
       isOpen: isSearchMode ? true : undefined,

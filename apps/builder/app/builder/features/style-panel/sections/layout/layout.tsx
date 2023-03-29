@@ -17,7 +17,7 @@ import {
 } from "@webstudio-is/icons";
 import type { RenderCategoryProps } from "../../style-sections";
 import { FlexGrid } from "./shared/flex-grid";
-import { renderProperty } from "../../style-sections";
+// import { renderProperty } from "../../style-sections";
 import { MenuControl, SelectControl } from "../../controls";
 import { PropertyName } from "../../shared/property-name";
 import { styleConfigByName } from "../../shared/configs";
@@ -332,6 +332,7 @@ const orderedDisplayValues = [
   "inline-flex",
   "inline",
   "none",
+  "grid",
 ];
 if (isFeatureEnabled("displayContents")) {
   orderedDisplayValues.push("contents");
@@ -348,7 +349,7 @@ export const LayoutSection = ({
   setProperty,
   deleteProperty,
   createBatchUpdate,
-  styleConfigsByCategory,
+  // styleConfigsByCategory,
   label: sectionLabel,
   isOpen,
   sources,
@@ -386,12 +387,11 @@ export const LayoutSection = ({
             deleteProperty={deleteProperty}
             createBatchUpdate={createBatchUpdate}
           />
-        ) : (
-          styleConfigsByCategory.map((entry) =>
-            // exclude display already rendered above
-            entry.property === "display" ? null : renderProperty(entry)
-          )
-        )}
+        ) : // styleConfigsByCategory.map((entry) =>
+        //   // exclude display already rendered above
+        //   entry.property === "display" ? null : renderProperty(entry)
+        // )
+        null}
       </>
     </CollapsibleSection>
   );

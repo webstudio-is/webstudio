@@ -40,8 +40,6 @@ export type RenderCategoryProps = {
   createBatchUpdate: CreateBatchUpdate;
   currentStyle: StyleInfo;
   category: Category;
-  styleConfigsByCategory: Array<RenderPropertyProps>;
-  moreStyleConfigsByCategory: Array<RenderPropertyProps>;
   sources: StyleSource[];
   label: string;
   isOpen?: boolean | undefined;
@@ -52,7 +50,6 @@ export type RenderPropertyProps = {
   currentStyle: StyleInfo;
   setProperty: SetProperty;
   deleteProperty: DeleteProperty;
-  category: Category;
 };
 
 export const renderProperty = ({
@@ -60,7 +57,6 @@ export const renderProperty = ({
   currentStyle,
   setProperty,
   deleteProperty,
-  category,
 }: RenderPropertyProps) => {
   const { label, control, items } = styleConfigByName[property];
   const Control = controls[control];
@@ -69,7 +65,7 @@ export const renderProperty = ({
   }
 
   return (
-    <Grid key={category + property} css={{ gridTemplateColumns: "4fr 6fr" }}>
+    <Grid key={property} css={{ gridTemplateColumns: "4fr 6fr" }}>
       <PropertyName
         style={currentStyle}
         property={property}
@@ -93,8 +89,6 @@ export const renderCategory = ({
   createBatchUpdate,
   currentStyle,
   category,
-  styleConfigsByCategory,
-  moreStyleConfigsByCategory,
   sources,
   label,
   isOpen,
@@ -108,8 +102,6 @@ export const renderCategory = ({
       createBatchUpdate={createBatchUpdate}
       currentStyle={currentStyle}
       category={category}
-      styleConfigsByCategory={styleConfigsByCategory}
-      moreStyleConfigsByCategory={moreStyleConfigsByCategory}
       label={label}
       isOpen={isOpen}
       sources={sources}
