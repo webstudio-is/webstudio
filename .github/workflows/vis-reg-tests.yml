@@ -20,6 +20,9 @@ jobs:
   builder:
     timeout-minutes: 20
     runs-on: ubuntu-latest
+    env:
+      DATABASE_URL: postgres://
+      AUTH_SECRET: test
     steps:
       - uses: actions/checkout@v3
       - uses: ./.github/actions/ci-setup
