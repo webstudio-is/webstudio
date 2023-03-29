@@ -1,4 +1,3 @@
-import { titleCase } from "title-case";
 import {
   Box,
   RadioGroup,
@@ -7,6 +6,7 @@ import {
   useId,
   theme,
 } from "@webstudio-is/design-system";
+import { humanizeString } from "~/shared/string-utils";
 import { type ControlProps, getLabel, VerticalLayout, Label } from "../shared";
 
 export const RadioControl = ({
@@ -35,7 +35,7 @@ export const RadioControl = ({
           {options.map((value) => (
             <RadioAndLabel key={value}>
               <Radio value={value} id={`${id}:${value}`} />
-              <Label htmlFor={`${id}:${value}`}>{titleCase(value)}</Label>
+              <Label htmlFor={`${id}:${value}`}>{humanizeString(value)}</Label>
             </RadioAndLabel>
           ))}
         </RadioGroup>

@@ -75,6 +75,7 @@
     "mitt": "^3.0.0",
     "nanoid": "^3.2.0",
     "nanostores": "^0.7.1",
+    "no-case": "^3.0.4",
     "pretty-bytes": "^6.0.0",
     "react": "^17.0.2",
     "react-color": "^2.19.3",

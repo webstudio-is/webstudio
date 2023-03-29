@@ -1,7 +1,7 @@
-import { titleCase } from "title-case";
 import { categories, type Category } from "@webstudio-is/react-sdk";
 import type { StyleProperty, AppliesTo } from "@webstudio-is/css-data";
 import { keywordValues, properties } from "@webstudio-is/css-data";
+import { humanizeString } from "~/shared/string-utils";
 import {
   IconRecords,
   AlignContentStartIcon,
@@ -84,7 +84,7 @@ const createStyleConfigs = () => {
       // in that category, we are widening the type to include all properties
       const property = prop as Property;
       const keywords = keywordValues[property] || [];
-      const label = titleCase(property);
+      const label = humanizeString(property);
 
       styleConfigByName[property] = {
         label,

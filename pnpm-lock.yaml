@@ -219,6 +219,9 @@ importers:
       nanostores:
         specifier: ^0.7.1
         version: 0.7.1
+      no-case:
+        specifier: ^3.0.4
+        version: 3.0.4
       pretty-bytes:
         specifier: ^6.0.0
         version: 6.0.0
@@ -15107,7 +15110,6 @@ packages:
     resolution: {integrity: sha512-7fm3l3NAF9WfN6W3JOmf5drwpVqX78JtoGJ3A6W0a6ZnldM41w2fV5D490psKFTpMds8TJse/eHLFFsNHHjHgg==}
     dependencies:
       tslib: 2.5.0
-    dev: true
 
   /lowercase-keys@2.0.0:
     resolution: {integrity: sha512-tqNXrS78oMOE73NMxK4EMLQsQowWf8jKooH9g7xPavRT706R6bkQJ6DY2Te7QukaZsulxa30wQ7bk0pm4XiHmA==}
@@ -16098,7 +16100,6 @@ packages:
     dependencies:
       lower-case: 2.0.2
       tslib: 2.5.0
-    dev: true
 
   /node-abi@3.22.0:
     resolution: {integrity: sha512-u4uAs/4Zzmp/jjsD9cyFYDXeISfUWaAVWshPmDZOFOv4Xl4SbzTXm53I04C2uRueYJ+0t5PEtLH/owbn2Npf/w==}
