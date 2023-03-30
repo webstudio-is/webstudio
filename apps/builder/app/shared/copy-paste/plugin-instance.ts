@@ -146,8 +146,6 @@ export const onPaste = (clipboardData: string) => {
       stylesStore,
     ],
     (instances, styleSources, props, styleSourceSelections, styles) => {
-      // @todo implement paste of sharable data
-
       const copiedInstanceIds = insertInstancesCopyMutable(
         instances,
         data.instances,
