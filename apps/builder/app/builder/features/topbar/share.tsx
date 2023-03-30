@@ -31,7 +31,9 @@ export const ShareButton = ({ projectId }: { projectId: Project["id"] }) => {
       <FloatingPanelAnchor>
         <Tooltip side="bottom" content={tooltipContent}>
           <FloatingPanelPopoverTrigger asChild>
-            <Button disabled={isShareDisabled}>Share</Button>
+            <Button disabled={isShareDisabled} color="gradient">
+              Share
+            </Button>
           </FloatingPanelPopoverTrigger>
         </Tooltip>
       </FloatingPanelAnchor>
