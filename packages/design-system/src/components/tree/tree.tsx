@@ -158,7 +158,7 @@ export const Tree = <Data extends { id: string }>({
         return dropTarget;
       }
 
-      const newDropItemSelector = dropTarget.data.slice();
+      let newDropItemSelector = dropTarget.data.slice();
 
       if (dropTarget.area === "top" || dropTarget.area === "bottom") {
         newDropItemSelector.shift();
@@ -178,7 +178,7 @@ export const Tree = <Data extends { id: string }>({
       if (ancestorIndex === -1) {
         return getFallbackDropTarget();
       }
-      newDropItemSelector.slice(ancestorIndex);
+      newDropItemSelector = newDropItemSelector.slice(ancestorIndex);
 
       const element = getElementByItemSelector(
         rootRef.current ?? undefined,
