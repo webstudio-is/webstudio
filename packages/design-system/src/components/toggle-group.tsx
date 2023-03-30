@@ -7,12 +7,13 @@ export const ToggleGroup = styled(ToggleGroupPrimitive.Root, {
   borderRadius: theme.spacing[3],
   boxShadow: `0 0 0 ${theme.spacing[1]} ${theme.colors.slate7}`,
   padding: 2,
+  backgroundColor: theme.colors.backgroundControls,
 });
 
 export const ToggleGroupItem = styled(ToggleGroupPrimitive.Item, {
   // all: "unset", // @note weird bug, this somehow gets into weird specifity issues with how styles are inserted
   border: "none",
-  backgroundColor: theme.colors.loContrast,
+  backgroundColor: theme.colors.backgroundControls,
   color: theme.colors.hiContrast,
   display: "flex",
   whiteSpace: "nowrap",
