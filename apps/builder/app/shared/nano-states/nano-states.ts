@@ -382,9 +382,6 @@ export const selectedStyleSourceStore = computed(
 export const hoveredInstanceSelectorStore = atom<undefined | InstanceSelector>(
   undefined
 );
-export const hoveredInstanceOutlineStore = atom<
-  undefined | { label?: string; component: string; rect: DOMRect }
->(undefined);
 
 export const isPreviewModeStore = atom<boolean>(false);
 export const useIsPreviewMode = () => useValue(isPreviewModeStore);
@@ -409,16 +406,6 @@ export const useSetAuthToken = (authToken: string | undefined) => {
     authTokenStore.set(authToken);
   });
 };
-
-const selectedInstanceOutlineContainer = atom<{
-  visible: boolean;
-  rect?: DOMRect;
-}>({
-  visible: false,
-  rect: undefined,
-});
-export const useSelectedInstanceOutline = () =>
-  useValue(selectedInstanceOutlineContainer);
 
 export type DragAndDropState = {
   isDragging: boolean;
