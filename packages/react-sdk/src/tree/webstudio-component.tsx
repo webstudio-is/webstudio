@@ -35,6 +35,7 @@ type WebstudioComponentProps = {
 
 export const WebstudioComponent = ({
   instance,
+  instanceSelector,
   children,
   getComponent,
   ...rest
