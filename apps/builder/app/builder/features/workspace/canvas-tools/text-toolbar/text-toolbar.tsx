@@ -94,7 +94,7 @@ const Toolbar = ({ state, onToggle }: ToolbarProps) => {
         top: 0,
         left: 0,
         pointerEvents: "auto",
-        background: theme.colors.loContrast,
+        background: theme.colors.backgroundPanel,
         padding: theme.spacing[3],
         borderRadius: theme.borderRadius[6],
         border: `1px solid ${theme.colors.slate8}`,

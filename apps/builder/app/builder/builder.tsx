@@ -116,7 +116,7 @@ const SidePanel = ({
         fg: 0,
         // Left sidebar tabs won't be able to pop out to the right if we set overflowX to auto.
         //overflowY: "auto",
-        bc: theme.colors.loContrast,
+        bc: theme.colors.backgroundPanel,
         height: "100%",
         ...css,
         "&:last-of-type": {

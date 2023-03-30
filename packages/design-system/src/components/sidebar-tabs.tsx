@@ -71,7 +71,7 @@ export const SidebarTabsContent = styled(TabsPrimitive.Content, {
   top: 0,
   left: "100%",
   height: "100%",
-  bc: theme.colors.loContrast,
+  bc: theme.colors.backgroundPanel,
   outline: "none",
   '&[data-state="active"]': {
     borderRight: `1px solid ${theme.colors.slate7}`,
