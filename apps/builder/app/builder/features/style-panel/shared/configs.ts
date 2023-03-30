@@ -1,4 +1,3 @@
-import { categories, type Category } from "@webstudio-is/react-sdk";
 import type { StyleProperty, AppliesTo } from "@webstudio-is/css-data";
 import { keywordValues, properties } from "@webstudio-is/css-data";
 import { humanizeString } from "~/shared/string-utils";
@@ -71,38 +70,34 @@ const getControl = (property: StyleProperty): Control => {
   return "TextControl";
 };
 
-const createStyleConfigs = () => {
-  // We have same properties in different categories: alignSelf is in grid children and flex children
-  // but this list has to contain only unique props
-  const styleConfigByName = {} as { [prop in StyleProperty]: StyleConfig };
+const styleConfigCache = new Map<StyleProperty, StyleConfig>();
 
-  let category: Category;
+export const styleConfigByName = (propertyName: StyleProperty): StyleConfig => {
+  const fromCache = styleConfigCache.get(propertyName);
 
-  for (category in categories) {
-    for (const prop of categories[category].properties) {
-      // @todo prop is more narrow, only the props
-      // in that category, we are widening the type to include all properties
-      const property = prop as Property;
-      const keywords = keywordValues[property] || [];
-      const label = humanizeString(property);
-
-      styleConfigByName[property] = {
-        label,
-        property,
-        appliesTo: properties[property].appliesTo,
-        control: getControl(property),
-        items: keywords.map((keyword) => ({
-          label: keyword,
-          name: keyword,
-        })),
-      };
-    }
+  if (fromCache) {
+    return fromCache;
   }
 
-  return { styleConfigs: Object.values(styleConfigByName), styleConfigByName };
-};
+  // @todo propertyName is more narrow, only the props
+  // in that category, we are widening the type to include all properties
+  const property = propertyName as Property;
 
-export const { styleConfigs, styleConfigByName } = createStyleConfigs();
+  const keywords = keywordValues[property] || [];
+  const label = humanizeString(property);
+
+  const result = {
+    label,
+    property,
+    appliesTo: properties[property].appliesTo,
+    control: getControl(property),
+    items: keywords.map((keyword) => ({ label: keyword, name: keyword })),
+  };
+
+  styleConfigCache.set(propertyName, result);
+
+  return result;
+};
 
 export const iconConfigs: IconRecords = {
   // layout

@@ -17,18 +17,17 @@ import {
 } from "@webstudio-is/icons";
 import type { RenderCategoryProps } from "../../style-sections";
 import { FlexGrid } from "./shared/flex-grid";
-import { renderProperty } from "../../style-sections";
 import { MenuControl, SelectControl } from "../../controls";
 import { PropertyName } from "../../shared/property-name";
 import { styleConfigByName } from "../../shared/configs";
 import type { CreateBatchUpdate } from "../../shared/use-style-data";
 import { getStyleSource, type StyleInfo } from "../../shared/style-info";
+import { CollapsibleSection } from "../../shared/collapsible-section";
 import {
   type IntermediateStyleValue,
   CssValueInput,
 } from "../../shared/css-value-input";
 import { theme } from "@webstudio-is/design-system";
-import { CollapsibleSection } from "~/builder/shared/collapsible-section";
 import { isFeatureEnabled } from "@webstudio-is/feature-flags";
 
 const GapLinked = ({
@@ -75,7 +74,7 @@ const GapInput = ({
   onPreviewChange: (value?: StyleValue) => void;
   onChange: (value: StyleValue) => void;
 }) => {
-  const { label, items } = styleConfigByName[property];
+  const { label, items } = styleConfigByName(property);
   return (
     <EnhancedTooltip content={label}>
       <Box>
@@ -343,21 +342,33 @@ const compareDisplayValues = (a: { name: string }, b: { name: string }) => {
   return aIndex - bIndex;
 };
 
+const properties: StyleProperty[] = [
+  "display",
+  "flexDirection",
+  "flexWrap",
+  "alignItems",
+  "justifyContent",
+  "alignContent",
+  "rowGap",
+  "columnGap",
+];
+
 export const LayoutSection = ({
   currentStyle,
   setProperty,
   deleteProperty,
   createBatchUpdate,
-  styleConfigsByCategory,
-  label: sectionLabel,
-  isOpen,
 }: RenderCategoryProps) => {
   const displayValue = toValue(currentStyle.display?.value);
 
-  const { label, items } = styleConfigByName.display;
+  const { label, items } = styleConfigByName("display");
 
   return (
-    <CollapsibleSection label={sectionLabel} isOpen={isOpen}>
+    <CollapsibleSection
+      label="Layout"
+      currentStyle={currentStyle}
+      properties={properties}
+    >
       <>
         <Grid css={{ gridTemplateColumns: "4fr 6fr" }}>
           <PropertyName
@@ -378,18 +389,13 @@ export const LayoutSection = ({
           />
         </Grid>
 
-        {displayValue === "flex" || displayValue === "inline-flex" ? (
+        {(displayValue === "flex" || displayValue === "inline-flex") && (
           <LayoutSectionFlex
             currentStyle={currentStyle}
             setProperty={setProperty}
             deleteProperty={deleteProperty}
             createBatchUpdate={createBatchUpdate}
           />
-        ) : (
-          styleConfigsByCategory.map((entry) =>
-            // exclude display already rendered above
-            entry.property === "display" ? null : renderProperty(entry)
-          )
         )}
       </>
     </CollapsibleSection>

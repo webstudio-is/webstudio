@@ -1,15 +1,16 @@
 import { Box, Flex, Grid, theme } from "@webstudio-is/design-system";
-import { CollapsibleSection } from "~/builder/shared/collapsible-section";
+import type { StyleProperty } from "@webstudio-is/css-data";
 import { ColorControl } from "../../controls";
 import { styleConfigByName } from "../../shared/configs";
 import { PropertyName } from "../../shared/property-name";
 import type { RenderCategoryProps } from "../../style-sections";
+import { CollapsibleSection } from "../../shared/collapsible-section";
 import { BorderRadius } from "./border-radius";
 import { BorderStyle } from "./border-style";
 import { deleteAllProperties, setAllProperties } from "./border-utils";
 import { BorderWidth } from "./border-width";
 
-const { items: borderColorItems } = styleConfigByName["borderTopColor"];
+const { items: borderColorItems } = styleConfigByName("borderTopColor");
 
 const borderColorProperties = [
   "borderTopColor",
@@ -17,6 +18,25 @@ const borderColorProperties = [
   "borderBottomColor",
   "borderLeftColor",
 ] as const;
+
+const properties: StyleProperty[] = [
+  ...borderColorProperties,
+
+  "borderTopLeftRadius",
+  "borderTopRightRadius",
+  "borderBottomLeftRadius",
+  "borderBottomRightRadius",
+
+  "borderTopStyle",
+  "borderRightStyle",
+  "borderBottomStyle",
+  "borderLeftStyle",
+
+  "borderTopWidth",
+  "borderRightWidth",
+  "borderBottomWidth",
+  "borderLeftWidth",
+];
 
 export const BordersSection = (props: RenderCategoryProps) => {
   const { currentStyle, setProperty, deleteProperty, createBatchUpdate } =
@@ -40,7 +60,11 @@ export const BordersSection = (props: RenderCategoryProps) => {
   );
 
   return (
-    <CollapsibleSection label={props.label} isOpen={props.isOpen}>
+    <CollapsibleSection
+      label="Borders"
+      currentStyle={currentStyle}
+      properties={properties}
+    >
       <Flex direction="column" gap={2}>
         <BorderStyle
           createBatchUpdate={createBatchUpdate}

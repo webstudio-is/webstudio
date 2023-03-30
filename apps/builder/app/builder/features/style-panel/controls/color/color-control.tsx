@@ -20,7 +20,7 @@ export const ColorControl = ({
   const [intermediateValue, setIntermediateValue] =
     useState<CssColorPickerValueInput>();
 
-  const { items: defaultItems } = styleConfigByName[property];
+  const { items: defaultItems } = styleConfigByName(property);
   const styleInfo = currentStyle[property];
 
   let value = currentStyle[property]?.value ?? {

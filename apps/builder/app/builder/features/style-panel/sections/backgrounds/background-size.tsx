@@ -36,7 +36,7 @@ export const BackgroundSize = (
   const styleInfo = props.currentStyle[property];
   const styleValue = styleInfo?.value;
   const styleSource = "default";
-  const { items: defaultItems } = styleConfigByName[property];
+  const { items: defaultItems } = styleConfigByName(property);
 
   const selectOptions = [
     ...defaultItems,

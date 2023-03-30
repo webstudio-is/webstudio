@@ -112,10 +112,7 @@ export const BackgroundsCollapsible = () => {
         setProperty={setProperty}
         deleteProperty={deleteProperty}
         createBatchUpdate={createBatchUpdate}
-        category={"backgrounds"}
-        styleConfigsByCategory={[]}
-        moreStyleConfigsByCategory={[]}
-        label="Backgrounds"
+        category="backgrounds"
       />
     </Panel>
   );
@@ -137,10 +134,7 @@ export const Backgrounds = () => {
         setProperty={setProperty}
         deleteProperty={deleteProperty}
         createBatchUpdate={createBatchUpdate}
-        category={"backgrounds"}
-        styleConfigsByCategory={[]}
-        moreStyleConfigsByCategory={[]}
-        label="Backgrounds"
+        category="backgrounds"
       />
     </Panel>
   );

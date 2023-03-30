@@ -1,7 +1,6 @@
 import { Grid } from "@webstudio-is/design-system";
 import { toValue } from "@webstudio-is/css-engine";
 import { styleConfigByName } from "./shared/configs";
-import type { Category } from "@webstudio-is/react-sdk";
 import type { Style, StyleProperty } from "@webstudio-is/css-data";
 import type {
   SetProperty,
@@ -25,6 +24,22 @@ import {
   OtherSection,
 } from "./sections";
 
+export const categories = [
+  "layout",
+  "flexChild",
+  "gridChild",
+  "space",
+  "size",
+  "position",
+  "typography",
+  "backgrounds",
+  "borders",
+  "effects",
+  "other",
+];
+
+export type Category = (typeof categories)[number];
+
 export type ControlProps = {
   property: StyleProperty;
   items?: Array<{ label: string; name: string }>;
@@ -40,10 +55,6 @@ export type RenderCategoryProps = {
   createBatchUpdate: CreateBatchUpdate;
   currentStyle: StyleInfo;
   category: Category;
-  styleConfigsByCategory: Array<RenderPropertyProps>;
-  moreStyleConfigsByCategory: Array<RenderPropertyProps>;
-  label: string;
-  isOpen?: boolean | undefined;
 };
 
 export type RenderPropertyProps = {
@@ -51,7 +62,6 @@ export type RenderPropertyProps = {
   currentStyle: StyleInfo;
   setProperty: SetProperty;
   deleteProperty: DeleteProperty;
-  category: Category;
 };
 
 export const renderProperty = ({
@@ -59,16 +69,15 @@ export const renderProperty = ({
   currentStyle,
   setProperty,
   deleteProperty,
-  category,
 }: RenderPropertyProps) => {
-  const { label, control, items } = styleConfigByName[property];
+  const { label, control, items } = styleConfigByName(property);
   const Control = controls[control];
   if (!Control) {
     return null;
   }
 
   return (
-    <Grid key={category + property} css={{ gridTemplateColumns: "4fr 6fr" }}>
+    <Grid key={property} css={{ gridTemplateColumns: "4fr 6fr" }}>
       <PropertyName
         style={currentStyle}
         property={property}
@@ -92,10 +101,6 @@ export const renderCategory = ({
   createBatchUpdate,
   currentStyle,
   category,
-  styleConfigsByCategory,
-  moreStyleConfigsByCategory,
-  label,
-  isOpen,
 }: RenderCategoryProps) => {
   const Section = sections[category];
 
@@ -106,10 +111,6 @@ export const renderCategory = ({
       createBatchUpdate={createBatchUpdate}
       currentStyle={currentStyle}
       category={category}
-      styleConfigsByCategory={styleConfigsByCategory}
-      moreStyleConfigsByCategory={moreStyleConfigsByCategory}
-      label={label}
-      isOpen={isOpen}
     />
   );
 };

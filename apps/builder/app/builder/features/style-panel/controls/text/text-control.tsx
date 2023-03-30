@@ -18,7 +18,7 @@ export const TextControl = ({
   icon,
   disabled,
 }: ControlProps & { icon?: JSX.Element }) => {
-  const { label, items: defaultItems } = styleConfigByName[property];
+  const { label, items: defaultItems } = styleConfigByName(property);
   const styleInfo = currentStyle[property];
   const value = styleInfo?.value;
 

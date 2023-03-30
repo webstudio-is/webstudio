@@ -40,11 +40,12 @@ import { BackgroundContent } from "./background-content";
 import { getLayerName, LayerThumbnail } from "./background-thumbnail";
 import { useSortable } from "./use-sortable";
 import { useMemo } from "react";
-import type { RgbValue } from "@webstudio-is/css-data";
+import type { RgbValue, StyleProperty } from "@webstudio-is/css-data";
 import {
   CollapsibleSectionBase,
   useOpenState,
 } from "~/builder/shared/collapsible-section";
+import { getDots } from "../../shared/collapsible-section";
 
 const Layer = (props: {
   id: string;
@@ -124,18 +125,26 @@ const Layer = (props: {
   );
 };
 
-const BackgroundsCollapsibleSection = (
-  props: RenderCategoryProps & { children: React.ReactNode }
-) => {
-  const { label, children } = props;
-  const [isOpen, setIsOpen] = useOpenState(props);
+const properties: StyleProperty[] = [
+  "backgroundAttachment",
+  "backgroundClip",
+  "backgroundColor",
+  "backgroundImage",
+  "backgroundOrigin",
+  "backgroundPosition",
+  "backgroundRepeat",
+  "backgroundSize",
+  "backgroundBlendMode",
+];
 
-  const layersStyleSource = getLayersStyleSource(props.currentStyle);
-  const dots: ("local" | "remote")[] = [];
-
-  if (layersStyleSource === "local" || layersStyleSource === "remote") {
-    dots.push(layersStyleSource);
-  }
+const BackgroundsCollapsibleSection = ({
+  children,
+  currentStyle,
+  createBatchUpdate,
+}: RenderCategoryProps & { children: React.ReactNode }) => {
+  const label = "Backgrounds";
+  const [isOpen, setIsOpen] = useOpenState({ label });
+  const layersStyleSource = getLayersStyleSource(currentStyle);
 
   return (
     <CollapsibleSectionBase
@@ -147,12 +156,11 @@ const BackgroundsCollapsibleSection = (
       }}
       trigger={
         <SectionTitle
-          dots={dots}
+          dots={getDots(currentStyle, properties)}
           suffix={
             <SectionTitleButton
               prefix={<PlusIcon />}
               onClick={() => {
-                const { currentStyle, createBatchUpdate } = props;
                 addLayer(currentStyle, createBatchUpdate);
                 setIsOpen(true);
               }}
@@ -160,15 +168,14 @@ const BackgroundsCollapsibleSection = (
           }
         >
           <PropertyName
-            style={props.currentStyle}
+            style={currentStyle}
             property={layeredBackgroundProps}
             label={
               <SectionTitleLabel color={layersStyleSource}>
-                {props.label}
+                {label}
               </SectionTitleLabel>
             }
             onReset={() => {
-              const { createBatchUpdate } = props;
               deleteLayers(createBatchUpdate);
             }}
           />
@@ -185,7 +192,7 @@ export const BackgroundsSection = (props: RenderCategoryProps) => {
     props;
   const layersCount = getLayerCount(currentStyle);
 
-  const { items } = styleConfigByName["backgroundColor"];
+  const { items } = styleConfigByName("backgroundColor");
 
   const layers = useMemo(
     () =>
@@ -210,10 +217,6 @@ export const BackgroundsSection = (props: RenderCategoryProps) => {
       createBatchUpdate={createBatchUpdate}
       currentStyle={currentStyle}
       category={props.category}
-      styleConfigsByCategory={props.styleConfigsByCategory}
-      moreStyleConfigsByCategory={props.moreStyleConfigsByCategory}
-      label={props.label}
-      isOpen={props.isOpen}
     >
       <Flex gap={1} direction="column">
         <Flex

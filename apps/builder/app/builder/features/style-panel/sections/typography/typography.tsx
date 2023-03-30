@@ -1,11 +1,13 @@
-import type { RenderCategoryProps } from "../../style-sections";
 import {
   Flex,
   Grid,
   DeprecatedIconButton,
   Tooltip,
+  theme,
 } from "@webstudio-is/design-system";
 import { toValue } from "@webstudio-is/css-engine";
+import type { StyleProperty } from "@webstudio-is/css-data";
+import type { RenderCategoryProps } from "../../style-sections";
 import { PropertyName } from "../../shared/property-name";
 import {
   ColorControl,
@@ -35,12 +37,32 @@ import {
 import { ToggleGroupControl } from "../../controls/toggle/toggle-control";
 import { FloatingPanel } from "~/builder/shared/floating-panel";
 import { getStyleSource } from "../../shared/style-info";
-import { theme } from "@webstudio-is/design-system";
-import { CollapsibleSection } from "~/builder/shared/collapsible-section";
+import { CollapsibleSection } from "../../shared/collapsible-section";
+
+const properties: StyleProperty[] = [
+  "fontFamily",
+  "fontWeight",
+  "fontSize",
+  "lineHeight",
+  "color",
+  "textAlign",
+  "fontStyle",
+  "textDecorationLine",
+  "letterSpacing",
+  "textTransform",
+  "direction",
+  "whiteSpace",
+  "textOverflow",
+  "hyphens",
+];
 
 export const TypographySection = (props: RenderCategoryProps) => {
   return (
-    <CollapsibleSection label={props.label} isOpen={props.isOpen}>
+    <CollapsibleSection
+      label="Typography"
+      currentStyle={props.currentStyle}
+      properties={properties}
+    >
       <Flex css={{ gap: theme.spacing[7] }} direction="column">
         <TypographySectionFont {...props} />
         <TypographySectionSizing {...props} />
