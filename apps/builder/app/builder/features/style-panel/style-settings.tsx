@@ -4,7 +4,6 @@ import {
   renderCategory,
   shouldRenderCategory,
   type RenderCategoryProps,
-  type Category,
 } from "./style-sections";
 import type { SetProperty, CreateBatchUpdate } from "./shared/use-style-data";
 import type { StyleInfo } from "./shared/style-info";
@@ -38,11 +37,9 @@ export const StyleSettings = ({
   currentStyle,
 }: StyleSettingsProps) => {
   const all = [];
-  let category: Category;
-
   const parentStyle = useParentStyle();
 
-  for (category of categories) {
+  for (const category of categories) {
     const categoryProps: RenderCategoryProps = {
       setProperty,
       deleteProperty,

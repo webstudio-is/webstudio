@@ -331,7 +331,6 @@ const orderedDisplayValues = [
   "inline-flex",
   "inline",
   "none",
-  "grid",
 ];
 if (isFeatureEnabled("displayContents")) {
   orderedDisplayValues.push("contents");

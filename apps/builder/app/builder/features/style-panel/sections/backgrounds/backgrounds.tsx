@@ -137,14 +137,14 @@ const properties: StyleProperty[] = [
   "backgroundBlendMode",
 ];
 
-const BackgroundsCollapsibleSection = (
-  props: RenderCategoryProps & { children: React.ReactNode }
-) => {
+const BackgroundsCollapsibleSection = ({
+  children,
+  currentStyle,
+  createBatchUpdate,
+}: RenderCategoryProps & { children: React.ReactNode }) => {
   const label = "Backgrounds";
-  const { children, currentStyle } = props;
   const [isOpen, setIsOpen] = useOpenState({ label });
-
-  const layersStyleSource = getLayersStyleSource(props.currentStyle);
+  const layersStyleSource = getLayersStyleSource(currentStyle);
 
   return (
     <CollapsibleSectionBase
@@ -161,7 +161,6 @@ const BackgroundsCollapsibleSection = (
             <SectionTitleButton
               prefix={<PlusIcon />}
               onClick={() => {
-                const { currentStyle, createBatchUpdate } = props;
                 addLayer(currentStyle, createBatchUpdate);
                 setIsOpen(true);
               }}
@@ -169,7 +168,7 @@ const BackgroundsCollapsibleSection = (
           }
         >
           <PropertyName
-            style={props.currentStyle}
+            style={currentStyle}
             property={layeredBackgroundProps}
             label={
               <SectionTitleLabel color={layersStyleSource}>
@@ -177,7 +176,6 @@ const BackgroundsCollapsibleSection = (
               </SectionTitleLabel>
             }
             onReset={() => {
-              const { createBatchUpdate } = props;
               deleteLayers(createBatchUpdate);
             }}
           />
