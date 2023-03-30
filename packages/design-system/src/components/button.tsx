@@ -47,22 +47,21 @@ const foregrounds: Record<ButtonColor, string> = {
 };
 
 // CSS supports multiple gradients as backgrounds but not multiple colors
-const backgroundColors = (base: string, overlay: string) => {
-  if (base === "$colors$backgroundGradientPrimary") {
-    return `linear-gradient(${overlay}, ${overlay}), ${base}`;
-  }
-  return `linear-gradient(${overlay}, ${overlay}), linear-gradient(${base}, ${base})`;
-};
+const backgroundColors = (base: string, overlay: string) =>
+  `linear-gradient(${overlay}, ${overlay}), linear-gradient(${base}, ${base})`;
 
 const perColorStyle = (variant: ButtonColor) => ({
   background: variant === "ghost" ? "transparent" : backgrounds[variant],
   color: foregrounds[variant],
 
   "&[data-state=auto]:hover, &[data-state=hover]": {
-    background: backgroundColors(
-      backgrounds[variant],
-      theme.colors.backgroundButtonHover
-    ),
+    background:
+      variant === "gradient"
+        ? `linear-gradient(${theme.colors.backgroundButtonHover}, ${theme.colors.backgroundButtonHover}), ${backgrounds[variant]}`
+        : backgroundColors(
+            backgrounds[variant],
+            theme.colors.backgroundButtonHover
+          ),
   },
 
   "&[data-state=auto]:focus-visible, &[data-state=focus]": {
@@ -71,10 +70,13 @@ const perColorStyle = (variant: ButtonColor) => ({
   },
 
   "&[data-state=auto]:active, &[data-state=pressed]": {
-    background: backgroundColors(
-      backgrounds[variant],
-      theme.colors.backgroundButtonPressed
-    ),
+    background:
+      variant === "gradient"
+        ? `linear-gradient(${theme.colors.backgroundButtonPressed}, ${theme.colors.backgroundButtonPressed}), ${backgrounds[variant]}`
+        : backgroundColors(
+            backgrounds[variant],
+            theme.colors.backgroundButtonPressed
+          ),
   },
 
   "&[data-state=disabled]": {
