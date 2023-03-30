@@ -1,5 +1,6 @@
 import { nanoid } from "nanoid";
 import {
+  findTreeInstanceIdsExcludingSlotDescendants,
   getStyleDeclKey,
   Instance,
   Instances,
@@ -337,22 +338,39 @@ export const insertInstancesCopyMutable = (
   copiedInstances: InstancesItem[],
   dropTarget: DroppableTarget
 ) => {
+  const newInstances: Instances = new Map();
+  for (const instance of copiedInstances) {
+    newInstances.set(instance.id, instance);
+  }
+  const newInstanceIds = findTreeInstanceIdsExcludingSlotDescendants(
+    newInstances,
+    copiedInstances[0].id
+  );
+
   const copiedInstanceIds = new Map<Instance["id"], Instance["id"]>();
   const copiedInstancesWithNewIds: InstancesItem[] = [];
-  for (const instance of copiedInstances) {
+  for (const instanceId of newInstanceIds) {
     const newInstanceId = nanoid();
-    copiedInstanceIds.set(instance.id, newInstanceId);
+    copiedInstanceIds.set(instanceId, newInstanceId);
   }
 
   const preservedChildIds = new Set<Instance["id"]>();
 
   for (const instance of copiedInstances) {
+    const newInstanceId = copiedInstanceIds.get(instance.id);
+    if (newInstanceId === undefined) {
+      if (instances.has(instance.id) === false) {
+        instances.set(instance.id, instance);
+      }
+      continue;
+    }
+
     copiedInstancesWithNewIds.push({
       ...instance,
-      id: copiedInstanceIds.get(instance.id) ?? instance.id,
+      id: newInstanceId,
       children: instance.children.map((child) => {
         if (child.type === "id") {
-          if (copiedInstanceIds.has(child.value) === false) {
+          if (newInstanceIds.has(child.value) === false) {
             preservedChildIds.add(child.value);
           }
           return {
@@ -391,11 +409,21 @@ export const insertInstancesCopyMutable = (
 
 export const insertStyleSourcesCopyMutable = (
   styleSources: StyleSources,
-  copiedStyleSources: StyleSource[]
+  copiedStyleSources: StyleSource[],
+  newStyleSourceIds: Set<StyleSource["id"]>
 ) => {
   // store map of old ids to new ids to copy dependant data
   const copiedStyleSourceIds = new Map<StyleSource["id"], StyleSource["id"]>();
   for (const styleSource of copiedStyleSources) {
+    // insert without changes when style source is shared
+    if (newStyleSourceIds.has(styleSource.id) === false) {
+      // prevent overriding shared style sources if already exist
+      if (styleSources.has(styleSource.id) === false) {
+        styleSources.set(styleSource.id, styleSource);
+      }
+      continue;
+    }
+
     const newStyleSourceId = nanoid();
     copiedStyleSourceIds.set(styleSource.id, newStyleSourceId);
     styleSources.set(newStyleSourceId, {
@@ -412,8 +440,17 @@ export const insertPropsCopyMutable = (
   copiedInstanceIds: Map<Instance["id"], Instance["id"]>
 ) => {
   for (const prop of copiedProps) {
-    const newInstanceId =
-      copiedInstanceIds.get(prop.instanceId) ?? prop.instanceId;
+    const newInstanceId = copiedInstanceIds.get(prop.instanceId);
+    // insert without changes when instance does not have new id
+    if (newInstanceId === undefined) {
+      // prevent overriding shared props if already exist
+      if (props.has(prop.id) === false) {
+        props.set(prop.id, prop);
+      }
+      continue;
+    }
+
+    // copy prop before inserting
     const newPropId = nanoid();
     props.set(newPropId, {
       ...prop,
@@ -430,13 +467,20 @@ export const insertStyleSourceSelectionsCopyMutable = (
   copiedStyleSourceIds: Map<StyleSource["id"], StyleSource["id"]>
 ) => {
   for (const styleSourceSelection of copiedStyleSourceSelections) {
-    // preserve ids when no new id provided
-    // for example for non-local style source
-    const newInstanceId =
-      copiedInstanceIds.get(styleSourceSelection.instanceId) ??
-      styleSourceSelection.instanceId;
+    // insert without changes when style source selection does not have new instance id
+    const { instanceId } = styleSourceSelection;
+    const newInstanceId = copiedInstanceIds.get(instanceId);
+    if (newInstanceId === undefined) {
+      // prevent overriding shared style source selections if already exist
+      if (styleSourceSelections.has(instanceId) === false) {
+        styleSourceSelections.set(instanceId, styleSourceSelection);
+      }
+      continue;
+    }
+
     const newValues = styleSourceSelection.values.map(
       (styleSourceId) =>
+        // preserve shared style source ids
         copiedStyleSourceIds.get(styleSourceId) ?? styleSourceId
     );
     styleSourceSelections.set(newInstanceId, {
@@ -452,10 +496,17 @@ export const insertStylesCopyMutable = (
   copiedStyleSourceIds: Map<StyleSource["id"], StyleSource["id"]>
 ) => {
   for (const styleDecl of copiedStyles) {
-    // preserve ids when no new id provided
-    const newStyleSourceId =
-      copiedStyleSourceIds.get(styleDecl.styleSourceId) ??
-      styleDecl.styleSourceId;
+    const newStyleSourceId = copiedStyleSourceIds.get(styleDecl.styleSourceId);
+    // insert without changes when style source does not have new id
+    if (newStyleSourceId === undefined) {
+      const styleDeclKey = getStyleDeclKey(styleDecl);
+      // prevent overriding shared styles if already exist
+      if (styles.has(styleDeclKey) === false) {
+        styles.set(styleDeclKey, styleDecl);
+      }
+      continue;
+    }
+
     const styleDeclCopy = {
       ...styleDecl,
       styleSourceId: newStyleSourceId,
