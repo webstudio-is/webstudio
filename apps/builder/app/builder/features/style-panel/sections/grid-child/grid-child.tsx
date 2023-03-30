@@ -15,7 +15,7 @@ const properties: StyleProperty[] = [
 
 export const GridChildSection = (props: RenderCategoryProps) => (
   <CollapsibleSection
-    label={props.label}
+    label="Grid Child"
     currentStyle={props.currentStyle}
     properties={properties}
   >

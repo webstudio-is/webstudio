@@ -24,7 +24,7 @@ const properties: StyleProperty[] = [
 
 export const OtherSection = (props: RenderCategoryProps) => (
   <CollapsibleSection
-    label={props.label}
+    label="Other"
     currentStyle={props.currentStyle}
     properties={properties}
   >

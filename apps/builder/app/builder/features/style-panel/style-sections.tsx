@@ -1,7 +1,6 @@
 import { Grid } from "@webstudio-is/design-system";
 import { toValue } from "@webstudio-is/css-engine";
 import { styleConfigByName } from "./shared/configs";
-import type { Category } from "@webstudio-is/react-sdk";
 import type { Style, StyleProperty } from "@webstudio-is/css-data";
 import type {
   SetProperty,
@@ -25,6 +24,22 @@ import {
   OtherSection,
 } from "./sections";
 
+export const categories = [
+  "layout",
+  "flexChild",
+  "gridChild",
+  "space",
+  "size",
+  "position",
+  "typography",
+  "backgrounds",
+  "borders",
+  "effects",
+  "other",
+];
+
+export type Category = (typeof categories)[number];
+
 export type ControlProps = {
   property: StyleProperty;
   items?: Array<{ label: string; name: string }>;
@@ -40,7 +55,6 @@ export type RenderCategoryProps = {
   createBatchUpdate: CreateBatchUpdate;
   currentStyle: StyleInfo;
   category: Category;
-  label: string;
 };
 
 export type RenderPropertyProps = {
@@ -87,7 +101,6 @@ export const renderCategory = ({
   createBatchUpdate,
   currentStyle,
   category,
-  label,
 }: RenderCategoryProps) => {
   const Section = sections[category];
 
@@ -98,7 +111,6 @@ export const renderCategory = ({
       createBatchUpdate={createBatchUpdate}
       currentStyle={currentStyle}
       category={category}
-      label={label}
     />
   );
 };

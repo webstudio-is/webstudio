@@ -140,8 +140,9 @@ const properties: StyleProperty[] = [
 const BackgroundsCollapsibleSection = (
   props: RenderCategoryProps & { children: React.ReactNode }
 ) => {
-  const { label, children, currentStyle } = props;
-  const [isOpen, setIsOpen] = useOpenState(props);
+  const label = "Backgrounds";
+  const { children, currentStyle } = props;
+  const [isOpen, setIsOpen] = useOpenState({ label });
 
   const layersStyleSource = getLayersStyleSource(props.currentStyle);
 
@@ -172,7 +173,7 @@ const BackgroundsCollapsibleSection = (
             property={layeredBackgroundProps}
             label={
               <SectionTitleLabel color={layersStyleSource}>
-                {props.label}
+                {label}
               </SectionTitleLabel>
             }
             onReset={() => {
@@ -218,7 +219,6 @@ export const BackgroundsSection = (props: RenderCategoryProps) => {
       createBatchUpdate={createBatchUpdate}
       currentStyle={currentStyle}
       category={props.category}
-      label={props.label}
     >
       <Flex gap={1} direction="column">
         <Flex

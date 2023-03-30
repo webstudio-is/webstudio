@@ -91,7 +91,6 @@ export const SpaceSection = ({
   deleteProperty,
   createBatchUpdate,
   currentStyle,
-  label,
 }: RenderCategoryProps) => {
   const [hoverTarget, setHoverTarget] = useState<HoverTagret>();
 
@@ -141,7 +140,7 @@ export const SpaceSection = ({
 
   return (
     <CollapsibleSection
-      label={label}
+      label="Space"
       currentStyle={currentStyle}
       properties={spacePropertiesNames}
     >

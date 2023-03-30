@@ -33,7 +33,7 @@ const properties: StyleProperty[] = [
 export const FlexChildSection = (props: RenderCategoryProps) => {
   return (
     <CollapsibleSection
-      label={props.label}
+      label="Flex Child"
       currentStyle={props.currentStyle}
       properties={properties}
     >

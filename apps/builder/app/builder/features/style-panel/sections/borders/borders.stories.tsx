@@ -85,8 +85,7 @@ export const Borders = () => {
         setProperty={setProperty}
         deleteProperty={deleteProperty}
         createBatchUpdate={createBatchUpdate}
-        category={"borders"}
-        label={"Borders"}
+        category="borders"
       />
     </Panel>
   );

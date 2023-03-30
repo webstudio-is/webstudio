@@ -1,9 +1,10 @@
-import { categories, type Category } from "@webstudio-is/react-sdk";
 import type { StyleProperty } from "@webstudio-is/css-data";
 import {
+  categories,
   renderCategory,
   shouldRenderCategory,
   type RenderCategoryProps,
+  type Category,
 } from "./style-sections";
 import type { SetProperty, CreateBatchUpdate } from "./shared/use-style-data";
 import type { StyleInfo } from "./shared/style-info";
@@ -41,14 +42,13 @@ export const StyleSettings = ({
 
   const parentStyle = useParentStyle();
 
-  for (category in categories) {
+  for (category of categories) {
     const categoryProps: RenderCategoryProps = {
       setProperty,
       deleteProperty,
       createBatchUpdate,
       currentStyle,
       category,
-      label: categories[category].label,
     };
 
     if (shouldRenderCategory(categoryProps, parentStyle)) {

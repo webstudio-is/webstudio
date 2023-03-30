@@ -59,7 +59,7 @@ const properties: StyleProperty[] = [
 export const TypographySection = (props: RenderCategoryProps) => {
   return (
     <CollapsibleSection
-      label={props.label}
+      label="Typography"
       currentStyle={props.currentStyle}
       properties={properties}
     >
