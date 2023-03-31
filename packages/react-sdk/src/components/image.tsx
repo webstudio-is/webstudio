@@ -1,6 +1,6 @@
 import { forwardRef, type ElementRef, type ComponentProps } from "react";
 
-const defaultTag = "img";
+export const defaultTag = "img";
 
 // quality and optimize can be overwritten and used by asset transform
 // Or we need and additional way to pass them upper level

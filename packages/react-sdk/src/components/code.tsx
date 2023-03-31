@@ -6,7 +6,7 @@ import {
 } from "react";
 import { cssVars } from "@webstudio-is/css-vars";
 
-const defaultTag = "code";
+export const defaultTag = "code";
 
 export const displayVarNamespace = cssVars.unique("code-display");
 

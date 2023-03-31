@@ -1,6 +1,6 @@
 import { forwardRef, type ElementRef, type ComponentProps } from "react";
 
-const defaultTag = "input";
+export const defaultTag = "input";
 
 export const Input = forwardRef<
   ElementRef<typeof defaultTag>,

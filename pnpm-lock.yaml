@@ -1202,6 +1202,9 @@ importers:
       detect-font:
         specifier: ^0.1.5
         version: 0.1.5
+      html-tags:
+        specifier: ^3.2.0
+        version: 3.2.0
       mitt:
         specifier: ^3.0.0
         version: 3.0.0
@@ -13452,7 +13455,6 @@ packages:
   /html-tags@3.2.0:
     resolution: {integrity: sha512-vy7ClnArOZwCnqZgvv+ddgHgJiAFXe3Ge9ML5/mBctVJoUoYPCdxVucOywjDARn6CVoh3dRSFdPHy2sX80L0Wg==}
     engines: {node: '>=8'}
-    dev: true
 
   /html-void-elements@1.0.5:
     resolution: {integrity: sha512-uE/TxKuyNIcx44cIWnjr/rfIATDH7ZaOMmstu0CwhFG1Dunhlp4OC6/NMbhiwoq5BpW0ubi303qnEk/PZj614w==}

@@ -5,7 +5,7 @@ import {
   type ComponentProps,
 } from "react";
 
-const defaultTag = "blockquote";
+export const defaultTag = "blockquote";
 
 type Props = ComponentProps<typeof defaultTag>;
 

@@ -5,7 +5,7 @@ import {
   type ComponentProps,
 } from "react";
 
-const defaultTag = "li";
+export const defaultTag = "li";
 
 type Props = ComponentProps<typeof defaultTag>;
 
