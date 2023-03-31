@@ -176,7 +176,7 @@ export const getInheritedInfo = (
   instances: Instances,
   stylesByInstanceId: Map<Instance["id"], StyleDecl[]>,
   instanceSelector: InstanceSelector,
-  tagName: HtmlTags | undefined,
+
   cascadedBreakpointIds: string[],
   selectedBreakpointId: string
 ) => {
@@ -197,7 +197,13 @@ export const getInheritedInfo = (
       continue;
     }
 
-    const presetStyle = getPresetStyle(instances, ancestorInstance.id, tagName);
+    // @todo We need to somehow get the tag name of the ancestor instance
+    // otherwise getPresetStyle is always undefined
+    const presetStyle = getPresetStyle(
+      instances,
+      ancestorInstance.id,
+      undefined
+    );
     if (presetStyle) {
       for (const [styleProperty, styleValue] of Object.entries(presetStyle)) {
         if (inheritableProperties.has(styleProperty)) {
@@ -274,7 +280,6 @@ export const useStyleInfo = () => {
       instances,
       stylesByInstanceId,
       selectedInstanceSelector,
-      tagName,
       cascadedBreakpointIds,
       selectedBreakpointId
     );
@@ -284,7 +289,6 @@ export const useStyleInfo = () => {
     cascadedBreakpointIds,
     selectedBreakpointId,
     selectedInstanceSelector,
-    tagName,
   ]);
 
   const cascadedInfo = useMemo(() => {
@@ -372,7 +376,6 @@ export const useInstanceStyleData = (
       instances,
       stylesByInstanceId,
       instanceSelector,
-      tagName,
       cascadedBreakpointIds,
       selectedBreakpointId
     );
@@ -382,7 +385,6 @@ export const useInstanceStyleData = (
     cascadedBreakpointIds,
     selectedBreakpointId,
     instanceSelector,
-    tagName,
   ]);
 
   const styleData = useMemo(() => {
