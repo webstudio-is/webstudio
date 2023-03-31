@@ -133,15 +133,7 @@ export const body = {
   /* 2 */
   fontFamily: {
     type: "keyword",
-    value: `
-	  	system-ui,
-		  'Segoe UI',
-		  Roboto,
-		  Helvetica,
-		  Arial,
-		  sans-serif,
-		  'Apple Color Emoji',
-		  'Segoe UI Emoji'`,
+    value: `system-ui, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif, 'Apple Color Emoji', 'Segoe UI Emoji'`,
   },
   boxSizing,
   ...borders,
@@ -170,7 +162,7 @@ Add the correct text decoration in Chrome, Edge, and Safari.
 !!!Skipped as we don't support this logic!!!
 
 abbr[title] {
-	text-decoration: underline dotted;
+ text-decoration: underline dotted;
 }
 */
 
@@ -195,13 +187,7 @@ export const code = {
   /* 1 */
   fontFamily: {
     type: "keyword",
-    value: `
-		ui-monospace,
-		SFMono-Regular,
-		Consolas,
-		'Liberation Mono',
-		Menlo,
-		monospace`,
+    value: `ui-monospace, SFMono-Regular, Consolas, 'Liberation Mono', Menlo, monospace`,
   },
   /* 2 */
   fontSize: {
@@ -402,7 +388,7 @@ Remove the inner border and padding in Firefox.
 
 ::-moz-focus-inner {
   border-style: none;
-	padding: 0;
+ padding: 0;
 }
 */
 
@@ -488,7 +474,7 @@ Correct the cursor style of increment and decrement buttons in Safari.
 
 [type='search'] {
   -webkit-appearance: textfield;
-	outline-offset: -2px;
+ outline-offset: -2px;
 }
 */
 
@@ -510,7 +496,7 @@ Remove the inner padding in Chrome and Safari on macOS.
 
 ::-webkit-file-upload-buttonBase {
   -webkit-appearance: buttonBase;
-	font: inherit;
+ font: inherit;
 }
 */
 
