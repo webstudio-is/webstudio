@@ -1,5 +1,6 @@
 import { test, expect } from "@jest/globals";
 import type {
+  Breakpoint,
   Instance,
   Instances,
   InstancesItem,
@@ -22,9 +23,22 @@ import {
   insertStyleSourcesCopyMutable,
   insertStyleSourceSelectionsCopyMutable,
   reparentInstanceMutable,
+  mergeNewBreakpointsMutable,
 } from "./tree-utils";
 
 const expectString = expect.any(String) as unknown as string;
+
+const createBreakpoint = (
+  id: Breakpoint["id"],
+  minWidth: Breakpoint["minWidth"]
+) => ({ id, label: id, minWidth });
+
+const createBreakpointPair = (
+  id: Breakpoint["id"],
+  minWidth: Breakpoint["minWidth"]
+) => {
+  return [id, createBreakpoint(id, minWidth)] as const;
+};
 
 const createInstance = (
   id: Instance["id"],
@@ -98,6 +112,17 @@ const createStyleDecl = (
       value: value ?? "value",
     },
   };
+};
+
+const createStyleDeclPair = (
+  styleSourceId: string,
+  breakpointId: string,
+  value?: string
+) => {
+  return [
+    `${styleSourceId}:${breakpointId}:width`,
+    createStyleDecl(styleSourceId, breakpointId, value),
+  ] as const;
 };
 
 test("get ancestor instance selector", () => {
@@ -713,14 +738,11 @@ test("insert style source selections copy and apply new instance ids and style s
 
 test("insert styles copy and apply new style source ids", () => {
   const styles: Styles = new Map([
-    [`styleSource1:bp1:width`, createStyleDecl("styleSource1", "bp1")],
-    [`styleSource2:bp2:width`, createStyleDecl("styleSource2", "bp2")],
-    [`styleSource1:bp3:width`, createStyleDecl("styleSource1", "bp3")],
-    [`styleSource3:bp4:width`, createStyleDecl("styleSource3", "bp4")],
-    [
-      `existingSharedStyleSource:bp4:width`,
-      createStyleDecl("existingSharedStyleSource", "bp4"),
-    ],
+    createStyleDeclPair("styleSource1", "bp1"),
+    createStyleDeclPair("styleSource2", "bp2"),
+    createStyleDeclPair("styleSource1", "bp3"),
+    createStyleDeclPair("styleSource3", "bp4"),
+    createStyleDeclPair("existingSharedStyleSource", "bp4"),
   ]);
   const copiedStyles = [
     createStyleDecl("styleSource2", "bp2"),
@@ -732,25 +754,27 @@ test("insert styles copy and apply new style source ids", () => {
     ["styleSource2", "newStyleSource2"],
     ["styleSource3", "newStyleSource3"],
   ]);
-  insertStylesCopyMutable(styles, copiedStyles, copiedStyleSourceIds);
+  const mergedBreakpointIds = new Map<Breakpoint["id"], Breakpoint["id"]>([
+    ["bp2", "newBp2"],
+  ]);
+  insertStylesCopyMutable(
+    styles,
+    copiedStyles,
+    copiedStyleSourceIds,
+    mergedBreakpointIds
+  );
   expect(Array.from(styles.entries())).toEqual([
-    [`styleSource1:bp1:width`, createStyleDecl("styleSource1", "bp1")],
-    [`styleSource2:bp2:width`, createStyleDecl("styleSource2", "bp2")],
-    [`styleSource1:bp3:width`, createStyleDecl("styleSource1", "bp3")],
-    [`styleSource3:bp4:width`, createStyleDecl("styleSource3", "bp4")],
+    createStyleDeclPair("styleSource1", "bp1"),
+    createStyleDeclPair("styleSource2", "bp2"),
+    createStyleDeclPair("styleSource1", "bp3"),
+    createStyleDeclPair("styleSource3", "bp4"),
     // shared style is not overriden
-    [
-      `existingSharedStyleSource:bp4:width`,
-      createStyleDecl("existingSharedStyleSource", "bp4"),
-    ],
+    createStyleDeclPair("existingSharedStyleSource", "bp4"),
     // new styles are copied
-    [`newStyleSource2:bp2:width`, createStyleDecl("newStyleSource2", "bp2")],
-    [`newStyleSource3:bp4:width`, createStyleDecl("newStyleSource3", "bp4")],
+    createStyleDeclPair("newStyleSource2", "newBp2"),
+    createStyleDeclPair("newStyleSource3", "bp4"),
     // shared style inserted without changes
-    [
-      `sharedStyleSource:bp4:width`,
-      createStyleDecl("sharedStyleSource", "bp4"),
-    ],
+    createStyleDeclPair("sharedStyleSource", "bp4"),
   ]);
 });
 
@@ -801,4 +825,29 @@ test("find subtree local style sources", () => {
       styleSourceSelections
     )
   ).toEqual(new Set(["local2", "local4"]));
+});
+
+test("merge new breakpoints", () => {
+  const breakpoints = new Map([
+    createBreakpointPair("1", 0),
+    createBreakpointPair("2", 600),
+    createBreakpointPair("3", 1200),
+  ]);
+  const newBreakpoints = [
+    createBreakpoint("4", 600),
+    createBreakpoint("5", 768),
+  ];
+  const mergedBreakpointIds = mergeNewBreakpointsMutable(
+    breakpoints,
+    newBreakpoints
+  );
+  expect(mergedBreakpointIds).toEqual(new Map([["4", "2"]]));
+  expect(breakpoints).toEqual(
+    new Map([
+      createBreakpointPair("1", 0),
+      createBreakpointPair("2", 600),
+      createBreakpointPair("3", 1200),
+      createBreakpointPair("5", 768),
+    ])
+  );
 });
