@@ -9,6 +9,32 @@ import { colord } from "colord";
 import { getStyleSource } from "../../shared/style-info";
 import { styleConfigByName } from "../../shared/configs";
 import { useState } from "react";
+import type { RgbValue, StyleValue } from "@webstudio-is/css-data";
+
+const parseColor = (color?: StyleValue): RgbValue => {
+  const colordValue = colord(toValue(color));
+
+  if (colordValue.isValid()) {
+    const rgb = colordValue.toRgb();
+    return {
+      type: "rgb",
+      r: rgb.r,
+      g: rgb.g,
+      b: rgb.b,
+      alpha: rgb.a ?? 1,
+    };
+  }
+
+  // @todo what to show as default?
+  // Default to black
+  return {
+    type: "rgb",
+    r: 0,
+    g: 0,
+    b: 0,
+    alpha: 1,
+  };
+};
 
 export const ColorControl = ({
   property,
@@ -32,33 +58,15 @@ export const ColorControl = ({
 
   if (value.type !== "rgb" && value.type !== "keyword") {
     // Support previously set colors
-    const colordValue = colord(toValue(value));
-
-    if (colordValue.isValid()) {
-      const rgb = colordValue.toRgb();
-      value = {
-        type: "rgb",
-        r: rgb.r,
-        g: rgb.g,
-        b: rgb.b,
-        alpha: rgb.a ?? 1,
-      };
-    } else {
-      // @todo what to show as default?
-      // Default to black
-      value = {
-        type: "rgb",
-        r: 0,
-        g: 0,
-        b: 0,
-        alpha: 1,
-      };
-    }
+    value = parseColor(value);
   }
+
+  const currentColor = parseColor(currentStyle["color"]?.currentColor);
 
   return (
     <Flex align="center" gap="1">
       <ColorPicker
+        currentColor={currentColor}
         property={property}
         value={value}
         styleSource={getStyleSource(styleInfo)}
