@@ -56,6 +56,7 @@
     "@webstudio-is/prisma-client": "workspace:^",
     "@webstudio-is/project-build": "workspace:^",
     "detect-font": "^0.1.5",
+    "html-tags": "^3.2.0",
     "mitt": "^3.0.0",
     "nanostores": "^0.7.1",
     "warn-once": "^0.1.1"

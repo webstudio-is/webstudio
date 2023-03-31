@@ -14,6 +14,7 @@ import {
   instancesStore,
   selectedInstanceBrowserStyleStore,
   selectedInstanceSelectorStore,
+  selectedInstanceIntanceToTagStore,
   selectedStyleSourceStore,
   stylesIndexStore,
   useBreakpoints,
@@ -21,6 +22,7 @@ import {
 import { selectedBreakpointStore } from "~/shared/nano-states/breakpoints";
 import type { InstanceSelector } from "~/shared/tree-utils";
 import { getComponentMeta } from "@webstudio-is/react-sdk";
+import type { htmlTags as HtmlTags } from "html-tags";
 
 type CascadedValueInfo = {
   breakpointId: string;
@@ -150,7 +152,8 @@ export const getCascadedInfo = (
 
 export const getPresetStyle = (
   instances: Instances,
-  instanceId: undefined | Instance["id"]
+  instanceId: undefined | Instance["id"],
+  tagName: HtmlTags
 ) => {
   if (instanceId === undefined) {
     return;
@@ -159,7 +162,10 @@ export const getPresetStyle = (
   if (instance === undefined) {
     return;
   }
-  return getComponentMeta(instance.component)?.presetStyle;
+  if (tagName === undefined) {
+    return;
+  }
+  return getComponentMeta(instance.component)?.presetStyle?.[tagName];
 };
 
 /**
@@ -170,6 +176,7 @@ export const getInheritedInfo = (
   instances: Instances,
   stylesByInstanceId: Map<Instance["id"], StyleDecl[]>,
   instanceSelector: InstanceSelector,
+  selectedInstanceIntanceToTag: Map<Instance["id"], HtmlTags>,
   cascadedBreakpointIds: string[],
   selectedBreakpointId: string
 ) => {
@@ -190,7 +197,12 @@ export const getInheritedInfo = (
       continue;
     }
 
-    const presetStyle = getPresetStyle(instances, ancestorInstance.id);
+    const tagName = selectedInstanceIntanceToTag.get(instanceId);
+
+    const presetStyle =
+      tagName !== undefined
+        ? getPresetStyle(instances, ancestorInstance.id, tagName)
+        : undefined;
     if (presetStyle) {
       for (const [styleProperty, styleValue] of Object.entries(presetStyle)) {
         if (inheritableProperties.has(styleProperty)) {
@@ -231,6 +243,10 @@ export const useStyleInfo = () => {
   const selectedStyleSource = useStore(selectedStyleSourceStore);
   const selectedStyleSourceId = selectedStyleSource?.id;
   const browserStyle = useStore(selectedInstanceBrowserStyleStore);
+  const selectedInstanceIntanceToTag = useStore(
+    selectedInstanceIntanceToTagStore
+  );
+
   const instances = useStore(instancesStore);
   const { stylesByInstanceId, stylesByStyleSourceId } =
     useStore(stylesIndexStore);
@@ -257,7 +273,8 @@ export const useStyleInfo = () => {
   const inheritedInfo = useMemo(() => {
     if (
       selectedBreakpointId === undefined ||
-      selectedInstanceSelector === undefined
+      selectedInstanceSelector === undefined ||
+      selectedInstanceIntanceToTag === undefined
     ) {
       return {};
     }
@@ -265,6 +282,7 @@ export const useStyleInfo = () => {
       instances,
       stylesByInstanceId,
       selectedInstanceSelector,
+      selectedInstanceIntanceToTag,
       cascadedBreakpointIds,
       selectedBreakpointId
     );
@@ -274,6 +292,7 @@ export const useStyleInfo = () => {
     cascadedBreakpointIds,
     selectedBreakpointId,
     selectedInstanceSelector,
+    selectedInstanceIntanceToTag,
   ]);
 
   const cascadedInfo = useMemo(() => {
@@ -288,8 +307,16 @@ export const useStyleInfo = () => {
   }, [stylesByInstanceId, selectedInstanceSelector, cascadedBreakpointIds]);
 
   const presetStyle = useMemo(() => {
-    return getPresetStyle(instances, selectedInstanceSelector?.[0]);
-  }, [instances, selectedInstanceSelector]);
+    const selectedInstanceId = selectedInstanceSelector?.[0];
+    if (selectedInstanceId === undefined) {
+      return;
+    }
+    const tagName = selectedInstanceIntanceToTag?.get(selectedInstanceId);
+
+    return tagName !== undefined
+      ? getPresetStyle(instances, selectedInstanceSelector?.[0], tagName)
+      : undefined;
+  }, [instances, selectedInstanceSelector, selectedInstanceIntanceToTag]);
 
   const styleInfoData = useMemo(() => {
     const styleInfoData: StyleInfo = {};
@@ -325,11 +352,26 @@ export const useInstanceStyleData = (
   const { stylesByInstanceId } = useStore(stylesIndexStore);
   const [breakpoints] = useBreakpoints();
   const selectedBreakpoint = useStore(selectedBreakpointStore);
+
+  // We assume that instance ancestor contains tags we need to get preset styles
+  // Its not always true, but to extract parent styles it works well
+  const selectedInstanceIntanceToTag = useStore(
+    selectedInstanceIntanceToTagStore
+  );
+
   const selectedBreakpointId = selectedBreakpoint?.id;
 
   const presetStyle = useMemo(() => {
-    return getPresetStyle(instances, instanceSelector?.[0]);
-  }, [instances, instanceSelector]);
+    const selectedInstanceId = instanceSelector?.[0];
+    if (selectedInstanceId === undefined) {
+      return;
+    }
+    const tagName = selectedInstanceIntanceToTag?.get(selectedInstanceId);
+
+    return tagName !== undefined
+      ? getPresetStyle(instances, instanceSelector?.[0], tagName)
+      : undefined;
+  }, [instances, instanceSelector, selectedInstanceIntanceToTag]);
 
   const cascadedBreakpointIds = useMemo(
     () => getCascadedBreakpointIds(breakpoints, selectedBreakpointId),
@@ -352,13 +394,18 @@ export const useInstanceStyleData = (
   ]);
 
   const inheritedInfo = useMemo(() => {
-    if (selectedBreakpointId === undefined || instanceSelector === undefined) {
+    if (
+      selectedBreakpointId === undefined ||
+      instanceSelector === undefined ||
+      selectedInstanceIntanceToTag === undefined
+    ) {
       return {};
     }
     return getInheritedInfo(
       instances,
       stylesByInstanceId,
       instanceSelector,
+      selectedInstanceIntanceToTag,
       cascadedBreakpointIds,
       selectedBreakpointId
     );
@@ -368,6 +415,7 @@ export const useInstanceStyleData = (
     cascadedBreakpointIds,
     selectedBreakpointId,
     instanceSelector,
+    selectedInstanceIntanceToTag,
   ]);
 
   const styleData = useMemo(() => {

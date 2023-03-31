@@ -132,12 +132,14 @@ export const GlobalStyles = () => {
       const meta = getComponentMeta(component);
       const presetStyle = meta?.presetStyle;
       if (presetStyle !== undefined) {
-        presetStylesEngine.addStyleRule(
-          `[${componentAttribute}=${component}]`,
-          {
-            style: presetStyle,
-          }
-        );
+        for (const [tag, style] of Object.entries(presetStyle)) {
+          presetStylesEngine.addStyleRule(
+            `${tag}:where([${componentAttribute}=${component}])`,
+            {
+              style,
+            }
+          );
+        }
       }
     }
     presetStylesEngine.render();

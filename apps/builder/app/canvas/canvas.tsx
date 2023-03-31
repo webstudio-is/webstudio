@@ -57,6 +57,7 @@ const useElementsTree = (getComponent: GetComponent) => {
   // @todo remove after https://github.com/webstudio-is/webstudio-builder/issues/1313 now its needed to be sure that no leaks exists
   // eslint-disable-next-line no-console
   console.log({
+    rootInstance,
     assetsStore: assetsStore.get().size,
     pagesStore: pagesStore.get()?.pages.length ?? 0,
     instancesStore: instancesStore.get().size,

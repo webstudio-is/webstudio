@@ -1,6 +1,6 @@
 import { forwardRef, type ElementRef, type ComponentProps } from "react";
 
-const defaultTag = "p";
+export const defaultTag = "p";
 
 export const Paragraph = forwardRef<
   ElementRef<typeof defaultTag>,

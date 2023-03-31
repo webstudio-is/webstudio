@@ -1,6 +1,6 @@
 import { forwardRef, type ElementRef, type ComponentProps } from "react";
 
-const defaultTag = "button";
+export const defaultTag = "button";
 
 type ButtonProps = ComponentProps<typeof defaultTag> & { innerText?: string };
 

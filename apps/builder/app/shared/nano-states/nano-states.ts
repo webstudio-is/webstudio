@@ -32,6 +32,7 @@ import type {
 import { useSyncInitializeOnce } from "../hook-utils";
 import { shallowComputed } from "../store-utils";
 import { createInstancesIndex, type InstanceSelector } from "../tree-utils";
+import type { htmlTags as HtmlTags } from "html-tags";
 
 const useValue = <T>(atom: WritableAtom<T>) => {
   const value = useStore(atom);
@@ -328,6 +329,13 @@ export const selectedInstanceStore = computed(
 );
 
 export const selectedInstanceBrowserStyleStore = atom<undefined | Style>();
+
+/**
+ * instanceId => tagName store for selected instance and its ancestors
+ */
+export const selectedInstanceIntanceToTagStore = atom<
+  undefined | Map<Instance["id"], HtmlTags>
+>();
 
 export const selectedInstanceStyleSourcesStore = computed(
   [

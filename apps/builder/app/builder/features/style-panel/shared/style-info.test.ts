@@ -66,7 +66,7 @@ const instances: Instances = new Map([
     {
       type: "instance",
       id: "1",
-      component: "Box",
+      component: "Body",
       children: [{ type: "id", value: "2" }],
     },
   ],
@@ -161,11 +161,31 @@ test("compute inherited styles", () => {
       instances,
       inheritingStylesByInstanceId,
       selectedInstanceSelector,
+      new Map([
+        ["1", "body"],
+        ["2", "div"],
+        ["3", "div"],
+      ]),
+
       cascadedBreakpointIds,
       selectedBreakpointId
     )
   ).toMatchInlineSnapshot(`
     {
+      "color": {
+        "instanceId": "1",
+        "value": {
+          "type": "keyword",
+          "value": "#232323",
+        },
+      },
+      "fontFamily": {
+        "instanceId": "1",
+        "value": {
+          "type": "keyword",
+          "value": "Arial",
+        },
+      },
       "fontSize": {
         "instanceId": "1",
         "value": {
@@ -179,6 +199,14 @@ test("compute inherited styles", () => {
         "value": {
           "type": "keyword",
           "value": "600",
+        },
+      },
+      "lineHeight": {
+        "instanceId": "1",
+        "value": {
+          "type": "unit",
+          "unit": "number",
+          "value": 1.5,
         },
       },
     }

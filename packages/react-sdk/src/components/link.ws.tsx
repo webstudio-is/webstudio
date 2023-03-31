@@ -1,18 +1,24 @@
+import type { Style } from "@webstudio-is/css-data";
 import { Link2Icon } from "@webstudio-is/icons";
+import { a } from "../css/normalize";
 import type { WsComponentMeta, WsComponentPropsMeta } from "./component-meta";
+import type { defaultTag } from "./link";
 import { props } from "./__generated__/link.props";
 
 const presetStyle = {
-  minHeight: {
-    type: "unit",
-    unit: "em",
-    value: 1,
+  a: {
+    ...a,
+    minHeight: {
+      type: "unit",
+      unit: "em",
+      value: 1,
+    },
+    display: {
+      type: "keyword",
+      value: "inline-block",
+    },
   },
-  display: {
-    type: "keyword",
-    value: "inline-block",
-  },
-} as const;
+} as const satisfies Record<typeof defaultTag, Style>;
 
 export const meta: WsComponentMeta = {
   category: "general",

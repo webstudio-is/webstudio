@@ -11,6 +11,10 @@ import {
 } from "~/shared/nano-states";
 import { selectedBreakpointStore } from "~/shared/nano-states/breakpoints";
 import { subscribe } from "~/shared/pubsub";
+import htmlTags, { type htmlTags as HtmlTags } from "html-tags";
+
+const isHtmlTag = (tag: string): tag is HtmlTags =>
+  htmlTags.includes(tag as HtmlTags);
 
 const instanceIdSet = new Set<string>();
 
@@ -40,7 +44,7 @@ const replacedHtmlElements = ["IFRAME", "VIDEO", "EMBED", "IMG"];
 
 const skipElementsSet = new Set([...voidHtmlElements, ...replacedHtmlElements]);
 
-const getInstanceSize = (instanceId: string) => {
+const getInstanceSize = (instanceId: string, tagName: HtmlTags | undefined) => {
   const breakpoints = breakpointsContainer.get();
   const selectedBreakpoint = selectedBreakpointStore.get();
   const { stylesByInstanceId } = stylesIndexStore.get();
@@ -59,7 +63,10 @@ const getInstanceSize = (instanceId: string) => {
     selectedBreakpointId
   );
 
-  const presetStyle = getPresetStyle(instances, instanceId);
+  const presetStyle =
+    tagName !== undefined
+      ? getPresetStyle(instances, instanceId, tagName)
+      : undefined;
 
   const cascadedStyle = getCascadedInfo(stylesByInstanceId, instanceId, [
     ...cascadedBreakpointIds,
@@ -170,7 +177,12 @@ const recalculate = () => {
       throw new Error(`Element ${idAttribute} has no instance id`);
     }
 
-    const elementSize = getInstanceSize(elementInstanceId);
+    const tagName = element.tagName.toLowerCase();
+
+    const elementSize = getInstanceSize(
+      elementInstanceId,
+      isHtmlTag(tagName) ? tagName : undefined
+    );
 
     const collapsedWidth =
       element.offsetWidth === 0 && elementSize.width === undefined ? "w" : "";
