@@ -3,7 +3,7 @@
  * https://www.figma.com/file/sfCE7iLS0k25qCxiifQNLE/%F0%9F%93%9A-Webstudio-Library?node-id=4-3389
  */
 
-import { type ComponentProps, forwardRef, Ref } from "react";
+import { type ComponentProps, type Ref, forwardRef } from "react";
 import { type CSS, css, theme } from "../stitches.config";
 import { textVariants } from "./text";
 

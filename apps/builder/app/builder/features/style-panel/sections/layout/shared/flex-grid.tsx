@@ -7,7 +7,7 @@ import {
 import { toValue } from "@webstudio-is/css-engine";
 import { DotFilledIcon } from "@webstudio-is/icons";
 import type { CreateBatchUpdate } from "../../../shared/use-style-data";
-import { getStyleSource, StyleInfo } from "../../../shared/style-info";
+import { getStyleSource, type StyleInfo } from "../../../shared/style-info";
 import { theme } from "@webstudio-is/design-system";
 
 export const FlexGrid = ({

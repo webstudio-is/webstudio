@@ -24,7 +24,7 @@ import type {
 } from "../../shared/use-style-data";
 
 import {
-  DeleteBackgroundProperty,
+  type DeleteBackgroundProperty,
   isBackgroundLayeredProperty,
   isBackgroundStyleValue,
   type SetBackgroundProperty,

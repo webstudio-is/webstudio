@@ -13,7 +13,7 @@ import {
 } from "@webstudio-is/icons";
 import { selectedInstanceSelectorStore } from "~/shared/nano-states";
 import {
-  TextToolbarState,
+  type TextToolbarState,
   textToolbarStore,
 } from "~/shared/nano-states/canvas";
 import type { Publish } from "~/shared/pubsub";

@@ -1,4 +1,4 @@
-import { KeyboardEventHandler, useState } from "react";
+import { type KeyboardEventHandler, useState } from "react";
 import { css, theme } from "../stitches.config";
 import { Box } from "./box";
 import { Grid } from "./grid";

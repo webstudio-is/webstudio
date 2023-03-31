@@ -1,6 +1,6 @@
 import { z } from "zod";
 import store from "immerhin";
-import { useState, useCallback, ComponentProps } from "react";
+import { useState, useCallback, type ComponentProps } from "react";
 import { useStore } from "@nanostores/react";
 import { useDebouncedCallback } from "use-debounce";
 import { useUnmount } from "react-use";

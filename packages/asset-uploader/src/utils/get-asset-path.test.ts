@@ -6,7 +6,7 @@ import {
   test,
   expect,
 } from "@jest/globals";
-import { Asset, Location } from "@webstudio-is/prisma-client";
+import { type Asset, Location } from "@webstudio-is/prisma-client";
 
 const commonAsset: Asset = {
   id: "sa-546",

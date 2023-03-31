@@ -1,6 +1,6 @@
 // @todo this should be a local customization in sidebar left, not a reusable component
 import React from "react";
-import { CSS, styled } from "../stitches.config";
+import { type CSS, styled } from "../stitches.config";
 import * as TabsPrimitive from "@radix-ui/react-tabs";
 import { theme } from "../stitches.config";
 

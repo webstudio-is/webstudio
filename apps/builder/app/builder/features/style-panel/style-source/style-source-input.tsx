@@ -36,7 +36,7 @@ import {
 } from "react";
 import { mergeRefs } from "@react-aria/utils";
 import {
-  ItemSource,
+  type ItemSource,
   menuCssVars,
   StyleSource,
   type ItemState,

@@ -2,7 +2,7 @@ import type { StyleProperty, AppliesTo } from "@webstudio-is/css-data";
 import { keywordValues, properties } from "@webstudio-is/css-data";
 import { humanizeString } from "~/shared/string-utils";
 import {
-  IconRecords,
+  type IconRecords,
   AlignContentStartIcon,
   AlignContentEndIcon,
   AlignContentCenterIcon,

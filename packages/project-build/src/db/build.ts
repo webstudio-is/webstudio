@@ -1,9 +1,9 @@
 import { nanoid } from "nanoid";
 import {
+  type Build as DbBuild,
+  type Project,
   prisma,
-  Build as DbBuild,
   Prisma,
-  Project,
 } from "@webstudio-is/prisma-client";
 import type { AppContext } from "@webstudio-is/trpc-interface";
 import type { Build } from "../types";

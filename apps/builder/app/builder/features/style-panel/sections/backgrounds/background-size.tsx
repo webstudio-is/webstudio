@@ -5,7 +5,11 @@ import { toPascalCase } from "../../shared/keyword-utils";
 import { parseCssValue } from "../../shared/parse-css-value";
 import type { ControlProps } from "../../style-sections";
 import { CssValueInputContainer } from "../../controls/position/css-value-input-container";
-import { StyleValue, TupleValue, TupleValueItem } from "@webstudio-is/css-data";
+import {
+  type StyleValue,
+  TupleValue,
+  TupleValueItem,
+} from "@webstudio-is/css-data";
 import type { SetValue } from "../../shared/use-style-data";
 
 const StyleKeywordAuto = { type: "keyword" as const, value: "auto" };

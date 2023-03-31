@@ -7,7 +7,7 @@ import { Flex } from "../flex";
 import { DeprecatedIconButton } from "./icon-button";
 import { DeprecatedText2 } from "./text2";
 import { Separator } from "../separator";
-import { styled, CSS } from "../../stitches.config";
+import { styled, type CSS } from "../../stitches.config";
 import { theme } from "../../stitches.config";
 
 type PopoverProps = React.ComponentProps<typeof PopoverPrimitive.Root> & {
