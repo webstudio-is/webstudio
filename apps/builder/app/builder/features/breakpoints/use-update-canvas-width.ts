@@ -27,7 +27,10 @@ export const useUpdateCanvasWidth = () => {
     if (isPreviewMode || selectedBreakpoint === undefined) {
       return;
     }
-    const maxWidthBelowNextBreakpoint = (nextBreakpoint?.minWidth ?? 0) - 1;
+    const maxWidthBelowNextBreakpoint =
+      (nextBreakpoint && "minWidth" in nextBreakpoint
+        ? nextBreakpoint.minWidth ?? 1
+        : 1) - 1;
     const initialMaxAvailableWidth = initialWorkspaceRect.current
       ? Math.min(
           maxWidthBelowNextBreakpoint,
@@ -36,7 +39,7 @@ export const useUpdateCanvasWidth = () => {
       : maxWidthBelowNextBreakpoint;
 
     const width = Math.max(
-      selectedBreakpoint.minWidth ?? 0,
+      "minWidth" in selectedBreakpoint ? selectedBreakpoint.minWidth ?? 0 : 0,
       initialMaxAvailableWidth,
       minWidth
     );

@@ -2,7 +2,6 @@ import { useEffect, useState } from "react";
 import { useStore } from "@nanostores/react";
 import store from "immerhin";
 import type { Breakpoint } from "@webstudio-is/project-build";
-import { utils } from "@webstudio-is/project";
 import {
   theme,
   DropdownMenu,
@@ -30,6 +29,7 @@ import {
   selectedBreakpointIdStore,
   selectedBreakpointStore,
 } from "~/shared/nano-states/breakpoints";
+import { sortMedia } from "@webstudio-is/css-engine";
 
 export const Breakpoints = () => {
   const [view, setView] = useState<
@@ -133,28 +133,35 @@ export const Breakpoints = () => {
           )}
           {view === "selector" && (
             <>
-              {utils.breakpoints.sort(breakpoints).map((breakpoint) => {
-                return (
-                  <DropdownMenuCheckboxItem
-                    checked={breakpoint === selectedBreakpoint}
-                    key={breakpoint.id}
-                    onMouseEnter={() => {
-                      setBreakpointPreview(breakpoint);
-                    }}
-                    onMouseLeave={() => {
-                      setBreakpointPreview(selectedBreakpoint);
-                    }}
-                    onSelect={() => {
-                      selectedBreakpointIdStore.set(breakpoint.id);
-                    }}
-                  >
-                    {breakpoint.label}
-                    <DropdownMenuItemRightSlot>
-                      {breakpoint.minWidth}
-                    </DropdownMenuItemRightSlot>
-                  </DropdownMenuCheckboxItem>
-                );
-              })}
+              {Array.from(breakpoints.values())
+                .sort(sortMedia)
+                .reverse()
+                .map((breakpoint) => {
+                  return (
+                    <DropdownMenuCheckboxItem
+                      checked={breakpoint === selectedBreakpoint}
+                      key={breakpoint.id}
+                      onMouseEnter={() => {
+                        setBreakpointPreview(breakpoint);
+                      }}
+                      onMouseLeave={() => {
+                        setBreakpointPreview(selectedBreakpoint);
+                      }}
+                      onSelect={() => {
+                        selectedBreakpointIdStore.set(breakpoint.id);
+                      }}
+                    >
+                      {breakpoint.label}
+                      <DropdownMenuItemRightSlot>
+                        {"minWidth" in breakpoint
+                          ? breakpoint.minWidth
+                          : "maxWidth" in breakpoint
+                          ? breakpoint.maxWidth
+                          : null}
+                      </DropdownMenuItemRightSlot>
+                    </DropdownMenuCheckboxItem>
+                  );
+                })}
               <DropdownMenuSeparator />
               <form>
                 <ZoomSetting />

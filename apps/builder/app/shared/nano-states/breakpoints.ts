@@ -1,7 +1,7 @@
 import { atom, computed } from "nanostores";
 import type { Breakpoint } from "@webstudio-is/project-build";
-import { utils } from "@webstudio-is/project";
 import { breakpointsContainer } from "./nano-states";
+import { sortMedia } from "@webstudio-is/css-engine";
 
 export const minZoom = 10;
 const maxZoom = 100;
@@ -29,7 +29,9 @@ export const selectedBreakpointStore = computed(
         ? undefined
         : breakpoints.get(selectedBreakpointId);
     // initially set first breakpoint as selected breakpoint
-    const fallbackBreakpoint = utils.breakpoints.sort(breakpoints).at(0);
+    const fallbackBreakpoint = Array.from(breakpoints.values())
+      .sort(sortMedia)
+      .at(0);
     return matchedBreakpoint ?? fallbackBreakpoint;
   }
 );
@@ -40,7 +42,7 @@ export const selectedBreakpointStore = computed(
 export const selectBreakpointByOrderNumber = (orderNumber: number) => {
   const breakpoints = breakpointsContainer.get();
   const index = orderNumber - 1;
-  const breakpoint = utils.breakpoints.sort(breakpoints).at(index);
+  const breakpoint = Array.from(breakpoints.values()).sort(sortMedia).at(index);
   if (breakpoint) {
     selectedBreakpointIdStore.set(breakpoint.id);
   }
