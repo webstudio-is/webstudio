@@ -10,6 +10,7 @@ import {
   StyleSourceSelection,
   StyleSourceSelections,
 } from "@webstudio-is/project-build";
+import { Asset } from "@webstudio-is/asset-uploader";
 import {
   propsStore,
   stylesStore,
@@ -18,6 +19,7 @@ import {
   styleSourcesStore,
   instancesStore,
   selectedPageStore,
+  assetsStore,
 } from "../nano-states";
 import {
   type InstanceSelector,
@@ -40,6 +42,7 @@ const InstanceData = z.object({
   styleSourceSelections: z.array(StyleSourceSelection),
   styleSources: z.array(StyleSource),
   styles: z.array(StyleDecl),
+  assets: z.array(Asset),
 });
 
 type InstanceData = z.infer<typeof InstanceData>;
@@ -61,11 +64,15 @@ const findTreeStyleSourceIds = (
   return treeStyleSourceIds;
 };
 
-const getTreeData = (targetInstanceSelector: InstanceSelector) => {
+const getTreeData = (
+  targetInstanceSelector: InstanceSelector
+): InstanceData | undefined => {
   // @todo tell user they can't copy or cut root
   if (targetInstanceSelector.length === 1) {
     return;
   }
+
+  const assets = assetsStore.get();
 
   const [targetInstanceId] = targetInstanceSelector;
   const instances = instancesStore.get();
@@ -76,12 +83,23 @@ const getTreeData = (targetInstanceSelector: InstanceSelector) => {
     treeInstanceIds
   );
 
+  const assetIds = new Set<Asset["id"]>();
+  const fontFamilies = new Set<string>();
+
   // first item is guaranteed root of copied tree
   const treeInstances = getMapValuesByKeysSet(instances, treeInstanceIds);
 
-  const treeProps = getMapValuesBy(propsStore.get(), (prop) =>
-    treeInstanceIds.has(prop.instanceId)
-  );
+  const treeProps = getMapValuesBy(propsStore.get(), (prop) => {
+    if (treeInstanceIds.has(prop.instanceId) === false) {
+      return false;
+    }
+
+    if (prop.type === "asset") {
+      assetIds.add(prop.value);
+    }
+
+    return true;
+  });
 
   const treeStyleSourceSelections = getMapValuesByKeysSet(
     styleSourceSelections,
@@ -93,9 +111,33 @@ const getTreeData = (targetInstanceSelector: InstanceSelector) => {
     treeStyleSourceIds
   );
 
-  const treeStyles = getMapValuesBy(stylesStore.get(), (styleDecl) =>
-    treeStyleSourceIds.has(styleDecl.styleSourceId)
-  );
+  const treeStyles = getMapValuesBy(stylesStore.get(), (styleDecl) => {
+    if (treeStyleSourceIds.has(styleDecl.styleSourceId) === false) {
+      return false;
+    }
+
+    const value = styleDecl.value;
+
+    if (value.type === "image") {
+      assetIds.add(value.value.value.id);
+    }
+
+    if (value.type === "fontFamily") {
+      for (const fontFamily of value.value) {
+        fontFamilies.add(fontFamily);
+      }
+    }
+
+    return true;
+  });
+
+  for (const asset of assets.values()) {
+    if (asset.type === "font" && fontFamilies.has(asset.meta.family)) {
+      assetIds.add(asset.id);
+    }
+  }
+
+  const treeAssets = getMapValuesByKeysSet(assets, assetIds);
 
   return {
     instances: treeInstances,
@@ -103,6 +145,7 @@ const getTreeData = (targetInstanceSelector: InstanceSelector) => {
     props: treeProps,
     styleSourceSelections: treeStyleSourceSelections,
     styles: treeStyles,
+    assets: treeAssets,
   };
 };
 
@@ -137,6 +180,7 @@ export const onPaste = (clipboardData: string) => {
     instancesStore.get(),
     instanceSelector
   );
+
   store.createTransaction(
     [
       instancesStore,
