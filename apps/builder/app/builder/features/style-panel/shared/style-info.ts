@@ -62,7 +62,7 @@ export type StyleInfo = {
      * Only color property can have currentColor
      * Now we take it from the computed style, @todo: calculate when we are going to remove computed.
      **/
-    currentColor: StyleValue | undefined;
+    currentColor?: StyleValue | undefined;
   };
 };
 
