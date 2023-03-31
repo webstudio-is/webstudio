@@ -37,9 +37,11 @@ export const generateCssText = (data: Data) => {
     const meta = getComponentMeta(component);
     const presetStyle = meta?.presetStyle;
     if (presetStyle !== undefined) {
-      engine.addStyleRule(`[${componentAttribute}=${component}]`, {
-        style: presetStyle,
-      });
+      for (const [tag, style] of Object.entries(presetStyle)) {
+        engine.addStyleRule(`${tag}[${componentAttribute}=${component}]`, {
+          style,
+        });
+      }
     }
   }
 

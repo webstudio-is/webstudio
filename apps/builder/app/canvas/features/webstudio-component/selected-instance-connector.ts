@@ -7,10 +7,15 @@ import { subscribeWindowResize } from "~/shared/dom-hooks";
 import {
   rootInstanceContainer,
   selectedInstanceBrowserStyleStore,
+  selectedInstanceTagStore,
 } from "~/shared/nano-states";
+import htmlTags, { type htmlTags as HtmlTags } from "html-tags";
 import { getAllElementsBoundingBox } from "~/shared/dom-utils";
 import { subscribeScrollState } from "~/canvas/shared/scroll-state";
 import { selectedInstanceOutlineStore } from "~/shared/nano-states/canvas";
+
+const isHtmlTag = (tag: string): tag is HtmlTags =>
+  htmlTags.includes(tag as HtmlTags);
 
 const setOutline = (instanceId: Instance["id"], element: HTMLElement) => {
   selectedInstanceOutlineStore.set({
@@ -89,6 +94,9 @@ export const SelectedInstanceConnector = ({
 
     // trigger style recomputing every time instance styles are changed
     selectedInstanceBrowserStyleStore.set(getBrowserStyle(element));
+
+    const tagName = element.tagName.toLowerCase();
+    selectedInstanceTagStore.set(isHtmlTag(tagName) ? tagName : undefined);
 
     return () => {
       resizeObserver.disconnect();
