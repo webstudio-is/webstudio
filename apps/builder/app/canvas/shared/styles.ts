@@ -134,7 +134,7 @@ export const GlobalStyles = () => {
       if (presetStyle !== undefined) {
         for (const [tag, style] of Object.entries(presetStyle)) {
           presetStylesEngine.addStyleRule(
-            `${tag}[${componentAttribute}=${component}]`,
+            `${tag}:where([${componentAttribute}=${component}])`,
             {
               style,
             }

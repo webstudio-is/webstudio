@@ -100,6 +100,7 @@ export const html = {
   },
 
   boxSizing,
+  ...borders,
 } as const satisfies Style;
 
 /**
@@ -142,6 +143,7 @@ export const body = {
 		  'Segoe UI Emoji'`,
   },
   boxSizing,
+  ...borders,
 } as const satisfies Style;
 
 /**
@@ -158,6 +160,7 @@ export const hr = {
   /* 2 */
   color: { type: "keyword", value: "inherit" },
   boxSizing,
+  ...borders,
 } as const satisfies Style;
 
 /**
@@ -179,6 +182,7 @@ export const b = {
     value: "bolder",
   },
   boxSizing,
+  ...borders,
 } as const satisfies Style;
 export const strong = b;
 
@@ -205,6 +209,7 @@ export const code = {
     unit: "em",
   },
   boxSizing,
+  ...borders,
 } as const satisfies Style;
 
 export const kbd = code;
@@ -222,6 +227,7 @@ export const small = {
     unit: "%",
   },
   boxSizing,
+  ...borders,
 } as const satisfies Style;
 
 /**
@@ -248,6 +254,7 @@ const subSupBase = {
     value: "baseline",
   },
   boxSizing,
+  ...borders,
 } as const satisfies Style;
 
 export const sub = {
@@ -285,6 +292,7 @@ export const table = {
     value: 0,
     unit: "number",
   },
+  ...borders,
   /* 2 */
   borderTopColor: {
     type: "keyword",
@@ -353,6 +361,7 @@ const buttonBase = {
     unit: "number",
   },
   boxSizing,
+  ...borders,
 } as const satisfies Style;
 
 export const input = buttonBase;
@@ -443,6 +452,7 @@ export const legend = {
     unit: "number",
   },
   boxSizing,
+  ...borders,
 } as const satisfies Style;
 
 /**
@@ -455,6 +465,7 @@ export const progress = {
     value: "baseline",
   },
   boxSizing,
+  ...borders,
 } as const satisfies Style;
 
 /**
@@ -516,4 +527,6 @@ export const summary = {
     type: "keyword",
     value: "list-item",
   },
+  boxSizing,
+  ...borders,
 } as const satisfies Style;
