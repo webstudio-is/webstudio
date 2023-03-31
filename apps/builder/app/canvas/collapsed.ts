@@ -63,7 +63,10 @@ const getInstanceSize = (instanceId: string, tagName: HtmlTags | undefined) => {
     selectedBreakpointId
   );
 
-  const presetStyle = getPresetStyle(instances, instanceId, tagName);
+  const presetStyle =
+    tagName !== undefined
+      ? getPresetStyle(instances, instanceId, tagName)
+      : undefined;
 
   const cascadedStyle = getCascadedInfo(stylesByInstanceId, instanceId, [
     ...cascadedBreakpointIds,

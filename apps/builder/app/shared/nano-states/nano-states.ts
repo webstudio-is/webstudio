@@ -330,7 +330,12 @@ export const selectedInstanceStore = computed(
 
 export const selectedInstanceBrowserStyleStore = atom<undefined | Style>();
 
-export const selectedInstanceTagStore = atom<undefined | HtmlTags>();
+/**
+ * instanceId => tagName store for selected instance and its ancestors
+ */
+export const selectedInstanceIntanceToTagStore = atom<
+  undefined | Map<Instance["id"], HtmlTags>
+>();
 
 export const selectedInstanceStyleSourcesStore = computed(
   [
