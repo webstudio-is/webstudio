@@ -166,7 +166,7 @@ export const PropertyName = ({
               setIsOpen(true);
             }}
           >
-            <span>{labelElement}</span>
+            {labelElement}
           </PopoverTrigger>
           <PopoverPortal>
             <PopoverContent align="start" onClick={() => setIsOpen(false)}>
