@@ -16,7 +16,8 @@
  */
 
 import type { Style } from "@webstudio-is/css-data";
-// webstudion custom opinionated presets
+
+// webstudio custom opinionated presets
 import { borders } from "./presets";
 
 /**
