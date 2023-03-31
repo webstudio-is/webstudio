@@ -138,9 +138,7 @@ export const PropertyName = ({
     ...properties.map((property) => style[property])
   );
   const [isOpen, setIsOpen] = useState(false);
-  const isPopoverEnabled =
-    isFeatureEnabled("propertyReset") &&
-    (styleSource === "local" || styleSource === "remote");
+  const isPopoverEnabled = styleSource === "local" || styleSource === "remote";
 
   const labelElement =
     typeof label === "string" ? (
