@@ -1,6 +1,5 @@
-import { useState, type ReactElement, type MouseEventHandler } from "react";
+import { useState, type ReactElement } from "react";
 import { useStore } from "@nanostores/react";
-import { isFeatureEnabled } from "@webstudio-is/feature-flags";
 import type { StyleProperty } from "@webstudio-is/css-data";
 import { toValue } from "@webstudio-is/css-engine";
 import {
@@ -11,11 +10,11 @@ import {
   DeprecatedText2,
   Label,
   Tooltip,
-  DeprecatedPopover,
-  DeprecatedPopoverContent,
-  DeprecatedPopoverPortal,
-  DeprecatedPopoverTrigger,
   Separator,
+  Popover,
+  PopoverTrigger,
+  PopoverPortal,
+  PopoverContent,
 } from "@webstudio-is/design-system";
 import { UndoIcon } from "@webstudio-is/icons";
 import { instancesStore, useBreakpoints } from "~/shared/nano-states";
@@ -30,7 +29,7 @@ const PropertyPopoverContent = ({
   properties: StyleProperty[];
   style: StyleInfo;
   styleSource: StyleSource;
-  onReset: MouseEventHandler<HTMLButtonElement>;
+  onReset: () => void;
 }) => {
   const [breakpoints] = useBreakpoints();
   const instances = useStore(instancesStore);
@@ -42,7 +41,7 @@ const PropertyPopoverContent = ({
           align="start"
           css={{ px: theme.spacing[4], py: theme.spacing[3] }}
         >
-          <Button onClick={onReset} prefix={<UndoIcon />}>
+          <Button onClick={() => onReset()} prefix={<UndoIcon />}>
             Reset
           </Button>
         </Flex>
@@ -124,7 +123,7 @@ type PropertyNameProps = {
   style: StyleInfo;
   property: StyleProperty | readonly StyleProperty[];
   label: string | ReactElement;
-  onReset: React.MouseEventHandler<HTMLButtonElement>;
+  onReset: () => void;
 };
 
 export const PropertyName = ({
@@ -138,9 +137,7 @@ export const PropertyName = ({
     ...properties.map((property) => style[property])
   );
   const [isOpen, setIsOpen] = useState(false);
-  const isPopoverEnabled =
-    isFeatureEnabled("propertyReset") &&
-    (styleSource === "local" || styleSource === "remote");
+  const isPopoverEnabled = styleSource === "local" || styleSource === "remote";
 
   const labelElement =
     typeof label === "string" ? (
@@ -156,27 +153,32 @@ export const PropertyName = ({
   if (isPopoverEnabled) {
     return (
       <Flex align="center">
-        <DeprecatedPopover modal open={isOpen} onOpenChange={setIsOpen}>
-          <DeprecatedPopoverTrigger
+        <Popover modal open={isOpen} onOpenChange={setIsOpen}>
+          <PopoverTrigger
             asChild
             aria-label="Show proprety description"
+            onClick={(event) => {
+              event.preventDefault();
+              if (event.metaKey) {
+                onReset();
+                return;
+              }
+              setIsOpen(true);
+            }}
           >
-            {labelElement}
-          </DeprecatedPopoverTrigger>
-          <DeprecatedPopoverPortal>
-            <DeprecatedPopoverContent
-              align="start"
-              onClick={() => setIsOpen(false)}
-            >
+            <span>{labelElement}</span>
+          </PopoverTrigger>
+          <PopoverPortal>
+            <PopoverContent align="start" onClick={() => setIsOpen(false)}>
               <PropertyPopoverContent
                 properties={properties}
                 style={style}
                 styleSource={styleSource}
                 onReset={onReset}
               />
-            </DeprecatedPopoverContent>
-          </DeprecatedPopoverPortal>
-        </DeprecatedPopover>
+            </PopoverContent>
+          </PopoverPortal>
+        </Popover>
       </Flex>
     );
   }
