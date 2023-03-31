@@ -47,13 +47,13 @@ const createInstancePair = (
   return [id, createInstance(id, component, children)];
 };
 
-const createProp = (id: string, instanceId: string): Prop => {
+const createProp = (id: string, instanceId: string, value?: string): Prop => {
   return {
     id,
     instanceId,
     type: "string",
     name: "prop",
-    value: "value",
+    value: value ?? "value",
   };
 };
 
@@ -86,7 +86,8 @@ const createStyleSourceSelection = (
 
 const createStyleDecl = (
   styleSourceId: string,
-  breakpointId: string
+  breakpointId: string,
+  value?: string
 ): StyleDecl => {
   return {
     styleSourceId,
@@ -94,7 +95,7 @@ const createStyleDecl = (
     property: "width",
     value: {
       type: "keyword",
-      value: "value",
+      value: value ?? "value",
     },
   };
 };
@@ -472,7 +473,7 @@ test("insert slot or do nothing when slot is cyclic", () => {
   const instances = new Map([
     createInstancePair("root", "Body", [
       { type: "id", value: "slot" },
-      { type: "id", value: 'sibling",' },
+      { type: "id", value: "sibling" },
     ]),
     createInstancePair("slot", "Slot", [{ type: "id", value: "fragment" }]),
     createInstancePair("fragment", "Fragment", [
@@ -481,7 +482,7 @@ test("insert slot or do nothing when slot is cyclic", () => {
     createInstancePair("child", "Box", []),
     createInstancePair("sibling", "Box", []),
   ]);
-  const copiedInstances = [
+  let copiedInstances = [
     createInstance("slot", "Slot", [{ type: "id", value: "fragment" }]),
   ];
 
@@ -498,7 +499,7 @@ test("insert slot or do nothing when slot is cyclic", () => {
   expect(Array.from(instances.entries())).toEqual([
     createInstancePair("root", "Body", [
       { type: "id", value: "slot" },
-      { type: "id", value: 'sibling",' },
+      { type: "id", value: "sibling" },
     ]),
     createInstancePair("slot", "Slot", [{ type: "id", value: "fragment" }]),
     createInstancePair("fragment", "Fragment", [
@@ -508,7 +509,7 @@ test("insert slot or do nothing when slot is cyclic", () => {
     createInstancePair("sibling", "Box", []),
   ]);
 
-  // insert slot into itself
+  // do not insert slot into itself
   copiedInstanceIds = insertInstancesCopyMutable(instances, copiedInstances, {
     parentSelector: ["slot", "root"],
     position: "end",
@@ -517,7 +518,7 @@ test("insert slot or do nothing when slot is cyclic", () => {
   expect(Array.from(instances.entries())).toEqual([
     createInstancePair("root", "Body", [
       { type: "id", value: "slot" },
-      { type: "id", value: 'sibling",' },
+      { type: "id", value: "sibling" },
     ]),
     createInstancePair("slot", "Slot", [{ type: "id", value: "fragment" }]),
     createInstancePair("fragment", "Fragment", [
@@ -536,7 +537,7 @@ test("insert slot or do nothing when slot is cyclic", () => {
   expect(Array.from(instances.entries())).toEqual([
     createInstancePair("root", "Body", [
       { type: "id", value: "slot" },
-      { type: "id", value: 'sibling",' },
+      { type: "id", value: "sibling" },
     ]),
     createInstancePair("slot", "Slot", [{ type: "id", value: "fragment" }]),
     createInstancePair("fragment", "Fragment", [
@@ -548,20 +549,62 @@ test("insert slot or do nothing when slot is cyclic", () => {
       { type: "id", value: "fragment" },
     ]),
   ]);
+
+  // insert new slot from other project
+  copiedInstances = [
+    createInstance("slot2", "Slot", [{ type: "id", value: "fragment2" }]),
+    createInstance("fragment2", "Fragment", [
+      { type: "id", value: "slot2box" },
+    ]),
+    createInstance("slot2box", "Box", []),
+  ];
+  copiedInstanceIds = insertInstancesCopyMutable(instances, copiedInstances, {
+    parentSelector: ["root"],
+    position: "end",
+  });
+  expect(copiedInstanceIds).toEqual(new Map([["slot2", expectString]]));
+  expect(Array.from(instances.entries())).toEqual([
+    createInstancePair("root", "Body", [
+      { type: "id", value: "slot" },
+      { type: "id", value: "sibling" },
+      { type: "id", value: expectString },
+    ]),
+    createInstancePair("slot", "Slot", [{ type: "id", value: "fragment" }]),
+    createInstancePair("fragment", "Fragment", [
+      { type: "id", value: "child" },
+    ]),
+    createInstancePair("child", "Box", []),
+    createInstancePair("sibling", "Box", [{ type: "id", value: expectString }]),
+    createInstancePair(expectString, "Slot", [
+      { type: "id", value: "fragment" },
+    ]),
+    createInstancePair("fragment2", "Fragment", [
+      { type: "id", value: "slot2box" },
+    ]),
+    createInstancePair("slot2box", "Box", []),
+    createInstancePair(expectString, "Slot", [
+      { type: "id", value: "fragment2" },
+    ]),
+  ]);
 });
 
 test("insert style sources copy with new ids and provide map from old ids", () => {
   const styleSources = new Map([
     ["local1", createStyleSource("local", "local1")],
     ["local2", createStyleSource("local", "local2")],
+    ["token3", createStyleSource("token", "token3")],
   ]);
   const copiedStyleSources = [
     createStyleSource("local", "local1"),
     createStyleSource("local", "local2"),
+    createStyleSource("local", "local4"),
+    createStyleSource("token", "token5"),
   ];
+  const newStyleSourceIds = new Set(["local1", "local2"]);
   const copiedStyleSourceIds = insertStyleSourcesCopyMutable(
     styleSources,
-    copiedStyleSources
+    copiedStyleSources,
+    newStyleSourceIds
   );
   expect(Array.from(copiedStyleSourceIds.entries())).toEqual([
     ["local1", expectString],
@@ -570,8 +613,14 @@ test("insert style sources copy with new ids and provide map from old ids", () =
   expect(Array.from(styleSources.entries())).toEqual([
     ["local1", createStyleSource("local", "local1")],
     ["local2", createStyleSource("local", "local2")],
+    // shared prop should not be overriden
+    ["token3", createStyleSource("token", "token3")],
+    // new style sources are copied
     [expectString, createStyleSource("local", expectString)],
     [expectString, createStyleSource("local", expectString)],
+    // shared style sources are inserted without changes
+    ["local4", createStyleSource("local", "local4")],
+    ["token5", createStyleSource("token", "token5")],
   ]);
 });
 
@@ -580,10 +629,12 @@ test("insert props copy with new ids and apply new instance ids", () => {
     ["prop1", createProp("prop1", "instance1")],
     ["prop2", createProp("prop2", "instance2")],
     ["prop3", createProp("prop3", "instance3")],
+    ["existingSharedProp", createProp("existingSharedProp", "instance3")],
   ]);
   const copiedProps = [
-    createProp("prop1", "instance1"),
     createProp("prop2", "instance2"),
+    createProp("sharedProp", "instance3", "newValue"),
+    createProp("existingSharedProp", "instance3", "newValue"),
   ];
   const clonedInstanceIds = new Map<Instance["id"], Instance["id"]>([
     ["instance2", "newInstance2"],
@@ -593,8 +644,12 @@ test("insert props copy with new ids and apply new instance ids", () => {
     ["prop1", createProp("prop1", "instance1")],
     ["prop2", createProp("prop2", "instance2")],
     ["prop3", createProp("prop3", "instance3")],
-    [expectString, createProp(expectString, "instance1")],
+    // shared prop is not overriden
+    ["existingSharedProp", createProp("existingSharedProp", "instance3")],
+    // new props are copied
     [expectString, createProp(expectString, "newInstance2")],
+    // shared prop inserted without changes
+    ["sharedProp", createProp("sharedProp", "instance3", "newValue")],
   ]);
 });
 
@@ -613,6 +668,8 @@ test("insert style source selections copy and apply new instance ids and style s
   const copiedStyleSourceSelections = [
     createStyleSourceSelection("instance1", ["local1", "token2"]),
     createStyleSourceSelection("instance2", ["token3", "local4", "token5"]),
+    createStyleSourceSelection("instance3", ["local6", "token5"]),
+    createStyleSourceSelection("instance4", ["token5"]),
   ];
   const copiedStyleSourceIds = new Map<StyleSource["id"], StyleSource["id"]>([
     ["local1", "newLocal1"],
@@ -650,6 +707,7 @@ test("insert style source selections copy and apply new instance ids and style s
         "token5",
       ]),
     ],
+    ["instance4", createStyleSourceSelection("instance4", ["token5"])],
   ]);
 });
 
@@ -659,10 +717,16 @@ test("insert styles copy and apply new style source ids", () => {
     [`styleSource2:bp2:width`, createStyleDecl("styleSource2", "bp2")],
     [`styleSource1:bp3:width`, createStyleDecl("styleSource1", "bp3")],
     [`styleSource3:bp4:width`, createStyleDecl("styleSource3", "bp4")],
+    [
+      `existingSharedStyleSource:bp4:width`,
+      createStyleDecl("existingSharedStyleSource", "bp4"),
+    ],
   ]);
   const copiedStyles = [
     createStyleDecl("styleSource2", "bp2"),
     createStyleDecl("styleSource3", "bp4"),
+    createStyleDecl("sharedStyleSource", "bp4"),
+    createStyleDecl("existingSharedStyleSource", "bp4", "newValue"),
   ];
   const copiedStyleSourceIds = new Map<StyleSource["id"], StyleSource["id"]>([
     ["styleSource2", "newStyleSource2"],
@@ -674,8 +738,19 @@ test("insert styles copy and apply new style source ids", () => {
     [`styleSource2:bp2:width`, createStyleDecl("styleSource2", "bp2")],
     [`styleSource1:bp3:width`, createStyleDecl("styleSource1", "bp3")],
     [`styleSource3:bp4:width`, createStyleDecl("styleSource3", "bp4")],
+    // shared style is not overriden
+    [
+      `existingSharedStyleSource:bp4:width`,
+      createStyleDecl("existingSharedStyleSource", "bp4"),
+    ],
+    // new styles are copied
     [`newStyleSource2:bp2:width`, createStyleDecl("newStyleSource2", "bp2")],
     [`newStyleSource3:bp4:width`, createStyleDecl("newStyleSource3", "bp4")],
+    // shared style inserted without changes
+    [
+      `sharedStyleSource:bp4:width`,
+      createStyleDecl("sharedStyleSource", "bp4"),
+    ],
   ]);
 });
 
