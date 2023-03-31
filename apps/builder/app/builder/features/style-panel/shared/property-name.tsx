@@ -159,7 +159,7 @@ export const PropertyName = ({
             aria-label="Show proprety description"
             onClick={(event) => {
               event.preventDefault();
-              if (event.metaKey) {
+              if (event.altKey) {
                 onReset();
                 return;
               }
