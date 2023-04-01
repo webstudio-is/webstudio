@@ -72,14 +72,11 @@ const createItem = (
 };
 
 const removeItem = (
-  itemToRemove: Item,
+  itemIdToRemove: Item["id"],
   value: Array<Item>,
   setValue: (value: Array<Item>) => void
 ) => {
-  if (itemToRemove.source === "local") {
-    return;
-  }
-  setValue(value.filter((item) => item.id !== itemToRemove.id));
+  setValue(value.filter((item) => item.id !== itemIdToRemove));
 };
 
 export const Basic: ComponentStory<typeof StyleSourceInput> = () => {
@@ -95,8 +92,8 @@ export const Basic: ComponentStory<typeof StyleSourceInput> = () => {
       onSelectAutocompleteItem={(item) => {
         setValue([...value, item]);
       }}
-      onRemoveItem={(itemToRemove) => {
-        removeItem(itemToRemove, value, setValue);
+      onRemoveItem={(itemId) => {
+        removeItem(itemId, value, setValue);
       }}
       onSort={setValue}
     />
@@ -189,20 +186,20 @@ export const Complete: ComponentStory<typeof StyleSourceInput> = () => {
           })
         );
       }}
-      onDisableItem={(itemToDisable) => {
+      onDisableItem={(itemIdToDisable) => {
         setValue(
           value.map((item) => {
-            if (item.id === itemToDisable.id) {
+            if (item.id === itemIdToDisable) {
               return { ...item, state: "disabled" };
             }
             return item;
           })
         );
       }}
-      onEnableItem={(itemToEnable) => {
+      onEnableItem={(itemIdToEnable) => {
         setValue(
           value.map((item) => {
-            if (item.id === itemToEnable.id) {
+            if (item.id === itemIdToEnable) {
               return { ...item, state: "unselected" };
             }
             return item;

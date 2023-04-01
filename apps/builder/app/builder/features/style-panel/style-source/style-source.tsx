@@ -2,7 +2,6 @@ import { cssVars } from "@webstudio-is/css-vars";
 import {
   DropdownMenu,
   DropdownMenuContent,
-  DropdownMenuItem,
   DropdownMenuPortal,
   DropdownMenuTrigger,
   DeprecatedText2,
@@ -19,21 +18,8 @@ import {
   type KeyboardEvent,
   type KeyboardEventHandler,
   type FocusEvent,
+  type ReactNode,
 } from "react";
-
-// Used to schedule function calls to be executed after at a later point in time.
-// Since menu is managing focus, we need to execute that callback when the management is done.
-const useCallScheduler = () => {
-  const ref = useRef<(() => void) | undefined>();
-  const call = () => {
-    ref.current?.();
-    ref.current = undefined;
-  };
-  const set = (fn: () => void) => () => {
-    ref.current = fn;
-  };
-  return { call, set };
-};
 
 const menuTriggerVisibilityVar = cssVars.define("menu-trigger-visibility");
 const menuTriggerVisibilityOverrideVar = cssVars.define(
@@ -134,23 +120,10 @@ const MenuTriggerGradient = styled(Box, {
 
 type MenuProps = {
   source: ItemSource;
-  state: ItemState;
-  onEdit: () => void;
-  onDuplicate: () => void;
-  onConvertToToken: () => void;
-  onDisable: () => void;
-  onEnable: () => void;
-  onRemove: () => void;
+  children: ReactNode;
 };
 
 const Menu = (props: MenuProps) => {
-  const scheduler = useCallScheduler();
-  const canEdit = props.source !== "local";
-  const canDuplicate = props.source !== "local";
-  const canConvertToToken = props.source === "local";
-  const canDisable = props.state !== "disabled";
-  const canEnable = props.state === "disabled";
-  const canRemove = props.source !== "local";
   return (
     <DropdownMenu modal>
       <MenuTriggerGradient source={props.source} />
@@ -160,37 +133,10 @@ const Menu = (props: MenuProps) => {
         </MenuTrigger>
       </DropdownMenuTrigger>
       <DropdownMenuPortal>
-        <DropdownMenuContent onCloseAutoFocus={scheduler.call}>
-          {canEdit && (
-            <DropdownMenuItem onSelect={scheduler.set(props.onEdit)}>
-              Edit Name
-            </DropdownMenuItem>
-          )}
-          {canDuplicate && (
-            <DropdownMenuItem onSelect={scheduler.set(props.onDuplicate)}>
-              Duplicate
-            </DropdownMenuItem>
-          )}
-          {canConvertToToken && (
-            <DropdownMenuItem onSelect={scheduler.set(props.onConvertToToken)}>
-              Convert to token
-            </DropdownMenuItem>
-          )}
-          {canEnable && (
-            <DropdownMenuItem onSelect={scheduler.set(props.onEnable)}>
-              Enable
-            </DropdownMenuItem>
-          )}
-          {canDisable && (
-            <DropdownMenuItem onSelect={scheduler.set(props.onDisable)}>
-              Disable
-            </DropdownMenuItem>
-          )}
-          {canRemove && (
-            <DropdownMenuItem onSelect={scheduler.set(props.onRemove)}>
-              Remove
-            </DropdownMenuItem>
-          )}
+        <DropdownMenuContent
+          onCloseAutoFocus={(event) => event.preventDefault()}
+        >
+          {props.children}
         </DropdownMenuContent>
       </DropdownMenuPortal>
     </DropdownMenu>
@@ -411,16 +357,13 @@ SourceButton.displayName = "SourceButton";
 type StyleSourceProps = {
   id: string;
   label: string;
+  menuItems: ReactNode;
   isEditable: boolean;
   isEditing: boolean;
   isDragging: boolean;
   state: ItemState;
   source: ItemSource;
-  onChangeState: (state: ItemState) => void;
   onSelect: () => void;
-  onDuplicate: () => void;
-  onConvertToToken: () => void;
-  onRemove: () => void;
   onChangeValue: (value: string) => void;
   onChangeEditing: (isEditing: boolean) => void;
 };
@@ -429,17 +372,14 @@ export const StyleSource = ({
   id,
   label,
   state,
+  menuItems,
   isEditable,
   isEditing,
   isDragging,
   source,
   onChangeValue,
   onChangeEditing,
-  onChangeState,
   onSelect,
-  onDuplicate,
-  onConvertToToken,
-  onRemove,
 }: StyleSourceProps) => {
   const ref = useForceRecalcStyle<HTMLDivElement>("max-width", isEditing);
   const showMenu = isEditing === false && isDragging === false;
@@ -458,24 +398,7 @@ export const StyleSource = ({
         onChangeValue={onChangeValue}
         label={label}
       />
-      {showMenu && (
-        <Menu
-          source={source}
-          state={state}
-          onDuplicate={onDuplicate}
-          onConvertToToken={onConvertToToken}
-          onRemove={onRemove}
-          onEnable={() => {
-            onChangeState("unselected");
-          }}
-          onDisable={() => {
-            onChangeState("disabled");
-          }}
-          onEdit={() => {
-            onChangeEditing(true);
-          }}
-        />
-      )}
+      {showMenu && <Menu source={source}>{menuItems}</Menu>}
     </SourceButton>
   );
 };
