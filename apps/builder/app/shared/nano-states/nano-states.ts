@@ -375,14 +375,14 @@ export const selectedInstanceStyleSourcesStore = computed(
 
 /**
  * Provide selected style source with fallback
- * to local style source of selected instance
+ * to the last style source of selected instance
  */
 export const selectedStyleSourceStore = computed(
   [selectedInstanceStyleSourcesStore, selectedStyleSourceIdStore],
   (styleSources, selectedStyleSourceId) => {
     return (
       styleSources.find((item) => item.id === selectedStyleSourceId) ??
-      styleSources.find((item) => item.type === "local")
+      styleSources.at(-1)
     );
   }
 );
