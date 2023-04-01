@@ -284,7 +284,7 @@ export const StyleSourcesSection = () => {
         onSelectAutocompleteItem={({ id }) => {
           addStyleSourceToInstace(id);
         }}
-        onRemoveItem={({ id }) => {
+        onRemoveItem={(id) => {
           removeStyleSourceFromInstance(id);
         }}
         onDuplicateItem={(id) => {
