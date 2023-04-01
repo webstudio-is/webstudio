@@ -1,5 +1,7 @@
 import { nanoid } from "nanoid";
 import {
+  Breakpoint,
+  Breakpoints,
   findTreeInstanceIdsExcludingSlotDescendants,
   getStyleDeclKey,
   Instance,
@@ -15,6 +17,7 @@ import {
   StyleSourceSelections,
 } from "@webstudio-is/project-build";
 import { getComponentMeta } from "@webstudio-is/react-sdk";
+import { equalMedia } from "@webstudio-is/css-engine";
 
 // slots can have multiple parents so instance should be addressed
 // with full rendered path to avoid double selections with slots
@@ -493,16 +496,24 @@ export const insertStyleSourceSelectionsCopyMutable = (
 export const insertStylesCopyMutable = (
   styles: Styles,
   copiedStyles: StyleDecl[],
-  copiedStyleSourceIds: Map<StyleSource["id"], StyleSource["id"]>
+  copiedStyleSourceIds: Map<StyleSource["id"], StyleSource["id"]>,
+  mergedBreakpointIds: Map<Breakpoint["id"], Breakpoint["id"]>
 ) => {
   for (const styleDecl of copiedStyles) {
     const newStyleSourceId = copiedStyleSourceIds.get(styleDecl.styleSourceId);
+    // fallback to old id in case breakpoint was added without changes
+    const newBreakpointId =
+      mergedBreakpointIds.get(styleDecl.breakpointId) ?? styleDecl.breakpointId;
     // insert without changes when style source does not have new id
     if (newStyleSourceId === undefined) {
-      const styleDeclKey = getStyleDeclKey(styleDecl);
+      const newStyleDecl = {
+        ...styleDecl,
+        breakpointId: newBreakpointId,
+      };
+      const styleDeclKey = getStyleDeclKey(newStyleDecl);
       // prevent overriding shared styles if already exist
       if (styles.has(styleDeclKey) === false) {
-        styles.set(styleDeclKey, styleDecl);
+        styles.set(styleDeclKey, newStyleDecl);
       }
       continue;
     }
@@ -510,7 +521,29 @@ export const insertStylesCopyMutable = (
     const styleDeclCopy = {
       ...styleDecl,
       styleSourceId: newStyleSourceId,
+      breakpointId: newBreakpointId,
     };
     styles.set(getStyleDeclKey(styleDeclCopy), styleDeclCopy);
   }
+};
+
+export const mergeNewBreakpointsMutable = (
+  breakpoints: Breakpoints,
+  newBreakpoints: Breakpoint[]
+) => {
+  const mergedBreakpointIds = new Map<Breakpoint["id"], Breakpoint["id"]>();
+  for (const newBreakpoint of newBreakpoints) {
+    let matched = false;
+    for (const breakpoint of breakpoints.values()) {
+      if (equalMedia(breakpoint, newBreakpoint)) {
+        matched = true;
+        mergedBreakpointIds.set(newBreakpoint.id, breakpoint.id);
+        break;
+      }
+    }
+    if (matched === false) {
+      breakpoints.set(newBreakpoint.id, newBreakpoint);
+    }
+  }
+  return mergedBreakpointIds;
 };

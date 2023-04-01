@@ -1,6 +1,7 @@
 import store from "immerhin";
 import { z } from "zod";
 import {
+  Breakpoint,
   findTreeInstanceIds,
   Instance,
   InstancesItem,
@@ -18,6 +19,7 @@ import {
   styleSourcesStore,
   instancesStore,
   selectedPageStore,
+  breakpointsContainer,
 } from "../nano-states";
 import {
   type InstanceSelector,
@@ -28,6 +30,7 @@ import {
   insertStyleSourcesCopyMutable,
   insertStyleSourceSelectionsCopyMutable,
   findSubtreeLocalStyleSources,
+  mergeNewBreakpointsMutable,
 } from "../tree-utils";
 import { deleteInstance } from "../instance-utils";
 import { getMapValuesBy, getMapValuesByKeysSet } from "../array-utils";
@@ -35,6 +38,7 @@ import { getMapValuesBy, getMapValuesByKeysSet } from "../array-utils";
 const version = "@webstudio/instance/v0.1";
 
 const InstanceData = z.object({
+  breakpoints: z.array(Breakpoint),
   instances: z.array(InstancesItem),
   props: z.array(Prop),
   styleSourceSelections: z.array(StyleSourceSelection),
@@ -97,7 +101,17 @@ const getTreeData = (targetInstanceSelector: InstanceSelector) => {
     treeStyleSourceIds.has(styleDecl.styleSourceId)
   );
 
+  const treeBreapointIds = new Set<Breakpoint["id"]>();
+  for (const styleDecl of treeStyles) {
+    treeBreapointIds.add(styleDecl.breakpointId);
+  }
+  const treeBreapoints = getMapValuesByKeysSet(
+    breakpointsContainer.get(),
+    treeBreapointIds
+  );
+
   return {
+    breakpoints: treeBreapoints,
     instances: treeInstances,
     styleSources: treeStyleSources,
     props: treeProps,
@@ -139,13 +153,26 @@ export const onPaste = (clipboardData: string) => {
   );
   store.createTransaction(
     [
+      breakpointsContainer,
       instancesStore,
       styleSourcesStore,
       propsStore,
       styleSourceSelectionsStore,
       stylesStore,
     ],
-    (instances, styleSources, props, styleSourceSelections, styles) => {
+    (
+      breakpoints,
+      instances,
+      styleSources,
+      props,
+      styleSourceSelections,
+      styles
+    ) => {
+      const mergedBreakpointIds = mergeNewBreakpointsMutable(
+        breakpoints,
+        data.breakpoints
+      );
+
       const copiedInstanceIds = insertInstancesCopyMutable(
         instances,
         data.instances,
@@ -179,7 +206,12 @@ export const onPaste = (clipboardData: string) => {
         copiedInstanceIds,
         copiedStyleSourceIds
       );
-      insertStylesCopyMutable(styles, data.styles, copiedStyleSourceIds);
+      insertStylesCopyMutable(
+        styles,
+        data.styles,
+        copiedStyleSourceIds,
+        mergedBreakpointIds
+      );
 
       // first item is guaranteed root of copied tree
       const copiedRootInstanceId = Array.from(copiedInstanceIds.values())[0];
