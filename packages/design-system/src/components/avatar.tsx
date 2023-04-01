@@ -293,7 +293,15 @@ export const Avatar = React.forwardRef<
               mb: `-${theme.spacing[2]}`,
             }}
           >
-            <Status size={size && size > 2 ? "2" : "1"} variant={status} />
+            <Status
+              size={
+                (typeof size === "number" && size > 2) ||
+                (typeof size === "string" && parseInt(size, 10) > 2)
+                  ? "2"
+                  : "1"
+              }
+              variant={status}
+            />
           </Box>
         )}
       </Box>
