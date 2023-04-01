@@ -358,7 +358,6 @@ type StyleSourceProps = {
   id: string;
   label: string;
   menuItems: ReactNode;
-  isEditable: boolean;
   isEditing: boolean;
   isDragging: boolean;
   state: ItemState;
@@ -373,7 +372,6 @@ export const StyleSource = ({
   label,
   state,
   menuItems,
-  isEditable,
   isEditing,
   isDragging,
   source,
@@ -387,7 +385,7 @@ export const StyleSource = ({
   return (
     <SourceButton state={state} source={source} id={id} ref={ref}>
       <EditableText
-        isEditable={isEditable}
+        isEditable={source !== "local"}
         isEditing={isEditing}
         onChangeEditing={onChangeEditing}
         onClick={() => {

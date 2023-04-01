@@ -247,7 +247,6 @@ const renameStyleSource = (id: StyleSource["id"], label: string) => {
 type StyleSourceInputItem = {
   id: string;
   label: string;
-  isEditable: boolean;
   state: ItemState;
   source: ItemSource;
 };
@@ -262,7 +261,6 @@ const convertToInputItem = (
     return {
       id: styleSource.id,
       label: "Local",
-      isEditable: false,
       state,
       source: styleSource.type,
     };
@@ -270,7 +268,6 @@ const convertToInputItem = (
   return {
     id: styleSource.id,
     label: styleSource.name,
-    isEditable: true,
     state,
     source: styleSource.type,
   };

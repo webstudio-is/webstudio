@@ -50,7 +50,6 @@ import { StyleSourceBadge } from "./style-source-badge";
 type IntermediateItem = {
   id: string;
   label: string;
-  isEditable: boolean;
   state: ItemState;
   source: ItemSource;
   isAdded?: boolean;
@@ -136,7 +135,6 @@ const TextFieldBase: ForwardRefRenderFunction<
           isEditing={item.id === editingItemId}
           state={item.state}
           source={item.source}
-          isEditable={item.isEditable}
           onChangeEditing={(isEditing) => {
             onEditItem?.(isEditing ? item.id : undefined);
           }}
@@ -206,7 +204,6 @@ const matchOrSuggestToCreate = (
       label: search.trim(),
       state: "unselected",
       source: "token",
-      isEditable: true,
       isAdded: false,
     });
   }
@@ -299,7 +296,6 @@ export const StyleSourceInput = (
       state: "unselected",
       id: "",
       source: "local",
-      isEditable: true,
     },
     selectedItem: undefined,
     match: matchOrSuggestToCreate,

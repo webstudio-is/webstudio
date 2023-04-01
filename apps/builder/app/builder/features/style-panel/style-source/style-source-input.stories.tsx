@@ -11,7 +11,6 @@ type Item = {
   id: string;
   label: string;
   source: ItemSource;
-  isEditable: boolean;
   state: ItemState;
 };
 
@@ -19,7 +18,6 @@ const localItem: Item = {
   id: nanoid(),
   label: "Local",
   source: "local",
-  isEditable: false,
   state: "selected",
 };
 
@@ -28,21 +26,18 @@ const getItems = (): Array<Item> => [
     id: nanoid(),
     label: "Token",
     source: "token",
-    isEditable: true,
     state: "unselected",
   },
   {
     id: nanoid(),
     label: "Tag",
     source: "tag",
-    isEditable: true,
     state: "unselected",
   },
   {
     id: nanoid(),
     label: "State",
     source: "state",
-    isEditable: true,
     state: "unselected",
   },
 ];
@@ -56,7 +51,6 @@ const createItem = (
     id: nanoid(),
     label,
     source: "token",
-    isEditable: true,
     state: "selected",
   };
   const nextValue = value.map((item) => {
@@ -109,7 +103,6 @@ export const WithTruncatedItem: ComponentStory<
       label:
         "Local Something Something Something Something Something Something Something Something Something Something Something",
       source: "local",
-      isEditable: true,
       state: "selected",
     },
   ]);
@@ -141,7 +134,6 @@ export const Complete: ComponentStory<typeof StyleSourceInput> = () => {
       label: "Disabled",
       source: "token",
 
-      isEditable: true,
       state: "disabled",
     },
   ]);
