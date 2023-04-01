@@ -32,7 +32,7 @@ export const Preview = ({ breakpoint }: PreviewProps) => {
           ? `@media (min-width: ${breakpoint.minWidth}px)`
           : "maxWidth" in breakpoint
           ? `@media (max-width: ${breakpoint.maxWidth}px)`
-          : ""}
+          : "@media all"}
       </DeprecatedParagraph>
     </Flex>
   );
