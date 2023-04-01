@@ -15,12 +15,13 @@ import {
   assetContainersStore,
   selectedInstanceSelectorStore,
   selectedInstanceBrowserStyleStore,
+  selectedInstanceIntanceToTagStore,
   hoveredInstanceSelectorStore,
-  hoveredInstanceOutlineStore,
   isPreviewModeStore,
 } from "~/shared/nano-states";
 import { synchronizedBreakpointsStores } from "~/shared/nano-states/breakpoints";
 import { synchronizedInstancesStores } from "~/shared/nano-states/instances";
+import { synchronizedCanvasStores } from "~/shared/nano-states/canvas";
 
 enableMapSet();
 
@@ -66,13 +67,20 @@ export const registerContainers = () => {
     "selectedInstanceBrowserStyle",
     selectedInstanceBrowserStyleStore
   );
+  clientStores.set(
+    "selectedInstanceIntanceToTagStore",
+    selectedInstanceIntanceToTagStore
+  );
+
   clientStores.set("hoveredInstanceSelector", hoveredInstanceSelectorStore);
-  clientStores.set("hoveredInstanceOutline", hoveredInstanceOutlineStore);
   clientStores.set("isPreviewMode", isPreviewModeStore);
   for (const [name, store] of synchronizedBreakpointsStores) {
     clientStores.set(name, store);
   }
   for (const [name, store] of synchronizedInstancesStores) {
+    clientStores.set(name, store);
+  }
+  for (const [name, store] of synchronizedCanvasStores) {
     clientStores.set(name, store);
   }
 };

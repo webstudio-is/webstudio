@@ -1,4 +1,4 @@
-import { TextField, theme, useId } from "@webstudio-is/design-system";
+import { Flex, TextField, theme, useId } from "@webstudio-is/design-system";
 import {
   type ControlProps,
   getLabel,
@@ -31,25 +31,27 @@ export const NumberControl = ({
       label={getLabel(meta, propName)}
       onDelete={onDelete}
     >
-      <TextField
-        id={id}
-        type="number"
-        value={localValue.value}
-        onChange={(event) => {
-          const asNumber = parseFloat(event.target.value);
-          localValue.set(
-            // just in case type="number" doesn't guarantee a number
-            Number.isNaN(asNumber) ? event.target.value : asNumber
-          );
+      <Flex
+        css={{
+          // can't set width on TextField because it adds padding
+          width: theme.spacing[21],
         }}
-        onBlur={localValue.save}
-        onKeyDown={(event) => {
-          if (event.key === "Enter") {
-            localValue.save();
+      >
+        <TextField
+          id={id}
+          type="number"
+          value={localValue.value}
+          onChange={({ target: { valueAsNumber, value } }) =>
+            localValue.set(Number.isNaN(valueAsNumber) ? value : valueAsNumber)
           }
-        }}
-        css={{ width: theme.spacing[21] }}
-      />
+          onBlur={localValue.save}
+          onKeyDown={(event) => {
+            if (event.key === "Enter") {
+              localValue.save();
+            }
+          }}
+        />
+      </Flex>
     </HorizontalLayout>
   );
 };

@@ -1,6 +1,9 @@
 import { expect, test } from "@jest/globals";
 import type { Instance, Instances, InstancesItem } from "../schema/instances";
-import { findTreeInstanceIds } from "./instances-utils";
+import {
+  findTreeInstanceIds,
+  findTreeInstanceIdsExcludingSlotDescendants,
+} from "./instances-utils";
 
 const createInstance = (
   id: Instance["id"],
@@ -39,4 +42,29 @@ test("find all tree instances", () => {
     createInstancePair("6", "Box", []),
   ]);
   expect(findTreeInstanceIds(instances, "3")).toEqual(new Set(["3", "4", "5"]));
+});
+
+test("find all tree instances excluding slot descendants", () => {
+  const instances: Instances = new Map([
+    createInstancePair("root", "Body", [
+      { type: "id", value: "box1" },
+      { type: "id", value: "box2" },
+    ]),
+    // this is outside of subtree
+    createInstancePair("outside", "Box", []),
+    // these should be matched
+    createInstancePair("box1", "Box", [
+      { type: "id", value: "slot11" },
+      { type: "id", value: "box12" },
+    ]),
+    createInstancePair("slot11", "Slot", [
+      { type: "id", value: "box111" },
+      { type: "id", value: "box112" },
+    ]),
+    createInstancePair("box12", "Box", []),
+    createInstancePair("box2", "Box", []),
+  ]);
+  expect(
+    findTreeInstanceIdsExcludingSlotDescendants(instances, "box1")
+  ).toEqual(new Set(["box1", "box12", "slot11"]));
 });

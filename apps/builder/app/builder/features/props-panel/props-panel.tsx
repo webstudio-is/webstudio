@@ -14,7 +14,7 @@ import {
   Separator,
   Flex,
   Text,
-  CSS,
+  type CSS,
 } from "@webstudio-is/design-system";
 import { ChevronDownIcon } from "@webstudio-is/icons";
 import type { Publish } from "~/shared/pubsub";

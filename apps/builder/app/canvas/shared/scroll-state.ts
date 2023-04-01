@@ -1,6 +1,4 @@
-import { useEffect } from "react";
 import mitt from "mitt";
-import noop from "lodash.noop";
 
 // Using a JS emitter to avoid overhead with subscribing scroll event directly on the DOM by many listeners
 const emitter = mitt();
@@ -41,6 +39,13 @@ type UseScrollState = {
   onScrollEnd?: () => void;
 };
 
+// eslint-disable-next-line @typescript-eslint/no-empty-function
+const noop = () => {};
+
+/**
+ * Scroll state abstraction that can handle a lot of subscribers well.
+ * Potentially could add rate limiting and actual scroll top/left values.
+ */
 export const subscribeScrollState = ({
   onScroll = noop,
   onScrollStart = noop,
@@ -55,23 +60,4 @@ export const subscribeScrollState = ({
     emitter.off("scroll", onScroll);
     emitter.off("scrollEnd", onScrollEnd);
   };
-};
-
-/**
- * Scroll state abstraction that can handle a lot of subscribers well.
- * Potentially could add rate limiting and actual scroll top/left values.
- */
-export const useScrollState = ({
-  onScroll,
-  onScrollStart,
-  onScrollEnd,
-}: UseScrollState) => {
-  useEffect(() => {
-    const unsubscribe = subscribeScrollState({
-      onScrollStart,
-      onScroll,
-      onScrollEnd,
-    });
-    return unsubscribe;
-  }, [onScroll, onScrollEnd, onScrollStart]);
 };

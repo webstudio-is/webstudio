@@ -1,7 +1,7 @@
 import type { ComponentMeta } from "@storybook/react";
 import { useState } from "react";
 import { Tree } from "./tree";
-import { findItemById, Item, reparent } from "./test-tree-data";
+import { type Item, findItemById, reparent } from "./test-tree-data";
 import { Flex } from "../flex";
 import { TreeItemLabel, TreeItemBody } from "./tree-node";
 import type { ItemDropTarget, ItemSelector } from "./item-utils";
@@ -109,7 +109,11 @@ export const StressTest = ({ animate }: { animate: boolean }) => {
             <TreeItemLabel>{props.itemData.id}</TreeItemLabel>
           </TreeItemBody>
         )}
-        onDragEnd={(payload) => setRoot((root) => reparent(root, payload))}
+        onDragEnd={(payload) => {
+          setRoot((root) => reparent(root, payload));
+          setDragItemSelector(undefined);
+          setDropTarget(undefined);
+        }}
         onCancel={() => {
           setDragItemSelector(undefined);
           setDropTarget(undefined);

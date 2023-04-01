@@ -23,16 +23,4 @@ export const useCanvasRect = () => useValue(canvasRectContainer);
 export const projectContainer = atom<Project | undefined>();
 export const useProject = () => useValue(projectContainer);
 
-export type TextToolbarState = {
-  selectionRect: DOMRect;
-  isBold: boolean;
-  isItalic: boolean;
-  isSuperscript: boolean;
-  isSubscript: boolean;
-  isLink: boolean;
-  isSpan: boolean;
-};
-const textToolbarState = atom<undefined | TextToolbarState>();
-export const useTextToolbarState = () => useValue(textToolbarState);
-
 export const isCanvasPointerEventsEnabledStore = atom<boolean>(true);

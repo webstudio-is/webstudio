@@ -10,7 +10,7 @@ export const MenuControl = ({
   currentStyle,
   setProperty,
 }: ControlProps) => {
-  const { label, items: defaultItems } = styleConfigByName[property];
+  const { label, items: defaultItems } = styleConfigByName(property);
   const value = currentStyle[property]?.value;
   const styleSource = getStyleSource(currentStyle[property]);
 

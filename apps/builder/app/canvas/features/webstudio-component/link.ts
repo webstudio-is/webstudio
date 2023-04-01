@@ -1,5 +1,5 @@
 import type { MouseEvent } from "react";
-import { findPageByIdOrPath, Page } from "@webstudio-is/project-build";
+import { findPageByIdOrPath, type Page } from "@webstudio-is/project-build";
 import { pagesStore, isPreviewModeStore } from "~/shared/nano-states";
 import { publish } from "~/shared/pubsub";
 

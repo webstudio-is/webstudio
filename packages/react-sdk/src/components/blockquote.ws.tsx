@@ -1,45 +1,72 @@
+import type { Style } from "@webstudio-is/css-data";
 import { BlockquoteIcon } from "@webstudio-is/icons";
+import type { defaultTag } from "./blockquote";
 import type { WsComponentMeta, WsComponentPropsMeta } from "./component-meta";
 import { props } from "./__generated__/blockquote.props";
 
 const presetStyle = {
-  margin: {
-    type: "keyword",
-    value: "0",
+  blockquote: {
+    marginTop: {
+      type: "unit",
+      value: 0,
+      unit: "number",
+    },
+    marginRight: {
+      type: "unit",
+      value: 0,
+      unit: "number",
+    },
+    marginBottom: {
+      type: "unit",
+      value: 10,
+      unit: "px",
+    },
+    marginLeft: {
+      type: "unit",
+      value: 0,
+      unit: "number",
+    },
+
+    paddingTop: {
+      type: "unit",
+      value: 10,
+      unit: "px",
+    },
+    paddingBottom: {
+      type: "unit",
+      value: 10,
+      unit: "px",
+    },
+    paddingLeft: {
+      type: "unit",
+      value: 20,
+      unit: "px",
+    },
+    paddingRight: {
+      type: "unit",
+      value: 20,
+      unit: "px",
+    },
+
+    borderLeftWidth: {
+      type: "unit",
+      value: 5,
+      unit: "px",
+    },
+    borderLeftStyle: {
+      type: "keyword",
+      value: "solid",
+    },
+
+    borderLeftColor: {
+      type: "rgb",
+      r: 226,
+      g: 226,
+      b: 226,
+      alpha: 1,
+    },
   },
-  marginBottom: {
-    type: "keyword",
-    value: "10px",
-  },
-  paddingTop: {
-    type: "keyword",
-    value: "10px",
-  },
-  paddingBottom: {
-    type: "keyword",
-    value: "10px",
-  },
-  paddingLeft: {
-    type: "keyword",
-    value: "20px",
-  },
-  paddingRight: {
-    type: "keyword",
-    value: "20px",
-  },
-  borderLeftWidth: {
-    type: "keyword",
-    value: "5px",
-  },
-  borderLeftStyle: {
-    type: "keyword",
-    value: "solid",
-  },
-  borderLeftColor: {
-    type: "keyword",
-    value: "#e2e2e2",
-  },
-} as const;
+} as const satisfies Record<typeof defaultTag, Style>;
 
 export const meta: WsComponentMeta = {
   category: "typography",

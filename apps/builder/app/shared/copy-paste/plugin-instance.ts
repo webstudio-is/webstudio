@@ -1,12 +1,15 @@
 import store from "immerhin";
 import { z } from "zod";
 import {
+  Breakpoint,
   findTreeInstanceIds,
+  Instance,
   InstancesItem,
   Prop,
   StyleDecl,
   StyleSource,
   StyleSourceSelection,
+  StyleSourceSelections,
 } from "@webstudio-is/project-build";
 import {
   propsStore,
@@ -16,22 +19,26 @@ import {
   styleSourcesStore,
   instancesStore,
   selectedPageStore,
+  breakpointsContainer,
 } from "../nano-states";
 import {
   type InstanceSelector,
   findClosestDroppableTarget,
-  findSubtreeLocalStyleSources,
   insertInstancesCopyMutable,
   insertPropsCopyMutable,
   insertStylesCopyMutable,
   insertStyleSourcesCopyMutable,
   insertStyleSourceSelectionsCopyMutable,
+  findSubtreeLocalStyleSources,
+  mergeNewBreakpointsMutable,
 } from "../tree-utils";
 import { deleteInstance } from "../instance-utils";
+import { getMapValuesBy, getMapValuesByKeysSet } from "../array-utils";
 
 const version = "@webstudio/instance/v0.1";
 
 const InstanceData = z.object({
+  breakpoints: z.array(Breakpoint),
   instances: z.array(InstancesItem),
   props: z.array(Prop),
   styleSourceSelections: z.array(StyleSourceSelection),
@@ -40,6 +47,23 @@ const InstanceData = z.object({
 });
 
 type InstanceData = z.infer<typeof InstanceData>;
+
+const findTreeStyleSourceIds = (
+  styleSourceSelections: StyleSourceSelections,
+  treeInstanceIds: Set<Instance["id"]>
+) => {
+  const treeStyleSourceIds = new Set<StyleSource["id"]>();
+  for (const { instanceId, values } of styleSourceSelections.values()) {
+    // skip selections outside of tree
+    if (treeInstanceIds.has(instanceId) === false) {
+      continue;
+    }
+    for (const styleSourceId of values) {
+      treeStyleSourceIds.add(styleSourceId);
+    }
+  }
+  return treeStyleSourceIds;
+};
 
 const getTreeData = (targetInstanceSelector: InstanceSelector) => {
   // @todo tell user they can't copy or cut root
@@ -50,55 +74,44 @@ const getTreeData = (targetInstanceSelector: InstanceSelector) => {
   const [targetInstanceId] = targetInstanceSelector;
   const instances = instancesStore.get();
   const treeInstanceIds = findTreeInstanceIds(instances, targetInstanceId);
-  const styleSources = styleSourcesStore.get();
   const styleSourceSelections = styleSourceSelectionsStore.get();
-  const subtreeLocalStyleSourceIds = findSubtreeLocalStyleSources(
-    treeInstanceIds,
-    styleSources,
-    styleSourceSelections
+  const treeStyleSourceIds = findTreeStyleSourceIds(
+    styleSourceSelections,
+    treeInstanceIds
   );
 
   // first item is guaranteed root of copied tree
-  const treeInstances: InstancesItem[] = [];
-  for (const instanceId of treeInstanceIds) {
-    const instance = instances.get(instanceId);
-    if (instance) {
-      treeInstances.push(instance);
-    }
-  }
+  const treeInstances = getMapValuesByKeysSet(instances, treeInstanceIds);
 
-  const treeStyleSources: StyleSource[] = [];
-  for (const styleSourceId of subtreeLocalStyleSourceIds) {
-    const styleSource = styleSources.get(styleSourceId);
-    if (styleSource) {
-      treeStyleSources.push(styleSource);
-    }
-  }
+  const treeProps = getMapValuesBy(propsStore.get(), (prop) =>
+    treeInstanceIds.has(prop.instanceId)
+  );
 
-  const props = propsStore.get();
-  const treeProps: Prop[] = [];
-  for (const prop of props.values()) {
-    if (treeInstanceIds.has(prop.instanceId)) {
-      treeProps.push(prop);
-    }
-  }
+  const treeStyleSourceSelections = getMapValuesByKeysSet(
+    styleSourceSelections,
+    treeInstanceIds
+  );
 
-  const treeStyleSourceSelections: StyleSourceSelection[] = [];
-  for (const styleSourceSelection of styleSourceSelections.values()) {
-    if (treeInstanceIds.has(styleSourceSelection.instanceId)) {
-      treeStyleSourceSelections.push(styleSourceSelection);
-    }
-  }
+  const treeStyleSources = getMapValuesByKeysSet(
+    styleSourcesStore.get(),
+    treeStyleSourceIds
+  );
 
-  const styles = stylesStore.get();
-  const treeStyles: StyleDecl[] = [];
-  for (const styleDecl of styles.values()) {
-    if (subtreeLocalStyleSourceIds.has(styleDecl.styleSourceId)) {
-      treeStyles.push(styleDecl);
-    }
+  const treeStyles = getMapValuesBy(stylesStore.get(), (styleDecl) =>
+    treeStyleSourceIds.has(styleDecl.styleSourceId)
+  );
+
+  const treeBreapointIds = new Set<Breakpoint["id"]>();
+  for (const styleDecl of treeStyles) {
+    treeBreapointIds.add(styleDecl.breakpointId);
   }
+  const treeBreapoints = getMapValuesByKeysSet(
+    breakpointsContainer.get(),
+    treeBreapointIds
+  );
 
   return {
+    breakpoints: treeBreapoints,
     instances: treeInstances,
     styleSources: treeStyleSources,
     props: treeProps,
@@ -140,22 +153,52 @@ export const onPaste = (clipboardData: string) => {
   );
   store.createTransaction(
     [
+      breakpointsContainer,
       instancesStore,
       styleSourcesStore,
       propsStore,
       styleSourceSelectionsStore,
       stylesStore,
     ],
-    (instances, styleSources, props, styleSourceSelections, styles) => {
+    (
+      breakpoints,
+      instances,
+      styleSources,
+      props,
+      styleSourceSelections,
+      styles
+    ) => {
+      const mergedBreakpointIds = mergeNewBreakpointsMutable(
+        breakpoints,
+        data.breakpoints
+      );
+
       const copiedInstanceIds = insertInstancesCopyMutable(
         instances,
         data.instances,
         dropTarget
       );
+
+      // find all local style sources of copied instances
+      const newStyleSourceIds = findSubtreeLocalStyleSources(
+        new Set(copiedInstanceIds.values()),
+        new Map(
+          data.styleSources.map((styleSource) => [styleSource.id, styleSource])
+        ),
+        new Map(
+          data.styleSourceSelections.map((styleSourceSelection) => [
+            styleSourceSelection.instanceId,
+            styleSourceSelection,
+          ])
+        )
+      );
+
       const copiedStyleSourceIds = insertStyleSourcesCopyMutable(
         styleSources,
-        data.styleSources
+        data.styleSources,
+        newStyleSourceIds
       );
+
       insertPropsCopyMutable(props, data.props, copiedInstanceIds);
       insertStyleSourceSelectionsCopyMutable(
         styleSourceSelections,
@@ -163,7 +206,12 @@ export const onPaste = (clipboardData: string) => {
         copiedInstanceIds,
         copiedStyleSourceIds
       );
-      insertStylesCopyMutable(styles, data.styles, copiedStyleSourceIds);
+      insertStylesCopyMutable(
+        styles,
+        data.styles,
+        copiedStyleSourceIds,
+        mergedBreakpointIds
+      );
 
       // first item is guaranteed root of copied tree
       const copiedRootInstanceId = Array.from(copiedInstanceIds.values())[0];

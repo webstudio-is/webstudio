@@ -59,15 +59,6 @@ export const hasProjectPermit = async (
     return true;
   }
 
-  // Edge-case to allow access the project on the canvas
-  if (
-    props.permit === "view" &&
-    authorization.authReadToken !== undefined &&
-    authorization.authReadToken.projectId === props.projectId
-  ) {
-    return true;
-  }
-
   // Check if the user is allowed to access the project
   if (authorization.userId !== undefined) {
     checks.push(

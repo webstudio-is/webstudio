@@ -3,13 +3,16 @@ import type { Instance, Instances, InstancesItem } from "../schema/instances";
 const traverseInstances = (
   instances: Instances,
   instanceId: Instance["id"],
-  callback: (instance: InstancesItem) => void
+  callback: (instance: InstancesItem) => false | void
 ) => {
   const instance = instances.get(instanceId);
   if (instance === undefined) {
     return;
   }
-  callback(instance);
+  const skipTraversingChildren = callback(instance);
+  if (skipTraversingChildren === false) {
+    return;
+  }
   for (const child of instance.children) {
     if (child.type === "id") {
       traverseInstances(instances, child.value, callback);
@@ -24,6 +27,20 @@ export const findTreeInstanceIds = (
   const ids = new Set<Instance["id"]>();
   traverseInstances(instances, rootInstanceId, (instance) => {
     ids.add(instance.id);
+  });
+  return ids;
+};
+
+export const findTreeInstanceIdsExcludingSlotDescendants = (
+  instances: Instances,
+  rootInstanceId: Instance["id"]
+) => {
+  const ids = new Set<Instance["id"]>();
+  traverseInstances(instances, rootInstanceId, (instance) => {
+    ids.add(instance.id);
+    if (instance.component === "Slot") {
+      return false;
+    }
   });
   return ids;
 };

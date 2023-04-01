@@ -1,5 +1,5 @@
 import { Select } from "@webstudio-is/design-system";
-import { FontWeight, fontWeights } from "@webstudio-is/fonts";
+import { type FontWeight, fontWeights } from "@webstudio-is/fonts";
 import { toValue } from "@webstudio-is/css-engine";
 import { useMemo } from "react";
 import { useAssets } from "~/builder/shared/assets";

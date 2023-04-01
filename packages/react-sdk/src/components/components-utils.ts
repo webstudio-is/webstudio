@@ -10,6 +10,8 @@ export type ComponentName = keyof typeof components;
  * @todo this list should not be hardcoded!
  */
 const componentNames = Object.keys({
+  Slot: 1,
+  Fragment: 1,
   Box: 1,
   Body: 1,
   TextBlock: 1,

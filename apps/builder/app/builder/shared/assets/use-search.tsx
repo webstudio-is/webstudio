@@ -1,4 +1,8 @@
-import { ChangeEventHandler, KeyboardEventHandler, useState } from "react";
+import {
+  type ChangeEventHandler,
+  type KeyboardEventHandler,
+  useState,
+} from "react";
 
 type UseSearch = {
   onCancel: () => void;

@@ -1,6 +1,6 @@
 {
   "name": "@webstudio-is/icons",
-  "version": "0.49.0",
+  "version": "0.51.0",
   "description": "Webstudio Icons",
   "author": "Webstudio <github@webstudio.is>",
   "homepage": "https://webstudio.is",
@@ -22,7 +22,7 @@
     "@webstudio-is/scripts": "workspace:^",
     "@webstudio-is/storybook-config": "workspace:^",
     "@webstudio-is/tsconfig": "workspace:^",
-    "tsx": "^3.9.0",
+    "tsx": "^3.12.6",
     "typescript": "4.9.5"
   },
   "peerDependencies": {

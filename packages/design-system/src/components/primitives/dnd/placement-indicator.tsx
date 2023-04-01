@@ -7,7 +7,7 @@ import {
   getPlacementInside,
   getPlacementNextTo,
 } from "./geometry-utils";
-import { defaultGetValidChildren, DropTarget } from "./use-drop";
+import { defaultGetValidChildren, type DropTarget } from "./use-drop";
 
 const placementStyle = {
   boxSizing: "content-box",

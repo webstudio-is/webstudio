@@ -1,6 +1,6 @@
 import type { FontFormat, VariationAxes } from "./schema";
 import { create as createFontKit } from "fontkit";
-import { FontWeight, fontWeights } from "./font-weights";
+import { type FontWeight, fontWeights } from "./font-weights";
 
 // @todo sumbit this to definitely typed, they are not up to date
 declare module "fontkit" {
@@ -12,7 +12,7 @@ declare module "fontkit" {
 }
 
 export const styles = ["normal", "italic", "oblique"] as const;
-type Style = typeof styles[number];
+type Style = (typeof styles)[number];
 
 export const parseSubfamily = (subfamily: string) => {
   const subfamilyLow = subfamily.toLowerCase();

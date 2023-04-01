@@ -1,4 +1,4 @@
-import { createContext, RefObject } from "react";
+import { createContext, type RefObject } from "react";
 
 export const FloatingPanelContext = createContext<{
   container: RefObject<HTMLElement>;

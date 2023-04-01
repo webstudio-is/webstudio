@@ -1,6 +1,6 @@
 // @todo this should be a local customization in sidebar left, not a reusable component
 import React from "react";
-import { CSS, styled } from "../stitches.config";
+import { type CSS, styled } from "../stitches.config";
 import * as TabsPrimitive from "@radix-ui/react-tabs";
 import { theme } from "../stitches.config";
 
@@ -71,7 +71,7 @@ export const SidebarTabsContent = styled(TabsPrimitive.Content, {
   top: 0,
   left: "100%",
   height: "100%",
-  bc: theme.colors.loContrast,
+  bc: theme.colors.backgroundPanel,
   outline: "none",
   '&[data-state="active"]': {
     borderRight: `1px solid ${theme.colors.slate7}`,

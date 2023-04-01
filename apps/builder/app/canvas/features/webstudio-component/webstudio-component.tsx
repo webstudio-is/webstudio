@@ -1,4 +1,4 @@
-import { MouseEvent, FormEvent, useEffect } from "react";
+import { type MouseEvent, type FormEvent, useEffect } from "react";
 import { Suspense, lazy, useCallback, useMemo, useRef } from "react";
 import { useStore } from "@nanostores/react";
 import { useLexicalComposerContext } from "@lexical/react/LexicalComposerContext";
@@ -24,8 +24,8 @@ import {
 import { textEditingInstanceSelectorStore } from "~/shared/nano-states/instances";
 import { useCssRules } from "~/canvas/shared/styles";
 import {
+  type InstanceSelector,
   areInstanceSelectorsEqual,
-  InstanceSelector,
 } from "~/shared/tree-utils";
 import { SelectedInstanceConnector } from "./selected-instance-connector";
 import { handleLinkClick } from "./link";

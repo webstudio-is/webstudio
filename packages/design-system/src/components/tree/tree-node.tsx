@@ -445,10 +445,8 @@ export const TreeNode = <Data extends { id: string }>({
   const itemSelector = [itemData.id, ...(parentSelector ?? [])];
 
   const itemIsHidden = isItemHidden(itemData.id);
-  const isAlwaysExpanded = itemIsHidden;
-  if (itemIsHidden === false) {
-    level += 1;
-  }
+  // hidden items and root are always expanded
+  const isAlwaysExpanded = itemIsHidden || level === 0;
 
   const isExpandable = itemChildren.length > 0;
   const isExpanded = getIsExpanded(itemSelector) || isAlwaysExpanded;
@@ -514,7 +512,7 @@ export const TreeNode = <Data extends { id: string }>({
                 itemData={child}
                 parentSelector={itemSelector}
                 parentIsSelected={isSelected || parentIsSelected}
-                level={level}
+                level={itemIsHidden ? level : level + 1}
                 {...commonProps}
               />
             ))

@@ -7,7 +7,7 @@ import {
   FloatingPanelPopoverTitle,
 } from "@webstudio-is/design-system";
 import {
-  MutableRefObject,
+  type MutableRefObject,
   useContext,
   useEffect,
   useRef,

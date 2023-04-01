@@ -116,7 +116,7 @@ const SidePanel = ({
         fg: 0,
         // Left sidebar tabs won't be able to pop out to the right if we set overflowX to auto.
         //overflowY: "auto",
-        bc: theme.colors.loContrast,
+        bc: theme.colors.backgroundPanel,
         height: "100%",
         ...css,
         "&:last-of-type": {
@@ -242,7 +242,6 @@ export type BuilderProps = {
   build: Build;
   assets: Asset[];
   buildOrigin: string;
-  authReadToken: string;
   authToken?: string;
   authPermit: AuthPermit;
 };
@@ -252,7 +251,6 @@ export const Builder = ({
   build,
   assets,
   buildOrigin,
-  authReadToken,
   authToken,
   authPermit,
 }: BuilderProps) => {
@@ -315,8 +313,6 @@ export const Builder = ({
   const canvasUrl = getBuildUrl({
     buildOrigin,
     project,
-    page: build.pages.homePage,
-    authReadToken,
   });
 
   return (

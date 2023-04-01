@@ -1,5 +1,5 @@
 import { forwardRef } from "react";
-import { CSS, css } from "@webstudio-is/design-system";
+import { type CSS, css } from "@webstudio-is/design-system";
 
 const iframeStyle = css({
   border: "none",

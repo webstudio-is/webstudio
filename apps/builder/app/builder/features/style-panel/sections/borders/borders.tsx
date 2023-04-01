@@ -1,73 +1,123 @@
 import { Box, Flex, Grid, theme } from "@webstudio-is/design-system";
+import type { StyleProperty } from "@webstudio-is/css-data";
 import { ColorControl } from "../../controls";
 import { styleConfigByName } from "../../shared/configs";
 import { PropertyName } from "../../shared/property-name";
 import type { RenderCategoryProps } from "../../style-sections";
+import { CollapsibleSection } from "../../shared/collapsible-section";
 import { BorderRadius } from "./border-radius";
 import { BorderStyle } from "./border-style";
+import { deleteAllProperties, setAllProperties } from "./border-utils";
 import { BorderWidth } from "./border-width";
 
-const { items: borderColorItems } = styleConfigByName["borderTopColor"];
+const { items: borderColorItems } = styleConfigByName("borderTopColor");
 
-export const BordersSection = ({
-  currentStyle,
-  setProperty,
-  deleteProperty,
-  createBatchUpdate,
-}: RenderCategoryProps) => {
+const borderColorProperties = [
+  "borderTopColor",
+  "borderRightColor",
+  "borderBottomColor",
+  "borderLeftColor",
+] as const;
+
+const properties: StyleProperty[] = [
+  ...borderColorProperties,
+
+  "borderTopLeftRadius",
+  "borderTopRightRadius",
+  "borderBottomLeftRadius",
+  "borderBottomRightRadius",
+
+  "borderTopStyle",
+  "borderRightStyle",
+  "borderBottomStyle",
+  "borderLeftStyle",
+
+  "borderTopWidth",
+  "borderRightWidth",
+  "borderBottomWidth",
+  "borderLeftWidth",
+];
+
+export const BordersSection = (props: RenderCategoryProps) => {
+  const { currentStyle, setProperty, deleteProperty, createBatchUpdate } =
+    props;
+
+  /**
+   * We do not use shorthand properties such as borderWidth or borderRadius in our code.
+   * However, in the UI, we can display a single field, and in that case, we can use any property
+   * from the shorthand property set and pass it instead.
+   **/
+  const borderColorProperty = borderColorProperties[0];
+
+  const deleteAllBorderColorProperties = deleteAllProperties(
+    borderColorProperties,
+    createBatchUpdate
+  );
+
+  const setAllBorderColorProperties = setAllProperties(
+    borderColorProperties,
+    createBatchUpdate
+  );
+
   return (
-    <Flex direction="column" gap={2}>
-      <Grid
-        css={{
-          // Our aim is to maintain consistent styling throughout the property and align
-          // the input fields on the left-hand side
-          // See ./border-property.tsx for more details
-          gridTemplateColumns: `1fr ${theme.spacing[20]} ${theme.spacing[12]}`,
-        }}
-        gapX={2}
-      >
-        <PropertyName
-          style={currentStyle}
-          property={"borderTopColor"}
-          label={"Color"}
-          onReset={() => deleteProperty("borderTopColor")}
+    <CollapsibleSection
+      label="Borders"
+      currentStyle={currentStyle}
+      properties={properties}
+    >
+      <Flex direction="column" gap={2}>
+        <BorderStyle
+          createBatchUpdate={createBatchUpdate}
+          currentStyle={currentStyle}
+          setProperty={setProperty}
+          deleteProperty={deleteProperty}
         />
 
-        <Box
+        <Grid
           css={{
-            gridColumn: `span 2`,
+            // Our aim is to maintain consistent styling throughout the property and align
+            // the input fields on the left-hand side
+            // See ./border-property.tsx for more details
+            gridTemplateColumns: `1fr ${theme.spacing[20]} ${theme.spacing[12]}`,
           }}
+          gapX={2}
         >
-          <ColorControl
-            property={"borderTopColor"}
-            items={borderColorItems}
-            currentStyle={currentStyle}
-            setProperty={setProperty}
-            deleteProperty={deleteProperty}
+          <PropertyName
+            style={currentStyle}
+            property={borderColorProperty}
+            label={"Color"}
+            onReset={() => deleteAllBorderColorProperties(borderColorProperty)}
           />
-        </Box>
-      </Grid>
 
-      <BorderStyle
-        createBatchUpdate={createBatchUpdate}
-        currentStyle={currentStyle}
-        setProperty={setProperty}
-        deleteProperty={deleteProperty}
-      />
+          <Box
+            css={{
+              gridColumn: `span 2`,
+            }}
+          >
+            <ColorControl
+              property={borderColorProperty}
+              items={borderColorItems}
+              currentStyle={currentStyle}
+              setProperty={setAllBorderColorProperties}
+              deleteProperty={deleteAllBorderColorProperties}
+            />
+          </Box>
+        </Grid>
 
-      <BorderWidth
-        createBatchUpdate={createBatchUpdate}
-        currentStyle={currentStyle}
-        setProperty={setProperty}
-        deleteProperty={deleteProperty}
-      />
+        <BorderWidth
+          createBatchUpdate={createBatchUpdate}
+          currentStyle={currentStyle}
+          setProperty={setProperty}
+          deleteProperty={deleteProperty}
+        />
 
-      <BorderRadius
-        createBatchUpdate={createBatchUpdate}
-        currentStyle={currentStyle}
-        setProperty={setProperty}
-        deleteProperty={deleteProperty}
-      />
-    </Flex>
+        <BorderRadius
+          createBatchUpdate={createBatchUpdate}
+          currentStyle={currentStyle}
+          setProperty={setProperty}
+          deleteProperty={deleteProperty}
+        />
+      </Flex>
+    </CollapsibleSection>
   );
 };

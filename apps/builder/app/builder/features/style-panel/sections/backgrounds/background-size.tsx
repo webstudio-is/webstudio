@@ -5,7 +5,11 @@ import { toPascalCase } from "../../shared/keyword-utils";
 import { parseCssValue } from "../../shared/parse-css-value";
 import type { ControlProps } from "../../style-sections";
 import { CssValueInputContainer } from "../../controls/position/css-value-input-container";
-import { StyleValue, TupleValue, TupleValueItem } from "@webstudio-is/css-data";
+import {
+  type StyleValue,
+  TupleValue,
+  TupleValueItem,
+} from "@webstudio-is/css-data";
 import type { SetValue } from "../../shared/use-style-data";
 
 const StyleKeywordAuto = { type: "keyword" as const, value: "auto" };
@@ -36,7 +40,7 @@ export const BackgroundSize = (
   const styleInfo = props.currentStyle[property];
   const styleValue = styleInfo?.value;
   const styleSource = "default";
-  const { items: defaultItems } = styleConfigByName[property];
+  const { items: defaultItems } = styleConfigByName(property);
 
   const selectOptions = [
     ...defaultItems,
@@ -63,7 +67,11 @@ export const BackgroundSize = (
 
   return (
     <>
-      <Grid css={{ gridTemplateColumns: "1fr 128px" }} align="center" gap={2}>
+      <Grid
+        css={{ gridTemplateColumns: `1fr ${theme.spacing[23]}` }}
+        align="center"
+        gap={2}
+      >
         <Label color="default" truncate>
           Size
         </Label>

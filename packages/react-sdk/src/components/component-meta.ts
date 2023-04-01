@@ -3,6 +3,9 @@ import type { FunctionComponent } from "react";
 import type { IconProps } from "@webstudio-is/icons";
 import type { Style } from "@webstudio-is/css-data";
 import { PropMeta } from "@webstudio-is/generate-arg-types";
+import type { htmlTags as HtmlTags } from "html-tags";
+
+type PresetStyle = Partial<Record<HtmlTags, Style>>;
 
 // props are separated from the rest of the meta
 // so they can be exported separately and potentially tree-shaken
@@ -44,6 +47,6 @@ export type WsComponentMeta = Omit<
   z.infer<typeof WsComponentMeta>,
   "presetStyle" | "Icon"
 > & {
-  presetStyle?: Style;
+  presetStyle?: PresetStyle;
   Icon: FunctionComponent<IconProps>;
 };

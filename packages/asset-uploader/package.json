@@ -1,6 +1,6 @@
 {
   "name": "@webstudio-is/asset-uploader",
-  "version": "0.49.0",
+  "version": "0.51.0",
   "description": "Webstudio Asset Uploader",
   "author": "Webstudio <github@webstudio.is>",
   "homepage": "https://webstudio.is",
@@ -16,7 +16,7 @@
   "dependencies": {
     "@aws-sdk/client-s3": "^3.131.0",
     "@aws-sdk/lib-storage": "^3.131.0",
-    "@remix-run/node": "1.12.0",
+    "@remix-run/node": "1.14.3",
     "@webstudio-is/fonts": "workspace:^",
     "@webstudio-is/prisma-client": "workspace:^",
     "@webstudio-is/trpc-interface": "workspace:^",

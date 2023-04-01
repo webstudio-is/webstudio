@@ -1,4 +1,4 @@
-import { Options, useHotkeys } from "react-hotkeys-hook";
+import { type Options, useHotkeys } from "react-hotkeys-hook";
 import store from "immerhin";
 import {
   zoomIn,

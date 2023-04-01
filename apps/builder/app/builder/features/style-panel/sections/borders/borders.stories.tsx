@@ -20,7 +20,6 @@ const styleInfoInitial: StyleInfo = {
 const Panel = styled("div", {
   width: theme.spacing[30],
   boxSizing: "border-box",
-  padding: theme.spacing[9],
 });
 
 export const Borders = () => {
@@ -86,9 +85,7 @@ export const Borders = () => {
         setProperty={setProperty}
         deleteProperty={deleteProperty}
         createBatchUpdate={createBatchUpdate}
-        category={"borders"}
-        styleConfigsByCategory={[]}
-        moreStyleConfigsByCategory={[]}
+        category="borders"
       />
     </Panel>
   );

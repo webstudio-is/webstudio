@@ -4,15 +4,12 @@ import { Box } from "@webstudio-is/design-system";
 import { PlacementIndicator } from "@webstudio-is/design-system";
 import {
   useIsPreviewMode,
-  useIsScrolling,
-  useSubscribeScrollState,
   useDragAndDropState,
   useSubscribeDragAndDropState,
   instancesStore,
 } from "~/shared/nano-states";
 import { HoveredInstanceOutline, SelectedInstanceOutline } from "./outline";
-import { useSubscribeTextToolbar, TextToolbar } from "./text-toolbar";
-import { useSubscribeInstanceRect } from "./hooks/use-subscribe-instance-rect";
+import { TextToolbar } from "./text-toolbar";
 import { useSubscribeSwitchPage } from "~/shared/pages";
 import { Label } from "./outline/label";
 import { Outline } from "./outline/outline";
@@ -33,14 +30,10 @@ type CanvasToolsProps = {
 
 export const CanvasTools = ({ publish }: CanvasToolsProps) => {
   // @todo try to setup cross-frame atoms to vaoid this
-  useSubscribeInstanceRect();
-  useSubscribeTextToolbar();
-  useSubscribeScrollState();
   useSubscribeDragAndDropState();
   useSubscribeSwitchPage();
 
   const [isPreviewMode] = useIsPreviewMode();
-  const [isScrolling] = useIsScrolling();
   const [dragAndDropState] = useDragAndDropState();
   const instances = useStore(instancesStore);
 
@@ -66,7 +59,7 @@ export const CanvasTools = ({ publish }: CanvasToolsProps) => {
     ) : null;
   }
 
-  if (isPreviewMode || isScrolling) {
+  if (isPreviewMode) {
     return null;
   }
   return (

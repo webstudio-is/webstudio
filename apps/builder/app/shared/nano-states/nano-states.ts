@@ -32,6 +32,7 @@ import type {
 import { useSyncInitializeOnce } from "../hook-utils";
 import { shallowComputed } from "../store-utils";
 import { createInstancesIndex, type InstanceSelector } from "../tree-utils";
+import type { htmlTags as HtmlTags } from "html-tags";
 
 const useValue = <T>(atom: WritableAtom<T>) => {
   const value = useStore(atom);
@@ -329,6 +330,13 @@ export const selectedInstanceStore = computed(
 
 export const selectedInstanceBrowserStyleStore = atom<undefined | Style>();
 
+/**
+ * instanceId => tagName store for selected instance and its ancestors
+ */
+export const selectedInstanceIntanceToTagStore = atom<
+  undefined | Map<Instance["id"], HtmlTags>
+>();
+
 export const selectedInstanceStyleSourcesStore = computed(
   [
     styleSourceSelectionsStore,
@@ -367,14 +375,14 @@ export const selectedInstanceStyleSourcesStore = computed(
 
 /**
  * Provide selected style source with fallback
- * to local style source of selected instance
+ * to the last style source of selected instance
  */
 export const selectedStyleSourceStore = computed(
   [selectedInstanceStyleSourcesStore, selectedStyleSourceIdStore],
   (styleSources, selectedStyleSourceId) => {
     return (
       styleSources.find((item) => item.id === selectedStyleSourceId) ??
-      styleSources.find((item) => item.type === "local")
+      styleSources.at(-1)
     );
   }
 );
@@ -382,9 +390,6 @@ export const selectedStyleSourceStore = computed(
 export const hoveredInstanceSelectorStore = atom<undefined | InstanceSelector>(
   undefined
 );
-export const hoveredInstanceOutlineStore = atom<
-  undefined | { label?: string; component: string; rect: DOMRect }
->(undefined);
 
 export const isPreviewModeStore = atom<boolean>(false);
 export const useIsPreviewMode = () => useValue(isPreviewModeStore);
@@ -409,19 +414,6 @@ export const useSetAuthToken = (authToken: string | undefined) => {
     authTokenStore.set(authToken);
   });
 };
-
-const selectedInstanceOutlineContainer = atom<{
-  visible: boolean;
-  rect?: DOMRect;
-}>({
-  visible: false,
-  rect: undefined,
-});
-export const useSelectedInstanceOutline = () =>
-  useValue(selectedInstanceOutlineContainer);
-
-const isScrollingContainer = atom<boolean>(false);
-export const useIsScrolling = () => useValue(isScrollingContainer);
 
 export type DragAndDropState = {
   isDragging: boolean;

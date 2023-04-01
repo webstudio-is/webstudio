@@ -3,7 +3,7 @@ import { renderHook, act } from "@testing-library/react-hooks";
 import type { Placement } from "../primitives/dnd";
 import { useHorizontalShift } from "./horizontal-shift";
 import type { ItemDropTarget, ItemId, ItemSelector } from "./item-utils";
-import { findItemById, getItemPath, Item } from "./test-tree-data";
+import { type Item, findItemById, getItemPath } from "./test-tree-data";
 
 const box1: Item = { canAcceptChildren: true, id: "box1", children: [] };
 const box2: Item = { canAcceptChildren: true, id: "box2", children: [] };

@@ -1,5 +1,9 @@
 import { expect, test } from "@jest/globals";
-import { removeByMutable } from "./array-utils";
+import {
+  getMapValuesBy,
+  getMapValuesByKeysSet,
+  removeByMutable,
+} from "./array-utils";
 
 test("removeByMutable", () => {
   const array = [
@@ -32,4 +36,29 @@ test("removeByMutable", () => {
       },
     ]
   `);
+});
+
+test("getMapValuesByKeysSet", () => {
+  const map = new Map([
+    [1, "value1"],
+    [2, "value2"],
+    [3, "value3"],
+    [4, "value4"],
+    [5, "value5"],
+  ]);
+  const keys = new Set([2, 4]);
+  expect(getMapValuesByKeysSet(map, keys)).toEqual(["value2", "value4"]);
+});
+
+test("getMapValuesBy", () => {
+  const map = new Map([
+    [1, "value1"],
+    [2, "value2"],
+    [3, "value3"],
+    [4, "value4"],
+    [5, "value5"],
+  ]);
+  expect(
+    getMapValuesBy(map, (value) => value.includes("3") || value.includes("5"))
+  ).toEqual(["value3", "value5"]);
 });

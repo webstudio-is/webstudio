@@ -28,6 +28,7 @@ const colors: ReadonlyArray<ComponentProps<typeof ButtonComponent>["color"]> = [
   "positive",
   "ghost",
   "dark",
+  "gradient",
 ];
 
 const states: ReadonlyArray<ComponentProps<typeof ButtonComponent>["state"]> = [

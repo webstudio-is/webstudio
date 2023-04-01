@@ -179,15 +179,16 @@ const PagesPanel = ({
   }
 
   return (
-    <Box
+    <Flex
       css={{
         position: "relative",
         height: "100%",
         // z-index needed for page settings animation
         zIndex: 1,
         flexGrow: 1,
-        background: theme.colors.loContrast,
+        background: theme.colors.backgroundPanel,
       }}
+      direction="column"
     >
       <Header
         title="Pages"
@@ -207,21 +208,23 @@ const PagesPanel = ({
           </>
         }
       />
-      <TreeNode<PagesTreeNode>
-        selectedItemSelector={[selectedPageId, pagesTree.id]}
-        onSelect={selectTreeNode}
-        itemData={pagesTree}
-        renderItem={renderItem}
-        getItemChildren={(nodeId) => {
-          if (nodeId === pagesTree.id && pagesTree.type === "folder") {
-            return pagesTree.children;
-          }
-          return [];
-        }}
-        isItemHidden={(itemId) => itemId === pagesTree.id}
-        getIsExpanded={() => true}
-      />
-    </Box>
+      <Box css={{ overflowY: "auto", flexBasis: 0, flexGrow: 1 }}>
+        <TreeNode<PagesTreeNode>
+          selectedItemSelector={[selectedPageId, pagesTree.id]}
+          onSelect={selectTreeNode}
+          itemData={pagesTree}
+          renderItem={renderItem}
+          getItemChildren={(nodeId) => {
+            if (nodeId === pagesTree.id && pagesTree.type === "folder") {
+              return pagesTree.children;
+            }
+            return [];
+          }}
+          isItemHidden={(itemId) => itemId === pagesTree.id}
+          getIsExpanded={() => true}
+        />
+      </Box>
+    </Flex>
   );
 };
 

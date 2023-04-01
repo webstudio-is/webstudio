@@ -2,9 +2,9 @@ import { useMemo } from "react";
 import { usePress } from "@react-aria/interactions";
 import {
   type ComponentName,
+  type WsComponentMeta,
   getComponentMeta,
   getComponentNames,
-  WsComponentMeta,
   componentCategories,
 } from "@webstudio-is/react-sdk";
 import {

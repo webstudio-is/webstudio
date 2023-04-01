@@ -8,6 +8,8 @@ import {
 const unorderedTag = "ul";
 const orderedTag = "ol";
 
+export type ListTag = typeof unorderedTag | typeof orderedTag;
+
 type Props = ComponentProps<typeof unorderedTag> &
   ComponentProps<typeof orderedTag> & {
     ordered?: boolean;
