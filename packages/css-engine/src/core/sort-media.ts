@@ -4,7 +4,7 @@
  */
 type Option = { minWidth?: number; maxWidth?: number };
 
-export const sortMedia = (optionA: Option, optionB: Option) => {
+export const compareMedia = (optionA: Option, optionB: Option) => {
   if (optionA?.minWidth !== undefined && optionB?.minWidth !== undefined) {
     return optionA.minWidth - optionB.minWidth;
   }

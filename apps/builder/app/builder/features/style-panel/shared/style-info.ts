@@ -22,7 +22,7 @@ import { selectedBreakpointStore } from "~/shared/nano-states/breakpoints";
 import type { InstanceSelector } from "~/shared/tree-utils";
 import { getComponentMeta } from "@webstudio-is/react-sdk";
 import type { htmlTags as HtmlTags } from "html-tags";
-import { sortMedia } from "@webstudio-is/css-engine";
+import { compareMedia } from "@webstudio-is/css-engine";
 
 type CascadedValueInfo = {
   breakpointId: string;
@@ -112,7 +112,7 @@ export const getCascadedBreakpointIds = (
   breakpoints: Breakpoints,
   selectedBreakpointId?: string
 ) => {
-  const sortedBreakpoints = Array.from(breakpoints.values()).sort(sortMedia);
+  const sortedBreakpoints = Array.from(breakpoints.values()).sort(compareMedia);
   const cascadedBreakpointIds: string[] = [];
   for (const breakpoint of sortedBreakpoints) {
     if (breakpoint.id === selectedBreakpointId) {

@@ -7,7 +7,7 @@ import {
   type FontFaceOptions,
   type MediaRuleOptions,
 } from "./rules";
-import { sortMedia } from "./sort-media";
+import { compareMedia } from "./sort-media";
 import { StyleElement } from "./style-element";
 import { StyleSheet } from "./style-sheet";
 
@@ -93,7 +93,7 @@ export class CssEngine {
     }
 
     const sortedMediaRules = Array.from(this.#mediaRules.values()).sort(
-      (ruleA, ruleB) => sortMedia(ruleA.options, ruleB.options)
+      (ruleA, ruleB) => compareMedia(ruleA.options, ruleB.options)
     );
     for (const mediaRule of sortedMediaRules) {
       const { cssText } = mediaRule;

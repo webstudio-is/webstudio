@@ -1,5 +1,5 @@
 import { describe, test, expect } from "@jest/globals";
-import { sortMedia } from "./sort-media";
+import { compareMedia } from "./sort-media";
 
 describe("Sort media", () => {
   test("mobile first", () => {
@@ -9,13 +9,13 @@ describe("Sort media", () => {
       { minWidth: 1024 },
       { minWidth: 1280 },
     ];
-    expect(initial.sort(sortMedia)).toStrictEqual(initial);
+    expect(initial.sort(compareMedia)).toStrictEqual(initial);
   });
 
   test("random minWidth", () => {
     const initial = [{ minWidth: 0 }, { minWidth: 3 }, { minWidth: 2 }];
     const sorted = [{ minWidth: 0 }, { minWidth: 2 }, { minWidth: 3 }];
-    expect(initial.sort(sortMedia)).toStrictEqual(sorted);
+    expect(initial.sort(compareMedia)).toStrictEqual(sorted);
   });
 
   test("webflow", () => {
@@ -35,6 +35,6 @@ describe("Sort media", () => {
       { minWidth: 1440 },
       { minWidth: 1920 },
     ];
-    expect(initial.sort(sortMedia)).toStrictEqual(sorted);
+    expect(initial.sort(compareMedia)).toStrictEqual(sorted);
   });
 });

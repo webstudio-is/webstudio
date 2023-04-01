@@ -2,7 +2,7 @@ import { useMemo } from "react";
 import { useBreakpoints } from "~/shared/nano-states";
 import { useStore } from "@nanostores/react";
 import { selectedBreakpointStore } from "~/shared/nano-states/breakpoints";
-import { sortMedia } from "@webstudio-is/css-engine";
+import { compareMedia } from "@webstudio-is/css-engine";
 
 /**
  * Return the next breakpoint from the currently selected one, sorted by the `sort()`
@@ -12,7 +12,7 @@ export const useNextBreakpoint = () => {
   const [breakpoints] = useBreakpoints();
 
   const sortedBreakpoints = useMemo(
-    () => Array.from(breakpoints.values()).sort(sortMedia),
+    () => Array.from(breakpoints.values()).sort(compareMedia),
     [breakpoints]
   );
 

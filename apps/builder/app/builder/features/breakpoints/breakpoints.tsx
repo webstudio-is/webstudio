@@ -29,7 +29,7 @@ import {
   selectedBreakpointIdStore,
   selectedBreakpointStore,
 } from "~/shared/nano-states/breakpoints";
-import { sortMedia } from "@webstudio-is/css-engine";
+import { compareMedia } from "@webstudio-is/css-engine";
 
 export const Breakpoints = () => {
   const [view, setView] = useState<
@@ -134,7 +134,7 @@ export const Breakpoints = () => {
           {view === "selector" && (
             <>
               {Array.from(breakpoints.values())
-                .sort(sortMedia)
+                .sort(compareMedia)
                 .reverse()
                 .map((breakpoint) => {
                   return (

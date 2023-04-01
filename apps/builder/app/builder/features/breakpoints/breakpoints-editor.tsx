@@ -73,13 +73,7 @@ const BreakpointEditorItem = ({
         <TextField
           css={{ textAlign: "right", width: 50 }}
           variant="ghost"
-          defaultValue={
-            "minWidth" in breakpoint
-              ? breakpoint.minWidth
-              : "maxWidth" in breakpoint
-              ? breakpoint.maxWidth
-              : 0
-          }
+          defaultValue={breakpoint.minWidth ?? breakpoint.maxWidth ?? 0}
           type="number"
           name="minWidth"
           min={0}

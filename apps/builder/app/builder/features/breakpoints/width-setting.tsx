@@ -27,19 +27,13 @@ export const WidthSetting = () => {
   // We want to enable unconstrained resizing in a preview mode
   const min = isPreviewMode
     ? minWidth
-    : Math.max(
-        minWidth,
-        "minWidth" in selectedBreakpoint ? selectedBreakpoint.minWidth ?? 0 : 0
-      );
+    : Math.max(minWidth, selectedBreakpoint.minWidth ?? 0);
 
   const max = isPreviewMode
     ? maxWidth
     : Math.min(
         maxWidth,
-        nextBreakpoint
-          ? ("minWidth" in nextBreakpoint ? nextBreakpoint.minWidth ?? 1 : 1) -
-              1
-          : maxWidth
+        nextBreakpoint ? (nextBreakpoint.minWidth ?? 1) - 1 : maxWidth
       );
 
   return (
