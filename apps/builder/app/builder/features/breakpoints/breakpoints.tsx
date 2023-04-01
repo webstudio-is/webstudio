@@ -30,6 +30,7 @@ import {
   selectedBreakpointStore,
 } from "~/shared/nano-states/breakpoints";
 import { compareMedia } from "@webstudio-is/css-engine";
+import { isFeatureEnabled } from "@webstudio-is/feature-flags";
 
 export const Breakpoints = () => {
   const [view, setView] = useState<
@@ -157,7 +158,7 @@ export const Breakpoints = () => {
                           ? breakpoint.minWidth
                           : "maxWidth" in breakpoint
                           ? breakpoint.maxWidth
-                          : null}
+                          : "any"}
                       </DropdownMenuItemRightSlot>
                     </DropdownMenuCheckboxItem>
                   );
@@ -169,16 +170,20 @@ export const Breakpoints = () => {
               </form>
               <DropdownMenuSeparator />
               <Preview breakpoint={breakpointPreview} />
-              <DropdownMenuSeparator />
-              <DropdownMenuItem
-                css={{ justifyContent: "center" }}
-                onSelect={(event) => {
-                  event.preventDefault();
-                  setView("editor");
-                }}
-              >
-                Edit breakpoints
-              </DropdownMenuItem>
+              {isFeatureEnabled("breakpointsEditor") && (
+                <>
+                  <DropdownMenuSeparator />
+                  <DropdownMenuItem
+                    css={{ justifyContent: "center" }}
+                    onSelect={(event) => {
+                      event.preventDefault();
+                      setView("editor");
+                    }}
+                  >
+                    Edit breakpoints
+                  </DropdownMenuItem>
+                </>
+              )}
             </>
           )}
         </DropdownMenuContent>
