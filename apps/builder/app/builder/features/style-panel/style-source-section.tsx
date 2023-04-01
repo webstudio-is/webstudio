@@ -110,6 +110,28 @@ const removeStyleSourceFromInstance = (styleSourceId: StyleSource["id"]) => {
   );
 };
 
+const deleteStyleSource = (styleSourceId: StyleSource["id"]) => {
+  store.createTransaction(
+    [styleSourcesStore, styleSourceSelectionsStore, stylesStore],
+    (styleSources, styleSourceSelections, styles) => {
+      styleSources.delete(styleSourceId);
+      for (const styleSourceSelection of styleSourceSelections.values()) {
+        if (styleSourceSelection.values.includes(styleSourceId)) {
+          removeByMutable(
+            styleSourceSelection.values,
+            (item) => item === styleSourceId
+          );
+        }
+      }
+      for (const [styleDeclKey, styleDecl] of styles) {
+        if (styleDecl.styleSourceId === styleSourceId) {
+          styles.delete(styleDeclKey);
+        }
+      }
+    }
+  );
+};
+
 const duplicateStyleSource = (styleSourceId: StyleSource["id"]) => {
   const selectedInstanceSelector = selectedInstanceSelectorStore.get();
   if (selectedInstanceSelector === undefined) {
@@ -284,9 +306,6 @@ export const StyleSourcesSection = () => {
         onSelectAutocompleteItem={({ id }) => {
           addStyleSourceToInstace(id);
         }}
-        onRemoveItem={(id) => {
-          removeStyleSourceFromInstance(id);
-        }}
         onDuplicateItem={(id) => {
           const newId = duplicateStyleSource(id);
           if (newId !== undefined) {
@@ -296,6 +315,12 @@ export const StyleSourcesSection = () => {
         onConvertToToken={(id) => {
           convertLocalStyleSourceToToken(id);
           setEditingItemId(id);
+        }}
+        onRemoveItem={(id) => {
+          removeStyleSourceFromInstance(id);
+        }}
+        onDeleteItem={(id) => {
+          deleteStyleSource(id);
         }}
         onSort={(items) => {
           reorderStyleSources(items.map((item) => item.id));
