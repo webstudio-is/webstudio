@@ -16,7 +16,6 @@
     "jsx": "react-jsx",
     "resolveJsonModule": true,
     "noFallthroughCasesInSwitch": true,
-    "importsNotUsedAsValues": "error",
-    "preserveValueImports": true
+    "verbatimModuleSyntax": true
   }
 }
