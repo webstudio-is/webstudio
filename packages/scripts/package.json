@@ -21,6 +21,6 @@
     "@types/node": "^18.11.18",
     "@webstudio-is/tsconfig": "workspace:^",
     "tsx": "^3.12.6",
-    "typescript": "4.9.5"
+    "typescript": "5.0.3"
   }
 }
