@@ -60,16 +60,18 @@ for (const rel of assets) {
   await cp(join("src", rel), join("lib/cjs", rel));
 }
 
-if (
-  noGeneratedAsEntries &&
-  (await access("./src/__generated__")
-    .then(() => true)
-    .catch(() => false))
-) {
-  await cp("./src/__generated__", "./lib/__generated__", { recursive: true });
-  await cp("./src/__generated__", "./lib/cjs/__generated__", {
-    recursive: true,
-  });
+if (noGeneratedAsEntries) {
+  try {
+    await access("./src/__generated__");
+    await Promise.all([
+      cp("./src/__generated__", "./lib/__generated__", { recursive: true }),
+      cp("./src/__generated__", "./lib/cjs/__generated__", {
+        recursive: true,
+      }),
+    ]);
+  } catch {
+    // noop
+  }
 }
 
 if (watch) {
