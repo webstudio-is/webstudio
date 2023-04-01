@@ -1,4 +1,4 @@
-import { prisma, Project } from "@webstudio-is/prisma-client";
+import { prisma, type Project } from "@webstudio-is/prisma-client";
 import type { Asset } from "../schema";
 import { formatAsset } from "../utils/format-asset";
 import {

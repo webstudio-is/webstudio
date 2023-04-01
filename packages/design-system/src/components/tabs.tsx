@@ -1,5 +1,5 @@
 import React from "react";
-import { styled, CSS } from "../stitches.config";
+import { styled, type CSS } from "../stitches.config";
 import * as TabsPrimitive from "@radix-ui/react-tabs";
 import { DeprecatedText2 } from "./__DEPRECATED__/text2";
 import { theme } from "../stitches.config";

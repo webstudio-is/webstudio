@@ -1,4 +1,4 @@
-import { ComponentProps, useState } from "react";
+import { type ComponentProps, useState } from "react";
 import type { StyleValue, StyleProperty } from "@webstudio-is/css-data";
 import { Box, EnhancedTooltip } from "@webstudio-is/design-system";
 import {

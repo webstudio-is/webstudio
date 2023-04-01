@@ -1,8 +1,8 @@
 import type { LayersValue, StyleValue } from "@webstudio-is/css-data";
 import {
+  type StyleInfo,
+  type StyleValueInfo,
   getStyleSource,
-  StyleInfo,
-  StyleValueInfo,
 } from "../../shared/style-info";
 import type {
   CreateBatchUpdate,

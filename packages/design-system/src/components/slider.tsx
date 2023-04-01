@@ -1,5 +1,5 @@
 import React from "react";
-import { styled, CSS } from "../stitches.config";
+import { styled, type CSS } from "../stitches.config";
 import * as SliderPrimitive from "@radix-ui/react-slider";
 import { theme } from "../stitches.config";
 

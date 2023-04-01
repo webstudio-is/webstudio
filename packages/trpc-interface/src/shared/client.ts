@@ -1,7 +1,7 @@
 import { createTRPCProxyClient, httpBatchLink } from "@trpc/client";
 import {
   sharedRouter,
-  TrpcInterfaceClient,
+  type TrpcInterfaceClient,
   type SharedRouter,
 } from "./shared-router";
 import { callerLink } from "../trpc-caller-link";

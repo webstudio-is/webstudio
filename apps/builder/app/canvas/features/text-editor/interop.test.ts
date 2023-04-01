@@ -2,7 +2,7 @@ import { test, expect } from "@jest/globals";
 import { createHeadlessEditor } from "@lexical/headless";
 import { LinkNode } from "@lexical/link";
 import type { Instance, InstancesItem } from "@webstudio-is/project-build";
-import { $convertToLexical, $convertToUpdates, Refs } from "./interop";
+import { $convertToLexical, $convertToUpdates, type Refs } from "./interop";
 
 const createInstance = (
   id: Instance["id"],

@@ -1,8 +1,8 @@
 import {
   type LoaderArgs,
+  type TypedResponse,
   redirect,
   json,
-  TypedResponse,
 } from "@remix-run/node";
 import { findAuthenticatedUser } from "~/services/auth.server";
 import env from "~/env/env.server";

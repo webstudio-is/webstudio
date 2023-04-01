@@ -2,7 +2,7 @@ import type { KeyboardEvent as ReactKeyboardEvent } from "react";
 import { useState, useMemo, useRef, useCallback, useEffect } from "react";
 import { createPortal } from "react-dom";
 import { ListPositionIndicator } from "../list-position-indicator";
-import { TreeNode, INDENT, TreeItemRenderProps } from "./tree-node";
+import { TreeNode, INDENT, type TreeItemRenderProps } from "./tree-node";
 import {
   useHold,
   useDrop,

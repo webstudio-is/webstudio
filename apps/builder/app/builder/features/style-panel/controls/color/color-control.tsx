@@ -2,8 +2,8 @@ import { Flex } from "@webstudio-is/design-system";
 import { toValue } from "@webstudio-is/css-engine";
 import type { ControlProps } from "../../style-sections";
 import {
+  type CssColorPickerValueInput,
   ColorPicker,
-  CssColorPickerValueInput,
 } from "../../shared/color-picker";
 import { colord } from "colord";
 import { getStyleSource } from "../../shared/style-info";

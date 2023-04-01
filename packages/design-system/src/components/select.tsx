@@ -1,5 +1,10 @@
 import * as Primitive from "@radix-ui/react-select";
-import React, { ReactNode, Ref, useMemo, type ComponentProps } from "react";
+import React, {
+  type ReactNode,
+  type Ref,
+  type ComponentProps,
+  useMemo,
+} from "react";
 import {
   menuCss,
   itemCss,

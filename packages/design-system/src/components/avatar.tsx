@@ -1,5 +1,5 @@
 import React from "react";
-import { styled, VariantProps, CSS } from "../stitches.config";
+import { styled, type VariantProps, type CSS } from "../stitches.config";
 import * as AvatarPrimitive from "@radix-ui/react-avatar";
 import { Box } from "./box";
 import { Status } from "./status";

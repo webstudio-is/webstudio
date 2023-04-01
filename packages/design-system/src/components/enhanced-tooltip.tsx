@@ -1,9 +1,9 @@
 import React, {
-  Ref,
-  useRef,
-  useState,
+  type Ref,
   type ComponentProps,
   type FocusEvent,
+  useRef,
+  useState,
   createContext,
   useContext,
   useMemo,

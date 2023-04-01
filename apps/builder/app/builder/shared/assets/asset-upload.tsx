@@ -1,4 +1,4 @@
-import { ChangeEvent, useRef } from "react";
+import { type ChangeEvent, useRef } from "react";
 import { Button, Flex, Tooltip } from "@webstudio-is/design-system";
 import { UploadIcon } from "@webstudio-is/icons";
 import type { AssetType } from "@webstudio-is/asset-uploader";

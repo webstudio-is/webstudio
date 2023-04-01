@@ -7,7 +7,7 @@ import { sessionStorage } from "~/services/session.server";
 import { sentryException } from "~/shared/sentry";
 import { AUTH_PROVIDERS } from "~/shared/session";
 import { authCallbackPath } from "~/shared/router-utils";
-import { getUserById, User } from "~/shared/db/user.server";
+import { getUserById, type User } from "~/shared/db/user.server";
 import env from "~/env/env.server";
 
 const url =
