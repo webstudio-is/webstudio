@@ -1,10 +1,13 @@
+import type { MediaRuleOptions } from "./rules";
+
 /**
  * Sort by minWidth descending or maxWidth ascending
- * We want media querries with bigger minWidth to override the smaller once.
+ * We want media querries with bigger minWidth to override the smaller once, but the smaller maxWidth to override the bigger once.
  */
-type Option = { minWidth?: number; maxWidth?: number };
-
-export const compareMedia = (optionA: Option, optionB: Option) => {
+export const compareMedia = (
+  optionA: MediaRuleOptions,
+  optionB: MediaRuleOptions
+) => {
   if (optionA?.minWidth !== undefined && optionB?.minWidth !== undefined) {
     return optionA.minWidth - optionB.minWidth;
   }

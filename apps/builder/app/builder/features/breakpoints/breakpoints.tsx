@@ -154,11 +154,7 @@ export const Breakpoints = () => {
                     >
                       {breakpoint.label}
                       <DropdownMenuItemRightSlot>
-                        {"minWidth" in breakpoint
-                          ? breakpoint.minWidth
-                          : "maxWidth" in breakpoint
-                          ? breakpoint.maxWidth
-                          : "any"}
+                        {breakpoint.minWidth ?? breakpoint.maxWidth ?? "any"}
                       </DropdownMenuItemRightSlot>
                     </DropdownMenuCheckboxItem>
                   );

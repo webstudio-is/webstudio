@@ -1,7 +1,7 @@
 import { describe, test, expect } from "@jest/globals";
-import { compareMedia } from "./sort-media";
+import { compareMedia } from "./compare-media";
 
-describe("Sort media", () => {
+describe("Compare media", () => {
   test("mobile first", () => {
     const initial = [
       { minWidth: 0 },

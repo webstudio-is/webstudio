@@ -7,7 +7,7 @@ import {
   type FontFaceOptions,
   type MediaRuleOptions,
 } from "./rules";
-import { compareMedia } from "./sort-media";
+import { compareMedia } from "./compare-media";
 import { StyleElement } from "./style-element";
 import { StyleSheet } from "./style-sheet";
 
