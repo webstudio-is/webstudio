@@ -17,6 +17,7 @@ import {
   StyleSourceSelections,
 } from "@webstudio-is/project-build";
 import { getComponentMeta } from "@webstudio-is/react-sdk";
+import { equalMedia } from "@webstudio-is/css-engine";
 
 // slots can have multiple parents so instance should be addressed
 // with full rendered path to avoid double selections with slots
@@ -526,10 +527,6 @@ export const insertStylesCopyMutable = (
   }
 };
 
-const areBreakpointsSimilar = (left: Breakpoint, right: Breakpoint) => {
-  return left.minWidth === right.minWidth && left.maxWidth === right.maxWidth;
-};
-
 export const mergeNewBreakpointsMutable = (
   breakpoints: Breakpoints,
   newBreakpoints: Breakpoint[]
@@ -538,7 +535,7 @@ export const mergeNewBreakpointsMutable = (
   for (const newBreakpoint of newBreakpoints) {
     let matched = false;
     for (const breakpoint of breakpoints.values()) {
-      if (areBreakpointsSimilar(breakpoint, newBreakpoint)) {
+      if (equalMedia(breakpoint, newBreakpoint)) {
         matched = true;
         mergedBreakpointIds.set(newBreakpoint.id, breakpoint.id);
         break;
