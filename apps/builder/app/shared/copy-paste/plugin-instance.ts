@@ -97,12 +97,14 @@ const getTreeData = (targetInstanceSelector: InstanceSelector) => {
     treeStyleSourceIds
   );
 
-  const treeBreapointIds = new Set<Breakpoint["id"]>();
-  const treeStyles = getMapValuesBy(stylesStore.get(), (styleDecl) => {
-    treeBreapointIds.add(styleDecl.breakpointId);
-    return treeStyleSourceIds.has(styleDecl.styleSourceId);
-  });
+  const treeStyles = getMapValuesBy(stylesStore.get(), (styleDecl) =>
+    treeStyleSourceIds.has(styleDecl.styleSourceId)
+  );
 
+  const treeBreapointIds = new Set<Breakpoint["id"]>();
+  for (const styleDecl of treeStyles) {
+    treeBreapointIds.add(styleDecl.breakpointId);
+  }
   const treeBreapoints = getMapValuesByKeysSet(
     breakpointsContainer.get(),
     treeBreapointIds
