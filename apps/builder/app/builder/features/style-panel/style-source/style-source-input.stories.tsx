@@ -1,7 +1,7 @@
 import { nanoid } from "nanoid";
 import type { ComponentStory } from "@storybook/react";
 import { useState } from "react";
-import { StyleSourceInput, type ItemState, type ItemSource } from ".";
+import { StyleSourceInput, type ItemSource } from ".";
 
 export default {
   component: StyleSourceInput,
@@ -11,14 +11,14 @@ type Item = {
   id: string;
   label: string;
   source: ItemSource;
-  state: ItemState;
+  disabled: boolean;
 };
 
 const localItem: Item = {
   id: nanoid(),
   label: "Local",
   source: "local",
-  state: "selected",
+  disabled: false,
 };
 
 const getItems = (): Array<Item> => [
@@ -26,19 +26,13 @@ const getItems = (): Array<Item> => [
     id: nanoid(),
     label: "Token",
     source: "token",
-    state: "unselected",
+    disabled: false,
   },
   {
     id: nanoid(),
     label: "Tag",
     source: "tag",
-    state: "unselected",
-  },
-  {
-    id: nanoid(),
-    label: "State",
-    source: "state",
-    state: "unselected",
+    disabled: false,
   },
 ];
 
@@ -51,18 +45,9 @@ const createItem = (
     id: nanoid(),
     label,
     source: "token",
-    state: "selected",
+    disabled: false,
   };
-  const nextValue = value.map((item) => {
-    if (item.state === "selected") {
-      return {
-        ...item,
-        state: "unselected" as const,
-      };
-    }
-    return item;
-  });
-  setValue([...nextValue, item]);
+  setValue([...value, item]);
 };
 
 const removeItem = (
@@ -80,6 +65,7 @@ export const Basic: ComponentStory<typeof StyleSourceInput> = () => {
       css={{ width: 300 }}
       items={getItems()}
       value={value}
+      selectedItemId={localItem.id}
       onCreateItem={(label) => {
         createItem(label, value, setValue);
       }}
@@ -103,7 +89,7 @@ export const WithTruncatedItem: ComponentStory<
       label:
         "Local Something Something Something Something Something Something Something Something Something Something Something",
       source: "local",
-      state: "selected",
+      disabled: false,
     },
   ]);
   return (
@@ -111,6 +97,7 @@ export const WithTruncatedItem: ComponentStory<
       css={{ width: 300 }}
       items={getItems()}
       value={value}
+      selectedItemId={value[0].id}
       onCreateItem={(label) => {
         createItem(label, value, setValue);
       }}
@@ -133,10 +120,12 @@ export const Complete: ComponentStory<typeof StyleSourceInput> = () => {
       id: nanoid(),
       label: "Disabled",
       source: "token",
-
-      state: "disabled",
+      disabled: true,
     },
   ]);
+  const [selectedItemId, setSelectedItemId] = useState<undefined | Item["id"]>(
+    localItem.id
+  );
   const [editingItemId, setEditingItemId] = useState<undefined | Item["id"]>();
 
   return (
@@ -144,19 +133,10 @@ export const Complete: ComponentStory<typeof StyleSourceInput> = () => {
       css={{ width: 300 }}
       items={getItems()}
       value={value}
+      selectedItemId={selectedItemId}
       editingItemId={editingItemId}
       onSelectItem={(itemToSelect) => {
-        setValue(
-          value.map((item) => {
-            if (item.id === itemToSelect?.id) {
-              return { ...item, state: "selected" };
-            }
-            if (item.state === "selected") {
-              return { ...item, state: "unselected" };
-            }
-            return item;
-          })
-        );
+        setSelectedItemId(itemToSelect?.id);
       }}
       onEditItem={setEditingItemId}
       onCreateItem={(label) => {
@@ -182,7 +162,7 @@ export const Complete: ComponentStory<typeof StyleSourceInput> = () => {
         setValue(
           value.map((item) => {
             if (item.id === itemIdToDisable) {
-              return { ...item, state: "disabled" };
+              return { ...item, disabled: true };
             }
             return item;
           })
@@ -192,7 +172,7 @@ export const Complete: ComponentStory<typeof StyleSourceInput> = () => {
         setValue(
           value.map((item) => {
             if (item.id === itemIdToEnable) {
-              return { ...item, state: "unselected" };
+              return { ...item, disabled: false };
             }
             return item;
           })

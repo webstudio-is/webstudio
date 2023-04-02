@@ -36,12 +36,7 @@ import {
   type RefObject,
 } from "react";
 import { mergeRefs } from "@react-aria/utils";
-import {
-  type ItemSource,
-  menuCssVars,
-  StyleSource,
-  type ItemState,
-} from "./style-source";
+import { type ItemSource, menuCssVars, StyleSource } from "./style-source";
 import { useSortable } from "./use-sortable";
 import { theme } from "@webstudio-is/design-system";
 import { matchSorter } from "match-sorter";
@@ -50,7 +45,7 @@ import { StyleSourceBadge } from "./style-source-badge";
 type IntermediateItem = {
   id: string;
   label: string;
-  state: ItemState;
+  disabled: boolean;
   source: ItemSource;
   isAdded?: boolean;
 };
@@ -64,6 +59,7 @@ type TextFieldBaseWrapperProps<Item extends IntermediateItem> = Omit<
     "variant" | "state" | "css"
   > & {
     value: Array<Item>;
+    selectedItemId: undefined | Item["id"];
     label: string;
     disabled?: boolean;
     containerRef?: RefObject<HTMLDivElement>;
@@ -94,6 +90,7 @@ const TextFieldBase: ForwardRefRenderFunction<
     onKeyDown,
     label,
     value,
+    selectedItemId,
     renderStyleSourceMenuItems,
     onChangeItem,
     onSort,
@@ -131,9 +128,10 @@ const TextFieldBase: ForwardRefRenderFunction<
           label={item.label}
           menuItems={renderStyleSourceMenuItems(item)}
           id={item.id}
+          selected={item.id === selectedItemId}
+          disabled={item.disabled}
           isDragging={item.id === dragItemId}
           isEditing={item.id === editingItemId}
-          state={item.state}
           source={item.source}
           onChangeEditing={(isEditing) => {
             onEditItem?.(isEditing ? item.id : undefined);
@@ -169,6 +167,7 @@ type StyleSourceInputProps<Item extends IntermediateItem> = {
   items?: Array<Item>;
   value?: Array<Item>;
   editingItemId?: Item["id"];
+  selectedItemId?: Item["id"];
   onSelectAutocompleteItem?: (item: Item) => void;
   onRemoveItem?: (id: Item["id"]) => void;
   onDeleteItem?: (id: Item["id"]) => void;
@@ -202,7 +201,7 @@ const matchOrSuggestToCreate = (
     matched.unshift({
       id: newItemId,
       label: search.trim(),
-      state: "unselected",
+      disabled: false,
       source: "token",
       isAdded: false,
     });
@@ -225,7 +224,7 @@ const markAddedValues = <Item extends IntermediateItem>(
 const renderMenuItems = (props: {
   itemId: IntermediateItem["id"];
   source: ItemSource;
-  state: ItemState;
+  disabled: boolean;
   onEdit?: (itemId: IntermediateItem["id"]) => void;
   onDuplicate?: (itemId: IntermediateItem["id"]) => void;
   onConvertToToken?: (itemId: IntermediateItem["id"]) => void;
@@ -250,16 +249,17 @@ const renderMenuItems = (props: {
         Convert to token
       </DropdownMenuItem>
     )}
-    {props.state === "disabled" && (
+    {/* @todo implement disabling
+    {props.disabled ? (
       <DropdownMenuItem onSelect={() => props.onEnable?.(props.itemId)}>
         Enable
       </DropdownMenuItem>
-    )}
-    {props.state !== "disabled" && (
+    ) : (
       <DropdownMenuItem onSelect={() => props.onDisable?.(props.itemId)}>
         Disable
       </DropdownMenuItem>
     )}
+    */}
     {props.source !== "local" && (
       <DropdownMenuItem onSelect={() => props.onRemove?.(props.itemId)}>
         Remove
@@ -293,7 +293,7 @@ export const StyleSourceInput = (
     items: markAddedValues(props.items ?? [], value),
     value: {
       label,
-      state: "unselected",
+      disabled: false,
       id: "",
       source: "local",
     },
@@ -336,12 +336,13 @@ export const StyleSourceInput = (
       <Box {...getComboboxProps()}>
         <ComboboxAnchor>
           <TextField
+            // @todo inputProps is any which breaks all types passed to TextField
             {...inputProps}
             renderStyleSourceMenuItems={(item) =>
               renderMenuItems({
                 itemId: item.id,
                 source: item.source,
-                state: item.state,
+                disabled: item.disabled,
                 onDuplicate: props.onDuplicateItem,
                 onConvertToToken: props.onConvertToToken,
                 onEnable: props.onEnableItem,
@@ -357,6 +358,7 @@ export const StyleSourceInput = (
             onSort={props.onSort}
             label={label}
             value={value}
+            selectedItemId={props.selectedItemId}
             css={props.css}
             editingItemId={props.editingItemId}
           />
