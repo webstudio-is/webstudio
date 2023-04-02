@@ -1,8 +1,5 @@
 export {
   ImageIcon,
-  FontBoldIcon,
-  FontItalicIcon,
-  Link2Icon,
   DotsHorizontalIcon,
   CheckIcon,
   RocketIcon,

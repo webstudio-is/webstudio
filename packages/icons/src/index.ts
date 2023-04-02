@@ -1,7 +1,6 @@
 export * from "./legacy";
 export * from "./__generated__";
 export * from "./list-nested";
-export * from "./brush";
 export * from "./form";
 export * from "./undo";
 export * from "./redo";
@@ -78,7 +77,6 @@ export * from "./text-align-left";
 export * from "./text-align-right";
 export * from "./text-capitalize";
 export * from "./text-hyphen";
-export * from "./text-italic";
 export * from "./text-lowercase";
 export * from "./text-strikethrough";
 export * from "./text-truncate";
