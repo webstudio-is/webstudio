@@ -9,6 +9,9 @@ patchedDependencies:
   '@stitches/react@1.3.1-1':
     hash: knml42mpr6mlzseo3d6gjljiq4
     path: patches/@stitches__react@1.3.1-1.patch
+  mitt@3.0.0:
+    hash: 4gwmhmjqmdcx2eqz3s6leupoa4
+    path: patches/mitt@3.0.0.patch
   use-debounce@9.0.2:
     hash: hz26kjqwxmwnhjjl5quuqexnii
     path: patches/use-debounce@9.0.2.patch
@@ -220,7 +223,7 @@ importers:
         version: 2.0.1
       mitt:
         specifier: ^3.0.0
-        version: 3.0.0
+        version: 3.0.0(patch_hash=4gwmhmjqmdcx2eqz3s6leupoa4)
       nanoid:
         specifier: ^3.2.0
         version: 3.3.4
@@ -1218,7 +1221,7 @@ importers:
         version: 3.2.0
       mitt:
         specifier: ^3.0.0
-        version: 3.0.0
+        version: 3.0.0(patch_hash=4gwmhmjqmdcx2eqz3s6leupoa4)
       nanostores:
         specifier: ^0.7.1
         version: 0.7.1
@@ -15541,9 +15544,10 @@ packages:
       stream-each: 1.2.3
       through2: 2.0.5
 
-  /mitt@3.0.0:
+  /mitt@3.0.0(patch_hash=4gwmhmjqmdcx2eqz3s6leupoa4):
     resolution: {integrity: sha512-7dX2/10ITVyqh4aOSVI9gdape+t9l2/8QxHrFmUXu4EEUpdlxl6RudZUPZoc+zuY2hk1j7XxVroIVIan/pD/SQ==}
     dev: false
+    patched: true
 
   /mixin-deep@1.3.2:
     resolution: {integrity: sha512-WRoDn//mXBiJ1H40rqa3vH0toePwSsGb45iInWlTySa+Uu4k3tYUSxa2v1KqAiLtvlrSzaExqS1gtk96A9zvEA==}
