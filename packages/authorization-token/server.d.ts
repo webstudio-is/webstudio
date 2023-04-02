@@ -1,1 +1,1 @@
-export * from "./src/index.server";
+export * from "./lib/types/index.server";

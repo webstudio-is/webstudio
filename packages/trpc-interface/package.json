@@ -34,7 +34,6 @@
       "default": "./server.js"
     }
   },
-  "types": "lib/types/index.server.ts",
   "files": [
     "lib/*",
     "src/*",
