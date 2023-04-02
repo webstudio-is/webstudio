@@ -29,9 +29,12 @@
     "typescript": "5.0.3"
   },
   "exports": {
-    "./server": "./server.js"
+    "./server": {
+      "source": "./src/index.server.ts",
+      "default": "./server.js"
+    }
   },
-  "types": "src/index.server.ts",
+  "types": "lib/types/index.server.ts",
   "files": [
     "lib/*",
     "src/*",
