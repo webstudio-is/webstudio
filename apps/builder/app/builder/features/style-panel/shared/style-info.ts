@@ -2,7 +2,6 @@ import { useMemo } from "react";
 import { useStore } from "@nanostores/react";
 import type { Style, StyleProperty, StyleValue } from "@webstudio-is/css-data";
 import { properties } from "@webstudio-is/css-data";
-import { utils } from "@webstudio-is/project";
 import type {
   Breakpoints,
   Instance,
@@ -23,6 +22,7 @@ import { selectedBreakpointStore } from "~/shared/nano-states/breakpoints";
 import type { InstanceSelector } from "~/shared/tree-utils";
 import { getComponentMeta } from "@webstudio-is/react-sdk";
 import type { htmlTags as HtmlTags } from "html-tags";
+import { compareMedia } from "@webstudio-is/css-engine";
 
 type CascadedValueInfo = {
   breakpointId: string;
@@ -112,7 +112,7 @@ export const getCascadedBreakpointIds = (
   breakpoints: Breakpoints,
   selectedBreakpointId?: string
 ) => {
-  const sortedBreakpoints = utils.breakpoints.sort(breakpoints);
+  const sortedBreakpoints = Array.from(breakpoints.values()).sort(compareMedia);
   const cascadedBreakpointIds: string[] = [];
   for (const breakpoint of sortedBreakpoints) {
     if (breakpoint.id === selectedBreakpointId) {

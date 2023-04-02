@@ -10,3 +10,4 @@ export * from "./create-css-engine";
 export * from "./to-value";
 export * from "./match-media";
 export * from "./equal-media";
+export * from "./compare-media";
