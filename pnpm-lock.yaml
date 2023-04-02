@@ -12,6 +12,9 @@ patchedDependencies:
   mitt@3.0.0:
     hash: 4gwmhmjqmdcx2eqz3s6leupoa4
     path: patches/mitt@3.0.0.patch
+  totalist@3.0.0:
+    hash: fl2en5gpnz77rjypktq643qs2q
+    path: patches/totalist@3.0.0.patch
   use-debounce@9.0.2:
     hash: hz26kjqwxmwnhjjl5quuqexnii
     path: patches/use-debounce@9.0.2.patch
@@ -1294,7 +1297,7 @@ importers:
         version: 0.17.14
       totalist:
         specifier: ^3.0.0
-        version: 3.0.0
+        version: 3.0.0(patch_hash=fl2en5gpnz77rjypktq643qs2q)
     devDependencies:
       '@types/node':
         specifier: ^18.11.18
@@ -18902,10 +18905,11 @@ packages:
     resolution: {integrity: sha512-y/mWCZinnvxjTKYhJ+pYxwD0mRLVvOtdS2Awbgxln6iEnt4rk0yBxeSBHkGJcPucRiG0e55mwWp+g/05rsrd6w==}
     dev: true
 
-  /totalist@3.0.0:
+  /totalist@3.0.0(patch_hash=fl2en5gpnz77rjypktq643qs2q):
     resolution: {integrity: sha512-eM+pCBxXO/njtF7vdFsHuqb+ElbxqtI4r5EAvk6grfAFyJ6IvWlSkfZ5T9ozC6xWw3Fj1fGoSmrl0gUs46JVIw==}
     engines: {node: '>=6'}
     dev: false
+    patched: true
 
   /tr46@0.0.3:
     resolution: {integrity: sha512-N3WMsuqV66lT30CrXNbEjx4GEwlow3v6rr4mCcv6prnfwhS01rkgyFdjPNBYd9br7LpXV1+Emh01fHnq2Gdgrw==}
