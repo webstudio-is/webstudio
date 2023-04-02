@@ -303,6 +303,7 @@ const renderMenuItems = (props: {
         <DropdownMenuLabel>States</DropdownMenuLabel>
         {userActionStates.map((state) => (
           <DropdownMenuItem
+            key={state}
             withIndicator={true}
             icon={
               props.itemId === props.selectedItemSelector?.styleSourceId &&
