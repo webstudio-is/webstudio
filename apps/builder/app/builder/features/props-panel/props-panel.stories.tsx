@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { ButtonIcon } from "@webstudio-is/icons";
+import { ButtonElementIcon } from "@webstudio-is/icons";
 import { PropsPanel } from "./props-panel";
 import { usePropsLogic } from "./use-props-logic";
 import { pagesStore } from "~/shared/nano-states";
@@ -104,7 +104,7 @@ const componentMeta: WsComponentMeta = {
   category: "general",
   type: "rich-text",
   label: "Button",
-  Icon: ButtonIcon,
+  Icon: ButtonElementIcon,
 };
 
 const componentPropsMeta: WsComponentPropsMeta = {

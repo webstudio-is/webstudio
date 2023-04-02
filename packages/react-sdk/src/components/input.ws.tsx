@@ -1,5 +1,5 @@
 import type { Style } from "@webstudio-is/css-data";
-import { InputIcon } from "@webstudio-is/icons";
+import { FormTextFieldIcon } from "@webstudio-is/icons";
 import { input } from "../css/normalize";
 import type { WsComponentMeta, WsComponentPropsMeta } from "./component-meta";
 import type { defaultTag } from "./input";
@@ -13,7 +13,7 @@ export const meta: WsComponentMeta = {
   category: "forms",
   type: "control",
   label: "Input",
-  Icon: InputIcon,
+  Icon: FormTextFieldIcon,
   presetStyle,
 };
 

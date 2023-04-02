@@ -1,4 +1,4 @@
-import { ButtonIcon } from "@webstudio-is/icons";
+import { ButtonElementIcon } from "@webstudio-is/icons";
 import type { WsComponentMeta, WsComponentPropsMeta } from "./component-meta";
 import { props } from "./__generated__/button.props";
 import { button } from "../css/normalize";
@@ -13,7 +13,7 @@ export const meta: WsComponentMeta = {
   category: "forms",
   type: "container",
   label: "Button",
-  Icon: ButtonIcon,
+  Icon: ButtonElementIcon,
   presetStyle,
 };
 

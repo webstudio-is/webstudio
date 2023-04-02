@@ -1,5 +1,4 @@
 export {
-  ImageIcon,
   DotsHorizontalIcon,
   CheckIcon,
   RocketIcon,
@@ -9,10 +8,6 @@ export {
   DotFilledIcon,
   TriangleRightIcon,
   TriangleDownIcon,
-  InputIcon,
-  ButtonIcon,
-  HeadingIcon,
-  TextIcon,
   CrossCircledIcon,
   CheckCircledIcon,
 } from "@radix-ui/react-icons";
