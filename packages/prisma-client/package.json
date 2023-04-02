@@ -30,7 +30,7 @@
     "source": "./src/index.ts",
     "import": "./lib/index.js"
   },
-  "types": "src/index.ts",
+  "types": "lib/types/index.d.ts",
   "license": "MIT",
   "private": false,
   "dependencies": {

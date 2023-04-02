@@ -10,6 +10,7 @@
     "checks": "pnpm typecheck && pnpm lint && pnpm test",
     "dev": "build-package --watch",
     "build": "build-package",
+    "dts": "tsc --emitDeclarationOnly --declaration --declarationDir lib/types",
     "test": "NODE_OPTIONS=--experimental-vm-modules jest",
     "lint": "eslint ./src --ext .ts,.tsx --max-warnings 0",
     "storybook:run": "start-storybook -p 6006",
@@ -39,7 +40,7 @@
     "source": "./src/index.ts",
     "import": "./lib/index.js"
   },
-  "types": "src/index.ts",
+  "types": "lib/types/index.d.ts",
   "files": [
     "lib/*",
     "src/*",

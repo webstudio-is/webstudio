@@ -35,7 +35,7 @@
     },
     "./server": "./server.js"
   },
-  "types": "src/index.ts",
+  "types": "lib/types/index.d.ts",
   "files": [
     "lib/*",
     "src/*",

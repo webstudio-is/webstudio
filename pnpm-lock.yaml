@@ -5,6 +5,14 @@ overrides:
   '@types/react': 17.0.47
   babel-loader: 8.3.0
 
+patchedDependencies:
+  '@stitches/react@1.3.1-1':
+    hash: knml42mpr6mlzseo3d6gjljiq4
+    path: patches/@stitches__react@1.3.1-1.patch
+  use-debounce@9.0.2:
+    hash: hz26kjqwxmwnhjjl5quuqexnii
+    path: patches/use-debounce@9.0.2.patch
+
 importers:
 
   .:
@@ -266,7 +274,7 @@ importers:
         version: 3.0.3
       use-debounce:
         specifier: ^9.0.2
-        version: 9.0.2(react@17.0.2)
+        version: 9.0.2(patch_hash=hz26kjqwxmwnhjjl5quuqexnii)(react@17.0.2)
       uuid:
         specifier: ^9.0.0
         version: 9.0.0
@@ -684,8 +692,8 @@ importers:
         specifier: ^3.13.3
         version: 3.13.3(react@17.0.2)
       '@stitches/react':
-        specifier: ^1.2.8
-        version: 1.2.8(react@17.0.2)
+        specifier: 1.3.1-1
+        version: 1.3.1-1(patch_hash=knml42mpr6mlzseo3d6gjljiq4)(react@17.0.2)
       '@webstudio-is/css-vars':
         specifier: workspace:^
         version: link:../css-vars
@@ -715,7 +723,7 @@ importers:
         version: 0.0.28
       use-debounce:
         specifier: ^9.0.2
-        version: 9.0.2(react@17.0.2)
+        version: 9.0.2(patch_hash=hz26kjqwxmwnhjjl5quuqexnii)(react@17.0.2)
     devDependencies:
       '@jest/globals':
         specifier: ^29.3.1
@@ -6615,13 +6623,14 @@ packages:
       size-limit: 8.2.4
     dev: true
 
-  /@stitches/react@1.2.8(react@17.0.2):
-    resolution: {integrity: sha512-9g9dWI4gsSVe8bNLlb+lMkBYsnIKCZTmvqvDG+Avnn69XfmHZKiaMrx7cgTaddq7aTPPmXiTsbFcUy0xgI4+wA==}
+  /@stitches/react@1.3.1-1(patch_hash=knml42mpr6mlzseo3d6gjljiq4)(react@17.0.2):
+    resolution: {integrity: sha512-ErptbQehV25Da6LtZuM/51kGNK/UvlRY2da9IhhfXQ9h4bmf2f+lYFiJQ9j43O1kwYr6iYJIBRM47FEbsUWffw==}
     peerDependencies:
       react: '>= 16.3.0'
     dependencies:
       react: 17.0.2
     dev: false
+    patched: true
 
   /@storybook/addon-actions@6.5.16(react-dom@17.0.2)(react@17.0.2):
     resolution: {integrity: sha512-aADjilFmuD6TNGz2CRPSupnyiA/IGkPJHDBTqMpsDXTUr8xnuD122xkIhg6UxmCM2y1c+ncwYXy3WPK2xXK57g==}
@@ -19455,7 +19464,7 @@ packages:
       tslib: 2.5.0
     dev: false
 
-  /use-debounce@9.0.2(react@17.0.2):
+  /use-debounce@9.0.2(patch_hash=hz26kjqwxmwnhjjl5quuqexnii)(react@17.0.2):
     resolution: {integrity: sha512-QLyB0sxt9F5AisGDrUybCRJSLE60bTQR0yXc+IebNGUu1GCXwii1zsZl82mPGdWqDVQy7+1FKMLHQUixxf5Nbw==}
     engines: {node: '>= 10.0.0'}
     peerDependencies:
@@ -19463,6 +19472,7 @@ packages:
     dependencies:
       react: 17.0.2
     dev: false
+    patched: true
 
   /use-isomorphic-layout-effect@1.1.2(@types/react@17.0.47)(react@17.0.2):
     resolution: {integrity: sha512-49L8yCO3iGT/ZF9QttjwLF/ZD9Iwto5LnH5LmEdk/6cFmXddqi2ulF0edxTwjj+7mqvpVVGQWvbXZdn32wRSHA==}

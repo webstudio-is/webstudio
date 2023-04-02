@@ -11,6 +11,7 @@
     "checks": "pnpm typecheck && pnpm lint",
     "dev": "build-package --watch",
     "build": "build-package",
+    "dts": "tsc --emitDeclarationOnly --declaration --declarationDir lib/types",
     "lint": "eslint ./src --ext .ts,.tsx --max-warnings 0"
   },
   "dependencies": {
@@ -34,7 +35,7 @@
     },
     "./server": "./server.js"
   },
-  "types": "src/index.ts",
+  "types": "lib/types/index.d.ts",
   "files": [
     "lib/*",
     "src/*",
