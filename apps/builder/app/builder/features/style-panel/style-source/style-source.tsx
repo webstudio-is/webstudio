@@ -142,13 +142,11 @@ const useEditableText = ({
   isEditing,
   onChangeEditing,
   onChangeValue,
-  onClick,
 }: {
   isEditable: boolean;
   isEditing: boolean;
   onChangeEditing: (isEditing: boolean) => void;
   onChangeValue: (value: string) => void;
-  onClick: () => void;
 }) => {
   const elementRef = useRef<HTMLDivElement>(null);
   const lastValueRef = useRef<string>("");
@@ -201,7 +199,6 @@ const useEditableText = ({
   const handlers = {
     onKeyDown: handleKeyDown,
     onBlur: handleFinishEditing,
-    onClick,
     onDoubleClick: handleDoubleClick,
   };
 
@@ -214,7 +211,6 @@ type EditableTextProps = {
   isEditing: boolean;
   onChangeEditing: (isEditing: boolean) => void;
   onChangeValue: (value: string) => void;
-  onClick: () => void;
 };
 
 const EditableText = ({
@@ -223,14 +219,12 @@ const EditableText = ({
   isEditing,
   onChangeEditing,
   onChangeValue,
-  onClick,
 }: EditableTextProps) => {
   const { ref, handlers } = useEditableText({
     isEditable,
     isEditing,
     onChangeEditing,
     onChangeValue,
-    onClick,
   });
 
   return (
@@ -275,10 +269,9 @@ const useForceRecalcStyle = <Element extends HTMLElement>(
   return ref;
 };
 
-const StyledSourceButton = styled(Box, {
+const StyledSourceContainer = styled(Box, {
   display: "inline-flex",
   borderRadius: theme.borderRadius[3],
-  padding: theme.spacing[4],
   minWidth: theme.spacing[13],
   maxWidth: "100%",
   position: "relative",
@@ -314,44 +307,55 @@ const StyledSourceButton = styled(Box, {
       false: {},
     },
   },
-  defaultVariants: {
-    selected: false,
-    disabled: false,
-  },
 });
 
-type SourceButtonProps = {
+type SourceContainerProps = {
   id: string;
+  source: ItemSource;
   selected: boolean;
   disabled: boolean;
-  source: ItemSource;
   children: Array<JSX.Element | boolean>;
 };
 
-const SourceButton = forwardRef<HTMLDivElement, SourceButtonProps>(
-  ({ id, selected, disabled, source, children }, ref) => {
+const SourceSourceContainer = forwardRef<HTMLDivElement, SourceContainerProps>(
+  ({ id, source, selected, disabled, children }, ref) => {
     return (
-      <StyledSourceButton
+      <StyledSourceContainer
+        data-id={id}
+        source={source}
         selected={selected}
         disabled={disabled}
-        source={source}
-        data-id={id}
         aria-current={selected}
         role="button"
         ref={ref}
       >
         {children}
-      </StyledSourceButton>
+      </StyledSourceContainer>
     );
   }
 );
-SourceButton.displayName = "SourceButton";
+SourceSourceContainer.displayName = "SourceSourceContainer";
+
+const StyleSourceButton = styled("button", {
+  all: "unset",
+  display: "block",
+  boxSizing: "border-box",
+  padding: theme.spacing[4],
+});
+
+const StyleSourceState = styled(Box, {
+  padding: theme.spacing[4],
+  backgroundColor: theme.colors.backgroundStyleSourceToken,
+  borderTopRightRadius: theme.borderRadius[3],
+  borderBottomRightRadius: theme.borderRadius[3],
+});
 
 type StyleSourceProps = {
   id: string;
   label: string;
   menuItems: ReactNode;
   selected: boolean;
+  state: undefined | string;
   disabled: boolean;
   isEditing: boolean;
   isDragging: boolean;
@@ -366,6 +370,7 @@ export const StyleSource = ({
   label,
   menuItems,
   selected,
+  state,
   disabled,
   isEditing,
   isDragging,
@@ -378,26 +383,24 @@ export const StyleSource = ({
   const showMenu = isEditing === false && isDragging === false;
 
   return (
-    <SourceButton
-      selected={selected}
-      disabled={disabled}
+    <SourceSourceContainer
       source={source}
+      selected={selected && state === undefined}
+      disabled={disabled}
       id={id}
       ref={ref}
     >
-      <EditableText
-        isEditable={source !== "local"}
-        isEditing={isEditing}
-        onChangeEditing={onChangeEditing}
-        onClick={() => {
-          if (disabled === false && isEditing === false) {
-            onSelect();
-          }
-        }}
-        onChangeValue={onChangeValue}
-        label={label}
-      />
+      <StyleSourceButton disabled={disabled || isEditing} onClick={onSelect}>
+        <EditableText
+          isEditable={source !== "local"}
+          isEditing={isEditing}
+          onChangeEditing={onChangeEditing}
+          onChangeValue={onChangeValue}
+          label={label}
+        />
+      </StyleSourceButton>
+      {state !== undefined && <StyleSourceState>{state}</StyleSourceState>}
       {showMenu && <Menu source={source}>{menuItems}</Menu>}
-    </SourceButton>
+    </SourceSourceContainer>
   );
 };
