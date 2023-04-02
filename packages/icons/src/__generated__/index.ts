@@ -37,6 +37,7 @@ export * from "./div";
 export * from "./dot";
 export * from "./dotted-border";
 export * from "./drag-handle";
+export * from "./external-link";
 export * from "./eyecon-closed";
 export * from "./eyecon-open";
 export * from "./form-text-field";

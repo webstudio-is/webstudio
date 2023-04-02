@@ -1,4 +1,3 @@
-export * from "./legacy";
 export * from "./__generated__";
 export * from "./list-nested";
 export * from "./undo";

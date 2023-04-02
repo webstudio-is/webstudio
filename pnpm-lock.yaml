@@ -903,9 +903,6 @@ importers:
 
   packages/icons:
     dependencies:
-      '@radix-ui/react-icons':
-        specifier: ^1.1.0
-        version: 1.1.1(react@17.0.2)
       '@webstudio-is/css-vars':
         specifier: workspace:^
         version: link:../css-vars
@@ -5497,14 +5494,6 @@ packages:
       '@radix-ui/react-use-callback-ref': 1.0.0(react@17.0.2)
       react: 17.0.2
       react-dom: 17.0.2(react@17.0.2)
-    dev: false
-
-  /@radix-ui/react-icons@1.1.1(react@17.0.2):
-    resolution: {integrity: sha512-xc3wQC59rsFylVbSusQCrrM+6695ppF730Q6yqzhRdqDcRNWIm2R6ngpzBoSOQMcwnq4p805F+Gr7xo4fmtN1A==}
-    peerDependencies:
-      react: ^16.x || ^17.x || ^18.x
-    dependencies:
-      react: 17.0.2
     dev: false
 
   /@radix-ui/react-id@1.0.0(react@17.0.2):

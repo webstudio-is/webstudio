@@ -7,7 +7,7 @@ import type { IconProps } from "../types";
 export const AlertIcon = forwardRef<SVGSVGElement, IconProps>(
   ({ color = "currentColor", size = 16, ...props }, forwardedRef) => {
     return (
-      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 22 22" width={size} height={size} fill={color} {...props} ref={forwardedRef}><path fillRule="evenodd" d="M9.213 2.567c.784-1.393 2.79-1.393 3.573 0l8.09 14.378C21.645 18.31 20.657 20 19.089 20H2.91c-1.568 0-2.555-1.689-1.786-3.055l8.09-14.378Zm2.266.736a.55.55 0 0 0-.959 0L2.431 17.68a.55.55 0 0 0 .48.82h16.178a.55.55 0 0 0 .48-.82l-8.09-14.377Z" clipRule="evenodd" /><path fillRule="evenodd" d="M11 7.5a.75.75 0 0 1 .75.75v3.658a.75.75 0 0 1-1.5 0V8.25A.75.75 0 0 1 11 7.5ZM10.1 15.583a.9.9 0 0 1 .9-.9h.009a.9.9 0 0 1 0 1.8h-.01a.9.9 0 0 1-.9-.9Z" clipRule="evenodd" /></svg>
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 16 16" width={size} height={size} fill={color} {...props} ref={forwardedRef}><path fillRule="evenodd" d="M6.3 2.354c.746-1.325 2.654-1.325 3.4 0l5.276 9.38c.732 1.3-.208 2.905-1.699 2.905H2.723c-1.491 0-2.43-1.606-1.7-2.906l5.278-9.379Zm2.267.638a.65.65 0 0 0-1.133 0L2.157 12.37a.65.65 0 0 0 .566.968h10.554a.65.65 0 0 0 .566-.968L8.567 2.99Z" clipRule="evenodd" /><path fillRule="evenodd" d="M8 5.34a.65.65 0 0 1 .65.65v2.66a.65.65 0 0 1-1.3 0V5.99A.65.65 0 0 1 8 5.34ZM7.2 11.323a.8.8 0 0 1 .8-.8h.007a.8.8 0 0 1 0 1.6H8a.8.8 0 0 1-.8-.8Z" clipRule="evenodd" /></svg>
     );
   }
 );

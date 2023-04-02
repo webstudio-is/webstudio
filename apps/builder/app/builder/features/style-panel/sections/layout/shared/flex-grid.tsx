@@ -5,7 +5,7 @@ import {
   DeprecatedIconButton,
 } from "@webstudio-is/design-system";
 import { toValue } from "@webstudio-is/css-engine";
-import { DotFilledIcon } from "@webstudio-is/icons";
+import { DotIcon } from "@webstudio-is/icons";
 import type { CreateBatchUpdate } from "../../../shared/use-style-data";
 import { getStyleSource, type StyleInfo } from "../../../shared/style-info";
 import { theme } from "@webstudio-is/design-system";
@@ -110,7 +110,7 @@ export const FlexGrid = ({
                 batchUpdate.publish();
               }}
             >
-              <DotFilledIcon />
+              <DotIcon />
             </DeprecatedIconButton>
           </Flex>
         );
