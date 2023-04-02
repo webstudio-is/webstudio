@@ -3,13 +3,13 @@ import { useStore } from "@nanostores/react";
 import { computePosition, flip, offset, shift } from "@floating-ui/dom";
 import { theme, Flex, IconButton, Tooltip } from "@webstudio-is/design-system";
 import {
-  FontBoldIcon,
-  FontItalicIcon,
   SuperscriptIcon,
   SubscriptIcon,
-  Link2Icon,
-  BrushIcon,
   CrossSmallIcon,
+  BoldIcon,
+  TextItalicIcon,
+  LinkIcon,
+  PaintBrushIcon,
 } from "@webstudio-is/icons";
 import { selectedInstanceSelectorStore } from "~/shared/nano-states";
 import {
@@ -121,7 +121,7 @@ const Toolbar = ({ state, onToggle }: ToolbarProps) => {
           variant={state.isBold ? "local" : "default"}
           onClick={() => onToggle("bold")}
         >
-          <FontBoldIcon />
+          <BoldIcon />
         </IconButton>
       </Tooltip>
 
@@ -131,7 +131,7 @@ const Toolbar = ({ state, onToggle }: ToolbarProps) => {
           variant={state.isItalic ? "local" : "default"}
           onClick={() => onToggle("italic")}
         >
-          <FontItalicIcon />
+          <TextItalicIcon />
         </IconButton>
       </Tooltip>
 
@@ -161,7 +161,7 @@ const Toolbar = ({ state, onToggle }: ToolbarProps) => {
           variant={state.isLink ? "local" : "default"}
           onClick={() => onToggle("link")}
         >
-          <Link2Icon />
+          <LinkIcon />
         </IconButton>
       </Tooltip>
 
@@ -171,7 +171,7 @@ const Toolbar = ({ state, onToggle }: ToolbarProps) => {
           variant={state.isSpan ? "local" : "default"}
           onClick={() => onToggle("span")}
         >
-          <BrushIcon />
+          <PaintBrushIcon />
         </IconButton>
       </Tooltip>
     </Flex>

@@ -1,4 +1,4 @@
-import { TextIcon } from "@webstudio-is/icons";
+import { TextBlockIcon } from "@webstudio-is/icons";
 import type { WsComponentMeta, WsComponentPropsMeta } from "./component-meta";
 import { props } from "./__generated__/text-block.props";
 import type { defaultTag } from "./text-block";
@@ -21,7 +21,7 @@ export const meta: WsComponentMeta = {
   category: "typography",
   type: "rich-text",
   label: "Text Block",
-  Icon: TextIcon,
+  Icon: TextBlockIcon,
   presetStyle,
   children: ["Block of text you can edit"],
 };

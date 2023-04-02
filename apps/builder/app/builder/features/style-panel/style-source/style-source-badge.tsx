@@ -16,9 +16,6 @@ export const StyleSourceBadge = styled(DeprecatedText2, {
       tag: {
         backgroundColor: theme.colors.backgroundStyleSourceTag,
       },
-      state: {
-        backgroundColor: theme.colors.backgroundStyleSourceState,
-      },
     },
   },
 });

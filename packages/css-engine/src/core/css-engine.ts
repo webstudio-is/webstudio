@@ -7,6 +7,7 @@ import {
   type FontFaceOptions,
   type MediaRuleOptions,
 } from "./rules";
+import { compareMedia } from "./compare-media";
 import { StyleElement } from "./style-element";
 import { StyleSheet } from "./style-sheet";
 
@@ -90,7 +91,11 @@ export class CssEngine {
     for (const plaintextRule of this.#plainRules.values()) {
       css.push(plaintextRule.cssText);
     }
-    for (const mediaRule of MediaRule.sort(this.#mediaRules.values())) {
+
+    const sortedMediaRules = Array.from(this.#mediaRules.values()).sort(
+      (ruleA, ruleB) => compareMedia(ruleA.options, ruleB.options)
+    );
+    for (const mediaRule of sortedMediaRules) {
       const { cssText } = mediaRule;
       if (cssText !== "") {
         css.push(cssText);

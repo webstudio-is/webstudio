@@ -10,7 +10,7 @@ import {
   Select,
   Tooltip,
 } from "@webstudio-is/design-system";
-import { Link2Icon, PageIcon } from "@webstudio-is/icons";
+import { LinkIcon, PageIcon } from "@webstudio-is/icons";
 import { useState } from "react";
 import {
   type ControlProps,
@@ -128,7 +128,7 @@ export const UrlControl = ({
         >
           <ToggleGroupItem value={"url" satisfies Mode}>
             <Tooltip content="URL">
-              <Link2Icon />
+              <LinkIcon />
             </Tooltip>
           </ToggleGroupItem>
           <ToggleGroupItem value={"page" satisfies Mode}>
