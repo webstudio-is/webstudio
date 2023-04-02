@@ -15,9 +15,6 @@ export const All: ComponentStory<typeof StyleSourceBadge> = () => {
       <StyleSourceBadge source="token" variant="small">
         Token
       </StyleSourceBadge>
-      <StyleSourceBadge source="state" variant="small">
-        State
-      </StyleSourceBadge>
     </Flex>
   );
 };

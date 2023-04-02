@@ -78,11 +78,6 @@ const MenuTrigger = styled("button", {
           background: theme.colors.backgroundButtonHover,
         },
       },
-      state: {
-        "&:hover": {
-          background: theme.colors.backgroundButtonHover,
-        },
-      },
     },
   },
 });
@@ -110,9 +105,6 @@ const MenuTriggerGradient = styled(Box, {
       },
       tag: {
         background: theme.colors.backgroundStyleSourceGradientTag,
-      },
-      state: {
-        background: theme.colors.backgroundStyleSourceGradientState,
       },
     },
   },
@@ -143,9 +135,7 @@ const Menu = (props: MenuProps) => {
   );
 };
 
-export type ItemState = "unselected" | "selected" | "disabled";
-
-export type ItemSource = "token" | "tag" | "state" | "local";
+export type ItemSource = "token" | "tag" | "local";
 
 const useEditableText = ({
   isEditable,
@@ -306,44 +296,47 @@ const StyledSourceButton = styled(Box, {
       tag: {
         backgroundColor: theme.colors.backgroundStyleSourceTag,
       },
-      state: {
-        backgroundColor: theme.colors.backgroundStyleSourceState,
-      },
     },
-    state: {
-      selected: {},
-      unselected: {
+    selected: {
+      true: {},
+      false: {
         "&:not(:hover)": {
           backgroundColor: theme.colors.backgroundStyleSourceNeutral,
         },
       },
-      disabled: {
+    },
+    disabled: {
+      true: {
         "&:not(:hover)": {
           backgroundColor: theme.colors.backgroundStyleSourceDisabled,
         },
       },
+      false: {},
     },
   },
   defaultVariants: {
-    state: "unselected",
+    selected: false,
+    disabled: false,
   },
 });
 
 type SourceButtonProps = {
   id: string;
-  state: ItemState;
+  selected: boolean;
+  disabled: boolean;
   source: ItemSource;
   children: Array<JSX.Element | boolean>;
 };
 
 const SourceButton = forwardRef<HTMLDivElement, SourceButtonProps>(
-  ({ id, state, source, children }, ref) => {
+  ({ id, selected, disabled, source, children }, ref) => {
     return (
       <StyledSourceButton
-        state={state}
+        selected={selected}
+        disabled={disabled}
         source={source}
         data-id={id}
-        aria-current={state === "selected"}
+        aria-current={selected}
         role="button"
         ref={ref}
       >
@@ -358,9 +351,10 @@ type StyleSourceProps = {
   id: string;
   label: string;
   menuItems: ReactNode;
+  selected: boolean;
+  disabled: boolean;
   isEditing: boolean;
   isDragging: boolean;
-  state: ItemState;
   source: ItemSource;
   onSelect: () => void;
   onChangeValue: (value: string) => void;
@@ -370,8 +364,9 @@ type StyleSourceProps = {
 export const StyleSource = ({
   id,
   label,
-  state,
   menuItems,
+  selected,
+  disabled,
   isEditing,
   isDragging,
   source,
@@ -383,13 +378,19 @@ export const StyleSource = ({
   const showMenu = isEditing === false && isDragging === false;
 
   return (
-    <SourceButton state={state} source={source} id={id} ref={ref}>
+    <SourceButton
+      selected={selected}
+      disabled={disabled}
+      source={source}
+      id={id}
+      ref={ref}
+    >
       <EditableText
         isEditable={source !== "local"}
         isEditing={isEditing}
         onChangeEditing={onChangeEditing}
         onClick={() => {
-          if (state !== "disabled" && isEditing === false) {
+          if (disabled === false && isEditing === false) {
             onSelect();
           }
         }}
