@@ -1,4 +1,4 @@
-import { FontBoldIcon } from "@webstudio-is/icons";
+import { BoldIcon } from "@webstudio-is/icons";
 import type { WsComponentMeta, WsComponentPropsMeta } from "./component-meta";
 import { props } from "./__generated__/bold.props";
 import { b } from "../css/normalize";
@@ -12,7 +12,7 @@ const presetStyle = {
 export const meta: WsComponentMeta = {
   type: "rich-text-child",
   label: "Bold Text",
-  Icon: FontBoldIcon,
+  Icon: BoldIcon,
   presetStyle,
 };
 

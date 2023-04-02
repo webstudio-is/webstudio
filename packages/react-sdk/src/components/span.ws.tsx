@@ -1,5 +1,5 @@
 import type { Style } from "@webstudio-is/css-data";
-import { BrushIcon } from "@webstudio-is/icons";
+import { PaintBrushIcon } from "@webstudio-is/icons";
 import { span } from "../css/normalize";
 import type { WsComponentMeta, WsComponentPropsMeta } from "./component-meta";
 import type { defaultTag } from "./span";
@@ -12,7 +12,7 @@ const presetStyle = {
 export const meta: WsComponentMeta = {
   type: "rich-text-child",
   label: "Styled Text",
-  Icon: BrushIcon,
+  Icon: PaintBrushIcon,
   presetStyle,
 };
 

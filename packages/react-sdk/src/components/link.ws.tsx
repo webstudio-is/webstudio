@@ -1,5 +1,5 @@
 import type { Style } from "@webstudio-is/css-data";
-import { Link2Icon } from "@webstudio-is/icons";
+import { LinkIcon } from "@webstudio-is/icons";
 import { a } from "../css/normalize";
 import type { WsComponentMeta, WsComponentPropsMeta } from "./component-meta";
 import type { defaultTag } from "./link";
@@ -24,7 +24,7 @@ export const meta: WsComponentMeta = {
   category: "general",
   type: "rich-text",
   label: "Link Text",
-  Icon: Link2Icon,
+  Icon: LinkIcon,
   presetStyle,
   children: ["Link text you can edit"],
 };
