@@ -153,7 +153,6 @@ export const CssValueListItem = forwardRef(
               data-state={state ?? dataState}
               data-active={active}
               {...rest}
-              // tabIndex={-1}
             >
               <DragHandleIconStyled />
 
