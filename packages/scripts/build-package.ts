@@ -1,9 +1,9 @@
 #!/usr/bin/env tsx
 
-import { rm, cp, access } from "node:fs/promises";
+import { rm, cp, access, writeFile, mkdir } from "node:fs/promises";
 import { join } from "node:path";
 import { totalist } from "totalist";
-import { build, context } from "esbuild";
+import { build, context, type BuildOptions } from "esbuild";
 
 const args = process.argv.slice(2);
 const watch = args.includes("--watch");
@@ -29,21 +29,22 @@ await totalist("./src", (rel) => {
 });
 
 await rm("lib", { recursive: true, force: true });
+// regenerate them so we can safely write files into those directories without relying on esbuild creating them
+// in the watch mode esbuild might not create them soon enough for them to be available for other parts of the script
+await mkdir("lib");
+await mkdir("lib/cjs");
 
-const esmConfig = {
+const esmConfig: BuildOptions = {
   entryPoints,
   outdir: "lib",
   format: "esm",
-} as const;
+};
 
-const cjsConfig = {
+const cjsConfig: BuildOptions = {
   entryPoints,
   outdir: "lib/cjs",
   format: "cjs",
-  outExtension: {
-    ".js": ".cjs",
-  },
-} as const;
+};
 
 if (watch) {
   const esmContext = await context(esmConfig);
@@ -54,6 +55,12 @@ if (watch) {
   await build(esmConfig);
   await build(cjsConfig);
 }
+
+await writeFile(
+  "lib/cjs/package.json",
+  JSON.stringify({ type: "commonjs" }) + "\n",
+  "utf8"
+);
 
 for (const rel of assets) {
   await cp(join("src", rel), join("lib", rel));
