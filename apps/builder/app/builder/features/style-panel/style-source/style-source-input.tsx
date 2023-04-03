@@ -27,6 +27,8 @@ import {
   ComboboxLabel,
   ComboboxSeparator,
   DropdownMenuItem,
+  DropdownMenuLabel,
+  DropdownMenuSeparator,
 } from "@webstudio-is/design-system";
 import {
   forwardRef,
@@ -41,6 +43,9 @@ import { useSortable } from "./use-sortable";
 import { theme } from "@webstudio-is/design-system";
 import { matchSorter } from "match-sorter";
 import { StyleSourceBadge } from "./style-source-badge";
+import { CheckMarkIcon } from "@webstudio-is/icons";
+import { isFeatureEnabled } from "@webstudio-is/feature-flags";
+import { humanizeString } from "~/shared/string-utils";
 
 type IntermediateItem = {
   id: string;
@@ -48,6 +53,11 @@ type IntermediateItem = {
   disabled: boolean;
   source: ItemSource;
   isAdded?: boolean;
+};
+
+export type ItemSelector = {
+  styleSourceId: IntermediateItem["id"];
+  state?: string;
 };
 
 type TextFieldBaseWrapperProps<Item extends IntermediateItem> = Omit<
@@ -59,7 +69,7 @@ type TextFieldBaseWrapperProps<Item extends IntermediateItem> = Omit<
     "variant" | "state" | "css"
   > & {
     value: Array<Item>;
-    selectedItemId: undefined | Item["id"];
+    selectedItemSelector: undefined | ItemSelector;
     label: string;
     disabled?: boolean;
     containerRef?: RefObject<HTMLDivElement>;
@@ -67,7 +77,7 @@ type TextFieldBaseWrapperProps<Item extends IntermediateItem> = Omit<
     renderStyleSourceMenuItems: (item: Item) => void;
     onChangeItem?: (item: Item) => void;
     onSort?: (items: Array<Item>) => void;
-    onSelectItem?: (item?: Item) => void;
+    onSelectItem?: (itemSelector?: ItemSelector) => void;
     onEditItem?: (id?: Item["id"]) => void;
     editingItemId?: Item["id"];
   };
@@ -90,7 +100,7 @@ const TextFieldBase: ForwardRefRenderFunction<
     onKeyDown,
     label,
     value,
-    selectedItemId,
+    selectedItemSelector,
     renderStyleSourceMenuItems,
     onChangeItem,
     onSort,
@@ -128,7 +138,12 @@ const TextFieldBase: ForwardRefRenderFunction<
           label={item.label}
           menuItems={renderStyleSourceMenuItems(item)}
           id={item.id}
-          selected={item.id === selectedItemId}
+          selected={item.id === selectedItemSelector?.styleSourceId}
+          state={
+            item.id === selectedItemSelector?.styleSourceId
+              ? selectedItemSelector.state
+              : undefined
+          }
           disabled={item.disabled}
           isDragging={item.id === dragItemId}
           isEditing={item.id === editingItemId}
@@ -136,7 +151,7 @@ const TextFieldBase: ForwardRefRenderFunction<
           onChangeEditing={(isEditing) => {
             onEditItem?.(isEditing ? item.id : undefined);
           }}
-          onSelect={() => onSelectItem?.(item)}
+          onSelect={() => onSelectItem?.({ styleSourceId: item.id })}
           onChangeValue={(label) => {
             onEditItem?.();
             onChangeItem?.({ ...item, label });
@@ -166,8 +181,8 @@ TextField.displayName = "TextField";
 type StyleSourceInputProps<Item extends IntermediateItem> = {
   items?: Array<Item>;
   value?: Array<Item>;
+  selectedItemSelector: undefined | ItemSelector;
   editingItemId?: Item["id"];
-  selectedItemId?: Item["id"];
   onSelectAutocompleteItem?: (item: Item) => void;
   onRemoveItem?: (id: Item["id"]) => void;
   onDeleteItem?: (id: Item["id"]) => void;
@@ -175,7 +190,7 @@ type StyleSourceInputProps<Item extends IntermediateItem> = {
   onConvertToToken?: (id: Item["id"]) => void;
   onCreateItem?: (label: string) => void;
   onChangeItem?: (item: Item) => void;
-  onSelectItem?: (item?: Item) => void;
+  onSelectItem?: (item: undefined | ItemSelector) => void;
   onEditItem?: (id?: Item["id"]) => void;
   onDisableItem?: (id: Item["id"]) => void;
   onEnableItem?: (id: Item["id"]) => void;
@@ -221,10 +236,20 @@ const markAddedValues = <Item extends IntermediateItem>(
   return items.map((item) => ({ ...item, isAdded: valueIds.has(item.id) }));
 };
 
+const userActionStates = [
+  ":hover",
+  ":active",
+  ":focus",
+  ":focus-visible",
+  ":focus-within",
+];
+
 const renderMenuItems = (props: {
+  selectedItemSelector: undefined | ItemSelector;
   itemId: IntermediateItem["id"];
   source: ItemSource;
   disabled: boolean;
+  onSelect?: (itemSelector: undefined | ItemSelector) => void;
   onEdit?: (itemId: IntermediateItem["id"]) => void;
   onDuplicate?: (itemId: IntermediateItem["id"]) => void;
   onConvertToToken?: (itemId: IntermediateItem["id"]) => void;
@@ -272,6 +297,27 @@ const renderMenuItems = (props: {
       >
         Delete
       </DropdownMenuItem>
+    )}
+    {isFeatureEnabled("styleSourceStates") && (
+      <>
+        <DropdownMenuSeparator />
+        <DropdownMenuLabel>States</DropdownMenuLabel>
+        {userActionStates.map((state) => (
+          <DropdownMenuItem
+            key={state}
+            withIndicator={true}
+            icon={
+              props.itemId === props.selectedItemSelector?.styleSourceId &&
+              state === props.selectedItemSelector.state && <CheckMarkIcon />
+            }
+            onSelect={() =>
+              props.onSelect?.({ styleSourceId: props.itemId, state })
+            }
+          >
+            {humanizeString(state)}
+          </DropdownMenuItem>
+        ))}
+      </>
     )}
   </>
 );
@@ -340,9 +386,11 @@ export const StyleSourceInput = (
             {...inputProps}
             renderStyleSourceMenuItems={(item) =>
               renderMenuItems({
+                selectedItemSelector: props.selectedItemSelector,
                 itemId: item.id,
                 source: item.source,
                 disabled: item.disabled,
+                onSelect: props.onSelectItem,
                 onDuplicate: props.onDuplicateItem,
                 onConvertToToken: props.onConvertToToken,
                 onEnable: props.onEnableItem,
@@ -358,7 +406,7 @@ export const StyleSourceInput = (
             onSort={props.onSort}
             label={label}
             value={value}
-            selectedItemId={props.selectedItemId}
+            selectedItemSelector={props.selectedItemSelector}
             css={props.css}
             editingItemId={props.editingItemId}
           />

@@ -1,7 +1,7 @@
 import * as React from "react";
 import { TooltipProvider } from "@radix-ui/react-tooltip";
-import { globalCss } from "@webstudio-is/design-system";
-import { theme } from "@webstudio-is/design-system";
+import { theme, globalCss } from "@webstudio-is/design-system";
+import { setEnv } from "@webstudio-is/feature-flags";
 import "@webstudio-is/storybook-config/setup-fonts";
 
 export const parameters = {
@@ -25,6 +25,7 @@ const globalStyles = globalCss({
 export const decorators = [
   (StoryFn: any) => {
     globalStyles();
+    setEnv("*");
     return (
       <TooltipProvider>
         <StoryFn />

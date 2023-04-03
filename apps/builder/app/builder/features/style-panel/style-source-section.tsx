@@ -14,8 +14,7 @@ import {
   availableStyleSourcesStore,
   selectedInstanceSelectorStore,
   selectedInstanceStyleSourcesStore,
-  selectedStyleSourceIdStore,
-  selectedStyleSourceStore,
+  selectedStyleSourceSelectorStore,
   styleSourceSelectionsStore,
   styleSourcesStore,
   stylesStore,
@@ -60,7 +59,7 @@ const createStyleSource = (name: string) => {
       styleSources.set(newStyleSource.id, newStyleSource);
     }
   );
-  selectedStyleSourceIdStore.set(newStyleSource.id);
+  selectedStyleSourceSelectorStore.set({ styleSourceId: newStyleSource.id });
 };
 
 const addStyleSourceToInstace = (newStyleSourceId: StyleSource["id"]) => {
@@ -81,7 +80,7 @@ const addStyleSourceToInstace = (newStyleSourceId: StyleSource["id"]) => {
       }
     }
   );
-  selectedStyleSourceIdStore.set(newStyleSourceId);
+  selectedStyleSourceSelectorStore.set({ styleSourceId: newStyleSourceId });
 };
 
 const removeStyleSourceFromInstance = (styleSourceId: StyleSource["id"]) => {
@@ -169,7 +168,7 @@ const duplicateStyleSource = (styleSourceId: StyleSource["id"]) => {
     }
   );
 
-  selectedStyleSourceIdStore.set(newStyleSource.id);
+  selectedStyleSourceSelectorStore.set({ styleSourceId: newStyleSource.id });
 
   return newStyleSource.id;
 };
@@ -199,7 +198,7 @@ const convertLocalStyleSourceToToken = (styleSourceId: StyleSource["id"]) => {
       styleSources.set(newStyleSource.id, newStyleSource);
     }
   );
-  selectedStyleSourceIdStore.set(newStyleSource.id);
+  selectedStyleSourceSelectorStore.set({ styleSourceId: newStyleSource.id });
 };
 
 const reorderStyleSources = (styleSourceIds: StyleSource["id"][]) => {
@@ -269,12 +268,14 @@ export const StyleSourcesSection = () => {
   const selectedInstanceStyleSources = useStore(
     selectedInstanceStyleSourcesStore
   );
-  const selectedStyleSource = useStore(selectedStyleSourceStore);
   const items = availableStyleSources.map((styleSource) =>
     convertToInputItem(styleSource)
   );
   const value = selectedInstanceStyleSources.map((styleSource) =>
     convertToInputItem(styleSource)
+  );
+  const selectedStyleSourceSelector = useStore(
+    selectedStyleSourceSelectorStore
   );
 
   const [editingItemId, setEditingItemId] = useState<
@@ -290,7 +291,7 @@ export const StyleSourcesSection = () => {
       <StyleSourceInput
         items={items}
         value={value}
-        selectedItemId={selectedStyleSource?.id}
+        selectedItemSelector={selectedStyleSourceSelector}
         onCreateItem={createStyleSource}
         onSelectAutocompleteItem={({ id }) => {
           addStyleSourceToInstace(id);
@@ -314,8 +315,8 @@ export const StyleSourcesSection = () => {
         onSort={(items) => {
           reorderStyleSources(items.map((item) => item.id));
         }}
-        onSelectItem={(selectedItem) => {
-          selectedStyleSourceIdStore.set(selectedItem?.id);
+        onSelectItem={(styleSourceSelector) => {
+          selectedStyleSourceSelectorStore.set(styleSourceSelector);
         }}
         // style source renaming
         editingItemId={editingItemId}
@@ -323,7 +324,9 @@ export const StyleSourcesSection = () => {
           setEditingItemId(id);
           // prevent deselect after renaming
           if (id !== undefined) {
-            selectedStyleSourceIdStore.set(id);
+            selectedStyleSourceSelectorStore.set({
+              styleSourceId: id,
+            });
           }
         }}
         onChangeItem={(item) => {
