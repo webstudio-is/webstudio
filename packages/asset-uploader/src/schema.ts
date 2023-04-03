@@ -70,7 +70,7 @@ export type Asset = z.infer<typeof Asset>;
 
 export const idsFormDataFieldName = "ids";
 
-// undefined is necessary to represent uploading or deleting states
+// undefined is necessary to represent uploading state
 // to be able to upload data while preserving order
 export const Assets = z.map(AssetId, z.union([z.undefined(), Asset]));
 export type Assets = z.infer<typeof Assets>;
