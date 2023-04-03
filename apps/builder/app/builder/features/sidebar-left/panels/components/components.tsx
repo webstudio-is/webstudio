@@ -13,6 +13,7 @@ import {
   ComponentCard,
   Tooltip,
   ArrowFocus,
+  ScrollArea,
 } from "@webstudio-is/design-system";
 import { PlusIcon } from "@webstudio-is/icons";
 import type { Publish } from "~/shared/pubsub";
@@ -24,7 +25,6 @@ import {
   elementToComponentName,
   useDraggable,
 } from "./use-draggable";
-import { ScrollArea } from "./scroll-area";
 
 const getMetaMaps = () => {
   const metaByComponentName: Map<ComponentName, WsComponentMeta> = new Map();
@@ -79,7 +79,10 @@ export const TabContent = ({ publish, onSetActiveTab }: TabContentProps) => {
   });
 
   return (
-    <Flex css={{ height: "100%", flexDirection: "column" }}>
+    <Flex
+      css={{ height: "100%", flexDirection: "column" }}
+      ref={draggableContainerRef}
+    >
       <Header
         title="Add"
         suffix={<CloseButton onClick={() => onSetActiveTab("none")} />}
