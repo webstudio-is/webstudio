@@ -114,8 +114,8 @@ export const AssetsProvider = ({
 
   const handleDeleteAfterSubmit = (data: UploadData) => {
     const { errors, deletedAssets } = data;
+    const assetContainers = assetContainersStore.get();
     if (errors !== undefined) {
-      const assetContainers = assetContainersStore.get();
       const nextAssetContainers = assetContainers.map((assetContainer) => {
         if (assetContainer.status === "deleting") {
           const uploadedAssetContainer: UploadedAssetContainer = {
