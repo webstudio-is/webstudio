@@ -1,8 +1,15 @@
-import { FocusScope, useFocusManager } from "@react-aria/focus";
+import {
+  FocusScope,
+  useFocusManager,
+  type FocusManagerOptions,
+} from "@react-aria/focus";
 import type { KeyboardEvent } from "react";
 
 type Render = (props: {
-  handleKeyDown: (event: KeyboardEvent) => void;
+  handleKeyDown: (
+    event: KeyboardEvent,
+    focusManagerOptions?: FocusManagerOptions
+  ) => void;
   focusManager: ReturnType<typeof useFocusManager>;
 }) => JSX.Element;
 
@@ -12,12 +19,17 @@ const ContextHelper = ({ render }: { render: Render }) => {
   const focusManager = useFocusManager();
 
   return render({
-    handleKeyDown: (event: KeyboardEvent) => {
+    handleKeyDown: (
+      event: KeyboardEvent,
+      focusManagerOptions?: FocusManagerOptions
+    ) => {
       if (event.key === "ArrowRight" || event.key === "ArrowDown") {
-        focusManager.focusNext({ wrap: true });
+        focusManager.focusNext({ wrap: true, ...focusManagerOptions });
+        event.preventDefault(); // Prevents the page from scrolling
       }
       if (event.key === "ArrowLeft" || event.key === "ArrowUp") {
-        focusManager.focusPrevious({ wrap: true });
+        focusManager.focusPrevious({ wrap: true, ...focusManagerOptions });
+        event.preventDefault(); // Prevents the page from scrolling
       }
     },
     focusManager,

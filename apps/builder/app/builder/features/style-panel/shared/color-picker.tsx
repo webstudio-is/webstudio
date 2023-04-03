@@ -56,6 +56,26 @@ const colorResultToRgbValue = (rgb: RgbaColor | RGBColor): RgbValue => {
   };
 };
 
+const styleValueResolve = (
+  value: RgbValue | KeywordValue,
+  currentColor: RgbValue
+): RgbValue | KeywordValue => {
+  if (
+    value.type === "keyword" &&
+    value.value.toLowerCase() === "currentcolor"
+  ) {
+    return {
+      type: "rgb",
+      r: currentColor.r,
+      g: currentColor.g,
+      b: currentColor.b,
+      alpha: currentColor.alpha,
+    };
+  }
+
+  return value;
+};
+
 const styleValueToRgbaColor = (value: CssColorPickerValueInput): RgbaColor => {
   const color = colord(
     value.type === "intermediate" ? value.value : toValue(value)
@@ -143,6 +163,7 @@ type ColorPickerProps = {
   onAbort: () => void;
   intermediateValue: CssColorPickerValueInput | undefined;
   value: RgbValue | KeywordValue;
+  currentColor: RgbValue;
   styleSource: StyleSource;
   keywords?: Array<KeywordValue>;
   property: StyleProperty;
@@ -150,6 +171,7 @@ type ColorPickerProps = {
 
 export const ColorPicker = ({
   value,
+  currentColor,
   intermediateValue,
   onChange,
   onChangeComplete,
@@ -162,15 +184,18 @@ export const ColorPicker = ({
   const [displayColorPicker, setDisplayColorPicker] = useState(false);
   const canvasFix = useFixDragOverCanvas();
 
-  const currentValue = intermediateValue ?? value;
+  const currentValue =
+    intermediateValue ?? styleValueResolve(value, currentColor);
 
   const rgbValue = styleValueToRgbaColor(currentValue);
 
   // Change prefix color in sync with color picker, don't change during input changed
-  const prefixColor =
+  const prefixColor = styleValueResolve(
     currentValue.type === "keyword" || currentValue.type === "rgb"
       ? currentValue
-      : value;
+      : value,
+    currentColor
+  );
 
   const prefixColorRgba = styleValueToRgbaColor(prefixColor);
 

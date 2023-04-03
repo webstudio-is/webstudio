@@ -15,6 +15,9 @@ import {
   FloatingPanelPopoverTrigger,
 } from "./floating-panel-popover";
 import { StorySection, StoryGrid } from "./storybook";
+import { ArrowFocus } from "./primitives/arrow-focus";
+import { Box } from "./box";
+import type { ReactNode } from "react";
 
 export default {
   component: CssValueListItem,
@@ -29,6 +32,10 @@ export default {
   },
   title: "Library/CSS Value List Item",
 };
+
+const LIST_ITEM_ATTRIBUTE = "data-list-item";
+
+const listItemAttributes = { [LIST_ITEM_ATTRIBUTE]: true };
 
 const Thumbnail = styled("div", {
   width: theme.spacing[10],
@@ -47,6 +54,7 @@ const ListItem = (props: {
   active: boolean;
   focused: undefined | boolean;
   label?: React.ReactNode;
+  tabIndex?: -1 | 0;
 }) => {
   const [pressed, onPressedChange] = React.useState(false);
 
@@ -62,27 +70,51 @@ const ListItem = (props: {
       state={props.state}
       focused={props.focused}
       active={props.active}
+      tabIndex={props.tabIndex ?? 0}
       buttons={
         <>
           <SmallToggleButton
             pressed={pressed}
             onPressedChange={onPressedChange}
             variant="normal"
-            tabIndex={0}
+            tabIndex={-1}
             icon={pressed ? <EyeconClosedIcon /> : <EyeconOpenIcon />}
           />
 
           <SmallIconButton
             variant="destructive"
-            tabIndex={0}
+            tabIndex={-1}
             icon={<SubtractIcon />}
           />
         </>
       }
+      {...listItemAttributes}
     />
   );
 };
 
+const ListItemsFocusWrap = (props: { children: ReactNode }) => {
+  return (
+    <ArrowFocus
+      render={({ handleKeyDown }) => (
+        <Box
+          css={{ display: "contents" }}
+          onKeyDown={(event) => {
+            if (event.key === "ArrowUp" || event.key === "ArrowDown") {
+              handleKeyDown(event, {
+                accept: (element) => {
+                  return element.getAttribute(LIST_ITEM_ATTRIBUTE) === "true";
+                },
+              });
+            }
+          }}
+        >
+          {props.children}
+        </Box>
+      )}
+    />
+  );
+};
 export const Declarative = (props: {
   hidden: boolean;
   focused: boolean;
@@ -110,13 +142,13 @@ export const Declarative = (props: {
                     pressed={pressed}
                     onPressedChange={onPressedChange}
                     variant="normal"
-                    tabIndex={0}
+                    tabIndex={-1}
                     icon={pressed ? <EyeconClosedIcon /> : <EyeconOpenIcon />}
                   />
 
                   <SmallIconButton
                     variant="destructive"
-                    tabIndex={0}
+                    tabIndex={-1}
                     icon={<SubtractIcon />}
                   />
                 </>
@@ -131,105 +163,118 @@ export const Declarative = (props: {
 
       <StorySection title="Overflows">
         <StoryGrid>
-          {(["default", "preset", "local", "remote"] as const).map(
-            (labelColor) => (
-              <ListItem
-                key={labelColor}
-                hidden={false}
-                active={false}
-                labelColor={labelColor}
-                state={undefined}
-                focused={false}
-                label="Very long text, very long text"
-              />
-            )
-          )}
+          <ListItemsFocusWrap>
+            {(["default", "preset", "local", "remote"] as const).map(
+              (labelColor, index) => (
+                <ListItem
+                  key={labelColor}
+                  tabIndex={index === 0 ? 0 : -1}
+                  hidden={false}
+                  active={false}
+                  labelColor={labelColor}
+                  state={undefined}
+                  focused={false}
+                  label="Very long text, very long text"
+                />
+              )
+            )}
+          </ListItemsFocusWrap>
         </StoryGrid>
       </StorySection>
 
       <StorySection title="Variants">
         <StoryGrid>
-          {(["default", "preset", "local", "remote"] as const).map(
-            (labelColor) => (
-              <ListItem
-                key={labelColor}
-                hidden={false}
-                active={false}
-                labelColor={labelColor}
-                state={undefined}
-                focused={false}
-              />
-            )
-          )}
+          <ListItemsFocusWrap>
+            {(["default", "preset", "local", "remote"] as const).map(
+              (labelColor, index) => (
+                <ListItem
+                  key={labelColor}
+                  tabIndex={index === 0 ? 0 : -1}
+                  hidden={false}
+                  active={false}
+                  labelColor={labelColor}
+                  state={undefined}
+                  focused={false}
+                />
+              )
+            )}
 
-          {(["default", "preset", "local", "remote"] as const).map(
-            (labelColor) => (
-              <ListItem
-                key={labelColor}
-                hidden={true}
-                active={false}
-                labelColor={labelColor}
-                state={undefined}
-                focused={false}
-              />
-            )
-          )}
+            {(["default", "preset", "local", "remote"] as const).map(
+              (labelColor) => (
+                <ListItem
+                  key={labelColor}
+                  tabIndex={-1}
+                  hidden={true}
+                  active={false}
+                  labelColor={labelColor}
+                  state={undefined}
+                  focused={false}
+                />
+              )
+            )}
 
-          {(["default", "preset", "local", "remote"] as const).map(
-            (labelColor) => (
-              <ListItem
-                key={labelColor}
-                hidden={false}
-                active={false}
-                labelColor={labelColor}
-                state={"open"}
-                focused={false}
-              />
-            )
-          )}
+            {(["default", "preset", "local", "remote"] as const).map(
+              (labelColor) => (
+                <ListItem
+                  key={labelColor}
+                  tabIndex={-1}
+                  hidden={false}
+                  active={false}
+                  labelColor={labelColor}
+                  state={"open"}
+                  focused={false}
+                />
+              )
+            )}
+          </ListItemsFocusWrap>
         </StoryGrid>
       </StorySection>
 
       <StorySection title="Active">
         <StoryGrid>
-          {(["default", "preset", "local", "remote"] as const).map(
-            (labelColor) => (
-              <ListItem
-                key={labelColor}
-                hidden={false}
-                active={true}
-                labelColor={labelColor}
-                state={undefined}
-                focused={false}
-              />
-            )
-          )}
+          <ListItemsFocusWrap>
+            {(["default", "preset", "local", "remote"] as const).map(
+              (labelColor, index) => (
+                <ListItem
+                  key={labelColor}
+                  tabIndex={index === 0 ? 0 : -1}
+                  hidden={false}
+                  active={true}
+                  labelColor={labelColor}
+                  state={undefined}
+                  focused={false}
+                />
+              )
+            )}
 
-          {(["default", "preset", "local", "remote"] as const).map(
-            (labelColor) => (
-              <ListItem
-                key={labelColor}
-                hidden={true}
-                active={true}
-                labelColor={labelColor}
-                state={undefined}
-                focused={false}
-              />
-            )
-          )}
+            {(["default", "preset", "local", "remote"] as const).map(
+              (labelColor, index) => (
+                <ListItem
+                  key={labelColor}
+                  tabIndex={-1}
+                  hidden={true}
+                  active={true}
+                  labelColor={labelColor}
+                  state={undefined}
+                  focused={false}
+                />
+              )
+            )}
 
-          {(["default", "preset", "local", "remote"] as const).map(
-            (labelColor) => (
-              <ListItem
-                key={labelColor}
-                hidden={false}
-                active={true}
-                labelColor={labelColor}
-                state={"open"}
-                focused={false}
-              />
-            )
-          )}
+            {(["default", "preset", "local", "remote"] as const).map(
+              (labelColor, index) => (
+                <ListItem
+                  key={labelColor}
+                  tabIndex={-1}
+                  hidden={false}
+                  active={true}
+                  labelColor={labelColor}
+                  state={"open"}
+                  focused={false}
+                />
+              )
+            )}
+          </ListItemsFocusWrap>
         </StoryGrid>
       </StorySection>
     </Panel>

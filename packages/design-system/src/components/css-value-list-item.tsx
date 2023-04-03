@@ -9,6 +9,7 @@ import { styled } from "../stitches.config";
 import { Flex } from "./flex";
 import { theme } from "../stitches.config";
 import { DragHandleIcon } from "@webstudio-is/icons";
+import { ArrowFocus } from "./primitives/arrow-focus";
 
 const DragHandleIconStyled = styled(DragHandleIcon, {
   visibility: "hidden",
@@ -137,41 +138,54 @@ export const CssValueListItem = forwardRef(
     );
 
     return (
-      <ItemWrapper>
-        <ItemButton
-          ref={ref}
-          data-focused={focused}
-          data-state={state ?? dataState}
-          data-active={active}
-          {...rest}
-          tabIndex={0}
-        >
-          <DragHandleIconStyled />
+      <ArrowFocus
+        render={({ handleKeyDown }) => (
+          <ItemWrapper
+            onKeyDown={(event) => {
+              if (event.key === "ArrowLeft" || event.key === "ArrowRight") {
+                handleKeyDown(event);
+              }
+            }}
+          >
+            <ItemButton
+              ref={ref}
+              data-focused={focused}
+              data-state={state ?? dataState}
+              data-active={active}
+              {...rest}
+            >
+              <DragHandleIconStyled />
 
-          <Flex gap={2} shrink>
-            <ThumbHolder>{thumbnail}</ThumbHolder>
-            {label}
-          </Flex>
+              <Flex gap={2} shrink>
+                <ThumbHolder>{thumbnail}</ThumbHolder>
+                {label}
+              </Flex>
 
-          <Flex grow={true} />
+              <Flex grow={true} />
 
-          {/*
+              {/*
             We place fake divs with same dimensions as small buttons here to avoid following warning:
             Warning: validateDOMNesting(...): <button> cannot appear as a descendant of <button>
             Real buttons will be placed on top of fake buttons
           */}
-          <Flex shrink={false} css={{ paddingLeft: theme.spacing[5] }} gap={2}>
-            {fakeButtons}
-          </Flex>
-        </ItemButton>
+              <Flex
+                shrink={false}
+                css={{ paddingLeft: theme.spacing[5] }}
+                gap={2}
+              >
+                {fakeButtons}
+              </Flex>
+            </ItemButton>
 
-        {/*
+            {/*
           Real buttons are placed above ItemButton to avoid <button> cannot appear as a descendant of <button> warning
         */}
-        <IconButtonsWrapper gap={2} align="center">
-          {buttons}
-        </IconButtonsWrapper>
-      </ItemWrapper>
+            <IconButtonsWrapper gap={2} align="center">
+              {buttons}
+            </IconButtonsWrapper>
+          </ItemWrapper>
+        )}
+      />
     );
   }
 );

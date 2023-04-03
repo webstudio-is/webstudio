@@ -316,7 +316,7 @@ export const Builder = ({
   });
 
   return (
-    <AssetsProvider authToken={authToken}>
+    <AssetsProvider projectId={project.id} authToken={authToken}>
       <ChromeWrapper isPreviewMode={isPreviewMode}>
         <Topbar gridArea="header" project={project} publish={publish} />
         <Main>

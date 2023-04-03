@@ -3,20 +3,20 @@
     "menu drop shadow": {
       "value": [
         {
-          "color": "#00000026",
-          "type": "dropShadow",
-          "x": "0",
-          "y": "5",
-          "blur": "17",
-          "spread": "0"
-        },
-        {
           "color": "#0000001a",
           "type": "dropShadow",
-          "x": "0",
-          "y": "2",
-          "blur": "7",
-          "spread": "0"
+          "x": 0,
+          "y": 2,
+          "blur": 7,
+          "spread": 0
+        },
+        {
+          "color": "#00000026",
+          "type": "dropShadow",
+          "x": 0,
+          "y": 5,
+          "blur": 17,
+          "spread": 0
         }
       ],
       "type": "boxShadow"
@@ -73,6 +73,10 @@
         "type": "lineHeights"
       },
       "9": {
+        "value": "38",
+        "type": "lineHeights"
+      },
+      "10": {
         "value": "360",
         "type": "lineHeights"
       }
@@ -145,6 +149,10 @@
         "type": "letterSpacing"
       },
       "4": {
+        "value": "2%",
+        "type": "letterSpacing"
+      },
+      "5": {
         "value": "-5%",
         "type": "letterSpacing"
       }
@@ -648,7 +656,22 @@
           "value": "linear-gradient(90deg, #4a4efa 0%, #bd2fdb 100%)",
           "type": "color",
           "description": "For horizontally-oriented elements in the Builder UI that use a brand gradient background. "
+        },
+        "horizontal-reverse": {
+          "value": "linear-gradient(90deg, #bd2fdb 0%, #4a4efa 100%)",
+          "type": "color",
+          "description": "Like horizontal brand gradient, but opposite direction."
         }
+      },
+      "menu-hint": {
+        "value": "#dedede",
+        "type": "color",
+        "description": "For the background of the hint menu item."
+      },
+      "topbar-hover": {
+        "value": "#383838",
+        "type": "color",
+        "description": "For tabs and button backgrounds that are in the top toolbar"
       }
     },
     "brand": {
@@ -683,6 +706,14 @@
         "dashboard": {
           "value": "#ededed",
           "type": "color"
+        },
+        "regular-button-selected": {
+          "value": "linear-gradient(180deg, #bffeec 0%, #fbfff6 100%)",
+          "type": "color"
+        },
+        "cta-button": {
+          "value": "linear-gradient(135deg, #4a4efa 0%, #bd2fdb 100%)",
+          "type": "color"
         }
       },
       "foreground": {
@@ -698,6 +729,10 @@
         },
         "full-gradient": {
           "value": "linear-gradient(135deg, #92fddc 0%, #7d7ffb 31.94%, #ed72fe 64.24%, #fdd791 100%)",
+          "type": "color"
+        },
+        "navbar": {
+          "value": "linear-gradient(90deg, #39fbbb00 0%, #39fbbb 20%, #4a4efa 40.03%, #e63cfe 60.02%, #ffae3c 80.04%, #ffae3c00 100%, #ffae3c00 100%)",
           "type": "color"
         }
       }
@@ -897,7 +932,7 @@
         }
       },
       "text-more-subtle": {
-        "value": "#889096",
+        "value": "#8d949a",
         "type": "color",
         "description": "for subtle text that needs to be even more subtle \nthan \"text-subtle\"\n\nused as the color for text on title tab triggers and the category label of the font item component"
       },
@@ -942,10 +977,10 @@
         "value": {
           "color": "#1717171a",
           "type": "dropShadow",
-          "x": "0",
-          "y": "4",
-          "blur": "4",
-          "spread": "0"
+          "x": 0,
+          "y": 4,
+          "blur": 4,
+          "spread": 0
         },
         "type": "boxShadow",
         "description": "elevation for small things within the dashboard"
@@ -954,10 +989,10 @@
         "value": {
           "color": "#1717171a",
           "type": "dropShadow",
-          "x": "0",
-          "y": "8",
-          "blur": "16",
-          "spread": "0"
+          "x": 0,
+          "y": 8,
+          "blur": 16,
+          "spread": 0
         },
         "type": "boxShadow",
         "description": "elevation for big things within the dashboard"
@@ -980,7 +1015,7 @@
         "value": {
           "fontFamily": "{fontFamilies.manrope}",
           "fontWeight": "{fontWeights.manrope-5}",
-          "lineHeight": "38",
+          "lineHeight": "{lineHeights.9}",
           "fontSize": "{fontSize.5}",
           "letterSpacing": "{letterSpacing.3}",
           "paragraphSpacing": "{paragraphSpacing.0}",
@@ -1024,7 +1059,7 @@
           "fontWeight": "{fontWeights.manrope-7}",
           "lineHeight": "{lineHeights.0}",
           "fontSize": "{fontSize.2}",
-          "letterSpacing": "2%",
+          "letterSpacing": "{letterSpacing.4}",
           "paragraphSpacing": "{paragraphSpacing.0}",
           "paragraphIndent": "{paragraphIndent.0}",
           "textCase": "{textCase.none}",
@@ -1037,9 +1072,9 @@
           "value": {
             "fontFamily": "{fontFamilies.manrope}",
             "fontWeight": "{fontWeights.manrope-8}",
-            "lineHeight": "{lineHeights.9}",
+            "lineHeight": "{lineHeights.10}",
             "fontSize": "{fontSize.7}",
-            "letterSpacing": "{letterSpacing.4}",
+            "letterSpacing": "{letterSpacing.5}",
             "paragraphSpacing": "{paragraphSpacing.0}",
             "paragraphIndent": "{paragraphIndent.0}",
             "textCase": "{textCase.none}",
@@ -1051,9 +1086,9 @@
           "value": {
             "fontFamily": "{fontFamilies.manrope}",
             "fontWeight": "{fontWeights.manrope-9}",
-            "lineHeight": "{lineHeights.9}",
+            "lineHeight": "{lineHeights.10}",
             "fontSize": "{fontSize.7}",
-            "letterSpacing": "{letterSpacing.4}",
+            "letterSpacing": "{letterSpacing.5}",
             "paragraphSpacing": "{paragraphSpacing.0}",
             "paragraphIndent": "{paragraphIndent.0}",
             "textCase": "{textCase.none}",

@@ -48,5 +48,5 @@ export const fontWeights = {
 
 export type FontWeight = keyof typeof fontWeights;
 export type FontWeightKeyword =
-  | typeof fontWeights[FontWeight]["name"]
-  | typeof fontWeights[FontWeight]["alt"];
+  | (typeof fontWeights)[FontWeight]["name"]
+  | (typeof fontWeights)[FontWeight]["alt"];

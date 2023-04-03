@@ -1,5 +1,4 @@
 import * as icons from "./index";
-import * as legacyIcons from "./legacy";
 
 export const Icons = ({ testColor }: { testColor: boolean }) => {
   return (
@@ -45,7 +44,6 @@ export const Icons = ({ testColor }: { testColor: boolean }) => {
                   }}
                 >
                   {name.replace(/Icon$/, "")}
-                  {name in legacyIcons && " (legacy)"}
                 </div>
               </div>
             );

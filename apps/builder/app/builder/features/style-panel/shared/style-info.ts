@@ -51,7 +51,19 @@ export type StyleValueInfo = {
 };
 
 export type StyleInfo = {
-  [property in StyleProperty]?: StyleValueInfo;
+  [property in Exclude<StyleProperty, "color">]?: StyleValueInfo;
+} & {
+  /**
+   * In order to maintain code efficiency and reduce clutter, we should only expose the currentColor value for the color property.
+   * We can consider it an edge case when it is necessary to display the actual currentColor value in the Color Picker.
+   */
+  color?: StyleValueInfo & {
+    /**
+     * Only color property can have currentColor
+     * Now we take it from the computed style, @todo: calculate when we are going to remove computed.
+     **/
+    currentColor?: StyleValue | undefined;
+  };
 };
 
 export type StyleSource = "local" | "remote" | "preset" | "default";
@@ -330,13 +342,24 @@ export const useStyleInfo = () => {
       const value =
         local ?? cascaded?.value ?? inherited?.value ?? preset ?? computed;
       if (value) {
-        styleInfoData[property] = {
-          value,
-          local,
-          cascaded,
-          inherited,
-          preset,
-        };
+        if (property === "color") {
+          styleInfoData[property] = {
+            value,
+            local,
+            cascaded,
+            inherited,
+            preset,
+            currentColor: computed,
+          };
+        } else {
+          styleInfoData[property] = {
+            value,
+            local,
+            cascaded,
+            inherited,
+            preset,
+          };
+        }
       }
     }
     return styleInfoData;

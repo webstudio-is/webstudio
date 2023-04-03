@@ -1,26 +1,17 @@
-import {
-  useEffect,
-  useMemo,
-  createContext,
-  useContext,
-  type ReactNode,
-  useRef,
-} from "react";
+import { useMemo, createContext, useContext, type ReactNode } from "react";
 import { useStore } from "@nanostores/react";
 import warnOnce from "warn-once";
-import { useFetcher } from "@remix-run/react";
+import type { Project } from "@webstudio-is/project";
 import {
   type AssetType,
   idsFormDataFieldName,
   MAX_UPLOAD_SIZE,
   toBytes,
-  type Asset,
 } from "@webstudio-is/asset-uploader";
 import { toast } from "@webstudio-is/design-system";
 import { sanitizeS3Key } from "@webstudio-is/asset-uploader";
 import { assetContainersStore } from "~/shared/nano-states";
 import { restAssetsPath } from "~/shared/router-utils";
-import { useProject } from "../nano-states";
 import type {
   AssetContainer,
   DeletingAssetContainer,
@@ -30,7 +21,6 @@ import type {
 import { usePersistentFetcher } from "~/shared/fetcher";
 import type { ActionData } from "~/builder/shared/assets";
 import { normalizeErrors, toastUnknownFieldErrors } from "~/shared/form-utils";
-import { updateStateAssets } from "./update-asset-containers";
 
 export type UploadData = ActionData;
 
@@ -109,57 +99,23 @@ type AssetsContext = {
 const Context = createContext<AssetsContext | undefined>(undefined);
 
 export const AssetsProvider = ({
-  children,
+  projectId,
   authToken,
+  children,
 }: {
-  children: ReactNode;
+  projectId: Project["id"];
   authToken: string | undefined;
+  children: ReactNode;
 }) => {
-  const [project] = useProject();
   const assetContainers = useStore(assetContainersStore);
-  const { submit: load, data: serverAssets } = useFetcher<Asset[]>();
   const submit = usePersistentFetcher();
-  const assetContainersRef = useRef(assetContainers);
 
-  const action =
-    project && restAssetsPath({ projectId: project.id, authToken });
-  assetContainersRef.current = assetContainers;
-
-  useEffect(() => {
-    if (action && assetContainers.length === 0) {
-      /**
-       * To prevent the AssetsProvider from being redrawn every time an action is requested, we use PUT instead of GET
-       * to load assets. The only reason PUT is chosen is that it is idempotent and has not been used before.
-       */
-      load({}, { action, method: "put" });
-    }
-  }, [action, assetContainers.length, load]);
-
-  useEffect(() => {
-    if (serverAssets !== undefined) {
-      const nextAssetContainers = updateStateAssets(
-        assetContainers,
-        serverAssets
-      );
-
-      if (nextAssetContainers !== assetContainers) {
-        assetContainersStore.set(nextAssetContainers);
-      }
-    }
-  }, [serverAssets, assetContainers]);
+  const action = restAssetsPath({ projectId: projectId, authToken });
 
   const handleDeleteAfterSubmit = (data: UploadData) => {
-    // We need to remove assets only at updateStateAssets.
-    // We can't remove it here optimistically because the previous load
-    // can return it as "updated" because of the async operation nature
-    if (action) {
-      load({}, { action, method: "put" });
-    }
-
-    const { errors } = data;
+    const { errors, deletedAssets } = data;
+    const assetContainers = assetContainersStore.get();
     if (errors !== undefined) {
-      // We don't know what's wrong, remove the "deleting" status from assets and wait for the load to fix it
-      const assetContainers = assetContainersRef.current;
       const nextAssetContainers = assetContainers.map((assetContainer) => {
         if (assetContainer.status === "deleting") {
           const uploadedAssetContainer: UploadedAssetContainer = {
@@ -171,22 +127,24 @@ export const AssetsProvider = ({
 
         return assetContainer;
       });
-
       assetContainersStore.set(nextAssetContainers);
-
       return toastUnknownFieldErrors(normalizeErrors(errors), []);
+    }
+
+    if (deletedAssets) {
+      const deletedIds = new Set(deletedAssets.map((asset) => asset.id));
+      assetContainersStore.set(
+        assetContainers.filter(
+          (assetContainer) => deletedIds.has(assetContainer.asset.id) === false
+        )
+      );
     }
   };
 
-  const handleAfterSubmit = (assetId: string) => (data: UploadData) => {
-    const assetContainers = assetContainersRef.current;
-
-    if (action) {
-      load({}, { action, method: "put" });
-    }
+  const handleAfterSubmit = (assetId: string, data: UploadData) => {
+    const assetContainers = assetContainersStore.get();
 
     if (data.errors !== undefined) {
-      // We don't know what's wrong, remove uploading asset and wait for the load to fix it
       assetContainersStore.set(
         assetContainers.filter(
           (assetContainer) =>
@@ -230,7 +188,7 @@ export const AssetsProvider = ({
           assetContainer.asset.id === assetId
         ) {
           // We can start using the uploaded asset for image previews etc
-          return { ...assetContainer, asset: uploadedAsset };
+          return { status: "uploaded", asset: uploadedAsset };
         }
         return assetContainer;
       })
@@ -239,7 +197,7 @@ export const AssetsProvider = ({
 
   const handleDelete = (ids: Array<string>) => {
     const formData = new FormData();
-    const assetContainer = assetContainersRef.current;
+    const assetContainer = assetContainersStore.get();
 
     const nextAssetContainers = [...assetContainer];
 
@@ -283,10 +241,9 @@ export const AssetsProvider = ({
         files
       );
 
-      const assets = assetContainersRef.current;
       assetContainersStore.set([
         ...uploadingAssetsAndFormData.map(([previewAsset]) => previewAsset),
-        ...assets,
+        ...assetContainersStore.get(),
       ]);
 
       for (const [
@@ -300,7 +257,7 @@ export const AssetsProvider = ({
             action,
             encType: "multipart/form-data",
           },
-          handleAfterSubmit(uploadingAssetContainer.asset.id)
+          (data) => handleAfterSubmit(uploadingAssetContainer.asset.id, data)
         );
       }
     } catch (error) {
@@ -311,9 +268,7 @@ export const AssetsProvider = ({
   };
 
   return (
-    <Context.Provider
-      value={{ handleSubmit, assetContainers: assetContainers, handleDelete }}
-    >
+    <Context.Provider value={{ assetContainers, handleSubmit, handleDelete }}>
       {children}
     </Context.Provider>
   );

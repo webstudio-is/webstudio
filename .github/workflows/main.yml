@@ -16,4 +16,13 @@ jobs:
       - uses: actions/checkout@v3
       - uses: ./.github/actions/ci-setup
 
+      - uses: actions/cache@v3
+        with:
+          path: |
+            ./node_modules/.cache/prettier/.prettier-cache
+          key: checks-${{ github.sha }}
+          restore-keys: checks-
+
+      - run: pnpm prettier --cache --check "**/*.{js,md,ts,tsx}"
+
       - run: pnpm turbo run size-test build checks
