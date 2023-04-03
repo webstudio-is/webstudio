@@ -342,6 +342,7 @@ const StyleSourceButton = styled("button", {
   display: "block",
   boxSizing: "border-box",
   padding: theme.spacing[4],
+  maxWidth: "100%",
 });
 
 const StyleSourceState = styled(Box, {
