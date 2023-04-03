@@ -1,5 +1,5 @@
 import fetch from "isomorphic-fetch";
-import type { CanvasData } from "@webstudio-is/project";
+import type { Data } from "@webstudio-is/react-sdk";
 
 export const loadProject = async ({
   apiUrl,
@@ -7,7 +7,7 @@ export const loadProject = async ({
 }: {
   apiUrl: string;
   projectId: string;
-}): Promise<Array<CanvasData>> => {
+}): Promise<Array<Data>> => {
   if (apiUrl === undefined) {
     throw new Error("Webstudio API URL is required.");
   }

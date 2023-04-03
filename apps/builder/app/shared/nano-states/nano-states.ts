@@ -229,9 +229,14 @@ export const useSetStyleSourceSelections = (
   });
 };
 
-export const selectedStyleSourceIdStore = atom<undefined | StyleSource["id"]>(
-  undefined
-);
+type StyleSourceSelector = {
+  styleSourceId: StyleSource["id"];
+  state?: string;
+};
+
+export const selectedStyleSourceSelectorStore = atom<
+  undefined | StyleSourceSelector
+>(undefined);
 
 /**
  * Indexed styles data is recomputed on every styles update
@@ -378,11 +383,12 @@ export const selectedInstanceStyleSourcesStore = computed(
  * to the last style source of selected instance
  */
 export const selectedStyleSourceStore = computed(
-  [selectedInstanceStyleSourcesStore, selectedStyleSourceIdStore],
-  (styleSources, selectedStyleSourceId) => {
+  [selectedInstanceStyleSourcesStore, selectedStyleSourceSelectorStore],
+  (styleSources, selectedStyleSourceSelector) => {
     return (
-      styleSources.find((item) => item.id === selectedStyleSourceId) ??
-      styleSources.at(-1)
+      styleSources.find(
+        (item) => item.id === selectedStyleSourceSelector?.styleSourceId
+      ) ?? styleSources.at(-1)
     );
   }
 );

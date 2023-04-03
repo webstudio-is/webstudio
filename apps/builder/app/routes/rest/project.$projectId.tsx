@@ -1,13 +1,13 @@
 import { json, type LoaderArgs } from "@remix-run/node";
+import type { Data } from "@webstudio-is/react-sdk";
 import { sentryException } from "~/shared/sentry";
 import { loadProductionCanvasData } from "~/shared/db";
-import type { CanvasData } from "@webstudio-is/project";
 import { createContext } from "~/shared/context.server";
 
 export const loader = async ({
   params,
   request,
-}: LoaderArgs): Promise<CanvasData> => {
+}: LoaderArgs): Promise<Data> => {
   try {
     const projectId = params.projectId ?? undefined;
 

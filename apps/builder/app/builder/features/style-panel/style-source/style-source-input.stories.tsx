@@ -1,7 +1,7 @@
 import { nanoid } from "nanoid";
 import type { ComponentStory } from "@storybook/react";
 import { useState } from "react";
-import { StyleSourceInput, type ItemSource } from ".";
+import { type ItemSelector, type ItemSource, StyleSourceInput } from ".";
 
 export default {
   component: StyleSourceInput,
@@ -65,7 +65,7 @@ export const Basic: ComponentStory<typeof StyleSourceInput> = () => {
       css={{ width: 300 }}
       items={getItems()}
       value={value}
-      selectedItemId={localItem.id}
+      selectedItemSelector={{ styleSourceId: localItem.id }}
       onCreateItem={(label) => {
         createItem(label, value, setValue);
       }}
@@ -97,7 +97,7 @@ export const WithTruncatedItem: ComponentStory<
       css={{ width: 300 }}
       items={getItems()}
       value={value}
-      selectedItemId={value[0].id}
+      selectedItemSelector={{ styleSourceId: value[0].id }}
       onCreateItem={(label) => {
         createItem(label, value, setValue);
       }}
@@ -123,9 +123,9 @@ export const Complete: ComponentStory<typeof StyleSourceInput> = () => {
       disabled: true,
     },
   ]);
-  const [selectedItemId, setSelectedItemId] = useState<undefined | Item["id"]>(
-    localItem.id
-  );
+  const [selectedItemSelector, setSelectedItemSelector] = useState<
+    undefined | ItemSelector
+  >({ styleSourceId: localItem.id });
   const [editingItemId, setEditingItemId] = useState<undefined | Item["id"]>();
 
   return (
@@ -133,11 +133,9 @@ export const Complete: ComponentStory<typeof StyleSourceInput> = () => {
       css={{ width: 300 }}
       items={getItems()}
       value={value}
-      selectedItemId={selectedItemId}
+      selectedItemSelector={selectedItemSelector}
       editingItemId={editingItemId}
-      onSelectItem={(itemToSelect) => {
-        setSelectedItemId(itemToSelect?.id);
-      }}
+      onSelectItem={setSelectedItemSelector}
       onEditItem={setEditingItemId}
       onCreateItem={(label) => {
         createItem(label, value, setValue);

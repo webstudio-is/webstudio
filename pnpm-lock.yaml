@@ -879,9 +879,9 @@ importers:
       '@webstudio-is/prisma-client':
         specifier: workspace:^
         version: link:../prisma-client
-      '@webstudio-is/project':
+      '@webstudio-is/react-sdk':
         specifier: workspace:^
-        version: link:../project
+        version: link:../react-sdk
       '@webstudio-is/scripts':
         specifier: workspace:^
         version: link:../scripts
@@ -1050,18 +1050,12 @@ importers:
       '@webstudio-is/asset-uploader':
         specifier: workspace:^
         version: link:../asset-uploader
-      '@webstudio-is/css-data':
-        specifier: workspace:^
-        version: link:../css-data
       '@webstudio-is/prisma-client':
         specifier: workspace:^
         version: link:../prisma-client
       '@webstudio-is/project-build':
         specifier: workspace:^
         version: link:../project-build
-      '@webstudio-is/react-sdk':
-        specifier: workspace:^
-        version: link:../react-sdk
       '@webstudio-is/trpc-interface':
         specifier: workspace:^
         version: link:../trpc-interface
