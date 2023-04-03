@@ -7,8 +7,7 @@
   "type": "module",
   "scripts": {
     "typecheck": "tsc --noEmit",
-    "test": "NODE_OPTIONS=--experimental-vm-modules jest",
-    "checks": "pnpm typecheck && pnpm lint && pnpm test",
+    "checks": "pnpm typecheck && pnpm lint",
     "dev": "build-package --watch",
     "build": "build-package",
     "lint": "eslint ./src --ext .ts,.tsx --max-warnings 0"
@@ -27,12 +26,9 @@
     "zod": "^3.19.1"
   },
   "devDependencies": {
-    "@jest/globals": "^29.3.1",
     "@types/uuid": "^8.3.4",
-    "@webstudio-is/jest-config": "workspace:^",
     "@webstudio-is/scripts": "workspace:^",
     "@webstudio-is/tsconfig": "workspace:^",
-    "jest": "^29.3.1",
     "typescript": "5.0.3"
   },
   "exports": {
@@ -46,8 +42,7 @@
   "types": "src/index.ts",
   "files": [
     "lib/*",
-    "src/*",
-    "!*.test.*"
+    "src/*"
   ],
   "license": "MIT",
   "private": false,

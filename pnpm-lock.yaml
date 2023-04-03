@@ -1081,24 +1081,15 @@ importers:
         specifier: ^3.19.1
         version: 3.19.1
     devDependencies:
-      '@jest/globals':
-        specifier: ^29.3.1
-        version: 29.3.1
       '@types/uuid':
         specifier: ^8.3.4
         version: 8.3.4
-      '@webstudio-is/jest-config':
-        specifier: workspace:^
-        version: link:../jest-config
       '@webstudio-is/scripts':
         specifier: workspace:^
         version: link:../scripts
       '@webstudio-is/tsconfig':
         specifier: workspace:^
         version: link:../tsconfig
-      jest:
-        specifier: ^29.3.1
-        version: 29.3.1(@types/node@18.11.18)
       typescript:
         specifier: 5.0.3
         version: 5.0.3
