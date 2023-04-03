@@ -106,8 +106,9 @@ const getInitialState = <Data>() => {
 export const defaultGetValidChildren = (parent: Element) =>
   Array.from(parent.children).filter(
     (element) =>
-      // hidden attribute is used by react-aria FocusScope helper elements to support focus lock, focus wrap etc
-      // we don't want to include them in the list of children
+      // The 'hidden' attribute is utilized by the react-arial FocusScope
+      // as helper elements to enable focus lock, focus wrap, and other features.
+      // We should exclude them from the list of children.
       element.hasAttribute("hidden") === false &&
       element.hasAttribute("data-placement-indicator") === false
   );
