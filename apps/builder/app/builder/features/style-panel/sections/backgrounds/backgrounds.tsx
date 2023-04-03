@@ -2,6 +2,8 @@ import type { RenderCategoryProps } from "../../style-sections";
 import { styleConfigByName } from "../../shared/configs";
 import { FloatingPanel } from "~/builder/shared/floating-panel";
 import {
+  ArrowFocus,
+  Box,
   CssValueListItem,
   Flex,
   Grid,
@@ -39,7 +41,7 @@ import {
 import { BackgroundContent } from "./background-content";
 import { getLayerName, LayerThumbnail } from "./background-thumbnail";
 import { useSortable } from "./use-sortable";
-import { useMemo } from "react";
+import { useMemo, type ReactNode } from "react";
 import type { RgbValue, StyleProperty } from "@webstudio-is/css-data";
 import {
   CollapsibleSectionBase,
@@ -47,8 +49,13 @@ import {
 } from "~/builder/shared/collapsible-section";
 import { getDots } from "../../shared/collapsible-section";
 
+const LIST_ITEM_ATTRIBUTE = "data-list-item";
+
+const listItemAttributes = { [LIST_ITEM_ATTRIBUTE]: true };
+
 const Layer = (props: {
   id: string;
+  tabIndex: -1 | 0;
   isHighlighted: boolean;
   layerStyle: StyleInfo;
   setProperty: SetBackgroundProperty;
@@ -94,6 +101,7 @@ const Layer = (props: {
       <CssValueListItem
         active={props.isHighlighted}
         data-id={props.id}
+        tabIndex={props.tabIndex}
         label={
           <Label truncate onReset={props.deleteLayer}>
             {getLayerName(props.layerStyle)}
@@ -108,18 +116,19 @@ const Layer = (props: {
               pressed={isHidden}
               onPressedChange={handleHiddenChange}
               variant="normal"
-              tabIndex={0}
+              tabIndex={-1}
               icon={isHidden ? <EyeconClosedIcon /> : <EyeconOpenIcon />}
             />
 
             <SmallIconButton
               variant="destructive"
-              tabIndex={0}
+              tabIndex={-1}
               icon={<SubtractIcon />}
               onClick={props.deleteLayer}
             />
           </>
         }
+        {...listItemAttributes}
       />
     </FloatingPanel>
   );
@@ -187,6 +196,28 @@ const BackgroundsCollapsibleSection = ({
   );
 };
 
+const ListItemsFocusWrap = (props: { children: ReactNode }) => {
+  return (
+    <ArrowFocus
+      render={({ handleKeyDown }) => (
+        <Box
+          css={{ display: "contents" }}
+          onKeyDown={(event) => {
+            if (event.key === "ArrowUp" || event.key === "ArrowDown") {
+              handleKeyDown(event, {
+                accept: (element) =>
+                  element.getAttribute(LIST_ITEM_ATTRIBUTE) === "true",
+              });
+            }
+          }}
+        >
+          {props.children}
+        </Box>
+      )}
+    />
+  );
+};
+
 export const BackgroundsSection = (props: RenderCategoryProps) => {
   const { setProperty, deleteProperty, currentStyle, createBatchUpdate } =
     props;
@@ -219,47 +250,50 @@ export const BackgroundsSection = (props: RenderCategoryProps) => {
       category={props.category}
     >
       <Flex gap={1} direction="column">
-        <Flex
-          gap={1}
-          direction="column"
-          ref={sortableRefCallback}
-          css={{
-            pointerEvents: dragItemId ? "none" : "auto",
-            // to make DnD work we have to disable scrolling using touch
-            touchAction: "none",
-          }}
-        >
-          {layers.map((layer) => (
-            <Layer
-              id={layer.id}
-              key={layer.id}
-              isHighlighted={dragItemId === layer.id}
-              layerStyle={getLayerBackgroundStyleInfo(
-                layer.index,
-                currentStyle
-              )}
-              deleteLayer={deleteLayer(
-                layer.index,
-                currentStyle,
-                createBatchUpdate
-              )}
-              setProperty={setLayerProperty(
-                layer.index,
-                currentStyle,
-                createBatchUpdate
-              )}
-              deleteProperty={deleteLayerProperty(
-                layer.index,
-                currentStyle,
-                deleteProperty,
-                createBatchUpdate
-              )}
-              setBackgroundColor={setProperty("backgroundColor")}
-            />
-          ))}
+        <ListItemsFocusWrap>
+          <Flex
+            gap={1}
+            direction="column"
+            ref={sortableRefCallback}
+            css={{
+              pointerEvents: dragItemId ? "none" : "auto",
+              // to make DnD work we have to disable scrolling using touch
+              touchAction: "none",
+            }}
+          >
+            {layers.map((layer, index) => (
+              <Layer
+                id={layer.id}
+                tabIndex={index === 0 ? 0 : -1}
+                key={layer.id}
+                isHighlighted={dragItemId === layer.id}
+                layerStyle={getLayerBackgroundStyleInfo(
+                  layer.index,
+                  currentStyle
+                )}
+                deleteLayer={deleteLayer(
+                  layer.index,
+                  currentStyle,
+                  createBatchUpdate
+                )}
+                setProperty={setLayerProperty(
+                  layer.index,
+                  currentStyle,
+                  createBatchUpdate
+                )}
+                deleteProperty={deleteLayerProperty(
+                  layer.index,
+                  currentStyle,
+                  deleteProperty,
+                  createBatchUpdate
+                )}
+                setBackgroundColor={setProperty("backgroundColor")}
+              />
+            ))}
 
-          {placementIndicator}
-        </Flex>
+            {placementIndicator}
+          </Flex>
+        </ListItemsFocusWrap>
 
         <Grid
           css={{
