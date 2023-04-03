@@ -1,6 +1,9 @@
 import { useState } from "react";
 import { Flex, Button, Collapsible } from "@webstudio-is/design-system";
-import { TriangleDownIcon, TriangleRightIcon } from "@webstudio-is/icons";
+import {
+  ChevronFilledDownIcon,
+  ChevronFilledRightIcon,
+} from "@webstudio-is/icons";
 
 export const ShowMore = ({
   styleConfigs,
@@ -17,7 +20,9 @@ export const ShowMore = ({
         <Collapsible.Trigger asChild>
           <Button
             css={{ width: "100%" }}
-            prefix={isOpen ? <TriangleDownIcon /> : <TriangleRightIcon />}
+            prefix={
+              isOpen ? <ChevronFilledDownIcon /> : <ChevronFilledRightIcon />
+            }
           >
             Show more
           </Button>

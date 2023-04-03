@@ -1,11 +1,7 @@
 import * as ToastPrimitive from "@radix-ui/react-toast";
 import toast, { useToaster } from "react-hot-toast/headless";
 import { keyframes, styled } from "../stitches.config";
-import {
-  CheckCircledIcon,
-  CrossCircledIcon,
-  InfoIcon,
-} from "@webstudio-is/icons";
+import { InfoIcon } from "@webstudio-is/icons";
 import { Box } from "./box";
 import { theme } from "../stitches.config";
 
@@ -118,8 +114,6 @@ export const Toaster = () => {
               },
             }}
           >
-            {toast.type === "success" && <CheckCircledIcon />}
-            {toast.type === "error" && <CrossCircledIcon />}
             {toast.type === "blank" && <InfoIcon />}
           </Box>
           <StyledTitle>{toast.message}</StyledTitle>
