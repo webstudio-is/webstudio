@@ -1,13 +1,12 @@
 import { redirect } from "@remix-run/node";
 import type { LoaderArgs, ErrorBoundaryComponent } from "@remix-run/node";
 import { useLoaderData } from "@remix-run/react";
-import { Root, getComponent } from "@webstudio-is/react-sdk";
+import { type Params, Root, getComponent } from "@webstudio-is/react-sdk";
 import env from "~/env/env.public.server";
 import { sentryException } from "~/shared/sentry";
 import { Canvas } from "~/canvas";
 import { ErrorMessage } from "~/shared/error";
 import { getBuildParams, dashboardPath } from "~/shared/router-utils";
-import type { CanvasData } from "@webstudio-is/project";
 
 export const loader = async ({ request }: LoaderArgs) => {
   const buildParams = getBuildParams(request);
@@ -15,7 +14,7 @@ export const loader = async ({ request }: LoaderArgs) => {
     throw redirect(dashboardPath());
   }
 
-  const params: CanvasData["params"] = {};
+  const params: Params = {};
 
   if (env.RESIZE_ORIGIN != null) {
     params.resizeOrigin = env.RESIZE_ORIGIN;
