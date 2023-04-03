@@ -24,6 +24,7 @@ import {
   elementToComponentName,
   useDraggable,
 } from "./use-draggable";
+import { ScrollArea } from "./scroll-area";
 
 const getMetaMaps = () => {
   const metaByComponentName: Map<ComponentName, WsComponentMeta> = new Map();
@@ -83,7 +84,7 @@ export const TabContent = ({ publish, onSetActiveTab }: TabContentProps) => {
         title="Add"
         suffix={<CloseButton onClick={() => onSetActiveTab("none")} />}
       />
-      <div ref={draggableContainerRef}>
+      <ScrollArea>
         {Array.from(componentCategories).map((category) => (
           <CollapsibleSection label={category} key={category} fullWidth>
             <ArrowFocus
@@ -119,7 +120,7 @@ export const TabContent = ({ publish, onSetActiveTab }: TabContentProps) => {
             />
           </CollapsibleSection>
         ))}
-      </div>
+      </ScrollArea>
     </Flex>
   );
 };
