@@ -45,6 +45,7 @@ import { matchSorter } from "match-sorter";
 import { StyleSourceBadge } from "./style-source-badge";
 import { CheckMarkIcon } from "@webstudio-is/icons";
 import { isFeatureEnabled } from "@webstudio-is/feature-flags";
+import { humanizeString } from "~/shared/string-utils";
 
 type IntermediateItem = {
   id: string;
@@ -313,7 +314,7 @@ const renderMenuItems = (props: {
               props.onSelect?.({ styleSourceId: props.itemId, state })
             }
           >
-            {state}
+            {humanizeString(state)}
           </DropdownMenuItem>
         ))}
       </>
