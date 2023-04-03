@@ -5,6 +5,7 @@
 import * as ToolbarPrimitive from "@radix-ui/react-toolbar";
 import { css, styled, theme } from "../stitches.config";
 import { separatorStyle } from "./separator";
+import { typography } from "../__generated__/figma-design-tokens";
 
 export const Toolbar = styled(ToolbarPrimitive.Root, {
   display: "flex",
@@ -12,6 +13,7 @@ export const Toolbar = styled(ToolbarPrimitive.Root, {
   background: theme.colors.backgroundTopbar,
   color: theme.colors.foregroundContrastMain,
   alignItems: "center",
+  gap: theme.spacing[5],
 });
 
 export const ToolbarToggleGroup = styled(ToolbarPrimitive.ToggleGroup, {
@@ -24,8 +26,7 @@ const toolbarItemFocusRing = {
   "&::after": {
     content: '""',
     position: "absolute",
-    width: theme.spacing[12],
-    height: theme.spacing[12],
+    inset: 4,
     outlineWidth: 2,
     outlineStyle: "solid",
     outlineColor: theme.colors.borderFocus,
@@ -33,10 +34,12 @@ const toolbarItemFocusRing = {
   },
 };
 
-export const toggleItemStyle = css({
+export const toggleItemStyle = css(typography.labelsTitleCase, {
   // reset styles
   boxSizing: "border-box",
-  padding: 0,
+  position: "relative",
+  py: 0,
+  px: theme.spacing["5"],
   appearance: "none",
   border: "none",
   outline: "none",
@@ -47,8 +50,8 @@ export const toggleItemStyle = css({
   // prevent shrinking inside flex box
   flexShrink: 0,
   // set size and shape
-  width: theme.spacing["15"],
-  height: theme.spacing["15"],
+  minWidth: theme.spacing["15"],
+  minHeight: theme.spacing["15"],
 
   color: "inherit",
   background: "transparent",

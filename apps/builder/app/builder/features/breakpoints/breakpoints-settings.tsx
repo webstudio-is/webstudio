@@ -10,7 +10,6 @@ import {
   DropdownMenuItem,
   DropdownMenuPortal,
   DropdownMenuSeparator,
-  DropdownMenuTrigger,
   DropdownMenuItemRightSlot,
 } from "@webstudio-is/design-system";
 import { useSubscribe } from "~/shared/pubsub";
@@ -32,7 +31,7 @@ import {
 import { compareMedia } from "@webstudio-is/css-engine";
 import { isFeatureEnabled } from "@webstudio-is/feature-flags";
 
-export const Breakpoints = () => {
+export const BreakpointsSettings = () => {
   const [view, setView] = useState<
     "selector" | "editor" | "confirmation" | undefined
   >();
@@ -93,9 +92,7 @@ export const Breakpoints = () => {
         setView(isOpen ? "selector" : undefined);
       }}
     >
-      <DropdownMenuTrigger asChild>
-        <TriggerButton />
-      </DropdownMenuTrigger>
+      <TriggerButton />
       <DropdownMenuPortal>
         <DropdownMenuContent
           css={{ zIndex: theme.zIndices[1] }}
