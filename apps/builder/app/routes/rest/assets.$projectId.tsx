@@ -40,14 +40,6 @@ export const action = async (
   const context = await createContext(request);
 
   try {
-    /**
-     * To prevent the AssetsProvider from being redrawn every time an action is requested, we use PUT instead of GET
-     * to load assets. The only reason PUT is chosen is that it is idempotent and has not been used before.
-     */
-    if (request.method === "PUT") {
-      return await loader(props);
-    }
-
     if (request.method === "DELETE") {
       const { assetId: ids } = DeleteAssets.parse(await request.formData());
       const deletedAssets = await deleteAssets(
