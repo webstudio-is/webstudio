@@ -33,6 +33,10 @@ export default {
   title: "Library/CSS Value List Item",
 };
 
+const LIST_ITEM_ATTRIBUTE = "data-list-item";
+
+const listItemAttributes = { [LIST_ITEM_ATTRIBUTE]: true };
+
 const Thumbnail = styled("div", {
   width: theme.spacing[10],
   height: theme.spacing[10],
@@ -67,7 +71,6 @@ const ListItem = (props: {
       focused={props.focused}
       active={props.active}
       tabIndex={props.tabIndex ?? 0}
-      data-list-item
       buttons={
         <>
           <SmallToggleButton
@@ -85,6 +88,7 @@ const ListItem = (props: {
           />
         </>
       }
+      {...listItemAttributes}
     />
   );
 };
@@ -99,7 +103,7 @@ const ListItemsFocusWrap = (props: { children: ReactNode }) => {
             if (event.key === "ArrowUp" || event.key === "ArrowDown") {
               handleKeyDown(event, {
                 accept: (element) => {
-                  return element.getAttribute("data-list-item") === "true";
+                  return element.getAttribute(LIST_ITEM_ATTRIBUTE) === "true";
                 },
               });
 
