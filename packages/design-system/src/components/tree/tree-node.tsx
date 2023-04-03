@@ -1,5 +1,8 @@
 import { useCallback, useRef, useEffect, useMemo, useState } from "react";
-import { TriangleRightIcon, TriangleDownIcon } from "@webstudio-is/icons";
+import {
+  ChevronFilledDownIcon,
+  ChevronFilledRightIcon,
+} from "@webstudio-is/icons";
 import { cssVars } from "@webstudio-is/css-vars";
 import { Box } from "../box";
 import * as Collapsible from "@radix-ui/react-collapsible";
@@ -366,7 +369,7 @@ export const TreeItemBody = <Data extends { id: string }>({
           // We don't want this trigger to be focusable
           tabIndex={-1}
         >
-          {isExpanded ? <TriangleDownIcon /> : <TriangleRightIcon />}
+          {isExpanded ? <ChevronFilledDownIcon /> : <ChevronFilledRightIcon />}
         </CollapsibleTrigger>
       )}
 

@@ -73,18 +73,6 @@ export type MediaRuleOptions = {
 };
 
 export class MediaRule {
-  // Sort media rules by minWidth.
-  // Needed to ensure that more specific media rules are inserted after less specific ones.
-  // So that they get a higher specificity.
-  // @todo remove this once we have ability to control order from the UI
-  static sort(mediaRules: Iterable<MediaRule>) {
-    return Array.from(mediaRules).sort((ruleA, ruleB) => {
-      return (
-        (ruleA.options.minWidth ?? -Number.MAX_SAFE_INTEGER) -
-        (ruleB.options.minWidth ?? -Number.MAX_SAFE_INTEGER)
-      );
-    });
-  }
   options: MediaRuleOptions;
   rules: Array<StyleRule | PlaintextRule> = [];
   #mediaType;

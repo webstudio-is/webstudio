@@ -188,7 +188,6 @@ export async function createBuild(
     newInstances = props.sourceBuild.instances;
     newPages = props.sourceBuild.pages;
   }
-
   await client.build.create({
     data: {
       projectId: props.projectId,

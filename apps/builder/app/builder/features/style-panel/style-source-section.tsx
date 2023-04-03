@@ -8,11 +8,7 @@ import {
   type StyleSourceSelections,
   getStyleDeclKey,
 } from "@webstudio-is/project-build";
-import {
-  type ItemSource,
-  type ItemState,
-  StyleSourceInput,
-} from "./style-source";
+import { type ItemSource, StyleSourceInput } from "./style-source";
 import { useStore } from "@nanostores/react";
 import {
   availableStyleSourcesStore,
@@ -247,31 +243,23 @@ const renameStyleSource = (id: StyleSource["id"], label: string) => {
 type StyleSourceInputItem = {
   id: string;
   label: string;
-  isEditable: boolean;
-  state: ItemState;
+  disabled: boolean;
   source: ItemSource;
 };
 
-const convertToInputItem = (
-  styleSource: StyleSource,
-  selectedStyleSource?: StyleSource["id"]
-): StyleSourceInputItem => {
-  const state: ItemState =
-    selectedStyleSource === styleSource.id ? "selected" : "unselected";
+const convertToInputItem = (styleSource: StyleSource): StyleSourceInputItem => {
   if (styleSource.type === "local") {
     return {
       id: styleSource.id,
       label: "Local",
-      isEditable: false,
-      state,
+      disabled: false,
       source: styleSource.type,
     };
   }
   return {
     id: styleSource.id,
     label: styleSource.name,
-    isEditable: true,
-    state,
+    disabled: false,
     source: styleSource.type,
   };
 };
@@ -286,7 +274,7 @@ export const StyleSourcesSection = () => {
     convertToInputItem(styleSource)
   );
   const value = selectedInstanceStyleSources.map((styleSource) =>
-    convertToInputItem(styleSource, selectedStyleSource?.id)
+    convertToInputItem(styleSource)
   );
 
   const [editingItemId, setEditingItemId] = useState<
@@ -302,6 +290,7 @@ export const StyleSourcesSection = () => {
       <StyleSourceInput
         items={items}
         value={value}
+        selectedItemId={selectedStyleSource?.id}
         onCreateItem={createStyleSource}
         onSelectAutocompleteItem={({ id }) => {
           addStyleSourceToInstace(id);

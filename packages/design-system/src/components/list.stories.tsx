@@ -1,5 +1,5 @@
 import type { ComponentStory } from "@storybook/react";
-import { CheckIcon, MenuIcon } from "@webstudio-is/icons";
+import { CheckMarkIcon, MenuIcon } from "@webstudio-is/icons";
 import { useState } from "react";
 import { List, ListItem, useList } from "./list";
 
@@ -13,11 +13,11 @@ export const Declarative: ComponentStory<typeof List> = () => {
       <ListItem>Apple</ListItem>
       <ListItem state="disabled">Banana</ListItem>
       <ListItem state="selected">Orange</ListItem>
-      <ListItem prefix={<CheckIcon />} suffix={<MenuIcon />}>
+      <ListItem prefix={<CheckMarkIcon />} suffix={<MenuIcon />}>
         Strawberry
       </ListItem>
       <ListItem
-        prefix={<CheckIcon />}
+        prefix={<CheckMarkIcon />}
         suffix={<MenuIcon />}
         current
         state="selected"
@@ -47,7 +47,7 @@ export const WithHook: ComponentStory<typeof List> = () => {
           <ListItem
             {...itemProps}
             key={index}
-            prefix={itemProps.current ? <CheckIcon /> : undefined}
+            prefix={itemProps.current ? <CheckMarkIcon /> : undefined}
           >
             {item}
           </ListItem>

@@ -45,7 +45,11 @@ export const StylePanel = ({ selectedInstance, publish }: StylePanelProps) => {
             {`Please increase the canvas width.`}
           </DeprecatedParagraph>
           <DeprecatedParagraph>
-            {`"${breakpoint.label}" breakpoint minimum width is ${breakpoint.minWidth}px.`}
+            {"minWidth" in breakpoint
+              ? `"${breakpoint.label}" breakpoint minimum width is ${breakpoint.minWidth}px.`
+              : "maxWidth" in breakpoint
+              ? `"${breakpoint.label}" breakpoint maximum width is ${breakpoint.maxWidth}px.`
+              : ""}
           </DeprecatedParagraph>
         </Card>
       </Box>
