@@ -2,8 +2,11 @@ import { useCallback } from "react";
 import { useStore } from "@nanostores/react";
 import store from "immerhin";
 import warnOnce from "warn-once";
-import { getStyleDeclKey, type Instance } from "@webstudio-is/project-build";
-import type { StyleUpdates } from "@webstudio-is/project";
+import {
+  type Breakpoint,
+  type Instance,
+  getStyleDeclKey,
+} from "@webstudio-is/project-build";
 import type { StyleProperty, StyleValue } from "@webstudio-is/css-data";
 import type { Publish } from "~/shared/pubsub";
 import {
@@ -16,6 +19,23 @@ import { selectedBreakpointStore } from "~/shared/nano-states/breakpoints";
 // @todo: must be removed, now it's only for compatibility with existing code
 import { parseCssValue } from "./parse-css-value";
 import { useStyleInfo } from "./style-info";
+
+export type StyleUpdate =
+  | {
+      operation: "delete";
+      property: StyleProperty;
+    }
+  | {
+      operation: "set";
+      property: StyleProperty;
+      value: StyleValue;
+    };
+
+export type StyleUpdates = {
+  id: Instance["id"];
+  updates: Array<StyleUpdate>;
+  breakpoint: Breakpoint;
+};
 
 declare module "~/shared/pubsub" {
   export interface PubsubMap {

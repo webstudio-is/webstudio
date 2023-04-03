@@ -18,7 +18,7 @@
     "@types/isomorphic-fetch": "^0.0.36",
     "@webstudio-is/jest-config": "workspace:^",
     "@webstudio-is/prisma-client": "workspace:^",
-    "@webstudio-is/project": "workspace:^",
+    "@webstudio-is/react-sdk": "workspace:^",
     "@webstudio-is/scripts": "workspace:^",
     "@webstudio-is/tsconfig": "workspace:^",
     "jest": "^29.3.1",
