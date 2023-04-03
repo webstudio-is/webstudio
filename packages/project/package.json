@@ -39,7 +39,7 @@
       "require": "./lib/cjs/index.cjs"
     },
     "./server": {
-      "source": "./src/server.ts",
+      "source": "./src/index.server.ts",
       "default": "./server.js"
     }
   },
