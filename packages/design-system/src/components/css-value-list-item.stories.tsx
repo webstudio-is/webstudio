@@ -106,8 +106,6 @@ const ListItemsFocusWrap = (props: { children: ReactNode }) => {
                   return element.getAttribute(LIST_ITEM_ATTRIBUTE) === "true";
                 },
               });
-
-              event.preventDefault(); // Prevents the page from scrolling
             }
           }}
         >
