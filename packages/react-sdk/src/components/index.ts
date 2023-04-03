@@ -1,6 +1,8 @@
 import { PropMeta } from "@webstudio-is/generate-arg-types";
-import type { WsComponentMeta, WsComponentPropsMeta } from "./component-type";
+import type { WsComponentMeta, WsComponentPropsMeta } from "./component-meta";
 import type { ComponentName } from "./components-utils";
+import { meta as SlotMeta } from "./slot.ws";
+import { meta as FragmentMeta } from "./fragment.ws";
 import { meta as BodyMeta } from "./body.ws";
 import { meta as BoxMeta } from "./box.ws";
 import { meta as TextBlockMeta } from "./text-block.ws";
@@ -25,6 +27,8 @@ import { meta as SeparatorMeta } from "./separator.ws";
 import { meta as CodeMeta } from "./code.ws";
 
 // these are huge JSON objects that we want to be tree-shaken when not used!
+import { propsMeta as SlotMetaPropsMeta } from "./slot.ws";
+import { propsMeta as FragmentMetaPropsMeta } from "./fragment.ws";
 import { propsMeta as BodyMetaPropsMeta } from "./body.ws";
 import { propsMeta as BoxMetaPropsMeta } from "./box.ws";
 import { propsMeta as TextBlockMetaPropsMeta } from "./text-block.ws";
@@ -48,7 +52,10 @@ import { propsMeta as ListItemPropsMeta } from "./list-item.ws";
 import { propsMeta as SeparatorPropsMeta } from "./separator.ws";
 import { propsMeta as CodePropsMeta } from "./code.ws";
 
+// @todo this list should not be hardcoded!
 const defaultMetas: Record<string, WsComponentMeta> = {
+  Slot: SlotMeta,
+  Fragment: FragmentMeta,
   Box: BoxMeta,
   Body: BodyMeta,
   TextBlock: TextBlockMeta,
@@ -89,7 +96,10 @@ export const registerComponentMetas = (
   currentMetas = result;
 };
 
+// @todo this list should not be hardcoded!
 const defaultPropsMetasRaw = {
+  Slot: SlotMetaPropsMeta,
+  Fragment: FragmentMetaPropsMeta,
   Box: BoxMetaPropsMeta,
   Body: BodyMetaPropsMeta,
   TextBlock: TextBlockMetaPropsMeta,

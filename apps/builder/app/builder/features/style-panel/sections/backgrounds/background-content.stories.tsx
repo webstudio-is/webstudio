@@ -5,7 +5,7 @@ import {
   FloatingPanelProvider,
 } from "~/builder/shared/floating-panel";
 import { useRef, useState } from "react";
-import type { StyleValue } from "@webstudio-is/css-data";
+import type { SetProperty } from "../../shared/use-style-data";
 
 const defaultCurrentStyle = getLayerBackgroundStyleInfo(0, {
   backgroundImage: {
@@ -24,15 +24,20 @@ export const BackgroundContentStory = () => {
 
   const [currentStyle, setCurrentStyle] = useState(defaultCurrentStyle);
 
-  const setProperty = (propertyName: string) => (style: StyleValue) => {
-    setCurrentStyle({
-      ...currentStyle,
-      [propertyName]: {
-        value: style,
-        local: style,
-      },
-    });
-  };
+  const setProperty: SetProperty =
+    (propertyName: string) => (style, options) => {
+      if (options?.isEphemeral) {
+        return;
+      }
+
+      setCurrentStyle({
+        ...currentStyle,
+        [propertyName]: {
+          value: style,
+          local: style,
+        },
+      });
+    };
 
   return (
     <>
@@ -47,6 +52,9 @@ export const BackgroundContentStory = () => {
               currentStyle={currentStyle}
               deleteProperty={deleteProperty}
               setProperty={setProperty}
+              setBackgroundColor={(color) => {
+                setProperty("backgroundColor")(color);
+              }}
             />
           }
         >

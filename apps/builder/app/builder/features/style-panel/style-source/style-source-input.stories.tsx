@@ -1,7 +1,7 @@
 import { nanoid } from "nanoid";
 import type { ComponentStory } from "@storybook/react";
 import { useState } from "react";
-import { StyleSourceInput, type ItemState, type ItemSource } from ".";
+import { StyleSourceInput, type ItemSource } from ".";
 
 export default {
   component: StyleSourceInput,
@@ -11,16 +11,14 @@ type Item = {
   id: string;
   label: string;
   source: ItemSource;
-  isEditable: boolean;
-  state: ItemState;
+  disabled: boolean;
 };
 
 const localItem: Item = {
   id: nanoid(),
   label: "Local",
   source: "local",
-  isEditable: false,
-  state: "selected",
+  disabled: false,
 };
 
 const getItems = (): Array<Item> => [
@@ -28,22 +26,13 @@ const getItems = (): Array<Item> => [
     id: nanoid(),
     label: "Token",
     source: "token",
-    isEditable: true,
-    state: "unselected",
+    disabled: false,
   },
   {
     id: nanoid(),
     label: "Tag",
     source: "tag",
-    isEditable: true,
-    state: "unselected",
-  },
-  {
-    id: nanoid(),
-    label: "State",
-    source: "state",
-    isEditable: true,
-    state: "unselected",
+    disabled: false,
   },
 ];
 
@@ -56,30 +45,17 @@ const createItem = (
     id: nanoid(),
     label,
     source: "token",
-    isEditable: true,
-    state: "selected",
+    disabled: false,
   };
-  const nextValue = value.map((item) => {
-    if (item.state === "selected") {
-      return {
-        ...item,
-        state: "unselected" as const,
-      };
-    }
-    return item;
-  });
-  setValue([...nextValue, item]);
+  setValue([...value, item]);
 };
 
 const removeItem = (
-  itemToRemove: Item,
+  itemIdToRemove: Item["id"],
   value: Array<Item>,
   setValue: (value: Array<Item>) => void
 ) => {
-  if (itemToRemove.source === "local") {
-    return;
-  }
-  setValue(value.filter((item) => item.id !== itemToRemove.id));
+  setValue(value.filter((item) => item.id !== itemIdToRemove));
 };
 
 export const Basic: ComponentStory<typeof StyleSourceInput> = () => {
@@ -89,14 +65,15 @@ export const Basic: ComponentStory<typeof StyleSourceInput> = () => {
       css={{ width: 300 }}
       items={getItems()}
       value={value}
+      selectedItemId={localItem.id}
       onCreateItem={(label) => {
         createItem(label, value, setValue);
       }}
       onSelectAutocompleteItem={(item) => {
         setValue([...value, item]);
       }}
-      onRemoveItem={(itemToRemove) => {
-        removeItem(itemToRemove, value, setValue);
+      onRemoveItem={(itemId) => {
+        removeItem(itemId, value, setValue);
       }}
       onSort={setValue}
     />
@@ -112,8 +89,7 @@ export const WithTruncatedItem: ComponentStory<
       label:
         "Local Something Something Something Something Something Something Something Something Something Something Something",
       source: "local",
-      isEditable: true,
-      state: "selected",
+      disabled: false,
     },
   ]);
   return (
@@ -121,6 +97,7 @@ export const WithTruncatedItem: ComponentStory<
       css={{ width: 300 }}
       items={getItems()}
       value={value}
+      selectedItemId={value[0].id}
       onCreateItem={(label) => {
         createItem(label, value, setValue);
       }}
@@ -143,11 +120,12 @@ export const Complete: ComponentStory<typeof StyleSourceInput> = () => {
       id: nanoid(),
       label: "Disabled",
       source: "token",
-
-      isEditable: true,
-      state: "disabled",
+      disabled: true,
     },
   ]);
+  const [selectedItemId, setSelectedItemId] = useState<undefined | Item["id"]>(
+    localItem.id
+  );
   const [editingItemId, setEditingItemId] = useState<undefined | Item["id"]>();
 
   return (
@@ -155,19 +133,10 @@ export const Complete: ComponentStory<typeof StyleSourceInput> = () => {
       css={{ width: 300 }}
       items={getItems()}
       value={value}
+      selectedItemId={selectedItemId}
       editingItemId={editingItemId}
       onSelectItem={(itemToSelect) => {
-        setValue(
-          value.map((item) => {
-            if (item.id === itemToSelect?.id) {
-              return { ...item, state: "selected" };
-            }
-            if (item.state === "selected") {
-              return { ...item, state: "unselected" };
-            }
-            return item;
-          })
-        );
+        setSelectedItemId(itemToSelect?.id);
       }}
       onEditItem={setEditingItemId}
       onCreateItem={(label) => {
@@ -189,21 +158,21 @@ export const Complete: ComponentStory<typeof StyleSourceInput> = () => {
           })
         );
       }}
-      onDisableItem={(itemToDisable) => {
+      onDisableItem={(itemIdToDisable) => {
         setValue(
           value.map((item) => {
-            if (item.id === itemToDisable.id) {
-              return { ...item, state: "disabled" };
+            if (item.id === itemIdToDisable) {
+              return { ...item, disabled: true };
             }
             return item;
           })
         );
       }}
-      onEnableItem={(itemToEnable) => {
+      onEnableItem={(itemIdToEnable) => {
         setValue(
           value.map((item) => {
-            if (item.id === itemToEnable.id) {
-              return { ...item, state: "unselected" };
+            if (item.id === itemIdToEnable) {
+              return { ...item, disabled: false };
             }
             return item;
           })

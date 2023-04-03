@@ -6,6 +6,7 @@ import {
   TreeItemBody,
   TreeNode,
   type TreeItemRenderProps,
+  type ItemSelector,
   styled,
   Flex,
   Tooltip,
@@ -21,7 +22,6 @@ import {
 } from "@webstudio-is/icons";
 import type { Page, Pages } from "@webstudio-is/project-build";
 import type { Publish } from "~/shared/pubsub";
-import { useProject } from "~/builder/shared/nano-states";
 import type { TabName } from "../../types";
 import { CloseButton, Header } from "../../header";
 import { SettingsPanel } from "./settings-panel";
@@ -57,18 +57,6 @@ const toTreeData = (pages: Pages): PagesTreeNode => {
       data,
     })),
   };
-};
-
-const staticTreeProps = {
-  getItemChildren(node: PagesTreeNode) {
-    if (node.type === "folder") {
-      return node.children;
-    }
-    return [];
-  },
-  getIsExpanded(_node: PagesTreeNode) {
-    return true;
-  },
 };
 
 const MenuButton = styled(DeprecatedIconButton, {
@@ -162,7 +150,7 @@ const PagesPanel = ({
           suffix={
             onEdit && (
               <ItemSuffix
-                isParentSelected={props.selectedItemId === props.itemData.id}
+                isParentSelected={props.parentIsSelected ?? false}
                 itemId={props.itemData.id}
                 editingItemId={editingPageId}
                 onEdit={onEdit}
@@ -181,20 +169,26 @@ const PagesPanel = ({
     [editingPageId, onEdit]
   );
 
+  const selectTreeNode = useCallback(
+    ([pageId]: ItemSelector) => onSelect(pageId),
+    [onSelect]
+  );
+
   if (pagesTree === undefined) {
     return null;
   }
 
   return (
-    <Box
+    <Flex
       css={{
         position: "relative",
         height: "100%",
         // z-index needed for page settings animation
         zIndex: 1,
         flexGrow: 1,
-        background: theme.colors.loContrast,
+        background: theme.colors.backgroundPanel,
       }}
+      direction="column"
     >
       <Header
         title="Pages"
@@ -214,27 +208,34 @@ const PagesPanel = ({
           </>
         }
       />
-      <TreeNode
-        hideRoot
-        selectedItemId={selectedPageId}
-        onSelect={onSelect}
-        itemData={pagesTree}
-        renderItem={renderItem}
-        {...staticTreeProps}
-      />
-    </Box>
+      <Box css={{ overflowY: "auto", flexBasis: 0, flexGrow: 1 }}>
+        <TreeNode<PagesTreeNode>
+          selectedItemSelector={[selectedPageId, pagesTree.id]}
+          onSelect={selectTreeNode}
+          itemData={pagesTree}
+          renderItem={renderItem}
+          getItemChildren={(nodeId) => {
+            if (nodeId === pagesTree.id && pagesTree.type === "folder") {
+              return pagesTree.children;
+            }
+            return [];
+          }}
+          isItemHidden={(itemId) => itemId === pagesTree.id}
+          getIsExpanded={() => true}
+        />
+      </Box>
+    </Flex>
   );
 };
 
 export const TabContent = (props: TabContentProps) => {
   const currentPageId = useStore(selectedPageIdStore);
-  const [project] = useProject();
   const switchPage = useSwitchPage();
 
   const newPageId = "new-page";
   const [editingPageId, setEditingPageId] = useState<string>();
 
-  if (currentPageId === undefined || project === undefined) {
+  if (currentPageId === undefined) {
     return null;
   }
 
@@ -272,7 +273,6 @@ export const TabContent = (props: TabContentProps) => {
               }
             }}
             pageId={editingPageId}
-            projectId={project.id}
             key={editingPageId}
           />
         )}

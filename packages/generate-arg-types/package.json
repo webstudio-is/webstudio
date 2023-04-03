@@ -1,6 +1,6 @@
 {
   "name": "@webstudio-is/generate-arg-types",
-  "version": "0.48.0",
+  "version": "0.51.0",
   "description": "Generate components property types",
   "author": "Webstudio <github@webstudio.is>",
   "homepage": "https://webstudio.is",
@@ -20,10 +20,10 @@
     "zod": "^3.19.1"
   },
   "devDependencies": {
-    "@webstudio-is/tsconfig": "workspace:^",
     "@webstudio-is/scripts": "workspace:^",
-    "esbuild": "^0.14.25",
-    "typescript": "4.9.5"
+    "@webstudio-is/tsconfig": "workspace:^",
+    "tsx": "^3.12.6",
+    "typescript": "5.0.3"
   },
   "files": [
     "lib/*",

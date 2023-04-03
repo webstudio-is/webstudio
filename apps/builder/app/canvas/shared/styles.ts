@@ -107,7 +107,6 @@ const subscribePreviewMode = () => {
 export const useManageDesignModeStyles = () => {
   useUpdateStyle();
   usePreviewStyle();
-  useRemoveSsrStyles();
   useEffect(subscribePreviewMode, []);
 };
 
@@ -133,12 +132,14 @@ export const GlobalStyles = () => {
       const meta = getComponentMeta(component);
       const presetStyle = meta?.presetStyle;
       if (presetStyle !== undefined) {
-        presetStylesEngine.addStyleRule(
-          `[${componentAttribute}=${component}]`,
-          {
-            style: presetStyle,
-          }
-        );
+        for (const [tag, style] of Object.entries(presetStyle)) {
+          presetStylesEngine.addStyleRule(
+            `${tag}:where([${componentAttribute}=${component}])`,
+            {
+              style,
+            }
+          );
+        }
       }
     }
     presetStylesEngine.render();
@@ -258,7 +259,7 @@ const setCssVar = (id: string, property: string, value?: StyleValue) => {
     document.body.style.removeProperty(customProperty);
     return;
   }
-  document.body.style.setProperty(customProperty, toValue(value));
+  document.body.style.setProperty(customProperty, toValue(value, undefined));
 };
 
 const useUpdateStyle = () => {
@@ -306,13 +307,4 @@ const usePreviewStyle = () => {
 
     cssEngine.render();
   });
-};
-
-// Once we rendered the tree in editing mode, we have rendered all styles in a <style> tag.
-// We keep the SSR styles just for the page on canvas to show up like it does in preview.
-const useRemoveSsrStyles = () => {
-  useEffect(() => {
-    const link = document.head.querySelector('[data-webstudio="ssr"]');
-    link?.parentElement?.removeChild(link);
-  }, []);
 };

@@ -12,7 +12,7 @@ import {
 } from "~/builder/shared/assets";
 import { useEffect, useMemo, useState } from "react";
 import { useMenu } from "./item-menu";
-import { CheckIcon } from "@webstudio-is/icons";
+import { CheckMarkIcon } from "@webstudio-is/icons";
 import {
   type Item,
   filterIdsByFamily,
@@ -140,7 +140,7 @@ export const FontsManager = ({ value, onChange }: FontsManagerProps) => {
     return (
       <ListItem
         {...itemProps}
-        prefix={itemProps.current ? <CheckIcon /> : undefined}
+        prefix={itemProps.current ? <CheckMarkIcon /> : undefined}
         suffix={item.type === "uploaded" ? renderMenu(index) : undefined}
       >
         {item.label}

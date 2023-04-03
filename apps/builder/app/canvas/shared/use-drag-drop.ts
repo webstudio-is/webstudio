@@ -1,35 +1,31 @@
 import { useLayoutEffect, useRef } from "react";
-import { useStore } from "@nanostores/react";
+import type { Instance } from "@webstudio-is/project-build";
 import {
-  type DropTarget,
   type Point,
+  type Placement,
+  type ItemDropTarget,
   useAutoScroll,
   useDrag,
   useDrop,
+  computeIndicatorPlacement,
 } from "@webstudio-is/design-system";
-import {
-  type Instance,
-  type BaseInstance,
-  toBaseInstance,
-} from "@webstudio-is/project-build";
 import { getComponentMeta } from "@webstudio-is/react-sdk";
-import {
-  instancesIndexStore,
-  useRootInstance,
-  useTextEditingInstanceId,
-} from "~/shared/nano-states";
+import { instancesStore, selectedPageStore } from "~/shared/nano-states";
+import { textEditingInstanceSelectorStore } from "~/shared/nano-states/instances";
 import { publish, useSubscribe } from "~/shared/pubsub";
 import {
   insertNewComponentInstance,
   reparentInstance,
 } from "~/shared/instance-utils";
 import {
-  getInstanceElementById,
+  getElementByInstanceSelector,
   getInstanceIdFromElement,
+  getInstanceSelectorFromElement,
 } from "~/shared/dom-utils";
 import {
-  findClosestRichTextInstance,
-  getInstanceAncestorsAndSelf,
+  type InstanceSelector,
+  getAncestorInstanceSelector,
+  areInstanceSelectorsEqual,
 } from "~/shared/tree-utils";
 
 declare module "~/shared/pubsub" {
@@ -37,206 +33,216 @@ declare module "~/shared/pubsub" {
     dragEnd: DragEndPayload;
     dragMove: DragMovePayload;
     dragStart: DragStartPayload;
-    dropTargetChange: DropTargetChangePayload;
+    dropTargetChange: ItemDropTarget;
+    placementIndicatorChange: Placement;
   }
 }
 
-export type DropTargetChangePayload = {
-  rect: DropTarget<null>["rect"];
-  placement: DropTarget<null>["placement"];
-  position: number;
-  instance: BaseInstance;
-};
+type Origin = "canvas" | "panel";
 
-export type DragStartPayload = {
-  origin: "panel" | "canvas";
-  dragItem: BaseInstance;
-};
+export type DragStartPayload =
+  | { origin: Origin; type: "insert"; dragComponent: Instance["component"] }
+  | {
+      origin: Origin;
+      type: "reparent";
+      dragInstanceSelector: InstanceSelector;
+    };
 
 export type DragEndPayload = {
-  origin: "panel" | "canvas";
   isCanceled: boolean;
 };
 
 export type DragMovePayload = { canvasCoordinates: Point };
 
+const findClosestRichTextInstanceSelector = (
+  instanceSelector: InstanceSelector
+) => {
+  const instances = instancesStore.get();
+  for (const instanceId of instanceSelector) {
+    const instance = instances.get(instanceId);
+    if (
+      instance !== undefined &&
+      getComponentMeta(instance.component)?.type === "rich-text"
+    ) {
+      return getAncestorInstanceSelector(instanceSelector, instanceId);
+    }
+  }
+  return;
+};
+
+const findClosestDroppableInstanceSelector = (
+  instanceSelector: InstanceSelector
+) => {
+  const instances = instancesStore.get();
+  for (const instanceId of instanceSelector) {
+    const instance = instances.get(instanceId);
+    if (instance !== undefined) {
+      const meta = getComponentMeta(instance.component);
+      if (meta?.type === "container") {
+        return getAncestorInstanceSelector(instanceSelector, instanceId);
+      }
+    }
+  }
+  return;
+};
+
 const initialState: {
-  dropTarget: DropTarget<Instance> | undefined;
-  dragItem: BaseInstance | undefined;
+  dropTarget: ItemDropTarget | undefined;
+  dragPayload: DragStartPayload | undefined;
 } = {
   dropTarget: undefined,
-  dragItem: undefined,
+  dragPayload: undefined,
+};
+
+const sharedDropOptions = {
+  getValidChildren: (parent: Element) => {
+    return Array.from(parent.children).filter(
+      (child) => getInstanceIdFromElement(child) !== undefined
+    );
+  },
+};
+
+const getDefaultDropTarget = () => {
+  const selectedPage = selectedPageStore.get();
+  if (selectedPage === undefined) {
+    throw new Error("Could not find selected page");
+  }
+  const rootInstanceSelector = [selectedPage.rootInstanceId];
+  const element = getElementByInstanceSelector(rootInstanceSelector);
+  // Should never happen
+  if (element === undefined) {
+    throw new Error("Could not find root instance element");
+  }
+  return { element, data: rootInstanceSelector };
 };
 
 export const useDragAndDrop = () => {
-  const [rootInstance] = useRootInstance();
-  const instancesIndex = useStore(instancesIndexStore);
-  const { instancesById } = instancesIndex;
-  const [textEditingInstanceId] = useTextEditingInstanceId();
-
   const state = useRef({ ...initialState });
 
   const autoScrollHandlers = useAutoScroll({ fullscreen: true });
 
-  const getDefaultDropTarget = () => {
-    const element = rootInstance && getInstanceElementById(rootInstance.id);
+  const dropHandlers = useDrop<InstanceSelector>({
+    ...sharedDropOptions,
 
-    // Should never happen
-    if (!element || !rootInstance) {
-      throw new Error("Could not find root instance element");
-    }
-
-    return { element, data: rootInstance };
-  };
-
-  const dropHandlers = useDrop<Instance>({
     elementToData(element) {
-      const instanceId = getInstanceIdFromElement(element);
-      const instance =
-        instanceId === undefined ? undefined : instancesById.get(instanceId);
-
-      return instance || false;
+      const instanceSelector = getInstanceSelectorFromElement(element);
+      if (instanceSelector === undefined) {
+        return false;
+      }
+      return instanceSelector;
     },
 
     // This must be fast, it can be called multiple times per pointer move
     swapDropTarget(dropTarget) {
-      const { dragItem } = state.current;
+      const { dragPayload } = state.current;
 
-      if (!dropTarget || dragItem === undefined || rootInstance === undefined) {
+      if (dropTarget === undefined || dragPayload === undefined) {
         return getDefaultDropTarget();
       }
 
-      if (dropTarget.data.id === rootInstance.id) {
+      const dropInstanceSelector = dropTarget.data;
+      if (dropInstanceSelector.length === 1) {
         return dropTarget;
       }
 
-      const path = getInstanceAncestorsAndSelf(
-        instancesIndex,
-        dropTarget.data.id
-      );
-      path.reverse();
-
+      const newDropInstanceSelector = dropInstanceSelector.slice();
       if (dropTarget.area !== "center") {
-        path.shift();
+        newDropInstanceSelector.shift();
       }
 
       // Don't allow to drop inside drag item or any of its children
-      const dragItemIndex = path.findIndex(
-        (instance) => instance.id === dragItem.id
-      );
-      if (dragItemIndex !== -1) {
-        path.splice(0, dragItemIndex + 1);
+      if (dragPayload.type === "reparent") {
+        const [dragInstanceId] = dragPayload.dragInstanceSelector;
+        const dragInstanceIndex =
+          newDropInstanceSelector.indexOf(dragInstanceId);
+        if (dragInstanceIndex !== -1) {
+          newDropInstanceSelector.splice(0, dragInstanceIndex + 1);
+        }
       }
 
-      const data = path.find((instance) => {
-        const meta = getComponentMeta(instance.component);
-        return meta?.type === "body" || meta?.type === "container";
-      });
-
-      if (data === undefined) {
+      const droppableInstanceSelector = findClosestDroppableInstanceSelector(
+        newDropInstanceSelector
+      );
+      if (droppableInstanceSelector === undefined) {
         return getDefaultDropTarget();
       }
 
-      if (data.id === dropTarget.data.id) {
+      if (
+        areInstanceSelectorsEqual(
+          dropInstanceSelector,
+          droppableInstanceSelector
+        )
+      ) {
         return dropTarget;
       }
 
-      const element = getInstanceElementById(data.id);
-
-      if (element === null) {
+      const element = getElementByInstanceSelector(droppableInstanceSelector);
+      if (element === undefined) {
         return getDefaultDropTarget();
       }
 
-      return { data, element };
+      return { data: droppableInstanceSelector, element };
     },
 
     onDropTargetChange(dropTarget) {
-      state.current.dropTarget = dropTarget;
       publish({
         type: "dropTargetChange",
         payload: {
-          rect: dropTarget.rect,
           placement: dropTarget.placement,
-          position: dropTarget.indexWithinChildren,
-          instance: toBaseInstance(dropTarget.data),
+          indexWithinChildren: dropTarget.indexWithinChildren,
+          itemSelector: dropTarget.data,
         },
       });
     },
-
-    getValidChildren: (parent) => {
-      return Array.from(parent.children).filter(
-        (child) => getInstanceIdFromElement(child) !== undefined
-      );
-    },
   });
 
-  const dragHandlers = useDrag<Instance>({
+  const dragHandlers = useDrag<InstanceSelector>({
     elementToData(element) {
-      if (rootInstance === undefined) {
+      const instanceSelector = getInstanceSelectorFromElement(element);
+      if (instanceSelector === undefined) {
         return false;
       }
-
-      const instanceId = getInstanceIdFromElement(element);
-      const instance =
-        instanceId === undefined ? undefined : instancesById.get(instanceId);
-
-      if (instance === undefined) {
+      // cannot drag root
+      if (instanceSelector.length === 1) {
         return false;
       }
-
-      // We can't drag if we are editing text
-      if (instance.id === textEditingInstanceId) {
+      // cannot drag while editing text
+      if (
+        areInstanceSelectorsEqual(
+          instanceSelector,
+          textEditingInstanceSelectorStore.get()
+        )
+      ) {
         return false;
       }
-
-      // Cannot drag root
-      if (instance.id === rootInstance.id) {
-        return false;
-      }
-
       // When trying to drag an instance inside editor, drag the editor instead
       return (
-        findClosestRichTextInstance(instancesIndexStore.get(), instance.id) ??
-        instance
+        findClosestRichTextInstanceSelector(instanceSelector) ??
+        instanceSelector
       );
     },
-    onStart({ data: instance }) {
-      state.current.dragItem = instance;
 
-      autoScrollHandlers.setEnabled(true);
-      dropHandlers.handleStart();
-
+    onStart({ data: dragInstanceSelector }) {
       publish({
         type: "dragStart",
         payload: {
+          type: "reparent",
           origin: "canvas",
-          dragItem: toBaseInstance(instance),
+          dragInstanceSelector,
         },
       });
     },
     onMove: (point) => {
-      dropHandlers.handleMove(point);
-      autoScrollHandlers.handleMove(point);
+      publish({
+        type: "dragMove",
+        payload: { canvasCoordinates: point },
+      });
     },
     onEnd({ isCanceled }) {
-      dropHandlers.handleEnd({ isCanceled });
-      autoScrollHandlers.setEnabled(false);
-
       publish({
         type: "dragEnd",
-        payload: { origin: "canvas", isCanceled },
+        payload: { isCanceled },
       });
-
-      const { dropTarget, dragItem } = state.current;
-
-      if (dropTarget && dragItem && isCanceled === false) {
-        reparentInstance(dragItem.id, {
-          parentId: dropTarget.data.id,
-          position: dropTarget.indexWithinChildren,
-        });
-      }
-
-      state.current = { ...initialState };
     },
   });
 
@@ -263,12 +269,10 @@ export const useDragAndDrop = () => {
   // Handle drag from the panel
   // ================================================================
 
-  useSubscribe("dragStart", ({ origin, dragItem }) => {
-    if (origin === "panel") {
-      state.current.dragItem = dragItem;
-      autoScrollHandlers.setEnabled(true);
-      dropHandlers.handleStart();
-    }
+  useSubscribe("dragStart", (dragPayload) => {
+    state.current.dragPayload = dragPayload;
+    autoScrollHandlers.setEnabled(true);
+    dropHandlers.handleStart();
   });
 
   useSubscribe("dragMove", ({ canvasCoordinates }) => {
@@ -276,21 +280,42 @@ export const useDragAndDrop = () => {
     autoScrollHandlers.handleMove(canvasCoordinates);
   });
 
-  useSubscribe("dragEnd", ({ origin, isCanceled }) => {
-    if (origin === "panel") {
-      dropHandlers.handleEnd({ isCanceled });
-      autoScrollHandlers.setEnabled(false);
+  useSubscribe("dropTargetChange", (dropTarget) => {
+    state.current.dropTarget = dropTarget;
+    const element = getElementByInstanceSelector(dropTarget.itemSelector);
+    if (element === undefined) {
+      return;
+    }
+    publish({
+      type: "placementIndicatorChange",
+      payload: computeIndicatorPlacement({
+        ...sharedDropOptions,
+        element,
+        placement: dropTarget.placement,
+      }),
+    });
+  });
 
-      const { dropTarget, dragItem } = state.current;
+  useSubscribe("dragEnd", ({ isCanceled }) => {
+    dropHandlers.handleEnd({ isCanceled });
+    autoScrollHandlers.setEnabled(false);
+    const { dropTarget, dragPayload } = state.current;
 
-      if (dropTarget && dragItem && isCanceled === false) {
-        insertNewComponentInstance(dragItem.component, {
-          parentId: dropTarget.data.id,
+    if (dropTarget && dragPayload && isCanceled === false) {
+      if (dragPayload.type === "insert") {
+        insertNewComponentInstance(dragPayload.dragComponent, {
+          parentSelector: dropTarget.itemSelector,
           position: dropTarget.indexWithinChildren,
         });
       }
-
-      state.current = { ...initialState };
+      if (dragPayload.type === "reparent") {
+        reparentInstance(dragPayload.dragInstanceSelector, {
+          parentSelector: dropTarget.itemSelector,
+          position: dropTarget.indexWithinChildren,
+        });
+      }
     }
+
+    state.current = { ...initialState };
   });
 };

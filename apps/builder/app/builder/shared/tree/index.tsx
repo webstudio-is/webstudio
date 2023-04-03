@@ -4,47 +4,18 @@ import {
   Tree,
   TreeItemLabel,
   TreeItemBody,
-  TreeNode,
-  type TreeNodeProps,
   type TreeProps,
   type TreeItemRenderProps,
 } from "@webstudio-is/design-system";
-import type { Instance } from "@webstudio-is/project-build";
+import type { Instance, InstancesItem } from "@webstudio-is/project-build";
 import {
   getComponentMeta,
   type WsComponentMeta,
 } from "@webstudio-is/react-sdk";
-import { instancesIndexStore } from "~/shared/nano-states";
-import { getInstanceAncestorsAndSelf } from "~/shared/tree-utils";
+import { instancesStore } from "~/shared/nano-states";
 
 const instanceRelatedProps = {
-  canLeaveParent(item: Instance) {
-    const meta = getComponentMeta(item.component);
-    return meta?.type !== "rich-text-child";
-  },
-  canAcceptChild(item: Instance) {
-    const meta = getComponentMeta(item.component);
-    return meta?.type === "body" || meta?.type === "container";
-  },
-  getItemChildren(item: Instance) {
-    const meta = getComponentMeta(item.component);
-
-    // We want to avoid calling .filter() unnecessarily, because this is a hot path for performance.
-    // We rely on the fact that only rich-text or rich-text-child components may have `string` children.
-    if (
-      meta?.type === "body" ||
-      meta?.type === "container" ||
-      meta?.type === "control" ||
-      meta?.type === "embed"
-    ) {
-      return item.children as Instance[];
-    }
-
-    return item.children.filter(
-      (child): child is Instance => child.type === "instance"
-    );
-  },
-  renderItem(props: TreeItemRenderProps<Instance>) {
+  renderItem(props: TreeItemRenderProps<InstancesItem>) {
     const meta = getComponentMeta(props.itemData.component);
     if (meta === undefined) {
       return <></>;
@@ -61,46 +32,72 @@ const instanceRelatedProps = {
 
 export const InstanceTree = (
   props: Omit<
-    TreeProps<Instance>,
-    keyof typeof instanceRelatedProps | "findItemById" | "getItemPath"
+    TreeProps<InstancesItem>,
+    | keyof typeof instanceRelatedProps
+    | "canLeaveParent"
+    | "canAcceptChild"
+    | "getItemChildren"
   >
 ) => {
-  const instancesIndex = useStore(instancesIndexStore);
-  const { instancesById } = instancesIndex;
+  const instances = useStore(instancesStore);
 
-  const findItemById = useCallback(
-    (_rootInstance: Instance, instanceId: Instance["id"]) => {
-      return instancesById.get(instanceId);
+  const canLeaveParent = useCallback(
+    (instanceId: Instance["id"]) => {
+      const instance = instances.get(instanceId);
+      if (instance === undefined) {
+        return false;
+      }
+      const meta = getComponentMeta(instance.component);
+      return meta?.type !== "rich-text-child";
     },
-    [instancesById]
+    [instances]
   );
 
-  const getItemPath = useCallback(
-    (_rootInstance: Instance, instanceId: Instance["id"]) => {
-      return getInstanceAncestorsAndSelf(instancesIndex, instanceId);
+  const canAcceptChild = useCallback(
+    (instanceId: Instance["id"]) => {
+      const instance = instances.get(instanceId);
+      if (instance === undefined) {
+        return false;
+      }
+      const meta = getComponentMeta(instance.component);
+      return meta?.type === "container";
     },
-    [instancesIndex]
+    [instances]
+  );
+
+  const getItemChildren = useCallback(
+    (instanceId: Instance["id"]) => {
+      const instance = instances.get(instanceId);
+      const children: InstancesItem[] = [];
+      if (instance === undefined) {
+        return children;
+      }
+
+      for (const child of instance.children) {
+        if (child.type !== "id") {
+          continue;
+        }
+        const childInstance = instances.get(child.value);
+        if (childInstance === undefined) {
+          continue;
+        }
+        children.push(childInstance);
+      }
+      return children;
+    },
+    [instances]
   );
 
   return (
     <Tree
       {...props}
       {...instanceRelatedProps}
-      findItemById={findItemById}
-      getItemPath={getItemPath}
+      canLeaveParent={canLeaveParent}
+      canAcceptChild={canAcceptChild}
+      getItemChildren={getItemChildren}
     />
   );
 };
-
-export const InstanceTreeNode = (
-  props: Omit<TreeNodeProps<Instance>, "getItemChildren" | "renderItem">
-) => (
-  <TreeNode
-    {...props}
-    getItemChildren={instanceRelatedProps.getItemChildren}
-    renderItem={instanceRelatedProps.renderItem}
-  />
-);
 
 export const getInstanceLabel = (
   instance: { label?: string },

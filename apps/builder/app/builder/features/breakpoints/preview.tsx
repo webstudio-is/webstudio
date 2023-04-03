@@ -28,7 +28,11 @@ export const Preview = ({ breakpoint }: PreviewProps) => {
       <DeprecatedParagraph color="hint">
         {breakpoint === undefined
           ? "No breakpoint selected"
-          : `@media (min-width: ${breakpoint.minWidth}px)`}
+          : "minWidth" in breakpoint
+          ? `@media (min-width: ${breakpoint.minWidth}px)`
+          : "maxWidth" in breakpoint
+          ? `@media (max-width: ${breakpoint.maxWidth}px)`
+          : "@media all"}
       </DeprecatedParagraph>
     </Flex>
   );

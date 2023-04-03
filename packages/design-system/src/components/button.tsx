@@ -19,6 +19,7 @@ const colors = [
   "neutral",
   "ghost",
   "dark",
+  "gradient",
 ] as const;
 
 type ButtonColor = (typeof colors)[number];
@@ -32,6 +33,7 @@ const backgrounds: Record<ButtonColor, string> = {
   positive: theme.colors.backgroundSuccessMain,
   ghost: theme.colors.backgroundHover,
   dark: theme.colors.backgroundTopbar,
+  gradient: theme.colors.backgroundGradientPrimary,
 };
 
 const foregrounds: Record<ButtonColor, string> = {
@@ -41,6 +43,7 @@ const foregrounds: Record<ButtonColor, string> = {
   neutral: theme.colors.foregroundMain,
   ghost: theme.colors.foregroundMain,
   dark: theme.colors.foregroundContrastMain,
+  gradient: theme.colors.foregroundContrastMain,
 };
 
 // CSS supports multiple gradients as backgrounds but not multiple colors
@@ -52,10 +55,13 @@ const perColorStyle = (variant: ButtonColor) => ({
   color: foregrounds[variant],
 
   "&[data-state=auto]:hover, &[data-state=hover]": {
-    background: backgroundColors(
-      backgrounds[variant],
-      theme.colors.backgroundButtonHover
-    ),
+    background:
+      variant === "gradient"
+        ? `linear-gradient(${theme.colors.backgroundButtonHover}, ${theme.colors.backgroundButtonHover}), ${backgrounds[variant]}`
+        : backgroundColors(
+            backgrounds[variant],
+            theme.colors.backgroundButtonHover
+          ),
   },
 
   "&[data-state=auto]:focus-visible, &[data-state=focus]": {
@@ -64,10 +70,13 @@ const perColorStyle = (variant: ButtonColor) => ({
   },
 
   "&[data-state=auto]:active, &[data-state=pressed]": {
-    background: backgroundColors(
-      backgrounds[variant],
-      theme.colors.backgroundButtonPressed
-    ),
+    background:
+      variant === "gradient"
+        ? `linear-gradient(${theme.colors.backgroundButtonPressed}, ${theme.colors.backgroundButtonPressed}), ${backgrounds[variant]}`
+        : backgroundColors(
+            backgrounds[variant],
+            theme.colors.backgroundButtonPressed
+          ),
   },
 
   "&[data-state=disabled]": {
@@ -101,6 +110,7 @@ const StyledButton = styled("button", {
       neutral: perColorStyle("neutral"),
       ghost: perColorStyle("ghost"),
       dark: perColorStyle("dark"),
+      gradient: perColorStyle("gradient"),
     },
   },
 

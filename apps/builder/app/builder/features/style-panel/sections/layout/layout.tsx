@@ -17,17 +17,18 @@ import {
 } from "@webstudio-is/icons";
 import type { RenderCategoryProps } from "../../style-sections";
 import { FlexGrid } from "./shared/flex-grid";
-import { renderProperty } from "../../style-sections";
 import { MenuControl, SelectControl } from "../../controls";
 import { PropertyName } from "../../shared/property-name";
 import { styleConfigByName } from "../../shared/configs";
 import type { CreateBatchUpdate } from "../../shared/use-style-data";
 import { getStyleSource, type StyleInfo } from "../../shared/style-info";
+import { CollapsibleSection } from "../../shared/collapsible-section";
 import {
   type IntermediateStyleValue,
   CssValueInput,
 } from "../../shared/css-value-input";
 import { theme } from "@webstudio-is/design-system";
+import { isFeatureEnabled } from "@webstudio-is/feature-flags";
 
 const GapLinked = ({
   isLinked,
@@ -73,7 +74,7 @@ const GapInput = ({
   onPreviewChange: (value?: StyleValue) => void;
   onChange: (value: StyleValue) => void;
 }) => {
-  const { label, items } = styleConfigByName[property];
+  const { label, items } = styleConfigByName(property);
   return (
     <EnhancedTooltip content={label}>
       <Box>
@@ -331,6 +332,9 @@ const orderedDisplayValues = [
   "inline",
   "none",
 ];
+if (isFeatureEnabled("displayContents")) {
+  orderedDisplayValues.push("contents");
+}
 
 const compareDisplayValues = (a: { name: string }, b: { name: string }) => {
   const aIndex = orderedDisplayValues.indexOf(a.name);
@@ -338,51 +342,62 @@ const compareDisplayValues = (a: { name: string }, b: { name: string }) => {
   return aIndex - bIndex;
 };
 
+const properties: StyleProperty[] = [
+  "display",
+  "flexDirection",
+  "flexWrap",
+  "alignItems",
+  "justifyContent",
+  "alignContent",
+  "rowGap",
+  "columnGap",
+];
+
 export const LayoutSection = ({
   currentStyle,
   setProperty,
   deleteProperty,
   createBatchUpdate,
-  styleConfigsByCategory,
 }: RenderCategoryProps) => {
   const displayValue = toValue(currentStyle.display?.value);
 
-  const { label, items } = styleConfigByName.display;
+  const { label, items } = styleConfigByName("display");
 
   return (
-    <>
-      <Grid css={{ gridTemplateColumns: "4fr 6fr" }}>
-        <PropertyName
-          style={currentStyle}
-          property="display"
-          label={label}
-          onReset={() => deleteProperty("display")}
-        />
-        <SelectControl
-          property="display"
-          currentStyle={currentStyle}
-          setProperty={setProperty}
-          deleteProperty={deleteProperty}
-          // show only important values first and hide others with scroll
-          items={items
-            .filter((item) => orderedDisplayValues.includes(item.name))
-            .sort(compareDisplayValues)}
-        />
-      </Grid>
+    <CollapsibleSection
+      label="Layout"
+      currentStyle={currentStyle}
+      properties={properties}
+    >
+      <>
+        <Grid css={{ gridTemplateColumns: "4fr 6fr" }}>
+          <PropertyName
+            style={currentStyle}
+            property="display"
+            label={label}
+            onReset={() => deleteProperty("display")}
+          />
+          <SelectControl
+            property="display"
+            currentStyle={currentStyle}
+            setProperty={setProperty}
+            deleteProperty={deleteProperty}
+            // show only important values first and hide others with scroll
+            items={items
+              .filter((item) => orderedDisplayValues.includes(item.name))
+              .sort(compareDisplayValues)}
+          />
+        </Grid>
 
-      {displayValue === "flex" || displayValue === "inline-flex" ? (
-        <LayoutSectionFlex
-          currentStyle={currentStyle}
-          setProperty={setProperty}
-          deleteProperty={deleteProperty}
-          createBatchUpdate={createBatchUpdate}
-        />
-      ) : (
-        styleConfigsByCategory.map((entry) =>
-          // exclude display already rendered above
-          entry.property === "display" ? null : renderProperty(entry)
-        )
-      )}
-    </>
+        {(displayValue === "flex" || displayValue === "inline-flex") && (
+          <LayoutSectionFlex
+            currentStyle={currentStyle}
+            setProperty={setProperty}
+            deleteProperty={deleteProperty}
+            createBatchUpdate={createBatchUpdate}
+          />
+        )}
+      </>
+    </CollapsibleSection>
   );
 };

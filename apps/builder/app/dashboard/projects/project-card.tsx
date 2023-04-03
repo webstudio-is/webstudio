@@ -12,7 +12,7 @@ import {
 } from "@webstudio-is/design-system";
 import { MenuIcon } from "@webstudio-is/icons";
 import type { DashboardProject } from "@webstudio-is/prisma-client";
-import { KeyboardEvent, useEffect, useRef, useState } from "react";
+import { type KeyboardEvent, useEffect, useRef, useState } from "react";
 import { builderPath, getPublishedUrl } from "~/shared/router-utils";
 import {
   RenameProjectDialog,
@@ -100,7 +100,6 @@ const Menu = ({
     <DropdownMenu open={isOpen} onOpenChange={setIsOpen}>
       <DropdownMenuTrigger asChild>
         <IconButton
-          variant={isOpen ? "active" : "default"}
           aria-label="Menu Button"
           tabIndex={tabIndex}
           css={{ alignSelf: "center" }}

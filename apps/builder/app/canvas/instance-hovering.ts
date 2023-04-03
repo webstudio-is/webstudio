@@ -2,14 +2,15 @@ import debounce from "lodash.debounce";
 import { idAttribute } from "@webstudio-is/react-sdk";
 import {
   hoveredInstanceSelectorStore,
-  hoveredInstanceOutlineStore,
   instancesStore,
 } from "~/shared/nano-states";
-import { subscribeScrollState } from "~/shared/dom-hooks";
+import { hoveredInstanceOutlineStore } from "~/shared/nano-states/canvas";
 import {
+  getAllElementsBoundingBox,
   getElementByInstanceSelector,
   getInstanceSelectorFromElement,
 } from "~/shared/dom-utils";
+import { subscribeScrollState } from "./shared/scroll-state";
 
 type TimeoutId = undefined | ReturnType<typeof setTimeout>;
 
@@ -41,6 +42,7 @@ export const subscribeInstanceHovering = () => {
     mouseOutTimeoutId = setTimeout(() => {
       hoveredElement = undefined;
       hoveredInstanceSelectorStore.set(undefined);
+      hoveredInstanceOutlineStore.set(undefined);
     }, 100);
   };
 
@@ -60,9 +62,8 @@ export const subscribeInstanceHovering = () => {
       return;
     }
     hoveredInstanceOutlineStore.set({
-      label: instance.label,
-      component: instance.component,
-      rect: element.getBoundingClientRect(),
+      instanceId: instance.id,
+      rect: getAllElementsBoundingBox(element),
     });
   }, 50);
 

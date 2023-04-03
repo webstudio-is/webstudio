@@ -10,7 +10,7 @@ export const MenuControl = ({
   currentStyle,
   setProperty,
 }: ControlProps) => {
-  const { label, items: defaultItems } = styleConfigByName[property];
+  const { label, items: defaultItems } = styleConfigByName(property);
   const value = currentStyle[property]?.value;
   const styleSource = getStyleSource(currentStyle[property]);
 
@@ -41,19 +41,10 @@ export const MenuControl = ({
       };
     })
     .filter((item) => item.icon);
-  let variant: "default" | "set" | "inherited" | "preset" = "default";
-  if (styleSource === "local") {
-    variant = "set";
-  }
-  if (styleSource === "remote") {
-    variant = "inherited";
-  }
-  if (styleSource === "preset") {
-    variant = "preset";
-  }
+
   return (
     <IconButtonWithMenu
-      variant={variant}
+      variant={styleSource}
       icon={items.find(({ name }) => name === currentValue)?.icon}
       label={label}
       items={items}

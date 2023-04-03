@@ -2,17 +2,19 @@ import type { KeyboardEvent as ReactKeyboardEvent } from "react";
 import { useState, useMemo, useRef, useCallback, useEffect } from "react";
 import { createPortal } from "react-dom";
 import { ListPositionIndicator } from "../list-position-indicator";
-import { TreeNode, INDENT, TreeItemRenderProps } from "./tree-node";
+import { TreeNode, INDENT, type TreeItemRenderProps } from "./tree-node";
 import {
   useHold,
   useDrop,
   useDrag,
   useAutoScroll,
   useDragCursor,
+  computeIndicatorPlacement,
 } from "../primitives/dnd";
 import { Box } from "../box";
 import { useHorizontalShift } from "./horizontal-shift";
 import {
+  type ItemId,
   type ItemSelector,
   type ItemDropTarget,
   areItemSelectorsEqual,
@@ -23,49 +25,81 @@ import {
 export type TreeProps<Data extends { id: string }> = {
   root: Data;
   selectedItemSelector: undefined | ItemSelector;
+  dragItemSelector: undefined | ItemSelector;
+  dropTarget: undefined | ItemDropTarget;
 
-  canLeaveParent: (item: Data) => boolean;
-  canAcceptChild: (item: Data) => boolean;
-  findItemById: (root: Data, id: string) => Data | undefined;
-  getItemPath: (root: Data, id: string) => Data[];
-  getItemChildren: (item: Data) => Data[];
+  canLeaveParent: (itemId: ItemId) => boolean;
+  canAcceptChild: (itemId: ItemId) => boolean;
+  getItemChildren: (itemId: ItemId) => Data[];
+  isItemHidden: (itemId: ItemId) => boolean;
   renderItem: (props: TreeItemRenderProps<Data>) => React.ReactNode;
 
-  onSelect?: (itemId: string) => void;
-  onHover?: (item: Data | undefined) => void;
+  onSelect?: (itemSelector: ItemSelector) => void;
+  onHover?: (itemSelector: undefined | ItemSelector) => void;
   animate?: boolean;
+  onDropTargetChange: (dropTarget: ItemDropTarget) => void;
+  onDragItemChange: (itemSelector: ItemSelector) => void;
   onDragEnd: (event: {
     itemSelector: ItemSelector;
-    dropTarget: { itemId: string; position: number | "end" };
+    dropTarget: { itemSelector: ItemSelector; position: number | "end" };
   }) => void;
+  onCancel: () => void;
 };
+
+const sharedDropOptions = {
+  placementPadding: 0,
+  getValidChildren: (element: Element) => {
+    // NOTE:
+    //   redefining children like this will screw up automatic childrenOrientation detection
+    //   luckily we know the orientation and can define it manually below
+    return Array.from(
+      element.querySelectorAll(":scope > div > [data-drop-target-id]")
+    );
+  },
+  childrenOrientation: { type: "vertical", reverse: false },
+} as const;
 
 export const Tree = <Data extends { id: string }>({
   root,
   selectedItemSelector,
+  dragItemSelector,
+  dropTarget,
   canLeaveParent,
   canAcceptChild,
-  findItemById,
-  getItemPath,
   getItemChildren,
+  isItemHidden,
   renderItem,
   onSelect,
   onHover,
   animate,
+  onDropTargetChange,
+  onDragItemChange,
   onDragEnd,
+  onCancel,
 }: TreeProps<Data>) => {
   const { getIsExpanded, setIsExpanded } = useExpandState({
-    root,
     selectedItemSelector,
-    getItemChildren,
   });
 
   const rootRef = useRef<HTMLElement | null>(null);
 
-  const [dragItemSelector, setDragItemSelector] = useState<
-    undefined | ItemSelector
-  >();
-  const [dropTarget, setDropTarget] = useState<ItemDropTarget<Data>>();
+  const placementIndicator = useMemo(() => {
+    if (dropTarget === undefined) {
+      return;
+    }
+    const element = getElementByItemSelector(
+      rootRef.current ?? undefined,
+      dropTarget.itemSelector
+    );
+    if (element === undefined) {
+      return;
+    }
+    return computeIndicatorPlacement({
+      placement: dropTarget.placement,
+      element,
+      ...sharedDropOptions,
+    });
+  }, [dropTarget]);
 
   const getDropTargetElement = useCallback(
     (id: string): HTMLElement | null | undefined =>
@@ -76,43 +110,42 @@ export const Tree = <Data extends { id: string }>({
   const [shiftedDropTarget, setHorizontalShift] = useHorizontalShift({
     dragItemSelector,
     dropTarget,
-    root,
+    placementIndicator,
     getIsExpanded,
-    getItemPath,
     getItemChildren,
+    isItemHidden,
     canAcceptChild,
   });
 
   const getFallbackDropTarget = () => {
     return {
-      data: root,
+      data: [root.id],
       element: getDropTargetElement(root.id) as HTMLElement,
       final: true,
     };
   };
 
-  const useHoldHandler = useHold<ItemDropTarget<Data>>({
-    isEqual: (a, b) => areItemSelectorsEqual(a.itemSelector, b.itemSelector),
+  const useHoldHandler = useHold({
+    data: dropTarget,
+    isEqual: (a, b) => areItemSelectorsEqual(a?.itemSelector, b?.itemSelector),
     holdTimeThreshold: 600,
     onHold: (dropTarget) => {
-      if (
-        getItemChildren(dropTarget.data).length > 0 ||
-        getIsExpanded(dropTarget.data) === false
-      ) {
-        setIsExpanded(dropTarget.data, true);
+      if (dropTarget === undefined) {
+        return;
+      }
+      if (getIsExpanded(dropTarget.itemSelector) === false) {
+        setIsExpanded(dropTarget.itemSelector, true);
       }
     },
   });
 
-  const dropHandlers = useDrop<Data>({
+  const dropHandlers = useDrop<ItemSelector>({
+    ...sharedDropOptions,
+
     emulatePointerAlwaysInRootBounds: true,
 
-    placementPadding: 0,
-
     elementToData: (element) => {
-      const id = (element as HTMLElement).dataset.dropTargetId;
-      const instance = id && findItemById(root, id);
-      return instance || false;
+      return getItemSelectorFromElement(element);
     },
 
     swapDropTarget: (dropTarget) => {
@@ -120,97 +153,75 @@ export const Tree = <Data extends { id: string }>({
         return getFallbackDropTarget();
       }
 
-      if (dropTarget.data.id === root.id) {
+      // drop target is the root
+      if (dropTarget.data.length === 1) {
         return dropTarget;
       }
 
-      const path = getItemPath(root, dropTarget.data.id);
-      path.reverse();
+      let newDropItemSelector = dropTarget.data.slice();
 
       if (dropTarget.area === "top" || dropTarget.area === "bottom") {
-        path.shift();
+        newDropItemSelector.shift();
       }
 
       // Don't allow to drop inside drag item or any of its children
       const [dragItemId] = dragItemSelector;
-      const dragItemIndex = path.findIndex(
-        (instance) => instance.id === dragItemId
-      );
+      const dragItemIndex = newDropItemSelector.indexOf(dragItemId);
       if (dragItemIndex !== -1) {
-        path.splice(0, dragItemIndex + 1);
+        newDropItemSelector.splice(0, dragItemIndex + 1);
       }
 
-      const data = path.find(canAcceptChild);
+      // select closest droppable
+      const ancestorIndex = newDropItemSelector.findIndex((itemId) =>
+        canAcceptChild(itemId)
+      );
+      if (ancestorIndex === -1) {
+        return getFallbackDropTarget();
+      }
+      newDropItemSelector = newDropItemSelector.slice(ancestorIndex);
 
-      if (data === undefined) {
+      const element = getElementByItemSelector(
+        rootRef.current ?? undefined,
+        newDropItemSelector
+      );
+
+      if (element === undefined) {
         return getFallbackDropTarget();
       }
 
-      const element = getDropTargetElement(data.id);
-
-      if (element == null) {
-        return getFallbackDropTarget();
-      }
-
-      return { data, element, final: true };
+      return { data: newDropItemSelector, element, final: true };
     },
 
     onDropTargetChange: (dropTarget) => {
       const itemDropTarget = {
-        itemSelector: getItemSelectorFromElement(dropTarget.element),
-        data: dropTarget.data,
-        rect: dropTarget.rect,
+        itemSelector: dropTarget.data,
         indexWithinChildren: dropTarget.indexWithinChildren,
         placement: dropTarget.placement,
       };
-      useHoldHandler.setData(itemDropTarget);
-      setDropTarget(itemDropTarget);
+      onDropTargetChange(itemDropTarget);
     },
-
-    getValidChildren: (element) => {
-      // NOTE:
-      //   redefining children like this will screw up automatic childrenOrientation detection
-      //   luckily we know the orientation and can define it manually below
-      return Array.from(
-        element.querySelectorAll(":scope > div > [data-drop-target-id]")
-      );
-    },
-
-    childrenOrientation: { type: "vertical", reverse: false },
   });
 
-  const dragHandlers = useDrag<Data>({
+  const dragHandlers = useDrag<ItemSelector>({
     shiftDistanceThreshold: INDENT,
 
     elementToData: (element) => {
-      const dragItemElement = element.closest("[data-drag-item-id]");
-      if (!(dragItemElement instanceof HTMLElement)) {
-        return false;
-      }
-      const id = dragItemElement.dataset.dragItemId;
-      if (id === undefined || id === root.id) {
+      const dragItemSelector = getItemSelectorFromElement(element);
+      // tree root is not draggable
+      if (dragItemSelector.length === 1) {
         return false;
       }
 
-      const instance = findItemById(root, id);
-
-      if (instance === undefined) {
+      const [dragItemId] = dragItemSelector;
+      if (canLeaveParent(dragItemId) === false) {
         return false;
       }
 
-      if (canLeaveParent(instance) === false) {
-        return false;
-      }
-
-      return instance;
+      return dragItemSelector;
     },
-    onStart: ({ data }) => {
-      onSelect?.(data.id);
-      setDragItemSelector(
-        getItemPath(root, data.id)
-          .reverse()
-          .map((item) => item.id)
-      );
+    onStart: ({ data: itemSelector }) => {
+      onSelect?.(itemSelector);
+      onDragItemChange(itemSelector);
       dropHandlers.handleStart();
       autoScrollHandlers.setEnabled(true);
     },
@@ -226,16 +237,16 @@ export const Tree = <Data extends { id: string }>({
         onDragEnd({
           itemSelector: dragItemSelector,
           dropTarget: {
-            itemId: shiftedDropTarget.itemSelector[0],
+            itemSelector: shiftedDropTarget.itemSelector,
             position: shiftedDropTarget.position,
           },
         });
+      } else {
+        onCancel();
       }
 
       autoScrollHandlers.setEnabled(false);
       setHorizontalShift(0);
-      setDragItemSelector(undefined);
-      setDropTarget(undefined);
       dropHandlers.handleEnd({ isCanceled });
       useHoldHandler.reset();
     },
@@ -248,19 +259,12 @@ export const Tree = <Data extends { id: string }>({
   const keyboardNavigation = useKeyboardNavigation({
     root,
     getItemChildren,
-    findItemById,
+    isItemHidden,
     selectedItemSelector,
     getIsExpanded,
     setIsExpanded,
     onEsc: dragHandlers.cancelCurrentDrag,
   });
-
-  const [onMouseEnter, onMouseLeave] = useMemo(() => {
-    if (onHover === undefined) {
-      return [undefined, undefined];
-    }
-    return [(item: Data) => onHover(item), () => onHover(undefined)] as const;
-  }, [onHover]);
 
   return (
     <Box
@@ -288,17 +292,17 @@ export const Tree = <Data extends { id: string }>({
         <TreeNode
           renderItem={renderItem}
           getItemChildren={getItemChildren}
+          isItemHidden={isItemHidden}
           animate={animate}
           onSelect={onSelect}
-          onMouseEnter={onMouseEnter}
-          onMouseLeave={onMouseLeave}
-          selectedItemId={selectedItemSelector?.[0]}
+          onMouseEnter={onHover}
+          onMouseLeave={onHover}
+          selectedItemSelector={selectedItemSelector}
           itemData={root}
-          level={0}
           getIsExpanded={getIsExpanded}
           setIsExpanded={setIsExpanded}
           onExpandTransitionEnd={dropHandlers.handleDomMutation}
-          dropTargetItemId={shiftedDropTarget?.itemSelector[0]}
+          dropTargetItemSelector={shiftedDropTarget?.itemSelector}
         />
       </Box>
 
@@ -320,57 +324,55 @@ const useKeyboardNavigation = <Data extends { id: string }>({
   root,
   selectedItemSelector,
   getItemChildren,
-  findItemById,
+  isItemHidden,
   getIsExpanded,
   setIsExpanded,
   onEsc,
 }: {
   root: Data;
   selectedItemSelector: undefined | ItemSelector;
-  getItemChildren: (item: Data) => Data[];
-  findItemById: (root: Data, id: string) => Data | undefined;
-  getIsExpanded: (instance: Data) => boolean;
-  setIsExpanded: (instance: Data, isExpanded: boolean) => void;
+  getItemChildren: (itemId: ItemId) => Data[];
+  isItemHidden: (itemId: ItemId) => boolean;
+  getIsExpanded: (itemSelector: ItemSelector) => boolean;
+  setIsExpanded: (itemSelector: ItemSelector, isExpanded: boolean) => void;
   onEsc: () => void;
 }) => {
-  const selectedItem = useMemo(() => {
-    if (selectedItemSelector === undefined) {
-      return undefined;
-    }
-    const [selectedItemId] = selectedItemSelector;
-    return findItemById(root, selectedItemId);
-  }, [root, selectedItemSelector, findItemById]);
-
   const flatCurrentlyExpandedTree = useMemo(() => {
     const result: ItemSelector[] = [];
-    const traverse = (item: Data, itemSelector: ItemSelector) => {
-      result.push(itemSelector);
-      if (getIsExpanded(item)) {
-        for (const child of getItemChildren(item)) {
-          traverse(child, [child.id, ...itemSelector]);
+    const traverse = (itemSelector: ItemSelector) => {
+      const [itemId] = itemSelector;
+      if (isItemHidden(itemId) === false) {
+        result.push(itemSelector);
+      }
+      if (getIsExpanded(itemSelector)) {
+        for (const child of getItemChildren(itemId)) {
+          traverse([child.id, ...itemSelector]);
         }
       }
     };
-    traverse(root, [root.id]);
+    traverse([root.id]);
     return result;
-  }, [root, getIsExpanded, getItemChildren]);
+  }, [root, getIsExpanded, getItemChildren, isItemHidden]);
 
   const rootRef = useRef<HTMLDivElement>(null);
 
   const handleKeyDown = (event: ReactKeyboardEvent) => {
     // skip if nothing is selected in the tree
-    if (selectedItem === undefined) {
+    if (selectedItemSelector === undefined) {
       return;
     }
 
-    if (event.key === "ArrowRight" && getIsExpanded(selectedItem) === false) {
-      setIsExpanded(selectedItem, true);
+    if (
+      event.key === "ArrowRight" &&
+      getIsExpanded(selectedItemSelector) === false
+    ) {
+      setIsExpanded(selectedItemSelector, true);
     }
-    if (event.key === "ArrowLeft" && getIsExpanded(selectedItem)) {
-      setIsExpanded(selectedItem, false);
+    if (event.key === "ArrowLeft" && getIsExpanded(selectedItemSelector)) {
+      setIsExpanded(selectedItemSelector, false);
     }
     if (event.key === " ") {
-      setIsExpanded(selectedItem, !getIsExpanded(selectedItem));
+      setIsExpanded(selectedItemSelector, !getIsExpanded(selectedItemSelector));
       // prevent scrolling
       event.preventDefault();
     }
@@ -401,10 +403,11 @@ const useKeyboardNavigation = <Data extends { id: string }>({
 
   const setFocus = useCallback(
     (itemSelector: ItemSelector, reason: "restoring" | "changing") => {
+      const [itemId] = itemSelector;
       const itemButton = getElementByItemSelector(
         rootRef.current ?? undefined,
         itemSelector
-      );
+      )?.querySelector(`[data-item-button-id="${itemId}"]`);
       if (itemButton instanceof HTMLElement) {
         itemButton.focus({ preventScroll: reason === "restoring" });
       }
@@ -466,18 +469,15 @@ const useKeyboardNavigation = <Data extends { id: string }>({
   };
 };
 
-const useExpandState = <Data extends { id: string }>({
+const useExpandState = ({
   selectedItemSelector,
-  root,
-  getItemChildren,
 }: {
-  root: Data;
-  getItemChildren: (item: Data) => Data[];
   selectedItemSelector: undefined | ItemSelector;
 }) => {
   const [record, setRecord] = useState<Record<string, boolean>>({});
 
-  // We want to automatically expand all parents of the selected instance whenever it changes
+  // whenever selected instance is changed
+  // all its parents should be automatically expanded
   const prevSelectedItemSelector = useRef(selectedItemSelector);
   useEffect(() => {
     if (
@@ -492,39 +492,39 @@ const useExpandState = <Data extends { id: string }>({
     if (selectedItemSelector === undefined) {
       return;
     }
-    const path = selectedItemSelector.slice().reverse();
-    // Don't want to expand the selected instance itself
-    path.pop();
-    const toExpand = path.filter((id) => record[id] !== true);
-    if (toExpand.length === 0) {
-      return;
-    }
     setRecord((record) => {
       const newRecord = { ...record };
-      for (const id of toExpand) {
-        newRecord[id] = true;
+      let expanded = 0;
+      // do not expand the selected instance itself, start with parent
+      for (let index = 1; index < selectedItemSelector.length; index += 1) {
+        const key = selectedItemSelector.slice(index).join();
+        if (newRecord[key] !== true) {
+          newRecord[key] = true;
+          expanded += 1;
+        }
       }
-      return newRecord;
+      // prevent rerender if nothing new is expanded
+      return expanded === 0 ? record : newRecord;
     });
-  }, [record, selectedItemSelector]);
+  }, [selectedItemSelector]);
 
   const getIsExpanded = useCallback(
-    (instance: Data) => {
+    (itemSelector: ItemSelector) => {
       // root is always expanded
-      if (instance.id === root.id) {
+      if (itemSelector.length === 1) {
         return true;
       }
-
-      return (
-        getItemChildren(instance).length > 0 && record[instance.id] === true
-      );
+      return record[itemSelector.join()] === true;
     },
-    [record, root, getItemChildren]
+    [record]
   );
 
-  const setIsExpanded = useCallback((instance: Data, expanded: boolean) => {
-    setRecord((record) => ({ ...record, [instance.id]: expanded }));
-  }, []);
+  const setIsExpanded = useCallback(
+    (itemSelector: ItemSelector, expanded: boolean) => {
+      setRecord((record) => ({ ...record, [itemSelector.join()]: expanded }));
+    },
+    []
+  );
 
   return { getIsExpanded, setIsExpanded };
 };

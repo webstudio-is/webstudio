@@ -13,7 +13,6 @@ import {
   insertInstancesMutable,
 } from "../tree-utils";
 import {
-  instancesIndexStore,
   instancesStore,
   propsStore,
   selectedInstanceSelectorStore,
@@ -216,11 +215,9 @@ export const onPaste = (clipboardData: string) => {
   const instanceSelector = selectedInstanceSelectorStore.get() ?? [
     selectedPage.rootInstanceId,
   ];
-  const [targetInstanceId] = instanceSelector;
   const dropTarget = findClosestDroppableTarget(
-    instancesIndexStore.get(),
-    // @todo accept instance selector
-    targetInstanceId
+    instancesStore.get(),
+    instanceSelector
   );
   store.createTransaction([instancesStore, propsStore], (instances, props) => {
     insertInstancesMutable(instances, data.instances, data.rootIds, dropTarget);

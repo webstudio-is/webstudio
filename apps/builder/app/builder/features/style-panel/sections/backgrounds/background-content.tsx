@@ -3,7 +3,7 @@
  * as of now just implement feature parity with old backgrounds section
  **/
 
-import type { StyleValue } from "@webstudio-is/css-data";
+import type { RgbValue, StyleValue } from "@webstudio-is/css-data";
 import {
   theme,
   Flex,
@@ -24,7 +24,7 @@ import type {
 } from "../../shared/use-style-data";
 
 import {
-  DeleteBackgroundProperty,
+  type DeleteBackgroundProperty,
   isBackgroundLayeredProperty,
   isBackgroundStyleValue,
   type SetBackgroundProperty,
@@ -48,6 +48,7 @@ type BackgroundContentProps = {
   currentStyle: StyleInfo;
   setProperty: SetBackgroundProperty;
   deleteProperty: DeleteBackgroundProperty;
+  setBackgroundColor: (color: RgbValue) => void;
 };
 
 const safeDeleteProperty = (
@@ -145,7 +146,11 @@ export const BackgroundContent = (props: BackgroundContentProps) => {
       <Separator css={{ gridColumn: "span 2" }} />
 
       <BackgroundSection>
-        <Grid css={{ gridTemplateColumns: "1fr 128px" }} align="center" gap={2}>
+        <Grid
+          css={{ gridTemplateColumns: `1fr ${theme.spacing[23]}` }}
+          align="center"
+          gap={2}
+        >
           {imageGradientToggle === "image" && (
             <>
               <Label color="default" truncate>
@@ -192,6 +197,7 @@ export const BackgroundContent = (props: BackgroundContentProps) => {
                 setProperty={setProperty}
                 deleteProperty={deleteProperty}
                 currentStyle={props.currentStyle}
+                setBackgroundColor={props.setBackgroundColor}
               />
             </Flex>
           )}
@@ -237,7 +243,10 @@ export const BackgroundContent = (props: BackgroundContentProps) => {
         />
 
         <Grid
-          css={{ gridTemplateColumns: "1fr 128px", mt: theme.spacing[5] }}
+          css={{
+            gridTemplateColumns: `1fr ${theme.spacing[23]}`,
+            mt: theme.spacing[5],
+          }}
           align="center"
           gap={2}
         >

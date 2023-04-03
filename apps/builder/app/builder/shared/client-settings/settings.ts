@@ -6,7 +6,7 @@ import * as config from "./config";
 
 type Name = keyof typeof config;
 type Value = (typeof config)[Name]["values"][number];
-type Settings = Record<Name, Value>;
+export type Settings = Record<Name, Value>;
 
 const defaultSettings = (Object.keys(config) as Array<Name>).reduce(
   (acc, settingName) => {

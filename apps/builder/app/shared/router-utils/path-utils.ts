@@ -1,5 +1,4 @@
 import type { AUTH_PROVIDERS } from "~/shared/session";
-import type { Page } from "@webstudio-is/project-build";
 import type { Project } from "@webstudio-is/project";
 import type { ThemeSetting } from "~/shared/theme";
 import env from "~/shared/env";
@@ -77,9 +76,6 @@ export const authPath = ({
   provider: "google" | "github" | "dev";
 }) => `/auth/${provider}`;
 
-export const restPagesPath = ({ projectId }: { projectId: string }) =>
-  `/rest/pages/${projectId}`;
-
 export const restAssetsPath = ({
   projectId,
   authToken,
@@ -119,34 +115,17 @@ export const restPublishPath = () => "/rest/publish";
 export const getBuildUrl = ({
   buildOrigin,
   project,
-  page,
-  // Hidden token for canvas (should not be visible in browser URL)
-  authReadToken,
-  // Token to share project
-  authToken,
 }: {
   buildOrigin: string;
   project: Project;
-  page: Page;
-  authReadToken?: string;
-  authToken?: string;
 }) => {
   const url = new URL(buildOrigin);
-  url.pathname = page.path;
 
   if (env.BUILD_REQUIRE_SUBDOMAIN) {
     url.host = `${project.domain}.${url.host}`;
   }
 
   url.searchParams.set("projectId", project.id);
-
-  if (authReadToken) {
-    url.searchParams.set("authReadToken", authReadToken);
-  }
-
-  if (authToken) {
-    url.searchParams.set("authToken", authToken);
-  }
 
   return url.toString();
 };

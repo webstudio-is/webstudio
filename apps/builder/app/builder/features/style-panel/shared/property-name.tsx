@@ -1,6 +1,5 @@
-import { useState } from "react";
+import { useState, type ReactElement } from "react";
 import { useStore } from "@nanostores/react";
-import { isFeatureEnabled } from "@webstudio-is/feature-flags";
 import type { StyleProperty } from "@webstudio-is/css-data";
 import { toValue } from "@webstudio-is/css-engine";
 import {
@@ -11,14 +10,14 @@ import {
   DeprecatedText2,
   Label,
   Tooltip,
-  DeprecatedPopover,
-  DeprecatedPopoverContent,
-  DeprecatedPopoverPortal,
-  DeprecatedPopoverTrigger,
   Separator,
+  Popover,
+  PopoverTrigger,
+  PopoverPortal,
+  PopoverContent,
 } from "@webstudio-is/design-system";
 import { UndoIcon } from "@webstudio-is/icons";
-import { instancesIndexStore, useBreakpoints } from "~/shared/nano-states";
+import { instancesStore, useBreakpoints } from "~/shared/nano-states";
 import { type StyleInfo, type StyleSource, getStyleSource } from "./style-info";
 
 const PropertyPopoverContent = ({
@@ -33,7 +32,7 @@ const PropertyPopoverContent = ({
   onReset: () => void;
 }) => {
   const [breakpoints] = useBreakpoints();
-  const { instancesById } = useStore(instancesIndexStore);
+  const instances = useStore(instancesStore);
 
   if (styleSource === "local") {
     return (
@@ -42,7 +41,7 @@ const PropertyPopoverContent = ({
           align="start"
           css={{ px: theme.spacing[4], py: theme.spacing[3] }}
         >
-          <Button onClick={onReset} prefix={<UndoIcon />}>
+          <Button onClick={() => onReset()} prefix={<UndoIcon />}>
             Reset
           </Button>
         </Flex>
@@ -71,7 +70,7 @@ const PropertyPopoverContent = ({
 
             if (styleValueInfo?.inherited) {
               const { value, instanceId } = styleValueInfo.inherited;
-              const instance = instancesById.get(instanceId);
+              const instance = instances.get(instanceId);
               return (
                 <DeprecatedText2 key={property} color="hint">
                   Resetting will change {property} to inherited {toValue(value)}{" "}
@@ -108,7 +107,7 @@ const PropertyPopoverContent = ({
 
         if (styleValueInfo?.inherited) {
           const { instanceId } = styleValueInfo.inherited;
-          const instance = instancesById.get(instanceId);
+          const instance = instances.get(instanceId);
           return (
             <DeprecatedText2 key={property} color="hint">
               {property} value is inherited from {instance?.component}
@@ -122,8 +121,8 @@ const PropertyPopoverContent = ({
 
 type PropertyNameProps = {
   style: StyleInfo;
-  property: StyleProperty | StyleProperty[];
-  label: string;
+  property: StyleProperty | readonly StyleProperty[];
+  label: string | ReactElement;
   onReset: () => void;
 };
 
@@ -138,55 +137,67 @@ export const PropertyName = ({
     ...properties.map((property) => style[property])
   );
   const [isOpen, setIsOpen] = useState(false);
-  const isPopoverEnabled =
-    isFeatureEnabled("propertyReset") &&
-    (styleSource === "local" || styleSource === "remote");
+  const isPopoverEnabled = styleSource === "local" || styleSource === "remote";
 
-  const labelElement = (
-    <Flex shrink>
-      <Label color={styleSource} truncate>
-        {label}
-      </Label>
-    </Flex>
-  );
+  const labelElement =
+    typeof label === "string" ? (
+      <Flex shrink>
+        <Label color={styleSource} truncate>
+          {label}
+        </Label>
+      </Flex>
+    ) : (
+      label
+    );
 
   if (isPopoverEnabled) {
     return (
       <Flex align="center">
-        <DeprecatedPopover modal open={isOpen} onOpenChange={setIsOpen}>
-          <DeprecatedPopoverTrigger
+        <Popover modal open={isOpen} onOpenChange={setIsOpen}>
+          <PopoverTrigger
             asChild
             aria-label="Show proprety description"
+            onClick={(event) => {
+              event.preventDefault();
+              if (event.altKey) {
+                onReset();
+                return;
+              }
+              setIsOpen(true);
+            }}
           >
             {labelElement}
-          </DeprecatedPopoverTrigger>
-          <DeprecatedPopoverPortal>
-            <DeprecatedPopoverContent
-              align="start"
-              onClick={() => setIsOpen(false)}
-            >
+          </PopoverTrigger>
+          <PopoverPortal>
+            <PopoverContent align="start" onClick={() => setIsOpen(false)}>
               <PropertyPopoverContent
                 properties={properties}
                 style={style}
                 styleSource={styleSource}
                 onReset={onReset}
               />
-            </DeprecatedPopoverContent>
-          </DeprecatedPopoverPortal>
-        </DeprecatedPopover>
+            </PopoverContent>
+          </PopoverPortal>
+        </Popover>
       </Flex>
     );
   }
 
   return (
     <Flex align="center">
-      <Tooltip
-        content={label}
-        delayDuration={600}
-        disableHoverableContent={true}
-      >
-        {labelElement}
-      </Tooltip>
+      {typeof label === "string" ? (
+        <Tooltip
+          content={label}
+          delayDuration={600}
+          disableHoverableContent={true}
+        >
+          {labelElement}
+        </Tooltip>
+      ) : (
+        // It's on purpose to not wrap labelElement in Tooltip,
+        // it can be a complex element with its own tooltip or no tooltip at all like SectionTitle
+        labelElement
+      )}
     </Flex>
   );
 };

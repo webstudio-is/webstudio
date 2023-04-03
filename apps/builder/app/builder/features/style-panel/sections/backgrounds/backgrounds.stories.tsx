@@ -1,6 +1,7 @@
 import type { LayersValue } from "@webstudio-is/css-data";
 import { styled, theme } from "@webstudio-is/design-system";
-import { useState } from "react";
+import { setEnv } from "@webstudio-is/feature-flags";
+import { useRef, useState } from "react";
 import type { StyleInfo } from "../../shared/style-info";
 import type {
   CreateBatchUpdate,
@@ -8,6 +9,8 @@ import type {
   SetProperty,
 } from "../../shared/use-style-data";
 import { BackgroundsSection } from "./backgrounds";
+
+setEnv("*");
 
 const backgroundImageStyle: LayersValue = {
   type: "layers",
@@ -27,20 +30,18 @@ const backgroundImageStyle: LayersValue = {
   ],
 };
 
-const styleInfoInitial: StyleInfo = {
-  backgroundImage: {
-    value: backgroundImageStyle,
-    local: backgroundImageStyle,
-  },
-};
-
 const Panel = styled("div", {
   width: theme.spacing[30],
 });
 
-export const Backgrounds = () => {
+const useStyleInfo = (styleInfoInitial: StyleInfo) => {
   const [styleInfo, setStyleInfo] = useState(() => styleInfoInitial);
+
   const setProperty: SetProperty = (name) => (value, options) => {
+    if (options?.isEphemeral) {
+      return;
+    }
+
     setStyleInfo((styleInfo) => ({
       ...styleInfo,
       [name]: {
@@ -51,20 +52,58 @@ export const Backgrounds = () => {
     }));
   };
 
-  const deleteProperty: DeleteProperty = (name) => {
+  const deleteProperty: DeleteProperty = (name, options) => {
+    if (options?.isEphemeral) {
+      return;
+    }
+
     setStyleInfo((styleInfo) => {
       const { [name]: _, ...rest } = styleInfo;
       return rest;
     });
   };
 
+  const execCommands = useRef<(() => void)[]>([]);
+
   const createBatchUpdate: CreateBatchUpdate = () => ({
-    deleteProperty,
-    setProperty,
-    publish: () => {
-      // do nothing
+    deleteProperty: (property) => {
+      execCommands.current.push(() => {
+        deleteProperty(property);
+      });
+    },
+    setProperty: (property) => (style) => {
+      execCommands.current.push(() => {
+        setProperty(property)(style);
+      });
+    },
+    publish: (options) => {
+      if (options?.isEphemeral) {
+        execCommands.current = [];
+        return;
+      }
+
+      for (const command of execCommands.current) {
+        command();
+      }
+
+      execCommands.current = [];
     },
   });
+
+  return { styleInfo, setProperty, deleteProperty, createBatchUpdate };
+};
+
+export const BackgroundsCollapsible = () => {
+  const { styleInfo, setProperty, deleteProperty, createBatchUpdate } =
+    useStyleInfo({
+      backgroundImage: {
+        cascaded: {
+          value: backgroundImageStyle,
+          breakpointId: "mobile",
+        },
+        value: backgroundImageStyle,
+      },
+    });
 
   return (
     <Panel>
@@ -73,9 +112,29 @@ export const Backgrounds = () => {
         setProperty={setProperty}
         deleteProperty={deleteProperty}
         createBatchUpdate={createBatchUpdate}
-        category={"backgrounds"}
-        styleConfigsByCategory={[]}
-        moreStyleConfigsByCategory={[]}
+        category="backgrounds"
+      />
+    </Panel>
+  );
+};
+
+export const Backgrounds = () => {
+  const { styleInfo, setProperty, deleteProperty, createBatchUpdate } =
+    useStyleInfo({
+      backgroundImage: {
+        value: backgroundImageStyle,
+        local: backgroundImageStyle,
+      },
+    });
+
+  return (
+    <Panel>
+      <BackgroundsSection
+        currentStyle={styleInfo}
+        setProperty={setProperty}
+        deleteProperty={deleteProperty}
+        createBatchUpdate={createBatchUpdate}
+        category="backgrounds"
       />
     </Panel>
   );

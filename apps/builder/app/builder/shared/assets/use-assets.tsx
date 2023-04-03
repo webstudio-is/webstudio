@@ -10,7 +10,7 @@ import { useStore } from "@nanostores/react";
 import warnOnce from "warn-once";
 import { useFetcher } from "@remix-run/react";
 import {
-  AssetType,
+  type AssetType,
   idsFormDataFieldName,
   MAX_UPLOAD_SIZE,
   toBytes,

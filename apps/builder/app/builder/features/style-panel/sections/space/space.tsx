@@ -8,6 +8,7 @@ import type { SpaceStyleProperty, HoverTagret } from "./types";
 import { InputPopover } from "./input-popover";
 import { SpaceTooltip } from "./tooltip";
 import { getStyleSource } from "../../shared/style-info";
+import { CollapsibleSection } from "../../shared/collapsible-section";
 import { useKeyboardNavigation } from "./keyboard";
 
 const Cell = ({
@@ -138,38 +139,44 @@ export const SpaceSection = ({
   };
 
   return (
-    <SpaceLayout
-      ref={layoutRef}
-      onClick={() => setOpenProperty(hoverTarget?.property)}
-      onHover={handleHover}
-      onFocus={keyboardNavigation.hadnleFocus}
-      onBlur={keyboardNavigation.handleBlur}
-      onKeyDown={keyboardNavigation.handleKeyDown}
-      onMouseLeave={keyboardNavigation.handleMouseLeave}
-      activeProperties={activeProperties}
-      renderCell={({ property }) => (
-        <Cell
-          isPopoverOpen={openProperty === property}
-          onPopoverClose={() => {
-            if (openProperty === property) {
-              setOpenProperty(undefined);
-              layoutRef.current?.focus();
-            }
-          }}
-          onChange={(update, options) => {
-            if (update.operation === "set") {
-              setProperty(update.property)(update.value, options);
-            } else {
-              deleteProperty(update.property, options);
-            }
-          }}
-          onHover={handleHover}
-          property={property}
-          scrubStatus={scrubStatus}
-          isActive={activeProperties.includes(property)}
-          currentStyle={currentStyle}
-        />
-      )}
-    />
+    <CollapsibleSection
+      label="Space"
+      currentStyle={currentStyle}
+      properties={spacePropertiesNames}
+    >
+      <SpaceLayout
+        ref={layoutRef}
+        onClick={() => setOpenProperty(hoverTarget?.property)}
+        onHover={handleHover}
+        onFocus={keyboardNavigation.hadnleFocus}
+        onBlur={keyboardNavigation.handleBlur}
+        onKeyDown={keyboardNavigation.handleKeyDown}
+        onMouseLeave={keyboardNavigation.handleMouseLeave}
+        activeProperties={activeProperties}
+        renderCell={({ property }) => (
+          <Cell
+            isPopoverOpen={openProperty === property}
+            onPopoverClose={() => {
+              if (openProperty === property) {
+                setOpenProperty(undefined);
+                layoutRef.current?.focus();
+              }
+            }}
+            onChange={(update, options) => {
+              if (update.operation === "set") {
+                setProperty(update.property)(update.value, options);
+              } else {
+                deleteProperty(update.property, options);
+              }
+            }}
+            onHover={handleHover}
+            property={property}
+            scrubStatus={scrubStatus}
+            isActive={activeProperties.includes(property)}
+            currentStyle={currentStyle}
+          />
+        )}
+      />
+    </CollapsibleSection>
   );
 };

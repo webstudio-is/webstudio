@@ -1,19 +1,23 @@
 import { BoxLinkIcon } from "@webstudio-is/icons";
-import type { WsComponentMeta, WsComponentPropsMeta } from "./component-type";
+import type { WsComponentMeta, WsComponentPropsMeta } from "./component-meta";
 import { props } from "./__generated__/link-block.props";
+import { propsMeta as linkPropsMeta } from "./link.ws";
+import type { defaultTag } from "./link-block";
+import type { Style } from "@webstudio-is/css-data";
+import { a } from "../css/normalize";
 
 const presetStyle = {
-  boxSizing: {
-    type: "keyword",
-    value: "border-box",
+  a: {
+    ...a,
+    display: {
+      type: "keyword",
+      value: "inline-block",
+    },
   },
-  display: {
-    type: "keyword",
-    value: "inline-block",
-  },
-} as const;
+} as const satisfies Record<typeof defaultTag, Style>;
 
 export const meta: WsComponentMeta = {
+  category: "general",
   type: "container",
   label: "Link Block",
   Icon: BoxLinkIcon,
@@ -21,6 +25,9 @@ export const meta: WsComponentMeta = {
 };
 
 export const propsMeta: WsComponentPropsMeta = {
-  props,
-  initialProps: ["href", "target", "prefetch"],
+  props: {
+    ...props,
+    href: linkPropsMeta.props.href,
+  },
+  initialProps: linkPropsMeta.initialProps,
 };

@@ -2,7 +2,7 @@ import {
   Button,
   Tooltip,
   Separator,
-  Title,
+  PanelTitle,
   TitleSuffixSpacer,
 } from "@webstudio-is/design-system";
 import { CrossIcon } from "@webstudio-is/icons";
@@ -15,7 +15,7 @@ type HeaderProps = {
 export const Header = ({ title, suffix }: HeaderProps) => {
   return (
     <>
-      <Title suffix={suffix}>{title}</Title>
+      <PanelTitle suffix={suffix}>{title}</PanelTitle>
       <Separator />
     </>
   );

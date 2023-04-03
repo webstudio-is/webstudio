@@ -150,7 +150,7 @@ const itemStyle = css({
   gap: theme.spacing[3],
   py: theme.spacing[5],
   px: theme.spacing[9],
-  backgroundColor: theme.colors.background,
+  backgroundColor: theme.colors.backgroundPanel,
 });
 
 type Relation = "viewers" | "editors" | "builders";

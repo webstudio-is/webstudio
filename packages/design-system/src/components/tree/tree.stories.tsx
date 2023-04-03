@@ -1,17 +1,10 @@
 import type { ComponentMeta } from "@storybook/react";
 import { useState } from "react";
 import { Tree } from "./tree";
-import {
-  canAcceptChild,
-  findItemById,
-  getItemChildren,
-  getItemPath,
-  Item,
-  reparent,
-} from "./test-tree-data";
+import { type Item, findItemById, reparent } from "./test-tree-data";
 import { Flex } from "../flex";
 import { TreeItemLabel, TreeItemBody } from "./tree-node";
-import type { ItemSelector } from "./item-utils";
+import type { ItemDropTarget, ItemSelector } from "./item-utils";
 
 export const StressTest = ({ animate }: { animate: boolean }) => {
   const [root, setRoot] = useState<Item>((): Item => {
@@ -39,22 +32,29 @@ export const StressTest = ({ animate }: { animate: boolean }) => {
               canAcceptChildren: true,
               children: [
                 {
-                  id: `box-${index}.0.0`,
+                  id: `hidden-${index}.0.0`,
                   canAcceptChildren: true,
+                  isHidden: true,
                   children: [
                     {
                       id: `box-${index}.0.0.0`,
                       canAcceptChildren: true,
                       children: [
                         {
-                          id: `heading-${index}.1`,
-                          canAcceptChildren: false,
-                          children: [],
-                        },
-                        {
-                          id: `paragraph-${index}.1`,
-                          canAcceptChildren: false,
-                          children: [],
+                          id: `box-${index}.0.0.0.0`,
+                          canAcceptChildren: true,
+                          children: [
+                            {
+                              id: `heading-${index}.1`,
+                              canAcceptChildren: false,
+                              children: [],
+                            },
+                            {
+                              id: `paragraph-${index}.1`,
+                              canAcceptChildren: false,
+                              children: [],
+                            },
+                          ],
                         },
                       ],
                     },
@@ -76,31 +76,48 @@ export const StressTest = ({ animate }: { animate: boolean }) => {
   const [selectedItemSelector, setSelectedItemSelector] = useState<
     undefined | ItemSelector
   >();
+  const [dropTarget, setDropTarget] = useState<undefined | ItemDropTarget>();
+  const [dragItemSelector, setDragItemSelector] = useState<
+    undefined | ItemSelector
+  >();
 
   return (
     <Flex css={{ width: 300, height: 500, flexDirection: "column" }}>
       <Tree
-        findItemById={findItemById}
-        getItemPath={getItemPath}
-        canAcceptChild={canAcceptChild}
+        canAcceptChild={(itemId) => {
+          const item = findItemById(root, itemId);
+          return (
+            (item?.canAcceptChildren ?? false) &&
+            (item?.isHidden ?? false) === false
+          );
+        }}
         canLeaveParent={() => true}
-        getItemChildren={getItemChildren}
+        getItemChildren={(itemId) => findItemById(root, itemId)?.children ?? []}
+        isItemHidden={(itemSelector) =>
+          findItemById(root, itemSelector[0])?.isHidden ?? false
+        }
         animate={animate}
         root={root}
         selectedItemSelector={selectedItemSelector}
-        onSelect={(instanceId) => {
-          setSelectedItemSelector(
-            getItemPath(root, instanceId)
-              .reverse()
-              .map((item) => item.id)
-          );
-        }}
+        dragItemSelector={dragItemSelector}
+        dropTarget={dropTarget}
+        onSelect={setSelectedItemSelector}
+        onDropTargetChange={setDropTarget}
+        onDragItemChange={setDragItemSelector}
         renderItem={(props) => (
           <TreeItemBody {...props}>
             <TreeItemLabel>{props.itemData.id}</TreeItemLabel>
           </TreeItemBody>
         )}
-        onDragEnd={(payload) => setRoot((root) => reparent(root, payload))}
+        onDragEnd={(payload) => {
+          setRoot((root) => reparent(root, payload));
+          setDragItemSelector(undefined);
+          setDropTarget(undefined);
+        }}
+        onCancel={() => {
+          setDragItemSelector(undefined);
+          setDropTarget(undefined);
+        }}
       />
     </Flex>
   );

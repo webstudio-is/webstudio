@@ -1,5 +1,5 @@
 import React from "react";
-import { styled, VariantProps, CSS } from "../stitches.config";
+import { styled, type VariantProps, type CSS } from "../stitches.config";
 import * as AvatarPrimitive from "@radix-ui/react-avatar";
 import { Box } from "./box";
 import { Status } from "./status";
@@ -293,7 +293,15 @@ export const Avatar = React.forwardRef<
               mb: `-${theme.spacing[2]}`,
             }}
           >
-            <Status size={size && size > 2 ? "2" : "1"} variant={status} />
+            <Status
+              size={
+                (typeof size === "number" && size > 2) ||
+                (typeof size === "string" && parseInt(size, 10) > 2)
+                  ? "2"
+                  : "1"
+              }
+              variant={status}
+            />
           </Box>
         )}
       </Box>

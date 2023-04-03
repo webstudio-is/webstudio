@@ -25,6 +25,7 @@ import type {
   InstancesList,
 } from "@webstudio-is/project-build";
 import { idAttribute } from "@webstudio-is/react-sdk";
+import type { InstanceSelector } from "~/shared/tree-utils";
 import { ToolbarConnectorPlugin } from "./toolbar-connector";
 import { type Refs, $convertToLexical, $convertToUpdates } from "./interop";
 
@@ -117,25 +118,27 @@ const onError = (error: Error) => {
 };
 
 type TextEditorProps = {
-  rootInstanceId: Instance["id"];
+  rootInstanceSelector: InstanceSelector;
   instances: Instances;
   contentEditable: JSX.Element;
   onChange: (instancesList: InstancesList) => void;
-  onSelectInstance: (instanceId: string) => void;
+  onSelectInstance: (instanceId: Instance["id"]) => void;
 };
 
 export const TextEditor = ({
-  rootInstanceId,
+  rootInstanceSelector,
   instances,
   contentEditable,
   onChange,
   onSelectInstance,
 }: TextEditorProps) => {
-  const [paragraphClassName] = useState(() => nanoid());
-  const [italicClassName] = useState(() => nanoid());
+  // class names must be started with letter so we add a prefix
+  const [paragraphClassName] = useState(() => `a${nanoid()}`);
+  const [italicClassName] = useState(() => `a${nanoid()}`);
 
   useLayoutEffect(() => {
     const engine = createCssEngine({ name: "text-editor" });
+
     // reset paragraph styles and make it work inside <a>
     engine.addPlaintextRule(`
       .${paragraphClassName} { display: inline; margin: 0; }
@@ -166,7 +169,7 @@ export const TextEditor = ({
       // text editor is unmounted when change properties in side panel
       // so assume new nodes don't need to preserve instance id
       // and store only initial references
-      $convertToLexical(instances, rootInstanceId, refs);
+      $convertToLexical(instances, rootInstanceSelector[0], refs);
     },
     nodes: [LinkNode],
     onError,
@@ -196,7 +199,7 @@ export const TextEditor = ({
         ignoreSelectionChange={true}
         onChange={(editorState) => {
           editorState.read(() => {
-            const treeRootInstance = instances.get(rootInstanceId);
+            const treeRootInstance = instances.get(rootInstanceSelector[0]);
             if (treeRootInstance) {
               onChange($convertToUpdates(treeRootInstance, refs));
             }

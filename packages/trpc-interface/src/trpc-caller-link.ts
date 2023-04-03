@@ -1,7 +1,7 @@
 import type { AnyRouter } from "@trpc/server";
 // eslint-disable-next-line import/no-internal-modules
 import { observable } from "@trpc/server/observable";
-import { TRPCClientError, TRPCLink } from "@trpc/client";
+import { TRPCClientError, type TRPCLink } from "@trpc/client";
 
 type MemoryLinkOptions<TemplateRouter extends AnyRouter> = {
   appRouter: TemplateRouter;

@@ -1,4 +1,4 @@
-import { ShareProject, LinkOptions } from "./share-project";
+import { ShareProject, type LinkOptions } from "./share-project";
 import { createTrpcRemixProxy } from "~/shared/remix/trpc-remix-proxy";
 import type { AuthorizationTokensRouter } from "@webstudio-is/authorization-token";
 import { authorizationTokenPath, builderUrl } from "~/shared/router-utils";

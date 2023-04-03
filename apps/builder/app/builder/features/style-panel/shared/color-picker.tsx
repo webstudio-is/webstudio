@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
 import { colord, extend, type RgbaColor } from "colord";
 import namesPlugin from "colord/plugins/names";
-import { ColorResult, RGBColor, SketchPicker } from "react-color";
+import { type ColorResult, type RGBColor, SketchPicker } from "react-color";
 import type {
   InvalidValue,
   KeywordValue,

@@ -18,6 +18,7 @@ import type { GetComponent } from "../components/components-utils";
 
 export type Data = {
   page: Page;
+  pages: Array<Page>;
   build: Build;
   assets: Array<Asset>;
   params?: Params;
@@ -86,6 +87,7 @@ export const InstanceRoot = ({
       getPropsByInstanceId(new Map(data.build.props))
     ),
     assetsStore: atom(new Map(data.assets.map((asset) => [asset.id, asset]))),
+    pagesStore: atom(new Map(data.pages.map((page) => [page.id, page]))),
     Component: Component ?? WebstudioComponent,
     getComponent,
   });

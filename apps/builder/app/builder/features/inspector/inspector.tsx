@@ -1,4 +1,4 @@
-import { useRef } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useStore } from "@nanostores/react";
 import type { Publish } from "~/shared/pubsub";
 import {
@@ -17,11 +17,17 @@ import { StylePanel } from "~/builder/features/style-panel";
 import { PropsPanelContainer } from "~/builder/features/props-panel";
 import { FloatingPanelProvider } from "~/builder/shared/floating-panel";
 import { theme } from "@webstudio-is/design-system";
-import { selectedInstanceStore } from "~/shared/nano-states";
+import {
+  selectedInstanceStore,
+  useDragAndDropState,
+} from "~/shared/nano-states";
 import { SettingsPanel } from "../settings-panel";
+import { NavigatorTree } from "~/builder/shared/navigator-tree";
+import type { Settings } from "~/builder/shared/client-settings";
 
 type InspectorProps = {
   publish: Publish;
+  navigatorLayout: Settings["navigatorLayout"];
 };
 
 const contentStyle = {
@@ -30,9 +36,32 @@ const contentStyle = {
   overflow: "auto",
 };
 
-export const Inspector = ({ publish }: InspectorProps) => {
+// separate component to avoid inspetor updates on drag when navigator is undocked
+const NavigatorTreePreview = () => {
+  const [dragAndDropState] = useDragAndDropState();
+  if (dragAndDropState.isDragging) {
+    return <NavigatorTree />;
+  }
+  return null;
+};
+
+export const Inspector = ({ publish, navigatorLayout }: InspectorProps) => {
   const selectedInstance = useStore(selectedInstanceStore);
   const tabsRef = useRef<HTMLDivElement>(null);
+
+  const [tab, setTab] = useState("style");
+
+  useEffect(() => {
+    if (selectedInstance?.component === "Slot") {
+      if (tab === "style" || tab === "props") {
+        setTab("settings");
+      }
+    }
+  }, [selectedInstance, tab]);
+
+  if (navigatorLayout === "docked") {
+    return <NavigatorTreePreview />;
+  }
 
   if (selectedInstance === undefined) {
     return (
@@ -56,13 +85,19 @@ export const Inspector = ({ publish }: InspectorProps) => {
       skipDelayDuration={0}
     >
       <FloatingPanelProvider container={tabsRef}>
-        <Flex as={Tabs} defaultValue="style" grow ref={tabsRef}>
+        <Flex as={Tabs} grow ref={tabsRef} value={tab} onValueChange={setTab}>
           <TabsList>
-            <TabsTrigger value="style">
+            <TabsTrigger
+              value="style"
+              disabled={selectedInstance.component === "Slot"}
+            >
               <DeprecatedText2>Style</DeprecatedText2>
             </TabsTrigger>
             {/* @note: events would be part of props */}
-            <TabsTrigger value="props">
+            <TabsTrigger
+              value="props"
+              disabled={selectedInstance.component === "Slot"}
+            >
               <DeprecatedText2>Properties</DeprecatedText2>
             </TabsTrigger>
             <TabsTrigger value="settings">

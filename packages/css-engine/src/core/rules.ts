@@ -73,17 +73,6 @@ export type MediaRuleOptions = {
 };
 
 export class MediaRule {
-  // Sort media rules by minWidth.
-  // Needed to ensure that more specific media rules are inserted after less specific ones.
-  // So that they get a higher specificity.
-  static sort(mediaRules: Iterable<MediaRule>) {
-    return Array.from(mediaRules).sort((ruleA, ruleB) => {
-      return (
-        (ruleA.options.minWidth ?? -Number.MAX_SAFE_INTEGER) -
-        (ruleB.options.minWidth ?? -Number.MAX_SAFE_INTEGER)
-      );
-    });
-  }
   options: MediaRuleOptions;
   rules: Array<StyleRule | PlaintextRule> = [];
   #mediaType;
@@ -106,15 +95,12 @@ export class MediaRule {
     let conditionText = "";
     const { minWidth, maxWidth } = this.options;
     if (minWidth !== undefined) {
-      conditionText = `min-width: ${minWidth}px`;
+      conditionText = ` and (min-width: ${minWidth}px)`;
     }
     if (maxWidth !== undefined) {
-      conditionText = `max-width: ${maxWidth}px`;
+      conditionText += ` and (max-width: ${maxWidth}px)`;
     }
-    if (conditionText) {
-      conditionText = `and (${conditionText}) `;
-    }
-    return `@media ${this.#mediaType} ${conditionText}{\n${rules.join(
+    return `@media ${this.#mediaType}${conditionText} {\n${rules.join(
       "\n"
     )}\n}`;
   }

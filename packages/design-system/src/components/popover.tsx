@@ -5,6 +5,8 @@ import { Separator } from "./separator";
 
 export const Popover = Primitive.Root;
 
+export const PopoverPortal = Primitive.Portal;
+
 const contentStyle = css({
   border: `1px solid ${theme.colors.borderMain}`,
   boxShadow: `${theme.shadows.menuDropShadow}, inset 0 0 0 1px ${theme.colors.borderMenuInner}`,

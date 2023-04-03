@@ -17,7 +17,7 @@ import type {
   InstancesItem,
   InstancesList,
 } from "@webstudio-is/project-build";
-import { utils } from "@webstudio-is/project";
+import { nanoid } from "nanoid";
 import { $isSpanNode, $setNodeSpan } from "./toolbar-connector";
 
 // Map<nodeKey, instanceId>
@@ -46,7 +46,7 @@ const $writeUpdates = (
     }
     if ($isLinkNode(child)) {
       const key = child.getKey();
-      const id = refs.get(key) ?? utils.tree.createInstanceId();
+      const id = refs.get(key) ?? nanoid();
       refs.set(key, id);
       instanceChildren.push({
         type: "id",
@@ -70,7 +70,7 @@ const $writeUpdates = (
       if ($isSpanNode(child)) {
         // prematurely generate span id to select it right after applying
         const key = `${child.getKey()}:span`;
-        const id = refs.get(key) ?? utils.tree.createInstanceId();
+        const id = refs.get(key) ?? nanoid();
         refs.set(key, id);
         const childInstance: InstancesItem = {
           type: "instance",
@@ -86,7 +86,7 @@ const $writeUpdates = (
       for (const [format, component] of lexicalFormats) {
         if (child.hasFormat(format)) {
           const key = `${child.getKey()}:${format}`;
-          const id = refs.get(key) ?? utils.tree.createInstanceId();
+          const id = refs.get(key) ?? nanoid();
           refs.set(key, id);
           const childInstance: InstancesItem = {
             type: "instance",

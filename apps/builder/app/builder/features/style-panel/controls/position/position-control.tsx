@@ -44,7 +44,7 @@ export const PositionControl = ({
   setProperty,
   deleteProperty,
 }: ControlProps) => {
-  const { label, items } = styleConfigByName[property];
+  const { label, items } = styleConfigByName(property);
   const styleInfo = currentStyle[property];
   const value = toTuple(styleInfo?.value);
   const styleSource = getStyleSource(styleInfo);

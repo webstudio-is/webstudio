@@ -2,7 +2,7 @@ import { useMemo, Fragment, useEffect } from "react";
 import { useStore } from "@nanostores/react";
 import { computed } from "nanostores";
 import type { CanvasData } from "@webstudio-is/project";
-import type { Instance } from "@webstudio-is/project-build";
+import type { Instance, Page } from "@webstudio-is/project-build";
 import {
   createElementsTree,
   registerComponents,
@@ -18,19 +18,17 @@ import { publish } from "~/shared/pubsub";
 import { registerContainers, useCanvasStore } from "~/shared/sync";
 import { useSharedShortcuts } from "~/shared/shortcuts";
 import { useShortcuts } from "./shared/use-shortcuts";
-import { usePublishTextEditingInstanceId } from "./shared/instance";
 import { useManageDesignModeStyles, GlobalStyles } from "./shared/styles";
-import { useTrackSelectedElement } from "./shared/use-track-selected-element";
 import { WebstudioComponentDev } from "./features/webstudio-component";
 import {
   propsIndexStore,
   assetsStore,
+  pagesStore,
   useRootInstance,
-  useSubscribeScrollState,
+  instancesStore,
   useIsPreviewMode,
   selectedPageStore,
 } from "~/shared/nano-states";
-import { usePublishScrollState } from "./shared/use-publish-scroll-state";
 import { useDragAndDrop } from "./shared/use-drag-drop";
 import { useSubscribeBuilderReady } from "./shared/use-builder-ready";
 import { useCopyPaste } from "~/shared/copy-paste";
@@ -56,6 +54,28 @@ const temporaryRootInstance: Instance = {
 const useElementsTree = (getComponent: GetComponent) => {
   const [rootInstance] = useRootInstance();
 
+  // @todo remove after https://github.com/webstudio-is/webstudio-builder/issues/1313 now its needed to be sure that no leaks exists
+  // eslint-disable-next-line no-console
+  console.log({
+    rootInstance,
+    assetsStore: assetsStore.get().size,
+    pagesStore: pagesStore.get()?.pages.length ?? 0,
+    instancesStore: instancesStore.get().size,
+  });
+
+  const pagesMapStore = useMemo(
+    () =>
+      computed(pagesStore, (pages): Map<string, Page> => {
+        if (pages === undefined) {
+          return new Map();
+        }
+        return new Map(
+          [pages.homePage, ...pages.pages].map((page) => [page.id, page])
+        );
+      }),
+    []
+  );
+
   return useMemo(() => {
     return createElementsTree({
       sandbox: true,
@@ -64,18 +84,15 @@ const useElementsTree = (getComponent: GetComponent) => {
       instance: rootInstance ?? temporaryRootInstance,
       propsByInstanceIdStore,
       assetsStore,
+      pagesStore: pagesMapStore,
       Component: WebstudioComponentDev,
       getComponent,
     });
-  }, [rootInstance, getComponent]);
+  }, [rootInstance, getComponent, pagesMapStore]);
 };
 
 const DesignMode = () => {
   useManageDesignModeStyles();
-  useTrackSelectedElement();
-  usePublishScrollState();
-  useSubscribeScrollState();
-  usePublishTextEditingInstanceId();
   useDragAndDrop();
   // We need to initialize this in both canvas and builder,
   // because the events will fire in either one, depending on where the focus is
@@ -90,16 +107,16 @@ const DesignMode = () => {
 };
 
 type CanvasProps = {
-  data: CanvasData;
+  params: CanvasData["params"];
   getComponent: GetComponent;
 };
 
 export const Canvas = ({
-  data,
+  params,
   getComponent,
 }: CanvasProps): JSX.Element | null => {
   const isBuilderReady = useSubscribeBuilderReady();
-  setParams(data.params ?? null);
+  setParams(params ?? null);
   useCanvasStore(publish);
   const [isPreviewMode] = useIsPreviewMode();
 

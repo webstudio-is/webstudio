@@ -1,6 +1,6 @@
 import { useMemo, useState } from "react";
 import type { Placement } from "../primitives/dnd";
-import type { ItemDropTarget, ItemSelector } from "./item-utils";
+import type { ItemDropTarget, ItemId, ItemSelector } from "./item-utils";
 import { getPlacementIndicatorAlignment } from "./tree-node";
 
 export type ShiftedDropTarget = {
@@ -9,80 +9,81 @@ export type ShiftedDropTarget = {
   placement?: Placement;
 };
 
-export const useHorizontalShift = <Data extends { id: string }>({
+export const useHorizontalShift = <Data extends { id: ItemId }>({
   dragItemSelector,
   dropTarget,
-  root,
+  placementIndicator,
   getIsExpanded,
-  getItemPath,
   canAcceptChild,
+  isItemHidden,
   getItemChildren,
 }: {
-  getItemChildren: (item: Data) => Data[];
-  canAcceptChild: (item: Data) => boolean;
-  getItemPath: (root: Data, id: string) => Data[];
+  getItemChildren: (itemId: ItemId) => Data[];
+  canAcceptChild: (itemId: ItemId) => boolean;
+  isItemHidden: (itemId: ItemId) => boolean;
   dragItemSelector: undefined | ItemSelector;
-  dropTarget: ItemDropTarget<Data> | undefined;
-  root: Data;
-  getIsExpanded: (item: Data) => boolean;
+  dropTarget: ItemDropTarget | undefined;
+  placementIndicator: undefined | Placement;
+  getIsExpanded: (itemSelector: ItemSelector) => boolean;
 }) => {
   const [horizontalShift, setHorizontalShift] = useState(0);
 
   // Here we want to allow user to shift placement line horizontally
   // but only if that corresponds to a meaningful position in the tree
   const shiftedDropTarget = useMemo((): ShiftedDropTarget | undefined => {
-    if (dropTarget === undefined || dragItemSelector === undefined) {
+    if (
+      dropTarget === undefined ||
+      placementIndicator === undefined ||
+      dragItemSelector === undefined
+    ) {
       return undefined;
     }
 
-    const dragItemDepth = dragItemSelector.length - 1;
-
-    const {
-      itemSelector: dropItemSelector,
-      data,
-      placement,
-      indexWithinChildren,
-    } = dropTarget;
+    const { itemSelector: dropItemSelector, indexWithinChildren } = dropTarget;
 
     const shiftPlacement = (depth: number) => {
       const shift = getPlacementIndicatorAlignment(depth);
       return {
-        ...placement,
-        x: placement.x + shift,
-        length: placement.length - shift,
+        ...placementIndicator,
+        x: placementIndicator.x + shift,
+        length: placementIndicator.length - shift,
       };
     };
 
     // Placement type “inside-parent” means that useDrop() didn’t find any children.
     // In this case the placement line coordinates are meaningless in the context of the tree.
     // We're dropping the placement and not performing any shifting.
-    if (placement.type === "inside-parent") {
+    if (placementIndicator.type === "inside-parent") {
       return { itemSelector: dropItemSelector, position: "end" };
     }
 
+    let dropHiddenCount = 0;
+    for (const itemId of dropItemSelector) {
+      if (isItemHidden(itemId)) {
+        dropHiddenCount += 1;
+      }
+    }
+
+    const dragItemDepth = dragItemSelector.length - 1;
     const currentDepth = dropItemSelector.length;
     const desiredDepth = dragItemDepth + horizontalShift;
 
     const withoutShift = {
       itemSelector: dropItemSelector,
       position: indexWithinChildren,
-      placement: shiftPlacement(currentDepth),
+      placement: shiftPlacement(currentDepth - dropHiddenCount),
     } as const;
 
     const [dragItemId] = dragItemSelector;
     const isDragItem = (item: Data | undefined) => item?.id === dragItemId;
 
-    const dropTargetPath = getItemPath(root, data.id);
-    dropTargetPath.reverse();
-
     if (desiredDepth < currentDepth) {
       let shifted = 0;
-      let newParent = data;
       let newParentSelector = dropItemSelector;
       let newPosition = indexWithinChildren;
 
-      const isAtTheBottom = (parent: Data, index: number) => {
-        const children = getItemChildren(parent);
+      const isAtTheBottom = (parentId: ItemId, index: number) => {
+        const children = getItemChildren(parentId);
 
         // There's a special case when the placement line is above the drag item.
         // For reparenting, above and below the drag item means the same.
@@ -91,19 +92,18 @@ export const useHorizontalShift = <Data extends { id: string }>({
       };
 
       // skip drop item
-      for (let index = 1; index < dropTargetPath.length; index += 1) {
-        const potentialNewParent = dropTargetPath[index];
+      for (let index = 1; index < dropItemSelector.length; index += 1) {
+        const potentialNewParentId = dropItemSelector[index];
         if (
-          isAtTheBottom(newParent, newPosition) &&
-          canAcceptChild(potentialNewParent) &&
+          isAtTheBottom(newParentSelector[0], newPosition) &&
+          canAcceptChild(potentialNewParentId) &&
           shifted < currentDepth - desiredDepth
         ) {
           shifted = index;
-          newParent = potentialNewParent;
           newParentSelector = dropItemSelector.slice(index);
-          const child = dropTargetPath[index - 1];
-          const childPosition = getItemChildren(newParent).findIndex(
-            (item) => item.id === child.id
+          const childId = dropItemSelector[index - 1];
+          const childPosition = getItemChildren(newParentSelector[0]).findIndex(
+            (item) => item.id === childId
           );
           newPosition = childPosition + 1;
           continue;
@@ -118,40 +118,41 @@ export const useHorizontalShift = <Data extends { id: string }>({
       return {
         itemSelector: newParentSelector,
         position: newPosition,
-        placement: shiftPlacement(currentDepth - shifted),
+        placement: shiftPlacement(currentDepth - dropHiddenCount - shifted),
       };
     }
 
     if (desiredDepth > currentDepth) {
       let shifted = 0;
-      let newParent = data;
       let newParentSelector = dropItemSelector;
 
       const findNextParent = (
-        parent: Data,
+        parentId: ItemId,
         position: number | "last"
-      ): undefined | Data => {
-        const children = getItemChildren(parent);
+      ): undefined | ItemId => {
+        const children = getItemChildren(parentId);
         const index = position === "last" ? children.length - 1 : position;
 
         // There's a special case when the placement line is below the drag item.
         // For reparenting, above and below the drag item means the same.
         return isDragItem(children[index])
-          ? children[index - 1]
-          : children[index];
+          ? children[index - 1]?.id
+          : children[index]?.id;
       };
 
-      let potentialNewParent = findNextParent(data, indexWithinChildren - 1);
+      let potentialNewParentId = findNextParent(
+        dropItemSelector[0],
+        indexWithinChildren - 1
+      );
 
       while (
-        potentialNewParent &&
-        getIsExpanded(potentialNewParent) &&
-        canAcceptChild(potentialNewParent) &&
+        potentialNewParentId !== undefined &&
+        getIsExpanded([potentialNewParentId, ...newParentSelector]) &&
+        canAcceptChild(potentialNewParentId) &&
         shifted < desiredDepth - currentDepth
       ) {
-        newParent = potentialNewParent;
-        newParentSelector = [newParent.id, ...newParentSelector];
-        potentialNewParent = findNextParent(newParent, "last");
+        newParentSelector = [potentialNewParentId, ...newParentSelector];
+        potentialNewParentId = findNextParent(potentialNewParentId, "last");
         shifted++;
       }
 
@@ -162,18 +163,18 @@ export const useHorizontalShift = <Data extends { id: string }>({
       return {
         itemSelector: newParentSelector,
         position: "end",
-        placement: shiftPlacement(currentDepth + shifted),
+        placement: shiftPlacement(currentDepth - dropHiddenCount + shifted),
       };
     }
 
     return withoutShift;
   }, [
     dropTarget,
+    placementIndicator,
     dragItemSelector,
-    root,
     horizontalShift,
-    getItemPath,
     canAcceptChild,
+    isItemHidden,
     getItemChildren,
     getIsExpanded,
   ]);

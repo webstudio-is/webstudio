@@ -1,42 +1,79 @@
+import type { InvalidValue, RgbValue } from "@webstudio-is/css-data";
 import { TextArea, theme } from "@webstudio-is/design-system";
 import { useEffect, useRef, useState } from "react";
 import { parseCssValue } from "../../shared/parse-css-value";
 import type { ControlProps } from "../../style-sections";
+import { parseBackground } from "./background-parser";
+
+type IntermediateValue = {
+  type: "intermediate";
+  value: string;
+};
 
 export const BackgroundGradient = (
-  props: Omit<ControlProps, "property" | "items">
+  props: Omit<ControlProps, "property" | "items"> & {
+    setBackgroundColor: (color: RgbValue) => void;
+  }
 ) => {
   const property = "backgroundImage";
+  const textAreaRef = useRef<HTMLTextAreaElement>(null);
 
   const styleInfo = props.currentStyle[property];
   const styleValue = styleInfo?.value;
 
-  // In gradient section we want to show gradient data only
   const [intermediateValue, setIntermediateValue] = useState<
-    string | undefined
+    IntermediateValue | InvalidValue | undefined
   >(undefined);
 
-  const value =
-    intermediateValue ??
+  const textAreaValue =
+    intermediateValue?.value ??
     (styleValue?.type === "unparsed" ? styleValue.value : undefined);
 
-  const handleChange = (value: string, isEphemeral: boolean) => {
-    setIntermediateValue(isEphemeral ? value : undefined);
+  const handleChange = (value: string) => {
+    setIntermediateValue({
+      type: "intermediate",
+      value,
+    });
 
+    // This doesn't have the same behavior as CssValueInput.
+    // However, it's great to see the immediate results when making gradient changes,
+    // especially until we have a better gradient tool.
     const newValue = parseCssValue(property, value);
 
     if (newValue.type === "unparsed") {
-      props.setProperty(property)(newValue, { isEphemeral });
+      props.setProperty(property)(newValue, { isEphemeral: true });
       return;
     }
 
-    props.deleteProperty(property, { isEphemeral });
+    // Set backgroundImage at layer to none if it's invalid
+    props.setProperty(property)(
+      { type: "keyword", value: "none" },
+      { isEphemeral: true }
+    );
   };
 
   const handleOnComplete = () => {
-    if (intermediateValue !== undefined) {
-      handleChange(intermediateValue, false);
+    if (intermediateValue === undefined) {
+      return;
     }
+
+    const { backgroundImage, backgroundColor } = parseBackground(
+      intermediateValue.value
+    );
+
+    if (backgroundColor !== undefined) {
+      props.setBackgroundColor(backgroundColor);
+    }
+
+    if (backgroundImage.type !== "invalid") {
+      setIntermediateValue(undefined);
+      props.setProperty(property)(backgroundImage);
+      return;
+    }
+
+    // Set invalid state
+    setIntermediateValue({ type: "invalid", value: intermediateValue.value });
+    props.deleteProperty(property, { isEphemeral: true });
   };
 
   const handleOnCompleteRef = useRef(handleOnComplete);
@@ -51,18 +88,30 @@ export const BackgroundGradient = (
 
   return (
     <TextArea
+      ref={textAreaRef}
       css={{ minHeight: theme.spacing[14] }}
       rows={2}
       name="description"
       disabled={props.disabled}
-      value={value}
+      value={textAreaValue ?? ""}
+      state={intermediateValue?.type === "invalid" ? "invalid" : undefined}
       onChange={(event) => {
-        handleChange(event.target.value, true);
+        handleChange(event.target.value);
       }}
       onBlur={handleOnComplete}
       onKeyDown={(event) => {
         if (event.key === "Enter") {
           handleOnComplete();
+          event.preventDefault();
+        }
+
+        if (event.key === "Escape") {
+          if (intermediateValue === undefined) {
+            return;
+          }
+          props.deleteProperty(property, { isEphemeral: true });
+          setIntermediateValue(undefined);
+          event.preventDefault();
         }
       }}
     />

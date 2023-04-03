@@ -17,13 +17,10 @@ export const Default: ComponentStory<typeof IconButton> = () => {
         <IconButton variant="preset">
           <CrossIcon fill="currentColor" />
         </IconButton>
-        <IconButton variant="set">
+        <IconButton variant="local">
           <CrossIcon fill="currentColor" />
         </IconButton>
-        <IconButton variant="inherited">
-          <CrossIcon fill="currentColor" />
-        </IconButton>
-        <IconButton variant="active">
+        <IconButton variant="remote">
           <CrossIcon fill="currentColor" />
         </IconButton>
       </Flex>
@@ -34,10 +31,38 @@ export const Default: ComponentStory<typeof IconButton> = () => {
         <IconButton variant="preset" disabled={true}>
           <CrossIcon fill="currentColor" />
         </IconButton>
-        <IconButton variant="set" disabled={true}>
+        <IconButton variant="local" disabled={true}>
           <CrossIcon fill="currentColor" />
         </IconButton>
-        <IconButton variant="inherited" disabled={true}>
+        <IconButton variant="remote" disabled={true}>
+          <CrossIcon fill="currentColor" />
+        </IconButton>
+      </Flex>
+      <Flex gap={2}>
+        <IconButton data-state={"open"}>
+          <CrossIcon fill="currentColor" />
+        </IconButton>
+        <IconButton variant="preset" data-state={"open"}>
+          <CrossIcon fill="currentColor" />
+        </IconButton>
+        <IconButton variant="local" data-state={"open"}>
+          <CrossIcon fill="currentColor" />
+        </IconButton>
+        <IconButton variant="remote" data-state={"open"}>
+          <CrossIcon fill="currentColor" />
+        </IconButton>
+      </Flex>
+      <Flex gap={2}>
+        <IconButton data-focused={true}>
+          <CrossIcon fill="currentColor" />
+        </IconButton>
+        <IconButton variant="preset" data-focused={true}>
+          <CrossIcon fill="currentColor" />
+        </IconButton>
+        <IconButton variant="local" data-focused={true}>
+          <CrossIcon fill="currentColor" />
+        </IconButton>
+        <IconButton variant="remote" data-focused={true}>
           <CrossIcon fill="currentColor" />
         </IconButton>
       </Flex>

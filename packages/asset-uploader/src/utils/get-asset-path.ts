@@ -1,4 +1,4 @@
-import { Asset as DbAsset, Location } from "@webstudio-is/prisma-client";
+import { type Asset as DbAsset, Location } from "@webstudio-is/prisma-client";
 import { FsEnv, S3Env } from "../schema";
 import path from "path";
 

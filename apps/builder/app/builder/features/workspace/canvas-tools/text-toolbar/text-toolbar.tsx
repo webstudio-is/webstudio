@@ -1,24 +1,22 @@
 import { useRef, useEffect } from "react";
 import { useStore } from "@nanostores/react";
 import { computePosition, flip, offset, shift } from "@floating-ui/dom";
-import type { Publish } from "~/shared/pubsub";
+import { theme, Flex, IconButton, Tooltip } from "@webstudio-is/design-system";
 import {
-  type TextToolbarState,
-  useTextToolbarState,
-} from "~/builder/shared/nano-states";
-import { Flex, IconButton, Tooltip } from "@webstudio-is/design-system";
-import {
-  FontBoldIcon,
-  FontItalicIcon,
   SuperscriptIcon,
   SubscriptIcon,
-  Link2Icon,
-  BrushIcon,
   CrossSmallIcon,
+  BoldIcon,
+  TextItalicIcon,
+  LinkIcon,
+  PaintBrushIcon,
 } from "@webstudio-is/icons";
-import { useSubscribe } from "~/shared/pubsub";
-import { theme } from "@webstudio-is/design-system";
 import { selectedInstanceSelectorStore } from "~/shared/nano-states";
+import {
+  type TextToolbarState,
+  textToolbarStore,
+} from "~/shared/nano-states/canvas";
+import type { Publish } from "~/shared/pubsub";
 
 type Format =
   | "bold"
@@ -31,17 +29,9 @@ type Format =
 
 declare module "~/shared/pubsub" {
   export interface PubsubMap {
-    showTextToolbar: TextToolbarState;
-    hideTextToolbar: void;
     formatTextToolbar: Format;
   }
 }
-
-export const useSubscribeTextToolbar = () => {
-  const [, setTextToolbar] = useTextToolbarState();
-  useSubscribe("showTextToolbar", setTextToolbar);
-  useSubscribe("hideTextToolbar", () => setTextToolbar(undefined));
-};
 
 const getRectForRelativeRect = (parent: DOMRect, rel: DOMRect) => {
   return {
@@ -65,6 +55,9 @@ const Toolbar = ({ state, onToggle }: ToolbarProps) => {
   const rootRef = useRef<HTMLDivElement | null>(null);
 
   useEffect(() => {
+    if (state.selectionRect === undefined) {
+      return;
+    }
     if (rootRef.current?.parentElement) {
       const floating = rootRef.current;
       const parent = rootRef.current.parentElement;
@@ -101,7 +94,7 @@ const Toolbar = ({ state, onToggle }: ToolbarProps) => {
         top: 0,
         left: 0,
         pointerEvents: "auto",
-        background: theme.colors.loContrast,
+        background: theme.colors.backgroundPanel,
         padding: theme.spacing[3],
         borderRadius: theme.borderRadius[6],
         border: `1px solid ${theme.colors.slate8}`,
@@ -125,27 +118,27 @@ const Toolbar = ({ state, onToggle }: ToolbarProps) => {
       <Tooltip content="Bold">
         <IconButton
           aria-label="Bold"
-          variant={state.isBold ? "set" : "default"}
+          variant={state.isBold ? "local" : "default"}
           onClick={() => onToggle("bold")}
         >
-          <FontBoldIcon />
+          <BoldIcon />
         </IconButton>
       </Tooltip>
 
       <Tooltip content="Italic">
         <IconButton
           aria-label="Italic"
-          variant={state.isItalic ? "set" : "default"}
+          variant={state.isItalic ? "local" : "default"}
           onClick={() => onToggle("italic")}
         >
-          <FontItalicIcon />
+          <TextItalicIcon />
         </IconButton>
       </Tooltip>
 
       <Tooltip content="Superscript">
         <IconButton
           aria-label="Superscript"
-          variant={state.isSuperscript ? "set" : "default"}
+          variant={state.isSuperscript ? "local" : "default"}
           onClick={() => onToggle("superscript")}
         >
           <SuperscriptIcon />
@@ -155,7 +148,7 @@ const Toolbar = ({ state, onToggle }: ToolbarProps) => {
       <Tooltip content="Subscript">
         <IconButton
           aria-label="Subscript"
-          variant={state.isSubscript ? "set" : "default"}
+          variant={state.isSubscript ? "local" : "default"}
           onClick={() => onToggle("subscript")}
         >
           <SubscriptIcon />
@@ -165,20 +158,20 @@ const Toolbar = ({ state, onToggle }: ToolbarProps) => {
       <Tooltip content="Inline link">
         <IconButton
           aria-label="Inline link"
-          variant={state.isLink ? "set" : "default"}
+          variant={state.isLink ? "local" : "default"}
           onClick={() => onToggle("link")}
         >
-          <Link2Icon />
+          <LinkIcon />
         </IconButton>
       </Tooltip>
 
       <Tooltip content="Wrap with span">
         <IconButton
           aria-label="Wrap with span"
-          variant={state.isSpan ? "set" : "default"}
+          variant={state.isSpan ? "local" : "default"}
           onClick={() => onToggle("span")}
         >
-          <BrushIcon />
+          <PaintBrushIcon />
         </IconButton>
       </Tooltip>
     </Flex>
@@ -190,10 +183,13 @@ type TextToolbarProps = {
 };
 
 export const TextToolbar = ({ publish }: TextToolbarProps) => {
-  const [textToolbar] = useTextToolbarState();
+  const textToolbar = useStore(textToolbarStore);
   const selectedInstanceSelector = useStore(selectedInstanceSelectorStore);
 
-  if (textToolbar == null || selectedInstanceSelector === undefined) {
+  if (
+    textToolbar?.selectionRect === undefined ||
+    selectedInstanceSelector === undefined
+  ) {
     return null;
   }
 

@@ -4,6 +4,7 @@ import { useStore } from "@nanostores/react";
 import { nanoid } from "nanoid";
 import type { AuthPermit } from "@webstudio-is/trpc-interface";
 import type { Asset } from "@webstudio-is/asset-uploader";
+import type { ItemDropTarget, Placement } from "@webstudio-is/design-system";
 import type {
   Breakpoint,
   Breakpoints,
@@ -23,10 +24,7 @@ import type {
   StyleSourceSelections,
 } from "@webstudio-is/project-build";
 import type { Style } from "@webstudio-is/css-data";
-import type {
-  DropTargetChangePayload,
-  DragStartPayload,
-} from "~/canvas/shared/use-drag-drop";
+import type { DragStartPayload } from "~/canvas/shared/use-drag-drop";
 import type {
   AssetContainer,
   DeletingAssetContainer,
@@ -34,6 +32,7 @@ import type {
 import { useSyncInitializeOnce } from "../hook-utils";
 import { shallowComputed } from "../store-utils";
 import { createInstancesIndex, type InstanceSelector } from "../tree-utils";
+import type { htmlTags as HtmlTags } from "html-tags";
 
 const useValue = <T>(atom: WritableAtom<T>) => {
   const value = useStore(atom);
@@ -77,6 +76,16 @@ export const useSetInstances = (
     instancesStore.set(new Map(instances));
   });
 };
+
+export const rootInstanceStore = computed(
+  [instancesStore, selectedPageStore],
+  (instances, selectedPage) => {
+    if (selectedPage === undefined) {
+      return undefined;
+    }
+    return instances.get(selectedPage.rootInstanceId);
+  }
+);
 
 // @todo will be removed soon
 const denormalizeTree = (
@@ -321,6 +330,13 @@ export const selectedInstanceStore = computed(
 
 export const selectedInstanceBrowserStyleStore = atom<undefined | Style>();
 
+/**
+ * instanceId => tagName store for selected instance and its ancestors
+ */
+export const selectedInstanceIntanceToTagStore = atom<
+  undefined | Map<Instance["id"], HtmlTags>
+>();
+
 export const selectedInstanceStyleSourcesStore = computed(
   [
     styleSourceSelectionsStore,
@@ -359,14 +375,14 @@ export const selectedInstanceStyleSourcesStore = computed(
 
 /**
  * Provide selected style source with fallback
- * to local style source of selected instance
+ * to the last style source of selected instance
  */
 export const selectedStyleSourceStore = computed(
   [selectedInstanceStyleSourcesStore, selectedStyleSourceIdStore],
   (styleSources, selectedStyleSourceId) => {
     return (
       styleSources.find((item) => item.id === selectedStyleSourceId) ??
-      styleSources.find((item) => item.type === "local")
+      styleSources.at(-1)
     );
   }
 );
@@ -374,9 +390,6 @@ export const selectedStyleSourceStore = computed(
 export const hoveredInstanceSelectorStore = atom<undefined | InstanceSelector>(
   undefined
 );
-export const hoveredInstanceOutlineStore = atom<
-  undefined | { label?: string; component: string; rect: DOMRect }
->(undefined);
 
 export const isPreviewModeStore = atom<boolean>(false);
 export const useIsPreviewMode = () => useValue(isPreviewModeStore);
@@ -402,29 +415,11 @@ export const useSetAuthToken = (authToken: string | undefined) => {
   });
 };
 
-const selectedInstanceOutlineContainer = atom<{
-  visible: boolean;
-  rect?: DOMRect;
-}>({
-  visible: false,
-  rect: undefined,
-});
-export const useSelectedInstanceOutline = () =>
-  useValue(selectedInstanceOutlineContainer);
-
-const isScrollingContainer = atom<boolean>(false);
-export const useIsScrolling = () => useValue(isScrollingContainer);
-
-// We are editing the text of that instance in text editor.
-export const textEditingInstanceIdStore = atom<Instance["id"] | undefined>();
-export const useTextEditingInstanceId = () =>
-  useValue(textEditingInstanceIdStore);
-
 export type DragAndDropState = {
   isDragging: boolean;
-  origin?: "canvas" | "panel";
-  dropTarget?: DropTargetChangePayload;
-  dragItem?: DragStartPayload["dragItem"];
+  dropTarget?: ItemDropTarget;
+  dragPayload?: DragStartPayload;
+  placementIndicator?: Placement;
 };
 const dragAndDropStateContainer = atom<DragAndDropState>({
   isDragging: false,

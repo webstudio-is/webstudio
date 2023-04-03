@@ -65,7 +65,7 @@ export const SettingsPanel = ({
           css={{
             flexGrow: 1,
             width: theme.spacing[35],
-            background: theme.colors.loContrast,
+            background: theme.colors.backgroundPanel,
             borderRight: `1px solid ${theme.colors.slate7}`,
             position: "relative",
           }}

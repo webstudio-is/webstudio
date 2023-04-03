@@ -2,7 +2,7 @@ import type { ComponentStory } from "@storybook/react";
 import { RowGapIcon } from "@webstudio-is/icons";
 import React from "react";
 import { NestedIconLabel } from "./nested-icon-label";
-import { Select, SelectOption } from "./select";
+import { Select, type SelectOption } from "./select";
 
 export default {
   component: Select,

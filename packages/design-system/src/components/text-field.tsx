@@ -144,7 +144,7 @@ export const TextFieldContainer = styled("div", {
   display: "flex",
   flexWrap: "wrap",
   alignItems: "center",
-  backgroundColor: theme.colors.loContrast,
+  backgroundColor: theme.colors.backgroundControls,
   boxShadow: `inset 0 0 0 1px ${theme.colors.slate7}`,
   color: theme.colors.hiContrast,
   fontVariantNumeric: "tabular-nums",
@@ -180,7 +180,7 @@ export const TextFieldContainer = styled("div", {
           },
         },
         "&:focus": {
-          backgroundColor: theme.colors.loContrast,
+          backgroundColor: theme.colors.backgroundControls,
           boxShadow: `inset 0px 0px 0px 1px ${theme.colors.blue10}, 0px 0px 0px 1px ${theme.colors.blue10}`,
         },
         "&:disabled": {

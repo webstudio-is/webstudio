@@ -1,15 +1,17 @@
-import type { Placement } from "../primitives/dnd";
+import type { ChildrenOrientation } from "../primitives/dnd/geometry-utils";
 
 export type ItemId = string;
 
 export type ItemSelector = string[];
 
-export type ItemDropTarget<Item> = {
+export type ItemDropTarget = {
   itemSelector: ItemSelector;
-  data: Item;
-  rect: DOMRect;
   indexWithinChildren: number;
-  placement: Placement;
+  placement: {
+    closestChildIndex: number;
+    indexAdjustment: number;
+    childrenOrientation: ChildrenOrientation;
+  };
 };
 
 export const getElementByItemSelector = (
@@ -21,11 +23,7 @@ export const getElementByItemSelector = (
     .map((id) => `[data-drop-target-id="${id}"]`)
     .reverse()
     .join(" ");
-  const [itemId] = itemSelector;
-  return (
-    root?.querySelector(`${domSelector} [data-item-button-id="${itemId}"]`) ??
-    undefined
-  );
+  return root?.querySelector(domSelector) ?? undefined;
 };
 
 export const getItemSelectorFromElement = (element: Element) => {
@@ -44,8 +42,8 @@ export const getItemSelectorFromElement = (element: Element) => {
 };
 
 export const areItemSelectorsEqual = (
-  left?: ItemSelector,
-  right?: ItemSelector
+  left: undefined | ItemSelector,
+  right: undefined | ItemSelector
 ) => {
   if (left === undefined || right === undefined) {
     return false;

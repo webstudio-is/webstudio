@@ -1,4 +1,4 @@
-import { ComponentProps, useState } from "react";
+import { type ComponentProps, useState } from "react";
 import type { StyleValue, StyleProperty } from "@webstudio-is/css-data";
 import { Box, EnhancedTooltip } from "@webstudio-is/design-system";
 import {
@@ -17,6 +17,7 @@ type CssValueInputContainerProps = {
   setValue: SetValue;
   deleteProperty: DeleteProperty;
   disabled?: boolean;
+  icon?: JSX.Element;
 };
 
 export const CssValueInputContainer = ({
@@ -28,6 +29,7 @@ export const CssValueInputContainer = ({
   setValue,
   deleteProperty,
   disabled,
+  icon,
 }: CssValueInputContainerProps) => {
   const [intermediateValue, setIntermediateValue] = useState<
     StyleValue | IntermediateStyleValue
@@ -37,6 +39,7 @@ export const CssValueInputContainer = ({
     <EnhancedTooltip content={label}>
       <Box>
         <CssValueInput
+          icon={icon}
           disabled={disabled}
           styleSource={styleSource}
           property={property}
