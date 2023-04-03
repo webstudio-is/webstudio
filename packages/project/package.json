@@ -7,8 +7,7 @@
   "type": "module",
   "scripts": {
     "typecheck": "tsc --noEmit",
-    "test": "NODE_OPTIONS=--experimental-vm-modules jest",
-    "checks": "pnpm typecheck && pnpm lint && pnpm test",
+    "checks": "pnpm typecheck && pnpm lint",
     "dev": "build-package --watch",
     "build": "build-package",
     "lint": "eslint ./src --ext .ts,.tsx --max-warnings 0"
@@ -17,27 +16,19 @@
     "@trpc/server": "^10.9.0",
     "@webstudio-is/asset-uploader": "workspace:^",
     "@webstudio-is/css-data": "workspace:^",
-    "@webstudio-is/css-engine": "workspace:^",
-    "@webstudio-is/fonts": "workspace:^",
     "@webstudio-is/prisma-client": "workspace:^",
     "@webstudio-is/project-build": "workspace:^",
     "@webstudio-is/react-sdk": "workspace:^",
     "@webstudio-is/trpc-interface": "workspace:^",
-    "immer": "^9.0.12",
     "nanoid": "^3.2.0",
-    "react": "^17.0.2",
     "slugify": "^1.6.5",
     "uuid": "^9.0.0",
-    "warn-once": "^0.1.1",
     "zod": "^3.19.1"
   },
   "devDependencies": {
-    "@jest/globals": "^29.3.1",
     "@types/uuid": "^8.3.4",
-    "@webstudio-is/jest-config": "workspace:^",
     "@webstudio-is/scripts": "workspace:^",
     "@webstudio-is/tsconfig": "workspace:^",
-    "jest": "^29.3.1",
     "typescript": "5.0.3"
   },
   "exports": {
@@ -51,8 +42,7 @@
   "types": "src/index.ts",
   "files": [
     "lib/*",
-    "src/*",
-    "!*.test.*"
+    "src/*"
   ],
   "license": "MIT",
   "private": false,

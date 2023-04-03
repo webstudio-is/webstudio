@@ -1056,12 +1056,6 @@ importers:
       '@webstudio-is/css-data':
         specifier: workspace:^
         version: link:../css-data
-      '@webstudio-is/css-engine':
-        specifier: workspace:^
-        version: link:../css-engine
-      '@webstudio-is/fonts':
-        specifier: workspace:^
-        version: link:../fonts
       '@webstudio-is/prisma-client':
         specifier: workspace:^
         version: link:../prisma-client
@@ -1074,46 +1068,28 @@ importers:
       '@webstudio-is/trpc-interface':
         specifier: workspace:^
         version: link:../trpc-interface
-      immer:
-        specifier: ^9.0.12
-        version: 9.0.15
       nanoid:
         specifier: ^3.2.0
         version: 3.3.4
-      react:
-        specifier: ^17.0.2
-        version: 17.0.2
       slugify:
         specifier: ^1.6.5
         version: 1.6.5
       uuid:
         specifier: ^9.0.0
         version: 9.0.0
-      warn-once:
-        specifier: ^0.1.1
-        version: 0.1.1
       zod:
         specifier: ^3.19.1
         version: 3.19.1
     devDependencies:
-      '@jest/globals':
-        specifier: ^29.3.1
-        version: 29.3.1
       '@types/uuid':
         specifier: ^8.3.4
         version: 8.3.4
-      '@webstudio-is/jest-config':
-        specifier: workspace:^
-        version: link:../jest-config
       '@webstudio-is/scripts':
         specifier: workspace:^
         version: link:../scripts
       '@webstudio-is/tsconfig':
         specifier: workspace:^
         version: link:../tsconfig
-      jest:
-        specifier: ^29.3.1
-        version: 29.3.1(@types/node@18.11.18)
       typescript:
         specifier: 5.0.3
         version: 5.0.3
@@ -1178,9 +1154,15 @@ importers:
       '@webstudio-is/css-data':
         specifier: workspace:^
         version: link:../css-data
+      '@webstudio-is/css-engine':
+        specifier: workspace:^
+        version: link:../css-engine
       '@webstudio-is/css-vars':
         specifier: workspace:^
         version: link:../css-vars
+      '@webstudio-is/fonts':
+        specifier: workspace:^
+        version: link:../fonts
       '@webstudio-is/generate-arg-types':
         specifier: workspace:^
         version: link:../generate-arg-types
@@ -1208,9 +1190,6 @@ importers:
       nanostores:
         specifier: ^0.7.1
         version: 0.7.1
-      warn-once:
-        specifier: ^0.1.1
-        version: 0.1.1
     devDependencies:
       '@babel/core':
         specifier: ^7.21.0

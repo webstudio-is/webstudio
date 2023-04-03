@@ -1,12 +1,9 @@
 import { createCssEngine } from "@webstudio-is/css-engine";
 import type { Asset } from "@webstudio-is/asset-uploader";
 import type { Build } from "@webstudio-is/project-build";
-import {
-  componentAttribute,
-  getComponentMeta,
-  getComponentNames,
-  idAttribute,
-} from "@webstudio-is/react-sdk";
+import { getComponentNames } from "../components/components-utils";
+import { getComponentMeta } from "../components";
+import { componentAttribute, idAttribute } from "../tree";
 import { addGlobalRules } from "./global-rules";
 import { getStyleRules } from "./style-rules";
 

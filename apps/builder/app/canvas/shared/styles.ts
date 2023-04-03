@@ -1,7 +1,14 @@
 import { useEffect } from "react";
 import { useIsomorphicLayoutEffect } from "react-use";
 import { useStore } from "@nanostores/react";
-import { addGlobalRules } from "@webstudio-is/project";
+import {
+  collapsedAttribute,
+  componentAttribute,
+  getComponentMeta,
+  getComponentNames,
+  idAttribute,
+  addGlobalRules,
+} from "@webstudio-is/react-sdk";
 import {
   assetsStore,
   isPreviewModeStore,
@@ -9,13 +16,6 @@ import {
   useBreakpoints,
 } from "~/shared/nano-states";
 import type { StyleDecl } from "@webstudio-is/project-build";
-import {
-  collapsedAttribute,
-  componentAttribute,
-  getComponentMeta,
-  getComponentNames,
-  idAttribute,
-} from "@webstudio-is/react-sdk";
 import {
   validStaticValueTypes,
   type ValidStaticStyleValue,
