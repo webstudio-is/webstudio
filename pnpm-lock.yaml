@@ -31,8 +31,8 @@ importers:
         specifier: ^0.8.0
         version: 0.8.0
       prettier:
-        specifier: 2.8.4
-        version: 2.8.4
+        specifier: 2.8.7
+        version: 2.8.7
       simple-git-hooks:
         specifier: ^2.8.1
         version: 2.8.1
@@ -349,9 +349,6 @@ importers:
       jest:
         specifier: ^29.3.1
         version: 29.3.1(@types/node@18.11.18)
-      prettier:
-        specifier: ^2.8.4
-        version: 2.8.4
       react-test-renderer:
         specifier: ^17.0.2
         version: 17.0.2(react@17.0.2)
@@ -16665,8 +16662,8 @@ packages:
     hasBin: true
     dev: true
 
-  /prettier@2.8.4:
-    resolution: {integrity: sha512-vIS4Rlc2FNh0BySk3Wkd6xmwxB0FpOndW5fisM5H8hsZSxU2VWVB5CWIkIjWvrHjIhxk2g3bfMKM87zNTrZddw==}
+  /prettier@2.8.7:
+    resolution: {integrity: sha512-yPngTo3aXUUmyuTjeTUT75txrf+aMh9FiD7q9ZE/i6r0bPb22g4FsE6Y338PQX1bmfy08i9QQCB7/rcUAVntfw==}
     engines: {node: '>=10.13.0'}
     hasBin: true
     dev: true

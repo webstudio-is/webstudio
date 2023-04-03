@@ -28,7 +28,7 @@
     "@webstudio-is/eslint-config-custom": "workspace:^",
     "chromatic": "^6.11.4",
     "nano-staged": "^0.8.0",
-    "prettier": "2.8.4",
+    "prettier": "2.8.7",
     "simple-git-hooks": "^2.8.1",
     "tsx": "^3.12.6",
     "turbo": "^1.8.6",
