@@ -105,7 +105,11 @@ const getInitialState = <Data>() => {
  */
 export const defaultGetValidChildren = (parent: Element) =>
   Array.from(parent.children).filter(
-    (element) => element.hasAttribute("data-placement-indicator") === false
+    (element) =>
+      // hidden attribute is used by react-aria FocusScope helper elements to support focus lock, focus wrap etc
+      // we don't want to include them in the list of children
+      element.hasAttribute("hidden") === false &&
+      element.hasAttribute("data-placement-indicator") === false
   );
 
 export const useDrop = <Data>(props: UseDropProps<Data>): UseDropHandlers => {
