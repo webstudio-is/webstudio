@@ -1,5 +1,5 @@
 import type { CssEngine } from "@webstudio-is/css-engine";
-import type { Asset, FontAsset } from "@webstudio-is/asset-uploader";
+import type { Assets, FontAsset } from "@webstudio-is/asset-uploader";
 import {
   type FontFormat,
   FONT_FORMATS,
@@ -8,7 +8,7 @@ import {
 
 export const addGlobalRules = (
   engine: CssEngine,
-  { assets }: { assets: Map<Asset["id"], Asset> }
+  { assets }: { assets: Assets }
 ) => {
   // @todo we need to figure out all global resets while keeping
   // the engine aware of all of them.
@@ -17,7 +17,7 @@ export const addGlobalRules = (
 
   const fontAssets: Array<FontAsset> = [];
   for (const asset of assets.values()) {
-    if (FONT_FORMATS.has(asset.format as FontFormat)) {
+    if (asset && FONT_FORMATS.has(asset.format as FontFormat)) {
       fontAssets.push(asset as FontAsset);
     }
   }

@@ -2,13 +2,11 @@ import { useContext, useMemo } from "react";
 import { computed } from "nanostores";
 import { useStore } from "@nanostores/react";
 import type { Instance, Page, Prop, Props } from "@webstudio-is/project-build";
-import type { Asset } from "@webstudio-is/asset-uploader";
 import { ReactSdkContext } from "./context";
 import { idAttribute } from "./tree/webstudio-component";
 
 export type PropsByInstanceId = Map<Instance["id"], Prop[]>;
 
-export type Assets = Map<Asset["id"], Asset>;
 export type Pages = Map<Page["id"], Page>;
 
 export const getPropsByInstanceId = (props: Props) => {
