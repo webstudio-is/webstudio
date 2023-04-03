@@ -350,6 +350,7 @@ const StyleSourceState = styled(Box, {
   backgroundColor: theme.colors.backgroundStyleSourceToken,
   borderTopRightRadius: theme.borderRadius[3],
   borderBottomRightRadius: theme.borderRadius[3],
+  cursor: "default",
 });
 
 type StyleSourceProps = {
