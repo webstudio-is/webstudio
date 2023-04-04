@@ -1,5 +1,5 @@
 /**
- * Implementation of the "Title (title of: section)" component from:
+ * Implementation of the "Section Title" component from:
  * https://www.figma.com/file/sfCE7iLS0k25qCxiifQNLE/%F0%9F%93%9A-Webstudio-Library?node-id=2%3A12361
  *
  * Designed to be used with Collapsible.Trigger
