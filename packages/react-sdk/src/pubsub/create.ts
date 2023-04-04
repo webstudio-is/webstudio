@@ -1,5 +1,6 @@
 import { createNanoEvents } from "nanoevents";
 import { useCallback, useEffect, useRef } from "react";
+// eslint-disable-next-line camelcase
 import { unstable_batchedUpdates } from "react-dom";
 
 export const createPubsub = <PublishMap>() => {
