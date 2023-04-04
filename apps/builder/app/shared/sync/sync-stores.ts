@@ -11,8 +11,8 @@ import {
   stylesStore,
   styleSourcesStore,
   styleSourceSelectionsStore,
+  assetsStore,
   selectedPageIdStore,
-  assetContainersStore,
   selectedInstanceSelectorStore,
   selectedInstanceBrowserStyleStore,
   selectedInstanceIntanceToTagStore,
@@ -60,8 +60,8 @@ export const registerContainers = () => {
   store.register("styleSourceSelections", styleSourceSelectionsStore);
   store.register("props", propsStore);
   // synchronize whole states
+  clientStores.set("assets", assetsStore);
   clientStores.set("selectedPageId", selectedPageIdStore);
-  clientStores.set("assetContainers", assetContainersStore);
   clientStores.set("selectedInstanceSelector", selectedInstanceSelectorStore);
   clientStores.set(
     "selectedInstanceBrowserStyle",

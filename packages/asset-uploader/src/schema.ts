@@ -38,8 +38,10 @@ export const FsEnv = z.object({
 export const Location = z.union([z.literal("FS"), z.literal("REMOTE")]);
 export type Location = z.infer<typeof Location>;
 
+const AssetId = z.string();
+
 const BaseAsset = z.object({
-  id: z.string(),
+  id: AssetId,
   projectId: z.string(),
   format: z.string(),
   size: z.number(),
@@ -67,3 +69,8 @@ export const Asset = z.union([FontAsset, ImageAsset]);
 export type Asset = z.infer<typeof Asset>;
 
 export const idsFormDataFieldName = "ids";
+
+// undefined is necessary to represent uploading state
+// to be able to upload data while preserving order
+export const Assets = z.map(AssetId, z.union([z.undefined(), Asset]));
+export type Assets = z.infer<typeof Assets>;

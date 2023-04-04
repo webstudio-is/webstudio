@@ -4,6 +4,7 @@
 generator client {
   provider        = "prisma-client-js"
   previewFeatures = ["views", "clientExtensions"]
+  output          = "../src/__generated__"
   // <output-placeholder-for-migrations>
 }
 
