@@ -1,16 +1,18 @@
 import { atom } from "nanostores";
 import { getComponentMeta } from "@webstudio-is/react-sdk";
+
 import type { InstanceSelector } from "../tree-utils";
 import {
   selectedInstanceSelectorStore,
   selectedInstanceStore,
 } from "./nano-states";
+import { getElementByInstanceSelector } from "../dom-utils";
 
 export const textEditingInstanceSelectorStore = atom<
   undefined | InstanceSelector
 >();
 
-export const enterEditingMode = (event: KeyboardEvent) => {
+export const enterEditingMode = (event?: KeyboardEvent) => {
   const selectedInstanceSelector = selectedInstanceSelectorStore.get();
   const selectedInstance = selectedInstanceStore.get();
   if (
@@ -19,12 +21,24 @@ export const enterEditingMode = (event: KeyboardEvent) => {
   ) {
     return;
   }
+
   const meta = getComponentMeta(selectedInstance.component);
-  if (meta?.type === "rich-text") {
-    // Prevents inserting a newline when entering text-editing mode
-    event.preventDefault();
-    textEditingInstanceSelectorStore.set(selectedInstanceSelector);
+  if (meta?.type !== "rich-text") {
+    return;
   }
+
+  const element = getElementByInstanceSelector(selectedInstanceSelector);
+
+  if (element === undefined) {
+    return;
+  }
+
+  // Enter click can be intercepted from builder and element can be unfocused
+  element.focus();
+
+  // Prevents inserting a newline when entering text-editing mode
+  event?.preventDefault();
+  textEditingInstanceSelectorStore.set(selectedInstanceSelector);
 };
 
 export const escapeSelection = () => {
