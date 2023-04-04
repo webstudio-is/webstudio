@@ -1,6 +1,6 @@
 import type { Asset } from "@webstudio-is/asset-uploader";
 
-type PreviewAsset = Pick<
+export type PreviewAsset = Pick<
   Asset,
   "path" | "name" | "id" | "format" | "description" | "type"
 >;
@@ -13,14 +13,6 @@ export type UploadedAssetContainer = {
 export type UploadingAssetContainer = {
   status: "uploading";
   asset: Asset | PreviewAsset;
-};
-
-/**
- * Used for optimistic UI only
- **/
-export type DeletingAssetContainer = {
-  status: "deleting";
-  asset: Asset;
 };
 
 /**

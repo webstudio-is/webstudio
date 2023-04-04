@@ -3,7 +3,7 @@ import { atom, computed, type WritableAtom } from "nanostores";
 import { useStore } from "@nanostores/react";
 import { nanoid } from "nanoid";
 import type { AuthPermit } from "@webstudio-is/trpc-interface";
-import type { Asset } from "@webstudio-is/asset-uploader";
+import type { Asset, Assets } from "@webstudio-is/asset-uploader";
 import type { ItemDropTarget, Placement } from "@webstudio-is/design-system";
 import type {
   Breakpoint,
@@ -25,10 +25,6 @@ import type {
 } from "@webstudio-is/project-build";
 import type { Style } from "@webstudio-is/css-data";
 import type { DragStartPayload } from "~/canvas/shared/use-drag-drop";
-import type {
-  AssetContainer,
-  DeletingAssetContainer,
-} from "~/builder/shared/assets";
 import { useSyncInitializeOnce } from "../hook-utils";
 import { shallowComputed } from "../store-utils";
 import { createInstancesIndex, type InstanceSelector } from "../tree-utils";
@@ -290,31 +286,10 @@ export const useSetBreakpoints = (
   });
 };
 
-export const assetContainersStore = atom<
-  Array<AssetContainer | DeletingAssetContainer>
->([]);
-
-export const assetsStore = computed(assetContainersStore, (assetContainers) => {
-  const assets = new Map<Asset["id"], Asset>();
-  for (const assetContainer of assetContainers) {
-    if (assetContainer.status === "uploaded") {
-      assets.set(assetContainer.asset.id, assetContainer.asset);
-    }
-  }
-  return assets;
-});
-export const assetsIndex = computed;
-
+export const assetsStore = atom<Assets>(new Map());
 export const useSetAssets = (assets: Asset[]) => {
   useSyncInitializeOnce(() => {
-    assetContainersStore.set(
-      assets.map((asset) => {
-        return {
-          status: "uploaded",
-          asset,
-        };
-      })
-    );
+    assetsStore.set(new Map(assets.map((asset) => [asset.id, asset])));
   });
 };
 
