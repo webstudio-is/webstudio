@@ -1,6 +1,6 @@
 import { redirect } from "@remix-run/node";
-import type { LoaderArgs, ErrorBoundaryComponent } from "@remix-run/node";
-import { useLoaderData } from "@remix-run/react";
+import type { LoaderArgs } from "@remix-run/node";
+import { useLoaderData, useRouteError } from "@remix-run/react";
 import { type Params, Root, getComponent } from "@webstudio-is/react-sdk";
 import env from "~/env/env.public.server";
 import { sentryException } from "~/shared/sentry";
@@ -23,7 +23,8 @@ export const loader = async ({ request }: LoaderArgs) => {
   return { params };
 };
 
-export const ErrorBoundary: ErrorBoundaryComponent = ({ error }) => {
+export const ErrorBoundary = () => {
+  const error = useRouteError();
   sentryException({ error });
   const message = error instanceof Error ? error.message : String(error);
   return <ErrorMessage message={message} />;
