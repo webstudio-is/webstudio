@@ -1,4 +1,9 @@
-import { Flex, TextField, theme, useId } from "@webstudio-is/design-system";
+import {
+  Flex,
+  DeprecatedTextField,
+  theme,
+  useId,
+} from "@webstudio-is/design-system";
 import {
   type ControlProps,
   getLabel,
@@ -35,7 +40,7 @@ export const ColorControl = ({
           width: theme.spacing[22],
         }}
       >
-        <TextField
+        <DeprecatedTextField
           id={id}
           value={localValue.value}
           onChange={(event) => localValue.set(event.target.value)}

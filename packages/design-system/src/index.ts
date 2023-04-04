@@ -31,8 +31,8 @@ export * from "./components/text-area";
 export * from "./components/radio";
 export * from "./components/checkbox";
 export * from "./components/component-card";
-export * from "./components/primitives/arrow-focus";
-export * from "./components/scroll-area";
+export * from "./components/input-field";
+export * from "./components/nested-select-button";
 
 // Not aligned
 
@@ -41,7 +41,6 @@ export * as Collapsible from "@radix-ui/react-collapsible";
 export { AccessibleIcon } from "@radix-ui/react-accessible-icon";
 export * from "./components/toggle-group";
 export * from "./components/progress-radial";
-export * from "./components/text-field";
 export { SearchField } from "./components/search-field";
 export { Tabs, TabsContent, TabsList, TabsTrigger } from "./components/tabs";
 export {
@@ -76,6 +75,8 @@ export { Grid } from "./components/grid";
 export * from "./components/primitives/dnd";
 export * from "./components/primitives/numeric-gesture-control";
 export * from "./components/primitives/is-truncated";
+export * from "./components/primitives/arrow-focus";
+export * from "./components/scroll-area";
 
 // Deprecated
 
@@ -87,3 +88,4 @@ export { DeprecatedHeading } from "./components/__DEPRECATED__/heading";
 export { DeprecatedLabel } from "./components/__DEPRECATED__/label";
 export * from "./components/__DEPRECATED__/popover";
 export * from "./components/__DEPRECATED__/paragraph";
+export * from "./components/__DEPRECATED__/text-field";

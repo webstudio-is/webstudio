@@ -10,7 +10,7 @@ import {
   CrossCircledFilledIcon,
   MagnifyingGlassIcon,
 } from "@webstudio-is/icons";
-import { TextField } from "./text-field";
+import { DeprecatedTextField } from "./__DEPRECATED__/text-field";
 import { DeprecatedIconButton } from "./__DEPRECATED__/icon-button";
 import { styled } from "../stitches.config";
 import { theme } from "../stitches.config";
@@ -26,7 +26,7 @@ const AbortButton = styled(DeprecatedIconButton, {
 
 const SearchFieldBase: ForwardRefRenderFunction<
   HTMLInputElement,
-  ComponentProps<typeof TextField> & { onCancel?: () => void }
+  ComponentProps<typeof DeprecatedTextField> & { onCancel?: () => void }
 > = (props, ref) => {
   const {
     onChange,
@@ -41,7 +41,7 @@ const SearchFieldBase: ForwardRefRenderFunction<
     setValue(String(propsValue));
   }, [propsValue]);
   return (
-    <TextField
+    <DeprecatedTextField
       {...rest}
       ref={ref}
       type="search"

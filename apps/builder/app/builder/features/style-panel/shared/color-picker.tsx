@@ -293,7 +293,7 @@ export const ColorPicker = ({
   return (
     <CssValueInput
       styleSource={styleSource}
-      icon={prefix}
+      prefix={prefix}
       property={property}
       value={value}
       intermediateValue={intermediateValue}

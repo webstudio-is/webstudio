@@ -20,7 +20,7 @@ import {
   Box,
   DeprecatedLabel,
   TextArea,
-  TextField,
+  DeprecatedTextField,
   styled,
   Flex,
   InputErrorsTooltip,
@@ -147,7 +147,7 @@ const FormFields = ({
       <Group>
         <DeprecatedLabel htmlFor={fieldIds.name}>Page Name</DeprecatedLabel>
         <InputErrorsTooltip errors={errors.name}>
-          <TextField
+          <DeprecatedTextField
             tabIndex={1}
             state={errors.name && "invalid"}
             id={fieldIds.name}
@@ -167,7 +167,7 @@ const FormFields = ({
         <Group>
           <DeprecatedLabel htmlFor={fieldIds.path}>Path</DeprecatedLabel>
           <InputErrorsTooltip errors={errors.path}>
-            <TextField
+            <DeprecatedTextField
               tabIndex={1}
               state={errors.path && "invalid"}
               id={fieldIds.path}
@@ -185,7 +185,7 @@ const FormFields = ({
       <Group>
         <DeprecatedLabel htmlFor={fieldIds.title}>Title</DeprecatedLabel>
         <InputErrorsTooltip errors={errors.title}>
-          <TextField
+          <DeprecatedTextField
             tabIndex={1}
             state={errors.title && "invalid"}
             id={fieldIds.title}

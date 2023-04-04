@@ -9,7 +9,7 @@ import {
   ComboboxAnchor,
   ComboboxListbox,
   ComboboxListboxItem,
-  TextField,
+  DeprecatedTextField,
   SmallIconButton,
   Separator,
   Flex,
@@ -88,7 +88,7 @@ const PropsCombobox = ({
     <Combobox>
       <div {...combobox.getComboboxProps()}>
         <ComboboxAnchor>
-          <TextField
+          <DeprecatedTextField
             autoFocus
             {...combobox.getInputProps()}
             placeholder="Property"

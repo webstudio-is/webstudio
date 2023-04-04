@@ -1,66 +1,69 @@
 import * as React from "react";
 import type { ComponentStory } from "@storybook/react";
 import { RowGapIcon, ChevronDownIcon } from "@webstudio-is/icons";
-import { Button } from "./button";
-import { Flex } from "./flex";
-import { DeprecatedIconButton } from "./__DEPRECATED__/icon-button";
-import { TextField } from "./text-field";
-import { Box } from "./box";
-import { Grid } from "./grid";
-import { DeprecatedText2 } from "./__DEPRECATED__/text2";
-import { theme } from "../stitches.config";
+import { Button } from "../button";
+import { Flex } from "../flex";
+import { DeprecatedIconButton } from "./icon-button";
+import { DeprecatedTextField } from "./text-field";
+import { Box } from "../box";
+import { Grid } from "../grid";
+import { DeprecatedText2 } from "./text2";
+import { theme } from "../../stitches.config";
 
 export default {
-  component: TextField,
+  component: DeprecatedTextField,
   argTypes: {
     onFocus: { action: true },
     onBlur: { action: true },
   },
 };
 
-export const Default: ComponentStory<typeof TextField> = () => {
-  return <TextField />;
+export const Default: ComponentStory<typeof DeprecatedTextField> = () => {
+  return <DeprecatedTextField />;
 };
 
-export const NativeProps: ComponentStory<typeof TextField> = () => {
+export const NativeProps: ComponentStory<typeof DeprecatedTextField> = () => {
   return (
     <Flex direction="column" gap={3}>
-      <TextField placeholder="This is a placeholder" />
-      <TextField disabled placeholder="This is a disabled placeholder" />
-      <TextField type="number" defaultValue={25} />
-      <TextField type="search" placeholder="This is a search input" />
-      <TextField type="button" defaultValue={"Arial"} />
-      <TextField readOnly value="Read-only" />
-      <TextField disabled value="Disabled" />
+      <DeprecatedTextField placeholder="This is a placeholder" />
+      <DeprecatedTextField
+        disabled
+        placeholder="This is a disabled placeholder"
+      />
+      <DeprecatedTextField type="number" defaultValue={25} />
+      <DeprecatedTextField type="search" placeholder="This is a search input" />
+      <DeprecatedTextField type="button" defaultValue={"Arial"} />
+      <DeprecatedTextField readOnly value="Read-only" />
+      <DeprecatedTextField disabled value="Disabled" />
     </Flex>
   );
 };
 
-export const Variants: ComponentStory<typeof TextField> = () => {
+export const Variants: ComponentStory<typeof DeprecatedTextField> = () => {
   return (
     <Flex direction="column" gap={3}>
-      <TextField />
-      <TextField variant="ghost" />
-      <TextField type="button" />
-      <TextField type="button" state="active" />
+      <DeprecatedTextField />
+      <DeprecatedTextField variant="ghost" />
+      <DeprecatedTextField type="button" />
+      <DeprecatedTextField type="button" state="active" />
     </Flex>
   );
 };
 
-export const State: ComponentStory<typeof TextField> = () => {
+export const State: ComponentStory<typeof DeprecatedTextField> = () => {
   return (
     <Flex direction="column" gap={3}>
-      <TextField />
-      <TextField state="invalid" />
-      <TextField state="valid" />
+      <DeprecatedTextField />
+      <DeprecatedTextField state="invalid" />
+      <DeprecatedTextField state="valid" />
     </Flex>
   );
 };
 
-export const PrefixSuffix: ComponentStory<typeof TextField> = () => {
+export const PrefixSuffix: ComponentStory<typeof DeprecatedTextField> = () => {
   return (
     <Flex direction="column" gap={3}>
-      <TextField
+      <DeprecatedTextField
         prefix={<RowGapIcon />}
         suffix={
           <DeprecatedIconButton>
@@ -68,7 +71,7 @@ export const PrefixSuffix: ComponentStory<typeof TextField> = () => {
           </DeprecatedIconButton>
         }
       />
-      <TextField
+      <DeprecatedTextField
         state="invalid"
         prefix={<RowGapIcon />}
         suffix={
@@ -77,7 +80,7 @@ export const PrefixSuffix: ComponentStory<typeof TextField> = () => {
           </DeprecatedIconButton>
         }
       />
-      <TextField
+      <DeprecatedTextField
         disabled
         prefix={<RowGapIcon />}
         suffix={
@@ -90,11 +93,11 @@ export const PrefixSuffix: ComponentStory<typeof TextField> = () => {
   );
 };
 
-export const Layout: ComponentStory<typeof TextField> = () => {
+export const Layout: ComponentStory<typeof DeprecatedTextField> = () => {
   return (
     <>
       <Flex direction="row" gap={2} css={{ justifyContent: "space-between" }}>
-        <TextField
+        <DeprecatedTextField
           value="Long content comes here and it doesn't wrap"
           prefix={<RowGapIcon />}
           suffix={
@@ -108,7 +111,7 @@ export const Layout: ComponentStory<typeof TextField> = () => {
           }}
         />
         <Box css={{ background: theme.colors.muted }}>Content</Box>
-        <TextField
+        <DeprecatedTextField
           state="invalid"
           value="Long content comes here and it doesn't wrap"
         />
@@ -128,7 +131,7 @@ export const Layout: ComponentStory<typeof TextField> = () => {
           </DeprecatedText2>
         </Box>
         <Box css={{ background: theme.colors.muted }}>
-          <TextField
+          <DeprecatedTextField
             id="field"
             value="Long content comes here and it doesn't wrap"
             prefix={<RowGapIcon />}
@@ -139,7 +142,7 @@ export const Layout: ComponentStory<typeof TextField> = () => {
             This is a label
           </DeprecatedText2>
         </Box>
-        <TextField
+        <DeprecatedTextField
           id="field2"
           value="Long content comes here and it doesn't wrap"
         />
@@ -148,14 +151,19 @@ export const Layout: ComponentStory<typeof TextField> = () => {
   );
 };
 
-export const Interactive: ComponentStory<typeof TextField> = () => {
+export const Interactive: ComponentStory<typeof DeprecatedTextField> = () => {
   const [value, setValue] = React.useState("");
   const wrapperRef = React.useRef<HTMLDivElement>(null);
   const inputRef = React.useRef<HTMLInputElement>(null);
 
   return (
     <Flex direction="column" gap={3}>
-      <TextField ref={wrapperRef} inputRef={inputRef} value={value} readOnly />
+      <DeprecatedTextField
+        ref={wrapperRef}
+        inputRef={inputRef}
+        value={value}
+        readOnly
+      />
       <Button
         onClick={() => {
           // eslint-disable-next-line no-console

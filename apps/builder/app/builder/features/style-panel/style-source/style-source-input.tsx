@@ -19,9 +19,9 @@ import {
   Combobox,
   ComboboxAnchor,
   ComboboxContent,
-  TextFieldContainer,
-  TextFieldInput,
-  useTextFieldFocus,
+  DeprecatedTextFieldContainer,
+  DeprecatedTextFieldInput,
+  useDeprecatedTextFieldFocus,
   useCombobox,
   type CSS,
   ComboboxLabel,
@@ -65,7 +65,7 @@ type TextFieldBaseWrapperProps<Item extends IntermediateItem> = Omit<
   "value"
 > &
   Pick<
-    ComponentProps<typeof TextFieldContainer>,
+    ComponentProps<typeof DeprecatedTextFieldContainer>,
     "variant" | "state" | "css"
   > & {
     value: Array<Item>;
@@ -109,7 +109,7 @@ const TextFieldBase: ForwardRefRenderFunction<
     editingItemId,
     ...textFieldProps
   } = props;
-  const [internalInputRef, focusProps] = useTextFieldFocus({
+  const [internalInputRef, focusProps] = useDeprecatedTextFieldFocus({
     disabled,
     onFocus,
     onBlur,
@@ -120,7 +120,7 @@ const TextFieldBase: ForwardRefRenderFunction<
   });
 
   return (
-    <TextFieldContainer
+    <DeprecatedTextFieldContainer
       {...focusProps}
       aria-disabled={disabled}
       ref={mergeRefs(forwardedRef, containerRef ?? null, sortableRefCallback)}
@@ -161,7 +161,7 @@ const TextFieldBase: ForwardRefRenderFunction<
       {placementIndicator}
       {/* We want input to be the first element in DOM so it receives the focus first */}
       {editingItemId === undefined && (
-        <TextFieldInput
+        <DeprecatedTextFieldInput
           {...textFieldProps}
           value={label}
           type={type}
@@ -171,7 +171,7 @@ const TextFieldBase: ForwardRefRenderFunction<
           aria-label="New Style Source Input"
         />
       )}
-    </TextFieldContainer>
+    </DeprecatedTextFieldContainer>
   );
 };
 
