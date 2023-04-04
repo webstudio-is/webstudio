@@ -65,7 +65,7 @@ type ScrollAreaProps = { children: JSX.Element | Array<JSX.Element> };
 export const ScrollArea = ({ children }: ScrollAreaProps) => {
   return (
     <ScrollAreaRoot>
-      <ScrollAreaViewport> {children}</ScrollAreaViewport>
+      <ScrollAreaViewport>{children}</ScrollAreaViewport>
       <ScrollAreaScrollbar orientation="vertical">
         <ScrollAreaThumb />
       </ScrollAreaScrollbar>
