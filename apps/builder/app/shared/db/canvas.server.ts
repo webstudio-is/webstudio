@@ -1,4 +1,5 @@
-import type { CanvasData, Project } from "@webstudio-is/project";
+import type { Project } from "@webstudio-is/project";
+import type { Data } from "@webstudio-is/react-sdk";
 import { loadBuildByProjectId } from "@webstudio-is/project-build/server";
 import { db as projectDb } from "@webstudio-is/project/server";
 import { loadByProject } from "@webstudio-is/asset-uploader/server";
@@ -10,7 +11,7 @@ export const loadProductionCanvasData = async (
     projectId: Project["id"];
   },
   context: AppContext
-): Promise<CanvasData> => {
+): Promise<Data> => {
   const project = await projectDb.project.loadByParams(
     { projectId: props.projectId },
     context
@@ -61,7 +62,7 @@ export const loadCanvasData = async (
     pageIdOrPath: string;
   },
   context: AppContext
-): Promise<CanvasData> => {
+): Promise<Data> => {
   const build =
     props.env === "dev"
       ? await loadBuildByProjectId(props.project.id, "dev")

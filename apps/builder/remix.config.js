@@ -13,7 +13,7 @@ module.exports = {
   // sym-linked and can't be hoisted. You could also manually name packages
   // e.g. ["@webstudio-is/ui", ...]
   serverDependenciesToBundle: [
-    /@webstudio-is\/.*/,
+    /@webstudio-is\/(?!prisma-client)/,
     "pretty-bytes",
     "djb2a",
     "nanostores",

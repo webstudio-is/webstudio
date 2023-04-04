@@ -1,7 +1,7 @@
 import { useMemo, Fragment, useEffect } from "react";
 import { useStore } from "@nanostores/react";
 import { computed } from "nanostores";
-import type { CanvasData } from "@webstudio-is/project";
+import type { Params } from "@webstudio-is/react-sdk";
 import type { Instance, Page } from "@webstudio-is/project-build";
 import {
   createElementsTree,
@@ -107,7 +107,7 @@ const DesignMode = () => {
 };
 
 type CanvasProps = {
-  params: CanvasData["params"];
+  params: Params;
   getComponent: GetComponent;
 };
 

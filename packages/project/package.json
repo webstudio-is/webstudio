@@ -16,10 +16,8 @@
   "dependencies": {
     "@trpc/server": "^10.9.0",
     "@webstudio-is/asset-uploader": "workspace:^",
-    "@webstudio-is/css-data": "workspace:^",
     "@webstudio-is/prisma-client": "workspace:^",
     "@webstudio-is/project-build": "workspace:^",
-    "@webstudio-is/react-sdk": "workspace:^",
     "@webstudio-is/trpc-interface": "workspace:^",
     "nanoid": "^3.2.0",
     "slugify": "^1.6.5",
@@ -36,7 +34,7 @@
     ".": {
       "source": "./src/index.ts",
       "import": "./lib/index.js",
-      "require": "./lib/cjs/index.cjs"
+      "require": "./lib/cjs/index.js"
     },
     "./server": {
       "source": "./src/index.server.ts",
