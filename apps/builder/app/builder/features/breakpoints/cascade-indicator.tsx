@@ -8,6 +8,7 @@ const cascadeIndicatorStyle = css({
   position: "absolute",
   bottom: 0,
   height: 2,
+  transition: "150ms width, 150ms left",
   '&[data-direction="left"]': {
     background: theme.colors.backgroundGradientHorizontal,
   },
