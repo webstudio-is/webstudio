@@ -3,7 +3,12 @@
  * https://www.figma.com/file/sfCE7iLS0k25qCxiifQNLE/%F0%9F%93%9A-Webstudio-Library?node-id=4-3304
  */
 
-import { forwardRef, ReactNode, type ComponentProps, type Ref } from "react";
+import {
+  forwardRef,
+  type ReactNode,
+  type ComponentProps,
+  type Ref,
+} from "react";
 import { textVariants } from "./text";
 import { css, theme, type CSS } from "../stitches.config";
 import { ArrowFocus } from "./primitives/arrow-focus";
