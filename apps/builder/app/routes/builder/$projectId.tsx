@@ -1,6 +1,6 @@
-import { useLoaderData } from "@remix-run/react";
+import { useLoaderData, useRouteError } from "@remix-run/react";
 import type { ShouldRevalidateFunction } from "@remix-run/react";
-import type { ErrorBoundaryComponent, LoaderArgs } from "@remix-run/node";
+import type { LoaderArgs } from "@remix-run/node";
 import { loadBuildByProjectId } from "@webstudio-is/project-build/server";
 import { db } from "@webstudio-is/project/server";
 import { authorizeProject } from "@webstudio-is/trpc-interface/server";
@@ -66,7 +66,8 @@ export const loader = async ({
   };
 };
 
-export const ErrorBoundary: ErrorBoundaryComponent = ({ error }) => {
+export const ErrorBoundary = () => {
+  const error = useRouteError();
   sentryException({ error });
   const message = error instanceof Error ? error.message : String(error);
   return <ErrorMessage message={message} />;

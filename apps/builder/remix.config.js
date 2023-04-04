@@ -16,6 +16,7 @@ module.exports = {
     /@webstudio-is\/(?!prisma-client)/,
     "pretty-bytes",
     "djb2a",
+    "nanoevents",
     "nanostores",
     "@nanostores/react",
     /micromark/,
@@ -30,5 +31,9 @@ module.exports = {
   // publicPath: "/build/",
   watchPaths: () => {
     return ["../../packages/**/lib/**.js"];
+  },
+
+  future: {
+    v2_errorBoundary: true,
   },
 };

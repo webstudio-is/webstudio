@@ -1,5 +1,10 @@
-import { useMemo, createContext, useContext, type ReactNode } from "react";
-import { useStore } from "@nanostores/react";
+import {
+  useMemo,
+  createContext,
+  useContext,
+  type ReactNode,
+  useState,
+} from "react";
 import warnOnce from "warn-once";
 import type { Project } from "@webstudio-is/project";
 import {
@@ -7,20 +12,44 @@ import {
   idsFormDataFieldName,
   MAX_UPLOAD_SIZE,
   toBytes,
+  Asset,
 } from "@webstudio-is/asset-uploader";
 import { toast } from "@webstudio-is/design-system";
 import { sanitizeS3Key } from "@webstudio-is/asset-uploader";
-import { assetContainersStore } from "~/shared/nano-states";
 import { restAssetsPath } from "~/shared/router-utils";
 import type {
   AssetContainer,
-  DeletingAssetContainer,
-  UploadedAssetContainer,
+  PreviewAsset,
   UploadingAssetContainer,
 } from "./types";
 import { usePersistentFetcher } from "~/shared/fetcher";
 import type { ActionData } from "~/builder/shared/assets";
 import { normalizeErrors, toastUnknownFieldErrors } from "~/shared/form-utils";
+import { assetsStore } from "~/shared/nano-states";
+import { useStore } from "@nanostores/react";
+
+// stubbed asset is necessary to preserve position of asset
+// while uploading and after it is uploaded
+// undefined is not stored in db and only persisted in current session
+const stubAssets = (ids: Asset["id"][]) => {
+  const assets = new Map(assetsStore.get());
+  for (const assetId of ids) {
+    assets.set(assetId, undefined);
+  }
+  assetsStore.set(assets);
+};
+
+const setAsset = (asset: Asset) => {
+  const assets = new Map(assetsStore.get());
+  assets.set(asset.id, asset);
+  assetsStore.set(assets);
+};
+
+const cleanAsset = (assetId: Asset["id"]) => {
+  const assets = new Map(assetsStore.get());
+  assets.delete(assetId);
+  assetsStore.set(assets);
+};
 
 export type UploadData = ActionData;
 
@@ -92,7 +121,7 @@ const getFilesFromInput = (_type: AssetType, input: HTMLInputElement) => {
 
 type AssetsContext = {
   handleSubmit: (type: AssetType, files: File[]) => Promise<void>;
-  assetContainers: Array<AssetContainer | DeletingAssetContainer>;
+  assetContainers: AssetContainer[];
   handleDelete: (ids: Array<string>) => void;
 };
 
@@ -107,52 +136,41 @@ export const AssetsProvider = ({
   authToken: string | undefined;
   children: ReactNode;
 }) => {
-  const assetContainers = useStore(assetContainersStore);
+  const [deletingAssetIds, setDeletingAssetIds] = useState<Asset["id"][]>([]);
+  const [uploadingAssets, setUploadingAssets] = useState<
+    Array<Asset | PreviewAsset>
+  >([]);
   const submit = usePersistentFetcher();
 
   const action = restAssetsPath({ projectId: projectId, authToken });
 
-  const handleDeleteAfterSubmit = (data: UploadData) => {
-    const { errors, deletedAssets } = data;
-    const assetContainers = assetContainersStore.get();
-    if (errors !== undefined) {
-      const nextAssetContainers = assetContainers.map((assetContainer) => {
-        if (assetContainer.status === "deleting") {
-          const uploadedAssetContainer: UploadedAssetContainer = {
-            ...assetContainer,
-            status: "uploaded",
-          };
-          return uploadedAssetContainer;
-        }
+  const handleDeleteAfterSubmit = (ids: Asset["id"][], data: UploadData) => {
+    setDeletingAssetIds((prev) =>
+      prev.filter((assetId) => ids.includes(assetId) === false)
+    );
 
-        return assetContainer;
-      });
-      assetContainersStore.set(nextAssetContainers);
+    const { errors, deletedAssets } = data;
+    if (errors !== undefined) {
       return toastUnknownFieldErrors(normalizeErrors(errors), []);
     }
 
-    if (deletedAssets) {
-      const deletedIds = new Set(deletedAssets.map((asset) => asset.id));
-      assetContainersStore.set(
-        assetContainers.filter(
-          (assetContainer) => deletedIds.has(assetContainer.asset.id) === false
-        )
-      );
+    if (deletedAssets === undefined) {
+      warnOnce(true, "Deleted assets is undefined");
+      toast.error("Could not delete assets");
+      return;
+    }
+
+    for (const deletedId of ids) {
+      cleanAsset(deletedId);
     }
   };
 
   const handleAfterSubmit = (assetId: string, data: UploadData) => {
-    const assetContainers = assetContainersStore.get();
+    // remove uploaded or failed asset
+    setUploadingAssets((prev) => prev.filter((asset) => asset.id !== assetId));
 
     if (data.errors !== undefined) {
-      assetContainersStore.set(
-        assetContainers.filter(
-          (assetContainer) =>
-            assetContainer.status !== "uploading" ||
-            assetContainer.asset.id !== assetId
-        )
-      );
-
+      cleanAsset(assetId);
       return toastUnknownFieldErrors(
         normalizeErrors(data.errors ?? "Could not upload an asset"),
         []
@@ -169,68 +187,24 @@ export const AssetsProvider = ({
     if (uploadedAsset === undefined) {
       warnOnce(true, "An uploaded asset is undefined");
       toast.error("Could not upload an asset");
-
-      // remove uploading asset and wait for the load to fix it
-      assetContainersStore.set(
-        assetContainers.filter(
-          (assetContainer) =>
-            assetContainer.status !== "uploading" ||
-            assetContainer.asset.id !== assetId
-        )
-      );
+      cleanAsset(assetId);
       return;
     }
 
-    assetContainersStore.set(
-      assetContainers.map((assetContainer) => {
-        if (
-          assetContainer.status === "uploading" &&
-          assetContainer.asset.id === assetId
-        ) {
-          // We can start using the uploaded asset for image previews etc
-          return { status: "uploaded", asset: uploadedAsset };
-        }
-        return assetContainer;
-      })
-    );
+    // update store with new asset
+    setAsset(uploadedAsset);
   };
 
   const handleDelete = (ids: Array<string>) => {
+    setDeletingAssetIds((prev) => [...prev, ...ids]);
+
     const formData = new FormData();
-    const assetContainer = assetContainersStore.get();
-
-    const nextAssetContainers = [...assetContainer];
-
     for (const id of ids) {
       formData.append("assetId", id);
-      // Mark assets as deleting
-      const index = nextAssetContainers.findIndex(
-        (nextAssetContainer) => nextAssetContainer.asset.id === id
-      );
-
-      if (index !== -1) {
-        const asset = nextAssetContainers[index];
-
-        if (asset.status === "uploaded") {
-          const newAsset: DeletingAssetContainer = {
-            ...asset,
-            status: "deleting",
-          };
-
-          nextAssetContainers[index] = newAsset;
-          continue;
-        }
-
-        warnOnce(true, "Trying to delete an asset that is not uploaded");
-      }
     }
 
-    assetContainersStore.set(nextAssetContainers);
-
-    submit<UploadData>(
-      formData,
-      { method: "delete", action },
-      handleDeleteAfterSubmit
+    submit<UploadData>(formData, { method: "delete", action }, (data) =>
+      handleDeleteAfterSubmit(ids, data)
     );
   };
 
@@ -240,11 +214,13 @@ export const AssetsProvider = ({
         type,
         files
       );
+      const uploadingAssets = uploadingAssetsAndFormData.map(
+        ([previewAsset]) => previewAsset.asset
+      );
 
-      assetContainersStore.set([
-        ...uploadingAssetsAndFormData.map(([previewAsset]) => previewAsset),
-        ...assetContainersStore.get(),
-      ]);
+      setUploadingAssets((prev) => [...uploadingAssets, ...prev]);
+
+      stubAssets(uploadingAssets.map((asset) => asset.id));
 
       for (const [
         uploadingAssetContainer,
@@ -267,6 +243,32 @@ export const AssetsProvider = ({
     }
   };
 
+  const uploadingAssetsMap = new Map();
+  for (const asset of uploadingAssets) {
+    uploadingAssetsMap.set(asset.id, asset);
+  }
+  const assetContainers: Array<AssetContainer> = [];
+  const assets = useStore(assetsStore);
+  for (const [assetId, asset] of assets) {
+    if (deletingAssetIds.includes(assetId)) {
+      continue;
+    }
+    const uploadingAsset = uploadingAssetsMap.get(assetId);
+    if (uploadingAsset) {
+      assetContainers.push({
+        status: "uploading",
+        asset: uploadingAsset,
+      });
+      continue;
+    }
+    if (asset) {
+      assetContainers.push({
+        status: "uploaded",
+        asset,
+      });
+    }
+  }
+
   return (
     <Context.Provider value={{ assetContainers, handleSubmit, handleDelete }}>
       {children}
@@ -287,16 +289,7 @@ export const useAssets = (type: AssetType) => {
   }
 
   const assetsByType = useMemo(() => {
-    // In no case we need to have access to deleting assets
-    // But we need them for optiistic updates, filter out here
-    const assetContainers: AssetContainer[] = [];
-
-    for (const asset of assetContainersContext.assetContainers) {
-      if (asset.status !== "deleting") {
-        assetContainers.push(asset);
-      }
-    }
-
+    const assetContainers = assetContainersContext.assetContainers;
     return filterByType(assetContainers, type);
   }, [assetContainersContext.assetContainers, type]);
 

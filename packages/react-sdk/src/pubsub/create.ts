@@ -1,4 +1,4 @@
-import mitt from "mitt";
+import { createNanoEvents } from "nanoevents";
 import { useCallback, useEffect, useRef } from "react";
 
 export const createPubsub = <PublishMap>() => {
@@ -7,9 +7,8 @@ export const createPubsub = <PublishMap>() => {
       ? { type: Type; payload?: PublishMap[Type] }
       : { type: Type; payload: PublishMap[Type] };
 
-  // `mitt` has a somewhat annoying overload for `*` type that makes it hard to wrap in a generic context
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const emitter = mitt<Record<any, any>>();
+  const emitter = createNanoEvents<Record<any, any>>();
 
   if (typeof window === "object") {
     window.addEventListener(
@@ -62,47 +61,15 @@ export const createPubsub = <PublishMap>() => {
       onAction: (payload: PublishMap[Type]) => void
     ) {
       useEffect(() => {
-        emitter.on(type, onAction);
-        return () => {
-          emitter.off(type, onAction);
-        };
+        return emitter.on(type, onAction);
       }, [type, onAction]);
-    },
-
-    useSubscribeAll(
-      onAction: <Type extends keyof PublishMap>(
-        type: Type,
-        payload: PublishMap[Type]
-      ) => void
-    ) {
-      useEffect(() => {
-        emitter.on("*", onAction);
-        return () => {
-          emitter.off("*", onAction);
-        };
-      }, [onAction]);
     },
 
     subscribe<Type extends keyof PublishMap>(
       type: Type,
       onAction: (payload: PublishMap[Type]) => void
     ) {
-      emitter.on(type, onAction);
-      return () => {
-        emitter.off(type, onAction);
-      };
-    },
-
-    subscribeAll(
-      onAction: <Type extends keyof PublishMap>(
-        type: Type,
-        payload: PublishMap[Type]
-      ) => void
-    ) {
-      emitter.on("*", onAction);
-      return () => {
-        emitter.off("*", onAction);
-      };
+      return emitter.on(type, onAction);
     },
   };
 };
