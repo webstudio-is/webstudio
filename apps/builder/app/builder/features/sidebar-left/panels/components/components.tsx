@@ -13,6 +13,7 @@ import {
   ComponentCard,
   Tooltip,
   ArrowFocus,
+  ScrollArea,
 } from "@webstudio-is/design-system";
 import { PlusIcon } from "@webstudio-is/icons";
 import type { Publish } from "~/shared/pubsub";
@@ -78,12 +79,15 @@ export const TabContent = ({ publish, onSetActiveTab }: TabContentProps) => {
   });
 
   return (
-    <Flex css={{ height: "100%", flexDirection: "column" }}>
+    <Flex
+      css={{ height: "100%", flexDirection: "column" }}
+      ref={draggableContainerRef}
+    >
       <Header
         title="Add"
         suffix={<CloseButton onClick={() => onSetActiveTab("none")} />}
       />
-      <div ref={draggableContainerRef}>
+      <ScrollArea>
         {Array.from(componentCategories).map((category) => (
           <CollapsibleSection label={category} key={category} fullWidth>
             <ArrowFocus
@@ -119,7 +123,7 @@ export const TabContent = ({ publish, onSetActiveTab }: TabContentProps) => {
             />
           </CollapsibleSection>
         ))}
-      </div>
+      </ScrollArea>
     </Flex>
   );
 };

@@ -635,6 +635,9 @@ importers:
       '@radix-ui/react-radio-group':
         specifier: ^1.0.0
         version: 1.0.0(react-dom@17.0.2)(react@17.0.2)
+      '@radix-ui/react-scroll-area':
+        specifier: ^1.0.3
+        version: 1.0.3(react-dom@17.0.2)(react@17.0.2)
       '@radix-ui/react-select':
         specifier: ^1.0.0
         version: 1.0.0(@types/react@17.0.47)(react-dom@17.0.2)(react@17.0.2)
@@ -5619,6 +5622,18 @@ packages:
       react-dom: 17.0.2(react@17.0.2)
     dev: false
 
+  /@radix-ui/react-primitive@1.0.2(react-dom@17.0.2)(react@17.0.2):
+    resolution: {integrity: sha512-zY6G5Qq4R8diFPNwtyoLRZBxzu1Z+SXMlfYpChN7Dv8gvmx9X3qhDqiLWvKseKVJMuedFeU/Sa0Sy/Ia+t06Dw==}
+    peerDependencies:
+      react: ^16.8 || ^17.0 || ^18.0
+      react-dom: ^16.8 || ^17.0 || ^18.0
+    dependencies:
+      '@babel/runtime': 7.20.13
+      '@radix-ui/react-slot': 1.0.1(react@17.0.2)
+      react: 17.0.2
+      react-dom: 17.0.2(react@17.0.2)
+    dev: false
+
   /@radix-ui/react-progress@1.0.0(react-dom@17.0.2)(react@17.0.2):
     resolution: {integrity: sha512-j+JHtTuDpIhF0eOolNug+8hpZqNXcXp2GhTtwz+lnFzhY2a8+LXRSU79iy0r0WUs7UqCXCEeIJIrhg7NS/vPGA==}
     peerDependencies:
@@ -5690,6 +5705,26 @@ packages:
       '@radix-ui/react-primitive': 1.0.1(react-dom@17.0.2)(react@17.0.2)
       '@radix-ui/react-use-callback-ref': 1.0.0(react@17.0.2)
       '@radix-ui/react-use-controllable-state': 1.0.0(react@17.0.2)
+      react: 17.0.2
+      react-dom: 17.0.2(react@17.0.2)
+    dev: false
+
+  /@radix-ui/react-scroll-area@1.0.3(react-dom@17.0.2)(react@17.0.2):
+    resolution: {integrity: sha512-sBX9j8Q+0/jReNObEAveKIGXJtk3xUoSIx4cMKygGtO128QJyVDn01XNOFsyvihKDCTcu7SINzQ2jPAZEhIQtw==}
+    peerDependencies:
+      react: ^16.8 || ^17.0 || ^18.0
+      react-dom: ^16.8 || ^17.0 || ^18.0
+    dependencies:
+      '@babel/runtime': 7.20.13
+      '@radix-ui/number': 1.0.0
+      '@radix-ui/primitive': 1.0.0
+      '@radix-ui/react-compose-refs': 1.0.0(react@17.0.2)
+      '@radix-ui/react-context': 1.0.0(react@17.0.2)
+      '@radix-ui/react-direction': 1.0.0(react@17.0.2)
+      '@radix-ui/react-presence': 1.0.0(react-dom@17.0.2)(react@17.0.2)
+      '@radix-ui/react-primitive': 1.0.2(react-dom@17.0.2)(react@17.0.2)
+      '@radix-ui/react-use-callback-ref': 1.0.0(react@17.0.2)
+      '@radix-ui/react-use-layout-effect': 1.0.0(react@17.0.2)
       react: 17.0.2
       react-dom: 17.0.2(react@17.0.2)
     dev: false
@@ -5967,7 +6002,7 @@ packages:
     peerDependencies:
       react: ^16.8 || ^17.0 || ^18.0
     dependencies:
-      '@babel/runtime': 7.19.4
+      '@babel/runtime': 7.20.13
       react: 17.0.2
     dev: false
 
