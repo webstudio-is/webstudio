@@ -1,5 +1,4 @@
 import { useEffect } from "react";
-import { zfd } from "zod-form-data";
 import type { ActionArgs, LoaderArgs } from "@remix-run/node";
 import { useActionData } from "@remix-run/react";
 import type { Asset } from "@webstudio-is/asset-uploader";
