@@ -24,9 +24,6 @@ importers:
       '@webstudio-is/eslint-config-custom':
         specifier: workspace:^
         version: link:packages/eslint-config-custom
-      chromatic:
-        specifier: ^6.11.4
-        version: 6.11.4
       nano-staged:
         specifier: ^0.8.0
         version: 0.8.0
@@ -10051,14 +10048,6 @@ packages:
   /chownr@2.0.0:
     resolution: {integrity: sha512-bIomtDF5KGpdogkLd9VspvFzk9KfpyyGlS8YFVZl7TGPBHL5snIOnxeshwVgPteQ9b4Eydl+pVbIyE1DcvCWgQ==}
     engines: {node: '>=10'}
-    dev: true
-
-  /chromatic@6.11.4:
-    resolution: {integrity: sha512-f1TcuIXKjGUuOjPuwFF44kzbuEcESFcDxHzrzWPLmHuC90dV8HLxbufqYaTOBYMO/rJ32Zftb7S9pXuF/Rhfog==}
-    hasBin: true
-    dependencies:
-      '@discoveryjs/json-ext': 0.5.7
-      '@types/webpack-env': 1.18.0
     dev: true
 
   /chrome-trace-event@1.0.3:
