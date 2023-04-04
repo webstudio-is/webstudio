@@ -23,6 +23,21 @@ const ContextHelper = ({ render }: { render: Render }) => {
       event: KeyboardEvent,
       focusManagerOptions?: FocusManagerOptions
     ) => {
+      const { activeElement } = document;
+
+      // In a text input, arrow keys are used for moving the caret,
+      // so unless Alt is pressed, we don't want to move focus
+      //
+      // @todo: this may not set :focus-visible correctly
+      //        https://github.com/webstudio-is/webstudio-builder/issues/1364
+      if (
+        (activeElement instanceof HTMLInputElement ||
+          activeElement instanceof HTMLTextAreaElement) &&
+        event.altKey === false
+      ) {
+        return;
+      }
+
       if (event.key === "ArrowRight" || event.key === "ArrowDown") {
         focusManager.focusNext({ wrap: true, ...focusManagerOptions });
         event.preventDefault(); // Prevents the page from scrolling
