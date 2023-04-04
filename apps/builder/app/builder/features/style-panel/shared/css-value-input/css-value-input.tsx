@@ -22,10 +22,10 @@ import type {
 import {
   type KeyboardEventHandler,
   type KeyboardEvent,
+  type ReactNode,
   useCallback,
   useEffect,
   useRef,
-  ReactNode,
 } from "react";
 import { useUnitSelect } from "./unit-select";
 import { unstable_batchedUpdates as unstableBatchedUpdates } from "react-dom";
