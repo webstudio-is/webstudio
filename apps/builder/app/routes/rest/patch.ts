@@ -10,6 +10,7 @@ import {
   patchInstances,
   patchPages,
 } from "@webstudio-is/project-build/server";
+import { patchAssets } from "@webstudio-is/asset-uploader/server";
 import type { Project } from "@webstudio-is/project";
 import { createContext } from "~/shared/context.server";
 
@@ -55,6 +56,8 @@ export const action = async ({ request }: ActionArgs) => {
         await patchProps({ buildId, projectId }, patches, context);
       } else if (namespace === "breakpoints") {
         await patchBreakpoints({ buildId, projectId }, patches, context);
+      } else if (namespace === "assets") {
+        await patchAssets({ projectId }, patches, context);
       } else {
         return { errors: `Unknown namespace "${namespace}"` };
       }

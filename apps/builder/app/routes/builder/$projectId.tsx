@@ -59,7 +59,7 @@ export const loader = async ({
   return {
     project,
     build: devBuild,
-    assets,
+    assets: assets.map((asset) => [asset.id, asset]),
     buildOrigin: getBuildOrigin(request),
     authToken,
     authPermit,

@@ -5,7 +5,9 @@ import {
   type ReactNode,
   useState,
 } from "react";
+import { useStore } from "@nanostores/react";
 import warnOnce from "warn-once";
+import store from "immerhin";
 import type { Project } from "@webstudio-is/project";
 import {
   type AssetType,
@@ -26,29 +28,30 @@ import { usePersistentFetcher } from "~/shared/fetcher";
 import type { ActionData } from "~/builder/shared/assets";
 import { normalizeErrors, toastUnknownFieldErrors } from "~/shared/form-utils";
 import { assetsStore } from "~/shared/nano-states";
-import { useStore } from "@nanostores/react";
+
+export const deleteAssets = (assetIds: Asset["id"][]) => {
+  store.createTransaction([assetsStore], (assets) => {
+    for (const assetId of assetIds) {
+      assets.delete(assetId);
+    }
+  });
+};
 
 // stubbed asset is necessary to preserve position of asset
 // while uploading and after it is uploaded
 // undefined is not stored in db and only persisted in current session
 const stubAssets = (ids: Asset["id"][]) => {
-  const assets = new Map(assetsStore.get());
-  for (const assetId of ids) {
-    assets.set(assetId, undefined);
-  }
-  assetsStore.set(assets);
+  store.createTransaction([assetsStore], (assets) => {
+    for (const assetId of ids) {
+      assets.set(assetId, undefined);
+    }
+  });
 };
 
 const setAsset = (asset: Asset) => {
-  const assets = new Map(assetsStore.get());
-  assets.set(asset.id, asset);
-  assetsStore.set(assets);
-};
-
-const cleanAsset = (assetId: Asset["id"]) => {
-  const assets = new Map(assetsStore.get());
-  assets.delete(assetId);
-  assetsStore.set(assets);
+  store.createTransaction([assetsStore], (assets) => {
+    assets.set(asset.id, asset);
+  });
 };
 
 export type UploadData = ActionData;
@@ -122,7 +125,6 @@ const getFilesFromInput = (_type: AssetType, input: HTMLInputElement) => {
 type AssetsContext = {
   handleSubmit: (type: AssetType, files: File[]) => Promise<void>;
   assetContainers: AssetContainer[];
-  handleDelete: (ids: Array<string>) => void;
 };
 
 const Context = createContext<AssetsContext | undefined>(undefined);
@@ -136,7 +138,6 @@ export const AssetsProvider = ({
   authToken: string | undefined;
   children: ReactNode;
 }) => {
-  const [deletingAssetIds, setDeletingAssetIds] = useState<Asset["id"][]>([]);
   const [uploadingAssets, setUploadingAssets] = useState<
     Array<Asset | PreviewAsset>
   >([]);
@@ -144,33 +145,12 @@ export const AssetsProvider = ({
 
   const action = restAssetsPath({ projectId: projectId, authToken });
 
-  const handleDeleteAfterSubmit = (ids: Asset["id"][], data: UploadData) => {
-    setDeletingAssetIds((prev) =>
-      prev.filter((assetId) => ids.includes(assetId) === false)
-    );
-
-    const { errors, deletedAssets } = data;
-    if (errors !== undefined) {
-      return toastUnknownFieldErrors(normalizeErrors(errors), []);
-    }
-
-    if (deletedAssets === undefined) {
-      warnOnce(true, "Deleted assets is undefined");
-      toast.error("Could not delete assets");
-      return;
-    }
-
-    for (const deletedId of ids) {
-      cleanAsset(deletedId);
-    }
-  };
-
   const handleAfterSubmit = (assetId: string, data: UploadData) => {
     // remove uploaded or failed asset
     setUploadingAssets((prev) => prev.filter((asset) => asset.id !== assetId));
 
     if (data.errors !== undefined) {
-      cleanAsset(assetId);
+      deleteAssets([assetId]);
       return toastUnknownFieldErrors(
         normalizeErrors(data.errors ?? "Could not upload an asset"),
         []
@@ -187,25 +167,12 @@ export const AssetsProvider = ({
     if (uploadedAsset === undefined) {
       warnOnce(true, "An uploaded asset is undefined");
       toast.error("Could not upload an asset");
-      cleanAsset(assetId);
+      deleteAssets([assetId]);
       return;
     }
 
     // update store with new asset
     setAsset(uploadedAsset);
-  };
-
-  const handleDelete = (ids: Array<string>) => {
-    setDeletingAssetIds((prev) => [...prev, ...ids]);
-
-    const formData = new FormData();
-    for (const id of ids) {
-      formData.append("assetId", id);
-    }
-
-    submit<UploadData>(formData, { method: "delete", action }, (data) =>
-      handleDeleteAfterSubmit(ids, data)
-    );
   };
 
   const handleSubmit = async (type: AssetType, files: File[]) => {
@@ -250,9 +217,6 @@ export const AssetsProvider = ({
   const assetContainers: Array<AssetContainer> = [];
   const assets = useStore(assetsStore);
   for (const [assetId, asset] of assets) {
-    if (deletingAssetIds.includes(assetId)) {
-      continue;
-    }
     const uploadingAsset = uploadingAssetsMap.get(assetId);
     if (uploadingAsset) {
       assetContainers.push({
@@ -270,7 +234,7 @@ export const AssetsProvider = ({
   }
 
   return (
-    <Context.Provider value={{ assetContainers, handleSubmit, handleDelete }}>
+    <Context.Provider value={{ assetContainers, handleSubmit }}>
       {children}
     </Context.Provider>
   );
@@ -304,6 +268,5 @@ export const useAssets = (type: AssetType) => {
      */
     assetContainers: assetsByType,
     handleSubmit,
-    handleDelete: assetContainersContext.handleDelete,
   };
 };
