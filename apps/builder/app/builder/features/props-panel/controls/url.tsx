@@ -1,7 +1,7 @@
 import { useStore } from "@nanostores/react";
 import { pagesStore } from "~/shared/nano-states";
 import {
-  TextField,
+  DeprecatedTextField,
   Flex,
   theme,
   useId,
@@ -36,7 +36,7 @@ const BaseUrl = ({ prop, onChange, id }: BaseControlProps) => {
 
   return (
     <Flex css={{ py: theme.spacing[2] }} direction="column" align="stretch">
-      <TextField
+      <DeprecatedTextField
         id={id}
         value={localValue.value}
         placeholder="https://example.com/"

@@ -1,4 +1,9 @@
-import { Flex, TextField, theme, useId } from "@webstudio-is/design-system";
+import {
+  Flex,
+  DeprecatedTextField,
+  theme,
+  useId,
+} from "@webstudio-is/design-system";
 import {
   type ControlProps,
   getLabel,
@@ -37,7 +42,7 @@ export const NumberControl = ({
           width: theme.spacing[21],
         }}
       >
-        <TextField
+        <DeprecatedTextField
           id={id}
           type="number"
           value={localValue.value}

@@ -34,7 +34,7 @@ import {
   SelectGroup,
 } from "./select";
 import { MenuCheckedAndSetIcon, MenuSetDotIcon } from "./menu";
-import { TextField } from "./text-field";
+import { DeprecatedTextField } from "./__DEPRECATED__/text-field";
 import { Button } from "./button";
 import {
   ChevronDownIcon,
@@ -178,7 +178,7 @@ const ComboboxDemo = () => {
     <Combobox>
       <div {...getComboboxProps()}>
         <ComboboxAnchor>
-          <TextField
+          <DeprecatedTextField
             {...getInputProps()}
             placeholder="Enter: Apple"
             suffix={

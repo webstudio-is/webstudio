@@ -5,10 +5,9 @@ import React, {
   type FocusEventHandler,
 } from "react";
 import { useFocusWithin } from "@react-aria/interactions";
-import { css, styled } from "../stitches.config";
+import { css, styled, theme } from "../../stitches.config";
 import { ChevronLeftIcon } from "@webstudio-is/icons";
 import { cssVars } from "@webstudio-is/css-vars";
-import { theme } from "../stitches.config";
 
 const backgroundColorVar = cssVars.define("background-color");
 const colorVar = cssVars.define("color");
@@ -36,50 +35,13 @@ const textFieldIconBaseStyle = css({
   borderRadius: 2,
 });
 
-// Trigger can be used as a button, which is focusable/hoverable itself or as an icon,
-// which has the same states but activated over the parent component element.
-export const TextFieldIconButton = styled(
-  "button",
-  {
-    background: "none",
-    border: "none",
-    boxSizing: "border-box",
-    fontFamily: "inherit",
-    fontSize: "inherit",
-    color: "inherit",
-    padding: 0,
-    margin: 0,
-    "&:hover": {
-      backgroundColor: theme.colors.slate7,
-      color: theme.colors.hiContrast,
-    },
-    "&:focus": {
-      backgroundColor: theme.colors.blue10,
-      color: "white",
-    },
-    variants: {
-      state: {
-        active: {
-          backgroundColor: theme.colors.blue10,
-          color: "white",
-          "&:hover": {
-            backgroundColor: theme.colors.blue10,
-            color: "white",
-          },
-        },
-      },
-    },
-  },
-  textFieldIconBaseStyle
-);
-
-export const TextFieldIcon = styled("span", textFieldIconBaseStyle, {
+const DeprecatedTextFieldIcon = styled("span", textFieldIconBaseStyle, {
   // Icon receives colors from parent.
   backgroundColor: cssVars.use(backgroundColorVar),
   color: cssVars.use(colorVar),
 });
 
-export const TextFieldInput = styled("input", {
+export const DeprecatedTextFieldInput = styled("input", {
   // Reset
   appearance: "none",
   borderWidth: "0",
@@ -139,7 +101,7 @@ export const TextFieldInput = styled("input", {
   },
 });
 
-export const TextFieldContainer = styled("div", {
+export const DeprecatedTextFieldContainer = styled("div", {
   // Custom
   display: "flex",
   flexWrap: "wrap",
@@ -247,7 +209,7 @@ const SuffixSlot = styled("div", {
   borderRadius: 2,
 });
 
-export const useTextFieldFocus = ({
+export const useDeprecatedTextFieldFocus = ({
   disabled,
   onFocus,
   onBlur,
@@ -257,7 +219,7 @@ export const useTextFieldFocus = ({
   onBlur?: FocusEventHandler<HTMLInputElement>;
 }): [
   RefObject<HTMLInputElement>,
-  ComponentProps<typeof TextFieldContainer>
+  ComponentProps<typeof DeprecatedTextFieldContainer>
 ] => {
   const ref = React.useRef<HTMLInputElement>(null);
 
@@ -287,8 +249,8 @@ export const useTextFieldFocus = ({
   ];
 };
 
-export type TextFieldProps = Pick<
-  React.ComponentProps<typeof TextFieldContainer>,
+export type DeprecatedTextFieldProps = Pick<
+  React.ComponentProps<typeof DeprecatedTextFieldContainer>,
   "variant" | "state" | "css"
 > &
   Omit<React.ComponentProps<"input">, "prefix" | "children"> & {
@@ -298,72 +260,73 @@ export type TextFieldProps = Pick<
     suffix?: React.ReactNode;
   };
 
-export const TextField = React.forwardRef<HTMLDivElement, TextFieldProps>(
-  (props, forwardedRef) => {
-    const {
-      prefix,
-      css,
-      disabled,
-      containerRef,
-      inputRef,
-      state,
-      variant: variantProp,
-      onFocus,
-      onBlur,
-      onClick,
-      type,
-      onKeyDown,
-      // prevent spreading it into the dom
-      suffix: suffixProp,
-      ...textFieldProps
-    } = props;
-    let suffix = suffixProp;
-    const variant =
-      type === "button" && variantProp === undefined ? "button" : variantProp;
+export const DeprecatedTextField = React.forwardRef<
+  HTMLDivElement,
+  DeprecatedTextFieldProps
+>((props, forwardedRef) => {
+  const {
+    prefix,
+    css,
+    disabled,
+    containerRef,
+    inputRef,
+    state,
+    variant: variantProp,
+    onFocus,
+    onBlur,
+    onClick,
+    type,
+    onKeyDown,
+    // prevent spreading it into the dom
+    suffix: suffixProp,
+    ...textFieldProps
+  } = props;
+  let suffix = suffixProp;
+  const variant =
+    type === "button" && variantProp === undefined ? "button" : variantProp;
 
-    const [internalInputRef, focusProps] = useTextFieldFocus({
-      disabled,
-      onFocus,
-      onBlur,
-    });
+  const [internalInputRef, focusProps] = useDeprecatedTextFieldFocus({
+    disabled,
+    onFocus,
+    onBlur,
+  });
 
-    if (type === "button" && suffix === undefined) {
-      suffix = (
-        <TextFieldIcon
-          as={ChevronLeftIcon}
-          onClick={() => {
-            internalInputRef.current?.click();
-          }}
-        />
-      );
-    }
-
-    return (
-      <TextFieldContainer
-        {...focusProps}
-        aria-disabled={disabled}
-        ref={mergeRefs(forwardedRef, containerRef ?? null)}
-        state={state}
-        variant={variant}
-        css={css}
-        withPrefix={Boolean(prefix)}
-        withSuffix={Boolean(suffix)}
-        onKeyDown={onKeyDown}
-      >
-        {/* We want input to be the first element in DOM so it receives the focus first */}
-        <TextFieldInput
-          {...textFieldProps}
-          type={type}
-          disabled={disabled}
-          onClick={onClick}
-          ref={mergeRefs(internalInputRef, inputRef ?? null)}
-        />
-
-        {prefix && <PrefixSlot>{prefix}</PrefixSlot>}
-        {suffix && <SuffixSlot>{suffix}</SuffixSlot>}
-      </TextFieldContainer>
+  if (type === "button" && suffix === undefined) {
+    suffix = (
+      <DeprecatedTextFieldIcon
+        as={ChevronLeftIcon}
+        onClick={() => {
+          internalInputRef.current?.click();
+        }}
+      />
     );
   }
-);
 
-TextField.displayName = "TextField";
+  return (
+    <DeprecatedTextFieldContainer
+      {...focusProps}
+      aria-disabled={disabled}
+      ref={mergeRefs(forwardedRef, containerRef ?? null)}
+      state={state}
+      variant={variant}
+      css={css}
+      withPrefix={Boolean(prefix)}
+      withSuffix={Boolean(suffix)}
+      onKeyDown={onKeyDown}
+    >
+      {/* We want input to be the first element in DOM so it receives the focus first */}
+      <DeprecatedTextFieldInput
+        {...textFieldProps}
+        type={type}
+        disabled={disabled}
+        onClick={onClick}
+        ref={mergeRefs(internalInputRef, inputRef ?? null)}
+      />
+
+      {prefix && <PrefixSlot>{prefix}</PrefixSlot>}
+      {suffix && <SuffixSlot>{suffix}</SuffixSlot>}
+    </DeprecatedTextFieldContainer>
+  );
+});
+
+DeprecatedTextField.displayName = "TextField";

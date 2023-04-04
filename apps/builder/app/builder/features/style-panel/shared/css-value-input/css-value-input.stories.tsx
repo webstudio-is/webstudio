@@ -1,5 +1,5 @@
 import * as React from "react";
-import { Flex, TextField } from "@webstudio-is/design-system";
+import { Flex, DeprecatedTextField } from "@webstudio-is/design-system";
 import type { StyleValue } from "@webstudio-is/css-data";
 import { CssValueInput, type IntermediateStyleValue } from "./css-value-input";
 import { action } from "@storybook/addon-actions";
@@ -135,7 +135,7 @@ export const WithUnits = () => {
           action("onAbort")();
         }}
       />
-      <TextField
+      <DeprecatedTextField
         readOnly
         value={
           value

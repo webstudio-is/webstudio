@@ -1,4 +1,4 @@
-import { TextField } from "@webstudio-is/design-system";
+import { DeprecatedTextField } from "@webstudio-is/design-system";
 import { FontsManager } from "~/builder/shared/fonts-manager";
 import type { ControlProps } from "../../style-sections";
 import { FloatingPanel } from "~/builder/shared/floating-panel";
@@ -21,7 +21,7 @@ export const FontFamilyControl = ({
       content={<FontsManager value={toValue(value)} onChange={setValue} />}
       onOpenChange={setIsOpen}
     >
-      <TextField
+      <DeprecatedTextField
         defaultValue={toValue(value)}
         state={isOpen ? "active" : undefined}
       />

@@ -5,7 +5,7 @@ import {
   Flex,
   Label,
   Text,
-  TextField,
+  DeprecatedTextField,
   theme,
 } from "@webstudio-is/design-system";
 import { PlusIcon } from "@webstudio-is/icons";
@@ -68,7 +68,7 @@ const DialogContent = ({
           </DialogDescription>
         )}
         <Label>{label}</Label>
-        <TextField
+        <DeprecatedTextField
           placeholder={placeholder}
           name="title"
           defaultValue={title}

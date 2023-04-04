@@ -1,6 +1,6 @@
 import { MagnifyingGlassIcon } from "@webstudio-is/icons";
 import React, { useCallback } from "react";
-import { TextField } from "./text-field";
+import { DeprecatedTextField } from "./__DEPRECATED__/text-field";
 import {
   ComboboxListboxItem,
   useCombobox,
@@ -58,7 +58,7 @@ export const Complex = () => {
       {...getComboboxProps()}
       css={{ flexDirection: "column", gap: theme.spacing[9] }}
     >
-      <TextField
+      <DeprecatedTextField
         type="search"
         prefix={<MagnifyingGlassIcon />}
         {...getInputProps({})}

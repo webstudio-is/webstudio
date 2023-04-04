@@ -1,5 +1,5 @@
 import {
-  TextField,
+  DeprecatedTextField,
   Flex,
   theme,
   useId,
@@ -38,7 +38,7 @@ const AsInput = ({
           width: theme.spacing[22],
         }}
       >
-        <TextField
+        <DeprecatedTextField
           id={id}
           value={localValue.value}
           onChange={(event) => localValue.set(event.target.value)}
