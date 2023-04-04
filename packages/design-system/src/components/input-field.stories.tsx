@@ -38,7 +38,6 @@ export const Demo = () => (
             color={color}
             prefix={prefix}
             suffix={suffix}
-            arrowFocus
           />
         ))}
         <InputField
