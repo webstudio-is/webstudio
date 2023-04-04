@@ -287,9 +287,9 @@ export const useSetBreakpoints = (
 };
 
 export const assetsStore = atom<Assets>(new Map());
-export const useSetAssets = (assets: Asset[]) => {
+export const useSetAssets = (assets: [Asset["id"], Asset][]) => {
   useSyncInitializeOnce(() => {
-    assetsStore.set(new Map(assets.map((asset) => [asset.id, asset])));
+    assetsStore.set(new Map(assets));
   });
 };
 

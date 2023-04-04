@@ -240,7 +240,7 @@ const NavigatorPanel = ({
 export type BuilderProps = {
   project: Project;
   build: Build;
-  assets: Asset[];
+  assets: [Asset["id"], Asset][];
   buildOrigin: string;
   authToken?: string;
   authPermit: AuthPermit;

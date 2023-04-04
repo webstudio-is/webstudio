@@ -382,6 +382,9 @@ importers:
       app-root-path:
         specifier: ^3.0.0
         version: 3.0.0
+      immer:
+        specifier: ^9.0.12
+        version: 9.0.15
       nanoid:
         specifier: ^3.2.0
         version: 3.3.4

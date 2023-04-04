@@ -6,6 +6,7 @@ import {
 } from "@webstudio-is/design-system";
 import {
   AssetsShell,
+  deleteAssets,
   Separator,
   useAssets,
   useSearch,
@@ -29,8 +30,7 @@ const useLogic = ({
   onChange: (value: string) => void;
   value: string;
 }) => {
-  const { assetContainers, handleDelete: handleDeleteAssets } =
-    useAssets("font");
+  const { assetContainers } = useAssets("font");
   const [selectedIndex, setSelectedIndex] = useState(-1);
   const fontItems = useMemo(() => toItems(assetContainers), [assetContainers]);
   const { filteredItems, resetFilteredItems, setFilteredItems } = useFilter({
@@ -68,7 +68,7 @@ const useLogic = ({
   const handleDelete = (index: number) => {
     const family = groupedItems[index].label;
     const ids = filterIdsByFamily(family, assetContainers);
-    handleDeleteAssets(ids);
+    deleteAssets(ids);
     if (index === currentIndex) {
       setCurrentIndex(-1);
     }

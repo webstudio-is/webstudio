@@ -5,6 +5,7 @@ import {
   type AssetContainer,
   useAssets,
   useSearch,
+  deleteAssets,
 } from "../assets";
 import { useFilter } from "../assets/use-filter";
 import { ImageThumbnail } from "./image-thumbnail";
@@ -18,7 +19,7 @@ const filterItems = (search: string, items: AssetContainer[]) => {
 };
 
 const useLogic = ({ onChange }: { onChange?: (asset: ImageAsset) => void }) => {
-  const { assetContainers, handleDelete } = useAssets("image");
+  const { assetContainers } = useAssets("image");
 
   const [selectedIndex, setSelectedIndex] = useState(-1);
 
@@ -69,7 +70,7 @@ const useLogic = ({ onChange }: { onChange?: (asset: ImageAsset) => void }) => {
 
   return {
     searchProps,
-    handleDelete,
+    handleDelete: deleteAssets,
     filteredItems,
     handleSelect,
     selectedIndex,
