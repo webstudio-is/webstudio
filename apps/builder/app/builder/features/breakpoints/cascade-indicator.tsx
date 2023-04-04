@@ -86,7 +86,7 @@ const useSizes = ({
       setButtonWidth(buttonRef.current.offsetWidth);
       setContainerWidth(buttonRef.current.parentElement?.offsetWidth);
     }
-  }, [selectedBreakpoint]);
+  }, [selectedBreakpoint, buttonRef]);
 
   if (
     buttonLeft === undefined ||
