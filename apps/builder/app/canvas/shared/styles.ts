@@ -39,7 +39,7 @@ const helpersCssEngine = createCssEngine({ name: "helpers" });
 const fontsAndDefaultsCssEngine = createCssEngine({
   name: "fonts-and-defaults",
 });
-const presetStylesEngine = createCssEngine({ name: "presetStyles" });
+const presetStylesEngine = createCssEngine({ name: "preset-styles" });
 
 // Helper styles on for canvas in design mode
 // - Only instances that would collapse without helper should receive helper

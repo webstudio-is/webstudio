@@ -28,8 +28,8 @@ import {
   selectedBreakpointIdStore,
   selectedBreakpointStore,
 } from "~/shared/nano-states/breakpoints";
-import { compareMedia } from "@webstudio-is/css-engine";
 import { isFeatureEnabled } from "@webstudio-is/feature-flags";
+import { groupBreakpoints } from "./group-breakpoints";
 
 export const BreakpointsSettings = () => {
   const [view, setView] = useState<
@@ -131,10 +131,8 @@ export const BreakpointsSettings = () => {
           )}
           {view === "selector" && (
             <>
-              {Array.from(breakpoints.values())
-                .sort(compareMedia)
-                .reverse()
-                .map((breakpoint) => {
+              {groupBreakpoints(Array.from(breakpoints.values())).map(
+                (breakpoint) => {
                   return (
                     <DropdownMenuCheckboxItem
                       checked={breakpoint === selectedBreakpoint}
@@ -155,7 +153,8 @@ export const BreakpointsSettings = () => {
                       </DropdownMenuItemRightSlot>
                     </DropdownMenuCheckboxItem>
                   );
-                })}
+                }
+              )}
               <DropdownMenuSeparator />
               <form>
                 <ZoomSetting />
