@@ -16,6 +16,7 @@ module.exports = {
     /@webstudio-is\/(?!prisma-client)/,
     "pretty-bytes",
     "djb2a",
+    "nanoevents",
     "nanostores",
     "@nanostores/react",
     /micromark/,

@@ -1,7 +1,11 @@
 import { useEffect } from "react";
-import mitt from "mitt";
+import { createNanoEvents } from "nanoevents";
 
-const emitter = mitt();
+const emitter = createNanoEvents<{
+  resizeStart: () => void;
+  resize: () => void;
+  resizeEnd: () => void;
+}>();
 
 if (typeof window === "object") {
   let timeoutId = 0;
@@ -41,14 +45,14 @@ export const subscribeWindowResize = ({
   onResize = noop,
   onResizeEnd = noop,
 }: UseWindowResize) => {
-  emitter.on("resizeStart", onResizeStart);
-  emitter.on("resize", onResize);
-  emitter.on("resizeEnd", onResizeEnd);
+  const unsubscribeResizeStart = emitter.on("resizeStart", onResizeStart);
+  const unsubscribeResize = emitter.on("resize", onResize);
+  const unsubscribeResizeEnd = emitter.on("resizeEnd", onResizeEnd);
 
   return () => {
-    emitter.off("resizeStart", onResizeStart);
-    emitter.off("resize", onResize);
-    emitter.off("resizeEnd", onResizeEnd);
+    unsubscribeResizeStart();
+    unsubscribeResize();
+    unsubscribeResizeEnd();
   };
 };
 
@@ -59,9 +63,9 @@ export const subscribeWindowResize = ({
  */
 export const useWindowResize = (onResize: () => void) => {
   useEffect(() => {
-    emitter.on("resize", onResize);
+    const unsubscribeResize = emitter.on("resize", onResize);
     return () => {
-      emitter.off("resize", onResize);
+      unsubscribeResize();
     };
   }, [onResize]);
 };
@@ -69,12 +73,12 @@ export const useWindowResize = (onResize: () => void) => {
 export const useWindowResizeDebounced = (onResize: () => void) => {
   useEffect(() => {
     // Call on leading
-    emitter.on("resizeStart", onResize);
+    const unsubscribeResizeStart = emitter.on("resizeStart", onResize);
     // and trailing edge
-    emitter.on("resizeEnd", onResize);
+    const unsubscribeResizeEnd = emitter.on("resizeEnd", onResize);
     return () => {
-      emitter.on("resizeStart", onResize);
-      emitter.off("resizeEnd", onResize);
+      unsubscribeResizeStart();
+      unsubscribeResizeEnd();
     };
   }, [onResize]);
 };
