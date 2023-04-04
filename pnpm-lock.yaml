@@ -207,9 +207,9 @@ importers:
       micromark-extension-gfm:
         specifier: ^2.0.1
         version: 2.0.1
-      mitt:
-        specifier: ^3.0.0
-        version: 3.0.0
+      nanoevents:
+        specifier: ^7.0.1
+        version: 7.0.1
       nanoid:
         specifier: ^3.2.0
         version: 3.3.4
@@ -1178,9 +1178,9 @@ importers:
       html-tags:
         specifier: ^3.2.0
         version: 3.2.0
-      mitt:
-        specifier: ^3.0.0
-        version: 3.0.0
+      nanoevents:
+        specifier: ^7.0.1
+        version: 7.0.1
       nanostores:
         specifier: ^0.7.1
         version: 0.7.1
@@ -15524,10 +15524,6 @@ packages:
       stream-each: 1.2.3
       through2: 2.0.5
 
-  /mitt@3.0.0:
-    resolution: {integrity: sha512-7dX2/10ITVyqh4aOSVI9gdape+t9l2/8QxHrFmUXu4EEUpdlxl6RudZUPZoc+zuY2hk1j7XxVroIVIan/pD/SQ==}
-    dev: false
-
   /mixin-deep@1.3.2:
     resolution: {integrity: sha512-WRoDn//mXBiJ1H40rqa3vH0toePwSsGb45iInWlTySa+Uu4k3tYUSxa2v1KqAiLtvlrSzaExqS1gtk96A9zvEA==}
     engines: {node: '>=0.10.0'}
@@ -15625,6 +15621,11 @@ packages:
     dependencies:
       picocolors: 1.0.0
     dev: true
+
+  /nanoevents@7.0.1:
+    resolution: {integrity: sha512-o6lpKiCxLeijK4hgsqfR6CNToPyRU3keKyyI6uwuHRvpRTbZ0wXw51WRgyldVugZqoJfkGFrjrIenYH3bfEO3Q==}
+    engines: {node: ^14.0.0 || ^16.0.0 || >=18.0.0}
+    dev: false
 
   /nanoid@3.3.4:
     resolution: {integrity: sha512-MqBkQh/OHTS2egovRtLk45wEyNXwF+cokD+1YPf9u5VfJiRdAiRwB2froX5Co9Rh20xs4siNPm8naNotSD6RBw==}

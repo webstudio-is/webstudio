@@ -59,7 +59,7 @@
     "@webstudio-is/project-build": "workspace:^",
     "detect-font": "^0.1.5",
     "html-tags": "^3.2.0",
-    "mitt": "^3.0.0",
+    "nanoevents": "^7.0.1",
     "nanostores": "^0.7.1"
   },
   "exports": {

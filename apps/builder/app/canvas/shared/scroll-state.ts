@@ -1,7 +1,11 @@
-import mitt from "mitt";
+import { createNanoEvents } from "nanoevents";
 
 // Using a JS emitter to avoid overhead with subscribing scroll event directly on the DOM by many listeners
-const emitter = mitt();
+const emitter = createNanoEvents<{
+  scrollStart: () => void;
+  scroll: () => void;
+  scrollEnd: () => void;
+}>();
 
 if (typeof window === "object") {
   const eventOptions = {
@@ -51,13 +55,13 @@ export const subscribeScrollState = ({
   onScrollStart = noop,
   onScrollEnd = noop,
 }: UseScrollState) => {
-  emitter.on("scrollStart", onScrollStart);
-  emitter.on("scroll", onScroll);
-  emitter.on("scrollEnd", onScrollEnd);
+  const unsubscribeScrollStart = emitter.on("scrollStart", onScrollStart);
+  const unsubscribeScroll = emitter.on("scroll", onScroll);
+  const unsubscribeScrollEnd = emitter.on("scrollEnd", onScrollEnd);
 
   return () => {
-    emitter.off("scrollStart", onScrollStart);
-    emitter.off("scroll", onScroll);
-    emitter.off("scrollEnd", onScrollEnd);
+    unsubscribeScrollStart();
+    unsubscribeScroll();
+    unsubscribeScrollEnd();
   };
 };
