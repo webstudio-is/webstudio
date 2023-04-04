@@ -10,12 +10,12 @@ export default {
 };
 
 const prefix = (
-  <NestedIconLabel color="local">
+  <NestedIconLabel color="local" tabIndex={-1}>
     <RowGapIcon />
   </NestedIconLabel>
 );
 
-const suffix = <NestedSelectButton />;
+const suffix = <NestedSelectButton tabIndex={-1} />;
 
 export const Demo = () => (
   <>
@@ -43,7 +43,7 @@ export const Demo = () => (
         <InputField
           defaultValue="disabled"
           prefix={
-            <NestedIconLabel disabled color="local" tabIndex={-1}>
+            <NestedIconLabel disabled color="local">
               <RowGapIcon />
             </NestedIconLabel>
           }
