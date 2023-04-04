@@ -1,5 +1,6 @@
 import { createNanoEvents } from "nanoevents";
 import { useCallback, useEffect, useRef } from "react";
+import { unstable_batchedUpdates } from "react-dom";
 
 export const createPubsub = <PublishMap>() => {
   type Action<Type extends keyof PublishMap> =
@@ -10,6 +11,25 @@ export const createPubsub = <PublishMap>() => {
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const emitter = createNanoEvents<Record<any, any>>();
 
+  type Task = () => void;
+  let rafHandler: ReturnType<typeof requestAnimationFrame>;
+  const tasks: Task[] = [];
+
+  const processArray = () => {
+    unstable_batchedUpdates(() => {
+      for (const task of tasks) {
+        task();
+      }
+      tasks.length = 0;
+    });
+  };
+
+  const queueTask = (task: () => void) => {
+    tasks.push(task);
+    cancelAnimationFrame(rafHandler);
+    rafHandler = requestAnimationFrame(processArray);
+  };
+
   if (typeof window === "object") {
     window.addEventListener(
       "message",
@@ -18,7 +38,7 @@ export const createPubsub = <PublishMap>() => {
         // we could potentially maintain a list of valid event types at runtime
         // at the very least we could add a brand property or something to our events
         if (typeof event.data?.type === "string") {
-          emitter.emit(event.data.type, event.data.payload);
+          queueTask(() => emitter.emit(event.data.type, event.data.payload));
         }
       },
       false

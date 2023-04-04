@@ -20,6 +20,7 @@ type StylePanelProps = {
 };
 
 export const StylePanel = ({ selectedInstance, publish }: StylePanelProps) => {
+  console.log("Render");
   const { currentStyle, setProperty, deleteProperty, createBatchUpdate } =
     useStyleData({
       selectedInstance,
