@@ -83,10 +83,8 @@ const Container = forwardRef(
       css,
       prefix,
       suffix,
-      arrowFocus = false,
       ...props
     }: {
-      arrowFocus?: boolean;
       children: ReactNode;
       prefix?: ReactNode;
       suffix?: ReactNode;
@@ -94,7 +92,8 @@ const Container = forwardRef(
     } & Omit<ComponentProps<"div">, "prefix">,
     ref: Ref<HTMLDivElement>
   ) => {
-    if (arrowFocus === false) {
+    // no reason to use ArrowFocus if there's no prefix or suffix
+    if (!prefix && !suffix) {
       return (
         <div
           className={containerStyle({ className, css })}
@@ -168,15 +167,12 @@ export const InputField = forwardRef(
       suffix,
       containerRef,
       inputRef,
-      arrowFocus,
       ...props
     }: InputProps & {
       prefix?: ReactNode;
       suffix?: ReactNode;
       containerRef?: Ref<HTMLDivElement>;
       inputRef?: Ref<HTMLInputElement>;
-      /** whether arrow keys should move focus between input/suffix/prefix */
-      arrowFocus?: boolean;
     },
     ref: Ref<HTMLDivElement>
   ) => (
@@ -185,7 +181,6 @@ export const InputField = forwardRef(
       className={className}
       prefix={prefix}
       suffix={suffix}
-      arrowFocus={arrowFocus}
       ref={mergeRefs(ref, containerRef ?? null)}
     >
       <Input {...props} ref={inputRef} />

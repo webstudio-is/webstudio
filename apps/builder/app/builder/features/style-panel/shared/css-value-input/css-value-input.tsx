@@ -25,6 +25,7 @@ import {
   useCallback,
   useEffect,
   useRef,
+  ReactNode,
 } from "react";
 import { useUnitSelect } from "./unit-select";
 import { unstable_batchedUpdates as unstableBatchedUpdates } from "react-dom";
@@ -226,6 +227,8 @@ type CssValueInputProps = {
   }) => void;
   onHighlight: (value: StyleValue | undefined) => void;
   onAbort: () => void;
+  icon?: ReactNode;
+  prefix?: ReactNode;
 };
 
 const initialValue: IntermediateStyleValue = {
@@ -285,6 +288,7 @@ const match = <Item,>(
  */
 export const CssValueInput = ({
   icon,
+  prefix,
   styleSource,
   property,
   keywords = [],
@@ -292,7 +296,7 @@ export const CssValueInput = ({
   onAbort,
   disabled,
   ...props
-}: CssValueInputProps & { icon?: JSX.Element }) => {
+}: CssValueInputProps) => {
   const value = props.intermediateValue ?? props.value ?? initialValue;
 
   const onChange = (input: string | undefined) => {
@@ -456,19 +460,22 @@ export const CssValueInput = ({
     onKeyDown: inputProps.onKeyDown,
   });
 
-  const prefix = icon && (
-    <NestedIconLabel
-      color={styleSource}
-      css={value.type === "unit" ? { cursor: "ew-resize" } : undefined}
-    >
-      {icon}
-    </NestedIconLabel>
-  );
+  const finalPrefix =
+    prefix ||
+    (icon && (
+      <NestedIconLabel
+        color={styleSource}
+        css={value.type === "unit" ? { cursor: "ew-resize" } : undefined}
+      >
+        {icon}
+      </NestedIconLabel>
+    ));
 
   const keywordButtonElement = (
     <NestedSelectButton
       {...getToggleButtonProps()}
       data-state={isOpen ? "open" : "closed"}
+      tabIndex={-1}
     >
       <ChevronDownIcon />
     </NestedSelectButton>
@@ -506,10 +513,8 @@ export const CssValueInput = ({
             inputRef={inputRef}
             name={property}
             color={value.type === "invalid" ? "error" : undefined}
-            prefix={prefix}
+            prefix={finalPrefix}
             suffix={suffix}
-            // no need for arrow focus unless we have a unit-select control to focus
-            arrowFocus={isUnitValue}
             css={{ cursor: "default" }}
           />
         </ComboboxAnchor>

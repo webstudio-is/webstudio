@@ -13,6 +13,44 @@ type Render = (props: {
   focusManager: ReturnType<typeof useFocusManager>;
 }) => JSX.Element;
 
+const willEventMoveCaret = (event: KeyboardEvent) => {
+  const { activeElement } = document;
+
+  if (!(activeElement instanceof HTMLInputElement)) {
+    return false;
+  }
+
+  const { selectionStart, selectionEnd, value } = activeElement;
+
+  // probably never the case, just for TypeScript
+  if (selectionStart === null || selectionEnd === null) {
+    return true;
+  }
+
+  // if some text is selected, arrow keys remove selection
+  if (selectionStart !== selectionEnd) {
+    return true;
+  }
+
+  // if caret at the end, right and down will not move it
+  if (
+    selectionEnd === value.length &&
+    (event.key === "ArrowRight" || event.key === "ArrowDown")
+  ) {
+    return false;
+  }
+
+  // if caret at the start, left and up will not move it
+  if (
+    selectionStart === 0 &&
+    (event.key === "ArrowLeft" || event.key === "ArrowUp")
+  ) {
+    return false;
+  }
+
+  return true;
+};
+
 // Need this wrapper becuase we can't call useFocusManager
 // in the same component that renders FocusScope
 const ContextHelper = ({ render }: { render: Render }) => {
@@ -23,18 +61,7 @@ const ContextHelper = ({ render }: { render: Render }) => {
       event: KeyboardEvent,
       focusManagerOptions?: FocusManagerOptions
     ) => {
-      const { activeElement } = document;
-
-      // In a text input, arrow keys are used for moving the caret,
-      // so unless Alt is pressed, we don't want to move focus
-      //
-      // @todo: this may not set :focus-visible correctly
-      //        https://github.com/webstudio-is/webstudio-builder/issues/1364
-      if (
-        (activeElement instanceof HTMLInputElement ||
-          activeElement instanceof HTMLTextAreaElement) &&
-        event.altKey === false
-      ) {
+      if (willEventMoveCaret(event)) {
         return;
       }
 
