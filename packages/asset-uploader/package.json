@@ -40,7 +40,7 @@
     ".": {
       "source": "./src/index.ts",
       "import": "./lib/index.js",
-      "require": "./lib/cjs/index.cjs"
+      "require": "./lib/cjs/index.js"
     },
     "./server": "./server.js"
   },

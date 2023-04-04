@@ -992,9 +992,6 @@ importers:
       '@inquirer/confirm':
         specifier: ^0.0.25-alpha.0
         version: 0.0.25-alpha.0
-      '@prisma/client':
-        specifier: ^4.9.0
-        version: 4.9.0(prisma@4.9.0)
       '@types/minimist':
         specifier: ^1.2.2
         version: 1.2.2
@@ -1017,6 +1014,9 @@ importers:
         specifier: ^9.0.0
         version: 9.0.0
     devDependencies:
+      '@prisma/client':
+        specifier: ^4.9.0
+        version: 4.9.0(prisma@4.9.0)
       '@types/node':
         specifier: ^18.11.18
         version: 18.11.18
@@ -5159,15 +5159,16 @@ packages:
     dependencies:
       '@prisma/engines-version': 4.9.0-42.ceb5c99003b99c9ee2c1d2e618e359c14aef2ea5
       prisma: 4.9.0
-    dev: false
+    dev: true
 
   /@prisma/engines-version@4.9.0-42.ceb5c99003b99c9ee2c1d2e618e359c14aef2ea5:
     resolution: {integrity: sha512-M16aibbxi/FhW7z1sJCX8u+0DriyQYY5AyeTH7plQm9MLnURoiyn3CZBqAyIoQ+Z1pS77usCIibYJWSgleBMBA==}
-    dev: false
+    dev: true
 
   /@prisma/engines@4.9.0:
     resolution: {integrity: sha512-t1pt0Gsp+HcgPJrHFc+d/ZSAaKKWar2G/iakrE07yeKPNavDP3iVKPpfXP22OTCHZUWf7OelwKJxQgKAm5hkgw==}
     requiresBuild: true
+    dev: true
 
   /@radix-ui/colors@0.1.8:
     resolution: {integrity: sha512-jwRMXYwC0hUo0mv6wGpuw254Pd9p/R6Td5xsRpOmaWkUHlooNWqVcadgyzlRumMq3xfOTXwJReU0Jv+EIy4Jbw==}
@@ -16688,6 +16689,7 @@ packages:
     requiresBuild: true
     dependencies:
       '@prisma/engines': 4.9.0
+    dev: true
 
   /prismjs@1.28.0:
     resolution: {integrity: sha512-8aaXdYvl1F7iC7Xm1spqSaY/OJBpYW3v+KJ+F17iYxvdc8sfjW194COK5wVhMZX45tGteiBQgdvD/nhxcRwylw==}
