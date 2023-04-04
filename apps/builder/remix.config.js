@@ -32,4 +32,8 @@ module.exports = {
   watchPaths: () => {
     return ["../../packages/**/lib/**.js"];
   },
+
+  future: {
+    v2_errorBoundary: true,
+  },
 };
