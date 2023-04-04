@@ -33,7 +33,8 @@ export const enterEditingMode = (event?: KeyboardEvent) => {
     return;
   }
 
-  // Enter click can be intercepted from builder and element can be unfocused
+  // When an event is triggered from the Builder,
+  // the canvas element may be unfocused, so it's important to focus the element on the canvas.
   element.focus();
 
   // Prevents inserting a newline when entering text-editing mode
