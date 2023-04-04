@@ -28,6 +28,9 @@ import { normalizeErrors, toastUnknownFieldErrors } from "~/shared/form-utils";
 import { assetsStore } from "~/shared/nano-states";
 import { useStore } from "@nanostores/react";
 
+// stubbed asset is necessary to preserve position of asset
+// while uploading and after it is uploaded
+// undefined is not stored in db and only persisted in current session
 const stubAssets = (ids: Asset["id"][]) => {
   const assets = new Map(assetsStore.get());
   for (const assetId of ids) {
