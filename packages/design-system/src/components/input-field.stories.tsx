@@ -53,6 +53,17 @@ export const Demo = () => (
       </StoryGrid>
     </StorySection>
 
+    <StorySection title="Focused (initially)">
+      <StoryGrid horizontal>
+        <InputField
+          defaultValue="Some value"
+          prefix={prefix}
+          suffix={suffix}
+          autoFocus
+        />
+      </StoryGrid>
+    </StorySection>
+
     <StorySection title="Width text">
       <StoryGrid>
         {[300, 100].map((width) => (
