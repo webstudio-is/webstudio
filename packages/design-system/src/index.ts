@@ -31,7 +31,7 @@ export * from "./components/text-area";
 export * from "./components/radio";
 export * from "./components/checkbox";
 export * from "./components/component-card";
-export * from "./components/primitives/arrow-focus";
+export * from "./components/input-field";
 export * from "./components/nested-select-button";
 
 // Not aligned
@@ -76,6 +76,7 @@ export { Grid } from "./components/grid";
 export * from "./components/primitives/dnd";
 export * from "./components/primitives/numeric-gesture-control";
 export * from "./components/primitives/is-truncated";
+export * from "./components/primitives/arrow-focus";
 
 // Deprecated
 
