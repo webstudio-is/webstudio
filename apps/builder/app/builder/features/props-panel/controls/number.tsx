@@ -44,7 +44,7 @@ export const NumberControl = ({
             localValue.save();
           }
         }}
-        css={{ width: theme.spacing[22] }}
+        css={{ width: theme.spacing[21] }}
       />
     </HorizontalLayout>
   );
