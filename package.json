@@ -26,7 +26,6 @@
     "@storybook/react": "^6.5.16",
     "@types/css-tree": "^2.0.0",
     "@webstudio-is/eslint-config-custom": "workspace:^",
-    "chromatic": "^6.11.4",
     "nano-staged": "^0.8.0",
     "prettier": "2.8.7",
     "simple-git-hooks": "^2.8.1",

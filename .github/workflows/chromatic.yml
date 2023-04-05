@@ -52,9 +52,6 @@ jobs:
 
       - uses: ./.github/actions/ci-setup
 
-      # only packages have to be built as they might be imported by Storybooks
-      - run: pnpm build-packages
-
       - name: Chromatic
         id: chromatic
         uses: chromaui/action@v1
@@ -79,8 +76,6 @@ jobs:
           fetch-depth: 2 # we need to fetch at least parent commit to satisfy Chromatic
 
       - uses: ./.github/actions/ci-setup
-
-      - run: DATABASE_URL="-" AUTH_SECRET="-" pnpm build
 
       - name: Chromatic
         id: chromatic
