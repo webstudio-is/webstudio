@@ -1,5 +1,6 @@
 import { createNanoEvents } from "nanoevents";
 import { useCallback, useEffect, useRef } from "react";
+import { batchUpdate } from "./raf-queue";
 
 export const createPubsub = <PublishMap>() => {
   type Action<Type extends keyof PublishMap> =
@@ -18,7 +19,8 @@ export const createPubsub = <PublishMap>() => {
         // we could potentially maintain a list of valid event types at runtime
         // at the very least we could add a brand property or something to our events
         if (typeof event.data?.type === "string") {
-          emitter.emit(event.data.type, event.data.payload);
+          // Execute all updates within a single batch to improve performance
+          batchUpdate(() => emitter.emit(event.data.type, event.data.payload));
         }
       },
       false
