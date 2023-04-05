@@ -4,9 +4,20 @@ import {
   type AppContext,
   authorizeProject,
 } from "@webstudio-is/trpc-interface/server";
-import { type Asset, Assets } from "./schema";
+import { type Asset, Assets, Env } from "./schema";
 import { deleteAssets } from "./delete";
 import { loadByProject } from "./db/load";
+
+const env = Env.parse(process.env);
+const MAX_ASSETS_PER_PROJECT = env.MAX_ASSETS_PER_PROJECT;
+
+const truncateNewAssets = (assetsCount: number, newAssets: Asset[]) => {
+  const possibleNewAssetsCount = Math.max(
+    0,
+    MAX_ASSETS_PER_PROJECT - assetsCount
+  );
+  return newAssets.slice(0, possibleNewAssetsCount);
+};
 
 /**
  * patchAssets can only delete or add assets
@@ -54,16 +65,19 @@ export const patchAssets = async (
       addedAssets.push(asset);
     }
   }
-  await prisma.asset.createMany({
-    data: addedAssets.map((asset) => ({
-      id: asset.id,
-      location: asset.location,
-      name: asset.name,
-      size: asset.size,
-      format: asset.format,
-      projectId: asset.projectId,
-      meta: JSON.stringify(asset.meta),
-      status: "UPLOADED",
-    })),
-  });
+  const truncatedAddedAssets = truncateNewAssets(assets.size, addedAssets);
+  if (truncatedAddedAssets.length !== 0) {
+    await prisma.asset.createMany({
+      data: truncatedAddedAssets.map((asset) => ({
+        id: asset.id,
+        location: asset.location,
+        name: asset.name,
+        size: asset.size,
+        format: asset.format,
+        projectId: asset.projectId,
+        meta: JSON.stringify(asset.meta),
+        status: "UPLOADED",
+      })),
+    });
+  }
 };
