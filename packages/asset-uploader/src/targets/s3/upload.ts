@@ -11,7 +11,7 @@ import { Location } from "@webstudio-is/prisma-client";
 import { S3Env } from "../../schema";
 import { toUint8Array } from "../../utils/to-uint8-array";
 import { getAssetData, AssetData } from "../../utils/get-asset-data";
-import { createAssetWithLimit } from "../../db";
+import { createAsset } from "../../db";
 import { idsFormDataFieldName, type Asset } from "../../schema";
 import { getUniqueFilename } from "../../utils/get-unique-filename";
 import { getS3Client } from "./client";
@@ -42,7 +42,7 @@ export const uploadToS3 = async (
   },
   context: AppContext
 ): Promise<Array<Asset>> => {
-  const asset = await createAssetWithLimit(
+  const asset = await createAsset(
     projectId,
     async () => {
       const uploadHandler = createUploadHandler(MAX_FILES_PER_REQUEST);

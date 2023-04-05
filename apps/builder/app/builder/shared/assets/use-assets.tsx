@@ -8,7 +8,10 @@ import {
   idsFormDataFieldName,
 } from "@webstudio-is/asset-uploader";
 import { toast } from "@webstudio-is/design-system";
-import { sanitizeS3Key } from "@webstudio-is/asset-uploader";
+import {
+  sanitizeS3Key,
+  MAX_ASSETS_PER_PROJECT,
+} from "@webstudio-is/asset-uploader";
 import { restAssetsPath } from "~/shared/router-utils";
 import type { AssetContainer } from "./types";
 import { usePersistentFetcher } from "~/shared/fetcher";
@@ -151,6 +154,20 @@ export const useUploadAsset = () => {
     if (projectId === undefined) {
       return;
     }
+
+    const assetsCount = assetsStore.get().size;
+    const newFilesCount = files.length;
+    const count = assetsCount + newFilesCount;
+    if (count > MAX_ASSETS_PER_PROJECT) {
+      toast.error(
+        `The maximum number of assets per project is ${MAX_ASSETS_PER_PROJECT}.`
+      );
+    }
+    const possibleNewFilesCount = Math.max(
+      0,
+      MAX_ASSETS_PER_PROJECT - assetsCount
+    );
+    files = files.slice(0, possibleNewFilesCount);
 
     try {
       const filesData = getFilesData(type, files);

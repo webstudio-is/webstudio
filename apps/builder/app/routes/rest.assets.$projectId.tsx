@@ -43,10 +43,7 @@ export const action = async (
         context
       );
       return {
-        uploadedAssets: assets.map((asset) => ({
-          ...asset,
-          status: "uploaded",
-        })),
+        uploadedAssets: assets,
       };
     }
   } catch (error) {
