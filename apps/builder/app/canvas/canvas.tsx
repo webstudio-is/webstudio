@@ -17,7 +17,7 @@ import {
 import { publish } from "~/shared/pubsub";
 import { registerContainers, useCanvasStore } from "~/shared/sync";
 import { useSharedShortcuts } from "~/shared/shortcuts";
-import { useShortcuts } from "./shared/use-shortcuts";
+import { useCanvasShortcuts } from "./canvas-shortcuts";
 import { useManageDesignModeStyles, GlobalStyles } from "./shared/styles";
 import { WebstudioComponentDev } from "./features/webstudio-component";
 import {
@@ -127,7 +127,7 @@ export const Canvas = ({
   registerComponentPropsMetas(customComponentPropsMetas);
 
   // e.g. toggling preview is still needed in both modes
-  useShortcuts();
+  useCanvasShortcuts();
   useSharedShortcuts();
   const selectedPage = useStore(selectedPageStore);
 

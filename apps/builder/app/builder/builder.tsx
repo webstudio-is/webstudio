@@ -211,11 +211,13 @@ const ChromeWrapper = ({ children, isPreviewMode }: ChromeWrapperProps) => {
 type NavigatorPanelProps = {
   isPreviewMode: boolean;
   navigatorLayout: "docked" | "undocked";
+  publish: Publish;
 };
 
 const NavigatorPanel = ({
   isPreviewMode,
   navigatorLayout,
+  publish,
 }: NavigatorPanelProps) => {
   if (navigatorLayout === "docked") {
     return null;
@@ -230,7 +232,7 @@ const NavigatorPanel = ({
           height: "100%",
         }}
       >
-        <Navigator isClosable={false} />
+        <Navigator isClosable={false} publish={publish} />
       </Box>
     </SidePanel>
   );
@@ -337,6 +339,7 @@ export const Builder = ({
       <NavigatorPanel
         isPreviewMode={isPreviewMode}
         navigatorLayout={navigatorLayout}
+        publish={publish}
       />
       <SidePanel
         gridArea="inspector"
