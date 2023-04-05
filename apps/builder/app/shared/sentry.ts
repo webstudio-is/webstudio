@@ -2,10 +2,13 @@ import * as Sentry from "@sentry/remix";
 import type { Extras, Integration } from "@sentry/types";
 import env from "~/shared/env";
 
+// Disable sentry as it failed with production Remix 1.15.0
+const SENTRY_ENABLED = false;
+
 export const initSentry = ({
   integrations = [],
 }: { integrations?: Integration[] } = {}) =>
-  env.SENTRY_DSN
+  SENTRY_ENABLED && env.SENTRY_DSN
     ? Sentry.init({
         dsn: env.SENTRY_DSN,
         tracesSampleRate: 1.0,
@@ -24,7 +27,7 @@ export const sentryMessage = ({
   extras,
   skipLogging = false,
 }: SentryHelperProps & { message: string }) => {
-  if (env.SENTRY_DSN) {
+  if (SENTRY_ENABLED && env.SENTRY_DSN) {
     Sentry.withScope((scope) => {
       if (extras) {
         scope.setExtras(extras);
@@ -44,7 +47,7 @@ export const sentryException = ({
   extras,
   skipLogging = false,
 }: SentryHelperProps & { error: unknown }) => {
-  if (env.SENTRY_DSN) {
+  if (SENTRY_ENABLED && env.SENTRY_DSN) {
     Sentry.withScope((scope) => {
       if (extras) {
         scope.setExtras(extras);
