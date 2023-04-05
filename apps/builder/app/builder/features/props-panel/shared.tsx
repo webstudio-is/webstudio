@@ -5,6 +5,7 @@ import {
   useState,
   useEffect,
 } from "react";
+import equal from "fast-deep-equal";
 import type { WsComponentPropsMeta } from "@webstudio-is/react-sdk";
 import type { Prop } from "@webstudio-is/project-build";
 import type { Asset } from "@webstudio-is/asset-uploader";
@@ -84,13 +85,13 @@ export const useLocalValue = <Type,>(
   // Not using an effect to avoid re-rendering
   // https://beta.reactjs.org/reference/react/useState#storing-information-from-previous-renders
   const [previousSavedValue, setPreviousSavedValue] = useState(savedValue);
-  if (previousSavedValue !== savedValue) {
+  if (equal(previousSavedValue, savedValue) === false) {
     setLocalValue(savedValue);
     setPreviousSavedValue(savedValue);
   }
 
   const save = () => {
-    if (localValue !== savedValue) {
+    if (equal(localValue, savedValue) === false) {
       onSave(localValue);
     }
   };

@@ -9,9 +9,10 @@ import {
   ToggleGroupItem,
   Select,
   Tooltip,
+  Label,
 } from "@webstudio-is/design-system";
-import { LinkIcon, PageIcon, PhoneIcon } from "@webstudio-is/icons";
-import { useState } from "react";
+import { EmailIcon, LinkIcon, PageIcon, PhoneIcon } from "@webstudio-is/icons";
+import { ReactNode, useState } from "react";
 import {
   type ControlProps,
   getLabel,
@@ -28,6 +29,12 @@ type BaseControlProps = {
   onChange: UrlControlProps["onChange"];
 };
 
+const Row = ({ children }: { children: ReactNode }) => (
+  <Flex css={{ height: theme.spacing[13] }} align="center" justify="between">
+    {children}
+  </Flex>
+);
+
 const BaseUrl = ({ prop, onChange, id }: BaseControlProps) => {
   const localValue = useLocalValue(
     prop?.type === "string" ? prop.value : "",
@@ -35,7 +42,7 @@ const BaseUrl = ({ prop, onChange, id }: BaseControlProps) => {
   );
 
   return (
-    <Flex css={{ py: theme.spacing[2] }} direction="column" align="stretch">
+    <Row>
       <InputField
         id={id}
         value={localValue.value}
@@ -47,8 +54,9 @@ const BaseUrl = ({ prop, onChange, id }: BaseControlProps) => {
             localValue.save();
           }
         }}
+        css={{ width: "100%" }}
       />
-    </Flex>
+    </Row>
   );
 };
 
@@ -61,10 +69,11 @@ const BasePhone = ({ prop, onChange, id }: BaseControlProps) => {
   );
 
   return (
-    <Flex css={{ py: theme.spacing[2] }} direction="column" align="stretch">
+    <Row>
       <InputField
         id={id}
         value={localValue.value}
+        type="tel"
         placeholder="+15555555555"
         onChange={(event) => localValue.set(event.target.value)}
         onBlur={localValue.save}
@@ -73,8 +82,88 @@ const BasePhone = ({ prop, onChange, id }: BaseControlProps) => {
             localValue.save();
           }
         }}
+        css={{ width: "100%" }}
       />
-    </Flex>
+    </Row>
+  );
+};
+
+const propToEmail = (prop?: UrlControlProps["prop"]) => {
+  if (prop?.type !== "string") {
+    return { email: "", subject: "" };
+  }
+
+  let url;
+  try {
+    url = new URL(prop.value);
+    // eslint-disable-next-line no-empty
+  } catch {}
+
+  if (url === undefined || url.protocol !== "mailto:") {
+    return { email: "", subject: "" };
+  }
+
+  return {
+    email: url.pathname,
+    subject: url.searchParams.get("subject") ?? "",
+  };
+};
+
+const BaseEmail = ({ prop, onChange, id }: BaseControlProps) => {
+  const localValue = useLocalValue(propToEmail(prop), ({ email, subject }) => {
+    if (email === "") {
+      onChange({ type: "string", value: "" });
+      return;
+    }
+    const url = new URL(`mailto:${email}`);
+    if (subject !== "") {
+      url.searchParams.set("subject", subject);
+    }
+    onChange({ type: "string", value: url.toString() });
+  });
+
+  return (
+    <>
+      <Row>
+        <InputField
+          id={id}
+          value={localValue.value.email}
+          type="email"
+          placeholder="email@address.com"
+          onChange={(event) =>
+            localValue.set((value) => ({ ...value, email: event.target.value }))
+          }
+          onBlur={localValue.save}
+          onKeyDown={(event) => {
+            if (event.key === "Enter") {
+              localValue.save();
+            }
+          }}
+          css={{ width: "100%" }}
+        />
+      </Row>
+      <Row>
+        <Label htmlFor={`${id}-subject`}>Subject</Label>
+        <InputField
+          id={`${id}-subject`}
+          value={localValue.value.subject}
+          placeholder="You've got mail!"
+          onChange={(event) =>
+            localValue.set((value) => ({
+              ...value,
+              subject: event.target.value,
+            }))
+          }
+          onBlur={localValue.save}
+          onKeyDown={(event) => {
+            if (event.key === "Enter") {
+              localValue.save();
+            }
+          }}
+          css={{ width: theme.spacing[24] }}
+        />
+      </Row>
+    </>
   );
 };
 
@@ -90,7 +179,7 @@ const BasePage = ({ prop, onChange, id }: BaseControlProps) => {
       : undefined;
 
   return (
-    <Flex css={{ py: theme.spacing[2] }}>
+    <Row>
       <Select
         id={id}
         value={value}
@@ -100,18 +189,18 @@ const BasePage = ({ prop, onChange, id }: BaseControlProps) => {
         onChange={(page) => onChange({ type: "page", value: page.id })}
         fullWidth
       />
-    </Flex>
+    </Row>
   );
 };
 
-// @todo: Section, Email, Attachment
-const modes = ["url", "page", "phone"] as const;
-type Mode = (typeof modes)[number];
-const baseControls = {
-  url: BaseUrl,
-  page: BasePage,
-  phone: BasePhone,
-} satisfies Record<Mode, unknown>;
+const modes = {
+  url: { icon: <LinkIcon />, control: BaseUrl, label: "URL" },
+  page: { icon: <PageIcon />, control: BasePage, label: "Page" },
+  email: { icon: <EmailIcon />, control: BaseEmail, label: "Email" },
+  phone: { icon: <PhoneIcon />, control: BasePhone, label: "Phone" },
+} as const;
+
+type Mode = keyof typeof modes;
 
 const propToMode = (prop?: UrlControlProps["prop"]): Mode => {
   if (prop === undefined) {
@@ -124,6 +213,10 @@ const propToMode = (prop?: UrlControlProps["prop"]): Mode => {
 
   if (prop.value.startsWith("tel:")) {
     return "phone";
+  }
+
+  if (prop.value.startsWith("mailto:")) {
+    return "email";
   }
 
   return "url";
@@ -140,7 +233,7 @@ export const UrlControl = ({
 
   const id = useId();
 
-  const BaseControl = baseControls[mode];
+  const BaseControl = modes[mode].control;
 
   return (
     <VerticalLayout
@@ -161,27 +254,16 @@ export const UrlControl = ({
           type="single"
           value={mode}
           onValueChange={(value) => {
-            const asMode = modes.find((mode) => mode === value);
-            if (asMode) {
-              setMode(asMode);
-            }
+            // too tricky to prove to TS that value is a Mode
+            // doesn't worth it given we map over modes below
+            setMode(value as Mode);
           }}
         >
-          <ToggleGroupItem value={"url" satisfies Mode}>
-            <Tooltip content="URL">
-              <LinkIcon />
-            </Tooltip>
-          </ToggleGroupItem>
-          <ToggleGroupItem value={"page" satisfies Mode}>
-            <Tooltip content="Page">
-              <PageIcon />
-            </Tooltip>
-          </ToggleGroupItem>
-          <ToggleGroupItem value={"phone" satisfies Mode}>
-            <Tooltip content="Phone">
-              <PhoneIcon />
-            </Tooltip>
-          </ToggleGroupItem>
+          {Object.entries(modes).map(([key, { icon, label }]) => (
+            <ToggleGroupItem value={key} key={key}>
+              <Tooltip content={label}>{icon}</Tooltip>
+            </ToggleGroupItem>
+          ))}
         </ToggleGroup>
       </Flex>
 
