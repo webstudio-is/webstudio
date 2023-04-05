@@ -45,7 +45,6 @@ import {
 import { type Settings, useClientSettings } from "./shared/client-settings";
 import { getBuildUrl } from "~/shared/router-utils";
 import { useCopyPaste } from "~/shared/copy-paste";
-import { AssetsProvider } from "./shared/assets";
 import type { Asset } from "@webstudio-is/asset-uploader";
 import { useSearchParams } from "@remix-run/react";
 import { useSyncInitializeOnce } from "~/shared/hook-utils";
@@ -316,40 +315,38 @@ export const Builder = ({
   });
 
   return (
-    <AssetsProvider projectId={project.id} authToken={authToken}>
-      <ChromeWrapper isPreviewMode={isPreviewMode}>
-        <Topbar gridArea="header" project={project} publish={publish} />
-        <Main>
-          <Workspace onTransitionEnd={onTransitionEnd} publish={publish}>
-            <CanvasIframe
-              ref={iframeRefCallback}
-              src={canvasUrl}
-              pointerEvents={isCanvasPointerEventsEnabled ? "auto" : "none"}
-              title={project.title}
-              css={{
-                height: "100%",
-                width: "100%",
-              }}
-            />
-          </Workspace>
-        </Main>
-        <SidePanel gridArea="sidebar" isPreviewMode={isPreviewMode}>
-          <SidebarLeft publish={publish} />
-        </SidePanel>
-        <NavigatorPanel
-          isPreviewMode={isPreviewMode}
-          navigatorLayout={navigatorLayout}
-        />
-        <SidePanel
-          gridArea="inspector"
-          isPreviewMode={isPreviewMode}
-          css={{ overflow: "hidden" }}
-        >
-          <Inspector publish={publish} navigatorLayout={navigatorLayout} />
-        </SidePanel>
-        {isPreviewMode === false && <Footer />}
-        <BlockingAlerts />
-      </ChromeWrapper>
-    </AssetsProvider>
+    <ChromeWrapper isPreviewMode={isPreviewMode}>
+      <Topbar gridArea="header" project={project} publish={publish} />
+      <Main>
+        <Workspace onTransitionEnd={onTransitionEnd} publish={publish}>
+          <CanvasIframe
+            ref={iframeRefCallback}
+            src={canvasUrl}
+            pointerEvents={isCanvasPointerEventsEnabled ? "auto" : "none"}
+            title={project.title}
+            css={{
+              height: "100%",
+              width: "100%",
+            }}
+          />
+        </Workspace>
+      </Main>
+      <SidePanel gridArea="sidebar" isPreviewMode={isPreviewMode}>
+        <SidebarLeft publish={publish} />
+      </SidePanel>
+      <NavigatorPanel
+        isPreviewMode={isPreviewMode}
+        navigatorLayout={navigatorLayout}
+      />
+      <SidePanel
+        gridArea="inspector"
+        isPreviewMode={isPreviewMode}
+        css={{ overflow: "hidden" }}
+      >
+        <Inspector publish={publish} navigatorLayout={navigatorLayout} />
+      </SidePanel>
+      {isPreviewMode === false && <Footer />}
+      <BlockingAlerts />
+    </ChromeWrapper>
   );
 };
