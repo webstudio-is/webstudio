@@ -11,6 +11,9 @@ export const shortcuts = {
   esc: "esc",
   preview: "meta+shift+p, ctrl+shift+p",
   breakpointsMenu: "meta+b, ctrl+b",
+} as const;
+
+export const instanceTreeShortcuts = {
   enter: "enter",
 } as const;
 

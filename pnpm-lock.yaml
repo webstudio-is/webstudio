@@ -198,6 +198,9 @@ importers:
       mdast-util-from-markdown:
         specifier: ^1.3.0
         version: 1.3.0
+      merge-refs:
+        specifier: ^1.1.3
+        version: 1.1.3
       micromark:
         specifier: ^3.1.0
         version: 3.1.0
@@ -15252,6 +15255,12 @@ packages:
 
   /merge-descriptors@1.0.1:
     resolution: {integrity: sha512-cCi6g3/Zr1iqQi6ySbseM1Xvooa98N0w31jzUYrXPX2xqObmFGHJ0tQ5u74H3mVh7wLouTseZyYIq39g8cNp1w==}
+
+  /merge-refs@1.1.3:
+    resolution: {integrity: sha512-di/iXo7YUDHs38KoIROE2BQvL6xmqiKYpNQSM0NG2jdvikvhJOeihXXyOXXMKkoMxdCXF2SvyxTJ92NuRA5wfA==}
+    dependencies:
+      '@types/react': 17.0.47
+    dev: false
 
   /merge-stream@2.0.0:
     resolution: {integrity: sha512-abv/qOcuPfk3URPfDzmZU1LKmuw8kT+0nIHvKrKgFrwifol/doWcdA4ZqsWQ8ENrFKkd67Mfpo/LovbIUsbt3w==}

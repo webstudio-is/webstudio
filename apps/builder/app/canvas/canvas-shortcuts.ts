@@ -1,5 +1,5 @@
 import { useHotkeys } from "react-hotkeys-hook";
-import { shortcuts, options } from "~/shared/shortcuts";
+import { shortcuts, instanceTreeShortcuts, options } from "~/shared/shortcuts";
 import { publish, useSubscribe } from "~/shared/pubsub";
 import { isPreviewModeStore } from "~/shared/nano-states";
 import {
@@ -32,7 +32,10 @@ export const useCanvasShortcuts = () => {
     breakpointsMenu: publishOpenBreakpointsMenu,
     esc: publishCancelCurrentDrag,
     enter: enterEditingMode,
-  } as const satisfies Record<keyof typeof shortcuts, unknown>;
+  } as const satisfies Record<
+    keyof typeof shortcuts | keyof typeof instanceTreeShortcuts,
+    unknown
+  >;
 
   useHotkeys(shortcuts.preview, shortcutHandlerMap.preview, options, []);
 
@@ -54,7 +57,7 @@ export const useCanvasShortcuts = () => {
     []
   );
 
-  useHotkeys(shortcuts.enter, shortcutHandlerMap.enter, {}, []);
+  useHotkeys(instanceTreeShortcuts.enter, shortcutHandlerMap.enter, {}, []);
 
   // Shortcuts from the parent window
   useSubscribe("shortcut", ({ name }) => {
