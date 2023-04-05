@@ -6,7 +6,7 @@
   "scripts": {
     "build": "remix build",
     "start": "remix-serve build",
-    "start-local": "NODE_ENV=development dotenv -e .env remix",
+    "start-local": "dotenv -e .env remix",
     "dev": "remix dev",
     "typecheck": "tsc",
     "lint": "eslint . --ext .ts,.tsx --max-warnings 0",
