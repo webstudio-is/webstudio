@@ -32,7 +32,7 @@ import { useIsPreviewMode } from "~/shared/nano-states";
 import { deleteSelectedInstance } from "~/shared/instance-utils";
 import { MenuButton } from "./menu-button";
 import { useAuthPermit } from "~/shared/nano-states";
-import { zoomIn, zoomOut } from "~/shared/nano-states/breakpoints";
+import { scaleUp, scaleDown } from "~/shared/nano-states/breakpoints";
 
 const ThemeMenuItem = () => {
   if (isFeatureEnabled("dark") === false) {
@@ -181,14 +181,14 @@ export const Menu = ({ publish }: MenuProps) => {
               <ShortcutHint value={["cmd", "b"]} />
             </DropdownMenuItemRightSlot>
           </DropdownMenuItem>
-          <DropdownMenuItem onSelect={zoomIn}>
-            Zoom in
+          <DropdownMenuItem onSelect={scaleUp}>
+            Scale up
             <DropdownMenuItemRightSlot>
               <ShortcutHint value={["+"]} />
             </DropdownMenuItemRightSlot>
           </DropdownMenuItem>
-          <DropdownMenuItem onSelect={zoomOut}>
-            Zoom out
+          <DropdownMenuItem onSelect={scaleDown}>
+            Scale down
             <DropdownMenuItemRightSlot>
               <ShortcutHint value={["-"]} />
             </DropdownMenuItemRightSlot>

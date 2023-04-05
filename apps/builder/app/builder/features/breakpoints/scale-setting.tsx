@@ -5,23 +5,23 @@ import {
   DeprecatedText2,
   Flex,
 } from "@webstudio-is/design-system";
-import { minZoom, zoomStore } from "~/shared/nano-states/breakpoints";
+import { minScale, scaleStore } from "~/shared/nano-states/breakpoints";
 
-export const ZoomSetting = () => {
-  const value = useStore(zoomStore);
+export const ScaleSetting = () => {
+  const value = useStore(scaleStore);
   return (
     <Flex
       css={{ px: theme.spacing[11], py: theme.spacing[3] }}
       gap="1"
       direction="column"
     >
-      <DeprecatedText2>Zoom</DeprecatedText2>
+      <DeprecatedText2>Scale</DeprecatedText2>
       <Flex gap="3" align="center">
         <Slider
-          min={minZoom}
+          min={minScale}
           value={value}
           onValueChange={([value]) => {
-            zoomStore.set(value);
+            scaleStore.set(value);
           }}
         />
         <DeprecatedText2>{value}%</DeprecatedText2>

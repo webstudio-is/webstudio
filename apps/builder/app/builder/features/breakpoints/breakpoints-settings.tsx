@@ -15,7 +15,7 @@ import {
 import { useSubscribe } from "~/shared/pubsub";
 import { BreakpointsEditor } from "./breakpoints-editor";
 import { Preview } from "./preview";
-import { ZoomSetting } from "./zoom-setting";
+import { ScaleSetting } from "./scale-setting";
 import { TriggerButton } from "./trigger-button";
 import { WidthSetting } from "./width-setting";
 import { ConfirmationDialog } from "./confirmation-dialog";
@@ -157,7 +157,7 @@ export const BreakpointsSettings = () => {
               )}
               <DropdownMenuSeparator />
               <form>
-                <ZoomSetting />
+                <ScaleSetting />
                 <WidthSetting />
               </form>
               <DropdownMenuSeparator />

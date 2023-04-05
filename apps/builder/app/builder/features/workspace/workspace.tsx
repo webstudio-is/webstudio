@@ -6,7 +6,7 @@ import { selectedInstanceSelectorStore } from "~/shared/nano-states";
 import { textEditingInstanceSelectorStore } from "~/shared/nano-states/instances";
 import {
   workspaceRectStore,
-  zoomStore,
+  scaleStore,
 } from "~/shared/nano-states/breakpoints";
 import { CanvasTools } from "./canvas-tools";
 import { useMeasure } from "react-use";
@@ -19,7 +19,7 @@ const workspaceStyle = {
   position: "relative",
 };
 
-const zoomStyle = {
+const scaleStyle = {
   transformStyle: "preserve-3d",
   transition: "transform 200ms ease-out",
   height: "100%",
@@ -56,7 +56,7 @@ export const Workspace = ({
   onTransitionEnd,
   publish,
 }: WorkspaceProps) => {
-  const zoom = useStore(zoomStore);
+  const scale = useStore(scaleStore);
   const [canvasWidth] = useCanvasWidth();
   const workspaceRef = useSetWorkspaceRect();
 
@@ -70,8 +70,8 @@ export const Workspace = ({
       <Flex
         direction="column"
         align="center"
-        css={zoomStyle}
-        style={{ transform: `scale(${zoom / 100})` }}
+        css={scaleStyle}
+        style={{ transform: `scale(${scale / 100})` }}
         onTransitionEnd={onTransitionEnd}
       >
         <Box css={canvasContainerStyle} style={{ width: canvasWidth }}>

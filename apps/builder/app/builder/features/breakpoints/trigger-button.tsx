@@ -8,13 +8,13 @@ import {
 import { useCanvasWidth } from "~/builder/shared/nano-states";
 import {
   selectedBreakpointStore,
-  zoomStore,
+  scaleStore,
 } from "~/shared/nano-states/breakpoints";
 
 type TriggerButtonProps = ComponentProps<typeof DropdownMenuSubTrigger>;
 
 export const TriggerButton = (props: TriggerButtonProps) => {
-  const zoom = useStore(zoomStore);
+  const scale = useStore(scaleStore);
   const breakpoint = useStore(selectedBreakpointStore);
   const [canvasWidth] = useCanvasWidth();
   if (breakpoint === undefined) {
@@ -25,7 +25,7 @@ export const TriggerButton = (props: TriggerButtonProps) => {
       aria-label="Show breakpoints"
       className={toggleItemStyle()}
     >
-      {`${canvasWidth}px ${zoom}%`}
+      {`${canvasWidth}px ${scale}%`}
     </DropdownMenuTrigger>
   );
 };

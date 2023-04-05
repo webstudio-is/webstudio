@@ -1,8 +1,8 @@
 import { type Options, useHotkeys } from "react-hotkeys-hook";
 import store from "immerhin";
 import {
-  zoomIn,
-  zoomOut,
+  scaleUp,
+  scaleDown,
   selectBreakpointByOrderNumber,
 } from "../nano-states/breakpoints";
 import { deleteSelectedInstance } from "../instance-utils";
@@ -48,8 +48,8 @@ export const useSharedShortcuts = () => {
 
   useHotkeys(
     "equal",
-    zoomIn,
-    // prevent zoom while typing
+    scaleUp,
+    // prevent scale while typing
     { enableOnFormTags: false, enableOnContentEditable: false },
     []
   );
@@ -58,7 +58,7 @@ export const useSharedShortcuts = () => {
     "meta+shift+equal",
     (event) => {
       event.preventDefault();
-      zoomIn();
+      scaleUp();
     },
     { enableOnFormTags: true, enableOnContentEditable: true },
     []
@@ -66,8 +66,8 @@ export const useSharedShortcuts = () => {
 
   useHotkeys(
     "minus",
-    zoomOut,
-    // prevent zoom while typing
+    scaleDown,
+    // prevent scale while typing
     { enableOnFormTags: false, enableOnContentEditable: false },
     []
   );
@@ -76,7 +76,7 @@ export const useSharedShortcuts = () => {
     "meta+shift+minus",
     (event) => {
       event.preventDefault();
-      zoomOut();
+      scaleDown();
     },
     { enableOnFormTags: true, enableOnContentEditable: true },
     []

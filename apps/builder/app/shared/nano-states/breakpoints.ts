@@ -3,18 +3,18 @@ import type { Breakpoint } from "@webstudio-is/project-build";
 import { breakpointsContainer } from "./nano-states";
 import { compareMedia } from "@webstudio-is/css-engine";
 
-export const minZoom = 10;
-const maxZoom = 100;
-const zoomStep = 20;
+export const minScale = 10;
+const maxScale = 100;
+const scaleStep = 20;
 
-export const zoomStore = atom<number>(100);
+export const scaleStore = atom<number>(100);
 
-export const zoomIn = () => {
-  zoomStore.set(Math.min(zoomStore.get() + zoomStep, maxZoom));
+export const scaleUp = () => {
+  scaleStore.set(Math.min(scaleStore.get() + scaleStep, maxScale));
 };
 
-export const zoomOut = () => {
-  zoomStore.set(Math.max(zoomStore.get() - zoomStep, minZoom));
+export const scaleDown = () => {
+  scaleStore.set(Math.max(scaleStore.get() - scaleStep, minScale));
 };
 
 export const selectedBreakpointIdStore = atom<undefined | Breakpoint["id"]>(
@@ -51,7 +51,7 @@ export const selectBreakpointByOrderNumber = (orderNumber: number) => {
 };
 
 export const synchronizedBreakpointsStores = [
-  ["zoomStore", zoomStore],
+  ["scaleStore", scaleStore],
   ["selectedBreakpointId", selectedBreakpointIdStore],
 ] as const;
 
