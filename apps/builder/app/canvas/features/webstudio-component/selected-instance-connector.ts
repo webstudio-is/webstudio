@@ -113,6 +113,7 @@ export const SelectedInstanceConnector = ({
     selectedInstanceIntanceToTagStore.set(instanceToTag);
 
     return () => {
+      hideOutline();
       resizeObserver.disconnect();
       mutationObserver.disconnect();
       unsubscribePreviewStyle();
