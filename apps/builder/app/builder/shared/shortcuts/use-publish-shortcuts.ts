@@ -1,7 +1,7 @@
 import { useHotkeys } from "react-hotkeys-hook";
 import { shortcuts, options, instanceTreeShortcuts } from "~/shared/shortcuts";
 import type { Publish } from "~/shared/pubsub";
-import mergeRefs from "merge-refs";
+import { mergeRefs } from "@react-aria/utils";
 import type { Ref } from "react";
 
 declare module "~/shared/pubsub" {
