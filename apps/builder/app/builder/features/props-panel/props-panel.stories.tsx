@@ -8,6 +8,7 @@ import type {
   WsComponentMeta,
   WsComponentPropsMeta,
 } from "@webstudio-is/react-sdk";
+import { textVariants } from "@webstudio-is/design-system";
 
 const page = (name: string, path: string) => ({
   id: Math.random().toString(),
@@ -249,14 +250,24 @@ export const Story = () => {
   });
 
   return (
-    <div style={{ width: 240, border: "dashed 3px #e3e3e3" }}>
-      <PropsPanel
-        propsLogic={logic}
-        component="Button"
-        instanceLabel="My Button"
-        componentMeta={componentMeta}
-        setCssProperty={() => () => undefined}
-      />
+    <div style={{ display: "flex", gap: 12 }}>
+      <div style={{ width: 240, border: "dashed 3px #e3e3e3" }}>
+        <PropsPanel
+          propsLogic={logic}
+          component="Button"
+          instanceLabel="My Button"
+          componentMeta={componentMeta}
+          setCssProperty={() => () => undefined}
+        />
+      </div>
+      <pre style={textVariants.mono}>
+        {props
+          .map(
+            ({ name, value, type }) =>
+              `${name}: ${type} = ${JSON.stringify(value)}`
+          )
+          .join("\n")}
+      </pre>
     </div>
   );
 };
