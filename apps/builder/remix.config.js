@@ -5,7 +5,8 @@ require("./env-check");
  */
 module.exports = {
   publicPath: "/build/",
-  serverBuildPath: "api/index.js",
+  serverBuildPath: "build/index.js",
+
   serverMainFields: ["main", "module"],
   serverModuleFormat: "cjs",
   serverPlatform: "node",
