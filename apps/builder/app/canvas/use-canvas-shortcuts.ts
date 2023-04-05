@@ -2,7 +2,10 @@ import { useHotkeys } from "react-hotkeys-hook";
 import { shortcuts, options } from "~/shared/shortcuts";
 import { publish, useSubscribe } from "~/shared/pubsub";
 import { isPreviewModeStore } from "~/shared/nano-states";
-import { enterEditingMode } from "~/shared/nano-states/instances";
+import {
+  enterEditingMode,
+  escapeSelection,
+} from "~/shared/nano-states/instances";
 
 declare module "~/shared/pubsub" {
   export interface PubsubMap {
@@ -23,7 +26,7 @@ const publishCancelCurrentDrag = () => {
   publish({ type: "cancelCurrentDrag" });
 };
 
-export const useShortcuts = () => {
+export const useCanvasShortcuts = () => {
   const shortcutHandlerMap = {
     preview: togglePreviewMode,
     breakpointsMenu: publishOpenBreakpointsMenu,
@@ -40,7 +43,16 @@ export const useShortcuts = () => {
     []
   );
 
-  useHotkeys(shortcuts.esc, shortcutHandlerMap.esc, options, []);
+  useHotkeys(
+    shortcuts.esc,
+    () => {
+      // Reset selection for local canvas escape, but not for the Builder escape via useSubscribe
+      shortcutHandlerMap.esc();
+      escapeSelection();
+    },
+    options,
+    []
+  );
 
   useHotkeys(shortcuts.enter, shortcutHandlerMap.enter, {}, []);
 
