@@ -12,7 +12,7 @@ import {
   Label,
 } from "@webstudio-is/design-system";
 import { EmailIcon, LinkIcon, PageIcon, PhoneIcon } from "@webstudio-is/icons";
-import { ReactNode, useState } from "react";
+import { type ReactNode, useState } from "react";
 import {
   type ControlProps,
   getLabel,
