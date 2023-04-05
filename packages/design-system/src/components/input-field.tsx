@@ -21,6 +21,7 @@ export const inputFieldTypes = [
   "tel",
   "text",
   "url",
+  "number",
 ] as const;
 
 export const inputFieldColors = ["placeholder", "set", "error"] as const;
@@ -41,6 +42,13 @@ const inputStyle = css({
   "&[data-color=error]": { color: theme.colors.foregroundDestructive },
   "&:disabled, &:disabled::placeholder": {
     color: theme.colors.foregroundDisabled,
+  },
+  '&[type="number"]': {
+    MozAppearance: "textfield",
+    "&::-webkit-outer-spin-button, &::-webkit-inner-spin-button": {
+      WebkitAppearance: "none",
+      margin: 0,
+    },
   },
 });
 
