@@ -10,7 +10,7 @@ import {
   Select,
   Tooltip,
 } from "@webstudio-is/design-system";
-import { LinkIcon, PageIcon } from "@webstudio-is/icons";
+import { LinkIcon, PageIcon, PhoneIcon } from "@webstudio-is/icons";
 import { useState } from "react";
 import {
   type ControlProps,
@@ -52,6 +52,32 @@ const BaseUrl = ({ prop, onChange, id }: BaseControlProps) => {
   );
 };
 
+const BasePhone = ({ prop, onChange, id }: BaseControlProps) => {
+  const localValue = useLocalValue(
+    prop?.type === "string" && prop.value.startsWith("tel:")
+      ? prop.value.slice(4)
+      : "",
+    (value) => onChange({ type: "string", value: `tel:${value}` })
+  );
+
+  return (
+    <Flex css={{ py: theme.spacing[2] }} direction="column" align="stretch">
+      <InputField
+        id={id}
+        value={localValue.value}
+        placeholder="+15555555555"
+        onChange={(event) => localValue.set(event.target.value)}
+        onBlur={localValue.save}
+        onKeyDown={(event) => {
+          if (event.key === "Enter") {
+            localValue.save();
+          }
+        }}
+      />
+    </Flex>
+  );
+};
+
 const getPageId = (page: Page) => page.id;
 const getPageName = (page: Page) => page.name;
 
@@ -78,13 +104,30 @@ const BasePage = ({ prop, onChange, id }: BaseControlProps) => {
   );
 };
 
-// @todo: Section, Email, Phone, Attachment
-const modes = ["url", "page"] as const;
+// @todo: Section, Email, Attachment
+const modes = ["url", "page", "phone"] as const;
 type Mode = (typeof modes)[number];
 const baseControls = {
   url: BaseUrl,
   page: BasePage,
+  phone: BasePhone,
 } satisfies Record<Mode, unknown>;
+
+const propToMode = (prop?: UrlControlProps["prop"]): Mode => {
+  if (prop === undefined) {
+    return "url";
+  }
+
+  if (prop.type === "page") {
+    return "page";
+  }
+
+  if (prop.value.startsWith("tel:")) {
+    return "phone";
+  }
+
+  return "url";
+};
 
 export const UrlControl = ({
   meta,
@@ -93,9 +136,7 @@ export const UrlControl = ({
   onChange,
   onDelete,
 }: UrlControlProps) => {
-  const initialMode = prop?.type === "page" ? "page" : "url";
-
-  const [mode, setMode] = useState<Mode>(initialMode);
+  const [mode, setMode] = useState<Mode>(propToMode(prop));
 
   const id = useId();
 
@@ -134,6 +175,11 @@ export const UrlControl = ({
           <ToggleGroupItem value={"page" satisfies Mode}>
             <Tooltip content="Page">
               <PageIcon />
+            </Tooltip>
+          </ToggleGroupItem>
+          <ToggleGroupItem value={"phone" satisfies Mode}>
+            <Tooltip content="Phone">
+              <PhoneIcon />
             </Tooltip>
           </ToggleGroupItem>
         </ToggleGroup>

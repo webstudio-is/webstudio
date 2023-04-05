@@ -10,13 +10,15 @@ import type {
 } from "@webstudio-is/react-sdk";
 import { textVariants } from "@webstudio-is/design-system";
 
+const unique = () => Math.random().toString();
+
 const page = (name: string, path: string) => ({
-  id: Math.random().toString(),
+  id: unique(),
   name,
   title: name,
   path,
   meta: {},
-  rootInstanceId: "1",
+  rootInstanceId: unique(),
 });
 
 pagesStore.set({
@@ -99,7 +101,7 @@ const checkProp = (options = defaultOptions, label?: string): PropMeta => ({
   label,
 });
 
-const instanceId = "0";
+const instanceId = unique();
 
 const componentMeta: WsComponentMeta = {
   category: "general",
@@ -129,6 +131,7 @@ const componentPropsMeta: WsComponentPropsMeta = {
     addedCheck: checkProp(),
     addedUrlUrl: urlProp("Added URL (URL)"),
     addedUrlPage: urlProp("Added URL (Page)"),
+    addedUrlPhone: urlProp("Added URL (Phone)"),
     availableText: textProp(),
     availableShortText: shortTextProp(),
     availableNumber: numberProp(),
@@ -154,74 +157,81 @@ const componentPropsMeta: WsComponentPropsMeta = {
 
 const startingProps: Prop[] = [
   {
-    id: "0",
+    id: unique(),
     instanceId,
     name: "addedText",
     type: "string",
     value: "some text",
   },
   {
-    id: "1",
+    id: unique(),
     instanceId,
     name: "addedShortText",
     type: "string",
     value: "some short text",
   },
   {
-    id: "2",
+    id: unique(),
     instanceId,
     name: "addedNumber",
     type: "number",
     value: 10,
   },
   {
-    id: "3",
+    id: unique(),
     instanceId,
     name: "addedBoolean",
     type: "boolean",
     value: true,
   },
   {
-    id: "4",
+    id: unique(),
     instanceId,
     name: "addedColor",
     type: "string",
     value: "#ff0000",
   },
   {
-    id: "5",
+    id: unique(),
     instanceId,
     name: "addedRadio",
     type: "string",
     value: "two",
   },
   {
-    id: "7",
+    id: unique(),
     instanceId,
     name: "addedSelect",
     type: "string",
     value: "two",
   },
   {
-    id: "8",
+    id: unique(),
     instanceId,
     name: "addedCheck",
     type: "string[]",
     value: ["one", "two"],
   },
   {
-    id: "9",
+    id: unique(),
     instanceId,
     name: "addedUrlUrl",
     type: "string",
     value: "https://example.com",
   },
   {
-    id: "10",
+    id: unique(),
     instanceId,
     name: "addedUrlPage",
     type: "page",
     value: pagesStore.get()?.pages[0].id ?? "",
+  },
+  {
+    id: unique(),
+    instanceId,
+    name: "addedUrlPhone",
+    type: "string",
+    value: "tel:+1234567890",
   },
 ];
 
