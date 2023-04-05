@@ -46,8 +46,8 @@ export const useCanvasShortcuts = () => {
   useHotkeys(
     shortcuts.esc,
     () => {
-      // Reset selection for local canvas escape, but not for the Builder escape via useSubscribe
       shortcutHandlerMap.esc();
+      // Reset selection for local canvas escape, but not for the Builder escape via useSubscribe
       escapeSelection();
     },
     options,
