@@ -1,33 +1,22 @@
-import {
-  useMemo,
-  createContext,
-  useContext,
-  type ReactNode,
-  useState,
-} from "react";
+import { useMemo } from "react";
 import { useStore } from "@nanostores/react";
 import warnOnce from "warn-once";
 import store from "immerhin";
-import type { Project } from "@webstudio-is/project";
 import {
   type AssetType,
+  type Asset,
   idsFormDataFieldName,
-  MAX_UPLOAD_SIZE,
-  toBytes,
-  Asset,
 } from "@webstudio-is/asset-uploader";
 import { toast } from "@webstudio-is/design-system";
 import { sanitizeS3Key } from "@webstudio-is/asset-uploader";
 import { restAssetsPath } from "~/shared/router-utils";
-import type {
-  AssetContainer,
-  PreviewAsset,
-  UploadingAssetContainer,
-} from "./types";
+import type { AssetContainer } from "./types";
 import { usePersistentFetcher } from "~/shared/fetcher";
 import type { ActionData } from "~/builder/shared/assets";
 import { normalizeErrors, toastUnknownFieldErrors } from "~/shared/form-utils";
-import { assetsStore } from "~/shared/nano-states";
+import { assetsStore, authTokenStore } from "~/shared/nano-states";
+import { atom, computed } from "nanostores";
+import { projectContainer } from "../nano-states";
 
 export const deleteAssets = (assetIds: Asset["id"][]) => {
   store.createTransaction([assetsStore], (assets) => {
@@ -54,100 +43,81 @@ const setAsset = (asset: Asset) => {
   });
 };
 
+type FileData = {
+  id: string;
+  type: AssetType;
+  file: File;
+  objectURL: string;
+};
+
+const getFilesData = (type: AssetType, files: File[]): FileData[] => {
+  return files.map((file) => {
+    return {
+      id: crypto.randomUUID(),
+      type,
+      file,
+      objectURL: URL.createObjectURL(file),
+    };
+  });
+};
+
+const uploadingFilesDataStore = atom<FileData[]>([]);
+
+const addUploadingFilesData = (filesData: FileData[]) => {
+  const uploadingFilesData = uploadingFilesDataStore.get();
+  uploadingFilesDataStore.set([...uploadingFilesData, ...filesData]);
+};
+
+const deleteUploadingFileData = (id: FileData["id"]) => {
+  const uploadingFilesData = uploadingFilesDataStore.get();
+  uploadingFilesDataStore.set(
+    uploadingFilesData.filter((fileData) => fileData.id !== id)
+  );
+};
+
+const assetContainersStore = computed(
+  [assetsStore, uploadingFilesDataStore],
+  (assets, uploadingFilesData) => {
+    const uploadingAssets = new Map();
+    for (const { id, type, file, objectURL } of uploadingFilesData) {
+      uploadingAssets.set(id, {
+        id,
+        type,
+        format: file.type.split("/")[1],
+        path: objectURL,
+        name: file.name,
+        description: file.name,
+      });
+    }
+    const assetContainers: Array<AssetContainer> = [];
+    for (const [assetId, asset] of assets) {
+      const uploadingAsset = uploadingAssets.get(assetId);
+      if (uploadingAsset) {
+        assetContainers.push({
+          status: "uploading",
+          asset: uploadingAsset,
+        });
+        continue;
+      }
+      if (asset) {
+        assetContainers.push({
+          status: "uploaded",
+          asset,
+        });
+      }
+    }
+    return assetContainers;
+  }
+);
+
 export type UploadData = ActionData;
 
-const toUploadingAssetsAndFormData = (
-  type: AssetType,
-  files: File[]
-): Promise<[UploadingAssetContainer, FormData][]> => {
-  const assets: Array<Promise<[UploadingAssetContainer, FormData]>> = [];
-
-  for (const file of files) {
-    const promise = new Promise<[UploadingAssetContainer, FormData]>(
-      (resolve, reject) => {
-        const reader = new FileReader();
-        reader.addEventListener("load", (event) => {
-          const dataUri = event?.target?.result;
-          if (dataUri === undefined) {
-            return reject(new Error(`Could not read file "${file.name}"`));
-          }
-
-          const id = crypto.randomUUID();
-
-          // sanitizeS3Key here is just because of https://github.com/remix-run/remix/issues/4443
-          // should be removed after fix
-          const formData = new FormData();
-          formData.append(type, file, sanitizeS3Key(file.name));
-          formData.append(idsFormDataFieldName, id);
-
-          resolve([
-            {
-              status: "uploading",
-              asset: {
-                type,
-                format: file.type.split("/")[1],
-                path: String(dataUri),
-                name: file.name,
-                description: file.name,
-                id,
-              },
-            },
-            formData,
-          ]);
-        });
-
-        reader.readAsDataURL(file);
-      }
-    );
-
-    assets.push(promise);
-  }
-
-  return Promise.all(assets);
-};
-
-const maxSize = toBytes(MAX_UPLOAD_SIZE);
-
-const getFilesFromInput = (_type: AssetType, input: HTMLInputElement) => {
-  const files = Array.from(input?.files ?? []);
-
-  const exceedSizeFiles = files.filter((file) => file.size > maxSize);
-
-  for (const file of exceedSizeFiles) {
-    toast.error(
-      `Asset "${file.name}" cannot be bigger than ${MAX_UPLOAD_SIZE}MB`
-    );
-  }
-
-  return files.filter((file) => file.size <= maxSize);
-};
-
-type AssetsContext = {
-  handleSubmit: (type: AssetType, files: File[]) => Promise<void>;
-  assetContainers: AssetContainer[];
-};
-
-const Context = createContext<AssetsContext | undefined>(undefined);
-
-export const AssetsProvider = ({
-  projectId,
-  authToken,
-  children,
-}: {
-  projectId: Project["id"];
-  authToken: string | undefined;
-  children: ReactNode;
-}) => {
-  const [uploadingAssets, setUploadingAssets] = useState<
-    Array<Asset | PreviewAsset>
-  >([]);
+export const useUploadAsset = () => {
   const submit = usePersistentFetcher();
-
-  const action = restAssetsPath({ projectId: projectId, authToken });
 
   const handleAfterSubmit = (assetId: string, data: UploadData) => {
     // remove uploaded or failed asset
-    setUploadingAssets((prev) => prev.filter((asset) => asset.id !== assetId));
+    deleteUploadingFileData(assetId);
 
     if (data.errors !== undefined) {
       deleteAssets([assetId]);
@@ -175,32 +145,37 @@ export const AssetsProvider = ({
     setAsset(uploadedAsset);
   };
 
-  const handleSubmit = async (type: AssetType, files: File[]) => {
+  const uploadAsset = (type: AssetType, files: File[]) => {
+    const projectId = projectContainer.get()?.id;
+    const authToken = authTokenStore.get();
+    if (projectId === undefined) {
+      return;
+    }
+
     try {
-      const uploadingAssetsAndFormData = await toUploadingAssetsAndFormData(
-        type,
-        files
-      );
-      const uploadingAssets = uploadingAssetsAndFormData.map(
-        ([previewAsset]) => previewAsset.asset
-      );
+      const filesData = getFilesData(type, files);
 
-      setUploadingAssets((prev) => [...uploadingAssets, ...prev]);
+      addUploadingFilesData(filesData);
+      stubAssets(filesData.map((fileData) => fileData.id));
 
-      stubAssets(uploadingAssets.map((asset) => asset.id));
-
-      for (const [
-        uploadingAssetContainer,
-        formData,
-      ] of uploadingAssetsAndFormData) {
+      for (const fileData of filesData) {
+        const { id, type, file } = fileData;
+        // sanitizeS3Key here is just because of https://github.com/remix-run/remix/issues/4443
+        // should be removed after fix
+        const formData = new FormData();
+        formData.append(type, file, sanitizeS3Key(file.name));
+        formData.append(idsFormDataFieldName, id);
         submit<UploadData>(
           formData,
           {
             method: "post",
-            action,
+            action: restAssetsPath({ projectId, authToken }),
             encType: "multipart/form-data",
           },
-          (data) => handleAfterSubmit(uploadingAssetContainer.asset.id, data)
+          (data) => {
+            URL.revokeObjectURL(fileData.objectURL);
+            handleAfterSubmit(fileData.id, data);
+          }
         );
       }
     } catch (error) {
@@ -210,34 +185,7 @@ export const AssetsProvider = ({
     }
   };
 
-  const uploadingAssetsMap = new Map();
-  for (const asset of uploadingAssets) {
-    uploadingAssetsMap.set(asset.id, asset);
-  }
-  const assetContainers: Array<AssetContainer> = [];
-  const assets = useStore(assetsStore);
-  for (const [assetId, asset] of assets) {
-    const uploadingAsset = uploadingAssetsMap.get(assetId);
-    if (uploadingAsset) {
-      assetContainers.push({
-        status: "uploading",
-        asset: uploadingAsset,
-      });
-      continue;
-    }
-    if (asset) {
-      assetContainers.push({
-        status: "uploaded",
-        asset,
-      });
-    }
-  }
-
-  return (
-    <Context.Provider value={{ assetContainers, handleSubmit }}>
-      {children}
-    </Context.Provider>
-  );
+  return uploadAsset;
 };
 
 const filterByType = (assetContainers: AssetContainer[], type: AssetType) => {
@@ -247,26 +195,16 @@ const filterByType = (assetContainers: AssetContainer[], type: AssetType) => {
 };
 
 export const useAssets = (type: AssetType) => {
-  const assetContainersContext = useContext(Context);
-  if (!assetContainersContext) {
-    throw new Error("useAssets is used without AssetsProvider");
-  }
+  const assetContainers = useStore(assetContainersStore);
 
   const assetsByType = useMemo(() => {
-    const assetContainers = assetContainersContext.assetContainers;
     return filterByType(assetContainers, type);
-  }, [assetContainersContext.assetContainers, type]);
-
-  const handleSubmit = (input: HTMLInputElement) => {
-    const formsData = getFilesFromInput(type, input);
-    assetContainersContext.handleSubmit(type, formsData);
-  };
+  }, [assetContainers, type]);
 
   return {
     /**
      * Already loaded assets or assets that are being uploaded
      */
     assetContainers: assetsByType,
-    handleSubmit,
   };
 };
