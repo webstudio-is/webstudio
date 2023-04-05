@@ -20,8 +20,8 @@
     }
   ],
   "dependencies": {
-    "@remix-run/cloudflare-pages": "1.14.3",
-    "@remix-run/react": "1.14.3",
+    "@remix-run/cloudflare-pages": "1.15.0",
+    "@remix-run/react": "1.15.0",
     "@webstudio-is/project": "workspace:^",
     "@webstudio-is/project-build": "workspace:^",
     "@webstudio-is/react-sdk": "workspace:^",
@@ -29,7 +29,7 @@
     "react-dom": "^17.0.2"
   },
   "devDependencies": {
-    "@remix-run/dev": "1.14.3",
+    "@remix-run/dev": "1.15.0",
     "@size-limit/file": "^8.2.4",
     "@types/react": "17.0.47",
     "@types/react-dom": "^17.0.9",
