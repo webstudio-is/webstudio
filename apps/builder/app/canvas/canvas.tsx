@@ -17,7 +17,7 @@ import {
 import { publish } from "~/shared/pubsub";
 import { registerContainers, useCanvasStore } from "~/shared/sync";
 import { useSharedShortcuts } from "~/shared/shortcuts";
-import { useCanvasShortcuts } from "./use-canvas-shortcuts";
+import { useCanvasShortcuts } from "./canvas-shortcuts";
 import { useManageDesignModeStyles, GlobalStyles } from "./shared/styles";
 import { WebstudioComponentDev } from "./features/webstudio-component";
 import {
