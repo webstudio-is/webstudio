@@ -10,7 +10,8 @@ import type {
 } from "@webstudio-is/react-sdk";
 import { textVariants } from "@webstudio-is/design-system";
 
-const unique = () => Math.random().toString();
+let id = 0;
+const unique = () => `${++id}`;
 
 const page = (name: string, path: string) => ({
   id: unique(),
@@ -131,6 +132,7 @@ const componentPropsMeta: WsComponentPropsMeta = {
     addedCheck: checkProp(),
     addedUrlUrl: urlProp("Added URL (URL)"),
     addedUrlPage: urlProp("Added URL (Page)"),
+    addedUrlEmail: urlProp("Added URL (Email)"),
     addedUrlPhone: urlProp("Added URL (Phone)"),
     availableText: textProp(),
     availableShortText: shortTextProp(),
@@ -225,6 +227,13 @@ const startingProps: Prop[] = [
     name: "addedUrlPage",
     type: "page",
     value: pagesStore.get()?.pages[0].id ?? "",
+  },
+  {
+    id: unique(),
+    instanceId,
+    name: "addedUrlEmail",
+    type: "string",
+    value: "mailto:hello@example.com?subject=Hello",
   },
   {
     id: unique(),
