@@ -9,7 +9,7 @@ import type {
   WsComponentPropsMeta,
 } from "@webstudio-is/react-sdk";
 import { textVariants } from "@webstudio-is/design-system";
-import { Asset } from "@webstudio-is/asset-uploader";
+import type { Asset } from "@webstudio-is/asset-uploader";
 
 let id = 0;
 const unique = () => `${++id}`;
@@ -105,7 +105,7 @@ const urlProp = (label?: string): PropMeta => ({
 
 const fileProp = (label?: string): PropMeta => ({
   type: "string",
-  control: "file-image",
+  control: "file",
   required: false,
   label,
 });

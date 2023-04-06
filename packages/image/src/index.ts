@@ -11,7 +11,7 @@ export const imageProps: Record<string, PropMeta> = {
   ...publicProps,
   src: {
     type: "string",
-    control: "file-image",
+    control: "file",
     label: "Source",
     required: false,
   },

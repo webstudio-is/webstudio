@@ -5,7 +5,7 @@ import { CheckControl } from "./check";
 import { RadioControl } from "./radio";
 import { SelectControl } from "./select";
 import { BooleanControl } from "./boolean";
-import { FileImageControl } from "./file-image";
+import { FileControl } from "./file";
 import { UrlControl } from "./url";
 import type { ControlProps } from "../shared";
 
@@ -66,10 +66,10 @@ export const renderControl = ({
   }
 
   if (
-    meta.control === "file-image" &&
+    meta.control === "file" &&
     (prop === undefined || prop.type === "asset")
   ) {
-    return <FileImageControl meta={meta} prop={prop} {...rest} />;
+    return <FileControl meta={meta} prop={prop} {...rest} />;
   }
 
   if (
@@ -129,11 +129,11 @@ export const renderControl = ({
 
     if (prop.type === "asset") {
       return (
-        <FileImageControl
+        <FileControl
           meta={{
             ...meta,
             defaultValue: undefined,
-            control: "file-image",
+            control: "file",
             type: "string",
           }}
           prop={prop}

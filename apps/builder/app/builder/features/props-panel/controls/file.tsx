@@ -7,13 +7,13 @@ import { FloatingPanel } from "~/builder/shared/floating-panel";
 import { ImageManager } from "~/builder/shared/image-manager";
 import { type ControlProps, getLabel, VerticalLayout } from "../shared";
 
-export const FileImageControl = ({
+export const FileControl = ({
   meta,
   prop,
   propName,
   onChange,
   onDelete,
-}: ControlProps<"file-image", "asset">) => {
+}: ControlProps<"file", "asset">) => {
   const assetStore = useMemo(
     () =>
       computed(assetsStore, (assets) =>

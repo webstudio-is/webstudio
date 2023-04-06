@@ -37,7 +37,7 @@ export const propsMeta: WsComponentPropsMeta = {
     ...props,
     src: {
       type: "string",
-      control: "file-image",
+      control: "file",
       label: "Source",
       required: false,
     },

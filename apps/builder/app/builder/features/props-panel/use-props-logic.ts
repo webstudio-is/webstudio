@@ -20,7 +20,7 @@ export type NameAndLabel = { name: string; label?: string };
 //
 // We want to avoid this if possible, but for some types like "asset" we can't
 export const getStartingValue = (meta: PropMeta): PropValue | undefined => {
-  if (meta.type === "string" && meta.control !== "file-image") {
+  if (meta.type === "string" && meta.control !== "file") {
     return {
       type: "string",
       value: meta.defaultValue ?? "",
@@ -67,7 +67,7 @@ const getDefaultMetaForType = (type: Prop["type"]): PropMeta => {
     case "boolean":
       return { type: "boolean", control: "boolean", required: false };
     case "asset":
-      return { type: "string", control: "file-image", required: false };
+      return { type: "string", control: "file", required: false };
     case "string[]":
       throw new Error(
         "A prop with type string[] must have a meta, we can't provide a default one because we need a list of options"
