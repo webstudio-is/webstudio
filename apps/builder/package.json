@@ -90,7 +90,7 @@
     "shallow-equal": "^3.1.0",
     "slugify": "^1.6.5",
     "title-case": "^3.0.3",
-    "use-debounce": "^9.0.2",
+    "use-debounce": "^9.0.4",
     "uuid": "^9.0.0",
     "warn-once": "^0.1.1",
     "zod": "^3.19.1",

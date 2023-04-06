@@ -81,7 +81,7 @@
     "match-sorter": "^6.3.1",
     "react-hot-toast": "^2.3.0",
     "token-transformer": "^0.0.28",
-    "use-debounce": "^9.0.2"
+    "use-debounce": "^9.0.4"
   },
   "exports": {
     "source": "./src/index.ts",
