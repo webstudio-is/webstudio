@@ -1,10 +1,11 @@
 import { type ComponentProps, Fragment } from "react";
 import type { ReadableAtom } from "nanostores";
 import { Scripts, ScrollRestoration } from "@remix-run/react";
+import type { Assets } from "@webstudio-is/asset-uploader";
 import type { Instance } from "@webstudio-is/project-build";
 import type { GetComponent } from "../components/components-utils";
 import { ReactSdkContext } from "../context";
-import type { Assets, Pages, PropsByInstanceId } from "../props";
+import type { Pages, PropsByInstanceId } from "../props";
 import type { WebstudioComponent } from "./webstudio-component";
 import { SessionStoragePolyfill } from "./session-storage-polyfill";
 

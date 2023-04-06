@@ -1,14 +1,15 @@
-import { useLoaderData } from "@remix-run/react";
-import type { ErrorBoundaryComponent, LoaderArgs } from "@remix-run/node";
+import type { ComponentProps } from "react";
+import { useLoaderData, useRouteError } from "@remix-run/react";
+import type { LoaderArgs } from "@remix-run/node";
 import { redirect } from "@remix-run/node";
+import { dashboardProjectRouter } from "@webstudio-is/dashboard/server";
 import { Dashboard } from "~/dashboard";
 import { findAuthenticatedUser } from "~/services/auth.server";
 import { loginPath } from "~/shared/router-utils";
-import type { ComponentProps } from "react";
 import { sentryException } from "~/shared/sentry";
 import { ErrorMessage } from "~/shared/error";
-import { dashboardProjectRouter } from "@webstudio-is/dashboard/server";
 import { createContext } from "~/shared/context.server";
+
 export { links } from "~/dashboard";
 
 export const loader = async ({
@@ -35,7 +36,8 @@ export const loader = async ({
   return { user, projects };
 };
 
-export const ErrorBoundary: ErrorBoundaryComponent = ({ error }) => {
+export const ErrorBoundary = () => {
+  const error = useRouteError();
   sentryException({ error });
   const message = error instanceof Error ? error.message : String(error);
   return <ErrorMessage message={message} />;

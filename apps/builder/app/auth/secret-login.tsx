@@ -1,4 +1,9 @@
-import { Button, Flex, TextField, theme } from "@webstudio-is/design-system";
+import {
+  Button,
+  Flex,
+  DeprecatedTextField,
+  theme,
+} from "@webstudio-is/design-system";
 import { CommitIcon } from "@webstudio-is/icons";
 import { useState } from "react";
 import { authPath } from "~/shared/router-utils";
@@ -18,7 +23,7 @@ export const SecretLogin = () => {
           gap: theme.spacing[5],
         }}
       >
-        <TextField
+        <DeprecatedTextField
           name="secret"
           type="text"
           minLength={2}

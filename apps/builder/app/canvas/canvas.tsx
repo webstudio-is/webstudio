@@ -17,7 +17,7 @@ import {
 import { publish } from "~/shared/pubsub";
 import { registerContainers, useCanvasStore } from "~/shared/sync";
 import { useSharedShortcuts } from "~/shared/shortcuts";
-import { useShortcuts } from "./shared/use-shortcuts";
+import { useCanvasShortcuts } from "./canvas-shortcuts";
 import { useManageDesignModeStyles, GlobalStyles } from "./shared/styles";
 import { WebstudioComponentDev } from "./features/webstudio-component";
 import {
@@ -54,14 +54,16 @@ const temporaryRootInstance: Instance = {
 const useElementsTree = (getComponent: GetComponent) => {
   const [rootInstance] = useRootInstance();
 
-  // @todo remove after https://github.com/webstudio-is/webstudio-builder/issues/1313 now its needed to be sure that no leaks exists
-  // eslint-disable-next-line no-console
-  console.log({
-    rootInstance,
-    assetsStore: assetsStore.get().size,
-    pagesStore: pagesStore.get()?.pages.length ?? 0,
-    instancesStore: instancesStore.get().size,
-  });
+  if (typeof window === "undefined") {
+    // @todo remove after https://github.com/webstudio-is/webstudio-builder/issues/1313 now its needed to be sure that no leaks exists
+    // eslint-disable-next-line no-console
+    console.log({
+      rootInstance,
+      assetsStore: assetsStore.get().size,
+      pagesStore: pagesStore.get()?.pages.length ?? 0,
+      instancesStore: instancesStore.get().size,
+    });
+  }
 
   const pagesMapStore = useMemo(
     () =>
@@ -125,7 +127,7 @@ export const Canvas = ({
   registerComponentPropsMetas(customComponentPropsMetas);
 
   // e.g. toggling preview is still needed in both modes
-  useShortcuts();
+  useCanvasShortcuts();
   useSharedShortcuts();
   const selectedPage = useStore(selectedPageStore);
 

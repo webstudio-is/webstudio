@@ -11,7 +11,7 @@
       "outputs": ["lib/types/**"]
     },
     "checks": {
-      "dependsOn": ["^checks"]
+      "dependsOn": ["build", "^checks"]
     },
     "storybook:build": {
       "dependsOn": ["build"],

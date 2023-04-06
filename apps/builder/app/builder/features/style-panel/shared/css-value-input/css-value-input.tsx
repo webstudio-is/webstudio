@@ -1,7 +1,6 @@
 import { matchSorter } from "match-sorter";
 import {
   Box,
-  TextField,
   useCombobox,
   Combobox,
   ComboboxContent,
@@ -9,9 +8,9 @@ import {
   ComboboxListbox,
   ComboboxListboxItem,
   numericScrubControl,
-  TextFieldIcon,
-  TextFieldIconButton,
-  styled,
+  NestedSelectButton,
+  NestedIconLabel,
+  InputField,
 } from "@webstudio-is/design-system";
 import { ChevronDownIcon } from "@webstudio-is/icons";
 import type {
@@ -23,6 +22,7 @@ import type {
 import {
   type KeyboardEventHandler,
   type KeyboardEvent,
+  type ReactNode,
   useCallback,
   useEffect,
   useRef,
@@ -34,7 +34,6 @@ import { toValue } from "@webstudio-is/css-engine";
 import { useDebouncedCallback } from "use-debounce";
 import type { StyleSource } from "../style-info";
 import { toPascalCase } from "../keyword-utils";
-import { theme } from "@webstudio-is/design-system";
 import { isValid } from "../parse-css-value";
 
 // We increment by 10 when shift is pressed, by 0.1 when alt/option is pressed and by 1 by default.
@@ -108,6 +107,7 @@ const useScrub = ({
       onValueInput(event) {
         // Moving focus to container of the input to hide the caret
         // (it makes text harder to read and may jump around as you scrub)
+        scrubRef.current?.setAttribute("tabindex", "-1");
         scrubRef.current?.focus();
 
         onChangeRef.current({
@@ -128,6 +128,7 @@ const useScrub = ({
         });
 
         // Returning focus that we've moved above
+        scrubRef.current?.removeAttribute("tabindex");
         inputRef.current?.focus();
         inputRef.current?.select();
       },
@@ -226,6 +227,8 @@ type CssValueInputProps = {
   }) => void;
   onHighlight: (value: StyleValue | undefined) => void;
   onAbort: () => void;
+  icon?: ReactNode;
+  prefix?: ReactNode;
 };
 
 const initialValue: IntermediateStyleValue = {
@@ -285,6 +288,7 @@ const match = <Item,>(
  */
 export const CssValueInput = ({
   icon,
+  prefix,
   styleSource,
   property,
   keywords = [],
@@ -292,7 +296,7 @@ export const CssValueInput = ({
   onAbort,
   disabled,
   ...props
-}: CssValueInputProps & { icon?: JSX.Element }) => {
+}: CssValueInputProps) => {
   const value = props.intermediateValue ?? props.value ?? initialValue;
 
   const onChange = (input: string | undefined) => {
@@ -456,29 +460,25 @@ export const CssValueInput = ({
     onKeyDown: inputProps.onKeyDown,
   });
 
-  let state = undefined;
-  if (styleSource === "local") {
-    state = "set" as const;
-  }
-  if (styleSource === "remote") {
-    state = "inherited" as const;
-  }
-  const prefix = icon && (
-    <CssValueInputIconButton
-      state={state}
-      css={value.type === "unit" ? { cursor: "ew-resize" } : undefined}
-    >
-      {icon}
-    </CssValueInputIconButton>
-  );
+  const finalPrefix =
+    prefix ||
+    (icon && (
+      <NestedIconLabel
+        color={styleSource}
+        css={value.type === "unit" ? { cursor: "ew-resize" } : undefined}
+      >
+        {icon}
+      </NestedIconLabel>
+    ));
 
   const keywordButtonElement = (
-    <TextFieldIconButton
+    <NestedSelectButton
       {...getToggleButtonProps()}
-      state={isOpen ? "active" : undefined}
+      data-state={isOpen ? "open" : "closed"}
+      tabIndex={-1}
     >
       <ChevronDownIcon />
-    </TextFieldIconButton>
+    </NestedSelectButton>
   );
   const hasItems = items.length !== 0;
   const isUnitValue = "unit" in value;
@@ -498,7 +498,7 @@ export const CssValueInput = ({
     <Combobox>
       <Box {...getComboboxProps()}>
         <ComboboxAnchor>
-          <TextField
+          <InputField
             disabled={disabled}
             {...inputProps}
             onFocus={() => {
@@ -512,8 +512,8 @@ export const CssValueInput = ({
             containerRef={scrubRef}
             inputRef={inputRef}
             name={property}
-            state={value.type === "invalid" ? "invalid" : undefined}
-            prefix={prefix}
+            color={value.type === "invalid" ? "error" : undefined}
+            prefix={finalPrefix}
             suffix={suffix}
             css={{ cursor: "default" }}
           />
@@ -535,27 +535,3 @@ export const CssValueInput = ({
     </Combobox>
   );
 };
-
-const CssValueInputIconButton = styled(TextFieldIcon, {
-  variants: {
-    state: {
-      set: {
-        backgroundColor: theme.colors.blue4,
-        color: theme.colors.blue11,
-        "&:hover": {
-          backgroundColor: theme.colors.blue4,
-          color: theme.colors.blue11,
-        },
-      },
-
-      inherited: {
-        backgroundColor: theme.colors.orange4,
-        color: theme.colors.orange11,
-        "&:hover": {
-          backgroundColor: theme.colors.orange4,
-          color: theme.colors.orange11,
-        },
-      },
-    },
-  },
-});

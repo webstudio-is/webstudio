@@ -1,5 +1,5 @@
 // import React, { useCallback } from "react";
-import { TextField } from "./text-field";
+import { DeprecatedTextField } from "./__DEPRECATED__/text-field";
 import { EnhancedTooltip, EnhancedTooltipProvider } from "./enhanced-tooltip";
 import { Flex } from "./flex";
 
@@ -12,7 +12,7 @@ export const Simple = () => {
     <EnhancedTooltipProvider>
       <Flex>
         <EnhancedTooltip content="Hello world">
-          <TextField />
+          <DeprecatedTextField />
         </EnhancedTooltip>
       </Flex>
     </EnhancedTooltipProvider>

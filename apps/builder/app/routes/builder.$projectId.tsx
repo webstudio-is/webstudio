@@ -1,15 +1,15 @@
-import { useLoaderData } from "@remix-run/react";
+import { useLoaderData, useRouteError } from "@remix-run/react";
 import type { ShouldRevalidateFunction } from "@remix-run/react";
-import type { ErrorBoundaryComponent, LoaderArgs } from "@remix-run/node";
+import type { LoaderArgs } from "@remix-run/node";
 import { loadBuildByProjectId } from "@webstudio-is/project-build/server";
 import { db } from "@webstudio-is/project/server";
 import { authorizeProject } from "@webstudio-is/trpc-interface/server";
+import { loadByProject } from "@webstudio-is/asset-uploader/server";
 import { createContext } from "~/shared/context.server";
 import { ErrorMessage } from "~/shared/error";
 import { sentryException } from "~/shared/sentry";
 import { getBuildOrigin } from "~/shared/router-utils";
 import { type BuilderProps, Builder, links } from "~/builder";
-import { loadByProject } from "@webstudio-is/asset-uploader/server";
 
 export { links };
 
@@ -59,14 +59,15 @@ export const loader = async ({
   return {
     project,
     build: devBuild,
-    assets,
+    assets: assets.map((asset) => [asset.id, asset]),
     buildOrigin: getBuildOrigin(request),
     authToken,
     authPermit,
   };
 };
 
-export const ErrorBoundary: ErrorBoundaryComponent = ({ error }) => {
+export const ErrorBoundary = () => {
+  const error = useRouteError();
   sentryException({ error });
   const message = error instanceof Error ? error.message : String(error);
   return <ErrorMessage message={message} />;

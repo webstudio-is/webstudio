@@ -7,7 +7,7 @@ import {
   Flex,
   Label,
   Link,
-  TextField,
+  DeprecatedTextField,
   useId,
   Tooltip,
   FloatingPanelPopover,
@@ -58,7 +58,7 @@ const Content = ({ project }: PublishButtonProps) => {
           <Flex gap="2" align="center">
             <input type="hidden" name="projectId" value={project.id} />
             <Label htmlFor={id}>Domain:</Label>
-            <TextField id={id} name="domain" defaultValue={domain} />
+            <DeprecatedTextField id={id} name="domain" defaultValue={domain} />
           </Flex>
           {fetcher.data?.errors !== undefined && (
             <Text color="destructive">{fetcher.data?.errors}</Text>

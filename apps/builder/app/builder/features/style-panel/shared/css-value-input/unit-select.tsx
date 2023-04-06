@@ -8,9 +8,8 @@ import {
   SelectViewport,
   SelectItem,
   SelectContent,
-  TextFieldIconButton,
-  styled,
-  deprecatedTextStyle,
+  NestedSelectButton,
+  nestedSelectButtonUnitless,
 } from "@webstudio-is/design-system";
 import { ChevronDownIcon, ChevronUpIcon } from "@webstudio-is/icons";
 
@@ -44,7 +43,7 @@ export const useUnitSelect = ({
     const { unitGroups } = properties[property as keyof typeof properties];
     for (const unitGroup of unitGroups) {
       if (unitGroup === "number") {
-        options.push({ id: "number", label: "—" });
+        options.push({ id: "number", label: nestedSelectButtonUnitless });
         continue;
       }
       const visibleUnits =
@@ -55,7 +54,7 @@ export const useUnitSelect = ({
     }
 
     if (showUnitless && !options.some((o) => o.id === "number")) {
-      options.push({ id: "number", label: "—" });
+      options.push({ id: "number", label: nestedSelectButtonUnitless });
     }
 
     return options;
@@ -83,10 +82,6 @@ export const useUnitSelect = ({
   return [isOpen, select];
 };
 
-const StyledTrigger = styled(TextFieldIconButton, deprecatedTextStyle, {
-  px: 3,
-});
-
 type UnitSelectProps = {
   options: Array<UnitOption>;
   value: string;
@@ -113,13 +108,12 @@ const UnitSelect = ({
       open={open}
     >
       <SelectPrimitive.SelectTrigger asChild>
-        <StyledTrigger variant="unit">
+        <NestedSelectButton tabIndex={-1}>
           <SelectPrimitive.Value>
-            {/* fallback to uppercased value for not listed units, show - for number unit */}
             {matchedOption?.label ??
-              (value === "number" ? "—" : value.toLocaleUpperCase())}
+              (value === "number" ? nestedSelectButtonUnitless : value)}
           </SelectPrimitive.Value>
-        </StyledTrigger>
+        </NestedSelectButton>
       </SelectPrimitive.SelectTrigger>
       <SelectPrimitive.Portal>
         <SelectContent

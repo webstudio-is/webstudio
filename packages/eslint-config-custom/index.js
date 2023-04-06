@@ -32,14 +32,7 @@ module.exports = {
     "no-unused-vars": "off",
     "@typescript-eslint/no-unused-vars": "off",
     "func-style": ["error", "expression", { allowArrowFunctions: true }],
-    "unicorn/filename-case": [
-      "error",
-      {
-        case: "kebabCase",
-        // Remix routes need to contain $variable in the file name
-        ignore: ["\\$"],
-      },
-    ],
+    "unicorn/filename-case": ["error", { case: "kebabCase" }],
     curly: 2,
     eqeqeq: ["error", "always", { null: "ignore" }],
     camelcase: [2, { properties: "never" }],
@@ -57,4 +50,12 @@ module.exports = {
       },
     ],
   },
+  overrides: [
+    {
+      files: ["**/app/routes/**/*.{ts,tsx}"],
+      rules: {
+        "unicorn/filename-case": "off",
+      },
+    },
+  ],
 };

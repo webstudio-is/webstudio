@@ -10,7 +10,7 @@ import {
   rawTheme,
   Separator,
   Switch,
-  TextField,
+  DeprecatedTextField,
   theme,
   Tooltip,
   useId,
@@ -88,7 +88,7 @@ const Menu = ({
       <PopoverContent css={{ zIndex: theme.zIndices[1] }}>
         <Item>
           <Label>Name</Label>
-          <TextField
+          <DeprecatedTextField
             autoFocus
             value={name}
             onChange={(event) => {

@@ -34,7 +34,7 @@ export const getElementByInstanceSelector = (
     .map((id) => `[${idAttribute}="${id}"]`)
     .reverse()
     .join(" ");
-  return document.querySelector(domSelector) ?? undefined;
+  return document.querySelector<HTMLElement>(domSelector) ?? undefined;
 };
 
 type Rect = {

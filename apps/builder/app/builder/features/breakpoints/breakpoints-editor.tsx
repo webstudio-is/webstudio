@@ -6,7 +6,7 @@ import type { Breakpoint } from "@webstudio-is/project-build";
 import {
   theme,
   Button,
-  TextField,
+  DeprecatedTextField,
   Flex,
   DeprecatedText2,
 } from "@webstudio-is/design-system";
@@ -60,7 +60,7 @@ const BreakpointEditorItem = ({
         gap="1"
         css={{ paddingLeft: theme.spacing[10], paddingRight: theme.spacing[9] }}
       >
-        <TextField
+        <DeprecatedTextField
           css={{ width: 100, flexGrow: 1 }}
           type="text"
           variant="ghost"
@@ -70,7 +70,7 @@ const BreakpointEditorItem = ({
           minLength={2}
           required
         />
-        <TextField
+        <DeprecatedTextField
           css={{ textAlign: "right", width: 50 }}
           variant="ghost"
           defaultValue={breakpoint.minWidth ?? breakpoint.maxWidth ?? 0}

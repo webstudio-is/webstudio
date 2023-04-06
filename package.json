@@ -27,7 +27,6 @@
     "@storybook/react": "^6.5.16",
     "@types/css-tree": "^2.0.0",
     "@webstudio-is/eslint-config-custom": "workspace:^",
-    "chromatic": "^6.11.4",
     "nano-staged": "^0.8.0",
     "prettier": "2.8.7",
     "simple-git-hooks": "^2.8.1",
@@ -70,7 +69,6 @@
     "patchedDependencies": {
       "@stitches/react@1.3.1-1": "patches/@stitches__react@1.3.1-1.patch",
       "use-debounce@9.0.2": "patches/use-debounce@9.0.2.patch",
-      "mitt@3.0.0": "patches/mitt@3.0.0.patch",
       "totalist@3.0.0": "patches/totalist@3.0.0.patch"
     }
   }

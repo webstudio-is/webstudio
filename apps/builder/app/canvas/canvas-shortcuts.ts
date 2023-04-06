@@ -1,7 +1,11 @@
 import { useHotkeys } from "react-hotkeys-hook";
-import { shortcuts, options } from "~/shared/shortcuts";
+import { shortcuts, instanceTreeShortcuts, options } from "~/shared/shortcuts";
 import { publish, useSubscribe } from "~/shared/pubsub";
 import { isPreviewModeStore } from "~/shared/nano-states";
+import {
+  enterEditingMode,
+  escapeSelection,
+} from "~/shared/nano-states/instances";
 
 declare module "~/shared/pubsub" {
   export interface PubsubMap {
@@ -22,12 +26,16 @@ const publishCancelCurrentDrag = () => {
   publish({ type: "cancelCurrentDrag" });
 };
 
-export const useShortcuts = () => {
+export const useCanvasShortcuts = () => {
   const shortcutHandlerMap = {
     preview: togglePreviewMode,
     breakpointsMenu: publishOpenBreakpointsMenu,
     esc: publishCancelCurrentDrag,
-  } as const;
+    enter: enterEditingMode,
+  } as const satisfies Record<
+    keyof typeof shortcuts | keyof typeof instanceTreeShortcuts,
+    unknown
+  >;
 
   useHotkeys(shortcuts.preview, shortcutHandlerMap.preview, options, []);
 
@@ -38,7 +46,18 @@ export const useShortcuts = () => {
     []
   );
 
-  useHotkeys(shortcuts.esc, shortcutHandlerMap.esc, options, []);
+  useHotkeys(
+    shortcuts.esc,
+    () => {
+      shortcutHandlerMap.esc();
+      // Reset selection for local canvas escape, but not for the Builder escape via useSubscribe
+      escapeSelection();
+    },
+    options,
+    []
+  );
+
+  useHotkeys(instanceTreeShortcuts.enter, shortcutHandlerMap.enter, {}, []);
 
   // Shortcuts from the parent window
   useSubscribe("shortcut", ({ name }) => {

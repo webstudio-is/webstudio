@@ -1,3 +1,4 @@
+/* eslint-disable import/no-internal-modules */
 import { parse, definitionSyntax, type DSNode } from "css-tree";
 import properties from "mdn-data/css/properties.json";
 import syntaxes from "mdn-data/css/syntaxes.json";
@@ -141,7 +142,7 @@ const walkSyntax = (
       return;
     }
     if (node.type === "Type") {
-      const nestedSyntax = syntaxes[node.name]?.syntax;
+      const nestedSyntax = syntaxes[node.name as keyof typeof syntaxes]?.syntax;
       if (nestedSyntax === undefined) {
         enter(node);
       } else {
@@ -152,7 +153,11 @@ const walkSyntax = (
     }
     if (node.type === "Property") {
       // resolve other properties references
-      walkSyntax(properties[node.name].syntax, enter, parsedSyntaxes);
+      walkSyntax(
+        properties[node.name as keyof typeof properties].syntax,
+        enter,
+        parsedSyntaxes
+      );
       return;
     }
     enter(node);
@@ -235,6 +240,14 @@ for (property in filteredProperties) {
     }
   });
 
+  if (Array.isArray(config.initial)) {
+    throw new Error(
+      `Property ${property} contains non string initial value ${config.initial.join(
+        ", "
+      )}`
+    );
+  }
+
   propertiesData[camelCase(property)] = {
     unitGroups: Array.from(unitGroups),
     inherited: config.inherited,
@@ -269,19 +282,43 @@ const nonStandardValues = {
   "background-clip": ["text"],
 };
 
-const keywordValues = (() => {
-  const result = {};
+const beautifyKeyword = (keyword: string) => {
+  if (keyword === "currentcolor") {
+    return "currentColor";
+  }
+  return keyword;
+};
 
-  for (let property in filteredProperties) {
+// https://www.w3.org/TR/css-values/#common-keywords
+const commonKeywords = ["initial", "inherit", "unset"];
+
+const keywordValues = (() => {
+  const result: Record<string, string[]> = {};
+
+  for (const property in filteredProperties) {
     const keywords = new Set<string>();
-    walkSyntax(filteredProperties[property].syntax, (node) => {
-      if (node.type === "Keyword") {
-        keywords.add(node.name);
+    walkSyntax(
+      filteredProperties[property as keyof typeof filteredProperties].syntax,
+      (node) => {
+        if (node.type === "Keyword") {
+          keywords.add(beautifyKeyword(node.name));
+        }
       }
-    });
+    );
+
     if (property in nonStandardValues) {
-      keywords.add.apply(keywords, nonStandardValues[property]);
+      for (const nonStandartKeyword of nonStandardValues[
+        property as keyof typeof nonStandardValues
+      ]) {
+        keywords.add(nonStandartKeyword);
+      }
     }
+    for (const commonKeyword of commonKeywords) {
+      // Delete to add commonKeyword at the end of the set
+      keywords.delete(commonKeyword);
+      keywords.add(commonKeyword);
+    }
+
     if (keywords.size !== 0) {
       result[camelCase(property)] = Array.from(keywords);
     }

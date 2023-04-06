@@ -1,13 +1,33 @@
 import { type ChangeEvent, useRef } from "react";
-import { Button, Flex, Tooltip } from "@webstudio-is/design-system";
+import { Button, Flex, Tooltip, toast } from "@webstudio-is/design-system";
 import { UploadIcon } from "@webstudio-is/icons";
-import type { AssetType } from "@webstudio-is/asset-uploader";
+import {
+  type AssetType,
+  MAX_UPLOAD_SIZE,
+  toBytes,
+} from "@webstudio-is/asset-uploader";
 import { FONT_MIME_TYPES } from "@webstudio-is/fonts";
-import { useAssets } from "./use-assets";
+import { useUploadAsset } from "./use-assets";
 import { useAuthPermit } from "~/shared/nano-states";
 
+const maxSize = toBytes(MAX_UPLOAD_SIZE);
+
+const getFilesFromInput = (_type: AssetType, input: HTMLInputElement) => {
+  const files = Array.from(input?.files ?? []);
+
+  const exceedSizeFiles = files.filter((file) => file.size > maxSize);
+
+  for (const file of exceedSizeFiles) {
+    toast.error(
+      `Asset "${file.name}" cannot be bigger than ${MAX_UPLOAD_SIZE}MB`
+    );
+  }
+
+  return files.filter((file) => file.size <= maxSize);
+};
+
 const useUpload = (type: AssetType) => {
-  const { handleSubmit } = useAssets(type);
+  const uploadAsset = useUploadAsset();
   const inputRef = useRef<HTMLInputElement | null>(null);
 
   const onChange = (event: ChangeEvent<HTMLFormElement>) => {
@@ -16,7 +36,8 @@ const useUpload = (type: AssetType) => {
     if (input === null) {
       return;
     }
-    handleSubmit(input);
+    const files = getFilesFromInput(type, input);
+    uploadAsset(type, files);
     form.reset();
   };
 

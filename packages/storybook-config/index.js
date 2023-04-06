@@ -8,4 +8,12 @@ module.exports = {
   core: {
     builder: "@storybook/builder-vite",
   },
+  async viteFinal(config) {
+    return {
+      ...config,
+      resolve: {
+        conditions: ["source", "import", "module", "browser", "default"],
+      },
+    };
+  },
 };
