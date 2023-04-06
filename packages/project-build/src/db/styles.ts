@@ -133,6 +133,7 @@ export const parseStyles = async (
     const styleDecl = {
       styleSourceId: storedStyleDecl.styleSourceId,
       breakpointId: storedStyleDecl.breakpointId,
+      state: storedStyleDecl.state,
       property: storedStyleDecl.property,
       value: parseValue(storedStyleDecl.value, assetsMap),
     };
@@ -189,6 +190,7 @@ export const serializeStyles = (styles: Styles) => {
       return {
         breakpointId: styleDecl.breakpointId,
         styleSourceId: styleDecl.styleSourceId,
+        state: styleDecl.state,
         property: styleDecl.property,
         value: serializeValue(styleDecl.value),
       };

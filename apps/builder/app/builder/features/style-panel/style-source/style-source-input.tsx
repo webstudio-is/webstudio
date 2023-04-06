@@ -29,6 +29,8 @@ import {
   DropdownMenuItem,
   DropdownMenuLabel,
   DropdownMenuSeparator,
+  rawTheme,
+  theme,
 } from "@webstudio-is/design-system";
 import {
   forwardRef,
@@ -40,10 +42,9 @@ import {
 import { mergeRefs } from "@react-aria/utils";
 import { type ItemSource, menuCssVars, StyleSource } from "./style-source";
 import { useSortable } from "./use-sortable";
-import { theme } from "@webstudio-is/design-system";
 import { matchSorter } from "match-sorter";
 import { StyleSourceBadge } from "./style-source-badge";
-import { CheckMarkIcon } from "@webstudio-is/icons";
+import { CheckMarkIcon, DotIcon } from "@webstudio-is/icons";
 import { isFeatureEnabled } from "@webstudio-is/feature-flags";
 import { humanizeString } from "~/shared/string-utils";
 
@@ -53,6 +54,7 @@ type IntermediateItem = {
   disabled: boolean;
   source: ItemSource;
   isAdded?: boolean;
+  states: string[];
 };
 
 export type ItemSelector = {
@@ -219,6 +221,7 @@ const matchOrSuggestToCreate = (
       disabled: false,
       source: "token",
       isAdded: false,
+      states: [],
     });
   }
   // skip already added values
@@ -246,9 +249,7 @@ const userActionStates = [
 
 const renderMenuItems = (props: {
   selectedItemSelector: undefined | ItemSelector;
-  itemId: IntermediateItem["id"];
-  source: ItemSource;
-  disabled: boolean;
+  item: IntermediateItem;
   onSelect?: (itemSelector: undefined | ItemSelector) => void;
   onEdit?: (itemId: IntermediateItem["id"]) => void;
   onDuplicate?: (itemId: IntermediateItem["id"]) => void;
@@ -259,18 +260,20 @@ const renderMenuItems = (props: {
   onDelete?: (itemId: IntermediateItem["id"]) => void;
 }) => (
   <>
-    {props.source !== "local" && (
-      <DropdownMenuItem onSelect={() => props.onEdit?.(props.itemId)}>
+    {props.item.source !== "local" && (
+      <DropdownMenuItem onSelect={() => props.onEdit?.(props.item.id)}>
         Edit Name
       </DropdownMenuItem>
     )}
-    {props.source !== "local" && (
-      <DropdownMenuItem onSelect={() => props.onDuplicate?.(props.itemId)}>
+    {props.item.source !== "local" && (
+      <DropdownMenuItem onSelect={() => props.onDuplicate?.(props.item.id)}>
         Duplicate
       </DropdownMenuItem>
     )}
-    {props.source === "local" && (
-      <DropdownMenuItem onSelect={() => props.onConvertToToken?.(props.itemId)}>
+    {props.item.source === "local" && (
+      <DropdownMenuItem
+        onSelect={() => props.onConvertToToken?.(props.item.id)}
+      >
         Convert to token
       </DropdownMenuItem>
     )}
@@ -285,15 +288,15 @@ const renderMenuItems = (props: {
       </DropdownMenuItem>
     )}
     */}
-    {props.source !== "local" && (
-      <DropdownMenuItem onSelect={() => props.onRemove?.(props.itemId)}>
+    {props.item.source !== "local" && (
+      <DropdownMenuItem onSelect={() => props.onRemove?.(props.item.id)}>
         Remove
       </DropdownMenuItem>
     )}
-    {props.source !== "local" && (
+    {props.item.source !== "local" && (
       <DropdownMenuItem
         destructive={true}
-        onSelect={() => props.onDelete?.(props.itemId)}
+        onSelect={() => props.onDelete?.(props.item.id)}
       >
         Delete
       </DropdownMenuItem>
@@ -307,11 +310,21 @@ const renderMenuItems = (props: {
             key={state}
             withIndicator={true}
             icon={
-              props.itemId === props.selectedItemSelector?.styleSourceId &&
-              state === props.selectedItemSelector.state && <CheckMarkIcon />
+              props.item.id === props.selectedItemSelector?.styleSourceId &&
+              state === props.selectedItemSelector.state ? (
+                <CheckMarkIcon
+                  color={
+                    props.item.states.includes(state)
+                      ? rawTheme.colors.foregroundPrimary
+                      : rawTheme.colors.foregroundIconMain
+                  }
+                />
+              ) : props.item.states.includes(state) ? (
+                <DotIcon color={rawTheme.colors.foregroundPrimary} />
+              ) : null
             }
             onSelect={() =>
-              props.onSelect?.({ styleSourceId: props.itemId, state })
+              props.onSelect?.({ styleSourceId: props.item.id, state })
             }
           >
             {humanizeString(state)}
@@ -342,6 +355,7 @@ export const StyleSourceInput = (
       disabled: false,
       id: "",
       source: "local",
+      states: [],
     },
     selectedItem: undefined,
     match: matchOrSuggestToCreate,
@@ -387,9 +401,7 @@ export const StyleSourceInput = (
             renderStyleSourceMenuItems={(item) =>
               renderMenuItems({
                 selectedItemSelector: props.selectedItemSelector,
-                itemId: item.id,
-                source: item.source,
-                disabled: item.disabled,
+                item,
                 onSelect: props.onSelectItem,
                 onDuplicate: props.onDuplicateItem,
                 onConvertToToken: props.onConvertToToken,

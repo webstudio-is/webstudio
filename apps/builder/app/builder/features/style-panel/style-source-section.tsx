@@ -13,7 +13,9 @@ import { useStore } from "@nanostores/react";
 import {
   availableStyleSourcesStore,
   selectedInstanceSelectorStore,
+  selectedInstanceStatesByStyleSourceIdStore,
   selectedInstanceStyleSourcesStore,
+  selectedOrLastStyleSourceSelectorStore,
   selectedStyleSourceSelectorStore,
   styleSourceSelectionsStore,
   styleSourcesStore,
@@ -244,22 +246,19 @@ type StyleSourceInputItem = {
   label: string;
   disabled: boolean;
   source: ItemSource;
+  states: string[];
 };
 
-const convertToInputItem = (styleSource: StyleSource): StyleSourceInputItem => {
-  if (styleSource.type === "local") {
-    return {
-      id: styleSource.id,
-      label: "Local",
-      disabled: false,
-      source: styleSource.type,
-    };
-  }
+const convertToInputItem = (
+  styleSource: StyleSource,
+  states: string[]
+): StyleSourceInputItem => {
   return {
     id: styleSource.id,
-    label: styleSource.name,
+    label: styleSource.type === "local" ? "Local" : styleSource.name,
     disabled: false,
     source: styleSource.type,
+    states,
   };
 };
 
@@ -269,13 +268,19 @@ export const StyleSourcesSection = () => {
     selectedInstanceStyleSourcesStore
   );
   const items = availableStyleSources.map((styleSource) =>
-    convertToInputItem(styleSource)
+    convertToInputItem(styleSource, [])
+  );
+  const selectedInstanceStatesByStyleSourceId = useStore(
+    selectedInstanceStatesByStyleSourceIdStore
   );
   const value = selectedInstanceStyleSources.map((styleSource) =>
-    convertToInputItem(styleSource)
+    convertToInputItem(
+      styleSource,
+      selectedInstanceStatesByStyleSourceId.get(styleSource.id) ?? []
+    )
   );
-  const selectedStyleSourceSelector = useStore(
-    selectedStyleSourceSelectorStore
+  const selectedOrLastStyleSourceSelector = useStore(
+    selectedOrLastStyleSourceSelectorStore
   );
 
   const [editingItemId, setEditingItemId] = useState<
@@ -291,7 +296,7 @@ export const StyleSourcesSection = () => {
       <StyleSourceInput
         items={items}
         value={value}
-        selectedItemSelector={selectedStyleSourceSelector}
+        selectedItemSelector={selectedOrLastStyleSourceSelector}
         onCreateItem={createStyleSource}
         onSelectAutocompleteItem={({ id }) => {
           addStyleSourceToInstace(id);

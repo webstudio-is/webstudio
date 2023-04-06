@@ -10,13 +10,14 @@ import type {
   StyleSource as StyleSourceType,
 } from "@webstudio-is/project-build";
 import {
+  type StyleSourceSelector,
   instancesStore,
   selectedInstanceBrowserStyleStore,
   selectedInstanceSelectorStore,
   selectedInstanceIntanceToTagStore,
-  selectedStyleSourceStore,
   stylesIndexStore,
   useBreakpoints,
+  selectedOrLastStyleSourceSelectorStore,
 } from "~/shared/nano-states";
 import { selectedBreakpointStore } from "~/shared/nano-states/breakpoints";
 import type { InstanceSelector } from "~/shared/tree-utils";
@@ -102,15 +103,20 @@ for (const [property, value] of Object.entries(properties)) {
 const getSelectedStyle = (
   stylesByStyleSourceId: Map<StyleSourceType["id"], StyleDecl[]>,
   breakpointId: string,
-  styleSourceId: string
+  styleSourceSelector: StyleSourceSelector
 ) => {
   const style: Style = {};
-  const instanceStyles = stylesByStyleSourceId.get(styleSourceId);
+  const instanceStyles = stylesByStyleSourceId.get(
+    styleSourceSelector.styleSourceId
+  );
   if (instanceStyles === undefined) {
     return style;
   }
   for (const styleDecl of instanceStyles) {
-    if (styleDecl.breakpointId === breakpointId) {
+    if (
+      styleDecl.breakpointId === breakpointId &&
+      styleDecl.state === styleSourceSelector.state
+    ) {
       style[styleDecl.property] = styleDecl.value;
     }
   }
@@ -151,7 +157,10 @@ export const getCascadedInfo = (
   }
   for (const breakpointId of cascadedBreakpointIds) {
     for (const styleDecl of instanceStyles) {
-      if (styleDecl.breakpointId === breakpointId) {
+      if (
+        styleDecl.breakpointId === breakpointId &&
+        styleDecl.state === undefined
+      ) {
         cascadedStyle[styleDecl.property] = {
           breakpointId,
           value: styleDecl.value,
@@ -252,8 +261,9 @@ export const useStyleInfo = () => {
   const selectedBreakpoint = useStore(selectedBreakpointStore);
   const selectedBreakpointId = selectedBreakpoint?.id;
   const selectedInstanceSelector = useStore(selectedInstanceSelectorStore);
-  const selectedStyleSource = useStore(selectedStyleSourceStore);
-  const selectedStyleSourceId = selectedStyleSource?.id;
+  const selectedOrLastStyleSourceSelector = useStore(
+    selectedOrLastStyleSourceSelectorStore
+  );
   const browserStyle = useStore(selectedInstanceBrowserStyleStore);
   const selectedInstanceIntanceToTag = useStore(
     selectedInstanceIntanceToTagStore
@@ -266,16 +276,20 @@ export const useStyleInfo = () => {
   const selectedStyle = useMemo(() => {
     if (
       selectedBreakpointId === undefined ||
-      selectedStyleSourceId === undefined
+      selectedOrLastStyleSourceSelector === undefined
     ) {
       return {};
     }
     return getSelectedStyle(
       stylesByStyleSourceId,
       selectedBreakpointId,
-      selectedStyleSourceId
+      selectedOrLastStyleSourceSelector
     );
-  }, [stylesByStyleSourceId, selectedBreakpointId, selectedStyleSourceId]);
+  }, [
+    stylesByStyleSourceId,
+    selectedBreakpointId,
+    selectedOrLastStyleSourceSelector,
+  ]);
 
   const cascadedBreakpointIds = useMemo(
     () => getCascadedBreakpointIds(breakpoints, selectedBreakpointId),
