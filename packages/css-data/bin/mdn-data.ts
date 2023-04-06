@@ -142,7 +142,7 @@ const walkSyntax = (
       return;
     }
     if (node.type === "Type") {
-      const nestedSyntax = syntaxes[node.name]?.syntax;
+      const nestedSyntax = syntaxes[node.name as keyof typeof syntaxes]?.syntax;
       if (nestedSyntax === undefined) {
         enter(node);
       } else {
@@ -153,7 +153,11 @@ const walkSyntax = (
     }
     if (node.type === "Property") {
       // resolve other properties references
-      walkSyntax(properties[node.name].syntax, enter, parsedSyntaxes);
+      walkSyntax(
+        properties[node.name as keyof typeof properties].syntax,
+        enter,
+        parsedSyntaxes
+      );
       return;
     }
     enter(node);
@@ -289,18 +293,23 @@ const beautifyKeyword = (keyword: string) => {
 const commonKeywords = ["initial", "inherit", "unset"];
 
 const keywordValues = (() => {
-  const result = {};
+  const result: Record<string, string[]> = {};
 
   for (const property in filteredProperties) {
     const keywords = new Set<string>();
-    walkSyntax(filteredProperties[property].syntax, (node) => {
-      if (node.type === "Keyword") {
-        keywords.add(beautifyKeyword(node.name));
+    walkSyntax(
+      filteredProperties[property as keyof typeof filteredProperties].syntax,
+      (node) => {
+        if (node.type === "Keyword") {
+          keywords.add(beautifyKeyword(node.name));
+        }
       }
-    });
+    );
 
     if (property in nonStandardValues) {
-      for (const nonStandartKeyword of nonStandardValues[property]) {
+      for (const nonStandartKeyword of nonStandardValues[
+        property as keyof typeof nonStandardValues
+      ]) {
         keywords.add(nonStandartKeyword);
       }
     }
