@@ -25,10 +25,11 @@ const style = css({
     paddingLeft: theme.spacing[2],
     paddingRight: theme.spacing[2],
   },
-  "&[data-state=hover], &:not([data-state=open], :disabled):hover": {
-    color: theme.colors.foregroundMain,
-    backgroundColor: theme.colors.backgroundHover,
-  },
+  "&[data-state=hover], &:not([data-state=open], :disabled, :focus-visible):hover":
+    {
+      color: theme.colors.foregroundMain,
+      backgroundColor: theme.colors.backgroundHover,
+    },
   "&[data-state=open], &:focus-visible": {
     color: theme.colors.foregroundContrastMain,
     backgroundColor: theme.colors.backgroundActive,
