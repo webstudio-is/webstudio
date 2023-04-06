@@ -393,7 +393,7 @@ export const selectedOrLastStyleSourceSelectorStore = computed(
     if (lastStyleSource !== undefined) {
       return { styleSourceId: lastStyleSource.id };
     }
-    return undefined;
+    return;
   }
 );
 
