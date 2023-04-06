@@ -40,7 +40,6 @@ export * from "./trash";
 export * from "./size";
 export * from "./upload";
 export * from "./gear";
-export * from "./page";
 export * from "./copy";
 export * from "./new-page";
 export * from "./new-folder";

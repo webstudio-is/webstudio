@@ -1,9 +1,4 @@
-import {
-  Flex,
-  DeprecatedTextField,
-  theme,
-  useId,
-} from "@webstudio-is/design-system";
+import { InputField, theme, useId } from "@webstudio-is/design-system";
 import {
   type ControlProps,
   getLabel,
@@ -36,27 +31,21 @@ export const NumberControl = ({
       label={getLabel(meta, propName)}
       onDelete={onDelete}
     >
-      <Flex
-        css={{
-          // can't set width on TextField because it adds padding
-          width: theme.spacing[21],
-        }}
-      >
-        <DeprecatedTextField
-          id={id}
-          type="number"
-          value={localValue.value}
-          onChange={({ target: { valueAsNumber, value } }) =>
-            localValue.set(Number.isNaN(valueAsNumber) ? value : valueAsNumber)
+      <InputField
+        id={id}
+        type="number"
+        value={localValue.value}
+        onChange={({ target: { valueAsNumber, value } }) =>
+          localValue.set(Number.isNaN(valueAsNumber) ? value : valueAsNumber)
+        }
+        onBlur={localValue.save}
+        onKeyDown={(event) => {
+          if (event.key === "Enter") {
+            localValue.save();
           }
-          onBlur={localValue.save}
-          onKeyDown={(event) => {
-            if (event.key === "Enter") {
-              localValue.save();
-            }
-          }}
-        />
-      </Flex>
+        }}
+        css={{ width: theme.spacing[21] }}
+      />
     </HorizontalLayout>
   );
 };
