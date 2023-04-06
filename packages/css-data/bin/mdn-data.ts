@@ -1,3 +1,4 @@
+/* eslint-disable import/no-internal-modules */
 import { parse, definitionSyntax, type DSNode } from "css-tree";
 import properties from "mdn-data/css/properties.json";
 import syntaxes from "mdn-data/css/syntaxes.json";
@@ -235,6 +236,14 @@ for (property in filteredProperties) {
     }
   });
 
+  if (Array.isArray(config.initial)) {
+    throw new Error(
+      `Property ${property} contains non string initial value ${config.initial.join(
+        ", "
+      )}`
+    );
+  }
+
   propertiesData[camelCase(property)] = {
     unitGroups: Array.from(unitGroups),
     inherited: config.inherited,
@@ -269,19 +278,38 @@ const nonStandardValues = {
   "background-clip": ["text"],
 };
 
+const beautifyKeyword = (keyword: string) => {
+  if (keyword === "currentcolor") {
+    return "currentColor";
+  }
+  return keyword;
+};
+
+// https://www.w3.org/TR/css-values/#common-keywords
+const commonKeywords = ["initial", "inherit", "unset"];
+
 const keywordValues = (() => {
   const result = {};
 
-  for (let property in filteredProperties) {
+  for (const property in filteredProperties) {
     const keywords = new Set<string>();
     walkSyntax(filteredProperties[property].syntax, (node) => {
       if (node.type === "Keyword") {
-        keywords.add(node.name);
+        keywords.add(beautifyKeyword(node.name));
       }
     });
+
     if (property in nonStandardValues) {
-      keywords.add.apply(keywords, nonStandardValues[property]);
+      for (const nonStandartKeyword of nonStandardValues[property]) {
+        keywords.add(nonStandartKeyword);
+      }
     }
+    for (const commonKeyword of commonKeywords) {
+      // Delete to add commonKeyword at the end of the set
+      keywords.delete(commonKeyword);
+      keywords.add(commonKeyword);
+    }
+
     if (keywords.size !== 0) {
       result[camelCase(property)] = Array.from(keywords);
     }
