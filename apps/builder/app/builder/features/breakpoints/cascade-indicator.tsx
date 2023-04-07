@@ -9,7 +9,7 @@ const cascadeIndicatorStyle = css({
   position: "absolute",
   bottom: 0,
   height: 2,
-  transition: "150ms width, 150ms left",
+  transition: "150ms width, 150ms left, 150ms right",
   '&[data-direction="left"]': {
     background: theme.colors.backgroundGradientHorizontal,
   },
@@ -41,12 +41,12 @@ const calcIndicatorStyle = ({
       },
     };
   }
-
-  if (selectedBreakpoint.minWidth) {
+  if (selectedBreakpoint.minWidth !== undefined) {
     return {
       left: {
+        right: buttonLeft + buttonWidth,
         width: buttonLeft + buttonWidth,
-        left: buttonLeft,
+        left: 0,
       },
       right: {
         left: 0,

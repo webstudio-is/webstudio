@@ -16,11 +16,11 @@ export const useSetCanvasSize = () => {
     if (workspaceRect === undefined) {
       return;
     }
-    const width =
-      selectedBreakpoint?.minWidth ??
-      selectedBreakpoint?.maxWidth ??
-      workspaceRect.width;
-
+    // When there is no non zero min/max width, we use the workspace width
+    const width = Math.max(
+      selectedBreakpoint?.minWidth ?? selectedBreakpoint?.maxWidth ?? 0,
+      workspaceRect.width
+    );
     setCanvasWidth(width);
   }, [workspaceRect, selectedBreakpoint, setCanvasWidth]);
 

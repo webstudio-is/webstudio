@@ -17,9 +17,13 @@ export const selectedBreakpointStore = computed(
       selectedBreakpointId === undefined
         ? undefined
         : breakpoints.get(selectedBreakpointId);
+
+    const breakpointsArray = Array.from(breakpoints.values());
+
     return (
       matchedBreakpoint ??
-      Array.from(breakpoints.values()).find(isBaseBreakpoint)
+      breakpointsArray.find(isBaseBreakpoint) ??
+      breakpointsArray[0]
     );
   }
 );
