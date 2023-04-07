@@ -11,6 +11,7 @@
     "checks": "pnpm typecheck && pnpm lint",
     "dev": "prisma generate --watch & build-package --watch --no-generated-as-entries",
     "build": "prisma format && prisma generate && build-package --no-generated-as-entries",
+    "dts": "tsc --emitDeclarationOnly --declaration --declarationDir lib",
     "migrations": "./migrations-cli/cli.ts"
   },
   "bin": {
@@ -32,7 +33,7 @@
     "import": "./lib/index.js",
     "require": "./lib/cjs/index.js"
   },
-  "types": "lib/types/index.d.ts",
+  "types": "lib/index.d.ts",
   "license": "MIT",
   "private": false,
   "dependencies": {
