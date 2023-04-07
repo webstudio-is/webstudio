@@ -1,6 +1,6 @@
 import { useStore } from "@nanostores/react";
 import {
-  Flex,
+  Toolbar,
   ToolbarToggleGroup,
   ToolbarToggleItem,
 } from "@webstudio-is/design-system";
@@ -19,13 +19,14 @@ export const BreakpointsSelector = () => {
     return null;
   }
   return (
-    <Flex css={{ position: "relative" }}>
+    <Toolbar>
       <ToolbarToggleGroup
         type="single"
         value={selectedBreakpoint.id}
         onValueChange={(breakpointId: string) => {
           selectedBreakpointIdStore.set(breakpointId);
         }}
+        css={{ position: "relative" }}
       >
         {groupBreakpoints(Array.from(breakpoints.values())).map(
           (breakpoint) => {
@@ -42,6 +43,6 @@ export const BreakpointsSelector = () => {
         )}
         <CascadeIndicator buttonRef={ref} />
       </ToolbarToggleGroup>
-    </Flex>
+    </Toolbar>
   );
 };

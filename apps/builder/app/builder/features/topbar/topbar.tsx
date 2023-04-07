@@ -19,10 +19,12 @@ import { BreakpointsSelector, BreakpointsSettings } from "../breakpoints";
 import { ViewMode } from "./view-mode";
 
 const topbarContainerStyle = css({
+  display: "flex",
   background: theme.colors.backgroundTopbar,
   height: theme.spacing[15],
   boxShadow: `inset 0 -1px 0 0 ${theme.colors.panelOutline}`,
   paddingRight: theme.spacing[9],
+  color: theme.colors.foregroundContrastMain,
 });
 
 type TopbarProps = {
@@ -38,7 +40,7 @@ export const Topbar = ({ gridArea, project, publish }: TopbarProps) => {
   }
 
   return (
-    <Toolbar className={topbarContainerStyle({ css: { gridArea } })}>
+    <nav className={topbarContainerStyle({ css: { gridArea } })}>
       <Flex grow={false} shrink={false}>
         <Menu publish={publish} />
       </Flex>
@@ -54,20 +56,22 @@ export const Topbar = ({ gridArea, project, publish }: TopbarProps) => {
       <Flex grow align="center" justify="center">
         <BreakpointsSelector />
       </Flex>
-      <ToolbarToggleGroup
-        type="single"
-        css={{
-          justifyContent: "flex-end",
-          gap: theme.spacing[5],
-          width: theme.spacing[30],
-        }}
-      >
-        <ViewMode />
-        <SyncStatus />
-        <PreviewButton />
-        <ShareButton projectId={project.id} />
-        <PublishButton project={project} />
-      </ToolbarToggleGroup>
-    </Toolbar>
+      <Toolbar>
+        <ToolbarToggleGroup
+          type="single"
+          css={{
+            justifyContent: "flex-end",
+            gap: theme.spacing[5],
+            width: theme.spacing[30],
+          }}
+        >
+          <ViewMode />
+          <SyncStatus />
+          <PreviewButton />
+          <ShareButton projectId={project.id} />
+          <PublishButton project={project} />
+        </ToolbarToggleGroup>
+      </Toolbar>
+    </nav>
   );
 };
