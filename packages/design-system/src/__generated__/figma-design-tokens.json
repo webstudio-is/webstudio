@@ -672,6 +672,15 @@
         "value": "#383838",
         "type": "color",
         "description": "For tabs and button backgrounds that are in the top toolbar"
+      },
+      "workspace": {
+        "value": "#c7c7c7",
+        "type": "color",
+        "description": "The color of the Builder UI canvas area background."
+      },
+      "icon-subtle": {
+        "value": "#3e3e3e",
+        "type": "color"
       }
     },
     "brand": {
