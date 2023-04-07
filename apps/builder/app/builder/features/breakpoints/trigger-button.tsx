@@ -37,15 +37,11 @@ export const TriggerButton = (props: TriggerButtonProps) => {
     <DropdownMenuTrigger
       aria-label="Show breakpoints"
       className={toggleItemStyle({
-        css: {
-          minWidth: theme.spacing[23],
-          gap: theme.spacing[5],
-          justifyContent: "flex-start",
-        },
+        css: { gap: theme.spacing[5] },
       })}
     >
       <Value unit="PX">{canvasWidth}</Value>
-      {scale !== 100 && <Value unit="%">{scale}</Value>}
+      <Value unit="%">{scale}</Value>
     </DropdownMenuTrigger>
   );
 };
