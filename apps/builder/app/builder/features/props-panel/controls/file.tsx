@@ -6,6 +6,7 @@ import { assetsStore } from "~/shared/nano-states";
 import { FloatingPanel } from "~/builder/shared/floating-panel";
 import { ImageManager } from "~/builder/shared/image-manager";
 import { type ControlProps, getLabel, VerticalLayout } from "../shared";
+import { acceptToMimeCategories } from "@webstudio-is/asset-uploader";
 
 export const FileControl = ({
   meta,
@@ -23,22 +24,30 @@ export const FileControl = ({
   );
   const asset = useStore(assetStore);
 
+  const acceptCategories = acceptToMimeCategories(meta?.accept || "");
+
   return (
     <VerticalLayout label={getLabel(meta, propName)} onDelete={onDelete}>
-      <FloatingPanel
-        title="Images"
-        content={
-          <ImageManager
-            onChange={(asset) =>
-              onChange({ type: "asset", value: asset.id }, asset)
-            }
-          />
-        }
-      >
-        <Button color="neutral" css={{ width: "100%" }}>
-          {asset?.name ?? "Choose image"}
-        </Button>
-      </FloatingPanel>
+      {acceptCategories === "*" ||
+      (acceptCategories.size === 1 && acceptCategories.has("image")) ? (
+        <FloatingPanel
+          title="Images"
+          content={
+            <ImageManager
+              onChange={(asset) =>
+                onChange({ type: "asset", value: asset.id }, asset)
+              }
+              accept={meta?.accept}
+            />
+          }
+        >
+          <Button color="neutral" css={{ width: "100%" }}>
+            {asset?.name ?? "Choose source"}
+          </Button>
+        </FloatingPanel>
+      ) : (
+        `Unsupported accept value: ${meta?.accept}`
+      )}
     </VerticalLayout>
   );
 };
