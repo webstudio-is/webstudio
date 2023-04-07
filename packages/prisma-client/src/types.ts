@@ -6,5 +6,6 @@ export type {
   Project,
   Asset,
   DashboardProject,
+  AuthorizationRelation,
   AuthorizationToken,
 } from "./__generated__";
