@@ -1,7 +1,7 @@
 import { useMemo } from "react";
 import { computed } from "nanostores";
 import { useStore } from "@nanostores/react";
-import { Button } from "@webstudio-is/design-system";
+import { Button, Text } from "@webstudio-is/design-system";
 import { assetsStore } from "~/shared/nano-states";
 import { FloatingPanel } from "~/builder/shared/floating-panel";
 import { ImageManager } from "~/builder/shared/image-manager";
@@ -46,7 +46,9 @@ export const FileControl = ({
           </Button>
         </FloatingPanel>
       ) : (
-        `Unsupported accept value: ${meta?.accept}`
+        <Text color="destructive">
+          Unsupported accept value: {meta?.accept}
+        </Text>
       )}
     </VerticalLayout>
   );
