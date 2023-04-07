@@ -5,7 +5,6 @@
     "esModuleInterop": true,
     "forceConsistentCasingInFileNames": true,
     "inlineSources": false,
-    "isolatedModules": true,
     "moduleResolution": "bundler",
     "customConditions": ["source"],
     "noUnusedLocals": true,
