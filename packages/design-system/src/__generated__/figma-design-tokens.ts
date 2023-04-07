@@ -370,6 +370,8 @@ export const color = {
     "linear-gradient(90deg, #bd2fdb 0%, #4a4efa 100%)",
   backgroundMenuHint: "#dedede",
   backgroundTopbarHover: "#383838",
+  backgroundWorkspace: "#c7c7c7",
+  backgroundIconSubtle: "#3e3e3e",
   brandBackgroundProjectCardFront:
     "linear-gradient(0deg, #fbf8ff 0%, #e2e2e2 100%)",
   brandBackgroundProjectCardBack:
