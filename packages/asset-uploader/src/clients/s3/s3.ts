@@ -1,15 +1,49 @@
+import { DeleteObjectCommand, S3Client } from "@aws-sdk/client-s3";
 import type { AssetClient } from "../../client";
-import { deleteFromS3 } from "./delete";
 import { uploadToS3 } from "./upload";
 
 type S3ClientOptions = {
+  endpoint: string;
+  region: string;
+  accessKeyId: string;
+  secretAccessKey: string;
+  bucket: string;
+  acl?: string;
   maxUploadSize: number;
 };
 
-export const createS3Client = (clientOptions: S3ClientOptions): AssetClient => {
-  const { maxUploadSize } = clientOptions;
+export const createS3Client = (options: S3ClientOptions): AssetClient => {
+  // @todo find a way to destroy this client to free resources
+  const client = new S3Client({
+    endpoint: options.endpoint,
+    region: options.region,
+    credentials: {
+      accessKeyId: options.accessKeyId,
+      secretAccessKey: options.secretAccessKey,
+    },
+  });
+
+  const uploadFile: AssetClient["uploadFile"] = async (request) => {
+    return await uploadToS3({
+      client,
+      request,
+      maxSize: options.maxUploadSize,
+      bucket: options.bucket,
+      acl: options.acl,
+    });
+  };
+
+  const deleteFile: AssetClient["deleteFile"] = async (name) => {
+    await client.send(
+      new DeleteObjectCommand({
+        Bucket: options.bucket,
+        Key: name,
+      })
+    );
+  };
+
   return {
-    uploadFile: (request) => uploadToS3({ request, maxSize: maxUploadSize }),
-    deleteFile: deleteFromS3,
+    uploadFile,
+    deleteFile,
   };
 };
