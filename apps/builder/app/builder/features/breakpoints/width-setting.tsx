@@ -1,5 +1,5 @@
 import { useStore } from "@nanostores/react";
-import { findMatchingMedia } from "@webstudio-is/css-engine";
+import { findApplicableMedia } from "@webstudio-is/css-engine";
 import { theme, Text, Flex, Slider } from "@webstudio-is/design-system";
 import { useCanvasWidth } from "~/builder/shared/nano-states";
 import { breakpointsContainer } from "~/shared/nano-states";
@@ -35,7 +35,7 @@ export const WidthSetting = () => {
           value={[canvasWidth]}
           onValueChange={([value]) => {
             setCanvasWidth(value);
-            const matchedBreakpoint = findMatchingMedia(
+            const matchedBreakpoint = findApplicableMedia(
               Array.from(breakpoints.values()),
               value
             );

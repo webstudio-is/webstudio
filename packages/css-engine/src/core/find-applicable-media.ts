@@ -3,7 +3,7 @@ import { matchMedia } from "./match-media";
 import type { MediaRuleOptions } from "./rules";
 
 // Find media rule that matches the given width when rendered.
-export const findMatchingMedia = <Media extends MediaRuleOptions>(
+export const findApplicableMedia = <Media extends MediaRuleOptions>(
   media: Array<Media>,
   width: number
 ) => {
