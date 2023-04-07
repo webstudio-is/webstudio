@@ -13,9 +13,17 @@ import {
   scaleStore,
 } from "~/shared/nano-states/breakpoints";
 
-const Value = ({ children, unit }: { children?: number; unit: string }) => {
+const Value = ({
+  children,
+  unit,
+  minWidth,
+}: {
+  children?: number;
+  unit: string;
+  minWidth: number;
+}) => {
   return (
-    <Flex gap="1" as="span">
+    <Flex gap="1" as="span" justify="end" css={{ minWidth }}>
       {children}
       <Flex css={{ color: theme.colors.foregroundTextMoreSubtle }} as="span">
         {unit}
@@ -40,8 +48,14 @@ export const TriggerButton = (props: TriggerButtonProps) => {
         css: { gap: theme.spacing[5] },
       })}
     >
-      <Value unit="PX">{canvasWidth}</Value>
-      {scale !== 100 && <Value unit="%">{scale}</Value>}
+      <Value unit="PX" minWidth={50}>
+        {canvasWidth}
+      </Value>
+      {scale !== 100 && (
+        <Value unit="%" minWidth={30}>
+          {Math.round(scale)}
+        </Value>
+      )}
     </DropdownMenuTrigger>
   );
 };

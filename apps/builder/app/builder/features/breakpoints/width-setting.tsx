@@ -35,12 +35,12 @@ export const WidthSetting = () => {
           value={[canvasWidth]}
           onValueChange={([value]) => {
             setCanvasWidth(value);
-            const matchedBreakpoint = findApplicableMedia(
+            const applicableBreakpoint = findApplicableMedia(
               Array.from(breakpoints.values()),
               value
             );
-            if (matchedBreakpoint) {
-              selectedBreakpointIdStore.set(matchedBreakpoint.id);
+            if (applicableBreakpoint) {
+              selectedBreakpointIdStore.set(applicableBreakpoint.id);
             }
           }}
         />
