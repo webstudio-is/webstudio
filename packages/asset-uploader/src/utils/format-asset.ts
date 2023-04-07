@@ -5,24 +5,38 @@ import { getAssetPath } from "./get-asset-path";
 import { type Asset, ImageMeta } from "../schema";
 
 export const formatAsset = (asset: DbAsset): Asset => {
-  const base = { ...asset, path: getAssetPath(asset) };
+  const path = getAssetPath(asset);
 
   const isFont = FONT_FORMATS.has(asset.format as FontFormat);
 
   if (isFont) {
     return {
-      ...base,
+      id: asset.id,
+      name: asset.name,
+      path,
+      description: asset.description,
+      location: asset.location,
+      projectId: asset.projectId,
+      size: asset.size,
+
       type: "font",
-      createdAt: base.createdAt.toISOString(),
+      createdAt: asset.createdAt.toISOString(),
       format: asset.format as FontFormat,
       meta: FontMeta.parse(JSON.parse(asset.meta)),
     };
   }
 
   return {
-    ...base,
+    id: asset.id,
+    name: asset.name,
+    path,
+    description: asset.description,
+    location: asset.location,
+    projectId: asset.projectId,
+    size: asset.size,
     type: "image",
-    createdAt: base.createdAt.toISOString(),
+    format: asset.format,
+    createdAt: asset.createdAt.toISOString(),
     meta: ImageMeta.parse(JSON.parse(asset.meta)),
   };
 };
