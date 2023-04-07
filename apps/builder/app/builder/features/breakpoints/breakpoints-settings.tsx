@@ -14,8 +14,6 @@ import {
 } from "@webstudio-is/design-system";
 import { useSubscribe } from "~/shared/pubsub";
 import { BreakpointsEditor } from "./breakpoints-editor";
-import { Preview } from "./preview";
-import { ScaleSetting } from "./scale-setting";
 import { TriggerButton } from "./trigger-button";
 import { WidthSetting } from "./width-setting";
 import { ConfirmationDialog } from "./confirmation-dialog";
@@ -40,12 +38,6 @@ export const BreakpointsSettings = () => {
   >();
   const [breakpoints] = useBreakpoints();
   const selectedBreakpoint = useStore(selectedBreakpointStore);
-  const [breakpointPreview, setBreakpointPreview] =
-    useState(selectedBreakpoint);
-
-  useEffect(() => {
-    setBreakpointPreview(selectedBreakpoint);
-  }, [selectedBreakpoint]);
 
   useSubscribe("openBreakpointsMenu", () => {
     setView("selector");
@@ -137,12 +129,6 @@ export const BreakpointsSettings = () => {
                     <DropdownMenuCheckboxItem
                       checked={breakpoint === selectedBreakpoint}
                       key={breakpoint.id}
-                      onMouseEnter={() => {
-                        setBreakpointPreview(breakpoint);
-                      }}
-                      onMouseLeave={() => {
-                        setBreakpointPreview(selectedBreakpoint);
-                      }}
                       onSelect={() => {
                         selectedBreakpointIdStore.set(breakpoint.id);
                       }}
@@ -157,11 +143,8 @@ export const BreakpointsSettings = () => {
               )}
               <DropdownMenuSeparator />
               <form>
-                <ScaleSetting />
                 <WidthSetting />
               </form>
-              <DropdownMenuSeparator />
-              <Preview breakpoint={breakpointPreview} />
               {isFeatureEnabled("breakpointsEditor") && (
                 <>
                   <DropdownMenuSeparator />

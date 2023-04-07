@@ -2,6 +2,7 @@ import { atom, computed } from "nanostores";
 import type { Breakpoint } from "@webstudio-is/project-build";
 import { breakpointsContainer } from "./nano-states";
 import { compareMedia } from "@webstudio-is/css-engine";
+import { findBaseBreakpoint } from "~/builder/shared/breakpoints";
 
 export const minScale = 10;
 const maxScale = 100;
@@ -28,11 +29,9 @@ export const selectedBreakpointStore = computed(
       selectedBreakpointId === undefined
         ? undefined
         : breakpoints.get(selectedBreakpointId);
-    // initially set first breakpoint as selected breakpoint
-    const fallbackBreakpoint = Array.from(breakpoints.values())
-      .sort(compareMedia)
-      .at(0);
-    return matchedBreakpoint ?? fallbackBreakpoint;
+    return (
+      matchedBreakpoint ?? findBaseBreakpoint(Array.from(breakpoints.values()))
+    );
   }
 );
 

@@ -1,5 +1,5 @@
 import { useStore } from "@nanostores/react";
-import { theme, Box, Flex, Toaster } from "@webstudio-is/design-system";
+import { theme, Box, Toaster } from "@webstudio-is/design-system";
 import { useCanvasWidth } from "~/builder/shared/nano-states";
 import type { Publish } from "~/shared/pubsub";
 import { selectedInstanceSelectorStore } from "~/shared/nano-states";
@@ -15,21 +15,15 @@ import { useEffect } from "react";
 const workspaceStyle = {
   flexGrow: 1,
   background: theme.colors.backgroundCanvas,
-  overflow: "scroll",
   position: "relative",
-};
-
-const scaleStyle = {
-  transformStyle: "preserve-3d",
-  transition: "transform 200ms ease-out",
-  height: "100%",
-  width: "100%",
+  overflow: "hidden",
 };
 
 const canvasContainerStyle = {
   position: "relative",
-  height: "100%",
   overflow: "hidden",
+  transformStyle: "preserve-3d",
+  transformOrigin: "0 0",
 };
 
 const useSetWorkspaceRect = () => {
@@ -57,6 +51,7 @@ export const Workspace = ({
   publish,
 }: WorkspaceProps) => {
   const scale = useStore(scaleStore);
+  const workspaceRect = useStore(workspaceRectStore);
   const [canvasWidth] = useCanvasWidth();
   const workspaceRef = useSetWorkspaceRect();
 
@@ -65,20 +60,33 @@ export const Workspace = ({
     textEditingInstanceSelectorStore.set(undefined);
   };
 
+  let canvasHeight;
+  let canvasLeft;
+
+  if (workspaceRect?.height) {
+    canvasHeight =
+      workspaceRect.height + (workspaceRect.height * (100 - scale)) / 100;
+  }
+
+  if (workspaceRect?.width && canvasWidth) {
+    canvasLeft = Math.max((workspaceRect.width - canvasWidth) / 2, 0);
+  }
+
   return (
     <Box css={workspaceStyle} onClick={handleWorkspaceClick} ref={workspaceRef}>
-      <Flex
-        direction="column"
-        align="center"
-        css={scaleStyle}
-        style={{ transform: `scale(${scale / 100})` }}
+      <Box
+        css={canvasContainerStyle}
+        style={{
+          width: canvasWidth,
+          height: canvasHeight ?? "100%",
+          left: canvasLeft ?? 0,
+          transform: `scale(${scale}%)`,
+        }}
         onTransitionEnd={onTransitionEnd}
       >
-        <Box css={canvasContainerStyle} style={{ width: canvasWidth }}>
-          {children}
-          <CanvasTools publish={publish} />
-        </Box>
-      </Flex>
+        {children}
+        <CanvasTools publish={publish} />
+      </Box>
       <Toaster />
     </Box>
   );

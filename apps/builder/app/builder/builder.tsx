@@ -298,10 +298,10 @@ export const Builder = ({
   useCopyPaste();
   useSetWindowTitle();
   const iframeRefCallback = useCallback(
-    (ref) => {
-      publishRef.current = ref;
-      onRefReadCanvasWidth(ref);
-      onRefReadCanvas(ref);
+    (element) => {
+      publishRef.current = element;
+      onRefReadCanvasWidth(element);
+      onRefReadCanvas(element);
     },
     [publishRef, onRefReadCanvasWidth, onRefReadCanvas]
   );

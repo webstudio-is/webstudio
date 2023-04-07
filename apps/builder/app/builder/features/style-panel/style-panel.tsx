@@ -32,7 +32,8 @@ export const StylePanel = ({ selectedInstance, publish }: StylePanelProps) => {
   if (
     currentStyle === undefined ||
     selectedInstance === undefined ||
-    breakpoint === undefined
+    breakpoint === undefined ||
+    canvasWidth === undefined
   ) {
     return null;
   }
