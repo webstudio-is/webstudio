@@ -3,10 +3,9 @@ import {
   authorizeProject,
   type AppContext,
 } from "@webstudio-is/trpc-interface/server";
+import type { AssetClient } from "./client";
 import { deleteFromDb } from "./db";
 import type { Asset } from "./schema";
-import { deleteFromFs } from "./targets/fs/delete";
-import { deleteFromS3 } from "./targets/s3/delete";
 import { formatAsset } from "./utils/format-asset";
 
 export const deleteAssets = async (
@@ -14,7 +13,8 @@ export const deleteAssets = async (
     ids: Array<Asset["id"]>;
     projectId: Project["id"];
   },
-  context: AppContext
+  context: AppContext,
+  client: AssetClient
 ): Promise<Array<Asset>> => {
   const canDelete = await authorizeProject.hasProjectPermit(
     { projectId: props.projectId, permit: "edit" },
@@ -45,11 +45,7 @@ export const deleteAssets = async (
       continue;
     }
 
-    if (asset.location === "REMOTE") {
-      await deleteFromS3(asset.name);
-    } else {
-      await deleteFromFs(asset.name);
-    }
+    await client.deleteFile(asset.name);
   }
 
   return assets.map(formatAsset);
