@@ -681,6 +681,11 @@
       "icon-subtle": {
         "value": "#3e3e3e",
         "type": "color"
+      },
+      "primary-light": {
+        "value": "#2e82ff",
+        "type": "color",
+        "description": "A lighter version of primary blue. Not to be used with or as  text. Used for drag handles."
       }
     },
     "brand": {
@@ -1247,6 +1252,8 @@
   },
   "$themes": [],
   "$metadata": {
-    "tokenSetOrder": ["global"]
+    "tokenSetOrder": [
+      "global"
+    ]
   }
 }
