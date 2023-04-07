@@ -24,5 +24,4 @@ export const initialBreakpoints: Array<Breakpoint> = [
   { id: "placeholder", label: "Tablet", maxWidth: 991 },
   { id: "placeholder", label: "Mobile landscape", maxWidth: 767 },
   { id: "placeholder", label: "Mobile portrait", maxWidth: 479 },
-  { id: "placeholder", label: "Large", minWidth: 1280 },
 ];
