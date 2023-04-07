@@ -90,6 +90,7 @@ export const BreakpointsSettings = () => {
           css={{ zIndex: theme.zIndices[1] }}
           sideOffset={4}
           collisionPadding={4}
+          align="start"
         >
           {view === "confirmation" && breakpointToDelete && (
             <ConfirmationDialog

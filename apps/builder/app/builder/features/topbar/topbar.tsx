@@ -52,7 +52,9 @@ export const Topbar = ({ gridArea, project, publish }: TopbarProps) => {
           {page.name}
         </Text>
       </Flex>
-      <BreakpointsSettings />
+      <Flex css={{ minWidth: theme.spacing[23] }}>
+        <BreakpointsSettings />
+      </Flex>
       <Flex grow align="center" justify="center">
         <BreakpointsSelector />
       </Flex>
