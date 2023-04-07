@@ -38,7 +38,9 @@ export const TriggerButton = (props: TriggerButtonProps) => {
       aria-label="Show breakpoints"
       className={toggleItemStyle({
         css: {
+          minWidth: theme.spacing[23],
           gap: theme.spacing[5],
+          justifyContent: "flex-start",
         },
       })}
     >
