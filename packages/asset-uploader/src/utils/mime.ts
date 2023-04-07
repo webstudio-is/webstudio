@@ -104,18 +104,19 @@ export const acceptToMimeCategories = (
   return new Set(Array.from(patterns).map(getCategory));
 };
 
-export const getAssetMime = (
-  asset: Pick<Asset, "format" | "type">
-): Mime | undefined => {
-  const mime = `${asset.type}/${asset.format}`;
+export const getAssetMime = ({
+  format,
+  type,
+}: Pick<Asset, "format" | "type">): Mime | undefined => {
+  const mime = `${type}/${format}`;
   if (isMime(mime)) {
     return mime;
   }
-  const mime2 = extensionToMime.get(`.${asset.format}`);
+  const mime2 = extensionToMime.get(`.${format}`);
   if (mime2 === undefined) {
     warnOnce(
       true,
-      `Couldn't determine mime type of asset: ${asset.type}, ${asset.format}.`
+      `Couldn't determine mime type of asset: ${type}, ${format}.`
     );
   }
   return mime2;
