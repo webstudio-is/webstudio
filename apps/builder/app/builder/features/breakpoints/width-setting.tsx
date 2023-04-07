@@ -9,7 +9,7 @@ import {
 } from "~/shared/nano-states/breakpoints";
 
 // Doesn't make sense to allow resizing the canvas lower/higher than this.
-export const minWidth = 360;
+export const minWidth = 240;
 export const maxWidth = 2500;
 
 export const WidthSetting = () => {
