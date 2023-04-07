@@ -16,11 +16,10 @@ export const useSetCanvasSize = () => {
     if (workspaceRect === undefined) {
       return;
     }
-    const width = selectedBreakpoint?.minWidth
-      ? selectedBreakpoint?.minWidth + 1
-      : selectedBreakpoint?.maxWidth
-      ? selectedBreakpoint?.maxWidth - 1
-      : workspaceRect.width;
+    const width =
+      selectedBreakpoint?.minWidth ??
+      selectedBreakpoint?.maxWidth ??
+      workspaceRect.width;
 
     setCanvasWidth(width);
   }, [workspaceRect, selectedBreakpoint, setCanvasWidth]);
