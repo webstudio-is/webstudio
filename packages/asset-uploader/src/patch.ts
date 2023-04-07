@@ -7,11 +7,13 @@ import {
 import { type Asset, Assets } from "./schema";
 import { deleteAssets } from "./delete";
 import { loadByProject } from "./db/load";
+import type { AssetClient } from "./client";
 
 export const patchAssets = async (
   { projectId }: { projectId: Project["id"] },
   patches: Array<Patch>,
-  context: AppContext
+  context: AppContext,
+  assetClient: AssetClient
 ) => {
   const canEdit = await authorizeProject.hasProjectPermit(
     { projectId, permit: "edit" },
@@ -36,6 +38,6 @@ export const patchAssets = async (
     }
   }
   if (deletedAssetIds.length !== 0) {
-    deleteAssets({ projectId, ids: deletedAssetIds }, context);
+    deleteAssets({ projectId, ids: deletedAssetIds }, context, assetClient);
   }
 };
