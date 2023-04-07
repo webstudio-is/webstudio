@@ -104,14 +104,13 @@ const MultiSelect = z.object({
   options: z.array(z.string()),
 });
 
-// @todo
-// remove this and add a generic "file" control instead with an "accept" option
-// to be in line with Storybook
-const FileImage = z.object({
+const File = z.object({
   ...common,
-  control: z.literal("file-image"),
+  control: z.literal("file"),
   type: z.literal("string"),
   defaultValue: z.string().optional(),
+  /** https://developer.mozilla.org/en-US/docs/Web/HTML/Element/input/file#accept */
+  accept: z.string().optional(),
 });
 
 const Url = z.object({
@@ -156,7 +155,7 @@ export const PropMeta = z.union([
   MultiSelect,
   Check,
   InlineCheck,
-  FileImage,
+  File,
   Url,
   ObjectType,
   Date,

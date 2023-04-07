@@ -2,16 +2,20 @@ import { useState } from "react";
 import { ButtonElementIcon } from "@webstudio-is/icons";
 import { PropsPanel } from "./props-panel";
 import { usePropsLogic } from "./use-props-logic";
-import { pagesStore } from "~/shared/nano-states";
+import { assetsStore, pagesStore } from "~/shared/nano-states";
 import type { Prop } from "@webstudio-is/project-build";
 import type {
   WsComponentMeta,
   WsComponentPropsMeta,
 } from "@webstudio-is/react-sdk";
 import { textVariants } from "@webstudio-is/design-system";
+import type { Asset } from "@webstudio-is/asset-uploader";
 
 let id = 0;
 const unique = () => `${++id}`;
+
+const instanceId = unique();
+const projectId = unique();
 
 const page = (name: string, path: string) => ({
   id: unique(),
@@ -30,6 +34,28 @@ pagesStore.set({
     page("Contacts", "/contacts"),
   ],
 });
+
+const imageAsset = (name = "cat", format = "jpeg"): Asset => ({
+  id: unique(),
+  projectId,
+  type: "image",
+  name: `${name}.${format}`,
+  path: `https://loremflickr.com/128/180/${name}`,
+  format: format,
+  location: "FS",
+  size: 100000,
+  createdAt: new Date().toISOString(),
+  description: null,
+  meta: { width: 128, height: 180 },
+});
+
+assetsStore.set(
+  new Map(
+    [imageAsset("cat"), imageAsset("car", "png"), imageAsset("beach")].map(
+      (asset) => [asset.id, asset]
+    )
+  )
+);
 
 type PropMeta = WsComponentPropsMeta["props"][string];
 
@@ -76,6 +102,14 @@ const urlProp = (label?: string): PropMeta => ({
   label,
 });
 
+const fileProp = (label?: string, accept?: string): PropMeta => ({
+  type: "string",
+  control: "file",
+  required: false,
+  label,
+  accept,
+});
+
 const defaultOptions = ["one", "two", "three-the-very-long-one-so-much-long"];
 
 const radioProp = (options = defaultOptions, label?: string): PropMeta => ({
@@ -102,8 +136,6 @@ const checkProp = (options = defaultOptions, label?: string): PropMeta => ({
   label,
 });
 
-const instanceId = unique();
-
 const componentMeta: WsComponentMeta = {
   category: "general",
   type: "rich-text",
@@ -122,6 +154,7 @@ const componentPropsMeta: WsComponentPropsMeta = {
     initialSelect: selectProp(),
     initialCheck: checkProp(),
     initialUrl: urlProp(),
+    initialFile: fileProp("Initial File (PNG only)", ".png"),
     addedText: textProp(),
     addedShortText: shortTextProp(),
     addedNumber: numberProp(),
@@ -134,6 +167,7 @@ const componentPropsMeta: WsComponentPropsMeta = {
     addedUrlPage: urlProp("Added URL (Page)"),
     addedUrlEmail: urlProp("Added URL (Email)"),
     addedUrlPhone: urlProp("Added URL (Phone)"),
+    addedFile: fileProp(),
     availableText: textProp(),
     availableShortText: shortTextProp(),
     availableNumber: numberProp(),
@@ -143,6 +177,7 @@ const componentPropsMeta: WsComponentPropsMeta = {
     availableSelect: selectProp(),
     availableCheck: checkProp(),
     availableUrl: urlProp(),
+    availableFile: fileProp(),
   },
   initialProps: [
     "initialText",
@@ -154,6 +189,7 @@ const componentPropsMeta: WsComponentPropsMeta = {
     "initialSelect",
     "initialCheck",
     "initialUrl",
+    "initialFile",
   ],
 };
 
@@ -241,6 +277,13 @@ const startingProps: Prop[] = [
     name: "addedUrlPhone",
     type: "string",
     value: "tel:+1234567890",
+  },
+  {
+    id: unique(),
+    instanceId,
+    name: "addedFile",
+    type: "asset",
+    value: Array.from(assetsStore.get().keys() ?? [])[0] ?? "",
   },
 ];
 

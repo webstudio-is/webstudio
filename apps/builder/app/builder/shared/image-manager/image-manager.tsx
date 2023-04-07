@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useMemo } from "react";
 import { findNextListIndex, Grid } from "@webstudio-is/design-system";
 import {
   AssetsShell,
@@ -7,39 +7,26 @@ import {
   useSearch,
   deleteAssets,
 } from "../assets";
-import { useFilter } from "../assets/use-filter";
 import { ImageThumbnail } from "./image-thumbnail";
 import { matchSorter } from "match-sorter";
-import type { ImageAsset } from "@webstudio-is/asset-uploader";
+import {
+  acceptToMimePatterns,
+  doesAssetMatchMimePatterns,
+  type ImageAsset,
+} from "@webstudio-is/asset-uploader";
 
-const filterItems = (search: string, items: AssetContainer[]) => {
-  return matchSorter(items, search, {
-    keys: [(item) => item.asset.name],
-  });
-};
-
-const useLogic = ({ onChange }: { onChange?: (asset: ImageAsset) => void }) => {
+const useLogic = ({
+  onChange,
+  accept,
+}: {
+  onChange?: (asset: ImageAsset) => void;
+  accept?: string;
+}) => {
   const { assetContainers } = useAssets("image");
 
   const [selectedIndex, setSelectedIndex] = useState(-1);
 
-  // @todo filter out deleting assets
-  const { filteredItems, resetFilteredItems, setFilteredItems } = useFilter({
-    items: assetContainers,
-    onReset() {
-      searchProps.onCancel();
-    },
-  });
-
   const searchProps = useSearch({
-    onCancel: resetFilteredItems,
-    onSearch(search) {
-      if (search === "") {
-        return resetFilteredItems();
-      }
-      const items = filterItems(search, assetContainers);
-      setFilteredItems(items);
-    },
     onSelect(direction) {
       if (direction === "current") {
         setSelectedIndex(selectedIndex);
@@ -61,6 +48,22 @@ const useLogic = ({ onChange }: { onChange?: (asset: ImageAsset) => void }) => {
     },
   });
 
+  const filteredItems = useMemo(() => {
+    let acceptable = assetContainers;
+    const patterns = acceptToMimePatterns(accept ?? "");
+    if (patterns !== "*") {
+      acceptable = assetContainers.filter((item) =>
+        doesAssetMatchMimePatterns(item.asset, patterns)
+      );
+    }
+    if (searchProps.value === "") {
+      return acceptable;
+    }
+    return matchSorter(acceptable, searchProps.value, {
+      keys: [(item) => item.asset.name],
+    });
+  }, [assetContainers, accept, searchProps.value]);
+
   const handleSelect = (assetContainer?: AssetContainer) => {
     const selectedIndex = filteredItems.findIndex(
       (item) => item.asset.id === assetContainer?.asset.id
@@ -79,22 +82,25 @@ const useLogic = ({ onChange }: { onChange?: (asset: ImageAsset) => void }) => {
 
 type ImageManagerProps = {
   onChange?: (asset: ImageAsset) => void;
+  /** acceptable file types in the `<imput accept>` attribute format */
+  accept?: string;
 };
 
-export const ImageManager = ({ onChange }: ImageManagerProps) => {
+export const ImageManager = ({ accept, onChange }: ImageManagerProps) => {
   const {
     handleDelete,
     handleSelect,
     filteredItems,
     searchProps,
     selectedIndex,
-  } = useLogic({ onChange });
+  } = useLogic({ onChange, accept });
 
   return (
     <AssetsShell
       searchProps={searchProps}
       isEmpty={filteredItems.length === 0}
       type="image"
+      accept={accept}
     >
       <Grid columns={3} gap={2}>
         {filteredItems.map((assetContainer, index) => (

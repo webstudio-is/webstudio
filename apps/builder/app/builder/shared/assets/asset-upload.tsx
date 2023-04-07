@@ -51,40 +51,52 @@ const acceptMap = {
 
 type AssetUploadProps = {
   type: AssetType;
+  accept?: string;
 };
 
-export const AssetUpload = ({ type }: AssetUploadProps) => {
+const EnabledAssetUpload = ({ accept, type }: AssetUploadProps) => {
   const { inputRef, onChange } = useUpload(type);
-  const [authPermit] = useAuthPermit();
-
-  const isUploadDisabled = authPermit === "view";
-  const tooltipContent = isUploadDisabled
-    ? "View mode. You can't upload assets."
-    : undefined;
 
   return (
     <form onChange={onChange}>
       <Flex>
         <input
-          accept={acceptMap[type]}
+          accept={accept ?? acceptMap[type]}
           type="file"
           name={type}
           multiple
           ref={inputRef}
           style={{ display: "none" }}
         />
-        <Tooltip side="bottom" content={tooltipContent}>
-          <Button
-            type="button"
-            onClick={() => inputRef?.current?.click()}
-            css={{ flexGrow: 1 }}
-            prefix={<UploadIcon />}
-            disabled={isUploadDisabled}
-          >
-            Upload
-          </Button>
-        </Tooltip>
+        <Button
+          type="button"
+          onClick={() => inputRef?.current?.click()}
+          css={{ flexGrow: 1 }}
+          prefix={<UploadIcon />}
+        >
+          Upload
+        </Button>
       </Flex>
     </form>
+  );
+};
+
+export const AssetUpload = ({ type }: AssetUploadProps) => {
+  const [authPermit] = useAuthPermit();
+
+  if (authPermit !== "view") {
+    // Split into a separate component to avoid using `useUpload` hook unnecessarily
+    // (It's hard to mock this hook in storybook)
+    return <EnabledAssetUpload type={type} />;
+  }
+
+  return (
+    <Flex>
+      <Tooltip side="bottom" content="View mode. You can't upload assets.">
+        <Button css={{ flexGrow: 1 }} prefix={<UploadIcon />} disabled={true}>
+          Upload
+        </Button>
+      </Tooltip>
+    </Flex>
   );
 };

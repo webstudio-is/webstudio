@@ -36,7 +36,7 @@ const inputStyle = css({
   height: "100%",
   paddingRight: theme.spacing[2],
   paddingLeft: theme.spacing[3],
-  "&[data-color=placeholder]:not(:hover):not(:disabled), &::placeholder": {
+  "&[data-color=placeholder]:not(:hover, :disabled, :focus), &::placeholder": {
     color: theme.colors.foregroundSubtle,
   },
   "&[data-color=error]": { color: theme.colors.foregroundDestructive },

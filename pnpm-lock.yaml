@@ -399,6 +399,9 @@ importers:
       sharp:
         specifier: ^0.30.7
         version: 0.30.7
+      warn-once:
+        specifier: ^0.1.1
+        version: 0.1.1
     devDependencies:
       '@jest/globals':
         specifier: ^29.3.1
