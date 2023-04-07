@@ -13,7 +13,8 @@ import type { RenderCategoryProps } from "../../style-sections";
 import { toValue } from "@webstudio-is/css-engine";
 import { deleteAllProperties, setAllProperties } from "./border-utils";
 import type { StyleProperty, UnitValue } from "@webstudio-is/css-data";
-import { type ReactNode, useState } from "react";
+import { type ReactNode } from "react";
+import { useSelectedInstanceKv } from "../../shared/instances-kv";
 
 const borderPropertyStyleValueDefault: UnitValue = {
   type: "unit",
@@ -52,18 +53,17 @@ export const BorderProperty = ({
       )
     ).size === 1;
 
-  // If individualModeIcon is not defined, we do not want to display individual properties at all.
-  const [showIndividualMode, setShowIndividualMode] = useState(
-    () =>
-      allPropertyValuesAreEqual === false && individualModeIcon !== undefined
-  );
-
   /**
    * We do not use shorthand properties such as borderWidth or borderRadius in our code.
    * However, in the UI, we can display a single field, and in that case, we can use any property
    * from the shorthand property set and pass it instead.
    **/
   const firstPropertyName = borderProperties[0];
+
+  const [showIndividualMode, setShowIndividualMode] = useSelectedInstanceKv(
+    `${firstPropertyName}-showIndividualMode`,
+    allPropertyValuesAreEqual === false && individualModeIcon !== undefined
+  );
 
   const { items: borderPropertyItems } = styleConfigByName(firstPropertyName);
 
