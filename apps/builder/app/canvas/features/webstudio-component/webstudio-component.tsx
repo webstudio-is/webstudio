@@ -152,9 +152,6 @@ export const WebstudioComponentDev = ({
     ...userProps,
     ...readonlyProps,
     tabIndex: 0,
-    // we should replace id, data-component and data-id with "data-ws"=instance.id and grab the rest always over the id
-    // for this we need to also make search by id fast
-    id: instance.id,
     [componentAttribute]: instance.component,
     [idAttribute]: instance.id,
     onClick: (event: MouseEvent) => {
