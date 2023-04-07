@@ -13,6 +13,7 @@ import {
 import { patchAssets } from "@webstudio-is/asset-uploader/server";
 import type { Project } from "@webstudio-is/project";
 import { createContext } from "~/shared/context.server";
+import { createAssetClient } from "~/shared/asset-client";
 
 type PatchData = {
   transactions: Array<SyncItem>;
@@ -57,7 +58,7 @@ export const action = async ({ request }: ActionArgs) => {
       } else if (namespace === "breakpoints") {
         await patchBreakpoints({ buildId, projectId }, patches, context);
       } else if (namespace === "assets") {
-        await patchAssets({ projectId }, patches, context);
+        await patchAssets({ projectId }, patches, context, createAssetClient());
       } else {
         return { errors: `Unknown namespace "${namespace}"` };
       }

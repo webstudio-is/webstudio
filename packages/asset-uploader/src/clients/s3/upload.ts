@@ -11,13 +11,11 @@ import { Location } from "@webstudio-is/prisma-client";
 import { S3Env } from "../../schema";
 import { toUint8Array } from "../../utils/to-uint8-array";
 import { getAssetData, AssetData } from "../../utils/get-asset-data";
-import { createAssetWithLimit } from "../../db";
-import { idsFormDataFieldName, type Asset } from "../../schema";
+import { idsFormDataFieldName } from "../../schema";
 import { getUniqueFilename } from "../../utils/get-unique-filename";
 import { getS3Client } from "./client";
 import { sanitizeS3Key } from "../../utils/sanitize-s3-key";
 import { uuidHandler } from "../../utils/uuid-handler";
-import type { AppContext } from "@webstudio-is/trpc-interface/server";
 
 const AssetsUploadedSuccess = z.object({
   Location: z.string(),
@@ -30,51 +28,38 @@ const Ids = z.array(z.string().uuid());
  */
 const MAX_FILES_PER_REQUEST = 1;
 
-export const uploadToS3 = async (
-  {
+export const uploadToS3 = async ({
+  request,
+  maxSize,
+}: {
+  request: Request;
+  maxSize: number;
+}): Promise<AssetData> => {
+  const uploadHandler = createUploadHandler(MAX_FILES_PER_REQUEST);
+
+  const formData = await unstableCreateFileUploadHandler(
     request,
-    projectId,
-    maxSize,
-  }: {
-    request: Request;
-    projectId: string;
-    maxSize: number;
-  },
-  context: AppContext
-): Promise<Array<Asset>> => {
-  const asset = await createAssetWithLimit(
-    projectId,
-    async () => {
-      const uploadHandler = createUploadHandler(MAX_FILES_PER_REQUEST);
-
-      const formData = await unstableCreateFileUploadHandler(
-        request,
-        unstableComposeUploadHandlers(
-          (file: UploadHandlerPart) =>
-            uploadHandler({
-              file,
-              maxSize,
-            }),
-          uuidHandler
-        )
-      );
-
-      const imagesFormData = formData.getAll("image") as Array<string>;
-      const fontsFormData = formData.getAll("font") as Array<string>;
-      const ids = Ids.parse(formData.getAll(idsFormDataFieldName));
-
-      const assetsData = [...imagesFormData, ...fontsFormData]
-        .slice(0, MAX_FILES_PER_REQUEST)
-        .map((dataString, index) => {
-          return AssetData.parse({ ...JSON.parse(dataString), id: ids[index] });
-        });
-
-      return assetsData[0];
-    },
-    context
+    unstableComposeUploadHandlers(
+      (file: UploadHandlerPart) =>
+        uploadHandler({
+          file,
+          maxSize,
+        }),
+      uuidHandler
+    )
   );
 
-  return [asset];
+  const imagesFormData = formData.getAll("image") as Array<string>;
+  const fontsFormData = formData.getAll("font") as Array<string>;
+  const ids = Ids.parse(formData.getAll(idsFormDataFieldName));
+
+  const assetsData = [...imagesFormData, ...fontsFormData]
+    .slice(0, MAX_FILES_PER_REQUEST)
+    .map((dataString, index) => {
+      return AssetData.parse({ ...JSON.parse(dataString), id: ids[index] });
+    });
+
+  return assetsData[0];
 };
 
 const createUploadHandler = (maxFiles: number) => {

@@ -14,7 +14,7 @@ const env = {
   PUBLISHER_ENDPOINT: process.env.PUBLISHER_ENDPOINT,
   PUBLISHER_TOKEN: process.env.PUBLISHER_TOKEN,
 
-  // DEPLOYMENT_ENVIRONMENT developement | preview | production
+  // DEPLOYMENT_ENVIRONMENT development | preview | production
   DEPLOYMENT_ENVIRONMENT: process.env.DEPLOYMENT_ENVIRONMENT,
   DEPLOYMENT_URL: process.env.DEPLOYMENT_URL,
 

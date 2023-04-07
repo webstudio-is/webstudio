@@ -10,6 +10,7 @@ import { toast } from "@webstudio-is/design-system";
 import type { ActionData } from "~/builder/shared/assets";
 import { sentryException } from "~/shared/sentry";
 import { createContext } from "~/shared/context.server";
+import { createAssetClient } from "~/shared/asset-client";
 
 export const loader = async ({
   params,
@@ -40,7 +41,8 @@ export const action = async (
           request,
           projectId: params.projectId,
         },
-        context
+        context,
+        createAssetClient()
       );
       return {
         uploadedAssets: assets.map((asset) => ({
