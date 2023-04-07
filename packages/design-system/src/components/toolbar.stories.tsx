@@ -23,8 +23,17 @@ const ToolbarStory = () => {
         </ToolbarToggleItem>
       </ToolbarToggleGroup>
       <ToolbarSeparator />
+      <ToolbarToggleGroup type="single" value="4">
+        <ToolbarToggleItem value="3" variant="subtle">
+          <PlayIcon size={22} />
+        </ToolbarToggleItem>
+        <ToolbarToggleItem value="4" variant="preview">
+          <PlayIcon size={22} />
+        </ToolbarToggleItem>
+      </ToolbarToggleGroup>
+      <ToolbarSeparator />
       <ToolbarToggleGroup type="single">
-        <ToolbarToggleItem value="3" focused>
+        <ToolbarToggleItem value="5" focused>
           <PlayIcon size={22} />
         </ToolbarToggleItem>
       </ToolbarToggleGroup>

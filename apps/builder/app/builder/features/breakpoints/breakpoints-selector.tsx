@@ -32,6 +32,7 @@ export const BreakpointsSelector = () => {
           (breakpoint) => {
             return (
               <ToolbarToggleItem
+                variant="subtle"
                 ref={breakpoint.id === selectedBreakpoint.id ? ref : undefined}
                 value={breakpoint.id}
                 key={breakpoint.id}

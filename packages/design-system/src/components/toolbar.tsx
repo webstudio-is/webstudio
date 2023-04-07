@@ -57,13 +57,26 @@ export const toggleItemStyle = css(typography.labelsTitleCase, {
   background: "transparent",
 
   "&:focus-visible": toolbarItemFocusRing,
-  "&:hover, &[data-state='on'], &[data-state='open']": {
-    background: theme.colors.backgroundButtonHover,
+  "&:hover, &[data-state=on], &[data-state=open]": {
+    background: theme.colors.backgroundTopbarHover,
   },
   variants: {
     // Just for story
     focused: {
       true: toolbarItemFocusRing,
+    },
+    variant: {
+      subtle: {
+        color: theme.colors.foregroundSubtle,
+        "&:hover, &[data-state=on]": {
+          color: "inherit",
+        },
+      },
+      preview: {
+        "&[data-state=on]": {
+          color: theme.colors.foregroundSuccess,
+        },
+      },
     },
   },
 });

@@ -15,11 +15,7 @@ export const PreviewButton = () => {
     <ToolbarToggleItem
       value="preview"
       aria-label="Toggle Preview"
-      css={{
-        color: isPreviewMode
-          ? theme.colors.foregroundSuccess
-          : theme.colors.foregroundContrastMain,
-      }}
+      variant="preview"
       onClick={() => setIsPreviewMode(isPreviewMode === false)}
       tabIndex={0}
     >
