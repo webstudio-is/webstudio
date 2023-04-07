@@ -7,7 +7,6 @@
     "inlineSources": false,
     "isolatedModules": true,
     "moduleResolution": "bundler",
-    "allowImportingTsExtensions": true,
     "customConditions": ["source"],
     "noUnusedLocals": true,
     "noUnusedParameters": false,
