@@ -5,15 +5,13 @@ import {
   unstable_composeUploadHandlers as unstableComposeUploadHandlers,
   MaxPartSizeExceededError,
 } from "@remix-run/node";
-import type { PutObjectCommandInput } from "@aws-sdk/client-s3";
+import type { PutObjectCommandInput, S3Client } from "@aws-sdk/client-s3";
 import { Upload } from "@aws-sdk/lib-storage";
 import { Location } from "@webstudio-is/prisma-client";
-import { S3Env } from "../../schema";
 import { toUint8Array } from "../../utils/to-uint8-array";
 import { getAssetData, AssetData } from "../../utils/get-asset-data";
 import { idsFormDataFieldName } from "../../schema";
 import { getUniqueFilename } from "../../utils/get-unique-filename";
-import { getS3Client } from "./client";
 import { sanitizeS3Key } from "../../utils/sanitize-s3-key";
 import { uuidHandler } from "../../utils/uuid-handler";
 
@@ -29,13 +27,19 @@ const Ids = z.array(z.string().uuid());
 const MAX_FILES_PER_REQUEST = 1;
 
 export const uploadToS3 = async ({
+  client,
   request,
   maxSize,
+  bucket,
+  acl,
 }: {
+  client: S3Client;
   request: Request;
   maxSize: number;
+  bucket: string;
+  acl?: string;
 }): Promise<AssetData> => {
-  const uploadHandler = createUploadHandler(MAX_FILES_PER_REQUEST);
+  const uploadHandler = createUploadHandler(MAX_FILES_PER_REQUEST, client);
 
   const formData = await unstableCreateFileUploadHandler(
     request,
@@ -44,6 +48,8 @@ export const uploadToS3 = async ({
         uploadHandler({
           file,
           maxSize,
+          bucket,
+          acl,
         }),
       uuidHandler
     )
@@ -62,15 +68,19 @@ export const uploadToS3 = async ({
   return assetsData[0];
 };
 
-const createUploadHandler = (maxFiles: number) => {
+const createUploadHandler = (maxFiles: number, client: S3Client) => {
   let count = 0;
 
   return async ({
     file,
     maxSize,
+    bucket,
+    acl,
   }: {
     file: UploadHandlerPart;
     maxSize: number;
+    bucket: string;
+    acl?: string;
   }): Promise<string | undefined> => {
     if (file.filename === undefined) {
       // Do not parse if it's not a file
@@ -103,14 +113,12 @@ const createUploadHandler = (maxFiles: number) => {
 
     const uniqueFilename = getUniqueFilename(fileName);
 
-    const s3Env = S3Env.parse(process.env);
-
     // if there is no ACL passed we do not default since some providers do not support it
-    const ACL = s3Env.S3_ACL ? { ACL: s3Env.S3_ACL } : {};
+    const ACL = acl ? { ACL: acl } : {};
 
     const params: PutObjectCommandInput = {
       ...ACL,
-      Bucket: s3Env.S3_BUCKET,
+      Bucket: bucket,
       Key: uniqueFilename,
       Body: data,
       ContentType: file.contentType,
@@ -120,7 +128,7 @@ const createUploadHandler = (maxFiles: number) => {
       },
     };
 
-    const upload = new Upload({ client: getS3Client(), params });
+    const upload = new Upload({ client, params });
 
     AssetsUploadedSuccess.parse(await upload.done());
 
