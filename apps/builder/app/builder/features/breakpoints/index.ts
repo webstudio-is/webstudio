@@ -1,3 +1,3 @@
 export * from "./breakpoints-settings";
-export * from "./use-update-canvas-width";
+export * from "./use-set-canvas-size";
 export * from "./breakpoints-selector";

@@ -20,7 +20,7 @@ import {
 import { Topbar } from "./features/topbar";
 import builderStyles from "./builder.css";
 import { Footer } from "./features/footer";
-import { useUpdateCanvasWidth } from "./features/breakpoints";
+import { useSetCanvasSize } from "./features/breakpoints";
 import {
   CanvasIframe,
   useReadCanvasRect,
@@ -290,7 +290,7 @@ export const Builder = ({
   useSetIsPreviewMode(authPermit === "view");
   const [isPreviewMode] = useIsPreviewMode();
   usePublishShortcuts(publish);
-  const onRefReadCanvasWidth = useUpdateCanvasWidth();
+  useSetCanvasSize();
   const { onRef: onRefReadCanvas, onTransitionEnd } = useReadCanvasRect();
   useSubscribeCanvasReady(publish);
   // We need to initialize this in both canvas and builder,
@@ -300,10 +300,9 @@ export const Builder = ({
   const iframeRefCallback = useCallback(
     (element) => {
       publishRef.current = element;
-      onRefReadCanvasWidth(element);
       onRefReadCanvas(element);
     },
-    [publishRef, onRefReadCanvasWidth, onRefReadCanvas]
+    [publishRef, onRefReadCanvas]
   );
   const isCanvasPointerEventsEnabled = useStore(
     isCanvasPointerEventsEnabledStore
