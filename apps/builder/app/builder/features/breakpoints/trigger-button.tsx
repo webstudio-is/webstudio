@@ -48,7 +48,7 @@ export const TriggerButton = (props: TriggerButtonProps) => {
         css: { gap: theme.spacing[5] },
       })}
     >
-      <Value unit="PX" minWidth={50}>
+      <Value unit="PX" minWidth={55}>
         {canvasWidth}
       </Value>
       {scale !== 100 && (
