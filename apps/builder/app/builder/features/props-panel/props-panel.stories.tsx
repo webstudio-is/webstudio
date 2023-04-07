@@ -35,13 +35,13 @@ pagesStore.set({
   ],
 });
 
-const imageAsset = (name = "cat"): Asset => ({
+const imageAsset = (name = "cat", format = "jpeg"): Asset => ({
   id: unique(),
   projectId,
   type: "image",
-  name: `${name}.jpg`,
+  name: `${name}.${format}`,
   path: `https://loremflickr.com/128/180/${name}`,
-  format: "jpg",
+  format: format,
   location: "FS",
   size: 100000,
   createdAt: new Date().toISOString(),
@@ -51,10 +51,9 @@ const imageAsset = (name = "cat"): Asset => ({
 
 assetsStore.set(
   new Map(
-    [imageAsset("cat"), imageAsset("car"), imageAsset("beach")].map((asset) => [
-      asset.id,
-      asset,
-    ])
+    [imageAsset("cat"), imageAsset("car", "png"), imageAsset("beach")].map(
+      (asset) => [asset.id, asset]
+    )
   )
 );
 
@@ -103,11 +102,12 @@ const urlProp = (label?: string): PropMeta => ({
   label,
 });
 
-const fileProp = (label?: string): PropMeta => ({
+const fileProp = (label?: string, accept?: string): PropMeta => ({
   type: "string",
   control: "file",
   required: false,
   label,
+  accept,
 });
 
 const defaultOptions = ["one", "two", "three-the-very-long-one-so-much-long"];
@@ -154,7 +154,7 @@ const componentPropsMeta: WsComponentPropsMeta = {
     initialSelect: selectProp(),
     initialCheck: checkProp(),
     initialUrl: urlProp(),
-    initialFile: fileProp(),
+    initialFile: fileProp("Initial File (PNG only)", ".png"),
     addedText: textProp(),
     addedShortText: shortTextProp(),
     addedNumber: numberProp(),
