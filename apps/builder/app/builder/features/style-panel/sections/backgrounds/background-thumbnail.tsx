@@ -4,7 +4,6 @@ import type { StyleInfo } from "../../shared/style-info";
 import brokenImage from "~/shared/images/broken-image-placeholder.svg";
 import env from "~/shared/env";
 import { layeredBackgroundProps } from "./background-layers";
-import type { StyleProperty } from "@webstudio-is/css-data";
 import { toValue } from "@webstudio-is/css-engine";
 import { toPascalCase } from "../../shared/keyword-utils";
 
@@ -98,7 +97,9 @@ export const LayerThumbnail = (props: { layerStyle: StyleInfo }) => {
   }
 
   if (backgroundImageStyle?.type === "unparsed") {
-    const cssStyle: { [property in StyleProperty]?: string } = {};
+    const cssStyle: {
+      [property in (typeof layeredBackgroundProps)[number]]?: string;
+    } = {};
 
     for (const property of layeredBackgroundProps) {
       cssStyle[property] = toValue(props.layerStyle[property]?.value);

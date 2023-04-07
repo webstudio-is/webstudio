@@ -8,6 +8,7 @@
   "scripts": {
     "dev": "build-package --watch",
     "build": "build-package",
+    "dts": "tsc --emitDeclarationOnly --declaration --declarationDir lib/types",
     "typecheck": "tsc --noEmit",
     "checks": "pnpm typecheck && pnpm lint",
     "lint": "eslint ./src --ext .ts,.tsx --max-warnings 0"
@@ -38,7 +39,7 @@
     "source": "./src/index.ts",
     "import": "./lib/index.js"
   },
-  "types": "src/index.ts",
+  "types": "lib/types/index.d.ts",
   "license": "MIT",
   "private": false,
   "sideEffects": false

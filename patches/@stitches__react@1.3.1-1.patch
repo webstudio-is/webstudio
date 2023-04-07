@@ -1,0 +1,27 @@
+diff --git a/package.json b/package.json
+index e944f271cd7cb172abcac315866a3b69dc408f2a..522db63f5f83e2f51b550252eda30f4f34c29fe1 100644
+--- a/package.json
++++ b/package.json
+@@ -4,7 +4,6 @@
+   "description": "The modern CSS-in-JS library",
+   "type": "module",
+   "main": "dist/index.cjs",
+-  "module": "dist/index.mjs",
+   "types": "types/index.d.ts",
+   "typesVersions": {
+     ">= 4.1": {
+@@ -15,14 +14,6 @@
+   },
+   "jsdelivr": "dist/index.global.js",
+   "unpkg": "dist/index.global.js",
+-  "exports": {
+-    ".": {
+-      "require": "./dist/index.cjs",
+-      "import": "./dist/index.mjs",
+-      "types": "./types/index.d.ts"
+-    },
+-    "./global": "./dist/index.global.js"
+-  },
+   "files": [
+     "dist/*.cjs",
+     "dist/*.js",

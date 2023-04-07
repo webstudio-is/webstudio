@@ -11,6 +11,7 @@
     "dev": "build-package --watch",
     "build": "build-package",
     "build:mdn-data": "tsx ./bin/mdn-data.ts ./src/__generated__ &&  prettier --write \"./src/__generated__/**/*.ts\"",
+    "dts": "tsc --emitDeclarationOnly --declaration --declarationDir lib/types",
     "lint": "eslint ./src --ext .ts,.tsx --max-warnings 0"
   },
   "devDependencies": {
@@ -33,7 +34,7 @@
     "import": "./lib/index.js",
     "require": "./lib/cjs/index.js"
   },
-  "types": "src/index.ts",
+  "types": "lib/types/index.d.ts",
   "files": [
     "lib/*",
     "src/*",

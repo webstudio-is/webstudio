@@ -15,7 +15,7 @@
   },
   "dependencies": {
     "esbuild": "^0.17.14",
-    "totalist": "^3.0.0"
+    "totalist": "^3.0.1"
   },
   "devDependencies": {
     "@types/node": "^18.11.18",
