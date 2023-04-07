@@ -57,8 +57,7 @@ export const StyleDecl = z.object({
 
 export type StyleDecl = z.infer<typeof StyleDecl>;
 
-export type StyleDeclKey =
-  `${StyleDecl["styleSourceId"]}:${StyleDecl["breakpointId"]}:${StyleDecl["property"]}`;
+export type StyleDeclKey = string;
 
 export const getStyleDeclKey = (
   styleDecl: Omit<StyleDecl, "value">
