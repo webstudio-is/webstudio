@@ -3,13 +3,19 @@ import { deleteFromFs } from "./delete";
 import { uploadToFs } from "./upload";
 
 type FSClientOptions = {
+  fileDirectory: string;
   maxUploadSize: number;
 };
 
-export const createFSClient = (clientOptions: FSClientOptions): AssetClient => {
-  const { maxUploadSize } = clientOptions;
+export const createFSClient = (options: FSClientOptions): AssetClient => {
   return {
-    uploadFile: (request) => uploadToFs({ request, maxSize: maxUploadSize }),
-    deleteFile: deleteFromFs,
+    uploadFile: (request) =>
+      uploadToFs({
+        request,
+        maxSize: options.maxUploadSize,
+        fileDirectory: options.fileDirectory,
+      }),
+    deleteFile: (name) =>
+      deleteFromFs({ name, fileDirectory: options.fileDirectory }),
   };
 };

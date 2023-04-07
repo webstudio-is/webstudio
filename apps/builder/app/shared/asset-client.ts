@@ -1,3 +1,4 @@
+import * as path from "path";
 import { S3Env, FsEnv } from "@webstudio-is/asset-uploader";
 import {
   createFSClient,
@@ -9,6 +10,7 @@ export const createAssetClient = () => {
     const env = FsEnv.parse(process.env);
     return createFSClient({
       maxUploadSize: env.MAX_UPLOAD_SIZE,
+      fileDirectory: path.join(process.cwd(), env.FILE_UPLOAD_PATH),
     });
   } else {
     const env = S3Env.parse(process.env);
