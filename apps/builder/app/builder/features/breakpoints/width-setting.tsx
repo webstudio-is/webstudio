@@ -10,7 +10,7 @@ import {
 
 // Doesn't make sense to allow resizing the canvas lower/higher than this.
 export const minWidth = 360;
-export const maxWidth = 3000;
+export const maxWidth = 2500;
 
 export const WidthSetting = () => {
   const [canvasWidth, setCanvasWidth] = useCanvasWidth();
