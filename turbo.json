@@ -7,7 +7,7 @@
       "outputs": ["lib/**", "dist/**", "build/**", "api/**", "public/build/**"]
     },
     "dts": {
-      "dependsOn": ["^dts"],
+      "dependsOn": ["build", "^dts"],
       "outputs": ["lib/types/**"]
     },
     "checks": {
