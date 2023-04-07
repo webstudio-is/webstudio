@@ -51,16 +51,17 @@ const acceptMap = {
 
 type AssetUploadProps = {
   type: AssetType;
+  accept?: string;
 };
 
-const EnabledAssetUpload = ({ type }: AssetUploadProps) => {
+const EnabledAssetUpload = ({ accept, type }: AssetUploadProps) => {
   const { inputRef, onChange } = useUpload(type);
 
   return (
     <form onChange={onChange}>
       <Flex>
         <input
-          accept={acceptMap[type]}
+          accept={accept ?? acceptMap[type]}
           type="file"
           name={type}
           multiple

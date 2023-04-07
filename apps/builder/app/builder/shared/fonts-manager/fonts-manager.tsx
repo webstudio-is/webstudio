@@ -21,7 +21,6 @@ import {
   groupItemsByType,
   toItems,
 } from "./item-utils";
-import { useFilter } from "../assets/use-filter";
 
 const useLogic = ({
   onChange,
@@ -33,12 +32,30 @@ const useLogic = ({
   const { assetContainers } = useAssets("font");
   const [selectedIndex, setSelectedIndex] = useState(-1);
   const fontItems = useMemo(() => toItems(assetContainers), [assetContainers]);
-  const { filteredItems, resetFilteredItems, setFilteredItems } = useFilter({
-    items: fontItems,
-    onReset() {
-      searchProps.onCancel();
+
+  const searchProps = useSearch({
+    onSelect(direction) {
+      if (direction === "current") {
+        handleChangeCurrent(selectedIndex);
+        return;
+      }
+      const nextIndex = findNextListIndex(
+        selectedIndex,
+        groupedItems.length,
+        direction
+      );
+      setSelectedIndex(nextIndex);
     },
   });
+
+  const filteredItems = useMemo(
+    () =>
+      searchProps.value === ""
+        ? fontItems
+        : filterItems(searchProps.value, fontItems),
+    [fontItems, searchProps.value]
+  );
+
   const { uploadedItems, systemItems, groupedItems } = useMemo(
     () => groupItemsByType(filteredItems),
     [filteredItems]
@@ -73,29 +90,6 @@ const useLogic = ({
       setCurrentIndex(-1);
     }
   };
-
-  const searchProps = useSearch({
-    onCancel: resetFilteredItems,
-    onSearch(search) {
-      if (search === "") {
-        return resetFilteredItems();
-      }
-      const items = filterItems(search, groupedItems);
-      setFilteredItems(items);
-    },
-    onSelect(direction) {
-      if (direction === "current") {
-        handleChangeCurrent(selectedIndex);
-        return;
-      }
-      const nextIndex = findNextListIndex(
-        selectedIndex,
-        groupedItems.length,
-        direction
-      );
-      setSelectedIndex(nextIndex);
-    },
-  });
 
   return {
     groupedItems,

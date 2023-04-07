@@ -10,6 +10,7 @@ type AssetsShellProps = {
   searchProps: ComponentProps<typeof SearchField>;
   children: JSX.Element;
   type: AssetType;
+  accept?: string;
   isEmpty: boolean;
 };
 
@@ -18,6 +19,7 @@ export const AssetsShell = ({
   isEmpty,
   children,
   type,
+  accept,
 }: AssetsShellProps) => {
   return (
     <Flex
@@ -33,7 +35,7 @@ export const AssetsShell = ({
         direction="column"
         shrink={false}
       >
-        <AssetUpload type={type} />
+        <AssetUpload type={type} accept={accept} />
         <SearchField {...searchProps} autoFocus placeholder="Search" />
       </Flex>
       <Separator />

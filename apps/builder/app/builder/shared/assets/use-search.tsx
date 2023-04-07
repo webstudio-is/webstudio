@@ -5,12 +5,10 @@ import {
 } from "react";
 
 type UseSearch = {
-  onCancel: () => void;
-  onSearch: (search: string) => void;
   onSelect: (direction: "next" | "previous" | "current") => void;
 };
 
-export const useSearch = ({ onSearch, onSelect, onCancel }: UseSearch) => {
+export const useSearch = ({ onSelect }: UseSearch) => {
   const [search, setSearch] = useState("");
   const handleKeyDown: KeyboardEventHandler = ({ code }) => {
     const keyMap = {
@@ -27,12 +25,10 @@ export const useSearch = ({ onSearch, onSelect, onCancel }: UseSearch) => {
   const handleChange: ChangeEventHandler<HTMLInputElement> = (event) => {
     const { value } = event.currentTarget;
     setSearch(value);
-    onSearch(value);
   };
 
   const handleCancel = () => {
     setSearch("");
-    onCancel();
   };
 
   return {
