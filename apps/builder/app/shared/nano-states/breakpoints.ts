@@ -4,19 +4,7 @@ import { breakpointsContainer } from "./nano-states";
 import { compareMedia } from "@webstudio-is/css-engine";
 import { isBaseBreakpoint } from "~/builder/shared/breakpoints";
 
-export const minScale = 10;
-const maxScale = 100;
-const scaleStep = 20;
-
 export const scaleStore = atom<number>(100);
-
-export const scaleUp = () => {
-  scaleStore.set(Math.min(scaleStore.get() + scaleStep, maxScale));
-};
-
-export const scaleDown = () => {
-  scaleStore.set(Math.max(scaleStore.get() - scaleStep, minScale));
-};
 
 export const selectedBreakpointIdStore = atom<undefined | Breakpoint["id"]>(
   undefined

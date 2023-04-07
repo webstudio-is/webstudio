@@ -132,6 +132,7 @@ export const BreakpointsSettings = () => {
                       onSelect={() => {
                         selectedBreakpointIdStore.set(breakpoint.id);
                       }}
+                      css={{ gap: theme.spacing[10] }}
                     >
                       {breakpoint.label}
                       <DropdownMenuItemRightSlot>

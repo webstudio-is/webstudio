@@ -1,10 +1,7 @@
 import { type Options, useHotkeys } from "react-hotkeys-hook";
 import store from "immerhin";
-import {
-  scaleUp,
-  scaleDown,
-  selectBreakpointByOrderNumber,
-} from "../nano-states/breakpoints";
+import { selectBreakpointByOrderNumber } from "../nano-states/breakpoints";
+import { escapeSelection } from "../nano-states/instances";
 import { deleteSelectedInstance } from "../instance-utils";
 
 export const shortcuts = {
@@ -46,42 +43,6 @@ export const useSharedShortcuts = () => {
     []
   );
 
-  useHotkeys(
-    "equal",
-    scaleUp,
-    // prevent scale while typing
-    { enableOnFormTags: false, enableOnContentEditable: false },
-    []
-  );
-
-  useHotkeys(
-    "meta+shift+equal",
-    (event) => {
-      event.preventDefault();
-      scaleUp();
-    },
-    { enableOnFormTags: true, enableOnContentEditable: true },
-    []
-  );
-
-  useHotkeys(
-    "minus",
-    scaleDown,
-    // prevent scale while typing
-    { enableOnFormTags: false, enableOnContentEditable: false },
-    []
-  );
-
-  useHotkeys(
-    "meta+shift+minus",
-    (event) => {
-      event.preventDefault();
-      scaleDown();
-    },
-    { enableOnFormTags: true, enableOnContentEditable: true },
-    []
-  );
-
   const breakpointShortcuts = Array.from(new Array(9))
     .map((_, index) => `meta+${index + 1}, ctrl+${index + 1}`)
     .join(", ");
@@ -93,4 +54,6 @@ export const useSharedShortcuts = () => {
     { enableOnFormTags: true, enableOnContentEditable: true },
     []
   );
+
+  useHotkeys("esc", escapeSelection, { enableOnContentEditable: true }, []);
 };
