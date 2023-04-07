@@ -1,1 +1,1 @@
-export * from "./find-base";
+export * from "./is-base-breakpoint";

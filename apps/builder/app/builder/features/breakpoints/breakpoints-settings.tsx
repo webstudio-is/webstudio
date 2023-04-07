@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import { useStore } from "@nanostores/react";
 import store from "immerhin";
 import type { Breakpoint } from "@webstudio-is/project-build";

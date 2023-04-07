@@ -1,4 +1,5 @@
 import { compareMedia } from "@webstudio-is/css-engine";
+import { isBaseBreakpoint } from "~/builder/shared/breakpoints";
 //import type { Breakpoint } from "@webstudio-is/project-build";
 
 export const groupBreakpoints = <
@@ -11,9 +12,6 @@ export const groupBreakpoints = <
   const mins = sorted
     .filter((breakpoint) => breakpoint.minWidth !== undefined)
     .reverse();
-  const base = sorted.filter(
-    (breakpoint) =>
-      breakpoint.minWidth === undefined && breakpoint.maxWidth === undefined
-  );
+  const base = sorted.filter(isBaseBreakpoint);
   return [...mins, ...base, ...maxs];
 };

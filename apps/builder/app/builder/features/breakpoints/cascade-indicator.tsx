@@ -3,6 +3,7 @@ import { css, theme } from "@webstudio-is/design-system";
 import { useEffect, useState, type RefObject } from "react";
 import { selectedBreakpointStore } from "~/shared/nano-states/breakpoints";
 import type { Breakpoint } from "@webstudio-is/project-build";
+import { isBaseBreakpoint } from "~/builder/shared/breakpoints";
 
 const cascadeIndicatorStyle = css({
   position: "absolute",
@@ -28,11 +29,7 @@ const calcIndicatorStyle = ({
   containerWidth: number;
   selectedBreakpoint: Breakpoint;
 }) => {
-  const isBase =
-    selectedBreakpoint.minWidth === undefined &&
-    selectedBreakpoint.maxWidth === undefined;
-
-  if (isBase) {
+  if (isBaseBreakpoint(selectedBreakpoint)) {
     return {
       left: {
         left: 0,
