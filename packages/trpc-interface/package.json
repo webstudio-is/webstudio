@@ -11,6 +11,7 @@
     "checks": "pnpm typecheck && pnpm lint",
     "dev": "build-package --watch",
     "build": "build-package",
+    "dts": "tsc --emitDeclarationOnly --declaration --declarationDir lib/types",
     "lint": "eslint ./src --ext .ts,.tsx --max-warnings 0"
   },
   "dependencies": {
@@ -28,9 +29,11 @@
     "typescript": "5.0.3"
   },
   "exports": {
-    "./server": "./server.js"
+    "./server": {
+      "source": "./src/index.server.ts",
+      "default": "./server.js"
+    }
   },
-  "types": "src/index.server.ts",
   "files": [
     "lib/*",
     "src/*",

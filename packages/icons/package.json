@@ -8,6 +8,7 @@
   "scripts": {
     "dev": "build-package --watch",
     "build": "build-package",
+    "dts": "tsc --emitDeclarationOnly --declaration --declarationDir lib/types",
     "generate": "rm -fr src/__generated__ && NODE_OPTIONS='--loader=tsx' svgo-jsx svgo-jsx.config.ts",
     "typecheck": "tsc --noEmit",
     "lint": "eslint ./src --ext .ts,.tsx --max-warnings 0",
@@ -39,7 +40,7 @@
     "import": "./lib/index.js",
     "require": "./lib/cjs/index.js"
   },
-  "types": "src/index.ts",
+  "types": "lib/types/index.d.ts",
   "files": [
     "lib/*",
     "src/*",

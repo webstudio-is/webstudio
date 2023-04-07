@@ -6,6 +6,7 @@
   "scripts": {
     "build": "turbo run build",
     "build-packages": "turbo run build --filter=\"!@webstudio-is/builder\"",
+    "dts": "turbo run dts",
     "size-test": "turbo run size-test",
     "checks": "turbo run checks",
     "dev": "pnpm run --parallel --recursive dev",
@@ -64,6 +65,9 @@
       "react-dom": "17.0.2",
       "@types/react": "17.0.47",
       "babel-loader": "8.3.0"
+    },
+    "patchedDependencies": {
+      "@stitches/react@1.3.1-1": "patches/@stitches__react@1.3.1-1.patch"
     }
   }
 }

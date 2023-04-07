@@ -5,7 +5,7 @@ import {
   prisma,
   Prisma,
 } from "@webstudio-is/prisma-client";
-import type { AppContext } from "@webstudio-is/trpc-interface";
+import type { AppContext } from "@webstudio-is/trpc-interface/server";
 import type { Build } from "../types";
 import { Pages } from "../schema/pages";
 import {

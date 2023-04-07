@@ -6,6 +6,10 @@
       "dependsOn": ["^build"],
       "outputs": ["lib/**", "dist/**", "build/**", "api/**", "public/build/**"]
     },
+    "dts": {
+      "dependsOn": ["^dts"],
+      "outputs": ["lib/types/**"]
+    },
     "checks": {
       "dependsOn": ["build", "^checks"]
     },

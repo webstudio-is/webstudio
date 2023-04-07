@@ -11,6 +11,7 @@
     "checks": "pnpm typecheck && pnpm lint && pnpm test",
     "dev": "build-package --watch",
     "build": "build-package",
+    "dts": "tsc --emitDeclarationOnly --declaration --declarationDir lib/types",
     "lint": "eslint ./src --ext .ts,.tsx --max-warnings 0"
   },
   "dependencies": {
@@ -37,9 +38,12 @@
       "import": "./lib/index.js",
       "require": "./lib/cjs/index.js"
     },
-    "./server": "./server.js"
+    "./server": {
+      "source": "./src/index.server.ts",
+      "default": "./server.js"
+    }
   },
-  "types": "src/index.ts",
+  "types": "lib/types/index.d.ts",
   "files": [
     "lib/*",
     "src/*",

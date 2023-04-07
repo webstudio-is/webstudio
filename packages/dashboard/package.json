@@ -33,9 +33,12 @@
       "import": "./lib/index.js",
       "require": "./lib/cjs/index.js"
     },
-    "./server": "./server.js"
+    "./server": {
+      "source": "./src/index.server.ts",
+      "default": "./server.js"
+    }
   },
-  "types": "src/index.ts",
+  "types": "lib/types/index.d.ts",
   "files": [
     "lib/*",
     "src/*",
