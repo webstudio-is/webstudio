@@ -1,12 +1,16 @@
 import type { Style, StyleProperty, StyleValue } from "@webstudio-is/css-data";
-import { toValue } from "./to-value";
+import { type GetAssetPath, toValue } from "./to-value";
 import { toProperty } from "./to-property";
 
 class StylePropertyMap {
   #styleMap: Map<StyleProperty, StyleValue | undefined> = new Map();
   #isDirty = false;
   #string = "";
+  #getAssetPath?: GetAssetPath;
   onChange?: () => void;
+  constructor(options?: { getAssetPath?: GetAssetPath }) {
+    this.#getAssetPath = options?.getAssetPath;
+  }
   set(property: StyleProperty, value?: StyleValue) {
     this.#styleMap.set(property, value);
     this.#isDirty = true;
@@ -37,7 +41,11 @@ class StylePropertyMap {
       if (value === undefined) {
         continue;
       }
-      block.push(`${toProperty(property)}: ${toValue(value)}`);
+      block.push(
+        `${toProperty(property)}: ${toValue(value, {
+          getAssetPath: this.#getAssetPath,
+        })}`
+      );
     }
     this.#string = block.join("; ");
     this.#isDirty = false;
@@ -49,8 +57,8 @@ export class StyleRule {
   styleMap;
   selectorText;
   onChange?: () => void;
-  constructor(selectorText: string, style: Style) {
-    this.styleMap = new StylePropertyMap();
+  constructor(selectorText: string, style: Style, getAssetPath?: GetAssetPath) {
+    this.styleMap = new StylePropertyMap({ getAssetPath });
     this.selectorText = selectorText;
     let property: StyleProperty;
     for (property in style) {

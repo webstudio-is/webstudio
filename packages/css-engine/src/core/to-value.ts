@@ -1,12 +1,12 @@
+import type { Asset } from "@webstudio-is/asset-uploader";
 import type { StyleValue } from "@webstudio-is/css-data";
 import { DEFAULT_FONT_FALLBACK, SYSTEM_FONTS } from "@webstudio-is/fonts";
 
-type ToCssOptions = {
-  withFallback: boolean;
-};
+export type GetAssetPath = (assetId: Asset["id"]) => undefined | string;
 
-const defaultOptions = {
-  withFallback: true,
+type ToCssOptions = {
+  withFallback?: boolean;
+  getAssetPath?: GetAssetPath;
 };
 
 // exhaustive check, should never happen in runtime as ts would give error
@@ -16,8 +16,9 @@ const assertUnreachable = (_arg: never, errorMessage: string) => {
 
 export const toValue = (
   value?: StyleValue,
-  options: ToCssOptions = defaultOptions
+  options: ToCssOptions = {}
 ): string => {
+  const { withFallback = true, getAssetPath } = options;
   if (value === undefined) {
     return "";
   }
@@ -25,7 +26,7 @@ export const toValue = (
     return value.value + (value.unit === "number" ? "" : value.unit);
   }
   if (value.type === "fontFamily") {
-    if (options.withFallback === false) {
+    if (withFallback === false) {
       return value.value[0];
     }
     const family = value.value[0];
@@ -69,8 +70,14 @@ export const toValue = (
       return "none";
     }
 
+    const assetId = value.value.value.id;
+    const assetPath = getAssetPath?.(assetId);
+    if (assetPath === undefined) {
+      return "none";
+    }
+
     // @todo image-set
-    return `url(${value.value.value.path}) /* id=${value.value.value.id} */`;
+    return `url(${assetPath}) /* id=${assetId} */`;
   }
 
   if (value.type === "unparsed") {

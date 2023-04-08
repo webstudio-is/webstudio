@@ -1,4 +1,5 @@
 import { describe, beforeEach, test, expect } from "@jest/globals";
+import type { Assets, ImageAsset } from "@webstudio-is/asset-uploader";
 import { CssEngine } from "./css-engine";
 
 const style0 = {
@@ -346,6 +347,51 @@ describe("CssEngine", () => {
     expect(engine.cssText).toMatchInlineSnapshot(`
       "@media all {
         .c { color: black }
+      }"
+    `);
+  });
+
+  test("delete style from rule", () => {
+    const assets: Assets = new Map([
+      [
+        "1234",
+        {
+          type: "image",
+          path: "foo.png",
+          id: "1234567890",
+          projectId: "",
+          format: "",
+          size: 1212,
+          name: "img",
+          description: "",
+          location: "REMOTE",
+          createdAt: "",
+          meta: { width: 1, height: 2 },
+        },
+      ],
+    ]);
+    const rule = engine.addStyleRule(
+      ".c",
+      {
+        style: {
+          backgroundImage: {
+            type: "image",
+            value: {
+              type: "asset",
+              value: {
+                id: "1234",
+              } as ImageAsset,
+            },
+          },
+        },
+        breakpoint: "0",
+      },
+      (id) => assets.get(id)?.path
+    );
+    rule.styleMap.delete("display");
+    expect(engine.cssText).toMatchInlineSnapshot(`
+      "@media all {
+        .c { background-image: url(foo.png) /* id=1234 */ }
       }"
     `);
   });

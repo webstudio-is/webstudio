@@ -47,10 +47,14 @@ export const generateCssText = (data: Data) => {
 
   const styleRules = getStyleRules(styles, styleSourceSelections);
   for (const { breakpointId, instanceId, style } of styleRules) {
-    engine.addStyleRule(`[${idAttribute}="${instanceId}"]`, {
-      breakpoint: breakpointId,
-      style,
-    });
+    engine.addStyleRule(
+      `[${idAttribute}="${instanceId}"]`,
+      {
+        breakpoint: breakpointId,
+        style,
+      },
+      (assetId) => assets.get(assetId)?.path
+    );
   }
 
   return engine.cssText;
