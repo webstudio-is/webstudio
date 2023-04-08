@@ -372,6 +372,7 @@ export const color = {
   backgroundTopbarHover: "#383838",
   backgroundWorkspace: "#c7c7c7",
   backgroundIconSubtle: "#3e3e3e",
+  backgroundPrimaryLight: "#2e82ff",
   brandBackgroundProjectCardFront:
     "linear-gradient(0deg, #fbf8ff 0%, #e2e2e2 100%)",
   brandBackgroundProjectCardBack:
