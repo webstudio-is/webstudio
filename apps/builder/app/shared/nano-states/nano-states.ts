@@ -225,7 +225,7 @@ export const useSetStyleSourceSelections = (
   });
 };
 
-type StyleSourceSelector = {
+export type StyleSourceSelector = {
   styleSourceId: StyleSource["id"];
   state?: string;
 };
@@ -317,6 +317,36 @@ export const selectedInstanceIntanceToTagStore = atom<
   undefined | Map<Instance["id"], HtmlTags>
 >();
 
+export const selectedInstanceStatesByStyleSourceIdStore = computed(
+  [stylesStore, styleSourceSelectionsStore, selectedInstanceSelectorStore],
+  (styles, styleSourceSelections, selectedInstanceSelector) => {
+    const statesByStyleSourceId = new Map<StyleSource["id"], string[]>();
+    if (selectedInstanceSelector === undefined) {
+      return statesByStyleSourceId;
+    }
+    const styleSourceIds = new Set(
+      styleSourceSelections.get(selectedInstanceSelector[0])?.values
+    );
+    for (const styleDecl of styles.values()) {
+      if (
+        styleDecl.state === undefined ||
+        styleSourceIds.has(styleDecl.styleSourceId) === false
+      ) {
+        continue;
+      }
+      let states = statesByStyleSourceId.get(styleDecl.styleSourceId);
+      if (states === undefined) {
+        states = [];
+        statesByStyleSourceId.set(styleDecl.styleSourceId, states);
+      }
+      if (states.includes(styleDecl.state) === false) {
+        states.push(styleDecl.state);
+      }
+    }
+    return statesByStyleSourceId;
+  }
+);
+
 export const selectedInstanceStyleSourcesStore = computed(
   [
     styleSourceSelectionsStore,
@@ -350,6 +380,20 @@ export const selectedInstanceStyleSourcesStore = computed(
       });
     }
     return selectedInstanceStyleSources;
+  }
+);
+
+export const selectedOrLastStyleSourceSelectorStore = computed(
+  [selectedInstanceStyleSourcesStore, selectedStyleSourceSelectorStore],
+  (styleSources, selectedStyleSourceSelector) => {
+    if (selectedStyleSourceSelector !== undefined) {
+      return selectedStyleSourceSelector;
+    }
+    const lastStyleSource = styleSources.at(-1);
+    if (lastStyleSource !== undefined) {
+      return { styleSourceId: lastStyleSource.id };
+    }
+    return;
   }
 );
 

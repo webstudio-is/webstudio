@@ -36,6 +36,7 @@ const StoredLayersValue = z.object({
 export const StoredStyleDecl = z.object({
   styleSourceId: z.string(),
   breakpointId: z.string(),
+  state: z.optional(z.string()),
   // @todo can't figure out how to make property to be enum
   property: z.string() as z.ZodType<StyleProperty>,
   value: z.union([StoredImageValue, StoredLayersValue, SharedStyleValue]),
@@ -50,6 +51,7 @@ export type StoredStyles = z.infer<typeof StoredStyles>;
 export const StyleDecl = z.object({
   styleSourceId: z.string(),
   breakpointId: z.string(),
+  state: z.optional(z.string()),
   // @todo can't figure out how to make property to be enum
   property: z.string() as z.ZodType<StyleProperty>,
   value: z.union([ImageValue, LayersValue, SharedStyleValue]),
@@ -62,7 +64,9 @@ export type StyleDeclKey = string;
 export const getStyleDeclKey = (
   styleDecl: Omit<StyleDecl, "value">
 ): StyleDeclKey => {
-  return `${styleDecl.styleSourceId}:${styleDecl.breakpointId}:${styleDecl.property}`;
+  return `${styleDecl.styleSourceId}:${styleDecl.breakpointId}:${
+    styleDecl.property
+  }:${styleDecl.state ?? ""}`;
 };
 
 export const Styles = z.map(z.string() as z.ZodType<StyleDeclKey>, StyleDecl);

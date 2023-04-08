@@ -12,6 +12,7 @@ type Item = {
   label: string;
   source: ItemSource;
   disabled: boolean;
+  states: string[];
 };
 
 const localItem: Item = {
@@ -19,6 +20,7 @@ const localItem: Item = {
   label: "Local",
   source: "local",
   disabled: false,
+  states: [],
 };
 
 const getItems = (): Array<Item> => [
@@ -27,12 +29,14 @@ const getItems = (): Array<Item> => [
     label: "Token",
     source: "token",
     disabled: false,
+    states: [],
   },
   {
     id: nanoid(),
     label: "Tag",
     source: "tag",
     disabled: false,
+    states: [],
   },
 ];
 
@@ -46,6 +50,7 @@ const createItem = (
     label,
     source: "token",
     disabled: false,
+    states: [],
   };
   setValue([...value, item]);
 };
@@ -90,6 +95,7 @@ export const WithTruncatedItem: ComponentStory<
         "Local Something Something Something Something Something Something Something Something Something Something Something",
       source: "local",
       disabled: false,
+      states: [],
     },
   ]);
   return (
@@ -121,6 +127,7 @@ export const Complete: ComponentStory<typeof StyleSourceInput> = () => {
       label: "Disabled",
       source: "token",
       disabled: true,
+      states: [],
     },
   ]);
   const [selectedItemSelector, setSelectedItemSelector] = useState<

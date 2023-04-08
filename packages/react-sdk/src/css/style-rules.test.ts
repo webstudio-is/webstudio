@@ -1,75 +1,60 @@
 import { test, expect } from "@jest/globals";
-import type {
+import {
+  getStyleDeclKey,
+  StyleDecl,
   Styles,
   StyleSourceSelections,
 } from "@webstudio-is/project-build";
 import { getStyleRules } from "./style-rules";
 
+const createStyleDeclPair = (styleDecl: StyleDecl) => {
+  return [getStyleDeclKey(styleDecl), styleDecl] as const;
+};
+
 test("compute styles from different style sources", () => {
   const styles: Styles = new Map([
-    [
-      "styleSource1:a:width",
-      {
-        breakpointId: "a",
-        styleSourceId: "styleSource1",
-        property: "width",
-        value: { type: "unit", value: 10, unit: "px" },
-      },
-    ],
-    [
-      "styleSource2:a:display",
-      {
-        breakpointId: "a",
-        styleSourceId: "styleSource2",
-        property: "display",
-        value: { type: "keyword", value: "block" },
-      },
-    ],
-    [
-      "styleSource4:a:color",
-      {
-        breakpointId: "a",
-        styleSourceId: "styleSource4",
-        property: "color",
-        value: { type: "keyword", value: "green" },
-      },
-    ],
-    [
-      "styleSource4:a:width",
-      {
-        breakpointId: "a",
-        styleSourceId: "styleSource4",
-        property: "width",
-        value: { type: "keyword", value: "min-content" },
-      },
-    ],
-    [
-      "styleSource3:a:color",
-      {
-        breakpointId: "a",
-        styleSourceId: "styleSource3",
-        property: "color",
-        value: { type: "keyword", value: "red" },
-      },
-    ],
-    [
-      "styleSource5:b:color",
-      {
-        breakpointId: "b",
-        styleSourceId: "styleSource5",
-        property: "color",
-        value: { type: "keyword", value: "orange" },
-      },
-    ],
-    [
-      "styleSource6:a:color",
-      {
-        breakpointId: "a",
-        styleSourceId: "styleSource6",
-        property: "color",
-        value: { type: "keyword", value: "blue" },
-      },
-    ],
+    createStyleDeclPair({
+      breakpointId: "a",
+      styleSourceId: "styleSource1",
+      property: "width",
+      value: { type: "unit", value: 10, unit: "px" },
+    }),
+    createStyleDeclPair({
+      breakpointId: "a",
+      styleSourceId: "styleSource2",
+      property: "display",
+      value: { type: "keyword", value: "block" },
+    }),
+    createStyleDeclPair({
+      breakpointId: "a",
+      styleSourceId: "styleSource4",
+      property: "color",
+      value: { type: "keyword", value: "green" },
+    }),
+    createStyleDeclPair({
+      breakpointId: "a",
+      styleSourceId: "styleSource4",
+      property: "width",
+      value: { type: "keyword", value: "min-content" },
+    }),
+    createStyleDeclPair({
+      breakpointId: "a",
+      styleSourceId: "styleSource3",
+      property: "color",
+      value: { type: "keyword", value: "red" },
+    }),
+    createStyleDeclPair({
+      breakpointId: "b",
+      styleSourceId: "styleSource5",
+      property: "color",
+      value: { type: "keyword", value: "orange" },
+    }),
+    createStyleDeclPair({
+      breakpointId: "a",
+      styleSourceId: "styleSource6",
+      property: "color",
+      value: { type: "keyword", value: "blue" },
+    }),
   ]);
   const styleSourceSelections: StyleSourceSelections = new Map([
     [

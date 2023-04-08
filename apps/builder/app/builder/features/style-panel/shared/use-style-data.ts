@@ -10,6 +10,7 @@ import {
 import type { StyleProperty, StyleValue } from "@webstudio-is/css-data";
 import type { Publish } from "~/shared/pubsub";
 import {
+  selectedOrLastStyleSourceSelectorStore,
   selectedStyleSourceStore,
   styleSourceSelectionsStore,
   styleSourcesStore,
@@ -80,11 +81,13 @@ export const useStyleData = ({ selectedInstance, publish }: UseStyleData) => {
   const publishUpdates = useCallback(
     (type: "update" | "preview", updates: StyleUpdates["updates"]) => {
       const selectedStyleSource = selectedStyleSourceStore.get();
+      const styleSourceSelector = selectedOrLastStyleSourceSelectorStore.get();
 
       if (
         updates.length === 0 ||
         selectedBreakpoint === undefined ||
-        selectedStyleSource === undefined
+        selectedStyleSource === undefined ||
+        styleSourceSelector === undefined
       ) {
         return;
       }
@@ -106,7 +109,6 @@ export const useStyleData = ({ selectedInstance, publish }: UseStyleData) => {
         (styleSourceSelections, styleSources, styles) => {
           const instanceId = selectedInstance.id;
           const breakpointId = selectedBreakpoint.id;
-          const styleSourceId = selectedStyleSource.id;
           // set only selected style source and update selection with it
           // generated local style source will not be written if not selected
           styleSources.set(selectedStyleSource.id, selectedStyleSource);
@@ -114,16 +116,17 @@ export const useStyleData = ({ selectedInstance, publish }: UseStyleData) => {
             styleSourceSelections.get(instanceId)?.values ?? [];
           styleSourceSelections.set(instanceId, {
             instanceId,
-            values: selectionValues.includes(styleSourceId)
+            values: selectionValues.includes(styleSourceSelector.styleSourceId)
               ? selectionValues
-              : [...selectionValues, styleSourceId],
+              : [...selectionValues, styleSourceSelector.styleSourceId],
           });
 
           for (const update of updates) {
             if (update.operation === "set") {
               const styleDecl = {
                 breakpointId,
-                styleSourceId,
+                styleSourceId: styleSourceSelector.styleSourceId,
+                state: styleSourceSelector.state,
                 property: update.property,
                 value: update.value,
               };
@@ -133,7 +136,8 @@ export const useStyleData = ({ selectedInstance, publish }: UseStyleData) => {
             if (update.operation === "delete") {
               const styleDeclKey = getStyleDeclKey({
                 breakpointId,
-                styleSourceId,
+                styleSourceId: styleSourceSelector.styleSourceId,
+                state: styleSourceSelector.state,
                 property: update.property,
               });
               styles.delete(styleDeclKey);
