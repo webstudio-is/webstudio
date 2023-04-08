@@ -55,6 +55,7 @@ export const toggleItemStyle = css(typography.labelsTitleCase, {
 
   color: "inherit",
   background: "transparent",
+  transition: "200ms background",
 
   "&:focus-visible": toolbarItemFocusRing,
   "&:hover, &[data-state=on], &[data-state=open]": {

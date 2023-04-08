@@ -10,6 +10,7 @@ import { selectedBreakpointIdStore } from "~/shared/nano-states/breakpoints";
 import { selectedBreakpointStore } from "~/shared/nano-states/breakpoints";
 import { groupBreakpoints } from "./group-breakpoints";
 import { CascadeIndicator } from "./cascade-indicator";
+import { BpStarOffIcon, BpStarOnIcon } from "@webstudio-is/icons";
 
 export const BreakpointsSelector = () => {
   const [breakpoints] = useBreakpoints();
@@ -37,7 +38,13 @@ export const BreakpointsSelector = () => {
                 value={breakpoint.id}
                 key={breakpoint.id}
               >
-                {breakpoint.minWidth ?? breakpoint.maxWidth ?? "Base"}
+                {breakpoint.minWidth ??
+                  breakpoint.maxWidth ??
+                  (breakpoint.id === selectedBreakpoint.id ? (
+                    <BpStarOnIcon size={22} />
+                  ) : (
+                    <BpStarOffIcon size={22} />
+                  ))}
               </ToolbarToggleItem>
             );
           }
