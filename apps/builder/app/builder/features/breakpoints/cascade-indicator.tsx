@@ -4,6 +4,7 @@ import { useEffect, useState, type RefObject } from "react";
 import { selectedBreakpointStore } from "~/shared/nano-states/breakpoints";
 import type { Breakpoint } from "@webstudio-is/project-build";
 import { isBaseBreakpoint } from "~/builder/shared/breakpoints";
+import { breakpointsContainer } from "~/shared/nano-states";
 
 const cascadeIndicatorStyle = css({
   position: "absolute",
@@ -77,6 +78,7 @@ const useSizes = ({
   const [buttonLeft, setButtonLeft] = useState<number>();
   const [buttonWidth, setButtonWidth] = useState<number>();
   const [containerWidth, setContainerWidth] = useState<number>();
+  const breakpoints = useStore(breakpointsContainer);
 
   useEffect(() => {
     if (buttonRef.current) {
@@ -84,7 +86,12 @@ const useSizes = ({
       setButtonWidth(buttonRef.current.offsetWidth);
       setContainerWidth(buttonRef.current.parentElement?.offsetWidth);
     }
-  }, [selectedBreakpoint, buttonRef]);
+  }, [
+    selectedBreakpoint,
+    buttonRef,
+    // needed to update sizes when breakpoints are changed
+    breakpoints,
+  ]);
 
   if (
     buttonLeft === undefined ||
