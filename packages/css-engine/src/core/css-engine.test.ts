@@ -351,7 +351,7 @@ describe("CssEngine", () => {
     `);
   });
 
-  test("delete style from rule", () => {
+  test("render images with injected asset path", () => {
     const assets: Assets = new Map([
       [
         "1234",
