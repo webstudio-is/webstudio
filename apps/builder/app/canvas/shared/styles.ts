@@ -291,7 +291,8 @@ const usePreviewStyle = () => {
     let rule = getRule(id, breakpoint.id);
 
     if (rule === undefined) {
-      rule = addRule(id, { breakpoint: breakpoint.id, style: {} });
+      const assets = assetsStore.get();
+      rule = addRule(id, { breakpoint: breakpoint.id, style: {} }, assets);
     }
 
     for (const update of updates) {
