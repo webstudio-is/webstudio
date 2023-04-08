@@ -1,6 +1,5 @@
 import { compareMedia } from "@webstudio-is/css-engine";
 import { isBaseBreakpoint } from "~/builder/shared/breakpoints";
-//import type { Breakpoint } from "@webstudio-is/project-build";
 
 export const groupBreakpoints = <
   Breakpoint extends { minWidth?: number; maxWidth?: number }

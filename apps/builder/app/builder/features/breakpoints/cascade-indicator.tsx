@@ -96,6 +96,9 @@ const useSizes = ({
   return { buttonLeft, containerWidth, buttonWidth };
 };
 
+// There are 2 indicators left and right.
+// Left one is shown for min breakpoints, right one for max breakpoints.
+// When you have base breakpoint selected which has neither min nor max width, both indicators are shown.
 export const CascadeIndicator = ({
   buttonRef,
 }: {
@@ -108,7 +111,6 @@ export const CascadeIndicator = ({
   }
 
   const indicatorStyle = calcIndicatorStyle({ ...sizes, selectedBreakpoint });
-
   return (
     <>
       <div
