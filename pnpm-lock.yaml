@@ -500,6 +500,9 @@ importers:
 
   packages/css-engine:
     dependencies:
+      '@webstudio-is/asset-uploader':
+        specifier: workspace:^
+        version: link:../asset-uploader
       '@webstudio-is/fonts':
         specifier: workspace:^
         version: link:../fonts

@@ -17,6 +17,7 @@
     "storybook:build": "build-storybook"
   },
   "dependencies": {
+    "@webstudio-is/asset-uploader": "workspace:^",
     "@webstudio-is/fonts": "workspace:^",
     "hyphenate-style-name": "^1.0.4",
     "react": "^17.0.2",
