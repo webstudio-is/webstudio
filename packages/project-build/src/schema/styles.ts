@@ -64,8 +64,9 @@ export type StyleDeclKey = string;
 export const getStyleDeclKey = (
   styleDecl: Omit<StyleDecl, "value">
 ): StyleDeclKey => {
-  return `${styleDecl.styleSourceId}:${styleDecl.breakpointId}:${styleDecl.property
-    }:${styleDecl.state ?? ""}`;
+  return `${styleDecl.styleSourceId}:${styleDecl.breakpointId}:${
+    styleDecl.property
+  }:${styleDecl.state ?? ""}`;
 };
 
 export const Styles = z.map(z.string() as z.ZodType<StyleDeclKey>, StyleDecl);
