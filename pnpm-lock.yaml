@@ -528,6 +528,9 @@ importers:
       '@types/react-dom':
         specifier: ^17.0.9
         version: 17.0.17
+      '@webstudio-is/asset-uploader':
+        specifier: workspace:^
+        version: link:../asset-uploader
       '@webstudio-is/css-data':
         specifier: workspace:^
         version: link:../css-data

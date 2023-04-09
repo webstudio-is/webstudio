@@ -1,6 +1,7 @@
 import { useEffect } from "react";
 import { useIsomorphicLayoutEffect } from "react-use";
 import { useStore } from "@nanostores/react";
+import type { Assets } from "@webstudio-is/asset-uploader";
 import {
   collapsedAttribute,
   componentAttribute,
@@ -8,13 +9,8 @@ import {
   getComponentNames,
   idAttribute,
   addGlobalRules,
+  createImageValueTransformer,
 } from "@webstudio-is/react-sdk";
-import {
-  assetsStore,
-  isPreviewModeStore,
-  selectedInstanceSelectorStore,
-  useBreakpoints,
-} from "~/shared/nano-states";
 import type { StyleDecl } from "@webstudio-is/project-build";
 import {
   validStaticValueTypes,
@@ -24,6 +20,12 @@ import {
   type StyleProperty,
   type Style,
 } from "@webstudio-is/css-data";
+import {
+  assetsStore,
+  isPreviewModeStore,
+  selectedInstanceSelectorStore,
+  useBreakpoints,
+} from "~/shared/nano-states";
 import {
   createCssEngine,
   toValue,
@@ -187,13 +189,17 @@ const toVarStyleWithFallback = (instanceId: string, style: Style): Style => {
 
 const wrappedRulesMap = new Map<string, StyleRule | PlaintextRule>();
 
-const addRule = (id: string, cssRule: CssRule) => {
+const addRule = (id: string, cssRule: CssRule, assets: Assets) => {
   const key = id + cssRule.breakpoint;
   const selectorText = `[${idAttribute}="${id}"]`;
-  const rule = cssEngine.addStyleRule(selectorText, {
-    ...cssRule,
-    style: toVarStyleWithFallback(id, cssRule.style),
-  });
+  const rule = cssEngine.addStyleRule(
+    selectorText,
+    {
+      ...cssRule,
+      style: toVarStyleWithFallback(id, cssRule.style),
+    },
+    createImageValueTransformer(assets)
+  );
   wrappedRulesMap.set(key, rule);
   return rule;
 };
@@ -214,6 +220,9 @@ export const useCssRules = ({
 
   useIsomorphicLayoutEffect(() => {
     const stylePerBreakpoint = new Map<string, Style>();
+    // expect assets to be up to date by the time styles are changed
+    // to avoid all styles rerendering when assets are changed
+    const assets = assetsStore.get();
 
     for (const item of instanceStyles) {
       let style = stylePerBreakpoint.get(item.breakpointId);
@@ -229,7 +238,7 @@ export const useCssRules = ({
       const rule = getRule(instanceId, breakpointId);
       // It's the first time the rule is being used
       if (rule === undefined) {
-        addRule(instanceId, { breakpoint: breakpointId, style });
+        addRule(instanceId, { breakpoint: breakpointId, style }, assets);
         continue;
       }
       // It's an update to an existing rule
@@ -283,7 +292,8 @@ const usePreviewStyle = () => {
     let rule = getRule(id, breakpoint.id);
 
     if (rule === undefined) {
-      rule = addRule(id, { breakpoint: breakpoint.id, style: {} });
+      const assets = assetsStore.get();
+      rule = addRule(id, { breakpoint: breakpoint.id, style: {} }, assets);
     }
 
     for (const update of updates) {

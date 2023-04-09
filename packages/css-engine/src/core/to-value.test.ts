@@ -1,4 +1,5 @@
 import { describe, test, expect } from "@jest/globals";
+import type { Assets } from "@webstudio-is/asset-uploader";
 import { toValue } from "./to-value";
 
 describe("Convert WS CSS Values to native CSS strings", () => {
@@ -73,39 +74,79 @@ describe("Convert WS CSS Values to native CSS strings", () => {
   });
 
   test("array", () => {
-    const value = toValue({
-      type: "layers",
-      value: [
-        {
-          type: "keyword",
-          value: "auto",
-        },
-        { type: "unit", value: 10, unit: "px" },
-        { type: "unparsed", value: "calc(10px)" },
+    const assets: Assets = new Map([
+      [
+        "1234567890",
         {
           type: "image",
-          value: {
-            type: "asset",
-            value: {
-              type: "image",
-              path: "foo.png",
+          path: "foo.png",
 
-              id: "1234567890",
-              projectId: "",
-              format: "",
-              size: 1212,
-              name: "img",
-              description: "",
-              location: "REMOTE",
-              createdAt: "",
-              meta: { width: 1, height: 2 },
-            },
-          },
+          id: "1234567890",
+          projectId: "",
+          format: "",
+          size: 1212,
+          name: "img",
+          description: "",
+          location: "REMOTE",
+          createdAt: "",
+          meta: { width: 1, height: 2 },
         },
       ],
-    });
+    ]);
 
-    expect(value).toBe("auto,10px,calc(10px),url(foo.png) /* id=1234567890 */");
+    const value = toValue(
+      {
+        type: "layers",
+        value: [
+          {
+            type: "keyword",
+            value: "auto",
+          },
+          { type: "unit", value: 10, unit: "px" },
+          { type: "unparsed", value: "calc(10px)" },
+          {
+            type: "image",
+            value: {
+              type: "asset",
+              value: {
+                type: "image",
+                path: "foo.png",
+
+                id: "1234567890",
+                projectId: "",
+                format: "",
+                size: 1212,
+                name: "img",
+                description: "",
+                location: "REMOTE",
+                createdAt: "",
+                meta: { width: 1, height: 2 },
+              },
+            },
+          },
+        ],
+      },
+      (styleValue) => {
+        if (styleValue.type === "image" && styleValue.value.type === "asset") {
+          const asset = assets.get(styleValue.value.value.id);
+          if (asset === undefined) {
+            return {
+              type: "keyword",
+              value: "none",
+            };
+          }
+          return {
+            type: "image",
+            value: {
+              type: "url",
+              url: asset.path,
+            },
+          };
+        }
+      }
+    );
+
+    expect(value).toBe("auto,10px,calc(10px),url(foo.png)");
   });
 
   test("tuple", () => {
