@@ -8,10 +8,6 @@ import type { ItemDropTarget, Placement } from "@webstudio-is/design-system";
 import type {
   Breakpoint,
   Instance,
-  Instances,
-  InstancesItem,
-  Page,
-  Pages,
   Prop,
   Props,
   StyleDecl,
@@ -26,51 +22,19 @@ import type { Style } from "@webstudio-is/css-data";
 import type { DragStartPayload } from "~/canvas/shared/use-drag-drop";
 import { useSyncInitializeOnce } from "../hook-utils";
 import { shallowComputed } from "../store-utils";
-import { createInstancesIndex, type InstanceSelector } from "../tree-utils";
+import { type InstanceSelector } from "../tree-utils";
 import type { htmlTags as HtmlTags } from "html-tags";
 import { breakpointsStore } from "./breakpoints";
+import {
+  instancesStore,
+  rootInstanceContainer,
+  selectedInstanceSelectorStore,
+} from "./instances";
+import { selectedPageStore } from "./pages";
 
 const useValue = <T>(atom: WritableAtom<T>) => {
   const value = useStore(atom);
   return [value, atom.set] as const;
-};
-
-export const pagesStore = atom<undefined | Pages>(undefined);
-export const useSetPages = (pages: Pages) => {
-  useSyncInitializeOnce(() => {
-    pagesStore.set(pages);
-  });
-};
-
-export const selectedPageIdStore = atom<undefined | Page["id"]>(undefined);
-export const useSetSelectedPageId = (pageId: Page["id"]) => {
-  useSyncInitializeOnce(() => {
-    selectedPageIdStore.set(pageId);
-  });
-};
-
-export const selectedPageStore = computed(
-  [pagesStore, selectedPageIdStore],
-  (pages, selectedPageId) => {
-    if (pages === undefined) {
-      return undefined;
-    }
-    if (pages.homePage.id === selectedPageId) {
-      return pages.homePage;
-    }
-    return pages.pages.find((page) => page.id === selectedPageId);
-  }
-);
-
-export const instancesStore = atom<Map<InstancesItem["id"], InstancesItem>>(
-  new Map()
-);
-export const useSetInstances = (
-  instances: [InstancesItem["id"], InstancesItem][]
-) => {
-  useSyncInitializeOnce(() => {
-    instancesStore.set(new Map(instances));
-  });
 };
 
 export const rootInstanceStore = computed(
@@ -83,55 +47,10 @@ export const rootInstanceStore = computed(
   }
 );
 
-// @todo will be removed soon
-const denormalizeTree = (
-  instances: Instances,
-  rootInstanceId: Instance["id"]
-): undefined | Instance => {
-  const convertTree = (instance: InstancesItem) => {
-    const legacyInstance: Instance = {
-      type: "instance",
-      id: instance.id,
-      component: instance.component,
-      label: instance.label,
-      children: [],
-    };
-    for (const child of instance.children) {
-      if (child.type === "id") {
-        const childInstance = instances.get(child.value);
-        if (childInstance) {
-          legacyInstance.children.push(convertTree(childInstance));
-        }
-      } else {
-        legacyInstance.children.push(child);
-      }
-    }
-    return legacyInstance;
-  };
-  const rootInstance = instances.get(rootInstanceId);
-  if (rootInstance === undefined) {
-    return;
-  }
-  return convertTree(rootInstance);
-};
-
-export const rootInstanceContainer = computed(
-  [instancesStore, selectedPageStore],
-  (instances, selectedPage) => {
-    if (selectedPage === undefined) {
-      return undefined;
-    }
-    return denormalizeTree(instances, selectedPage.rootInstanceId);
-  }
-);
 export const useRootInstance = () => {
   const value = useStore(rootInstanceContainer);
   return [value] as const;
 };
-export const instancesIndexStore = computed(
-  rootInstanceContainer,
-  createInstancesIndex
-);
 
 export const propsStore = atom<Props>(new Map());
 export const propsIndexStore = computed(propsStore, (props) => {
@@ -290,21 +209,6 @@ export const useSetAssets = (assets: [Asset["id"], Asset][]) => {
     assetsStore.set(new Map(assets));
   });
 };
-
-export const selectedInstanceSelectorStore = atom<undefined | InstanceSelector>(
-  undefined
-);
-
-export const selectedInstanceStore = computed(
-  [instancesIndexStore, selectedInstanceSelectorStore],
-  (instancesIndex, selectedInstanceSelector) => {
-    if (selectedInstanceSelector === undefined) {
-      return;
-    }
-    const [selectedInstanceId] = selectedInstanceSelector;
-    return instancesIndex.instancesById.get(selectedInstanceId);
-  }
-);
 
 export const selectedInstanceBrowserStyleStore = atom<undefined | Style>();
 

@@ -7,18 +7,17 @@ import { Outline } from "./outline";
 import { Label } from "./label";
 
 export const SelectedInstanceOutline = () => {
-  const outline = useStore(selectedInstanceOutlineAndInstanceStore);
   const selectedInstanceSelector = useStore(selectedInstanceSelectorStore);
   const textEditingInstanceSelector = useStore(
     textEditingInstanceSelectorStore
   );
-
   const isEditingCurrentInstance =
     textEditingInstanceSelector !== undefined &&
     areInstanceSelectorsEqual(
       textEditingInstanceSelector,
       selectedInstanceSelector
     );
+  const outline = useStore(selectedInstanceOutlineAndInstanceStore);
 
   if (isEditingCurrentInstance || outline === undefined) {
     return null;

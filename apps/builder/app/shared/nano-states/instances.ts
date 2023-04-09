@@ -1,12 +1,18 @@
-import { atom } from "nanostores";
+import { atom, computed } from "nanostores";
 import { getComponentMeta } from "@webstudio-is/react-sdk";
-
-import type { InstanceSelector } from "../tree-utils";
-import {
-  selectedInstanceSelectorStore,
-  selectedInstanceStore,
-} from "./nano-states";
+import type {
+  Instance,
+  Instances,
+  InstancesItem,
+} from "@webstudio-is/project-build";
+import { createInstancesIndex, type InstanceSelector } from "../tree-utils";
 import { getElementByInstanceSelector } from "../dom-utils";
+import { useSyncInitializeOnce } from "../hook-utils";
+import { selectedPageStore } from "./pages";
+
+export const selectedInstanceSelectorStore = atom<undefined | InstanceSelector>(
+  undefined
+);
 
 export const textEditingInstanceSelectorStore = atom<
   undefined | InstanceSelector
@@ -55,6 +61,75 @@ export const escapeSelection = () => {
   }
   selectedInstanceSelectorStore.set(undefined);
 };
+
+export const instancesStore = atom<Map<InstancesItem["id"], InstancesItem>>(
+  new Map()
+);
+export const useSetInstances = (
+  instances: [InstancesItem["id"], InstancesItem][]
+) => {
+  useSyncInitializeOnce(() => {
+    instancesStore.set(new Map(instances));
+  });
+};
+
+// @todo will be removed soon
+const denormalizeTree = (
+  instances: Instances,
+  rootInstanceId: Instance["id"]
+): undefined | Instance => {
+  const convertTree = (instance: InstancesItem) => {
+    const legacyInstance: Instance = {
+      type: "instance",
+      id: instance.id,
+      component: instance.component,
+      label: instance.label,
+      children: [],
+    };
+    for (const child of instance.children) {
+      if (child.type === "id") {
+        const childInstance = instances.get(child.value);
+        if (childInstance) {
+          legacyInstance.children.push(convertTree(childInstance));
+        }
+      } else {
+        legacyInstance.children.push(child);
+      }
+    }
+    return legacyInstance;
+  };
+  const rootInstance = instances.get(rootInstanceId);
+  if (rootInstance === undefined) {
+    return;
+  }
+  return convertTree(rootInstance);
+};
+
+export const rootInstanceContainer = computed(
+  [instancesStore, selectedPageStore],
+  (instances, selectedPage) => {
+    if (selectedPage === undefined) {
+      return undefined;
+    }
+    return denormalizeTree(instances, selectedPage.rootInstanceId);
+  }
+);
+
+export const instancesIndexStore = computed(
+  rootInstanceContainer,
+  createInstancesIndex
+);
+
+export const selectedInstanceStore = computed(
+  [instancesIndexStore, selectedInstanceSelectorStore],
+  (instancesIndex, selectedInstanceSelector) => {
+    if (selectedInstanceSelector === undefined) {
+      return;
+    }
+    const [selectedInstanceId] = selectedInstanceSelector;
+    return instancesIndex.instancesById.get(selectedInstanceId);
+  }
+);
 
 export const synchronizedInstancesStores = [
   ["textEditingInstanceSelector", textEditingInstanceSelectorStore],

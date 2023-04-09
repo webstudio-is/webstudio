@@ -1,6 +1,6 @@
 import { atom, computed } from "nanostores";
 import type { Instance, Instances } from "@webstudio-is/project-build";
-import { instancesStore } from "./nano-states";
+import { instancesStore } from "./instances";
 
 export type TextToolbarState = {
   selectionRect: undefined | DOMRect;
