@@ -1,7 +1,7 @@
 import { type Options, useHotkeys } from "react-hotkeys-hook";
 import store from "immerhin";
 import { deleteSelectedInstance } from "../instance-utils";
-import { selectBreakpointByOrder } from "~/builder/shared/breakpoints";
+import { selectBreakpointByOrder } from "../breakpoints";
 
 export const shortcuts = {
   esc: "esc",

@@ -9,7 +9,7 @@ import {
   instancesStore,
   stylesIndexStore,
 } from "~/shared/nano-states";
-import { selectedBreakpointStore } from "~/builder/shared/breakpoints";
+import { selectedBreakpointStore } from "~/shared/nano-states/breakpoints";
 import { subscribe } from "~/shared/pubsub";
 import htmlTags, { type htmlTags as HtmlTags } from "html-tags";
 

@@ -5,7 +5,7 @@ import {
   workspaceRectStore,
 } from "~/builder/shared/nano-states";
 import { breakpointsStore } from "~/shared/nano-states";
-import { selectedBreakpointStore } from "~/builder/shared/breakpoints";
+import { selectedBreakpointStore } from "~/shared/nano-states/breakpoints";
 import { findInitialWidth } from "./find-initial-width";
 
 export const useSetInitialCanvasWidth = () => {

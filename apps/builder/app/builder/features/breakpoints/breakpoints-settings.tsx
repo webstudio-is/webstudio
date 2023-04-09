@@ -17,13 +17,14 @@ import { BreakpointsEditor } from "./breakpoints-editor";
 import { TriggerButton } from "./trigger-button";
 import { WidthSetting } from "./width-setting";
 import { ConfirmationDialog } from "./confirmation-dialog";
-import { breakpointsStore, stylesStore } from "~/shared/nano-states";
 import {
-  groupBreakpoints,
+  breakpointsStore,
+  stylesStore,
   selectedBreakpointIdStore,
   selectedBreakpointStore,
-} from "~/builder/shared/breakpoints";
+} from "~/shared/nano-states";
 import { isFeatureEnabled } from "@webstudio-is/feature-flags";
+import { groupBreakpoints } from "~/shared/breakpoints";
 
 export const BreakpointsSettings = () => {
   const [view, setView] = useState<

@@ -19,7 +19,7 @@ import {
   hoveredInstanceSelectorStore,
   isPreviewModeStore,
 } from "~/shared/nano-states";
-import { synchronizedBreakpointsStores } from "~/builder/shared/breakpoints";
+import { synchronizedBreakpointsStores } from "~/shared/nano-states/breakpoints";
 import { synchronizedInstancesStores } from "~/shared/nano-states/instances";
 import { synchronizedCanvasStores } from "~/shared/nano-states/canvas";
 
