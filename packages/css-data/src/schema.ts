@@ -144,23 +144,15 @@ export const validStaticValueTypes = [
   "tuple",
 ] as const;
 
-/**
- * Shared zod types with DB types.
- * ImageValue in DB has a different type
- */
-const SharedStaticStyleValue = z.union([
+const ValidStaticStyleValue = z.union([
+  ImageValue,
+  LayersValue,
   UnitValue,
   KeywordValue,
   FontFamilyValue,
   RgbValue,
   UnparsedValue,
   TupleValue,
-]);
-
-const ValidStaticStyleValue = z.union([
-  ImageValue,
-  LayersValue,
-  SharedStaticStyleValue,
 ]);
 
 export type ValidStaticStyleValue = z.infer<typeof ValidStaticStyleValue>;
@@ -172,18 +164,8 @@ const VarValue = z.object({
 });
 export type VarValue = z.infer<typeof VarValue>;
 
-const StyleValue = z.union([
+export const StyleValue = z.union([
   ValidStaticStyleValue,
-  InvalidValue,
-  UnsetValue,
-  VarValue,
-]);
-
-/**
- * Shared types with DB types
- */
-export const SharedStyleValue = z.union([
-  SharedStaticStyleValue,
   InvalidValue,
   UnsetValue,
   VarValue,

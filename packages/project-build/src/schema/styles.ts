@@ -1,10 +1,5 @@
 import { z } from "zod";
-import {
-  type StyleProperty,
-  SharedStyleValue,
-  ImageValue,
-  LayersValue,
-} from "@webstudio-is/css-data";
+import { type StyleProperty, StyleValue } from "@webstudio-is/css-data";
 
 export const StyleDecl = z.object({
   styleSourceId: z.string(),
@@ -12,7 +7,7 @@ export const StyleDecl = z.object({
   state: z.optional(z.string()),
   // @todo can't figure out how to make property to be enum
   property: z.string() as z.ZodType<StyleProperty>,
-  value: z.union([ImageValue, LayersValue, SharedStyleValue]),
+  value: StyleValue,
 });
 
 export type StyleDecl = z.infer<typeof StyleDecl>;
