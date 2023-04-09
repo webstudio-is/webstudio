@@ -11,7 +11,7 @@ import { textEditingInstanceSelectorStore } from "~/shared/nano-states";
 import { CanvasTools } from "./canvas-tools";
 import { useMeasure } from "react-use";
 import { useEffect } from "react";
-import { useSetInitialCanvasWidth } from "../breakpoints";
+import { useSetInitialCanvasWidthOnce } from "../breakpoints";
 
 const workspaceStyle = css({
   flexGrow: 1,
@@ -34,6 +34,7 @@ const useSetWorkspaceRect = () => {
     if (rect.width === 0 || rect.height === 0) {
       return;
     }
+    console.log("set workspace rect", rect);
     // Little lie to safe the trouble of importing the type it uses everywhere.
     workspaceRectStore.set(rect as DOMRect);
   }, [workspaceRect, rect]);
@@ -82,8 +83,9 @@ export const Workspace = ({
   onTransitionEnd,
   publish,
 }: WorkspaceProps) => {
-  useSetInitialCanvasWidth();
+  const canvasStyle = useCanvasStyle();
   const workspaceRef = useSetWorkspaceRect();
+  useSetInitialCanvasWidthOnce();
   const handleWorkspaceClick = () => {
     selectedInstanceSelectorStore.set(undefined);
     textEditingInstanceSelectorStore.set(undefined);
@@ -97,7 +99,7 @@ export const Workspace = ({
     >
       <div
         className={canvasContainerStyle()}
-        style={useCanvasStyle()}
+        style={canvasStyle}
         onTransitionEnd={onTransitionEnd}
       >
         {children}

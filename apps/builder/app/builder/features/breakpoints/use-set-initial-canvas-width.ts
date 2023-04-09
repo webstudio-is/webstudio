@@ -12,12 +12,11 @@ export const useSetInitialCanvasWidth = () => {
   const [, setCanvasWidth] = useCanvasWidth();
   const workspaceRect = useStore(workspaceRectStore);
   const breakpoints = useStore(breakpointsStore);
-
   return useCallback(
     (breakpointId) => {
       const breakpoint = breakpoints.get(breakpointId);
       if (workspaceRect === undefined || breakpoint === undefined) {
-        return;
+        return false;
       }
       const width = findInitialWidth(
         Array.from(breakpoints.values()),
@@ -25,6 +24,7 @@ export const useSetInitialCanvasWidth = () => {
         workspaceRect.width
       );
       setCanvasWidth(width);
+      return true;
     },
     [workspaceRect, breakpoints, setCanvasWidth]
   );
@@ -34,12 +34,15 @@ export const useSetInitialCanvasWidthOnce = () => {
   const selectedBreakpoint = useStore(selectedBreakpointStore);
   const isDone = useRef(false);
   const setWidth = useSetInitialCanvasWidth();
+  const workspaceRect = useStore(workspaceRectStore);
+
   // Set it initially once.
   useEffect(() => {
     if (isDone.current) {
       return;
     }
-    isDone.current = true;
-    setWidth(selectedBreakpoint.id);
-  }, [selectedBreakpoint, setWidth]);
+    if (selectedBreakpoint) {
+      isDone.current = setWidth(selectedBreakpoint.id);
+    }
+  }, [selectedBreakpoint, setWidth, workspaceRect]);
 };
