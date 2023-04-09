@@ -1,7 +1,7 @@
 import { type Options, useHotkeys } from "react-hotkeys-hook";
 import store from "immerhin";
-import { selectBreakpointByOrderNumber } from "../nano-states/breakpoints";
 import { deleteSelectedInstance } from "../instance-utils";
+import { selectBreakpointByOrder } from "~/builder/shared/breakpoints";
 
 export const shortcuts = {
   esc: "esc",
@@ -48,7 +48,7 @@ export const useSharedShortcuts = () => {
   useHotkeys(
     breakpointShortcuts,
     (event) => {
-      selectBreakpointByOrderNumber(Number.parseInt(event.key, 10));
+      selectBreakpointByOrder(Number.parseInt(event.key, 10));
     },
     { enableOnFormTags: true, enableOnContentEditable: true },
     []

@@ -5,8 +5,8 @@ import {
   ToolbarToggleItem,
 } from "@webstudio-is/design-system";
 import { useRef } from "react";
-import { selectedBreakpointIdStore } from "~/shared/nano-states/breakpoints";
-import { selectedBreakpointStore } from "~/shared/nano-states/breakpoints";
+import { selectedBreakpointIdStore } from "~/builder/shared/breakpoints/stores";
+import { selectedBreakpointStore } from "~/builder/shared/breakpoints/stores";
 import { groupBreakpoints } from "./group-breakpoints";
 import { CascadeIndicator } from "./cascade-indicator";
 import { BpStarOffIcon, BpStarOnIcon } from "@webstudio-is/icons";

@@ -21,7 +21,7 @@ import { breakpointsStore, stylesStore } from "~/shared/nano-states";
 import {
   selectedBreakpointIdStore,
   selectedBreakpointStore,
-} from "~/shared/nano-states/breakpoints";
+} from "~/builder/shared/breakpoints/stores";
 import { isFeatureEnabled } from "@webstudio-is/feature-flags";
 import { groupBreakpoints } from "./group-breakpoints";
 

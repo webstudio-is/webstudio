@@ -296,7 +296,7 @@ export const Avatar = React.forwardRef<
             <Status
               size={
                 (typeof size === "number" && size > 2) ||
-                (typeof size === "string" && parseInt(size, 10) > 2)
+                (typeof size === "string" && Number.parseInt(size, 10) > 2)
                   ? "2"
                   : "1"
               }
