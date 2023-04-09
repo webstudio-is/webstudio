@@ -19,11 +19,11 @@ import { WidthSetting } from "./width-setting";
 import { ConfirmationDialog } from "./confirmation-dialog";
 import { breakpointsStore, stylesStore } from "~/shared/nano-states";
 import {
+  groupBreakpoints,
   selectedBreakpointIdStore,
   selectedBreakpointStore,
-} from "~/builder/shared/breakpoints/stores";
+} from "~/builder/shared/breakpoints";
 import { isFeatureEnabled } from "@webstudio-is/feature-flags";
-import { groupBreakpoints } from "./group-breakpoints";
 
 export const BreakpointsSettings = () => {
   const [view, setView] = useState<

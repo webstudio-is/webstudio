@@ -1,6 +1,6 @@
+import { groupBreakpoints } from ".";
 import { breakpointsStore } from "../../../shared/nano-states/nano-states";
 import { selectedBreakpointIdStore } from "./stores";
-import { groupBreakpoints } from "~/builder/features/breakpoints";
 
 /**
  * Order number starts with 1 and covers all existing breakpoints

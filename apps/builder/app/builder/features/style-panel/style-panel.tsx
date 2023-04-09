@@ -7,7 +7,7 @@ import {
 } from "@webstudio-is/design-system";
 import type { Instance } from "@webstudio-is/project-build";
 import type { Publish } from "~/shared/pubsub";
-import { selectedBreakpointStore } from "~/builder/shared/breakpoints/stores";
+import { selectedBreakpointStore } from "~/builder/shared/breakpoints";
 import { useStyleData } from "./shared/use-style-data";
 import { StyleSettings } from "./style-settings";
 import { useCanvasWidth } from "~/builder/shared/nano-states";

@@ -5,13 +5,15 @@ import {
   ToolbarToggleItem,
 } from "@webstudio-is/design-system";
 import { useRef } from "react";
-import { selectedBreakpointIdStore } from "~/builder/shared/breakpoints/stores";
-import { selectedBreakpointStore } from "~/builder/shared/breakpoints/stores";
-import { groupBreakpoints } from "./group-breakpoints";
+import {
+  selectedBreakpointStore,
+  selectedBreakpointIdStore,
+} from "~/builder/shared/breakpoints";
 import { CascadeIndicator } from "./cascade-indicator";
 import { BpStarOffIcon, BpStarOnIcon } from "@webstudio-is/icons";
 import { useSetInitialCanvasWidth } from ".";
 import { breakpointsStore } from "~/shared/nano-states";
+import { groupBreakpoints } from "~/builder/shared/breakpoints";
 
 export const BreakpointsSelector = () => {
   const breakpoints = useStore(breakpointsStore);

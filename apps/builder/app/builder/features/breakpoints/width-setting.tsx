@@ -6,7 +6,7 @@ import { breakpointsStore } from "~/shared/nano-states";
 import {
   selectedBreakpointIdStore,
   selectedBreakpointStore,
-} from "~/builder/shared/breakpoints/stores";
+} from "~/builder/shared/breakpoints";
 
 // Doesn't make sense to allow resizing the canvas lower/higher than this.
 export const minWidth = 240;

@@ -8,7 +8,7 @@ import {
   toggleItemStyle,
 } from "@webstudio-is/design-system";
 import { scaleStore, useCanvasWidth } from "~/builder/shared/nano-states";
-import { selectedBreakpointStore } from "~/builder/shared/breakpoints/stores";
+import { selectedBreakpointStore } from "~/builder/shared/breakpoints";
 
 const Value = ({
   children,
