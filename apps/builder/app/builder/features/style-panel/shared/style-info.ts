@@ -19,7 +19,7 @@ import {
   selectedOrLastStyleSourceSelectorStore,
   breakpointsStore,
 } from "~/shared/nano-states";
-import { selectedBreakpointStore } from "~/shared/nano-states/breakpoints";
+import { selectedBreakpointStore } from "~/shared/nano-states";
 import type { InstanceSelector } from "~/shared/tree-utils";
 import { getComponentMeta } from "@webstudio-is/react-sdk";
 import type { htmlTags as HtmlTags } from "html-tags";

@@ -16,7 +16,7 @@ import {
   styleSourcesStore,
   stylesStore,
 } from "~/shared/nano-states";
-import { selectedBreakpointStore } from "~/shared/nano-states/breakpoints";
+import { selectedBreakpointStore } from "~/shared/nano-states";
 // @todo: must be removed, now it's only for compatibility with existing code
 import { parseCssValue } from "./parse-css-value";
 import { useStyleInfo } from "./style-info";

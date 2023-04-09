@@ -7,7 +7,7 @@ import {
 } from "~/builder/shared/nano-states";
 import type { Publish } from "~/shared/pubsub";
 import { selectedInstanceSelectorStore } from "~/shared/nano-states";
-import { textEditingInstanceSelectorStore } from "~/shared/nano-states/instances";
+import { textEditingInstanceSelectorStore } from "~/shared/nano-states";
 import { CanvasTools } from "./canvas-tools";
 import { useMeasure } from "react-use";
 import { useEffect } from "react";

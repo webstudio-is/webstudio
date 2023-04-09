@@ -11,7 +11,7 @@ import {
   selectedInstanceSelectorStore,
 } from "~/shared/nano-states";
 import { getAncestorInstanceSelector } from "~/shared/tree-utils";
-import { textEditingInstanceSelectorStore } from "~/shared/nano-states/instances";
+import { textEditingInstanceSelectorStore } from "~/shared/nano-states";
 
 type BreadcrumbProps = {
   children: JSX.Element | string;

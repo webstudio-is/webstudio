@@ -3,11 +3,11 @@ import {
   hoveredInstanceSelectorStore,
   selectedInstanceSelectorStore,
 } from "~/shared/nano-states";
-import { textEditingInstanceSelectorStore } from "~/shared/nano-states/instances";
+import { textEditingInstanceSelectorStore } from "~/shared/nano-states";
 import { areInstanceSelectorsEqual } from "~/shared/tree-utils";
 import { Outline } from "./outline";
 import { Label } from "./label";
-import { hoveredInstanceOutlineAndInstanceStore } from "~/shared/nano-states/canvas";
+import { hoveredInstanceOutlineAndInstanceStore } from "~/shared/nano-states";
 
 export const HoveredInstanceOutline = () => {
   const selectedInstanceSelector = useStore(selectedInstanceSelectorStore);

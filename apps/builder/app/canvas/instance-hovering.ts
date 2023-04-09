@@ -4,7 +4,7 @@ import {
   hoveredInstanceSelectorStore,
   instancesStore,
 } from "~/shared/nano-states";
-import { hoveredInstanceOutlineStore } from "~/shared/nano-states/canvas";
+import { hoveredInstanceOutlineStore } from "~/shared/nano-states";
 import {
   getAllElementsBoundingBox,
   getElementByInstanceSelector,

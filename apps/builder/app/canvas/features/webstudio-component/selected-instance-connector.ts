@@ -12,7 +12,7 @@ import {
 import htmlTags, { type htmlTags as HtmlTags } from "html-tags";
 import { getAllElementsBoundingBox } from "~/shared/dom-utils";
 import { subscribeScrollState } from "~/canvas/shared/scroll-state";
-import { selectedInstanceOutlineStore } from "~/shared/nano-states/canvas";
+import { selectedInstanceOutlineStore } from "~/shared/nano-states";
 
 const isHtmlTag = (tag: string): tag is HtmlTags =>
   htmlTags.includes(tag as HtmlTags);

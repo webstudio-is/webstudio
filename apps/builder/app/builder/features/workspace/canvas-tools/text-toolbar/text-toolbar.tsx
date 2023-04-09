@@ -12,10 +12,7 @@ import {
   PaintBrushIcon,
 } from "@webstudio-is/icons";
 import { selectedInstanceSelectorStore } from "~/shared/nano-states";
-import {
-  type TextToolbarState,
-  textToolbarStore,
-} from "~/shared/nano-states/canvas";
+import { type TextToolbarState, textToolbarStore } from "~/shared/nano-states";
 import type { Publish } from "~/shared/pubsub";
 
 type Format =

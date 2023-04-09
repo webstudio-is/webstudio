@@ -1,8 +1,5 @@
 import { groupBreakpoints } from ".";
-import {
-  selectedBreakpointIdStore,
-  breakpointsStore,
-} from "../nano-states/breakpoints";
+import { selectedBreakpointIdStore, breakpointsStore } from "../nano-states";
 
 /**
  * Order number starts with 1 and covers all existing breakpoints

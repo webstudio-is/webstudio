@@ -19,9 +19,9 @@ import {
   hoveredInstanceSelectorStore,
   isPreviewModeStore,
 } from "~/shared/nano-states";
-import { synchronizedBreakpointsStores } from "~/shared/nano-states/breakpoints";
-import { synchronizedInstancesStores } from "~/shared/nano-states/instances";
-import { synchronizedCanvasStores } from "~/shared/nano-states/canvas";
+import { synchronizedBreakpointsStores } from "~/shared/nano-states";
+import { synchronizedInstancesStores } from "~/shared/nano-states";
+import { synchronizedCanvasStores } from "~/shared/nano-states";
 
 enableMapSet();
 

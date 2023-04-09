@@ -1,7 +1,7 @@
 import { useStore } from "@nanostores/react";
 import { selectedInstanceSelectorStore } from "~/shared/nano-states";
-import { textEditingInstanceSelectorStore } from "~/shared/nano-states/instances";
-import { selectedInstanceOutlineAndInstanceStore } from "~/shared/nano-states/canvas";
+import { textEditingInstanceSelectorStore } from "~/shared/nano-states";
+import { selectedInstanceOutlineAndInstanceStore } from "~/shared/nano-states";
 import { areInstanceSelectorsEqual } from "~/shared/tree-utils";
 import { Outline } from "./outline";
 import { Label } from "./label";

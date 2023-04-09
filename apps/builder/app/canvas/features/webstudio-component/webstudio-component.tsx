@@ -21,7 +21,7 @@ import {
   useInstanceProps,
   useInstanceStyles,
 } from "~/shared/nano-states";
-import { textEditingInstanceSelectorStore } from "~/shared/nano-states/instances";
+import { textEditingInstanceSelectorStore } from "~/shared/nano-states";
 import { useCssRules } from "~/canvas/shared/styles";
 import {
   type InstanceSelector,
