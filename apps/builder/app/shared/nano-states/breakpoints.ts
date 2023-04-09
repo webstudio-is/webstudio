@@ -4,8 +4,6 @@ import { breakpointsContainer } from "./nano-states";
 import { compareMedia } from "@webstudio-is/css-engine";
 import { isBaseBreakpoint } from "~/builder/shared/breakpoints";
 
-export const scaleStore = atom<number>(100);
-
 export const selectedBreakpointIdStore = atom<undefined | Breakpoint["id"]>(
   undefined
 );
@@ -43,8 +41,5 @@ export const selectBreakpointByOrderNumber = (orderNumber: number) => {
 };
 
 export const synchronizedBreakpointsStores = [
-  ["scaleStore", scaleStore],
   ["selectedBreakpointId", selectedBreakpointIdStore],
 ] as const;
-
-export const workspaceRectStore = atom<DOMRect | undefined>();

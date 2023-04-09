@@ -11,11 +11,13 @@ import { selectedBreakpointStore } from "~/shared/nano-states/breakpoints";
 import { groupBreakpoints } from "./group-breakpoints";
 import { CascadeIndicator } from "./cascade-indicator";
 import { BpStarOffIcon, BpStarOnIcon } from "@webstudio-is/icons";
+import { useSetInitialCanvasWidth } from ".";
 
 export const BreakpointsSelector = () => {
   const [breakpoints] = useBreakpoints();
   const selectedBreakpoint = useStore(selectedBreakpointStore);
   const ref = useRef(null);
+  const setInitialCanvasWidth = useSetInitialCanvasWidth();
   if (selectedBreakpoint === undefined) {
     return null;
   }
@@ -26,6 +28,10 @@ export const BreakpointsSelector = () => {
         value={selectedBreakpoint.id}
         onValueChange={(breakpointId: string) => {
           selectedBreakpointIdStore.set(breakpointId);
+          const nextSelectedBreakpoint = breakpoints.get(breakpointId);
+          if (nextSelectedBreakpoint) {
+            setInitialCanvasWidth(nextSelectedBreakpoint.id);
+          }
         }}
         css={{ position: "relative" }}
       >

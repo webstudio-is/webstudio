@@ -22,10 +22,10 @@ import {
 import { useSubscribe, type Publish } from "~/shared/pubsub";
 import {
   isCanvasPointerEventsEnabledStore,
+  scaleStore,
   useCanvasRect,
 } from "~/builder/shared/nano-states";
 import { insertNewComponentInstance } from "~/shared/instance-utils";
-import { scaleStore } from "~/shared/nano-states/breakpoints";
 
 const DragLayer = ({
   component,

@@ -1,8 +1,11 @@
 import { useCallback, useEffect, useState } from "react";
 import { useStore } from "@nanostores/react";
-import { useCanvasRect, useCanvasWidth } from "~/builder/shared/nano-states";
+import {
+  scaleStore,
+  useCanvasRect,
+  useCanvasWidth,
+} from "~/builder/shared/nano-states";
 import { useWindowResize } from "~/shared/dom-hooks";
-import { scaleStore } from "~/shared/nano-states/breakpoints";
 
 /**
  * Reads the canvas iframe dom rect and puts it into nano state

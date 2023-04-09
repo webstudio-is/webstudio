@@ -20,7 +20,6 @@ import {
 import { Topbar } from "./features/topbar";
 import builderStyles from "./builder.css";
 import { Footer } from "./features/footer";
-import { useSetCanvasSize } from "./features/breakpoints";
 import {
   CanvasIframe,
   useReadCanvasRect,
@@ -290,7 +289,6 @@ export const Builder = ({
   useSetIsPreviewMode(authPermit === "view");
   const [isPreviewMode] = useIsPreviewMode();
   usePublishShortcuts(publish);
-  useSetCanvasSize();
   const { onRef: onRefReadCanvas, onTransitionEnd } = useReadCanvasRect();
   useSubscribeCanvasReady(publish);
   // We need to initialize this in both canvas and builder,

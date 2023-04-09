@@ -1,4 +1,4 @@
-import { atom, type WritableAtom } from "nanostores";
+import { atom, computed, type WritableAtom } from "nanostores";
 import { useStore } from "@nanostores/react";
 import type { Project } from "@webstudio-is/project";
 
@@ -24,3 +24,19 @@ export const projectContainer = atom<Project | undefined>();
 export const useProject = () => useValue(projectContainer);
 
 export const isCanvasPointerEventsEnabledStore = atom<boolean>(true);
+
+export const workspaceRectStore = atom<DOMRect | undefined>();
+
+export const scaleStore = computed(
+  [canvasWidthContainer, workspaceRectStore],
+  (canvasWidth, workspaceRect) => {
+    if (
+      canvasWidth === undefined ||
+      workspaceRect === undefined ||
+      canvasWidth <= workspaceRect.width
+    ) {
+      return 100;
+    }
+    return parseFloat(((workspaceRect.width / canvasWidth) * 100).toFixed(2));
+  }
+);

@@ -1,16 +1,17 @@
 import { useStore } from "@nanostores/react";
 import { theme, Toaster, css } from "@webstudio-is/design-system";
-import { useCanvasWidth } from "~/builder/shared/nano-states";
+import {
+  scaleStore,
+  useCanvasWidth,
+  workspaceRectStore,
+} from "~/builder/shared/nano-states";
 import type { Publish } from "~/shared/pubsub";
 import { selectedInstanceSelectorStore } from "~/shared/nano-states";
 import { textEditingInstanceSelectorStore } from "~/shared/nano-states/instances";
-import {
-  workspaceRectStore,
-  scaleStore,
-} from "~/shared/nano-states/breakpoints";
 import { CanvasTools } from "./canvas-tools";
 import { useMeasure } from "react-use";
 import { useEffect } from "react";
+import { useSetInitialCanvasWidth } from "../breakpoints";
 
 const workspaceStyle = css({
   flexGrow: 1,
@@ -81,6 +82,7 @@ export const Workspace = ({
   onTransitionEnd,
   publish,
 }: WorkspaceProps) => {
+  useSetInitialCanvasWidth();
   const workspaceRef = useSetWorkspaceRect();
   const handleWorkspaceClick = () => {
     selectedInstanceSelectorStore.set(undefined);
