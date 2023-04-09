@@ -17,11 +17,7 @@ import { BreakpointsEditor } from "./breakpoints-editor";
 import { TriggerButton } from "./trigger-button";
 import { WidthSetting } from "./width-setting";
 import { ConfirmationDialog } from "./confirmation-dialog";
-import {
-  breakpointsContainer,
-  stylesStore,
-  useBreakpoints,
-} from "~/shared/nano-states";
+import { breakpointsStore, stylesStore } from "~/shared/nano-states";
 import {
   selectedBreakpointIdStore,
   selectedBreakpointStore,
@@ -36,7 +32,7 @@ export const BreakpointsSettings = () => {
   const [breakpointToDelete, setBreakpointToDelete] = useState<
     Breakpoint | undefined
   >();
-  const [breakpoints] = useBreakpoints();
+  const breakpoints = useStore(breakpointsStore);
   const selectedBreakpoint = useStore(selectedBreakpointStore);
 
   useSubscribe("openBreakpointsMenu", () => {
@@ -56,7 +52,7 @@ export const BreakpointsSettings = () => {
       return;
     }
     store.createTransaction(
-      [breakpointsContainer, stylesStore],
+      [breakpointsStore, stylesStore],
       (breakpoints, styles) => {
         const breakpointId = breakpointToDelete.id;
         breakpoints.delete(breakpointId);

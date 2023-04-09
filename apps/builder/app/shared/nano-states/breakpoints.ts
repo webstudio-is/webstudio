@@ -1,6 +1,6 @@
 import { atom, computed } from "nanostores";
 import type { Breakpoint } from "@webstudio-is/project-build";
-import { breakpointsContainer } from "./nano-states";
+import { breakpointsStore } from "./nano-states";
 import { compareMedia } from "@webstudio-is/css-engine";
 import { isBaseBreakpoint } from "~/builder/shared/breakpoints";
 
@@ -9,7 +9,7 @@ export const selectedBreakpointIdStore = atom<undefined | Breakpoint["id"]>(
 );
 
 export const selectedBreakpointStore = computed(
-  [breakpointsContainer, selectedBreakpointIdStore],
+  [breakpointsStore, selectedBreakpointIdStore],
   (breakpoints, selectedBreakpointId) => {
     const matchedBreakpoint =
       selectedBreakpointId === undefined
@@ -30,7 +30,7 @@ export const selectedBreakpointStore = computed(
  * order number starts with 1 and covers all existing breakpoints
  */
 export const selectBreakpointByOrderNumber = (orderNumber: number) => {
-  const breakpoints = breakpointsContainer.get();
+  const breakpoints = breakpointsStore.get();
   const index = orderNumber - 1;
   const breakpoint = Array.from(breakpoints.values())
     .sort(compareMedia)

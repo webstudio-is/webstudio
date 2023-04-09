@@ -7,7 +7,7 @@ import {
   pagesStore,
   instancesStore,
   propsStore,
-  breakpointsContainer,
+  breakpointsStore,
   stylesStore,
   styleSourcesStore,
   styleSourceSelectionsStore,
@@ -53,7 +53,7 @@ const clientStores = new Map<string, WritableAtom<unknown>>();
 export const registerContainers = () => {
   // synchronize patches
   store.register("pages", pagesStore);
-  store.register("breakpoints", breakpointsContainer);
+  store.register("breakpoints", breakpointsStore);
   store.register("instances", instancesStore);
   store.register("styles", stylesStore);
   store.register("styleSources", styleSourcesStore);

@@ -5,16 +5,16 @@ import {
   ToolbarToggleItem,
 } from "@webstudio-is/design-system";
 import { useRef } from "react";
-import { useBreakpoints } from "~/shared/nano-states";
 import { selectedBreakpointIdStore } from "~/shared/nano-states/breakpoints";
 import { selectedBreakpointStore } from "~/shared/nano-states/breakpoints";
 import { groupBreakpoints } from "./group-breakpoints";
 import { CascadeIndicator } from "./cascade-indicator";
 import { BpStarOffIcon, BpStarOnIcon } from "@webstudio-is/icons";
 import { useSetInitialCanvasWidth } from ".";
+import { breakpointsStore } from "~/shared/nano-states";
 
 export const BreakpointsSelector = () => {
-  const [breakpoints] = useBreakpoints();
+  const breakpoints = useStore(breakpointsStore);
   const selectedBreakpoint = useStore(selectedBreakpointStore);
   const ref = useRef(null);
   const setInitialCanvasWidth = useSetInitialCanvasWidth();

@@ -5,7 +5,7 @@ import {
   getPresetStyle,
 } from "~/builder/features/style-panel/shared/style-info";
 import {
-  breakpointsContainer,
+  breakpointsStore,
   instancesStore,
   stylesIndexStore,
 } from "~/shared/nano-states";
@@ -45,7 +45,7 @@ const replacedHtmlElements = ["IFRAME", "VIDEO", "EMBED", "IMG"];
 const skipElementsSet = new Set([...voidHtmlElements, ...replacedHtmlElements]);
 
 const getInstanceSize = (instanceId: string, tagName: HtmlTags | undefined) => {
-  const breakpoints = breakpointsContainer.get();
+  const breakpoints = breakpointsStore.get();
   const selectedBreakpoint = selectedBreakpointStore.get();
   const { stylesByInstanceId } = stylesIndexStore.get();
   const instances = instancesStore.get();

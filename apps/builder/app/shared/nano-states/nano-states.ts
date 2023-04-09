@@ -276,13 +276,12 @@ export const stylesIndexStore = computed(
   }
 );
 
-export const breakpointsContainer = atom<Breakpoints>(new Map());
-export const useBreakpoints = () => useValue(breakpointsContainer);
+export const breakpointsStore = atom<Breakpoints>(new Map());
 export const useSetBreakpoints = (
   breakpoints: [Breakpoint["id"], Breakpoint][]
 ) => {
   useSyncInitializeOnce(() => {
-    breakpointsContainer.set(new Map(breakpoints));
+    breakpointsStore.set(new Map(breakpoints));
   });
 };
 
