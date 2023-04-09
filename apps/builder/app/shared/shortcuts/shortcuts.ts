@@ -1,7 +1,6 @@
 import { type Options, useHotkeys } from "react-hotkeys-hook";
 import store from "immerhin";
 import { selectBreakpointByOrderNumber } from "../nano-states/breakpoints";
-import { escapeSelection } from "../nano-states/instances";
 import { deleteSelectedInstance } from "../instance-utils";
 
 export const shortcuts = {
@@ -54,6 +53,4 @@ export const useSharedShortcuts = () => {
     { enableOnFormTags: true, enableOnContentEditable: true },
     []
   );
-
-  useHotkeys("esc", escapeSelection, { enableOnContentEditable: true }, []);
 };
