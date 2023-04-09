@@ -158,7 +158,7 @@ const printLetterSpacing = (path: string[], unparsedValue: unknown) => {
     return `${value}px`;
   }
   if (/^-?[0-9]+(.[0-9]+)?%$/.test(value)) {
-    const fraction = parseFloat(value) / 100;
+    const fraction = Number.parseFloat(value) / 100;
     return `${fraction}em`;
   }
   throw new Error(

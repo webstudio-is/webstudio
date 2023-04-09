@@ -142,7 +142,7 @@ const useScrub = ({
 };
 
 export const isNumericString = (input: string) =>
-  String(input).trim().length !== 0 && isNaN(Number(input)) === false;
+  String(input).trim().length !== 0 && Number.isNaN(Number(input)) === false;
 
 const useHandleKeyDown =
   ({

@@ -24,7 +24,7 @@ const useContentController = ({
         },
         {
           name: "number",
-          match: (value: string) => isNaN(parseFloat(value)) === false,
+          match: (value: string) => Number.isNaN(parseFloat(value)) === false,
         },
         { name: "unknown", match: (value: string) => Boolean(value) },
       ],

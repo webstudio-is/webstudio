@@ -37,6 +37,8 @@ export const scaleStore = computed(
     ) {
       return 100;
     }
-    return parseFloat(((workspaceRect.width / canvasWidth) * 100).toFixed(2));
+    return Number.parseFloat(
+      ((workspaceRect.width / canvasWidth) * 100).toFixed(2)
+    );
   }
 );
