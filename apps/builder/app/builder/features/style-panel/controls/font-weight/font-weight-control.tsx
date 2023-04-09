@@ -77,7 +77,15 @@ export const FontWeightControl = ({
   const fontFamily = currentStyle.fontFamily?.value;
 
   const availableFontWeights = useAvailableFontWeights(
-    toValue(fontFamily, { withFallback: false })
+    toValue(fontFamily, (styleValue) => {
+      // override default fallback with rendering only first font family
+      if (styleValue.type === "fontFamily") {
+        return {
+          type: "fontFamily",
+          value: [styleValue.value[0]],
+        };
+      }
+    })
   );
   const { labels, selectedLabel } = useLabels(
     availableFontWeights,

@@ -54,13 +54,20 @@ describe("Convert WS CSS Values to native CSS strings", () => {
     expect(value).toBe("Courier New, monospace");
   });
 
-  test("withFallback=false", () => {
+  test("Transform font family value to override default fallback", () => {
     const value = toValue(
       {
         type: "fontFamily",
         value: ["Courier New"],
       },
-      { withFallback: false }
+      (styleValue) => {
+        if (styleValue.type === "fontFamily") {
+          return {
+            type: "fontFamily",
+            value: [styleValue.value[0]],
+          };
+        }
+      }
     );
     expect(value).toBe("Courier New");
   });
