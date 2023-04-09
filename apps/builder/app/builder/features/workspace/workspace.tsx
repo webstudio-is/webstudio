@@ -34,7 +34,6 @@ const useSetWorkspaceRect = () => {
     if (rect.width === 0 || rect.height === 0) {
       return;
     }
-    console.log("set workspace rect", rect);
     // Little lie to safe the trouble of importing the type it uses everywhere.
     workspaceRectStore.set(rect as DOMRect);
   }, [workspaceRect, rect]);
