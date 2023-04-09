@@ -5,7 +5,6 @@ import { PlacementIndicator } from "@webstudio-is/design-system";
 import {
   useIsPreviewMode,
   useDragAndDropState,
-  useSubscribeDragAndDropState,
   instancesStore,
 } from "~/shared/nano-states";
 import { HoveredInstanceOutline, SelectedInstanceOutline } from "./outline";
@@ -13,6 +12,7 @@ import { TextToolbar } from "./text-toolbar";
 import { useSubscribeSwitchPage } from "~/shared/pages";
 import { Label } from "./outline/label";
 import { Outline } from "./outline/outline";
+import { useSubscribeDragAndDropState } from "./use-subscribe-drag-drop-state";
 
 const toolsStyle = {
   position: "absolute",
