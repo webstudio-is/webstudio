@@ -34,7 +34,6 @@
     "dts": "tsc --emitDeclarationOnly --declaration --declarationDir lib/types"
   },
   "dependencies": {
-    "@webstudio-is/asset-uploader": "workspace:^",
     "@webstudio-is/css-data": "workspace:^",
     "@webstudio-is/prisma-client": "workspace:^",
     "@webstudio-is/trpc-interface": "workspace:^",

@@ -1,6 +1,6 @@
 import { describe, beforeEach, test, expect } from "@jest/globals";
+import type { Assets } from "@webstudio-is/asset-uploader";
 import { CssEngine } from "./css-engine";
-import type { Assets, ImageAsset } from "@webstudio-is/asset-uploader";
 
 const style0 = {
   display: { type: "keyword", value: "block" },
@@ -378,9 +378,7 @@ describe("CssEngine", () => {
             type: "image",
             value: {
               type: "asset",
-              value: {
-                id: "1234",
-              } as ImageAsset,
+              value: "1234",
             },
           },
         },
@@ -388,7 +386,7 @@ describe("CssEngine", () => {
       },
       (styleValue) => {
         if (styleValue.type === "image" && styleValue.value.type === "asset") {
-          const asset = assets.get(styleValue.value.value.id);
+          const asset = assets.get(styleValue.value.value);
           if (asset === undefined) {
             return { type: "keyword", value: "none" };
           }

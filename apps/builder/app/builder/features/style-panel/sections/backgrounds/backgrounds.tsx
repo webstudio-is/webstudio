@@ -1,3 +1,4 @@
+import { useStore } from "@nanostores/react";
 import type { RenderCategoryProps } from "../../style-sections";
 import { styleConfigByName } from "../../shared/configs";
 import { FloatingPanel } from "~/builder/shared/floating-panel";
@@ -21,6 +22,7 @@ import {
   SubtractIcon,
   PlusIcon,
 } from "@webstudio-is/icons";
+import { assetsStore } from "~/shared/nano-states";
 import { PropertyName } from "../../shared/property-name";
 import type { StyleInfo } from "../../shared/style-info";
 import { ColorControl } from "../../controls/color/color-control";
@@ -63,6 +65,8 @@ const Layer = (props: {
   deleteLayer: () => void;
   setBackgroundColor: (color: RgbValue) => void;
 }) => {
+  const assets = useStore(assetsStore);
+
   const backgrounImageStyle = props.layerStyle.backgroundImage?.value;
   const isHidden =
     backgrounImageStyle?.type === "image" ||
@@ -104,7 +108,7 @@ const Layer = (props: {
         tabIndex={props.tabIndex}
         label={
           <Label truncate onReset={props.deleteLayer}>
-            {getLayerName(props.layerStyle)}
+            {getLayerName(props.layerStyle, assets)}
           </Label>
         }
         thumbnail={<LayerThumbnail layerStyle={props.layerStyle} />}

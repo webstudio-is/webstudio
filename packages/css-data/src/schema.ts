@@ -1,7 +1,6 @@
 import { units } from "./__generated__/units";
 import type { properties } from "./__generated__/properties";
 import { z } from "zod";
-import { ImageAsset } from "@webstudio-is/asset-uploader";
 
 type Properties = typeof properties & {
   [custom: CustomProperty]: {
@@ -75,7 +74,7 @@ export type RgbValue = z.infer<typeof RgbValue>;
 export const ImageValue = z.object({
   type: z.literal("image"),
   value: z.union([
-    z.object({ type: z.literal("asset"), value: ImageAsset }),
+    z.object({ type: z.literal("asset"), value: z.string() }),
     // url is not stored in db and only used by css-engine transformValue
     // to prepare image value for rendering
     z.object({ type: z.literal("url"), url: z.string() }),
