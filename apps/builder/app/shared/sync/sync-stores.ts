@@ -18,10 +18,10 @@ import {
   selectedInstanceIntanceToTagStore,
   hoveredInstanceSelectorStore,
   isPreviewModeStore,
+  synchronizedCanvasStores,
+  synchronizedInstancesStores,
+  synchronizedBreakpointsStores,
 } from "~/shared/nano-states";
-import { synchronizedBreakpointsStores } from "~/shared/nano-states";
-import { synchronizedInstancesStores } from "~/shared/nano-states";
-import { synchronizedCanvasStores } from "~/shared/nano-states";
 
 enableMapSet();
 
