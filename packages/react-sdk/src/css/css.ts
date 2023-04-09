@@ -1,5 +1,5 @@
-import { createCssEngine } from "@webstudio-is/css-engine";
-import type { Asset } from "@webstudio-is/asset-uploader";
+import { createCssEngine, type TransformValue } from "@webstudio-is/css-engine";
+import type { Asset, Assets } from "@webstudio-is/asset-uploader";
 import type { Build } from "@webstudio-is/project-build";
 import { getComponentNames } from "../components/components-utils";
 import { getComponentMeta } from "../components";
@@ -13,6 +13,24 @@ type Data = {
   styles?: Build["styles"];
   styleSourceSelections?: Build["styleSourceSelections"];
 };
+
+export const createImageValueTransformer =
+  (assets: Assets): TransformValue =>
+  (styleValue) => {
+    if (styleValue.type === "image" && styleValue.value.type === "asset") {
+      const asset = assets.get(styleValue.value.value.id);
+      if (asset === undefined) {
+        return { type: "keyword", value: "none" };
+      }
+      return {
+        type: "image",
+        value: {
+          type: "url",
+          url: asset.path,
+        },
+      };
+    }
+  };
 
 export const generateCssText = (data: Data) => {
   const assets = new Map<Asset["id"], Asset>(
@@ -47,10 +65,14 @@ export const generateCssText = (data: Data) => {
 
   const styleRules = getStyleRules(styles, styleSourceSelections);
   for (const { breakpointId, instanceId, style } of styleRules) {
-    engine.addStyleRule(`[${idAttribute}="${instanceId}"]`, {
-      breakpoint: breakpointId,
-      style,
-    });
+    engine.addStyleRule(
+      `[${idAttribute}="${instanceId}"]`,
+      {
+        breakpoint: breakpointId,
+        style,
+      },
+      createImageValueTransformer(assets)
+    );
   }
 
   return engine.cssText;

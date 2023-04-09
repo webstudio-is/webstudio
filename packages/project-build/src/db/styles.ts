@@ -150,6 +150,9 @@ const serializeValue = (
   styleValue: StyleDecl["value"]
 ): StoredStyleDecl["value"] => {
   if (styleValue.type === "image") {
+    if (styleValue.value.type === "url") {
+      return { type: "keyword", value: "none" };
+    }
     const asset = styleValue.value;
     return {
       type: "image" as const,
@@ -165,6 +168,9 @@ const serializeValue = (
       type: "layers" as const,
       value: styleValue.value.map((item) => {
         if (item.type === "image") {
+          if (item.value.type === "url") {
+            return { type: "keyword" as const, value: "none" };
+          }
           const asset = item.value;
           return {
             type: "image" as const,

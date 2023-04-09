@@ -28,6 +28,7 @@
     "@types/hyphenate-style-name": "^1.0.0",
     "@types/react": "^17.0.24",
     "@types/react-dom": "^17.0.9",
+    "@webstudio-is/asset-uploader": "workspace:^",
     "@webstudio-is/css-data": "workspace:^",
     "@webstudio-is/jest-config": "workspace:^",
     "@webstudio-is/scripts": "workspace:^",

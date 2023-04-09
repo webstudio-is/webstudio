@@ -56,7 +56,10 @@ const gradientNames = [
 
 export const getLayerName = (layerStyle: StyleInfo) => {
   const backgroundImageStyle = layerStyle.backgroundImage?.value;
-  if (backgroundImageStyle?.type === "image") {
+  if (
+    backgroundImageStyle?.type === "image" &&
+    backgroundImageStyle.value.type === "asset"
+  ) {
     return backgroundImageStyle.value.value.name;
   }
 
@@ -74,7 +77,10 @@ export const getLayerName = (layerStyle: StyleInfo) => {
 export const LayerThumbnail = (props: { layerStyle: StyleInfo }) => {
   const backgroundImageStyle = props.layerStyle.backgroundImage?.value;
 
-  if (backgroundImageStyle?.type === "image") {
+  if (
+    backgroundImageStyle?.type === "image" &&
+    backgroundImageStyle.value.type === "asset"
+  ) {
     const asset = backgroundImageStyle.value.value;
     const remoteLocation = asset.location === "REMOTE";
 

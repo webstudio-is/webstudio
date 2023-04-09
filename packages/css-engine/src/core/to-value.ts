@@ -68,7 +68,7 @@ export const toValue = (
   }
 
   if (value.type === "image") {
-    if (value.hidden) {
+    if (value.hidden || value.value.type !== "url") {
       // We assume that property is background-image and use this to hide background layers
       // In the future we might want to have a more generic way to hide values
       // i.e. have knowledge about property-name, as none is property specific
@@ -76,7 +76,7 @@ export const toValue = (
     }
 
     // @todo image-set
-    return `url(${value.value.value.path}) /* id=${value.value.value.id} */`;
+    return `url(${value.value.url})`;
   }
 
   if (value.type === "unparsed") {

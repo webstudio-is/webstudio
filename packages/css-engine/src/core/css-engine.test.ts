@@ -1,5 +1,6 @@
 import { describe, beforeEach, test, expect } from "@jest/globals";
 import { CssEngine } from "./css-engine";
+import type { Assets, ImageAsset } from "@webstudio-is/asset-uploader";
 
 const style0 = {
   display: { type: "keyword", value: "block" },
@@ -346,6 +347,65 @@ describe("CssEngine", () => {
     expect(engine.cssText).toMatchInlineSnapshot(`
       "@media all {
         .c { color: black }
+      }"
+    `);
+  });
+
+  test("render images with injected asset url", () => {
+    const assets: Assets = new Map([
+      [
+        "1234",
+        {
+          type: "image",
+          path: "foo.png",
+          id: "1234567890",
+          projectId: "",
+          format: "",
+          size: 1212,
+          name: "img",
+          description: "",
+          location: "REMOTE",
+          createdAt: "",
+          meta: { width: 1, height: 2 },
+        },
+      ],
+    ]);
+    const rule = engine.addStyleRule(
+      ".c",
+      {
+        style: {
+          backgroundImage: {
+            type: "image",
+            value: {
+              type: "asset",
+              value: {
+                id: "1234",
+              } as ImageAsset,
+            },
+          },
+        },
+        breakpoint: "0",
+      },
+      (styleValue) => {
+        if (styleValue.type === "image" && styleValue.value.type === "asset") {
+          const asset = assets.get(styleValue.value.value.id);
+          if (asset === undefined) {
+            return { type: "keyword", value: "none" };
+          }
+          return {
+            type: "image",
+            value: {
+              type: "url",
+              url: asset.path,
+            },
+          };
+        }
+      }
+    );
+    rule.styleMap.delete("display");
+    expect(engine.cssText).toMatchInlineSnapshot(`
+      "@media all {
+        .c { background-image: url(foo.png) }
       }"
     `);
   });

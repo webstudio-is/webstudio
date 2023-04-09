@@ -16,7 +16,10 @@ export const ImageControl = ({
 
   const setValue = setProperty(property);
 
-  const valueAsset = styleValue.type === "image" ? styleValue.value : undefined;
+  const valueAsset =
+    styleValue.type === "image" && styleValue.value.type === "asset"
+      ? styleValue.value
+      : undefined;
 
   return (
     <FloatingPanel

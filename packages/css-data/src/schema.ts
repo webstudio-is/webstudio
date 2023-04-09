@@ -74,7 +74,12 @@ export type RgbValue = z.infer<typeof RgbValue>;
 
 export const ImageValue = z.object({
   type: z.literal("image"),
-  value: z.object({ type: z.literal("asset"), value: ImageAsset }),
+  value: z.union([
+    z.object({ type: z.literal("asset"), value: ImageAsset }),
+    // url is not stored in db and only used by css-engine transformValue
+    // to prepare image value for rendering
+    z.object({ type: z.literal("url"), url: z.string() }),
+  ]),
   // For the builder we want to be able to hide images
   hidden: z.boolean().optional(),
 });

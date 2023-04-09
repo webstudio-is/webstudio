@@ -10,6 +10,7 @@ import {
 import { compareMedia } from "./compare-media";
 import { StyleElement } from "./style-element";
 import { StyleSheet } from "./style-sheet";
+import type { TransformValue } from "./to-value";
 
 const defaultMediaRuleId = "__default-media-rule__";
 
@@ -36,10 +37,14 @@ export class CssEngine {
     }
     return mediaRule;
   }
-  addStyleRule(selectorText: string, rule: CssRule) {
+  addStyleRule(
+    selectorText: string,
+    rule: CssRule,
+    transformValue?: TransformValue
+  ) {
     const mediaRule = this.addMediaRule(rule.breakpoint || defaultMediaRuleId);
     this.#isDirty = true;
-    const styleRule = new StyleRule(selectorText, rule.style);
+    const styleRule = new StyleRule(selectorText, rule.style, transformValue);
     styleRule.onChange = this.#onChangeRule;
     if (mediaRule === undefined) {
       // Should be impossible to reach.
