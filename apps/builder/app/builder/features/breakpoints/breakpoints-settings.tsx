@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import { useStore } from "@nanostores/react";
 import store from "immerhin";
 import type { Breakpoint } from "@webstudio-is/project-build";
@@ -10,43 +10,31 @@ import {
   DropdownMenuItem,
   DropdownMenuPortal,
   DropdownMenuSeparator,
-  DropdownMenuTrigger,
   DropdownMenuItemRightSlot,
 } from "@webstudio-is/design-system";
 import { useSubscribe } from "~/shared/pubsub";
 import { BreakpointsEditor } from "./breakpoints-editor";
-import { Preview } from "./preview";
-import { ZoomSetting } from "./zoom-setting";
 import { TriggerButton } from "./trigger-button";
 import { WidthSetting } from "./width-setting";
 import { ConfirmationDialog } from "./confirmation-dialog";
 import {
-  breakpointsContainer,
+  breakpointsStore,
   stylesStore,
-  useBreakpoints,
-} from "~/shared/nano-states";
-import {
   selectedBreakpointIdStore,
   selectedBreakpointStore,
-} from "~/shared/nano-states/breakpoints";
-import { compareMedia } from "@webstudio-is/css-engine";
+} from "~/shared/nano-states";
 import { isFeatureEnabled } from "@webstudio-is/feature-flags";
+import { groupBreakpoints } from "~/shared/breakpoints";
 
-export const Breakpoints = () => {
+export const BreakpointsSettings = () => {
   const [view, setView] = useState<
     "selector" | "editor" | "confirmation" | undefined
   >();
   const [breakpointToDelete, setBreakpointToDelete] = useState<
     Breakpoint | undefined
   >();
-  const [breakpoints] = useBreakpoints();
+  const breakpoints = useStore(breakpointsStore);
   const selectedBreakpoint = useStore(selectedBreakpointStore);
-  const [breakpointPreview, setBreakpointPreview] =
-    useState(selectedBreakpoint);
-
-  useEffect(() => {
-    setBreakpointPreview(selectedBreakpoint);
-  }, [selectedBreakpoint]);
 
   useSubscribe("openBreakpointsMenu", () => {
     setView("selector");
@@ -65,7 +53,7 @@ export const Breakpoints = () => {
       return;
     }
     store.createTransaction(
-      [breakpointsContainer, stylesStore],
+      [breakpointsStore, stylesStore],
       (breakpoints, styles) => {
         const breakpointId = breakpointToDelete.id;
         breakpoints.delete(breakpointId);
@@ -93,14 +81,13 @@ export const Breakpoints = () => {
         setView(isOpen ? "selector" : undefined);
       }}
     >
-      <DropdownMenuTrigger asChild>
-        <TriggerButton />
-      </DropdownMenuTrigger>
+      <TriggerButton />
       <DropdownMenuPortal>
         <DropdownMenuContent
           css={{ zIndex: theme.zIndices[1] }}
           sideOffset={4}
           collisionPadding={4}
+          align="start"
         >
           {view === "confirmation" && breakpointToDelete && (
             <ConfirmationDialog
@@ -134,23 +121,16 @@ export const Breakpoints = () => {
           )}
           {view === "selector" && (
             <>
-              {Array.from(breakpoints.values())
-                .sort(compareMedia)
-                .reverse()
-                .map((breakpoint) => {
+              {groupBreakpoints(Array.from(breakpoints.values())).map(
+                (breakpoint) => {
                   return (
                     <DropdownMenuCheckboxItem
                       checked={breakpoint === selectedBreakpoint}
                       key={breakpoint.id}
-                      onMouseEnter={() => {
-                        setBreakpointPreview(breakpoint);
-                      }}
-                      onMouseLeave={() => {
-                        setBreakpointPreview(selectedBreakpoint);
-                      }}
                       onSelect={() => {
                         selectedBreakpointIdStore.set(breakpoint.id);
                       }}
+                      css={{ gap: theme.spacing[10] }}
                     >
                       {breakpoint.label}
                       <DropdownMenuItemRightSlot>
@@ -158,14 +138,12 @@ export const Breakpoints = () => {
                       </DropdownMenuItemRightSlot>
                     </DropdownMenuCheckboxItem>
                   );
-                })}
+                }
+              )}
               <DropdownMenuSeparator />
               <form>
-                <ZoomSetting />
                 <WidthSetting />
               </form>
-              <DropdownMenuSeparator />
-              <Preview breakpoint={breakpointPreview} />
               {isFeatureEnabled("breakpointsEditor") && (
                 <>
                   <DropdownMenuSeparator />

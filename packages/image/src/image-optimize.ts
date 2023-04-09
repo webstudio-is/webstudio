@@ -112,7 +112,7 @@ const getWidths = (
     const viewportWidthRe = /(^|\s)(1?\d?\d)vw/g;
     const percentSizes = [];
     for (let match; (match = viewportWidthRe.exec(sizes)); match) {
-      percentSizes.push(parseInt(match[2], 10));
+      percentSizes.push(Number.parseInt(match[2], 10));
     }
 
     if (percentSizes.length) {

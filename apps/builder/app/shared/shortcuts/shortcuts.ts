@@ -1,11 +1,7 @@
 import { type Options, useHotkeys } from "react-hotkeys-hook";
 import store from "immerhin";
-import {
-  zoomIn,
-  zoomOut,
-  selectBreakpointByOrderNumber,
-} from "../nano-states/breakpoints";
 import { deleteSelectedInstance } from "../instance-utils";
+import { selectBreakpointByOrder } from "../breakpoints";
 
 export const shortcuts = {
   esc: "esc",
@@ -46,49 +42,13 @@ export const useSharedShortcuts = () => {
     []
   );
 
-  useHotkeys(
-    "equal",
-    zoomIn,
-    // prevent zoom while typing
-    { enableOnFormTags: false, enableOnContentEditable: false },
-    []
-  );
-
-  useHotkeys(
-    "meta+shift+equal",
-    (event) => {
-      event.preventDefault();
-      zoomIn();
-    },
-    { enableOnFormTags: true, enableOnContentEditable: true },
-    []
-  );
-
-  useHotkeys(
-    "minus",
-    zoomOut,
-    // prevent zoom while typing
-    { enableOnFormTags: false, enableOnContentEditable: false },
-    []
-  );
-
-  useHotkeys(
-    "meta+shift+minus",
-    (event) => {
-      event.preventDefault();
-      zoomOut();
-    },
-    { enableOnFormTags: true, enableOnContentEditable: true },
-    []
-  );
-
   const breakpointShortcuts = Array.from(new Array(9))
     .map((_, index) => `meta+${index + 1}, ctrl+${index + 1}`)
     .join(", ");
   useHotkeys(
     breakpointShortcuts,
     (event) => {
-      selectBreakpointByOrderNumber(Number.parseInt(event.key, 10));
+      selectBreakpointByOrder(Number.parseInt(event.key, 10));
     },
     { enableOnFormTags: true, enableOnContentEditable: true },
     []

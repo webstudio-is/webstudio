@@ -5,7 +5,6 @@ import {
   Flex,
   Text,
   Toolbar,
-  ToolbarSeparator,
   ToolbarToggleGroup,
 } from "@webstudio-is/design-system";
 import type { Project } from "@webstudio-is/project";
@@ -16,14 +15,16 @@ import { ShareButton } from "./share";
 import { PublishButton } from "./publish";
 import { SyncStatus } from "./sync-status";
 import { Menu } from "./menu";
-import { Breakpoints } from "../breakpoints";
+import { BreakpointsSelector, BreakpointsSettings } from "../breakpoints";
 import { ViewMode } from "./view-mode";
 
 const topbarContainerStyle = css({
+  display: "flex",
   background: theme.colors.backgroundTopbar,
   height: theme.spacing[15],
   boxShadow: `inset 0 -1px 0 0 ${theme.colors.panelOutline}`,
   paddingRight: theme.spacing[9],
+  color: theme.colors.foregroundContrastMain,
 });
 
 type TopbarProps = {
@@ -39,43 +40,40 @@ export const Topbar = ({ gridArea, project, publish }: TopbarProps) => {
   }
 
   return (
-    <Toolbar className={topbarContainerStyle({ css: { gridArea } })}>
+    <nav className={topbarContainerStyle({ css: { gridArea } })}>
       <Flex grow={false} shrink={false}>
         <Menu publish={publish} />
-        <ToolbarSeparator
-          css={{
-            // Workaround to prevent separator disappearing during menu animation
-            zIndex: 0,
-          }}
-        />
       </Flex>
-      <Flex css={{ width: theme.spacing[30], px: theme.spacing[9] }}>
-        <Text
-          variant="labelsTitleCase"
-          color="contrast"
-          css={{ minWidth: theme.spacing[15], maxWidth: "80%" }}
-          truncate
-        >
+      <Flex
+        css={{ px: theme.spacing[9], maxWidth: theme.spacing[24] }}
+        align="center"
+      >
+        <Text variant="labelsTitleCase" color="contrast" truncate>
           {page.name}
         </Text>
       </Flex>
-      <Flex grow align="center" justify="center">
-        <Breakpoints />
+      <Flex css={{ minWidth: theme.spacing[23] }}>
+        <BreakpointsSettings />
       </Flex>
-      <ToolbarToggleGroup
-        type="single"
-        css={{
-          justifyContent: "flex-end",
-          gap: theme.spacing[5],
-          width: theme.spacing[30],
-        }}
-      >
-        <ViewMode />
-        <SyncStatus />
-        <PreviewButton />
-        <ShareButton projectId={project.id} />
-        <PublishButton project={project} />
-      </ToolbarToggleGroup>
-    </Toolbar>
+      <Flex grow align="center" justify="center">
+        <BreakpointsSelector />
+      </Flex>
+      <Toolbar>
+        <ToolbarToggleGroup
+          type="single"
+          css={{
+            justifyContent: "flex-end",
+            gap: theme.spacing[5],
+            width: theme.spacing[30],
+          }}
+        >
+          <ViewMode />
+          <SyncStatus />
+          <PreviewButton />
+          <ShareButton projectId={project.id} />
+          <PublishButton project={project} />
+        </ToolbarToggleGroup>
+      </Toolbar>
+    </nav>
   );
 };

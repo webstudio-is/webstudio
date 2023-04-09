@@ -11,3 +11,4 @@ export * from "./to-value";
 export * from "./match-media";
 export * from "./equal-media";
 export * from "./compare-media";
+export * from "./find-applicable-media";

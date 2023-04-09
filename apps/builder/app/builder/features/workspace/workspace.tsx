@@ -1,36 +1,31 @@
 import { useStore } from "@nanostores/react";
-import { theme, Box, Flex, Toaster } from "@webstudio-is/design-system";
-import { useCanvasWidth } from "~/builder/shared/nano-states";
+import { theme, Toaster, css } from "@webstudio-is/design-system";
+import {
+  scaleStore,
+  useCanvasWidth,
+  workspaceRectStore,
+} from "~/builder/shared/nano-states";
 import type { Publish } from "~/shared/pubsub";
 import { selectedInstanceSelectorStore } from "~/shared/nano-states";
-import { textEditingInstanceSelectorStore } from "~/shared/nano-states/instances";
-import {
-  workspaceRectStore,
-  zoomStore,
-} from "~/shared/nano-states/breakpoints";
+import { textEditingInstanceSelectorStore } from "~/shared/nano-states";
 import { CanvasTools } from "./canvas-tools";
 import { useMeasure } from "react-use";
 import { useEffect } from "react";
+import { useSetInitialCanvasWidthOnce } from "../breakpoints";
 
-const workspaceStyle = {
+const workspaceStyle = css({
   flexGrow: 1,
   background: theme.colors.backgroundCanvas,
-  overflow: "scroll",
   position: "relative",
-};
-
-const zoomStyle = {
-  transformStyle: "preserve-3d",
-  transition: "transform 200ms ease-out",
-  height: "100%",
-  width: "100%",
-};
-
-const canvasContainerStyle = {
-  position: "relative",
-  height: "100%",
   overflow: "hidden",
-};
+});
+
+const canvasContainerStyle = css({
+  position: "relative",
+  overflow: "hidden",
+  transformStyle: "preserve-3d",
+  transformOrigin: "0 0",
+});
 
 const useSetWorkspaceRect = () => {
   const workspaceRect = useStore(workspaceRectStore);
@@ -45,6 +40,37 @@ const useSetWorkspaceRect = () => {
   return ref;
 };
 
+const getCanvasStyle = (
+  scale: number,
+  workspaceRect?: DOMRect,
+  canvasWidth?: number
+) => {
+  let canvasHeight;
+  let canvasLeft;
+
+  if (workspaceRect?.height) {
+    canvasHeight = workspaceRect.height / (scale / 100);
+  }
+
+  if (workspaceRect?.width && canvasWidth) {
+    canvasLeft = Math.max((workspaceRect.width - canvasWidth) / 2, 0);
+  }
+
+  return {
+    width: canvasWidth,
+    height: canvasHeight ?? "100%",
+    left: canvasLeft ?? 0,
+    transform: `scale(${scale}%)`,
+  };
+};
+
+const useCanvasStyle = () => {
+  const scale = useStore(scaleStore);
+  const workspaceRect = useStore(workspaceRectStore);
+  const [canvasWidth] = useCanvasWidth();
+  return getCanvasStyle(scale, workspaceRect, canvasWidth);
+};
+
 type WorkspaceProps = {
   children: JSX.Element;
   onTransitionEnd: () => void;
@@ -56,30 +82,29 @@ export const Workspace = ({
   onTransitionEnd,
   publish,
 }: WorkspaceProps) => {
-  const zoom = useStore(zoomStore);
-  const [canvasWidth] = useCanvasWidth();
+  const canvasStyle = useCanvasStyle();
   const workspaceRef = useSetWorkspaceRect();
-
+  useSetInitialCanvasWidthOnce();
   const handleWorkspaceClick = () => {
     selectedInstanceSelectorStore.set(undefined);
     textEditingInstanceSelectorStore.set(undefined);
   };
 
   return (
-    <Box css={workspaceStyle} onClick={handleWorkspaceClick} ref={workspaceRef}>
-      <Flex
-        direction="column"
-        align="center"
-        css={zoomStyle}
-        style={{ transform: `scale(${zoom / 100})` }}
+    <div
+      className={workspaceStyle()}
+      onClick={handleWorkspaceClick}
+      ref={workspaceRef}
+    >
+      <div
+        className={canvasContainerStyle()}
+        style={canvasStyle}
         onTransitionEnd={onTransitionEnd}
       >
-        <Box css={canvasContainerStyle} style={{ width: canvasWidth }}>
-          {children}
-          <CanvasTools publish={publish} />
-        </Box>
-      </Flex>
+        {children}
+        <CanvasTools publish={publish} />
+      </div>
       <Toaster />
-    </Box>
+    </div>
   );
 };

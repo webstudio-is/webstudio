@@ -14,7 +14,7 @@ import { $patchStyleText } from "@lexical/selection";
 import { LinkNode, TOGGLE_LINK_COMMAND } from "@lexical/link";
 import { useLexicalComposerContext } from "@lexical/react/LexicalComposerContext";
 import { useSubscribe } from "~/shared/pubsub";
-import { textToolbarStore } from "~/shared/nano-states/canvas";
+import { textToolbarStore } from "~/shared/nano-states";
 import { subscribeScrollState } from "~/canvas/shared/scroll-state";
 
 const spanTriggerName = "--style-node-trigger";

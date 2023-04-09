@@ -1,40 +1,25 @@
 import { useStore } from "@nanostores/react";
-import {
-  theme,
-  DeprecatedText2,
-  Flex,
-  Slider,
-} from "@webstudio-is/design-system";
-import { useIsPreviewMode } from "~/shared/nano-states";
-import { selectedBreakpointStore } from "~/shared/nano-states/breakpoints";
+import { findApplicableMedia } from "@webstudio-is/css-engine";
+import { theme, Text, Flex, Slider } from "@webstudio-is/design-system";
 import { useCanvasWidth } from "~/builder/shared/nano-states";
-import { useNextBreakpoint } from "./use-next-breakpoint";
+import { breakpointsStore } from "~/shared/nano-states";
+import {
+  selectedBreakpointIdStore,
+  selectedBreakpointStore,
+} from "~/shared/nano-states";
 
 // Doesn't make sense to allow resizing the canvas lower/higher than this.
-export const minWidth = 360;
-export const maxWidth = 3000;
+export const minWidth = 240;
+export const maxWidth = 2500;
 
 export const WidthSetting = () => {
   const [canvasWidth, setCanvasWidth] = useCanvasWidth();
   const selectedBreakpoint = useStore(selectedBreakpointStore);
-  const nextBreakpoint = useNextBreakpoint();
-  const [isPreviewMode] = useIsPreviewMode();
+  const breakpoints = useStore(breakpointsStore);
 
-  if (selectedBreakpoint === undefined) {
+  if (canvasWidth === undefined || selectedBreakpoint === undefined) {
     return null;
   }
-
-  // We want to enable unconstrained resizing in a preview mode
-  const min = isPreviewMode
-    ? minWidth
-    : Math.max(minWidth, selectedBreakpoint.minWidth ?? 0);
-
-  const max = isPreviewMode
-    ? maxWidth
-    : Math.min(
-        maxWidth,
-        nextBreakpoint ? (nextBreakpoint.minWidth ?? 1) - 1 : maxWidth
-      );
 
   return (
     <Flex
@@ -42,17 +27,24 @@ export const WidthSetting = () => {
       gap="1"
       direction="column"
     >
-      <DeprecatedText2>Canvas width</DeprecatedText2>
+      <Text>Canvas width</Text>
       <Flex gap="3" align="center">
         <Slider
-          min={min}
-          max={max}
+          min={minWidth}
+          max={maxWidth}
           value={[canvasWidth]}
           onValueChange={([value]) => {
             setCanvasWidth(value);
+            const applicableBreakpoint = findApplicableMedia(
+              Array.from(breakpoints.values()),
+              value
+            );
+            if (applicableBreakpoint) {
+              selectedBreakpointIdStore.set(applicableBreakpoint.id);
+            }
           }}
         />
-        <DeprecatedText2>{`${canvasWidth}px`}</DeprecatedText2>
+        <Text>{`${canvasWidth}px`}</Text>
       </Flex>
     </Flex>
   );

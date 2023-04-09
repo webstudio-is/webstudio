@@ -22,9 +22,9 @@ import {
 } from "@webstudio-is/css-data";
 import {
   assetsStore,
+  breakpointsStore,
   isPreviewModeStore,
   selectedInstanceSelectorStore,
-  useBreakpoints,
 } from "~/shared/nano-states";
 import {
   createCssEngine,
@@ -39,7 +39,7 @@ const helpersCssEngine = createCssEngine({ name: "helpers" });
 const fontsAndDefaultsCssEngine = createCssEngine({
   name: "fonts-and-defaults",
 });
-const presetStylesEngine = createCssEngine({ name: "presetStyles" });
+const presetStylesEngine = createCssEngine({ name: "preset-styles" });
 
 // Helper styles on for canvas in design mode
 // - Only instances that would collapse without helper should receive helper
@@ -113,7 +113,7 @@ export const useManageDesignModeStyles = () => {
 };
 
 export const GlobalStyles = () => {
-  const [breakpoints] = useBreakpoints();
+  const breakpoints = useStore(breakpointsStore);
   const assets = useStore(assetsStore);
 
   useIsomorphicLayoutEffect(() => {
@@ -216,7 +216,7 @@ export const useCssRules = ({
   instanceId: string;
   instanceStyles: StyleDecl[];
 }) => {
-  const [breakpoints] = useBreakpoints();
+  const breakpoints = useStore(breakpointsStore);
 
   useIsomorphicLayoutEffect(() => {
     const stylePerBreakpoint = new Map<string, Style>();

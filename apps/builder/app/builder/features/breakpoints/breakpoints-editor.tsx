@@ -11,7 +11,8 @@ import {
   DeprecatedText2,
 } from "@webstudio-is/design-system";
 import { PlusIcon, TrashIcon } from "@webstudio-is/icons";
-import { breakpointsContainer, useBreakpoints } from "~/shared/nano-states";
+import { breakpointsStore } from "~/shared/nano-states";
+import { useStore } from "@nanostores/react";
 
 type BreakpointEditorItemProps = {
   breakpoint: Breakpoint;
@@ -97,7 +98,7 @@ type BreakpointsEditorProps = {
 };
 
 export const BreakpointsEditor = ({ onDelete }: BreakpointsEditorProps) => {
-  const [breakpoints] = useBreakpoints();
+  const breakpoints = useStore(breakpointsStore);
   const [addedBreakpoints, setAddedBreakpoints] = useState<Breakpoint[]>([]);
   const storedBreakpoints = new Set<string>();
   for (const breakpoint of breakpoints.values()) {
@@ -144,7 +145,7 @@ export const BreakpointsEditor = ({ onDelete }: BreakpointsEditorProps) => {
             key={breakpoint.id}
             breakpoint={breakpoint}
             onChange={(updatedBreakpoint) => {
-              store.createTransaction([breakpointsContainer], (breakpoints) => {
+              store.createTransaction([breakpointsStore], (breakpoints) => {
                 breakpoints.set(updatedBreakpoint.id, updatedBreakpoint);
               });
             }}

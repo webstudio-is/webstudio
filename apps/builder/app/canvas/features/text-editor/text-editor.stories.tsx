@@ -10,7 +10,7 @@ import type {
   InstancesItem,
 } from "@webstudio-is/project-build";
 import { publish } from "~/shared/pubsub";
-import { textToolbarStore } from "~/shared/nano-states/canvas";
+import { textToolbarStore } from "~/shared/nano-states";
 import { TextEditor } from "./text-editor";
 
 export default {

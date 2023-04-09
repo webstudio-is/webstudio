@@ -11,7 +11,7 @@ import {
 } from "@webstudio-is/design-system";
 import { getComponentMeta } from "@webstudio-is/react-sdk";
 import { instancesStore, selectedPageStore } from "~/shared/nano-states";
-import { textEditingInstanceSelectorStore } from "~/shared/nano-states/instances";
+import { textEditingInstanceSelectorStore } from "~/shared/nano-states";
 import { publish, useSubscribe } from "~/shared/pubsub";
 import {
   insertNewComponentInstance,

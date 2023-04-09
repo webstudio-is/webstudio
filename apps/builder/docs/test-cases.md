@@ -64,9 +64,6 @@
 1. Breakpoints
 
    - Clicking on different breakpoints resizes the canvas
-   - Canvas width slider lets you resize canvas only within its bounds
-   - Zoom slider works
-   - Hovering over breakpoints with the mouse shows the right one in preview
    - Click on Edit breakpoints shows you breakpoints editor
      - lets you change the breakpoint min-width value and it gets applied immediately on the canvas and on the width slider constraint
      - adding a new breakpoint adds it, lets you specify the value, works like every other breakpoint
@@ -77,7 +74,6 @@
    - Click anywhere outside of breakpoints closes breakpoints selector
    - Click on the canvas closes breakpoints selector
    - Styles added on each breakpoint are only applied to each breakpoint, verify that by resizing the canvas in preview mode
-   - Resizing canvas width in preview mode doesn't limit resize slider to each breakpoint
 
 1. Auth
 

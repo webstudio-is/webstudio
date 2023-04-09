@@ -17,7 +17,7 @@ import {
   PopoverContent,
 } from "@webstudio-is/design-system";
 import { UndoIcon } from "@webstudio-is/icons";
-import { instancesStore, useBreakpoints } from "~/shared/nano-states";
+import { breakpointsStore, instancesStore } from "~/shared/nano-states";
 import { type StyleInfo, type StyleSource, getStyleSource } from "./style-info";
 
 const PropertyPopoverContent = ({
@@ -31,7 +31,7 @@ const PropertyPopoverContent = ({
   styleSource: StyleSource;
   onReset: () => void;
 }) => {
-  const [breakpoints] = useBreakpoints();
+  const breakpoints = useStore(breakpointsStore);
   const instances = useStore(instancesStore);
 
   if (styleSource === "local") {

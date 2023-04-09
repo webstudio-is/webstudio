@@ -20,6 +20,7 @@ describe("Compare media", () => {
 
   test("webflow", () => {
     const initial = [
+      {},
       { maxWidth: 991 },
       { maxWidth: 767 },
       { maxWidth: 479 },
@@ -28,6 +29,7 @@ describe("Compare media", () => {
       { minWidth: 1920 },
     ];
     const sorted = [
+      {},
       { maxWidth: 991 },
       { maxWidth: 767 },
       { maxWidth: 479 },

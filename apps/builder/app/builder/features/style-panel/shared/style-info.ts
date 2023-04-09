@@ -16,10 +16,10 @@ import {
   selectedInstanceSelectorStore,
   selectedInstanceIntanceToTagStore,
   stylesIndexStore,
-  useBreakpoints,
   selectedOrLastStyleSourceSelectorStore,
+  breakpointsStore,
 } from "~/shared/nano-states";
-import { selectedBreakpointStore } from "~/shared/nano-states/breakpoints";
+import { selectedBreakpointStore } from "~/shared/nano-states";
 import type { InstanceSelector } from "~/shared/tree-utils";
 import { getComponentMeta } from "@webstudio-is/react-sdk";
 import type { htmlTags as HtmlTags } from "html-tags";
@@ -257,7 +257,7 @@ export const getInheritedInfo = (
  * combine all local, cascaded, inherited and browser styles
  */
 export const useStyleInfo = () => {
-  const [breakpoints] = useBreakpoints();
+  const breakpoints = useStore(breakpointsStore);
   const selectedBreakpoint = useStore(selectedBreakpointStore);
   const selectedBreakpointId = selectedBreakpoint?.id;
   const selectedInstanceSelector = useStore(selectedInstanceSelectorStore);
@@ -387,7 +387,7 @@ export const useInstanceStyleData = (
 ) => {
   const instances = useStore(instancesStore);
   const { stylesByInstanceId } = useStore(stylesIndexStore);
-  const [breakpoints] = useBreakpoints();
+  const breakpoints = useStore(breakpointsStore);
   const selectedBreakpoint = useStore(selectedBreakpointStore);
 
   // We assume that instance ancestor contains tags we need to get preset styles

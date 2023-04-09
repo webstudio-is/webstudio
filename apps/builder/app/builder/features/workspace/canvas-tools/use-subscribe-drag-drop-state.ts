@@ -1,5 +1,5 @@
 import { useSubscribe } from "~/shared/pubsub";
-import { useDragAndDropState } from "./nano-states";
+import { useDragAndDropState } from "~/shared/nano-states";
 
 export const useSubscribeDragAndDropState = () => {
   const [state, setState] = useDragAndDropState();

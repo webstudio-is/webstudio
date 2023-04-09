@@ -40,7 +40,7 @@ const ScrollAreaScrollbar = styled(Scrollbar, {
   display: "flex",
   // ensures no selection
   userSelect: "none",
-  // disable browser handling of all panning and zooming gestures on touch devices
+  // disable browser handling of all panning and scaleUp gestures on touch devices
   touchAction: "none",
   paddingRight: 2,
   paddingLeft: 6,

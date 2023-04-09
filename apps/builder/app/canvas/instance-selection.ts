@@ -4,7 +4,7 @@ import {
   instancesStore,
   selectedInstanceSelectorStore,
 } from "~/shared/nano-states";
-import { textEditingInstanceSelectorStore } from "~/shared/nano-states/instances";
+import { textEditingInstanceSelectorStore } from "~/shared/nano-states";
 import { publish } from "~/shared/pubsub";
 import {
   type InstanceSelector,

@@ -7,8 +7,8 @@ import {
   rootInstanceStore,
   selectedInstanceSelectorStore,
   useDragAndDropState,
+  textEditingInstanceSelectorStore,
 } from "~/shared/nano-states";
-import { textEditingInstanceSelectorStore } from "~/shared/nano-states/instances";
 import type { InstanceSelector } from "~/shared/tree-utils";
 import { reparentInstance } from "~/shared/instance-utils";
 import { InstanceTree } from "./tree";

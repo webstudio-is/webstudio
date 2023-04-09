@@ -145,12 +145,12 @@ export const numericScrubControl = (
           // When cursor moves out of the browser window
           // we want it to come back from the other side
           const top = wrapAround(
-            parseFloat(state.cursor.style.top) + event.movementY,
+            Number.parseFloat(state.cursor.style.top) + event.movementY,
             0,
             globalThis.innerHeight
           );
           const left = wrapAround(
-            parseFloat(state.cursor.style.left) + event.movementX,
+            Number.parseFloat(state.cursor.style.left) + event.movementX,
             0,
             globalThis.innerWidth
           );

@@ -22,10 +22,10 @@ import {
 import { useSubscribe, type Publish } from "~/shared/pubsub";
 import {
   isCanvasPointerEventsEnabledStore,
+  scaleStore,
   useCanvasRect,
 } from "~/builder/shared/nano-states";
 import { insertNewComponentInstance } from "~/shared/instance-utils";
-import { zoomStore } from "~/shared/nano-states/breakpoints";
 
 const DragLayer = ({
   component,
@@ -65,14 +65,17 @@ export const dragItemAttribute = "data-drag-component";
 
 const toCanvasCoordinates = (
   { x, y }: Point,
-  zoom: number,
+  scale: number,
   canvasRect?: DOMRect
 ) => {
   if (canvasRect === undefined) {
     return { x: 0, y: 0 };
   }
-  const scale = zoom / 100;
-  return { x: (x - canvasRect.x) / scale, y: (y - canvasRect.y) / scale };
+  const scaleFraction = scale / 100;
+  return {
+    x: (x - canvasRect.x) / scaleFraction,
+    y: (y - canvasRect.y) / scaleFraction,
+  };
 };
 
 export const elementToComponentName = (
@@ -102,7 +105,7 @@ export const useDraggable = ({
   const [dragComponent, setDragComponent] = useState<Instance["component"]>();
   const [point, setPoint] = useState<Point>({ x: 0, y: 0 });
   const [canvasRect] = useCanvasRect();
-  const zoom = useStore(zoomStore);
+  const scale = useStore(scaleStore);
 
   const dragHandlers = useDrag<Instance["component"]>({
     elementToData(element) {
@@ -125,7 +128,7 @@ export const useDraggable = ({
       publish({
         type: "dragMove",
         payload: {
-          canvasCoordinates: toCanvasCoordinates(point, zoom, canvasRect),
+          canvasCoordinates: toCanvasCoordinates(point, scale, canvasRect),
         },
       });
     },

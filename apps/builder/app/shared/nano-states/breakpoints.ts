@@ -1,58 +1,34 @@
 import { atom, computed } from "nanostores";
-import type { Breakpoint } from "@webstudio-is/project-build";
-import { breakpointsContainer } from "./nano-states";
-import { compareMedia } from "@webstudio-is/css-engine";
+import type { Breakpoint, Breakpoints } from "@webstudio-is/project-build";
+import { isBaseBreakpoint } from "../breakpoints";
 
-export const minZoom = 10;
-const maxZoom = 100;
-const zoomStep = 20;
-
-export const zoomStore = atom<number>(100);
-
-export const zoomIn = () => {
-  zoomStore.set(Math.min(zoomStore.get() + zoomStep, maxZoom));
-};
-
-export const zoomOut = () => {
-  zoomStore.set(Math.max(zoomStore.get() - zoomStep, minZoom));
-};
+export const breakpointsStore = atom<Breakpoints>(new Map());
 
 export const selectedBreakpointIdStore = atom<undefined | Breakpoint["id"]>(
   undefined
 );
 
 export const selectedBreakpointStore = computed(
-  [breakpointsContainer, selectedBreakpointIdStore],
+  [breakpointsStore, selectedBreakpointIdStore],
   (breakpoints, selectedBreakpointId) => {
-    const matchedBreakpoint =
+    const selectedBreakpoint =
       selectedBreakpointId === undefined
         ? undefined
         : breakpoints.get(selectedBreakpointId);
-    // initially set first breakpoint as selected breakpoint
-    const fallbackBreakpoint = Array.from(breakpoints.values())
-      .sort(compareMedia)
-      .at(0);
-    return matchedBreakpoint ?? fallbackBreakpoint;
+
+    if (breakpoints.size === 0) {
+      return;
+    }
+    const breakpointsArray = Array.from(breakpoints.values());
+    return (
+      selectedBreakpoint ??
+      breakpointsArray.find(isBaseBreakpoint) ??
+      breakpointsArray[0] ??
+      undefined
+    );
   }
 );
 
-/**
- * order number starts with 1 and covers all existing breakpoints
- */
-export const selectBreakpointByOrderNumber = (orderNumber: number) => {
-  const breakpoints = breakpointsContainer.get();
-  const index = orderNumber - 1;
-  const breakpoint = Array.from(breakpoints.values())
-    .sort(compareMedia)
-    .at(index);
-  if (breakpoint) {
-    selectedBreakpointIdStore.set(breakpoint.id);
-  }
-};
-
 export const synchronizedBreakpointsStores = [
-  ["zoomStore", zoomStore],
   ["selectedBreakpointId", selectedBreakpointIdStore],
 ] as const;
-
-export const workspaceRectStore = atom<DOMRect | undefined>();

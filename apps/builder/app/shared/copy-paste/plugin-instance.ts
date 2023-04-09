@@ -19,7 +19,7 @@ import {
   styleSourcesStore,
   instancesStore,
   selectedPageStore,
-  breakpointsContainer,
+  breakpointsStore,
 } from "../nano-states";
 import {
   type InstanceSelector,
@@ -106,7 +106,7 @@ const getTreeData = (targetInstanceSelector: InstanceSelector) => {
     treeBreapointIds.add(styleDecl.breakpointId);
   }
   const treeBreapoints = getMapValuesByKeysSet(
-    breakpointsContainer.get(),
+    breakpointsStore.get(),
     treeBreapointIds
   );
 
@@ -153,7 +153,7 @@ export const onPaste = (clipboardData: string) => {
   );
   store.createTransaction(
     [
-      breakpointsContainer,
+      breakpointsStore,
       instancesStore,
       styleSourcesStore,
       propsStore,

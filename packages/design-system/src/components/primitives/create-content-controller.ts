@@ -9,7 +9,7 @@
  * const {update, disconnectedCallback} = createContentController(target, {
  *   contents: [
  *     { name: 'unit', match: (value) => value === 'px' },
- *     { name: 'number', match: (value) => isNaN(parseFloat(value)) === false },
+ *     { name: 'number', match: (value) => Number.isNaN(parseFloat(value)) === false },
  *     { name: 'unknown', match: (value) => true },
  *   ],
  *   onMouseMove: ({name, value, position}) => { },
@@ -38,10 +38,10 @@ const measureTextPadding = (node: HTMLElement, value: string) => {
   }
   canvasContext.font = `${fontWeight} ${fontSize} ${fontFamily}`;
   return ["left", "start"].includes(textAlign)
-    ? parseFloat(paddingLeft)
+    ? Number.parseFloat(paddingLeft)
     : node.clientWidth -
         canvasContext.measureText(value).width -
-        parseFloat(paddingRight);
+        Number.parseFloat(paddingRight);
 };
 const measureTextMetrics = (value: string, index: number, offset: number) => {
   let length = 0;

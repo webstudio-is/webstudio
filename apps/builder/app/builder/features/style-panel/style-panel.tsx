@@ -7,7 +7,7 @@ import {
 } from "@webstudio-is/design-system";
 import type { Instance } from "@webstudio-is/project-build";
 import type { Publish } from "~/shared/pubsub";
-import { selectedBreakpointStore } from "~/shared/nano-states/breakpoints";
+import { selectedBreakpointStore } from "~/shared/nano-states";
 import { useStyleData } from "./shared/use-style-data";
 import { StyleSettings } from "./style-settings";
 import { useCanvasWidth } from "~/builder/shared/nano-states";
@@ -32,7 +32,8 @@ export const StylePanel = ({ selectedInstance, publish }: StylePanelProps) => {
   if (
     currentStyle === undefined ||
     selectedInstance === undefined ||
-    breakpoint === undefined
+    breakpoint === undefined ||
+    canvasWidth === undefined
   ) {
     return null;
   }

@@ -1,34 +1,58 @@
-import { forwardRef, type ComponentProps, type ElementRef } from "react";
+import { type ComponentProps } from "react";
 import { useStore } from "@nanostores/react";
-import { Button, Text } from "@webstudio-is/design-system";
-import { useCanvasWidth } from "~/builder/shared/nano-states";
 import {
-  selectedBreakpointStore,
-  zoomStore,
-} from "~/shared/nano-states/breakpoints";
-import { matchMedia } from "@webstudio-is/css-engine";
+  DropdownMenuSubTrigger,
+  DropdownMenuTrigger,
+  Flex,
+  theme,
+  toggleItemStyle,
+} from "@webstudio-is/design-system";
+import { scaleStore, useCanvasWidth } from "~/builder/shared/nano-states";
+import { selectedBreakpointStore } from "~/shared/nano-states";
 
-type TriggerButtonProps = ComponentProps<typeof Button>;
+const Value = ({
+  children,
+  unit,
+  minWidth,
+}: {
+  children?: number;
+  unit: string;
+  minWidth: number;
+}) => {
+  return (
+    <Flex gap="1" as="span" justify="end" css={{ minWidth }}>
+      {children}
+      <Flex css={{ color: theme.colors.foregroundTextMoreSubtle }} as="span">
+        {unit}
+      </Flex>
+    </Flex>
+  );
+};
 
-export const TriggerButton = forwardRef<
-  ElementRef<typeof Button>,
-  TriggerButtonProps
->((props, ref) => {
-  const zoom = useStore(zoomStore);
+type TriggerButtonProps = ComponentProps<typeof DropdownMenuSubTrigger>;
+
+export const TriggerButton = (props: TriggerButtonProps) => {
+  const scale = useStore(scaleStore);
   const breakpoint = useStore(selectedBreakpointStore);
   const [canvasWidth] = useCanvasWidth();
   if (breakpoint === undefined) {
     return null;
   }
-  const variant = matchMedia(breakpoint, canvasWidth) ? "contrast" : "subtle";
-
   return (
-    <Button {...props} ref={ref} color="dark" aria-label="Show breakpoints">
-      <Text color={variant}>
-        {`${breakpoint.label} ${canvasWidth}px / ${zoom}%`}
-      </Text>
-    </Button>
+    <DropdownMenuTrigger
+      aria-label="Show breakpoints"
+      className={toggleItemStyle({
+        css: { gap: theme.spacing[5] },
+      })}
+    >
+      <Value unit="PX" minWidth={55}>
+        {canvasWidth}
+      </Value>
+      {scale !== 100 && (
+        <Value unit="%" minWidth={30}>
+          {Math.round(scale)}
+        </Value>
+      )}
+    </DropdownMenuTrigger>
   );
-});
-
-TriggerButton.displayName = "TriggerButton";
+};
