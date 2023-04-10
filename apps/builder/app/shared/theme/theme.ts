@@ -3,6 +3,7 @@ import { isFeatureEnabled } from "@webstudio-is/feature-flags";
 import { darkTheme } from "@webstudio-is/design-system";
 import { restThemePath } from "~/shared/router-utils";
 import type { ColorScheme, ThemeSetting } from "./types";
+import { useState } from "react";
 
 // User selected theme setting.
 let setting: ThemeSetting = isFeatureEnabled("dark") ? "system" : "light";
@@ -75,12 +76,31 @@ export const useThemeProps = () => {
   if (data.theme.system) {
     system = data.theme.system;
   }
-  const theme = getColorScheme();
-  return {
-    className: theme === "dark" ? darkTheme.className : undefined,
-    style: { colorScheme: theme },
-    "data-theme": theme,
-  };
+
+  const [themeProps] = useState<{
+    className: string | undefined;
+    style: { colorScheme: ColorScheme };
+    "data-theme": ColorScheme;
+  }>({
+    className: undefined,
+    style: { colorScheme: "light" },
+    "data-theme": "light",
+  });
+
+  /*
+  // @todo uncomment when we will decide to use theme
+  useEffect(() => {
+    const theme = getColorScheme();
+
+    setThemeProps(() => ({
+      className: theme === "dark" ? darkTheme.className : undefined,
+      style: { colorScheme: theme },
+      "data-theme": theme,
+    }));
+  }, []);
+  */
+
+  return themeProps;
 };
 
 /**
