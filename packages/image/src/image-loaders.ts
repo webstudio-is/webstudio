@@ -33,15 +33,20 @@ export const cloudflareImageLoader: (
     }
   };
 
+type LocalImageLoaderOptions = {
+  publicPath?: string;
+};
+
 /**
  * Fake pseudo loader for local testing purposes
  **/
-export const localImageLoader: () => ImageLoader =
-  () =>
+export const localImageLoader =
+  (options: LocalImageLoaderOptions): ImageLoader =>
   ({ width, src, quality }) => {
+    const { publicPath = "/" } = options;
     // Just emulate like we really resize the image
     const params = new URLSearchParams();
     params.set("width", `${width}`);
     params.set("quality", `${quality}`);
-    return `${src}?${params.toString()}`;
+    return `${publicPath}${src}?${params.toString()}`;
   };

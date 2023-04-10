@@ -10,6 +10,7 @@ import {
   idAttribute,
   addGlobalRules,
   createImageValueTransformer,
+  getParams,
 } from "@webstudio-is/react-sdk";
 import type { StyleDecl } from "@webstudio-is/project-build";
 import {
@@ -198,7 +199,9 @@ const addRule = (id: string, cssRule: CssRule, assets: Assets) => {
       ...cssRule,
       style: toVarStyleWithFallback(id, cssRule.style),
     },
-    createImageValueTransformer(assets)
+    createImageValueTransformer(assets, {
+      publicPath: getParams().publicPath,
+    })
   );
   wrappedRulesMap.set(key, rule);
   return rule;

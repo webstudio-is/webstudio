@@ -1,20 +1,11 @@
 import { type Asset as DbAsset, Location } from "@webstudio-is/prisma-client";
-import { FsEnv, S3Env } from "../schema";
-import path from "path";
+import { S3Env } from "../schema";
 
 const s3Envs = S3Env.safeParse(process.env);
-const fsEnv = FsEnv.parse(process.env);
 
 export const getAssetPath = (asset: DbAsset) => {
   if (asset.location === Location.FS) {
-    const splitPath = fsEnv.FILE_UPLOAD_PATH.split("public");
-    const url = new URL(
-      path.join("/", splitPath[splitPath.length - 1], asset.name),
-      // Hostname here is not important
-      "http://localhost"
-    );
-
-    return url.pathname;
+    return asset.name;
   }
 
   if (asset.location === Location.REMOTE && s3Envs.success) {

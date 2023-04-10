@@ -18,6 +18,8 @@ const env = {
   BUILD_REQUIRE_SUBDOMAIN: process.env.BUILD_REQUIRE_SUBDOMAIN === "true",
   // Must be set for Vercel deployments
   RESIZE_ORIGIN: process.env.RESIZE_ORIGIN,
+  // must be set for local setup
+  ASSET_PUBLIC_PATH: process.env.ASSET_PUBLIC_PATH,
 } as const;
 
 export default env;
