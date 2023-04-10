@@ -2,12 +2,12 @@ import type { AssetClient } from "../../client";
 import { deleteFromFs } from "./delete";
 import { uploadToFs } from "./upload";
 
-type FSClientOptions = {
+type FsClientOptions = {
   fileDirectory: string;
   maxUploadSize: number;
 };
 
-export const createFSClient = (options: FSClientOptions): AssetClient => {
+export const createFsClient = (options: FsClientOptions): AssetClient => {
   return {
     uploadFile: (request) =>
       uploadToFs({
