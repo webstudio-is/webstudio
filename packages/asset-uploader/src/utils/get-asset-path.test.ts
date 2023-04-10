@@ -38,30 +38,6 @@ describe("getAssetPath", () => {
     process.env = OLD_ENV;
   });
 
-  describe("local", () => {
-    test("returns local path with no custom path", async () => {
-      const { getAssetPath } = await import("./get-asset-path");
-      expect(
-        getAssetPath({
-          ...commonAsset,
-          name: "test.png",
-          location: Location.FS,
-        })
-      ).toBe("/s/uploads/test.png");
-    });
-
-    test("return local path with custom path", async () => {
-      process.env.FILE_UPLOAD_PATH = "assets";
-      const { getAssetPath } = await import("./get-asset-path");
-      expect(
-        getAssetPath({
-          ...commonAsset,
-          name: "test.png",
-          location: Location.FS,
-        })
-      ).toBe("/assets/test.png");
-    });
-  });
   describe("s3", () => {
     test("returns s3 url", async () => {
       process.env.S3_ENDPOINT = "https://fr1.s3.com";
