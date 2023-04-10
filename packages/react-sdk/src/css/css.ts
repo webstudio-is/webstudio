@@ -28,6 +28,7 @@ export const createImageValueTransformer =
           type: "url",
           url: asset.path,
         },
+        hidden: styleValue.hidden,
       };
     }
   };
