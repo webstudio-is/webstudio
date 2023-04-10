@@ -108,27 +108,14 @@ describe("Convert WS CSS Values to native CSS strings", () => {
             type: "image",
             value: {
               type: "asset",
-              value: {
-                type: "image",
-                path: "foo.png",
-
-                id: "1234567890",
-                projectId: "",
-                format: "",
-                size: 1212,
-                name: "img",
-                description: "",
-                location: "REMOTE",
-                createdAt: "",
-                meta: { width: 1, height: 2 },
-              },
+              value: "1234567890",
             },
           },
         ],
       },
       (styleValue) => {
         if (styleValue.type === "image" && styleValue.value.type === "asset") {
-          const asset = assets.get(styleValue.value.value.id);
+          const asset = assets.get(styleValue.value.value);
           if (asset === undefined) {
             return {
               type: "keyword",

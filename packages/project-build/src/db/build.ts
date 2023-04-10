@@ -32,7 +32,7 @@ const parseBuild = async (build: DbBuild): Promise<Build> => {
     createdAt: build.createdAt.toISOString(),
     pages,
     breakpoints: Array.from(parseBreakpoints(build.breakpoints)),
-    styles: Array.from(await parseStyles(build.projectId, build.styles)),
+    styles: Array.from(parseStyles(build.styles)),
     styleSources: Array.from(parseStyleSources(build.styleSources)),
     styleSourceSelections: Array.from(
       parseStyleSourceSelections(build.styleSourceSelections)

@@ -18,7 +18,7 @@ export const createImageValueTransformer =
   (assets: Assets): TransformValue =>
   (styleValue) => {
     if (styleValue.type === "image" && styleValue.value.type === "asset") {
-      const asset = assets.get(styleValue.value.value.id);
+      const asset = assets.get(styleValue.value.value);
       if (asset === undefined) {
         return { type: "keyword", value: "none" };
       }
@@ -28,6 +28,7 @@ export const createImageValueTransformer =
           type: "url",
           url: asset.path,
         },
+        hidden: styleValue.hidden,
       };
     }
   };

@@ -1,7 +1,6 @@
 import { units } from "./__generated__/units";
 import type { properties } from "./__generated__/properties";
 import { z } from "zod";
-import { ImageAsset } from "@webstudio-is/asset-uploader";
 
 type Properties = typeof properties & {
   [custom: CustomProperty]: {
@@ -75,7 +74,7 @@ export type RgbValue = z.infer<typeof RgbValue>;
 export const ImageValue = z.object({
   type: z.literal("image"),
   value: z.union([
-    z.object({ type: z.literal("asset"), value: ImageAsset }),
+    z.object({ type: z.literal("asset"), value: z.string() }),
     // url is not stored in db and only used by css-engine transformValue
     // to prepare image value for rendering
     z.object({ type: z.literal("url"), url: z.string() }),
@@ -145,23 +144,15 @@ export const validStaticValueTypes = [
   "tuple",
 ] as const;
 
-/**
- * Shared zod types with DB types.
- * ImageValue in DB has a different type
- */
-const SharedStaticStyleValue = z.union([
+const ValidStaticStyleValue = z.union([
+  ImageValue,
+  LayersValue,
   UnitValue,
   KeywordValue,
   FontFamilyValue,
   RgbValue,
   UnparsedValue,
   TupleValue,
-]);
-
-const ValidStaticStyleValue = z.union([
-  ImageValue,
-  LayersValue,
-  SharedStaticStyleValue,
 ]);
 
 export type ValidStaticStyleValue = z.infer<typeof ValidStaticStyleValue>;
@@ -173,18 +164,8 @@ const VarValue = z.object({
 });
 export type VarValue = z.infer<typeof VarValue>;
 
-const StyleValue = z.union([
+export const StyleValue = z.union([
   ValidStaticStyleValue,
-  InvalidValue,
-  UnsetValue,
-  VarValue,
-]);
-
-/**
- * Shared types with DB types
- */
-export const SharedStyleValue = z.union([
-  SharedStaticStyleValue,
   InvalidValue,
   UnsetValue,
   VarValue,

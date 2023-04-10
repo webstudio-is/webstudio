@@ -464,9 +464,6 @@ importers:
       '@types/css-tree':
         specifier: ^2.0.0
         version: 2.0.0
-      '@webstudio-is/asset-uploader':
-        specifier: workspace:^
-        version: link:../asset-uploader
       '@webstudio-is/scripts':
         specifier: workspace:^
         version: link:../scripts
@@ -1101,9 +1098,6 @@ importers:
 
   packages/project-build:
     dependencies:
-      '@webstudio-is/asset-uploader':
-        specifier: workspace:^
-        version: link:../asset-uploader
       '@webstudio-is/css-data':
         specifier: workspace:^
         version: link:../css-data

@@ -1,5 +1,8 @@
+import { useStore } from "@nanostores/react";
+import type { Assets } from "@webstudio-is/asset-uploader";
 import { Image as WebstudioImage, loaders } from "@webstudio-is/image";
 import { styled, theme } from "@webstudio-is/design-system";
+import { assetsStore } from "~/shared/nano-states";
 import type { StyleInfo } from "../../shared/style-info";
 import brokenImage from "~/shared/images/broken-image-placeholder.svg";
 import env from "~/shared/env";
@@ -54,13 +57,16 @@ const gradientNames = [
   "repeating-radial-gradient",
 ];
 
-export const getLayerName = (layerStyle: StyleInfo) => {
+export const getLayerName = (layerStyle: StyleInfo, assets: Assets) => {
   const backgroundImageStyle = layerStyle.backgroundImage?.value;
   if (
     backgroundImageStyle?.type === "image" &&
     backgroundImageStyle.value.type === "asset"
   ) {
-    return backgroundImageStyle.value.value.name;
+    const asset = assets.get(backgroundImageStyle.value.value);
+    if (asset) {
+      return asset.name;
+    }
   }
 
   if (backgroundImageStyle?.type === "unparsed") {
@@ -75,13 +81,17 @@ export const getLayerName = (layerStyle: StyleInfo) => {
 };
 
 export const LayerThumbnail = (props: { layerStyle: StyleInfo }) => {
+  const assets = useStore(assetsStore);
   const backgroundImageStyle = props.layerStyle.backgroundImage?.value;
 
   if (
     backgroundImageStyle?.type === "image" &&
     backgroundImageStyle.value.type === "asset"
   ) {
-    const asset = backgroundImageStyle.value.value;
+    const asset = assets.get(backgroundImageStyle.value.value);
+    if (asset === undefined) {
+      return null;
+    }
     const remoteLocation = asset.location === "REMOTE";
 
     const loader = remoteLocation
@@ -97,7 +107,7 @@ export const LayerThumbnail = (props: { layerStyle: StyleInfo }) => {
         src={asset.path}
         width={theme.spacing[10]}
         optimize={true}
-        alt={getLayerName(props.layerStyle)}
+        alt={getLayerName(props.layerStyle, assets)}
       />
     );
   }
