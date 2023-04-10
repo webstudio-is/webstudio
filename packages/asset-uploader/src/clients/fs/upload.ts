@@ -7,7 +7,6 @@ import {
 } from "@remix-run/node";
 import { Location } from "@webstudio-is/prisma-client";
 import { AssetData, getAssetData } from "../../utils/get-asset-data";
-import { FILE_DIRECTORY } from "./file-path";
 import { idsFormDataFieldName } from "../../schema";
 import { getUniqueFilename } from "../../utils/get-unique-filename";
 import { sanitizeS3Key } from "../../utils/sanitize-s3-key";
@@ -24,13 +23,15 @@ const MAX_FILES_PER_REQUEST = 1;
 export const uploadToFs = async ({
   request,
   maxSize,
+  fileDirectory,
 }: {
   request: Request;
   maxSize: number;
+  fileDirectory: string;
 }): Promise<AssetData> => {
   const uploadHandler = unstableCreateFileUploadHandler({
     maxPartSize: maxSize,
-    directory: FILE_DIRECTORY,
+    directory: fileDirectory,
     file: ({ filename }) => getUniqueFilename(sanitizeS3Key(filename)),
   });
 

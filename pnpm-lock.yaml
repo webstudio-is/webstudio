@@ -387,9 +387,6 @@ importers:
       '@webstudio-is/trpc-interface':
         specifier: workspace:^
         version: link:../trpc-interface
-      app-root-path:
-        specifier: ^3.0.0
-        version: 3.0.0
       immer:
         specifier: ^9.0.12
         version: 9.0.15
@@ -406,9 +403,6 @@ importers:
       '@jest/globals':
         specifier: ^29.3.1
         version: 29.3.1
-      '@types/app-root-path':
-        specifier: ^1.2.4
-        version: 1.2.4
       '@types/node':
         specifier: ^18.11.18
         version: 18.11.18
@@ -8229,10 +8223,6 @@ packages:
       '@types/estree': 1.0.0
     dev: true
 
-  /@types/app-root-path@1.2.4:
-    resolution: {integrity: sha512-yhURoXmWN/zfw2MXXcOdUTwe5CWhzRWtb4Rs2+JwGpuhm2hxLCzjASi/aIuyVeJB3Iyks1teaHyOEfNNmltdvQ==}
-    dev: true
-
   /@types/argparse@1.0.38:
     resolution: {integrity: sha512-ebDJ9b0e702Yr7pWgB0jzm+CX4Srzz8RcXtLJDJB+BSccqMa36uyH/zUsSYao5+BD1ytv3k3rPYCq4mAE1hsXA==}
     dev: false
@@ -9238,11 +9228,6 @@ packages:
 
   /app-root-dir@1.0.2:
     resolution: {integrity: sha512-jlpIfsOoNoafl92Sz//64uQHGSyMrD2vYG5d8o2a4qGvyNCvXur7bzIsWtAC/6flI2RYAp3kv8rsfBtaLm7w0g==}
-
-  /app-root-path@3.0.0:
-    resolution: {integrity: sha512-qMcx+Gy2UZynHjOHOIXPNvpf+9cjvk3cWrBBK7zg4gH9+clobJRb9NGzcT7mQTcV/6Gm/1WelUtqxVXnNlrwcw==}
-    engines: {node: '>= 6.0.0'}
-    dev: false
 
   /aproba@1.2.0:
     resolution: {integrity: sha512-Y9J6ZjXtoYh8RnXVCMOU/ttDmk1aBjunq9vO0ta5x85WDQiQfUF9sIPBITdbiiIVcBo03Hi3jMxigBtsddlXRw==}
