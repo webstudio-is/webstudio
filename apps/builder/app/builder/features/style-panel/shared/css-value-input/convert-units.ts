@@ -1,5 +1,4 @@
 import type { Unit } from "@webstudio-is/css-data";
-// import { selectedInstanceUnitSizesStore } from "~/shared/nano-states";
 
 const convertibleUnits = ["px", "ch", "vw", "vh", "em", "rem"] as const;
 
