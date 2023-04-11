@@ -30,26 +30,27 @@ const hideOutline = () => {
 };
 
 const calculateUnitSizes = (element: HTMLElement) => {
-  // https://stackoverflow.com/questions/1248081/how-to-get-the-browser-viewport-dimensions/8876069#8876069
+  // Based on this https://stackoverflow.com/questions/1248081/how-to-get-the-browser-viewport-dimensions/8876069#8876069
+  // this is crossbrowser way to get viewport sizes vw vh in px
   const vw =
     Math.max(document.documentElement.clientWidth, window.innerWidth) / 100;
   const vh =
     Math.max(document.documentElement.clientHeight, window.innerHeight) / 100;
 
+  // em is equal to current computed style for font size
   const em = Number.parseFloat(getComputedStyle(element).fontSize);
 
+  // rem is equal to root computed style for font size
   const rem = Number.parseFloat(
     getComputedStyle(document.documentElement).fontSize
   );
 
+  // we create a node with 1ch width, measure it and remove it
   const node = document.createElement("div");
   node.style.width = "1ch";
   node.style.position = "absolute";
-
   element.appendChild(node);
-
   const ch = Number.parseFloat(getComputedStyle(node).width);
-
   element.removeChild(node);
 
   return {
