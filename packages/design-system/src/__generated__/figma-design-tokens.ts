@@ -434,6 +434,7 @@ export const color = {
   foregroundGridControlsFlexHover: "#96c7f2",
   foregroundIconSecondary: "#c1c8cd",
   foregroundIconMain: "#11181c",
+  foregroundMoreSubtle: "#adb1b4",
   maintenanceLight: "#ededed",
   maintenanceMedium: "#c7c7c7",
   maintenanceDark: "#858585",
