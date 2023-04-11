@@ -97,6 +97,7 @@ export const LayerThumbnail = (props: { layerStyle: StyleInfo }) => {
     const loader = remoteLocation
       ? loaders.cloudflareImageLoader({
           resizeOrigin: env.RESIZE_ORIGIN,
+          cdnUrl: env.ASSET_PUBLIC_PATH,
         })
       : loaders.localImageLoader({
           publicPath: env.ASSET_PUBLIC_PATH,

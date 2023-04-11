@@ -52,6 +52,7 @@ export const Image = ({ assetContainer, alt, width }: ImageProps) => {
     if (remoteLocation) {
       return loaders.cloudflareImageLoader({
         resizeOrigin: env.RESIZE_ORIGIN,
+        cdnUrl: env.ASSET_CDN_URL,
       });
     }
 

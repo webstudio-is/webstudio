@@ -3,16 +3,15 @@ import { allSizes, type ImageLoader } from "./image-optimize";
 
 export type CloudflareImageLoaderOptions = {
   resizeOrigin?: string | null;
+  cdnUrl?: string;
 };
 
 /**
  * Default image loader in case of no loader provided
  * https://developers.cloudflare.com/images/image-resizing/url-format/
  **/
-export const cloudflareImageLoader: (
-  ops: CloudflareImageLoaderOptions | null
-) => ImageLoader =
-  (loaderOptions) =>
+export const cloudflareImageLoader =
+  (loaderOptions: CloudflareImageLoaderOptions | null): ImageLoader =>
   ({ width, src, quality }) => {
     if (process.env.NODE_ENV !== "production") {
       warnOnce(
@@ -21,9 +20,12 @@ export const cloudflareImageLoader: (
       );
     }
 
+    const cdnUrl = loaderOptions?.cdnUrl ?? "/";
+    const imageUrl = `${cdnUrl}${src}`;
+
     const options = `width=${width},quality=${quality},format=auto`;
     // Cloudflare docs say that we don't need to urlencode the path params
-    const pathname = `/cdn-cgi/image/${options}/${src}`;
+    const pathname = `/cdn-cgi/image/${options}/${imageUrl}`;
 
     if (loaderOptions?.resizeOrigin != null) {
       const url = new URL(pathname, loaderOptions.resizeOrigin);
