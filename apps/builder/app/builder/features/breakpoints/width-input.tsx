@@ -138,7 +138,7 @@ const Input = ({
         handleChangeCompleteRef.current(value);
       }
     },
-    []
+    [inputRef]
   );
 
   return (
