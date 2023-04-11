@@ -16,13 +16,8 @@ export const convertUnits =
       return value;
     }
 
-    if (!isConvertibleUnit(from)) {
-      return value;
+    if (isConvertibleUnit(from) && isConvertibleUnit(to)) {
+      return (value * unitSizes[from]) / unitSizes[to];
     }
-
-    if (!isConvertibleUnit(to)) {
-      return value;
-    }
-
-    return (value * unitSizes[from]) / unitSizes[to];
+    return value;
   };
