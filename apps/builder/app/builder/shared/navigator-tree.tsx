@@ -12,6 +12,7 @@ import {
 import type { InstanceSelector } from "~/shared/tree-utils";
 import { reparentInstance } from "~/shared/instance-utils";
 import { InstanceTree } from "./tree";
+import { shallowEqual } from "shallow-equal";
 
 export const NavigatorTree = () => {
   const selectedInstanceSelector = useStore(selectedInstanceSelectorStore);
@@ -47,8 +48,11 @@ export const NavigatorTree = () => {
   );
 
   const handleSelect = useCallback((instanceSelector: InstanceSelector) => {
-    selectedInstanceSelectorStore.set(instanceSelector);
-    textEditingInstanceSelectorStore.set(undefined);
+    // @todo for unknown reason handleSelect is called during "delete" hot key
+    if (!shallowEqual(selectedInstanceSelectorStore.get(), instanceSelector)) {
+      selectedInstanceSelectorStore.set(instanceSelector);
+      textEditingInstanceSelectorStore.set(undefined);
+    }
   }, []);
 
   if (rootInstance === undefined) {
