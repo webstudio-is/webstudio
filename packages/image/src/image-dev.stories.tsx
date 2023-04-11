@@ -30,7 +30,7 @@ const imageSrc = USE_CLOUDFLARE_IMAGE_TRANSFORM
 
 const imageLoader = USE_CLOUDFLARE_IMAGE_TRANSFORM
   ? loaders.cloudflareImageLoader({ resizeOrigin: "https://webstudio.is" })
-  : loaders.localImageLoader();
+  : loaders.localImageLoader({ publicPath: "" });
 
 const ImageBase: ComponentStory<
   React.ForwardRefExoticComponent<

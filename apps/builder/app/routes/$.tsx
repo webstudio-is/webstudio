@@ -19,6 +19,9 @@ export const loader = async ({ request }: LoaderArgs) => {
   if (env.RESIZE_ORIGIN != null) {
     params.resizeOrigin = env.RESIZE_ORIGIN;
   }
+  if (env.ASSET_PUBLIC_PATH != null) {
+    params.publicPath = env.ASSET_PUBLIC_PATH;
+  }
 
   return { params };
 };

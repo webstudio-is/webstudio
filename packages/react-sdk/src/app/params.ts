@@ -1,5 +1,6 @@
 export type Params = {
   resizeOrigin?: string;
+  publicPath?: string;
 };
 
 let params: Params | null = {};
