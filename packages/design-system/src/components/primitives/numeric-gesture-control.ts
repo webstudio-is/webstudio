@@ -199,9 +199,11 @@ const requestPointerLock = (
   // albeit without an infinite cursor ux.
   if (shouldUsePointerLock) {
     targetNode.requestPointerLock();
-    const cursorNode = (targetNode.ownerDocument.querySelector("#cursor") ||
+    const cursorNode = (targetNode.ownerDocument.querySelector(
+      "#numeric-guesture-control-cursor"
+    ) ||
       new Range().createContextualFragment(`
-      <svg id="cursor" version="1.1" xmlns="http://www.w3.org/2000/svg" width="46" height="15">
+      <svg id="numeric-guesture-control-cursor" version="1.1" xmlns="http://www.w3.org/2000/svg" width="46" height="15">
        <g transform="translate(2 3)">
          <path d="M 15 4.5L 15 2L 11.5 5.5L 15 9L 15 6.5L 31 6.5L 31 9L 34.5 5.5L 31 2L 31 4.5Z" fill="#111" fill-rule="evenodd" stroke="#FFF" stroke-width="2"></path>
           <path d="M 15 4.5L 15 2L 11.5 5.5L 15 9L 15 6.5L 31 6.5L 31 9L 34.5 5.5L 31 2L 31 4.5Z" fill="#111" fill-rule="evenodd"></path>
@@ -211,6 +213,7 @@ const requestPointerLock = (
       state.direction === "horizontal" ? "0 1px" : "1px 0"
     } 1.1px rgba(0,0,0,.4))`;
     cursorNode.style.position = "absolute";
+    cursorNode.style.zIndex = Number.MAX_SAFE_INTEGER.toString();
     cursorNode.style.left = `${event.clientX}px`;
     cursorNode.style.top = `${event.clientY}px`;
     cursorNode.style.transform = `translate(-50%, -50%) ${
