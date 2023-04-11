@@ -386,7 +386,8 @@ export const CssValueInput = ({
         ? value.unit
         : undefined,
     onChange: (unit) => {
-      // Value edited by user, value looks like a number, then Unit has changed, no need in any conversions.
+      // value looks like a number and just edited (type === "intermediate")
+      // no additional conversions are necessary
       if (
         value.type === "intermediate" &&
         Number.isNaN(Number.parseFloat(value.value)) === false
@@ -416,8 +417,8 @@ export const CssValueInput = ({
         return;
       }
 
+      // value is a keyword or non numeric, try get browser style value and convert it
       if (value.type === "keyword" || value.type === "intermediate") {
-        // try to convert browser style, otherwise set to 0
         const browserStyle = selectedInstanceBrowserStyleStore.get();
         const browserPropertyValue = browserStyle?.[property];
         const propertyValue =
