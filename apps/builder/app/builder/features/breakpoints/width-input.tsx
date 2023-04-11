@@ -6,11 +6,10 @@ import {
   Flex,
   Label,
   type NumericScrubValue,
-  type NumericScrubDirection,
-  numericScrubControl,
   InputField,
   useId,
   type CSS,
+  useScrub,
 } from "@webstudio-is/design-system";
 import { useCanvasWidth } from "~/builder/shared/nano-states";
 import { breakpointsStore } from "~/shared/nano-states";
@@ -18,7 +17,7 @@ import {
   selectedBreakpointIdStore,
   selectedBreakpointStore,
 } from "~/shared/nano-states";
-import { useEffect, useRef, type RefObject, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 
 // Doesn't make sense to allow resizing the canvas lower/higher than this.
 export const minWidth = 240;
@@ -52,7 +51,6 @@ export const WidthInput = () => {
         id={id}
         value={canvasWidth}
         min={minWidth}
-        direction="horizontal"
         onChange={onChange}
         tabIndex={0}
         suffix={
@@ -69,7 +67,7 @@ export const WidthInput = () => {
     </Flex>
   );
 };
-
+/*
 const useScrub = ({
   ref,
   value,
@@ -102,10 +100,10 @@ const useScrub = ({
     return disconnectedCallback;
   }, [direction, ref]);
 };
+*/
 
 const Input = ({
   value,
-  direction,
   onChange,
   suffix,
   id,
@@ -114,7 +112,6 @@ const Input = ({
   min,
 }: {
   value: NumericScrubValue;
-  direction: NumericScrubDirection;
   suffix?: JSX.Element;
   onChange: (value: NumericScrubValue) => void;
   id: string;
@@ -123,19 +120,17 @@ const Input = ({
   min?: number;
 }) => {
   const [intermediateValue, setIntermediateValue] = useState<number>();
-  const inputRef = useRef<HTMLInputElement | null>(null);
   const handleChangeComplete = (value: number) => {
     onChange(Math.max(value, min ?? 0));
     setIntermediateValue(undefined);
   };
   const handleChangeCompleteRef = useRef(handleChangeComplete);
 
-  useScrub({
-    ref: inputRef,
+  const { scrubRef, inputRef } = useScrub({
     value,
-    direction,
     onChange: handleChangeCompleteRef.current,
   });
+
   useEffect(
     () => () => {
       const value = inputRef.current?.valueAsNumber;
@@ -145,10 +140,12 @@ const Input = ({
     },
     []
   );
+
   return (
     <InputField
       id={id}
       value={intermediateValue ?? value}
+      ref={scrubRef}
       inputRef={inputRef}
       type="number"
       suffix={suffix}
@@ -158,11 +155,11 @@ const Input = ({
       }}
       onKeyDown={(event) => {
         if (event.key === "Enter") {
-          handleChangeComplete(event.currentTarget.valueAsNumber);
+          handleChangeComplete(value);
         }
       }}
-      onBlur={(event) => {
-        handleChangeComplete(event.target.valueAsNumber);
+      onBlur={() => {
+        handleChangeComplete(value);
       }}
       css={css}
       tabIndex={tabIndex}

@@ -77,6 +77,7 @@ export * from "./components/primitives/numeric-gesture-control";
 export * from "./components/primitives/is-truncated";
 export * from "./components/primitives/arrow-focus";
 export * from "./components/scroll-area";
+export * from "./components/primitives/use-scrub";
 
 // Deprecated
 
