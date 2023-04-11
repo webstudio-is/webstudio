@@ -193,8 +193,8 @@ export const InputField = forwardRef(
     // Our input field can contain multiple focused elements,
     // so we need to use useFocusWithin to track focus within the container.
     const { focusWithinProps } = useFocusWithin({
-      onFocusWithin: (e) => onFocus?.(e),
-      onBlurWithin: (e) => onBlur?.(e),
+      onFocusWithin: onFocus,
+      onBlurWithin: onBlur,
     });
 
     return (
