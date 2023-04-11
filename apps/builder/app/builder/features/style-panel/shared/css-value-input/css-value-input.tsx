@@ -35,6 +35,11 @@ import { useDebouncedCallback } from "use-debounce";
 import type { StyleSource } from "../style-info";
 import { toPascalCase } from "../keyword-utils";
 import { isValid } from "../parse-css-value";
+import {
+  selectedInstanceBrowserStyleStore,
+  selectedInstanceUnitSizesStore,
+} from "~/shared/nano-states";
+import { convertUnits } from "./convert-units";
 
 // We increment by 10 when shift is pressed, by 0.1 when alt/option is pressed and by 1 by default.
 const calcNumberChange = (
@@ -381,13 +386,73 @@ export const CssValueInput = ({
         ? value.unit
         : undefined,
     onChange: (unit) => {
-      if (value.type === "unit" || value.type === "intermediate") {
+      // value looks like a number and just edited (type === "intermediate")
+      // no additional conversions are necessary
+      if (
+        value.type === "intermediate" &&
+        Number.isNaN(Number.parseFloat(value.value)) === false
+      ) {
         onChangeComplete({ ...value, unit }, "unit-select");
         return;
       }
 
+      const unitSizes = selectedInstanceUnitSizesStore.get();
+
+      // Value not edited by the user, we need to convert it to the new unit
+      if (value.type === "unit") {
+        const convertedValue = convertUnits(unitSizes)(
+          value.value,
+          value.unit,
+          unit
+        );
+
+        onChangeComplete(
+          {
+            type: "unit",
+            value: Number.parseFloat(convertedValue.toFixed(2)),
+            unit,
+          },
+          "unit-select"
+        );
+        return;
+      }
+
+      // value is a keyword or non numeric, try get browser style value and convert it
+      if (value.type === "keyword" || value.type === "intermediate") {
+        const browserStyle = selectedInstanceBrowserStyleStore.get();
+        const browserPropertyValue = browserStyle?.[property];
+        const propertyValue =
+          browserPropertyValue?.type === "unit"
+            ? browserPropertyValue.value
+            : 0;
+        const propertyUnit =
+          browserPropertyValue?.type === "unit"
+            ? browserPropertyValue.unit
+            : "number";
+
+        const convertedValue = convertUnits(unitSizes)(
+          propertyValue,
+          propertyUnit,
+          unit
+        );
+
+        onChangeComplete(
+          {
+            type: "unit",
+            value: Number.parseFloat(convertedValue.toFixed(2)),
+            unit,
+          },
+          "unit-select"
+        );
+        return;
+      }
+
       onChangeComplete(
-        { type: "intermediate", value: toValue(value), unit },
+        {
+          type: "intermediate",
+          value: toValue(value),
+          unit,
+        },
         "unit-select"
       );
     },
@@ -480,10 +545,13 @@ export const CssValueInput = ({
       <ChevronDownIcon />
     </NestedSelectButton>
   );
+
+  const isUnitValue = unitSelectElement !== null;
+
   const hasItems = items.length !== 0;
-  const isUnitValue = "unit" in value;
   const isKeywordValue = value.type === "keyword" && hasItems;
   const suffixRef = useRef<HTMLDivElement | null>(null);
+
   const suffix = (
     <Box ref={suffixRef}>
       {isUnitValue

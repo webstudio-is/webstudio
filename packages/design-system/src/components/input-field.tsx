@@ -8,11 +8,13 @@ import {
   type ReactNode,
   type ComponentProps,
   type Ref,
+  type FocusEvent,
 } from "react";
 import { textVariants } from "./text";
 import { css, theme, type CSS } from "../stitches.config";
 import { ArrowFocus } from "./primitives/arrow-focus";
 import { mergeRefs } from "@react-aria/utils";
+import { useFocusWithin } from "@react-aria/interactions";
 
 // we only support types that behave more or less like a regular text input
 export const inputFieldTypes = [
@@ -147,7 +149,7 @@ type InputProps = {
   type?: (typeof inputFieldTypes)[number];
   color?: (typeof inputFieldColors)[number];
   css?: CSS;
-} & Omit<ComponentProps<"input">, "prefix">;
+} & Omit<ComponentProps<"input">, "prefix" | "onFocus" | "onBlur">;
 
 const Input = forwardRef(
   (
@@ -175,24 +177,38 @@ export const InputField = forwardRef(
       suffix,
       containerRef,
       inputRef,
+      onFocus,
+      onBlur,
       ...props
     }: InputProps & {
       prefix?: ReactNode;
       suffix?: ReactNode;
       containerRef?: Ref<HTMLDivElement>;
       inputRef?: Ref<HTMLInputElement>;
+      onFocus?: (e: FocusEvent) => void;
+      onBlur?: (e: FocusEvent) => void;
     },
     ref: Ref<HTMLDivElement>
-  ) => (
-    <Container
-      css={css}
-      className={className}
-      prefix={prefix}
-      suffix={suffix}
-      ref={mergeRefs(ref, containerRef ?? null)}
-    >
-      <Input {...props} ref={inputRef} />
-    </Container>
-  )
+  ) => {
+    // Our input field can contain multiple focused elements,
+    // so we need to use useFocusWithin to track focus within the container.
+    const { focusWithinProps } = useFocusWithin({
+      onFocusWithin: onFocus,
+      onBlurWithin: onBlur,
+    });
+
+    return (
+      <Container
+        css={css}
+        className={className}
+        prefix={prefix}
+        suffix={suffix}
+        {...focusWithinProps}
+        ref={mergeRefs(ref, containerRef ?? null)}
+      >
+        <Input {...props} ref={inputRef} />
+      </Container>
+    );
+  }
 );
 InputField.displayName = "InputField";

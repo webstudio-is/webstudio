@@ -31,6 +31,7 @@ import {
   selectedInstanceSelectorStore,
 } from "./instances";
 import { selectedPageStore } from "./pages";
+import type { UnitSizes } from "~/builder/features/style-panel/shared/css-value-input/convert-units";
 
 const useValue = <T>(atom: WritableAtom<T>) => {
   const value = useStore(atom);
@@ -211,6 +212,16 @@ export const useSetAssets = (assets: [Asset["id"], Asset][]) => {
 };
 
 export const selectedInstanceBrowserStyleStore = atom<undefined | Style>();
+
+// Init with some defaults to avoid undefined
+export const selectedInstanceUnitSizesStore = atom<UnitSizes>({
+  ch: 8,
+  vw: 3.2,
+  vh: 4.8,
+  em: 16,
+  rem: 16,
+  px: 1,
+});
 
 /**
  * instanceId => tagName store for selected instance and its ancestors
