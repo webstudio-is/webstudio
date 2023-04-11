@@ -2,7 +2,9 @@ import warnOnce from "warn-once";
 import { allSizes, type ImageLoader } from "./image-optimize";
 
 export type CloudflareImageLoaderOptions = {
+  // origin of transformation wrapper
   resizeOrigin?: string | null;
+  // origin of cdn serving image
   cdnUrl?: string;
 };
 
