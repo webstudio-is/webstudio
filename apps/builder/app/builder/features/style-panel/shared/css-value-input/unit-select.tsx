@@ -70,12 +70,13 @@ export const useUnitSelect = ({
 
   const select = (
     <UnitSelect
-      value={value ?? options[0].id}
+      value={value}
       options={options}
       open={isOpen}
       onCloseAutoFocus={onCloseAutoFocus}
       onOpenChange={setIsOpen}
       onChange={onChange}
+      labelFallback={options[0].label}
     />
   );
 
@@ -84,11 +85,12 @@ export const useUnitSelect = ({
 
 type UnitSelectProps = {
   options: Array<UnitOption>;
-  value: string;
+  value?: string | undefined;
   onChange: (value: Unit) => void;
   onOpenChange: (open: boolean) => void;
   onCloseAutoFocus: (event: Event) => void;
   open: boolean;
+  labelFallback: string;
 };
 
 const UnitSelect = ({
@@ -98,6 +100,7 @@ const UnitSelect = ({
   onOpenChange,
   onCloseAutoFocus,
   open,
+  labelFallback,
 }: UnitSelectProps) => {
   const matchedOption = options.find((item) => item.id === value);
   return (
@@ -111,7 +114,9 @@ const UnitSelect = ({
         <NestedSelectButton tabIndex={-1}>
           <SelectPrimitive.Value>
             {matchedOption?.label ??
-              (value === "number" ? nestedSelectButtonUnitless : value)}
+              (value === "number"
+                ? nestedSelectButtonUnitless
+                : value ?? labelFallback)}
           </SelectPrimitive.Value>
         </NestedSelectButton>
       </SelectPrimitive.SelectTrigger>
