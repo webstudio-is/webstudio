@@ -29,7 +29,7 @@ export const createImageValueTransformer =
 
       // @todo reuse image loaders and generate image-set
       const { publicPath = "/" } = options;
-      let url =
+      const url =
         asset.location === "REMOTE" ? asset.path : `${publicPath}${asset.name}`;
 
       return {
