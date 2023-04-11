@@ -16,12 +16,7 @@ import {
   selectedBreakpointIdStore,
   selectedBreakpointStore,
 } from "~/shared/nano-states";
-import {
-  useState,
-  type ChangeEventHandler,
-  type KeyboardEventHandler,
-  type FocusEventHandler,
-} from "react";
+import { useState, type ChangeEvent, type KeyboardEvent } from "react";
 
 // Doesn't make sense to allow resizing the canvas lower/higher than this.
 export const minWidth = 240;
@@ -34,36 +29,31 @@ const useEnhancedInput = ({
   value: number;
 }) => {
   const [intermediateValue, setIntermediateValue] = useState<number>();
-  const handleChangeComplete = (nextValue: number) => {
+
+  const handleChange = (nextValue: number) => {
     onChange(Math.max(nextValue, minWidth));
     setIntermediateValue(undefined);
   };
 
   const { scrubRef, inputRef } = useScrub({
     value,
-    onChange: handleChangeComplete,
+    onChange: handleChange,
   });
-
-  const handleChange: ChangeEventHandler<HTMLInputElement> = (event) => {
-    setIntermediateValue(event.target.valueAsNumber);
-  };
-
-  const handleKeydown: KeyboardEventHandler<HTMLInputElement> = (event) => {
-    if (event.key === "Enter") {
-      handleChangeComplete(event.currentTarget.valueAsNumber);
-    }
-  };
-
-  const handleBlur: FocusEventHandler = () => {
-    handleChangeComplete(inputRef.current?.valueAsNumber ?? 0);
-  };
 
   return {
     ref: scrubRef,
     inputRef,
-    onChange: handleChange,
-    onKeyDown: handleKeydown,
-    onBlur: handleBlur,
+    onChange(event: ChangeEvent<HTMLInputElement>) {
+      setIntermediateValue(event.target.valueAsNumber);
+    },
+    onKeyDown(event: KeyboardEvent<HTMLInputElement>) {
+      if (event.key === "Enter") {
+        handleChange(event.currentTarget.valueAsNumber);
+      }
+    },
+    onBlur() {
+      handleChange(inputRef.current?.valueAsNumber ?? 0);
+    },
     type: "number" as const,
     value: intermediateValue ?? value,
   };
