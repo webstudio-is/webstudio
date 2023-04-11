@@ -4,7 +4,8 @@
 import serverEnv from "./env.server";
 
 const getCdnUrlFromS3 = () => {
-  const { S3_ENDPOINT, S3_BUCKET } = process.env;
+  const S3_ENDPOINT = process.env.S3_ENDPOINT;
+  const S3_BUCKET = process.env.S3_BUCKET;
   if (S3_ENDPOINT === undefined || S3_BUCKET === undefined) {
     return undefined;
   }
