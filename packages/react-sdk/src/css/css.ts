@@ -14,26 +14,36 @@ type Data = {
   styleSourceSelections?: Build["styleSourceSelections"];
 };
 
+type CssOptions = {
+  publicPath?: string;
+};
+
 export const createImageValueTransformer =
-  (assets: Assets): TransformValue =>
+  (assets: Assets, options: CssOptions): TransformValue =>
   (styleValue) => {
     if (styleValue.type === "image" && styleValue.value.type === "asset") {
       const asset = assets.get(styleValue.value.value);
       if (asset === undefined) {
         return { type: "keyword", value: "none" };
       }
+
+      // @todo reuse image loaders and generate image-set
+      const { publicPath = "/" } = options;
+      const url =
+        asset.location === "REMOTE" ? asset.path : `${publicPath}${asset.name}`;
+
       return {
         type: "image",
         value: {
           type: "url",
-          url: asset.path,
+          url,
         },
         hidden: styleValue.hidden,
       };
     }
   };
 
-export const generateCssText = (data: Data) => {
+export const generateCssText = (data: Data, options: CssOptions) => {
   const assets = new Map<Asset["id"], Asset>(
     data.assets.map((asset) => [asset.id, asset])
   );
@@ -72,7 +82,7 @@ export const generateCssText = (data: Data) => {
         breakpoint: breakpointId,
         style,
       },
-      createImageValueTransformer(assets)
+      createImageValueTransformer(assets, options)
     );
   }
 

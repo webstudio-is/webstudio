@@ -39,12 +39,17 @@ export const loader = async ({ request }: ActionArgs) => {
       throw json("Page not found", { status: 404 });
     }
 
-    const cssText = generateCssText({
-      assets: canvasData.assets,
-      breakpoints: canvasData.build?.breakpoints,
-      styles: canvasData.build?.styles,
-      styleSourceSelections: canvasData.build?.styleSourceSelections,
-    });
+    const cssText = generateCssText(
+      {
+        assets: canvasData.assets,
+        breakpoints: canvasData.build?.breakpoints,
+        styles: canvasData.build?.styles,
+        styleSourceSelections: canvasData.build?.styleSourceSelections,
+      },
+      {
+        publicPath: env.ASSET_PUBLIC_PATH,
+      }
+    );
 
     const engine = createCssEngine({ name: "ssr" });
     for (const style of helperStyles) {

@@ -98,7 +98,9 @@ export const LayerThumbnail = (props: { layerStyle: StyleInfo }) => {
       ? loaders.cloudflareImageLoader({
           resizeOrigin: env.RESIZE_ORIGIN,
         })
-      : loaders.localImageLoader();
+      : loaders.localImageLoader({
+          publicPath: env.ASSET_PUBLIC_PATH,
+        });
 
     return (
       <StyledWebstudioImage

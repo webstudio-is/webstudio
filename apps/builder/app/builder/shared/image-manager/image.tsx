@@ -55,7 +55,9 @@ export const Image = ({ assetContainer, alt, width }: ImageProps) => {
       });
     }
 
-    return loaders.localImageLoader();
+    return loaders.localImageLoader({
+      publicPath: env.ASSET_PUBLIC_PATH,
+    });
   }, [remoteLocation]);
 
   return (
