@@ -8,6 +8,7 @@ import {
   rootInstanceContainer,
   selectedInstanceBrowserStyleStore,
   selectedInstanceIntanceToTagStore,
+  selectedInstanceUnitSizesStore,
 } from "~/shared/nano-states";
 import htmlTags, { type htmlTags as HtmlTags } from "html-tags";
 import { getAllElementsBoundingBox } from "~/shared/dom-utils";
@@ -26,6 +27,39 @@ const setOutline = (instanceId: Instance["id"], element: HTMLElement) => {
 
 const hideOutline = () => {
   selectedInstanceOutlineStore.set(undefined);
+};
+
+const calculateUnitSizes = (element: HTMLElement) => {
+  // https://stackoverflow.com/questions/1248081/how-to-get-the-browser-viewport-dimensions/8876069#8876069
+  const vw =
+    Math.max(document.documentElement.clientWidth, window.innerWidth) / 100;
+  const vh =
+    Math.max(document.documentElement.clientHeight, window.innerHeight) / 100;
+
+  const em = Number.parseFloat(getComputedStyle(element).fontSize);
+
+  const rem = Number.parseFloat(
+    getComputedStyle(document.documentElement).fontSize
+  );
+
+  const node = document.createElement("div");
+  node.style.width = "1ch";
+  node.style.position = "absolute";
+
+  element.appendChild(node);
+
+  const ch = Number.parseFloat(getComputedStyle(node).width);
+
+  element.removeChild(node);
+
+  return {
+    ch,
+    vw,
+    vh,
+    em,
+    rem,
+    px: 1,
+  };
 };
 
 export const SelectedInstanceConnector = ({
@@ -111,6 +145,9 @@ export const SelectedInstanceConnector = ({
     }
 
     selectedInstanceIntanceToTagStore.set(instanceToTag);
+
+    const unitSizes = calculateUnitSizes(element);
+    selectedInstanceUnitSizesStore.set(unitSizes);
 
     return () => {
       hideOutline();
