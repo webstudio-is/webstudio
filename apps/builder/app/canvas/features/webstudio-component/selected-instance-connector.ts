@@ -8,11 +8,13 @@ import {
   rootInstanceContainer,
   selectedInstanceBrowserStyleStore,
   selectedInstanceIntanceToTagStore,
+  selectedInstanceUnitSizesStore,
 } from "~/shared/nano-states";
 import htmlTags, { type htmlTags as HtmlTags } from "html-tags";
 import { getAllElementsBoundingBox } from "~/shared/dom-utils";
 import { subscribeScrollState } from "~/canvas/shared/scroll-state";
 import { selectedInstanceOutlineStore } from "~/shared/nano-states";
+import type { UnitSizes } from "~/builder/features/style-panel/shared/css-value-input/convert-units";
 
 const isHtmlTag = (tag: string): tag is HtmlTags =>
   htmlTags.includes(tag as HtmlTags);
@@ -26,6 +28,40 @@ const setOutline = (instanceId: Instance["id"], element: HTMLElement) => {
 
 const hideOutline = () => {
   selectedInstanceOutlineStore.set(undefined);
+};
+
+const calculateUnitSizes = (element: HTMLElement): UnitSizes => {
+  // Based on this https://stackoverflow.com/questions/1248081/how-to-get-the-browser-viewport-dimensions/8876069#8876069
+  // this is crossbrowser way to get viewport sizes vw vh in px
+  const vw =
+    Math.max(document.documentElement.clientWidth, window.innerWidth) / 100;
+  const vh =
+    Math.max(document.documentElement.clientHeight, window.innerHeight) / 100;
+
+  // em in px is equal to current computed style for font size
+  const em = Number.parseFloat(getComputedStyle(element).fontSize);
+
+  // rem in px is equal to root computed style for font size
+  const rem = Number.parseFloat(
+    getComputedStyle(document.documentElement).fontSize
+  );
+
+  // we create a node with 1ch width, measure it in px and remove it
+  const node = document.createElement("div");
+  node.style.width = "1ch";
+  node.style.position = "absolute";
+  element.appendChild(node);
+  const ch = Number.parseFloat(getComputedStyle(node).width);
+  element.removeChild(node);
+
+  return {
+    ch, // 1ch in pixels
+    vw, // 1vw in pixels
+    vh, // 1vh in pixels
+    em, // 1em in pixels
+    rem, // 1rem in pixels
+    px: 1, // always 1, simplifies conversions and types, i.e valueTo = valueFrom * unitSizes[from] / unitSizes[to]
+  };
 };
 
 export const SelectedInstanceConnector = ({
@@ -111,6 +147,9 @@ export const SelectedInstanceConnector = ({
     }
 
     selectedInstanceIntanceToTagStore.set(instanceToTag);
+
+    const unitSizes = calculateUnitSizes(element);
+    selectedInstanceUnitSizesStore.set(unitSizes);
 
     return () => {
       hideOutline();
