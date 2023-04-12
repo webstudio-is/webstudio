@@ -1,5 +1,5 @@
 import { Fragment } from "react";
-import type { Instance } from "@webstudio-is/project-build";
+import type { Instance, InstancesItem } from "@webstudio-is/project-build";
 import type { GetComponent } from "../components/components-utils";
 import { useInstanceProps } from "../props";
 
@@ -27,7 +27,7 @@ export const renderWebstudioComponentChildren = (
 };
 
 type WebstudioComponentProps = {
-  instance: Instance;
+  instance: InstancesItem;
   instanceSelector: Instance["id"][];
   children: Array<JSX.Element | string>;
   getComponent: GetComponent;
