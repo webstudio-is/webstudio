@@ -248,8 +248,7 @@ const useScrollIntoView = (
 };
 
 export type TreeItemRenderProps<Data extends { id: string }> = {
-  onMouseEnter?: (itemSelector: ItemSelector) => void;
-  onMouseLeave?: (itemSelector: ItemSelector) => void;
+  onHover?: (itemSelector?: ItemSelector) => void;
   itemData: Data;
   itemSelector: ItemSelector;
   dropTargetItemSelector?: ItemSelector;
@@ -268,8 +267,7 @@ export const TreeItemBody = <Data extends { id: string }>({
   parentIsSelected = false,
   isSelected = false,
   dropTargetItemSelector,
-  onMouseEnter,
-  onMouseLeave,
+  onHover,
   itemData,
   itemSelector,
   level,
@@ -332,8 +330,8 @@ export const TreeItemBody = <Data extends { id: string }>({
 
   return (
     <ItemContainer
-      onMouseEnter={onMouseEnter && (() => onMouseEnter(itemSelector))}
-      onMouseLeave={onMouseLeave && (() => onMouseLeave(itemSelector))}
+      onMouseEnter={onHover && (() => onHover(itemSelector))}
+      onMouseLeave={onHover && (() => onHover())}
       isSelected={isSelected}
       parentIsSelected={parentIsSelected}
       enableHoverState={isDragging === false}
@@ -411,8 +409,7 @@ export type TreeNodeProps<Data extends { id: ItemId }> = {
 
   parentIsSelected?: boolean;
   onSelect?: (itemSelector: ItemSelector) => void;
-  onMouseEnter?: (itemSelector: ItemSelector) => void;
-  onMouseLeave?: (itemSelector: ItemSelector) => void;
+  onHover?: (itemSelector?: ItemSelector) => void;
 
   animate?: boolean;
 
@@ -432,8 +429,7 @@ export const TreeNode = <Data extends { id: string }>({
     setIsExpanded,
     selectedItemSelector,
     onSelect,
-    onMouseEnter,
-    onMouseLeave,
+    onHover,
     onExpandTransitionEnd,
     dropTargetItemSelector,
     renderItem,
@@ -489,8 +485,7 @@ export const TreeNode = <Data extends { id: string }>({
       {itemIsHidden === false &&
         renderItem({
           dropTargetItemSelector,
-          onMouseEnter,
-          onMouseLeave,
+          onHover,
           itemData,
           itemSelector,
           parentIsSelected,
