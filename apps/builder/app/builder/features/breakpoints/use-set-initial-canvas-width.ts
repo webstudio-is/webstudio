@@ -4,9 +4,13 @@ import {
   useCanvasWidth,
   workspaceRectStore,
 } from "~/builder/shared/nano-states";
-import { breakpointsStore } from "~/shared/nano-states";
-import { selectedBreakpointStore } from "~/shared/nano-states";
+import {
+  breakpointsStore,
+  selectedBreakpointIdStore,
+} from "~/shared/nano-states";
+
 import { findInitialWidth } from "./find-initial-width";
+import { findApplicableMedia } from "@webstudio-is/css-engine";
 
 export const useSetInitialCanvasWidth = () => {
   const [, setCanvasWidth] = useCanvasWidth();
@@ -31,18 +35,32 @@ export const useSetInitialCanvasWidth = () => {
 };
 
 export const useSetInitialCanvasWidthOnce = () => {
-  const selectedBreakpoint = useStore(selectedBreakpointStore);
   const isDone = useRef(false);
-  const setWidth = useSetInitialCanvasWidth();
+  const [, setWidth] = useCanvasWidth();
   const workspaceRect = useStore(workspaceRectStore);
+  const breakpoints = useStore(breakpointsStore);
 
   // Set it initially once.
   useEffect(() => {
     if (isDone.current) {
       return;
     }
-    if (selectedBreakpoint) {
-      isDone.current = setWidth(selectedBreakpoint.id);
+    if (workspaceRect === undefined) {
+      return;
     }
-  }, [selectedBreakpoint, setWidth, workspaceRect]);
+
+    const width = workspaceRect.width;
+
+    const applicableBreakpoint = findApplicableMedia(
+      Array.from(breakpoints.values()),
+      width
+    );
+    if (applicableBreakpoint) {
+      selectedBreakpointIdStore.set(applicableBreakpoint.id);
+    }
+
+    setWidth(width);
+
+    isDone.current = true;
+  }, [breakpoints, setWidth, workspaceRect]);
 };
