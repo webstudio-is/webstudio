@@ -11,21 +11,28 @@ import {
   useScrub,
 } from "@webstudio-is/design-system";
 import { useCanvasWidth } from "~/builder/shared/nano-states";
-import { breakpointsStore } from "~/shared/nano-states";
+import { breakpointsStore, isResizingCanvasStore } from "~/shared/nano-states";
 import {
   selectedBreakpointIdStore,
   selectedBreakpointStore,
 } from "~/shared/nano-states";
-import { useState, type ChangeEvent, type KeyboardEvent } from "react";
+import {
+  useState,
+  type ChangeEvent,
+  type KeyboardEvent,
+  useEffect,
+} from "react";
 
 // Doesn't make sense to allow resizing the canvas lower/higher than this.
 export const minWidth = 240;
 
 const useEnhancedInput = ({
   onChange,
+  onChangeComplete,
   value,
 }: {
   onChange: (value: NumericScrubValue) => void;
+  onChangeComplete: (value: NumericScrubValue) => void;
   value: number;
 }) => {
   const [intermediateValue, setIntermediateValue] = useState<number>();
@@ -35,9 +42,15 @@ const useEnhancedInput = ({
     setIntermediateValue(undefined);
   };
 
+  const handleChangeComplete = (nextValue: number) => {
+    onChangeComplete(Math.max(nextValue, minWidth));
+    setIntermediateValue(undefined);
+  };
+
   const { scrubRef, inputRef } = useScrub({
     value,
     onChange: handleChange,
+    onChangeComplete: handleChangeComplete,
   });
 
   return {
@@ -48,11 +61,11 @@ const useEnhancedInput = ({
     },
     onKeyDown(event: KeyboardEvent<HTMLInputElement>) {
       if (event.key === "Enter") {
-        handleChange(event.currentTarget.valueAsNumber);
+        handleChangeComplete(event.currentTarget.valueAsNumber);
       }
     },
     onBlur() {
-      handleChange(inputRef.current?.valueAsNumber ?? 0);
+      handleChangeComplete(inputRef.current?.valueAsNumber ?? 0);
     },
     type: "number" as const,
     value: intermediateValue ?? value,
@@ -74,9 +87,31 @@ export const WidthInput = () => {
     if (applicableBreakpoint) {
       selectedBreakpointIdStore.set(applicableBreakpoint.id);
     }
+    if (isResizingCanvasStore.get() === false) {
+      isResizingCanvasStore.set(true);
+    }
   };
 
-  const inputProps = useEnhancedInput({ onChange, value: canvasWidth ?? 0 });
+  const onChangeComplete = (value: number) => {
+    onChange(value);
+    isResizingCanvasStore.set(false);
+  };
+
+  useEffect(() => {
+    return () => {
+      // Just in case we haven't received onChangeComplete, make sure we have set isResizingCanvasStore to false,
+      // otherwise the canvas will be stuck in a resizing state.
+      if (isResizingCanvasStore.get()) {
+        isResizingCanvasStore.set(false);
+      }
+    };
+  }, []);
+
+  const inputProps = useEnhancedInput({
+    value: canvasWidth ?? 0,
+    onChange,
+    onChangeComplete,
+  });
 
   if (canvasWidth === undefined || selectedBreakpoint === undefined) {
     return null;
