@@ -78,6 +78,7 @@ export * from "./components/primitives/is-truncated";
 export * from "./components/primitives/arrow-focus";
 export * from "./components/scroll-area";
 export * from "./components/primitives/use-scrub";
+export * from "./components/primitives/numeric-input-arrow-keys";
 
 // Deprecated
 

@@ -9,6 +9,7 @@ import {
   InputField,
   useId,
   useScrub,
+  handleNumericInputArrowKeys,
 } from "@webstudio-is/design-system";
 import { useCanvasWidth } from "~/builder/shared/nano-states";
 import { breakpointsStore, isResizingCanvasStore } from "~/shared/nano-states";
@@ -37,6 +38,8 @@ const useEnhancedInput = ({
 }) => {
   const [intermediateValue, setIntermediateValue] = useState<number>();
 
+  const currentValue = intermediateValue ?? value;
+
   const handleChange = (nextValue: number) => {
     onChange(Math.max(nextValue, minWidth));
     setIntermediateValue(undefined);
@@ -61,14 +64,19 @@ const useEnhancedInput = ({
     },
     onKeyDown(event: KeyboardEvent<HTMLInputElement>) {
       if (event.key === "Enter") {
-        handleChangeComplete(event.currentTarget.valueAsNumber);
+        return handleChangeComplete(event.currentTarget.valueAsNumber);
+      }
+      const nextValue = handleNumericInputArrowKeys(currentValue, event);
+      if (nextValue !== currentValue) {
+        event.preventDefault();
+        handleChange(nextValue);
       }
     },
     onBlur() {
       handleChangeComplete(inputRef.current?.valueAsNumber ?? 0);
     },
     type: "number" as const,
-    value: intermediateValue ?? value,
+    value: currentValue,
   };
 };
 
