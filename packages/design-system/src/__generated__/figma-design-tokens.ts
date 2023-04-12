@@ -4,6 +4,8 @@ export const boxShadow = {
   menuDropShadow: "0px 2px 7px 0px #0000001a, 0px 5px 17px 0px #00000026",
   brandElevationSmall: "0px 4px 4px 0px #1717171a",
   brandElevationBig: "0px 8px 16px 0px #1717171a",
+  panelSectionDropShadow:
+    "0px 4px 15px 0px #00000014, 0px 1px 7px 0px #00000014",
 } as const;
 
 export const fontFamilies = {
@@ -434,6 +436,7 @@ export const color = {
   foregroundGridControlsFlexHover: "#96c7f2",
   foregroundIconSecondary: "#c1c8cd",
   foregroundIconMain: "#11181c",
+  foregroundMoreSubtle: "#adb1b4",
   maintenanceLight: "#ededed",
   maintenanceMedium: "#c7c7c7",
   maintenanceDark: "#858585",

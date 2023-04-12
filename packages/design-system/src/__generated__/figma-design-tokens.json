@@ -984,6 +984,11 @@
           "value": "#11181c",
           "type": "color"
         }
+      },
+      "more-subtle": {
+        "value": "#adb1b4",
+        "type": "color",
+        "description": "The scroll bar, and anything that needs to be a bit lighter than foreground/subtle"
       }
     },
     "Brand": {
@@ -1248,6 +1253,28 @@
         "value": "360",
         "type": "fontSizes"
       }
+    },
+    "panel section drop shadow": {
+      "value": [
+        {
+          "color": "#00000014",
+          "type": "dropShadow",
+          "x": 0,
+          "y": 4,
+          "blur": 15,
+          "spread": 0
+        },
+        {
+          "color": "#00000014",
+          "type": "dropShadow",
+          "x": 0,
+          "y": 1,
+          "blur": 7,
+          "spread": 0
+        }
+      ],
+      "type": "boxShadow",
+      "description": "Shadow for sections that overlap other sections within the same panel. More subtle than the menu drop shadow."
     }
   },
   "$themes": [],

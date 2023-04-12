@@ -160,6 +160,7 @@ export const useDraggable = ({
       // fallback to root as drop target
       selectedInstanceSelectorStore.get() ?? [selectedPage.rootInstanceId]
     );
+
     insertNewComponentInstance(component, dropTarget);
   };
 
