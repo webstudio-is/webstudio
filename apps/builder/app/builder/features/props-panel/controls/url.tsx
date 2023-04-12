@@ -46,7 +46,7 @@ const BaseUrl = ({ prop, onChange, id }: BaseControlProps) => {
       <InputField
         id={id}
         value={localValue.value}
-        placeholder="https://example.com/"
+        placeholder="http://www.url.com"
         onChange={(event) => localValue.set(event.target.value)}
         onBlur={localValue.save}
         onKeyDown={(event) => {
