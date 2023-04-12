@@ -45,6 +45,8 @@ type CollapsibleSectionBaseProps = {
   onOpenChange: (value: boolean) => void;
 };
 
+const rootStyle = css({ display: "grid" });
+
 export const CollapsibleSectionBase = ({
   label,
   trigger,
@@ -56,7 +58,7 @@ export const CollapsibleSectionBase = ({
   <Collapsible.Root
     // Grid elements inside `display:table` element doesn't use children size and perfectly fit the parent
     // I don't know why, but this fixes our issues with ScrollArea
-    className={css({ display: "grid" })()}
+    className={rootStyle()}
     open={isOpen}
     onOpenChange={onOpenChange}
   >
