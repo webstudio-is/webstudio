@@ -155,32 +155,29 @@ export const usePropsLogic = ({
     return { prop, propName: name, meta: known };
   });
 
-  // names of the props added by the user during the lifetime of the hook
-  const [newNames, setNewNames] = useState<Prop["name"][]>([]);
+  // We keep track of names because sometime prop is in the list but not actually added/saved
+  // Also makes order stable etc.
+  const [addedNames, setAddedNames] = useState<Prop["name"][]>(() =>
+    Array.from(unprocessedSaved.values(), (prop) => prop.name)
+  );
 
-  const oldAdded: PropAndMeta[] = Array.from(unprocessedSaved.values())
-    .filter((prop) => newNames.includes(prop.name) === false)
-    .map((prop) => {
-      const known = getAndDelete(unprocessedKnown, prop.name);
-      unprocessedSaved.delete(prop.name);
-      return {
-        prop,
-        propName: prop.name,
-
-        // @todo:
-        //   if meta is undefined, this means it's a "custom attribute"
-        //   but because custom attributes not implemented yet,
-        //   we'll show it as a regular optional prop for now
-        meta: known ?? getDefaultMetaForType(prop.type),
-      };
-    });
-
-  const newAdded: PropAndMeta[] = newNames.map((name) => {
+  const addedProps: PropAndMeta[] = addedNames.map((name) => {
     const saved = getAndDelete(unprocessedSaved, name);
     const known = getAndDelete(unprocessedKnown, name);
 
+    // @todo:
+    //   if meta is undefined, this means it's a "custom attribute"
+    //   but because custom attributes not implemented yet,
+    //   we'll show it as a regular optional prop for now
     if (known === undefined) {
-      throw new Error(`Cannot find meta for a newly added prop "${name}`);
+      if (saved === undefined) {
+        throw new Error(`Cannot find meta for a newly added prop "${name}`);
+      }
+      return {
+        prop: saved,
+        propName: name,
+        meta: getDefaultMetaForType(saved.type),
+      };
     }
 
     return { prop: saved, propName: name, meta: known };
@@ -202,7 +199,7 @@ export const usePropsLogic = ({
     if (prop) {
       updateProp(prop);
     }
-    setNewNames((prev) => [...prev, propName]);
+    setAddedNames((prev) => [...prev, propName]);
   };
 
   const handleChange = ({ prop, propName }: PropOrName, value: PropValue) => {
@@ -217,7 +214,7 @@ export const usePropsLogic = ({
     if (prop) {
       deleteProp(prop.id);
     }
-    setNewNames((prev) => prev.filter((name) => propName !== name));
+    setAddedNames((prev) => prev.filter((name) => propName !== name));
   };
 
   const handleSoftDelete = (prop: Prop) => {
@@ -226,7 +223,7 @@ export const usePropsLogic = ({
 
   return {
     initialProps,
-    addedProps: [...oldAdded, ...newAdded],
+    addedProps,
     remainingProps: Array.from(unprocessedKnown.entries()).map(
       ([name, { label }]) => ({ name, label })
     ),
