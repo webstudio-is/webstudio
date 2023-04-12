@@ -35,7 +35,6 @@ export const useSetInitialCanvasWidth = () => {
 };
 
 export const useSetInitialCanvasWidthOnce = () => {
-  // const selectedBreakpoint = useStore(selectedBreakpointStore);
   const isDone = useRef(false);
   const [, setWidth] = useCanvasWidth();
   const workspaceRect = useStore(workspaceRectStore);
