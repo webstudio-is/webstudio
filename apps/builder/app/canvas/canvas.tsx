@@ -97,7 +97,7 @@ const useElementsTree = (getComponent: GetComponent) => {
       Component: WebstudioComponentDev,
       getComponent,
     });
-  }, [rootInstanceId, getComponent, pagesMapStore]);
+  }, [instances, rootInstanceId, getComponent, pagesMapStore]);
 };
 
 const DesignMode = () => {
