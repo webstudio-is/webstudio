@@ -12,6 +12,7 @@ import {
 import type { InstanceSelector } from "~/shared/tree-utils";
 import { reparentInstance } from "~/shared/instance-utils";
 import { InstanceTree } from "./tree";
+import { shallowEqual } from "shallow-equal";
 
 export const NavigatorTree = () => {
   const selectedInstanceSelector = useStore(selectedInstanceSelectorStore);
@@ -47,8 +48,16 @@ export const NavigatorTree = () => {
   );
 
   const handleSelect = useCallback((instanceSelector: InstanceSelector) => {
-    selectedInstanceSelectorStore.set(instanceSelector);
-    textEditingInstanceSelectorStore.set(undefined);
+    // TreeNode is refocused during "delete" hot key here https://github.com/webstudio-is/webstudio-builder/blob/5935d7818fba3739e4f16fe710ea468bf9d0ac78/packages/design-system/src/components/tree/tree.tsx#L435
+    // and then focus cause handleSelect to be called with the same instanceSelector
+    // This avoids additional rerender on node delete
+    if (
+      shallowEqual(selectedInstanceSelectorStore.get(), instanceSelector) ===
+      false
+    ) {
+      selectedInstanceSelectorStore.set(instanceSelector);
+      textEditingInstanceSelectorStore.set(undefined);
+    }
   }, []);
 
   if (rootInstance === undefined) {
