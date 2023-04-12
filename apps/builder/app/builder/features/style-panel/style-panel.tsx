@@ -10,9 +10,10 @@ import type { Publish } from "~/shared/pubsub";
 import { selectedBreakpointStore } from "~/shared/nano-states";
 import { useStyleData } from "./shared/use-style-data";
 import { StyleSettings } from "./style-settings";
-import { useCanvasWidth } from "~/builder/shared/nano-states";
+import { canvasWidthContainer } from "~/builder/shared/nano-states";
 import { StyleSourcesSection } from "./style-source-section";
 import { matchMedia } from "@webstudio-is/css-engine";
+import { useEffect, useState } from "react";
 
 type StylePanelProps = {
   publish: Publish;
@@ -26,19 +27,37 @@ export const StylePanel = ({ selectedInstance, publish }: StylePanelProps) => {
       publish,
     });
 
+  const [renderAlert, setRenderAlert] = useState(false);
+
   const breakpoint = useStore(selectedBreakpointStore);
-  const [canvasWidth] = useCanvasWidth();
+
+  useEffect(() => {
+    return canvasWidthContainer.subscribe((canvasWidth) => {
+      const breakpoint = selectedBreakpointStore.get();
+      if (breakpoint === undefined) {
+        return;
+      }
+      if (canvasWidth === undefined) {
+        return;
+      }
+
+      if (matchMedia(breakpoint, canvasWidth) === false) {
+        setRenderAlert(true);
+      }
+
+      setRenderAlert(false);
+    });
+  }, []);
 
   if (
     currentStyle === undefined ||
     selectedInstance === undefined ||
-    breakpoint === undefined ||
-    canvasWidth === undefined
+    breakpoint === undefined
   ) {
     return null;
   }
 
-  if (matchMedia(breakpoint, canvasWidth) === false) {
+  if (renderAlert) {
     return (
       <Box css={{ p: theme.spacing[5] }}>
         <Card css={{ p: theme.spacing[9], mt: theme.spacing[9] }}>
@@ -56,6 +75,8 @@ export const StylePanel = ({ selectedInstance, publish }: StylePanelProps) => {
       </Box>
     );
   }
+
+  console.log("E", breakpoint);
 
   return (
     <>
