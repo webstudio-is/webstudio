@@ -1,80 +1,14 @@
-import { useMemo, type ReactNode } from "react";
-import { computed } from "nanostores";
-import { useStore } from "@nanostores/react";
-import {
-  Button,
-  Flex,
-  InputField,
-  SmallIconButton,
-  Text,
-  theme,
-  useId,
-} from "@webstudio-is/design-system";
-import { assetsStore } from "~/shared/nano-states";
-import { FloatingPanel } from "~/builder/shared/floating-panel";
-import { ImageManager } from "~/builder/shared/image-manager";
+import { type ReactNode } from "react";
+import { Flex, InputField, theme, useId } from "@webstudio-is/design-system";
 import {
   type ControlProps,
   getLabel,
   VerticalLayout,
   useLocalValue,
 } from "../shared";
-import { acceptToMimeCategories } from "@webstudio-is/asset-uploader";
-import { TrashIcon } from "@webstudio-is/icons";
+import { SelectAsset } from "./select-asset";
 
 type FileControlProps = ControlProps<"file", "asset" | "string">;
-
-// tests whether we can use ImageManager for the given "accept" value
-const isImageAccept = (accept?: string) => {
-  const acceptCategories = acceptToMimeCategories(accept || "");
-  return (
-    acceptCategories === "*" ||
-    (acceptCategories.size === 1 && acceptCategories.has("image"))
-  );
-};
-
-const SelectAssetButton = ({
-  prop,
-  meta,
-  onChange,
-  disabled,
-}: Pick<FileControlProps, "prop" | "meta" | "onChange"> & {
-  disabled: boolean;
-}) => {
-  const assetStore = useMemo(
-    () =>
-      computed(assetsStore, (assets) =>
-        prop?.type === "asset" ? assets.get(prop.value) : undefined
-      ),
-    [prop]
-  );
-
-  const asset = useStore(assetStore);
-
-  if (isImageAccept(meta?.accept) === false) {
-    return (
-      <Text color="destructive">Unsupported accept value: {meta?.accept}</Text>
-    );
-  }
-
-  return (
-    <FloatingPanel
-      title="Images"
-      content={
-        <ImageManager
-          onChange={(asset) =>
-            onChange({ type: "asset", value: asset.id }, asset)
-          }
-          accept={meta?.accept}
-        />
-      }
-    >
-      <Button color="neutral" css={{ flex: 1 }} disabled={disabled}>
-        {asset?.name ?? "Choose source"}
-      </Button>
-    </FloatingPanel>
-  );
-};
 
 const UrlInput = ({
   id,
@@ -102,11 +36,7 @@ const UrlInput = ({
 );
 
 const Row = ({ children }: { children: ReactNode }) => (
-  <Flex
-    css={{ height: theme.spacing[13], gap: theme.spacing[5] }}
-    align="center"
-    justify="between"
-  >
+  <Flex css={{ height: theme.spacing[13] }} align="center">
     {children}
   </Flex>
 );
@@ -146,19 +76,13 @@ export const FileControl = ({
         />
       </Row>
       <Row>
-        <SelectAssetButton
-          prop={prop}
-          meta={meta}
+        <SelectAsset
+          prop={prop?.type === "asset" ? prop : undefined}
+          accept={meta.accept}
           onChange={onChange}
+          onSoftDelete={onSoftDelete}
           disabled={localStringValue.value !== ""}
         />
-        {prop?.type === "asset" ? (
-          <SmallIconButton
-            icon={<TrashIcon />}
-            onClick={onSoftDelete}
-            variant="destructive"
-          />
-        ) : null}
       </Row>
     </VerticalLayout>
   );

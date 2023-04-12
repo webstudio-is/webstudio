@@ -74,7 +74,10 @@ export const renderControl = ({
 
   if (
     meta.control === "url" &&
-    (prop === undefined || prop.type === "string" || prop.type === "page")
+    (prop === undefined ||
+      prop.type === "string" ||
+      prop.type === "page" ||
+      prop.type === "asset")
   ) {
     return <UrlControl meta={meta} prop={prop} {...rest} />;
   }

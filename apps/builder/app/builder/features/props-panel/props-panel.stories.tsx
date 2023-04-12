@@ -169,6 +169,7 @@ const componentPropsMeta: WsComponentPropsMeta = {
     addedUrlPage: urlProp("Added URL (Page)"),
     addedUrlEmail: urlProp("Added URL (Email)"),
     addedUrlPhone: urlProp("Added URL (Phone)"),
+    addedUrlAttachment: urlProp("Added URL (Attachment)"),
     addedFile: fileProp(),
     availableText: textProp(),
     availableShortText: shortTextProp(),
@@ -279,6 +280,13 @@ const startingProps: Prop[] = [
     name: "addedUrlPhone",
     type: "string",
     value: "tel:+1234567890",
+  },
+  {
+    id: unique(),
+    instanceId,
+    name: "addedUrlAttachment",
+    type: "asset",
+    value: Array.from(assetsStore.get().keys() ?? [])[0] ?? "",
   },
   {
     id: unique(),
