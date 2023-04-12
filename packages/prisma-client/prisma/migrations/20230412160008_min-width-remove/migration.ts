@@ -25,10 +25,10 @@ export default () => {
       #- remove at path
       */
       await prisma.$executeRaw`
-      UPDATE "Build"
-      SET breakpoints = (breakpoints::jsonb #- '{0, minWidth}')::text
-      where (breakpoints::jsonb #> '{0, minWidth}')::int = 0;
-    `;
+        UPDATE "Build"
+        SET breakpoints = (breakpoints::jsonb #- '{0, minWidth}')::text
+        where (breakpoints::jsonb #> '{0, minWidth}')::int = 0;
+      `;
     },
     { timeout: 1000 * 60 }
   );
