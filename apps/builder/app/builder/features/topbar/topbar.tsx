@@ -35,9 +35,6 @@ type TopbarProps = {
 
 export const Topbar = ({ gridArea, project, publish }: TopbarProps) => {
   const page = useStore(selectedPageStore);
-  if (page === undefined) {
-    return null;
-  }
 
   return (
     <nav className={topbarContainerStyle({ css: { gridArea } })}>
@@ -49,7 +46,7 @@ export const Topbar = ({ gridArea, project, publish }: TopbarProps) => {
         align="center"
       >
         <Text variant="labelsTitleCase" color="contrast" truncate>
-          {page.name}
+          {page?.name ?? ""}
         </Text>
       </Flex>
       <Flex css={{ minWidth: theme.spacing[23] }}>
