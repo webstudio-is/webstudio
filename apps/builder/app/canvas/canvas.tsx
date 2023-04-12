@@ -2,7 +2,7 @@ import { useMemo, Fragment, useEffect } from "react";
 import { useStore } from "@nanostores/react";
 import { computed } from "nanostores";
 import type { Params } from "@webstudio-is/react-sdk";
-import type { Instance, Page } from "@webstudio-is/project-build";
+import type { Instances, Page } from "@webstudio-is/project-build";
 import {
   createElementsTree,
   registerComponents,
@@ -24,7 +24,6 @@ import {
   propsIndexStore,
   assetsStore,
   pagesStore,
-  useRootInstance,
   instancesStore,
   useIsPreviewMode,
   selectedPageStore,
@@ -44,21 +43,28 @@ const propsByInstanceIdStore = computed(
   (propsIndex) => propsIndex.propsByInstanceId
 );
 
-const temporaryRootInstance: Instance = {
-  type: "instance",
-  id: "temporaryRootInstance",
-  component: "Body",
-  children: [],
-};
+const temporaryRootInstanceId = "temporaryRootInstance";
+const temporaryInstances: Instances = new Map([
+  [
+    temporaryRootInstanceId,
+    {
+      type: "instance",
+      id: temporaryRootInstanceId,
+      component: "Body",
+      children: [],
+    },
+  ],
+]);
 
 const useElementsTree = (getComponent: GetComponent) => {
-  const [rootInstance] = useRootInstance();
+  const instances = useStore(instancesStore);
+  const page = useStore(selectedPageStore);
+  const rootInstanceId = page?.rootInstanceId;
 
   if (typeof window === "undefined") {
     // @todo remove after https://github.com/webstudio-is/webstudio-builder/issues/1313 now its needed to be sure that no leaks exists
     // eslint-disable-next-line no-console
     console.log({
-      rootInstance,
       assetsStore: assetsStore.get().size,
       pagesStore: pagesStore.get()?.pages.length ?? 0,
       instancesStore: instancesStore.get().size,
@@ -81,16 +87,17 @@ const useElementsTree = (getComponent: GetComponent) => {
   return useMemo(() => {
     return createElementsTree({
       sandbox: true,
+      instances: instances.size === 0 ? temporaryInstances : instances,
       // fallback to temporary root instance to render scripts
       // and receive real data from builder
-      instance: rootInstance ?? temporaryRootInstance,
+      rootInstanceId: rootInstanceId ?? temporaryRootInstanceId,
       propsByInstanceIdStore,
       assetsStore,
       pagesStore: pagesMapStore,
       Component: WebstudioComponentDev,
       getComponent,
     });
-  }, [rootInstance, getComponent, pagesMapStore]);
+  }, [instances, rootInstanceId, getComponent, pagesMapStore]);
 };
 
 const DesignMode = () => {

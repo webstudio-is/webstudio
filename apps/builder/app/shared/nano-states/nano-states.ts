@@ -25,11 +25,7 @@ import { shallowComputed } from "../store-utils";
 import { type InstanceSelector } from "../tree-utils";
 import type { htmlTags as HtmlTags } from "html-tags";
 import { breakpointsStore } from "./breakpoints";
-import {
-  instancesStore,
-  rootInstanceContainer,
-  selectedInstanceSelectorStore,
-} from "./instances";
+import { instancesStore, selectedInstanceSelectorStore } from "./instances";
 import { selectedPageStore } from "./pages";
 import type { UnitSizes } from "~/builder/features/style-panel/shared/css-value-input/convert-units";
 
@@ -47,11 +43,6 @@ export const rootInstanceStore = computed(
     return instances.get(selectedPage.rootInstanceId);
   }
 );
-
-export const useRootInstance = () => {
-  const value = useStore(rootInstanceContainer);
-  return [value] as const;
-};
 
 export const propsStore = atom<Props>(new Map());
 export const propsIndexStore = computed(propsStore, (props) => {
