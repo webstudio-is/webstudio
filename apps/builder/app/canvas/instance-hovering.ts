@@ -83,12 +83,13 @@ export const subscribeInstanceHovering = () => {
   // update rect whenever hovered instance is changed
   const unsubscribeHoveredInstanceId = hoveredInstanceSelectorStore.subscribe(
     (instanceSelector) => {
-      if (instanceSelector === undefined) {
-        return;
-      }
-      const element = getElementByInstanceSelector(instanceSelector);
-      if (element !== undefined) {
-        updateHoveredRect(element);
+      if (instanceSelector) {
+        const element = getElementByInstanceSelector(instanceSelector);
+        if (element !== undefined) {
+          updateHoveredRect(element);
+        }
+      } else {
+        hoveredInstanceOutlineStore.set(undefined);
       }
     }
   );
