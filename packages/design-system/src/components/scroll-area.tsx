@@ -1,4 +1,5 @@
-import { styled, theme, type CSS } from "../stitches.config";
+import { forwardRef, type ComponentProps, type Ref } from "react";
+import { styled, theme } from "../stitches.config";
 import { Root, Viewport, Scrollbar, Thumb } from "@radix-ui/react-scroll-area";
 
 const ScrollAreaRoot = styled(Root, {
@@ -49,21 +50,22 @@ const ScrollAreaScrollbar = styled(Scrollbar, {
   },
 });
 
-type ScrollAreaProps = {
-  children: JSX.Element | Array<JSX.Element>;
-  css?: CSS;
-};
+type ScrollAreaProps = ComponentProps<typeof ScrollAreaViewport>;
 
-export const ScrollArea = ({ children, css }: ScrollAreaProps) => {
-  return (
-    <ScrollAreaRoot scrollHideDelay={0} css={css}>
-      <ScrollAreaViewport>{children}</ScrollAreaViewport>
-      <ScrollAreaScrollbar orientation="vertical">
-        <ScrollAreaThumb />
-      </ScrollAreaScrollbar>
-      <ScrollAreaScrollbar orientation="horizontal">
-        <ScrollAreaThumb />
-      </ScrollAreaScrollbar>
-    </ScrollAreaRoot>
-  );
-};
+export const ScrollArea = forwardRef(
+  ({ children, css, onScroll }: ScrollAreaProps, ref: Ref<HTMLDivElement>) => {
+    return (
+      <ScrollAreaRoot scrollHideDelay={0} css={css}>
+        <ScrollAreaViewport ref={ref} onScroll={onScroll}>
+          {children}
+        </ScrollAreaViewport>
+        <ScrollAreaScrollbar orientation="vertical">
+          <ScrollAreaThumb />
+        </ScrollAreaScrollbar>
+        <ScrollAreaScrollbar orientation="horizontal">
+          <ScrollAreaThumb />
+        </ScrollAreaScrollbar>
+      </ScrollAreaRoot>
+    );
+  }
+);
