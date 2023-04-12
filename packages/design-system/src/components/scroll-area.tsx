@@ -28,7 +28,7 @@ const ScrollAreaThumb = styled(Thumb, {
     transform: "translate(-50%, -50%)",
     width: "100%",
     height: "100%",
-    minWidth: 44,
+    minWidth: 16,
     minHeight: 44,
   },
 });
@@ -39,7 +39,8 @@ const ScrollAreaScrollbar = styled(Scrollbar, {
   userSelect: "none",
   // disable browser handling of all panning and scaleUp gestures on touch devices
   touchAction: "none",
-  padding: theme.spacing[2],
+  padding: 2,
+  paddingRight: 3,
   '&[data-orientation="vertical"]': {
     width: theme.spacing[6],
   },
