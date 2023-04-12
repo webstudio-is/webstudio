@@ -11,11 +11,11 @@ export const wrapLinkComponent = (BaseLink: LinkComponent) => {
   const Component: LinkComponent = forwardRef((props: LinkProps, ref) => {
     const href = usePropUrl(getInstanceIdFromComponentProps(props), "href");
 
-    if (typeof href === "string" || href === undefined) {
-      return <BaseLink {...props} ref={ref} />;
+    if (href?.type === "page") {
+      return <RemixLink {...props} to={href.page.path} ref={ref} />;
     }
 
-    return <RemixLink {...props} to={href.path} ref={ref} />;
+    return <BaseLink {...props} ref={ref} />;
   });
 
   Component.displayName = BaseLink.displayName;

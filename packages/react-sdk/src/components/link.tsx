@@ -1,5 +1,6 @@
 import { forwardRef, type ComponentProps } from "react";
 import { usePropUrl, getInstanceIdFromComponentProps } from "../props";
+import { getParams } from "../app/params";
 
 export const defaultTag = "a";
 
@@ -15,13 +16,23 @@ type Props = Omit<ComponentProps<"a">, "href" | "target"> & {
 
 export const Link = forwardRef<HTMLAnchorElement, Props>((props, ref) => {
   const href = usePropUrl(getInstanceIdFromComponentProps(props), "href");
-  return (
-    <a
-      {...props}
-      href={typeof href === "string" ? href : href?.path}
-      ref={ref}
-    />
-  );
+
+  let url: string | undefined;
+  switch (href?.type) {
+    case "page":
+      url = href.page.path;
+      break;
+    case "asset": {
+      const { publicPath, cdnUrl } = getParams();
+      const { asset } = href;
+      url = `${asset.location === "FS" ? publicPath : cdnUrl}${asset.name}`;
+      break;
+    }
+    case "string":
+      url = href.url;
+  }
+
+  return <a {...props} href={url} ref={ref} />;
 });
 
 Link.displayName = "Link";
