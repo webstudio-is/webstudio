@@ -2,7 +2,6 @@ import store from "immerhin";
 import type { Instance, Prop } from "@webstudio-is/project-build";
 import {
   theme,
-  Box,
   useCombobox,
   Combobox,
   ComboboxContent,

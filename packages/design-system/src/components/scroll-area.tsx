@@ -49,7 +49,10 @@ const ScrollAreaScrollbar = styled(Scrollbar, {
   },
 });
 
-type ScrollAreaProps = { children: JSX.Element | Array<JSX.Element>; css: CSS };
+type ScrollAreaProps = {
+  children: JSX.Element | Array<JSX.Element>;
+  css?: CSS;
+};
 
 export const ScrollArea = ({ children, css }: ScrollAreaProps) => {
   return (
