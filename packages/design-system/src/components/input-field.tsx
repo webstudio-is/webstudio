@@ -58,11 +58,11 @@ const containerStyle = css({
   display: "flex",
   height: theme.spacing[12],
   boxSizing: "border-box",
+  minWidth: 0,
   alignItems: "center",
   borderRadius: theme.borderRadius[4],
   border: `solid 1px ${theme.colors.borderMain}`,
   backgroundColor: theme.colors.backgroundControls,
-
   "&:has([data-input-field-input]:focus), &:focus": {
     outline: `solid 2px ${theme.colors.borderFocus}`,
     outlineOffset: "-1px",

@@ -5,6 +5,7 @@ import { getBrowserStyle, idAttribute } from "@webstudio-is/react-sdk";
 import { subscribe } from "~/shared/pubsub";
 import { subscribeWindowResize } from "~/shared/dom-hooks";
 import {
+  isResizingCanvasStore,
   rootInstanceContainer,
   selectedInstanceBrowserStyleStore,
   selectedInstanceIntanceToTagStore,
@@ -76,27 +77,33 @@ export const SelectedInstanceConnector = ({
   instanceProps: undefined | Prop[];
 }) => {
   const rootInstance = useStore(rootInstanceContainer);
+
   useEffect(() => {
     const element = instanceElementRef.current;
     if (element === undefined) {
       return;
     }
-
+    const showOutline = () => {
+      if (isResizingCanvasStore.get()) {
+        return;
+      }
+      setOutline(instance.id, element);
+    };
     // effect close to rendered element also catches dnd remounts
     // so actual state is always provided here
-    setOutline(instance.id, element);
+    showOutline();
 
     const resizeObserver = new ResizeObserver(() => {
       // contentRect has wrong x/y values for absolutely positioned element.
       // getBoundingClientRect is used instead.
-      setOutline(instance.id, element);
+      showOutline();
     });
     resizeObserver.observe(element);
 
     // detect movement of the element within same parent
     // React prevent remount when key stays the same
     const mutationObserver = new window.MutationObserver(() => {
-      setOutline(instance.id, element);
+      showOutline();
     });
     const parent = element?.parentElement;
     if (parent) {
@@ -110,12 +117,21 @@ export const SelectedInstanceConnector = ({
       hideOutline();
     });
 
+    const unsubscribeIsResizingCanvas = isResizingCanvasStore.subscribe(
+      (isResizing) => {
+        if (isResizing && selectedInstanceOutlineStore.get()) {
+          return hideOutline();
+        }
+        showOutline();
+      }
+    );
+
     const unsubscribeScrollState = subscribeScrollState({
       onScrollStart() {
         hideOutline();
       },
       onScrollEnd() {
-        setOutline(instance.id, element);
+        showOutline();
       },
     });
 
@@ -124,7 +140,7 @@ export const SelectedInstanceConnector = ({
         hideOutline();
       },
       onResizeEnd() {
-        setOutline(instance.id, element);
+        showOutline();
       },
     });
 
@@ -158,6 +174,7 @@ export const SelectedInstanceConnector = ({
       unsubscribePreviewStyle();
       unsubscribeScrollState();
       unsubscribeWindowResize();
+      unsubscribeIsResizingCanvas();
     };
   }, [
     instanceElementRef,

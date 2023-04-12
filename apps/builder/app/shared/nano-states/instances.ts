@@ -10,6 +10,8 @@ import { getElementByInstanceSelector } from "../dom-utils";
 import { useSyncInitializeOnce } from "../hook-utils";
 import { selectedPageStore } from "./pages";
 
+export const isResizingCanvasStore = atom(false);
+
 export const selectedInstanceSelectorStore = atom<undefined | InstanceSelector>(
   undefined
 );
@@ -133,4 +135,5 @@ export const selectedInstanceStore = computed(
 
 export const synchronizedInstancesStores = [
   ["textEditingInstanceSelector", textEditingInstanceSelectorStore],
+  ["isResizingCanvas", isResizingCanvasStore],
 ] as const;

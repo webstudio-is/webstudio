@@ -11,11 +11,14 @@ import {
   DropdownMenuPortal,
   DropdownMenuSeparator,
   DropdownMenuItemRightSlot,
+  Flex,
+  Label,
+  Button,
 } from "@webstudio-is/design-system";
 import { useSubscribe } from "~/shared/pubsub";
 import { BreakpointsEditor } from "./breakpoints-editor";
 import { TriggerButton } from "./trigger-button";
-import { WidthSetting } from "./width-setting";
+import { WidthInput } from "./width-input";
 import { ConfirmationDialog } from "./confirmation-dialog";
 import {
   breakpointsStore,
@@ -25,6 +28,7 @@ import {
 } from "~/shared/nano-states";
 import { isFeatureEnabled } from "@webstudio-is/feature-flags";
 import { groupBreakpoints } from "~/shared/breakpoints";
+import { scaleStore } from "~/builder/shared/nano-states";
 
 export const BreakpointsSettings = () => {
   const [view, setView] = useState<
@@ -35,6 +39,7 @@ export const BreakpointsSettings = () => {
   >();
   const breakpoints = useStore(breakpointsStore);
   const selectedBreakpoint = useStore(selectedBreakpointStore);
+  const scale = useStore(scaleStore);
 
   useSubscribe("openBreakpointsMenu", () => {
     setView("selector");
@@ -121,6 +126,21 @@ export const BreakpointsSettings = () => {
           )}
           {view === "selector" && (
             <>
+              <Flex
+                css={{ px: theme.spacing[7], py: theme.spacing[5] }}
+                gap="3"
+                direction="row"
+              >
+                <WidthInput />
+                <Flex align="center" gap="2">
+                  <Label>Scale</Label>
+                  <Button color="neutral" css={{ width: theme.spacing[17] }}>
+                    {Math.round(scale)}%
+                  </Button>
+                </Flex>
+              </Flex>
+              <DropdownMenuSeparator />
+
               {groupBreakpoints(Array.from(breakpoints.values())).map(
                 (breakpoint) => {
                   return (
@@ -140,10 +160,6 @@ export const BreakpointsSettings = () => {
                   );
                 }
               )}
-              <DropdownMenuSeparator />
-              <form>
-                <WidthSetting />
-              </form>
               {isFeatureEnabled("breakpointsEditor") && (
                 <>
                   <DropdownMenuSeparator />

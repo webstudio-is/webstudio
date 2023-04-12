@@ -9,7 +9,7 @@ import { isBaseBreakpoint } from "~/shared/breakpoints";
 const cascadeIndicatorStyle = css({
   position: "absolute",
   bottom: 0,
-  height: 2,
+  height: 3,
   transition: "150ms width, 150ms left, 150ms right",
   '&[data-direction="left"]': {
     background: theme.colors.backgroundGradientHorizontal,
