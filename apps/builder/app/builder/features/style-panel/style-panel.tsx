@@ -90,7 +90,7 @@ export const StylePanel = ({ selectedInstance, publish }: StylePanelProps) => {
         css={{
           px: theme.spacing[9],
           pb: theme.spacing[9],
-          boxShadow: `0px 1px 0 ${theme.colors.panelOutline}`,
+          boxShadow: theme.shadows.panelSectionDropShadow,
         }}
       >
         <StyleSourcesSection />
