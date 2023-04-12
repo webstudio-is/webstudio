@@ -69,3 +69,4 @@ export const ScrollArea = forwardRef(
     );
   }
 );
+ScrollArea.displayName = "ScrollArea";
