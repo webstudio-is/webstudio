@@ -21,7 +21,7 @@ type StylePanelProps = {
 };
 
 const useMatchMedia = () => {
-  const [renderWarning, setRenderWarning] = useState(false);
+  const [matched, setMatched] = useState(false);
 
   useEffect(() => {
     return canvasWidthContainer.subscribe((canvasWidth) => {
@@ -34,14 +34,14 @@ const useMatchMedia = () => {
       }
 
       if (matchMedia(breakpoint, canvasWidth) === false) {
-        setRenderWarning(true);
+        setMatched(true);
       }
 
-      setRenderWarning(false);
+      setMatched(false);
     });
   }, []);
 
-  return renderWarning;
+  return matched;
 };
 
 export const StylePanel = ({ selectedInstance, publish }: StylePanelProps) => {
