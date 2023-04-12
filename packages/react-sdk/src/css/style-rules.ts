@@ -10,6 +10,7 @@ import type {
 type StyleRule = {
   instanceId: string;
   breakpointId: string;
+  state: undefined | string;
   style: Style;
 };
 
@@ -38,7 +39,10 @@ export const getStyleRules = (
 
   const styleRules: StyleRule[] = [];
   for (const { instanceId, values } of styleSourceSelections.values()) {
-    const styleRuleByBreakpointId = new Map<Breakpoint["id"], StyleRule>();
+    const styleRuleByBreakpointId = new Map<
+      `${Breakpoint["id"]}:${string}`,
+      StyleRule
+    >();
 
     for (const styleSourceId of values) {
       const styleSourceStyles = stylesByStyleSourceId.get(styleSourceId);
@@ -46,15 +50,22 @@ export const getStyleRules = (
       if (styleSourceStyles === undefined) {
         continue;
       }
-      for (const { breakpointId, property, value } of styleSourceStyles) {
-        let styleRule = styleRuleByBreakpointId.get(breakpointId);
+      for (const {
+        breakpointId,
+        state,
+        property,
+        value,
+      } of styleSourceStyles) {
+        const key = `${breakpointId}:${state ?? ""}` as const;
+        let styleRule = styleRuleByBreakpointId.get(key);
         if (styleRule === undefined) {
           styleRule = {
             instanceId,
             breakpointId,
+            state,
             style: {},
           };
-          styleRuleByBreakpointId.set(breakpointId, styleRule);
+          styleRuleByBreakpointId.set(key, styleRule);
         }
         styleRule.style[property] = value;
       }

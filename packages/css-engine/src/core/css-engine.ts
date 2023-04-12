@@ -1,4 +1,4 @@
-import type { CssRule } from "@webstudio-is/css-data";
+import type { Style } from "@webstudio-is/css-data";
 import {
   FontFaceRule,
   MediaRule,
@@ -13,6 +13,11 @@ import { StyleSheet } from "./style-sheet";
 import type { TransformValue } from "./to-value";
 
 const defaultMediaRuleId = "__default-media-rule__";
+
+type CssRule = {
+  style: Style;
+  breakpoint?: string;
+};
 
 export type CssEngineOptions = { name?: string };
 

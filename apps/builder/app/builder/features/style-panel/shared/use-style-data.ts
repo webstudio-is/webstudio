@@ -36,6 +36,7 @@ export type StyleUpdates = {
   id: Instance["id"];
   updates: Array<StyleUpdate>;
   breakpoint: Breakpoint;
+  state: undefined | string;
 };
 
 declare module "~/shared/pubsub" {
@@ -97,6 +98,7 @@ export const useStyleData = ({ selectedInstance, publish }: UseStyleData) => {
           id: selectedInstance.id,
           updates,
           breakpoint: selectedBreakpoint,
+          state: styleSourceSelector.state,
         },
       });
 
