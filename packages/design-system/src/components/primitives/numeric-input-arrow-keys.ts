@@ -1,5 +1,5 @@
 // We increment by 10 when shift is pressed, by 0.1 when alt/option is pressed and by 1 by default.
-export const calcNumericInputChange = (
+export const handleNumericInputArrowKeys = (
   value: number,
   { altKey, shiftKey, key }: { altKey: boolean; shiftKey: boolean; key: string }
 ) => {

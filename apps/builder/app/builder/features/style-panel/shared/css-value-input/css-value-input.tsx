@@ -11,7 +11,7 @@ import {
   NestedSelectButton,
   NestedIconLabel,
   InputField,
-  calcNumericInputChange,
+  handleNumericInputArrowKeys,
 } from "@webstudio-is/design-system";
 import { ChevronDownIcon } from "@webstudio-is/icons";
 import type {
@@ -181,7 +181,7 @@ const useHandleKeyDown =
 
       onChange({
         type: "unit",
-        value: calcNumericInputChange(inputValue, event),
+        value: handleNumericInputArrowKeys(inputValue, event),
         unit: value.unit,
       });
       // Prevent Downshift from opening menu on arrow up/down
