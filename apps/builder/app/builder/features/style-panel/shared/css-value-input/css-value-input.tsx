@@ -11,6 +11,7 @@ import {
   NestedSelectButton,
   NestedIconLabel,
   InputField,
+  handleNumericInputArrowKeys,
 } from "@webstudio-is/design-system";
 import { ChevronDownIcon } from "@webstudio-is/icons";
 import type {
@@ -40,16 +41,6 @@ import {
   selectedInstanceUnitSizesStore,
 } from "~/shared/nano-states";
 import { convertUnits } from "./convert-units";
-
-// We increment by 10 when shift is pressed, by 0.1 when alt/option is pressed and by 1 by default.
-const calcNumberChange = (
-  value: number,
-  { altKey, shiftKey, key }: { altKey: boolean; shiftKey: boolean; key: string }
-) => {
-  const delta = shiftKey ? 10 : altKey ? 0.1 : 1;
-  const multiplier = key === "ArrowUp" ? 1 : -1;
-  return Number((value + delta * multiplier).toFixed(1));
-};
 
 const useScrub = ({
   value,
@@ -190,7 +181,7 @@ const useHandleKeyDown =
 
       onChange({
         type: "unit",
-        value: calcNumberChange(inputValue, event),
+        value: handleNumericInputArrowKeys(inputValue, event),
         unit: value.unit,
       });
       // Prevent Downshift from opening menu on arrow up/down
