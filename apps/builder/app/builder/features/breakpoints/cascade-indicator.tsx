@@ -1,6 +1,6 @@
 import { useStore } from "@nanostores/react";
 import { css, theme } from "@webstudio-is/design-system";
-import { useEffect, useState, type RefObject } from "react";
+import { useEffect, useState } from "react";
 import { selectedBreakpointStore } from "~/shared/nano-states";
 import type { Breakpoint } from "@webstudio-is/project-build";
 import { breakpointsStore } from "~/shared/nano-states";
@@ -69,10 +69,10 @@ const calcIndicatorStyle = ({
 };
 
 const useSizes = ({
-  buttonRef,
+  getButtonById,
   selectedBreakpoint,
 }: {
-  buttonRef: RefObject<HTMLButtonElement | null>;
+  getButtonById: (id: string) => HTMLButtonElement | undefined;
   selectedBreakpoint?: Breakpoint;
 }) => {
   const [buttonLeft, setButtonLeft] = useState<number>();
@@ -81,14 +81,22 @@ const useSizes = ({
   const breakpoints = useStore(breakpointsStore);
 
   useEffect(() => {
-    if (buttonRef.current) {
-      setButtonLeft(buttonRef.current.offsetLeft);
-      setButtonWidth(buttonRef.current.offsetWidth);
-      setContainerWidth(buttonRef.current.parentElement?.offsetWidth);
+    if (selectedBreakpoint === undefined) {
+      return;
     }
+
+    const button = getButtonById(selectedBreakpoint?.id);
+
+    if (button === undefined) {
+      return;
+    }
+
+    setButtonLeft(button.offsetLeft);
+    setButtonWidth(button.offsetWidth);
+    setContainerWidth(button.parentElement?.offsetWidth);
   }, [
     selectedBreakpoint,
-    buttonRef,
+    getButtonById,
     // needed to update sizes when breakpoints are changed
     breakpoints,
   ]);
@@ -107,12 +115,12 @@ const useSizes = ({
 // Left one is shown for min breakpoints, right one for max breakpoints.
 // When you have base breakpoint selected which has neither min nor max width, both indicators are shown.
 export const CascadeIndicator = ({
-  buttonRef,
+  getButtonById,
 }: {
-  buttonRef: RefObject<HTMLButtonElement | null>;
+  getButtonById: (id: string) => HTMLButtonElement | undefined;
 }) => {
   const selectedBreakpoint = useStore(selectedBreakpointStore);
-  const sizes = useSizes({ buttonRef, selectedBreakpoint });
+  const sizes = useSizes({ getButtonById, selectedBreakpoint });
   if (selectedBreakpoint === undefined || sizes === undefined) {
     return null;
   }

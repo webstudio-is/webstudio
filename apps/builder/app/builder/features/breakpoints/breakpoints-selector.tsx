@@ -4,7 +4,7 @@ import {
   ToolbarToggleGroup,
   ToolbarToggleItem,
 } from "@webstudio-is/design-system";
-import { useRef } from "react";
+import { useCallback, useRef } from "react";
 import { CascadeIndicator } from "./cascade-indicator";
 import { BpStarOffIcon, BpStarOnIcon } from "@webstudio-is/icons";
 import { useSetInitialCanvasWidth } from ".";
@@ -18,11 +18,14 @@ import { groupBreakpoints } from "~/shared/breakpoints";
 export const BreakpointsSelector = () => {
   const breakpoints = useStore(breakpointsStore);
   const selectedBreakpoint = useStore(selectedBreakpointStore);
-  const ref = useRef(null);
+  const refs = useRef(new Map<string, HTMLButtonElement>());
   const setInitialCanvasWidth = useSetInitialCanvasWidth();
+  const getButtonById = useCallback((id: string) => refs.current.get(id), []);
+
   if (selectedBreakpoint === undefined) {
     return null;
   }
+
   return (
     <Toolbar>
       <ToolbarToggleGroup
@@ -42,7 +45,13 @@ export const BreakpointsSelector = () => {
             return (
               <ToolbarToggleItem
                 variant="subtle"
-                ref={breakpoint.id === selectedBreakpoint.id ? ref : undefined}
+                ref={(node) => {
+                  if (node) {
+                    refs.current.set(breakpoint.id, node);
+                    return;
+                  }
+                  refs.current.delete(breakpoint.id);
+                }}
                 value={breakpoint.id}
                 key={breakpoint.id}
               >
@@ -57,7 +66,7 @@ export const BreakpointsSelector = () => {
             );
           }
         )}
-        <CascadeIndicator buttonRef={ref} />
+        <CascadeIndicator getButtonById={getButtonById} />
       </ToolbarToggleGroup>
     </Toolbar>
   );
