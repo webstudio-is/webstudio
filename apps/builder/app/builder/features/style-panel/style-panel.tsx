@@ -4,6 +4,7 @@ import {
   Box,
   Card,
   DeprecatedParagraph,
+  ScrollArea,
 } from "@webstudio-is/design-system";
 import type { Instance } from "@webstudio-is/project-build";
 import type { Publish } from "~/shared/pubsub";
@@ -95,18 +96,14 @@ export const StylePanel = ({ selectedInstance, publish }: StylePanelProps) => {
       >
         <StyleSourcesSection />
       </Box>
-      <Box
-        css={{
-          overflow: "auto",
-        }}
-      >
+      <ScrollArea>
         <StyleSettings
           currentStyle={currentStyle}
           setProperty={setProperty}
           deleteProperty={deleteProperty}
           createBatchUpdate={createBatchUpdate}
         />
-      </Box>
+      </ScrollArea>
     </>
   );
 };

@@ -1,6 +1,6 @@
 import type { ComponentProps } from "react";
 import type { AssetType } from "@webstudio-is/asset-uploader";
-import { Flex, SearchField } from "@webstudio-is/design-system";
+import { Flex, ScrollArea, SearchField } from "@webstudio-is/design-system";
 import { AssetUpload } from "./asset-upload";
 import { NotFound } from "./not-found";
 import { Separator } from "./separator";
@@ -40,15 +40,16 @@ export const AssetsShell = ({
       </Flex>
       <Separator />
       {isEmpty && <NotFound />}
-      <Flex
+      <ScrollArea
         css={{
+          display: "flex",
           flexDirection: "column",
           px: theme.spacing[9],
           overflow: "auto",
         }}
       >
         {children}
-      </Flex>
+      </ScrollArea>
     </Flex>
   );
 };

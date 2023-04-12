@@ -4,6 +4,7 @@ import {
   Label,
   DeprecatedTextField,
   theme,
+  ScrollArea,
 } from "@webstudio-is/design-system";
 import { getComponentMeta } from "@webstudio-is/react-sdk";
 import { selectedInstanceStore } from "~/shared/nano-states";
@@ -17,7 +18,7 @@ export const SettingsPanel = () => {
   }
   const label = getComponentMeta(selectedInstance.component)?.label;
   return (
-    <Flex css={{ px: theme.spacing[9] }}>
+    <ScrollArea css={{ px: theme.spacing[9] }}>
       <Flex gap="1" direction="column" grow>
         <Label>Instance Name</Label>
         <DeprecatedTextField
@@ -32,6 +33,6 @@ export const SettingsPanel = () => {
           }}
         />
       </Flex>
-    </Flex>
+    </ScrollArea>
   );
 };

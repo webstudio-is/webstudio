@@ -21,6 +21,7 @@ import {
   getElementByItemSelector,
   getItemSelectorFromElement,
 } from "./item-utils";
+import { ScrollArea } from "../scroll-area";
 
 export type TreeProps<Data extends { id: string }> = {
   root: Data;
@@ -267,7 +268,7 @@ export const Tree = <Data extends { id: string }>({
   });
 
   return (
-    <Box
+    <ScrollArea
       css={{
         width: "100%",
         overflowY: "auto",
@@ -315,7 +316,7 @@ export const Tree = <Data extends { id: string }>({
           />,
           document.body
         )}
-    </Box>
+    </ScrollArea>
   );
 };
 
