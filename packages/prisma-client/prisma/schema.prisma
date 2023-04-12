@@ -4,8 +4,10 @@
 generator client {
   provider        = "prisma-client-js"
   previewFeatures = ["views", "clientExtensions"]
-  output          = "../src/__generated__"
+  // see commands.ts
   // <output-placeholder-for-migrations>
+  output          = "../src/__generated__"
+  // </output-placeholder-for-migrations>
 }
 
 datasource db {
