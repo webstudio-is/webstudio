@@ -20,16 +20,8 @@ type StylePanelProps = {
   selectedInstance: Instance;
 };
 
-export const StylePanel = ({ selectedInstance, publish }: StylePanelProps) => {
-  const { currentStyle, setProperty, deleteProperty, createBatchUpdate } =
-    useStyleData({
-      selectedInstance,
-      publish,
-    });
-
-  const [renderAlert, setRenderAlert] = useState(false);
-
-  const breakpoint = useStore(selectedBreakpointStore);
+const useMatchMedia = () => {
+  const [renderWarning, setRenderWarning] = useState(false);
 
   useEffect(() => {
     return canvasWidthContainer.subscribe((canvasWidth) => {
@@ -42,12 +34,26 @@ export const StylePanel = ({ selectedInstance, publish }: StylePanelProps) => {
       }
 
       if (matchMedia(breakpoint, canvasWidth) === false) {
-        setRenderAlert(true);
+        setRenderWarning(true);
       }
 
-      setRenderAlert(false);
+      setRenderWarning(false);
     });
   }, []);
+
+  return renderWarning;
+};
+
+export const StylePanel = ({ selectedInstance, publish }: StylePanelProps) => {
+  const { currentStyle, setProperty, deleteProperty, createBatchUpdate } =
+    useStyleData({
+      selectedInstance,
+      publish,
+    });
+
+  const renderWarning = useMatchMedia();
+
+  const breakpoint = useStore(selectedBreakpointStore);
 
   if (
     currentStyle === undefined ||
@@ -57,7 +63,7 @@ export const StylePanel = ({ selectedInstance, publish }: StylePanelProps) => {
     return null;
   }
 
-  if (renderAlert) {
+  if (renderWarning) {
     return (
       <Box css={{ p: theme.spacing[5] }}>
         <Card css={{ p: theme.spacing[9], mt: theme.spacing[9] }}>
@@ -75,8 +81,6 @@ export const StylePanel = ({ selectedInstance, publish }: StylePanelProps) => {
       </Box>
     );
   }
-
-  console.log("E", breakpoint);
 
   return (
     <>
