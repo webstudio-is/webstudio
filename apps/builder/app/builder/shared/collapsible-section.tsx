@@ -58,6 +58,7 @@ export const CollapsibleSectionBase = ({
   <Collapsible.Root
     // Grid elements inside `display:table` element doesn't use children size and perfectly fit the parent
     // I don't know why, but this fixes our issues with ScrollArea
+    // @todo probably pull request here to allow change display https://github.com/radix-ui/primitives/blob/main/packages/react/scroll-area/src/ScrollArea.tsx#L183
     className={rootStyle()}
     open={isOpen}
     onOpenChange={onOpenChange}
