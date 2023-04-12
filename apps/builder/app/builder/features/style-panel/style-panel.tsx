@@ -29,12 +29,14 @@ const useMatchMedia = () => {
       if (breakpoint === undefined) {
         return;
       }
+
       if (canvasWidth === undefined) {
         return;
       }
 
       if (matchMedia(breakpoint, canvasWidth) === false) {
         setMatched(true);
+        return;
       }
 
       setMatched(false);
