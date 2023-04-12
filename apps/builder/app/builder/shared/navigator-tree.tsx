@@ -49,7 +49,10 @@ export const NavigatorTree = () => {
 
   const handleSelect = useCallback((instanceSelector: InstanceSelector) => {
     // @todo for unknown reason handleSelect is called during "delete" hot key
-    if (!shallowEqual(selectedInstanceSelectorStore.get(), instanceSelector)) {
+    if (
+      shallowEqual(selectedInstanceSelectorStore.get(), instanceSelector) ===
+      false
+    ) {
       selectedInstanceSelectorStore.set(instanceSelector);
       textEditingInstanceSelectorStore.set(undefined);
     }
