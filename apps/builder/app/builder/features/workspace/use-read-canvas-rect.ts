@@ -1,11 +1,11 @@
 import { useCallback, useEffect, useState } from "react";
-import { useStore } from "@nanostores/react";
+
 import {
   scaleStore,
-  useCanvasRect,
-  useCanvasWidth,
+  canvasWidthContainer,
+  canvasRectContainer,
 } from "~/builder/shared/nano-states";
-import { useWindowResize } from "~/shared/dom-hooks";
+import { useWindowResizeDebounced } from "~/shared/dom-hooks";
 
 /**
  * Reads the canvas iframe dom rect and puts it into nano state
@@ -15,33 +15,33 @@ export const useReadCanvasRect = () => {
   const [iframeElement, setIframeElement] = useState<HTMLIFrameElement | null>(
     null
   );
-  const [, setCanvasRect] = useCanvasRect();
-  const [canvasWidth] = useCanvasWidth();
-  const scale = useStore(scaleStore);
-  const [recalcFlag, forceRecalc] = useState(false);
-  useWindowResize(() => {
-    forceRecalc(!recalcFlag);
+
+  const updateRect = useCallback(() => {
+    if (iframeElement === null) {
+      return;
+    }
+    const rect = iframeElement.getBoundingClientRect();
+    canvasRectContainer.set(rect);
+  }, [iframeElement]);
+
+  useEffect(() => {
+    updateRect();
+    const scaleStoreUnsubscribe = scaleStore.listen(updateRect);
+    const canvasWidthContainerUnsubscribe =
+      canvasWidthContainer.listen(updateRect);
+
+    return () => {
+      scaleStoreUnsubscribe();
+      canvasWidthContainerUnsubscribe();
+    };
+  }, [updateRect]);
+
+  useWindowResizeDebounced(() => {
+    updateRect();
   });
-
-  const readRect = useCallback(
-    () => {
-      if (iframeElement === null) {
-        return;
-      }
-      requestAnimationFrame(() => {
-        const rect = iframeElement.getBoundingClientRect();
-        setCanvasRect(rect);
-      });
-    },
-    // canvasWidth will change the canvas width, so we need to React it to it and update the rect, even though we don't necessary usenthe value
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-    [iframeElement, setCanvasRect, canvasWidth, scale, recalcFlag]
-  );
-
-  useEffect(readRect, [readRect]);
 
   return {
     onRef: setIframeElement,
-    onTransitionEnd: readRect,
+    onTransitionEnd: updateRect,
   };
 };

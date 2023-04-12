@@ -14,10 +14,10 @@ const isPublishDialogOpenContainer = atom<boolean>(false);
 export const useIsPublishDialogOpen = () =>
   useValue(isPublishDialogOpenContainer);
 
-const canvasWidthContainer = atom<number | undefined>();
+export const canvasWidthContainer = atom<number | undefined>();
 export const useCanvasWidth = () => useValue(canvasWidthContainer);
 
-const canvasRectContainer = atom<DOMRect | undefined>();
+export const canvasRectContainer = atom<DOMRect | undefined>();
 export const useCanvasRect = () => useValue(canvasRectContainer);
 
 export const projectContainer = atom<Project | undefined>();
