@@ -39,8 +39,7 @@ const ScrollAreaScrollbar = styled(Scrollbar, {
   userSelect: "none",
   // disable browser handling of all panning and scaleUp gestures on touch devices
   touchAction: "none",
-  paddingRight: theme.spacing[2],
-  paddingLeft: theme.spacing[2],
+  padding: theme.spacing[2],
   '&[data-orientation="vertical"]': {
     width: theme.spacing[6],
   },
