@@ -11,6 +11,9 @@ import type {
 import { textVariants } from "@webstudio-is/design-system";
 import type { Asset } from "@webstudio-is/asset-uploader";
 
+// eslint-disable-next-line import/no-internal-modules
+import catPath from "./props-panel.stories.assets/cat.jpg";
+
 let id = 0;
 const unique = () => `${++id}`;
 
