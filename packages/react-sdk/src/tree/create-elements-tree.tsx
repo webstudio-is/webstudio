@@ -2,7 +2,11 @@ import { type ComponentProps, Fragment } from "react";
 import type { ReadableAtom } from "nanostores";
 import { Scripts, ScrollRestoration } from "@remix-run/react";
 import type { Assets } from "@webstudio-is/asset-uploader";
-import type { Instance } from "@webstudio-is/project-build";
+import type {
+  Instance,
+  Instances,
+  InstancesItem,
+} from "@webstudio-is/project-build";
 import type { GetComponent } from "../components/components-utils";
 import { ReactSdkContext } from "../context";
 import type { Pages, PropsByInstanceId } from "../props";
@@ -12,32 +16,40 @@ import { SessionStoragePolyfill } from "./session-storage-polyfill";
 type InstanceSelector = Instance["id"][];
 
 export const createElementsTree = ({
+  instances,
+  rootInstanceId,
   sandbox,
-  instance,
   propsByInstanceIdStore,
   assetsStore,
   pagesStore,
   Component,
   getComponent,
 }: {
+  instances: Instances;
+  rootInstanceId: Instance["id"];
   sandbox?: boolean;
-  instance: Instance;
   propsByInstanceIdStore: ReadableAtom<PropsByInstanceId>;
   assetsStore: ReadableAtom<Assets>;
   pagesStore: ReadableAtom<Pages>;
   Component: (props: ComponentProps<typeof WebstudioComponent>) => JSX.Element;
   getComponent: GetComponent;
 }) => {
-  const rootInstanceSelector = [instance.id];
+  const rootInstance = instances.get(rootInstanceId);
+  if (rootInstance === undefined) {
+    return null;
+  }
+
+  const rootInstanceSelector = [rootInstanceId];
   const children = createInstanceChildrenElements({
+    instances,
     instanceSelector: rootInstanceSelector,
     Component,
-    children: instance.children,
+    children: rootInstance.children,
     getComponent,
   });
   const root = createInstanceElement({
     Component,
-    instance,
+    instance: rootInstance,
     instanceSelector: rootInstanceSelector,
     children: [
       <Fragment key="children">
@@ -59,13 +71,15 @@ export const createElementsTree = ({
 };
 
 const createInstanceChildrenElements = ({
+  instances,
   instanceSelector,
   children,
   Component,
   getComponent,
 }: {
+  instances: Instances;
   instanceSelector: InstanceSelector;
-  children: Instance["children"];
+  children: InstancesItem["children"];
   Component: (props: ComponentProps<typeof WebstudioComponent>) => JSX.Element;
   getComponent: GetComponent;
 }) => {
@@ -75,15 +89,20 @@ const createInstanceChildrenElements = ({
       elements.push(child.value);
       continue;
     }
-    const childInstanceSelector = [child.id, ...instanceSelector];
+    const childInstance = instances.get(child.value);
+    if (childInstance === undefined) {
+      continue;
+    }
+    const childInstanceSelector = [child.value, ...instanceSelector];
     const children = createInstanceChildrenElements({
+      instances,
       instanceSelector: childInstanceSelector,
-      children: child.children,
+      children: childInstance.children,
       Component,
       getComponent,
     });
     const element = createInstanceElement({
-      instance: child,
+      instance: childInstance,
       instanceSelector: childInstanceSelector,
       Component,
       children,
@@ -101,7 +120,7 @@ const createInstanceElement = ({
   children = [],
   getComponent,
 }: {
-  instance: Instance;
+  instance: InstancesItem;
   instanceSelector: InstanceSelector;
   Component: (props: ComponentProps<typeof WebstudioComponent>) => JSX.Element;
   children?: Array<JSX.Element | string>;
