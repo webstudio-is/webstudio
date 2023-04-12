@@ -1,4 +1,4 @@
-import { styled, theme } from "../stitches.config";
+import { styled, theme, type CSS } from "../stitches.config";
 import { Root, Viewport, Scrollbar, Thumb } from "@radix-ui/react-scroll-area";
 
 const ScrollAreaRoot = styled(Root, {
@@ -49,11 +49,11 @@ const ScrollAreaScrollbar = styled(Scrollbar, {
   },
 });
 
-type ScrollAreaProps = { children: JSX.Element | Array<JSX.Element> };
+type ScrollAreaProps = { children: JSX.Element | Array<JSX.Element>; css: CSS };
 
-export const ScrollArea = ({ children }: ScrollAreaProps) => {
+export const ScrollArea = ({ children, css }: ScrollAreaProps) => {
   return (
-    <ScrollAreaRoot scrollHideDelay={0}>
+    <ScrollAreaRoot scrollHideDelay={0} css={css}>
       <ScrollAreaViewport>{children}</ScrollAreaViewport>
       <ScrollAreaScrollbar orientation="vertical">
         <ScrollAreaThumb />

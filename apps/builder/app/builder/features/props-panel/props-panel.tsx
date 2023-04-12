@@ -15,6 +15,7 @@ import {
   Flex,
   Text,
   type CSS,
+  ScrollArea,
 } from "@webstudio-is/design-system";
 import { ChevronDownIcon } from "@webstudio-is/icons";
 import type { Publish } from "~/shared/pubsub";
@@ -202,11 +203,10 @@ export const PropsPanel = ({
   const hasAddedProps = logic.addedProps.length > 0 || addingProp;
 
   return (
-    <Box css={{ paddingTop: theme.spacing[3] }}>
+    <ScrollArea css={{ paddingTop: theme.spacing[3] }}>
       <Row>
         <InstanceInfo meta={componentMeta} label={instanceLabel} />
       </Row>
-
       <Row
         css={{
           paddingTop: theme.spacing[3],
@@ -264,7 +264,7 @@ export const PropsPanel = ({
         )}
       </CollapsibleSectionWithAddButton>
       <Separator />
-    </Box>
+    </ScrollArea>
   );
 };
 
