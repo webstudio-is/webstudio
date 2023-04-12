@@ -92,8 +92,6 @@ export const StylePanel = ({ selectedInstance, publish }: StylePanelProps) => {
           px: theme.spacing[9],
           pb: theme.spacing[9],
           boxShadow: theme.shadows.panelSectionDropShadow,
-          // Makes sure shadow is casted on top of the scroll area
-          zIndex: 1,
         }}
       >
         <StyleSourcesSection />

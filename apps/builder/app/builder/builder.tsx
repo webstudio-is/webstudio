@@ -116,8 +116,6 @@ const SidePanel = ({
         //overflowY: "auto",
         bc: theme.colors.backgroundPanel,
         height: "100%",
-        // We need the content of the panel to receive higher stacking index than portals.
-        zIndex: 0,
         ...css,
         "&:last-of-type": {
           borderLeft: `1px solid  ${theme.colors.borderMain}`,
