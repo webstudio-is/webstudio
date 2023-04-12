@@ -7,6 +7,7 @@ import {
   SectionTitle,
   SectionTitleLabel,
   SectionTitleButton,
+  css,
 } from "@webstudio-is/design-system";
 import { theme } from "@webstudio-is/design-system";
 import type { ComponentProps, ReactNode } from "react";
@@ -52,7 +53,13 @@ export const CollapsibleSectionBase = ({
   isOpen,
   onOpenChange,
 }: CollapsibleSectionBaseProps) => (
-  <Collapsible.Root open={isOpen} onOpenChange={onOpenChange}>
+  <Collapsible.Root
+    // Grid elements inside `display:table` element doesn't use children size and perfectly fit the parent
+    // I don't know why, but this fixes our issues with ScrollArea
+    className={css({ display: "grid" })()}
+    open={isOpen}
+    onOpenChange={onOpenChange}
+  >
     <Box css={{ boxShadow: `0px 1px 0 ${theme.colors.panelOutline}` }}>
       <Collapsible.Trigger asChild>
         {trigger ?? (
