@@ -23,6 +23,7 @@ const ListItemBase = styled("li", {
   justifyContent: "space-between",
   height: theme.spacing[11],
   px: theme.spacing[3],
+  mx: theme.spacing[2],
   listStyle: "none",
   borderRadius: theme.borderRadius[4],
   outline: 0,

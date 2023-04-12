@@ -1,3 +1,4 @@
+import { forwardRef, type ComponentProps, type Ref } from "react";
 import { styled, theme } from "../stitches.config";
 import { Root, Viewport, Scrollbar, Thumb } from "@radix-ui/react-scroll-area";
 
@@ -27,7 +28,7 @@ const ScrollAreaThumb = styled(Thumb, {
     transform: "translate(-50%, -50%)",
     width: "100%",
     height: "100%",
-    minWidth: 44,
+    minWidth: 16,
     minHeight: 44,
   },
 });
@@ -38,8 +39,8 @@ const ScrollAreaScrollbar = styled(Scrollbar, {
   userSelect: "none",
   // disable browser handling of all panning and scaleUp gestures on touch devices
   touchAction: "none",
-  paddingRight: theme.spacing[2],
-  paddingLeft: theme.spacing[2],
+  padding: 2,
+  paddingRight: 3,
   '&[data-orientation="vertical"]': {
     width: theme.spacing[6],
   },
@@ -49,18 +50,23 @@ const ScrollAreaScrollbar = styled(Scrollbar, {
   },
 });
 
-type ScrollAreaProps = { children: JSX.Element | Array<JSX.Element> };
+type ScrollAreaProps = ComponentProps<typeof ScrollAreaViewport>;
 
-export const ScrollArea = ({ children }: ScrollAreaProps) => {
-  return (
-    <ScrollAreaRoot scrollHideDelay={0}>
-      <ScrollAreaViewport>{children}</ScrollAreaViewport>
-      <ScrollAreaScrollbar orientation="vertical">
-        <ScrollAreaThumb />
-      </ScrollAreaScrollbar>
-      <ScrollAreaScrollbar orientation="horizontal">
-        <ScrollAreaThumb />
-      </ScrollAreaScrollbar>
-    </ScrollAreaRoot>
-  );
-};
+export const ScrollArea = forwardRef(
+  ({ children, css, onScroll }: ScrollAreaProps, ref: Ref<HTMLDivElement>) => {
+    return (
+      <ScrollAreaRoot scrollHideDelay={0} css={css}>
+        <ScrollAreaViewport ref={ref} onScroll={onScroll}>
+          {children}
+        </ScrollAreaViewport>
+        <ScrollAreaScrollbar orientation="vertical">
+          <ScrollAreaThumb />
+        </ScrollAreaScrollbar>
+        <ScrollAreaScrollbar orientation="horizontal">
+          <ScrollAreaThumb />
+        </ScrollAreaScrollbar>
+      </ScrollAreaRoot>
+    );
+  }
+);
+ScrollArea.displayName = "ScrollArea";

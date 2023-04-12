@@ -17,6 +17,7 @@ type TitleProps = {
 const Container = styled("div", textVariants.titles, {
   display: "flex",
   alignItems: "center",
+  flexShrink: 0,
   justifyContent: "space-between",
   height: theme.spacing[15],
   paddingLeft: theme.spacing[9],
