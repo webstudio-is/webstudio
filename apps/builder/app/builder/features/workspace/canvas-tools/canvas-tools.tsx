@@ -13,6 +13,7 @@ import { useSubscribeSwitchPage } from "~/shared/pages";
 import { Label } from "./outline/label";
 import { Outline } from "./outline/outline";
 import { useSubscribeDragAndDropState } from "./use-subscribe-drag-drop-state";
+import { ResizeHandles } from "./resize-handles";
 
 const toolsStyle = {
   position: "absolute",
@@ -67,6 +68,7 @@ export const CanvasTools = ({ publish }: CanvasToolsProps) => {
       <SelectedInstanceOutline />
       <HoveredInstanceOutline />
       <TextToolbar publish={publish} />
+      <ResizeHandles />
     </Box>
   );
 };

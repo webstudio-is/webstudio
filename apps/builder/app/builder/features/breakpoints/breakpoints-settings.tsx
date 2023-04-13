@@ -27,7 +27,7 @@ import {
   selectedBreakpointStore,
 } from "~/shared/nano-states";
 import { isFeatureEnabled } from "@webstudio-is/feature-flags";
-import { groupBreakpoints } from "~/shared/breakpoints";
+import { groupBreakpoints, minCanvasWidth } from "~/shared/breakpoints";
 import { scaleStore } from "~/builder/shared/nano-states";
 
 export const BreakpointsSettings = () => {
@@ -131,7 +131,7 @@ export const BreakpointsSettings = () => {
                 gap="3"
                 direction="row"
               >
-                <WidthInput />
+                <WidthInput min={minCanvasWidth} />
                 <Flex align="center" gap="2">
                   <Label>Scale</Label>
                   <Button color="neutral" css={{ width: theme.spacing[17] }}>
