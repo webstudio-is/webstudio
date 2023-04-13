@@ -22,8 +22,8 @@ const initialState: State<unknown> = {
 type UseDragProps<DragItemData> = {
   startDistanceThreashold?: number;
   shiftDistanceThreshold?: number;
-  elementToData: (element: Element) => DragItemData | false;
-  onStart: (event: { data: DragItemData }) => void;
+  elementToData?: (element: Element) => DragItemData | false;
+  onStart: (event: { data?: DragItemData }) => void;
   onMove: (event: Point) => void;
   onShiftChange?: (event: { shifts: number }) => void;
   onEnd: (event: { isCanceled: boolean }) => void;
@@ -76,7 +76,7 @@ export const useDrag = <DragItemData>(
         return;
       }
 
-      const data = latestProps.current.elementToData(event.target as Element);
+      const data = latestProps.current.elementToData?.(event.target as Element);
 
       if (data === false) {
         return;
@@ -122,10 +122,7 @@ export const useDrag = <DragItemData>(
         return;
       }
 
-      if (
-        state.current.status === "pending" &&
-        state.current.dragItemData !== undefined
-      ) {
+      if (state.current.status === "pending") {
         onStart({ data: state.current.dragItemData });
         state.current.status = "dragging";
       }

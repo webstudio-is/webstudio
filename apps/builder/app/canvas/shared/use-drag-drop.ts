@@ -223,6 +223,9 @@ export const useDragAndDrop = () => {
     },
 
     onStart({ data: dragInstanceSelector }) {
+      if (dragInstanceSelector === undefined) {
+        return;
+      }
       publish({
         type: "dragStart",
         payload: {
