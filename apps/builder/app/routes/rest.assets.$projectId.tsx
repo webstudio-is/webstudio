@@ -1,7 +1,7 @@
 import { useEffect } from "react";
 import type { ActionArgs, LoaderArgs } from "@remix-run/node";
 import { useActionData } from "@remix-run/react";
-import type { Asset } from "@webstudio-is/asset-uploader";
+import { MaxAssets, type Asset } from "@webstudio-is/asset-uploader";
 import {
   uploadAssets,
   loadByProject,
@@ -11,6 +11,7 @@ import type { ActionData } from "~/builder/shared/assets";
 import { sentryException } from "~/shared/sentry";
 import { createContext } from "~/shared/context.server";
 import { createAssetClient } from "~/shared/asset-client";
+import env from "~/env/env.server";
 
 export const loader = async ({
   params,
@@ -40,6 +41,7 @@ export const action = async (
         {
           request,
           projectId: params.projectId,
+          maxAssetsPerProject: MaxAssets.parse(env.MAX_ASSETS_PER_PROJECT),
         },
         context,
         createAssetClient()

@@ -30,6 +30,22 @@ const env = {
 
   // Preview support
   BRANCH_NAME: process.env.BRANCH_NAME,
+
+  // Assets
+  MAX_UPLOAD_SIZE: process.env.MAX_UPLOAD_SIZE,
+  MAX_ASSETS_PER_PROJECT: process.env.MAX_ASSETS_PER_PROJECT,
+
+  // Local assets
+  FILE_UPLOAD_PATH: process.env.FILE_UPLOAD_PATH,
+
+  // Remote assets
+  S3_ENDPOINT: process.env.S3_ENDPOINT,
+  S3_REGION: process.env.S3_REGION,
+  S3_ACCESS_KEY_ID: process.env.S3_ACCESS_KEY_ID,
+  S3_SECRET_ACCESS_KEY: process.env.S3_SECRET_ACCESS_KEY,
+  S3_BUCKET: process.env.S3_BUCKET,
+  S3_ACL: process.env.S3_ACL,
+  ASSET_CDN_URL: process.env.ASSET_CDN_URL,
 };
 
 export type ServerEnv = typeof env;

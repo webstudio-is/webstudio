@@ -6,9 +6,11 @@ export const uploadAssets = async (
   {
     request,
     projectId,
+    maxAssetsPerProject,
   }: {
     request: Request;
     projectId: string;
+    maxAssetsPerProject: number;
   },
   context: AppContext,
   client: AssetClient
@@ -18,7 +20,10 @@ export const uploadAssets = async (
     () => {
       return client.uploadFile(request);
     },
-    context
+    context,
+    {
+      maxAssetsPerProject,
+    }
   );
 
   return [asset];

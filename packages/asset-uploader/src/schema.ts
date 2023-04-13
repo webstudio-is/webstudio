@@ -1,6 +1,6 @@
 import { z } from "zod";
 import { FontFormat, FontMeta } from "@webstudio-is/fonts";
-import { DEFAULT_UPLOAD_PATH, MAX_UPLOAD_SIZE } from "./constants";
+import { MAX_UPLOAD_SIZE } from "./constants";
 import { toBytes } from "./utils/to-bytes";
 
 export const ImageMeta = z.object({
@@ -9,31 +9,13 @@ export const ImageMeta = z.object({
 });
 export type ImageMeta = z.infer<typeof ImageMeta>;
 
-const maxSize = z
+export const MaxSize = z
   .string()
+  .default(MAX_UPLOAD_SIZE)
   // user inputs the max value in mb and we transform it to bytes
-  .transform(toBytes)
-  .default(MAX_UPLOAD_SIZE);
+  .transform(toBytes);
 
-export const Env = z.object({
-  MAX_ASSETS_PER_PROJECT: z.string().default("50").transform(Number.parseFloat),
-});
-
-export const S3Env = z.object({
-  S3_ENDPOINT: z.string(),
-  S3_REGION: z.string(),
-  S3_ACCESS_KEY_ID: z.string(),
-  S3_SECRET_ACCESS_KEY: z.string(),
-  S3_BUCKET: z.string(),
-  S3_ACL: z.string().optional(),
-  ASSET_CDN_URL: z.string().optional(),
-  MAX_UPLOAD_SIZE: maxSize,
-});
-
-export const FsEnv = z.object({
-  MAX_UPLOAD_SIZE: maxSize,
-  FILE_UPLOAD_PATH: z.string().default(DEFAULT_UPLOAD_PATH),
-});
+export const MaxAssets = z.string().default("50").transform(Number.parseFloat);
 
 export const Location = z.union([z.literal("FS"), z.literal("REMOTE")]);
 export type Location = z.infer<typeof Location>;

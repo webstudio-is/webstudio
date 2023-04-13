@@ -5,14 +5,12 @@ import {
   type Project,
   type Asset,
 } from "@webstudio-is/prisma-client";
-import { Env, type ImageMeta } from "../schema";
+import type { ImageMeta } from "../schema";
 import { formatAsset } from "../utils/format-asset";
 import {
   authorizeProject,
   type AppContext,
 } from "@webstudio-is/trpc-interface/server";
-
-const env = Env.parse(process.env);
 
 type BaseOptions = {
   id: string;
@@ -33,7 +31,10 @@ type Options =
 export const createAssetWithLimit = async (
   projectId: Project["id"],
   uploadAsset: () => Promise<Options>,
-  context: AppContext
+  context: AppContext,
+  options: {
+    maxAssetsPerProject: number;
+  }
 ) => {
   let updated: { id: string } | undefined;
 
@@ -67,7 +68,7 @@ export const createAssetWithLimit = async (
       },
     });
 
-    if (count >= env.MAX_ASSETS_PER_PROJECT) {
+    if (count >= options.maxAssetsPerProject) {
       /**
        * Here is right to write `Max ${MAX_ASSETS_PER_PROJECT}` but see the comment below,
        * it's probable that the user can exceed the limit a little bit.
