@@ -20,16 +20,12 @@ const handleStyle = css({
   bottom: 0,
   cursor: "col-resize",
   pointerEvents: "auto",
+  color: "transparent",
   "&::before": {
     position: "absolute",
     content: '""',
     inset: 0,
-  },
-  "&:hover::before": {
-    background: theme.colors.backgroundPrimaryLight,
-  },
-  "&:hover svg": {
-    color: theme.colors.backgroundPrimaryLight,
+    background: "currentColor",
   },
   "& svg": {
     position: "absolute",
@@ -37,6 +33,9 @@ const handleStyle = css({
     right: 0,
     transform: "translateX(100%)",
     color: theme.colors.foregroundSubtle,
+  },
+  "&:hover::before, &:hover:not([data-state=dragging]) svg": {
+    color: theme.colors.backgroundPrimaryLight,
   },
   "&[data-align=left]": {
     left: 0,
