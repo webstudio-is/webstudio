@@ -4,11 +4,7 @@ import type { ComponentStory, ComponentMeta } from "@storybook/react";
 import { action } from "@storybook/addon-actions";
 import { Box } from "@webstudio-is/design-system";
 import { theme } from "@webstudio-is/design-system";
-import type {
-  Instance,
-  Instances,
-  InstancesItem,
-} from "@webstudio-is/project-build";
+import type { Instance, Instances } from "@webstudio-is/project-build";
 import { publish } from "~/shared/pubsub";
 import { textToolbarStore } from "~/shared/nano-states";
 import { TextEditor } from "./text-editor";
@@ -30,8 +26,8 @@ type Format =
 const createInstancePair = (
   id: Instance["id"],
   component: string,
-  children: InstancesItem["children"]
-): [Instance["id"], InstancesItem] => {
+  children: Instance["children"]
+): [Instance["id"], Instance] => {
   return [
     id,
     {

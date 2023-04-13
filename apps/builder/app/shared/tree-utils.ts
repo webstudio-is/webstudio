@@ -6,7 +6,6 @@ import {
   getStyleDeclKey,
   Instance,
   Instances,
-  InstancesItem,
   Prop,
   Props,
   StyleDecl,
@@ -50,7 +49,7 @@ export const areInstanceSelectorsEqual = (
 
 export const createComponentInstance = (
   component: Instance["component"]
-): InstancesItem => {
+): Instance => {
   const componentMeta = getComponentMeta(component);
   return {
     type: "instance",
@@ -61,7 +60,7 @@ export const createComponentInstance = (
   };
 };
 
-const isInstanceDroppable = (instance: InstancesItem) => {
+const isInstanceDroppable = (instance: Instance) => {
   const meta = getComponentMeta(instance.component);
   return meta?.type === "container";
 };
@@ -81,7 +80,7 @@ export const findClosestDroppableTarget = (
     position: "end",
   };
   let position = -1;
-  let lastChild: undefined | InstancesItem = undefined;
+  let lastChild: undefined | Instance = undefined;
   for (const instanceId of instanceSelector) {
     const instance = instances.get(instanceId);
     if (instance === undefined) {
@@ -126,7 +125,7 @@ const getInstanceOrCreateFragmentIfNecessary = (
   if (instance.component === "Slot") {
     if (instance.children.length === 0) {
       const id = nanoid();
-      const fragment: InstancesItem = {
+      const fragment: Instance = {
         type: "instance",
         id,
         component: "Fragment",
@@ -258,7 +257,7 @@ export const findSubtreeLocalStyleSources = (
 
 export const insertInstancesMutable = (
   instances: Instances,
-  insertedInstances: InstancesItem[],
+  insertedInstances: Instance[],
   rootIds: Instance["id"][],
   dropTarget: DroppableTarget
 ) => {
@@ -282,7 +281,7 @@ export const insertInstancesMutable = (
   }
 
   const { position } = dropTarget;
-  const dropTargetChildren: InstancesItem["children"] = rootIds.map(
+  const dropTargetChildren: Instance["children"] = rootIds.map(
     (instanceId) => ({
       type: "id",
       value: instanceId,
@@ -297,7 +296,7 @@ export const insertInstancesMutable = (
 
 export const insertInstancesCopyMutable = (
   instances: Instances,
-  copiedInstances: InstancesItem[],
+  copiedInstances: Instance[],
   dropTarget: DroppableTarget
 ) => {
   const newInstances: Instances = new Map();
@@ -310,7 +309,7 @@ export const insertInstancesCopyMutable = (
   );
 
   const copiedInstanceIds = new Map<Instance["id"], Instance["id"]>();
-  const copiedInstancesWithNewIds: InstancesItem[] = [];
+  const copiedInstancesWithNewIds: Instance[] = [];
   for (const instanceId of newInstanceIds) {
     const newInstanceId = nanoid();
     copiedInstanceIds.set(instanceId, newInstanceId);
