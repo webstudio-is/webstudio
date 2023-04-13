@@ -11,7 +11,7 @@ import { subscribe } from "~/shared/pubsub";
 import { subscribeWindowResize } from "~/shared/dom-hooks";
 import {
   isResizingCanvasStore,
-  rootInstanceContainer,
+  instancesStore,
   selectedInstanceBrowserStyleStore,
   selectedInstanceIntanceToTagStore,
   selectedInstanceUnitSizesStore,
@@ -81,7 +81,7 @@ export const SelectedInstanceConnector = ({
   instanceStyles: StyleDecl[];
   instanceProps: undefined | Prop[];
 }) => {
-  const rootInstance = useStore(rootInstanceContainer);
+  const instances = useStore(instancesStore);
 
   useEffect(() => {
     const element = instanceElementRef.current;
@@ -188,7 +188,7 @@ export const SelectedInstanceConnector = ({
     // instance props may change dom element
     instanceProps,
     // update on all changes in the tree in case ResizeObserver does ont work
-    rootInstance,
+    instances,
   ]);
 
   return null;

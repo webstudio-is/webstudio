@@ -61,47 +61,6 @@ export const createComponentInstance = (
   };
 };
 
-const traverseInstances = (
-  instance: Instance,
-  cb: (child: Instance, parent: Instance) => void
-) => {
-  for (const child of instance.children) {
-    if (child.type === "text") {
-      continue;
-    }
-    if (child.type === "instance") {
-      cb(child, instance);
-      traverseInstances(child, cb);
-    }
-  }
-};
-
-export type InstancesIndex = {
-  rootInstanceId: undefined | Instance["id"];
-  instancesById: Map<Instance["id"], Instance>;
-  parentInstancesById: Map<Instance["id"], Instance>;
-};
-
-export const createInstancesIndex = (
-  rootInstance: undefined | Instance
-): InstancesIndex => {
-  const instancesById = new Map<Instance["id"], Instance>();
-  const parentInstancesById = new Map<Instance["id"], Instance>();
-  if (rootInstance) {
-    // traverse skips root without parent
-    instancesById.set(rootInstance.id, rootInstance);
-    traverseInstances(rootInstance, (child, parent) => {
-      parentInstancesById.set(child.id, parent);
-      instancesById.set(child.id, child);
-    });
-  }
-  return {
-    rootInstanceId: rootInstance?.id,
-    instancesById,
-    parentInstancesById,
-  };
-};
-
 const isInstanceDroppable = (instance: InstancesItem) => {
   const meta = getComponentMeta(instance.component);
   return meta?.type === "container";
