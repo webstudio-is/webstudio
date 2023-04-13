@@ -40,7 +40,6 @@ const imageAsset = (name = "cat", format = "jpeg"): Asset => ({
   projectId,
   type: "image",
   name: `${name}.${format}`,
-  path: `https://loremflickr.com/128/180/${name}`,
   format: format,
   location: "FS",
   size: 100000,

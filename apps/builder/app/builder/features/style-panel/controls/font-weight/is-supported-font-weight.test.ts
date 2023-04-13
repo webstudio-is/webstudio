@@ -13,7 +13,6 @@ const createServerAsset = (meta: FontAsset["meta"]): FontAsset => ({
   createdAt: "",
   description: "",
   meta,
-  path: "",
 });
 
 describe("isSupportedFontWeight", () => {
