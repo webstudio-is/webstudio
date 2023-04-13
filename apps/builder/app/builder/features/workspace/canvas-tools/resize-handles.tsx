@@ -1,7 +1,12 @@
 import { useStore } from "@nanostores/react";
 import { findApplicableMedia } from "@webstudio-is/css-engine";
-import { css, theme, useDrag } from "@webstudio-is/design-system";
-import { useState } from "react";
+import {
+  css,
+  numericScrubControl,
+  theme,
+  type NumericScrubOptions,
+} from "@webstudio-is/design-system";
+import { useEffect, useRef, useState } from "react";
 import {
   canvasRectStore,
   canvasWidthStore,
@@ -78,55 +83,78 @@ const handleIcon = (
   </svg>
 );
 
-const baseDragProps = {
-  startDistanceThreashold: 0,
-  elementToData: () => true,
-  onStart() {
+const updateBreakpoint = (width: number) => {
+  const applicableBreakpoint = findApplicableMedia(
+    Array.from(breakpointsStore.get().values()),
+    width
+  );
+  if (applicableBreakpoint) {
+    selectedBreakpointIdStore.set(applicableBreakpoint.id);
+  }
+};
+
+const onStatusChange: NumericScrubOptions["onStatusChange"] = (status) => {
+  if (status === "scrubbing") {
     isCanvasPointerEventsEnabledStore.set(false);
     isResizingCanvasStore.set(true);
-  },
-  onEnd() {
-    isCanvasPointerEventsEnabledStore.set(true);
-    isResizingCanvasStore.set(false);
-  },
+    return;
+  }
+  isCanvasPointerEventsEnabledStore.set(true);
+  isResizingCanvasStore.set(false);
 };
 
 const useResize = () => {
   const isDragging = useStore(isCanvasPointerEventsEnabledStore) === false;
   const [isHovering, setIsHovering] = useState(false);
+  const leftRef = useRef<HTMLDivElement>(null);
+  const rightRef = useRef<HTMLDivElement>(null);
 
-  const updateBreakpoint = (width: number) => {
-    const applicableBreakpoint = findApplicableMedia(
-      Array.from(breakpointsStore.get().values()),
-      width
-    );
-    if (applicableBreakpoint) {
-      selectedBreakpointIdStore.set(applicableBreakpoint.id);
+  useEffect(() => {
+    if (leftRef.current === null) {
+      return;
     }
-  };
+    const scrub = numericScrubControl(leftRef.current, {
+      onStatusChange,
+      getValue() {
+        return canvasRectStore.get()?.left;
+      },
+      onValueInput(event) {
+        const rect = canvasRectStore.get();
+        if (rect) {
+          const width = Math.round(
+            Math.max(rect.right - event.value, minCanvasWidth)
+          );
+          canvasWidthStore.set(width);
+          updateBreakpoint(width);
+        }
+      },
+    });
+    return scrub.disconnectedCallback;
+  }, []);
 
-  const { rootRef: leftRef } = useDrag({
-    ...baseDragProps,
-    onMove({ x }) {
-      const rect = canvasRectStore.get();
-      if (rect) {
-        const width = Math.round(Math.max(rect.right - x, minCanvasWidth));
-        canvasWidthStore.set(width);
-        updateBreakpoint(width);
-      }
-    },
-  });
-  const { rootRef: rightRef } = useDrag({
-    ...baseDragProps,
-    onMove({ x }) {
-      const rect = canvasRectStore.get();
-      if (rect) {
-        const width = Math.max(Math.round(x - rect.left), minCanvasWidth);
-        canvasWidthStore.set(width);
-        updateBreakpoint(width);
-      }
-    },
-  });
+  useEffect(() => {
+    if (rightRef.current === null) {
+      return;
+    }
+    const scrub = numericScrubControl(rightRef.current, {
+      onStatusChange,
+      getValue() {
+        return canvasRectStore.get()?.right;
+      },
+      onValueInput(event) {
+        const rect = canvasRectStore.get();
+        if (rect) {
+          const width = Math.max(
+            Math.round(event.value - rect.left),
+            minCanvasWidth
+          );
+          canvasWidthStore.set(width);
+          updateBreakpoint(width);
+        }
+      },
+    });
+    return scrub.disconnectedCallback;
+  }, []);
 
   const handleMouseEnter = () => setIsHovering(true);
 

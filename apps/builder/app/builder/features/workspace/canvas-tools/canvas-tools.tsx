@@ -59,7 +59,7 @@ export const CanvasTools = ({ publish }: CanvasToolsProps) => {
       </Box>
     ) : null;
   }
-  console.log(isPreviewMode);
+
   return (
     <Box css={toolsStyle}>
       <MediaBadge />
