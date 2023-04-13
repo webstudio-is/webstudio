@@ -193,6 +193,7 @@ const wrappedRulesMap = new Map<string, StyleRule | PlaintextRule>();
 const addRule = (id: string, cssRule: CssRule, assets: Assets) => {
   const key = id + cssRule.breakpoint;
   const selectorText = `[${idAttribute}="${id}"]`;
+  const params = getParams();
   const rule = cssEngine.addStyleRule(
     selectorText,
     {
@@ -200,7 +201,8 @@ const addRule = (id: string, cssRule: CssRule, assets: Assets) => {
       style: toVarStyleWithFallback(id, cssRule.style),
     },
     createImageValueTransformer(assets, {
-      publicPath: getParams().publicPath,
+      publicPath: params.publicPath,
+      cdnUrl: params.cdnUrl,
     })
   );
   wrappedRulesMap.set(key, rule);

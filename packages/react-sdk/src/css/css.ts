@@ -16,6 +16,7 @@ type Data = {
 
 type CssOptions = {
   publicPath?: string;
+  cdnUrl?: string;
 };
 
 export const createImageValueTransformer =
@@ -28,9 +29,11 @@ export const createImageValueTransformer =
       }
 
       // @todo reuse image loaders and generate image-set
-      const { publicPath = "/" } = options;
+      const { publicPath = "/", cdnUrl = "/" } = options;
       const url =
-        asset.location === "REMOTE" ? asset.path : `${publicPath}${asset.name}`;
+        asset.location === "REMOTE"
+          ? `${cdnUrl}${asset.name}`
+          : `${publicPath}${asset.name}`;
 
       return {
         type: "image",

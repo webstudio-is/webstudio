@@ -1,19 +1,16 @@
 import type { Asset as DbAsset } from "@webstudio-is/prisma-client";
 import { type FontFormat, FONT_FORMATS } from "@webstudio-is/fonts";
 import { FontMeta } from "@webstudio-is/fonts";
-import { getAssetPath } from "./get-asset-path";
 import { type Asset, ImageMeta } from "../schema";
 
 export const formatAsset = (asset: DbAsset): Asset => {
-  const path = getAssetPath(asset);
-
   const isFont = FONT_FORMATS.has(asset.format as FontFormat);
 
   if (isFont) {
     return {
       id: asset.id,
       name: asset.name,
-      path,
+      path: asset.name,
       description: asset.description,
       location: asset.location,
       projectId: asset.projectId,
@@ -29,7 +26,7 @@ export const formatAsset = (asset: DbAsset): Asset => {
   return {
     id: asset.id,
     name: asset.name,
-    path,
+    path: asset.name,
     description: asset.description,
     location: asset.location,
     projectId: asset.projectId,

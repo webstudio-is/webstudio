@@ -1,5 +1,6 @@
 export type Params = {
   resizeOrigin?: string;
+  cdnUrl?: string;
   publicPath?: string;
 };
 

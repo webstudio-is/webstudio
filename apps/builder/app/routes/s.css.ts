@@ -48,6 +48,7 @@ export const loader = async ({ request }: ActionArgs) => {
       },
       {
         publicPath: env.ASSET_PUBLIC_PATH,
+        cdnUrl: env.ASSET_CDN_URL,
       }
     );
 

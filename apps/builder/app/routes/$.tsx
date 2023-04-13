@@ -22,6 +22,9 @@ export const loader = async ({ request }: LoaderArgs) => {
   if (env.ASSET_PUBLIC_PATH != null) {
     params.publicPath = env.ASSET_PUBLIC_PATH;
   }
+  if (env.ASSET_CDN_URL != null) {
+    params.cdnUrl = env.ASSET_CDN_URL;
+  }
 
   return { params };
 };

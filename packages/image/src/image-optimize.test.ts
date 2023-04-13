@@ -7,11 +7,14 @@ describe("Image optimizations applied", () => {
     const imgAttr = getImageAttributes({
       optimize: true,
       width: 100,
-      src: "https://webstudio.is/logo.webp",
+      src: "logo.webp",
       srcSet: undefined,
       sizes: undefined,
       quality: 100,
-      loader: cloudflareImageLoader({ resizeOrigin: null }),
+      loader: cloudflareImageLoader({
+        resizeOrigin: null,
+        cdnUrl: "https://webstudio.is/",
+      }),
     });
 
     expect(imgAttr).toMatchInlineSnapshot(`
@@ -27,11 +30,14 @@ describe("Image optimizations applied", () => {
     const imgAttr = getImageAttributes({
       optimize: true,
       width: undefined,
-      src: "https://webstudio.is/logo.webp",
+      src: "logo.webp",
       srcSet: undefined,
       sizes: undefined,
       quality: 90,
-      loader: cloudflareImageLoader({ resizeOrigin: null }),
+      loader: cloudflareImageLoader({
+        resizeOrigin: null,
+        cdnUrl: "https://webstudio.is/",
+      }),
     });
 
     expect(imgAttr).toMatchInlineSnapshot(`
@@ -47,11 +53,14 @@ describe("Image optimizations applied", () => {
     const imgAttr = getImageAttributes({
       optimize: true,
       width: undefined,
-      src: "https://webstudio.is/logo.webp",
+      src: "logo.webp",
       srcSet: undefined,
       sizes: "100vw",
       quality: 70,
-      loader: cloudflareImageLoader({ resizeOrigin: null }),
+      loader: cloudflareImageLoader({
+        resizeOrigin: null,
+        cdnUrl: "https://webstudio.is/",
+      }),
     });
 
     expect(imgAttr).toMatchInlineSnapshot(`
@@ -67,12 +76,13 @@ describe("Image optimizations applied", () => {
     const imgAttr = getImageAttributes({
       optimize: true,
       width: undefined,
-      src: "https://webstudio.is/logo.webp",
+      src: "logo.webp",
       srcSet: undefined,
       sizes: "100vw",
       quality: 70,
       loader: cloudflareImageLoader({
         resizeOrigin: "https://resize-origin.is",
+        cdnUrl: "https://webstudio.is/",
       }),
     });
 
