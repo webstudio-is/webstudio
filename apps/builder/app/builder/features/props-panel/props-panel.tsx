@@ -1,5 +1,9 @@
 import store from "immerhin";
-import type { Instance, Prop } from "@webstudio-is/project-build";
+import type {
+  Instance,
+  InstancesItem,
+  Prop,
+} from "@webstudio-is/project-build";
 import {
   theme,
   useCombobox,
@@ -272,7 +276,7 @@ export const PropsPanelContainer = ({
   publish,
 }: {
   publish: Publish;
-  selectedInstance: Instance;
+  selectedInstance: InstancesItem;
 }) => {
   const propsMeta = getComponentPropsMeta(instance.component);
   if (propsMeta === undefined) {
