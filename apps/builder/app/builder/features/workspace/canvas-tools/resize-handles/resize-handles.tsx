@@ -26,6 +26,7 @@ const handleStyle = css({
 
 const baseDragProps = {
   startDistanceThreashold: 0,
+  elementToData: () => true,
   onStart() {
     isCanvasPointerEventsEnabledStore.set(false);
   },

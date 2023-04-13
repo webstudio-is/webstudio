@@ -112,9 +112,6 @@ export const useDraggable = ({
       return elementToComponentName(element, metaByComponentName);
     },
     onStart({ data: componentName }) {
-      if (componentName === undefined) {
-        return;
-      }
       setDragComponent(componentName);
       publish({
         type: "dragStart",

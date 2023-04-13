@@ -221,9 +221,6 @@ export const Tree = <Data extends { id: string }>({
       return dragItemSelector;
     },
     onStart: ({ data: itemSelector }) => {
-      if (itemSelector === undefined) {
-        return;
-      }
       onSelect?.(itemSelector);
       onDragItemChange(itemSelector);
       dropHandlers.handleStart();
