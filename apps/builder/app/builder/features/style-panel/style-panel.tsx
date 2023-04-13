@@ -1,5 +1,5 @@
 import { theme, Box, ScrollArea } from "@webstudio-is/design-system";
-import type { InstancesItem } from "@webstudio-is/project-build";
+import type { Instance } from "@webstudio-is/project-build";
 import type { Publish } from "~/shared/pubsub";
 
 import { useStyleData } from "./shared/use-style-data";
@@ -9,7 +9,7 @@ import { StyleSourcesSection } from "./style-source-section";
 
 type StylePanelProps = {
   publish: Publish;
-  selectedInstance: InstancesItem;
+  selectedInstance: Instance;
 };
 
 export const StylePanel = ({ selectedInstance, publish }: StylePanelProps) => {

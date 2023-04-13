@@ -4,7 +4,6 @@ import {
   Breakpoint,
   findTreeInstanceIds,
   Instance,
-  InstancesItem,
   Prop,
   StyleDecl,
   StyleSource,
@@ -39,7 +38,7 @@ const version = "@webstudio/instance/v0.1";
 
 const InstanceData = z.object({
   breakpoints: z.array(Breakpoint),
-  instances: z.array(InstancesItem),
+  instances: z.array(Instance),
   props: z.array(Prop),
   styleSourceSelections: z.array(StyleSourceSelection),
   styleSources: z.array(StyleSource),

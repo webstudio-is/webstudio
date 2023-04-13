@@ -1,13 +1,13 @@
 import { test, expect } from "@jest/globals";
 import { createHeadlessEditor } from "@lexical/headless";
 import { LinkNode } from "@lexical/link";
-import type { Instance, InstancesItem } from "@webstudio-is/project-build";
+import type { Instance } from "@webstudio-is/project-build";
 import { $convertToLexical, $convertToUpdates, type Refs } from "./interop";
 
 const createInstance = (
   id: Instance["id"],
   component: string,
-  children: InstancesItem["children"]
+  children: Instance["children"]
 ) => {
   return {
     type: "instance",
@@ -20,8 +20,8 @@ const createInstance = (
 const createInstancePair = (
   id: Instance["id"],
   component: string,
-  children: InstancesItem["children"]
-): [Instance["id"], InstancesItem] => {
+  children: Instance["children"]
+): [Instance["id"], Instance] => {
   return [
     id,
     {

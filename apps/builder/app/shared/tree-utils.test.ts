@@ -3,7 +3,6 @@ import type {
   Breakpoint,
   Instance,
   Instances,
-  InstancesItem,
   Prop,
   StyleDecl,
   Styles,
@@ -44,8 +43,8 @@ const createBreakpointPair = (
 const createInstance = (
   id: Instance["id"],
   component: string,
-  children: InstancesItem["children"]
-): InstancesItem => {
+  children: Instance["children"]
+): Instance => {
   return {
     type: "instance",
     id,
@@ -57,8 +56,8 @@ const createInstance = (
 const createInstancePair = (
   id: Instance["id"],
   component: string,
-  children: InstancesItem["children"]
-): [Instance["id"], InstancesItem] => {
+  children: Instance["children"]
+): [Instance["id"], Instance] => {
   return [id, createInstance(id, component, children)];
 };
 

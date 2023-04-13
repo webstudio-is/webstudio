@@ -1,6 +1,6 @@
 import { atom, computed } from "nanostores";
 import { getComponentMeta } from "@webstudio-is/react-sdk";
-import type { InstancesItem } from "@webstudio-is/project-build";
+import type { Instance, Instances } from "@webstudio-is/project-build";
 import type { InstanceSelector } from "../tree-utils";
 import { getElementByInstanceSelector } from "../dom-utils";
 import { useSyncInitializeOnce } from "../hook-utils";
@@ -59,12 +59,8 @@ export const escapeSelection = () => {
   selectedInstanceSelectorStore.set(undefined);
 };
 
-export const instancesStore = atom<Map<InstancesItem["id"], InstancesItem>>(
-  new Map()
-);
-export const useSetInstances = (
-  instances: [InstancesItem["id"], InstancesItem][]
-) => {
+export const instancesStore = atom<Instances>(new Map());
+export const useSetInstances = (instances: [Instance["id"], Instance][]) => {
   useSyncInitializeOnce(() => {
     instancesStore.set(new Map(instances));
   });

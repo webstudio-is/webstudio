@@ -5,7 +5,6 @@ import warnOnce from "warn-once";
 import {
   type Breakpoint,
   type Instance,
-  type InstancesItem,
   getStyleDeclKey,
 } from "@webstudio-is/project-build";
 import type { StyleProperty, StyleValue } from "@webstudio-is/css-data";
@@ -48,7 +47,7 @@ declare module "~/shared/pubsub" {
 
 type UseStyleData = {
   publish: Publish;
-  selectedInstance: InstancesItem;
+  selectedInstance: Instance;
 };
 
 export type StyleUpdateOptions = { isEphemeral: boolean };

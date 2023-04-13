@@ -1,9 +1,9 @@
-import type { Instance, Instances, InstancesItem } from "../schema/instances";
+import type { Instance, Instances } from "../schema/instances";
 
 const traverseInstances = (
   instances: Instances,
   instanceId: Instance["id"],
-  callback: (instance: InstancesItem) => false | void
+  callback: (instance: Instance) => false | void
 ) => {
   const instance = instances.get(instanceId);
   if (instance === undefined) {
