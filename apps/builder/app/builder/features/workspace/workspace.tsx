@@ -22,7 +22,6 @@ const workspaceStyle = css({
 
 const canvasContainerStyle = css({
   position: "relative",
-  overflow: "hidden",
   transformStyle: "preserve-3d",
   transformOrigin: "0 0",
 });

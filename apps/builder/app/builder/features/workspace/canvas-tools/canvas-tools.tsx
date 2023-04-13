@@ -22,7 +22,6 @@ const toolsStyle = {
   bottom: 0,
   left: 0,
   pointerEvents: "none",
-  overflow: "hidden",
 };
 
 type CanvasToolsProps = {
