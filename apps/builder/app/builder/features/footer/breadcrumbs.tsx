@@ -4,7 +4,7 @@ import {
   theme,
   DeprecatedButton,
   Flex,
-  DeprecatedText2,
+  Text,
 } from "@webstudio-is/design-system";
 import {
   instancesStore,
@@ -46,7 +46,7 @@ export const Breadcrumbs = () => {
     <Flex align="center" css={{ height: "100%" }}>
       {selectedInstanceSelector === undefined ? (
         <Breadcrumb>
-          <DeprecatedText2>No instance selected</DeprecatedText2>
+          <Text>No instance selected</Text>
         </Breadcrumb>
       ) : (
         selectedInstanceSelector
@@ -71,7 +71,7 @@ export const Breadcrumbs = () => {
                   textEditingInstanceSelectorStore.set(undefined);
                 }}
               >
-                {instance.component}
+                {instance.label || instance.component}
               </Breadcrumb>
             );
           })
