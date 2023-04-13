@@ -3,16 +3,18 @@ import { ButtonElementIcon } from "@webstudio-is/icons";
 import { PropsPanel } from "./props-panel";
 import { usePropsLogic } from "./use-props-logic";
 import { assetsStore, pagesStore } from "~/shared/nano-states";
+import { setMockEnv } from "~/shared/env";
 import type { Prop } from "@webstudio-is/project-build";
-import type {
-  WsComponentMeta,
-  WsComponentPropsMeta,
+import {
+  type WsComponentMeta,
+  type WsComponentPropsMeta,
 } from "@webstudio-is/react-sdk";
 import { textVariants } from "@webstudio-is/design-system";
 import type { Asset } from "@webstudio-is/asset-uploader";
+// eslint-disable-next-line import/no-internal-modules
+import catPath from "./props-panel.stories.assets/cat.jpg";
 
-// @todo: use this somehow to make images actually show in the story
-// import catPath from "./props-panel.stories.assets/cat.jpg";
+setMockEnv({ ASSET_PUBLIC_PATH: catPath.replace("cat.jpg", "") });
 
 let id = 0;
 const unique = () => `${++id}`;
