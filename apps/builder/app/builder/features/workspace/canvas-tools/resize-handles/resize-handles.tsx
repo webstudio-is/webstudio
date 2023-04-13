@@ -1,6 +1,7 @@
 import { useStore } from "@nanostores/react";
 import { findApplicableMedia } from "@webstudio-is/css-engine";
 import { css, theme, useDrag } from "@webstudio-is/design-system";
+import { useState } from "react";
 import {
   canvasRectStore,
   canvasWidthStore,
@@ -34,8 +35,10 @@ const handleStyle = css({
     transform: "translateX(100%)",
     color: theme.colors.foregroundSubtle,
   },
-  "&:hover::before, &:hover:not([data-state=dragging]) svg": {
-    color: theme.colors.backgroundPrimaryLight,
+  "&[data-state=hovering]": {
+    "&::before, & svg": {
+      color: theme.colors.backgroundPrimaryLight,
+    },
   },
   "&[data-align=left]": {
     left: 0,
@@ -88,10 +91,9 @@ const baseDragProps = {
   },
 };
 
-const useResizeHandles = () => {
-  const isCanvasPointerEventsEnabled = useStore(
-    isCanvasPointerEventsEnabledStore
-  );
+const useResize = () => {
+  const isDragging = useStore(isCanvasPointerEventsEnabledStore) === false;
+  const [isHovering, setIsHovering] = useState(false);
 
   const updateBreakpoint = (width: number) => {
     const applicableBreakpoint = findApplicableMedia(
@@ -125,30 +127,43 @@ const useResizeHandles = () => {
       }
     },
   });
-  const state = isCanvasPointerEventsEnabled ? "idle" : "dragging";
+
+  const handleMouseEnter = () => setIsHovering(true);
+
+  const handleMouseOut = () => setIsHovering(false);
+
+  const state = isDragging ? "dragging" : isHovering ? "hovering" : "idle";
 
   return {
     state,
     leftRef,
     rightRef,
+    handleMouseEnter,
+    handleMouseOut,
   };
 };
 
 export const ResizeHandles = () => {
-  const { state, leftRef, rightRef } = useResizeHandles();
+  const { state, leftRef, rightRef, handleMouseEnter, handleMouseOut } =
+    useResize();
+
   return (
     <>
       <div
         ref={leftRef}
-        className={handleStyle()}
-        data-align="left"
+        onMouseEnter={handleMouseEnter}
+        onMouseOut={handleMouseOut}
         data-state={state}
+        data-align="left"
+        className={handleStyle()}
       />
       <div
         ref={rightRef}
-        className={handleStyle()}
-        data-align="right"
+        onMouseEnter={handleMouseEnter}
+        onMouseOut={handleMouseOut}
         data-state={state}
+        data-align="right"
+        className={handleStyle()}
       >
         {handleIcon}
       </div>
