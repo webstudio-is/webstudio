@@ -2,11 +2,7 @@ import store from "immerhin";
 import { gfm } from "micromark-extension-gfm";
 import type { Root } from "mdast";
 import { fromMarkdown } from "mdast-util-from-markdown";
-import type {
-  Instance,
-  InstancesItem,
-  Prop,
-} from "@webstudio-is/project-build";
+import type { Instance, Prop } from "@webstudio-is/project-build";
 import { nanoid } from "nanoid";
 import {
   findClosestDroppableTarget,
@@ -45,13 +41,13 @@ const astTypeComponentMap: Record<string, Instance["component"]> = {
 type Options = { generateId?: typeof nanoid };
 
 const toInstanceData = (
-  instances: InstancesItem[],
+  instances: Instance[],
   props: Prop[],
   ast: { children: Root["children"] },
   options: Options = {}
-): InstancesItem["children"] => {
+): Instance["children"] => {
   const { generateId = nanoid } = options;
-  const children: InstancesItem["children"] = [];
+  const children: Instance["children"] = [];
 
   for (const child of ast.children) {
     if (child.type === "text") {
@@ -63,7 +59,7 @@ const toInstanceData = (
     if (component === undefined) {
       continue;
     }
-    const instance: InstancesItem = {
+    const instance: Instance = {
       type: "instance",
       id: generateId(),
       component,
@@ -195,7 +191,7 @@ export const parse = (clipboardData: string, options?: Options) => {
   if (ast.children.length === 0) {
     return;
   }
-  const instances: InstancesItem[] = [];
+  const instances: Instance[] = [];
   const props: Prop[] = [];
   const children = toInstanceData(instances, props, ast, options);
   // assume text is not top level

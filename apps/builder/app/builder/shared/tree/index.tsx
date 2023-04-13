@@ -7,7 +7,7 @@ import {
   type TreeProps,
   type TreeItemRenderProps,
 } from "@webstudio-is/design-system";
-import type { Instance, InstancesItem } from "@webstudio-is/project-build";
+import type { Instance } from "@webstudio-is/project-build";
 import {
   getComponentMeta,
   type WsComponentMeta,
@@ -15,7 +15,7 @@ import {
 import { instancesStore } from "~/shared/nano-states";
 
 const instanceRelatedProps = {
-  renderItem(props: TreeItemRenderProps<InstancesItem>) {
+  renderItem(props: TreeItemRenderProps<Instance>) {
     const meta = getComponentMeta(props.itemData.component);
     if (meta === undefined) {
       return <></>;
@@ -32,7 +32,7 @@ const instanceRelatedProps = {
 
 export const InstanceTree = (
   props: Omit<
-    TreeProps<InstancesItem>,
+    TreeProps<Instance>,
     | keyof typeof instanceRelatedProps
     | "canLeaveParent"
     | "canAcceptChild"
@@ -68,7 +68,7 @@ export const InstanceTree = (
   const getItemChildren = useCallback(
     (instanceId: Instance["id"]) => {
       const instance = instances.get(instanceId);
-      const children: InstancesItem[] = [];
+      const children: Instance[] = [];
       if (instance === undefined) {
         return children;
       }

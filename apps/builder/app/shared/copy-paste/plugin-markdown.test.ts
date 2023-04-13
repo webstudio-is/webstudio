@@ -1,5 +1,5 @@
 import { describe, test, expect } from "@jest/globals";
-import { InstancesItem, Prop } from "@webstudio-is/project-build";
+import { Instance, Prop } from "@webstudio-is/project-build";
 import { parse } from "./plugin-markdown";
 
 const parseInstanceData = (data?: ReturnType<typeof parse>) => {
@@ -8,7 +8,7 @@ const parseInstanceData = (data?: ReturnType<typeof parse>) => {
   }
   const { rootIds, instances, props } = data;
   for (const instance of instances) {
-    InstancesItem.parse(instance);
+    Instance.parse(instance);
   }
   for (const prop of props) {
     Prop.parse(prop);
