@@ -38,7 +38,7 @@ const env = {
   // Local assets
   FILE_UPLOAD_PATH: process.env.FILE_UPLOAD_PATH,
 
-  // Remove assets
+  // Remote assets
   S3_ENDPOINT: process.env.S3_ENDPOINT,
   S3_REGION: process.env.S3_REGION,
   S3_ACCESS_KEY_ID: process.env.S3_ACCESS_KEY_ID,
