@@ -125,7 +125,12 @@ export const GlobalStyles = () => {
 
   useIsomorphicLayoutEffect(() => {
     fontsAndDefaultsCssEngine.clear();
-    addGlobalRules(fontsAndDefaultsCssEngine, { assets });
+    const params = getParams();
+    addGlobalRules(fontsAndDefaultsCssEngine, {
+      assets,
+      publicPath: params.publicPath,
+      cdnUrl: params.cdnUrl,
+    });
     fontsAndDefaultsCssEngine.render();
   }, [assets]);
 
