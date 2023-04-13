@@ -48,6 +48,13 @@ const viewPortStyle = css({
   width: "100%",
   height: "100%",
   borderRadius: "inherit",
+
+  variants: {
+    verticalOnly: {
+      // https://github.com/radix-ui/primitives/issues/926#issuecomment-1015279283
+      true: { "& > div[style]": { display: "block !important" } },
+    },
+  },
 });
 
 type ScrollAreaProps = { css?: CSS; verticalOnly?: boolean } & Pick<
@@ -62,20 +69,12 @@ export const ScrollArea = forwardRef(
   ) => {
     return (
       <ScrollAreaRoot scrollHideDelay={0} css={css}>
-        <Viewport ref={ref} className={viewPortStyle()} onScroll={onScroll}>
-          {/*
-           * Radix sets "display:table" on Viewport,
-           * which allows children to grow past the ScrollArea's width:
-           * https://github.com/radix-ui/primitives/blob/1b05a8e35cf35f3020484979086d70aefbaf4095/packages/react/scroll-area/src/ScrollArea.tsx#L183
-           *
-           * We don't want that in case of vertilcal only scroll.
-           * A wrapper with "display:grid" counteracts the effect of "display:table".
-           */}
-          {verticalOnly ? (
-            <div style={{ display: "grid" }}>{children}</div>
-          ) : (
-            children
-          )}
+        <Viewport
+          ref={ref}
+          className={viewPortStyle({ verticalOnly })}
+          onScroll={onScroll}
+        >
+          {children}
         </Viewport>
         <ScrollAreaScrollbar orientation="vertical">
           <ScrollAreaThumb />
