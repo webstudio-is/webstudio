@@ -11,7 +11,8 @@ describe("getFontFaces()", () => {
           style: "normal",
           weight: 400,
         },
-        path: "/fonts/roboto.woff",
+        location: "FS",
+        name: "roboto.woff",
       },
       {
         format: "ttf",
@@ -20,10 +21,11 @@ describe("getFontFaces()", () => {
           style: "normal",
           weight: 400,
         },
-        path: "/fonts/roboto.ttf",
+        location: "FS",
+        name: "roboto.ttf",
       },
     ];
-    expect(getFontFaces(assets)).toMatchSnapshot();
+    expect(getFontFaces(assets, { publicPath: "/fonts/" })).toMatchSnapshot();
   });
 
   test("different style", () => {
@@ -35,7 +37,8 @@ describe("getFontFaces()", () => {
           style: "normal",
           weight: 400,
         },
-        path: "/fonts/roboto.ttf",
+        location: "FS",
+        name: "roboto.ttf",
       },
       {
         format: "ttf",
@@ -44,10 +47,11 @@ describe("getFontFaces()", () => {
           style: "italic",
           weight: 400,
         },
-        path: "/fonts/roboto-italic.ttf",
+        location: "FS",
+        name: "roboto-italic.ttf",
       },
     ];
-    expect(getFontFaces(assets)).toMatchSnapshot();
+    expect(getFontFaces(assets, { publicPath: "/fonts/" })).toMatchSnapshot();
   });
 
   test("different weight", () => {
@@ -59,7 +63,8 @@ describe("getFontFaces()", () => {
           style: "normal",
           weight: 400,
         },
-        path: "/fonts/roboto.ttf",
+        location: "FS",
+        name: "roboto.ttf",
       },
       {
         format: "ttf",
@@ -68,10 +73,11 @@ describe("getFontFaces()", () => {
           style: "normal",
           weight: 500,
         },
-        path: "/fonts/roboto-bold.ttf",
+        location: "FS",
+        name: "roboto-bold.ttf",
       },
     ];
-    expect(getFontFaces(assets)).toMatchSnapshot();
+    expect(getFontFaces(assets, { publicPath: "/fonts/" })).toMatchSnapshot();
   });
 
   test("variable font", () => {
@@ -96,9 +102,10 @@ describe("getFontFaces()", () => {
             YTFI: { name: "YTFI", min: 560, default: 738, max: 788 },
           },
         },
-        path: "/fonts/inter.ttf",
+        location: "FS",
+        name: "inter.ttf",
       },
     ];
-    expect(getFontFaces(assets)).toMatchSnapshot();
+    expect(getFontFaces(assets, { publicPath: "/fonts/" })).toMatchSnapshot();
   });
 });
