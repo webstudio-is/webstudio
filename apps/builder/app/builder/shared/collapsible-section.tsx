@@ -7,7 +7,6 @@ import {
   SectionTitle,
   SectionTitleLabel,
   SectionTitleButton,
-  css,
 } from "@webstudio-is/design-system";
 import { theme } from "@webstudio-is/design-system";
 import type { ComponentProps, ReactNode } from "react";
@@ -45,8 +44,6 @@ type CollapsibleSectionBaseProps = {
   onOpenChange: (value: boolean) => void;
 };
 
-const rootStyle = css({ display: "grid" });
-
 export const CollapsibleSectionBase = ({
   label,
   trigger,
@@ -55,14 +52,7 @@ export const CollapsibleSectionBase = ({
   isOpen,
   onOpenChange,
 }: CollapsibleSectionBaseProps) => (
-  <Collapsible.Root
-    // Grid elements inside `display:table` element doesn't use children size and perfectly fit the parent
-    // I don't know why, but this fixes our issues with ScrollArea
-    // @todo probably pull request here to allow change display https://github.com/radix-ui/primitives/blob/main/packages/react/scroll-area/src/ScrollArea.tsx#L183
-    className={rootStyle()}
-    open={isOpen}
-    onOpenChange={onOpenChange}
-  >
+  <Collapsible.Root open={isOpen} onOpenChange={onOpenChange}>
     <Box css={{ boxShadow: `0px 1px 0 ${theme.colors.panelOutline}` }}>
       <Collapsible.Trigger asChild>
         {trigger ?? (
