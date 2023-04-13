@@ -12,6 +12,7 @@ export const Toggle = styled(TogglePrimitive.Root, {
   flexShrink: 0,
   fontFamily: "inherit",
   fontSize: theme.deprecatedFontSize[4],
+  WebkitFontSmoothing: "antialiased",
   justifyContent: "center",
   lineHeight: "1",
   outline: "none",

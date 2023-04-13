@@ -5,6 +5,7 @@ export { textVariants };
 
 export const textStyle = css({
   margin: 0, // in case it's used with <p>
+  WebkitFontSmoothing: "antialiased",
   variants: {
     variant: textVariants,
     color: {

@@ -13,6 +13,8 @@ import { useSubscribeSwitchPage } from "~/shared/pages";
 import { Label } from "./outline/label";
 import { Outline } from "./outline/outline";
 import { useSubscribeDragAndDropState } from "./use-subscribe-drag-drop-state";
+import { ResizeHandles } from "./resize-handles";
+import { MediaBadge } from "./media-badge";
 
 const toolsStyle = {
   position: "absolute",
@@ -21,7 +23,6 @@ const toolsStyle = {
   bottom: 0,
   left: 0,
   pointerEvents: "none",
-  overflow: "hidden",
 };
 
 type CanvasToolsProps = {
@@ -29,7 +30,7 @@ type CanvasToolsProps = {
 };
 
 export const CanvasTools = ({ publish }: CanvasToolsProps) => {
-  // @todo try to setup cross-frame atoms to vaoid this
+  // @todo try to setup cross-frame atoms to avoid this
   useSubscribeDragAndDropState();
   useSubscribeSwitchPage();
 
@@ -64,9 +65,11 @@ export const CanvasTools = ({ publish }: CanvasToolsProps) => {
   }
   return (
     <Box css={toolsStyle}>
+      <MediaBadge />
       <SelectedInstanceOutline />
       <HoveredInstanceOutline />
       <TextToolbar publish={publish} />
+      <ResizeHandles />
     </Box>
   );
 };

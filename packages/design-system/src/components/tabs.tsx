@@ -17,6 +17,7 @@ export const TabsTrigger = styled(TabsPrimitive.Trigger, {
   display: "inline-flex",
   lineHeight: 1,
   fontFamily: "inherit",
+  WebkitFontSmoothing: "antialiased",
   fontSize: theme.deprecatedFontSize[3],
   px: theme.spacing[5],
   userSelect: "none",

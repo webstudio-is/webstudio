@@ -7,18 +7,16 @@ const useValue = <T>(atom: WritableAtom<T>) => {
   return [value, atom.set] as const;
 };
 
-const isShareDialogOpenContainer = atom<boolean>(false);
-export const useIsShareDialogOpen = () => useValue(isShareDialogOpenContainer);
+const isShareDialogOpenStore = atom<boolean>(false);
+export const useIsShareDialogOpen = () => useValue(isShareDialogOpenStore);
 
-const isPublishDialogOpenContainer = atom<boolean>(false);
-export const useIsPublishDialogOpen = () =>
-  useValue(isPublishDialogOpenContainer);
+const isPublishDialogOpenStore = atom<boolean>(false);
+export const useIsPublishDialogOpen = () => useValue(isPublishDialogOpenStore);
 
-export const canvasWidthContainer = atom<number | undefined>();
-export const useCanvasWidth = () => useValue(canvasWidthContainer);
+export const canvasWidthStore = atom<number | undefined>();
+export const useCanvasWidth = () => useValue(canvasWidthStore);
 
-export const canvasRectContainer = atom<DOMRect | undefined>();
-export const useCanvasRect = () => useValue(canvasRectContainer);
+export const canvasRectStore = atom<DOMRect | undefined>();
 
 export const projectContainer = atom<Project | undefined>();
 export const useProject = () => useValue(projectContainer);
@@ -28,7 +26,7 @@ export const isCanvasPointerEventsEnabledStore = atom<boolean>(true);
 export const workspaceRectStore = atom<DOMRect | undefined>();
 
 export const scaleStore = computed(
-  [canvasWidthContainer, workspaceRectStore],
+  [canvasWidthStore, workspaceRectStore],
   (canvasWidth, workspaceRect) => {
     if (
       canvasWidth === undefined ||

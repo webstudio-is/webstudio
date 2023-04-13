@@ -50,6 +50,7 @@ const StyledToast = styled(ToastPrimitive.Root, {
   color: theme.colors.hiContrast,
   fontWeight: 500,
   fontSize: theme.deprecatedFontSize[3],
+  WebkitFontSmoothing: "antialiased",
   background: theme.colors.backgroundPanel,
 
   "@media (prefers-reduced-motion: no-preference)": {

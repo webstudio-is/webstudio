@@ -21,9 +21,9 @@ import {
 } from "~/shared/nano-states";
 import { useSubscribe, type Publish } from "~/shared/pubsub";
 import {
+  canvasRectStore,
   isCanvasPointerEventsEnabledStore,
   scaleStore,
-  useCanvasRect,
 } from "~/builder/shared/nano-states";
 import { insertNewComponentInstance } from "~/shared/instance-utils";
 
@@ -104,7 +104,7 @@ export const useDraggable = ({
 }) => {
   const [dragComponent, setDragComponent] = useState<Instance["component"]>();
   const [point, setPoint] = useState<Point>({ x: 0, y: 0 });
-  const [canvasRect] = useCanvasRect();
+  const canvasRect = useStore(canvasRectStore);
   const scale = useStore(scaleStore);
 
   const dragHandlers = useDrag<Instance["component"]>({

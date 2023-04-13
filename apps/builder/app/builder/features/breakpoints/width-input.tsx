@@ -24,29 +24,28 @@ import {
   useEffect,
 } from "react";
 
-// Doesn't make sense to allow resizing the canvas lower/higher than this.
-export const minWidth = 240;
-
 const useEnhancedInput = ({
   onChange,
   onChangeComplete,
   value,
+  min,
 }: {
   onChange: (value: NumericScrubValue) => void;
   onChangeComplete: (value: NumericScrubValue) => void;
   value: number;
+  min: number;
 }) => {
   const [intermediateValue, setIntermediateValue] = useState<number>();
 
   const currentValue = intermediateValue ?? value;
 
   const handleChange = (nextValue: number) => {
-    onChange(Math.max(nextValue, minWidth));
+    onChange(Math.max(nextValue, min));
     setIntermediateValue(undefined);
   };
 
   const handleChangeComplete = (nextValue: number) => {
-    onChangeComplete(Math.max(nextValue, minWidth));
+    onChangeComplete(Math.max(nextValue, min));
     setIntermediateValue(undefined);
   };
 
@@ -80,7 +79,7 @@ const useEnhancedInput = ({
   };
 };
 
-export const WidthInput = () => {
+export const WidthInput = ({ min }: { min: number }) => {
   const id = useId();
   const [canvasWidth, setCanvasWidth] = useCanvasWidth();
   const selectedBreakpoint = useStore(selectedBreakpointStore);
@@ -119,6 +118,7 @@ export const WidthInput = () => {
     value: canvasWidth ?? 0,
     onChange,
     onChangeComplete,
+    min,
   });
 
   if (canvasWidth === undefined || selectedBreakpoint === undefined) {
