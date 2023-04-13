@@ -31,7 +31,6 @@ const BaseAsset = z.object({
   description: z.union([z.string(), z.null()]),
   location: Location,
   createdAt: z.string(),
-  path: z.string(),
 });
 
 export const FontAsset = BaseAsset.omit({ format: true }).extend({

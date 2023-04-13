@@ -28,11 +28,7 @@ export const Image = forwardRef<ElementRef<typeof defaultTag>, Props>(
       return loaders.localImageLoader(params);
     }, [asset, params]);
 
-    let src = props.src;
-
-    if (asset != null) {
-      src = asset.path;
-    }
+    const src = asset?.name ?? props.src;
 
     if (asset == null || loader == null) {
       return <SdkImage key={src} {...props} src={src} ref={ref} />;
