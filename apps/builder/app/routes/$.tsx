@@ -14,16 +14,12 @@ export const loader = async ({ request }: LoaderArgs) => {
     throw redirect(dashboardPath());
   }
 
-  const params: Params = {};
+  const params: Params = {
+    assetBaseUrl: env.ASSET_BASE_URL,
+  };
 
   if (env.RESIZE_ORIGIN != null) {
     params.resizeOrigin = env.RESIZE_ORIGIN;
-  }
-  if (env.ASSET_PUBLIC_PATH != null) {
-    params.publicPath = env.ASSET_PUBLIC_PATH;
-  }
-  if (env.ASSET_CDN_URL != null) {
-    params.cdnUrl = env.ASSET_CDN_URL;
   }
 
   return { params };

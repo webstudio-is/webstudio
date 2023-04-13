@@ -128,8 +128,7 @@ export const GlobalStyles = () => {
     const params = getParams();
     addGlobalRules(fontsAndDefaultsCssEngine, {
       assets,
-      publicPath: params.publicPath,
-      cdnUrl: params.cdnUrl,
+      assetBaseUrl: params.assetBaseUrl,
     });
     fontsAndDefaultsCssEngine.render();
   }, [assets]);
@@ -206,8 +205,7 @@ const addRule = (id: string, cssRule: CssRule, assets: Assets) => {
       style: toVarStyleWithFallback(id, cssRule.style),
     },
     createImageValueTransformer(assets, {
-      publicPath: params.publicPath,
-      cdnUrl: params.cdnUrl,
+      assetBaseUrl: params.assetBaseUrl,
     })
   );
   wrappedRulesMap.set(key, rule);

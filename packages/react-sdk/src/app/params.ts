@@ -1,15 +1,16 @@
 export type Params = {
   resizeOrigin?: string;
-  cdnUrl?: string;
-  publicPath?: string;
+  assetBaseUrl: string;
 };
 
-let params: Params | null = {};
+let params: undefined | Params;
 
-const emptyParams: Params = {};
+const emptyParams: Params = {
+  assetBaseUrl: "/",
+};
 
 export const getParams = (): Params => params ?? emptyParams;
 
-export const setParams = (newParams: Params | null) => {
+export const setParams = (newParams: undefined | Params) => {
   params = newParams;
 };
