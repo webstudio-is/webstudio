@@ -76,8 +76,6 @@ export const ScrollArea = forwardRef(
           ) : (
             children
           )}
-
-          {children}
         </Viewport>
         <ScrollAreaScrollbar orientation="vertical">
           <ScrollAreaThumb />
