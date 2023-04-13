@@ -7,6 +7,7 @@ export const DeprecatedText = styled("div", {
   margin: "0",
   fontWeight: 400,
   fontVariantNumeric: "tabular-nums",
+  WebkitFontSmoothing: "antialiased",
   display: "block",
   userSelect: "none",
 

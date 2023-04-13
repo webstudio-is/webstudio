@@ -15,6 +15,7 @@ const StyledLabel = styled(RadixLabel, {
   all: "unset", // reset <button>
   margin: 0,
   WebkitAppearance: "none",
+  WebkitFontSmoothing: "antialiased",
   display: "block",
 
   boxSizing: "border-box",
