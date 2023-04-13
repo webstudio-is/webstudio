@@ -4,7 +4,8 @@ import type { FontMeta, FontFormat, FontMetaStatic } from "./schema";
 export type PartialFontAsset = {
   format: FontFormat;
   meta: FontMeta;
-  path: string;
+  name: string;
+  location: "FS" | "REMOTE";
 };
 
 export type FontFace = {
@@ -16,14 +17,18 @@ export type FontFace = {
   fontStretch?: string;
 };
 
-const formatFace = (asset: PartialFontAsset, format: string): FontFace => {
+const formatFace = (
+  asset: PartialFontAsset,
+  format: string,
+  url: string
+): FontFace => {
   if ("variationAxes" in asset.meta) {
     const { wght, wdth } = asset.meta?.variationAxes ?? {};
     return {
       fontFamily: asset.meta.family,
       fontStyle: "normal",
       fontDisplay: "swap",
-      src: `url('${asset.path}') format('${format}')`,
+      src: `url('${url}') format('${format}')`,
       fontStretch: wdth ? `${wdth.min}% ${wdth.max}%` : undefined,
       fontWeight: wght ? `${wght.min} ${wght.max}` : undefined,
     };
@@ -33,7 +38,7 @@ const formatFace = (asset: PartialFontAsset, format: string): FontFace => {
     fontStyle: asset.meta.style,
     fontWeight: asset.meta.weight,
     fontDisplay: "swap",
-    src: `url('${asset.path}') format('${format}')`,
+    src: `url('${url}') format('${format}')`,
   };
 };
 
@@ -45,10 +50,19 @@ const getKey = (asset: PartialFontAsset) => {
 };
 
 export const getFontFaces = (
-  assets: Array<PartialFontAsset>
+  assets: Array<PartialFontAsset>,
+  options: {
+    publicPath?: string;
+    cdnUrl?: string;
+  }
 ): Array<FontFace> => {
+  const { publicPath = "/", cdnUrl = "/" } = options;
   const faces = new Map();
   for (const asset of assets) {
+    const url =
+      asset.location === "REMOTE"
+        ? `${cdnUrl}${asset.name}`
+        : `${publicPath}${asset.name}`;
     const assetKey = getKey(asset);
     const face = faces.get(assetKey);
     const format = FONT_FORMATS.get(asset.format);
@@ -58,13 +72,13 @@ export const getFontFaces = (
     }
 
     if (face === undefined) {
-      const face = formatFace(asset, format);
+      const face = formatFace(asset, format, url);
       faces.set(assetKey, face);
       continue;
     }
 
     // We already have that font face, so we need to add the new src
-    face.src += `, url('${asset.path}') format('${format}')`;
+    face.src += `, url('${url}') format('${format}')`;
   }
   return Array.from(faces.values());
 };

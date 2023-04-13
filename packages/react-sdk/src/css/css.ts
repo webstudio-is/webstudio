@@ -56,7 +56,11 @@ export const generateCssText = (data: Data, options: CssOptions) => {
 
   const engine = createCssEngine({ name: "ssr" });
 
-  addGlobalRules(engine, { assets });
+  addGlobalRules(engine, {
+    assets,
+    publicPath: options.publicPath,
+    cdnUrl: options.cdnUrl,
+  });
 
   for (const breakpoint of breakpoints.values()) {
     engine.addMediaRule(breakpoint.id, breakpoint);
