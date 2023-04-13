@@ -10,12 +10,10 @@ export const formatAsset = (asset: DbAsset): Asset => {
     return {
       id: asset.id,
       name: asset.name,
-      path: asset.name,
       description: asset.description,
       location: asset.location,
       projectId: asset.projectId,
       size: asset.size,
-
       type: "font",
       createdAt: asset.createdAt.toISOString(),
       format: asset.format as FontFormat,
@@ -26,7 +24,6 @@ export const formatAsset = (asset: DbAsset): Asset => {
   return {
     id: asset.id,
     name: asset.name,
-    path: asset.name,
     description: asset.description,
     location: asset.location,
     projectId: asset.projectId,

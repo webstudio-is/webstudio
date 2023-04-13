@@ -61,12 +61,17 @@ export const Image = ({ assetContainer, alt, width }: ImageProps) => {
     });
   }, [remoteLocation]);
 
+  const src =
+    assetContainer.status === "uploading"
+      ? assetContainer.objectURL
+      : asset.name;
+
   return (
     <StyledWebstudioImage
       key={asset.id}
       loader={loader}
       decoding={decoding}
-      src={asset.path}
+      src={src}
       width={width}
       optimize={optimize}
       alt={alt}

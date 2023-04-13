@@ -1,5 +1,4 @@
 import { describe, beforeEach, test, expect } from "@jest/globals";
-import type { Assets } from "@webstudio-is/asset-uploader";
 import { CssEngine } from "./css-engine";
 
 const style0 = {
@@ -352,23 +351,8 @@ describe("CssEngine", () => {
   });
 
   test("render images with injected asset url", () => {
-    const assets: Assets = new Map([
-      [
-        "1234",
-        {
-          type: "image",
-          path: "foo.png",
-          id: "1234567890",
-          projectId: "",
-          format: "",
-          size: 1212,
-          name: "img",
-          description: "",
-          location: "REMOTE",
-          createdAt: "",
-          meta: { width: 1, height: 2 },
-        },
-      ],
+    const assets = new Map<string, { path: string }>([
+      ["1234", { path: "foo.png" }],
     ]);
     const rule = engine.addStyleRule(
       ".c",

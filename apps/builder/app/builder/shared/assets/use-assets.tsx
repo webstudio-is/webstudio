@@ -10,7 +10,7 @@ import {
 import { toast } from "@webstudio-is/design-system";
 import { sanitizeS3Key } from "@webstudio-is/asset-uploader";
 import { restAssetsPath } from "~/shared/router-utils";
-import type { AssetContainer } from "./types";
+import type { AssetContainer, PreviewAsset } from "./types";
 import { usePersistentFetcher } from "~/shared/fetcher";
 import type { ActionData } from "~/builder/shared/assets";
 import { normalizeErrors, toastUnknownFieldErrors } from "~/shared/form-utils";
@@ -78,25 +78,25 @@ const deleteUploadingFileData = (id: FileData["id"]) => {
 const assetContainersStore = computed(
   [assetsStore, uploadingFilesDataStore],
   (assets, uploadingFilesData) => {
-    const uploadingAssets = new Map();
+    const uploadingAssets = new Map<PreviewAsset["id"], AssetContainer>();
     for (const { id, type, file, objectURL } of uploadingFilesData) {
       uploadingAssets.set(id, {
-        id,
-        type,
-        format: file.type.split("/")[1],
-        path: objectURL,
-        name: file.name,
-        description: file.name,
+        status: "uploading",
+        objectURL: objectURL,
+        asset: {
+          id,
+          type,
+          format: file.type.split("/")[1],
+          name: file.name,
+          description: file.name,
+        },
       });
     }
     const assetContainers: Array<AssetContainer> = [];
     for (const [assetId, asset] of assets) {
       const uploadingAsset = uploadingAssets.get(assetId);
       if (uploadingAsset) {
-        assetContainers.push({
-          status: "uploading",
-          asset: uploadingAsset,
-        });
+        assetContainers.push(uploadingAsset);
         continue;
       }
       if (asset) {

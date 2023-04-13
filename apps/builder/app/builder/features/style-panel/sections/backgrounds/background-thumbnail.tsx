@@ -107,7 +107,7 @@ export const LayerThumbnail = (props: { layerStyle: StyleInfo }) => {
       <StyledWebstudioImage
         key={asset.id}
         loader={loader}
-        src={asset.path}
+        src={asset.name}
         width={theme.spacing[10]}
         optimize={true}
         alt={getLayerName(props.layerStyle, assets)}

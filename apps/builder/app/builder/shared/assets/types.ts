@@ -2,7 +2,7 @@ import type { Asset } from "@webstudio-is/asset-uploader";
 
 export type PreviewAsset = Pick<
   Asset,
-  "path" | "name" | "id" | "format" | "description" | "type"
+  "name" | "id" | "format" | "description" | "type"
 >;
 
 export type UploadedAssetContainer = {
@@ -12,6 +12,7 @@ export type UploadedAssetContainer = {
 
 export type UploadingAssetContainer = {
   status: "uploading";
+  objectURL: string;
   asset: Asset | PreviewAsset;
 };
 
