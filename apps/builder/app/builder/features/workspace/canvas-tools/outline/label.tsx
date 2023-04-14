@@ -20,7 +20,7 @@ const useLabelPosition = (
   const [position, setPosition] = useState<LabelPosition>("top");
 
   const ref = useCallback(
-    (element) => {
+    (element: null | HTMLElement) => {
       if (element === null || instanceRect === undefined) {
         return;
       }

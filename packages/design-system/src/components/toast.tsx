@@ -117,7 +117,12 @@ export const Toaster = () => {
           >
             {toast.type === "blank" && <InfoIcon />}
           </Box>
-          <StyledTitle>{toast.message}</StyledTitle>
+          <StyledTitle>
+            {/* react-hot-toast have weird types for message
+                https://github.com/timolins/react-hot-toast/blob/d897ad82bee649d2c8a68b29d2c8d80c81ca22ac/src/core/types.ts#L37
+            */}
+            {typeof toast.message === "function" ? undefined : toast.message}
+          </StyledTitle>
         </StyledToast>
       ))}
       <StyledViewport />
