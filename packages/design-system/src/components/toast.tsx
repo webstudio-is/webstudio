@@ -1,5 +1,5 @@
 import * as ToastPrimitive from "@radix-ui/react-toast";
-import toast, { useToaster } from "react-hot-toast/headless";
+import toast, { resolveValue, useToaster } from "react-hot-toast/headless";
 import { keyframes, styled } from "../stitches.config";
 import { InfoIcon } from "@webstudio-is/icons";
 import { Box } from "./box";
@@ -117,12 +117,7 @@ export const Toaster = () => {
           >
             {toast.type === "blank" && <InfoIcon />}
           </Box>
-          <StyledTitle>
-            {/* react-hot-toast have weird types for message
-                https://github.com/timolins/react-hot-toast/blob/d897ad82bee649d2c8a68b29d2c8d80c81ca22ac/src/core/types.ts#L37
-            */}
-            {typeof toast.message === "function" ? undefined : toast.message}
-          </StyledTitle>
+          <StyledTitle>{resolveValue(toast.message, toast)}</StyledTitle>
         </StyledToast>
       ))}
       <StyledViewport />
