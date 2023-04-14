@@ -17,17 +17,16 @@ type Props = Omit<ComponentProps<"a">, "href" | "target"> & {
 export const Link = forwardRef<HTMLAnchorElement, Props>((props, ref) => {
   const href = usePropUrl(getInstanceIdFromComponentProps(props), "href");
 
+  const { assetBaseUrl } = getParams();
+
   let url: string | undefined;
   switch (href?.type) {
     case "page":
       url = href.page.path;
       break;
-    case "asset": {
-      const { publicPath, cdnUrl } = getParams();
-      const { asset } = href;
-      url = `${asset.location === "FS" ? publicPath : cdnUrl}${asset.name}`;
+    case "asset":
+      url = `${assetBaseUrl}${href.asset.name}`;
       break;
-    }
     case "string":
       url = href.url;
   }

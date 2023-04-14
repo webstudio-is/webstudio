@@ -14,7 +14,7 @@ import type { Asset } from "@webstudio-is/asset-uploader";
 // eslint-disable-next-line import/no-internal-modules
 import catPath from "./props-panel.stories.assets/cat.jpg";
 
-setMockEnv({ ASSET_PUBLIC_PATH: catPath.replace("cat.jpg", "") });
+setMockEnv({ ASSET_BASE_URL: catPath.replace("cat.jpg", "") });
 
 let id = 0;
 const unique = () => `${++id}`;
@@ -40,7 +40,7 @@ pagesStore.set({
   ],
 });
 
-const imageAsset = (name = "cat", format = "jpeg"): Asset => ({
+const imageAsset = (name = "cat", format = "jpg"): Asset => ({
   id: unique(),
   projectId,
   type: "image",
