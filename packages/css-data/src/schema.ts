@@ -141,6 +141,11 @@ const ValidStaticStyleValue = z.union([
 
 export type ValidStaticStyleValue = z.infer<typeof ValidStaticStyleValue>;
 
+/**
+ * All StyleValue types that going to need wrapping into a CSS variable when rendered
+ * on canvas inside builder.
+ * Values like InvalidValue, UnsetValue, VarValue don't need to be wrapped
+ */
 export const isValidStaticStyleValue = (
   styleValue: StyleValue
 ): styleValue is ValidStaticStyleValue => {
