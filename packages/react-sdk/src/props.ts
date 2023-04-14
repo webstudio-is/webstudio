@@ -2,6 +2,7 @@ import { useContext, useMemo } from "react";
 import { computed } from "nanostores";
 import { useStore } from "@nanostores/react";
 import type { Instance, Page, Prop, Props } from "@webstudio-is/project-build";
+import type { Asset, Assets } from "@webstudio-is/asset-uploader";
 import { ReactSdkContext } from "./context";
 import { idAttribute } from "./tree/webstudio-component";
 
@@ -67,10 +68,17 @@ export const usePropAsset = (instanceId: Instance["id"], name: string) => {
 export const resolveUrlProp = (
   instanceId: Instance["id"],
   name: string,
-  propsByInstanceId: PropsByInstanceId,
-  pages: Pages
-): Page | string | undefined => {
-  const instanceProps = propsByInstanceId.get(instanceId);
+  {
+    props,
+    pages,
+    assets,
+  }: { props: PropsByInstanceId; pages: Pages; assets: Assets }
+):
+  | { type: "page"; page: Page }
+  | { type: "asset"; asset: Asset }
+  | { type: "string"; url: string }
+  | undefined => {
+  const instanceProps = props.get(instanceId);
   if (instanceProps === undefined) {
     return;
   }
@@ -80,16 +88,22 @@ export const resolveUrlProp = (
     }
 
     if (prop.type === "page") {
-      return pages.get(prop.value);
+      const page = pages.get(prop.value);
+      return page && { type: "page", page };
     }
 
     if (prop.type === "string") {
       for (const page of pages.values()) {
         if (page.path === prop.value) {
-          return page;
+          return { type: "page", page };
         }
       }
-      return prop.value;
+      return { type: "string", url: prop.value };
+    }
+
+    if (prop.type === "asset") {
+      const asset = assets.get(prop.value);
+      return asset && { type: "asset", asset };
     }
 
     return;
@@ -99,15 +113,16 @@ export const resolveUrlProp = (
 // this utility is used for link component in both builder and preview
 // so need to optimize rerenders with computed
 export const usePropUrl = (instanceId: Instance["id"], name: string) => {
-  const { propsByInstanceIdStore, pagesStore } = useContext(ReactSdkContext);
+  const { propsByInstanceIdStore, pagesStore, assetsStore } =
+    useContext(ReactSdkContext);
   const pageStore = useMemo(
     () =>
       computed(
-        [propsByInstanceIdStore, pagesStore],
-        (propsByInstanceId, pages) =>
-          resolveUrlProp(instanceId, name, propsByInstanceId, pages)
+        [propsByInstanceIdStore, pagesStore, assetsStore],
+        (props, pages, assets) =>
+          resolveUrlProp(instanceId, name, { props, pages, assets })
       ),
-    [propsByInstanceIdStore, pagesStore, instanceId, name]
+    [propsByInstanceIdStore, pagesStore, assetsStore, instanceId, name]
   );
   return useStore(pageStore);
 };

@@ -3,6 +3,7 @@ import { ButtonElementIcon } from "@webstudio-is/icons";
 import { PropsPanel } from "./props-panel";
 import { usePropsLogic } from "./use-props-logic";
 import { assetsStore, pagesStore } from "~/shared/nano-states";
+import { setMockEnv } from "~/shared/env";
 import type { Prop } from "@webstudio-is/project-build";
 import type {
   WsComponentMeta,
@@ -10,6 +11,10 @@ import type {
 } from "@webstudio-is/react-sdk";
 import { textVariants } from "@webstudio-is/design-system";
 import type { Asset } from "@webstudio-is/asset-uploader";
+// eslint-disable-next-line import/no-internal-modules
+import catPath from "./props-panel.stories.assets/cat.jpg";
+
+setMockEnv({ ASSET_BASE_URL: catPath.replace("cat.jpg", "") });
 
 let id = 0;
 const unique = () => `${++id}`;
@@ -35,7 +40,7 @@ pagesStore.set({
   ],
 });
 
-const imageAsset = (name = "cat", format = "jpeg"): Asset => ({
+const imageAsset = (name = "cat", format = "jpg"): Asset => ({
   id: unique(),
   projectId,
   type: "image",
@@ -166,6 +171,7 @@ const componentPropsMeta: WsComponentPropsMeta = {
     addedUrlPage: urlProp("Added URL (Page)"),
     addedUrlEmail: urlProp("Added URL (Email)"),
     addedUrlPhone: urlProp("Added URL (Phone)"),
+    addedUrlAttachment: urlProp("Added URL (Attachment)"),
     addedFile: fileProp(),
     availableText: textProp(),
     availableShortText: shortTextProp(),
@@ -276,6 +282,13 @@ const startingProps: Prop[] = [
     name: "addedUrlPhone",
     type: "string",
     value: "tel:+1234567890",
+  },
+  {
+    id: unique(),
+    instanceId,
+    name: "addedUrlAttachment",
+    type: "asset",
+    value: Array.from(assetsStore.get().keys() ?? [])[0] ?? "",
   },
   {
     id: unique(),

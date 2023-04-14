@@ -1,12 +1,45 @@
-import { useMemo } from "react";
-import { computed } from "nanostores";
-import { useStore } from "@nanostores/react";
-import { Button, Text } from "@webstudio-is/design-system";
-import { assetsStore } from "~/shared/nano-states";
-import { FloatingPanel } from "~/builder/shared/floating-panel";
-import { ImageManager } from "~/builder/shared/image-manager";
-import { type ControlProps, getLabel, VerticalLayout } from "../shared";
-import { acceptToMimeCategories } from "@webstudio-is/asset-uploader";
+import { type ReactNode } from "react";
+import { Flex, InputField, theme, useId } from "@webstudio-is/design-system";
+import {
+  type ControlProps,
+  getLabel,
+  VerticalLayout,
+  useLocalValue,
+} from "../shared";
+import { SelectAsset } from "./select-asset";
+
+type FileControlProps = ControlProps<"file", "asset" | "string">;
+
+const UrlInput = ({
+  id,
+  disabled,
+  localValue,
+}: {
+  id: string;
+  disabled: boolean;
+  localValue: ReturnType<typeof useLocalValue<string>>;
+}) => (
+  <InputField
+    disabled={disabled}
+    id={id}
+    value={localValue.value}
+    placeholder="http://www.url.com"
+    onChange={(event) => localValue.set(event.target.value)}
+    onBlur={localValue.save}
+    onKeyDown={(event) => {
+      if (event.key === "Enter") {
+        localValue.save();
+      }
+    }}
+    css={{ width: "100%" }}
+  />
+);
+
+const Row = ({ children }: { children: ReactNode }) => (
+  <Flex css={{ height: theme.spacing[13] }} align="center">
+    {children}
+  </Flex>
+);
 
 export const FileControl = ({
   meta,
@@ -14,42 +47,43 @@ export const FileControl = ({
   propName,
   onChange,
   onDelete,
-}: ControlProps<"file", "asset">) => {
-  const assetStore = useMemo(
-    () =>
-      computed(assetsStore, (assets) =>
-        prop ? assets.get(prop.value) : undefined
-      ),
-    [prop]
-  );
-  const asset = useStore(assetStore);
+  onSoftDelete,
+}: FileControlProps) => {
+  const id = useId();
 
-  const acceptCategories = acceptToMimeCategories(meta?.accept || "");
+  const localStringValue = useLocalValue(
+    prop?.type === "string" ? prop.value : "",
+    (value) => {
+      if (value === "") {
+        onSoftDelete();
+      } else {
+        onChange({ type: "string", value });
+      }
+    }
+  );
 
   return (
-    <VerticalLayout label={getLabel(meta, propName)} onDelete={onDelete}>
-      {acceptCategories === "*" ||
-      (acceptCategories.size === 1 && acceptCategories.has("image")) ? (
-        <FloatingPanel
-          title="Images"
-          content={
-            <ImageManager
-              onChange={(asset) =>
-                onChange({ type: "asset", value: asset.id }, asset)
-              }
-              accept={meta?.accept}
-            />
-          }
-        >
-          <Button color="neutral" css={{ width: "100%" }}>
-            {asset?.name ?? "Choose source"}
-          </Button>
-        </FloatingPanel>
-      ) : (
-        <Text color="destructive">
-          Unsupported accept value: {meta?.accept}
-        </Text>
-      )}
+    <VerticalLayout
+      label={getLabel(meta, propName)}
+      onDelete={onDelete}
+      id={id}
+    >
+      <Row>
+        <UrlInput
+          id={id}
+          disabled={prop?.type === "asset"}
+          localValue={localStringValue}
+        />
+      </Row>
+      <Row>
+        <SelectAsset
+          prop={prop?.type === "asset" ? prop : undefined}
+          accept={meta.accept}
+          onChange={onChange}
+          onSoftDelete={onSoftDelete}
+          disabled={localStringValue.value !== ""}
+        />
+      </Row>
     </VerticalLayout>
   );
 };

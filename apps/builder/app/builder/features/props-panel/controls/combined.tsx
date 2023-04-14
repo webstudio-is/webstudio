@@ -67,14 +67,17 @@ export const renderControl = ({
 
   if (
     meta.control === "file" &&
-    (prop === undefined || prop.type === "asset")
+    (prop === undefined || prop.type === "asset" || prop.type === "string")
   ) {
     return <FileControl meta={meta} prop={prop} {...rest} />;
   }
 
   if (
     meta.control === "url" &&
-    (prop === undefined || prop.type === "string" || prop.type === "page")
+    (prop === undefined ||
+      prop.type === "string" ||
+      prop.type === "page" ||
+      prop.type === "asset")
   ) {
     return <UrlControl meta={meta} prop={prop} {...rest} />;
   }

@@ -14,7 +14,7 @@ export default new Proxy(
           ? publicEnv[prop as keyof PublicEnv]
           : undefined;
       }
-      const env = (window[namespace as never] ?? {}) as unknown as PublicEnv;
+      const env: Partial<PublicEnv> = window[namespace] ?? {};
       return prop in env ? env[prop as keyof PublicEnv] : undefined;
     },
   }
