@@ -126,7 +126,8 @@ const PropsCombobox = ({
 
 const renderProperty = (
   { propsLogic: logic, setCssProperty, component }: PropsPanelProps,
-  { prop, propName, meta, deletable }: PropAndMeta & { deletable?: boolean }
+  { prop, propName, meta }: PropAndMeta,
+  deletable?: boolean
 ) =>
   renderControl({
     meta,
@@ -222,10 +223,7 @@ export const PropsPanel = (props: PropsPanelProps) => {
       >
         {hasAddedProps && (
           <Flex gap="2" direction="column">
-            {logic.addedProps.map(({ prop, propName, meta }) =>
-              renderProperty(props, { prop, propName, meta, deletable: true })
-            )}
-
+            {logic.addedProps.map((item) => renderProperty(props, item, true))}
             {addingProp && (
               <AddPropertyForm
                 availableProps={logic.remainingProps}
