@@ -141,6 +141,23 @@ const ValidStaticStyleValue = z.union([
 
 export type ValidStaticStyleValue = z.infer<typeof ValidStaticStyleValue>;
 
+export const isValidStaticStyleValue = (
+  styleValue: StyleValue
+): styleValue is ValidStaticStyleValue => {
+  // guard against invalid checks
+  const staticStyleValue = styleValue as ValidStaticStyleValue;
+  return (
+    staticStyleValue.type === "image" ||
+    staticStyleValue.type === "layers" ||
+    staticStyleValue.type === "unit" ||
+    staticStyleValue.type === "keyword" ||
+    staticStyleValue.type === "fontFamily" ||
+    staticStyleValue.type === "rgb" ||
+    staticStyleValue.type === "unparsed" ||
+    staticStyleValue.type === "tuple"
+  );
+};
+
 const VarValue = z.object({
   type: z.literal("var"),
   value: z.string(),

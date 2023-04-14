@@ -13,7 +13,11 @@ import {
   getParams,
 } from "@webstudio-is/react-sdk";
 import type { Instance, StyleDecl } from "@webstudio-is/project-build";
-import type { StyleValue, StyleProperty } from "@webstudio-is/css-data";
+import {
+  type StyleValue,
+  type StyleProperty,
+  isValidStaticStyleValue,
+} from "@webstudio-is/css-data";
 import {
   assetsStore,
   breakpointsStore,
@@ -159,17 +163,8 @@ const toVarValue = (
   if (styleValue.type === "var") {
     return styleValue;
   }
-  if (
-    // Values like InvalidValue, UnsetValue, VarValue don't need to be wrapped
-    styleValue.type === "unit" ||
-    styleValue.type === "keyword" ||
-    styleValue.type === "fontFamily" ||
-    styleValue.type === "rgb" ||
-    styleValue.type === "image" ||
-    styleValue.type === "unparsed" ||
-    styleValue.type === "layers" ||
-    styleValue.type === "tuple"
-  ) {
+  // Values like InvalidValue, UnsetValue, VarValue don't need to be wrapped
+  if (isValidStaticStyleValue(styleValue)) {
     return {
       type: "var",
       value: toVarNamespace(instanceId, styleProperty),
