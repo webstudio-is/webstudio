@@ -170,12 +170,6 @@ const toVarValue = (
     styleValue.type === "layers" ||
     styleValue.type === "tuple"
   ) {
-    // We don't want to wrap backgroundClip into a var, because it's not supported by CSS variables
-    // It's fine because we don't need to update it dynamically via CSS variables during preview changes
-    // we renrender it anyway when CSS update happens
-    if (styleProperty === "backgroundClip") {
-      return styleValue;
-    }
     return {
       type: "var",
       value: toVarNamespace(instanceId, styleProperty),
@@ -259,9 +253,16 @@ export const useCssRules = ({
         deletedProperties.delete(property);
       }
 
-      const varValue = toVarValue(instanceId, property, value);
-      if (varValue) {
+      // We don't want to wrap backgroundClip into a var, because it's not supported by CSS variables
+      // It's fine because we don't need to update it dynamically via CSS variables during preview changes
+      // we renrender it anyway when CSS update happens
+      if (property === "backgroundClip") {
         rule.styleMap.set(property, value);
+      } else {
+        const varValue = toVarValue(instanceId, property, value);
+        if (varValue) {
+          rule.styleMap.set(property, varValue);
+        }
       }
     }
 
