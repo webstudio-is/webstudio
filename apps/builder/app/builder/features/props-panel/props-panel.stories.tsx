@@ -5,9 +5,9 @@ import { usePropsLogic } from "./use-props-logic";
 import { assetsStore, pagesStore } from "~/shared/nano-states";
 import { setMockEnv } from "~/shared/env";
 import type { Prop } from "@webstudio-is/project-build";
-import {
-  type WsComponentMeta,
-  type WsComponentPropsMeta,
+import type {
+  WsComponentMeta,
+  WsComponentPropsMeta,
 } from "@webstudio-is/react-sdk";
 import { textVariants } from "@webstudio-is/design-system";
 import type { Asset } from "@webstudio-is/asset-uploader";
