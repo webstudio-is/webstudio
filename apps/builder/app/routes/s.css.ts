@@ -47,8 +47,7 @@ export const loader = async ({ request }: ActionArgs) => {
         styleSourceSelections: canvasData.build?.styleSourceSelections,
       },
       {
-        publicPath: env.ASSET_PUBLIC_PATH,
-        cdnUrl: env.ASSET_CDN_URL,
+        assetBaseUrl: env.ASSET_BASE_URL,
       }
     );
 

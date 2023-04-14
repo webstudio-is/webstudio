@@ -5,7 +5,6 @@ export type PartialFontAsset = {
   format: FontFormat;
   meta: FontMeta;
   name: string;
-  location: "FS" | "REMOTE";
 };
 
 export type FontFace = {
@@ -52,17 +51,13 @@ const getKey = (asset: PartialFontAsset) => {
 export const getFontFaces = (
   assets: Array<PartialFontAsset>,
   options: {
-    publicPath?: string;
-    cdnUrl?: string;
+    assetBaseUrl: string;
   }
 ): Array<FontFace> => {
-  const { publicPath = "/", cdnUrl = "/" } = options;
+  const { assetBaseUrl } = options;
   const faces = new Map();
   for (const asset of assets) {
-    const url =
-      asset.location === "REMOTE"
-        ? `${cdnUrl}${asset.name}`
-        : `${publicPath}${asset.name}`;
+    const url = `${assetBaseUrl}${asset.name}`;
     const assetKey = getKey(asset);
     const face = faces.get(assetKey);
     const format = FONT_FORMATS.get(asset.format);

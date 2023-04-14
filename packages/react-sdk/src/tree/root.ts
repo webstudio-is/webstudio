@@ -35,7 +35,7 @@ export const InstanceRoot = ({
   customComponents = defaultCustomComponents,
   getComponent,
 }: RootProps): JSX.Element | null => {
-  setParams(data.params ?? null);
+  setParams(data.params);
   registerComponents(customComponents);
   return createElementsTree({
     instances: new Map(data.build.instances),
