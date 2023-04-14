@@ -1,6 +1,9 @@
 import { useMemo } from "react";
 import { styled } from "@webstudio-is/design-system";
-import { Image as WebstudioImage, loaders } from "@webstudio-is/image";
+import {
+  Image as WebstudioImage,
+  createImageLoader,
+} from "@webstudio-is/image";
 import env from "~/shared/env";
 import type { AssetContainer } from "../assets";
 import brokenImage from "~/shared/images/broken-image-placeholder.svg";
@@ -40,26 +43,14 @@ const StyledWebstudioImage = styled(WebstudioImage, {
 export const Image = ({ assetContainer, alt, width }: ImageProps) => {
   const { asset } = assetContainer;
   const optimize = assetContainer.status === "uploaded";
-  const remoteLocation =
-    assetContainer.status === "uploaded" &&
-    assetContainer.asset.location === "REMOTE";
 
   // Avoid image flickering on switching from preview to asset (during upload)
   // Possible optimisation, we can set it to "sync" only if asset.path has changed or add isNew prop to UploadedAssetContainer
   const decoding = "sync";
 
   const loader = useMemo(() => {
-    if (remoteLocation) {
-      return loaders.cloudflareImageLoader({
-        resizeOrigin: env.RESIZE_ORIGIN,
-        cdnUrl: env.ASSET_BASE_URL,
-      });
-    }
-
-    return loaders.localImageLoader({
-      publicPath: env.ASSET_BASE_URL,
-    });
-  }, [remoteLocation]);
+    return createImageLoader({ imageBaseUrl: env.IMAGE_BASE_URL });
+  }, []);
 
   const src =
     assetContainer.status === "uploading"

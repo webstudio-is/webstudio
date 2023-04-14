@@ -28,9 +28,10 @@ const env = {
   PUBLISHER_HOST: process.env.PUBLISHER_HOST || null,
   BUILD_REQUIRE_SUBDOMAIN: process.env.BUILD_REQUIRE_SUBDOMAIN === "true",
 
-  // Must be set for Vercel deployments
-  RESIZE_ORIGIN: process.env.RESIZE_ORIGIN,
-
+  IMAGE_BASE_URL:
+    process.env.IMAGE_BASE_URL ??
+    `${process.env.RESIZE_ORIGIN ?? ""}/cdn-cgi/image/` ??
+    "/",
   ASSET_BASE_URL:
     process.env.ASSET_BASE_URL ??
     process.env.ASSET_CDN_URL ??

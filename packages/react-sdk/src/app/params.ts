@@ -1,11 +1,12 @@
 export type Params = {
-  resizeOrigin?: string;
+  imageBaseUrl: string;
   assetBaseUrl: string;
 };
 
 let params: undefined | Params;
 
 const emptyParams: Params = {
+  imageBaseUrl: "/",
   assetBaseUrl: "/",
 };
 
