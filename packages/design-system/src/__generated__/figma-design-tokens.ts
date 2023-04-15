@@ -437,6 +437,7 @@ export const color = {
   foregroundIconSecondary: "#c1c8cd",
   foregroundIconMain: "#11181c",
   foregroundMoreSubtle: "#adb1b4",
+  foregroundScrollBar: "#a7acaf99",
   maintenanceLight: "#ededed",
   maintenanceMedium: "#c7c7c7",
   maintenanceDark: "#858585",
