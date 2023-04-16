@@ -10,6 +10,7 @@ const cascadeIndicatorStyle = css({
   position: "absolute",
   bottom: 0,
   height: 3,
+  borderRadius: 2,
   transition: "150ms width, 150ms left, 150ms right",
   '&[data-direction="left"]': {
     background: theme.colors.backgroundGradientHorizontal,
@@ -35,10 +36,14 @@ const calcIndicatorStyle = ({
       left: {
         left: 0,
         width: buttonLeft + buttonWidth / 2,
+        borderTopRightRadius: 0,
+        borderBottomRightRadius: 0,
       },
       right: {
         width: containerWidth - buttonLeft - buttonWidth / 2,
         left: buttonLeft + buttonWidth / 2,
+        borderTopLeftRadius: 0,
+        borderBottomLeftRadius: 0,
       },
     };
   }
