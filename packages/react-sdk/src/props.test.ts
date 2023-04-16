@@ -1,11 +1,13 @@
 import { describe, test, expect } from "@jest/globals";
 import { resolveUrlProp, type Pages, type PropsByInstanceId } from "./props";
 import type { Page, Prop } from "@webstudio-is/project-build";
+import type { Asset, Assets } from "@webstudio-is/asset-uploader";
 
 const unique = () => Math.random().toString();
 
 describe("resolveUrlProp", () => {
   const instanceId = unique();
+  const projectId = unique();
 
   const page1: Page = {
     id: unique(),
@@ -23,6 +25,27 @@ describe("resolveUrlProp", () => {
     title: "",
     meta: {},
     rootInstanceId: "0",
+  };
+
+  const asset1: Asset = {
+    id: unique(),
+    name: unique(),
+    type: "image",
+    location: "REMOTE",
+    projectId,
+    format: "png",
+    size: 100000,
+    createdAt: new Date().toISOString(),
+    description: null,
+    meta: { width: 128, height: 180 },
+  };
+
+  const assetProp: Prop = {
+    type: "asset",
+    id: unique(),
+    instanceId,
+    name: unique(),
+    value: asset1.id,
   };
 
   const pageByIdProp: Prop = {
@@ -49,8 +72,8 @@ describe("resolveUrlProp", () => {
     value: unique(),
   };
 
-  const propsByInstanceId: PropsByInstanceId = new Map([
-    [instanceId, [pageByIdProp, pageByPathProp, arbitraryUrlProp]],
+  const props: PropsByInstanceId = new Map([
+    [instanceId, [pageByIdProp, pageByPathProp, arbitraryUrlProp, assetProp]],
   ]);
 
   const pages: Pages = new Map([
@@ -58,38 +81,45 @@ describe("resolveUrlProp", () => {
     [page2.id, page2],
   ]);
 
+  const assets: Assets = new Map([[asset1.id, asset1]]);
+
+  const stores = { props, pages, assets };
+
   test("if instanceId is unknown returns undefined", () => {
     expect(
-      resolveUrlProp("unknown", pageByIdProp.name, propsByInstanceId, pages)
+      resolveUrlProp("unknown", pageByIdProp.name, stores)
     ).toBeUndefined();
   });
 
   test("if prop name is unknown returns undefined", () => {
-    expect(
-      resolveUrlProp(instanceId, "unknown", propsByInstanceId, pages)
-    ).toBeUndefined();
+    expect(resolveUrlProp(instanceId, "unknown", stores)).toBeUndefined();
+  });
+
+  test("asset by id", () => {
+    expect(resolveUrlProp(instanceId, assetProp.name, stores)).toEqual({
+      type: "asset",
+      asset: asset1,
+    });
   });
 
   test("page by id", () => {
-    expect(
-      resolveUrlProp(instanceId, pageByIdProp.name, propsByInstanceId, pages)
-    ).toBe(page1);
+    expect(resolveUrlProp(instanceId, pageByIdProp.name, stores)).toEqual({
+      type: "page",
+      page: page1,
+    });
   });
 
   test("page by path", () => {
-    expect(
-      resolveUrlProp(instanceId, pageByPathProp.name, propsByInstanceId, pages)
-    ).toBe(page2);
+    expect(resolveUrlProp(instanceId, pageByPathProp.name, stores)).toEqual({
+      type: "page",
+      page: page2,
+    });
   });
 
   test("arbitrary url", () => {
-    expect(
-      resolveUrlProp(
-        instanceId,
-        arbitraryUrlProp.name,
-        propsByInstanceId,
-        pages
-      )
-    ).toBe(arbitraryUrlProp.value);
+    expect(resolveUrlProp(instanceId, arbitraryUrlProp.name, stores)).toEqual({
+      type: "string",
+      url: arbitraryUrlProp.value,
+    });
   });
 });

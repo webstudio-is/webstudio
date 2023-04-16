@@ -38,7 +38,7 @@ export type NumericScrubOptions = {
   onValueInput?: NumericScrubCallback;
   onValueChange?: NumericScrubCallback;
   onStatusChange?: (status: "idle" | "scrubbing") => void;
-  shouldHandleEvent?: (node: EventTarget) => boolean;
+  shouldHandleEvent?: (node: Node) => boolean;
 };
 
 type NumericScrubState = {
@@ -122,7 +122,10 @@ export const numericScrubControl = (
         break;
       }
       case "pointerdown": {
-        if (event.target && shouldHandleEvent?.(event.target) === false) {
+        if (
+          event.target &&
+          shouldHandleEvent?.(event.target as Node) === false
+        ) {
           return;
         }
         // light touches don't register corresponding pointerup

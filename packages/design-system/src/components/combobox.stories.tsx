@@ -8,41 +8,51 @@ import {
 } from "./combobox";
 import { Flex } from "./flex";
 import { theme } from "../stitches.config";
+import type {
+  UseComboboxState,
+  UseComboboxStateChangeOptions,
+} from "downshift";
 
 export const Complex = () => {
   const [value, setValue] = React.useState<string | null>(null);
 
-  const stateReducer = useCallback((state, actionAndChanges) => {
-    const { type, changes } = actionAndChanges;
-    switch (type) {
-      // on item selection.
-      case comboboxStateChangeTypes.ItemClick:
-      case comboboxStateChangeTypes.InputKeyDownEnter:
-      case comboboxStateChangeTypes.InputBlur:
-      case comboboxStateChangeTypes.ControlledPropUpdatedSelectedItem:
-        return {
-          ...changes,
-          // if we have a selected item.
-          ...(changes.selectedItem && {
-            // we will set the input value to "" (empty string).
-            inputValue: "",
-          }),
-        };
+  const stateReducer = useCallback(
+    (
+      state: UseComboboxState<string | null>,
+      actionAndChanges: UseComboboxStateChangeOptions<string | null>
+    ) => {
+      const { type, changes } = actionAndChanges;
+      switch (type) {
+        // on item selection.
+        case comboboxStateChangeTypes.ItemClick:
+        case comboboxStateChangeTypes.InputKeyDownEnter:
+        case comboboxStateChangeTypes.InputBlur:
+        case comboboxStateChangeTypes.ControlledPropUpdatedSelectedItem:
+          return {
+            ...changes,
+            // if we have a selected item.
+            ...(changes.selectedItem && {
+              // we will set the input value to "" (empty string).
+              inputValue: "",
+            }),
+          };
 
-      // Remove "reset" action
-      case comboboxStateChangeTypes.InputKeyDownEscape: {
-        return {
-          ...state,
-        };
+        // Remove "reset" action
+        case comboboxStateChangeTypes.InputKeyDownEscape: {
+          return {
+            ...state,
+          };
+        }
+
+        default:
+          return changes; // otherwise business as usual.
       }
-
-      default:
-        return changes; // otherwise business as usual.
-    }
-  }, []);
+    },
+    []
+  );
 
   const { items, getComboboxProps, getMenuProps, getItemProps, getInputProps } =
-    useCombobox({
+    useCombobox<string | null>({
       items: ["Apple", "Banana", "Orange"],
       value,
       selectedItem: value,

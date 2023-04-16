@@ -11,7 +11,13 @@ import {
   Tooltip,
   Label,
 } from "@webstudio-is/design-system";
-import { EmailIcon, LinkIcon, PageIcon, PhoneIcon } from "@webstudio-is/icons";
+import {
+  AttachmentIcon,
+  EmailIcon,
+  LinkIcon,
+  PageIcon,
+  PhoneIcon,
+} from "@webstudio-is/icons";
 import { type ReactNode, useState } from "react";
 import {
   type ControlProps,
@@ -20,13 +26,15 @@ import {
   VerticalLayout,
 } from "../shared";
 import type { Page } from "@webstudio-is/project-build";
+import { SelectAsset } from "./select-asset";
 
-type UrlControlProps = ControlProps<"url", "string" | "page">;
+type UrlControlProps = ControlProps<"url", "string" | "page" | "asset">;
 
 type BaseControlProps = {
   id: string;
   prop: UrlControlProps["prop"];
   onChange: UrlControlProps["onChange"];
+  onSoftDelete: UrlControlProps["onSoftDelete"];
 };
 
 const Row = ({ children }: { children: ReactNode }) => (
@@ -46,7 +54,7 @@ const BaseUrl = ({ prop, onChange, id }: BaseControlProps) => {
       <InputField
         id={id}
         value={localValue.value}
-        placeholder="https://example.com/"
+        placeholder="http://www.url.com"
         onChange={(event) => localValue.set(event.target.value)}
         onBlur={localValue.save}
         onKeyDown={(event) => {
@@ -193,11 +201,26 @@ const BasePage = ({ prop, onChange, id }: BaseControlProps) => {
   );
 };
 
+const BaseAttachment = ({ prop, onChange, onSoftDelete }: BaseControlProps) => (
+  <Row>
+    <SelectAsset
+      prop={prop?.type === "asset" ? prop : undefined}
+      onChange={onChange}
+      onSoftDelete={onSoftDelete}
+    />
+  </Row>
+);
+
 const modes = {
   url: { icon: <LinkIcon />, control: BaseUrl, label: "URL" },
   page: { icon: <PageIcon />, control: BasePage, label: "Page" },
   email: { icon: <EmailIcon />, control: BaseEmail, label: "Email" },
   phone: { icon: <PhoneIcon />, control: BasePhone, label: "Phone" },
+  attachment: {
+    icon: <AttachmentIcon />,
+    control: BaseAttachment,
+    label: "Attachment",
+  },
 } as const;
 
 type Mode = keyof typeof modes;
@@ -209,6 +232,10 @@ const propToMode = (prop?: UrlControlProps["prop"]): Mode => {
 
   if (prop.type === "page") {
     return "page";
+  }
+
+  if (prop.type === "asset") {
+    return "attachment";
   }
 
   if (prop.value.startsWith("tel:")) {
@@ -228,6 +255,7 @@ export const UrlControl = ({
   propName,
   onChange,
   onDelete,
+  onSoftDelete,
 }: UrlControlProps) => {
   const [mode, setMode] = useState<Mode>(propToMode(prop));
 
@@ -267,7 +295,12 @@ export const UrlControl = ({
         </ToggleGroup>
       </Flex>
 
-      <BaseControl id={id} prop={prop} onChange={onChange} />
+      <BaseControl
+        id={id}
+        prop={prop}
+        onChange={onChange}
+        onSoftDelete={onSoftDelete}
+      />
     </VerticalLayout>
   );
 };

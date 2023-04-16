@@ -296,7 +296,7 @@ export const Builder = ({
   useCopyPaste();
   useSetWindowTitle();
   const iframeRefCallback = useCallback(
-    (element) => {
+    (element: HTMLIFrameElement) => {
       publishRef.current = element;
       onRefReadCanvas(element);
     },

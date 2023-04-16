@@ -1,4 +1,5 @@
-import React, { type Ref, Fragment, type ComponentProps } from "react";
+import type { Ref, ComponentProps, ReactNode, ReactElement } from "react";
+import { Fragment, forwardRef } from "react";
 import { styled } from "../stitches.config";
 import * as TooltipPrimitive from "@radix-ui/react-tooltip";
 import { Box } from "./box";
@@ -7,9 +8,9 @@ import type { CSS } from "../stitches.config";
 import { theme } from "../stitches.config";
 
 export type TooltipProps = ComponentProps<typeof TooltipPrimitive.Root> &
-  ComponentProps<typeof Content> & {
-    children: React.ReactElement;
-    content: React.ReactNode;
+  Omit<ComponentProps<typeof Content>, "content"> & {
+    children: ReactElement;
+    content: ReactNode;
     delayDuration?: number;
     disableHoverableContent?: boolean;
     css?: CSS;
@@ -41,7 +42,7 @@ const Arrow = styled(TooltipPrimitive.Arrow, {
   marginTop: -0.5,
 });
 
-export const Tooltip = React.forwardRef(
+export const Tooltip = forwardRef(
   (
     {
       children,
@@ -115,7 +116,7 @@ export const InputErrorsTooltip = ({
     // and current value loss.
     <Tooltip
       {...rest}
-      content={content || " "}
+      content={content ?? " "}
       open={errors !== undefined && errors.length !== 0}
       side="right"
     >

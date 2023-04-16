@@ -23,9 +23,12 @@ export const Image = forwardRef<ElementRef<typeof defaultTag>, Props>(
         return null;
       }
       if (asset.location === "REMOTE") {
-        return loaders.cloudflareImageLoader(params);
+        return loaders.cloudflareImageLoader({
+          resizeOrigin: params.resizeOrigin,
+          cdnUrl: params.assetBaseUrl,
+        });
       }
-      return loaders.localImageLoader(params);
+      return loaders.localImageLoader({ publicPath: params.assetBaseUrl });
     }, [asset, params]);
 
     const src = asset?.name ?? props.src;

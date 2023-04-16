@@ -4,11 +4,7 @@ import { getFontFaces } from "@webstudio-is/fonts";
 
 export const addGlobalRules = (
   engine: CssEngine,
-  {
-    assets,
-    publicPath,
-    cdnUrl,
-  }: { assets: Assets; publicPath?: string; cdnUrl?: string }
+  { assets, assetBaseUrl }: { assets: Assets; assetBaseUrl: string }
 ) => {
   // @todo we need to figure out all global resets while keeping
   // the engine aware of all of them.
@@ -22,10 +18,7 @@ export const addGlobalRules = (
     }
   }
 
-  const fontFaces = getFontFaces(fontAssets, {
-    publicPath,
-    cdnUrl,
-  });
+  const fontFaces = getFontFaces(fontAssets, { assetBaseUrl });
   for (const fontFace of fontFaces) {
     engine.addFontFaceRule(fontFace);
   }
