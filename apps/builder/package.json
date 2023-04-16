@@ -8,7 +8,7 @@
     "start": "remix-serve build",
     "start-local": "dotenv -e .env npm start",
     "dev": "remix dev",
-    "typecheck": "tsc",
+    "typecheck": "tsc --noEmit --emitDeclarationOnly false",
     "lint": "eslint . --ext .ts,.tsx --max-warnings 0",
     "test": "NODE_OPTIONS=--experimental-vm-modules jest",
     "checks": "pnpm lint && pnpm typecheck && pnpm test",

@@ -5,7 +5,7 @@
   "sideEffects": false,
   "scripts": {
     "size-test": "rm -rf ./public && rm -rf ./functions && remix build && size-limit",
-    "typecheck": "tsc --noEmit"
+    "typecheck": "tsc --noEmit --emitDeclarationOnly false"
   },
   "size-limit": [
     {

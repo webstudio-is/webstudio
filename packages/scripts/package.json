@@ -11,7 +11,7 @@
     "build-package": "./build-package.ts"
   },
   "scripts": {
-    "checks": "tsc --noEmit"
+    "checks": "tsc --noEmit --emitDeclarationOnly false"
   },
   "dependencies": {
     "esbuild": "^0.17.14",

@@ -8,9 +8,9 @@
   "scripts": {
     "dev": "build-package --watch",
     "build": "build-package",
-    "dts": "tsc --emitDeclarationOnly --declaration --declarationDir lib/types",
+    "dts": "tsc",
     "test": "NODE_OPTIONS=--experimental-vm-modules jest",
-    "typecheck": "tsc --noEmit",
+    "typecheck": "tsc --noEmit --emitDeclarationOnly false",
     "lint": "eslint ./src --ext .ts,.tsx --max-warnings 0",
     "checks": "pnpm typecheck && pnpm lint"
   },

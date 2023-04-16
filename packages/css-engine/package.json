@@ -6,11 +6,11 @@
   "homepage": "https://webstudio.is",
   "type": "module",
   "scripts": {
-    "typecheck": "tsc --noEmit",
+    "typecheck": "tsc --noEmit --emitDeclarationOnly false",
     "checks": "pnpm typecheck && pnpm lint && pnpm test",
     "dev": "build-package --watch",
     "build": "build-package",
-    "dts": "tsc --emitDeclarationOnly --declaration --declarationDir lib/types",
+    "dts": "tsc",
     "test": "NODE_OPTIONS=--experimental-vm-modules jest",
     "lint": "eslint ./src --ext .ts,.tsx --max-warnings 0",
     "storybook:run": "start-storybook -p 6006",

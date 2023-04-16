@@ -6,12 +6,12 @@
   "homepage": "https://webstudio.is",
   "type": "module",
   "scripts": {
-    "typecheck": "tsc --noEmit",
+    "typecheck": "tsc --noEmit --emitDeclarationOnly false",
     "checks": "pnpm typecheck && pnpm lint",
     "dev": "build-package --watch",
     "build": "build-package",
     "build:mdn-data": "tsx ./bin/mdn-data.ts ./src/__generated__ &&  prettier --write \"./src/__generated__/**/*.ts\"",
-    "dts": "tsc --emitDeclarationOnly --declaration --declarationDir lib/types",
+    "dts": "tsc",
     "lint": "eslint ./src --ext .ts,.tsx --max-warnings 0"
   },
   "devDependencies": {

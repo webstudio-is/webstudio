@@ -6,7 +6,7 @@
   "homepage": "https://webstudio.is",
   "type": "module",
   "scripts": {
-    "typecheck": "tsc --noEmit",
+    "typecheck": "tsc --noEmit --emitDeclarationOnly false",
     "test": "NODE_OPTIONS=--experimental-vm-modules jest",
     "checks": "pnpm typecheck && pnpm lint",
     "dev": "build-package --watch",

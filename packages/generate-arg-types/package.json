@@ -8,8 +8,8 @@
   "scripts": {
     "dev": "build-package --watch",
     "build": "build-package",
-    "dts": "tsc --emitDeclarationOnly --declaration --declarationDir lib/types",
-    "typecheck": "tsc --noEmit",
+    "dts": "tsc",
+    "typecheck": "tsc --noEmit --emitDeclarationOnly false",
     "checks": "pnpm typecheck && pnpm lint",
     "lint": "eslint ./src --ext .ts,.tsx --max-warnings 0"
   },
