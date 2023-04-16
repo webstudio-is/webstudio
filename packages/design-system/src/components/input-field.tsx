@@ -24,6 +24,7 @@ export const inputFieldTypes = [
   "text",
   "url",
   "number",
+  "search",
 ] as const;
 
 export const inputFieldColors = ["placeholder", "set", "error"] as const;
