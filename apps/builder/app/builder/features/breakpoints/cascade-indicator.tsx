@@ -1,8 +1,7 @@
 import { useStore } from "@nanostores/react";
 import { css, theme } from "@webstudio-is/design-system";
 import { useEffect, useState } from "react";
-import { selectedBreakpointStore } from "~/shared/nano-states";
-import type { Breakpoint } from "@webstudio-is/project-build";
+import type { Breakpoint, Breakpoints } from "@webstudio-is/project-build";
 import { breakpointsStore } from "~/shared/nano-states";
 import { isBaseBreakpoint } from "~/shared/breakpoints";
 
@@ -10,6 +9,7 @@ const cascadeIndicatorStyle = css({
   position: "absolute",
   bottom: 0,
   height: 3,
+  borderRadius: 2,
   transition: "150ms width, 150ms left, 150ms right",
   '&[data-direction="left"]': {
     background: theme.colors.backgroundGradientHorizontal,
@@ -19,29 +19,66 @@ const cascadeIndicatorStyle = css({
   },
 });
 
+const hasMinAndMax = (breakpoints: Breakpoints) => {
+  let hasMin = false;
+  let hasMax = false;
+  for (const breakpoint of breakpoints.values()) {
+    if (breakpoint.minWidth !== undefined) {
+      hasMin = true;
+    }
+    if (breakpoint.maxWidth !== undefined) {
+      hasMax = true;
+    }
+  }
+
+  return { hasMin, hasMax };
+};
+
 const calcIndicatorStyle = ({
   buttonLeft,
   buttonWidth,
   containerWidth,
   selectedBreakpoint,
+  breakpoints,
 }: {
   buttonLeft: number;
   buttonWidth: number;
   containerWidth: number;
   selectedBreakpoint: Breakpoint;
+  breakpoints: Breakpoints;
 }) => {
   if (isBaseBreakpoint(selectedBreakpoint)) {
-    return {
-      left: {
-        left: 0,
-        width: buttonLeft + buttonWidth / 2,
-      },
-      right: {
-        width: containerWidth - buttonLeft - buttonWidth / 2,
-        left: buttonLeft + buttonWidth / 2,
-      },
-    };
+    const { hasMin, hasMax } = hasMinAndMax(breakpoints);
+    if (hasMin && hasMax) {
+      return {
+        left: {
+          left: 0,
+          width: buttonLeft + buttonWidth / 2,
+          borderTopRightRadius: 0,
+          borderBottomRightRadius: 0,
+        },
+        right: {
+          width: containerWidth - buttonLeft - buttonWidth / 2,
+          left: buttonLeft + buttonWidth / 2,
+          borderTopLeftRadius: 0,
+          borderBottomLeftRadius: 0,
+        },
+      };
+    }
+    if (hasMin) {
+      return {
+        left: {
+          left: 0,
+          width: buttonLeft + buttonWidth,
+        },
+        right: {
+          width: 0,
+          right: 0,
+        },
+      };
+    }
   }
+
   if (selectedBreakpoint.minWidth !== undefined) {
     return {
       left: {
@@ -116,16 +153,22 @@ const useSizes = ({
 // When you have base breakpoint selected which has neither min nor max width, both indicators are shown.
 export const CascadeIndicator = ({
   getButtonById,
+  selectedBreakpoint,
+  breakpoints,
 }: {
   getButtonById: (id: string) => HTMLButtonElement | undefined;
+  selectedBreakpoint: Breakpoint;
+  breakpoints: Breakpoints;
 }) => {
-  const selectedBreakpoint = useStore(selectedBreakpointStore);
   const sizes = useSizes({ getButtonById, selectedBreakpoint });
   if (selectedBreakpoint === undefined || sizes === undefined) {
     return null;
   }
-
-  const indicatorStyle = calcIndicatorStyle({ ...sizes, selectedBreakpoint });
+  const indicatorStyle = calcIndicatorStyle({
+    ...sizes,
+    selectedBreakpoint,
+    breakpoints,
+  });
   return (
     <>
       <div
