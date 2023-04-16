@@ -674,7 +674,7 @@
         "description": "For tabs and button backgrounds that are in the top toolbar"
       },
       "workspace": {
-        "value": "#c7c7c7",
+        "value": "#a9a9a9",
         "type": "color",
         "description": "The color of the Builder UI canvas area background."
       },
