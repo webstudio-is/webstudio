@@ -1,7 +1,6 @@
 import { atom } from "nanostores";
 import { useStore } from "@nanostores/react";
 import {
-  Box,
   Flex,
   Collapsible,
   SectionTitle,
