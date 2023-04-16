@@ -120,7 +120,7 @@ const useScrub = ({ side }: { side: "right" | "left" }) => {
       },
     });
     return scrub.disconnectedCallback;
-  }, []);
+  }, [side]);
 
   return ref;
 };
