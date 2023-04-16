@@ -41,7 +41,7 @@ export const useScrub = ({
     }
 
     const scrub = numericScrubControl(scrubRefCurrent, {
-      getValue: () => {
+      getInitialValue: () => {
         return valueRef.current;
       },
       onValueInput(event) {

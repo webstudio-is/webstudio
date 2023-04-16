@@ -82,7 +82,7 @@ export const useScrub = (props: {
         property.endsWith("Left") || property.endsWith("Right")
           ? "horizontal"
           : "vertical",
-      getValue() {
+      getInitialValue() {
         const { value } = nonDependencies.current.props;
         if (value?.type === "unit") {
           unitRef.current = value.unit;

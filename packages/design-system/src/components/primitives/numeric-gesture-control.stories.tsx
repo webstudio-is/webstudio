@@ -20,7 +20,7 @@ const useNumericScrubControl = ({
     }
     ref.current.value = String(value);
     const { disconnectedCallback } = numericScrubControl(ref.current, {
-      getValue: () => value,
+      getInitialValue: () => value,
       direction: direction,
       onValueChange: (event) => {
         event.preventDefault();

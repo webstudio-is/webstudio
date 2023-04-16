@@ -1,14 +1,8 @@
 import { useStore } from "@nanostores/react";
 import { findApplicableMedia } from "@webstudio-is/css-engine";
-import {
-  css,
-  numericScrubControl,
-  theme,
-  type NumericScrubOptions,
-} from "@webstudio-is/design-system";
+import { css, numericScrubControl, theme } from "@webstudio-is/design-system";
 import { useEffect, useRef, useState } from "react";
 import {
-  canvasRectStore,
   canvasWidthStore,
   isCanvasPointerEventsEnabledStore,
 } from "~/builder/shared/nano-states";
@@ -93,68 +87,49 @@ const updateBreakpoint = (width: number) => {
   }
 };
 
-const onStatusChange: NumericScrubOptions["onStatusChange"] = (status) => {
-  if (status === "scrubbing") {
-    isCanvasPointerEventsEnabledStore.set(false);
-    isResizingCanvasStore.set(true);
-    return;
-  }
-  isCanvasPointerEventsEnabledStore.set(true);
-  isResizingCanvasStore.set(false);
+const useScrub = ({ side }: { side: "right" | "left" }) => {
+  const ref = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    if (ref.current === null) {
+      return;
+    }
+    const scrub = numericScrubControl(ref.current, {
+      getInitialValue() {
+        return canvasWidthStore.get();
+      },
+      getValue(state, movement) {
+        const value =
+          side === "left"
+            ? state.value - movement * 2
+            : state.value + movement * 2;
+        return Math.max(value, minCanvasWidth);
+      },
+      onStatusChange(status) {
+        if (status === "scrubbing") {
+          isCanvasPointerEventsEnabledStore.set(false);
+          isResizingCanvasStore.set(true);
+          return;
+        }
+        isCanvasPointerEventsEnabledStore.set(true);
+        isResizingCanvasStore.set(false);
+      },
+      onValueInput(event) {
+        canvasWidthStore.set(event.value);
+        updateBreakpoint(event.value);
+      },
+    });
+    return scrub.disconnectedCallback;
+  }, []);
+
+  return ref;
 };
 
 const useResize = () => {
   const isDragging = useStore(isCanvasPointerEventsEnabledStore) === false;
   const [isHovering, setIsHovering] = useState(false);
-  const leftRef = useRef<HTMLDivElement>(null);
-  const rightRef = useRef<HTMLDivElement>(null);
-
-  useEffect(() => {
-    if (leftRef.current === null) {
-      return;
-    }
-    const scrub = numericScrubControl(leftRef.current, {
-      onStatusChange,
-      getValue() {
-        return canvasRectStore.get()?.left;
-      },
-      onValueInput(event) {
-        const rect = canvasRectStore.get();
-        if (rect) {
-          const width = Math.round(
-            Math.max(rect.right - event.value, minCanvasWidth)
-          );
-          canvasWidthStore.set(width);
-          updateBreakpoint(width);
-        }
-      },
-    });
-    return scrub.disconnectedCallback;
-  }, []);
-
-  useEffect(() => {
-    if (rightRef.current === null) {
-      return;
-    }
-    const scrub = numericScrubControl(rightRef.current, {
-      onStatusChange,
-      getValue() {
-        return canvasRectStore.get()?.right;
-      },
-      onValueInput(event) {
-        const rect = canvasRectStore.get();
-        if (rect) {
-          const width = Math.max(
-            Math.round(event.value - rect.left),
-            minCanvasWidth
-          );
-          canvasWidthStore.set(width);
-          updateBreakpoint(width);
-        }
-      },
-    });
-    return scrub.disconnectedCallback;
-  }, []);
+  const leftRef = useScrub({ side: "left" });
+  const rightRef = useScrub({ side: "right" });
 
   const handleMouseEnter = () => setIsHovering(true);
 

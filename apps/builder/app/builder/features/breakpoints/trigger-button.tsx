@@ -35,7 +35,7 @@ export const TriggerButton = (props: TriggerButtonProps) => {
   const scale = useStore(scaleStore);
   const breakpoint = useStore(selectedBreakpointStore);
   const [canvasWidth] = useCanvasWidth();
-  if (breakpoint === undefined) {
+  if (breakpoint === undefined || canvasWidth === undefined) {
     return null;
   }
   return (
@@ -46,7 +46,7 @@ export const TriggerButton = (props: TriggerButtonProps) => {
       })}
     >
       <Value unit="PX" minWidth={55}>
-        {canvasWidth}
+        {Math.round(canvasWidth)}
       </Value>
       {scale !== 100 && (
         <Value unit="%" minWidth={30}>

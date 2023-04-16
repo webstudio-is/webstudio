@@ -95,7 +95,7 @@ const useScrub = ({
       // Until we have decision do we use key properties for this or not,
       // on of the solution to get value inside scrub is to use ref and lazy getter.
       // Getter to avoid recreating scrub on every value change
-      getValue: () => {
+      getInitialValue: () => {
         if (valueRef.current.type === "unit") {
           return valueRef.current.value;
         }
