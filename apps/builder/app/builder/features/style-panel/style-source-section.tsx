@@ -1,7 +1,7 @@
 import { useState } from "react";
 import store from "immerhin";
 import { nanoid } from "nanoid";
-import { theme, DeprecatedText2, Text } from "@webstudio-is/design-system";
+import { theme, Text } from "@webstudio-is/design-system";
 import {
   type Instance,
   type StyleSource,
