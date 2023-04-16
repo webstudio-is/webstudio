@@ -8,7 +8,7 @@ import {
   type ReactNode,
   type ComponentProps,
   type Ref,
-  type FocusEvent,
+  type FocusEventHandler,
 } from "react";
 import { textVariants } from "./text";
 import { css, theme, type CSS } from "../stitches.config";
@@ -185,8 +185,8 @@ export const InputField = forwardRef(
       suffix?: ReactNode;
       containerRef?: Ref<HTMLDivElement>;
       inputRef?: Ref<HTMLInputElement>;
-      onFocus?: (e: FocusEvent) => void;
-      onBlur?: (e: FocusEvent) => void;
+      onFocus?: FocusEventHandler;
+      onBlur?: FocusEventHandler;
     },
     ref: Ref<HTMLDivElement>
   ) => {
