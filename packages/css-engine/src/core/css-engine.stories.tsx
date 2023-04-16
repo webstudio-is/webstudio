@@ -1,8 +1,9 @@
+import type { Meta, StoryFn } from "@storybook/react";
 import { CssEngine } from "./css-engine";
 
 export default {
-  component: "CssEngine",
-};
+  title: "CssEngine",
+} satisfies Meta;
 
 const style0 = {
   color: { type: "keyword", value: "red" },
@@ -11,7 +12,7 @@ const style0 = {
 const mediaRuleOptions0 = { minWidth: 0 } as const;
 const mediaId = "0";
 
-export const Basic = () => {
+export const Basic: StoryFn = () => {
   const engine = new CssEngine({ name: "test" });
   engine.addMediaRule(mediaId, mediaRuleOptions0);
   const rule = engine.addStyleRule(".test", {

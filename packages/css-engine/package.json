@@ -13,8 +13,8 @@
     "dts": "tsc --emitDeclarationOnly --declaration --declarationDir lib/types",
     "test": "NODE_OPTIONS=--experimental-vm-modules jest",
     "lint": "eslint ./src --ext .ts,.tsx --max-warnings 0",
-    "storybook:run": "start-storybook -p 6006",
-    "storybook:build": "build-storybook"
+    "storybook:dev": "storybook dev -p 6006",
+    "storybook:build": "storybook build"
   },
   "dependencies": {
     "@webstudio-is/css-data": "workspace:^",
@@ -25,7 +25,9 @@
   },
   "devDependencies": {
     "@jest/globals": "^29.3.1",
-    "@storybook/react": "^6.5.16",
+    "@storybook/addon-essentials": "^7.0.5",
+    "@storybook/react": "^7.0.5",
+    "@storybook/react-vite": "^7.0.5",
     "@types/hyphenate-style-name": "^1.0.0",
     "@types/react": "^18.0.35",
     "@types/react-dom": "^18.0.11",
@@ -34,7 +36,9 @@
     "@webstudio-is/storybook-config": "workspace:^",
     "@webstudio-is/tsconfig": "workspace:^",
     "jest": "^29.3.1",
-    "typescript": "5.0.3"
+    "storybook": "^7.0.5",
+    "typescript": "5.0.3",
+    "vite": "^4.1.4"
   },
   "exports": {
     "source": "./src/index.ts",
