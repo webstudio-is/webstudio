@@ -1,4 +1,4 @@
-import { theme, Box, ScrollArea } from "@webstudio-is/design-system";
+import { theme, Box, ScrollArea, Separator } from "@webstudio-is/design-system";
 import type { Instance } from "@webstudio-is/project-build";
 import type { Publish } from "~/shared/pubsub";
 
@@ -34,6 +34,7 @@ export const StylePanel = ({ selectedInstance, publish }: StylePanelProps) => {
       >
         <StyleSourcesSection />
       </Box>
+      <Separator />
       <ScrollArea>
         <StyleSettings
           currentStyle={currentStyle}
