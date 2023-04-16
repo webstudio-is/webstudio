@@ -133,7 +133,7 @@ const useResize = () => {
 
   const handleMouseEnter = () => setIsHovering(true);
 
-  const handleMouseOut = () => setIsHovering(false);
+  const handleMouseLeave = () => setIsHovering(false);
 
   const state = isDragging ? "dragging" : isHovering ? "hovering" : "idle";
 
@@ -142,12 +142,12 @@ const useResize = () => {
     leftRef,
     rightRef,
     handleMouseEnter,
-    handleMouseOut,
+    handleMouseLeave,
   };
 };
 
 export const ResizeHandles = () => {
-  const { state, leftRef, rightRef, handleMouseEnter, handleMouseOut } =
+  const { state, leftRef, rightRef, handleMouseEnter, handleMouseLeave } =
     useResize();
 
   return (
@@ -155,7 +155,7 @@ export const ResizeHandles = () => {
       <div
         ref={leftRef}
         onMouseEnter={handleMouseEnter}
-        onMouseOut={handleMouseOut}
+        onMouseOut={handleMouseLeave}
         data-state={state}
         data-align="left"
         className={handleStyle()}
@@ -163,7 +163,7 @@ export const ResizeHandles = () => {
       <div
         ref={rightRef}
         onMouseEnter={handleMouseEnter}
-        onMouseOut={handleMouseOut}
+        onMouseLeave={handleMouseLeave}
         data-state={state}
         data-align="right"
         className={handleStyle()}
