@@ -38,6 +38,7 @@ import {
   type ComponentProps,
   type ForwardRefRenderFunction,
   type RefObject,
+  type ReactNode,
 } from "react";
 import { mergeRefs } from "@react-aria/utils";
 import { type ItemSource, menuCssVars, StyleSource } from "./style-source";
@@ -76,7 +77,7 @@ type TextFieldBaseWrapperProps<Item extends IntermediateItem> = Omit<
     disabled?: boolean;
     containerRef?: RefObject<HTMLDivElement>;
     inputRef?: RefObject<HTMLInputElement>;
-    renderStyleSourceMenuItems: (item: Item) => void;
+    renderStyleSourceMenuItems: (item: Item) => ReactNode;
     onChangeItem?: (item: Item) => void;
     onSort?: (items: Array<Item>) => void;
     onSelectItem?: (itemSelector?: ItemSelector) => void;

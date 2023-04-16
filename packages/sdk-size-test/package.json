@@ -10,7 +10,7 @@
   "size-limit": [
     {
       "path": "public/build/*.js",
-      "limit": "126 kB",
+      "limit": "136 kB",
       "gzip": false
     },
     {
@@ -25,14 +25,14 @@
     "@webstudio-is/project": "workspace:^",
     "@webstudio-is/project-build": "workspace:^",
     "@webstudio-is/react-sdk": "workspace:^",
-    "react": "^17.0.2",
-    "react-dom": "^17.0.2"
+    "react": "^18.2.0",
+    "react-dom": "^18.2.0"
   },
   "devDependencies": {
     "@remix-run/dev": "1.15.0",
     "@size-limit/file": "^8.2.4",
-    "@types/react": "17.0.47",
-    "@types/react-dom": "^17.0.9",
+    "@types/react": "^18.0.35",
+    "@types/react-dom": "^18.0.11",
     "size-limit": "^8.2.4",
     "typescript": "5.0.3"
   }

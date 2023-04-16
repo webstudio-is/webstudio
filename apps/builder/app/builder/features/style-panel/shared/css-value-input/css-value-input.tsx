@@ -51,7 +51,7 @@ const useScrub = ({
   value: CssValueInputValue;
   onChange: (value: CssValueInputValue) => void;
   onChangeComplete: (value: StyleValue) => void;
-  shouldHandleEvent?: (node: EventTarget) => boolean;
+  shouldHandleEvent?: (node: Node) => boolean;
 }): [
   React.MutableRefObject<HTMLDivElement | null>,
   React.MutableRefObject<HTMLInputElement | null>
@@ -455,7 +455,7 @@ export const CssValueInput = ({
     },
   });
 
-  const shouldHandleEvent = useCallback((node) => {
+  const shouldHandleEvent = useCallback((node: Node) => {
     return suffixRef.current?.contains?.(node) === false;
   }, []);
 
