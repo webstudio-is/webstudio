@@ -20,23 +20,25 @@
   },
   "dependencies": {
     "@webstudio-is/generate-arg-types": "workspace:^",
-    "react": "^17.0.2",
+    "react": "^18.2.0",
     "warn-once": "^0.1.1"
   },
   "devDependencies": {
     "@jest/globals": "^29.3.1",
     "@storybook/react": "^6.5.16",
-    "@types/react": "^17.0.24",
+    "@types/react": "^18.0.35",
     "@webstudio-is/jest-config": "workspace:^",
     "@webstudio-is/scripts": "workspace:^",
     "@webstudio-is/storybook-config": "workspace:^",
     "@webstudio-is/tsconfig": "workspace:^",
     "jest": "^29.3.1",
+    "react": "^18.2.0",
+    "react-dom": "^18.2.0",
     "typescript": "5.0.3"
   },
   "peerDependencies": {
-    "react": "^17.0.2",
-    "react-dom": "^17.0.2"
+    "react": "^18.2.0",
+    "react-dom": "^18.2.0"
   },
   "module": "./lib/index.js",
   "exports": {

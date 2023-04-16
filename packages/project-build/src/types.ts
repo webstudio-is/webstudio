@@ -2,7 +2,7 @@ import type { Pages } from "./schema/pages";
 import type { Breakpoint } from "./schema/breakpoints";
 import type { StyleDecl, StyleDeclKey } from "./schema/styles";
 import type { StyleSource } from "./schema/style-sources";
-import type { Instance, InstancesItem } from "./schema/instances";
+import type { Instance } from "./schema/instances";
 import type { Prop } from "./schema/props";
 import type { StyleSourceSelection } from "./schema/style-source-selections";
 
@@ -18,5 +18,5 @@ export type Build = {
   styleSources: [StyleSource["id"], StyleSource][];
   styleSourceSelections: [Instance["id"], StyleSourceSelection][];
   props: [Prop["id"], Prop][];
-  instances: [InstancesItem["id"], InstancesItem][];
+  instances: [Instance["id"], Instance][];
 };

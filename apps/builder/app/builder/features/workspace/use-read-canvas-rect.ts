@@ -2,8 +2,8 @@ import { useCallback, useEffect, useState } from "react";
 
 import {
   scaleStore,
-  canvasWidthContainer,
-  canvasRectContainer,
+  canvasWidthStore,
+  canvasRectStore,
 } from "~/builder/shared/nano-states";
 import { useWindowResizeDebounced } from "~/shared/dom-hooks";
 
@@ -21,18 +21,17 @@ export const useReadCanvasRect = () => {
       return;
     }
     const rect = iframeElement.getBoundingClientRect();
-    canvasRectContainer.set(rect);
+    canvasRectStore.set(rect);
   }, [iframeElement]);
 
   useEffect(() => {
     updateRect();
     const scaleStoreUnsubscribe = scaleStore.listen(updateRect);
-    const canvasWidthContainerUnsubscribe =
-      canvasWidthContainer.listen(updateRect);
+    const canvasWidthStoreUnsubscribe = canvasWidthStore.listen(updateRect);
 
     return () => {
       scaleStoreUnsubscribe();
-      canvasWidthContainerUnsubscribe();
+      canvasWidthStoreUnsubscribe();
     };
   }, [updateRect]);
 

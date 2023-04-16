@@ -1,5 +1,5 @@
 import * as ToastPrimitive from "@radix-ui/react-toast";
-import toast, { useToaster } from "react-hot-toast/headless";
+import toast, { resolveValue, useToaster } from "react-hot-toast/headless";
 import { keyframes, styled } from "../stitches.config";
 import { InfoIcon } from "@webstudio-is/icons";
 import { Box } from "./box";
@@ -50,6 +50,7 @@ const StyledToast = styled(ToastPrimitive.Root, {
   color: theme.colors.hiContrast,
   fontWeight: 500,
   fontSize: theme.deprecatedFontSize[3],
+  WebkitFontSmoothing: "antialiased",
   background: theme.colors.backgroundPanel,
 
   "@media (prefers-reduced-motion: no-preference)": {
@@ -116,7 +117,7 @@ export const Toaster = () => {
           >
             {toast.type === "blank" && <InfoIcon />}
           </Box>
-          <StyledTitle>{toast.message}</StyledTitle>
+          <StyledTitle>{resolveValue(toast.message, toast)}</StyledTitle>
         </StyledToast>
       ))}
       <StyledViewport />

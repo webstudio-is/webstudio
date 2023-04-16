@@ -8,7 +8,6 @@ import {
   type Prop,
   findTreeInstanceIds,
   Instances,
-  type InstancesItem,
 } from "@webstudio-is/project-build";
 import {
   renderWebstudioComponentChildren,
@@ -88,7 +87,7 @@ const getInstanceSelector = (
 };
 
 type WebstudioComponentDevProps = {
-  instance: InstancesItem;
+  instance: Instance;
   instanceSelector: InstanceSelector;
   children: Array<JSX.Element | string>;
   getComponent: GetComponent;

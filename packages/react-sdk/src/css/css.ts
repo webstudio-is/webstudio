@@ -15,8 +15,7 @@ type Data = {
 };
 
 type CssOptions = {
-  publicPath?: string;
-  cdnUrl?: string;
+  assetBaseUrl: string;
 };
 
 export const createImageValueTransformer =
@@ -29,11 +28,8 @@ export const createImageValueTransformer =
       }
 
       // @todo reuse image loaders and generate image-set
-      const { publicPath = "/", cdnUrl = "/" } = options;
-      const url =
-        asset.location === "REMOTE"
-          ? `${cdnUrl}${asset.name}`
-          : `${publicPath}${asset.name}`;
+      const { assetBaseUrl } = options;
+      const url = `${assetBaseUrl}${asset.name}`;
 
       return {
         type: "image",
@@ -58,8 +54,7 @@ export const generateCssText = (data: Data, options: CssOptions) => {
 
   addGlobalRules(engine, {
     assets,
-    publicPath: options.publicPath,
-    cdnUrl: options.cdnUrl,
+    assetBaseUrl: options.assetBaseUrl,
   });
 
   for (const breakpoint of breakpoints.values()) {

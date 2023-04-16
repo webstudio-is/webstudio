@@ -16,11 +16,12 @@ import {
 import { Popper, PopperContent, PopperAnchor } from "@radix-ui/react-popper";
 import { Portal } from "@radix-ui/react-portal";
 import {
-  type DownshiftState,
+  type UseComboboxState,
   type UseComboboxStateChangeOptions,
   type UseComboboxProps as UseDownshiftComboboxProps,
   type UseComboboxGetInputPropsOptions,
   useCombobox as useDownshiftCombobox,
+  type UseComboboxGetItemPropsOptions,
 } from "downshift";
 import { matchSorter } from "match-sorter";
 import { styled, theme } from "../stitches.config";
@@ -164,7 +165,7 @@ type UseComboboxProps<Item> = UseDownshiftComboboxProps<Item> & {
   onItemSelect?: (value: Item) => void;
   onItemHighlight?: (value: Item | null) => void;
   stateReducer?: (
-    state: DownshiftState<Item>,
+    state: UseComboboxState<Item>,
     changes: UseComboboxStateChangeOptions<Item>
   ) => Partial<UseComboboxStateChangeOptions<Item>>;
   match?: Match<Item>;
@@ -181,7 +182,7 @@ export const useCombobox = <Item,>({
   onInputChange,
   onItemSelect,
   onItemHighlight,
-  stateReducer = (state, { changes }) => changes,
+  stateReducer = (_state, { changes }) => changes,
   match,
   defaultHighlightedIndex = -1,
   ...rest
@@ -272,16 +273,18 @@ export const useCombobox = <Item,>({
   );
 
   const enhancedGetItemProps = useCallback(
-    (options) => {
-      return getItemProps({
+    (options: UseComboboxGetItemPropsOptions<Item>) => {
+      return {
         highlighted: highlightedIndex === options.index,
-        // We need to either deep compare objects here or use itemToString to get primitive types
-        selected:
-          selectedItem !== undefined &&
-          itemToString(selectedItem) === itemToString(options.item),
-        key: options.id,
-        ...options,
-      });
+        ...getItemProps({
+          // We need to either deep compare objects here or use itemToString to get primitive types
+          selected:
+            selectedItem !== undefined &&
+            itemToString(selectedItem) === itemToString(options.item),
+          key: options.id,
+          ...options,
+        }),
+      };
     },
     [getItemProps, highlightedIndex, itemToString, selectedItem]
   );

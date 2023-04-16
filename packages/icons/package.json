@@ -19,20 +19,21 @@
   "devDependencies": {
     "@storybook/react": "^6.5.16",
     "@svgo/jsx": "^0.4.2",
-    "@types/react": "^17.0.24",
+    "@types/react": "^18.0.35",
     "@webstudio-is/scripts": "workspace:^",
     "@webstudio-is/storybook-config": "workspace:^",
     "@webstudio-is/tsconfig": "workspace:^",
+    "react": "^18.2.0",
+    "react-dom": "^18.2.0",
     "tsx": "^3.12.6",
     "typescript": "5.0.3"
   },
   "peerDependencies": {
-    "react": "^17.0.2",
-    "react-dom": "^17.0.2"
+    "react": "^18.2.0",
+    "react-dom": "^18.2.0"
   },
   "dependencies": {
-    "@webstudio-is/css-vars": "workspace:^",
-    "react": "^17.0.2"
+    "@webstudio-is/css-vars": "workspace:^"
   },
   "module": "./lib/index.js",
   "exports": {

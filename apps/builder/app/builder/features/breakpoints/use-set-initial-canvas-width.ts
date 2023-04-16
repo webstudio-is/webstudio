@@ -1,5 +1,7 @@
 import { useStore } from "@nanostores/react";
 import { useCallback, useEffect, useRef } from "react";
+import { findApplicableMedia } from "@webstudio-is/css-engine";
+import type { Breakpoint } from "@webstudio-is/project-build";
 import {
   useCanvasWidth,
   workspaceRectStore,
@@ -8,16 +10,14 @@ import {
   breakpointsStore,
   selectedBreakpointIdStore,
 } from "~/shared/nano-states";
-
 import { findInitialWidth } from "./find-initial-width";
-import { findApplicableMedia } from "@webstudio-is/css-engine";
 
 export const useSetInitialCanvasWidth = () => {
   const [, setCanvasWidth] = useCanvasWidth();
   const workspaceRect = useStore(workspaceRectStore);
   const breakpoints = useStore(breakpointsStore);
   return useCallback(
-    (breakpointId) => {
+    (breakpointId: Breakpoint["id"]) => {
       const breakpoint = breakpoints.get(breakpointId);
       if (workspaceRect === undefined || breakpoint === undefined) {
         return false;

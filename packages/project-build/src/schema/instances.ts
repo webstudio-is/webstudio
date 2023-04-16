@@ -1,13 +1,5 @@
 import { z } from "zod";
 
-export type Instance = {
-  type: "instance";
-  id: string;
-  component: string;
-  label?: string;
-  children: Array<Instance | Text>;
-};
-
 export const Text = z.object({
   type: z.literal("text"),
   value: z.string(),
@@ -23,7 +15,7 @@ export const Id = z.object({
 });
 export type Id = z.infer<typeof Id>;
 
-export const InstancesItem = z.object({
+export const Instance = z.object({
   type: z.literal("instance"),
   id: InstanceId,
   component: z.string(),
@@ -31,22 +23,12 @@ export const InstancesItem = z.object({
   children: z.array(z.union([Id, Text])),
 });
 
-export type InstancesItem = z.infer<typeof InstancesItem>;
+export type Instance = z.infer<typeof Instance>;
 
-export const InstancesList = z.array(InstancesItem);
+export const InstancesList = z.array(Instance);
 
 export type InstancesList = z.infer<typeof InstancesList>;
 
-export const Instances = z.map(InstanceId, InstancesItem);
+export const Instances = z.map(InstanceId, Instance);
 
 export type Instances = z.infer<typeof Instances>;
-
-export const Instance: z.ZodType<Instance> = z.lazy(() =>
-  z.object({
-    type: z.literal("instance"),
-    id: z.string(),
-    component: z.string(),
-    label: z.string().optional(),
-    children: z.array(z.union([Instance, Text])),
-  })
-);

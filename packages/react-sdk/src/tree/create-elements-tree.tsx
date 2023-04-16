@@ -2,11 +2,7 @@ import { type ComponentProps, Fragment } from "react";
 import type { ReadableAtom } from "nanostores";
 import { Scripts, ScrollRestoration } from "@remix-run/react";
 import type { Assets } from "@webstudio-is/asset-uploader";
-import type {
-  Instance,
-  Instances,
-  InstancesItem,
-} from "@webstudio-is/project-build";
+import type { Instance, Instances } from "@webstudio-is/project-build";
 import type { GetComponent } from "../components/components-utils";
 import { ReactSdkContext } from "../context";
 import type { Pages, PropsByInstanceId } from "../props";
@@ -79,7 +75,7 @@ const createInstanceChildrenElements = ({
 }: {
   instances: Instances;
   instanceSelector: InstanceSelector;
-  children: InstancesItem["children"];
+  children: Instance["children"];
   Component: (props: ComponentProps<typeof WebstudioComponent>) => JSX.Element;
   getComponent: GetComponent;
 }) => {
@@ -120,7 +116,7 @@ const createInstanceElement = ({
   children = [],
   getComponent,
 }: {
-  instance: InstancesItem;
+  instance: Instance;
   instanceSelector: InstanceSelector;
   Component: (props: ComponentProps<typeof WebstudioComponent>) => JSX.Element;
   children?: Array<JSX.Element | string>;

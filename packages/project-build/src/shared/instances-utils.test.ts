@@ -1,5 +1,5 @@
 import { expect, test } from "@jest/globals";
-import type { Instance, Instances, InstancesItem } from "../schema/instances";
+import type { Instance, Instances } from "../schema/instances";
 import {
   findTreeInstanceIds,
   findTreeInstanceIdsExcludingSlotDescendants,
@@ -8,8 +8,8 @@ import {
 const createInstance = (
   id: Instance["id"],
   component: string,
-  children: InstancesItem["children"]
-): InstancesItem => {
+  children: Instance["children"]
+): Instance => {
   return {
     type: "instance",
     id,
@@ -21,7 +21,7 @@ const createInstance = (
 const createInstancePair = (
   id: Instance["id"],
   component: string,
-  children: InstancesItem["children"]
+  children: Instance["children"]
 ) => {
   return [id, createInstance(id, component, children)] as const;
 };

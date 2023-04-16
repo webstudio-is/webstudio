@@ -372,7 +372,7 @@ export const color = {
     "linear-gradient(90deg, #bd2fdb 0%, #4a4efa 100%)",
   backgroundMenuHint: "#dedede",
   backgroundTopbarHover: "#383838",
-  backgroundWorkspace: "#c7c7c7",
+  backgroundWorkspace: "#a9a9a9",
   backgroundIconSubtle: "#3e3e3e",
   backgroundPrimaryLight: "#2e82ff",
   brandBackgroundProjectCardFront:
@@ -437,6 +437,7 @@ export const color = {
   foregroundIconSecondary: "#c1c8cd",
   foregroundIconMain: "#11181c",
   foregroundMoreSubtle: "#adb1b4",
+  foregroundScrollBar: "#a7acaf99",
   maintenanceLight: "#ededed",
   maintenanceMedium: "#c7c7c7",
   maintenanceDark: "#858585",

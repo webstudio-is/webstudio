@@ -22,21 +22,21 @@
     "@storybook/react": "^6.5.16",
     "@testing-library/react-hooks": "^8.0.1",
     "@types/lodash.merge": "^4.6.6",
-    "@types/react": "^17.0.24",
-    "@types/react-dom": "^17.0.9",
+    "@types/react": "^18.0.35",
+    "@types/react-dom": "^18.0.11",
     "@webstudio-is/jest-config": "workspace:^",
     "@webstudio-is/scripts": "workspace:^",
     "@webstudio-is/storybook-config": "workspace:^",
     "@webstudio-is/tsconfig": "workspace:^",
     "jest": "^29.3.1",
-    "react": "^17.0.2",
-    "react-dom": "^17.0.2",
+    "react": "^18.2.0",
+    "react-dom": "^18.2.0",
     "tsx": "^3.12.6",
     "typescript": "5.0.3"
   },
   "peerDependencies": {
-    "react": "^17.0.2",
-    "react-dom": "^17.0.2"
+    "react": "^18.2.0",
+    "react-dom": "^18.2.0"
   },
   "dependencies": {
     "@radix-ui/colors": "^0.1.8",

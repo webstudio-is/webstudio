@@ -14,7 +14,6 @@ import { $createLinkNode, $isLinkNode } from "@lexical/link";
 import type {
   Instance,
   Instances,
-  InstancesItem,
   InstancesList,
 } from "@webstudio-is/project-build";
 import { nanoid } from "nanoid";
@@ -32,7 +31,7 @@ const lexicalFormats = [
 
 const $writeUpdates = (
   node: ElementNode,
-  instanceChildren: InstancesItem["children"],
+  instanceChildren: Instance["children"],
   instancesList: InstancesList,
   refs: Refs
 ) => {
@@ -52,7 +51,7 @@ const $writeUpdates = (
         type: "id",
         value: id,
       });
-      const childChildren: InstancesItem["children"] = [];
+      const childChildren: Instance["children"] = [];
       $writeUpdates(child, childChildren, instancesList, refs);
       instancesList.push({
         type: "instance",
@@ -72,7 +71,7 @@ const $writeUpdates = (
         const key = `${child.getKey()}:span`;
         const id = refs.get(key) ?? nanoid();
         refs.set(key, id);
-        const childInstance: InstancesItem = {
+        const childInstance: Instance = {
           type: "instance",
           id,
           component: "Span",
@@ -88,7 +87,7 @@ const $writeUpdates = (
           const key = `${child.getKey()}:${format}`;
           const id = refs.get(key) ?? nanoid();
           refs.set(key, id);
-          const childInstance: InstancesItem = {
+          const childInstance: Instance = {
             type: "instance",
             id,
             component,
@@ -104,12 +103,9 @@ const $writeUpdates = (
   }
 };
 
-export const $convertToUpdates = (
-  treeRootInstance: InstancesItem,
-  refs: Refs
-) => {
-  const treeRootInstanceChildren: InstancesItem["children"] = [];
-  const instancesList: InstancesItem[] = [
+export const $convertToUpdates = (treeRootInstance: Instance, refs: Refs) => {
+  const treeRootInstanceChildren: Instance["children"] = [];
+  const instancesList: InstancesList = [
     {
       ...treeRootInstance,
       children: treeRootInstanceChildren,
@@ -122,7 +118,7 @@ export const $convertToUpdates = (
 
 const $writeLexical = (
   parent: ElementNode | TextNode,
-  children: InstancesItem["children"],
+  children: Instance["children"],
   instances: Instances,
   refs: Refs
 ) => {

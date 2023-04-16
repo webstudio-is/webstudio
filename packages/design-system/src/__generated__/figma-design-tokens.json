@@ -674,7 +674,7 @@
         "description": "For tabs and button backgrounds that are in the top toolbar"
       },
       "workspace": {
-        "value": "#c7c7c7",
+        "value": "#a9a9a9",
         "type": "color",
         "description": "The color of the Builder UI canvas area background."
       },
@@ -989,6 +989,11 @@
         "value": "#adb1b4",
         "type": "color",
         "description": "The scroll bar, and anything that needs to be a bit lighter than foreground/subtle"
+      },
+      "scroll-bar": {
+        "value": "#a7acaf99",
+        "type": "color",
+        "description": "For the scroll bar thumb only"
       }
     },
     "Brand": {

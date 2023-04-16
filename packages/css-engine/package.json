@@ -20,15 +20,15 @@
     "@webstudio-is/css-data": "workspace:^",
     "@webstudio-is/fonts": "workspace:^",
     "hyphenate-style-name": "^1.0.4",
-    "react": "^17.0.2",
-    "react-dom": "^17.0.2"
+    "react": "^18.2.0",
+    "react-dom": "^18.2.0"
   },
   "devDependencies": {
     "@jest/globals": "^29.3.1",
     "@storybook/react": "^6.5.16",
     "@types/hyphenate-style-name": "^1.0.0",
-    "@types/react": "^17.0.24",
-    "@types/react-dom": "^17.0.9",
+    "@types/react": "^18.0.35",
+    "@types/react-dom": "^18.0.11",
     "@webstudio-is/jest-config": "workspace:^",
     "@webstudio-is/scripts": "workspace:^",
     "@webstudio-is/storybook-config": "workspace:^",
