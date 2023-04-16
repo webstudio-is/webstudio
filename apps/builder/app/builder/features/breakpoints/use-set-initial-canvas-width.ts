@@ -12,6 +12,7 @@ import {
 } from "~/shared/nano-states";
 import { findInitialWidth } from "./find-initial-width";
 
+// Set canvas width based on workspace width, breakpoints and passed breakpoint id.
 export const useSetInitialCanvasWidth = () => {
   const [, setCanvasWidth] = useCanvasWidth();
   const workspaceRect = useStore(workspaceRectStore);

@@ -15,7 +15,10 @@ import { ShareButton } from "./share";
 import { PublishButton } from "./publish";
 import { SyncStatus } from "./sync-status";
 import { Menu } from "./menu";
-import { BreakpointsSelector, BreakpointsSettings } from "../breakpoints";
+import {
+  BreakpointsSelectorContainer,
+  BreakpointsSettings,
+} from "../breakpoints";
 import { ViewMode } from "./view-mode";
 
 const topbarContainerStyle = css({
@@ -53,7 +56,7 @@ export const Topbar = ({ gridArea, project, publish }: TopbarProps) => {
         <BreakpointsSettings />
       </Flex>
       <Flex grow align="center" justify="center">
-        <BreakpointsSelector />
+        <BreakpointsSelectorContainer />
       </Flex>
       <Toolbar>
         <ToolbarToggleGroup
