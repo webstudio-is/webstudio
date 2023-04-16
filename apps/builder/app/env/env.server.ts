@@ -34,6 +34,12 @@ const env = {
   // Assets
   MAX_UPLOAD_SIZE: process.env.MAX_UPLOAD_SIZE,
   MAX_ASSETS_PER_PROJECT: process.env.MAX_ASSETS_PER_PROJECT,
+  IMAGE_BASE_URL: process.env.IMAGE_BASE_URL ?? "/",
+  ASSET_BASE_URL:
+    process.env.ASSET_BASE_URL ??
+    process.env.ASSET_CDN_URL ??
+    process.env.ASSET_PUBLIC_PATH ??
+    "/",
 
   // Local assets
   FILE_UPLOAD_PATH: process.env.FILE_UPLOAD_PATH,
@@ -45,7 +51,7 @@ const env = {
   S3_SECRET_ACCESS_KEY: process.env.S3_SECRET_ACCESS_KEY,
   S3_BUCKET: process.env.S3_BUCKET,
   S3_ACL: process.env.S3_ACL,
-  ASSET_CDN_URL: process.env.ASSET_CDN_URL,
+  RESIZE_ORIGIN: process.env.RESIZE_ORIGIN,
 };
 
 export type ServerEnv = typeof env;
