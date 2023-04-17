@@ -259,6 +259,7 @@ let sectionsStore: ReadableAtom<Map<string, string>> = computed(
       if (
         prop.type === "string" &&
         prop.name === "id" &&
+        prop.value.trim() !== "" &&
         pageInstances.has(prop.instanceId)
       ) {
         sections.set(prop.instanceId, prop.value);
