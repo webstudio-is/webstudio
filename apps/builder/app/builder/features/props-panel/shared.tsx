@@ -40,6 +40,7 @@ type PropByType<Type> = Type extends string
   : never;
 
 export type ControlProps<Control, PropType> = {
+  instanceId: string;
   meta: PropMetaByControl<Control>;
   // prop is optional because we don't have it when an intial prop is not set
   // and we don't want to show user something like a 0 for number when it's in fact not set to any value

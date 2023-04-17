@@ -42,6 +42,7 @@ type UrlControlProps = ControlProps<
 
 type BaseControlProps = {
   id: string;
+  instanceId: string;
   prop: UrlControlProps["prop"];
   onChange: UrlControlProps["onChange"];
   onSoftDelete: UrlControlProps["onSoftDelete"];
@@ -268,18 +269,22 @@ const sectionsStore = computed(
   }
 );
 
-const BaseSection = ({ prop, onChange, id }: BaseControlProps) => {
+const BaseSection = ({ prop, onChange, id, instanceId }: BaseControlProps) => {
   const sections = useStore(sectionsStore);
-  const value = prop?.type === "instance" ? prop.value : undefined;
 
-  // @todo: filter out id of current instance
+  const options = Array.from(sections.keys()).filter((id) => id !== instanceId);
+
+  const value =
+    prop?.type === "instance" && options.includes(prop.value)
+      ? prop.value
+      : undefined;
 
   return (
     <Row>
       <Select
         id={id}
         value={value}
-        options={Array.from(sections.keys())}
+        options={options}
         getLabel={(instanceId) => sections.get(instanceId) ?? ""}
         onChange={(instanceId) =>
           onChange({ type: "instance", value: instanceId })
@@ -338,6 +343,7 @@ const propToMode = (prop?: UrlControlProps["prop"]): Mode => {
 };
 
 export const UrlControl = ({
+  instanceId,
   meta,
   prop,
   propName,
@@ -385,6 +391,7 @@ export const UrlControl = ({
 
       <BaseControl
         id={id}
+        instanceId={instanceId}
         prop={prop}
         onChange={onChange}
         onSoftDelete={onSoftDelete}

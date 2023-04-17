@@ -125,12 +125,13 @@ const PropsCombobox = ({
 };
 
 const renderProperty = (
-  { propsLogic: logic, setCssProperty, component }: PropsPanelProps,
+  { propsLogic: logic, setCssProperty, component, instanceId }: PropsPanelProps,
   { prop, propName, meta }: PropAndMeta,
   deletable?: boolean
 ) =>
   renderControl({
     key: propName,
+    instanceId,
     meta,
     prop,
     propName,
@@ -177,6 +178,7 @@ type PropsPanelProps = {
   propsLogic: ReturnType<typeof usePropsLogic>;
   component: Instance["component"];
   instanceLabel: string;
+  instanceId: string;
   componentMeta: WsComponentMeta;
   setCssProperty: SetCssProperty;
 };
@@ -286,6 +288,7 @@ export const PropsPanelContainer = ({
     <PropsPanel
       propsLogic={logic}
       component={instance.component}
+      instanceId={instance.id}
       instanceLabel={instanceLabel}
       componentMeta={componentMeta}
       setCssProperty={setCssProperty}
