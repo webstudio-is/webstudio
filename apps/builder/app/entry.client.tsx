@@ -1,10 +1,8 @@
-import { hydrate } from "react-dom";
-import { RemixBrowser } from "@remix-run/react";
-import { initSentry } from "./shared/sentry";
-
-import { useLocation, useMatches } from "@remix-run/react";
+import { RemixBrowser, useLocation, useMatches } from "@remix-run/react";
+import { startTransition, StrictMode, useEffect } from "react";
+import { hydrateRoot } from "react-dom/client";
 import { BrowserTracing, remixRouterInstrumentation } from "@sentry/remix";
-import { useEffect } from "react";
+import { initSentry } from "./shared/sentry";
 import env from "./shared/env";
 
 initSentry({
@@ -35,4 +33,11 @@ try {
   console.warn("Failed to set localStorage.debug due to Error:", error);
 }
 
-hydrate(<RemixBrowser />, document);
+startTransition(() => {
+  hydrateRoot(
+    document,
+    <StrictMode>
+      <RemixBrowser />
+    </StrictMode>
+  );
+});
