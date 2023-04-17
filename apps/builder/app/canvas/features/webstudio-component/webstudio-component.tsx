@@ -18,6 +18,7 @@ import type { GetComponent } from "@webstudio-is/react-sdk";
 import {
   instancesStore,
   selectedInstanceSelectorStore,
+  selectedStyleSourceSelectorStore,
   useInstanceProps,
   useInstanceStyles,
 } from "~/shared/nano-states";
@@ -224,6 +225,7 @@ export const WebstudioComponentDev = ({
           );
           textEditingInstanceSelectorStore.set(undefined);
           selectedInstanceSelectorStore.set(newSelectedSelector);
+          selectedStyleSourceSelectorStore.set(undefined);
         }}
       />
     </Suspense>

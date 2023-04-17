@@ -6,7 +6,10 @@ import {
   workspaceRectStore,
 } from "~/builder/shared/nano-states";
 import type { Publish } from "~/shared/pubsub";
-import { selectedInstanceSelectorStore } from "~/shared/nano-states";
+import {
+  selectedInstanceSelectorStore,
+  selectedStyleSourceSelectorStore,
+} from "~/shared/nano-states";
 import { textEditingInstanceSelectorStore } from "~/shared/nano-states";
 import { CanvasTools } from "./canvas-tools";
 import { useMeasure } from "react-use";
@@ -87,6 +90,7 @@ export const Workspace = ({
   const handleWorkspaceClick = () => {
     selectedInstanceSelectorStore.set(undefined);
     textEditingInstanceSelectorStore.set(undefined);
+    selectedStyleSourceSelectorStore.set(undefined);
   };
 
   return (

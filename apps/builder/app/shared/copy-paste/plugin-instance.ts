@@ -19,6 +19,7 @@ import {
   instancesStore,
   selectedPageStore,
   breakpointsStore,
+  selectedStyleSourceSelectorStore,
 } from "../nano-states";
 import {
   type InstanceSelector,
@@ -218,6 +219,7 @@ export const onPaste = (clipboardData: string) => {
         copiedRootInstanceId,
         ...instanceSelector,
       ]);
+      selectedStyleSourceSelectorStore.set(undefined);
     }
   );
 };
