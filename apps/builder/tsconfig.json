@@ -10,6 +10,8 @@
   "compilerOptions": {
     "paths": { "~/*": ["app/*"] },
     "baseUrl": ".",
-    "rootDir": "./app"
+    "rootDir": "./app",
+    "declaration": false,
+    "declarationDir": null
   }
 }

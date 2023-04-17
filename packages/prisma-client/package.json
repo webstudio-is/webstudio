@@ -6,7 +6,7 @@
   "homepage": "https://webstudio.is",
   "type": "module",
   "scripts": {
-    "typecheck": "tsc --noEmit",
+    "typecheck": "tsc --noEmit --emitDeclarationOnly false",
     "lint": "eslint ./src --ext .ts,.tsx --max-warnings 0",
     "checks": "pnpm typecheck && pnpm lint",
     "dev": "prisma generate --watch & build-package --watch --no-generated-as-entries",
