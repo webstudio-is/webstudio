@@ -11,6 +11,7 @@ import {
   selectedBreakpointIdStore,
 } from "~/shared/nano-states";
 import { findInitialWidth } from "./find-initial-width";
+import { isBaseBreakpoint } from "~/shared/breakpoints";
 
 // Set canvas width based on workspace width, breakpoints and passed breakpoint id.
 export const useSetInitialCanvasWidth = () => {
@@ -43,21 +44,20 @@ export const useSetInitialCanvasWidthOnce = () => {
 
   // Set it initially once.
   useEffect(() => {
-    if (isDone.current) {
-      return;
-    }
-    if (workspaceRect === undefined) {
+    if (isDone.current || workspaceRect === undefined) {
       return;
     }
 
-    const width = workspaceRect.width;
+    const { width } = workspaceRect;
+    const breakpointValues = Array.from(breakpoints.values());
+    const baseBreakpoint = breakpointValues.find(isBaseBreakpoint);
 
-    const applicableBreakpoint = findApplicableMedia(
-      Array.from(breakpoints.values()),
-      width
-    );
-    if (applicableBreakpoint) {
-      selectedBreakpointIdStore.set(applicableBreakpoint.id);
+    // We don't need to set breakpoint if there is a base breakpoint, since it's what should be used by default.
+    if (baseBreakpoint === undefined) {
+      const applicableBreakpoint = findApplicableMedia(breakpointValues, width);
+      if (applicableBreakpoint) {
+        selectedBreakpointIdStore.set(applicableBreakpoint.id);
+      }
     }
 
     setWidth(width);
