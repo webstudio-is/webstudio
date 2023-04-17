@@ -1,7 +1,7 @@
 import { useState } from "react";
 import store from "immerhin";
 import { nanoid } from "nanoid";
-import { theme, DeprecatedText2 } from "@webstudio-is/design-system";
+import { theme, Text } from "@webstudio-is/design-system";
 import {
   type Instance,
   type StyleSource,
@@ -289,9 +289,9 @@ export const StyleSourcesSection = () => {
 
   return (
     <>
-      <DeprecatedText2 css={{ py: theme.spacing[9] }} variant="label">
+      <Text css={{ py: theme.spacing[9] }} variant="titles">
         Style Sources
-      </DeprecatedText2>
+      </Text>
 
       <StyleSourceInput
         items={items}
