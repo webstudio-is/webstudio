@@ -23,8 +23,8 @@
     "@webstudio-is/scripts": "workspace:^",
     "@webstudio-is/storybook-config": "workspace:^",
     "@webstudio-is/tsconfig": "workspace:^",
-    "react": "^18.2.0",
-    "react-dom": "^18.2.0",
+    "react": "0.0.0-experimental-39a3b72c6-20230414",
+    "react-dom": "0.0.0-experimental-39a3b72c6-20230414",
     "tsx": "^3.12.6",
     "typescript": "5.0.3"
   },

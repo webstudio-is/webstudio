@@ -1,3 +1,4 @@
+import * as React from "react";
 import { Grid } from "@webstudio-is/design-system";
 import { toValue } from "@webstudio-is/css-engine";
 import { styleConfigByName } from "./shared/configs";
@@ -23,6 +24,10 @@ import {
   EffectsSection,
   OtherSection,
 } from "./sections";
+import { useInView } from "react-intersection-observer";
+
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+const Offscreen = (React as any).unstable_Offscreen;
 
 export const categories = [
   "layout",
@@ -95,6 +100,20 @@ export const renderProperty = ({
   );
 };
 
+const Off = (props: { children: React.ReactNode }) => {
+  const { ref, inView } = useInView({
+    threshold: 0,
+  });
+
+  return (
+    <div ref={ref} style={{ minHeight: "100px" }}>
+      <Offscreen mode={inView ? "visible" : "hidden"}>
+        {props.children}
+      </Offscreen>
+    </div>
+  );
+};
+
 export const renderCategory = ({
   setProperty,
   deleteProperty,
@@ -105,13 +124,15 @@ export const renderCategory = ({
   const Section = sections[category];
 
   return (
-    <Section
-      setProperty={setProperty}
-      deleteProperty={deleteProperty}
-      createBatchUpdate={createBatchUpdate}
-      currentStyle={currentStyle}
-      category={category}
-    />
+    <Off>
+      <Section
+        setProperty={setProperty}
+        deleteProperty={deleteProperty}
+        createBatchUpdate={createBatchUpdate}
+        currentStyle={currentStyle}
+        category={category}
+      />
+    </Off>
   );
 };
 

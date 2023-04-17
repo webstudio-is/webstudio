@@ -20,7 +20,7 @@
   },
   "dependencies": {
     "@webstudio-is/generate-arg-types": "workspace:^",
-    "react": "^18.2.0",
+    "react": "0.0.0-experimental-39a3b72c6-20230414",
     "warn-once": "^0.1.1"
   },
   "devDependencies": {
@@ -33,7 +33,7 @@
     "@webstudio-is/tsconfig": "workspace:^",
     "jest": "^29.3.1",
     "react": "^18.2.0",
-    "react-dom": "^18.2.0",
+    "react-dom": "0.0.0-experimental-39a3b72c6-20230414",
     "typescript": "5.0.3"
   },
   "peerDependencies": {

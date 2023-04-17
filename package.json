@@ -56,14 +56,14 @@
     ]
   },
   "resolutions": {
-    "react": "18.2.0",
-    "react-dom": "18.2.0"
+    "react": "0.0.0-experimental-39a3b72c6-20230414",
+    "react-dom": "0.0.0-experimental-39a3b72c6-20230414"
   },
   "pnpm": {
     "overrides": {
       "babel-loader": "8.3.0",
-      "react": "18.2.0",
-      "react-dom": "18.2.0"
+      "react": "0.0.0-experimental-39a3b72c6-20230414",
+      "react-dom": "0.0.0-experimental-39a3b72c6-20230414"
     },
     "patchedDependencies": {
       "@stitches/react@1.3.1-1": "patches/@stitches__react@1.3.1-1.patch"

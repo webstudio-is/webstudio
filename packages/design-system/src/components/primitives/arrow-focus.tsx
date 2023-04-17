@@ -79,7 +79,5 @@ const ContextHelper = ({ render }: { render: Render }) => {
 };
 
 export const ArrowFocus = ({ render }: { render: Render }) => (
-  <FocusScope>
-    <ContextHelper render={render} />
-  </FocusScope>
+  <ContextHelper render={render} />
 );
