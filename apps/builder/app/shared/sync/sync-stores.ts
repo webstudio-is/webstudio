@@ -36,7 +36,8 @@ type SyncEventSource = "canvas" | "builder";
 
 declare module "~/shared/pubsub" {
   export interface PubsubMap {
-    canvasStoreReady: void;
+    handshake: { source: SyncEventSource };
+
     sendStoreData: {
       // distinct source to avoid infinite loop
       source: SyncEventSource;
@@ -112,6 +113,7 @@ const syncStoresChanges = (name: SyncEventSource, publish: Publish) => {
       if (source === "remote") {
         return;
       }
+
       publish({
         type: "sendStoreChanges",
         payload: {
@@ -168,6 +170,7 @@ const syncStoresState = (name: SyncEventSource, publish: Publish) => {
           return;
         }
         latestData.set(namespace, value);
+
         publish({
           type: "sendStoreData",
           payload: {
@@ -192,25 +195,82 @@ const syncStoresState = (name: SyncEventSource, publish: Publish) => {
   };
 };
 
+const handshakeAndSyncStores = (
+  source: SyncEventSource,
+  publish: Publish,
+  sync: (publish: Publish) => () => void
+) => {
+  const actions: Parameters<typeof publish>[0][] = [];
+  let destinationReady = false;
+
+  // Until builder is ready store action in local cache
+  const publishAction: typeof publish = (action) => {
+    if (destinationReady) {
+      return publish(action);
+    }
+    actions.push(action);
+  };
+
+  const unsubscribe = sync(publishAction);
+
+  const handshakeAction = {
+    type: "handshake",
+    payload: {
+      source,
+    },
+  } as const;
+
+  publish(handshakeAction);
+
+  const destinationStoreReady = subscribe("handshake", (payload) => {
+    if (source === payload.source) {
+      return;
+    }
+
+    if (destinationReady) {
+      return;
+    }
+
+    // We need to publish it here last time
+    publish(handshakeAction);
+
+    for (const action of actions) {
+      publish(action);
+    }
+
+    // cleanup
+    actions.length = 0;
+
+    destinationReady = true;
+
+    destinationStoreReady();
+  });
+
+  return () => {
+    destinationStoreReady();
+    unsubscribe();
+  };
+};
+
 export const useCanvasStore = (publish: Publish) => {
   useEffect(() => {
-    const unsubscribeStoresState = syncStoresState("canvas", publish);
-    const unsubscribeStoresChanges = syncStoresChanges("canvas", publish);
-
-    publish({
-      type: "canvasStoreReady",
+    return handshakeAndSyncStores("canvas", publish, (publish) => {
+      const unsubscribeStoresState = syncStoresState("canvas", publish);
+      const unsubscribeStoresChanges = syncStoresChanges("canvas", publish);
+      return () => {
+        unsubscribeStoresState();
+        unsubscribeStoresChanges();
+      };
     });
-
-    return () => {
-      unsubscribeStoresState();
-      unsubscribeStoresChanges();
-    };
   }, [publish]);
 };
 
 export const useBuilderStore = (publish: Publish) => {
   useEffect(() => {
-    const unsubscribeCanvasStoreReady = subscribe("canvasStoreReady", () => {
+    return handshakeAndSyncStores("builder", publish, (publish) => {
+      const unsubscribeStoresState = syncStoresState("builder", publish);
+      const unsubscribeStoresChanges = syncStoresChanges("builder", publish);
+
       // immerhin data is sent only initially so not part of syncStoresState
       // expect data to be populated by the time effect is called
       const data = [];
@@ -233,15 +293,11 @@ export const useBuilderStore = (publish: Publish) => {
           data,
         },
       });
+
+      return () => {
+        unsubscribeStoresState();
+        unsubscribeStoresChanges();
+      };
     });
-
-    const unsubscribeStoresState = syncStoresState("builder", publish);
-    const unsubscribeStoresChanges = syncStoresChanges("builder", publish);
-
-    return () => {
-      unsubscribeCanvasStoreReady();
-      unsubscribeStoresState();
-      unsubscribeStoresChanges();
-    };
   }, [publish]);
 };
