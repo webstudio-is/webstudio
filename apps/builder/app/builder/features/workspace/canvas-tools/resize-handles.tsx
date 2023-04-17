@@ -101,7 +101,9 @@ const useScrub = ({ side }: { side: "right" | "left" }) => {
       getValue(state, movement) {
         const value =
           side === "left"
-            ? state.value - movement * 2
+            ? //  * 2 is a compensation for the fact that canvas is centered, so when we scrub, width has to change twice faster,
+              // otherwise cursor will be faster than the edge movement
+              state.value - movement * 2
             : state.value + movement * 2;
         return Math.max(value, minCanvasWidth);
       },
