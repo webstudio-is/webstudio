@@ -1,6 +1,6 @@
 import { useStore } from "@nanostores/react";
 import type { Publish } from "~/shared/pubsub";
-import { Box, css } from "@webstudio-is/design-system";
+import { css } from "@webstudio-is/design-system";
 import { PlacementIndicator } from "@webstudio-is/design-system";
 import {
   useIsPreviewMode,
