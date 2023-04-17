@@ -33,7 +33,7 @@ const useContentController = ({
       onMouseMove: callback,
       onCaretMove: callback,
     });
-    return () => cleanup();
+    return cleanup;
   }, [ref, read, write, callback]);
 };
 
