@@ -17,6 +17,9 @@
     "jsx": "react-jsx",
     "resolveJsonModule": true,
     "noFallthroughCasesInSwitch": true,
-    "verbatimModuleSyntax": true
+    "verbatimModuleSyntax": true,
+    "emitDeclarationOnly": true,
+    "declaration": true,
+    "declarationDir": "lib/types"
   }
 }
