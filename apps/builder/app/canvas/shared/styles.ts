@@ -1,5 +1,6 @@
-import { useEffect } from "react";
+import { useEffect, useMemo } from "react";
 import { useIsomorphicLayoutEffect } from "react-use";
+import { computed } from "nanostores";
 import { useStore } from "@nanostores/react";
 import type { Assets } from "@webstudio-is/asset-uploader";
 import {
@@ -23,6 +24,8 @@ import {
   breakpointsStore,
   isPreviewModeStore,
   selectedInstanceSelectorStore,
+  selectedStyleSourceSelectorStore,
+  styleSourceSelectionsStore,
 } from "~/shared/nano-states";
 import {
   createCssEngine,
@@ -205,6 +208,37 @@ const getOrCreateRule = ({
   return rule;
 };
 
+const useSelectedState = (instanceId: Instance["id"]) => {
+  const selectedStateStore = useMemo(() => {
+    return computed(
+      [
+        selectedInstanceSelectorStore,
+        selectedStyleSourceSelectorStore,
+        styleSourceSelectionsStore,
+      ],
+      (
+        selectedInstanceSelector,
+        selectedStyleSourceSelector,
+        styleSourceSelections
+      ) => {
+        if (
+          selectedInstanceSelector?.[0] !== instanceId ||
+          selectedStyleSourceSelector?.state === undefined
+        ) {
+          return;
+        }
+        const { styleSourceId, state } = selectedStyleSourceSelector;
+        const styleSourceSelection = styleSourceSelections.get(instanceId);
+        if (styleSourceSelection?.values.includes(styleSourceId) === true) {
+          return state;
+        }
+      }
+    );
+  }, [instanceId]);
+  const selectedState = useStore(selectedStateStore);
+  return selectedState;
+};
+
 export const useCssRules = ({
   instanceId,
   instanceStyles,
@@ -213,6 +247,7 @@ export const useCssRules = ({
   instanceStyles: StyleDecl[];
 }) => {
   const breakpoints = useStore(breakpointsStore);
+  const selectedState = useSelectedState(instanceId);
 
   useIsomorphicLayoutEffect(() => {
     // expect assets to be up to date by the time styles are changed
@@ -230,14 +265,24 @@ export const useCssRules = ({
       }
     }
 
-    for (const styleDecl of instanceStyles) {
+    // render styles without state first so state styles in preview
+    // could override them
+    const orderedStyles = instanceStyles.slice().sort((left, right) => {
+      const leftDirection = left.state === undefined ? -1 : 1;
+      const rightDirection = right.state === undefined ? -1 : 1;
+      return leftDirection - rightDirection;
+    });
+
+    for (const styleDecl of orderedStyles) {
       const { breakpointId, state, property, value } = styleDecl;
 
       // create new rule or use cached one
       const rule = getOrCreateRule({
         instanceId,
         breakpointId,
-        state,
+        // render selected state as style without state
+        // to show user preview
+        state: selectedState === state ? undefined : state,
         assets,
       });
 
@@ -269,7 +314,7 @@ export const useCssRules = ({
     }
 
     cssEngine.render();
-  }, [instanceId, instanceStyles, breakpoints]);
+  }, [instanceId, selectedState, instanceStyles, breakpoints]);
 };
 
 const toVarNamespace = (id: string, property: string) => {
