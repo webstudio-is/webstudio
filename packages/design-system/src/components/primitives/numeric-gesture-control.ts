@@ -90,7 +90,7 @@ export const numericScrubControl = (
 
   let exitPointerLock: (() => void) | undefined = undefined;
 
-  let originalUserSelect: string = "";
+  let originalUserSelect = "";
 
   const cleanup = () => {
     targetNode.removeEventListener("pointermove", handleEvent);
