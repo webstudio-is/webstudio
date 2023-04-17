@@ -25,7 +25,6 @@ import {
   isPreviewModeStore,
   selectedInstanceSelectorStore,
   selectedStyleSourceSelectorStore,
-  styleSourceSelectionsStore,
 } from "~/shared/nano-states";
 import {
   createCssEngine,
@@ -211,27 +210,12 @@ const getOrCreateRule = ({
 const useSelectedState = (instanceId: Instance["id"]) => {
   const selectedStateStore = useMemo(() => {
     return computed(
-      [
-        selectedInstanceSelectorStore,
-        selectedStyleSourceSelectorStore,
-        styleSourceSelectionsStore,
-      ],
-      (
-        selectedInstanceSelector,
-        selectedStyleSourceSelector,
-        styleSourceSelections
-      ) => {
-        if (
-          selectedInstanceSelector?.[0] !== instanceId ||
-          selectedStyleSourceSelector?.state === undefined
-        ) {
+      [selectedInstanceSelectorStore, selectedStyleSourceSelectorStore],
+      (selectedInstanceSelector, selectedStyleSourceSelector) => {
+        if (selectedInstanceSelector?.[0] !== instanceId) {
           return;
         }
-        const { styleSourceId, state } = selectedStyleSourceSelector;
-        const styleSourceSelection = styleSourceSelections.get(instanceId);
-        if (styleSourceSelection?.values.includes(styleSourceId) === true) {
-          return state;
-        }
+        return selectedStyleSourceSelector?.state;
       }
     );
   }, [instanceId]);
