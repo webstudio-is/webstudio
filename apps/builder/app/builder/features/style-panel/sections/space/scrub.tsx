@@ -77,7 +77,7 @@ export const useScrub = (props: {
       setValues(isEphemeral ? nextValues : {});
     };
 
-    const scrub = numericScrubControl(finalTarget.element, {
+    return numericScrubControl(finalTarget.element, {
       direction:
         property.endsWith("Left") || property.endsWith("Right")
           ? "horizontal"
@@ -103,8 +103,6 @@ export const useScrub = (props: {
         );
       },
     });
-
-    return scrub.disconnectedCallback;
   }, [finalTarget]);
 
   return {

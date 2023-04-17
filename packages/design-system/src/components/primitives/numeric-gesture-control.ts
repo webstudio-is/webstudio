@@ -193,19 +193,17 @@ export const numericScrubControl = (
     targetNode.addEventListener(eventName, handleEvent)
   );
 
-  return {
-    disconnectedCallback: () => {
-      eventNames.forEach((eventName) =>
-        targetNode.removeEventListener(eventName, handleEvent)
-      );
+  return () => {
+    eventNames.forEach((eventName) =>
+      targetNode.removeEventListener(eventName, handleEvent)
+    );
 
-      clearTimeout(state.timerId);
-      targetNode.removeEventListener("pointermove", handleEvent);
-      onStatusChange?.("idle");
+    clearTimeout(state.timerId);
+    targetNode.removeEventListener("pointermove", handleEvent);
+    onStatusChange?.("idle");
 
-      exitPointerLock?.();
-      exitPointerLock = undefined;
-    },
+    exitPointerLock?.();
+    exitPointerLock = undefined;
   };
 };
 

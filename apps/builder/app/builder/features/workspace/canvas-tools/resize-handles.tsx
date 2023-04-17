@@ -94,7 +94,7 @@ const useScrub = ({ side }: { side: "right" | "left" }) => {
     if (ref.current === null) {
       return;
     }
-    const scrub = numericScrubControl(ref.current, {
+    return numericScrubControl(ref.current, {
       getInitialValue() {
         return canvasWidthStore.get();
       },
@@ -119,7 +119,6 @@ const useScrub = ({ side }: { side: "right" | "left" }) => {
         updateBreakpoint(event.value);
       },
     });
-    return scrub.disconnectedCallback;
   }, [side]);
 
   return ref;

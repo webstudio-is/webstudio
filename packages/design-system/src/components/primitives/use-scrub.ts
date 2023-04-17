@@ -40,7 +40,7 @@ export const useScrub = ({
       return;
     }
 
-    const scrub = numericScrubControl(scrubRefCurrent, {
+    return numericScrubControl(scrubRefCurrent, {
       getInitialValue: () => {
         return valueRef.current;
       },
@@ -66,8 +66,6 @@ export const useScrub = ({
       },
       shouldHandleEvent: shouldHandleEventRef.current,
     });
-
-    return scrub.disconnectedCallback;
   }, []);
 
   return { scrubRef, inputRef };

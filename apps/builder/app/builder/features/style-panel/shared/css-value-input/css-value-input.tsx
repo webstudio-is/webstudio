@@ -85,7 +85,7 @@ const useScrub = ({
       return;
     }
 
-    const scrub = numericScrubControl(scrubRefCurrent, {
+    return numericScrubControl(scrubRefCurrent, {
       // @todo: after this https://github.com/webstudio-is/webstudio-builder/issues/564
       // we can switch back on using just initial value
       //
@@ -130,8 +130,6 @@ const useScrub = ({
       },
       shouldHandleEvent: shouldHandleEvent,
     });
-
-    return scrub.disconnectedCallback;
   }, [type, unit, shouldHandleEvent]);
 
   return [scrubRef, inputRef];
