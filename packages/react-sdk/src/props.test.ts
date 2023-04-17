@@ -72,8 +72,43 @@ describe("resolveUrlProp", () => {
     value: unique(),
   };
 
+  const instanceProp1: Prop = {
+    type: "instance",
+    id: unique(),
+    instanceId,
+    name: unique(),
+    value: unique(),
+  };
+
+  const instnaceIdProp: Prop = {
+    type: "string",
+    id: unique(),
+    instanceId: instanceProp1.value,
+    name: "id",
+    value: unique(),
+  };
+
+  const instanceProp2: Prop = {
+    type: "instance",
+    id: unique(),
+    instanceId,
+    name: unique(),
+    value: unique(),
+  };
+
   const props: PropsByInstanceId = new Map([
-    [instanceId, [pageByIdProp, pageByPathProp, arbitraryUrlProp, assetProp]],
+    [
+      instanceId,
+      [
+        pageByIdProp,
+        pageByPathProp,
+        arbitraryUrlProp,
+        assetProp,
+        instanceProp1,
+        instanceProp2,
+      ],
+    ],
+    [instnaceIdProp.instanceId, [instnaceIdProp]],
   ]);
 
   const pages: Pages = new Map([
@@ -113,6 +148,21 @@ describe("resolveUrlProp", () => {
     expect(resolveUrlProp(instanceId, pageByPathProp.name, stores)).toEqual({
       type: "page",
       page: page2,
+    });
+  });
+
+  test("instance by id", () => {
+    expect(resolveUrlProp(instanceId, instanceProp1.name, stores)).toEqual({
+      type: "instance",
+      instanceId: instnaceIdProp.instanceId,
+      idProp: instnaceIdProp.value,
+    });
+  });
+
+  test("instance by id (no id prop)", () => {
+    expect(resolveUrlProp(instanceId, instanceProp2.name, stores)).toEqual({
+      type: "instance",
+      instanceId: instanceProp2.value,
     });
   });
 

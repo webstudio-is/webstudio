@@ -231,7 +231,6 @@ const pageInstancesStore = computed(
       return result;
     }
 
-    // @todo: do we need to handle slots specially here?
     const addInstance = (id: string) => {
       const instance = instances.get(id);
       if (instance === undefined) {

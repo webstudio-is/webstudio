@@ -81,6 +81,7 @@ export const resolveUrlProp = (
   | { type: "page"; page: Page }
   | { type: "asset"; asset: Asset }
   | { type: "string"; url: string }
+  | { type: "instance"; instanceId: Instance["id"]; idProp?: string }
   | undefined => {
   const instanceProps = props.get(instanceId);
   if (instanceProps === undefined) {
@@ -110,6 +111,18 @@ export const resolveUrlProp = (
       return asset && { type: "asset", asset };
     }
 
+    if (prop.type === "instance") {
+      const idProp = props.get(prop.value)?.find((prop) => prop.name === "id");
+      return {
+        type: "instance",
+        instanceId: prop.value,
+        idProp:
+          idProp === undefined || idProp.type !== "string"
+            ? undefined
+            : idProp.value,
+      };
+    }
+
     return;
   }
 };
@@ -119,7 +132,7 @@ export const resolveUrlProp = (
 export const usePropUrl = (instanceId: Instance["id"], name: string) => {
   const { propsByInstanceIdStore, pagesStore, assetsStore } =
     useContext(ReactSdkContext);
-  const pageStore = useMemo(
+  const store = useMemo(
     () =>
       computed(
         [propsByInstanceIdStore, pagesStore, assetsStore],
@@ -128,7 +141,7 @@ export const usePropUrl = (instanceId: Instance["id"], name: string) => {
       ),
     [propsByInstanceIdStore, pagesStore, assetsStore, instanceId, name]
   );
-  return useStore(pageStore);
+  return useStore(store);
 };
 
 export const getInstanceIdFromComponentProps = (
