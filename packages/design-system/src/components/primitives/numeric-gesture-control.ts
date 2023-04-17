@@ -90,6 +90,18 @@ export const numericScrubControl = (
 
   let exitPointerLock: (() => void) | undefined = undefined;
 
+  const cleanup = () => {
+    targetNode.removeEventListener("pointermove", handleEvent);
+    onStatusChange?.("idle");
+    clearTimeout(state.timerId);
+
+    exitPointerLock?.();
+    exitPointerLock = undefined;
+    targetNode.ownerDocument.documentElement.style.removeProperty(
+      "user-select"
+    );
+  };
+
   // Cannot define `event:` as PointerEvent,
   // because (HTMLElement | SVGElement).addEventListener("pointermove", ...)
   // takes (Event => void) as a callback
@@ -105,13 +117,7 @@ export const numericScrubControl = (
     switch (type) {
       case "pointerup": {
         const shouldComponentUpdate = Boolean(state.cursor);
-        targetNode.removeEventListener("pointermove", handleEvent);
-        onStatusChange?.("idle");
-        clearTimeout(state.timerId);
-
-        exitPointerLock?.();
-        exitPointerLock = undefined;
-
+        cleanup();
         if (shouldComponentUpdate) {
           onValueChange?.({
             target: targetNode,
@@ -151,6 +157,7 @@ export const numericScrubControl = (
 
         onStatusChange?.("scrubbing");
         targetNode.addEventListener("pointermove", handleEvent);
+        targetNode.ownerDocument.documentElement.style.userSelect = "none";
         break;
       }
       case "pointermove": {
@@ -197,13 +204,7 @@ export const numericScrubControl = (
     eventNames.forEach((eventName) =>
       targetNode.removeEventListener(eventName, handleEvent)
     );
-
-    clearTimeout(state.timerId);
-    targetNode.removeEventListener("pointermove", handleEvent);
-    onStatusChange?.("idle");
-
-    exitPointerLock?.();
-    exitPointerLock = undefined;
+    cleanup();
   };
 };
 
