@@ -11,8 +11,10 @@ import type {
 } from "@webstudio-is/react-sdk";
 import { textVariants } from "@webstudio-is/design-system";
 import type { Asset } from "@webstudio-is/asset-uploader";
+import { setMockUrlSectionsStore } from "./controls/url";
 // eslint-disable-next-line import/no-internal-modules
 import catPath from "./props-panel.stories.assets/cat.jpg";
+import { atom } from "nanostores";
 
 setMockEnv({ ASSET_BASE_URL: catPath.replace("cat.jpg", "") });
 
@@ -39,6 +41,13 @@ pagesStore.set({
     page("Contacts", "/contacts"),
   ],
 });
+
+const urlSections = new Map([
+  [unique(), "links"],
+  [unique(), "about"],
+]);
+
+setMockUrlSectionsStore(atom(urlSections));
 
 const imageAsset = (name = "cat", format = "jpg"): Asset => ({
   id: unique(),
@@ -169,6 +178,7 @@ const componentPropsMeta: WsComponentPropsMeta = {
     addedCheck: checkProp(),
     addedUrlUrl: urlProp("Added URL (URL)"),
     addedUrlPage: urlProp("Added URL (Page)"),
+    addedUrlSection: urlProp("Added URL (Section)"),
     addedUrlEmail: urlProp("Added URL (Email)"),
     addedUrlPhone: urlProp("Added URL (Phone)"),
     addedUrlAttachment: urlProp("Added URL (Attachment)"),
@@ -272,6 +282,13 @@ const startingProps: Prop[] = [
   {
     id: unique(),
     instanceId,
+    name: "addedUrlSection",
+    type: "instance",
+    value: Array.from(urlSections.keys())[0] ?? "",
+  },
+  {
+    id: unique(),
+    instanceId,
     name: "addedUrlEmail",
     type: "string",
     value: "mailto:hello@example.com?subject=Hello",
@@ -327,6 +344,7 @@ export const Story = () => {
     <div style={{ display: "flex", gap: 12 }}>
       <div style={{ width: 240, border: "dashed 3px #e3e3e3" }}>
         <PropsPanel
+          instanceId={instanceId}
           propsLogic={logic}
           component="Button"
           instanceLabel="My Button"

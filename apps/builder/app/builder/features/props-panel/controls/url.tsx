@@ -33,7 +33,7 @@ import {
 } from "../shared";
 import type { Instance, Page } from "@webstudio-is/project-build";
 import { SelectAsset } from "./select-asset";
-import { computed } from "nanostores";
+import { computed, type ReadableAtom } from "nanostores";
 
 type UrlControlProps = ControlProps<
   "url",
@@ -250,7 +250,7 @@ const pageInstancesStore = computed(
   }
 );
 
-const sectionsStore = computed(
+let sectionsStore: ReadableAtom<Map<string, string>> = computed(
   [pageInstancesStore, propsStore],
   (pageInstances, props) => {
     const sections = new Map<Instance["id"], string>();
@@ -268,6 +268,12 @@ const sectionsStore = computed(
     return sections;
   }
 );
+
+// too hard to mock all the stores that sectionsStore is derived from
+// so we have this for Storybook
+export const setMockUrlSectionsStore = (store: typeof sectionsStore) => {
+  sectionsStore = store;
+};
 
 const BaseSection = ({ prop, onChange, id, instanceId }: BaseControlProps) => {
   const sections = useStore(sectionsStore);
