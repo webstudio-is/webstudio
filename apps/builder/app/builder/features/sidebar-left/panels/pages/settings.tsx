@@ -1,6 +1,11 @@
 import { z } from "zod";
 import store from "immerhin";
-import { useState, useCallback, type ComponentProps } from "react";
+import {
+  useState,
+  useCallback,
+  type ComponentProps,
+  type FocusEventHandler,
+} from "react";
 import { useStore } from "@nanostores/react";
 import { useDebouncedCallback } from "use-debounce";
 import { useUnmount } from "react-use";
@@ -18,13 +23,13 @@ import {
   theme,
   Button,
   Box,
-  DeprecatedLabel,
+  Label,
   TextArea,
-  DeprecatedTextField,
   styled,
   Flex,
   InputErrorsTooltip,
   Tooltip,
+  InputField,
 } from "@webstudio-is/design-system";
 import { ChevronDoubleLeftIcon, TrashIcon } from "@webstudio-is/icons";
 import { useIds } from "~/shared/form-utils";
@@ -119,7 +124,7 @@ const toFormPage = (page?: Page): Values => {
   };
 };
 
-const autoSelectHandler = (event: React.FocusEvent<HTMLInputElement>) =>
+const autoSelectHandler: FocusEventHandler<HTMLInputElement> = (event) =>
   event.target.select();
 
 const FormFields = ({
@@ -145,11 +150,11 @@ const FormFields = ({
   return (
     <>
       <Group>
-        <DeprecatedLabel htmlFor={fieldIds.name}>Page Name</DeprecatedLabel>
+        <Label htmlFor={fieldIds.name}>Page Name</Label>
         <InputErrorsTooltip errors={errors.name}>
-          <DeprecatedTextField
+          <InputField
             tabIndex={1}
-            state={errors.name && "invalid"}
+            color={errors.name && "error"}
             id={fieldIds.name}
             autoFocus
             onFocus={autoSelect ? autoSelectHandler : undefined}
@@ -165,11 +170,11 @@ const FormFields = ({
       </Group>
       {isHomePage !== true && (
         <Group>
-          <DeprecatedLabel htmlFor={fieldIds.path}>Path</DeprecatedLabel>
+          <Label htmlFor={fieldIds.path}>Path</Label>
           <InputErrorsTooltip errors={errors.path}>
-            <DeprecatedTextField
+            <InputField
               tabIndex={1}
-              state={errors.path && "invalid"}
+              color={errors.path && "error"}
               id={fieldIds.path}
               name="path"
               placeholder="/about"
@@ -183,11 +188,11 @@ const FormFields = ({
         </Group>
       )}
       <Group>
-        <DeprecatedLabel htmlFor={fieldIds.title}>Title</DeprecatedLabel>
+        <Label htmlFor={fieldIds.title}>Title</Label>
         <InputErrorsTooltip errors={errors.title}>
-          <DeprecatedTextField
+          <InputField
             tabIndex={1}
-            state={errors.title && "invalid"}
+            color={errors.title && "error"}
             id={fieldIds.title}
             name="title"
             placeholder="My awesome site - About"
@@ -200,9 +205,7 @@ const FormFields = ({
         </InputErrorsTooltip>
       </Group>
       <Group>
-        <DeprecatedLabel htmlFor={fieldIds.description}>
-          Description
-        </DeprecatedLabel>
+        <Label htmlFor={fieldIds.description}>Description</Label>
         <InputErrorsTooltip errors={errors.description}>
           <TextArea
             tabIndex={1}
