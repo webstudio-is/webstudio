@@ -1,5 +1,10 @@
 import { useStore } from "@nanostores/react";
-import { pagesStore } from "~/shared/nano-states";
+import {
+  instancesStore,
+  pagesStore,
+  propsStore,
+  selectedPageStore,
+} from "~/shared/nano-states";
 import {
   InputField,
   Flex,
@@ -17,6 +22,7 @@ import {
   LinkIcon,
   PageIcon,
   PhoneIcon,
+  SectionLinkIcon,
 } from "@webstudio-is/icons";
 import { type ReactNode, useState } from "react";
 import {
@@ -25,10 +31,14 @@ import {
   useLocalValue,
   VerticalLayout,
 } from "../shared";
-import type { Page } from "@webstudio-is/project-build";
+import type { Instance, Page } from "@webstudio-is/project-build";
 import { SelectAsset } from "./select-asset";
+import { computed } from "nanostores";
 
-type UrlControlProps = ControlProps<"url", "string" | "page" | "asset">;
+type UrlControlProps = ControlProps<
+  "url",
+  "string" | "page" | "asset" | "instance"
+>;
 
 type BaseControlProps = {
   id: string;
@@ -211,9 +221,83 @@ const BaseAttachment = ({ prop, onChange, onSoftDelete }: BaseControlProps) => (
   </Row>
 );
 
+const pageInstancesStore = computed(
+  [selectedPageStore, instancesStore],
+  (page, instances) => {
+    const result = new Set<string>();
+
+    if (page === undefined) {
+      return result;
+    }
+
+    // @todo: do we need to handle slots specially here?
+    const addInstance = (id: string) => {
+      const instance = instances.get(id);
+      if (instance === undefined) {
+        return;
+      }
+      result.add(id);
+      for (const child of instance.children) {
+        if (child.type === "id") {
+          addInstance(child.value);
+        }
+      }
+    };
+    addInstance(page.rootInstanceId);
+
+    return result;
+  }
+);
+
+const sectionsStore = computed(
+  [pageInstancesStore, propsStore],
+  (pageInstances, props) => {
+    const sections = new Map<Instance["id"], string>();
+
+    for (const prop of props.values()) {
+      if (
+        prop.type === "string" &&
+        prop.name === "id" &&
+        pageInstances.has(prop.instanceId)
+      ) {
+        sections.set(prop.instanceId, prop.value);
+      }
+    }
+
+    return sections;
+  }
+);
+
+const BaseSection = ({ prop, onChange, id }: BaseControlProps) => {
+  const sections = useStore(sectionsStore);
+  const value = prop?.type === "instance" ? prop.value : undefined;
+
+  // @todo: filter out id of current instance
+
+  return (
+    <Row>
+      <Select
+        id={id}
+        value={value}
+        options={Array.from(sections.keys())}
+        getLabel={(instanceId) => sections.get(instanceId) ?? ""}
+        onChange={(instanceId) =>
+          onChange({ type: "instance", value: instanceId })
+        }
+        fullWidth
+      />
+    </Row>
+  );
+};
+
 const modes = {
   url: { icon: <LinkIcon />, control: BaseUrl, label: "URL" },
   page: { icon: <PageIcon />, control: BasePage, label: "Page" },
+  section: {
+    icon: <SectionLinkIcon />,
+    control: BaseSection,
+    label: "Section",
+  },
   email: { icon: <EmailIcon />, control: BaseEmail, label: "Email" },
   phone: { icon: <PhoneIcon />, control: BasePhone, label: "Phone" },
   attachment: {
@@ -236,6 +320,10 @@ const propToMode = (prop?: UrlControlProps["prop"]): Mode => {
 
   if (prop.type === "asset") {
     return "attachment";
+  }
+
+  if (prop.type === "instance") {
+    return "section";
   }
 
   if (prop.value.startsWith("tel:")) {

@@ -13,7 +13,7 @@ export const renderControl = ({
   meta,
   prop,
   ...rest
-}: ControlProps<string, string>) => {
+}: ControlProps<string, string> & { key?: string }) => {
   if (
     meta.control === "text" &&
     (prop === undefined || prop.type === "string")
@@ -77,6 +77,7 @@ export const renderControl = ({
     (prop === undefined ||
       prop.type === "string" ||
       prop.type === "page" ||
+      prop.type === "instance" ||
       prop.type === "asset")
   ) {
     return <UrlControl meta={meta} prop={prop} {...rest} />;
@@ -145,7 +146,7 @@ export const renderControl = ({
       );
     }
 
-    if (prop.type === "page") {
+    if (prop.type === "page" || prop.type === "instance") {
       return (
         <UrlControl
           meta={{

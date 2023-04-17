@@ -130,6 +130,7 @@ const renderProperty = (
   deletable?: boolean
 ) =>
   renderControl({
+    key: propName,
     meta,
     prop,
     propName,
