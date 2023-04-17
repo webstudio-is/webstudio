@@ -2,9 +2,9 @@ import { useStore } from "@nanostores/react";
 import {
   Flex,
   Label,
-  DeprecatedTextField,
   theme,
   ScrollArea,
+  InputField,
 } from "@webstudio-is/design-system";
 import { getComponentMeta } from "@webstudio-is/react-sdk";
 import { selectedInstanceStore } from "~/shared/nano-states";
@@ -21,7 +21,7 @@ export const SettingsPanel = () => {
     <ScrollArea css={{ px: theme.spacing[9] }}>
       <Flex gap="1" direction="column" grow>
         <Label>Instance Name</Label>
-        <DeprecatedTextField
+        <InputField
           /* Key is required, otherwise when label is undefined, previous value stayed */
           key={selectedInstance.id}
           onBlur={handleBlur}

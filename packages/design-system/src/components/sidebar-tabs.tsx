@@ -74,6 +74,6 @@ export const SidebarTabsContent = styled(TabsPrimitive.Content, {
   bc: theme.colors.backgroundPanel,
   outline: "none",
   '&[data-state="active"]': {
-    borderRight: `1px solid ${theme.colors.slate7}`,
+    borderRight: `1px solid ${theme.colors.borderMain}`,
   },
 });

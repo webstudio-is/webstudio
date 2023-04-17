@@ -8,13 +8,13 @@ import {
   ComboboxAnchor,
   ComboboxListbox,
   ComboboxListboxItem,
-  DeprecatedTextField,
   SmallIconButton,
   Separator,
   Flex,
   Text,
   type CSS,
   ScrollArea,
+  InputField,
 } from "@webstudio-is/design-system";
 import { ChevronDownIcon } from "@webstudio-is/icons";
 import type { Publish } from "~/shared/pubsub";
@@ -88,13 +88,14 @@ const PropsCombobox = ({
     <Combobox>
       <div {...combobox.getComboboxProps()}>
         <ComboboxAnchor>
-          <DeprecatedTextField
+          <InputField
             autoFocus
             {...combobox.getInputProps()}
             placeholder="Property"
             suffix={
               <SmallIconButton
                 {...combobox.getToggleButtonProps()}
+                css={{ display: "flex", justifyContent: "center" }}
                 icon={<ChevronDownIcon />}
               />
             }

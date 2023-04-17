@@ -1,12 +1,12 @@
 import { atom } from "nanostores";
 import { useStore } from "@nanostores/react";
 import {
-  Box,
   Flex,
   Collapsible,
   SectionTitle,
   SectionTitleLabel,
   SectionTitleButton,
+  Separator,
 } from "@webstudio-is/design-system";
 import { theme } from "@webstudio-is/design-system";
 import type { ComponentProps, ReactNode } from "react";
@@ -53,7 +53,7 @@ export const CollapsibleSectionBase = ({
   onOpenChange,
 }: CollapsibleSectionBaseProps) => (
   <Collapsible.Root open={isOpen} onOpenChange={onOpenChange}>
-    <Box css={{ boxShadow: `0px 1px 0 ${theme.colors.panelOutline}` }}>
+    <>
       <Collapsible.Trigger asChild>
         {trigger ?? (
           <SectionTitle>
@@ -76,7 +76,8 @@ export const CollapsibleSectionBase = ({
           {children}
         </Flex>
       </Collapsible.Content>
-    </Box>
+      <Separator />
+    </>
   </Collapsible.Root>
 );
 
