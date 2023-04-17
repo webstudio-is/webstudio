@@ -16,7 +16,7 @@ const useContentController = ({
     if (ref.current == null) {
       return;
     }
-    const { disconnectedCallback } = createContentController(ref.current, {
+    const { cleanup } = createContentController(ref.current, {
       contents: [
         {
           name: "unit",
@@ -33,7 +33,7 @@ const useContentController = ({
       onMouseMove: callback,
       onCaretMove: callback,
     });
-    return () => disconnectedCallback();
+    return cleanup;
   }, [ref, read, write, callback]);
 };
 

@@ -2,11 +2,11 @@
  * @description
  * - detects whether the pointer/keyboard is on any given token as specified by the {contents: []} contract.
  * - pointermove/keyup in turn dispatch onMouseMove/onCaretMove with the current state if and when within a configured content token.
- * - returns two methods {update, disconnectedCallback} the former of which dispatches a content update(while preserving the caret position if any)
+ * - returns two methods {update, cleanup} the former of which dispatches a content update(while preserving the caret position if any)
  * - read/write methods are called when reading from the passed element or when updating/writing to the same element.
  * @example
  * const target = document.querySelector('input');
- * const {update, disconnectedCallback} = createContentController(target, {
+ * const {update, cleanup} = createContentController(target, {
  *   contents: [
  *     { name: 'unit', match: (value) => value === 'px' },
  *     { name: 'number', match: (value) => Number.isNaN(parseFloat(value)) === false },
@@ -89,7 +89,7 @@ export const createContentController = (
   }
 ): {
   update: (value: string) => void;
-  disconnectedCallback: () => void;
+  cleanup: () => void;
 } => {
   const eventNames = ["keyup", "pointermove"] as const;
   const handleEvent = (event: KeyboardEvent | PointerEvent): void => {
@@ -136,7 +136,7 @@ export const createContentController = (
       write(targetNode, value);
       targetNode.setSelectionRange(selectionStart, selectionEnd);
     },
-    disconnectedCallback: () => {
+    cleanup: () => {
       eventNames.forEach((eventName) =>
         targetNode.removeEventListener(eventName, handleEvent, false)
       );

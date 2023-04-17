@@ -1,9 +1,8 @@
 import { useStore } from "@nanostores/react";
 import { findApplicableMedia } from "@webstudio-is/css-engine";
-import { css, theme, useDrag } from "@webstudio-is/design-system";
-import { useState } from "react";
+import { css, numericScrubControl, theme } from "@webstudio-is/design-system";
+import { useEffect, useRef, useState } from "react";
 import {
-  canvasRectStore,
   canvasWidthStore,
   isCanvasPointerEventsEnabledStore,
 } from "~/builder/shared/nano-states";
@@ -78,59 +77,64 @@ const handleIcon = (
   </svg>
 );
 
-const baseDragProps = {
-  startDistanceThreashold: 0,
-  elementToData: () => true,
-  onStart() {
-    isCanvasPointerEventsEnabledStore.set(false);
-    isResizingCanvasStore.set(true);
-  },
-  onEnd() {
-    isCanvasPointerEventsEnabledStore.set(true);
-    isResizingCanvasStore.set(false);
-  },
+const updateBreakpoint = (width: number) => {
+  const applicableBreakpoint = findApplicableMedia(
+    Array.from(breakpointsStore.get().values()),
+    width
+  );
+  if (applicableBreakpoint) {
+    selectedBreakpointIdStore.set(applicableBreakpoint.id);
+  }
+};
+
+const useScrub = ({ side }: { side: "right" | "left" }) => {
+  const ref = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    if (ref.current === null) {
+      return;
+    }
+    return numericScrubControl(ref.current, {
+      getInitialValue() {
+        return canvasWidthStore.get();
+      },
+      getValue(state, movement) {
+        const value =
+          side === "left"
+            ? //  * 2 is a compensation for the fact that canvas is centered, so when we scrub, width has to change twice faster,
+              // otherwise cursor will be faster than the edge movement
+              state.value - movement * 2
+            : state.value + movement * 2;
+        return Math.max(value, minCanvasWidth);
+      },
+      onStatusChange(status) {
+        if (status === "scrubbing") {
+          isCanvasPointerEventsEnabledStore.set(false);
+          isResizingCanvasStore.set(true);
+          return;
+        }
+        isCanvasPointerEventsEnabledStore.set(true);
+        isResizingCanvasStore.set(false);
+      },
+      onValueInput(event) {
+        canvasWidthStore.set(event.value);
+        updateBreakpoint(event.value);
+      },
+    });
+  }, [side]);
+
+  return ref;
 };
 
 const useResize = () => {
   const isDragging = useStore(isCanvasPointerEventsEnabledStore) === false;
   const [isHovering, setIsHovering] = useState(false);
-
-  const updateBreakpoint = (width: number) => {
-    const applicableBreakpoint = findApplicableMedia(
-      Array.from(breakpointsStore.get().values()),
-      width
-    );
-    if (applicableBreakpoint) {
-      selectedBreakpointIdStore.set(applicableBreakpoint.id);
-    }
-  };
-
-  const { rootRef: leftRef } = useDrag({
-    ...baseDragProps,
-    onMove({ x }) {
-      const rect = canvasRectStore.get();
-      if (rect) {
-        const width = Math.round(Math.max(rect.right - x, minCanvasWidth));
-        canvasWidthStore.set(width);
-        updateBreakpoint(width);
-      }
-    },
-  });
-  const { rootRef: rightRef } = useDrag({
-    ...baseDragProps,
-    onMove({ x }) {
-      const rect = canvasRectStore.get();
-      if (rect) {
-        const width = Math.max(Math.round(x - rect.left), minCanvasWidth);
-        canvasWidthStore.set(width);
-        updateBreakpoint(width);
-      }
-    },
-  });
+  const leftRef = useScrub({ side: "left" });
+  const rightRef = useScrub({ side: "right" });
 
   const handleMouseEnter = () => setIsHovering(true);
 
-  const handleMouseOut = () => setIsHovering(false);
+  const handleMouseLeave = () => setIsHovering(false);
 
   const state = isDragging ? "dragging" : isHovering ? "hovering" : "idle";
 
@@ -139,12 +143,12 @@ const useResize = () => {
     leftRef,
     rightRef,
     handleMouseEnter,
-    handleMouseOut,
+    handleMouseLeave,
   };
 };
 
 export const ResizeHandles = () => {
-  const { state, leftRef, rightRef, handleMouseEnter, handleMouseOut } =
+  const { state, leftRef, rightRef, handleMouseEnter, handleMouseLeave } =
     useResize();
 
   return (
@@ -152,7 +156,7 @@ export const ResizeHandles = () => {
       <div
         ref={leftRef}
         onMouseEnter={handleMouseEnter}
-        onMouseOut={handleMouseOut}
+        onMouseOut={handleMouseLeave}
         data-state={state}
         data-align="left"
         className={handleStyle()}
@@ -160,7 +164,7 @@ export const ResizeHandles = () => {
       <div
         ref={rightRef}
         onMouseEnter={handleMouseEnter}
-        onMouseOut={handleMouseOut}
+        onMouseLeave={handleMouseLeave}
         data-state={state}
         data-align="right"
         className={handleStyle()}

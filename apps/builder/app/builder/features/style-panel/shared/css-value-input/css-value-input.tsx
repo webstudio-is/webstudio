@@ -85,7 +85,7 @@ const useScrub = ({
       return;
     }
 
-    const scrub = numericScrubControl(scrubRefCurrent, {
+    return numericScrubControl(scrubRefCurrent, {
       // @todo: after this https://github.com/webstudio-is/webstudio-builder/issues/564
       // we can switch back on using just initial value
       //
@@ -95,7 +95,7 @@ const useScrub = ({
       // Until we have decision do we use key properties for this or not,
       // on of the solution to get value inside scrub is to use ref and lazy getter.
       // Getter to avoid recreating scrub on every value change
-      getValue: () => {
+      getInitialValue: () => {
         if (valueRef.current.type === "unit") {
           return valueRef.current.value;
         }
@@ -130,8 +130,6 @@ const useScrub = ({
       },
       shouldHandleEvent: shouldHandleEvent,
     });
-
-    return scrub.disconnectedCallback;
   }, [type, unit, shouldHandleEvent]);
 
   return [scrubRef, inputRef];

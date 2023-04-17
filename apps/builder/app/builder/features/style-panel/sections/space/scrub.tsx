@@ -77,12 +77,12 @@ export const useScrub = (props: {
       setValues(isEphemeral ? nextValues : {});
     };
 
-    const scrub = numericScrubControl(finalTarget.element, {
+    return numericScrubControl(finalTarget.element, {
       direction:
         property.endsWith("Left") || property.endsWith("Right")
           ? "horizontal"
           : "vertical",
-      getValue() {
+      getInitialValue() {
         const { value } = nonDependencies.current.props;
         if (value?.type === "unit") {
           unitRef.current = value.unit;
@@ -103,8 +103,6 @@ export const useScrub = (props: {
         );
       },
     });
-
-    return scrub.disconnectedCallback;
   }, [finalTarget]);
 
   return {

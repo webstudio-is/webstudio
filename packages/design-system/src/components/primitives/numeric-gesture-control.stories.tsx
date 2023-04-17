@@ -19,8 +19,8 @@ const useNumericScrubControl = ({
       return;
     }
     ref.current.value = String(value);
-    const { disconnectedCallback } = numericScrubControl(ref.current, {
-      getValue: () => value,
+    return numericScrubControl(ref.current, {
+      getInitialValue: () => value,
       direction: direction,
       onValueChange: (event) => {
         event.preventDefault();
@@ -28,7 +28,6 @@ const useNumericScrubControl = ({
         (event.target as HTMLInputElement).select();
       },
     });
-    return () => disconnectedCallback();
   }, [direction, value, ref]);
 };
 
