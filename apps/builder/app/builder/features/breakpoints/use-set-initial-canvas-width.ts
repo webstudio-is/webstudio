@@ -11,7 +11,7 @@ import {
   selectedBreakpointIdStore,
 } from "~/shared/nano-states";
 import { findInitialWidth } from "./find-initial-width";
-import { isBaseBreakpoint } from "~/shared/breakpoints";
+import { groupBreakpoints, isBaseBreakpoint } from "~/shared/breakpoints";
 
 // Set canvas width based on workspace width, breakpoints and passed breakpoint id.
 export const useSetInitialCanvasWidth = () => {
@@ -38,7 +38,7 @@ export const useSetInitialCanvasWidth = () => {
 
 export const useSetInitialCanvasWidthOnce = () => {
   const isDone = useRef(false);
-  const [, setWidth] = useCanvasWidth();
+  const [, setCanvasWidth] = useCanvasWidth();
   const workspaceRect = useStore(workspaceRectStore);
   const breakpoints = useStore(breakpointsStore);
 
@@ -48,20 +48,32 @@ export const useSetInitialCanvasWidthOnce = () => {
       return;
     }
 
-    const { width } = workspaceRect;
+    isDone.current = true;
+
     const breakpointValues = Array.from(breakpoints.values());
     const baseBreakpoint = breakpointValues.find(isBaseBreakpoint);
 
-    // We don't need to set breakpoint if there is a base breakpoint, since it's what should be used by default.
-    if (baseBreakpoint === undefined) {
-      const applicableBreakpoint = findApplicableMedia(breakpointValues, width);
-      if (applicableBreakpoint) {
-        selectedBreakpointIdStore.set(applicableBreakpoint.id);
+    // When there is base breakpoint, we want to find the lowest possible size
+    // that is bigger than all max breakpoints and smaller than all min breakpoints.
+    if (baseBreakpoint) {
+      const grouped = groupBreakpoints(breakpointValues);
+      const baseIndex = grouped.findIndex(isBaseBreakpoint);
+      const nextAfterBase = grouped[baseIndex + 1];
+      if (nextAfterBase?.maxWidth !== undefined) {
+        const width = nextAfterBase.maxWidth + 1;
+        setCanvasWidth(width);
+        return;
       }
     }
 
-    setWidth(width);
-
-    isDone.current = true;
-  }, [breakpoints, setWidth, workspaceRect]);
+    // Find the breakpoint that applies according to the workspace width.
+    const applicableBreakpoint = findApplicableMedia(
+      breakpointValues,
+      workspaceRect.width
+    );
+    if (applicableBreakpoint) {
+      selectedBreakpointIdStore.set(applicableBreakpoint.id);
+    }
+    setCanvasWidth(workspaceRect.width);
+  }, [breakpoints, setCanvasWidth, workspaceRect]);
 };
