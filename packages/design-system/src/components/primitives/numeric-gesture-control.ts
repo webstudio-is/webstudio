@@ -90,6 +90,8 @@ export const numericScrubControl = (
 
   let exitPointerLock: (() => void) | undefined = undefined;
 
+  let originalUserSelect: string = "";
+
   const cleanup = () => {
     targetNode.removeEventListener("pointermove", handleEvent);
     onStatusChange?.("idle");
@@ -97,9 +99,14 @@ export const numericScrubControl = (
 
     exitPointerLock?.();
     exitPointerLock = undefined;
-    targetNode.ownerDocument.documentElement.style.removeProperty(
-      "user-select"
-    );
+    if (originalUserSelect) {
+      targetNode.ownerDocument.documentElement.style.userSelect =
+        originalUserSelect;
+    } else {
+      targetNode.ownerDocument.documentElement.style.removeProperty(
+        "user-select"
+      );
+    }
   };
 
   // Cannot define `event:` as PointerEvent,
@@ -157,6 +164,8 @@ export const numericScrubControl = (
 
         onStatusChange?.("scrubbing");
         targetNode.addEventListener("pointermove", handleEvent);
+        originalUserSelect =
+          targetNode.ownerDocument.documentElement.style.userSelect;
         targetNode.ownerDocument.documentElement.style.userSelect = "none";
         break;
       }
