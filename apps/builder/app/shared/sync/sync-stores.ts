@@ -221,10 +221,6 @@ const handshakeAndSyncStores = (
   } as const;
 
   publish(handshakeAction);
-  // Use setInterval as with SSR iframe can send handshake before builder is initialized and vice versa
-  const intervalHandle = setInterval(() => {
-    publish(handshakeAction);
-  }, 100);
 
   const destinationStoreReady = subscribe("handshake", (payload) => {
     if (source === payload.source) {
@@ -237,8 +233,6 @@ const handshakeAndSyncStores = (
 
     // We need to publish it here last time
     publish(handshakeAction);
-
-    clearInterval(intervalHandle);
 
     for (const action of actions) {
       publish(action);
@@ -255,7 +249,6 @@ const handshakeAndSyncStores = (
   return () => {
     destinationStoreReady();
     unsubscribe();
-    clearInterval(intervalHandle);
   };
 };
 
