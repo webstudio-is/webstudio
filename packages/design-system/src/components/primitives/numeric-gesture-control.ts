@@ -25,9 +25,15 @@ export type NumericScrubCallback = (event: {
 }) => void;
 
 export type NumericScrubOptions = {
+  inverse?: boolean;
   minValue?: NumericScrubValue;
   maxValue?: NumericScrubValue;
-  getValue: () => number | undefined;
+  getInitialValue: () => number | undefined;
+  getValue?: (
+    state: NumericScrubState,
+    movement: number,
+    options: NumericScrubOptions
+  ) => number;
   direction?: NumericScrubDirection;
   onValueInput?: NumericScrubCallback;
   onValueChange?: NumericScrubCallback;
@@ -42,19 +48,37 @@ type NumericScrubState = {
   timerId?: ReturnType<typeof window.setTimeout>;
 };
 
-export const numericScrubControl = (
-  targetNode: HTMLElement | SVGElement,
+const getValueDefault = (
+  state: NumericScrubState,
+  movement: number,
   {
     minValue = Number.MIN_SAFE_INTEGER,
     maxValue = Number.MAX_SAFE_INTEGER,
-    getValue,
+  }: NumericScrubOptions
+) => {
+  const value = state.value + movement;
+  if (value < minValue) {
+    return minValue;
+  }
+  if (state.value > maxValue) {
+    return maxValue;
+  }
+  return value;
+};
+
+export const numericScrubControl = (
+  targetNode: HTMLElement | SVGElement,
+  options: NumericScrubOptions
+) => {
+  const {
+    getInitialValue,
+    getValue = getValueDefault,
     direction = "horizontal",
     onValueInput,
     onValueChange,
     onStatusChange,
     shouldHandleEvent,
-  }: NumericScrubOptions
-) => {
+  } = options;
   const eventNames = ["pointerup", "pointerdown"] as const;
   const state: NumericScrubState = {
     // We will read value lazyly in a moment it will be used to avoid having outdated value
@@ -65,6 +89,25 @@ export const numericScrubControl = (
   };
 
   let exitPointerLock: (() => void) | undefined = undefined;
+
+  let originalUserSelect = "";
+
+  const cleanup = () => {
+    targetNode.removeEventListener("pointermove", handleEvent);
+    onStatusChange?.("idle");
+    clearTimeout(state.timerId);
+
+    exitPointerLock?.();
+    exitPointerLock = undefined;
+    if (originalUserSelect) {
+      targetNode.ownerDocument.documentElement.style.userSelect =
+        originalUserSelect;
+    } else {
+      targetNode.ownerDocument.documentElement.style.removeProperty(
+        "user-select"
+      );
+    }
+  };
 
   // Cannot define `event:` as PointerEvent,
   // because (HTMLElement | SVGElement).addEventListener("pointermove", ...)
@@ -81,13 +124,7 @@ export const numericScrubControl = (
     switch (type) {
       case "pointerup": {
         const shouldComponentUpdate = Boolean(state.cursor);
-        targetNode.removeEventListener("pointermove", handleEvent);
-        onStatusChange?.("idle");
-        clearTimeout(state.timerId);
-
-        exitPointerLock?.();
-        exitPointerLock = undefined;
-
+        cleanup();
         if (shouldComponentUpdate) {
           onValueChange?.({
             target: targetNode,
@@ -108,11 +145,11 @@ export const numericScrubControl = (
         if (event.pressure === 0 || event.button !== 0) {
           break;
         }
-        const value = getValue();
+        const value = getInitialValue();
 
         // We don't support scrub on non unit values
         // Its highly unlikely that the value here will be undefined, as useScrub tries to not create scrub on non unit values
-        // but having that we use lazy getValue() and vanilla js events it's possible.
+        // but having that we use lazy getInitialValue() and vanilla js events it's possible.
         if (value === undefined) {
           return;
         }
@@ -127,17 +164,17 @@ export const numericScrubControl = (
 
         onStatusChange?.("scrubbing");
         targetNode.addEventListener("pointermove", handleEvent);
+        originalUserSelect =
+          targetNode.ownerDocument.documentElement.style.userSelect;
+        targetNode.ownerDocument.documentElement.style.userSelect = "none";
         break;
       }
       case "pointermove": {
-        state.value += movement;
-
-        if (state.value < minValue) {
-          state.value = minValue;
-        } else if (state.value > maxValue) {
-          state.value = maxValue;
+        const nextValue = getValue(state, movement, options);
+        if (nextValue === state.value) {
+          break;
         }
-
+        state.value = nextValue;
         onValueInput?.({
           target: targetNode,
           value: state.value,
@@ -172,19 +209,11 @@ export const numericScrubControl = (
     targetNode.addEventListener(eventName, handleEvent)
   );
 
-  return {
-    disconnectedCallback: () => {
-      eventNames.forEach((eventName) =>
-        targetNode.removeEventListener(eventName, handleEvent)
-      );
-
-      clearTimeout(state.timerId);
-      targetNode.removeEventListener("pointermove", handleEvent);
-      onStatusChange?.("idle");
-
-      exitPointerLock?.();
-      exitPointerLock = undefined;
-    },
+  return () => {
+    eventNames.forEach((eventName) =>
+      targetNode.removeEventListener(eventName, handleEvent)
+    );
+    cleanup();
   };
 };
 

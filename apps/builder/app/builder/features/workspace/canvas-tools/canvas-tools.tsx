@@ -60,16 +60,13 @@ export const CanvasTools = ({ publish }: CanvasToolsProps) => {
     ) : null;
   }
 
-  if (isPreviewMode) {
-    return null;
-  }
   return (
     <Box css={toolsStyle}>
       <MediaBadge />
-      <SelectedInstanceOutline />
-      <HoveredInstanceOutline />
-      <TextToolbar publish={publish} />
       <ResizeHandles />
+      {isPreviewMode === false && <SelectedInstanceOutline />}
+      {isPreviewMode === false && <HoveredInstanceOutline />}
+      {isPreviewMode === false && <TextToolbar publish={publish} />}
     </Box>
   );
 };
