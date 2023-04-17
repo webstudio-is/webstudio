@@ -29,7 +29,6 @@ import {
   useRef,
 } from "react";
 import { useUnitSelect } from "./unit-select";
-import { unstable_batchedUpdates as unstableBatchedUpdates } from "react-dom";
 import { parseIntermediateOrInvalidValue } from "./parse-intermediate-or-invalid-value";
 import { toValue } from "@webstudio-is/css-engine";
 import { useDebouncedCallback } from "use-debounce";
@@ -115,12 +114,11 @@ const useScrub = ({
       onValueChange(event) {
         // Will work without but depends on order of setState updates
         // at text-control, now fixed in both places (order of updates is right, and batched here)
-        unstableBatchedUpdates(() => {
-          onChangeCompleteRef.current({
-            type,
-            unit,
-            value: event.value,
-          });
+
+        onChangeCompleteRef.current({
+          type,
+          unit,
+          value: event.value,
         });
 
         // Returning focus that we've moved above
