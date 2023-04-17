@@ -11,6 +11,7 @@
     "paths": { "~/*": ["app/*"] },
     "baseUrl": ".",
     "rootDir": "./app",
-    "declaration": false
+    "declaration": false,
+    "declarationDir": null
   }
 }
