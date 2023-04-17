@@ -32,7 +32,11 @@ export const useInstanceProps = (instanceId: Instance["id"]) => {
   const instancePropsObject: Record<Prop["name"], Prop["value"]> = {};
   if (instanceProps) {
     for (const prop of instanceProps) {
-      if (prop.type !== "asset") {
+      if (
+        prop.type !== "asset" &&
+        prop.type !== "page" &&
+        prop.type !== "instance"
+      ) {
         instancePropsObject[prop.name] = prop.value;
       }
     }

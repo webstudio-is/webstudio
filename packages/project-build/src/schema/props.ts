@@ -37,6 +37,11 @@ export const Prop = z.union([
   }),
   z.object({
     ...baseProp,
+    type: z.literal("instance"),
+    value: z.string(), // instance id
+  }),
+  z.object({
+    ...baseProp,
     type: z.literal("string[]"),
     value: z.array(z.string()),
   }),
