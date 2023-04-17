@@ -128,22 +128,6 @@ export const LayersValue = z.object({
 
 export type LayersValue = z.infer<typeof LayersValue>;
 
-/**
- * All StyleValue types that going to need wrapping into a CSS variable when rendered
- * on canvas inside builder.
- * Values like InvalidValue, UnsetValue, VarValue don't need to be wrapped
- */
-export const validStaticValueTypes = [
-  "unit",
-  "keyword",
-  "fontFamily",
-  "rgb",
-  "image",
-  "unparsed",
-  "layers",
-  "tuple",
-] as const;
-
 const ValidStaticStyleValue = z.union([
   ImageValue,
   LayersValue,
@@ -156,6 +140,28 @@ const ValidStaticStyleValue = z.union([
 ]);
 
 export type ValidStaticStyleValue = z.infer<typeof ValidStaticStyleValue>;
+
+/**
+ * All StyleValue types that going to need wrapping into a CSS variable when rendered
+ * on canvas inside builder.
+ * Values like InvalidValue, UnsetValue, VarValue don't need to be wrapped
+ */
+export const isValidStaticStyleValue = (
+  styleValue: StyleValue
+): styleValue is ValidStaticStyleValue => {
+  // guard against invalid checks
+  const staticStyleValue = styleValue as ValidStaticStyleValue;
+  return (
+    staticStyleValue.type === "image" ||
+    staticStyleValue.type === "layers" ||
+    staticStyleValue.type === "unit" ||
+    staticStyleValue.type === "keyword" ||
+    staticStyleValue.type === "fontFamily" ||
+    staticStyleValue.type === "rgb" ||
+    staticStyleValue.type === "unparsed" ||
+    staticStyleValue.type === "tuple"
+  );
+};
 
 const VarValue = z.object({
   type: z.literal("var"),
@@ -178,10 +184,3 @@ const Style = z.record(z.string(), StyleValue);
 export type Style = {
   [property in StyleProperty]?: StyleValue;
 } & { [property: CustomProperty]: StyleValue };
-
-export const CssRule = z.object({
-  style: Style,
-  breakpoint: z.optional(z.string()),
-});
-
-export type CssRule = z.infer<typeof CssRule>;

@@ -39,6 +39,35 @@ const getOrCreateStyleSourceSelectionMutable = (
   return styleSourceSelection;
 };
 
+const createLocalStyleSourceIfNotExists = (
+  styleSourceId: StyleSource["id"]
+) => {
+  const selectedInstanceSelector = selectedInstanceSelectorStore.get();
+  if (selectedInstanceSelector === undefined) {
+    return;
+  }
+  const [selectedInstanceId] = selectedInstanceSelector;
+  store.createTransaction(
+    [styleSourceSelectionsStore, styleSourcesStore],
+    (styleSourceSelections, styleSources) => {
+      const styleSourceSelection = getOrCreateStyleSourceSelectionMutable(
+        styleSourceSelections,
+        selectedInstanceId
+      );
+      if (styleSourceSelection.values.includes(styleSourceId) === false) {
+        // local should be put first by default
+        styleSourceSelection.values.unshift(styleSourceId);
+      }
+      if (styleSources.has(styleSourceId) === false) {
+        styleSources.set(styleSourceId, {
+          type: "local",
+          id: styleSourceId,
+        });
+      }
+    }
+  );
+};
+
 const createStyleSource = (name: string) => {
   const selectedInstanceSelector = selectedInstanceSelectorStore.get();
   if (selectedInstanceSelector === undefined) {
@@ -105,6 +134,12 @@ const removeStyleSourceFromInstance = (styleSourceId: StyleSource["id"]) => {
       );
     }
   );
+  // reset selected style source if necessary
+  const selectedStyleSourceId =
+    selectedStyleSourceSelectorStore.get()?.styleSourceId;
+  if (selectedStyleSourceId === styleSourceId) {
+    selectedStyleSourceSelectorStore.set(undefined);
+  }
 };
 
 const deleteStyleSource = (styleSourceId: StyleSource["id"]) => {
@@ -127,6 +162,12 @@ const deleteStyleSource = (styleSourceId: StyleSource["id"]) => {
       }
     }
   );
+  // reset selected style source if necessary
+  const selectedStyleSourceId =
+    selectedStyleSourceSelectorStore.get()?.styleSourceId;
+  if (selectedStyleSourceId === styleSourceId) {
+    selectedStyleSourceSelectorStore.set(undefined);
+  }
 };
 
 const duplicateStyleSource = (styleSourceId: StyleSource["id"]) => {
@@ -321,6 +362,7 @@ export const StyleSourcesSection = () => {
           reorderStyleSources(items.map((item) => item.id));
         }}
         onSelectItem={(styleSourceSelector) => {
+          createLocalStyleSourceIfNotExists(styleSourceSelector.styleSourceId);
           selectedStyleSourceSelectorStore.set(styleSourceSelector);
         }}
         // style source renaming

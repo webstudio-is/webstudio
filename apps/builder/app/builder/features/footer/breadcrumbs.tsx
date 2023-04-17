@@ -9,6 +9,7 @@ import {
 import {
   instancesStore,
   selectedInstanceSelectorStore,
+  selectedStyleSourceSelectorStore,
 } from "~/shared/nano-states";
 import { getAncestorInstanceSelector } from "~/shared/tree-utils";
 import { textEditingInstanceSelectorStore } from "~/shared/nano-states";
@@ -69,6 +70,7 @@ export const Breadcrumbs = () => {
                     )
                   );
                   textEditingInstanceSelectorStore.set(undefined);
+                  selectedStyleSourceSelectorStore.set(undefined);
                 }}
               >
                 {instance.label || instance.component}

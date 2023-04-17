@@ -22,6 +22,7 @@ import {
   synchronizedCanvasStores,
   synchronizedInstancesStores,
   synchronizedBreakpointsStores,
+  selectedStyleSourceSelectorStore,
 } from "~/shared/nano-states";
 
 enableMapSet();
@@ -76,9 +77,12 @@ export const registerContainers = () => {
     "selectedInstanceUnitSizesStore",
     selectedInstanceUnitSizesStore
   );
-
   clientStores.set("hoveredInstanceSelector", hoveredInstanceSelectorStore);
   clientStores.set("isPreviewMode", isPreviewModeStore);
+  clientStores.set(
+    "selectedStyleSourceSelector",
+    selectedStyleSourceSelectorStore
+  );
   for (const [name, store] of synchronizedBreakpointsStores) {
     clientStores.set(name, store);
   }

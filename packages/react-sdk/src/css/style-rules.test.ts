@@ -55,6 +55,13 @@ test("compute styles from different style sources", () => {
       property: "color",
       value: { type: "keyword", value: "blue" },
     }),
+    createStyleDeclPair({
+      breakpointId: "a",
+      styleSourceId: "styleSource6",
+      state: ":hover",
+      property: "color",
+      value: { type: "keyword", value: "blue" },
+    }),
   ]);
   const styleSourceSelections: StyleSourceSelections = new Map([
     [
@@ -85,6 +92,7 @@ test("compute styles from different style sources", () => {
       {
         "breakpointId": "a",
         "instanceId": "instance1",
+        "state": undefined,
         "style": {
           "width": {
             "type": "unit",
@@ -96,6 +104,7 @@ test("compute styles from different style sources", () => {
       {
         "breakpointId": "a",
         "instanceId": "instance2",
+        "state": undefined,
         "style": {
           "color": {
             "type": "keyword",
@@ -110,6 +119,7 @@ test("compute styles from different style sources", () => {
       {
         "breakpointId": "b",
         "instanceId": "instance2",
+        "state": undefined,
         "style": {
           "color": {
             "type": "keyword",
@@ -120,6 +130,18 @@ test("compute styles from different style sources", () => {
       {
         "breakpointId": "a",
         "instanceId": "instance3",
+        "state": undefined,
+        "style": {
+          "color": {
+            "type": "keyword",
+            "value": "blue",
+          },
+        },
+      },
+      {
+        "breakpointId": "a",
+        "instanceId": "instance3",
+        "state": ":hover",
         "style": {
           "color": {
             "type": "keyword",

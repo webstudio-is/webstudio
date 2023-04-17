@@ -77,9 +77,9 @@ export const generateCssText = (data: Data, options: CssOptions) => {
   }
 
   const styleRules = getStyleRules(styles, styleSourceSelections);
-  for (const { breakpointId, instanceId, style } of styleRules) {
+  for (const { breakpointId, instanceId, state, style } of styleRules) {
     engine.addStyleRule(
-      `[${idAttribute}="${instanceId}"]`,
+      `[${idAttribute}="${instanceId}"]${state ?? ""}`,
       {
         breakpoint: breakpointId,
         style,

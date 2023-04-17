@@ -80,7 +80,7 @@ type TextFieldBaseWrapperProps<Item extends IntermediateItem> = Omit<
     renderStyleSourceMenuItems: (item: Item) => ReactNode;
     onChangeItem?: (item: Item) => void;
     onSort?: (items: Array<Item>) => void;
-    onSelectItem?: (itemSelector?: ItemSelector) => void;
+    onSelectItem?: (itemSelector: ItemSelector) => void;
     onEditItem?: (id?: Item["id"]) => void;
     editingItemId?: Item["id"];
   };
@@ -193,7 +193,7 @@ type StyleSourceInputProps<Item extends IntermediateItem> = {
   onConvertToToken?: (id: Item["id"]) => void;
   onCreateItem?: (label: string) => void;
   onChangeItem?: (item: Item) => void;
-  onSelectItem?: (item: undefined | ItemSelector) => void;
+  onSelectItem?: (item: ItemSelector) => void;
   onEditItem?: (id?: Item["id"]) => void;
   onDisableItem?: (id: Item["id"]) => void;
   onEnableItem?: (id: Item["id"]) => void;
@@ -251,7 +251,7 @@ const userActionStates = [
 const renderMenuItems = (props: {
   selectedItemSelector: undefined | ItemSelector;
   item: IntermediateItem;
-  onSelect?: (itemSelector: undefined | ItemSelector) => void;
+  onSelect?: (itemSelector: ItemSelector) => void;
   onEdit?: (itemId: IntermediateItem["id"]) => void;
   onDuplicate?: (itemId: IntermediateItem["id"]) => void;
   onConvertToToken?: (itemId: IntermediateItem["id"]) => void;
