@@ -1,0 +1,50 @@
+{
+  "name": "@webstudio-is/generate-schema-types",
+  "version": "0.56.0",
+  "description": "Generate schema types",
+  "author": "Webstudio <github@webstudio.is>",
+  "homepage": "https://webstudio.is",
+  "type": "module",
+  "scripts": {
+    "dev": "build-package --watch",
+    "build": "build-package",
+    "build:schema": "tsx ./src/generate-schema-types.ts",
+    "dts": "tsc --emitDeclarationOnly --declaration --declarationDir lib/types",
+    "typecheck": "tsc --noEmit",
+    "checks": "pnpm typecheck && pnpm lint",
+    "lint": "eslint ./src --ext .ts,.tsx --max-warnings 0"
+  },
+  "dependencies": {
+    "@types/fs-extra": "^9.0.13",
+    "@webstudio-is/project-build": "workspace:^",
+    "fast-glob": "^3.2.12",
+    "fs-extra": "^10.1.0",
+    "pascalcase": "^2.0.0",
+    "react-docgen-typescript": "^2.2.2",
+    "zod": "^3.19.1",
+    "zod-to-ts": "^1.1.4"
+  },
+  "devDependencies": {
+    "@webstudio-is/scripts": "workspace:^",
+    "@webstudio-is/tsconfig": "workspace:^",
+    "tsx": "^3.12.6",
+    "typescript": "5.0.3"
+  },
+  "files": [
+    "lib/*",
+    "src/*",
+    "README.md",
+    "!*.test.*"
+  ],
+  "bin": {
+    "generate-arg-types": "./src/cli.ts"
+  },
+  "exports": {
+    "source": "./src/index.ts",
+    "import": "./lib/index.js"
+  },
+  "types": "lib/types/index.d.ts",
+  "license": "MIT",
+  "private": false,
+  "sideEffects": false
+}

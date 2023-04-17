@@ -863,6 +863,46 @@ importers:
         specifier: 5.0.3
         version: 5.0.3
 
+  packages/gpt:
+    dependencies:
+      '@types/fs-extra':
+        specifier: ^9.0.13
+        version: 9.0.13
+      '@webstudio-is/project-build':
+        specifier: workspace:^
+        version: link:../project-build
+      fast-glob:
+        specifier: ^3.2.12
+        version: 3.2.12
+      fs-extra:
+        specifier: ^10.1.0
+        version: 10.1.0
+      pascalcase:
+        specifier: ^2.0.0
+        version: 2.0.0
+      react-docgen-typescript:
+        specifier: ^2.2.2
+        version: 2.2.2(typescript@5.0.3)
+      zod:
+        specifier: ^3.19.1
+        version: 3.19.1
+      zod-to-ts:
+        specifier: ^1.1.4
+        version: 1.1.4(typescript@5.0.3)(zod@3.19.1)
+    devDependencies:
+      '@webstudio-is/scripts':
+        specifier: workspace:^
+        version: link:../scripts
+      '@webstudio-is/tsconfig':
+        specifier: workspace:^
+        version: link:../tsconfig
+      tsx:
+        specifier: ^3.12.6
+        version: 3.12.6
+      typescript:
+        specifier: 5.0.3
+        version: 5.0.3
+
   packages/http-client:
     dependencies:
       isomorphic-fetch:
@@ -11497,6 +11537,7 @@ packages:
   /esbuild@0.17.6:
     resolution: {integrity: sha512-TKFRp9TxrJDdRWfSsSERKEovm6v30iHnrjlcGhLBOtReE28Yp1VSBRfO3GTaOFMoxsNerx4TjrhzSuma9ha83Q==}
     engines: {node: '>=12'}
+    hasBin: true
     requiresBuild: true
     optionalDependencies:
       '@esbuild/android-arm': 0.17.6
@@ -16184,6 +16225,13 @@ packages:
     resolution: {integrity: sha512-XHXfu/yOQRy9vYOtUDVMN60OEJjW013GoObG1o+xwQTpB9eYJX/BjXMsdW13ZDPruFhYYn0AG22w0xgQMwl3Nw==}
     engines: {node: '>=0.10.0'}
 
+  /pascalcase@2.0.0:
+    resolution: {integrity: sha512-DHpENy5Qm/FaX+x3iBLoMLG/XHNCTgL+yErm1TwuVaj6u4fiOSkYkf60vGtITk7hrKHOO4uCl9vRrD4hqjNKjg==}
+    engines: {node: '>=14'}
+    dependencies:
+      camelcase: 6.3.0
+    dev: false
+
   /path-browserify@0.0.1:
     resolution: {integrity: sha512-BapA40NHICOS+USX9SN4tyhq+A2RrN/Ws5F0Z5aMHDp98Fl86lX8Oti8B7uN93L4Ifv4fHOEA+pQw87gmMO/lQ==}
 
@@ -18979,6 +19027,7 @@ packages:
   /typescript@5.0.3:
     resolution: {integrity: sha512-xv8mOEDnigb/tN9PSMTwSEqAnUvkoXMQlicOb0IUVDBSQCgBSaAAROUZYy2IcUy5qU6XajK5jjjO7TMWqBTKZA==}
     engines: {node: '>=12.20'}
+    hasBin: true
 
   /ufo@1.1.1:
     resolution: {integrity: sha512-MvlCc4GHrmZdAllBc0iUDowff36Q9Ndw/UzqmEKyrfSzokTd9ZCy1i+IIk5hrYKkjoYVQyNbrw7/F8XJ2rEwTg==}
@@ -19977,6 +20026,16 @@ packages:
     peerDependencies:
       zod: ^3.11.x
     dependencies:
+      zod: 3.19.1
+    dev: false
+
+  /zod-to-ts@1.1.4(typescript@5.0.3)(zod@3.19.1):
+    resolution: {integrity: sha512-jsCg+pTNxLAdJOfW4ul+SpechdGYEJPPnssSbqWdR2LSIkotT22k+UvqPb1nEHwe/YbEcbUOlZUfGM0npgR+Jg==}
+    peerDependencies:
+      typescript: ^4.9.4 || ^5.0.2
+      zod: ^3
+    dependencies:
+      typescript: 5.0.3
       zod: 3.19.1
     dev: false
 
