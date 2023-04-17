@@ -86,8 +86,8 @@ type UsePropsLogicInput = {
 };
 
 type UsePropsLogicOutput = {
-  /** Similar to Initial, but displayed as a seoparate group in UI etc.
-   * Currentrly only for the ID prop. */
+  /** Similar to Initial, but displayed as a separate group in UI etc.
+   * Currentrly used only for the ID prop. */
   systemProps: PropAndMeta[];
   /** Initial (not deletable) props */
   initialProps: PropAndMeta[];

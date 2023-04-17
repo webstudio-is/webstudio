@@ -8,13 +8,13 @@ import {
   ComboboxAnchor,
   ComboboxListbox,
   ComboboxListboxItem,
-  SmallIconButton,
   Separator,
   Flex,
   Text,
   type CSS,
   ScrollArea,
   InputField,
+  NestedSelectButton,
 } from "@webstudio-is/design-system";
 import { ChevronDownIcon } from "@webstudio-is/icons";
 import type { Publish } from "~/shared/pubsub";
@@ -97,9 +97,8 @@ const PropsCombobox = ({
             {...combobox.getInputProps()}
             placeholder="Property"
             suffix={
-              <SmallIconButton
+              <NestedSelectButton
                 {...combobox.getToggleButtonProps()}
-                css={{ display: "flex", justifyContent: "center" }}
                 icon={<ChevronDownIcon />}
               />
             }
@@ -239,7 +238,6 @@ export const PropsPanel = (props: PropsPanelProps) => {
           </Flex>
         )}
       </CollapsibleSectionWithAddButton>
-      <Separator />
     </ScrollArea>
   );
 };

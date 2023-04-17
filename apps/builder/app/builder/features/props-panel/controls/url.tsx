@@ -1,4 +1,5 @@
 import { useStore } from "@nanostores/react";
+import { computed } from "nanostores";
 import {
   instancesStore,
   pagesStore,
@@ -33,7 +34,6 @@ import {
 } from "../shared";
 import type { Instance, Page } from "@webstudio-is/project-build";
 import { SelectAsset } from "./select-asset";
-import { computed, type ReadableAtom } from "nanostores";
 
 type UrlControlProps = ControlProps<
   "url",
@@ -222,6 +222,7 @@ const BaseAttachment = ({ prop, onChange, onSoftDelete }: BaseControlProps) => (
   </Row>
 );
 
+// store that contains IDs off all instances in the selected page
 const pageInstancesStore = computed(
   [selectedPageStore, instancesStore],
   (page, instances) => {
@@ -249,7 +250,7 @@ const pageInstancesStore = computed(
   }
 );
 
-let sectionsStore: ReadableAtom<Map<string, string>> = computed(
+let sectionsStore = computed(
   [pageInstancesStore, propsStore],
   (pageInstances, props) => {
     const sections = new Map<Instance["id"], string>();
