@@ -2,6 +2,7 @@ import { Links, LiveReload, Meta, Outlet, Scripts } from "@remix-run/react";
 import { Env } from "~/shared/env";
 import { useThemeProps } from "~/shared/theme";
 import { CRITICAL_CSS_MARKER } from "./constants";
+import env from "~/env/env.server";
 
 export const Root = () => {
   const themeProps = useThemeProps();
@@ -18,7 +19,11 @@ export const Root = () => {
         <Outlet />
         <Env />
         <Scripts />
-        {process.env.NODE_ENV === "development" && <LiveReload />}
+        {process.env.NODE_ENV === "development" && (
+          <LiveReload
+            port={env.BUILD_ORIGIN !== undefined ? 3010 : undefined}
+          />
+        )}
       </body>
     </html>
   );
