@@ -1,4 +1,3 @@
-import { useStore } from "@nanostores/react";
 import {
   Toolbar,
   ToolbarToggleGroup,
@@ -8,23 +7,22 @@ import { useCallback, useRef } from "react";
 import { CascadeIndicator } from "./cascade-indicator";
 import { BpStarOffIcon, BpStarOnIcon } from "@webstudio-is/icons";
 import { useSetInitialCanvasWidth } from ".";
-import {
-  breakpointsStore,
-  selectedBreakpointStore,
-  selectedBreakpointIdStore,
-} from "~/shared/nano-states";
+import { selectedBreakpointIdStore } from "~/shared/nano-states";
 import { groupBreakpoints } from "~/shared/breakpoints";
+import type { Breakpoint, Breakpoints } from "@webstudio-is/project-build";
 
-export const BreakpointsSelector = () => {
-  const breakpoints = useStore(breakpointsStore);
-  const selectedBreakpoint = useStore(selectedBreakpointStore);
+type BreakpointsSelector = {
+  breakpoints: Breakpoints;
+  selectedBreakpoint: Breakpoint;
+};
+
+export const BreakpointsSelector = ({
+  breakpoints,
+  selectedBreakpoint,
+}: BreakpointsSelector) => {
   const refs = useRef(new Map<string, HTMLButtonElement>());
   const setInitialCanvasWidth = useSetInitialCanvasWidth();
   const getButtonById = useCallback((id: string) => refs.current.get(id), []);
-
-  if (selectedBreakpoint === undefined) {
-    return null;
-  }
 
   return (
     <Toolbar>
@@ -66,7 +64,11 @@ export const BreakpointsSelector = () => {
             );
           }
         )}
-        <CascadeIndicator getButtonById={getButtonById} />
+        <CascadeIndicator
+          getButtonById={getButtonById}
+          selectedBreakpoint={selectedBreakpoint}
+          breakpoints={breakpoints}
+        />
       </ToolbarToggleGroup>
     </Toolbar>
   );

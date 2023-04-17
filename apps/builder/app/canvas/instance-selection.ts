@@ -3,6 +3,7 @@ import { getInstanceSelectorFromElement } from "~/shared/dom-utils";
 import {
   instancesStore,
   selectedInstanceSelectorStore,
+  selectedStyleSourceSelectorStore,
 } from "~/shared/nano-states";
 import { textEditingInstanceSelectorStore } from "~/shared/nano-states";
 import { publish } from "~/shared/pubsub";
@@ -70,6 +71,7 @@ export const subscribeInstanceSelection = () => {
       selectedInstanceSelectorStore.set(instanceSelector);
       // reset text editor when another instance is selected
       textEditingInstanceSelectorStore.set(undefined);
+      selectedStyleSourceSelectorStore.set(undefined);
     }
 
     // the second click in a double click.
@@ -81,6 +83,7 @@ export const subscribeInstanceSelection = () => {
       if (richTextInstanceSelector) {
         selectedInstanceSelectorStore.set(richTextInstanceSelector);
         textEditingInstanceSelectorStore.set(richTextInstanceSelector);
+        selectedStyleSourceSelectorStore.set(undefined);
       }
     }
   };

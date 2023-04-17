@@ -7,6 +7,8 @@ import {
   styleSourceSelectionsStore,
   styleSourcesStore,
   instancesStore,
+  selectedStyleSourceSelectorStore,
+  textEditingInstanceSelectorStore,
 } from "./nano-states";
 import {
   type DroppableTarget,
@@ -34,6 +36,7 @@ export const insertNewComponentInstance = (
       instance.id,
       ...dropTarget.parentSelector,
     ]);
+    selectedStyleSourceSelectorStore.set(undefined);
   });
 };
 
@@ -46,6 +49,7 @@ export const reparentInstance = (
       reparentInstanceMutable(instances, targetInstanceSelector, dropTarget);
     });
     selectedInstanceSelectorStore.set(targetInstanceSelector);
+    selectedStyleSourceSelectorStore.set(undefined);
   });
 };
 
@@ -123,6 +127,7 @@ export const deleteInstance = (instanceSelector: InstanceSelector) => {
           selectedInstanceSelectorStore.set(
             getAncestorInstanceSelector(instanceSelector, parentInstance.id)
           );
+          selectedStyleSourceSelectorStore.set(undefined);
         }
       }
     );
@@ -141,4 +146,19 @@ export const deleteSelectedInstance = () => {
     }
     deleteInstance(selectedInstanceSelector);
   });
+};
+
+export const escapeSelection = () => {
+  const selectedInstanceSelector = selectedInstanceSelectorStore.get();
+  const textEditingInstanceSelector = textEditingInstanceSelectorStore.get();
+  if (selectedInstanceSelector === undefined) {
+    return;
+  }
+  // exit text editing mode first without unselecting instance
+  if (textEditingInstanceSelector) {
+    textEditingInstanceSelectorStore.set(undefined);
+    return;
+  }
+  selectedInstanceSelectorStore.set(undefined);
+  selectedStyleSourceSelectorStore.set(undefined);
 };

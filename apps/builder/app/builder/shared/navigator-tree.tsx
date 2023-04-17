@@ -8,6 +8,7 @@ import {
   selectedInstanceSelectorStore,
   useDragAndDropState,
   textEditingInstanceSelectorStore,
+  selectedStyleSourceSelectorStore,
 } from "~/shared/nano-states";
 import type { InstanceSelector } from "~/shared/tree-utils";
 import { reparentInstance } from "~/shared/instance-utils";
@@ -57,6 +58,7 @@ export const NavigatorTree = () => {
     ) {
       selectedInstanceSelectorStore.set(instanceSelector);
       textEditingInstanceSelectorStore.set(undefined);
+      selectedStyleSourceSelectorStore.set(undefined);
     }
   }, []);
 

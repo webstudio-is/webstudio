@@ -34,7 +34,7 @@ export const Basic = () => {
         onClick={() => {
           engine.addStyleRule(".test", {
             style: {
-              background: { type: "keyword", value: "yellow" },
+              backgroundColor: { type: "keyword", value: "yellow" },
             },
             breakpoint: "0",
           });

@@ -45,20 +45,6 @@ export const enterEditingMode = (event?: KeyboardEvent) => {
   textEditingInstanceSelectorStore.set(selectedInstanceSelector);
 };
 
-export const escapeSelection = () => {
-  const selectedInstanceSelector = selectedInstanceSelectorStore.get();
-  const textEditingInstanceSelector = textEditingInstanceSelectorStore.get();
-  if (selectedInstanceSelector === undefined) {
-    return;
-  }
-  // exit text editing mode first without unselecting instance
-  if (textEditingInstanceSelector) {
-    textEditingInstanceSelectorStore.set(undefined);
-    return;
-  }
-  selectedInstanceSelectorStore.set(undefined);
-};
-
 export const instancesStore = atom<Instances>(new Map());
 export const useSetInstances = (instances: [Instance["id"], Instance][]) => {
   useSyncInitializeOnce(() => {

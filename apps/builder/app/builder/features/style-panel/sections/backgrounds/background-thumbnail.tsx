@@ -41,6 +41,8 @@ const StyledWebstudioImage = styled(WebstudioImage, {
     height: "100%",
     left: 0,
     top: 0,
+    right: 0,
+    bottom: 0,
     backgroundSize: "contain",
     backgroundRepeat: "no-repeat",
     backgroundPosition: "center",
@@ -110,7 +112,6 @@ export const LayerThumbnail = (props: { layerStyle: StyleInfo }) => {
         src={asset.name}
         width={theme.spacing[10]}
         optimize={true}
-        alt={getLayerName(props.layerStyle, assets)}
       />
     );
   }

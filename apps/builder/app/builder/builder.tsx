@@ -226,7 +226,7 @@ const NavigatorPanel = ({
     <SidePanel gridArea="navigator" isPreviewMode={isPreviewMode}>
       <Box
         css={{
-          borderRight: `1px solid ${theme.colors.slate7}`,
+          borderRight: `1px solid ${theme.colors.borderMain}`,
           width: theme.spacing[30],
           height: "100%",
         }}
