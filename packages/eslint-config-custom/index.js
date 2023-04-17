@@ -46,6 +46,8 @@ module.exports = {
           "__generated__/*",
           "react-hot-toast/headless",
           "colord/plugins/*",
+          "react/*",
+          "react-dom/*",
         ],
       },
     ],
