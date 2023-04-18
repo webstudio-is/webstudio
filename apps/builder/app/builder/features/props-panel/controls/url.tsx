@@ -23,9 +23,8 @@ import {
   LinkIcon,
   PageIcon,
   PhoneIcon,
-  SectionLinkIcon,
 } from "@webstudio-is/icons";
-import { type ReactNode, useState } from "react";
+import { type ReactNode, useState, useMemo } from "react";
 import {
   type ControlProps,
   getLabel,
@@ -39,10 +38,7 @@ import {
 } from "@webstudio-is/project-build";
 import { SelectAsset } from "./select-asset";
 
-type UrlControlProps = ControlProps<
-  "url",
-  "string" | "page" | "asset" | "instance"
->;
+type UrlControlProps = ControlProps<"url", "string" | "page" | "asset">;
 
 type BaseControlProps = {
   id: string;
@@ -190,29 +186,104 @@ const BaseEmail = ({ prop, onChange, id }: BaseControlProps) => {
   );
 };
 
+const useSections = (page: { rootInstanceId: string }) => {
+  const store = useMemo(
+    () =>
+      computed([instancesStore, propsStore], (instances, props) => {
+        const pageInstances = findTreeInstanceIds(
+          instances,
+          page.rootInstanceId
+        );
+
+        const sections = new Map<Instance["id"], string>();
+
+        for (const prop of props.values()) {
+          if (
+            prop.type === "string" &&
+            prop.name === "id" &&
+            prop.value.trim() !== "" &&
+            pageInstances.has(prop.instanceId)
+          ) {
+            sections.set(prop.instanceId, prop.value);
+          }
+        }
+
+        return sections;
+      }),
+    [page.rootInstanceId]
+  );
+
+  return useStore(store);
+};
+
 const getPageId = (page: Page) => page.id;
 const getPageName = (page: Page) => page.name;
 
-const BasePage = ({ prop, onChange, id }: BaseControlProps) => {
+const BasePage = ({ prop, onChange }: BaseControlProps) => {
   const pages = useStore(pagesStore);
-  const options = pages === undefined ? [] : [pages.homePage, ...pages.pages];
-  const value =
+
+  const pageSelectOptions =
+    pages === undefined ? [] : [pages.homePage, ...pages.pages];
+
+  const pageSelectValue =
     prop?.type === "page"
-      ? options.find((page) => page.id === prop.value)
+      ? pageSelectOptions.find(
+          (page) =>
+            page.id ===
+            (typeof prop.value === "string" ? prop.value : prop.value.pageId)
+        )
+      : undefined;
+
+  const currentPage = useStore(selectedPageStore);
+  const sectionsPage = pageSelectValue ?? currentPage;
+  const sections = useSections(sectionsPage ?? { rootInstanceId: "" });
+
+  const sectionSelectOptions = Array.from(sections.keys());
+
+  const sectionSelectValue =
+    prop?.type === "page" && typeof prop.value !== "string"
+      ? prop.value.instanceId
       : undefined;
 
   return (
-    <Row>
-      <Select
-        id={id}
-        value={value}
-        options={options}
-        getLabel={getPageName}
-        getValue={getPageId}
-        onChange={(page) => onChange({ type: "page", value: page.id })}
-        fullWidth
-      />
-    </Row>
+    <>
+      <Row>
+        <Select
+          value={pageSelectValue}
+          options={pageSelectOptions}
+          getLabel={getPageName}
+          getValue={getPageId}
+          onChange={(page) => onChange({ type: "page", value: page.id })}
+          placeholder="Current page"
+          fullWidth
+        />
+      </Row>
+      <Row>
+        <Select
+          key={sectionsPage?.id}
+          disabled={sectionSelectOptions.length === 0}
+          placeholder={
+            sectionSelectOptions.length === 0
+              ? "Selected page has no sections"
+              : "Choose section"
+          }
+          value={sectionSelectValue}
+          options={sectionSelectOptions}
+          getLabel={(instanceId) => sections.get(instanceId) ?? ""}
+          onChange={(instanceId) => {
+            // for TypeScript
+            if (sectionsPage === undefined) {
+              return;
+            }
+            onChange({
+              type: "page",
+              value: { pageId: sectionsPage.id, instanceId },
+            });
+          }}
+          fullWidth
+        />
+      </Row>
+    </>
   );
 };
 
@@ -226,68 +297,9 @@ const BaseAttachment = ({ prop, onChange, onSoftDelete }: BaseControlProps) => (
   </Row>
 );
 
-// separate store just to avoid unnecessary recomputations
-const pageInstancesStore = computed(
-  [selectedPageStore, instancesStore],
-  (page, instances): Set<Instance["id"]> =>
-    page === undefined
-      ? new Set()
-      : findTreeInstanceIds(instances, page.rootInstanceId)
-);
-
-const sectionsStore = computed(
-  [pageInstancesStore, propsStore],
-  (pageInstances, props) => {
-    const sections = new Map<Instance["id"], string>();
-
-    for (const prop of props.values()) {
-      if (
-        prop.type === "string" &&
-        prop.name === "id" &&
-        prop.value.trim() !== "" &&
-        pageInstances.has(prop.instanceId)
-      ) {
-        sections.set(prop.instanceId, prop.value);
-      }
-    }
-
-    return sections;
-  }
-);
-
-const BaseSection = ({ prop, onChange, id, instanceId }: BaseControlProps) => {
-  const sections = useStore(sectionsStore);
-  const options = Array.from(sections.keys()).filter((id) => id !== instanceId);
-
-  const value =
-    prop?.type === "instance" && options.includes(prop.value)
-      ? prop.value
-      : undefined;
-
-  return (
-    <Row>
-      <Select
-        id={id}
-        value={value}
-        options={options}
-        getLabel={(instanceId) => sections.get(instanceId) ?? ""}
-        onChange={(instanceId) =>
-          onChange({ type: "instance", value: instanceId })
-        }
-        fullWidth
-      />
-    </Row>
-  );
-};
-
 const modes = {
   url: { icon: <LinkIcon />, control: BaseUrl, label: "URL" },
   page: { icon: <PageIcon />, control: BasePage, label: "Page" },
-  section: {
-    icon: <SectionLinkIcon />,
-    control: BaseSection,
-    label: "Section",
-  },
   email: { icon: <EmailIcon />, control: BaseEmail, label: "Email" },
   phone: { icon: <PhoneIcon />, control: BasePhone, label: "Phone" },
   attachment: {
@@ -310,10 +322,6 @@ const propToMode = (prop?: UrlControlProps["prop"]): Mode => {
 
   if (prop.type === "asset") {
     return "attachment";
-  }
-
-  if (prop.type === "instance") {
-    return "section";
   }
 
   if (prop.value.startsWith("tel:")) {

@@ -92,6 +92,7 @@ const addLinkableSections = (
 };
 
 addLinkableSections(["contacts", "about"]);
+addLinkableSections(["company", "employees"], pagesStore.get()?.pages[0]);
 selectedPageIdStore.set(pagesStore.get()?.homePage.id);
 
 const imageAsset = (name = "cat", format = "jpg"): Asset => ({
@@ -328,8 +329,11 @@ const startingProps: Prop[] = [
     id: unique(),
     instanceId,
     name: "addedUrlSection",
-    type: "instance",
-    value: getSectionInstanceId("about"),
+    type: "page",
+    value: {
+      pageId: pagesStore.get()?.homePage.id ?? "",
+      instanceId: getSectionInstanceId("about"),
+    },
   },
   {
     id: unique(),

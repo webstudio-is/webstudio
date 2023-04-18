@@ -56,6 +56,22 @@ describe("resolveUrlProp", () => {
     value: page1.id,
   };
 
+  const instnaceIdProp: Prop = {
+    type: "string",
+    id: unique(),
+    instanceId: unique(),
+    name: "id",
+    value: unique(),
+  };
+
+  const pageSectionProp: Prop = {
+    type: "page",
+    id: unique(),
+    instanceId,
+    name: unique(),
+    value: { pageId: page1.id, instanceId: instnaceIdProp.instanceId },
+  };
+
   const pageByPathProp: Prop = {
     type: "string",
     id: unique(),
@@ -72,30 +88,6 @@ describe("resolveUrlProp", () => {
     value: unique(),
   };
 
-  const instanceProp1: Prop = {
-    type: "instance",
-    id: unique(),
-    instanceId,
-    name: unique(),
-    value: unique(),
-  };
-
-  const instnaceIdProp: Prop = {
-    type: "string",
-    id: unique(),
-    instanceId: instanceProp1.value,
-    name: "id",
-    value: unique(),
-  };
-
-  const instanceProp2: Prop = {
-    type: "instance",
-    id: unique(),
-    instanceId,
-    name: unique(),
-    value: unique(),
-  };
-
   const props: PropsByInstanceId = new Map([
     [
       instanceId,
@@ -104,8 +96,7 @@ describe("resolveUrlProp", () => {
         pageByPathProp,
         arbitraryUrlProp,
         assetProp,
-        instanceProp1,
-        instanceProp2,
+        pageSectionProp,
       ],
     ],
     [instnaceIdProp.instanceId, [instnaceIdProp]],
@@ -151,18 +142,12 @@ describe("resolveUrlProp", () => {
     });
   });
 
-  test("instance by id", () => {
-    expect(resolveUrlProp(instanceId, instanceProp1.name, stores)).toEqual({
-      type: "instance",
+  test("section on a page", () => {
+    expect(resolveUrlProp(instanceId, pageSectionProp.name, stores)).toEqual({
+      type: "page",
+      page: page1,
       instanceId: instnaceIdProp.instanceId,
-      idProp: instnaceIdProp.value,
-    });
-  });
-
-  test("instance by id (no id prop)", () => {
-    expect(resolveUrlProp(instanceId, instanceProp2.name, stores)).toEqual({
-      type: "instance",
-      instanceId: instanceProp2.value,
+      idPropValue: instnaceIdProp.value,
     });
   });
 

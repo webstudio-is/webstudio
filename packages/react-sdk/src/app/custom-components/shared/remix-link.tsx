@@ -12,7 +12,11 @@ export const wrapLinkComponent = (BaseLink: LinkComponent) => {
     const href = usePropUrl(getInstanceIdFromComponentProps(props), "href");
 
     if (href?.type === "page") {
-      return <RemixLink {...props} to={href.page.path} ref={ref} />;
+      let to = href.page.path;
+      if (href.idPropValue !== undefined) {
+        to += `#${href.idPropValue}`;
+      }
+      return <RemixLink {...props} to={to} ref={ref} />;
     }
 
     return <BaseLink {...props} ref={ref} />;

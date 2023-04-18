@@ -32,11 +32,7 @@ export const useInstanceProps = (instanceId: Instance["id"]) => {
   const instancePropsObject: Record<Prop["name"], Prop["value"]> = {};
   if (instanceProps) {
     for (const prop of instanceProps) {
-      if (
-        prop.type !== "asset" &&
-        prop.type !== "page" &&
-        prop.type !== "instance"
-      ) {
+      if (prop.type !== "asset" && prop.type !== "page") {
         instancePropsObject[prop.name] = prop.value;
       }
     }
@@ -78,10 +74,14 @@ export const resolveUrlProp = (
     assets,
   }: { props: PropsByInstanceId; pages: Pages; assets: Assets }
 ):
-  | { type: "page"; page: Page }
+  | {
+      type: "page";
+      page: Page;
+      instanceId?: Instance["id"];
+      idPropValue?: string;
+    }
   | { type: "asset"; asset: Asset }
   | { type: "string"; url: string }
-  | { type: "instance"; instanceId: Instance["id"]; idProp?: string }
   | undefined => {
   const instanceProps = props.get(instanceId);
   if (instanceProps === undefined) {
@@ -93,8 +93,30 @@ export const resolveUrlProp = (
     }
 
     if (prop.type === "page") {
-      const page = pages.get(prop.value);
-      return page && { type: "page", page };
+      if (typeof prop.value === "string") {
+        const page = pages.get(prop.value);
+        return page && { type: "page", page };
+      }
+
+      const { instanceId, pageId } = prop.value;
+
+      const page = pages.get(pageId);
+
+      if (page === undefined) {
+        return;
+      }
+
+      const idProp = props.get(instanceId)?.find((prop) => prop.name === "id");
+
+      return {
+        type: "page",
+        page,
+        instanceId,
+        idPropValue:
+          idProp === undefined || idProp.type !== "string"
+            ? undefined
+            : idProp.value,
+      };
     }
 
     if (prop.type === "string") {
@@ -109,18 +131,6 @@ export const resolveUrlProp = (
     if (prop.type === "asset") {
       const asset = assets.get(prop.value);
       return asset && { type: "asset", asset };
-    }
-
-    if (prop.type === "instance") {
-      const idProp = props.get(prop.value)?.find((prop) => prop.name === "id");
-      return {
-        type: "instance",
-        instanceId: prop.value,
-        idProp:
-          idProp === undefined || idProp.type !== "string"
-            ? undefined
-            : idProp.value,
-      };
     }
 
     return;
