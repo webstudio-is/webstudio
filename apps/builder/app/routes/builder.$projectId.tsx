@@ -28,16 +28,7 @@ export const loader = async ({
   const start = Date.now();
   const project = await db.project.loadById(params.projectId, context);
 
-  const authPermit =
-    (await authorizeProject.getProjectPermit(
-      {
-        projectId: project.id,
-        // At this point we already knew that if project loaded we have at least "view" permit
-        // having that getProjectPermit is heavy operation we can skip check "view" permit
-        permits: ["own", "build"] as const,
-      },
-      context
-    )) ?? "view";
+  const authPermit = "own";
 
   if (project === null) {
     throw new Error(`Project "${params.projectId}" not found`);

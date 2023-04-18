@@ -75,27 +75,35 @@ export async function loadBuildByProjectId(
   projectId: Build["projectId"],
   env: "prod" | "dev"
 ): Promise<Build | undefined> {
-  if (env === "dev") {
+  console.time("BUILD LOAD");
+  try {
+    if (env === "dev") {
+      const build = await prisma.build.findFirst({
+        where: { projectId, isDev: true },
+      });
+
+      if (build === null) {
+        throw new Error("Dev build not found");
+      }
+
+      console.time("BUILD PARSE");
+      return parseBuild(build);
+    }
+
     const build = await prisma.build.findFirst({
-      where: { projectId, isDev: true },
+      where: { projectId, isProd: true },
     });
 
     if (build === null) {
-      throw new Error("Dev build not found");
+      return;
     }
 
+    console.time("BUILD PARSE");
     return parseBuild(build);
+  } finally {
+    console.timeEnd("BUILD PARSE");
+    console.timeEnd("BUILD LOAD");
   }
-
-  const build = await prisma.build.findFirst({
-    where: { projectId, isProd: true },
-  });
-
-  if (build === null) {
-    return;
-  }
-
-  return parseBuild(build);
 }
 
 const createNewPageInstances = (): Build["instances"] => {

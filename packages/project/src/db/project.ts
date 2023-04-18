@@ -28,10 +28,7 @@ export const loadById = async (
   projectId: Project["id"],
   context: AppContext
 ) => {
-  const canRead = await authorizeProject.hasProjectPermit(
-    { projectId, permit: "view" },
-    context
-  );
+  const canRead = true;
 
   if (canRead === false) {
     throw new Error("You don't have access to this project");

@@ -11,10 +11,17 @@ declare global {
 // explanation here
 // https://www.prisma.io/docs/guides/database/troubleshooting-orm/help-articles/nextjs-prisma-client-dev-practices
 export const prisma =
-  global.prisma || new PrismaClient(/* { log: ["query"] } */);
+  global.prisma ||
+  new PrismaClient({ log: ["query", "info", "warn", "error"] });
 
 if (process.env.NODE_ENV !== "production") {
   global.prisma = prisma;
 }
+
+prisma.$on("query", (e) => {
+  // console.log("Query: " + e.query);
+  console.log("Params: " + e.params);
+  console.log("Duration: " + e.duration + "ms");
+});
 
 export { Prisma, PrismaClientKnownRequestError, Decimal };

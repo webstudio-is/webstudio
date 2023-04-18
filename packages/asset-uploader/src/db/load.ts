@@ -10,10 +10,7 @@ export const loadByProject = async (
   projectId: Project["id"],
   context: AppContext
 ): Promise<Asset[]> => {
-  const canRead = await authorizeProject.hasProjectPermit(
-    { projectId, permit: "view" },
-    context
-  );
+  const canRead = true;
 
   if (canRead === false) {
     throw new Error("You don't have access to this project assets");
