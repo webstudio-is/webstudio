@@ -7,8 +7,14 @@ import {
 import type { Build } from "../types";
 import { Styles, StylesList, getStyleDeclKey } from "../schema/styles";
 
-export const parseStyles = (stylesString: string): Styles => {
-  const stylesList = StylesList.parse(JSON.parse(stylesString));
+export const parseStyles = (
+  stylesString: string,
+  skipValidation = false
+): Styles => {
+  const stylesList = skipValidation
+    ? (JSON.parse(stylesString) as StylesList)
+    : StylesList.parse(JSON.parse(stylesString));
+
   return new Map(stylesList.map((item) => [getStyleDeclKey(item), item]));
 };
 

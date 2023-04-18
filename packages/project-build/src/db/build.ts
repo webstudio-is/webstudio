@@ -1,7 +1,8 @@
+/* eslint no-console: ["error", { allow: ["time", "timeEnd"] }] */
+
 import { nanoid } from "nanoid";
 import {
   type Build as DbBuild,
-  type Project,
   prisma,
   Prisma,
 } from "@webstudio-is/prisma-client";
@@ -23,43 +24,48 @@ import { parseProps, serializeProps } from "./props";
 import { parseInstances, serializeInstances } from "./instances";
 
 const parseBuild = async (build: DbBuild): Promise<Build> => {
-  const pages = Pages.parse(JSON.parse(build.pages));
-  return {
-    id: build.id,
-    projectId: build.projectId,
-    isDev: build.isDev,
-    isProd: build.isProd,
-    createdAt: build.createdAt.toISOString(),
-    pages,
-    breakpoints: Array.from(parseBreakpoints(build.breakpoints)),
-    styles: Array.from(parseStyles(build.styles)),
-    styleSources: Array.from(parseStyleSources(build.styleSources)),
-    styleSourceSelections: Array.from(
-      parseStyleSourceSelections(build.styleSourceSelections)
-    ),
-    props: Array.from(parseProps(build.props)),
-    instances: Array.from(parseInstances(build.instances)),
-  };
-};
+  // Hardcode skipValidation to true for now
+  const skipValidation = true;
+  // eslint-disable-next-line no-console
+  console.time("parseBuild");
+  try {
+    const pages = skipValidation
+      ? (JSON.parse(build.pages) as Pages)
+      : Pages.parse(JSON.parse(build.pages));
 
-export const loadBuildById = async ({
-  projectId,
-  buildId,
-}: {
-  projectId: Project["id"];
-  buildId: Build["id"];
-}): Promise<Build> => {
-  const build = await prisma.build.findUnique({
-    where: {
-      id_projectId: { projectId, id: buildId },
-    },
-  });
+    const breakpoints = Array.from(
+      parseBreakpoints(build.breakpoints, skipValidation)
+    );
+    const styles = Array.from(parseStyles(build.styles, skipValidation));
+    const styleSources = Array.from(
+      parseStyleSources(build.styleSources, skipValidation)
+    );
+    const styleSourceSelections = Array.from(
+      parseStyleSourceSelections(build.styleSourceSelections, skipValidation)
+    );
+    const props = Array.from(parseProps(build.props, skipValidation));
+    const instances = Array.from(
+      parseInstances(build.instances, skipValidation)
+    );
 
-  if (build === null) {
-    throw new Error("Build not found");
+    return {
+      id: build.id,
+      projectId: build.projectId,
+      isDev: build.isDev,
+      isProd: build.isProd,
+      createdAt: build.createdAt.toISOString(),
+      pages,
+      breakpoints,
+      styles,
+      styleSources,
+      styleSourceSelections,
+      props,
+      instances,
+    };
+  } finally {
+    // eslint-disable-next-line no-console
+    console.timeEnd("parseBuild");
   }
-
-  return parseBuild(build);
 };
 
 export async function loadBuildByProjectId(

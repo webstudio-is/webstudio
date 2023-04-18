@@ -10,11 +10,13 @@ import {
 } from "../schema/style-source-selections";
 
 export const parseStyleSourceSelections = (
-  styleSourceSelectionsString: string
+  styleSourceSelectionsString: string,
+  skipValidation = false
 ): StyleSourceSelections => {
-  const styleSourceSelectionsList = StyleSourceSelectionsList.parse(
-    JSON.parse(styleSourceSelectionsString)
-  );
+  const styleSourceSelectionsList = skipValidation
+    ? (JSON.parse(styleSourceSelectionsString) as StyleSourceSelectionsList)
+    : StyleSourceSelectionsList.parse(JSON.parse(styleSourceSelectionsString));
+
   return new Map(
     styleSourceSelectionsList.map((item) => [item.instanceId, item])
   );

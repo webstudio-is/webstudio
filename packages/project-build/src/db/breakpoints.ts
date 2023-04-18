@@ -13,8 +13,13 @@ import {
   type AppContext,
 } from "@webstudio-is/trpc-interface/server";
 
-export const parseBreakpoints = (breakpointsString: string): Breakpoints => {
-  const breakpointssList = BreakpointsList.parse(JSON.parse(breakpointsString));
+export const parseBreakpoints = (
+  breakpointsString: string,
+  skipValidation = false
+): Breakpoints => {
+  const breakpointssList = skipValidation
+    ? (JSON.parse(breakpointsString) as BreakpointsList)
+    : BreakpointsList.parse(JSON.parse(breakpointsString));
   return new Map(breakpointssList.map((item) => [item.id, item]));
 };
 
