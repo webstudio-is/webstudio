@@ -32,7 +32,11 @@ import {
   useLocalValue,
   VerticalLayout,
 } from "../shared";
-import type { Instance, Page } from "@webstudio-is/project-build";
+import {
+  findTreeInstanceIds,
+  type Instance,
+  type Page,
+} from "@webstudio-is/project-build";
 import { SelectAsset } from "./select-asset";
 
 type UrlControlProps = ControlProps<
@@ -222,32 +226,13 @@ const BaseAttachment = ({ prop, onChange, onSoftDelete }: BaseControlProps) => (
   </Row>
 );
 
-// store that contains IDs off all instances in the selected page
+// separate store just to avoid unnecessary recomputations
 const pageInstancesStore = computed(
   [selectedPageStore, instancesStore],
-  (page, instances) => {
-    const result = new Set<string>();
-
-    if (page === undefined) {
-      return result;
-    }
-
-    const addInstance = (id: string) => {
-      const instance = instances.get(id);
-      if (instance === undefined) {
-        return;
-      }
-      result.add(id);
-      for (const child of instance.children) {
-        if (child.type === "id") {
-          addInstance(child.value);
-        }
-      }
-    };
-    addInstance(page.rootInstanceId);
-
-    return result;
-  }
+  (page, instances): Set<Instance["id"]> =>
+    page === undefined
+      ? new Set()
+      : findTreeInstanceIds(instances, page.rootInstanceId)
 );
 
 let sectionsStore = computed(
