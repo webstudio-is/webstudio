@@ -11,7 +11,7 @@
     "checks": "pnpm typecheck && pnpm lint",
     "dev": "prisma generate --watch & build-package --watch --no-generated-as-entries",
     "build": "prisma format && prisma generate && build-package --no-generated-as-entries",
-    "dts": "tsc --emitDeclarationOnly --declaration --declarationDir lib",
+    "dts": "tsc --declarationDir lib",
     "migrations": "./migrations-cli/cli.ts"
   },
   "bin": {

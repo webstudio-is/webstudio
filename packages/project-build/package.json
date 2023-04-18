@@ -31,7 +31,7 @@
     "checks": "pnpm typecheck && pnpm lint && pnpm test",
     "dev": "build-package --watch",
     "build": "build-package",
-    "dts": "tsc"
+    "dts": "tsc --declarationDir lib/types"
   },
   "dependencies": {
     "@webstudio-is/css-data": "workspace:^",
