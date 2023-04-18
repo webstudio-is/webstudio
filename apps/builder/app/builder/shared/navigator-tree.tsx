@@ -76,17 +76,17 @@ export const NavigatorTree = () => {
       onSelect={handleSelect}
       onHover={hoveredInstanceSelectorStore.set}
       onDragItemChange={(dragInstanceSelector) => {
-        setState({
+        setState((state) => ({
           ...state,
           dragPayload: {
             origin: "panel",
             type: "reparent",
             dragInstanceSelector,
           },
-        });
+        }));
       }}
       onDropTargetChange={(dropTarget) => {
-        setState({ ...state, dropTarget });
+        setState((state) => ({ ...state, dropTarget }));
       }}
       onDragEnd={handleDragEnd}
       onCancel={() => {
