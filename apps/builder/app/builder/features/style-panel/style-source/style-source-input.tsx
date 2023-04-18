@@ -41,6 +41,7 @@ import {
   type ReactNode,
 } from "react";
 import { mergeRefs } from "@react-aria/utils";
+import type { ComponentState } from "@webstudio-is/react-sdk";
 import { type ItemSource, menuCssVars, StyleSource } from "./style-source";
 import { useSortable } from "./use-sortable";
 import { matchSorter } from "match-sorter";
@@ -186,7 +187,7 @@ type StyleSourceInputProps<Item extends IntermediateItem> = {
   value?: Array<Item>;
   selectedItemSelector: undefined | ItemSelector;
   editingItemId?: Item["id"];
-  componentStates?: string[];
+  componentStates?: ComponentState[];
   onSelectAutocompleteItem?: (item: Item) => void;
   onRemoveItem?: (id: Item["id"]) => void;
   onDeleteItem?: (id: Item["id"]) => void;
@@ -252,7 +253,7 @@ const userActionStates = [
 const renderMenuItems = (props: {
   selectedItemSelector: undefined | ItemSelector;
   item: IntermediateItem;
-  componentStates?: string[];
+  componentStates?: ComponentState[];
   onSelect?: (itemSelector: ItemSelector) => void;
   onEdit?: (itemId: IntermediateItem["id"]) => void;
   onDuplicate?: (itemId: IntermediateItem["id"]) => void;
@@ -262,7 +263,13 @@ const renderMenuItems = (props: {
   onRemove?: (itemId: IntermediateItem["id"]) => void;
   onDelete?: (itemId: IntermediateItem["id"]) => void;
 }) => {
-  const states = [...userActionStates, ...(props.componentStates ?? [])];
+  const states = [
+    ...userActionStates.map((value) => ({
+      value,
+      label: humanizeString(value),
+    })),
+    ...(props.componentStates ?? []),
+  ];
   return (
     <>
       {props.item.source !== "local" && (
@@ -306,33 +313,34 @@ const renderMenuItems = (props: {
           Delete
         </DropdownMenuItem>
       )}
+
       {isFeatureEnabled("styleSourceStates") && (
         <>
           <DropdownMenuSeparator />
           <DropdownMenuLabel>States</DropdownMenuLabel>
-          {states.map((state) => (
+          {states.map(({ label, value }) => (
             <DropdownMenuItem
-              key={state}
+              key={value}
               withIndicator={true}
               icon={
                 props.item.id === props.selectedItemSelector?.styleSourceId &&
-                state === props.selectedItemSelector.state ? (
+                value === props.selectedItemSelector.state ? (
                   <CheckMarkIcon
                     color={
-                      props.item.states.includes(state)
+                      props.item.states.includes(value)
                         ? rawTheme.colors.foregroundPrimary
                         : rawTheme.colors.foregroundIconMain
                     }
                   />
-                ) : props.item.states.includes(state) ? (
+                ) : props.item.states.includes(value) ? (
                   <DotIcon color={rawTheme.colors.foregroundPrimary} />
                 ) : null
               }
               onSelect={() =>
-                props.onSelect?.({ styleSourceId: props.item.id, state })
+                props.onSelect?.({ styleSourceId: props.item.id, state: value })
               }
             >
-              {humanizeString(state)}
+              {label}
             </DropdownMenuItem>
           ))}
         </>

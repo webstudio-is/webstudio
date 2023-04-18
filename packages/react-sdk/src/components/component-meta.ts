@@ -23,6 +23,13 @@ export const componentCategories = [
   "forms",
 ] as const;
 
+export const ComponentState = z.object({
+  value: z.string(),
+  label: z.string(),
+});
+
+export type ComponentState = z.infer<typeof ComponentState>;
+
 const WsComponentMeta = z.object({
   category: z.enum(componentCategories).optional(),
   // container - can accept other components with dnd
@@ -40,7 +47,7 @@ const WsComponentMeta = z.object({
   label: z.string(),
   Icon: z.function(),
   presetStyle: z.optional(z.any()),
-  states: z.optional(z.array(z.string())),
+  states: z.optional(z.array(ComponentState)),
   children: z.optional(z.array(z.string())),
 });
 

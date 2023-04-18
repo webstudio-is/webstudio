@@ -13,5 +13,6 @@ export {
 export {
   type WsComponentPropsMeta,
   type WsComponentMeta,
+  type ComponentState,
   componentCategories,
 } from "./components/component-meta";
