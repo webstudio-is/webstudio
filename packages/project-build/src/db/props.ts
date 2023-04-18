@@ -6,8 +6,13 @@ import {
 } from "@webstudio-is/trpc-interface/server";
 import { Props, PropsList } from "../schema/props";
 
-export const parseProps = (propsString: string): Props => {
-  const propsList = PropsList.parse(JSON.parse(propsString));
+export const parseProps = (
+  propsString: string,
+  skipValidation = false
+): Props => {
+  const propsList = skipValidation
+    ? (JSON.parse(propsString) as PropsList)
+    : PropsList.parse(JSON.parse(propsString));
   return new Map(propsList.map((prop) => [prop.id, prop]));
 };
 

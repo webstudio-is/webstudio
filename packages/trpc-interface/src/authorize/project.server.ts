@@ -37,77 +37,86 @@ export const hasProjectPermit = async (
   },
   context: AppContext
 ) => {
-  const { authorization } = context;
-  const { authorizeTrpc } = authorization;
+  const start = Date.now();
 
-  const checks = [];
-  const namespace = "Project";
+  try {
+    const { authorization } = context;
+    const { authorizeTrpc } = authorization;
 
-  // Allow load production build env i.e. "published" site
-  if (props.permit === "view" && context.authorization.buildEnv === "prod") {
-    return true;
-  }
+    const checks = [];
+    const namespace = "Project";
 
-  // Allow load webstudiois for clone
-  // @todo Rethink permissions for this use-case
-  // The plan is to make new permission for projects which are allowed to be publicly clonable by anyone
-  // https://github.com/webstudio-is/webstudio-builder/issues/1038
-  if (
-    props.permit === "view" &&
-    props.projectId === "62154aaef0cb0860ccf85d6e"
-  ) {
-    return true;
-  }
-
-  // Check if the user is allowed to access the project
-  if (authorization.userId !== undefined) {
-    checks.push(
-      authorizeTrpc.check.query({
-        subjectSet: {
-          namespace: "User",
-          id: authorization.userId,
-        },
-        namespace,
-        id: props.projectId,
-        permit: props.permit,
-      })
-    );
-  }
-
-  // Check if the special link with a token allows to access the project
-  // Token doesn't have own permit, do not check it
-  if (authorization.authToken !== undefined && props.permit !== "own") {
-    checks.push(
-      authorizeTrpc.check.query({
-        namespace,
-        id: props.projectId,
-        subjectSet: {
-          id: authorization.authToken,
-          namespace: "Token",
-        },
-        permit: props.permit,
-      })
-    );
-  }
-
-  if (checks.length === 0) {
-    return false;
-  }
-
-  const authResults = await Promise.allSettled(checks);
-
-  for (const authResult of authResults) {
-    if (authResult.status === "rejected") {
-      throw new Error(`Authorization call failed ${authResult.reason}`);
+    // Allow load production build env i.e. "published" site
+    if (props.permit === "view" && context.authorization.buildEnv === "prod") {
+      return true;
     }
+
+    // Allow load webstudiois for clone
+    // @todo Rethink permissions for this use-case
+    // The plan is to make new permission for projects which are allowed to be publicly clonable by anyone
+    // https://github.com/webstudio-is/webstudio-builder/issues/1038
+    if (
+      props.permit === "view" &&
+      props.projectId === "62154aaef0cb0860ccf85d6e"
+    ) {
+      return true;
+    }
+
+    // Check if the user is allowed to access the project
+    if (authorization.userId !== undefined) {
+      checks.push(
+        authorizeTrpc.check.query({
+          subjectSet: {
+            namespace: "User",
+            id: authorization.userId,
+          },
+          namespace,
+          id: props.projectId,
+          permit: props.permit,
+        })
+      );
+    }
+
+    // Check if the special link with a token allows to access the project
+    // Token doesn't have own permit, do not check it
+    if (authorization.authToken !== undefined && props.permit !== "own") {
+      checks.push(
+        authorizeTrpc.check.query({
+          namespace,
+          id: props.projectId,
+          subjectSet: {
+            id: authorization.authToken,
+            namespace: "Token",
+          },
+          permit: props.permit,
+        })
+      );
+    }
+
+    if (checks.length === 0) {
+      return false;
+    }
+
+    const authResults = await Promise.allSettled(checks);
+
+    for (const authResult of authResults) {
+      if (authResult.status === "rejected") {
+        throw new Error(`Authorization call failed ${authResult.reason}`);
+      }
+    }
+
+    const allowed = authResults.some(
+      (authResult) =>
+        authResult.status === "fulfilled" && authResult.value.allowed
+    );
+
+    return allowed;
+  } finally {
+    const diff = Date.now() - start;
+
+    // eslint-disable-next-line no-console
+    console.log(`hasProjectPermit execution ${diff}ms`);
   }
-
-  const allowed = authResults.some(
-    (authResult) =>
-      authResult.status === "fulfilled" && authResult.value.allowed
-  );
-
-  return allowed;
 };
 
 /**
@@ -122,21 +131,30 @@ export const getProjectPermit = async <T extends AuthPermit>(
   },
   context: AppContext
 ): Promise<T | undefined> => {
-  const permitToCheck = props.permits;
+  const start = Date.now();
 
-  const permits = await Promise.allSettled(
-    permitToCheck.map((permit) =>
-      hasProjectPermit({ projectId: props.projectId, permit }, context)
-    )
-  );
+  try {
+    const permitToCheck = props.permits;
 
-  for (const permit of permits) {
-    if (permit.status === "rejected") {
-      throw new Error(`Authorization call failed ${permit.reason}`);
+    const permits = await Promise.allSettled(
+      permitToCheck.map((permit) =>
+        hasProjectPermit({ projectId: props.projectId, permit }, context)
+      )
+    );
+
+    for (const permit of permits) {
+      if (permit.status === "rejected") {
+        throw new Error(`Authorization call failed ${permit.reason}`);
+      }
+
+      if (permit.value === true) {
+        return permitToCheck[permits.indexOf(permit)];
+      }
     }
+  } finally {
+    const diff = Date.now() - start;
 
-    if (permit.value === true) {
-      return permitToCheck[permits.indexOf(permit)];
-    }
+    // eslint-disable-next-line no-console
+    console.log(`getProjectPermit execution ${diff}ms`);
   }
 };

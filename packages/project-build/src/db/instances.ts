@@ -6,8 +6,13 @@ import {
 } from "@webstudio-is/trpc-interface/server";
 import { Instances, InstancesList } from "../schema/instances";
 
-export const parseInstances = (instancesString: string): Instances => {
-  const instancesList = InstancesList.parse(JSON.parse(instancesString));
+export const parseInstances = (
+  instancesString: string,
+  skipValidation = false
+): Instances => {
+  const instancesList = skipValidation
+    ? (JSON.parse(instancesString) as InstancesList)
+    : InstancesList.parse(JSON.parse(instancesString));
   return new Map(instancesList.map((prop) => [prop.id, prop]));
 };
 
