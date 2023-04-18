@@ -3,7 +3,6 @@
 import { nanoid } from "nanoid";
 import {
   type Build as DbBuild,
-  type Project,
   prisma,
   Prisma,
 } from "@webstudio-is/prisma-client";
