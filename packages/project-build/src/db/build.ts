@@ -25,7 +25,7 @@ import { parseInstances, serializeInstances } from "./instances";
 
 const parseBuild = async (build: DbBuild): Promise<Build> => {
   // Hardcode skipValidation to true for now
-  const skipValidation = true;
+  const skipValidation = process.env.NODE_ENV === "production";
   // eslint-disable-next-line no-console
   console.time("parseBuild");
   try {
