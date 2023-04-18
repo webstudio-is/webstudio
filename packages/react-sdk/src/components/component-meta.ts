@@ -40,6 +40,7 @@ const WsComponentMeta = z.object({
   label: z.string(),
   Icon: z.function(),
   presetStyle: z.optional(z.any()),
+  states: z.optional(z.array(z.string())),
   children: z.optional(z.array(z.string())),
 });
 
