@@ -1,4 +1,4 @@
-import { useMemo } from "react";
+import { useCallback, useMemo } from "react";
 import { atom, computed, type WritableAtom } from "nanostores";
 import { useStore } from "@nanostores/react";
 import { nanoid } from "nanoid";
@@ -31,7 +31,19 @@ import type { UnitSizes } from "~/builder/features/style-panel/shared/css-value-
 
 const useValue = <T>(atom: WritableAtom<T>) => {
   const value = useStore(atom);
-  return [value, atom.set] as const;
+
+  const set = useCallback(
+    (value: T | ((current: T) => T)) => {
+      if (typeof value === "function") {
+        atom.set((value as (current: T) => T)(atom.get()));
+      } else {
+        atom.set(value);
+      }
+    },
+    [atom]
+  );
+
+  return [value, set] as const;
 };
 
 export const rootInstanceStore = computed(
