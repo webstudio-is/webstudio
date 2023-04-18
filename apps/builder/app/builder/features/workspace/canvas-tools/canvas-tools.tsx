@@ -68,11 +68,15 @@ export const CanvasTools = ({ publish }: CanvasToolsProps) => {
     <div className={containerStyle()}>
       <MediaBadge />
       <ResizeHandles />
-      <div className={containerStyle({ overflow: "hidden" })}>
-        {isPreviewMode === false && <SelectedInstanceOutline />}
-        {isPreviewMode === false && <HoveredInstanceOutline />}
-      </div>
-      {isPreviewMode === false && <TextToolbar publish={publish} />}
+      {isPreviewMode === false && (
+        <>
+          <div className={containerStyle({ overflow: "hidden" })}>
+            <SelectedInstanceOutline />
+            <HoveredInstanceOutline />
+          </div>
+          <TextToolbar publish={publish} />
+        </>
+      )}
     </div>
   );
 };
