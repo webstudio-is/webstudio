@@ -2,19 +2,23 @@ import { useState } from "react";
 import { ButtonElementIcon } from "@webstudio-is/icons";
 import { PropsPanel } from "./props-panel";
 import { usePropsLogic } from "./use-props-logic";
-import { assetsStore, pagesStore } from "~/shared/nano-states";
+import {
+  assetsStore,
+  instancesStore,
+  pagesStore,
+  propsStore,
+  selectedPageIdStore,
+} from "~/shared/nano-states";
 import { setMockEnv } from "~/shared/env";
-import type { Prop } from "@webstudio-is/project-build";
+import type { Instance, Prop } from "@webstudio-is/project-build";
 import type {
   WsComponentMeta,
   WsComponentPropsMeta,
 } from "@webstudio-is/react-sdk";
 import { textVariants } from "@webstudio-is/design-system";
 import type { Asset } from "@webstudio-is/asset-uploader";
-import { setMockUrlSectionsStore } from "./controls/url";
 // eslint-disable-next-line import/no-internal-modules
 import catPath from "./props-panel.stories.assets/cat.jpg";
-import { atom } from "nanostores";
 
 setMockEnv({ ASSET_BASE_URL: catPath.replace("cat.jpg", "") });
 
@@ -42,12 +46,53 @@ pagesStore.set({
   ],
 });
 
-const urlSections = new Map([
-  [unique(), "links"],
-  [unique(), "about"],
-]);
+const getSectionInstanceId = (
+  name: string,
+  page = pagesStore.get()?.homePage
+) => (page === undefined ? "" : `${page.id}-${name}`);
 
-setMockUrlSectionsStore(atom(urlSections));
+const addLinkableSections = (
+  names: string[],
+  page = pagesStore.get()?.homePage
+) => {
+  if (page === undefined) {
+    return;
+  }
+
+  const instances = instancesStore.get();
+  const props = propsStore.get();
+
+  const rootInstance: Instance = {
+    id: page.rootInstanceId,
+    type: "instance",
+    component: "body",
+    children: [],
+  };
+  instances.set(rootInstance.id, rootInstance);
+
+  for (const name of names) {
+    const instance: Instance = {
+      id: getSectionInstanceId(name, page),
+      type: "instance",
+      component: "box",
+      children: [],
+    };
+    rootInstance.children.push({ type: "id", value: instance.id });
+    instances.set(instance.id, instance);
+
+    const prop: Prop = {
+      id: unique(),
+      instanceId: instance.id,
+      name: "id",
+      type: "string",
+      value: name,
+    };
+    props.set(prop.id, prop);
+  }
+};
+
+addLinkableSections(["contacts", "about"]);
+selectedPageIdStore.set(pagesStore.get()?.homePage.id);
 
 const imageAsset = (name = "cat", format = "jpg"): Asset => ({
   id: unique(),
@@ -284,7 +329,7 @@ const startingProps: Prop[] = [
     instanceId,
     name: "addedUrlSection",
     type: "instance",
-    value: Array.from(urlSections.keys())[0] ?? "",
+    value: getSectionInstanceId("about"),
   },
   {
     id: unique(),

@@ -235,7 +235,7 @@ const pageInstancesStore = computed(
       : findTreeInstanceIds(instances, page.rootInstanceId)
 );
 
-let sectionsStore = computed(
+const sectionsStore = computed(
   [pageInstancesStore, propsStore],
   (pageInstances, props) => {
     const sections = new Map<Instance["id"], string>();
@@ -255,15 +255,8 @@ let sectionsStore = computed(
   }
 );
 
-// too hard to mock all the stores that sectionsStore is derived from
-// so we have this for Storybook
-export const setMockUrlSectionsStore = (store: typeof sectionsStore) => {
-  sectionsStore = store;
-};
-
 const BaseSection = ({ prop, onChange, id, instanceId }: BaseControlProps) => {
   const sections = useStore(sectionsStore);
-
   const options = Array.from(sections.keys()).filter((id) => id !== instanceId);
 
   const value =
