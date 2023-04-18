@@ -11,6 +11,7 @@ import {
   selectedBreakpointIdStore,
 } from "~/shared/nano-states";
 import { findInitialWidth } from "./find-initial-width";
+import { groupBreakpoints, isBaseBreakpoint } from "~/shared/breakpoints";
 
 // Set canvas width based on workspace width, breakpoints and passed breakpoint id.
 export const useSetInitialCanvasWidth = () => {
@@ -37,31 +38,42 @@ export const useSetInitialCanvasWidth = () => {
 
 export const useSetInitialCanvasWidthOnce = () => {
   const isDone = useRef(false);
-  const [, setWidth] = useCanvasWidth();
+  const [, setCanvasWidth] = useCanvasWidth();
   const workspaceRect = useStore(workspaceRectStore);
   const breakpoints = useStore(breakpointsStore);
 
   // Set it initially once.
   useEffect(() => {
-    if (isDone.current) {
-      return;
-    }
-    if (workspaceRect === undefined) {
+    if (isDone.current || workspaceRect === undefined) {
       return;
     }
 
-    const width = workspaceRect.width;
+    isDone.current = true;
 
+    const breakpointValues = Array.from(breakpoints.values());
+    const baseBreakpoint = breakpointValues.find(isBaseBreakpoint);
+
+    // When there is base breakpoint, we want to find the lowest possible size
+    // that is bigger than all max breakpoints and smaller than all min breakpoints.
+    if (baseBreakpoint) {
+      const grouped = groupBreakpoints(breakpointValues);
+      const baseIndex = grouped.findIndex(isBaseBreakpoint);
+      const nextAfterBase = grouped[baseIndex + 1];
+      if (nextAfterBase?.maxWidth !== undefined) {
+        const width = nextAfterBase.maxWidth + 1;
+        setCanvasWidth(width);
+        return;
+      }
+    }
+
+    // Find the breakpoint that applies according to the workspace width.
     const applicableBreakpoint = findApplicableMedia(
-      Array.from(breakpoints.values()),
-      width
+      breakpointValues,
+      workspaceRect.width
     );
     if (applicableBreakpoint) {
       selectedBreakpointIdStore.set(applicableBreakpoint.id);
     }
-
-    setWidth(width);
-
-    isDone.current = true;
-  }, [breakpoints, setWidth, workspaceRect]);
+    setCanvasWidth(workspaceRect.width);
+  }, [breakpoints, setCanvasWidth, workspaceRect]);
 };

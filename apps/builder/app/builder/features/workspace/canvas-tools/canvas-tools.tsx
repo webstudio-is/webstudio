@@ -1,6 +1,6 @@
 import { useStore } from "@nanostores/react";
 import type { Publish } from "~/shared/pubsub";
-import { Box } from "@webstudio-is/design-system";
+import { css } from "@webstudio-is/design-system";
 import { PlacementIndicator } from "@webstudio-is/design-system";
 import {
   useIsPreviewMode,
@@ -16,14 +16,18 @@ import { useSubscribeDragAndDropState } from "./use-subscribe-drag-drop-state";
 import { ResizeHandles } from "./resize-handles";
 import { MediaBadge } from "./media-badge";
 
-const toolsStyle = {
+const containerStyle = css({
   position: "absolute",
-  top: 0,
-  right: 0,
-  bottom: 0,
-  left: 0,
+  inset: 0,
   pointerEvents: "none",
-};
+  variants: {
+    overflow: {
+      hidden: {
+        overflow: "hidden",
+      },
+    },
+  },
+});
 
 type CanvasToolsProps = {
   publish: Publish;
@@ -46,7 +50,7 @@ export const CanvasTools = ({ publish }: CanvasToolsProps) => {
     const { dropTarget, placementIndicator } = dragAndDropState;
     const dropTargetInstance = instances.get(dropTarget.itemSelector[0]);
     return dropTargetInstance ? (
-      <Box css={toolsStyle}>
+      <div className={containerStyle({ overflow: "hidden" })}>
         <Outline rect={placementIndicator.parentRect}>
           <Label
             instance={dropTargetInstance}
@@ -56,17 +60,23 @@ export const CanvasTools = ({ publish }: CanvasToolsProps) => {
         {placementIndicator !== undefined && (
           <PlacementIndicator placement={placementIndicator} />
         )}
-      </Box>
+      </div>
     ) : null;
   }
 
   return (
-    <Box css={toolsStyle}>
+    <div className={containerStyle()}>
       <MediaBadge />
       <ResizeHandles />
-      {isPreviewMode === false && <SelectedInstanceOutline />}
-      {isPreviewMode === false && <HoveredInstanceOutline />}
-      {isPreviewMode === false && <TextToolbar publish={publish} />}
-    </Box>
+      {isPreviewMode === false && (
+        <>
+          <div className={containerStyle({ overflow: "hidden" })}>
+            <SelectedInstanceOutline />
+            <HoveredInstanceOutline />
+          </div>
+          <TextToolbar publish={publish} />
+        </>
+      )}
+    </div>
   );
 };

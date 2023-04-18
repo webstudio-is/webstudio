@@ -1,7 +1,7 @@
 import { useStore } from "@nanostores/react";
 import { findApplicableMedia } from "@webstudio-is/css-engine";
 import { css, numericScrubControl, theme } from "@webstudio-is/design-system";
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useRef } from "react";
 import {
   canvasWidthStore,
   isCanvasPointerEventsEnabledStore,
@@ -13,7 +13,7 @@ import {
   selectedBreakpointIdStore,
 } from "~/shared/nano-states";
 
-const handleStyle = css({
+const handlesContainerStyle = css({
   position: "absolute",
   top: 0,
   width: 4,
@@ -34,19 +34,23 @@ const handleStyle = css({
     transform: "translateX(100%)",
     color: theme.colors.foregroundSubtle,
   },
-  "&[data-state=hovering]": {
-    "&::before, & svg": {
-      color: theme.colors.backgroundPrimaryLight,
-    },
-  },
   "&[data-align=left]": {
     left: 0,
   },
   "&[data-align=right]": {
     right: 0,
   },
-  "&[data-state=dragging]::before": {
+  "&[data-state=resizing]::before": {
     display: "none",
+  },
+  "&:hover, &:has(+ &:hover), &:hover+&": {
+    "&::before, & svg": {
+      color: theme.colors.backgroundPrimaryLight,
+    },
+  },
+  // A little specificity hack to override the previou selector
+  "&&[data-state=resizing] svg": {
+    color: theme.colors.foregroundSubtle,
   },
 });
 
@@ -127,47 +131,34 @@ const useScrub = ({ side }: { side: "right" | "left" }) => {
 };
 
 const useResize = () => {
-  const isDragging = useStore(isCanvasPointerEventsEnabledStore) === false;
-  const [isHovering, setIsHovering] = useState(false);
+  const isResizing = useStore(isResizingCanvasStore);
   const leftRef = useScrub({ side: "left" });
   const rightRef = useScrub({ side: "right" });
-
-  const handleMouseEnter = () => setIsHovering(true);
-
-  const handleMouseLeave = () => setIsHovering(false);
-
-  const state = isDragging ? "dragging" : isHovering ? "hovering" : "idle";
+  const state = isResizing ? "resizing" : "idle";
 
   return {
     state,
     leftRef,
     rightRef,
-    handleMouseEnter,
-    handleMouseLeave,
   };
 };
 
 export const ResizeHandles = () => {
-  const { state, leftRef, rightRef, handleMouseEnter, handleMouseLeave } =
-    useResize();
+  const { state, leftRef, rightRef } = useResize();
 
   return (
     <>
       <div
         ref={leftRef}
-        onMouseEnter={handleMouseEnter}
-        onMouseOut={handleMouseLeave}
         data-state={state}
         data-align="left"
-        className={handleStyle()}
+        className={handlesContainerStyle()}
       />
       <div
         ref={rightRef}
-        onMouseEnter={handleMouseEnter}
-        onMouseLeave={handleMouseLeave}
         data-state={state}
         data-align="right"
-        className={handleStyle()}
+        className={handlesContainerStyle()}
       >
         {handleIcon}
       </div>
