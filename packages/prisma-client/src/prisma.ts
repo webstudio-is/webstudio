@@ -17,9 +17,40 @@ declare global {
 // this fixes the issue with `warn(prisma-client) There are already 10 instances of Prisma Client actively running.`
 // explanation here
 // https://www.prisma.io/docs/guides/database/troubleshooting-orm/help-articles/nextjs-prisma-client-dev-practices
-export const prisma = global.prisma || new PrismaClient({ log: ["query"] });
+export const prisma =
+  global.prisma ||
+  new PrismaClient({
+    log: [
+      { emit: "event", level: "query" },
+
+      {
+        emit: "stdout",
+        level: "error",
+      },
+      {
+        emit: "stdout",
+        level: "info",
+      },
+      {
+        emit: "stdout",
+        level: "warn",
+      },
+    ],
+  });
 
 prisma.$on("query", (e) => {
+  // Try to minify the query as vercel/new relic log size is limited
+  // eslint-disable-next-line no-console
+  console.log(
+    "Query: " +
+      e.query
+        .replace(/"public"\./g, "")
+        .replace(/"Project"\./g, "")
+        .replace(/"Build"\./g, "")
+        .replace(/"AuthorizationToken"\./g, "")
+        .replace(/"Asset"\./g, "")
+  );
+
   // eslint-disable-next-line no-console
   console.log("Params: " + e.params);
   // eslint-disable-next-line no-console
