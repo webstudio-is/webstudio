@@ -450,6 +450,38 @@ test("reparent instance into slot", () => {
       ]),
     ])
   );
+
+  // prevent reparenting into own children to avoid infinite loop
+  reparentInstanceMutable(instances, ["slot1", "root"], {
+    parentSelector: ["fragment11", "slot1", "root"],
+    position: "end",
+  });
+  expect(instances).toEqual(
+    new Map([
+      createInstancePair("root", "Body", [
+        { type: "id", value: "slot1" },
+        { type: "id", value: "box3" },
+      ]),
+      createInstancePair("slot1", "Slot", [
+        { type: "id", value: "fragment11" },
+      ]),
+      createInstancePair("fragment11", "Fragment", []),
+      createInstancePair("box2", "Box", [
+        { type: "id", value: "box21" },
+        { type: "id", value: "box22" },
+        { type: "id", value: "box23" },
+      ]),
+      createInstancePair("box21", "Box", []),
+      createInstancePair("box22", "Box", []),
+      createInstancePair("box23", "Box", []),
+      createInstancePair("slot3", "Slot", [
+        { type: "id", value: expectString },
+      ]),
+      createInstancePair(expectString, "Fragment", [
+        { type: "id", value: "box2" },
+      ]),
+    ])
+  );
 });
 
 test("insert tree of instances copy and provide map from ids map", () => {
