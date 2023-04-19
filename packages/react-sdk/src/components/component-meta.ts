@@ -24,7 +24,7 @@ export const componentCategories = [
 ] as const;
 
 export const ComponentState = z.object({
-  value: z.string(),
+  selector: z.string(),
   label: z.string(),
 });
 

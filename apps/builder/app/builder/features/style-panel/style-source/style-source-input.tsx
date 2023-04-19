@@ -264,9 +264,9 @@ const renderMenuItems = (props: {
   onDelete?: (itemId: IntermediateItem["id"]) => void;
 }) => {
   const states = [
-    ...userActionStates.map((value) => ({
-      value,
-      label: humanizeString(value),
+    ...userActionStates.map((selector) => ({
+      selector,
+      label: humanizeString(selector),
     })),
     ...(props.componentStates ?? []),
   ];
@@ -318,26 +318,29 @@ const renderMenuItems = (props: {
         <>
           <DropdownMenuSeparator />
           <DropdownMenuLabel>States</DropdownMenuLabel>
-          {states.map(({ label, value }) => (
+          {states.map(({ label, selector }) => (
             <DropdownMenuItem
-              key={value}
+              key={selector}
               withIndicator={true}
               icon={
                 props.item.id === props.selectedItemSelector?.styleSourceId &&
-                value === props.selectedItemSelector.state ? (
+                selector === props.selectedItemSelector.state ? (
                   <CheckMarkIcon
                     color={
-                      props.item.states.includes(value)
+                      props.item.states.includes(selector)
                         ? rawTheme.colors.foregroundPrimary
                         : rawTheme.colors.foregroundIconMain
                     }
                   />
-                ) : props.item.states.includes(value) ? (
+                ) : props.item.states.includes(selector) ? (
                   <DotIcon color={rawTheme.colors.foregroundPrimary} />
                 ) : null
               }
               onSelect={() =>
-                props.onSelect?.({ styleSourceId: props.item.id, state: value })
+                props.onSelect?.({
+                  styleSourceId: props.item.id,
+                  state: selector,
+                })
               }
             >
               {label}
