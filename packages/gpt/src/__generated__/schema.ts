@@ -1,34 +1,38 @@
-export type Breakpoints = Map<
-  string,
-  {
-    id: string;
-    label: string;
-    minWidth?: number | undefined;
-    maxWidth?: number | undefined;
-  }
->;
+type JSONResult = {
+  breakpoints: Breakpoint[];
+  instances: Instance[];
+  styles: StyleDecl[];
+  styleSources: StyleSource[];
+  styleSourceSelections: StyleSourceSelection[];
+  // props: Prop[];
+  // pages: Pages[];
+};
 
-export type Instances = Map<
-  string,
-  {
-    type: "instance";
-    id: string;
-    component: string;
-    label?: string | undefined;
-    children: (
-      | {
-          type: "id";
-          value: string;
-        }
-      | {
-          type: "text";
-          value: string;
-        }
-    )[];
-  }
->;
+type Breakpoint = {
+  id: string;
+  label: string;
+  minWidth?: number | undefined;
+  maxWidth?: number | undefined;
+};
 
-export type Pages = {
+type Instance = {
+  type: "instance";
+  id: string;
+  component: string;
+  label?: string | undefined;
+  children: (
+    | {
+        type: "id";
+        value: string;
+      }
+    | {
+        type: "text";
+        value: string;
+      }
+  )[];
+};
+
+type Pages = {
   homePage: {
     id: string;
     name: string;
@@ -51,8 +55,7 @@ export type Pages = {
   }[];
 };
 
-export type Props = Map<
-  string,
+type Prop =
   | {
       id: string;
       instanceId: string;
@@ -100,37 +103,430 @@ export type Props = Map<
       required?: boolean | undefined;
       type: "string[]";
       value: string[];
-    }
->;
+    };
 
-export type StyleSourceSelections = Map<
-  string,
-  {
-    instanceId: string;
-    values: string[];
-  }
->;
+type styleSourceId = string;
 
-export type StyleSource =
+type StyleSourceSelection = {
+  instanceId: string;
+  values: styleSourceId[];
+};
+
+type StyleSource =
   | {
       type: "token";
-      id: string;
+      id: styleSourceId;
       name: string;
     }
   | {
       type: "local";
-      id: string;
+      id: styleSourceId;
     };
 
-export type Styles = Map<
-  string,
-  {
-    styleSourceId: string;
-    breakpointId: string;
-    state?: string | undefined;
-    property: string;
-    value:
-      | (
+type StyleDecl = {
+  styleSourceId: styleSourceId;
+  breakpointId: string;
+  state?: string | undefined;
+  property: string;
+  value:
+    | (
+        | {
+            type: "image";
+            value:
+              | {
+                  type: "asset";
+                  value: string;
+                }
+              | {
+                  type: "url";
+                  url: string;
+                };
+            hidden?: boolean | undefined;
+          }
+        | {
+            type: "layers";
+            value: (
+              | {
+                  type: "unit";
+                  unit:
+                    | (
+                        | "%"
+                        | "deg"
+                        | "grad"
+                        | "rad"
+                        | "turn"
+                        | "db"
+                        | "fr"
+                        | "hz"
+                        | "khz"
+                        | "cm"
+                        | "mm"
+                        | "q"
+                        | "in"
+                        | "pt"
+                        | "pc"
+                        | "px"
+                        | "em"
+                        | "rem"
+                        | "ex"
+                        | "rex"
+                        | "cap"
+                        | "rcap"
+                        | "ch"
+                        | "rch"
+                        | "ic"
+                        | "ric"
+                        | "lh"
+                        | "rlh"
+                        | "vw"
+                        | "svw"
+                        | "lvw"
+                        | "dvw"
+                        | "vh"
+                        | "svh"
+                        | "lvh"
+                        | "dvh"
+                        | "vi"
+                        | "svi"
+                        | "lvi"
+                        | "dvi"
+                        | "vb"
+                        | "svb"
+                        | "lvb"
+                        | "dvb"
+                        | "vmin"
+                        | "svmin"
+                        | "lvmin"
+                        | "dvmin"
+                        | "vmax"
+                        | "svmax"
+                        | "lvmax"
+                        | "dvmax"
+                        | "cqw"
+                        | "cqh"
+                        | "cqi"
+                        | "cqb"
+                        | "cqmin"
+                        | "cqmax"
+                        | "dpi"
+                        | "dpcm"
+                        | "dppx"
+                        | "x"
+                        | "st"
+                        | "s"
+                        | "ms"
+                      )
+                    | "number";
+                  value: number;
+                }
+              | {
+                  type: "keyword";
+                  value: string;
+                }
+              | {
+                  type: "unparsed";
+                  value: string;
+                  hidden?: boolean | undefined;
+                }
+              | {
+                  type: "image";
+                  value:
+                    | {
+                        type: "asset";
+                        value: string;
+                      }
+                    | {
+                        type: "url";
+                        url: string;
+                      };
+                  hidden?: boolean | undefined;
+                }
+              | {
+                  type: "tuple";
+                  value: (
+                    | {
+                        type: "unit";
+                        unit:
+                          | (
+                              | "%"
+                              | "deg"
+                              | "grad"
+                              | "rad"
+                              | "turn"
+                              | "db"
+                              | "fr"
+                              | "hz"
+                              | "khz"
+                              | "cm"
+                              | "mm"
+                              | "q"
+                              | "in"
+                              | "pt"
+                              | "pc"
+                              | "px"
+                              | "em"
+                              | "rem"
+                              | "ex"
+                              | "rex"
+                              | "cap"
+                              | "rcap"
+                              | "ch"
+                              | "rch"
+                              | "ic"
+                              | "ric"
+                              | "lh"
+                              | "rlh"
+                              | "vw"
+                              | "svw"
+                              | "lvw"
+                              | "dvw"
+                              | "vh"
+                              | "svh"
+                              | "lvh"
+                              | "dvh"
+                              | "vi"
+                              | "svi"
+                              | "lvi"
+                              | "dvi"
+                              | "vb"
+                              | "svb"
+                              | "lvb"
+                              | "dvb"
+                              | "vmin"
+                              | "svmin"
+                              | "lvmin"
+                              | "dvmin"
+                              | "vmax"
+                              | "svmax"
+                              | "lvmax"
+                              | "dvmax"
+                              | "cqw"
+                              | "cqh"
+                              | "cqi"
+                              | "cqb"
+                              | "cqmin"
+                              | "cqmax"
+                              | "dpi"
+                              | "dpcm"
+                              | "dppx"
+                              | "x"
+                              | "st"
+                              | "s"
+                              | "ms"
+                            )
+                          | "number";
+                        value: number;
+                      }
+                    | {
+                        type: "keyword";
+                        value: string;
+                      }
+                    | {
+                        type: "unparsed";
+                        value: string;
+                        hidden?: boolean | undefined;
+                      }
+                  )[];
+                }
+              | {
+                  type: "invalid";
+                  value: string;
+                }
+            )[];
+          }
+        | {
+            type: "unit";
+            unit:
+              | (
+                  | "%"
+                  | "deg"
+                  | "grad"
+                  | "rad"
+                  | "turn"
+                  | "db"
+                  | "fr"
+                  | "hz"
+                  | "khz"
+                  | "cm"
+                  | "mm"
+                  | "q"
+                  | "in"
+                  | "pt"
+                  | "pc"
+                  | "px"
+                  | "em"
+                  | "rem"
+                  | "ex"
+                  | "rex"
+                  | "cap"
+                  | "rcap"
+                  | "ch"
+                  | "rch"
+                  | "ic"
+                  | "ric"
+                  | "lh"
+                  | "rlh"
+                  | "vw"
+                  | "svw"
+                  | "lvw"
+                  | "dvw"
+                  | "vh"
+                  | "svh"
+                  | "lvh"
+                  | "dvh"
+                  | "vi"
+                  | "svi"
+                  | "lvi"
+                  | "dvi"
+                  | "vb"
+                  | "svb"
+                  | "lvb"
+                  | "dvb"
+                  | "vmin"
+                  | "svmin"
+                  | "lvmin"
+                  | "dvmin"
+                  | "vmax"
+                  | "svmax"
+                  | "lvmax"
+                  | "dvmax"
+                  | "cqw"
+                  | "cqh"
+                  | "cqi"
+                  | "cqb"
+                  | "cqmin"
+                  | "cqmax"
+                  | "dpi"
+                  | "dpcm"
+                  | "dppx"
+                  | "x"
+                  | "st"
+                  | "s"
+                  | "ms"
+                )
+              | "number";
+            value: number;
+          }
+        | {
+            type: "keyword";
+            value: string;
+          }
+        | {
+            type: "fontFamily";
+            value: string[];
+          }
+        | {
+            type: "rgb";
+            r: number;
+            g: number;
+            b: number;
+            alpha: number;
+          }
+        | {
+            type: "unparsed";
+            value: string;
+            hidden?: boolean | undefined;
+          }
+        | {
+            type: "tuple";
+            value: (
+              | {
+                  type: "unit";
+                  unit:
+                    | (
+                        | "%"
+                        | "deg"
+                        | "grad"
+                        | "rad"
+                        | "turn"
+                        | "db"
+                        | "fr"
+                        | "hz"
+                        | "khz"
+                        | "cm"
+                        | "mm"
+                        | "q"
+                        | "in"
+                        | "pt"
+                        | "pc"
+                        | "px"
+                        | "em"
+                        | "rem"
+                        | "ex"
+                        | "rex"
+                        | "cap"
+                        | "rcap"
+                        | "ch"
+                        | "rch"
+                        | "ic"
+                        | "ric"
+                        | "lh"
+                        | "rlh"
+                        | "vw"
+                        | "svw"
+                        | "lvw"
+                        | "dvw"
+                        | "vh"
+                        | "svh"
+                        | "lvh"
+                        | "dvh"
+                        | "vi"
+                        | "svi"
+                        | "lvi"
+                        | "dvi"
+                        | "vb"
+                        | "svb"
+                        | "lvb"
+                        | "dvb"
+                        | "vmin"
+                        | "svmin"
+                        | "lvmin"
+                        | "dvmin"
+                        | "vmax"
+                        | "svmax"
+                        | "lvmax"
+                        | "dvmax"
+                        | "cqw"
+                        | "cqh"
+                        | "cqi"
+                        | "cqb"
+                        | "cqmin"
+                        | "cqmax"
+                        | "dpi"
+                        | "dpcm"
+                        | "dppx"
+                        | "x"
+                        | "st"
+                        | "s"
+                        | "ms"
+                      )
+                    | "number";
+                  value: number;
+                }
+              | {
+                  type: "keyword";
+                  value: string;
+                }
+              | {
+                  type: "unparsed";
+                  value: string;
+                  hidden?: boolean | undefined;
+                }
+            )[];
+          }
+      )
+    | {
+        type: "invalid";
+        value: string;
+      }
+    | {
+        type: "unset";
+        value: "";
+      }
+    | {
+        type: "var";
+        value: string;
+        fallbacks: (
           | {
               type: "image";
               value:
@@ -515,404 +911,6 @@ export type Styles = Map<
                   }
               )[];
             }
-        )
-      | {
-          type: "invalid";
-          value: string;
-        }
-      | {
-          type: "unset";
-          value: "";
-        }
-      | {
-          type: "var";
-          value: string;
-          fallbacks: (
-            | {
-                type: "image";
-                value:
-                  | {
-                      type: "asset";
-                      value: string;
-                    }
-                  | {
-                      type: "url";
-                      url: string;
-                    };
-                hidden?: boolean | undefined;
-              }
-            | {
-                type: "layers";
-                value: (
-                  | {
-                      type: "unit";
-                      unit:
-                        | (
-                            | "%"
-                            | "deg"
-                            | "grad"
-                            | "rad"
-                            | "turn"
-                            | "db"
-                            | "fr"
-                            | "hz"
-                            | "khz"
-                            | "cm"
-                            | "mm"
-                            | "q"
-                            | "in"
-                            | "pt"
-                            | "pc"
-                            | "px"
-                            | "em"
-                            | "rem"
-                            | "ex"
-                            | "rex"
-                            | "cap"
-                            | "rcap"
-                            | "ch"
-                            | "rch"
-                            | "ic"
-                            | "ric"
-                            | "lh"
-                            | "rlh"
-                            | "vw"
-                            | "svw"
-                            | "lvw"
-                            | "dvw"
-                            | "vh"
-                            | "svh"
-                            | "lvh"
-                            | "dvh"
-                            | "vi"
-                            | "svi"
-                            | "lvi"
-                            | "dvi"
-                            | "vb"
-                            | "svb"
-                            | "lvb"
-                            | "dvb"
-                            | "vmin"
-                            | "svmin"
-                            | "lvmin"
-                            | "dvmin"
-                            | "vmax"
-                            | "svmax"
-                            | "lvmax"
-                            | "dvmax"
-                            | "cqw"
-                            | "cqh"
-                            | "cqi"
-                            | "cqb"
-                            | "cqmin"
-                            | "cqmax"
-                            | "dpi"
-                            | "dpcm"
-                            | "dppx"
-                            | "x"
-                            | "st"
-                            | "s"
-                            | "ms"
-                          )
-                        | "number";
-                      value: number;
-                    }
-                  | {
-                      type: "keyword";
-                      value: string;
-                    }
-                  | {
-                      type: "unparsed";
-                      value: string;
-                      hidden?: boolean | undefined;
-                    }
-                  | {
-                      type: "image";
-                      value:
-                        | {
-                            type: "asset";
-                            value: string;
-                          }
-                        | {
-                            type: "url";
-                            url: string;
-                          };
-                      hidden?: boolean | undefined;
-                    }
-                  | {
-                      type: "tuple";
-                      value: (
-                        | {
-                            type: "unit";
-                            unit:
-                              | (
-                                  | "%"
-                                  | "deg"
-                                  | "grad"
-                                  | "rad"
-                                  | "turn"
-                                  | "db"
-                                  | "fr"
-                                  | "hz"
-                                  | "khz"
-                                  | "cm"
-                                  | "mm"
-                                  | "q"
-                                  | "in"
-                                  | "pt"
-                                  | "pc"
-                                  | "px"
-                                  | "em"
-                                  | "rem"
-                                  | "ex"
-                                  | "rex"
-                                  | "cap"
-                                  | "rcap"
-                                  | "ch"
-                                  | "rch"
-                                  | "ic"
-                                  | "ric"
-                                  | "lh"
-                                  | "rlh"
-                                  | "vw"
-                                  | "svw"
-                                  | "lvw"
-                                  | "dvw"
-                                  | "vh"
-                                  | "svh"
-                                  | "lvh"
-                                  | "dvh"
-                                  | "vi"
-                                  | "svi"
-                                  | "lvi"
-                                  | "dvi"
-                                  | "vb"
-                                  | "svb"
-                                  | "lvb"
-                                  | "dvb"
-                                  | "vmin"
-                                  | "svmin"
-                                  | "lvmin"
-                                  | "dvmin"
-                                  | "vmax"
-                                  | "svmax"
-                                  | "lvmax"
-                                  | "dvmax"
-                                  | "cqw"
-                                  | "cqh"
-                                  | "cqi"
-                                  | "cqb"
-                                  | "cqmin"
-                                  | "cqmax"
-                                  | "dpi"
-                                  | "dpcm"
-                                  | "dppx"
-                                  | "x"
-                                  | "st"
-                                  | "s"
-                                  | "ms"
-                                )
-                              | "number";
-                            value: number;
-                          }
-                        | {
-                            type: "keyword";
-                            value: string;
-                          }
-                        | {
-                            type: "unparsed";
-                            value: string;
-                            hidden?: boolean | undefined;
-                          }
-                      )[];
-                    }
-                  | {
-                      type: "invalid";
-                      value: string;
-                    }
-                )[];
-              }
-            | {
-                type: "unit";
-                unit:
-                  | (
-                      | "%"
-                      | "deg"
-                      | "grad"
-                      | "rad"
-                      | "turn"
-                      | "db"
-                      | "fr"
-                      | "hz"
-                      | "khz"
-                      | "cm"
-                      | "mm"
-                      | "q"
-                      | "in"
-                      | "pt"
-                      | "pc"
-                      | "px"
-                      | "em"
-                      | "rem"
-                      | "ex"
-                      | "rex"
-                      | "cap"
-                      | "rcap"
-                      | "ch"
-                      | "rch"
-                      | "ic"
-                      | "ric"
-                      | "lh"
-                      | "rlh"
-                      | "vw"
-                      | "svw"
-                      | "lvw"
-                      | "dvw"
-                      | "vh"
-                      | "svh"
-                      | "lvh"
-                      | "dvh"
-                      | "vi"
-                      | "svi"
-                      | "lvi"
-                      | "dvi"
-                      | "vb"
-                      | "svb"
-                      | "lvb"
-                      | "dvb"
-                      | "vmin"
-                      | "svmin"
-                      | "lvmin"
-                      | "dvmin"
-                      | "vmax"
-                      | "svmax"
-                      | "lvmax"
-                      | "dvmax"
-                      | "cqw"
-                      | "cqh"
-                      | "cqi"
-                      | "cqb"
-                      | "cqmin"
-                      | "cqmax"
-                      | "dpi"
-                      | "dpcm"
-                      | "dppx"
-                      | "x"
-                      | "st"
-                      | "s"
-                      | "ms"
-                    )
-                  | "number";
-                value: number;
-              }
-            | {
-                type: "keyword";
-                value: string;
-              }
-            | {
-                type: "fontFamily";
-                value: string[];
-              }
-            | {
-                type: "rgb";
-                r: number;
-                g: number;
-                b: number;
-                alpha: number;
-              }
-            | {
-                type: "unparsed";
-                value: string;
-                hidden?: boolean | undefined;
-              }
-            | {
-                type: "tuple";
-                value: (
-                  | {
-                      type: "unit";
-                      unit:
-                        | (
-                            | "%"
-                            | "deg"
-                            | "grad"
-                            | "rad"
-                            | "turn"
-                            | "db"
-                            | "fr"
-                            | "hz"
-                            | "khz"
-                            | "cm"
-                            | "mm"
-                            | "q"
-                            | "in"
-                            | "pt"
-                            | "pc"
-                            | "px"
-                            | "em"
-                            | "rem"
-                            | "ex"
-                            | "rex"
-                            | "cap"
-                            | "rcap"
-                            | "ch"
-                            | "rch"
-                            | "ic"
-                            | "ric"
-                            | "lh"
-                            | "rlh"
-                            | "vw"
-                            | "svw"
-                            | "lvw"
-                            | "dvw"
-                            | "vh"
-                            | "svh"
-                            | "lvh"
-                            | "dvh"
-                            | "vi"
-                            | "svi"
-                            | "lvi"
-                            | "dvi"
-                            | "vb"
-                            | "svb"
-                            | "lvb"
-                            | "dvb"
-                            | "vmin"
-                            | "svmin"
-                            | "lvmin"
-                            | "dvmin"
-                            | "vmax"
-                            | "svmax"
-                            | "lvmax"
-                            | "dvmax"
-                            | "cqw"
-                            | "cqh"
-                            | "cqi"
-                            | "cqb"
-                            | "cqmin"
-                            | "cqmax"
-                            | "dpi"
-                            | "dpcm"
-                            | "dppx"
-                            | "x"
-                            | "st"
-                            | "s"
-                            | "ms"
-                          )
-                        | "number";
-                      value: number;
-                    }
-                  | {
-                      type: "keyword";
-                      value: string;
-                    }
-                  | {
-                      type: "unparsed";
-                      value: string;
-                      hidden?: boolean | undefined;
-                    }
-                )[];
-              }
-          )[];
-        };
-  }
->;
+        )[];
+      };
+};

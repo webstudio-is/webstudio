@@ -9,6 +9,7 @@
     "dev": "build-package --watch",
     "build": "build-package",
     "build:schema": "tsx ./src/generate-schema-types.ts",
+    "ask": "dotenv -e .env tsx ./src/ask.ts",
     "dts": "tsc --emitDeclarationOnly --declaration --declarationDir lib/types",
     "typecheck": "tsc --noEmit",
     "checks": "pnpm typecheck && pnpm lint",
@@ -17,8 +18,10 @@
   "dependencies": {
     "@types/fs-extra": "^9.0.13",
     "@webstudio-is/project-build": "workspace:^",
+    "dotenv": "^16.0.0",
     "fast-glob": "^3.2.12",
     "fs-extra": "^10.1.0",
+    "openai": "^3.2.1",
     "pascalcase": "^2.0.0",
     "react-docgen-typescript": "^2.2.2",
     "zod": "^3.19.1",
