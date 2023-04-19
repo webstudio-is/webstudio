@@ -146,6 +146,13 @@ export const Tree = <Data extends { id: string }>({
     emulatePointerAlwaysInRootBounds: true,
 
     elementToData: (element) => {
+      // We want to make sure edge detection is calculated relative
+      // to the element with the data-drop-target-id attribute.
+      // So, unless it has the attribute,
+      // we return `false` to make useDrop go up the tree.
+      if (element.getAttribute("data-drop-target-id") === null) {
+        return false;
+      }
       return getItemSelectorFromElement(element);
     },
 
