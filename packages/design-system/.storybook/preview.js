@@ -1,6 +1,8 @@
 import "@webstudio-is/storybook-config/setup-fonts";
 import { color } from "../src/__generated__/figma-design-tokens";
 
+export { decorators } from "@webstudio-is/storybook-config/decorators";
+
 export const parameters = {
   actions: { argTypesRegex: "^on[A-Z].*" },
   controls: {
