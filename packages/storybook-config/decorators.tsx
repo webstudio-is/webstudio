@@ -2,21 +2,21 @@ import * as React from "react";
 import { useEffect } from "react";
 
 const WaitForFonts = ({ children }) => {
-  const [fontsLoaded, setFontsLoaded] = React.useState(false);
+  const [isFontsLoaded, setIsFontsLoaded] = React.useState(false);
 
   useEffect(() => {
-    let unsubscribed = false;
+    let isUnsubscribed = false;
     document.fonts.ready.then(() => {
-      if (!unsubscribed) {
-        setFontsLoaded(true);
+      if (isUnsubscribed === false) {
+        setIsFontsLoaded(true);
       }
     });
     return () => {
-      unsubscribed = true;
+      isUnsubscribed = true;
     };
   }, []);
 
-  return fontsLoaded ? (
+  return isFontsLoaded ? (
     children
   ) : (
     <div>
