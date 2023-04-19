@@ -32,7 +32,13 @@ export type DropTarget<Data> = PartialDropTarget<Data> & {
 // For example, data found in elementToData
 // doesn't have to be looked up again in swapDropTarget.
 type UseDropProps<Data> = {
-  // To check that the element can qualify as a target
+  /**
+   * To check that the element can qualify as a drop target.
+   * If `false` is returned, the parent of the element
+   * will be suggested instead, and so on.
+   * It's important to choose a correct element,
+   * because it will be used for edge detection.
+   */
   elementToData: (target: Element) => Data | false;
 
   // Distance from an edge to determine "area" value for swapDropTarget

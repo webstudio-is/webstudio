@@ -22,6 +22,10 @@ const initialState: State<unknown> = {
 type UseDragProps<DragItemData> = {
   startDistanceThreashold?: number;
   shiftDistanceThreshold?: number;
+  /**
+   * Checks whether the given element can be dragged.
+   * If `false` is returned, drag will not start.
+   */
   elementToData: (element: Element) => DragItemData | false;
   onStart: (event: { data: DragItemData }) => void;
   onMove: (event: Point) => void;
