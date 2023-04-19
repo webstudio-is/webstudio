@@ -20,8 +20,6 @@ import {
   TypographySection,
   BackgroundsSection,
   BordersSection,
-  EffectsSection,
-  OtherSection,
 } from "./sections";
 
 export const categories = [
@@ -34,8 +32,6 @@ export const categories = [
   "typography",
   "backgrounds",
   "borders",
-  "effects",
-  "other",
 ];
 
 export type Category = (typeof categories)[number];
@@ -141,6 +137,4 @@ export const sections: {
   typography: TypographySection,
   backgrounds: BackgroundsSection,
   borders: BordersSection,
-  effects: EffectsSection,
-  other: OtherSection,
 };
