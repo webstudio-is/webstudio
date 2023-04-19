@@ -33,7 +33,9 @@ export const handleLinkClick = (event: MouseEvent) => {
     return;
   }
 
-  const page = findPageByIdOrPath(pages, href);
+  const [withoutHash] = href.split("#");
+
+  const page = findPageByIdOrPath(pages, withoutHash);
 
   if (page) {
     publish({ type: "switchPage", payload: { pageId: page.id } });
