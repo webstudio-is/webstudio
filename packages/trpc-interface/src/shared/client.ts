@@ -1,3 +1,4 @@
+import fetch from "node-fetch";
 import { createTRPCProxyClient, httpBatchLink } from "@trpc/client";
 import {
   sharedRouter,
@@ -19,6 +20,9 @@ export const createTrpcProxyServiceClient = (
     const remoteClient = createTRPCProxyClient<SharedRouter>({
       links: [
         httpBatchLink({
+          // httpBatchLink uses lib.dom.d.ts's fetch type
+          // which is incompatible with node fetch type.
+          fetch: fetch as never,
           url: options.url,
           headers: () => ({
             Authorization: options.token,
