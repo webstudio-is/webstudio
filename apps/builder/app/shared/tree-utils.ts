@@ -176,7 +176,6 @@ export const reparentInstanceMutable = (
   );
   const instance = instances.get(instanceId);
 
-  // detect recursive reparent for example with slots
   // delect is target is one of own descendants
   // prevent reparenting to avoid infinite loop
   const instanceDescendants = findTreeInstanceIds(instances, instanceId);
