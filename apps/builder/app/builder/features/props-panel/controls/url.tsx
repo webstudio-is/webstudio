@@ -1,16 +1,11 @@
+import { type ReactNode, useState } from "react";
 import { useStore } from "@nanostores/react";
 import { computed } from "nanostores";
 import {
-  instancesStore,
-  pagesStore,
-  propsStore,
-  selectedPageStore,
-} from "~/shared/nano-states";
-import {
-  InputField,
-  Flex,
   theme,
   useId,
+  InputField,
+  Flex,
   ToggleGroup,
   ToggleGroupItem,
   Select,
@@ -24,18 +19,18 @@ import {
   PageIcon,
   PhoneIcon,
 } from "@webstudio-is/icons";
-import { type ReactNode, useState, useMemo } from "react";
+import {
+  findTreeInstanceIds,
+  type Instance,
+  type Page,
+} from "@webstudio-is/project-build";
+import { instancesStore, pagesStore, propsStore } from "~/shared/nano-states";
 import {
   type ControlProps,
   getLabel,
   useLocalValue,
   VerticalLayout,
 } from "../shared";
-import {
-  findTreeInstanceIds,
-  type Instance,
-  type Page,
-} from "@webstudio-is/project-build";
 import { SelectAsset } from "./select-asset";
 
 type UrlControlProps = ControlProps<"url", "string" | "page" | "asset">;
@@ -186,38 +181,50 @@ const BaseEmail = ({ prop, onChange, id }: BaseControlProps) => {
   );
 };
 
-const useSections = (page: { rootInstanceId: string }) => {
-  const store = useMemo(
-    () =>
-      computed([instancesStore, propsStore], (instances, props) => {
-        const pageInstances = findTreeInstanceIds(
-          instances,
-          page.rootInstanceId
-        );
+const instancesPerPageStore = computed(
+  [instancesStore, pagesStore],
+  (instances, pages) =>
+    (pages ? [pages.homePage, ...pages.pages] : []).map((page) => ({
+      pageId: page.id,
+      instancesIds: findTreeInstanceIds(instances, page.rootInstanceId),
+    }))
+);
 
-        const sections = new Map<Instance["id"], string>();
+const sectionsStore = computed(
+  [instancesPerPageStore, propsStore],
+  (instancesPerPage, props) => {
+    const sections: Array<{
+      pageId: Page["id"];
+      instanceId: Instance["id"];
+      hash: string;
+    }> = [];
 
-        for (const prop of props.values()) {
-          if (
-            prop.type === "string" &&
-            prop.name === "id" &&
-            prop.value.trim() !== "" &&
-            pageInstances.has(prop.instanceId)
-          ) {
-            sections.set(prop.instanceId, prop.value);
+    for (const prop of props.values()) {
+      if (
+        prop.type === "string" &&
+        prop.name === "id" &&
+        prop.value.trim() !== ""
+      ) {
+        for (const { pageId, instancesIds } of instancesPerPage) {
+          if (instancesIds.has(prop.instanceId)) {
+            sections.push({
+              pageId,
+              instanceId: prop.instanceId,
+              hash: prop.value,
+            });
           }
         }
+      }
+    }
 
-        return sections;
-      }),
-    [page.rootInstanceId]
-  );
+    return sections.sort((a, b) => a.hash.localeCompare(b.hash));
+  }
+);
 
-  return useStore(store);
-};
-
-const getPageId = (page: Page) => page.id;
-const getPageName = (page: Page) => page.name;
+const getId = (data: { id: string }) => data.id;
+const getName = (data: { name: string }) => data.name;
+const getHash = (data: { hash: string }) => data.hash;
+const getInstanceId = (data: { instanceId: string }) => data.instanceId;
 
 const BasePage = ({ prop, onChange }: BaseControlProps) => {
   const pages = useStore(pagesStore);
@@ -234,16 +241,23 @@ const BasePage = ({ prop, onChange }: BaseControlProps) => {
         )
       : undefined;
 
-  const currentPage = useStore(selectedPageStore);
-  const sectionsPage = pageSelectValue ?? currentPage;
-  const sections = useSections(sectionsPage ?? { rootInstanceId: "" });
+  const sections = useStore(sectionsStore);
 
-  const sectionSelectOptions = Array.from(sections.keys());
+  const sectionSelectOptions = pageSelectValue
+    ? sections.filter(({ pageId }) => pageId === pageSelectValue.id)
+    : sections;
 
-  const sectionSelectValue =
+  const sectionInstanceId =
     prop?.type === "page" && typeof prop.value !== "string"
       ? prop.value.instanceId
       : undefined;
+
+  const sectionSelectValue =
+    sectionInstanceId === undefined
+      ? undefined
+      : sectionSelectOptions.find(
+          ({ instanceId }) => instanceId === sectionInstanceId
+        );
 
   return (
     <>
@@ -251,35 +265,31 @@ const BasePage = ({ prop, onChange }: BaseControlProps) => {
         <Select
           value={pageSelectValue}
           options={pageSelectOptions}
-          getLabel={getPageName}
-          getValue={getPageId}
-          onChange={(page) => onChange({ type: "page", value: page.id })}
-          placeholder="Current page"
+          getLabel={getName}
+          getValue={getId}
+          onChange={({ id }) => onChange({ type: "page", value: id })}
+          placeholder="Choose page"
           fullWidth
         />
       </Row>
       <Row>
         <Select
-          key={sectionsPage?.id}
+          key={pageSelectValue?.id}
           disabled={sectionSelectOptions.length === 0}
           placeholder={
             sectionSelectOptions.length === 0
-              ? "Selected page has no sections"
+              ? pageSelectValue
+                ? "Selected page has no sections"
+                : "No sections available"
               : "Choose section"
           }
           value={sectionSelectValue}
           options={sectionSelectOptions}
-          getLabel={(instanceId) => sections.get(instanceId) ?? ""}
-          onChange={(instanceId) => {
-            // for TypeScript
-            if (sectionsPage === undefined) {
-              return;
-            }
-            onChange({
-              type: "page",
-              value: { pageId: sectionsPage.id, instanceId },
-            });
-          }}
+          getLabel={getHash}
+          getValue={getInstanceId}
+          onChange={({ pageId, instanceId }) =>
+            onChange({ type: "page", value: { pageId, instanceId } })
+          }
           fullWidth
         />
       </Row>
