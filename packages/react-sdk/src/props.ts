@@ -78,7 +78,7 @@ export const resolveUrlProp = (
       type: "page";
       page: Page;
       instanceId?: Instance["id"];
-      idPropValue?: string;
+      hash?: string;
     }
   | { type: "asset"; asset: Asset }
   | { type: "string"; url: string }
@@ -112,7 +112,7 @@ export const resolveUrlProp = (
         type: "page",
         page,
         instanceId,
-        idPropValue:
+        hash:
           idProp === undefined || idProp.type !== "string"
             ? undefined
             : idProp.value,

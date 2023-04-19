@@ -13,8 +13,8 @@ export const wrapLinkComponent = (BaseLink: LinkComponent) => {
 
     if (href?.type === "page") {
       let to = href.page.path;
-      if (href.idPropValue !== undefined) {
-        to += `#${href.idPropValue}`;
+      if (href.hash !== undefined) {
+        to += `#${href.hash}`;
       }
       return <RemixLink {...props} to={to} ref={ref} />;
     }

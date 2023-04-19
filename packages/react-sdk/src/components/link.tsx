@@ -24,8 +24,8 @@ export const Link = forwardRef<HTMLAnchorElement, Props>((props, ref) => {
   switch (href?.type) {
     case "page":
       url = href.page.path;
-      if (href.idPropValue !== undefined) {
-        url += `#${href.idPropValue}`;
+      if (href.hash !== undefined) {
+        url += `#${href.hash}`;
       }
       break;
     case "asset":

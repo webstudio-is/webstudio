@@ -147,7 +147,7 @@ describe("resolveUrlProp", () => {
       type: "page",
       page: page1,
       instanceId: instnaceIdProp.instanceId,
-      idPropValue: instnaceIdProp.value,
+      hash: instnaceIdProp.value,
     });
   });
 
