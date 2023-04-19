@@ -1,7 +1,11 @@
 import { useNavigate } from "@remix-run/react";
 import type { Page } from "@webstudio-is/project-build";
 import { projectContainer } from "~/builder/shared/nano-states";
-import { authTokenStore, pagesStore } from "~/shared/nano-states";
+import {
+  authTokenStore,
+  pagesStore,
+  selectedInstanceSelectorStore,
+} from "~/shared/nano-states";
 import { builderPath } from "~/shared/router-utils";
 import { useSubscribe } from "~/shared/pubsub";
 
@@ -18,6 +22,8 @@ export const useSwitchPage = () => {
     if (project === undefined || pages === undefined) {
       return;
     }
+
+    selectedInstanceSelectorStore.set(undefined);
 
     navigate(
       builderPath({
