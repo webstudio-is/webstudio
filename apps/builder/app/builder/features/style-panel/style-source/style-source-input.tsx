@@ -41,6 +41,7 @@ import {
   type ReactNode,
 } from "react";
 import { mergeRefs } from "@react-aria/utils";
+import type { ComponentState } from "@webstudio-is/react-sdk";
 import { type ItemSource, menuCssVars, StyleSource } from "./style-source";
 import { useSortable } from "./use-sortable";
 import { matchSorter } from "match-sorter";
@@ -186,6 +187,7 @@ type StyleSourceInputProps<Item extends IntermediateItem> = {
   value?: Array<Item>;
   selectedItemSelector: undefined | ItemSelector;
   editingItemId?: Item["id"];
+  componentStates?: ComponentState[];
   onSelectAutocompleteItem?: (item: Item) => void;
   onRemoveItem?: (id: Item["id"]) => void;
   onDeleteItem?: (id: Item["id"]) => void;
@@ -251,6 +253,7 @@ const userActionStates = [
 const renderMenuItems = (props: {
   selectedItemSelector: undefined | ItemSelector;
   item: IntermediateItem;
+  componentStates?: ComponentState[];
   onSelect?: (itemSelector: ItemSelector) => void;
   onEdit?: (itemId: IntermediateItem["id"]) => void;
   onDuplicate?: (itemId: IntermediateItem["id"]) => void;
@@ -259,26 +262,34 @@ const renderMenuItems = (props: {
   onEnable?: (itemId: IntermediateItem["id"]) => void;
   onRemove?: (itemId: IntermediateItem["id"]) => void;
   onDelete?: (itemId: IntermediateItem["id"]) => void;
-}) => (
-  <>
-    {props.item.source !== "local" && (
-      <DropdownMenuItem onSelect={() => props.onEdit?.(props.item.id)}>
-        Edit Name
-      </DropdownMenuItem>
-    )}
-    {props.item.source !== "local" && (
-      <DropdownMenuItem onSelect={() => props.onDuplicate?.(props.item.id)}>
-        Duplicate
-      </DropdownMenuItem>
-    )}
-    {props.item.source === "local" && (
-      <DropdownMenuItem
-        onSelect={() => props.onConvertToToken?.(props.item.id)}
-      >
-        Convert to token
-      </DropdownMenuItem>
-    )}
-    {/* @todo implement disabling
+}) => {
+  const states = [
+    ...userActionStates.map((selector) => ({
+      selector,
+      label: humanizeString(selector),
+    })),
+    ...(props.componentStates ?? []),
+  ];
+  return (
+    <>
+      {props.item.source !== "local" && (
+        <DropdownMenuItem onSelect={() => props.onEdit?.(props.item.id)}>
+          Edit Name
+        </DropdownMenuItem>
+      )}
+      {props.item.source !== "local" && (
+        <DropdownMenuItem onSelect={() => props.onDuplicate?.(props.item.id)}>
+          Duplicate
+        </DropdownMenuItem>
+      )}
+      {props.item.source === "local" && (
+        <DropdownMenuItem
+          onSelect={() => props.onConvertToToken?.(props.item.id)}
+        >
+          Convert to token
+        </DropdownMenuItem>
+      )}
+      {/* @todo implement disabling
     {props.disabled ? (
       <DropdownMenuItem onSelect={() => props.onEnable?.(props.itemId)}>
         Enable
@@ -289,52 +300,57 @@ const renderMenuItems = (props: {
       </DropdownMenuItem>
     )}
     */}
-    {props.item.source !== "local" && (
-      <DropdownMenuItem onSelect={() => props.onRemove?.(props.item.id)}>
-        Remove
-      </DropdownMenuItem>
-    )}
-    {props.item.source !== "local" && (
-      <DropdownMenuItem
-        destructive={true}
-        onSelect={() => props.onDelete?.(props.item.id)}
-      >
-        Delete
-      </DropdownMenuItem>
-    )}
-    {isFeatureEnabled("styleSourceStates") && (
-      <>
-        <DropdownMenuSeparator />
-        <DropdownMenuLabel>States</DropdownMenuLabel>
-        {userActionStates.map((state) => (
-          <DropdownMenuItem
-            key={state}
-            withIndicator={true}
-            icon={
-              props.item.id === props.selectedItemSelector?.styleSourceId &&
-              state === props.selectedItemSelector.state ? (
-                <CheckMarkIcon
-                  color={
-                    props.item.states.includes(state)
-                      ? rawTheme.colors.foregroundPrimary
-                      : rawTheme.colors.foregroundIconMain
-                  }
-                />
-              ) : props.item.states.includes(state) ? (
-                <DotIcon color={rawTheme.colors.foregroundPrimary} />
-              ) : null
-            }
-            onSelect={() =>
-              props.onSelect?.({ styleSourceId: props.item.id, state })
-            }
-          >
-            {humanizeString(state)}
-          </DropdownMenuItem>
-        ))}
-      </>
-    )}
-  </>
-);
+      {props.item.source !== "local" && (
+        <DropdownMenuItem onSelect={() => props.onRemove?.(props.item.id)}>
+          Remove
+        </DropdownMenuItem>
+      )}
+      {props.item.source !== "local" && (
+        <DropdownMenuItem
+          destructive={true}
+          onSelect={() => props.onDelete?.(props.item.id)}
+        >
+          Delete
+        </DropdownMenuItem>
+      )}
+
+      {isFeatureEnabled("styleSourceStates") && (
+        <>
+          <DropdownMenuSeparator />
+          <DropdownMenuLabel>States</DropdownMenuLabel>
+          {states.map(({ label, selector }) => (
+            <DropdownMenuItem
+              key={selector}
+              withIndicator={true}
+              icon={
+                props.item.id === props.selectedItemSelector?.styleSourceId &&
+                selector === props.selectedItemSelector.state ? (
+                  <CheckMarkIcon
+                    color={
+                      props.item.states.includes(selector)
+                        ? rawTheme.colors.foregroundPrimary
+                        : rawTheme.colors.foregroundIconMain
+                    }
+                  />
+                ) : props.item.states.includes(selector) ? (
+                  <DotIcon color={rawTheme.colors.foregroundPrimary} />
+                ) : null
+              }
+              onSelect={() =>
+                props.onSelect?.({
+                  styleSourceId: props.item.id,
+                  state: selector,
+                })
+              }
+            >
+              {label}
+            </DropdownMenuItem>
+          ))}
+        </>
+      )}
+    </>
+  );
+};
 
 export const StyleSourceInput = (
   props: StyleSourceInputProps<IntermediateItem>
@@ -403,6 +419,7 @@ export const StyleSourceInput = (
               renderMenuItems({
                 selectedItemSelector: props.selectedItemSelector,
                 item,
+                componentStates: props.componentStates,
                 onSelect: props.onSelectItem,
                 onDuplicate: props.onDuplicateItem,
                 onConvertToToken: props.onConvertToToken,

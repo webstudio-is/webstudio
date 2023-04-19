@@ -1,6 +1,8 @@
 import { useState } from "react";
-import store from "immerhin";
+import { useStore } from "@nanostores/react";
 import { nanoid } from "nanoid";
+import { computed } from "nanostores";
+import store from "immerhin";
 import { theme, Text } from "@webstudio-is/design-system";
 import {
   type Instance,
@@ -8,12 +10,13 @@ import {
   type StyleSourceSelections,
   getStyleDeclKey,
 } from "@webstudio-is/project-build";
+import { getComponentMeta } from "@webstudio-is/react-sdk";
 import { type ItemSource, StyleSourceInput } from "./style-source";
-import { useStore } from "@nanostores/react";
 import {
   availableStyleSourcesStore,
   selectedInstanceSelectorStore,
   selectedInstanceStatesByStyleSourceIdStore,
+  selectedInstanceStore,
   selectedInstanceStyleSourcesStore,
   selectedOrLastStyleSourceSelectorStore,
   selectedStyleSourceSelectorStore,
@@ -282,6 +285,16 @@ const renameStyleSource = (id: StyleSource["id"], label: string) => {
   });
 };
 
+const componentStatesStore = computed(
+  [selectedInstanceStore],
+  (selectedInstance) => {
+    if (selectedInstance === undefined) {
+      return;
+    }
+    return getComponentMeta(selectedInstance.component)?.states;
+  }
+);
+
 type StyleSourceInputItem = {
   id: string;
   label: string;
@@ -304,6 +317,7 @@ const convertToInputItem = (
 };
 
 export const StyleSourcesSection = () => {
+  const componentStates = useStore(componentStatesStore);
   const availableStyleSources = useStore(availableStyleSourcesStore);
   const selectedInstanceStyleSources = useStore(
     selectedInstanceStyleSourcesStore
@@ -338,6 +352,7 @@ export const StyleSourcesSection = () => {
         items={items}
         value={value}
         selectedItemSelector={selectedOrLastStyleSourceSelector}
+        componentStates={componentStates}
         onCreateItem={createStyleSource}
         onSelectAutocompleteItem={({ id }) => {
           addStyleSourceToInstace(id);

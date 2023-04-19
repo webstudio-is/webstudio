@@ -26,6 +26,7 @@ export const meta: WsComponentMeta = {
   label: "Link Text",
   Icon: LinkIcon,
   presetStyle,
+  states: [{ selector: "[aria-current=page]", label: "Current page" }],
   children: ["Link text you can edit"],
 };
 

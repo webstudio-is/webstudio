@@ -1,7 +1,7 @@
 import { BoxLinkIcon } from "@webstudio-is/icons";
 import type { WsComponentMeta, WsComponentPropsMeta } from "./component-meta";
 import { props } from "./__generated__/link-block.props";
-import { propsMeta as linkPropsMeta } from "./link.ws";
+import { meta as linkMeta, propsMeta as linkPropsMeta } from "./link.ws";
 import type { defaultTag } from "./link-block";
 import type { Style } from "@webstudio-is/css-data";
 import { a } from "../css/normalize";
@@ -21,6 +21,7 @@ export const meta: WsComponentMeta = {
   type: "container",
   label: "Link Block",
   Icon: BoxLinkIcon,
+  states: linkMeta.states,
   presetStyle,
 };
 
