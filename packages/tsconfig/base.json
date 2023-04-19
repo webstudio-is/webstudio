@@ -19,7 +19,6 @@
     "noFallthroughCasesInSwitch": true,
     "verbatimModuleSyntax": true,
     "emitDeclarationOnly": true,
-    "declaration": true,
-    "declarationDir": "lib/types"
+    "declaration": true
   }
 }

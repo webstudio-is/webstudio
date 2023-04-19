@@ -9,7 +9,7 @@
     "dev": "build-package --watch",
     "build": "build-package",
     "build-figma-tokens": "tsx ./bin/transform-figma-tokens.ts",
-    "dts": "tsc",
+    "dts": "tsc --declarationDir lib/types",
     "typecheck": "tsc --noEmit --emitDeclarationOnly false",
     "lint": "eslint ./src --ext .ts,.tsx --max-warnings 0",
     "test": "NODE_OPTIONS=--experimental-vm-modules jest",
