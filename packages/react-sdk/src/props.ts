@@ -32,7 +32,7 @@ export const useInstanceProps = (instanceId: Instance["id"]) => {
   const instancePropsObject: Record<Prop["name"], Prop["value"]> = {};
   if (instanceProps) {
     for (const prop of instanceProps) {
-      if (prop.type !== "asset") {
+      if (prop.type !== "asset" && prop.type !== "page") {
         instancePropsObject[prop.name] = prop.value;
       }
     }
@@ -74,7 +74,12 @@ export const resolveUrlProp = (
     assets,
   }: { props: PropsByInstanceId; pages: Pages; assets: Assets }
 ):
-  | { type: "page"; page: Page }
+  | {
+      type: "page";
+      page: Page;
+      instanceId?: Instance["id"];
+      hash?: string;
+    }
   | { type: "asset"; asset: Asset }
   | { type: "string"; url: string }
   | undefined => {
@@ -88,8 +93,30 @@ export const resolveUrlProp = (
     }
 
     if (prop.type === "page") {
-      const page = pages.get(prop.value);
-      return page && { type: "page", page };
+      if (typeof prop.value === "string") {
+        const page = pages.get(prop.value);
+        return page && { type: "page", page };
+      }
+
+      const { instanceId, pageId } = prop.value;
+
+      const page = pages.get(pageId);
+
+      if (page === undefined) {
+        return;
+      }
+
+      const idProp = props.get(instanceId)?.find((prop) => prop.name === "id");
+
+      return {
+        type: "page",
+        page,
+        instanceId,
+        hash:
+          idProp === undefined || idProp.type !== "string"
+            ? undefined
+            : idProp.value,
+      };
     }
 
     if (prop.type === "string") {
@@ -115,7 +142,7 @@ export const resolveUrlProp = (
 export const usePropUrl = (instanceId: Instance["id"], name: string) => {
   const { propsByInstanceIdStore, pagesStore, assetsStore } =
     useContext(ReactSdkContext);
-  const pageStore = useMemo(
+  const store = useMemo(
     () =>
       computed(
         [propsByInstanceIdStore, pagesStore, assetsStore],
@@ -124,7 +151,7 @@ export const usePropUrl = (instanceId: Instance["id"], name: string) => {
       ),
     [propsByInstanceIdStore, pagesStore, assetsStore, instanceId, name]
   );
-  return useStore(pageStore);
+  return useStore(store);
 };
 
 export const getInstanceIdFromComponentProps = (

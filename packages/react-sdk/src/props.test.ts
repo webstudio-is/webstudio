@@ -56,6 +56,22 @@ describe("resolveUrlProp", () => {
     value: page1.id,
   };
 
+  const instnaceIdProp: Prop = {
+    type: "string",
+    id: unique(),
+    instanceId: unique(),
+    name: "id",
+    value: unique(),
+  };
+
+  const pageSectionProp: Prop = {
+    type: "page",
+    id: unique(),
+    instanceId,
+    name: unique(),
+    value: { pageId: page1.id, instanceId: instnaceIdProp.instanceId },
+  };
+
   const pageByPathProp: Prop = {
     type: "string",
     id: unique(),
@@ -73,7 +89,17 @@ describe("resolveUrlProp", () => {
   };
 
   const props: PropsByInstanceId = new Map([
-    [instanceId, [pageByIdProp, pageByPathProp, arbitraryUrlProp, assetProp]],
+    [
+      instanceId,
+      [
+        pageByIdProp,
+        pageByPathProp,
+        arbitraryUrlProp,
+        assetProp,
+        pageSectionProp,
+      ],
+    ],
+    [instnaceIdProp.instanceId, [instnaceIdProp]],
   ]);
 
   const pages: Pages = new Map([
@@ -113,6 +139,15 @@ describe("resolveUrlProp", () => {
     expect(resolveUrlProp(instanceId, pageByPathProp.name, stores)).toEqual({
       type: "page",
       page: page2,
+    });
+  });
+
+  test("section on a page", () => {
+    expect(resolveUrlProp(instanceId, pageSectionProp.name, stores)).toEqual({
+      type: "page",
+      page: page1,
+      instanceId: instnaceIdProp.instanceId,
+      hash: instnaceIdProp.value,
     });
   });
 

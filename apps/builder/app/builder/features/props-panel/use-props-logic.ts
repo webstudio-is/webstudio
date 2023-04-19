@@ -86,24 +86,19 @@ type UsePropsLogicInput = {
 };
 
 type UsePropsLogicOutput = {
-  /**
-   * Initial (not deletable) props
-   */
+  /** Similar to Initial, but displayed as a separate group in UI etc.
+   * Currentrly used only for the ID prop. */
+  systemProps: PropAndMeta[];
+  /** Initial (not deletable) props */
   initialProps: PropAndMeta[];
-  /**
-   * Optional props that were added by user
-   */
+  /** Optional props that were added by user */
   addedProps: PropAndMeta[];
-  /**
-   * List of remaining props still available to add
-   */
+  /** List of remaining props still available to add */
   remainingProps: NameAndLabel[];
   handleAdd: (propName: string) => void;
   handleChange: (prop: PropOrName, value: PropValue) => void;
   handleDelete: (prop: PropOrName) => void;
-  /**
-   * Delete the prop, but keep it in the list of added props
-   */
+  /** Delete the prop, but keep it in the list of added props */
   handleSoftDelete: (prop: Prop) => void;
 };
 
@@ -113,9 +108,20 @@ const getAndDelete = <Value>(map: Map<string, Value>, key: string) => {
   return value;
 };
 
-/**
- * usePropsLogic expects that key={instanceId} is used on the ancestor component
- */
+const systemPropsMeta: { name: string; meta: PropMeta }[] = [
+  {
+    name: "id",
+    meta: {
+      required: false,
+      control: "text",
+      type: "string",
+      rows: 0,
+      label: "ID",
+    },
+  },
+];
+
+/** usePropsLogic expects that key={instanceId} is used on the ancestor component */
 export const usePropsLogic = ({
   props: savedProps,
   meta,
@@ -127,7 +133,16 @@ export const usePropsLogic = ({
   const unprocessedSaved = new Map(savedProps.map((prop) => [prop.name, prop]));
   const unprocessedKnown = new Map(Object.entries(meta.props));
 
-  const initialProps: PropAndMeta[] = (meta.initialProps ?? []).map((name) => {
+  const initialPropsNames = new Set(meta.initialProps ?? []);
+
+  const systemProps = systemPropsMeta.map(({ name, meta }) => {
+    const saved = getAndDelete(unprocessedSaved, name);
+    getAndDelete(unprocessedKnown, name);
+    initialPropsNames.delete(name);
+    return { prop: saved, propName: name, meta };
+  });
+
+  const initialProps: PropAndMeta[] = Array.from(initialPropsNames, (name) => {
     const saved = getAndDelete(unprocessedSaved, name);
     const known = getAndDelete(unprocessedKnown, name);
 
@@ -222,9 +237,11 @@ export const usePropsLogic = ({
   };
 
   return {
+    systemProps,
     initialProps,
     addedProps,
-    remainingProps: Array.from(unprocessedKnown.entries()).map(
+    remainingProps: Array.from(
+      unprocessedKnown.entries(),
       ([name, { label }]) => ({ name, label })
     ),
     handleAdd,

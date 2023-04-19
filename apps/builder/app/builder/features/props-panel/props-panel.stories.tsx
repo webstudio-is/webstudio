@@ -2,9 +2,15 @@ import { useState } from "react";
 import { ButtonElementIcon } from "@webstudio-is/icons";
 import { PropsPanel } from "./props-panel";
 import { usePropsLogic } from "./use-props-logic";
-import { assetsStore, pagesStore } from "~/shared/nano-states";
+import {
+  assetsStore,
+  instancesStore,
+  pagesStore,
+  propsStore,
+  selectedPageIdStore,
+} from "~/shared/nano-states";
 import { setMockEnv } from "~/shared/env";
-import type { Prop } from "@webstudio-is/project-build";
+import type { Instance, Prop } from "@webstudio-is/project-build";
 import type {
   WsComponentMeta,
   WsComponentPropsMeta,
@@ -39,6 +45,55 @@ pagesStore.set({
     page("Contacts", "/contacts"),
   ],
 });
+
+const getSectionInstanceId = (
+  name: string,
+  page = pagesStore.get()?.homePage
+) => (page === undefined ? "" : `${page.id}-${name}`);
+
+const addLinkableSections = (
+  names: string[],
+  page = pagesStore.get()?.homePage
+) => {
+  if (page === undefined) {
+    return;
+  }
+
+  const instances = instancesStore.get();
+  const props = propsStore.get();
+
+  const rootInstance: Instance = {
+    id: page.rootInstanceId,
+    type: "instance",
+    component: "body",
+    children: [],
+  };
+  instances.set(rootInstance.id, rootInstance);
+
+  for (const name of names) {
+    const instance: Instance = {
+      id: getSectionInstanceId(name, page),
+      type: "instance",
+      component: "box",
+      children: [],
+    };
+    rootInstance.children.push({ type: "id", value: instance.id });
+    instances.set(instance.id, instance);
+
+    const prop: Prop = {
+      id: unique(),
+      instanceId: instance.id,
+      name: "id",
+      type: "string",
+      value: name,
+    };
+    props.set(prop.id, prop);
+  }
+};
+
+addLinkableSections(["contacts", "about"]);
+addLinkableSections(["company", "employees"], pagesStore.get()?.pages[0]);
+selectedPageIdStore.set(pagesStore.get()?.homePage.id);
 
 const imageAsset = (name = "cat", format = "jpg"): Asset => ({
   id: unique(),
@@ -169,6 +224,7 @@ const componentPropsMeta: WsComponentPropsMeta = {
     addedCheck: checkProp(),
     addedUrlUrl: urlProp("Added URL (URL)"),
     addedUrlPage: urlProp("Added URL (Page)"),
+    addedUrlSection: urlProp("Added URL (Section)"),
     addedUrlEmail: urlProp("Added URL (Email)"),
     addedUrlPhone: urlProp("Added URL (Phone)"),
     addedUrlAttachment: urlProp("Added URL (Attachment)"),
@@ -272,6 +328,16 @@ const startingProps: Prop[] = [
   {
     id: unique(),
     instanceId,
+    name: "addedUrlSection",
+    type: "page",
+    value: {
+      pageId: pagesStore.get()?.homePage.id ?? "",
+      instanceId: getSectionInstanceId("about"),
+    },
+  },
+  {
+    id: unique(),
+    instanceId,
     name: "addedUrlEmail",
     type: "string",
     value: "mailto:hello@example.com?subject=Hello",
@@ -327,6 +393,7 @@ export const Story = () => {
     <div style={{ display: "flex", gap: 12 }}>
       <div style={{ width: 240, border: "dashed 3px #e3e3e3" }}>
         <PropsPanel
+          instanceId={instanceId}
           propsLogic={logic}
           component="Button"
           instanceLabel="My Button"

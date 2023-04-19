@@ -33,7 +33,13 @@ export const Prop = z.union([
   z.object({
     ...baseProp,
     type: z.literal("page"),
-    value: z.string(), // page id
+    value: z.union([
+      z.string(), // page id
+      z.object({
+        pageId: z.string(),
+        instanceId: z.string(),
+      }),
+    ]),
   }),
   z.object({
     ...baseProp,

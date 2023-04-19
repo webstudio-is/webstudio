@@ -13,7 +13,7 @@ export const renderControl = ({
   meta,
   prop,
   ...rest
-}: ControlProps<string, string>) => {
+}: ControlProps<string, string> & { key?: string }) => {
   if (
     meta.control === "text" &&
     (prop === undefined || prop.type === "string")

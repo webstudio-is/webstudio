@@ -19,10 +19,14 @@ export const Link = forwardRef<HTMLAnchorElement, Props>((props, ref) => {
 
   const { assetBaseUrl } = getParams();
 
-  let url: string | undefined;
+  let url = "#";
+
   switch (href?.type) {
     case "page":
       url = href.page.path;
+      if (href.hash !== undefined) {
+        url += `#${href.hash}`;
+      }
       break;
     case "asset":
       url = `${assetBaseUrl}${href.asset.name}`;

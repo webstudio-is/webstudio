@@ -1,5 +1,5 @@
 import store from "immerhin";
-import type { Instance, Prop } from "@webstudio-is/project-build";
+import type { Instance } from "@webstudio-is/project-build";
 import {
   theme,
   useCombobox,
@@ -8,13 +8,13 @@ import {
   ComboboxAnchor,
   ComboboxListbox,
   ComboboxListboxItem,
-  SmallIconButton,
   Separator,
   Flex,
   Text,
   type CSS,
   ScrollArea,
   InputField,
+  NestedSelectButton,
 } from "@webstudio-is/design-system";
 import { ChevronDownIcon } from "@webstudio-is/icons";
 import type { Publish } from "~/shared/pubsub";
@@ -25,8 +25,12 @@ import {
   type SetProperty as SetCssProperty,
 } from "~/builder/features/style-panel/shared/use-style-data";
 import { renderControl } from "./controls/combined";
-import { usePropsLogic, type NameAndLabel } from "./use-props-logic";
-import { type PropMeta, type PropValue, getLabel } from "./shared";
+import {
+  usePropsLogic,
+  type NameAndLabel,
+  type PropAndMeta,
+} from "./use-props-logic";
+import { getLabel } from "./shared";
 import { useState, type ReactNode } from "react";
 import {
   getComponentPropsMeta,
@@ -93,9 +97,8 @@ const PropsCombobox = ({
             {...combobox.getInputProps()}
             placeholder="Property"
             suffix={
-              <SmallIconButton
+              <NestedSelectButton
                 {...combobox.getToggleButtonProps()}
-                css={{ display: "flex", justifyContent: "center" }}
                 icon={<ChevronDownIcon />}
               />
             }
@@ -120,37 +123,23 @@ const PropsCombobox = ({
   );
 };
 
-// @todo:
-//   at this point we need the <Property> wrapper only because
-//   of complicated `onChange` inside.
-//   need to refactor this somehow
-const Property = ({
-  meta,
-  prop,
-  propName,
-  component,
-  onChange,
-  onDelete,
-  onSoftDelete,
-  setCssProperty,
-}: {
-  prop: Prop | undefined;
-  propName: string;
-  meta: PropMeta;
-  component: Instance["component"];
-  onChange: (value: PropValue) => void;
-  onDelete?: () => void;
-  onSoftDelete: () => void;
-  setCssProperty: SetCssProperty;
-}) =>
+const renderProperty = (
+  { propsLogic: logic, setCssProperty, component, instanceId }: PropsPanelProps,
+  { prop, propName, meta }: PropAndMeta,
+  deletable?: boolean
+) =>
   renderControl({
+    key: propName,
+    instanceId,
     meta,
     prop,
     propName,
-    onDelete,
-    onSoftDelete,
+    onDelete: deletable
+      ? () => logic.handleDelete({ prop, propName })
+      : undefined,
+    onSoftDelete: () => prop && logic.handleSoftDelete(prop),
     onChange: (propValue, asset) => {
-      onChange(propValue);
+      logic.handleChange({ prop, propName }, propValue);
 
       // @todo: better way to do this?
       if (
@@ -184,20 +173,19 @@ const AddPropertyForm = ({
   </Flex>
 );
 
-// A UI componet with minimum logic that can be demoed in Storybook etc.
-export const PropsPanel = ({
-  propsLogic: logic,
-  component,
-  instanceLabel,
-  componentMeta,
-  setCssProperty,
-}: {
+type PropsPanelProps = {
   propsLogic: ReturnType<typeof usePropsLogic>;
   component: Instance["component"];
   instanceLabel: string;
+  instanceId: string;
   componentMeta: WsComponentMeta;
   setCssProperty: SetCssProperty;
-}) => {
+};
+
+// A UI componet with minimum logic that can be demoed in Storybook etc.
+export const PropsPanel = (props: PropsPanelProps) => {
+  const { propsLogic: logic, instanceLabel, componentMeta } = props;
+
   const [addingProp, setAddingProp] = useState(false);
 
   const hasAddedProps = logic.addedProps.length > 0 || addingProp;
@@ -207,27 +195,29 @@ export const PropsPanel = ({
       <Row>
         <InstanceInfo meta={componentMeta} label={instanceLabel} />
       </Row>
+
       <Row
         css={{
           paddingTop: theme.spacing[3],
           paddingBottom: theme.spacing[5],
         }}
       >
-        {logic.initialProps.map(({ prop, propName, meta }) => (
-          <Property
-            key={propName}
-            propName={propName}
-            prop={prop}
-            meta={meta}
-            component={component}
-            onChange={(value) => logic.handleChange({ prop, propName }, value)}
-            onSoftDelete={() => prop && logic.handleSoftDelete(prop)}
-            setCssProperty={setCssProperty}
-          />
-        ))}
+        {logic.systemProps.map((item) => renderProperty(props, item))}
       </Row>
 
       <Separator />
+
+      <Row
+        css={{
+          paddingTop: theme.spacing[5],
+          paddingBottom: theme.spacing[5],
+        }}
+      >
+        {logic.initialProps.map((item) => renderProperty(props, item))}
+      </Row>
+
+      <Separator />
+
       <CollapsibleSectionWithAddButton
         label="Properties"
         onAdd={() => setAddingProp(true)}
@@ -235,22 +225,7 @@ export const PropsPanel = ({
       >
         {hasAddedProps && (
           <Flex gap="2" direction="column">
-            {logic.addedProps.map(({ prop, propName, meta }) => (
-              <Property
-                key={propName}
-                propName={propName}
-                prop={prop}
-                meta={meta}
-                component={component}
-                onChange={(value) =>
-                  logic.handleChange({ prop, propName }, value)
-                }
-                onDelete={() => logic.handleDelete({ prop, propName })}
-                onSoftDelete={() => prop && logic.handleSoftDelete(prop)}
-                setCssProperty={setCssProperty}
-              />
-            ))}
-
+            {logic.addedProps.map((item) => renderProperty(props, item, true))}
             {addingProp && (
               <AddPropertyForm
                 availableProps={logic.remainingProps}
@@ -263,7 +238,6 @@ export const PropsPanel = ({
           </Flex>
         )}
       </CollapsibleSectionWithAddButton>
-      <Separator />
     </ScrollArea>
   );
 };
@@ -312,6 +286,7 @@ export const PropsPanelContainer = ({
     <PropsPanel
       propsLogic={logic}
       component={instance.component}
+      instanceId={instance.id}
       instanceLabel={instanceLabel}
       componentMeta={componentMeta}
       setCssProperty={setCssProperty}

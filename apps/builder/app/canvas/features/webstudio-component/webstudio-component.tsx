@@ -118,7 +118,7 @@ export const WebstudioComponentDev = ({
       return result;
     }
     for (const item of instanceProps) {
-      if (item.type !== "asset") {
+      if (item.type !== "asset" && item.type !== "page") {
         result[item.name] = item.value;
       }
     }
