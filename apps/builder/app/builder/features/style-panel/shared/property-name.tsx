@@ -17,7 +17,11 @@ import {
   PopoverContent,
 } from "@webstudio-is/design-system";
 import { UndoIcon } from "@webstudio-is/icons";
-import { breakpointsStore, instancesStore } from "~/shared/nano-states";
+import {
+  breakpointsStore,
+  instancesStore,
+  styleSourcesStore,
+} from "~/shared/nano-states";
 import { type StyleInfo, type StyleSource, getStyleSource } from "./style-info";
 
 const PropertyPopoverContent = ({
@@ -33,6 +37,7 @@ const PropertyPopoverContent = ({
 }) => {
   const breakpoints = useStore(breakpointsStore);
   const instances = useStore(instancesStore);
+  const styleSources = useStore(styleSourcesStore);
 
   if (styleSource === "local") {
     return (
@@ -56,6 +61,24 @@ const PropertyPopoverContent = ({
         >
           {properties.map((property) => {
             const styleValueInfo = style[property];
+
+            if (styleValueInfo?.previousSource) {
+              const { value, styleSourceId } = styleValueInfo.previousSource;
+              const styleSource = styleSources.get(styleSourceId);
+              let name: undefined | string = undefined;
+              if (styleSource?.type === "local") {
+                name = "local style source";
+              }
+              if (styleSource?.type === "token") {
+                name = `"${styleSource.name}" token`;
+              }
+              return (
+                <DeprecatedText2 key={property} color="hint">
+                  Resetting will change {property} value to {toValue(value)}{" "}
+                  from {name}
+                </DeprecatedText2>
+              );
+            }
 
             if (styleValueInfo?.cascaded) {
               const { value, breakpointId } = styleValueInfo.cascaded;
@@ -94,6 +117,23 @@ const PropertyPopoverContent = ({
     <Box css={{ px: theme.spacing[4], py: theme.spacing[3] }}>
       {properties.map((property) => {
         const styleValueInfo = style[property];
+
+        if (styleValueInfo?.previousSource) {
+          const { styleSourceId } = styleValueInfo.previousSource;
+          const styleSource = styleSources.get(styleSourceId);
+          let name: undefined | string = undefined;
+          if (styleSource?.type === "local") {
+            name = "local style source";
+          }
+          if (styleSource?.type === "token") {
+            name = `"${styleSource.name}" token`;
+          }
+          return (
+            <DeprecatedText2 key={property} color="hint">
+              {property} value is defined in {name}
+            </DeprecatedText2>
+          );
+        }
 
         if (styleValueInfo?.cascaded) {
           const { breakpointId } = styleValueInfo.cascaded;
