@@ -1187,21 +1187,12 @@ importers:
       '@jest/globals':
         specifier: ^29.3.1
         version: 29.3.1
-      '@remix-run/node':
-        specifier: 1.15.0
-        version: 1.15.0
       '@remix-run/react':
-        specifier: 1.15.0
+        specifier: ^1.15.0
         version: 1.15.0(react-dom@18.2.0)(react@18.2.0)
-      '@remix-run/server-runtime':
-        specifier: 1.15.0
-        version: 1.15.0
       '@storybook/react':
         specifier: ^6.5.16
         version: 6.5.16(@babel/core@7.21.0)(react-dom@18.2.0)(react@18.2.0)(require-from-string@2.0.2)(type-fest@3.7.1)(typescript@5.0.3)
-      '@types/node':
-        specifier: ^18.11.18
-        version: 18.11.18
       '@types/react':
         specifier: ^18.0.35
         version: 18.0.35
@@ -1260,11 +1251,14 @@ importers:
 
   packages/sdk-size-test:
     dependencies:
+      '@remix-run/cloudflare':
+        specifier: ^1.15.0
+        version: 1.15.0(@cloudflare/workers-types@3.19.0)
       '@remix-run/cloudflare-pages':
-        specifier: 1.15.0
+        specifier: ^1.15.0
         version: 1.15.0(@cloudflare/workers-types@3.19.0)
       '@remix-run/react':
-        specifier: 1.15.0
+        specifier: ^1.15.0
         version: 1.15.0(react-dom@18.2.0)(react@18.2.0)
       '@webstudio-is/project':
         specifier: workspace:^
@@ -1275,6 +1269,9 @@ importers:
       '@webstudio-is/react-sdk':
         specifier: workspace:^
         version: link:../react-sdk
+      isbot:
+        specifier: ^3.6.10
+        version: 3.6.10
       react:
         specifier: 18.2.0
         version: 18.2.0
@@ -1283,7 +1280,7 @@ importers:
         version: 18.2.0(react@18.2.0)
     devDependencies:
       '@remix-run/dev':
-        specifier: 1.15.0
+        specifier: ^1.15.0
         version: 1.15.0(@remix-run/serve@1.15.0)
       '@size-limit/file':
         specifier: ^8.2.4
@@ -13779,6 +13776,11 @@ packages:
     resolution: {integrity: sha512-xHjhDr3cNBK0BzdUJSPXZntQUx/mwMS5Rw4A7lPJ90XGAO6ISP/ePDNuo0vhqOZU+UD5JoodwCAAoZQd3FeAKw==}
     dev: true
 
+  /isbot@3.6.10:
+    resolution: {integrity: sha512-+I+2998oyP4oW9+OTQD8TS1r9P6wv10yejukj+Ksj3+UR5pUhsZN3f8W7ysq0p1qxpOVNbl5mCuv0bCaF8y5iQ==}
+    engines: {node: '>=12'}
+    dev: false
+
   /isbot@3.6.7:
     resolution: {integrity: sha512-SXNUQaNZlj/+9jdrGnAp6WW0YoHe3MIwwc6oRIYuhhERBUt7/L6I7JkMiA2sX9fcvS7gZ2C7GWgmDZfOOU4I5g==}
     engines: {node: '>=12'}
@@ -14614,6 +14616,7 @@ packages:
 
   /loose-envify@1.4.0:
     resolution: {integrity: sha512-lyuxPGr/Wfhrlem2CL/UcnUc1zcqKAImBDzukY7Y5F/yQiNdko6+fRLevlw1HgMySw7f611UIY408EtxRSoK3Q==}
+    hasBin: true
     dependencies:
       js-tokens: 4.0.0
 
@@ -15333,10 +15336,12 @@ packages:
   /mime@1.6.0:
     resolution: {integrity: sha512-x0Vn8spI+wuJ1O6S7gnbaQg8Pxh4NNHb7KSINmEWKiPE4RKOplvijn+NkmYmmRgP68mc70j2EbeTFRsrswaQeg==}
     engines: {node: '>=4'}
+    hasBin: true
 
   /mime@2.6.0:
     resolution: {integrity: sha512-USPkMeET31rOMiarsBNIHZKLGgvKc/LrjofAnBlOttf5ajRvqiRA8QsenbcooctK6d6Ts6aqZXBA+XbkKthiQg==}
     engines: {node: '>=4.0.0'}
+    hasBin: true
 
   /mimic-fn@2.1.0:
     resolution: {integrity: sha512-OqbOk5oEQeAZ8WXWydlu9HJjz9WVdEIvamMCcXmuqUYjTknH/sqsWvhQ3vgwKFRR1HpjvNBKQ37nbJgYzGqGcg==}
