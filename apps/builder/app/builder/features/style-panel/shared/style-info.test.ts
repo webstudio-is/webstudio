@@ -176,7 +176,7 @@ test("compute inherited styles", () => {
         "instanceId": "1",
         "value": {
           "type": "keyword",
-          "value": "#232323",
+          "value": "black",
         },
       },
       "fontFamily": {
