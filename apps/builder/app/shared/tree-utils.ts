@@ -2,6 +2,7 @@ import { nanoid } from "nanoid";
 import {
   Breakpoint,
   Breakpoints,
+  findTreeInstanceIds,
   findTreeInstanceIdsExcludingSlotDescendants,
   getStyleDeclKey,
   Instance,
@@ -174,6 +175,16 @@ export const reparentInstanceMutable = (
     dropTarget.parentSelector[0]
   );
   const instance = instances.get(instanceId);
+
+  // delect is target is one of own descendants
+  // prevent reparenting to avoid infinite loop
+  const instanceDescendants = findTreeInstanceIds(instances, instanceId);
+  for (const instanceId of instanceDescendants) {
+    if (dropTarget.parentSelector.includes(instanceId)) {
+      return;
+    }
+  }
+
   if (
     prevParent === undefined ||
     nextParent === undefined ||
