@@ -15,11 +15,6 @@ const presetStyle = {
       value: 100,
     },
 
-    backgroundColor: {
-      type: "keyword",
-      value: "transparent",
-    },
-
     fontFamily: {
       type: "keyword",
       value: "Arial",
@@ -35,11 +30,6 @@ const presetStyle = {
       type: "unit",
       unit: "number",
       value: 1.5,
-    },
-
-    color: {
-      type: "keyword",
-      value: "black",
     },
   },
 } as const satisfies Record<typeof defaultTag, Style>;
