@@ -9,7 +9,7 @@ const ScrollAreaRoot = styled(Root, {
 
 const ScrollAreaThumb = styled(Thumb, {
   boxSizing: "border-box",
-  background: theme.colors.foregroundMoreSubtle,
+  background: theme.colors.foregroundScrollBar,
   borderRadius: theme.spacing[4],
   // increase target size for touch devices https://www.w3.org/WAI/WCAG21/Understanding/target-size.html
   position: "relative",

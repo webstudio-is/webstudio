@@ -1,5 +1,5 @@
 import { useState, useMemo } from "react";
-import { findNextListIndex, Grid } from "@webstudio-is/design-system";
+import { findNextListIndex, Grid, theme } from "@webstudio-is/design-system";
 import {
   AssetsShell,
   type AssetContainer,
@@ -102,7 +102,7 @@ export const ImageManager = ({ accept, onChange }: ImageManagerProps) => {
       type="image"
       accept={accept}
     >
-      <Grid columns={3} gap={2}>
+      <Grid columns={3} gap={2} css={{ px: theme.spacing[9] }}>
         {filteredItems.map((assetContainer, index) => (
           <ImageThumbnail
             key={assetContainer.asset.id}

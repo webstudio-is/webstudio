@@ -103,18 +103,16 @@ const ItemSuffix = ({
   }, [editingItemId, itemId]);
 
   return (
-    <Flex css={{ mr: theme.spacing[5] }} align="center">
-      <Tooltip content={menuLabel} disableHoverableContent>
-        <MenuButton
-          aria-label={menuLabel}
-          isParentSelected={isParentSelected}
-          onClick={() => onEdit(isEditing ? undefined : itemId)}
-          ref={buttonRef}
-        >
-          {isEditing ? <ChevronRightIcon /> : <MenuIcon />}
-        </MenuButton>
-      </Tooltip>
-    </Flex>
+    <Tooltip content={menuLabel} disableHoverableContent>
+      <MenuButton
+        aria-label={menuLabel}
+        isParentSelected={isParentSelected}
+        onClick={() => onEdit(isEditing ? undefined : itemId)}
+        ref={buttonRef}
+      >
+        {isEditing ? <ChevronRightIcon /> : <MenuIcon />}
+      </MenuButton>
+    </Tooltip>
   );
 };
 
@@ -150,7 +148,7 @@ const PagesPanel = ({
           suffix={
             onEdit && (
               <ItemSuffix
-                isParentSelected={props.parentIsSelected ?? false}
+                isParentSelected={props.isSelected ?? false}
                 itemId={props.itemData.id}
                 editingItemId={editingPageId}
                 onEdit={onEdit}
