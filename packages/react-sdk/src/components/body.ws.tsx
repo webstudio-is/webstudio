@@ -17,7 +17,7 @@ const presetStyle = {
 
     backgroundColor: {
       type: "keyword",
-      value: "white",
+      value: "transparent",
     },
 
     fontFamily: {
@@ -39,7 +39,7 @@ const presetStyle = {
 
     color: {
       type: "keyword",
-      value: "#232323",
+      value: "black",
     },
   },
 } as const satisfies Record<typeof defaultTag, Style>;
