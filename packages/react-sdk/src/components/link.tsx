@@ -23,7 +23,7 @@ export const Link = forwardRef<HTMLAnchorElement, Props>((props, ref) => {
 
   switch (href?.type) {
     case "page":
-      url = href.page.path;
+      url = href.page.path === "" ? "/" : href.page.path;
       if (href.hash !== undefined) {
         url += `#${href.hash}`;
       }
