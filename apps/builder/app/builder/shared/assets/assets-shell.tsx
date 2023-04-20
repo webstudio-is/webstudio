@@ -1,10 +1,14 @@
 import type { ComponentProps } from "react";
 import type { AssetType } from "@webstudio-is/asset-uploader";
-import { Flex, ScrollArea, SearchField } from "@webstudio-is/design-system";
+import {
+  Flex,
+  ScrollArea,
+  SearchField,
+  theme,
+} from "@webstudio-is/design-system";
 import { AssetUpload } from "./asset-upload";
 import { NotFound } from "./not-found";
 import { Separator } from "./separator";
-import { theme } from "@webstudio-is/design-system";
 
 type AssetsShellProps = {
   searchProps: ComponentProps<typeof SearchField>;
@@ -40,14 +44,7 @@ export const AssetsShell = ({
       </Flex>
       <Separator />
       {isEmpty && <NotFound />}
-      <ScrollArea
-        css={{
-          display: "flex",
-          flexDirection: "column",
-          px: theme.spacing[9],
-          overflow: "auto",
-        }}
-      >
+      <ScrollArea css={{ display: "flex", flexDirection: "column" }}>
         {children}
       </ScrollArea>
     </Flex>
