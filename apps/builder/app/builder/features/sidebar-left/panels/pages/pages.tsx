@@ -148,7 +148,7 @@ const PagesPanel = ({
           suffix={
             onEdit && (
               <ItemSuffix
-                isParentSelected={props.parentIsSelected ?? false}
+                isParentSelected={props.isSelected ?? false}
                 itemId={props.itemData.id}
                 editingItemId={editingPageId}
                 onEdit={onEdit}
