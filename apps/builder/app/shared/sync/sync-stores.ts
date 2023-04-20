@@ -1,6 +1,6 @@
 import store, { type Change } from "immerhin";
 import { enableMapSet } from "immer";
-import type { WritableAtom } from "nanostores";
+import { atom, type WritableAtom } from "nanostores";
 import { useEffect } from "react";
 import { type Publish, subscribe } from "~/shared/pubsub";
 import {
@@ -195,16 +195,18 @@ const syncStoresState = (name: SyncEventSource, publish: Publish) => {
   };
 };
 
+export const handshakenStore = atom(false);
+
 const handshakeAndSyncStores = (
   source: SyncEventSource,
   publish: Publish,
   sync: (publish: Publish) => () => void
 ) => {
   const actions: Parameters<typeof publish>[0][] = [];
-  let destinationReady = false;
 
   // Until builder is ready store action in local cache
   const publishAction: typeof publish = (action) => {
+    const destinationReady = handshakenStore.get();
     if (destinationReady) {
       return publish(action);
     }
@@ -227,6 +229,7 @@ const handshakeAndSyncStores = (
       return;
     }
 
+    const destinationReady = handshakenStore.get();
     if (destinationReady) {
       return;
     }
@@ -241,7 +244,7 @@ const handshakeAndSyncStores = (
     // cleanup
     actions.length = 0;
 
-    destinationReady = true;
+    handshakenStore.set(true);
 
     destinationStoreReady();
   });

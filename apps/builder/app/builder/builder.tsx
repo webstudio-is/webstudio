@@ -1,5 +1,5 @@
 import { useCallback, useEffect } from "react";
-import { type Publish, usePublish, useSubscribe } from "~/shared/pubsub";
+import { type Publish, usePublish } from "~/shared/pubsub";
 import type { Build } from "@webstudio-is/project-build";
 import type { Project } from "@webstudio-is/project";
 import { theme, Box, type CSS, Flex, Grid } from "@webstudio-is/design-system";
@@ -72,12 +72,6 @@ const useNavigatorLayout = () => {
   // Otherwise we may show the detached state because its the default and then hide it immediately.
   const [clientSettings, _, isLoaded] = useClientSettings();
   return isLoaded ? clientSettings.navigatorLayout : "undocked";
-};
-
-const useSubscribeCanvasReady = (publish: Publish) => {
-  useSubscribe("canvasReady", () => {
-    publish({ type: "canvasReadyAck" });
-  });
 };
 
 const useSetWindowTitle = () => {
@@ -290,7 +284,6 @@ export const Builder = ({
   const [isPreviewMode] = useIsPreviewMode();
   usePublishShortcuts(publish);
   const { onRef: onRefReadCanvas, onTransitionEnd } = useReadCanvasRect();
-  useSubscribeCanvasReady(publish);
   // We need to initialize this in both canvas and builder,
   // because the events will fire in either one, depending on where the focus is
   useCopyPaste();
