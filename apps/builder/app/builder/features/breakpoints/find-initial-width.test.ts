@@ -13,11 +13,31 @@ const breakpoints = [
 ];
 
 describe("Find initial width", () => {
-  test("base", () => {
+  test("base default", () => {
+    expect(
+      findInitialWidth(breakpoints, breakpoints[0], workspaceWidth)
+    ).toStrictEqual(992);
+  });
+
+  test("base while workspace is small", () => {
+    expect(findInitialWidth(breakpoints, breakpoints[0], 500)).toStrictEqual(
+      992
+    );
+  });
+
+  test("base min-width only", () => {
+    const workspaceWidth = 1000;
+
+    const breakpoints = [
+      { id: "0", label: "Base" },
+      { id: "4", label: "Large", minWidth: 1280 },
+      { id: "5", label: "Extra Large", minWidth: 1440 },
+    ];
     expect(
       findInitialWidth(breakpoints, breakpoints[0], workspaceWidth)
     ).toStrictEqual(workspaceWidth);
   });
+
   test("tablet", () => {
     expect(
       findInitialWidth(breakpoints, breakpoints[1], workspaceWidth)

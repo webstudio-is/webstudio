@@ -38,6 +38,7 @@ export const TriggerButton = (props: TriggerButtonProps) => {
   if (breakpoint === undefined || canvasWidth === undefined) {
     return null;
   }
+  const roundedScale = Math.round(scale);
   return (
     <DropdownMenuTrigger
       aria-label="Show breakpoints"
@@ -48,9 +49,9 @@ export const TriggerButton = (props: TriggerButtonProps) => {
       <Value unit="PX" minWidth={55}>
         {Math.round(canvasWidth)}
       </Value>
-      {scale !== 100 && (
+      {roundedScale !== 100 && (
         <Value unit="%" minWidth={30}>
-          {Math.round(scale)}
+          {roundedScale}
         </Value>
       )}
     </DropdownMenuTrigger>
