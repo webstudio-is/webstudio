@@ -452,7 +452,14 @@ export const useStyleInfo = () => {
       }
     }
     return styleInfoData;
-  }, [browserStyle, presetStyle, inheritedInfo, cascadedInfo, selectedStyle]);
+  }, [
+    browserStyle,
+    presetStyle,
+    inheritedInfo,
+    cascadedInfo,
+    previousSourceInfo,
+    selectedStyle,
+  ]);
 
   return styleInfoData;
 };
