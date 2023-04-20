@@ -3,6 +3,7 @@ import {
   ListItem,
   useList,
   findNextListIndex,
+  theme,
 } from "@webstudio-is/design-system";
 import {
   AssetsShell,
@@ -162,7 +163,9 @@ export const FontsManager = ({ value, onChange }: FontsManagerProps) => {
         {uploadedItems.map(renderItem)}
         {systemItems.length !== 0 && (
           <>
-            {uploadedItems.length !== 0 && <Separator />}
+            {uploadedItems.length !== 0 && (
+              <Separator css={{ mx: theme.spacing[9] }} />
+            )}
             <ListItem state="disabled">{"System"}</ListItem>
           </>
         )}
