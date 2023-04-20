@@ -191,19 +191,16 @@ const getOrCreateRule = ({
   const key = `${instanceId}:${breakpointId}:${state}`;
   let rule = wrappedRulesMap.get(key);
   if (rule === undefined) {
-    const params = getParams();
-    rule = cssEngine.addStyleRule(
-      `[${idAttribute}="${instanceId}"]${state}`,
-      {
-        breakpoint: breakpointId,
-        style: {},
-      },
-      createImageValueTransformer(assets, {
-        assetBaseUrl: params.assetBaseUrl,
-      })
-    );
+    rule = cssEngine.addStyleRule(`[${idAttribute}="${instanceId}"]${state}`, {
+      breakpoint: breakpointId,
+      style: {},
+    });
     wrappedRulesMap.set(key, rule);
   }
+  const params = getParams();
+  rule.styleMap.setTransformer(
+    createImageValueTransformer(assets, { assetBaseUrl: params.assetBaseUrl })
+  );
   return rule;
 };
 

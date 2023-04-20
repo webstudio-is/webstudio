@@ -11,6 +11,9 @@ class StylePropertyMap {
   constructor(transformValue?: TransformValue) {
     this.#transformValue = transformValue;
   }
+  setTransformer(transformValue: TransformValue) {
+    this.#transformValue = transformValue;
+  }
   set(property: StyleProperty, value?: StyleValue) {
     this.#styleMap.set(property, value);
     this.#isDirty = true;
