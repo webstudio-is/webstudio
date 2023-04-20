@@ -7,7 +7,6 @@ import {
   Button,
   Flex,
   Box,
-  DeprecatedText2,
   Label,
   Tooltip,
   Separator,
@@ -15,9 +14,14 @@ import {
   PopoverTrigger,
   PopoverPortal,
   PopoverContent,
+  Text,
 } from "@webstudio-is/design-system";
 import { UndoIcon } from "@webstudio-is/icons";
-import { breakpointsStore, instancesStore } from "~/shared/nano-states";
+import {
+  breakpointsStore,
+  instancesStore,
+  styleSourcesStore,
+} from "~/shared/nano-states";
 import { type StyleInfo, type StyleSource, getStyleSource } from "./style-info";
 
 const PropertyPopoverContent = ({
@@ -33,6 +37,7 @@ const PropertyPopoverContent = ({
 }) => {
   const breakpoints = useStore(breakpointsStore);
   const instances = useStore(instancesStore);
+  const styleSources = useStore(styleSourcesStore);
 
   if (styleSource === "local") {
     return (
@@ -57,14 +62,32 @@ const PropertyPopoverContent = ({
           {properties.map((property) => {
             const styleValueInfo = style[property];
 
+            if (styleValueInfo?.previousSource) {
+              const { value, styleSourceId } = styleValueInfo.previousSource;
+              const styleSource = styleSources.get(styleSourceId);
+              let name: undefined | string = undefined;
+              if (styleSource?.type === "local") {
+                name = "local style source";
+              }
+              if (styleSource?.type === "token") {
+                name = `"${styleSource.name}" token`;
+              }
+              return (
+                <Text key={property} color="subtle">
+                  Resetting will change {property} value to {toValue(value)}{" "}
+                  from {name}
+                </Text>
+              );
+            }
+
             if (styleValueInfo?.cascaded) {
               const { value, breakpointId } = styleValueInfo.cascaded;
               const breakpoint = breakpoints.get(breakpointId);
               return (
-                <DeprecatedText2 key={property} color="hint">
+                <Text key={property} color="subtle">
                   Resetting will change {property} to cascaded {toValue(value)}{" "}
                   from {breakpoint?.label}
-                </DeprecatedText2>
+                </Text>
               );
             }
 
@@ -72,17 +95,17 @@ const PropertyPopoverContent = ({
               const { value, instanceId } = styleValueInfo.inherited;
               const instance = instances.get(instanceId);
               return (
-                <DeprecatedText2 key={property} color="hint">
+                <Text key={property} color="subtle">
                   Resetting will change {property} to inherited {toValue(value)}{" "}
                   from {instance?.component}
-                </DeprecatedText2>
+                </Text>
               );
             }
 
             return (
-              <DeprecatedText2 key={property} color="hint">
+              <Text key={property} color="subtle">
                 Resetting will change to initial value
-              </DeprecatedText2>
+              </Text>
             );
           })}
         </Box>
@@ -95,13 +118,30 @@ const PropertyPopoverContent = ({
       {properties.map((property) => {
         const styleValueInfo = style[property];
 
+        if (styleValueInfo?.previousSource) {
+          const { styleSourceId } = styleValueInfo.previousSource;
+          const styleSource = styleSources.get(styleSourceId);
+          let name: undefined | string = undefined;
+          if (styleSource?.type === "local") {
+            name = "local style source";
+          }
+          if (styleSource?.type === "token") {
+            name = `"${styleSource.name}" token`;
+          }
+          return (
+            <Text key={property} color="subtle">
+              {property} value is defined in {name}
+            </Text>
+          );
+        }
+
         if (styleValueInfo?.cascaded) {
           const { breakpointId } = styleValueInfo.cascaded;
           const breakpoint = breakpoints.get(breakpointId);
           return (
-            <DeprecatedText2 key={property} color="hint">
+            <Text key={property} color="subtle">
               {property} value is cascaded from {breakpoint?.label}
-            </DeprecatedText2>
+            </Text>
           );
         }
 
@@ -109,9 +149,9 @@ const PropertyPopoverContent = ({
           const { instanceId } = styleValueInfo.inherited;
           const instance = instances.get(instanceId);
           return (
-            <DeprecatedText2 key={property} color="hint">
+            <Text key={property} color="subtle">
               {property} value is inherited from {instance?.component}
-            </DeprecatedText2>
+            </Text>
           );
         }
       })}

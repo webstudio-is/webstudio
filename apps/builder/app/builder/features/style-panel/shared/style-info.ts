@@ -2,12 +2,13 @@ import { useMemo } from "react";
 import { useStore } from "@nanostores/react";
 import type { Style, StyleProperty, StyleValue } from "@webstudio-is/css-data";
 import { properties } from "@webstudio-is/css-data";
-import type {
-  Breakpoints,
-  Instance,
-  Instances,
-  StyleDecl,
-  StyleSource as StyleSourceType,
+import {
+  StyleSourceSelections,
+  type Breakpoints,
+  type Instance,
+  type Instances,
+  type StyleDecl,
+  type StyleSource as StyleSourceType,
 } from "@webstudio-is/project-build";
 import {
   type StyleSourceSelector,
@@ -18,6 +19,7 @@ import {
   stylesIndexStore,
   selectedOrLastStyleSourceSelectorStore,
   breakpointsStore,
+  styleSourceSelectionsStore,
 } from "~/shared/nano-states";
 import { selectedBreakpointStore } from "~/shared/nano-states";
 import type { InstanceSelector } from "~/shared/tree-utils";
@@ -43,9 +45,19 @@ type InheritedProperties = {
   [property in StyleProperty]?: InheritedValueInfo;
 };
 
+type PreviousSourceValueInfo = {
+  styleSourceId: string;
+  value: StyleValue;
+};
+
+type PreviousSourceProperties = {
+  [property in StyleProperty]?: PreviousSourceValueInfo;
+};
+
 export type StyleValueInfo = {
   value: StyleValue;
   local?: StyleValue;
+  previousSource?: PreviousSourceValueInfo;
   cascaded?: CascadedValueInfo;
   inherited?: InheritedValueInfo;
   preset?: StyleValue;
@@ -80,7 +92,11 @@ export const getStyleSource = (
     }
   }
   for (const info of styleValueInfos) {
-    if (info?.cascaded !== undefined || info?.inherited !== undefined) {
+    if (
+      info?.previousSource !== undefined ||
+      info?.cascaded !== undefined ||
+      info?.inherited !== undefined
+    ) {
       return "remote";
     }
   }
@@ -253,6 +269,36 @@ export const getInheritedInfo = (
   return inheritedStyle;
 };
 
+export const getPreviousSourceInfo = (
+  styleSourceSelections: StyleSourceSelections,
+  stylesByInstanceId: Map<Instance["id"], StyleDecl[]>,
+  selectedInstanceSelector: InstanceSelector,
+  selectedStyleSourceSelector: StyleSourceSelector
+) => {
+  const previousSourceStyle: PreviousSourceProperties = {};
+  const [selectedInstanceId] = selectedInstanceSelector;
+  const { styleSourceId } = selectedStyleSourceSelector;
+  const styleSourceSelection = styleSourceSelections.get(selectedInstanceId);
+  const instanceStyles = stylesByInstanceId.get(selectedInstanceId);
+  if (styleSourceSelection === undefined || instanceStyles === undefined) {
+    return previousSourceStyle;
+  }
+  const previousSourceIds = styleSourceSelection.values.slice(
+    0,
+    styleSourceSelection.values.indexOf(styleSourceId)
+  );
+  // expect instance styles to be ordered
+  for (const styleDecl of instanceStyles) {
+    if (previousSourceIds.includes(styleDecl.styleSourceId)) {
+      previousSourceStyle[styleDecl.property] = {
+        styleSourceId: styleDecl.styleSourceId,
+        value: styleDecl.value,
+      };
+    }
+  }
+  return previousSourceStyle;
+};
+
 /**
  * combine all local, cascaded, inherited and browser styles
  */
@@ -272,6 +318,7 @@ export const useStyleInfo = () => {
   const instances = useStore(instancesStore);
   const { stylesByInstanceId, stylesByStyleSourceId } =
     useStore(stylesIndexStore);
+  const styleSourceSelections = useStore(styleSourceSelectionsStore);
 
   const selectedStyle = useMemo(() => {
     if (
@@ -332,6 +379,26 @@ export const useStyleInfo = () => {
     );
   }, [stylesByInstanceId, selectedInstanceSelector, cascadedBreakpointIds]);
 
+  const previousSourceInfo = useMemo(() => {
+    if (
+      selectedInstanceSelector === undefined ||
+      selectedOrLastStyleSourceSelector === undefined
+    ) {
+      return {};
+    }
+    return getPreviousSourceInfo(
+      styleSourceSelections,
+      stylesByInstanceId,
+      selectedInstanceSelector,
+      selectedOrLastStyleSourceSelector
+    );
+  }, [
+    styleSourceSelections,
+    stylesByInstanceId,
+    selectedInstanceSelector,
+    selectedOrLastStyleSourceSelector,
+  ]);
+
   const presetStyle = useMemo(() => {
     const selectedInstanceId = selectedInstanceSelector?.[0];
     if (selectedInstanceId === undefined) {
@@ -352,14 +419,21 @@ export const useStyleInfo = () => {
       const preset = presetStyle?.[property];
       const inherited = inheritedInfo[property];
       const cascaded = cascadedInfo[property];
+      const previousSource = previousSourceInfo[property];
       const local = selectedStyle?.[property];
       const value =
-        local ?? cascaded?.value ?? inherited?.value ?? preset ?? computed;
+        local ??
+        previousSource?.value ??
+        cascaded?.value ??
+        inherited?.value ??
+        preset ??
+        computed;
       if (value) {
         if (property === "color") {
           styleInfoData[property] = {
             value,
             local,
+            previousSource,
             cascaded,
             inherited,
             preset,
@@ -369,6 +443,7 @@ export const useStyleInfo = () => {
           styleInfoData[property] = {
             value,
             local,
+            previousSource,
             cascaded,
             inherited,
             preset,
@@ -377,7 +452,14 @@ export const useStyleInfo = () => {
       }
     }
     return styleInfoData;
-  }, [browserStyle, presetStyle, inheritedInfo, cascadedInfo, selectedStyle]);
+  }, [
+    browserStyle,
+    presetStyle,
+    inheritedInfo,
+    cascadedInfo,
+    previousSourceInfo,
+    selectedStyle,
+  ]);
 
   return styleInfoData;
 };
