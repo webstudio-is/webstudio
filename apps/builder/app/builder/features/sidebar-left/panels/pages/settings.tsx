@@ -38,6 +38,7 @@ import { deleteInstance } from "~/shared/instance-utils";
 import {
   instancesStore,
   pagesStore,
+  selectedInstanceSelectorStore,
   selectedPageIdStore,
 } from "~/shared/nano-states";
 import { nanoid } from "nanoid";
@@ -293,6 +294,7 @@ export const NewPageSettings = ({
             component: "Body",
             children: [],
           });
+          selectedInstanceSelectorStore.set(undefined);
         }
       );
       onSuccess(pageId);
@@ -420,6 +422,7 @@ const deletePage = (pageId: Page["id"]) => {
   // deselect page before deleting to avoid flash of content
   if (selectedPageIdStore.get() === pageId) {
     selectedPageIdStore.set(pages?.homePage.id);
+    selectedInstanceSelectorStore.set(undefined);
   }
   const rootInstanceId = pages?.pages.find(
     (page) => page.id === pageId
