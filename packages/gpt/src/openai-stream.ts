@@ -24,25 +24,35 @@ export const OpenAIStream = async function OpenAIStream({
   });
   const openai = new OpenAIApi(configuration);
 
-  const response = await openai.createChatCompletion(
-    {
-      model,
-      messages: prompt,
-      max_tokens: maxTokens,
-      temperature: 0,
-      stream: true,
-    },
-    { responseType: "stream" }
-  );
+  try {
+    var response = await openai.createChatCompletion(
+      {
+        model,
+        messages: prompt,
+        max_tokens: maxTokens,
+        temperature: 0,
+        stream: true,
+      },
+      { responseType: "stream" }
+    );
+  } catch (error) {
+    if (error.response) {
+      console.log(error.response.status);
+      console.log(error.response.statusText);
+    } else {
+      console.log(error.message);
+    }
+    throw new Error("Chat Completion Failed");
+  }
 
-  let onDone, onError;
+  let onDone: Function, onError: Function;
   const streamPromise = new Promise((resolve, reject) => {
     onDone = resolve;
     onError = reject;
   });
 
   const stream = response.data;
-  let chunks = [];
+  let chunks: string[] = [];
 
   stream.on("data", (data) => {
     const lines = data
@@ -50,11 +60,11 @@ export const OpenAIStream = async function OpenAIStream({
       .split("\n")
       .filter((line: string) => line.trim() !== "");
 
-    const chunk = "";
     for (const line of lines) {
       const message = line.replace(/^data: /, "");
       if (message === "[DONE]") {
         onChunk(chunks.join(""));
+        chunks = [];
         return;
       }
       try {
@@ -62,8 +72,8 @@ export const OpenAIStream = async function OpenAIStream({
         const text = parsed.choices[0].delta.content;
         if (typeof text === "string") {
           if (text.endsWith("\n")) {
-            chunks.push(text.slice(0, -1));
-            console.log(chunks.join(""));
+            chunks.push(text);
+            onChunk(chunks.join(""));
             chunks = [];
           } else {
             chunks.push(text);
@@ -77,6 +87,7 @@ export const OpenAIStream = async function OpenAIStream({
 
   stream.on("end", () => {
     onChunk(chunks.join(""));
+    chunks = [];
     onDone();
   });
   stream.on("error", (e: Error) => onError(e.message));
