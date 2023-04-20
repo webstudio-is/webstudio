@@ -37,6 +37,8 @@ export default function handleRequest(
 ) {
   let handle = handleRequestBuilder;
 
+  // @todo canvas can be deployed as separate app
+  // and separate request handler will not be necessary anymore
   if (
     remixContext.staticHandlerContext.matches.some(
       (match) =>
