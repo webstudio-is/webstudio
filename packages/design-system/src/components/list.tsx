@@ -4,10 +4,9 @@ import {
   forwardRef,
   type KeyboardEvent,
 } from "react";
-import { styled } from "../stitches.config";
-import { Flex } from "./flex";
 import { DeprecatedText2 } from "./__DEPRECATED__/text2";
-import { theme } from "../stitches.config";
+import { Flex } from "./flex";
+import { styled, theme } from "../stitches.config";
 
 const ListBase = styled("ul", {
   display: "flex",
@@ -22,18 +21,25 @@ const ListItemBase = styled("li", {
   alignItems: "center",
   justifyContent: "space-between",
   height: theme.spacing[11],
-  px: theme.spacing[3],
-  mx: theme.spacing[2],
+  paddingLeft: theme.spacing[5],
+  paddingRight: theme.spacing[8],
   listStyle: "none",
-  borderRadius: theme.borderRadius[4],
   outline: 0,
+  position: "relative",
   variants: {
     state: {
       disabled: {
         pointerEvents: "none",
       },
       selected: {
-        boxShadow: `0px 0px 0px 2px ${theme.colors.blue10}, 0px 0px 0px 2px ${theme.colors.blue10}`,
+        "&:before": {
+          content: "''",
+          position: "absolute",
+          pointerEvents: "none",
+          inset: `0 ${theme.spacing[3]}`,
+          borderRadius: theme.borderRadius[4],
+          border: `2px solid ${theme.colors.borderFocus}`,
+        },
       },
     },
   },

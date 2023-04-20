@@ -18,11 +18,13 @@ import {
 
 export const INDENT = 16;
 const ITEM_HEIGHT = 32;
-const ICONS_SIZE = 15;
-const ITEM_PADDING = 8;
+const ICONS_SIZE = 16;
+const ITEM_PADDING_LEFT = 8;
+// extra padding on the right to make sure scrollbar doesn't obscure anything
+const ITEM_PADDING_RIGHT = 14;
 
 export const getPlacementIndicatorAlignment = (depth: number) => {
-  return depth * INDENT + ITEM_PADDING;
+  return depth * INDENT + ITEM_PADDING_LEFT;
 };
 
 const suffixWidthVar = cssVars.define("suffix-width");
@@ -36,17 +38,15 @@ const getItemButtonCssVars = ({
   suffixVisible: boolean;
 }) => {
   if (suffixVisible) {
+    const suffixWidth = cssVars.use(suffixWidthVar, "0px");
     return {
       // We have to use a padding to make space for the suffix
       // because we can't put it inside ItemButton (see comment in TreeItemBody)
-      [itemButtonVars.paddingRight]: `calc(${ITEM_PADDING}px + ${cssVars.use(
-        suffixWidthVar,
-        "0"
-      )})`,
+      [itemButtonVars.paddingRight]: `calc(${ITEM_PADDING_RIGHT}px + ${suffixWidth})`,
     };
   }
   return {
-    [itemButtonVars.paddingRight]: `${ITEM_PADDING}px`,
+    [itemButtonVars.paddingRight]: `${ITEM_PADDING_RIGHT}px`,
   };
 };
 const ItemButton = styled("button", {
@@ -60,7 +60,7 @@ const ItemButton = styled("button", {
   margin: 0,
   pt: 0,
   pb: 0,
-  pl: ITEM_PADDING,
+  pl: ITEM_PADDING_LEFT,
   pr: cssVars.use(itemButtonVars.paddingRight),
   flexBasis: 0,
   flexGrow: 1,
@@ -156,7 +156,7 @@ const getSuffixContainerCssVars = ({
 const SuffixContainer = styled(Flex, {
   position: "absolute",
   alignItems: "center",
-  right: 0,
+  right: `${ITEM_PADDING_RIGHT}px`,
   top: 0,
   bottom: 0,
   defaultVariants: { align: "center" },
@@ -275,7 +275,7 @@ export const TreeItemBody = <Data extends { id: string }>({
   isExpanded,
   children,
   suffix,
-  suffixWidth = suffix ? theme.spacing[11] : "0",
+  suffixWidth = suffix ? theme.spacing[9] : "0px",
   alwaysShowSuffix = false,
   forceFocus = false,
   selectionEvent = "click",
@@ -363,7 +363,7 @@ export const TreeItemBody = <Data extends { id: string }>({
 
       {shouldRenderExpandButton && (
         <CollapsibleTrigger
-          style={{ left: (level - 1) * INDENT + ITEM_PADDING }}
+          style={{ left: (level - 1) * INDENT + ITEM_PADDING_LEFT }}
           // We don't want this trigger to be focusable
           tabIndex={-1}
         >

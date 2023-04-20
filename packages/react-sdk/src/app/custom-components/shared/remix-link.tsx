@@ -12,7 +12,7 @@ export const wrapLinkComponent = (BaseLink: LinkComponent) => {
     const href = usePropUrl(getInstanceIdFromComponentProps(props), "href");
 
     if (href?.type === "page") {
-      let to = href.page.path;
+      let to = href.page.path === "" ? "/" : href.page.path;
       if (href.hash !== undefined) {
         to += `#${href.hash}`;
       }
