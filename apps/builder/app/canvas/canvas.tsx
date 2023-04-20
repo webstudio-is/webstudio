@@ -1,4 +1,4 @@
-import { useMemo, Fragment, useEffect } from "react";
+import { useMemo, useEffect } from "react";
 import { useStore } from "@nanostores/react";
 import { computed } from "nanostores";
 import type { Params } from "@webstudio-is/react-sdk";
@@ -15,7 +15,11 @@ import {
   type GetComponent,
 } from "@webstudio-is/react-sdk";
 import { publish } from "~/shared/pubsub";
-import { registerContainers, useCanvasStore } from "~/shared/sync";
+import {
+  handshakenStore,
+  registerContainers,
+  useCanvasStore,
+} from "~/shared/sync";
 import { useSharedShortcuts } from "~/shared/shortcuts";
 import { useCanvasShortcuts } from "./canvas-shortcuts";
 import { useManageDesignModeStyles, GlobalStyles } from "./shared/styles";
@@ -29,7 +33,6 @@ import {
   selectedPageStore,
 } from "~/shared/nano-states";
 import { useDragAndDrop } from "./shared/use-drag-drop";
-import { useSubscribeBuilderReady } from "./shared/use-builder-ready";
 import { useCopyPaste } from "~/shared/copy-paste";
 import { setDataCollapsed, subscribeCollapsedToPubSub } from "./collapsed";
 import { useWindowResizeDebounced } from "~/shared/dom-hooks";
@@ -124,7 +127,7 @@ export const Canvas = ({
   params,
   getComponent,
 }: CanvasProps): JSX.Element | null => {
-  const isBuilderReady = useSubscribeBuilderReady();
+  const handshaken = useStore(handshakenStore);
   setParams(params ?? null);
   useCanvasStore(publish);
   const [isPreviewMode] = useIsPreviewMode();
@@ -156,25 +159,11 @@ export const Canvas = ({
 
   const elements = useElementsTree(getComponent);
 
-  if (elements === undefined) {
-    return null;
-  }
-
-  if (isPreviewMode || isBuilderReady === false) {
-    return (
-      <>
-        <GlobalStyles />
-        {/* Without fragment elements will be recreated in DesignMode */}
-        <Fragment key="elements">{elements}</Fragment>
-      </>
-    );
-  }
-
   return (
     <>
       <GlobalStyles />
-      <DesignMode />
-      <Fragment key="elements">{elements}</Fragment>
+      {isPreviewMode === false && handshaken === true && <DesignMode />}
+      {elements}
     </>
   );
 };
