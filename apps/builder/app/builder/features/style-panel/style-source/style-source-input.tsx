@@ -425,7 +425,6 @@ export const StyleSourceInput = (
                 selectedItemSelector: props.selectedItemSelector,
                 item,
                 states,
-                componentStates: props.componentStates,
                 onSelect: props.onSelectItem,
                 onDuplicate: props.onDuplicateItem,
                 onConvertToToken: props.onConvertToToken,
