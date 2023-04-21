@@ -25,7 +25,7 @@ describe("Find initial width", () => {
     );
   });
 
-  test("base min-width only", () => {
+  test("base and min-width only", () => {
     const workspaceWidth = 1000;
 
     const breakpoints = [
@@ -38,7 +38,21 @@ describe("Find initial width", () => {
     ).toStrictEqual(workspaceWidth);
   });
 
-  test("base is the only breakpoint", () => {
+  test("base and max-width only", () => {
+    const workspaceWidth = 1000;
+
+    const breakpoints = [
+      { id: "0", label: "Base" },
+      { id: "1", label: "Tablet", maxWidth: 991 },
+      { id: "2", label: "Mobile landscape", maxWidth: 767 },
+      { id: "3", label: "Mobile portrait", maxWidth: 479 },
+    ];
+    expect(
+      findInitialWidth(breakpoints, breakpoints[0], workspaceWidth)
+    ).toStrictEqual(992);
+  });
+
+  test("base only", () => {
     const breakpoints = [{ id: "0", label: "Base" }];
     expect(
       findInitialWidth(breakpoints, breakpoints[0], workspaceWidth)
