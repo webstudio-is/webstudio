@@ -20,7 +20,6 @@ import {
   type FocusEvent,
   type ReactNode,
 } from "react";
-import { humanizeString } from "~/shared/string-utils";
 
 const menuTriggerVisibilityVar = cssVars.define("menu-trigger-visibility");
 const menuTriggerVisibilityOverrideVar = cssVars.define(
@@ -359,6 +358,7 @@ type StyleSourceProps = {
   menuItems: ReactNode;
   selected: boolean;
   state: undefined | string;
+  stateLabel: undefined | string;
   disabled: boolean;
   isEditing: boolean;
   isDragging: boolean;
@@ -374,6 +374,7 @@ export const StyleSource = ({
   menuItems,
   selected,
   state,
+  stateLabel,
   disabled,
   isEditing,
   isDragging,
@@ -402,8 +403,8 @@ export const StyleSource = ({
           label={label}
         />
       </StyleSourceButton>
-      {state !== undefined && (
-        <StyleSourceState>{humanizeString(state)}</StyleSourceState>
+      {stateLabel !== undefined && (
+        <StyleSourceState>{stateLabel}</StyleSourceState>
       )}
       {showMenu && <Menu source={source}>{menuItems}</Menu>}
     </SourceSourceContainer>
