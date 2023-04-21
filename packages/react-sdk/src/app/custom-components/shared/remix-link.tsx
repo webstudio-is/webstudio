@@ -1,4 +1,4 @@
-import { Link as RemixLink } from "@remix-run/react";
+import { NavLink as RemixLink } from "@remix-run/react";
 import type { ComponentPropsWithoutRef } from "react";
 import { forwardRef } from "react";
 import type { Link } from "../../../components/link";
