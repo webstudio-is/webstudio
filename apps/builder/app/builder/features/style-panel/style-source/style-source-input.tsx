@@ -261,7 +261,6 @@ const userActionStates = [
 const renderMenuItems = (props: {
   selectedItemSelector: undefined | ItemSelector;
   item: IntermediateItem;
-  componentStates?: ComponentState[];
   states: { selector: string; label: string }[];
   onSelect?: (itemSelector: ItemSelector) => void;
   onEdit?: (itemId: IntermediateItem["id"]) => void;
