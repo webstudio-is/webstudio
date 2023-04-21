@@ -174,13 +174,6 @@ test("compute inherited styles", () => {
     )
   ).toMatchInlineSnapshot(`
     {
-      "color": {
-        "instanceId": "1",
-        "value": {
-          "type": "keyword",
-          "value": "#232323",
-        },
-      },
       "fontFamily": {
         "instanceId": "1",
         "value": {

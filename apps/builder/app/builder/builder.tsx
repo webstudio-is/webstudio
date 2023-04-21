@@ -319,6 +319,7 @@ export const Builder = ({
             css={{
               height: "100%",
               width: "100%",
+              backgroundColor: "#fff",
             }}
           />
         </Workspace>
