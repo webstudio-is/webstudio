@@ -35,6 +35,7 @@ import {
 import {
   forwardRef,
   useState,
+  Fragment,
   type ComponentProps,
   type ForwardRefRenderFunction,
   type RefObject,
@@ -47,7 +48,6 @@ import { useSortable } from "./use-sortable";
 import { matchSorter } from "match-sorter";
 import { StyleSourceBadge } from "./style-source-badge";
 import { CheckMarkIcon, DotIcon } from "@webstudio-is/icons";
-import { isFeatureEnabled } from "@webstudio-is/feature-flags";
 import { humanizeString } from "~/shared/string-utils";
 
 type IntermediateItem = {
@@ -84,6 +84,7 @@ type TextFieldBaseWrapperProps<Item extends IntermediateItem> = Omit<
     onSelectItem?: (itemSelector: ItemSelector) => void;
     onEditItem?: (id?: Item["id"]) => void;
     editingItemId?: Item["id"];
+    states: { label: string; selector: string }[];
   };
 
 const TextFieldBase: ForwardRefRenderFunction<
@@ -111,6 +112,7 @@ const TextFieldBase: ForwardRefRenderFunction<
     onSelectItem,
     onEditItem,
     editingItemId,
+    states,
     ...textFieldProps
   } = props;
   const [internalInputRef, focusProps] = useDeprecatedTextFieldFocus({
@@ -146,6 +148,12 @@ const TextFieldBase: ForwardRefRenderFunction<
           state={
             item.id === selectedItemSelector?.styleSourceId
               ? selectedItemSelector.state
+              : undefined
+          }
+          stateLabel={
+            item.id === selectedItemSelector?.styleSourceId
+              ? states.find((s) => s.selector === selectedItemSelector.state)
+                  ?.label
               : undefined
           }
           disabled={item.disabled}
@@ -254,6 +262,7 @@ const renderMenuItems = (props: {
   selectedItemSelector: undefined | ItemSelector;
   item: IntermediateItem;
   componentStates?: ComponentState[];
+  states: { selector: string; label: string }[];
   onSelect?: (itemSelector: ItemSelector) => void;
   onEdit?: (itemId: IntermediateItem["id"]) => void;
   onDuplicate?: (itemId: IntermediateItem["id"]) => void;
@@ -263,13 +272,6 @@ const renderMenuItems = (props: {
   onRemove?: (itemId: IntermediateItem["id"]) => void;
   onDelete?: (itemId: IntermediateItem["id"]) => void;
 }) => {
-  const states = [
-    ...userActionStates.map((selector) => ({
-      selector,
-      label: humanizeString(selector),
-    })),
-    ...(props.componentStates ?? []),
-  ];
   return (
     <>
       {props.item.source !== "local" && (
@@ -314,40 +316,36 @@ const renderMenuItems = (props: {
         </DropdownMenuItem>
       )}
 
-      {isFeatureEnabled("styleSourceStates") && (
-        <>
-          <DropdownMenuSeparator />
-          <DropdownMenuLabel>States</DropdownMenuLabel>
-          {states.map(({ label, selector }) => (
-            <DropdownMenuItem
-              key={selector}
-              withIndicator={true}
-              icon={
-                props.item.id === props.selectedItemSelector?.styleSourceId &&
-                selector === props.selectedItemSelector.state ? (
-                  <CheckMarkIcon
-                    color={
-                      props.item.states.includes(selector)
-                        ? rawTheme.colors.foregroundPrimary
-                        : rawTheme.colors.foregroundIconMain
-                    }
-                  />
-                ) : props.item.states.includes(selector) ? (
-                  <DotIcon color={rawTheme.colors.foregroundPrimary} />
-                ) : null
-              }
-              onSelect={() =>
-                props.onSelect?.({
-                  styleSourceId: props.item.id,
-                  state: selector,
-                })
-              }
-            >
-              {label}
-            </DropdownMenuItem>
-          ))}
-        </>
-      )}
+      <DropdownMenuSeparator />
+      <DropdownMenuLabel>States</DropdownMenuLabel>
+      {props.states.map(({ label, selector }) => (
+        <DropdownMenuItem
+          key={selector}
+          withIndicator={true}
+          icon={
+            props.item.id === props.selectedItemSelector?.styleSourceId &&
+            selector === props.selectedItemSelector.state ? (
+              <CheckMarkIcon
+                color={
+                  props.item.states.includes(selector)
+                    ? rawTheme.colors.foregroundPrimary
+                    : rawTheme.colors.foregroundIconMain
+                }
+              />
+            ) : props.item.states.includes(selector) ? (
+              <DotIcon color={rawTheme.colors.foregroundPrimary} />
+            ) : null
+          }
+          onSelect={() =>
+            props.onSelect?.({
+              styleSourceId: props.item.id,
+              state: selector,
+            })
+          }
+        >
+          {label}
+        </DropdownMenuItem>
+      ))}
     </>
   );
 };
@@ -408,6 +406,14 @@ export const StyleSourceInput = (
 
   let hasNewTokenItem = false;
 
+  const states = [
+    ...userActionStates.map((selector) => ({
+      selector,
+      label: humanizeString(selector),
+    })),
+    ...(props.componentStates ?? []),
+  ];
+
   return (
     <Combobox>
       <Box {...getComboboxProps()}>
@@ -419,6 +425,7 @@ export const StyleSourceInput = (
               renderMenuItems({
                 selectedItemSelector: props.selectedItemSelector,
                 item,
+                states,
                 componentStates: props.componentStates,
                 onSelect: props.onSelectItem,
                 onDuplicate: props.onDuplicateItem,
@@ -436,6 +443,7 @@ export const StyleSourceInput = (
             onSort={props.onSort}
             label={label}
             value={value}
+            states={states}
             selectedItemSelector={props.selectedItemSelector}
             css={props.css}
             editingItemId={props.editingItemId}
@@ -448,11 +456,10 @@ export const StyleSourceInput = (
                 if (item.id === newItemId) {
                   hasNewTokenItem = true;
                   return (
-                    <>
+                    <Fragment key={index}>
                       <ComboboxLabel>New Token</ComboboxLabel>
                       <ComboboxListboxItem
                         {...getItemProps({ item, index })}
-                        key={index}
                         selectable={false}
                       >
                         <div>
@@ -462,7 +469,7 @@ export const StyleSourceInput = (
                           </StyleSourceBadge>
                         </div>
                       </ComboboxListboxItem>
-                    </>
+                    </Fragment>
                   );
                 }
 
@@ -477,18 +484,17 @@ export const StyleSourceInput = (
                   return;
                 }
                 return (
-                  <>
+                  <Fragment key={index}>
                     {label}
                     <ComboboxListboxItem
                       {...getItemProps({ item, index })}
-                      key={index}
                       selectable={false}
                     >
                       <StyleSourceBadge source={item.source}>
                         {item.label}
                       </StyleSourceBadge>
                     </ComboboxListboxItem>
-                  </>
+                  </Fragment>
                 );
               })}
           </ComboboxListbox>
