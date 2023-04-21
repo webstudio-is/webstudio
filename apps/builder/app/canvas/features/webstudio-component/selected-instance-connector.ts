@@ -99,6 +99,8 @@ export const SelectedInstanceConnector = ({
     showOutline();
 
     const resizeObserver = new ResizeObserver(() => {
+      // Having hover etc, element can have no size because of that
+      setDataCollapsed(instance.id, true);
       // contentRect has wrong x/y values for absolutely positioned element.
       // getBoundingClientRect is used instead.
       showOutline();
