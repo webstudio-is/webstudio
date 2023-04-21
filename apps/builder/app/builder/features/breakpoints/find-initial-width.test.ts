@@ -13,11 +13,52 @@ const breakpoints = [
 ];
 
 describe("Find initial width", () => {
-  test("base", () => {
+  test("base default", () => {
+    expect(
+      findInitialWidth(breakpoints, breakpoints[0], workspaceWidth)
+    ).toStrictEqual(992);
+  });
+
+  test("base while workspace is small", () => {
+    expect(findInitialWidth(breakpoints, breakpoints[0], 500)).toStrictEqual(
+      992
+    );
+  });
+
+  test("base and min-width only", () => {
+    const workspaceWidth = 1000;
+
+    const breakpoints = [
+      { id: "0", label: "Base" },
+      { id: "4", label: "Large", minWidth: 1280 },
+      { id: "5", label: "Extra Large", minWidth: 1440 },
+    ];
     expect(
       findInitialWidth(breakpoints, breakpoints[0], workspaceWidth)
     ).toStrictEqual(workspaceWidth);
   });
+
+  test("base and max-width only", () => {
+    const workspaceWidth = 1000;
+
+    const breakpoints = [
+      { id: "0", label: "Base" },
+      { id: "1", label: "Tablet", maxWidth: 991 },
+      { id: "2", label: "Mobile landscape", maxWidth: 767 },
+      { id: "3", label: "Mobile portrait", maxWidth: 479 },
+    ];
+    expect(
+      findInitialWidth(breakpoints, breakpoints[0], workspaceWidth)
+    ).toStrictEqual(992);
+  });
+
+  test("base only", () => {
+    const breakpoints = [{ id: "0", label: "Base" }];
+    expect(
+      findInitialWidth(breakpoints, breakpoints[0], workspaceWidth)
+    ).toStrictEqual(workspaceWidth);
+  });
+
   test("tablet", () => {
     expect(
       findInitialWidth(breakpoints, breakpoints[1], workspaceWidth)

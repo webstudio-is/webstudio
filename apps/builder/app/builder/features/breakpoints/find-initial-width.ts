@@ -1,5 +1,6 @@
 import { compareMedia } from "@webstudio-is/css-engine";
 import type { Breakpoint } from "@webstudio-is/project-build";
+import { groupBreakpoints, isBaseBreakpoint } from "~/shared/breakpoints";
 
 const defaultWidth = 320;
 
@@ -11,12 +12,29 @@ export const findInitialWidth = (
   selectedBreakpoint: Breakpoint,
   workspaceWidth: number
 ) => {
-  // When on a base breakpoint, we want to show maximum width canvas
-  if (
-    selectedBreakpoint.minWidth === undefined &&
-    selectedBreakpoint.maxWidth === undefined
-  ) {
-    return workspaceWidth;
+  // Finding the canvas width when user selects base breakpoint is a bit more complicated.
+  // We want to find the lowest possible size that is bigger than all max breakpoints and smaller than all min breakpoints.
+  // Note: it is still possible to get intersecting min and max breakpoints.
+  if (isBaseBreakpoint(selectedBreakpoint)) {
+    // Base is the only breakpoint
+    if (breakpoints.length === 1) {
+      return workspaceWidth;
+    }
+    const grouped = groupBreakpoints(breakpoints);
+    const baseIndex = grouped.findIndex(
+      ({ id }) => selectedBreakpoint.id === id
+    );
+    const next = grouped[baseIndex + 1];
+    if (next?.maxWidth !== undefined) {
+      return Math.max(next.maxWidth + 1, defaultWidth);
+    }
+    const prev = grouped[baseIndex - 1];
+    if (prev?.minWidth !== undefined) {
+      if (prev.minWidth < workspaceWidth) {
+        return Math.max(prev.minWidth - 1, defaultWidth);
+      }
+      return workspaceWidth;
+    }
   }
 
   if (selectedBreakpoint.minWidth !== undefined) {
