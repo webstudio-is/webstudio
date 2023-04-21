@@ -35,6 +35,7 @@ import {
 import {
   forwardRef,
   useState,
+  Fragment,
   type ComponentProps,
   type ForwardRefRenderFunction,
   type RefObject,
@@ -448,11 +449,10 @@ export const StyleSourceInput = (
                 if (item.id === newItemId) {
                   hasNewTokenItem = true;
                   return (
-                    <>
+                    <Fragment key={index}>
                       <ComboboxLabel>New Token</ComboboxLabel>
                       <ComboboxListboxItem
                         {...getItemProps({ item, index })}
-                        key={index}
                         selectable={false}
                       >
                         <div>
@@ -462,7 +462,7 @@ export const StyleSourceInput = (
                           </StyleSourceBadge>
                         </div>
                       </ComboboxListboxItem>
-                    </>
+                    </Fragment>
                   );
                 }
 
@@ -477,18 +477,17 @@ export const StyleSourceInput = (
                   return;
                 }
                 return (
-                  <>
+                  <Fragment key={index}>
                     {label}
                     <ComboboxListboxItem
                       {...getItemProps({ item, index })}
-                      key={index}
                       selectable={false}
                     >
                       <StyleSourceBadge source={item.source}>
                         {item.label}
                       </StyleSourceBadge>
                     </ComboboxListboxItem>
-                  </>
+                  </Fragment>
                 );
               })}
           </ComboboxListbox>
