@@ -208,10 +208,15 @@ const recalculate = () => {
  * For such elements we set collapsedAttribute and then style helpers add padding to
  * prevent collapsing.
  **/
-export const setDataCollapsed = (instanceId: string) => {
+export const setDataCollapsed = (instanceId: string, syncExec = false) => {
   instanceIdSet.add(instanceId);
 
   cancelAnimationFrame(rafHandle);
+
+  if (syncExec) {
+    recalculate();
+    return;
+  }
 
   rafHandle = requestAnimationFrame(() => {
     recalculate();

@@ -16,6 +16,7 @@ import { getAllElementsBoundingBox } from "~/shared/dom-utils";
 import { subscribeScrollState } from "~/canvas/shared/scroll-state";
 import { selectedInstanceOutlineStore } from "~/shared/nano-states";
 import type { UnitSizes } from "~/builder/features/style-panel/shared/css-value-input/convert-units";
+import { setDataCollapsed } from "~/canvas/collapsed";
 
 const isHtmlTag = (tag: string): tag is HtmlTags =>
   htmlTags.includes(tag as HtmlTags);
@@ -79,6 +80,10 @@ export const SelectedInstanceConnector = ({
   const instances = useStore(instancesStore);
 
   useEffect(() => {
+    // Synchronously execute setDataCollapsed to calculate right outline
+    // This fixes an issue, when new element outline was calulated before collapsed elements calculations
+    setDataCollapsed(instance.id, true);
+
     const element = instanceElementRef.current;
     if (element === undefined) {
       return;
@@ -94,6 +99,8 @@ export const SelectedInstanceConnector = ({
     showOutline();
 
     const resizeObserver = new ResizeObserver(() => {
+      // Having hover etc, element can have no size because of that
+      setDataCollapsed(instance.id, true);
       // contentRect has wrong x/y values for absolutely positioned element.
       // getBoundingClientRect is used instead.
       showOutline();
