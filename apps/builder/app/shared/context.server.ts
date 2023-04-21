@@ -1,4 +1,4 @@
-import type { AppContext } from "@webstudio-is/trpc-interface/server";
+import type { AppContext } from "@webstudio-is/trpc-interface/index.server";
 import { authenticator } from "~/services/auth.server";
 import { trpcClient } from "~/services/trpc.server";
 

@@ -1,5 +1,5 @@
 import { prisma } from "@webstudio-is/prisma-client";
-import type { AppContext } from "@webstudio-is/trpc-interface/server";
+import type { AppContext } from "@webstudio-is/trpc-interface/index.server";
 import { DashboardProjects } from "./schema";
 
 export const findMany = async (userId: string, context: AppContext) => {

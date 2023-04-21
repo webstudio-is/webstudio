@@ -9,8 +9,8 @@ import {
   patchStyleSourceSelections,
   patchInstances,
   patchPages,
-} from "@webstudio-is/project-build/server";
-import { patchAssets } from "@webstudio-is/asset-uploader/server";
+} from "@webstudio-is/project-build/index.server";
+import { patchAssets } from "@webstudio-is/asset-uploader/index.server";
 import type { Project } from "@webstudio-is/project";
 import { createContext } from "~/shared/context.server";
 import { createAssetClient } from "~/shared/asset-client";

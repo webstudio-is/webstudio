@@ -2,7 +2,7 @@ import { prisma, type Project } from "@webstudio-is/prisma-client";
 import {
   authorizeProject,
   type AppContext,
-} from "@webstudio-is/trpc-interface/server";
+} from "@webstudio-is/trpc-interface/index.server";
 import type { AssetClient } from "./client";
 import { deleteFromDb } from "./db";
 import type { Asset } from "./schema";

@@ -1,11 +1,11 @@
+import { z } from "zod";
 import {
   mergeRouters,
   router,
   procedure,
   projectRouter as baseProjectRouter,
-} from "@webstudio-is/project/server";
+} from "@webstudio-is/project/index.server";
 import { db } from "../db";
-import { z } from "zod";
 
 const projectRouter = router({
   findMany: procedure

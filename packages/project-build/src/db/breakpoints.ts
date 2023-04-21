@@ -1,6 +1,10 @@
 import { nanoid } from "nanoid";
 import { applyPatches, type Patch } from "immer";
 import { type Project, prisma } from "@webstudio-is/prisma-client";
+import {
+  authorizeProject,
+  type AppContext,
+} from "@webstudio-is/trpc-interface/index.server";
 import type { Build } from "../types";
 import {
   type Breakpoint,
@@ -8,10 +12,6 @@ import {
   BreakpointsList,
   initialBreakpoints,
 } from "../schema/breakpoints";
-import {
-  authorizeProject,
-  type AppContext,
-} from "@webstudio-is/trpc-interface/server";
 
 export const parseBreakpoints = (
   breakpointsString: string,

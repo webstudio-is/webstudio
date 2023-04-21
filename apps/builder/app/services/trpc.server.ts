@@ -1,4 +1,4 @@
-import { createTrpcProxyServiceClient } from "@webstudio-is/trpc-interface/server";
+import { createTrpcProxyServiceClient } from "@webstudio-is/trpc-interface/index.server";
 import env from "~/env/env.server";
 
 const TRPC_SERVER_URL = env.TRPC_SERVER_URL ?? "";

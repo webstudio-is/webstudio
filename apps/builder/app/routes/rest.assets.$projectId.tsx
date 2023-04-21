@@ -5,7 +5,7 @@ import { MaxAssets, type Asset } from "@webstudio-is/asset-uploader";
 import {
   uploadAssets,
   loadByProject,
-} from "@webstudio-is/asset-uploader/server";
+} from "@webstudio-is/asset-uploader/index.server";
 import { toast } from "@webstudio-is/design-system";
 import type { ActionData } from "~/builder/shared/assets";
 import { sentryException } from "~/shared/sentry";

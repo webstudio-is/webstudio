@@ -2,15 +2,15 @@ import slugify from "slugify";
 import { customAlphabet } from "nanoid";
 import { v4 as uuid } from "uuid";
 import { prisma, Prisma } from "@webstudio-is/prisma-client";
-import { cloneAssets } from "@webstudio-is/asset-uploader/server";
+import { cloneAssets } from "@webstudio-is/asset-uploader/index.server";
 import {
   authorizeProject,
   type AppContext,
-} from "@webstudio-is/trpc-interface/server";
+} from "@webstudio-is/trpc-interface/index.server";
 import {
   createBuild,
   loadBuildByProjectId,
-} from "@webstudio-is/project-build/server";
+} from "@webstudio-is/project-build/index.server";
 import { Project, Title } from "../shared/schema";
 
 const nanoid = customAlphabet("1234567890abcdefghijklmnopqrstuvwxyz");

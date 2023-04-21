@@ -1,4 +1,4 @@
-import type { AppContext } from "@webstudio-is/trpc-interface/server";
+import type { AppContext } from "@webstudio-is/trpc-interface/index.server";
 import type { AssetClient } from "./client";
 import { createAssetWithLimit } from "./db/create";
 

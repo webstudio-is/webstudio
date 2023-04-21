@@ -3,7 +3,7 @@ import { type Project, prisma } from "@webstudio-is/prisma-client";
 import {
   authorizeProject,
   type AppContext,
-} from "@webstudio-is/trpc-interface/server";
+} from "@webstudio-is/trpc-interface/index.server";
 import type { Build } from "../types";
 import { StyleSourcesList, StyleSources } from "../schema/style-sources";
 

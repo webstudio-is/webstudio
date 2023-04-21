@@ -1,10 +1,10 @@
 import { useLoaderData, useRouteError } from "@remix-run/react";
 import type { ShouldRevalidateFunction } from "@remix-run/react";
 import type { LoaderArgs } from "@remix-run/node";
-import { loadBuildByProjectId } from "@webstudio-is/project-build/server";
-import { db } from "@webstudio-is/project/server";
-import { authorizeProject } from "@webstudio-is/trpc-interface/server";
-import { loadByProject } from "@webstudio-is/asset-uploader/server";
+import { loadBuildByProjectId } from "@webstudio-is/project-build/index.server";
+import { db } from "@webstudio-is/project/index.server";
+import { authorizeProject } from "@webstudio-is/trpc-interface/index.server";
+import { loadByProject } from "@webstudio-is/asset-uploader/index.server";
 import { createContext } from "~/shared/context.server";
 import { ErrorMessage } from "~/shared/error";
 import { sentryException } from "~/shared/sentry";

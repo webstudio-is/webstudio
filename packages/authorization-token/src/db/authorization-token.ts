@@ -1,3 +1,4 @@
+import { v4 as uuid } from "uuid";
 import {
   prisma,
   type AuthorizationToken,
@@ -7,8 +8,7 @@ import {
   authorizeProject,
   authorizeAuthorizationToken,
   type AppContext,
-} from "@webstudio-is/trpc-interface/server";
-import { v4 as uuid } from "uuid";
+} from "@webstudio-is/trpc-interface/index.server";
 
 export const findMany = async (
   props: { projectId: Project["id"] },
