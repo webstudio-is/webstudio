@@ -38,6 +38,13 @@ describe("Find initial width", () => {
     ).toStrictEqual(workspaceWidth);
   });
 
+  test("base is the only breakpoint", () => {
+    const breakpoints = [{ id: "0", label: "Base" }];
+    expect(
+      findInitialWidth(breakpoints, breakpoints[0], workspaceWidth)
+    ).toStrictEqual(workspaceWidth);
+  });
+
   test("tablet", () => {
     expect(
       findInitialWidth(breakpoints, breakpoints[1], workspaceWidth)

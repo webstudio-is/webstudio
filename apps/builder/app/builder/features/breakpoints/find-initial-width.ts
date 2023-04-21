@@ -16,6 +16,10 @@ export const findInitialWidth = (
   // We want to find the lowest possible size that is bigger than all max breakpoints and smaller than all min breakpoints.
   // Note: it is still possible to get intersecting min and max breakpoints.
   if (isBaseBreakpoint(selectedBreakpoint)) {
+    // Base is the only breakpoint
+    if (breakpoints.length === 1) {
+      return workspaceWidth;
+    }
     const grouped = groupBreakpoints(breakpoints);
     const baseIndex = grouped.findIndex(
       ({ id }) => selectedBreakpoint.id === id
