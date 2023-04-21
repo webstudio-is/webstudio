@@ -46,6 +46,7 @@ type NumericScrubState = {
   cursor?: SVGElement;
   direction: string;
   timerId?: ReturnType<typeof window.setTimeout>;
+  status: "idle" | "scrubbing";
 };
 
 const getValueDefault = (
@@ -86,6 +87,7 @@ export const numericScrubControl = (
     cursor: undefined,
     direction: direction,
     timerId: undefined,
+    status: "idle",
   };
 
   let exitPointerLock: (() => void) | undefined = undefined;
@@ -94,7 +96,12 @@ export const numericScrubControl = (
 
   const cleanup = () => {
     targetNode.removeEventListener("pointermove", handleEvent);
-    onStatusChange?.("idle");
+
+    if (state.status === "scrubbing") {
+      state.status = "idle";
+      onStatusChange?.("idle");
+    }
+
     clearTimeout(state.timerId);
 
     exitPointerLock?.();
@@ -162,7 +169,9 @@ export const numericScrubControl = (
           exitPointerLock = requestPointerLock(state, event, targetNode);
         }, 150);
 
+        state.status = "scrubbing";
         onStatusChange?.("scrubbing");
+
         targetNode.addEventListener("pointermove", handleEvent);
         originalUserSelect =
           targetNode.ownerDocument.documentElement.style.userSelect;
