@@ -22,23 +22,11 @@ export const MenuControl = ({
   const currentValue = toValue(value);
 
   const iconProps = iconConfigs[property];
-  const iconStyle =
-    property === "flexDirection"
-      ? {}
-      : {
-          transform: `rotate(${
-            toValue(currentStyle.flexDirection?.value) === "column"
-              ? 90 * (property === "alignItems" ? -1 : 1)
-              : 0
-          }deg)`,
-        };
+
   const items = (passedItems ?? defaultItems)
     .map((item) => {
       const ItemIcon = iconProps[item.name];
-      return {
-        ...item,
-        icon: ItemIcon && <ItemIcon style={iconStyle} />,
-      };
+      return { ...item, icon: ItemIcon && <ItemIcon /> };
     })
     .filter((item) => item.icon);
 

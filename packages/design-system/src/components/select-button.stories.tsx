@@ -1,6 +1,6 @@
 import { NestedIconLabel } from "./nested-icon-label";
 import { SelectButton } from "./select-button";
-import { RowGapIcon } from "@webstudio-is/icons";
+import { GapVerticalIcon } from "@webstudio-is/icons";
 import { StorySection, StoryGrid } from "./storybook";
 
 export default {
@@ -9,7 +9,7 @@ export default {
 
 const iconLabel = (
   <NestedIconLabel color="local">
-    <RowGapIcon />
+    <GapVerticalIcon />
   </NestedIconLabel>
 );
 
@@ -49,7 +49,7 @@ export const Demo = () => {
             disabled
             prefix={
               <NestedIconLabel color="local" disabled>
-                <RowGapIcon />
+                <GapVerticalIcon />
               </NestedIconLabel>
             }
             data-placeholder
@@ -61,7 +61,7 @@ export const Demo = () => {
             disabled
             prefix={
               <NestedIconLabel color="local" disabled>
-                <RowGapIcon />
+                <GapVerticalIcon />
               </NestedIconLabel>
             }
           >

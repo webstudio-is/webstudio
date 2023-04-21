@@ -10,10 +10,10 @@ import {
 import type { StyleProperty, StyleValue } from "@webstudio-is/css-data";
 import { toValue } from "@webstudio-is/css-engine";
 import {
-  ColumnGapIcon,
-  RowGapIcon,
-  LinkedIcon,
-  UnlinkedIcon,
+  Link2Icon,
+  Link2UnlinkedIcon,
+  GapHorizontalIcon,
+  GapVerticalIcon,
 } from "@webstudio-is/icons";
 import type { RenderCategoryProps } from "../../style-sections";
 import { FlexGrid } from "./shared/flex-grid";
@@ -50,7 +50,7 @@ const GapLinked = ({
         }}
       >
         <DeprecatedIconButton onClick={() => onChange(isLinked === false)}>
-          {isLinked ? <LinkedIcon /> : <UnlinkedIcon />}
+          {isLinked ? <Link2Icon /> : <Link2UnlinkedIcon />}
         </DeprecatedIconButton>
       </Flex>
     </Tooltip>
@@ -151,7 +151,7 @@ const FlexGap = ({
     >
       <Box css={{ gridArea: "columnGap" }}>
         <GapInput
-          icon={<ColumnGapIcon />}
+          icon={<GapHorizontalIcon />}
           style={style}
           property="columnGap"
           intermediateValue={intermediateColumnGap}
@@ -200,7 +200,7 @@ const FlexGap = ({
 
       <Box css={{ gridArea: "rowGap" }}>
         <GapInput
-          icon={<RowGapIcon />}
+          icon={<GapVerticalIcon />}
           style={style}
           property="rowGap"
           intermediateValue={intermediateRowGap}
