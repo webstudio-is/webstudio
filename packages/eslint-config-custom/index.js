@@ -32,11 +32,12 @@ module.exports = {
     "no-unused-vars": "off",
     "@typescript-eslint/no-unused-vars": "off",
     "func-style": ["error", "expression", { allowArrowFunctions: true }],
-    "unicorn/filename-case": ["error", { case: "kebabCase" }],
     curly: 2,
     eqeqeq: ["error", "always", { null: "ignore" }],
     camelcase: [2, { properties: "never" }],
     radix: 2,
+    "unicorn/filename-case": ["error", { case: "kebabCase" }],
+    "unicorn/prefer-node-protocol": "error",
     "import/no-internal-modules": [
       "error",
       {

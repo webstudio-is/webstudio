@@ -1,4 +1,4 @@
-import * as path from "path";
+import * as path from "node:path";
 import { MaxSize } from "@webstudio-is/asset-uploader";
 import {
   createFsClient,
