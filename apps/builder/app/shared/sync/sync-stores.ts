@@ -303,4 +303,10 @@ export const useBuilderStore = (publish: Publish) => {
       };
     });
   }, [publish]);
+
+  useEffect(() => {
+    return () => {
+      handshakenStore.set(false);
+    };
+  }, []);
 };
