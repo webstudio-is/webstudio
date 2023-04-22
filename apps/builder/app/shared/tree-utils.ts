@@ -53,7 +53,7 @@ export const areInstanceSelectorsEqual = (
 
 export const createComponentInstance = (component: Instance["component"]) => {
   const componentMeta = getComponentMeta(component);
-  const { children, instances } = generateDataFromEmbedTemplate(
+  const { children, instances, props } = generateDataFromEmbedTemplate(
     componentMeta?.children ?? []
   );
   // put first to be interpreted as root
@@ -63,7 +63,7 @@ export const createComponentInstance = (component: Instance["component"]) => {
     component,
     children,
   });
-  return instances;
+  return { instances, props };
 };
 
 const isInstanceDroppable = (instance: Instance) => {

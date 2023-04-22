@@ -18,6 +18,7 @@ import {
   insertInstancesMutable,
   reparentInstanceMutable,
   getAncestorInstanceSelector,
+  insertPropsCopyMutable,
 } from "./tree-utils";
 import { removeByMutable } from "./array-utils";
 
@@ -25,15 +26,17 @@ export const insertNewComponentInstance = (
   component: string,
   dropTarget: DroppableTarget
 ) => {
-  const insertedInstances = createComponentInstance(component);
+  const { instances: insertedInstances, props: insertedProps } =
+    createComponentInstance(component);
   const rootInstanceId = insertedInstances[0].id;
-  store.createTransaction([instancesStore], (instances) => {
+  store.createTransaction([instancesStore, propsStore], (instances, props) => {
     insertInstancesMutable(
       instances,
       insertedInstances,
       [rootInstanceId],
       dropTarget
     );
+    insertPropsCopyMutable(props, insertedProps, new Map());
   });
 
   selectedInstanceSelectorStore.set([

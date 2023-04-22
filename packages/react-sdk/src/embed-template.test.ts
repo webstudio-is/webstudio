@@ -3,7 +3,7 @@ import { generateDataFromEmbedTemplate } from "./embed-template";
 
 const expectString = expect.any(String) as unknown as string;
 
-test("generate tree from template", () => {
+test("generate data for embedding from instances and text", () => {
   expect(
     generateDataFromEmbedTemplate([
       { type: "text", value: "hello" },
@@ -36,6 +36,69 @@ test("generate tree from template", () => {
         id: expectString,
         component: "Box2",
         children: [],
+      },
+    ],
+    props: [],
+  });
+});
+
+test("generate data for embedding from props", () => {
+  expect(
+    generateDataFromEmbedTemplate([
+      {
+        type: "instance",
+        component: "Box1",
+        props: [
+          { type: "string", name: "data-prop1", value: "value1" },
+          { type: "string", name: "data-prop2", value: "value2" },
+        ],
+        children: [
+          {
+            type: "instance",
+            component: "Box2",
+            props: [{ type: "string", name: "data-prop3", value: "value3" }],
+            children: [],
+          },
+        ],
+      },
+    ])
+  ).toEqual({
+    children: [{ type: "id", value: expectString }],
+    instances: [
+      {
+        type: "instance",
+        id: expectString,
+        component: "Box1",
+        children: [{ type: "id", value: expectString }],
+      },
+      {
+        type: "instance",
+        id: expectString,
+        component: "Box2",
+        children: [],
+      },
+    ],
+    props: [
+      {
+        type: "string",
+        id: expectString,
+        instanceId: expectString,
+        name: "data-prop1",
+        value: "value1",
+      },
+      {
+        type: "string",
+        id: expectString,
+        instanceId: expectString,
+        name: "data-prop2",
+        value: "value2",
+      },
+      {
+        type: "string",
+        id: expectString,
+        instanceId: expectString,
+        name: "data-prop3",
+        value: "value3",
       },
     ],
   });
