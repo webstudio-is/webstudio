@@ -25,13 +25,19 @@ export const insertNewComponentInstance = (
   component: string,
   dropTarget: DroppableTarget
 ) => {
-  const instance = createComponentInstance(component);
+  const insertedInstances = createComponentInstance(component);
+  const rootInstanceId = insertedInstances[0].id;
   store.createTransaction([instancesStore], (instances) => {
-    insertInstancesMutable(instances, [instance], [instance.id], dropTarget);
+    insertInstancesMutable(
+      instances,
+      insertedInstances,
+      [rootInstanceId],
+      dropTarget
+    );
   });
 
   selectedInstanceSelectorStore.set([
-    instance.id,
+    rootInstanceId,
     ...dropTarget.parentSelector,
   ]);
   selectedStyleSourceSelectorStore.set(undefined);

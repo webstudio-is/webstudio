@@ -22,6 +22,14 @@ export const meta: WsComponentMeta = {
   label: "Form",
   Icon: FormIcon,
   presetStyle,
+  children: [
+    { type: "instance", component: "Input", children: [] },
+    {
+      type: "instance",
+      component: "Button",
+      children: [{ type: "text", value: "Submit" }],
+    },
+  ],
 };
 
 export const propsMeta: WsComponentPropsMeta = {

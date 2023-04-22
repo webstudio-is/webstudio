@@ -16,3 +16,4 @@ export {
   type ComponentState,
   componentCategories,
 } from "./components/component-meta";
+export * from "./embed-template";

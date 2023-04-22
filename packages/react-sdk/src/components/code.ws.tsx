@@ -46,7 +46,7 @@ export const meta: WsComponentMeta = {
   label: "Code",
   Icon: CodeIcon,
   presetStyle,
-  children: ["Code you can edit"],
+  children: [{ type: "text", value: "Code you can edit" }],
 };
 
 export const propsMeta: WsComponentPropsMeta = {

@@ -23,7 +23,7 @@ export const meta: WsComponentMeta = {
   label: "Text Block",
   Icon: TextBlockIcon,
   presetStyle,
-  children: ["Block of text you can edit"],
+  children: [{ type: "text", value: "Block of text you can edit" }],
 };
 
 export const propsMeta: WsComponentPropsMeta = {

@@ -16,7 +16,10 @@ import {
   StyleSourceSelection,
   StyleSourceSelections,
 } from "@webstudio-is/project-build";
-import { getComponentMeta } from "@webstudio-is/react-sdk";
+import {
+  generateDataFromEmbedTemplate,
+  getComponentMeta,
+} from "@webstudio-is/react-sdk";
 import { equalMedia } from "@webstudio-is/css-engine";
 
 // slots can have multiple parents so instance should be addressed
@@ -48,17 +51,19 @@ export const areInstanceSelectorsEqual = (
   return left.join(",") === right.join(",");
 };
 
-export const createComponentInstance = (
-  component: Instance["component"]
-): Instance => {
+export const createComponentInstance = (component: Instance["component"]) => {
   const componentMeta = getComponentMeta(component);
-  return {
+  const { children, instances } = generateDataFromEmbedTemplate(
+    componentMeta?.children ?? []
+  );
+  // put first to be interpreted as root
+  instances.unshift({
     type: "instance",
     id: nanoid(),
     component,
-    children:
-      componentMeta?.children?.map((value) => ({ type: "text", value })) ?? [],
-  };
+    children,
+  });
+  return instances;
 };
 
 const isInstanceDroppable = (instance: Instance) => {
