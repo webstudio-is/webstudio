@@ -41,7 +41,7 @@ export const fontWeights = {
   manrope7: 600,
   manrope8: 200,
   manrope9: 800,
-  robotoMono3: 400,
+  robotoMono3: 500,
 } as const;
 
 export const letterSpacing = {
@@ -135,7 +135,7 @@ export const typography = {
   },
   mono: {
     fontFamily: "Roboto Mono, RobotoMono, menlo, monospace",
-    fontWeight: 400,
+    fontWeight: 500,
     fontSize: "12px",
     lineHeight: "16px",
     letterSpacing: "0.01em",
