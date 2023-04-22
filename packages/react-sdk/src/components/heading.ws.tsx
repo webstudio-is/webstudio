@@ -22,7 +22,7 @@ export const meta: WsComponentMeta = {
   type: "rich-text",
   label: "Heading",
   Icon: HeadingIcon,
-  children: ["Heading you can edit"],
+  children: [{ type: "text", value: "Heading you can edit" }],
   presetStyle,
 };
 

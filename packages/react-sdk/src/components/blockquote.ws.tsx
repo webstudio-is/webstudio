@@ -74,7 +74,7 @@ export const meta: WsComponentMeta = {
   label: "Blockquote",
   Icon: BlockquoteIcon,
   presetStyle,
-  children: ["Blockquote you can edit"],
+  children: [{ type: "text", value: "Blockquote you can edit" }],
 };
 
 export const propsMeta: WsComponentPropsMeta = {

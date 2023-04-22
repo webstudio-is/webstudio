@@ -14,7 +14,7 @@ export const meta: WsComponentMeta = {
   type: "rich-text",
   label: "Paragraph",
   Icon: TextAlignLeftIcon,
-  children: ["Pragraph you can edit"],
+  children: [{ type: "text", value: "Pragraph you can edit" }],
   presetStyle,
 };
 
