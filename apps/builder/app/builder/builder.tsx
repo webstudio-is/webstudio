@@ -3,7 +3,7 @@ import { type Publish, usePublish } from "~/shared/pubsub";
 import type { Build } from "@webstudio-is/project-build";
 import type { Project } from "@webstudio-is/project";
 import { theme, Box, type CSS, Flex, Grid } from "@webstudio-is/design-system";
-import type { AuthPermit } from "@webstudio-is/trpc-interface/server";
+import type { AuthPermit } from "@webstudio-is/trpc-interface/index.server";
 import { registerContainers, useBuilderStore } from "~/shared/sync";
 import { useSyncServer } from "./shared/sync/sync-server";
 // eslint-disable-next-line import/no-internal-modules

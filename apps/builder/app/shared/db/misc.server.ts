@@ -1,10 +1,10 @@
-import { db } from "@webstudio-is/project/server";
+import { db } from "@webstudio-is/project/index.server";
 import { prisma } from "@webstudio-is/prisma-client";
-import type { AppContext } from "@webstudio-is/trpc-interface/server";
+import type { AppContext } from "@webstudio-is/trpc-interface/index.server";
 import {
   createBuild,
   loadBuildByProjectId,
-} from "@webstudio-is/project-build/server";
+} from "@webstudio-is/project-build/index.server";
 
 /**
  * Conceptually publishing is cloning all data that affects user site

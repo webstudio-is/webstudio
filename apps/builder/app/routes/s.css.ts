@@ -1,6 +1,6 @@
 import { type ActionArgs, json } from "@remix-run/node";
 import { generateCssText } from "@webstudio-is/react-sdk";
-import { db } from "@webstudio-is/project/server";
+import { db } from "@webstudio-is/project/index.server";
 import { createCssEngine } from "@webstudio-is/css-engine";
 import env from "~/env/env.public.server";
 import { getBuildParams } from "~/shared/router-utils";

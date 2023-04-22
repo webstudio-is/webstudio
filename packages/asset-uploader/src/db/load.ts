@@ -1,10 +1,10 @@
 import { prisma, type Project } from "@webstudio-is/prisma-client";
-import type { Asset } from "../schema";
-import { formatAsset } from "../utils/format-asset";
 import {
   authorizeProject,
   type AppContext,
-} from "@webstudio-is/trpc-interface/server";
+} from "@webstudio-is/trpc-interface/index.server";
+import type { Asset } from "../schema";
+import { formatAsset } from "../utils/format-asset";
 
 export const loadByProject = async (
   projectId: Project["id"],

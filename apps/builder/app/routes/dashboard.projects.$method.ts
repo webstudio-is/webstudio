@@ -1,5 +1,5 @@
 import type { ActionArgs } from "@remix-run/node";
-import { dashboardProjectRouter } from "@webstudio-is/dashboard/server";
+import { dashboardProjectRouter } from "@webstudio-is/dashboard/index.server";
 import { findAuthenticatedUser } from "~/services/auth.server";
 import { createContext } from "~/shared/context.server";
 import { handleTrpcRemixAction } from "~/shared/remix/trpc-remix-request.server";

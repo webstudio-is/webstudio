@@ -1,9 +1,9 @@
 import { prisma, type Project } from "@webstudio-is/prisma-client";
-import type { Asset } from "../schema";
 import {
   authorizeProject,
   type AppContext,
-} from "@webstudio-is/trpc-interface/server";
+} from "@webstudio-is/trpc-interface/index.server";
+import type { Asset } from "../schema";
 
 export const deleteFromDb = async (
   props: {

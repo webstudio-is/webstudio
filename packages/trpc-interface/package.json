@@ -30,9 +30,9 @@
     "typescript": "5.0.3"
   },
   "exports": {
-    "./server": {
+    "./index.server": {
       "source": "./src/index.server.ts",
-      "default": "./server.js"
+      "import": "./lib/index.server.js"
     }
   },
   "files": [

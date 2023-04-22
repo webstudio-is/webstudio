@@ -1,7 +1,7 @@
-import { initTRPC } from "@trpc/server";
-import type { AppContext } from "@webstudio-is/trpc-interface/server";
-import { db } from "../db";
 import { z } from "zod";
+import { initTRPC } from "@trpc/server";
+import type { AppContext } from "@webstudio-is/trpc-interface/index.server";
+import { db } from "../db";
 
 const { router, procedure } = initTRPC.context<AppContext>().create();
 

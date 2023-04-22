@@ -5,12 +5,12 @@ import {
   type Project,
   type Asset,
 } from "@webstudio-is/prisma-client";
-import type { ImageMeta } from "../schema";
-import { formatAsset } from "../utils/format-asset";
 import {
   authorizeProject,
   type AppContext,
-} from "@webstudio-is/trpc-interface/server";
+} from "@webstudio-is/trpc-interface/index.server";
+import type { ImageMeta } from "../schema";
+import { formatAsset } from "../utils/format-asset";
 
 type BaseOptions = {
   id: string;

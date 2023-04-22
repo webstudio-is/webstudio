@@ -1,9 +1,9 @@
 import type { Project } from "@webstudio-is/project";
 import type { Data } from "@webstudio-is/react-sdk";
-import { loadBuildByProjectId } from "@webstudio-is/project-build/server";
-import { db as projectDb } from "@webstudio-is/project/server";
-import { loadByProject } from "@webstudio-is/asset-uploader/server";
-import type { AppContext } from "@webstudio-is/trpc-interface/server";
+import { loadBuildByProjectId } from "@webstudio-is/project-build/index.server";
+import { db as projectDb } from "@webstudio-is/project/index.server";
+import { loadByProject } from "@webstudio-is/asset-uploader/index.server";
+import type { AppContext } from "@webstudio-is/trpc-interface/index.server";
 import { findPageByIdOrPath } from "@webstudio-is/project-build";
 
 export const loadProductionCanvasData = async (

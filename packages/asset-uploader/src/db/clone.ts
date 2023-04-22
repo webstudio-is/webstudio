@@ -2,7 +2,7 @@ import { prisma, type Prisma, type Project } from "@webstudio-is/prisma-client";
 import {
   authorizeProject,
   type AppContext,
-} from "@webstudio-is/trpc-interface/server";
+} from "@webstudio-is/trpc-interface/index.server";
 
 export const cloneAssets = async (
   {

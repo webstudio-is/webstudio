@@ -3,7 +3,7 @@ import { MaxSize } from "@webstudio-is/asset-uploader";
 import {
   createFsClient,
   createS3Client,
-} from "@webstudio-is/asset-uploader/server";
+} from "@webstudio-is/asset-uploader/index.server";
 import env from "~/env/env.server";
 
 export const createAssetClient = () => {

@@ -1,9 +1,8 @@
 import { z } from "zod";
-
 import sharp from "sharp";
-import { Location, ImageMeta } from "../schema";
 import { FontMeta } from "@webstudio-is/fonts";
-import { getFontData } from "@webstudio-is/fonts/server";
+import { getFontData } from "@webstudio-is/fonts/index.server";
+import { Location, ImageMeta } from "../schema";
 
 const BaseData = z.object({
   id: z.string(),
