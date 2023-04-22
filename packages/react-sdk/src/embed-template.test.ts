@@ -1,11 +1,11 @@
 import { expect, test } from "@jest/globals";
-import { generateTreeFromTemplate } from "./tree-template";
+import { generateDataFromEmbedTemplate } from "./embed-template";
 
 const expectString = expect.any(String) as unknown as string;
 
 test("generate tree from template", () => {
   expect(
-    generateTreeFromTemplate([
+    generateDataFromEmbedTemplate([
       { type: "text", value: "hello" },
       {
         type: "instance",

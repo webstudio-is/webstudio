@@ -17,7 +17,7 @@ import {
   StyleSourceSelections,
 } from "@webstudio-is/project-build";
 import {
-  generateTreeFromTemplate,
+  generateDataFromEmbedTemplate,
   getComponentMeta,
 } from "@webstudio-is/react-sdk";
 import { equalMedia } from "@webstudio-is/css-engine";
@@ -53,7 +53,7 @@ export const areInstanceSelectorsEqual = (
 
 export const createComponentInstance = (component: Instance["component"]) => {
   const componentMeta = getComponentMeta(component);
-  const { children, instances } = generateTreeFromTemplate(
+  const { children, instances } = generateDataFromEmbedTemplate(
     componentMeta?.children ?? []
   );
   // put first to be interpreted as root

@@ -2,33 +2,33 @@ import { z } from "zod";
 import { nanoid } from "nanoid";
 import type { Instance, InstancesList } from "@webstudio-is/project-build";
 
-export const TreeTemplateText = z.object({
+const EmbedTemplateText = z.object({
   type: z.literal("text"),
   value: z.string(),
 });
 
-export type TreeTemplateText = z.infer<typeof TreeTemplateText>;
+type EmbedTemplateText = z.infer<typeof EmbedTemplateText>;
 
-export type TreeTemplateInstance = {
+type EmbedTemplateInstance = {
   type: "instance";
   component: string;
-  children: Array<TreeTemplateInstance | TreeTemplateText>;
+  children: Array<EmbedTemplateInstance | EmbedTemplateText>;
 };
 
-export const TreeTemplateInstance: z.ZodType<TreeTemplateInstance> = z.object({
+const EmbedTemplateInstancen: z.ZodType<EmbedTemplateInstance> = z.object({
   type: z.literal("instance"),
   component: z.string(),
-  children: z.lazy(() => TreeTemplate),
+  children: z.lazy(() => WsEmbedTemplate),
 });
 
-export const TreeTemplate = z.array(
-  z.union([z.lazy(() => TreeTemplateInstance), TreeTemplateText])
+export const WsEmbedTemplate = z.array(
+  z.union([z.lazy(() => EmbedTemplateInstancen), EmbedTemplateText])
 );
 
-export type TreeTemplate = z.infer<typeof TreeTemplate>;
+export type WsEmbedTemplate = z.infer<typeof WsEmbedTemplate>;
 
 const createInstancesFromTemplate = (
-  treeTemplate: TreeTemplate,
+  treeTemplate: WsEmbedTemplate,
   instances: InstancesList
 ) => {
   const parentChildren: Instance["children"] = [];
@@ -59,7 +59,9 @@ const createInstancesFromTemplate = (
   return parentChildren;
 };
 
-export const generateTreeFromTemplate = (treeTemplate: TreeTemplate) => {
+export const generateDataFromEmbedTemplate = (
+  treeTemplate: WsEmbedTemplate
+) => {
   const instances: InstancesList = [];
   const children = createInstancesFromTemplate(treeTemplate, instances);
   return { children, instances };

@@ -4,7 +4,7 @@ import type { IconProps } from "@webstudio-is/icons";
 import type { Style } from "@webstudio-is/css-data";
 import { PropMeta } from "@webstudio-is/generate-arg-types";
 import type { htmlTags as HtmlTags } from "html-tags";
-import { TreeTemplate } from "../tree-template";
+import { WsEmbedTemplate } from "../embed-template";
 
 type PresetStyle = Partial<Record<HtmlTags, Style>>;
 
@@ -49,7 +49,7 @@ const WsComponentMeta = z.object({
   Icon: z.function(),
   presetStyle: z.optional(z.any()),
   states: z.optional(z.array(ComponentState)),
-  children: z.optional(TreeTemplate),
+  children: z.optional(WsEmbedTemplate),
 });
 
 export type WsComponentMeta = Omit<

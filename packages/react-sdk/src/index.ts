@@ -16,4 +16,4 @@ export {
   type ComponentState,
   componentCategories,
 } from "./components/component-meta";
-export * from "./tree-template";
+export * from "./embed-template";
