@@ -43,6 +43,7 @@
   "dependencies": {
     "@nanostores/react": "^0.4.1",
     "@react-aria/utils": "^3.13.3",
+    "@radix-ui/react-tabs": "^1.0.0",
     "@webstudio-is/asset-uploader": "workspace:^",
     "@webstudio-is/css-data": "workspace:^",
     "@webstudio-is/css-engine": "workspace:^",

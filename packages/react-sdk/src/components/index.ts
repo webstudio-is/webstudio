@@ -33,6 +33,10 @@ import { meta as RadioButtonFieldMeta } from "./radio-button-field.ws";
 import { meta as RadioButtonMeta } from "./radio-button.ws";
 import { meta as CheckboxFieldMeta } from "./checkbox-field.ws";
 import { meta as CheckboxMeta } from "./checkbox.ws";
+import { meta as TabsRootMeta } from "./tabs.ws";
+import { meta as TabsList } from "./tabs-list.ws";
+import { meta as TabsTrigger } from "./tabs-trigger.ws";
+import { meta as TabsContent } from "./tabs-content.ws";
 
 // these are huge JSON objects that we want to be tree-shaken when not used!
 import { propsMeta as SlotMetaPropsMeta } from "./slot.ws";
@@ -68,6 +72,10 @@ import { propsMeta as RadioButtonFieldPropsMeta } from "./radio-button-field.ws"
 import { propsMeta as RadioButtonPropsMeta } from "./radio-button.ws";
 import { propsMeta as CheckboxFieldPropsMeta } from "./checkbox-field.ws";
 import { propsMeta as CheckboxPropsMeta } from "./checkbox.ws";
+import { propsMeta as TabsRootPropsMeta } from "./tabs.ws";
+import { propsMeta as TabsListPropsMeta } from "./tabs-list.ws";
+import { propsMeta as TabsTriggerPropsMeta } from "./tabs-trigger.ws";
+import { propsMeta as TabsContentPropsMeta } from "./tabs-content.ws";
 
 // @todo this list should not be hardcoded!
 export const defaultMetas: Record<string, WsComponentMeta> = {
@@ -104,6 +112,10 @@ export const defaultMetas: Record<string, WsComponentMeta> = {
   RadioButton: RadioButtonMeta,
   CheckboxField: CheckboxFieldMeta,
   Checkbox: CheckboxMeta,
+  Tabs: TabsRootMeta,
+  TabsList: TabsList,
+  TabsTrigger: TabsTrigger,
+  TabsContent: TabsContent,
 };
 
 let currentMetas = defaultMetas;
@@ -157,7 +169,11 @@ export const defaultPropsMetas: Record<string, WsComponentPropsMeta> = {
   RadioButton: RadioButtonPropsMeta,
   CheckboxField: CheckboxFieldPropsMeta,
   Checkbox: CheckboxPropsMeta,
-};
+  Tabs: TabsRootPropsMeta,
+  TabsList: TabsListPropsMeta,
+  TabsTrigger: TabsTriggerPropsMeta,
+  TabsContent: TabsContentPropsMeta,
+} as const;
 
 type RegisteredComponents = Partial<{
   // eslint-disable-next-line @typescript-eslint/ban-types

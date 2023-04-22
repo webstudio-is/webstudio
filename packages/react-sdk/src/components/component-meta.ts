@@ -21,6 +21,7 @@ export const componentCategories = [
   "typography",
   "media",
   "forms",
+  "advanced",
 ] as const;
 
 export const stateCategories = ["states", "component-states"] as const;

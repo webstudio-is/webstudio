@@ -38,3 +38,7 @@ export { RadioButtonField } from "./radio-button-field";
 export { RadioButton } from "./radio-button";
 export { CheckboxField } from "./checkbox-field";
 export { Checkbox } from "./checkbox";
+export { Tabs } from "./tabs";
+export { TabsList } from "./tabs-list";
+export { TabsTrigger } from "./tabs-trigger";
+export { TabsContent } from "./tabs-content";
