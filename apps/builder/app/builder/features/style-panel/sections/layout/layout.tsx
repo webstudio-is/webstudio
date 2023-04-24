@@ -319,7 +319,7 @@ const LayoutSectionFlex = ({
           <Box css={{ gridArea: "alignContent" }}>
             <MenuControl
               property="alignContent"
-              styleValue={mapNormalTo("start", currentStyle.alignContent)}
+              styleValue={mapNormalTo("stretch", currentStyle.alignContent)}
               setProperty={setProperty}
             />
           </Box>
