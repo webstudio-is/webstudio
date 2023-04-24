@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, type ReactNode } from "react";
 import {
   Box,
   EnhancedTooltip,
@@ -256,6 +256,46 @@ const mapNormalTo = (
   return { ...current, value: { type: "keyword", value: toValue } };
 };
 
+const Toggle = ({
+  property,
+  iconOn,
+  iconOff,
+  valueOn,
+  valueOff,
+  currentStyle,
+  setProperty,
+}: {
+  property: StyleProperty;
+  iconOn: ReactNode;
+  iconOff: ReactNode;
+  valueOn: string;
+  valueOff: string;
+  currentStyle: RenderCategoryProps["currentStyle"];
+  setProperty: RenderCategoryProps["setProperty"];
+}) => {
+  const { label } = styleConfigByName(property);
+  const styleValue = currentStyle[property]?.value;
+  const isPressed =
+    styleValue?.type === "keyword" && styleValue?.value === valueOn;
+
+  return (
+    <Tooltip content={label} delayDuration={400} disableHoverableContent={true}>
+      <ToggleButton
+        pressed={isPressed}
+        onPressedChange={(isPressed) => {
+          setProperty(property)({
+            type: "keyword",
+            value: isPressed ? valueOn : valueOff,
+          });
+        }}
+        variant={getStyleSource(currentStyle[property])}
+      >
+        {isPressed ? iconOn : iconOff}
+      </ToggleButton>
+    </Tooltip>
+  );
+};
+
 const LayoutSectionFlex = ({
   currentStyle,
   setProperty,
@@ -275,66 +315,30 @@ const LayoutSectionFlex = ({
     flexWrapValue?.type === "keyword" &&
     (flexWrapValue.value === "wrap" || flexWrapValue.value === "wrap-reverse");
 
-  // @todo: this and the corresponfig repeatings JSX below
-  // can be extracted into a component
-  const flexDirectionToggleValue =
-    currentStyle.flexDirection?.value?.type === "keyword" &&
-    currentStyle.flexDirection?.value?.value === "column";
-  const setFlexDirectionToggleValue = (value: boolean) => {
-    setProperty("flexDirection")({
-      type: "keyword",
-      value: value ? "column" : "row",
-    });
-  };
-  const flexDirectionToggleVariant = getStyleSource(currentStyle.flexDirection);
-
-  const flexWrapToggleValue =
-    currentStyle.flexWrap?.value?.type === "keyword" &&
-    currentStyle.flexWrap?.value?.value === "wrap";
-  const setFlexWrapToggleValue = (value: boolean) => {
-    setProperty("flexWrap")({
-      type: "keyword",
-      value: value ? "wrap" : "nowrap",
-    });
-  };
-  const flexWrapToggleVariant = getStyleSource(currentStyle.flexWrap);
-
   return (
     <Flex css={{ flexDirection: "column", gap: theme.spacing[5] }}>
       <Flex css={{ gap: theme.spacing[7] }} align="stretch">
         <FlexGrid currentStyle={currentStyle} batchUpdate={batchUpdate} />
         <Flex direction="column" justify="between">
           <Flex css={{ gap: theme.spacing[7] }}>
-            <Tooltip
-              content="Flex direction"
-              delayDuration={400}
-              disableHoverableContent={true}
-            >
-              <ToggleButton
-                pressed={flexDirectionToggleValue}
-                onPressedChange={setFlexDirectionToggleValue}
-                variant={flexDirectionToggleVariant}
-              >
-                {flexDirectionToggleValue ? (
-                  <ArrowDownIcon />
-                ) : (
-                  <ArrowRightIcon />
-                )}
-              </ToggleButton>
-            </Tooltip>
-            <Tooltip
-              content="Flex wrap"
-              delayDuration={400}
-              disableHoverableContent={true}
-            >
-              <ToggleButton
-                pressed={flexWrapToggleValue}
-                onPressedChange={setFlexWrapToggleValue}
-                variant={flexWrapToggleVariant}
-              >
-                {flexWrapToggleValue ? <WrapIcon /> : <NoWrapIcon />}
-              </ToggleButton>
-            </Tooltip>
+            <Toggle
+              property="flexDirection"
+              iconOn={<ArrowDownIcon />}
+              iconOff={<ArrowRightIcon />}
+              valueOn="column"
+              valueOff="row"
+              currentStyle={currentStyle}
+              setProperty={setProperty}
+            />
+            <Toggle
+              property="flexWrap"
+              iconOn={<WrapIcon />}
+              iconOff={<NoWrapIcon />}
+              valueOn="wrap"
+              valueOff="nowrap"
+              currentStyle={currentStyle}
+              setProperty={setProperty}
+            />
           </Flex>
           <Flex css={{ gap: theme.spacing[7] }}>
             <MenuControl
