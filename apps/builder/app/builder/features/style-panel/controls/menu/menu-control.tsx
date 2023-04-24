@@ -2,17 +2,19 @@ import { IconButtonWithMenu } from "@webstudio-is/design-system";
 import type { ControlProps } from "../../style-sections";
 import { iconConfigs, styleConfigByName } from "../../shared/configs";
 import { toValue } from "@webstudio-is/css-engine";
-import { getStyleSource } from "../../shared/style-info";
+import { getStyleSource, type StyleValueInfo } from "../../shared/style-info";
 
 export const MenuControl = ({
   property,
   items: passedItems,
-  currentStyle,
+  styleValue,
   setProperty,
-}: ControlProps) => {
+}: Pick<ControlProps, "property" | "items" | "setProperty"> & {
+  styleValue?: StyleValueInfo;
+}) => {
   const { label, items: defaultItems } = styleConfigByName(property);
-  const value = currentStyle[property]?.value;
-  const styleSource = getStyleSource(currentStyle[property]);
+  const value = styleValue?.value;
+  const styleSource = getStyleSource(styleValue);
 
   if (value === undefined) {
     return null;

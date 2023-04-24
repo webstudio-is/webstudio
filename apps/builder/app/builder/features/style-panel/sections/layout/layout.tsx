@@ -21,7 +21,11 @@ import { MenuControl, SelectControl } from "../../controls";
 import { PropertyName } from "../../shared/property-name";
 import { styleConfigByName } from "../../shared/configs";
 import type { CreateBatchUpdate } from "../../shared/use-style-data";
-import { getStyleSource, type StyleInfo } from "../../shared/style-info";
+import {
+  getStyleSource,
+  type StyleInfo,
+  type StyleValueInfo,
+} from "../../shared/style-info";
 import { CollapsibleSection } from "../../shared/collapsible-section";
 import {
   type IntermediateStyleValue,
@@ -43,12 +47,7 @@ const GapLinked = ({
       delayDuration={400}
       disableHoverableContent={true}
     >
-      <Flex
-        css={{
-          width: "100%",
-          justifyContent: "center",
-        }}
-      >
+      <Flex css={{ width: "100%", justifyContent: "center" }}>
         <DeprecatedIconButton onClick={() => onChange(isLinked === false)}>
           {isLinked ? <Link2Icon /> : <Link2UnlinkedIcon />}
         </DeprecatedIconButton>
@@ -237,15 +236,28 @@ const FlexGap = ({
   );
 };
 
+const mapNormalTo = (
+  toValue: string,
+  current?: StyleValueInfo
+): StyleValueInfo | undefined => {
+  if (
+    current === undefined ||
+    current.value.type !== "keyword" ||
+    current.value.value !== "normal"
+  ) {
+    return current;
+  }
+
+  return { ...current, value: { type: "keyword", value: toValue } };
+};
+
 const LayoutSectionFlex = ({
   currentStyle,
   setProperty,
-  deleteProperty,
   createBatchUpdate,
 }: {
   currentStyle: RenderCategoryProps["currentStyle"];
   setProperty: RenderCategoryProps["setProperty"];
-  deleteProperty: RenderCategoryProps["deleteProperty"];
   createBatchUpdate: RenderCategoryProps["createBatchUpdate"];
 }) => {
   const batchUpdate = createBatchUpdate();
@@ -278,42 +290,37 @@ const LayoutSectionFlex = ({
         <Box css={{ gridArea: "flexDirection" }}>
           <MenuControl
             property="flexDirection"
-            currentStyle={currentStyle}
+            styleValue={currentStyle.flexDirection}
             setProperty={setProperty}
-            deleteProperty={deleteProperty}
           />
         </Box>
         <Box css={{ gridArea: "flexWrap" }}>
           <MenuControl
             property="flexWrap"
-            currentStyle={currentStyle}
+            styleValue={currentStyle.flexWrap}
             setProperty={setProperty}
-            deleteProperty={deleteProperty}
           />
         </Box>
         <Box css={{ gridArea: "alignItems" }}>
           <MenuControl
             property="alignItems"
-            currentStyle={currentStyle}
+            styleValue={mapNormalTo("stretch", currentStyle.alignItems)}
             setProperty={setProperty}
-            deleteProperty={deleteProperty}
           />
         </Box>
         <Box css={{ gridArea: "justifyContent" }}>
           <MenuControl
             property="justifyContent"
-            currentStyle={currentStyle}
+            styleValue={mapNormalTo("start", currentStyle.justifyContent)}
             setProperty={setProperty}
-            deleteProperty={deleteProperty}
           />
         </Box>
         {showAlignContent && (
           <Box css={{ gridArea: "alignContent" }}>
             <MenuControl
               property="alignContent"
-              currentStyle={currentStyle}
+              styleValue={mapNormalTo("start", currentStyle.alignContent)}
               setProperty={setProperty}
-              deleteProperty={deleteProperty}
             />
           </Box>
         )}
@@ -328,7 +335,6 @@ const orderedDisplayValues = [
   "block",
   "flex",
   "inline-block",
-  "inline-flex",
   "inline",
   "none",
 ];
@@ -393,7 +399,6 @@ export const LayoutSection = ({
           <LayoutSectionFlex
             currentStyle={currentStyle}
             setProperty={setProperty}
-            deleteProperty={deleteProperty}
             createBatchUpdate={createBatchUpdate}
           />
         )}

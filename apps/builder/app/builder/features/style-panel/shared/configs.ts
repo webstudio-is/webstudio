@@ -99,7 +99,6 @@ export const styleConfigByName = (propertyName: StyleProperty): StyleConfig => {
 export const iconConfigs: IconRecords = {
   // layout
   alignContent: {
-    normal: ACStartIcon,
     start: ACStartIcon,
     end: ACEndIcon,
     center: ACCenterIcon,
@@ -108,7 +107,6 @@ export const iconConfigs: IconRecords = {
     "space-between": ACSpaceBetweenIcon,
   },
   alignItems: {
-    normal: AIStartIcon,
     start: AIStartIcon,
     end: AIEndIcon,
     center: AICenterIcon,
@@ -124,10 +122,9 @@ export const iconConfigs: IconRecords = {
     wrap: WrapIcon,
   },
   justifyContent: {
-    normal: JCStartIcon,
     start: JCStartIcon,
-    end: JCEndIcon,
     center: JCCenterIcon,
+    end: JCEndIcon,
     "space-between": JCSpaceBetweenIcon,
     "space-around": JCSpaceAroundIcon,
   },
