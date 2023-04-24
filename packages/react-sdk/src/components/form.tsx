@@ -6,7 +6,7 @@ export const defaultTag = "form";
 export const Form = forwardRef<
   ElementRef<typeof defaultTag>,
   ComponentProps<typeof defaultTag> & {
-    initialState: "initial" | "success" | "error";
+    initialState?: "initial" | "success" | "error";
   }
 >(({ children, initialState, ...props }, ref) => (
   <form {...props} ref={ref}>
