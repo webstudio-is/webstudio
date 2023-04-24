@@ -5,6 +5,7 @@ import {
   EnhancedTooltip,
   Flex,
   Grid,
+  ToggleButton,
   Tooltip,
 } from "@webstudio-is/design-system";
 import type { StyleProperty, StyleValue } from "@webstudio-is/css-data";
@@ -14,6 +15,10 @@ import {
   Link2UnlinkedIcon,
   GapHorizontalIcon,
   GapVerticalIcon,
+  ArrowRightIcon,
+  ArrowDownIcon,
+  WrapIcon,
+  NoWrapIcon,
 } from "@webstudio-is/icons";
 import type { RenderCategoryProps } from "../../style-sections";
 import { FlexGrid } from "./shared/flex-grid";
@@ -270,6 +275,26 @@ const LayoutSectionFlex = ({
     flexWrapValue?.type === "keyword" &&
     (flexWrapValue.value === "wrap" || flexWrapValue.value === "wrap-reverse");
 
+  const flexDirectionToggleValue =
+    currentStyle.flexDirection?.value?.type === "keyword" &&
+    currentStyle.flexDirection?.value?.value === "column";
+  const setFlexDirectionToggleValue = (value: boolean) => {
+    setProperty("flexDirection")({
+      type: "keyword",
+      value: value ? "column" : "row",
+    });
+  };
+
+  const flexWrapToggleValue =
+    currentStyle.flexWrap?.value?.type === "keyword" &&
+    currentStyle.flexWrap?.value?.value === "wrap";
+  const setFlexWrapToggleValue = (value: boolean) => {
+    setProperty("flexWrap")({
+      type: "keyword",
+      value: value ? "wrap" : "nowrap",
+    });
+  };
+
   return (
     <Flex css={{ flexDirection: "column", gap: theme.spacing[5] }}>
       <Grid
@@ -288,18 +313,36 @@ const LayoutSectionFlex = ({
           <FlexGrid currentStyle={currentStyle} batchUpdate={batchUpdate} />
         </Box>
         <Box css={{ gridArea: "flexDirection" }}>
-          <MenuControl
-            property="flexDirection"
-            styleValue={currentStyle.flexDirection}
-            setProperty={setProperty}
-          />
+          <Tooltip
+            content="Flex direction"
+            delayDuration={400}
+            disableHoverableContent={true}
+          >
+            <ToggleButton
+              pressed={flexDirectionToggleValue}
+              onPressedChange={setFlexDirectionToggleValue}
+            >
+              {flexDirectionToggleValue ? (
+                <ArrowDownIcon />
+              ) : (
+                <ArrowRightIcon />
+              )}
+            </ToggleButton>
+          </Tooltip>
         </Box>
         <Box css={{ gridArea: "flexWrap" }}>
-          <MenuControl
-            property="flexWrap"
-            styleValue={currentStyle.flexWrap}
-            setProperty={setProperty}
-          />
+          <Tooltip
+            content="Flex wrap"
+            delayDuration={400}
+            disableHoverableContent={true}
+          >
+            <ToggleButton
+              pressed={flexWrapToggleValue}
+              onPressedChange={setFlexWrapToggleValue}
+            >
+              {flexWrapToggleValue ? <WrapIcon /> : <NoWrapIcon />}
+            </ToggleButton>
+          </Tooltip>
         </Box>
         <Box css={{ gridArea: "alignItems" }}>
           <MenuControl
