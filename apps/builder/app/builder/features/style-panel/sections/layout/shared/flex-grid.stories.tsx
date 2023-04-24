@@ -24,7 +24,7 @@ const justifyContent = [
   "end",
 ];
 
-const showReference = false;
+const REFERENCE = false;
 
 const Base = ({ flexDirection }: { flexDirection: string }) => {
   return (
@@ -50,10 +50,7 @@ const Base = ({ flexDirection }: { flexDirection: string }) => {
             {alignItems}
           </Box>
           {justifyContent.map((justifyContent) => (
-            <Box
-              key={justifyContent}
-              css={{ width: 72, height: 72, position: "relative" }}
-            >
+            <Box key={justifyContent} css={{ position: "relative" }}>
               <FlexGrid
                 currentStyle={{
                   flexDirection: {
@@ -69,7 +66,7 @@ const Base = ({ flexDirection }: { flexDirection: string }) => {
                 batchUpdate={batchUpdate}
               />
 
-              {showReference && (
+              {REFERENCE && (
                 <div style={{ position: "absolute", inset: 0, opacity: 0.3 }}>
                   {alignItems === "stretch" && justifyContent === "center" && (
                     <svg

@@ -11,7 +11,7 @@ import type { CreateBatchUpdate } from "../../../shared/use-style-data";
 import { getStyleSource, type StyleInfo } from "../../../shared/style-info";
 import { theme } from "@webstudio-is/design-system";
 
-// Sometimes we need to hode a dot that ends up at an end
+// Sometimes we need to hide a dot that ends up at an end
 // of a line and visually extends it
 const shouldHideDot = ({
   x,
@@ -79,10 +79,10 @@ export const FlexGrid = ({
     <Grid
       tabIndex={0}
       css={{
-        width: "100%",
-        aspectRatio: "1 / 1",
+        width: 72,
+        height: 72,
         padding: theme.spacing[4],
-        borderRadius: "4px",
+        borderRadius: theme.borderRadius[4],
         background: theme.colors.backgroundControls,
         alignItems: "center",
         gap: 0,
