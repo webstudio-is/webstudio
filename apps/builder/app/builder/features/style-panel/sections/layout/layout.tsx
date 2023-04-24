@@ -150,6 +150,7 @@ const FlexGap = ({
           "columnGap linked rowGap"
         `,
         alignItems: "center",
+        height: theme.spacing[13],
       }}
     >
       <Box css={{ gridArea: "columnGap" }}>
@@ -285,6 +286,7 @@ const LayoutSectionFlex = ({
       value: value ? "column" : "row",
     });
   };
+  const flexDirectionToggleVariant = getStyleSource(currentStyle.flexDirection);
 
   const flexWrapToggleValue =
     currentStyle.flexWrap?.value?.type === "keyword" &&
@@ -295,80 +297,66 @@ const LayoutSectionFlex = ({
       value: value ? "wrap" : "nowrap",
     });
   };
+  const flexWrapToggleVariant = getStyleSource(currentStyle.flexWrap);
 
   return (
     <Flex css={{ flexDirection: "column", gap: theme.spacing[5] }}>
-      <Grid
-        css={{
-          gap: theme.spacing[5],
-          gridTemplateColumns: `repeat(2, ${theme.spacing[13]}) repeat(3, ${theme.spacing[13]})`,
-          gridTemplateRows: `repeat(2, ${theme.spacing[13]})`,
-          gridTemplateAreas: `
-            "grid grid flexDirection flexWrap ."
-            "grid grid alignItems justifyContent alignContent"
-          `,
-          alignItems: "center",
-        }}
-      >
-        <Box css={{ gridArea: "grid" }}>
-          <FlexGrid currentStyle={currentStyle} batchUpdate={batchUpdate} />
-        </Box>
-        <Box css={{ gridArea: "flexDirection" }}>
-          <Tooltip
-            content="Flex direction"
-            delayDuration={400}
-            disableHoverableContent={true}
-          >
-            <ToggleButton
-              pressed={flexDirectionToggleValue}
-              onPressedChange={setFlexDirectionToggleValue}
+      <Flex css={{ gap: theme.spacing[7] }} align="stretch">
+        <FlexGrid currentStyle={currentStyle} batchUpdate={batchUpdate} />
+        <Flex direction="column" justify="between">
+          <Flex css={{ gap: theme.spacing[7] }}>
+            <Tooltip
+              content="Flex direction"
+              delayDuration={400}
+              disableHoverableContent={true}
             >
-              {flexDirectionToggleValue ? (
-                <ArrowDownIcon />
-              ) : (
-                <ArrowRightIcon />
-              )}
-            </ToggleButton>
-          </Tooltip>
-        </Box>
-        <Box css={{ gridArea: "flexWrap" }}>
-          <Tooltip
-            content="Flex wrap"
-            delayDuration={400}
-            disableHoverableContent={true}
-          >
-            <ToggleButton
-              pressed={flexWrapToggleValue}
-              onPressedChange={setFlexWrapToggleValue}
+              <ToggleButton
+                pressed={flexDirectionToggleValue}
+                onPressedChange={setFlexDirectionToggleValue}
+                variant={flexDirectionToggleVariant}
+              >
+                {flexDirectionToggleValue ? (
+                  <ArrowDownIcon />
+                ) : (
+                  <ArrowRightIcon />
+                )}
+              </ToggleButton>
+            </Tooltip>
+            <Tooltip
+              content="Flex wrap"
+              delayDuration={400}
+              disableHoverableContent={true}
             >
-              {flexWrapToggleValue ? <WrapIcon /> : <NoWrapIcon />}
-            </ToggleButton>
-          </Tooltip>
-        </Box>
-        <Box css={{ gridArea: "alignItems" }}>
-          <MenuControl
-            property="alignItems"
-            styleValue={mapNormalTo("stretch", currentStyle.alignItems)}
-            setProperty={setProperty}
-          />
-        </Box>
-        <Box css={{ gridArea: "justifyContent" }}>
-          <MenuControl
-            property="justifyContent"
-            styleValue={mapNormalTo("start", currentStyle.justifyContent)}
-            setProperty={setProperty}
-          />
-        </Box>
-        {showAlignContent && (
-          <Box css={{ gridArea: "alignContent" }}>
+              <ToggleButton
+                pressed={flexWrapToggleValue}
+                onPressedChange={setFlexWrapToggleValue}
+                variant={flexWrapToggleVariant}
+              >
+                {flexWrapToggleValue ? <WrapIcon /> : <NoWrapIcon />}
+              </ToggleButton>
+            </Tooltip>
+          </Flex>
+          <Flex css={{ gap: theme.spacing[7] }}>
             <MenuControl
-              property="alignContent"
-              styleValue={mapNormalTo("stretch", currentStyle.alignContent)}
+              property="alignItems"
+              styleValue={mapNormalTo("stretch", currentStyle.alignItems)}
               setProperty={setProperty}
             />
-          </Box>
-        )}
-      </Grid>
+            <MenuControl
+              property="justifyContent"
+              styleValue={mapNormalTo("start", currentStyle.justifyContent)}
+              setProperty={setProperty}
+            />
+            {showAlignContent && (
+              <MenuControl
+                property="alignContent"
+                styleValue={mapNormalTo("stretch", currentStyle.alignContent)}
+                setProperty={setProperty}
+              />
+            )}
+          </Flex>
+        </Flex>
+      </Flex>
 
       <FlexGap style={currentStyle} createBatchUpdate={createBatchUpdate} />
     </Flex>
@@ -419,8 +407,14 @@ export const LayoutSection = ({
       currentStyle={currentStyle}
       properties={properties}
     >
-      <>
-        <Grid css={{ gridTemplateColumns: "4fr 6fr" }}>
+      <Flex direction="column" gap="2">
+        <Grid
+          css={{
+            gridTemplateColumns: `1fr ${theme.spacing[24]}`,
+            height: theme.spacing[13],
+            alignItems: "center",
+          }}
+        >
           <PropertyName
             style={currentStyle}
             property="display"
@@ -432,7 +426,6 @@ export const LayoutSection = ({
             currentStyle={currentStyle}
             setProperty={setProperty}
             deleteProperty={deleteProperty}
-            // show only important values first and hide others with scroll
             items={items
               .filter((item) => orderedDisplayValues.includes(item.name))
               .sort(compareDisplayValues)}
@@ -446,7 +439,7 @@ export const LayoutSection = ({
             createBatchUpdate={createBatchUpdate}
           />
         )}
-      </>
+      </Flex>
     </CollapsibleSection>
   );
 };
