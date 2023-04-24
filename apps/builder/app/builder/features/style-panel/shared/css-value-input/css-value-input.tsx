@@ -573,7 +573,7 @@ export const CssValueInput = ({
             css={{ cursor: "default" }}
           />
         </ComboboxAnchor>
-        <ComboboxContent align="start" sideOffset={8} collisionPadding={10}>
+        <ComboboxContent align="start" sideOffset={2} collisionPadding={10}>
           <ComboboxListbox {...menuProps}>
             {isOpen &&
               items.map((item, index) => (
