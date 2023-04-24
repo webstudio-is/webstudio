@@ -21,7 +21,7 @@ export const meta: WsComponentMeta = {
   label: "Label",
   Icon: TextBlockIcon,
   presetStyle,
-  children: ["Form Label"],
+  children: [{ type: "text", value: "Form Label" }],
 };
 
 export const propsMeta: WsComponentPropsMeta = {

@@ -5,6 +5,7 @@ export const meta: WsComponentMeta = {
   ...boxMeta.meta,
   type: "container",
   label: "Success Message",
+  category: undefined,
 };
 
 export const { propsMeta } = boxMeta;

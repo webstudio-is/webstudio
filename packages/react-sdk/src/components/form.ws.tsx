@@ -23,11 +23,45 @@ export const meta: WsComponentMeta = {
   Icon: FormIcon,
   presetStyle,
   children: [
-    { type: "instance", component: "Input", children: [] },
+    {
+      type: "instance",
+      component: "Label",
+      children: [{ type: "text", value: "Name" }],
+    },
+    {
+      type: "instance",
+      component: "Input",
+      props: [{ type: "string", name: "name", value: "name" }],
+      children: [],
+    },
+    {
+      type: "instance",
+      component: "Label",
+      children: [{ type: "text", value: "Email" }],
+    },
+    {
+      type: "instance",
+      component: "Input",
+      props: [{ type: "string", name: "email", value: "email" }],
+      children: [],
+    },
     {
       type: "instance",
       component: "Button",
       children: [{ type: "text", value: "Submit" }],
+    },
+    {
+      type: "instance",
+      component: "SuccessMessage",
+      children: [
+        {
+          type: "instance",
+          component: "TextBlock",
+          children: [
+            { type: "text", value: "Thank you for getting in touch!" },
+          ],
+        },
+      ],
     },
   ],
 };

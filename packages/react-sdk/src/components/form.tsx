@@ -18,6 +18,15 @@ export const Form = forwardRef<
         if (initialState === "error") {
           return child.props.instance.component === "ErrorMessage";
         }
+
+        if (initialState === undefined || initialState === "initial") {
+          if (
+            child.props.instance.component === "SuccessMessage" ||
+            child.props.instance.component === "ErrorMessage"
+          ) {
+            return false;
+          }
+        }
       }
       return true;
     })}
