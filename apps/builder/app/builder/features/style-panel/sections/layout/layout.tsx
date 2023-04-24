@@ -244,17 +244,10 @@ const FlexGap = ({
 const mapNormalTo = (
   toValue: string,
   current?: StyleValueInfo
-): StyleValueInfo | undefined => {
-  if (
-    current === undefined ||
-    current.value.type !== "keyword" ||
-    current.value.value !== "normal"
-  ) {
-    return current;
-  }
-
-  return { ...current, value: { type: "keyword", value: toValue } };
-};
+): StyleValueInfo | undefined =>
+  current?.value.type === "keyword" && current?.value.value === "normal"
+    ? { ...current, value: { type: "keyword", value: toValue } }
+    : current;
 
 const Toggle = ({
   property,
