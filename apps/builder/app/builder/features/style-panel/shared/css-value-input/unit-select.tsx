@@ -29,7 +29,7 @@ type UnitOption =
   | { id: string; label: string; type: "keyword" };
 
 // To make sorting stable
-const unitPreferedSorting = [
+const preferedSorting = [
   "number",
   "px",
   ...units.percentage,
@@ -45,6 +45,9 @@ const unitPreferedSorting = [
   ...units.resolution,
   ...units.semitones,
   ...units.time,
+  "auto",
+  "normal",
+  "none",
 ];
 
 const visibleLengthUnits = ["px", "em", "rem", "dvw", "dvh"] as const;
@@ -133,8 +136,8 @@ export const useUnitSelect = ({
     // This ensures that the order of options remains consistent between renders
     options.sort(
       (optionA, optionB) =>
-        indexSortValue(unitPreferedSorting.indexOf(optionA.id)) -
-        indexSortValue(unitPreferedSorting.indexOf(optionB.id))
+        indexSortValue(preferedSorting.indexOf(optionA.id)) -
+        indexSortValue(preferedSorting.indexOf(optionB.id))
     );
 
     // This value can't have units, skip select
@@ -156,6 +159,17 @@ export const useUnitSelect = ({
       options.push({
         id: keyword,
         label: toPascalCase(keyword),
+        type: "keyword",
+      });
+    }
+
+    if (
+      value.type === "keyword" &&
+      options.some((option) => option.id === value.value) === false
+    ) {
+      options.push({
+        id: value.value,
+        label: toPascalCase(value.value),
         type: "keyword",
       });
     }
