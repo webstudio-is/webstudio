@@ -30,9 +30,14 @@ type UnitOption =
 
 // To make sorting stable
 const unitPreferedSorting = [
-  ...units.length,
-  ...units.percentage,
   "number",
+  "px",
+  ...units.percentage,
+  "em",
+  "rem",
+  "dvw",
+  "dvh",
+  ...units.length,
   ...units.angle,
   ...units.decibel,
   ...units.flex,
