@@ -448,4 +448,10 @@ export const props: Record<string, PropMeta> = {
     control: "text",
     type: "string",
   },
+  initialState: {
+    required: true,
+    control: "radio",
+    type: "string",
+    options: ["initial", "success", "error"],
+  },
 };

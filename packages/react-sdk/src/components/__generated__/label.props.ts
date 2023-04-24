@@ -1,9 +1,11 @@
 import type { PropMeta } from "@webstudio-is/generate-arg-types";
 
 export const props: Record<string, PropMeta> = {
+  form: { required: false, control: "text", type: "string" },
   slot: { required: false, control: "text", type: "string" },
   style: { required: false, control: "text", type: "string" },
   title: { required: false, control: "text", type: "string" },
+  htmlFor: { required: false, control: "text", type: "string" },
   defaultChecked: { required: false, control: "boolean", type: "boolean" },
   defaultValue: { required: false, control: "text", type: "string" },
   suppressContentEditableWarning: {
@@ -439,22 +441,5 @@ export const props: Record<string, PropMeta> = {
     required: false,
     control: "text",
     type: "string",
-  },
-  tag: {
-    required: false,
-    control: "select",
-    type: "string",
-    options: [
-      "div",
-      "address",
-      "article",
-      "aside",
-      "figure",
-      "footer",
-      "header",
-      "main",
-      "nav",
-      "section",
-    ],
   },
 };

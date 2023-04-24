@@ -15,8 +15,17 @@ export const meta: WsComponentMeta = {
   label: "Input",
   Icon: FormTextFieldIcon,
   presetStyle,
+  states: [
+    { selector: "::placeholder", label: "Placeholder" },
+    { selector: ":valid", label: "Valid" },
+    { selector: ":invalid", label: "Invalid" },
+    { selector: ":required", label: "Required" },
+    { selector: ":checked", label: "Checked" },
+    { selector: ":disabled", label: "Disabled" },
+  ],
 };
 
 export const propsMeta: WsComponentPropsMeta = {
   props,
+  initialProps: ["name", "type", "placeholder", "required", "autoFocus"],
 };

@@ -29,3 +29,5 @@ export { List } from "./list";
 export { ListItem } from "./list-item";
 export { Separator } from "./separator";
 export { Code } from "./code";
+export { Label } from "./label";
+export { SuccessMessage } from "./success-message";
