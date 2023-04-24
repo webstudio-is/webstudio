@@ -444,6 +444,7 @@ export const props: Record<string, PropMeta> = {
     required: false,
     control: "select",
     type: "string",
+    defaultValue: "div",
     options: [
       "div",
       "address",

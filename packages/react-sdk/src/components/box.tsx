@@ -22,14 +22,10 @@ type Props = ComponentProps<typeof defaultTag> & {
     | "figure";
 };
 
-export const createBox = () => {
-  return forwardRef<ElementRef<typeof defaultTag>, Props>(
-    ({ tag = defaultTag, ...props }, ref) => {
-      return createElement(tag as string, { ...props, ref });
-    }
-  );
-};
-
-export const Box = createBox();
+export const Box = forwardRef<ElementRef<typeof defaultTag>, Props>(
+  ({ tag = defaultTag, ...props }, ref) => {
+    return createElement(tag as string, { ...props, ref });
+  }
+);
 
 Box.displayName = "Box";

@@ -440,21 +440,4 @@ export const props: Record<string, PropMeta> = {
     control: "text",
     type: "string",
   },
-  tag: {
-    required: false,
-    control: "select",
-    type: "string",
-    options: [
-      "div",
-      "address",
-      "article",
-      "aside",
-      "figure",
-      "footer",
-      "header",
-      "main",
-      "nav",
-      "section",
-    ],
-  },
 };
