@@ -38,7 +38,7 @@ const EmbedTemplateProp = z.union([
 
 type EmbedTemplateProp = z.infer<typeof EmbedTemplateProp>;
 
-type EmbedTemplateInstance = {
+export type EmbedTemplateInstance = {
   type: "instance";
   component: string;
   props?: EmbedTemplateProp[];
