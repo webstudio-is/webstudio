@@ -10,6 +10,8 @@ import {
 } from "./dropdown-menu";
 import { Tooltip } from "./tooltip";
 import { IconButton } from "./icon-button";
+import { Flex } from "./flex";
+import { theme } from "../stitches.config";
 
 export const IconButtonWithMenu = ({
   variant,
@@ -54,7 +56,16 @@ export const IconButtonWithMenu = ({
                   onFocus={() => onHover?.(name)}
                   onBlur={() => onHover?.(value)}
                 >
-                  {icon}
+                  <Flex
+                    css={{
+                      width: theme.spacing[11],
+                      height: theme.spacing[11],
+                    }}
+                    align="center"
+                    justify="center"
+                  >
+                    {icon}
+                  </Flex>
                   {label}
                 </DropdownMenuRadioItem>
               );

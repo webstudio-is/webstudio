@@ -1,19 +1,24 @@
-import { useState } from "react";
+import { useState, type ReactNode } from "react";
 import {
   Box,
-  DeprecatedIconButton,
   EnhancedTooltip,
   Flex,
   Grid,
+  SmallToggleButton,
+  ToggleButton,
   Tooltip,
 } from "@webstudio-is/design-system";
 import type { StyleProperty, StyleValue } from "@webstudio-is/css-data";
 import { toValue } from "@webstudio-is/css-engine";
 import {
-  ColumnGapIcon,
-  RowGapIcon,
-  LinkedIcon,
-  UnlinkedIcon,
+  Link2Icon,
+  Link2UnlinkedIcon,
+  GapHorizontalIcon,
+  GapVerticalIcon,
+  ArrowRightIcon,
+  ArrowDownIcon,
+  WrapIcon,
+  NoWrapIcon,
 } from "@webstudio-is/icons";
 import type { RenderCategoryProps } from "../../style-sections";
 import { FlexGrid } from "./shared/flex-grid";
@@ -21,7 +26,11 @@ import { MenuControl, SelectControl } from "../../controls";
 import { PropertyName } from "../../shared/property-name";
 import { styleConfigByName } from "../../shared/configs";
 import type { CreateBatchUpdate } from "../../shared/use-style-data";
-import { getStyleSource, type StyleInfo } from "../../shared/style-info";
+import {
+  getStyleSource,
+  type StyleInfo,
+  type StyleValueInfo,
+} from "../../shared/style-info";
 import { CollapsibleSection } from "../../shared/collapsible-section";
 import {
   type IntermediateStyleValue,
@@ -36,26 +45,20 @@ const GapLinked = ({
 }: {
   isLinked: boolean;
   onChange: (isLinked: boolean) => void;
-}) => {
-  return (
-    <Tooltip
-      content={isLinked ? "Unlink gap values" : "Link gap values"}
-      delayDuration={400}
-      disableHoverableContent={true}
-    >
-      <Flex
-        css={{
-          width: "100%",
-          justifyContent: "center",
-        }}
-      >
-        <DeprecatedIconButton onClick={() => onChange(isLinked === false)}>
-          {isLinked ? <LinkedIcon /> : <UnlinkedIcon />}
-        </DeprecatedIconButton>
-      </Flex>
-    </Tooltip>
-  );
-};
+}) => (
+  <Tooltip
+    content={isLinked ? "Unlink gap values" : "Link gap values"}
+    delayDuration={400}
+    disableHoverableContent={true}
+  >
+    <SmallToggleButton
+      pressed={isLinked}
+      onPressedChange={onChange}
+      variant="normal"
+      icon={isLinked ? <Link2Icon /> : <Link2UnlinkedIcon />}
+    />
+  </Tooltip>
+);
 
 const GapInput = ({
   icon,
@@ -147,11 +150,12 @@ const FlexGap = ({
           "columnGap linked rowGap"
         `,
         alignItems: "center",
+        height: theme.spacing[13],
       }}
     >
       <Box css={{ gridArea: "columnGap" }}>
         <GapInput
-          icon={<ColumnGapIcon />}
+          icon={<GapHorizontalIcon />}
           style={style}
           property="columnGap"
           intermediateValue={intermediateColumnGap}
@@ -185,7 +189,7 @@ const FlexGap = ({
         />
       </Box>
 
-      <Box css={{ gridArea: "linked", px: theme.spacing[3] }}>
+      <Flex css={{ gridArea: "linked", px: theme.spacing[3] }} justify="center">
         <GapLinked
           isLinked={isLinked}
           onChange={(isLinked) => {
@@ -196,11 +200,11 @@ const FlexGap = ({
             }
           }}
         />
-      </Box>
+      </Flex>
 
       <Box css={{ gridArea: "rowGap" }}>
         <GapInput
-          icon={<RowGapIcon />}
+          icon={<GapVerticalIcon />}
           style={style}
           property="rowGap"
           intermediateValue={intermediateRowGap}
@@ -237,15 +241,61 @@ const FlexGap = ({
   );
 };
 
+const mapNormalTo = (
+  toValue: string,
+  current?: StyleValueInfo
+): StyleValueInfo | undefined =>
+  current?.value.type === "keyword" && current?.value.value === "normal"
+    ? { ...current, value: { type: "keyword", value: toValue } }
+    : current;
+
+const Toggle = ({
+  property,
+  iconOn,
+  iconOff,
+  valueOn,
+  valueOff,
+  currentStyle,
+  setProperty,
+}: {
+  property: StyleProperty;
+  iconOn: ReactNode;
+  iconOff: ReactNode;
+  valueOn: string;
+  valueOff: string;
+  currentStyle: RenderCategoryProps["currentStyle"];
+  setProperty: RenderCategoryProps["setProperty"];
+}) => {
+  const { label } = styleConfigByName(property);
+  const styleValue = currentStyle[property]?.value;
+  const isPressed =
+    styleValue?.type === "keyword" && styleValue?.value === valueOn;
+
+  return (
+    <Tooltip content={label} delayDuration={400} disableHoverableContent={true}>
+      <ToggleButton
+        pressed={isPressed}
+        onPressedChange={(isPressed) => {
+          setProperty(property)({
+            type: "keyword",
+            value: isPressed ? valueOn : valueOff,
+          });
+        }}
+        variant={getStyleSource(currentStyle[property])}
+      >
+        {isPressed ? iconOn : iconOff}
+      </ToggleButton>
+    </Tooltip>
+  );
+};
+
 const LayoutSectionFlex = ({
   currentStyle,
   setProperty,
-  deleteProperty,
   createBatchUpdate,
 }: {
   currentStyle: RenderCategoryProps["currentStyle"];
   setProperty: RenderCategoryProps["setProperty"];
-  deleteProperty: RenderCategoryProps["deleteProperty"];
   createBatchUpdate: RenderCategoryProps["createBatchUpdate"];
 }) => {
   const batchUpdate = createBatchUpdate();
@@ -260,64 +310,50 @@ const LayoutSectionFlex = ({
 
   return (
     <Flex css={{ flexDirection: "column", gap: theme.spacing[5] }}>
-      <Grid
-        css={{
-          gap: theme.spacing[5],
-          gridTemplateColumns: `repeat(2, ${theme.spacing[13]}) repeat(3, ${theme.spacing[13]})`,
-          gridTemplateRows: `repeat(2, ${theme.spacing[13]})`,
-          gridTemplateAreas: `
-            "grid grid flexDirection flexWrap ."
-            "grid grid alignItems justifyContent alignContent"
-          `,
-          alignItems: "center",
-        }}
-      >
-        <Box css={{ gridArea: "grid" }}>
-          <FlexGrid currentStyle={currentStyle} batchUpdate={batchUpdate} />
-        </Box>
-        <Box css={{ gridArea: "flexDirection" }}>
-          <MenuControl
-            property="flexDirection"
-            currentStyle={currentStyle}
-            setProperty={setProperty}
-            deleteProperty={deleteProperty}
-          />
-        </Box>
-        <Box css={{ gridArea: "flexWrap" }}>
-          <MenuControl
-            property="flexWrap"
-            currentStyle={currentStyle}
-            setProperty={setProperty}
-            deleteProperty={deleteProperty}
-          />
-        </Box>
-        <Box css={{ gridArea: "alignItems" }}>
-          <MenuControl
-            property="alignItems"
-            currentStyle={currentStyle}
-            setProperty={setProperty}
-            deleteProperty={deleteProperty}
-          />
-        </Box>
-        <Box css={{ gridArea: "justifyContent" }}>
-          <MenuControl
-            property="justifyContent"
-            currentStyle={currentStyle}
-            setProperty={setProperty}
-            deleteProperty={deleteProperty}
-          />
-        </Box>
-        {showAlignContent && (
-          <Box css={{ gridArea: "alignContent" }}>
-            <MenuControl
-              property="alignContent"
+      <Flex css={{ gap: theme.spacing[7] }} align="stretch">
+        <FlexGrid currentStyle={currentStyle} batchUpdate={batchUpdate} />
+        <Flex direction="column" justify="between">
+          <Flex css={{ gap: theme.spacing[7] }}>
+            <Toggle
+              property="flexDirection"
+              iconOn={<ArrowDownIcon />}
+              iconOff={<ArrowRightIcon />}
+              valueOn="column"
+              valueOff="row"
               currentStyle={currentStyle}
               setProperty={setProperty}
-              deleteProperty={deleteProperty}
             />
-          </Box>
-        )}
-      </Grid>
+            <Toggle
+              property="flexWrap"
+              iconOn={<WrapIcon />}
+              iconOff={<NoWrapIcon />}
+              valueOn="wrap"
+              valueOff="nowrap"
+              currentStyle={currentStyle}
+              setProperty={setProperty}
+            />
+          </Flex>
+          <Flex css={{ gap: theme.spacing[7] }}>
+            <MenuControl
+              property="alignItems"
+              styleValue={mapNormalTo("stretch", currentStyle.alignItems)}
+              setProperty={setProperty}
+            />
+            <MenuControl
+              property="justifyContent"
+              styleValue={mapNormalTo("start", currentStyle.justifyContent)}
+              setProperty={setProperty}
+            />
+            {showAlignContent && (
+              <MenuControl
+                property="alignContent"
+                styleValue={mapNormalTo("stretch", currentStyle.alignContent)}
+                setProperty={setProperty}
+              />
+            )}
+          </Flex>
+        </Flex>
+      </Flex>
 
       <FlexGap style={currentStyle} createBatchUpdate={createBatchUpdate} />
     </Flex>
@@ -328,7 +364,6 @@ const orderedDisplayValues = [
   "block",
   "flex",
   "inline-block",
-  "inline-flex",
   "inline",
   "none",
 ];
@@ -369,8 +404,14 @@ export const LayoutSection = ({
       currentStyle={currentStyle}
       properties={properties}
     >
-      <>
-        <Grid css={{ gridTemplateColumns: "4fr 6fr" }}>
+      <Flex direction="column" gap="2">
+        <Grid
+          css={{
+            gridTemplateColumns: `1fr ${theme.spacing[24]}`,
+            height: theme.spacing[13],
+            alignItems: "center",
+          }}
+        >
           <PropertyName
             style={currentStyle}
             property="display"
@@ -382,7 +423,6 @@ export const LayoutSection = ({
             currentStyle={currentStyle}
             setProperty={setProperty}
             deleteProperty={deleteProperty}
-            // show only important values first and hide others with scroll
             items={items
               .filter((item) => orderedDisplayValues.includes(item.name))
               .sort(compareDisplayValues)}
@@ -393,11 +433,10 @@ export const LayoutSection = ({
           <LayoutSectionFlex
             currentStyle={currentStyle}
             setProperty={setProperty}
-            deleteProperty={deleteProperty}
             createBatchUpdate={createBatchUpdate}
           />
         )}
-      </>
+      </Flex>
     </CollapsibleSection>
   );
 };
