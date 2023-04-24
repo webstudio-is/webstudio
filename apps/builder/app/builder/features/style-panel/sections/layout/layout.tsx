@@ -1,10 +1,10 @@
 import { useState } from "react";
 import {
   Box,
-  DeprecatedIconButton,
   EnhancedTooltip,
   Flex,
   Grid,
+  SmallToggleButton,
   ToggleButton,
   Tooltip,
 } from "@webstudio-is/design-system";
@@ -45,21 +45,20 @@ const GapLinked = ({
 }: {
   isLinked: boolean;
   onChange: (isLinked: boolean) => void;
-}) => {
-  return (
-    <Tooltip
-      content={isLinked ? "Unlink gap values" : "Link gap values"}
-      delayDuration={400}
-      disableHoverableContent={true}
-    >
-      <Flex css={{ width: "100%", justifyContent: "center" }}>
-        <DeprecatedIconButton onClick={() => onChange(isLinked === false)}>
-          {isLinked ? <Link2Icon /> : <Link2UnlinkedIcon />}
-        </DeprecatedIconButton>
-      </Flex>
-    </Tooltip>
-  );
-};
+}) => (
+  <Tooltip
+    content={isLinked ? "Unlink gap values" : "Link gap values"}
+    delayDuration={400}
+    disableHoverableContent={true}
+  >
+    <SmallToggleButton
+      pressed={isLinked}
+      onPressedChange={onChange}
+      variant="normal"
+      icon={isLinked ? <Link2Icon /> : <Link2UnlinkedIcon />}
+    />
+  </Tooltip>
+);
 
 const GapInput = ({
   icon,
@@ -189,7 +188,7 @@ const FlexGap = ({
         />
       </Box>
 
-      <Box css={{ gridArea: "linked", px: theme.spacing[3] }}>
+      <Flex css={{ gridArea: "linked", px: theme.spacing[3] }} justify="center">
         <GapLinked
           isLinked={isLinked}
           onChange={(isLinked) => {
@@ -200,7 +199,7 @@ const FlexGap = ({
             }
           }}
         />
-      </Box>
+      </Flex>
 
       <Box css={{ gridArea: "rowGap" }}>
         <GapInput
@@ -275,6 +274,8 @@ const LayoutSectionFlex = ({
     flexWrapValue?.type === "keyword" &&
     (flexWrapValue.value === "wrap" || flexWrapValue.value === "wrap-reverse");
 
+  // @todo: this and the corresponfig repeatings JSX below
+  // can be extracted into a component
   const flexDirectionToggleValue =
     currentStyle.flexDirection?.value?.type === "keyword" &&
     currentStyle.flexDirection?.value?.value === "column";
