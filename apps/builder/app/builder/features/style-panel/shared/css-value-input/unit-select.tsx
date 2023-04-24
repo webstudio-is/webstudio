@@ -45,9 +45,6 @@ const preferedSorting = [
   ...units.resolution,
   ...units.semitones,
   ...units.time,
-  "auto",
-  "normal",
-  "none",
 ];
 
 const visibleLengthUnits = ["px", "em", "rem", "dvw", "dvh"] as const;
