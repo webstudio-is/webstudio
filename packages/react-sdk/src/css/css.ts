@@ -1,5 +1,5 @@
-import { createCssEngine, type TransformValue } from "@webstudio-is/css-engine";
 import type { Asset, Assets } from "@webstudio-is/asset-uploader";
+import { createCssEngine, type TransformValue } from "@webstudio-is/css-engine";
 import type { Build } from "@webstudio-is/project-build";
 import type { WsComponentMeta } from "../components/component-meta";
 import { idAttribute } from "../tree";
@@ -16,6 +16,7 @@ type Data = {
 
 type CssOptions = {
   assetBaseUrl: string;
+  createSelector?: typeof defaultCreateSelector;
 };
 
 export const createImageValueTransformer =
@@ -75,7 +76,11 @@ export const generateCssText = (data: Data, options: CssOptions) => {
   const styleRules = getStyleRules(styles, styleSourceSelections);
   for (const { breakpointId, instanceId, state, style } of styleRules) {
     engine.addStyleRule(
-      `[${idAttribute}="${instanceId}"]${state ?? ""}`,
+      (options.createSelector || defaultCreateSelector)({
+        idAttribute,
+        instanceId,
+        state,
+      }),
       {
         breakpoint: breakpointId,
         style,
@@ -85,4 +90,16 @@ export const generateCssText = (data: Data, options: CssOptions) => {
   }
 
   return engine.cssText;
+};
+
+const defaultCreateSelector = function defaultCreateSelector({
+  idAttribute,
+  instanceId,
+  state,
+}: {
+  idAttribute: string;
+  instanceId: string;
+  state?: string;
+}) {
+  return `[${idAttribute}="${instanceId}"]${state ?? ""}`;
 };

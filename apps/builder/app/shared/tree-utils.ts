@@ -1,25 +1,25 @@
-import { nanoid } from "nanoid";
+import { equalMedia } from "@webstudio-is/css-engine";
 import {
   Breakpoint,
   Breakpoints,
-  findTreeInstanceIds,
-  findTreeInstanceIdsExcludingSlotDescendants,
-  getStyleDeclKey,
   Instance,
   Instances,
   Prop,
   Props,
   StyleDecl,
-  Styles,
   StyleSource,
-  StyleSources,
   StyleSourceSelection,
   StyleSourceSelections,
   StyleSourceSelectionsList,
+  StyleSources,
   StyleSourcesList,
+  Styles,
+  findTreeInstanceIds,
+  findTreeInstanceIdsExcludingSlotDescendants,
+  getStyleDeclKey,
 } from "@webstudio-is/project-build";
-import { equalMedia } from "@webstudio-is/css-engine";
 import type { WsComponentMeta } from "@webstudio-is/react-sdk";
+import { nanoid } from "nanoid";
 
 // slots can have multiple parents so instance should be addressed
 // with full rendered path to avoid double selections with slots
@@ -243,7 +243,7 @@ export const reparentInstanceMutable = (
   const nextParent = instances.get(parentId);
   const instance = instances.get(instanceId);
 
-  // delect is target is one of own descendants
+  // delect if target is one of own descendants
   // prevent reparenting to avoid infinite loop
   const instanceDescendants = findTreeInstanceIds(instances, instanceId);
   for (const instanceId of instanceDescendants) {

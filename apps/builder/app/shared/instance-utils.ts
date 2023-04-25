@@ -1,40 +1,41 @@
-import store from "immerhin";
 import {
   Instances,
   findTreeInstanceIdsExcludingSlotDescendants,
 } from "@webstudio-is/project-build";
 import {
-  type WsEmbedTemplate,
-  type WsComponentMeta,
   generateDataFromEmbedTemplate,
+  type WsComponentMeta,
+  type WsEmbedTemplate,
 } from "@webstudio-is/react-sdk";
-import {
-  propsStore,
-  stylesStore,
-  selectedInstanceSelectorStore,
-  styleSourceSelectionsStore,
-  styleSourcesStore,
-  instancesStore,
-  selectedStyleSourceSelectorStore,
-  textEditingInstanceSelectorStore,
-  breakpointsStore,
-  registeredComponentMetasStore,
-} from "./nano-states";
-import {
-  type DroppableTarget,
-  type InstanceSelector,
-  findLocalStyleSourcesWithinInstances,
-  insertInstancesMutable,
-  reparentInstanceMutable,
-  getAncestorInstanceSelector,
-  insertPropsCopyMutable,
-  insertStyleSourcesCopyMutable,
-  insertStyleSourceSelectionsCopyMutable,
-  insertStylesCopyMutable,
-} from "./tree-utils";
+import store from "immerhin";
 import { removeByMutable } from "./array-utils";
 import { isBaseBreakpoint } from "./breakpoints";
 import { getElementByInstanceSelector } from "./dom-utils";
+import {
+  breakpointsStore,
+  instancesStore,
+  propsStore,
+  registeredComponentMetasStore,
+  selectedInstanceSelectorStore,
+  selectedPageStore,
+  selectedStyleSourceSelectorStore,
+  styleSourceSelectionsStore,
+  styleSourcesStore,
+  stylesStore,
+  textEditingInstanceSelectorStore,
+} from "./nano-states";
+import {
+  findLocalStyleSourcesWithinInstances,
+  getAncestorInstanceSelector,
+  insertInstancesMutable,
+  insertPropsCopyMutable,
+  insertStyleSourceSelectionsCopyMutable,
+  insertStyleSourcesCopyMutable,
+  insertStylesCopyMutable,
+  reparentInstanceMutable,
+  type DroppableTarget,
+  type InstanceSelector,
+} from "./tree-utils";
 
 export const findClosestEditableInstanceSelector = (
   instanceSelector: InstanceSelector,
@@ -161,6 +162,20 @@ export const findClosestDroppableTarget = (
   };
 };
 
+export const findSelectedInstance = () => {
+  const selectedPage = selectedPageStore.get();
+  if (selectedPage === undefined) {
+    return;
+  }
+  return findClosestDroppableTarget(
+    registeredComponentMetasStore.get(),
+    instancesStore.get(),
+    // fallback to root as drop target
+    selectedInstanceSelectorStore.get() ?? [selectedPage.rootInstanceId],
+    []
+  );
+};
+
 export const insertTemplate = (
   template: WsEmbedTemplate,
   dropTarget: DroppableTarget
@@ -179,6 +194,7 @@ export const insertTemplate = (
     styleSources: insertedStyleSources,
     styles: insertedStyles,
   } = generateDataFromEmbedTemplate(template, baseBreakpoint.id);
+
   const rootInstanceId = insertedInstances[0].id;
   store.createTransaction(
     [
@@ -389,4 +405,128 @@ export const escapeSelection = () => {
   }
   selectedInstanceSelectorStore.set(undefined);
   selectedStyleSourceSelectorStore.set(undefined);
+};
+
+export const replaceTemplate = (
+  template: WsEmbedTemplate,
+  instanceSelector: InstanceSelector
+) => {
+  const breakpoints = breakpointsStore.get();
+  const breakpointValues = Array.from(breakpoints.values());
+  const baseBreakpoint = breakpointValues.find(isBaseBreakpoint);
+
+  if (baseBreakpoint === undefined) {
+    return;
+  }
+  const {
+    children: insertedChildren,
+    instances: insertedInstances,
+    props: insertedProps,
+    styleSourceSelections: insertedStyleSourceSelections,
+    styleSources: insertedStyleSources,
+    styles: insertedStyles,
+  } = generateDataFromEmbedTemplate(template, baseBreakpoint.id);
+
+  store.createTransaction(
+    [
+      instancesStore,
+      propsStore,
+      styleSourceSelectionsStore,
+      styleSourcesStore,
+      stylesStore,
+    ],
+    (instances, props, styleSourceSelections, styleSources, styles) => {
+      const targetInstanceId = instanceSelector[0];
+      const parentInstanceId = instanceSelector[1];
+      const parentInstance =
+        parentInstanceId === undefined
+          ? undefined
+          : instances.get(parentInstanceId);
+
+      const parentSelector = getAncestorInstanceSelector(
+        instanceSelector,
+        parentInstanceId
+      );
+
+      if (!parentSelector) {
+        throw new Error("Could not determine dropTarget");
+      }
+
+      const dropTargetIndex = parentInstance
+        ? parentInstance.children.findIndex(
+            ({ type, value }) => type === "id" && value === targetInstanceId
+          )
+        : -1;
+      const dropTarget: DroppableTarget = {
+        parentSelector,
+        position: dropTargetIndex > -1 ? dropTargetIndex : "end",
+      };
+
+      const instanceIds = findTreeInstanceIdsExcludingSlotDescendants(
+        instances,
+        targetInstanceId
+      );
+      const localStyleSourceIds = findLocalStyleSourcesWithinInstances(
+        styleSources.values(),
+        styleSourceSelections.values(),
+        instanceIds
+      );
+
+      // may not exist when delete root
+      if (parentInstance) {
+        removeByMutable(
+          parentInstance.children,
+          (child) => child.type === "id" && child.value === targetInstanceId
+        );
+      }
+
+      for (const instanceId of instanceIds) {
+        instances.delete(instanceId);
+      }
+      // delete props and styles of deleted instance and its descendants
+      for (const prop of props.values()) {
+        if (instanceIds.has(prop.instanceId)) {
+          props.delete(prop.id);
+        }
+      }
+      for (const instanceId of instanceIds) {
+        styleSourceSelections.delete(instanceId);
+      }
+      for (const styleSourceId of localStyleSourceIds) {
+        styleSources.delete(styleSourceId);
+      }
+      for (const [styleDeclKey, styleDecl] of styles) {
+        if (localStyleSourceIds.has(styleDecl.styleSourceId)) {
+          styles.delete(styleDeclKey);
+        }
+      }
+
+      insertInstancesMutable(
+        instances,
+        props,
+        registeredComponentMetasStore.get(),
+        insertedInstances,
+        insertedChildren,
+        dropTarget
+      );
+      insertPropsCopyMutable(props, insertedProps, new Map());
+      insertStyleSourcesCopyMutable(
+        styleSources,
+        insertedStyleSources,
+        new Set()
+      );
+      insertStyleSourceSelectionsCopyMutable(
+        styleSourceSelections,
+        insertedStyleSourceSelections,
+        new Map(),
+        new Map()
+      );
+      insertStylesCopyMutable(styles, insertedStyles, new Map(), new Map());
+
+      selectedInstanceSelectorStore.set(
+        getAncestorInstanceSelector(instanceSelector, insertedInstances[0].id)
+      );
+      selectedStyleSourceSelectorStore.set(undefined);
+    }
+  );
 };

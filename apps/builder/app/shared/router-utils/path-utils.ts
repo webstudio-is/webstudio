@@ -1,7 +1,7 @@
-import type { AUTH_PROVIDERS } from "~/shared/session";
 import type { Project } from "@webstudio-is/project";
-import type { ThemeSetting } from "~/shared/theme";
 import env from "~/shared/env";
+import type { AUTH_PROVIDERS } from "~/shared/session";
+import type { ThemeSetting } from "~/shared/theme";
 
 const searchParams = (params: Record<string, string | undefined | null>) => {
   const searchParams = new URLSearchParams();
@@ -142,3 +142,5 @@ export const getPublishedUrl = (domain: string) => {
 
   return `${protocol}//${domain}.${host}`;
 };
+
+export const aiGenerationPath = () => "/rest/ai";

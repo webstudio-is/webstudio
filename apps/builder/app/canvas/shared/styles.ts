@@ -1,23 +1,30 @@
-import { useContext, useEffect, useMemo } from "react";
-import { useIsomorphicLayoutEffect } from "react-use";
-import { computed } from "nanostores";
 import { useStore } from "@nanostores/react";
 import type { Assets } from "@webstudio-is/asset-uploader";
 import {
-  collapsedAttribute,
-  idAttribute,
-  addGlobalRules,
-  createImageValueTransformer,
-  getPresetStyleRules,
-  type Params,
-  ReactSdkContext,
-} from "@webstudio-is/react-sdk";
+  isValidStaticStyleValue,
+  type StyleProperty,
+  type StyleValue,
+} from "@webstudio-is/css-data";
+import {
+  compareMedia,
+  createCssEngine,
+  toValue,
+  type PlaintextRule,
+  type StyleRule,
+} from "@webstudio-is/css-engine";
 import type { Instance, StyleDecl } from "@webstudio-is/project-build";
 import {
-  type StyleValue,
-  type StyleProperty,
-  isValidStaticStyleValue,
-} from "@webstudio-is/css-data";
+  addGlobalRules,
+  collapsedAttribute,
+  createImageValueTransformer,
+  getPresetStyleRules,
+  idAttribute,
+  ReactSdkContext,
+  type Params,
+} from "@webstudio-is/react-sdk";
+import { computed } from "nanostores";
+import { useContext, useEffect, useMemo } from "react";
+import { useIsomorphicLayoutEffect } from "react-use";
 import {
   assetsStore,
   breakpointsStore,
@@ -26,21 +33,14 @@ import {
   selectedInstanceSelectorStore,
   selectedStyleSourceSelectorStore,
 } from "~/shared/nano-states";
-import {
-  type StyleRule,
-  type PlaintextRule,
-  createCssEngine,
-  toValue,
-  compareMedia,
-} from "@webstudio-is/css-engine";
 import { useSubscribe } from "~/shared/pubsub";
 
-const userCssEngine = createCssEngine({ name: "user-styles" });
+export const userCssEngine = createCssEngine({ name: "user-styles" });
 const helpersCssEngine = createCssEngine({ name: "helpers" });
 const fontsAndDefaultsCssEngine = createCssEngine({
   name: "fonts-and-defaults",
 });
-const presetStylesEngine = createCssEngine({ name: "preset-styles" });
+export const presetStylesEngine = createCssEngine({ name: "preset-styles" });
 
 // Helper styles on for canvas in design mode
 // - Only instances that would collapse without helper should receive helper

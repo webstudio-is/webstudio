@@ -77,6 +77,10 @@ const env = {
    */
   ENTRI_APPLICATION_ID: process.env.ENTRI_APPLICATION_ID ?? "webstudio",
   ENTRI_SECRET: process.env.ENTRI_SECRET,
+
+  // AI Features
+  OPENAI_KEY: process.env.OPENAI_KEY,
+  OPENAI_ORG: process.env.OPENAI_ORG,
 };
 
 export type ServerEnv = typeof env;

@@ -1,2 +1,4 @@
 pnpm-lock.yaml
 packages/prisma-client/prisma/migrations/*/client
+packages/ai/src/templates/**/*.css
+packages/ai/src/templates/**/tw-styles.ts
