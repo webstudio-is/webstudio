@@ -46,6 +46,10 @@ const env = {
   S3_BUCKET: process.env.S3_BUCKET,
   S3_ACL: process.env.S3_ACL,
   ASSET_CDN_URL: process.env.ASSET_CDN_URL,
+
+  // AI Features
+  OPENAI_KEY: process.env.OPENAI_KEY,
+  OPENAI_ORG: process.env.OPENAI_ORG,
 };
 
 export type ServerEnv = typeof env;
