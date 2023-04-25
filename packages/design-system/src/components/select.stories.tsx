@@ -1,5 +1,5 @@
 import type { ComponentStory } from "@storybook/react";
-import { RowGapIcon } from "@webstudio-is/icons";
+import { GapVerticalIcon } from "@webstudio-is/icons";
 import React from "react";
 import { NestedIconLabel } from "./nested-icon-label";
 import { Select, type SelectOption } from "./select";
@@ -47,7 +47,7 @@ export const WithNestedLabelIcon: ComponentStory<typeof Select> = () => {
     <Select
       prefix={
         <NestedIconLabel>
-          <RowGapIcon />
+          <GapVerticalIcon />
         </NestedIconLabel>
       }
       name="fruit"

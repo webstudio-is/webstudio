@@ -1,4 +1,4 @@
-import { RowGapIcon } from "@webstudio-is/icons";
+import { GapVerticalIcon } from "@webstudio-is/icons";
 import { Flex } from "./flex";
 import { InputField, inputFieldColors } from "./input-field";
 import { NestedIconLabel } from "./nested-icon-label";
@@ -11,7 +11,7 @@ export default {
 
 const prefix = (
   <NestedIconLabel color="local" tabIndex={-1}>
-    <RowGapIcon />
+    <GapVerticalIcon />
   </NestedIconLabel>
 );
 
@@ -44,7 +44,7 @@ export const Demo = () => (
           defaultValue="disabled"
           prefix={
             <NestedIconLabel disabled color="local">
-              <RowGapIcon />
+              <GapVerticalIcon />
             </NestedIconLabel>
           }
           suffix={<NestedSelectButton disabled />}
