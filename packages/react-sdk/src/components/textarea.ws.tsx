@@ -1,21 +1,22 @@
 import type { Style } from "@webstudio-is/css-data";
-import { FormTextFieldIcon } from "@webstudio-is/icons";
-import { input } from "../css/normalize";
+import { FormTextAreaIcon } from "@webstudio-is/icons";
+import { textarea } from "../css/normalize";
 import type { WsComponentMeta, WsComponentPropsMeta } from "./component-meta";
-import type { defaultTag } from "./input";
-import { props } from "./__generated__/input.props";
+import type { defaultTag } from "./textarea";
+import { props } from "./__generated__/textarea.props";
 
 const presetStyle = {
-  input,
+  textarea,
 } as const satisfies Record<typeof defaultTag, Style>;
 
 export const meta: WsComponentMeta = {
   category: "forms",
   type: "control",
-  label: "Input",
-  Icon: FormTextFieldIcon,
+  label: "Text Area",
+  Icon: FormTextAreaIcon,
   presetStyle,
   states: [
+    // @todo: are all of these make sense for textarea?
     { selector: "::placeholder", label: "Placeholder" },
     { selector: ":valid", label: "Valid" },
     { selector: ":invalid", label: "Invalid" },
@@ -26,5 +27,5 @@ export const meta: WsComponentMeta = {
 
 export const propsMeta: WsComponentPropsMeta = {
   props,
-  initialProps: ["name", "type", "placeholder", "required", "autoFocus"],
+  initialProps: ["name", "placeholder", "required", "autoFocus"],
 };

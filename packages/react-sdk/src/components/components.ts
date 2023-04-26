@@ -32,3 +32,4 @@ export { Code } from "./code";
 export { Label } from "./label";
 export { SuccessMessage } from "./success-message";
 export { ErrorMessage } from "./error-message";
+export { Textarea } from "./textarea";
