@@ -470,6 +470,9 @@ importers:
       css-tree:
         specifier: ^2.3.1
         version: 2.3.1
+      html-tags:
+        specifier: ^3.2.0
+        version: 3.2.0
       mdn-data:
         specifier: 2.0.30
         version: 2.0.30
@@ -12555,7 +12558,7 @@ packages:
     resolution: {integrity: sha512-oWb1Z6mkHIskLzEJ/XWX0srkpkTQ7vaopMQkyaEIoq0fmtFVxOthb8cCxeT+p3ynTdkk/RZwbgG4brR5BeWECw==}
     engines: {node: '>= 4.0'}
     os: [darwin]
-    deprecated: fsevents 1 will break on node v14+ and could be using insecure binaries. Upgrade to fsevents 2.
+    deprecated: The v1 package contains DANGEROUS / INSECURE binaries. Upgrade to safe fsevents v2
     requiresBuild: true
     dependencies:
       bindings: 1.5.0

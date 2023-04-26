@@ -49,6 +49,13 @@ const normalizedValues = {
   "text-size-adjust": autoValue,
 } as const;
 
+const beautifyKeyword = (keyword: string) => {
+  if (keyword === "currentcolor") {
+    return "currentColor";
+  }
+  return keyword;
+};
+
 const parseInitialValue = (
   property: string,
   value: string,
@@ -67,7 +74,7 @@ const parseInitialValue = (
   if (ast.children.first !== ast.children.last) {
     return {
       type: "keyword",
-      value: value,
+      value: beautifyKeyword(value),
     };
   }
 
@@ -75,7 +82,7 @@ const parseInitialValue = (
   if (node?.type === "Identifier") {
     return {
       type: "keyword",
-      value: node.name,
+      value: beautifyKeyword(node.name),
     };
   }
   if (node?.type === "Number") {
@@ -280,13 +287,6 @@ const writeToFile = (fileName: string, constant: string, data: unknown) => {
 // Non-standard properties are just missing in mdn data
 const nonStandardValues = {
   "background-clip": ["text"],
-};
-
-const beautifyKeyword = (keyword: string) => {
-  if (keyword === "currentcolor") {
-    return "currentColor";
-  }
-  return keyword;
 };
 
 // https://www.w3.org/TR/css-values/#common-keywords

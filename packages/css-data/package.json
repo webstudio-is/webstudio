@@ -20,6 +20,7 @@
     "@webstudio-is/tsconfig": "workspace:^",
     "camelcase": "^6.3.0",
     "css-tree": "^2.3.1",
+    "html-tags": "^3.2.0",
     "mdn-data": "2.0.30",
     "tsx": "^3.12.6",
     "typescript": "5.0.3",
