@@ -36,6 +36,7 @@ const componentNames = Object.keys({
   Code: 1,
   Label: 1,
   SuccessMessage: 1,
+  ErrorMessage: 1,
 } satisfies { [K in keyof typeof components]: 1 }) as Array<
   keyof typeof components
 >;
