@@ -168,7 +168,6 @@ test("compute inherited styles", () => {
         ["2", "div"],
         ["3", "div"],
       ]),
-
       cascadedBreakpointIds,
       selectedBreakpointId
     )

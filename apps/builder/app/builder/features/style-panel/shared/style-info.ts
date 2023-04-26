@@ -247,7 +247,7 @@ export const getInheritedInfo = (
 
     const tagName = selectedInstanceIntanceToTag.get(instanceId);
 
-    const component = getInstanceComponent(instances, instanceSelector[0]);
+    const component = getInstanceComponent(instances, instanceId);
     const presetStyle =
       tagName !== undefined && component !== undefined
         ? getComponentMeta(component)?.presetStyle?.[tagName]
