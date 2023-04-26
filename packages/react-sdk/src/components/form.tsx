@@ -9,43 +9,45 @@ const isComponentNode = (component: string, node: ReactNode) =>
   "props" in node &&
   node.props.instance?.component === component;
 
-const isComponentNodeOrItsParent = (
-  component: string,
-  node: ReactNode
-): boolean => {
-  if (typeof node !== "object" || node === null) {
-    return false;
-  }
-
-  if (isComponentNode(component, node)) {
-    return true;
-  }
-
-  const containsComponent = (nodes: Iterable<ReactNode>) => {
-    for (const node of nodes) {
-      if (isComponentNodeOrItsParent(component, node)) {
-        return true;
-      }
-    }
-    return false;
-  };
-
-  if ("props" in node) {
-    return containsComponent(Children.toArray(node.props.children));
-  }
-
-  return containsComponent(node);
-};
-
 const onlyErrorMessage = (children: ReactNode) =>
-  Children.toArray(children).filter((child) =>
-    isComponentNodeOrItsParent("ErrorMessage", child)
-  );
+  Children.map(children, (child): ReactNode => {
+    if (typeof child !== "object" || child === null) {
+      return null;
+    }
+
+    if (isComponentNode("ErrorMessage", child)) {
+      return child;
+    }
+
+    if ("props" in child) {
+      const newChildren = onlyErrorMessage(child.props.children);
+      return Children.toArray(newChildren).some((child) => child !== null)
+        ? cloneElement(child, { children: newChildren })
+        : null;
+    }
+
+    return onlyErrorMessage(child);
+  });
 
 const onlySuccessMessage = (children: ReactNode) =>
-  Children.toArray(children).filter((child) =>
-    isComponentNodeOrItsParent("SuccessMessage", child)
-  );
+  Children.map(children, (child): ReactNode => {
+    if (typeof child !== "object" || child === null) {
+      return null;
+    }
+
+    if (isComponentNode("SuccessMessage", child)) {
+      return child;
+    }
+
+    if ("props" in child) {
+      const newChildren = onlySuccessMessage(child.props.children);
+      return Children.toArray(newChildren).some((child) => child !== null)
+        ? cloneElement(child, { children: newChildren })
+        : null;
+    }
+
+    return onlySuccessMessage(child);
+  });
 
 const withoutMessages = (children: ReactNode) =>
   Children.map(children, (child): ReactNode => {
@@ -66,9 +68,6 @@ const withoutMessages = (children: ReactNode) =>
       });
     }
 
-    // Here `child` is ReactFragment which is Iterable<ReactNode>,
-    // so we pass it directly to the next recursive step,
-    // but I'm not 100% sure this is correct way to recurse over fragments
     return withoutMessages(child);
   });
 
