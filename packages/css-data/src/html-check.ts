@@ -3,6 +3,6 @@ import type { htmlTags as HtmlTags } from "html-tags";
 
 type ExportedTags = keyof typeof html;
 
-declare var exportedTags: ExportedTags;
+declare let exportedTags: ExportedTags;
 
 exportedTags satisfies HtmlTags;
