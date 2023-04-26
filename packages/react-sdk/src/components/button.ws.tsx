@@ -15,6 +15,13 @@ export const meta: WsComponentMeta = {
   label: "Button",
   Icon: ButtonElementIcon,
   presetStyle,
+  states: [
+    { selector: ":hover", label: "Hover" },
+    { selector: ":focus", label: "Focus" },
+    { selector: ":active", label: "Active" },
+    { selector: ":disabled", label: "Disabled" },
+    { selector: ":enabled", label: "Enabled" },
+  ],
 };
 
 export const propsMeta: WsComponentPropsMeta = {
