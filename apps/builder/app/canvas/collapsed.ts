@@ -2,7 +2,8 @@ import { collapsedAttribute, idAttribute } from "@webstudio-is/react-sdk";
 import {
   getCascadedBreakpointIds,
   getCascadedInfo,
-  getPresetStyle,
+  getInstanceComponent,
+  getPresetStyleRule,
 } from "~/builder/features/style-panel/shared/style-info";
 import {
   breakpointsStore,
@@ -63,9 +64,10 @@ const getInstanceSize = (instanceId: string, tagName: HtmlTags | undefined) => {
     selectedBreakpointId
   );
 
+  const component = getInstanceComponent(instances, instanceId);
   const presetStyle =
-    tagName !== undefined
-      ? getPresetStyle(instances, instanceId, tagName)
+    tagName !== undefined && component !== undefined
+      ? getPresetStyleRule(component, tagName)
       : undefined;
 
   const cascadedStyle = getCascadedInfo(stylesByInstanceId, instanceId, [
@@ -228,7 +230,7 @@ export const setDataCollapsed = (instanceId: string, syncExec = false) => {
  * In that case we just check the subtree of parent/common ancestor of changed elements to find collapsed elements
  **/
 export const subscribeCollapsedToPubSub = () =>
-  subscribe("sendStoreChanges", ({ source, changes }) => {
+  subscribe("sendStoreChanges", ({ changes }) => {
     for (const change of changes) {
       if (change.namespace === "styleSourceSelections") {
         for (const patch of change.patches) {

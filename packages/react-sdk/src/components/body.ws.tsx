@@ -1,38 +1,35 @@
 import { BodyIcon } from "@webstudio-is/icons";
 import { body } from "../css/normalize";
-import type { WsComponentMeta, WsComponentPropsMeta } from "./component-meta";
+import type {
+  PresetStyle,
+  WsComponentMeta,
+  WsComponentPropsMeta,
+} from "./component-meta";
 import { props } from "./__generated__/body.props";
 import type { defaultTag } from "./body";
-import type { Style } from "@webstudio-is/css-data";
 
 const presetStyle = {
-  body: {
+  body: [
     ...body,
 
-    minHeight: {
-      type: "unit",
-      unit: "%",
-      value: 100,
+    {
+      property: "minHeight",
+      value: { type: "unit", unit: "%", value: 100 },
     },
-
-    fontFamily: {
-      type: "keyword",
-      value: "Arial",
+    {
+      property: "fontFamily",
+      value: { type: "keyword", value: "Arial" },
     },
-
-    fontSize: {
-      type: "unit",
-      unit: "px",
-      value: 14,
+    {
+      property: "fontSize",
+      value: { type: "unit", unit: "px", value: 14 },
     },
-
-    lineHeight: {
-      type: "unit",
-      unit: "number",
-      value: 1.5,
+    {
+      property: "lineHeight",
+      value: { type: "unit", unit: "number", value: 1.5 },
     },
-  },
-} as const satisfies Record<typeof defaultTag, Style>;
+  ],
+} satisfies PresetStyle<typeof defaultTag>;
 
 export const meta: WsComponentMeta = {
   type: "container",

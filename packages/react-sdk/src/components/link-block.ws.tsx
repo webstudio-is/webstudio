@@ -1,20 +1,23 @@
 import { BoxLinkIcon } from "@webstudio-is/icons";
-import type { WsComponentMeta, WsComponentPropsMeta } from "./component-meta";
+import type {
+  PresetStyle,
+  WsComponentMeta,
+  WsComponentPropsMeta,
+} from "./component-meta";
 import { props } from "./__generated__/link-block.props";
 import { meta as linkMeta, propsMeta as linkPropsMeta } from "./link.ws";
 import type { defaultTag } from "./link-block";
-import type { Style } from "@webstudio-is/css-data";
 import { a } from "../css/normalize";
 
 const presetStyle = {
-  a: {
+  a: [
     ...a,
-    display: {
-      type: "keyword",
-      value: "inline-block",
+    {
+      property: "display",
+      value: { type: "keyword", value: "inline-block" },
     },
-  },
-} as const satisfies Record<typeof defaultTag, Style>;
+  ],
+} satisfies PresetStyle<typeof defaultTag>;
 
 export const meta: WsComponentMeta = {
   category: "general",

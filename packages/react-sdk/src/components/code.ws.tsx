@@ -1,44 +1,38 @@
 import { CodeIcon } from "@webstudio-is/icons";
-import type { WsComponentMeta, WsComponentPropsMeta } from "./component-meta";
+import type {
+  PresetStyle,
+  WsComponentMeta,
+  WsComponentPropsMeta,
+} from "./component-meta";
 import { type defaultTag, displayVarNamespace } from "./code";
 import { props } from "./__generated__/code.props";
-import type { Style, StyleValue } from "@webstudio-is/css-data";
 import { code } from "../css/normalize";
 
-const display: StyleValue = {
-  type: "var",
-  value: displayVarNamespace,
-  fallbacks: [
+const presetStyle = {
+  code: [
+    ...code,
     {
-      type: "keyword",
-      value: "inline-block",
+      property: "display",
+      value: {
+        type: "var",
+        value: displayVarNamespace,
+        fallbacks: [{ type: "keyword", value: "inline-block" }],
+      },
+    },
+    {
+      property: "paddingLeft",
+      value: { type: "unit", value: 0.2, unit: "em" },
+    },
+    {
+      property: "paddingRight",
+      value: { type: "unit", value: 0.2, unit: "em" },
+    },
+    {
+      property: "backgroundColor",
+      value: { type: "rgb", r: 238, g: 238, b: 238, alpha: 1 },
     },
   ],
-};
-
-const presetStyle = {
-  code: {
-    ...code,
-    display,
-    paddingLeft: {
-      type: "unit",
-      value: 0.2,
-      unit: "em",
-    },
-    paddingRight: {
-      type: "unit",
-      value: 0.2,
-      unit: "em",
-    },
-    backgroundColor: {
-      type: "rgb",
-      r: 238,
-      g: 238,
-      b: 238,
-      alpha: 1,
-    },
-  },
-} as const satisfies Record<typeof defaultTag, Style>;
+} satisfies PresetStyle<typeof defaultTag>;
 
 export const meta: WsComponentMeta = {
   category: "general",
