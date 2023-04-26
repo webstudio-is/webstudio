@@ -3,11 +3,10 @@ import { forwardRef, type ElementRef, type ComponentProps } from "react";
 
 export const defaultTag = "form";
 
-const isComponentNode = (component: string, node: ReactNode) =>
-  typeof node === "object" &&
-  node !== null &&
-  "props" in node &&
-  node.props.instance?.component === component;
+const isComponentNode = (
+  component: string,
+  node: Exclude<ReactNode, null | number | string | boolean | undefined>
+) => "props" in node && node.props.instance?.component === component;
 
 const onlyErrorMessage = (children: ReactNode) =>
   Children.map(children, (child): ReactNode => {
