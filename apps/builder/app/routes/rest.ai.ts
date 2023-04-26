@@ -1,15 +1,26 @@
 import type { ActionArgs } from "@remix-run/node";
 import { isFeatureEnabled } from "@webstudio-is/feature-flags";
 import { fromMarkdown as parseMarkdown } from "mdast-util-from-markdown";
-import type { ChatCompletionRequestMessage } from "openai";
+import type {
+  ChatCompletionRequestMessage,
+  CreateChatCompletionResponse,
+} from "openai";
 import { Configuration, OpenAIApi } from "openai";
 import { visit } from "unist-util-visit";
 import { z } from "zod";
 import { zfd } from "zod-form-data";
 import env from "~/env/env.server";
 
+const StepSchema = z.enum(["instances", "styles"]);
+type Step = z.infer<typeof StepSchema>;
+
+type Steps = [Step, string][];
+type Messages = (ChatCompletionRequestMessage[] | null)[];
+
 const schema = zfd.formData({
   prompt: zfd.text(z.string().max(140)),
+  steps: zfd.repeatableOfType(zfd.text(StepSchema)),
+  messages: zfd.repeatableOfType(zfd.text().optional()),
 });
 
 type OpenAIConfig = {
@@ -25,7 +36,13 @@ export const action = async ({ request }: ActionArgs) => {
   }
 
   try {
-    const { prompt: userPrompt } = schema.parse(await request.formData());
+    const formData = schema.parse(await request.formData());
+    const userPrompt = formData.prompt;
+    const steps: Steps = formData.steps.map((step) => [step, templates[step]]);
+    const messages: Messages = steps.map((_, index) => {
+      const m = formData.messages[index];
+      return typeof m === "string" ? JSON.parse(m) : null;
+    });
 
     if (!env.OPENAI_KEY) {
       throw new Error("OpenAI API missing");
@@ -37,11 +54,13 @@ export const action = async ({ request }: ActionArgs) => {
 
     const result = await generate({
       userPrompt,
+      steps,
+      messages,
       config: {
         apiKey: env.OPENAI_KEY,
         organization: env.OPENAI_ORG,
         model: "gpt-3.5-turbo",
-        maxTokens: 1000,
+        maxTokens: 2000,
       },
     });
 
@@ -55,9 +74,13 @@ export const action = async ({ request }: ActionArgs) => {
 
 export const generate = async function generate({
   userPrompt,
+  steps,
+  messages,
   config,
 }: {
   userPrompt: string;
+  steps: Steps;
+  messages: Messages;
   config: OpenAIConfig;
 }) {
   const { apiKey, organization, model, maxTokens }: OpenAIConfig = config;
@@ -69,17 +92,11 @@ export const generate = async function generate({
     throw new Error("OpenAI org missing or invalid");
   }
 
-  const configuration = new Configuration({
-    apiKey,
-    organization,
-  });
-  const openai = new OpenAIApi(configuration);
-
-  let results;
   try {
     const chain = getChainForPrompt({
       prompt: userPrompt,
       steps,
+      messages,
       complete: (messages) =>
         fetch("https://api.openai.com/v1/chat/completions", {
           method: "POST",
@@ -101,27 +118,66 @@ export const generate = async function generate({
           }
           throw new Error(`${response.status}: ${response.statusText}`);
         }),
-      // openai.createChatCompletion({
-      //   model,
-      //   messages,
-      //   max_tokens: maxTokens,
-      //   temperature: 0,
-      // }),
     });
-    results = await chain();
-    console.log({ results });
-    return Object.assign(results.map(getJSONCodeBlock));
+
+    const responses = await chain();
+    return responses.map(([step, response]) => [
+      step,
+      getJSONCodeBlock(response),
+    ]);
   } catch (error) {
     const errorMessage = `Something went wrong. ${
-      process.env.NODE_ENV === "production"
-        ? ""
-        : `${error.message}\n\n\n${results}`
+      process.env.NODE_ENV === "production" ? "" : `${error.message}`
     }`;
     if (process.env.NODE_ENV !== "production") {
       console.error(errorMessage);
     }
     throw new Error(errorMessage);
   }
+};
+
+const getChainForPrompt = function getChainForPrompt({
+  prompt,
+  steps,
+  messages,
+  complete,
+}: {
+  prompt: string;
+  steps: Steps;
+  messages: Messages;
+  complete: (
+    messages: ChatCompletionRequestMessage[]
+  ) => Promise<CreateChatCompletionResponse>;
+}) {
+  return async function chain() {
+    const responses: [Steps, string][] = [];
+
+    for (let i = 0; i < steps.length; i++) {
+      const [step, template] = steps[i];
+
+      const completionRequestMessages = [
+        {
+          role: "user",
+          content: template.replace(/<!--prompt-content-->/, prompt).trim(),
+        } as ChatCompletionRequestMessage,
+      ];
+
+      const messagesForStep = messages[i];
+      if (messagesForStep !== null) {
+        completionRequestMessages.unshift(...messagesForStep);
+      } else if (i > 0 && responses[i - 1]) {
+        completionRequestMessages.unshift({
+          role: "assistant",
+          content: responses[i - 1][1],
+        });
+      }
+
+      const completion = await complete(completionRequestMessages);
+      responses[i] = [step, completion.choices[0].message?.content || ""];
+    }
+
+    return responses;
+  };
 };
 
 const getJSONCodeBlock = (text: string) => {
@@ -136,7 +192,7 @@ const getJSONCodeBlock = (text: string) => {
     const codeBlocks: string[] = [];
 
     visit(tree, "code", (node) => {
-      if (node.lang === "json") {
+      if (!node.lang || node.lang === "json") {
         codeBlocks.push(node.value.trim());
       }
     });
@@ -155,46 +211,8 @@ const getJSONCodeBlock = (text: string) => {
   throw new Error(errorMsg.join("\n\n"));
 };
 
-const getChainForPrompt = function getChainForPrompt({
-  prompt,
-  steps,
-  complete,
-}: {
-  prompt: string;
-  steps: string[];
-  complete: (
-    messages: ChatCompletionRequestMessage[]
-  ) => ReturnType<OpenAIApi["createChatCompletion"]>;
-}) {
-  return async function chain() {
-    const responses: string[] = [];
-
-    for (let i = 0; i < steps.length; i++) {
-      const completionRequestMessages = [
-        {
-          role: "user",
-          content: steps[i].replace(/<!--prompt-content-->/, prompt).trim(),
-        } as ChatCompletionRequestMessage,
-      ];
-
-      if (i > 0) {
-        completionRequestMessages.unshift({
-          role: "assistant",
-          content: responses[i - 1],
-        });
-      }
-
-      const completion = await complete(completionRequestMessages);
-
-      responses[i] = completion.data.choices[0].message?.content || "";
-    }
-
-    return responses;
-  };
-};
-
-const steps = [
-  `
+const templates = {
+  instances: `
 You are WebstudioGPT a no-code tool for designers that generates a clean UI markup as single JSON code block.
 
 Rules:
@@ -215,7 +233,7 @@ The only available components (instances) are the following:
 - TextArea: a multi line input field component
 - Button: a button component
 
-Use only the components are semantically correct to fulfill the following request:
+Use only the components that you need to represent the following request:
 
 <!--prompt-content-->
 
@@ -270,17 +288,18 @@ Below is an example of **invalid** JSON because children cannot be of type "inst
   ]
 }
 \`\`\``,
-  `Can you add styles to this JSON?
+  styles: `The JSON above describes <!--prompt-content-->.
+
+Can you generate styles to it following the spec below?
 
 - Use the JSON instances from your previous response.
-- You generate JSON styles that are linked to instances by instance id.
+- You generate styles as JSON that are linked to instances by instance id.
 - StyleDecl properties are camel case eg. \`backgroundColor\`.
+- Every StyleDecl must have a non-empty value.
 - StyleSourceId \`id\` has the following format: \`styleSourceId-{number}\`.
 - BreakpointId \`id\` has the following format: \`breakpointId-{number}\`.
 - Any of your answers can be parsed as JSON, therefore you will exclusively generate a code block with valid JSON.
 - Do not generate nor include any explanation.
-
-<!--prompt-content-->
 
 Use the following type definitions to generate the styles JSON:
 
@@ -410,4 +429,4 @@ type Units = {
 };
 \`\`\`
 `,
-];
+};
