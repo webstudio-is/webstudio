@@ -27,6 +27,7 @@ import { meta as SeparatorMeta } from "./separator.ws";
 import { meta as CodeMeta } from "./code.ws";
 import { meta as LabelMeta } from "./label.ws";
 import { meta as SuccessMessageMeta } from "./success-message.ws";
+import { meta as ErrorMessageMeta } from "./error-message.ws";
 
 // these are huge JSON objects that we want to be tree-shaken when not used!
 import { propsMeta as SlotMetaPropsMeta } from "./slot.ws";
@@ -55,6 +56,7 @@ import { propsMeta as SeparatorPropsMeta } from "./separator.ws";
 import { propsMeta as CodePropsMeta } from "./code.ws";
 import { propsMeta as LabelPropsMeta } from "./label.ws";
 import { propsMeta as SuccessMessagePropsMeta } from "./success-message.ws";
+import { propsMeta as ErrorMessagePropsMeta } from "./error-message.ws";
 
 // @todo this list should not be hardcoded!
 const defaultMetas: Record<string, WsComponentMeta> = {
@@ -84,6 +86,7 @@ const defaultMetas: Record<string, WsComponentMeta> = {
   Code: CodeMeta,
   Label: LabelMeta,
   SuccessMessage: SuccessMessageMeta,
+  ErrorMessage: ErrorMessageMeta,
 };
 
 let currentMetas = defaultMetas;
@@ -130,6 +133,7 @@ const defaultPropsMetasRaw = {
   Code: CodePropsMeta,
   Label: LabelPropsMeta,
   SuccessMessage: SuccessMessagePropsMeta,
+  ErrorMessage: ErrorMessagePropsMeta,
 } as const;
 
 const defaultPropsMetas: Record<string, WsComponentPropsMeta> =

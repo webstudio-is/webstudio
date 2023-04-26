@@ -63,9 +63,21 @@ export const meta: WsComponentMeta = {
         },
       ],
     },
+    {
+      type: "instance",
+      component: "ErrorMessage",
+      children: [
+        {
+          type: "instance",
+          component: "TextBlock",
+          children: [{ type: "text", value: "Sorry, something went wrong." }],
+        },
+      ],
+    },
   ],
 };
 
 export const propsMeta: WsComponentPropsMeta = {
   props,
+  initialProps: ["initialState"],
 };

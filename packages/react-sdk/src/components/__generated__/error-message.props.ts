@@ -4,14 +4,6 @@ export const props: Record<string, PropMeta> = {
   slot: { required: false, control: "text", type: "string" },
   style: { required: false, control: "text", type: "string" },
   title: { required: false, control: "text", type: "string" },
-  acceptCharset: { required: false, control: "text", type: "string" },
-  action: { required: false, control: "text", type: "string" },
-  autoComplete: { required: false, control: "text", type: "string" },
-  encType: { required: false, control: "text", type: "string" },
-  method: { required: false, control: "text", type: "string" },
-  name: { required: false, control: "text", type: "string" },
-  noValidate: { required: false, control: "boolean", type: "boolean" },
-  target: { required: false, control: "text", type: "string" },
   defaultChecked: { required: false, control: "boolean", type: "boolean" },
   defaultValue: { required: false, control: "text", type: "string" },
   suppressContentEditableWarning: {
@@ -447,11 +439,5 @@ export const props: Record<string, PropMeta> = {
     required: false,
     control: "text",
     type: "string",
-  },
-  initialState: {
-    required: false,
-    control: "radio",
-    type: "string",
-    options: ["initial", "success", "error"],
   },
 };
