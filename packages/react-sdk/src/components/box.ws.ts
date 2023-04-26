@@ -23,14 +23,7 @@ import {
 type BoxTags = NonNullable<ComponentProps<typeof Box>["tag"]>;
 
 const presetStyle = {
-  div: [
-    ...div,
-    {
-      state: ":hover",
-      property: "backgroundColor",
-      value: { type: "keyword", value: "red" },
-    },
-  ],
+  div,
   address,
   article,
   aside,
