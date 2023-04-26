@@ -25,6 +25,15 @@ export const meta: WsComponentMeta = {
 };
 
 export const propsMeta: WsComponentPropsMeta = {
-  props,
-  initialProps: ["for"],
+  props: {
+    ...props,
+    htmlFor: {
+      required: false,
+      control: "text",
+      type: "string",
+      rows: 0,
+      label: "For",
+    },
+  },
+  initialProps: ["htmlFor"],
 };
