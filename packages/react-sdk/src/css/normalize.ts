@@ -15,18 +15,17 @@
  * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE
  */
 
-import type { Style } from "@webstudio-is/css-data";
-
 // webstudio custom opinionated presets
 import { borders } from "./presets";
+import type { EmbedTemplateStyleDecl } from "../embed-template";
 
 /**
 Use a better box model (opinionated).
 */
 const boxSizing = {
-  type: "keyword",
-  value: "border-box",
-} as const;
+  property: "boxSizing",
+  value: { type: "keyword", value: "border-box" },
+} satisfies EmbedTemplateStyleDecl;
 
 /**
  *  We dont support rules like this now, implement boxSizing for each used element
@@ -36,10 +35,7 @@ const boxSizing = {
  *   box-sizing: border-box;
   }
 */
-const baseStyle = {
-  boxSizing,
-  ...borders,
-} as const satisfies Style;
+const baseStyle = [boxSizing, ...borders] satisfies EmbedTemplateStyleDecl[];
 
 export const div = baseStyle;
 export const address = baseStyle;
@@ -78,83 +74,78 @@ export const span = baseStyle;
 2. Prevent adjustments of font size after orientation changes in iOS.
 3. Use a more readable tab size (opinionated).
 */
-export const html = {
+export const html = [
   /* 1 */
-  lineHeight: {
-    type: "unit",
-    value: 1.15,
-    unit: "number",
+  {
+    property: "lineHeight",
+    value: { type: "unit", value: 1.15, unit: "number" },
   },
-
   /* 2 */
-  textSizeAdjust: {
-    type: "unit",
-    value: 100,
-    unit: "%",
+  {
+    property: "textSizeAdjust",
+    value: { type: "unit", value: 100, unit: "%" },
   },
-
   /* 3 */
-  tabSize: {
-    type: "unit",
-    value: 4,
-    unit: "number",
+  {
+    property: "tabSize",
+    value: { type: "unit", value: 4, unit: "number" },
   },
-
   boxSizing,
   ...borders,
-} as const satisfies Style;
+] satisfies EmbedTemplateStyleDecl[];
 
 /**
 1. Remove the margin in all browsers.
 2. Improve consistency of default fonts in all browsers. (https://github.com/sindresorhus/modern-normalize/issues/3)
 */
-export const body = {
+export const body = [
   /* 1 */
-  marginTop: {
-    type: "unit",
-    value: 0,
-    unit: "number",
+  {
+    property: "marginTop",
+    value: { type: "unit", value: 0, unit: "number" },
   },
-  marginRight: {
-    type: "unit",
-    value: 0,
-    unit: "number",
+  {
+    property: "marginRight",
+    value: { type: "unit", value: 0, unit: "number" },
   },
-  marginBottom: {
-    type: "unit",
-    value: 0,
-    unit: "number",
+  {
+    property: "marginBottom",
+    value: { type: "unit", value: 0, unit: "number" },
   },
-  marginLeft: {
-    type: "unit",
-    value: 0,
-    unit: "number",
+  {
+    property: "marginLeft",
+    value: { type: "unit", value: 0, unit: "number" },
   },
   /* 2 */
-  fontFamily: {
-    type: "keyword",
-    value: `system-ui, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif, 'Apple Color Emoji', 'Segoe UI Emoji'`,
+  {
+    property: "fontFamily",
+    value: {
+      type: "keyword",
+      value: `system-ui, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif, 'Apple Color Emoji', 'Segoe UI Emoji'`,
+    },
   },
   boxSizing,
   ...borders,
-} as const satisfies Style;
+] satisfies EmbedTemplateStyleDecl[];
 
 /**
 1. Add the correct height in Firefox.
 2. Correct the inheritance of border color in Firefox. (https://bugzilla.mozilla.org/show_bug.cgi?id=190655)
 */
-export const hr = {
+export const hr = [
   /* 1 */
-  height: {
-    type: "unit",
-    value: 0,
-    unit: "number",
+  {
+    property: "height",
+    value: { type: "unit", value: 0, unit: "number" },
   },
   /* 2 */
-  color: { type: "keyword", value: "inherit" },
+  {
+    property: "color",
+    value: { type: "keyword", value: "inherit" },
+  },
   boxSizing,
   ...borders,
-} as const satisfies Style;
+] satisfies EmbedTemplateStyleDecl[];
 
 /**
 Add the correct text decoration in Chrome, Edge, and Safari.
@@ -169,35 +160,37 @@ abbr[title] {
 /**
 Add the correct font weight in Edge and Safari.
 */
-export const b = {
-  fontWeight: {
-    type: "keyword",
-    value: "bolder",
+export const b = [
+  {
+    property: "fontWeight",
+    value: { type: "keyword", value: "bolder" },
   },
   boxSizing,
   ...borders,
-} as const satisfies Style;
+] satisfies EmbedTemplateStyleDecl[];
 export const strong = b;
 
 /**
 1. Improve consistency of default fonts in all browsers. (https://github.com/sindresorhus/modern-normalize/issues/3)
 2. Correct the odd 'em' font sizing in all browsers.
 */
-export const code = {
+export const code = [
   /* 1 */
-  fontFamily: {
-    type: "keyword",
-    value: `ui-monospace, SFMono-Regular, Consolas, 'Liberation Mono', Menlo, monospace`,
+  {
+    property: "fontFamily",
+    value: {
+      type: "keyword",
+      value: `ui-monospace, SFMono-Regular, Consolas, 'Liberation Mono', Menlo, monospace`,
+    },
   },
   /* 2 */
-  fontSize: {
-    type: "unit",
-    value: 1,
-    unit: "em",
+  {
+    property: "fontSize",
+    value: { type: "unit", value: 1, unit: "em" },
   },
   boxSizing,
   ...borders,
-} as const satisfies Style;
+] satisfies EmbedTemplateStyleDecl[];
 
 export const kbd = code;
 export const samp = code;
@@ -207,60 +200,55 @@ export const pre = code;
 Add the correct font size in all browsers.
 */
 
-export const small = {
-  fontSize: {
-    type: "unit",
-    value: 80,
-    unit: "%",
+export const small = [
+  {
+    property: "fontSize",
+    value: { type: "unit", value: 80, unit: "%" },
   },
   boxSizing,
   ...borders,
-} as const satisfies Style;
+] satisfies EmbedTemplateStyleDecl[];
 
 /**
 Prevent 'sub' and 'sup' elements from affecting the line height in all browsers.
 */
 
-const subSupBase = {
-  fontSize: {
-    type: "unit",
-    value: 75,
-    unit: "%",
+const subSupBase = [
+  {
+    property: "fontSize",
+    value: { type: "unit", value: 75, unit: "%" },
   },
-  lineHeight: {
-    type: "unit",
-    value: 0,
-    unit: "number",
+  {
+    property: "lineHeight",
+    value: { type: "unit", value: 0, unit: "number" },
   },
-  position: {
-    type: "keyword",
-    value: "relative",
+  {
+    property: "position",
+    value: { type: "keyword", value: "relative" },
   },
-  verticalAlign: {
-    type: "keyword",
-    value: "baseline",
+  {
+    property: "verticalAlign",
+    value: { type: "keyword", value: "baseline" },
   },
   boxSizing,
   ...borders,
-} as const satisfies Style;
+] satisfies EmbedTemplateStyleDecl[];
 
-export const sub = {
+export const sub = [
   ...subSupBase,
-  bottom: {
-    type: "unit",
-    value: -0.25,
-    unit: "em",
+  {
+    property: "bottom",
+    value: { type: "unit", value: -0.25, unit: "em" },
   },
-} as const satisfies Style;
+] satisfies EmbedTemplateStyleDecl[];
 
-export const sup = {
+export const sup = [
   ...subSupBase,
-  top: {
-    type: "unit",
-    value: -0.5,
-    unit: "em",
+  {
+    property: "top",
+    value: { type: "unit", value: -0.5, unit: "em" },
   },
-} as const satisfies Style;
+] satisfies EmbedTemplateStyleDecl[];
 
 /*
 Tabular data
@@ -272,33 +260,32 @@ Tabular data
 2. Correct table border color inheritance in Chrome and Safari. (https://bugs.chromium.org/p/chromium/issues/detail?id=935729, https://bugs.webkit.org/show_bug.cgi?id=195016)
 */
 
-export const table = {
+export const table = [
   /* 1 */
-  textIndent: {
-    type: "unit",
-    value: 0,
-    unit: "number",
+  {
+    property: "textIndent",
+    value: { type: "unit", value: 0, unit: "number" },
   },
   ...borders,
   /* 2 */
-  borderTopColor: {
-    type: "keyword",
-    value: "inherit",
+  {
+    property: "borderTopColor",
+    value: { type: "keyword", value: "inherit" },
   },
-  borderRightColor: {
-    type: "keyword",
-    value: "inherit",
+  {
+    property: "borderRightColor",
+    value: { type: "keyword", value: "inherit" },
   },
-  borderBottomColor: {
-    type: "keyword",
-    value: "inherit",
+  {
+    property: "borderBottomColor",
+    value: { type: "keyword", value: "inherit" },
   },
-  borderLeftColor: {
-    type: "keyword",
-    value: "inherit",
+  {
+    property: "borderLeftColor",
+    value: { type: "keyword", value: "inherit" },
   },
   boxSizing,
-} as const satisfies Style;
+] satisfies EmbedTemplateStyleDecl[];
 
 /*
 Forms
@@ -310,46 +297,40 @@ Forms
 2. Remove the margin in Firefox and Safari.
 */
 
-const buttonBase = {
+const buttonBase = [
   /* 1 */
-  fontFamily: {
-    type: "keyword",
-    value: "inherit",
+  {
+    property: "fontFamily",
+    value: { type: "keyword", value: "inherit" },
   },
-  fontSize: {
-    type: "unit",
-    value: 100,
-    unit: "%",
+  {
+    property: "fontSize",
+    value: { type: "unit", value: 100, unit: "%" },
   },
-  lineHeight: {
-    type: "unit",
-    value: 1.15,
-    unit: "number",
+  {
+    property: "lineHeight",
+    value: { type: "unit", value: 1.15, unit: "number" },
   },
   /* 2 */
-  marginTop: {
-    type: "unit",
-    value: 0,
-    unit: "number",
+  {
+    property: "marginTop",
+    value: { type: "unit", value: 0, unit: "number" },
   },
-  marginRight: {
-    type: "unit",
-    value: 0,
-    unit: "number",
+  {
+    property: "marginRight",
+    value: { type: "unit", value: 0, unit: "number" },
   },
-  marginBottom: {
-    type: "unit",
-    value: 0,
-    unit: "number",
+  {
+    property: "marginBottom",
+    value: { type: "unit", value: 0, unit: "number" },
   },
-  marginLeft: {
-    type: "unit",
-    value: 0,
-    unit: "number",
+  {
+    property: "marginLeft",
+    value: { type: "unit", value: 0, unit: "number" },
   },
   boxSizing,
   ...borders,
-} as const satisfies Style;
+] satisfies EmbedTemplateStyleDecl[];
 
 export const input = buttonBase;
 export const optgroup = buttonBase;
@@ -358,13 +339,13 @@ export const textarea = buttonBase;
 /**
 Remove the inheritance of text transform in Edge and Firefox.
 */
-export const button = {
+export const button = [
   ...buttonBase,
-  textTransform: {
-    type: "keyword",
-    value: "none",
+  {
+    property: "textTransform",
+    value: { type: "keyword", value: "none" },
   },
-} as const satisfies Style;
+] satisfies EmbedTemplateStyleDecl[];
 
 export const select = button;
 
@@ -417,43 +398,39 @@ See: https://github.com/mozilla/gecko-dev/blob/2f9eacd9d3d995c937b4251a5557d95d4
 Remove the padding so developers are not caught out when they zero out 'fieldset' elements in all browsers.
 */
 
-export const legend = {
-  paddingTop: {
-    type: "unit",
-    value: 0,
-    unit: "number",
+export const legend = [
+  {
+    property: "paddingTop",
+    value: { type: "unit", value: 0, unit: "number" },
   },
-  paddingRight: {
-    type: "unit",
-    value: 0,
-    unit: "number",
+  {
+    property: "paddingRight",
+    value: { type: "unit", value: 0, unit: "number" },
   },
-  paddingBottom: {
-    type: "unit",
-    value: 0,
-    unit: "number",
+  {
+    property: "paddingBottom",
+    value: { type: "unit", value: 0, unit: "number" },
   },
-  paddingLeft: {
-    type: "unit",
-    value: 0,
-    unit: "number",
+  {
+    property: "paddingLeft",
+    value: { type: "unit", value: 0, unit: "number" },
   },
   boxSizing,
   ...borders,
-} as const satisfies Style;
+] satisfies EmbedTemplateStyleDecl[];
 
 /**
 Add the correct vertical alignment in Chrome and Firefox.
 */
 
-export const progress = {
-  verticalAlign: {
-    type: "keyword",
-    value: "baseline",
+export const progress = [
+  {
+    property: "verticalAlign",
+    value: { type: "keyword", value: "baseline" },
   },
   boxSizing,
   ...borders,
-} as const satisfies Style;
+] satisfies EmbedTemplateStyleDecl[];
 
 /**
 Correct the cursor style of increment and decrement buttons in Safari.
@@ -509,11 +486,11 @@ Interactive
 Add the correct display in Chrome and Safari.
 */
 
-export const summary = {
-  display: {
-    type: "keyword",
-    value: "list-item",
+export const summary = [
+  {
+    property: "display",
+    value: { type: "keyword", value: "list-item" },
   },
   boxSizing,
   ...borders,
-} as const satisfies Style;
+] satisfies EmbedTemplateStyleDecl[];

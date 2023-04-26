@@ -5,6 +5,7 @@ import {
   type InstancesList,
   PropsList,
 } from "@webstudio-is/project-build";
+import { StyleValue, type StyleProperty } from "@webstudio-is/css-data";
 
 const EmbedTemplateText = z.object({
   type: z.literal("text"),
@@ -38,10 +39,19 @@ const EmbedTemplateProp = z.union([
 
 type EmbedTemplateProp = z.infer<typeof EmbedTemplateProp>;
 
+export const EmbedTemplateStyleDecl = z.object({
+  state: z.optional(z.string()),
+  property: z.string() as z.ZodType<StyleProperty>,
+  value: StyleValue,
+});
+
+export type EmbedTemplateStyleDecl = z.infer<typeof EmbedTemplateStyleDecl>;
+
 type EmbedTemplateInstance = {
   type: "instance";
   component: string;
   props?: EmbedTemplateProp[];
+  styles?: EmbedTemplateStyleDecl[];
   children: Array<EmbedTemplateInstance | EmbedTemplateText>;
 };
 
@@ -49,6 +59,7 @@ const EmbedTemplateInstance: z.ZodType<EmbedTemplateInstance> = z.object({
   type: z.literal("instance"),
   component: z.string(),
   props: z.optional(z.array(EmbedTemplateProp)),
+  styles: z.optional(z.array(EmbedTemplateStyleDecl)),
   children: z.lazy(() => WsEmbedTemplate),
 });
 

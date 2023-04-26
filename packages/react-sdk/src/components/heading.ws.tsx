@@ -1,8 +1,11 @@
-import type { Style } from "@webstudio-is/css-data";
 import { HeadingIcon } from "@webstudio-is/icons";
 import type { ComponentProps } from "react";
 import { h1, h2, h3, h4, h5, h6 } from "../css/normalize";
-import type { WsComponentMeta, WsComponentPropsMeta } from "./component-meta";
+import type {
+  PresetStyle,
+  WsComponentMeta,
+  WsComponentPropsMeta,
+} from "./component-meta";
 import type { Heading } from "./heading";
 import { props } from "./__generated__/heading.props";
 
@@ -15,7 +18,7 @@ const presetStyle = {
   h4,
   h5,
   h6,
-} as const satisfies Record<HeadingTags, Style>;
+} satisfies PresetStyle<HeadingTags>;
 
 export const meta: WsComponentMeta = {
   category: "typography",

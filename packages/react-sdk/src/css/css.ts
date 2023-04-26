@@ -3,9 +3,9 @@ import type { Asset, Assets } from "@webstudio-is/asset-uploader";
 import type { Build } from "@webstudio-is/project-build";
 import { getComponentNames } from "../components/components-utils";
 import { getComponentMeta } from "../components";
-import { componentAttribute, idAttribute } from "../tree";
+import { idAttribute } from "../tree";
 import { addGlobalRules } from "./global-rules";
-import { getStyleRules } from "./style-rules";
+import { getPresetStyleRules, getStyleRules } from "./style-rules";
 
 type Data = {
   assets: Asset[];
@@ -64,15 +64,12 @@ export const generateCssText = (data: Data, options: CssOptions) => {
   for (const component of getComponentNames()) {
     const meta = getComponentMeta(component);
     const presetStyle = meta?.presetStyle;
-    if (presetStyle !== undefined) {
-      for (const [tag, style] of Object.entries(presetStyle)) {
-        engine.addStyleRule(
-          `${tag}:where([${componentAttribute}=${component}])`,
-          {
-            style,
-          }
-        );
-      }
+    if (presetStyle === undefined) {
+      continue;
+    }
+    const rules = getPresetStyleRules(component, presetStyle);
+    for (const [selector, style] of rules) {
+      engine.addStyleRule(selector, { style });
     }
   }
 

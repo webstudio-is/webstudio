@@ -1,72 +1,62 @@
-import type { Style } from "@webstudio-is/css-data";
 import { BlockquoteIcon } from "@webstudio-is/icons";
 import type { defaultTag } from "./blockquote";
-import type { WsComponentMeta, WsComponentPropsMeta } from "./component-meta";
+import type {
+  PresetStyle,
+  WsComponentMeta,
+  WsComponentPropsMeta,
+} from "./component-meta";
 import { props } from "./__generated__/blockquote.props";
 
 const presetStyle = {
-  blockquote: {
-    marginTop: {
-      type: "unit",
-      value: 0,
-      unit: "number",
+  blockquote: [
+    {
+      property: "marginTop",
+      value: { type: "unit", value: 0, unit: "number" },
     },
-    marginRight: {
-      type: "unit",
-      value: 0,
-      unit: "number",
+    {
+      property: "marginRight",
+      value: { type: "unit", value: 0, unit: "number" },
     },
-    marginBottom: {
-      type: "unit",
-      value: 10,
-      unit: "px",
+    {
+      property: "marginBottom",
+      value: { type: "unit", value: 10, unit: "px" },
     },
-    marginLeft: {
-      type: "unit",
-      value: 0,
-      unit: "number",
+    {
+      property: "marginLeft",
+      value: { type: "unit", value: 0, unit: "number" },
     },
 
-    paddingTop: {
-      type: "unit",
-      value: 10,
-      unit: "px",
+    {
+      property: "paddingTop",
+      value: { type: "unit", value: 10, unit: "px" },
     },
-    paddingBottom: {
-      type: "unit",
-      value: 10,
-      unit: "px",
+    {
+      property: "paddingBottom",
+      value: { type: "unit", value: 10, unit: "px" },
     },
-    paddingLeft: {
-      type: "unit",
-      value: 20,
-      unit: "px",
+    {
+      property: "paddingLeft",
+      value: { type: "unit", value: 20, unit: "px" },
     },
-    paddingRight: {
-      type: "unit",
-      value: 20,
-      unit: "px",
+    {
+      property: "paddingRight",
+      value: { type: "unit", value: 20, unit: "px" },
     },
 
-    borderLeftWidth: {
-      type: "unit",
-      value: 5,
-      unit: "px",
+    {
+      property: "borderLeftWidth",
+      value: { type: "unit", value: 5, unit: "px" },
     },
-    borderLeftStyle: {
-      type: "keyword",
-      value: "solid",
+    {
+      property: "borderLeftStyle",
+      value: { type: "keyword", value: "solid" },
     },
-
-    borderLeftColor: {
-      type: "rgb",
-      r: 226,
-      g: 226,
-      b: 226,
-      alpha: 1,
+    {
+      property: "borderLeftColor",
+      value: { type: "rgb", r: 226, g: 226, b: 226, alpha: 1 },
     },
-  },
-} as const satisfies Record<typeof defaultTag, Style>;
+  ],
+} satisfies PresetStyle<typeof defaultTag>;
 
 export const meta: WsComponentMeta = {
   category: "typography",
