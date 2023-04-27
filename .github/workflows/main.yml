@@ -25,4 +25,4 @@ jobs:
 
       - run: pnpm prettier --cache --check "**/*.{js,md,ts,tsx}"
 
-      - run: pnpm turbo run size-test build checks
+      - run: pnpm turbo run size-test build checks dts
