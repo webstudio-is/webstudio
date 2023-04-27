@@ -1,9 +1,12 @@
 import { BoxIcon } from "@webstudio-is/icons";
-import type { WsComponentMeta, WsComponentPropsMeta } from "./component-meta";
+import type {
+  PresetStyle,
+  WsComponentMeta,
+  WsComponentPropsMeta,
+} from "./component-meta";
 import { props } from "./__generated__/box.props";
 import type { Box } from "./box";
 import type { ComponentProps } from "react";
-import type { Style } from "@webstudio-is/css-data";
 import {
   div,
   address,
@@ -30,7 +33,7 @@ const presetStyle = {
   main,
   nav,
   section,
-} as const satisfies Record<BoxTags, Style>;
+} satisfies PresetStyle<BoxTags>;
 
 export const meta: WsComponentMeta = {
   category: "general",

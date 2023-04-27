@@ -1,6 +1,5 @@
 import { useState, useMemo } from "react";
-import type { Unit } from "@webstudio-is/css-data";
-import { properties, units } from "@webstudio-is/css-data";
+import { type Unit } from "@webstudio-is/css-data";
 import * as SelectPrimitive from "@radix-ui/react-select";
 import {
   SelectScrollUpButton,
@@ -12,71 +11,67 @@ import {
   nestedSelectButtonUnitless,
 } from "@webstudio-is/design-system";
 import { ChevronDownIcon, ChevronUpIcon } from "@webstudio-is/icons";
+import type { CssValueInputValue } from "./css-value-input";
+import { buildOptions } from "./unit-select-options";
 
-type UnitOption = {
-  id: Unit;
-  label: string;
-};
-
-const visibleLengthUnits = ["px", "em", "rem", "ch", "vw", "vh"] as const;
+export type UnitOption =
+  | {
+      id: Unit;
+      label: string;
+      type: "unit";
+    }
+  | { id: string; label: string; type: "keyword" };
 
 type UseUnitSelectType = {
   property: string;
-  value?: Unit;
-  showUnitless: boolean;
-  onChange: (value: Unit) => void;
+  value: CssValueInputValue;
+  onChange: (
+    value: { type: "unit"; value: Unit } | { type: "keyword"; value: string }
+  ) => void;
   onCloseAutoFocus: (event: Event) => void;
 };
 
 export const useUnitSelect = ({
   property,
   value,
-  // edge-case, most css properties accept unitless value 0
-  showUnitless,
   onChange,
   onCloseAutoFocus,
 }: UseUnitSelectType): [boolean, JSX.Element | null] => {
   const [isOpen, setIsOpen] = useState(false);
 
-  const options = useMemo(() => {
-    const options: UnitOption[] = [];
-    const { unitGroups } = properties[property as keyof typeof properties];
-    for (const unitGroup of unitGroups) {
-      if (unitGroup === "number") {
-        options.push({ id: "number", label: nestedSelectButtonUnitless });
-        continue;
-      }
-      const visibleUnits =
-        unitGroup === "length" ? visibleLengthUnits : units[unitGroup];
-      for (const unit of visibleUnits) {
-        options.push({ id: unit, label: unit.toLocaleUpperCase() });
-      }
-    }
+  const unit =
+    value.type === "unit" || value.type === "intermediate"
+      ? value.unit
+      : undefined;
 
-    if (showUnitless && !options.some((o) => o.id === "number")) {
-      options.push({ id: "number", label: nestedSelectButtonUnitless });
-    }
+  const options = useMemo(
+    () => buildOptions(property, value, nestedSelectButtonUnitless),
+    [property, value]
+  );
 
-    return options;
-  }, [property, showUnitless]);
-
-  if (
-    options.length === 0 ||
-    // hide unit select when value cannot have units
-    (options.length === 1 && options[0].id === "number")
-  ) {
+  if (options.length === 0) {
     return [isOpen, null];
   }
 
+  const unitOrKeyword: string | undefined =
+    unit ?? (value.type === "keyword" ? value.value : undefined);
+
   const select = (
     <UnitSelect
-      value={value}
+      value={unitOrKeyword}
+      label={unit ?? nestedSelectButtonUnitless}
       options={options}
       open={isOpen}
       onCloseAutoFocus={onCloseAutoFocus}
       onOpenChange={setIsOpen}
-      onChange={onChange}
-      labelFallback={options[0].label}
+      onChange={(unitOption) => {
+        if (unitOption.type === "keyword") {
+          onChange({ type: "keyword", value: unitOption.id });
+          return;
+        }
+
+        onChange({ type: "unit", value: unitOption.id });
+      }}
     />
   );
 
@@ -86,37 +81,39 @@ export const useUnitSelect = ({
 type UnitSelectProps = {
   options: Array<UnitOption>;
   value?: string | undefined;
-  onChange: (value: Unit) => void;
+  label?: string | undefined;
+  onChange: (value: UnitOption) => void;
   onOpenChange: (open: boolean) => void;
   onCloseAutoFocus: (event: Event) => void;
   open: boolean;
-  labelFallback: string;
 };
 
 const UnitSelect = ({
   options,
   value,
+  label,
   onChange,
   onOpenChange,
   onCloseAutoFocus,
   open,
-  labelFallback,
 }: UnitSelectProps) => {
-  const matchedOption = options.find((item) => item.id === value);
   return (
     <SelectPrimitive.Root
       value={value}
-      onValueChange={onChange}
+      onValueChange={(value) => {
+        const optionValue = options.find((option) => option.id === value);
+        if (optionValue === undefined) {
+          return;
+        }
+        onChange(optionValue);
+      }}
       onOpenChange={onOpenChange}
       open={open}
     >
       <SelectPrimitive.SelectTrigger asChild>
         <NestedSelectButton tabIndex={-1}>
           <SelectPrimitive.Value>
-            {matchedOption?.label ??
-              (value === "number"
-                ? nestedSelectButtonUnitless
-                : value ?? labelFallback)}
+            {value === "number" ? nestedSelectButtonUnitless : label}
           </SelectPrimitive.Value>
         </NestedSelectButton>
       </SelectPrimitive.SelectTrigger>

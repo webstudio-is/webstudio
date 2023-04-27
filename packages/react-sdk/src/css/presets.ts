@@ -1,42 +1,20 @@
-import type { Style } from "@webstudio-is/css-data";
+import type { EmbedTemplateStyleDecl } from "../embed-template";
 
-export const borders = {
-  borderTopColor: {
-    type: "keyword",
-    value: "currentColor",
+export const borders: EmbedTemplateStyleDecl[] = [
+  {
+    property: "borderTopWidth",
+    value: { type: "unit", value: 1, unit: "px" },
   },
-  borderRightColor: {
-    type: "keyword",
-    value: "currentColor",
+  {
+    property: "borderRightWidth",
+    value: { type: "unit", value: 1, unit: "px" },
   },
-  borderBottomColor: {
-    type: "keyword",
-    value: "currentColor",
+  {
+    property: "borderBottomWidth",
+    value: { type: "unit", value: 1, unit: "px" },
   },
-  borderLeftColor: {
-    type: "keyword",
-    value: "currentColor",
+  {
+    property: "borderLeftWidth",
+    value: { type: "unit", value: 1, unit: "px" },
   },
-
-  borderTopWidth: {
-    type: "unit",
-    value: 1,
-    unit: "px",
-  },
-
-  borderRightWidth: {
-    type: "unit",
-    value: 1,
-    unit: "px",
-  },
-  borderBottomWidth: {
-    type: "unit",
-    value: 1,
-    unit: "px",
-  },
-  borderLeftWidth: {
-    type: "unit",
-    value: 1,
-    unit: "px",
-  },
-} as const satisfies Style;
+];

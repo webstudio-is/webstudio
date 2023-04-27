@@ -1,19 +1,22 @@
-import type { Style } from "@webstudio-is/css-data";
 import { TextItalicIcon } from "@webstudio-is/icons";
 import type { defaultTag } from "./italic";
-import type { WsComponentMeta, WsComponentPropsMeta } from "./component-meta";
+import type {
+  PresetStyle,
+  WsComponentMeta,
+  WsComponentPropsMeta,
+} from "./component-meta";
 import { props } from "./__generated__/italic.props";
 import { i } from "../css/normalize";
 
 const presetStyle = {
-  i: {
+  i: [
     ...i,
-    fontStyle: {
-      type: "keyword",
-      value: "italic",
+    {
+      property: "fontStyle",
+      value: { type: "keyword", value: "italic" },
     },
-  },
-} as const satisfies Record<typeof defaultTag, Style>;
+  ],
+} satisfies PresetStyle<typeof defaultTag>;
 
 export const meta: WsComponentMeta = {
   type: "rich-text-child",

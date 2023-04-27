@@ -1,12 +1,13 @@
 import { describe, test, expect } from "@jest/globals";
 import { parseIntermediateOrInvalidValue } from "./parse-intermediate-or-invalid-value";
+import { toKebabCase, toPascalCase } from "../keyword-utils";
 
 const properties = ["width", "lineHeight", "backgroundPositionX"] as const;
 
 const propertiesAndKeywords = [
-  ["width", "auto"],
-  ["lineHeight", "normal"],
-  ["backgroundPositionX", "center"],
+  ["width", "auto" as string],
+  ["lineHeight", "normal" as string],
+  ["backgroundPositionX", "center" as string],
 ] as const;
 
 describe("Parse intermediate or invalid value without math evaluation", () => {
@@ -85,6 +86,38 @@ describe("Parse intermediate or invalid value without math evaluation", () => {
         value: keyword,
       });
     }
+  });
+
+  test("accept keywords written as pascal case", () => {
+    const pascalCaseKeywords = propertiesAndKeywords.map(
+      ([property, keyword]) => [property, toPascalCase(keyword)] as const
+    );
+
+    for (const [propery, keyword] of pascalCaseKeywords) {
+      const result = parseIntermediateOrInvalidValue(propery, {
+        type: "intermediate",
+        value: keyword,
+        unit: "em",
+      });
+
+      expect(result).toEqual({
+        type: "keyword",
+        value: toKebabCase(keyword),
+      });
+    }
+  });
+
+  test("keyword with pascal case name", () => {
+    const result = parseIntermediateOrInvalidValue("boxSizing", {
+      type: "intermediate",
+      value: "Border Box",
+      unit: "em",
+    });
+
+    expect(result).toEqual({
+      type: "keyword",
+      value: "border-box",
+    });
   });
 });
 

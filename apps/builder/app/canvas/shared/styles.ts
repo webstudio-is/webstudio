@@ -5,13 +5,13 @@ import { useStore } from "@nanostores/react";
 import type { Assets } from "@webstudio-is/asset-uploader";
 import {
   collapsedAttribute,
-  componentAttribute,
   getComponentMeta,
   getComponentNames,
   idAttribute,
   addGlobalRules,
   createImageValueTransformer,
   getParams,
+  getPresetStyleRules,
 } from "@webstudio-is/react-sdk";
 import type { Instance, StyleDecl } from "@webstudio-is/project-build";
 import {
@@ -137,15 +137,12 @@ export const GlobalStyles = () => {
     for (const component of getComponentNames()) {
       const meta = getComponentMeta(component);
       const presetStyle = meta?.presetStyle;
-      if (presetStyle !== undefined) {
-        for (const [tag, style] of Object.entries(presetStyle)) {
-          presetStylesEngine.addStyleRule(
-            `${tag}:where([${componentAttribute}=${component}])`,
-            {
-              style,
-            }
-          );
-        }
+      if (presetStyle === undefined) {
+        continue;
+      }
+      const rules = getPresetStyleRules(component, presetStyle);
+      for (const [selector, style] of rules) {
+        presetStylesEngine.addStyleRule(selector, { style });
       }
     }
     presetStylesEngine.render();

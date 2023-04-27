@@ -1,42 +1,43 @@
 import { DashIcon } from "@webstudio-is/icons";
-import type { WsComponentMeta, WsComponentPropsMeta } from "./component-meta";
+import type {
+  PresetStyle,
+  WsComponentMeta,
+  WsComponentPropsMeta,
+} from "./component-meta";
 import { props } from "./__generated__/separator.props";
 import type { defaultTag } from "./separator";
-import type { Style } from "@webstudio-is/css-data";
 import { hr } from "../css/normalize";
 
 const presetStyle = {
-  hr: {
+  hr: [
     ...hr,
 
-    height: {
-      type: "keyword",
-      value: "1px",
+    {
+      property: "height",
+      value: { type: "keyword", value: "1px" },
     },
-
-    backgroundColor: {
-      type: "keyword",
-      value: "gray",
+    {
+      property: "backgroundColor",
+      value: { type: "keyword", value: "gray" },
     },
-
-    borderTopStyle: {
-      type: "keyword",
-      value: "none",
+    {
+      property: "borderTopStyle",
+      value: { type: "keyword", value: "none" },
     },
-    borderRightStyle: {
-      type: "keyword",
-      value: "none",
+    {
+      property: "borderRightStyle",
+      value: { type: "keyword", value: "none" },
     },
-    borderLeftStyle: {
-      type: "keyword",
-      value: "none",
+    {
+      property: "borderLeftStyle",
+      value: { type: "keyword", value: "none" },
     },
-    borderBottomStyle: {
-      type: "keyword",
-      value: "none",
+    {
+      property: "borderBottomStyle",
+      value: { type: "keyword", value: "none" },
     },
-  },
-} as const satisfies Record<typeof defaultTag, Style>;
+  ],
+} satisfies PresetStyle<typeof defaultTag>;
 
 export const meta: WsComponentMeta = {
   category: "general",
