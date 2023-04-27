@@ -38,7 +38,7 @@ import { scaleStore } from "~/builder/shared/nano-states";
 
 export const BreakpointsPopover = () => {
   const [view, setView] = useState<
-    "selector" | "editor" | "confirmation" | undefined
+    "initial" | "editor" | "confirmation" | undefined
   >();
   const [breakpointToDelete, setBreakpointToDelete] = useState<
     Breakpoint | undefined
@@ -48,7 +48,7 @@ export const BreakpointsPopover = () => {
   const scale = useStore(scaleStore);
 
   useSubscribe("openBreakpointsMenu", () => {
-    setView("selector");
+    setView("initial");
   });
 
   useSubscribe("clickCanvas", () => {
@@ -87,7 +87,7 @@ export const BreakpointsPopover = () => {
     <Popover
       open={view !== undefined}
       onOpenChange={(isOpen) => {
-        setView(isOpen ? "selector" : undefined);
+        setView(isOpen ? "initial" : undefined);
       }}
     >
       <PopoverTrigger aria-label="Show breakpoints" asChild>
@@ -115,26 +115,14 @@ export const BreakpointsPopover = () => {
             />
           )}
           {view === "editor" && (
-            <>
-              <BreakpointsEditor
-                onDelete={(breakpoint) => {
-                  setBreakpointToDelete(breakpoint);
-                  setView("confirmation");
-                }}
-              />
-              <PopoverSeparator />
-              <DropdownMenuItem
-                css={{ justifyContent: "center" }}
-                onSelect={(event) => {
-                  event.preventDefault();
-                  setView("selector");
-                }}
-              >
-                {"Done"}
-              </DropdownMenuItem>
-            </>
+            <BreakpointsEditor
+              onDelete={(breakpoint) => {
+                setBreakpointToDelete(breakpoint);
+                setView("confirmation");
+              }}
+            />
           )}
-          {view === "selector" && (
+          {view === "initial" && (
             <>
               <Flex
                 css={{ px: theme.spacing[7], py: theme.spacing[5] }}
@@ -189,27 +177,31 @@ export const BreakpointsPopover = () => {
                   );
                 }
               )}
-              {isFeatureEnabled("breakpointsEditor") && (
-                <>
-                  <PopoverSeparator />
-                  <PopoverMenuItemContainer
-                    css={{
-                      justifyContent: "center",
-                      px: theme.spacing[7],
-                    }}
-                    onSelect={(event) => {
-                      event.preventDefault();
-                      setView("editor");
-                    }}
-                  >
-                    <Button color="neutral" css={{ flexGrow: 1 }}>
-                      Edit breakpoints
-                    </Button>
-                  </PopoverMenuItemContainer>
-                </>
-              )}
             </>
           )}
+          {isFeatureEnabled("breakpointsEditor") &&
+            (view === "editor" || view === "initial") && (
+              <>
+                <PopoverSeparator />
+                <PopoverMenuItemContainer
+                  css={{
+                    justifyContent: "center",
+                    px: theme.spacing[7],
+                  }}
+                >
+                  <Button
+                    color="neutral"
+                    css={{ flexGrow: 1 }}
+                    onClick={(event) => {
+                      event.preventDefault();
+                      setView(view === "initial" ? "editor" : "initial");
+                    }}
+                  >
+                    {view === "editor" ? "Done" : "Edit breakpoints"}
+                  </Button>
+                </PopoverMenuItemContainer>
+              </>
+            )}
         </PopoverContent>
       </PopoverPortal>
     </Popover>
