@@ -396,7 +396,7 @@ export const mark: Styles = [
   {
     property: "color",
     // in firefox defined as MarkText
-    value: { type: "keyword", value: "blac" },
+    value: { type: "keyword", value: "black" },
   },
 ];
 
