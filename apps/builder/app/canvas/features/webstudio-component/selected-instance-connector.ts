@@ -10,6 +10,7 @@ import {
   selectedInstanceBrowserStyleStore,
   selectedInstanceIntanceToTagStore,
   selectedInstanceUnitSizesStore,
+  selectedInstanceIsRenderedStore,
 } from "~/shared/nano-states";
 import htmlTags, { type htmlTags as HtmlTags } from "html-tags";
 import { getAllElementsBoundingBox } from "~/shared/dom-utils";
@@ -174,6 +175,8 @@ export const SelectedInstanceConnector = ({
     const unitSizes = calculateUnitSizes(element);
     selectedInstanceUnitSizesStore.set(unitSizes);
 
+    selectedInstanceIsRenderedStore.set(true);
+
     return () => {
       hideOutline();
       resizeObserver.disconnect();
@@ -182,6 +185,7 @@ export const SelectedInstanceConnector = ({
       unsubscribeScrollState();
       unsubscribeWindowResize();
       unsubscribeIsResizingCanvas();
+      selectedInstanceIsRenderedStore.set(false);
     };
   }, [
     instanceElementRef,
