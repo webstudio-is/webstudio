@@ -8,19 +8,33 @@ import {
   TextArea,
   theme,
 } from "@webstudio-is/design-system";
+
 import { EyeconOpenIcon } from "@webstudio-is/icons";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import type { Publish } from "~/shared/pubsub";
 import { aiGenerationPath } from "~/shared/router-utils";
 import { CloseButton, Header } from "../../header";
 import type { TabName } from "../../types";
+
+import type { Instance, PropsList } from "@webstudio-is/project-build";
+import type { WsEmbedTemplate } from "@webstudio-is/react-sdk";
+import { generateDataFromEmbedTemplate } from "@webstudio-is/react-sdk";
+import { insertInstances } from "~/shared/instance-utils";
+import {
+  instancesStore,
+  selectedInstanceSelectorStore,
+  selectedPageStore,
+} from "~/shared/nano-states";
+import {
+  findClosestDroppableTarget,
+  type InstanceSelector,
+} from "~/shared/tree-utils";
 
 type TabContentProps = {
   onSetActiveTab: (tabName: TabName) => void;
   publish: Publish;
 };
 
-type AIGenerationSteps = "instances" | "styles";
 type AIGenerationState =
   | {
       state: "idle";
@@ -29,17 +43,42 @@ type AIGenerationState =
       state: "generating";
       step: AIGenerationSteps;
     };
-type AIGenerationResults = Array<any>;
+type AIGenerationResponse =
+  | { step: "instances"; response: EmbedTemplateInstance }
+  | { step: "styles"; response: any }
+  | { step: "props"; response: PropsList };
 
-const steps: AIGenerationSteps[] = ["instances", "styles"];
+type AIGenerationResponses = Array<AIGenerationResponse>;
+
+type AIGenerationSteps = AIGenerationResponse["step"];
+// "instances" | "styles" | "props";
+
+const steps: AIGenerationSteps[] = ["instances"];
 const labels = {
   instances: "components",
   styles: "styles",
 };
 
+const insertTemplate = (template: WsEmbedTemplate) => {
+  const { instances, children, props } =
+    generateDataFromEmbedTemplate(template);
+
+  const selectedPage = selectedPageStore.get();
+  if (selectedPage === undefined) {
+    return;
+  }
+  const dropTarget = findClosestDroppableTarget(
+    instancesStore.get(),
+    // fallback to root as drop target
+    selectedInstanceSelectorStore.get() ?? [selectedPage.rootInstanceId]
+  );
+
+  insertInstances(instances, props, dropTarget);
+};
+
 export const TabContent = ({ publish, onSetActiveTab }: TabContentProps) => {
-  const [aiGenerationResults, setAiGenerationResults] =
-    useState<AIGenerationResults>([]);
+  const [aiGenerationResponses, setAiGenerationResponses] =
+    useState<WsEmbedTemplate>([]);
   const [aiGenerationState, setAiGenerationState] = useState<AIGenerationState>(
     { state: "idle" }
   );
@@ -53,7 +92,7 @@ export const TabContent = ({ publish, onSetActiveTab }: TabContentProps) => {
     const form = event.currentTarget as HTMLFormElement;
     const baseData = new FormData(form);
 
-    const responses = [];
+    const responses: AIGenerationResponses = [];
 
     for (let i = 0; i < steps.length; ) {
       const step = steps[i];
@@ -90,11 +129,11 @@ export const TabContent = ({ publish, onSetActiveTab }: TabContentProps) => {
 
       const response = await res.json();
 
-      if (!response.errors) {
+      if (!response.errors && step === response[0][0]) {
         responses.push({ step, response: response[0][1] });
         i++;
       } else {
-        // todo handle failures - perhaps use expontential backoff retry
+        // @todo handle failures - perhaps use expontential backoff retry
         if (!window.confirm(`Something went wrong. Retry?`)) {
           setAiGenerationState({
             state: "idle",
@@ -104,11 +143,12 @@ export const TabContent = ({ publish, onSetActiveTab }: TabContentProps) => {
       }
     }
 
-    setAiGenerationResults((existingResults) => {
-      return [
-        Object.assign(...responses.map(({ response }) => response)),
-        ...existingResults,
-      ];
+    const template = responses.flatMap(({ step, response }) => response);
+
+    insertTemplate(template);
+
+    setAiGenerationResponses((existingResponses) => {
+      return [template, ...existingResponses];
     });
 
     setAiGenerationState({
@@ -116,9 +156,13 @@ export const TabContent = ({ publish, onSetActiveTab }: TabContentProps) => {
     });
   };
 
-  if (aiGenerationResults.length) {
-    console.log({ aiGenerationResults });
+  if (aiGenerationResponses.length) {
+    console.log({ aiGenerationResponses });
   }
+
+  // useEffect(() => {
+  //   insertTemplate(testInstances);
+  // }, []);
 
   const progress =
     aiGenerationState.state === "idle"
@@ -160,7 +204,7 @@ export const TabContent = ({ publish, onSetActiveTab }: TabContentProps) => {
         </Flex>
       </Flex>
       {aiGenerationState.state !== "idle" ? (
-        <Dialog title="AI" defaultOpen={true}>
+        <Dialog defaultOpen={true}>
           <DialogContent>
             <Flex
               gap="2"
@@ -180,97 +224,21 @@ export const TabContent = ({ publish, onSetActiveTab }: TabContentProps) => {
 
 export const icon = <EyeconOpenIcon />;
 
-const testInstances = {
-  step: "instances",
-  response: {
-    instances: [
+const testInstances = [
+  {
+    type: "instance",
+    component: "Box",
+    children: [
       {
         type: "instance",
-        id: "instance-Box-1",
         component: "Box",
-        children: [
-          { type: "id", value: "instance-Box-2" },
-          { type: "id", value: "instance-Box-3" },
-        ],
+        children: [],
       },
       {
         type: "instance",
-        id: "instance-Box-2",
         component: "Box",
-        children: [
-          { type: "id", value: "instance-Heading-1" },
-          { type: "id", value: "instance-Input-1" },
-          { type: "id", value: "instance-TextArea-1" },
-          { type: "id", value: "instance-Button-1" },
-        ],
-      },
-      {
-        type: "instance",
-        id: "instance-Box-3",
-        component: "Box",
-        children: [
-          { type: "id", value: "instance-Heading-2" },
-          { type: "id", value: "instance-Input-2" },
-          { type: "id", value: "instance-TextArea-2" },
-          { type: "id", value: "instance-Button-2" },
-        ],
-      },
-      {
-        type: "instance",
-        id: "instance-Heading-1",
-        component: "Heading",
-        label: "Column 1 Heading",
-        children: [{ type: "text", value: "Column 1" }],
-      },
-      {
-        type: "instance",
-        id: "instance-Heading-2",
-        component: "Heading",
-        label: "Column 2 Heading",
-        children: [{ type: "text", value: "Column 2" }],
-      },
-      {
-        type: "instance",
-        id: "instance-Input-1",
-        component: "Input",
-        label: "Column 1 Input",
         children: [],
-      },
-      {
-        type: "instance",
-        id: "instance-Input-2",
-        component: "Input",
-        label: "Column 2 Input",
-        children: [],
-      },
-      {
-        type: "instance",
-        id: "instance-TextArea-1",
-        component: "TextArea",
-        label: "Column 1 Text Area",
-        children: [],
-      },
-      {
-        type: "instance",
-        id: "instance-TextArea-2",
-        component: "TextArea",
-        label: "Column 2 Text Area",
-        children: [],
-      },
-      {
-        type: "instance",
-        id: "instance-Button-1",
-        component: "Button",
-        label: "Column 1 Button",
-        children: [{ type: "text", value: "Submit" }],
-      },
-      {
-        type: "instance",
-        id: "instance-Button-2",
-        component: "Button",
-        label: "Column 2 Button",
-        children: [{ type: "text", value: "Submit" }],
       },
     ],
   },
-};
+];

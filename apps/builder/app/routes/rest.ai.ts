@@ -35,6 +35,8 @@ export const action = async ({ request }: ActionArgs) => {
     return { errors: ["Feature not available"] };
   }
 
+  // @todo add session checks and rate limiting
+
   try {
     const formData = schema.parse(await request.formData());
     const userPrompt = formData.prompt;
@@ -121,10 +123,16 @@ export const generate = async function generate({
     });
 
     const responses = await chain();
-    return responses.map(([step, response]) => [
-      step,
-      getJSONCodeBlock(response),
-    ]);
+    return responses
+      .map(([step, response]) => [
+        step,
+        // @todo validate code block against step's schema.
+        getJSONCodeBlock(response),
+      ])
+      .map(([step, response]) => [
+        step,
+        Array.isArray(response) ? response : [response],
+      ]);
   } catch (error) {
     const errorMessage = `Something went wrong. ${
       process.env.NODE_ENV === "production" ? "" : `${error.message}`
@@ -218,10 +226,6 @@ You are WebstudioGPT a no-code tool for designers that generates a clean UI mark
 Rules:
 
 - Don't use any dependency or external library.
-- \`instances\` are a shallow representation of the UI element components.
-- Don't nest instances.
-- Children components are at the same level of the parent element which references them by type \`id\` (instanceId).
-- Instance \`id\` has the following format: \`instance-{ComponentName}-{number}\`.
 - Any of your answers can be parsed as JSON, therefore you will exclusively generate a single code block with valid JSON.
 - Do not generate nor include any explanation.
 
@@ -240,23 +244,15 @@ Use only the components that you need to represent the following request:
 The produced JSON code block strictly follows the TypeScript definitions (spec) below:
 
 \`\`\`typescript
-type InstanceId = string;
+type EmbedTemplateText = {
+  type: "text";
+  value: string;
+};
 
-type Instance = {
+type EmbedTemplateInstance = {
   type: "instance";
-  id: InstanceId;
   component: string;
-  label?: string | undefined;
-  children: (
-    | {
-        type: "id";
-        value: InstanceId;
-      }
-    | {
-        type: "text";
-        value: string;
-      }
-  )[];
+  children: Array<EmbedTemplateInstance | EmbedTemplateText>;
 };
 \`\`\`
 
@@ -265,26 +261,15 @@ Below is an example of **invalid** JSON because children cannot be of type "inst
 \`\`\`json
 {
   "instances": [
+    { type: "text", value: "hello" },
     {
-      "type": "instance",
-      "id": "id-Box-2",
-      "component": "Box",
-      "label": "main content",
-      "children": [
-        {
-          "type": "instance",
-          "id": "id-Heading-2",
-          "component": "Heading",
-          "label": "Main Content Heading",
-          "children": [
-            {
-              "type": "text",
-              "value": "Main Content"
-            }
-          ]
-        }
-      ]
-    }
+      type: "instance",
+      component: "Box",
+      children: [
+        { type: "instance", component: "Box", children: [] },
+        { type: "text", value: "world" },
+      ],
+    },
   ]
 }
 \`\`\``,

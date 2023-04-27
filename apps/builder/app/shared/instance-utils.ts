@@ -1,31 +1,31 @@
-import store from "immerhin";
 import { findTreeInstanceIdsExcludingSlotDescendants } from "@webstudio-is/project-build";
-import {
-  propsStore,
-  stylesStore,
-  selectedInstanceSelectorStore,
-  styleSourceSelectionsStore,
-  styleSourcesStore,
-  instancesStore,
-  selectedStyleSourceSelectorStore,
-  textEditingInstanceSelectorStore,
-  breakpointsStore,
-} from "./nano-states";
-import {
-  type DroppableTarget,
-  type InstanceSelector,
-  createComponentInstance,
-  findLocalStyleSourcesWithinInstances,
-  insertInstancesMutable,
-  reparentInstanceMutable,
-  getAncestorInstanceSelector,
-  insertPropsCopyMutable,
-  insertStyleSourcesCopyMutable,
-  insertStyleSourceSelectionsCopyMutable,
-  insertStylesCopyMutable,
-} from "./tree-utils";
+import store from "immerhin";
 import { removeByMutable } from "./array-utils";
 import { isBaseBreakpoint } from "./breakpoints";
+import {
+  breakpointsStore,
+  instancesStore,
+  propsStore,
+  selectedInstanceSelectorStore,
+  selectedStyleSourceSelectorStore,
+  styleSourceSelectionsStore,
+  styleSourcesStore,
+  stylesStore,
+  textEditingInstanceSelectorStore,
+} from "./nano-states";
+import {
+  createComponentInstance,
+  findLocalStyleSourcesWithinInstances,
+  getAncestorInstanceSelector,
+  insertInstancesMutable,
+  insertPropsCopyMutable,
+  insertStyleSourceSelectionsCopyMutable,
+  insertStyleSourcesCopyMutable,
+  insertStylesCopyMutable,
+  reparentInstanceMutable,
+  type DroppableTarget,
+  type InstanceSelector,
+} from "./tree-utils";
 
 export const insertNewComponentInstance = (
   component: string,
