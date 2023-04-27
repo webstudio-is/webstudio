@@ -179,9 +179,7 @@ export const WebstudioComponentDev = ({
           instanceProps={instanceProps}
         />
       )}
-      {/* Component includes many types and it's hard to provide right ref type with useRef */}
-      {/* eslint-disable-next-line @typescript-eslint/no-explicit-any */}
-      <Component {...props} ref={instanceElementRef as any}>
+      <Component {...props} ref={instanceElementRef}>
         {renderWebstudioComponentChildren(children)}
       </Component>
     </>

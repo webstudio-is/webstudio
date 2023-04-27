@@ -1,3 +1,4 @@
+import type { forwardRef } from "react";
 import * as components from "./components";
 import { registeredComponents } from "./index";
 
@@ -53,17 +54,16 @@ export const getComponentNames = (): ComponentName[] => {
   return Array.from(uniqueNames) as ComponentName[];
 };
 
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+type AnyComponent = ReturnType<typeof forwardRef<any, any>>;
+
 /**
  * Now used only in builder app
  * @todo Consider using the same approach in the builder app as in the published apps . A dynamic import is needed
  */
-export const getComponent = (
-  name: string
-): undefined | (typeof components)[ComponentName] => {
+export const getComponent = (name: string): undefined | AnyComponent => {
   return registeredComponents != null && name in registeredComponents
-    ? (registeredComponents[
-        name as ComponentName
-      ] as (typeof components)[ComponentName])
+    ? (registeredComponents[name as ComponentName] as AnyComponent)
     : components[name as ComponentName];
 };
 
@@ -74,11 +74,9 @@ export const getComponent = (
  * see example /packages/sdk-size-test/app/routes/$.tsx
  **/
 export const createGetComponent = (comps: Partial<typeof components>) => {
-  return (name: string) => {
+  return (name: string): undefined | AnyComponent => {
     return registeredComponents != null && name in registeredComponents
-      ? (registeredComponents[
-          name as ComponentName
-        ] as (typeof components)[ComponentName])
+      ? (registeredComponents[name as ComponentName] as AnyComponent)
       : comps[name as ComponentName];
   };
 };
