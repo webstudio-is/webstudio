@@ -1,19 +1,19 @@
 import { TextBlockIcon } from "@webstudio-is/icons";
-import type { WsComponentMeta, WsComponentPropsMeta } from "./component-meta";
+import type {
+  WsComponentMeta,
+  WsComponentPropsMeta,
+  PresetStyle,
+} from "./component-meta";
 import { props } from "./__generated__/label.props";
 import type { defaultTag } from "./label";
-import type { Style } from "@webstudio-is/css-data";
 import { label } from "../css/normalize";
 
 const presetStyle = {
-  label: {
+  label: [
     ...label,
-    display: {
-      type: "keyword",
-      value: "block",
-    },
-  },
-} as const satisfies Record<typeof defaultTag, Style>;
+    { property: "display", value: { type: "keyword", value: "block" } },
+  ],
+} satisfies PresetStyle<typeof defaultTag>;
 
 export const meta: WsComponentMeta = {
   category: "forms",

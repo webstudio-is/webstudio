@@ -1,18 +1,20 @@
-import type { Style } from "@webstudio-is/css-data";
 import { FormTextAreaIcon } from "@webstudio-is/icons";
 import { textarea } from "../css/normalize";
-import type { WsComponentMeta, WsComponentPropsMeta } from "./component-meta";
+import type {
+  WsComponentMeta,
+  WsComponentPropsMeta,
+  PresetStyle,
+} from "./component-meta";
 import type { defaultTag } from "./textarea";
 import { props } from "./__generated__/textarea.props";
 
 const presetStyle = {
-  textarea: {
+  textarea: [
     ...textarea,
-
-    // it's hard to block or support well resize while on canvas
-    resize: { type: "keyword", value: "none" },
-  },
-} as const satisfies Record<typeof defaultTag, Style>;
+    // resize doesn't work well while on canvas
+    { property: "resize", value: { type: "keyword", value: "none" } },
+  ],
+} satisfies PresetStyle<typeof defaultTag>;
 
 export const meta: WsComponentMeta = {
   category: "forms",
