@@ -6,7 +6,12 @@ import type { defaultTag } from "./textarea";
 import { props } from "./__generated__/textarea.props";
 
 const presetStyle = {
-  textarea,
+  textarea: {
+    ...textarea,
+
+    // it's hard to block or support well resize while on canvas
+    resize: { type: "keyword", value: "none" },
+  },
 } as const satisfies Record<typeof defaultTag, Style>;
 
 export const meta: WsComponentMeta = {
