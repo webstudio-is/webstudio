@@ -34,7 +34,7 @@ import { toValue } from "@webstudio-is/css-engine";
 import { useDebouncedCallback } from "use-debounce";
 import type { StyleSource } from "../style-info";
 import { toPascalCase } from "../keyword-utils";
-import { isValid } from "../parse-css-value";
+
 import {
   selectedInstanceBrowserStyleStore,
   selectedInstanceUnitSizesStore,
@@ -364,15 +364,15 @@ export const CssValueInput = ({
 
   const [isUnitsOpen, unitSelectElement] = useUnitSelect({
     property,
-    showUnitless:
-      value.type === "unit" || value.type === "intermediate"
-        ? isValid(property, `${value.value}`)
-        : false,
-    value:
-      value.type === "unit" || value.type === "intermediate"
-        ? value.unit
-        : undefined,
-    onChange: (unit) => {
+    value,
+    onChange: (unitOrKeyword) => {
+      if (unitOrKeyword.type === "keyword") {
+        onChangeComplete(unitOrKeyword, "unit-select");
+        return;
+      }
+
+      const unit = unitOrKeyword.value;
+
       // value looks like a number and just edited (type === "intermediate")
       // no additional conversions are necessary
       if (
@@ -573,7 +573,7 @@ export const CssValueInput = ({
             css={{ cursor: "default" }}
           />
         </ComboboxAnchor>
-        <ComboboxContent align="start" sideOffset={8} collisionPadding={10}>
+        <ComboboxContent align="start" sideOffset={2} collisionPadding={10}>
           <ComboboxListbox {...menuProps}>
             {isOpen &&
               items.map((item, index) => (

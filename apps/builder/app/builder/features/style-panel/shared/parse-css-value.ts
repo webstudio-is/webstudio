@@ -114,10 +114,18 @@ export const parseCssValue = (
       const values = keywordValues[
         property as keyof typeof keywordValues
       ] as ReadonlyArray<string>;
-      if (values?.includes(input)) {
+      const lettersRegex = /[^a-zA-Z]+/g;
+      const searchValues = values.map((value) =>
+        value.replace(lettersRegex, "").toLowerCase()
+      );
+      const keywordInput = input.replace(lettersRegex, "").toLowerCase();
+
+      const index = searchValues.indexOf(keywordInput);
+
+      if (index > -1) {
         return {
           type: "keyword",
-          value: input,
+          value: values[index],
         };
       }
     }
