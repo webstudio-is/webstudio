@@ -141,7 +141,9 @@ export const WebstudioComponentDev = ({
   }, [isSelected]);
 
   const readonlyProps =
-    instance.component === "Input" ? { readOnly: true } : undefined;
+    instance.component === "Input" || instance.component === "Textarea"
+      ? { readOnly: true }
+      : undefined;
 
   const Component = getComponent(instance.component);
 
@@ -156,6 +158,7 @@ export const WebstudioComponentDev = ({
     [componentAttribute]: instance.component,
     [idAttribute]: instance.id,
     onClick: (event: MouseEvent) => {
+      event.preventDefault();
       if (event.currentTarget instanceof HTMLAnchorElement) {
         handleLinkClick(event);
       }
