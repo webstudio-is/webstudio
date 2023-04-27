@@ -114,11 +114,11 @@ export const parseCssValue = (
       const values = keywordValues[
         property as keyof typeof keywordValues
       ] as ReadonlyArray<string>;
-      const regExOnlyLetters = /[^a-zA-Z]+/g;
+      const lettersRegex = /[^a-zA-Z]+/g;
       const searchValues = values.map((value) =>
-        value.replace(regExOnlyLetters, "").toLowerCase()
+        value.replace(lettersRegex, "").toLowerCase()
       );
-      const keywordInput = input.replace(regExOnlyLetters, "").toLowerCase();
+      const keywordInput = input.replace(lettersRegex, "").toLowerCase();
 
       const index = searchValues.indexOf(keywordInput);
 
