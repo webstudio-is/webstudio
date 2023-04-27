@@ -163,7 +163,7 @@ Add the correct font weight in Edge and Safari.
 export const b = [
   {
     property: "fontWeight",
-    value: { type: "keyword", value: "bolder" },
+    value: { type: "keyword", value: "700" },
   },
   boxSizing,
   ...borders,

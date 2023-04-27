@@ -3836,8 +3836,8 @@ export const keywordValues = {
     "unset",
   ],
   fontWeight: [
-    "normal",
-    "bold",
+    "400",
+    "700",
     "bolder",
     "lighter",
     "initial",

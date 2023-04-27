@@ -1,6 +1,11 @@
 import { useMemo } from "react";
 import { useStore } from "@nanostores/react";
-import type { Style, StyleProperty, StyleValue } from "@webstudio-is/css-data";
+import {
+  html,
+  type Style,
+  type StyleProperty,
+  type StyleValue,
+} from "@webstudio-is/css-data";
 import { properties } from "@webstudio-is/css-data";
 import {
   StyleSourceSelections,
@@ -428,11 +433,34 @@ export const useStyleInfo = () => {
     return getPresetStyleRule(component, tagName);
   }, [instances, selectedInstanceSelector, selectedInstanceIntanceToTag]);
 
+  const htmlStyle = useMemo(() => {
+    const instanceId = selectedInstanceSelector?.[0];
+    if (instanceId === undefined) {
+      return;
+    }
+    const tagName = selectedInstanceIntanceToTag?.get(instanceId);
+    if (tagName === undefined) {
+      return;
+    }
+    const styles = html[tagName];
+    if (styles === undefined) {
+      return;
+    }
+    const style: Style = {};
+    for (const styleDecl of styles) {
+      style[styleDecl.property] = styleDecl.value;
+    }
+    return style;
+  }, [selectedInstanceSelector, selectedInstanceIntanceToTag]);
+
   const styleInfoData = useMemo(() => {
     const styleInfoData: StyleInfo = {};
     for (const property of styleProperties) {
       // temporary solution until we start computing all styles from data
       const computed = browserStyle?.[property];
+      const defaultValue =
+        htmlStyle?.[property] ??
+        properties[property as keyof typeof properties].initial;
       const preset = presetStyle?.[property];
       const inherited = inheritedInfo[property];
       const cascaded = cascadedInfo[property];
@@ -444,7 +472,7 @@ export const useStyleInfo = () => {
         cascaded?.value ??
         inherited?.value ??
         preset ??
-        computed;
+        defaultValue;
       if (value) {
         if (property === "color") {
           styleInfoData[property] = {
@@ -470,6 +498,7 @@ export const useStyleInfo = () => {
     }
     return styleInfoData;
   }, [
+    htmlStyle,
     browserStyle,
     presetStyle,
     inheritedInfo,
