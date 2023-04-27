@@ -47,7 +47,7 @@ export const EmbedTemplateStyleDecl = z.object({
 
 export type EmbedTemplateStyleDecl = z.infer<typeof EmbedTemplateStyleDecl>;
 
-type EmbedTemplateInstance = {
+export type EmbedTemplateInstance = {
   type: "instance";
   component: string;
   props?: EmbedTemplateProp[];
@@ -55,16 +55,19 @@ type EmbedTemplateInstance = {
   children: Array<EmbedTemplateInstance | EmbedTemplateText>;
 };
 
-const EmbedTemplateInstance: z.ZodType<EmbedTemplateInstance> = z.object({
-  type: z.literal("instance"),
-  component: z.string(),
-  props: z.optional(z.array(EmbedTemplateProp)),
-  styles: z.optional(z.array(EmbedTemplateStyleDecl)),
-  children: z.lazy(() => WsEmbedTemplate),
-});
+export const EmbedTemplateInstance: z.ZodType<EmbedTemplateInstance> = z.lazy(
+  () =>
+    z.object({
+      type: z.literal("instance"),
+      component: z.string(),
+      props: z.optional(z.array(EmbedTemplateProp)),
+      styles: z.optional(z.array(EmbedTemplateStyleDecl)),
+      children: WsEmbedTemplate,
+    })
+);
 
-export const WsEmbedTemplate = z.array(
-  z.union([z.lazy(() => EmbedTemplateInstance), EmbedTemplateText])
+export const WsEmbedTemplate = z.lazy(() =>
+  z.array(z.union([EmbedTemplateInstance, EmbedTemplateText]))
 );
 
 export type WsEmbedTemplate = z.infer<typeof WsEmbedTemplate>;
