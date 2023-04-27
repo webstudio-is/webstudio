@@ -17,7 +17,11 @@ export * from "./components/toggle-button";
 export * from "./components/dialog";
 export * from "./components/floating-panel-popover";
 export * from "./components/popover";
-export { MenuItemButton } from "./components/menu";
+export {
+  MenuItemButton,
+  MenuCheckedIcon,
+  MenuItemIndicator,
+} from "./components/menu";
 export * from "./components/switch";
 export * from "./components/toolbar";
 export * from "./components/two-rows-icon-button-container";

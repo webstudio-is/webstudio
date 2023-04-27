@@ -4,20 +4,26 @@ import store from "immerhin";
 import type { Breakpoint } from "@webstudio-is/project-build";
 import {
   theme,
-  DropdownMenu,
-  DropdownMenuCheckboxItem,
-  DropdownMenuContent,
   DropdownMenuItem,
-  DropdownMenuPortal,
-  DropdownMenuSeparator,
-  DropdownMenuItemRightSlot,
+  PopoverSeparator,
   Flex,
   Label,
   Button,
+  Popover,
+  PopoverPortal,
+  PopoverContent,
+  PopoverMenuItemContainer,
+  PopoverMenuItemRightSlot,
+  MenuItemButton,
+  Box,
+  PopoverTrigger,
+  toggleItemStyle,
+  MenuCheckedIcon,
+  MenuItemIndicator,
 } from "@webstudio-is/design-system";
 import { useSubscribe } from "~/shared/pubsub";
 import { BreakpointsEditor } from "./breakpoints-editor";
-import { TriggerButton } from "./trigger-button";
+import { BreakpointsPopoverToolbarButton } from "./breakpoints-popover-toolbar-button";
 import { WidthInput } from "./width-input";
 import { ConfirmationDialog } from "./confirmation-dialog";
 import {
@@ -30,7 +36,7 @@ import { isFeatureEnabled } from "@webstudio-is/feature-flags";
 import { groupBreakpoints, minCanvasWidth } from "~/shared/breakpoints";
 import { scaleStore } from "~/builder/shared/nano-states";
 
-export const BreakpointsSettings = () => {
+export const BreakpointsPopover = () => {
   const [view, setView] = useState<
     "selector" | "editor" | "confirmation" | undefined
   >();
@@ -78,19 +84,23 @@ export const BreakpointsSettings = () => {
   };
 
   return (
-    // @todo this should be a popover instead
-    // there is a bunch of accessibility issues here
-    <DropdownMenu
+    <Popover
       open={view !== undefined}
       onOpenChange={(isOpen) => {
         setView(isOpen ? "selector" : undefined);
       }}
     >
-      <TriggerButton />
-      <DropdownMenuPortal>
-        <DropdownMenuContent
+      <PopoverTrigger aria-label="Show breakpoints" asChild>
+        <BreakpointsPopoverToolbarButton
+          className={toggleItemStyle({
+            css: { gap: theme.spacing[5] },
+          })}
+        />
+      </PopoverTrigger>
+      <PopoverPortal>
+        <PopoverContent
           css={{ zIndex: theme.zIndices[1] }}
-          sideOffset={4}
+          sideOffset={0}
           collisionPadding={4}
           align="start"
         >
@@ -112,7 +122,7 @@ export const BreakpointsSettings = () => {
                   setView("confirmation");
                 }}
               />
-              <DropdownMenuSeparator />
+              <PopoverSeparator />
               <DropdownMenuItem
                 css={{ justifyContent: "center" }}
                 onSelect={(event) => {
@@ -129,55 +139,79 @@ export const BreakpointsSettings = () => {
               <Flex
                 css={{ px: theme.spacing[7], py: theme.spacing[5] }}
                 gap="3"
-                direction="row"
               >
                 <WidthInput min={minCanvasWidth} />
                 <Flex align="center" gap="2">
                   <Label>Scale</Label>
-                  <Button color="neutral" css={{ width: theme.spacing[17] }}>
+                  <Button
+                    color="neutral"
+                    css={{ width: theme.spacing[17] }}
+                    tabIndex={-1}
+                  >
                     {Math.round(scale)}%
                   </Button>
                 </Flex>
               </Flex>
-              <DropdownMenuSeparator />
+              <PopoverSeparator />
 
               {groupBreakpoints(Array.from(breakpoints.values())).map(
                 (breakpoint) => {
                   return (
-                    <DropdownMenuCheckboxItem
-                      checked={breakpoint === selectedBreakpoint}
+                    <PopoverMenuItemContainer
                       key={breakpoint.id}
                       onSelect={() => {
                         selectedBreakpointIdStore.set(breakpoint.id);
                       }}
                       css={{ gap: theme.spacing[10] }}
                     >
-                      {breakpoint.label}
-                      <DropdownMenuItemRightSlot>
-                        {breakpoint.minWidth ?? breakpoint.maxWidth ?? "any"}
-                      </DropdownMenuItemRightSlot>
-                    </DropdownMenuCheckboxItem>
+                      <MenuItemButton withIndicator>
+                        {breakpoint === selectedBreakpoint && (
+                          <MenuItemIndicator>
+                            <MenuCheckedIcon />
+                          </MenuItemIndicator>
+                        )}
+                        <Box css={{ flexGrow: 1, textAlign: "left" }} as="span">
+                          {breakpoint.minWidth ??
+                            breakpoint.maxWidth ??
+                            breakpoint.label}
+                        </Box>
+                        <PopoverMenuItemRightSlot
+                          css={{ color: theme.colors.foregroundSubtle }}
+                        >
+                          {breakpoint.minWidth !== undefined
+                            ? `≥ ${breakpoint.minWidth} PX`
+                            : breakpoint.maxWidth !== undefined
+                            ? `≤ ${breakpoint.maxWidth} PX`
+                            : "All Sizes"}
+                        </PopoverMenuItemRightSlot>
+                      </MenuItemButton>
+                    </PopoverMenuItemContainer>
                   );
                 }
               )}
               {isFeatureEnabled("breakpointsEditor") && (
                 <>
-                  <DropdownMenuSeparator />
-                  <DropdownMenuItem
-                    css={{ justifyContent: "center" }}
+                  <PopoverSeparator />
+                  <PopoverMenuItemContainer
+                    css={{
+                      justifyContent: "center",
+                      px: theme.spacing[7],
+                    }}
                     onSelect={(event) => {
                       event.preventDefault();
                       setView("editor");
                     }}
                   >
-                    Edit breakpoints
-                  </DropdownMenuItem>
+                    <Button color="neutral" css={{ flexGrow: 1 }}>
+                      Edit breakpoints
+                    </Button>
+                  </PopoverMenuItemContainer>
                 </>
               )}
             </>
           )}
-        </DropdownMenuContent>
-      </DropdownMenuPortal>
-    </DropdownMenu>
+        </PopoverContent>
+      </PopoverPortal>
+    </Popover>
   );
 };

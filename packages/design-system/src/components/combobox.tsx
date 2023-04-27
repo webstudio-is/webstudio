@@ -26,9 +26,9 @@ import {
 import { matchSorter } from "match-sorter";
 import { styled, theme } from "../stitches.config";
 import {
-  itemCss,
+  menuItemCss,
   menuCss,
-  itemIndicatorCss,
+  menuItemIndicatorCss,
   labelCss,
   separatorCss,
   MenuCheckedIcon,
@@ -48,9 +48,9 @@ const Listbox = styled(
   menuCss
 );
 
-const ListboxItem = styled("li", itemCss);
+const ListboxItem = styled("li", menuItemCss);
 
-const Indicator = styled("span", itemIndicatorCss);
+const Indicator = styled("span", menuItemIndicatorCss);
 
 export const ComboboxLabel = styled("li", labelCss);
 

@@ -7,8 +7,8 @@ import React, {
 } from "react";
 import {
   menuCss,
-  itemCss,
-  itemIndicatorCss,
+  menuItemCss,
+  menuItemIndicatorCss,
   labelCss,
   separatorCss,
   MenuCheckedIcon,
@@ -27,13 +27,13 @@ export const SelectSeparator = styled(Primitive.Separator, separatorCss);
 
 export const SelectGroup = Primitive.Group;
 
-const StyledItem = styled(Primitive.Item, itemCss, {
+const StyledItem = styled(Primitive.Item, menuItemCss, {
   // we don't want to transform text using CSS in case of the Select,
   // we want getLabel to handle it
   textTransform: "none",
 });
 
-const StyledIndicator = styled(Primitive.ItemIndicator, itemIndicatorCss);
+const StyledIndicator = styled(Primitive.ItemIndicator, menuItemIndicatorCss);
 
 const scrollButtonStyles = {
   display: "flex",
