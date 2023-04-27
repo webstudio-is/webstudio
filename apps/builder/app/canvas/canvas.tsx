@@ -138,7 +138,7 @@ export const Canvas = ({
 
   // e.g. toggling preview is still needed in both modes
   useCanvasShortcuts();
-  useSharedShortcuts();
+  useSharedShortcuts({ isOnCanvas: true });
   const selectedPage = useStore(selectedPageStore);
 
   useEffect(() => {

@@ -17,7 +17,7 @@ export const options: Options = {
   enableOnFormTags: true,
 };
 
-export const useSharedShortcuts = () => {
+export const useSharedShortcuts = ({ isOnCanvas }: { isOnCanvas: boolean }) => {
   useHotkeys(
     // safari use cmd+z to reopen closed tabs so fallback to ctrl
     "meta+z, ctrl+z",
@@ -37,8 +37,11 @@ export const useSharedShortcuts = () => {
   useHotkeys(
     "backspace, delete",
     deleteSelectedInstance,
-    // prevent instance deletion while deleting text
-    { enableOnFormTags: true, enableOnContentEditable: false },
+    {
+      // prevent instance deletion while deleting text in a control at style panel etc.
+      enableOnFormTags: isOnCanvas,
+      enableOnContentEditable: false,
+    },
     []
   );
 

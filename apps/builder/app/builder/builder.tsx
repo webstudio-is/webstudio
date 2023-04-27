@@ -279,7 +279,7 @@ export const Builder = ({
     authToken,
     authPermit,
   });
-  useSharedShortcuts();
+  useSharedShortcuts({ isOnCanvas: false });
   useSetIsPreviewMode(authPermit === "view");
   const [isPreviewMode] = useIsPreviewMode();
   usePublishShortcuts(publish);
