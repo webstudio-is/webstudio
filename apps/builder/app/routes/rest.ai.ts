@@ -5,7 +5,6 @@ import type {
   ChatCompletionRequestMessage,
   CreateChatCompletionResponse,
 } from "openai";
-import { Configuration, OpenAIApi } from "openai";
 import { visit } from "unist-util-visit";
 import { z } from "zod";
 import { zfd } from "zod-form-data";
@@ -30,12 +29,19 @@ type OpenAIConfig = {
   maxTokens: number;
 };
 
+// @todo Add end-to-end types.
+
 export const action = async ({ request }: ActionArgs) => {
   if (!isFeatureEnabled("ai")) {
     return { errors: ["Feature not available"] };
   }
 
-  // @todo add session checks and rate limiting
+  // @todo Add session checks and rate limiting.
+
+  // @todo Incorporate embeddings to provide context to each step:
+  // instances -> pick relevant components metadata with description etc.
+  // props     -> pick props definitions for used components? This payload can be very long.
+  // styles    -> pick examples?
 
   try {
     const formData = schema.parse(await request.formData());
@@ -45,14 +51,6 @@ export const action = async ({ request }: ActionArgs) => {
       const m = formData.messages[index];
       return typeof m === "string" ? JSON.parse(m) : null;
     });
-
-    if (!env.OPENAI_KEY) {
-      throw new Error("OpenAI API missing");
-    }
-
-    if (!env.OPENAI_ORG) {
-      throw new Error("OpenAI org missing");
-    }
 
     const result = await generate({
       userPrompt,
@@ -126,7 +124,7 @@ export const generate = async function generate({
     return responses
       .map(([step, response]) => [
         step,
-        // @todo validate code block against step's schema.
+        // @todo Validate code block against step's schema.
         getJSONCodeBlock(response),
       ])
       .map(([step, response]) => [
@@ -200,7 +198,9 @@ const getJSONCodeBlock = (text: string) => {
     const codeBlocks: string[] = [];
 
     visit(tree, "code", (node) => {
-      if (!node.lang || node.lang === "json") {
+      if (node.lang === "json") {
+        codeBlocks.unshift(node.value.trim());
+      } else if (!node.lang) {
         codeBlocks.push(node.value.trim());
       }
     });
@@ -219,6 +219,8 @@ const getJSONCodeBlock = (text: string) => {
   throw new Error(errorMsg.join("\n\n"));
 };
 
+// @todo Iterate and refine the prompt templates.
+// The ones below are very WIP and rudimental.
 const templates = {
   instances: `
 You are WebstudioGPT a no-code tool for designers that generates a clean UI markup as single JSON code block.
@@ -254,9 +256,11 @@ type EmbedTemplateInstance = {
   component: string;
   children: Array<EmbedTemplateInstance | EmbedTemplateText>;
 };
+
+type JSONResult = Array<EmbedTemplateInstance | EmbedTemplateText>
 \`\`\`
 
-Below is an example of **invalid** JSON because children cannot be of type "instance":
+Below is an example of valid output:
 
 \`\`\`json
 {
@@ -275,42 +279,26 @@ Below is an example of **invalid** JSON because children cannot be of type "inst
 \`\`\``,
   styles: `The JSON above describes <!--prompt-content-->.
 
-Can you generate styles to it following the spec below?
+Using it as a reference, generate styles (JSONResult) for it following the spec below:
 
-- Use the JSON instances from your previous response.
-- You generate styles as JSON that are linked to instances by instance id.
-- StyleDecl properties are camel case eg. \`backgroundColor\`.
-- Every StyleDecl must have a non-empty value.
-- StyleSourceId \`id\` has the following format: \`styleSourceId-{number}\`.
-- BreakpointId \`id\` has the following format: \`breakpointId-{number}\`.
+- EmbedTemplateStyleDecl properties are camel case eg. \`backgroundColor\`.
+- Every EmbedTemplateStyleDecl must have a non-empty value.
+- Don't create styles for children of type \`text\`.
 - Any of your answers can be parsed as JSON, therefore you will exclusively generate a code block with valid JSON.
 - Do not generate nor include any explanation.
 
 Use the following type definitions to generate the styles JSON:
 
 \`\`\`typescript
-type StyleSourceId = string;
+type JSONResult = EmbedTemplateStyles[];
 
-type StyleSourceSelection = {
-  instanceId: InstanceId;
-  values: StyleSourceId[];
+type EmbedTemplateStyles = {
+  styles: EmbedTemplateStyleDecl[],
+  children: EmbedTemplateStyles[]
 };
 
-type StyleSource =
-  | {
-      type: "token";
-      id: StyleSourceId;
-      name: string;
-    }
-  | {
-      type: "local";
-      id: StyleSourceId;
-    };
-
-type StyleDecl = {
-  styleSourceId: StyleSourceId;
-  breakpointId: BreakpointId;
-  state?: string | undefined;
+type EmbedTemplateStyleDecl = {
+  state?: string,
   property: string;
   value:
     | {

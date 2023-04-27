@@ -1,15 +1,15 @@
-import { z } from "zod";
-import { nanoid } from "nanoid";
+import { StyleValue, type StyleProperty } from "@webstudio-is/css-data";
 import {
-  type Instance,
-  type InstancesList,
+  Breakpoint,
   PropsList,
   StyleSourceSelectionsList,
   StyleSourcesList,
   StylesList,
-  Breakpoint,
+  type Instance,
+  type InstancesList,
 } from "@webstudio-is/project-build";
-import { StyleValue, type StyleProperty } from "@webstudio-is/css-data";
+import { nanoid } from "nanoid";
+import { z } from "zod";
 
 const EmbedTemplateText = z.object({
   type: z.literal("text"),
@@ -41,7 +41,7 @@ const EmbedTemplateProp = z.union([
   }),
 ]);
 
-type EmbedTemplateProp = z.infer<typeof EmbedTemplateProp>;
+export type EmbedTemplateProp = z.infer<typeof EmbedTemplateProp>;
 
 export const EmbedTemplateStyleDecl = z.object({
   state: z.optional(z.string()),

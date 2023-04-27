@@ -1,8 +1,8 @@
-import React, { type ReactNode, type ComponentProps, type Ref } from "react";
 import * as Primitive from "@radix-ui/react-dialog";
-import { css, theme, keyframes, type CSS } from "../stitches.config";
+import React, { type ComponentProps, type ReactNode, type Ref } from "react";
+import { css, keyframes, theme, type CSS } from "../stitches.config";
+import { CloseButton, TitleSlot, floatingPanelStyle } from "./floating-panel";
 import { PanelTitle } from "./panel-title";
-import { floatingPanelStyle, CloseButton, TitleSlot } from "./floating-panel";
 
 export const Dialog = Primitive.Root;
 export const DialogTrigger = Primitive.Trigger;
@@ -73,6 +73,7 @@ const overlayStyle = css({
   position: "fixed",
   inset: 0,
   animation: `${overlayShow} 150ms ${theme.easing.easeOut}`,
+  zIndex: theme.zIndices.max,
 });
 
 const contentShow = keyframes({
@@ -89,6 +90,7 @@ const contentStyle = css(floatingPanelStyle, {
   maxWidth: theme.spacing[35],
   maxHeight: "85vh",
   animation: `${contentShow} 150ms ${theme.easing.easeOut}`,
+  zIndex: theme.zIndices.max,
 });
 
 const titleStyle = css({

@@ -1,34 +1,30 @@
 import {
+  Box,
   Button,
   Dialog,
   DialogContent,
   Flex,
   Label,
-  Progress,
+  Text,
   TextArea,
   theme,
 } from "@webstudio-is/design-system";
 
 import { EyeconOpenIcon } from "@webstudio-is/icons";
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import type { Publish } from "~/shared/pubsub";
 import { aiGenerationPath } from "~/shared/router-utils";
 import { CloseButton, Header } from "../../header";
 import type { TabName } from "../../types";
 
-import type { Instance, PropsList } from "@webstudio-is/project-build";
-import type { WsEmbedTemplate } from "@webstudio-is/react-sdk";
-import { generateDataFromEmbedTemplate } from "@webstudio-is/react-sdk";
-import { insertInstances } from "~/shared/instance-utils";
-import {
-  instancesStore,
-  selectedInstanceSelectorStore,
-  selectedPageStore,
-} from "~/shared/nano-states";
-import {
-  findClosestDroppableTarget,
-  type InstanceSelector,
-} from "~/shared/tree-utils";
+import type {
+  EmbedTemplateProp,
+  EmbedTemplateStyleDecl,
+  WsEmbedTemplate,
+} from "@webstudio-is/react-sdk";
+
+import merge from "lodash.merge";
+import { insertTemplate } from "~/shared/template-utils";
 
 type TabContentProps = {
   onSetActiveTab: (tabName: TabName) => void;
@@ -43,42 +39,36 @@ type AIGenerationState =
       state: "generating";
       step: AIGenerationSteps;
     };
+
+// @todo Rewrite the type definitions below
+// so that when merged the result's type is correctly inferred as WsEmbedTemplate.
+type EmbedTemplateStyles = {
+  styles: EmbedTemplateStyleDecl[];
+  children: EmbedTemplateStyles[];
+};
+type EmbedTemplateProps = {
+  props: EmbedTemplateProp[];
+  children: EmbedTemplateProps[];
+};
 type AIGenerationResponse =
-  | { step: "instances"; response: EmbedTemplateInstance }
-  | { step: "styles"; response: any }
-  | { step: "props"; response: PropsList };
+  | { step: "instances"; response: WsEmbedTemplate }
+  | { step: "styles"; response: EmbedTemplateStyles[] }
+  | { step: "props"; response: EmbedTemplateProps[] };
 
 type AIGenerationResponses = Array<AIGenerationResponse>;
 
 type AIGenerationSteps = AIGenerationResponse["step"];
-// "instances" | "styles" | "props";
 
-const steps: AIGenerationSteps[] = ["instances"];
-const labels = {
+const labels: Record<AIGenerationSteps, string> = {
   instances: "components",
   styles: "styles",
-};
-
-const insertTemplate = (template: WsEmbedTemplate) => {
-  const { instances, children, props } =
-    generateDataFromEmbedTemplate(template);
-
-  const selectedPage = selectedPageStore.get();
-  if (selectedPage === undefined) {
-    return;
-  }
-  const dropTarget = findClosestDroppableTarget(
-    instancesStore.get(),
-    // fallback to root as drop target
-    selectedInstanceSelectorStore.get() ?? [selectedPage.rootInstanceId]
-  );
-
-  insertInstances(instances, props, dropTarget);
+  props: "components props",
 };
 
 export const TabContent = ({ publish, onSetActiveTab }: TabContentProps) => {
-  const [aiGenerationResponses, setAiGenerationResponses] =
-    useState<WsEmbedTemplate>([]);
+  // @todo Decide whether it makes sense to make "styles" optional
+  // i.e. add a checkbox to tick if the user wants styles.
+  const steps: AIGenerationSteps[] = ["instances", "styles"];
   const [aiGenerationState, setAiGenerationState] = useState<AIGenerationState>(
     { state: "idle" }
   );
@@ -111,6 +101,7 @@ export const TabContent = ({ publish, onSetActiveTab }: TabContentProps) => {
       formData.append("steps", step);
 
       if (responses.length > 0) {
+        // Send previous response for context.
         formData.append(
           "messages",
           JSON.stringify([
@@ -129,11 +120,16 @@ export const TabContent = ({ publish, onSetActiveTab }: TabContentProps) => {
 
       const response = await res.json();
 
+      // @todo Improve this abort logic.
+      if (aiGenerationState.state === "idle") {
+        return;
+      }
+
       if (!response.errors && step === response[0][0]) {
         responses.push({ step, response: response[0][1] });
         i++;
       } else {
-        // @todo handle failures - perhaps use expontential backoff retry
+        // @todo Handle failures - perhaps use expontential backoff retry.
         if (!window.confirm(`Something went wrong. Retry?`)) {
           setAiGenerationState({
             state: "idle",
@@ -143,26 +139,17 @@ export const TabContent = ({ publish, onSetActiveTab }: TabContentProps) => {
       }
     }
 
-    const template = responses.flatMap(({ step, response }) => response);
+    const { template } = merge(
+      {},
+      { template: responses.flatMap(({ step, response }) => response) }
+    );
 
     insertTemplate(template);
-
-    setAiGenerationResponses((existingResponses) => {
-      return [template, ...existingResponses];
-    });
 
     setAiGenerationState({
       state: "idle",
     });
   };
-
-  if (aiGenerationResponses.length) {
-    console.log({ aiGenerationResponses });
-  }
-
-  // useEffect(() => {
-  //   insertTemplate(testInstances);
-  // }, []);
 
   const progress =
     aiGenerationState.state === "idle"
@@ -176,11 +163,7 @@ export const TabContent = ({ publish, onSetActiveTab }: TabContentProps) => {
           title="AI Generation"
           suffix={<CloseButton onClick={() => onSetActiveTab("none")} />}
         />
-        <Flex
-          gap="2"
-          wrap="wrap"
-          css={{ p: theme.spacing[9], overflow: "auto" }}
-        >
+        <Flex gap="2" wrap="wrap" css={{ p: theme.spacing[9] }}>
           <form
             method="POST"
             action={aiGenerationPath()}
@@ -205,12 +188,20 @@ export const TabContent = ({ publish, onSetActiveTab }: TabContentProps) => {
       </Flex>
       {aiGenerationState.state !== "idle" ? (
         <Dialog defaultOpen={true}>
-          <DialogContent>
+          <DialogContent
+            // @todo Add ability to abort generation requests.
+            onInteractOutside={(event) => {
+              event.preventDefault();
+            }}
+            onEscapeKeyDown={(event) => {
+              event.preventDefault();
+            }}
+          >
             <Flex
               gap="2"
               css={{ flexDirection: "column", p: theme.spacing[9] }}
             >
-              <p>Generating {labels[aiGenerationState.step]}...</p>
+              <Text>🪄 Generating {labels[aiGenerationState.step]}...</Text>
               <progress value={progress} max="100" style={{ width: "100%" }}>
                 {progress}%
               </progress>
@@ -223,22 +214,3 @@ export const TabContent = ({ publish, onSetActiveTab }: TabContentProps) => {
 };
 
 export const icon = <EyeconOpenIcon />;
-
-const testInstances = [
-  {
-    type: "instance",
-    component: "Box",
-    children: [
-      {
-        type: "instance",
-        component: "Box",
-        children: [],
-      },
-      {
-        type: "instance",
-        component: "Box",
-        children: [],
-      },
-    ],
-  },
-];
