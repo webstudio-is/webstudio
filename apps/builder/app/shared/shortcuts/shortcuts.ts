@@ -38,7 +38,7 @@ export const useSharedShortcuts = () => {
     "backspace, delete",
     deleteSelectedInstance,
     // prevent instance deletion while deleting text
-    { enableOnFormTags: false, enableOnContentEditable: false },
+    { enableOnFormTags: true, enableOnContentEditable: false },
     []
   );
 
