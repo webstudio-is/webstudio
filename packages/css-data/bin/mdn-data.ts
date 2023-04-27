@@ -49,9 +49,14 @@ const normalizedValues = {
   "text-size-adjust": autoValue,
 } as const;
 
-const beautifyKeyword = (keyword: string) => {
+const beautifyKeyword = (property: string, keyword: string) => {
   if (keyword === "currentcolor") {
     return "currentColor";
+  }
+  // builder style panel cannot interpret "normal" and "bold"
+  // always expected numeric value
+  if (property === "font-weight" && keyword === "normal") {
+    return "400";
   }
   return keyword;
 };
@@ -74,7 +79,7 @@ const parseInitialValue = (
   if (ast.children.first !== ast.children.last) {
     return {
       type: "keyword",
-      value: beautifyKeyword(value),
+      value: beautifyKeyword(property, value),
     };
   }
 
@@ -82,7 +87,7 @@ const parseInitialValue = (
   if (node?.type === "Identifier") {
     return {
       type: "keyword",
-      value: beautifyKeyword(node.name),
+      value: beautifyKeyword(property, node.name),
     };
   }
   if (node?.type === "Number") {
@@ -301,7 +306,7 @@ const keywordValues = (() => {
       filteredProperties[property as keyof typeof filteredProperties].syntax,
       (node) => {
         if (node.type === "Keyword") {
-          keywords.add(beautifyKeyword(node.name));
+          keywords.add(beautifyKeyword(property, node.name));
         }
       }
     );
