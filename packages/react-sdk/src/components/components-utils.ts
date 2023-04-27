@@ -38,6 +38,8 @@ const componentNames = Object.keys({
   SuccessMessage: 1,
   ErrorMessage: 1,
   Textarea: 1,
+  RadioButtonField: 1,
+  RadioButton: 1,
 } satisfies { [K in keyof typeof components]: 1 }) as Array<
   keyof typeof components
 >;

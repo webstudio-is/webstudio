@@ -29,6 +29,8 @@ import { meta as LabelMeta } from "./label.ws";
 import { meta as SuccessMessageMeta } from "./success-message.ws";
 import { meta as ErrorMessageMeta } from "./error-message.ws";
 import { meta as TextareaMeta } from "./textarea.ws";
+import { meta as RadioButtonField } from "./radio-button-field.ws";
+import { meta as RadioButton } from "./radio-button.ws";
 
 // these are huge JSON objects that we want to be tree-shaken when not used!
 import { propsMeta as SlotMetaPropsMeta } from "./slot.ws";
@@ -59,6 +61,8 @@ import { propsMeta as LabelPropsMeta } from "./label.ws";
 import { propsMeta as SuccessMessagePropsMeta } from "./success-message.ws";
 import { propsMeta as ErrorMessagePropsMeta } from "./error-message.ws";
 import { propsMeta as TextareaPropsMeta } from "./textarea.ws";
+import { propsMeta as RadioButtonFieldPropsMeta } from "./radio-button-field.ws";
+import { propsMeta as RadioButtonPropsMeta } from "./radio-button.ws";
 
 // @todo this list should not be hardcoded!
 const defaultMetas: Record<string, WsComponentMeta> = {
@@ -90,6 +94,8 @@ const defaultMetas: Record<string, WsComponentMeta> = {
   SuccessMessage: SuccessMessageMeta,
   ErrorMessage: ErrorMessageMeta,
   Textarea: TextareaMeta,
+  RadioButtonField: RadioButtonField,
+  RadioButton: RadioButton,
 };
 
 let currentMetas = defaultMetas;
@@ -138,6 +144,8 @@ const defaultPropsMetasRaw = {
   SuccessMessage: SuccessMessagePropsMeta,
   ErrorMessage: ErrorMessagePropsMeta,
   Textarea: TextareaPropsMeta,
+  RadioButtonField: RadioButtonFieldPropsMeta,
+  RadioButton: RadioButtonPropsMeta,
 } as const;
 
 const defaultPropsMetas: Record<string, WsComponentPropsMeta> =
