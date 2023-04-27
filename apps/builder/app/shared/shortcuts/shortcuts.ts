@@ -17,7 +17,11 @@ export const options: Options = {
   enableOnFormTags: true,
 };
 
-export const useSharedShortcuts = () => {
+export const useSharedShortcuts = ({
+  source,
+}: {
+  source: "canvas" | "builder";
+}) => {
   useHotkeys(
     // safari use cmd+z to reopen closed tabs so fallback to ctrl
     "meta+z, ctrl+z",
@@ -37,8 +41,13 @@ export const useSharedShortcuts = () => {
   useHotkeys(
     "backspace, delete",
     deleteSelectedInstance,
-    // prevent instance deletion while deleting text
-    { enableOnFormTags: false, enableOnContentEditable: false },
+    {
+      // When in builder, we don't want to delete instances,
+      // when user edits text in a control on style panel etc.
+      // But when a form control on canvas has focus, we want the shortcut to work.
+      enableOnFormTags: source === "canvas",
+      enableOnContentEditable: false,
+    },
     []
   );
 
