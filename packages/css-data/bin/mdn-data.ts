@@ -55,8 +55,13 @@ const beautifyKeyword = (property: string, keyword: string) => {
   }
   // builder style panel cannot interpret "normal" and "bold"
   // always expected numeric value
-  if (property === "font-weight" && keyword === "normal") {
-    return "400";
+  if (property === "font-weight") {
+    if (keyword === "normal") {
+      return "400";
+    }
+    if (keyword === "bold") {
+      return "700";
+    }
   }
   return keyword;
 };

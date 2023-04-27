@@ -3837,7 +3837,7 @@ export const keywordValues = {
   ],
   fontWeight: [
     "400",
-    "bold",
+    "700",
     "bolder",
     "lighter",
     "initial",
