@@ -51,10 +51,21 @@ export const areInstanceSelectorsEqual = (
   return left.join(",") === right.join(",");
 };
 
-export const createComponentInstance = (component: Instance["component"]) => {
+export const createComponentInstance = (
+  component: Instance["component"],
+  defaultBreakpointId: Breakpoint["id"]
+) => {
   const componentMeta = getComponentMeta(component);
-  const { children, instances, props } = generateDataFromEmbedTemplate(
-    componentMeta?.children ?? []
+  const {
+    children,
+    instances,
+    props,
+    styleSourceSelections,
+    styleSources,
+    styles,
+  } = generateDataFromEmbedTemplate(
+    componentMeta?.children ?? [],
+    defaultBreakpointId
   );
   // put first to be interpreted as root
   instances.unshift({
@@ -63,7 +74,7 @@ export const createComponentInstance = (component: Instance["component"]) => {
     component,
     children,
   });
-  return { instances, props };
+  return { instances, props, styleSourceSelections, styleSources, styles };
 };
 
 const isInstanceDroppable = (instance: Instance) => {
