@@ -6,17 +6,17 @@ import { ToggleGroupControl } from "../../controls/toggle/toggle-control";
 import { PropertyName } from "../../shared/property-name";
 import { TextControl } from "../../controls";
 import {
-  CrossSmallIcon,
-  AlignSelfStartIcon,
-  AlignSelfEndIcon,
-  AlignSelfCenterIcon,
-  AlignSelfBaselineIcon,
-  AlignSelfStretchIcon,
-  FlexSizingShrinkIcon,
-  FlexSizingGrowIcon,
+  SmallXIcon,
+  ASStartIcon,
+  ASEndIcon,
+  ASCenterIcon,
+  ASBaselineIcon,
+  ASStretchIcon,
+  ShrinkIcon,
+  GrowIcon,
   OrderFirstIcon,
   OrderLastIcon,
-  EllipsesIcon,
+  MenuEllipsesIcon,
 } from "@webstudio-is/icons";
 import { FloatingPanel } from "~/builder/shared/floating-panel";
 import { getStyleSource } from "../../shared/style-info";
@@ -64,32 +64,32 @@ const FlexChildSectionAlign = (props: RenderCategoryProps) => {
         value={toValue(currentStyle.alignSelf?.value)}
         items={[
           {
-            child: <CrossSmallIcon />,
+            child: <SmallXIcon />,
             label: "Do not align self",
             value: "auto",
           },
           {
-            child: <AlignSelfStartIcon />,
+            child: <ASStartIcon />,
             label: "align-self: flex-start",
             value: "start",
           },
           {
-            child: <AlignSelfEndIcon />,
+            child: <ASEndIcon />,
             label: "align-self: flex-end",
             value: "end",
           },
           {
-            child: <AlignSelfCenterIcon />,
+            child: <ASCenterIcon />,
             label: "align-self: center",
             value: "center",
           },
           {
-            child: <AlignSelfStretchIcon />,
+            child: <ASStretchIcon />,
             label: "align-self: stretch",
             value: "stretch",
           },
           {
-            child: <AlignSelfBaselineIcon />,
+            child: <ASBaselineIcon />,
             label: "align-self: baseline",
             value: "baseline",
           },
@@ -148,17 +148,17 @@ const FlexChildSectionSizing = (props: RenderCategoryProps) => {
         )}
         items={[
           {
-            child: <CrossSmallIcon />,
+            child: <SmallXIcon />,
             label: "Don't grow or shrink",
             value: "none",
           },
           {
-            child: <FlexSizingGrowIcon />,
+            child: <GrowIcon />,
             label: "Grow if possible",
             value: "grow",
           },
           {
-            child: <FlexSizingShrinkIcon />,
+            child: <ShrinkIcon />,
             label: "Shrink if needed",
             value: "shrink",
           },
@@ -235,7 +235,7 @@ const FlexChildSectionSizingPopover = ({
       }
     >
       <Flex>
-        <EllipsesIcon />
+        <MenuEllipsesIcon />
       </Flex>
     </FloatingPanel>
   );
@@ -268,7 +268,7 @@ const FlexChildSectionOrder = (props: RenderCategoryProps) => {
         value={toValue(currentStyle.order?.value)}
         items={[
           {
-            child: <CrossSmallIcon />,
+            child: <SmallXIcon />,
             label: "Dont't change",
             value: "0",
           },
@@ -318,7 +318,7 @@ const FlexChildSectionOrderPopover = (props: RenderCategoryProps) => {
       }
     >
       <Flex>
-        <EllipsesIcon />
+        <MenuEllipsesIcon />
       </Flex>
     </FloatingPanel>
   );
