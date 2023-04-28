@@ -199,13 +199,6 @@ export const Canvas = () => {
 
   const rootRef = useRef<HTMLElement | null>(null);
 
-  const getDefaultDropTarget = () => {
-    if (rootRef.current === null) {
-      throw new Error("Unexpected empty rootRef during drag");
-    }
-    return { data: ROOT_ID, element: rootRef.current };
-  };
-
   const dropHandlers = useDrop<string>({
     edgeDistanceThreshold: 10,
 
@@ -216,14 +209,10 @@ export const Canvas = () => {
     swapDropTarget(dropTarget) {
       const rootElement = rootRef.current;
       if (dropTarget === undefined || rootElement === null) {
-        return getDefaultDropTarget();
+        return;
       }
 
       const { data: id, area } = dropTarget;
-
-      if (id === ROOT_ID) {
-        return dropTarget;
-      }
 
       const path = findItemPath(data, id) ?? [];
 
@@ -240,13 +229,13 @@ export const Canvas = () => {
       const newItem = path.find((item) => item.acceptsChildren);
 
       if (newItem === undefined) {
-        return getDefaultDropTarget();
+        return;
       }
 
       const element = idToElement(rootElement, newItem.id);
 
       if (element === undefined) {
-        return getDefaultDropTarget();
+        return;
       }
 
       return { data: newItem.id, element };
@@ -254,12 +243,16 @@ export const Canvas = () => {
 
     onDropTargetChange(dropTarget) {
       setCurrentDropTarget(dropTarget);
-      setPlacementIndicator(
-        computeIndicatorPlacement({
-          placement: dropTarget.placement,
-          element: dropTarget.element,
-        })
-      );
+      if (dropTarget === undefined) {
+        setPlacementIndicator(undefined);
+      } else {
+        setPlacementIndicator(
+          computeIndicatorPlacement({
+            placement: dropTarget.placement,
+            element: dropTarget.element,
+          })
+        );
+      }
     },
   });
 
