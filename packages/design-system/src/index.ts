@@ -67,7 +67,6 @@ export * from "./components/slider";
 export * from "./components/avatar";
 export * from "./components/icon-button-with-menu";
 export * from "./components/tree";
-export * from "./components/list";
 
 // No need to align
 
@@ -83,6 +82,7 @@ export * from "./components/primitives/arrow-focus";
 export * from "./components/scroll-area";
 export * from "./components/primitives/use-scrub";
 export * from "./components/primitives/numeric-input-arrow-keys";
+export * from "./components/primitives/list";
 
 // Deprecated
 
@@ -95,3 +95,4 @@ export { DeprecatedLabel } from "./components/__DEPRECATED__/label";
 export * from "./components/__DEPRECATED__/popover";
 export * from "./components/__DEPRECATED__/paragraph";
 export * from "./components/__DEPRECATED__/text-field";
+export * from "./components/__DEPRECATED__/list";

@@ -4,7 +4,6 @@ import store from "immerhin";
 import type { Breakpoint } from "@webstudio-is/project-build";
 import {
   theme,
-  DropdownMenuItem,
   PopoverSeparator,
   Flex,
   Label,
@@ -12,14 +11,16 @@ import {
   Popover,
   PopoverPortal,
   PopoverContent,
-  PopoverMenuItemContainer,
-  PopoverMenuItemRightSlot,
-  MenuItemButton,
-  Box,
   PopoverTrigger,
   toggleItemStyle,
   MenuCheckedIcon,
   MenuItemIndicator,
+  List,
+  ListItem,
+  MenuItemButton,
+  Box,
+  PopoverMenuItemContainer,
+  PopoverMenuItemRightSlot,
 } from "@webstudio-is/design-system";
 import { useSubscribe } from "~/shared/pubsub";
 import { BreakpointsEditor } from "./breakpoints-editor";
@@ -141,42 +142,49 @@ export const BreakpointsPopover = () => {
                 </Flex>
               </Flex>
               <PopoverSeparator />
-
-              {groupBreakpoints(Array.from(breakpoints.values())).map(
-                (breakpoint) => {
-                  return (
-                    <PopoverMenuItemContainer
-                      key={breakpoint.id}
-                      onSelect={() => {
-                        selectedBreakpointIdStore.set(breakpoint.id);
-                      }}
-                      css={{ gap: theme.spacing[10] }}
-                    >
-                      <MenuItemButton withIndicator>
-                        {breakpoint === selectedBreakpoint && (
-                          <MenuItemIndicator>
-                            <MenuCheckedIcon />
-                          </MenuItemIndicator>
-                        )}
-                        <Box css={{ flexGrow: 1, textAlign: "left" }} as="span">
-                          {breakpoint.minWidth ??
-                            breakpoint.maxWidth ??
-                            breakpoint.label}
-                        </Box>
-                        <PopoverMenuItemRightSlot
-                          css={{ color: theme.colors.foregroundSubtle }}
+              <List asChild>
+                <Flex direction="column" css={{ my: 0, mx: theme.spacing[3] }}>
+                  {groupBreakpoints(Array.from(breakpoints.values())).map(
+                    (breakpoint, index) => {
+                      return (
+                        <ListItem
+                          asChild
+                          onSelect={() => {
+                            selectedBreakpointIdStore.set(breakpoint.id);
+                          }}
+                          index={index}
+                          key={breakpoint.id}
                         >
-                          {breakpoint.minWidth !== undefined
-                            ? `≥ ${breakpoint.minWidth} PX`
-                            : breakpoint.maxWidth !== undefined
-                            ? `≤ ${breakpoint.maxWidth} PX`
-                            : "All Sizes"}
-                        </PopoverMenuItemRightSlot>
-                      </MenuItemButton>
-                    </PopoverMenuItemContainer>
-                  );
-                }
-              )}
+                          <MenuItemButton withIndicator>
+                            {breakpoint === selectedBreakpoint && (
+                              <MenuItemIndicator>
+                                <MenuCheckedIcon />
+                              </MenuItemIndicator>
+                            )}
+                            <Box
+                              css={{ flexGrow: 1, textAlign: "left" }}
+                              as="span"
+                            >
+                              {breakpoint.minWidth ??
+                                breakpoint.maxWidth ??
+                                breakpoint.label}
+                            </Box>
+                            <PopoverMenuItemRightSlot
+                              css={{ color: theme.colors.foregroundSubtle }}
+                            >
+                              {breakpoint.minWidth !== undefined
+                                ? `≥ ${breakpoint.minWidth} PX`
+                                : breakpoint.maxWidth !== undefined
+                                ? `≤ ${breakpoint.maxWidth} PX`
+                                : "All Sizes"}
+                            </PopoverMenuItemRightSlot>
+                          </MenuItemButton>
+                        </ListItem>
+                      );
+                    }
+                  )}
+                </Flex>
+              </List>
             </>
           )}
           {isFeatureEnabled("breakpointsEditor") &&

@@ -1,38 +1,38 @@
 import type { ComponentStory } from "@storybook/react";
 import { CheckMarkIcon, MenuIcon } from "@webstudio-is/icons";
 import { useState } from "react";
-import { List, ListItem, useList } from "./list";
+import { DeprecatedList, DeprecatedListItem, useDeprecatedList } from "./list";
 
 export default {
-  component: List,
+  component: DeprecatedList,
 };
 
-export const Declarative: ComponentStory<typeof List> = () => {
+export const Declarative: ComponentStory<typeof DeprecatedList> = () => {
   return (
-    <List>
-      <ListItem>Apple</ListItem>
-      <ListItem state="disabled">Banana</ListItem>
-      <ListItem state="selected">Orange</ListItem>
-      <ListItem prefix={<CheckMarkIcon />} suffix={<MenuIcon />}>
+    <DeprecatedList>
+      <DeprecatedListItem>Apple</DeprecatedListItem>
+      <DeprecatedListItem state="disabled">Banana</DeprecatedListItem>
+      <DeprecatedListItem state="selected">Orange</DeprecatedListItem>
+      <DeprecatedListItem prefix={<CheckMarkIcon />} suffix={<MenuIcon />}>
         Strawberry
-      </ListItem>
-      <ListItem
+      </DeprecatedListItem>
+      <DeprecatedListItem
         prefix={<CheckMarkIcon />}
         suffix={<MenuIcon />}
         current
         state="selected"
       >
         Watermelon
-      </ListItem>
-    </List>
+      </DeprecatedListItem>
+    </DeprecatedList>
   );
 };
 
-export const WithHook: ComponentStory<typeof List> = () => {
+export const WithHook: ComponentStory<typeof DeprecatedList> = () => {
   const items = ["Banana", "Orange", "Apple"];
   const [selectedIndex, setSelectedIndex] = useState(-1);
   const [currentIndex, setCurrentIndex] = useState(-1);
-  const { getListProps, getItemProps } = useList({
+  const { getListProps, getItemProps } = useDeprecatedList({
     items,
     selectedIndex,
     currentIndex,
@@ -40,19 +40,19 @@ export const WithHook: ComponentStory<typeof List> = () => {
     onChangeCurrent: setCurrentIndex,
   });
   return (
-    <List {...getListProps()}>
+    <DeprecatedList {...getListProps()}>
       {items.map((item, index) => {
         const itemProps = getItemProps({ index });
         return (
-          <ListItem
+          <DeprecatedListItem
             {...itemProps}
             key={index}
             prefix={itemProps.current ? <CheckMarkIcon /> : undefined}
           >
             {item}
-          </ListItem>
+          </DeprecatedListItem>
         );
       })}
-    </List>
+    </DeprecatedList>
   );
 };
