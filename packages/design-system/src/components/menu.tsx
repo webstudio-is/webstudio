@@ -32,7 +32,7 @@ export const labelCss = css(textVariants.titles, {
 });
 
 const indicatorSize = theme.spacing[9];
-export const itemIndicatorCss = css({
+export const menuItemIndicatorCss = css({
   position: "absolute",
   display: "flex",
   alignItems: "center",
@@ -42,8 +42,10 @@ export const itemIndicatorCss = css({
   height: indicatorSize,
 });
 
+export const MenuItemIndicator = styled("span", menuItemIndicatorCss);
+
 const itemMargin = theme.spacing[3];
-export const itemCss = css(textVariants.labelsTitleCase, {
+export const menuItemCss = css(textVariants.labelsTitleCase, {
   outline: "none",
   cursor: "default",
   position: "relative",
@@ -74,7 +76,7 @@ export const itemCss = css(textVariants.labelsTitleCase, {
 });
 
 // To use outside of any menu context, e.g. in a Popover
-export const MenuItemButton = styled("button", itemCss, {
+export const MenuItemButton = styled("button", menuItemCss, {
   border: "none",
   boxSizing: "border-box",
   width: `calc(100% - ${itemMargin} * 2)`,
@@ -114,7 +116,7 @@ export const subMenuCss = css(menuCss, {
 });
 
 export const subContentProps: Partial<ComponentProps<typeof SubContent>> = {
-  // this depends on itemCss.margin and menuCss.padding,
+  // this depends on menuItemCss.margin and menuCss.padding,
   // the goal is to make sub-menu overlap the parent menu by exactly 2px
   sideOffset: 3,
 };

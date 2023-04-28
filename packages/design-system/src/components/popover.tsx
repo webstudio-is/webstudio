@@ -74,7 +74,13 @@ export const PopoverContentContainer = styled("div", {
 });
 
 export const PopoverMenuItemContainer = styled("div", {
+  display: "flex",
   margin: `0 ${theme.spacing[3]}`,
+});
+
+export const PopoverMenuItemRightSlot = styled("span", {
+  marginLeft: "auto",
+  display: "flex",
 });
 
 export const PopoverSeparator = styled(Separator, {
