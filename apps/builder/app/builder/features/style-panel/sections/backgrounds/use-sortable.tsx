@@ -44,12 +44,16 @@ export const useSortable = <Item extends { id: string }>({
     },
     onDropTargetChange(dropTarget) {
       setDropTarget(dropTarget);
-      setPlacementIndicator(
-        computeIndicatorPlacement({
-          placement: dropTarget.placement,
-          element: dropTarget.element,
-        })
-      );
+      if (dropTarget === undefined) {
+        setPlacementIndicator(undefined);
+      } else {
+        setPlacementIndicator(
+          computeIndicatorPlacement({
+            placement: dropTarget.placement,
+            element: dropTarget.element,
+          })
+        );
+      }
     },
   });
 
