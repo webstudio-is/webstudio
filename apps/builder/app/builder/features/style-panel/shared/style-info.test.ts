@@ -168,11 +168,19 @@ test("compute inherited styles", () => {
         ["2", "div"],
         ["3", "div"],
       ]),
+
       cascadedBreakpointIds,
       selectedBreakpointId
     )
   ).toMatchInlineSnapshot(`
     {
+      "color": {
+        "instanceId": "1",
+        "value": {
+          "type": "keyword",
+          "value": "black",
+        },
+      },
       "fontFamily": {
         "instanceId": "1",
         "value": {

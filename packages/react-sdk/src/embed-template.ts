@@ -4,6 +4,10 @@ import {
   type Instance,
   type InstancesList,
   PropsList,
+  StyleSourceSelectionsList,
+  StyleSourcesList,
+  StylesList,
+  Breakpoint,
 } from "@webstudio-is/project-build";
 import { StyleValue, type StyleProperty } from "@webstudio-is/css-data";
 
@@ -47,7 +51,7 @@ export const EmbedTemplateStyleDecl = z.object({
 
 export type EmbedTemplateStyleDecl = z.infer<typeof EmbedTemplateStyleDecl>;
 
-type EmbedTemplateInstance = {
+export type EmbedTemplateInstance = {
   type: "instance";
   component: string;
   props?: EmbedTemplateProp[];
@@ -55,16 +59,19 @@ type EmbedTemplateInstance = {
   children: Array<EmbedTemplateInstance | EmbedTemplateText>;
 };
 
-const EmbedTemplateInstance: z.ZodType<EmbedTemplateInstance> = z.object({
-  type: z.literal("instance"),
-  component: z.string(),
-  props: z.optional(z.array(EmbedTemplateProp)),
-  styles: z.optional(z.array(EmbedTemplateStyleDecl)),
-  children: z.lazy(() => WsEmbedTemplate),
-});
+export const EmbedTemplateInstance: z.ZodType<EmbedTemplateInstance> = z.lazy(
+  () =>
+    z.object({
+      type: z.literal("instance"),
+      component: z.string(),
+      props: z.optional(z.array(EmbedTemplateProp)),
+      styles: z.optional(z.array(EmbedTemplateStyleDecl)),
+      children: WsEmbedTemplate,
+    })
+);
 
-export const WsEmbedTemplate = z.array(
-  z.union([z.lazy(() => EmbedTemplateInstance), EmbedTemplateText])
+export const WsEmbedTemplate = z.lazy(() =>
+  z.array(z.union([EmbedTemplateInstance, EmbedTemplateText]))
 );
 
 export type WsEmbedTemplate = z.infer<typeof WsEmbedTemplate>;
@@ -72,7 +79,11 @@ export type WsEmbedTemplate = z.infer<typeof WsEmbedTemplate>;
 const createInstancesFromTemplate = (
   treeTemplate: WsEmbedTemplate,
   instances: InstancesList,
-  props: PropsList
+  props: PropsList,
+  styleSourceSelections: StyleSourceSelectionsList,
+  styleSources: StyleSourcesList,
+  styles: StylesList,
+  defaultBreakpointId: Breakpoint["id"]
 ) => {
   const parentChildren: Instance["children"] = [];
   for (const item of treeTemplate) {
@@ -90,6 +101,28 @@ const createInstancesFromTemplate = (
         }
       }
 
+      // populate styles
+      if (item.styles) {
+        const styleSourceId = nanoid();
+        styleSources.push({
+          type: "local",
+          id: styleSourceId,
+        });
+        styleSourceSelections.push({
+          instanceId,
+          values: [styleSourceId],
+        });
+        for (const styleDecl of item.styles) {
+          styles.push({
+            breakpointId: defaultBreakpointId,
+            styleSourceId,
+            state: styleDecl.state,
+            property: styleDecl.property,
+            value: styleDecl.value,
+          });
+        }
+      }
+
       // populate instances
       const instance: Instance = {
         type: "instance",
@@ -102,13 +135,18 @@ const createInstancesFromTemplate = (
       instance.children = createInstancesFromTemplate(
         item.children,
         instances,
-        props
+        props,
+        styleSourceSelections,
+        styleSources,
+        styles,
+        defaultBreakpointId
       );
       parentChildren.push({
         type: "id",
         value: instanceId,
       });
     }
+
     if (item.type === "text") {
       parentChildren.push({
         type: "text",
@@ -120,10 +158,30 @@ const createInstancesFromTemplate = (
 };
 
 export const generateDataFromEmbedTemplate = (
-  treeTemplate: WsEmbedTemplate
+  treeTemplate: WsEmbedTemplate,
+  defaultBreakpointId: Breakpoint["id"]
 ) => {
   const instances: InstancesList = [];
   const props: PropsList = [];
-  const children = createInstancesFromTemplate(treeTemplate, instances, props);
-  return { children, instances, props };
+  const styleSourceSelections: StyleSourceSelectionsList = [];
+  const styleSources: StyleSourcesList = [];
+  const styles: StylesList = [];
+
+  const children = createInstancesFromTemplate(
+    treeTemplate,
+    instances,
+    props,
+    styleSourceSelections,
+    styleSources,
+    styles,
+    defaultBreakpointId
+  );
+  return {
+    children,
+    instances,
+    props,
+    styleSourceSelections,
+    styleSources,
+    styles,
+  };
 };

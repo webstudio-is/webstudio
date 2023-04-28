@@ -9,6 +9,7 @@ import {
   instancesStore,
   selectedStyleSourceSelectorStore,
   textEditingInstanceSelectorStore,
+  breakpointsStore,
 } from "./nano-states";
 import {
   type DroppableTarget,
@@ -19,25 +20,61 @@ import {
   reparentInstanceMutable,
   getAncestorInstanceSelector,
   insertPropsCopyMutable,
+  insertStyleSourcesCopyMutable,
+  insertStyleSourceSelectionsCopyMutable,
+  insertStylesCopyMutable,
 } from "./tree-utils";
 import { removeByMutable } from "./array-utils";
+import { isBaseBreakpoint } from "./breakpoints";
 
 export const insertNewComponentInstance = (
   component: string,
   dropTarget: DroppableTarget
 ) => {
-  const { instances: insertedInstances, props: insertedProps } =
-    createComponentInstance(component);
+  const breakpoints = breakpointsStore.get();
+  const breakpointValues = Array.from(breakpoints.values());
+  const baseBreakpoint = breakpointValues.find(isBaseBreakpoint);
+  if (baseBreakpoint === undefined) {
+    return;
+  }
+  const {
+    instances: insertedInstances,
+    props: insertedProps,
+    styleSourceSelections: insertedStyleSourceSelections,
+    styleSources: insertedStyleSources,
+    styles: insertedStyles,
+  } = createComponentInstance(component, baseBreakpoint.id);
   const rootInstanceId = insertedInstances[0].id;
-  store.createTransaction([instancesStore, propsStore], (instances, props) => {
-    insertInstancesMutable(
-      instances,
-      insertedInstances,
-      [rootInstanceId],
-      dropTarget
-    );
-    insertPropsCopyMutable(props, insertedProps, new Map());
-  });
+  store.createTransaction(
+    [
+      instancesStore,
+      propsStore,
+      styleSourceSelectionsStore,
+      styleSourcesStore,
+      stylesStore,
+    ],
+    (instances, props, styleSourceSelections, styleSources, styles) => {
+      insertInstancesMutable(
+        instances,
+        insertedInstances,
+        [rootInstanceId],
+        dropTarget
+      );
+      insertPropsCopyMutable(props, insertedProps, new Map());
+      insertStyleSourcesCopyMutable(
+        styleSources,
+        insertedStyleSources,
+        new Set()
+      );
+      insertStyleSourceSelectionsCopyMutable(
+        styleSourceSelections,
+        insertedStyleSourceSelections,
+        new Map(),
+        new Map()
+      );
+      insertStylesCopyMutable(styles, insertedStyles, new Map(), new Map());
+    }
+  );
 
   selectedInstanceSelectorStore.set([
     rootInstanceId,
