@@ -56,7 +56,7 @@ export const InstanceTree = (
       )?.component;
     }
     return dragComponent;
-  }, [dragPayload]);
+  }, [dragPayload, instances]);
 
   const canLeaveParent = useCallback(
     (instanceId: Instance["id"]) => {
