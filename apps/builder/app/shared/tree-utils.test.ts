@@ -170,33 +170,51 @@ test("find closest droppable target", () => {
     createInstancePair("box3", "Box", [
       { type: "id", value: "box31" },
       { type: "id", value: "box32" },
-      { type: "id", value: "box33" },
+      { type: "id", value: "list33" },
     ]),
     createInstancePair("box31", "Box", []),
     createInstancePair("box32", "Box", []),
-    createInstancePair("box33", "Box", []),
+    createInstancePair("list33", "List", []),
   ]);
+
   expect(
-    findClosestDroppableTarget(instances, [
-      "bold",
-      "paragraph21",
-      "box2",
-      "root",
-    ])
+    findClosestDroppableTarget(
+      instances,
+      ["bold", "paragraph21", "box2", "root"],
+      ["Box"]
+    )
   ).toEqual({
     parentSelector: ["box2", "root"],
     position: 1,
   });
-  expect(findClosestDroppableTarget(instances, ["box3", "root"])).toEqual({
+  expect(
+    findClosestDroppableTarget(instances, ["box3", "root"], ["Box"])
+  ).toEqual({
     parentSelector: ["box3", "root"],
     position: "end",
   });
-  expect(findClosestDroppableTarget(instances, ["root"])).toEqual({
+  expect(findClosestDroppableTarget(instances, ["root"], ["Box"])).toEqual({
     parentSelector: ["root"],
     position: "end",
   });
-  expect(findClosestDroppableTarget(instances, ["box4", "root"])).toEqual({
-    parentSelector: ["root"],
+  expect(
+    findClosestDroppableTarget(instances, ["box4", "root"], ["Box"])
+  ).toEqual(undefined);
+  expect(
+    findClosestDroppableTarget(
+      instances,
+      ["box32", "box3", "root"],
+      ["Box", "ListItem"]
+    )
+  ).toEqual(undefined);
+  expect(
+    findClosestDroppableTarget(
+      instances,
+      ["list33", "box3", "root"],
+      ["Box", "ListItem"]
+    )
+  ).toEqual({
+    parentSelector: ["list33", "box3", "root"],
     position: "end",
   });
 });

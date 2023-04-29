@@ -9,7 +9,7 @@ import {
   useDrop,
   computeIndicatorPlacement,
 } from "@webstudio-is/design-system";
-import { getComponentMeta } from "@webstudio-is/react-sdk";
+import { canAcceptComponent, getComponentMeta } from "@webstudio-is/react-sdk";
 import { instancesStore } from "~/shared/nano-states";
 import { textEditingInstanceSelectorStore } from "~/shared/nano-states";
 import { publish, useSubscribe } from "~/shared/pubsub";
@@ -71,14 +71,23 @@ const findClosestRichTextInstanceSelector = (
 };
 
 const findClosestDroppableInstanceSelector = (
-  instanceSelector: InstanceSelector
+  instanceSelector: InstanceSelector,
+  dragPayload: DragStartPayload
 ) => {
   const instances = instancesStore.get();
+  let dragComponent: undefined | string;
+  if (dragPayload.type === "insert") {
+    dragComponent = dragPayload.dragComponent;
+  }
+  if (dragPayload.type === "reparent") {
+    dragComponent = instances.get(
+      dragPayload.dragInstanceSelector[0]
+    )?.component;
+  }
   for (const instanceId of instanceSelector) {
     const instance = instances.get(instanceId);
-    if (instance !== undefined) {
-      const meta = getComponentMeta(instance.component);
-      if (meta?.type === "container") {
+    if (instance !== undefined && dragComponent !== undefined) {
+      if (canAcceptComponent(instance.component, dragComponent)) {
         return getAncestorInstanceSelector(instanceSelector, instanceId);
       }
     }
@@ -144,7 +153,8 @@ export const useDragAndDrop = () => {
       }
 
       const droppableInstanceSelector = findClosestDroppableInstanceSelector(
-        newDropInstanceSelector
+        newDropInstanceSelector,
+        dragPayload
       );
       if (droppableInstanceSelector === undefined) {
         return;
