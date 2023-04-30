@@ -85,6 +85,7 @@ export * from "./link";
 export * from "./list-item";
 export * from "./list";
 export * from "./menu-ellipses";
+export * from "./minus";
 export * from "./no-wrap";
 export * from "./offline";
 export * from "./order-first";
