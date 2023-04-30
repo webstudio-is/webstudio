@@ -52,7 +52,7 @@ export const BreakpointsPopover = () => {
   const selectedBreakpoint = useStore(selectedBreakpointStore);
   const scale = useStore(scaleStore);
   const setInitialCanvasWidth = useSetInitialCanvasWidth();
-  console.log(Array.from(breakpoints.values()));
+
   useSubscribe("openBreakpointsMenu", () => {
     setView("initial");
   });
