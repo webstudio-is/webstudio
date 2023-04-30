@@ -2,8 +2,10 @@ import {
   generateDataFromEmbedTemplate,
   type WsEmbedTemplate,
 } from "@webstudio-is/react-sdk";
+import { isBaseBreakpoint } from "./breakpoints";
 import { insertInstances } from "./instance-utils";
 import {
+  breakpointsStore,
   instancesStore,
   selectedInstanceSelectorStore,
   selectedPageStore,
@@ -14,7 +16,14 @@ export const insertTemplate = (
   template: WsEmbedTemplate,
   dropTarget?: DroppableTarget
 ) => {
-  const { instances, props } = generateDataFromEmbedTemplate(template);
+  const breakpoints = breakpointsStore.get();
+  const breakpointValues = Array.from(breakpoints.values());
+  const baseBreakpoint = breakpointValues.find(isBaseBreakpoint);
+  if (baseBreakpoint === undefined) {
+    return;
+  }
+  const { instances, props, styleSourceSelections, styleSources, styles } =
+    generateDataFromEmbedTemplate(template, baseBreakpoint.id);
 
   if (!dropTarget) {
     const selectedPage = selectedPageStore.get();
@@ -28,5 +37,12 @@ export const insertTemplate = (
     );
   }
 
-  insertInstances(instances, props, dropTarget);
+  insertInstances(
+    instances,
+    props,
+    styleSourceSelections,
+    styleSources,
+    styles,
+    dropTarget
+  );
 };

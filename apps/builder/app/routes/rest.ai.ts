@@ -25,7 +25,7 @@ const schema = zfd.formData({
 type OpenAIConfig = {
   apiKey: string;
   organization: string;
-  model: "gpt-3.5-turbo";
+  model: "gpt-3.5-turbo" | "gpt-4";
   maxTokens: number;
 };
 
@@ -57,8 +57,8 @@ export const action = async ({ request }: ActionArgs) => {
       steps,
       messages,
       config: {
-        apiKey: env.OPENAI_KEY,
-        organization: env.OPENAI_ORG,
+        apiKey: env.OPENAI_KEY || "",
+        organization: env.OPENAI_ORG || "",
         model: "gpt-3.5-turbo",
         maxTokens: 2000,
       },
@@ -84,11 +84,11 @@ export const generate = async function generate({
   config: OpenAIConfig;
 }) {
   const { apiKey, organization, model, maxTokens }: OpenAIConfig = config;
-  if (typeof apiKey !== "string" || apiKey.trim().length === 0) {
+  if (apiKey.trim().length === 0) {
     throw new Error("OpenAI API missing");
   }
 
-  if (typeof organization !== "string" || !organization.startsWith("org-")) {
+  if (!organization.startsWith("org-")) {
     throw new Error("OpenAI org missing or invalid");
   }
 
@@ -133,7 +133,7 @@ export const generate = async function generate({
       ]);
   } catch (error) {
     const errorMessage = `Something went wrong. ${
-      process.env.NODE_ENV === "production" ? "" : `${error.message}`
+      process.env.NODE_ENV === "production" ? "" : `${(error as Error).message}`
     }`;
     if (process.env.NODE_ENV !== "production") {
       console.error(errorMessage);
@@ -156,7 +156,7 @@ const getChainForPrompt = function getChainForPrompt({
   ) => Promise<CreateChatCompletionResponse>;
 }) {
   return async function chain() {
-    const responses: [Steps, string][] = [];
+    const responses: [Step, string][] = [];
 
     for (let i = 0; i < steps.length; i++) {
       const [step, template] = steps[i];
@@ -235,6 +235,7 @@ The only available components (instances) are the following:
 
 - Box: a container element
 - Heading: typography element used for headings and titles
+- TextBlock: typography element for generic blocks of text (eg. a paragraph)
 - Input: an input field component
 - TextArea: a multi line input field component
 - Button: a button component
@@ -263,19 +264,17 @@ type JSONResult = Array<EmbedTemplateInstance | EmbedTemplateText>
 Below is an example of valid output:
 
 \`\`\`json
-{
-  "instances": [
-    { type: "text", value: "hello" },
-    {
-      type: "instance",
-      component: "Box",
-      children: [
-        { type: "instance", component: "Box", children: [] },
-        { type: "text", value: "world" },
-      ],
-    },
-  ]
-}
+[
+  { type: "text", value: "hello" },
+  {
+    type: "instance",
+    component: "Box",
+    children: [
+      { type: "instance", component: "Box", children: [] },
+      { type: "text", value: "world" },
+    ],
+  },
+]
 \`\`\``,
   styles: `The JSON above describes <!--prompt-content-->.
 

@@ -1,4 +1,11 @@
-import { findTreeInstanceIdsExcludingSlotDescendants } from "@webstudio-is/project-build";
+import {
+  InstancesList,
+  PropsList,
+  StyleSourceSelectionsList,
+  StyleSourcesList,
+  StylesList,
+  findTreeInstanceIdsExcludingSlotDescendants,
+} from "@webstudio-is/project-build";
 import store from "immerhin";
 import { removeByMutable } from "./array-utils";
 import { isBaseBreakpoint } from "./breakpoints";
@@ -37,14 +44,28 @@ export const insertNewComponentInstance = (
   if (baseBreakpoint === undefined) {
     return;
   }
-  const {
-    instances: insertedInstances,
-    props: insertedProps,
-    styleSourceSelections: insertedStyleSourceSelections,
-    styleSources: insertedStyleSources,
-    styles: insertedStyles,
-  } = createComponentInstance(component, baseBreakpoint.id);
-  const rootInstanceId = insertedInstances[0].id;
+  const { instances, props, styleSourceSelections, styleSources, styles } =
+    createComponentInstance(component, baseBreakpoint.id);
+
+  insertInstances(
+    instances,
+    props,
+    styleSourceSelections,
+    styleSources,
+    styles,
+    dropTarget
+  );
+};
+
+export const insertInstances = (
+  instances: InstancesList,
+  props: PropsList,
+  styleSourceSelections: StyleSourceSelectionsList,
+  styleSources: StyleSourcesList,
+  styles: StylesList,
+  dropTarget: DroppableTarget
+) => {
+  const rootInstanceId = instances[0].id;
   store.createTransaction(
     [
       instancesStore,
@@ -53,26 +74,32 @@ export const insertNewComponentInstance = (
       styleSourcesStore,
       stylesStore,
     ],
-    (instances, props, styleSourceSelections, styleSources, styles) => {
+    (
+      existingInstances,
+      existingProps,
+      existingStyleSourceSelections,
+      existingStyleSources,
+      existingStyles
+    ) => {
       insertInstancesMutable(
+        existingInstances,
         instances,
-        insertedInstances,
         [rootInstanceId],
         dropTarget
       );
-      insertPropsCopyMutable(props, insertedProps, new Map());
+      insertPropsCopyMutable(existingProps, props, new Map());
       insertStyleSourcesCopyMutable(
+        existingStyleSources,
         styleSources,
-        insertedStyleSources,
         new Set()
       );
       insertStyleSourceSelectionsCopyMutable(
+        existingStyleSourceSelections,
         styleSourceSelections,
-        insertedStyleSourceSelections,
         new Map(),
         new Map()
       );
-      insertStylesCopyMutable(styles, insertedStyles, new Map(), new Map());
+      insertStylesCopyMutable(existingStyles, styles, new Map(), new Map());
     }
   );
 

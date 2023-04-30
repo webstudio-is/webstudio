@@ -120,10 +120,7 @@ export const TabContent = ({ publish, onSetActiveTab }: TabContentProps) => {
 
       const response = await res.json();
 
-      // @todo Improve this abort logic.
-      if (aiGenerationState.state === "idle") {
-        return;
-      }
+      // @todo add abort logic if aiGenerationState.state is changed.
 
       if (!response.errors && step === response[0][0]) {
         responses.push({ step, response: response[0][1] });
@@ -139,10 +136,11 @@ export const TabContent = ({ publish, onSetActiveTab }: TabContentProps) => {
       }
     }
 
-    const { template } = merge(
-      {},
-      { template: responses.flatMap(({ step, response }) => response) }
-    );
+    const template = [
+      merge({}, ...responses.flatMap(({ step, response }) => response)),
+    ];
+
+    console.log(template);
 
     insertTemplate(template);
 
