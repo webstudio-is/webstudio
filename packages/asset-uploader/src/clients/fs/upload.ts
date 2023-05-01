@@ -1,8 +1,9 @@
 import { z } from "zod";
 import {
-  unstable_parseMultipartFormData as unstableParseMultipartFormData,
-  unstable_createFileUploadHandler as unstableCreateFileUploadHandler,
-  unstable_composeUploadHandlers as unstableComposeUploadHandlers,
+  unstable_parseMultipartFormData as parseMultipartFormData,
+  unstable_composeUploadHandlers as composeUploadHandlers,
+  unstable_createMemoryUploadHandler as createMemoryUploadHandler,
+  unstable_createFileUploadHandler as createFileUploadHandler,
   NodeOnDiskFile,
 } from "@remix-run/node";
 import { Location } from "@webstudio-is/prisma-client";
@@ -10,7 +11,6 @@ import { AssetData, getAssetData } from "../../utils/get-asset-data";
 import { idsFormDataFieldName } from "../../schema";
 import { getUniqueFilename } from "../../utils/get-unique-filename";
 import { sanitizeS3Key } from "../../utils/sanitize-s3-key";
-import { uuidHandler } from "../../utils/uuid-handler";
 
 const AssetsFromFs = z.array(z.instanceof(NodeOnDiskFile));
 const Ids = z.array(z.string().uuid());
@@ -29,15 +29,20 @@ export const uploadToFs = async ({
   maxSize: number;
   fileDirectory: string;
 }): Promise<AssetData> => {
-  const uploadHandler = unstableCreateFileUploadHandler({
+  const uploadHandler = createFileUploadHandler({
     maxPartSize: maxSize,
     directory: fileDirectory,
     file: ({ filename }) => getUniqueFilename(sanitizeS3Key(filename)),
   });
 
-  const formData = await unstableParseMultipartFormData(
+  const formData = await parseMultipartFormData(
     request,
-    unstableComposeUploadHandlers(uploadHandler, uuidHandler)
+    composeUploadHandlers(
+      uploadHandler,
+      createMemoryUploadHandler({
+        filter: ({ name }) => name === idsFormDataFieldName,
+      })
+    )
   );
 
   const formDataImages = AssetsFromFs.parse(formData.getAll("image"));
