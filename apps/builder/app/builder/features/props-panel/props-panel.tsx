@@ -207,16 +207,19 @@ export const PropsPanel = (props: PropsPanelProps) => {
 
       <Separator />
 
-      <Row
-        css={{
-          paddingTop: theme.spacing[5],
-          paddingBottom: theme.spacing[5],
-        }}
-      >
-        {logic.initialProps.map((item) => renderProperty(props, item))}
-      </Row>
-
-      <Separator />
+      {logic.initialProps.length > 0 && (
+        <>
+          <Row
+            css={{
+              paddingTop: theme.spacing[5],
+              paddingBottom: theme.spacing[5],
+            }}
+          >
+            {logic.initialProps.map((item) => renderProperty(props, item))}
+          </Row>
+          <Separator />
+        </>
+      )}
 
       <CollapsibleSectionWithAddButton
         label="Properties"
