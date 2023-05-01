@@ -230,7 +230,7 @@ export const canAcceptComponent = (
     return false;
   }
   return (
-    childMeta.allowedParentComponents === undefined ||
-    childMeta.allowedParentComponents.includes(parentComponent)
+    childMeta.acceptedParents === undefined ||
+    childMeta.acceptedParents.includes(parentComponent)
   );
 };
