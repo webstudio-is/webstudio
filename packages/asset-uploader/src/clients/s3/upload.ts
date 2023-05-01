@@ -1,8 +1,9 @@
 import { z } from "zod";
 import {
   type UploadHandlerPart,
-  unstable_parseMultipartFormData as unstableCreateFileUploadHandler,
-  unstable_composeUploadHandlers as unstableComposeUploadHandlers,
+  unstable_parseMultipartFormData as parseMultipartFormData,
+  unstable_composeUploadHandlers as composeUploadHandlers,
+  unstable_createMemoryUploadHandler as createMemoryUploadHandler,
   MaxPartSizeExceededError,
 } from "@remix-run/node";
 import type { PutObjectCommandInput, S3Client } from "@aws-sdk/client-s3";
@@ -13,7 +14,6 @@ import { getAssetData, AssetData } from "../../utils/get-asset-data";
 import { idsFormDataFieldName } from "../../schema";
 import { getUniqueFilename } from "../../utils/get-unique-filename";
 import { sanitizeS3Key } from "../../utils/sanitize-s3-key";
-import { uuidHandler } from "../../utils/uuid-handler";
 
 const AssetsUploadedSuccess = z.object({
   Location: z.string(),
@@ -41,9 +41,9 @@ export const uploadToS3 = async ({
 }): Promise<AssetData> => {
   const uploadHandler = createUploadHandler(MAX_FILES_PER_REQUEST, client);
 
-  const formData = await unstableCreateFileUploadHandler(
+  const formData = await parseMultipartFormData(
     request,
-    unstableComposeUploadHandlers(
+    composeUploadHandlers(
       (file: UploadHandlerPart) =>
         uploadHandler({
           file,
@@ -51,7 +51,9 @@ export const uploadToS3 = async ({
           bucket,
           acl,
         }),
-      uuidHandler
+      createMemoryUploadHandler({
+        filter: ({ name }) => name === idsFormDataFieldName,
+      })
     )
   );
 
