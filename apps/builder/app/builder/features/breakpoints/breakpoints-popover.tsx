@@ -33,9 +33,13 @@ import {
   selectedBreakpointIdStore,
   selectedBreakpointStore,
 } from "~/shared/nano-states";
-import { isFeatureEnabled } from "@webstudio-is/feature-flags";
-import { groupBreakpoints, minCanvasWidth } from "~/shared/breakpoints";
+import {
+  groupBreakpoints,
+  isBaseBreakpoint,
+  minCanvasWidth,
+} from "~/shared/breakpoints";
 import { scaleStore } from "~/builder/shared/nano-states";
+import { useSetInitialCanvasWidth } from "./use-set-initial-canvas-width";
 
 export const BreakpointsPopover = () => {
   const [view, setView] = useState<
@@ -47,6 +51,7 @@ export const BreakpointsPopover = () => {
   const breakpoints = useStore(breakpointsStore);
   const selectedBreakpoint = useStore(selectedBreakpointStore);
   const scale = useStore(scaleStore);
+  const setInitialCanvasWidth = useSetInitialCanvasWidth();
 
   useSubscribe("openBreakpointsMenu", () => {
     setView("initial");
@@ -76,10 +81,14 @@ export const BreakpointsPopover = () => {
         }
       }
     );
-    if (breakpointToDelete.id === selectedBreakpoint.id) {
-      selectedBreakpointIdStore.set(undefined);
-    }
 
+    if (breakpointToDelete.id === selectedBreakpoint.id) {
+      const breakpointsArray = Array.from(breakpoints.values());
+      const base =
+        breakpointsArray.find(isBaseBreakpoint) ?? breakpointsArray[0];
+      selectedBreakpointIdStore.set(base.id);
+      setInitialCanvasWidth(base.id);
+    }
     setBreakpointToDelete(undefined);
     setView("editor");
   };
@@ -100,7 +109,7 @@ export const BreakpointsPopover = () => {
       </PopoverTrigger>
       <PopoverPortal>
         <PopoverContent
-          css={{ zIndex: theme.zIndices[1] }}
+          css={{ zIndex: theme.zIndices[1], padding: 0 }}
           sideOffset={0}
           collisionPadding={4}
           align="start"
@@ -126,7 +135,7 @@ export const BreakpointsPopover = () => {
           {view === "initial" && (
             <>
               <Flex
-                css={{ px: theme.spacing[7], py: theme.spacing[5] }}
+                css={{ px: theme.spacing[7], paddingTop: theme.spacing[5] }}
                 gap="3"
               >
                 <WidthInput min={minCanvasWidth} />
@@ -151,6 +160,7 @@ export const BreakpointsPopover = () => {
                           asChild
                           onSelect={() => {
                             selectedBreakpointIdStore.set(breakpoint.id);
+                            setInitialCanvasWidth(breakpoint.id);
                           }}
                           index={index}
                           key={breakpoint.id}
@@ -167,7 +177,7 @@ export const BreakpointsPopover = () => {
                             >
                               {breakpoint.minWidth ??
                                 breakpoint.maxWidth ??
-                                breakpoint.label}
+                                "Base"}
                             </Box>
                             <PopoverMenuItemRightSlot
                               css={{ color: theme.colors.foregroundSubtle }}
@@ -187,29 +197,29 @@ export const BreakpointsPopover = () => {
               </List>
             </>
           )}
-          {isFeatureEnabled("breakpointsEditor") &&
-            (view === "editor" || view === "initial") && (
-              <>
-                <PopoverSeparator />
-                <PopoverMenuItemContainer
-                  css={{
-                    justifyContent: "center",
-                    px: theme.spacing[7],
+          {(view === "editor" || view === "initial") && (
+            <>
+              <PopoverSeparator />
+              <PopoverMenuItemContainer
+                css={{
+                  justifyContent: "center",
+                  mx: theme.spacing[7],
+                  paddingBottom: theme.spacing[5],
+                }}
+              >
+                <Button
+                  color="neutral"
+                  css={{ flexGrow: 1 }}
+                  onClick={(event) => {
+                    event.preventDefault();
+                    setView(view === "initial" ? "editor" : "initial");
                   }}
                 >
-                  <Button
-                    color="neutral"
-                    css={{ flexGrow: 1 }}
-                    onClick={(event) => {
-                      event.preventDefault();
-                      setView(view === "initial" ? "editor" : "initial");
-                    }}
-                  >
-                    {view === "editor" ? "Done" : "Edit breakpoints"}
-                  </Button>
-                </PopoverMenuItemContainer>
-              </>
-            )}
+                  {view === "editor" ? "Done" : "Edit breakpoints"}
+                </Button>
+              </PopoverMenuItemContainer>
+            </>
+          )}
         </PopoverContent>
       </PopoverPortal>
     </Popover>
