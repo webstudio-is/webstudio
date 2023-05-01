@@ -24,8 +24,6 @@ export const meta: WsComponentMeta = {
   presetStyle,
   states: [
     { selector: "::placeholder", label: "Placeholder" },
-    { selector: ":hover", label: "Hover" },
-    { selector: ":focus", label: "Focus" },
     { selector: ":valid", label: "Valid" },
     { selector: ":invalid", label: "Invalid" },
     { selector: ":required", label: "Required" },

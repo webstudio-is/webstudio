@@ -19,8 +19,6 @@ export const meta: WsComponentMeta = {
   presetStyle,
   states: [
     { selector: ":checked", label: "Checked" },
-    { selector: ":hover", label: "Hover" },
-    { selector: ":focus", label: "Focus" },
     { selector: ":required", label: "Required" },
     { selector: ":optional", label: "Optional" },
     { selector: ":disabled", label: "Disabled" },
