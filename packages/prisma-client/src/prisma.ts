@@ -14,29 +14,35 @@ declare global {
     | undefined;
 }
 
+const logPrisma = process.env.NODE_ENV === "production";
+
 // this fixes the issue with `warn(prisma-client) There are already 10 instances of Prisma Client actively running.`
 // explanation here
 // https://www.prisma.io/docs/guides/database/troubleshooting-orm/help-articles/nextjs-prisma-client-dev-practices
 export const prisma =
   global.prisma ||
-  new PrismaClient({
-    log: [
-      { emit: "event", level: "query" },
+  new PrismaClient(
+    logPrisma
+      ? {
+          log: [
+            { emit: "event", level: "query" },
 
-      {
-        emit: "stdout",
-        level: "error",
-      },
-      {
-        emit: "stdout",
-        level: "info",
-      },
-      {
-        emit: "stdout",
-        level: "warn",
-      },
-    ],
-  });
+            {
+              emit: "stdout",
+              level: "error",
+            },
+            {
+              emit: "stdout",
+              level: "info",
+            },
+            {
+              emit: "stdout",
+              level: "warn",
+            },
+          ],
+        }
+      : {}
+  );
 
 prisma.$on("query", (e) => {
   // Try to minify the query as vercel/new relic log size is limited

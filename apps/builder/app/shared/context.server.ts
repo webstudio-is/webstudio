@@ -31,6 +31,14 @@ const createAuthorizationContext = async (
   return context;
 };
 
+const createDomainContext = () => {
+  const context = {
+    domainTrpc: trpcClient.domain,
+  };
+
+  return context;
+};
+
 /**
  * argument buildEnv==="prod" only if we are loading project with production build
  */
@@ -39,8 +47,10 @@ export const createContext = async (
   buildEnv: AppContext["authorization"]["buildEnv"] = "dev"
 ): Promise<AppContext> => {
   const authorization = await createAuthorizationContext(request, buildEnv);
+  const domain = await createDomainContext();
 
   return {
     authorization,
+    domain,
   };
 };

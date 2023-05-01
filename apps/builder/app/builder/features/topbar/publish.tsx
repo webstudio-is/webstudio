@@ -21,6 +21,8 @@ import type { Project } from "@webstudio-is/project";
 import { getPublishedUrl, restPublishPath } from "~/shared/router-utils";
 import { theme } from "@webstudio-is/design-system";
 import { useAuthPermit } from "~/shared/nano-states";
+import { isFeatureEnabled } from "@webstudio-is/feature-flags";
+import { Domains } from "./domains";
 type PublishButtonProps = { project: Project };
 
 const Content = ({ project }: PublishButtonProps) => {
@@ -34,47 +36,55 @@ const Content = ({ project }: PublishButtonProps) => {
   }, [domain]);
 
   return (
-    <Flex
-      direction="column"
-      css={{
-        padding: theme.spacing[9],
-      }}
-    >
-      <fetcher.Form method="post" action={restPublishPath()}>
-        <Flex direction="column" gap="2">
-          {url !== undefined && (
-            <Link
-              href={url}
-              target="_blank"
-              css={{
-                display: "flex",
-                gap: theme.spacing[0],
-              }}
-            >
-              <Text truncate>{new URL(getPublishedUrl(domain)).host}</Text>
-              <ExternalLinkIcon />
-            </Link>
-          )}
-          <Flex gap="2" align="center">
-            <input type="hidden" name="projectId" value={project.id} />
-            <Label htmlFor={id}>Domain:</Label>
-            <DeprecatedTextField id={id} name="domain" defaultValue={domain} />
+    <>
+      <Flex
+        direction="column"
+        gap={3}
+        css={{
+          padding: theme.spacing[9],
+        }}
+      >
+        <fetcher.Form method="post" action={restPublishPath()}>
+          <Flex direction="column" gap="2">
+            {url !== undefined && (
+              <Link
+                href={url}
+                target="_blank"
+                css={{
+                  display: "flex",
+                  gap: theme.spacing[0],
+                }}
+              >
+                <Text truncate>{new URL(getPublishedUrl(domain)).host}</Text>
+                <ExternalLinkIcon />
+              </Link>
+            )}
+            <Flex gap="2" align="center">
+              <input type="hidden" name="projectId" value={project.id} />
+              <Label htmlFor={id}>Domain:</Label>
+              <DeprecatedTextField
+                id={id}
+                name="domain"
+                defaultValue={domain}
+              />
+            </Flex>
+            {fetcher.data?.errors !== undefined && (
+              <Text color="destructive">{fetcher.data?.errors}</Text>
+            )}
+            <Flex css={{ paddingTop: theme.spacing["2"] }}>
+              <Button
+                state={fetcher.state !== "idle" ? "pending" : "auto"}
+                type="submit"
+                css={{ flexGrow: 1 }}
+              >
+                {fetcher.state !== "idle" ? "Publishing" : "Publish"}
+              </Button>
+            </Flex>
           </Flex>
-          {fetcher.data?.errors !== undefined && (
-            <Text color="destructive">{fetcher.data?.errors}</Text>
-          )}
-          <Flex css={{ paddingTop: theme.spacing["2"] }}>
-            <Button
-              state={fetcher.state !== "idle" ? "pending" : "auto"}
-              type="submit"
-              css={{ flexGrow: 1 }}
-            >
-              {fetcher.state !== "idle" ? "Publishing" : "Publish"}
-            </Button>
-          </Flex>
-        </Flex>
-      </fetcher.Form>
-    </Flex>
+        </fetcher.Form>
+      </Flex>
+      {isFeatureEnabled("domains") && <Domains projectId={project.id} />}
+    </>
   );
 };
 

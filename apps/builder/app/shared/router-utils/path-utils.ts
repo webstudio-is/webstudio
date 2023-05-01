@@ -50,6 +50,9 @@ export const dashboardPath = () => {
   return "/dashboard";
 };
 
+export const builderDomainsPath = (method: string) =>
+  `/builder/domains/${method}`;
+
 export const dashboardProjectPath = (method: string) =>
   `/dashboard/projects/${method}`;
 
