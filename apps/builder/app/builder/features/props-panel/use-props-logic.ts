@@ -198,13 +198,6 @@ export const usePropsLogic = ({
     return { prop: saved, propName: name, meta: known };
   });
 
-  // can happen only if there is a bug
-  if (unprocessedSaved.size > 0) {
-    throw new Error(
-      `Expected all saved props to be processed, but there are ${unprocessedSaved.size} left`
-    );
-  }
-
   const handleAdd = (propName: string) => {
     const propMeta = unprocessedKnown.get(propName);
     if (propMeta === undefined) {
