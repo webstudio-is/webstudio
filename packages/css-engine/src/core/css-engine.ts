@@ -39,7 +39,14 @@ export class CssEngine {
       mediaRule = new MediaRule(options);
       this.#mediaRules.set(id, mediaRule);
       this.#isDirty = true;
+      return mediaRule;
     }
+
+    if (options) {
+      mediaRule.options = options;
+      this.#isDirty = true;
+    }
+
     return mediaRule;
   }
   addStyleRule(
