@@ -17,7 +17,7 @@ import {
 import { MinusIcon, PlusIcon } from "@webstudio-is/icons";
 import { breakpointsStore } from "~/shared/nano-states";
 import { useStore } from "@nanostores/react";
-import { isBaseBreakpoint } from "~/shared/breakpoints";
+import { groupBreakpoints, isBaseBreakpoint } from "~/shared/breakpoints";
 import { z } from "zod";
 
 type BreakpointEditorItemProps = {
@@ -150,15 +150,17 @@ type BreakpointsEditorProps = {
 export const BreakpointsEditor = ({ onDelete }: BreakpointsEditorProps) => {
   const breakpoints = useStore(breakpointsStore);
   const [addedBreakpoints, setAddedBreakpoints] = useState<Breakpoint[]>([]);
-
+  const breakpointsRef = useRef(
+    groupBreakpoints(Array.from(breakpoints.values()))
+  );
   const allBreakpoints = [
     ...addedBreakpoints,
-    ...Array.from(breakpoints.values()).filter(
+    ...breakpointsRef.current.filter(
       (breakpoint) =>
         addedBreakpoints.find((added) => added.id === breakpoint.id) ===
         undefined
     ),
-  ];
+  ].filter((breakpoint) => isBaseBreakpoint(breakpoint) === false);
 
   const handleChangeComplete = (breakpoint: Breakpoint) => {
     store.createTransaction([breakpointsStore], (breakpoints) => {
@@ -191,21 +193,19 @@ export const BreakpointsEditor = ({ onDelete }: BreakpointsEditorProps) => {
       </PanelTitle>
       <Separator />
       <Box css={{ marginTop: theme.spacing[5] }}>
-        {allBreakpoints
-          .filter((breakpoint) => isBaseBreakpoint(breakpoint) === false)
-          .map((breakpoint, index, all) => {
-            return (
-              <Fragment key={breakpoint.id}>
-                <BreakpointEditorItem
-                  breakpoint={breakpoint}
-                  onChangeComplete={handleChangeComplete}
-                  onDelete={onDelete}
-                  autoFocus={index === 0}
-                />
-                {index < all.length - 1 && <PopoverSeparator />}
-              </Fragment>
-            );
-          })}
+        {allBreakpoints.map((breakpoint, index, all) => {
+          return (
+            <Fragment key={breakpoint.id}>
+              <BreakpointEditorItem
+                breakpoint={breakpoint}
+                onChangeComplete={handleChangeComplete}
+                onDelete={onDelete}
+                autoFocus={index === 0}
+              />
+              {index < all.length - 1 && <PopoverSeparator />}
+            </Fragment>
+          );
+        })}
       </Box>
     </Flex>
   );

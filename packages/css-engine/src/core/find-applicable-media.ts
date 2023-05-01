@@ -7,7 +7,7 @@ export const findApplicableMedia = <Media extends MediaRuleOptions>(
   media: Array<Media>,
   width: number
 ) => {
-  const sortedMedia = media
+  const sortedMedia = [...media]
     .sort(compareMedia)
     // Reverse order is needed because the last rule in CSSOM has higher source order specificity.
     .reverse();

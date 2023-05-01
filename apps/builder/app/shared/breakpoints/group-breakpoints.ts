@@ -7,7 +7,7 @@ export const groupBreakpoints = <
 >(
   breakpoints: Array<Breakpoint>
 ) => {
-  const sorted = breakpoints.sort(compareMedia);
+  const sorted = [...breakpoints].sort(compareMedia);
   const maxs = sorted.filter((breakpoint) => breakpoint.maxWidth !== undefined);
   const mins = sorted
     .filter((breakpoint) => breakpoint.minWidth !== undefined)
