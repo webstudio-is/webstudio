@@ -81,8 +81,8 @@ export const Form = forwardRef<
   ComponentProps<typeof defaultTag> & {
     initialState?: "initial" | "success" | "error";
   }
->(({ children, initialState, ...props }, ref) => (
-  <form {...props} ref={ref}>
+>(({ children, initialState = "initial", ...props }, ref) => (
+  <form {...props} data-state={initialState} ref={ref}>
     {initialState === "success"
       ? onlySuccessMessage(children)
       : initialState === "error"
