@@ -1,7 +1,7 @@
 {
-  "name": "@webstudio-is/dashboard",
-  "version": "0.68.0",
-  "description": "Webstudio Dashboard",
+  "name": "@webstudio-is/domain",
+  "version": "0.61.0",
+  "description": "Webstudio Domain",
   "author": "Webstudio <github@webstudio.is>",
   "homepage": "https://webstudio.is",
   "type": "module",
@@ -11,11 +11,13 @@
     "checks": "pnpm typecheck && pnpm lint",
     "dev": "build-package --watch",
     "build": "build-package",
+    "dts": "tsc --declarationDir lib/types",
     "lint": "eslint ./src --ext .ts,.tsx --max-warnings 0"
   },
   "dependencies": {
     "@webstudio-is/prisma-client": "workspace:^",
     "@webstudio-is/project": "workspace:^",
+    "@webstudio-is/project-build": "workspace:^",
     "@webstudio-is/trpc-interface": "workspace:^",
     "zod": "^3.21.4"
   },

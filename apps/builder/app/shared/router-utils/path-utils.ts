@@ -50,6 +50,9 @@ export const dashboardPath = () => {
   return "/dashboard";
 };
 
+export const builderDomainsPath = (method: string) =>
+  `/builder/domains/${method}`;
+
 export const dashboardProjectPath = (method: string) =>
   `/dashboard/projects/${method}`;
 
@@ -107,8 +110,6 @@ export const restPatchPath = (props: { authToken?: string }) => {
     urlSearchParamsString ? `?${urlSearchParamsString}` : ""
   }`;
 };
-
-export const restPublishPath = () => "/rest/publish";
 
 export const getBuildUrl = ({
   buildOrigin,

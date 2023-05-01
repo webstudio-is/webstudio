@@ -1,16 +1,22 @@
 import { z } from "zod";
 import { type StyleProperty, StyleValue } from "@webstudio-is/css-data";
+import type { Simplify } from "type-fest";
 
-export const StyleDecl = z.object({
+const StyleDeclRaw = z.object({
   styleSourceId: z.string(),
   breakpointId: z.string(),
   state: z.optional(z.string()),
   // @todo can't figure out how to make property to be enum
-  property: z.string() as z.ZodType<StyleProperty>,
+  property: z.string(),
   value: StyleValue,
 });
 
-export type StyleDecl = z.infer<typeof StyleDecl>;
+export type StyleDecl = Simplify<
+  Omit<z.infer<typeof StyleDeclRaw>, "property"> & {
+    property: StyleProperty;
+  }
+>;
+export const StyleDecl = StyleDeclRaw as z.ZodType<StyleDecl>;
 
 export type StyleDeclKey = string;
 
@@ -26,6 +32,6 @@ export const StylesList = z.array(StyleDecl);
 
 export type StylesList = z.infer<typeof StylesList>;
 
-export const Styles = z.map(z.string() as z.ZodType<StyleDeclKey>, StyleDecl);
+export const Styles = z.map(z.string(), StyleDecl);
 
-export type Styles = z.infer<typeof Styles>;
+export type Styles = Map<string, StyleDecl>;

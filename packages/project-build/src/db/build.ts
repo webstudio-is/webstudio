@@ -6,7 +6,11 @@ import {
   prisma,
   Prisma,
 } from "@webstudio-is/prisma-client";
-import type { AppContext } from "@webstudio-is/trpc-interface/index.server";
+import {
+  AuthorizationError,
+  authorizeProject,
+  type AppContext,
+} from "@webstudio-is/trpc-interface/index.server";
 import type { Build } from "../types";
 import { Pages } from "../schema/pages";
 import {
@@ -215,3 +219,31 @@ export async function createBuild(
     },
   });
 }
+
+export const createProductionBuild = async (
+  props: {
+    projectId: Build["projectId"];
+  },
+  context: AppContext
+) => {
+  const canBuild = await authorizeProject.hasProjectPermit(
+    { projectId: props.projectId, permit: "build" },
+    context
+  );
+
+  if (canBuild === false) {
+    throw new AuthorizationError("You don't have access to build this project");
+  }
+
+  // @todo: This is highly unoptimal and on a big project would take few seconds of CPU time.
+  // we need just duplicate row from dev build and change isDev to false and isProd to true
+  const devBuild = await loadBuildByProjectId(props.projectId, "dev");
+
+  await prisma.$transaction(async (client) => {
+    await createBuild(
+      { projectId: props.projectId, env: "prod", sourceBuild: devBuild },
+      context,
+      client
+    );
+  });
+};

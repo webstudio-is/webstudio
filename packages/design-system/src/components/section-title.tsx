@@ -40,11 +40,11 @@ const titleButtonLayoutStyle = css({
   height: "100%",
   boxSizing: "border-box",
   paddingLeft: theme.spacing[9],
-  paddingRight: theme.spacing[7],
+  paddingRight: theme.spacing[6],
   variants: {
     // We assume that suffix is a <Button prefix={<Icon />} />
     // (hard to support arbitrary width suffixes here, hopefully we'll never need to)
-    hasSuffix: { true: { paddingRight: theme.spacing[16] } },
+    // hasSuffix: { true: { paddingRight: theme.spacing[16] } },
   },
 });
 
@@ -71,6 +71,10 @@ const suffixSlotStyle = css({
   position: "absolute",
   right: theme.spacing[6],
   top: theme.spacing[4],
+});
+
+const invisibleSuffixStyle = css({
+  visibility: "hidden",
 });
 
 const dotsSlotStyle = css({
@@ -155,6 +159,11 @@ export const SectionTitle = forwardRef(
                         <div key={color} className={dotStyle({ color })} />
                       ))}
                     </div>
+                  )}
+
+                  {suffix && (
+                    /* In case of text overflow we need to place here the same suffix*/
+                    <div className={invisibleSuffixStyle()}>{suffix}</div>
                   )}
                 </div>
               </div>

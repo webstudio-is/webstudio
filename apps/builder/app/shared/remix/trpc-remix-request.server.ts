@@ -28,12 +28,16 @@ export const handleTrpcRemixAction = async <Router extends AnyRouter>({
     }
     input = JSON.parse(inputRaw) as never;
   } else {
-    const formData = await request.formData();
-    const inputRaw = formData.get("input");
-    if (typeof inputRaw !== "string") {
-      throw new Error(`Bad method name ${inputRaw}`);
+    if (request.headers.get("Content-Type") !== "application/json") {
+      const formData = await request.formData();
+      const inputRaw = formData.get("input");
+      if (typeof inputRaw !== "string") {
+        throw new Error(`Bad method name ${inputRaw}`);
+      }
+      input = JSON.parse(inputRaw) as never;
+    } else {
+      input = (await request.json()) as never;
     }
-    input = JSON.parse(inputRaw) as never;
   }
 
   const caller = router.createCaller(context);

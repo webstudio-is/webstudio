@@ -23,6 +23,17 @@ type AuthorizationContext = {
   authorizeTrpc: TrpcInterfaceClient["authorize"];
 };
 
+type DomainContext = {
+  domainTrpc: TrpcInterfaceClient["domain"];
+  domainEnv: {
+    PUBLISHER_TOKEN: string;
+    PUBLISHER_ENDPOINT?: string;
+    BUILDER_ORIGIN: string;
+    // @todo remove and get from the /rest/project endpoint
+    BRANCH_NAME?: string;
+  };
+};
+
 /**
  * AppContext is a global context that is passed to all trpc/api queries/mutations
  * "authorization" is made inside the namespace because eventually there will be
@@ -30,4 +41,5 @@ type AuthorizationContext = {
  */
 export type AppContext = {
   authorization: AuthorizationContext;
+  domain: DomainContext;
 };

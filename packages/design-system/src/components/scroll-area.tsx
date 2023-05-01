@@ -5,6 +5,7 @@ import { Root, Viewport, Scrollbar, Thumb } from "@radix-ui/react-scroll-area";
 const ScrollAreaRoot = styled(Root, {
   boxSizing: "border-box",
   overflow: "hidden",
+  display: "grid",
 });
 
 const ScrollAreaThumb = styled(Thumb, {

@@ -131,6 +131,9 @@ importers:
       '@webstudio-is/design-system':
         specifier: workspace:^
         version: link:../../packages/design-system
+      '@webstudio-is/domain':
+        specifier: workspace:^
+        version: link:../../packages/domain
       '@webstudio-is/feature-flags':
         specifier: workspace:^
         version: link:../../packages/feature-flags
@@ -261,11 +264,8 @@ importers:
         specifier: ^0.1.1
         version: 0.1.1
       zod:
-        specifier: ^3.19.1
-        version: 3.19.1
-      zod-form-data:
-        specifier: ^1.2.1
-        version: 1.2.1(zod@3.19.1)
+        specifier: ^3.21.4
+        version: 3.21.4
     devDependencies:
       '@babel/core':
         specifier: ^7.21.0
@@ -395,8 +395,8 @@ importers:
         specifier: 5.0.3
         version: 5.0.3
       zod:
-        specifier: ^3.19.1
-        version: 3.19.1
+        specifier: ^3.21.4
+        version: 3.21.4
 
   packages/authorization-token:
     dependencies:
@@ -407,8 +407,8 @@ importers:
         specifier: workspace:^
         version: link:../trpc-interface
       zod:
-        specifier: ^3.19.1
-        version: 3.19.1
+        specifier: ^3.21.4
+        version: 3.21.4
     devDependencies:
       '@jest/globals':
         specifier: ^29.3.1
@@ -478,8 +478,8 @@ importers:
         specifier: 5.0.3
         version: 5.0.3
       zod:
-        specifier: ^3.19.1
-        version: 3.19.1
+        specifier: ^3.21.4
+        version: 3.21.4
 
   packages/css-engine:
     dependencies:
@@ -557,8 +557,8 @@ importers:
         specifier: workspace:^
         version: link:../trpc-interface
       zod:
-        specifier: ^3.19.1
-        version: 3.19.1
+        specifier: ^3.21.4
+        version: 3.21.4
     devDependencies:
       '@jest/globals':
         specifier: ^29.3.1
@@ -757,6 +757,43 @@ importers:
         specifier: 5.0.3
         version: 5.0.3
 
+  packages/domain:
+    dependencies:
+      '@webstudio-is/prisma-client':
+        specifier: workspace:^
+        version: link:../prisma-client
+      '@webstudio-is/project':
+        specifier: workspace:^
+        version: link:../project
+      '@webstudio-is/project-build':
+        specifier: workspace:^
+        version: link:../project-build
+      '@webstudio-is/trpc-interface':
+        specifier: workspace:^
+        version: link:../trpc-interface
+      zod:
+        specifier: ^3.21.4
+        version: 3.21.4
+    devDependencies:
+      '@jest/globals':
+        specifier: ^29.3.1
+        version: 29.3.1
+      '@webstudio-is/jest-config':
+        specifier: workspace:^
+        version: link:../jest-config
+      '@webstudio-is/scripts':
+        specifier: workspace:^
+        version: link:../scripts
+      '@webstudio-is/tsconfig':
+        specifier: workspace:^
+        version: link:../tsconfig
+      jest:
+        specifier: ^29.3.1
+        version: 29.3.1(@types/node@18.11.18)
+      typescript:
+        specifier: 5.0.3
+        version: 5.0.3
+
   packages/eslint-config-custom:
     dependencies:
       '@typescript-eslint/eslint-plugin':
@@ -827,8 +864,8 @@ importers:
         specifier: 5.0.3
         version: 5.0.3
       zod:
-        specifier: ^3.19.1
-        version: 3.19.1
+        specifier: ^3.21.4
+        version: 3.21.4
 
   packages/form-handlers:
     dependencies:
@@ -889,8 +926,8 @@ importers:
         specifier: ^2.2.2
         version: 2.2.2(typescript@5.0.3)
       zod:
-        specifier: ^3.19.1
-        version: 3.19.1
+        specifier: ^3.21.4
+        version: 3.21.4
     devDependencies:
       '@webstudio-is/scripts':
         specifier: workspace:^
@@ -1086,8 +1123,8 @@ importers:
         specifier: 5.0.3
         version: 5.0.3
       zod:
-        specifier: ^3.19.1
-        version: 3.19.1
+        specifier: ^3.21.4
+        version: 3.21.4
 
   packages/project:
     dependencies:
@@ -1116,8 +1153,8 @@ importers:
         specifier: ^9.0.0
         version: 9.0.0
       zod:
-        specifier: ^3.19.1
-        version: 3.19.1
+        specifier: ^3.21.4
+        version: 3.21.4
     devDependencies:
       '@types/uuid':
         specifier: ^8.3.4
@@ -1147,8 +1184,8 @@ importers:
         specifier: ^3.2.0
         version: 3.3.4
       zod:
-        specifier: ^3.19.1
-        version: 3.19.1
+        specifier: ^3.21.4
+        version: 3.21.4
     devDependencies:
       '@jest/globals':
         specifier: ^29.3.1
@@ -1165,6 +1202,9 @@ importers:
       jest:
         specifier: ^29.3.1
         version: 29.3.1(@types/node@18.11.18)
+      type-fest:
+        specifier: ^3.7.1
+        version: 3.7.1
       typescript:
         specifier: 5.0.3
         version: 5.0.3
@@ -1265,12 +1305,15 @@ importers:
       react-dom:
         specifier: 18.2.0
         version: 18.2.0(react@18.2.0)
+      type-fest:
+        specifier: ^3.7.1
+        version: 3.7.1
       typescript:
         specifier: 5.0.3
         version: 5.0.3
       zod:
-        specifier: ^3.19.1
-        version: 3.19.1
+        specifier: ^3.21.4
+        version: 3.21.4
 
   packages/scripts:
     dependencies:
@@ -1391,8 +1434,8 @@ importers:
         specifier: ^9.0.0
         version: 9.0.0
       zod:
-        specifier: ^3.19.1
-        version: 3.19.1
+        specifier: ^3.21.4
+        version: 3.21.4
     devDependencies:
       '@types/node':
         specifier: ^18.11.18
@@ -20132,16 +20175,8 @@ packages:
       stack-trace: 0.0.10
     dev: true
 
-  /zod-form-data@1.2.1(zod@3.19.1):
-    resolution: {integrity: sha512-L4zocmlzikYB9A2uVVj3OUKX/t3spOZTzQLOhoCXECn9w+eN3bw0D/KYGX4J72iLdCIwDP6YJyYwVXkx3WTu7A==}
-    peerDependencies:
-      zod: ^3.11.x
-    dependencies:
-      zod: 3.19.1
-    dev: false
-
-  /zod@3.19.1:
-    resolution: {integrity: sha512-LYjZsEDhCdYET9ikFu6dVPGp2YH9DegXjdJToSzD9rO6fy4qiRYFoyEYwps88OseJlPyl2NOe2iJuhEhL7IpEA==}
+  /zod@3.21.4:
+    resolution: {integrity: sha512-m46AKbrzKVzOzs/DZgVnG5H55N1sv1M8qZU3A8RIKbs3mrACDNeIOeilDymVb2HdmP8uwshOCF4uJ8uM9rCqJw==}
 
   /zwitch@1.0.5:
     resolution: {integrity: sha512-V50KMwwzqJV0NpZIZFwfOD5/lyny3WlSzRiXgA0G7VUnRlqttta1L6UQIHzd6EuBY/cHGfwTIck7w1yH6Q5zUw==}
