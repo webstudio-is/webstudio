@@ -76,7 +76,7 @@ const BreakpointEditorItem = ({
     onChangeComplete
   );
   return (
-    <Flex css={{ mx: theme.spacing[7] }}>
+    <Flex gap="2" css={{ mx: theme.spacing[7] }}>
       <form
         ref={formRef}
         onKeyPress={(event) => {
@@ -193,7 +193,7 @@ export const BreakpointsEditor = ({ onDelete }: BreakpointsEditorProps) => {
       <Box css={{ marginTop: theme.spacing[5] }}>
         {allBreakpoints
           .filter((breakpoint) => isBaseBreakpoint(breakpoint) === false)
-          .map((breakpoint, index) => {
+          .map((breakpoint, index, all) => {
             return (
               <Fragment key={breakpoint.id}>
                 <BreakpointEditorItem
@@ -202,7 +202,7 @@ export const BreakpointsEditor = ({ onDelete }: BreakpointsEditorProps) => {
                   onDelete={onDelete}
                   autoFocus={index === 0}
                 />
-                {index < allBreakpoints.length - 1 && <PopoverSeparator />}
+                {index < all.length - 1 && <PopoverSeparator />}
               </Fragment>
             );
           })}
