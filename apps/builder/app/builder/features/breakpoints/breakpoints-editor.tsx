@@ -150,12 +150,12 @@ type BreakpointsEditorProps = {
 export const BreakpointsEditor = ({ onDelete }: BreakpointsEditorProps) => {
   const breakpoints = useStore(breakpointsStore);
   const [addedBreakpoints, setAddedBreakpoints] = useState<Breakpoint[]>([]);
-  const breakpointsRef = useRef(
+  const initialBreakpointsRef = useRef(
     groupBreakpoints(Array.from(breakpoints.values()))
   );
   const allBreakpoints = [
     ...addedBreakpoints,
-    ...breakpointsRef.current.filter(
+    ...initialBreakpointsRef.current.filter(
       (breakpoint) =>
         addedBreakpoints.find((added) => added.id === breakpoint.id) ===
         undefined
@@ -207,6 +207,9 @@ export const BreakpointsEditor = ({ onDelete }: BreakpointsEditorProps) => {
           );
         })}
       </Box>
+      {allBreakpoints.length === 0 && (
+        <Text css={{ margin: theme.spacing[10] }}>No breakpoints found</Text>
+      )}
     </Flex>
   );
 };
