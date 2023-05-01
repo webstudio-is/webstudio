@@ -1,5 +1,9 @@
 import { useState, useMemo } from "react";
-import { findNextListIndex, Grid, theme } from "@webstudio-is/design-system";
+import {
+  deprecatedFindNextListIndex,
+  Grid,
+  theme,
+} from "@webstudio-is/design-system";
 import {
   AssetsShell,
   type AssetContainer,
@@ -39,7 +43,7 @@ const useLogic = ({
         }
         return;
       }
-      const nextIndex = findNextListIndex(
+      const nextIndex = deprecatedFindNextListIndex(
         selectedIndex,
         filteredItems.length,
         direction

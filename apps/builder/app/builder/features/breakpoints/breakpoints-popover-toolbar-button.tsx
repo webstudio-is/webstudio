@@ -1,12 +1,6 @@
-import { type ComponentProps } from "react";
+import { forwardRef, type ComponentProps } from "react";
 import { useStore } from "@nanostores/react";
-import {
-  DropdownMenuSubTrigger,
-  DropdownMenuTrigger,
-  Flex,
-  theme,
-  toggleItemStyle,
-} from "@webstudio-is/design-system";
+import { Flex, theme } from "@webstudio-is/design-system";
 import { scaleStore, useCanvasWidth } from "~/builder/shared/nano-states";
 import { selectedBreakpointStore } from "~/shared/nano-states";
 
@@ -29,9 +23,10 @@ const Value = ({
   );
 };
 
-type TriggerButtonProps = ComponentProps<typeof DropdownMenuSubTrigger>;
-
-export const TriggerButton = (props: TriggerButtonProps) => {
+export const BreakpointsPopoverToolbarButton = forwardRef<
+  HTMLButtonElement,
+  ComponentProps<"button">
+>((props, ref) => {
   const scale = useStore(scaleStore);
   const breakpoint = useStore(selectedBreakpointStore);
   const [canvasWidth] = useCanvasWidth();
@@ -40,12 +35,7 @@ export const TriggerButton = (props: TriggerButtonProps) => {
   }
   const roundedScale = Math.round(scale);
   return (
-    <DropdownMenuTrigger
-      aria-label="Show breakpoints"
-      className={toggleItemStyle({
-        css: { gap: theme.spacing[5] },
-      })}
-    >
+    <button ref={ref} {...props}>
       <Value unit="PX" minWidth={55}>
         {Math.round(canvasWidth)}
       </Value>
@@ -54,6 +44,8 @@ export const TriggerButton = (props: TriggerButtonProps) => {
           {roundedScale}
         </Value>
       )}
-    </DropdownMenuTrigger>
+    </button>
   );
-};
+});
+
+BreakpointsPopoverToolbarButton.displayName = "BreakpointsPopoverToolbarButton";

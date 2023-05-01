@@ -44,11 +44,13 @@ export const CanvasTools = ({ publish }: CanvasToolsProps) => {
 
   if (
     dragAndDropState.isDragging &&
-    dragAndDropState.dropTarget !== undefined &&
     dragAndDropState.placementIndicator !== undefined
   ) {
     const { dropTarget, placementIndicator } = dragAndDropState;
-    const dropTargetInstance = instances.get(dropTarget.itemSelector[0]);
+    const dropTargetInstance =
+      dropTarget === undefined
+        ? undefined
+        : instances.get(dropTarget.itemSelector[0]);
     return dropTargetInstance ? (
       <div className={containerStyle({ overflow: "hidden" })}>
         <Outline rect={placementIndicator.parentRect}>

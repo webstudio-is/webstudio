@@ -1,8 +1,8 @@
 import {
-  List,
-  ListItem,
-  useList,
-  findNextListIndex,
+  DeprecatedList,
+  DeprecatedListItem,
+  useDeprecatedList,
+  deprecatedFindNextListIndex,
   theme,
 } from "@webstudio-is/design-system";
 import {
@@ -40,7 +40,7 @@ const useLogic = ({
         handleChangeCurrent(selectedIndex);
         return;
       }
-      const nextIndex = findNextListIndex(
+      const nextIndex = deprecatedFindNextListIndex(
         selectedIndex,
         groupedItems.length,
         direction
@@ -75,7 +75,7 @@ const useLogic = ({
     }
   };
 
-  const { getItemProps, getListProps } = useList({
+  const { getItemProps, getListProps } = useDeprecatedList({
     items: groupedItems,
     selectedIndex,
     currentIndex,
@@ -133,13 +133,13 @@ export const FontsManager = ({ value, onChange }: FontsManagerProps) => {
   const renderItem = (item: Item, index: number) => {
     const itemProps = getItemProps({ index });
     return (
-      <ListItem
+      <DeprecatedListItem
         {...itemProps}
         prefix={itemProps.current ? <CheckMarkIcon /> : undefined}
         suffix={item.type === "uploaded" ? renderMenu(index) : undefined}
       >
         {item.label}
-      </ListItem>
+      </DeprecatedListItem>
     );
   };
 
@@ -149,7 +149,7 @@ export const FontsManager = ({ value, onChange }: FontsManagerProps) => {
       type="font"
       isEmpty={groupedItems.length === 0}
     >
-      <List
+      <DeprecatedList
         {...listProps}
         onBlur={(event) => {
           if (isMenuOpen === false) {
@@ -158,7 +158,7 @@ export const FontsManager = ({ value, onChange }: FontsManagerProps) => {
         }}
       >
         {uploadedItems.length !== 0 && (
-          <ListItem state="disabled">{"Uploaded"}</ListItem>
+          <DeprecatedListItem state="disabled">{"Uploaded"}</DeprecatedListItem>
         )}
         {uploadedItems.map(renderItem)}
         {systemItems.length !== 0 && (
@@ -166,13 +166,13 @@ export const FontsManager = ({ value, onChange }: FontsManagerProps) => {
             {uploadedItems.length !== 0 && (
               <Separator css={{ mx: theme.spacing[9] }} />
             )}
-            <ListItem state="disabled">{"System"}</ListItem>
+            <DeprecatedListItem state="disabled">{"System"}</DeprecatedListItem>
           </>
         )}
         {systemItems.map((item, index) =>
           renderItem(item, index + uploadedItems.length)
         )}
-      </List>
+      </DeprecatedList>
     </AssetsShell>
   );
 };

@@ -38,7 +38,7 @@ export type TreeProps<Data extends { id: string }> = {
   onSelect?: (itemSelector: ItemSelector) => void;
   onHover?: (itemSelector: undefined | ItemSelector) => void;
   animate?: boolean;
-  onDropTargetChange: (dropTarget: ItemDropTarget) => void;
+  onDropTargetChange: (dropTarget: undefined | ItemDropTarget) => void;
   onDragItemChange: (itemSelector: ItemSelector) => void;
   onDragEnd: (event: {
     itemSelector: ItemSelector;
@@ -102,12 +102,6 @@ export const Tree = <Data extends { id: string }>({
     });
   }, [dropTarget]);
 
-  const getDropTargetElement = useCallback(
-    (id: string): HTMLElement | null | undefined =>
-      rootRef.current?.querySelector(`[data-drop-target-id="${id}"]`),
-    []
-  );
-
   const [shiftedDropTarget, setHorizontalShift] = useHorizontalShift({
     dragItemSelector,
     dropTarget,
@@ -117,14 +111,6 @@ export const Tree = <Data extends { id: string }>({
     isItemHidden,
     canAcceptChild,
   });
-
-  const getFallbackDropTarget = () => {
-    return {
-      data: [root.id],
-      element: getDropTargetElement(root.id) as HTMLElement,
-      final: true,
-    };
-  };
 
   const useHoldHandler = useHold({
     data: dropTarget,
@@ -143,8 +129,6 @@ export const Tree = <Data extends { id: string }>({
   const dropHandlers = useDrop<ItemSelector>({
     ...sharedDropOptions,
 
-    emulatePointerAlwaysInRootBounds: true,
-
     elementToData: (element) => {
       // We want to make sure edge detection is calculated relative
       // to the element with the data-drop-target-id attribute.
@@ -158,12 +142,7 @@ export const Tree = <Data extends { id: string }>({
 
     swapDropTarget: (dropTarget) => {
       if (dragItemSelector === undefined || dropTarget === undefined) {
-        return getFallbackDropTarget();
-      }
-
-      // drop target is the root
-      if (dropTarget.data.length === 1) {
-        return dropTarget;
+        return;
       }
 
       let newDropItemSelector = dropTarget.data.slice();
@@ -184,7 +163,7 @@ export const Tree = <Data extends { id: string }>({
         canAcceptChild(itemId)
       );
       if (ancestorIndex === -1) {
-        return getFallbackDropTarget();
+        return;
       }
       newDropItemSelector = newDropItemSelector.slice(ancestorIndex);
 
@@ -194,19 +173,23 @@ export const Tree = <Data extends { id: string }>({
       );
 
       if (element === undefined) {
-        return getFallbackDropTarget();
+        return;
       }
 
       return { data: newDropItemSelector, element, final: true };
     },
 
     onDropTargetChange: (dropTarget) => {
-      const itemDropTarget = {
-        itemSelector: dropTarget.data,
-        indexWithinChildren: dropTarget.indexWithinChildren,
-        placement: dropTarget.placement,
-      };
-      onDropTargetChange(itemDropTarget);
+      if (dropTarget === undefined) {
+        onDropTargetChange(undefined);
+      } else {
+        const itemDropTarget = {
+          itemSelector: dropTarget.data,
+          indexWithinChildren: dropTarget.indexWithinChildren,
+          placement: dropTarget.placement,
+        };
+        onDropTargetChange(itemDropTarget);
+      }
     },
   });
 

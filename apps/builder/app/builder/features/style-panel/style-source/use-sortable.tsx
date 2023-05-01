@@ -54,13 +54,17 @@ export const useSortable = <Item extends { id: string }>({
     },
     onDropTargetChange(dropTarget) {
       setDropTarget(dropTarget);
-      setPlacementIndicator(
-        computeIndicatorPlacement({
-          ...sharedDropOptions,
-          placement: dropTarget.placement,
-          element: dropTarget.element,
-        })
-      );
+      if (dropTarget === undefined) {
+        setPlacementIndicator(undefined);
+      } else {
+        setPlacementIndicator(
+          computeIndicatorPlacement({
+            ...sharedDropOptions,
+            placement: dropTarget.placement,
+            element: dropTarget.element,
+          })
+        );
+      }
     },
   });
 
@@ -89,6 +93,7 @@ export const useSortable = <Item extends { id: string }>({
       useDropHandlers.handleEnd({ isCanceled });
       setDragItemId(undefined);
       setDropTarget(undefined);
+      setPlacementIndicator(undefined);
 
       if (isCanceled || dropTarget === undefined || dragItemId === undefined) {
         return;

@@ -4,9 +4,9 @@ import {
   forwardRef,
   type KeyboardEvent,
 } from "react";
-import { DeprecatedText2 } from "./__DEPRECATED__/text2";
-import { Flex } from "./flex";
-import { styled, theme } from "../stitches.config";
+import { DeprecatedText2 } from "./text2";
+import { Flex } from "../flex";
+import { styled, theme } from "../../stitches.config";
 
 const ListBase = styled("ul", {
   display: "flex",
@@ -45,15 +45,15 @@ const ListItemBase = styled("li", {
   },
 });
 
-export const List = forwardRef<
+export const DeprecatedList = forwardRef<
   HTMLUListElement,
   ComponentProps<typeof ListBase>
 >((props, ref) => {
   return <ListBase role="listbox" ref={ref} {...props} />;
 });
-List.displayName = "List";
+DeprecatedList.displayName = "DeprecatedList";
 
-export const ListItem = forwardRef<
+export const DeprecatedListItem = forwardRef<
   HTMLLIElement,
   Omit<ComponentProps<typeof ListItemBase>, "prefix" | "suffix" | "current"> & {
     state?: "disabled" | "selected";
@@ -86,9 +86,9 @@ export const ListItem = forwardRef<
     </ListItemBase>
   );
 });
-ListItem.displayName = "ListItem";
+DeprecatedListItem.displayName = "DeprecatedListItem";
 
-export const findNextListIndex = (
+export const deprecatedFindNextListIndex = (
   currentIndex: number,
   total: number,
   direction: "next" | "previous"
@@ -117,7 +117,7 @@ type UseList<Item = unknown> = {
   onChangeCurrent: (index: number) => void;
 };
 
-export const useList = ({
+export const useDeprecatedList = ({
   items,
   selectedIndex,
   currentIndex,
@@ -151,7 +151,7 @@ export const useList = ({
         switch (event.code) {
           case "ArrowUp":
           case "ArrowDown": {
-            const nextIndex = findNextListIndex(
+            const nextIndex = deprecatedFindNextListIndex(
               selectedIndex,
               items.length,
               event.code === "ArrowUp" ? "previous" : "next"

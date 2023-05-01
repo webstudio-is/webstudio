@@ -4,6 +4,10 @@ import {
   type Instance,
   type InstancesList,
   PropsList,
+  StyleSourceSelectionsList,
+  StyleSourcesList,
+  StylesList,
+  Breakpoint,
 } from "@webstudio-is/project-build";
 import { StyleValue, type StyleProperty } from "@webstudio-is/css-data";
 
@@ -75,7 +79,11 @@ export type WsEmbedTemplate = z.infer<typeof WsEmbedTemplate>;
 const createInstancesFromTemplate = (
   treeTemplate: WsEmbedTemplate,
   instances: InstancesList,
-  props: PropsList
+  props: PropsList,
+  styleSourceSelections: StyleSourceSelectionsList,
+  styleSources: StyleSourcesList,
+  styles: StylesList,
+  defaultBreakpointId: Breakpoint["id"]
 ) => {
   const parentChildren: Instance["children"] = [];
   for (const item of treeTemplate) {
@@ -93,6 +101,28 @@ const createInstancesFromTemplate = (
         }
       }
 
+      // populate styles
+      if (item.styles) {
+        const styleSourceId = nanoid();
+        styleSources.push({
+          type: "local",
+          id: styleSourceId,
+        });
+        styleSourceSelections.push({
+          instanceId,
+          values: [styleSourceId],
+        });
+        for (const styleDecl of item.styles) {
+          styles.push({
+            breakpointId: defaultBreakpointId,
+            styleSourceId,
+            state: styleDecl.state,
+            property: styleDecl.property,
+            value: styleDecl.value,
+          });
+        }
+      }
+
       // populate instances
       const instance: Instance = {
         type: "instance",
@@ -105,13 +135,18 @@ const createInstancesFromTemplate = (
       instance.children = createInstancesFromTemplate(
         item.children,
         instances,
-        props
+        props,
+        styleSourceSelections,
+        styleSources,
+        styles,
+        defaultBreakpointId
       );
       parentChildren.push({
         type: "id",
         value: instanceId,
       });
     }
+
     if (item.type === "text") {
       parentChildren.push({
         type: "text",
@@ -123,10 +158,30 @@ const createInstancesFromTemplate = (
 };
 
 export const generateDataFromEmbedTemplate = (
-  treeTemplate: WsEmbedTemplate
+  treeTemplate: WsEmbedTemplate,
+  defaultBreakpointId: Breakpoint["id"]
 ) => {
   const instances: InstancesList = [];
   const props: PropsList = [];
-  const children = createInstancesFromTemplate(treeTemplate, instances, props);
-  return { children, instances, props };
+  const styleSourceSelections: StyleSourceSelectionsList = [];
+  const styleSources: StyleSourcesList = [];
+  const styles: StylesList = [];
+
+  const children = createInstancesFromTemplate(
+    treeTemplate,
+    instances,
+    props,
+    styleSourceSelections,
+    styleSources,
+    styles,
+    defaultBreakpointId
+  );
+  return {
+    children,
+    instances,
+    props,
+    styleSourceSelections,
+    styleSources,
+    styles,
+  };
 };
