@@ -103,6 +103,17 @@ const useScrub = ({
           value: `${value.value}`,
           unit: value.unit,
         });
+
+        if (value.type === "invalid") {
+          // Try return unitless
+          if (isValid(property, "0")) {
+            value = {
+              type: "unit",
+              unit: "number",
+              value: 0,
+            };
+          }
+        }
       }
       return value;
     };
