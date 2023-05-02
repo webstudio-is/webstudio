@@ -159,9 +159,17 @@ export const renderControl = ({
         />
       );
     }
+
+    if (prop.type === "string[]") {
+      throw new Error(
+        `Cannot render a fallback control for prop "${rest.propName}" with type string[], because we don't know the available options for a multiselect control`
+      );
+    }
+
+    prop satisfies never;
   }
 
   throw new Error(
-    `Unsupported combination of prop and control: name=${rest.propName}, type=${prop?.type}, control=${meta.control}`
+    `Unsupported control type "${meta.control}" for prop "${rest.propName}"`
   );
 };
