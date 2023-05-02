@@ -39,16 +39,7 @@ const parseValue = (
   }
 
   if (number === 0 && property in properties) {
-    const { initial } = properties[property];
-    if (initial.type === "tuple") {
-      // workaround read only array from "as const"
-      return {
-        type: "tuple",
-        value: [...initial.value],
-      };
-    } else {
-      return initial;
-    }
+    return properties[property].initial;
   }
 
   if (parsedUnit === null) {
