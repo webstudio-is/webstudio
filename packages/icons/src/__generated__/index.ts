@@ -62,6 +62,7 @@ export * from "./email";
 export * from "./external-link";
 export * from "./eyecon-closed";
 export * from "./eyecon-open";
+export * from "./form-text-area";
 export * from "./form-text-field";
 export * from "./form";
 export * from "./gap-horizontal";

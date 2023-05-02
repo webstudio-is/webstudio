@@ -19,8 +19,6 @@ const isAbsoluteUrl = (href: string) => {
 };
 
 export const handleLinkClick = (event: MouseEvent) => {
-  event.preventDefault();
-
   const pages = pagesStore.get();
 
   if (isPreviewModeStore.get() === false || pages === undefined) {

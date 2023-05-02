@@ -13,11 +13,16 @@ const presetStyle = {
 } satisfies PresetStyle<typeof defaultTag>;
 
 export const meta: WsComponentMeta = {
-  category: "forms",
+  category: "general",
   type: "container",
   label: "Button",
   Icon: ButtonElementIcon,
   presetStyle,
+  states: [
+    { selector: ":active", label: "Active" },
+    { selector: ":disabled", label: "Disabled" },
+    { selector: ":enabled", label: "Enabled" },
+  ],
 };
 
 export const propsMeta: WsComponentPropsMeta = {

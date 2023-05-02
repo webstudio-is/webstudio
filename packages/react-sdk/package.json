@@ -8,7 +8,7 @@
   "scripts": {
     "dev": "build-package --watch",
     "build": "build-package",
-    "build:args": "generate-arg-types './src/components/*.tsx !./src/**/*.stories.tsx !./src/**/*.ws.tsx' && prettier --write \"**/*.props.ts\"",
+    "build:args": "generate-arg-types './src/components/*.tsx ./src/app/custom-components/*.tsx !./src/**/*.stories.tsx !./src/**/*.ws.tsx' && prettier --write \"**/*.props.ts\"",
     "dts": "tsc --declarationDir lib/types",
     "typecheck": "tsc --noEmit --emitDeclarationOnly false",
     "test": "NODE_OPTIONS=--experimental-vm-modules jest --passWithNoTests",

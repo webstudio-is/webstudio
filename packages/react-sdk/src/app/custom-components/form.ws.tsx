@@ -1,10 +1,10 @@
 import { FormIcon } from "@webstudio-is/icons";
-import { form } from "../css/normalize";
+import { form } from "../../css/normalize";
 import type {
   PresetStyle,
   WsComponentMeta,
   WsComponentPropsMeta,
-} from "./component-meta";
+} from "../../components/component-meta";
 import type { defaultTag } from "./form";
 import { props } from "./__generated__/form.props";
 
@@ -21,6 +21,10 @@ export const meta: WsComponentMeta = {
   label: "Form",
   Icon: FormIcon,
   presetStyle,
+  states: [
+    { selector: "[data-state=error]", label: "Error" },
+    { selector: "[data-state=success]", label: "Success" },
+  ],
   children: [
     {
       type: "instance",
@@ -49,10 +53,34 @@ export const meta: WsComponentMeta = {
       component: "Button",
       children: [{ type: "text", value: "Submit" }],
     },
+    {
+      type: "instance",
+      component: "SuccessMessage",
+      children: [
+        {
+          type: "instance",
+          component: "TextBlock",
+          children: [
+            { type: "text", value: "Thank you for getting in touch!" },
+          ],
+        },
+      ],
+    },
+    {
+      type: "instance",
+      component: "ErrorMessage",
+      children: [
+        {
+          type: "instance",
+          component: "TextBlock",
+          children: [{ type: "text", value: "Sorry, something went wrong." }],
+        },
+      ],
+    },
   ],
 };
 
 export const propsMeta: WsComponentPropsMeta = {
   props,
-  initialProps: [],
+  initialProps: ["initialState"],
 };

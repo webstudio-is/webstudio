@@ -1,22 +1,26 @@
-import { FormTextFieldIcon } from "@webstudio-is/icons";
-import { input } from "../css/normalize";
+import { FormTextAreaIcon } from "@webstudio-is/icons";
+import { textarea } from "../css/normalize";
 import type {
-  PresetStyle,
   WsComponentMeta,
   WsComponentPropsMeta,
+  PresetStyle,
 } from "./component-meta";
-import type { defaultTag } from "./input";
-import { props } from "./__generated__/input.props";
+import type { defaultTag } from "./textarea";
+import { props } from "./__generated__/textarea.props";
 
 const presetStyle = {
-  input,
+  textarea: [
+    ...textarea,
+    // resize doesn't work well while on canvas
+    { property: "resize", value: { type: "keyword", value: "none" } },
+  ],
 } satisfies PresetStyle<typeof defaultTag>;
 
 export const meta: WsComponentMeta = {
   category: "forms",
   type: "control",
-  label: "Text Field",
-  Icon: FormTextFieldIcon,
+  label: "Text Area",
+  Icon: FormTextAreaIcon,
   presetStyle,
   states: [
     { selector: "::placeholder", label: "Placeholder" },
@@ -33,5 +37,5 @@ export const meta: WsComponentMeta = {
 
 export const propsMeta: WsComponentPropsMeta = {
   props,
-  initialProps: ["name", "type", "placeholder", "required", "autoFocus"],
+  initialProps: ["name", "placeholder", "required", "autoFocus"],
 };

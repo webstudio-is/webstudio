@@ -1,27 +1,30 @@
-import { FormTextFieldIcon } from "@webstudio-is/icons";
-import { input } from "../css/normalize";
+import { RadioCheckedIcon } from "@webstudio-is/icons";
 import type {
-  PresetStyle,
   WsComponentMeta,
   WsComponentPropsMeta,
+  PresetStyle,
 } from "./component-meta";
-import type { defaultTag } from "./input";
-import { props } from "./__generated__/input.props";
+import type { defaultTag } from "./radio-button";
+import { input } from "../css/normalize";
+import { props } from "./__generated__/radio-button.props";
 
 const presetStyle = {
-  input,
+  input: [
+    ...input,
+    {
+      property: "marginRight",
+      value: { type: "unit", unit: "em", value: 0.5 },
+    },
+  ],
 } satisfies PresetStyle<typeof defaultTag>;
 
 export const meta: WsComponentMeta = {
-  category: "forms",
   type: "control",
-  label: "Text Field",
-  Icon: FormTextFieldIcon,
+  label: "Radio Button",
+  Icon: RadioCheckedIcon,
   presetStyle,
   states: [
-    { selector: "::placeholder", label: "Placeholder" },
-    { selector: ":valid", label: "Valid" },
-    { selector: ":invalid", label: "Invalid" },
+    { selector: ":checked", label: "Checked" },
     { selector: ":required", label: "Required" },
     { selector: ":optional", label: "Optional" },
     { selector: ":disabled", label: "Disabled" },
@@ -33,5 +36,5 @@ export const meta: WsComponentMeta = {
 
 export const propsMeta: WsComponentPropsMeta = {
   props,
-  initialProps: ["name", "type", "placeholder", "required", "autoFocus"],
+  initialProps: ["name"],
 };
