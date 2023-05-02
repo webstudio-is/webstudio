@@ -1,4 +1,4 @@
-import { LabelIcon } from "@webstudio-is/icons";
+import { TextBlockIcon } from "@webstudio-is/icons";
 import type {
   WsComponentMeta,
   WsComponentPropsMeta,
@@ -19,7 +19,7 @@ export const meta: WsComponentMeta = {
   category: "forms",
   type: "rich-text",
   label: "Input Label",
-  Icon: LabelIcon,
+  Icon: TextBlockIcon,
   presetStyle,
   children: [{ type: "text", value: "Form Label" }],
 };
