@@ -4,6 +4,10 @@ import { useState, useEffect, useRef } from "react";
 import { useModifierKeys } from "../../shared/modifier-keys";
 import type { StyleUpdateOptions } from "../../shared/use-style-data";
 import type { SpaceStyleProperty, HoverTagret } from "./types";
+import { isValid } from "../../shared/parse-css-value";
+import { parseIntermediateOrInvalidValue } from "../../shared/css-value-input/parse-intermediate-or-invalid-value";
+import { toValue } from "@webstudio-is/css-engine";
+import type { CssValueInputValue } from "../../shared/css-value-input/css-value-input";
 
 type Values = Partial<Record<SpaceStyleProperty, StyleValue>>;
 
@@ -61,11 +65,19 @@ export const useScrub = (props: {
 
       const { values, properties, props } = nonDependencies.current;
 
-      const value = {
+      let value: CssValueInputValue = {
         type: "unit",
         value: event.value,
         unit: unitRef.current,
       } as const;
+
+      if (isValid(property, toValue(value)) === false) {
+        value = parseIntermediateOrInvalidValue(property, {
+          type: "intermediate",
+          value: `${value.value}`,
+          unit: value.unit,
+        });
+      }
 
       const nextValues = { ...values };
       for (const property of properties) {
