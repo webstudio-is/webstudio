@@ -414,4 +414,12 @@ export const Story = () => {
 };
 
 Story.storyName = "props-panel";
-export default { component: Story };
+export default {
+  component: Story,
+  parameters: {
+    lostpixel: {
+      // this is to fix cutting off the after scroll area in the screenshot
+      waitBeforeScreenshot: 5000,
+    },
+  },
+};
