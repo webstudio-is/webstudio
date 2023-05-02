@@ -1,4 +1,4 @@
-import { CheckboxCheckedFilledIcon } from "@webstudio-is/icons";
+import { CheckboxCheckedIcon } from "@webstudio-is/icons";
 import type {
   WsComponentMeta,
   WsComponentPropsMeta,
@@ -21,7 +21,7 @@ const presetStyle = {
 export const meta: WsComponentMeta = {
   type: "control",
   label: "Checkbox",
-  Icon: CheckboxCheckedFilledIcon,
+  Icon: CheckboxCheckedIcon,
   presetStyle,
   states: [
     { selector: ":checked", label: "Checked" },

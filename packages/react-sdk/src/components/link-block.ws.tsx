@@ -1,4 +1,4 @@
-import { BoxLinkIcon } from "@webstudio-is/icons";
+import { LinkBlockIcon } from "@webstudio-is/icons";
 import type {
   PresetStyle,
   WsComponentMeta,
@@ -23,7 +23,7 @@ export const meta: WsComponentMeta = {
   category: "general",
   type: "container",
   label: "Link Block",
-  Icon: BoxLinkIcon,
+  Icon: LinkBlockIcon,
   states: linkMeta.states,
   presetStyle,
 };

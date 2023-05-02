@@ -35,7 +35,6 @@ export * from "./cross-large";
 export * from "./ellipses";
 export * from "./text-align-center";
 export * from "./text-align-justify";
-export * from "./text-align-left";
 export * from "./text-align-right";
 export * from "./text-capitalize";
 export * from "./text-hyphen";
