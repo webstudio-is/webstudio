@@ -54,8 +54,10 @@ export const PersistentFetcherProvider = ({
     isIdle.current = true;
 
     if (currentRequestCallback.current) {
-      currentRequestCallback.current(data);
+      const callback = currentRequestCallback.current;
+      // reset before calling to enable sequential submits
       currentRequestCallback.current = undefined;
+      callback(data);
     }
 
     const nextTask = queue.current.shift();

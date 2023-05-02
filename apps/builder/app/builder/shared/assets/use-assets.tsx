@@ -9,7 +9,7 @@ import {
 } from "@webstudio-is/asset-uploader";
 import { toast } from "@webstudio-is/design-system";
 import { sanitizeS3Key } from "@webstudio-is/asset-uploader";
-import { restAssetsPath } from "~/shared/router-utils";
+import { restAssetsUploadPath, restAssetsPath } from "~/shared/router-utils";
 import type { AssetContainer, PreviewAsset } from "./types";
 import { usePersistentFetcher } from "~/shared/fetcher";
 import type { ActionData } from "~/builder/shared/assets";
@@ -113,7 +113,8 @@ const assetContainersStore = computed(
 export type UploadData = ActionData;
 
 export const useUploadAsset = () => {
-  const submit = usePersistentFetcher();
+  const submitAsset = usePersistentFetcher();
+  const submitUpload = usePersistentFetcher();
 
   const handleAfterSubmit = (assetId: string, data: UploadData) => {
     // remove uploaded or failed asset
@@ -160,21 +161,37 @@ export const useUploadAsset = () => {
 
       for (const fileData of filesData) {
         const { id, type, file } = fileData;
-        // sanitizeS3Key here is just because of https://github.com/remix-run/remix/issues/4443
         // should be removed after fix
         const formData = new FormData();
-        formData.append(type, file, sanitizeS3Key(file.name));
-        formData.append(idsFormDataFieldName, id);
-        submit<UploadData>(
+        formData.append("projectId", projectId);
+        formData.append("assetId", id);
+        // sanitizeS3Key here is just because of https://github.com/remix-run/remix/issues/4443
+        // should be removed after fix
+        formData.append("filename", sanitizeS3Key(file.name));
+        submitAsset<{ name: string }>(
           formData,
           {
             method: "post",
-            action: restAssetsPath({ projectId, authToken }),
+            action: restAssetsPath({ authToken }),
             encType: "multipart/form-data",
           },
           (data) => {
-            URL.revokeObjectURL(fileData.objectURL);
-            handleAfterSubmit(fileData.id, data);
+            const formData = new FormData();
+            formData.append(type, file, data.name);
+            formData.append("projectId", projectId);
+            formData.append(idsFormDataFieldName, id);
+            submitUpload<UploadData>(
+              formData,
+              {
+                method: "post",
+                action: restAssetsUploadPath({ name: data.name }),
+                encType: "multipart/form-data",
+              },
+              (data) => {
+                URL.revokeObjectURL(fileData.objectURL);
+                handleAfterSubmit(fileData.id, data);
+              }
+            );
           }
         );
       }

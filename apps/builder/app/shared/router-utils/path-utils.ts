@@ -76,22 +76,20 @@ export const authPath = ({
   provider: "google" | "github" | "dev";
 }) => `/auth/${provider}`;
 
-export const restAssetsPath = ({
-  projectId,
-  authToken,
-}: {
-  projectId: string;
-  authToken?: string;
-}) => {
+export const restAssetsPath = ({ authToken }: { authToken?: string }) => {
   const urlSearchParams = new URLSearchParams();
   if (authToken !== undefined) {
     urlSearchParams.set("authToken", authToken);
   }
   const urlSearchParamsString = urlSearchParams.toString();
 
-  return `/rest/assets/${projectId}${
+  return `/rest/assets${
     urlSearchParamsString ? `?${urlSearchParamsString}` : ""
   }`;
+};
+
+export const restAssetsUploadPath = ({ name }: { name: string }) => {
+  return `/rest/assets/${name}`;
 };
 
 export const restThemePath = ({ setting }: { setting: ThemeSetting }) =>
