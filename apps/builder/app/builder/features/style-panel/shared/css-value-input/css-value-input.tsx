@@ -104,6 +104,7 @@ const useScrub = ({
           unit: value.unit,
         });
 
+        // In case of negative values for some properties, we might end up with invalid value.
         if (value.type === "invalid") {
           // Try return unitless
           if (isValid(property, "0")) {
