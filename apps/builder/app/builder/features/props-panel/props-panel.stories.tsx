@@ -426,4 +426,7 @@ export const Story = () => {
 };
 
 Story.storyName = "props-panel";
-export default { component: Story };
+export default {
+  component: Story,
+  parameters: { lostpixel: { waitBeforeScreenshot: 5000 } },
+};
