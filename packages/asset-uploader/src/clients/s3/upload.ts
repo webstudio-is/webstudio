@@ -12,8 +12,6 @@ import { Location } from "@webstudio-is/prisma-client";
 import { toUint8Array } from "../../utils/to-uint8-array";
 import { getAssetData, AssetData } from "../../utils/get-asset-data";
 import { idsFormDataFieldName } from "../../schema";
-import { getUniqueFilename } from "../../utils/get-unique-filename";
-import { sanitizeS3Key } from "../../utils/sanitize-s3-key";
 
 const AssetsUploadedSuccess = z.object({
   Location: z.string(),
@@ -111,9 +109,9 @@ const createUploadHandler = (maxFiles: number, client: S3Client) => {
       throw new MaxPartSizeExceededError(file.name, maxSize);
     }
 
-    const fileName = sanitizeS3Key(file.filename);
+    const fileName = file.filename;
 
-    const uniqueFilename = getUniqueFilename(fileName);
+    const uniqueFilename = fileName;
 
     // if there is no ACL passed we do not default since some providers do not support it
     const ACL = acl ? { ACL: acl } : {};

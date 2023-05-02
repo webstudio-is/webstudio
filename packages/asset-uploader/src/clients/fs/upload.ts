@@ -9,8 +9,6 @@ import {
 import { Location } from "@webstudio-is/prisma-client";
 import { AssetData, getAssetData } from "../../utils/get-asset-data";
 import { idsFormDataFieldName } from "../../schema";
-import { getUniqueFilename } from "../../utils/get-unique-filename";
-import { sanitizeS3Key } from "../../utils/sanitize-s3-key";
 
 const AssetsFromFs = z.array(z.instanceof(NodeOnDiskFile));
 const Ids = z.array(z.string().uuid());
@@ -32,7 +30,7 @@ export const uploadToFs = async ({
   const uploadHandler = createFileUploadHandler({
     maxPartSize: maxSize,
     directory: fileDirectory,
-    file: ({ filename }) => getUniqueFilename(sanitizeS3Key(filename)),
+    file: ({ filename }) => filename,
   });
 
   const formData = await parseMultipartFormData(
