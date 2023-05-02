@@ -17,6 +17,7 @@ import {
   StyleSourceSelections,
 } from "@webstudio-is/project-build";
 import {
+  canAcceptComponent,
   generateDataFromEmbedTemplate,
   getComponentMeta,
 } from "@webstudio-is/react-sdk";
@@ -77,11 +78,6 @@ export const createComponentInstance = (
   return { instances, props, styleSourceSelections, styleSources, styles };
 };
 
-const isInstanceDroppable = (instance: Instance) => {
-  const meta = getComponentMeta(instance.component);
-  return meta?.type === "container";
-};
-
 export type DroppableTarget = {
   parentSelector: InstanceSelector;
   position: number | "end";
@@ -89,19 +85,16 @@ export type DroppableTarget = {
 
 export const findClosestDroppableTarget = (
   instances: Instances,
-  instanceSelector: InstanceSelector
-): DroppableTarget => {
+  instanceSelector: InstanceSelector,
+  dragComponents: string[]
+): undefined | DroppableTarget => {
   // fallback to root as drop target when selector is stale
-  const rootDropTarget: DroppableTarget = {
-    parentSelector: [instanceSelector[instanceSelector.length - 1]],
-    position: "end",
-  };
   let position = -1;
   let lastChild: undefined | Instance = undefined;
   for (const instanceId of instanceSelector) {
     const instance = instances.get(instanceId);
     if (instance === undefined) {
-      return rootDropTarget;
+      return;
     }
     // find the index of child from selector
     if (lastChild) {
@@ -111,21 +104,22 @@ export const findClosestDroppableTarget = (
       );
     }
     lastChild = instance;
-    if (isInstanceDroppable(instance)) {
+    const canAcceptAllDragComponents = dragComponents.every((dragComponent) =>
+      canAcceptComponent(instance.component, dragComponent)
+    );
+    if (canAcceptAllDragComponents) {
       const parentSelector = getAncestorInstanceSelector(
         instanceSelector,
         instance.id
       );
-      if (parentSelector === undefined) {
-        return rootDropTarget;
+      if (parentSelector !== undefined) {
+        return {
+          parentSelector: parentSelector,
+          position: position === -1 ? "end" : position + 1,
+        };
       }
-      return {
-        parentSelector: parentSelector,
-        position: position === -1 ? "end" : position + 1,
-      };
     }
   }
-  return rootDropTarget;
 };
 
 const getInstanceOrCreateFragmentIfNecessary = (

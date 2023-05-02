@@ -147,10 +147,15 @@ export const onPaste = (clipboardData: string) => {
   const instanceSelector = selectedInstanceSelectorStore.get() ?? [
     selectedPage.rootInstanceId,
   ];
+  const dragComponent = data.instances[0].component;
   const dropTarget = findClosestDroppableTarget(
     instancesStore.get(),
-    instanceSelector
+    instanceSelector,
+    [dragComponent]
   );
+  if (dropTarget === undefined) {
+    return;
+  }
   store.createTransaction(
     [
       breakpointsStore,
