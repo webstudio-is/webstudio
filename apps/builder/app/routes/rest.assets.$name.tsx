@@ -1,6 +1,6 @@
 import type { ActionArgs } from "@remix-run/node";
 import type { Asset } from "@webstudio-is/asset-uploader";
-import { completeUpload } from "@webstudio-is/asset-uploader/index.server";
+import { uploadFile } from "@webstudio-is/asset-uploader/index.server";
 import type { ActionData } from "~/builder/shared/assets";
 import { sentryException } from "~/shared/sentry";
 import { createAssetClient } from "~/shared/asset-client";
@@ -16,7 +16,7 @@ export const action = async (
 
   try {
     if (request.method === "POST") {
-      const asset = await completeUpload(
+      const asset = await uploadFile(
         {
           name: params.name,
           request,

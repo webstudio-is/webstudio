@@ -2,7 +2,7 @@ import type { ActionArgs, LoaderArgs } from "@remix-run/node";
 import { MaxAssets, type Asset } from "@webstudio-is/asset-uploader";
 import {
   loadByProject,
-  initiateUpload,
+  createUploadName,
 } from "@webstudio-is/asset-uploader/index.server";
 import { sentryException } from "~/shared/sentry";
 import { createContext } from "~/shared/context.server";
@@ -33,7 +33,7 @@ export const action = async (props: ActionArgs) => {
       if (projectId === null || assetId === null || filename === null) {
         throw Error("Project id, asset id or filename are missing");
       }
-      const name = await initiateUpload(
+      const name = await createUploadName(
         {
           projectId,
           assetId,

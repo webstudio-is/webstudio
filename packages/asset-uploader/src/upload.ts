@@ -8,7 +8,7 @@ import { getUniqueFilename } from "./utils/get-unique-filename";
 import { sanitizeS3Key } from "./utils/sanitize-s3-key";
 import { formatAsset } from "./utils/format-asset";
 
-type InitialUploadData = {
+type UploadData = {
   projectId: string;
   assetId: string;
   filename: string;
@@ -17,8 +17,8 @@ type InitialUploadData = {
 
 const UPLOADING_STALE_TIMEOUT = 1000 * 60 * 30; // 30 minutes
 
-export const initiateUpload = async (
-  data: InitialUploadData,
+export const createUploadName = async (
+  data: UploadData,
   context: AppContext
 ) => {
   const { projectId, maxAssetsPerProject, assetId, filename } = data;
@@ -82,7 +82,7 @@ export const initiateUpload = async (
   return name;
 };
 
-export const completeUpload = async (
+export const uploadFile = async (
   { name, request }: { name: string; request: Request },
   client: AssetClient
 ) => {
