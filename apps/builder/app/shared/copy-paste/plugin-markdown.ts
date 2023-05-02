@@ -211,10 +211,22 @@ export const onPaste = (clipboardData: string) => {
   const instanceSelector = selectedInstanceSelectorStore.get() ?? [
     selectedPage.rootInstanceId,
   ];
+  const instances = instancesStore.get();
+  const dragComponents = [];
+  for (const instanceId of data.rootIds) {
+    const component = instances.get(instanceId)?.component;
+    if (component !== undefined) {
+      dragComponents.push(component);
+    }
+  }
   const dropTarget = findClosestDroppableTarget(
     instancesStore.get(),
-    instanceSelector
+    instanceSelector,
+    dragComponents
   );
+  if (dropTarget === undefined) {
+    return;
+  }
   store.createTransaction([instancesStore, propsStore], (instances, props) => {
     insertInstancesMutable(instances, data.instances, data.rootIds, dropTarget);
     for (const prop of data.props) {

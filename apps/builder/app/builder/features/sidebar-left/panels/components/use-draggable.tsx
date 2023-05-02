@@ -158,10 +158,12 @@ export const useDraggable = ({
     const dropTarget = findClosestDroppableTarget(
       instancesStore.get(),
       // fallback to root as drop target
-      selectedInstanceSelectorStore.get() ?? [selectedPage.rootInstanceId]
+      selectedInstanceSelectorStore.get() ?? [selectedPage.rootInstanceId],
+      [component]
     );
-
-    insertNewComponentInstance(component, dropTarget);
+    if (dropTarget) {
+      insertNewComponentInstance(component, dropTarget);
+    }
   };
 
   return {

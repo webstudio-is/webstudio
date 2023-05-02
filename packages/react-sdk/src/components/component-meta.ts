@@ -46,6 +46,7 @@ const WsComponentMeta = z.object({
     "rich-text",
     "rich-text-child",
   ]),
+  acceptedParents: z.optional(z.array(z.string())),
   label: z.string(),
   Icon: z.function(),
   presetStyle: z.optional(z.any()),
