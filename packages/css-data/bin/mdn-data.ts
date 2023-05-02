@@ -1,5 +1,5 @@
 /* eslint-disable import/no-internal-modules */
-import { parse, definitionSyntax, type DSNode } from "css-tree";
+import { parse, definitionSyntax, type DSNode, type CssNode } from "css-tree";
 import properties from "mdn-data/css/properties.json";
 import syntaxes from "mdn-data/css/syntaxes.json";
 import data from "css-tree/dist/data";
@@ -7,7 +7,13 @@ import { popularityIndex } from "../src/popularity-index";
 import camelCase from "camelcase";
 import * as fs from "fs";
 import * as path from "path";
-import type { StyleValue, Unit } from "../src";
+import type {
+  KeywordValue,
+  StyleValue,
+  Unit,
+  UnitValue,
+  UnparsedValue,
+} from "../src/schema";
 
 const units = {
   number: [],
@@ -66,29 +72,12 @@ const beautifyKeyword = (property: string, keyword: string) => {
   return keyword;
 };
 
-const parseInitialValue = (
+const convertToStyleValue = (
+  node: CssNode,
   property: string,
   value: string,
   unitGroups: Set<string>
-): StyleValue => {
-  // Our default values hardcoded because no single standard
-  if (property in normalizedValues) {
-    return normalizedValues[property as keyof typeof normalizedValues];
-  }
-  const ast = parse(value, { context: "value" });
-  if (ast.type !== "Value") {
-    throw Error(`Unknown parsed type ${ast.type}`);
-  }
-
-  // more than 2 values consider as keyword
-  if (ast.children.first !== ast.children.last) {
-    return {
-      type: "keyword",
-      value: beautifyKeyword(property, value),
-    };
-  }
-
-  const node = ast.children.first;
+): undefined | UnitValue | KeywordValue | UnparsedValue => {
   if (node?.type === "Identifier") {
     return {
       type: "keyword",
@@ -126,6 +115,49 @@ const parseInitialValue = (
       unit: node.unit as Unit,
       value: Number(node.value),
     };
+  }
+};
+
+const parseInitialValue = (
+  property: string,
+  value: string,
+  unitGroups: Set<string>
+): StyleValue => {
+  // Our default values hardcoded because no single standard
+  if (property in normalizedValues) {
+    return normalizedValues[property as keyof typeof normalizedValues];
+  }
+  const ast = parse(value, { context: "value" });
+  if (ast.type !== "Value") {
+    throw Error(`Unknown parsed type ${ast.type}`);
+  }
+
+  // more than 2 values consider as keyword
+  if (ast.children.first !== ast.children.last) {
+    return {
+      type: "tuple",
+      value: ast.children.toArray().map((node) => {
+        const styleValue = convertToStyleValue(
+          node,
+          property,
+          value,
+          unitGroups
+        );
+        if (styleValue !== undefined) {
+          return styleValue;
+        }
+        throw Error(`Cannot find initial for ${property}`);
+      }),
+    };
+  }
+
+  const node = ast.children.first;
+  let styleValue: undefined | StyleValue;
+  if (node) {
+    styleValue = convertToStyleValue(node, property, value, unitGroups);
+  }
+  if (styleValue !== undefined) {
+    return styleValue;
   }
 
   throw Error(`Cannot find initial for ${property}`);
