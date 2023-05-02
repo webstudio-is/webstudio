@@ -13,7 +13,7 @@ const presetStyle = {
 } satisfies PresetStyle<typeof defaultTag>;
 
 export const meta: WsComponentMeta = {
-  category: "forms",
+  category: "general",
   type: "container",
   label: "Button",
   Icon: ButtonElementIcon,
