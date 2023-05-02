@@ -9,7 +9,13 @@ import { input } from "../css/normalize";
 import { props } from "./__generated__/radio-button.props";
 
 const presetStyle = {
-  input,
+  input: [
+    ...input,
+    {
+      property: "marginRight",
+      value: { type: "unit", unit: "em", value: 0.5 },
+    },
+  ],
 } satisfies PresetStyle<typeof defaultTag>;
 
 export const meta: WsComponentMeta = {
