@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { ButtonElementIcon } from "@webstudio-is/icons";
 import { PropsPanel } from "./props-panel";
 import { usePropsLogic } from "./use-props-logic";
@@ -365,6 +365,17 @@ const startingProps: Prop[] = [
   },
 ];
 
+// @todo: elete this
+const TMPClock = () => {
+  const [initialTime] = useState(new Date());
+  const [time, setTime] = useState(new Date());
+  useEffect(() => {
+    const interval = setInterval(() => setTime(new Date()), 100);
+    return () => clearInterval(interval);
+  }, []);
+  return <div>{time.getTime() - initialTime.getTime()}</div>;
+};
+
 export const Story = () => {
   const [props, setProps] = useState(startingProps);
 
@@ -409,6 +420,7 @@ export const Story = () => {
           )
           .join("\n")}
       </pre>
+      <TMPClock />
     </div>
   );
 };
