@@ -31,10 +31,7 @@ export const BreakpointsSelector = ({
         value={selectedBreakpoint.id}
         onValueChange={(breakpointId: string) => {
           selectedBreakpointIdStore.set(breakpointId);
-          const nextSelectedBreakpoint = breakpoints.get(breakpointId);
-          if (nextSelectedBreakpoint) {
-            setInitialCanvasWidth(nextSelectedBreakpoint.id);
-          }
+          setInitialCanvasWidth(breakpointId);
         }}
         css={{ position: "relative" }}
       >

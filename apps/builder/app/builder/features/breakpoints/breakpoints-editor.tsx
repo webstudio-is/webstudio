@@ -1,95 +1,145 @@
-import { useState } from "react";
-import { useDebouncedCallback } from "use-debounce";
+import { Fragment, useEffect, useRef, useState } from "react";
 import { nanoid } from "nanoid";
 import store from "immerhin";
 import type { Breakpoint } from "@webstudio-is/project-build";
 import {
   theme,
-  Button,
-  DeprecatedTextField,
   Flex,
-  DeprecatedText2,
+  PanelTitle,
+  Select,
+  IconButton,
+  InputField,
+  Text,
+  PopoverSeparator,
+  Separator,
+  Box,
 } from "@webstudio-is/design-system";
-import { PlusIcon, TrashIcon } from "@webstudio-is/icons";
+import { MinusIcon, PlusIcon } from "@webstudio-is/icons";
 import { breakpointsStore } from "~/shared/nano-states";
 import { useStore } from "@nanostores/react";
+import { groupBreakpoints, isBaseBreakpoint } from "~/shared/breakpoints";
+import { z } from "zod";
 
 type BreakpointEditorItemProps = {
   breakpoint: Breakpoint;
-  onChange: (breakpoint: Breakpoint) => void;
+  autoFocus?: boolean;
+  onChangeComplete: (breakpoint: Breakpoint) => void;
   onDelete: (breakpoint: Breakpoint) => void;
 };
 
+const BreakpointFormData = z.object({
+  label: z.string(),
+  type: z.enum(["minWidth", "maxWidth"]),
+  value: z.string().transform(Number),
+});
+
+const useHandleChangeComplete = (
+  breakpoint: Breakpoint,
+  onChangeComplete: (breakpoint: Breakpoint) => void
+) => {
+  const formRef = useRef<HTMLFormElement>(null);
+  const handleChangeComplete = () => {
+    const form = formRef.current;
+    if (form === null || form.reportValidity() === false) {
+      return;
+    }
+    const parsed = BreakpointFormData.safeParse(
+      Object.fromEntries(new FormData(form))
+    );
+    // Should never be not successful because the html validator should catch it
+    if (parsed.success) {
+      const newBreakpoint: Breakpoint = {
+        id: breakpoint.id,
+        label: parsed.data.label,
+        [parsed.data.type]: parsed.data.value,
+      };
+      onChangeComplete(newBreakpoint);
+    }
+  };
+  const handleChangeCompleteRef = useRef(handleChangeComplete);
+  handleChangeCompleteRef.current = handleChangeComplete;
+
+  // Handle change when unmounting
+  useEffect(() => handleChangeCompleteRef.current, []);
+
+  return { formRef, handleChangeComplete };
+};
+
 const BreakpointEditorItem = ({
-  breakpoint: initialBreakpoint,
-  onChange,
+  breakpoint,
+  autoFocus,
+  onChangeComplete,
   onDelete,
 }: BreakpointEditorItemProps) => {
-  const [breakpoint, setBreakpoint] = useState(initialBreakpoint);
-
-  const handleChangeBreakpointDebounced = useDebouncedCallback(
-    (nextBreakpoint: Breakpoint) => {
-      if (nextBreakpoint !== initialBreakpoint) {
-        onChange(nextBreakpoint);
-      }
-    },
-    500
+  const { formRef, handleChangeComplete } = useHandleChangeComplete(
+    breakpoint,
+    onChangeComplete
   );
-
   return (
-    <form
-      onKeyDown={(event) => {
-        event.stopPropagation();
-      }}
-      onChange={(event) => {
-        event.stopPropagation();
-        const form = event.currentTarget;
-        if (form.reportValidity() === false) {
-          return;
-        }
-        const data = new FormData(form);
-        const nextBreakpoint: Breakpoint = {
-          ...breakpoint,
-          label: String(data.get("label")),
-          minWidth: Number(data.get("minWidth")),
-        };
-        setBreakpoint(nextBreakpoint);
-        handleChangeBreakpointDebounced(nextBreakpoint);
-      }}
-    >
-      <Flex
-        gap="1"
-        css={{ paddingLeft: theme.spacing[10], paddingRight: theme.spacing[9] }}
+    <Flex gap="2" css={{ mx: theme.spacing[7] }}>
+      <form
+        ref={formRef}
+        onKeyPress={(event) => {
+          if (event.key === "Enter") {
+            handleChangeComplete();
+          }
+        }}
+        onSubmit={(event) => {
+          event.preventDefault();
+          handleChangeComplete();
+        }}
+        onBlur={handleChangeComplete}
       >
-        <DeprecatedTextField
-          css={{ width: 100, flexGrow: 1 }}
-          type="text"
-          variant="ghost"
-          defaultValue={breakpoint.label}
-          placeholder="Breakpoint name"
-          name="label"
-          minLength={2}
-          required
-        />
-        <DeprecatedTextField
-          css={{ textAlign: "right", width: 50 }}
-          variant="ghost"
-          defaultValue={breakpoint.minWidth ?? breakpoint.maxWidth ?? 0}
-          type="number"
-          name="minWidth"
-          min={0}
-          required
-        />
-        <Button
-          type="button"
-          color="ghost"
-          onClick={() => {
-            onDelete(breakpoint);
-          }}
-          prefix={<TrashIcon />}
-        />
-      </Flex>
-    </form>
+        <Flex direction="column" gap="1">
+          <InputField
+            type="text"
+            defaultValue={breakpoint.minWidth ?? breakpoint.maxWidth ?? 0}
+            placeholder="Breakpoint name"
+            name="label"
+            minLength={1}
+            required
+            autoFocus={autoFocus}
+          />
+          <Flex gap="2" css={{ width: theme.spacing[26] }}>
+            <Select
+              name="type"
+              css={{ zIndex: theme.zIndices[1], width: theme.spacing[21] }}
+              options={["maxWidth", "minWidth"]}
+              getLabel={(option) =>
+                option === "maxWidth" ? "Max Width" : "Min Width"
+              }
+              defaultValue={breakpoint.maxWidth ? "maxWidth" : "minWidth"}
+              onChange={handleChangeComplete}
+            />
+            <InputField
+              css={{ flexShrink: 1 }}
+              defaultValue={breakpoint.minWidth ?? breakpoint.maxWidth ?? 0}
+              type="number"
+              name="value"
+              min={0}
+              required
+              suffix={
+                <Text
+                  variant="unit"
+                  color="subtle"
+                  align="center"
+                  css={{ width: theme.spacing[10] }}
+                >
+                  PX
+                </Text>
+              }
+            />
+          </Flex>
+        </Flex>
+      </form>
+      <IconButton
+        onClick={() => {
+          onDelete(breakpoint);
+        }}
+      >
+        <MinusIcon />
+      </IconButton>
+    </Flex>
   );
 };
 
@@ -100,59 +150,66 @@ type BreakpointsEditorProps = {
 export const BreakpointsEditor = ({ onDelete }: BreakpointsEditorProps) => {
   const breakpoints = useStore(breakpointsStore);
   const [addedBreakpoints, setAddedBreakpoints] = useState<Breakpoint[]>([]);
-  const storedBreakpoints = new Set<string>();
-  for (const breakpoint of breakpoints.values()) {
-    storedBreakpoints.add(breakpoint.id);
-  }
-  // filter out new breakpoints which are already store
-  // instead of deleting from state to avoid the case
-  // when both states do not have such breakpoint
-  // and focused input remounts
-  const newBreakpoints = addedBreakpoints.filter(
-    (breakpoint) => storedBreakpoints.has(breakpoint.id) === false
+  const initialBreakpointsRef = useRef(
+    groupBreakpoints(Array.from(breakpoints.values()))
   );
+  const allBreakpoints = [
+    ...addedBreakpoints,
+    ...initialBreakpointsRef.current.filter(
+      (breakpoint) =>
+        addedBreakpoints.find((added) => added.id === breakpoint.id) ===
+        undefined
+    ),
+  ].filter((breakpoint) => isBaseBreakpoint(breakpoint) === false);
+
+  const handleChangeComplete = (breakpoint: Breakpoint) => {
+    store.createTransaction([breakpointsStore], (breakpoints) => {
+      breakpoints.set(breakpoint.id, breakpoint);
+    });
+  };
+
   return (
-    <Flex gap="2" direction="column">
-      <Flex
-        align="center"
-        gap="1"
-        justify="between"
+    <Flex direction="column">
+      <PanelTitle
         css={{
-          paddingLeft: theme.spacing[11],
-          paddingRight: theme.spacing[9],
-          py: theme.spacing[3],
+          px: theme.spacing[7],
         }}
-      >
-        <DeprecatedText2>Breakpoints</DeprecatedText2>
-        <Button
-          color="ghost"
-          onClick={() => {
-            setAddedBreakpoints((prev) => [
-              ...prev,
-              {
+        suffix={
+          <IconButton
+            onClick={() => {
+              const newBreakpoint: Breakpoint = {
                 id: nanoid(),
                 label: "",
                 minWidth: 0,
-              },
-            ]);
-          }}
-          prefix={<PlusIcon />}
-        />
-      </Flex>
-      {[...breakpoints.values(), ...newBreakpoints].map((breakpoint) => {
-        return (
-          <BreakpointEditorItem
-            key={breakpoint.id}
-            breakpoint={breakpoint}
-            onChange={(updatedBreakpoint) => {
-              store.createTransaction([breakpointsStore], (breakpoints) => {
-                breakpoints.set(updatedBreakpoint.id, updatedBreakpoint);
-              });
+              };
+              setAddedBreakpoints([newBreakpoint, ...addedBreakpoints]);
             }}
-            onDelete={onDelete}
-          />
-        );
-      })}
+          >
+            <PlusIcon />
+          </IconButton>
+        }
+      >
+        {"Breakpoints"}
+      </PanelTitle>
+      <Separator />
+      <Box css={{ marginTop: theme.spacing[5] }}>
+        {allBreakpoints.map((breakpoint, index, all) => {
+          return (
+            <Fragment key={breakpoint.id}>
+              <BreakpointEditorItem
+                breakpoint={breakpoint}
+                onChangeComplete={handleChangeComplete}
+                onDelete={onDelete}
+                autoFocus={index === 0}
+              />
+              {index < all.length - 1 && <PopoverSeparator />}
+            </Fragment>
+          );
+        })}
+      </Box>
+      {allBreakpoints.length === 0 && (
+        <Text css={{ margin: theme.spacing[10] }}>No breakpoints found</Text>
+      )}
     </Flex>
   );
 };

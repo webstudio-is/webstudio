@@ -34,7 +34,7 @@ import {
 } from "@webstudio-is/css-engine";
 import { useSubscribe } from "~/shared/pubsub";
 
-const cssEngine = createCssEngine({ name: "user-styles" });
+const userCssEngine = createCssEngine({ name: "user-styles" });
 const helpersCssEngine = createCssEngine({ name: "helpers" });
 const fontsAndDefaultsCssEngine = createCssEngine({
   name: "fonts-and-defaults",
@@ -118,8 +118,9 @@ export const GlobalStyles = () => {
 
   useIsomorphicLayoutEffect(() => {
     for (const breakpoint of breakpoints.values()) {
-      cssEngine.addMediaRule(breakpoint.id, breakpoint);
+      userCssEngine.addMediaRule(breakpoint.id, breakpoint);
     }
+    userCssEngine.render();
   }, [breakpoints]);
 
   useIsomorphicLayoutEffect(() => {
@@ -188,10 +189,13 @@ const getOrCreateRule = ({
   const key = `${instanceId}:${breakpointId}:${state}`;
   let rule = wrappedRulesMap.get(key);
   if (rule === undefined) {
-    rule = cssEngine.addStyleRule(`[${idAttribute}="${instanceId}"]${state}`, {
-      breakpoint: breakpointId,
-      style: {},
-    });
+    rule = userCssEngine.addStyleRule(
+      `[${idAttribute}="${instanceId}"]${state}`,
+      {
+        breakpoint: breakpointId,
+        style: {},
+      }
+    );
     wrappedRulesMap.set(key, rule);
   }
   const params = getParams();
@@ -291,7 +295,7 @@ export const useCssRules = ({
       }
     }
 
-    cssEngine.render();
+    userCssEngine.render();
   }, [instanceId, selectedState, instanceStyles, breakpoints]);
 };
 
@@ -351,6 +355,6 @@ const usePreviewStyle = () => {
       }
     }
 
-    cssEngine.render();
+    userCssEngine.render();
   });
 };

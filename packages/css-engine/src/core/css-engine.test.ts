@@ -266,6 +266,27 @@ describe("CssEngine", () => {
     `);
   });
 
+  test("update media rule options", () => {
+    engine.addMediaRule(mediaId0, mediaRuleOptions0);
+    engine.addStyleRule(".c", {
+      style: {
+        color: { type: "keyword", value: "red" },
+      },
+      breakpoint: "0",
+    });
+    expect(engine.cssText).toMatchInlineSnapshot(`
+      "@media all and (min-width: 0px) {
+        .c { color: red }
+      }"
+    `);
+    engine.addMediaRule(mediaId0, { minWidth: 10 });
+    expect(engine.cssText).toMatchInlineSnapshot(`
+      "@media all and (min-width: 10px) {
+        .c { color: red }
+      }"
+    `);
+  });
+
   test("don't override media queries", () => {
     engine.addMediaRule(mediaId0, mediaRuleOptions0);
     engine.addStyleRule(".c", {
