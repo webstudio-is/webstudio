@@ -18,7 +18,7 @@ const presetStyle = {
 export const meta: WsComponentMeta = {
   category: "forms",
   type: "rich-text",
-  label: "Label",
+  label: "Input Label",
   Icon: TextBlockIcon,
   presetStyle,
   children: [{ type: "text", value: "Form Label" }],
