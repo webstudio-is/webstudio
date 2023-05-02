@@ -245,13 +245,7 @@ export const getInheritedInfo = (
       selectedBreakpointId,
     ];
 
-    const ancestorInstanceStyles = stylesByInstanceId.get(ancestorInstance.id);
-    if (ancestorInstanceStyles === undefined) {
-      continue;
-    }
-
     const tagName = selectedInstanceIntanceToTag.get(instanceId);
-
     const component = getInstanceComponent(instances, instanceId);
     const presetStyle =
       tagName !== undefined && component !== undefined
@@ -269,6 +263,11 @@ export const getInheritedInfo = (
           };
         }
       }
+    }
+
+    const ancestorInstanceStyles = stylesByInstanceId.get(ancestorInstance.id);
+    if (ancestorInstanceStyles === undefined) {
+      continue;
     }
 
     // extract styles from all active breakpoints
