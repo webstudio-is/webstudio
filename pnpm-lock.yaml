@@ -479,6 +479,9 @@ importers:
       tsx:
         specifier: ^3.12.6
         version: 3.12.6
+      type-fest:
+        specifier: ^3.7.1
+        version: 3.7.1
       typescript:
         specifier: 5.0.3
         version: 5.0.3
