@@ -7,7 +7,7 @@ import type { IconProps } from "../types";
 export const CodeIcon = forwardRef<SVGSVGElement, IconProps>(
   ({ color = "currentColor", size = 16, ...props }, forwardedRef) => {
     return (
-      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 22 22" width={size} height={size} fill={color} {...props} ref={forwardedRef}><path fillRule="evenodd" d="M12.996 2.018c.404.09.66.49.57.895l-3.667 16.5a.75.75 0 0 1-1.464-.326l3.666-16.5a.75.75 0 0 1 .895-.569ZM6.947 5.887a.75.75 0 0 1 0 1.06L2.894 11l4.053 4.053a.75.75 0 1 1-1.06 1.06l-4.584-4.582a.75.75 0 0 1 0-1.061l4.583-4.584a.75.75 0 0 1 1.061 0Zm8.106 0a.75.75 0 0 1 1.06 0l4.584 4.583a.75.75 0 0 1 0 1.06l-4.583 4.584a.75.75 0 0 1-1.061-1.06L19.106 11l-4.053-4.053a.75.75 0 0 1 0-1.06Z" clipRule="evenodd" /></svg>
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 16 16" width={size} height={size} fill={color} {...props} ref={forwardedRef}><path fillRule="evenodd" d="M9.474 1.365a.65.65 0 0 1 .494.776l-2.667 12a.65.65 0 0 1-1.269-.282l2.667-12a.65.65 0 0 1 .775-.494ZM5.126 4.207a.65.65 0 0 1 0 .92L2.253 8l2.873 2.874a.65.65 0 1 1-.919.919L.874 8.46a.65.65 0 0 1 0-.92l3.333-3.333a.65.65 0 0 1 .92 0Zm5.748 0a.65.65 0 0 1 .919 0l3.333 3.333a.65.65 0 0 1 0 .92l-3.333 3.333a.65.65 0 1 1-.92-.92L13.748 8l-2.873-2.874a.65.65 0 0 1 0-.919Z" clipRule="evenodd" /></svg>
     );
   }
 );
