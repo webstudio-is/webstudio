@@ -18,7 +18,12 @@ import { createTrpcRemixProxy } from "~/shared/remix/trpc-remix-proxy";
 import { builderDomainsPath } from "~/shared/router-utils";
 import { CollapsibleSectionBase } from "~/builder/shared/collapsible-section";
 
-import { AlertIcon, CheckboxCheckedIcon } from "@webstudio-is/icons";
+import {
+  AlertIcon,
+  CheckboxCheckedIcon,
+  CheckMarkIcon,
+} from "@webstudio-is/icons";
+import type { DomainStatus } from "@webstudio-is/prisma-client";
 
 const trpc = createTrpcRemixProxy<DomainRouter>(builderDomainsPath);
 
@@ -106,7 +111,7 @@ const DomainItem = (props: {
     domain: {
       domain: string;
       error: string | null;
-      status: string;
+      status: DomainStatus;
     };
     txtRecord: string;
     verified: boolean;
@@ -138,16 +143,70 @@ const DomainItem = (props: {
     setError("");
   }, [verifyData]);
 
-  /*
-  const state =
-    props.projectDomain.verified === false
-      ? "unverified"
-      : props.projectDomain.domain.error !== null
-      ? "verified_cname_error"
-      : props.projectDomain.domain.status === "active"
-      ? "verified_active"
-      : "verified_pending";
-    */
+  const status = props.projectDomain.verified
+    ? (`VERIFIED_${props.projectDomain.domain.status}` as `VERIFIED_${DomainStatus}`)
+    : `UNVERIFIED`;
+
+  let icon = <>/</>;
+
+  switch (status) {
+    case "UNVERIFIED":
+      icon = (
+        <Tooltip content={"Domain not verified, expand section to see details"}>
+          <Box css={{ color: theme.colors.yellow10 }}>
+            <AlertIcon />
+          </Box>
+        </Tooltip>
+      );
+      break;
+
+    case "VERIFIED_INITIALIZING":
+      icon = (
+        <Tooltip content={"Initializing CNAME"}>
+          <Box css={{ color: theme.colors.yellow8 }}>
+            <CheckMarkIcon />
+          </Box>
+        </Tooltip>
+      );
+
+      break;
+    case "VERIFIED_PENDING":
+      icon = (
+        <Tooltip content={"Waiting for CNAME propagation"}>
+          <Box css={{ color: theme.colors.yellow8 }}>
+            <CheckMarkIcon />
+          </Box>
+        </Tooltip>
+      );
+
+      break;
+    case "VERIFIED_ACTIVE":
+      icon = (
+        <Tooltip content={"Domain is verified"}>
+          <Box css={{ color: theme.colors.green10 }}>
+            <CheckboxCheckedIcon />
+          </Box>
+        </Tooltip>
+      );
+
+      break;
+    case "VERIFIED_ERROR":
+      icon = (
+        <Tooltip content={props.projectDomain.domain.error ?? ""}>
+          <Box css={{ color: theme.colors.foregroundDestructive }}>
+            <AlertIcon />
+          </Box>
+        </Tooltip>
+      );
+
+      break;
+
+    default:
+      ((value: never) => {
+        /* exhaustive check */
+      })(status);
+      break;
+  }
 
   return (
     <CollapsibleSectionBase
@@ -169,29 +228,7 @@ const DomainItem = (props: {
                 height: theme.spacing[12],
               }}
             >
-              {props.projectDomain.verified ? (
-                props.projectDomain.domain.error === null ? (
-                  <Tooltip content={"Domain is verified"}>
-                    <Box css={{ color: theme.colors.green10 }}>
-                      <CheckboxCheckedIcon />
-                    </Box>
-                  </Tooltip>
-                ) : (
-                  <Tooltip content={props.projectDomain.domain.error ?? ""}>
-                    <Box css={{ color: theme.colors.foregroundDestructive }}>
-                      <AlertIcon />
-                    </Box>
-                  </Tooltip>
-                )
-              ) : (
-                <Tooltip
-                  content={"Domain not verified, expand section to see details"}
-                >
-                  <Box css={{ color: theme.colors.foregroundDestructive }}>
-                    <AlertIcon />
-                  </Box>
-                </Tooltip>
-              )}
+              {icon}
             </Flex>
           }
         >
@@ -207,9 +244,7 @@ const DomainItem = (props: {
         gap={2}
         direction={"column"}
       >
-        {props.projectDomain.verified ? (
-          <div>ddd</div>
-        ) : (
+        {status === "UNVERIFIED" && (
           <Text>
             <Box>
               <strong>Follow these steps:</strong>
@@ -253,20 +288,22 @@ const DomainItem = (props: {
           </Label>
         )}
 
-        <Button
-          disabled={disabled}
-          color="neutral"
-          css={{ width: "100%", flexShrink: 0 }}
-          onClick={() => {
-            setError("");
-            verify({
-              domain: props.projectDomain.domain.domain,
-              projectId: props.projectDomain.projectId,
-            });
-          }}
-        >
-          Verify
-        </Button>
+        {status === "UNVERIFIED" && (
+          <Button
+            disabled={disabled}
+            color="neutral"
+            css={{ width: "100%", flexShrink: 0 }}
+            onClick={() => {
+              setError("");
+              verify({
+                domain: props.projectDomain.domain.domain,
+                projectId: props.projectDomain.projectId,
+              });
+            }}
+          >
+            Verify
+          </Button>
+        )}
         <Button
           disabled={disabled}
           color="neutral"
