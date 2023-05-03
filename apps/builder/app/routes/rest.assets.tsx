@@ -1,7 +1,7 @@
 import type { ActionArgs, LoaderArgs } from "@remix-run/node";
 import { MaxAssets, type Asset } from "@webstudio-is/asset-uploader";
 import {
-  loadByProject,
+  loadAssetsByProject,
   createUploadName,
 } from "@webstudio-is/asset-uploader/index.server";
 import { sentryException } from "~/shared/sentry";
@@ -16,7 +16,7 @@ export const loader = async ({
     throw new Error("Project id undefined");
   }
   const context = await createContext(request);
-  return await loadByProject(params.projectId, context);
+  return await loadAssetsByProject(params.projectId, context);
 };
 
 export const action = async (props: ActionArgs) => {
