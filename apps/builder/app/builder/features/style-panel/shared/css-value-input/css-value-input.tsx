@@ -34,7 +34,7 @@ import { toValue } from "@webstudio-is/css-engine";
 import { useDebouncedCallback } from "use-debounce";
 import type { StyleSource } from "../style-info";
 import { toPascalCase } from "../keyword-utils";
-
+import { isValid } from "../parse-css-value";
 import {
   selectedInstanceBrowserStyleStore,
   selectedInstanceUnitSizesStore,
@@ -43,11 +43,13 @@ import { convertUnits } from "./convert-units";
 
 const useScrub = ({
   value,
+  property,
   onChange,
   onChangeComplete,
   shouldHandleEvent,
 }: {
   value: CssValueInputValue;
+  property: StyleProperty;
   onChange: (value: CssValueInputValue) => void;
   onChangeComplete: (value: StyleValue) => void;
   shouldHandleEvent?: (node: Node) => boolean;
@@ -68,13 +70,14 @@ const useScrub = ({
   valueRef.current = value;
 
   const type = valueRef.current.type;
-  const unit = type === "unit" ? valueRef.current.unit : undefined;
 
   // Since scrub is going to call onChange and onChangeComplete callbacks, it will result in a new value and potentially new callback refs.
   // We need this effect to ONLY run when type or unit changes, but not when callbacks or value.value changes.
   useEffect(() => {
     const inputRefCurrent = inputRef.current;
     const scrubRefCurrent = scrubRef.current;
+    const unit = type === "unit" ? valueRef.current.unit : undefined;
+
     if (
       type !== "unit" ||
       unit === undefined ||
@@ -83,6 +86,38 @@ const useScrub = ({
     ) {
       return;
     }
+
+    const validateValue = (numericValue: number) => {
+      let value: CssValueInputValue = {
+        type,
+        unit,
+        value: numericValue,
+      };
+
+      if (
+        value.type === "unit" &&
+        isValid(property, toValue(value)) === false
+      ) {
+        value = parseIntermediateOrInvalidValue(property, {
+          type: "intermediate",
+          value: `${value.value}`,
+          unit: value.unit,
+        });
+
+        // In case of negative values for some properties, we might end up with invalid value.
+        if (value.type === "invalid") {
+          // Try return unitless
+          if (isValid(property, "0")) {
+            value = {
+              type: "unit",
+              unit: "number",
+              value: 0,
+            };
+          }
+        }
+      }
+      return value;
+    };
 
     return numericScrubControl(scrubRefCurrent, {
       // @todo: after this https://github.com/webstudio-is/webstudio-builder/issues/564
@@ -105,21 +140,16 @@ const useScrub = ({
         scrubRef.current?.setAttribute("tabindex", "-1");
         scrubRef.current?.focus();
 
-        onChangeRef.current({
-          type,
-          unit,
-          value: event.value,
-        });
+        const value = validateValue(event.value);
+
+        onChangeRef.current(value);
       },
       onValueChange(event) {
         // Will work without but depends on order of setState updates
         // at text-control, now fixed in both places (order of updates is right, and batched here)
+        const value = validateValue(event.value);
 
-        onChangeCompleteRef.current({
-          type,
-          unit,
-          value: event.value,
-        });
+        onChangeCompleteRef.current(value);
 
         // Returning focus that we've moved above
         scrubRef.current?.removeAttribute("tabindex");
@@ -128,7 +158,7 @@ const useScrub = ({
       },
       shouldHandleEvent: shouldHandleEvent,
     });
-  }, [type, unit, shouldHandleEvent]);
+  }, [type, shouldHandleEvent, property]);
 
   return [scrubRef, inputRef];
 };
@@ -457,6 +487,7 @@ export const CssValueInput = ({
 
   const [scrubRef, inputRef] = useScrub({
     value,
+    property,
     onChange: props.onChange,
     onChangeComplete: (value) => onChangeComplete(value, "scrub-end"),
     shouldHandleEvent,
