@@ -6,7 +6,7 @@ import {
 } from "@webstudio-is/trpc-interface/index.server";
 import { type Asset, Assets } from "./schema";
 import { deleteAssets } from "./delete";
-import { loadByProject } from "./db/load";
+import { loadAssetsByProject } from "./db/load";
 import type { AssetClient } from "./client";
 
 export const patchAssets = async (
@@ -23,7 +23,7 @@ export const patchAssets = async (
     throw new Error("You don't have edit access to this project");
   }
 
-  const assetsList = await loadByProject(projectId, context);
+  const assetsList = await loadAssetsByProject(projectId, context);
   const assets = new Map<Asset["id"], Asset>();
   for (const asset of assetsList) {
     assets.set(asset.id, asset);

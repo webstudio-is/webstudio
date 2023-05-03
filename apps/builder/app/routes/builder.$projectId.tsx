@@ -4,7 +4,7 @@ import type { LoaderArgs } from "@remix-run/node";
 import { loadBuildByProjectId } from "@webstudio-is/project-build/index.server";
 import { db } from "@webstudio-is/project/index.server";
 import { authorizeProject } from "@webstudio-is/trpc-interface/index.server";
-import { loadByProject } from "@webstudio-is/asset-uploader/index.server";
+import { loadAssetsByProject } from "@webstudio-is/asset-uploader/index.server";
 import { createContext } from "~/shared/context.server";
 import { ErrorMessage } from "~/shared/error";
 import { sentryException } from "~/shared/sentry";
@@ -44,7 +44,7 @@ export const loader = async ({
   }
 
   const devBuild = await loadBuildByProjectId(project.id, "dev");
-  const assets = await loadByProject(project.id, context);
+  const assets = await loadAssetsByProject(project.id, context);
 
   const end = Date.now();
 

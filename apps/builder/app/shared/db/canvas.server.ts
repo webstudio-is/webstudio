@@ -2,7 +2,7 @@ import type { Project } from "@webstudio-is/project";
 import type { Data } from "@webstudio-is/react-sdk";
 import { loadBuildByProjectId } from "@webstudio-is/project-build/index.server";
 import { db as projectDb } from "@webstudio-is/project/index.server";
-import { loadByProject } from "@webstudio-is/asset-uploader/index.server";
+import { loadAssetsByProject } from "@webstudio-is/asset-uploader/index.server";
 import type { AppContext } from "@webstudio-is/trpc-interface/index.server";
 import { findPageByIdOrPath } from "@webstudio-is/project-build";
 
@@ -78,7 +78,7 @@ export const loadCanvasData = async (
     throw new Error(`Page ${props.pageIdOrPath} not found`);
   }
 
-  const assets = await loadByProject(props.project.id, context);
+  const assets = await loadAssetsByProject(props.project.id, context);
 
   return {
     build,
