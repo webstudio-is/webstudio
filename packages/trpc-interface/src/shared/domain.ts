@@ -16,7 +16,7 @@ declare global {
   // eslint-disable-next-line no-var
   var dnsTxtEntries: Map<string, string>;
   // eslint-disable-next-line no-var
-  var domainStates: Map<string, "active" | "pending">;
+  var domainStates: Map<string, "active" | "pending" | "error">;
 }
 
 // Remix purges require module cache on every request in development,
@@ -25,6 +25,8 @@ globalThis.dnsTxtEntries =
   globalThis.dnsTxtEntries ?? new Map<string, string>();
 globalThis.domainStates =
   globalThis.domainStates ?? new Map<string, "active" | "pending">();
+
+// const sleep = (ms: number) => new Promise((resolve) => setTimeout(resolve, ms));
 
 export const domainRouter = router({
   create: procedure
@@ -57,7 +59,14 @@ export const domainRouter = router({
     }),
   getStatus: procedure
     .input(Input)
-    .output(createOutput(z.object({ status: z.enum(["active", "pending"]) })))
+    .output(
+      createOutput(
+        z.discriminatedUnion("status", [
+          z.object({ status: z.enum(["active", "pending"]) }),
+          z.object({ status: z.enum(["error"]), error: z.string() }),
+        ])
+      )
+    )
     .query(async ({ input, ctx }) => {
       const record = dnsTxtEntries.get(input.domain);
       if (record !== input.txtRecord) {
@@ -78,10 +87,26 @@ export const domainRouter = router({
         };
       }
 
-      if (domainState === "pending") {
+      if (domainState === "active") {
+        setTimeout(() => {
+          domainStates.set(input.domain, "error");
+        });
+      }
+
+      if (domainState === "pending" || domainState === "error") {
         setTimeout(() => {
           domainStates.set(input.domain, "active");
         }, 5000);
+      }
+
+      if (domainState === "error") {
+        return {
+          success: true,
+          data: {
+            status: "error",
+            error: "Domain cname verification failed",
+          },
+        };
       }
 
       return {

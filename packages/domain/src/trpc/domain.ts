@@ -6,7 +6,7 @@ import { db } from "../db";
 const { router, procedure } = initTRPC.context<AppContext>().create();
 
 export const domainRouter = router({
-  start: procedure
+  create: procedure
     .input(
       z.object({
         projectId: z.string(),
@@ -15,7 +15,7 @@ export const domainRouter = router({
     )
     .mutation(async ({ input, ctx }) => {
       try {
-        return await db.start(
+        return await db.create(
           {
             projectId: input.projectId,
             domain: input.domain,
@@ -31,7 +31,7 @@ export const domainRouter = router({
       }
     }),
 
-  create: procedure
+  verify: procedure
     .input(
       z.object({
         projectId: z.string(),
@@ -40,7 +40,7 @@ export const domainRouter = router({
     )
     .mutation(async ({ input, ctx }) => {
       try {
-        return await db.create(
+        return await db.verify(
           {
             projectId: input.projectId,
             domain: input.domain,
@@ -54,7 +54,29 @@ export const domainRouter = router({
         };
       }
     }),
-
+  remove: procedure
+    .input(
+      z.object({
+        projectId: z.string(),
+        domain: z.string(),
+      })
+    )
+    .mutation(async ({ input, ctx }) => {
+      try {
+        return await db.remove(
+          {
+            projectId: input.projectId,
+            domain: input.domain,
+          },
+          ctx
+        );
+      } catch (error) {
+        return {
+          success: false,
+          error: error instanceof Error ? error.message : "Unknown error",
+        };
+      }
+    }),
   findMany: procedure
     .input(
       z.object({

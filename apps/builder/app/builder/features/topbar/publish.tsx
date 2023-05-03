@@ -15,6 +15,7 @@ import {
   FloatingPanelPopoverTrigger,
   FloatingPanelPopoverContent,
   FloatingPanelPopoverTitle,
+  ScrollArea,
 } from "@webstudio-is/design-system";
 import { useIsPublishDialogOpen } from "../../shared/nano-states";
 import type { Project } from "@webstudio-is/project";
@@ -110,7 +111,9 @@ export const PublishButton = ({ project }: PublishButtonProps) => {
       </FloatingPanelAnchor>
 
       <FloatingPanelPopoverContent css={{ zIndex: theme.zIndices[1] }}>
-        <Content project={project} />
+        <ScrollArea css={{ display: "grid" }}>
+          <Content project={project} />
+        </ScrollArea>
         <FloatingPanelPopoverTitle>Publish</FloatingPanelPopoverTitle>
       </FloatingPanelPopoverContent>
     </FloatingPanelPopover>

@@ -115,6 +115,13 @@ model AuthorizationToken {
   @@id([token, projectId])
 }
 
+enum DomainStatus {
+  INITIALIZING
+  ACTIVE
+  ERROR
+  PENDING
+}
+
 // Domains  + last known status and last known txtRecord
 // In the future we can update this table using queue, n8n or temporal workflows.
 // As of now updates are done during UI interactions
@@ -126,7 +133,7 @@ model Domain {
   // Last known txtRecord of the domain (to check domain ownership)
   txtRecord         String?
   // create, init, pending, active, error
-  status            String              @default("create")
+  status            DomainStatus        @default(INITIALIZING)
   // In case of status="error", this will contain the error message
   error             String?
   projectWithDomain ProjectWithDomain[]

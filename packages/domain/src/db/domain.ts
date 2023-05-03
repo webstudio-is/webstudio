@@ -48,7 +48,7 @@ export const findMany = async (
 
 type Result = { success: false; error: string } | { success: true };
 
-export const start = async (
+export const create = async (
   props: {
     projectId: Project["id"];
     domain: string;
@@ -95,7 +95,7 @@ export const start = async (
     },
     create: {
       domain,
-      status: "starting",
+      status: "INITIALIZING",
     },
     where: {
       domain,
@@ -115,7 +115,7 @@ export const start = async (
   return { success: true };
 };
 
-export const create = async (
+export const verify = async (
   props: {
     projectId: Project["id"];
     domain: string;
@@ -167,13 +167,56 @@ export const create = async (
       domain,
     },
     data: {
-      status: "creating",
+      status: "PENDING",
       txtRecord: projectDomain.txtRecord,
     },
   });
 
   return { success: true };
 };
+
+export const remove = async (
+  props: {
+    projectId: Project["id"];
+    domain: string;
+  },
+  context: AppContext
+): Promise<Result> => {
+  // Only owner of the project can register domains
+  const canDeleteDomain = await authorizeProject.hasProjectPermit(
+    { projectId: props.projectId, permit: "own" },
+    context
+  );
+
+  if (canDeleteDomain === false) {
+    throw new Error("You don't have access to delete this project domains");
+  }
+
+  const validationResult = validateDomain(props.domain);
+
+  if (validationResult.success === false) {
+    return validationResult;
+  }
+
+  const { domain } = validationResult;
+
+  await prisma.projectDomain.deleteMany({
+    where: {
+      projectId: props.projectId,
+      domain: {
+        domain,
+      },
+    },
+  });
+
+  return { success: true };
+};
+
+type Status = "active" | "pending" | "error";
+type StatusEnum = Uppercase<Status>;
+
+const statusToStatusEnum = (status: Status): StatusEnum =>
+  status.toUpperCase() as StatusEnum;
 
 export const refresh = async (
   props: {
@@ -218,7 +261,23 @@ export const refresh = async (
     return statusResult;
   }
 
-  const { status } = statusResult.data;
+  const { data } = statusResult;
+
+  if (data.status === "error") {
+    // update domain status
+    await prisma.domain.update({
+      where: {
+        domain,
+      },
+      data: {
+        status: statusToStatusEnum(data.status),
+        error: data.error,
+        txtRecord: projectDomain.txtRecord,
+      },
+    });
+
+    return { success: true };
+  }
 
   // update domain status
   await prisma.domain.update({
@@ -226,8 +285,9 @@ export const refresh = async (
       domain,
     },
     data: {
-      status,
+      status: statusToStatusEnum(data.status),
       txtRecord: projectDomain.txtRecord,
+      error: null,
     },
   });
 
