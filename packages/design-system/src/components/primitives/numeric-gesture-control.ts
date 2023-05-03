@@ -57,7 +57,8 @@ const getValueDefault = (
     maxValue = Number.MAX_SAFE_INTEGER,
   }: NumericScrubOptions
 ) => {
-  const value = state.value + movement;
+  // toFixed is needed to fix `1.3 - 1 = 0.30000000000000004`
+  const value = Number((state.value + movement).toFixed(2));
   if (value < minValue) {
     return minValue;
   }
