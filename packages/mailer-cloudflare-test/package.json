@@ -1,0 +1,17 @@
+{
+  "private": true,
+  "version": "0.0.0",
+  "scripts": {
+    "deploy": "wrangler publish src/index.ts",
+    "dev": "wrangler dev src/index.ts"
+  },
+  "dependencies": {
+    "@webstudio-is/mailer": "workspace:^"
+  },
+  "devDependencies": {
+    "@webstudio-is/tsconfig": "workspace:^",
+    "@cloudflare/workers-types": "^3.0.0",
+    "wrangler": "^2.18.0",
+    "typescript": "5.0.3"
+  }
+}
