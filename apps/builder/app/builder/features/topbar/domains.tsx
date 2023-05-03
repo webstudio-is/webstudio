@@ -24,10 +24,17 @@ const trpc = createTrpcRemixProxy<DomainRouter>(builderDomainsPath);
 
 type DomainsProps = {
   projectId: Project["id"];
+};
+
+type DomainsAddProps = {
+  projectId: Project["id"];
   onBeforeCreate: (domain: string) => void;
 };
 
-const AddDomain = ({ projectId, onBeforeCreate: onCreate }: DomainsProps) => {
+const AddDomain = ({
+  projectId,
+  onBeforeCreate: onCreate,
+}: DomainsAddProps) => {
   const { send: create, data: startData, state } = trpc.create.useMutation();
   const [domain, setDomain] = useState("");
   const [error, setError] = useState<string>();
@@ -116,7 +123,7 @@ const DomainItem = (props: {
 
   const disabled = verifyState !== "idle" || deleteState !== "idle";
 
-  console.log(verifyData, props.projectDomain);
+  // console.log(verifyData, props.projectDomain);
 
   useEffect(() => {
     if (verifyData === undefined) {
@@ -131,6 +138,7 @@ const DomainItem = (props: {
     setError("");
   }, [verifyData]);
 
+  /*
   const state =
     props.projectDomain.verified === false
       ? "unverified"
@@ -139,6 +147,7 @@ const DomainItem = (props: {
       : props.projectDomain.domain.status === "active"
       ? "verified_active"
       : "verified_pending";
+    */
 
   return (
     <CollapsibleSectionBase

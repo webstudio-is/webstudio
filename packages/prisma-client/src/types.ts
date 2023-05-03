@@ -8,4 +8,5 @@ export type {
   DashboardProject,
   AuthorizationRelation,
   AuthorizationToken,
+  DomainStatus,
 } from "./__generated__";
