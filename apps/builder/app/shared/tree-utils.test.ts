@@ -14,7 +14,7 @@ import {
   type InstanceSelector,
   cloneStyles,
   findClosestDroppableTarget,
-  findSubtreeLocalStyleSources,
+  findLocalStyleSourcesWithinInstances,
   getAncestorInstanceSelector,
   insertInstancesCopyMutable,
   insertInstancesMutable,
@@ -853,32 +853,28 @@ test("clone styles with appled new style source ids", () => {
   ]);
 });
 
-test("find subtree local style sources", () => {
-  const subtreeIds = new Set(["instance2", "instance4"]);
-  const styleSources = new Map([
-    ["local1", createStyleSource("local", "local1")],
-    ["local2", createStyleSource("local", "local2")],
-    ["token3", createStyleSource("token", "token3")],
-    ["local4", createStyleSource("local", "local4")],
-    ["token5", createStyleSource("token", "token5")],
-    ["local6", createStyleSource("local", "local6")],
-  ]);
-  const styleSourceSelections = new Map([
-    ["instance1", createStyleSourceSelection("instance1", ["local1"])],
-    ["instance2", createStyleSourceSelection("instance2", ["local2"])],
-    ["instance3", createStyleSourceSelection("instance3", ["token3"])],
-    [
-      "instance4",
-      createStyleSourceSelection("instance4", ["local4", "token5"]),
-    ],
-    ["instance5", createStyleSourceSelection("instance5", ["local6"])],
-  ]);
-
+test("find local style sources within instances", () => {
+  const instanceIds = new Set(["instance2", "instance4"]);
+  const styleSources = [
+    createStyleSource("local", "local1"),
+    createStyleSource("local", "local2"),
+    createStyleSource("token", "token3"),
+    createStyleSource("local", "local4"),
+    createStyleSource("token", "token5"),
+    createStyleSource("local", "local6"),
+  ];
+  const styleSourceSelections = [
+    createStyleSourceSelection("instance1", ["local1"]),
+    createStyleSourceSelection("instance2", ["local2"]),
+    createStyleSourceSelection("instance3", ["token3"]),
+    createStyleSourceSelection("instance4", ["local4", "token5"]),
+    createStyleSourceSelection("instance5", ["local6"]),
+  ];
   expect(
-    findSubtreeLocalStyleSources(
-      subtreeIds,
+    findLocalStyleSourcesWithinInstances(
       styleSources,
-      styleSourceSelections
+      styleSourceSelections,
+      instanceIds
     )
   ).toEqual(new Set(["local2", "local4"]));
 });
