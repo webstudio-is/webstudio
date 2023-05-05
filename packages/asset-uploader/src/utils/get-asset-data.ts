@@ -4,31 +4,16 @@ import { FontMeta } from "@webstudio-is/fonts";
 import { getFontData } from "@webstudio-is/fonts/index.server";
 import { Location, ImageMeta } from "../schema";
 
-const BaseData = z.object({
-  id: z.string(),
-  name: z.string(),
+export const AssetData = z.object({
   size: z.number(),
   location: Location,
   format: z.string(),
+  meta: z.union([ImageMeta, FontMeta]),
 });
-
-const ImageData = BaseData.extend({
-  type: z.literal("image"),
-  meta: ImageMeta,
-});
-
-const FontData = BaseData.extend({
-  type: z.literal("font"),
-  meta: FontMeta,
-});
-
-export const AssetData = z.union([ImageData, FontData]);
 
 export type AssetData = z.infer<typeof AssetData>;
 
 type BaseAssetOptions = {
-  id: string;
-  name: string;
   size: number;
   data: Uint8Array;
   location: Location;
@@ -43,11 +28,6 @@ type AssetOptions =
 export const getAssetData = async (
   options: AssetOptions
 ): Promise<AssetData> => {
-  const baseData = {
-    name: options.name,
-    size: options.size,
-    location: options.location,
-  };
   if (options.type === "image") {
     const sharpImage = sharp(options.data);
     const { width, height, format } = await sharpImage.metadata();
@@ -59,9 +39,8 @@ export const getAssetData = async (
     }
 
     return {
-      ...baseData,
-      id: options.id,
-      type: options.type,
+      size: options.size,
+      location: options.location,
       format,
       meta: { width, height },
     };
@@ -70,9 +49,8 @@ export const getAssetData = async (
   const { format, ...meta } = getFontData(options.data);
 
   return {
-    id: options.id,
-    type: options.type,
-    ...baseData,
+    size: options.size,
+    location: options.location,
     format,
     meta,
   };
