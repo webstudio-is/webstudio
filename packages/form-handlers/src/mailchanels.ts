@@ -1,6 +1,8 @@
 // References:
 // https://api.mailchannels.net/tx/v1/documentation
 // https://github.com/cloudflare/pages-plugins/tree/main/packages/mailchannels
+//
+// To test see `packages/form-handlers-mailchannels-test`
 
 import { formDataToEmailContent } from "./shared";
 

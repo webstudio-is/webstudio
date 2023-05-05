@@ -4,7 +4,7 @@
   "version": "0.0.0",
   "scripts": {
     "deploy": "wrangler publish src/index.ts",
-    "dev": "wrangler dev src/index.ts"
+    "local-dev": "wrangler dev src/index.ts"
   },
   "dependencies": {
     "@webstudio-is/form-handlers": "workspace:^"
