@@ -48,7 +48,10 @@ export const cloneAssets = async (
   }
 
   const assets = await client.asset.findMany({
-    where: { projectId: fromProjectId, status: "UPLOADED" },
+    where: {
+      projectId: fromProjectId,
+      file: { status: "UPLOADED" },
+    },
   });
 
   await client.asset.createMany({
