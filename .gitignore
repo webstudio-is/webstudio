@@ -19,6 +19,7 @@ _build
 # misc
 .DS_Store
 *.pem
+/.idea
 
 # logs
 npm-debug.log*
@@ -53,5 +54,3 @@ tsconfig.tsbuildinfo
 
 # to save thunder https://marketplace.visualstudio.com/items?itemName=rangav.vscode-thunder-client files
 .thunder
-
-/.idea
