@@ -393,6 +393,10 @@ export const color = {
     "linear-gradient(135deg, #92fddc 0%, #7d7ffb 31.94%, #ed72fe 64.24%, #fdd791 100%)",
   brandBorderNavbar:
     "linear-gradient(90deg, #39fbbb00 0%, #39fbbb 20%, #4a4efa 40.03%, #e63cfe 60.02%, #ffae3c 80.04%, #ffae3c00 100%, #ffae3c00 100%)",
+  brandSpinnerTurquoise: "#39fbbb",
+  brandSpinnerBlue: "#4a4efa",
+  brandSpinnerPurple: "#e63cfe",
+  brandSpinnerOrange: "#ffae3c",
   borderMain: "#c1c8cd",
   borderFocus: "#096cff",
   borderMenuInner: "#fcfcfc",
