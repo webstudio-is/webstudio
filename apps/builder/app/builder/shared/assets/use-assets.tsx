@@ -2,11 +2,7 @@ import { useMemo } from "react";
 import { useStore } from "@nanostores/react";
 import warnOnce from "warn-once";
 import store from "immerhin";
-import {
-  type AssetType,
-  type Asset,
-  idsFormDataFieldName,
-} from "@webstudio-is/asset-uploader";
+import { type AssetType, type Asset } from "@webstudio-is/asset-uploader";
 import { toast } from "@webstudio-is/design-system";
 import { sanitizeS3Key } from "@webstudio-is/asset-uploader";
 import { restAssetsUploadPath, restAssetsPath } from "~/shared/router-utils";
@@ -178,8 +174,6 @@ export const useUploadAsset = () => {
           (data) => {
             const formData = new FormData();
             formData.append(type, file, data.name);
-            formData.append("projectId", projectId);
-            formData.append(idsFormDataFieldName, id);
             submitUpload<UploadData>(
               formData,
               {

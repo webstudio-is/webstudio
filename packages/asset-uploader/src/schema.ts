@@ -49,8 +49,6 @@ export type ImageAsset = z.infer<typeof ImageAsset>;
 export const Asset = z.union([FontAsset, ImageAsset]);
 export type Asset = z.infer<typeof Asset>;
 
-export const idsFormDataFieldName = "ids";
-
 // undefined is necessary to represent uploading state
 // to be able to upload data while preserving order
 export const Assets = z.map(AssetId, z.union([z.undefined(), Asset]));

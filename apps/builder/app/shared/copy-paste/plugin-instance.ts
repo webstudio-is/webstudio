@@ -29,7 +29,7 @@ import {
   insertStylesCopyMutable,
   insertStyleSourcesCopyMutable,
   insertStyleSourceSelectionsCopyMutable,
-  findSubtreeLocalStyleSources,
+  findLocalStyleSourcesWithinInstances,
   mergeNewBreakpointsMutable,
 } from "../tree-utils";
 import { deleteInstance } from "../instance-utils";
@@ -184,24 +184,16 @@ export const onPaste = (clipboardData: string) => {
         dropTarget
       );
 
-      // find all local style sources of copied instances
-      const newStyleSourceIds = findSubtreeLocalStyleSources(
-        new Set(copiedInstanceIds.values()),
-        new Map(
-          data.styleSources.map((styleSource) => [styleSource.id, styleSource])
-        ),
-        new Map(
-          data.styleSourceSelections.map((styleSourceSelection) => [
-            styleSourceSelection.instanceId,
-            styleSourceSelection,
-          ])
-        )
+      const localStyleSourceIds = findLocalStyleSourcesWithinInstances(
+        data.styleSources,
+        data.styleSourceSelections,
+        new Set(copiedInstanceIds.keys())
       );
 
       const copiedStyleSourceIds = insertStyleSourcesCopyMutable(
         styleSources,
         data.styleSources,
-        newStyleSourceIds
+        localStyleSourceIds
       );
 
       insertPropsCopyMutable(props, data.props, copiedInstanceIds);
