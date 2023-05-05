@@ -53,3 +53,5 @@ tsconfig.tsbuildinfo
 
 # to save thunder https://marketplace.visualstudio.com/items?itemName=rangav.vscode-thunder-client files
 .thunder
+
+/.idea
