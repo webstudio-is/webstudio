@@ -1,4 +1,4 @@
-import { sendFormData } from "@webstudio-is/form-handlers";
+import { mailchannelsHandler } from "@webstudio-is/form-handlers";
 
 export default {
   async fetch(request: Request) {
@@ -16,14 +16,11 @@ export default {
     formData.append("name", "Bob");
     formData.append("time", new Date().toLocaleString("en-US"));
 
-    const result = await sendFormData(
-      {
-        from: { email: "test@webstudio.is" },
-        to: { email: to },
-        subject: "New submission of your form",
-      },
-      formData
-    );
+    const result = await mailchannelsHandler({
+      senderEmail: "test@webstudio.is",
+      recipientEmail: to,
+      formData,
+    });
 
     if (result.success) {
       return new Response(`Email sent to ${to}`);

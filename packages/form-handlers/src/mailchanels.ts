@@ -2,7 +2,9 @@
 // https://api.mailchannels.net/tx/v1/documentation
 // https://github.com/cloudflare/pages-plugins/tree/main/packages/mailchannels
 
-export type EmailAddress = {
+import { formDataToEmailContent } from "./shared";
+
+type EmailAddress = {
   email: string;
   name?: string;
 };
@@ -25,7 +27,7 @@ type ContentItem = {
   value: string;
 };
 
-export type SendEmailPayload = {
+type SendEmailPayload = {
   personalizations: [Personalization, ...Personalization[]];
   from: EmailAddress;
   reply_to?: EmailAddress;
@@ -34,11 +36,9 @@ export type SendEmailPayload = {
   headers?: Record<string, string>;
 };
 
-export type SendEmailResult =
-  | { success: true }
-  | { success: false; errors: string[] };
+type SendEmailResult = { success: true } | { success: false; errors: string[] };
 
-export const sendEmail = async (
+const sendEmail = async (
   payload: SendEmailPayload
 ): Promise<SendEmailResult> => {
   const response = await fetch("https://api.mailchannels.net/tx/v1/send", {
@@ -57,4 +57,26 @@ export const sendEmail = async (
   } catch {
     return { success: false, errors: [response.statusText] };
   }
+};
+
+export const mailchannelsHandler = async ({
+  formData,
+  recipientEmail,
+  senderEmail,
+}: {
+  formData: FormData;
+  recipientEmail: string;
+  senderEmail: string;
+}) => {
+  const { plainText, html, subject } = formDataToEmailContent({ formData });
+
+  return sendEmail({
+    personalizations: [{ to: [{ email: recipientEmail }] }],
+    from: { email: senderEmail },
+    subject: subject,
+    content: [
+      { type: "text/plain", value: plainText },
+      { type: "text/html", value: html },
+    ],
+  });
 };
