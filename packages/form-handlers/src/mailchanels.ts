@@ -4,7 +4,7 @@
 //
 // To test see `packages/form-handlers-mailchannels-test`
 
-import { formDataToEmailContent } from "./shared";
+import { formDataToEmailContent, getErrors, getResponseBody } from "./shared";
 
 type EmailAddress = {
   email: string;
@@ -43,22 +43,24 @@ type SendEmailResult = { success: true } | { success: false; errors: string[] };
 const sendEmail = async (
   payload: SendEmailPayload
 ): Promise<SendEmailResult> => {
-  const response = await fetch("https://api.mailchannels.net/tx/v1/send", {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify(payload),
-  });
+  let response: Response;
+  try {
+    response = await fetch("https://api.mailchannels.net/tx/v1/send", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(payload),
+    });
+  } catch (error) {
+    return { success: false, errors: [(error as Error).message] };
+  }
 
-  if (response.status === 202) {
+  if (response.status >= 200 && response.status < 300) {
     return { success: true };
   }
 
-  try {
-    const { errors } = await response.json();
-    return { success: false, errors };
-  } catch {
-    return { success: false, errors: [response.statusText] };
-  }
+  const { text, json } = await getResponseBody(response);
+
+  return { success: false, errors: getErrors(json) ?? [text] };
 };
 
 export const mailchannelsHandler = async ({

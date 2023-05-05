@@ -1,4 +1,4 @@
-import { formDataToEmailContent } from "./shared";
+import { formDataToEmailContent, getErrors, getResponseBody } from "./shared";
 
 export const n8nHandler = async ({
   formData,
@@ -35,28 +35,26 @@ export const n8nHandler = async ({
     formData: Object.fromEntries(formData),
   };
 
-  const response = await fetch(hookUrl, {
-    method: "POST",
-    headers,
-    body: JSON.stringify(payload),
-  });
-
+  let response: Response;
   try {
-    const data = await response.json();
+    response = await fetch(hookUrl, {
+      method: "POST",
+      headers,
+      body: JSON.stringify(payload),
+    });
+  } catch (error) {
+    return { success: false, errors: [(error as Error).message] };
+  }
 
-    if (response.status === 200 && data.success === true) {
-      return { success: true };
-    }
+  const { text, json } = await getResponseBody(response);
 
-    if (typeof data.error === "string") {
-      return { success: false, errors: [data.error] };
-    }
+  if (
+    response.status >= 200 &&
+    response.status < 300 &&
+    json?.success === true
+  ) {
+    return { success: true };
+  }
 
-    if (typeof data.message === "string") {
-      return { success: false, errors: [data.message] };
-    }
-    // eslint-disable-next-line no-empty
-  } catch {}
-
-  return { success: false, errors: [response.statusText || "Unknown error"] };
+  return { success: false, errors: getErrors(json) ?? [text] };
 };

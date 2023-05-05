@@ -32,3 +32,37 @@ export const formDataToEmailContent = ({
     html: `<!DOCTYPE html><html><body><p>${prefix}</p><table><tbody>${htmlRows}</tbody></table></body></html>`,
   };
 };
+
+export const getResponseBody = async (
+  response: Response
+): Promise<{ text: string; json?: Record<string, unknown> }> => {
+  const text = await response.text();
+  try {
+    const json = JSON.parse(text);
+    return typeof json === "object" && json !== null
+      ? { json, text }
+      : { text };
+  } catch {
+    return { text: text === "" ? response.statusText : text };
+  }
+};
+
+export const getErrors = (
+  json: Record<string, unknown> | undefined
+): string[] | undefined => {
+  if (json === undefined) {
+    return;
+  }
+  if (typeof json.error === "string") {
+    return [json.error];
+  }
+  if (typeof json.message === "string") {
+    return [json.message];
+  }
+  if (
+    Array.isArray(json.errors) &&
+    json.errors.every((error) => typeof error === "string")
+  ) {
+    return json.errors;
+  }
+};
