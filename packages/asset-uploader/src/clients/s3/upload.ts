@@ -111,6 +111,7 @@ const createUploadHandler = (maxFiles: number, client: S3Client) => {
       Key: uniqueFilename,
       Body: data,
       ContentType: file.contentType,
+      CacheControl: "public, max-age=31536004,immutable",
       Metadata: {
         // encodeURIComponent is needed to support special characters like Cyrillic
         filename: encodeURIComponent(fileName) || "unnamed",
