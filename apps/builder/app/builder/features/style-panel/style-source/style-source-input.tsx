@@ -132,7 +132,12 @@ const TextFieldBase: ForwardRefRenderFunction<
       ref={mergeRefs(forwardedRef, containerRef ?? null, sortableRefCallback)}
       state={state}
       variant={textFieldVariant}
-      css={{ ...css, px: theme.spacing[3], py: theme.spacing[2] }}
+      css={{
+        ...css,
+        p: theme.spacing[3],
+        boxShadow: "none",
+        border: `1px solid ${theme.colors.borderMain}`,
+      }}
       style={
         dragItemId ? menuCssVars({ show: false, override: true }) : undefined
       }
@@ -338,7 +343,11 @@ const renderMenuItems = (props: {
           onSelect={() =>
             props.onSelect?.({
               styleSourceId: props.item.id,
-              state: selector,
+              // toggle state selection
+              state:
+                props.selectedItemSelector?.state === selector
+                  ? undefined
+                  : selector,
             })
           }
         >
