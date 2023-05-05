@@ -838,6 +838,46 @@ importers:
         specifier: ^3.19.1
         version: 3.19.1
 
+  packages/form-handlers:
+    devDependencies:
+      '@jest/globals':
+        specifier: ^29.3.1
+        version: 29.3.1
+      '@webstudio-is/jest-config':
+        specifier: workspace:^
+        version: link:../jest-config
+      '@webstudio-is/scripts':
+        specifier: workspace:^
+        version: link:../scripts
+      '@webstudio-is/tsconfig':
+        specifier: workspace:^
+        version: link:../tsconfig
+      jest:
+        specifier: ^29.3.1
+        version: 29.3.1(@types/node@18.11.18)
+      typescript:
+        specifier: 5.0.3
+        version: 5.0.3
+
+  packages/form-handlers-mailchannels-test:
+    dependencies:
+      '@webstudio-is/form-handlers':
+        specifier: workspace:^
+        version: link:../form-handlers
+    devDependencies:
+      '@cloudflare/workers-types':
+        specifier: ^3.0.0
+        version: 3.19.0
+      '@webstudio-is/tsconfig':
+        specifier: workspace:^
+        version: link:../tsconfig
+      typescript:
+        specifier: 5.0.3
+        version: 5.0.3
+      wrangler:
+        specifier: ^2.18.0
+        version: 2.18.0
+
   packages/generate-arg-types:
     dependencies:
       '@types/fs-extra':
@@ -994,46 +1034,6 @@ importers:
       jest:
         specifier: ^29.3.1
         version: 29.3.1(@types/node@18.11.18)
-
-  packages/mailer:
-    devDependencies:
-      '@jest/globals':
-        specifier: ^29.3.1
-        version: 29.3.1
-      '@webstudio-is/jest-config':
-        specifier: workspace:^
-        version: link:../jest-config
-      '@webstudio-is/scripts':
-        specifier: workspace:^
-        version: link:../scripts
-      '@webstudio-is/tsconfig':
-        specifier: workspace:^
-        version: link:../tsconfig
-      jest:
-        specifier: ^29.3.1
-        version: 29.3.1(@types/node@18.11.18)
-      typescript:
-        specifier: 5.0.3
-        version: 5.0.3
-
-  packages/mailer-cloudflare-test:
-    dependencies:
-      '@webstudio-is/mailer':
-        specifier: workspace:^
-        version: link:../mailer
-    devDependencies:
-      '@cloudflare/workers-types':
-        specifier: ^3.0.0
-        version: 3.19.0
-      '@webstudio-is/tsconfig':
-        specifier: workspace:^
-        version: link:../tsconfig
-      typescript:
-        specifier: 5.0.3
-        version: 5.0.3
-      wrangler:
-        specifier: ^2.18.0
-        version: 2.18.0
 
   packages/prisma-client:
     dependencies:

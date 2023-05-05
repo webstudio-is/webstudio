@@ -1,4 +1,4 @@
-import { sendFormData } from "@webstudio-is/mailer";
+import { sendFormData } from "@webstudio-is/form-handlers";
 
 export default {
   async fetch(request: Request) {

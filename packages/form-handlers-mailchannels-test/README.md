@@ -1,4 +1,4 @@
-# A cloudflare worker to test the `@webstudio-is/mailer` package
+# A cloudflare worker to test the `mailchannels` handler from `@webstudio-is/form-handlers` package
 
 We need it because:
 

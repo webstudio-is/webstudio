@@ -1,4 +1,5 @@
 {
+  "name": "@webstudio-is/form-handlers-mailchannels-test",
   "private": true,
   "version": "0.0.0",
   "scripts": {
@@ -6,7 +7,7 @@
     "dev": "wrangler dev src/index.ts"
   },
   "dependencies": {
-    "@webstudio-is/mailer": "workspace:^"
+    "@webstudio-is/form-handlers": "workspace:^"
   },
   "devDependencies": {
     "@webstudio-is/tsconfig": "workspace:^",
