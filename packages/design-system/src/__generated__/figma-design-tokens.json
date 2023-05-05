@@ -749,6 +749,22 @@
           "value": "linear-gradient(90deg, #39fbbb00 0%, #39fbbb 20%, #4a4efa 40.03%, #e63cfe 60.02%, #ffae3c 80.04%, #ffae3c00 100%, #ffae3c00 100%)",
           "type": "color"
         }
+      },
+      "spinner-turquoise": {
+        "value": "#39fbbb",
+        "type": "color"
+      },
+      "spinner-blue": {
+        "value": "#4a4efa",
+        "type": "color"
+      },
+      "spinner-purple": {
+        "value": "#e63cfe",
+        "type": "color"
+      },
+      "spinner-orange": {
+        "value": "#ffae3c",
+        "type": "color"
       }
     },
     "border": {
