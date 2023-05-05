@@ -15,6 +15,8 @@ import {
   StyleSources,
   StyleSourceSelection,
   StyleSourceSelections,
+  StyleSourceSelectionsList,
+  StyleSourcesList,
 } from "@webstudio-is/project-build";
 import {
   canAcceptComponent,
@@ -247,22 +249,24 @@ export const cloneStyles = (
   return clonedStyles;
 };
 
-export const findSubtreeLocalStyleSources = (
-  subtreeIds: Set<Instance["id"]>,
-  styleSources: StyleSources,
-  styleSourceSelections: StyleSourceSelections
+export const findLocalStyleSourcesWithinInstances = (
+  styleSources: IterableIterator<StyleSource> | StyleSourcesList,
+  styleSourceSelections:
+    | IterableIterator<StyleSourceSelection>
+    | StyleSourceSelectionsList,
+  instanceIds: Set<Instance["id"]>
 ) => {
   const localStyleSourceIds = new Set<StyleSource["id"]>();
-  for (const styleSource of styleSources.values()) {
+  for (const styleSource of styleSources) {
     if (styleSource.type === "local") {
       localStyleSourceIds.add(styleSource.id);
     }
   }
 
   const subtreeLocalStyleSourceIds = new Set<StyleSource["id"]>();
-  for (const { instanceId, values } of styleSourceSelections.values()) {
+  for (const { instanceId, values } of styleSourceSelections) {
     // skip selections outside of subtree
-    if (subtreeIds.has(instanceId) === false) {
+    if (instanceIds.has(instanceId) === false) {
       continue;
     }
     // find only local style sources on selections
