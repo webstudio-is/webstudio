@@ -15,7 +15,7 @@ import {
   type DroppableTarget,
   type InstanceSelector,
   createComponentInstance,
-  findSubtreeLocalStyleSources,
+  findLocalStyleSourcesWithinInstances,
   insertInstancesMutable,
   reparentInstanceMutable,
   getAncestorInstanceSelector,
@@ -124,14 +124,14 @@ export const deleteInstance = (instanceSelector: InstanceSelector) => {
         parentInstance = instances.get(grandparentInstanceId);
       }
 
-      const subtreeIds = findTreeInstanceIdsExcludingSlotDescendants(
+      const instanceIds = findTreeInstanceIdsExcludingSlotDescendants(
         instances,
         targetInstanceId
       );
-      const subtreeLocalStyleSourceIds = findSubtreeLocalStyleSources(
-        subtreeIds,
-        styleSources,
-        styleSourceSelections
+      const localStyleSourceIds = findLocalStyleSourcesWithinInstances(
+        styleSources.values(),
+        styleSourceSelections.values(),
+        instanceIds
       );
 
       // may not exist when delete root
@@ -142,23 +142,23 @@ export const deleteInstance = (instanceSelector: InstanceSelector) => {
         );
       }
 
-      for (const instanceId of subtreeIds) {
+      for (const instanceId of instanceIds) {
         instances.delete(instanceId);
       }
       // delete props and styles of deleted instance and its descendants
       for (const prop of props.values()) {
-        if (subtreeIds.has(prop.instanceId)) {
+        if (instanceIds.has(prop.instanceId)) {
           props.delete(prop.id);
         }
       }
-      for (const instanceId of subtreeIds) {
+      for (const instanceId of instanceIds) {
         styleSourceSelections.delete(instanceId);
       }
-      for (const styleSourceId of subtreeLocalStyleSourceIds) {
+      for (const styleSourceId of localStyleSourceIds) {
         styleSources.delete(styleSourceId);
       }
       for (const [styleDeclKey, styleDecl] of styles) {
-        if (subtreeLocalStyleSourceIds.has(styleDecl.styleSourceId)) {
+        if (localStyleSourceIds.has(styleDecl.styleSourceId)) {
           styles.delete(styleDeclKey);
         }
       }
