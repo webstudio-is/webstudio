@@ -42,13 +42,12 @@ import {
   type ReactNode,
 } from "react";
 import { mergeRefs } from "@react-aria/utils";
-import type { ComponentState } from "@webstudio-is/react-sdk";
+import { type ComponentState, stateCategories } from "@webstudio-is/react-sdk";
 import { type ItemSource, menuCssVars, StyleSource } from "./style-source";
 import { useSortable } from "./use-sortable";
 import { matchSorter } from "match-sorter";
 import { StyleSourceBadge } from "./style-source-badge";
 import { CheckMarkIcon, DotIcon } from "@webstudio-is/icons";
-import { stateCategories } from "node_modules/@webstudio-is/react-sdk/src/components/component-meta";
 import { humanizeString } from "~/shared/string-utils";
 
 type IntermediateItem = {
