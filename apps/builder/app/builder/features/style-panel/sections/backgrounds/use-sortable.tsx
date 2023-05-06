@@ -1,4 +1,5 @@
 import { useState, useRef } from "react";
+import { createPortal } from "react-dom";
 import {
   type Placement,
   PlacementIndicator,
@@ -105,9 +106,12 @@ export const useSortable = <Item extends { id: string }>({
     },
   });
 
-  const placementIndicatorElement = placementIndicator ? (
-    <PlacementIndicator placement={placementIndicator} />
-  ) : undefined;
+  const placementIndicatorElement = placementIndicator
+    ? createPortal(
+        <PlacementIndicator placement={placementIndicator} />,
+        document.body
+      )
+    : undefined;
 
   const sortableRefCallback = (element: HTMLDivElement | null) => {
     useDropHandlers.rootRef(element);
