@@ -19,7 +19,6 @@ import {
   Combobox,
   ComboboxAnchor,
   ComboboxContent,
-  DeprecatedTextFieldContainer,
   DeprecatedTextFieldInput,
   useDeprecatedTextFieldFocus,
   useCombobox,
@@ -31,6 +30,7 @@ import {
   DropdownMenuSeparator,
   rawTheme,
   theme,
+  styled,
 } from "@webstudio-is/design-system";
 import {
   forwardRef,
@@ -64,18 +64,32 @@ export type ItemSelector = {
   state?: string;
 };
 
+const TextFieldContainer = styled("div", {
+  // Custom
+  display: "flex",
+  flexWrap: "wrap",
+  alignItems: "center",
+  backgroundColor: theme.colors.backgroundControls,
+  gap: theme.spacing[3],
+  p: theme.spacing[3],
+  borderRadius: theme.borderRadius[4],
+  minHeight: theme.spacing[12],
+  minWidth: 0,
+  border: `1px solid ${theme.colors.borderMain}`,
+  "&:focus-within": {
+    outline: `2px solid ${theme.colors.borderFocus}`,
+    outlineOffset: -1,
+  },
+});
+
 type TextFieldBaseWrapperProps<Item extends IntermediateItem> = Omit<
   ComponentProps<"input">,
   "value"
 > &
-  Pick<
-    ComponentProps<typeof DeprecatedTextFieldContainer>,
-    "variant" | "state" | "css"
-  > & {
+  Pick<ComponentProps<typeof TextFieldContainer>, "css"> & {
     value: Array<Item>;
     selectedItemSelector: undefined | ItemSelector;
     label: string;
-    disabled?: boolean;
     containerRef?: RefObject<HTMLDivElement>;
     inputRef?: RefObject<HTMLInputElement>;
     renderStyleSourceMenuItems: (item: Item) => ReactNode;
@@ -93,11 +107,8 @@ const TextFieldBase: ForwardRefRenderFunction<
 > = (props, forwardedRef) => {
   const {
     css,
-    disabled,
     containerRef,
     inputRef,
-    state,
-    variant: textFieldVariant,
     onFocus,
     onBlur,
     onClick,
@@ -116,7 +127,6 @@ const TextFieldBase: ForwardRefRenderFunction<
     ...textFieldProps
   } = props;
   const [internalInputRef, focusProps] = useDeprecatedTextFieldFocus({
-    disabled,
     onFocus,
     onBlur,
   });
@@ -126,13 +136,10 @@ const TextFieldBase: ForwardRefRenderFunction<
   });
 
   return (
-    <DeprecatedTextFieldContainer
+    <TextFieldContainer
       {...focusProps}
-      aria-disabled={disabled}
       ref={mergeRefs(forwardedRef, containerRef ?? null, sortableRefCallback)}
-      state={state}
-      variant={textFieldVariant}
-      css={{ ...css, px: theme.spacing[3], py: theme.spacing[2] }}
+      css={css}
       style={
         dragItemId ? menuCssVars({ show: false, override: true }) : undefined
       }
@@ -175,15 +182,21 @@ const TextFieldBase: ForwardRefRenderFunction<
       {editingItemId === undefined && (
         <DeprecatedTextFieldInput
           {...textFieldProps}
+          css={{
+            color: theme.colors.hiContrast,
+            fontVariantNumeric: "tabular-nums",
+            fontFamily: theme.fonts.sans,
+            fontSize: theme.deprecatedFontSize[3],
+            lineHeight: 1,
+          }}
           value={label}
           type={type}
-          disabled={disabled}
           onClick={onClick}
           ref={mergeRefs(internalInputRef, inputRef ?? null)}
           aria-label="New Style Source Input"
         />
       )}
-    </DeprecatedTextFieldContainer>
+    </TextFieldContainer>
   );
 };
 
@@ -338,7 +351,11 @@ const renderMenuItems = (props: {
           onSelect={() =>
             props.onSelect?.({
               styleSourceId: props.item.id,
-              state: selector,
+              // toggle state selection
+              state:
+                props.selectedItemSelector?.state === selector
+                  ? undefined
+                  : selector,
             })
           }
         >
