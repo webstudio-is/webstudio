@@ -48,6 +48,7 @@ import { useSortable } from "./use-sortable";
 import { matchSorter } from "match-sorter";
 import { StyleSourceBadge } from "./style-source-badge";
 import { CheckMarkIcon, DotIcon } from "@webstudio-is/icons";
+import { stateCategories } from "node_modules/@webstudio-is/react-sdk/src/components/component-meta";
 import { humanizeString } from "~/shared/string-utils";
 
 type IntermediateItem = {
@@ -263,18 +264,10 @@ const markAddedValues = <Item extends IntermediateItem>(
   return items.map((item) => ({ ...item, isAdded: valueIds.has(item.id) }));
 };
 
-const userActionStates = [
-  ":hover",
-  ":active",
-  ":focus",
-  ":focus-visible",
-  ":focus-within",
-];
-
 const renderMenuItems = (props: {
   selectedItemSelector: undefined | ItemSelector;
   item: IntermediateItem;
-  states: { selector: string; label: string }[];
+  states: ComponentState[];
   onSelect?: (itemSelector: ItemSelector) => void;
   onEdit?: (itemId: IntermediateItem["id"]) => void;
   onDuplicate?: (itemId: IntermediateItem["id"]) => void;
@@ -328,40 +321,55 @@ const renderMenuItems = (props: {
         </DropdownMenuItem>
       )}
 
-      <DropdownMenuSeparator />
-      <DropdownMenuLabel>States</DropdownMenuLabel>
-      {props.states.map(({ label, selector }) => (
-        <DropdownMenuItem
-          key={selector}
-          withIndicator={true}
-          icon={
-            props.item.id === props.selectedItemSelector?.styleSourceId &&
-            selector === props.selectedItemSelector.state ? (
-              <CheckMarkIcon
-                color={
-                  props.item.states.includes(selector)
-                    ? rawTheme.colors.foregroundPrimary
-                    : rawTheme.colors.foregroundIconMain
+      {stateCategories.map((currentCategory) => {
+        const categoryStates = props.states.filter(
+          ({ category }) => (category ?? "states") === currentCategory
+        );
+        // prevent rendering empty category
+        if (categoryStates.length === 0) {
+          return;
+        }
+        return (
+          <>
+            <DropdownMenuSeparator />
+            <DropdownMenuLabel>
+              {humanizeString(currentCategory)}
+            </DropdownMenuLabel>
+            {categoryStates.map(({ label, selector }) => (
+              <DropdownMenuItem
+                key={selector}
+                withIndicator={true}
+                icon={
+                  props.item.id === props.selectedItemSelector?.styleSourceId &&
+                  selector === props.selectedItemSelector.state ? (
+                    <CheckMarkIcon
+                      color={
+                        props.item.states.includes(selector)
+                          ? rawTheme.colors.foregroundPrimary
+                          : rawTheme.colors.foregroundIconMain
+                      }
+                    />
+                  ) : props.item.states.includes(selector) ? (
+                    <DotIcon color={rawTheme.colors.foregroundPrimary} />
+                  ) : null
                 }
-              />
-            ) : props.item.states.includes(selector) ? (
-              <DotIcon color={rawTheme.colors.foregroundPrimary} />
-            ) : null
-          }
-          onSelect={() =>
-            props.onSelect?.({
-              styleSourceId: props.item.id,
-              // toggle state selection
-              state:
-                props.selectedItemSelector?.state === selector
-                  ? undefined
-                  : selector,
-            })
-          }
-        >
-          {label}
-        </DropdownMenuItem>
-      ))}
+                onSelect={() =>
+                  props.onSelect?.({
+                    styleSourceId: props.item.id,
+                    // toggle state selection
+                    state:
+                      props.selectedItemSelector?.state === selector
+                        ? undefined
+                        : selector,
+                  })
+                }
+              >
+                {label}
+              </DropdownMenuItem>
+            ))}
+          </>
+        );
+      })}
     </>
   );
 };
@@ -422,13 +430,7 @@ export const StyleSourceInput = (
 
   let hasNewTokenItem = false;
 
-  const states = [
-    ...userActionStates.map((selector) => ({
-      selector,
-      label: humanizeString(selector),
-    })),
-    ...(props.componentStates ?? []),
-  ];
+  const states = props.componentStates ?? [];
 
   return (
     <Combobox>

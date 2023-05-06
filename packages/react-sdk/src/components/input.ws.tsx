@@ -1,9 +1,10 @@
 import { FormTextFieldIcon } from "@webstudio-is/icons";
 import { input } from "../css/normalize";
-import type {
-  PresetStyle,
-  WsComponentMeta,
-  WsComponentPropsMeta,
+import {
+  defaultStates,
+  type PresetStyle,
+  type WsComponentMeta,
+  type WsComponentPropsMeta,
 } from "./component-meta";
 import type { defaultTag } from "./input";
 import { props } from "./__generated__/input.props";
@@ -19,6 +20,7 @@ export const meta: WsComponentMeta = {
   Icon: FormTextFieldIcon,
   presetStyle,
   states: [
+    ...defaultStates,
     { selector: "::placeholder", label: "Placeholder" },
     { selector: ":valid", label: "Valid" },
     { selector: ":invalid", label: "Invalid" },

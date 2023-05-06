@@ -1,9 +1,10 @@
 import { TextAlignLeftIcon } from "@webstudio-is/icons";
 import { p } from "../css/normalize";
-import type {
-  PresetStyle,
-  WsComponentMeta,
-  WsComponentPropsMeta,
+import {
+  defaultStates,
+  type PresetStyle,
+  type WsComponentMeta,
+  type WsComponentPropsMeta,
 } from "./component-meta";
 import type { defaultTag } from "./paragraph";
 import { props } from "./__generated__/paragraph.props";
@@ -18,6 +19,7 @@ export const meta: WsComponentMeta = {
   label: "Paragraph",
   Icon: TextAlignLeftIcon,
   children: [{ type: "text", value: "Pragraph you can edit" }],
+  states: defaultStates,
   presetStyle,
 };
 
