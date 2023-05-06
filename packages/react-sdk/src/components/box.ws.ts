@@ -1,8 +1,9 @@
 import { BoxIcon } from "@webstudio-is/icons";
-import type {
-  PresetStyle,
-  WsComponentMeta,
-  WsComponentPropsMeta,
+import {
+  defaultStates,
+  type PresetStyle,
+  type WsComponentMeta,
+  type WsComponentPropsMeta,
 } from "./component-meta";
 import { props } from "./__generated__/box.props";
 import type { Box } from "./box";
@@ -40,6 +41,7 @@ export const meta: WsComponentMeta = {
   type: "container",
   label: "Box",
   Icon: BoxIcon,
+  states: defaultStates,
   presetStyle,
 };
 

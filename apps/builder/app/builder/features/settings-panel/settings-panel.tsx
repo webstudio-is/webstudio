@@ -18,8 +18,13 @@ export const SettingsPanel = () => {
   }
   const label = getComponentMeta(selectedInstance.component)?.label;
   return (
-    <ScrollArea css={{ px: theme.spacing[9] }}>
-      <Flex gap="1" direction="column" grow>
+    <ScrollArea>
+      <Flex
+        gap="1"
+        direction="column"
+        grow
+        css={{ px: theme.spacing[9], py: theme.spacing[9] }}
+      >
         <Label>Instance Name</Label>
         <InputField
           /* Key is required, otherwise when label is undefined, previous value stayed */

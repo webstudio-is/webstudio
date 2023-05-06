@@ -1,9 +1,10 @@
 import { ImageIcon } from "@webstudio-is/icons";
 import { img } from "../css/normalize";
-import type {
-  PresetStyle,
-  WsComponentMeta,
-  WsComponentPropsMeta,
+import {
+  defaultStates,
+  type PresetStyle,
+  type WsComponentMeta,
+  type WsComponentPropsMeta,
 } from "./component-meta";
 import type { defaultTag } from "./image";
 import { props } from "./__generated__/image.props";
@@ -31,6 +32,7 @@ export const meta: WsComponentMeta = {
   type: "embed",
   label: "Image",
   Icon: ImageIcon,
+  states: defaultStates,
   presetStyle,
 };
 
