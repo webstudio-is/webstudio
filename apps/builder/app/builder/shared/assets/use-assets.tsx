@@ -7,9 +7,7 @@ import { toast } from "@webstudio-is/design-system";
 import { sanitizeS3Key } from "@webstudio-is/asset-uploader";
 import { restAssetsUploadPath, restAssetsPath } from "~/shared/router-utils";
 import type { AssetContainer, PreviewAsset } from "./types";
-import { usePersistentFetcher } from "~/shared/fetcher";
 import type { ActionData } from "~/builder/shared/assets";
-import { normalizeErrors, toastUnknownFieldErrors } from "~/shared/form-utils";
 import { assetsStore, authTokenStore } from "~/shared/nano-states";
 import { atom, computed } from "nanostores";
 import { projectContainer } from "../nano-states";
@@ -108,22 +106,63 @@ const assetContainersStore = computed(
 
 export type UploadData = ActionData;
 
-export const useUploadAsset = () => {
-  const submitAsset = usePersistentFetcher();
-  const submitUpload = usePersistentFetcher();
-
-  const handleAfterSubmit = (assetId: string, data: UploadData) => {
-    // remove uploaded or failed asset
-    deleteUploadingFileData(assetId);
-
-    if (data.errors !== undefined) {
-      deleteAssets([assetId]);
-      return toastUnknownFieldErrors(
-        normalizeErrors(data.errors ?? "Could not upload an asset"),
-        []
-      );
+const uploadAsset = async ({
+  authToken,
+  projectId,
+  assetId,
+  type,
+  file,
+  onCompleted,
+  onError,
+}: {
+  authToken: undefined | string;
+  projectId: string;
+  assetId: string;
+  type: string;
+  file: File;
+  onCompleted: (data: UploadData) => void;
+  onError: (error: string) => void;
+}) => {
+  try {
+    const metaFormData = new FormData();
+    metaFormData.append("projectId", projectId);
+    metaFormData.append("assetId", assetId);
+    // sanitizeS3Key here is just because of https://github.com/remix-run/remix/issues/4443
+    // should be removed after fix
+    metaFormData.append("filename", sanitizeS3Key(file.name));
+    const metaResponse = await fetch(restAssetsPath({ authToken }), {
+      method: "POST",
+      body: metaFormData,
+    });
+    const metaData: { name: string } | { errors: string } =
+      await metaResponse.json();
+    if ("errors" in metaData) {
+      throw Error(metaData.errors);
     }
 
+    const uploadFormData = new FormData();
+    uploadFormData.append(type, file, metaData.name);
+    const uploadResponse = await fetch(
+      restAssetsUploadPath({ name: metaData.name }),
+      {
+        method: "POST",
+        body: uploadFormData,
+      }
+    );
+    const uploadData: UploadData = await uploadResponse.json();
+    if ("errors" in uploadData) {
+      throw Error(uploadData.errors);
+    }
+    onCompleted(uploadData);
+  } catch (error) {
+    if (error instanceof Error) {
+      onError(error.message);
+    }
+  }
+};
+
+export const useUploadAsset = () => {
+  const handleAfterSubmit = (assetId: string, data: UploadData) => {
     warnOnce(
       data.uploadedAssets?.length !== 1,
       "Expected exactly 1 uploaded asset"
@@ -142,61 +181,41 @@ export const useUploadAsset = () => {
     setAsset(uploadedAsset);
   };
 
-  const uploadAsset = (type: AssetType, files: File[]) => {
+  const uploadAssets = (type: AssetType, files: File[]) => {
     const projectId = projectContainer.get()?.id;
     const authToken = authTokenStore.get();
     if (projectId === undefined) {
       return;
     }
 
-    try {
-      const filesData = getFilesData(type, files);
+    const filesData = getFilesData(type, files);
 
-      addUploadingFilesData(filesData);
-      stubAssets(filesData.map((fileData) => fileData.id));
+    addUploadingFilesData(filesData);
+    stubAssets(filesData.map((fileData) => fileData.id));
 
-      for (const fileData of filesData) {
-        const { id, type, file } = fileData;
-        // should be removed after fix
-        const formData = new FormData();
-        formData.append("projectId", projectId);
-        formData.append("assetId", id);
-        // sanitizeS3Key here is just because of https://github.com/remix-run/remix/issues/4443
-        // should be removed after fix
-        formData.append("filename", sanitizeS3Key(file.name));
-        submitAsset<{ name: string }>(
-          formData,
-          {
-            method: "post",
-            action: restAssetsPath({ authToken }),
-            encType: "multipart/form-data",
-          },
-          (data) => {
-            const formData = new FormData();
-            formData.append(type, file, data.name);
-            submitUpload<UploadData>(
-              formData,
-              {
-                method: "post",
-                action: restAssetsUploadPath({ name: data.name }),
-                encType: "multipart/form-data",
-              },
-              (data) => {
-                URL.revokeObjectURL(fileData.objectURL);
-                handleAfterSubmit(fileData.id, data);
-              }
-            );
-          }
-        );
-      }
-    } catch (error) {
-      if (error instanceof Error) {
-        toast.error(error.message);
-      }
+    for (const fileData of filesData) {
+      const assetId = fileData.id;
+      uploadAsset({
+        authToken,
+        projectId,
+        assetId,
+        file: fileData.file,
+        type,
+        onCompleted: (data) => {
+          URL.revokeObjectURL(fileData.objectURL);
+          deleteUploadingFileData(assetId);
+          handleAfterSubmit(assetId, data);
+        },
+        onError: (error) => {
+          deleteAssets([assetId]);
+          deleteUploadingFileData(assetId);
+          toast.error(error);
+        },
+      });
     }
   };
 
-  return uploadAsset;
+  return uploadAssets;
 };
 
 const filterByType = (assetContainers: AssetContainer[], type: AssetType) => {
