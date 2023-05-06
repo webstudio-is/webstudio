@@ -50,38 +50,24 @@ type UseDropProps<Data> = {
   swapDropTarget: (
     // undefined is passed when no suitable element is found under the pointer
     dropTarget: (PartialDropTarget<Data> & { area: Area }) | undefined
-  ) => PartialDropTarget<Data> & {
-    // Set "final" to true if you don't want to swap any further.
-    // (Normally swapDropTarget is called repeatedly until the output is the same as the input)
-    final?: boolean;
-  };
+  ) =>
+    | undefined
+    | (PartialDropTarget<Data> & {
+        // Set "final" to true if you don't want to swap any further.
+        // (Normally swapDropTarget is called repeatedly until the output is the same as the input)
+        final?: boolean;
+      });
 
-  onDropTargetChange: (dropTarget: DropTarget<Data>) => void;
+  onDropTargetChange: (dropTarget: undefined | DropTarget<Data>) => void;
 
   // Allows you to customize children
   // that will be used to determine placement and indexWithinChildren
   getValidChildren?: (parent: Element) => Element[] | HTMLCollection;
 
-  // If set to true, the target selection will work as if
-  // the pointer is always inside the root element's bounds.
-  //
-  // For example:
-  //  ___________
-  // |           |
-  // |          *|   * - real pointer
-  // |          ^------- emulated pointer
-  // |           |
-  // |___________|
-  emulatePointerAlwaysInRootBounds?: boolean;
-
   // If not provided, will be guessed automatically based
   // on the actual orientation of the children
   childrenOrientation?: ChildrenOrientation;
 };
-
-// When emulatePointerAlwaysInRootBounds=true,
-// the pointer always will be at least 2px away from any edge of the root.
-const PADDING_WHEN_EMULATING_POINTER_IN_BOUNDS = 2;
 
 type UseDropHandlers = {
   handleMove: (pointerCoordinates: Point) => void;
@@ -143,7 +129,15 @@ export const useDrop = <Data>(props: UseDropProps<Data>): UseDropHandlers => {
       return result;
     };
 
-    const setDropTarget = (partialDropTarget: PartialDropTarget<Data>) => {
+    const setDropTarget = (
+      partialDropTarget: undefined | PartialDropTarget<Data>
+    ) => {
+      if (partialDropTarget === undefined) {
+        state.current.dropTarget = undefined;
+        latestProps.current.onDropTargetChange(undefined);
+        return;
+      }
+
       const { pointerCoordinates } = state.current;
       if (pointerCoordinates === undefined) {
         return;
@@ -266,8 +260,12 @@ export const useDrop = <Data>(props: UseDropProps<Data>): UseDropHandlers => {
       }
 
       let continueSwapping = true;
-      while (continueSwapping || candidate == null) {
+      while (continueSwapping || candidate === undefined) {
         const swappedTo = swapDropTarget(candidate);
+        if (swappedTo === undefined) {
+          candidate = undefined;
+          break;
+        }
         continueSwapping =
           swappedTo.element !== candidate?.element && swappedTo.final !== true;
         candidate = withArea(swappedTo);
@@ -278,25 +276,7 @@ export const useDrop = <Data>(props: UseDropProps<Data>): UseDropHandlers => {
 
     return {
       handleMove(pointerCoordinates) {
-        if (latestProps.current.emulatePointerAlwaysInRootBounds === true) {
-          const rect = (rootRef.current as Element).getBoundingClientRect();
-          const { x, y } = pointerCoordinates;
-          state.current.pointerCoordinates = {
-            x: Math.max(
-              rect.left + PADDING_WHEN_EMULATING_POINTER_IN_BOUNDS,
-              Math.min(rect.right - PADDING_WHEN_EMULATING_POINTER_IN_BOUNDS, x)
-            ),
-            y: Math.max(
-              rect.top + PADDING_WHEN_EMULATING_POINTER_IN_BOUNDS,
-              Math.min(
-                rect.bottom - PADDING_WHEN_EMULATING_POINTER_IN_BOUNDS,
-                y
-              )
-            ),
-          };
-        } else {
-          state.current.pointerCoordinates = pointerCoordinates;
-        }
+        state.current.pointerCoordinates = pointerCoordinates;
         detectTarget();
       },
 

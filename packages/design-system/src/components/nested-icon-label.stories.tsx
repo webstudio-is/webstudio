@@ -1,6 +1,6 @@
 import { NestedIconLabel } from "./nested-icon-label";
 import { labelColors } from "./label";
-import { RowGapIcon } from "@webstudio-is/icons";
+import { GapVerticalIcon } from "@webstudio-is/icons";
 import { StorySection, StoryGrid } from "./storybook";
 
 export default {
@@ -14,7 +14,7 @@ export const Demo = () => {
         <StoryGrid horizontal>
           {labelColors.map((color) => (
             <NestedIconLabel key={color} color={color}>
-              <RowGapIcon />
+              <GapVerticalIcon />
             </NestedIconLabel>
           ))}
         </StoryGrid>
@@ -23,7 +23,7 @@ export const Demo = () => {
         <StoryGrid horizontal>
           {labelColors.map((color) => (
             <NestedIconLabel key={color} color={color} hover>
-              <RowGapIcon />
+              <GapVerticalIcon />
             </NestedIconLabel>
           ))}
         </StoryGrid>
@@ -32,7 +32,7 @@ export const Demo = () => {
         <StoryGrid horizontal>
           {labelColors.map((color) => (
             <NestedIconLabel key={color} color={color} disabled>
-              <RowGapIcon />
+              <GapVerticalIcon />
             </NestedIconLabel>
           ))}
         </StoryGrid>

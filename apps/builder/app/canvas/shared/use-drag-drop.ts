@@ -9,8 +9,8 @@ import {
   useDrop,
   computeIndicatorPlacement,
 } from "@webstudio-is/design-system";
-import { getComponentMeta } from "@webstudio-is/react-sdk";
-import { instancesStore, selectedPageStore } from "~/shared/nano-states";
+import { canAcceptComponent, getComponentMeta } from "@webstudio-is/react-sdk";
+import { instancesStore } from "~/shared/nano-states";
 import { textEditingInstanceSelectorStore } from "~/shared/nano-states";
 import { publish, useSubscribe } from "~/shared/pubsub";
 import {
@@ -33,8 +33,8 @@ declare module "~/shared/pubsub" {
     dragEnd: DragEndPayload;
     dragMove: DragMovePayload;
     dragStart: DragStartPayload;
-    dropTargetChange: ItemDropTarget;
-    placementIndicatorChange: Placement;
+    dropTargetChange: undefined | ItemDropTarget;
+    placementIndicatorChange: undefined | Placement;
   }
 }
 
@@ -71,14 +71,23 @@ const findClosestRichTextInstanceSelector = (
 };
 
 const findClosestDroppableInstanceSelector = (
-  instanceSelector: InstanceSelector
+  instanceSelector: InstanceSelector,
+  dragPayload: DragStartPayload
 ) => {
   const instances = instancesStore.get();
+  let dragComponent: undefined | string;
+  if (dragPayload.type === "insert") {
+    dragComponent = dragPayload.dragComponent;
+  }
+  if (dragPayload.type === "reparent") {
+    dragComponent = instances.get(
+      dragPayload.dragInstanceSelector[0]
+    )?.component;
+  }
   for (const instanceId of instanceSelector) {
     const instance = instances.get(instanceId);
-    if (instance !== undefined) {
-      const meta = getComponentMeta(instance.component);
-      if (meta?.type === "container") {
+    if (instance !== undefined && dragComponent !== undefined) {
+      if (canAcceptComponent(instance.component, dragComponent)) {
         return getAncestorInstanceSelector(instanceSelector, instanceId);
       }
     }
@@ -102,20 +111,6 @@ const sharedDropOptions = {
   },
 };
 
-const getDefaultDropTarget = () => {
-  const selectedPage = selectedPageStore.get();
-  if (selectedPage === undefined) {
-    throw new Error("Could not find selected page");
-  }
-  const rootInstanceSelector = [selectedPage.rootInstanceId];
-  const element = getElementByInstanceSelector(rootInstanceSelector);
-  // Should never happen
-  if (element === undefined) {
-    throw new Error("Could not find root instance element");
-  }
-  return { element, data: rootInstanceSelector };
-};
-
 export const useDragAndDrop = () => {
   const state = useRef({ ...initialState });
 
@@ -137,13 +132,10 @@ export const useDragAndDrop = () => {
       const { dragPayload } = state.current;
 
       if (dropTarget === undefined || dragPayload === undefined) {
-        return getDefaultDropTarget();
+        return;
       }
 
       const dropInstanceSelector = dropTarget.data;
-      if (dropInstanceSelector.length === 1) {
-        return dropTarget;
-      }
 
       const newDropInstanceSelector = dropInstanceSelector.slice();
       if (dropTarget.area !== "center") {
@@ -161,10 +153,11 @@ export const useDragAndDrop = () => {
       }
 
       const droppableInstanceSelector = findClosestDroppableInstanceSelector(
-        newDropInstanceSelector
+        newDropInstanceSelector,
+        dragPayload
       );
       if (droppableInstanceSelector === undefined) {
-        return getDefaultDropTarget();
+        return;
       }
 
       if (
@@ -178,7 +171,7 @@ export const useDragAndDrop = () => {
 
       const element = getElementByInstanceSelector(droppableInstanceSelector);
       if (element === undefined) {
-        return getDefaultDropTarget();
+        return;
       }
 
       return { data: droppableInstanceSelector, element };
@@ -187,11 +180,14 @@ export const useDragAndDrop = () => {
     onDropTargetChange(dropTarget) {
       publish({
         type: "dropTargetChange",
-        payload: {
-          placement: dropTarget.placement,
-          indexWithinChildren: dropTarget.indexWithinChildren,
-          itemSelector: dropTarget.data,
-        },
+        payload:
+          dropTarget === undefined
+            ? undefined
+            : {
+                placement: dropTarget.placement,
+                indexWithinChildren: dropTarget.indexWithinChildren,
+                itemSelector: dropTarget.data,
+              },
       });
     },
   });
@@ -282,6 +278,13 @@ export const useDragAndDrop = () => {
 
   useSubscribe("dropTargetChange", (dropTarget) => {
     state.current.dropTarget = dropTarget;
+    if (dropTarget === undefined) {
+      publish({
+        type: "placementIndicatorChange",
+        payload: undefined,
+      });
+      return;
+    }
     const element = getElementByInstanceSelector(dropTarget.itemSelector);
     if (element === undefined) {
       return;

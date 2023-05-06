@@ -6,6 +6,8 @@ import type {
   StyleSource,
   StyleSourceSelections,
 } from "@webstudio-is/project-build";
+import type { PresetStyle } from "../components/component-meta";
+import { componentAttribute } from "../tree";
 
 type StyleRule = {
   instanceId: string;
@@ -74,4 +76,26 @@ export const getStyleRules = (
   }
 
   return styleRules;
+};
+
+export const getPresetStyleRules = (
+  component: string,
+  presetStyle: PresetStyle
+) => {
+  // group style declarations by selector to render as separate rules
+  const presetStyleRules = new Map<string, Style>();
+  for (const [tag, styles] of Object.entries(presetStyle)) {
+    for (const styleDecl of styles) {
+      const selector = `${tag}:where([${componentAttribute}=${component}])${
+        styleDecl.state ?? ""
+      }`;
+      let rule = presetStyleRules.get(selector);
+      if (rule === undefined) {
+        rule = {};
+        presetStyleRules.set(selector, rule);
+      }
+      rule[styleDecl.property] = styleDecl.value;
+    }
+  }
+  return presetStyleRules;
 };

@@ -1,6 +1,11 @@
 import { useMemo } from "react";
 import { useStore } from "@nanostores/react";
-import type { Style, StyleProperty, StyleValue } from "@webstudio-is/css-data";
+import {
+  html,
+  type Style,
+  type StyleProperty,
+  type StyleValue,
+} from "@webstudio-is/css-data";
 import { properties } from "@webstudio-is/css-data";
 import {
   StyleSourceSelections,
@@ -187,10 +192,9 @@ export const getCascadedInfo = (
   return cascadedStyle;
 };
 
-export const getPresetStyle = (
+export const getInstanceComponent = (
   instances: Instances,
-  instanceId: undefined | Instance["id"],
-  tagName: HtmlTags
+  instanceId: undefined | Instance["id"]
 ) => {
   if (instanceId === undefined) {
     return;
@@ -199,10 +203,22 @@ export const getPresetStyle = (
   if (instance === undefined) {
     return;
   }
-  if (tagName === undefined) {
+  return instance.component;
+};
+
+export const getPresetStyleRule = (component: string, tagName: HtmlTags) => {
+  const meta = getComponentMeta(component);
+  const presetStyles = meta?.presetStyle?.[tagName];
+  if (presetStyles === undefined) {
     return;
   }
-  return getComponentMeta(instance.component)?.presetStyle?.[tagName];
+  const presetStyle: Style = {};
+  for (const styleDecl of presetStyles) {
+    if (styleDecl.state === undefined) {
+      presetStyle[styleDecl.property] = styleDecl.value;
+    }
+  }
+  return presetStyle;
 };
 
 /**
@@ -229,26 +245,29 @@ export const getInheritedInfo = (
       selectedBreakpointId,
     ];
 
-    const ancestorInstanceStyles = stylesByInstanceId.get(ancestorInstance.id);
-    if (ancestorInstanceStyles === undefined) {
-      continue;
-    }
-
     const tagName = selectedInstanceIntanceToTag.get(instanceId);
-
+    const component = getInstanceComponent(instances, instanceId);
     const presetStyle =
-      tagName !== undefined
-        ? getPresetStyle(instances, ancestorInstance.id, tagName)
+      tagName !== undefined && component !== undefined
+        ? getComponentMeta(component)?.presetStyle?.[tagName]
         : undefined;
     if (presetStyle) {
-      for (const [styleProperty, styleValue] of Object.entries(presetStyle)) {
-        if (inheritableProperties.has(styleProperty)) {
-          inheritedStyle[styleProperty as StyleProperty] = {
+      for (const styleDecl of presetStyle) {
+        if (
+          styleDecl.state === undefined &&
+          inheritableProperties.has(styleDecl.property)
+        ) {
+          inheritedStyle[styleDecl.property] = {
             instanceId: ancestorInstance.id,
-            value: styleValue,
+            value: styleDecl.value,
           };
         }
       }
+    }
+
+    const ancestorInstanceStyles = stylesByInstanceId.get(ancestorInstance.id);
+    if (ancestorInstanceStyles === undefined) {
+      continue;
     }
 
     // extract styles from all active breakpoints
@@ -256,6 +275,7 @@ export const getInheritedInfo = (
       for (const styleDecl of ancestorInstanceStyles) {
         if (
           styleDecl.breakpointId === breakpointId &&
+          styleDecl.state === undefined &&
           inheritableProperties.has(styleDecl.property)
         ) {
           inheritedStyle[styleDecl.property] = {
@@ -405,17 +425,41 @@ export const useStyleInfo = () => {
       return;
     }
     const tagName = selectedInstanceIntanceToTag?.get(selectedInstanceId);
-
-    return tagName !== undefined
-      ? getPresetStyle(instances, selectedInstanceSelector?.[0], tagName)
-      : undefined;
+    const component = getInstanceComponent(instances, selectedInstanceId);
+    if (tagName === undefined || component === undefined) {
+      return;
+    }
+    return getPresetStyleRule(component, tagName);
   }, [instances, selectedInstanceSelector, selectedInstanceIntanceToTag]);
+
+  const htmlStyle = useMemo(() => {
+    const instanceId = selectedInstanceSelector?.[0];
+    if (instanceId === undefined) {
+      return;
+    }
+    const tagName = selectedInstanceIntanceToTag?.get(instanceId);
+    if (tagName === undefined) {
+      return;
+    }
+    const styles = html[tagName];
+    if (styles === undefined) {
+      return;
+    }
+    const style: Style = {};
+    for (const styleDecl of styles) {
+      style[styleDecl.property] = styleDecl.value;
+    }
+    return style;
+  }, [selectedInstanceSelector, selectedInstanceIntanceToTag]);
 
   const styleInfoData = useMemo(() => {
     const styleInfoData: StyleInfo = {};
     for (const property of styleProperties) {
       // temporary solution until we start computing all styles from data
       const computed = browserStyle?.[property];
+      const defaultValue =
+        htmlStyle?.[property] ??
+        properties[property as keyof typeof properties].initial;
       const preset = presetStyle?.[property];
       const inherited = inheritedInfo[property];
       const cascaded = cascadedInfo[property];
@@ -427,7 +471,7 @@ export const useStyleInfo = () => {
         cascaded?.value ??
         inherited?.value ??
         preset ??
-        computed;
+        defaultValue;
       if (value) {
         if (property === "color") {
           styleInfoData[property] = {
@@ -453,6 +497,7 @@ export const useStyleInfo = () => {
     }
     return styleInfoData;
   }, [
+    htmlStyle,
     browserStyle,
     presetStyle,
     inheritedInfo,
@@ -481,15 +526,16 @@ export const useInstanceStyleData = (
   const selectedBreakpointId = selectedBreakpoint?.id;
 
   const presetStyle = useMemo(() => {
-    const selectedInstanceId = instanceSelector?.[0];
-    if (selectedInstanceId === undefined) {
+    const instanceId = instanceSelector?.[0];
+    if (instanceId === undefined) {
       return;
     }
-    const tagName = selectedInstanceIntanceToTag?.get(selectedInstanceId);
-
-    return tagName !== undefined
-      ? getPresetStyle(instances, instanceSelector?.[0], tagName)
-      : undefined;
+    const tagName = selectedInstanceIntanceToTag?.get(instanceId);
+    const component = getInstanceComponent(instances, instanceId);
+    if (tagName === undefined || component === undefined) {
+      return;
+    }
+    return getPresetStyleRule(component, tagName);
   }, [instances, instanceSelector, selectedInstanceIntanceToTag]);
 
   const cascadedBreakpointIds = useMemo(

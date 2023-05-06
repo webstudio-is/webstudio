@@ -1,20 +1,19 @@
-import type { Style } from "@webstudio-is/css-data";
 import { FormIcon } from "@webstudio-is/icons";
 import { form } from "../css/normalize";
-import type { WsComponentMeta, WsComponentPropsMeta } from "./component-meta";
+import type {
+  PresetStyle,
+  WsComponentMeta,
+  WsComponentPropsMeta,
+} from "./component-meta";
 import type { defaultTag } from "./form";
 import { props } from "./__generated__/form.props";
 
 const presetStyle = {
-  form: {
+  form: [
     ...form,
-    minHeight: {
-      type: "unit",
-      unit: "px",
-      value: 20,
-    },
-  },
-} as const satisfies Record<typeof defaultTag, Style>;
+    { property: "minHeight", value: { type: "unit", unit: "px", value: 20 } },
+  ],
+} satisfies PresetStyle<typeof defaultTag>;
 
 export const meta: WsComponentMeta = {
   category: "forms",
@@ -23,7 +22,28 @@ export const meta: WsComponentMeta = {
   Icon: FormIcon,
   presetStyle,
   children: [
-    { type: "instance", component: "Input", children: [] },
+    {
+      type: "instance",
+      component: "Label",
+      children: [{ type: "text", value: "Name" }],
+    },
+    {
+      type: "instance",
+      component: "Input",
+      props: [{ type: "string", name: "name", value: "name" }],
+      children: [],
+    },
+    {
+      type: "instance",
+      component: "Label",
+      children: [{ type: "text", value: "Email" }],
+    },
+    {
+      type: "instance",
+      component: "Input",
+      props: [{ type: "string", name: "email", value: "email" }],
+      children: [],
+    },
     {
       type: "instance",
       component: "Button",
@@ -34,4 +54,5 @@ export const meta: WsComponentMeta = {
 
 export const propsMeta: WsComponentPropsMeta = {
   props,
+  initialProps: [],
 };

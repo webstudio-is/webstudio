@@ -5,13 +5,13 @@ import { useStore } from "@nanostores/react";
 import type { Assets } from "@webstudio-is/asset-uploader";
 import {
   collapsedAttribute,
-  componentAttribute,
   getComponentMeta,
   getComponentNames,
   idAttribute,
   addGlobalRules,
   createImageValueTransformer,
   getParams,
+  getPresetStyleRules,
 } from "@webstudio-is/react-sdk";
 import type { Instance, StyleDecl } from "@webstudio-is/project-build";
 import {
@@ -34,7 +34,7 @@ import {
 } from "@webstudio-is/css-engine";
 import { useSubscribe } from "~/shared/pubsub";
 
-const cssEngine = createCssEngine({ name: "user-styles" });
+const userCssEngine = createCssEngine({ name: "user-styles" });
 const helpersCssEngine = createCssEngine({ name: "helpers" });
 const fontsAndDefaultsCssEngine = createCssEngine({
   name: "fonts-and-defaults",
@@ -118,8 +118,9 @@ export const GlobalStyles = () => {
 
   useIsomorphicLayoutEffect(() => {
     for (const breakpoint of breakpoints.values()) {
-      cssEngine.addMediaRule(breakpoint.id, breakpoint);
+      userCssEngine.addMediaRule(breakpoint.id, breakpoint);
     }
+    userCssEngine.render();
   }, [breakpoints]);
 
   useIsomorphicLayoutEffect(() => {
@@ -137,15 +138,12 @@ export const GlobalStyles = () => {
     for (const component of getComponentNames()) {
       const meta = getComponentMeta(component);
       const presetStyle = meta?.presetStyle;
-      if (presetStyle !== undefined) {
-        for (const [tag, style] of Object.entries(presetStyle)) {
-          presetStylesEngine.addStyleRule(
-            `${tag}:where([${componentAttribute}=${component}])`,
-            {
-              style,
-            }
-          );
-        }
+      if (presetStyle === undefined) {
+        continue;
+      }
+      const rules = getPresetStyleRules(component, presetStyle);
+      for (const [selector, style] of rules) {
+        presetStylesEngine.addStyleRule(selector, { style });
       }
     }
     presetStylesEngine.render();
@@ -191,10 +189,13 @@ const getOrCreateRule = ({
   const key = `${instanceId}:${breakpointId}:${state}`;
   let rule = wrappedRulesMap.get(key);
   if (rule === undefined) {
-    rule = cssEngine.addStyleRule(`[${idAttribute}="${instanceId}"]${state}`, {
-      breakpoint: breakpointId,
-      style: {},
-    });
+    rule = userCssEngine.addStyleRule(
+      `[${idAttribute}="${instanceId}"]${state}`,
+      {
+        breakpoint: breakpointId,
+        style: {},
+      }
+    );
     wrappedRulesMap.set(key, rule);
   }
   const params = getParams();
@@ -294,7 +295,7 @@ export const useCssRules = ({
       }
     }
 
-    cssEngine.render();
+    userCssEngine.render();
   }, [instanceId, selectedState, instanceStyles, breakpoints]);
 };
 
@@ -354,6 +355,6 @@ const usePreviewStyle = () => {
       }
     }
 
-    cssEngine.render();
+    userCssEngine.render();
   });
 };

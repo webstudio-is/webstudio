@@ -68,12 +68,14 @@ const getDefaultMetaForType = (type: Prop["type"]): PropMeta => {
       return { type: "boolean", control: "boolean", required: false };
     case "asset":
       return { type: "string", control: "file", required: false };
+    case "page":
+      return { type: "string", control: "url", required: false };
     case "string[]":
       throw new Error(
         "A prop with type string[] must have a meta, we can't provide a default one because we need a list of options"
       );
     default:
-      throw new Error(`Usupported data type: ${type}`);
+      throw new Error(`Usupported data type: ${type satisfies never}`);
   }
 };
 
@@ -197,13 +199,6 @@ export const usePropsLogic = ({
 
     return { prop: saved, propName: name, meta: known };
   });
-
-  // can happen only if there is a bug
-  if (unprocessedSaved.size > 0) {
-    throw new Error(
-      `Expected all saved props to be processed, but there are ${unprocessedSaved.size} left`
-    );
-  }
 
   const handleAdd = (propName: string) => {
     const propMeta = unprocessedKnown.get(propName);

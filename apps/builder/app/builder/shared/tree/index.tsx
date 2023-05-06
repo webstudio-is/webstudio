@@ -1,4 +1,4 @@
-import { useCallback } from "react";
+import { useCallback, useMemo } from "react";
 import { useStore } from "@nanostores/react";
 import {
   Tree,
@@ -9,10 +9,11 @@ import {
 } from "@webstudio-is/design-system";
 import type { Instance } from "@webstudio-is/project-build";
 import {
+  canAcceptComponent,
   getComponentMeta,
   type WsComponentMeta,
 } from "@webstudio-is/react-sdk";
-import { instancesStore } from "~/shared/nano-states";
+import { instancesStore, useDragAndDropState } from "~/shared/nano-states";
 
 const instanceRelatedProps = {
   renderItem(props: TreeItemRenderProps<Instance>) {
@@ -40,6 +41,22 @@ export const InstanceTree = (
   >
 ) => {
   const instances = useStore(instancesStore);
+  const [state] = useDragAndDropState();
+
+  const dragPayload = state.dragPayload;
+
+  const dragComponent = useMemo(() => {
+    let dragComponent: undefined | string;
+    if (dragPayload?.type === "insert") {
+      dragComponent = dragPayload.dragComponent;
+    }
+    if (dragPayload?.type === "reparent") {
+      dragComponent = instances.get(
+        dragPayload.dragInstanceSelector[0]
+      )?.component;
+    }
+    return dragComponent;
+  }, [dragPayload, instances]);
 
   const canLeaveParent = useCallback(
     (instanceId: Instance["id"]) => {
@@ -56,13 +73,12 @@ export const InstanceTree = (
   const canAcceptChild = useCallback(
     (instanceId: Instance["id"]) => {
       const instance = instances.get(instanceId);
-      if (instance === undefined) {
+      if (instance === undefined || dragComponent === undefined) {
         return false;
       }
-      const meta = getComponentMeta(instance.component);
-      return meta?.type === "container";
+      return canAcceptComponent(instance.component, dragComponent);
     },
-    [instances]
+    [instances, dragComponent]
   );
 
   const getItemChildren = useCallback(

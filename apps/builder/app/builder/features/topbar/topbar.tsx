@@ -17,7 +17,7 @@ import { SyncStatus } from "./sync-status";
 import { Menu } from "./menu";
 import {
   BreakpointsSelectorContainer,
-  BreakpointsSettings,
+  BreakpointsPopover,
 } from "../breakpoints";
 import { ViewMode } from "./view-mode";
 
@@ -53,7 +53,7 @@ export const Topbar = ({ gridArea, project, publish }: TopbarProps) => {
         </Text>
       </Flex>
       <Flex css={{ minWidth: theme.spacing[23] }}>
-        <BreakpointsSettings />
+        <BreakpointsPopover />
       </Flex>
       <Flex grow align="center" justify="center">
         <BreakpointsSelectorContainer />

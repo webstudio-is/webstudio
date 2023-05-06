@@ -37,6 +37,7 @@ export const ConfirmationDialog = ({
           Delete
         </Button>
         <Button
+          color="neutral"
           autoFocus
           onClick={() => {
             onAbort();

@@ -17,6 +17,7 @@ import {
   selectedInstanceBrowserStyleStore,
   selectedInstanceUnitSizesStore,
   selectedInstanceIntanceToTagStore,
+  selectedInstanceIsRenderedStore,
   hoveredInstanceSelectorStore,
   isPreviewModeStore,
   synchronizedCanvasStores,
@@ -77,6 +78,10 @@ export const registerContainers = () => {
   clientStores.set(
     "selectedInstanceUnitSizesStore",
     selectedInstanceUnitSizesStore
+  );
+  clientStores.set(
+    "selectedInstanceIsRenderedStore",
+    selectedInstanceIsRenderedStore
   );
   clientStores.set("hoveredInstanceSelector", hoveredInstanceSelectorStore);
   clientStores.set("isPreviewMode", isPreviewModeStore);

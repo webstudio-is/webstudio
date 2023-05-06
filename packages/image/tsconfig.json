@@ -4,7 +4,6 @@
   "compilerOptions": {
     "module": "ES2020",
     "target": "ES2020",
-    "baseUrl": ".",
     "rootDir": "./src",
     "outDir": "./lib"
   }

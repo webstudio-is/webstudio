@@ -1,3 +1,4 @@
+import type { CSSProperties } from "react";
 import {
   Box,
   Flex,
@@ -10,6 +11,31 @@ import type { CreateBatchUpdate } from "../../../shared/use-style-data";
 import { getStyleSource, type StyleInfo } from "../../../shared/style-info";
 import { theme } from "@webstudio-is/design-system";
 
+// Sometimes we need to hide a dot that ends up at an end
+// of a line and visually extends it
+const shouldHideDot = ({
+  x,
+  y,
+  justifyContent,
+  alignItems,
+}: {
+  x: number;
+  y: number;
+  justifyContent: string;
+  alignItems: string;
+}) => {
+  if (justifyContent === "space-between") {
+    if (alignItems === "start" || alignItems === "baseline") {
+      return x === 2 && y === 0;
+    }
+    if (alignItems === "end") {
+      return x === 2 && y === 2;
+    }
+  }
+
+  return false;
+};
+
 export const FlexGrid = ({
   currentStyle,
   batchUpdate,
@@ -20,8 +46,6 @@ export const FlexGrid = ({
   const styleSource = getStyleSource(
     currentStyle.flexDirection,
     currentStyle.justifyContent,
-    currentStyle.justifyItems,
-    currentStyle.alignContent,
     currentStyle.alignItems
   );
   const flexDirection = toValue(currentStyle.flexDirection?.value);
@@ -42,25 +66,36 @@ export const FlexGrid = ({
     color = theme.colors.borderRemoteFlexUi;
   }
 
+  const addjustLinesPadding = (padding: number | undefined) => {
+    if (padding === undefined) {
+      return {};
+    }
+    return isFlexDirectionColumn
+      ? { paddingTop: padding, paddingBottom: padding }
+      : { paddingLeft: padding, paddingRight: padding };
+  };
+
   return (
     <Grid
       tabIndex={0}
       css={{
-        width: "100%",
-        aspectRatio: "1 / 1",
+        width: 72,
+        height: 72,
         padding: theme.spacing[4],
-        borderRadius: "4px",
+        borderRadius: theme.borderRadius[4],
         background: theme.colors.backgroundControls,
-        outlineStyle: "solid",
-        outlineWidth: styleSource === "default" ? 1 : 2,
-        outlineColor: color,
         alignItems: "center",
-        gap: theme.spacing[1],
+        gap: 0,
         gridTemplateColumns: "repeat(3, 1fr)",
         gridTemplateRows: "repeat(3, 1fr)",
         color,
+        outlineStyle: "solid",
+        outlineWidth: styleSource === "default" ? 1 : 2,
+        outlineOffset: styleSource === "default" ? -1 : -2,
+        outlineColor: color,
         "&:focus-within": {
           outlineWidth: 2,
+          outlineOffset: -2,
           outlineColor: theme.colors.borderLocalFlexUi,
         },
       }}
@@ -110,7 +145,8 @@ export const FlexGrid = ({
                 batchUpdate.publish();
               }}
             >
-              <DotIcon />
+              {shouldHideDot({ x, y, justifyContent, alignItems }) ===
+                false && <DotIcon />}
             </DeprecatedIconButton>
           </Flex>
         );
@@ -120,29 +156,35 @@ export const FlexGrid = ({
         css={{
           width: "100%",
           height: "100%",
-          // fill whole grid
-          gridColumn: "-1 / 1",
-          gridRow: "-1 / 1",
-          p: 1,
+          gridArea: "-1 / -1 / 1 / 1", // fill whole grid
+          p: 2,
           gap: 2,
           pointerEvents: "none",
-          // controlled styles
-          flexDirection,
+        }}
+        style={{
+          flexDirection: flexDirection as CSSProperties["flexDirection"],
           justifyContent,
           alignItems,
+          ...addjustLinesPadding(
+            justifyContent === "space-between"
+              ? 8
+              : justifyContent === "space-around"
+              ? 14.5
+              : undefined
+          ),
         }}
       >
-        {[10, 16, 8].map((size) => (
+        {[11, 16, 9].map((size) => (
           <Box
             key={size}
             css={{
-              borderRadius: `calc(${theme.borderRadius[4]} / 2)`,
+              borderRadius: theme.borderRadius[1],
               backgroundColor: "currentColor",
               ...(isFlexDirectionColumn
                 ? { minWidth: size, minHeight: 4 }
                 : { minWidth: 4, minHeight: size }),
             }}
-          ></Box>
+          />
         ))}
       </Flex>
     </Grid>

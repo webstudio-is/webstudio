@@ -257,8 +257,19 @@ export const properties = {
     unitGroups: ["length", "percentage"],
     inherited: false,
     initial: {
-      type: "keyword",
-      value: "0% 0%",
+      type: "tuple",
+      value: [
+        {
+          type: "unit",
+          unit: "%",
+          value: 0,
+        },
+        {
+          type: "unit",
+          unit: "%",
+          value: 0,
+        },
+      ],
     },
     popularity: 0.76724967,
     appliesTo: "allElements",
@@ -330,7 +341,7 @@ export const properties = {
     inherited: false,
     initial: {
       type: "keyword",
-      value: "currentcolor",
+      value: "currentColor",
     },
     popularity: 0.00012849,
     appliesTo: "allElements",
@@ -360,7 +371,7 @@ export const properties = {
     inherited: false,
     initial: {
       type: "keyword",
-      value: "currentcolor",
+      value: "currentColor",
     },
     popularity: 0.00172099,
     appliesTo: "allElements",
@@ -390,7 +401,7 @@ export const properties = {
     inherited: false,
     initial: {
       type: "keyword",
-      value: "currentcolor",
+      value: "currentColor",
     },
     popularity: 0.00170188,
     appliesTo: "allElements",
@@ -420,7 +431,7 @@ export const properties = {
     inherited: false,
     initial: {
       type: "keyword",
-      value: "currentcolor",
+      value: "currentColor",
     },
     popularity: 0.42283564,
     appliesTo: "allElements",
@@ -557,7 +568,7 @@ export const properties = {
     inherited: false,
     initial: {
       type: "keyword",
-      value: "currentcolor",
+      value: "currentColor",
     },
     popularity: 0.00007844,
     appliesTo: "allElements",
@@ -587,7 +598,7 @@ export const properties = {
     inherited: false,
     initial: {
       type: "keyword",
-      value: "currentcolor",
+      value: "currentColor",
     },
     popularity: 0.00196849,
     appliesTo: "allElements",
@@ -617,7 +628,7 @@ export const properties = {
     inherited: false,
     initial: {
       type: "keyword",
-      value: "currentcolor",
+      value: "currentColor",
     },
     popularity: 0.00196928,
     appliesTo: "allElements",
@@ -647,7 +658,7 @@ export const properties = {
     inherited: false,
     initial: {
       type: "keyword",
-      value: "currentcolor",
+      value: "currentColor",
     },
     popularity: 0.30754028,
     appliesTo: "allElements",
@@ -677,7 +688,7 @@ export const properties = {
     inherited: false,
     initial: {
       type: "keyword",
-      value: "currentcolor",
+      value: "currentColor",
     },
     popularity: 0.29336595,
     appliesTo: "allElements",
@@ -740,7 +751,7 @@ export const properties = {
     inherited: false,
     initial: {
       type: "keyword",
-      value: "currentcolor",
+      value: "currentColor",
     },
     popularity: 0.43342948,
     appliesTo: "allElements",
@@ -983,7 +994,7 @@ export const properties = {
     inherited: false,
     initial: {
       type: "keyword",
-      value: "currentcolor",
+      value: "currentColor",
     },
     popularity: 0.01356616,
     appliesTo: "multicolElements",
@@ -1344,8 +1355,17 @@ export const properties = {
     unitGroups: [],
     inherited: true,
     initial: {
-      type: "keyword",
-      value: "weight style",
+      type: "tuple",
+      value: [
+        {
+          type: "keyword",
+          value: "weight",
+        },
+        {
+          type: "keyword",
+          value: "style",
+        },
+      ],
     },
     popularity: 0.00686166,
     appliesTo: "allElements",
@@ -1425,7 +1445,7 @@ export const properties = {
     inherited: true,
     initial: {
       type: "keyword",
-      value: "normal",
+      value: "400",
     },
     popularity: 0.88598106,
     appliesTo: "allElements",
@@ -2239,8 +2259,19 @@ export const properties = {
     unitGroups: ["length", "percentage"],
     inherited: true,
     initial: {
-      type: "keyword",
-      value: "50% 50%",
+      type: "tuple",
+      value: [
+        {
+          type: "unit",
+          unit: "%",
+          value: 50,
+        },
+        {
+          type: "unit",
+          unit: "%",
+          value: 50,
+        },
+      ],
     },
     popularity: 0.08374319,
     appliesTo: "replacedElements",
@@ -2643,8 +2674,19 @@ export const properties = {
     unitGroups: ["length", "percentage"],
     inherited: false,
     initial: {
-      type: "keyword",
-      value: "50% 50%",
+      type: "tuple",
+      value: [
+        {
+          type: "unit",
+          unit: "%",
+          value: 50,
+        },
+        {
+          type: "unit",
+          unit: "%",
+          value: 50,
+        },
+      ],
     },
     popularity: 0.03597136,
     appliesTo: "transformableElements",
@@ -3106,7 +3148,7 @@ export const properties = {
     inherited: false,
     initial: {
       type: "keyword",
-      value: "currentcolor",
+      value: "currentColor",
     },
     popularity: 0.05079903,
     appliesTo: "allElements",
@@ -3166,7 +3208,7 @@ export const properties = {
     inherited: false,
     initial: {
       type: "keyword",
-      value: "currentcolor",
+      value: "currentColor",
     },
     popularity: 0,
     appliesTo: "allElements",
@@ -3175,8 +3217,17 @@ export const properties = {
     unitGroups: [],
     inherited: false,
     initial: {
-      type: "keyword",
-      value: "over right",
+      type: "tuple",
+      value: [
+        {
+          type: "keyword",
+          value: "over",
+        },
+        {
+          type: "keyword",
+          value: "right",
+        },
+      ],
     },
     popularity: 0,
     appliesTo: "allElements",
@@ -3337,8 +3388,24 @@ export const properties = {
     unitGroups: ["length", "percentage"],
     inherited: false,
     initial: {
-      type: "keyword",
-      value: "50% 50% 0",
+      type: "tuple",
+      value: [
+        {
+          type: "unit",
+          unit: "%",
+          value: 50,
+        },
+        {
+          type: "unit",
+          unit: "%",
+          value: 50,
+        },
+        {
+          type: "unit",
+          unit: "px",
+          value: 0,
+        },
+      ],
     },
     popularity: 0.54179205,
     appliesTo: "transformableElements",

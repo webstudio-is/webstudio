@@ -1,8 +1,7 @@
 import { z } from "zod";
 import {
   type UploadHandlerPart,
-  unstable_parseMultipartFormData as unstableCreateFileUploadHandler,
-  unstable_composeUploadHandlers as unstableComposeUploadHandlers,
+  unstable_parseMultipartFormData as parseMultipartFormData,
   MaxPartSizeExceededError,
 } from "@remix-run/node";
 import type { PutObjectCommandInput, S3Client } from "@aws-sdk/client-s3";
@@ -10,16 +9,10 @@ import { Upload } from "@aws-sdk/lib-storage";
 import { Location } from "@webstudio-is/prisma-client";
 import { toUint8Array } from "../../utils/to-uint8-array";
 import { getAssetData, AssetData } from "../../utils/get-asset-data";
-import { idsFormDataFieldName } from "../../schema";
-import { getUniqueFilename } from "../../utils/get-unique-filename";
-import { sanitizeS3Key } from "../../utils/sanitize-s3-key";
-import { uuidHandler } from "../../utils/uuid-handler";
 
 const AssetsUploadedSuccess = z.object({
   Location: z.string(),
 });
-
-const Ids = z.array(z.string().uuid());
 
 /**
  * Do not change. Upload code assumes its 1.
@@ -41,28 +34,24 @@ export const uploadToS3 = async ({
 }): Promise<AssetData> => {
   const uploadHandler = createUploadHandler(MAX_FILES_PER_REQUEST, client);
 
-  const formData = await unstableCreateFileUploadHandler(
+  const formData = await parseMultipartFormData(
     request,
-    unstableComposeUploadHandlers(
-      (file: UploadHandlerPart) =>
-        uploadHandler({
-          file,
-          maxSize,
-          bucket,
-          acl,
-        }),
-      uuidHandler
-    )
+    (file: UploadHandlerPart) =>
+      uploadHandler({
+        file,
+        maxSize,
+        bucket,
+        acl,
+      })
   );
 
   const imagesFormData = formData.getAll("image") as Array<string>;
   const fontsFormData = formData.getAll("font") as Array<string>;
-  const ids = Ids.parse(formData.getAll(idsFormDataFieldName));
 
   const assetsData = [...imagesFormData, ...fontsFormData]
     .slice(0, MAX_FILES_PER_REQUEST)
-    .map((dataString, index) => {
-      return AssetData.parse({ ...JSON.parse(dataString), id: ids[index] });
+    .map((dataString) => {
+      return AssetData.parse(JSON.parse(dataString));
     });
 
   return assetsData[0];
@@ -109,9 +98,9 @@ const createUploadHandler = (maxFiles: number, client: S3Client) => {
       throw new MaxPartSizeExceededError(file.name, maxSize);
     }
 
-    const fileName = sanitizeS3Key(file.filename);
+    const fileName = file.filename;
 
-    const uniqueFilename = getUniqueFilename(fileName);
+    const uniqueFilename = fileName;
 
     // if there is no ACL passed we do not default since some providers do not support it
     const ACL = acl ? { ACL: acl } : {};
@@ -122,6 +111,7 @@ const createUploadHandler = (maxFiles: number, client: S3Client) => {
       Key: uniqueFilename,
       Body: data,
       ContentType: file.contentType,
+      CacheControl: "public, max-age=31536004,immutable",
       Metadata: {
         // encodeURIComponent is needed to support special characters like Cyrillic
         filename: encodeURIComponent(fileName) || "unnamed",
@@ -136,35 +126,12 @@ const createUploadHandler = (maxFiles: number, client: S3Client) => {
       ? ("image" as const)
       : ("font" as const);
 
-    const baseAssetOptions = {
-      name: uniqueFilename,
+    const assetData = await getAssetData({
+      type,
       size: data.byteLength,
       data,
       location: Location.REMOTE,
-    };
-    let assetOptions;
-
-    if (type === "image") {
-      assetOptions = {
-        // Id will be set later
-        id: "",
-        type,
-        ...baseAssetOptions,
-      };
-    } else if (type === "font") {
-      assetOptions = {
-        // Id will be set later
-        id: "",
-        type,
-        ...baseAssetOptions,
-      };
-    }
-
-    if (assetOptions === undefined) {
-      throw new Error("Asset type not supported");
-    }
-
-    const assetData = await getAssetData(assetOptions);
+    });
 
     return JSON.stringify(assetData);
   };

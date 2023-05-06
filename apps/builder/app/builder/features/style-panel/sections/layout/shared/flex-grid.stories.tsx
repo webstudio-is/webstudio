@@ -26,47 +26,64 @@ const justifyContent = [
 
 const Base = ({ flexDirection }: { flexDirection: string }) => {
   return (
-    <Flex direction="column" gap={2} css={{ color: "#000" }}>
-      <Flex gap={2}>
-        <Box css={{ fontSize: 10, writingMode: "vertical-lr" }}>&nbsp;</Box>
-        {justifyContent.map((justifyContent) => (
-          <Box key={justifyContent} css={{ width: 72, fontSize: 10 }}>
-            {justifyContent}
-          </Box>
-        ))}
-      </Flex>
-      {alignItems.map((alignItems) => (
-        <Flex key={alignItems} gap={2}>
-          <Box
-            css={{
-              fontSize: 10,
-              textAlign: "right",
-              writingMode: "vertical-lr",
-              transform: "rotate(180deg)",
-            }}
-          >
-            {alignItems}
-          </Box>
+    <Flex>
+      <Box
+        css={{
+          fontSize: 10,
+          paddingTop: 200,
+          paddingLeft: 6,
+          fontWeight: "bold",
+          writingMode: "vertical-lr",
+          transform: "rotate(180deg)",
+        }}
+      >
+        align-items
+      </Box>
+      <Flex direction="column" gap={2} css={{ color: "#000" }}>
+        <Box css={{ fontSize: 10, paddingLeft: 200, fontWeight: "bold" }}>
+          justify-content
+        </Box>
+        <Flex gap={2}>
+          <Box css={{ fontSize: 10, writingMode: "vertical-lr" }}>&nbsp;</Box>
           {justifyContent.map((justifyContent) => (
-            <Box key={justifyContent} css={{ width: 72, height: 72 }}>
-              <FlexGrid
-                currentStyle={{
-                  flexDirection: {
-                    value: { type: "keyword", value: flexDirection },
-                  },
-                  justifyContent: {
-                    value: { type: "keyword", value: justifyContent },
-                  },
-                  alignItems: {
-                    value: { type: "keyword", value: alignItems },
-                  },
-                }}
-                batchUpdate={batchUpdate}
-              />
+            <Box key={justifyContent} css={{ width: 72, fontSize: 10 }}>
+              {justifyContent}
             </Box>
           ))}
         </Flex>
-      ))}
+        {alignItems.map((alignItems) => (
+          <Flex key={alignItems} gap={2}>
+            <Box
+              css={{
+                fontSize: 10,
+                textAlign: "right",
+                writingMode: "vertical-lr",
+                transform: "rotate(180deg)",
+              }}
+            >
+              {alignItems}
+            </Box>
+            {justifyContent.map((justifyContent) => (
+              <Box key={justifyContent} css={{ position: "relative" }}>
+                <FlexGrid
+                  currentStyle={{
+                    flexDirection: {
+                      value: { type: "keyword", value: flexDirection },
+                    },
+                    justifyContent: {
+                      value: { type: "keyword", value: justifyContent },
+                    },
+                    alignItems: {
+                      value: { type: "keyword", value: alignItems },
+                    },
+                  }}
+                  batchUpdate={batchUpdate}
+                />
+              </Box>
+            ))}
+          </Flex>
+        ))}
+      </Flex>
     </Flex>
   );
 };

@@ -49,6 +49,12 @@ import { useSearchParams } from "@remix-run/react";
 import { useSyncInitializeOnce } from "~/shared/hook-utils";
 import { BlockingAlerts } from "./features/blocking-alerts";
 import { useStore } from "@nanostores/react";
+import {
+  customComponentMetas,
+  customComponentPropsMetas,
+  registerComponentMetas,
+  registerComponentPropsMetas,
+} from "@webstudio-is/react-sdk";
 
 registerContainers();
 
@@ -240,6 +246,11 @@ export type BuilderProps = {
   authPermit: AuthPermit;
 };
 
+// @todo: Don't do this in builder
+// https://github.com/webstudio-is/webstudio-builder/issues/1545
+registerComponentMetas(customComponentMetas);
+registerComponentPropsMetas(customComponentPropsMetas);
+
 export const Builder = ({
   project,
   build,
@@ -279,7 +290,7 @@ export const Builder = ({
     authToken,
     authPermit,
   });
-  useSharedShortcuts();
+  useSharedShortcuts({ source: "builder" });
   useSetIsPreviewMode(authPermit === "view");
   const [isPreviewMode] = useIsPreviewMode();
   usePublishShortcuts(publish);

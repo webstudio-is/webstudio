@@ -1,6 +1,6 @@
 {
   "name": "@webstudio-is/react-sdk",
-  "version": "0.60.0",
+  "version": "0.62.0",
   "description": "Webstudio JavaScript / TypeScript API",
   "author": "Webstudio <github@webstudio.is>",
   "homepage": "https://webstudio.is",
@@ -8,7 +8,7 @@
   "scripts": {
     "dev": "build-package --watch",
     "build": "build-package",
-    "build:args": "generate-arg-types './src/components/*.tsx !./src/**/*.stories.tsx !./src/**/*.ws.tsx' && prettier --write \"**/*.props.ts\"",
+    "build:args": "generate-arg-types './src/components/*.tsx ./src/app/custom-components/*.tsx !./src/**/*.stories.tsx !./src/**/*.ws.tsx' && prettier --write \"**/*.props.ts\"",
     "dts": "tsc --declarationDir lib/types",
     "typecheck": "tsc --noEmit --emitDeclarationOnly false",
     "test": "NODE_OPTIONS=--experimental-vm-modules jest --passWithNoTests",

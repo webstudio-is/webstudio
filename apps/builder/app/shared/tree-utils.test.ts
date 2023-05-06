@@ -14,7 +14,7 @@ import {
   type InstanceSelector,
   cloneStyles,
   findClosestDroppableTarget,
-  findSubtreeLocalStyleSources,
+  findLocalStyleSourcesWithinInstances,
   getAncestorInstanceSelector,
   insertInstancesCopyMutable,
   insertInstancesMutable,
@@ -170,33 +170,51 @@ test("find closest droppable target", () => {
     createInstancePair("box3", "Box", [
       { type: "id", value: "box31" },
       { type: "id", value: "box32" },
-      { type: "id", value: "box33" },
+      { type: "id", value: "list33" },
     ]),
     createInstancePair("box31", "Box", []),
     createInstancePair("box32", "Box", []),
-    createInstancePair("box33", "Box", []),
+    createInstancePair("list33", "List", []),
   ]);
+
   expect(
-    findClosestDroppableTarget(instances, [
-      "bold",
-      "paragraph21",
-      "box2",
-      "root",
-    ])
+    findClosestDroppableTarget(
+      instances,
+      ["bold", "paragraph21", "box2", "root"],
+      ["Box"]
+    )
   ).toEqual({
     parentSelector: ["box2", "root"],
     position: 1,
   });
-  expect(findClosestDroppableTarget(instances, ["box3", "root"])).toEqual({
+  expect(
+    findClosestDroppableTarget(instances, ["box3", "root"], ["Box"])
+  ).toEqual({
     parentSelector: ["box3", "root"],
     position: "end",
   });
-  expect(findClosestDroppableTarget(instances, ["root"])).toEqual({
+  expect(findClosestDroppableTarget(instances, ["root"], ["Box"])).toEqual({
     parentSelector: ["root"],
     position: "end",
   });
-  expect(findClosestDroppableTarget(instances, ["box4", "root"])).toEqual({
-    parentSelector: ["root"],
+  expect(
+    findClosestDroppableTarget(instances, ["box4", "root"], ["Box"])
+  ).toEqual(undefined);
+  expect(
+    findClosestDroppableTarget(
+      instances,
+      ["box32", "box3", "root"],
+      ["Box", "ListItem"]
+    )
+  ).toEqual(undefined);
+  expect(
+    findClosestDroppableTarget(
+      instances,
+      ["list33", "box3", "root"],
+      ["Box", "ListItem"]
+    )
+  ).toEqual({
+    parentSelector: ["list33", "box3", "root"],
     position: "end",
   });
 });
@@ -835,32 +853,28 @@ test("clone styles with appled new style source ids", () => {
   ]);
 });
 
-test("find subtree local style sources", () => {
-  const subtreeIds = new Set(["instance2", "instance4"]);
-  const styleSources = new Map([
-    ["local1", createStyleSource("local", "local1")],
-    ["local2", createStyleSource("local", "local2")],
-    ["token3", createStyleSource("token", "token3")],
-    ["local4", createStyleSource("local", "local4")],
-    ["token5", createStyleSource("token", "token5")],
-    ["local6", createStyleSource("local", "local6")],
-  ]);
-  const styleSourceSelections = new Map([
-    ["instance1", createStyleSourceSelection("instance1", ["local1"])],
-    ["instance2", createStyleSourceSelection("instance2", ["local2"])],
-    ["instance3", createStyleSourceSelection("instance3", ["token3"])],
-    [
-      "instance4",
-      createStyleSourceSelection("instance4", ["local4", "token5"]),
-    ],
-    ["instance5", createStyleSourceSelection("instance5", ["local6"])],
-  ]);
-
+test("find local style sources within instances", () => {
+  const instanceIds = new Set(["instance2", "instance4"]);
+  const styleSources = [
+    createStyleSource("local", "local1"),
+    createStyleSource("local", "local2"),
+    createStyleSource("token", "token3"),
+    createStyleSource("local", "local4"),
+    createStyleSource("token", "token5"),
+    createStyleSource("local", "local6"),
+  ];
+  const styleSourceSelections = [
+    createStyleSourceSelection("instance1", ["local1"]),
+    createStyleSourceSelection("instance2", ["local2"]),
+    createStyleSourceSelection("instance3", ["token3"]),
+    createStyleSourceSelection("instance4", ["local4", "token5"]),
+    createStyleSourceSelection("instance5", ["local6"]),
+  ];
   expect(
-    findSubtreeLocalStyleSources(
-      subtreeIds,
+    findLocalStyleSourcesWithinInstances(
       styleSources,
-      styleSourceSelections
+      styleSourceSelections,
+      instanceIds
     )
   ).toEqual(new Set(["local2", "local4"]));
 });

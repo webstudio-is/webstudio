@@ -1,12 +1,13 @@
 import { z } from "zod";
 import type { FunctionComponent } from "react";
 import type { IconProps } from "@webstudio-is/icons";
-import type { Style } from "@webstudio-is/css-data";
 import { PropMeta } from "@webstudio-is/generate-arg-types";
 import type { htmlTags as HtmlTags } from "html-tags";
-import { WsEmbedTemplate } from "../embed-template";
+import { EmbedTemplateStyleDecl, WsEmbedTemplate } from "../embed-template";
 
-type PresetStyle = Partial<Record<HtmlTags, Style>>;
+export type PresetStyle<Tag extends HtmlTags = HtmlTags> = Partial<
+  Record<Tag, EmbedTemplateStyleDecl[]>
+>;
 
 // props are separated from the rest of the meta
 // so they can be exported separately and potentially tree-shaken
@@ -45,6 +46,7 @@ const WsComponentMeta = z.object({
     "rich-text",
     "rich-text-child",
   ]),
+  acceptedParents: z.optional(z.array(z.string())),
   label: z.string(),
   Icon: z.function(),
   presetStyle: z.optional(z.any()),

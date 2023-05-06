@@ -67,6 +67,11 @@ const AsTextarea = ({
           onChange={(event) => localValue.set(event.target.value)}
           onBlur={localValue.save}
           rows={rows ?? 1}
+          onKeyDown={(event) => {
+            if (event.key === "Enter" && event.metaKey) {
+              localValue.save();
+            }
+          }}
         />
       </Flex>
     </VerticalLayout>

@@ -15,8 +15,11 @@ import {
   StyleSources,
   StyleSourceSelection,
   StyleSourceSelections,
+  StyleSourceSelectionsList,
+  StyleSourcesList,
 } from "@webstudio-is/project-build";
 import {
+  canAcceptComponent,
   generateDataFromEmbedTemplate,
   getComponentMeta,
 } from "@webstudio-is/react-sdk";
@@ -51,10 +54,21 @@ export const areInstanceSelectorsEqual = (
   return left.join(",") === right.join(",");
 };
 
-export const createComponentInstance = (component: Instance["component"]) => {
+export const createComponentInstance = (
+  component: Instance["component"],
+  defaultBreakpointId: Breakpoint["id"]
+) => {
   const componentMeta = getComponentMeta(component);
-  const { children, instances, props } = generateDataFromEmbedTemplate(
-    componentMeta?.children ?? []
+  const {
+    children,
+    instances,
+    props,
+    styleSourceSelections,
+    styleSources,
+    styles,
+  } = generateDataFromEmbedTemplate(
+    componentMeta?.children ?? [],
+    defaultBreakpointId
   );
   // put first to be interpreted as root
   instances.unshift({
@@ -63,12 +77,7 @@ export const createComponentInstance = (component: Instance["component"]) => {
     component,
     children,
   });
-  return { instances, props };
-};
-
-const isInstanceDroppable = (instance: Instance) => {
-  const meta = getComponentMeta(instance.component);
-  return meta?.type === "container";
+  return { instances, props, styleSourceSelections, styleSources, styles };
 };
 
 export type DroppableTarget = {
@@ -78,19 +87,16 @@ export type DroppableTarget = {
 
 export const findClosestDroppableTarget = (
   instances: Instances,
-  instanceSelector: InstanceSelector
-): DroppableTarget => {
+  instanceSelector: InstanceSelector,
+  dragComponents: string[]
+): undefined | DroppableTarget => {
   // fallback to root as drop target when selector is stale
-  const rootDropTarget: DroppableTarget = {
-    parentSelector: [instanceSelector[instanceSelector.length - 1]],
-    position: "end",
-  };
   let position = -1;
   let lastChild: undefined | Instance = undefined;
   for (const instanceId of instanceSelector) {
     const instance = instances.get(instanceId);
     if (instance === undefined) {
-      return rootDropTarget;
+      return;
     }
     // find the index of child from selector
     if (lastChild) {
@@ -100,21 +106,22 @@ export const findClosestDroppableTarget = (
       );
     }
     lastChild = instance;
-    if (isInstanceDroppable(instance)) {
+    const canAcceptAllDragComponents = dragComponents.every((dragComponent) =>
+      canAcceptComponent(instance.component, dragComponent)
+    );
+    if (canAcceptAllDragComponents) {
       const parentSelector = getAncestorInstanceSelector(
         instanceSelector,
         instance.id
       );
-      if (parentSelector === undefined) {
-        return rootDropTarget;
+      if (parentSelector !== undefined) {
+        return {
+          parentSelector: parentSelector,
+          position: position === -1 ? "end" : position + 1,
+        };
       }
-      return {
-        parentSelector: parentSelector,
-        position: position === -1 ? "end" : position + 1,
-      };
     }
   }
-  return rootDropTarget;
 };
 
 const getInstanceOrCreateFragmentIfNecessary = (
@@ -242,22 +249,24 @@ export const cloneStyles = (
   return clonedStyles;
 };
 
-export const findSubtreeLocalStyleSources = (
-  subtreeIds: Set<Instance["id"]>,
-  styleSources: StyleSources,
-  styleSourceSelections: StyleSourceSelections
+export const findLocalStyleSourcesWithinInstances = (
+  styleSources: IterableIterator<StyleSource> | StyleSourcesList,
+  styleSourceSelections:
+    | IterableIterator<StyleSourceSelection>
+    | StyleSourceSelectionsList,
+  instanceIds: Set<Instance["id"]>
 ) => {
   const localStyleSourceIds = new Set<StyleSource["id"]>();
-  for (const styleSource of styleSources.values()) {
+  for (const styleSource of styleSources) {
     if (styleSource.type === "local") {
       localStyleSourceIds.add(styleSource.id);
     }
   }
 
   const subtreeLocalStyleSourceIds = new Set<StyleSource["id"]>();
-  for (const { instanceId, values } of styleSourceSelections.values()) {
+  for (const { instanceId, values } of styleSourceSelections) {
     // skip selections outside of subtree
-    if (subtreeIds.has(instanceId) === false) {
+    if (instanceIds.has(instanceId) === false) {
       continue;
     }
     // find only local style sources on selections

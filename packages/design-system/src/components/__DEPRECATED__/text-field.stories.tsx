@@ -1,6 +1,6 @@
 import * as React from "react";
 import type { ComponentStory } from "@storybook/react";
-import { RowGapIcon, ChevronDownIcon } from "@webstudio-is/icons";
+import { GapVerticalIcon, ChevronDownIcon } from "@webstudio-is/icons";
 import { Button } from "../button";
 import { Flex } from "../flex";
 import { DeprecatedIconButton } from "./icon-button";
@@ -64,7 +64,7 @@ export const PrefixSuffix: ComponentStory<typeof DeprecatedTextField> = () => {
   return (
     <Flex direction="column" gap={3}>
       <DeprecatedTextField
-        prefix={<RowGapIcon />}
+        prefix={<GapVerticalIcon />}
         suffix={
           <DeprecatedIconButton>
             <ChevronDownIcon />
@@ -73,7 +73,7 @@ export const PrefixSuffix: ComponentStory<typeof DeprecatedTextField> = () => {
       />
       <DeprecatedTextField
         state="invalid"
-        prefix={<RowGapIcon />}
+        prefix={<GapVerticalIcon />}
         suffix={
           <DeprecatedIconButton>
             <ChevronDownIcon />
@@ -82,7 +82,7 @@ export const PrefixSuffix: ComponentStory<typeof DeprecatedTextField> = () => {
       />
       <DeprecatedTextField
         disabled
-        prefix={<RowGapIcon />}
+        prefix={<GapVerticalIcon />}
         suffix={
           <DeprecatedIconButton>
             <ChevronDownIcon />
@@ -99,7 +99,7 @@ export const Layout: ComponentStory<typeof DeprecatedTextField> = () => {
       <Flex direction="row" gap={2} css={{ justifyContent: "space-between" }}>
         <DeprecatedTextField
           value="Long content comes here and it doesn't wrap"
-          prefix={<RowGapIcon />}
+          prefix={<GapVerticalIcon />}
           suffix={
             <DeprecatedIconButton>
               <ChevronDownIcon />
@@ -134,7 +134,7 @@ export const Layout: ComponentStory<typeof DeprecatedTextField> = () => {
           <DeprecatedTextField
             id="field"
             value="Long content comes here and it doesn't wrap"
-            prefix={<RowGapIcon />}
+            prefix={<GapVerticalIcon />}
           />
         </Box>
         <Box css={{ background: theme.colors.muted }}>
