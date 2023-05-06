@@ -1,8 +1,9 @@
 import { RadioCheckedIcon } from "@webstudio-is/icons";
-import type {
-  WsComponentMeta,
-  WsComponentPropsMeta,
-  PresetStyle,
+import {
+  type WsComponentMeta,
+  type WsComponentPropsMeta,
+  type PresetStyle,
+  defaultStates,
 } from "./component-meta";
 import { props } from "./__generated__/radio-button-field.props";
 import type { defaultTag } from "./radio-button-field";
@@ -20,6 +21,7 @@ export const meta: WsComponentMeta = {
   type: "container",
   label: "Radio Button Field",
   Icon: RadioCheckedIcon,
+  states: defaultStates,
   presetStyle,
   children: [
     { type: "instance", component: "RadioButton", props: [], children: [] },

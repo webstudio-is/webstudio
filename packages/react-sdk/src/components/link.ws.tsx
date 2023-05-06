@@ -1,9 +1,10 @@
 import { LinkIcon } from "@webstudio-is/icons";
 import { a } from "../css/normalize";
-import type {
-  PresetStyle,
-  WsComponentMeta,
-  WsComponentPropsMeta,
+import {
+  defaultStates,
+  type PresetStyle,
+  type WsComponentMeta,
+  type WsComponentPropsMeta,
 } from "./component-meta";
 import type { defaultTag } from "./link";
 import { props } from "./__generated__/link.props";
@@ -28,7 +29,14 @@ export const meta: WsComponentMeta = {
   label: "Link Text",
   Icon: LinkIcon,
   presetStyle,
-  states: [{ selector: "[aria-current=page]", label: "Current page" }],
+  states: [
+    ...defaultStates,
+    {
+      category: "component-states",
+      selector: "[aria-current=page]",
+      label: "Current page",
+    },
+  ],
   children: [{ type: "text", value: "Link text you can edit" }],
 };
 
