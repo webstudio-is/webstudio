@@ -78,6 +78,7 @@ const TextFieldContainer = styled("div", {
   border: `1px solid ${theme.colors.borderMain}`,
   "&:focus-within": {
     outline: `2px solid ${theme.colors.borderFocus}`,
+    outlineOffset: -1,
   },
 });
 
