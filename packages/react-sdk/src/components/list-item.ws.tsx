@@ -1,9 +1,10 @@
 import { ListItemIcon } from "@webstudio-is/icons";
 import { li } from "../css/normalize";
-import type {
-  PresetStyle,
-  WsComponentMeta,
-  WsComponentPropsMeta,
+import {
+  defaultStates,
+  type PresetStyle,
+  type WsComponentMeta,
+  type WsComponentPropsMeta,
 } from "./component-meta";
 import type { defaultTag } from "./list-item";
 import { props } from "./__generated__/list-item.props";
@@ -19,6 +20,7 @@ export const meta: WsComponentMeta = {
   label: "List Item",
   Icon: ListItemIcon,
   children: [{ type: "text", value: "List Item you can edit" }],
+  states: defaultStates,
   presetStyle,
 };
 
