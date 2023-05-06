@@ -14,7 +14,7 @@ const presetStyle = {
 
 export const meta: WsComponentMeta = {
   category: "general",
-  type: "container",
+  type: "embed",
   label: "Button",
   Icon: ButtonElementIcon,
   presetStyle,
