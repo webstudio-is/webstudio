@@ -8,6 +8,7 @@ import {
   styled,
   Box,
   theme,
+  Flex,
 } from "@webstudio-is/design-system";
 import { ChevronDownIcon } from "@webstudio-is/icons";
 import {
@@ -310,6 +311,7 @@ const StyleSourceContainer = styled(Box, {
 
 const StyleSourceButton = styled("button", {
   all: "unset",
+  flexGrow: 1,
   display: "block",
   boxSizing: "border-box",
   maxWidth: "100%",
@@ -377,7 +379,7 @@ export const StyleSource = ({
       role="button"
       ref={ref}
     >
-      <Box css={{ padding: theme.spacing[2] }}>
+      <Flex css={{ flexGrow: 1, padding: theme.spacing[2] }}>
         <StyleSourceButton
           disabled={disabled || isEditing}
           isEditing={isEditing}
@@ -391,7 +393,7 @@ export const StyleSource = ({
             label={label}
           />
         </StyleSourceButton>
-      </Box>
+      </Flex>
       {stateLabel !== undefined && (
         <StyleSourceState>{stateLabel}</StyleSourceState>
       )}
