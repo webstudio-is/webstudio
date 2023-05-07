@@ -239,6 +239,13 @@ test("compute styles from previous sources", () => {
           property: "width",
           value: { type: "unit", value: 200, unit: "px" },
         },
+        // prevent overriding by value from other breakpoint
+        {
+          breakpointId: "bp2",
+          styleSourceId: "2",
+          property: "width",
+          value: { type: "unit", value: 250, unit: "px" },
+        },
         {
           breakpointId: "bp",
           styleSourceId: "3",
@@ -259,7 +266,8 @@ test("compute styles from previous sources", () => {
       styleSourceSelections,
       stylesByInstanceId,
       selectedInstanceSelector,
-      selectedStyleSourceSelector
+      selectedStyleSourceSelector,
+      "bp"
     )
   ).toMatchInlineSnapshot(`
     {
@@ -310,6 +318,13 @@ test("compute styles from next sources", () => {
           property: "width",
           value: { type: "unit", value: 400, unit: "px" },
         },
+        // prevent overriding by value from other breakpoint
+        {
+          breakpointId: "bp2",
+          styleSourceId: "4",
+          property: "width",
+          value: { type: "unit", value: 450, unit: "px" },
+        },
       ],
     ],
   ]);
@@ -318,7 +333,8 @@ test("compute styles from next sources", () => {
       styleSourceSelections,
       stylesByInstanceId,
       selectedInstanceSelector,
-      selectedStyleSourceSelector
+      selectedStyleSourceSelector,
+      "bp"
     )
   ).toMatchInlineSnapshot(`
     {

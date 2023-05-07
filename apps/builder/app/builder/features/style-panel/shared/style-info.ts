@@ -14,6 +14,7 @@ import {
   type Instances,
   type StyleDecl,
   type StyleSource as StyleSourceType,
+  Breakpoint,
 } from "@webstudio-is/project-build";
 import {
   type StyleSourceSelector,
@@ -303,7 +304,8 @@ export const getPreviousSourceInfo = (
   styleSourceSelections: StyleSourceSelections,
   stylesByInstanceId: Map<Instance["id"], StyleDecl[]>,
   selectedInstanceSelector: InstanceSelector,
-  selectedStyleSourceSelector: StyleSourceSelector
+  selectedStyleSourceSelector: StyleSourceSelector,
+  breakpointId: Breakpoint["id"]
 ) => {
   const previousSourceStyle: SourceProperties = {};
   const [selectedInstanceId] = selectedInstanceSelector;
@@ -319,7 +321,10 @@ export const getPreviousSourceInfo = (
   );
   // expect instance styles to be ordered
   for (const styleDecl of instanceStyles) {
-    if (previousSourceIds.includes(styleDecl.styleSourceId)) {
+    if (
+      styleDecl.breakpointId === breakpointId &&
+      previousSourceIds.includes(styleDecl.styleSourceId)
+    ) {
       previousSourceStyle[styleDecl.property] = {
         styleSourceId: styleDecl.styleSourceId,
         value: styleDecl.value,
@@ -333,7 +338,8 @@ export const getNextSourceInfo = (
   styleSourceSelections: StyleSourceSelections,
   stylesByInstanceId: Map<Instance["id"], StyleDecl[]>,
   selectedInstanceSelector: InstanceSelector,
-  selectedStyleSourceSelector: StyleSourceSelector
+  selectedStyleSourceSelector: StyleSourceSelector,
+  breakpointId: Breakpoint["id"]
 ) => {
   const nextSourceStyle: SourceProperties = {};
   const [selectedInstanceId] = selectedInstanceSelector;
@@ -349,7 +355,10 @@ export const getNextSourceInfo = (
   );
   // expect instance styles to be ordered
   for (const styleDecl of instanceStyles) {
-    if (nextSourceIds.includes(styleDecl.styleSourceId)) {
+    if (
+      styleDecl.breakpointId === breakpointId &&
+      nextSourceIds.includes(styleDecl.styleSourceId)
+    ) {
       nextSourceStyle[styleDecl.property] = {
         styleSourceId: styleDecl.styleSourceId,
         value: styleDecl.value,
@@ -442,7 +451,8 @@ export const useStyleInfo = () => {
   const previousSourceInfo = useMemo(() => {
     if (
       selectedInstanceSelector === undefined ||
-      selectedOrLastStyleSourceSelector === undefined
+      selectedOrLastStyleSourceSelector === undefined ||
+      selectedBreakpointId === undefined
     ) {
       return {};
     }
@@ -450,19 +460,22 @@ export const useStyleInfo = () => {
       styleSourceSelections,
       stylesByInstanceId,
       selectedInstanceSelector,
-      selectedOrLastStyleSourceSelector
+      selectedOrLastStyleSourceSelector,
+      selectedBreakpointId
     );
   }, [
     styleSourceSelections,
     stylesByInstanceId,
     selectedInstanceSelector,
     selectedOrLastStyleSourceSelector,
+    selectedBreakpointId,
   ]);
 
   const nextSourceInfo = useMemo(() => {
     if (
       selectedInstanceSelector === undefined ||
-      selectedOrLastStyleSourceSelector === undefined
+      selectedOrLastStyleSourceSelector === undefined ||
+      selectedBreakpointId === undefined
     ) {
       return {};
     }
@@ -470,13 +483,15 @@ export const useStyleInfo = () => {
       styleSourceSelections,
       stylesByInstanceId,
       selectedInstanceSelector,
-      selectedOrLastStyleSourceSelector
+      selectedOrLastStyleSourceSelector,
+      selectedBreakpointId
     );
   }, [
     styleSourceSelections,
     stylesByInstanceId,
     selectedInstanceSelector,
     selectedOrLastStyleSourceSelector,
+    selectedBreakpointId,
   ]);
 
   const presetStyle = useMemo(() => {
