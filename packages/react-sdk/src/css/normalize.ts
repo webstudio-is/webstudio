@@ -19,7 +19,7 @@
 import { borders, linkColors } from "./presets";
 import type { EmbedTemplateStyleDecl } from "../embed-template";
 
-type Styles = EmbedTemplateStyleDecl[];
+export type Styles = EmbedTemplateStyleDecl[];
 
 /**
 Use a better box model (opinionated).
