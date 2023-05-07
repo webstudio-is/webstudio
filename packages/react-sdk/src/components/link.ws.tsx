@@ -32,6 +32,10 @@ export const meta: WsComponentMeta = {
   states: [
     ...defaultStates,
     {
+      selector: ":visited",
+      label: "Visited",
+    },
+    {
       category: "component-states",
       selector: "[aria-current=page]",
       label: "Current page",

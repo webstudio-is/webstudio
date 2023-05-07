@@ -16,7 +16,7 @@
  */
 
 // webstudio custom opinionated presets
-import { borders } from "./presets";
+import { borders, linkColors } from "./presets";
 import type { EmbedTemplateStyleDecl } from "../embed-template";
 
 /**
@@ -61,7 +61,7 @@ export const i = baseStyle;
 
 export const img = baseStyle;
 
-export const a = baseStyle;
+export const a = [boxSizing, ...borders, ...linkColors];
 export const li = baseStyle;
 export const ul = baseStyle;
 export const ol = baseStyle;

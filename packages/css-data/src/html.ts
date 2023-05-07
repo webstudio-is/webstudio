@@ -438,6 +438,17 @@ export const sup: Styles = [
   },
 ];
 
+export const a: Styles = [
+  {
+    property: "textDecorationStyle",
+    value: { type: "keyword", value: "underline" },
+  },
+  {
+    property: "cursor",
+    value: { type: "keyword", value: "pointer" },
+  },
+];
+
 /* lists */
 
 // nested lists have no top/bottom margins
