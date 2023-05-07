@@ -1,26 +1,17 @@
-import type { StyleProperty } from "@webstudio-is/css-data";
-import {
-  Grid,
-  theme,
-  Box,
-  ToggleGroup,
-  ToggleGroupItem,
-  Tooltip,
-} from "@webstudio-is/design-system";
-import {
-  DashBorderIcon,
-  DashedBorderIcon,
-  DottedBorderIcon,
-  SmallXIcon,
-} from "@webstudio-is/icons";
-import type { RenderCategoryProps } from "../../style-sections";
-import { toPascalCase } from "../../shared/keyword-utils";
-import { PropertyName } from "../../shared/property-name";
+import type { StyleProperty, UnitValue } from "@webstudio-is/css-data";
+import { Grid, theme } from "@webstudio-is/design-system";
 import { CssValueInputContainer } from "../../controls/position/css-value-input-container";
+import type { RenderCategoryProps } from "../../style-sections";
+import { PropertyName } from "../../shared/property-name";
+import { styleConfigByName } from "../../shared/configs";
+import { getStyleSource } from "../../shared/style-info";
 
-const outlineWidthProperties = [
-  "outlineOffset",
-] as const satisfies readonly StyleProperty[];
+const property: StyleProperty = "outlineOffset";
+const defaultOutlineOffsetValue: UnitValue = {
+  type: "unit",
+  value: 0,
+  unit: "number",
+};
 
 export const OutlineOffset = (
   props: Pick<
@@ -28,15 +19,20 @@ export const OutlineOffset = (
     "currentStyle" | "setProperty" | "deleteProperty" | "createBatchUpdate"
   >
 ) => {
+  const { deleteProperty, setProperty, currentStyle } = props;
+  const outlineOffsetValue =
+    currentStyle[property]?.value ?? defaultOutlineOffsetValue;
+  const outlineOffsetStyleConfig = styleConfigByName(property);
+
   return (
     <Grid
       css={{
-        gridTemplateColumns: `1fr ${theme.spacing[20]} ${theme.spacing[12]}`,
+        gridTemplateColumns: `1fr ${theme.spacing[20]}`,
       }}
       gap={2}
     >
       <PropertyName
-        property={outlineWidthProperties}
+        property={property}
         style={props.currentStyle}
         label={"Offset"}
         onReset={() => {
@@ -44,11 +40,16 @@ export const OutlineOffset = (
         }}
       />
 
-      <Box>
-        {/* <CssValueInputContainer
-          label={"Outline"}
-        /> */}
-      </Box>
+      <CssValueInputContainer
+        key={property}
+        property={property}
+        label={outlineOffsetStyleConfig?.label || ""}
+        styleSource={getStyleSource(currentStyle[property])}
+        keywords={[]}
+        setValue={setProperty(property)}
+        deleteProperty={deleteProperty}
+        value={outlineOffsetValue}
+      />
     </Grid>
   );
 };

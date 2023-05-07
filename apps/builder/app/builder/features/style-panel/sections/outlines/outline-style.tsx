@@ -15,6 +15,7 @@ import {
 import type { RenderCategoryProps } from "../../style-sections";
 import { toPascalCase } from "../../shared/keyword-utils";
 import { PropertyName } from "../../shared/property-name";
+import { toValue } from "@webstudio-is/css-engine";
 
 const outlineStyleProperties = [
   "outlineStyle",
@@ -33,6 +34,14 @@ export const OutlineStyle = (
     "currentStyle" | "setProperty" | "deleteProperty" | "createBatchUpdate"
   >
 ) => {
+  const { currentStyle, setProperty, deleteProperty } = props;
+  const outlineStyleValue = toValue(
+    currentStyle["outlineStyle"]?.value ?? {
+      type: "keyword",
+      value: "none",
+    }
+  );
+
   return (
     <Grid
       css={{
@@ -44,9 +53,7 @@ export const OutlineStyle = (
         property={outlineStyleProperties}
         style={props.currentStyle}
         label={"Style"}
-        onReset={() => {
-          console.log("called reset");
-        }}
+        onReset={() => deleteProperty("outlineStyle")}
       />
 
       <ToggleGroup
@@ -55,6 +62,8 @@ export const OutlineStyle = (
           justifySelf: "end",
         }}
         type="single"
+        value={outlineStyleValue}
+        onValueChange={(value) => setProperty("outlineStyle")(value)}
       >
         {outlineStyleValues.map(({ value, Icon }) => (
           <ToggleGroupItem key={value} value={value}>
