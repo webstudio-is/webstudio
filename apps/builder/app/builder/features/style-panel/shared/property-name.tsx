@@ -4,6 +4,7 @@ import type { StyleProperty } from "@webstudio-is/css-data";
 import { toValue } from "@webstudio-is/css-engine";
 import {
   theme,
+  rawTheme,
   Button,
   Flex,
   Box,
@@ -16,7 +17,7 @@ import {
   PopoverContent,
   Text,
 } from "@webstudio-is/design-system";
-import { UndoIcon } from "@webstudio-is/icons";
+import { AlertIcon, UndoIcon } from "@webstudio-is/icons";
 import {
   breakpointsStore,
   instancesStore,
@@ -61,6 +62,24 @@ const PropertyPopoverContent = ({
         >
           {properties.map((property) => {
             const styleValueInfo = style[property];
+
+            if (styleValueInfo?.nextSource) {
+              const { value, styleSourceId } = styleValueInfo.nextSource;
+              const styleSource = styleSources.get(styleSourceId);
+              let name: undefined | string = undefined;
+              if (styleSource?.type === "local") {
+                name = "local style source";
+              }
+              if (styleSource?.type === "token") {
+                name = `"${styleSource.name}" token`;
+              }
+              return (
+                <Text key={property} color="subtle">
+                  The value of {property} is overriden by {toValue(value)} from{" "}
+                  {name}
+                </Text>
+              );
+            }
 
             if (styleValueInfo?.previousSource) {
               const { value, styleSourceId } = styleValueInfo.previousSource;
@@ -117,9 +136,11 @@ const PropertyPopoverContent = ({
     <Box css={{ px: theme.spacing[4], py: theme.spacing[3] }}>
       {properties.map((property) => {
         const styleValueInfo = style[property];
+        const source =
+          styleValueInfo?.nextSource ?? styleValueInfo?.previousSource;
 
-        if (styleValueInfo?.previousSource) {
-          const { styleSourceId } = styleValueInfo.previousSource;
+        if (source) {
+          const { styleSourceId } = source;
           const styleSource = styleSources.get(styleSourceId);
           let name: undefined | string = undefined;
           if (styleSource?.type === "local") {
@@ -179,16 +200,25 @@ export const PropertyName = ({
   const [isOpen, setIsOpen] = useState(false);
   const isPopoverEnabled = styleSource === "local" || styleSource === "remote";
 
-  const labelElement =
-    typeof label === "string" ? (
-      <Flex shrink>
+  const hasStyleSourceConflict = properties.some((property) => {
+    const info = style[property];
+    return info?.nextSource && info.local;
+  });
+
+  const labelElement = (
+    <Flex shrink gap={1}>
+      {typeof label === "string" ? (
         <Label color={styleSource} truncate>
           {label}
         </Label>
-      </Flex>
-    ) : (
-      label
-    );
+      ) : (
+        label
+      )}
+      {hasStyleSourceConflict && (
+        <AlertIcon fill={rawTheme.colors.foregroundDestructive} />
+      )}
+    </Flex>
+  );
 
   if (isPopoverEnabled) {
     return (

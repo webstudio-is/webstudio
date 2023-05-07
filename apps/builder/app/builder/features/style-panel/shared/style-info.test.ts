@@ -10,6 +10,7 @@ import {
   getCascadedBreakpointIds,
   getCascadedInfo,
   getInheritedInfo,
+  getNextSourceInfo,
   getPreviousSourceInfo,
 } from "./style-info";
 
@@ -268,6 +269,65 @@ test("compute styles from previous sources", () => {
           "type": "unit",
           "unit": "px",
           "value": 200,
+        },
+      },
+    }
+  `);
+});
+
+test("compute styles from next sources", () => {
+  const styleSourceSelections = new Map([
+    ["3", { instanceId: "3", values: ["1", "2", "3", "4"] }],
+  ]);
+  const selectedStyleSourceSelector = {
+    styleSourceId: "3",
+  };
+  const stylesByInstanceId = new Map<Instance["id"], StylesList>([
+    [
+      "3",
+      [
+        {
+          breakpointId: "bp",
+          styleSourceId: "1",
+          property: "width",
+          value: { type: "unit", value: 100, unit: "px" },
+        },
+        {
+          breakpointId: "bp",
+          styleSourceId: "2",
+          property: "width",
+          value: { type: "unit", value: 200, unit: "px" },
+        },
+        {
+          breakpointId: "bp",
+          styleSourceId: "3",
+          property: "width",
+          value: { type: "unit", value: 300, unit: "px" },
+        },
+        {
+          breakpointId: "bp",
+          styleSourceId: "4",
+          property: "width",
+          value: { type: "unit", value: 400, unit: "px" },
+        },
+      ],
+    ],
+  ]);
+  expect(
+    getNextSourceInfo(
+      styleSourceSelections,
+      stylesByInstanceId,
+      selectedInstanceSelector,
+      selectedStyleSourceSelector
+    )
+  ).toMatchInlineSnapshot(`
+    {
+      "width": {
+        "styleSourceId": "4",
+        "value": {
+          "type": "unit",
+          "unit": "px",
+          "value": 400,
         },
       },
     }

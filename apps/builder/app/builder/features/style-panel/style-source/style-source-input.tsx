@@ -329,7 +329,7 @@ const renderMenuItems = (props: {
           return;
         }
         return (
-          <>
+          <Fragment key={currentCategory}>
             <DropdownMenuSeparator />
             <DropdownMenuLabel>
               {humanizeString(currentCategory)}
@@ -366,7 +366,7 @@ const renderMenuItems = (props: {
                 {label}
               </DropdownMenuItem>
             ))}
-          </>
+          </Fragment>
         );
       })}
     </>

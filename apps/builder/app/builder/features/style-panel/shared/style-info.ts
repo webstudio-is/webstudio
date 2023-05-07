@@ -50,19 +50,20 @@ type InheritedProperties = {
   [property in StyleProperty]?: InheritedValueInfo;
 };
 
-type PreviousSourceValueInfo = {
+type SourceValueInfo = {
   styleSourceId: string;
   value: StyleValue;
 };
 
-type PreviousSourceProperties = {
-  [property in StyleProperty]?: PreviousSourceValueInfo;
+type SourceProperties = {
+  [property in StyleProperty]?: SourceValueInfo;
 };
 
 export type StyleValueInfo = {
   value: StyleValue;
   local?: StyleValue;
-  previousSource?: PreviousSourceValueInfo;
+  previousSource?: SourceValueInfo;
+  nextSource?: SourceValueInfo;
   cascaded?: CascadedValueInfo;
   inherited?: InheritedValueInfo;
   preset?: StyleValue;
@@ -99,6 +100,7 @@ export const getStyleSource = (
   for (const info of styleValueInfos) {
     if (
       info?.previousSource !== undefined ||
+      info?.nextSource !== undefined ||
       info?.cascaded !== undefined ||
       info?.inherited !== undefined
     ) {
@@ -295,7 +297,7 @@ export const getPreviousSourceInfo = (
   selectedInstanceSelector: InstanceSelector,
   selectedStyleSourceSelector: StyleSourceSelector
 ) => {
-  const previousSourceStyle: PreviousSourceProperties = {};
+  const previousSourceStyle: SourceProperties = {};
   const [selectedInstanceId] = selectedInstanceSelector;
   const { styleSourceId } = selectedStyleSourceSelector;
   const styleSourceSelection = styleSourceSelections.get(selectedInstanceId);
@@ -317,6 +319,36 @@ export const getPreviousSourceInfo = (
     }
   }
   return previousSourceStyle;
+};
+
+export const getNextSourceInfo = (
+  styleSourceSelections: StyleSourceSelections,
+  stylesByInstanceId: Map<Instance["id"], StyleDecl[]>,
+  selectedInstanceSelector: InstanceSelector,
+  selectedStyleSourceSelector: StyleSourceSelector
+) => {
+  const nextSourceStyle: SourceProperties = {};
+  const [selectedInstanceId] = selectedInstanceSelector;
+  const { styleSourceId } = selectedStyleSourceSelector;
+  const styleSourceSelection = styleSourceSelections.get(selectedInstanceId);
+  const instanceStyles = stylesByInstanceId.get(selectedInstanceId);
+  if (styleSourceSelection === undefined || instanceStyles === undefined) {
+    return nextSourceStyle;
+  }
+  const nextSourceIds = styleSourceSelection.values.slice(
+    // exclude current style source
+    styleSourceSelection.values.indexOf(styleSourceId) + 1
+  );
+  // expect instance styles to be ordered
+  for (const styleDecl of instanceStyles) {
+    if (nextSourceIds.includes(styleDecl.styleSourceId)) {
+      nextSourceStyle[styleDecl.property] = {
+        styleSourceId: styleDecl.styleSourceId,
+        value: styleDecl.value,
+      };
+    }
+  }
+  return nextSourceStyle;
 };
 
 /**
@@ -419,6 +451,26 @@ export const useStyleInfo = () => {
     selectedOrLastStyleSourceSelector,
   ]);
 
+  const nextSourceInfo = useMemo(() => {
+    if (
+      selectedInstanceSelector === undefined ||
+      selectedOrLastStyleSourceSelector === undefined
+    ) {
+      return {};
+    }
+    return getNextSourceInfo(
+      styleSourceSelections,
+      stylesByInstanceId,
+      selectedInstanceSelector,
+      selectedOrLastStyleSourceSelector
+    );
+  }, [
+    styleSourceSelections,
+    stylesByInstanceId,
+    selectedInstanceSelector,
+    selectedOrLastStyleSourceSelector,
+  ]);
+
   const presetStyle = useMemo(() => {
     const selectedInstanceId = selectedInstanceSelector?.[0];
     if (selectedInstanceId === undefined) {
@@ -464,9 +516,11 @@ export const useStyleInfo = () => {
       const inherited = inheritedInfo[property];
       const cascaded = cascadedInfo[property];
       const previousSource = previousSourceInfo[property];
+      const nextSource = nextSourceInfo[property];
       const local = selectedStyle?.[property];
       const value =
         local ??
+        nextSource?.value ??
         previousSource?.value ??
         cascaded?.value ??
         inherited?.value ??
@@ -477,6 +531,7 @@ export const useStyleInfo = () => {
           styleInfoData[property] = {
             value,
             local,
+            nextSource,
             previousSource,
             cascaded,
             inherited,
@@ -487,6 +542,7 @@ export const useStyleInfo = () => {
           styleInfoData[property] = {
             value,
             local,
+            nextSource,
             previousSource,
             cascaded,
             inherited,
@@ -502,6 +558,7 @@ export const useStyleInfo = () => {
     presetStyle,
     inheritedInfo,
     cascadedInfo,
+    nextSourceInfo,
     previousSourceInfo,
     selectedStyle,
   ]);
