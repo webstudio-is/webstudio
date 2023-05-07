@@ -193,6 +193,10 @@ export const SelectedInstanceConnector = ({
       unsubscribeWindowResize();
       unsubscribeIsResizingCanvas();
 
+      // Retain selectedInstanceIsRenderedStore state if instanceSelector stays the same.
+      // Occasionally, an immediate call to selectedInstanceIsRenderedStore.set(true) may not update StylePanel state
+      // within the same batch as the current effect unsubscribe (e.g., due to delayed postMessage). (and cause to lost scroll position)
+      // This rare issue is difficult to reproduce, occurring roughly once every 100 calls.
       if (
         areInstanceSelectorsEqual(
           selectedInstanceSelectorStore.get(),
