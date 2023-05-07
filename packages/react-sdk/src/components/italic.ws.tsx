@@ -1,9 +1,10 @@
 import { TextItalicIcon } from "@webstudio-is/icons";
 import type { defaultTag } from "./italic";
-import type {
-  PresetStyle,
-  WsComponentMeta,
-  WsComponentPropsMeta,
+import {
+  defaultStates,
+  type PresetStyle,
+  type WsComponentMeta,
+  type WsComponentPropsMeta,
 } from "./component-meta";
 import { props } from "./__generated__/italic.props";
 import { i } from "../css/normalize";
@@ -22,6 +23,7 @@ export const meta: WsComponentMeta = {
   type: "rich-text-child",
   label: "Italic Text",
   Icon: TextItalicIcon,
+  states: defaultStates,
   presetStyle,
 };
 
