@@ -67,93 +67,98 @@ import { propsMeta as RadioButtonFieldPropsMeta } from "./radio-button-field.ws"
 import { propsMeta as RadioButtonPropsMeta } from "./radio-button.ws";
 import { propsMeta as CheckboxFieldPropsMeta } from "./checkbox-field.ws";
 import { propsMeta as CheckboxPropsMeta } from "./checkbox.ws";
+import { ELEMENTS } from "./elements";
 
 // @todo this list should not be hardcoded!
-const defaultMetas: Record<string, WsComponentMeta> = {
-  Slot: SlotMeta,
-  Fragment: FragmentMeta,
-  Box: BoxMeta,
-  Body: BodyMeta,
-  TextBlock: TextBlockMeta,
-  Heading: HeadingMeta,
-  Paragraph: ParagraphMeta,
-  Link: LinkMeta,
-  LinkBlock: LinkBlockMeta,
-  RichTextLink: RichTextLinkMeta,
-  Span: SpanMeta,
-  Bold: BoldMeta,
-  Italic: ItalicMeta,
-  Superscript: SuperscriptMeta,
-  Subscript: SubscriptMeta,
-  Button: ButtonMeta,
-  Input: InputMeta,
-  Form: FormMeta,
-  Image: ImageMeta,
-  Blockquote: BlockquoteMeta,
-  List: ListMeta,
-  ListItem: ListItemMeta,
-  Separator: SeparatorMeta,
-  Code: CodeMeta,
-  Label: LabelMeta,
-  SuccessMessage: SuccessMessageMeta,
-  ErrorMessage: ErrorMessageMeta,
-  Textarea: TextareaMeta,
-  RadioButtonField: RadioButtonFieldMeta,
-  RadioButton: RadioButtonMeta,
-  CheckboxField: CheckboxFieldMeta,
-  Checkbox: CheckboxMeta,
+const defaultMetas: Record<ELEMENTS, WsComponentMeta> = {
+  [ELEMENTS.SLOT]: SlotMeta,
+  [ELEMENTS.FRAGMENT]: FragmentMeta,
+  [ELEMENTS.BOX]: BoxMeta,
+  [ELEMENTS.BODY]: BodyMeta,
+  [ELEMENTS.TEXT_BLOCK]: TextBlockMeta,
+  [ELEMENTS.HEADINNG]: HeadingMeta,
+  [ELEMENTS.PARAGRAPH]: ParagraphMeta,
+  [ELEMENTS.LINK]: LinkMeta,
+  [ELEMENTS.LINK_BLOCK]: LinkBlockMeta,
+  [ELEMENTS.RICH_TEXT_LINK]: RichTextLinkMeta,
+  [ELEMENTS.SPAN]: SpanMeta,
+  [ELEMENTS.BOLD]: BoldMeta,
+  [ELEMENTS.ITALIC]: ItalicMeta,
+  [ELEMENTS.SUPERSCRIPT]: SuperscriptMeta,
+  [ELEMENTS.SUBSCRIPT]: SubscriptMeta,
+  [ELEMENTS.BUTTON]: ButtonMeta,
+  [ELEMENTS.INPUT]: InputMeta,
+  [ELEMENTS.FORM]: FormMeta,
+  [ELEMENTS.IMAGE]: ImageMeta,
+  [ELEMENTS.BLOCKQUOTE]: BlockquoteMeta,
+  [ELEMENTS.LIST]: ListMeta,
+  [ELEMENTS.LIST_ITEM]: ListItemMeta,
+  [ELEMENTS.SEPERATOR]: SeparatorMeta,
+  [ELEMENTS.CODE]: CodeMeta,
+  [ELEMENTS.LABEL]: LabelMeta,
+  [ELEMENTS.SUCCESS_MESSAGE]: SuccessMessageMeta,
+  [ELEMENTS.ERROR_MESSAGE]: ErrorMessageMeta,
+  [ELEMENTS.TEXT_AREA]: TextareaMeta,
+  [ELEMENTS.RADIO_BUTTON_FIELD]: RadioButtonFieldMeta,
+  [ELEMENTS.RADIO_BUTTON]: RadioButtonMeta,
+  [ELEMENTS.CHECKBOX_FIELD]: CheckboxFieldMeta,
+  [ELEMENTS.CHECKBOX]: CheckboxMeta,
 };
 
 let currentMetas = defaultMetas;
 
-export const getComponentMeta = (name: string): WsComponentMeta | undefined => {
+export const getComponentMeta = (
+  name: ELEMENTS
+): WsComponentMeta | undefined => {
   return currentMetas[name];
 };
 
 export const registerComponentMetas = (
-  overrides: Record<string, Partial<WsComponentMeta>>
+  overrides: Record<ELEMENTS, Partial<WsComponentMeta>>
 ) => {
-  const result: typeof currentMetas = {};
-  for (const name of Object.keys(defaultMetas)) {
-    result[name] = { ...defaultMetas[name], ...overrides[name] };
-  }
+  const elements = Object.keys(defaultMetas) as Array<ELEMENTS>;
+  const result = elements.reduce((acc, element) => {
+    acc[element] = { ...defaultMetas[element], ...overrides[element] };
+    return acc;
+  }, {} as Record<ELEMENTS, WsComponentMeta>);
+
   currentMetas = result;
 };
 
 // @todo this list should not be hardcoded!
-const defaultPropsMetasRaw = {
-  Slot: SlotMetaPropsMeta,
-  Fragment: FragmentMetaPropsMeta,
-  Box: BoxMetaPropsMeta,
-  Body: BodyMetaPropsMeta,
-  TextBlock: TextBlockMetaPropsMeta,
-  Heading: HeadingMetaPropsMeta,
-  Paragraph: ParagraphMetaPropsMeta,
-  Link: LinkMetaPropsMeta,
-  LinkBlock: LinkBlockPropsMeta,
-  RichTextLink: RichTextLinkMetaPropsMeta,
-  Span: SpanMetaPropsMeta,
-  Bold: BoldMetaPropsMeta,
-  Italic: ItalicMetaPropsMeta,
-  Superscript: SuperscriptMetaPropsMeta,
-  Subscript: SubscriptMetaPropsMeta,
-  Button: ButtonMetaPropsMeta,
-  Input: InputMetaPropsMeta,
-  Form: FormMetaPropsMeta,
-  Image: ImageMetaPropsMeta,
-  Blockquote: BlockquotePropsMeta,
-  List: ListPropsMeta,
-  ListItem: ListItemPropsMeta,
-  Separator: SeparatorPropsMeta,
-  Code: CodePropsMeta,
-  Label: LabelPropsMeta,
-  SuccessMessage: SuccessMessagePropsMeta,
-  ErrorMessage: ErrorMessagePropsMeta,
-  Textarea: TextareaPropsMeta,
-  RadioButtonField: RadioButtonFieldPropsMeta,
-  RadioButton: RadioButtonPropsMeta,
-  CheckboxField: CheckboxFieldPropsMeta,
-  Checkbox: CheckboxPropsMeta,
+const defaultPropsMetasRaw: Record<ELEMENTS, WsComponentPropsMeta> = {
+  [ELEMENTS.SLOT]: SlotMetaPropsMeta,
+  [ELEMENTS.FRAGMENT]: FragmentMetaPropsMeta,
+  [ELEMENTS.BOX]: BoxMetaPropsMeta,
+  [ELEMENTS.BODY]: BodyMetaPropsMeta,
+  [ELEMENTS.TEXT_BLOCK]: TextBlockMetaPropsMeta,
+  [ELEMENTS.HEADINNG]: HeadingMetaPropsMeta,
+  [ELEMENTS.PARAGRAPH]: ParagraphMetaPropsMeta,
+  [ELEMENTS.LINK]: LinkMetaPropsMeta,
+  [ELEMENTS.LINK_BLOCK]: LinkBlockPropsMeta,
+  [ELEMENTS.RICH_TEXT_LINK]: RichTextLinkMetaPropsMeta,
+  [ELEMENTS.SPAN]: SpanMetaPropsMeta,
+  [ELEMENTS.BOLD]: BoldMetaPropsMeta,
+  [ELEMENTS.ITALIC]: ItalicMetaPropsMeta,
+  [ELEMENTS.SUPERSCRIPT]: SuperscriptMetaPropsMeta,
+  [ELEMENTS.SUBSCRIPT]: SubscriptMetaPropsMeta,
+  [ELEMENTS.BUTTON]: ButtonMetaPropsMeta,
+  [ELEMENTS.INPUT]: InputMetaPropsMeta,
+  [ELEMENTS.FORM]: FormMetaPropsMeta,
+  [ELEMENTS.IMAGE]: ImageMetaPropsMeta,
+  [ELEMENTS.BLOCKQUOTE]: BlockquotePropsMeta,
+  [ELEMENTS.LIST]: ListPropsMeta,
+  [ELEMENTS.LIST_ITEM]: ListItemPropsMeta,
+  [ELEMENTS.SEPERATOR]: SeparatorPropsMeta,
+  [ELEMENTS.CODE]: CodePropsMeta,
+  [ELEMENTS.LABEL]: LabelPropsMeta,
+  [ELEMENTS.SUCCESS_MESSAGE]: SuccessMessagePropsMeta,
+  [ELEMENTS.ERROR_MESSAGE]: ErrorMessagePropsMeta,
+  [ELEMENTS.TEXT_AREA]: TextareaPropsMeta,
+  [ELEMENTS.RADIO_BUTTON_FIELD]: RadioButtonFieldPropsMeta,
+  [ELEMENTS.RADIO_BUTTON]: RadioButtonPropsMeta,
+  [ELEMENTS.CHECKBOX_FIELD]: CheckboxFieldPropsMeta,
+  [ELEMENTS.CHECKBOX]: CheckboxPropsMeta,
 } as const;
 
 const defaultPropsMetas: Record<string, WsComponentPropsMeta> =
@@ -253,8 +258,8 @@ const computeInitialProps = (
 };
 
 export const canAcceptComponent = (
-  parentComponent: string,
-  childComponent: string
+  parentComponent: ELEMENTS,
+  childComponent: ELEMENTS
 ) => {
   const parentMeta = getComponentMeta(parentComponent);
   const childMeta = getComponentMeta(childComponent);
