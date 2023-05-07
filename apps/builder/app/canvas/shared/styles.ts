@@ -309,7 +309,14 @@ const setCssVar = (id: string, property: string, value?: StyleValue) => {
     document.body.style.removeProperty(customProperty);
     return;
   }
-  document.body.style.setProperty(customProperty, toValue(value, undefined));
+
+  const assets = assetsStore.get();
+  const params = getParams();
+  const transformer = createImageValueTransformer(assets, {
+    assetBaseUrl: params.assetBaseUrl,
+  });
+
+  document.body.style.setProperty(customProperty, toValue(value, transformer));
 };
 
 const useUpdateStyle = () => {
