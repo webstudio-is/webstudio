@@ -25,7 +25,7 @@ export const OutlinesSection = (props: RenderCategoryProps) => {
   return (
     <CollapsibleSection
       label="Outlines"
-      currentStyle={{}}
+      currentStyle={currentStyle}
       properties={properties}
     >
       <Flex direction="column" gap={2}>
@@ -46,9 +46,7 @@ export const OutlinesSection = (props: RenderCategoryProps) => {
             style={currentStyle}
             property={["outlineColor"]}
             label={"Color"}
-            onReset={() => {
-              console.log("called reset");
-            }}
+            onReset={() => deleteProperty("outlineColor")}
           />
 
           <Box
@@ -56,17 +54,13 @@ export const OutlinesSection = (props: RenderCategoryProps) => {
               gridColumn: `span 2`,
             }}
           >
-            <ColorControl
+            {/* <ColorControl
               property={"outlineColor"}
               items={outlineColorItems}
-              currentStyle={currentStyle}
-              setProperty={() => {
-                console.log(`setPropert`);
-              }}
-              deleteProperty={() => {
-                console.log(`deleteAllBorderColorProperties`);
-              }}
-            />
+              currentStyle={currentStyle} */}
+            {/* setProperty={() => setProperty('outlineColor')}
+              deleteProperty={() => deleteProperty('outlineColor')} */}
+            {/* /> */}
           </Box>
         </Grid>
 
