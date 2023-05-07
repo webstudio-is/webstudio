@@ -110,7 +110,10 @@ const PropertyPopoverContent = ({
               );
             }
 
-            if (styleValueInfo?.inherited) {
+            if (
+              styleValueInfo?.inherited &&
+              styleValueInfo.preset === undefined
+            ) {
               const { value, instanceId } = styleValueInfo.inherited;
               const instance = instances.get(instanceId);
               return (
@@ -166,7 +169,7 @@ const PropertyPopoverContent = ({
           );
         }
 
-        if (styleValueInfo?.inherited) {
+        if (styleValueInfo?.inherited && styleValueInfo.preset === undefined) {
           const { instanceId } = styleValueInfo.inherited;
           const instance = instances.get(instanceId);
           return (

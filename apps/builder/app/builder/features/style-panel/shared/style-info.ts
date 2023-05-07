@@ -101,8 +101,7 @@ export const getStyleSource = (
     if (
       info?.previousSource !== undefined ||
       info?.nextSource !== undefined ||
-      info?.cascaded !== undefined ||
-      info?.inherited !== undefined
+      info?.cascaded !== undefined
     ) {
       return "remote";
     }
@@ -110,6 +109,11 @@ export const getStyleSource = (
   for (const info of styleValueInfos) {
     if (info?.preset !== undefined) {
       return "preset";
+    }
+  }
+  for (const info of styleValueInfos) {
+    if (info?.inherited !== undefined) {
+      return "remote";
     }
   }
   return "default";
@@ -208,7 +212,11 @@ export const getInstanceComponent = (
   return instance.component;
 };
 
-export const getPresetStyleRule = (component: string, tagName: HtmlTags) => {
+export const getPresetStyleRule = (
+  component: string,
+  tagName: HtmlTags,
+  styleSourceSelector?: StyleSourceSelector
+) => {
   const meta = getComponentMeta(component);
   const presetStyles = meta?.presetStyle?.[tagName];
   if (presetStyles === undefined) {
@@ -216,7 +224,7 @@ export const getPresetStyleRule = (component: string, tagName: HtmlTags) => {
   }
   const presetStyle: Style = {};
   for (const styleDecl of presetStyles) {
-    if (styleDecl.state === undefined) {
+    if (styleDecl.state === styleSourceSelector?.state) {
       presetStyle[styleDecl.property] = styleDecl.value;
     }
   }
@@ -473,7 +481,10 @@ export const useStyleInfo = () => {
 
   const presetStyle = useMemo(() => {
     const selectedInstanceId = selectedInstanceSelector?.[0];
-    if (selectedInstanceId === undefined) {
+    if (
+      selectedInstanceId === undefined ||
+      selectedOrLastStyleSourceSelector === undefined
+    ) {
       return;
     }
     const tagName = selectedInstanceIntanceToTag?.get(selectedInstanceId);
@@ -481,8 +492,17 @@ export const useStyleInfo = () => {
     if (tagName === undefined || component === undefined) {
       return;
     }
-    return getPresetStyleRule(component, tagName);
-  }, [instances, selectedInstanceSelector, selectedInstanceIntanceToTag]);
+    return getPresetStyleRule(
+      component,
+      tagName,
+      selectedOrLastStyleSourceSelector
+    );
+  }, [
+    instances,
+    selectedInstanceSelector,
+    selectedInstanceIntanceToTag,
+    selectedOrLastStyleSourceSelector,
+  ]);
 
   const htmlStyle = useMemo(() => {
     const instanceId = selectedInstanceSelector?.[0];
@@ -523,8 +543,8 @@ export const useStyleInfo = () => {
         nextSource?.value ??
         previousSource?.value ??
         cascaded?.value ??
-        inherited?.value ??
         preset ??
+        inherited?.value ??
         defaultValue;
       if (value) {
         if (property === "color") {
