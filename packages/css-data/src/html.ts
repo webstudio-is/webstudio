@@ -440,7 +440,7 @@ export const sup: Styles = [
 
 export const a: Styles = [
   {
-    property: "textDecorationStyle",
+    property: "textDecorationLine",
     value: { type: "keyword", value: "underline" },
   },
   {
