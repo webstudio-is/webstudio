@@ -175,6 +175,7 @@ export const WebstudioComponentDev = ({
         <SelectedInstanceConnector
           instanceElementRef={instanceElementRef}
           instance={instance}
+          instanceSelector={instanceSelector}
           instanceStyles={instanceStyles}
           instanceProps={instanceProps}
         />

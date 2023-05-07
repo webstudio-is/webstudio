@@ -11,6 +11,7 @@ import {
   selectedInstanceIntanceToTagStore,
   selectedInstanceUnitSizesStore,
   selectedInstanceIsRenderedStore,
+  selectedInstanceSelectorStore,
 } from "~/shared/nano-states";
 import htmlTags, { type htmlTags as HtmlTags } from "html-tags";
 import { getAllElementsBoundingBox } from "~/shared/dom-utils";
@@ -18,6 +19,10 @@ import { subscribeScrollState } from "~/canvas/shared/scroll-state";
 import { selectedInstanceOutlineStore } from "~/shared/nano-states";
 import type { UnitSizes } from "~/builder/features/style-panel/shared/css-value-input/convert-units";
 import { setDataCollapsed } from "~/canvas/collapsed";
+import {
+  areInstanceSelectorsEqual,
+  type InstanceSelector,
+} from "~/shared/tree-utils";
 
 const isHtmlTag = (tag: string): tag is HtmlTags =>
   htmlTags.includes(tag as HtmlTags);
@@ -72,11 +77,13 @@ export const SelectedInstanceConnector = ({
   instance,
   instanceStyles,
   instanceProps,
+  instanceSelector,
 }: {
   instanceElementRef: { current: undefined | HTMLElement };
   instance: Instance;
   instanceStyles: StyleDecl[];
   instanceProps: undefined | Prop[];
+  instanceSelector: InstanceSelector;
 }) => {
   const instances = useStore(instancesStore);
 
@@ -185,11 +192,20 @@ export const SelectedInstanceConnector = ({
       unsubscribeScrollState();
       unsubscribeWindowResize();
       unsubscribeIsResizingCanvas();
-      selectedInstanceIsRenderedStore.set(false);
+
+      if (
+        areInstanceSelectorsEqual(
+          selectedInstanceSelectorStore.get(),
+          instanceSelector
+        ) === false
+      ) {
+        selectedInstanceIsRenderedStore.set(false);
+      }
     };
   }, [
     instanceElementRef,
     instance,
+    instanceSelector,
     instanceStyles,
     // instance props may change dom element
     instanceProps,
