@@ -77,6 +77,9 @@ export const action = async ({ request }: ActionArgs) => {
 
   const skipValidation = true;
 
+  // Used to optimize by validating only changed styles, as they accounted for 99% of validation time
+  const patchedStyleDeclKeysSet = new Set<string>();
+
   for await (const transaction of transactions) {
     for await (const change of transaction.changes) {
       const { namespace, patches } = change;
@@ -123,6 +126,11 @@ export const action = async ({ request }: ActionArgs) => {
       }
 
       if (namespace === "styles") {
+        // It's somehow implementation detail leak, as we use the fact that styles patches has ids in path
+        for (const patch of patches) {
+          patchedStyleDeclKeysSet.add(`${patch.path[0]}`);
+        }
+
         const styles =
           buildData.styles ?? parseStyles(build.styles, skipValidation);
         buildData.styles = applyPatches(styles, patches);
@@ -163,19 +171,23 @@ export const action = async ({ request }: ActionArgs) => {
     // parse with zod before serialization to avoid saving invalid data
     dbBuildData.pages = serializePages(Pages.parse(buildData.pages));
   }
+
   if (buildData.breakpoints) {
     dbBuildData.breakpoints = serializeBreakpoints(
       Breakpoints.parse(buildData.breakpoints)
     );
   }
+
   if (buildData.instances) {
     dbBuildData.instances = serializeInstances(
       Instances.parse(buildData.instances)
     );
   }
+
   if (buildData.props) {
     dbBuildData.props = serializeProps(Props.parse(buildData.props));
   }
+
   if (buildData.styleSources) {
     dbBuildData.styleSources = serializeStyleSources(
       StyleSources.parse(buildData.styleSources)
@@ -186,9 +198,25 @@ export const action = async ({ request }: ActionArgs) => {
       StyleSourceSelections.parse(buildData.styleSourceSelections)
     );
   }
+
   if (buildData.styles) {
-    dbBuildData.styles = serializeStyles(Styles.parse(buildData.styles));
+    // Optimize by validating only changed styles, as they accounted for 99% of validation time
+    const stylesToValidate: Styles = new Map();
+    for (const styleId of patchedStyleDeclKeysSet) {
+      const style = buildData.styles.get(styleId);
+      // In case of deletion style could be undefined
+      if (style === undefined) {
+        continue;
+      }
+
+      stylesToValidate.set(styleId, style);
+    }
+
+    Styles.parse(stylesToValidate);
+
+    dbBuildData.styles = serializeStyles(buildData.styles);
   }
+
   // check any build data is changed because only assets could change
   if (Object.keys(dbBuildData).length > 0) {
     await prisma.build.update({
