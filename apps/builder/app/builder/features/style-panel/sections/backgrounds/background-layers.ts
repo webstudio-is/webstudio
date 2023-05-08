@@ -102,6 +102,7 @@ export const getLayerBackgroundStyleInfo = (
     const localStyle = styleValue?.local;
     const cascadedStyle = styleValue?.cascaded;
     const previousSourceStyle = styleValue?.previousSource;
+    const nextSourceStyle = styleValue?.nextSource;
 
     if (valueStyle?.type === "layers") {
       const styleValue = valueStyle.value[layerNum];
@@ -117,6 +118,14 @@ export const getLayerBackgroundStyleInfo = (
       const styleValue = previousSourceStyle.value.value[layerNum];
       resultProperty["previousSource"] = {
         styleSourceId: previousSourceStyle.styleSourceId,
+        value: styleValue,
+      };
+    }
+
+    if (nextSourceStyle?.value?.type === "layers") {
+      const styleValue = nextSourceStyle.value.value[layerNum];
+      resultProperty["nextSource"] = {
+        styleSourceId: nextSourceStyle.styleSourceId,
         value: styleValue,
       };
     }
@@ -160,6 +169,10 @@ const getLayersValue = (styleValue?: StyleValueInfo) => {
     structuredClone(styleValue);
   if (clonedStyleValue?.local?.type === "layers") {
     return clonedStyleValue.local;
+  }
+
+  if (clonedStyleValue?.nextSource?.value?.type === "layers") {
+    return clonedStyleValue?.nextSource?.value;
   }
 
   if (clonedStyleValue?.previousSource?.value?.type === "layers") {
