@@ -35,9 +35,7 @@ export const OutlineOffset = (
         property={property}
         style={props.currentStyle}
         label={"Offset"}
-        onReset={() => {
-          console.log("called reset");
-        }}
+        onReset={() => deleteProperty(property)}
       />
 
       <CssValueInputContainer
