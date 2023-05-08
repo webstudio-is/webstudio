@@ -78,7 +78,7 @@ export const action = async ({ request }: ActionArgs) => {
   const skipValidation = true;
 
   // Used to optimize by validating only changed styles, as they accounted for 99% of validation time
-  const patchedStyleIdsSet = new Set<string>();
+  const patchedStyleDeclKeysSet = new Set<string>();
 
   for await (const transaction of transactions) {
     for await (const change of transaction.changes) {
@@ -128,7 +128,7 @@ export const action = async ({ request }: ActionArgs) => {
       if (namespace === "styles") {
         // It's somehow implementation detail leak, as we use the fact that styles patches has ids in path
         for (const patch of patches) {
-          patchedStyleIdsSet.add(`${patch.path[0]}`);
+          patchedStyleDeclKeysSet.add(`${patch.path[0]}`);
         }
 
         const styles =
@@ -202,8 +202,9 @@ export const action = async ({ request }: ActionArgs) => {
   if (buildData.styles) {
     // Optimize by validating only changed styles, as they accounted for 99% of validation time
     const stylesToValidate: Styles = new Map();
-    for (const styleId of patchedStyleIdsSet) {
+    for (const styleId of patchedStyleDeclKeysSet) {
       const style = buildData.styles.get(styleId);
+      // In case of deletion style could be undefined
       if (style === undefined) {
         continue;
       }
