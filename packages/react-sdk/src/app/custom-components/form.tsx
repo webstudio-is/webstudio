@@ -97,7 +97,7 @@ export const Form = forwardRef<
 
   return (
     <fetcher.Form {...props} method="post" data-state={state} ref={ref}>
-      <input type="hidden" name="ws-form-id" value={instanceId} />
+      <input type="hidden" name="ws--form-id" value={instanceId} />
       {state === "success"
         ? onlySuccessMessage(children)
         : state === "error"
