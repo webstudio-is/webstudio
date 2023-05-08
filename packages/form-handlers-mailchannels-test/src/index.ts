@@ -13,13 +13,19 @@ export default {
     }
 
     const formData = new FormData();
+    formData.append("ws--form-id", "test-form");
     formData.append("name", "Bob");
     formData.append("time", new Date().toLocaleString("en-US"));
 
     const result = await mailchannelsHandler({
-      senderEmail: "test@webstudio.is",
-      recipientEmail: to,
-      formData,
+      formInto: {
+        formData,
+        projectDomain: "example.com",
+        projectId: "test-project",
+        pageUrl: "https://example.com/some-page",
+        email: to,
+      },
+      senderDomain: "webstudio.is",
     });
 
     if (result.success) {

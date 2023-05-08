@@ -4,7 +4,13 @@
 //
 // To test see `packages/form-handlers-mailchannels-test`
 
-import { formDataToEmailContent, getErrors, getResponseBody } from "./shared";
+import {
+  type FormInfo,
+  type Result,
+  formToEmail,
+  getErrors,
+  getResponseBody,
+} from "./shared";
 
 type EmailAddress = {
   email: string;
@@ -38,11 +44,7 @@ type SendEmailPayload = {
   headers?: Record<string, string>;
 };
 
-type SendEmailResult = { success: true } | { success: false; errors: string[] };
-
-const sendEmail = async (
-  payload: SendEmailPayload
-): Promise<SendEmailResult> => {
+const sendEmail = async (payload: SendEmailPayload): Promise<Result> => {
   let response: Response;
   try {
     response = await fetch("https://api.mailchannels.net/tx/v1/send", {
@@ -64,27 +66,24 @@ const sendEmail = async (
 };
 
 export const mailchannelsHandler = async ({
-  formData,
-  intro,
-  subject = "New form submission",
-  recipientEmail,
-  senderEmail,
+  formInto,
+  senderDomain,
 }: {
-  formData: FormData;
-  intro?: string;
-  subject?: string;
-  recipientEmail: string;
-  senderEmail: string;
+  formInto: FormInfo;
+  senderDomain?: string;
 }) => {
-  const { plainText, html } = formDataToEmailContent({ formData, intro });
+  const email = formToEmail(formInto, senderDomain);
 
   return sendEmail({
-    personalizations: [{ to: [{ email: recipientEmail }] }],
-    from: { email: senderEmail },
-    subject: subject,
+    personalizations: [{ to: [{ email: email.to }] }],
+    from: { email: email.from },
+    subject: email.subject,
     content: [
-      { type: "text/plain", value: plainText },
-      { type: "text/html", value: html },
+      { type: "text/plain", value: email.txt },
+      {
+        type: "text/html",
+        value: `<!DOCTYPE html><html><body>${email.html}</body></html>`,
+      },
     ],
   });
 };

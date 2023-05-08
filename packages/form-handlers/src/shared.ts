@@ -1,38 +1,55 @@
-export type EmailContent = { plainText: string; html: string };
-
-export const formDataToEmailContent = ({
-  formData,
-  intro = "There has been a new submission of your form:",
-  unsubscribeUrl,
-}: {
+export type FormInfo = {
+  projectId: string;
+  projectDomain: string;
+  pageUrl: string;
   formData: FormData;
-  intro?: string;
-  unsubscribeUrl?: string;
-}): EmailContent => {
-  const entries = [...formData.entries()];
+  email: string;
+};
 
-  const htmlRows = entries
-    .map(
-      ([key, value]) =>
-        `<tr><td><strong>${key}:</strong></td><td>${value}</td></tr>`
-    )
-    .join("");
+export type EmailInfo = {
+  from: string;
+  to: string;
+  txt: string;
+  /** Only the body content, requers wrapping into `<!DOCTYPE html><html><body>...</body></html>` */
+  html: string;
+  subject: string;
+};
 
-  const plainTextRows = entries
-    .map(([key, value]) => `${key}: ${value}`)
-    .join("\n");
+export type Result = { success: true } | { success: false; errors: string[] };
 
-  const unsubscribePlainText = unsubscribeUrl
-    ? `\n\nTo unsubscribe, click here: ${unsubscribeUrl}`
-    : "";
+export const getFormEntries = (formData: FormData) =>
+  [...formData.entries()].filter(([key]) => key.startsWith("ws--") === false);
 
-  const unsubscribeHtml = unsubscribeUrl
-    ? `<p>To unsubscribe, click <a href="${unsubscribeUrl}">here</a>.</p>`
-    : "";
+export const getFormId = (formData: FormData) => {
+  for (const [key, value] of formData.entries()) {
+    if (key === "ws--form-id") {
+      return value;
+    }
+  }
+};
+
+export const formToEmail = (
+  { formData, pageUrl, projectDomain, email }: FormInfo,
+  senderDomain = "webstudio.mail"
+): EmailInfo => {
+  let html = `<p>There has been a new submission of your form at <a href="${pageUrl}">${pageUrl}</a>:</p>`;
+  let txt = `There has been a new submission of your form at ${pageUrl}:\n\n`;
+
+  html += "<table><tbody>";
+
+  for (const [key, value] of getFormEntries(formData)) {
+    html += `<tr><td><strong>${key}:</strong></td><td>${value}</td></tr>`;
+    txt += `${key}: ${value}\n`;
+  }
+
+  html += "</tbody></table>";
 
   return {
-    plainText: `${intro}\n\n${plainTextRows}${unsubscribePlainText}`,
-    html: `<!DOCTYPE html><html><body><p>${intro}</p><table><tbody>${htmlRows}</tbody></table>${unsubscribeHtml}</body></html>`,
+    from: `${projectDomain}@${senderDomain}`,
+    to: email,
+    subject: `New form submission from ${projectDomain}`,
+    txt,
+    html,
   };
 };
 

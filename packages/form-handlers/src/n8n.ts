@@ -1,31 +1,25 @@
-import { formDataToEmailContent, getErrors, getResponseBody } from "./shared";
+import {
+  type FormInfo,
+  type Result,
+  formToEmail,
+  getFormEntries,
+  getErrors,
+  getResponseBody,
+  getFormId,
+} from "./shared";
 
 export const n8nHandler = async ({
-  formData,
-  intro,
-  subject = "New form submission",
-  unsubscribeUrl,
-  recipientEmail,
-  senderEmail,
+  formInto,
+  senderDomain,
   hookUrl,
   authentication,
 }: {
-  formData: FormData;
-  intro?: string;
-  subject?: string;
-  unsubscribeUrl?: string;
-  recipientEmail: string;
-  senderEmail: string;
+  formInto: FormInfo;
+  senderDomain?: string;
   hookUrl: string;
   // @todo: add support for other authentication types
   authentication?: { type: "basic"; username: string; password: string };
-}) => {
-  const { plainText, html } = formDataToEmailContent({
-    formData,
-    intro,
-    unsubscribeUrl,
-  });
-
+}): Promise<Result> => {
   const headers: HeadersInit = { "Content-Type": "application/json" };
 
   if (authentication?.type === "basic") {
@@ -34,15 +28,17 @@ export const n8nHandler = async ({
     ).toString("base64")}`;
   }
 
+  const formId = getFormId(formInto.formData);
+
+  if (formId === undefined) {
+    return { success: false, errors: ["No form id in FormData"] };
+  }
+
   const payload = {
-    email: {
-      to: recipientEmail,
-      from: senderEmail,
-      subject,
-      plainText,
-      html,
-    },
-    formData: Object.fromEntries(formData),
+    email: formToEmail(formInto, senderDomain),
+    // globally unique form id (can be used for unsubscribing)
+    formId: [formInto.projectId, formId].join("--"),
+    formData: Object.fromEntries(getFormEntries(formInto.formData)),
   };
 
   let response: Response;
