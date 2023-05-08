@@ -3,19 +3,15 @@ import { Flex, css } from "@webstudio-is/design-system";
 import { SvgLoading } from "~/dashboard/loading-state/svg-loading";
 import { WebmLoading } from "~/dashboard/loading-state/webm-loading";
 
-const containerStyle = {
+const containerStyle = css({
   position: "absolute",
   left: "0",
   right: "0",
   top: "0",
   bottom: "0",
-};
-
-const lightContainerStyle = css(containerStyle, {
-  backgroundColor: "rgb(255 255 255 / 50%);",
-});
-const darkContainerStyle = css(containerStyle, {
-  backgroundColor: "rgb(0 0 0 / 80%);",
+  background:
+    "radial-gradient(34.37% 50% at 50% 50%, rgba(255, 255, 255, 0.5) 0%, rgba(248, 248, 248, 0.5) 100%);",
+  backdropFilter: "blur(8px)",
 });
 
 export const Loading = ({
@@ -45,7 +41,7 @@ export const Loading = ({
       direction="row"
       justify="center"
       align="center"
-      className={isDark ? darkContainerStyle() : lightContainerStyle()}
+      className={containerStyle()}
     >
       {type === "webm" ? <WebmLoading size={100} /> : <SvgLoading size={100} />}
     </Flex>
