@@ -5,7 +5,6 @@ import {
   SidebarTabsContent,
   SidebarTabsList,
   SidebarTabsTrigger,
-  ToolbarToggleItem,
 } from "@webstudio-is/design-system";
 import { useSubscribe, type Publish } from "~/shared/pubsub";
 import { useDragAndDropState } from "~/shared/nano-states";
