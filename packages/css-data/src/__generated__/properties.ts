@@ -2365,7 +2365,7 @@ export const properties = {
     inherited: false,
     initial: {
       type: "keyword",
-      value: "invertOrCurrentColor",
+      value: "currentColor",
     },
     popularity: 0.09538741,
     appliesTo: "allElements",

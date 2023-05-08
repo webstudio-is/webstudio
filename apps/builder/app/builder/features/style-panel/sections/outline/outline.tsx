@@ -1,7 +1,6 @@
 import { Flex, Grid, theme, Box } from "@webstudio-is/design-system";
 import type { StyleProperty } from "@webstudio-is/css-data";
 import { ColorControl } from "../../controls";
-import { styleConfigByName } from "../../shared/configs";
 import { CollapsibleSection } from "../../shared/collapsible-section";
 import type { RenderCategoryProps } from "../../style-sections";
 import { OutlineStyle } from "./outline-style";
@@ -9,8 +8,7 @@ import { PropertyName } from "../../shared/property-name";
 import { OutlineWidth } from "./outline-width";
 import { OutlineOffset } from "./outline-offset";
 
-const { items: outlineColorItems } = styleConfigByName("outlineColor");
-
+const property: StyleProperty = "outlineColor";
 const properties: StyleProperty[] = [
   "outlineStyle",
   "outlineColor",
@@ -18,13 +16,13 @@ const properties: StyleProperty[] = [
   "outlineOffset",
 ];
 
-export const OutlinesSection = (props: RenderCategoryProps) => {
+export const OutlineSection = (props: RenderCategoryProps) => {
   const { currentStyle, setProperty, deleteProperty, createBatchUpdate } =
     props;
 
   return (
     <CollapsibleSection
-      label="Outlines"
+      label="Outline"
       currentStyle={currentStyle}
       properties={properties}
     >
@@ -44,9 +42,9 @@ export const OutlinesSection = (props: RenderCategoryProps) => {
         >
           <PropertyName
             style={currentStyle}
-            property={["outlineColor"]}
+            property={property}
             label={"Color"}
-            onReset={() => deleteProperty("outlineColor")}
+            onReset={() => deleteProperty(property)}
           />
 
           <Box
@@ -54,13 +52,12 @@ export const OutlinesSection = (props: RenderCategoryProps) => {
               gridColumn: `span 2`,
             }}
           >
-            {/* <ColorControl
-              property={"outlineColor"}
-              items={outlineColorItems}
-              currentStyle={currentStyle} */}
-            {/* setProperty={() => setProperty('outlineColor')}
-              deleteProperty={() => deleteProperty('outlineColor')} */}
-            {/* /> */}
+            <ColorControl
+              property={property}
+              currentStyle={currentStyle}
+              setProperty={setProperty}
+              deleteProperty={deleteProperty}
+            />
           </Box>
         </Grid>
 
