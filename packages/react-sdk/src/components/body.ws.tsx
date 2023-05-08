@@ -1,9 +1,10 @@
 import { BodyIcon } from "@webstudio-is/icons";
 import { body } from "../css/normalize";
-import type {
-  PresetStyle,
-  WsComponentMeta,
-  WsComponentPropsMeta,
+import {
+  defaultStates,
+  type PresetStyle,
+  type WsComponentMeta,
+  type WsComponentPropsMeta,
 } from "./component-meta";
 import { props } from "./__generated__/body.props";
 import type { defaultTag } from "./body";
@@ -41,6 +42,7 @@ export const meta: WsComponentMeta = {
   type: "container",
   label: "Body",
   Icon: BodyIcon,
+  states: defaultStates,
   presetStyle,
 };
 

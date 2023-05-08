@@ -15,5 +15,6 @@ export {
   type WsComponentMeta,
   type ComponentState,
   componentCategories,
+  stateCategories,
 } from "./components/component-meta";
 export * from "./embed-template";

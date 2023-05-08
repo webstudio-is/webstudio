@@ -1,10 +1,11 @@
 import { HeadingIcon } from "@webstudio-is/icons";
 import type { ComponentProps } from "react";
 import { h1, h2, h3, h4, h5, h6 } from "../css/normalize";
-import type {
-  PresetStyle,
-  WsComponentMeta,
-  WsComponentPropsMeta,
+import {
+  defaultStates,
+  type PresetStyle,
+  type WsComponentMeta,
+  type WsComponentPropsMeta,
 } from "./component-meta";
 import type { Heading } from "./heading";
 import { props } from "./__generated__/heading.props";
@@ -26,6 +27,7 @@ export const meta: WsComponentMeta = {
   label: "Heading",
   Icon: HeadingIcon,
   children: [{ type: "text", value: "Heading you can edit" }],
+  states: defaultStates,
   presetStyle,
 };
 

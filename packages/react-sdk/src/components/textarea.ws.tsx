@@ -1,9 +1,10 @@
 import { FormTextAreaIcon } from "@webstudio-is/icons";
 import { textarea } from "../css/normalize";
-import type {
-  WsComponentMeta,
-  WsComponentPropsMeta,
-  PresetStyle,
+import {
+  type WsComponentMeta,
+  type WsComponentPropsMeta,
+  type PresetStyle,
+  defaultStates,
 } from "./component-meta";
 import type { defaultTag } from "./textarea";
 import { props } from "./__generated__/textarea.props";
@@ -23,6 +24,7 @@ export const meta: WsComponentMeta = {
   Icon: FormTextAreaIcon,
   presetStyle,
   states: [
+    ...defaultStates,
     { selector: "::placeholder", label: "Placeholder" },
     { selector: ":valid", label: "Valid" },
     { selector: ":invalid", label: "Invalid" },
