@@ -1,5 +1,6 @@
 import type { ActionArgs } from "@remix-run/node";
 import { isFeatureEnabled } from "@webstudio-is/feature-flags";
+import { EmbedTemplateStyles, WsEmbedTemplate } from "@webstudio-is/react-sdk";
 import { fromMarkdown as parseMarkdown } from "mdast-util-from-markdown";
 import type {
   ChatCompletionRequestMessage,
@@ -17,7 +18,7 @@ type Steps = [Step, string][];
 type Messages = (ChatCompletionRequestMessage[] | null)[];
 
 const schema = zfd.formData({
-  prompt: zfd.text(z.string().max(140)),
+  prompt: zfd.text(z.string().max(280)),
   steps: zfd.repeatableOfType(zfd.text(StepSchema)),
   messages: zfd.repeatableOfType(zfd.text().optional()),
 });
@@ -45,7 +46,7 @@ export const action = async ({ request }: ActionArgs) => {
 
   try {
     const formData = schema.parse(await request.formData());
-    const userPrompt = formData.prompt;
+    const userPrompt = formData.prompt.trim();
     const steps: Steps = formData.steps.map((step) => [step, templates[step]]);
     const messages: Messages = steps.map((_, index) => {
       const m = formData.messages[index];
@@ -60,7 +61,7 @@ export const action = async ({ request }: ActionArgs) => {
         apiKey: env.OPENAI_KEY || "",
         organization: env.OPENAI_ORG || "",
         model: "gpt-3.5-turbo",
-        maxTokens: 2000,
+        maxTokens: 3000,
       },
     });
 
@@ -70,6 +71,15 @@ export const action = async ({ request }: ActionArgs) => {
   }
 
   return { errors: "Unexpected error" };
+};
+
+const validators = {
+  instances: (json: unknown) => {
+    WsEmbedTemplate.parse(json);
+  },
+  styles: (json: unknown) => {
+    z.array(EmbedTemplateStyles).parse(json);
+  },
 };
 
 export const generate = async function generate({
@@ -121,16 +131,24 @@ export const generate = async function generate({
     });
 
     const responses = await chain();
-    return responses
-      .map(([step, response]) => [
-        step,
-        // @todo Validate code block against step's schema.
-        getJSONCodeBlock(response),
-      ])
-      .map(([step, response]) => [
-        step,
-        Array.isArray(response) ? response : [response],
-      ]);
+    return responses.map(([step, response]) => {
+      const json = getJSONCodeBlock(response);
+
+      if (typeof validators[step] === "function") {
+        try {
+          validators[step](json);
+        } catch (error) {
+          const errorMessage = `Invalid ${step} generation. ${
+            process.env.NODE_ENV === "production"
+              ? ""
+              : `${JSON.stringify(json, null, 2)}\n\n${error.message}`
+          }`;
+          throw new Error(errorMessage);
+        }
+      }
+
+      return [step, Array.isArray(json) ? json : [json]];
+    });
   } catch (error) {
     const errorMessage = `Something went wrong. ${
       process.env.NODE_ENV === "production" ? "" : `${(error as Error).message}`
@@ -223,28 +241,13 @@ const getJSONCodeBlock = (text: string) => {
 // The ones below are very WIP and rudimental.
 const templates = {
   instances: `
-You are WebstudioGPT a no-code tool for designers that generates a clean UI markup as single JSON code block.
+You are WebstudioGPT a no-code tool for designers that generates a JSON representation of UI markup.
 
-Rules:
-
-- Don't use any dependency or external library.
-- Any of your answers can be parsed as JSON, therefore you will exclusively generate a single code block with valid JSON.
-- Do not generate nor include any explanation.
-
-The only available components (instances) are the following:
-
-- Box: a container element
-- Heading: typography element used for headings and titles
-- TextBlock: typography element for generic blocks of text (eg. a paragraph)
-- Input: an input field component
-- TextArea: a multi line input field component
-- Button: a button component
-
-Use only the components that you need to represent the following request:
+Without using any dependency or external library, generate a JSON object for the following request:
 
 <!--prompt-content-->
 
-The produced JSON code block strictly follows the TypeScript definitions (spec) below:
+Respond in valid JSON that strictly follows the TypeScript definitions below:
 
 \`\`\`typescript
 type EmbedTemplateText = {
@@ -254,6 +257,21 @@ type EmbedTemplateText = {
 
 type EmbedTemplateInstance = {
   type: "instance";
+  /*
+    component can be:
+    - Box: a container element
+    - Heading: typography element used for headings and titles
+    - TextBlock: typography element for generic blocks of text (eg. a paragraph)
+    - Link: a text link
+    - List: a bulleted or numbere list container element
+    - List Item: a item in a List component
+    - Input: an input field component
+    - Label: a label for an Input or TextArea component
+    - TextArea: a multi line input field component
+    - RadioButton: a radio input component
+    - Checkbox: a checkbox field
+    - Button: a button component
+  */
   component: string;
   children: Array<EmbedTemplateInstance | EmbedTemplateText>;
 };
@@ -275,29 +293,28 @@ Below is an example of valid output:
     ],
   },
 ]
-\`\`\``,
-  styles: `The JSON above describes <!--prompt-content-->.
+\`\`\`
 
-Using it as a reference, generate styles (JSONResult) for it following the spec below:
+Omit information like "props" that are not in the TypeScript definitions above.`,
+  styles: `Given the "input JSON" object representing a UI component structure provided in the previous message, your task is to generate a new JSON object representing **only** the styles for the components in that structure. Ensure that the existing properties such as "type" or "component" are not repeated in the output JSON. Don't generate styles for elements with "type" equal to "text".
 
-- EmbedTemplateStyleDecl properties are camel case eg. \`backgroundColor\`.
-- Every EmbedTemplateStyleDecl must have a non-empty value.
-- Don't create styles for children of type \`text\`.
-- Any of your answers can be parsed as JSON, therefore you will exclusively generate a code block with valid JSON.
-- Do not generate nor include any explanation.
+User Request that generated the "input JSON": "<!--prompt-content-->".
 
-Use the following type definitions to generate the styles JSON:
+Respond in valid JSON that strictly follows the TypeScript definitions below:
 
 \`\`\`typescript
 type JSONResult = EmbedTemplateStyles[];
 
 type EmbedTemplateStyles = {
   styles: EmbedTemplateStyleDecl[],
-  children: EmbedTemplateStyles[]
+  children?: EmbedTemplateStyles[]
 };
 
 type EmbedTemplateStyleDecl = {
   state?: string,
+  /*
+   property's values are camelCase e.g. flexDirection.
+  */
   property: string;
   value:
     | {
@@ -328,77 +345,17 @@ type EmbedTemplateStyleDecl = {
 
 type Units = {
   type: "unit";
-  unit:
-    | (
-        | "%"
-        | "deg"
-        | "grad"
-        | "rad"
-        | "turn"
-        | "db"
-        | "fr"
-        | "hz"
-        | "khz"
-        | "cm"
-        | "mm"
-        | "q"
-        | "in"
-        | "pt"
-        | "pc"
-        | "px"
-        | "em"
-        | "rem"
-        | "ex"
-        | "rex"
-        | "cap"
-        | "rcap"
-        | "ch"
-        | "rch"
-        | "ic"
-        | "ric"
-        | "lh"
-        | "rlh"
-        | "vw"
-        | "svw"
-        | "lvw"
-        | "dvw"
-        | "vh"
-        | "svh"
-        | "lvh"
-        | "dvh"
-        | "vi"
-        | "svi"
-        | "lvi"
-        | "dvi"
-        | "vb"
-        | "svb"
-        | "lvb"
-        | "dvb"
-        | "vmin"
-        | "svmin"
-        | "lvmin"
-        | "dvmin"
-        | "vmax"
-        | "svmax"
-        | "lvmax"
-        | "dvmax"
-        | "cqw"
-        | "cqh"
-        | "cqi"typography
-        | "cqb"
-        | "cqmin"
-        | "cqmax"
-        | "dpi"
-        | "dpcm"
-        | "dppx"
-        | "x"
-        | "st"
-        | "s"
-        | "ms"
-      )
-    | "number";
   value: number;
+  /* unit is a ValidCSSUnit (string) or the string literal "number" for unitless numbers */
+  unit: ValidCSSUnit | "number";
 };
 \`\`\`
-`,
+
+Comments in the code block provide further context for the immediate key that follows.
+
+Example result:
+
+\`\`\`json
+[{"styles":[{"property":"display","value":{"type":"keyword","value":"flex"}},{"property":"flexDirection","value":{"type":"keyword","value": "column"}}],"children":[{"styles":[{"property":"marginBottom","value":{"type":"unit","value": 10,"unit":"px"}}]},{"styles":[{"property":"marginBottom","value":{"type":"unit","value": 10,"unit":"px"}}]}]}]
+\`\`\``,
 };

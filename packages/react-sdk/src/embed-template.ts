@@ -51,6 +51,19 @@ export const EmbedTemplateStyleDecl = z.object({
 
 export type EmbedTemplateStyleDecl = z.infer<typeof EmbedTemplateStyleDecl>;
 
+export type EmbedTemplateStyles = {
+  styles: EmbedTemplateStyleDecl[];
+  children?: EmbedTemplateStyles[];
+};
+
+// @todo figure out a way to construct EmbedTemplateInstance so that it can use EmbedTemplateStyles.
+export const EmbedTemplateStyles: z.ZodType<EmbedTemplateStyles> = z.lazy(() =>
+  z.object({
+    styles: z.array(EmbedTemplateStyleDecl),
+    children: z.optional(z.array(EmbedTemplateStyles)),
+  })
+);
+
 export type EmbedTemplateInstance = {
   type: "instance";
   component: string;

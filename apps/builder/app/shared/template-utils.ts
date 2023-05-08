@@ -33,7 +33,8 @@ export const insertTemplate = (
     dropTarget = findClosestDroppableTarget(
       instancesStore.get(),
       // fallback to root as drop target
-      selectedInstanceSelectorStore.get() ?? [selectedPage.rootInstanceId]
+      selectedInstanceSelectorStore.get() ?? [selectedPage.rootInstanceId],
+      []
     );
   }
 

@@ -82,7 +82,12 @@ export const TabContent = ({ publish, onSetActiveTab }: TabContentProps) => {
     const form = event.currentTarget as HTMLFormElement;
     const baseData = new FormData(form);
 
-    const responses: AIGenerationResponses = [];
+    const responses: AIGenerationResponses = [
+      // {
+      //   step: "instances",
+      //   response: exampleInstances,
+      // },
+    ];
 
     for (let i = 0; i < steps.length; ) {
       const step = steps[i];
@@ -126,6 +131,7 @@ export const TabContent = ({ publish, onSetActiveTab }: TabContentProps) => {
         responses.push({ step, response: response[0][1] });
         i++;
       } else {
+        console.log(response.errors);
         // @todo Handle failures - perhaps use expontential backoff retry.
         if (!window.confirm(`Something went wrong. Retry?`)) {
           setAiGenerationState({
@@ -140,7 +146,7 @@ export const TabContent = ({ publish, onSetActiveTab }: TabContentProps) => {
       merge({}, ...responses.flatMap(({ step, response }) => response)),
     ];
 
-    console.log(template);
+    console.log({ template });
 
     insertTemplate(template);
 
@@ -212,3 +218,27 @@ export const TabContent = ({ publish, onSetActiveTab }: TabContentProps) => {
 };
 
 export const icon = <EyeconOpenIcon />;
+
+const exampleInstances = [
+  {
+    type: "instance",
+    component: "Box",
+    children: [
+      {
+        type: "instance",
+        component: "Link",
+        children: [{ type: "text", value: "Home" }],
+      },
+      {
+        type: "instance",
+        component: "Link",
+        children: [{ type: "text", value: "About" }],
+      },
+      {
+        type: "instance",
+        component: "Link",
+        children: [{ type: "text", value: "Contact" }],
+      },
+    ],
+  },
+];
