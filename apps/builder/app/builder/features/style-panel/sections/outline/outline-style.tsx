@@ -17,10 +17,7 @@ import { toPascalCase } from "../../shared/keyword-utils";
 import { PropertyName } from "../../shared/property-name";
 import { toValue } from "@webstudio-is/css-engine";
 
-const outlineStyleProperties = [
-  "outlineStyle",
-] as const satisfies readonly StyleProperty[];
-
+const property: StyleProperty = "outlineStyle";
 const outlineStyleValues = [
   { value: "none", Icon: SmallXIcon },
   { value: "solid", Icon: DashBorderIcon },
@@ -50,10 +47,10 @@ export const OutlineStyle = (
       gap={2}
     >
       <PropertyName
-        property={outlineStyleProperties}
+        property={property}
         style={props.currentStyle}
         label={"Style"}
-        onReset={() => deleteProperty("outlineStyle")}
+        onReset={() => deleteProperty(property)}
       />
 
       <ToggleGroup
@@ -63,7 +60,7 @@ export const OutlineStyle = (
         }}
         type="single"
         value={outlineStyleValue}
-        onValueChange={(value) => setProperty("outlineStyle")(value)}
+        onValueChange={(value) => setProperty(property)(value)}
       >
         {outlineStyleValues.map(({ value, Icon }) => (
           <ToggleGroupItem key={value} value={value}>
