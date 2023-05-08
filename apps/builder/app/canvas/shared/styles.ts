@@ -60,8 +60,9 @@ export const helperStyles = [
   }`,
   // Using :where allows to prevent increasing specificity, so that helper is overwritten by user styles.
   `[${idAttribute}]:where([${collapsedAttribute}]:not(body)) {
-    outline: 1px dashed #555;
-    outline-offset: -0.5px;
+    outline: 1px dashed rgba(0,0,0,0.7);
+    outline-offset: -1px;
+    box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.7);
   }`,
   // Has no width, will collapse
   `[${idAttribute}]:where(:not(body)[${collapsedAttribute}="w"]) {
