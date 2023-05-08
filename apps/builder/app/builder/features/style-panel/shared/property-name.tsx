@@ -209,7 +209,7 @@ export const PropertyName = ({
   });
 
   const labelElement = (
-    <Flex shrink gap={1}>
+    <Flex shrink gap={1} align="center">
       {typeof label === "string" ? (
         <Label color={styleSource} truncate>
           {label}
