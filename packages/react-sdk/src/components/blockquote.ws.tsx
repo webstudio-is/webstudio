@@ -1,9 +1,10 @@
 import { BlockquoteIcon } from "@webstudio-is/icons";
 import type { defaultTag } from "./blockquote";
-import type {
-  PresetStyle,
-  WsComponentMeta,
-  WsComponentPropsMeta,
+import {
+  defaultStates,
+  type PresetStyle,
+  type WsComponentMeta,
+  type WsComponentPropsMeta,
 } from "./component-meta";
 import { props } from "./__generated__/blockquote.props";
 
@@ -63,6 +64,7 @@ export const meta: WsComponentMeta = {
   type: "rich-text",
   label: "Blockquote",
   Icon: BlockquoteIcon,
+  states: defaultStates,
   presetStyle,
   children: [{ type: "text", value: "Blockquote you can edit" }],
 };

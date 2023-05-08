@@ -16,8 +16,10 @@
  */
 
 // webstudio custom opinionated presets
-import { borders } from "./presets";
+import { borders, linkColors } from "./presets";
 import type { EmbedTemplateStyleDecl } from "../embed-template";
+
+export type Styles = EmbedTemplateStyleDecl[];
 
 /**
 Use a better box model (opinionated).
@@ -35,7 +37,7 @@ const boxSizing = {
  *   box-sizing: border-box;
   }
 */
-const baseStyle = [boxSizing, ...borders] satisfies EmbedTemplateStyleDecl[];
+const baseStyle = [boxSizing, ...borders] satisfies Styles;
 
 export const div = baseStyle;
 export const address = baseStyle;
@@ -61,7 +63,7 @@ export const i = baseStyle;
 
 export const img = baseStyle;
 
-export const a = baseStyle;
+export const a = [boxSizing, ...borders, ...linkColors];
 export const li = baseStyle;
 export const ul = baseStyle;
 export const ol = baseStyle;
@@ -93,7 +95,7 @@ export const html = [
   },
   boxSizing,
   ...borders,
-] satisfies EmbedTemplateStyleDecl[];
+] satisfies Styles;
 
 /**
 1. Remove the margin in all browsers.
@@ -127,7 +129,7 @@ export const body = [
   },
   boxSizing,
   ...borders,
-] satisfies EmbedTemplateStyleDecl[];
+] satisfies Styles;
 
 /**
 1. Add the correct height in Firefox.
@@ -146,7 +148,7 @@ export const hr = [
   },
   boxSizing,
   ...borders,
-] satisfies EmbedTemplateStyleDecl[];
+] satisfies Styles;
 
 /**
 Add the correct text decoration in Chrome, Edge, and Safari.
@@ -168,7 +170,7 @@ export const b = [
   },
   boxSizing,
   ...borders,
-] satisfies EmbedTemplateStyleDecl[];
+] satisfies Styles;
 export const strong = b;
 
 /**
@@ -191,7 +193,7 @@ export const code = [
   },
   boxSizing,
   ...borders,
-] satisfies EmbedTemplateStyleDecl[];
+] satisfies Styles;
 
 export const kbd = code;
 export const samp = code;
@@ -208,7 +210,7 @@ export const small = [
   },
   boxSizing,
   ...borders,
-] satisfies EmbedTemplateStyleDecl[];
+] satisfies Styles;
 
 /**
 Prevent 'sub' and 'sup' elements from affecting the line height in all browsers.
@@ -233,7 +235,7 @@ const subSupBase = [
   },
   boxSizing,
   ...borders,
-] satisfies EmbedTemplateStyleDecl[];
+] satisfies Styles;
 
 export const sub = [
   ...subSupBase,
@@ -241,7 +243,7 @@ export const sub = [
     property: "bottom",
     value: { type: "unit", value: -0.25, unit: "em" },
   },
-] satisfies EmbedTemplateStyleDecl[];
+] satisfies Styles;
 
 export const sup = [
   ...subSupBase,
@@ -249,7 +251,7 @@ export const sup = [
     property: "top",
     value: { type: "unit", value: -0.5, unit: "em" },
   },
-] satisfies EmbedTemplateStyleDecl[];
+] satisfies Styles;
 
 /*
 Tabular data
@@ -286,7 +288,7 @@ export const table = [
     value: { type: "keyword", value: "inherit" },
   },
   boxSizing,
-] satisfies EmbedTemplateStyleDecl[];
+] satisfies Styles;
 
 /*
 Forms
@@ -331,7 +333,7 @@ const buttonBase = [
   },
   boxSizing,
   ...borders,
-] satisfies EmbedTemplateStyleDecl[];
+] satisfies Styles;
 
 export const input = buttonBase;
 export const optgroup = buttonBase;
@@ -346,7 +348,7 @@ export const button = [
     property: "textTransform",
     value: { type: "keyword", value: "none" },
   },
-] satisfies EmbedTemplateStyleDecl[];
+] satisfies Styles;
 
 export const select = button;
 
@@ -418,7 +420,7 @@ export const legend = [
   },
   boxSizing,
   ...borders,
-] satisfies EmbedTemplateStyleDecl[];
+] satisfies Styles;
 
 /**
 Add the correct vertical alignment in Chrome and Firefox.
@@ -431,7 +433,7 @@ export const progress = [
   },
   boxSizing,
   ...borders,
-] satisfies EmbedTemplateStyleDecl[];
+] satisfies Styles;
 
 /**
 Correct the cursor style of increment and decrement buttons in Safari.
@@ -494,4 +496,4 @@ export const summary = [
   },
   boxSizing,
   ...borders,
-] satisfies EmbedTemplateStyleDecl[];
+] satisfies Styles;

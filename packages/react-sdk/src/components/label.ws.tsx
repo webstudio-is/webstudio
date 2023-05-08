@@ -1,8 +1,9 @@
 import { TextBlockIcon } from "@webstudio-is/icons";
-import type {
-  WsComponentMeta,
-  WsComponentPropsMeta,
-  PresetStyle,
+import {
+  type WsComponentMeta,
+  type WsComponentPropsMeta,
+  type PresetStyle,
+  defaultStates,
 } from "./component-meta";
 import { props } from "./__generated__/label.props";
 import type { defaultTag } from "./label";
@@ -20,6 +21,7 @@ export const meta: WsComponentMeta = {
   type: "rich-text",
   label: "Input Label",
   Icon: TextBlockIcon,
+  states: defaultStates,
   presetStyle,
   children: [{ type: "text", value: "Form Label" }],
 };

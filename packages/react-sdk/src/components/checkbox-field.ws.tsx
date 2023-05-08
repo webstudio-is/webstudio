@@ -1,8 +1,9 @@
 import { CheckboxCheckedIcon } from "@webstudio-is/icons";
-import type {
-  WsComponentMeta,
-  WsComponentPropsMeta,
-  PresetStyle,
+import {
+  type WsComponentMeta,
+  type WsComponentPropsMeta,
+  type PresetStyle,
+  defaultStates,
 } from "./component-meta";
 import { props } from "./__generated__/checkbox-field.props";
 import type { defaultTag } from "./checkbox-field";
@@ -20,6 +21,7 @@ export const meta: WsComponentMeta = {
   type: "container",
   label: "Checkbox Field",
   Icon: CheckboxCheckedIcon,
+  states: defaultStates,
   presetStyle,
   children: [
     { type: "instance", component: "Checkbox", props: [], children: [] },

@@ -19,7 +19,6 @@ import {
   Combobox,
   ComboboxAnchor,
   ComboboxContent,
-  DeprecatedTextFieldContainer,
   DeprecatedTextFieldInput,
   useDeprecatedTextFieldFocus,
   useCombobox,
@@ -31,6 +30,7 @@ import {
   DropdownMenuSeparator,
   rawTheme,
   theme,
+  styled,
 } from "@webstudio-is/design-system";
 import {
   forwardRef,
@@ -42,7 +42,7 @@ import {
   type ReactNode,
 } from "react";
 import { mergeRefs } from "@react-aria/utils";
-import type { ComponentState } from "@webstudio-is/react-sdk";
+import { type ComponentState, stateCategories } from "@webstudio-is/react-sdk";
 import { type ItemSource, menuCssVars, StyleSource } from "./style-source";
 import { useSortable } from "./use-sortable";
 import { matchSorter } from "match-sorter";
@@ -64,18 +64,32 @@ export type ItemSelector = {
   state?: string;
 };
 
+const TextFieldContainer = styled("div", {
+  // Custom
+  display: "flex",
+  flexWrap: "wrap",
+  alignItems: "center",
+  backgroundColor: theme.colors.backgroundControls,
+  gap: theme.spacing[3],
+  p: theme.spacing[3],
+  borderRadius: theme.borderRadius[4],
+  minHeight: theme.spacing[12],
+  minWidth: 0,
+  border: `1px solid ${theme.colors.borderMain}`,
+  "&:focus-within": {
+    outline: `2px solid ${theme.colors.borderFocus}`,
+    outlineOffset: -1,
+  },
+});
+
 type TextFieldBaseWrapperProps<Item extends IntermediateItem> = Omit<
   ComponentProps<"input">,
   "value"
 > &
-  Pick<
-    ComponentProps<typeof DeprecatedTextFieldContainer>,
-    "variant" | "state" | "css"
-  > & {
+  Pick<ComponentProps<typeof TextFieldContainer>, "css"> & {
     value: Array<Item>;
     selectedItemSelector: undefined | ItemSelector;
     label: string;
-    disabled?: boolean;
     containerRef?: RefObject<HTMLDivElement>;
     inputRef?: RefObject<HTMLInputElement>;
     renderStyleSourceMenuItems: (item: Item) => ReactNode;
@@ -93,11 +107,8 @@ const TextFieldBase: ForwardRefRenderFunction<
 > = (props, forwardedRef) => {
   const {
     css,
-    disabled,
     containerRef,
     inputRef,
-    state,
-    variant: textFieldVariant,
     onFocus,
     onBlur,
     onClick,
@@ -116,7 +127,6 @@ const TextFieldBase: ForwardRefRenderFunction<
     ...textFieldProps
   } = props;
   const [internalInputRef, focusProps] = useDeprecatedTextFieldFocus({
-    disabled,
     onFocus,
     onBlur,
   });
@@ -126,13 +136,10 @@ const TextFieldBase: ForwardRefRenderFunction<
   });
 
   return (
-    <DeprecatedTextFieldContainer
+    <TextFieldContainer
       {...focusProps}
-      aria-disabled={disabled}
       ref={mergeRefs(forwardedRef, containerRef ?? null, sortableRefCallback)}
-      state={state}
-      variant={textFieldVariant}
-      css={{ ...css, px: theme.spacing[3], py: theme.spacing[2] }}
+      css={css}
       style={
         dragItemId ? menuCssVars({ show: false, override: true }) : undefined
       }
@@ -175,15 +182,21 @@ const TextFieldBase: ForwardRefRenderFunction<
       {editingItemId === undefined && (
         <DeprecatedTextFieldInput
           {...textFieldProps}
+          css={{
+            color: theme.colors.hiContrast,
+            fontVariantNumeric: "tabular-nums",
+            fontFamily: theme.fonts.sans,
+            fontSize: theme.deprecatedFontSize[3],
+            lineHeight: 1,
+          }}
           value={label}
           type={type}
-          disabled={disabled}
           onClick={onClick}
           ref={mergeRefs(internalInputRef, inputRef ?? null)}
           aria-label="New Style Source Input"
         />
       )}
-    </DeprecatedTextFieldContainer>
+    </TextFieldContainer>
   );
 };
 
@@ -250,18 +263,10 @@ const markAddedValues = <Item extends IntermediateItem>(
   return items.map((item) => ({ ...item, isAdded: valueIds.has(item.id) }));
 };
 
-const userActionStates = [
-  ":hover",
-  ":active",
-  ":focus",
-  ":focus-visible",
-  ":focus-within",
-];
-
 const renderMenuItems = (props: {
   selectedItemSelector: undefined | ItemSelector;
   item: IntermediateItem;
-  states: { selector: string; label: string }[];
+  states: ComponentState[];
   onSelect?: (itemSelector: ItemSelector) => void;
   onEdit?: (itemId: IntermediateItem["id"]) => void;
   onDuplicate?: (itemId: IntermediateItem["id"]) => void;
@@ -315,36 +320,55 @@ const renderMenuItems = (props: {
         </DropdownMenuItem>
       )}
 
-      <DropdownMenuSeparator />
-      <DropdownMenuLabel>States</DropdownMenuLabel>
-      {props.states.map(({ label, selector }) => (
-        <DropdownMenuItem
-          key={selector}
-          withIndicator={true}
-          icon={
-            props.item.id === props.selectedItemSelector?.styleSourceId &&
-            selector === props.selectedItemSelector.state ? (
-              <CheckMarkIcon
-                color={
-                  props.item.states.includes(selector)
-                    ? rawTheme.colors.foregroundPrimary
-                    : rawTheme.colors.foregroundIconMain
+      {stateCategories.map((currentCategory) => {
+        const categoryStates = props.states.filter(
+          ({ category }) => (category ?? "states") === currentCategory
+        );
+        // prevent rendering empty category
+        if (categoryStates.length === 0) {
+          return;
+        }
+        return (
+          <Fragment key={currentCategory}>
+            <DropdownMenuSeparator />
+            <DropdownMenuLabel>
+              {humanizeString(currentCategory)}
+            </DropdownMenuLabel>
+            {categoryStates.map(({ label, selector }) => (
+              <DropdownMenuItem
+                key={selector}
+                withIndicator={true}
+                icon={
+                  props.item.id === props.selectedItemSelector?.styleSourceId &&
+                  selector === props.selectedItemSelector.state ? (
+                    <CheckMarkIcon
+                      color={
+                        props.item.states.includes(selector)
+                          ? rawTheme.colors.foregroundPrimary
+                          : rawTheme.colors.foregroundIconMain
+                      }
+                    />
+                  ) : props.item.states.includes(selector) ? (
+                    <DotIcon color={rawTheme.colors.foregroundPrimary} />
+                  ) : null
                 }
-              />
-            ) : props.item.states.includes(selector) ? (
-              <DotIcon color={rawTheme.colors.foregroundPrimary} />
-            ) : null
-          }
-          onSelect={() =>
-            props.onSelect?.({
-              styleSourceId: props.item.id,
-              state: selector,
-            })
-          }
-        >
-          {label}
-        </DropdownMenuItem>
-      ))}
+                onSelect={() =>
+                  props.onSelect?.({
+                    styleSourceId: props.item.id,
+                    // toggle state selection
+                    state:
+                      props.selectedItemSelector?.state === selector
+                        ? undefined
+                        : selector,
+                  })
+                }
+              >
+                {label}
+              </DropdownMenuItem>
+            ))}
+          </Fragment>
+        );
+      })}
     </>
   );
 };
@@ -405,13 +429,7 @@ export const StyleSourceInput = (
 
   let hasNewTokenItem = false;
 
-  const states = [
-    ...userActionStates.map((selector) => ({
-      selector,
-      label: humanizeString(selector),
-    })),
-    ...(props.componentStates ?? []),
-  ];
+  const states = props.componentStates ?? [];
 
   return (
     <Combobox>

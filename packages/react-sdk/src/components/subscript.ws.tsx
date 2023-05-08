@@ -1,9 +1,10 @@
 import { SubscriptIcon } from "@webstudio-is/icons";
 import { sub } from "../css/normalize";
-import type {
-  PresetStyle,
-  WsComponentMeta,
-  WsComponentPropsMeta,
+import {
+  defaultStates,
+  type PresetStyle,
+  type WsComponentMeta,
+  type WsComponentPropsMeta,
 } from "./component-meta";
 import type { defaultTag } from "./subscript";
 import { props } from "./__generated__/subscript.props";
@@ -16,6 +17,7 @@ export const meta: WsComponentMeta = {
   type: "rich-text-child",
   label: "Subscript Text",
   Icon: SubscriptIcon,
+  states: defaultStates,
   presetStyle,
 };
 
