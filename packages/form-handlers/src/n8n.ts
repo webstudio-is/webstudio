@@ -2,19 +2,29 @@ import { formDataToEmailContent, getErrors, getResponseBody } from "./shared";
 
 export const n8nHandler = async ({
   formData,
+  intro,
+  subject = "New form submission",
+  unsubscribeUrl,
   recipientEmail,
   senderEmail,
   hookUrl,
   authentication,
 }: {
   formData: FormData;
+  intro?: string;
+  subject?: string;
+  unsubscribeUrl?: string;
   recipientEmail: string;
   senderEmail: string;
   hookUrl: string;
   // @todo: add support for other authentication types
   authentication?: { type: "basic"; username: string; password: string };
 }) => {
-  const { plainText, html, subject } = formDataToEmailContent({ formData });
+  const { plainText, html } = formDataToEmailContent({
+    formData,
+    intro,
+    unsubscribeUrl,
+  });
 
   const headers: HeadersInit = { "Content-Type": "application/json" };
 
@@ -51,6 +61,8 @@ export const n8nHandler = async ({
   if (
     response.status >= 200 &&
     response.status < 300 &&
+    // It's difficult to control status code at n8n side.
+    // Data is easier to control, so we use data to determine success.
     json?.success === true
   ) {
     return { success: true };

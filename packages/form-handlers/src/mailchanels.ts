@@ -65,14 +65,18 @@ const sendEmail = async (
 
 export const mailchannelsHandler = async ({
   formData,
+  intro,
+  subject = "New form submission",
   recipientEmail,
   senderEmail,
 }: {
   formData: FormData;
+  intro?: string;
+  subject?: string;
   recipientEmail: string;
   senderEmail: string;
 }) => {
-  const { plainText, html, subject } = formDataToEmailContent({ formData });
+  const { plainText, html } = formDataToEmailContent({ formData, intro });
 
   return sendEmail({
     personalizations: [{ to: [{ email: recipientEmail }] }],

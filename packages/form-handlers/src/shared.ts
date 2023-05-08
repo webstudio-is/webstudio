@@ -1,17 +1,13 @@
-export type EmailContent = {
-  plainText: string;
-  html: string;
-  subject: string;
-};
+export type EmailContent = { plainText: string; html: string };
 
 export const formDataToEmailContent = ({
   formData,
-  prefix = "There has been a new submission of your form:",
-  subject = "New form submission",
+  intro = "There has been a new submission of your form:",
+  unsubscribeUrl,
 }: {
   formData: FormData;
-  prefix?: string;
-  subject?: string;
+  intro?: string;
+  unsubscribeUrl?: string;
 }): EmailContent => {
   const entries = [...formData.entries()];
 
@@ -26,10 +22,17 @@ export const formDataToEmailContent = ({
     .map(([key, value]) => `${key}: ${value}`)
     .join("\n");
 
+  const unsubscribePlainText = unsubscribeUrl
+    ? `\n\nTo unsubscribe, click here: ${unsubscribeUrl}`
+    : "";
+
+  const unsubscribeHtml = unsubscribeUrl
+    ? `<p>To unsubscribe, click <a href="${unsubscribeUrl}">here</a>.</p>`
+    : "";
+
   return {
-    subject,
-    plainText: `${prefix}\n\n${plainTextRows}`,
-    html: `<!DOCTYPE html><html><body><p>${prefix}</p><table><tbody>${htmlRows}</tbody></table></body></html>`,
+    plainText: `${intro}\n\n${plainTextRows}${unsubscribePlainText}`,
+    html: `<!DOCTYPE html><html><body><p>${intro}</p><table><tbody>${htmlRows}</tbody></table>${unsubscribeHtml}</body></html>`,
   };
 };
 
