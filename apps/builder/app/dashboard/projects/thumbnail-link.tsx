@@ -40,9 +40,7 @@ export const ThumbnailLink = forwardRef<
 
   return (
     <Link ref={ref} to={to} className={thumbnailStyle()} tabIndex={-1}>
-      {shouldShowLoading ? (
-        <Loading type="svg" isDark={false} delay={700} />
-      ) : null}
+      {shouldShowLoading && <Loading delay={700} />}
       {getThumbnailAbbreviation(title)}
     </Link>
   );

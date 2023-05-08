@@ -1,7 +1,6 @@
 import { useEffect, useState } from "react";
 import { Flex, css } from "@webstudio-is/design-system";
 import { SvgLoading } from "~/dashboard/loading-state/svg-loading";
-import { WebmLoading } from "~/dashboard/loading-state/webm-loading";
 
 const containerStyle = css({
   position: "absolute",
@@ -14,15 +13,7 @@ const containerStyle = css({
   backdropFilter: "blur(8px)",
 });
 
-export const Loading = ({
-  type = "webm",
-  isDark = false,
-  delay = 0,
-}: {
-  type?: "webm" | "svg";
-  isDark?: boolean;
-  delay?: number;
-}) => {
+export const Loading = ({ delay = 0 }: { delay?: number }) => {
   const [isVisible, setIsVisible] = useState(false);
 
   useEffect(() => {
@@ -43,7 +34,7 @@ export const Loading = ({
       align="center"
       className={containerStyle()}
     >
-      {type === "webm" ? <WebmLoading size={100} /> : <SvgLoading size={100} />}
+      <SvgLoading size={100} />
     </Flex>
   ) : null;
 };
