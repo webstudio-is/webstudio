@@ -238,7 +238,7 @@ describe("setLayerProperty", () => {
         value: [
           {
             type: "unit",
-            value: 50,
+            value: 10,
             unit: "%",
           },
           {
@@ -323,7 +323,7 @@ describe("setLayerProperty", () => {
           {
             "type": "unit",
             "unit": "%",
-            "value": 50,
+            "value": 10,
           },
           {
             "type": "unit",
@@ -375,7 +375,7 @@ describe("setLayerProperty", () => {
           {
             "type": "unit",
             "unit": "%",
-            "value": 50,
+            "value": 10,
           },
           {
             "type": "unit",
