@@ -7,6 +7,7 @@ import {
   type ElementRef,
   type ComponentProps,
 } from "react";
+import { getInstanceIdFromComponentProps } from "../../props";
 
 export const defaultTag = "form";
 
@@ -92,8 +93,11 @@ export const Form = forwardRef<
         : "error"
       : initialState;
 
+  const instanceId = getInstanceIdFromComponentProps(props);
+
   return (
     <fetcher.Form {...props} method="post" data-state={state} ref={ref}>
+      <input type="hidden" name="ws-form-id" value={instanceId} />
       {state === "success"
         ? onlySuccessMessage(children)
         : state === "error"
