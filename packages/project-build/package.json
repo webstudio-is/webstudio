@@ -1,6 +1,6 @@
 {
   "name": "@webstudio-is/project-build",
-  "version": "0.62.0",
+  "version": "0.63.0",
   "description": "Webstudio Project Build",
   "author": "Webstudio <github@webstudio.is>",
   "homepage": "https://webstudio.is",
@@ -37,14 +37,11 @@
     "@webstudio-is/css-data": "workspace:^",
     "@webstudio-is/prisma-client": "workspace:^",
     "@webstudio-is/trpc-interface": "workspace:^",
-    "immer": "^9.0.12",
     "nanoid": "^3.2.0",
-    "uuid": "^9.0.0",
     "zod": "^3.19.1"
   },
   "devDependencies": {
     "@jest/globals": "^29.3.1",
-    "@types/uuid": "^8.3.4",
     "@webstudio-is/jest-config": "workspace:^",
     "@webstudio-is/scripts": "workspace:^",
     "@webstudio-is/tsconfig": "workspace:^",

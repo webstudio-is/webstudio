@@ -141,6 +141,15 @@ const getSelectedStyle = (
     return style;
   }
   for (const styleDecl of instanceStyles) {
+    // @todo consider making stateless styles remote when state is selected
+    if (
+      styleDecl.breakpointId === breakpointId &&
+      styleDecl.state === undefined
+    ) {
+      style[styleDecl.property] = styleDecl.value;
+    }
+  }
+  for (const styleDecl of instanceStyles) {
     if (
       styleDecl.breakpointId === breakpointId &&
       styleDecl.state === styleSourceSelector.state
@@ -225,6 +234,10 @@ export const getPresetStyleRule = (
   }
   const presetStyle: Style = {};
   for (const styleDecl of presetStyles) {
+    // @todo consider making stateless styles remote when state is selected
+    if (styleDecl.state === undefined) {
+      presetStyle[styleDecl.property] = styleDecl.value;
+    }
     if (styleDecl.state === styleSourceSelector?.state) {
       presetStyle[styleDecl.property] = styleDecl.value;
     }

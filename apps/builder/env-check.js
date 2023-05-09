@@ -50,11 +50,6 @@ if (process.env.DEPLOYMENT_ENVIRONMENT === "production") {
       "👉 In production BUILD_ORIGIN is required for security reasons."
     );
   }
-  if (process.env.BUILD_REQUIRE_SUBDOMAIN !== "true") {
-    errors.push(
-      "👉 In production BUILD_REQUIRE_SUBDOMAIN must be set to 'true' for security reasons."
-    );
-  }
 }
 
 // check for when user has some S3 env variables but not all required

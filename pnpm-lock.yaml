@@ -1144,15 +1144,9 @@ importers:
       '@webstudio-is/trpc-interface':
         specifier: workspace:^
         version: link:../trpc-interface
-      immer:
-        specifier: ^9.0.12
-        version: 9.0.15
       nanoid:
         specifier: ^3.2.0
         version: 3.3.4
-      uuid:
-        specifier: ^9.0.0
-        version: 9.0.0
       zod:
         specifier: ^3.19.1
         version: 3.19.1
@@ -1160,9 +1154,6 @@ importers:
       '@jest/globals':
         specifier: ^29.3.1
         version: 29.3.1
-      '@types/uuid':
-        specifier: ^8.3.4
-        version: 8.3.4
       '@webstudio-is/jest-config':
         specifier: workspace:^
         version: link:../jest-config
