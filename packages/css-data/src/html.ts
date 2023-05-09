@@ -447,6 +447,10 @@ export const a: Styles = [
     property: "cursor",
     value: { type: "keyword", value: "pointer" },
   },
+  {
+    property: "color",
+    value: { type: "rgb", r: 0, g: 0, b: 238, alpha: 1 },
+  },
 ];
 
 /* lists */
