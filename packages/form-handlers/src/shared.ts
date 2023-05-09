@@ -1,9 +1,11 @@
+// Input data common for all handlers
 export type FormInfo = {
   projectId: string;
   projectDomain: string;
   pageUrl: string;
   formData: FormData;
   email: string;
+  senderDomain?: string;
 };
 
 export type EmailInfo = {
@@ -28,10 +30,13 @@ export const getFormId = (formData: FormData) => {
   }
 };
 
-export const formToEmail = (
-  { formData, pageUrl, projectDomain, email }: FormInfo,
-  senderDomain = "webstudio.mail"
-): EmailInfo => {
+export const formToEmail = ({
+  formData,
+  pageUrl,
+  projectDomain,
+  email,
+  senderDomain = "webstudio.mail",
+}: FormInfo): EmailInfo => {
   let html = `<p>There has been a new submission of your form at <a href="${pageUrl}">${pageUrl}</a>:</p>`;
   let txt = `There has been a new submission of your form at ${pageUrl}:\n\n`;
 

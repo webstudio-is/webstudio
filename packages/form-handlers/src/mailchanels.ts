@@ -66,13 +66,11 @@ const sendEmail = async (payload: SendEmailPayload): Promise<Result> => {
 };
 
 export const mailchannelsHandler = async ({
-  formInto,
-  senderDomain,
+  formInfo,
 }: {
-  formInto: FormInfo;
-  senderDomain?: string;
+  formInfo: FormInfo;
 }) => {
-  const email = formToEmail(formInto, senderDomain);
+  const email = formToEmail(formInfo);
 
   return sendEmail({
     personalizations: [{ to: [{ email: email.to }] }],

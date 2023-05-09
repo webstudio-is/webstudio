@@ -18,14 +18,14 @@ export default {
     formData.append("time", new Date().toLocaleString("en-US"));
 
     const result = await mailchannelsHandler({
-      formInto: {
+      formInfo: {
         formData,
         projectDomain: "example.com",
         projectId: "test-project",
         pageUrl: "https://example.com/some-page",
         email: to,
+        senderDomain: "webstudio.is",
       },
-      senderDomain: "webstudio.is",
     });
 
     if (result.success) {

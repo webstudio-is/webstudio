@@ -8,42 +8,54 @@ import {
   getFormId,
 } from "./shared";
 
+const getAuth = (hookUrl: string) => {
+  const url = new URL(hookUrl);
+  const { username, password } = url;
+  url.username = "";
+  url.password = "";
+  const urlWithoutAuth = url.toString();
+  return {
+    username,
+    password,
+    urlWithoutAuth,
+  };
+};
+
 export const n8nHandler = async ({
-  formInto,
-  senderDomain,
+  formInfo,
   hookUrl,
-  authentication,
 }: {
-  formInto: FormInfo;
-  senderDomain?: string;
+  formInfo: FormInfo;
+  /** May containt basic authentication credentials,
+   * e.g. https://user:pass@...app.n8n.cloud/webhook/... */
   hookUrl: string;
-  // @todo: add support for other authentication types
-  authentication?: { type: "basic"; username: string; password: string };
 }): Promise<Result> => {
   const headers: HeadersInit = { "Content-Type": "application/json" };
 
-  if (authentication?.type === "basic") {
+  const { username, password, urlWithoutAuth } = getAuth(hookUrl);
+
+  if (username !== "" && password !== "") {
     headers["Authorization"] = `Basic ${Buffer.from(
-      `${authentication.username}:${authentication.password}`
+      [username, password].join(":")
     ).toString("base64")}`;
   }
 
-  const formId = getFormId(formInto.formData);
+  const formId = getFormId(formInfo.formData);
 
   if (formId === undefined) {
     return { success: false, errors: ["No form id in FormData"] };
   }
 
   const payload = {
-    email: formToEmail(formInto, senderDomain),
+    email: formToEmail(formInfo),
     // globally unique form id (can be used for unsubscribing)
-    formId: [formInto.projectId, formId].join("--"),
-    formData: Object.fromEntries(getFormEntries(formInto.formData)),
+    formId: [formInfo.projectId, formId].join("--"),
+    formData: Object.fromEntries(getFormEntries(formInfo.formData)),
   };
 
   let response: Response;
   try {
-    response = await fetch(hookUrl, {
+    response = await fetch(urlWithoutAuth, {
       method: "POST",
       headers,
       body: JSON.stringify(payload),
