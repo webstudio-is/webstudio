@@ -1,6 +1,7 @@
 import type { ActionArgs } from "@remix-run/node";
 import { isFeatureEnabled } from "@webstudio-is/feature-flags";
 import { EmbedTemplateStyles, WsEmbedTemplate } from "@webstudio-is/react-sdk";
+import yaml from "js-yaml";
 import { fromMarkdown as parseMarkdown } from "mdast-util-from-markdown";
 import type {
   ChatCompletionRequestMessage,
@@ -132,7 +133,12 @@ export const generate = async function generate({
 
     const responses = await chain();
     return responses.map(([step, response]) => {
-      const json = getJSONCodeBlock(response);
+      const yaml = getYAMLCodeBlock(response);
+      let json = yamlToJson(yaml);
+
+      if (!Array.isArray(json)) {
+        json = [json];
+      }
 
       if (typeof validators[step] === "function") {
         try {
@@ -147,8 +153,26 @@ export const generate = async function generate({
         }
       }
 
-      return [step, Array.isArray(json) ? json : [json]];
+      return [step, json];
     });
+    // return responses.map(([step, response]) => {
+    //   const json = getJSONCodeBlock(response);
+
+    //   if (typeof validators[step] === "function") {
+    //     try {
+    //       validators[step](json);
+    //     } catch (error) {
+    //       const errorMessage = `Invalid ${step} generation. ${
+    //         process.env.NODE_ENV === "production"
+    //           ? ""
+    //           : `${JSON.stringify(json, null, 2)}\n\n${error.message}`
+    //       }`;
+    //       throw new Error(errorMessage);
+    //     }
+    //   }
+
+    //   return [step, Array.isArray(json) ? json : [json]];
+    // });
   } catch (error) {
     const errorMessage = `Something went wrong. ${
       process.env.NODE_ENV === "production" ? "" : `${(error as Error).message}`
@@ -204,11 +228,10 @@ const getChainForPrompt = function getChainForPrompt({
   };
 };
 
-const getJSONCodeBlock = (text: string) => {
+const getYAMLCodeBlock = (text: string) => {
   const errorMsg = ["Parsing failed"];
-
   try {
-    return JSON.parse(text.trim());
+    return yaml.load(text.trim());
   } catch (error) {}
 
   try {
@@ -216,7 +239,7 @@ const getJSONCodeBlock = (text: string) => {
     const codeBlocks: string[] = [];
 
     visit(tree, "code", (node) => {
-      if (node.lang === "json") {
+      if (node.lang === "yaml") {
         codeBlocks.unshift(node.value.trim());
       } else if (!node.lang) {
         codeBlocks.push(node.value.trim());
@@ -224,7 +247,7 @@ const getJSONCodeBlock = (text: string) => {
     });
 
     if (codeBlocks.length > 0) {
-      return JSON.parse(codeBlocks[0]);
+      return yaml.load(codeBlocks[0]);
     } else {
       errorMsg.push("No code blocks found");
     }
@@ -237,111 +260,110 @@ const getJSONCodeBlock = (text: string) => {
   throw new Error(errorMsg.join("\n\n"));
 };
 
+const processYAMLValue = function processYAMLValue(value) {
+  if (typeof value === "string") {
+    return {
+      type: "text",
+      value,
+    };
+  }
+
+  if (Object.prototype.toString.call(value) === "[object Object]") {
+    const key = Object.keys(value)[0];
+    // Check if it is a component.
+    if (/^[A-Z]/.test(key)) {
+      return {
+        type: "instance",
+        component: key,
+        styles: value[key].css || [],
+        children: value[key].children || [],
+      };
+    }
+  }
+
+  return value;
+};
+
+const yamlToJson = (yaml) => {
+  return JSON.parse(
+    JSON.stringify(yaml, function replacer(key, value) {
+      if (key === "") {
+        return processYAMLValue(value);
+      }
+
+      if (key === "children" && Array.isArray(value)) {
+        return value.map(processYAMLValue);
+      }
+
+      if (key === "styles") {
+        return Object.entries(value || {}).map(([property, value]) => ({
+          property,
+          value,
+        }));
+      }
+
+      return value;
+    })
+  );
+};
+
 // @todo Iterate and refine the prompt templates.
 // The ones below are very WIP and rudimental.
 const templates = {
   instances: `
-You are WebstudioGPT a no-code tool for designers that generates a JSON representation of UI markup.
+Please genererate a valid YAML representation for a JSX tree based on the following prompt.
 
-Without using any dependency or external library, generate a JSON object for the following request:
+The prompt: <!--prompt-content-->
 
-<!--prompt-content-->
+Do not import or use any dependency or external library.
+Please only output the YAML code and no other text.
 
-Respond in valid JSON that strictly follows the TypeScript definitions below:
+Exclusively use the following components:
+- Box: a container element
+- Heading: typography element used for headings and titles
+- TextBlock: typography element for generic blocks of text (eg. a paragraph)
+- Link: a text link
+- List: a bulleted or numbere list container element
+- List Item: a item in a List component
+- Input: an input field component
+- Label: a label for an Input or TextArea component
+- TextArea: a multi line input field component
+- RadioButton: a radio input component
+- Checkbox: a checkbox field
+- Button: a button component
 
-\`\`\`typescript
-type EmbedTemplateText = {
-  type: "text";
-  value: string;
-};
-
-type EmbedTemplateInstance = {
-  type: "instance";
-  /*
-    component can be:
-    - Box: a container element
-    - Heading: typography element used for headings and titles
-    - TextBlock: typography element for generic blocks of text (eg. a paragraph)
-    - Link: a text link
-    - List: a bulleted or numbere list container element
-    - List Item: a item in a List component
-    - Input: an input field component
-    - Label: a label for an Input or TextArea component
-    - TextArea: a multi line input field component
-    - RadioButton: a radio input component
-    - Checkbox: a checkbox field
-    - Button: a button component
-  */
-  component: string;
-  children: Array<EmbedTemplateInstance | EmbedTemplateText>;
-};
-
-type JSONResult = Array<EmbedTemplateInstance | EmbedTemplateText>
-\`\`\`
-
-Below is an example of valid output:
-
-\`\`\`json
-[
-  { type: "text", value: "hello" },
-  {
-    type: "instance",
-    component: "Box",
-    children: [
-      { type: "instance", component: "Box", children: [] },
-      { type: "text", value: "world" },
-    ],
-  },
-]
-\`\`\`
-
-Omit information like "props" that are not in the TypeScript definitions above.`,
-  styles: `Given the "input JSON" object representing a UI component structure provided in the previous message, your task is to generate a new JSON object representing **only** the styles for the components in that structure. Ensure that the existing properties such as "type" or "component" are not repeated in the output JSON. Don't generate styles for elements with "type" equal to "text".
-
-User Request that generated the "input JSON": "<!--prompt-content-->"
-
-Respond in valid JSON that strictly follows the TypeScript definitions below:
+For styling use a \`css\` prop that strictly follows the TypeScript definitions below:
 
 \`\`\`typescript
-type JSONResult = EmbedTemplateStyles[];
+type CSSProp = {
+ [Property]:
+  | {
+      type: "keyword";
+      value: string;
+    }
+  | {
+      type: "fontFamily";
+      value: string[];
+    }
+  | {
+      type: "rgb";
+      r: number;
+      g: number;
+      b: number;
+      alpha: number;
+    }
+  | {
+      type: "invalid";
+      value: string;
+    }
+  | {
+      type: "unset";
+      value: "";
+    }
+  | Units;
+}
 
-type EmbedTemplateStyles = {
-  styles: EmbedTemplateStyleDecl[],
-  children?: EmbedTemplateStyles[]
-};
-
-type EmbedTemplateStyleDecl = {
-  state?: string,
-  /*
-   property's values are camelCase e.g. flexDirection.
-  */
-  property: string;
-  value:
-    | {
-        type: "keyword";
-        value: string;
-      }
-    | {
-        type: "fontFamily";
-        value: string[];
-      }
-    | {
-        type: "rgb";
-        r: number;
-        g: number;
-        b: number;
-        alpha: number;
-      }
-    | {
-        type: "invalid";
-        value: string;
-      }
-    | {
-        type: "unset";
-        value: "";
-      }
-    | Units;
-};
+type Property = string;
 
 type Units = {
   type: "unit";
@@ -351,11 +373,6 @@ type Units = {
 };
 \`\`\`
 
-Comments in the code block provide further context for the immediate key that follows.
-
-Example result:
-
-\`\`\`json
-[{"styles":[{"property":"display","value":{"type":"keyword","value":"flex"}},{"property":"flexDirection","value":{"type":"keyword","value": "column"}}],"children":[{"styles":[{"property":"marginBottom","value":{"type":"unit","value": 10,"unit":"px"}}]},{"styles":[{"property":"marginBottom","value":{"type":"unit","value": 10,"unit":"px"}}]}]}]
-\`\`\``,
+Each \`css\` prop value has a required "type" and, when present, "value" are in camelCase e.g. flexDirection.
+`,
 };

@@ -110,6 +110,9 @@ importers:
       '@trpc/server':
         specifier: ^10.9.0
         version: 10.9.0
+      '@types/js-yaml':
+        specifier: ^4.0.5
+        version: 4.0.5
       '@vercel/remix':
         specifier: ^1.15.0
         version: 1.15.0(react-dom@18.2.0)(react@18.2.0)
@@ -191,6 +194,9 @@ importers:
       jose:
         specifier: ^4.11.2
         version: 4.11.2
+      js-yaml:
+        specifier: ^4.1.0
+        version: 4.1.0
       lexical:
         specifier: ^0.6.0
         version: 0.6.0
@@ -8564,6 +8570,10 @@ packages:
 
   /@types/js-cookie@2.2.7:
     resolution: {integrity: sha512-aLkWa0C0vO5b4Sr798E26QgOkss68Un0bLjs7u9qxzPT5CG+8DuNTffWES58YzJs3hrVAOs1wonycqEBqNJubA==}
+    dev: false
+
+  /@types/js-yaml@4.0.5:
+    resolution: {integrity: sha512-FhpRzf927MNQdRZP0J5DLIdTXhjLYzeUTmLAu69mnVksLH9CJY3IuSeEgbKUki7GQZm0WqDkGzyxju2EZGD2wA==}
     dev: false
 
   /@types/json-schema@7.0.11:

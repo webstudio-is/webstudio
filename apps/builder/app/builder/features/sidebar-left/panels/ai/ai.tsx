@@ -68,7 +68,7 @@ const labels: Record<AIGenerationSteps, string> = {
 export const TabContent = ({ publish, onSetActiveTab }: TabContentProps) => {
   // @todo Decide whether it makes sense to make "styles" optional
   // i.e. add a checkbox to tick if the user wants styles.
-  const steps: AIGenerationSteps[] = ["instances", "styles"];
+  const steps: AIGenerationSteps[] = ["instances" /*, "styles"*/];
   const [aiGenerationState, setAiGenerationState] = useState<AIGenerationState>(
     { state: "idle" }
   );
