@@ -1,15 +1,22 @@
+import { css, rawTheme } from "@webstudio-is/design-system";
+
+const svgContainerStyle = css({
+  filter: "drop-shadow(#183dcce3 4px -4px 15px) blur(.7px)",
+});
+
+const svgStyle = css({
+  margin: "auto",
+  background: "transparent",
+  display: "block",
+  opacity: "0.8",
+});
+
 export const SvgLoading = ({ size = 100 }: { size?: number }) => {
   return (
-    <div style={{ filter: "drop-shadow(#183dcce3 4px -4px 15px)" }}>
+    <div className={svgContainerStyle()}>
       <svg
         xmlns="http://www.w3.org/2000/svg"
-        style={{
-          margin: "auto",
-          background: "transparent",
-          display: "block",
-          filter: "drop-shadow(grey 1px -1px 15px)",
-          opacity: "0.5",
-        }}
+        className={svgStyle()}
         width={size}
         height={size}
         viewBox="0 0 100 100"
@@ -26,7 +33,7 @@ export const SvgLoading = ({ size = 100 }: { size?: number }) => {
           >
             <feGaussianBlur
               in="SourceGraphic"
-              stdDeviation="5"
+              stdDeviation="4"
             ></feGaussianBlur>
             <feComponentTransfer result="cutoff">
               <feFuncA type="linear" slope="60" intercept="-40"></feFuncA>
@@ -60,7 +67,7 @@ export const SvgLoading = ({ size = 100 }: { size?: number }) => {
                 <animate
                   attributeType="XML"
                   attributeName="fill"
-                  values="#39FBBB;#39FBBB;#39FBBB;#39FBBB;#39FBBB;#4A4EFA;#4A4EFA;#4A4EFA;#4A4EFA;#4A4EFA;#E63CFE;#E63CFE;#E63CFE;#E63CFE;#E63CFE;#FFAE3C;#FFAE3C;#FFAE3C;#FFAE3C;#FFAE3C;"
+                  values={variations[0].join(";")}
                   dur="1.01s"
                   repeatCount="indefinite"
                 />
@@ -89,7 +96,7 @@ export const SvgLoading = ({ size = 100 }: { size?: number }) => {
                 <animate
                   attributeType="XML"
                   attributeName="fill"
-                  values="#39FBBB;#39FBBB;#39FBBB;#39FBBB;#39FBBB;#4A4EFA;#4A4EFA;#4A4EFA;#4A4EFA;#4A4EFA;#E63CFE;#E63CFE;#E63CFE;#E63CFE;#E63CFE;#FFAE3C;#FFAE3C;#FFAE3C;#FFAE3C;#FFAE3C;"
+                  values={variations[0].join(";")}
                   dur="1.01s"
                   repeatCount="indefinite"
                 />
@@ -118,7 +125,7 @@ export const SvgLoading = ({ size = 100 }: { size?: number }) => {
                 <animate
                   attributeType="XML"
                   attributeName="fill"
-                  values="#39FBBB;#39FBBB;#39FBBB;#39FBBB;#39FBBB;#4A4EFA;#4A4EFA;#4A4EFA;#4A4EFA;#4A4EFA;#E63CFE;#E63CFE;#E63CFE;#E63CFE;#E63CFE;#FFAE3C;#FFAE3C;#FFAE3C;#FFAE3C;#FFAE3C;"
+                  values={variations[0].join(";")}
                   dur="1.01s"
                   repeatCount="indefinite"
                 />
@@ -147,7 +154,7 @@ export const SvgLoading = ({ size = 100 }: { size?: number }) => {
                 <animate
                   attributeType="XML"
                   attributeName="fill"
-                  values="#39FBBB;#39FBBB;#39FBBB;#39FBBB;#39FBBB;#4A4EFA;#4A4EFA;#4A4EFA;#4A4EFA;#4A4EFA;#E63CFE;#E63CFE;#E63CFE;#E63CFE;#E63CFE;#FFAE3C;#FFAE3C;#FFAE3C;#FFAE3C;#FFAE3C;"
+                  values={variations[0].join(";")}
                   dur="1.01s"
                   repeatCount="indefinite"
                 />
@@ -176,7 +183,7 @@ export const SvgLoading = ({ size = 100 }: { size?: number }) => {
                 <animate
                   attributeType="XML"
                   attributeName="fill"
-                  values="#39FBBB;#39FBBB;#39FBBB;#39FBBB;#4A4EFA;#4A4EFA;#4A4EFA;#4A4EFA;#E63CFE;#E63CFE;#E63CFE;#E63CFE;#FFAE3C;#FFAE3C;#FFAE3C;#FFAE3C;"
+                  values={variations[1].join(";")}
                   dur="1.01s"
                   repeatCount="indefinite"
                 />
@@ -205,7 +212,7 @@ export const SvgLoading = ({ size = 100 }: { size?: number }) => {
                 <animate
                   attributeType="XML"
                   attributeName="fill"
-                  values="#39FBBB;#39FBBB;#39FBBB;#39FBBB;#4A4EFA;#4A4EFA;#4A4EFA;#4A4EFA;#E63CFE;#E63CFE;#E63CFE;#E63CFE;#FFAE3C;#FFAE3C;#FFAE3C;#FFAE3C;"
+                  values={variations[1].join(";")}
                   dur="1.01s"
                   repeatCount="indefinite"
                 />
@@ -234,7 +241,7 @@ export const SvgLoading = ({ size = 100 }: { size?: number }) => {
                 <animate
                   attributeType="XML"
                   attributeName="fill"
-                  values="#39FBBB;#39FBBB;#39FBBB;#39FBBB;#4A4EFA;#4A4EFA;#4A4EFA;#4A4EFA;#E63CFE;#E63CFE;#E63CFE;#E63CFE;#FFAE3C;#FFAE3C;#FFAE3C;#FFAE3C;"
+                  values={variations[1].join(";")}
                   dur="1.01s"
                   repeatCount="indefinite"
                 />
@@ -263,7 +270,7 @@ export const SvgLoading = ({ size = 100 }: { size?: number }) => {
                 <animate
                   attributeType="XML"
                   attributeName="fill"
-                  values="#39FBBB;#39FBBB;#39FBBB;#39FBBB;#4A4EFA;#4A4EFA;#4A4EFA;#4A4EFA;#E63CFE;#E63CFE;#E63CFE;#E63CFE;#FFAE3C;#FFAE3C;#FFAE3C;#FFAE3C;"
+                  values={variations[1].join(";")}
                   dur="1.01s"
                   repeatCount="indefinite"
                 />
@@ -292,7 +299,7 @@ export const SvgLoading = ({ size = 100 }: { size?: number }) => {
                 <animate
                   attributeType="XML"
                   attributeName="fill"
-                  values="#39FBBB;#39FBBB;#39FBBB;#4A4EFA;#4A4EFA;#4A4EFA;#E63CFE;#E63CFE;#E63CFE;#FFAE3C;#FFAE3C;#FFAE3C;"
+                  values={variations[2].join(";")}
                   dur="1.01s"
                   repeatCount="indefinite"
                 />
@@ -321,7 +328,7 @@ export const SvgLoading = ({ size = 100 }: { size?: number }) => {
                 <animate
                   attributeType="XML"
                   attributeName="fill"
-                  values="#39FBBB;#39FBBB;#39FBBB;#4A4EFA;#4A4EFA;#4A4EFA;#E63CFE;#E63CFE;#E63CFE;#FFAE3C;#FFAE3C;#FFAE3C;"
+                  values={variations[2].join(";")}
                   dur="1.01s"
                   repeatCount="indefinite"
                 />
@@ -350,7 +357,7 @@ export const SvgLoading = ({ size = 100 }: { size?: number }) => {
                 <animate
                   attributeType="XML"
                   attributeName="fill"
-                  values="#39FBBB;#39FBBB;#39FBBB;#4A4EFA;#4A4EFA;#4A4EFA;#E63CFE;#E63CFE;#E63CFE;#FFAE3C;#FFAE3C;#FFAE3C;"
+                  values={variations[2].join(";")}
                   dur="1.01s"
                   repeatCount="indefinite"
                 />
@@ -379,7 +386,7 @@ export const SvgLoading = ({ size = 100 }: { size?: number }) => {
                 <animate
                   attributeType="XML"
                   attributeName="fill"
-                  values="#39FBBB;#39FBBB;#39FBBB;#4A4EFA;#4A4EFA;#4A4EFA;#E63CFE;#E63CFE;#E63CFE;#FFAE3C;#FFAE3C;#FFAE3C;"
+                  values={variations[2].join(";")}
                   dur="1.01s"
                   repeatCount="indefinite"
                 />
@@ -408,7 +415,7 @@ export const SvgLoading = ({ size = 100 }: { size?: number }) => {
                 <animate
                   attributeType="XML"
                   attributeName="fill"
-                  values="#39FBBB;#39FBBB;#4A4EFA;#4A4EFA;#E63CFE;#E63CFE;#FFAE3C;#FFAE3C"
+                  values={variations[3].join(";")}
                   dur="1.01s"
                   repeatCount="indefinite"
                 />
@@ -437,7 +444,7 @@ export const SvgLoading = ({ size = 100 }: { size?: number }) => {
                 <animate
                   attributeType="XML"
                   attributeName="fill"
-                  values="#39FBBB;#39FBBB;#4A4EFA;#4A4EFA;#E63CFE;#E63CFE;#FFAE3C;#FFAE3C"
+                  values={variations[3].join(";")}
                   dur="1.01s"
                   repeatCount="indefinite"
                 />
@@ -466,7 +473,7 @@ export const SvgLoading = ({ size = 100 }: { size?: number }) => {
                 <animate
                   attributeType="XML"
                   attributeName="fill"
-                  values="#39FBBB;#39FBBB;#4A4EFA;#4A4EFA;#E63CFE;#E63CFE;#FFAE3C;#FFAE3C"
+                  values={variations[3].join(";")}
                   dur="1.01s"
                   repeatCount="indefinite"
                 />
@@ -495,7 +502,7 @@ export const SvgLoading = ({ size = 100 }: { size?: number }) => {
                 <animate
                   attributeType="XML"
                   attributeName="fill"
-                  values="#39FBBB;#39FBBB;#4A4EFA;#4A4EFA;#E63CFE;#E63CFE;#FFAE3C;#FFAE3C"
+                  values={variations[3].join(";")}
                   dur="1.01s"
                   repeatCount="indefinite"
                 />
@@ -524,7 +531,7 @@ export const SvgLoading = ({ size = 100 }: { size?: number }) => {
                 <animate
                   attributeType="XML"
                   attributeName="fill"
-                  values="#39FBBB;#4A4EFA;#E63CFE;#FFAE3C;"
+                  values={variations[4].join(";")}
                   dur="1.01s"
                   repeatCount="indefinite"
                 />
@@ -553,7 +560,7 @@ export const SvgLoading = ({ size = 100 }: { size?: number }) => {
                 <animate
                   attributeType="XML"
                   attributeName="fill"
-                  values="#39FBBB;#4A4EFA;#E63CFE;#FFAE3C;"
+                  values={variations[4].join(";")}
                   dur="1.01s"
                   repeatCount="indefinite"
                 />
@@ -582,7 +589,7 @@ export const SvgLoading = ({ size = 100 }: { size?: number }) => {
                 <animate
                   attributeType="XML"
                   attributeName="fill"
-                  values="#39FBBB;#4A4EFA;#E63CFE;#FFAE3C;"
+                  values={variations[4].join(";")}
                   dur="1.01s"
                   repeatCount="indefinite"
                 />
@@ -611,7 +618,7 @@ export const SvgLoading = ({ size = 100 }: { size?: number }) => {
                 <animate
                   attributeType="XML"
                   attributeName="fill"
-                  values="#39FBBB;#4A4EFA;#E63CFE;#FFAE3C;"
+                  values={variations[4].join(";")}
                   dur="1.01s"
                   repeatCount="indefinite"
                 />
@@ -633,3 +640,73 @@ export const SvgLoading = ({ size = 100 }: { size?: number }) => {
     </div>
   );
 };
+
+const colors = {
+  turquoise: rawTheme.colors.brandSpinnerTurquoise,
+  blue: rawTheme.colors.brandSpinnerBlue,
+  purple: rawTheme.colors.brandSpinnerPurple,
+  orange: rawTheme.colors.brandSpinnerOrange,
+};
+const variations = [
+  [
+    colors.turquoise,
+    colors.turquoise,
+    colors.turquoise,
+    colors.turquoise,
+    colors.blue,
+    colors.blue,
+    colors.blue,
+    colors.blue,
+    colors.purple,
+    colors.purple,
+    colors.purple,
+    colors.purple,
+    colors.orange,
+    colors.orange,
+    colors.orange,
+    colors.orange,
+  ],
+  [
+    colors.turquoise,
+    colors.turquoise,
+    colors.turquoise,
+    colors.turquoise,
+    colors.blue,
+    colors.blue,
+    colors.blue,
+    colors.blue,
+    colors.purple,
+    colors.purple,
+    colors.purple,
+    colors.purple,
+    colors.orange,
+    colors.orange,
+    colors.orange,
+    colors.orange,
+  ],
+  [
+    colors.turquoise,
+    colors.turquoise,
+    colors.turquoise,
+    colors.blue,
+    colors.blue,
+    colors.blue,
+    colors.purple,
+    colors.purple,
+    colors.purple,
+    colors.orange,
+    colors.orange,
+    colors.orange,
+  ],
+  [
+    colors.turquoise,
+    colors.turquoise,
+    colors.blue,
+    colors.blue,
+    colors.purple,
+    colors.purple,
+    colors.orange,
+    colors.orange,
+  ],
+  [colors.turquoise, colors.blue, colors.purple, colors.orange],
+];
