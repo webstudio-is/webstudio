@@ -19,7 +19,7 @@ import { FloatingPanelProvider } from "~/builder/shared/floating-panel";
 import { theme } from "@webstudio-is/design-system";
 import {
   selectedInstanceStore,
-  useDragAndDropState,
+  dragAndDropStateContainer,
 } from "~/shared/nano-states";
 import { SettingsPanel } from "../settings-panel";
 import { NavigatorTree } from "~/builder/shared/navigator-tree";
@@ -39,8 +39,7 @@ const contentStyle = {
 export const Inspector = ({ publish, navigatorLayout }: InspectorProps) => {
   const selectedInstance = useStore(selectedInstanceStore);
   const tabsRef = useRef<HTMLDivElement>(null);
-  const [dragAndDropState] = useDragAndDropState();
-
+  const [showNavigatorTree, setShowNavigatorTree] = useState(false);
   const [tab, setTab] = useState("style");
 
   useEffect(() => {
@@ -51,7 +50,15 @@ export const Inspector = ({ publish, navigatorLayout }: InspectorProps) => {
     }
   }, [selectedInstance, tab]);
 
-  if (navigatorLayout === "docked" && dragAndDropState.isDragging) {
+  useEffect(() => {
+    return dragAndDropStateContainer.subscribe((dragAndDropState) => {
+      setShowNavigatorTree(
+        navigatorLayout === "docked" && dragAndDropState.isDragging
+      );
+    });
+  }, [navigatorLayout]);
+
+  if (showNavigatorTree) {
     return <NavigatorTree />;
   }
 
