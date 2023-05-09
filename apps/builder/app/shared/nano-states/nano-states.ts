@@ -365,7 +365,13 @@ export type DragAndDropState = {
   dragPayload?: DragStartPayload;
   placementIndicator?: Placement;
 };
-export const dragAndDropStateContainer = atom<DragAndDropState>({
+
+const dragAndDropStateContainer = atom<DragAndDropState>({
   isDragging: false,
 });
 export const useDragAndDropState = () => useValue(dragAndDropStateContainer);
+
+export const isDraggingStore = computed(
+  [dragAndDropStateContainer],
+  (state) => state.isDragging
+);
