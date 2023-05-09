@@ -34,7 +34,7 @@ export const Loading = ({ delay = 0 }: { delay?: number }) => {
       align="center"
       className={containerStyle()}
     >
-      <SvgLoading size={100} />
+      <SvgLoading size={64} />
     </Flex>
   ) : null;
 };
