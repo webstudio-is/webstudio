@@ -1,8 +1,7 @@
 import { css, theme, textVariants } from "@webstudio-is/design-system";
 import { forwardRef } from "react";
-import { Link } from "@remix-run/react";
+import { Link, useNavigation } from "@remix-run/react";
 import { Loading } from "../loading-state";
-import { useNavigation } from "@remix-run/react";
 
 const thumbnailStyle = css(textVariants.brandThumbnailLargeDefault, {
   position: "relative",
