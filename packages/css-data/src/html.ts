@@ -451,6 +451,8 @@ export const a: Styles = [
     property: "color",
     value: { type: "rgb", r: 0, g: 0, b: 238, alpha: 1 },
   },
+  // active and visited states are not defined as usually overriden with stateless color
+  // and modeling var-like defaults is too complex
 ];
 
 /* lists */
