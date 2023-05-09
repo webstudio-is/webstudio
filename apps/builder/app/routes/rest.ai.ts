@@ -298,7 +298,7 @@ Below is an example of valid output:
 Omit information like "props" that are not in the TypeScript definitions above.`,
   styles: `Given the "input JSON" object representing a UI component structure provided in the previous message, your task is to generate a new JSON object representing **only** the styles for the components in that structure. Ensure that the existing properties such as "type" or "component" are not repeated in the output JSON. Don't generate styles for elements with "type" equal to "text".
 
-User Request that generated the "input JSON": "<!--prompt-content-->".
+User Request that generated the "input JSON": "<!--prompt-content-->"
 
 Respond in valid JSON that strictly follows the TypeScript definitions below:
 
