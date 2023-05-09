@@ -34,13 +34,11 @@ export const ThumbnailLink = forwardRef<
   HTMLAnchorElement,
   { title: string; to: string }
 >(({ title, to }, ref) => {
-  const navigation = useNavigation();
-  const shouldShowLoading =
-    navigation.state !== "idle" && to === navigation.location.pathname;
-
+  const { state, location } = useNavigation();
+  const shouldShowLoading = state !== "idle" && to === location?.pathname;
   return (
     <Link ref={ref} to={to} className={thumbnailStyle()} tabIndex={-1}>
-      {shouldShowLoading && <Loading delay={700} />}
+      {shouldShowLoading && <Loading delay={600} />}
       {getThumbnailAbbreviation(title)}
     </Link>
   );
