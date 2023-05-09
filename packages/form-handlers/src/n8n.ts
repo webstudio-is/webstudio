@@ -35,9 +35,9 @@ export const n8nHandler = async ({
   const { username, password, urlWithoutAuth } = getAuth(hookUrl);
 
   if (username !== "" && password !== "") {
-    headers["Authorization"] = `Basic ${Buffer.from(
-      [username, password].join(":")
-    ).toString("base64")}`;
+    // using btoa() instead of Buffer.from().toString("base64")
+    // because Buffer is not available in Cloudflare workers
+    headers["Authorization"] = `Basic ${btoa([username, password].join(":"))}`;
   }
 
   const formId = getFormId(formInfo.formData);
