@@ -65,7 +65,7 @@ export const subscribeInstanceHovering = () => {
       instanceId: instance.id,
       rect: getAllElementsBoundingBox(element),
     });
-  }, 50);
+  }, 0);
 
   // remove hover outline when scroll starts
   // and show it with new rect when scroll ends
