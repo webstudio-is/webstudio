@@ -149,30 +149,13 @@ export const generate = async function generate({
               ? ""
               : `${JSON.stringify(json, null, 2)}\n\n${error.message}`
           }`;
+
           throw new Error(errorMessage);
         }
       }
 
       return [step, json];
     });
-    // return responses.map(([step, response]) => {
-    //   const json = getJSONCodeBlock(response);
-
-    //   if (typeof validators[step] === "function") {
-    //     try {
-    //       validators[step](json);
-    //     } catch (error) {
-    //       const errorMessage = `Invalid ${step} generation. ${
-    //         process.env.NODE_ENV === "production"
-    //           ? ""
-    //           : `${JSON.stringify(json, null, 2)}\n\n${error.message}`
-    //       }`;
-    //       throw new Error(errorMessage);
-    //     }
-    //   }
-
-    //   return [step, Array.isArray(json) ? json : [json]];
-    // });
   } catch (error) {
     const errorMessage = `Something went wrong. ${
       process.env.NODE_ENV === "production" ? "" : `${(error as Error).message}`
@@ -271,7 +254,7 @@ const processYAMLValue = function processYAMLValue(value) {
   if (Object.prototype.toString.call(value) === "[object Object]") {
     const key = Object.keys(value)[0];
     // Check if it is a component.
-    if (/^[A-Z]/.test(key)) {
+    if (/^[A-Z][a-z]+/.test(key)) {
       return {
         type: "instance",
         component: key,
@@ -287,10 +270,6 @@ const processYAMLValue = function processYAMLValue(value) {
 const yamlToJson = (yaml) => {
   return JSON.parse(
     JSON.stringify(yaml, function replacer(key, value) {
-      if (key === "") {
-        return processYAMLValue(value);
-      }
-
       if (key === "children" && Array.isArray(value)) {
         return value.map(processYAMLValue);
       }
@@ -300,6 +279,10 @@ const yamlToJson = (yaml) => {
           property,
           value,
         }));
+      }
+
+      if (key !== null && Array.isArray(value)) {
+        return value.map((value) => replacer(null, processYAMLValue(value)));
       }
 
       return value;
@@ -316,26 +299,31 @@ Please genererate a valid YAML representation for a JSX tree based on the follow
 The prompt: <!--prompt-content-->
 
 Do not import or use any dependency or external library.
-Please only output the YAML code and no other text.
+Please only output the valid YAML code block and no other text.
 
 Exclusively use the following components:
 - Box: a container element
-- Heading: typography element used for headings and titles
+- Heading
 - TextBlock: typography element for generic blocks of text (eg. a paragraph)
-- Link: a text link
-- List: a bulleted or numbere list container element
-- List Item: a item in a List component
-- Input: an input field component
-- Label: a label for an Input or TextArea component
-- TextArea: a multi line input field component
-- RadioButton: a radio input component
-- Checkbox: a checkbox field
-- Button: a button component
+- Link
+- List
+- ListItem
+- Label
+- Input
+- TextArea
+- RadioButton
+- Checkbox
+- Button
 
 For styling use a \`css\` prop that strictly follows the TypeScript definitions below:
 
 \`\`\`typescript
 type CSSProp = {
+  /*
+    Only longhand properties are supported. For example:
+    valid: borderColor
+    invalid: border
+  */
  [Property]:
   | {
       type: "keyword";
