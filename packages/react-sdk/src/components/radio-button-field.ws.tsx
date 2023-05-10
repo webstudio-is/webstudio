@@ -19,7 +19,7 @@ const presetStyle = {
 export const meta: WsComponentMeta = {
   category: "forms",
   type: "container",
-  label: "Radio Button Field",
+  label: "Radio",
   Icon: RadioCheckedIcon,
   states: defaultStates,
   presetStyle,

@@ -16,7 +16,7 @@ const presetStyle = {
 export const meta: WsComponentMeta = {
   category: "forms",
   type: "control",
-  label: "Text Field",
+  label: "Text Input",
   Icon: FormTextFieldIcon,
   presetStyle,
   states: [
