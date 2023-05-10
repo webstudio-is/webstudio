@@ -28,6 +28,7 @@ export const meta: WsComponentMeta = {
     {
       type: "instance",
       component: "TextBlock",
+      label: "Checkbox Label",
       props: [],
       children: [{ type: "text", value: "Checkbox" }],
     },
