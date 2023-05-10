@@ -2,6 +2,7 @@ import { prisma, type Project } from "@webstudio-is/prisma-client";
 import {
   authorizeProject,
   type AppContext,
+  AuthorizationError,
 } from "@webstudio-is/trpc-interface/index.server";
 import type { Asset } from "../schema";
 
@@ -22,7 +23,9 @@ export const deleteFromDb = async (
   );
 
   if (canDelete === false) {
-    throw new Error("You don't have access to create this project assets");
+    throw new AuthorizationError(
+      "You don't have access to create this project assets"
+    );
   }
 
   return await prisma.asset.deleteMany({

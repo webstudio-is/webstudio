@@ -2,6 +2,7 @@ import { prisma, type Prisma, type Project } from "@webstudio-is/prisma-client";
 import {
   authorizeProject,
   type AppContext,
+  AuthorizationError,
 } from "@webstudio-is/trpc-interface/index.server";
 
 export const cloneAssets = async (
@@ -28,7 +29,9 @@ export const cloneAssets = async (
   );
 
   if (canView === false) {
-    throw new Error("You don't have access to this project assets");
+    throw new AuthorizationError(
+      "You don't have access to this project assets"
+    );
   }
 
   if (dontCheckEditPermission === false) {
@@ -38,7 +41,9 @@ export const cloneAssets = async (
     );
 
     if (canEdit === false) {
-      throw new Error("You don't have access to create this project assets");
+      throw new AuthorizationError(
+        "You don't have access to create this project assets"
+      );
     }
   }
 
