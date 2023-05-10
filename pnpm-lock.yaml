@@ -194,9 +194,6 @@ importers:
       lexical:
         specifier: ^0.6.0
         version: 0.6.0
-      lodash.debounce:
-        specifier: ^4.0.8
-        version: 4.0.8
       match-sorter:
         specifier: ^6.3.1
         version: 6.3.1
@@ -1144,15 +1141,9 @@ importers:
       '@webstudio-is/trpc-interface':
         specifier: workspace:^
         version: link:../trpc-interface
-      immer:
-        specifier: ^9.0.12
-        version: 9.0.15
       nanoid:
         specifier: ^3.2.0
         version: 3.3.4
-      uuid:
-        specifier: ^9.0.0
-        version: 9.0.0
       zod:
         specifier: ^3.19.1
         version: 3.19.1
@@ -1160,9 +1151,6 @@ importers:
       '@jest/globals':
         specifier: ^29.3.1
         version: 29.3.1
-      '@types/uuid':
-        specifier: ^8.3.4
-        version: 8.3.4
       '@webstudio-is/jest-config':
         specifier: workspace:^
         version: link:../jest-config
@@ -1199,6 +1187,9 @@ importers:
       '@webstudio-is/fonts':
         specifier: workspace:^
         version: link:../fonts
+      '@webstudio-is/form-handlers':
+        specifier: workspace:^
+        version: link:../form-handlers
       '@webstudio-is/generate-arg-types':
         specifier: workspace:^
         version: link:../generate-arg-types
@@ -1388,6 +1379,9 @@ importers:
       node-fetch:
         specifier: '2'
         version: 2.6.9
+      ts-custom-error:
+        specifier: ^3.3.1
+        version: 3.3.1
       uuid:
         specifier: ^9.0.0
         version: 9.0.0
@@ -19021,6 +19015,11 @@ packages:
   /trough@2.1.0:
     resolution: {integrity: sha512-AqTiAOLcj85xS7vQ8QkAV41hPDIJ71XJB4RCUrzo/1GM2CQwhkJGaf9Hgr7BOugMRpgGUrqRg/DrBDl4H40+8g==}
     dev: true
+
+  /ts-custom-error@3.3.1:
+    resolution: {integrity: sha512-5OX1tzOjxWEgsr/YEUWSuPrQ00deKLh6D7OTWcvNHm12/7QPyRh8SYpyWvA4IZv8H/+GQWQEh/kwo95Q9OVW1A==}
+    engines: {node: '>=14.0.0'}
+    dev: false
 
   /ts-dedent@2.2.0:
     resolution: {integrity: sha512-q5W7tVM71e2xjHZTlgfTDoPF/SmqKG5hddq9SzR49CH2hayqRKJtQ4mtRlSxKaJlR/+9rEM+mnBHf7I2/BQcpQ==}

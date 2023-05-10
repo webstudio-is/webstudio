@@ -36,6 +36,7 @@ export * from "./border-width-top";
 export * from "./box";
 export * from "./bp-star-off";
 export * from "./bp-star-on";
+export * from "./bug";
 export * from "./button-element";
 export * from "./checkbox-checked-filled";
 export * from "./checkbox-checked";

@@ -14,7 +14,7 @@ import { textEditingInstanceSelectorStore } from "~/shared/nano-states";
 import { CanvasTools } from "./canvas-tools";
 import { useMeasure } from "react-use";
 import { useEffect } from "react";
-import { useSetInitialCanvasWidthOnce } from "../breakpoints";
+import { useSetCanvasWidth } from "../breakpoints";
 
 const workspaceStyle = css({
   flexGrow: 1,
@@ -86,7 +86,7 @@ export const Workspace = ({
 }: WorkspaceProps) => {
   const canvasStyle = useCanvasStyle();
   const workspaceRef = useSetWorkspaceRect();
-  useSetInitialCanvasWidthOnce();
+  useSetCanvasWidth();
   const handleWorkspaceClick = () => {
     selectedInstanceSelectorStore.set(undefined);
     textEditingInstanceSelectorStore.set(undefined);

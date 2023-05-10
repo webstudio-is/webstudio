@@ -1,5 +1,6 @@
 import { useState } from "react";
 import {
+  Box,
   SidebarTabs,
   SidebarTabsContent,
   SidebarTabsList,
@@ -12,6 +13,7 @@ import type { TabName } from "./types";
 import { useClientSettings } from "~/builder/shared/client-settings";
 import { Flex } from "@webstudio-is/design-system";
 import { theme } from "@webstudio-is/design-system";
+import { BugIcon } from "@webstudio-is/icons";
 
 const none = { TabContent: () => null };
 
@@ -59,6 +61,20 @@ export const SidebarLeft = ({ publish }: SidebarLeftProps) => {
             </SidebarTabsTrigger>
           ))}
         </SidebarTabsList>
+        <Box css={{ borderRight: `1px solid  ${theme.colors.borderMain}` }}>
+          <SidebarTabsTrigger
+            as={"button"}
+            aria-label={"Report bug"}
+            onClick={() => {
+              window.open(
+                "https://github.com/webstudio-is/webstudio/discussions/new?category=q-a&labels=bug&title=[Bug]"
+              );
+            }}
+          >
+            <BugIcon size={22} />
+          </SidebarTabsTrigger>
+        </Box>
+
         <SidebarTabsContent
           value={activeTab === "none" ? "" : activeTab}
           css={{

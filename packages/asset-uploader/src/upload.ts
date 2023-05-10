@@ -2,6 +2,7 @@ import { prisma } from "@webstudio-is/prisma-client";
 import {
   type AppContext,
   authorizeProject,
+  AuthorizationError,
 } from "@webstudio-is/trpc-interface/index.server";
 import type { AssetClient } from "./client";
 import { getUniqueFilename } from "./utils/get-unique-filename";
@@ -27,7 +28,9 @@ export const createUploadName = async (
     context
   );
   if (canEdit === false) {
-    throw new Error("You don't have access to create this project assets");
+    throw new AuthorizationError(
+      "You don't have access to create this project assets"
+    );
   }
 
   /**

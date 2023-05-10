@@ -1,4 +1,3 @@
-import debounce from "lodash.debounce";
 import { idAttribute } from "@webstudio-is/react-sdk";
 import {
   hoveredInstanceSelectorStore,
@@ -16,6 +15,7 @@ type TimeoutId = undefined | ReturnType<typeof setTimeout>;
 
 export const subscribeInstanceHovering = () => {
   let hoveredElement: undefined | Element = undefined;
+  let isScrolling = false;
 
   const updateHoveredInstance = (element: Element) => {
     const instanceSelector = getInstanceSelectorFromElement(element);
@@ -51,7 +51,7 @@ export const subscribeInstanceHovering = () => {
   window.addEventListener("mouseout", handleMouseOut, eventOptions);
 
   // debounce is used to avoid laggy hover because of iframe message delay
-  const updateHoveredRect = debounce((element: Element) => {
+  const updateHoveredRect = (element: Element) => {
     const instanceId = element.getAttribute(idAttribute) ?? undefined;
     if (instanceId === undefined) {
       return;
@@ -61,19 +61,23 @@ export const subscribeInstanceHovering = () => {
     if (instance === undefined) {
       return;
     }
-    hoveredInstanceOutlineStore.set({
-      instanceId: instance.id,
-      rect: getAllElementsBoundingBox(element),
-    });
-  }, 50);
+    if (!isScrolling) {
+      hoveredInstanceOutlineStore.set({
+        instanceId: instance.id,
+        rect: getAllElementsBoundingBox(element),
+      });
+    }
+  };
 
   // remove hover outline when scroll starts
   // and show it with new rect when scroll ends
   const unsubscribeScrollState = subscribeScrollState({
     onScrollStart() {
+      isScrolling = true;
       hoveredInstanceOutlineStore.set(undefined);
     },
     onScrollEnd() {
+      isScrolling = false;
       if (hoveredElement !== undefined) {
         updateHoveredRect(hoveredElement);
       }
@@ -95,7 +99,6 @@ export const subscribeInstanceHovering = () => {
   );
 
   return () => {
-    updateHoveredRect.cancel();
     window.removeEventListener("mouseover", handleMouseOver);
     window.removeEventListener("mouseout", handleMouseOut);
     unsubscribeScrollState();

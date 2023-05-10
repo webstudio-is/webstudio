@@ -45,7 +45,7 @@ export const meta: WsComponentMeta = {
     {
       type: "instance",
       component: "Input",
-      props: [{ type: "string", name: "email", value: "email" }],
+      props: [{ type: "string", name: "name", value: "email" }],
       children: [],
     },
     {
