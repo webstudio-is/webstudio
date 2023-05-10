@@ -54,6 +54,7 @@ export type EmbedTemplateStyleDecl = z.infer<typeof EmbedTemplateStyleDecl>;
 export type EmbedTemplateInstance = {
   type: "instance";
   component: string;
+  label?: string;
   props?: EmbedTemplateProp[];
   styles?: EmbedTemplateStyleDecl[];
   children: Array<EmbedTemplateInstance | EmbedTemplateText>;
@@ -64,6 +65,7 @@ export const EmbedTemplateInstance: z.ZodType<EmbedTemplateInstance> = z.lazy(
     z.object({
       type: z.literal("instance"),
       component: z.string(),
+      label: z.optional(z.string()),
       props: z.optional(z.array(EmbedTemplateProp)),
       styles: z.optional(z.array(EmbedTemplateStyleDecl)),
       children: WsEmbedTemplate,
@@ -127,6 +129,7 @@ const createInstancesFromTemplate = (
       const instance: Instance = {
         type: "instance",
         id: instanceId,
+        label: item.label,
         component: item.component,
         children: [],
       };

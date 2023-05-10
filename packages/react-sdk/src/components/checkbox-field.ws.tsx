@@ -19,7 +19,7 @@ const presetStyle = {
 export const meta: WsComponentMeta = {
   category: "forms",
   type: "container",
-  label: "Checkbox Field",
+  label: "Checkbox",
   Icon: CheckboxCheckedIcon,
   states: defaultStates,
   presetStyle,
@@ -28,6 +28,7 @@ export const meta: WsComponentMeta = {
     {
       type: "instance",
       component: "TextBlock",
+      label: "Checkbox Label",
       props: [],
       children: [{ type: "text", value: "Checkbox" }],
     },
