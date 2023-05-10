@@ -1190,6 +1190,9 @@ importers:
       '@webstudio-is/fonts':
         specifier: workspace:^
         version: link:../fonts
+      '@webstudio-is/form-handlers':
+        specifier: workspace:^
+        version: link:../form-handlers
       '@webstudio-is/generate-arg-types':
         specifier: workspace:^
         version: link:../generate-arg-types

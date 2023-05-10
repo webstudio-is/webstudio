@@ -1,3 +1,5 @@
+export const formIdFieldName = "ws--form-id";
+
 // Input data common for all handlers
 export type FormInfo = {
   projectId: string;
@@ -19,11 +21,11 @@ export type EmailInfo = {
 export type Result = { success: true } | { success: false; errors: string[] };
 
 export const getFormEntries = (formData: FormData) =>
-  [...formData.entries()].filter(([key]) => key.startsWith("ws--") === false);
+  [...formData.entries()].filter(([key]) => key !== formIdFieldName);
 
 export const getFormId = (formData: FormData) => {
   for (const [key, value] of formData.entries()) {
-    if (key === "ws--form-id") {
+    if (key === formIdFieldName) {
       return value;
     }
   }

@@ -1,4 +1,5 @@
 import { useFetcher } from "@remix-run/react";
+import { formIdFieldName } from "@webstudio-is/form-handlers";
 import {
   Children,
   cloneElement,
@@ -97,7 +98,7 @@ export const Form = forwardRef<
 
   return (
     <fetcher.Form {...props} method="post" data-state={state} ref={ref}>
-      <input type="hidden" name="ws--form-id" value={instanceId} />
+      <input type="hidden" name={formIdFieldName} value={instanceId} />
       {state === "success"
         ? onlySuccessMessage(children)
         : state === "error"
