@@ -9,7 +9,9 @@ import { getUserById, type User } from "~/shared/db/user.server";
 export const loader = async ({
   params,
   request,
-}: LoaderArgs): Promise<Data & { user?: { email: User["email"] } }> => {
+}: LoaderArgs): Promise<
+  Data & { user: { email: User["email"] } | undefined }
+> => {
   try {
     const projectId = params.projectId ?? undefined;
 
