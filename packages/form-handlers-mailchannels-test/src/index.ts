@@ -20,11 +20,10 @@ export default {
     const result = await mailchannelsHandler({
       formInfo: {
         formData,
-        projectDomain: "example.com",
         projectId: "test-project",
         pageUrl: "https://example.com/some-page",
-        email: to,
-        senderDomain: "webstudio.is",
+        toEmail: to,
+        fromEmail: "test@webstudio.is",
       },
     });
 
