@@ -1,62 +1,80 @@
-import { formDataToEmailContent } from "./shared";
+import {
+  type FormInfo,
+  type Result,
+  formToEmail,
+  getFormEntries,
+  getErrors,
+  getResponseBody,
+  getFormId,
+} from "./shared";
+
+const getAuth = (hookUrl: string) => {
+  const url = new URL(hookUrl);
+  const { username, password } = url;
+  url.username = "";
+  url.password = "";
+  const urlWithoutAuth = url.toString();
+  return {
+    username,
+    password,
+    urlWithoutAuth,
+  };
+};
 
 export const n8nHandler = async ({
-  formData,
-  recipientEmail,
-  senderEmail,
+  formInfo,
   hookUrl,
-  authentication,
 }: {
-  formData: FormData;
-  recipientEmail: string;
-  senderEmail: string;
+  formInfo: FormInfo;
+  /** May containt basic authentication credentials,
+   * e.g. https://user:pass@...app.n8n.cloud/webhook/... */
   hookUrl: string;
-  // @todo: add support for other authentication types
-  authentication?: { type: "basic"; username: string; password: string };
-}) => {
-  const { plainText, html, subject } = formDataToEmailContent({ formData });
-
+}): Promise<Result> => {
   const headers: HeadersInit = { "Content-Type": "application/json" };
 
-  if (authentication?.type === "basic") {
-    headers["Authorization"] = `Basic ${Buffer.from(
-      `${authentication.username}:${authentication.password}`
-    ).toString("base64")}`;
+  const { username, password, urlWithoutAuth } = getAuth(hookUrl);
+
+  if (username !== "" && password !== "") {
+    // using btoa() instead of Buffer.from().toString("base64")
+    // because Buffer is not available in Cloudflare workers
+    headers["Authorization"] = `Basic ${btoa([username, password].join(":"))}`;
+  }
+
+  const formId = getFormId(formInfo.formData);
+
+  if (formId === undefined) {
+    return { success: false, errors: ["No form id in FormData"] };
   }
 
   const payload = {
-    email: {
-      to: recipientEmail,
-      from: senderEmail,
-      subject,
-      plainText,
-      html,
-    },
-    formData: Object.fromEntries(formData),
+    email: formToEmail(formInfo),
+    // globally unique form id (can be used for unsubscribing)
+    formId: [formInfo.projectId, formId].join("--"),
+    formData: Object.fromEntries(getFormEntries(formInfo.formData)),
   };
 
-  const response = await fetch(hookUrl, {
-    method: "POST",
-    headers,
-    body: JSON.stringify(payload),
-  });
-
+  let response: Response;
   try {
-    const data = await response.json();
+    response = await fetch(urlWithoutAuth, {
+      method: "POST",
+      headers,
+      body: JSON.stringify(payload),
+    });
+  } catch (error) {
+    return { success: false, errors: [(error as Error).message] };
+  }
 
-    if (response.status === 200 && data.success === true) {
-      return { success: true };
-    }
+  const { text, json } = await getResponseBody(response);
 
-    if (typeof data.error === "string") {
-      return { success: false, errors: [data.error] };
-    }
+  if (
+    response.status >= 200 &&
+    response.status < 300 &&
+    // It's difficult to control status code at n8n side.
+    // Data is easier to control, so we use data to determine success.
+    json?.success === true
+  ) {
+    return { success: true };
+  }
 
-    if (typeof data.message === "string") {
-      return { success: false, errors: [data.message] };
-    }
-    // eslint-disable-next-line no-empty
-  } catch {}
-
-  return { success: false, errors: [response.statusText || "Unknown error"] };
+  return { success: false, errors: getErrors(json) ?? [text] };
 };

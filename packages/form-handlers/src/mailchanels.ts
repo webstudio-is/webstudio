@@ -4,7 +4,13 @@
 //
 // To test see `packages/form-handlers-mailchannels-test`
 
-import { formDataToEmailContent } from "./shared";
+import {
+  type FormInfo,
+  type Result,
+  formToEmail,
+  getErrors,
+  getResponseBody,
+} from "./shared";
 
 type EmailAddress = {
   email: string;
@@ -38,47 +44,44 @@ type SendEmailPayload = {
   headers?: Record<string, string>;
 };
 
-type SendEmailResult = { success: true } | { success: false; errors: string[] };
+const sendEmail = async (payload: SendEmailPayload): Promise<Result> => {
+  let response: Response;
+  try {
+    response = await fetch("https://api.mailchannels.net/tx/v1/send", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(payload),
+    });
+  } catch (error) {
+    return { success: false, errors: [(error as Error).message] };
+  }
 
-const sendEmail = async (
-  payload: SendEmailPayload
-): Promise<SendEmailResult> => {
-  const response = await fetch("https://api.mailchannels.net/tx/v1/send", {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify(payload),
-  });
-
-  if (response.status === 202) {
+  if (response.status >= 200 && response.status < 300) {
     return { success: true };
   }
 
-  try {
-    const { errors } = await response.json();
-    return { success: false, errors };
-  } catch {
-    return { success: false, errors: [response.statusText] };
-  }
+  const { text, json } = await getResponseBody(response);
+
+  return { success: false, errors: getErrors(json) ?? [text] };
 };
 
 export const mailchannelsHandler = async ({
-  formData,
-  recipientEmail,
-  senderEmail,
+  formInfo,
 }: {
-  formData: FormData;
-  recipientEmail: string;
-  senderEmail: string;
+  formInfo: FormInfo;
 }) => {
-  const { plainText, html, subject } = formDataToEmailContent({ formData });
+  const email = formToEmail(formInfo);
 
   return sendEmail({
-    personalizations: [{ to: [{ email: recipientEmail }] }],
-    from: { email: senderEmail },
-    subject: subject,
+    personalizations: [{ to: [{ email: email.to }] }],
+    from: { email: email.from },
+    subject: email.subject,
     content: [
-      { type: "text/plain", value: plainText },
-      { type: "text/html", value: html },
+      { type: "text/plain", value: email.txt },
+      {
+        type: "text/html",
+        value: `<!DOCTYPE html><html><body>${email.html}</body></html>`,
+      },
     ],
   });
 };
