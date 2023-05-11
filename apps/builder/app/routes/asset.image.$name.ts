@@ -22,7 +22,8 @@ export const loader = async ({ params, request }: LoaderArgs) => {
   const options = `width=${width},quality=${quality},format=${format}/`;
 
   if (env.RESIZE_ORIGIN !== undefined) {
-    return fetch(`${env.RESIZE_ORIGIN}/cdn-cgi/${options}/${name}`);
+    const assetUrl = `${env.ASSET_BASE_URL}${name}`;
+    return fetch(`${env.RESIZE_ORIGIN}/cdn-cgi/${options}/${assetUrl}`);
   }
 
   if (env.FILE_UPLOAD_PATH === undefined) {
