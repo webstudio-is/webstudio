@@ -1,6 +1,5 @@
 import { z } from "zod";
 import {
-  type UploadHandlerPart,
   unstable_parseMultipartFormData as parseMultipartFormData,
   MaxPartSizeExceededError,
 } from "@remix-run/node";
@@ -21,12 +20,16 @@ const MAX_FILES_PER_REQUEST = 1;
 
 export const uploadToS3 = async ({
   client,
+  name,
+  type,
   request,
   maxSize,
   bucket,
   acl,
 }: {
   client: S3Client;
+  name: string;
+  type: string;
   request: Request;
   maxSize: number;
   bucket: string;
@@ -34,48 +37,46 @@ export const uploadToS3 = async ({
 }): Promise<AssetData> => {
   const uploadHandler = createUploadHandler(MAX_FILES_PER_REQUEST, client);
 
-  const formData = await parseMultipartFormData(
-    request,
-    (file: UploadHandlerPart) =>
-      uploadHandler({
-        file,
-        maxSize,
-        bucket,
-        acl,
-      })
-  );
-
-  const imagesFormData = formData.getAll("image") as Array<string>;
-  const fontsFormData = formData.getAll("font") as Array<string>;
-
-  const assetsData = [...imagesFormData, ...fontsFormData]
-    .slice(0, MAX_FILES_PER_REQUEST)
-    .map((dataString) => {
-      return AssetData.parse(JSON.parse(dataString));
+  const formData = await parseMultipartFormData(request, async (file) => {
+    // Do not parse if it's not a file
+    if (file.filename === undefined) {
+      return;
+    }
+    return uploadHandler({
+      name,
+      type,
+      data: file.data,
+      maxSize,
+      bucket,
+      acl,
     });
+  });
 
-  return assetsData[0];
+  const file = formData.get("file") as string;
+
+  const assetData = AssetData.parse(JSON.parse(file));
+
+  return assetData;
 };
 
 const createUploadHandler = (maxFiles: number, client: S3Client) => {
   let count = 0;
 
   return async ({
-    file,
+    name,
+    type,
+    data: dataStream,
     maxSize,
     bucket,
     acl,
   }: {
-    file: UploadHandlerPart;
+    name: string;
+    type: string;
+    data: AsyncIterable<Uint8Array>;
     maxSize: number;
     bucket: string;
     acl?: string;
   }): Promise<string | undefined> => {
-    if (file.filename === undefined) {
-      // Do not parse if it's not a file
-      return;
-    }
-
     if (count >= maxFiles) {
       // Do not throw, just ignore the file
       // In case of throw we need to delete previously uploaded files
@@ -84,23 +85,15 @@ const createUploadHandler = (maxFiles: number, client: S3Client) => {
 
     count++;
 
-    if (!file.data) {
-      throw new Error("Your asset seems to be empty");
-    }
-
     // @todo this is going to put the entire file in memory
     // this has to be a stream that goes directly to s3
     // Size check has to happen as you stream and interrupted when size is too big
     // Also check if S3 client has an option to check the size limit
-    const data = await toUint8Array(file.data);
+    const data = await toUint8Array(dataStream);
 
     if (data.byteLength > maxSize) {
-      throw new MaxPartSizeExceededError(file.name, maxSize);
+      throw new MaxPartSizeExceededError(name, maxSize);
     }
-
-    const fileName = file.filename;
-
-    const uniqueFilename = fileName;
 
     // if there is no ACL passed we do not default since some providers do not support it
     const ACL = acl ? { ACL: acl } : {};
@@ -108,13 +101,13 @@ const createUploadHandler = (maxFiles: number, client: S3Client) => {
     const params: PutObjectCommandInput = {
       ...ACL,
       Bucket: bucket,
-      Key: uniqueFilename,
+      Key: name,
       Body: data,
-      ContentType: file.contentType,
+      ContentType: type,
       CacheControl: "public, max-age=31536004,immutable",
       Metadata: {
         // encodeURIComponent is needed to support special characters like Cyrillic
-        filename: encodeURIComponent(fileName) || "unnamed",
+        filename: encodeURIComponent(name) || "unnamed",
       },
     };
 
@@ -122,12 +115,8 @@ const createUploadHandler = (maxFiles: number, client: S3Client) => {
 
     AssetsUploadedSuccess.parse(await upload.done());
 
-    const type = file.contentType.startsWith("image")
-      ? ("image" as const)
-      : ("font" as const);
-
     const assetData = await getAssetData({
-      type,
+      type: type.startsWith("image") ? "image" : "font",
       size: data.byteLength,
       data,
       location: Location.REMOTE,
