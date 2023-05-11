@@ -49,7 +49,9 @@ export const action = async (props: ActionArgs) => {
   } catch (error) {
     if (error instanceof Error) {
       sentryException({ error });
-      throw error;
+      return {
+        errors: error.message,
+      };
     }
   }
 };
