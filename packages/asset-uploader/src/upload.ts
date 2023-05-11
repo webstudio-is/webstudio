@@ -42,11 +42,16 @@ export const createUploadName = async (
   const count = await prisma.asset.count({
     where: {
       OR: [
-        { projectId, status: "UPLOADED" },
         {
           projectId,
-          status: "UPLOADING",
-          createdAt: { gt: new Date(Date.now() - UPLOADING_STALE_TIMEOUT) },
+          file: { status: "UPLOADED" },
+        },
+        {
+          projectId,
+          file: {
+            status: "UPLOADING",
+            createdAt: { gt: new Date(Date.now() - UPLOADING_STALE_TIMEOUT) },
+          },
         },
       ],
     },
@@ -74,11 +79,19 @@ export const createUploadName = async (
   await prisma.asset.create({
     data: {
       id: assetId,
-      name,
       projectId,
+      location: "REMOTE",
+      file: {
+        create: {
+          name,
+          status: "UPLOADING",
+          format: "unknown",
+          size: 0,
+        },
+      },
+      // @todo remove once legacy fields are removed from schema
       status: "UPLOADING",
       format: "unknown",
-      location: "REMOTE",
       size: 0,
     },
   });
@@ -91,9 +104,11 @@ export const uploadFile = async (
 ) => {
   const asset = await prisma.asset.findFirst({
     where: {
-      name: { equals: name },
-      status: { equals: "UPLOADING" },
-      createdAt: { gt: new Date(Date.now() - UPLOADING_STALE_TIMEOUT) },
+      name,
+      file: {
+        status: "UPLOADING",
+        createdAt: { gt: new Date(Date.now() - UPLOADING_STALE_TIMEOUT) },
+      },
     },
   });
   if (asset === null) {
@@ -104,18 +119,29 @@ export const uploadFile = async (
     const assetData = await client.uploadFile(request);
     const { meta, format, location, size } = assetData;
     const dbAsset = await prisma.asset.update({
+      select: {
+        file: true,
+        id: true,
+        projectId: true,
+        name: true,
+        location: true,
+      },
       where: {
         id_projectId: { id: asset.id, projectId: asset.projectId },
       },
       data: {
         location,
-        size,
-        format,
-        meta: JSON.stringify(meta),
-        status: "UPLOADED",
+        file: {
+          update: {
+            size,
+            format,
+            meta: JSON.stringify(meta),
+            status: "UPLOADED",
+          },
+        },
       },
     });
-    return formatAsset(dbAsset);
+    return formatAsset(dbAsset, dbAsset.file);
   } catch (error) {
     await prisma.asset.delete({
       where: {

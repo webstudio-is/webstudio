@@ -5,7 +5,6 @@ import {
   AuthorizationError,
 } from "@webstudio-is/trpc-interface/index.server";
 import type { AssetClient } from "./client";
-import { deleteFromDb } from "./db";
 import type { Asset } from "./schema";
 import { formatAsset } from "./utils/format-asset";
 
@@ -29,6 +28,13 @@ export const deleteAssets = async (
   }
 
   const assets = await prisma.asset.findMany({
+    select: {
+      file: true,
+      id: true,
+      projectId: true,
+      name: true,
+      location: true,
+    },
     where: { id: { in: props.ids }, projectId: props.projectId },
   });
 
@@ -36,20 +42,26 @@ export const deleteAssets = async (
     throw new Error("Assets not found");
   }
 
-  await deleteFromDb(props, context);
-
-  const assetsByName = await prisma.asset.findMany({
-    where: { name: { in: assets.map((asset) => asset.name) } },
+  await prisma.asset.deleteMany({
+    where: { id: { in: props.ids }, projectId: props.projectId },
   });
-  const stillUsedNames = new Set(assetsByName.map((asset) => asset.name));
 
-  for (const asset of assets) {
-    if (stillUsedNames.has(asset.name)) {
-      continue;
-    }
-
-    await client.deleteFile(asset.name);
+  // find unused files
+  const unusedFileNames = new Set(assets.map((asset) => asset.name));
+  const assetsByStillUsedFileName = await prisma.asset.findMany({
+    where: { name: { in: Array.from(unusedFileNames) } },
+  });
+  for (const asset of assetsByStillUsedFileName) {
+    unusedFileNames.delete(asset.name);
   }
 
-  return assets.map(formatAsset);
+  // delete unused files
+  await prisma.file.deleteMany({
+    where: { name: { in: Array.from(unusedFileNames) } },
+  });
+  for (const name of unusedFileNames) {
+    await client.deleteFile(name);
+  }
+
+  return assets.map((asset) => formatAsset(asset, asset.file));
 };

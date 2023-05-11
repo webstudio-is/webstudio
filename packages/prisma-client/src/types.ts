@@ -5,6 +5,7 @@ export type {
   Build,
   Project,
   Asset,
+  File,
   DashboardProject,
   AuthorizationRelation,
   AuthorizationToken,
