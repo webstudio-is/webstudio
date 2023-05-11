@@ -22,8 +22,11 @@ export type EmailInfo = {
 
 export type Result = { success: true } | { success: false; errors: string[] };
 
-export const getFormEntries = (formData: FormData) =>
-  [...formData.entries()].filter(([key]) => key !== formIdFieldName);
+/** Returns form entries that should be send in email: removes `File` entries and `formId` */
+export const getFormEntries = (formData: FormData): [string, string][] =>
+  [...formData.entries()].flatMap(([key, value]) =>
+    key !== formIdFieldName && typeof value === "string" ? [[key, value]] : []
+  );
 
 export const getFormId = (formData: FormData) => {
   for (const [key, value] of formData.entries()) {
