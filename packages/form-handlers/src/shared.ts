@@ -105,7 +105,7 @@ export const getErrors = (
   }
 };
 
-/** Checks that `formData` corresponds to a form in the `instnaces` tree */
+/** Checks that `formData` corresponds to a form in the `instances` tree */
 export const hasMatchingForm = (
   formData: FormData,
   instances: Build["instances"]
