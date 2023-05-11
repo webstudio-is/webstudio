@@ -23,7 +23,7 @@ export const loader = async ({ params, request }: LoaderArgs) => {
 
   if (env.RESIZE_ORIGIN !== undefined) {
     const assetUrl = `${env.ASSET_BASE_URL}${name}`;
-    return fetch(`${env.RESIZE_ORIGIN}/cdn-cgi//image/${options}/${assetUrl}`);
+    return fetch(`${env.RESIZE_ORIGIN}/cdn-cgi/image/${options}/${assetUrl}`);
   }
 
   if (env.FILE_UPLOAD_PATH === undefined) {
