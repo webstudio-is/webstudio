@@ -836,6 +836,10 @@ importers:
         version: 3.19.1
 
   packages/form-handlers:
+    dependencies:
+      '@webstudio-is/project-build':
+        specifier: workspace:^
+        version: link:../project-build
     devDependencies:
       '@jest/globals':
         specifier: ^29.3.1

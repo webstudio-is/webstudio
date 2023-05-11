@@ -1,3 +1,5 @@
+import type { Build } from "@webstudio-is/project-build";
+
 export const formIdFieldName = "ws--form-id";
 
 // Input data common for all handlers
@@ -25,7 +27,7 @@ export const getFormEntries = (formData: FormData) =>
 
 export const getFormId = (formData: FormData) => {
   for (const [key, value] of formData.entries()) {
-    if (key === formIdFieldName) {
+    if (key === formIdFieldName && typeof value === "string") {
       return value;
     }
   }
@@ -98,4 +100,24 @@ export const getErrors = (
   ) {
     return json.errors;
   }
+};
+
+/** Checks that `formData` corresponds to a form in the `instnaces` tree */
+export const hasMatchingFrom = (
+  formData: FormData,
+  instances: Build["instances"]
+) => {
+  const formId = getFormId(formData);
+
+  if (formId === undefined) {
+    return false;
+  }
+
+  return instances.some(
+    ([, instance]) => instance.id === formId && instance.component === "Form"
+  );
+
+  // @todo:
+  // We could also check that each entry in formData has a corresponding input control in the tree,
+  // but that seem like an overkill for now.
 };
