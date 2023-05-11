@@ -7,14 +7,12 @@ import type { GetComponent } from "../components/components-utils";
 import { ReactSdkContext } from "../context";
 import type { Pages, PropsByInstanceId } from "../props";
 import type { WebstudioComponent } from "./webstudio-component";
-import { SessionStoragePolyfill } from "./session-storage-polyfill";
 
 type InstanceSelector = Instance["id"][];
 
 export const createElementsTree = ({
   instances,
   rootInstanceId,
-  sandbox,
   propsByInstanceIdStore,
   assetsStore,
   pagesStore,
@@ -23,7 +21,6 @@ export const createElementsTree = ({
 }: {
   instances: Instances;
   rootInstanceId: Instance["id"];
-  sandbox?: boolean;
   propsByInstanceIdStore: ReadableAtom<PropsByInstanceId>;
   assetsStore: ReadableAtom<Assets>;
   pagesStore: ReadableAtom<Pages>;
@@ -50,7 +47,6 @@ export const createElementsTree = ({
     children: [
       <Fragment key="children">
         {children}
-        {sandbox && <SessionStoragePolyfill />}
         <ScrollRestoration />
         <Scripts />
       </Fragment>,
