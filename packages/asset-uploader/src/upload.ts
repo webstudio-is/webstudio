@@ -86,7 +86,7 @@ export const createUploadName = async (
         create: {
           name,
           status: "UPLOADING",
-          // store content type in relative field
+          // store content type in related field
           format: type,
           size: 0,
         },
