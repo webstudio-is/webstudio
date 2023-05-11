@@ -32,7 +32,6 @@ const imageLoader = createImageLoader({
   imageBaseUrl: USE_CLOUDFLARE_IMAGE_TRANSFORM
     ? "https://webstudio.is/cdn-cgi/image/"
     : "",
-  disableOptions: USE_CLOUDFLARE_IMAGE_TRANSFORM === false,
 });
 
 const ImageBase: ComponentStory<

@@ -3,7 +3,6 @@ import { allSizes, type ImageLoader } from "./image-optimize";
 
 export type ImageLoaderOptions = {
   imageBaseUrl: string;
-  disableOptions?: boolean;
 };
 
 /**
@@ -19,11 +18,12 @@ export const createImageLoader =
         "Width must be only from allowed values"
       );
     }
-    const { imageBaseUrl, disableOptions = false } = loaderOptions;
+    const { imageBaseUrl } = loaderOptions;
+    const searchParams = new URLSearchParams();
+    searchParams.set("width", width.toString());
+    searchParams.set("quality", quality.toString());
+    searchParams.set("format", "auto");
 
-    const options = disableOptions
-      ? ""
-      : `width=${width},quality=${quality},format=auto/`;
     // Cloudflare docs say that we don't need to urlencode the path params
-    return `${imageBaseUrl}${options}${src}`;
+    return `${imageBaseUrl}${src}?${searchParams.toString()}`;
   };
