@@ -2,7 +2,7 @@ export {
   formToEmail,
   formIdFieldName,
   getFormId,
-  hasMatchingFrom,
+  hasMatchingForm,
   type EmailInfo,
   type FormInfo,
 } from "./shared";
