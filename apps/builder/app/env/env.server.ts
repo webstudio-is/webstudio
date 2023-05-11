@@ -34,7 +34,7 @@ const env = {
   // Assets
   MAX_UPLOAD_SIZE: process.env.MAX_UPLOAD_SIZE,
   MAX_ASSETS_PER_PROJECT: process.env.MAX_ASSETS_PER_PROJECT,
-  IMAGE_BASE_URL: process.env.IMAGE_BASE_URL ?? "/",
+  IMAGE_BASE_URL: process.env.IMAGE_BASE_URL ?? "/asset/image/",
   ASSET_BASE_URL:
     process.env.ASSET_BASE_URL ??
     process.env.ASSET_CDN_URL ??
