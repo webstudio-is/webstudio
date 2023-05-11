@@ -33,6 +33,10 @@ export const createUploadName = async (
       "You don't have access to create this project assets"
     );
   }
+  const { userId } = context.authorization;
+  if (userId === undefined) {
+    throw new Error("The user must be authenticated to create a project");
+  }
 
   /**
    * sometimes for example on request timeout we don't know what happened to the "UPLOADING" asset,
@@ -40,18 +44,20 @@ export const createUploadName = async (
    * than UPLOADING_STALE_TIMEOUT milliseconds ago
    **/
 
-  const count = await prisma.asset.count({
+  const count = await prisma.file.count({
     where: {
       OR: [
         {
-          projectId,
-          file: { status: "UPLOADED" },
+          status: "UPLOADED",
+          assets: {
+            some: { projectId },
+          },
         },
         {
-          projectId,
-          file: {
-            status: "UPLOADING",
-            createdAt: { gt: new Date(Date.now() - UPLOADING_STALE_TIMEOUT) },
+          status: "UPLOADING",
+          createdAt: { gt: new Date(Date.now() - UPLOADING_STALE_TIMEOUT) },
+          assets: {
+            some: { projectId },
           },
         },
       ],
@@ -89,6 +95,7 @@ export const createUploadName = async (
           // store content type in related field
           format: type,
           size: 0,
+          userId,
         },
       },
       // @todo remove once legacy fields are removed from schema

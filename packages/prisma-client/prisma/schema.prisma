@@ -38,6 +38,8 @@ model File {
   createdAt   DateTime     @default(now())
   meta        String       @default("{}")
   status      UploadStatus @default(UPLOADING)
+  user        User?        @relation(fields: [userId], references: [id])
+  userId      String?
   assets      Asset[]
 }
 
@@ -69,6 +71,7 @@ model User {
   team      Team?     @relation(fields: [teamId], references: [id])
   teamId    String?
   projects  Project[]
+  files     File[]
 }
 
 model Project {
