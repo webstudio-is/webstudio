@@ -19,12 +19,11 @@ export const loader = async ({ params, request }: LoaderArgs) => {
   if (width === null || quality === null || format === null) {
     throw Error("Options are invalid");
   }
-  const options = `width=${width},quality=${quality},format=${format}/`;
+  const options = `width=${width},quality=${quality},format=${format}`;
 
   if (env.RESIZE_ORIGIN !== undefined) {
     const assetUrl = `${env.ASSET_BASE_URL}${name}`;
-    console.log(`${env.RESIZE_ORIGIN}/cdn-cgi/${options}/${assetUrl}`);
-    return fetch(`${env.RESIZE_ORIGIN}/cdn-cgi/${options}/${assetUrl}`);
+    return fetch(`${env.RESIZE_ORIGIN}/cdn-cgi//image/${options}/${assetUrl}`);
   }
 
   if (env.FILE_UPLOAD_PATH === undefined) {
