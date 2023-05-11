@@ -27,17 +27,8 @@ const StyledButton = styled(Button, {});
 const containerStyle = css({
   position: "relative",
   height: theme.spacing[15],
-  [buttonContentColor]: theme.colors.foregroundSubtle,
-  [labelTextColor]: theme.colors.foregroundSubtle,
-
-  "&:hover, &:has(:focus-visible), &[data-state=open]": {
-    [buttonContentColor]: theme.colors.foregroundIconMain,
-    [labelTextColor]: theme.colors.foregroundMain,
-  },
-  // Remove hover style from the label when the button is hovered
-  [`&:hover:where(:has(${StyledButton}:hover))`]: {
-    [labelTextColor]: theme.colors.foregroundSubtle,
-  },
+  [buttonContentColor]: theme.colors.foregroundIconMain,
+  [labelTextColor]: theme.colors.foregroundMain,
 });
 
 const titleButtonLayoutStyle = css({
