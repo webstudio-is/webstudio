@@ -1,4 +1,4 @@
-import type { StyleProperty, UnitValue } from "@webstudio-is/css-data";
+import type { StyleProperty } from "@webstudio-is/css-data";
 import { Grid, theme } from "@webstudio-is/design-system";
 import type { RenderCategoryProps } from "../../style-sections";
 import { PropertyName } from "../../shared/property-name";
@@ -7,11 +7,6 @@ import { styleConfigByName } from "../../shared/configs";
 import { getStyleSource } from "../../shared/style-info";
 
 const property: StyleProperty = "outlineWidth";
-const defaultOutlineWidthValue: UnitValue = {
-  type: "unit",
-  value: 0,
-  unit: "number",
-};
 
 export const OutlineWidth = (
   props: Pick<
@@ -20,11 +15,7 @@ export const OutlineWidth = (
   >
 ) => {
   const { deleteProperty, setProperty, currentStyle } = props;
-  const styleValue = currentStyle[property]?.value;
-  const outlineWidthValue =
-    styleValue && styleValue.type === "keyword"
-      ? defaultOutlineWidthValue
-      : styleValue;
+  const outlineWidthValue = currentStyle[property]?.value;
   const outlineStyleConfig = styleConfigByName(property);
 
   const outlineStyleWidthKeywords = outlineStyleConfig.items.map((item) => ({
