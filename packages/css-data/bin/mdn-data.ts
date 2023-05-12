@@ -57,8 +57,8 @@ const normalizedValues = {
 
 const beautifyKeyword = (property: string, keyword: string) => {
   /*
-   * outline-color support both invert and currentColor properties.
-   * The default value is `invert` but that isn't supported in all browsers.
+   * The default value is `invert` or `currentcolor` for some css properties.
+   * But that isn't supported in all browsers, example outline-color.
    * So, going with currentColor for consistency.
    * https://developer.mozilla.org/en-US/docs/Web/CSS/outline-color#formal_definition
    */
