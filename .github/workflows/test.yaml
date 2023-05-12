@@ -11,6 +11,8 @@ concurrency:
   group: ${{ github.workflow }}-${{ github.event.number || github.sha }}
   cancel-in-progress: true
 
+# github.event.pull_request.head.sha
+
 jobs:
   Test:
     runs-on: ubuntu-latest
