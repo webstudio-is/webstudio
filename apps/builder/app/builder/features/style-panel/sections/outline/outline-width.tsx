@@ -22,11 +22,6 @@ export const OutlineWidth = (
     value: item.name,
   }));
 
-  const outlineStyleWidthKeywords = outlineStyleConfig.items.map((item) => ({
-    type: "keyword" as const,
-    value: item.name,
-  }));
-
   return (
     <Grid
       css={{
