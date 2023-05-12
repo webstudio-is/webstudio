@@ -6,6 +6,7 @@ import { cloneAssets } from "@webstudio-is/asset-uploader/index.server";
 import {
   authorizeProject,
   type AppContext,
+  AuthorizationError,
 } from "@webstudio-is/trpc-interface/index.server";
 import {
   createBuild,
@@ -34,7 +35,7 @@ export const loadById = async (
   );
 
   if (canRead === false) {
-    throw new Error("You don't have access to this project");
+    throw new AuthorizationError("You don't have access to this project");
   }
 
   const data = await prisma.project.findUnique({

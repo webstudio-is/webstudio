@@ -2,6 +2,7 @@ import { prisma, type Project } from "@webstudio-is/prisma-client";
 import {
   authorizeProject,
   type AppContext,
+  AuthorizationError,
 } from "@webstudio-is/trpc-interface/index.server";
 import type { Asset } from "../schema";
 import { formatAsset } from "../utils/format-asset";
@@ -16,15 +17,27 @@ export const loadAssetsByProject = async (
   );
 
   if (canRead === false) {
-    throw new Error("You don't have access to this project assets");
+    throw new AuthorizationError(
+      "You don't have access to this project assets"
+    );
   }
 
   const assets = await prisma.asset.findMany({
-    where: { projectId, status: "UPLOADED" },
+    select: {
+      file: true,
+      id: true,
+      projectId: true,
+      name: true,
+      location: true,
+    },
+    where: {
+      projectId,
+      file: { status: "UPLOADED" },
+    },
     orderBy: {
-      createdAt: "desc",
+      file: { createdAt: "desc" },
     },
   });
 
-  return assets.map(formatAsset);
+  return assets.map((asset) => formatAsset(asset, asset.file));
 };

@@ -9,8 +9,10 @@ type FsClientOptions = {
 
 export const createFsClient = (options: FsClientOptions): AssetClient => {
   return {
-    uploadFile: (request) =>
+    uploadFile: (name, type, request) =>
       uploadToFs({
+        name,
+        type,
         request,
         maxSize: options.maxUploadSize,
         fileDirectory: options.fileDirectory,

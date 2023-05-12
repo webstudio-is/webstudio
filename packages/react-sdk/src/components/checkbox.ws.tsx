@@ -21,7 +21,7 @@ const presetStyle = {
 
 export const meta: WsComponentMeta = {
   type: "control",
-  label: "Checkbox",
+  label: "Checkbox Input",
   Icon: CheckboxCheckedIcon,
   presetStyle,
   states: [

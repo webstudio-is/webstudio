@@ -21,7 +21,7 @@ const presetStyle = {
 
 export const meta: WsComponentMeta = {
   type: "control",
-  label: "Radio Button",
+  label: "Radio Input",
   Icon: RadioCheckedIcon,
   presetStyle,
   states: [
