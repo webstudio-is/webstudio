@@ -1,0 +1,19 @@
+name: CI
+
+on:
+  push:
+    branches:
+      - master
+  pull_request:
+
+# cancel in-progress runs on new commits to same PR (gitub.event.number)
+concurrency:
+  group: ${{ github.workflow }}-${{ github.event.number || github.sha }}
+  cancel-in-progress: true
+
+jobs:
+  Test:
+    runs-on: ubuntu-latest
+    steps:
+      - run: |
+          echo "wf: ${{ github.workflow }} - evt: ${{ github.event.number }} -sha: ${{ github.sha }} head: ${{ github.head_ref }} base: ${{ github.base_ref }}"
