@@ -54,7 +54,7 @@ import {
 
 registerContainers();
 
-// Can cause FOUC because of react-island
+// Can cause FOUC because of remix-island, be very accurate adding anything here
 export const links = () => {
   return [{ rel: "stylesheet", href: builderStyles }];
 };
