@@ -1,29 +1,16 @@
 name: CI setup
 
+description: |
+  Sets up the CI environment for the project.
+
 runs:
   using: "composite"
 
   steps:
-    - name: Setup Node
-      uses: actions/setup-node@v3
+    - uses: pnpm/action-setup@v2.2.4
+    - uses: actions/setup-node@v3
       with:
-        node-version: 16
-
-    - run: corepack enable
-      shell: bash
-
-    - name: Get pnpm cache directory path
-      id: pnpm-cache-dir-path
-      run: echo "dir=$(pnpm store path --silent)" >> $GITHUB_OUTPUT
-      shell: bash
-
-    - uses: actions/cache@v3
-      with:
-        path: ${{ steps.pnpm-cache-dir-path.outputs.dir }}
-        key: ${{ runner.os }}-pnpm-${{ hashFiles('pnpm-lock.yaml') }}
-        restore-keys: |
-          ${{ runner.os }}-pnpm-
-
-    - name: Install Dependencies
-      run: pnpm install --frozen-lockfile --ignore-scripts
+        node-version: "16.x"
+        cache: pnpm
+    - run: pnpm install --frozen-lockfile --ignore-scripts
       shell: bash
