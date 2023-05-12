@@ -42,11 +42,11 @@ model File {
 }
 
 model Asset {
-  id          String       @default(uuid()) // not unique!
-  projectId   String
-  file        File         @relation(fields: [name], references: [name])
-  name        String
-  location    Location
+  id        String   @default(uuid()) // not unique!
+  projectId String
+  file      File     @relation(fields: [name], references: [name])
+  name      String
+  location  Location
 
   // @todo remove these fields from schema and db after release
   format      String
