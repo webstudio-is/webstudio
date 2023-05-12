@@ -20,9 +20,13 @@ export const OutlineWidth = (
   >
 ) => {
   const { deleteProperty, setProperty, currentStyle } = props;
+  const styleValue = currentStyle[property]?.value;
   const outlineWidthValue =
-    currentStyle[property]?.value ?? defaultOutlineWidthValue;
+    styleValue && styleValue.type === "keyword"
+      ? defaultOutlineWidthValue
+      : styleValue;
   const outlineStyleConfig = styleConfigByName(property);
+
   const outlineStyleWidthKeywords = outlineStyleConfig.items.map((item) => ({
     type: "keyword" as const,
     value: item.name,
