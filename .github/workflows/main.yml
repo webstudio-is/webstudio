@@ -38,6 +38,8 @@ jobs:
           key: checks-${{ github.sha }}
           restore-keys: checks-
 
+      - run: echo ===SHA USED=== ${{ github.event.pull_request.head.sha || github.sha }} # todo: remove after check whats happening on main
+
       - run: pnpm prettier --cache --check "**/*.{js,md,ts,tsx}"
 
       - run: pnpm turbo run size-test build checks dts
