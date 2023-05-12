@@ -271,9 +271,12 @@ export const setLayerProperty =
         const insertItems =
           property === propertyName
             ? newValue.value
-            : Array.from(
-                Array(newValue.value.length),
-                () => layeredBackgroundPropsDefaults[property]
+            : Array.from(Array(newValue.value.length), (_, index) =>
+                // Do not override existing values with defaults for layerNum layer
+                index === 0
+                  ? newPropertyStyle.value[layerNum] ??
+                    layeredBackgroundPropsDefaults[property]
+                  : layeredBackgroundPropsDefaults[property]
               );
 
         newPropertyStyle.value.splice(layerNum, 1, ...insertItems);

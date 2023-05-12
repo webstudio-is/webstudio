@@ -1,6 +1,6 @@
 {
   "name": "@webstudio-is/react-sdk",
-  "version": "0.62.0",
+  "version": "0.64.0",
   "description": "Webstudio JavaScript / TypeScript API",
   "author": "Webstudio <github@webstudio.is>",
   "homepage": "https://webstudio.is",
@@ -52,6 +52,7 @@
     "@webstudio-is/image": "workspace:^",
     "@webstudio-is/prisma-client": "workspace:^",
     "@webstudio-is/project-build": "workspace:^",
+    "@webstudio-is/form-handlers": "workspace:^",
     "detect-font": "^0.1.5",
     "html-tags": "^3.2.0",
     "nanoevents": "^7.0.1",
