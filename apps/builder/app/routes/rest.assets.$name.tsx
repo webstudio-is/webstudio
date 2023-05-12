@@ -15,12 +15,10 @@ export const action = async (
   }
 
   try {
-    if (request.method === "POST") {
+    if (request.method === "POST" && request.body !== null) {
       const asset = await uploadFile(
-        {
-          name: params.name,
-          request,
-        },
+        params.name,
+        request.body,
         createAssetClient()
       );
       return {

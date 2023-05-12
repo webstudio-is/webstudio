@@ -1,41 +1,36 @@
-import { z } from "zod";
-import {
-  unstable_parseMultipartFormData as parseMultipartFormData,
-  unstable_createFileUploadHandler as createFileUploadHandler,
-  NodeOnDiskFile,
-} from "@remix-run/node";
+import { mkdir, writeFile } from "node:fs/promises";
+import { dirname, resolve } from "node:path";
 import { Location } from "@webstudio-is/prisma-client";
-import { AssetData, getAssetData } from "../../utils/get-asset-data";
-
-const AssetFromFs = z.instanceof(NodeOnDiskFile);
+import { getAssetData } from "../../utils/get-asset-data";
+import { toUint8Array } from "../../utils/to-uint8-array";
+import { createSizeLimiter } from "../../utils/size-limiter";
 
 export const uploadToFs = async ({
   name,
   type,
-  request,
+  data: dataStream,
   maxSize,
   fileDirectory,
 }: {
   name: string;
   type: string;
-  request: Request;
+  data: AsyncIterable<Uint8Array>;
   maxSize: number;
   fileDirectory: string;
-}): Promise<AssetData> => {
-  const uploadHandler = createFileUploadHandler({
-    maxPartSize: maxSize,
-    directory: fileDirectory,
-    file: ({ filename }) => filename,
-  });
+}) => {
+  const filepath = resolve(fileDirectory, name);
 
-  const formData = await parseMultipartFormData(request, uploadHandler);
+  // eslint-disable-next-line @typescript-eslint/no-empty-function
+  await mkdir(dirname(filepath), { recursive: true }).catch(() => {});
+  const limitSize = createSizeLimiter(maxSize, name);
 
-  const file = AssetFromFs.parse(formData.get("file"));
+  const data = await toUint8Array(limitSize(dataStream));
+  await writeFile(filepath, data);
 
   const assetData = await getAssetData({
     type: type.startsWith("image") ? "image" : "font",
-    size: file.size,
-    data: new Uint8Array(await file.arrayBuffer()),
+    size: data.byteLength,
+    data,
     location: Location.FS,
   });
 

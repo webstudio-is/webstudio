@@ -101,7 +101,8 @@ export const createUploadName = async (
 };
 
 export const uploadFile = async (
-  { name, request }: { name: string; request: Request },
+  name: string,
+  data: ReadableStream<Uint8Array>,
   client: AssetClient
 ) => {
   const asset = await prisma.asset.findFirst({
@@ -123,7 +124,12 @@ export const uploadFile = async (
   }
 
   try {
-    const assetData = await client.uploadFile(name, asset.file.format, request);
+    const assetData = await client.uploadFile(
+      name,
+      asset.file.format,
+      // global web streams types do not define ReadableStream as async iterable
+      data as unknown as AsyncIterable<Uint8Array>
+    );
     const { meta, format, location, size } = assetData;
     const dbAsset = await prisma.asset.update({
       select: {

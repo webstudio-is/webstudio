@@ -366,9 +366,6 @@ importers:
       '@aws-sdk/lib-storage':
         specifier: ^3.131.0
         version: 3.131.0(@aws-sdk/abort-controller@3.127.0)(@aws-sdk/client-s3@3.131.0)
-      '@remix-run/node':
-        specifier: 1.15.0
-        version: 1.15.0
       '@webstudio-is/fonts':
         specifier: workspace:^
         version: link:../fonts
