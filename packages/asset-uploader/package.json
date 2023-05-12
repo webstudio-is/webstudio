@@ -17,7 +17,6 @@
   "dependencies": {
     "@aws-sdk/client-s3": "^3.131.0",
     "@aws-sdk/lib-storage": "^3.131.0",
-    "@remix-run/node": "1.15.0",
     "@webstudio-is/fonts": "workspace:^",
     "@webstudio-is/prisma-client": "workspace:^",
     "@webstudio-is/trpc-interface": "workspace:^",

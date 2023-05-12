@@ -4,7 +4,7 @@ export type AssetClient = {
   uploadFile: (
     name: string,
     type: string,
-    request: Request
+    data: AsyncIterable<Uint8Array>
   ) => Promise<AssetData>;
   deleteFile: (name: string) => Promise<void>;
 };
