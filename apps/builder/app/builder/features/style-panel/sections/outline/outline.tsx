@@ -60,14 +60,12 @@ export const OutlineSection = (props: RenderCategoryProps) => {
         </Grid>
 
         <OutlineWidth
-          createBatchUpdate={createBatchUpdate}
           currentStyle={currentStyle}
           setProperty={setProperty}
           deleteProperty={deleteProperty}
         />
 
         <OutlineOffset
-          createBatchUpdate={createBatchUpdate}
           currentStyle={currentStyle}
           setProperty={setProperty}
           deleteProperty={deleteProperty}
