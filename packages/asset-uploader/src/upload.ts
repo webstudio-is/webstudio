@@ -12,6 +12,7 @@ import { formatAsset } from "./utils/format-asset";
 type UploadData = {
   projectId: string;
   assetId: string;
+  type: string;
   filename: string;
   maxAssetsPerProject: number;
 };
@@ -22,7 +23,7 @@ export const createUploadName = async (
   data: UploadData,
   context: AppContext
 ) => {
-  const { projectId, maxAssetsPerProject, assetId, filename } = data;
+  const { projectId, maxAssetsPerProject, assetId, type, filename } = data;
   const canEdit = await authorizeProject.hasProjectPermit(
     { projectId, permit: "edit" },
     context
@@ -85,13 +86,14 @@ export const createUploadName = async (
         create: {
           name,
           status: "UPLOADING",
-          format: "unknown",
+          // store content type in related field
+          format: type,
           size: 0,
         },
       },
       // @todo remove once legacy fields are removed from schema
       status: "UPLOADING",
-      format: "unknown",
+      format: type,
       size: 0,
     },
   });
@@ -103,6 +105,11 @@ export const uploadFile = async (
   client: AssetClient
 ) => {
   const asset = await prisma.asset.findFirst({
+    select: {
+      id: true,
+      projectId: true,
+      file: true,
+    },
     where: {
       name,
       file: {
@@ -116,7 +123,7 @@ export const uploadFile = async (
   }
 
   try {
-    const assetData = await client.uploadFile(request);
+    const assetData = await client.uploadFile(name, asset.file.format, request);
     const { meta, format, location, size } = assetData;
     const dbAsset = await prisma.asset.update({
       select: {

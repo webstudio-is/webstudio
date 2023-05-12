@@ -7,18 +7,17 @@ import {
 import { Location } from "@webstudio-is/prisma-client";
 import { AssetData, getAssetData } from "../../utils/get-asset-data";
 
-const AssetsFromFs = z.array(z.instanceof(NodeOnDiskFile));
-
-/**
- * Do not change. Upload code assumes its 1.
- */
-const MAX_FILES_PER_REQUEST = 1;
+const AssetFromFs = z.instanceof(NodeOnDiskFile);
 
 export const uploadToFs = async ({
+  name,
+  type,
   request,
   maxSize,
   fileDirectory,
 }: {
+  name: string;
+  type: string;
   request: Request;
   maxSize: number;
   fileDirectory: string;
@@ -31,23 +30,14 @@ export const uploadToFs = async ({
 
   const formData = await parseMultipartFormData(request, uploadHandler);
 
-  const formDataImages = AssetsFromFs.parse(formData.getAll("image"));
-  const formDataFonts = AssetsFromFs.parse(formData.getAll("font"));
-  const formDataAll = [...formDataImages, ...formDataFonts].slice(
-    0,
-    MAX_FILES_PER_REQUEST
-  );
+  const file = AssetFromFs.parse(formData.get("file"));
 
-  const assets = formDataAll.map(async (asset) =>
-    getAssetData({
-      type: formDataFonts.includes(asset) ? "font" : "image",
-      size: asset.size,
-      data: new Uint8Array(await asset.arrayBuffer()),
-      location: Location.FS,
-    })
-  );
+  const assetData = await getAssetData({
+    type: type.startsWith("image") ? "image" : "font",
+    size: file.size,
+    data: new Uint8Array(await file.arrayBuffer()),
+    location: Location.FS,
+  });
 
-  const assetsData = await Promise.all(assets);
-
-  return assetsData[0];
+  return assetData;
 };
