@@ -16,7 +16,7 @@ const defaultOutlineWidthValue: UnitValue = {
 export const OutlineWidth = (
   props: Pick<
     RenderCategoryProps,
-    "currentStyle" | "setProperty" | "deleteProperty" | "createBatchUpdate"
+    "currentStyle" | "setProperty" | "deleteProperty"
   >
 ) => {
   const { deleteProperty, setProperty, currentStyle } = props;

@@ -28,7 +28,7 @@ const outlineStyleValues = [
 export const OutlineStyle = (
   props: Pick<
     RenderCategoryProps,
-    "currentStyle" | "setProperty" | "deleteProperty" | "createBatchUpdate"
+    "currentStyle" | "setProperty" | "deleteProperty"
   >
 ) => {
   const { currentStyle, setProperty, deleteProperty } = props;

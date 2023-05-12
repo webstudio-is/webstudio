@@ -17,8 +17,7 @@ const properties: StyleProperty[] = [
 ];
 
 export const OutlineSection = (props: RenderCategoryProps) => {
-  const { currentStyle, setProperty, deleteProperty, createBatchUpdate } =
-    props;
+  const { currentStyle, setProperty, deleteProperty } = props;
 
   return (
     <CollapsibleSection
@@ -31,7 +30,6 @@ export const OutlineSection = (props: RenderCategoryProps) => {
           currentStyle={currentStyle}
           setProperty={setProperty}
           deleteProperty={deleteProperty}
-          createBatchUpdate={createBatchUpdate}
         />
 
         <Grid
