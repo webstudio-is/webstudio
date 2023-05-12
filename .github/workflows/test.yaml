@@ -3,7 +3,7 @@ name: CI
 on:
   push:
     branches:
-      - master
+      - main
   pull_request:
 
 # cancel in-progress runs on new commits to same PR (gitub.event.number)
