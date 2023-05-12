@@ -26,7 +26,7 @@ export const handleRequest = (
   responseHeaders.set("Accept-CH", "Sec-CH-Prefers-Color-Scheme");
 
   // data-builder="true" to distinguish between builder and canvas at the entry.client.tsx
-  // inject fonts and set margin:0 here instead of `export links = ` to avoid FOUC
+  // inject fonts and base body styles here instead of `export links = ` to avoid FOUC
   const body = `
     <!DOCTYPE html>
     <html lang="en" data-builder="true">
