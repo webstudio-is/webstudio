@@ -139,13 +139,11 @@ const uploadAsset = async ({
       throw Error(metaData.errors);
     }
 
-    const uploadFormData = new FormData();
-    uploadFormData.append("file", file, metaData.name);
     const uploadResponse = await fetch(
       restAssetsUploadPath({ name: metaData.name }),
       {
         method: "POST",
-        body: uploadFormData,
+        body: file,
       }
     );
     const uploadData: UploadData = await uploadResponse.json();
