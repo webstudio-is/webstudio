@@ -23,6 +23,10 @@ export const OutlineWidth = (
   const outlineWidthValue =
     currentStyle[property]?.value ?? defaultOutlineWidthValue;
   const outlineStyleConfig = styleConfigByName(property);
+  const outlineStyleWidthKeywords = outlineStyleConfig.items.map((item) => ({
+    type: "keyword" as const,
+    value: item.name,
+  }));
 
   return (
     <Grid
@@ -43,7 +47,7 @@ export const OutlineWidth = (
         property={property}
         label={outlineStyleConfig?.label || ""}
         styleSource={getStyleSource(currentStyle[property])}
-        keywords={[]}
+        keywords={outlineStyleWidthKeywords}
         setValue={setProperty(property)}
         deleteProperty={deleteProperty}
         value={outlineWidthValue}

@@ -62,10 +62,7 @@ const beautifyKeyword = (property: string, keyword: string) => {
    * So, going with currentColor for consistency.
    * https://developer.mozilla.org/en-US/docs/Web/CSS/outline-color#formal_definition
    */
-  if (
-    keyword === "currentcolor" ||
-    (property === "outline-color" && keyword === "invertOrCurrentColor")
-  ) {
+  if (keyword === "currentcolor" || keyword === "invertOrCurrentColor") {
     return "currentColor";
   }
   // builder style panel cannot interpret "normal" and "bold"
