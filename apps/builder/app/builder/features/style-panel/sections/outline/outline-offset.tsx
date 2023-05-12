@@ -23,6 +23,12 @@ export const OutlineOffset = (
   const outlineOffsetValue =
     currentStyle[property]?.value ?? defaultOutlineOffsetValue;
   const outlineOffsetStyleConfig = styleConfigByName(property);
+  const outlineOffsetWidthKeywords = outlineOffsetStyleConfig.items.map(
+    (item) => ({
+      type: "keyword" as const,
+      value: item.name,
+    })
+  );
 
   return (
     <Grid
@@ -43,7 +49,7 @@ export const OutlineOffset = (
         property={property}
         label={outlineOffsetStyleConfig?.label || ""}
         styleSource={getStyleSource(currentStyle[property])}
-        keywords={[]}
+        keywords={outlineOffsetWidthKeywords}
         setValue={setProperty(property)}
         deleteProperty={deleteProperty}
         value={outlineOffsetValue}
