@@ -35,7 +35,10 @@ try {
 
 startTransition(() => {
   hydrateRoot(
-    document,
+    document.documentElement.dataset.builder === "true"
+      ? // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+        document.getElementById("root")!
+      : document,
     <StrictMode>
       <RemixBrowser />
     </StrictMode>
