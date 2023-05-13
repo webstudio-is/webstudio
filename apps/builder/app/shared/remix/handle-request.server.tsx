@@ -4,13 +4,7 @@ import type { EntryContext } from "@remix-run/node";
 import { flushCss } from "@webstudio-is/design-system";
 import { renderHeadToString } from "remix-island";
 import { Head } from "./root";
-// eslint-disable-next-line import/no-internal-modules
-import interFont from "@fontsource/inter/variable.css";
-// eslint-disable-next-line import/no-internal-modules
-import manropeVariableFont from "@fontsource/manrope/variable.css";
-// eslint-disable-next-line import/no-internal-modules
-import robotoMonoFont from "@fontsource/roboto-mono/index.css";
-import appCss from "../app.css";
+import { staticLinks } from "~/routes/login";
 
 export const handleRequest = (
   request: Request,
@@ -35,10 +29,9 @@ export const handleRequest = (
       <head>
         <meta charSet="utf-8" />
         <meta name="viewport" content="width=device-width,initial-scale=1" />
-        <link rel="stylesheet" href="${interFont}" />
-        <link rel="stylesheet" href="${manropeVariableFont}" />
-        <link rel="stylesheet" href="${robotoMonoFont}" />
-        <link rel="stylesheet" href="${appCss}" />
+        ${staticLinks
+          .map((link) => `<link rel="stylesheet" href="${link}" />`)
+          .join("\n")}
         ${head}
         <style id="stitches">${flushCss()}</style>
       </head>

@@ -17,6 +17,7 @@ export const loader = async ({ request }: LoaderArgs) => {
   // See remix.config.ts for the publicPath value
   const publicPath = "/build/";
 
+  // In case of 404 on static assets, this route will be executed
   if (url.pathname.startsWith(publicPath)) {
     throw new Response("Not found", {
       status: 404,
