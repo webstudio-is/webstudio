@@ -7,6 +7,7 @@
  */
 export { Slot } from "./slot";
 export { Fragment } from "./fragment";
+export { Html } from "./html";
 export { Body } from "./body";
 export { Box } from "./box";
 export { TextBlock } from "./text-block";

@@ -2,6 +2,7 @@ import type { WsComponentMeta, WsComponentPropsMeta } from "./component-meta";
 import type { ComponentName } from "./components-utils";
 import { meta as SlotMeta } from "./slot.ws";
 import { meta as FragmentMeta } from "./fragment.ws";
+import { meta as HtmlMeta } from "./html.ws";
 import { meta as BodyMeta } from "./body.ws";
 import { meta as BoxMeta } from "./box.ws";
 import { meta as TextBlockMeta } from "./text-block.ws";
@@ -36,6 +37,7 @@ import { meta as CheckboxMeta } from "./checkbox.ws";
 // these are huge JSON objects that we want to be tree-shaken when not used!
 import { propsMeta as SlotMetaPropsMeta } from "./slot.ws";
 import { propsMeta as FragmentMetaPropsMeta } from "./fragment.ws";
+import { propsMeta as HtmlMetaPropsMeta } from "./html.ws";
 import { propsMeta as BodyMetaPropsMeta } from "./body.ws";
 import { propsMeta as BoxMetaPropsMeta } from "./box.ws";
 import { propsMeta as TextBlockMetaPropsMeta } from "./text-block.ws";
@@ -71,6 +73,7 @@ import { propsMeta as CheckboxPropsMeta } from "./checkbox.ws";
 export const defaultMetas: Record<string, WsComponentMeta> = {
   Slot: SlotMeta,
   Fragment: FragmentMeta,
+  Html: HtmlMeta,
   Box: BoxMeta,
   Body: BodyMeta,
   TextBlock: TextBlockMeta,
@@ -123,6 +126,7 @@ export const registerComponentMetas = (
 export const defaultPropsMetas: Record<string, WsComponentPropsMeta> = {
   Slot: SlotMetaPropsMeta,
   Fragment: FragmentMetaPropsMeta,
+  Html: HtmlMetaPropsMeta,
   Box: BoxMetaPropsMeta,
   Body: BodyMetaPropsMeta,
   TextBlock: TextBlockMetaPropsMeta,
