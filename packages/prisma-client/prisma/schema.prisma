@@ -3,7 +3,7 @@
 
 generator client {
   provider        = "prisma-client-js"
-  previewFeatures = ["views", "clientExtensions"]
+  previewFeatures = ["views", "clientExtensions", "jsonProtocol"]
   // see commands.ts
   // <output-placeholder-for-migrations>
   output          = "../src/__generated__"
