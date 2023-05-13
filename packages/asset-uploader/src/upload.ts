@@ -12,6 +12,7 @@ import { formatAsset } from "./utils/format-asset";
 type UploadData = {
   projectId: string;
   assetId: string;
+  type: string;
   filename: string;
   maxAssetsPerProject: number;
 };
@@ -22,7 +23,7 @@ export const createUploadName = async (
   data: UploadData,
   context: AppContext
 ) => {
-  const { projectId, maxAssetsPerProject, assetId, filename } = data;
+  const { projectId, maxAssetsPerProject, assetId, type, filename } = data;
   const canEdit = await authorizeProject.hasProjectPermit(
     { projectId, permit: "edit" },
     context
@@ -42,11 +43,16 @@ export const createUploadName = async (
   const count = await prisma.asset.count({
     where: {
       OR: [
-        { projectId, status: "UPLOADED" },
         {
           projectId,
-          status: "UPLOADING",
-          createdAt: { gt: new Date(Date.now() - UPLOADING_STALE_TIMEOUT) },
+          file: { status: "UPLOADED" },
+        },
+        {
+          projectId,
+          file: {
+            status: "UPLOADING",
+            createdAt: { gt: new Date(Date.now() - UPLOADING_STALE_TIMEOUT) },
+          },
         },
       ],
     },
@@ -74,11 +80,20 @@ export const createUploadName = async (
   await prisma.asset.create({
     data: {
       id: assetId,
-      name,
       projectId,
-      status: "UPLOADING",
-      format: "unknown",
       location: "REMOTE",
+      file: {
+        create: {
+          name,
+          status: "UPLOADING",
+          // store content type in related field
+          format: type,
+          size: 0,
+        },
+      },
+      // @todo remove once legacy fields are removed from schema
+      status: "UPLOADING",
+      format: type,
       size: 0,
     },
   });
@@ -86,14 +101,22 @@ export const createUploadName = async (
 };
 
 export const uploadFile = async (
-  { name, request }: { name: string; request: Request },
+  name: string,
+  data: ReadableStream<Uint8Array>,
   client: AssetClient
 ) => {
   const asset = await prisma.asset.findFirst({
+    select: {
+      id: true,
+      projectId: true,
+      file: true,
+    },
     where: {
-      name: { equals: name },
-      status: { equals: "UPLOADING" },
-      createdAt: { gt: new Date(Date.now() - UPLOADING_STALE_TIMEOUT) },
+      name,
+      file: {
+        status: "UPLOADING",
+        createdAt: { gt: new Date(Date.now() - UPLOADING_STALE_TIMEOUT) },
+      },
     },
   });
   if (asset === null) {
@@ -101,21 +124,37 @@ export const uploadFile = async (
   }
 
   try {
-    const assetData = await client.uploadFile(request);
+    const assetData = await client.uploadFile(
+      name,
+      asset.file.format,
+      // global web streams types do not define ReadableStream as async iterable
+      data as unknown as AsyncIterable<Uint8Array>
+    );
     const { meta, format, location, size } = assetData;
     const dbAsset = await prisma.asset.update({
+      select: {
+        file: true,
+        id: true,
+        projectId: true,
+        name: true,
+        location: true,
+      },
       where: {
         id_projectId: { id: asset.id, projectId: asset.projectId },
       },
       data: {
         location,
-        size,
-        format,
-        meta: JSON.stringify(meta),
-        status: "UPLOADED",
+        file: {
+          update: {
+            size,
+            format,
+            meta: JSON.stringify(meta),
+            status: "UPLOADED",
+          },
+        },
       },
     });
-    return formatAsset(dbAsset);
+    return formatAsset(dbAsset, dbAsset.file);
   } catch (error) {
     await prisma.asset.delete({
       where: {

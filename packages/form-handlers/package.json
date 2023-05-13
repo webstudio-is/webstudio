@@ -14,7 +14,9 @@
     "dts": "tsc --declarationDir lib/types",
     "lint": "eslint ./src --ext .ts,.tsx --max-warnings 0"
   },
-  "dependencies": {},
+  "dependencies": {
+    "@webstudio-is/project-build": "workspace:^"
+  },
   "devDependencies": {
     "@jest/globals": "^29.3.1",
     "@webstudio-is/jest-config": "workspace:^",

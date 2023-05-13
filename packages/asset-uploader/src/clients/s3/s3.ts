@@ -23,10 +23,12 @@ export const createS3Client = (options: S3ClientOptions): AssetClient => {
     },
   });
 
-  const uploadFile: AssetClient["uploadFile"] = async (request) => {
-    return await uploadToS3({
+  const uploadFile: AssetClient["uploadFile"] = async (name, type, data) => {
+    return uploadToS3({
       client,
-      request,
+      name,
+      type,
+      data,
       maxSize: options.maxUploadSize,
       bucket: options.bucket,
       acl: options.acl,

@@ -23,11 +23,21 @@ export const loadAssetsByProject = async (
   }
 
   const assets = await prisma.asset.findMany({
-    where: { projectId, status: "UPLOADED" },
+    select: {
+      file: true,
+      id: true,
+      projectId: true,
+      name: true,
+      location: true,
+    },
+    where: {
+      projectId,
+      file: { status: "UPLOADED" },
+    },
     orderBy: {
-      createdAt: "desc",
+      file: { createdAt: "desc" },
     },
   });
 
-  return assets.map(formatAsset);
+  return assets.map((asset) => formatAsset(asset, asset.file));
 };

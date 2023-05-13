@@ -5,7 +5,6 @@ import { setEnv } from "@webstudio-is/feature-flags";
 import { withSentry } from "@sentry/remix";
 import { ErrorBoundary } from "@sentry/remix";
 import env from "./shared/env";
-import { PersistentFetcherProvider } from "./shared/fetcher";
 import type { ComponentProps } from "react";
 
 setEnv(env.FEATURES as string);
@@ -15,9 +14,7 @@ type OutletProps = ComponentProps<typeof Outlet>;
 const RootWithErrorBoundary = (props: OutletProps) => (
   <ErrorBoundary>
     <TooltipProvider>
-      <PersistentFetcherProvider>
-        <Outlet {...props} />
-      </PersistentFetcherProvider>
+      <Outlet {...props} />
     </TooltipProvider>
   </ErrorBoundary>
 );
