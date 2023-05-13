@@ -54,7 +54,6 @@ export const backgroundToLonghand = (
   backgroundColor: string | undefined;
 } => {
   const layers: string[] = [];
-
   let tokenStream = background.trim();
 
   tokenStream = tokenStream.endsWith(";")
