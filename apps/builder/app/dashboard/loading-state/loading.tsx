@@ -14,7 +14,13 @@ const containerStyle = css({
   backdropFilter: "blur(8px)",
 });
 
-export const Loading = ({ delay = 0 }: { delay?: number }) => {
+export const Loading = ({
+  delay = 0,
+  size,
+}: {
+  delay?: number;
+  size?: number;
+}) => {
   const [isVisible, setIsVisible] = useState(false);
   const [visible] = useDebounce(isVisible, delay ?? 0);
 
@@ -29,7 +35,7 @@ export const Loading = ({ delay = 0 }: { delay?: number }) => {
       align="center"
       className={containerStyle()}
     >
-      <SvgLoading />
+      <SvgLoading size={size} />
     </Flex>
   ) : null;
 };
