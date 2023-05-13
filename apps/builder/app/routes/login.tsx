@@ -11,7 +11,8 @@ import interFont from "@fontsource/inter/variable.css";
 import manropeVariableFont from "@fontsource/manrope/variable.css";
 // eslint-disable-next-line import/no-internal-modules
 import robotoMonoFont from "@fontsource/roboto-mono/index.css";
-import appCss from "../app.css";
+// eslint-disable-next-line import/no-internal-modules
+import appCss from "../shared/app.css";
 
 export const staticLinks = [
   interFont,
