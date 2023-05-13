@@ -3,12 +3,15 @@
   "extends": "../../packages/tsconfig/remix.json",
   "include": [
     "remix.env.d.ts",
+    "css-box-shadow.d.ts",
     "**/*.ts",
     "**/*.tsx",
     "../../@types/**/*.d.ts"
   ],
   "compilerOptions": {
-    "paths": { "~/*": ["app/*"] },
+    "paths": {
+      "~/*": ["app/*"]
+    },
     "baseUrl": ".",
     "rootDir": "./app",
     "declaration": false,

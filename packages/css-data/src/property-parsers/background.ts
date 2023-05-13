@@ -124,6 +124,8 @@ export const parseBackgroundImage = (
 ): LayersValue | InvalidValue => {
   const backgroundImages: UnparsedValue[] = [];
 
+  console.log(layers);
+
   for (const layer of layers) {
     if (
       gradientNames.some((gradientName) => layer.startsWith(gradientName)) ===

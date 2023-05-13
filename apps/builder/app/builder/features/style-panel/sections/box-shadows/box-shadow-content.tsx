@@ -2,6 +2,7 @@ import { useState } from "react";
 import type { InvalidValue, StyleProperty } from "@webstudio-is/css-data";
 import { TextArea, theme } from "@webstudio-is/design-system";
 import type { RenderCategoryProps } from "../../style-sections";
+import { parseBoxShadow } from "./box-shadow-parser";
 
 type IntermediateValue = {
   type: "intermediate";
@@ -31,9 +32,9 @@ export const BoxShadowContent = (
       type: "intermediate",
       value,
     });
-  };
 
-  console.log(intermediateValue);
+    parseBoxShadow(value);
+  };
 
   return (
     <TextArea
