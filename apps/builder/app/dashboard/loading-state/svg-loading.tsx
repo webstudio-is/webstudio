@@ -1,5 +1,5 @@
 import { css } from "@webstudio-is/design-system";
-import svgSpinner from "./spinner";
+import svgSpinner from "./svg-spinner";
 
 const svgContainerStyle = css({
   display: "flex",
@@ -13,6 +13,6 @@ export const SvgLoading = ({ size = 64 }: { size?: number }) => {
       className={svgContainerStyle()}
       style={{ height: size, width: size }}
       dangerouslySetInnerHTML={{ __html: svgSpinner }}
-    ></div>
+    />
   );
 };
