@@ -6,10 +6,6 @@ import { theme, Box, type CSS, Flex, Grid } from "@webstudio-is/design-system";
 import type { AuthPermit } from "@webstudio-is/trpc-interface/index.server";
 import { registerContainers, useBuilderStore } from "~/shared/sync";
 import { useSyncServer } from "./shared/sync/sync-server";
-// eslint-disable-next-line import/no-internal-modules
-import interFont from "@fontsource/inter/variable.css";
-// eslint-disable-next-line import/no-internal-modules
-import robotoMonoFont from "@fontsource/roboto-mono/index.css";
 import { useSharedShortcuts } from "~/shared/shortcuts";
 import { SidebarLeft, Navigator } from "./features/sidebar-left";
 import { Inspector } from "./features/inspector";
@@ -58,12 +54,9 @@ import {
 
 registerContainers();
 
+// Can cause FOUC because of remix-island, be very accurate adding anything here
 export const links = () => {
-  return [
-    { rel: "stylesheet", href: interFont },
-    { rel: "stylesheet", href: robotoMonoFont },
-    { rel: "stylesheet", href: builderStyles },
-  ];
+  return [{ rel: "stylesheet", href: builderStyles }];
 };
 
 const useSetProject = (project: Project) => {

@@ -84,6 +84,7 @@
     "remix-auth-form": "^1.1.2",
     "remix-auth-github": "^1.1.1",
     "remix-auth-google": "^1.1.0",
+    "remix-island": "^0.1.2",
     "shallow-equal": "^3.1.0",
     "slugify": "^1.6.5",
     "title-case": "^3.0.3",

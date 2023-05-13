@@ -248,6 +248,9 @@ importers:
       remix-auth-google:
         specifier: ^1.1.0
         version: 1.1.0(@remix-run/react@1.15.0)(@remix-run/server-runtime@1.15.0)(react@18.2.0)(remix-auth@3.2.2)
+      remix-island:
+        specifier: ^0.1.2
+        version: 0.1.2(@remix-run/react@1.15.0)(@remix-run/server-runtime@1.15.0)(react-dom@18.2.0)(react@18.2.0)
       shallow-equal:
         specifier: ^3.1.0
         version: 3.1.0
@@ -17729,6 +17732,20 @@ packages:
       '@remix-run/react': 1.15.0(react-dom@18.2.0)(react@18.2.0)
       '@remix-run/server-runtime': 1.15.0
       uuid: 8.3.2
+    dev: false
+
+  /remix-island@0.1.2(@remix-run/react@1.15.0)(@remix-run/server-runtime@1.15.0)(react-dom@18.2.0)(react@18.2.0):
+    resolution: {integrity: sha512-1vXF56y7ZKb8caUduCKdkbxObAxZnTO+arQ94QlwKK6a7wVozGCfiOOk3lr919rm7cy54eeqOVI0hud3cfHlLg==}
+    peerDependencies:
+      '@remix-run/react': '>= 1'
+      '@remix-run/server-runtime': '>= 1'
+      react: '>= 16.8'
+      react-dom: '>= 16.8'
+    dependencies:
+      '@remix-run/react': 1.15.0(react-dom@18.2.0)(react@18.2.0)
+      '@remix-run/server-runtime': 1.15.0
+      react: 18.2.0
+      react-dom: 18.2.0(react@18.2.0)
     dev: false
 
   /remove-accents@0.4.2:
