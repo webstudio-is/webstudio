@@ -8,12 +8,10 @@ import {
 import { useLoaderData } from "@remix-run/react";
 import { findAuthenticatedUser } from "~/services/auth.server";
 import env from "~/env/env.server";
-import { Login, links } from "~/auth";
+import { Login } from "~/auth";
 import { useLoginErrorMessage } from "~/shared/session";
 import { dashboardPath } from "~/shared/router-utils";
 import { returnToCookie } from "~/services/cookie.server";
-
-export { links };
 
 const comparePathnames = (pathnameOrUrlA: string, pathnameOrUrlB: string) => {
   const aPathname = new URL(pathnameOrUrlA, "http://localhost").pathname;
