@@ -1,7 +1,7 @@
 import { forwardRef, type ElementRef } from "react";
 
 type Props = {
-  code: string;
+  code?: string;
 };
 
 export const Html = forwardRef<ElementRef<"div">, Props>((props, ref) => {
@@ -10,8 +10,8 @@ export const Html = forwardRef<ElementRef<"div">, Props>((props, ref) => {
     <div
       {...rest}
       ref={ref}
-      style={{ display: props.code.trim().length !== 0 ? "contents" : "block" }}
-      dangerouslySetInnerHTML={{ __html: code }}
+      style={{ display: code?.trim().length !== 0 ? "contents" : "block" }}
+      dangerouslySetInnerHTML={{ __html: code ?? "" }}
     />
   );
 });
