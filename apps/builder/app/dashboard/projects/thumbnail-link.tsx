@@ -1,10 +1,8 @@
 import { css, theme, textVariants } from "@webstudio-is/design-system";
 import { forwardRef } from "react";
-import { Link, useNavigation } from "@remix-run/react";
-import { Loading } from "../loading-state";
+import { Link } from "@remix-run/react";
 
 const thumbnailStyle = css(textVariants.brandThumbnailLargeDefault, {
-  position: "relative",
   display: "flex",
   alignItems: "center",
   alignSelf: "center",
@@ -33,11 +31,8 @@ export const ThumbnailLink = forwardRef<
   HTMLAnchorElement,
   { title: string; to: string }
 >(({ title, to }, ref) => {
-  const { state, location } = useNavigation();
-  const shouldShowLoading = state !== "idle" && to === location?.pathname;
   return (
     <Link ref={ref} to={to} className={thumbnailStyle()} tabIndex={-1}>
-      {shouldShowLoading && <Loading delay={600} />}
       {getThumbnailAbbreviation(title)}
     </Link>
   );

@@ -46,6 +46,8 @@ export const config: Config = {
         overrides: {
           // preserve viewBox
           removeViewBox: false,
+          convertTransform: false,
+          inlineStyles: false,
         },
       },
     },
