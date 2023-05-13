@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import { Flex, css } from "@webstudio-is/design-system";
-import { SvgLoading } from "~/dashboard/loading-state/svg-loading";
+import spinner from "./spinner.svg";
 
 const containerStyle = css({
   position: "absolute",
@@ -11,6 +11,9 @@ const containerStyle = css({
   background:
     "radial-gradient(34.37% 50% at 50% 50%, rgba(255, 255, 255, 0.5) 0%, rgba(248, 248, 248, 0.5) 100%);",
   backdropFilter: "blur(8px)",
+  display: "flex",
+  alignItems: "center",
+  justifyContent: "center",
 });
 
 export const Loading = ({ delay = 0 }: { delay?: number }) => {
@@ -34,7 +37,7 @@ export const Loading = ({ delay = 0 }: { delay?: number }) => {
       align="center"
       className={containerStyle()}
     >
-      <SvgLoading size={64} />
+      <img src={spinner} alt="Loading" width={64} height={64} />
     </Flex>
   ) : null;
 };
