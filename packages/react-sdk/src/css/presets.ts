@@ -22,6 +22,6 @@ export const borders: Styles = [
 export const outline: Styles = [
   {
     property: "outlineWidth",
-    value: { type: "unit", value: 0, unit: "px" },
+    value: { type: "unit", value: 1, unit: "px" },
   },
 ];
