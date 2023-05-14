@@ -7,3 +7,4 @@ export * from "./position/position";
 export * from "./typography/typography";
 export * from "./backgrounds/backgrounds";
 export * from "./borders/borders";
+export * from "./outline/outline";

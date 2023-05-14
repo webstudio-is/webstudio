@@ -16,7 +16,7 @@
  */
 
 // webstudio custom opinionated presets
-import { borders } from "./presets";
+import { borders, outline } from "./presets";
 import type { EmbedTemplateStyleDecl } from "../embed-template";
 
 export type Styles = EmbedTemplateStyleDecl[];
@@ -37,7 +37,7 @@ const boxSizing = {
  *   box-sizing: border-box;
   }
 */
-const baseStyle = [boxSizing, ...borders] satisfies Styles;
+const baseStyle = [boxSizing, ...borders, ...outline] satisfies Styles;
 
 export const div = baseStyle;
 export const address = baseStyle;

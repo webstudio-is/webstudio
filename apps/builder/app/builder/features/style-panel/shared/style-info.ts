@@ -60,6 +60,15 @@ type SourceProperties = {
   [property in StyleProperty]?: SourceValueInfo;
 };
 
+/*
+ * For some cases we are encouraging to use custom defaults, than
+ * `initial` values provided by browsers. This helps in controlling the behaviour
+ * of such properties
+ */
+const CUSTOM_DEFAULT_VALUES: Partial<Record<StyleProperty, StyleValue>> = {
+  outlineWidth: { value: 0, type: "unit", unit: "px" },
+};
+
 export type StyleValueInfo = {
   value: StyleValue;
   local?: StyleValue;
@@ -559,6 +568,7 @@ export const useStyleInfo = () => {
       const computed = browserStyle?.[property];
       const defaultValue =
         htmlStyle?.[property] ??
+        CUSTOM_DEFAULT_VALUES[property] ??
         properties[property as keyof typeof properties].initial;
       const preset = presetStyle?.[property];
       const inherited = inheritedInfo[property];

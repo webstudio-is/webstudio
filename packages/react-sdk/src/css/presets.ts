@@ -18,3 +18,10 @@ export const borders: Styles = [
     value: { type: "unit", value: 1, unit: "px" },
   },
 ];
+
+export const outline: Styles = [
+  {
+    property: "outlineWidth",
+    value: { type: "unit", value: 1, unit: "px" },
+  },
+];

@@ -44,6 +44,7 @@ const containerStyle = css({
 const thumbnailStyle = css({
   position: "relative",
   overflow: "hidden",
+  minWidth: "100%",
 });
 
 const footerStyle = css({
