@@ -108,6 +108,7 @@ export * from "./section-link";
 export * from "./shrink";
 export * from "./slot-component";
 export * from "./small-x";
+export * from "./spinner";
 export * from "./subscript";
 export * from "./subtract";
 export * from "./superscript";
