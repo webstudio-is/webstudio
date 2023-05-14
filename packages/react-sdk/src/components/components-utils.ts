@@ -1,6 +1,6 @@
-import type { UnionToIntersection } from "type-fest";
 import * as components from "./components";
 import { registeredComponents } from "./index";
+import { componentAttribute, idAttribute } from "../tree";
 
 export type ComponentName = keyof typeof components;
 
@@ -57,8 +57,14 @@ export const getComponentNames = (): ComponentName[] => {
 };
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
-type AnyComponent = UnionToIntersection<
-  (typeof components)[keyof typeof components]
+type AnyComponent = React.ForwardRefExoticComponent<
+  Omit<
+    React.DetailedHTMLProps<React.HTMLAttributes<HTMLElement>, HTMLElement>,
+    "ref"
+  > & {
+    [componentAttribute]: string;
+    [idAttribute]: string;
+  } & React.RefAttributes<HTMLElement>
 >;
 
 /**

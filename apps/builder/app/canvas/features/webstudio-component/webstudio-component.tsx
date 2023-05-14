@@ -40,6 +40,8 @@ const ContentEditable = ({
 }: {
   Component: NonNullable<ReturnType<GetComponent>>;
   elementRef: { current: null | HTMLElement };
+  [idAttribute]: Instance["id"];
+  [componentAttribute]: Instance["component"];
 }) => {
   const [editor] = useLexicalComposerContext();
 
