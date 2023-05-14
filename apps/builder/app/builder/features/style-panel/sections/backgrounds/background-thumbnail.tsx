@@ -1,6 +1,9 @@
 import { useStore } from "@nanostores/react";
 import type { Assets } from "@webstudio-is/asset-uploader";
-import { Image as WebstudioImage, loaders } from "@webstudio-is/image";
+import {
+  Image as WebstudioImage,
+  createImageLoader,
+} from "@webstudio-is/image";
 import { styled, theme } from "@webstudio-is/design-system";
 import { assetsStore } from "~/shared/nano-states";
 import type { StyleInfo } from "../../shared/style-info";
@@ -94,16 +97,8 @@ export const LayerThumbnail = (props: { layerStyle: StyleInfo }) => {
     if (asset === undefined) {
       return null;
     }
-    const remoteLocation = asset.location === "REMOTE";
 
-    const loader = remoteLocation
-      ? loaders.cloudflareImageLoader({
-          resizeOrigin: env.RESIZE_ORIGIN,
-          cdnUrl: env.ASSET_BASE_URL,
-        })
-      : loaders.localImageLoader({
-          publicPath: env.ASSET_BASE_URL,
-        });
+    const loader = createImageLoader({ imageBaseUrl: env.IMAGE_BASE_URL });
 
     return (
       <StyledWebstudioImage

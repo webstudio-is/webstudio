@@ -30,12 +30,9 @@ export const loader = async ({ request }: LoaderArgs) => {
   }
 
   const params: Params = {
+    imageBaseUrl: env.IMAGE_BASE_URL,
     assetBaseUrl: env.ASSET_BASE_URL,
   };
-
-  if (env.RESIZE_ORIGIN != null) {
-    params.resizeOrigin = env.RESIZE_ORIGIN;
-  }
 
   return { params };
 };
