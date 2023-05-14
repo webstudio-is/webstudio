@@ -33,7 +33,12 @@ export const BoxShadowContent = (
       value,
     });
 
-    parseBoxShadow(value);
+    const shadows = parseBoxShadow(value);
+
+    if (shadows.type === "invalid") {
+      return;
+    }
+    props.setProperty(property)(shadows);
   };
 
   return (
