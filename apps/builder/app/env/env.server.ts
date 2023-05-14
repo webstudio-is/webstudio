@@ -34,7 +34,13 @@ const env = {
   // Assets
   MAX_UPLOAD_SIZE: process.env.MAX_UPLOAD_SIZE,
   MAX_ASSETS_PER_PROJECT: process.env.MAX_ASSETS_PER_PROJECT,
+  /**
+   * Base url ir base path for images with ending slash.
+   */
   IMAGE_BASE_URL: process.env.IMAGE_BASE_URL ?? "/asset/image/",
+  /**
+   * Base url or base path for any asset with ending slash.
+   */
   ASSET_BASE_URL:
     process.env.ASSET_BASE_URL ??
     process.env.ASSET_CDN_URL ??
@@ -51,6 +57,10 @@ const env = {
   S3_SECRET_ACCESS_KEY: process.env.S3_SECRET_ACCESS_KEY,
   S3_BUCKET: process.env.S3_BUCKET,
   S3_ACL: process.env.S3_ACL,
+  /**
+   * Origin of service implementing /cdn-cgi/image/ cloudflare endpoint
+   * without ending slash
+   */
   RESIZE_ORIGIN: process.env.RESIZE_ORIGIN,
 };
 

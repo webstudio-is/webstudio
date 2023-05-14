@@ -6,9 +6,8 @@ export type Params = {
    *
    * For example
    * /asset/image/ used by default in builder
-   * or
-   * https://webstudio.is/asset/image/ can be specified
-   * by user to use custom server
+   * https://image-transform.wstd.io/cdn-cgi/image/
+   * https://webstudio.is/cdn-cgi/image/
    */
   imageBaseUrl: string;
   /**
@@ -19,8 +18,8 @@ export type Params = {
    * For example
    * /s/uploads/
    * /asset/file/
-   * or
-   * https://webstudio.is/asset/file/
+   * https://assets-dev.webstudio.is/
+   * https://assets.webstudio.is/
    */
   assetBaseUrl: string;
 };
