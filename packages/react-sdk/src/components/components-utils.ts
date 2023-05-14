@@ -1,4 +1,4 @@
-import type { forwardRef } from "react";
+import type { UnionToIntersection } from "type-fest";
 import * as components from "./components";
 import { registeredComponents } from "./index";
 
@@ -57,7 +57,9 @@ export const getComponentNames = (): ComponentName[] => {
 };
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
-type AnyComponent = ReturnType<typeof forwardRef<any, any>>;
+type AnyComponent = UnionToIntersection<
+  (typeof components)[keyof typeof components]
+>;
 
 /**
  * Now used only in builder app
@@ -65,8 +67,8 @@ type AnyComponent = ReturnType<typeof forwardRef<any, any>>;
  */
 export const getComponent = (name: string): undefined | AnyComponent => {
   return registeredComponents != null && name in registeredComponents
-    ? (registeredComponents[name as ComponentName] as AnyComponent)
-    : components[name as ComponentName];
+    ? (registeredComponents[name as ComponentName] as never)
+    : (components[name as ComponentName] as never);
 };
 
 /**
@@ -78,8 +80,8 @@ export const getComponent = (name: string): undefined | AnyComponent => {
 export const createGetComponent = (comps: Partial<typeof components>) => {
   return (name: string): undefined | AnyComponent => {
     return registeredComponents != null && name in registeredComponents
-      ? (registeredComponents[name as ComponentName] as AnyComponent)
-      : comps[name as ComponentName];
+      ? (registeredComponents[name as ComponentName] as never)
+      : (comps[name as ComponentName] as never);
   };
 };
 

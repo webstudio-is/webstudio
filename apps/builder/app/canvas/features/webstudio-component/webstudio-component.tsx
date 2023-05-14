@@ -39,14 +39,14 @@ const ContentEditable = ({
   ...props
 }: {
   Component: NonNullable<ReturnType<GetComponent>>;
-  elementRef: { current: undefined | HTMLElement };
+  elementRef: { current: null | HTMLElement };
 }) => {
   const [editor] = useLexicalComposerContext();
 
   const ref = useCallback(
     (rootElement: null | HTMLElement) => {
       editor.setRootElement(rootElement);
-      elementRef.current = rootElement ?? undefined;
+      elementRef.current = rootElement ?? null;
     },
     [editor, elementRef]
   );
@@ -101,7 +101,7 @@ export const WebstudioComponentDev = ({
   getComponent,
 }: WebstudioComponentDevProps) => {
   const instanceId = instance.id;
-  const instanceElementRef = useRef<HTMLElement>();
+  const instanceElementRef = useRef<HTMLElement>(null);
   const instanceStyles = useInstanceStyles(instanceId);
   useCssRules({ instanceId: instance.id, instanceStyles });
   const instances = useStore(instancesStore);
