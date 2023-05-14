@@ -25,6 +25,7 @@ import { useNavigation } from "@remix-run/react";
 import { Spinner } from "../spinner";
 
 const containerStyle = css({
+  overflow: "hidden",
   width: theme.spacing[31],
   height: theme.spacing[29],
   borderWidth: 1,
@@ -34,6 +35,9 @@ const containerStyle = css({
   background: theme.colors.brandBackgroundProjectCardBack,
   "&:hover, &:focus-within": {
     boxShadow: theme.shadows.brandElevationBig,
+  },
+  "&:focus-visible": {
+    outline: `2px solid ${theme.colors.borderFocus}`,
   },
 });
 
@@ -189,6 +193,7 @@ export const ProjectCard = ({
     <Box as="article" hidden={isHidden}>
       <Flex
         direction="column"
+        align="center"
         shrink={false}
         className={containerStyle()}
         tabIndex={0}
@@ -202,6 +207,7 @@ export const ProjectCard = ({
         <Flex
           justify="between"
           shrink={false}
+          alignSelf="stretch"
           gap="1"
           className={footerStyle()}
         >

@@ -39,6 +39,23 @@ export const Flex = styled("div", {
         alignItems: "baseline",
       },
     },
+    alignSelf: {
+      start: {
+        alignSelf: "flex-start",
+      },
+      center: {
+        alignSelf: "center",
+      },
+      end: {
+        alignSelf: "flex-end",
+      },
+      stretch: {
+        alignSelf: "stretch",
+      },
+      baseline: {
+        alignSelf: "baseline",
+      },
+    },
     justify: {
       start: {
         justifyContent: "flex-start",
