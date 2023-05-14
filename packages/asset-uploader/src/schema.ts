@@ -17,9 +17,6 @@ export const MaxSize = z
 
 export const MaxAssets = z.string().default("50").transform(Number.parseFloat);
 
-export const Location = z.union([z.literal("FS"), z.literal("REMOTE")]);
-export type Location = z.infer<typeof Location>;
-
 const AssetId = z.string();
 
 const BaseAsset = z.object({
@@ -29,7 +26,6 @@ const BaseAsset = z.object({
   size: z.number(),
   name: z.string(),
   description: z.union([z.string(), z.null()]),
-  location: Location,
   createdAt: z.string(),
 });
 
