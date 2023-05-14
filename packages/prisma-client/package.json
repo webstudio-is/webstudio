@@ -18,12 +18,12 @@
     "migrations": "./migrations-cli/cli.ts"
   },
   "devDependencies": {
-    "@prisma/client": "^4.9.0",
+    "@prisma/client": "^4.14.0",
     "@types/node": "^18.11.18",
     "@types/uuid": "^8.3.4",
     "@webstudio-is/scripts": "workspace:^",
     "@webstudio-is/tsconfig": "workspace:^",
-    "prisma": "^4.9.0",
+    "prisma": "^4.14.0",
     "tsx": "^3.12.6",
     "typescript": "5.0.3",
     "zod": "^3.19.1"

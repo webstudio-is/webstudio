@@ -1,6 +1,10 @@
 import { redirect } from "@remix-run/node";
 import type { LoaderArgs } from "@remix-run/node";
-import { useLoaderData, useRouteError } from "@remix-run/react";
+import {
+  isRouteErrorResponse,
+  useLoaderData,
+  useRouteError,
+} from "@remix-run/react";
 import { type Params, Root, getComponent } from "@webstudio-is/react-sdk";
 import env from "~/env/env.public.server";
 import { sentryException } from "~/shared/sentry";
@@ -9,6 +13,17 @@ import { ErrorMessage } from "~/shared/error";
 import { getBuildParams, dashboardPath } from "~/shared/router-utils";
 
 export const loader = async ({ request }: LoaderArgs) => {
+  const url = new URL(request.url);
+  // See remix.config.ts for the publicPath value
+  const publicPath = "/build/";
+
+  // In case of 404 on static assets, this route will be executed
+  if (url.pathname.startsWith(publicPath)) {
+    throw new Response("Not found", {
+      status: 404,
+    });
+  }
+
   const buildParams = getBuildParams(request);
   if (buildParams === undefined) {
     throw redirect(dashboardPath());
@@ -27,8 +42,14 @@ export const loader = async ({ request }: LoaderArgs) => {
 
 export const ErrorBoundary = () => {
   const error = useRouteError();
+
   sentryException({ error });
-  const message = error instanceof Error ? error.message : String(error);
+  const message = isRouteErrorResponse(error)
+    ? error.data.message ?? error.data
+    : error instanceof Error
+    ? error.message
+    : String(error);
+
   return <ErrorMessage message={message} />;
 };
 
