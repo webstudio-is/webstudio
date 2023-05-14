@@ -93,7 +93,7 @@ export const SelectedInstanceConnector = ({
     setDataCollapsed(instance.id, true);
 
     const element = instanceElementRef.current;
-    if (element == null) {
+    if (element === null) {
       return;
     }
     const showOutline = () => {
