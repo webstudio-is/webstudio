@@ -31,14 +31,16 @@ enum UploadStatus {
 }
 
 model File {
-  name        String       @id
-  format      String
-  size        Int
-  description String?
-  createdAt   DateTime     @default(now())
-  meta        String       @default("{}")
-  status      UploadStatus @default(UPLOADING)
-  assets      Asset[]
+  name              String       @id
+  format            String
+  size              Int
+  description       String?
+  createdAt         DateTime     @default(now())
+  meta              String       @default("{}")
+  status            UploadStatus @default(UPLOADING)
+  uploaderProject   Project?     @relation(fields: [uploaderProjectId], references: [id])
+  uploaderProjectId String?
+  assets            Asset[]
 }
 
 model Asset {
@@ -80,6 +82,7 @@ model Project {
   userId    String?
   build     Build[]
   isDeleted Boolean  @default(false)
+  files     File[]
 
   @@unique([id, isDeleted])
   @@unique([domain, isDeleted])

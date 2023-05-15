@@ -40,19 +40,17 @@ export const createUploadName = async (
    * than UPLOADING_STALE_TIMEOUT milliseconds ago
    **/
 
-  const count = await prisma.asset.count({
+  const count = await prisma.file.count({
     where: {
       OR: [
         {
-          projectId,
-          file: { status: "UPLOADED" },
+          status: "UPLOADED",
+          uploaderProjectId: projectId,
         },
         {
-          projectId,
-          file: {
-            status: "UPLOADING",
-            createdAt: { gt: new Date(Date.now() - UPLOADING_STALE_TIMEOUT) },
-          },
+          status: "UPLOADING",
+          createdAt: { gt: new Date(Date.now() - UPLOADING_STALE_TIMEOUT) },
+          uploaderProjectId: projectId,
         },
       ],
     },
@@ -89,6 +87,7 @@ export const createUploadName = async (
           // store content type in related field
           format: type,
           size: 0,
+          uploaderProjectId: projectId,
         },
       },
       // @todo remove once legacy fields are removed from schema
