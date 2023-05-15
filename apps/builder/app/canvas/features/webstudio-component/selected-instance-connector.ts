@@ -79,7 +79,7 @@ export const SelectedInstanceConnector = ({
   instanceProps,
   instanceSelector,
 }: {
-  instanceElementRef: { current: undefined | HTMLElement };
+  instanceElementRef: { current: null | HTMLElement };
   instance: Instance;
   instanceStyles: StyleDecl[];
   instanceProps: undefined | Prop[];
@@ -93,7 +93,7 @@ export const SelectedInstanceConnector = ({
     setDataCollapsed(instance.id, true);
 
     const element = instanceElementRef.current;
-    if (element === undefined) {
+    if (element === null) {
       return;
     }
     const showOutline = () => {
