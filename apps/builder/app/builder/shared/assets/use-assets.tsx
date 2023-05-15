@@ -38,7 +38,7 @@ const setAsset = (asset: Asset) => {
 };
 
 type FileData = {
-  id: string;
+  assetId: string;
   type: AssetType;
   file: File;
   objectURL: string;
@@ -47,7 +47,7 @@ type FileData = {
 const getFilesData = (type: AssetType, files: File[]): FileData[] => {
   return files.map((file) => {
     return {
-      id: crypto.randomUUID(),
+      assetId: crypto.randomUUID(),
       type,
       file,
       objectURL: URL.createObjectURL(file),
@@ -62,10 +62,10 @@ const addUploadingFilesData = (filesData: FileData[]) => {
   uploadingFilesDataStore.set([...uploadingFilesData, ...filesData]);
 };
 
-const deleteUploadingFileData = (id: FileData["id"]) => {
+const deleteUploadingFileData = (id: FileData["assetId"]) => {
   const uploadingFilesData = uploadingFilesDataStore.get();
   uploadingFilesDataStore.set(
-    uploadingFilesData.filter((fileData) => fileData.id !== id)
+    uploadingFilesData.filter((fileData) => fileData.assetId !== id)
   );
 };
 
@@ -73,12 +73,12 @@ const assetContainersStore = computed(
   [assetsStore, uploadingFilesDataStore],
   (assets, uploadingFilesData) => {
     const uploadingAssets = new Map<PreviewAsset["id"], AssetContainer>();
-    for (const { id, type, file, objectURL } of uploadingFilesData) {
-      uploadingAssets.set(id, {
+    for (const { assetId, type, file, objectURL } of uploadingFilesData) {
+      uploadingAssets.set(assetId, {
         status: "uploading",
         objectURL: objectURL,
         asset: {
-          id,
+          id: assetId,
           type,
           format: file.type.split("/")[1],
           name: file.name,
@@ -185,10 +185,10 @@ export const useUploadAsset = () => {
     const filesData = getFilesData(type, files);
 
     addUploadingFilesData(filesData);
-    stubAssets(filesData.map((fileData) => fileData.id));
+    stubAssets(filesData.map((fileData) => fileData.assetId));
 
     for (const fileData of filesData) {
-      const assetId = fileData.id;
+      const assetId = fileData.assetId;
       uploadAsset({
         authToken,
         projectId,
