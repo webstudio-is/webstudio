@@ -144,12 +144,11 @@ export const WebstudioComponentDev = ({
   }, [isSelected]);
 
   useEffect(() => {
-    // `length === 1` means this is root
+    // 1 means root
     if (instanceSelector.length === 1) {
-      // By the time root is rendered, the new selected instance should be rendered too,
-      // and `selectedInstanceIsRendered` should be set to `true`.
-      // If it's still `undefined`, it means selected instance is not on the canvas,
-      // so we set it to `false` here.
+      // If by the time root is rendered,
+      // no selected instance renders and sets `selectedInstanceIsRendered` to `true`,
+      // then it's clear that selected instance will not render at all, so we set it to `false`
       if (selectedInstanceIsRenderedStore.get() === undefined) {
         selectedInstanceIsRenderedStore.set(false);
       }

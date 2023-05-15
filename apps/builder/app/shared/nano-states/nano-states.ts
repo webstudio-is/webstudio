@@ -234,10 +234,10 @@ export const selectedInstanceIntanceToTagStore = atom<
 >();
 
 /**
- * Whether or the selected instance is rendered on canvas
- * `true` — rendered
- * `false` — not rendered
- * `undefined` — set to `undefined` in the brief moment when selected instance changes
+ * Whether or not the selected instance is rendered on canvas:
+ * `true` — rendered;
+ * `false` — not rendered;
+ * `undefined` — when selected instance unmounts and we don't know yet whether a new one will mount.
  **/
 export const selectedInstanceIsRenderedStore = atom<boolean | undefined>(false);
 
