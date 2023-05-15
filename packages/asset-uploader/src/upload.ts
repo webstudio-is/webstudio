@@ -45,16 +45,12 @@ export const createUploadName = async (
       OR: [
         {
           status: "UPLOADED",
-          assets: {
-            some: { projectId },
-          },
+          uploaderProjectId: projectId,
         },
         {
           status: "UPLOADING",
           createdAt: { gt: new Date(Date.now() - UPLOADING_STALE_TIMEOUT) },
-          assets: {
-            some: { projectId },
-          },
+          uploaderProjectId: projectId,
         },
       ],
     },
