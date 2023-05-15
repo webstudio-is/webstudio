@@ -9,7 +9,7 @@ import { type Asset, ImageMeta } from "../schema";
 // @todo remove once legacy fields are removed from schema
 type DbAssetWithoutOldFields = Omit<
   DbAsset,
-  "size" | "format" | "meta" | "status" | "description" | "createdAt"
+  "name" | "size" | "format" | "meta" | "status" | "description" | "createdAt"
 >;
 
 export const formatAsset = (

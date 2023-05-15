@@ -11,7 +11,6 @@ import { formatAsset } from "./utils/format-asset";
 
 type UploadData = {
   projectId: string;
-  assetId: string;
   type: string;
   filename: string;
   maxAssetsPerProject: number;
@@ -23,7 +22,7 @@ export const createUploadName = async (
   data: UploadData,
   context: AppContext
 ) => {
-  const { projectId, maxAssetsPerProject, assetId, type, filename } = data;
+  const { projectId, maxAssetsPerProject, type, filename } = data;
   const canEdit = await authorizeProject.hasProjectPermit(
     { projectId, permit: "edit" },
     context
@@ -62,7 +61,9 @@ export const createUploadName = async (
      * it's probable that the user can exceed the limit a little bit.
      * So it can be a little bit strange that the limit is 5 but the user already has 7.
      **/
-    throw new Error(`The maximum number of assets per project is ${count}.`);
+    throw new Error(
+      `The maximum number of assets per project is ${maxAssetsPerProject}.`
+    );
   }
 
   /**
@@ -75,25 +76,14 @@ export const createUploadName = async (
    * "SELECT id FROM "Project" where id=? FOR UPDATE;" is shareable between sqlite and postgres.
    **/
   const name = getUniqueFilename(sanitizeS3Key(filename));
-  await prisma.asset.create({
+  await prisma.file.create({
     data: {
-      id: assetId,
-      projectId,
-      location: "REMOTE",
-      file: {
-        create: {
-          name,
-          status: "UPLOADING",
-          // store content type in related field
-          format: type,
-          size: 0,
-          uploaderProjectId: projectId,
-        },
-      },
-      // @todo remove once legacy fields are removed from schema
+      name,
       status: "UPLOADING",
+      // store content type in related field
       format: type,
       size: 0,
+      uploaderProjectId: projectId,
     },
   });
   return name;
@@ -104,60 +94,48 @@ export const uploadFile = async (
   data: ReadableStream<Uint8Array>,
   client: AssetClient
 ) => {
-  const asset = await prisma.asset.findFirst({
-    select: {
-      id: true,
-      projectId: true,
-      file: true,
-    },
+  const file = await prisma.file.findFirst({
     where: {
       name,
-      file: {
-        status: "UPLOADING",
-        createdAt: { gt: new Date(Date.now() - UPLOADING_STALE_TIMEOUT) },
-      },
+      status: "UPLOADING",
+      createdAt: { gt: new Date(Date.now() - UPLOADING_STALE_TIMEOUT) },
     },
   });
-  if (asset === null) {
+  if (file === null) {
     throw Error("File already uploaded or url is expired");
   }
 
   try {
     const assetData = await client.uploadFile(
       name,
-      asset.file.format,
+      file.format,
       // global web streams types do not define ReadableStream as async iterable
       data as unknown as AsyncIterable<Uint8Array>
     );
     const { meta, format, location, size } = assetData;
-    const dbAsset = await prisma.asset.update({
-      select: {
-        file: true,
-        id: true,
-        projectId: true,
-        name: true,
-        location: true,
-      },
+    const dbFile = await prisma.file.update({
       where: {
-        id_projectId: { id: asset.id, projectId: asset.projectId },
+        name,
       },
       data: {
-        location,
-        file: {
-          update: {
-            size,
-            format,
-            meta: JSON.stringify(meta),
-            status: "UPLOADED",
-          },
-        },
+        size,
+        format,
+        meta: JSON.stringify(meta),
+        status: "UPLOADED",
       },
     });
-    return formatAsset(dbAsset, dbAsset.file);
+    return formatAsset(
+      {
+        id: "",
+        projectId: dbFile.uploaderProjectId as string,
+        location,
+      },
+      dbFile
+    );
   } catch (error) {
-    await prisma.asset.delete({
+    await prisma.file.delete({
       where: {
-        id_projectId: { id: asset.id, projectId: asset.projectId },
+        name,
       },
     });
 

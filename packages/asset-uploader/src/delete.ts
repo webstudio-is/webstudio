@@ -6,7 +6,6 @@ import {
 } from "@webstudio-is/trpc-interface/index.server";
 import type { AssetClient } from "./client";
 import type { Asset } from "./schema";
-import { formatAsset } from "./utils/format-asset";
 
 export const deleteAssets = async (
   props: {
@@ -15,7 +14,7 @@ export const deleteAssets = async (
   },
   context: AppContext,
   client: AssetClient
-): Promise<Array<Asset>> => {
+) => {
   const canDelete = await authorizeProject.hasProjectPermit(
     { projectId: props.projectId, permit: "edit" },
     context
@@ -62,6 +61,4 @@ export const deleteAssets = async (
   for (const name of unusedFileNames) {
     await client.deleteFile(name);
   }
-
-  return assets.map((asset) => formatAsset(asset, asset.file));
 };
