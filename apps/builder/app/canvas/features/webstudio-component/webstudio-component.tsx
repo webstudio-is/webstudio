@@ -17,6 +17,7 @@ import {
 import type { GetComponent } from "@webstudio-is/react-sdk";
 import {
   instancesStore,
+  selectedInstanceIsRenderedStore,
   selectedInstanceSelectorStore,
   selectedStyleSourceSelectorStore,
   useInstanceProps,
@@ -141,6 +142,19 @@ export const WebstudioComponentDev = ({
       });
     }
   }, [isSelected]);
+
+  useEffect(() => {
+    // `length === 1` means this is root
+    if (instanceSelector.length === 1) {
+      // By the time root is rendered, the new selected instance should be rendered too,
+      // and `selectedInstanceIsRendered` should be set to `true`.
+      // If it's still `undefined`, it means selected instance is not on the canvas,
+      // so we set it to `false` here.
+      if (selectedInstanceIsRenderedStore.get() === undefined) {
+        selectedInstanceIsRenderedStore.set(false);
+      }
+    }
+  });
 
   const readonlyProps =
     instance.component === "Input" || instance.component === "Textarea"
