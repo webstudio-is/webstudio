@@ -33,10 +33,6 @@ export const createUploadName = async (
       "You don't have access to create this project assets"
     );
   }
-  const { userId } = context.authorization;
-  if (userId === undefined) {
-    throw new Error("The user must be authenticated to create a project");
-  }
 
   /**
    * sometimes for example on request timeout we don't know what happened to the "UPLOADING" asset,
@@ -95,7 +91,7 @@ export const createUploadName = async (
           // store content type in related field
           format: type,
           size: 0,
-          userId,
+          uploaderProjectId: projectId,
         },
       },
       // @todo remove once legacy fields are removed from schema
