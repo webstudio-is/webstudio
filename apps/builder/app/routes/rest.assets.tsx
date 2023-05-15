@@ -28,21 +28,14 @@ export const action = async (props: ActionArgs) => {
     if (request.method === "POST") {
       const formData = await request.formData();
       const projectId = formData.get("projectId") as string;
-      const assetId = formData.get("assetId") as string;
       const type = formData.get("type") as string;
       const filename = formData.get("filename") as string;
-      if (
-        projectId === null ||
-        assetId === null ||
-        type === null ||
-        filename === null
-      ) {
+      if (projectId === null || type === null || filename === null) {
         throw Error("Project id, asset id or filename are missing");
       }
       const name = await createUploadName(
         {
           projectId,
-          assetId,
           type,
           filename,
           maxAssetsPerProject: MaxAssets.parse(env.MAX_ASSETS_PER_PROJECT),

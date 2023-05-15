@@ -1,5 +1,5 @@
 import { type Patch, applyPatches } from "immer";
-import type { Project } from "@webstudio-is/prisma-client";
+import { type Project, prisma } from "@webstudio-is/prisma-client";
 import {
   type AppContext,
   authorizeProject,
@@ -9,6 +9,10 @@ import { deleteAssets } from "./delete";
 import { loadAssetsByProject } from "./db/load";
 import type { AssetClient } from "./client";
 
+/**
+ * patchAssets can only delete or add assets
+ * update patches are ignored
+ */
 export const patchAssets = async (
   { projectId }: { projectId: Project["id"] },
   patches: Array<Patch>,
@@ -39,5 +43,32 @@ export const patchAssets = async (
   }
   if (deletedAssetIds.length !== 0) {
     deleteAssets({ projectId, ids: deletedAssetIds }, context, assetClient);
+  }
+
+  // add new assets found in patched version
+  const addedAssets: Asset[] = [];
+  for (const [assetId, asset] of patchedAssets) {
+    // skip stubbed assets
+    if (asset === undefined) {
+      continue;
+    }
+    if (assets.has(assetId) === false) {
+      addedAssets.push(asset);
+    }
+  }
+  if (addedAssets.length !== 0) {
+    await prisma.asset.createMany({
+      data: addedAssets.map((asset) => ({
+        id: asset.id,
+        projectId: asset.projectId,
+        name: asset.name,
+        // @todo remove once legacy fields are removed from schema
+        location: asset.location,
+        size: asset.size,
+        format: asset.format,
+        meta: JSON.stringify(asset.meta),
+        status: "UPLOADED",
+      })),
+    });
   }
 };
