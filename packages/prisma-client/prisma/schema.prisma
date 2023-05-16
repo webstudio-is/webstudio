@@ -20,11 +20,6 @@ model Team {
   users User[]
 }
 
-enum Location {
-  FS
-  REMOTE
-}
-
 enum UploadStatus {
   UPLOADING
   UPLOADED
