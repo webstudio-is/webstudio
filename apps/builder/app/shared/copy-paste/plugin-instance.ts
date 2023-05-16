@@ -20,6 +20,7 @@ import {
   selectedPageStore,
   breakpointsStore,
   selectedStyleSourceSelectorStore,
+  assetsStore,
 } from "../nano-states";
 import {
   type InstanceSelector,
@@ -34,6 +35,7 @@ import {
 } from "../tree-utils";
 import { deleteInstance } from "../instance-utils";
 import { getMapValuesBy, getMapValuesByKeysSet } from "../array-utils";
+import { Asset } from "@webstudio-is/asset-uploader";
 
 const version = "@webstudio/instance/v0.1";
 
@@ -44,6 +46,7 @@ const InstanceData = z.object({
   styleSourceSelections: z.array(StyleSourceSelection),
   styleSources: z.array(StyleSource),
   styles: z.array(StyleDecl),
+  assets: z.array(Asset),
 });
 
 type InstanceData = z.infer<typeof InstanceData>;
@@ -63,6 +66,79 @@ const findTreeStyleSourceIds = (
     }
   }
   return treeStyleSourceIds;
+};
+
+const getAssetsUsedInStyle = (
+  style: StyleDecl[],
+  foundAssetIds = new Set<Asset["id"]>()
+) => {
+  const fontFamilies = new Set<string>();
+
+  const processValues = (values: StyleDecl["value"][]) => {
+    for (const value of values) {
+      if (value.type === "fontFamily") {
+        for (const fontFamily of value.value) {
+          fontFamilies.add(fontFamily);
+        }
+        continue;
+      }
+      if (value.type === "image") {
+        if (value.value.type === "asset") {
+          foundAssetIds.add(value.value.value);
+        }
+        continue;
+      }
+      if (value.type === "var") {
+        processValues(value.fallbacks);
+        continue;
+      }
+      if (value.type === "tuple" || value.type === "layers") {
+        processValues(value.value);
+        continue;
+      }
+      if (
+        value.type === "unit" ||
+        value.type === "keyword" ||
+        value.type === "unparsed" ||
+        value.type === "invalid" ||
+        value.type === "unset" ||
+        value.type === "rgb"
+      ) {
+        continue;
+      }
+      value satisfies never;
+    }
+  };
+
+  processValues(style.map(({ value }) => value));
+
+  for (const [, asset] of assetsStore.get()) {
+    if (asset?.type === "font" && fontFamilies.has(asset.meta.family)) {
+      foundAssetIds.add(asset.id);
+    }
+  }
+
+  return foundAssetIds;
+};
+
+const getAssetsUsedInProps = (props: Prop[], foundAssetIds = new Set()) => {
+  for (const prop of props) {
+    if (prop.type === "asset") {
+      foundAssetIds.add(prop.value);
+      continue;
+    }
+    if (
+      prop.type === "number" ||
+      prop.type === "string" ||
+      prop.type === "boolean" ||
+      prop.type === "page" ||
+      prop.type === "string[]"
+    ) {
+      continue;
+    }
+    prop satisfies never;
+  }
+  return foundAssetIds;
 };
 
 const getTreeData = (targetInstanceSelector: InstanceSelector) => {
@@ -110,6 +186,11 @@ const getTreeData = (targetInstanceSelector: InstanceSelector) => {
     treeBreapointIds
   );
 
+  const treeAssets = getMapValuesByKeysSet(
+    assetsStore.get(),
+    getAssetsUsedInProps(treeProps, getAssetsUsedInStyle(treeStyles))
+  );
+
   return {
     breakpoints: treeBreapoints,
     instances: treeInstances,
@@ -117,6 +198,7 @@ const getTreeData = (targetInstanceSelector: InstanceSelector) => {
     props: treeProps,
     styleSourceSelections: treeStyleSourceSelections,
     styles: treeStyles,
+    assets: treeAssets,
   };
 };
 
