@@ -31,7 +31,6 @@ describe("resolveUrlProp", () => {
     id: unique(),
     name: unique(),
     type: "image",
-    location: "REMOTE",
     projectId,
     format: "png",
     size: 100000,
