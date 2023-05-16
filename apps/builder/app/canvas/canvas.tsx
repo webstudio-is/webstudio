@@ -93,6 +93,7 @@ const useElementsTree = (getComponent: GetComponent) => {
 
   return useMemo(() => {
     return createElementsTree({
+      renderer: "canvas",
       instances: instances.size === 0 ? temporaryInstances : instances,
       // fallback to temporary root instance to render scripts
       // and receive real data from builder

@@ -11,6 +11,7 @@ import type { WebstudioComponent } from "./webstudio-component";
 type InstanceSelector = Instance["id"][];
 
 export const createElementsTree = ({
+  renderer,
   instances,
   rootInstanceId,
   propsByInstanceIdStore,
@@ -19,6 +20,7 @@ export const createElementsTree = ({
   Component,
   getComponent,
 }: {
+  renderer?: "canvas";
   instances: Instances;
   rootInstanceId: Instance["id"];
   propsByInstanceIdStore: ReadableAtom<PropsByInstanceId>;
@@ -55,7 +57,7 @@ export const createElementsTree = ({
   });
   return (
     <ReactSdkContext.Provider
-      value={{ propsByInstanceIdStore, assetsStore, pagesStore }}
+      value={{ propsByInstanceIdStore, assetsStore, pagesStore, renderer }}
     >
       {root}
     </ReactSdkContext.Provider>

@@ -1161,6 +1161,9 @@ importers:
       '@nanostores/react':
         specifier: ^0.4.1
         version: 0.4.1(nanostores@0.7.1)(react@18.2.0)
+      '@react-aria/utils':
+        specifier: ^3.13.3
+        version: 3.15.0(react@18.2.0)
       '@webstudio-is/asset-uploader':
         specifier: workspace:^
         version: link:../asset-uploader
