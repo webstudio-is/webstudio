@@ -233,9 +233,16 @@ export const onPaste = (clipboardData: string) => {
   const data = parse(clipboardData);
 
   const selectedPage = selectedPageStore.get();
-  if (data === undefined || selectedPage === undefined) {
+  const project = projectStore.get();
+
+  if (
+    data === undefined ||
+    selectedPage === undefined ||
+    project === undefined
+  ) {
     return;
   }
+
   // paste to the root if nothing is selected
   const instanceSelector = selectedInstanceSelectorStore.get() ?? [
     selectedPage.rootInstanceId,
@@ -249,6 +256,7 @@ export const onPaste = (clipboardData: string) => {
   if (dropTarget === undefined) {
     return;
   }
+
   store.createTransaction(
     [
       breakpointsStore,
@@ -257,6 +265,7 @@ export const onPaste = (clipboardData: string) => {
       propsStore,
       styleSourceSelectionsStore,
       stylesStore,
+      assetsStore,
     ],
     (
       breakpoints,
@@ -264,8 +273,17 @@ export const onPaste = (clipboardData: string) => {
       styleSources,
       props,
       styleSourceSelections,
-      styles
+      styles,
+      assets
     ) => {
+      // if pasting to a different project, copy assets.
+      // use the same ids so the references are preserved.
+      if (data.projectId !== project.id) {
+        for (const asset of data.assets) {
+          assets.set(asset.id, { ...asset, projectId: project.id });
+        }
+      }
+
       const mergedBreakpointIds = mergeNewBreakpointsMutable(
         breakpoints,
         data.breakpoints
