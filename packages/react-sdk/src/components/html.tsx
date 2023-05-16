@@ -16,7 +16,8 @@ const ExecutableHtml = forwardRef<HTMLDivElement, Props>((props, ref) => {
 
   useEffect(() => {
     const container = containerRef.current;
-    if (container === null) {
+    // code can be actually undefined when prop is not provided
+    if (container === null || code === undefined) {
       return;
     }
     console.log(container);
@@ -50,13 +51,28 @@ const InnerHtml = forwardRef<HTMLDivElement, Props>((props, ref) => {
       {...rest}
       ref={ref}
       style={{ display: "contents" }}
-      dangerouslySetInnerHTML={{ __html: props.code }}
+      // code can be actually undefined when prop is not provided
+      dangerouslySetInnerHTML={{ __html: props.code ?? "" }}
     />
+  );
+});
+
+const Placeholder = forwardRef<HTMLDivElement, Props>((props, ref) => {
+  const { code, executeScriptInCanvas, ...rest } = props;
+  return (
+    <div ref={ref} {...rest} style={{ padding: "20px" }}>
+      Paste html into "Code" prop
+    </div>
   );
 });
 
 export const Html = forwardRef<HTMLDivElement, Props>((props, ref) => {
   const { renderer } = useContext(ReactSdkContext);
+
+  // code can be actually undefined when prop is not provided
+  if (props.code === undefined || props.code.trim().length === 0) {
+    return <Placeholder ref={ref} {...props} />;
+  }
 
   if (renderer === "canvas" && props.executeScriptInCanvas === true) {
     return <ExecutableHtml ref={ref} {...props} />;
