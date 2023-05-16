@@ -70,7 +70,7 @@ const Placeholder = (props: ChildProps) => {
   const { code, innerRef, ...rest } = props;
   return (
     <div ref={innerRef} {...rest} style={{ padding: "20px" }}>
-      Paste html into "Code" prop
+      {'Paste html into "Code" prop'}
     </div>
   );
 };
