@@ -114,7 +114,7 @@ const getAssetsUsedInStyle = (
 
   processValues(style.map(({ value }) => value));
 
-  for (const [, asset] of assetsStore.get()) {
+  for (const asset of assetsStore.get().values()) {
     if (asset?.type === "font" && fontFamilies.has(asset.meta.family)) {
       foundAssetsIds.add(asset.id);
     }
