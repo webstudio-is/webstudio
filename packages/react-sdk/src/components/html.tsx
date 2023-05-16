@@ -1,4 +1,10 @@
-import { forwardRef, useContext, useEffect, useRef } from "react";
+import {
+  forwardRef,
+  useContext,
+  useEffect,
+  useRef,
+  type ForwardedRef,
+} from "react";
 import { mergeRefs } from "@react-aria/utils";
 import { ReactSdkContext } from "../context";
 
@@ -7,20 +13,24 @@ type Props = {
   executeScriptInCanvas: boolean;
 };
 
+type ChildProps = {
+  innerRef: ForwardedRef<HTMLDivElement>;
+  // code can be actually undefined when prop is not provided
+  code?: string;
+};
+
 /**
  * Scripts are executed when rendered client side
  */
-const ExecutableHtml = forwardRef<HTMLDivElement, Props>((props, ref) => {
-  const { code, executeScriptInCanvas, ...rest } = props;
+const ExecutableHtml = (props: ChildProps) => {
+  const { code, innerRef, ...rest } = props;
   const containerRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     const container = containerRef.current;
-    // code can be actually undefined when prop is not provided
     if (container === null || code === undefined) {
       return;
     }
-    console.log(container);
     // the trick to execute inserted scripts
     const range = document.createRange();
     range.setStart(container, 0);
@@ -34,51 +44,51 @@ const ExecutableHtml = forwardRef<HTMLDivElement, Props>((props, ref) => {
   return (
     <div
       {...rest}
-      ref={mergeRefs(ref, containerRef)}
+      ref={mergeRefs(innerRef, containerRef)}
       style={{ display: "contents" }}
     />
   );
-});
+};
 
 /**
  * Scripts are executed when rendered server side
  */
-const InnerHtml = forwardRef<HTMLDivElement, Props>((props, ref) => {
-  const { code, executeScriptInCanvas, ...rest } = props;
+const InnerHtml = (props: ChildProps) => {
+  const { code, innerRef, ...rest } = props;
 
   return (
     <div
       {...rest}
-      ref={ref}
+      ref={innerRef}
       style={{ display: "contents" }}
-      // code can be actually undefined when prop is not provided
       dangerouslySetInnerHTML={{ __html: props.code ?? "" }}
     />
   );
-});
+};
 
-const Placeholder = forwardRef<HTMLDivElement, Props>((props, ref) => {
-  const { code, executeScriptInCanvas, ...rest } = props;
+const Placeholder = (props: ChildProps) => {
+  const { code, innerRef, ...rest } = props;
   return (
-    <div ref={ref} {...rest} style={{ padding: "20px" }}>
+    <div ref={innerRef} {...rest} style={{ padding: "20px" }}>
       Paste html into "Code" prop
     </div>
   );
-});
+};
 
 export const Html = forwardRef<HTMLDivElement, Props>((props, ref) => {
   const { renderer } = useContext(ReactSdkContext);
+  const { code, executeScriptInCanvas, ...rest } = props;
 
   // code can be actually undefined when prop is not provided
-  if (props.code === undefined || props.code.trim().length === 0) {
-    return <Placeholder ref={ref} {...props} />;
+  if (code === undefined || code.trim().length === 0) {
+    return <Placeholder innerRef={ref} {...rest} />;
   }
 
-  if (renderer === "canvas" && props.executeScriptInCanvas === true) {
-    return <ExecutableHtml ref={ref} {...props} />;
+  if (renderer === "canvas" && executeScriptInCanvas === true) {
+    return <ExecutableHtml innerRef={ref} code={code} {...rest} />;
   }
 
-  return <InnerHtml ref={ref} {...props} />;
+  return <InnerHtml innerRef={ref} code={code} {...rest} />;
 });
 
 Html.displayName = "Html";
