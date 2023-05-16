@@ -20,6 +20,8 @@ import {
   selectedPageStore,
   breakpointsStore,
   selectedStyleSourceSelectorStore,
+  assetsStore,
+  projectStore,
 } from "../nano-states";
 import {
   type InstanceSelector,
@@ -34,6 +36,7 @@ import {
 } from "../tree-utils";
 import { deleteInstance } from "../instance-utils";
 import { getMapValuesBy, getMapValuesByKeysSet } from "../array-utils";
+import { Asset } from "@webstudio-is/asset-uploader";
 
 const version = "@webstudio/instance/v0.1";
 
@@ -44,6 +47,7 @@ const InstanceData = z.object({
   styleSourceSelections: z.array(StyleSourceSelection),
   styleSources: z.array(StyleSource),
   styles: z.array(StyleDecl),
+  assets: z.array(Asset),
 });
 
 type InstanceData = z.infer<typeof InstanceData>;
@@ -63,6 +67,79 @@ const findTreeStyleSourceIds = (
     }
   }
   return treeStyleSourceIds;
+};
+
+const getAssetsUsedInStyle = (
+  style: StyleDecl[],
+  foundAssetsIds = new Set<Asset["id"]>()
+) => {
+  const fontFamilies = new Set<string>();
+
+  const processValues = (values: StyleDecl["value"][]) => {
+    for (const value of values) {
+      if (value.type === "fontFamily") {
+        for (const fontFamily of value.value) {
+          fontFamilies.add(fontFamily);
+        }
+        continue;
+      }
+      if (value.type === "image") {
+        if (value.value.type === "asset") {
+          foundAssetsIds.add(value.value.value);
+        }
+        continue;
+      }
+      if (value.type === "var") {
+        processValues(value.fallbacks);
+        continue;
+      }
+      if (value.type === "tuple" || value.type === "layers") {
+        processValues(value.value);
+        continue;
+      }
+      if (
+        value.type === "unit" ||
+        value.type === "keyword" ||
+        value.type === "unparsed" ||
+        value.type === "invalid" ||
+        value.type === "unset" ||
+        value.type === "rgb"
+      ) {
+        continue;
+      }
+      value satisfies never;
+    }
+  };
+
+  processValues(style.map(({ value }) => value));
+
+  for (const asset of assetsStore.get().values()) {
+    if (asset?.type === "font" && fontFamilies.has(asset.meta.family)) {
+      foundAssetsIds.add(asset.id);
+    }
+  }
+
+  return foundAssetsIds;
+};
+
+const getAssetsUsedInProps = (props: Prop[], foundAssetsIds = new Set()) => {
+  for (const prop of props) {
+    if (prop.type === "asset") {
+      foundAssetsIds.add(prop.value);
+      continue;
+    }
+    if (
+      prop.type === "number" ||
+      prop.type === "string" ||
+      prop.type === "boolean" ||
+      prop.type === "page" ||
+      prop.type === "string[]"
+    ) {
+      continue;
+    }
+    prop satisfies never;
+  }
+  return foundAssetsIds;
 };
 
 const getTreeData = (targetInstanceSelector: InstanceSelector) => {
@@ -110,6 +187,11 @@ const getTreeData = (targetInstanceSelector: InstanceSelector) => {
     treeBreapointIds
   );
 
+  const treeAssets = getMapValuesByKeysSet(
+    assetsStore.get(),
+    getAssetsUsedInProps(treeProps, getAssetsUsedInStyle(treeStyles))
+  );
+
   return {
     breakpoints: treeBreapoints,
     instances: treeInstances,
@@ -117,6 +199,7 @@ const getTreeData = (targetInstanceSelector: InstanceSelector) => {
     props: treeProps,
     styleSourceSelections: treeStyleSourceSelections,
     styles: treeStyles,
+    assets: treeAssets,
   };
 };
 
@@ -139,10 +222,18 @@ export const mimeType = "application/json";
 
 export const onPaste = (clipboardData: string) => {
   const data = parse(clipboardData);
+
   const selectedPage = selectedPageStore.get();
-  if (data === undefined || selectedPage === undefined) {
+  const project = projectStore.get();
+
+  if (
+    data === undefined ||
+    selectedPage === undefined ||
+    project === undefined
+  ) {
     return;
   }
+
   // paste to the root if nothing is selected
   const instanceSelector = selectedInstanceSelectorStore.get() ?? [
     selectedPage.rootInstanceId,
@@ -156,6 +247,7 @@ export const onPaste = (clipboardData: string) => {
   if (dropTarget === undefined) {
     return;
   }
+
   store.createTransaction(
     [
       breakpointsStore,
@@ -164,6 +256,7 @@ export const onPaste = (clipboardData: string) => {
       propsStore,
       styleSourceSelectionsStore,
       stylesStore,
+      assetsStore,
     ],
     (
       breakpoints,
@@ -171,8 +264,17 @@ export const onPaste = (clipboardData: string) => {
       styleSources,
       props,
       styleSourceSelections,
-      styles
+      styles,
+      assets
     ) => {
+      for (const asset of data.assets) {
+        // asset can be already present if pasting to the same project
+        if (assets.has(asset.id) === false) {
+          // we use the same asset.id so the references are preserved
+          assets.set(asset.id, { ...asset, projectId: project.id });
+        }
+      }
+
       const mergedBreakpointIds = mergeNewBreakpointsMutable(
         breakpoints,
         data.breakpoints

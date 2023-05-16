@@ -8,9 +8,12 @@ import { sanitizeS3Key } from "@webstudio-is/asset-uploader";
 import { restAssetsUploadPath, restAssetsPath } from "~/shared/router-utils";
 import type { AssetContainer, PreviewAsset } from "./types";
 import type { ActionData } from "~/builder/shared/assets";
-import { assetsStore, authTokenStore } from "~/shared/nano-states";
+import {
+  assetsStore,
+  authTokenStore,
+  projectStore,
+} from "~/shared/nano-states";
 import { atom, computed } from "nanostores";
-import { projectContainer } from "../nano-states";
 
 export const deleteAssets = (assetIds: Asset["id"][]) => {
   store.createTransaction([assetsStore], (assets) => {
@@ -176,7 +179,7 @@ export const useUploadAsset = () => {
   };
 
   const uploadAssets = (type: AssetType, files: File[]) => {
-    const projectId = projectContainer.get()?.id;
+    const projectId = projectStore.get()?.id;
     const authToken = authTokenStore.get();
     if (projectId === undefined) {
       return;

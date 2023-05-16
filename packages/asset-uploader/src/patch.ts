@@ -57,18 +57,27 @@ export const patchAssets = async (
     }
   }
   if (addedAssets.length !== 0) {
+    const files = await prisma.file.findMany({
+      where: { name: { in: addedAssets.map((asset) => asset.name) } },
+    });
+
+    const fileNames = new Set(files.map((file) => file.name));
+
     await prisma.asset.createMany({
-      data: addedAssets.map((asset) => ({
-        id: asset.id,
-        projectId: asset.projectId,
-        name: asset.name,
-        // @todo remove once legacy fields are removed from schema
-        location: asset.location,
-        size: asset.size,
-        format: asset.format,
-        meta: JSON.stringify(asset.meta),
-        status: "UPLOADED",
-      })),
+      data: addedAssets
+        // making sure corresponding file exist before creating an asset that references it
+        .filter((asset) => fileNames.has(asset.name))
+        .map((asset) => ({
+          id: asset.id,
+          projectId: asset.projectId,
+          name: asset.name,
+          // @todo remove once legacy fields are removed from schema
+          location: asset.location,
+          size: asset.size,
+          format: asset.format,
+          meta: JSON.stringify(asset.meta),
+          status: "UPLOADED",
+        })),
     });
   }
 };

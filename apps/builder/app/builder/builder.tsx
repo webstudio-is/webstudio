@@ -9,10 +9,7 @@ import { useSyncServer } from "./shared/sync/sync-server";
 import { useSharedShortcuts } from "~/shared/shortcuts";
 import { SidebarLeft, Navigator } from "./features/sidebar-left";
 import { Inspector } from "./features/inspector";
-import {
-  isCanvasPointerEventsEnabledStore,
-  useProject,
-} from "./shared/nano-states";
+import { isCanvasPointerEventsEnabledStore } from "./shared/nano-states";
 import { Topbar } from "./features/topbar";
 import builderStyles from "./builder.css";
 import { Footer } from "./features/footer";
@@ -23,6 +20,7 @@ import {
 } from "./features/workspace";
 import { usePublishShortcuts } from "./shared/shortcuts";
 import {
+  projectStore,
   selectedPageIdStore,
   useIsPreviewMode,
   useSetAssets,
@@ -60,10 +58,9 @@ export const links = () => {
 };
 
 const useSetProject = (project: Project) => {
-  const [, setProject] = useProject();
   useEffect(() => {
-    setProject(project);
-  }, [project, setProject]);
+    projectStore.set(project);
+  }, [project]);
 };
 
 const useNavigatorLayout = () => {
@@ -74,7 +71,7 @@ const useNavigatorLayout = () => {
 };
 
 const useSetWindowTitle = () => {
-  const [project] = useProject();
+  const project = useStore(projectStore);
   useEffect(() => {
     document.title = `${project?.title} | Webstudio`;
   }, [project?.title]);
