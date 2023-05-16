@@ -51,7 +51,7 @@ export const useSetCanvasWidth = () => {
       const breakpointValues = Array.from(breakpoints.values());
       const selectedBreakpoint = selectedBreakpointStore.get();
 
-      // When there is base breakpoint, we want to find the lowest possible size
+      // When there is selected breakpoint, we want to find the lowest possible size
       // that is bigger than all max breakpoints and smaller than all min breakpoints.
       if (selectedBreakpoint) {
         const width = findInitialWidth(
