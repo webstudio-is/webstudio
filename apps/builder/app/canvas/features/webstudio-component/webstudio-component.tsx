@@ -143,6 +143,8 @@ export const WebstudioComponentDev = ({
     }
   }, [isSelected]);
 
+  // this assumes presence of `useStore(selectedInstanceSelectorStore)` above
+  // we rely on root re-rendering after selected instance changes
   useEffect(() => {
     // 1 means root
     if (instanceSelector.length === 1) {
