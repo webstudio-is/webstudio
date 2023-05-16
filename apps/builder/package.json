@@ -59,7 +59,6 @@
     "colord": "^2.9.3",
     "date-fns": "^2.30.0",
     "css-tree": "^2.3.1",
-    "css-box-shadow": "^1.0.0-3",
     "debug": "^4.3.4",
     "detect-font": "^0.1.5",
     "downshift": "^6.1.7",

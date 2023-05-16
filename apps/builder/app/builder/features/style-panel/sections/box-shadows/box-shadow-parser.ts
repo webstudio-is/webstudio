@@ -1,4 +1,6 @@
-import { parse, stringify } from "css-box-shadow";
+import * as csstree from "css-tree";
+import { List } from "css-tree/utils";
+import type { CssNode } from "css-tree/utils";
 import { parseCssValue } from "../../shared/parse-css-value";
 import type {
   InvalidValue,
@@ -22,8 +24,23 @@ export const parseBoxShadow = (
       : tokenStream;
   }
 
-  const layers = parse(tokenStream).map((layer) => {
-    return stringify([layer]);
+  const ast = csstree.parse(`${tokenStream},`, { context: "value" });
+  const layers: string[] = [];
+  const boxShadowValue = new List<CssNode>();
+
+  csstree.walk(ast, (node) => {
+    if (node.type === "Value") {
+      node.children.forEach((child) => {
+        if (child.type === "Operator") {
+          layers.push(
+            csstree.generate({ type: "Value", children: boxShadowValue })
+          );
+          boxShadowValue.clear();
+          return;
+        }
+        boxShadowValue.push(child);
+      });
+    }
   });
 
   const boxShadows: UnparsedValue[] = [];
