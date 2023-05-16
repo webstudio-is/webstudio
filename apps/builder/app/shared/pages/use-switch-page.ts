@@ -1,9 +1,9 @@
 import { useNavigate } from "@remix-run/react";
 import type { Page } from "@webstudio-is/project-build";
-import { projectContainer } from "~/builder/shared/nano-states";
 import {
   authTokenStore,
   pagesStore,
+  projectStore,
   selectedInstanceSelectorStore,
 } from "~/shared/nano-states";
 import { builderPath } from "~/shared/router-utils";
@@ -16,7 +16,7 @@ export const useSwitchPage = () => {
    * If no `pageId` provided, switches to default page (home)
    */
   return (pageId?: Page["id"]) => {
-    const project = projectContainer.get();
+    const project = projectStore.get();
     const pages = pagesStore.get();
 
     if (project === undefined || pages === undefined) {

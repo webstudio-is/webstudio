@@ -21,6 +21,7 @@ import {
   breakpointsStore,
   selectedStyleSourceSelectorStore,
   assetsStore,
+  projectStore,
 } from "../nano-states";
 import {
   type InstanceSelector,
@@ -47,6 +48,7 @@ const InstanceData = z.object({
   styleSources: z.array(StyleSource),
   styles: z.array(StyleDecl),
   assets: z.array(Asset),
+  projectId: z.string(),
 });
 
 type InstanceData = z.infer<typeof InstanceData>;
@@ -70,7 +72,7 @@ const findTreeStyleSourceIds = (
 
 const getAssetsUsedInStyle = (
   style: StyleDecl[],
-  foundAssetIds = new Set<Asset["id"]>()
+  foundAssetsIds = new Set<Asset["id"]>()
 ) => {
   const fontFamilies = new Set<string>();
 
@@ -84,7 +86,7 @@ const getAssetsUsedInStyle = (
       }
       if (value.type === "image") {
         if (value.value.type === "asset") {
-          foundAssetIds.add(value.value.value);
+          foundAssetsIds.add(value.value.value);
         }
         continue;
       }
@@ -114,17 +116,17 @@ const getAssetsUsedInStyle = (
 
   for (const [, asset] of assetsStore.get()) {
     if (asset?.type === "font" && fontFamilies.has(asset.meta.family)) {
-      foundAssetIds.add(asset.id);
+      foundAssetsIds.add(asset.id);
     }
   }
 
-  return foundAssetIds;
+  return foundAssetsIds;
 };
 
-const getAssetsUsedInProps = (props: Prop[], foundAssetIds = new Set()) => {
+const getAssetsUsedInProps = (props: Prop[], foundAssetsIds = new Set()) => {
   for (const prop of props) {
     if (prop.type === "asset") {
-      foundAssetIds.add(prop.value);
+      foundAssetsIds.add(prop.value);
       continue;
     }
     if (
@@ -138,12 +140,19 @@ const getAssetsUsedInProps = (props: Prop[], foundAssetIds = new Set()) => {
     }
     prop satisfies never;
   }
-  return foundAssetIds;
+  return foundAssetsIds;
 };
 
 const getTreeData = (targetInstanceSelector: InstanceSelector) => {
   // @todo tell user they can't copy or cut root
   if (targetInstanceSelector.length === 1) {
+    return;
+  }
+
+  const project = projectStore.get();
+
+  // for TS
+  if (project === undefined) {
     return;
   }
 
@@ -199,6 +208,7 @@ const getTreeData = (targetInstanceSelector: InstanceSelector) => {
     styleSourceSelections: treeStyleSourceSelections,
     styles: treeStyles,
     assets: treeAssets,
+    projectId: project.id,
   };
 };
 
@@ -221,6 +231,7 @@ export const mimeType = "application/json";
 
 export const onPaste = (clipboardData: string) => {
   const data = parse(clipboardData);
+
   const selectedPage = selectedPageStore.get();
   if (data === undefined || selectedPage === undefined) {
     return;

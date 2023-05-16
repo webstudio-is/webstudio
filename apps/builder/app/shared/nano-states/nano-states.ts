@@ -28,6 +28,7 @@ import { breakpointsStore } from "./breakpoints";
 import { instancesStore, selectedInstanceSelectorStore } from "./instances";
 import { selectedPageStore } from "./pages";
 import type { UnitSizes } from "~/builder/features/style-panel/shared/css-value-input/convert-units";
+import type { Project } from "@webstudio-is/project";
 
 const useValue = <T>(atom: WritableAtom<T>) => {
   const value = useStore(atom);
@@ -45,6 +46,8 @@ const useValue = <T>(atom: WritableAtom<T>) => {
 
   return [value, set] as const;
 };
+
+export const projectStore = atom<Project | undefined>();
 
 export const rootInstanceStore = computed(
   [instancesStore, selectedPageStore],
