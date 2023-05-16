@@ -188,6 +188,8 @@ export const SelectedInstanceConnector = ({
       unsubscribeScrollState();
       unsubscribeWindowResize();
       unsubscribeIsResizingCanvas();
+
+      // see webstudio-component.tsx for where it's set to `false`
       selectedInstanceIsRenderedStore.set(undefined);
     };
   }, [
