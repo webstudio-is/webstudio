@@ -48,7 +48,6 @@ const InstanceData = z.object({
   styleSources: z.array(StyleSource),
   styles: z.array(StyleDecl),
   assets: z.array(Asset),
-  projectId: z.string(),
 });
 
 type InstanceData = z.infer<typeof InstanceData>;
@@ -149,13 +148,6 @@ const getTreeData = (targetInstanceSelector: InstanceSelector) => {
     return;
   }
 
-  const project = projectStore.get();
-
-  // for TS
-  if (project === undefined) {
-    return;
-  }
-
   const [targetInstanceId] = targetInstanceSelector;
   const instances = instancesStore.get();
   const treeInstanceIds = findTreeInstanceIds(instances, targetInstanceId);
@@ -208,7 +200,6 @@ const getTreeData = (targetInstanceSelector: InstanceSelector) => {
     styleSourceSelections: treeStyleSourceSelections,
     styles: treeStyles,
     assets: treeAssets,
-    projectId: project.id,
   };
 };
 
@@ -276,10 +267,10 @@ export const onPaste = (clipboardData: string) => {
       styles,
       assets
     ) => {
-      // if pasting to a different project, copy assets.
-      // use the same ids so the references are preserved.
-      if (data.projectId !== project.id) {
-        for (const asset of data.assets) {
+      for (const asset of data.assets) {
+        // asset can be already present if pasting to the same project
+        if (assets.has(asset.id) === false) {
+          // we use the same asset.id so the references are preserved
           assets.set(asset.id, { ...asset, projectId: project.id });
         }
       }
