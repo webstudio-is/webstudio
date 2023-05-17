@@ -6,5 +6,4 @@ export type AssetClient = {
     type: string,
     data: AsyncIterable<Uint8Array>
   ) => Promise<AssetData>;
-  deleteFile: (name: string) => Promise<void>;
 };

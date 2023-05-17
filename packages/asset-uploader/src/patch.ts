@@ -7,7 +7,6 @@ import {
 import { type Asset, Assets } from "./schema";
 import { deleteAssets } from "./delete";
 import { loadAssetsByProject } from "./db/load";
-import type { AssetClient } from "./client";
 
 /**
  * patchAssets can only delete or add assets
@@ -16,8 +15,7 @@ import type { AssetClient } from "./client";
 export const patchAssets = async (
   { projectId }: { projectId: Project["id"] },
   patches: Array<Patch>,
-  context: AppContext,
-  assetClient: AssetClient
+  context: AppContext
 ) => {
   const canEdit = await authorizeProject.hasProjectPermit(
     { projectId, permit: "edit" },
@@ -42,7 +40,7 @@ export const patchAssets = async (
     }
   }
   if (deletedAssetIds.length !== 0) {
-    deleteAssets({ projectId, ids: deletedAssetIds }, context, assetClient);
+    deleteAssets({ projectId, ids: deletedAssetIds }, context);
   }
 
   // add new assets found in patched version
@@ -63,13 +61,21 @@ export const patchAssets = async (
 
     const fileNames = new Set(files.map((file) => file.name));
 
+    // restore file when undo is triggered
+    await prisma.file.updateMany({
+      where: { name: { in: Array.from(fileNames) } },
+      data: {
+        isDeleted: false,
+      },
+    });
+
     await prisma.asset.createMany({
       data: addedAssets
         // making sure corresponding file exist before creating an asset that references it
         .filter((asset) => fileNames.has(asset.name))
         .map((asset) => ({
           id: asset.id,
-          projectId: asset.projectId,
+          projectId,
           name: asset.name,
           // @todo remove once legacy fields are removed from schema
           location: asset.location,

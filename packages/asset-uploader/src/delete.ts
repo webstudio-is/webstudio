@@ -4,7 +4,6 @@ import {
   type AppContext,
   AuthorizationError,
 } from "@webstudio-is/trpc-interface/index.server";
-import type { AssetClient } from "./client";
 import type { Asset } from "./schema";
 
 export const deleteAssets = async (
@@ -12,8 +11,7 @@ export const deleteAssets = async (
     ids: Array<Asset["id"]>;
     projectId: Project["id"];
   },
-  context: AppContext,
-  client: AssetClient
+  context: AppContext
 ) => {
   const canDelete = await authorizeProject.hasProjectPermit(
     { projectId: props.projectId, permit: "edit" },
@@ -55,10 +53,10 @@ export const deleteAssets = async (
   }
 
   // delete unused files
-  await prisma.file.deleteMany({
+  await prisma.file.updateMany({
     where: { name: { in: Array.from(unusedFileNames) } },
+    data: {
+      isDeleted: true,
+    },
   });
-  for (const name of unusedFileNames) {
-    await client.deleteFile(name);
-  }
 };
