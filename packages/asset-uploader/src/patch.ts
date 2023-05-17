@@ -75,7 +75,7 @@ export const patchAssets = async (
         .filter((asset) => fileNames.has(asset.name))
         .map((asset) => ({
           id: asset.id,
-          projectId: asset.projectId,
+          projectId,
           name: asset.name,
           // @todo remove once legacy fields are removed from schema
           location: asset.location,
