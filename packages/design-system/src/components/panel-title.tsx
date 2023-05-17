@@ -15,7 +15,6 @@ type TitleProps = {
 };
 
 const Container = styled("div", textVariants.titles, {
-  userSelect: "none",
   display: "flex",
   alignItems: "center",
   flexShrink: 0,
