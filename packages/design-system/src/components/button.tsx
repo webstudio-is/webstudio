@@ -101,6 +101,7 @@ const StyledButton = styled("button", {
   height: theme.spacing[12],
   borderRadius: theme.borderRadius[4],
   whiteSpace: "nowrap",
+  userSelect: "none",
 
   variants: {
     color: {

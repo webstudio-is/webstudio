@@ -6,6 +6,7 @@ export { textVariants };
 export const textStyle = css({
   margin: 0, // in case it's used with <p>
   WebkitFontSmoothing: "antialiased",
+  userSelect: "none",
   variants: {
     variant: textVariants,
     color: {
@@ -34,6 +35,14 @@ export const textStyle = css({
 
         flexBasis: 0,
         flexGrow: 1,
+      },
+    },
+    userSelect: {
+      auto: {
+        userSelect: "auto",
+      },
+      none: {
+        userSelect: "none",
       },
     },
   },

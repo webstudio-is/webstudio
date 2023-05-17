@@ -21,6 +21,7 @@ const style = css({
   alignItems: "center",
   height: theme.spacing[11],
   whiteSpace: "pre", // to make nestedSelectButtonUnitless work as expected
+  userSelect: "none",
   "&:not(:has(svg))": {
     paddingLeft: theme.spacing[2],
     paddingRight: theme.spacing[2],

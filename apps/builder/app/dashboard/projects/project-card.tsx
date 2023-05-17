@@ -216,7 +216,7 @@ export const ProjectCard = ({
           className={footerStyle()}
         >
           <Flex direction="column" justify="around">
-            <Text variant="titles" truncate>
+            <Text variant="titles" truncate userSelect="auto">
               {title}
             </Text>
             {isPublished ? (

@@ -43,6 +43,7 @@ export const toggleItemStyle = css(typography.labelsTitleCase, {
   appearance: "none",
   border: "none",
   outline: "none",
+  userSelect: "none",
   // center icon
   display: "flex",
   justifyContent: "center",

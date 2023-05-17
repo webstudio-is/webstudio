@@ -29,6 +29,7 @@ export const labelCss = css(textVariants.titles, {
   color: theme.colors.foregroundMain,
   mx: theme.spacing[3],
   padding: theme.spacing[3],
+  userSelect: "none",
 });
 
 const indicatorSize = theme.spacing[9];
@@ -55,6 +56,7 @@ export const menuItemCss = css(textVariants.labelsTitleCase, {
   mx: itemMargin,
   padding: theme.spacing[3],
   borderRadius: theme.borderRadius[3],
+  userSelect: "none",
   "&:focus, &[data-found], &[aria-selected=true], &[data-state=open]": {
     backgroundColor: theme.colors.backgroundItemMenuItemHover,
   },

@@ -18,6 +18,7 @@ const StyledLabel = styled(RadixLabel, {
   WebkitFontSmoothing: "antialiased",
   display: "block",
   cursor: "default",
+  userSelect: "none",
 
   boxSizing: "border-box",
   flexShrink: 0,
@@ -88,6 +89,11 @@ const StyledLabel = styled(RadixLabel, {
     sectionTitle: {
       true: textVariants.titles,
       false: textVariants.labelsSentenceCase,
+    },
+    userSelect: {
+      auto: {
+        userSelect: "auto",
+      },
     },
   },
 
