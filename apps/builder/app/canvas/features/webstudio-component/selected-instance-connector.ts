@@ -11,7 +11,6 @@ import {
   selectedInstanceIntanceToTagStore,
   selectedInstanceUnitSizesStore,
   selectedInstanceIsRenderedStore,
-  selectedInstanceSelectorStore,
 } from "~/shared/nano-states";
 import htmlTags, { type htmlTags as HtmlTags } from "html-tags";
 import { getAllElementsBoundingBox } from "~/shared/dom-utils";
@@ -19,10 +18,7 @@ import { subscribeScrollState } from "~/canvas/shared/scroll-state";
 import { selectedInstanceOutlineStore } from "~/shared/nano-states";
 import type { UnitSizes } from "~/builder/features/style-panel/shared/css-value-input/convert-units";
 import { setDataCollapsed } from "~/canvas/collapsed";
-import {
-  areInstanceSelectorsEqual,
-  type InstanceSelector,
-} from "~/shared/tree-utils";
+import { type InstanceSelector } from "~/shared/tree-utils";
 
 const isHtmlTag = (tag: string): tag is HtmlTags =>
   htmlTags.includes(tag as HtmlTags);
@@ -193,18 +189,8 @@ export const SelectedInstanceConnector = ({
       unsubscribeWindowResize();
       unsubscribeIsResizingCanvas();
 
-      // Retain selectedInstanceIsRenderedStore state if instanceSelector stays the same.
-      // Occasionally, an immediate call to selectedInstanceIsRenderedStore.set(true) may not update StylePanel state
-      // within the same batch as the current effect unsubscribe (e.g., due to delayed postMessage). (and cause to lost scroll position)
-      // This rare issue is difficult to reproduce, occurring roughly once every 100 calls.
-      if (
-        areInstanceSelectorsEqual(
-          selectedInstanceSelectorStore.get(),
-          instanceSelector
-        ) === false
-      ) {
-        selectedInstanceIsRenderedStore.set(false);
-      }
+      // see webstudio-component.tsx for where it's set to `false`
+      selectedInstanceIsRenderedStore.set(undefined);
     };
   }, [
     instanceElementRef,

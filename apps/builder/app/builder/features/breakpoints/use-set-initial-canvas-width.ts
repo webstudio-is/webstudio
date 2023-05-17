@@ -6,9 +6,11 @@ import {
   workspaceRectStore,
   canvasWidthStore,
 } from "~/builder/shared/nano-states";
-import { breakpointsStore } from "~/shared/nano-states";
+import {
+  breakpointsStore,
+  selectedBreakpointStore,
+} from "~/shared/nano-states";
 import { findInitialWidth } from "./find-initial-width";
-import { isBaseBreakpoint } from "~/shared/breakpoints";
 
 // Set canvas width based on workspace width, breakpoints and passed breakpoint id.
 export const useSetInitialCanvasWidth = () => {
@@ -47,14 +49,14 @@ export const useSetCanvasWidth = () => {
         return;
       }
       const breakpointValues = Array.from(breakpoints.values());
-      const baseBreakpoint = breakpointValues.find(isBaseBreakpoint);
+      const selectedBreakpoint = selectedBreakpointStore.get();
 
-      // When there is base breakpoint, we want to find the lowest possible size
+      // When there is selected breakpoint, we want to find the lowest possible size
       // that is bigger than all max breakpoints and smaller than all min breakpoints.
-      if (baseBreakpoint) {
+      if (selectedBreakpoint) {
         const width = findInitialWidth(
           breakpointValues,
-          baseBreakpoint,
+          selectedBreakpoint,
           workspaceRect.width
         );
 
@@ -71,16 +73,14 @@ export const useSetCanvasWidth = () => {
             if (workspaceRect === undefined) {
               return;
             }
-            unsubscribeRectStore();
+            unsubscribeRectStore?.();
             update();
           })
-        : () => {
-            /**/
-          };
+        : undefined;
 
     return () => {
       unsubscribeBreakpointStore();
-      unsubscribeRectStore();
+      unsubscribeRectStore?.();
     };
   }, []);
 };

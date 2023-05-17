@@ -27,10 +27,11 @@ import {
   selectedStyleSourceSelectorStore,
 } from "~/shared/nano-states";
 import {
-  createCssEngine,
-  toValue,
   type StyleRule,
   type PlaintextRule,
+  createCssEngine,
+  toValue,
+  compareMedia,
 } from "@webstudio-is/css-engine";
 import { useSubscribe } from "~/shared/pubsub";
 
@@ -118,7 +119,10 @@ export const GlobalStyles = () => {
   const assets = useStore(assetsStore);
 
   useIsomorphicLayoutEffect(() => {
-    for (const breakpoint of breakpoints.values()) {
+    const sortedBreakpoints = Array.from(breakpoints.values()).sort(
+      compareMedia
+    );
+    for (const breakpoint of sortedBreakpoints) {
       userCssEngine.addMediaRule(breakpoint.id, breakpoint);
     }
     userCssEngine.render();
