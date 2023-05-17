@@ -237,12 +237,12 @@ export const selectedInstanceIntanceToTagStore = atom<
 >();
 
 /**
- * Whether or not the selected instance is rendered on canvas:
- * `true` — rendered;
- * `false` — not rendered;
- * `undefined` — selected instance unmounted and we don't know yet whether a new one will mount.
+ * pending means: previous selected instance unmounted,
+ * and we don't know yet whether a new one will mount
  **/
-export const selectedInstanceIsRenderedStore = atom<boolean | undefined>(false);
+export const selectedInstanceRenderStateStore = atom<
+  "mounted" | "notMounted" | "pending"
+>("notMounted");
 
 export const selectedInstanceStatesByStyleSourceIdStore = computed(
   [stylesStore, styleSourceSelectionsStore, selectedInstanceSelectorStore],

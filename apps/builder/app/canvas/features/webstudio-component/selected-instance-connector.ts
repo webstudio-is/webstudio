@@ -10,7 +10,7 @@ import {
   selectedInstanceBrowserStyleStore,
   selectedInstanceIntanceToTagStore,
   selectedInstanceUnitSizesStore,
-  selectedInstanceIsRenderedStore,
+  selectedInstanceRenderStateStore,
 } from "~/shared/nano-states";
 import htmlTags, { type htmlTags as HtmlTags } from "html-tags";
 import { getAllElementsBoundingBox } from "~/shared/dom-utils";
@@ -178,7 +178,7 @@ export const SelectedInstanceConnector = ({
     const unitSizes = calculateUnitSizes(element);
     selectedInstanceUnitSizesStore.set(unitSizes);
 
-    selectedInstanceIsRenderedStore.set(true);
+    selectedInstanceRenderStateStore.set("mounted");
 
     return () => {
       hideOutline();
@@ -189,8 +189,8 @@ export const SelectedInstanceConnector = ({
       unsubscribeWindowResize();
       unsubscribeIsResizingCanvas();
 
-      // see webstudio-component.tsx for where it's set to `false`
-      selectedInstanceIsRenderedStore.set(undefined);
+      // see webstudio-component.tsx for where it's set to "notMounted"
+      selectedInstanceRenderStateStore.set("pending");
     };
   }, [
     instanceElementRef,

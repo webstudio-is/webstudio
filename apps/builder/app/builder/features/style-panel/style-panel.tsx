@@ -13,7 +13,7 @@ import { useStyleData } from "./shared/use-style-data";
 import { StyleSettings } from "./style-settings";
 
 import { StyleSourcesSection } from "./style-source-section";
-import { selectedInstanceIsRenderedStore } from "~/shared/nano-states";
+import { selectedInstanceRenderStateStore } from "~/shared/nano-states";
 import { useStore } from "@nanostores/react";
 
 type StylePanelProps = {
@@ -28,12 +28,14 @@ export const StylePanel = ({ selectedInstance, publish }: StylePanelProps) => {
       publish,
     });
 
-  const selectedInstaceIsRendered = useStore(selectedInstanceIsRenderedStore);
+  const selectedInstanceRenderState = useStore(
+    selectedInstanceRenderStateStore
+  );
 
   // If selected instance is not rendered on the canvas,
   // style panel will not work, because it needs the element in DOM in order to work.
   // See <SelectedInstanceConnector> for more details.
-  if (selectedInstaceIsRendered === false) {
+  if (selectedInstanceRenderState === "notMounted") {
     return (
       <Box css={{ p: theme.spacing[5] }}>
         <Card css={{ p: theme.spacing[9], width: "100%" }}>

@@ -17,7 +17,7 @@ import {
 import type { GetComponent } from "@webstudio-is/react-sdk";
 import {
   instancesStore,
-  selectedInstanceIsRenderedStore,
+  selectedInstanceRenderStateStore,
   selectedInstanceSelectorStore,
   selectedStyleSourceSelectorStore,
   useInstanceProps,
@@ -149,10 +149,10 @@ export const WebstudioComponentDev = ({
     // 1 means root
     if (instanceSelector.length === 1) {
       // If by the time root is rendered,
-      // no selected instance renders and sets `selectedInstanceIsRendered` to `true`,
-      // then it's clear that selected instance will not render at all, so we set it to `false`
-      if (selectedInstanceIsRenderedStore.get() === undefined) {
-        selectedInstanceIsRenderedStore.set(false);
+      // no selected instance renders and sets state to "mounted",
+      // then it's clear that selected instance will not render at all, so we set it to "notMounted"
+      if (selectedInstanceRenderStateStore.get() === "pending") {
+        selectedInstanceRenderStateStore.set("notMounted");
       }
     }
   });
