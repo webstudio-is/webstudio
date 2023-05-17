@@ -36,8 +36,10 @@ model File {
   size              Int
   description       String?
   createdAt         DateTime     @default(now())
+  updatedAt         DateTime     @default(now()) @updatedAt
   meta              String       @default("{}")
   status            UploadStatus @default(UPLOADING)
+  isDeleted         Boolean      @default(false)
   uploaderProject   Project?     @relation(fields: [uploaderProjectId], references: [id])
   uploaderProjectId String?
   assets            Asset[]

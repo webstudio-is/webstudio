@@ -1,5 +1,4 @@
 import type { AssetClient } from "../../client";
-import { deleteFromFs } from "./delete";
 import { uploadToFs } from "./upload";
 
 type FsClientOptions = {
@@ -17,7 +16,5 @@ export const createFsClient = (options: FsClientOptions): AssetClient => {
         maxSize: options.maxUploadSize,
         fileDirectory: options.fileDirectory,
       }),
-    deleteFile: (name) =>
-      deleteFromFs({ name, fileDirectory: options.fileDirectory }),
   };
 };

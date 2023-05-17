@@ -30,7 +30,6 @@ import {
 import { patchAssets } from "@webstudio-is/asset-uploader/index.server";
 import type { Project } from "@webstudio-is/project";
 import { createContext } from "~/shared/context.server";
-import { createAssetClient } from "~/shared/asset-client";
 import { authorizeProject } from "@webstudio-is/trpc-interface/index.server";
 import { applyPatches } from "immer";
 
@@ -157,7 +156,7 @@ export const action = async ({ request }: ActionArgs) => {
         // @todo parallelize the updates
         // currently not possible because we fetch the entire tree
         // and parallelized updates will cause unpredictable side effects
-        await patchAssets({ projectId }, patches, context, createAssetClient());
+        await patchAssets({ projectId }, patches, context);
         continue;
       }
 

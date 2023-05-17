@@ -44,12 +44,14 @@ export const createUploadName = async (
       OR: [
         {
           status: "UPLOADED",
+          isDeleted: false,
           uploaderProjectId: projectId,
         },
         {
           status: "UPLOADING",
-          createdAt: { gt: new Date(Date.now() - UPLOADING_STALE_TIMEOUT) },
+          isDeleted: false,
           uploaderProjectId: projectId,
+          createdAt: { gt: new Date(Date.now() - UPLOADING_STALE_TIMEOUT) },
         },
       ],
     },
