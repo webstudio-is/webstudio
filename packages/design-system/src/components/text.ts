@@ -3,6 +3,7 @@ import { typography } from "../__generated__/figma-design-tokens";
 
 const normalize = {
   userSelect: "none",
+  cursor: "default",
 } as const;
 
 type Variant = keyof typeof typography;

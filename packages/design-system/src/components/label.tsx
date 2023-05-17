@@ -90,11 +90,6 @@ const StyledLabel = styled(RadixLabel, {
       true: textVariants.titles,
       false: textVariants.labelsSentenceCase,
     },
-    userSelect: {
-      auto: {
-        userSelect: "auto",
-      },
-    },
   },
 
   defaultVariants: {

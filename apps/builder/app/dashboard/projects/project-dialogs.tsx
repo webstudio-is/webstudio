@@ -292,13 +292,13 @@ export const DeleteProjectDialog = ({
         onChange={handleChange}
         errors={errors}
         label={
-          <Label userSelect="auto">
+          <Label css={{ userSelect: "auto" }}>
             Confirm by typing
             <Text
               as="span"
               color="destructive"
               variant="labelsSentenceCase"
-              userSelect="auto"
+              css={{ userSelect: "auto" }}
             >
               {` ${title} `}
             </Text>
