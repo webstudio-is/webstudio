@@ -189,7 +189,7 @@ export const SelectedInstanceConnector = ({
       unsubscribeWindowResize();
       unsubscribeIsResizingCanvas();
 
-      // see webstudio-component.tsx for where it's set to "not-mounted"
+      // see webstudio-component.tsx for where it's set to "notMounted"
       selectedInstanceRenderStateStore.set("pending");
     };
   }, [

@@ -35,7 +35,7 @@ export const StylePanel = ({ selectedInstance, publish }: StylePanelProps) => {
   // If selected instance is not rendered on the canvas,
   // style panel will not work, because it needs the element in DOM in order to work.
   // See <SelectedInstanceConnector> for more details.
-  if (selectedInstanceRenderState === "not-mounted") {
+  if (selectedInstanceRenderState === "notMounted") {
     return (
       <Box css={{ p: theme.spacing[5] }}>
         <Card css={{ p: theme.spacing[9], width: "100%" }}>

@@ -241,8 +241,8 @@ export const selectedInstanceIntanceToTagStore = atom<
  * and we don't know yet whether a new one will mount
  **/
 export const selectedInstanceRenderStateStore = atom<
-  "mounted" | "not-mounted" | "pending"
->("not-mounted");
+  "mounted" | "notMounted" | "pending"
+>("notMounted");
 
 export const selectedInstanceStatesByStyleSourceIdStore = computed(
   [stylesStore, styleSourceSelectionsStore, selectedInstanceSelectorStore],

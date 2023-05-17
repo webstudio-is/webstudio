@@ -150,9 +150,9 @@ export const WebstudioComponentDev = ({
     if (instanceSelector.length === 1) {
       // If by the time root is rendered,
       // no selected instance renders and sets state to "mounted",
-      // then it's clear that selected instance will not render at all, so we set it to "not-mounted"
+      // then it's clear that selected instance will not render at all, so we set it to "notMounted"
       if (selectedInstanceRenderStateStore.get() === "pending") {
-        selectedInstanceRenderStateStore.set("not-mounted");
+        selectedInstanceRenderStateStore.set("notMounted");
       }
     }
   });
