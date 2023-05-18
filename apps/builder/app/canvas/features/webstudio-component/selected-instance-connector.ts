@@ -10,7 +10,7 @@ import {
   selectedInstanceBrowserStyleStore,
   selectedInstanceIntanceToTagStore,
   selectedInstanceUnitSizesStore,
-  selectedInstanceIsRenderedStore,
+  selectedInstanceRenderStateStore,
 } from "~/shared/nano-states";
 import htmlTags, { type htmlTags as HtmlTags } from "html-tags";
 import { getAllElementsBoundingBox } from "~/shared/dom-utils";
@@ -18,6 +18,7 @@ import { subscribeScrollState } from "~/canvas/shared/scroll-state";
 import { selectedInstanceOutlineStore } from "~/shared/nano-states";
 import type { UnitSizes } from "~/builder/features/style-panel/shared/css-value-input/convert-units";
 import { setDataCollapsed } from "~/canvas/collapsed";
+import { type InstanceSelector } from "~/shared/tree-utils";
 
 const isHtmlTag = (tag: string): tag is HtmlTags =>
   htmlTags.includes(tag as HtmlTags);
@@ -72,11 +73,13 @@ export const SelectedInstanceConnector = ({
   instance,
   instanceStyles,
   instanceProps,
+  instanceSelector,
 }: {
-  instanceElementRef: { current: undefined | HTMLElement };
+  instanceElementRef: { current: null | HTMLElement };
   instance: Instance;
   instanceStyles: StyleDecl[];
   instanceProps: undefined | Prop[];
+  instanceSelector: InstanceSelector;
 }) => {
   const instances = useStore(instancesStore);
 
@@ -86,7 +89,7 @@ export const SelectedInstanceConnector = ({
     setDataCollapsed(instance.id, true);
 
     const element = instanceElementRef.current;
-    if (element === undefined) {
+    if (element === null) {
       return;
     }
     const showOutline = () => {
@@ -175,7 +178,7 @@ export const SelectedInstanceConnector = ({
     const unitSizes = calculateUnitSizes(element);
     selectedInstanceUnitSizesStore.set(unitSizes);
 
-    selectedInstanceIsRenderedStore.set(true);
+    selectedInstanceRenderStateStore.set("mounted");
 
     return () => {
       hideOutline();
@@ -185,11 +188,14 @@ export const SelectedInstanceConnector = ({
       unsubscribeScrollState();
       unsubscribeWindowResize();
       unsubscribeIsResizingCanvas();
-      selectedInstanceIsRenderedStore.set(false);
+
+      // see webstudio-component.tsx for where it's set to "notMounted"
+      selectedInstanceRenderStateStore.set("pending");
     };
   }, [
     instanceElementRef,
     instance,
+    instanceSelector,
     instanceStyles,
     // instance props may change dom element
     instanceProps,

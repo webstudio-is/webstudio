@@ -1,53 +1,38 @@
-import { z } from "zod";
-import {
-  unstable_parseMultipartFormData as parseMultipartFormData,
-  unstable_createFileUploadHandler as createFileUploadHandler,
-  NodeOnDiskFile,
-} from "@remix-run/node";
+import { mkdir, writeFile } from "node:fs/promises";
+import { dirname, resolve } from "node:path";
 import { Location } from "@webstudio-is/prisma-client";
-import { AssetData, getAssetData } from "../../utils/get-asset-data";
-
-const AssetsFromFs = z.array(z.instanceof(NodeOnDiskFile));
-
-/**
- * Do not change. Upload code assumes its 1.
- */
-const MAX_FILES_PER_REQUEST = 1;
+import { getAssetData } from "../../utils/get-asset-data";
+import { toUint8Array } from "../../utils/to-uint8-array";
+import { createSizeLimiter } from "../../utils/size-limiter";
 
 export const uploadToFs = async ({
-  request,
+  name,
+  type,
+  data: dataStream,
   maxSize,
   fileDirectory,
 }: {
-  request: Request;
+  name: string;
+  type: string;
+  data: AsyncIterable<Uint8Array>;
   maxSize: number;
   fileDirectory: string;
-}): Promise<AssetData> => {
-  const uploadHandler = createFileUploadHandler({
-    maxPartSize: maxSize,
-    directory: fileDirectory,
-    file: ({ filename }) => filename,
+}) => {
+  const filepath = resolve(fileDirectory, name);
+
+  // eslint-disable-next-line @typescript-eslint/no-empty-function
+  await mkdir(dirname(filepath), { recursive: true }).catch(() => {});
+  const limitSize = createSizeLimiter(maxSize, name);
+
+  const data = await toUint8Array(limitSize(dataStream));
+  await writeFile(filepath, data);
+
+  const assetData = await getAssetData({
+    type: type.startsWith("image") ? "image" : "font",
+    size: data.byteLength,
+    data,
+    location: Location.FS,
   });
 
-  const formData = await parseMultipartFormData(request, uploadHandler);
-
-  const formDataImages = AssetsFromFs.parse(formData.getAll("image"));
-  const formDataFonts = AssetsFromFs.parse(formData.getAll("font"));
-  const formDataAll = [...formDataImages, ...formDataFonts].slice(
-    0,
-    MAX_FILES_PER_REQUEST
-  );
-
-  const assets = formDataAll.map(async (asset) =>
-    getAssetData({
-      type: formDataFonts.includes(asset) ? "font" : "image",
-      size: asset.size,
-      data: new Uint8Array(await asset.arrayBuffer()),
-      location: Location.FS,
-    })
-  );
-
-  const assetsData = await Promise.all(assets);
-
-  return assetsData[0];
+  return assetData;
 };

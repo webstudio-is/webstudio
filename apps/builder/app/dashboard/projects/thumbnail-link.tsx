@@ -30,10 +30,12 @@ const getThumbnailAbbreviation = (title: string) =>
 export const ThumbnailLink = forwardRef<
   HTMLAnchorElement,
   { title: string; to: string }
->(({ title, to }, ref) => (
-  <Link ref={ref} to={to} className={thumbnailStyle()} tabIndex={-1}>
-    {getThumbnailAbbreviation(title)}
-  </Link>
-));
+>(({ title, to }, ref) => {
+  return (
+    <Link ref={ref} to={to} className={thumbnailStyle()} tabIndex={-1}>
+      {getThumbnailAbbreviation(title)}
+    </Link>
+  );
+});
 
 ThumbnailLink.displayName = "ThumbnailLink";

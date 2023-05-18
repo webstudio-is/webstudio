@@ -1,6 +1,6 @@
-import type { forwardRef } from "react";
 import * as components from "./components";
 import { registeredComponents } from "./index";
+import { componentAttribute, idAttribute } from "../tree";
 
 export type ComponentName = keyof typeof components;
 
@@ -57,7 +57,15 @@ export const getComponentNames = (): ComponentName[] => {
 };
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
-type AnyComponent = ReturnType<typeof forwardRef<any, any>>;
+type AnyComponent = React.ForwardRefExoticComponent<
+  Omit<
+    React.DetailedHTMLProps<React.HTMLAttributes<HTMLElement>, HTMLElement>,
+    "ref"
+  > & {
+    [componentAttribute]: string;
+    [idAttribute]: string;
+  } & React.RefAttributes<HTMLElement>
+>;
 
 /**
  * Now used only in builder app
@@ -65,8 +73,8 @@ type AnyComponent = ReturnType<typeof forwardRef<any, any>>;
  */
 export const getComponent = (name: string): undefined | AnyComponent => {
   return registeredComponents != null && name in registeredComponents
-    ? (registeredComponents[name as ComponentName] as AnyComponent)
-    : components[name as ComponentName];
+    ? (registeredComponents[name as ComponentName] as never)
+    : (components[name as ComponentName] as never);
 };
 
 /**
@@ -78,8 +86,8 @@ export const getComponent = (name: string): undefined | AnyComponent => {
 export const createGetComponent = (comps: Partial<typeof components>) => {
   return (name: string): undefined | AnyComponent => {
     return registeredComponents != null && name in registeredComponents
-      ? (registeredComponents[name as ComponentName] as AnyComponent)
-      : comps[name as ComponentName];
+      ? (registeredComponents[name as ComponentName] as never)
+      : (comps[name as ComponentName] as never);
   };
 };
 

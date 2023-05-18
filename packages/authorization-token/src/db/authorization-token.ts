@@ -8,6 +8,7 @@ import {
   authorizeProject,
   authorizeAuthorizationToken,
   type AppContext,
+  AuthorizationError,
 } from "@webstudio-is/trpc-interface/index.server";
 
 export const findMany = async (
@@ -21,7 +22,7 @@ export const findMany = async (
   );
 
   if (canList === false) {
-    throw new Error(
+    throw new AuthorizationError(
       "You don't have access to list this project authorization tokens"
     );
   }
@@ -72,7 +73,7 @@ export const create = async (
   );
 
   if (canCreateToken === false) {
-    throw new Error(
+    throw new AuthorizationError(
       "You don't have access to create this project authorization tokens"
     );
   }
@@ -114,7 +115,7 @@ export const update = async (
   );
 
   if (canCreateToken === false) {
-    throw new Error(
+    throw new AuthorizationError(
       "You don't have access to edit this project authorization tokens"
     );
   }
@@ -130,7 +131,7 @@ export const update = async (
   });
 
   if (previousToken === null) {
-    throw new Error("Authorization token not found");
+    throw new AuthorizationError("Authorization token not found");
   }
 
   if (previousToken.relation !== props.relation) {

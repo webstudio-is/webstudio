@@ -28,6 +28,7 @@ import { breakpointsStore } from "./breakpoints";
 import { instancesStore, selectedInstanceSelectorStore } from "./instances";
 import { selectedPageStore } from "./pages";
 import type { UnitSizes } from "~/builder/features/style-panel/shared/css-value-input/convert-units";
+import type { Project } from "@webstudio-is/project";
 
 const useValue = <T>(atom: WritableAtom<T>) => {
   const value = useStore(atom);
@@ -45,6 +46,8 @@ const useValue = <T>(atom: WritableAtom<T>) => {
 
   return [value, set] as const;
 };
+
+export const projectStore = atom<Project | undefined>();
 
 export const rootInstanceStore = computed(
   [instancesStore, selectedPageStore],
@@ -233,8 +236,13 @@ export const selectedInstanceIntanceToTagStore = atom<
   undefined | Map<Instance["id"], HtmlTags>
 >();
 
-/** Whether or the selected instance is rendered on canvas */
-export const selectedInstanceIsRenderedStore = atom<boolean>(false);
+/**
+ * pending means: previous selected instance unmounted,
+ * and we don't know yet whether a new one will mount
+ **/
+export const selectedInstanceRenderStateStore = atom<
+  "mounted" | "notMounted" | "pending"
+>("notMounted");
 
 export const selectedInstanceStatesByStyleSourceIdStore = computed(
   [stylesStore, styleSourceSelectionsStore, selectedInstanceSelectorStore],
@@ -365,7 +373,13 @@ export type DragAndDropState = {
   dragPayload?: DragStartPayload;
   placementIndicator?: Placement;
 };
+
 const dragAndDropStateContainer = atom<DragAndDropState>({
   isDragging: false,
 });
 export const useDragAndDropState = () => useValue(dragAndDropStateContainer);
+
+export const isDraggingStore = computed(
+  [dragAndDropStateContainer],
+  (state) => state.isDragging
+);

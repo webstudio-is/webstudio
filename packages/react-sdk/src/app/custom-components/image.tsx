@@ -4,7 +4,10 @@ import {
   type ComponentPropsWithoutRef,
   type ElementRef,
 } from "react";
-import { Image as WebstudioImage, loaders } from "@webstudio-is/image";
+import {
+  Image as WebstudioImage,
+  createImageLoader,
+} from "@webstudio-is/image";
 import { Image as SdkImage } from "../../components/image";
 import { usePropAsset, getInstanceIdFromComponentProps } from "../../props";
 import { getParams } from "../params";
@@ -16,20 +19,11 @@ type Props = ComponentPropsWithoutRef<typeof WebstudioImage>;
 export const Image = forwardRef<ElementRef<typeof defaultTag>, Props>(
   (props, ref) => {
     const asset = usePropAsset(getInstanceIdFromComponentProps(props), "src");
-    const params = getParams();
 
     const loader = useMemo(() => {
-      if (asset === undefined) {
-        return null;
-      }
-      if (asset.location === "REMOTE") {
-        return loaders.cloudflareImageLoader({
-          resizeOrigin: params.resizeOrigin,
-          cdnUrl: params.assetBaseUrl,
-        });
-      }
-      return loaders.localImageLoader({ publicPath: params.assetBaseUrl });
-    }, [asset, params]);
+      const params = getParams();
+      return createImageLoader({ imageBaseUrl: params.imageBaseUrl });
+    }, []);
 
     const src = asset?.name ?? props.src;
 

@@ -18,6 +18,7 @@ export const usePointerOutline = () => {
     ref.current = div;
     return () => {
       document.body.removeChild(div);
+      ref.current = undefined;
     };
   }, []);
 

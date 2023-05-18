@@ -1,3 +1,5 @@
+import { useFetcher } from "@remix-run/react";
+import { formIdFieldName } from "@webstudio-is/form-handlers";
 import {
   Children,
   cloneElement,
@@ -6,6 +8,7 @@ import {
   type ElementRef,
   type ComponentProps,
 } from "react";
+import { getInstanceIdFromComponentProps } from "../../props";
 
 export const defaultTag = "form";
 
@@ -78,17 +81,31 @@ const withoutMessages = (children: ReactNode) =>
 
 export const Form = forwardRef<
   ElementRef<typeof defaultTag>,
-  ComponentProps<typeof defaultTag> & {
+  Omit<ComponentProps<typeof defaultTag>, "method" | "action"> & {
     initialState?: "initial" | "success" | "error";
   }
->(({ children, initialState = "initial", ...props }, ref) => (
-  <form {...props} data-state={initialState} ref={ref}>
-    {initialState === "success"
-      ? onlySuccessMessage(children)
-      : initialState === "error"
-      ? onlyErrorMessage(children)
-      : withoutMessages(children)}
-  </form>
-));
+>(({ children, initialState = "initial", ...props }, ref) => {
+  const fetcher = useFetcher();
+
+  const state =
+    fetcher.type === "done"
+      ? fetcher.data?.success === true
+        ? "success"
+        : "error"
+      : initialState;
+
+  const instanceId = getInstanceIdFromComponentProps(props);
+
+  return (
+    <fetcher.Form {...props} method="post" data-state={state} ref={ref}>
+      <input type="hidden" name={formIdFieldName} value={instanceId} />
+      {state === "success"
+        ? onlySuccessMessage(children)
+        : state === "error"
+        ? onlyErrorMessage(children)
+        : withoutMessages(children)}
+    </fetcher.Form>
+  );
+});
 
 Form.displayName = "Form";

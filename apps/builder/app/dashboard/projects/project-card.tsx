@@ -2,6 +2,7 @@ import {
   DropdownMenu,
   DropdownMenuTrigger,
   DropdownMenuContent,
+  DropdownMenuPortal,
   DropdownMenuItem,
   IconButton,
   css,
@@ -21,6 +22,8 @@ import {
   ShareProjectDialog,
 } from "./project-dialogs";
 import { ThumbnailLink } from "./thumbnail-link";
+import { useNavigation } from "@remix-run/react";
+import { Spinner } from "../spinner";
 
 const containerStyle = css({
   overflow: "hidden",
@@ -34,6 +37,15 @@ const containerStyle = css({
   "&:hover, &:focus-within": {
     boxShadow: theme.shadows.brandElevationBig,
   },
+  "&:focus-visible": {
+    outline: `2px solid ${theme.colors.borderFocus}`,
+  },
+});
+
+const thumbnailStyle = css({
+  position: "relative",
+  overflow: "hidden",
+  minWidth: "100%",
 });
 
 const footerStyle = css({
@@ -107,12 +119,14 @@ const Menu = ({
           <MenuIcon width={15} height={15} />
         </IconButton>
       </DropdownMenuTrigger>
-      <DropdownMenuContent align="end">
-        <DropdownMenuItem onSelect={onDuplicate}>Duplicate</DropdownMenuItem>
-        <DropdownMenuItem onSelect={onRename}>Rename</DropdownMenuItem>
-        <DropdownMenuItem onSelect={onShare}>Share</DropdownMenuItem>
-        <DropdownMenuItem onSelect={onDelete}>Delete</DropdownMenuItem>
-      </DropdownMenuContent>
+      <DropdownMenuPortal>
+        <DropdownMenuContent align="end">
+          <DropdownMenuItem onSelect={onDuplicate}>Duplicate</DropdownMenuItem>
+          <DropdownMenuItem onSelect={onRename}>Rename</DropdownMenuItem>
+          <DropdownMenuItem onSelect={onShare}>Share</DropdownMenuItem>
+          <DropdownMenuItem onSelect={onDelete}>Delete</DropdownMenuItem>
+        </DropdownMenuContent>
+      </DropdownMenuPortal>
     </DropdownMenu>
   );
 };
@@ -174,24 +188,30 @@ export const ProjectCard = ({
   const [isHidden, setIsHidden] = useState(false);
   const { thumbnailRef, handleKeyDown } = useProjectCard();
   const handleDuplicate = useDuplicate(id);
+  const { state, location } = useNavigation();
+  const linkPath = builderPath({ projectId: id });
+  // Transition to the project has started, we may need to show a spinner
+  const isTransitioning = state !== "idle" && linkPath === location.pathname;
 
   return (
     <Box as="article" hidden={isHidden}>
       <Flex
         direction="column"
+        align="center"
         shrink={false}
         className={containerStyle()}
         tabIndex={0}
         onKeyDown={handleKeyDown}
       >
-        <ThumbnailLink
-          title={title}
-          to={builderPath({ projectId: id })}
-          ref={thumbnailRef}
-        />
+        <Flex className={thumbnailStyle()}>
+          <ThumbnailLink title={title} to={linkPath} ref={thumbnailRef} />
+          {isTransitioning && <Spinner />}
+        </Flex>
+
         <Flex
           justify="between"
           shrink={false}
+          alignSelf="stretch"
           gap="1"
           className={footerStyle()}
         >

@@ -1,9 +1,10 @@
 import { SuperscriptIcon } from "@webstudio-is/icons";
 import { sup } from "../css/normalize";
-import type {
-  PresetStyle,
-  WsComponentMeta,
-  WsComponentPropsMeta,
+import {
+  defaultStates,
+  type PresetStyle,
+  type WsComponentMeta,
+  type WsComponentPropsMeta,
 } from "./component-meta";
 import type { defaultTag } from "./superscript";
 import { props } from "./__generated__/superscript.props";
@@ -16,6 +17,7 @@ export const meta: WsComponentMeta = {
   type: "rich-text-child",
   label: "Superscript Text",
   Icon: SuperscriptIcon,
+  states: defaultStates,
   presetStyle,
 };
 

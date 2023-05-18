@@ -1,8 +1,9 @@
 import { DashIcon } from "@webstudio-is/icons";
-import type {
-  PresetStyle,
-  WsComponentMeta,
-  WsComponentPropsMeta,
+import {
+  defaultStates,
+  type PresetStyle,
+  type WsComponentMeta,
+  type WsComponentPropsMeta,
 } from "./component-meta";
 import { props } from "./__generated__/separator.props";
 import type { defaultTag } from "./separator";
@@ -44,6 +45,7 @@ export const meta: WsComponentMeta = {
   type: "embed",
   label: "Separator",
   Icon: DashIcon,
+  states: defaultStates,
   presetStyle,
   children: [],
 };

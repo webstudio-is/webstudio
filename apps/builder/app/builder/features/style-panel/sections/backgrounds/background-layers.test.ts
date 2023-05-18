@@ -228,10 +228,36 @@ describe("setLayerProperty", () => {
         ],
       },
     };
+
+    const cascadedPosition: NonNullable<
+      StyleInfo["backgroundPosition"]
+    >["cascaded"] = {
+      breakpointId: "mobile",
+      value: {
+        type: "layers",
+        value: [
+          {
+            type: "unit",
+            value: 10,
+            unit: "%",
+          },
+          {
+            type: "unit",
+            value: 50,
+            unit: "%",
+          },
+        ],
+      },
+    };
+
     const styleInfo: StyleInfo = {
       backgroundImage: {
         cascaded,
         value: cascaded.value,
+      },
+      backgroundPosition: {
+        cascaded: cascadedPosition,
+        value: cascadedPosition.value,
       },
     };
 
@@ -289,6 +315,25 @@ describe("setLayerProperty", () => {
       }
     `);
 
+    // We should not reset existing properties to default values
+    expect(styleInfo.backgroundPosition?.value).toMatchInlineSnapshot(`
+      {
+        "type": "layers",
+        "value": [
+          {
+            "type": "unit",
+            "unit": "%",
+            "value": 10,
+          },
+          {
+            "type": "unit",
+            "unit": "%",
+            "value": 50,
+          },
+        ],
+      }
+    `);
+
     setProperty("backgroundImage")({
       type: "layers",
       value: [
@@ -318,6 +363,29 @@ describe("setLayerProperty", () => {
           {
             "type": "unparsed",
             "value": "linear-gradient(yellow, blue)",
+          },
+        ],
+      }
+    `);
+
+    expect(styleInfo.backgroundPosition?.value).toMatchInlineSnapshot(`
+      {
+        "type": "layers",
+        "value": [
+          {
+            "type": "unit",
+            "unit": "%",
+            "value": 10,
+          },
+          {
+            "type": "unit",
+            "unit": "%",
+            "value": 50,
+          },
+          {
+            "type": "unit",
+            "unit": "%",
+            "value": 0,
           },
         ],
       }

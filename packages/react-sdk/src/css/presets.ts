@@ -1,6 +1,6 @@
-import type { EmbedTemplateStyleDecl } from "../embed-template";
+import type { Styles } from "./normalize";
 
-export const borders: EmbedTemplateStyleDecl[] = [
+export const borders: Styles = [
   {
     property: "borderTopWidth",
     value: { type: "unit", value: 1, unit: "px" },
@@ -15,6 +15,13 @@ export const borders: EmbedTemplateStyleDecl[] = [
   },
   {
     property: "borderLeftWidth",
+    value: { type: "unit", value: 1, unit: "px" },
+  },
+];
+
+export const outline: Styles = [
+  {
+    property: "outlineWidth",
     value: { type: "unit", value: 1, unit: "px" },
   },
 ];

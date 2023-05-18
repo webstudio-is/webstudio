@@ -101,15 +101,35 @@ export const getLayerBackgroundStyleInfo = (
     const valueStyle = styleValue?.value;
     const localStyle = styleValue?.local;
     const cascadedStyle = styleValue?.cascaded;
+    const previousSourceStyle = styleValue?.previousSource;
+    const nextSourceStyle = styleValue?.nextSource;
 
     if (valueStyle?.type === "layers") {
       const styleValue = valueStyle.value[layerNum];
       resultProperty["value"] = styleValue;
     }
+
     if (localStyle?.type === "layers") {
       const styleValue = localStyle.value[layerNum];
       resultProperty["local"] = styleValue;
     }
+
+    if (previousSourceStyle?.value?.type === "layers") {
+      const styleValue = previousSourceStyle.value.value[layerNum];
+      resultProperty["previousSource"] = {
+        styleSourceId: previousSourceStyle.styleSourceId,
+        value: styleValue,
+      };
+    }
+
+    if (nextSourceStyle?.value?.type === "layers") {
+      const styleValue = nextSourceStyle.value.value[layerNum];
+      resultProperty["nextSource"] = {
+        styleSourceId: nextSourceStyle.styleSourceId,
+        value: styleValue,
+      };
+    }
+
     if (cascadedStyle?.value.type === "layers") {
       const styleValue = cascadedStyle.value.value[layerNum];
       resultProperty["cascaded"] = {
@@ -150,6 +170,15 @@ const getLayersValue = (styleValue?: StyleValueInfo) => {
   if (clonedStyleValue?.local?.type === "layers") {
     return clonedStyleValue.local;
   }
+
+  if (clonedStyleValue?.nextSource?.value?.type === "layers") {
+    return clonedStyleValue?.nextSource?.value;
+  }
+
+  if (clonedStyleValue?.previousSource?.value?.type === "layers") {
+    return clonedStyleValue?.previousSource?.value;
+  }
+
   if (clonedStyleValue?.cascaded?.value.type === "layers") {
     return clonedStyleValue?.cascaded?.value;
   }
@@ -242,9 +271,12 @@ export const setLayerProperty =
         const insertItems =
           property === propertyName
             ? newValue.value
-            : Array.from(
-                Array(newValue.value.length),
-                () => layeredBackgroundPropsDefaults[property]
+            : Array.from(Array(newValue.value.length), (_, index) =>
+                // Do not override existing values with defaults for layerNum layer
+                index === 0
+                  ? newPropertyStyle.value[layerNum] ??
+                    layeredBackgroundPropsDefaults[property]
+                  : layeredBackgroundPropsDefaults[property]
               );
 
         newPropertyStyle.value.splice(layerNum, 1, ...insertItems);

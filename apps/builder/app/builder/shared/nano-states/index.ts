@@ -1,6 +1,5 @@
 import { atom, computed, type WritableAtom } from "nanostores";
 import { useStore } from "@nanostores/react";
-import type { Project } from "@webstudio-is/project";
 
 const useValue = <T>(atom: WritableAtom<T>) => {
   const value = useStore(atom);
@@ -17,9 +16,6 @@ export const canvasWidthStore = atom<number | undefined>();
 export const useCanvasWidth = () => useValue(canvasWidthStore);
 
 export const canvasRectStore = atom<DOMRect | undefined>();
-
-export const projectContainer = atom<Project | undefined>();
-export const useProject = () => useValue(projectContainer);
 
 export const isCanvasPointerEventsEnabledStore = atom<boolean>(true);
 

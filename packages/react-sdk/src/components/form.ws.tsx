@@ -1,9 +1,10 @@
 import { FormIcon } from "@webstudio-is/icons";
 import { form } from "../css/normalize";
-import type {
-  PresetStyle,
-  WsComponentMeta,
-  WsComponentPropsMeta,
+import {
+  defaultStates,
+  type PresetStyle,
+  type WsComponentMeta,
+  type WsComponentPropsMeta,
 } from "./component-meta";
 import type { defaultTag } from "./form";
 import { props } from "./__generated__/form.props";
@@ -20,6 +21,7 @@ export const meta: WsComponentMeta = {
   type: "container",
   label: "Form",
   Icon: FormIcon,
+  states: defaultStates,
   presetStyle,
   children: [
     {
@@ -41,7 +43,7 @@ export const meta: WsComponentMeta = {
     {
       type: "instance",
       component: "Input",
-      props: [{ type: "string", name: "email", value: "email" }],
+      props: [{ type: "string", name: "name", value: "email" }],
       children: [],
     },
     {

@@ -41,8 +41,7 @@ export default function handleRequest(
   // and separate request handler will not be necessary anymore
   if (
     remixContext.staticHandlerContext.matches.some(
-      (match) =>
-        match.route.id === "routes/$" || match.route.id === "routes/index"
+      (match) => match.route.id === "routes/_index"
     ) &&
     getBuildParams(request) !== undefined
   ) {

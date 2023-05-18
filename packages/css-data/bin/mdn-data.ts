@@ -56,7 +56,13 @@ const normalizedValues = {
 } as const;
 
 const beautifyKeyword = (property: string, keyword: string) => {
-  if (keyword === "currentcolor") {
+  /*
+   * The default value is `invert` or `currentcolor` for some css properties.
+   * But that isn't supported in all browsers, example outline-color.
+   * So, going with currentColor for consistency.
+   * https://developer.mozilla.org/en-US/docs/Web/CSS/outline-color#formal_definition
+   */
+  if (keyword === "currentcolor" || keyword === "invertOrCurrentColor") {
     return "currentColor";
   }
   // builder style panel cannot interpret "normal" and "bold"

@@ -1,6 +1,6 @@
 {
   "name": "@webstudio-is/form-handlers",
-  "version": "0.62.0",
+  "version": "0.65.0",
   "description": "Webstudio Form Handlers",
   "author": "Webstudio <github@webstudio.is>",
   "homepage": "https://webstudio.is",
@@ -14,7 +14,9 @@
     "dts": "tsc --declarationDir lib/types",
     "lint": "eslint ./src --ext .ts,.tsx --max-warnings 0"
   },
-  "dependencies": {},
+  "dependencies": {
+    "@webstudio-is/project-build": "workspace:^"
+  },
   "devDependencies": {
     "@jest/globals": "^29.3.1",
     "@webstudio-is/jest-config": "workspace:^",

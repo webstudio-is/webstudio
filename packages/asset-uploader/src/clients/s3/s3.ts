@@ -1,4 +1,4 @@
-import { DeleteObjectCommand, S3Client } from "@aws-sdk/client-s3";
+import { S3Client } from "@aws-sdk/client-s3";
 import type { AssetClient } from "../../client";
 import { uploadToS3 } from "./upload";
 
@@ -23,27 +23,19 @@ export const createS3Client = (options: S3ClientOptions): AssetClient => {
     },
   });
 
-  const uploadFile: AssetClient["uploadFile"] = async (request) => {
-    return await uploadToS3({
+  const uploadFile: AssetClient["uploadFile"] = async (name, type, data) => {
+    return uploadToS3({
       client,
-      request,
+      name,
+      type,
+      data,
       maxSize: options.maxUploadSize,
       bucket: options.bucket,
       acl: options.acl,
     });
   };
 
-  const deleteFile: AssetClient["deleteFile"] = async (name) => {
-    await client.send(
-      new DeleteObjectCommand({
-        Bucket: options.bucket,
-        Key: name,
-      })
-    );
-  };
-
   return {
     uploadFile,
-    deleteFile,
   };
 };

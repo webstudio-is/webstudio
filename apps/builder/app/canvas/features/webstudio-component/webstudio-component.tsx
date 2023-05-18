@@ -17,6 +17,7 @@ import {
 import type { GetComponent } from "@webstudio-is/react-sdk";
 import {
   instancesStore,
+  selectedInstanceRenderStateStore,
   selectedInstanceSelectorStore,
   selectedStyleSourceSelectorStore,
   useInstanceProps,
@@ -39,14 +40,16 @@ const ContentEditable = ({
   ...props
 }: {
   Component: NonNullable<ReturnType<GetComponent>>;
-  elementRef: { current: undefined | HTMLElement };
+  elementRef: { current: null | HTMLElement };
+  [idAttribute]: Instance["id"];
+  [componentAttribute]: Instance["component"];
 }) => {
   const [editor] = useLexicalComposerContext();
 
   const ref = useCallback(
     (rootElement: null | HTMLElement) => {
       editor.setRootElement(rootElement);
-      elementRef.current = rootElement ?? undefined;
+      elementRef.current = rootElement ?? null;
     },
     [editor, elementRef]
   );
@@ -101,7 +104,7 @@ export const WebstudioComponentDev = ({
   getComponent,
 }: WebstudioComponentDevProps) => {
   const instanceId = instance.id;
-  const instanceElementRef = useRef<HTMLElement>();
+  const instanceElementRef = useRef<HTMLElement>(null);
   const instanceStyles = useInstanceStyles(instanceId);
   useCssRules({ instanceId: instance.id, instanceStyles });
   const instances = useStore(instancesStore);
@@ -140,6 +143,20 @@ export const WebstudioComponentDev = ({
     }
   }, [isSelected]);
 
+  // this assumes presence of `useStore(selectedInstanceSelectorStore)` above
+  // we rely on root re-rendering after selected instance changes
+  useEffect(() => {
+    // 1 means root
+    if (instanceSelector.length === 1) {
+      // If by the time root is rendered,
+      // no selected instance renders and sets state to "mounted",
+      // then it's clear that selected instance will not render at all, so we set it to "notMounted"
+      if (selectedInstanceRenderStateStore.get() === "pending") {
+        selectedInstanceRenderStateStore.set("notMounted");
+      }
+    }
+  });
+
   const readonlyProps =
     instance.component === "Input" || instance.component === "Textarea"
       ? { readOnly: true }
@@ -175,6 +192,7 @@ export const WebstudioComponentDev = ({
         <SelectedInstanceConnector
           instanceElementRef={instanceElementRef}
           instance={instance}
+          instanceSelector={instanceSelector}
           instanceStyles={instanceStyles}
           instanceProps={instanceProps}
         />

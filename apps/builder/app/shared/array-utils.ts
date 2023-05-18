@@ -16,10 +16,10 @@ export const getMapValuesByKeysSet = <Key, Value>(
   map: Map<Key, Value>,
   keys: Set<Key>
 ) => {
-  const values: Value[] = [];
+  const values: NonNullable<Value>[] = [];
   for (const key of keys) {
     const value = map.get(key);
-    if (value !== undefined) {
+    if (value != null) {
       values.push(value);
     }
   }

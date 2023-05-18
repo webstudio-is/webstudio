@@ -27,10 +27,11 @@ import {
   selectedStyleSourceSelectorStore,
 } from "~/shared/nano-states";
 import {
-  createCssEngine,
-  toValue,
   type StyleRule,
   type PlaintextRule,
+  createCssEngine,
+  toValue,
+  compareMedia,
 } from "@webstudio-is/css-engine";
 import { useSubscribe } from "~/shared/pubsub";
 
@@ -60,8 +61,9 @@ export const helperStyles = [
   }`,
   // Using :where allows to prevent increasing specificity, so that helper is overwritten by user styles.
   `[${idAttribute}]:where([${collapsedAttribute}]:not(body)) {
-    outline: 1px dashed #555;
-    outline-offset: -0.5px;
+    outline: 1px dashed rgba(0,0,0,0.7);
+    outline-offset: -1px;
+    box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.7);
   }`,
   // Has no width, will collapse
   `[${idAttribute}]:where(:not(body)[${collapsedAttribute}="w"]) {
@@ -117,7 +119,10 @@ export const GlobalStyles = () => {
   const assets = useStore(assetsStore);
 
   useIsomorphicLayoutEffect(() => {
-    for (const breakpoint of breakpoints.values()) {
+    const sortedBreakpoints = Array.from(breakpoints.values()).sort(
+      compareMedia
+    );
+    for (const breakpoint of sortedBreakpoints) {
       userCssEngine.addMediaRule(breakpoint.id, breakpoint);
     }
     userCssEngine.render();
@@ -309,7 +314,14 @@ const setCssVar = (id: string, property: string, value?: StyleValue) => {
     document.body.style.removeProperty(customProperty);
     return;
   }
-  document.body.style.setProperty(customProperty, toValue(value, undefined));
+
+  const assets = assetsStore.get();
+  const params = getParams();
+  const transformer = createImageValueTransformer(assets, {
+    assetBaseUrl: params.assetBaseUrl,
+  });
+
+  document.body.style.setProperty(customProperty, toValue(value, transformer));
 };
 
 const useUpdateStyle = () => {

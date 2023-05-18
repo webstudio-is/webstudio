@@ -1,8 +1,9 @@
 import { ListIcon } from "@webstudio-is/icons";
-import type {
-  PresetStyle,
-  WsComponentMeta,
-  WsComponentPropsMeta,
+import {
+  defaultStates,
+  type PresetStyle,
+  type WsComponentMeta,
+  type WsComponentPropsMeta,
 } from "./component-meta";
 import { props } from "./__generated__/list.props";
 import type { ListTag } from "./list";
@@ -46,6 +47,7 @@ export const meta: WsComponentMeta = {
   type: "container",
   label: "List",
   Icon: ListIcon,
+  states: defaultStates,
   presetStyle,
   children: [],
 };

@@ -4,17 +4,17 @@ import {
   DropdownMenuContent,
   DropdownMenuPortal,
   DropdownMenuTrigger,
-  DeprecatedText2,
+  Text,
   styled,
   Box,
   theme,
+  Flex,
 } from "@webstudio-is/design-system";
 import { ChevronDownIcon } from "@webstudio-is/icons";
 import {
   useEffect,
   useLayoutEffect,
   useRef,
-  forwardRef,
   type KeyboardEvent,
   type KeyboardEventHandler,
   type FocusEvent,
@@ -228,7 +228,7 @@ const EditableText = ({
   });
 
   return (
-    <DeprecatedText2
+    <Text
       truncate
       ref={ref}
       css={{
@@ -240,7 +240,7 @@ const EditableText = ({
       {...handlers}
     >
       {label}
-    </DeprecatedText2>
+    </Text>
   );
 };
 
@@ -269,7 +269,7 @@ const useForceRecalcStyle = <Element extends HTMLElement>(
   return ref;
 };
 
-const StyledSourceContainer = styled(Box, {
+const StyleSourceContainer = styled(Box, {
   display: "inline-flex",
   borderRadius: theme.borderRadius[3],
   minWidth: theme.spacing[13],
@@ -309,42 +309,25 @@ const StyledSourceContainer = styled(Box, {
   },
 });
 
-type SourceContainerProps = {
-  id: string;
-  source: ItemSource;
-  selected: boolean;
-  disabled: boolean;
-  children: Array<JSX.Element | boolean>;
-};
-
-const SourceSourceContainer = forwardRef<HTMLDivElement, SourceContainerProps>(
-  ({ id, source, selected, disabled, children }, ref) => {
-    return (
-      <StyledSourceContainer
-        data-id={id}
-        source={source}
-        selected={selected}
-        disabled={disabled}
-        aria-current={selected}
-        role="button"
-        ref={ref}
-      >
-        {children}
-      </StyledSourceContainer>
-    );
-  }
-);
-SourceSourceContainer.displayName = "SourceSourceContainer";
-
 const StyleSourceButton = styled("button", {
   all: "unset",
+  flexGrow: 1,
   display: "block",
   boxSizing: "border-box",
-  padding: theme.spacing[4],
   maxWidth: "100%",
+  padding: theme.spacing[3],
+  variants: {
+    isEditing: {
+      true: {
+        color: theme.colors.foregroundMain,
+        backgroundColor: theme.colors.backgroundControls,
+      },
+      false: {},
+    },
+  },
 });
 
-const StyleSourceState = styled(Box, {
+const StyleSourceState = styled(Text, {
   padding: theme.spacing[4],
   backgroundColor: theme.colors.backgroundStyleSourceToken,
   borderTopRightRadius: theme.borderRadius[3],
@@ -387,26 +370,34 @@ export const StyleSource = ({
   const showMenu = isEditing === false && isDragging === false;
 
   return (
-    <SourceSourceContainer
+    <StyleSourceContainer
+      data-id={id}
       source={source}
       selected={selected && state === undefined}
       disabled={disabled}
-      id={id}
+      aria-current={selected && state === undefined}
+      role="button"
       ref={ref}
     >
-      <StyleSourceButton disabled={disabled || isEditing} onClick={onSelect}>
-        <EditableText
-          isEditable={source !== "local"}
+      <Flex css={{ flexGrow: 1, padding: theme.spacing[2] }}>
+        <StyleSourceButton
+          disabled={disabled || isEditing}
           isEditing={isEditing}
-          onChangeEditing={onChangeEditing}
-          onChangeValue={onChangeValue}
-          label={label}
-        />
-      </StyleSourceButton>
+          onClick={onSelect}
+        >
+          <EditableText
+            isEditable={source !== "local"}
+            isEditing={isEditing}
+            onChangeEditing={onChangeEditing}
+            onChangeValue={onChangeValue}
+            label={label}
+          />
+        </StyleSourceButton>
+      </Flex>
       {stateLabel !== undefined && (
         <StyleSourceState>{stateLabel}</StyleSourceState>
       )}
       {showMenu && <Menu source={source}>{menuItems}</Menu>}
-    </SourceSourceContainer>
+    </StyleSourceContainer>
   );
 };

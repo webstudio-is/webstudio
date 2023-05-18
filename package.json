@@ -22,8 +22,6 @@
     "pre-commit": "./node_modules/.bin/nano-staged"
   },
   "devDependencies": {
-    "@changesets/get-dependents-graph": "^1.3.4",
-    "@manypkg/get-packages": "^1.1.3",
     "@storybook/react": "^6.5.16",
     "@types/css-tree": "^2.0.0",
     "@webstudio-is/eslint-config-custom": "workspace:^",

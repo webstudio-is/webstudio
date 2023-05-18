@@ -5,10 +5,8 @@ export const props: Record<string, PropMeta> = {
   style: { required: false, control: "text", type: "string" },
   title: { required: false, control: "text", type: "string" },
   acceptCharset: { required: false, control: "text", type: "string" },
-  action: { required: false, control: "text", type: "string" },
   autoComplete: { required: false, control: "text", type: "string" },
   encType: { required: false, control: "text", type: "string" },
-  method: { required: false, control: "text", type: "string" },
   name: { required: false, control: "text", type: "string" },
   noValidate: { required: false, control: "boolean", type: "boolean" },
   target: { required: false, control: "text", type: "string" },
@@ -452,6 +450,7 @@ export const props: Record<string, PropMeta> = {
     required: false,
     control: "radio",
     type: "string",
+    defaultValue: "initial",
     options: ["initial", "success", "error"],
   },
 };

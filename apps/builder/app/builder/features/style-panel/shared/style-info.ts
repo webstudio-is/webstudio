@@ -14,6 +14,7 @@ import {
   type Instances,
   type StyleDecl,
   type StyleSource as StyleSourceType,
+  Breakpoint,
 } from "@webstudio-is/project-build";
 import {
   type StyleSourceSelector,
@@ -50,19 +51,29 @@ type InheritedProperties = {
   [property in StyleProperty]?: InheritedValueInfo;
 };
 
-type PreviousSourceValueInfo = {
+type SourceValueInfo = {
   styleSourceId: string;
   value: StyleValue;
 };
 
-type PreviousSourceProperties = {
-  [property in StyleProperty]?: PreviousSourceValueInfo;
+type SourceProperties = {
+  [property in StyleProperty]?: SourceValueInfo;
+};
+
+/*
+ * For some cases we are encouraging to use custom defaults, than
+ * `initial` values provided by browsers. This helps in controlling the behaviour
+ * of such properties
+ */
+const CUSTOM_DEFAULT_VALUES: Partial<Record<StyleProperty, StyleValue>> = {
+  outlineWidth: { value: 0, type: "unit", unit: "px" },
 };
 
 export type StyleValueInfo = {
   value: StyleValue;
   local?: StyleValue;
-  previousSource?: PreviousSourceValueInfo;
+  previousSource?: SourceValueInfo;
+  nextSource?: SourceValueInfo;
   cascaded?: CascadedValueInfo;
   inherited?: InheritedValueInfo;
   preset?: StyleValue;
@@ -99,8 +110,8 @@ export const getStyleSource = (
   for (const info of styleValueInfos) {
     if (
       info?.previousSource !== undefined ||
-      info?.cascaded !== undefined ||
-      info?.inherited !== undefined
+      info?.nextSource !== undefined ||
+      info?.cascaded !== undefined
     ) {
       return "remote";
     }
@@ -108,6 +119,11 @@ export const getStyleSource = (
   for (const info of styleValueInfos) {
     if (info?.preset !== undefined) {
       return "preset";
+    }
+  }
+  for (const info of styleValueInfos) {
+    if (info?.inherited !== undefined) {
+      return "remote";
     }
   }
   return "default";
@@ -132,6 +148,15 @@ const getSelectedStyle = (
   );
   if (instanceStyles === undefined) {
     return style;
+  }
+  for (const styleDecl of instanceStyles) {
+    // @todo consider making stateless styles remote when state is selected
+    if (
+      styleDecl.breakpointId === breakpointId &&
+      styleDecl.state === undefined
+    ) {
+      style[styleDecl.property] = styleDecl.value;
+    }
   }
   for (const styleDecl of instanceStyles) {
     if (
@@ -206,7 +231,11 @@ export const getInstanceComponent = (
   return instance.component;
 };
 
-export const getPresetStyleRule = (component: string, tagName: HtmlTags) => {
+export const getPresetStyleRule = (
+  component: string,
+  tagName: HtmlTags,
+  styleSourceSelector?: StyleSourceSelector
+) => {
   const meta = getComponentMeta(component);
   const presetStyles = meta?.presetStyle?.[tagName];
   if (presetStyles === undefined) {
@@ -214,7 +243,11 @@ export const getPresetStyleRule = (component: string, tagName: HtmlTags) => {
   }
   const presetStyle: Style = {};
   for (const styleDecl of presetStyles) {
+    // @todo consider making stateless styles remote when state is selected
     if (styleDecl.state === undefined) {
+      presetStyle[styleDecl.property] = styleDecl.value;
+    }
+    if (styleDecl.state === styleSourceSelector?.state) {
       presetStyle[styleDecl.property] = styleDecl.value;
     }
   }
@@ -293,9 +326,10 @@ export const getPreviousSourceInfo = (
   styleSourceSelections: StyleSourceSelections,
   stylesByInstanceId: Map<Instance["id"], StyleDecl[]>,
   selectedInstanceSelector: InstanceSelector,
-  selectedStyleSourceSelector: StyleSourceSelector
+  selectedStyleSourceSelector: StyleSourceSelector,
+  breakpointId: Breakpoint["id"]
 ) => {
-  const previousSourceStyle: PreviousSourceProperties = {};
+  const previousSourceStyle: SourceProperties = {};
   const [selectedInstanceId] = selectedInstanceSelector;
   const { styleSourceId } = selectedStyleSourceSelector;
   const styleSourceSelection = styleSourceSelections.get(selectedInstanceId);
@@ -309,7 +343,10 @@ export const getPreviousSourceInfo = (
   );
   // expect instance styles to be ordered
   for (const styleDecl of instanceStyles) {
-    if (previousSourceIds.includes(styleDecl.styleSourceId)) {
+    if (
+      styleDecl.breakpointId === breakpointId &&
+      previousSourceIds.includes(styleDecl.styleSourceId)
+    ) {
       previousSourceStyle[styleDecl.property] = {
         styleSourceId: styleDecl.styleSourceId,
         value: styleDecl.value,
@@ -317,6 +354,40 @@ export const getPreviousSourceInfo = (
     }
   }
   return previousSourceStyle;
+};
+
+export const getNextSourceInfo = (
+  styleSourceSelections: StyleSourceSelections,
+  stylesByInstanceId: Map<Instance["id"], StyleDecl[]>,
+  selectedInstanceSelector: InstanceSelector,
+  selectedStyleSourceSelector: StyleSourceSelector,
+  breakpointId: Breakpoint["id"]
+) => {
+  const nextSourceStyle: SourceProperties = {};
+  const [selectedInstanceId] = selectedInstanceSelector;
+  const { styleSourceId } = selectedStyleSourceSelector;
+  const styleSourceSelection = styleSourceSelections.get(selectedInstanceId);
+  const instanceStyles = stylesByInstanceId.get(selectedInstanceId);
+  if (styleSourceSelection === undefined || instanceStyles === undefined) {
+    return nextSourceStyle;
+  }
+  const nextSourceIds = styleSourceSelection.values.slice(
+    // exclude current style source
+    styleSourceSelection.values.indexOf(styleSourceId) + 1
+  );
+  // expect instance styles to be ordered
+  for (const styleDecl of instanceStyles) {
+    if (
+      styleDecl.breakpointId === breakpointId &&
+      nextSourceIds.includes(styleDecl.styleSourceId)
+    ) {
+      nextSourceStyle[styleDecl.property] = {
+        styleSourceId: styleDecl.styleSourceId,
+        value: styleDecl.value,
+      };
+    }
+  }
+  return nextSourceStyle;
 };
 
 /**
@@ -402,7 +473,8 @@ export const useStyleInfo = () => {
   const previousSourceInfo = useMemo(() => {
     if (
       selectedInstanceSelector === undefined ||
-      selectedOrLastStyleSourceSelector === undefined
+      selectedOrLastStyleSourceSelector === undefined ||
+      selectedBreakpointId === undefined
     ) {
       return {};
     }
@@ -410,18 +482,46 @@ export const useStyleInfo = () => {
       styleSourceSelections,
       stylesByInstanceId,
       selectedInstanceSelector,
-      selectedOrLastStyleSourceSelector
+      selectedOrLastStyleSourceSelector,
+      selectedBreakpointId
     );
   }, [
     styleSourceSelections,
     stylesByInstanceId,
     selectedInstanceSelector,
     selectedOrLastStyleSourceSelector,
+    selectedBreakpointId,
+  ]);
+
+  const nextSourceInfo = useMemo(() => {
+    if (
+      selectedInstanceSelector === undefined ||
+      selectedOrLastStyleSourceSelector === undefined ||
+      selectedBreakpointId === undefined
+    ) {
+      return {};
+    }
+    return getNextSourceInfo(
+      styleSourceSelections,
+      stylesByInstanceId,
+      selectedInstanceSelector,
+      selectedOrLastStyleSourceSelector,
+      selectedBreakpointId
+    );
+  }, [
+    styleSourceSelections,
+    stylesByInstanceId,
+    selectedInstanceSelector,
+    selectedOrLastStyleSourceSelector,
+    selectedBreakpointId,
   ]);
 
   const presetStyle = useMemo(() => {
     const selectedInstanceId = selectedInstanceSelector?.[0];
-    if (selectedInstanceId === undefined) {
+    if (
+      selectedInstanceId === undefined ||
+      selectedOrLastStyleSourceSelector === undefined
+    ) {
       return;
     }
     const tagName = selectedInstanceIntanceToTag?.get(selectedInstanceId);
@@ -429,8 +529,17 @@ export const useStyleInfo = () => {
     if (tagName === undefined || component === undefined) {
       return;
     }
-    return getPresetStyleRule(component, tagName);
-  }, [instances, selectedInstanceSelector, selectedInstanceIntanceToTag]);
+    return getPresetStyleRule(
+      component,
+      tagName,
+      selectedOrLastStyleSourceSelector
+    );
+  }, [
+    instances,
+    selectedInstanceSelector,
+    selectedInstanceIntanceToTag,
+    selectedOrLastStyleSourceSelector,
+  ]);
 
   const htmlStyle = useMemo(() => {
     const instanceId = selectedInstanceSelector?.[0];
@@ -459,24 +568,28 @@ export const useStyleInfo = () => {
       const computed = browserStyle?.[property];
       const defaultValue =
         htmlStyle?.[property] ??
+        CUSTOM_DEFAULT_VALUES[property] ??
         properties[property as keyof typeof properties].initial;
       const preset = presetStyle?.[property];
       const inherited = inheritedInfo[property];
       const cascaded = cascadedInfo[property];
       const previousSource = previousSourceInfo[property];
+      const nextSource = nextSourceInfo[property];
       const local = selectedStyle?.[property];
       const value =
         local ??
+        nextSource?.value ??
         previousSource?.value ??
         cascaded?.value ??
-        inherited?.value ??
         preset ??
+        inherited?.value ??
         defaultValue;
       if (value) {
         if (property === "color") {
           styleInfoData[property] = {
             value,
             local,
+            nextSource,
             previousSource,
             cascaded,
             inherited,
@@ -487,6 +600,7 @@ export const useStyleInfo = () => {
           styleInfoData[property] = {
             value,
             local,
+            nextSource,
             previousSource,
             cascaded,
             inherited,
@@ -502,6 +616,7 @@ export const useStyleInfo = () => {
     presetStyle,
     inheritedInfo,
     cascadedInfo,
+    nextSourceInfo,
     previousSourceInfo,
     selectedStyle,
   ]);
