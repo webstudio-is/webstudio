@@ -37,6 +37,7 @@ export * from "./components/checkbox";
 export * from "./components/component-card";
 export * from "./components/input-field";
 export * from "./components/nested-select-button";
+export * from "./components/panel-tabs";
 
 // Not aligned
 
