@@ -2,7 +2,7 @@ import { GapVerticalIcon } from "@webstudio-is/icons";
 import { Flex } from "./flex";
 import { InputField, inputFieldColors } from "./input-field";
 import { NestedIconLabel } from "./nested-icon-label";
-import { NestedSelectButton } from "./nested-select-button";
+import { NestedInputButton } from "./nested-input-button";
 import { StorySection, StoryGrid } from "./storybook";
 
 export default {
@@ -15,7 +15,7 @@ const prefix = (
   </NestedIconLabel>
 );
 
-const suffix = <NestedSelectButton tabIndex={-1} />;
+const suffix = <NestedInputButton tabIndex={-1} />;
 
 export const Demo = () => (
   <>
@@ -47,7 +47,7 @@ export const Demo = () => (
               <GapVerticalIcon />
             </NestedIconLabel>
           }
-          suffix={<NestedSelectButton disabled />}
+          suffix={<NestedInputButton disabled />}
           disabled
         />
       </StoryGrid>

@@ -1,5 +1,5 @@
 /**
- * Implementation of the "Nested Select Button" component from:
+ * Implementation of the "Nested Input Button" component from:
  * https://www.figma.com/file/sfCE7iLS0k25qCxiifQNLE/%F0%9F%93%9A-Webstudio-Library?node-id=148-3113
  */
 
@@ -19,6 +19,7 @@ const style = css({
   borderRadius: theme.borderRadius[2],
   display: "inline-flex",
   alignItems: "center",
+  justifyContent: "center",
   height: theme.spacing[11],
   whiteSpace: "pre", // to make nestedSelectButtonUnitless work as expected
   "&:not(:has(svg))": {
@@ -37,21 +38,37 @@ const style = css({
   "&:disabled": {
     color: theme.colors.foregroundDisabled,
   },
+  variants: {
+    /**
+     * ChevronDownIcon is the only case when we have svg inside the button and width is not equal to height
+     */
+    hasChildren: {
+      true: {
+        "&:where(:has(svg))": {
+          width: theme.spacing[11],
+        },
+      },
+    },
+  },
 });
 
-export const NestedSelectButton = forwardRef(
+export const NestedInputButton = forwardRef(
   (
     {
       css,
       className,
-      children = <ChevronDownIcon />,
+      children,
       ...props
     }: ComponentProps<"button"> & { css?: CSS },
     ref: Ref<HTMLButtonElement>
   ) => (
-    <button className={style({ css, className })} {...props} ref={ref}>
-      {children}
+    <button
+      className={style({ css, className, hasChildren: children !== undefined })}
+      {...props}
+      ref={ref}
+    >
+      {children ?? <ChevronDownIcon />}
     </button>
   )
 );
-NestedSelectButton.displayName = "NestedSelectButton";
+NestedInputButton.displayName = "NestedSelectButton";
