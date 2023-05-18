@@ -1,4 +1,4 @@
-import { ListIcon } from "@webstudio-is/icons";
+import { ListIcon } from "@webstudio-is/icons/svg";
 import {
   defaultStates,
   type PresetStyle,

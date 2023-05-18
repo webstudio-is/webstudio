@@ -1,4 +1,4 @@
-import { BoxIcon } from "@webstudio-is/icons";
+import { BoxIcon } from "@webstudio-is/icons/svg";
 import type {
   WsComponentMeta,
   WsComponentPropsMeta,

@@ -1,4 +1,4 @@
-import { BoldIcon } from "@webstudio-is/icons";
+import { BoldIcon } from "@webstudio-is/icons/svg";
 import {
   defaultStates,
   type PresetStyle,

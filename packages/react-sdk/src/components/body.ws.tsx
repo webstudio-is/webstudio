@@ -1,4 +1,4 @@
-import { BodyIcon } from "@webstudio-is/icons";
+import { BodyIcon } from "@webstudio-is/icons/svg";
 import { body } from "../css/normalize";
 import {
   defaultStates,

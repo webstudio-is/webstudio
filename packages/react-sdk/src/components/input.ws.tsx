@@ -1,4 +1,4 @@
-import { FormTextFieldIcon } from "@webstudio-is/icons";
+import { FormTextFieldIcon } from "@webstudio-is/icons/svg";
 import { input } from "../css/normalize";
 import {
   defaultStates,

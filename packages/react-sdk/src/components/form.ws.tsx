@@ -1,4 +1,4 @@
-import { FormIcon } from "@webstudio-is/icons";
+import { FormIcon } from "@webstudio-is/icons/svg";
 import { form } from "../css/normalize";
 import {
   defaultStates,

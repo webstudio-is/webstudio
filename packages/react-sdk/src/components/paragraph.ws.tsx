@@ -1,4 +1,4 @@
-import { TextAlignLeftIcon } from "@webstudio-is/icons";
+import { TextAlignLeftIcon } from "@webstudio-is/icons/svg";
 import { p } from "../css/normalize";
 import {
   defaultStates,

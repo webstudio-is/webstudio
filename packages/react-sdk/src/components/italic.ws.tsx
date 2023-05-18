@@ -1,4 +1,4 @@
-import { TextItalicIcon } from "@webstudio-is/icons";
+import { TextItalicIcon } from "@webstudio-is/icons/svg";
 import type { defaultTag } from "./italic";
 import {
   defaultStates,

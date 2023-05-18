@@ -1,4 +1,4 @@
-import { ListItemIcon } from "@webstudio-is/icons";
+import { ListItemIcon } from "@webstudio-is/icons/svg";
 import { li } from "../css/normalize";
 import {
   defaultStates,

@@ -1,4 +1,4 @@
-import { SuperscriptIcon } from "@webstudio-is/icons";
+import { SuperscriptIcon } from "@webstudio-is/icons/svg";
 import { sup } from "../css/normalize";
 import {
   defaultStates,

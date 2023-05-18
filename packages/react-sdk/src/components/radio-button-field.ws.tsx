@@ -1,4 +1,4 @@
-import { RadioCheckedIcon } from "@webstudio-is/icons";
+import { RadioCheckedIcon } from "@webstudio-is/icons/svg";
 import {
   type WsComponentMeta,
   type WsComponentPropsMeta,

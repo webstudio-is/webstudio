@@ -1,4 +1,4 @@
-import { LinkIcon } from "@webstudio-is/icons";
+import { LinkIcon } from "@webstudio-is/icons/svg";
 import { a } from "../css/normalize";
 import {
   defaultStates,

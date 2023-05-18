@@ -1,4 +1,4 @@
-import { BlockquoteIcon } from "@webstudio-is/icons";
+import { BlockquoteIcon } from "@webstudio-is/icons/svg";
 import type { defaultTag } from "./blockquote";
 import {
   defaultStates,

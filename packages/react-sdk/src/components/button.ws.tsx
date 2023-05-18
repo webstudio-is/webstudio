@@ -1,4 +1,4 @@
-import { ButtonElementIcon } from "@webstudio-is/icons";
+import { ButtonElementIcon } from "@webstudio-is/icons/svg";
 import { button } from "../css/normalize";
 import {
   defaultStates,

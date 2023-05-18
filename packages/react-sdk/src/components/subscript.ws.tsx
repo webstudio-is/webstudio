@@ -1,4 +1,4 @@
-import { SubscriptIcon } from "@webstudio-is/icons";
+import { SubscriptIcon } from "@webstudio-is/icons/svg";
 import { sub } from "../css/normalize";
 import {
   defaultStates,

@@ -1,4 +1,4 @@
-import { CheckboxCheckedIcon } from "@webstudio-is/icons";
+import { CheckboxCheckedIcon } from "@webstudio-is/icons/svg";
 import {
   type WsComponentMeta,
   type WsComponentPropsMeta,

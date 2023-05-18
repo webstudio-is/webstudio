@@ -59,7 +59,10 @@ const InstanceInfo = ({
     css={{ height: theme.spacing[13], color: theme.colors.foregroundSubtle }}
     align="center"
   >
-    <meta.Icon />{" "}
+    <div
+      style={{ width: 16, height: 16 }}
+      dangerouslySetInnerHTML={{ __html: meta.Icon }}
+    />
     <Text truncate variant="labelsSentenceCase">
       {label}
     </Text>

@@ -1,4 +1,4 @@
-import { PaintBrushIcon } from "@webstudio-is/icons";
+import { PaintBrushIcon } from "@webstudio-is/icons/svg";
 import { span } from "../css/normalize";
 import {
   defaultStates,

@@ -23,7 +23,14 @@ const instanceRelatedProps = {
     }
     return (
       <TreeItemBody {...props} selectionEvent="focus">
-        <TreeItemLabel prefix={<meta.Icon />}>
+        <TreeItemLabel
+          prefix={
+            <div
+              style={{ width: 16, height: 16 }}
+              dangerouslySetInnerHTML={{ __html: meta.Icon }}
+            />
+          }
+        >
           {getInstanceLabel(props.itemData, meta)}
         </TreeItemLabel>
       </TreeItemBody>

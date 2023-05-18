@@ -1,4 +1,4 @@
-import { TextBlockIcon } from "@webstudio-is/icons";
+import { TextBlockIcon } from "@webstudio-is/icons/svg";
 import {
   defaultStates,
   type PresetStyle,

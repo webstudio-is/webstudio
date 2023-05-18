@@ -1,4 +1,4 @@
-import { SlotComponentIcon } from "@webstudio-is/icons";
+import { SlotComponentIcon } from "@webstudio-is/icons/svg";
 import type { WsComponentMeta, WsComponentPropsMeta } from "./component-meta";
 
 export const meta: WsComponentMeta = {

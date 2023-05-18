@@ -1,4 +1,4 @@
-import { FormTextAreaIcon } from "@webstudio-is/icons";
+import { FormTextAreaIcon } from "@webstudio-is/icons/svg";
 import { textarea } from "../css/normalize";
 import {
   type WsComponentMeta,

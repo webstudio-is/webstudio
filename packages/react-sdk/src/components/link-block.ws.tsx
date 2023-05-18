@@ -1,4 +1,4 @@
-import { LinkBlockIcon } from "@webstudio-is/icons";
+import { LinkBlockIcon } from "@webstudio-is/icons/svg";
 import type {
   PresetStyle,
   WsComponentMeta,

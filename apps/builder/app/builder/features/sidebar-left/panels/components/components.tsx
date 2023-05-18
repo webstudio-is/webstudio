@@ -110,7 +110,11 @@ export const TabContent = ({ publish, onSetActiveTab }: TabContentProps) => {
                             {...pressProps}
                             {...{ [dragItemAttribute]: component }}
                             label={meta.label}
-                            icon={<meta.Icon />}
+                            icon={
+                              <div
+                                dangerouslySetInnerHTML={{ __html: meta.Icon }}
+                              />
+                            }
                             tabIndex={index === 0 ? 0 : -1}
                           />
                         </Tooltip>
