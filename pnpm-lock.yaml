@@ -433,10 +433,23 @@ importers:
         version: 5.0.3
 
   packages/css-data:
+    dependencies:
+      colord:
+        specifier: ^2.9.3
+        version: 2.9.3
+      hyphenate-style-name:
+        specifier: ^1.0.4
+        version: 1.0.4
+      warn-once:
+        specifier: ^0.1.1
+        version: 0.1.1
     devDependencies:
       '@types/css-tree':
         specifier: ^2.0.0
         version: 2.0.0
+      '@webstudio-is/jest-config':
+        specifier: workspace:^
+        version: link:../jest-config
       '@webstudio-is/scripts':
         specifier: workspace:^
         version: link:../scripts
@@ -452,6 +465,9 @@ importers:
       html-tags:
         specifier: ^3.2.0
         version: 3.2.0
+      jest:
+        specifier: ^29.3.1
+        version: 29.3.1(@types/node@18.11.18)
       mdn-data:
         specifier: 2.0.30
         version: 2.0.30

@@ -6,6 +6,8 @@ export const html: Html = exportedHtml;
 export * from "./__generated__/keyword-values";
 export * from "./__generated__/units";
 export * from "./schema";
+export * from "./parse-css";
+export * from "./parse-css-value";
 
 import { properties as generatedProperties } from "./__generated__/properties";
 

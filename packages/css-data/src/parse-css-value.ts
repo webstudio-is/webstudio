@@ -1,7 +1,8 @@
 import * as csstree from "css-tree";
 import hyphenate from "hyphenate-style-name";
-import type { StyleProperty, StyleValue, Unit } from "@webstudio-is/css-data";
-import { units, keywordValues } from "@webstudio-is/css-data";
+import type { StyleProperty, StyleValue, Unit } from "./schema";
+import { units } from "./__generated__/units";
+import { keywordValues } from "./__generated__/keyword-values";
 import warnOnce from "warn-once";
 import { colord } from "colord";
 
@@ -14,7 +15,10 @@ const cssTryParseValue = (input: string) => {
   }
 };
 
-export const isValid = (property: string, value: string): boolean => {
+export const isValidDeclaration = (
+  property: string,
+  value: string
+): boolean => {
   const ast = cssTryParseValue(value);
 
   if (ast == null) {
@@ -25,10 +29,10 @@ export const isValid = (property: string, value: string): boolean => {
 
   const matchResult = csstree.lexer.matchProperty(cssPropertyName, ast);
 
-  const isValid = matchResult.matched != null;
+  const isValidDeclaration = matchResult.matched != null;
 
   // @todo remove after fix https://github.com/csstree/csstree/issues/246
-  if (isValid && typeof CSSStyleValue !== "undefined") {
+  if (isValidDeclaration && typeof CSSStyleValue !== "undefined") {
     try {
       CSSStyleValue.parse(cssPropertyName, value);
     } catch {
@@ -41,7 +45,7 @@ export const isValid = (property: string, value: string): boolean => {
     }
   }
 
-  return isValid;
+  return isValidDeclaration;
 };
 
 export const parseCssValue = (
@@ -57,7 +61,7 @@ export const parseCssValue = (
     return invalidValue;
   }
 
-  if (!isValid(property, input)) {
+  if (!isValidDeclaration(property, input)) {
     return invalidValue;
   }
 

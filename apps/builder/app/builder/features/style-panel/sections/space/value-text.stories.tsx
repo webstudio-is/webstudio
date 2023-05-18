@@ -1,6 +1,6 @@
 import type { ComponentMeta } from "@storybook/react";
 import React from "react";
-import { parseCssValue } from "../../shared/parse-css-value";
+import { parseCssValue } from "@webstudio-is/css-data";
 import { SpaceLayout } from "./layout";
 import { ValueText as ValueTextComponent } from "./value-text";
 

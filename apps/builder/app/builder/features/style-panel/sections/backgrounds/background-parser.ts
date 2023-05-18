@@ -1,6 +1,6 @@
 import * as csstree from "css-tree";
 import { colord } from "colord";
-import { parseCssValue } from "../../shared/parse-css-value";
+import { parseCssValue } from "@webstudio-is/css-data";
 import type {
   InvalidValue,
   LayersValue,

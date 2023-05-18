@@ -33,7 +33,7 @@ import { toValue } from "@webstudio-is/css-engine";
 import { useDebouncedCallback } from "use-debounce";
 import type { StyleSource } from "../style-info";
 import { toPascalCase } from "../keyword-utils";
-import { isValid } from "../parse-css-value";
+import { isValidDeclaration } from "@webstudio-is/css-data";
 import {
   selectedInstanceBrowserStyleStore,
   selectedInstanceUnitSizesStore,
@@ -95,7 +95,7 @@ const useScrub = ({
 
       if (
         value.type === "unit" &&
-        isValid(property, toValue(value)) === false
+        isValidDeclaration(property, toValue(value)) === false
       ) {
         value = parseIntermediateOrInvalidValue(property, {
           type: "intermediate",
@@ -106,7 +106,7 @@ const useScrub = ({
         // In case of negative values for some properties, we might end up with invalid value.
         if (value.type === "invalid") {
           // Try return unitless
-          if (isValid(property, "0")) {
+          if (isValidDeclaration(property, "0")) {
             value = {
               type: "unit",
               unit: "number",
