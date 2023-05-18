@@ -7,7 +7,7 @@ import {
   SelectViewport,
   SelectItem,
   SelectContent,
-  NestedSelectButton,
+  NestedInputButton,
   nestedSelectButtonUnitless,
 } from "@webstudio-is/design-system";
 import { ChevronDownIcon, ChevronUpIcon } from "@webstudio-is/icons";
@@ -111,11 +111,11 @@ const UnitSelect = ({
       open={open}
     >
       <SelectPrimitive.SelectTrigger asChild>
-        <NestedSelectButton tabIndex={-1}>
+        <NestedInputButton tabIndex={-1}>
           <SelectPrimitive.Value>
             {value === "number" ? nestedSelectButtonUnitless : label}
           </SelectPrimitive.Value>
-        </NestedSelectButton>
+        </NestedInputButton>
       </SelectPrimitive.SelectTrigger>
       <SelectPrimitive.Portal>
         <SelectContent
