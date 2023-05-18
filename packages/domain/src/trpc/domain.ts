@@ -125,7 +125,7 @@ export const domainRouter = router({
         return {
           success: false,
           error: error instanceof Error ? error.message : "Unknown error",
-        };
+        } as const;
       }
     }),
 
@@ -149,7 +149,7 @@ export const domainRouter = router({
         return {
           success: false,
           error: error instanceof Error ? error.message : "Unknown error",
-        };
+        } as const;
       }
     }),
   remove: procedure
@@ -172,7 +172,7 @@ export const domainRouter = router({
         return {
           success: false,
           error: error instanceof Error ? error.message : "Unknown error",
-        };
+        } as const;
       }
     }),
   findMany: procedure
@@ -209,7 +209,7 @@ export const domainRouter = router({
         return {
           success: false,
           error: error instanceof Error ? error.message : "Unknown error",
-        };
+        } as const;
       }
     }),
 });

@@ -155,9 +155,11 @@ const DomainItem = (props: {
     error: refreshSystemError,
   } = trpc.refresh.useMutation();
 
-  const disabled =
+  const isRemovePending =
+    removeState !== "idle" || props.domainLoadingState !== "idle";
+
+  const isCheckStatePending =
     verifyState !== "idle" ||
-    removeState !== "idle" ||
     refreshState !== "idle" ||
     props.domainLoadingState !== "idle";
 
@@ -210,7 +212,7 @@ const DomainItem = (props: {
             <Text color="destructive">{verifySystemError}</Text>
           )}
           <Button
-            disabled={disabled}
+            state={isCheckStatePending ? "pending" : undefined}
             color="primary"
             css={{ width: "100%", flexShrink: 0, mt: theme.spacing[3] }}
             onClick={() => {
@@ -241,7 +243,7 @@ const DomainItem = (props: {
             <Text color="destructive">{refreshSystemError}</Text>
           )}
           <Button
-            disabled={disabled}
+            state={isCheckStatePending ? "pending" : undefined}
             color="primary"
             css={{ width: "100%", flexShrink: 0, mt: theme.spacing[3] }}
             onClick={() => {
@@ -250,10 +252,18 @@ const DomainItem = (props: {
                   domain: props.projectDomain.domain.domain,
                   projectId: props.projectDomain.projectId,
                 },
-                () => {
-                  props.refreshDomainResult({
-                    projectId: props.projectDomain.projectId,
-                  });
+                (data) => {
+                  if (data.success) {
+                    if (
+                      props.projectDomain.domain.status !==
+                        data.domain.status ||
+                      props.projectDomain.domain.error !== data.domain.error
+                    ) {
+                      props.refreshDomainResult({
+                        projectId: props.projectDomain.projectId,
+                      });
+                    }
+                  }
                 }
               );
             }}
@@ -272,7 +282,7 @@ const DomainItem = (props: {
       )}
 
       <Button
-        disabled={disabled}
+        state={isRemovePending ? "pending" : undefined}
         color="neutral"
         css={{ width: "100%", flexShrink: 0 }}
         onClick={() => {

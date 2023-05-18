@@ -1,5 +1,5 @@
 import { v4 as uuid } from "uuid";
-import { prisma, type Project } from "@webstudio-is/prisma-client";
+import { prisma, type Project, type Domain } from "@webstudio-is/prisma-client";
 import {
   authorizeProject,
   type AppContext,
@@ -288,6 +288,10 @@ export const remove = async (
 type Status = "active" | "pending" | "error";
 type StatusEnum = Uppercase<Status>;
 
+type RefreshResult =
+  | { success: false; error: string }
+  | { success: true; domain: Domain };
+
 const statusToStatusEnum = (status: Status): StatusEnum =>
   status.toUpperCase() as StatusEnum;
 
@@ -297,7 +301,7 @@ export const refresh = async (
     domain: string;
   },
   context: AppContext
-): Promise<Result> => {
+): Promise<RefreshResult> => {
   // Only owner of the project can register domains
   const canRefreshDomain = await authorizeProject.hasProjectPermit(
     { projectId: props.projectId, permit: "own" },
@@ -328,7 +332,7 @@ export const refresh = async (
 
   if (data.status === "error") {
     // update domain status
-    await prisma.domain.update({
+    const updatedDomain = await prisma.domain.update({
       where: {
         domain,
       },
@@ -338,11 +342,11 @@ export const refresh = async (
       },
     });
 
-    return { success: true };
+    return { success: true, domain: updatedDomain };
   }
 
   // update domain status
-  await prisma.domain.update({
+  const updatedDomain = await prisma.domain.update({
     where: {
       domain,
     },
@@ -352,5 +356,5 @@ export const refresh = async (
     },
   });
 
-  return { success: true };
+  return { success: true, domain: updatedDomain };
 };

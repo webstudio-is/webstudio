@@ -9,4 +9,5 @@ export type {
   AuthorizationRelation,
   AuthorizationToken,
   DomainStatus,
+  Domain,
 } from "./__generated__";

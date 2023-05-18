@@ -110,6 +110,10 @@ export const createTrpcFetchProxy = <Router extends AnyRouter>(
           requestId += 1;
           const currentRequestId = requestId;
 
+          if (process.env.NODE_ENV !== "production") {
+            await new Promise((resolve) => setTimeout(resolve, 1000));
+          }
+
           const response = await fetch(getPath(method), {
             method: "POST",
             headers: {

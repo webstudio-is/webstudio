@@ -78,9 +78,11 @@ export const domainRouter = router({
       const domainState = domainStates.get(input.domain);
 
       if (domainState === undefined) {
+        domainStates.set(input.domain, "pending");
+
         return {
           success: false,
-          error: `Domain not found`,
+          error: `Domain ${input.domain} is not active`,
         };
       }
 
