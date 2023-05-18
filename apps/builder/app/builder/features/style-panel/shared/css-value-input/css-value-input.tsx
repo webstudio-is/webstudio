@@ -8,12 +8,11 @@ import {
   ComboboxListbox,
   ComboboxListboxItem,
   numericScrubControl,
-  NestedSelectButton,
+  NestedInputButton,
   NestedIconLabel,
   InputField,
   handleNumericInputArrowKeys,
 } from "@webstudio-is/design-system";
-import { ChevronDownIcon } from "@webstudio-is/icons";
 import type {
   KeywordValue,
   StyleProperty,
@@ -555,13 +554,11 @@ export const CssValueInput = ({
     ));
 
   const keywordButtonElement = (
-    <NestedSelectButton
+    <NestedInputButton
       {...getToggleButtonProps()}
       data-state={isOpen ? "open" : "closed"}
       tabIndex={-1}
-    >
-      <ChevronDownIcon />
-    </NestedSelectButton>
+    />
   );
 
   const isUnitValue = unitSelectElement !== null;

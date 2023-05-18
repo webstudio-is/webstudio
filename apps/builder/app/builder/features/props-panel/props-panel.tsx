@@ -14,9 +14,8 @@ import {
   type CSS,
   ScrollArea,
   InputField,
-  NestedSelectButton,
+  NestedInputButton,
 } from "@webstudio-is/design-system";
-import { ChevronDownIcon } from "@webstudio-is/icons";
 import type { Publish } from "~/shared/pubsub";
 import { propsStore, useInstanceProps } from "~/shared/nano-states";
 import { CollapsibleSectionWithAddButton } from "~/builder/shared/collapsible-section";
@@ -96,12 +95,7 @@ const PropsCombobox = ({
             autoFocus
             {...combobox.getInputProps()}
             placeholder="Property"
-            suffix={
-              <NestedSelectButton
-                {...combobox.getToggleButtonProps()}
-                icon={<ChevronDownIcon />}
-              />
-            }
+            suffix={<NestedInputButton {...combobox.getToggleButtonProps()} />}
           />
         </ComboboxAnchor>
         <ComboboxContent align="end" sideOffset={5}>
