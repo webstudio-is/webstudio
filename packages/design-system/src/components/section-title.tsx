@@ -55,7 +55,6 @@ const labelContainerStyle = css({
 });
 
 const titleButtonStyle = css(titleButtonLayoutStyle, {
-  cursor: "pointer",
   "&:focus-visible::before": {
     content: "''",
     position: "absolute",
