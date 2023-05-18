@@ -1,6 +1,6 @@
 import { describe, test, expect } from "@jest/globals";
 
-import { parseBackground } from "./background-parser";
+import { parseBackground } from "./background";
 
 describe("parseBackground", () => {
   test("parse background from figma", () => {

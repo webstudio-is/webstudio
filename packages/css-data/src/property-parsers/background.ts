@@ -1,12 +1,12 @@
 import * as csstree from "css-tree";
 import { colord } from "colord";
-import { parseCssValue } from "@webstudio-is/css-data";
+import { parseCssValue } from "../parse-css-value";
 import type {
   InvalidValue,
   LayersValue,
   RgbValue,
   UnparsedValue,
-} from "@webstudio-is/css-data";
+} from "../schema";
 
 export const gradientNames = [
   "conic-gradient",

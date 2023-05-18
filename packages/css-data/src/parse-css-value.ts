@@ -49,7 +49,7 @@ export const isValidDeclaration = (
 };
 
 export const parseCssValue = (
-  property: StyleProperty,
+  property: StyleProperty, // Handles only long-hand values.
   input: string
 ): StyleValue => {
   const invalidValue = {
