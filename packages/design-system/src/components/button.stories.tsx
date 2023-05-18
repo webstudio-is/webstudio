@@ -25,6 +25,7 @@ const colors: ReadonlyArray<ComponentProps<typeof ButtonComponent>["color"]> = [
   "primary",
   "neutral",
   "destructive",
+  "neutral-destructive",
   "positive",
   "ghost",
   "dark",

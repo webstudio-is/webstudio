@@ -20,6 +20,7 @@ const colors = [
   "ghost",
   "dark",
   "gradient",
+  "neutral-destructive",
 ] as const;
 
 type ButtonColor = (typeof colors)[number];
@@ -29,6 +30,7 @@ type ButtonState = "auto" | "hover" | "focus" | "pressed" | "pending";
 const backgrounds: Record<ButtonColor, string> = {
   primary: theme.colors.backgroundPrimary,
   neutral: theme.colors.backgroundNeutralMain,
+  "neutral-destructive": theme.colors.backgroundNeutralMain,
   destructive: theme.colors.backgroundDestructiveMain,
   positive: theme.colors.backgroundSuccessMain,
   ghost: theme.colors.backgroundHover,
@@ -39,6 +41,7 @@ const backgrounds: Record<ButtonColor, string> = {
 const foregrounds: Record<ButtonColor, string> = {
   primary: theme.colors.foregroundContrastMain,
   destructive: theme.colors.foregroundContrastMain,
+  "neutral-destructive": theme.colors.foregroundDestructive,
   positive: theme.colors.foregroundContrastMain,
   neutral: theme.colors.foregroundMain,
   ghost: theme.colors.foregroundMain,
@@ -106,6 +109,7 @@ const StyledButton = styled("button", {
     color: {
       primary: perColorStyle("primary"),
       destructive: perColorStyle("destructive"),
+      "neutral-destructive": perColorStyle("neutral-destructive"),
       positive: perColorStyle("positive"),
       neutral: perColorStyle("neutral"),
       ghost: perColorStyle("ghost"),
