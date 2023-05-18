@@ -87,11 +87,11 @@
         "type": "fontWeights"
       },
       "inter-1": {
-        "value": "Medium",
+        "value": "Bold",
         "type": "fontWeights"
       },
       "inter-2": {
-        "value": "Bold",
+        "value": "Medium",
         "type": "fontWeights"
       },
       "inter-3": {
@@ -103,7 +103,7 @@
         "type": "fontWeights"
       },
       "roboto-mono-4": {
-        "value": "Regular",
+        "value": "Bold",
         "type": "fontWeights"
       },
       "manrope-5": {
@@ -111,23 +111,31 @@
         "type": "fontWeights"
       },
       "manrope-6": {
-        "value": "Regular",
+        "value": "Bold",
         "type": "fontWeights"
       },
       "manrope-7": {
-        "value": "SemiBold",
+        "value": "Regular",
         "type": "fontWeights"
       },
       "manrope-8": {
-        "value": "ExtraLight",
+        "value": "SemiBold",
         "type": "fontWeights"
       },
       "manrope-9": {
-        "value": "ExtraBold",
+        "value": "ExtraLight",
         "type": "fontWeights"
       },
       "roboto-mono-3": {
         "value": "Medium",
+        "type": "fontWeights"
+      },
+      "inter-5": {
+        "value": "Semi Bold",
+        "type": "fontWeights"
+      },
+      "manrope-10": {
+        "value": "ExtraBold",
         "type": "fontWeights"
       }
     },
@@ -180,7 +188,7 @@
     "Labels - Title Case": {
       "value": {
         "fontFamily": "{fontFamilies.inter}",
-        "fontWeight": "{fontWeights.inter-1}",
+        "fontWeight": "{fontWeights.inter-2}",
         "lineHeight": "{lineHeights.0}",
         "fontSize": "{fontSize.2}",
         "letterSpacing": "{letterSpacing.0}",
@@ -194,7 +202,7 @@
     "Labels - Sentence case": {
       "value": {
         "fontFamily": "{fontFamilies.inter}",
-        "fontWeight": "{fontWeights.inter-1}",
+        "fontWeight": "{fontWeights.inter-2}",
         "lineHeight": "{lineHeights.0}",
         "fontSize": "{fontSize.2}",
         "letterSpacing": "{letterSpacing.0}",
@@ -208,7 +216,7 @@
     "Titles": {
       "value": {
         "fontFamily": "{fontFamilies.inter}",
-        "fontWeight": "{fontWeights.inter-2}",
+        "fontWeight": "{fontWeights.inter-1}",
         "lineHeight": "{lineHeights.0}",
         "fontSize": "{fontSize.2}",
         "letterSpacing": "{letterSpacing.1}",
@@ -237,7 +245,7 @@
     "Tiny": {
       "value": {
         "fontFamily": "{fontFamilies.inter}",
-        "fontWeight": "{fontWeights.inter-1}",
+        "fontWeight": "{fontWeights.inter-2}",
         "lineHeight": "{lineHeights.1}",
         "fontSize": "{fontSize.0}",
         "letterSpacing": "{letterSpacing.1}",
@@ -251,7 +259,7 @@
     "Unit": {
       "value": {
         "fontFamily": "{fontFamilies.inter}",
-        "fontWeight": "{fontWeights.inter-1}",
+        "fontWeight": "{fontWeights.inter-2}",
         "lineHeight": "{lineHeights.2}",
         "fontSize": "{fontSize.1}",
         "letterSpacing": "{letterSpacing.2}",
@@ -268,18 +276,19 @@
         "fontWeight": "{fontWeights.roboto-mono-3}",
         "lineHeight": "{lineHeights.0}",
         "fontSize": "{fontSize.2}",
-        "letterSpacing": "{letterSpacing.1}",
+        "letterSpacing": "{letterSpacing.2}",
         "paragraphSpacing": "{paragraphSpacing.0}",
         "paragraphIndent": "{paragraphIndent.0}",
         "textCase": "{textCase.none}",
         "textDecoration": "{textDecoration.none}"
       },
-      "type": "typography"
+      "type": "typography",
+      "description": "Where code is displayed, it should be Mono."
     },
     "Big Title": {
       "value": {
         "fontFamily": "{fontFamilies.inter}",
-        "fontWeight": "{fontWeights.inter-1}",
+        "fontWeight": "{fontWeights.inter-2}",
         "lineHeight": "{lineHeights.4}",
         "fontSize": "{fontSize.5}",
         "letterSpacing": "{letterSpacing.0}",
@@ -293,7 +302,7 @@
     "Space Section Unit Text": {
       "value": {
         "fontFamily": "{fontFamilies.inter}",
-        "fontWeight": "{fontWeights.inter-4}",
+        "fontWeight": "{fontWeights.inter-5}",
         "lineHeight": "{lineHeights.1}",
         "fontSize": "{fontSize.0}",
         "letterSpacing": "{letterSpacing.1}",
@@ -307,7 +316,7 @@
     "Space Section Value Text": {
       "value": {
         "fontFamily": "{fontFamilies.inter}",
-        "fontWeight": "{fontWeights.inter-1}",
+        "fontWeight": "{fontWeights.inter-2}",
         "lineHeight": "{lineHeights.3}",
         "fontSize": "{fontSize.1}",
         "letterSpacing": "{letterSpacing.1}",
@@ -1040,7 +1049,7 @@
       "Large Title": {
         "value": {
           "fontFamily": "{fontFamilies.manrope}",
-          "fontWeight": "{fontWeights.manrope-5}",
+          "fontWeight": "{fontWeights.manrope-6}",
           "lineHeight": "{lineHeights.7}",
           "fontSize": "{fontSize.6}",
           "letterSpacing": "{letterSpacing.3}",
@@ -1054,7 +1063,7 @@
       "Medium Title": {
         "value": {
           "fontFamily": "{fontFamilies.manrope}",
-          "fontWeight": "{fontWeights.manrope-5}",
+          "fontWeight": "{fontWeights.manrope-6}",
           "lineHeight": "{lineHeights.9}",
           "fontSize": "{fontSize.5}",
           "letterSpacing": "{letterSpacing.3}",
@@ -1068,7 +1077,7 @@
       "Section Title": {
         "value": {
           "fontFamily": "{fontFamilies.manrope}",
-          "fontWeight": "{fontWeights.manrope-5}",
+          "fontWeight": "{fontWeights.manrope-6}",
           "lineHeight": "{lineHeights.6}",
           "fontSize": "{fontSize.4}",
           "letterSpacing": "{letterSpacing.2}",
@@ -1082,7 +1091,7 @@
       "regular": {
         "value": {
           "fontFamily": "{fontFamilies.manrope}",
-          "fontWeight": "{fontWeights.manrope-6}",
+          "fontWeight": "{fontWeights.manrope-7}",
           "lineHeight": "{lineHeights.8}",
           "fontSize": "{fontSize.3}",
           "letterSpacing": "{letterSpacing.2}",
@@ -1096,7 +1105,7 @@
       "small": {
         "value": {
           "fontFamily": "{fontFamilies.manrope}",
-          "fontWeight": "{fontWeights.manrope-7}",
+          "fontWeight": "{fontWeights.manrope-8}",
           "lineHeight": "{lineHeights.0}",
           "fontSize": "{fontSize.2}",
           "letterSpacing": "{letterSpacing.4}",
@@ -1111,7 +1120,7 @@
         "Default": {
           "value": {
             "fontFamily": "{fontFamilies.manrope}",
-            "fontWeight": "{fontWeights.manrope-8}",
+            "fontWeight": "{fontWeights.manrope-9}",
             "lineHeight": "{lineHeights.10}",
             "fontSize": "{fontSize.7}",
             "letterSpacing": "{letterSpacing.5}",
@@ -1125,7 +1134,7 @@
         "Hover": {
           "value": {
             "fontFamily": "{fontFamilies.manrope}",
-            "fontWeight": "{fontWeights.manrope-9}",
+            "fontWeight": "{fontWeights.manrope-10}",
             "lineHeight": "{lineHeights.10}",
             "fontSize": "{fontSize.7}",
             "letterSpacing": "{letterSpacing.5}",
@@ -1141,7 +1150,7 @@
         "Default": {
           "value": {
             "fontFamily": "{fontFamilies.manrope}",
-            "fontWeight": "{fontWeights.manrope-6}",
+            "fontWeight": "{fontWeights.manrope-7}",
             "lineHeight": "{lineHeights.7}",
             "fontSize": "{fontSize.6}",
             "letterSpacing": "{letterSpacing.3}",
@@ -1155,7 +1164,7 @@
         "Hover": {
           "value": {
             "fontFamily": "{fontFamilies.manrope}",
-            "fontWeight": "{fontWeights.manrope-9}",
+            "fontWeight": "{fontWeights.manrope-10}",
             "lineHeight": "{lineHeights.7}",
             "fontSize": "{fontSize.6}",
             "letterSpacing": "{letterSpacing.3}",
@@ -1171,7 +1180,7 @@
         "regular": {
           "value": {
             "fontFamily": "{fontFamilies.manrope}",
-            "fontWeight": "{fontWeights.manrope-7}",
+            "fontWeight": "{fontWeights.manrope-8}",
             "lineHeight": "{lineHeights.8}",
             "fontSize": "{fontSize.3}",
             "letterSpacing": "{letterSpacing.2}",
@@ -1185,7 +1194,7 @@
         "cta": {
           "value": {
             "fontFamily": "{fontFamilies.manrope}",
-            "fontWeight": "{fontWeights.manrope-5}",
+            "fontWeight": "{fontWeights.manrope-6}",
             "lineHeight": "{lineHeights.4}",
             "fontSize": "{fontSize.5}",
             "letterSpacing": "{letterSpacing.3}",
@@ -1296,6 +1305,36 @@
       ],
       "type": "boxShadow",
       "description": "Shadow for sections that overlap other sections within the same panel. More subtle than the menu drop shadow."
+    },
+    "Regular Bold": {
+      "value": {
+        "fontFamily": "{fontFamilies.inter}",
+        "fontWeight": "{fontWeights.inter-1}",
+        "lineHeight": "{lineHeights.0}",
+        "fontSize": "{fontSize.2}",
+        "letterSpacing": "{letterSpacing.0}",
+        "paragraphSpacing": "{paragraphSpacing.0}",
+        "paragraphIndent": "{paragraphIndent.0}",
+        "textCase": "{textCase.none}",
+        "textDecoration": "{textDecoration.none}"
+      },
+      "type": "typography",
+      "description": "Regular text, except it's bold."
+    },
+    "Mono Bold": {
+      "value": {
+        "fontFamily": "{fontFamilies.roboto-mono}",
+        "fontWeight": "{fontWeights.roboto-mono-4}",
+        "lineHeight": "{lineHeights.0}",
+        "fontSize": "{fontSize.2}",
+        "letterSpacing": "{letterSpacing.2}",
+        "paragraphSpacing": "{paragraphSpacing.0}",
+        "paragraphIndent": "{paragraphIndent.0}",
+        "textCase": "{textCase.none}",
+        "textDecoration": "{textDecoration.none}"
+      },
+      "type": "typography",
+      "description": "Labels with code syntax, such as CSS property labels within tooltips"
     }
   },
   "$themes": [],
