@@ -1,17 +1,16 @@
-import { useEffect, useRef, useState } from "react";
+import { useRef, useState } from "react";
 import { useStore } from "@nanostores/react";
 import type { Publish } from "~/shared/pubsub";
 import {
-  DeprecatedText2,
-  Tabs,
-  TabsList,
-  TabsTrigger,
-  TabsContent,
+  PanelTabs,
+  PanelTabsList,
+  PanelTabsTrigger,
+  PanelTabsContent,
   Card,
   Text,
   Box,
-  Flex,
   EnhancedTooltipProvider,
+  Flex,
 } from "@webstudio-is/design-system";
 import { StylePanel } from "~/builder/features/style-panel";
 import { PropsPanelContainer } from "~/builder/features/props-panel";
@@ -39,14 +38,6 @@ export const Inspector = ({ publish, navigatorLayout }: InspectorProps) => {
   const [tab, setTab] = useState("style");
   const isDragging = useStore(isDraggingStore);
 
-  useEffect(() => {
-    if (selectedInstance?.component === "Slot") {
-      if (tab === "style" || tab === "props") {
-        setTab("settings");
-      }
-    }
-  }, [selectedInstance, tab]);
-
   if (navigatorLayout === "docked" && isDragging) {
     return <NavigatorTree />;
   }
@@ -71,39 +62,41 @@ export const Inspector = ({ publish, navigatorLayout }: InspectorProps) => {
       skipDelayDuration={0}
     >
       <FloatingPanelProvider container={tabsRef}>
-        <Flex as={Tabs} grow ref={tabsRef} value={tab} onValueChange={setTab}>
-          <TabsList>
-            <TabsTrigger
-              value="style"
-              disabled={selectedInstance.component === "Slot"}
-            >
-              <DeprecatedText2>Style</DeprecatedText2>
-            </TabsTrigger>
-            {/* @note: events would be part of props */}
-            <TabsTrigger
-              value="props"
-              disabled={selectedInstance.component === "Slot"}
-            >
-              <DeprecatedText2>Properties</DeprecatedText2>
-            </TabsTrigger>
-            <TabsTrigger value="settings">
-              <DeprecatedText2>Settings</DeprecatedText2>
-            </TabsTrigger>
-          </TabsList>
-          <TabsContent value="style" css={contentStyle}>
-            <StylePanel publish={publish} selectedInstance={selectedInstance} />
-          </TabsContent>
-          <TabsContent value="props" css={contentStyle}>
-            <PropsPanelContainer
-              publish={publish}
-              key={selectedInstance.id /* Re-render when instance changes */}
-              selectedInstance={selectedInstance}
-            />
-          </TabsContent>
-          <TabsContent value="settings" css={contentStyle}>
-            <SettingsPanel />
-          </TabsContent>
-        </Flex>
+        <PanelTabs
+          ref={tabsRef}
+          value={selectedInstance?.component === "Slot" ? "settings" : tab}
+          onValueChange={setTab}
+          asChild
+        >
+          <Flex direction="column">
+            <PanelTabsList>
+              {selectedInstance.component !== "Slot" && (
+                <>
+                  <PanelTabsTrigger value="style">Style</PanelTabsTrigger>
+                  {/* @note: events would be part of props */}
+                  <PanelTabsTrigger value="props">Properties</PanelTabsTrigger>
+                </>
+              )}
+              <PanelTabsTrigger value="settings">Settings</PanelTabsTrigger>
+            </PanelTabsList>
+            <PanelTabsContent value="style" css={contentStyle} tabIndex={-1}>
+              <StylePanel
+                publish={publish}
+                selectedInstance={selectedInstance}
+              />
+            </PanelTabsContent>
+            <PanelTabsContent value="props" css={contentStyle} tabIndex={-1}>
+              <PropsPanelContainer
+                publish={publish}
+                key={selectedInstance.id /* Re-render when instance changes */}
+                selectedInstance={selectedInstance}
+              />
+            </PanelTabsContent>
+            <PanelTabsContent value="settings" css={contentStyle} tabIndex={-1}>
+              <SettingsPanel />
+            </PanelTabsContent>
+          </Flex>
+        </PanelTabs>
       </FloatingPanelProvider>
     </EnhancedTooltipProvider>
   );
