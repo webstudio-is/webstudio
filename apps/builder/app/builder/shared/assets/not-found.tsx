@@ -1,9 +1,9 @@
-import { Flex } from "@webstudio-is/design-system";
+import { Flex, Text } from "@webstudio-is/design-system";
 
 export const NotFound = () => {
   return (
     <Flex align="center" justify="center" css={{ height: 100 }}>
-      No matching assets
+      <Text>No matching assets</Text>
     </Flex>
   );
 };

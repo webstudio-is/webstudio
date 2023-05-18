@@ -67,7 +67,7 @@ const DialogContent = ({
             <Text as="p">{description}</Text>
           </DialogDescription>
         )}
-        <Label>{label}</Label>
+        {typeof label === "string" ? <Label>{label}</Label> : label}
         <DeprecatedTextField
           placeholder={placeholder}
           name="title"
@@ -292,13 +292,18 @@ export const DeleteProjectDialog = ({
         onChange={handleChange}
         errors={errors}
         label={
-          <>
-            Confirm by typing{" "}
-            <Text as="span" color="destructive" variant="labelsSentenceCase">
-              {title}
-            </Text>{" "}
+          <Label css={{ userSelect: "auto" }}>
+            Confirm by typing
+            <Text
+              as="span"
+              color="destructive"
+              variant="labelsSentenceCase"
+              css={{ userSelect: "auto" }}
+            >
+              {` ${title} `}
+            </Text>
             below
-          </>
+          </Label>
         }
         description="This project and its styles, pages and images will be deleted permanently."
         primaryButton={

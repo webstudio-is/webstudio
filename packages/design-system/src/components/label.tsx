@@ -18,6 +18,7 @@ const StyledLabel = styled(RadixLabel, {
   WebkitFontSmoothing: "antialiased",
   display: "block",
   cursor: "default",
+  userSelect: "none",
 
   boxSizing: "border-box",
   flexShrink: 0,

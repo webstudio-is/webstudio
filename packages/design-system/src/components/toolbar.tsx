@@ -5,7 +5,7 @@
 import * as ToolbarPrimitive from "@radix-ui/react-toolbar";
 import { css, styled, theme } from "../stitches.config";
 import { separatorStyle } from "./separator";
-import { typography } from "../__generated__/figma-design-tokens";
+import { textVariants } from "./text";
 
 export const Toolbar = styled(ToolbarPrimitive.Root, {
   display: "flex",
@@ -34,7 +34,7 @@ const toolbarItemFocusRing = {
   },
 };
 
-export const toggleItemStyle = css(typography.labelsTitleCase, {
+export const toggleItemStyle = css(textVariants.labelsTitleCase, {
   // reset styles
   boxSizing: "border-box",
   position: "relative",

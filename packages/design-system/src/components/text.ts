@@ -1,7 +1,23 @@
 import { css, theme, styled } from "../stitches.config";
-import { typography as textVariants } from "../__generated__/figma-design-tokens";
+import { typography } from "../__generated__/figma-design-tokens";
 
-export { textVariants };
+const normalize = {
+  userSelect: "none",
+  cursor: "default",
+} as const;
+
+type Variant = keyof typeof typography;
+type VariantStyle = typeof normalize & (typeof typography)[Variant];
+
+export const textVariants = {} as { [Key in Variant]: VariantStyle };
+
+let variant: Variant;
+for (variant in typography) {
+  textVariants[variant] = {
+    ...typography[variant as Variant],
+    ...normalize,
+  };
+}
 
 export const textStyle = css({
   margin: 0, // in case it's used with <p>
@@ -34,6 +50,14 @@ export const textStyle = css({
 
         flexBasis: 0,
         flexGrow: 1,
+      },
+    },
+    userSelect: {
+      auto: {
+        userSelect: "auto",
+      },
+      none: {
+        userSelect: "none",
       },
     },
   },

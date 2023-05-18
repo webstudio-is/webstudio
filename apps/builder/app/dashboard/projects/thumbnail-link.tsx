@@ -11,7 +11,6 @@ const thumbnailStyle = css(textVariants.brandThumbnailLargeDefault, {
   WebkitBackgroundClip: "text",
   backgroundClip: "text",
   color: "transparent",
-  userSelect: "none",
   outline: "none",
   "&:hover, &:focus": {
     ...textVariants.brandThumbnailLargeHover,
