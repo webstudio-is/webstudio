@@ -8,6 +8,7 @@ import {
   InputField,
   styled,
   Flex,
+  NestedInputButton,
 } from "@webstudio-is/design-system";
 import type { DomainRouter } from "@webstudio-is/domain/index.server";
 import type { Project } from "@webstudio-is/project";
@@ -46,13 +47,13 @@ const InputEllipsis = styled(InputField, {
 const CopyToClipboard = (props: { text: string }) => {
   return (
     <Tooltip content={"Copy to clipboard"}>
-      <IconButton
+      <NestedInputButton
         onClick={() => {
           navigator.clipboard.writeText(props.text);
         }}
       >
         <CopyIcon />
-      </IconButton>
+      </NestedInputButton>
     </Tooltip>
   );
 };
@@ -111,9 +112,12 @@ const StatusIcon = (props: { projectDomain: Domain }) => {
   return (
     <Tooltip content={text}>
       <Flex
-        align="center"
-        justify="center"
+        align={"center"}
+        justify={"center"}
         css={{
+          cursor: "pointer",
+          width: theme.spacing[12],
+          height: theme.spacing[12],
           color: isVerifiedActive
             ? theme.colors.foregroundSuccessText
             : theme.colors.foregroundDestructive,
