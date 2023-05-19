@@ -2,11 +2,7 @@ import { useState } from "react";
 import { useStore } from "@nanostores/react";
 import { createPortal } from "react-dom";
 import type { Instance } from "@webstudio-is/project-build";
-import {
-  type ComponentName,
-  type WsComponentMeta,
-  getComponentMeta,
-} from "@webstudio-is/react-sdk";
+import type { WsComponentMeta } from "@webstudio-is/react-sdk";
 import {
   type Point,
   Flex,
@@ -16,6 +12,7 @@ import {
 import { findClosestDroppableTarget } from "~/shared/tree-utils";
 import {
   instancesStore,
+  registeredComponentMetasStore,
   selectedInstanceSelectorStore,
   selectedPageStore,
 } from "~/shared/nano-states";
@@ -35,7 +32,8 @@ const DragLayer = ({
   component: Instance["component"];
   point: Point;
 }) => {
-  const meta = getComponentMeta(component);
+  const metas = useStore(registeredComponentMetasStore);
+  const meta = metas.get(component);
   if (meta === undefined) {
     return null;
   }
@@ -81,14 +79,14 @@ const toCanvasCoordinates = (
 
 export const elementToComponentName = (
   element: Element,
-  metaByComponentName: Map<ComponentName, WsComponentMeta>
+  metaByComponentName: Map<string, WsComponentMeta>
 ) => {
   // If drag doesn't start on the button element directly but on one of its children,
   // we need to trace back to the button that has the data.
   const parentWithData = element.closest(`[${dragItemAttribute}]`);
 
   if (parentWithData instanceof HTMLElement) {
-    const dragComponent = parentWithData.dataset.dragComponent as ComponentName;
+    const dragComponent = parentWithData.dataset.dragComponent as string;
     if (metaByComponentName.has(dragComponent)) {
       return dragComponent;
     }
@@ -101,7 +99,7 @@ export const useDraggable = ({
   metaByComponentName,
 }: {
   publish: Publish;
-  metaByComponentName: Map<ComponentName, WsComponentMeta>;
+  metaByComponentName: Map<string, WsComponentMeta>;
 }) => {
   const [dragComponent, setDragComponent] = useState<Instance["component"]>();
   const [point, setPoint] = useState<Point>({ x: 0, y: 0 });
@@ -151,7 +149,7 @@ export const useDraggable = ({
     <DragLayer component={dragComponent} point={point} />
   ) : undefined;
 
-  const handleInsert = (component: ComponentName) => {
+  const handleInsert = (component: string) => {
     const selectedPage = selectedPageStore.get();
     if (selectedPage === undefined) {
       return;

@@ -1,15 +1,14 @@
 import { useMemo, useEffect } from "react";
 import { useStore } from "@nanostores/react";
 import { computed } from "nanostores";
-import {
-  type Params,
-  defaultPropsMetas,
-  registerComponentMetas,
-} from "@webstudio-is/react-sdk";
 import type { Instances, Page } from "@webstudio-is/project-build";
 import {
+  type Params,
+  defaultMetas,
+  defaultPropsMetas,
   createElementsTree,
   registerComponents,
+  registerComponentMetas as registerComponentMetasLegacy,
   customComponentMetas,
   customComponentPropsMetas,
   setParams,
@@ -33,6 +32,7 @@ import {
   instancesStore,
   useIsPreviewMode,
   selectedPageStore,
+  registerComponentMetas,
   registerComponentPropsMetas,
 } from "~/shared/nano-states";
 import { useDragAndDrop } from "./shared/use-drag-drop";
@@ -136,9 +136,11 @@ export const Canvas = ({
   const [isPreviewMode] = useIsPreviewMode();
 
   registerComponents(customComponents);
-  registerComponentMetas(customComponentMetas);
+  registerComponentMetasLegacy(customComponentMetas);
   useSyncInitializeOnce(() => {
+    registerComponentMetas(defaultMetas);
     registerComponentPropsMetas(defaultPropsMetas);
+    registerComponentMetas(customComponentMetas);
     registerComponentPropsMetas(customComponentPropsMetas);
   });
 
