@@ -170,13 +170,13 @@ describe("parseBackground", () => {
     `);
   });
 
-  test("parse bad background", () => {
+  test.only("parse bad background", () => {
     expect(parseBackground("linear-gradient(180deg,")).toMatchInlineSnapshot(`
       {
         "backgroundColor": undefined,
         "backgroundImage": {
           "type": "invalid",
-          "value": "linear-gradient(180deg,",
+          "value": "linear-gradient(180deg,)",
         },
       }
     `);

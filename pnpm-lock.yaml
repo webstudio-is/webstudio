@@ -18,8 +18,8 @@ importers:
         specifier: ^6.5.16
         version: 6.5.16(@babel/core@7.21.0)(react-dom@18.2.0)(react@18.2.0)(require-from-string@2.0.2)(type-fest@3.7.1)(typescript@5.0.3)
       '@types/css-tree':
-        specifier: ^2.0.0
-        version: 2.0.0
+        specifier: ^2.3.1
+        version: 2.3.1
       '@webstudio-is/eslint-config-custom':
         specifier: workspace:^
         version: link:packages/eslint-config-custom
@@ -158,9 +158,6 @@ importers:
       colord:
         specifier: ^2.9.3
         version: 2.9.3
-      css-tree:
-        specifier: ^2.3.1
-        version: 2.3.1
       debug:
         specifier: ^4.3.4
         version: 4.3.4
@@ -285,9 +282,6 @@ importers:
       '@storybook/react':
         specifier: ^6.5.16
         version: 6.5.16(@babel/core@7.21.0)(react-dom@18.2.0)(react@18.2.0)(require-from-string@2.0.2)(type-fest@3.7.1)(typescript@5.0.3)
-      '@types/css-tree':
-        specifier: ^2.0.0
-        version: 2.0.0
       '@types/hyphenate-style-name':
         specifier: ^1.0.0
         version: 1.0.0
@@ -437,6 +431,9 @@ importers:
       colord:
         specifier: ^2.9.3
         version: 2.9.3
+      css-tree:
+        specifier: ^2.3.1
+        version: 2.3.1
       hyphenate-style-name:
         specifier: ^1.0.4
         version: 1.0.4
@@ -445,8 +442,8 @@ importers:
         version: 0.1.1
     devDependencies:
       '@types/css-tree':
-        specifier: ^2.0.0
-        version: 2.0.0
+        specifier: ^2.3.1
+        version: 2.3.1
       '@webstudio-is/jest-config':
         specifier: workspace:^
         version: link:../jest-config
@@ -459,9 +456,6 @@ importers:
       camelcase:
         specifier: ^6.3.0
         version: 6.3.0
-      css-tree:
-        specifier: ^2.3.1
-        version: 2.3.1
       html-tags:
         specifier: ^3.2.0
         version: 3.2.0
@@ -8430,8 +8424,8 @@ packages:
   /@types/cookie@0.4.1:
     resolution: {integrity: sha512-XW/Aa8APYr6jSVVA1y/DEIZX0/GMKLEVekNG727R8cs56ahETkRAy/3DR7+fJyh7oUgGwNQaRfXCun0+KbWY7Q==}
 
-  /@types/css-tree@2.0.0:
-    resolution: {integrity: sha512-mY2sXRLBnUPMYw6mkOT+6dABeaNxAEKZz6scE9kQPNJx8fKe1fOsm8Honl7+xFYe6TKX8WNk2+7oMp2vBArJ9Q==}
+  /@types/css-tree@2.3.1:
+    resolution: {integrity: sha512-3m636Jz4d9d+lHVMp6FNLsUWQrfOx1xpm1SBxPbQYSNNgXMe+XswcsDeo1ldyULiuzYyWKk1kmvkLTgNq+215Q==}
     dev: true
 
   /@types/debug@4.1.7:

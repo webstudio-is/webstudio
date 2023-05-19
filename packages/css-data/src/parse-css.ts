@@ -1,7 +1,7 @@
 import * as csstree from "css-tree";
 import { parseCssValue as parseCssValueLonghand } from "./parse-css-value";
-import { parseBackground } from "./property-parsers/background";
-import { properties } from "./__generated__/properties";
+import * as parsers from "./property-parsers/parsers";
+import * as toLonghand from "./property-parsers/to-longhand";
 import { type StyleProperty, type Style as S, StyleValue } from "./schema";
 
 type Selector = string;
@@ -13,21 +13,52 @@ type Style = {
 
 export type Styles = Record<Selector, Style[]>;
 
+type Longhand = keyof typeof toLonghand;
+
 const parseCssValue = function parseCssValue(
-  property: string,
+  property: Longhand | StyleProperty,
   value: string
-): S | null {
-  if (property === "background") {
-    return parseBackground(value);
+): S {
+  const unwrap = toLonghand[property as Longhand];
+
+  if (typeof unwrap === "function") {
+    const longhands = unwrap(value);
+
+    return Object.fromEntries(
+      Object.entries(longhands).map(([property, value]) => {
+        // eslint-disable-next-line @typescript-eslint/ban-ts-comment
+        // @ts-ignore @todo remove this ignore: property is a `keyof typeof longhands` which is a key in parsers but TS can't infer the link
+        const valueParser = parsers[property];
+
+        if (typeof valueParser === "function") {
+          return [property, valueParser(value)];
+        }
+
+        if (Array.isArray(value)) {
+          return [
+            property,
+            {
+              type: "invalid",
+              value: value.join(""),
+            },
+          ];
+        }
+
+        if (!value) {
+          return [property, { type: "invalid", value: "" }];
+        }
+
+        return [
+          property,
+          parseCssValueLonghand(property as StyleProperty, value),
+        ];
+      })
+    );
   }
 
-  if (property in properties) {
-    return {
-      [property]: parseCssValueLonghand(property as StyleProperty, value),
-    };
-  }
-
-  return null;
+  return {
+    [property]: parseCssValueLonghand(property as StyleProperty, value),
+  };
 };
 
 export const parseCss = function cssToWS(css: string) {
@@ -49,11 +80,11 @@ export const parseCss = function cssToWS(css: string) {
 
     if (node.type === "Declaration") {
       const stringValue = csstree.generate(node.value);
-      const parsedCss = parseCssValue(node.property, stringValue);
 
-      if (!parsedCss) {
-        return;
-      }
+      const parsedCss = parseCssValue(
+        node.property as Longhand | StyleProperty,
+        stringValue
+      );
 
       (Object.entries(parsedCss) as [StyleProperty, StyleValue][]).forEach(
         ([property, value]) => {
@@ -74,10 +105,10 @@ export const parseCss = function cssToWS(css: string) {
               // eslint-disable-next-line no-console
               console.warn(
                 true,
-                `Declaration parsing for \`${selectors.join(
-                  ", "
-                )}.${property}: ${stringValue}\` failed:\n\n${JSON.stringify(
-                  value,
+                `Declaration parsing for \`${selectors.join(", ")}.${
+                  node.property
+                }: ${stringValue}\` failed:\n\n${JSON.stringify(
+                  parsedCss,
                   null,
                   2
                 )}`

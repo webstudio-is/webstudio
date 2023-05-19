@@ -1,4 +1,6 @@
 /* eslint-disable import/no-internal-modules */
+// eslint-disable-next-line @typescript-eslint/ban-ts-comment
+// @ts-ignore @todo add missing type defitions for definitionSyntax, type DSNode, type CssNode
 import { parse, definitionSyntax, type DSNode, type CssNode } from "css-tree";
 import properties from "mdn-data/css/properties.json";
 import syntaxes from "mdn-data/css/syntaxes.json";
@@ -169,6 +171,8 @@ const walkSyntax = (
     return;
   }
   parsedSyntaxes.add(syntax);
+  // eslint-disable-next-line @typescript-eslint/ban-ts-comment
+  // @ts-ignore @todo add missing type defitions for definitionSyntax
   const parsed = definitionSyntax.parse(syntax);
 
   const walk = (node: DSNode) => {
