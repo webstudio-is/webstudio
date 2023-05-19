@@ -75,16 +75,16 @@ const useScrub = ({
   useEffect(() => {
     const inputRefCurrent = inputRef.current;
     const scrubRefCurrent = scrubRef.current;
-    const unit = type === "unit" ? valueRef.current.unit : undefined;
 
     if (
       type !== "unit" ||
-      unit === undefined ||
       inputRefCurrent === null ||
       scrubRefCurrent === null
     ) {
       return;
     }
+
+    let unit: Unit = "number";
 
     const validateValue = (numericValue: number) => {
       let value: CssValueInputValue = {
@@ -130,6 +130,7 @@ const useScrub = ({
       // Getter to avoid recreating scrub on every value change
       getInitialValue: () => {
         if (valueRef.current.type === "unit") {
+          unit = valueRef.current.unit;
           return valueRef.current.value;
         }
       },
