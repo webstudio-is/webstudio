@@ -29,6 +29,7 @@ export type NumericScrubOptions = {
   minValue?: NumericScrubValue;
   maxValue?: NumericScrubValue;
   getInitialValue: () => number | undefined;
+  onStart?: () => void;
   getValue?: (
     state: NumericScrubState,
     movement: number,
@@ -74,6 +75,7 @@ export const numericScrubControl = (
 ) => {
   const {
     getInitialValue,
+    onStart,
     getValue = getValueDefault,
     direction = "horizontal",
     onValueInput,
@@ -161,6 +163,8 @@ export const numericScrubControl = (
         if (value === undefined) {
           return;
         }
+
+        onStart?.();
 
         state.value = value;
 
