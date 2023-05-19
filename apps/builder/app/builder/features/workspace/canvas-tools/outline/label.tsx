@@ -4,6 +4,7 @@ import type { Instance } from "@webstudio-is/project-build";
 import { getComponentMeta } from "@webstudio-is/react-sdk";
 import { theme } from "@webstudio-is/design-system";
 import { getInstanceLabel } from "~/builder/shared/tree";
+import { MetaIcon } from "~/builder/shared/meta-icon";
 
 type LabelPosition = "top" | "inside" | "bottom";
 type LabelRefCallback = (element: HTMLElement | null) => void;
@@ -85,10 +86,7 @@ export const Label = ({ instance, instanceRect }: LabelProps) => {
   }
   return (
     <LabelContainer position={position} ref={labelRef}>
-      <div
-        style={{ width: "1em", height: "1em" }}
-        dangerouslySetInnerHTML={{ __html: meta.icon }}
-      />
+      <MetaIcon size="1em" icon={meta.icon} />
       {getInstanceLabel(instance, meta)}
     </LabelContainer>
   );
