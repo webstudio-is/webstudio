@@ -1,4 +1,4 @@
-import { RadioCheckedIcon } from "@webstudio-is/icons";
+import { RadioCheckedIcon } from "@webstudio-is/icons/svg";
 import {
   type WsComponentMeta,
   type WsComponentPropsMeta,
@@ -20,7 +20,7 @@ export const meta: WsComponentMeta = {
   category: "forms",
   type: "container",
   label: "Radio",
-  Icon: RadioCheckedIcon,
+  icon: RadioCheckedIcon,
   states: defaultStates,
   presetStyle,
   children: [

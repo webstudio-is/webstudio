@@ -1,4 +1,4 @@
-import { HeadingIcon } from "@webstudio-is/icons";
+import { HeadingIcon } from "@webstudio-is/icons/svg";
 import type { ComponentProps } from "react";
 import { h1, h2, h3, h4, h5, h6 } from "../css/normalize";
 import {
@@ -25,7 +25,7 @@ export const meta: WsComponentMeta = {
   category: "typography",
   type: "rich-text",
   label: "Heading",
-  Icon: HeadingIcon,
+  icon: HeadingIcon,
   children: [{ type: "text", value: "Heading you can edit" }],
   states: defaultStates,
   presetStyle,

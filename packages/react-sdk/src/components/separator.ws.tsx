@@ -1,4 +1,4 @@
-import { DashIcon } from "@webstudio-is/icons";
+import { DashIcon } from "@webstudio-is/icons/svg";
 import {
   defaultStates,
   type PresetStyle,
@@ -44,7 +44,7 @@ export const meta: WsComponentMeta = {
   category: "general",
   type: "embed",
   label: "Separator",
-  Icon: DashIcon,
+  icon: DashIcon,
   states: defaultStates,
   presetStyle,
   children: [],

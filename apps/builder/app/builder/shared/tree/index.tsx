@@ -14,6 +14,7 @@ import {
   type WsComponentMeta,
 } from "@webstudio-is/react-sdk";
 import { instancesStore, useDragAndDropState } from "~/shared/nano-states";
+import { MetaIcon } from "../meta-icon";
 
 const instanceRelatedProps = {
   renderItem(props: TreeItemRenderProps<Instance>) {
@@ -23,7 +24,7 @@ const instanceRelatedProps = {
     }
     return (
       <TreeItemBody {...props} selectionEvent="focus">
-        <TreeItemLabel prefix={<meta.Icon />}>
+        <TreeItemLabel prefix={<MetaIcon icon={meta.icon} />}>
           {getInstanceLabel(props.itemData, meta)}
         </TreeItemLabel>
       </TreeItemBody>

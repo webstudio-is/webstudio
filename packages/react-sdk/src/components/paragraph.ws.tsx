@@ -1,4 +1,4 @@
-import { TextAlignLeftIcon } from "@webstudio-is/icons";
+import { TextAlignLeftIcon } from "@webstudio-is/icons/svg";
 import { p } from "../css/normalize";
 import {
   defaultStates,
@@ -17,7 +17,7 @@ export const meta: WsComponentMeta = {
   category: "typography",
   type: "rich-text",
   label: "Paragraph",
-  Icon: TextAlignLeftIcon,
+  icon: TextAlignLeftIcon,
   children: [{ type: "text", value: "Pragraph you can edit" }],
   states: defaultStates,
   presetStyle,

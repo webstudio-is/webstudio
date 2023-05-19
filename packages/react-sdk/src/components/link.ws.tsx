@@ -1,4 +1,4 @@
-import { LinkIcon } from "@webstudio-is/icons";
+import { LinkIcon } from "@webstudio-is/icons/svg";
 import { a } from "../css/normalize";
 import {
   defaultStates,
@@ -27,7 +27,7 @@ export const meta: WsComponentMeta = {
   category: "general",
   type: "rich-text",
   label: "Link Text",
-  Icon: LinkIcon,
+  icon: LinkIcon,
   presetStyle,
   states: [
     ...defaultStates,

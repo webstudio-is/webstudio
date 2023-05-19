@@ -1,11 +1,11 @@
-import { SlotComponentIcon } from "@webstudio-is/icons";
+import { SlotComponentIcon } from "@webstudio-is/icons/svg";
 import type { WsComponentMeta, WsComponentPropsMeta } from "./component-meta";
 
 export const meta: WsComponentMeta = {
   category: "general",
   type: "container",
   label: "Slot",
-  Icon: SlotComponentIcon,
+  icon: SlotComponentIcon,
 };
 
 export const propsMeta: WsComponentPropsMeta = {

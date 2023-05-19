@@ -1,6 +1,4 @@
 import { z } from "zod";
-import type { FunctionComponent } from "react";
-import type { IconProps } from "@webstudio-is/icons";
 import { PropMeta } from "@webstudio-is/generate-arg-types";
 import type { htmlTags as HtmlTags } from "html-tags";
 import { EmbedTemplateStyleDecl, WsEmbedTemplate } from "../embed-template";
@@ -59,16 +57,15 @@ const WsComponentMeta = z.object({
   ]),
   acceptedParents: z.optional(z.array(z.string())),
   label: z.string(),
-  Icon: z.function(),
-  presetStyle: z.optional(z.any()),
+  icon: z.string(),
+  presetStyle: z.optional(z.record(z.string(), EmbedTemplateStyleDecl)),
   states: z.optional(z.array(ComponentState)),
   children: z.optional(WsEmbedTemplate),
 });
 
 export type WsComponentMeta = Omit<
   z.infer<typeof WsComponentMeta>,
-  "presetStyle" | "Icon"
+  "presetStyle"
 > & {
   presetStyle?: PresetStyle;
-  Icon: FunctionComponent<IconProps>;
 };

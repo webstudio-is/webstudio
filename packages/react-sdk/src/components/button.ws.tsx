@@ -1,4 +1,4 @@
-import { ButtonElementIcon } from "@webstudio-is/icons";
+import { ButtonElementIcon } from "@webstudio-is/icons/svg";
 import { button } from "../css/normalize";
 import {
   defaultStates,
@@ -17,7 +17,7 @@ export const meta: WsComponentMeta = {
   category: "forms",
   type: "container",
   label: "Button",
-  Icon: ButtonElementIcon,
+  icon: ButtonElementIcon,
   presetStyle,
   states: [
     ...defaultStates,

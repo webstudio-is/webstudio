@@ -1,0 +1,1 @@
+export const ArrowRightIcon = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 16 16" fill="currentColor" width="100%" height="100%" style="display: block;"><path fill-rule="evenodd" d="M8.434 12.566a.8.8 0 0 1 0-1.132L11.07 8.8H3a.8.8 0 1 1 0-1.6h8.069L8.434 4.566a.8.8 0 1 1 1.132-1.132l4 4a.8.8 0 0 1 0 1.132l-4 4a.8.8 0 0 1-1.132 0Z" clip-rule="evenodd"/></svg>`;

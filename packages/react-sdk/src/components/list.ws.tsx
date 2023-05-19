@@ -1,4 +1,4 @@
-import { ListIcon } from "@webstudio-is/icons";
+import { ListIcon } from "@webstudio-is/icons/svg";
 import {
   defaultStates,
   type PresetStyle,
@@ -46,7 +46,7 @@ export const meta: WsComponentMeta = {
   category: "typography",
   type: "container",
   label: "List",
-  Icon: ListIcon,
+  icon: ListIcon,
   states: defaultStates,
   presetStyle,
   children: [],

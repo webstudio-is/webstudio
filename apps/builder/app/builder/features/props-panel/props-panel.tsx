@@ -37,6 +37,7 @@ import {
   type WsComponentMeta,
 } from "@webstudio-is/react-sdk";
 import { getInstanceLabel } from "~/builder/shared/tree";
+import { MetaIcon } from "~/builder/shared/meta-icon";
 
 const itemToString = (item: NameAndLabel | null) =>
   item ? getLabel(item, item.name) : "";
@@ -59,7 +60,7 @@ const InstanceInfo = ({
     css={{ height: theme.spacing[13], color: theme.colors.foregroundSubtle }}
     align="center"
   >
-    <meta.Icon />{" "}
+    <MetaIcon icon={meta.icon} />
     <Text truncate variant="labelsSentenceCase">
       {label}
     </Text>

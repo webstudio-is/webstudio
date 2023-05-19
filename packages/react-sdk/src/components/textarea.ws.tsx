@@ -1,4 +1,4 @@
-import { FormTextAreaIcon } from "@webstudio-is/icons";
+import { FormTextAreaIcon } from "@webstudio-is/icons/svg";
 import { textarea } from "../css/normalize";
 import {
   type WsComponentMeta,
@@ -21,7 +21,7 @@ export const meta: WsComponentMeta = {
   category: "forms",
   type: "control",
   label: "Text Area",
-  Icon: FormTextAreaIcon,
+  icon: FormTextAreaIcon,
   presetStyle,
   states: [
     ...defaultStates,

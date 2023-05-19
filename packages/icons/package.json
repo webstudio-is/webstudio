@@ -9,7 +9,7 @@
     "dev": "build-package --watch",
     "build": "build-package",
     "dts": "tsc --declarationDir lib/types",
-    "generate": "rm -fr src/__generated__ && NODE_OPTIONS='--loader=tsx' svgo-jsx svgo-jsx.config.ts",
+    "generate": "rm -fr src/__generated__ && NODE_OPTIONS='--loader=tsx' svgo-jsx svgo-jsx.config.ts && tsx svg-string.ts",
     "typecheck": "tsc --noEmit --emitDeclarationOnly false",
     "lint": "eslint ./src --ext .ts,.tsx --max-warnings 0",
     "checks": "pnpm typecheck && pnpm lint",
@@ -25,6 +25,7 @@
     "@webstudio-is/tsconfig": "workspace:^",
     "react": "^18.2.0",
     "react-dom": "^18.2.0",
+    "svgo": "^3.0.2",
     "tsx": "^3.12.6",
     "typescript": "5.0.3"
   },
@@ -37,9 +38,16 @@
   },
   "module": "./lib/index.js",
   "exports": {
-    "source": "./src/index.ts",
-    "import": "./lib/index.js",
-    "require": "./lib/cjs/index.js"
+    ".": {
+      "source": "./src/index.ts",
+      "import": "./lib/index.js",
+      "require": "./lib/cjs/index.js"
+    },
+    "./svg": {
+      "source": "./src/__generated__/svg/index.ts",
+      "import": "./lib/__generated__/svg/index.js",
+      "require": "./lib/cjs/__generated__/svg/index.js"
+    }
   },
   "types": "lib/types/index.d.ts",
   "files": [

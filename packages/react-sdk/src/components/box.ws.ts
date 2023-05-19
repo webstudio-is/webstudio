@@ -1,4 +1,4 @@
-import { BoxIcon } from "@webstudio-is/icons";
+import { BoxIcon } from "@webstudio-is/icons/svg";
 import {
   defaultStates,
   type PresetStyle,
@@ -40,7 +40,7 @@ export const meta: WsComponentMeta = {
   category: "general",
   type: "container",
   label: "Box",
-  Icon: BoxIcon,
+  icon: BoxIcon,
   states: defaultStates,
   presetStyle,
 };

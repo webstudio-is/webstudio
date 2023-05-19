@@ -1,4 +1,4 @@
-import { FormTextFieldIcon } from "@webstudio-is/icons";
+import { FormTextFieldIcon } from "@webstudio-is/icons/svg";
 import { input } from "../css/normalize";
 import {
   defaultStates,
@@ -17,7 +17,7 @@ export const meta: WsComponentMeta = {
   category: "forms",
   type: "control",
   label: "Text Input",
-  Icon: FormTextFieldIcon,
+  icon: FormTextFieldIcon,
   presetStyle,
   states: [
     ...defaultStates,

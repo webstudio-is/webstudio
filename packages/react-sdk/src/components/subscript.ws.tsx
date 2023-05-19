@@ -1,4 +1,4 @@
-import { SubscriptIcon } from "@webstudio-is/icons";
+import { SubscriptIcon } from "@webstudio-is/icons/svg";
 import { sub } from "../css/normalize";
 import {
   defaultStates,
@@ -16,7 +16,7 @@ const presetStyle = {
 export const meta: WsComponentMeta = {
   type: "rich-text-child",
   label: "Subscript Text",
-  Icon: SubscriptIcon,
+  icon: SubscriptIcon,
   states: defaultStates,
   presetStyle,
 };
