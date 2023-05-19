@@ -27,7 +27,7 @@ export const meta: WsComponentMeta = {
   category: "general",
   type: "rich-text",
   label: "Link Text",
-  Icon: LinkIcon,
+  icon: LinkIcon,
   presetStyle,
   states: [
     ...defaultStates,

@@ -27,7 +27,7 @@ const instanceRelatedProps = {
           prefix={
             <div
               style={{ width: 16, height: 16 }}
-              dangerouslySetInnerHTML={{ __html: meta.Icon }}
+              dangerouslySetInnerHTML={{ __html: meta.icon }}
             />
           }
         >

@@ -40,7 +40,7 @@ export const meta: WsComponentMeta = {
   category: "general",
   type: "container",
   label: "Box",
-  Icon: BoxIcon,
+  icon: BoxIcon,
   states: defaultStates,
   presetStyle,
 };

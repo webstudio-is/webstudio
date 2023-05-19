@@ -20,7 +20,7 @@ export const meta: WsComponentMeta = {
   category: "forms",
   type: "rich-text",
   label: "Input Label",
-  Icon: TextBlockIcon,
+  icon: TextBlockIcon,
   states: defaultStates,
   presetStyle,
   children: [{ type: "text", value: "Form Label" }],

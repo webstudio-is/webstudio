@@ -20,7 +20,7 @@ export const meta: WsComponentMeta = {
   category: "forms",
   type: "container",
   label: "Radio",
-  Icon: RadioCheckedIcon,
+  icon: RadioCheckedIcon,
   states: defaultStates,
   presetStyle,
   children: [

@@ -25,7 +25,7 @@ export const meta: WsComponentMeta = {
   category: "typography",
   type: "rich-text",
   label: "Heading",
-  Icon: HeadingIcon,
+  icon: HeadingIcon,
   children: [{ type: "text", value: "Heading you can edit" }],
   states: defaultStates,
   presetStyle,

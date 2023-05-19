@@ -57,7 +57,7 @@ const WsComponentMeta = z.object({
   ]),
   acceptedParents: z.optional(z.array(z.string())),
   label: z.string(),
-  Icon: z.string(),
+  icon: z.string(),
   presetStyle: z.optional(z.record(z.string(), EmbedTemplateStyleDecl)),
   states: z.optional(z.array(ComponentState)),
   children: z.optional(WsEmbedTemplate),

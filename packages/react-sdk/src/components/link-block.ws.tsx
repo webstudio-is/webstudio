@@ -23,7 +23,7 @@ export const meta: WsComponentMeta = {
   category: "general",
   type: "container",
   label: "Link Block",
-  Icon: LinkBlockIcon,
+  icon: LinkBlockIcon,
   states: linkMeta.states,
   presetStyle,
 };

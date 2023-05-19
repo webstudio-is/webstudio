@@ -16,7 +16,7 @@ const presetStyle = {
 export const meta: WsComponentMeta = {
   type: "rich-text-child",
   label: "Subscript Text",
-  Icon: SubscriptIcon,
+  icon: SubscriptIcon,
   states: defaultStates,
   presetStyle,
 };

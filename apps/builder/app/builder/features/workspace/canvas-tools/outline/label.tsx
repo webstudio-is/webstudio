@@ -87,7 +87,7 @@ export const Label = ({ instance, instanceRect }: LabelProps) => {
     <LabelContainer position={position} ref={labelRef}>
       <div
         style={{ width: "1em", height: "1em" }}
-        dangerouslySetInnerHTML={{ __html: meta.Icon }}
+        dangerouslySetInnerHTML={{ __html: meta.icon }}
       />
       {getInstanceLabel(instance, meta)}
     </LabelContainer>

@@ -3,7 +3,7 @@ import type { WsComponentMeta, WsComponentPropsMeta } from "./component-meta";
 export const meta: WsComponentMeta = {
   type: "container",
   label: "Fragment",
-  Icon: "",
+  icon: "",
 };
 
 export const propsMeta: WsComponentPropsMeta = {

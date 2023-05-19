@@ -61,7 +61,7 @@ const InstanceInfo = ({
   >
     <div
       style={{ width: 16, height: 16 }}
-      dangerouslySetInnerHTML={{ __html: meta.Icon }}
+      dangerouslySetInnerHTML={{ __html: meta.icon }}
     />
     <Text truncate variant="labelsSentenceCase">
       {label}

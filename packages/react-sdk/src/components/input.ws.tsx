@@ -17,7 +17,7 @@ export const meta: WsComponentMeta = {
   category: "forms",
   type: "control",
   label: "Text Input",
-  Icon: FormTextFieldIcon,
+  icon: FormTextFieldIcon,
   presetStyle,
   states: [
     ...defaultStates,

@@ -39,7 +39,7 @@ export const meta: WsComponentMeta = {
   category: "general",
   type: "rich-text",
   label: "Code",
-  Icon: CodeIcon,
+  icon: CodeIcon,
   states: defaultStates,
   presetStyle,
   children: [{ type: "text", value: "Code you can edit" }],

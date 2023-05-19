@@ -199,7 +199,7 @@ const componentMeta: WsComponentMeta = {
   category: "general",
   type: "rich-text",
   label: "Button",
-  Icon: ButtonElementIcon,
+  icon: ButtonElementIcon,
 };
 
 const componentPropsMeta: WsComponentPropsMeta = {

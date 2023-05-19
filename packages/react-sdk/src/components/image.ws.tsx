@@ -31,7 +31,7 @@ export const meta: WsComponentMeta = {
   category: "media",
   type: "embed",
   label: "Image",
-  Icon: ImageIcon,
+  icon: ImageIcon,
   states: defaultStates,
   presetStyle,
 };

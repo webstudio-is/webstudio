@@ -19,7 +19,7 @@ export const meta: WsComponentMeta = {
   category: "forms",
   type: "container",
   label: "Form",
-  Icon: FormIcon,
+  icon: FormIcon,
   presetStyle,
   states: [
     { selector: "[data-state=error]", label: "Error" },

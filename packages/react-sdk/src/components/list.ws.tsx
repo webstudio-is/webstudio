@@ -46,7 +46,7 @@ export const meta: WsComponentMeta = {
   category: "typography",
   type: "container",
   label: "List",
-  Icon: ListIcon,
+  icon: ListIcon,
   states: defaultStates,
   presetStyle,
   children: [],

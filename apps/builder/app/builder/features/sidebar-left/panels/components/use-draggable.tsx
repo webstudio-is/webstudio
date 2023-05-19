@@ -51,7 +51,7 @@ const DragLayer = ({
     >
       <ComponentCard
         label={meta.label}
-        icon={<div dangerouslySetInnerHTML={{ __html: meta.Icon }} />}
+        icon={<div dangerouslySetInnerHTML={{ __html: meta.icon }} />}
         style={{
           transform: `translate3d(${point.x}px, ${point.y}px, 0)`,
         }}

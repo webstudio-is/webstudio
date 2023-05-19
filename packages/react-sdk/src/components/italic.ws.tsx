@@ -22,7 +22,7 @@ const presetStyle = {
 export const meta: WsComponentMeta = {
   type: "rich-text-child",
   label: "Italic Text",
-  Icon: TextItalicIcon,
+  icon: TextItalicIcon,
   states: defaultStates,
   presetStyle,
 };

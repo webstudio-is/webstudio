@@ -44,7 +44,7 @@ export const meta: WsComponentMeta = {
   category: "general",
   type: "embed",
   label: "Separator",
-  Icon: DashIcon,
+  icon: DashIcon,
   states: defaultStates,
   presetStyle,
   children: [],

@@ -63,7 +63,7 @@ export const meta: WsComponentMeta = {
   category: "typography",
   type: "rich-text",
   label: "Blockquote",
-  Icon: BlockquoteIcon,
+  icon: BlockquoteIcon,
   states: defaultStates,
   presetStyle,
   children: [{ type: "text", value: "Blockquote you can edit" }],

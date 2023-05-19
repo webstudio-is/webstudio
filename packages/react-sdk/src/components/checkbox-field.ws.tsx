@@ -20,7 +20,7 @@ export const meta: WsComponentMeta = {
   category: "forms",
   type: "container",
   label: "Checkbox",
-  Icon: CheckboxCheckedIcon,
+  icon: CheckboxCheckedIcon,
   states: defaultStates,
   presetStyle,
   children: [

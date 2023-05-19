@@ -41,7 +41,7 @@ const presetStyle = {
 export const meta: WsComponentMeta = {
   type: "container",
   label: "Body",
-  Icon: BodyIcon,
+  icon: BodyIcon,
   states: defaultStates,
   presetStyle,
 };

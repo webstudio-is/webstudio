@@ -14,7 +14,7 @@ const presetStyle = {
 export const meta: WsComponentMeta = {
   type: "container",
   label: "Success Message",
-  Icon: BoxIcon,
+  icon: BoxIcon,
   presetStyle,
 };
 

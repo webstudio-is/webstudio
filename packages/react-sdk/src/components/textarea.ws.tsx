@@ -21,7 +21,7 @@ export const meta: WsComponentMeta = {
   category: "forms",
   type: "control",
   label: "Text Area",
-  Icon: FormTextAreaIcon,
+  icon: FormTextAreaIcon,
   presetStyle,
   states: [
     ...defaultStates,

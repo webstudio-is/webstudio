@@ -112,7 +112,7 @@ export const TabContent = ({ publish, onSetActiveTab }: TabContentProps) => {
                             label={meta.label}
                             icon={
                               <div
-                                dangerouslySetInnerHTML={{ __html: meta.Icon }}
+                                dangerouslySetInnerHTML={{ __html: meta.icon }}
                               />
                             }
                             tabIndex={index === 0 ? 0 : -1}

@@ -16,7 +16,7 @@ const presetStyle = {
 export const meta: WsComponentMeta = {
   type: "rich-text-child",
   label: "Superscript Text",
-  Icon: SuperscriptIcon,
+  icon: SuperscriptIcon,
   states: defaultStates,
   presetStyle,
 };

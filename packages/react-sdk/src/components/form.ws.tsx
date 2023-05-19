@@ -20,7 +20,7 @@ export const meta: WsComponentMeta = {
   category: "forms",
   type: "container",
   label: "Form",
-  Icon: FormIcon,
+  icon: FormIcon,
   states: defaultStates,
   presetStyle,
   children: [

@@ -23,7 +23,7 @@ export const meta: WsComponentMeta = {
   category: "typography",
   type: "rich-text",
   label: "Text Block",
-  Icon: TextBlockIcon,
+  icon: TextBlockIcon,
   states: defaultStates,
   presetStyle,
   children: [{ type: "text", value: "Block of text you can edit" }],

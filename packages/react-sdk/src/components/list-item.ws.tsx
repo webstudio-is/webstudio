@@ -18,7 +18,7 @@ export const meta: WsComponentMeta = {
   type: "rich-text",
   acceptedParents: ["List"],
   label: "List Item",
-  Icon: ListItemIcon,
+  icon: ListItemIcon,
   children: [{ type: "text", value: "List Item you can edit" }],
   states: defaultStates,
   presetStyle,
