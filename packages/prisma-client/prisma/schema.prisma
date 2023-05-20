@@ -111,11 +111,6 @@ model Build {
   @@id([id, projectId])
 }
 
-model Breakpoints {
-  buildId String @id
-  values  String @default("[]")
-}
-
 enum AuthorizationRelation {
   viewers
   editors
