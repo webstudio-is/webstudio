@@ -54,7 +54,7 @@ const presetStylesEngine = createCssEngine({ name: "preset-styles" });
 // If user sets `height: 100px` or does anything that would give it a height - we remove the helper padding right away, so user can actually see the height they set
 //
 // In other words we prevent elements from collapsing when they have 0 height or width by making them non-zero on canvas, but then we remove those paddings as soon as element doesn't collapse.
-export const helperStyles = [
+const helperStyles = [
   // When double clicking into an element to edit text, it should not select the word.
   `[${idAttribute}] {
     user-select: none;

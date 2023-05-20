@@ -9,14 +9,6 @@ const createAuthorizationContext = async (
   const originUrl = new URL(request.url);
   let url = originUrl;
 
-  // In case of css use referrer as url to extract tokens from canvas iframe href
-  if (originUrl.pathname === "/s/css") {
-    const referer = request.headers.get("referer");
-    if (referer !== null) {
-      url = new URL(referer);
-    }
-  }
-
   const authToken = url.searchParams.get("authToken") ?? url.hostname;
 
   const user = await authenticator.isAuthenticated(request);
