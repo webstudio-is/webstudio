@@ -1445,7 +1445,7 @@ export const properties = {
     inherited: true,
     initial: {
       type: "keyword",
-      value: "400",
+      value: "normal",
     },
     popularity: 0.88598106,
     appliesTo: "allElements",
