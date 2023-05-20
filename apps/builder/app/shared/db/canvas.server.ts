@@ -55,7 +55,7 @@ export const loadProductionCanvasData = async (
   };
 };
 
-export const loadCanvasData = async (
+const loadCanvasData = async (
   props: {
     project: Project;
     env: "dev" | "prod";
