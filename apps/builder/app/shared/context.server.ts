@@ -6,8 +6,7 @@ const createAuthorizationContext = async (
   request: Request,
   buildEnv: AppContext["authorization"]["buildEnv"]
 ): Promise<AppContext["authorization"]> => {
-  const originUrl = new URL(request.url);
-  let url = originUrl;
+  const url = new URL(request.url);
 
   const authToken = url.searchParams.get("authToken") ?? url.hostname;
 
