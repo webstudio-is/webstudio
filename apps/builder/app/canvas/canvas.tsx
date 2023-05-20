@@ -34,7 +34,6 @@ import {
   useIsPreviewMode,
   selectedPageStore,
   registerComponentPropsMetas,
-  registeredComponentPropsMetasStore,
 } from "~/shared/nano-states";
 import { useDragAndDrop } from "./shared/use-drag-drop";
 import { useCopyPaste } from "~/shared/copy-paste";

@@ -21,7 +21,6 @@ import {
 import { usePublishShortcuts } from "./shared/shortcuts";
 import {
   projectStore,
-  registeredComponentPropsMetasStore,
   selectedPageIdStore,
   useIsPreviewMode,
   useSetAssets,
