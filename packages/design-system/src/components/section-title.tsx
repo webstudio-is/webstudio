@@ -85,6 +85,9 @@ const dotStyle = css({
   variants: {
     color: {
       local: { backgroundColor: theme.colors.foregroundLocalFlexUi },
+      overwritten: {
+        backgroundColor: theme.colors.foregroundOverwrittenFlexUi,
+      },
       remote: { backgroundColor: theme.colors.foregroundRemoteFlexUi },
     },
   },
@@ -106,7 +109,7 @@ export const SectionTitle = forwardRef(
     }: ComponentProps<"button"> & {
       /** https://www.radix-ui.com/docs/primitives/components/collapsible#trigger */
       "data-state"?: "open" | "closed";
-      dots?: Array<"local" | "remote">;
+      dots?: Array<"local" | "overwritten" | "remote">;
       css?: CSS;
       /** Primarily for <SectionTitleButton> */
       suffix?: ReactNode;

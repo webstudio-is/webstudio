@@ -26,6 +26,12 @@ const colors = {
     backgroundHover: theme.colors.backgroundLocalHover,
     icon: theme.colors.foregroundLocalMain,
   },
+  overwritten: {
+    border: theme.colors.borderOverwrittenMain,
+    background: theme.colors.backgroundOverwrittenMain,
+    backgroundHover: theme.colors.backgroundOverwrittenHover,
+    icon: theme.colors.foregroundOverwrittenMain,
+  },
   remote: {
     border: theme.colors.borderRemoteMain,
     background: theme.colors.backgroundRemoteMain,
@@ -62,6 +68,7 @@ const style = css({
       default: perColorStyle("default"),
       preset: perColorStyle("preset"),
       local: perColorStyle("local"),
+      overwritten: perColorStyle("overwritten"),
       remote: perColorStyle("remote"),
     },
   },

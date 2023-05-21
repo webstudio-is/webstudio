@@ -11,11 +11,11 @@ export const getDots = (
   currentStyle: StyleInfo,
   properties: ReadonlyArray<StyleProperty>
 ) => {
-  const dots = new Set<"local" | "remote">();
+  const dots = new Set<"local" | "overwritten" | "remote">();
 
   for (const property of properties) {
     const source = getStyleSource(currentStyle[property]);
-    if (source === "local" || source === "remote") {
+    if (source === "local" || source === "overwritten" || source === "remote") {
       dots.add(source);
     }
   }

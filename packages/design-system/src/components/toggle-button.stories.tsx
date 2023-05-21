@@ -3,7 +3,13 @@ import { BorderRadiusIndividualIcon } from "@webstudio-is/icons";
 import { ToggleButton } from "./toggle-button";
 import { StorySection, StoryGrid } from "./storybook";
 
-const toggleButtonVariants = ["default", "preset", "local", "remote"] as const;
+const toggleButtonVariants = [
+  "default",
+  "preset",
+  "local",
+  "overwritten",
+  "remote",
+] as const;
 
 export const Demo = ({
   variant,

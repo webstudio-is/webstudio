@@ -4,7 +4,6 @@ import type { StyleProperty } from "@webstudio-is/css-data";
 import { toValue } from "@webstudio-is/css-engine";
 import {
   theme,
-  rawTheme,
   Button,
   Flex,
   Box,
@@ -17,7 +16,7 @@ import {
   PopoverContent,
   Text,
 } from "@webstudio-is/design-system";
-import { AlertIcon, UndoIcon } from "@webstudio-is/icons";
+import { UndoIcon } from "@webstudio-is/icons";
 import {
   breakpointsStore,
   instancesStore,
@@ -201,12 +200,10 @@ export const PropertyName = ({
     ...properties.map((property) => style[property])
   );
   const [isOpen, setIsOpen] = useState(false);
-  const isPopoverEnabled = styleSource === "local" || styleSource === "remote";
-
-  const hasStyleSourceConflict = properties.some((property) => {
-    const info = style[property];
-    return info?.nextSource && info.local;
-  });
+  const isPopoverEnabled =
+    styleSource === "local" ||
+    styleSource === "overwritten" ||
+    styleSource === "remote";
 
   const labelElement = (
     <Flex shrink gap={1} align="center">
@@ -216,9 +213,6 @@ export const PropertyName = ({
         </Label>
       ) : (
         label
-      )}
-      {hasStyleSourceConflict && (
-        <AlertIcon fill={rawTheme.colors.foregroundDestructive} />
       )}
     </Flex>
   );
