@@ -440,7 +440,7 @@
       },
       "destructive": {
         "main": {
-          "value": "#de3339",
+          "value": "#dc2929",
           "type": "color",
           "description": "used for destructive button and accent color on destructive toast"
         },
@@ -544,7 +544,7 @@
           "description": "transparent color to create the pressed state for button"
         },
         "disabled": {
-          "value": "#dfe3e6",
+          "value": "#e9ebed",
           "type": "color",
           "description": "disabled state for button"
         }
@@ -695,6 +695,18 @@
         "value": "#2e82ff",
         "type": "color",
         "description": "A lighter version of primary blue. Not to be used with or as  text. Used for drag handles."
+      },
+      "overwritten": {
+        "main": {
+          "value": "#ffd9d9",
+          "type": "color",
+          "description": "Background color for labels on properties whose values are overwritten."
+        },
+        "hover": {
+          "value": "#fec4c4",
+          "type": "color",
+          "description": "Hover background for overwritten labels."
+        }
       }
     },
     "brand": {
@@ -848,7 +860,7 @@
       },
       "remote": {
         "main": {
-          "value": "#ffcca7",
+          "value": "#fbc69f",
           "type": "color",
           "description": "border color of inherited elements"
         },
@@ -860,7 +872,7 @@
       },
       "destructive": {
         "main": {
-          "value": "#de3339",
+          "value": "#d13a3a",
           "type": "color",
           "description": "border color for destructive input field, text area and search field"
         },
@@ -871,9 +883,21 @@
         }
       },
       "dark": {
-        "value": "#707375",
+        "value": "#595c5d",
         "type": "color",
         "description": "For borders that use dark mode colors in light mode like the Builder UI top bar."
+      },
+      "overwritten": {
+        "main": {
+          "value": "#fdaaab",
+          "type": "color",
+          "description": "Border color for labels on properties whose values are overwritten."
+        },
+        "flex-ui": {
+          "value": "#dc3d43",
+          "type": "color",
+          "description": "For the flex control grid border when the value is overwritten."
+        }
       }
     },
     "foreground": {
@@ -898,7 +922,7 @@
         "description": "foreground color for spacing controls text"
       },
       "destructive": {
-        "value": "#de3339",
+        "value": "#d13a3a",
         "type": "color",
         "description": "destructive foreground color. Used in input field, text field, search area, & toast"
       },
@@ -980,7 +1004,7 @@
         "type": "color"
       },
       "success-text": {
-        "value": "#00894a",
+        "value": "#008447",
         "type": "color",
         "description": "Success color that is dark enough for text. Same color as background/success"
       },
@@ -1019,6 +1043,18 @@
         "value": "#a7acaf99",
         "type": "color",
         "description": "For the scroll bar thumb only"
+      },
+      "overwritten": {
+        "main": {
+          "value": "#bf0007",
+          "type": "color",
+          "description": "Foreground (text & icon) color for labels on properties whose values are overwritten."
+        },
+        "flex-ui": {
+          "value": "#dc3d43",
+          "type": "color",
+          "description": "For the flex control grid when the value is overwritten."
+        }
       }
     },
     "Brand": {
