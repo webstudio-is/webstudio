@@ -75,16 +75,16 @@ const useScrub = ({
   useEffect(() => {
     const inputRefCurrent = inputRef.current;
     const scrubRefCurrent = scrubRef.current;
-    const unit = type === "unit" ? valueRef.current.unit : undefined;
 
     if (
       type !== "unit" ||
-      unit === undefined ||
       inputRefCurrent === null ||
       scrubRefCurrent === null
     ) {
       return;
     }
+
+    let unit: Unit = "number";
 
     const validateValue = (numericValue: number) => {
       let value: CssValueInputValue = {
@@ -128,10 +128,17 @@ const useScrub = ({
       // Until we have decision do we use key properties for this or not,
       // on of the solution to get value inside scrub is to use ref and lazy getter.
       // Getter to avoid recreating scrub on every value change
-      getInitialValue: () => {
+      getInitialValue() {
         if (valueRef.current.type === "unit") {
           return valueRef.current.value;
         }
+      },
+      onStart() {
+        // for TS
+        if (valueRef.current.type !== "unit") {
+          return;
+        }
+        unit = valueRef.current.unit;
       },
       onValueInput(event) {
         // Moving focus to container of the input to hide the caret
