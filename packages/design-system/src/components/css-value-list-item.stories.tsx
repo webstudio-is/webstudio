@@ -1,6 +1,6 @@
 import { css, styled, theme } from "../stitches.config";
 import { CssValueListItem } from "./css-value-list-item";
-import { Label } from "./label";
+import { Label, labelColors } from "./label";
 import { SmallToggleButton } from "./small-toggle-button";
 import {
   EyeconOpenIcon,
@@ -26,7 +26,7 @@ export default {
     hidden: { control: "boolean" },
     focused: { control: "boolean" },
     labelColor: {
-      options: ["default", "preset", "local", "overwritten", "remote"],
+      options: labelColors,
       type: "inline-radio",
     },
   },
@@ -164,9 +164,7 @@ export const Declarative = (props: {
       <StorySection title="Overflows">
         <StoryGrid>
           <ListItemsFocusWrap>
-            {(
-              ["default", "preset", "local", "overwritten", "remote"] as const
-            ).map((labelColor, index) => (
+            {labelColors.map((labelColor, index) => (
               <ListItem
                 key={labelColor}
                 tabIndex={index === 0 ? 0 : -1}
@@ -185,9 +183,7 @@ export const Declarative = (props: {
       <StorySection title="Variants">
         <StoryGrid>
           <ListItemsFocusWrap>
-            {(
-              ["default", "preset", "local", "overwritten", "remote"] as const
-            ).map((labelColor, index) => (
+            {labelColors.map((labelColor, index) => (
               <ListItem
                 key={labelColor}
                 tabIndex={index === 0 ? 0 : -1}
@@ -199,9 +195,7 @@ export const Declarative = (props: {
               />
             ))}
 
-            {(
-              ["default", "preset", "local", "overwritten", "remote"] as const
-            ).map((labelColor) => (
+            {labelColors.map((labelColor) => (
               <ListItem
                 key={labelColor}
                 tabIndex={-1}
@@ -213,9 +207,7 @@ export const Declarative = (props: {
               />
             ))}
 
-            {(
-              ["default", "preset", "local", "overwritten", "remote"] as const
-            ).map((labelColor) => (
+            {labelColors.map((labelColor) => (
               <ListItem
                 key={labelColor}
                 tabIndex={-1}
@@ -233,9 +225,7 @@ export const Declarative = (props: {
       <StorySection title="Active">
         <StoryGrid>
           <ListItemsFocusWrap>
-            {(
-              ["default", "preset", "local", "overwritten", "remote"] as const
-            ).map((labelColor, index) => (
+            {labelColors.map((labelColor, index) => (
               <ListItem
                 key={labelColor}
                 tabIndex={index === 0 ? 0 : -1}
@@ -247,9 +237,7 @@ export const Declarative = (props: {
               />
             ))}
 
-            {(
-              ["default", "preset", "local", "overwritten", "remote"] as const
-            ).map((labelColor, index) => (
+            {labelColors.map((labelColor) => (
               <ListItem
                 key={labelColor}
                 tabIndex={-1}
@@ -261,9 +249,7 @@ export const Declarative = (props: {
               />
             ))}
 
-            {(
-              ["default", "preset", "local", "overwritten", "remote"] as const
-            ).map((labelColor, index) => (
+            {labelColors.map((labelColor) => (
               <ListItem
                 key={labelColor}
                 tabIndex={-1}
