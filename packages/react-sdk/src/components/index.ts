@@ -1,4 +1,3 @@
-import { PropMeta } from "@webstudio-is/generate-arg-types";
 import type { WsComponentMeta, WsComponentPropsMeta } from "./component-meta";
 import type { ComponentName } from "./components-utils";
 import { meta as SlotMeta } from "./slot.ws";
@@ -69,7 +68,7 @@ import { propsMeta as CheckboxFieldPropsMeta } from "./checkbox-field.ws";
 import { propsMeta as CheckboxPropsMeta } from "./checkbox.ws";
 
 // @todo this list should not be hardcoded!
-const defaultMetas: Record<string, WsComponentMeta> = {
+export const defaultMetas: Record<string, WsComponentMeta> = {
   Slot: SlotMeta,
   Fragment: FragmentMeta,
   Box: BoxMeta,
@@ -121,7 +120,7 @@ export const registerComponentMetas = (
 };
 
 // @todo this list should not be hardcoded!
-const defaultPropsMetasRaw = {
+export const defaultPropsMetas: Record<string, WsComponentPropsMeta> = {
   Slot: SlotMetaPropsMeta,
   Fragment: FragmentMetaPropsMeta,
   Box: BoxMetaPropsMeta,
@@ -154,44 +153,6 @@ const defaultPropsMetasRaw = {
   RadioButton: RadioButtonPropsMeta,
   CheckboxField: CheckboxFieldPropsMeta,
   Checkbox: CheckboxPropsMeta,
-} as const;
-
-const defaultPropsMetas: Record<string, WsComponentPropsMeta> =
-  defaultPropsMetasRaw;
-
-let registeredPropsMetas: Record<string, Partial<WsComponentPropsMeta>> = {};
-
-// we start as `undefined` because pre-computing will likely kill tree-shaking
-let currentPropsMetas: Record<string, WsComponentPropsMeta> | undefined =
-  undefined;
-
-export const getComponentPropsMeta = (
-  name: string
-): WsComponentPropsMeta | undefined => {
-  if (currentPropsMetas === undefined) {
-    currentPropsMetas = {};
-    for (const name of Object.keys(defaultPropsMetas)) {
-      const props = computeProps(
-        defaultPropsMetas[name],
-        registeredPropsMetas[name] ?? {}
-      );
-      const initialProps = computeInitialProps(
-        props,
-        defaultPropsMetas[name],
-        registeredPropsMetas[name] ?? {}
-      );
-      currentPropsMetas[name] = { props, initialProps };
-    }
-  }
-
-  return currentPropsMetas[name];
-};
-
-export const registerComponentPropsMetas = (
-  metas: Record<string, WsComponentPropsMeta>
-) => {
-  registeredPropsMetas = metas;
-  currentPropsMetas = undefined;
 };
 
 type RegisteredComponents = Partial<{
@@ -208,48 +169,6 @@ export let registeredComponents: RegisteredComponents | undefined;
  **/
 export const registerComponents = (components: RegisteredComponents) => {
   registeredComponents = components;
-};
-
-const computeProps = (
-  defaults: WsComponentPropsMeta,
-  overrides: Partial<WsComponentPropsMeta>
-) => {
-  if (overrides) {
-    const allNames = new Set([
-      ...Object.keys(defaults.props ?? {}),
-      ...Object.keys(overrides?.props ?? {}),
-    ]).values();
-
-    const result: WsComponentPropsMeta["props"] = {};
-    for (const name of allNames) {
-      result[name] = PropMeta.parse({
-        ...defaults.props[name],
-        ...overrides?.props?.[name],
-      });
-    }
-    return result;
-  }
-
-  return defaults.props;
-};
-
-const computeInitialProps = (
-  props: WsComponentPropsMeta["props"],
-  defaults: WsComponentPropsMeta,
-  overrides: Partial<WsComponentPropsMeta>
-): Array<string> => {
-  const initialProps = overrides?.initialProps ?? defaults?.initialProps ?? [];
-  const requiredProps = props
-    ? Object.entries(props)
-        .filter(
-          ([name, value]) =>
-            value?.required && initialProps.includes(name) === false
-        )
-        .map(([name]) => name)
-    : [];
-
-  // order of initialProps must be preserved
-  return [...initialProps, ...requiredProps];
 };
 
 export const canAcceptComponent = (

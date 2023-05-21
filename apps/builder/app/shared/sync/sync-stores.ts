@@ -25,6 +25,7 @@ import {
   synchronizedInstancesStores,
   synchronizedBreakpointsStores,
   selectedStyleSourceSelectorStore,
+  synchronizedComponentsMetaStores,
 } from "~/shared/nano-states";
 
 enableMapSet();
@@ -54,6 +55,7 @@ declare module "~/shared/pubsub" {
 }
 
 const clientStores = new Map<string, WritableAtom<unknown>>();
+const initializedStores = new Set<string>();
 
 export const registerContainers = () => {
   // synchronize patches
@@ -99,6 +101,22 @@ export const registerContainers = () => {
   }
   for (const [name, store] of synchronizedCanvasStores) {
     clientStores.set(name, store);
+  }
+  for (const [name, store] of synchronizedComponentsMetaStores) {
+    clientStores.set(name, store);
+  }
+
+  // use listen to not invoke initially
+  for (const [name, store] of clientStores) {
+    // here we rely on the fact registerContainers is called before any store.set
+    // is called to find which store is initialized to send its data to the other realm
+    // this can help to find the direction between builder and canvas
+    // so canvas could send initial data to builder without builder overriding it
+    // with default store value
+    const unsubscribe = store.listen(() => {
+      initializedStores.add(name);
+      unsubscribe();
+    });
   }
 };
 
@@ -267,6 +285,26 @@ export const useCanvasStore = (publish: Publish) => {
     return handshakeAndSyncStores("canvas", publish, (publish) => {
       const unsubscribeStoresState = syncStoresState("canvas", publish);
       const unsubscribeStoresChanges = syncStoresChanges("canvas", publish);
+
+      // immerhin data is sent only initially so not part of syncStoresState
+      // expect data to be populated by the time effect is called
+      const data = [];
+      for (const [namespace, store] of clientStores) {
+        if (initializedStores.has(namespace)) {
+          data.push({
+            namespace,
+            value: store.get(),
+          });
+        }
+      }
+      publish({
+        type: "sendStoreData",
+        payload: {
+          source: "canvas",
+          data,
+        },
+      });
+
       return () => {
         unsubscribeStoresState();
         unsubscribeStoresChanges();
@@ -291,10 +329,12 @@ export const useBuilderStore = (publish: Publish) => {
         });
       }
       for (const [namespace, store] of clientStores) {
-        data.push({
-          namespace,
-          value: store.get(),
-        });
+        if (initializedStores.has(namespace)) {
+          data.push({
+            namespace,
+            value: store.get(),
+          });
+        }
       }
       publish({
         type: "sendStoreData",

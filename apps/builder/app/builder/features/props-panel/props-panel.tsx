@@ -1,3 +1,4 @@
+import { useStore } from "@nanostores/react";
 import store from "immerhin";
 import type { Instance } from "@webstudio-is/project-build";
 import {
@@ -16,8 +17,16 @@ import {
   InputField,
   NestedInputButton,
 } from "@webstudio-is/design-system";
+import {
+  type WsComponentMeta,
+  getComponentMeta,
+} from "@webstudio-is/react-sdk";
 import type { Publish } from "~/shared/pubsub";
-import { propsStore, useInstanceProps } from "~/shared/nano-states";
+import {
+  propsStore,
+  registeredComponentPropsMetasStore,
+  useInstanceProps,
+} from "~/shared/nano-states";
 import { CollapsibleSectionWithAddButton } from "~/builder/shared/collapsible-section";
 import {
   useStyleData,
@@ -31,11 +40,6 @@ import {
 } from "./use-props-logic";
 import { getLabel } from "./shared";
 import { useState, type ReactNode } from "react";
-import {
-  getComponentPropsMeta,
-  getComponentMeta,
-  type WsComponentMeta,
-} from "@webstudio-is/react-sdk";
 import { getInstanceLabel } from "~/builder/shared/tree";
 import { MetaIcon } from "~/builder/shared/meta-icon";
 
@@ -247,7 +251,9 @@ export const PropsPanelContainer = ({
   publish: Publish;
   selectedInstance: Instance;
 }) => {
-  const propsMeta = getComponentPropsMeta(instance.component);
+  const propsMeta = useStore(registeredComponentPropsMetasStore).get(
+    instance.component
+  );
   if (propsMeta === undefined) {
     throw new Error(`Could not get meta for compoent "${instance.component}"`);
   }

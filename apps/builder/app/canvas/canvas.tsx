@@ -1,13 +1,15 @@
 import { useMemo, useEffect } from "react";
 import { useStore } from "@nanostores/react";
 import { computed } from "nanostores";
-import type { Params } from "@webstudio-is/react-sdk";
+import {
+  type Params,
+  defaultPropsMetas,
+  registerComponentMetas,
+} from "@webstudio-is/react-sdk";
 import type { Instances, Page } from "@webstudio-is/project-build";
 import {
   createElementsTree,
   registerComponents,
-  registerComponentPropsMetas,
-  registerComponentMetas,
   customComponentMetas,
   customComponentPropsMetas,
   setParams,
@@ -31,9 +33,11 @@ import {
   instancesStore,
   useIsPreviewMode,
   selectedPageStore,
+  registerComponentPropsMetas,
 } from "~/shared/nano-states";
 import { useDragAndDrop } from "./shared/use-drag-drop";
 import { useCopyPaste } from "~/shared/copy-paste";
+import { useSyncInitializeOnce } from "~/shared/hook-utils";
 import { setDataCollapsed, subscribeCollapsedToPubSub } from "./collapsed";
 import { useWindowResizeDebounced } from "~/shared/dom-hooks";
 import { subscribeInstanceSelection } from "./instance-selection";
@@ -133,7 +137,10 @@ export const Canvas = ({
 
   registerComponents(customComponents);
   registerComponentMetas(customComponentMetas);
-  registerComponentPropsMetas(customComponentPropsMetas);
+  useSyncInitializeOnce(() => {
+    registerComponentPropsMetas(defaultPropsMetas);
+    registerComponentPropsMetas(customComponentPropsMetas);
+  });
 
   // e.g. toggling preview is still needed in both modes
   useCanvasShortcuts();

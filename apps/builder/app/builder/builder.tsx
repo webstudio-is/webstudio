@@ -45,9 +45,7 @@ import { BlockingAlerts } from "./features/blocking-alerts";
 import { useStore } from "@nanostores/react";
 import {
   customComponentMetas,
-  customComponentPropsMetas,
   registerComponentMetas,
-  registerComponentPropsMetas,
 } from "@webstudio-is/react-sdk";
 
 registerContainers();
@@ -239,7 +237,6 @@ export type BuilderProps = {
 // @todo: Don't do this in builder
 // https://github.com/webstudio-is/webstudio-builder/issues/1545
 registerComponentMetas(customComponentMetas);
-registerComponentPropsMetas(customComponentPropsMetas);
 
 export const Builder = ({
   project,
