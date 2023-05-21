@@ -1,4 +1,4 @@
-import { FormIcon } from "@webstudio-is/icons";
+import { FormIcon } from "@webstudio-is/icons/svg";
 import { form } from "../../css/normalize";
 import type {
   PresetStyle,
@@ -19,7 +19,7 @@ export const meta: WsComponentMeta = {
   category: "forms",
   type: "container",
   label: "Form",
-  Icon: FormIcon,
+  icon: FormIcon,
   presetStyle,
   states: [
     { selector: "[data-state=error]", label: "Error" },

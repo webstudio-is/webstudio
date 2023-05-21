@@ -1,4 +1,4 @@
-import { CheckboxCheckedIcon } from "@webstudio-is/icons";
+import { CheckboxCheckedIcon } from "@webstudio-is/icons/svg";
 import {
   type WsComponentMeta,
   type WsComponentPropsMeta,
@@ -20,7 +20,7 @@ export const meta: WsComponentMeta = {
   category: "forms",
   type: "container",
   label: "Checkbox",
-  Icon: CheckboxCheckedIcon,
+  icon: CheckboxCheckedIcon,
   states: defaultStates,
   presetStyle,
   children: [

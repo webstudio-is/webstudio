@@ -1,4 +1,4 @@
-import { SuperscriptIcon } from "@webstudio-is/icons";
+import { SuperscriptIcon } from "@webstudio-is/icons/svg";
 import { sup } from "../css/normalize";
 import {
   defaultStates,
@@ -16,7 +16,7 @@ const presetStyle = {
 export const meta: WsComponentMeta = {
   type: "rich-text-child",
   label: "Superscript Text",
-  Icon: SuperscriptIcon,
+  icon: SuperscriptIcon,
   states: defaultStates,
   presetStyle,
 };

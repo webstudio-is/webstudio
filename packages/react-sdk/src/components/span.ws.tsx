@@ -1,4 +1,4 @@
-import { PaintBrushIcon } from "@webstudio-is/icons";
+import { PaintBrushIcon } from "@webstudio-is/icons/svg";
 import { span } from "../css/normalize";
 import {
   defaultStates,
@@ -16,7 +16,7 @@ const presetStyle = {
 export const meta: WsComponentMeta = {
   type: "rich-text-child",
   label: "Styled Text",
-  Icon: PaintBrushIcon,
+  icon: PaintBrushIcon,
   states: defaultStates,
   presetStyle,
 };

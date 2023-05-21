@@ -48,9 +48,7 @@ const pl40px: Styles[number] = {
 
 const fontWeightBold: Styles[number] = {
   property: "fontWeight",
-  // in browsers defined as bold
-  // though builder accepts only numeric values
-  value: { type: "keyword", value: "700" },
+  value: { type: "keyword", value: "bold" },
 };
 
 const fontStyleItalic: Styles[number] = {

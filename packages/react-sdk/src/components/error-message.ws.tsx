@@ -1,4 +1,4 @@
-import { BoxIcon } from "@webstudio-is/icons";
+import { BoxIcon } from "@webstudio-is/icons/svg";
 import type {
   WsComponentMeta,
   WsComponentPropsMeta,
@@ -14,7 +14,7 @@ const presetStyle = {
 export const meta: WsComponentMeta = {
   type: "container",
   label: "Error Message",
-  Icon: BoxIcon,
+  icon: BoxIcon,
   presetStyle,
 };
 

@@ -1,4 +1,4 @@
-import { BlockquoteIcon } from "@webstudio-is/icons";
+import { BlockquoteIcon } from "@webstudio-is/icons/svg";
 import type { defaultTag } from "./blockquote";
 import {
   defaultStates,
@@ -63,7 +63,7 @@ export const meta: WsComponentMeta = {
   category: "typography",
   type: "rich-text",
   label: "Blockquote",
-  Icon: BlockquoteIcon,
+  icon: BlockquoteIcon,
   states: defaultStates,
   presetStyle,
   children: [{ type: "text", value: "Blockquote you can edit" }],

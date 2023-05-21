@@ -1,4 +1,4 @@
-import { BoldIcon } from "@webstudio-is/icons";
+import { BoldIcon } from "@webstudio-is/icons/svg";
 import {
   defaultStates,
   type PresetStyle,
@@ -16,7 +16,7 @@ const presetStyle = {
 export const meta: WsComponentMeta = {
   type: "rich-text-child",
   label: "Bold Text",
-  Icon: BoldIcon,
+  icon: BoldIcon,
   states: defaultStates,
   presetStyle,
 };

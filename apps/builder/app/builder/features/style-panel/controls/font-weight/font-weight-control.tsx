@@ -49,6 +49,13 @@ const useLabels = (
   availableFontWeights: Array<FontWeightItem>,
   currentWeight: string
 ) => {
+  // support named aliases
+  if (currentWeight === "normal") {
+    currentWeight = "400";
+  }
+  if (currentWeight === "bold") {
+    currentWeight = "700";
+  }
   const labels = useMemo(
     () => availableFontWeights.map((option) => option.label),
     [availableFontWeights]

@@ -26,6 +26,7 @@ import {
   scaleStore,
 } from "~/builder/shared/nano-states";
 import { insertNewComponentInstance } from "~/shared/instance-utils";
+import { MetaIcon } from "~/builder/shared/meta-icon";
 
 const DragLayer = ({
   component,
@@ -51,7 +52,7 @@ const DragLayer = ({
     >
       <ComponentCard
         label={meta.label}
-        icon={<meta.Icon />}
+        icon={<MetaIcon size="auto" icon={meta.icon} />}
         style={{
           transform: `translate3d(${point.x}px, ${point.y}px, 0)`,
         }}

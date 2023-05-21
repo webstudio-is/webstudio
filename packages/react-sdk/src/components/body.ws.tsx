@@ -1,4 +1,4 @@
-import { BodyIcon } from "@webstudio-is/icons";
+import { BodyIcon } from "@webstudio-is/icons/svg";
 import { body } from "../css/normalize";
 import {
   defaultStates,
@@ -41,7 +41,7 @@ const presetStyle = {
 export const meta: WsComponentMeta = {
   type: "container",
   label: "Body",
-  Icon: BodyIcon,
+  icon: BodyIcon,
   states: defaultStates,
   presetStyle,
 };

@@ -25,6 +25,7 @@ import {
   elementToComponentName,
   useDraggable,
 } from "./use-draggable";
+import { MetaIcon } from "~/builder/shared/meta-icon";
 
 const getMetaMaps = () => {
   const metaByComponentName: Map<ComponentName, WsComponentMeta> = new Map();
@@ -110,7 +111,7 @@ export const TabContent = ({ publish, onSetActiveTab }: TabContentProps) => {
                             {...pressProps}
                             {...{ [dragItemAttribute]: component }}
                             label={meta.label}
-                            icon={<meta.Icon />}
+                            icon={<MetaIcon size="auto" icon={meta.icon} />}
                             tabIndex={index === 0 ? 0 : -1}
                           />
                         </Tooltip>

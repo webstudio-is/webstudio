@@ -1,4 +1,4 @@
-import { ImageIcon } from "@webstudio-is/icons";
+import { ImageIcon } from "@webstudio-is/icons/svg";
 import { img } from "../css/normalize";
 import {
   defaultStates,
@@ -31,7 +31,7 @@ export const meta: WsComponentMeta = {
   category: "media",
   type: "embed",
   label: "Image",
-  Icon: ImageIcon,
+  icon: ImageIcon,
   states: defaultStates,
   presetStyle,
 };
