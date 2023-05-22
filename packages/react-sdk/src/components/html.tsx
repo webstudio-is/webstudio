@@ -20,7 +20,8 @@ type ChildProps = {
 };
 
 /**
- * Scripts are executed when rendered client side
+ * Scripts are executed when rendered client side.
+ * Necessary on canvas which does not have server rendering.
  */
 const ExecutableHtml = (props: ChildProps) => {
   const { code, innerRef, ...rest } = props;
