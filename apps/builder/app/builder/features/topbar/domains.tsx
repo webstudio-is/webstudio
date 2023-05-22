@@ -159,10 +159,10 @@ const DomainItem = (props: {
     error: refreshSystemError,
   } = trpc.refresh.useMutation();
 
-  const isRemovePending =
+  const isRemoveInProgress =
     removeState !== "idle" || props.domainLoadingState !== "idle";
 
-  const isCheckStatePending =
+  const isCheckStateInProgress =
     verifyState !== "idle" ||
     refreshState !== "idle" ||
     props.domainLoadingState !== "idle";
@@ -216,7 +216,7 @@ const DomainItem = (props: {
             <Text color="destructive">{verifySystemError}</Text>
           )}
           <Button
-            state={isCheckStatePending ? "pending" : undefined}
+            disabled={isCheckStateInProgress}
             color="primary"
             css={{ width: "100%", flexShrink: 0, mt: theme.spacing[3] }}
             onClick={() => {
@@ -247,7 +247,7 @@ const DomainItem = (props: {
             <Text color="destructive">{refreshSystemError}</Text>
           )}
           <Button
-            state={isCheckStatePending ? "pending" : undefined}
+            disabled={isCheckStateInProgress}
             color="primary"
             css={{ width: "100%", flexShrink: 0, mt: theme.spacing[3] }}
             onClick={() => {
@@ -286,7 +286,7 @@ const DomainItem = (props: {
       )}
 
       <Button
-        state={isRemovePending ? "pending" : undefined}
+        disabled={isRemoveInProgress}
         color="neutral"
         css={{ width: "100%", flexShrink: 0 }}
         onClick={() => {

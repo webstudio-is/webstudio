@@ -228,7 +228,7 @@ const Publish = ({ projectId }: { projectId: Project["id"] }) => {
 
       <Button
         color="positive"
-        state={publishState !== "idle" ? "pending" : undefined}
+        disabled={publishState !== "idle"}
         onClick={() => {
           publish({ projectId });
         }}

@@ -129,11 +129,7 @@ export const AddDomain = ({
         )}
 
         <Button
-          state={
-            state !== "idle" || domainLoadingState !== "idle"
-              ? "pending"
-              : undefined
-          }
+          disabled={state !== "idle" || domainLoadingState !== "idle"}
           color={addState === "initial" ? "neutral" : "primary"}
           css={{ width: "100%", flexShrink: 0 }}
           onClick={() => {
