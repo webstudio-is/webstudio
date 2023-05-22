@@ -6,7 +6,7 @@ import { Flex } from "../flex";
 import { TreeItemLabel, TreeItemBody } from "./tree-node";
 import type { ItemDropTarget, ItemSelector } from "./item-utils";
 
-export const StressTest = ({ animate }: { animate: boolean }) => {
+export const StressTest = () => {
   const [root, setRoot] = useState<Item>((): Item => {
     return {
       id: "root",
@@ -96,7 +96,6 @@ export const StressTest = ({ animate }: { animate: boolean }) => {
         isItemHidden={(itemSelector) =>
           findItemById(root, itemSelector[0])?.isHidden ?? false
         }
-        animate={animate}
         root={root}
         selectedItemSelector={selectedItemSelector}
         dragItemSelector={dragItemSelector}
@@ -125,5 +124,4 @@ export const StressTest = ({ animate }: { animate: boolean }) => {
 
 export default {
   component: Tree,
-  args: { animate: true },
 } as ComponentMeta<typeof Tree>;

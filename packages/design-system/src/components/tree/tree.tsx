@@ -37,7 +37,6 @@ export type TreeProps<Data extends { id: string }> = {
 
   onSelect?: (itemSelector: ItemSelector) => void;
   onHover?: (itemSelector: undefined | ItemSelector) => void;
-  animate?: boolean;
   onDropTargetChange: (dropTarget: undefined | ItemDropTarget) => void;
   onDragItemChange: (itemSelector: ItemSelector) => void;
   onDragEnd: (event: {
@@ -54,7 +53,7 @@ const sharedDropOptions = {
     //   redefining children like this will screw up automatic childrenOrientation detection
     //   luckily we know the orientation and can define it manually below
     return Array.from(
-      element.querySelectorAll(":scope > div > [data-drop-target-id]")
+      element.querySelectorAll(":scope > [data-drop-target-id]")
     );
   },
   childrenOrientation: { type: "vertical", reverse: false },
@@ -72,7 +71,6 @@ export const Tree = <Data extends { id: string }>({
   renderItem,
   onSelect,
   onHover,
-  animate,
   onDropTargetChange,
   onDragItemChange,
   onDragEnd,
@@ -284,14 +282,15 @@ export const Tree = <Data extends { id: string }>({
           renderItem={renderItem}
           getItemChildren={getItemChildren}
           isItemHidden={isItemHidden}
-          animate={animate}
           onSelect={onSelect}
           onHover={onHover}
           selectedItemSelector={selectedItemSelector}
           itemData={root}
           getIsExpanded={getIsExpanded}
-          setIsExpanded={setIsExpanded}
-          onExpandTransitionEnd={dropHandlers.handleDomMutation}
+          setIsExpanded={(itemSelector, isExpanded) => {
+            setIsExpanded(itemSelector, isExpanded);
+            dropHandlers.handleDomMutation();
+          }}
           dropTargetItemSelector={shiftedDropTarget?.itemSelector}
         />
       </Box>
