@@ -14,30 +14,35 @@ const Container = styled("span", {
   borderRadius: theme.borderRadius[3],
   padding: `0 ${theme.spacing[1]}`,
   variants: {
-    origin: {
-      unset: { color: theme.colors.slate11 },
-      set: {
-        color: theme.colors.blue11,
-        backgroundColor: theme.colors.blue4,
-        borderColor: theme.colors.blue6,
+    source: {
+      default: {
+        color: theme.colors.foregroundMain,
+      },
+      local: {
+        color: theme.colors.foregroundLocalMain,
+        backgroundColor: theme.colors.backgroundLocalMain,
+        borderColor: theme.colors.borderLocalMain,
+      },
+      overwritten: {
+        color: theme.colors.foregroundOverwrittenMain,
+        backgroundColor: theme.colors.backgroundOverwrittenMain,
+        borderColor: theme.colors.borderOverwrittenMain,
       },
       preset: {
-        // as I'm adding this Figma already uses new colors system,
-        // so I don't know which tokens to use from our legacy system
-        color: "#11181C", // foreground/main
-        backgroundColor: "#DFE3E6", // background/preset/main
-        borderColor: "#C1C8CD", // border/main
+        color: theme.colors.foregroundMain,
+        backgroundColor: theme.colors.backgroundPresetMain,
+        borderColor: theme.colors.borderMain,
       },
-      inherited: {
-        color: theme.colors.orange11,
-        backgroundColor: theme.colors.orange4,
-        borderColor: theme.colors.orange6,
+      remote: {
+        color: theme.colors.foregroundRemoteMain,
+        backgroundColor: theme.colors.backgroundRemoteMain,
+        borderColor: theme.colors.borderRemoteMain,
       },
     },
     isActive: { true: {} },
   },
   compoundVariants: [
-    { origin: "unset", isActive: true, css: { color: theme.colors.slate12 } },
+    { source: "default", isActive: true, css: { color: theme.colors.slate12 } },
   ],
 });
 
@@ -61,13 +66,13 @@ const Span = styled("span", {
 
 export const ValueText = ({
   value,
-  origin,
+  source,
   ...rest
 }: { value: StyleValue } & ComponentProps<typeof Container>) => {
   const children = useMemo(() => {
     if (value.type === "unit") {
-      // we want to show "0" rather than "0px" for unset values for cleaner UI
-      if (origin === "unset" && value.unit === "px" && value.value === 0) {
+      // we want to show "0" rather than "0px" for default values for cleaner UI
+      if (source === "default" && value.unit === "px" && value.value === 0) {
         return <Span>{value.value}</Span>;
       }
 
@@ -94,7 +99,7 @@ export const ValueText = ({
     }
 
     throw new Error(`Unexpected StyleValue type ${value.type}`);
-  }, [value, origin]);
+  }, [value, source]);
 
   const ref = useRef<HTMLSpanElement>(null);
 
@@ -124,7 +129,7 @@ export const ValueText = ({
   }, [children]);
 
   return (
-    <Container origin={origin} {...rest} ref={ref}>
+    <Container source={source} {...rest} ref={ref}>
       {children}
     </Container>
   );

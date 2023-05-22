@@ -1,6 +1,6 @@
 import { css, styled, theme } from "../stitches.config";
 import { CssValueListItem } from "./css-value-list-item";
-import { Label } from "./label";
+import { Label, labelColors } from "./label";
 import { SmallToggleButton } from "./small-toggle-button";
 import {
   EyeconOpenIcon,
@@ -26,7 +26,7 @@ export default {
     hidden: { control: "boolean" },
     focused: { control: "boolean" },
     labelColor: {
-      options: ["default", "preset", "local", "remote"],
+      options: labelColors,
       type: "inline-radio",
     },
   },
@@ -49,7 +49,7 @@ const Panel = styled("div", {
 
 const ListItem = (props: {
   hidden: boolean;
-  labelColor: "default" | "preset" | "local" | "remote";
+  labelColor: "default" | "preset" | "local" | "overwritten" | "remote";
   state: undefined | "open";
   active: boolean;
   focused: undefined | boolean;
@@ -164,20 +164,18 @@ export const Declarative = (props: {
       <StorySection title="Overflows">
         <StoryGrid>
           <ListItemsFocusWrap>
-            {(["default", "preset", "local", "remote"] as const).map(
-              (labelColor, index) => (
-                <ListItem
-                  key={labelColor}
-                  tabIndex={index === 0 ? 0 : -1}
-                  hidden={false}
-                  active={false}
-                  labelColor={labelColor}
-                  state={undefined}
-                  focused={false}
-                  label="Very long text, very long text"
-                />
-              )
-            )}
+            {labelColors.map((labelColor, index) => (
+              <ListItem
+                key={labelColor}
+                tabIndex={index === 0 ? 0 : -1}
+                hidden={false}
+                active={false}
+                labelColor={labelColor}
+                state={undefined}
+                focused={false}
+                label="Very long text, very long text"
+              />
+            ))}
           </ListItemsFocusWrap>
         </StoryGrid>
       </StorySection>
@@ -185,47 +183,41 @@ export const Declarative = (props: {
       <StorySection title="Variants">
         <StoryGrid>
           <ListItemsFocusWrap>
-            {(["default", "preset", "local", "remote"] as const).map(
-              (labelColor, index) => (
-                <ListItem
-                  key={labelColor}
-                  tabIndex={index === 0 ? 0 : -1}
-                  hidden={false}
-                  active={false}
-                  labelColor={labelColor}
-                  state={undefined}
-                  focused={false}
-                />
-              )
-            )}
+            {labelColors.map((labelColor, index) => (
+              <ListItem
+                key={labelColor}
+                tabIndex={index === 0 ? 0 : -1}
+                hidden={false}
+                active={false}
+                labelColor={labelColor}
+                state={undefined}
+                focused={false}
+              />
+            ))}
 
-            {(["default", "preset", "local", "remote"] as const).map(
-              (labelColor) => (
-                <ListItem
-                  key={labelColor}
-                  tabIndex={-1}
-                  hidden={true}
-                  active={false}
-                  labelColor={labelColor}
-                  state={undefined}
-                  focused={false}
-                />
-              )
-            )}
+            {labelColors.map((labelColor) => (
+              <ListItem
+                key={labelColor}
+                tabIndex={-1}
+                hidden={true}
+                active={false}
+                labelColor={labelColor}
+                state={undefined}
+                focused={false}
+              />
+            ))}
 
-            {(["default", "preset", "local", "remote"] as const).map(
-              (labelColor) => (
-                <ListItem
-                  key={labelColor}
-                  tabIndex={-1}
-                  hidden={false}
-                  active={false}
-                  labelColor={labelColor}
-                  state={"open"}
-                  focused={false}
-                />
-              )
-            )}
+            {labelColors.map((labelColor) => (
+              <ListItem
+                key={labelColor}
+                tabIndex={-1}
+                hidden={false}
+                active={false}
+                labelColor={labelColor}
+                state={"open"}
+                focused={false}
+              />
+            ))}
           </ListItemsFocusWrap>
         </StoryGrid>
       </StorySection>
@@ -233,47 +225,41 @@ export const Declarative = (props: {
       <StorySection title="Active">
         <StoryGrid>
           <ListItemsFocusWrap>
-            {(["default", "preset", "local", "remote"] as const).map(
-              (labelColor, index) => (
-                <ListItem
-                  key={labelColor}
-                  tabIndex={index === 0 ? 0 : -1}
-                  hidden={false}
-                  active={true}
-                  labelColor={labelColor}
-                  state={undefined}
-                  focused={false}
-                />
-              )
-            )}
+            {labelColors.map((labelColor, index) => (
+              <ListItem
+                key={labelColor}
+                tabIndex={index === 0 ? 0 : -1}
+                hidden={false}
+                active={true}
+                labelColor={labelColor}
+                state={undefined}
+                focused={false}
+              />
+            ))}
 
-            {(["default", "preset", "local", "remote"] as const).map(
-              (labelColor, index) => (
-                <ListItem
-                  key={labelColor}
-                  tabIndex={-1}
-                  hidden={true}
-                  active={true}
-                  labelColor={labelColor}
-                  state={undefined}
-                  focused={false}
-                />
-              )
-            )}
+            {labelColors.map((labelColor) => (
+              <ListItem
+                key={labelColor}
+                tabIndex={-1}
+                hidden={true}
+                active={true}
+                labelColor={labelColor}
+                state={undefined}
+                focused={false}
+              />
+            ))}
 
-            {(["default", "preset", "local", "remote"] as const).map(
-              (labelColor, index) => (
-                <ListItem
-                  key={labelColor}
-                  tabIndex={-1}
-                  hidden={false}
-                  active={true}
-                  labelColor={labelColor}
-                  state={"open"}
-                  focused={false}
-                />
-              )
-            )}
+            {labelColors.map((labelColor) => (
+              <ListItem
+                key={labelColor}
+                tabIndex={-1}
+                hidden={false}
+                active={true}
+                labelColor={labelColor}
+                state={"open"}
+                focused={false}
+              />
+            ))}
           </ListItemsFocusWrap>
         </StoryGrid>
       </StorySection>
