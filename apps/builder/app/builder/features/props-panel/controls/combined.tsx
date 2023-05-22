@@ -1,4 +1,5 @@
 import { TextControl } from "./text";
+import { CodeControl } from "./code";
 import { ColorControl } from "./color";
 import { NumberControl } from "./number";
 import { CheckControl } from "./check";
@@ -19,6 +20,13 @@ export const renderControl = ({
     (prop === undefined || prop.type === "string")
   ) {
     return <TextControl meta={meta} prop={prop} {...rest} />;
+  }
+
+  if (
+    meta.control === "code" &&
+    (prop === undefined || prop.type === "string")
+  ) {
+    return <CodeControl meta={meta} prop={prop} {...rest} />;
   }
 
   if (

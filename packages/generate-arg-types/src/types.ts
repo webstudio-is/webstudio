@@ -42,6 +42,18 @@ const Text = z.object({
   rows: z.number().optional(),
 });
 
+const Code = z.object({
+  ...common,
+  control: z.literal("code"),
+  type: z.literal("string"),
+  defaultValue: z.string().optional(),
+  /**
+   * The number of rows in <textarea>. If set to 0 an <input> will be used instead.
+   * In line with Storybook team's plan: https://github.com/storybookjs/storybook/issues/21100
+   */
+  rows: z.number().optional(),
+});
+
 const Color = z.object({
   ...common,
   control: z.literal("color"),
@@ -147,6 +159,7 @@ export const PropMeta = z.union([
   Number,
   Range,
   Text,
+  Code,
   Color,
   Boolean,
   Radio,
