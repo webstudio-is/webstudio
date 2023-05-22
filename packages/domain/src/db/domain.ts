@@ -247,6 +247,8 @@ const statusToStatusEnum = (status: Status): StatusEnum =>
 /**
  * Reads the status of the domain from the 3rd party provider
  * and updates the database accordingly
+ *
+ * @todo: In the future should be a read only status reader
  */
 export const updateStatus = async (
   props: {
@@ -273,7 +275,7 @@ export const updateStatus = async (
 
   const { domain } = validationResult;
 
-  // @todo: must be implemented as workflow/queue service, not as direct call
+  // @todo: must be implemented as workflow/queue service part of 3rd party domain initialization process
   const statusResult = await context.domain.domainTrpc.getStatus.query({
     domain,
   });
