@@ -22,6 +22,9 @@ export const CodeControl = ({
       onChange={(value) => {
         if (value.type === "string") {
           // sanitize html before saving
+          // this is basically what browser does when innerHTML is set
+          // but isolated within temporary element
+          // so the result is correct markup
           const div = document.createElement("div");
           div.innerHTML = value.value;
           onChange({ type: "string", value: div.innerHTML });
