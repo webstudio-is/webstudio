@@ -10,5 +10,13 @@ export const meta: WsComponentMeta = {
 };
 
 export const propsMeta: WsComponentPropsMeta = {
-  props,
+  props: {
+    ...props,
+    code: {
+      required: true,
+      control: "code",
+      type: "string",
+      rows: 10,
+    },
+  },
 };
