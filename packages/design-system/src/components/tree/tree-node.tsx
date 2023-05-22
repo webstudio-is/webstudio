@@ -1,14 +1,13 @@
-import { useCallback, useRef, useEffect, useMemo, useState } from "react";
+import { useRef, useEffect, useMemo, useState } from "react";
 import {
   ChevronFilledDownIcon,
   ChevronFilledRightIcon,
 } from "@webstudio-is/icons";
 import { cssVars } from "@webstudio-is/css-vars";
 import { Box } from "../box";
-import * as Collapsible from "@radix-ui/react-collapsible";
 import { Flex } from "../flex";
 import { DeprecatedText2 } from "../__DEPRECATED__/text2";
-import { keyframes, styled } from "../../stitches.config";
+import { styled } from "../../stitches.config";
 import { theme } from "../../stitches.config";
 import {
   type ItemId,
@@ -94,31 +93,7 @@ const NestingLines = ({
     </>
   ) : null;
 
-const openKeyframes = keyframes({
-  from: { height: 0 },
-  to: { height: "var(--radix-collapsible-content-height)" },
-});
-
-const closeKeyframes = keyframes({
-  from: { height: "var(--radix-collapsible-content-height)" },
-  to: { height: 0 },
-});
-
-const CollapsibleContentAnimated = styled(Collapsible.Content, {
-  overflow: "hidden",
-  '&[data-state="open"]': {
-    animation: `${openKeyframes} 150ms ease-in-out`,
-  },
-  '&[data-state="closed"]': {
-    animation: `${closeKeyframes} 150ms ease-in-out`,
-  },
-});
-
-const CollapsibleContentUnanimated = styled(Collapsible.Content, {
-  overflow: "hidden",
-});
-
-const CollapsibleTrigger = styled(Collapsible.Trigger, {
+const CollapsibleTrigger = styled("button", {
   all: "unset",
   display: "flex",
   pr: INDENT - ICONS_SIZE,
@@ -259,6 +234,7 @@ export type TreeItemRenderProps<Data extends { id: string }> = {
   isAlwaysExpanded: boolean;
   shouldRenderExpandButton: boolean;
   isExpanded: boolean;
+  onToggle: () => void;
 };
 
 export const TreeItemBody = <Data extends { id: string }>({
@@ -279,6 +255,7 @@ export const TreeItemBody = <Data extends { id: string }>({
   alwaysShowSuffix = false,
   forceFocus = false,
   selectionEvent = "click",
+  onToggle,
 }: TreeItemRenderProps<Data> & {
   children: React.ReactNode;
   suffix?: React.ReactNode;
@@ -366,6 +343,7 @@ export const TreeItemBody = <Data extends { id: string }>({
           style={{ left: (level - 1) * INDENT + ITEM_PADDING_LEFT }}
           // We don't want this trigger to be focusable
           tabIndex={-1}
+          onClick={onToggle}
         >
           {isExpanded ? <ChevronFilledDownIcon /> : <ChevronFilledRightIcon />}
         </CollapsibleTrigger>
@@ -401,7 +379,6 @@ export type TreeNodeProps<Data extends { id: ItemId }> = {
 
   getIsExpanded: (itemSelector: ItemSelector) => boolean;
   setIsExpanded?: (itemSelector: ItemSelector, expanded: boolean) => void;
-  onExpandTransitionEnd?: () => void;
 
   selectedItemSelector?: ItemSelector;
   dropTargetItemSelector?: ItemSelector;
@@ -410,8 +387,6 @@ export type TreeNodeProps<Data extends { id: ItemId }> = {
   parentIsSelected?: boolean;
   onSelect?: (itemSelector: ItemSelector) => void;
   onHover?: (itemSelector?: ItemSelector) => void;
-
-  animate?: boolean;
 
   level?: number;
 };
@@ -425,19 +400,15 @@ export const TreeNode = <Data extends { id: string }>({
 }: TreeNodeProps<Data>) => {
   const {
     getIsExpanded,
-    animate = true,
     setIsExpanded,
     selectedItemSelector,
     onSelect,
     onHover,
-    onExpandTransitionEnd,
     dropTargetItemSelector,
     renderItem,
     getItemChildren,
     isItemHidden,
   } = commonProps;
-
-  const collapsibleContentRef = useRef<HTMLDivElement>(null);
 
   const itemChildren = getItemChildren(itemData.id);
 
@@ -453,34 +424,8 @@ export const TreeNode = <Data extends { id: string }>({
 
   const shouldRenderExpandButton = isExpandable && isAlwaysExpanded === false;
 
-  const CollapsibleContent = animate
-    ? CollapsibleContentAnimated
-    : CollapsibleContentUnanimated;
-
-  const handleAnimationEnd = useCallback(
-    (event: React.AnimationEvent<HTMLDivElement>) => {
-      if (event.target === collapsibleContentRef.current) {
-        onExpandTransitionEnd?.();
-      }
-    },
-    [onExpandTransitionEnd]
-  );
-
-  // If ther's no animation, we need to manually trigger onExpandTransitionEnd
-  const prevIsExpanded = useRef(isExpanded);
-  useEffect(() => {
-    if (animate === false && isExpanded !== prevIsExpanded.current) {
-      onExpandTransitionEnd?.();
-    }
-    prevIsExpanded.current = isExpanded;
-  }, [animate, onExpandTransitionEnd, isExpanded]);
-
   return (
-    <Collapsible.Root
-      open={isExpanded}
-      onOpenChange={(isOpen) => setIsExpanded?.(itemSelector, isOpen)}
-      data-drop-target-id={itemData.id}
-    >
+    <div data-drop-target-id={itemData.id}>
       {/* optionally prevent rendering root item */}
       {itemIsHidden === false &&
         renderItem({
@@ -495,28 +440,20 @@ export const TreeNode = <Data extends { id: string }>({
           isAlwaysExpanded,
           shouldRenderExpandButton,
           isExpanded,
+          onToggle: () => setIsExpanded?.(itemSelector, isExpanded === false),
         })}
-      {isExpandable && (
-        <CollapsibleContent
-          onAnimationEnd={handleAnimationEnd}
-          ref={collapsibleContentRef}
-        >
-          {
-            // CollapsibleContent doesn't render children when collapsed.
-            // No need to worry about optimizing this.
-            itemChildren.map((child) => (
-              <TreeNode
-                key={child.id}
-                itemData={child}
-                parentSelector={itemSelector}
-                parentIsSelected={isSelected || parentIsSelected}
-                level={itemIsHidden ? level : level + 1}
-                {...commonProps}
-              />
-            ))
-          }
-        </CollapsibleContent>
-      )}
-    </Collapsible.Root>
+      {isExpandable &&
+        isExpanded &&
+        itemChildren.map((child) => (
+          <TreeNode
+            key={child.id}
+            itemData={child}
+            parentSelector={itemSelector}
+            parentIsSelected={isSelected || parentIsSelected}
+            level={itemIsHidden ? level : level + 1}
+            {...commonProps}
+          />
+        ))}
+    </div>
   );
 };
