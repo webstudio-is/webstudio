@@ -79,6 +79,9 @@ export const domainRouter = router({
         } as const;
       }
     }),
+  /**
+   * Update *.wstd.* domain
+   */
   updateProjectDomain: procedure
     .input(
       z.object({
@@ -104,6 +107,10 @@ export const domainRouter = router({
       }
     }),
 
+  /**
+   * Creates 2 entries in the database:
+   * at the "domain" table and at the "projectDomain" table
+   */
   create: procedure
     .input(
       z.object({
@@ -192,7 +199,7 @@ export const domainRouter = router({
       }
     }),
 
-  refresh: procedure
+  updateStatus: procedure
     .input(
       z.object({
         projectId: z.string(),
@@ -201,7 +208,7 @@ export const domainRouter = router({
     )
     .mutation(async ({ input, ctx }) => {
       try {
-        return await db.refresh(
+        return await db.updateStatus(
           { projectId: input.projectId, domain: input.domain },
           ctx
         );

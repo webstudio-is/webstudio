@@ -6,7 +6,7 @@ import {
   AuthorizationError,
 } from "@webstudio-is/trpc-interface/index.server";
 import { validateDomain } from "./validate";
-import { webcrypto as crypto } from "node:crypto";
+import { cnameFromUserId } from "./cname-from-user-id";
 
 const getProjectDomains = async (projectId: Project["id"]) =>
   await prisma.projectWithDomain.findMany({
@@ -50,67 +50,10 @@ export const findMany = async (
 
 type Result = { success: false; error: string } | { success: true };
 
-const cnameFromUserId = async (userId: string) => {
-  const vowels = ["a", "e", "i", "o", "u"];
-  const consonants = [
-    "b",
-    "c",
-    "d",
-    "f",
-    "g",
-    "h",
-    "j",
-    "k",
-    "l",
-    "m",
-    "n",
-    "p",
-    "q",
-    "r",
-    "s",
-    "t",
-    "v",
-    "w",
-    "x",
-    "y",
-    "z",
-  ];
-
-  const secretBuffer = await crypto.subtle.digest(
-    "SHA-256",
-    new TextEncoder().encode(userId)
-  );
-
-  let result = "";
-
-  const array = new Uint8Array(secretBuffer);
-  const wordsLength = [
-    Math.max(4, array[0] % 7),
-    Math.max(4, array[0] % 7),
-    Math.max(4, array[0] % 7),
-  ];
-
-  let wordIndex = 0;
-  let wordLength = wordsLength[wordIndex];
-
-  for (let i = 0; i < array.length; i++) {
-    result +=
-      i % 2 === 0
-        ? consonants[array[i] % consonants.length]
-        : vowels[array[i] % vowels.length];
-    if (i >= wordLength) {
-      wordIndex++;
-      if (wordIndex >= wordsLength.length) {
-        break;
-      }
-      result += "-";
-      wordLength += wordsLength[wordIndex];
-    }
-  }
-
-  return result;
-};
-
+/**
+ * Creates 2 entries in the database:
+ * at the "domain" table and at the "projectDomain" table
+ */
 export const create = async (
   props: {
     projectId: Project["id"];
@@ -188,6 +131,9 @@ export const create = async (
   return { success: true };
 };
 
+/**
+ * Verify TXT record of the domain, update domain status, start 3rd party domain initialization process
+ */
 export const verify = async (
   props: {
     projectId: Project["id"];
@@ -225,7 +171,7 @@ export const verify = async (
     },
   });
 
-  // Get domain state
+  // @todo: TXT verification and domain initialization should be implemented in the future as queue service
   const createDomainResult = await context.domain.domainTrpc.create.mutate({
     domain,
     txtRecord: projectDomain.txtRecord,
@@ -248,6 +194,9 @@ export const verify = async (
   return { success: true };
 };
 
+/**
+ * Removes projectDomain entry
+ */
 export const remove = async (
   props: {
     projectId: Project["id"];
@@ -295,7 +244,11 @@ type RefreshResult =
 const statusToStatusEnum = (status: Status): StatusEnum =>
   status.toUpperCase() as StatusEnum;
 
-export const refresh = async (
+/**
+ * Reads the status of the domain from the 3rd party provider
+ * and updates the database accordingly
+ */
+export const updateStatus = async (
   props: {
     projectId: Project["id"];
     domain: string;
@@ -320,6 +273,7 @@ export const refresh = async (
 
   const { domain } = validationResult;
 
+  // @todo: must be implemented as workflow/queue service, not as direct call
   const statusResult = await context.domain.domainTrpc.getStatus.query({
     domain,
   });

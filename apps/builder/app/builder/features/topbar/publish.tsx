@@ -141,11 +141,6 @@ const ChangeProjectDomain = (props: PublishButtonProps) => {
           <Tooltip content={`Proceed to ${publishedUrl.href}`}>
             <IconButton
               tabIndex={-1}
-              css={{
-                "&:hover": {
-                  // backgroundColor: "transparent",
-                },
-              }}
               onClick={(event) => {
                 window.open(publishedUrl.href, "_blank");
                 event.preventDefault();
@@ -240,7 +235,7 @@ const Publish = ({ projectId }: { projectId: Project["id"] }) => {
 };
 
 const Content = (props: PublishButtonProps) => {
-  const [newDomainSet, setNewDomainSet] = useState(new Set<string>());
+  const [newDomains, setNewDomains] = useState(new Set<string>());
   const {
     data: domainsResult,
     load: refreshDomainResult,
@@ -260,8 +255,7 @@ const Content = (props: PublishButtonProps) => {
           <>
             {domainsResult?.success === true && (
               <Domains
-                projectId={props.project.id}
-                newDomainSet={newDomainSet}
+                newDomains={newDomains}
                 domains={domainsResult.data}
                 refreshDomainResult={refreshDomainResult}
                 domainLoadingState={domainLoadingState}
@@ -292,7 +286,7 @@ const Content = (props: PublishButtonProps) => {
             refreshDomainResult={refreshDomainResult}
             domainLoadingState={domainLoadingState}
             onCreate={(domain) => {
-              setNewDomainSet((prev) => {
+              setNewDomains((prev) => {
                 return new Set([...prev, domain]);
               });
             }}

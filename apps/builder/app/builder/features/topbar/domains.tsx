@@ -153,26 +153,26 @@ const DomainItem = (props: {
   } = trpc.remove.useMutation();
 
   const {
-    send: refresh,
-    state: refreshState,
-    data: refreshData,
-    error: refreshSystemError,
-  } = trpc.refresh.useMutation();
+    send: updateStatus,
+    state: updateStatusState,
+    data: updateStatusData,
+    error: updateStatusError,
+  } = trpc.updateStatus.useMutation();
 
   const isRemoveInProgress =
     removeState !== "idle" || props.domainLoadingState !== "idle";
 
   const isCheckStateInProgress =
     verifyState !== "idle" ||
-    refreshState !== "idle" ||
+    updateStatusState !== "idle" ||
     props.domainLoadingState !== "idle";
 
   const status = props.projectDomain.verified
     ? (`VERIFIED_${props.projectDomain.domain.status}` as `VERIFIED_${DomainStatus}`)
     : `UNVERIFIED`;
 
-  const cnameName = getCname(props.projectDomain.domain.domain);
-  const cnameValue = `${props.projectDomain.cname}.customers.${
+  const cnameEntryName = getCname(props.projectDomain.domain.domain);
+  const cnameEntryValue = `${props.projectDomain.cname}.customers.${
     env.PUBLISHER_HOST ?? "wstd.work"
   }`;
 
@@ -191,11 +191,6 @@ const DomainItem = (props: {
           <Tooltip content={`Proceed to ${props.projectDomain.domain.domain}`}>
             <IconButton
               tabIndex={-1}
-              css={{
-                "&:hover": {
-                  // backgroundColor: "transparent",
-                },
-              }}
               onClick={(event) => {
                 const url = new URL(
                   `https://${props.projectDomain.domain.domain}`
@@ -240,18 +235,18 @@ const DomainItem = (props: {
 
       {status !== "UNVERIFIED" && (
         <>
-          {refreshData?.success === false && (
-            <Text color="destructive">{refreshData.error}</Text>
+          {updateStatusData?.success === false && (
+            <Text color="destructive">{updateStatusData.error}</Text>
           )}
-          {refreshSystemError !== undefined && (
-            <Text color="destructive">{refreshSystemError}</Text>
+          {updateStatusError !== undefined && (
+            <Text color="destructive">{updateStatusError}</Text>
           )}
           <Button
             disabled={isCheckStateInProgress}
             color="primary"
             css={{ width: "100%", flexShrink: 0, mt: theme.spacing[3] }}
             onClick={() => {
-              refresh(
+              updateStatus(
                 {
                   domain: props.projectDomain.domain.domain,
                   projectId: props.projectDomain.projectId,
@@ -365,13 +360,13 @@ const DomainItem = (props: {
           <InputEllipsis readOnly value="CNAME" />
           <InputEllipsis
             readOnly
-            value={cnameName}
-            suffix={<CopyToClipboard text={cnameName} />}
+            value={cnameEntryName}
+            suffix={<CopyToClipboard text={cnameEntryName} />}
           />
           <InputEllipsis
             readOnly
-            value={cnameValue}
-            suffix={<CopyToClipboard text={cnameValue} />}
+            value={cnameEntryValue}
+            suffix={<CopyToClipboard text={cnameEntryValue} />}
           />
 
           <InputEllipsis readOnly value="TXT" />
@@ -392,8 +387,7 @@ const DomainItem = (props: {
 };
 
 type DomainsProps = {
-  projectId: Project["id"];
-  newDomainSet: Set<string>;
+  newDomains: Set<string>;
   domains: Domain[];
   refreshDomainResult: (
     input: { projectId: Project["id"] },
@@ -403,8 +397,7 @@ type DomainsProps = {
 };
 
 export const Domains = ({
-  projectId,
-  newDomainSet,
+  newDomains,
   domains,
   refreshDomainResult,
   domainLoadingState,
@@ -415,7 +408,7 @@ export const Domains = ({
         <DomainItem
           key={projectDomain.domain.domain}
           projectDomain={projectDomain}
-          initiallyOpen={newDomainSet.has(projectDomain.domain.domain)}
+          initiallyOpen={newDomains.has(projectDomain.domain.domain)}
           refreshDomainResult={refreshDomainResult}
           domainLoadingState={domainLoadingState}
         />

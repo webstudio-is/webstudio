@@ -38,7 +38,7 @@ export const AddDomain = ({
     state,
     error: createSystemError,
   } = trpc.create.useMutation();
-  const [addState, setAddState] = useState<"initial" | "input">("initial");
+  const [isOpen, setIsOpen] = useState(false);
   const [domain, setDomain] = useState("");
   const [error, setError] = useState<string>();
 
@@ -60,7 +60,7 @@ export const AddDomain = ({
 
       refreshDomainResult({ projectId }, () => {
         setDomain("");
-        setAddState("initial");
+        setIsOpen(false);
         onCreate(domain);
       });
     });
@@ -71,9 +71,8 @@ export const AddDomain = ({
       <Flex
         css={{
           padding: theme.spacing[9],
-          paddingTop:
-            addState === "initial" ? theme.spacing[9] : theme.spacing[5],
-          paddingBottom: addState === "initial" ? 0 : theme.spacing[9],
+          paddingTop: isOpen ? theme.spacing[5] : theme.spacing[9],
+          paddingBottom: isOpen ? theme.spacing[9] : 0,
         }}
         gap={2}
         shrink={false}
@@ -81,12 +80,12 @@ export const AddDomain = ({
         onKeyDown={(event) => {
           if (event.key === "Escape") {
             setDomain("");
-            setAddState("initial");
+            setIsOpen(false);
             event.preventDefault();
           }
         }}
       >
-        {addState === "input" && (
+        {isOpen && (
           <>
             <Label htmlFor={id} sectionTitle>
               New Domain
@@ -103,7 +102,7 @@ export const AddDomain = ({
                 }
                 if (event.key === "Escape") {
                   setDomain("");
-                  setAddState("initial");
+                  setIsOpen(false);
                   event.preventDefault();
                 }
               }}
@@ -130,21 +129,21 @@ export const AddDomain = ({
 
         <Button
           disabled={state !== "idle" || domainLoadingState !== "idle"}
-          color={addState === "initial" ? "neutral" : "primary"}
+          color={isOpen ? "primary" : "neutral"}
           css={{ width: "100%", flexShrink: 0 }}
           onClick={() => {
-            if (addState === "initial") {
-              setAddState("input");
+            if (isOpen === false) {
+              setIsOpen(true);
               return;
             }
 
             handleCreate();
           }}
         >
-          {addState === "initial" ? "Add a new domain" : "Add domain"}
+          {isOpen ? "Add domain" : "Add a new domain"}
         </Button>
       </Flex>
-      {addState === "input" && <Separator css={{ mb: theme.spacing[5] }} />}
+      {isOpen && <Separator css={{ mb: theme.spacing[5] }} />}
     </>
   );
 };

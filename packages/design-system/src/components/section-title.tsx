@@ -41,11 +41,6 @@ const titleButtonLayoutStyle = css({
   boxSizing: "border-box",
   paddingLeft: theme.spacing[9],
   paddingRight: theme.spacing[6],
-  variants: {
-    // We assume that suffix is a <Button prefix={<Icon />} />
-    // (hard to support arbitrary width suffixes here, hopefully we'll never need to)
-    // hasSuffix: { true: { paddingRight: theme.spacing[16] } },
-  },
 });
 
 const labelContainerStyle = css({
@@ -133,9 +128,7 @@ export const SectionTitle = forwardRef(
               onKeyDown={handleKeyDown}
             >
               <button
-                className={titleButtonStyle({
-                  hasSuffix: suffix !== undefined,
-                })}
+                className={titleButtonStyle()}
                 data-state={state}
                 ref={ref}
                 {...props}
@@ -146,11 +139,7 @@ export const SectionTitle = forwardRef(
                 Therefore, we render the label in a layer above the SectionTitle button
               */}
               <div className={labelContainerStyle()}>
-                <div
-                  className={titleButtonLayoutStyle({
-                    hasSuffix: suffix !== undefined,
-                  })}
-                >
+                <div className={titleButtonLayoutStyle()}>
                   {children}
 
                   {finalDots.length > 0 && (
