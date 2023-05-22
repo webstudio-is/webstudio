@@ -24,7 +24,10 @@ export const loader = async ({ params, request }: LoaderArgs) => {
   if (env.RESIZE_ORIGIN !== undefined) {
     const assetUrl = `${env.ASSET_BASE_URL}${name}`;
     // @todo add secret ti avoid exploiting our server
-    return fetch(`${env.RESIZE_ORIGIN}/cdn-cgi/image/${options}/${assetUrl}`);
+    const imageUrl = `${env.RESIZE_ORIGIN}/cdn-cgi/image/${options}/${assetUrl}`;
+    const newRequest = request.clone();
+    newRequest.headers.set("Access-Control-Allow-Origin", url.origin);
+    return fetch(imageUrl, newRequest);
   }
 
   if (env.FILE_UPLOAD_PATH === undefined) {
