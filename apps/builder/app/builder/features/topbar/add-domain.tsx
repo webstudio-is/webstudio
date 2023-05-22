@@ -52,7 +52,7 @@ export const AddDomain = ({
       return;
     }
 
-    create({ domain, projectId }, (data) => {
+    create({ domain: validationResult.domain, projectId }, (data) => {
       if (data.success === false) {
         setError(data.error);
         return;
@@ -61,7 +61,7 @@ export const AddDomain = ({
       refreshDomainResult({ projectId }, () => {
         setDomain("");
         setIsOpen(false);
-        onCreate(domain);
+        onCreate(validationResult.domain);
       });
     });
   };

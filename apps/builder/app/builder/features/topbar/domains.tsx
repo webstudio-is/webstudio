@@ -176,6 +176,11 @@ const DomainItem = (props: {
     env.PUBLISHER_HOST ?? "wstd.work"
   }`;
 
+  const txtEntryName =
+    cnameEntryName === "@"
+      ? "__webstudio_is"
+      : `__webstudio_is.${cnameEntryName}`;
+
   const { isVerifiedActive, text } = getStatusText({
     projectDomain: props.projectDomain,
   });
@@ -220,10 +225,12 @@ const DomainItem = (props: {
                   domain: props.projectDomain.domain.domain,
                   projectId: props.projectDomain.projectId,
                 },
-                () => {
-                  props.refreshDomainResult({
-                    projectId: props.projectDomain.projectId,
-                  });
+                (verifyResponse) => {
+                  if (verifyResponse.success) {
+                    props.refreshDomainResult({
+                      projectId: props.projectDomain.projectId,
+                    });
+                  }
                 }
               );
             }}
@@ -372,8 +379,8 @@ const DomainItem = (props: {
           <InputEllipsis readOnly value="TXT" />
           <InputEllipsis
             readOnly
-            value="__webstudio_is"
-            suffix={<CopyToClipboard text="__webstudio_is" />}
+            value={txtEntryName}
+            suffix={<CopyToClipboard text={txtEntryName} />}
           />
           <InputEllipsis
             readOnly
