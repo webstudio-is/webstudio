@@ -25,9 +25,9 @@ export const loader = async ({ params, request }: LoaderArgs) => {
     const assetUrl = `${env.ASSET_BASE_URL}${name}`;
     // @todo add secret ti avoid exploiting our server
     const imageUrl = `${env.RESIZE_ORIGIN}/cdn-cgi/image/${options}/${assetUrl}`;
-    const newRequest = request.clone();
-    newRequest.headers.set("Access-Control-Allow-Origin", url.origin);
-    return fetch(imageUrl, newRequest);
+    const response = await fetch(imageUrl, request);
+    response.headers.set("Access-Control-Allow-Origin", url.origin);
+    return response;
   }
 
   if (env.FILE_UPLOAD_PATH === undefined) {
