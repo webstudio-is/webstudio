@@ -1,4 +1,4 @@
-import { describe, test, expect } from "@jest/globals";
+import { describe, expect, test } from "@jest/globals";
 import { parseCss } from "./parse-css";
 
 describe("Parse CSS", () => {
@@ -21,7 +21,7 @@ describe("Parse CSS", () => {
     `);
   });
 
-  test.only("parses supported shorthand values", () => {
+  test("parses supported shorthand values", () => {
     expect(
       parseCss(
         `.test { background: #ff0000 linear-gradient(180deg, #11181C 0%, rgba(17, 24, 28, 0) 36.09%), #EBFFFC; }`

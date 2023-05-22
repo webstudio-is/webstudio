@@ -1,10 +1,10 @@
+import { colord } from "colord";
 import * as csstree from "css-tree";
 import hyphenate from "hyphenate-style-name";
-import type { StyleProperty, StyleValue, Unit } from "./schema";
-import { units } from "./__generated__/units";
-import { keywordValues } from "./__generated__/keyword-values";
 import warnOnce from "warn-once";
-import { colord } from "colord";
+import { keywordValues } from "./__generated__/keyword-values";
+import { units } from "./__generated__/units";
+import type { StyleProperty, StyleValue, Unit } from "./schema";
 
 const cssTryParseValue = (input: string) => {
   try {

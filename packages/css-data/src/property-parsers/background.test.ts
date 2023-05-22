@@ -1,4 +1,4 @@
-import { describe, test, expect } from "@jest/globals";
+import { describe, expect, test } from "@jest/globals";
 
 import { parseBackground } from "./background";
 
@@ -170,7 +170,7 @@ describe("parseBackground", () => {
     `);
   });
 
-  test.only("parse bad background", () => {
+  test("parse bad background", () => {
     expect(parseBackground("linear-gradient(180deg,")).toMatchInlineSnapshot(`
       {
         "backgroundColor": undefined,

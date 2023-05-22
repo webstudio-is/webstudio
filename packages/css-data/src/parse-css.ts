@@ -2,7 +2,7 @@ import * as csstree from "css-tree";
 import { parseCssValue as parseCssValueLonghand } from "./parse-css-value";
 import * as parsers from "./property-parsers/parsers";
 import * as toLonghand from "./property-parsers/to-longhand";
-import { type StyleProperty, type Style as S, StyleValue } from "./schema";
+import { StyleValue, type Style as S, type StyleProperty } from "./schema";
 
 type Selector = string;
 type Style = {
