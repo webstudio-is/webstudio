@@ -33,6 +33,7 @@ const ExecutableHtml = (props: ChildProps) => {
       return;
     }
     // the trick to execute inserted scripts
+    // https://ghinda.net/article/script-tags
     const range = document.createRange();
     range.setStart(container, 0);
     const fragment = range.createContextualFragment(code);
