@@ -1,8 +1,7 @@
 import { createCssEngine, type TransformValue } from "@webstudio-is/css-engine";
 import type { Asset, Assets } from "@webstudio-is/asset-uploader";
 import type { Build } from "@webstudio-is/project-build";
-import { getComponentNames } from "../components/components-utils";
-import { getComponentMeta } from "../components";
+import type { WsComponentMeta } from "../components/component-meta";
 import { idAttribute } from "../tree";
 import { addGlobalRules } from "./global-rules";
 import { getPresetStyleRules, getStyleRules } from "./style-rules";
@@ -12,6 +11,7 @@ type Data = {
   breakpoints?: Build["breakpoints"];
   styles?: Build["styles"];
   styleSourceSelections?: Build["styleSourceSelections"];
+  componentMetas: Map<string, WsComponentMeta>;
 };
 
 type CssOptions = {
@@ -61,9 +61,8 @@ export const generateCssText = (data: Data, options: CssOptions) => {
     engine.addMediaRule(breakpoint.id, breakpoint);
   }
 
-  for (const component of getComponentNames()) {
-    const meta = getComponentMeta(component);
-    const presetStyle = meta?.presetStyle;
+  for (const [component, meta] of data.componentMetas) {
+    const presetStyle = meta.presetStyle;
     if (presetStyle === undefined) {
       continue;
     }

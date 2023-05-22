@@ -5,8 +5,6 @@ import { useStore } from "@nanostores/react";
 import type { Assets } from "@webstudio-is/asset-uploader";
 import {
   collapsedAttribute,
-  getComponentMeta,
-  getComponentNames,
   idAttribute,
   addGlobalRules,
   createImageValueTransformer,
@@ -23,6 +21,7 @@ import {
   assetsStore,
   breakpointsStore,
   isPreviewModeStore,
+  registeredComponentMetasStore,
   selectedInstanceSelectorStore,
   selectedStyleSourceSelectorStore,
 } from "~/shared/nano-states";
@@ -117,6 +116,7 @@ export const useManageDesignModeStyles = () => {
 export const GlobalStyles = () => {
   const breakpoints = useStore(breakpointsStore);
   const assets = useStore(assetsStore);
+  const metas = useStore(registeredComponentMetasStore);
 
   useIsomorphicLayoutEffect(() => {
     const sortedBreakpoints = Array.from(breakpoints.values()).sort(
@@ -140,9 +140,8 @@ export const GlobalStyles = () => {
 
   useIsomorphicLayoutEffect(() => {
     presetStylesEngine.clear();
-    for (const component of getComponentNames()) {
-      const meta = getComponentMeta(component);
-      const presetStyle = meta?.presetStyle;
+    for (const [component, meta] of metas) {
+      const presetStyle = meta.presetStyle;
       if (presetStyle === undefined) {
         continue;
       }
@@ -152,7 +151,7 @@ export const GlobalStyles = () => {
       }
     }
     presetStylesEngine.render();
-  }, []);
+  }, [metas]);
 
   return null;
 };

@@ -1,5 +1,23 @@
 import { atom } from "nanostores";
-import type { WsComponentPropsMeta } from "@webstudio-is/react-sdk";
+import type {
+  WsComponentMeta,
+  WsComponentPropsMeta,
+} from "@webstudio-is/react-sdk";
+
+export const registeredComponentMetasStore = atom(
+  new Map<string, WsComponentMeta>()
+);
+
+export const registerComponentMetas = (
+  newMetas: Record<string, WsComponentMeta>
+) => {
+  const prevMetas = registeredComponentMetasStore.get();
+  const nextMetas = new Map(prevMetas);
+  for (const [componentName, meta] of Object.entries(newMetas)) {
+    nextMetas.set(componentName, meta);
+  }
+  registeredComponentMetasStore.set(nextMetas);
+};
 
 export const registeredComponentPropsMetasStore = atom(
   new Map<string, WsComponentPropsMeta>()
@@ -28,5 +46,6 @@ export const registerComponentPropsMetas = (
 };
 
 export const synchronizedComponentsMetaStores = [
+  ["registeredComponentMetas", registeredComponentMetasStore],
   ["registeredComponentPropsMetas", registeredComponentPropsMetasStore],
 ] as const;
