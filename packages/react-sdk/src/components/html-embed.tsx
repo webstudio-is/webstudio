@@ -10,7 +10,7 @@ import { ReactSdkContext } from "../context";
 
 type Props = {
   code: string;
-  executeScriptInCanvas: boolean;
+  executeScriptOnCanvas: boolean;
 };
 
 type ChildProps = {
@@ -72,7 +72,7 @@ const Placeholder = (props: ChildProps) => {
   const { code, innerRef, ...rest } = props;
   return (
     <div ref={innerRef} {...rest} style={{ padding: "20px" }}>
-      {'Paste html into "Code" prop'}
+      {'Open "Properties" panel to insert HTML code'}
     </div>
   );
 };
