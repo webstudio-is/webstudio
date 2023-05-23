@@ -10,7 +10,7 @@ import { ReactSdkContext } from "../context";
 
 type Props = {
   code: string;
-  executeScriptInCanvas: boolean;
+  executeScriptOnCanvas: boolean;
 };
 
 type ChildProps = {
@@ -72,25 +72,25 @@ const Placeholder = (props: ChildProps) => {
   const { code, innerRef, ...rest } = props;
   return (
     <div ref={innerRef} {...rest} style={{ padding: "20px" }}>
-      {'Paste html into "Code" prop'}
+      {'Open "Properties" panel to insert HTML code'}
     </div>
   );
 };
 
-export const Html = forwardRef<HTMLDivElement, Props>((props, ref) => {
+export const HtmlEmbed = forwardRef<HTMLDivElement, Props>((props, ref) => {
   const { renderer } = useContext(ReactSdkContext);
-  const { code, executeScriptInCanvas, ...rest } = props;
+  const { code, executeScriptOnCanvas, ...rest } = props;
 
   // code can be actually undefined when prop is not provided
   if (code === undefined || code.trim().length === 0) {
     return <Placeholder innerRef={ref} {...rest} />;
   }
 
-  if (renderer === "canvas" && executeScriptInCanvas === true) {
+  if (renderer === "canvas" && executeScriptOnCanvas === true) {
     return <ExecutableHtml innerRef={ref} code={code} {...rest} />;
   }
 
   return <InnerHtml innerRef={ref} code={code} {...rest} />;
 });
 
-Html.displayName = "Html";
+HtmlEmbed.displayName = "HtmlEmbed";

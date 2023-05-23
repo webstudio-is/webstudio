@@ -1,12 +1,12 @@
-import { CodeIcon } from "@webstudio-is/icons/svg";
+import { CodeTextIcon } from "@webstudio-is/icons/svg";
 import {
   defaultStates,
   type PresetStyle,
   type WsComponentMeta,
   type WsComponentPropsMeta,
 } from "./component-meta";
-import { type defaultTag, displayVarNamespace } from "./code";
-import { props } from "./__generated__/code.props";
+import { type defaultTag, displayVarNamespace } from "./code-text";
+import { props } from "./__generated__/code-text.props";
 import { code } from "../css/normalize";
 
 const presetStyle = {
@@ -38,8 +38,8 @@ const presetStyle = {
 export const meta: WsComponentMeta = {
   category: "general",
   type: "rich-text",
-  label: "Code",
-  icon: CodeIcon,
+  label: "Code Text",
+  icon: CodeTextIcon,
   states: defaultStates,
   presetStyle,
   children: [{ type: "text", value: "Code you can edit" }],
