@@ -38,7 +38,10 @@ export const loader = async ({ params, request }: LoaderArgs) => {
     )
   );
 
-  if (request.headers.get("origin") !== url.origin) {
+  // Allow direct image access, and from the same origin
+  const refererRawUrl = request.headers.get("referer");
+  const refererUrl = refererRawUrl === null ? url : new URL(refererRawUrl);
+  if (refererUrl.origin !== url.origin) {
     throw new Response("Forbidden", {
       status: 403,
     });
