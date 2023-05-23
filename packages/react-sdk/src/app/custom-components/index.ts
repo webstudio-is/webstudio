@@ -16,7 +16,10 @@ export const customComponents = {
 };
 
 export const customComponentPropsMetas: Record<string, WsComponentPropsMeta> = {
-  Image: { props: imageProps },
+  Image: {
+    props: imageProps,
+    initialProps: ["src", "width", "height", "alt", "loading"],
+  },
   Form: formPropsMeta,
 };
 
