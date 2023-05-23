@@ -16,15 +16,29 @@ export const loader = async ({ params, request }: LoaderArgs) => {
   const width = url.searchParams.get("width");
   const quality = url.searchParams.get("quality");
   const format = url.searchParams.get("format");
+
   if (width === null || quality === null || format === null) {
     throw Error("Options are invalid");
   }
+
   const options = `width=${width},quality=${quality},format=${format}`;
+
+  // Allow direct image access, and from the same origin
+  const refererRawUrl = request.headers.get("referer");
+  const refererUrl = refererRawUrl === null ? url : new URL(refererRawUrl);
+  if (refererUrl.origin !== url.origin) {
+    throw new Response("Forbidden", {
+      status: 403,
+    });
+  }
 
   if (env.RESIZE_ORIGIN !== undefined) {
     const assetUrl = `${env.ASSET_BASE_URL}${name}`;
     // @todo add secret ti avoid exploiting our server
-    return fetch(`${env.RESIZE_ORIGIN}/cdn-cgi/image/${options}/${assetUrl}`);
+    const imageUrl = `${env.RESIZE_ORIGIN}/cdn-cgi/image/${options}/${assetUrl}`;
+    const response = await fetch(imageUrl, request);
+    response.headers.set("Access-Control-Allow-Origin", url.origin);
+    return response;
   }
 
   if (env.FILE_UPLOAD_PATH === undefined) {
