@@ -1,9 +1,8 @@
 import type { InvalidValue, RgbValue } from "@webstudio-is/css-data";
+import { parseCssValue, parseBackground } from "@webstudio-is/css-data";
 import { TextArea, theme } from "@webstudio-is/design-system";
 import { useEffect, useRef, useState } from "react";
-import { parseCssValue } from "../../shared/parse-css-value";
 import type { ControlProps } from "../../style-sections";
-import { parseBackground } from "./background-parser";
 
 type IntermediateValue = {
   type: "intermediate";
