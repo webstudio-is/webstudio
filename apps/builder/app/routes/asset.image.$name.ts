@@ -31,7 +31,7 @@ export const loader = async ({ params, request }: LoaderArgs) => {
         Origin: request.headers.get("Origin"),
         referer: request.headers.get("referer"),
         referrer: request.headers.get("referrer"),
-        keys: request.headers.keys(),
+        keys: [...request.headers.keys()],
       },
       null,
       2
