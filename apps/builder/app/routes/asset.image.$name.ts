@@ -16,10 +16,18 @@ export const loader = async ({ params, request }: LoaderArgs) => {
   const width = url.searchParams.get("width");
   const quality = url.searchParams.get("quality");
   const format = url.searchParams.get("format");
+
   if (width === null || quality === null || format === null) {
     throw Error("Options are invalid");
   }
+
   const options = `width=${width},quality=${quality},format=${format}`;
+
+  if (request.headers.get("origin") !== url.origin) {
+    throw new Response("Forbidden", {
+      status: 403,
+    });
+  }
 
   if (env.RESIZE_ORIGIN !== undefined) {
     const assetUrl = `${env.ASSET_BASE_URL}${name}`;
