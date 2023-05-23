@@ -1,4 +1,4 @@
-import { BoxIcon } from "@webstudio-is/icons";
+import { BoxIcon } from "@webstudio-is/icons/svg";
 import type { WsComponentMeta, WsComponentPropsMeta } from "./component-meta";
 import { props } from "./__generated__/tabs-trigger.props";
 import type { Style } from "@webstudio-is/css-data";
@@ -13,7 +13,7 @@ export const meta: WsComponentMeta = {
   category: "advanced",
   type: "container",
   label: "Tabs Trigger",
-  Icon: BoxIcon,
+  icon: BoxIcon,
   presetStyle,
   states: [
     {

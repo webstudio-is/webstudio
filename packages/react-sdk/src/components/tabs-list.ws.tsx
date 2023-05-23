@@ -1,4 +1,4 @@
-import { BoxIcon } from "@webstudio-is/icons";
+import { BoxIcon } from "@webstudio-is/icons/svg";
 import type { WsComponentMeta, WsComponentPropsMeta } from "./component-meta";
 import { props } from "./__generated__/tabs-list.props";
 import type { Style } from "@webstudio-is/css-data";
@@ -10,10 +10,9 @@ const presetStyle = {
 } as const satisfies Record<typeof defaultTag, Style>;
 
 export const meta: WsComponentMeta = {
-  category: "advanced",
   type: "container",
   label: "Tabs List",
-  Icon: BoxIcon,
+  icon: BoxIcon,
   presetStyle,
   states: [
     { selector: "[data-orientation=vertical]", label: "Vertical orientation" },
