@@ -221,7 +221,7 @@ export const PropsPanel = (props: PropsPanelProps) => {
       )}
 
       <CollapsibleSectionWithAddButton
-        label="Properties"
+        label="Custom Properties"
         onAdd={() => setAddingProp(true)}
         hasItems={hasAddedProps}
       >
