@@ -1,0 +1,18 @@
+diff --git a/package.json b/package.json
+index 934e699f19c6f1a265c1ef29121c6dde92cd25ed..a54e28a44de8e1adcf775be9564c2ad8b15b5c98 100644
+--- a/package.json
++++ b/package.json
+@@ -18,11 +18,11 @@
+     "validation"
+   ],
+   "type": "module",
+-  "module": "./lib/index.js",
++  "module": "./dist/csstree.esm.js",
+   "main": "./cjs/index.cjs",
+   "exports": {
+     ".": {
+-      "import": "./lib/index.js",
++      "import": "./dist/csstree.esm.js",
+       "require": "./cjs/index.cjs"
+     },
+     "./dist/*": "./dist/*.js",

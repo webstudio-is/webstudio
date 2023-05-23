@@ -4,7 +4,7 @@ import { useState, useEffect, useRef } from "react";
 import { useModifierKeys } from "../../shared/modifier-keys";
 import type { StyleUpdateOptions } from "../../shared/use-style-data";
 import type { SpaceStyleProperty, HoverTagret } from "./types";
-import { isValid } from "../../shared/parse-css-value";
+import { isValidDeclaration } from "@webstudio-is/css-data";
 import { parseIntermediateOrInvalidValue } from "../../shared/css-value-input/parse-intermediate-or-invalid-value";
 import { toValue } from "@webstudio-is/css-engine";
 import type { CssValueInputValue } from "../../shared/css-value-input/css-value-input";
@@ -71,7 +71,7 @@ export const useScrub = (props: {
         unit: unitRef.current,
       } as const;
 
-      if (isValid(property, toValue(value)) === false) {
+      if (isValidDeclaration(property, toValue(value)) === false) {
         value = parseIntermediateOrInvalidValue(property, {
           type: "intermediate",
           value: `${value.value}`,
@@ -81,7 +81,7 @@ export const useScrub = (props: {
         // In case of negative values for some properties, we might end up with invalid value.
         if (value.type === "invalid") {
           // Try return unitless
-          if (isValid(property, "0")) {
+          if (isValidDeclaration(property, "0")) {
             value = {
               type: "unit",
               unit: "number",

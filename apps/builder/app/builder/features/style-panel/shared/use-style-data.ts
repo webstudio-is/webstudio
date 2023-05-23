@@ -18,7 +18,7 @@ import {
 } from "~/shared/nano-states";
 import { selectedBreakpointStore } from "~/shared/nano-states";
 // @todo: must be removed, now it's only for compatibility with existing code
-import { parseCssValue } from "./parse-css-value";
+import { parseCssValue } from "@webstudio-is/css-data";
 import { useStyleInfo } from "./style-info";
 
 export type StyleUpdate =

@@ -1,6 +1,6 @@
-import { describe, test, expect } from "@jest/globals";
+import { describe, expect, test } from "@jest/globals";
 
-import { parseBackground } from "./background-parser";
+import { parseBackground } from "./background";
 
 describe("parseBackground", () => {
   test("parse background from figma", () => {
@@ -176,7 +176,7 @@ describe("parseBackground", () => {
         "backgroundColor": undefined,
         "backgroundImage": {
           "type": "invalid",
-          "value": "linear-gradient(180deg,",
+          "value": "linear-gradient(180deg,)",
         },
       }
     `);

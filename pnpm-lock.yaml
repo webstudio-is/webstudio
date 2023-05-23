@@ -9,6 +9,9 @@ patchedDependencies:
   '@stitches/react@1.3.1-1':
     hash: knml42mpr6mlzseo3d6gjljiq4
     path: patches/@stitches__react@1.3.1-1.patch
+  css-tree@2.3.1:
+    hash: epgcmebti7rfrc2ej4odb3t4jy
+    path: patches/css-tree@2.3.1.patch
 
 importers:
 
@@ -18,8 +21,8 @@ importers:
         specifier: ^6.5.16
         version: 6.5.16(@babel/core@7.21.0)(react-dom@18.2.0)(react@18.2.0)(require-from-string@2.0.2)(type-fest@3.7.1)(typescript@5.0.3)
       '@types/css-tree':
-        specifier: ^2.0.0
-        version: 2.0.0
+        specifier: ^2.3.1
+        version: 2.3.1
       '@webstudio-is/eslint-config-custom':
         specifier: workspace:^
         version: link:packages/eslint-config-custom
@@ -158,9 +161,6 @@ importers:
       colord:
         specifier: ^2.9.3
         version: 2.9.3
-      css-tree:
-        specifier: ^2.3.1
-        version: 2.3.1
       debug:
         specifier: ^4.3.4
         version: 4.3.4
@@ -285,9 +285,6 @@ importers:
       '@storybook/react':
         specifier: ^6.5.16
         version: 6.5.16(@babel/core@7.21.0)(react-dom@18.2.0)(react@18.2.0)(require-from-string@2.0.2)(type-fest@3.7.1)(typescript@5.0.3)
-      '@types/css-tree':
-        specifier: ^2.0.0
-        version: 2.0.0
       '@types/hyphenate-style-name':
         specifier: ^1.0.0
         version: 1.0.0
@@ -433,10 +430,26 @@ importers:
         version: 5.0.3
 
   packages/css-data:
+    dependencies:
+      colord:
+        specifier: ^2.9.3
+        version: 2.9.3
+      css-tree:
+        specifier: ^2.3.1
+        version: 2.3.1(patch_hash=epgcmebti7rfrc2ej4odb3t4jy)
+      hyphenate-style-name:
+        specifier: ^1.0.4
+        version: 1.0.4
+      warn-once:
+        specifier: ^0.1.1
+        version: 0.1.1
     devDependencies:
       '@types/css-tree':
-        specifier: ^2.0.0
-        version: 2.0.0
+        specifier: ^2.3.1
+        version: 2.3.1
+      '@webstudio-is/jest-config':
+        specifier: workspace:^
+        version: link:../jest-config
       '@webstudio-is/scripts':
         specifier: workspace:^
         version: link:../scripts
@@ -446,12 +459,12 @@ importers:
       camelcase:
         specifier: ^6.3.0
         version: 6.3.0
-      css-tree:
-        specifier: ^2.3.1
-        version: 2.3.1
       html-tags:
         specifier: ^3.2.0
         version: 3.2.0
+      jest:
+        specifier: ^29.3.1
+        version: 29.3.1(@types/node@18.11.18)
       mdn-data:
         specifier: 2.0.30
         version: 2.0.30
@@ -8302,7 +8315,7 @@ packages:
     resolution: {integrity: sha512-0e4B41q+GnS8TI+SWHQw78ziW6V07Li2TMLS8FwbvKOTIJL0ua1Sat1AI0AFAjHlAePz9b+1VtyJzv1516edJw==}
     hasBin: true
     dependencies:
-      css-tree: 2.3.1
+      css-tree: 2.3.1(patch_hash=epgcmebti7rfrc2ej4odb3t4jy)
       svgo: 3.0.2
     dev: true
 
@@ -8417,8 +8430,8 @@ packages:
   /@types/cookie@0.4.1:
     resolution: {integrity: sha512-XW/Aa8APYr6jSVVA1y/DEIZX0/GMKLEVekNG727R8cs56ahETkRAy/3DR7+fJyh7oUgGwNQaRfXCun0+KbWY7Q==}
 
-  /@types/css-tree@2.0.0:
-    resolution: {integrity: sha512-mY2sXRLBnUPMYw6mkOT+6dABeaNxAEKZz6scE9kQPNJx8fKe1fOsm8Honl7+xFYe6TKX8WNk2+7oMp2vBArJ9Q==}
+  /@types/css-tree@2.3.1:
+    resolution: {integrity: sha512-3m636Jz4d9d+lHVMp6FNLsUWQrfOx1xpm1SBxPbQYSNNgXMe+XswcsDeo1ldyULiuzYyWKk1kmvkLTgNq+215Q==}
     dev: true
 
   /@types/debug@4.1.7:
@@ -10837,12 +10850,13 @@ packages:
       source-map-js: 1.0.2
     dev: true
 
-  /css-tree@2.3.1:
+  /css-tree@2.3.1(patch_hash=epgcmebti7rfrc2ej4odb3t4jy):
     resolution: {integrity: sha512-6Fv1DV/TYw//QF5IzQdqsNDjx/wc8TrMBZsqjL9eW01tWb7R7k/mq+/VXfJCl7SoD5emsJop9cOByJZfs8hYIw==}
     engines: {node: ^10 || ^12.20.0 || ^14.13.0 || >=15.0.0}
     dependencies:
       mdn-data: 2.0.30
       source-map-js: 1.0.2
+    patched: true
 
   /css-what@5.1.0:
     resolution: {integrity: sha512-arSMRWIIFY0hV8pIxZMEfmMI47Wj3R/aWpZDDxWYCPEiOMv6tfOrnpDtgxBYPEQD4V0Y/958+1TdC3iWTFcUPw==}
@@ -18647,7 +18661,7 @@ packages:
       '@trysound/sax': 0.2.0
       commander: 7.2.0
       css-select: 5.1.0
-      css-tree: 2.3.1
+      css-tree: 2.3.1(patch_hash=epgcmebti7rfrc2ej4odb3t4jy)
       csso: 5.0.5
       picocolors: 1.0.0
     dev: true

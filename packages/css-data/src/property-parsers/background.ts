@@ -1,12 +1,11 @@
 import * as csstree from "css-tree";
-import { colord } from "colord";
-import { parseCssValue } from "../../shared/parse-css-value";
+import { parseCssValue } from "../parse-css-value";
 import type {
   InvalidValue,
   LayersValue,
   RgbValue,
   UnparsedValue,
-} from "@webstudio-is/css-data";
+} from "../schema";
 
 export const gradientNames = [
   "conic-gradient",
@@ -22,6 +21,28 @@ export const parseBackground = (
 ): {
   backgroundImage: LayersValue | InvalidValue;
   backgroundColor: RgbValue | undefined;
+} => {
+  const { backgroundImage, backgroundColor: backgroundColorRaw } =
+    backgroundToLonghand(background);
+
+  const backgroundColor = backgroundColorRaw
+    ? (parseCssValue("backgroundColor", backgroundColorRaw) as RgbValue)
+    : undefined;
+
+  return {
+    backgroundImage: parseBackgroundImage(backgroundImage),
+    backgroundColor:
+      backgroundColor && backgroundColor.type === "rgb"
+        ? backgroundColor
+        : undefined,
+  };
+};
+
+export const backgroundToLonghand = (
+  background: string
+): {
+  backgroundImage: string[];
+  backgroundColor: string | undefined;
 } => {
   const layers: string[] = [];
 
@@ -77,6 +98,15 @@ export const parseBackground = (
     },
   });
 
+  return {
+    backgroundImage: layers,
+    backgroundColor: backgroundColorRaw,
+  };
+};
+
+export const parseBackgroundImage = (
+  layers: string[]
+): LayersValue | InvalidValue => {
   const backgroundImages: UnparsedValue[] = [];
 
   for (const layer of layers) {
@@ -96,28 +126,7 @@ export const parseBackground = (
     backgroundImages.push(layerStyle);
   }
 
-  let backgroundColor: RgbValue | undefined;
-
-  if (backgroundColorRaw !== undefined) {
-    const colordValue = colord(backgroundColorRaw);
-
-    if (colordValue.isValid()) {
-      const rgb = colordValue.toRgb();
-      backgroundColor = {
-        type: "rgb",
-        r: rgb.r,
-        g: rgb.g,
-        b: rgb.b,
-        alpha: rgb.a ?? 1,
-      };
-    }
-  }
-
-  return {
-    backgroundImage:
-      backgroundImages.length > 0
-        ? { type: "layers", value: backgroundImages }
-        : { type: "invalid", value: background },
-    backgroundColor,
-  };
+  return backgroundImages.length > 0
+    ? { type: "layers", value: backgroundImages }
+    : { type: "invalid", value: layers.join(",") };
 };

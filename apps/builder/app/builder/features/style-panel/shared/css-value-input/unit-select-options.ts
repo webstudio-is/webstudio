@@ -1,7 +1,11 @@
 import type { CssValueInputValue } from "./css-value-input";
-import { isValid } from "../parse-css-value";
 import { toPascalCase } from "../keyword-utils";
-import { keywordValues, properties, units } from "@webstudio-is/css-data";
+import {
+  keywordValues,
+  properties,
+  units,
+  isValidDeclaration,
+} from "@webstudio-is/css-data";
 import type { UnitOption } from "./unit-select";
 
 // To make sorting stable
@@ -62,7 +66,7 @@ export const buildOptions = (
   // Special case for 0, which is often used as a unitless value
   const showUnitless =
     value.type === "unit" || value.type === "intermediate"
-      ? isValid(property, `${value.value}`)
+      ? isValidDeclaration(property, `${value.value}`)
       : false;
 
   if (
