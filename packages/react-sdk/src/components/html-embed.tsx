@@ -77,7 +77,7 @@ const Placeholder = (props: ChildProps) => {
   );
 };
 
-export const Html = forwardRef<HTMLDivElement, Props>((props, ref) => {
+export const HtmlEmbed = forwardRef<HTMLDivElement, Props>((props, ref) => {
   const { renderer } = useContext(ReactSdkContext);
   const { code, executeScriptInCanvas, ...rest } = props;
 
@@ -93,4 +93,4 @@ export const Html = forwardRef<HTMLDivElement, Props>((props, ref) => {
   return <InnerHtml innerRef={ref} code={code} {...rest} />;
 });
 
-Html.displayName = "Html";
+HtmlEmbed.displayName = "HtmlEmbed";

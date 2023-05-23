@@ -19,7 +19,7 @@ type Props = Omit<ComponentProps<typeof defaultTag>, "inline"> & {
   meta?: string;
 };
 
-export const Code = forwardRef<ElementRef<typeof defaultTag>, Props>(
+export const CodeText = forwardRef<ElementRef<typeof defaultTag>, Props>(
   ({ inline = false, ...props }, ref) => {
     // @todo in the future we should expose the inline prop a an attribute
     // and define the display style in `presetStyle` in meta.
@@ -28,4 +28,4 @@ export const Code = forwardRef<ElementRef<typeof defaultTag>, Props>(
   }
 );
 
-Code.displayName = "Code";
+CodeText.displayName = "CodeText";

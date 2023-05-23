@@ -7,7 +7,7 @@
  */
 export { Slot } from "./slot";
 export { Fragment } from "./fragment";
-export { Html } from "./html";
+export { HtmlEmbed } from "./html-embed";
 export { Body } from "./body";
 export { Box } from "./box";
 export { TextBlock } from "./text-block";
@@ -29,7 +29,7 @@ export { Blockquote } from "./blockquote";
 export { List } from "./list";
 export { ListItem } from "./list-item";
 export { Separator } from "./separator";
-export { Code } from "./code";
+export { CodeText } from "./code-text";
 export { Label } from "./label";
 export { SuccessMessage } from "./success-message";
 export { ErrorMessage } from "./error-message";
