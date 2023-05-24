@@ -21,7 +21,7 @@ export const componentCategories = [
   "typography",
   "media",
   "forms",
-  "advanced",
+  "Radix UI",
 ] as const;
 
 export const stateCategories = ["states", "component-states"] as const;

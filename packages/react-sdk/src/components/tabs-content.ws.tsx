@@ -1,13 +1,16 @@
 import { BoxIcon } from "@webstudio-is/icons/svg";
-import type { WsComponentMeta, WsComponentPropsMeta } from "./component-meta";
+import type {
+  PresetStyle,
+  WsComponentMeta,
+  WsComponentPropsMeta,
+} from "./component-meta";
 import { props } from "./__generated__/tabs-content.props";
-import type { Style } from "@webstudio-is/css-data";
 import { div } from "../css/normalize";
 import { defaultTag } from "./tabs-content";
 
 const presetStyle = {
   div,
-} as const satisfies Record<typeof defaultTag, Style>;
+} satisfies PresetStyle<typeof defaultTag>;
 
 export const meta: WsComponentMeta = {
   type: "container",

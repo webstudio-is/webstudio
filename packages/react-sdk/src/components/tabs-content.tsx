@@ -9,7 +9,7 @@ export const TabsContent = forwardRef<
   Omit<TabsContentProps, "value"> & {
     value?: TabsContentProps["value"];
   }
->(({ value = "tab", children, ...props }, ref) => (
+>(({ value = "tab", ...props }, ref) => (
   <Content value={value} {...props} ref={ref} />
 ));
 

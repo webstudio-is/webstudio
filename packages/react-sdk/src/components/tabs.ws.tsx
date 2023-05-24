@@ -1,26 +1,29 @@
 import { BoxIcon } from "@webstudio-is/icons/svg";
-import type { WsComponentMeta, WsComponentPropsMeta } from "./component-meta";
+import type {
+  PresetStyle,
+  WsComponentMeta,
+  WsComponentPropsMeta,
+} from "./component-meta";
 import { props } from "./__generated__/tabs.props";
-import type { Style } from "@webstudio-is/css-data";
 import { div } from "../css/normalize";
 import type { defaultTag } from "./tabs";
 
 const presetStyle = {
-  div: {
+  div: [
     ...div,
-    display: {
-      type: "keyword",
-      value: "flex",
+    {
+      property: "display",
+      value: { type: "keyword", value: "flex" },
     },
-    flexDirection: {
-      type: "keyword",
-      value: "column",
+    {
+      property: "flexDirection",
+      value: { type: "keyword", value: "column" },
     },
-  },
-} as const satisfies Record<typeof defaultTag, Style>;
+  ],
+} satisfies PresetStyle<typeof defaultTag>;
 
 export const meta: WsComponentMeta = {
-  category: "advanced",
+  category: "Radix UI",
   type: "container",
   label: "Tabs",
   icon: BoxIcon,
@@ -32,8 +35,50 @@ export const meta: WsComponentMeta = {
       label: "Horizontal orientation",
     },
   ],
-  // @todo needs TreeTemplate data structure
-  children: [],
+  children: [
+    {
+      type: "instance",
+      component: "TabsList",
+      children: [
+        {
+          type: "instance",
+          component: "TabsTrigger",
+          props: [{ type: "string", name: "value", value: "tab1" }],
+          children: [{ type: "text", value: "One" }],
+        },
+        {
+          type: "instance",
+          component: "TabsTrigger",
+          props: [{ type: "string", name: "value", value: "tab2" }],
+          children: [{ type: "text", value: "Two" }],
+        },
+        {
+          type: "instance",
+          component: "TabsTrigger",
+          props: [{ type: "string", name: "value", value: "tab3" }],
+          children: [{ type: "text", value: "Three" }],
+        },
+      ],
+    },
+    {
+      type: "instance",
+      component: "TabsContent",
+      props: [{ type: "string", name: "value", value: "tab1" }],
+      children: [{ type: "text", value: "One" }],
+    },
+    {
+      type: "instance",
+      component: "TabsContent",
+      props: [{ type: "string", name: "value", value: "tab2" }],
+      children: [{ type: "text", value: "Two" }],
+    },
+    {
+      type: "instance",
+      component: "TabsContent",
+      props: [{ type: "string", name: "value", value: "tab3" }],
+      children: [{ type: "text", value: "Three" }],
+    },
+  ],
 };
 
 export const propsMeta: WsComponentPropsMeta = {
