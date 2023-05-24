@@ -36,8 +36,14 @@ export const loader = async ({ params, request }: LoaderArgs) => {
     const assetUrl = `${env.ASSET_BASE_URL}${name}`;
     // @todo add secret ti avoid exploiting our server
     const imageUrl = `${env.RESIZE_ORIGIN}/cdn-cgi/image/${options}/${assetUrl}`;
-    const response = await fetch(imageUrl, request);
+    const response = await fetch(imageUrl, {
+      headers: {
+        accept: request.headers.get("accept") ?? "",
+        "accept-encoding": request.headers.get("accept-encoding") ?? "",
+      },
+    });
     response.headers.set("Access-Control-Allow-Origin", url.origin);
+
     return response;
   }
 
