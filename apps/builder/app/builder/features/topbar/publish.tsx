@@ -18,7 +18,7 @@ import {
   ScrollArea,
 } from "@webstudio-is/design-system";
 import { useIsPublishDialogOpen } from "../../shared/nano-states";
-import type { Project } from "@webstudio-is/project";
+import { validateProjectDomain, type Project } from "@webstudio-is/project";
 import { getPublishedUrl } from "~/shared/router-utils";
 import { theme } from "@webstudio-is/design-system";
 import { useAuthPermit } from "~/shared/nano-states";
@@ -51,6 +51,7 @@ const ChangeProjectDomain = (props: PublishButtonProps) => {
   const {
     load: loadProject,
     data: projectData,
+    state: projectState,
     error: projectSystemError,
   } = trpc.project.useQuery();
 
@@ -67,7 +68,10 @@ const ChangeProjectDomain = (props: PublishButtonProps) => {
       loadProject({ projectId: props.project.id }, (projectData) => {
         if (projectData?.success === false) {
           setError(projectData.error);
+          return;
         }
+
+        setDomain(projectData.project.domain);
       }),
     [loadProject, props.project.id]
   );
@@ -79,6 +83,13 @@ const ChangeProjectDomain = (props: PublishButtonProps) => {
   const publishedUrl = new URL(getPublishedUrl(project.domain));
 
   const handleUpdateProjectDomain = () => {
+    const validationResult = validateProjectDomain(domain);
+
+    if (validationResult.success === false) {
+      setError(validationResult.error);
+      return;
+    }
+
     if (updateProjectDomainState !== "idle") {
       return;
     }
@@ -91,6 +102,7 @@ const ChangeProjectDomain = (props: PublishButtonProps) => {
         setError(data.error);
         return;
       }
+
       refreshProject();
     });
   };
@@ -159,7 +171,9 @@ const ChangeProjectDomain = (props: PublishButtonProps) => {
             id={id}
             placeholder="Domain"
             value={domain}
-            disabled={updateProjectDomainState !== "idle"}
+            disabled={
+              updateProjectDomainState !== "idle" || projectState !== "idle"
+            }
             onChange={(event) => {
               setError(undefined);
               setDomain(event.target.value);
