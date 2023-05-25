@@ -76,15 +76,16 @@ model User {
 }
 
 model Project {
-  id        String   @id @default(uuid())
-  createdAt DateTime @default(now())
-  title     String
-  domain    String   @unique
-  user      User?    @relation(fields: [userId], references: [id])
-  userId    String?
-  build     Build[]
-  isDeleted Boolean  @default(false)
-  files     File[]
+  id            String          @id @default(uuid())
+  createdAt     DateTime        @default(now())
+  title         String
+  domain        String          @unique
+  user          User?           @relation(fields: [userId], references: [id])
+  userId        String?
+  build         Build[]
+  isDeleted     Boolean         @default(false)
+  files         File[]
+  ProjectDomain ProjectDomain[]
 
   @@unique([id, isDeleted])
   @@unique([domain, isDeleted])
@@ -126,6 +127,64 @@ model AuthorizationToken {
   createdAt DateTime              @default(now())
 
   @@id([token, projectId])
+}
+
+enum DomainStatus {
+  INITIALIZING
+  ACTIVE
+  ERROR
+  PENDING
+}
+
+// Domains  + last known status and last known txtRecord
+// In the future we can update this table using queue, n8n or temporal workflows.
+// As of now updates are done during UI interactions
+model Domain {
+  id                String              @id @default(uuid())
+  domain            String              @unique
+  createdAt         DateTime            @default(now())
+  ProjectDomain     ProjectDomain[]
+  // Last known txtRecord of the domain (to check domain ownership)
+  txtRecord         String?
+  // create, init, pending, active, error
+  status            DomainStatus        @default(INITIALIZING)
+  // In case of status="error", this will contain the error message
+  error             String?
+  projectWithDomain ProjectWithDomain[]
+}
+
+model ProjectDomain {
+  projectId String
+  project   Project  @relation(fields: [projectId], references: [id])
+  domainId  String
+  domain    Domain   @relation(fields: [domainId], references: [id])
+  createdAt DateTime @default(now())
+  // Generated txt record to check domain ownership
+  txtRecord String   @unique @default(uuid())
+
+  // CNAME record to point to the domain
+  cname String
+
+  @@id([projectId, domainId])
+  @@index([domainId])
+}
+
+view ProjectWithDomain {
+  projectId String
+  domainId  String
+  domain    Domain @relation(fields: [domainId], references: [id])
+  txtRecord String
+
+  createdAt DateTime
+
+  // CNAME record to point to the domain
+  cname String
+
+  verified Boolean
+  // To count statistics per user
+  userId   String?
+
+  @@id([projectId, domainId])
 }
 
 // Dashboard

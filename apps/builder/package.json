@@ -45,6 +45,7 @@
     "@webstudio-is/css-vars": "workspace:^",
     "@webstudio-is/dashboard": "workspace:^",
     "@webstudio-is/design-system": "workspace:^",
+    "@webstudio-is/domain": "workspace:^",
     "@webstudio-is/feature-flags": "workspace:^",
     "@webstudio-is/fonts": "workspace:^",
     "@webstudio-is/icons": "workspace:^",
@@ -88,8 +89,7 @@
     "use-debounce": "^9.0.4",
     "uuid": "^9.0.0",
     "warn-once": "^0.1.1",
-    "zod": "^3.19.1",
-    "zod-form-data": "^1.2.1"
+    "zod": "^3.21.4"
   },
   "devDependencies": {
     "@babel/core": "^7.21.0",

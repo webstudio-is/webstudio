@@ -40,12 +40,7 @@ const titleButtonLayoutStyle = css({
   height: "100%",
   boxSizing: "border-box",
   paddingLeft: theme.spacing[9],
-  paddingRight: theme.spacing[7],
-  variants: {
-    // We assume that suffix is a <Button prefix={<Icon />} />
-    // (hard to support arbitrary width suffixes here, hopefully we'll never need to)
-    hasSuffix: { true: { paddingRight: theme.spacing[16] } },
-  },
+  paddingRight: theme.spacing[6],
 });
 
 const labelContainerStyle = css({
@@ -71,6 +66,10 @@ const suffixSlotStyle = css({
   position: "absolute",
   right: theme.spacing[6],
   top: theme.spacing[4],
+});
+
+const invisibleSuffixStyle = css({
+  visibility: "hidden",
 });
 
 const dotsSlotStyle = css({
@@ -129,9 +128,7 @@ export const SectionTitle = forwardRef(
               onKeyDown={handleKeyDown}
             >
               <button
-                className={titleButtonStyle({
-                  hasSuffix: suffix !== undefined,
-                })}
+                className={titleButtonStyle()}
                 data-state={state}
                 ref={ref}
                 {...props}
@@ -142,11 +139,7 @@ export const SectionTitle = forwardRef(
                 Therefore, we render the label in a layer above the SectionTitle button
               */}
               <div className={labelContainerStyle()}>
-                <div
-                  className={titleButtonLayoutStyle({
-                    hasSuffix: suffix !== undefined,
-                  })}
-                >
+                <div className={titleButtonLayoutStyle()}>
                   {children}
 
                   {finalDots.length > 0 && (
@@ -155,6 +148,11 @@ export const SectionTitle = forwardRef(
                         <div key={color} className={dotStyle({ color })} />
                       ))}
                     </div>
+                  )}
+
+                  {suffix && (
+                    /* In case of text overflow we need to place here the same suffix*/
+                    <div className={invisibleSuffixStyle()}>{suffix}</div>
                   )}
                 </div>
               </div>

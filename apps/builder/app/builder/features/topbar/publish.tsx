@@ -1,13 +1,6 @@
-import { useEffect, useState } from "react";
-import { useFetcher } from "@remix-run/react";
-import { ExternalLinkIcon } from "@webstudio-is/icons";
+import { useCallback, useEffect, useState } from "react";
 import {
-  Text,
   Button,
-  Flex,
-  Label,
-  Link,
-  DeprecatedTextField,
   useId,
   Tooltip,
   FloatingPanelPopover,
@@ -15,66 +8,294 @@ import {
   FloatingPanelPopoverTrigger,
   FloatingPanelPopoverContent,
   FloatingPanelPopoverTitle,
+  IconButton,
+  Grid,
+  Flex,
+  Label,
+  Text,
+  InputField,
+  Separator,
+  ScrollArea,
 } from "@webstudio-is/design-system";
 import { useIsPublishDialogOpen } from "../../shared/nano-states";
 import type { Project } from "@webstudio-is/project";
-import { getPublishedUrl, restPublishPath } from "~/shared/router-utils";
+import { getPublishedUrl } from "~/shared/router-utils";
 import { theme } from "@webstudio-is/design-system";
 import { useAuthPermit } from "~/shared/nano-states";
+import { isFeatureEnabled } from "@webstudio-is/feature-flags";
+import { Domains } from "./domains";
+import { CollapsibleDomainSection } from "./collapsible-domain-section";
+import {
+  CheckCircleIcon,
+  ExternalLinkIcon,
+  AlertIcon,
+} from "@webstudio-is/icons";
+import { createTrpcFetchProxy } from "~/shared/remix/trpc-remix-proxy";
+import { builderDomainsPath } from "~/shared/router-utils";
+import type { DomainRouter } from "@webstudio-is/domain/index.server";
+import { AddDomain } from "./add-domain";
+
+const trpc = createTrpcFetchProxy<DomainRouter>(builderDomainsPath);
+
 type PublishButtonProps = { project: Project };
 
-const Content = ({ project }: PublishButtonProps) => {
+const ChangeProjectDomain = (props: PublishButtonProps) => {
   const id = useId();
-  const fetcher = useFetcher();
-  const [url, setUrl] = useState<string>();
-  const domain = fetcher.data?.domain || project.domain;
+
+  const {
+    send: updateProjectDomain,
+    state: updateProjectDomainState,
+    error: updateProjectSystemError,
+  } = trpc.updateProjectDomain.useMutation();
+
+  const {
+    load: loadProject,
+    data: projectData,
+    error: projectSystemError,
+  } = trpc.project.useQuery();
+
+  const [domain, setDomain] = useState(props.project.domain);
+  const [error, setError] = useState<string>();
+
+  let project = props.project;
+  if (projectData?.success) {
+    project = projectData.project;
+  }
+
+  const refreshProject = useCallback(
+    () =>
+      loadProject({ projectId: props.project.id }, (projectData) => {
+        if (projectData?.success === false) {
+          setError(projectData.error);
+        }
+      }),
+    [loadProject, props.project.id]
+  );
 
   useEffect(() => {
-    setUrl(getPublishedUrl(domain));
-  }, [domain]);
+    refreshProject();
+  }, [refreshProject]);
+
+  const publishedUrl = new URL(getPublishedUrl(project.domain));
+
+  const handleUpdateProjectDomain = () => {
+    if (updateProjectDomainState !== "idle") {
+      return;
+    }
+    if (domain === project.domain) {
+      return;
+    }
+
+    updateProjectDomain({ domain, projectId: project.id }, (data) => {
+      if (data?.success === false) {
+        setError(data.error);
+        return;
+      }
+      refreshProject();
+    });
+  };
+
+  if (projectSystemError !== undefined) {
+    return (
+      <Flex
+        css={{
+          m: theme.spacing[9],
+          overflowWrap: "anywhere",
+        }}
+        gap={2}
+        direction={"column"}
+      >
+        <Text color="destructive">{projectSystemError}</Text>
+        <Text color="subtle">Please try again later</Text>
+      </Flex>
+    );
+  }
+
+  if (projectData === undefined) {
+    return <div />;
+  }
+
+  return (
+    <CollapsibleDomainSection
+      title={publishedUrl.host}
+      suffix={
+        <Grid flow="column">
+          <Tooltip content={error !== undefined ? error : "Everything is ok"}>
+            <Flex
+              align={"center"}
+              justify={"center"}
+              css={{
+                cursor: "pointer",
+                width: theme.spacing[12],
+                height: theme.spacing[12],
+                color:
+                  error !== undefined
+                    ? theme.colors.foregroundDestructive
+                    : theme.colors.foregroundSuccessText,
+              }}
+            >
+              {error !== undefined ? <AlertIcon /> : <CheckCircleIcon />}
+            </Flex>
+          </Tooltip>
+
+          <Tooltip content={`Proceed to ${publishedUrl.href}`}>
+            <IconButton
+              tabIndex={-1}
+              onClick={(event) => {
+                window.open(publishedUrl.href, "_blank");
+                event.preventDefault();
+              }}
+            >
+              <ExternalLinkIcon />
+            </IconButton>
+          </Tooltip>
+        </Grid>
+      }
+    >
+      <Grid gap={3}>
+        <Grid gap={1}>
+          <Label htmlFor={id}>Domain:</Label>
+          <InputField
+            id={id}
+            placeholder="Domain"
+            value={domain}
+            disabled={updateProjectDomainState !== "idle"}
+            onChange={(event) => {
+              setError(undefined);
+              setDomain(event.target.value);
+            }}
+            onBlur={handleUpdateProjectDomain}
+            onKeyDown={(event) => {
+              if (event.key === "Enter") {
+                handleUpdateProjectDomain();
+              }
+
+              if (event.key === "Escape") {
+                if (project.domain !== domain) {
+                  setDomain(project.domain);
+                  event.preventDefault();
+                }
+              }
+            }}
+            color={
+              error !== undefined || updateProjectSystemError !== undefined
+                ? "error"
+                : undefined
+            }
+          />
+          {error !== undefined && <Text color="destructive">{error}</Text>}
+          {updateProjectSystemError !== undefined && (
+            <Text color="destructive">{updateProjectSystemError}</Text>
+          )}
+        </Grid>
+      </Grid>
+    </CollapsibleDomainSection>
+  );
+};
+
+const Publish = ({ projectId }: { projectId: Project["id"] }) => {
+  const {
+    send: publish,
+    state: publishState,
+    data: publishData,
+    error: publishSystemError,
+  } = trpc.publish.useMutation();
 
   return (
     <Flex
-      direction="column"
       css={{
-        padding: theme.spacing[9],
+        paddingLeft: theme.spacing[9],
+        paddingRight: theme.spacing[9],
+        paddingBottom: theme.spacing[9],
+        paddingTop: theme.spacing[5],
       }}
+      gap={2}
+      shrink={false}
+      direction={"column"}
     >
-      <fetcher.Form method="post" action={restPublishPath()}>
-        <Flex direction="column" gap="2">
-          {url !== undefined && (
-            <Link
-              href={url}
-              target="_blank"
-              css={{
-                display: "flex",
-                gap: theme.spacing[0],
-              }}
-            >
-              <Text truncate>{new URL(getPublishedUrl(domain)).host}</Text>
-              <ExternalLinkIcon />
-            </Link>
-          )}
-          <Flex gap="2" align="center">
-            <input type="hidden" name="projectId" value={project.id} />
-            <Label htmlFor={id}>Domain:</Label>
-            <DeprecatedTextField id={id} name="domain" defaultValue={domain} />
-          </Flex>
-          {fetcher.data?.errors !== undefined && (
-            <Text color="destructive">{fetcher.data?.errors}</Text>
-          )}
-          <Flex css={{ paddingTop: theme.spacing["2"] }}>
-            <Button
-              state={fetcher.state !== "idle" ? "pending" : "auto"}
-              type="submit"
-              css={{ flexGrow: 1 }}
-            >
-              {fetcher.state !== "idle" ? "Publishing" : "Publish"}
-            </Button>
-          </Flex>
-        </Flex>
-      </fetcher.Form>
+      {publishSystemError !== undefined && (
+        <Text color="destructive">{publishSystemError}</Text>
+      )}
+
+      {publishData?.success === false && (
+        <Text color="destructive">{publishData.error}</Text>
+      )}
+
+      <Button
+        color="positive"
+        disabled={publishState !== "idle"}
+        onClick={() => {
+          publish({ projectId });
+        }}
+      >
+        Publish
+      </Button>
     </Flex>
+  );
+};
+
+const Content = (props: PublishButtonProps) => {
+  const [newDomains, setNewDomains] = useState(new Set<string>());
+  const {
+    data: domainsResult,
+    load: refreshDomainResult,
+    state: domainLoadingState,
+  } = trpc.findMany.useQuery();
+
+  useEffect(() => {
+    refreshDomainResult({ projectId: props.project.id });
+  }, [refreshDomainResult, props.project.id]);
+
+  return (
+    <>
+      <ScrollArea>
+        <ChangeProjectDomain project={props.project} />
+
+        {isFeatureEnabled("domains") && (
+          <>
+            {domainsResult?.success === true && (
+              <Domains
+                newDomains={newDomains}
+                domains={domainsResult.data}
+                refreshDomainResult={refreshDomainResult}
+                domainLoadingState={domainLoadingState}
+              />
+            )}
+            {domainsResult?.success === false && (
+              <Label
+                css={{
+                  overflowWrap: "anywhere",
+                  color: theme.colors.foregroundDestructive,
+                }}
+              >
+                <div>{domainsResult.error}</div>
+              </Label>
+            )}
+          </>
+        )}
+      </ScrollArea>
+
+      {isFeatureEnabled("domains") && (
+        <>
+          <Flex direction="column" justify="end" css={{ height: 0 }}>
+            <Separator />
+          </Flex>
+
+          <AddDomain
+            projectId={props.project.id}
+            refreshDomainResult={refreshDomainResult}
+            domainLoadingState={domainLoadingState}
+            onCreate={(domain) => {
+              setNewDomains((prev) => {
+                return new Set([...prev, domain]);
+              });
+            }}
+          />
+        </>
+      )}
+
+      <Publish projectId={props.project.id} />
+    </>
   );
 };
 
@@ -99,9 +320,15 @@ export const PublishButton = ({ project }: PublishButtonProps) => {
         </Tooltip>
       </FloatingPanelAnchor>
 
-      <FloatingPanelPopoverContent css={{ zIndex: theme.zIndices[1] }}>
-        <Content project={project} />
+      <FloatingPanelPopoverContent
+        css={{
+          zIndex: theme.zIndices[1],
+          width: theme.spacing[33],
+          maxWidth: theme.spacing[33],
+        }}
+      >
         <FloatingPanelPopoverTitle>Publish</FloatingPanelPopoverTitle>
+        <Content project={project} />
       </FloatingPanelPopoverContent>
     </FloatingPanelPopover>
   );

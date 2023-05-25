@@ -6,7 +6,8 @@ import { isFeatureEnabled } from "@webstudio-is/feature-flags";
 const useTooSmallMessage = () => {
   const [message, setMessage] = useState<string>();
   const check = () => {
-    const minWidth = 900;
+    // To have more space for Chrome DevTools, we allow a smaller window size in development
+    const minWidth = process.env.NODE_ENV === "production" ? 900 : 700;
     const message =
       window.innerWidth >= minWidth
         ? undefined
