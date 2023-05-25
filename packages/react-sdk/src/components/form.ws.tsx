@@ -23,33 +23,39 @@ export const meta: WsComponentMeta = {
   icon: FormIcon,
   states: defaultStates,
   presetStyle,
-  children: [
+  template: [
     {
       type: "instance",
-      component: "Label",
-      children: [{ type: "text", value: "Name" }],
-    },
-    {
-      type: "instance",
-      component: "Input",
-      props: [{ type: "string", name: "name", value: "name" }],
-      children: [],
-    },
-    {
-      type: "instance",
-      component: "Label",
-      children: [{ type: "text", value: "Email" }],
-    },
-    {
-      type: "instance",
-      component: "Input",
-      props: [{ type: "string", name: "name", value: "email" }],
-      children: [],
-    },
-    {
-      type: "instance",
-      component: "Button",
-      children: [{ type: "text", value: "Submit" }],
+      component: "Form",
+      children: [
+        {
+          type: "instance",
+          component: "Label",
+          children: [{ type: "text", value: "Name" }],
+        },
+        {
+          type: "instance",
+          component: "Input",
+          props: [{ type: "string", name: "name", value: "name" }],
+          children: [],
+        },
+        {
+          type: "instance",
+          component: "Label",
+          children: [{ type: "text", value: "Email" }],
+        },
+        {
+          type: "instance",
+          component: "Input",
+          props: [{ type: "string", name: "name", value: "email" }],
+          children: [],
+        },
+        {
+          type: "instance",
+          component: "Button",
+          children: [{ type: "text", value: "Submit" }],
+        },
+      ],
     },
   ],
 };

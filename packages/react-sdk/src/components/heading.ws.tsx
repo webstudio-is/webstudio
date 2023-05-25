@@ -26,9 +26,15 @@ export const meta: WsComponentMeta = {
   type: "rich-text",
   label: "Heading",
   icon: HeadingIcon,
-  children: [{ type: "text", value: "Heading you can edit" }],
   states: defaultStates,
   presetStyle,
+  template: [
+    {
+      type: "instance",
+      component: "Heading",
+      children: [{ type: "text", value: "Heading you can edit" }],
+    },
+  ],
 };
 
 export const propsMeta: WsComponentPropsMeta = {

@@ -18,11 +18,7 @@ import {
   StyleSourceSelectionsList,
   StyleSourcesList,
 } from "@webstudio-is/project-build";
-import {
-  canAcceptComponent,
-  generateDataFromEmbedTemplate,
-  getComponentMeta,
-} from "@webstudio-is/react-sdk";
+import { canAcceptComponent } from "@webstudio-is/react-sdk";
 import { equalMedia } from "@webstudio-is/css-engine";
 
 // slots can have multiple parents so instance should be addressed
@@ -52,32 +48,6 @@ export const areInstanceSelectorsEqual = (
     return false;
   }
   return left.join(",") === right.join(",");
-};
-
-export const createComponentInstance = (
-  component: Instance["component"],
-  defaultBreakpointId: Breakpoint["id"]
-) => {
-  const componentMeta = getComponentMeta(component);
-  const {
-    children,
-    instances,
-    props,
-    styleSourceSelections,
-    styleSources,
-    styles,
-  } = generateDataFromEmbedTemplate(
-    componentMeta?.children ?? [],
-    defaultBreakpointId
-  );
-  // put first to be interpreted as root
-  instances.unshift({
-    type: "instance",
-    id: nanoid(),
-    component,
-    children,
-  });
-  return { instances, props, styleSourceSelections, styleSources, styles };
 };
 
 export type DroppableTarget = {
@@ -283,7 +253,7 @@ export const findLocalStyleSourcesWithinInstances = (
 export const insertInstancesMutable = (
   instances: Instances,
   insertedInstances: Instance[],
-  rootIds: Instance["id"][],
+  children: Instance["children"],
   dropTarget: DroppableTarget
 ) => {
   const parentInstance = getInstanceOrCreateFragmentIfNecessary(
@@ -306,16 +276,10 @@ export const insertInstancesMutable = (
   }
 
   const { position } = dropTarget;
-  const dropTargetChildren: Instance["children"] = rootIds.map(
-    (instanceId) => ({
-      type: "id",
-      value: instanceId,
-    })
-  );
   if (position === "end") {
-    parentInstance.children.push(...dropTargetChildren);
+    parentInstance.children.push(...children);
   } else {
-    parentInstance.children.splice(position, 0, ...dropTargetChildren);
+    parentInstance.children.splice(position, 0, ...children);
   }
 };
 
@@ -385,8 +349,13 @@ export const insertInstancesCopyMutable = (
   insertInstancesMutable(
     instances,
     copiedInstancesWithNewIds,
-    // consider the first instance as the root
-    [copiedInstancesWithNewIds[0].id],
+    // consider the first instance as child
+    [
+      {
+        type: "id",
+        value: copiedInstancesWithNewIds[0].id,
+      },
+    ],
     dropTarget
   );
 

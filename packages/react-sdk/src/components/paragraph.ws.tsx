@@ -18,9 +18,15 @@ export const meta: WsComponentMeta = {
   type: "rich-text",
   label: "Paragraph",
   icon: TextAlignLeftIcon,
-  children: [{ type: "text", value: "Pragraph you can edit" }],
   states: defaultStates,
   presetStyle,
+  template: [
+    {
+      type: "instance",
+      component: "Paragraph",
+      children: [{ type: "text", value: "Pragraph you can edit" }],
+    },
+  ],
 };
 
 export const propsMeta: WsComponentPropsMeta = {

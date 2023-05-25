@@ -42,7 +42,13 @@ export const meta: WsComponentMeta = {
   icon: CodeTextIcon,
   states: defaultStates,
   presetStyle,
-  children: [{ type: "text", value: "Code you can edit" }],
+  template: [
+    {
+      type: "instance",
+      component: "CodeText",
+      children: [{ type: "text", value: "Code you can edit" }],
+    },
+  ],
 };
 
 export const propsMeta: WsComponentPropsMeta = {

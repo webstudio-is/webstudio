@@ -23,7 +23,13 @@ export const meta: WsComponentMeta = {
   icon: TextBlockIcon,
   states: defaultStates,
   presetStyle,
-  children: [{ type: "text", value: "Form Label" }],
+  template: [
+    {
+      type: "instance",
+      component: "Label",
+      children: [{ type: "text", value: "Form Label" }],
+    },
+  ],
 };
 
 export const propsMeta: WsComponentPropsMeta = {

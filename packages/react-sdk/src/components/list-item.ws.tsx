@@ -19,9 +19,15 @@ export const meta: WsComponentMeta = {
   acceptedParents: ["List"],
   label: "List Item",
   icon: ListItemIcon,
-  children: [{ type: "text", value: "List Item you can edit" }],
   states: defaultStates,
   presetStyle,
+  template: [
+    {
+      type: "instance",
+      component: "ListItem",
+      children: [{ type: "text", value: "List Item you can edit" }],
+    },
+  ],
 };
 
 export const propsMeta: WsComponentPropsMeta = {

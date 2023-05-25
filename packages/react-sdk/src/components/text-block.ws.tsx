@@ -26,7 +26,13 @@ export const meta: WsComponentMeta = {
   icon: TextBlockIcon,
   states: defaultStates,
   presetStyle,
-  children: [{ type: "text", value: "Block of text you can edit" }],
+  template: [
+    {
+      type: "instance",
+      component: "TextBlock",
+      children: [{ type: "text", value: "Block of text you can edit" }],
+    },
+  ],
 };
 
 export const propsMeta: WsComponentPropsMeta = {
