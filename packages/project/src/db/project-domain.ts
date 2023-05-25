@@ -39,21 +39,21 @@ export const validateProjectDomain = (
       return {
         success: false,
         error: `Minimum ${MIN_DOMAIN_LENGTH} characters required`,
-      } as const;
+      };
     }
 
     if (reservedDomains.includes(domain)) {
       return {
         success: false,
         error: `Domain ${domain} is reserved`,
-      } as const;
+      };
     }
 
     if (reservedPrefixes.some((prefix) => domain.startsWith(prefix))) {
       return {
         success: false,
         error: `Domain ${domain} is reserved`,
-      } as const;
+      };
     }
 
     return {
