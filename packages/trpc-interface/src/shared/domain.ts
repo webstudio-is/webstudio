@@ -1,5 +1,6 @@
 /**
  * Localhost implementation of the dashboard trpc interface
+ * It's playground, and just emulates real 3rd party apis
  */
 import { z } from "zod";
 import { router, procedure } from "./trpc";
@@ -26,8 +27,6 @@ globalThis.dnsTxtEntries =
   globalThis.dnsTxtEntries ?? new Map<string, string>();
 globalThis.domainStates =
   globalThis.domainStates ?? new Map<string, "active" | "pending">();
-
-// const sleep = (ms: number) => new Promise((resolve) => setTimeout(resolve, ms));
 
 export const domainRouter = router({
   /**

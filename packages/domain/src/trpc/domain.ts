@@ -67,7 +67,7 @@ export const domainRouter = router({
         });
 
         const text = await response.text();
-        if (!response.ok) {
+        if (response.ok === false) {
           throw new Error(text);
         }
 

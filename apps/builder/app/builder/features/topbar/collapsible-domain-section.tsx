@@ -5,7 +5,7 @@ import {
   theme,
   SectionTitle,
 } from "@webstudio-is/design-system";
-import React, { useEffect, useRef, useState } from "react";
+import { useEffect, useRef, useState, type ReactNode } from "react";
 import { CollapsibleSectionBase } from "~/builder/shared/collapsible-section";
 
 export const CollapsibleDomainSection = ({
@@ -15,8 +15,8 @@ export const CollapsibleDomainSection = ({
   suffix,
 }: {
   initiallyOpen?: boolean;
-  children: React.ReactNode;
-  suffix: React.ReactNode;
+  children: ReactNode;
+  suffix: ReactNode;
   title: string;
 }) => {
   const [open, setOpen] = useState(initiallyOpen);
