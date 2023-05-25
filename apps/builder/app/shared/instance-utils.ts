@@ -1,6 +1,10 @@
 import store from "immerhin";
 import { findTreeInstanceIdsExcludingSlotDescendants } from "@webstudio-is/project-build";
 import {
+  generateDataFromEmbedTemplate,
+  getComponentMeta,
+} from "@webstudio-is/react-sdk";
+import {
   propsStore,
   stylesStore,
   selectedInstanceSelectorStore,
@@ -14,7 +18,6 @@ import {
 import {
   type DroppableTarget,
   type InstanceSelector,
-  createComponentInstance,
   findLocalStyleSourcesWithinInstances,
   insertInstancesMutable,
   reparentInstanceMutable,
@@ -34,16 +37,28 @@ export const insertNewComponentInstance = (
   const breakpoints = breakpointsStore.get();
   const breakpointValues = Array.from(breakpoints.values());
   const baseBreakpoint = breakpointValues.find(isBaseBreakpoint);
+  const componentMeta = getComponentMeta(component);
   if (baseBreakpoint === undefined) {
     return;
   }
   const {
+    children,
     instances: insertedInstances,
     props: insertedProps,
     styleSourceSelections: insertedStyleSourceSelections,
     styleSources: insertedStyleSources,
     styles: insertedStyles,
-  } = createComponentInstance(component, baseBreakpoint.id);
+  } = generateDataFromEmbedTemplate(
+    // when template not specified fallback to template with the component
+    componentMeta?.template ?? [
+      {
+        type: "instance",
+        component,
+        children: [],
+      },
+    ],
+    baseBreakpoint.id
+  );
   const rootInstanceId = insertedInstances[0].id;
   store.createTransaction(
     [
@@ -57,7 +72,7 @@ export const insertNewComponentInstance = (
       insertInstancesMutable(
         instances,
         insertedInstances,
-        [rootInstanceId],
+        children,
         dropTarget
       );
       insertPropsCopyMutable(props, insertedProps, new Map());

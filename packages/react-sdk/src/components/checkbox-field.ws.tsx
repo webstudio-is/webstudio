@@ -23,14 +23,20 @@ export const meta: WsComponentMeta = {
   icon: CheckboxCheckedIcon,
   states: defaultStates,
   presetStyle,
-  children: [
-    { type: "instance", component: "Checkbox", props: [], children: [] },
+  template: [
     {
       type: "instance",
-      component: "TextBlock",
-      label: "Checkbox Label",
-      props: [],
-      children: [{ type: "text", value: "Checkbox" }],
+      component: "CheckboxField",
+      children: [
+        { type: "instance", component: "Checkbox", children: [] },
+        {
+          type: "instance",
+          component: "TextBlock",
+          label: "Checkbox Label",
+          props: [],
+          children: [{ type: "text", value: "Checkbox" }],
+        },
+      ],
     },
   ],
 };

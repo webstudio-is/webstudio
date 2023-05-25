@@ -49,7 +49,6 @@ export const meta: WsComponentMeta = {
   icon: ListIcon,
   states: defaultStates,
   presetStyle,
-  children: [],
 };
 
 export const propsMeta: WsComponentPropsMeta = {

@@ -25,55 +25,63 @@ export const meta: WsComponentMeta = {
     { selector: "[data-state=error]", label: "Error" },
     { selector: "[data-state=success]", label: "Success" },
   ],
-  children: [
+  template: [
     {
       type: "instance",
-      component: "Label",
-      children: [{ type: "text", value: "Name" }],
-    },
-    {
-      type: "instance",
-      component: "Input",
-      props: [{ type: "string", name: "name", value: "name" }],
-      children: [],
-    },
-    {
-      type: "instance",
-      component: "Label",
-      children: [{ type: "text", value: "Email" }],
-    },
-    {
-      type: "instance",
-      component: "Input",
-      props: [{ type: "string", name: "name", value: "email" }],
-      children: [],
-    },
-    {
-      type: "instance",
-      component: "Button",
-      children: [{ type: "text", value: "Submit" }],
-    },
-    {
-      type: "instance",
-      component: "SuccessMessage",
+      component: "Form",
       children: [
         {
           type: "instance",
-          component: "TextBlock",
+          component: "Label",
+          children: [{ type: "text", value: "Name" }],
+        },
+        {
+          type: "instance",
+          component: "Input",
+          props: [{ type: "string", name: "name", value: "name" }],
+          children: [],
+        },
+        {
+          type: "instance",
+          component: "Label",
+          children: [{ type: "text", value: "Email" }],
+        },
+        {
+          type: "instance",
+          component: "Input",
+          props: [{ type: "string", name: "name", value: "email" }],
+          children: [],
+        },
+        {
+          type: "instance",
+          component: "Button",
+          children: [{ type: "text", value: "Submit" }],
+        },
+        {
+          type: "instance",
+          component: "SuccessMessage",
           children: [
-            { type: "text", value: "Thank you for getting in touch!" },
+            {
+              type: "instance",
+              component: "TextBlock",
+              children: [
+                { type: "text", value: "Thank you for getting in touch!" },
+              ],
+            },
           ],
         },
-      ],
-    },
-    {
-      type: "instance",
-      component: "ErrorMessage",
-      children: [
         {
           type: "instance",
-          component: "TextBlock",
-          children: [{ type: "text", value: "Sorry, something went wrong." }],
+          component: "ErrorMessage",
+          children: [
+            {
+              type: "instance",
+              component: "TextBlock",
+              children: [
+                { type: "text", value: "Sorry, something went wrong." },
+              ],
+            },
+          ],
         },
       ],
     },

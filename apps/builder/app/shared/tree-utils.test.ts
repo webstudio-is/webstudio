@@ -238,7 +238,7 @@ test("insert instances tree into target", () => {
       createInstance("inserted1", "Box", [{ type: "id", value: "inserted2" }]),
       createInstance("inserted2", "Box", []),
     ],
-    ["inserted1"],
+    [{ type: "id", value: "inserted1" }],
     {
       parentSelector: ["box1", "root"],
       position: 1,
@@ -267,7 +267,7 @@ test("insert instances tree into target", () => {
       createInstance("inserted3", "Box", [{ type: "id", value: "inserted4" }]),
       createInstance("inserted4", "Box", []),
     ],
-    ["inserted3"],
+    [{ type: "id", value: "inserted3" }],
     {
       parentSelector: ["box1", "root"],
       position: "end",

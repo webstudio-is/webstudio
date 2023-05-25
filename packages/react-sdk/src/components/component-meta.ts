@@ -60,7 +60,7 @@ const WsComponentMeta = z.object({
   icon: z.string(),
   presetStyle: z.optional(z.record(z.string(), EmbedTemplateStyleDecl)),
   states: z.optional(z.array(ComponentState)),
-  children: z.optional(WsEmbedTemplate),
+  template: z.optional(WsEmbedTemplate),
 });
 
 export type WsComponentMeta = Omit<

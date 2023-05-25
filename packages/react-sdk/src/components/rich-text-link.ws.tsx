@@ -7,7 +7,7 @@ const { category, ...linkMetaRest } = linkMeta;
 export const meta: WsComponentMeta = {
   ...linkMetaRest,
   type: "rich-text-child",
-  children: [],
+  template: [],
 };
 
 export const propsMeta: WsComponentPropsMeta = {

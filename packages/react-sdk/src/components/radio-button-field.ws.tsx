@@ -23,14 +23,20 @@ export const meta: WsComponentMeta = {
   icon: RadioCheckedIcon,
   states: defaultStates,
   presetStyle,
-  children: [
-    { type: "instance", component: "RadioButton", props: [], children: [] },
+  template: [
     {
       type: "instance",
-      component: "TextBlock",
-      label: "Radio Label",
-      props: [],
-      children: [{ type: "text", value: "Radio" }],
+      component: "RadioButtonField",
+      children: [
+        { type: "instance", component: "RadioButton", props: [], children: [] },
+        {
+          type: "instance",
+          component: "TextBlock",
+          label: "Radio Label",
+          props: [],
+          children: [{ type: "text", value: "Radio" }],
+        },
+      ],
     },
   ],
 };
