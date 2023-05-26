@@ -17,6 +17,7 @@ export const meta: WsComponentMeta = {
   label: "Tabs Trigger",
   icon: BoxIcon,
   presetStyle,
+  acceptedParents: ["TabsList"],
   states: [
     {
       selector: "[data-state=active]",

@@ -16,6 +16,7 @@ export const meta: WsComponentMeta = {
   type: "container",
   label: "Tabs List",
   icon: BoxIcon,
+  acceptedParents: ["Tabs"],
   presetStyle,
   states: [
     { selector: "[data-orientation=vertical]", label: "Vertical orientation" },

@@ -43,20 +43,29 @@ export const meta: WsComponentMeta = {
         {
           type: "instance",
           component: "TabsTrigger",
-          props: [{ type: "string", name: "value", value: "tab1" }],
-          children: [{ type: "text", value: "One" }],
+          props: [
+            { type: "string", name: "value", value: "tab1" },
+            { type: "string", name: "innerText", value: "One" },
+          ],
+          children: [],
         },
         {
           type: "instance",
           component: "TabsTrigger",
-          props: [{ type: "string", name: "value", value: "tab2" }],
-          children: [{ type: "text", value: "Two" }],
+          props: [
+            { type: "string", name: "value", value: "tab2" },
+            { type: "string", name: "innerText", value: "Two" },
+          ],
+          children: [],
         },
         {
           type: "instance",
           component: "TabsTrigger",
-          props: [{ type: "string", name: "value", value: "tab3" }],
-          children: [{ type: "text", value: "Three" }],
+          props: [
+            { type: "string", name: "value", value: "tab3" },
+            { type: "string", name: "innerText", value: "Three" },
+          ],
+          children: [],
         },
       ],
     },
@@ -64,24 +73,42 @@ export const meta: WsComponentMeta = {
       type: "instance",
       component: "TabsContent",
       props: [{ type: "string", name: "value", value: "tab1" }],
-      children: [{ type: "text", value: "One" }],
+      children: [
+        {
+          type: "instance",
+          component: "Paragraph",
+          children: [{ type: "text", value: "One" }],
+        },
+      ],
     },
     {
       type: "instance",
       component: "TabsContent",
       props: [{ type: "string", name: "value", value: "tab2" }],
-      children: [{ type: "text", value: "Two" }],
+      children: [
+        {
+          type: "instance",
+          component: "Paragraph",
+          children: [{ type: "text", value: "Two" }],
+        },
+      ],
     },
     {
       type: "instance",
       component: "TabsContent",
       props: [{ type: "string", name: "value", value: "tab3" }],
-      children: [{ type: "text", value: "Three" }],
+      children: [
+        {
+          type: "instance",
+          component: "Paragraph",
+          children: [{ type: "text", value: "Three" }],
+        },
+      ],
     },
   ],
 };
 
 export const propsMeta: WsComponentPropsMeta = {
   props,
-  initialProps: ["defaultValue", "orientation", "activationMode"],
+  initialProps: ["defaultValue", "value", "orientation", "activationMode"],
 };

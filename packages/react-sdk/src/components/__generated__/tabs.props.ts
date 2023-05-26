@@ -440,6 +440,7 @@ export const props: Record<string, PropMeta> = {
   },
   asChild: { required: false, control: "boolean", type: "boolean" },
   defaultValue: { required: false, control: "text", type: "string" },
+  value: { required: false, control: "text", type: "string" },
   activationMode: {
     required: false,
     control: "radio",

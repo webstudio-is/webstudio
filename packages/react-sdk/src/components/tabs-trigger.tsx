@@ -9,10 +9,12 @@ export const TabsTrigger = forwardRef<
     innerText?: string;
     value?: TabsTriggerProps["value"];
   }
->(({ innerText = "Tab", value = "tab", children, ...props }, ref) => (
-  <Trigger value={value} {...props} ref={ref}>
-    {children || innerText}
-  </Trigger>
-));
+>(({ innerText = "Tab", value = "tab", children, ...props }, ref) => {
+  return (
+    <Trigger value={value} {...props} ref={ref}>
+      {children || innerText}
+    </Trigger>
+  );
+});
 
 TabsTrigger.displayName = "TabsTrigger";
