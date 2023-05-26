@@ -1,5 +1,3 @@
-import slugify from "slugify";
-import { customAlphabet } from "nanoid";
 import { v4 as uuid } from "uuid";
 import { prisma, Prisma } from "@webstudio-is/prisma-client";
 import { cloneAssets } from "@webstudio-is/asset-uploader/index.server";
@@ -13,8 +11,7 @@ import {
   loadBuildByProjectId,
 } from "@webstudio-is/project-build/index.server";
 import { Project, Title } from "../shared/schema";
-
-const nanoid = customAlphabet("1234567890abcdefghijklmnopqrstuvwxyz");
+import { generateDomain, validateProjectDomain } from "./project-domain";
 
 export const loadByParams = async (
   params: { projectId: string } | { projectDomain: string },
@@ -68,20 +65,6 @@ export const loadByDomain = async (
 
   // Otherwise, check if the user has access to the project
   return await loadById(projectWithId.id, context);
-};
-
-const slugifyOptions = { lower: true, strict: true };
-
-const MIN_DOMAIN_LENGTH = 10;
-
-const generateDomain = (title: string) => {
-  const slugifiedTitle = slugify(title, slugifyOptions);
-  const domain = `${slugifiedTitle}-${nanoid(
-    // If user entered a long title already, we just add 5 chars generated id
-    // Otherwise we add the amount of chars to satisfy min length
-    Math.max(MIN_DOMAIN_LENGTH - slugifiedTitle.length - 1, 5)
-  )}`;
-  return domain;
 };
 
 export const create = async (
@@ -263,11 +246,13 @@ export const updateDomain = async (
   },
   context: AppContext
 ) => {
-  const domain = slugify(input.domain, slugifyOptions);
+  const domainValidation = validateProjectDomain(input.domain);
 
-  if (domain.length < MIN_DOMAIN_LENGTH) {
-    throw new Error(`Minimum ${MIN_DOMAIN_LENGTH} characters required`);
+  if (domainValidation.success === false) {
+    throw new Error(domainValidation.error);
   }
+
+  const { domain } = domainValidation;
 
   const canEdit = await authorizeProject.hasProjectPermit(
     { projectId: input.id, permit: "edit" },

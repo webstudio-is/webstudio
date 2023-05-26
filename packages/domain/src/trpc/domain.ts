@@ -98,6 +98,7 @@ export const domainRouter = router({
           },
           ctx
         );
+
         return { success: true } as const;
       } catch (error) {
         return {
