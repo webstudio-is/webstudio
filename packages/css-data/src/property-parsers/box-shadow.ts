@@ -1,12 +1,11 @@
 import * as csstree from "css-tree";
-import { List } from "css-tree/utils";
-import type { CssNode } from "css-tree/utils";
-import { parseCssValue } from "../../shared/parse-css-value";
+import { parseCssValue } from "../parse-css-value";
 import type {
   InvalidValue,
   LayersValue,
   UnparsedValue,
 } from "@webstudio-is/css-data";
+import { generate } from "css-tree";
 
 export const parseBoxShadow = (
   boxShadow: string
@@ -24,22 +23,30 @@ export const parseBoxShadow = (
       : tokenStream;
   }
 
-  const ast = csstree.parse(`${tokenStream},`, { context: "value" });
+  const ast = csstree.parse(tokenStream, { context: "value" });
   const layers: string[] = [];
-  const boxShadowValue = new List<CssNode>();
+  const boxShadowValue = new csstree.List<csstree.CssNode>();
 
   csstree.walk(ast, (node) => {
     if (node.type === "Value") {
-      node.children.forEach((child) => {
-        if (child.type === "Operator") {
-          layers.push(
-            csstree.generate({ type: "Value", children: boxShadowValue })
-          );
+      const children = node.children;
+
+      for (const child of children) {
+        if (children.last === child) {
+          boxShadowValue.push(child);
+          layers.push(generate({ type: "Value", children: boxShadowValue }));
           boxShadowValue.clear();
-          return;
+          continue;
         }
+
+        if (child.type === "Operator") {
+          layers.push(generate({ type: "Value", children: boxShadowValue }));
+          boxShadowValue.clear();
+          continue;
+        }
+
         boxShadowValue.push(child);
-      });
+      }
     }
   });
 

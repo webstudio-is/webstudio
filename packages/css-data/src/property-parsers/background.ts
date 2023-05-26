@@ -84,7 +84,7 @@ export const backgroundToLonghand = (
   let nestingLevel = 0;
 
   csstree.walk(cssAst, {
-    enter: (node, item, list) => {
+    enter: (node, item, _) => {
       if (node.type === "Function") {
         if (gradientNames.includes(node.name)) {
           layers.push(csstree.generate(node));
@@ -106,7 +106,7 @@ export const backgroundToLonghand = (
         backgroundColorRaw = csstree.generate(node);
       }
     },
-    leave: (node, item, list) => {
+    leave: (node, _, _) => {
       if (node.type === "Function") {
         nestingLevel--;
       }

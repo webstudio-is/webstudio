@@ -2,7 +2,7 @@ import { useState } from "react";
 import type { InvalidValue, StyleProperty } from "@webstudio-is/css-data";
 import { TextArea, theme } from "@webstudio-is/design-system";
 import type { RenderCategoryProps } from "../../style-sections";
-import { parseBoxShadow } from "./box-shadow-parser";
+import { parseBoxShadow } from "@webstudio-is/css-data";
 
 type IntermediateValue = {
   type: "intermediate";
@@ -34,7 +34,6 @@ export const BoxShadowContent = (
     });
 
     const shadows = parseBoxShadow(value);
-
     if (shadows.type === "invalid") {
       return;
     }
