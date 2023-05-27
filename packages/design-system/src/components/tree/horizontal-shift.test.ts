@@ -187,7 +187,7 @@ test("shifting is relative to the drag item's depth", () => {
   // box31's depth is 2, so it's inserted with shifting, to maintain the same depth
   const result2 = render({ dragItem: box31, dropTarget }, shift);
   expect(result2?.itemSelector).toEqual(["box3", "root"]);
-  expect(result2?.position).toBe("end");
+  expect(result2?.position).toBe(2);
 });
 
 describe("shifting to the left", () => {
@@ -296,7 +296,7 @@ describe("shifting to the right ", () => {
       3
     );
     expect(result2?.itemSelector).toEqual(["box3", "root"]);
-    expect(result2?.position).toBe("end");
+    expect(result2?.position).toBe(2);
   });
 
   test("when the item above is the drag item itself, we consider the item above it as a potential target", () => {
@@ -305,7 +305,7 @@ describe("shifting to the right ", () => {
       1
     );
     expect(result?.itemSelector).toEqual(["box3", "root"]);
-    expect(result?.position).toBe("end");
+    expect(result?.position).toBe(2);
   });
 
   test("if there's an expanded item above, but it cannot accept shildren, no shift occurs", () => {
