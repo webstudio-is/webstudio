@@ -1,4 +1,4 @@
-import * as csstree from "css-tree";
+import { walk, parse, generate } from "css-tree";
 import { parseCssValue } from "../parse-css-value";
 import type {
   InvalidValue,
@@ -40,7 +40,7 @@ export const parseBackground = (
 
 const cssTreeTryParseValue = (input: string) => {
   try {
-    const ast = csstree.parse(input, { context: "value" });
+    const ast = parse(input, { context: "value" });
     return ast;
   } catch {
     return undefined;
@@ -83,18 +83,18 @@ export const backgroundToLonghand = (
 
   let nestingLevel = 0;
 
-  csstree.walk(cssAst, {
-    enter: (node, item, _) => {
+  walk(cssAst, {
+    enter: (node, item, list) => {
       if (node.type === "Function") {
         if (gradientNames.includes(node.name)) {
-          layers.push(csstree.generate(node));
+          layers.push(generate(node));
         }
 
         // If the depth is at level 0 and the next item is null, it's likely that the backgroundColor
         // is written as rgba(x,y,z,a) or similar format.
         // nestingLevel is used as a fast way to check existance of parent Function node
         if (item.next === null && nestingLevel === 0) {
-          backgroundColorRaw = csstree.generate(node);
+          backgroundColorRaw = generate(node);
         }
 
         nestingLevel++;
@@ -103,10 +103,10 @@ export const backgroundToLonghand = (
       if (node.type === "Hash" && item.next === null && nestingLevel === 0) {
         // If the depth is at level 0 and the next item is null, it's likely that the backgroundColor
         // is written as hex #XYZFGH
-        backgroundColorRaw = csstree.generate(node);
+        backgroundColorRaw = generate(node);
       }
     },
-    leave: (node, _, _) => {
+    leave: (node, item, list) => {
       if (node.type === "Function") {
         nestingLevel--;
       }
