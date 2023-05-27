@@ -3,7 +3,6 @@
   "extends": "../../packages/tsconfig/remix.json",
   "include": [
     "remix.env.d.ts",
-    "css-tree-list.d.ts",
     "**/*.ts",
     "**/*.tsx",
     "../../@types/**/*.d.ts"

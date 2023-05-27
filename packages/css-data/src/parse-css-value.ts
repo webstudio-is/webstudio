@@ -1,5 +1,5 @@
 import { colord } from "colord";
-import * as csstree from "css-tree";
+import { parse, lexer } from "css-tree";
 import hyphenate from "hyphenate-style-name";
 import warnOnce from "warn-once";
 import { keywordValues } from "./__generated__/keyword-values";
@@ -8,7 +8,7 @@ import type { StyleProperty, StyleValue, Unit } from "./schema";
 
 const cssTryParseValue = (input: string) => {
   try {
-    const ast = csstree.parse(input, { context: "value" });
+    const ast = parse(input, { context: "value" });
     return ast;
   } catch {
     return undefined;
@@ -27,7 +27,7 @@ export const isValidDeclaration = (
 
   const cssPropertyName = hyphenate(property);
 
-  const matchResult = csstree.lexer.matchProperty(cssPropertyName, ast);
+  const matchResult = lexer.matchProperty(cssPropertyName, ast);
 
   const isValidDeclaration = matchResult.matched != null;
 
