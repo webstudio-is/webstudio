@@ -111,12 +111,10 @@ export const Inspector = ({ publish, navigatorLayout }: InspectorProps) => {
             </PanelTabsList>
             <PanelTabsContent value="style" css={contentStyle} tabIndex={-1}>
               <InstanceInfo instance={selectedInstance} />
-              <ScrollArea>
-                <StylePanel
-                  publish={publish}
-                  selectedInstance={selectedInstance}
-                />
-              </ScrollArea>
+              <StylePanel
+                publish={publish}
+                selectedInstance={selectedInstance}
+              />
             </PanelTabsContent>
             <PanelTabsContent value="props" css={contentStyle} tabIndex={-1}>
               <ScrollArea>

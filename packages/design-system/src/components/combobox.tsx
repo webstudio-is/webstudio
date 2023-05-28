@@ -95,14 +95,10 @@ export const ComboboxListboxItem = forwardRef(ListboxItemBase);
 
 export const Combobox = Popper;
 
-export const StyledPopperContent = styled(PopperContent, {
-  zIndex: theme.zIndices.max,
-});
-
 export const ComboboxContent = forwardRef(
   (props: ComponentProps<typeof PopperContent>, ref: Ref<HTMLDivElement>) => (
     <Portal>
-      <StyledPopperContent ref={ref} {...props} />
+      <PopperContent ref={ref} {...props} />
     </Portal>
   )
 );
