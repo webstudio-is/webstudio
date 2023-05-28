@@ -1,5 +1,4 @@
 import type { WsComponentMeta, WsComponentPropsMeta } from "./component-meta";
-import type { ComponentName } from "./components-utils";
 import { meta as SlotMeta } from "./slot.ws";
 import { meta as FragmentMeta } from "./fragment.ws";
 import { meta as HtmlEmbedMeta } from "./html-embed.ws";
@@ -157,22 +156,6 @@ export const defaultPropsMetas: Record<string, WsComponentPropsMeta> = {
   RadioButton: RadioButtonPropsMeta,
   CheckboxField: CheckboxFieldPropsMeta,
   Checkbox: CheckboxPropsMeta,
-};
-
-type RegisteredComponents = Partial<{
-  // eslint-disable-next-line @typescript-eslint/ban-types
-  [name in ComponentName]: {};
-}>;
-
-export let registeredComponents: RegisteredComponents | undefined;
-
-/**
- *  @todo: Allow register any component.
- * Now we can register only existings Components, as all our type system would
- * break otherwise, see getComponent etc. So its overwriteComponent now
- **/
-export const registerComponents = (components: RegisteredComponents) => {
-  registeredComponents = components;
 };
 
 export const canAcceptComponent = (
