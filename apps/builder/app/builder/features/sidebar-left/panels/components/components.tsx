@@ -38,7 +38,6 @@ export const TabContent = ({ publish, onSetActiveTab }: TabContentProps) => {
     () => getMetaMaps(metaByComponentName),
     [metaByComponentName]
   );
-  console.log({ metaByComponentName, metaByCategory, componentNamesByMeta });
   const { dragCard, handleInsert, draggableContainerRef } = useDraggable({
     publish,
     metaByComponentName,

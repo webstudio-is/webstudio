@@ -23,7 +23,7 @@ export const getMetaMaps = (
     componentNamesByMeta.set(meta, name);
   }
 
-  for (const [, meta] of metaByCategory) {
+  for (const meta of metaByCategory.values()) {
     meta.sort((metaA, metaB) => {
       return (
         (metaA.order ?? Number.MAX_SAFE_INTEGER) -
