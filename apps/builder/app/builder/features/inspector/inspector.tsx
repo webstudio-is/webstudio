@@ -29,7 +29,6 @@ import { getInstanceLabel } from "~/builder/shared/tree";
 const InstanceInfo = ({ instance }: { instance: Instance }) => {
   const componentMeta = getComponentMeta(instance.component);
   if (componentMeta === undefined) {
-    console.error(`Could not get meta for compoent "${instance.component}"`);
     return null;
   }
   const label = getInstanceLabel(instance, componentMeta);
