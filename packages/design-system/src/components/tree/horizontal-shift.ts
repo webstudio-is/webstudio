@@ -74,35 +74,44 @@ export const useHorizontalShift = <Data extends { id: ItemId }>({
       placement: shiftPlacement(currentDepth - dropHiddenCount),
     } as const;
 
+    if (desiredDepth === currentDepth) {
+      return withoutShift;
+    }
+
     const [dragItemId] = dragItemSelector;
     const isDragItem = (item: Data | undefined) => item?.id === dragItemId;
 
+    const isAtTheBottom = (parentId: ItemId, index: number) => {
+      const children = getItemChildren(parentId);
+      // There's a special case when the placement line is above the drag item.
+      // For reparenting, above and below the drag item means the same.
+      const indexCorrected = isDragItem(children[index]) ? index + 1 : index;
+      return indexCorrected === children.length;
+    };
+
+    // @todo generalize the logic of both directions
+
+    // find the last matching while shifting to the left
+    // until cursor is reached
+    // since the direction of search from the deepest to the root is same
+    // break on last match
     if (desiredDepth < currentDepth) {
-      let shifted = 0;
       let newParentSelector = dropItemSelector;
       let newPosition = indexWithinChildren;
 
-      const isAtTheBottom = (parentId: ItemId, index: number) => {
-        const children = getItemChildren(parentId);
-
-        // There's a special case when the placement line is above the drag item.
-        // For reparenting, above and below the drag item means the same.
-        const indexCorrected = isDragItem(children[index]) ? index + 1 : index;
-        return indexCorrected === children.length;
-      };
-
       // skip drop item
       for (let index = 1; index < dropItemSelector.length; index += 1) {
-        const potentialNewParentId = dropItemSelector[index];
         if (
-          isAtTheBottom(newParentSelector[0], newPosition) &&
-          canAcceptChild(potentialNewParentId) &&
-          shifted < currentDepth - desiredDepth
+          index > currentDepth - desiredDepth ||
+          isAtTheBottom(dropItemSelector[index - 1], newPosition) === false
         ) {
-          shifted = index;
+          break;
+        }
+        if (canAcceptChild(dropItemSelector[index])) {
           newParentSelector = dropItemSelector.slice(index);
-          const childId = dropItemSelector[index - 1];
-          const childPosition = getItemChildren(newParentSelector[0]).findIndex(
+          const children = getItemChildren(dropItemSelector[index]);
+          const childId = dropItemSelector[index - 1] ?? children.at(-1)?.id;
+          const childPosition = children.findIndex(
             (item) => item.id === childId
           );
           newPosition = childPosition + 1;
@@ -111,6 +120,8 @@ export const useHorizontalShift = <Data extends { id: ItemId }>({
         break;
       }
 
+      const shifted = newParentSelector.length - dropItemSelector.length;
+
       if (shifted === 0) {
         return withoutShift;
       }
@@ -118,43 +129,79 @@ export const useHorizontalShift = <Data extends { id: ItemId }>({
       return {
         itemSelector: newParentSelector,
         position: newPosition,
-        placement: shiftPlacement(currentDepth - dropHiddenCount - shifted),
+        placement: shiftPlacement(currentDepth - dropHiddenCount + shifted),
       };
     }
 
-    if (desiredDepth > currentDepth) {
-      let shifted = 0;
-      let newParentSelector = dropItemSelector;
-
-      const findNextParent = (
-        parentId: ItemId,
-        position: number | "last"
-      ): undefined | ItemId => {
-        const children = getItemChildren(parentId);
-        const index = position === "last" ? children.length - 1 : position;
-
-        // There's a special case when the placement line is below the drag item.
-        // For reparenting, above and below the drag item means the same.
-        return isDragItem(children[index])
-          ? children[index - 1]?.id
-          : children[index]?.id;
-      };
-
-      let potentialNewParentId = findNextParent(
-        dropItemSelector[0],
-        indexWithinChildren - 1
+    // find deepest item at the bottom
+    const getLastChild = (
+      children: Data[],
+      position: number
+    ): undefined | ItemId => {
+      // There's a special case when the placement line is below the drag item.
+      // For reparenting, above and below the drag item means the same.
+      return isDragItem(children[position])
+        ? children[position - 1]?.id
+        : children[position]?.id;
+    };
+    let deepestAtTheBottomItemSelector = dropItemSelector;
+    let deepestAtTheBottomParentId: undefined | string =
+      deepestAtTheBottomItemSelector[0];
+    let deepestAtTheBottomChildren = getItemChildren(
+      deepestAtTheBottomParentId
+    );
+    let deepestAtTheBottomPosition = indexWithinChildren - 1;
+    // eslint-disable-next-line no-constant-condition
+    while (true) {
+      deepestAtTheBottomParentId = getLastChild(
+        deepestAtTheBottomChildren,
+        deepestAtTheBottomPosition
       );
-
-      while (
-        potentialNewParentId !== undefined &&
-        getIsExpanded([potentialNewParentId, ...newParentSelector]) &&
-        canAcceptChild(potentialNewParentId) &&
-        shifted < desiredDepth - currentDepth
-      ) {
-        newParentSelector = [potentialNewParentId, ...newParentSelector];
-        potentialNewParentId = findNextParent(potentialNewParentId, "last");
-        shifted++;
+      if (deepestAtTheBottomParentId === undefined) {
+        break;
       }
+      const newItemSelector = [
+        deepestAtTheBottomParentId,
+        ...deepestAtTheBottomItemSelector,
+      ];
+      if (getIsExpanded(newItemSelector) === false) {
+        break;
+      }
+      deepestAtTheBottomItemSelector = newItemSelector;
+      deepestAtTheBottomChildren = getItemChildren(deepestAtTheBottomParentId);
+      deepestAtTheBottomPosition = deepestAtTheBottomChildren.length - 1;
+    }
+
+    // find the last matching while shifting to the right
+    // until cursor is reached
+    // since the direction of search from the deepest to the root is reversed
+    // break on first match
+    if (desiredDepth > currentDepth) {
+      let newParentSelector = deepestAtTheBottomItemSelector;
+      let newPosition = deepestAtTheBottomPosition;
+
+      for (
+        let index = deepestAtTheBottomItemSelector.length - desiredDepth;
+        index < deepestAtTheBottomItemSelector.length;
+        index += 1
+      ) {
+        if (canAcceptChild(deepestAtTheBottomItemSelector[index])) {
+          newParentSelector = deepestAtTheBottomItemSelector.slice(index);
+          const children = getItemChildren(
+            deepestAtTheBottomItemSelector[index]
+          );
+          const childId =
+            deepestAtTheBottomItemSelector[index - 1] ?? children.at(-1)?.id;
+          const childPosition = children.findIndex(
+            (item) => item.id === childId
+          );
+          newPosition = childPosition + 1;
+          break;
+        }
+        continue;
+      }
+
+      const shifted = newParentSelector.length - dropItemSelector.length;
 
       if (shifted === 0) {
         return withoutShift;
@@ -162,7 +209,7 @@ export const useHorizontalShift = <Data extends { id: ItemId }>({
 
       return {
         itemSelector: newParentSelector,
-        position: "end",
+        position: newPosition,
         placement: shiftPlacement(currentDepth - dropHiddenCount + shifted),
       };
     }
