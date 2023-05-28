@@ -26,6 +26,7 @@ export const meta: WsComponentMeta = {
   icon: LinkBlockIcon,
   states: linkMeta.states,
   presetStyle,
+  order: 2,
 };
 
 export const propsMeta: WsComponentPropsMeta = {

@@ -43,6 +43,7 @@ export const meta: WsComponentMeta = {
   icon: BoxIcon,
   states: defaultStates,
   presetStyle,
+  order: 0,
 };
 
 export const propsMeta: WsComponentPropsMeta = {

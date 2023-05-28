@@ -41,7 +41,7 @@ export const defaultStates: ComponentState[] = [
   { selector: ":focus-within", label: "Focus Within" },
 ];
 
-const WsComponentMeta = z.object({
+export const WsComponentMeta = z.object({
   category: z.enum(componentCategories).optional(),
   // container - can accept other components with dnd
   // control - usually form controls like inputs, without children
@@ -63,6 +63,7 @@ const WsComponentMeta = z.object({
   presetStyle: z.optional(z.record(z.string(), EmbedTemplateStyleDecl)),
   states: z.optional(z.array(ComponentState)),
   template: z.optional(WsEmbedTemplate),
+  order: z.number().optional(),
 });
 
 export type WsComponentMeta = Omit<
