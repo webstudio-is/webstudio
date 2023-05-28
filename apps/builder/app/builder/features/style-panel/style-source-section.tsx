@@ -3,7 +3,6 @@ import { useStore } from "@nanostores/react";
 import { nanoid } from "nanoid";
 import { computed } from "nanostores";
 import store from "immerhin";
-import { theme, Text } from "@webstudio-is/design-system";
 import {
   type Instance,
   type StyleSource,
@@ -343,58 +342,52 @@ export const StyleSourcesSection = () => {
   >(undefined);
 
   return (
-    <>
-      <Text css={{ py: theme.spacing[9] }} variant="titles">
-        Style Sources
-      </Text>
-
-      <StyleSourceInput
-        items={items}
-        value={value}
-        selectedItemSelector={selectedOrLastStyleSourceSelector}
-        componentStates={componentStates}
-        onCreateItem={createStyleSource}
-        onSelectAutocompleteItem={({ id }) => {
-          addStyleSourceToInstace(id);
-        }}
-        onDuplicateItem={(id) => {
-          const newId = duplicateStyleSource(id);
-          if (newId !== undefined) {
-            setEditingItemId(newId);
-          }
-        }}
-        onConvertToToken={(id) => {
-          convertLocalStyleSourceToToken(id);
-          setEditingItemId(id);
-        }}
-        onRemoveItem={(id) => {
-          removeStyleSourceFromInstance(id);
-        }}
-        onDeleteItem={(id) => {
-          deleteStyleSource(id);
-        }}
-        onSort={(items) => {
-          reorderStyleSources(items.map((item) => item.id));
-        }}
-        onSelectItem={(styleSourceSelector) => {
-          createLocalStyleSourceIfNotExists(styleSourceSelector.styleSourceId);
-          selectedStyleSourceSelectorStore.set(styleSourceSelector);
-        }}
-        // style source renaming
-        editingItemId={editingItemId}
-        onEditItem={(id) => {
-          setEditingItemId(id);
-          // prevent deselect after renaming
-          if (id !== undefined) {
-            selectedStyleSourceSelectorStore.set({
-              styleSourceId: id,
-            });
-          }
-        }}
-        onChangeItem={(item) => {
-          renameStyleSource(item.id, item.label);
-        }}
-      />
-    </>
+    <StyleSourceInput
+      items={items}
+      value={value}
+      selectedItemSelector={selectedOrLastStyleSourceSelector}
+      componentStates={componentStates}
+      onCreateItem={createStyleSource}
+      onSelectAutocompleteItem={({ id }) => {
+        addStyleSourceToInstace(id);
+      }}
+      onDuplicateItem={(id) => {
+        const newId = duplicateStyleSource(id);
+        if (newId !== undefined) {
+          setEditingItemId(newId);
+        }
+      }}
+      onConvertToToken={(id) => {
+        convertLocalStyleSourceToToken(id);
+        setEditingItemId(id);
+      }}
+      onRemoveItem={(id) => {
+        removeStyleSourceFromInstance(id);
+      }}
+      onDeleteItem={(id) => {
+        deleteStyleSource(id);
+      }}
+      onSort={(items) => {
+        reorderStyleSources(items.map((item) => item.id));
+      }}
+      onSelectItem={(styleSourceSelector) => {
+        createLocalStyleSourceIfNotExists(styleSourceSelector.styleSourceId);
+        selectedStyleSourceSelectorStore.set(styleSourceSelector);
+      }}
+      // style source renaming
+      editingItemId={editingItemId}
+      onEditItem={(id) => {
+        setEditingItemId(id);
+        // prevent deselect after renaming
+        if (id !== undefined) {
+          selectedStyleSourceSelectorStore.set({
+            styleSourceId: id,
+          });
+        }
+      }}
+      onChangeItem={(item) => {
+        renameStyleSource(item.id, item.label);
+      }}
+    />
   );
 };

@@ -1,11 +1,4 @@
-import {
-  theme,
-  Box,
-  ScrollArea,
-  Separator,
-  Card,
-  Text,
-} from "@webstudio-is/design-system";
+import { theme, Box, Card, Text, Separator } from "@webstudio-is/design-system";
 import type { Instance } from "@webstudio-is/project-build";
 import type { Publish } from "~/shared/pubsub";
 
@@ -49,22 +42,31 @@ export const StylePanel = ({ selectedInstance, publish }: StylePanelProps) => {
     <>
       <Box
         css={{
-          px: theme.spacing[9],
-          pb: theme.spacing[9],
-          boxShadow: theme.shadows.panelSectionDropShadow,
+          position: "sticky",
+          top: 0,
+          backgroundColor: theme.colors.backgroundPanel,
+          zIndex: theme.zIndices[1],
         }}
       >
-        <StyleSourcesSection />
+        <Box
+          css={{
+            px: theme.spacing[9],
+            pb: theme.spacing[9],
+          }}
+        >
+          <Text css={{ py: theme.spacing[7] }} variant="titles">
+            Style Sources
+          </Text>
+          <StyleSourcesSection />
+        </Box>
+        <Separator />
       </Box>
-      <Separator />
-      <ScrollArea>
-        <StyleSettings
-          currentStyle={currentStyle}
-          setProperty={setProperty}
-          deleteProperty={deleteProperty}
-          createBatchUpdate={createBatchUpdate}
-        />
-      </ScrollArea>
+      <StyleSettings
+        currentStyle={currentStyle}
+        setProperty={setProperty}
+        deleteProperty={deleteProperty}
+        createBatchUpdate={createBatchUpdate}
+      />
     </>
   );
 };
