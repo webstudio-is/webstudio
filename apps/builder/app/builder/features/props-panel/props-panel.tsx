@@ -11,16 +11,10 @@ import {
   ComboboxListboxItem,
   Separator,
   Flex,
-  Text,
   type CSS,
-  ScrollArea,
   InputField,
   NestedInputButton,
 } from "@webstudio-is/design-system";
-import {
-  type WsComponentMeta,
-  getComponentMeta,
-} from "@webstudio-is/react-sdk";
 import type { Publish } from "~/shared/pubsub";
 import {
   propsStore,
@@ -40,8 +34,6 @@ import {
 } from "./use-props-logic";
 import { getLabel } from "./shared";
 import { useState, type ReactNode } from "react";
-import { getInstanceLabel } from "~/builder/shared/tree";
-import { MetaIcon } from "~/builder/shared/meta-icon";
 
 const itemToString = (item: NameAndLabel | null) =>
   item ? getLabel(item, item.name) : "";
@@ -49,25 +41,6 @@ const itemToString = (item: NameAndLabel | null) =>
 const Row = ({ children, css }: { children: ReactNode; css?: CSS }) => (
   <Flex css={{ px: theme.spacing[9], ...css }} gap="2" direction="column">
     {children}
-  </Flex>
-);
-
-const InstanceInfo = ({
-  meta,
-  label,
-}: {
-  label: string;
-  meta: WsComponentMeta;
-}) => (
-  <Flex
-    gap="1"
-    css={{ height: theme.spacing[13], color: theme.colors.foregroundSubtle }}
-    align="center"
-  >
-    <MetaIcon icon={meta.icon} />
-    <Text truncate variant="labelsSentenceCase">
-      {label}
-    </Text>
   </Flex>
 );
 
@@ -175,32 +148,21 @@ const AddPropertyForm = ({
 type PropsPanelProps = {
   propsLogic: ReturnType<typeof usePropsLogic>;
   component: Instance["component"];
-  instanceLabel: string;
   instanceId: string;
-  componentMeta: WsComponentMeta;
   setCssProperty: SetCssProperty;
 };
 
 // A UI componet with minimum logic that can be demoed in Storybook etc.
 export const PropsPanel = (props: PropsPanelProps) => {
-  const { propsLogic: logic, instanceLabel, componentMeta } = props;
+  const { propsLogic: logic } = props;
 
   const [addingProp, setAddingProp] = useState(false);
 
   const hasAddedProps = logic.addedProps.length > 0 || addingProp;
 
   return (
-    <ScrollArea css={{ paddingTop: theme.spacing[3] }}>
-      <Row>
-        <InstanceInfo meta={componentMeta} label={instanceLabel} />
-      </Row>
-
-      <Row
-        css={{
-          paddingTop: theme.spacing[3],
-          paddingBottom: theme.spacing[5],
-        }}
-      >
+    <>
+      <Row css={{ py: theme.spacing[5] }}>
         {logic.systemProps.map((item) => renderProperty(props, item))}
       </Row>
 
@@ -240,7 +202,7 @@ export const PropsPanel = (props: PropsPanelProps) => {
           </Flex>
         )}
       </CollapsibleSectionWithAddButton>
-    </ScrollArea>
+    </>
   );
 };
 
@@ -255,11 +217,6 @@ export const PropsPanelContainer = ({
     instance.component
   );
   if (propsMeta === undefined) {
-    throw new Error(`Could not get meta for compoent "${instance.component}"`);
-  }
-
-  const componentMeta = getComponentMeta(instance.component);
-  if (componentMeta === undefined) {
     throw new Error(`Could not get meta for compoent "${instance.component}"`);
   }
 
@@ -284,15 +241,11 @@ export const PropsPanelContainer = ({
     },
   });
 
-  const instanceLabel = getInstanceLabel(instance, componentMeta);
-
   return (
     <PropsPanel
       propsLogic={logic}
       component={instance.component}
       instanceId={instance.id}
-      instanceLabel={instanceLabel}
-      componentMeta={componentMeta}
       setCssProperty={setCssProperty}
     />
   );

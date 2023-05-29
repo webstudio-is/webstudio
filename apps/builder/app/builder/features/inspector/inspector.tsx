@@ -1,7 +1,9 @@
 import { useRef, useState } from "react";
 import { useStore } from "@nanostores/react";
-import type { Publish } from "~/shared/pubsub";
+import type { Instance } from "@webstudio-is/project-build";
+import { getComponentMeta } from "@webstudio-is/react-sdk";
 import {
+  theme,
   PanelTabs,
   PanelTabsList,
   PanelTabsTrigger,
@@ -11,15 +13,43 @@ import {
   Box,
   EnhancedTooltipProvider,
   Flex,
+  ScrollArea,
 } from "@webstudio-is/design-system";
+import type { Publish } from "~/shared/pubsub";
 import { StylePanel } from "~/builder/features/style-panel";
 import { PropsPanelContainer } from "~/builder/features/props-panel";
 import { FloatingPanelProvider } from "~/builder/shared/floating-panel";
-import { theme } from "@webstudio-is/design-system";
 import { selectedInstanceStore, isDraggingStore } from "~/shared/nano-states";
 import { SettingsPanel } from "../settings-panel";
 import { NavigatorTree } from "~/builder/shared/navigator-tree";
 import type { Settings } from "~/builder/shared/client-settings";
+import { MetaIcon } from "~/builder/shared/meta-icon";
+import { getInstanceLabel } from "~/builder/shared/tree";
+
+const InstanceInfo = ({ instance }: { instance: Instance }) => {
+  const componentMeta = getComponentMeta(instance.component);
+  if (componentMeta === undefined) {
+    return null;
+  }
+  const label = getInstanceLabel(instance, componentMeta);
+  return (
+    <Flex
+      shrink="false"
+      gap="1"
+      align="center"
+      css={{
+        px: theme.spacing[9],
+        height: theme.spacing[13],
+        color: theme.colors.foregroundSubtle,
+      }}
+    >
+      <MetaIcon icon={componentMeta.icon} />
+      <Text truncate variant="labelsSentenceCase">
+        {label}
+      </Text>
+    </Flex>
+  );
+};
 
 type InspectorProps = {
   publish: Publish;
@@ -80,20 +110,29 @@ export const Inspector = ({ publish, navigatorLayout }: InspectorProps) => {
               <PanelTabsTrigger value="settings">Settings</PanelTabsTrigger>
             </PanelTabsList>
             <PanelTabsContent value="style" css={contentStyle} tabIndex={-1}>
+              <InstanceInfo instance={selectedInstance} />
               <StylePanel
                 publish={publish}
                 selectedInstance={selectedInstance}
               />
             </PanelTabsContent>
             <PanelTabsContent value="props" css={contentStyle} tabIndex={-1}>
-              <PropsPanelContainer
-                publish={publish}
-                key={selectedInstance.id /* Re-render when instance changes */}
-                selectedInstance={selectedInstance}
-              />
+              <ScrollArea>
+                <InstanceInfo instance={selectedInstance} />
+                <PropsPanelContainer
+                  publish={publish}
+                  key={
+                    selectedInstance.id /* Re-render when instance changes */
+                  }
+                  selectedInstance={selectedInstance}
+                />
+              </ScrollArea>
             </PanelTabsContent>
             <PanelTabsContent value="settings" css={contentStyle} tabIndex={-1}>
-              <SettingsPanel />
+              <ScrollArea>
+                <InstanceInfo instance={selectedInstance} />
+                <SettingsPanel />
+              </ScrollArea>
             </PanelTabsContent>
           </Flex>
         </PanelTabs>

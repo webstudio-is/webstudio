@@ -1,5 +1,4 @@
 import { useState } from "react";
-import { ButtonElementIcon } from "@webstudio-is/icons/svg";
 import { PropsPanel } from "./props-panel";
 import { usePropsLogic } from "./use-props-logic";
 import {
@@ -11,10 +10,7 @@ import {
 } from "~/shared/nano-states";
 import { setMockEnv } from "~/shared/env";
 import type { Instance, Prop } from "@webstudio-is/project-build";
-import type {
-  WsComponentMeta,
-  WsComponentPropsMeta,
-} from "@webstudio-is/react-sdk";
+import type { WsComponentPropsMeta } from "@webstudio-is/react-sdk";
 import { textVariants } from "@webstudio-is/design-system";
 import type { Asset } from "@webstudio-is/asset-uploader";
 // eslint-disable-next-line import/no-internal-modules
@@ -194,13 +190,6 @@ const checkProp = (options = defaultOptions, label?: string): PropMeta => ({
   required: false,
   label,
 });
-
-const componentMeta: WsComponentMeta = {
-  category: "general",
-  type: "rich-text",
-  label: "Button",
-  icon: ButtonElementIcon,
-};
 
 const componentPropsMeta: WsComponentPropsMeta = {
   props: {
@@ -396,8 +385,6 @@ export const Story = () => {
           instanceId={instanceId}
           propsLogic={logic}
           component="Button"
-          instanceLabel="My Button"
-          componentMeta={componentMeta}
           setCssProperty={() => () => undefined}
         />
       </div>
