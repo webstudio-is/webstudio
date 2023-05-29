@@ -4,17 +4,17 @@ import { computed } from "nanostores";
 import type { Instances, Page } from "@webstudio-is/project-build";
 import {
   type Params,
+  type Components,
   defaultMetas,
   defaultPropsMetas,
   createElementsTree,
-  registerComponents,
   registerComponentMetas as registerComponentMetasLegacy,
   customComponentMetas,
   customComponentPropsMetas,
   setParams,
   customComponents,
-  type GetComponent,
 } from "@webstudio-is/react-sdk";
+import * as defaultComponents from "@webstudio-is/react-sdk/components";
 import { publish } from "~/shared/pubsub";
 import {
   handshakenStore,
@@ -63,7 +63,7 @@ const temporaryInstances: Instances = new Map([
   ],
 ]);
 
-const useElementsTree = (getComponent: GetComponent) => {
+const useElementsTree = (components: Components) => {
   const instances = useStore(instancesStore);
   const page = useStore(selectedPageStore);
   const rootInstanceId = page?.rootInstanceId;
@@ -102,9 +102,9 @@ const useElementsTree = (getComponent: GetComponent) => {
       assetsStore,
       pagesStore: pagesMapStore,
       Component: WebstudioComponentDev,
-      getComponent,
+      components,
     });
-  }, [instances, rootInstanceId, getComponent, pagesMapStore]);
+  }, [instances, rootInstanceId, components, pagesMapStore]);
 };
 
 const DesignMode = () => {
@@ -124,19 +124,17 @@ const DesignMode = () => {
 
 type CanvasProps = {
   params: Params;
-  getComponent: GetComponent;
 };
 
-export const Canvas = ({
-  params,
-  getComponent,
-}: CanvasProps): JSX.Element | null => {
+export const Canvas = ({ params }: CanvasProps): JSX.Element | null => {
   const handshaken = useStore(handshakenStore);
   setParams(params ?? null);
   useCanvasStore(publish);
   const [isPreviewMode] = useIsPreviewMode();
 
-  registerComponents(customComponents);
+  const components = new Map(
+    Object.entries({ ...defaultComponents, ...customComponents })
+  ) as Components;
   registerComponentMetasLegacy(customComponentMetas);
   useSyncInitializeOnce(() => {
     registerComponentMetas(defaultMetas);
@@ -166,7 +164,7 @@ export const Canvas = ({
 
   useEffect(subscribeCollapsedToPubSub, []);
 
-  const elements = useElementsTree(getComponent);
+  const elements = useElementsTree(components);
 
   return (
     <>

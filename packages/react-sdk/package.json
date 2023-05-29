@@ -66,6 +66,11 @@
       "source": "./src/index.ts",
       "import": "./lib/index.js",
       "require": "./lib/cjs/index.js"
+    },
+    "./components": {
+      "source": "./src/components/components.ts",
+      "import": "./lib/components/components.js",
+      "require": "./lib/cjs/components/components.js"
     }
   },
   "types": "lib/types/index.d.ts",

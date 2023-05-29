@@ -1,6 +1,6 @@
 import { Fragment } from "react";
 import type { Instance } from "@webstudio-is/project-build";
-import type { GetComponent } from "../components/components-utils";
+import type { Components } from "../components/components-utils";
 import { useInstanceProps } from "../props";
 
 const renderText = (text: string): Array<JSX.Element> => {
@@ -30,14 +30,14 @@ type WebstudioComponentProps = {
   instance: Instance;
   instanceSelector: Instance["id"][];
   children: Array<JSX.Element | string>;
-  getComponent: GetComponent;
+  components: Components;
 };
 
 export const WebstudioComponent = ({
   instance,
   instanceSelector,
   children,
-  getComponent,
+  components,
   ...rest
 }: WebstudioComponentProps) => {
   const instanceProps = useInstanceProps(instance.id);
@@ -47,7 +47,7 @@ export const WebstudioComponent = ({
     [idAttribute]: instance.id,
     [componentAttribute]: instance.component,
   };
-  const Component = getComponent(instance.component);
+  const Component = components.get(instance.component);
   if (Component === undefined) {
     return <></>;
   }
