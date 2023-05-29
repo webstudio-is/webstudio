@@ -90,7 +90,9 @@ const useNewEntriesCheck = ({
           // user may cancel to copy own state before reloading
           if (result.status === "version_mismatched") {
             const shouldReload = confirm(
-              "Someone else is edited the project. Please reload to get the latest state."
+              "You are currently in single-player mode. " +
+                "The project has been edited in a different tab, browser, or by another user. " +
+                "Please reload the page to get the latest version."
             );
             if (shouldReload) {
               location.reload();
