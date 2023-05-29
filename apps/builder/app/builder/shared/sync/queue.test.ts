@@ -26,7 +26,7 @@ describe("queue", () => {
   });
 
   test("enqueue with failure", async () => {
-    enqueue(() => Promise.resolve({ ok: false }));
+    enqueue(() => Promise.resolve({ ok: false, retry: true }));
     const jobPromise = dequeue();
     expect(queueStatus.get()).toBe("running");
     expect(state.failedAttempts).toBe(0);
@@ -40,7 +40,13 @@ describe("queue", () => {
 
   test("recovering > failed > idle", async () => {
     let response = Promise.resolve({ ok: false });
-    await enqueue(() => response);
+    await enqueue(async () => {
+      const { ok } = await response;
+      if (ok) {
+        return { ok: true };
+      }
+      return { ok: false, retry: true };
+    });
 
     expect(queueStatus.get()).toBe("recovering");
 

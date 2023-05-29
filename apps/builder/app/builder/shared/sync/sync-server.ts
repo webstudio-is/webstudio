@@ -40,11 +40,14 @@ const useErrorCheck = () => {
   }, []);
 };
 
+let lastVersion: undefined | number = undefined;
+
 const useNewEntriesCheck = ({
   buildId,
   projectId,
   authToken,
   authPermit,
+  version,
 }: UserSyncServerProps) => {
   useEffect(() => {
     if (authPermit === "view") {
@@ -62,20 +65,47 @@ const useNewEntriesCheck = ({
         return;
       }
 
-      enqueue(() =>
-        fetch(restPatchPath({ authToken }), {
+      enqueue(async () => {
+        // save the initial version from loaded build
+        if (lastVersion === undefined) {
+          lastVersion = version;
+        }
+        const response = await fetch(restPatchPath({ authToken }), {
           method: "post",
           body: JSON.stringify({
             transactions,
             buildId,
             projectId,
+            // provide latest stored version to server
+            version: lastVersion,
           }),
-        })
-      );
+        });
+        if (response.ok) {
+          const result = await response.json();
+          if (result.status === "ok") {
+            lastVersion += 1;
+            return { ok: true };
+          }
+          // when versions mismatched ask user to reload
+          // user may cancel to copy own state before reloading
+          if (result.status === "version_mismatched") {
+            const shouldReload = confirm(
+              "You are currently in single-player mode. " +
+                "The project has been edited in a different tab, browser, or by another user. " +
+                "Please reload the page to get the latest version."
+            );
+            if (shouldReload) {
+              location.reload();
+            }
+            return { ok: false, retry: false };
+          }
+        }
+        return { ok: false, retry: true };
+      });
     }, NEW_ENTRIES_INTERVAL);
 
     return () => clearInterval(intervalId);
-  }, [buildId, projectId, authToken, authPermit]);
+  }, [buildId, projectId, authToken, authPermit, version]);
 };
 
 type UserSyncServerProps = {
@@ -83,6 +113,7 @@ type UserSyncServerProps = {
   projectId: Project["id"];
   authToken: string | undefined;
   authPermit: AuthPermit;
+  version: number;
 };
 
 export const useSyncServer = (props: UserSyncServerProps) => {

@@ -1,3 +1,4 @@
+import { applyPatches } from "immer";
 import type { ActionArgs } from "@remix-run/node";
 import type { SyncItem } from "immerhin";
 import { prisma } from "@webstudio-is/prisma-client";
@@ -29,18 +30,23 @@ import {
 } from "@webstudio-is/project-build/index.server";
 import { patchAssets } from "@webstudio-is/asset-uploader/index.server";
 import type { Project } from "@webstudio-is/project";
-import { createContext } from "~/shared/context.server";
 import { authorizeProject } from "@webstudio-is/trpc-interface/index.server";
-import { applyPatches } from "immer";
+import { createContext } from "~/shared/context.server";
 
 type PatchData = {
   transactions: Array<SyncItem>;
   buildId: Build["id"];
   projectId: Project["id"];
+  version: number;
 };
 
 export const action = async ({ request }: ActionArgs) => {
-  const { buildId, projectId, transactions }: PatchData = await request.json();
+  const {
+    buildId,
+    projectId,
+    transactions,
+    version: clientVersion,
+  }: PatchData = await request.json();
   if (buildId === undefined) {
     return { errors: "Build id required" };
   }
@@ -62,6 +68,13 @@ export const action = async ({ request }: ActionArgs) => {
   });
   if (build === null) {
     throw Error(`Build ${buildId} not found`);
+  }
+
+  const serverVersion = build.version;
+  if (clientVersion !== serverVersion) {
+    return {
+      status: "version_mismatched",
+    };
   }
 
   const buildData: {
@@ -165,7 +178,10 @@ export const action = async ({ request }: ActionArgs) => {
   }
 
   // save build data when all patches applied
-  const dbBuildData: Parameters<typeof prisma.build.update>[0]["data"] = {};
+  const dbBuildData: Parameters<typeof prisma.build.update>[0]["data"] = {
+    version: clientVersion + 1,
+  };
+
   if (buildData.pages) {
     // parse with zod before serialization to avoid saving invalid data
     dbBuildData.pages = serializePages(Pages.parse(buildData.pages));
@@ -216,14 +232,20 @@ export const action = async ({ request }: ActionArgs) => {
     dbBuildData.styles = serializeStyles(buildData.styles);
   }
 
-  // check any build data is changed because only assets could change
-  if (Object.keys(dbBuildData).length > 0) {
-    await prisma.build.update({
-      data: dbBuildData,
-      where: {
-        id_projectId: { projectId, id: buildId },
-      },
-    });
+  const { count } = await prisma.build.updateMany({
+    data: dbBuildData,
+    where: {
+      projectId,
+      id: buildId,
+      version: clientVersion,
+    },
+  });
+  // ensure only build with client version is updated
+  // to avoid race conditions
+  if (count === 0) {
+    return {
+      status: "version_mismatched",
+    };
   }
 
   return { status: "ok" };

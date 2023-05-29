@@ -9,6 +9,7 @@ import type { StyleSourceSelection } from "./schema/style-source-selections";
 export type Build = {
   id: string;
   projectId: string;
+  version: number;
   createdAt: string;
   isDev: boolean;
   isProd: boolean;

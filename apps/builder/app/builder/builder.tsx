@@ -276,6 +276,7 @@ export const Builder = ({
     projectId: project.id,
     authToken,
     authPermit,
+    version: build.version,
   });
   useSharedShortcuts({ source: "builder" });
   useSetIsPreviewMode(authPermit === "view");
