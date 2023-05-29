@@ -1,101 +1,40 @@
-import store from "immerhin";
 import { findTreeInstanceIdsExcludingSlotDescendants } from "@webstudio-is/project-build";
+import { getComponentMeta } from "@webstudio-is/react-sdk";
+import store from "immerhin";
+import { removeByMutable } from "./array-utils";
 import {
-  generateDataFromEmbedTemplate,
-  getComponentMeta,
-} from "@webstudio-is/react-sdk";
-import {
+  instancesStore,
   propsStore,
-  stylesStore,
   selectedInstanceSelectorStore,
+  selectedStyleSourceSelectorStore,
   styleSourceSelectionsStore,
   styleSourcesStore,
-  instancesStore,
-  selectedStyleSourceSelectorStore,
+  stylesStore,
   textEditingInstanceSelectorStore,
-  breakpointsStore,
 } from "./nano-states";
+import { insertTemplate } from "./template-utils";
 import {
+  findLocalStyleSourcesWithinInstances,
+  getAncestorInstanceSelector,
+  reparentInstanceMutable,
   type DroppableTarget,
   type InstanceSelector,
-  findLocalStyleSourcesWithinInstances,
-  insertInstancesMutable,
-  reparentInstanceMutable,
-  getAncestorInstanceSelector,
-  insertPropsCopyMutable,
-  insertStyleSourcesCopyMutable,
-  insertStyleSourceSelectionsCopyMutable,
-  insertStylesCopyMutable,
 } from "./tree-utils";
-import { removeByMutable } from "./array-utils";
-import { isBaseBreakpoint } from "./breakpoints";
 
 export const insertNewComponentInstance = (
   component: string,
   dropTarget: DroppableTarget
 ) => {
-  const breakpoints = breakpointsStore.get();
-  const breakpointValues = Array.from(breakpoints.values());
-  const baseBreakpoint = breakpointValues.find(isBaseBreakpoint);
   const componentMeta = getComponentMeta(component);
-  if (baseBreakpoint === undefined) {
-    return;
-  }
-  const {
-    children,
-    instances: insertedInstances,
-    props: insertedProps,
-    styleSourceSelections: insertedStyleSourceSelections,
-    styleSources: insertedStyleSources,
-    styles: insertedStyles,
-  } = generateDataFromEmbedTemplate(
-    // when template not specified fallback to template with the component
-    componentMeta?.template ?? [
-      {
-        type: "instance",
-        component,
-        children: [],
-      },
-    ],
-    baseBreakpoint.id
-  );
-  const rootInstanceId = insertedInstances[0].id;
-  store.createTransaction(
-    [
-      instancesStore,
-      propsStore,
-      styleSourceSelectionsStore,
-      styleSourcesStore,
-      stylesStore,
-    ],
-    (instances, props, styleSourceSelections, styleSources, styles) => {
-      insertInstancesMutable(
-        instances,
-        insertedInstances,
-        children,
-        dropTarget
-      );
-      insertPropsCopyMutable(props, insertedProps, new Map());
-      insertStyleSourcesCopyMutable(
-        styleSources,
-        insertedStyleSources,
-        new Set()
-      );
-      insertStyleSourceSelectionsCopyMutable(
-        styleSourceSelections,
-        insertedStyleSourceSelections,
-        new Map(),
-        new Map()
-      );
-      insertStylesCopyMutable(styles, insertedStyles, new Map(), new Map());
-    }
-  );
-
-  selectedInstanceSelectorStore.set([
-    rootInstanceId,
-    ...dropTarget.parentSelector,
-  ]);
-  selectedStyleSourceSelectorStore.set(undefined);
+  // when template not specified fallback to template with the component
+  const template = componentMeta?.template ?? [
+    {
+      type: "instance",
+      component,
+      children: [],
+    },
+  ];
+  insertTemplate(template, dropTarget);
 };
 
 export const reparentInstance = (
