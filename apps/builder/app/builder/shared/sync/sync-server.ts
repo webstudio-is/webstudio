@@ -83,7 +83,7 @@ const useNewEntriesCheck = ({
         if (response.ok) {
           const result = await response.json();
           if (result.status === "ok") {
-            lastVersion = result.version;
+            lastVersion += 1;
             return { ok: true };
           }
           // when versions mismatched ask user to reload

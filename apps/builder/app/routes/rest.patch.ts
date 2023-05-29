@@ -177,11 +177,9 @@ export const action = async ({ request }: ActionArgs) => {
     }
   }
 
-  const newVersion = build.version + 1;
-
   // save build data when all patches applied
   const dbBuildData: Parameters<typeof prisma.build.update>[0]["data"] = {
-    version: newVersion,
+    version: clientVersion + 1,
   };
 
   if (buildData.pages) {
@@ -234,12 +232,21 @@ export const action = async ({ request }: ActionArgs) => {
     dbBuildData.styles = serializeStyles(buildData.styles);
   }
 
-  await prisma.build.update({
+  const { count } = await prisma.build.updateMany({
     data: dbBuildData,
     where: {
-      id_projectId: { projectId, id: buildId },
+      projectId,
+      id: buildId,
+      version: clientVersion,
     },
   });
+  // ensure only build with client version is updated
+  // to avoid race conditions
+  if (count === 0) {
+    return {
+      status: "version_mismatched",
+    };
+  }
 
-  return { status: "ok", version: newVersion };
+  return { status: "ok" };
 };
