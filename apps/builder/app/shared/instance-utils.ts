@@ -1,43 +1,44 @@
-import store from "immerhin";
 import { findTreeInstanceIdsExcludingSlotDescendants } from "@webstudio-is/project-build";
 import {
   generateDataFromEmbedTemplate,
   getComponentMeta,
+  type WsEmbedTemplate,
 } from "@webstudio-is/react-sdk";
-import {
-  propsStore,
-  stylesStore,
-  selectedInstanceSelectorStore,
-  styleSourceSelectionsStore,
-  styleSourcesStore,
-  instancesStore,
-  selectedStyleSourceSelectorStore,
-  textEditingInstanceSelectorStore,
-  breakpointsStore,
-} from "./nano-states";
-import {
-  type DroppableTarget,
-  type InstanceSelector,
-  findLocalStyleSourcesWithinInstances,
-  insertInstancesMutable,
-  reparentInstanceMutable,
-  getAncestorInstanceSelector,
-  insertPropsCopyMutable,
-  insertStyleSourcesCopyMutable,
-  insertStyleSourceSelectionsCopyMutable,
-  insertStylesCopyMutable,
-} from "./tree-utils";
+import store from "immerhin";
 import { removeByMutable } from "./array-utils";
 import { isBaseBreakpoint } from "./breakpoints";
+import {
+  breakpointsStore,
+  instancesStore,
+  propsStore,
+  selectedInstanceSelectorStore,
+  selectedStyleSourceSelectorStore,
+  styleSourceSelectionsStore,
+  styleSourcesStore,
+  stylesStore,
+  textEditingInstanceSelectorStore,
+} from "./nano-states";
+import {
+  findLocalStyleSourcesWithinInstances,
+  getAncestorInstanceSelector,
+  insertInstancesMutable,
+  insertPropsCopyMutable,
+  insertStylesCopyMutable,
+  insertStyleSourcesCopyMutable,
+  insertStyleSourceSelectionsCopyMutable,
+  reparentInstanceMutable,
+  type DroppableTarget,
+  type InstanceSelector,
+} from "./tree-utils";
 
-export const insertNewComponentInstance = (
-  component: string,
+export const insertTemplate = (
+  template: WsEmbedTemplate,
   dropTarget: DroppableTarget
 ) => {
   const breakpoints = breakpointsStore.get();
   const breakpointValues = Array.from(breakpoints.values());
   const baseBreakpoint = breakpointValues.find(isBaseBreakpoint);
-  const componentMeta = getComponentMeta(component);
+
   if (baseBreakpoint === undefined) {
     return;
   }
@@ -48,17 +49,7 @@ export const insertNewComponentInstance = (
     styleSourceSelections: insertedStyleSourceSelections,
     styleSources: insertedStyleSources,
     styles: insertedStyles,
-  } = generateDataFromEmbedTemplate(
-    // when template not specified fallback to template with the component
-    componentMeta?.template ?? [
-      {
-        type: "instance",
-        component,
-        children: [],
-      },
-    ],
-    baseBreakpoint.id
-  );
+  } = generateDataFromEmbedTemplate(template, baseBreakpoint.id);
   const rootInstanceId = insertedInstances[0].id;
   store.createTransaction(
     [
@@ -96,6 +87,22 @@ export const insertNewComponentInstance = (
     ...dropTarget.parentSelector,
   ]);
   selectedStyleSourceSelectorStore.set(undefined);
+};
+
+export const insertNewComponentInstance = (
+  component: string,
+  dropTarget: DroppableTarget
+) => {
+  const componentMeta = getComponentMeta(component);
+  // when template not specified fallback to template with the component
+  const template = componentMeta?.template ?? [
+    {
+      type: "instance",
+      component,
+      children: [],
+    },
+  ];
+  insertTemplate(template, dropTarget);
 };
 
 export const reparentInstance = (
