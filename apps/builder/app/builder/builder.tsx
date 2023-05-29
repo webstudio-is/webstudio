@@ -266,8 +266,6 @@ export const Builder = ({
 
   useSetAssets(assets);
 
-  console.log(JSON.stringify(build.version));
-
   useSetAuthToken(authToken);
   useSetAuthPermit(authPermit);
   useSetProject(project);
