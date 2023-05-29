@@ -13,7 +13,6 @@ import { getStyleDeclKey } from "@webstudio-is/project-build";
 import {
   type InstanceSelector,
   cloneStyles,
-  findClosestDroppableTarget,
   findLocalStyleSourcesWithinInstances,
   getAncestorInstanceSelector,
   insertInstancesCopyMutable,
@@ -141,82 +140,6 @@ test("get ancestor instance selector", () => {
     undefined
   );
   expect(getAncestorInstanceSelector(instanceSelector, "1")).toEqual(["1"]);
-});
-
-test("find closest droppable target", () => {
-  const instances = new Map([
-    createInstancePair("root", "Body", [
-      { type: "id", value: "box1" },
-      { type: "id", value: "box2" },
-      { type: "id", value: "box3" },
-    ]),
-    createInstancePair("box1", "Box", [
-      { type: "id", value: "box11" },
-      { type: "id", value: "box12" },
-      { type: "id", value: "box13" },
-    ]),
-    createInstancePair("box11", "Box", []),
-    createInstancePair("box12", "Box", []),
-    createInstancePair("box13", "Box", []),
-    createInstancePair("box2", "Box", [
-      { type: "id", value: "paragraph21" },
-      { type: "id", value: "box22" },
-    ]),
-    createInstancePair("paragraph21", "Paragraph", [
-      { type: "id", value: "bold" },
-    ]),
-    createInstancePair("bold", "Bold", []),
-    createInstancePair("box22", "Box", []),
-    createInstancePair("box3", "Box", [
-      { type: "id", value: "box31" },
-      { type: "id", value: "box32" },
-      { type: "id", value: "list33" },
-    ]),
-    createInstancePair("box31", "Box", []),
-    createInstancePair("box32", "Box", []),
-    createInstancePair("list33", "List", []),
-  ]);
-
-  expect(
-    findClosestDroppableTarget(
-      instances,
-      ["bold", "paragraph21", "box2", "root"],
-      ["Box"]
-    )
-  ).toEqual({
-    parentSelector: ["box2", "root"],
-    position: 1,
-  });
-  expect(
-    findClosestDroppableTarget(instances, ["box3", "root"], ["Box"])
-  ).toEqual({
-    parentSelector: ["box3", "root"],
-    position: "end",
-  });
-  expect(findClosestDroppableTarget(instances, ["root"], ["Box"])).toEqual({
-    parentSelector: ["root"],
-    position: "end",
-  });
-  expect(
-    findClosestDroppableTarget(instances, ["box4", "root"], ["Box"])
-  ).toEqual(undefined);
-  expect(
-    findClosestDroppableTarget(
-      instances,
-      ["box32", "box3", "root"],
-      ["Box", "ListItem"]
-    )
-  ).toEqual(undefined);
-  expect(
-    findClosestDroppableTarget(
-      instances,
-      ["list33", "box3", "root"],
-      ["Box", "ListItem"]
-    )
-  ).toEqual({
-    parentSelector: ["list33", "box3", "root"],
-    position: "end",
-  });
 });
 
 test("insert instances tree into target", () => {

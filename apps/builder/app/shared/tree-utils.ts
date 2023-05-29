@@ -18,7 +18,6 @@ import {
   StyleSourceSelectionsList,
   StyleSourcesList,
 } from "@webstudio-is/project-build";
-import { canAcceptComponent } from "@webstudio-is/react-sdk";
 import { equalMedia } from "@webstudio-is/css-engine";
 
 // slots can have multiple parents so instance should be addressed
@@ -53,45 +52,6 @@ export const areInstanceSelectorsEqual = (
 export type DroppableTarget = {
   parentSelector: InstanceSelector;
   position: number | "end";
-};
-
-export const findClosestDroppableTarget = (
-  instances: Instances,
-  instanceSelector: InstanceSelector,
-  dragComponents: string[]
-): undefined | DroppableTarget => {
-  // fallback to root as drop target when selector is stale
-  let position = -1;
-  let lastChild: undefined | Instance = undefined;
-  for (const instanceId of instanceSelector) {
-    const instance = instances.get(instanceId);
-    if (instance === undefined) {
-      return;
-    }
-    // find the index of child from selector
-    if (lastChild) {
-      const lastChildId = lastChild.id;
-      position = instance.children.findIndex(
-        (child) => child.type === "id" && child.value === lastChildId
-      );
-    }
-    lastChild = instance;
-    const canAcceptAllDragComponents = dragComponents.every((dragComponent) =>
-      canAcceptComponent(instance.component, dragComponent)
-    );
-    if (canAcceptAllDragComponents) {
-      const parentSelector = getAncestorInstanceSelector(
-        instanceSelector,
-        instance.id
-      );
-      if (parentSelector !== undefined) {
-        return {
-          parentSelector: parentSelector,
-          position: position === -1 ? "end" : position + 1,
-        };
-      }
-    }
-  }
 };
 
 const getInstanceOrCreateFragmentIfNecessary = (

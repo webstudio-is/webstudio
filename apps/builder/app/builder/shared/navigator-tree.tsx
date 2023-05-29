@@ -1,5 +1,6 @@
-import { useCallback } from "react";
+import { useCallback, useMemo } from "react";
 import { useStore } from "@nanostores/react";
+import { shallowEqual } from "shallow-equal";
 import type { Instance } from "@webstudio-is/project-build";
 import {
   hoveredInstanceSelectorStore,
@@ -9,22 +10,61 @@ import {
   useDragAndDropState,
   textEditingInstanceSelectorStore,
   selectedStyleSourceSelectorStore,
+  registeredComponentMetasStore,
 } from "~/shared/nano-states";
 import type { InstanceSelector } from "~/shared/tree-utils";
-import { reparentInstance } from "~/shared/instance-utils";
+import {
+  findClosestDroppableComponentIndex,
+  reparentInstance,
+} from "~/shared/instance-utils";
 import { InstanceTree } from "./tree";
-import { shallowEqual } from "shallow-equal";
 
 export const NavigatorTree = () => {
   const selectedInstanceSelector = useStore(selectedInstanceSelectorStore);
   const rootInstance = useStore(rootInstanceStore);
   const instances = useStore(instancesStore);
+  const metas = useStore(registeredComponentMetasStore);
   const [state, setState] = useDragAndDropState();
 
+  const dragPayload = state.dragPayload;
+
   const dragItemSelector =
-    state.dragPayload?.type === "reparent"
-      ? state.dragPayload.dragInstanceSelector
+    dragPayload?.type === "reparent"
+      ? dragPayload.dragInstanceSelector
       : undefined;
+
+  const dragComponent = useMemo(() => {
+    let dragComponent: undefined | string;
+    if (dragPayload?.type === "insert") {
+      dragComponent = dragPayload.dragComponent;
+    }
+    if (dragPayload?.type === "reparent") {
+      dragComponent = instances.get(
+        dragPayload.dragInstanceSelector[0]
+      )?.component;
+    }
+    return dragComponent;
+  }, [dragPayload, instances]);
+
+  const findClosestDroppableIndex = useCallback(
+    (instanceSelector: InstanceSelector) => {
+      if (dragComponent === undefined) {
+        return -1;
+      }
+      const componentSelector: string[] = [];
+      for (const instanceId of instanceSelector) {
+        const component = instances.get(instanceId)?.component;
+        if (component === undefined) {
+          return -1;
+        }
+        componentSelector.push(component);
+      }
+      return findClosestDroppableComponentIndex(metas, componentSelector, [
+        dragComponent,
+      ]);
+    },
+    [instances, metas, dragComponent]
+  );
 
   const isItemHidden = useCallback(
     (instanceId: Instance["id"]) =>
@@ -73,6 +113,7 @@ export const NavigatorTree = () => {
       dragItemSelector={dragItemSelector}
       dropTarget={state.dropTarget}
       isItemHidden={isItemHidden}
+      findClosestDroppableIndex={findClosestDroppableIndex}
       onSelect={handleSelect}
       onHover={hoveredInstanceSelectorStore.set}
       onDragItemChange={(dragInstanceSelector) => {

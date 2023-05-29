@@ -19,7 +19,7 @@ export const useHorizontalShift = <Data extends { id: ItemId }>({
   getItemChildren,
 }: {
   getItemChildren: (itemId: ItemId) => Data[];
-  canAcceptChild: (itemId: ItemId) => boolean;
+  canAcceptChild: (itemSelector: ItemSelector) => boolean;
   isItemHidden: (itemId: ItemId) => boolean;
   dragItemSelector: undefined | ItemSelector;
   dropTarget: ItemDropTarget | undefined;
@@ -107,17 +107,16 @@ export const useHorizontalShift = <Data extends { id: ItemId }>({
         ) {
           break;
         }
-        if (canAcceptChild(dropItemSelector[index])) {
-          newParentSelector = dropItemSelector.slice(index);
+        const currentItemSelector = dropItemSelector.slice(index);
+        if (canAcceptChild(currentItemSelector)) {
+          newParentSelector = currentItemSelector;
           const children = getItemChildren(dropItemSelector[index]);
           const childId = dropItemSelector[index - 1] ?? children.at(-1)?.id;
           const childPosition = children.findIndex(
             (item) => item.id === childId
           );
           newPosition = childPosition + 1;
-          continue;
         }
-        break;
       }
 
       const shifted = newParentSelector.length - dropItemSelector.length;
@@ -181,12 +180,16 @@ export const useHorizontalShift = <Data extends { id: ItemId }>({
       let newPosition = deepestAtTheBottomPosition;
 
       for (
-        let index = deepestAtTheBottomItemSelector.length - desiredDepth;
+        let index = Math.max(
+          0,
+          deepestAtTheBottomItemSelector.length - desiredDepth
+        );
         index < deepestAtTheBottomItemSelector.length;
         index += 1
       ) {
-        if (canAcceptChild(deepestAtTheBottomItemSelector[index])) {
-          newParentSelector = deepestAtTheBottomItemSelector.slice(index);
+        const currentItemSelector = deepestAtTheBottomItemSelector.slice(index);
+        if (canAcceptChild(currentItemSelector)) {
+          newParentSelector = currentItemSelector;
           const children = getItemChildren(
             deepestAtTheBottomItemSelector[index]
           );

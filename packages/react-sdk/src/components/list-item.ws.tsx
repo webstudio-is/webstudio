@@ -16,7 +16,7 @@ const presetStyle = {
 export const meta: WsComponentMeta = {
   category: "typography",
   type: "rich-text",
-  acceptedParents: ["List"],
+  requiredAncestors: ["List"],
   label: "List Item",
   icon: ListItemIcon,
   states: defaultStates,

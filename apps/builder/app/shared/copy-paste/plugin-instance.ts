@@ -22,10 +22,10 @@ import {
   selectedStyleSourceSelectorStore,
   assetsStore,
   projectStore,
+  registeredComponentMetasStore,
 } from "../nano-states";
 import {
   type InstanceSelector,
-  findClosestDroppableTarget,
   insertInstancesCopyMutable,
   insertPropsCopyMutable,
   insertStylesCopyMutable,
@@ -34,7 +34,7 @@ import {
   findLocalStyleSourcesWithinInstances,
   mergeNewBreakpointsMutable,
 } from "../tree-utils";
-import { deleteInstance } from "../instance-utils";
+import { deleteInstance, findClosestDroppableTarget } from "../instance-utils";
 import { getMapValuesBy, getMapValuesByKeysSet } from "../array-utils";
 import { Asset } from "@webstudio-is/asset-uploader";
 
@@ -240,6 +240,7 @@ export const onPaste = (clipboardData: string) => {
   ];
   const dragComponent = data.instances[0].component;
   const dropTarget = findClosestDroppableTarget(
+    registeredComponentMetasStore.get(),
     instancesStore.get(),
     instanceSelector,
     [dragComponent]
