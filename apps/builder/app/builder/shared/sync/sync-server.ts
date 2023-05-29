@@ -40,7 +40,7 @@ const useErrorCheck = () => {
   }, []);
 };
 
-let lastVersion: undefined | string = undefined;
+let lastVersion: undefined | number = undefined;
 
 const useNewEntriesCheck = ({
   buildId,
@@ -111,7 +111,7 @@ type UserSyncServerProps = {
   projectId: Project["id"];
   authToken: string | undefined;
   authPermit: AuthPermit;
-  version: string;
+  version: number;
 };
 
 export const useSyncServer = (props: UserSyncServerProps) => {

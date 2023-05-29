@@ -93,7 +93,7 @@ model Project {
 
 model Build {
   id        String   @default(uuid())
-  version   String   @default("")
+  version   Int   @default(0)
   createdAt DateTime @default(now())
   updatedAt DateTime @default(now()) @updatedAt
   pages     String

@@ -1,4 +1,3 @@
-import { nanoid } from "nanoid";
 import { applyPatches } from "immer";
 import type { ActionArgs } from "@remix-run/node";
 import type { SyncItem } from "immerhin";
@@ -38,7 +37,7 @@ type PatchData = {
   transactions: Array<SyncItem>;
   buildId: Build["id"];
   projectId: Project["id"];
-  version: string;
+  version: number;
 };
 
 export const action = async ({ request }: ActionArgs) => {
@@ -178,7 +177,7 @@ export const action = async ({ request }: ActionArgs) => {
     }
   }
 
-  const newVersion = nanoid();
+  const newVersion = build.version + 1;
 
   // save build data when all patches applied
   const dbBuildData: Parameters<typeof prisma.build.update>[0]["data"] = {
