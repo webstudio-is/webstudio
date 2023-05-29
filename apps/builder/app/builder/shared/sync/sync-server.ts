@@ -40,11 +40,14 @@ const useErrorCheck = () => {
   }, []);
 };
 
+let lastVersion: undefined | string = undefined;
+
 const useNewEntriesCheck = ({
   buildId,
   projectId,
   authToken,
   authPermit,
+  version,
 }: UserSyncServerProps) => {
   useEffect(() => {
     if (authPermit === "view") {
@@ -62,16 +65,41 @@ const useNewEntriesCheck = ({
         return;
       }
 
-      enqueue(() =>
-        fetch(restPatchPath({ authToken }), {
+      enqueue(async () => {
+        // save the initial version from loaded build
+        if (lastVersion === undefined) {
+          lastVersion = version;
+        }
+        const response = await fetch(restPatchPath({ authToken }), {
           method: "post",
           body: JSON.stringify({
             transactions,
             buildId,
             projectId,
+            // provide latest stored version to server
+            version: lastVersion,
           }),
-        })
-      );
+        });
+        if (response.ok) {
+          const result = await response.json();
+          if (result.status === "ok") {
+            lastVersion = result.version;
+            return { ok: true };
+          }
+          // when versions mismatched ask user to reload
+          // user may cancel to copy own state before reloading
+          if (result.status === "version_mismatched") {
+            const shouldReload = confirm(
+              "Someone else is edited the project. Please reload to get the latest state."
+            );
+            if (shouldReload) {
+              location.reload();
+            }
+            return { ok: false, retry: false };
+          }
+        }
+        return { ok: false, retry: true };
+      });
     }, NEW_ENTRIES_INTERVAL);
 
     return () => clearInterval(intervalId);
@@ -83,6 +111,7 @@ type UserSyncServerProps = {
   projectId: Project["id"];
   authToken: string | undefined;
   authPermit: AuthPermit;
+  version: string;
 };
 
 export const useSyncServer = (props: UserSyncServerProps) => {

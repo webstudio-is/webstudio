@@ -55,6 +55,7 @@ const parseBuild = async (build: DbBuild): Promise<Build> => {
     return {
       id: build.id,
       projectId: build.projectId,
+      version: build.version,
       isDev: build.isDev,
       isProd: build.isProd,
       createdAt: build.createdAt.toISOString(),

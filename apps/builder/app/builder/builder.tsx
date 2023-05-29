@@ -266,6 +266,8 @@ export const Builder = ({
 
   useSetAssets(assets);
 
+  console.log(JSON.stringify(build.version));
+
   useSetAuthToken(authToken);
   useSetAuthPermit(authPermit);
   useSetProject(project);
@@ -276,6 +278,7 @@ export const Builder = ({
     projectId: project.id,
     authToken,
     authPermit,
+    version: build.version,
   });
   useSharedShortcuts({ source: "builder" });
   useSetIsPreviewMode(authPermit === "view");
