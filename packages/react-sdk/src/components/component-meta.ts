@@ -41,7 +41,7 @@ export const defaultStates: ComponentState[] = [
   { selector: ":focus-within", label: "Focus Within" },
 ];
 
-export const WsComponentMeta = z.object({
+const WsComponentMeta = z.object({
   category: z.enum(componentCategories).optional(),
   // container - can accept other components with dnd
   // control - usually form controls like inputs, without children
