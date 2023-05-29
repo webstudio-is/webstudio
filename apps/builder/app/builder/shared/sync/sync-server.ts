@@ -103,7 +103,7 @@ const useNewEntriesCheck = ({
     }, NEW_ENTRIES_INTERVAL);
 
     return () => clearInterval(intervalId);
-  }, [buildId, projectId, authToken, authPermit]);
+  }, [buildId, projectId, authToken, authPermit, version]);
 };
 
 type UserSyncServerProps = {
