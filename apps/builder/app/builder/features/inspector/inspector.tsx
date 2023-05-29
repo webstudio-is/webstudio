@@ -89,6 +89,12 @@ export const Inspector = ({ publish, navigatorLayout }: InspectorProps) => {
     );
   }
 
+  // functional components usually have display: contents
+  // and should not be styled or have props
+  const isFunctionalComponent =
+    selectedInstance.component === "Slot" ||
+    selectedInstance.component === "HtmlEmbed";
+
   return (
     <EnhancedTooltipProvider
       delayDuration={1600}
@@ -98,13 +104,13 @@ export const Inspector = ({ publish, navigatorLayout }: InspectorProps) => {
       <FloatingPanelProvider container={tabsRef}>
         <PanelTabs
           ref={tabsRef}
-          value={selectedInstance?.component === "Slot" ? "settings" : tab}
+          value={isFunctionalComponent ? "settings" : tab}
           onValueChange={setTab}
           asChild
         >
           <Flex direction="column">
             <PanelTabsList>
-              {selectedInstance.component !== "Slot" && (
+              {isFunctionalComponent === false && (
                 <>
                   <PanelTabsTrigger value="style">Style</PanelTabsTrigger>
                   {/* @note: events would be part of props */}
