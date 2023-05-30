@@ -5,14 +5,13 @@ import type { StyleSource } from "./schema/style-sources";
 import type { Instance } from "./schema/instances";
 import type { Prop } from "./schema/props";
 import type { StyleSourceSelection } from "./schema/style-source-selections";
+import type { Deployment } from "./schema/deployment";
 
 export type Build = {
   id: string;
   projectId: string;
   version: number;
   createdAt: string;
-  isDev: boolean;
-  isProd: boolean;
   pages: Pages;
   breakpoints: [Breakpoint["id"], Breakpoint][];
   styles: [StyleDeclKey, StyleDecl][];
@@ -20,4 +19,5 @@ export type Build = {
   styleSourceSelections: [Instance["id"], StyleSourceSelection][];
   props: [Prop["id"], Prop][];
   instances: [Instance["id"], Instance][];
+  deployment?: Deployment | undefined;
 };

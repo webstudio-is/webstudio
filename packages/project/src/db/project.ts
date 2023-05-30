@@ -8,19 +8,10 @@ import {
 } from "@webstudio-is/trpc-interface/index.server";
 import {
   createBuild,
-  loadBuildByProjectId,
+  cloneBuild,
 } from "@webstudio-is/project-build/index.server";
 import { Project, Title } from "../shared/schema";
 import { generateDomain, validateProjectDomain } from "./project-domain";
-
-export const loadByParams = async (
-  params: { projectId: string } | { projectDomain: string },
-  context: AppContext
-) => {
-  return "projectId" in params
-    ? await loadById(params.projectId, context)
-    : await loadByDomain(params.projectDomain, context);
-};
 
 export const loadById = async (
   projectId: Project["id"],
@@ -40,31 +31,6 @@ export const loadById = async (
   });
 
   return Project.parse(data);
-};
-
-export const loadByDomain = async (
-  domain: string,
-  context: AppContext
-): Promise<Project | null> => {
-  // The authorization system needs the project id to check if the user has access to the project
-  const projectWithId = await prisma.project.findUnique({
-    where: {
-      domain_isDeleted: { domain: domain.toLowerCase(), isDeleted: false },
-    },
-  });
-
-  if (projectWithId === null) {
-    return null;
-  }
-
-  // Edge case for webstudiois project
-  if (projectWithId.domain === "webstudiois") {
-    // Hardcode for now that everyone can duplicate webstudiois project
-    return Project.parse(projectWithId);
-  }
-
-  // Otherwise, check if the user has access to the project
-  return await loadById(projectWithId.id, context);
 };
 
 export const create = async (
@@ -92,11 +58,7 @@ export const create = async (
       },
     });
 
-    await createBuild(
-      { projectId: project.id, env: "dev", sourceBuild: undefined },
-      context,
-      client
-    );
+    await createBuild({ projectId: project.id }, context, client);
 
     return project;
   });
@@ -170,11 +132,6 @@ const clone = async (
     throw new Error("The user must be authenticated to clone the project");
   }
 
-  const build =
-    env === "dev"
-      ? await loadBuildByProjectId(project.id, "dev")
-      : await loadBuildByProjectId(project.id, "prod");
-
   const newProjectId = uuid();
   await authorizeProject.registerProjectOwner(
     { projectId: newProjectId },
@@ -191,8 +148,8 @@ const clone = async (
       },
     });
 
-    await createBuild(
-      { projectId: newProjectId, env: "dev", sourceBuild: build },
+    await cloneBuild(
+      { projectId: newProjectId, deployment: undefined },
       context,
       client
     );
@@ -227,16 +184,6 @@ export const duplicate = async (projectId: string, context: AppContext) => {
     },
     context
   );
-};
-
-export const cloneByDomain = async (domain: string, context: AppContext) => {
-  const project = await loadByDomain(domain, context);
-
-  if (project === null) {
-    throw new Error(`Not found project "${domain}"`);
-  }
-
-  return await clone({ project, env: "prod" }, context);
 };
 
 export const updateDomain = async (

@@ -51,7 +51,7 @@ export const loader = async ({
       throw new Error(`Project "${params.projectId}" not found`);
     }
 
-    const devBuild = await loadBuildByProjectId(project.id, "dev");
+    const devBuild = await loadBuildByProjectId(project.id);
     const assets = await loadAssetsByProject(project.id, context);
 
     const end = Date.now();

@@ -25,12 +25,13 @@ type AuthorizationContext = {
 
 type DomainContext = {
   domainTrpc: TrpcInterfaceClient["domain"];
-  domainEnv: {
-    PUBLISHER_TOKEN: string;
-    PUBLISHER_ENDPOINT?: string;
+};
+
+type CmsContext = {
+  cmsTrpc: TrpcInterfaceClient["cms"];
+  env: {
     BUILDER_ORIGIN: string;
-    // @todo remove and get from the /rest/project endpoint
-    BRANCH_NAME?: string;
+    BRANCH_NAME: string;
   };
 };
 
@@ -42,4 +43,5 @@ type DomainContext = {
 export type AppContext = {
   authorization: AuthorizationContext;
   domain: DomainContext;
+  cms: CmsContext;
 };

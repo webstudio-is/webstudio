@@ -24,15 +24,21 @@ const createAuthorizationContext = async (
 };
 
 const createDomainContext = (request: Request) => {
-  const url = new URL(request.url);
-
   const context: AppContext["domain"] = {
     domainTrpc: trpcClient.domain,
-    domainEnv: {
-      BRANCH_NAME: env.BRANCH_NAME ?? "main",
-      PUBLISHER_TOKEN: env.PUBLISHER_TOKEN ?? "",
-      PUBLISHER_ENDPOINT: env.PUBLISHER_ENDPOINT,
+  };
+
+  return context;
+};
+
+const createCmsContext = (request: Request) => {
+  const url = new URL(request.url);
+
+  const context: AppContext["cms"] = {
+    cmsTrpc: trpcClient.cms,
+    env: {
       BUILDER_ORIGIN: url.origin,
+      BRANCH_NAME: env.BRANCH_NAME ?? "main",
     },
   };
 
@@ -47,10 +53,12 @@ export const createContext = async (
   buildEnv: AppContext["authorization"]["buildEnv"] = "dev"
 ): Promise<AppContext> => {
   const authorization = await createAuthorizationContext(request, buildEnv);
-  const domain = await createDomainContext(request);
+  const domain = createDomainContext(request);
+  const cms = createCmsContext(request);
 
   return {
     authorization,
     domain,
+    cms,
   };
 };

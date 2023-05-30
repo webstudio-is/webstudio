@@ -41,9 +41,9 @@ model File {
 }
 
 model Asset {
-  id        String   @default(uuid()) // not unique!
+  id        String @default(uuid()) // not unique!
   projectId String
-  file      File     @relation(fields: [name], references: [name])
+  file      File   @relation(fields: [name], references: [name])
   name      String
 
   @@id([id, projectId])
@@ -78,7 +78,7 @@ model Project {
 }
 
 model Build {
-  id        String   @default(uuid())
+  id        String   @unique @default(uuid())
   version   Int      @default(0)
   createdAt DateTime @default(now())
   updatedAt DateTime @default(now()) @updatedAt
@@ -87,15 +87,14 @@ model Build {
   project   Project @relation(fields: [projectId], references: [id])
   projectId String
 
-  isDev  Boolean // exctly one is true per project
-  isProd Boolean // at most one is true per project (none if not published)
-
   breakpoints           String @default("[]")
   styles                String @default("[]")
   styleSources          String @default("[]")
   styleSourceSelections String @default("[]")
   props                 String @default("[]")
   instances             String @default("[]")
+
+  deployment String?
 
   @@id([id, projectId])
 }
