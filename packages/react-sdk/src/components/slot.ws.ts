@@ -6,6 +6,7 @@ export const meta: WsComponentMeta = {
   type: "container",
   label: "Slot",
   icon: SlotComponentIcon,
+  stylable: false,
 };
 
 export const propsMeta: WsComponentPropsMeta = {

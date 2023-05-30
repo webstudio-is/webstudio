@@ -57,6 +57,7 @@ const WsComponentMeta = z.object({
   ]),
   requiredAncestors: z.optional(z.array(z.string())),
   invalidAncestors: z.optional(z.array(z.string())),
+  stylable: z.optional(z.boolean()),
   label: z.string(),
   icon: z.string(),
   presetStyle: z.optional(z.record(z.string(), EmbedTemplateStyleDecl)),
