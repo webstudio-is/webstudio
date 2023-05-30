@@ -22,6 +22,7 @@ import {
   selectedInstanceStore,
   isDraggingStore,
   registeredComponentMetasStore,
+  registeredComponentPropsMetasStore,
 } from "~/shared/nano-states";
 import { SettingsPanel } from "../settings-panel";
 import { NavigatorTree } from "~/builder/shared/navigator-tree";
@@ -71,6 +72,8 @@ export const Inspector = ({ publish, navigatorLayout }: InspectorProps) => {
   const tabsRef = useRef<HTMLDivElement>(null);
   const [tab, setTab] = useState("style");
   const isDragging = useStore(isDraggingStore);
+  const metas = useStore(registeredComponentMetasStore);
+  const propsMetas = useStore(registeredComponentPropsMetasStore);
 
   if (navigatorLayout === "docked" && isDragging) {
     return <NavigatorTree />;
@@ -89,11 +92,17 @@ export const Inspector = ({ publish, navigatorLayout }: InspectorProps) => {
     );
   }
 
-  // functional components usually have display: contents
-  // and should not be styled or have props
-  const isFunctionalComponent =
-    selectedInstance.component === "Slot" ||
-    selectedInstance.component === "HtmlEmbed";
+  const meta = metas.get(selectedInstance.component);
+  const propsMeta = propsMetas.get(selectedInstance.component);
+  const isStyleTabVisible = meta?.stylable ?? true;
+  const isPropsTabVisible =
+    propsMeta && Object.keys(propsMeta.props).length !== 0;
+
+  const availableTabs = [
+    isStyleTabVisible ? "style" : undefined,
+    isPropsTabVisible ? "props" : undefined,
+    "settings",
+  ].filter((d) => d);
 
   return (
     <EnhancedTooltipProvider
@@ -104,18 +113,18 @@ export const Inspector = ({ publish, navigatorLayout }: InspectorProps) => {
       <FloatingPanelProvider container={tabsRef}>
         <PanelTabs
           ref={tabsRef}
-          value={isFunctionalComponent ? "settings" : tab}
+          value={availableTabs.includes(tab) ? tab : availableTabs[0]}
           onValueChange={setTab}
           asChild
         >
           <Flex direction="column">
             <PanelTabsList>
-              {isFunctionalComponent === false && (
-                <>
-                  <PanelTabsTrigger value="style">Style</PanelTabsTrigger>
-                  {/* @note: events would be part of props */}
-                  <PanelTabsTrigger value="props">Properties</PanelTabsTrigger>
-                </>
+              {isStyleTabVisible && (
+                <PanelTabsTrigger value="style">Style</PanelTabsTrigger>
+              )}
+              {/* @note: events would be part of props */}
+              {isPropsTabVisible && (
+                <PanelTabsTrigger value="props">Properties</PanelTabsTrigger>
               )}
               <PanelTabsTrigger value="settings">Settings</PanelTabsTrigger>
             </PanelTabsList>
