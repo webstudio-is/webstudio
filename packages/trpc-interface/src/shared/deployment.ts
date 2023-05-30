@@ -20,7 +20,7 @@ const Output = z.discriminatedUnion("success", [
  * This is the ContentManagementService. It is currently used to publish content to a custom domain.
  * In the future, additional methods, such as a 'preview' function, could be added.
  **/
-export const cmsRouter = router({
+export const deploymentRouter = router({
   publish: procedure
     .input(PublishInput)
     .output(Output)

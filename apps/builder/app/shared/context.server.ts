@@ -31,11 +31,11 @@ const createDomainContext = (request: Request) => {
   return context;
 };
 
-const createCmsContext = (request: Request) => {
+const createDeploymentContext = (request: Request) => {
   const url = new URL(request.url);
 
-  const context: AppContext["cms"] = {
-    cmsTrpc: trpcClient.cms,
+  const context: AppContext["deployment"] = {
+    deploymentTrpc: trpcClient.deployment,
     env: {
       BUILDER_ORIGIN: url.origin,
       BRANCH_NAME: env.BRANCH_NAME ?? "main",
@@ -54,11 +54,11 @@ export const createContext = async (
 ): Promise<AppContext> => {
   const authorization = await createAuthorizationContext(request, buildEnv);
   const domain = createDomainContext(request);
-  const cms = createCmsContext(request);
+  const deployment = createDeploymentContext(request);
 
   return {
     authorization,
     domain,
-    cms,
+    deployment,
   };
 };

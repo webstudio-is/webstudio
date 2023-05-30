@@ -2,12 +2,12 @@ import type { createTRPCProxyClient } from "@trpc/client";
 import { router } from "./trpc";
 import { authorizationRouter } from "./authorization-router";
 import { domainRouter } from "./domain";
-import { cmsRouter } from "./cms";
+import { deploymentRouter } from "./deployment";
 
 export const sharedRouter = router({
   authorize: authorizationRouter,
   domain: domainRouter,
-  cms: cmsRouter,
+  deployment: deploymentRouter,
 });
 
 export type SharedRouter = typeof sharedRouter;

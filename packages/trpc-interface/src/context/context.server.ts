@@ -27,8 +27,8 @@ type DomainContext = {
   domainTrpc: TrpcInterfaceClient["domain"];
 };
 
-type CmsContext = {
-  cmsTrpc: TrpcInterfaceClient["cms"];
+type DeploymentContext = {
+  deploymentTrpc: TrpcInterfaceClient["deployment"];
   env: {
     BUILDER_ORIGIN: string;
     BRANCH_NAME: string;
@@ -43,5 +43,5 @@ type CmsContext = {
 export type AppContext = {
   authorization: AuthorizationContext;
   domain: DomainContext;
-  cms: CmsContext;
+  deployment: DeploymentContext;
 };
