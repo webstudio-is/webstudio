@@ -29,6 +29,7 @@ export const meta: WsComponentMeta = {
   label: "Link Text",
   icon: LinkIcon,
   presetStyle,
+  order: 1,
   states: [
     ...defaultStates,
     {

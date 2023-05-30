@@ -14,7 +14,7 @@ const presetStyle = {
 } satisfies PresetStyle<typeof defaultTag>;
 
 export const meta: WsComponentMeta = {
-  category: "typography",
+  category: "general",
   type: "rich-text",
   requiredAncestors: ["List"],
   label: "List Item",
@@ -28,6 +28,7 @@ export const meta: WsComponentMeta = {
       children: [{ type: "text", value: "List Item you can edit" }],
     },
   ],
+  order: 4,
 };
 
 export const propsMeta: WsComponentPropsMeta = {

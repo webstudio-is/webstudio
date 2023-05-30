@@ -49,6 +49,7 @@ export const meta: WsComponentMeta = {
       children: [{ type: "text", value: "Code you can edit" }],
     },
   ],
+  order: 8,
 };
 
 export const propsMeta: WsComponentPropsMeta = {

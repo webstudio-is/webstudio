@@ -18,7 +18,7 @@ export type WsComponentPropsMeta = z.infer<typeof WsComponentPropsMeta>;
 
 export const componentCategories = [
   "general",
-  "typography",
+  "text",
   "media",
   "forms",
 ] as const;
@@ -63,6 +63,7 @@ const WsComponentMeta = z.object({
   presetStyle: z.optional(z.record(z.string(), EmbedTemplateStyleDecl)),
   states: z.optional(z.array(ComponentState)),
   template: z.optional(WsEmbedTemplate),
+  order: z.number().optional(),
 });
 
 export type WsComponentMeta = Omit<

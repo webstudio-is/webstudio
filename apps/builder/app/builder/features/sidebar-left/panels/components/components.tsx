@@ -25,29 +25,7 @@ import {
 } from "./use-draggable";
 import { MetaIcon } from "~/builder/shared/meta-icon";
 import { registeredComponentMetasStore } from "~/shared/nano-states";
-
-const getMetaMaps = (metaByComponentName: Map<string, WsComponentMeta>) => {
-  const metaByCategory: Map<
-    WsComponentMeta["category"],
-    Array<WsComponentMeta>
-  > = new Map();
-  const componentNamesByMeta: Map<WsComponentMeta, string> = new Map();
-
-  for (const [name, meta] of metaByComponentName) {
-    if (meta.category === undefined) {
-      continue;
-    }
-    let categoryMetas = metaByCategory.get(meta.category);
-    if (categoryMetas === undefined) {
-      categoryMetas = [];
-      metaByCategory.set(meta.category, categoryMetas);
-    }
-    categoryMetas.push(meta);
-    metaByComponentName.set(name, meta);
-    componentNamesByMeta.set(meta, name);
-  }
-  return { metaByComponentName, metaByCategory, componentNamesByMeta };
-};
+import { getMetaMaps } from "./get-meta-maps";
 
 type TabContentProps = {
   onSetActiveTab: (tabName: TabName) => void;

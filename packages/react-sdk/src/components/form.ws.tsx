@@ -23,6 +23,7 @@ export const meta: WsComponentMeta = {
   icon: FormIcon,
   states: defaultStates,
   presetStyle,
+  order: 0,
   template: [
     {
       type: "instance",

@@ -23,6 +23,7 @@ export const meta: WsComponentMeta = {
   label: "Text Area",
   icon: FormTextAreaIcon,
   presetStyle,
+  order: 4,
   states: [
     ...defaultStates,
     { selector: "::placeholder", label: "Placeholder" },

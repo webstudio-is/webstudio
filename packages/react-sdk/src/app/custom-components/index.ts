@@ -3,7 +3,10 @@ import { Link } from "./link";
 import { LinkBlock } from "./link-block";
 import { RichTextLink } from "./rich-text-link";
 import { Form } from "./form";
-import { meta as formMeta, propsMeta as formPropsMeta } from "./form.ws";
+import {
+  meta as formMeta,
+  propsMeta as formPropsMeta,
+} from "../../components/form.ws";
 
 export const customComponents = {
   Link,

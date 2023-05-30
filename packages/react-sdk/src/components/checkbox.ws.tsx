@@ -24,6 +24,7 @@ export const meta: WsComponentMeta = {
   label: "Checkbox Input",
   icon: CheckboxCheckedIcon,
   presetStyle,
+  order: 6,
   states: [
     ...defaultStates,
     { selector: ":checked", label: "Checked" },

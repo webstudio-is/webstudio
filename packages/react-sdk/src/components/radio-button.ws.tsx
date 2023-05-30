@@ -24,6 +24,7 @@ export const meta: WsComponentMeta = {
   label: "Radio Input",
   icon: RadioCheckedIcon,
   presetStyle,
+  order: 5,
   states: [
     ...defaultStates,
     { selector: ":checked", label: "Checked" },

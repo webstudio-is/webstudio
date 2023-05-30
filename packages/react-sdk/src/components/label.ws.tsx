@@ -23,6 +23,7 @@ export const meta: WsComponentMeta = {
   icon: TextBlockIcon,
   states: defaultStates,
   presetStyle,
+  order: 2,
   template: [
     {
       type: "instance",

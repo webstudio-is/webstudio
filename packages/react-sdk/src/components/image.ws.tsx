@@ -34,6 +34,7 @@ export const meta: WsComponentMeta = {
   icon: ImageIcon,
   states: defaultStates,
   presetStyle,
+  order: 0,
 };
 
 // "loader" is our internal prop not intended to show up in the props panel

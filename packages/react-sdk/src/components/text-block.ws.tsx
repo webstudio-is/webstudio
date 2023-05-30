@@ -20,7 +20,7 @@ const presetStyle = {
 } satisfies PresetStyle<typeof defaultTag>;
 
 export const meta: WsComponentMeta = {
-  category: "typography",
+  category: "text",
   type: "rich-text",
   label: "Text Block",
   icon: TextBlockIcon,
@@ -33,6 +33,7 @@ export const meta: WsComponentMeta = {
       children: [{ type: "text", value: "Block of text you can edit" }],
     },
   ],
+  order: 0,
 };
 
 export const propsMeta: WsComponentPropsMeta = {

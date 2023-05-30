@@ -25,6 +25,7 @@ export const meta: WsComponentMeta = {
     { selector: ":disabled", label: "Disabled" },
     { selector: ":enabled", label: "Enabled" },
   ],
+  order: 1,
 };
 
 export const propsMeta: WsComponentPropsMeta = {

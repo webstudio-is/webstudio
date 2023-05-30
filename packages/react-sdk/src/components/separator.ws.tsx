@@ -47,6 +47,7 @@ export const meta: WsComponentMeta = {
   icon: DashIcon,
   states: defaultStates,
   presetStyle,
+  order: 5,
 };
 
 export const propsMeta: WsComponentPropsMeta = {

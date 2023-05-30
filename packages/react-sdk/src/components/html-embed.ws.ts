@@ -8,6 +8,7 @@ export const meta: WsComponentMeta = {
   label: "HTML Embed",
   icon: EmbedIcon,
   stylable: false,
+  order: 7,
 };
 
 export const propsMeta: WsComponentPropsMeta = {
