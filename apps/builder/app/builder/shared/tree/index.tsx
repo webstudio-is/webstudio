@@ -1,4 +1,4 @@
-import { useCallback, useMemo } from "react";
+import { useCallback } from "react";
 import { useStore } from "@nanostores/react";
 import {
   Tree,
@@ -9,11 +9,10 @@ import {
 } from "@webstudio-is/design-system";
 import type { Instance } from "@webstudio-is/project-build";
 import {
-  canAcceptComponent,
   getComponentMeta,
   type WsComponentMeta,
 } from "@webstudio-is/react-sdk";
-import { instancesStore, useDragAndDropState } from "~/shared/nano-states";
+import { instancesStore } from "~/shared/nano-states";
 import { MetaIcon } from "../meta-icon";
 
 const instanceRelatedProps = {
@@ -35,29 +34,10 @@ const instanceRelatedProps = {
 export const InstanceTree = (
   props: Omit<
     TreeProps<Instance>,
-    | keyof typeof instanceRelatedProps
-    | "canLeaveParent"
-    | "canAcceptChild"
-    | "getItemChildren"
+    keyof typeof instanceRelatedProps | "canLeaveParent" | "getItemChildren"
   >
 ) => {
   const instances = useStore(instancesStore);
-  const [state] = useDragAndDropState();
-
-  const dragPayload = state.dragPayload;
-
-  const dragComponent = useMemo(() => {
-    let dragComponent: undefined | string;
-    if (dragPayload?.type === "insert") {
-      dragComponent = dragPayload.dragComponent;
-    }
-    if (dragPayload?.type === "reparent") {
-      dragComponent = instances.get(
-        dragPayload.dragInstanceSelector[0]
-      )?.component;
-    }
-    return dragComponent;
-  }, [dragPayload, instances]);
 
   const canLeaveParent = useCallback(
     (instanceId: Instance["id"]) => {
@@ -69,17 +49,6 @@ export const InstanceTree = (
       return meta?.type !== "rich-text-child";
     },
     [instances]
-  );
-
-  const canAcceptChild = useCallback(
-    (instanceId: Instance["id"]) => {
-      const instance = instances.get(instanceId);
-      if (instance === undefined || dragComponent === undefined) {
-        return false;
-      }
-      return canAcceptComponent(instance.component, dragComponent);
-    },
-    [instances, dragComponent]
   );
 
   const getItemChildren = useCallback(
@@ -110,7 +79,6 @@ export const InstanceTree = (
       {...props}
       {...instanceRelatedProps}
       canLeaveParent={canLeaveParent}
-      canAcceptChild={canAcceptChild}
       getItemChildren={getItemChildren}
     />
   );

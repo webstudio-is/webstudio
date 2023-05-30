@@ -112,8 +112,8 @@ const render = (
       placementIndicator,
       getIsExpanded: (itemSelector: ItemSelector) =>
         (findItemById(tree, itemSelector[0])?.children.length ?? 0) > 0,
-      canAcceptChild: (itemId: ItemId) =>
-        findItemById(tree, itemId)?.canAcceptChildren ?? false,
+      canAcceptChild: (itemSelector: ItemSelector) =>
+        findItemById(tree, itemSelector[0])?.canAcceptChildren ?? false,
       getItemChildren: (itemId: ItemId) =>
         findItemById(tree, itemId)?.children ?? [],
       isItemHidden: (_itemId: ItemId) => false,

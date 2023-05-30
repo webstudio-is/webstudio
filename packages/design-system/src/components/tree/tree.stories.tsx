@@ -84,12 +84,14 @@ export const StressTest = () => {
   return (
     <Flex css={{ width: 300, height: 500, flexDirection: "column" }}>
       <Tree
-        canAcceptChild={(itemId) => {
-          const item = findItemById(root, itemId);
-          return (
-            (item?.canAcceptChildren ?? false) &&
-            (item?.isHidden ?? false) === false
-          );
+        findClosestDroppableIndex={(itemSelector) => {
+          return itemSelector.findIndex((itemId) => {
+            const item = findItemById(root, itemId);
+            return (
+              (item?.canAcceptChildren ?? false) &&
+              (item?.isHidden ?? false) === false
+            );
+          });
         }}
         canLeaveParent={() => true}
         getItemChildren={(itemId) => findItemById(root, itemId)?.children ?? []}

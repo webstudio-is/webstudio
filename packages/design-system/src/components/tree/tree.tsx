@@ -30,7 +30,7 @@ export type TreeProps<Data extends { id: string }> = {
   dropTarget: undefined | ItemDropTarget;
 
   canLeaveParent: (itemId: ItemId) => boolean;
-  canAcceptChild: (itemId: ItemId) => boolean;
+  findClosestDroppableIndex: (itemSelector: ItemSelector) => number;
   getItemChildren: (itemId: ItemId) => Data[];
   isItemHidden: (itemId: ItemId) => boolean;
   renderItem: (props: TreeItemRenderProps<Data>) => React.ReactNode;
@@ -65,7 +65,7 @@ export const Tree = <Data extends { id: string }>({
   dragItemSelector,
   dropTarget,
   canLeaveParent,
-  canAcceptChild,
+  findClosestDroppableIndex,
   getItemChildren,
   isItemHidden,
   renderItem,
@@ -99,6 +99,14 @@ export const Tree = <Data extends { id: string }>({
       ...sharedDropOptions,
     });
   }, [dropTarget]);
+
+  const canAcceptChild = useCallback(
+    (itemSelector: ItemSelector) => {
+      const ancestorIndex = findClosestDroppableIndex(itemSelector);
+      return ancestorIndex === 0;
+    },
+    [findClosestDroppableIndex]
+  );
 
   const [shiftedDropTarget, setHorizontalShift] = useHorizontalShift({
     dragItemSelector,
@@ -157,9 +165,7 @@ export const Tree = <Data extends { id: string }>({
       }
 
       // select closest droppable
-      const ancestorIndex = newDropItemSelector.findIndex((itemId) =>
-        canAcceptChild(itemId)
-      );
+      const ancestorIndex = findClosestDroppableIndex(newDropItemSelector);
       if (ancestorIndex === -1) {
         return;
       }

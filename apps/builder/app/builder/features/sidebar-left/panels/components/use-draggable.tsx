@@ -9,7 +9,6 @@ import {
   useDrag,
   ComponentCard,
 } from "@webstudio-is/design-system";
-import { findClosestDroppableTarget } from "~/shared/tree-utils";
 import {
   instancesStore,
   registeredComponentMetasStore,
@@ -22,7 +21,10 @@ import {
   isCanvasPointerEventsEnabledStore,
   scaleStore,
 } from "~/builder/shared/nano-states";
-import { insertNewComponentInstance } from "~/shared/instance-utils";
+import {
+  findClosestDroppableTarget,
+  insertNewComponentInstance,
+} from "~/shared/instance-utils";
 import { MetaIcon } from "~/builder/shared/meta-icon";
 
 const DragLayer = ({
@@ -155,6 +157,7 @@ export const useDraggable = ({
       return;
     }
     const dropTarget = findClosestDroppableTarget(
+      registeredComponentMetasStore.get(),
       instancesStore.get(),
       // fallback to root as drop target
       selectedInstanceSelectorStore.get() ?? [selectedPage.rootInstanceId],

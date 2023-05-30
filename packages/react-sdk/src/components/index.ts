@@ -157,18 +157,3 @@ export const defaultPropsMetas: Record<string, WsComponentPropsMeta> = {
   CheckboxField: CheckboxFieldPropsMeta,
   Checkbox: CheckboxPropsMeta,
 };
-
-export const canAcceptComponent = (
-  parentComponent: string,
-  childComponent: string
-) => {
-  const parentMeta = getComponentMeta(parentComponent);
-  const childMeta = getComponentMeta(childComponent);
-  if (parentMeta?.type !== "container" || childMeta === undefined) {
-    return false;
-  }
-  return (
-    childMeta.acceptedParents === undefined ||
-    childMeta.acceptedParents.includes(parentComponent)
-  );
-};

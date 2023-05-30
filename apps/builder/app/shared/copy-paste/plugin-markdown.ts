@@ -4,13 +4,12 @@ import type { Root } from "mdast";
 import { fromMarkdown } from "mdast-util-from-markdown";
 import type { Instance, Prop } from "@webstudio-is/project-build";
 import { nanoid } from "nanoid";
-import {
-  findClosestDroppableTarget,
-  insertInstancesMutable,
-} from "../tree-utils";
+import { insertInstancesMutable } from "../tree-utils";
+import { findClosestDroppableTarget } from "../instance-utils";
 import {
   instancesStore,
   propsStore,
+  registeredComponentMetasStore,
   selectedInstanceSelectorStore,
   selectedPageStore,
 } from "../nano-states";
@@ -218,6 +217,7 @@ export const onPaste = (clipboardData: string) => {
     }
   }
   const dropTarget = findClosestDroppableTarget(
+    registeredComponentMetasStore.get(),
     instancesStore.get(),
     instanceSelector,
     dragComponents
