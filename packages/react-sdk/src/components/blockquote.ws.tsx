@@ -60,7 +60,7 @@ const presetStyle = {
 } satisfies PresetStyle<typeof defaultTag>;
 
 export const meta: WsComponentMeta = {
-  category: "typography",
+  category: "text",
   type: "rich-text",
   label: "Blockquote",
   icon: BlockquoteIcon,
@@ -73,6 +73,7 @@ export const meta: WsComponentMeta = {
       children: [{ type: "text", value: "Blockquote you can edit" }],
     },
   ],
+  order: 3,
 };
 
 export const propsMeta: WsComponentPropsMeta = {

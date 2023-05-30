@@ -21,6 +21,7 @@ export const meta: WsComponentMeta = {
   label: "Form",
   icon: FormIcon,
   presetStyle,
+  order: 0,
   states: [
     { selector: "[data-state=error]", label: "Error" },
     { selector: "[data-state=success]", label: "Success" },

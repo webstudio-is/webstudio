@@ -22,7 +22,7 @@ const presetStyle = {
 } satisfies PresetStyle<HeadingTags>;
 
 export const meta: WsComponentMeta = {
-  category: "typography",
+  category: "text",
   type: "rich-text",
   label: "Heading",
   icon: HeadingIcon,
@@ -35,6 +35,7 @@ export const meta: WsComponentMeta = {
       children: [{ type: "text", value: "Heading you can edit" }],
     },
   ],
+  order: 1,
 };
 
 export const propsMeta: WsComponentPropsMeta = {

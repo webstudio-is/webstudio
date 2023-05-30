@@ -14,7 +14,7 @@ const presetStyle = {
 } satisfies PresetStyle<typeof defaultTag>;
 
 export const meta: WsComponentMeta = {
-  category: "typography",
+  category: "text",
   type: "rich-text",
   label: "Paragraph",
   icon: TextAlignLeftIcon,
@@ -27,6 +27,7 @@ export const meta: WsComponentMeta = {
       children: [{ type: "text", value: "Pragraph you can edit" }],
     },
   ],
+  order: 2,
 };
 
 export const propsMeta: WsComponentPropsMeta = {

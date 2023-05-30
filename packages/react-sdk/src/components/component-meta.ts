@@ -18,7 +18,7 @@ export type WsComponentPropsMeta = z.infer<typeof WsComponentPropsMeta>;
 
 export const componentCategories = [
   "general",
-  "typography",
+  "text",
   "media",
   "forms",
 ] as const;
