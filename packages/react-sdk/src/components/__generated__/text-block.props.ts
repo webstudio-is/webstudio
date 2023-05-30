@@ -445,6 +445,6 @@ export const props: Record<string, PropMeta> = {
     control: "radio",
     type: "string",
     defaultValue: "div",
-    options: ["div", "figcaption"],
+    options: ["div", "figcaption", "span"],
   },
 };
