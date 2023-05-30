@@ -8,7 +8,6 @@ import {
   defaultMetas,
   defaultPropsMetas,
   createElementsTree,
-  registerComponentMetas as registerComponentMetasLegacy,
   customComponentMetas,
   customComponentPropsMetas,
   setParams,
@@ -135,7 +134,6 @@ export const Canvas = ({ params }: CanvasProps): JSX.Element | null => {
   const components = new Map(
     Object.entries({ ...defaultComponents, ...customComponents })
   ) as Components;
-  registerComponentMetasLegacy(customComponentMetas);
   useSyncInitializeOnce(() => {
     registerComponentMetas(defaultMetas);
     registerComponentPropsMetas(defaultPropsMetas);

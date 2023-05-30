@@ -8,35 +8,20 @@ import {
   type TreeItemRenderProps,
 } from "@webstudio-is/design-system";
 import type { Instance } from "@webstudio-is/project-build";
+import { type WsComponentMeta } from "@webstudio-is/react-sdk";
 import {
-  getComponentMeta,
-  type WsComponentMeta,
-} from "@webstudio-is/react-sdk";
-import { instancesStore } from "~/shared/nano-states";
+  instancesStore,
+  registeredComponentMetasStore,
+} from "~/shared/nano-states";
 import { MetaIcon } from "../meta-icon";
-
-const instanceRelatedProps = {
-  renderItem(props: TreeItemRenderProps<Instance>) {
-    const meta = getComponentMeta(props.itemData.component);
-    if (meta === undefined) {
-      return <></>;
-    }
-    return (
-      <TreeItemBody {...props} selectionEvent="focus">
-        <TreeItemLabel prefix={<MetaIcon icon={meta.icon} />}>
-          {getInstanceLabel(props.itemData, meta)}
-        </TreeItemLabel>
-      </TreeItemBody>
-    );
-  },
-} as const;
 
 export const InstanceTree = (
   props: Omit<
     TreeProps<Instance>,
-    keyof typeof instanceRelatedProps | "canLeaveParent" | "getItemChildren"
+    "renderItem" | "canLeaveParent" | "getItemChildren"
   >
 ) => {
+  const metas = useStore(registeredComponentMetasStore);
   const instances = useStore(instancesStore);
 
   const canLeaveParent = useCallback(
@@ -45,10 +30,10 @@ export const InstanceTree = (
       if (instance === undefined) {
         return false;
       }
-      const meta = getComponentMeta(instance.component);
+      const meta = metas.get(instance.component);
       return meta?.type !== "rich-text-child";
     },
-    [instances]
+    [instances, metas]
   );
 
   const getItemChildren = useCallback(
@@ -74,12 +59,29 @@ export const InstanceTree = (
     [instances]
   );
 
+  const renderItem = useCallback(
+    (props: TreeItemRenderProps<Instance>) => {
+      const meta = metas.get(props.itemData.component);
+      if (meta === undefined) {
+        return <></>;
+      }
+      return (
+        <TreeItemBody {...props} selectionEvent="focus">
+          <TreeItemLabel prefix={<MetaIcon icon={meta.icon} />}>
+            {getInstanceLabel(props.itemData, meta)}
+          </TreeItemLabel>
+        </TreeItemBody>
+      );
+    },
+    [metas]
+  );
+
   return (
     <Tree
       {...props}
-      {...instanceRelatedProps}
       canLeaveParent={canLeaveParent}
       getItemChildren={getItemChildren}
+      renderItem={renderItem}
     />
   );
 };

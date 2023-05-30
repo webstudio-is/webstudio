@@ -1,9 +1,9 @@
 import { atom, computed } from "nanostores";
-import { getComponentMeta } from "@webstudio-is/react-sdk";
 import type { Instance, Instances } from "@webstudio-is/project-build";
 import type { InstanceSelector } from "../tree-utils";
 import { getElementByInstanceSelector } from "../dom-utils";
 import { useSyncInitializeOnce } from "../hook-utils";
+import { registeredComponentMetasStore } from "./components-meta";
 
 export const isResizingCanvasStore = atom(false);
 
@@ -25,7 +25,8 @@ export const enterEditingMode = (event?: KeyboardEvent) => {
     return;
   }
 
-  const meta = getComponentMeta(selectedInstance.component);
+  const metas = registeredComponentMetasStore.get();
+  const meta = metas.get(selectedInstance.component);
   if (meta?.type !== "rich-text") {
     return;
   }
