@@ -102,7 +102,7 @@ export const Inspector = ({ publish, navigatorLayout }: InspectorProps) => {
     isStyleTabVisible ? "style" : undefined,
     isPropsTabVisible ? "props" : undefined,
     "settings",
-  ].filter((d) => d);
+  ].filter((tab) => tab);
 
   return (
     <EnhancedTooltipProvider
