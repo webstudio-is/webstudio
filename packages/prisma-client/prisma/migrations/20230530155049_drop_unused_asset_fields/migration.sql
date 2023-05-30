@@ -6,3 +6,6 @@ DROP COLUMN "location",
 DROP COLUMN "meta",
 DROP COLUMN "size",
 DROP COLUMN "status";
+
+-- DropEnum
+DROP TYPE "Location";
