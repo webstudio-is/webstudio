@@ -4,7 +4,7 @@ export const props: Record<string, PropMeta> = {
   slot: { required: false, control: "text", type: "string" },
   style: { required: false, control: "text", type: "string" },
   title: { required: false, control: "text", type: "string" },
-  alt: { required: false, control: "text", type: "string", defaultValue: "" },
+  alt: { required: false, control: "text", type: "string" },
   crossOrigin: {
     required: false,
     control: "radio",
@@ -41,7 +41,7 @@ export const props: Record<string, PropMeta> = {
     ],
   },
   sizes: { required: false, control: "text", type: "string" },
-  src: { required: false, control: "text", type: "string", defaultValue: "" },
+  src: { required: false, control: "text", type: "string" },
   srcSet: { required: false, control: "text", type: "string" },
   useMap: { required: false, control: "text", type: "string" },
   width: { required: false, control: "number", type: "number" },
@@ -481,4 +481,7 @@ export const props: Record<string, PropMeta> = {
     control: "text",
     type: "string",
   },
+  quality: { required: false, control: "number", type: "number" },
+  loader: { required: true, control: "text", type: "string" },
+  optimize: { required: false, control: "boolean", type: "boolean" },
 };

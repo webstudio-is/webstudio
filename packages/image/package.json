@@ -11,15 +11,12 @@
     "checks": "pnpm typecheck && pnpm lint && pnpm test",
     "dev": "build-package --watch",
     "build": "build-package",
-    "build:args": "generate-arg-types './src/*.tsx !./src/**/*.stories.tsx !./src/**/*.ws.tsx' && prettier --write \"**/*.props.ts\"",
     "dts": "tsc --declarationDir lib/types",
     "lint": "eslint ./src --ext .ts,.tsx --max-warnings 0",
     "storybook:run": "start-storybook -p 6006",
-    "storybook:build": "build-storybook",
-    "generate-types": "generate-arg-types"
+    "storybook:build": "build-storybook"
   },
   "dependencies": {
-    "@webstudio-is/generate-arg-types": "workspace:^",
     "react": "^18.2.0",
     "warn-once": "^0.1.1"
   },
@@ -40,7 +37,6 @@
     "react": "^18.2.0",
     "react-dom": "^18.2.0"
   },
-  "module": "./lib/index.js",
   "exports": {
     "source": "./src/index.ts",
     "import": "./lib/index.js",

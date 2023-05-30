@@ -1,31 +1,17 @@
-import { forwardRef, type ElementRef, type ComponentProps } from "react";
+import {
+  type ComponentPropsWithoutRef,
+  type ElementRef,
+  forwardRef,
+  useMemo,
+} from "react";
+import {
+  Image as WebstudioImage,
+  createImageLoader,
+} from "@webstudio-is/image";
+import { usePropAsset, getInstanceIdFromComponentProps } from "../props";
+import { getParams } from "../app/params";
 
 export const defaultTag = "img";
-
-// quality and optimize can be overwritten and used by asset transform
-// Or we need and additional way to pass them upper level
-type ImageProps = ComponentProps<typeof defaultTag>;
-
-export const Image = forwardRef<ElementRef<typeof defaultTag>, ImageProps>(
-  (imageProps, ref) => {
-    return (
-      <img
-        {...imageProps}
-        src={imageProps.src || imagePlaceholderSvg}
-        ref={ref}
-      />
-    );
-  }
-);
-
-Image.defaultProps = {
-  src: "",
-  width: "",
-  height: "",
-  alt: "",
-};
-
-Image.displayName = "Image";
 
 const imagePlaceholderSvg = `data:image/svg+xml;base64,${btoa(`<svg
   width="140"
@@ -50,3 +36,45 @@ const imagePlaceholderSvg = `data:image/svg+xml;base64,${btoa(`<svg
     fill="#A2A2A2"
   />
 </svg>`)}`;
+
+type Props = ComponentPropsWithoutRef<typeof WebstudioImage>;
+
+export const Image = forwardRef<ElementRef<typeof defaultTag>, Props>(
+  (props, ref) => {
+    const asset = usePropAsset(getInstanceIdFromComponentProps(props), "src");
+
+    const loader = useMemo(() => {
+      const params = getParams();
+      return createImageLoader({ imageBaseUrl: params.imageBaseUrl });
+    }, []);
+
+    const src = asset?.name ?? props.src;
+
+    if (asset == null || loader == null) {
+      return (
+        <img key={src} {...props} src={src || imagePlaceholderSvg} ref={ref} />
+      );
+    }
+
+    return (
+      <WebstudioImage
+        /**
+         * `key` is needed to recreate the image in case of asset change in builder,
+         * this gives immediate feedback when an asset is changed.
+         * Also, it visually fixes image distortion when another asset has a seriously different  aspectRatio
+         * (we change aspectRatio CSS prop on asset change)
+         *
+         * In non-builder mode, key on images are usually also a good idea,
+         * prevents showing outdated images on route change.
+         **/
+        key={src}
+        {...props}
+        loader={loader}
+        src={src}
+        ref={ref}
+      />
+    );
+  }
+);
+
+Image.displayName = "Image";
