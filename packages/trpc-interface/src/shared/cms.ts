@@ -1,7 +1,3 @@
-/**
- * Localhost implementation of the dashboard trpc interface
- * It's playground, and just emulates real 3rd party apis
- */
 import { z } from "zod";
 import { router, procedure } from "./trpc";
 
