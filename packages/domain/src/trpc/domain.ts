@@ -38,13 +38,18 @@ export const domainRouter = router({
           ctx
         );
 
+        const project = await projectDb.project.loadById(input.projectId, ctx);
+
         const { deploymentTrpc, env } = ctx.deployment;
 
         const result = deploymentTrpc.publish.mutate({
           // used to load build data from the builder see routes/rest.build.$buildId.ts
           builderApiOrigin: env.BUILDER_ORIGIN,
           buildId: build.id,
+          // preview support
           branchName: env.BRANCH_NAME,
+          // action log helper (not used for deployment, but for action logs readablity)
+          projectDomainName: project.domain,
         });
 
         return result;
