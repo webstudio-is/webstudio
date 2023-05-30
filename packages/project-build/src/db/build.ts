@@ -76,7 +76,9 @@ const parseBuild = async (build: DbBuild): Promise<Build> => {
   }
 };
 
-export const loadById = async (id: Build["id"]): Promise<Build | undefined> => {
+export const loadBuildById = async (
+  id: Build["id"]
+): Promise<Build | undefined> => {
   const build = await prisma.build.findUnique({
     where: { id },
   });

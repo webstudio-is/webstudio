@@ -15,7 +15,7 @@ export const loader = async ({
   }
 > => {
   try {
-    const buildId = params.buildId ?? undefined;
+    const buildId = params.buildId;
 
     if (buildId === undefined) {
       throw json("Required project id", { status: 400 });

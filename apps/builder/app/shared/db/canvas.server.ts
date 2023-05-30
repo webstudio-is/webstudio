@@ -1,5 +1,5 @@
 import type { Data } from "@webstudio-is/react-sdk";
-import { loadById } from "@webstudio-is/project-build/index.server";
+import { loadBuildById } from "@webstudio-is/project-build/index.server";
 import { loadAssetsByProject } from "@webstudio-is/asset-uploader/index.server";
 import type { AppContext } from "@webstudio-is/trpc-interface/index.server";
 import { findPageByIdOrPath } from "@webstudio-is/project-build";
@@ -9,7 +9,7 @@ export const loadProductionCanvasData = async (
   buildId: Build["id"],
   context: AppContext
 ): Promise<Data> => {
-  const build = await loadById(buildId);
+  const build = await loadBuildById(buildId);
 
   if (build === undefined) {
     throw new Error("The project is not published");
