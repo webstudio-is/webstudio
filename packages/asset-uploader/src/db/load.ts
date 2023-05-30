@@ -27,8 +27,6 @@ export const loadAssetsByProject = async (
       file: true,
       id: true,
       projectId: true,
-      name: true,
-      location: true,
     },
     where: {
       projectId,
@@ -39,5 +37,11 @@ export const loadAssetsByProject = async (
     },
   });
 
-  return assets.map((asset) => formatAsset(asset, asset.file));
+  return assets.map((asset) =>
+    formatAsset({
+      assetId: asset.id,
+      projectId: asset.projectId,
+      file: asset.file,
+    })
+  );
 };

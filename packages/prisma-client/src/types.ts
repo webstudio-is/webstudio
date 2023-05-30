@@ -1,4 +1,3 @@
-export { Location } from "./__generated__";
 export type {
   User,
   Build,

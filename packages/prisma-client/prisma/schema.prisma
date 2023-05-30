@@ -20,11 +20,6 @@ model Team {
   users User[]
 }
 
-enum Location {
-  FS
-  REMOTE
-}
-
 enum UploadStatus {
   UPLOADING
   UPLOADED
@@ -50,15 +45,6 @@ model Asset {
   projectId String
   file      File     @relation(fields: [name], references: [name])
   name      String
-  location  Location
-
-  // @todo remove these fields from schema and db after release
-  format      String
-  size        Int
-  description String?
-  createdAt   DateTime     @default(now())
-  meta        String       @default("{}")
-  status      UploadStatus @default(UPLOADED)
 
   @@id([id, projectId])
 }

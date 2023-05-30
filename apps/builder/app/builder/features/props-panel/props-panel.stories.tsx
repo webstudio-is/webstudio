@@ -97,7 +97,6 @@ const imageAsset = (name = "cat", format = "jpg"): Asset => ({
   type: "image",
   name: `${name}.${format}`,
   format: format,
-  location: "FS",
   size: 100000,
   createdAt: new Date().toISOString(),
   description: null,
