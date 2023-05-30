@@ -41,9 +41,10 @@ export const domainRouter = router({
         const { deploymentTrpc, env } = ctx.deployment;
 
         const result = deploymentTrpc.publish.mutate({
-          // used to load build data from the builder see routes/rest.project.$buildId.ts
+          // used to load build data from the builder see routes/rest.build.$buildId.ts
           builderApiOrigin: env.BUILDER_ORIGIN,
           buildId: build.id,
+          branchName: env.BRANCH_NAME,
         });
 
         return result;

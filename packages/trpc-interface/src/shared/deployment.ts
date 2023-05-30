@@ -4,6 +4,7 @@ import { router, procedure } from "./trpc";
 const PublishInput = z.object({
   buildId: z.string(),
   builderApiOrigin: z.string(),
+  branchName: z.string(),
 });
 
 const Output = z.discriminatedUnion("success", [
