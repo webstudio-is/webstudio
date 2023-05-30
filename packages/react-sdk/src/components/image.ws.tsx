@@ -36,9 +36,12 @@ export const meta: WsComponentMeta = {
   presetStyle,
 };
 
+// "loader" is our internal prop not intended to show up in the props panel
+const { loader, ...publicProps } = props;
+
 export const propsMeta: WsComponentPropsMeta = {
   props: {
-    ...props,
+    ...publicProps,
     src: {
       type: "string",
       control: "file",

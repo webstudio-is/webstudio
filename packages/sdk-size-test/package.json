@@ -15,7 +15,7 @@
     },
     {
       "path": "functions/*.js",
-      "limit": "242 kB",
+      "limit": "215 kB",
       "gzip": false
     }
   ],
