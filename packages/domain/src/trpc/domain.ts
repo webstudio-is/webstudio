@@ -28,50 +28,31 @@ export const domainRouter = router({
     .input(z.object({ projectId: z.string() }))
     .mutation(async ({ input, ctx }) => {
       try {
-        await createProductionBuild(
+        const build = await createProductionBuild(
           {
             projectId: input.projectId,
+            deployment: {
+              domains: [],
+            },
           },
           ctx
         );
 
         const project = await projectDb.project.loadById(input.projectId, ctx);
 
-        const { domainEnv } = ctx.domain;
+        const { deploymentTrpc, env } = ctx.deployment;
 
-        const headers = new Headers();
-
-        headers.append("X-AUTH-WEBSTUDIO", domainEnv.PUBLISHER_TOKEN || "");
-        headers.append("Content-Type", "text/plain");
-
-        const url = new URL(domainEnv.BUILDER_ORIGIN);
-        if (domainEnv.PUBLISHER_ENDPOINT === undefined) {
-          return {
-            success: false,
-            error: "PUBLISHER_ENDPOINT is not defined",
-          };
-        }
-
-        const response = await fetch(domainEnv.PUBLISHER_ENDPOINT, {
-          method: "PUT",
-          headers,
-          body: JSON.stringify({
-            builderApiOrigin: url.origin,
-            projectId: input.projectId,
-            // @todo: useless and must be provided by the rest/project endpoint
-            projectName: project.domain,
-            // To support preview deployments
-            // @todo: useless and must be provided by the rest/project endpoint
-            branchName: domainEnv.BRANCH_NAME,
-          }),
+        const result = deploymentTrpc.publish.mutate({
+          // used to load build data from the builder see routes/rest.build.$buildId.ts
+          builderApiOrigin: env.BUILDER_ORIGIN,
+          buildId: build.id,
+          // preview support
+          branchName: env.BRANCH_NAME,
+          // action log helper (not used for deployment, but for action logs readablity)
+          projectDomainName: project.domain,
         });
 
-        const text = await response.text();
-        if (response.ok === false) {
-          throw new Error(text);
-        }
-
-        return { success: true } as const;
+        return result;
       } catch (error) {
         return {
           success: false,

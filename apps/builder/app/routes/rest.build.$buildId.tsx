@@ -10,24 +10,23 @@ export const loader = async ({
   params,
   request,
 }: LoaderArgs): Promise<
-  Data & { user: { email: User["email"] } | undefined }
+  Data & { user: { email: User["email"] } | undefined } & {
+    projectDomain: string;
+  }
 > => {
   try {
-    const projectId = params.projectId ?? undefined;
+    const buildId = params.buildId;
 
-    if (projectId === undefined) {
+    if (buildId === undefined) {
       throw json("Required project id", { status: 400 });
     }
 
     const context = await createContext(request, "prod");
 
-    const pagesCanvasData = await loadProductionCanvasData(
-      { projectId },
-      context
-    );
+    const pagesCanvasData = await loadProductionCanvasData(buildId, context);
 
-    const project = await projectDb.project.loadByParams(
-      { projectId },
+    const project = await projectDb.project.loadById(
+      pagesCanvasData.build.projectId,
       context
     );
 
@@ -39,6 +38,7 @@ export const loader = async ({
     return {
       ...pagesCanvasData,
       user: user ? { email: user.email } : undefined,
+      projectDomain: project.domain,
     };
   } catch (error) {
     // If a Response is thrown, we're rethrowing it for Remix to handle.

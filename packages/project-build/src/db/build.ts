@@ -26,6 +26,8 @@ import {
 } from "./style-source-selections";
 import { parseProps, serializeProps } from "./props";
 import { parseInstances, serializeInstances } from "./instances";
+import { parseDeployment, serializeDeployment } from "./deployment";
+import type { Deployment } from "../schema/deployment";
 
 const parseBuild = async (build: DbBuild): Promise<Build> => {
   // Hardcode skipValidation to true for now
@@ -52,12 +54,12 @@ const parseBuild = async (build: DbBuild): Promise<Build> => {
       parseInstances(build.instances, skipValidation)
     );
 
+    const deployment = parseDeployment(build.deployment, skipValidation);
+
     return {
       id: build.id,
       projectId: build.projectId,
       version: build.version,
-      isDev: build.isDev,
-      isProd: build.isProd,
       createdAt: build.createdAt.toISOString(),
       pages,
       breakpoints,
@@ -66,6 +68,7 @@ const parseBuild = async (build: DbBuild): Promise<Build> => {
       styleSourceSelections,
       props,
       instances,
+      deployment,
     };
   } finally {
     // eslint-disable-next-line no-console
@@ -73,33 +76,11 @@ const parseBuild = async (build: DbBuild): Promise<Build> => {
   }
 };
 
-export async function loadBuildByProjectId(
-  projectId: Build["projectId"],
-  env: "dev"
-): Promise<Build>;
-export async function loadBuildByProjectId(
-  projectId: Build["projectId"],
-  env: "prod"
-): Promise<Build | undefined>;
-// eslint-disable-next-line func-style
-export async function loadBuildByProjectId(
-  projectId: Build["projectId"],
-  env: "prod" | "dev"
-): Promise<Build | undefined> {
-  if (env === "dev") {
-    const build = await prisma.build.findFirst({
-      where: { projectId, isDev: true },
-    });
-
-    if (build === null) {
-      throw new Error("Dev build not found");
-    }
-
-    return parseBuild(build);
-  }
-
-  const build = await prisma.build.findFirst({
-    where: { projectId, isProd: true },
+export const loadBuildById = async (
+  id: Build["id"]
+): Promise<Build | undefined> => {
+  const build = await prisma.build.findUnique({
+    where: { id },
   });
 
   if (build === null) {
@@ -107,7 +88,21 @@ export async function loadBuildByProjectId(
   }
 
   return parseBuild(build);
-}
+};
+
+export const loadBuildByProjectId = async (
+  projectId: Build["projectId"]
+): Promise<Build> => {
+  const build = await prisma.build.findFirst({
+    where: { projectId, deployment: null },
+  });
+
+  if (build === null) {
+    throw new Error("Dev build not found");
+  }
+
+  return parseBuild(build);
+};
 
 const createNewPageInstances = (): Build["instances"] => {
   const instanceId = nanoid();
@@ -130,100 +125,89 @@ const createNewPageInstances = (): Build["instances"] => {
  *   2. when we clone a project
  * We create "prod" build when we publish a dev build.
  */
-export async function createBuild(
+export const createBuild = async (
   props: {
     projectId: Build["projectId"];
-    env: "prod";
-    sourceBuild: Build | undefined;
-  },
-  context: AppContext,
-  client: Prisma.TransactionClient
-): Promise<void>;
-export async function createBuild(
-  props: {
-    projectId: Build["projectId"];
-    env: "dev";
-    sourceBuild: Build | undefined;
-  },
-  context: AppContext,
-  client: Prisma.TransactionClient
-): Promise<void>;
-// eslint-disable-next-line func-style
-export async function createBuild(
-  props: {
-    projectId: Build["projectId"];
-    env: "dev" | "prod";
-    sourceBuild: Build | undefined;
   },
   _context: AppContext,
   client: Prisma.TransactionClient
-): Promise<void> {
-  if (props.env === "dev") {
-    const count = await client.build.count({
-      where: { projectId: props.projectId, isDev: true },
-    });
+): Promise<void> => {
+  const count = await client.build.count({
+    where: { projectId: props.projectId, deployment: null },
+  });
 
-    if (count > 0) {
-      throw new Error("Dev build already exists");
-    }
+  if (count > 0) {
+    throw new Error("Dev build already exists");
   }
 
-  if (props.env === "prod" && props.sourceBuild === undefined) {
-    throw new Error("Source build required for production build");
-  }
+  const newInstances = createNewPageInstances();
+  const [rootInstanceId] = newInstances[0];
 
-  if (props.env === "prod") {
-    await client.build.updateMany({
-      where: { projectId: props.projectId, isProd: true },
-      data: { isProd: false },
-    });
-  }
+  const newPages = Pages.parse({
+    homePage: {
+      id: nanoid(),
+      name: "Home",
+      path: "",
+      title: "Home",
+      meta: {},
+      rootInstanceId,
+    },
+    pages: [],
+  } satisfies Pages);
 
-  let newInstances: Build["instances"];
-  let newPages: Pages;
-  if (props.sourceBuild === undefined) {
-    newInstances = createNewPageInstances();
-    const [rootInstanceId] = newInstances[0];
-    newPages = Pages.parse({
-      homePage: {
-        id: nanoid(),
-        name: "Home",
-        path: "",
-        title: "Home",
-        meta: {},
-        rootInstanceId,
-      },
-      pages: [],
-    } satisfies Pages);
-  } else {
-    newInstances = props.sourceBuild.instances;
-    newPages = props.sourceBuild.pages;
-  }
   await client.build.create({
     data: {
       projectId: props.projectId,
       pages: JSON.stringify(newPages),
-      breakpoints: serializeBreakpoints(
-        new Map(props.sourceBuild?.breakpoints ?? createInitialBreakpoints())
-      ),
-      styles: serializeStyles(new Map(props.sourceBuild?.styles)),
-      styleSources: serializeStyleSources(
-        new Map(props.sourceBuild?.styleSources)
-      ),
-      styleSourceSelections: serializeStyleSourceSelections(
-        new Map(props.sourceBuild?.styleSourceSelections)
-      ),
-      props: serializeProps(new Map(props.sourceBuild?.props)),
+      breakpoints: serializeBreakpoints(new Map(createInitialBreakpoints())),
+      styles: serializeStyles(new Map()),
+      styleSources: serializeStyleSources(new Map()),
+      styleSourceSelections: serializeStyleSourceSelections(new Map()),
+      props: serializeProps(new Map()),
       instances: serializeInstances(new Map(newInstances)),
-      isDev: props.env === "dev",
-      isProd: props.env === "prod",
     },
   });
-}
+};
+
+export const cloneBuild = async (
+  props: {
+    projectId: Build["projectId"];
+    deployment: Deployment | undefined;
+  },
+  _context: AppContext,
+  client: Prisma.TransactionClient
+) => {
+  const build = await prisma.build.findFirst({
+    where: { projectId: props.projectId, deployment: null },
+  });
+
+  if (build === null) {
+    throw new Error("Dev build not found");
+  }
+
+  const data = {
+    ...build,
+    id: undefined,
+    deployment: props.deployment
+      ? serializeDeployment(props.deployment)
+      : undefined,
+    projectId: props.projectId,
+  };
+
+  const result = await client.build.create({
+    data,
+    select: {
+      id: true,
+    },
+  });
+
+  return result;
+};
 
 export const createProductionBuild = async (
   props: {
     projectId: Build["projectId"];
+    deployment: Deployment;
   },
   context: AppContext
 ) => {
@@ -236,13 +220,9 @@ export const createProductionBuild = async (
     throw new AuthorizationError("You don't have access to build this project");
   }
 
-  // @todo: This is highly unoptimal and on a big project would take few seconds of CPU time.
-  // we need just duplicate row from dev build and change isDev to false and isProd to true
-  const devBuild = await loadBuildByProjectId(props.projectId, "dev");
-
-  await prisma.$transaction(async (client) => {
-    await createBuild(
-      { projectId: props.projectId, env: "prod", sourceBuild: devBuild },
+  return await prisma.$transaction(async (client) => {
+    return await cloneBuild(
+      { projectId: props.projectId, deployment: props.deployment },
       context,
       client
     );

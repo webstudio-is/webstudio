@@ -24,15 +24,21 @@ const createAuthorizationContext = async (
 };
 
 const createDomainContext = (request: Request) => {
-  const url = new URL(request.url);
-
   const context: AppContext["domain"] = {
     domainTrpc: trpcClient.domain,
-    domainEnv: {
-      BRANCH_NAME: env.BRANCH_NAME ?? "main",
-      PUBLISHER_TOKEN: env.PUBLISHER_TOKEN ?? "",
-      PUBLISHER_ENDPOINT: env.PUBLISHER_ENDPOINT,
+  };
+
+  return context;
+};
+
+const createDeploymentContext = (request: Request) => {
+  const url = new URL(request.url);
+
+  const context: AppContext["deployment"] = {
+    deploymentTrpc: trpcClient.deployment,
+    env: {
       BUILDER_ORIGIN: url.origin,
+      BRANCH_NAME: env.BRANCH_NAME ?? "main",
     },
   };
 
@@ -47,10 +53,12 @@ export const createContext = async (
   buildEnv: AppContext["authorization"]["buildEnv"] = "dev"
 ): Promise<AppContext> => {
   const authorization = await createAuthorizationContext(request, buildEnv);
-  const domain = await createDomainContext(request);
+  const domain = createDomainContext(request);
+  const deployment = createDeploymentContext(request);
 
   return {
     authorization,
     domain,
+    deployment,
   };
 };
