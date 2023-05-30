@@ -1,7 +1,7 @@
 #!/usr/bin/env tsx
 /* eslint-disable no-console */
 
-import path from "path";
+import * as path from "node:path";
 import { withCustomConfig } from "react-docgen-typescript";
 import fg from "fast-glob";
 import fs from "fs-extra";
