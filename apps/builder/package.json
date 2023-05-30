@@ -54,6 +54,7 @@
     "@webstudio-is/project": "workspace:^",
     "@webstudio-is/project-build": "workspace:^",
     "@webstudio-is/react-sdk": "workspace:^",
+    "@webstudio-is/sdk-components-react-remix": "workspace:^",
     "@webstudio-is/trpc-interface": "workspace:^",
     "colord": "^2.9.3",
     "debug": "^4.3.4",

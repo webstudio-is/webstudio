@@ -1,0 +1,63 @@
+{
+  "name": "@webstudio-is/sdk-components-react-remix",
+  "version": "0.68.0",
+  "description": "Webstudio components for Remix",
+  "author": "Webstudio <github@webstudio.is>",
+  "homepage": "https://webstudio.is",
+  "license": "MIT",
+  "private": false,
+  "type": "module",
+  "types": "lib/types/index.d.ts",
+  "files": [
+    "lib/*",
+    "src/*"
+  ],
+  "sideEffects": false,
+  "exports": {
+    ".": {
+      "source": "./src/components.ts",
+      "import": "./lib/components.js",
+      "require": "./lib/cjs/components.js"
+    },
+    "./metas": {
+      "source": "./src/metas.ts",
+      "import": "./lib/metas.js",
+      "require": "./lib/cjs/metas.js"
+    },
+    "./props": {
+      "source": "./src/props.ts",
+      "import": "./lib/props.js",
+      "require": "./lib/cjs/props.js"
+    }
+  },
+  "scripts": {
+    "dev": "build-package --watch",
+    "build": "build-package",
+    "build:args": "generate-arg-types './src/*.tsx !./src/**/*.stories.tsx !./src/**/*.ws.tsx' && prettier --write \"**/*.props.ts\"",
+    "dts": "tsc --declarationDir lib/types",
+    "typecheck": "tsc --noEmit --emitDeclarationOnly false",
+    "lint": "eslint ./src --ext .ts,.tsx --max-warnings 0",
+    "checks": "pnpm typecheck && pnpm lint"
+  },
+  "peerDependencies": {
+    "@remix-run/react": "^1.15.0",
+    "react": "^18.2.0",
+    "react-dom": "^18.2.0"
+  },
+  "dependencies": {
+    "@webstudio-is/form-handlers": "workspace:^",
+    "@webstudio-is/generate-arg-types": "workspace:^",
+    "@webstudio-is/icons": "workspace:^",
+    "@webstudio-is/react-sdk": "workspace:^"
+  },
+  "devDependencies": {
+    "@remix-run/react": "^1.15.0",
+    "@types/react": "^18.0.35",
+    "@types/react-dom": "^18.0.11",
+    "@webstudio-is/scripts": "workspace:^",
+    "@webstudio-is/tsconfig": "workspace:^",
+    "react": "^18.2.0",
+    "react-dom": "^18.2.0",
+    "typescript": "5.0.3"
+  }
+}
