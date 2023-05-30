@@ -1,10 +1,11 @@
 import { useCallback, useState } from "react";
+import { useStore } from "@nanostores/react";
 import { styled, type Rect } from "@webstudio-is/design-system";
 import type { Instance } from "@webstudio-is/project-build";
-import { getComponentMeta } from "@webstudio-is/react-sdk";
 import { theme } from "@webstudio-is/design-system";
 import { getInstanceLabel } from "~/builder/shared/tree";
 import { MetaIcon } from "~/builder/shared/meta-icon";
+import { registeredComponentMetasStore } from "~/shared/nano-states";
 
 type LabelPosition = "top" | "inside" | "bottom";
 type LabelRefCallback = (element: HTMLElement | null) => void;
@@ -80,7 +81,8 @@ type LabelProps = {
 
 export const Label = ({ instance, instanceRect }: LabelProps) => {
   const [labelRef, position] = useLabelPosition(instanceRect);
-  const meta = getComponentMeta(instance?.component);
+  const metas = useStore(registeredComponentMetasStore);
+  const meta = metas.get(instance.component);
   if (meta === undefined) {
     return <></>;
   }

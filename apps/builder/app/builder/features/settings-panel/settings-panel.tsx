@@ -1,16 +1,19 @@
 import { useStore } from "@nanostores/react";
 import { Flex, Label, theme, InputField } from "@webstudio-is/design-system";
-import { getComponentMeta } from "@webstudio-is/react-sdk";
-import { selectedInstanceStore } from "~/shared/nano-states";
+import {
+  registeredComponentMetasStore,
+  selectedInstanceStore,
+} from "~/shared/nano-states";
 import { useSettingsLogic } from "./use-settings-logic";
 
 export const SettingsPanel = () => {
   const { setLabel, handleBlur, handleKeyDown } = useSettingsLogic();
   const selectedInstance = useStore(selectedInstanceStore);
+  const metas = useStore(registeredComponentMetasStore);
   if (selectedInstance === undefined) {
     return null;
   }
-  const label = getComponentMeta(selectedInstance.component)?.label;
+  const label = metas.get(selectedInstance.component)?.label;
   return (
     <Flex
       gap="1"

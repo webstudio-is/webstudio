@@ -43,10 +43,6 @@ import { useSearchParams } from "@remix-run/react";
 import { useSyncInitializeOnce } from "~/shared/hook-utils";
 import { BlockingAlerts } from "./features/blocking-alerts";
 import { useStore } from "@nanostores/react";
-import {
-  customComponentMetas,
-  registerComponentMetas,
-} from "@webstudio-is/react-sdk";
 
 registerContainers();
 
@@ -233,10 +229,6 @@ export type BuilderProps = {
   authToken?: string;
   authPermit: AuthPermit;
 };
-
-// @todo: Don't do this in builder
-// https://github.com/webstudio-is/webstudio-builder/issues/1545
-registerComponentMetas(customComponentMetas);
 
 export const Builder = ({
   project,

@@ -1,5 +1,6 @@
 import { useMemo } from "react";
 import { useStore } from "@nanostores/react";
+import type { htmlTags as HtmlTags } from "html-tags";
 import {
   html,
   type Style,
@@ -16,6 +17,7 @@ import {
   type StyleSource as StyleSourceType,
   Breakpoint,
 } from "@webstudio-is/project-build";
+import { compareMedia } from "@webstudio-is/css-engine";
 import {
   type StyleSourceSelector,
   instancesStore,
@@ -26,12 +28,11 @@ import {
   selectedOrLastStyleSourceSelectorStore,
   breakpointsStore,
   styleSourceSelectionsStore,
+  registeredComponentMetasStore,
 } from "~/shared/nano-states";
 import { selectedBreakpointStore } from "~/shared/nano-states";
 import type { InstanceSelector } from "~/shared/tree-utils";
-import { getComponentMeta } from "@webstudio-is/react-sdk";
-import type { htmlTags as HtmlTags } from "html-tags";
-import { compareMedia } from "@webstudio-is/css-engine";
+import type { WsComponentMeta } from "@webstudio-is/react-sdk";
 
 type CascadedValueInfo = {
   breakpointId: string;
@@ -242,11 +243,10 @@ export const getInstanceComponent = (
 };
 
 export const getPresetStyleRule = (
-  component: string,
+  meta: undefined | WsComponentMeta,
   tagName: HtmlTags,
   styleSourceSelector?: StyleSourceSelector
 ) => {
-  const meta = getComponentMeta(component);
   const presetStyles = meta?.presetStyle?.[tagName];
   if (presetStyles === undefined) {
     return;
@@ -270,6 +270,7 @@ export const getPresetStyleRule = (
  */
 export const getInheritedInfo = (
   instances: Instances,
+  metas: Map<string, WsComponentMeta>,
   stylesByInstanceId: Map<Instance["id"], StyleDecl[]>,
   instanceSelector: InstanceSelector,
   selectedInstanceIntanceToTag: Map<Instance["id"], HtmlTags>,
@@ -292,7 +293,7 @@ export const getInheritedInfo = (
     const component = getInstanceComponent(instances, instanceId);
     const presetStyle =
       tagName !== undefined && component !== undefined
-        ? getComponentMeta(component)?.presetStyle?.[tagName]
+        ? metas.get(component)?.presetStyle?.[tagName]
         : undefined;
     if (presetStyle) {
       for (const styleDecl of presetStyle) {
@@ -417,6 +418,7 @@ export const useStyleInfo = () => {
   );
 
   const instances = useStore(instancesStore);
+  const metas = useStore(registeredComponentMetasStore);
   const { stylesByInstanceId, stylesByStyleSourceId } =
     useStore(stylesIndexStore);
   const styleSourceSelections = useStore(styleSourceSelectionsStore);
@@ -454,6 +456,7 @@ export const useStyleInfo = () => {
     }
     return getInheritedInfo(
       instances,
+      metas,
       stylesByInstanceId,
       selectedInstanceSelector,
       selectedInstanceIntanceToTag,
@@ -462,6 +465,7 @@ export const useStyleInfo = () => {
     );
   }, [
     instances,
+    metas,
     stylesByInstanceId,
     cascadedBreakpointIds,
     selectedBreakpointId,
@@ -540,12 +544,13 @@ export const useStyleInfo = () => {
       return;
     }
     return getPresetStyleRule(
-      component,
+      metas.get(component),
       tagName,
       selectedOrLastStyleSourceSelector
     );
   }, [
     instances,
+    metas,
     selectedInstanceSelector,
     selectedInstanceIntanceToTag,
     selectedOrLastStyleSourceSelector,
@@ -638,6 +643,7 @@ export const useInstanceStyleData = (
   instanceSelector: InstanceSelector | undefined
 ) => {
   const instances = useStore(instancesStore);
+  const metas = useStore(registeredComponentMetasStore);
   const { stylesByInstanceId } = useStore(stylesIndexStore);
   const breakpoints = useStore(breakpointsStore);
   const selectedBreakpoint = useStore(selectedBreakpointStore);
@@ -660,8 +666,8 @@ export const useInstanceStyleData = (
     if (tagName === undefined || component === undefined) {
       return;
     }
-    return getPresetStyleRule(component, tagName);
-  }, [instances, instanceSelector, selectedInstanceIntanceToTag]);
+    return getPresetStyleRule(metas.get(component), tagName);
+  }, [instances, metas, instanceSelector, selectedInstanceIntanceToTag]);
 
   const cascadedBreakpointIds = useMemo(
     () => getCascadedBreakpointIds(breakpoints, selectedBreakpointId),
@@ -693,6 +699,7 @@ export const useInstanceStyleData = (
     }
     return getInheritedInfo(
       instances,
+      metas,
       stylesByInstanceId,
       instanceSelector,
       selectedInstanceIntanceToTag,
@@ -701,6 +708,7 @@ export const useInstanceStyleData = (
     );
   }, [
     instances,
+    metas,
     stylesByInstanceId,
     cascadedBreakpointIds,
     selectedBreakpointId,

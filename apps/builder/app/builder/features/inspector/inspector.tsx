@@ -1,7 +1,6 @@
 import { useRef, useState } from "react";
 import { useStore } from "@nanostores/react";
 import type { Instance } from "@webstudio-is/project-build";
-import { getComponentMeta } from "@webstudio-is/react-sdk";
 import {
   theme,
   PanelTabs,
@@ -19,7 +18,11 @@ import type { Publish } from "~/shared/pubsub";
 import { StylePanel } from "~/builder/features/style-panel";
 import { PropsPanelContainer } from "~/builder/features/props-panel";
 import { FloatingPanelProvider } from "~/builder/shared/floating-panel";
-import { selectedInstanceStore, isDraggingStore } from "~/shared/nano-states";
+import {
+  selectedInstanceStore,
+  isDraggingStore,
+  registeredComponentMetasStore,
+} from "~/shared/nano-states";
 import { SettingsPanel } from "../settings-panel";
 import { NavigatorTree } from "~/builder/shared/navigator-tree";
 import type { Settings } from "~/builder/shared/client-settings";
@@ -27,7 +30,8 @@ import { MetaIcon } from "~/builder/shared/meta-icon";
 import { getInstanceLabel } from "~/builder/shared/tree";
 
 const InstanceInfo = ({ instance }: { instance: Instance }) => {
-  const componentMeta = getComponentMeta(instance.component);
+  const metas = useStore(registeredComponentMetasStore);
+  const componentMeta = metas.get(instance.component);
   if (componentMeta === undefined) {
     return null;
   }

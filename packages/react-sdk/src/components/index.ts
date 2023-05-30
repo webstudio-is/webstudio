@@ -105,22 +105,6 @@ export const defaultMetas: Record<string, WsComponentMeta> = {
   Checkbox: CheckboxMeta,
 };
 
-let currentMetas = defaultMetas;
-
-export const getComponentMeta = (name: string): WsComponentMeta | undefined => {
-  return currentMetas[name];
-};
-
-export const registerComponentMetas = (
-  overrides: Record<string, Partial<WsComponentMeta>>
-) => {
-  const result: typeof currentMetas = {};
-  for (const name of Object.keys(defaultMetas)) {
-    result[name] = { ...defaultMetas[name], ...overrides[name] };
-  }
-  currentMetas = result;
-};
-
 // @todo this list should not be hardcoded!
 export const defaultPropsMetas: Record<string, WsComponentPropsMeta> = {
   Slot: SlotMetaPropsMeta,

@@ -9,10 +9,10 @@ import {
   type StyleSourceSelections,
   getStyleDeclKey,
 } from "@webstudio-is/project-build";
-import { getComponentMeta } from "@webstudio-is/react-sdk";
 import { type ItemSource, StyleSourceInput } from "./style-source";
 import {
   availableStyleSourcesStore,
+  registeredComponentMetasStore,
   selectedInstanceSelectorStore,
   selectedInstanceStatesByStyleSourceIdStore,
   selectedInstanceStore,
@@ -285,12 +285,12 @@ const renameStyleSource = (id: StyleSource["id"], label: string) => {
 };
 
 const componentStatesStore = computed(
-  [selectedInstanceStore],
-  (selectedInstance) => {
+  [selectedInstanceStore, registeredComponentMetasStore],
+  (selectedInstance, registeredComponentMetas) => {
     if (selectedInstance === undefined) {
       return;
     }
-    return getComponentMeta(selectedInstance.component)?.states;
+    return registeredComponentMetas.get(selectedInstance.component)?.states;
   }
 );
 

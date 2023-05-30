@@ -9,7 +9,6 @@ import {
   useDrop,
   computeIndicatorPlacement,
 } from "@webstudio-is/design-system";
-import { getComponentMeta } from "@webstudio-is/react-sdk";
 import {
   instancesStore,
   registeredComponentMetasStore,
@@ -62,11 +61,12 @@ const findClosestRichTextInstanceSelector = (
   instanceSelector: InstanceSelector
 ) => {
   const instances = instancesStore.get();
+  const metas = registeredComponentMetasStore.get();
   for (const instanceId of instanceSelector) {
     const instance = instances.get(instanceId);
     if (
       instance !== undefined &&
-      getComponentMeta(instance.component)?.type === "rich-text"
+      metas.get(instance.component)?.type === "rich-text"
     ) {
       return getAncestorInstanceSelector(instanceSelector, instanceId);
     }
