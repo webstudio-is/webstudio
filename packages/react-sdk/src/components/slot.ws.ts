@@ -7,6 +7,7 @@ export const meta: WsComponentMeta = {
   label: "Slot",
   icon: SlotComponentIcon,
   stylable: false,
+  order: 6,
 };
 
 export const propsMeta: WsComponentPropsMeta = {
