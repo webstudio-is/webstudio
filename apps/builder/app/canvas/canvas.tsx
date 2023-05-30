@@ -138,7 +138,7 @@ export const Canvas = ({ params }: CanvasProps): JSX.Element | null => {
     registerComponentMetas(defaultMetas);
     registerComponentPropsMetas(defaultPropsMetas);
     registerComponentMetas(remixComponentMetas);
-    registerComponentPropsMetas(remixcustomComponentPropsMetas);
+    registerComponentPropsMetas(remixComponentPropsMetas);
   });
 
   // e.g. toggling preview is still needed in both modes
