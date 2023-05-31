@@ -24,7 +24,7 @@ type Props = ComponentProps<typeof defaultTag> & {
 
 export const Box = forwardRef<ElementRef<typeof defaultTag>, Props>(
   ({ tag = defaultTag, ...props }, ref) => {
-    return createElement(tag as string, { ...props, ref });
+    return createElement(tag, { ...props, ref });
   }
 );
 

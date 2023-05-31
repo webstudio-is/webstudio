@@ -440,4 +440,11 @@ export const props: Record<string, PropMeta> = {
     control: "text",
     type: "string",
   },
+  tag: {
+    required: false,
+    control: "radio",
+    type: "string",
+    defaultValue: "div",
+    options: ["div", "figcaption", "span"],
+  },
 };
