@@ -67,10 +67,13 @@ const getCname = (domain: string) => {
   return cnameArray.join(".");
 };
 
-const getStatusText = (props: { projectDomain: Domain }) => {
-  const status = props.projectDomain.verified
-    ? (`VERIFIED_${props.projectDomain.domain.status}` as `VERIFIED_${DomainStatus}`)
+export const getStatus = (projectDomain: Domain) =>
+  projectDomain.verified
+    ? (`VERIFIED_${projectDomain.domain.status}` as const)
     : `UNVERIFIED`;
+
+const getStatusText = (props: { projectDomain: Domain }) => {
+  const status = getStatus(props.projectDomain);
 
   let isVerifiedActive = false;
   let text = "Something went wrong";
