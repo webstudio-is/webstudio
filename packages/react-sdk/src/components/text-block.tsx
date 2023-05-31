@@ -17,3 +17,5 @@ export const TextBlock = forwardRef<ElementRef<typeof defaultTag>, Props>(
     return createElement(tag, { ...props, ref });
   }
 );
+
+TextBlock.displayName = "TextBlock";
