@@ -1,10 +1,10 @@
 import { FormIcon } from "@webstudio-is/icons/svg";
-import { form } from "../../css/normalize";
+import { form } from "@webstudio-is/react-sdk/css-normalize";
 import type {
   PresetStyle,
   WsComponentMeta,
   WsComponentPropsMeta,
-} from "../../components/component-meta";
+} from "@webstudio-is/react-sdk";
 import type { defaultTag } from "./form";
 import { props } from "./__generated__/form.props";
 

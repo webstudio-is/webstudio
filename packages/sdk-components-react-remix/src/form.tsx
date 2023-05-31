@@ -1,14 +1,14 @@
-import { useFetcher } from "@remix-run/react";
-import { formIdFieldName } from "@webstudio-is/form-handlers";
 import {
-  Children,
-  cloneElement,
-  forwardRef,
   type ReactNode,
   type ElementRef,
   type ComponentProps,
+  Children,
+  cloneElement,
+  forwardRef,
 } from "react";
-import { getInstanceIdFromComponentProps } from "../../props";
+import { useFetcher } from "@remix-run/react";
+import { formIdFieldName } from "@webstudio-is/form-handlers";
+import { getInstanceIdFromComponentProps } from "@webstudio-is/react-sdk";
 
 export const defaultTag = "form";
 

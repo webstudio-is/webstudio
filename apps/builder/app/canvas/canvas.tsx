@@ -8,12 +8,12 @@ import {
   defaultMetas,
   defaultPropsMetas,
   createElementsTree,
-  customComponentMetas,
-  customComponentPropsMetas,
   setParams,
-  customComponents,
 } from "@webstudio-is/react-sdk";
 import * as defaultComponents from "@webstudio-is/react-sdk/components";
+import * as remixComponents from "@webstudio-is/sdk-components-react-remix";
+import * as remixComponentMetas from "@webstudio-is/sdk-components-react-remix/metas";
+import * as remixComponentPropsMetas from "@webstudio-is/sdk-components-react-remix/props";
 import { publish } from "~/shared/pubsub";
 import {
   handshakenStore,
@@ -132,13 +132,13 @@ export const Canvas = ({ params }: CanvasProps): JSX.Element | null => {
   const [isPreviewMode] = useIsPreviewMode();
 
   const components = new Map(
-    Object.entries({ ...defaultComponents, ...customComponents })
+    Object.entries({ ...defaultComponents, ...remixComponents })
   ) as Components;
   useSyncInitializeOnce(() => {
     registerComponentMetas(defaultMetas);
     registerComponentPropsMetas(defaultPropsMetas);
-    registerComponentMetas(customComponentMetas);
-    registerComponentPropsMetas(customComponentPropsMetas);
+    registerComponentMetas(remixComponentMetas);
+    registerComponentPropsMetas(remixComponentPropsMetas);
   });
 
   // e.g. toggling preview is still needed in both modes
