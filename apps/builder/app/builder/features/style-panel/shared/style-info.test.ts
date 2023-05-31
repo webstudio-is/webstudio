@@ -1,5 +1,5 @@
 import { test, expect } from "@jest/globals";
-import { defaultMetas } from "@webstudio-is/react-sdk";
+import * as defaultMetas from "@webstudio-is/sdk-components-react/metas";
 import type {
   Breakpoints,
   Instance,

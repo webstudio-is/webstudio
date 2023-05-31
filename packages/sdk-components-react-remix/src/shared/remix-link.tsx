@@ -1,10 +1,10 @@
 import { forwardRef, type ComponentPropsWithoutRef } from "react";
 import { NavLink as RemixLink } from "@remix-run/react";
 import {
-  type Link,
   usePropUrl,
   getInstanceIdFromComponentProps,
 } from "@webstudio-is/react-sdk";
+import type { Link } from "@webstudio-is/sdk-components-react";
 
 type LinkComponent = typeof Link;
 type LinkProps = ComponentPropsWithoutRef<LinkComponent>;

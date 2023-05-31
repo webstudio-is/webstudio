@@ -13,20 +13,15 @@
     "typecheck": "tsc --noEmit --emitDeclarationOnly false",
     "test": "NODE_OPTIONS=--experimental-vm-modules jest --passWithNoTests",
     "lint": "eslint ./src --ext .ts,.tsx --max-warnings 0",
-    "checks": "pnpm typecheck && pnpm lint && pnpm test",
-    "storybook:run": "start-storybook -p 6006",
-    "storybook:build": "build-storybook"
+    "checks": "pnpm typecheck && pnpm lint && pnpm test"
   },
   "devDependencies": {
-    "@babel/core": "^7.21.0",
     "@jest/globals": "^29.3.1",
     "@remix-run/react": "^1.15.0",
-    "@storybook/react": "^6.5.16",
     "@types/react": "^18.0.35",
     "@types/react-dom": "^18.0.11",
     "@webstudio-is/jest-config": "workspace:^",
     "@webstudio-is/scripts": "workspace:^",
-    "@webstudio-is/storybook-config": "workspace:^",
     "@webstudio-is/tsconfig": "workspace:^",
     "jest": "^29.3.1",
     "react": "^18.2.0",
@@ -43,17 +38,11 @@
   },
   "dependencies": {
     "@nanostores/react": "^0.4.1",
-    "@react-aria/utils": "^3.13.3",
     "@webstudio-is/asset-uploader": "workspace:^",
     "@webstudio-is/css-data": "workspace:^",
     "@webstudio-is/css-engine": "workspace:^",
-    "@webstudio-is/css-vars": "workspace:^",
     "@webstudio-is/fonts": "workspace:^",
-    "@webstudio-is/form-handlers": "workspace:^",
     "@webstudio-is/generate-arg-types": "workspace:^",
-    "@webstudio-is/icons": "workspace:^",
-    "@webstudio-is/image": "workspace:^",
-    "@webstudio-is/prisma-client": "workspace:^",
     "@webstudio-is/project-build": "workspace:^",
     "detect-font": "^0.1.5",
     "html-tags": "^3.2.0",
@@ -67,12 +56,6 @@
       "import": "./lib/index.js",
       "require": "./lib/cjs/index.js",
       "types": "./lib/types/index.d.ts"
-    },
-    "./components": {
-      "source": "./src/components/components.ts",
-      "import": "./lib/components/components.js",
-      "require": "./lib/cjs/components/components.js",
-      "types": "./lib/types/components/components.d.ts"
     },
     "./css-normalize": {
       "source": "./src/css/normalize.ts",
