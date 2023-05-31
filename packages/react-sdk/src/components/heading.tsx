@@ -13,7 +13,7 @@ type Props = ComponentProps<typeof defaultTag> & {
 
 export const Heading = forwardRef<ElementRef<typeof defaultTag>, Props>(
   ({ tag = defaultTag, ...props }, ref) => {
-    return createElement(tag as string, { ...props, ref });
+    return createElement(tag, { ...props, ref });
   }
 );
 
