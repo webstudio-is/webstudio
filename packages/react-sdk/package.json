@@ -71,6 +71,11 @@
       "source": "./src/components/components.ts",
       "import": "./lib/components/components.js",
       "require": "./lib/cjs/components/components.js"
+    },
+    "./css-normalize": {
+      "source": "./src/css/normalize.ts",
+      "import": "./lib/css/normalize.js",
+      "require": "./lib/cjs/css/normalize.js"
     }
   },
   "types": "lib/types/index.d.ts",
