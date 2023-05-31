@@ -8,6 +8,8 @@ const StyleSourceToken = z.object({
   name: z.string(),
 });
 
+export type StyleSourceToken = z.infer<typeof StyleSourceToken>;
+
 const StyleSourceLocal = z.object({
   type: z.literal("local"),
   id: StyleSourceId,
