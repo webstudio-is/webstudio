@@ -1,6 +1,6 @@
 # Webstudio Builder
 
-Open Source alternative to Webflow Designer.
+Open Source alternative to Webflow Designer
 
 ## Contributing
 
