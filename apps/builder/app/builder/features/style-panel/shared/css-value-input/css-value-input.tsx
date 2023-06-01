@@ -257,6 +257,7 @@ type CssValueInputProps = {
   onAbort: () => void;
   icon?: ReactNode;
   prefix?: ReactNode;
+  showSuffix?: boolean;
 };
 
 const initialValue: IntermediateStyleValue = {
@@ -317,6 +318,7 @@ const match = <Item,>(
 export const CssValueInput = ({
   icon,
   prefix,
+  showSuffix = true,
   styleSource,
   property,
   keywords = [],
@@ -574,15 +576,16 @@ export const CssValueInput = ({
   const isKeywordValue = value.type === "keyword" && hasItems;
   const suffixRef = useRef<HTMLDivElement | null>(null);
 
-  const suffix = (
-    <Box ref={suffixRef}>
-      {isUnitValue
-        ? unitSelectElement
-        : isKeywordValue
-        ? keywordButtonElement
-        : null}
-    </Box>
-  );
+  const suffix =
+    showSuffix === false ? null : (
+      <Box ref={suffixRef}>
+        {isUnitValue
+          ? unitSelectElement
+          : isKeywordValue
+          ? keywordButtonElement
+          : null}
+      </Box>
+    );
 
   return (
     <Combobox>
