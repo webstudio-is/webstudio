@@ -25,14 +25,14 @@ export const domainRouter = router({
       }
     }),
   publish: procedure
-    .input(z.object({ projectId: z.string() }))
+    .input(z.object({ projectId: z.string(), domains: z.array(z.string()) }))
     .mutation(async ({ input, ctx }) => {
       try {
         const build = await createProductionBuild(
           {
             projectId: input.projectId,
             deployment: {
-              domains: [],
+              domains: input.domains,
             },
           },
           ctx

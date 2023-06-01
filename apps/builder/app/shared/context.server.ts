@@ -4,8 +4,7 @@ import { authenticator } from "~/services/auth.server";
 import { trpcClient } from "~/services/trpc.server";
 
 const createAuthorizationContext = async (
-  request: Request,
-  buildEnv: AppContext["authorization"]["buildEnv"]
+  request: Request
 ): Promise<AppContext["authorization"]> => {
   const url = new URL(request.url);
 
@@ -13,10 +12,14 @@ const createAuthorizationContext = async (
 
   const user = await authenticator.isAuthenticated(request);
 
+  const isServiceCall =
+    request.headers.has("Authorization") &&
+    request.headers.get("Authorization") === env.TRPC_SERVER_API_TOKEN;
+
   const context: AppContext["authorization"] = {
     userId: user?.id,
     authToken,
-    buildEnv,
+    isServiceCall,
     authorizeTrpc: trpcClient.authorize,
   };
 
@@ -48,11 +51,8 @@ const createDeploymentContext = (request: Request) => {
 /**
  * argument buildEnv==="prod" only if we are loading project with production build
  */
-export const createContext = async (
-  request: Request,
-  buildEnv: AppContext["authorization"]["buildEnv"] = "dev"
-): Promise<AppContext> => {
-  const authorization = await createAuthorizationContext(request, buildEnv);
+export const createContext = async (request: Request): Promise<AppContext> => {
+  const authorization = await createAuthorizationContext(request);
   const domain = createDomainContext(request);
   const deployment = createDeploymentContext(request);
 
