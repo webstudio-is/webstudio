@@ -23,7 +23,7 @@ import { getPublishedUrl } from "~/shared/router-utils";
 import { theme } from "@webstudio-is/design-system";
 import { useAuthPermit } from "~/shared/nano-states";
 import { isFeatureEnabled } from "@webstudio-is/feature-flags";
-import { Domains } from "./domains";
+import { Domains, getStatus } from "./domains";
 import { CollapsibleDomainSection } from "./collapsible-domain-section";
 import {
   CheckCircleIcon,
@@ -207,7 +207,13 @@ const ChangeProjectDomain = (props: PublishButtonProps) => {
   );
 };
 
-const Publish = ({ projectId }: { projectId: Project["id"] }) => {
+const Publish = ({
+  projectId,
+  domains,
+}: {
+  projectId: Project["id"];
+  domains: string[];
+}) => {
   const {
     send: publish,
     state: publishState,
@@ -239,7 +245,7 @@ const Publish = ({ projectId }: { projectId: Project["id"] }) => {
         color="positive"
         disabled={publishState !== "idle"}
         onClick={() => {
-          publish({ projectId });
+          publish({ projectId, domains });
         }}
       >
         Publish
@@ -259,6 +265,16 @@ const Content = (props: PublishButtonProps) => {
   useEffect(() => {
     refreshDomainResult({ projectId: props.project.id });
   }, [refreshDomainResult, props.project.id]);
+
+  // In the future we would allow to select what domains to publish,
+  // now we just publish all verified and active domains
+  const domainsToPublish = domainsResult?.success
+    ? domainsResult.data
+        .filter(
+          (projectDomain) => getStatus(projectDomain) === "VERIFIED_ACTIVE"
+        )
+        .map((projectDomain) => projectDomain.domain.domain)
+    : [];
 
   return (
     <>
@@ -308,7 +324,7 @@ const Content = (props: PublishButtonProps) => {
         </>
       )}
 
-      <Publish projectId={props.project.id} />
+      <Publish projectId={props.project.id} domains={domainsToPublish} />
     </>
   );
 };
