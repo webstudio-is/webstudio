@@ -445,7 +445,7 @@ const DeleteConfirmationDialog = ({
     >
       <DialogContent>
         <Flex gap="3" direction="column" css={{ padding: theme.spacing[9] }}>
-          <Text>{`Delete "${token}" token from the entire project including all of it's styles?`}</Text>
+          <Text>{`Delete "${token}" token from the project including all of its styles?`}</Text>
           <Flex direction="rowReverse" gap="2">
             <DialogClose asChild>
               <Button
@@ -454,7 +454,7 @@ const DeleteConfirmationDialog = ({
                   onConfirm();
                 }}
               >
-                Yes, Delete
+                Delete
               </Button>
             </DialogClose>
             <DialogClose asChild>
