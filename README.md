@@ -1,7 +1,6 @@
 # Webstudio Builder
 
-Webstudio Builder is a NoCode Visual Tool inspired by Webflow. It is the place
-where you can build your site or app visually.
+Open Source alternative to Webflow Designer
 
 ## Contributing
 
