@@ -21,7 +21,7 @@ export const loader = async ({
       throw json("Required project id", { status: 400 });
     }
 
-    const context = await createContext(request, "prod");
+    const context = await createContext(request);
 
     const pagesCanvasData = await loadProductionCanvasData(buildId, context);
 

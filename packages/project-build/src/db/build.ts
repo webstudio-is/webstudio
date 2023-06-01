@@ -188,6 +188,8 @@ export const cloneBuild = async (
   const data = {
     ...build,
     id: undefined,
+    createdAt: undefined,
+    updatedAt: undefined,
     deployment: props.deployment
       ? serializeDeployment(props.deployment)
       : undefined,

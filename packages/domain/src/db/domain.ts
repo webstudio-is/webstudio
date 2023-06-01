@@ -32,7 +32,7 @@ export const findMany = async (
 > => {
   // Only builder of the project can list domains
   const canList = await authorizeProject.hasProjectPermit(
-    { projectId: props.projectId, permit: "build" },
+    { projectId: props.projectId, permit: "view" },
     context
   );
 
