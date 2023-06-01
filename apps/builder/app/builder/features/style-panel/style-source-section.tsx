@@ -6,9 +6,20 @@ import store from "immerhin";
 import {
   type Instance,
   type StyleSource,
+  type StyleSourceToken,
   type StyleSourceSelections,
   getStyleDeclKey,
 } from "@webstudio-is/project-build";
+import {
+  Flex,
+  Dialog,
+  DialogContent,
+  DialogTitle,
+  DialogClose,
+  Button,
+  Text,
+  theme,
+} from "@webstudio-is/design-system";
 import { type ItemSource, StyleSourceInput } from "./style-source";
 import {
   availableStyleSourcesStore,
@@ -341,53 +352,118 @@ export const StyleSourcesSection = () => {
     undefined | StyleSource["id"]
   >(undefined);
 
+  const [tokenToDelete, setTokenToDelete] = useState<StyleSourceToken>();
+
   return (
-    <StyleSourceInput
-      items={items}
-      value={value}
-      selectedItemSelector={selectedOrLastStyleSourceSelector}
-      componentStates={componentStates}
-      onCreateItem={createStyleSource}
-      onSelectAutocompleteItem={({ id }) => {
-        addStyleSourceToInstace(id);
-      }}
-      onDuplicateItem={(id) => {
-        const newId = duplicateStyleSource(id);
-        if (newId !== undefined) {
-          setEditingItemId(newId);
+    <>
+      <StyleSourceInput
+        items={items}
+        value={value}
+        selectedItemSelector={selectedOrLastStyleSourceSelector}
+        componentStates={componentStates}
+        onCreateItem={createStyleSource}
+        onSelectAutocompleteItem={({ id }) => {
+          addStyleSourceToInstace(id);
+        }}
+        onDuplicateItem={(id) => {
+          const newId = duplicateStyleSource(id);
+          if (newId !== undefined) {
+            setEditingItemId(newId);
+          }
+        }}
+        onConvertToToken={(id) => {
+          convertLocalStyleSourceToToken(id);
+          setEditingItemId(id);
+        }}
+        onRemoveItem={(id) => {
+          removeStyleSourceFromInstance(id);
+        }}
+        onDeleteItem={(id) => {
+          const token = availableStyleSources.find(
+            (source) => source.id === id
+          );
+          if (token?.type === "token") {
+            setTokenToDelete(token);
+          }
+        }}
+        onSort={(items) => {
+          reorderStyleSources(items.map((item) => item.id));
+        }}
+        onSelectItem={(styleSourceSelector) => {
+          createLocalStyleSourceIfNotExists(styleSourceSelector.styleSourceId);
+          selectedStyleSourceSelectorStore.set(styleSourceSelector);
+        }}
+        // style source renaming
+        editingItemId={editingItemId}
+        onEditItem={(id) => {
+          setEditingItemId(id);
+          // prevent deselect after renaming
+          if (id !== undefined) {
+            selectedStyleSourceSelectorStore.set({
+              styleSourceId: id,
+            });
+          }
+        }}
+        onChangeItem={(item) => {
+          renameStyleSource(item.id, item.label);
+        }}
+      />
+      {tokenToDelete && (
+        <DeleteConfirmationDialog
+          onClose={() => {
+            setTokenToDelete(undefined);
+          }}
+          onConfirm={() => {
+            deleteStyleSource(tokenToDelete.id);
+          }}
+          token={tokenToDelete.name}
+        />
+      )}
+    </>
+  );
+};
+
+type DeleteConfirmationDialogProps = {
+  onClose: () => void;
+  onConfirm: () => void;
+  token: string;
+};
+
+const DeleteConfirmationDialog = ({
+  onClose,
+  onConfirm,
+  token,
+}: DeleteConfirmationDialogProps) => {
+  return (
+    <Dialog
+      open
+      onOpenChange={(isOpen) => {
+        if (isOpen === false) {
+          onClose();
         }
       }}
-      onConvertToToken={(id) => {
-        convertLocalStyleSourceToToken(id);
-        setEditingItemId(id);
-      }}
-      onRemoveItem={(id) => {
-        removeStyleSourceFromInstance(id);
-      }}
-      onDeleteItem={(id) => {
-        deleteStyleSource(id);
-      }}
-      onSort={(items) => {
-        reorderStyleSources(items.map((item) => item.id));
-      }}
-      onSelectItem={(styleSourceSelector) => {
-        createLocalStyleSourceIfNotExists(styleSourceSelector.styleSourceId);
-        selectedStyleSourceSelectorStore.set(styleSourceSelector);
-      }}
-      // style source renaming
-      editingItemId={editingItemId}
-      onEditItem={(id) => {
-        setEditingItemId(id);
-        // prevent deselect after renaming
-        if (id !== undefined) {
-          selectedStyleSourceSelectorStore.set({
-            styleSourceId: id,
-          });
-        }
-      }}
-      onChangeItem={(item) => {
-        renameStyleSource(item.id, item.label);
-      }}
-    />
+    >
+      <DialogContent>
+        <Flex gap="3" direction="column" css={{ padding: theme.spacing[9] }}>
+          <Text>{`Delete "${token}" token from the project including all of its styles?`}</Text>
+          <Flex direction="rowReverse" gap="2">
+            <DialogClose asChild>
+              <Button
+                color="destructive"
+                onClick={() => {
+                  onConfirm();
+                }}
+              >
+                Delete
+              </Button>
+            </DialogClose>
+            <DialogClose asChild>
+              <Button color="ghost">Cancel</Button>
+            </DialogClose>
+          </Flex>
+        </Flex>
+        <DialogTitle>Delete confirmation</DialogTitle>
+      </DialogContent>
+    </Dialog>
   );
 };
