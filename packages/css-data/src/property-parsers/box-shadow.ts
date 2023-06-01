@@ -1,11 +1,16 @@
 import * as csstree from "css-tree";
-import { parseCssValue } from "../parse-css-value";
-import type {
-  InvalidValue,
+import {
   LayersValue,
-  UnparsedValue,
+  type InvalidValue,
+  type KeywordValue,
+  TupleValue,
+  type TupleValueItem,
+  type Unit,
+  UnitValue,
 } from "@webstudio-is/css-data";
-import { generate } from "css-tree";
+import { colord } from "colord";
+
+const shadowProperties = ["offsetX", "offsetY", "blur", "spread"];
 
 export const parseBoxShadow = (
   boxShadow: string
@@ -24,44 +29,103 @@ export const parseBoxShadow = (
   }
 
   const ast = csstree.parse(tokenStream, { context: "value" });
-  const layers: string[] = [];
-  const boxShadowValue = new csstree.List<csstree.CssNode>();
+  const parsed = csstree.lexer.matchProperty("box-shadow", ast);
+  if (parsed.error) {
+    return {
+      type: "invalid",
+      value: boxShadow,
+    };
+  }
+
+  const layers: TupleValue[] = [];
 
   csstree.walk(ast, (node) => {
     if (node.type === "Value") {
       const children = node.children;
+      let layer: csstree.CssNode[] = [];
 
       for (const child of children) {
         if (children.last === child) {
-          boxShadowValue.push(child);
-          layers.push(generate({ type: "Value", children: boxShadowValue }));
-          boxShadowValue.clear();
+          layer.push(child);
+        }
+
+        if (child.type === "Operator" || children.last === child) {
+          const shadow: TupleValueItem[] = [];
+          const hasInset = layer.findIndex(
+            (item) => item.type === "Identifier"
+          );
+
+          if (hasInset > -1) {
+            const inset: KeywordValue = {
+              type: "keyword",
+              value: "inset",
+            };
+
+            shadow.push(inset);
+            layer.splice(hasInset, 1);
+          }
+
+          const hasColor = layer.findIndex(
+            (item) => item.type === "Function" || item.type === "Hash"
+          );
+          if (hasColor > -1) {
+            const colorValue = colord(csstree.generate(layer[hasColor]));
+            if (!colorValue.isValid()) {
+              return;
+            }
+            const rgb = colorValue.toRgb();
+            shadow.push({
+              type: "rgb",
+              alpha: rgb.a,
+              r: rgb.r,
+              g: rgb.g,
+              b: rgb.b,
+            });
+            layer.splice(hasColor, 1);
+          }
+
+          /**
+           * https://developer.mozilla.org/en-US/docs/Web/CSS/box-shadow#syntax
+           * `inset` and color can be at the start or end and their sequence can be anyhere
+           * So, we check and splice them out and then follow the sequence for the rest
+           * as specified from the docs.
+           */
+          shadowProperties.forEach((property, index) => {
+            const dimension = layer[index] as csstree.Dimension;
+            if (!dimension) {
+              return;
+            }
+
+            shadow.push({
+              type: "unit",
+              value: Number(dimension.value),
+              unit: dimension?.unit ? (dimension.unit as Unit) : "number",
+            });
+
+            UnitValue.parse({
+              type: "unit",
+              value: Number(dimension.value),
+              unit: dimension?.unit ? (dimension.unit as Unit) : "number",
+            });
+          });
+
+          layers.push({
+            type: "tuple",
+            value: shadow,
+          });
+          layer = [];
           continue;
         }
 
-        if (child.type === "Operator") {
-          layers.push(generate({ type: "Value", children: boxShadowValue }));
-          boxShadowValue.clear();
-          continue;
-        }
-
-        boxShadowValue.push(child);
+        layer.push(child);
       }
     }
   });
 
-  const boxShadows: UnparsedValue[] = [];
-  for (const layer of layers) {
-    const layerStyle = parseCssValue("boxShadow", layer);
-
-    if (layerStyle.type !== "unparsed") {
-      break;
-    }
-
-    boxShadows.push(layerStyle);
-  }
-
-  return boxShadows.length
-    ? { type: "layers", value: boxShadows }
+  return layers.length > 0
+    ? {
+        type: "layers",
+        value: layers,
+      }
     : { type: "invalid", value: boxShadow };
 };

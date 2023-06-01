@@ -1,7 +1,11 @@
 import { useState } from "react";
 import type { ReactNode } from "react";
 
-import type { StyleProperty } from "@webstudio-is/css-data";
+import {
+  parseBackground,
+  parseBoxShadow,
+  type StyleProperty,
+} from "@webstudio-is/css-data";
 import type { RenderCategoryProps } from "../../style-sections";
 import {
   Flex,

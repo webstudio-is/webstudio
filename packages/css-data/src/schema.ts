@@ -99,7 +99,12 @@ const UnsetValue = z.object({
 });
 export type UnsetValue = z.infer<typeof UnsetValue>;
 
-export const TupleValueItem = z.union([UnitValue, KeywordValue, UnparsedValue]);
+export const TupleValueItem = z.union([
+  UnitValue,
+  KeywordValue,
+  UnparsedValue,
+  RgbValue,
+]);
 export type TupleValueItem = z.infer<typeof TupleValueItem>;
 
 export const TupleValue = z.object({
