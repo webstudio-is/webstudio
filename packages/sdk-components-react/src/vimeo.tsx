@@ -32,7 +32,7 @@ export type VimeoPlayerOptions = {
   /** Whether to prevent the player from tracking session data, including cookies. Keep in mind that setting this argument to true also blocks video stats. */
   doNotTrack?: boolean;
   /** Key-value pairs representing dynamic parameters that are utilized on interactive videos with live elements, such as title=my-video,subtitle=interactive. */
-  interactive_params?: string;
+  interactiveParams?: string;
   /** Whether to enable keyboard input to trigger player events. This setting doesn't affect tab control. */
   keyboard?: boolean;
   /** Whether to restart the video automatically after reaching the end. */
@@ -87,6 +87,12 @@ const getUrl = (options: VimeoPlayerOptions) => {
       url.searchParams.append("autoplay", "true");
       continue;
     }
+    if (option === "interactiveParams") {
+      // We always set autoplay to true because we have a button that starts the video
+      url.searchParams.append("interactive_params", value.toString());
+      continue;
+    }
+
     url.searchParams.append(option, value.toString());
   }
   return url.toString();
@@ -156,7 +162,7 @@ export const Vimeo = forwardRef<Ref, Props>(
       transparent = true,
       autopip,
       color,
-      interactive_params,
+      interactiveParams,
       texttrack,
       children,
       ...rest
@@ -198,12 +204,14 @@ export const Vimeo = forwardRef<Ref, Props>(
           speed,
           title,
           transparent,
+          interactiveParams,
         },
         () => {
           setVideoState("ready");
         }
       );
     }, [
+      url,
       videoState,
       autoplay,
       autopause,
@@ -222,6 +230,7 @@ export const Vimeo = forwardRef<Ref, Props>(
       speed,
       title,
       transparent,
+      interactiveParams,
     ]);
     return (
       <div

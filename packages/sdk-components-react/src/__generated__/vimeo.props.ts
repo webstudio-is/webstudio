@@ -513,7 +513,7 @@ export const props: Record<string, PropMeta> = {
     type: "boolean",
     defaultValue: false,
   },
-  interactive_params: {
+  interactiveParams: {
     description:
       "Key-value pairs representing dynamic parameters that are utilized on interactive videos with live elements, such as title=my-video,subtitle=interactive.",
     required: false,
@@ -606,12 +606,5 @@ export const props: Record<string, PropMeta> = {
     control: "boolean",
     type: "boolean",
     defaultValue: true,
-  },
-  initialState: {
-    required: false,
-    control: "radio",
-    type: "string",
-    defaultValue: "initial",
-    options: ["initial", "player"],
   },
 };

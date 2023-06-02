@@ -104,7 +104,7 @@ const useElementsTree = (components: Components) => {
       Component: WebstudioComponentDev,
       components,
     });
-  }, [instances, rootInstanceId, components, pagesMapStore]);
+  }, [instances, rootInstanceId, components, pagesMapStore, isPreviewMode]);
 };
 
 const DesignMode = () => {
