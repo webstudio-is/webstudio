@@ -1,4 +1,4 @@
-import { useEffect } from "react";
+import { useEffect, useRef } from "react";
 import { useBeforeUnload } from "react-use";
 import { sync } from "immerhin";
 import type { Project } from "@webstudio-is/project";
@@ -40,8 +40,6 @@ const useErrorCheck = () => {
   }, []);
 };
 
-let lastVersion: undefined | number = undefined;
-
 const useNewEntriesCheck = ({
   buildId,
   projectId,
@@ -49,6 +47,9 @@ const useNewEntriesCheck = ({
   authPermit,
   version,
 }: UserSyncServerProps) => {
+  // save the initial version from loaded build
+  const lastVersion = useRef<number>(version);
+
   useEffect(() => {
     if (authPermit === "view") {
       return;
@@ -66,10 +67,6 @@ const useNewEntriesCheck = ({
       }
 
       enqueue(async () => {
-        // save the initial version from loaded build
-        if (lastVersion === undefined) {
-          lastVersion = version;
-        }
         const response = await fetch(restPatchPath({ authToken }), {
           method: "post",
           body: JSON.stringify({
@@ -77,13 +74,13 @@ const useNewEntriesCheck = ({
             buildId,
             projectId,
             // provide latest stored version to server
-            version: lastVersion,
+            version: lastVersion.current,
           }),
         });
         if (response.ok) {
           const result = await response.json();
           if (result.status === "ok") {
-            lastVersion += 1;
+            lastVersion.current += 1;
             return { ok: true };
           }
           // when versions mismatched ask user to reload
