@@ -5,7 +5,9 @@ import {
   useEffect,
   type ElementRef,
   type ComponentProps,
+  useContext,
 } from "react";
+import { ReactSdkContext } from "../context";
 
 const defaultTag = "div";
 
@@ -161,20 +163,21 @@ export const Vimeo = forwardRef<Ref, Props>(
     },
     ref
   ) => {
+    const { renderer } = useContext(ReactSdkContext);
     const [videoState, setVideoState] = useState<
       "initial" | "loading" | "ready"
     >("initial");
     const elementRef = useRef<ElementRef<typeof defaultTag> | null>(null);
 
     useEffect(() => {
-      setVideoState(autoplay ? "loading" : "initial");
-    }, [autoplay]);
+      setVideoState(autoplay && renderer !== "canvas" ? "loading" : "initial");
+    }, [autoplay, renderer]);
 
     useEffect(() => {
       if (elementRef.current === null || videoState === "initial") {
         return;
       }
-      const cleanup = createPlayer(
+      return createPlayer(
         elementRef.current,
         {
           url,
@@ -200,7 +203,6 @@ export const Vimeo = forwardRef<Ref, Props>(
           setVideoState("ready");
         }
       );
-      return cleanup;
     }, [
       videoState,
       autoplay,
@@ -231,7 +233,9 @@ export const Vimeo = forwardRef<Ref, Props>(
           }
         }}
         onClick={() => {
-          setVideoState("loading");
+          if (renderer !== "canvas") {
+            setVideoState("loading");
+          }
         }}
       >
         {
