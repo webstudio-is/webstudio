@@ -59,12 +59,13 @@ export type VimeoPlayerOptions = {
   /** Whether the responsive player and transparent background are enabled. */
   transparent?: boolean;
 };
-
+// https://player.vimeo.com/video/
 const getUrl = (options: VimeoPlayerOptions) => {
   if (options.url === undefined) {
     return;
   }
-  const url = new URL(options.url);
+  const userUrl = new URL(options.url);
+  const url = new URL(`https://player.vimeo.com/video${userUrl.pathname}`);
   let option: keyof VimeoPlayerOptions;
   for (option in options) {
     if (option === "url") {
