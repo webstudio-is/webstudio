@@ -60,71 +60,71 @@ export type VimeoPlayerOptions = {
   transparent?: boolean;
 };
 
-class VimeoPlayer {
-  options: VimeoPlayerOptions;
-  constructor(options: VimeoPlayerOptions) {
-    this.options = options;
+const getUrl = (options: VimeoPlayerOptions) => {
+  if (options.url === undefined) {
+    return;
   }
-  getUrl() {
-    if (this.options.url === undefined) {
-      return;
+  const url = new URL(options.url);
+  let option: keyof VimeoPlayerOptions;
+  for (option in options) {
+    if (option === "url") {
+      continue;
     }
-    const url = new URL(this.options.url);
-    let option: keyof VimeoPlayerOptions;
-    for (option in this.options) {
-      if (option === "url") {
-        continue;
-      }
-      const value = this.options[option];
-      if (value === undefined) {
-        continue;
-      }
-      if (option === "doNotTrack") {
-        // We are mapping it because we made it human readable
-        url.searchParams.append("dnt", value.toString());
-        continue;
-      }
-      if (option === "autoplay") {
-        // We always set autoplay to true because we have a button that starts the video
-        url.searchParams.append("autoplay", "true");
-        continue;
-      }
-      url.searchParams.append(option, value.toString());
+    const value = options[option];
+    if (value === undefined) {
+      continue;
     }
-    return url.toString();
+    if (option === "doNotTrack") {
+      // We are mapping it because we made it human readable
+      url.searchParams.append("dnt", value.toString());
+      continue;
+    }
+    if (option === "autoplay") {
+      // We always set autoplay to true because we have a button that starts the video
+      url.searchParams.append("autoplay", "true");
+      continue;
+    }
+    url.searchParams.append(option, value.toString());
   }
-  mount(parent: Element, callback: () => void) {
-    const url = this.getUrl();
-    if (url === undefined) {
-      return;
-    }
-    const iframe = document.createElement("iframe");
-    iframe.setAttribute(
-      "allow",
-      "accelerometer; autoplay; encrypted-media; gyroscope; picture-in-picture;"
-    );
-    iframe.setAttribute("frameborder", "0");
-    iframe.setAttribute("allowfullscreen", "true");
-    iframe.setAttribute("src", url);
-    iframe.setAttribute(
-      "style",
-      // float: left is a hack to remove a newline after the iframe
-      "display: block; width: 100%; height: 100%; visibility: hidden;"
-    );
-    iframe.addEventListener(
-      "load",
-      () => {
-        iframe.style.visibility = "visible";
-        callback();
-      },
-      { once: true }
-    );
-    parent.appendChild(iframe);
-    return () => {
-      iframe.parentElement?.removeChild(iframe);
-    };
+  return url.toString();
+};
+
+const createPlayer = (
+  parent: Element,
+  options: VimeoPlayerOptions,
+  callback: () => void
+) => {
+  const url = getUrl(options);
+  if (url === undefined) {
+    return;
   }
-}
+  const iframe = document.createElement("iframe");
+  iframe.setAttribute(
+    "allow",
+    "accelerometer; autoplay; encrypted-media; gyroscope; picture-in-picture;"
+  );
+  iframe.setAttribute("frameborder", "0");
+  iframe.setAttribute("allowfullscreen", "true");
+  iframe.setAttribute("src", url);
+  iframe.setAttribute(
+    "style",
+    // float: left is a hack to remove a newline after the iframe
+    "display: block; width: 100%; height: 100%; visibility: hidden;"
+  );
+  iframe.addEventListener(
+    "load",
+    () => {
+      iframe.style.visibility = "visible";
+      callback();
+    },
+    { once: true }
+  );
+  parent.appendChild(iframe);
+
+  return () => {
+    iframe.parentElement?.removeChild(iframe);
+  };
+};
 
 type Props = Omit<ComponentProps<typeof defaultTag>, keyof VimeoPlayerOptions> &
   VimeoPlayerOptions & { initialState?: "initial" | "loading" | "player" };
@@ -172,29 +172,32 @@ export const Vimeo = forwardRef<Ref, Props>(
       if (elementRef.current === null || state === "initial") {
         return;
       }
-      const player = new VimeoPlayer({
-        url,
-        autoplay,
-        autopause,
-        background,
-        byline,
-        controls,
-        doNotTrack,
-        keyboard,
-        loop,
-        muted,
-        pip,
-        playsinline,
-        portrait,
-        quality,
-        responsive,
-        speed,
-        title,
-        transparent,
-      });
-      return player.mount(elementRef.current, () => {
-        setState("player");
-      });
+      return createPlayer(
+        elementRef.current,
+        {
+          url,
+          autoplay,
+          autopause,
+          background,
+          byline,
+          controls,
+          doNotTrack,
+          keyboard,
+          loop,
+          muted,
+          pip,
+          playsinline,
+          portrait,
+          quality,
+          responsive,
+          speed,
+          title,
+          transparent,
+        },
+        () => {
+          setState("player");
+        }
+      );
     }, [
       state,
       autoplay,
