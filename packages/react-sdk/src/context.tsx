@@ -4,7 +4,7 @@ import type { Assets } from "@webstudio-is/asset-uploader";
 import type { Pages, PropsByInstanceId } from "./props";
 
 export const ReactSdkContext = createContext<{
-  renderer?: "canvas";
+  renderer?: "canvas" | "preview";
   propsByInstanceIdStore: ReadableAtom<PropsByInstanceId>;
   assetsStore: ReadableAtom<Assets>;
   pagesStore: ReadableAtom<Pages>;
