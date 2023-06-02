@@ -14,7 +14,7 @@ type Props = Omit<ComponentProps<"a">, "href" | "target"> & {
   prefetch?: "none" | "intent" | "render";
 };
 
-export const Link = forwardRef<HTMLAnchorElement, Props>((props, ref) => {
+export const TextLink = forwardRef<HTMLAnchorElement, Props>((props, ref) => {
   const href = usePropUrl(getInstanceIdFromComponentProps(props), "href");
 
   const { assetBaseUrl } = getParams();
@@ -38,4 +38,4 @@ export const Link = forwardRef<HTMLAnchorElement, Props>((props, ref) => {
   return <a {...props} href={url} ref={ref} />;
 });
 
-Link.displayName = "Link";
+TextLink.displayName = "TextLink";

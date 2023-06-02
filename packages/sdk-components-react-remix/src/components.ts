@@ -1,4 +1,4 @@
-export { Link } from "./link";
-export { LinkBlock } from "./link-block";
+export { TextLink } from "./text-link";
+export { BlockLink } from "./block-link";
 export { RichTextLink } from "./rich-text-link";
 export { Form } from "./form";

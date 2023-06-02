@@ -31,7 +31,7 @@ export const meta: WsComponentMeta = {
         { type: "instance", component: "RadioButton", props: [], children: [] },
         {
           type: "instance",
-          component: "TextBlock",
+          component: "Text",
           label: "Radio Label",
           props: [],
           children: [{ type: "text", value: "Radio" }],

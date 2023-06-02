@@ -4,11 +4,11 @@ import { meta as FragmentMeta } from "./fragment.ws";
 import { meta as HtmlEmbedMeta } from "./html-embed.ws";
 import { meta as BodyMeta } from "./body.ws";
 import { meta as BoxMeta } from "./box.ws";
-import { meta as TextBlockMeta } from "./text-block.ws";
+import { meta as TextMeta } from "./text.ws";
 import { meta as HeadingMeta } from "./heading.ws";
 import { meta as ParagraphMeta } from "./paragraph.ws";
-import { meta as LinkMeta } from "./link.ws";
-import { meta as LinkBlockMeta } from "./link-block.ws";
+import { meta as LinkMeta } from "./text-link.ws";
+import { meta as LinkBlockMeta } from "./block-link.ws";
 import { meta as RichTextLinkMeta } from "./rich-text-link.ws";
 import { meta as SpanMeta } from "./span.ws";
 import { meta as BoldMeta } from "./bold.ws";
@@ -39,11 +39,11 @@ import { propsMeta as FragmentMetaPropsMeta } from "./fragment.ws";
 import { propsMeta as HtmlEmbedMetaPropsMeta } from "./html-embed.ws";
 import { propsMeta as BodyMetaPropsMeta } from "./body.ws";
 import { propsMeta as BoxMetaPropsMeta } from "./box.ws";
-import { propsMeta as TextBlockMetaPropsMeta } from "./text-block.ws";
+import { propsMeta as TextMetaPropsMeta } from "./text.ws";
 import { propsMeta as HeadingMetaPropsMeta } from "./heading.ws";
 import { propsMeta as ParagraphMetaPropsMeta } from "./paragraph.ws";
-import { propsMeta as LinkMetaPropsMeta } from "./link.ws";
-import { propsMeta as LinkBlockPropsMeta } from "./link-block.ws";
+import { propsMeta as LinkMetaPropsMeta } from "./text-link.ws";
+import { propsMeta as LinkBlockPropsMeta } from "./block-link.ws";
 import { propsMeta as RichTextLinkMetaPropsMeta } from "./rich-text-link.ws";
 import { propsMeta as SpanMetaPropsMeta } from "./span.ws";
 import { propsMeta as BoldMetaPropsMeta } from "./bold.ws";
@@ -75,11 +75,11 @@ export const defaultMetas: Record<string, WsComponentMeta> = {
   HtmlEmbed: HtmlEmbedMeta,
   Box: BoxMeta,
   Body: BodyMeta,
-  TextBlock: TextBlockMeta,
+  Text: TextMeta,
   Heading: HeadingMeta,
   Paragraph: ParagraphMeta,
   Link: LinkMeta,
-  LinkBlock: LinkBlockMeta,
+  BlockLink: LinkBlockMeta,
   RichTextLink: RichTextLinkMeta,
   Span: SpanMeta,
   Bold: BoldMeta,
@@ -112,11 +112,11 @@ export const defaultPropsMetas: Record<string, WsComponentPropsMeta> = {
   HtmlEmbed: HtmlEmbedMetaPropsMeta,
   Box: BoxMetaPropsMeta,
   Body: BodyMetaPropsMeta,
-  TextBlock: TextBlockMetaPropsMeta,
+  Text: TextMetaPropsMeta,
   Heading: HeadingMetaPropsMeta,
   Paragraph: ParagraphMetaPropsMeta,
   Link: LinkMetaPropsMeta,
-  LinkBlock: LinkBlockPropsMeta,
+  BlockLink: LinkBlockPropsMeta,
   RichTextLink: RichTextLinkMetaPropsMeta,
   Span: SpanMetaPropsMeta,
   Bold: BoldMetaPropsMeta,

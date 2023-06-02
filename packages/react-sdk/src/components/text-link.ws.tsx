@@ -6,7 +6,7 @@ import {
   type WsComponentMeta,
   type WsComponentPropsMeta,
 } from "./component-meta";
-import type { defaultTag } from "./link";
+import type { defaultTag } from "./text-link";
 import { props } from "./__generated__/link.props";
 
 const presetStyle = {
@@ -26,7 +26,7 @@ const presetStyle = {
 export const meta: WsComponentMeta = {
   category: "general",
   type: "rich-text",
-  label: "Link Text",
+  label: "Text Link",
   icon: LinkIcon,
   presetStyle,
   order: 1,

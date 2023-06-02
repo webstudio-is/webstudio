@@ -4,9 +4,9 @@ import type {
   WsComponentMeta,
   WsComponentPropsMeta,
 } from "./component-meta";
-import { props } from "./__generated__/link-block.props";
-import { meta as linkMeta, propsMeta as linkPropsMeta } from "./link.ws";
-import type { defaultTag } from "./link-block";
+import { props } from "./__generated__/block-link.props";
+import { meta as linkMeta, propsMeta as linkPropsMeta } from "./text-link.ws";
+import type { defaultTag } from "./block-link";
 import { a } from "../css/normalize";
 
 const presetStyle = {
@@ -22,7 +22,7 @@ const presetStyle = {
 export const meta: WsComponentMeta = {
   category: "general",
   type: "container",
-  label: "Link Block",
+  label: "Block Link",
   icon: LinkBlockIcon,
   states: linkMeta.states,
   presetStyle,

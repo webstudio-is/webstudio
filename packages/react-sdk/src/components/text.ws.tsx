@@ -1,12 +1,12 @@
-import { TextBlockIcon } from "@webstudio-is/icons/svg";
+import { TextIcon } from "@webstudio-is/icons/svg";
 import {
   defaultStates,
   type PresetStyle,
   type WsComponentMeta,
   type WsComponentPropsMeta,
 } from "./component-meta";
-import { props } from "./__generated__/text-block.props";
-import type { defaultTag } from "./text-block";
+import { props } from "./__generated__/text.props";
+import type { defaultTag } from "./text";
 import { div } from "../css/normalize";
 
 const presetStyle = {
@@ -22,14 +22,14 @@ const presetStyle = {
 export const meta: WsComponentMeta = {
   category: "text",
   type: "rich-text",
-  label: "Text Block",
-  icon: TextBlockIcon,
+  label: "Text",
+  icon: TextIcon,
   states: defaultStates,
   presetStyle,
   template: [
     {
       type: "instance",
-      component: "TextBlock",
+      component: "Text",
       children: [{ type: "text", value: "Block of text you can edit" }],
     },
   ],

@@ -1,12 +1,12 @@
 import { forwardRef, type ComponentPropsWithoutRef } from "react";
 import { NavLink as RemixLink } from "@remix-run/react";
 import {
-  type Link,
+  type TextLink,
   usePropUrl,
   getInstanceIdFromComponentProps,
 } from "@webstudio-is/react-sdk";
 
-type LinkComponent = typeof Link;
+type LinkComponent = typeof TextLink;
 type LinkProps = ComponentPropsWithoutRef<LinkComponent>;
 
 export const wrapLinkComponent = (BaseLink: LinkComponent) => {

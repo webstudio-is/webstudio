@@ -1,8 +1,8 @@
 import { forwardRef } from "react";
-import { Link } from "./link";
+import { TextLink } from "./text-link";
 
-export const RichTextLink: typeof Link = forwardRef((props, ref) => (
-  <Link {...props} ref={ref} />
+export const RichTextLink: typeof TextLink = forwardRef((props, ref) => (
+  <TextLink {...props} ref={ref} />
 ));
 
 RichTextLink.displayName = "RichTextLink";

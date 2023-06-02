@@ -1,8 +1,8 @@
 import type { ComponentStory, ComponentMeta } from "@storybook/react";
-import { Link as LinkPrimitive } from "./link";
+import { Link as LinkPrimitive } from "./text-link";
 
 export default {
-  title: "Components/Link",
+  title: "Components/Link Block",
   component: LinkPrimitive,
 } as ComponentMeta<typeof LinkPrimitive>;
 
@@ -11,6 +11,3 @@ const Template: ComponentStory<typeof LinkPrimitive> = (args) => (
 );
 
 export const Link = Template.bind({});
-Link.args = {
-  children: "Link",
-};
