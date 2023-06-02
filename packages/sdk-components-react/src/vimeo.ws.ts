@@ -39,6 +39,7 @@ export const meta: WsComponentMeta = {
         {
           type: "instance",
           component: "Button",
+          label: "Play Button",
           styles: [
             {
               property: "display",
@@ -78,6 +79,7 @@ export const meta: WsComponentMeta = {
             {
               type: "instance",
               component: "Box",
+              label: "Icon",
               styles: [
                 {
                   property: "width",
@@ -92,6 +94,7 @@ export const meta: WsComponentMeta = {
                 {
                   type: "instance",
                   component: "HtmlEmbed",
+                  label: "SVG",
                   props: [
                     {
                       type: "string",

@@ -234,7 +234,11 @@ export const Vimeo = forwardRef<Ref, Props>(
       >
         {
           // When playing we need to hide the play button
-          state === "player" ? null : children
+          url === undefined ? (
+            <EmptyState />
+          ) : state === "player" ? null : (
+            children
+          )
         }
       </div>
     );
@@ -242,3 +246,21 @@ export const Vimeo = forwardRef<Ref, Props>(
 );
 
 Vimeo.displayName = "Vimeo";
+
+const EmptyState = () => {
+  return (
+    <div
+      style={{
+        display: "flex",
+        width: "100%",
+        height: "100%",
+        alignItems: "center",
+        justifyContent: "center",
+        fontSize: "1.2em",
+      }}
+    >
+      Open the Properties panel and paste a video URL, e.g.
+      https://vimeo.com/831343124.
+    </div>
+  );
+};
