@@ -1,16 +1,11 @@
 import * as csstree from "css-tree";
-import {
-  LayersValue,
-  type InvalidValue,
-  type KeywordValue,
-  TupleValue,
-  type TupleValueItem,
-  type Unit,
-  UnitValue,
+import { LayersValue, TupleValue } from "@webstudio-is/css-data";
+import type {
+  InvalidValue,
+  TupleValueItem,
+  Unit,
 } from "@webstudio-is/css-data";
 import { colord } from "colord";
-
-const shadowProperties = ["offsetX", "offsetY", "blur", "spread"];
 
 export const parseBoxShadow = (
   boxShadow: string
@@ -30,6 +25,7 @@ export const parseBoxShadow = (
 
   const ast = csstree.parse(tokenStream, { context: "value" });
   const parsed = csstree.lexer.matchProperty("box-shadow", ast);
+
   if (parsed.error) {
     return {
       type: "invalid",
@@ -51,63 +47,54 @@ export const parseBoxShadow = (
 
         if (child.type === "Operator" || children.last === child) {
           const shadow: TupleValueItem[] = [];
-          const hasInset = layer.findIndex(
-            (item) => item.type === "Identifier"
-          );
-
-          if (hasInset > -1) {
-            const inset: KeywordValue = {
-              type: "keyword",
-              value: "inset",
-            };
-
-            shadow.push(inset);
-            layer.splice(hasInset, 1);
-          }
-
-          const hasColor = layer.findIndex(
-            (item) => item.type === "Function" || item.type === "Hash"
-          );
-          if (hasColor > -1) {
-            const colorValue = colord(csstree.generate(layer[hasColor]));
-            if (!colorValue.isValid()) {
-              return;
-            }
-            const rgb = colorValue.toRgb();
-            shadow.push({
-              type: "rgb",
-              alpha: rgb.a,
-              r: rgb.r,
-              g: rgb.g,
-              b: rgb.b,
-            });
-            layer.splice(hasColor, 1);
-          }
 
           /**
            * https://developer.mozilla.org/en-US/docs/Web/CSS/box-shadow#syntax
-           * `inset` and color can be at the start or end and their sequence can be anyhere
-           * So, we check and splice them out and then follow the sequence for the rest
-           * as specified from the docs.
+           * `inset` and color can be at the start or end and their sequence can be anywhere.
+           * The rest need to foolow the sequence all the time
            */
-          shadowProperties.forEach((property, index) => {
-            const dimension = layer[index] as csstree.Dimension;
-            if (!dimension) {
-              return;
+
+          for (let index = 0; index < layer.length; index++) {
+            const item = layer[index];
+
+            if (item.type === "Identifier") {
+              shadow.push({
+                type: "keyword",
+                value: (item as csstree.Identifier).name,
+              });
             }
 
-            shadow.push({
-              type: "unit",
-              value: Number(dimension.value),
-              unit: dimension?.unit ? (dimension.unit as Unit) : "number",
-            });
+            if (item.type === "Function" || item.type === "Hash") {
+              const colorValue = colord(csstree.generate(item));
+              if (!colorValue.isValid()) {
+                return;
+              }
+              const rgb = colorValue.toRgb();
+              shadow.push({
+                type: "rgb",
+                alpha: rgb.a,
+                r: rgb.r,
+                g: rgb.g,
+                b: rgb.b,
+              });
+            }
 
-            UnitValue.parse({
-              type: "unit",
-              value: Number(dimension.value),
-              unit: dimension?.unit ? (dimension.unit as Unit) : "number",
-            });
-          });
+            if (item.type === "Dimension") {
+              shadow.push({
+                type: "unit",
+                value: Number(item.value),
+                unit: item.unit as Unit,
+              });
+            }
+
+            if (item.type === "Number") {
+              shadow.push({
+                type: "unit",
+                value: Number(item.value),
+                unit: "number",
+              });
+            }
+          }
 
           layers.push({
             type: "tuple",

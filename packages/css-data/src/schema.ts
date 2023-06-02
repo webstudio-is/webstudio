@@ -110,6 +110,7 @@ export type TupleValueItem = z.infer<typeof TupleValueItem>;
 export const TupleValue = z.object({
   type: z.literal("tuple"),
   value: z.array(TupleValueItem),
+  hidden: z.boolean().optional(),
 });
 
 export type TupleValue = z.infer<typeof TupleValue>;

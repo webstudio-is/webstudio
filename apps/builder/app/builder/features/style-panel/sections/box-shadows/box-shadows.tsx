@@ -1,11 +1,7 @@
 import { useState } from "react";
 import type { ReactNode } from "react";
 
-import {
-  parseBackground,
-  parseBoxShadow,
-  type StyleProperty,
-} from "@webstudio-is/css-data";
+import { type StyleProperty } from "@webstudio-is/css-data";
 import type { RenderCategoryProps } from "../../style-sections";
 import {
   Flex,
@@ -50,13 +46,7 @@ export const BoxShadows = (props: RenderCategoryProps) => {
         </Grid>
       </Flex>
       {value?.type === "layers" && value.value.length > 0 ? (
-        <BoxShadowLayersList
-          property={property}
-          value={value}
-          currentStyle={currentStyle}
-          setProperty={setProperty}
-          deleteProperty={deleteProperty}
-        />
+        <BoxShadowLayersList property={property} layers={value} {...props} />
       ) : null}
     </BoxShadowWrapper>
   );

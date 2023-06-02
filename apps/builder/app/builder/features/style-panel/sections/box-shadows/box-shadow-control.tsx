@@ -34,7 +34,7 @@ export const BoxShadowControls = (
                 Code
                 <Tooltip
                   variant="wrapped"
-                  content={<>Past some informaton here</>}
+                  content={<>Paste some informaton here</>}
                 >
                   <InformationIcon />
                 </Tooltip>

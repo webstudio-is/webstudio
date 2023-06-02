@@ -1,7 +1,7 @@
 import type {
   LayersValue,
   StyleProperty,
-  UnparsedValue,
+  TupleValue,
 } from "@webstudio-is/css-data";
 import {
   Flex,
@@ -19,74 +19,97 @@ import {
 } from "@webstudio-is/icons";
 import { useMemo } from "react";
 
-type BoxShadowLayerProperies = Pick<
-  RenderCategoryProps,
-  "currentStyle" | "deleteProperty" | "setProperty"
-> & {
-  value: LayersValue;
+type BoxShadowLayerProperies = RenderCategoryProps & {
+  layers: LayersValue;
   property: StyleProperty;
 };
 
 export const BoxShadowLayersList: React.FC<BoxShadowLayerProperies> = ({
   property,
-  value,
-  ...props
+  layers,
+  createBatchUpdate,
 }) => {
-  const layers: UnparsedValue[] = useMemo(() => {
-    return (
-      value.value.filter(
-        (layer) => layer.type === "unparsed"
-      ) as UnparsedValue[]
-    ).sort((a, b) => a.value.localeCompare(b.value));
-  }, [value]);
+  const handleDeleteLayer = (index: number) => {
+    const batch = createBatchUpdate();
+    const layer = layers.value[index];
 
-  const getFilteredLayersByValue = (key: string) =>
-    value.value.filter((layer) => layer.value !== key);
-
-  const handleHideLayer = (newValue: UnparsedValue, hidden: boolean) => {
-    props.setProperty(property)({
+    const canLayerBeHidden =
+      layer.type === "tuple" || layer.type === "unparsed";
+    if (!canLayerBeHidden) {
+      return;
+    }
+    const newLayers = [...layers.value];
+    newLayers.splice(index, 1);
+    batch.setProperty(property)({
       type: "layers",
-      value: [
-        ...getFilteredLayersByValue(newValue.value),
-        {
-          ...newValue,
-          hidden,
-        },
-      ],
+      value: newLayers,
     });
+
+    batch.publish();
   };
 
-  const handleDeleteLayer = (newValue: UnparsedValue) => {
-    props.setProperty(property)({
+  const handleHideLayer = (index: number) => {
+    const batch = createBatchUpdate();
+    const layer = layers.value[index];
+
+    const canLayerBeHidden =
+      layer.type === "tuple" || layer.type === "unparsed";
+    if (!canLayerBeHidden) {
+      return;
+    }
+    const newLayers = [...layers.value];
+    newLayers.splice(index, 1);
+    batch.setProperty(property)({
       type: "layers",
-      value: getFilteredLayersByValue(newValue.value),
+      value: [...newLayers, { ...layer, hidden: !layer?.hidden }],
     });
+
+    batch.publish();
   };
 
   return (
     <Flex direction="column" gap={2}>
-      {layers.map((shadow, index) => {
-        return (
-          <Layer
-            key={index}
-            property={property}
-            layer={shadow}
-            onLayerHide={handleHideLayer}
-            onDeleteLayer={handleDeleteLayer}
-          />
-        );
+      {layers.value.map((layer, index) => {
+        if (layer.type === "tuple") {
+          return (
+            <Layer
+              key={index}
+              index={index}
+              property={property}
+              layer={layer}
+              onLayerHide={handleHideLayer}
+              onDeleteLayer={handleDeleteLayer}
+            />
+          );
+        }
+        return null;
       })}
     </Flex>
   );
 };
 
 const Layer: React.FC<{
-  layer: UnparsedValue;
+  index: number;
+  layer: TupleValue;
   property: StyleProperty;
-  onLayerHide: (value: UnparsedValue, hidden: boolean) => void;
-  onDeleteLayer: (value: UnparsedValue) => void;
-}> = ({ layer, onLayerHide, onDeleteLayer }) => {
-  const isLayerHidden = layer.hidden;
+  onLayerHide: (index: number) => void;
+  onDeleteLayer: (index: number) => void;
+}> = ({ index, layer, onDeleteLayer, onLayerHide }) => {
+  const layerNamer = useMemo(() => {
+    return layer.value.reduce((acc: string, item) => {
+      if (item.type === "unit" && item.unit !== "number") {
+        acc = acc + " " + `${item.value}${item.unit}`;
+      }
+
+      if (
+        item.type === "keyword" ||
+        (item.type === "unit" && item.unit === "number")
+      ) {
+        acc = acc + " " + item.value;
+      }
+      return acc;
+    }, ``);
+  }, [layer]);
 
   return (
     <Grid
@@ -99,18 +122,18 @@ const Layer: React.FC<{
         backgroundColor: theme.colors.backgroundPanel,
       }}
     >
-      <WrappedLabel>{layer.value}</WrappedLabel>
+      <WrappedLabel>{layerNamer}</WrappedLabel>
       <SmallToggleButton
         variant="normal"
         disabled={false}
-        onPressedChange={() => onLayerHide(layer, !isLayerHidden)}
-        icon={isLayerHidden ? <EyeconClosedIcon /> : <EyeconOpenIcon />}
+        onPressedChange={() => onLayerHide(index)}
+        icon={layer?.hidden ? <EyeconClosedIcon /> : <EyeconOpenIcon />}
       />
       <SmallIconButton
         variant="destructive"
         tabIndex={-1}
         icon={<SubtractIcon />}
-        onClick={() => onDeleteLayer(layer)}
+        onClick={() => onDeleteLayer(index)}
       />
     </Grid>
   );

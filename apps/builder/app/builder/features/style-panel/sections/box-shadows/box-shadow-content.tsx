@@ -33,11 +33,11 @@ export const BoxShadowContent = (
       value,
     });
 
-    const shadows = parseBoxShadow(value);
-    if (shadows.type === "invalid") {
+    const layers = parseBoxShadow(value);
+    if (layers.type === "invalid") {
       return;
     }
-    props.setProperty(property)(shadows);
+    props.setProperty(property)(layers);
   };
 
   return (
@@ -47,7 +47,15 @@ export const BoxShadowContent = (
       value={textAreaValue ?? ""}
       css={{ minHeight: theme.spacing[14] }}
       state={intermediateValue?.type === "invalid" ? "invalid" : undefined}
-      onChange={(event) => handleChange(event.target.value)}
+      /**
+       * TODO: Chage this to on key  Enter
+       */
+      onKeyDown={(event) => {
+        if (event.key === "Enter") {
+          handleChange(event.target.value);
+          event.preventDefault();
+        }
+      }}
     />
   );
 };
