@@ -120,5 +120,6 @@ export * from "./text-align-left";
 export * from "./text-block";
 export * from "./text-italic";
 export * from "./video";
+export * from "./vimeo";
 export * from "./webstudio";
 export * from "./wrap";

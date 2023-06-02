@@ -31,3 +31,4 @@ export { RadioButtonField } from "./radio-button-field";
 export { RadioButton } from "./radio-button";
 export { CheckboxField } from "./checkbox-field";
 export { Checkbox } from "./checkbox";
+export { Vimeo } from "./vimeo";
