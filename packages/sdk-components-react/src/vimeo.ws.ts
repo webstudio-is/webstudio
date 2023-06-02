@@ -68,11 +68,16 @@ export const meta: WsComponentMeta = {
               property: "height",
               value: { type: "unit", value: 100, unit: "%" },
             },
+            {
+              state: ":hover",
+              property: "color",
+              value: { type: "keyword", value: "red" },
+            },
           ],
           children: [
             {
               type: "instance",
-              component: "Image",
+              component: "Box",
               styles: [
                 {
                   property: "width",
@@ -83,14 +88,20 @@ export const meta: WsComponentMeta = {
                   value: { type: "unit", value: 100, unit: "px" },
                 },
               ],
-              props: [
+              children: [
                 {
-                  type: "string",
-                  name: "src",
-                  value: `data:image/svg+xml;base64,${btoa(PlayIcon)}`,
+                  type: "instance",
+                  component: "HtmlEmbed",
+                  props: [
+                    {
+                      type: "string",
+                      name: "code",
+                      value: PlayIcon,
+                    },
+                  ],
+                  children: [],
                 },
               ],
-              children: [],
             },
           ],
         },
