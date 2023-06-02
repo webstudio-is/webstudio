@@ -1,5 +1,5 @@
 import type { ComponentStory, ComponentMeta } from "@storybook/react";
-import { Link as LinkPrimitive } from "./text-link";
+import { TextLink as LinkPrimitive } from "./text-link";
 
 export default {
   title: "Components/Link Block",
