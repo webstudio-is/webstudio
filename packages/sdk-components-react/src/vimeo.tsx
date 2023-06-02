@@ -128,7 +128,7 @@ const createPlayer = (
 };
 
 type Props = Omit<ComponentProps<typeof defaultTag>, keyof VimeoPlayerOptions> &
-  VimeoPlayerOptions & { initialState?: "initial" | "loading" | "player" };
+  VimeoPlayerOptions;
 type Ref = ElementRef<typeof defaultTag>;
 
 export const Vimeo = forwardRef<Ref, Props>(
@@ -157,23 +157,24 @@ export const Vimeo = forwardRef<Ref, Props>(
       interactive_params,
       texttrack,
       children,
-      initialState = "initial",
       ...rest
     },
     ref
   ) => {
-    const [state, setState] = useState(initialState);
+    const [videoState, setVideoState] = useState<
+      "initial" | "loading" | "ready"
+    >("initial");
     const elementRef = useRef<ElementRef<typeof defaultTag> | null>(null);
 
     useEffect(() => {
-      setState(initialState);
-    }, [initialState]);
+      setVideoState(autoplay ? "loading" : "initial");
+    }, [autoplay]);
 
     useEffect(() => {
-      if (elementRef.current === null || state === "initial") {
+      if (elementRef.current === null || videoState === "initial") {
         return;
       }
-      return createPlayer(
+      const cleanup = createPlayer(
         elementRef.current,
         {
           url,
@@ -196,11 +197,12 @@ export const Vimeo = forwardRef<Ref, Props>(
           transparent,
         },
         () => {
-          setState("player");
+          setVideoState("ready");
         }
       );
+      return cleanup;
     }, [
-      state,
+      videoState,
       autoplay,
       autopause,
       background,
@@ -229,14 +231,14 @@ export const Vimeo = forwardRef<Ref, Props>(
           }
         }}
         onClick={() => {
-          setState("loading");
+          setVideoState("loading");
         }}
       >
         {
           // When playing we need to hide the play button
           url === undefined ? (
             <EmptyState />
-          ) : state === "player" ? null : (
+          ) : videoState === "ready" ? null : (
             children
           )
         }
