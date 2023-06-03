@@ -21,7 +21,9 @@ import {
 import { usePublishShortcuts } from "./shared/shortcuts";
 import {
   projectStore,
+  selectedInstanceSelectorStore,
   selectedPageIdStore,
+  selectedPageStore,
   useIsPreviewMode,
   useSetAssets,
   useSetAuthPermit,
@@ -251,9 +253,17 @@ export const Builder = ({
 
   useSyncInitializeOnce(() => {
     selectedPageIdStore.set(pageId);
+    const page = selectedPageStore.get();
+    if (page) {
+      selectedInstanceSelectorStore.set([page.rootInstanceId]);
+    }
   });
   useEffect(() => {
     selectedPageIdStore.set(pageId);
+    const page = selectedPageStore.get();
+    if (page) {
+      selectedInstanceSelectorStore.set([page.rootInstanceId]);
+    }
   }, [pageId]);
 
   useSetAssets(assets);
