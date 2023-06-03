@@ -62,13 +62,19 @@ export type VimeoPlayerOptions = {
   transparent?: boolean;
 };
 
-// https://player.vimeo.com/video/
 const getUrl = (options: VimeoPlayerOptions) => {
   if (options.url === undefined) {
     return;
   }
-  const userUrl = new URL(options.url);
-  const url = new URL(`https://player.vimeo.com/video${userUrl.pathname}`);
+  let url;
+  try {
+    const userUrl = new URL(options.url);
+    url = new URL(IFRAME_CDN);
+    url.pathname = `/video${userUrl.pathname}`;
+  } catch {}
+  if (url === undefined) {
+    return;
+  }
   let option: keyof VimeoPlayerOptions;
   for (option in options) {
     if (option === "url") {
@@ -109,16 +115,20 @@ const preconnect = (url: string) => {
 
 let warmed = false;
 
+// Host that Vimeo uses to serve JS needed by player
+const PLAYER_CDN = "https://f.vimeocdn.com";
+// The iframe document comes from player.vimeo.com
+const IFRAME_CDN = "https://player.vimeo.com";
+// Image for placeholder comes from i.vimeocdn.com
+const IMAGE_CDN = "https://i.vimeocdn.com";
+
 const warmConnections = () => {
   if (warmed) {
     return;
   }
-  // Host that Vimeo uses to serve JS needed by player
-  preconnect("https://f.vimeocdn.com");
-  // The iframe document comes from player.vimeo.com
-  preconnect("https://player.vimeo.com");
-  // Image for placeholder comes from i.vimeocdn.com
-  preconnect("https://i.vimeocdn.com");
+  preconnect(PLAYER_CDN);
+  preconnect(IFRAME_CDN);
+  preconnect(IMAGE_CDN);
   warmed = true;
 };
 
