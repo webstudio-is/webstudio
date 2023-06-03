@@ -92,7 +92,8 @@ export const toValue = (
 
   if (value.type === "layers") {
     return value.value
-      .map((value) => toValue(value, transformValue))
+      .filter((layer) => layer.type === "tuple" && !layer.hidden)
+      .map((layer) => toValue(layer, transformValue))
       .join(", ");
   }
 

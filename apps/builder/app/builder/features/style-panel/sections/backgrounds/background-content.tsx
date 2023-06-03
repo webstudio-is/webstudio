@@ -1,345 +1,329 @@
-/**
- * Will be fully rewritten in next iteration,
- * as of now just implement feature parity with old backgrounds section
- **/
-
-import type { RgbValue, StyleValue } from "@webstudio-is/css-data";
+import { useStore } from "@nanostores/react";
+import type { RenderCategoryProps } from "../../style-sections";
+import { styleConfigByName } from "../../shared/configs";
+import { FloatingPanel } from "~/builder/shared/floating-panel";
 import {
-  theme,
+  ArrowFocus,
+  Box,
+  CssValueListItem,
   Flex,
   Grid,
-  ToggleGroup,
-  ToggleGroupButton,
-  Separator,
-  styled,
+  Label,
+  SectionTitle,
+  SectionTitleButton,
+  SectionTitleLabel,
+  SmallIconButton,
+  theme,
 } from "@webstudio-is/design-system";
-import { ImageControl, SelectControl, PositionControl } from "../../controls";
-import type { StyleInfo } from "../../shared/style-info";
-import type {
-  DeleteProperty,
-  SetProperty,
-  StyleUpdateOptions,
-} from "../../shared/use-style-data";
-
+import { SmallToggleButton } from "@webstudio-is/design-system";
 import {
-  type DeleteBackgroundProperty,
-  isBackgroundLayeredProperty,
-  isBackgroundStyleValue,
-  type SetBackgroundProperty,
-} from "./background-layers";
-
-import { FloatingPanelProvider } from "~/builder/shared/floating-panel";
-import { useRef, useState } from "react";
-import { BackgroundSize } from "./background-size";
-import { ToggleGroupControl } from "../../controls/toggle/toggle-control";
-import {
-  RepeatGridIcon,
-  RepeatColumnIcon,
-  RepeatRowIcon,
-  CrossSmallIcon,
+  EyeconOpenIcon,
+  EyeconClosedIcon,
+  SubtractIcon,
+  PlusIcon,
 } from "@webstudio-is/icons";
-import { toValue } from "@webstudio-is/css-engine";
-import { BackgroundGradient } from "./background-gradient";
-import { NonResetablePropertyName } from "../../shared/property-name";
+import { assetsStore } from "~/shared/nano-states";
+import { PropertyName } from "../../shared/property-name";
+import type { StyleInfo } from "../../shared/style-info";
+import { ColorControl } from "../../controls/color/color-control";
+import {
+  getLayerCount,
+  layeredBackgroundProps,
+  addLayer,
+  deleteLayer,
+  setLayerProperty,
+  type SetBackgroundProperty,
+  type DeleteBackgroundProperty,
+  getLayerBackgroundStyleInfo,
+  deleteLayerProperty,
+  swapLayers,
+  getLayersStyleSource,
+  deleteLayers,
+} from "./background-layers";
+import { BackgroundContent } from "./background-content";
+import { getLayerName, LayerThumbnail } from "./background-thumbnail";
+import { useSortable } from "./use-sortable";
+import { useMemo, type ReactNode } from "react";
+import type { RgbValue, StyleProperty } from "@webstudio-is/css-data";
+import {
+  CollapsibleSectionBase,
+  useOpenState,
+} from "~/builder/shared/collapsible-section";
+import { getDots } from "../../shared/collapsible-section";
 
-type BackgroundContentProps = {
-  currentStyle: StyleInfo;
+const LIST_ITEM_ATTRIBUTE = "data-list-item";
+
+const listItemAttributes = { [LIST_ITEM_ATTRIBUTE]: true };
+
+const Layer = (props: {
+  id: string;
+  tabIndex: -1 | 0;
+  isHighlighted: boolean;
+  layerStyle: StyleInfo;
   setProperty: SetBackgroundProperty;
   deleteProperty: DeleteBackgroundProperty;
+  deleteLayer: () => void;
   setBackgroundColor: (color: RgbValue) => void;
-};
+}) => {
+  const assets = useStore(assetsStore);
 
-const safeDeleteProperty = (
-  deleteProperty: DeleteBackgroundProperty
-): DeleteProperty => {
-  return (property, options) => {
-    const isLayered = isBackgroundLayeredProperty(property);
-    if (isLayered) {
-      return deleteProperty(property, options);
+  const backgrounImageStyle = props.layerStyle.backgroundImage?.value;
+  const isHidden =
+    backgrounImageStyle?.type === "image" ||
+    backgrounImageStyle?.type === "unparsed"
+      ? Boolean(backgrounImageStyle.hidden)
+      : false;
+
+  const handleHiddenChange = (hidden: boolean) => {
+    if (
+      backgrounImageStyle?.type === "image" ||
+      backgrounImageStyle?.type === "unparsed"
+    ) {
+      props.setProperty("backgroundImage")({
+        ...backgrounImageStyle,
+        hidden,
+      });
     }
-    throw new Error(`Property ${property} should be background style property`);
-  };
-};
-
-const safeSetProperty = (setBackgroundProperty: SetBackgroundProperty) => {
-  const result: SetProperty = (property) => {
-    if (isBackgroundLayeredProperty(property)) {
-      return (style: string | StyleValue, options?: StyleUpdateOptions) => {
-        if (typeof style === "string") {
-          throw new Error("style should be StyleValue and not a string");
-        }
-
-        if (isBackgroundStyleValue(style)) {
-          return setBackgroundProperty(property)(style, options);
-        }
-
-        throw new Error("Style should be valid BackgroundStyleValue");
-      };
-    }
-
-    throw new Error(`Property ${property} should be background style property`);
   };
 
-  return result;
-};
-
-const detectImageOrGradientToggle = (currentStyle: StyleInfo) => {
-  if (currentStyle?.backgroundImage?.value.type === "image") {
-    return "image";
-  }
-
-  if (currentStyle?.backgroundImage?.value.type === "keyword") {
-    // The only allowed keyword for backgroundImage is none
-    return "image";
-  }
-
-  return "gradient";
-};
-
-const isImageOrGradient = (value: string): value is "image" | "gradient" => {
-  return value === "image" || value === "gradient";
-};
-
-const BackgroundSection = styled("div", {
-  mx: theme.spacing[9],
-  my: theme.spacing[6],
-});
-
-const Spacer = styled("div", {
-  height: theme.spacing[5],
-});
-
-export const BackgroundContent = (props: BackgroundContentProps) => {
-  const setProperty = safeSetProperty(props.setProperty);
-  const deleteProperty = safeDeleteProperty(props.deleteProperty);
-
-  const elementRef = useRef<HTMLDivElement>(null);
-  const [imageGradientToggle, setImageGradientToggle] = useState<
-    "image" | "gradient"
-  >(() => detectImageOrGradientToggle(props.currentStyle));
+  const canDisable =
+    backgrounImageStyle?.type !== "image" &&
+    backgrounImageStyle?.type !== "unparsed";
 
   return (
-    <>
-      <BackgroundSection ref={elementRef}>
-        <Flex justify="center">
-          <ToggleGroup
-            type="single"
-            value={imageGradientToggle}
-            onValueChange={(value) => {
-              if (isImageOrGradient(value)) {
-                setImageGradientToggle(value);
-              }
+    <FloatingPanel
+      title="Background"
+      content={
+        <BackgroundContent
+          currentStyle={props.layerStyle}
+          setProperty={props.setProperty}
+          deleteProperty={props.deleteProperty}
+          setBackgroundColor={props.setBackgroundColor}
+        />
+      }
+    >
+      <CssValueListItem
+        active={props.isHighlighted}
+        data-id={props.id}
+        tabIndex={props.tabIndex}
+        label={
+          <Label truncate onReset={props.deleteLayer}>
+            {getLayerName(props.layerStyle, assets)}
+          </Label>
+        }
+        thumbnail={<LayerThumbnail layerStyle={props.layerStyle} />}
+        hidden={isHidden}
+        buttons={
+          <>
+            <SmallToggleButton
+              disabled={canDisable}
+              pressed={isHidden}
+              onPressedChange={handleHiddenChange}
+              variant="normal"
+              tabIndex={-1}
+              icon={isHidden ? <EyeconClosedIcon /> : <EyeconOpenIcon />}
+            />
+
+            <SmallIconButton
+              variant="destructive"
+              tabIndex={-1}
+              icon={<SubtractIcon />}
+              onClick={props.deleteLayer}
+            />
+          </>
+        }
+        {...listItemAttributes}
+      />
+    </FloatingPanel>
+  );
+};
+
+const properties: StyleProperty[] = [
+  "backgroundAttachment",
+  "backgroundClip",
+  "backgroundColor",
+  "backgroundImage",
+  "backgroundOrigin",
+  "backgroundPosition",
+  "backgroundRepeat",
+  "backgroundSize",
+  "backgroundBlendMode",
+];
+
+const BackgroundsCollapsibleSection = ({
+  children,
+  currentStyle,
+  createBatchUpdate,
+}: RenderCategoryProps & { children: React.ReactNode }) => {
+  const label = "Backgrounds";
+  const [isOpen, setIsOpen] = useOpenState({ label });
+  const layersStyleSource = getLayersStyleSource(currentStyle);
+
+  return (
+    <CollapsibleSectionBase
+      label={label}
+      fullWidth
+      isOpen={isOpen}
+      onOpenChange={(nextIsOpen) => {
+        setIsOpen(nextIsOpen);
+      }}
+      trigger={
+        <SectionTitle
+          dots={getDots(currentStyle, properties)}
+          suffix={
+            <SectionTitleButton
+              prefix={<PlusIcon />}
+              onClick={() => {
+                addLayer(currentStyle, createBatchUpdate);
+                setIsOpen(true);
+              }}
+            />
+          }
+        >
+          <PropertyName
+            style={currentStyle}
+            title="Backgrounds"
+            description="Sets background color, image or gradient and composes them with layers"
+            properties={layeredBackgroundProps}
+            label={
+              <SectionTitleLabel color={layersStyleSource}>
+                {label}
+              </SectionTitleLabel>
+            }
+            onReset={() => {
+              deleteLayers(createBatchUpdate);
+            }}
+          />
+        </SectionTitle>
+      }
+    >
+      {children}
+    </CollapsibleSectionBase>
+  );
+};
+
+const ListItemsFocusWrap = (props: { children: ReactNode }) => {
+  return (
+    <ArrowFocus
+      render={({ handleKeyDown }) => (
+        <Box
+          css={{ display: "contents" }}
+          onKeyDown={(event) => {
+            if (event.key === "ArrowUp" || event.key === "ArrowDown") {
+              handleKeyDown(event, {
+                accept: (element) =>
+                  element.getAttribute(LIST_ITEM_ATTRIBUTE) === "true",
+              });
+            }
+          }}
+        >
+          {props.children}
+        </Box>
+      )}
+    />
+  );
+};
+
+export const BackgroundsSection = (props: RenderCategoryProps) => {
+  const { setProperty, deleteProperty, currentStyle, createBatchUpdate } =
+    props;
+  const layersCount = getLayerCount(currentStyle);
+
+  const { items } = styleConfigByName("backgroundColor");
+
+  const layers = useMemo(
+    () =>
+      Array.from(Array(layersCount), (_, index) => ({
+        id: `${index}`,
+        index,
+      })),
+    [layersCount]
+  );
+
+  const { dragItemId, placementIndicator, sortableRefCallback } = useSortable({
+    items: layers,
+    onSort: (newIndex, oldIndex) => {
+      swapLayers(newIndex, oldIndex, currentStyle, createBatchUpdate);
+    },
+  });
+
+  return (
+    <BackgroundsCollapsibleSection
+      setProperty={setProperty}
+      deleteProperty={deleteProperty}
+      createBatchUpdate={createBatchUpdate}
+      currentStyle={currentStyle}
+      category={props.category}
+    >
+      <Flex gap={1} direction="column">
+        <ListItemsFocusWrap>
+          <Flex
+            gap={1}
+            direction="column"
+            ref={sortableRefCallback}
+            css={{
+              pointerEvents: dragItemId ? "none" : "auto",
+              // to make DnD work we have to disable scrolling using touch
+              touchAction: "none",
             }}
           >
-            {/* looks like now when dialog is open first toggle group buttons need to have autoFocus
-          otherwise the following "Choose image" button is focused
-          https://github.com/radix-ui/primitives/pull/2027
-          https://github.com/radix-ui/primitives/issues/1910
-          */}
-            <ToggleGroupButton value={"image"} autoFocus={true}>
-              <Flex css={{ px: theme.spacing[2] }}>Image</Flex>
-            </ToggleGroupButton>
-            <ToggleGroupButton value={"gradient"}>
-              <Flex css={{ px: theme.spacing[2] }}>Gradient</Flex>
-            </ToggleGroupButton>
-          </ToggleGroup>
-        </Flex>
-      </BackgroundSection>
-
-      <Separator css={{ gridColumn: "span 2" }} />
-
-      <BackgroundSection>
-        <Grid
-          css={{ gridTemplateColumns: `1fr ${theme.spacing[23]}` }}
-          align="center"
-          gap={2}
-        >
-          {imageGradientToggle === "image" && (
-            <>
-              <NonResetablePropertyName
-                style={props.currentStyle}
-                properties={["backgroundImage"]}
-                label="Image"
+            {layers.map((layer, index) => (
+              <Layer
+                id={layer.id}
+                tabIndex={index === 0 ? 0 : -1}
+                key={layer.id}
+                isHighlighted={dragItemId === layer.id}
+                layerStyle={getLayerBackgroundStyleInfo(
+                  layer.index,
+                  currentStyle
+                )}
+                deleteLayer={deleteLayer(
+                  layer.index,
+                  currentStyle,
+                  createBatchUpdate
+                )}
+                setProperty={setLayerProperty(
+                  layer.index,
+                  currentStyle,
+                  createBatchUpdate
+                )}
+                deleteProperty={deleteLayerProperty(
+                  layer.index,
+                  currentStyle,
+                  deleteProperty,
+                  createBatchUpdate
+                )}
+                setBackgroundColor={setProperty("backgroundColor")}
               />
+            ))}
 
-              <FloatingPanelProvider container={elementRef}>
-                <ImageControl
-                  setProperty={setProperty}
-                  deleteProperty={deleteProperty}
-                  currentStyle={props.currentStyle}
-                  property="backgroundImage"
-                />
-              </FloatingPanelProvider>
-            </>
-          )}
-
-          {imageGradientToggle === "gradient" && (
-            <Flex css={{ gridColumn: "span 2" }} direction="column">
-              <NonResetablePropertyName
-                style={props.currentStyle}
-                description={
-                  <>
-                    Paste a CSS gradient, for example:
-                    <br />
-                    <br />
-                    linear-gradient(...)
-                    <br />
-                    <br />
-                    If pasting from figma, remove the “background” property
-                    name.
-                  </>
-                }
-                properties={["backgroundImage"]}
-                label="Code"
-              />
-
-              <BackgroundGradient
-                setProperty={setProperty}
-                deleteProperty={deleteProperty}
-                currentStyle={props.currentStyle}
-                setBackgroundColor={props.setBackgroundColor}
-              />
-            </Flex>
-          )}
-
-          <NonResetablePropertyName
-            style={props.currentStyle}
-            properties={["backgroundClip"]}
-            label="Clip"
-          />
-
-          <SelectControl
-            setProperty={setProperty}
-            deleteProperty={deleteProperty}
-            currentStyle={props.currentStyle}
-            property="backgroundClip"
-          />
-
-          <NonResetablePropertyName
-            style={props.currentStyle}
-            properties={["backgroundOrigin"]}
-            label="Origin"
-          />
-
-          <SelectControl
-            setProperty={setProperty}
-            deleteProperty={deleteProperty}
-            currentStyle={props.currentStyle}
-            property="backgroundOrigin"
-          />
-        </Grid>
-
-        <Spacer />
-
-        <BackgroundSize
-          setProperty={setProperty}
-          deleteProperty={deleteProperty}
-          currentStyle={props.currentStyle}
-        />
-
-        <Spacer />
-
-        <PositionControl
-          setProperty={setProperty}
-          deleteProperty={deleteProperty}
-          currentStyle={props.currentStyle}
-          property="backgroundPosition"
-        />
+            {placementIndicator}
+          </Flex>
+        </ListItemsFocusWrap>
 
         <Grid
           css={{
+            px: theme.spacing[9],
             gridTemplateColumns: `1fr ${theme.spacing[23]}`,
-            mt: theme.spacing[5],
           }}
-          align="center"
-          gap={2}
         >
-          {imageGradientToggle === "image" && (
-            <>
-              <NonResetablePropertyName
-                style={props.currentStyle}
-                properties={["backgroundRepeat"]}
-                label="Repeat"
-              />
-
-              <Flex css={{ justifySelf: "end" }}>
-                <ToggleGroupControl
-                  styleSource={"default"}
-                  onValueChange={(value) =>
-                    setProperty("backgroundRepeat")({
-                      type: "keyword",
-                      value,
-                    })
-                  }
-                  onReset={() => deleteProperty("backgroundRepeat")}
-                  value={toValue(props.currentStyle.backgroundRepeat?.value)}
-                  items={[
-                    {
-                      child: <CrossSmallIcon />,
-                      label: "background-repeat: no-repeat",
-                      value: "no-repeat",
-                    },
-                    {
-                      child: <RepeatGridIcon />,
-                      label: "background-repeat: repeat",
-                      value: "repeat",
-                    },
-                    {
-                      child: <RepeatColumnIcon />,
-                      label: "background-repeat: repeat-y",
-                      value: "repeat-y",
-                    },
-                    {
-                      child: <RepeatRowIcon />,
-                      label: "background-repeat: repeat-x",
-                      value: "repeat-x",
-                    },
-                  ]}
-                />
-              </Flex>
-            </>
-          )}
-
-          <NonResetablePropertyName
-            style={props.currentStyle}
-            properties={["backgroundAttachment"]}
-            label="Attachment"
+          <PropertyName
+            style={currentStyle}
+            properties={["backgroundColor"]}
+            title={"Background Color"}
+            label={"Color"}
+            onReset={() => deleteProperty("backgroundColor")}
           />
 
-          <Flex css={{ justifySelf: "end" }}>
-            <ToggleGroup
-              type="single"
-              value={toValue(props.currentStyle.backgroundAttachment?.value)}
-              onValueChange={(value) => {
-                setProperty("backgroundAttachment")({
-                  type: "keyword",
-                  value,
-                });
-              }}
-            >
-              <ToggleGroupButton value={"scroll"}>
-                <Flex css={{ px: theme.spacing[3] }}>Scroll</Flex>
-              </ToggleGroupButton>
-              <ToggleGroupButton value={"fixed"}>
-                <Flex css={{ px: theme.spacing[3] }}>Fixed</Flex>
-              </ToggleGroupButton>
-            </ToggleGroup>
-          </Flex>
-
-          <NonResetablePropertyName
-            style={props.currentStyle}
-            properties={["backgroundBlendMode"]}
-            label="Blend mode"
-          />
-
-          <SelectControl
+          <ColorControl
+            property={"backgroundColor"}
+            items={items}
+            currentStyle={currentStyle}
             setProperty={setProperty}
             deleteProperty={deleteProperty}
-            currentStyle={props.currentStyle}
-            property="backgroundBlendMode"
           />
         </Grid>
-      </BackgroundSection>
-    </>
+      </Flex>
+    </BackgroundsCollapsibleSection>
   );
 };
