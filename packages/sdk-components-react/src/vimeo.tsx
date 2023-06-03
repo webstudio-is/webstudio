@@ -61,6 +61,7 @@ export type VimeoPlayerOptions = {
   /** Whether the responsive player and transparent background are enabled. */
   transparent?: boolean;
 };
+
 // https://player.vimeo.com/video/
 const getUrl = (options: VimeoPlayerOptions) => {
   if (options.url === undefined) {
@@ -96,6 +97,29 @@ const getUrl = (options: VimeoPlayerOptions) => {
     url.searchParams.append(option, value.toString());
   }
   return url.toString();
+};
+
+const preconnect = (url: string) => {
+  const link = document.createElement("link");
+  link.rel = "preconnect";
+  link.href = url;
+  link.crossOrigin = "true";
+  document.head.append(link);
+};
+
+let warmed = false;
+
+const warmConnections = () => {
+  if (warmed) {
+    return;
+  }
+  // Host that Vimeo uses to serve JS needed by player
+  preconnect("https://f.vimeocdn.com");
+  // The iframe document comes from player.vimeo.com
+  preconnect("https://player.vimeo.com");
+  // Image for placeholder comes from i.vimeocdn.com
+  preconnect("https://i.vimeocdn.com");
+  warmed = true;
 };
 
 const createPlayer = (
@@ -244,6 +268,11 @@ export const Vimeo = forwardRef<Ref, Props>(
         onClick={() => {
           if (renderer !== "canvas") {
             setVideoState("loading");
+          }
+        }}
+        onPointerOver={() => {
+          if (renderer !== "canvas") {
+            warmConnections();
           }
         }}
       >
