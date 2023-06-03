@@ -120,14 +120,14 @@ const initialProps: Array<keyof VimeoPlayerOptions> = [
   "url",
   "quality",
   "autoplay",
-  "controls",
   "background",
   "doNotTrack",
   "loop",
   "muted",
   "portrait",
+  "byline",
   "title",
-  "keyboard",
+  "controls",
   "color",
 ];
 
