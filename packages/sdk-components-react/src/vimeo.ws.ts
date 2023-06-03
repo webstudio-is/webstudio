@@ -7,7 +7,7 @@ import {
 } from "./component-meta";
 import { props } from "./__generated__/vimeo.props";
 import { div } from "../css/normalize";
-import { type VimeoPlayerOptions } from "./vimeo";
+import { type WsVimeoOptions } from "./vimeo";
 import type { WsEmbedTemplate } from "..";
 
 const presetStyle = {
@@ -62,6 +62,7 @@ const template: WsEmbedTemplate = [
             type: "string",
             name: "src",
             // @todo display control just like with an asset with reset button
+            // Generated using https://png-pixel.com/
             value:
               "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mNkqAcAAIUAgUW0RjgAAAAASUVORK5CYII=",
           },
@@ -166,9 +167,10 @@ export const meta: WsComponentMeta = {
   template,
 };
 
-const initialProps: Array<keyof VimeoPlayerOptions> = [
+const initialProps: Array<keyof WsVimeoOptions> = [
   "url",
   "quality",
+  "previewImage",
   "autoplay",
   "background",
   "doNotTrack",

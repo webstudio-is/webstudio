@@ -505,21 +505,6 @@ export const props: Record<string, PropMeta> = {
     type: "boolean",
     defaultValue: true,
   },
-  doNotTrack: {
-    description:
-      "Whether to prevent the player from tracking session data, including cookies. Keep in mind that setting this argument to true also blocks video stats.",
-    required: false,
-    control: "boolean",
-    type: "boolean",
-    defaultValue: false,
-  },
-  interactiveParams: {
-    description:
-      "Key-value pairs representing dynamic parameters that are utilized on interactive videos with live elements, such as title=my-video,subtitle=interactive.",
-    required: false,
-    control: "text",
-    type: "string",
-  },
   keyboard: {
     description:
       "Whether to enable keyboard input to trigger player events. This setting doesn't affect tab control.",
@@ -606,5 +591,18 @@ export const props: Record<string, PropMeta> = {
     control: "boolean",
     type: "boolean",
     defaultValue: true,
+  },
+  doNotTrack: {
+    required: false,
+    control: "boolean",
+    type: "boolean",
+    defaultValue: false,
+  },
+  interactiveParams: { required: true, control: "text", type: "string" },
+  previewImage: {
+    required: false,
+    control: "boolean",
+    type: "boolean",
+    defaultValue: false,
   },
 };
