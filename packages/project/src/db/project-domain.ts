@@ -22,6 +22,7 @@ const reservedDomains = [
   "images-transforms",
   // Assets
   "assets",
+  "static-assets",
   "fonts",
   "images",
 ];
