@@ -158,6 +158,9 @@ importers:
       '@webstudio-is/react-sdk':
         specifier: workspace:^
         version: link:../../packages/react-sdk
+      '@webstudio-is/sdk-components-react':
+        specifier: workspace:^
+        version: link:../../packages/sdk-components-react
       '@webstudio-is/sdk-components-react-remix':
         specifier: workspace:^
         version: link:../../packages/sdk-components-react-remix
@@ -1214,9 +1217,6 @@ importers:
       '@nanostores/react':
         specifier: ^0.4.1
         version: 0.4.1(nanostores@0.7.1)(react@18.2.0)
-      '@react-aria/utils':
-        specifier: ^3.13.3
-        version: 3.15.0(react@18.2.0)
       '@webstudio-is/asset-uploader':
         specifier: workspace:^
         version: link:../asset-uploader
@@ -1226,27 +1226,12 @@ importers:
       '@webstudio-is/css-engine':
         specifier: workspace:^
         version: link:../css-engine
-      '@webstudio-is/css-vars':
-        specifier: workspace:^
-        version: link:../css-vars
       '@webstudio-is/fonts':
         specifier: workspace:^
         version: link:../fonts
-      '@webstudio-is/form-handlers':
-        specifier: workspace:^
-        version: link:../form-handlers
       '@webstudio-is/generate-arg-types':
         specifier: workspace:^
         version: link:../generate-arg-types
-      '@webstudio-is/icons':
-        specifier: workspace:^
-        version: link:../icons
-      '@webstudio-is/image':
-        specifier: workspace:^
-        version: link:../image
-      '@webstudio-is/prisma-client':
-        specifier: workspace:^
-        version: link:../prisma-client
       '@webstudio-is/project-build':
         specifier: workspace:^
         version: link:../project-build
@@ -1266,18 +1251,12 @@ importers:
         specifier: ^0.7.1
         version: 0.7.1
     devDependencies:
-      '@babel/core':
-        specifier: ^7.21.0
-        version: 7.21.0
       '@jest/globals':
         specifier: ^29.3.1
         version: 29.3.1
       '@remix-run/react':
         specifier: ^1.15.0
         version: 1.15.0(react-dom@18.2.0)(react@18.2.0)
-      '@storybook/react':
-        specifier: ^6.5.16
-        version: 6.5.16(@babel/core@7.21.0)(react-dom@18.2.0)(react@18.2.0)(require-from-string@2.0.2)(type-fest@3.7.1)(typescript@5.0.3)
       '@types/react':
         specifier: ^18.0.35
         version: 18.0.35
@@ -1290,9 +1269,6 @@ importers:
       '@webstudio-is/scripts':
         specifier: workspace:^
         version: link:../scripts
-      '@webstudio-is/storybook-config':
-        specifier: workspace:^
-        version: link:../storybook-config
       '@webstudio-is/tsconfig':
         specifier: workspace:^
         version: link:../tsconfig
@@ -1337,6 +1313,55 @@ importers:
         specifier: 5.0.3
         version: 5.0.3
 
+  packages/sdk-components-react:
+    dependencies:
+      '@react-aria/utils':
+        specifier: ^3.13.3
+        version: 3.13.3(react@18.2.0)
+      '@webstudio-is/css-vars':
+        specifier: workspace:^
+        version: link:../css-vars
+      '@webstudio-is/generate-arg-types':
+        specifier: workspace:^
+        version: link:../generate-arg-types
+      '@webstudio-is/icons':
+        specifier: workspace:^
+        version: link:../icons
+      '@webstudio-is/image':
+        specifier: workspace:^
+        version: link:../image
+      '@webstudio-is/react-sdk':
+        specifier: workspace:^
+        version: link:../react-sdk
+    devDependencies:
+      '@storybook/react':
+        specifier: ^6.5.16
+        version: 6.5.16(@babel/core@7.21.0)(react-dom@18.2.0)(react@18.2.0)(require-from-string@2.0.2)(type-fest@3.7.1)(typescript@5.0.3)
+      '@types/react':
+        specifier: ^18.0.35
+        version: 18.0.35
+      '@types/react-dom':
+        specifier: ^18.0.11
+        version: 18.0.11
+      '@webstudio-is/scripts':
+        specifier: workspace:^
+        version: link:../scripts
+      '@webstudio-is/storybook-config':
+        specifier: workspace:^
+        version: link:../storybook-config
+      '@webstudio-is/tsconfig':
+        specifier: workspace:^
+        version: link:../tsconfig
+      react:
+        specifier: 18.2.0
+        version: 18.2.0
+      react-dom:
+        specifier: 18.2.0
+        version: 18.2.0(react@18.2.0)
+      typescript:
+        specifier: 5.0.3
+        version: 5.0.3
+
   packages/sdk-components-react-remix:
     dependencies:
       '@webstudio-is/form-handlers':
@@ -1351,6 +1376,9 @@ importers:
       '@webstudio-is/react-sdk':
         specifier: workspace:^
         version: link:../react-sdk
+      '@webstudio-is/sdk-components-react':
+        specifier: workspace:^
+        version: link:../sdk-components-react
     devDependencies:
       '@remix-run/react':
         specifier: ^1.15.0
@@ -1397,6 +1425,9 @@ importers:
       '@webstudio-is/react-sdk':
         specifier: workspace:^
         version: link:../react-sdk
+      '@webstudio-is/sdk-components-react':
+        specifier: workspace:^
+        version: link:../sdk-components-react
       isbot:
         specifier: ^3.6.10
         version: 3.6.10
