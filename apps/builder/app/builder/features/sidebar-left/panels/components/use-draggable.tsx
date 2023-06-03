@@ -8,6 +8,7 @@ import {
   Flex,
   useDrag,
   ComponentCard,
+  toast,
 } from "@webstudio-is/design-system";
 import {
   instancesStore,
@@ -96,6 +97,25 @@ export const elementToComponentName = (
   return false;
 };
 
+const formatInsertionError = (component: string, meta: WsComponentMeta) => {
+  const or = new Intl.ListFormat("en", {
+    type: "disjunction",
+  });
+  const and = new Intl.ListFormat("en", {
+    type: "conjunction",
+  });
+  const messages: string[] = [];
+  if (meta.requiredAncestors) {
+    const listString = or.format(meta.requiredAncestors);
+    messages.push(`can be added only inside of ${listString}`);
+  }
+  if (meta.invalidAncestors) {
+    const listString = and.format(meta.invalidAncestors);
+    messages.push(`cannot be added inside of ${listString}`);
+  }
+  return `${component} ${and.format(messages)}`;
+};
+
 export const useDraggable = ({
   publish,
   metaByComponentName,
@@ -156,16 +176,25 @@ export const useDraggable = ({
     if (selectedPage === undefined) {
       return;
     }
+    const instanceSelector = selectedInstanceSelectorStore.get() ?? [
+      selectedPage.rootInstanceId,
+    ];
+    const metas = registeredComponentMetasStore.get();
     const dropTarget = findClosestDroppableTarget(
-      registeredComponentMetasStore.get(),
+      metas,
       instancesStore.get(),
       // fallback to root as drop target
-      selectedInstanceSelectorStore.get() ?? [selectedPage.rootInstanceId],
+      instanceSelector,
       [component]
     );
-    if (dropTarget) {
-      insertNewComponentInstance(component, dropTarget);
+    if (dropTarget === undefined) {
+      const meta = metas.get(component);
+      if (meta) {
+        toast.error(formatInsertionError(component, meta));
+      }
+      return;
     }
+    insertNewComponentInstance(component, dropTarget);
   };
 
   return {
