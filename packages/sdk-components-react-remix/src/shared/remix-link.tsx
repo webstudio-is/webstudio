@@ -6,11 +6,19 @@ import {
 } from "@webstudio-is/react-sdk";
 import type { Link } from "@webstudio-is/sdk-components-react";
 
-type LinkComponent = typeof Link;
-type LinkProps = ComponentPropsWithoutRef<LinkComponent>;
+type Props = Omit<ComponentPropsWithoutRef<typeof Link>, "target"> & {
+  // override (string & {}) in target to generate keywords
+  target?: "_self" | "_blank" | "_parent" | "_top";
 
-export const wrapLinkComponent = (BaseLink: LinkComponent) => {
-  const Component: LinkComponent = forwardRef((props: LinkProps, ref) => {
+  // useful remix props
+  prefetch?: "intent" | "render" | "none";
+  reloadDocument?: boolean;
+  replace?: boolean;
+  preventScrollReset?: boolean;
+};
+
+export const wrapLinkComponent = (BaseLink: typeof Link) => {
+  const Component = forwardRef<HTMLAnchorElement, Props>((props, ref) => {
     const href = usePropUrl(getInstanceIdFromComponentProps(props), "href");
 
     if (href?.type === "page") {

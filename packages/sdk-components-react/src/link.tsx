@@ -7,14 +7,9 @@ import {
 
 export const defaultTag = "a";
 
-// @todo props that come from remix link, shouldn't be here at all
-// - prefetch should be only on remix component and it already is
-// - props meta should be generated from Remix link
-// - changing this requires update in app/canvas/custom-components/link.tsx
-type Props = Omit<ComponentProps<"a">, "href" | "target"> & {
-  href?: string;
+type Props = Omit<ComponentProps<"a">, "target"> & {
+  // override (string & {}) in target to generate keywords
   target?: "_self" | "_blank" | "_parent" | "_top";
-  prefetch?: "none" | "intent" | "render";
 };
 
 export const Link = forwardRef<HTMLAnchorElement, Props>((props, ref) => {

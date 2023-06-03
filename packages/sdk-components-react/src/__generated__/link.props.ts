@@ -4,7 +4,6 @@ export const props: Record<string, PropMeta> = {
   slot: { required: false, control: "text", type: "string" },
   style: { required: false, control: "text", type: "string" },
   title: { required: false, control: "text", type: "string" },
-  href: { required: false, control: "text", type: "string" },
   target: {
     required: false,
     control: "select",
@@ -12,6 +11,7 @@ export const props: Record<string, PropMeta> = {
     options: ["_self", "_blank", "_parent", "_top"],
   },
   download: { required: false, control: "text", type: "string" },
+  href: { required: false, control: "text", type: "string" },
   hrefLang: { required: false, control: "text", type: "string" },
   media: { required: false, control: "text", type: "string" },
   ping: { required: false, control: "text", type: "string" },
@@ -467,11 +467,5 @@ export const props: Record<string, PropMeta> = {
     required: false,
     control: "text",
     type: "string",
-  },
-  prefetch: {
-    required: false,
-    control: "radio",
-    type: "string",
-    options: ["none", "intent", "render"],
   },
 };
