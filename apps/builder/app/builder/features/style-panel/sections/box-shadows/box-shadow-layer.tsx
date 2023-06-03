@@ -38,7 +38,7 @@ export const Layer: React.FC<{
 
   return (
     <Grid
-      data-shadow={true}
+      data-shadow={index}
       align="center"
       gap={2}
       css={{
@@ -47,17 +47,12 @@ export const Layer: React.FC<{
         paddingRight: theme.spacing[6],
         backgroundColor: theme.colors.backgroundPanel,
         height: theme.spacing["13"],
+        "&:hover": {
+          backgroundColor: theme.colors.backgroundHover,
+        },
       }}
     >
-      <Label
-        css={{
-          "&:hover": {
-            backgroundColor: theme.colors.backgroundHover,
-          },
-        }}
-      >
-        {layerName}
-      </Label>
+      <Label>{layerName}</Label>
       <SmallToggleButton
         variant="normal"
         disabled={false}
