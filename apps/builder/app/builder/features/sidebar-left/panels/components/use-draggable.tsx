@@ -190,7 +190,7 @@ export const useDraggable = ({
     if (dropTarget === undefined) {
       const meta = metas.get(component);
       if (meta) {
-        toast(formatInsertionError(component, meta));
+        toast.error(formatInsertionError(component, meta));
       }
       return;
     }
