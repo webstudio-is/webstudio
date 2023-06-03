@@ -31,9 +31,9 @@
   "exports": {
     "source": "./src/index.ts",
     "import": "./lib/index.js",
-    "require": "./lib/cjs/index.js"
+    "require": "./lib/cjs/index.js",
+    "types": "./lib/index.d.ts"
   },
-  "types": "lib/index.d.ts",
   "license": "MIT",
   "private": false,
   "dependencies": {

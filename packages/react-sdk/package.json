@@ -65,20 +65,22 @@
     ".": {
       "source": "./src/index.ts",
       "import": "./lib/index.js",
-      "require": "./lib/cjs/index.js"
+      "require": "./lib/cjs/index.js",
+      "types": "./lib/types/index.d.ts"
     },
     "./components": {
       "source": "./src/components/components.ts",
       "import": "./lib/components/components.js",
-      "require": "./lib/cjs/components/components.js"
+      "require": "./lib/cjs/components/components.js",
+      "types": "./lib/types/components/components.d.ts"
     },
     "./css-normalize": {
       "source": "./src/css/normalize.ts",
       "import": "./lib/css/normalize.js",
-      "require": "./lib/cjs/css/normalize.js"
+      "require": "./lib/cjs/css/normalize.js",
+      "types": "./lib/types/css/normalize.d.ts"
     }
   },
-  "types": "lib/types/index.d.ts",
   "files": [
     "lib/*",
     "src/*",

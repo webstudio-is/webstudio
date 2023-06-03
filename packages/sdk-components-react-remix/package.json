@@ -15,21 +15,21 @@
   "exports": {
     ".": {
       "source": "./src/components.ts",
-      "types": "./lib/types/components.d.ts",
       "import": "./lib/components.js",
-      "require": "./lib/cjs/components.js"
+      "require": "./lib/cjs/components.js",
+      "types": "./lib/types/components.d.ts"
     },
     "./metas": {
       "source": "./src/metas.ts",
-      "types": "./lib/types/metas.d.ts",
       "import": "./lib/metas.js",
-      "require": "./lib/cjs/metas.js"
+      "require": "./lib/cjs/metas.js",
+      "types": "./lib/types/metas.d.ts"
     },
     "./props": {
       "source": "./src/props.ts",
-      "types": "./lib/types/props.d.ts",
       "import": "./lib/props.js",
-      "require": "./lib/cjs/props.js"
+      "require": "./lib/cjs/props.js",
+      "types": "./lib/types/props.d.ts"
     }
   },
   "scripts": {

@@ -36,20 +36,20 @@
   "dependencies": {
     "@webstudio-is/css-vars": "workspace:^"
   },
-  "module": "./lib/index.js",
   "exports": {
     ".": {
       "source": "./src/index.ts",
       "import": "./lib/index.js",
-      "require": "./lib/cjs/index.js"
+      "require": "./lib/cjs/index.js",
+      "types": "./lib/types/index.d.ts"
     },
     "./svg": {
       "source": "./src/__generated__/svg/index.ts",
       "import": "./lib/__generated__/svg/index.js",
-      "require": "./lib/cjs/__generated__/svg/index.js"
+      "require": "./lib/cjs/__generated__/svg/index.js",
+      "types": "./lib/types/__generated__/svg/index.d.ts"
     }
   },
-  "types": "lib/types/index.d.ts",
   "files": [
     "lib/*",
     "src/*",

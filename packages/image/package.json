@@ -40,9 +40,9 @@
   "exports": {
     "source": "./src/index.ts",
     "import": "./lib/index.js",
-    "require": "./lib/cjs/index.js"
+    "require": "./lib/cjs/index.js",
+    "types": "./lib/types/index.d.ts"
   },
-  "types": "lib/types/index.d.ts",
   "files": [
     "lib/*",
     "src/*",
