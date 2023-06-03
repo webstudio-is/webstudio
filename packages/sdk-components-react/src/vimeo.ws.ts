@@ -36,7 +36,7 @@ const template: WsEmbedTemplate = [
     children: [
       {
         type: "instance",
-        component: "Image",
+        component: "VimeoPreviewImage",
         label: "Preview Image",
         styles: [
           {

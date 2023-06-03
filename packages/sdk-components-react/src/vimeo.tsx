@@ -12,6 +12,7 @@ import {
   type ElementRef,
   type ComponentProps,
   useContext,
+  createContext,
 } from "react";
 import { ReactSdkContext } from "../context";
 
@@ -170,7 +171,6 @@ const createPlayer = (
 const getVideoId = (url: string) => {
   try {
     const parsedUrl = new URL(url);
-    console.log(parsedUrl);
     const id = parsedUrl.pathname.split("/")[1];
     if (id === "" || id == null) {
       return;
@@ -179,9 +179,8 @@ const getVideoId = (url: string) => {
   } catch {}
 };
 
-const renderPreviewImage = async (element: HTMLElement, videoUrl: string) => {
+const loadPreviewImage = async (element: HTMLElement, videoUrl: string) => {
   const videoId = getVideoId(videoUrl);
-  console.log(videoId);
   // API is the video-id based
   // http://vimeo.com/api/v2/video/364402896.json
   const apiUrl = `https://vimeo.com/api/v2/video/${videoId}.json`;
@@ -199,8 +198,7 @@ const renderPreviewImage = async (element: HTMLElement, videoUrl: string) => {
   imageUrl.searchParams.append("mw", "1100");
   imageUrl.searchParams.append("mh", "619");
   imageUrl.searchParams.append("q", "70");
-  element.style.backgroundImage = `url(${imageUrl})`;
-  element.style.backgroundSize = "cover";
+  return imageUrl;
 };
 
 export type WsVimeoOptions = Omit<
@@ -252,6 +250,7 @@ export const Vimeo = forwardRef<Ref, Props>(
       "initial" | "loading" | "ready"
     >("initial");
     const elementRef = useRef<ElementRef<typeof defaultTag> | null>(null);
+    const [previewImageUrl, setPreviewImageUrl] = useState<URL>();
 
     useEffect(() => {
       setVideoState(autoplay && renderer !== "canvas" ? "loading" : "initial");
@@ -265,7 +264,11 @@ export const Vimeo = forwardRef<Ref, Props>(
       ) {
         return;
       }
-      renderPreviewImage(elementRef.current, url);
+      if (previewImage) {
+        loadPreviewImage(elementRef.current, url).then(setPreviewImageUrl);
+      } else {
+        setPreviewImageUrl(undefined);
+      }
     }, [renderer, previewImage, url]);
 
     useEffect(() => {
@@ -322,34 +325,36 @@ export const Vimeo = forwardRef<Ref, Props>(
       interactiveParams,
     ]);
     return (
-      <div
-        {...rest}
-        ref={(value: Ref) => {
-          elementRef.current = value;
-          if (ref !== null) {
-            typeof ref === "function" ? ref(value) : (ref.current = value);
+      <VimeoContext.Provider value={{ previewImageUrl }}>
+        <div
+          {...rest}
+          ref={(value: Ref) => {
+            elementRef.current = value;
+            if (ref !== null) {
+              typeof ref === "function" ? ref(value) : (ref.current = value);
+            }
+          }}
+          onClick={() => {
+            if (renderer !== "canvas") {
+              setVideoState("loading");
+            }
+          }}
+          onPointerOver={() => {
+            if (renderer !== "canvas") {
+              warmConnections();
+            }
+          }}
+        >
+          {
+            // When playing we need to hide the play button
+            url === undefined ? (
+              <EmptyState />
+            ) : videoState === "ready" ? null : (
+              children
+            )
           }
-        }}
-        onClick={() => {
-          if (renderer !== "canvas") {
-            setVideoState("loading");
-          }
-        }}
-        onPointerOver={() => {
-          if (renderer !== "canvas") {
-            warmConnections();
-          }
-        }}
-      >
-        {
-          // When playing we need to hide the play button
-          url === undefined ? (
-            <EmptyState />
-          ) : videoState === "ready" ? null : (
-            children
-          )
-        }
-      </div>
+        </div>
+      </VimeoContext.Provider>
     );
   }
 );
@@ -373,3 +378,7 @@ const EmptyState = () => {
     </div>
   );
 };
+
+export const VimeoContext = createContext<{
+  previewImageUrl?: URL;
+}>({});
