@@ -20,6 +20,11 @@ const template: WsEmbedTemplate = [
     component: "Vimeo",
     styles: [
       {
+        property: "position",
+        value: { type: "keyword", value: "relative" },
+      },
+
+      {
         property: "aspectRatio",
         value: { type: "keyword", value: "640/360" },
       },
@@ -31,12 +36,53 @@ const template: WsEmbedTemplate = [
     children: [
       {
         type: "instance",
+        component: "Image",
+        label: "Preview Image",
+        styles: [
+          {
+            property: "position",
+            value: { type: "keyword", value: "absolute" },
+          },
+          {
+            property: "objectPosition",
+            value: { type: "keyword", value: "cover" },
+          },
+          {
+            property: "width",
+            value: { type: "unit", value: 100, unit: "%" },
+          },
+          {
+            property: "height",
+            value: { type: "unit", value: 100, unit: "%" },
+          },
+        ],
+        children: [],
+        props: [
+          {
+            type: "string",
+            name: "src",
+            // @todo display control just like with an asset with reset button
+            value:
+              "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mNkqAcAAIUAgUW0RjgAAAAASUVORK5CYII=",
+          },
+        ],
+      },
+      {
+        type: "instance",
         component: "Button",
         label: "Play Button",
         styles: [
           {
             property: "display",
             value: { type: "keyword", value: "flex" },
+          },
+          {
+            property: "position",
+            value: { type: "keyword", value: "absolute" },
+          },
+          {
+            property: "backgroundColor",
+            value: { type: "keyword", value: "transparent" },
           },
           {
             property: "alignItems",
@@ -72,8 +118,12 @@ const template: WsEmbedTemplate = [
           {
             type: "instance",
             component: "Box",
-            label: "Icon",
+            label: "Play Icon",
             styles: [
+              {
+                property: "width",
+                value: { type: "unit", value: 100, unit: "px" },
+              },
               {
                 property: "width",
                 value: { type: "unit", value: 100, unit: "px" },
@@ -87,7 +137,7 @@ const template: WsEmbedTemplate = [
               {
                 type: "instance",
                 component: "HtmlEmbed",
-                label: "SVG",
+                label: "Play SVG",
                 props: [
                   {
                     type: "string",
