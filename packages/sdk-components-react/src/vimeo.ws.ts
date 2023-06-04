@@ -82,10 +82,6 @@ const template: WsEmbedTemplate = [
             value: { type: "keyword", value: "absolute" },
           },
           {
-            property: "backgroundColor",
-            value: { type: "keyword", value: "transparent" },
-          },
-          {
             property: "alignItems",
             value: { type: "keyword", value: "center" },
           },
@@ -94,25 +90,95 @@ const template: WsEmbedTemplate = [
             value: { type: "keyword", value: "center" },
           },
           {
-            property: "flexGrow",
-            value: { type: "keyword", value: "1" },
-          },
-          {
             property: "cursor",
             value: { type: "keyword", value: "pointer" },
           },
           {
             property: "width",
-            value: { type: "unit", value: 100, unit: "%" },
+            value: { type: "unit", value: 140, unit: "px" },
           },
           {
             property: "height",
-            value: { type: "unit", value: 100, unit: "%" },
+            value: { type: "unit", value: 80, unit: "px" },
+          },
+          {
+            property: "top",
+            value: { type: "unit", value: 50, unit: "%" },
+          },
+          {
+            property: "left",
+            value: { type: "unit", value: 50, unit: "%" },
+          },
+          {
+            property: "marginTop",
+            value: { type: "unit", value: -40, unit: "px" },
+          },
+          {
+            property: "marginLeft",
+            value: { type: "unit", value: -70, unit: "px" },
+          },
+          {
+            property: "borderTopStyle",
+            value: { type: "keyword", value: "none" },
+          },
+          {
+            property: "borderRightStyle",
+            value: { type: "keyword", value: "none" },
+          },
+          {
+            property: "borderBottomStyle",
+            value: { type: "keyword", value: "none" },
+          },
+          {
+            property: "borderLeftStyle",
+            value: { type: "keyword", value: "none" },
+          },
+          {
+            property: "borderTopLeftRadius",
+            value: { type: "unit", value: 5, unit: "px" },
+          },
+          {
+            property: "borderTopRightRadius",
+            value: { type: "unit", value: 5, unit: "px" },
+          },
+          {
+            property: "borderBottomLeftRadius",
+            value: { type: "unit", value: 5, unit: "px" },
+          },
+          {
+            property: "borderBottomRightRadius",
+            value: { type: "unit", value: 5, unit: "px" },
+          },
+          {
+            property: "backgroundColor",
+            value: {
+              type: "rgb",
+              r: 18,
+              g: 18,
+              b: 18,
+              alpha: 1,
+            },
+          },
+          {
+            property: "color",
+            value: {
+              type: "rgb",
+              r: 255,
+              g: 255,
+              b: 255,
+              alpha: 1,
+            },
           },
           {
             state: ":hover",
-            property: "color",
-            value: { type: "keyword", value: "red" },
+            property: "backgroundColor",
+            value: {
+              type: "rgb",
+              r: 0,
+              g: 173,
+              b: 239,
+              alpha: 1,
+            },
           },
         ],
         children: [
@@ -123,15 +189,11 @@ const template: WsEmbedTemplate = [
             styles: [
               {
                 property: "width",
-                value: { type: "unit", value: 100, unit: "px" },
-              },
-              {
-                property: "width",
-                value: { type: "unit", value: 100, unit: "px" },
+                value: { type: "unit", value: 60, unit: "px" },
               },
               {
                 property: "height",
-                value: { type: "unit", value: 100, unit: "px" },
+                value: { type: "unit", value: 60, unit: "px" },
               },
             ],
             children: [
