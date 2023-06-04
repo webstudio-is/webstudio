@@ -81,6 +81,7 @@ const getUrl = (options: VimeoPlayerOptions) => {
     const userUrl = new URL(options.url);
     url = new URL(IFRAME_CDN);
     url.pathname = `/video${userUrl.pathname}`;
+    // eslint-disable-next-line no-empty
   } catch {}
   if (url === undefined) {
     return;
@@ -184,6 +185,7 @@ const getVideoId = (url: string) => {
       return;
     }
     return id;
+    // eslint-disable-next-line no-empty
   } catch {}
 };
 
@@ -279,7 +281,7 @@ export const Vimeo = forwardRef<Ref, Props>(
       } else {
         setPreviewImageUrl(undefined);
       }
-    }, [renderer, previewImage, url]);
+    }, [renderer, previewImage, url, videoState]);
 
     useEffect(() => {
       if (elementRef.current === null || videoState === "initial") {
@@ -334,6 +336,7 @@ export const Vimeo = forwardRef<Ref, Props>(
       title,
       transparent,
       interactiveParams,
+      color,
     ]);
 
     return (
@@ -398,4 +401,7 @@ const EmptyState = () => {
 export const VimeoContext = createContext<{
   previewImageUrl?: URL;
   initialize: () => void;
-}>({ initialize: () => {} });
+}>({
+  // eslint-disable-next-line @typescript-eslint/no-empty-function
+  initialize: () => {},
+});
