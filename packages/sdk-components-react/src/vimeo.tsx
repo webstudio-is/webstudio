@@ -343,7 +343,7 @@ export const Vimeo = forwardRef<Ref, Props>(
       <VimeoContext.Provider
         value={{
           previewImageUrl,
-          initialize() {
+          onInitPlayer() {
             if (renderer !== "canvas") {
               setVideoState("initialized");
             }
@@ -400,8 +400,8 @@ const EmptyState = () => {
 
 export const VimeoContext = createContext<{
   previewImageUrl?: URL;
-  initialize: () => void;
+  onInitPlayer: () => void;
 }>({
   // eslint-disable-next-line @typescript-eslint/no-empty-function
-  initialize: () => {},
+  onInitPlayer: () => {},
 });
