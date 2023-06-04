@@ -359,10 +359,7 @@ export const Vimeo = forwardRef<Ref, Props>(
             }
           }}
         >
-          {
-            // When playing we need to hide the play button
-            url === undefined ? <EmptyState /> : children
-          }
+          {url === undefined ? <EmptyState /> : children}
         </div>
       </VimeoContext.Provider>
     );
