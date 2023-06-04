@@ -7,7 +7,7 @@ import { props } from "./__generated__/vimeo-preview-image.props";
 
 export const meta: WsComponentMeta = {
   ...imageMeta,
-  category: undefined,
+  category: "hidden",
   label: "Preview Image",
   requiredAncestors: ["Vimeo"],
 };

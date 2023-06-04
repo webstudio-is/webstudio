@@ -65,41 +65,43 @@ export const TabContent = ({ publish, onSetActiveTab }: TabContentProps) => {
         suffix={<CloseButton onClick={() => onSetActiveTab("none")} />}
       />
       <ScrollArea>
-        {Array.from(componentCategories).map((category) => (
-          <CollapsibleSection label={category} key={category} fullWidth>
-            <ArrowFocus
-              render={({ handleKeyDown }) => (
-                <Flex
-                  onKeyDown={handleKeyDown}
-                  gap="2"
-                  wrap="wrap"
-                  css={{ px: theme.spacing[9], overflow: "auto" }}
-                >
-                  {(metaByCategory.get(category) ?? []).map(
-                    (meta: WsComponentMeta, index) => {
-                      const component = componentNamesByMeta.get(meta);
-                      if (component === undefined) {
-                        return null;
+        {componentCategories
+          .filter((category) => category !== "hidden")
+          .map((category) => (
+            <CollapsibleSection label={category} key={category} fullWidth>
+              <ArrowFocus
+                render={({ handleKeyDown }) => (
+                  <Flex
+                    onKeyDown={handleKeyDown}
+                    gap="2"
+                    wrap="wrap"
+                    css={{ px: theme.spacing[9], overflow: "auto" }}
+                  >
+                    {(metaByCategory.get(category) ?? []).map(
+                      (meta: WsComponentMeta, index) => {
+                        const component = componentNamesByMeta.get(meta);
+                        if (component === undefined) {
+                          return null;
+                        }
+                        return (
+                          <Tooltip content={meta.label} key={component}>
+                            <ComponentCard
+                              {...pressProps}
+                              {...{ [dragItemAttribute]: component }}
+                              label={meta.label}
+                              icon={<MetaIcon size="auto" icon={meta.icon} />}
+                              tabIndex={index === 0 ? 0 : -1}
+                            />
+                          </Tooltip>
+                        );
                       }
-                      return (
-                        <Tooltip content={meta.label} key={component}>
-                          <ComponentCard
-                            {...pressProps}
-                            {...{ [dragItemAttribute]: component }}
-                            label={meta.label}
-                            icon={<MetaIcon size="auto" icon={meta.icon} />}
-                            tabIndex={index === 0 ? 0 : -1}
-                          />
-                        </Tooltip>
-                      );
-                    }
-                  )}
-                  {dragCard}
-                </Flex>
-              )}
-            />
-          </CollapsibleSection>
-        ))}
+                    )}
+                    {dragCard}
+                  </Flex>
+                )}
+              />
+            </CollapsibleSection>
+          ))}
       </ScrollArea>
     </Flex>
   );
