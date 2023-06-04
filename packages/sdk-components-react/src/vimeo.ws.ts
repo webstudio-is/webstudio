@@ -4,9 +4,9 @@ import {
   type PresetStyle,
   type WsComponentMeta,
   type WsComponentPropsMeta,
-} from "./component-meta";
+} from "@webstudio-is/react-sdk";
+import { div } from "@webstudio-is/react-sdk/css-normalize";
 import { props } from "./__generated__/vimeo.props";
-import { div } from "../css/normalize";
 import { type WsVimeoOptions } from "./vimeo";
 
 const presetStyle = {

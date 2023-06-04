@@ -15,7 +15,7 @@ import {
   useContext,
   createContext,
 } from "react";
-import { ReactSdkContext } from "../context";
+import { ReactSdkContext } from "@webstudio-is/react-sdk";
 
 const defaultTag = "div";
 

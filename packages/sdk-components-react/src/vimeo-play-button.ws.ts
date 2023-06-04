@@ -1,7 +1,7 @@
 import {
   type WsComponentMeta,
   type WsComponentPropsMeta,
-} from "./component-meta";
+} from "@webstudio-is/react-sdk";
 import { propsMeta as buttonPropsMeta, meta as buttonMeta } from "./button.ws";
 import { props } from "./__generated__/vimeo-play-button.props";
 

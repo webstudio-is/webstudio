@@ -3,7 +3,7 @@ import { computed } from "nanostores";
 import { useStore } from "@nanostores/react";
 import type { Instance, Page, Prop, Props } from "@webstudio-is/project-build";
 import type { Asset, Assets } from "@webstudio-is/asset-uploader";
-import { ReactSdkContext } from "./context";
+import { ReactSdkContext } from "@webstudio-is/react-sdk";
 import { idAttribute } from "./tree/webstudio-component";
 
 export type PropsByInstanceId = Map<Instance["id"], Prop[]>;
