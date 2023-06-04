@@ -598,7 +598,7 @@ export const props: Record<string, PropMeta> = {
     type: "boolean",
     defaultValue: false,
   },
-  interactiveParams: { required: true, control: "text", type: "string" },
+  interactiveParams: { required: false, control: "text", type: "string" },
   previewImage: {
     required: false,
     control: "boolean",

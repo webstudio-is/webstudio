@@ -4,6 +4,7 @@
 // - we don't want to render player by default
 // - we want to expose Webstudio components to the user for customization
 
+import { colord } from "colord";
 import {
   forwardRef,
   useState,
@@ -34,7 +35,7 @@ type VimeoPlayerOptions = {
   /** Whether to display the video owner's name. */
   byline?: boolean;
   // @todo use color type to use color control
-  /** The hexadecimal color value of the playback controls, which is normally 00ADEF. The embed settings of the video might override this value. */
+  /** A color value of the playback controls, which is normally #00ADEF. The embed settings of the video might override this value. */
   color?: string;
   /** true	Whether to display the player's interactive elements, including the play bar and sharing buttons. Set this option to false for a chromeless experience. To control playback when the play/pause button is hidden, set autoplay to true, use keyboard controls (which remain active), or implement our player SDK. */
   controls?: boolean;
@@ -85,6 +86,7 @@ const getUrl = (options: VimeoPlayerOptions) => {
     return;
   }
   let option: keyof VimeoPlayerOptions;
+
   for (option in options) {
     if (option === "url") {
       continue;
@@ -96,6 +98,12 @@ const getUrl = (options: VimeoPlayerOptions) => {
     if (option === "autoplay") {
       // We always set autoplay to true because we have a button that starts the video
       url.searchParams.append("autoplay", "true");
+      continue;
+    }
+    // Vimeo needs a hex color value without the hash
+    if (option === "color" && typeof value === "string") {
+      const color = colord(value).toHex().replace("#", "");
+      url.searchParams.append(option, color);
       continue;
     }
 
@@ -205,8 +213,8 @@ export type WsVimeoOptions = Omit<
   VimeoPlayerOptions,
   "dnt" | "interactive_params"
 > & {
-  doNotTrack: VimeoPlayerOptions["dnt"];
-  interactiveParams: VimeoPlayerOptions["interactive_params"];
+  doNotTrack?: VimeoPlayerOptions["dnt"];
+  interactiveParams?: VimeoPlayerOptions["interactive_params"];
   previewImage?: boolean;
 };
 
@@ -297,6 +305,7 @@ export const Vimeo = forwardRef<Ref, Props>(
           title,
           transparent,
           interactive_params: interactiveParams,
+          color,
         },
         () => {
           setVideoState("ready");
@@ -324,6 +333,7 @@ export const Vimeo = forwardRef<Ref, Props>(
       transparent,
       interactiveParams,
     ]);
+
     return (
       <VimeoContext.Provider value={{ previewImageUrl }}>
         <div

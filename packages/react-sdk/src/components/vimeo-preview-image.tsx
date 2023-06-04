@@ -14,7 +14,6 @@ export const VimeoPreviewImage = forwardRef<
   Props
 >(({ src, ...rest }, ref) => {
   const vimeoContext = useContext(VimeoContext);
-  console.log({ vimeoContext });
 
   return (
     <Image
