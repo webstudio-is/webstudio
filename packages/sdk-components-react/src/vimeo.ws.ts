@@ -268,7 +268,7 @@ const initialProps: Array<keyof WsVimeoOptions> = [
   "quality",
   "previewImage",
   "autoplay",
-  "background",
+  "backgroundMode",
   "doNotTrack",
   "loop",
   "muted",

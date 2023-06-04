@@ -482,14 +482,6 @@ export const props: Record<string, PropMeta> = {
     type: "boolean",
     defaultValue: false,
   },
-  background: {
-    description:
-      "Whether the player is in background mode, which hides the playback controls, enables autoplay, and loops the video.",
-    required: false,
-    control: "boolean",
-    type: "boolean",
-    defaultValue: false,
-  },
   byline: {
     description: "Whether to display the video owner's name.",
     required: false,
@@ -600,6 +592,12 @@ export const props: Record<string, PropMeta> = {
   },
   interactiveParams: { required: false, control: "text", type: "string" },
   previewImage: {
+    required: false,
+    control: "boolean",
+    type: "boolean",
+    defaultValue: false,
+  },
+  backgroundMode: {
     required: false,
     control: "boolean",
     type: "boolean",
