@@ -55,6 +55,22 @@ const template: WsEmbedTemplate = [
             property: "height",
             value: { type: "unit", value: 100, unit: "%" },
           },
+          {
+            property: "borderTopLeftRadius",
+            value: { type: "unit", value: 20, unit: "px" },
+          },
+          {
+            property: "borderTopRightRadius",
+            value: { type: "unit", value: 20, unit: "px" },
+          },
+          {
+            property: "borderBottomLeftRadius",
+            value: { type: "unit", value: 20, unit: "px" },
+          },
+          {
+            property: "borderBottomRightRadius",
+            value: { type: "unit", value: 20, unit: "px" },
+          },
         ],
         children: [],
         props: [
@@ -64,7 +80,7 @@ const template: WsEmbedTemplate = [
             // @todo display control just like with an asset with reset button
             // Generated using https://png-pixel.com/
             value:
-              "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mNkqAcAAIUAgUW0RjgAAAAASUVORK5CYII=",
+              "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mNkOAMAANIAzr59FiYAAAAASUVORK5CYII=",
           },
         ],
       },
