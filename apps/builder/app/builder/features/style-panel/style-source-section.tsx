@@ -379,9 +379,8 @@ export const StyleSourcesSection = () => {
           removeStyleSourceFromInstance(id);
         }}
         onDeleteItem={(id) => {
-          const token = availableStyleSources.find(
-            (source) => source.id === id
-          );
+          const styleSources = styleSourcesStore.get();
+          const token = styleSources.get(id);
           if (token?.type === "token") {
             setTokenToDelete(token);
           }
@@ -408,17 +407,17 @@ export const StyleSourcesSection = () => {
           renameStyleSource(item.id, item.label);
         }}
       />
-      {tokenToDelete && (
-        <DeleteConfirmationDialog
-          onClose={() => {
-            setTokenToDelete(undefined);
-          }}
-          onConfirm={() => {
+      <DeleteConfirmationDialog
+        token={tokenToDelete?.name}
+        onClose={() => {
+          setTokenToDelete(undefined);
+        }}
+        onConfirm={() => {
+          if (tokenToDelete) {
             deleteStyleSource(tokenToDelete.id);
-          }}
-          token={tokenToDelete.name}
-        />
-      )}
+          }
+        }}
+      />
     </>
   );
 };
@@ -426,7 +425,7 @@ export const StyleSourcesSection = () => {
 type DeleteConfirmationDialogProps = {
   onClose: () => void;
   onConfirm: () => void;
-  token: string;
+  token?: string;
 };
 
 const DeleteConfirmationDialog = ({
@@ -436,7 +435,7 @@ const DeleteConfirmationDialog = ({
 }: DeleteConfirmationDialogProps) => {
   return (
     <Dialog
-      open
+      open={token !== undefined}
       onOpenChange={(isOpen) => {
         if (isOpen === false) {
           onClose();
