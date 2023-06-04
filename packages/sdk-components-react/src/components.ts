@@ -33,3 +33,4 @@ export { CheckboxField } from "./checkbox-field";
 export { Checkbox } from "./checkbox";
 export { Vimeo } from "./vimeo";
 export { VimeoPreviewImage } from "./vimeo-preview-image";
+export { VimeoPlayButton } from "./vimeo-play-button";

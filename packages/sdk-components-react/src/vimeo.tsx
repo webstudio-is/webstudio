@@ -255,13 +255,15 @@ export const Vimeo = forwardRef<Ref, Props>(
   ) => {
     const { renderer } = useContext(ReactSdkContext);
     const [videoState, setVideoState] = useState<
-      "initial" | "loading" | "ready"
+      "initial" | "initialized" | "ready"
     >("initial");
     const elementRef = useRef<ElementRef<typeof defaultTag> | null>(null);
     const [previewImageUrl, setPreviewImageUrl] = useState<URL>();
 
     useEffect(() => {
-      setVideoState(autoplay && renderer !== "canvas" ? "loading" : "initial");
+      setVideoState(
+        autoplay && renderer !== "canvas" ? "initialized" : "initial"
+      );
     }, [autoplay, renderer]);
 
     useEffect(() => {
@@ -335,18 +337,22 @@ export const Vimeo = forwardRef<Ref, Props>(
     ]);
 
     return (
-      <VimeoContext.Provider value={{ previewImageUrl }}>
+      <VimeoContext.Provider
+        value={{
+          previewImageUrl,
+          initialize() {
+            if (renderer !== "canvas") {
+              setVideoState("initialized");
+            }
+          },
+        }}
+      >
         <div
           {...rest}
           ref={(value: Ref) => {
             elementRef.current = value;
             if (ref !== null) {
               typeof ref === "function" ? ref(value) : (ref.current = value);
-            }
-          }}
-          onClick={() => {
-            if (renderer !== "canvas") {
-              setVideoState("loading");
             }
           }}
           onPointerOver={() => {
@@ -391,4 +397,5 @@ const EmptyState = () => {
 
 export const VimeoContext = createContext<{
   previewImageUrl?: URL;
-}>({});
+  initialize: () => void;
+}>({ initialize: () => {} });
