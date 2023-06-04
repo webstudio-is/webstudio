@@ -14,6 +14,7 @@ import {
   type ComponentProps,
   useContext,
   createContext,
+  type ContextType,
 } from "react";
 import { ReactSdkContext } from "@webstudio-is/react-sdk";
 
@@ -212,13 +213,63 @@ const loadPreviewImage = async (element: HTMLElement, videoUrl: string) => {
   return imageUrl;
 };
 
+const useVimeo = ({
+  options,
+  renderer,
+  previewImage,
+}: {
+  options: VimeoPlayerOptions;
+  previewImage?: boolean;
+  renderer: ContextType<typeof ReactSdkContext>["renderer"];
+}) => {
+  const [videoState, setVideoState] = useState<
+    "initial" | "initialized" | "ready"
+  >("initial");
+  const elementRef = useRef<ElementRef<typeof defaultTag> | null>(null);
+  const [previewImageUrl, setPreviewImageUrl] = useState<URL>();
+
+  useEffect(() => {
+    setVideoState(
+      options.autoplay && renderer !== "canvas" ? "initialized" : "initial"
+    );
+  }, [options.autoplay, renderer]);
+
+  useEffect(() => {
+    if (
+      elementRef.current === null ||
+      videoState === "ready" ||
+      options.url === undefined
+    ) {
+      return;
+    }
+    if (previewImage) {
+      loadPreviewImage(elementRef.current, options.url).then(
+        setPreviewImageUrl
+      );
+      return;
+    }
+    setPreviewImageUrl(undefined);
+  }, [renderer, previewImage, options.url, videoState]);
+
+  useEffect(() => {
+    if (elementRef.current === null || videoState === "initial") {
+      return;
+    }
+    return createPlayer(elementRef.current, options, () => {
+      setVideoState("ready");
+    });
+  }, [...Object.values(options), videoState]);
+  return { previewImageUrl, setVideoState, elementRef };
+};
+
 export type WsVimeoOptions = Omit<
   VimeoPlayerOptions,
-  "dnt" | "interactive_params"
+  "dnt" | "interactive_params" | "background"
 > & {
   doNotTrack?: VimeoPlayerOptions["dnt"];
   interactiveParams?: VimeoPlayerOptions["interactive_params"];
   previewImage?: boolean;
+  backgroundMode?: boolean;
 };
 
 type Props = Omit<ComponentProps<typeof defaultTag>, keyof WsVimeoOptions> &
@@ -231,7 +282,7 @@ export const Vimeo = forwardRef<Ref, Props>(
       url,
       autoplay = false,
       autopause = true,
-      background = false,
+      backgroundMode = false,
       byline = false,
       controls = true,
       doNotTrack = false,
@@ -257,88 +308,31 @@ export const Vimeo = forwardRef<Ref, Props>(
     ref
   ) => {
     const { renderer } = useContext(ReactSdkContext);
-    const [videoState, setVideoState] = useState<
-      "initial" | "initialized" | "ready"
-    >("initial");
-    const elementRef = useRef<ElementRef<typeof defaultTag> | null>(null);
-    const [previewImageUrl, setPreviewImageUrl] = useState<URL>();
-
-    useEffect(() => {
-      setVideoState(
-        autoplay && renderer !== "canvas" ? "initialized" : "initial"
-      );
-    }, [autoplay, renderer]);
-
-    useEffect(() => {
-      if (
-        elementRef.current === null ||
-        videoState === "ready" ||
-        url === undefined
-      ) {
-        return;
-      }
-      if (previewImage) {
-        loadPreviewImage(elementRef.current, url).then(setPreviewImageUrl);
-      } else {
-        setPreviewImageUrl(undefined);
-      }
-    }, [renderer, previewImage, url, videoState]);
-
-    useEffect(() => {
-      if (elementRef.current === null || videoState === "initial") {
-        return;
-      }
-      return createPlayer(
-        elementRef.current,
-        {
-          url,
-          autoplay,
-          autopause,
-          background,
-          byline,
-          controls,
-          dnt: doNotTrack,
-          keyboard,
-          loop,
-          muted,
-          pip,
-          playsinline,
-          portrait,
-          quality,
-          responsive,
-          speed,
-          title,
-          transparent,
-          interactive_params: interactiveParams,
-          color,
-        },
-        () => {
-          setVideoState("ready");
-        }
-      );
-    }, [
-      url,
-      videoState,
-      autoplay,
-      autopause,
-      background,
-      byline,
-      controls,
-      doNotTrack,
-      keyboard,
-      loop,
-      muted,
-      pip,
-      playsinline,
-      portrait,
-      quality,
-      responsive,
-      speed,
-      title,
-      transparent,
-      interactiveParams,
-      color,
-    ]);
+    const { previewImageUrl, setVideoState, elementRef } = useVimeo({
+      renderer,
+      options: {
+        url,
+        autoplay,
+        autopause,
+        byline,
+        controls,
+        keyboard,
+        loop,
+        muted,
+        pip,
+        playsinline,
+        portrait,
+        quality,
+        responsive,
+        speed,
+        title,
+        transparent,
+        color,
+        interactive_params: interactiveParams,
+        background: backgroundMode,
+        dnt: doNotTrack,
+      },
+    });
 
     return (
       <VimeoContext.Provider
