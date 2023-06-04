@@ -159,13 +159,14 @@ const createPlayer = (
   iframe.setAttribute("src", url);
   iframe.setAttribute(
     "style",
-    "display: block; width: 100%; height: 100%; visibility: hidden;"
+    "position: absolute; width: 100%; height: 100%; opacity: 0; transition: opacity 1s;"
   );
+
   // Show iframe only once it's loaded to avoid weird flashes.
   iframe.addEventListener(
     "load",
     () => {
-      iframe.style.visibility = "visible";
+      iframe.style.opacity = "1";
       callback();
     },
     { once: true }
@@ -366,11 +367,7 @@ export const Vimeo = forwardRef<Ref, Props>(
         >
           {
             // When playing we need to hide the play button
-            url === undefined ? (
-              <EmptyState />
-            ) : videoState === "ready" ? null : (
-              children
-            )
+            url === undefined ? <EmptyState /> : children
           }
         </div>
       </VimeoContext.Provider>

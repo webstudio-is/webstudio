@@ -30,7 +30,6 @@ export const meta: WsComponentMeta = {
           property: "position",
           value: { type: "keyword", value: "relative" },
         },
-
         {
           property: "aspectRatio",
           value: { type: "keyword", value: "640/360" },
