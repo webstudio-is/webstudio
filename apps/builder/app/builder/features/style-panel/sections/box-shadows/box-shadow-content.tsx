@@ -41,6 +41,10 @@ export const BoxShadowContent = (
 
     const layers = parseBoxShadow(intermediateValue.value);
     if (layers.type === "invalid") {
+      setIntermediateValue({
+        type: "invalid",
+        value: intermediateValue.value,
+      });
       return;
     }
     props.setProperty(property)(layers);
