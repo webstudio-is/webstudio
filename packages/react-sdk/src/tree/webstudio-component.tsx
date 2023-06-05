@@ -48,7 +48,7 @@ export const WebstudioComponent = ({
     [componentAttribute]: instance.component,
   };
   if (condition === false) {
-    return null;
+    return <></>;
   }
   const Component = components.get(instance.component);
   if (Component === undefined) {
