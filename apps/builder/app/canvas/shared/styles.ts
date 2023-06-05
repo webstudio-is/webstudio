@@ -1,4 +1,4 @@
-import { useEffect, useMemo } from "react";
+import { useContext, useEffect, useMemo } from "react";
 import { useIsomorphicLayoutEffect } from "react-use";
 import { computed } from "nanostores";
 import { useStore } from "@nanostores/react";
@@ -8,8 +8,9 @@ import {
   idAttribute,
   addGlobalRules,
   createImageValueTransformer,
-  getParams,
   getPresetStyleRules,
+  type Params,
+  ReactSdkContext,
 } from "@webstudio-is/react-sdk";
 import type { Instance, StyleDecl } from "@webstudio-is/project-build";
 import {
@@ -107,13 +108,13 @@ const subscribePreviewMode = () => {
   };
 };
 
-export const useManageDesignModeStyles = () => {
-  useUpdateStyle();
-  usePreviewStyle();
+export const useManageDesignModeStyles = (params: Params) => {
+  useUpdateStyle(params);
+  usePreviewStyle(params);
   useEffect(subscribePreviewMode, []);
 };
 
-export const GlobalStyles = () => {
+export const GlobalStyles = ({ params }: { params: Params }) => {
   const breakpoints = useStore(breakpointsStore);
   const assets = useStore(assetsStore);
   const metas = useStore(registeredComponentMetasStore);
@@ -130,7 +131,6 @@ export const GlobalStyles = () => {
 
   useIsomorphicLayoutEffect(() => {
     fontsAndDefaultsCssEngine.clear();
-    const params = getParams();
     addGlobalRules(fontsAndDefaultsCssEngine, {
       assets,
       assetBaseUrl: params.assetBaseUrl,
@@ -184,11 +184,13 @@ const getOrCreateRule = ({
   breakpointId,
   state = "",
   assets,
+  params,
 }: {
   instanceId: string;
   breakpointId: string;
   state: undefined | string;
   assets: Assets;
+  params: Params;
 }) => {
   const key = `${instanceId}:${breakpointId}:${state}`;
   let rule = wrappedRulesMap.get(key);
@@ -202,7 +204,6 @@ const getOrCreateRule = ({
     );
     wrappedRulesMap.set(key, rule);
   }
-  const params = getParams();
   rule.styleMap.setTransformer(
     createImageValueTransformer(assets, { assetBaseUrl: params.assetBaseUrl })
   );
@@ -232,6 +233,7 @@ export const useCssRules = ({
   instanceId: string;
   instanceStyles: StyleDecl[];
 }) => {
+  const params = useContext(ReactSdkContext);
   const breakpoints = useStore(breakpointsStore);
   const selectedState = useSelectedState(instanceId);
 
@@ -270,6 +272,7 @@ export const useCssRules = ({
         // to show user preview
         state: selectedState === state ? undefined : state,
         assets,
+        params,
       });
 
       // find existing declarations and exclude currently set properties
@@ -307,7 +310,12 @@ const toVarNamespace = (id: string, property: string) => {
   return `${property}-${id}`;
 };
 
-const setCssVar = (id: string, property: string, value?: StyleValue) => {
+const setCssVar = (
+  params: Params,
+  id: string,
+  property: string,
+  value?: StyleValue
+) => {
   const customProperty = `--${toVarNamespace(id, property)}`;
   if (value === undefined) {
     document.body.style.removeProperty(customProperty);
@@ -315,7 +323,6 @@ const setCssVar = (id: string, property: string, value?: StyleValue) => {
   }
 
   const assets = assetsStore.get();
-  const params = getParams();
   const transformer = createImageValueTransformer(assets, {
     assetBaseUrl: params.assetBaseUrl,
   });
@@ -323,7 +330,7 @@ const setCssVar = (id: string, property: string, value?: StyleValue) => {
   document.body.style.setProperty(customProperty, toValue(value, transformer));
 };
 
-const useUpdateStyle = () => {
+const useUpdateStyle = (params: Params) => {
   useSubscribe("updateStyle", ({ id, updates }) => {
     const selectedInstanceSelector = selectedInstanceSelectorStore.get();
     const selectedInstanceId = selectedInstanceSelector?.[0];
@@ -334,18 +341,19 @@ const useUpdateStyle = () => {
     }
 
     for (const update of updates) {
-      setCssVar(id, update.property, undefined);
+      setCssVar(params, id, update.property, undefined);
     }
   });
 };
 
-const usePreviewStyle = () => {
+const usePreviewStyle = (params: Params) => {
   useSubscribe("previewStyle", ({ id, updates, breakpoint, state }) => {
     const rule = getOrCreateRule({
       instanceId: id,
       breakpointId: breakpoint.id,
       state,
       assets: assetsStore.get(),
+      params,
     });
 
     for (const update of updates) {
@@ -358,11 +366,11 @@ const usePreviewStyle = () => {
           }
         }
 
-        setCssVar(id, update.property, update.value);
+        setCssVar(params, id, update.property, update.value);
       }
 
       if (update.operation === "delete") {
-        setCssVar(id, update.property, undefined);
+        setCssVar(params, id, update.property, undefined);
       }
     }
 

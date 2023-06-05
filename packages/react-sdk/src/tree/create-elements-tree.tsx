@@ -4,7 +4,7 @@ import { Scripts, ScrollRestoration } from "@remix-run/react";
 import type { Assets } from "@webstudio-is/asset-uploader";
 import type { Instance, Instances } from "@webstudio-is/project-build";
 import type { Components } from "../components/components-utils";
-import { ReactSdkContext } from "../context";
+import { ReactSdkContext, type Params } from "../context";
 import type { Pages, PropsByInstanceId } from "../props";
 import type { WebstudioComponent } from "./webstudio-component";
 
@@ -12,6 +12,8 @@ type InstanceSelector = Instance["id"][];
 
 export const createElementsTree = ({
   renderer,
+  imageBaseUrl,
+  assetBaseUrl,
   instances,
   rootInstanceId,
   propsByInstanceIdStore,
@@ -19,8 +21,7 @@ export const createElementsTree = ({
   pagesStore,
   Component,
   components,
-}: {
-  renderer?: "canvas" | "preview";
+}: Params & {
   instances: Instances;
   rootInstanceId: Instance["id"];
   propsByInstanceIdStore: ReadableAtom<PropsByInstanceId>;
@@ -57,7 +58,14 @@ export const createElementsTree = ({
   });
   return (
     <ReactSdkContext.Provider
-      value={{ propsByInstanceIdStore, assetsStore, pagesStore, renderer }}
+      value={{
+        propsByInstanceIdStore,
+        assetsStore,
+        pagesStore,
+        renderer,
+        imageBaseUrl,
+        assetBaseUrl,
+      }}
     >
       {root}
     </ReactSdkContext.Provider>

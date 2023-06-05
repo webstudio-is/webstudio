@@ -4,9 +4,9 @@ import type { Build, Page } from "@webstudio-is/project-build";
 import type { Asset } from "@webstudio-is/asset-uploader";
 import { createElementsTree } from "./create-elements-tree";
 import { WebstudioComponent } from "./webstudio-component";
-import { setParams, type Params } from "../app/params";
 import { getPropsByInstanceId } from "../props";
 import type { Components } from "../components/components-utils";
+import type { Params } from "../context";
 
 export type Data = {
   page: Page;
@@ -31,8 +31,9 @@ export const InstanceRoot = ({
   Component,
   components,
 }: RootProps): JSX.Element | null => {
-  setParams(data.params);
   return createElementsTree({
+    imageBaseUrl: data.params?.imageBaseUrl ?? "/",
+    assetBaseUrl: data.params?.assetBaseUrl ?? "/",
     instances: new Map(data.build.instances),
     rootInstanceId: data.page.rootInstanceId,
     propsByInstanceIdStore: atom(

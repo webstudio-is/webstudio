@@ -6,7 +6,6 @@ import {
   type Params,
   type Components,
   createElementsTree,
-  setParams,
 } from "@webstudio-is/react-sdk";
 import * as baseComponents from "@webstudio-is/sdk-components-react";
 import * as baseComponentMetas from "@webstudio-is/sdk-components-react/metas";
@@ -62,7 +61,7 @@ const temporaryInstances: Instances = new Map([
   ],
 ]);
 
-const useElementsTree = (components: Components) => {
+const useElementsTree = (components: Components, params: Params) => {
   const instances = useStore(instancesStore);
   const page = useStore(selectedPageStore);
   const [isPreviewMode] = useIsPreviewMode();
@@ -94,6 +93,8 @@ const useElementsTree = (components: Components) => {
   return useMemo(() => {
     return createElementsTree({
       renderer: isPreviewMode ? "preview" : "canvas",
+      imageBaseUrl: params.imageBaseUrl,
+      assetBaseUrl: params.assetBaseUrl,
       instances: instances.size === 0 ? temporaryInstances : instances,
       // fallback to temporary root instance to render scripts
       // and receive real data from builder
@@ -104,11 +105,18 @@ const useElementsTree = (components: Components) => {
       Component: WebstudioComponentDev,
       components,
     });
-  }, [instances, rootInstanceId, components, pagesMapStore, isPreviewMode]);
+  }, [
+    params,
+    instances,
+    rootInstanceId,
+    components,
+    pagesMapStore,
+    isPreviewMode,
+  ]);
 };
 
-const DesignMode = () => {
-  useManageDesignModeStyles();
+const DesignMode = ({ params }: { params: Params }) => {
+  useManageDesignModeStyles(params);
   useDragAndDrop();
   // We need to initialize this in both canvas and builder,
   // because the events will fire in either one, depending on where the focus is
@@ -128,7 +136,6 @@ type CanvasProps = {
 
 export const Canvas = ({ params }: CanvasProps): JSX.Element | null => {
   const handshaken = useStore(handshakenStore);
-  setParams(params ?? null);
   useCanvasStore(publish);
   const [isPreviewMode] = useIsPreviewMode();
 
@@ -163,12 +170,14 @@ export const Canvas = ({ params }: CanvasProps): JSX.Element | null => {
 
   useEffect(subscribeCollapsedToPubSub, []);
 
-  const elements = useElementsTree(components);
+  const elements = useElementsTree(components, params);
 
   return (
     <>
-      <GlobalStyles />
-      {isPreviewMode === false && handshaken === true && <DesignMode />}
+      <GlobalStyles params={params} />
+      {isPreviewMode === false && handshaken === true && (
+        <DesignMode params={params} />
+      )}
       {elements}
     </>
   );
