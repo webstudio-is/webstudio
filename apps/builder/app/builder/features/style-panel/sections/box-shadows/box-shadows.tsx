@@ -1,17 +1,10 @@
 import { useState } from "react";
-import { type StyleProperty } from "@webstudio-is/css-data";
 import {
-  Tooltip,
-  Flex,
-  theme,
-  Grid,
   SectionTitle,
   SectionTitleLabel,
   SectionTitleButton,
-  Label,
 } from "@webstudio-is/design-system";
 import { PropertyName } from "../../shared/property-name";
-import { InformationIcon } from "@webstudio-is/icons";
 import { FloatingPanel } from "~/builder/shared/floating-panel";
 import type { RenderCategoryProps } from "../../style-sections";
 import { BoxShadowContent } from "./box-shadow-content";
@@ -21,8 +14,8 @@ import { BoxShadowLayersList } from "./box-shadow-list";
 import { getStyleSource } from "../../shared/style-info";
 import { PlusIcon } from "@webstudio-is/icons";
 import { getDots } from "../../shared/collapsible-section";
+import { property } from "./utils";
 
-const property: StyleProperty = "boxShadow";
 const label = "Box Shadow";
 
 export const BoxShadows = (props: RenderCategoryProps) => {
@@ -32,7 +25,7 @@ export const BoxShadows = (props: RenderCategoryProps) => {
   return (
     <BoxShadowWrapper {...props}>
       {value?.type === "layers" && value.value.length > 0 ? (
-        <BoxShadowLayersList property={property} layers={value} {...props} />
+        <BoxShadowLayersList layers={value} {...props} />
       ) : (
         <></>
       )}
@@ -64,33 +57,9 @@ const BoxShadowWrapper: React.FC<
                 <FloatingPanel
                   title={label}
                   content={
-                    <Flex
-                      direction="column"
-                      css={{
-                        px: theme.spacing[9],
-                        py: theme.spacing[9],
-                      }}
-                    >
-                      <Label>
-                        <Flex align={"center"} gap={1}>
-                          Code
-                          <Tooltip
-                            variant="wrapped"
-                            content={
-                              <>
-                                Paste a box-shadow, for example:
-                                <br />
-                                <br />
-                                box-shadow(...)
-                              </>
-                            }
-                          >
-                            <InformationIcon />
-                          </Tooltip>
-                        </Flex>
-                      </Label>
-                      <BoxShadowContent {...props} />
-                    </Flex>
+                    <BoxShadowContent
+                      createBatchUpdate={props.createBatchUpdate}
+                    />
                   }
                 >
                   <PlusIcon />

@@ -83,7 +83,7 @@ const ItemButton = styled("button", {
 type Props = ComponentProps<typeof ItemButton> & {
   hidden?: boolean;
   label: React.ReactElement;
-  thumbnail: React.ReactElement;
+  thumbnail?: React.ReactElement;
   buttons?: React.ReactElement;
   // to support Radix trigger asChild
   "data-state"?: "open";
@@ -157,7 +157,7 @@ export const CssValueListItem = forwardRef(
               <DragHandleIconStyled />
 
               <Flex gap={2} shrink>
-                <ThumbHolder>{thumbnail}</ThumbHolder>
+                {thumbnail ? <ThumbHolder>{thumbnail}</ThumbHolder> : null}
                 {label}
               </Flex>
 

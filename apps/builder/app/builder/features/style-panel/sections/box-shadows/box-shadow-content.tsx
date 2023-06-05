@@ -1,31 +1,43 @@
 import { useState } from "react";
-import type { InvalidValue, StyleProperty } from "@webstudio-is/css-data";
-import { TextArea, theme } from "@webstudio-is/design-system";
+import type { InvalidValue, LayersValue } from "@webstudio-is/css-data";
+import {
+  Flex,
+  Label,
+  TextArea,
+  theme,
+  Tooltip,
+} from "@webstudio-is/design-system";
 import type { RenderCategoryProps } from "../../style-sections";
 import { parseBoxShadow } from "@webstudio-is/css-data";
+import { InformationIcon } from "@webstudio-is/icons";
+import { addBoxShadow } from "./utils";
 
 type IntermediateValue = {
   type: "intermediate";
   value: string;
 };
 
-const property: StyleProperty = "boxShadow";
+type BoxShadowEditProps = Pick<RenderCategoryProps, "createBatchUpdate"> & {
+  index: number;
+  value: string;
+  onEditLayer: (index: number, layers: LayersValue) => void;
+};
+
+type BoxShadowContentProps = Pick<RenderCategoryProps, "createBatchUpdate">;
 
 export const BoxShadowContent = (
-  props: Pick<
-    RenderCategoryProps,
-    "deleteProperty" | "currentStyle" | "setProperty"
-  >
+  props: BoxShadowContentProps | BoxShadowEditProps
 ) => {
   const [intermediateValue, setIntermediateValue] = useState<
     IntermediateValue | InvalidValue | undefined
-  >(undefined);
-  const styleInfo = props.currentStyle[property];
-  const styleValue = styleInfo?.value;
-
-  const textAreaValue =
-    intermediateValue?.value ??
-    (styleValue?.type === "unparsed" ? styleValue.value : undefined);
+  >(
+    "onEditLayer" in props
+      ? {
+          type: "intermediate",
+          value: props.value,
+        }
+      : undefined
+  );
 
   const handleChange = (value: string) => {
     setIntermediateValue({
@@ -38,7 +50,6 @@ export const BoxShadowContent = (
     if (intermediateValue === undefined) {
       return;
     }
-
     const layers = parseBoxShadow(intermediateValue.value);
     if (layers.type === "invalid") {
       setIntermediateValue({
@@ -47,23 +58,54 @@ export const BoxShadowContent = (
       });
       return;
     }
-    props.setProperty(property)(layers);
+
+    if ("onEditLayer" in props) {
+      props.onEditLayer(props.index, layers);
+    } else {
+      addBoxShadow(layers, props.createBatchUpdate);
+    }
   };
 
   return (
-    <TextArea
-      rows={3}
-      name="description"
-      value={textAreaValue ?? ""}
-      css={{ minHeight: theme.spacing[14] }}
-      state={intermediateValue?.type === "invalid" ? "invalid" : undefined}
-      onChange={(event) => handleChange(event.target.value)}
-      onKeyDown={(event) => {
-        if (event.key === "Enter") {
-          handleComplete();
-          event.preventDefault();
-        }
+    <Flex
+      direction="column"
+      css={{
+        px: theme.spacing[9],
+        py: theme.spacing[9],
       }}
-    />
+    >
+      <Label>
+        <Flex align={"center"} gap={2}>
+          Code
+          <Tooltip
+            variant="wrapped"
+            content={
+              <>
+                Paste a box-shadow, for example:
+                <br />
+                <br />
+                box-shadow(...)
+              </>
+            }
+          >
+            <InformationIcon />
+          </Tooltip>
+        </Flex>
+      </Label>
+      <TextArea
+        rows={3}
+        name="description"
+        value={intermediateValue?.value ?? ""}
+        css={{ minHeight: theme.spacing[14] }}
+        state={intermediateValue?.type === "invalid" ? "invalid" : undefined}
+        onChange={(event) => handleChange(event.target.value)}
+        onKeyDown={(event) => {
+          if (event.key === "Enter") {
+            handleComplete();
+            event.preventDefault();
+          }
+        }}
+      />
+    </Flex>
   );
 };

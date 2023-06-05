@@ -60,7 +60,7 @@ export const parseBoxShadow = (
             if (item.type === "Identifier") {
               shadow.push({
                 type: "keyword",
-                value: (item as csstree.Identifier).name,
+                value: item.name,
               });
             }
 
