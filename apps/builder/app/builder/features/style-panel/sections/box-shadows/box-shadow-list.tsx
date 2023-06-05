@@ -38,7 +38,7 @@ export const BoxShadowLayersList: React.FC<BoxShadowLayerProperies> = ({
 
     const canLayerBeHidden =
       layer.type === "tuple" || layer.type === "unparsed";
-    if (!canLayerBeHidden) {
+    if (canLayerBeHidden === false) {
       return;
     }
     const newLayers = [...layers.value];

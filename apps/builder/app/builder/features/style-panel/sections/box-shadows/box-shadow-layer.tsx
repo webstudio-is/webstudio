@@ -1,11 +1,11 @@
 import type { StyleProperty, TupleValue } from "@webstudio-is/css-data";
 import {
+  theme,
   Grid,
   Label,
   SmallIconButton,
   SmallToggleButton,
 } from "@webstudio-is/design-system";
-import { theme } from "@webstudio-is/design-system";
 import {
   EyeconClosedIcon,
   EyeconOpenIcon,
@@ -13,27 +13,30 @@ import {
 } from "@webstudio-is/icons";
 import { useMemo } from "react";
 
-export const Layer: React.FC<{
+export const Layer = (props: {
   index: number;
   layer: TupleValue;
   property: StyleProperty;
   onLayerHide: (index: number) => void;
   onDeleteLayer: (index: number) => void;
-}> = ({ index, layer, onDeleteLayer, onLayerHide }) => {
+}) => {
+  const { index, layer, onDeleteLayer, onLayerHide } = props;
   const layerName = useMemo(() => {
-    return layer.value.reduce((acc: string, item) => {
+    let name = "";
+    for (const item of Object.values(layer.value)) {
       if (item.type === "unit" && item.unit !== "number") {
-        acc = acc + " " + `${item.value}${item.unit}`;
+        name = name + ` ${item.value}${item.unit}`;
       }
 
       if (
         item.type === "keyword" ||
         (item.type === "unit" && item.unit === "number")
       ) {
-        acc = acc + " " + item.value;
+        name = name + " " + item.value;
       }
-      return acc;
-    }, ``);
+    }
+
+    return name;
   }, [layer]);
 
   return (
