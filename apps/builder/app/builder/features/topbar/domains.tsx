@@ -23,6 +23,7 @@ import {
 import type { DomainStatus } from "@webstudio-is/prisma-client";
 import { CollapsibleDomainSection } from "./collapsible-domain-section";
 import env from "~/shared/env";
+import { useCallback, useEffect, useState } from "react";
 
 const trpc = createTrpcFetchProxy<DomainRouter>(builderDomainsPath);
 
@@ -32,6 +33,7 @@ type Domain = {
     domain: string;
     error: string | null;
     status: DomainStatus;
+    updatedAt: string;
   };
   txtRecord: string;
   cname: string;
@@ -72,7 +74,10 @@ export const getStatus = (projectDomain: Domain) =>
     ? (`VERIFIED_${projectDomain.domain.status}` as const)
     : `UNVERIFIED`;
 
-const getStatusText = (props: { projectDomain: Domain }) => {
+const getStatusText = (props: {
+  projectDomain: Domain;
+  isLoading: boolean;
+}) => {
   const status = getStatus(props.projectDomain);
 
   let isVerifiedActive = false;
@@ -104,10 +109,13 @@ const getStatusText = (props: { projectDomain: Domain }) => {
       break;
   }
 
-  return { isVerifiedActive, text };
+  return {
+    isVerifiedActive,
+    text: props.isLoading ? "Loading status..." : text,
+  };
 };
 
-const StatusIcon = (props: { projectDomain: Domain }) => {
+const StatusIcon = (props: { projectDomain: Domain; isLoading: boolean }) => {
   const { isVerifiedActive, text } = getStatusText(props);
 
   const Icon = isVerifiedActive ? CheckCircleIcon : AlertIcon;
@@ -121,7 +129,9 @@ const StatusIcon = (props: { projectDomain: Domain }) => {
           cursor: "pointer",
           width: theme.spacing[12],
           height: theme.spacing[12],
-          color: isVerifiedActive
+          color: props.isLoading
+            ? theme.colors.foregroundDisabled
+            : isVerifiedActive
             ? theme.colors.foregroundSuccessText
             : theme.colors.foregroundDestructive,
         }}
@@ -162,6 +172,8 @@ const DomainItem = (props: {
     error: updateStatusError,
   } = trpc.updateStatus.useMutation();
 
+  const [isStatusLoading, setIsStatusLoading] = useState(true);
+
   const isRemoveInProgress =
     removeState !== "idle" || props.domainLoadingState !== "idle";
 
@@ -173,6 +185,106 @@ const DomainItem = (props: {
   const status = props.projectDomain.verified
     ? (`VERIFIED_${props.projectDomain.domain.status}` as `VERIFIED_${DomainStatus}`)
     : `UNVERIFIED`;
+
+  const { initiallyOpen } = props;
+
+  const domain = props.projectDomain.domain.domain;
+  const domainStatus = props.projectDomain.domain.status;
+  const domainError = props.projectDomain.domain.error;
+  const domainUpdatedAt = props.projectDomain.domain.updatedAt;
+
+  const projectId = props.projectDomain.projectId;
+  // const domain
+
+  const refreshDomainResult = props.refreshDomainResult;
+
+  // @todo this should gone https://github.com/webstudio-is/webstudio-builder/issues/1723
+  const handleVerify = useCallback(() => {
+    verify(
+      {
+        domain,
+        projectId,
+      },
+      (verifyResponse) => {
+        setIsStatusLoading(false);
+
+        if (verifyResponse.success) {
+          refreshDomainResult({
+            projectId,
+          });
+        }
+      }
+    );
+  }, [domain, projectId, refreshDomainResult, verify]);
+
+  // @todo this should gone https://github.com/webstudio-is/webstudio-builder/issues/1723
+  const handleUpdateStatus = useCallback(() => {
+    updateStatus(
+      {
+        domain,
+        projectId,
+      },
+      (data) => {
+        setIsStatusLoading(false);
+
+        if (data.success) {
+          if (
+            domainStatus !== data.domain.status ||
+            domainError !== data.domain.error
+          ) {
+            refreshDomainResult({
+              projectId,
+            });
+          }
+        }
+      }
+    );
+  }, [
+    domain,
+    domainError,
+    domainStatus,
+    projectId,
+    refreshDomainResult,
+    updateStatus,
+  ]);
+
+  // @todo this should gone https://github.com/webstudio-is/webstudio-builder/issues/1723
+  useEffect(() => {
+    if (initiallyOpen) {
+      setIsStatusLoading(false);
+      return;
+    }
+
+    if (status === "VERIFIED_ACTIVE") {
+      setIsStatusLoading(false);
+      return;
+    }
+
+    const timeSinceLastUpdateMs =
+      Date.now() - new Date(domainUpdatedAt).getTime();
+
+    const DAY_IN_MS = 24 * 60 * 60 * 1000;
+    // Do not check status if it updated more than one day ago
+    if (timeSinceLastUpdateMs > DAY_IN_MS) {
+      setIsStatusLoading(false);
+      return;
+    }
+
+    if (status === "UNVERIFIED") {
+      handleVerify();
+      return;
+    }
+
+    handleUpdateStatus();
+
+    // Update status automatically
+  }, [
+    status,
+    initiallyOpen,
+    handleVerify,
+    handleUpdateStatus,
+    domainUpdatedAt,
+  ]);
 
   const cnameEntryName = getCname(props.projectDomain.domain.domain);
   const cnameEntryValue = `${props.projectDomain.cname}.customers.${
@@ -186,6 +298,7 @@ const DomainItem = (props: {
 
   const { isVerifiedActive, text } = getStatusText({
     projectDomain: props.projectDomain,
+    isLoading: false,
   });
 
   return (
@@ -194,7 +307,10 @@ const DomainItem = (props: {
       title={props.projectDomain.domain.domain}
       suffix={
         <Grid flow="column">
-          <StatusIcon projectDomain={props.projectDomain} />
+          <StatusIcon
+            isLoading={isStatusLoading}
+            projectDomain={props.projectDomain}
+          />
 
           <Tooltip content={`Proceed to ${props.projectDomain.domain.domain}`}>
             <IconButton
@@ -222,21 +338,7 @@ const DomainItem = (props: {
             disabled={isCheckStateInProgress}
             color="primary"
             css={{ width: "100%", flexShrink: 0, mt: theme.spacing[3] }}
-            onClick={() => {
-              verify(
-                {
-                  domain: props.projectDomain.domain.domain,
-                  projectId: props.projectDomain.projectId,
-                },
-                (verifyResponse) => {
-                  if (verifyResponse.success) {
-                    props.refreshDomainResult({
-                      projectId: props.projectDomain.projectId,
-                    });
-                  }
-                }
-              );
-            }}
+            onClick={handleVerify}
           >
             Check status
           </Button>
@@ -255,27 +357,7 @@ const DomainItem = (props: {
             disabled={isCheckStateInProgress}
             color="primary"
             css={{ width: "100%", flexShrink: 0, mt: theme.spacing[3] }}
-            onClick={() => {
-              updateStatus(
-                {
-                  domain: props.projectDomain.domain.domain,
-                  projectId: props.projectDomain.projectId,
-                },
-                (data) => {
-                  if (data.success) {
-                    if (
-                      props.projectDomain.domain.status !==
-                        data.domain.status ||
-                      props.projectDomain.domain.error !== data.domain.error
-                    ) {
-                      props.refreshDomainResult({
-                        projectId: props.projectDomain.projectId,
-                      });
-                    }
-                  }
-                }
-              );
-            }}
+            onClick={handleUpdateStatus}
           >
             Check status
           </Button>
