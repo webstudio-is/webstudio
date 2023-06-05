@@ -40,13 +40,16 @@ export const WebstudioComponent = ({
   components,
   ...rest
 }: WebstudioComponentProps) => {
-  const instanceProps = useInstanceProps(instance.id);
+  const { condition = true, ...instanceProps } = useInstanceProps(instance.id);
   const props = {
     ...instanceProps,
     ...rest,
     [idAttribute]: instance.id,
     [componentAttribute]: instance.component,
   };
+  if (condition === false) {
+    return null;
+  }
   const Component = components.get(instance.component);
   if (Component === undefined) {
     return <></>;

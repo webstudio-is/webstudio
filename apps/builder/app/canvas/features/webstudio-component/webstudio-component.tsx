@@ -127,7 +127,7 @@ export const WebstudioComponentDev = ({
   );
 
   const instanceProps = useInstanceProps(instance.id);
-  const userProps = useMemo(() => {
+  const { condition = true, ...userProps } = useMemo(() => {
     const result: UserProps = {};
     if (instanceProps === undefined) {
       return result;
@@ -175,6 +175,10 @@ export const WebstudioComponentDev = ({
       : undefined;
 
   const Component = components.get(instance.component);
+
+  if (condition === false) {
+    return null;
+  }
 
   if (Component === undefined) {
     return <></>;

@@ -114,10 +114,20 @@ const systemPropsMeta: { name: string; meta: PropMeta }[] = [
   {
     name: "id",
     meta: {
+      label: "ID",
       required: false,
       control: "text",
       type: "string",
-      label: "ID",
+    },
+  },
+  {
+    name: "condition",
+    meta: {
+      label: "Condition",
+      required: false,
+      defaultValue: true,
+      control: "boolean",
+      type: "boolean",
     },
   },
 ];
@@ -137,7 +147,10 @@ export const usePropsLogic = ({
   const initialPropsNames = new Set(meta.initialProps ?? []);
 
   const systemProps = systemPropsMeta.map(({ name, meta }) => {
-    const saved = getAndDelete(unprocessedSaved, name);
+    let saved = getAndDelete(unprocessedSaved, name);
+    if (saved === undefined && meta.defaultValue !== undefined) {
+      saved = getStartingProp(instanceId, meta, name);
+    }
     getAndDelete(unprocessedKnown, name);
     initialPropsNames.delete(name);
     return { prop: saved, propName: name, meta };
