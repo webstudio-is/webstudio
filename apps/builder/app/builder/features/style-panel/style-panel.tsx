@@ -1,10 +1,10 @@
 import {
   theme,
   Box,
-  ScrollArea,
-  Separator,
   Card,
   Text,
+  Separator,
+  ScrollArea,
 } from "@webstudio-is/design-system";
 import type { Instance } from "@webstudio-is/project-build";
 import type { Publish } from "~/shared/pubsub";
@@ -51,9 +51,11 @@ export const StylePanel = ({ selectedInstance, publish }: StylePanelProps) => {
         css={{
           px: theme.spacing[9],
           pb: theme.spacing[9],
-          boxShadow: theme.shadows.panelSectionDropShadow,
         }}
       >
+        <Text css={{ py: theme.spacing[7] }} variant="titles">
+          Style Sources
+        </Text>
         <StyleSourcesSection />
       </Box>
       <Separator />

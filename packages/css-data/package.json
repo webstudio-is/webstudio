@@ -1,6 +1,6 @@
 {
   "name": "@webstudio-is/css-data",
-  "version": "0.65.0",
+  "version": "0.71.0",
   "description": "CSS Data",
   "author": "Webstudio <github@webstudio.is>",
   "homepage": "https://webstudio.is",
@@ -12,20 +12,22 @@
     "build": "build-package",
     "build:mdn-data": "tsx ./bin/mdn-data.ts ./src/__generated__ &&  prettier --write \"./src/__generated__/**/*.ts\"",
     "dts": "tsc --declarationDir lib/types",
-    "lint": "eslint ./src --ext .ts,.tsx --max-warnings 0"
+    "lint": "eslint ./src --ext .ts,.tsx --max-warnings 0",
+    "test": "NODE_OPTIONS=--experimental-vm-modules jest"
   },
   "devDependencies": {
-    "@types/css-tree": "^2.0.0",
+    "@types/css-tree": "^2.3.1",
     "@webstudio-is/scripts": "workspace:^",
+    "@webstudio-is/jest-config": "workspace:^",
     "@webstudio-is/tsconfig": "workspace:^",
     "camelcase": "^6.3.0",
-    "css-tree": "^2.3.1",
     "html-tags": "^3.2.0",
+    "jest": "^29.3.1",
     "mdn-data": "2.0.30",
     "tsx": "^3.12.6",
     "type-fest": "^3.7.1",
     "typescript": "5.0.3",
-    "zod": "^3.19.1"
+    "zod": "^3.21.4"
   },
   "peerDependencies": {
     "zod": "^3.19.1"
@@ -33,9 +35,9 @@
   "exports": {
     "source": "./src/index.ts",
     "import": "./lib/index.js",
-    "require": "./lib/cjs/index.js"
+    "require": "./lib/cjs/index.js",
+    "types": "./lib/types/index.d.ts"
   },
-  "types": "lib/types/index.d.ts",
   "files": [
     "lib/*",
     "src/*",
@@ -43,5 +45,11 @@
   ],
   "license": "MIT",
   "private": false,
-  "sideEffects": false
+  "sideEffects": false,
+  "dependencies": {
+    "colord": "^2.9.3",
+    "hyphenate-style-name": "^1.0.4",
+    "warn-once": "^0.1.1",
+    "css-tree": "^2.3.1"
+  }
 }

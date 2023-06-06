@@ -114,7 +114,7 @@ export const uploadFile = async (
       // global web streams types do not define ReadableStream as async iterable
       data as unknown as AsyncIterable<Uint8Array>
     );
-    const { meta, format, location, size } = assetData;
+    const { meta, format, size } = assetData;
     const dbFile = await prisma.file.update({
       where: {
         name,
@@ -126,14 +126,11 @@ export const uploadFile = async (
         status: "UPLOADED",
       },
     });
-    return formatAsset(
-      {
-        id: "",
-        projectId: dbFile.uploaderProjectId as string,
-        location,
-      },
-      dbFile
-    );
+    return formatAsset({
+      assetId: "",
+      projectId: dbFile.uploaderProjectId as string,
+      file: dbFile,
+    });
   } catch (error) {
     await prisma.file.delete({
       where: {

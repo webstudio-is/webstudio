@@ -1,19 +1,19 @@
 import { useMemo, useEffect } from "react";
 import { useStore } from "@nanostores/react";
 import { computed } from "nanostores";
-import type { Params } from "@webstudio-is/react-sdk";
 import type { Instances, Page } from "@webstudio-is/project-build";
 import {
+  type Params,
+  type Components,
   createElementsTree,
-  registerComponents,
-  registerComponentPropsMetas,
-  registerComponentMetas,
-  customComponentMetas,
-  customComponentPropsMetas,
   setParams,
-  customComponents,
-  type GetComponent,
 } from "@webstudio-is/react-sdk";
+import * as baseComponents from "@webstudio-is/sdk-components-react";
+import * as baseComponentMetas from "@webstudio-is/sdk-components-react/metas";
+import * as baseComponentPropsMetas from "@webstudio-is/sdk-components-react/props";
+import * as remixComponents from "@webstudio-is/sdk-components-react-remix";
+import * as remixComponentMetas from "@webstudio-is/sdk-components-react-remix/metas";
+import * as remixComponentPropsMetas from "@webstudio-is/sdk-components-react-remix/props";
 import { publish } from "~/shared/pubsub";
 import {
   handshakenStore,
@@ -31,9 +31,12 @@ import {
   instancesStore,
   useIsPreviewMode,
   selectedPageStore,
+  registerComponentMetas,
+  registerComponentPropsMetas,
 } from "~/shared/nano-states";
 import { useDragAndDrop } from "./shared/use-drag-drop";
 import { useCopyPaste } from "~/shared/copy-paste";
+import { useSyncInitializeOnce } from "~/shared/hook-utils";
 import { setDataCollapsed, subscribeCollapsedToPubSub } from "./collapsed";
 import { useWindowResizeDebounced } from "~/shared/dom-hooks";
 import { subscribeInstanceSelection } from "./instance-selection";
@@ -59,7 +62,7 @@ const temporaryInstances: Instances = new Map([
   ],
 ]);
 
-const useElementsTree = (getComponent: GetComponent) => {
+const useElementsTree = (components: Components) => {
   const instances = useStore(instancesStore);
   const page = useStore(selectedPageStore);
   const rootInstanceId = page?.rootInstanceId;
@@ -89,6 +92,7 @@ const useElementsTree = (getComponent: GetComponent) => {
 
   return useMemo(() => {
     return createElementsTree({
+      renderer: "canvas",
       instances: instances.size === 0 ? temporaryInstances : instances,
       // fallback to temporary root instance to render scripts
       // and receive real data from builder
@@ -97,9 +101,9 @@ const useElementsTree = (getComponent: GetComponent) => {
       assetsStore,
       pagesStore: pagesMapStore,
       Component: WebstudioComponentDev,
-      getComponent,
+      components,
     });
-  }, [instances, rootInstanceId, getComponent, pagesMapStore]);
+  }, [instances, rootInstanceId, components, pagesMapStore]);
 };
 
 const DesignMode = () => {
@@ -119,21 +123,23 @@ const DesignMode = () => {
 
 type CanvasProps = {
   params: Params;
-  getComponent: GetComponent;
 };
 
-export const Canvas = ({
-  params,
-  getComponent,
-}: CanvasProps): JSX.Element | null => {
+export const Canvas = ({ params }: CanvasProps): JSX.Element | null => {
   const handshaken = useStore(handshakenStore);
   setParams(params ?? null);
   useCanvasStore(publish);
   const [isPreviewMode] = useIsPreviewMode();
 
-  registerComponents(customComponents);
-  registerComponentMetas(customComponentMetas);
-  registerComponentPropsMetas(customComponentPropsMetas);
+  const components = new Map(
+    Object.entries({ ...baseComponents, ...remixComponents })
+  ) as Components;
+  useSyncInitializeOnce(() => {
+    registerComponentMetas(baseComponentMetas);
+    registerComponentPropsMetas(baseComponentPropsMetas);
+    registerComponentMetas(remixComponentMetas);
+    registerComponentPropsMetas(remixComponentPropsMetas);
+  });
 
   // e.g. toggling preview is still needed in both modes
   useCanvasShortcuts();
@@ -156,7 +162,7 @@ export const Canvas = ({
 
   useEffect(subscribeCollapsedToPubSub, []);
 
-  const elements = useElementsTree(getComponent);
+  const elements = useElementsTree(components);
 
   return (
     <>

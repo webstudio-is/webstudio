@@ -1,6 +1,6 @@
 {
   "name": "@webstudio-is/builder",
-  "version": "0.65.0",
+  "version": "0.71.0",
   "private": true,
   "description": "Webstudio Builder UI as a service",
   "scripts": {
@@ -45,6 +45,7 @@
     "@webstudio-is/css-vars": "workspace:^",
     "@webstudio-is/dashboard": "workspace:^",
     "@webstudio-is/design-system": "workspace:^",
+    "@webstudio-is/domain": "workspace:^",
     "@webstudio-is/feature-flags": "workspace:^",
     "@webstudio-is/fonts": "workspace:^",
     "@webstudio-is/icons": "workspace:^",
@@ -53,9 +54,10 @@
     "@webstudio-is/project": "workspace:^",
     "@webstudio-is/project-build": "workspace:^",
     "@webstudio-is/react-sdk": "workspace:^",
+    "@webstudio-is/sdk-components-react": "workspace:^",
+    "@webstudio-is/sdk-components-react-remix": "workspace:^",
     "@webstudio-is/trpc-interface": "workspace:^",
     "colord": "^2.9.3",
-    "css-tree": "^2.3.1",
     "debug": "^4.3.4",
     "detect-font": "^0.1.5",
     "downshift": "^6.1.7",
@@ -89,8 +91,7 @@
     "use-debounce": "^9.0.4",
     "uuid": "^9.0.0",
     "warn-once": "^0.1.1",
-    "zod": "^3.19.1",
-    "zod-form-data": "^1.2.1"
+    "zod": "^3.21.4"
   },
   "devDependencies": {
     "@babel/core": "^7.21.0",
@@ -99,7 +100,6 @@
     "@jest/globals": "^29.3.1",
     "@remix-run/dev": "1.15.0",
     "@storybook/react": "^6.5.16",
-    "@types/css-tree": "^2.0.0",
     "@types/hyphenate-style-name": "^1.0.0",
     "@types/lodash.debounce": "^4.0.6",
     "@types/react": "^18.0.35",
@@ -111,7 +111,6 @@
     "@webstudio-is/jest-config": "workspace:^",
     "@webstudio-is/storybook-config": "workspace:^",
     "@webstudio-is/tsconfig": "workspace:^",
-    "css-tree": "^2.3.0",
     "dotenv": "^16.0.0",
     "dotenv-cli": "^7.1.0",
     "html-tags": "^3.2.0",

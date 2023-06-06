@@ -9,11 +9,14 @@ import {
   useDrop,
   computeIndicatorPlacement,
 } from "@webstudio-is/design-system";
-import { canAcceptComponent, getComponentMeta } from "@webstudio-is/react-sdk";
-import { instancesStore } from "~/shared/nano-states";
+import {
+  instancesStore,
+  registeredComponentMetasStore,
+} from "~/shared/nano-states";
 import { textEditingInstanceSelectorStore } from "~/shared/nano-states";
 import { publish, useSubscribe } from "~/shared/pubsub";
 import {
+  findClosestDroppableComponentIndex,
   insertNewComponentInstance,
   reparentInstance,
 } from "~/shared/instance-utils";
@@ -58,11 +61,12 @@ const findClosestRichTextInstanceSelector = (
   instanceSelector: InstanceSelector
 ) => {
   const instances = instancesStore.get();
+  const metas = registeredComponentMetasStore.get();
   for (const instanceId of instanceSelector) {
     const instance = instances.get(instanceId);
     if (
       instance !== undefined &&
-      getComponentMeta(instance.component)?.type === "rich-text"
+      metas.get(instance.component)?.type === "rich-text"
     ) {
       return getAncestorInstanceSelector(instanceSelector, instanceId);
     }
@@ -84,15 +88,29 @@ const findClosestDroppableInstanceSelector = (
       dragPayload.dragInstanceSelector[0]
     )?.component;
   }
-  for (const instanceId of instanceSelector) {
-    const instance = instances.get(instanceId);
-    if (instance !== undefined && dragComponent !== undefined) {
-      if (canAcceptComponent(instance.component, dragComponent)) {
-        return getAncestorInstanceSelector(instanceSelector, instanceId);
-      }
-    }
+  if (dragComponent === undefined) {
+    return;
   }
-  return;
+
+  const componentSelector: string[] = [];
+  for (const instanceId of instanceSelector) {
+    const component = instances.get(instanceId)?.component;
+    if (component === undefined) {
+      return;
+    }
+    componentSelector.push(component);
+  }
+
+  const droppableIndex = findClosestDroppableComponentIndex(
+    registeredComponentMetasStore.get(),
+    componentSelector,
+    [dragComponent]
+  );
+  if (droppableIndex === -1) {
+    return;
+  }
+  const droppableInstanceSelector = instanceSelector.slice(droppableIndex);
+  return droppableInstanceSelector;
 };
 
 const initialState: {

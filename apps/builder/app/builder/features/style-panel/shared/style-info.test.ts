@@ -1,4 +1,5 @@
 import { test, expect } from "@jest/globals";
+import * as defaultMetas from "@webstudio-is/sdk-components-react/metas";
 import type {
   Breakpoints,
   Instance,
@@ -13,6 +14,8 @@ import {
   getNextSourceInfo,
   getPreviousSourceInfo,
 } from "./style-info";
+
+const metas = new Map(Object.entries(defaultMetas));
 
 const breakpoints: Breakpoints = new Map([
   ["1", { id: "1", label: "1", minWidth: 0 }],
@@ -162,6 +165,7 @@ test("compute inherited styles", () => {
   expect(
     getInheritedInfo(
       instances,
+      metas,
       inheritingStylesByInstanceId,
       selectedInstanceSelector,
       new Map([

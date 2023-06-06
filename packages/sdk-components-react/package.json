@@ -1,0 +1,69 @@
+{
+  "name": "@webstudio-is/sdk-components-react",
+  "version": "0.71.0",
+  "description": "Webstudio default library for react",
+  "author": "Webstudio <github@webstudio.is>",
+  "homepage": "https://webstudio.is",
+  "license": "MIT",
+  "private": false,
+  "type": "module",
+  "sideEffects": false,
+  "files": [
+    "lib/*",
+    "src/*"
+  ],
+  "exports": {
+    ".": {
+      "source": "./src/components.ts",
+      "import": "./lib/components.js",
+      "require": "./lib/cjs/components.js",
+      "types": "./lib/types/components.d.ts"
+    },
+    "./metas": {
+      "source": "./src/metas.ts",
+      "import": "./lib/metas.js",
+      "require": "./lib/cjs/metas.js",
+      "types": "./lib/types/metas.d.ts"
+    },
+    "./props": {
+      "source": "./src/props.ts",
+      "import": "./lib/props.js",
+      "require": "./lib/cjs/props.js",
+      "types": "./lib/types/props.d.ts"
+    }
+  },
+  "scripts": {
+    "dev": "build-package --watch",
+    "build": "build-package",
+    "build:args": "generate-arg-types './src/*.tsx !./src/*.stories.tsx !./src/*.ws.tsx' && prettier --write \"**/*.props.ts\"",
+    "dts": "tsc --declarationDir lib/types",
+    "typecheck": "tsc --noEmit --emitDeclarationOnly false",
+    "lint": "eslint ./src --ext .ts,.tsx --max-warnings 0",
+    "checks": "pnpm typecheck && pnpm lint",
+    "storybook:run": "start-storybook -p 6006",
+    "storybook:build": "build-storybook"
+  },
+  "peerDependencies": {
+    "react": "^18.2.0",
+    "react-dom": "^18.2.0"
+  },
+  "dependencies": {
+    "@react-aria/utils": "^3.13.3",
+    "@webstudio-is/css-vars": "workspace:^",
+    "@webstudio-is/generate-arg-types": "workspace:^",
+    "@webstudio-is/icons": "workspace:^",
+    "@webstudio-is/image": "workspace:^",
+    "@webstudio-is/react-sdk": "workspace:^"
+  },
+  "devDependencies": {
+    "@storybook/react": "^6.5.16",
+    "@types/react": "^18.0.35",
+    "@types/react-dom": "^18.0.11",
+    "@webstudio-is/scripts": "workspace:^",
+    "@webstudio-is/storybook-config": "workspace:^",
+    "@webstudio-is/tsconfig": "workspace:^",
+    "react": "^18.2.0",
+    "react-dom": "^18.2.0",
+    "typescript": "5.0.3"
+  }
+}

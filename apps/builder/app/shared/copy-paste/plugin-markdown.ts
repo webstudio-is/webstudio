@@ -4,13 +4,12 @@ import type { Root } from "mdast";
 import { fromMarkdown } from "mdast-util-from-markdown";
 import type { Instance, Prop } from "@webstudio-is/project-build";
 import { nanoid } from "nanoid";
-import {
-  findClosestDroppableTarget,
-  insertInstancesMutable,
-} from "../tree-utils";
+import { insertInstancesMutable } from "../tree-utils";
+import { findClosestDroppableTarget } from "../instance-utils";
 import {
   instancesStore,
   propsStore,
+  registeredComponentMetasStore,
   selectedInstanceSelectorStore,
   selectedPageStore,
 } from "../nano-states";
@@ -194,11 +193,7 @@ export const parse = (clipboardData: string, options?: Options) => {
   const instances: Instance[] = [];
   const props: Prop[] = [];
   const children = toInstanceData(instances, props, ast, options);
-  // assume text is not top level
-  const rootIds = children.flatMap((child) =>
-    child.type === "id" ? [child.value] : []
-  );
-  return { props, instances, rootIds };
+  return { props, instances, children };
 };
 
 export const onPaste = (clipboardData: string) => {
@@ -213,13 +208,16 @@ export const onPaste = (clipboardData: string) => {
   ];
   const instances = instancesStore.get();
   const dragComponents = [];
-  for (const instanceId of data.rootIds) {
-    const component = instances.get(instanceId)?.component;
-    if (component !== undefined) {
-      dragComponents.push(component);
+  for (const child of data.children) {
+    if (child.type === "id") {
+      const component = instances.get(child.value)?.component;
+      if (component !== undefined) {
+        dragComponents.push(component);
+      }
     }
   }
   const dropTarget = findClosestDroppableTarget(
+    registeredComponentMetasStore.get(),
     instancesStore.get(),
     instanceSelector,
     dragComponents
@@ -228,7 +226,12 @@ export const onPaste = (clipboardData: string) => {
     return;
   }
   store.createTransaction([instancesStore, propsStore], (instances, props) => {
-    insertInstancesMutable(instances, data.instances, data.rootIds, dropTarget);
+    insertInstancesMutable(
+      instances,
+      data.instances,
+      data.children,
+      dropTarget
+    );
     for (const prop of data.props) {
       props.set(prop.id, prop);
     }

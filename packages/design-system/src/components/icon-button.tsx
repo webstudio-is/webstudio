@@ -95,6 +95,18 @@ export const IconButton = styled("button", {
         },
       },
 
+      overwritten: {
+        backgroundColor: theme.colors.backgroundOverwrittenMain,
+        borderColor: theme.colors.borderOverwrittenMain,
+        color: theme.colors.foregroundOverwrittenMain,
+        "&:hover": {
+          backgroundColor: theme.colors.backgroundOverwrittenHover,
+        },
+        "&:disabled": {
+          color: theme.colors.foregroundDisabled,
+        },
+      },
+
       remote: {
         backgroundColor: theme.colors.backgroundRemoteMain,
         borderColor: theme.colors.borderRemoteMain,

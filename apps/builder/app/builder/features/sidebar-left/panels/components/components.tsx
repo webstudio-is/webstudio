@@ -1,10 +1,8 @@
 import { useMemo } from "react";
+import { useStore } from "@nanostores/react";
 import { usePress } from "@react-aria/interactions";
 import {
-  type ComponentName,
   type WsComponentMeta,
-  getComponentMeta,
-  getComponentNames,
   componentCategories,
 } from "@webstudio-is/react-sdk";
 import {
@@ -26,31 +24,8 @@ import {
   useDraggable,
 } from "./use-draggable";
 import { MetaIcon } from "~/builder/shared/meta-icon";
-
-const getMetaMaps = () => {
-  const metaByComponentName: Map<ComponentName, WsComponentMeta> = new Map();
-  const metaByCategory: Map<
-    WsComponentMeta["category"],
-    Array<WsComponentMeta>
-  > = new Map();
-  const componentNamesByMeta: Map<WsComponentMeta, ComponentName> = new Map();
-
-  for (const name of getComponentNames()) {
-    const meta = getComponentMeta(name);
-    if (meta?.category === undefined) {
-      continue;
-    }
-    let categoryMetas = metaByCategory.get(meta.category);
-    if (categoryMetas === undefined) {
-      categoryMetas = [];
-      metaByCategory.set(meta.category, categoryMetas);
-    }
-    categoryMetas.push(meta);
-    metaByComponentName.set(name, meta);
-    componentNamesByMeta.set(meta, name);
-  }
-  return { metaByComponentName, metaByCategory, componentNamesByMeta };
-};
+import { registeredComponentMetasStore } from "~/shared/nano-states";
+import { getMetaMaps } from "./get-meta-maps";
 
 type TabContentProps = {
   onSetActiveTab: (tabName: TabName) => void;
@@ -58,9 +33,10 @@ type TabContentProps = {
 };
 
 export const TabContent = ({ publish, onSetActiveTab }: TabContentProps) => {
-  const { metaByComponentName, metaByCategory, componentNamesByMeta } = useMemo(
-    getMetaMaps,
-    []
+  const metaByComponentName = useStore(registeredComponentMetasStore);
+  const { metaByCategory, componentNamesByMeta } = useMemo(
+    () => getMetaMaps(metaByComponentName),
+    [metaByComponentName]
   );
   const { dragCard, handleInsert, draggableContainerRef } = useDraggable({
     publish,

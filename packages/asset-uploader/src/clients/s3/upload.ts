@@ -1,7 +1,6 @@
 import { z } from "zod";
 import type { PutObjectCommandInput, S3Client } from "@aws-sdk/client-s3";
 import { Upload } from "@aws-sdk/lib-storage";
-import { Location } from "@webstudio-is/prisma-client";
 import { toUint8Array } from "../../utils/to-uint8-array";
 import { getAssetData } from "../../utils/get-asset-data";
 import { createSizeLimiter } from "../../utils/size-limiter";
@@ -59,7 +58,6 @@ export const uploadToS3 = async ({
     type: type.startsWith("image") ? "image" : "font",
     size: data.byteLength,
     data,
-    location: Location.REMOTE,
   });
 
   return assetData;

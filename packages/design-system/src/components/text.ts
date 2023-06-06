@@ -29,7 +29,13 @@ export const textStyle = css({
       contrast: { color: theme.colors.foregroundContrastMain },
       subtle: { color: theme.colors.foregroundSubtle },
       disabled: { color: theme.colors.foregroundDisabled },
-      destructive: { color: theme.colors.foregroundDestructive },
+      success: { color: theme.colors.foregroundSuccessText },
+      destructive: {
+        color: theme.colors.foregroundDestructive,
+        // destructive in most cases used to show 3rd party errors
+        // we don't want it to break layout
+        overflowWrap: "anywhere",
+      },
     },
     align: {
       left: { textAlign: "left" },

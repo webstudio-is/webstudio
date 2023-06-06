@@ -1,13 +1,13 @@
 import type { ComponentMeta } from "@storybook/react";
 import React from "react";
-import { parseCssValue } from "../../shared/parse-css-value";
+import { parseCssValue } from "@webstudio-is/css-data";
 import { SpaceLayout } from "./layout";
 import { ValueText as ValueTextComponent } from "./value-text";
 
 export const ValueText = (
   args: Pick<
     React.ComponentProps<typeof ValueTextComponent>,
-    "origin" | "value"
+    "source" | "value"
   >
 ) => {
   const [hovered, setHovered] = React.useState<{ property: string }>();
@@ -26,7 +26,7 @@ export const ValueText = (
 };
 
 ValueText.args = {
-  origin: "set",
+  source: "local",
   value: { type: "unit", value: 100, unit: "px" },
 };
 
@@ -34,9 +34,9 @@ export default {
   title: "Space/ValueText",
   component: ValueText,
   argTypes: {
-    origin: {
+    source: {
       control: "select",
-      options: ["set", "preset", "unset", "inherited"],
+      options: ["local", "overwritten", "preset", "default", "remote"],
     },
     value: {
       control: "select",

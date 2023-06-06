@@ -18,7 +18,7 @@ export type WsComponentPropsMeta = z.infer<typeof WsComponentPropsMeta>;
 
 export const componentCategories = [
   "general",
-  "typography",
+  "text",
   "media",
   "forms",
 ] as const;
@@ -55,12 +55,15 @@ const WsComponentMeta = z.object({
     "rich-text",
     "rich-text-child",
   ]),
-  acceptedParents: z.optional(z.array(z.string())),
+  requiredAncestors: z.optional(z.array(z.string())),
+  invalidAncestors: z.optional(z.array(z.string())),
+  stylable: z.optional(z.boolean()),
   label: z.string(),
   icon: z.string(),
   presetStyle: z.optional(z.record(z.string(), EmbedTemplateStyleDecl)),
   states: z.optional(z.array(ComponentState)),
-  children: z.optional(WsEmbedTemplate),
+  template: z.optional(WsEmbedTemplate),
+  order: z.number().optional(),
 });
 
 export type WsComponentMeta = Omit<

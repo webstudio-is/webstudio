@@ -77,12 +77,6 @@ export const patchAssets = async (
           id: asset.id,
           projectId,
           name: asset.name,
-          // @todo remove once legacy fields are removed from schema
-          location: asset.location,
-          size: asset.size,
-          format: asset.format,
-          meta: JSON.stringify(asset.meta),
-          status: "UPLOADED",
         })),
     });
   }

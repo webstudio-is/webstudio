@@ -1,6 +1,6 @@
 {
   "name": "@webstudio-is/generate-arg-types",
-  "version": "0.65.0",
+  "version": "0.71.0",
   "description": "Generate components property types",
   "author": "Webstudio <github@webstudio.is>",
   "homepage": "https://webstudio.is",
@@ -18,7 +18,7 @@
     "fast-glob": "^3.2.12",
     "fs-extra": "^10.1.0",
     "react-docgen-typescript": "^2.2.2",
-    "zod": "^3.19.1"
+    "zod": "^3.21.4"
   },
   "devDependencies": {
     "@webstudio-is/scripts": "workspace:^",
@@ -37,9 +37,9 @@
   },
   "exports": {
     "source": "./src/index.ts",
-    "import": "./lib/index.js"
+    "import": "./lib/index.js",
+    "types": "./lib/types/index.d.ts"
   },
-  "types": "lib/types/index.d.ts",
   "license": "MIT",
   "private": false,
   "sideEffects": false

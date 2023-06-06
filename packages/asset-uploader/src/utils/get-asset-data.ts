@@ -2,11 +2,10 @@ import { z } from "zod";
 import sharp from "sharp";
 import { FontMeta } from "@webstudio-is/fonts";
 import { getFontData } from "@webstudio-is/fonts/index.server";
-import { Location, ImageMeta } from "../schema";
+import { ImageMeta } from "../schema";
 
 export const AssetData = z.object({
   size: z.number(),
-  location: Location,
   format: z.string(),
   meta: z.union([ImageMeta, FontMeta]),
 });
@@ -16,7 +15,6 @@ export type AssetData = z.infer<typeof AssetData>;
 type BaseAssetOptions = {
   size: number;
   data: Uint8Array;
-  location: Location;
 };
 
 type AssetOptions =
@@ -40,7 +38,6 @@ export const getAssetData = async (
 
     return {
       size: options.size,
-      location: options.location,
       format,
       meta: { width, height },
     };
@@ -50,7 +47,6 @@ export const getAssetData = async (
 
   return {
     size: options.size,
-    location: options.location,
     format,
     meta,
   };

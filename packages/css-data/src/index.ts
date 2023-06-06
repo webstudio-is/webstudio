@@ -7,6 +7,12 @@ export * from "./__generated__/keyword-values";
 export * from "./__generated__/units";
 export * from "./schema";
 
+// longhand property parsers
+export * from "./property-parsers/index";
+// shorthand property parsers
+export * from "./parse-css-value";
+export * from "./parse-css";
+
 import { properties as generatedProperties } from "./__generated__/properties";
 
 // convert to writable to avoid conflicts with schema type

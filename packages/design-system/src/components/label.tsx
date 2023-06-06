@@ -9,7 +9,13 @@ import { textVariants } from "./text";
 import { styled, theme } from "../stitches.config";
 import { Label as RadixLabel } from "@radix-ui/react-label";
 
-export const labelColors = ["default", "preset", "local", "remote"] as const;
+export const labelColors = [
+  "default",
+  "preset",
+  "local",
+  "overwritten",
+  "remote",
+] as const;
 
 const StyledLabel = styled(RadixLabel, {
   all: "unset", // reset <button>
@@ -67,6 +73,15 @@ const StyledLabel = styled(RadixLabel, {
           backgroundColor: theme.colors.backgroundLocalHover,
         },
       },
+      overwritten: {
+        px: theme.spacing[3],
+        backgroundColor: theme.colors.backgroundOverwrittenMain,
+        borderColor: theme.colors.borderOverwrittenMain,
+        color: theme.colors.foregroundOverwrittenMain,
+        "&:hover": {
+          backgroundColor: theme.colors.backgroundOverwrittenHover,
+        },
+      },
       remote: {
         px: theme.spacing[3],
         backgroundColor: theme.colors.backgroundRemoteMain,
@@ -107,13 +122,17 @@ type Props = {
 } & ComponentProps<typeof StyledLabel>;
 
 export const isLabelButton = (color: Props["color"]) =>
-  color === "preset" || color === "local" || color === "remote";
+  color === "preset" ||
+  color === "local" ||
+  color === "overwritten" ||
+  color === "remote";
 
 export const Label = forwardRef((props: Props, ref: Ref<HTMLLabelElement>) => {
   const { disabled, children, ...rest } = props;
 
   // To enable keyboard accessibility for users who rely on the spacebar to activate the radix
-  // when using a preset, local, or remote color, we need to wrap the label with a button that has a "label" role.
+  // when using a preset, locala, overwritten or remote color, we need to wrap the label with
+  // a button that has a "label" role.
   // (Radix adds role="button" to the label)
   const isButton = isLabelButton(props.color);
 

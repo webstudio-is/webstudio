@@ -5,7 +5,7 @@ const MAX_RETRY_RECOVERY = 5;
 
 export type QueueStatus = "running" | "idle" | "recovering" | "failed";
 
-type BaseResult = { ok: boolean };
+type BaseResult = { ok: true } | { ok: false; retry: boolean };
 
 export const queueStatus = atom<QueueStatus>("idle");
 
@@ -50,7 +50,9 @@ export const dequeue = () => {
   return job()
     .then((result) => {
       if (result.ok === false) {
-        throw Error("Bad response");
+        if (result.retry) {
+          throw Error("Bad response");
+        }
       }
       state.failedAttempts = 0;
       queueStatus.set(getStatus("end"));

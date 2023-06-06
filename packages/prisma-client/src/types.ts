@@ -1,7 +1,5 @@
-export { Location } from "./__generated__";
 export type {
   User,
-  Breakpoints,
   Build,
   Project,
   Asset,
@@ -9,4 +7,6 @@ export type {
   DashboardProject,
   AuthorizationRelation,
   AuthorizationToken,
+  DomainStatus,
+  Domain,
 } from "./__generated__";

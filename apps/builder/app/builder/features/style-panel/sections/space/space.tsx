@@ -40,17 +40,6 @@ const Cell = ({
     return null;
   }
 
-  let origin: "set" | "inherited" | "preset" | "unset" = "unset";
-  if (styleSource === "local") {
-    origin = "set";
-  }
-  if (styleSource === "remote") {
-    origin = "inherited";
-  }
-  if (styleSource === "preset") {
-    origin = "preset";
-  }
-
   return (
     <>
       <InputPopover
@@ -76,7 +65,7 @@ const Cell = ({
         }}
         value={finalValue}
         isActive={isActive}
-        origin={origin}
+        source={styleSource}
         onMouseEnter={(event) =>
           onHover({ property, element: event.currentTarget })
         }

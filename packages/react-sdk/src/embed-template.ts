@@ -10,6 +10,7 @@ import {
   Breakpoint,
 } from "@webstudio-is/project-build";
 import { StyleValue, type StyleProperty } from "@webstudio-is/css-data";
+import type { Simplify } from "type-fest";
 
 const EmbedTemplateText = z.object({
   type: z.literal("text"),
@@ -43,13 +44,20 @@ const EmbedTemplateProp = z.union([
 
 type EmbedTemplateProp = z.infer<typeof EmbedTemplateProp>;
 
-export const EmbedTemplateStyleDecl = z.object({
+const EmbedTemplateStyleDeclRaw = z.object({
   state: z.optional(z.string()),
-  property: z.string() as z.ZodType<StyleProperty>,
+  property: z.string(),
   value: StyleValue,
 });
 
-export type EmbedTemplateStyleDecl = z.infer<typeof EmbedTemplateStyleDecl>;
+export type EmbedTemplateStyleDecl = Simplify<
+  Omit<z.infer<typeof EmbedTemplateStyleDeclRaw>, "property"> & {
+    property: StyleProperty;
+  }
+>;
+
+export const EmbedTemplateStyleDecl =
+  EmbedTemplateStyleDeclRaw as z.ZodType<EmbedTemplateStyleDecl>;
 
 export type EmbedTemplateInstance = {
   type: "instance";

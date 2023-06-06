@@ -294,6 +294,7 @@ export const ColorPicker = ({
     <CssValueInput
       styleSource={styleSource}
       prefix={prefix}
+      showSuffix={false}
       property={property}
       value={value}
       intermediateValue={intermediateValue}

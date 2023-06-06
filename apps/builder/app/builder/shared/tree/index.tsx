@@ -1,4 +1,4 @@
-import { useCallback, useMemo } from "react";
+import { useCallback } from "react";
 import { useStore } from "@nanostores/react";
 import {
   Tree,
@@ -8,56 +8,21 @@ import {
   type TreeItemRenderProps,
 } from "@webstudio-is/design-system";
 import type { Instance } from "@webstudio-is/project-build";
+import { type WsComponentMeta } from "@webstudio-is/react-sdk";
 import {
-  canAcceptComponent,
-  getComponentMeta,
-  type WsComponentMeta,
-} from "@webstudio-is/react-sdk";
-import { instancesStore, useDragAndDropState } from "~/shared/nano-states";
+  instancesStore,
+  registeredComponentMetasStore,
+} from "~/shared/nano-states";
 import { MetaIcon } from "../meta-icon";
-
-const instanceRelatedProps = {
-  renderItem(props: TreeItemRenderProps<Instance>) {
-    const meta = getComponentMeta(props.itemData.component);
-    if (meta === undefined) {
-      return <></>;
-    }
-    return (
-      <TreeItemBody {...props} selectionEvent="focus">
-        <TreeItemLabel prefix={<MetaIcon icon={meta.icon} />}>
-          {getInstanceLabel(props.itemData, meta)}
-        </TreeItemLabel>
-      </TreeItemBody>
-    );
-  },
-} as const;
 
 export const InstanceTree = (
   props: Omit<
     TreeProps<Instance>,
-    | keyof typeof instanceRelatedProps
-    | "canLeaveParent"
-    | "canAcceptChild"
-    | "getItemChildren"
+    "renderItem" | "canLeaveParent" | "getItemChildren"
   >
 ) => {
+  const metas = useStore(registeredComponentMetasStore);
   const instances = useStore(instancesStore);
-  const [state] = useDragAndDropState();
-
-  const dragPayload = state.dragPayload;
-
-  const dragComponent = useMemo(() => {
-    let dragComponent: undefined | string;
-    if (dragPayload?.type === "insert") {
-      dragComponent = dragPayload.dragComponent;
-    }
-    if (dragPayload?.type === "reparent") {
-      dragComponent = instances.get(
-        dragPayload.dragInstanceSelector[0]
-      )?.component;
-    }
-    return dragComponent;
-  }, [dragPayload, instances]);
 
   const canLeaveParent = useCallback(
     (instanceId: Instance["id"]) => {
@@ -65,21 +30,10 @@ export const InstanceTree = (
       if (instance === undefined) {
         return false;
       }
-      const meta = getComponentMeta(instance.component);
+      const meta = metas.get(instance.component);
       return meta?.type !== "rich-text-child";
     },
-    [instances]
-  );
-
-  const canAcceptChild = useCallback(
-    (instanceId: Instance["id"]) => {
-      const instance = instances.get(instanceId);
-      if (instance === undefined || dragComponent === undefined) {
-        return false;
-      }
-      return canAcceptComponent(instance.component, dragComponent);
-    },
-    [instances, dragComponent]
+    [instances, metas]
   );
 
   const getItemChildren = useCallback(
@@ -105,13 +59,29 @@ export const InstanceTree = (
     [instances]
   );
 
+  const renderItem = useCallback(
+    (props: TreeItemRenderProps<Instance>) => {
+      const meta = metas.get(props.itemData.component);
+      if (meta === undefined) {
+        return <></>;
+      }
+      return (
+        <TreeItemBody {...props} selectionEvent="focus">
+          <TreeItemLabel prefix={<MetaIcon icon={meta.icon} />}>
+            {getInstanceLabel(props.itemData, meta)}
+          </TreeItemLabel>
+        </TreeItemBody>
+      );
+    },
+    [metas]
+  );
+
   return (
     <Tree
       {...props}
-      {...instanceRelatedProps}
       canLeaveParent={canLeaveParent}
-      canAcceptChild={canAcceptChild}
       getItemChildren={getItemChildren}
+      renderItem={renderItem}
     />
   );
 };

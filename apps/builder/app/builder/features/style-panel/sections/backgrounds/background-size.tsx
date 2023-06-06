@@ -2,7 +2,7 @@ import { Grid, Label, Select, theme } from "@webstudio-is/design-system";
 import { toValue } from "@webstudio-is/css-engine";
 import { styleConfigByName } from "../../shared/configs";
 import { toPascalCase } from "../../shared/keyword-utils";
-import { parseCssValue } from "../../shared/parse-css-value";
+import { parseCssValue } from "@webstudio-is/css-data";
 import type { ControlProps } from "../../style-sections";
 import { CssValueInputContainer } from "../../controls/position/css-value-input-container";
 import {

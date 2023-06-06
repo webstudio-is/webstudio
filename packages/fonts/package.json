@@ -1,6 +1,6 @@
 {
   "name": "@webstudio-is/fonts",
-  "version": "0.65.0",
+  "version": "0.71.0",
   "description": "Fonts utils",
   "author": "Webstudio <github@webstudio.is>",
   "homepage": "https://webstudio.is",
@@ -26,24 +26,24 @@
     "@webstudio-is/tsconfig": "workspace:^",
     "jest": "^29.3.1",
     "typescript": "5.0.3",
-    "zod": "^3.19.1"
+    "zod": "^3.21.4"
   },
   "peerDependencies": {
     "zod": "^3.19.1"
   },
-  "module": "./lib/index.js",
   "exports": {
     ".": {
       "source": "./src/index.ts",
       "import": "./lib/index.js",
-      "require": "./lib/cjs/index.js"
+      "require": "./lib/cjs/index.js",
+      "types": "./lib/types/index.d.ts"
     },
     "./index.server": {
       "source": "./src/index.server.ts",
-      "import": "./lib/index.server.js"
+      "import": "./lib/index.server.js",
+      "types": "./lib/types/index.server.d.ts"
     }
   },
-  "types": "lib/types/index.d.ts",
   "files": [
     "lib/*",
     "src/*",

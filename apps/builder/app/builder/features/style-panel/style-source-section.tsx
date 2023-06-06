@@ -3,17 +3,27 @@ import { useStore } from "@nanostores/react";
 import { nanoid } from "nanoid";
 import { computed } from "nanostores";
 import store from "immerhin";
-import { theme, Text } from "@webstudio-is/design-system";
 import {
   type Instance,
   type StyleSource,
+  type StyleSourceToken,
   type StyleSourceSelections,
   getStyleDeclKey,
 } from "@webstudio-is/project-build";
-import { getComponentMeta } from "@webstudio-is/react-sdk";
+import {
+  Flex,
+  Dialog,
+  DialogContent,
+  DialogTitle,
+  DialogClose,
+  Button,
+  Text,
+  theme,
+} from "@webstudio-is/design-system";
 import { type ItemSource, StyleSourceInput } from "./style-source";
 import {
   availableStyleSourcesStore,
+  registeredComponentMetasStore,
   selectedInstanceSelectorStore,
   selectedInstanceStatesByStyleSourceIdStore,
   selectedInstanceStore,
@@ -286,12 +296,12 @@ const renameStyleSource = (id: StyleSource["id"], label: string) => {
 };
 
 const componentStatesStore = computed(
-  [selectedInstanceStore],
-  (selectedInstance) => {
+  [selectedInstanceStore, registeredComponentMetasStore],
+  (selectedInstance, registeredComponentMetas) => {
     if (selectedInstance === undefined) {
       return;
     }
-    return getComponentMeta(selectedInstance.component)?.states;
+    return registeredComponentMetas.get(selectedInstance.component)?.states;
   }
 );
 
@@ -342,12 +352,10 @@ export const StyleSourcesSection = () => {
     undefined | StyleSource["id"]
   >(undefined);
 
+  const [tokenToDelete, setTokenToDelete] = useState<StyleSourceToken>();
+
   return (
     <>
-      <Text css={{ py: theme.spacing[9] }} variant="titles">
-        Style Sources
-      </Text>
-
       <StyleSourceInput
         items={items}
         value={value}
@@ -371,7 +379,11 @@ export const StyleSourcesSection = () => {
           removeStyleSourceFromInstance(id);
         }}
         onDeleteItem={(id) => {
-          deleteStyleSource(id);
+          const styleSources = styleSourcesStore.get();
+          const token = styleSources.get(id);
+          if (token?.type === "token") {
+            setTokenToDelete(token);
+          }
         }}
         onSort={(items) => {
           reorderStyleSources(items.map((item) => item.id));
@@ -395,6 +407,62 @@ export const StyleSourcesSection = () => {
           renameStyleSource(item.id, item.label);
         }}
       />
+      <DeleteConfirmationDialog
+        token={tokenToDelete?.name}
+        onClose={() => {
+          setTokenToDelete(undefined);
+        }}
+        onConfirm={() => {
+          if (tokenToDelete) {
+            deleteStyleSource(tokenToDelete.id);
+          }
+        }}
+      />
     </>
+  );
+};
+
+type DeleteConfirmationDialogProps = {
+  onClose: () => void;
+  onConfirm: () => void;
+  token?: string;
+};
+
+const DeleteConfirmationDialog = ({
+  onClose,
+  onConfirm,
+  token,
+}: DeleteConfirmationDialogProps) => {
+  return (
+    <Dialog
+      open={token !== undefined}
+      onOpenChange={(isOpen) => {
+        if (isOpen === false) {
+          onClose();
+        }
+      }}
+    >
+      <DialogContent>
+        <Flex gap="3" direction="column" css={{ padding: theme.spacing[9] }}>
+          <Text>{`Delete "${token}" token from the project including all of its styles?`}</Text>
+          <Flex direction="rowReverse" gap="2">
+            <DialogClose asChild>
+              <Button
+                color="destructive"
+                onClick={() => {
+                  onConfirm();
+                }}
+              >
+                Delete
+              </Button>
+            </DialogClose>
+            <DialogClose asChild>
+              <Button color="ghost">Cancel</Button>
+            </DialogClose>
+          </Flex>
+        </Flex>
+        <DialogTitle>Delete confirmation</DialogTitle>
+      </DialogContent>
+    </Dialog>
   );
 };

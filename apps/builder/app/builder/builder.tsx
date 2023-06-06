@@ -21,7 +21,9 @@ import {
 import { usePublishShortcuts } from "./shared/shortcuts";
 import {
   projectStore,
+  selectedInstanceSelectorStore,
   selectedPageIdStore,
+  selectedPageStore,
   useIsPreviewMode,
   useSetAssets,
   useSetAuthPermit,
@@ -43,12 +45,6 @@ import { useSearchParams } from "@remix-run/react";
 import { useSyncInitializeOnce } from "~/shared/hook-utils";
 import { BlockingAlerts } from "./features/blocking-alerts";
 import { useStore } from "@nanostores/react";
-import {
-  customComponentMetas,
-  customComponentPropsMetas,
-  registerComponentMetas,
-  registerComponentPropsMetas,
-} from "@webstudio-is/react-sdk";
 
 registerContainers();
 
@@ -236,11 +232,6 @@ export type BuilderProps = {
   authPermit: AuthPermit;
 };
 
-// @todo: Don't do this in builder
-// https://github.com/webstudio-is/webstudio-builder/issues/1545
-registerComponentMetas(customComponentMetas);
-registerComponentPropsMetas(customComponentPropsMetas);
-
 export const Builder = ({
   project,
   build,
@@ -262,9 +253,17 @@ export const Builder = ({
 
   useSyncInitializeOnce(() => {
     selectedPageIdStore.set(pageId);
+    const page = selectedPageStore.get();
+    if (page) {
+      selectedInstanceSelectorStore.set([page.rootInstanceId]);
+    }
   });
   useEffect(() => {
     selectedPageIdStore.set(pageId);
+    const page = selectedPageStore.get();
+    if (page) {
+      selectedInstanceSelectorStore.set([page.rootInstanceId]);
+    }
   }, [pageId]);
 
   useSetAssets(assets);
@@ -279,6 +278,7 @@ export const Builder = ({
     projectId: project.id,
     authToken,
     authPermit,
+    version: build.version,
   });
   useSharedShortcuts({ source: "builder" });
   useSetIsPreviewMode(authPermit === "view");

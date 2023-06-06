@@ -22,13 +22,6 @@ export const ToggleGroupControl = ({
   items = [],
   onValueChange,
 }: ToggleGroupControlProps) => {
-  let state: undefined | "set" | "inherited" = undefined;
-  if (styleSource === "local") {
-    state = "set";
-  }
-  if (styleSource === "remote") {
-    state = "inherited";
-  }
   return (
     <ToggleGroup
       type="single"
@@ -38,7 +31,11 @@ export const ToggleGroupControl = ({
     >
       {items.map(({ child, label, value }, index) => {
         return (
-          <ToggleGroupControlItem key={index} value={value} state={state}>
+          <ToggleGroupControlItem
+            key={index}
+            value={value}
+            source={styleSource}
+          >
             <Tooltip content={label} delayDuration={0}>
               <Flex>{child}</Flex>
             </Tooltip>
@@ -51,17 +48,25 @@ export const ToggleGroupControl = ({
 
 const ToggleGroupControlItem = styled(ToggleGroupItem, {
   variants: {
-    state: {
-      set: {
+    source: {
+      default: {},
+      preset: {},
+      local: {
         "&[data-state=on]": {
-          color: theme.colors.blue11,
-          backgroundColor: theme.colors.blue4,
+          color: theme.colors.foregroundLocalMain,
+          backgroundColor: theme.colors.backgroundLocalMain,
         },
       },
-      inherited: {
+      overwritten: {
         "&[data-state=on]": {
-          color: theme.colors.orange11,
-          backgroundColor: theme.colors.orange4,
+          color: theme.colors.foregroundOverwrittenMain,
+          backgroundColor: theme.colors.backgroundOverwrittenMain,
+        },
+      },
+      remote: {
+        "&[data-state=on]": {
+          color: theme.colors.foregroundRemoteMain,
+          backgroundColor: theme.colors.backgroundRemoteMain,
         },
       },
     },

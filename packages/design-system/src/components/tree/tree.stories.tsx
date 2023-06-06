@@ -6,7 +6,7 @@ import { Flex } from "../flex";
 import { TreeItemLabel, TreeItemBody } from "./tree-node";
 import type { ItemDropTarget, ItemSelector } from "./item-utils";
 
-export const StressTest = ({ animate }: { animate: boolean }) => {
+export const StressTest = () => {
   const [root, setRoot] = useState<Item>((): Item => {
     return {
       id: "root",
@@ -84,19 +84,20 @@ export const StressTest = ({ animate }: { animate: boolean }) => {
   return (
     <Flex css={{ width: 300, height: 500, flexDirection: "column" }}>
       <Tree
-        canAcceptChild={(itemId) => {
-          const item = findItemById(root, itemId);
-          return (
-            (item?.canAcceptChildren ?? false) &&
-            (item?.isHidden ?? false) === false
-          );
+        findClosestDroppableIndex={(itemSelector) => {
+          return itemSelector.findIndex((itemId) => {
+            const item = findItemById(root, itemId);
+            return (
+              (item?.canAcceptChildren ?? false) &&
+              (item?.isHidden ?? false) === false
+            );
+          });
         }}
         canLeaveParent={() => true}
         getItemChildren={(itemId) => findItemById(root, itemId)?.children ?? []}
         isItemHidden={(itemSelector) =>
           findItemById(root, itemSelector[0])?.isHidden ?? false
         }
-        animate={animate}
         root={root}
         selectedItemSelector={selectedItemSelector}
         dragItemSelector={dragItemSelector}
@@ -125,5 +126,4 @@ export const StressTest = ({ animate }: { animate: boolean }) => {
 
 export default {
   component: Tree,
-  args: { animate: true },
 } as ComponentMeta<typeof Tree>;

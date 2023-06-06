@@ -47,7 +47,7 @@ export const hasProjectPermit = async (
     const namespace = "Project";
 
     // Allow load production build env i.e. "published" site
-    if (props.permit === "view" && context.authorization.buildEnv === "prod") {
+    if (props.permit === "view" && context.authorization.isServiceCall) {
       return true;
     }
 

@@ -15,12 +15,24 @@ type AuthorizationContext = {
   authToken: string | undefined;
 
   /**
-   * buildEnv==="prod" only if we are loading project with production build
+   * Allow service 2 service communications to skip authorization for view calls
    */
-  buildEnv: "dev" | "prod";
+  isServiceCall: boolean;
 
   // Pass trpcClient through context as only main app can initialize it
   authorizeTrpc: TrpcInterfaceClient["authorize"];
+};
+
+type DomainContext = {
+  domainTrpc: TrpcInterfaceClient["domain"];
+};
+
+type DeploymentContext = {
+  deploymentTrpc: TrpcInterfaceClient["deployment"];
+  env: {
+    BUILDER_ORIGIN: string;
+    BRANCH_NAME: string;
+  };
 };
 
 /**
@@ -30,4 +42,6 @@ type AuthorizationContext = {
  */
 export type AppContext = {
   authorization: AuthorizationContext;
+  domain: DomainContext;
+  deployment: DeploymentContext;
 };

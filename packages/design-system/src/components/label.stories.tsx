@@ -9,7 +9,7 @@ export default {
   title: "Library/Label",
 };
 
-const colors = ["default", "preset", "local", "remote"] as const;
+const colors = ["default", "preset", "local", "overwritten", "remote"] as const;
 
 const LabelStory: ComponentStory<typeof Label> = ({
   color,

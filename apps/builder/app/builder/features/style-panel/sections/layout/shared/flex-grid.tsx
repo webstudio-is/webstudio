@@ -62,6 +62,9 @@ export const FlexGrid = ({
   if (styleSource === "local") {
     color = theme.colors.borderLocalFlexUi;
   }
+  if (styleSource === "overwritten") {
+    color = theme.colors.borderOverwrittenFlexUi;
+  }
   if (styleSource === "remote") {
     color = theme.colors.borderRemoteFlexUi;
   }

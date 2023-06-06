@@ -2,20 +2,17 @@ import { useState } from "react";
 import { useStore } from "@nanostores/react";
 import { createPortal } from "react-dom";
 import type { Instance } from "@webstudio-is/project-build";
-import {
-  type ComponentName,
-  type WsComponentMeta,
-  getComponentMeta,
-} from "@webstudio-is/react-sdk";
+import type { WsComponentMeta } from "@webstudio-is/react-sdk";
 import {
   type Point,
   Flex,
   useDrag,
   ComponentCard,
+  toast,
 } from "@webstudio-is/design-system";
-import { findClosestDroppableTarget } from "~/shared/tree-utils";
 import {
   instancesStore,
+  registeredComponentMetasStore,
   selectedInstanceSelectorStore,
   selectedPageStore,
 } from "~/shared/nano-states";
@@ -25,7 +22,10 @@ import {
   isCanvasPointerEventsEnabledStore,
   scaleStore,
 } from "~/builder/shared/nano-states";
-import { insertNewComponentInstance } from "~/shared/instance-utils";
+import {
+  findClosestDroppableTarget,
+  insertNewComponentInstance,
+} from "~/shared/instance-utils";
 import { MetaIcon } from "~/builder/shared/meta-icon";
 
 const DragLayer = ({
@@ -35,7 +35,8 @@ const DragLayer = ({
   component: Instance["component"];
   point: Point;
 }) => {
-  const meta = getComponentMeta(component);
+  const metas = useStore(registeredComponentMetasStore);
+  const meta = metas.get(component);
   if (meta === undefined) {
     return null;
   }
@@ -81,14 +82,14 @@ const toCanvasCoordinates = (
 
 export const elementToComponentName = (
   element: Element,
-  metaByComponentName: Map<ComponentName, WsComponentMeta>
+  metaByComponentName: Map<string, WsComponentMeta>
 ) => {
   // If drag doesn't start on the button element directly but on one of its children,
   // we need to trace back to the button that has the data.
   const parentWithData = element.closest(`[${dragItemAttribute}]`);
 
   if (parentWithData instanceof HTMLElement) {
-    const dragComponent = parentWithData.dataset.dragComponent as ComponentName;
+    const dragComponent = parentWithData.dataset.dragComponent as string;
     if (metaByComponentName.has(dragComponent)) {
       return dragComponent;
     }
@@ -96,12 +97,31 @@ export const elementToComponentName = (
   return false;
 };
 
+const formatInsertionError = (component: string, meta: WsComponentMeta) => {
+  const or = new Intl.ListFormat("en", {
+    type: "disjunction",
+  });
+  const and = new Intl.ListFormat("en", {
+    type: "conjunction",
+  });
+  const messages: string[] = [];
+  if (meta.requiredAncestors) {
+    const listString = or.format(meta.requiredAncestors);
+    messages.push(`can be added only inside of ${listString}`);
+  }
+  if (meta.invalidAncestors) {
+    const listString = and.format(meta.invalidAncestors);
+    messages.push(`cannot be added inside of ${listString}`);
+  }
+  return `${component} ${and.format(messages)}`;
+};
+
 export const useDraggable = ({
   publish,
   metaByComponentName,
 }: {
   publish: Publish;
-  metaByComponentName: Map<ComponentName, WsComponentMeta>;
+  metaByComponentName: Map<string, WsComponentMeta>;
 }) => {
   const [dragComponent, setDragComponent] = useState<Instance["component"]>();
   const [point, setPoint] = useState<Point>({ x: 0, y: 0 });
@@ -151,20 +171,30 @@ export const useDraggable = ({
     <DragLayer component={dragComponent} point={point} />
   ) : undefined;
 
-  const handleInsert = (component: ComponentName) => {
+  const handleInsert = (component: string) => {
     const selectedPage = selectedPageStore.get();
     if (selectedPage === undefined) {
       return;
     }
+    const instanceSelector = selectedInstanceSelectorStore.get() ?? [
+      selectedPage.rootInstanceId,
+    ];
+    const metas = registeredComponentMetasStore.get();
     const dropTarget = findClosestDroppableTarget(
+      metas,
       instancesStore.get(),
       // fallback to root as drop target
-      selectedInstanceSelectorStore.get() ?? [selectedPage.rootInstanceId],
+      instanceSelector,
       [component]
     );
-    if (dropTarget) {
-      insertNewComponentInstance(component, dropTarget);
+    if (dropTarget === undefined) {
+      const meta = metas.get(component);
+      if (meta) {
+        toast.error(formatInsertionError(component, meta));
+      }
+      return;
     }
+    insertNewComponentInstance(component, dropTarget);
   };
 
   return {

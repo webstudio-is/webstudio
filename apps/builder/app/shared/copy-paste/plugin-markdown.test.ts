@@ -6,14 +6,14 @@ const parseInstanceData = (data?: ReturnType<typeof parse>) => {
   if (data === undefined) {
     return;
   }
-  const { rootIds, instances, props } = data;
+  const { children, instances, props } = data;
   for (const instance of instances) {
     Instance.parse(instance);
   }
   for (const prop of props) {
     Prop.parse(prop);
   }
-  return { rootIds, instances, props };
+  return { children, instances, props };
 };
 
 const options = { generateId: () => "123" };
@@ -22,6 +22,12 @@ describe("Plugin Markdown", () => {
   test("paragraph", () => {
     expect(parseInstanceData(parse("xyz", options))).toMatchInlineSnapshot(`
       {
+        "children": [
+          {
+            "type": "id",
+            "value": "123",
+          },
+        ],
         "instances": [
           {
             "children": [
@@ -36,9 +42,6 @@ describe("Plugin Markdown", () => {
           },
         ],
         "props": [],
-        "rootIds": [
-          "123",
-        ],
       }
     `);
   });
@@ -47,6 +50,12 @@ describe("Plugin Markdown", () => {
     expect(parseInstanceData(parse("# heading", options)))
       .toMatchInlineSnapshot(`
       {
+        "children": [
+          {
+            "type": "id",
+            "value": "123",
+          },
+        ],
         "instances": [
           {
             "children": [
@@ -69,9 +78,6 @@ describe("Plugin Markdown", () => {
             "value": "h1",
           },
         ],
-        "rootIds": [
-          "123",
-        ],
       }
     `);
   });
@@ -80,6 +86,12 @@ describe("Plugin Markdown", () => {
     expect(parseInstanceData(parse("###### heading", options)))
       .toMatchInlineSnapshot(`
       {
+        "children": [
+          {
+            "type": "id",
+            "value": "123",
+          },
+        ],
         "instances": [
           {
             "children": [
@@ -102,9 +114,6 @@ describe("Plugin Markdown", () => {
             "value": "h6",
           },
         ],
-        "rootIds": [
-          "123",
-        ],
       }
     `);
   });
@@ -113,6 +122,12 @@ describe("Plugin Markdown", () => {
     expect(parseInstanceData(parse("__bold__", options)))
       .toMatchInlineSnapshot(`
       {
+        "children": [
+          {
+            "type": "id",
+            "value": "123",
+          },
+        ],
         "instances": [
           {
             "children": [
@@ -138,9 +153,6 @@ describe("Plugin Markdown", () => {
           },
         ],
         "props": [],
-        "rootIds": [
-          "123",
-        ],
       }
     `);
   });
@@ -149,6 +161,12 @@ describe("Plugin Markdown", () => {
     expect(parseInstanceData(parse("**bold**", options)))
       .toMatchInlineSnapshot(`
       {
+        "children": [
+          {
+            "type": "id",
+            "value": "123",
+          },
+        ],
         "instances": [
           {
             "children": [
@@ -174,9 +192,6 @@ describe("Plugin Markdown", () => {
           },
         ],
         "props": [],
-        "rootIds": [
-          "123",
-        ],
       }
     `);
   });
@@ -185,6 +200,12 @@ describe("Plugin Markdown", () => {
     expect(parseInstanceData(parse("_italic_", options)))
       .toMatchInlineSnapshot(`
       {
+        "children": [
+          {
+            "type": "id",
+            "value": "123",
+          },
+        ],
         "instances": [
           {
             "children": [
@@ -210,9 +231,6 @@ describe("Plugin Markdown", () => {
           },
         ],
         "props": [],
-        "rootIds": [
-          "123",
-        ],
       }
     `);
   });
@@ -221,6 +239,12 @@ describe("Plugin Markdown", () => {
     expect(parseInstanceData(parse("*italic*", options)))
       .toMatchInlineSnapshot(`
       {
+        "children": [
+          {
+            "type": "id",
+            "value": "123",
+          },
+        ],
         "instances": [
           {
             "children": [
@@ -246,9 +270,6 @@ describe("Plugin Markdown", () => {
           },
         ],
         "props": [],
-        "rootIds": [
-          "123",
-        ],
       }
     `);
   });
@@ -257,6 +278,12 @@ describe("Plugin Markdown", () => {
     expect(parseInstanceData(parse('[link](/uri "Title")', options)))
       .toMatchInlineSnapshot(`
       {
+        "children": [
+          {
+            "type": "id",
+            "value": "123",
+          },
+        ],
         "instances": [
           {
             "children": [
@@ -297,9 +324,6 @@ describe("Plugin Markdown", () => {
             "value": "Title",
           },
         ],
-        "rootIds": [
-          "123",
-        ],
       }
     `);
   });
@@ -308,6 +332,12 @@ describe("Plugin Markdown", () => {
     expect(parseInstanceData(parse('![foo](/url "title")', options)))
       .toMatchInlineSnapshot(`
       {
+        "children": [
+          {
+            "type": "id",
+            "value": "123",
+          },
+        ],
         "instances": [
           {
             "children": [],
@@ -350,9 +380,6 @@ describe("Plugin Markdown", () => {
             "value": "foo",
           },
         ],
-        "rootIds": [
-          "123",
-        ],
       }
     `);
   });
@@ -368,6 +395,12 @@ describe("Plugin Markdown", () => {
       )
     ).toMatchInlineSnapshot(`
       {
+        "children": [
+          {
+            "type": "id",
+            "value": "123",
+          },
+        ],
         "instances": [
           {
             "children": [
@@ -386,9 +419,6 @@ describe("Plugin Markdown", () => {
           },
         ],
         "props": [],
-        "rootIds": [
-          "123",
-        ],
       }
     `);
   });
@@ -404,6 +434,12 @@ describe("Plugin Markdown", () => {
       )
     ).toMatchInlineSnapshot(`
       {
+        "children": [
+          {
+            "type": "id",
+            "value": "123",
+          },
+        ],
         "instances": [
           {
             "children": [
@@ -419,9 +455,6 @@ describe("Plugin Markdown", () => {
           },
         ],
         "props": [],
-        "rootIds": [
-          "123",
-        ],
       }
     `);
   });
@@ -429,6 +462,12 @@ describe("Plugin Markdown", () => {
   test("blockquote", () => {
     expect(parseInstanceData(parse("> bar", options))).toMatchInlineSnapshot(`
       {
+        "children": [
+          {
+            "type": "id",
+            "value": "123",
+          },
+        ],
         "instances": [
           {
             "children": [
@@ -454,9 +493,6 @@ describe("Plugin Markdown", () => {
           },
         ],
         "props": [],
-        "rootIds": [
-          "123",
-        ],
       }
     `);
   });
@@ -464,6 +500,12 @@ describe("Plugin Markdown", () => {
   test("inline code", () => {
     expect(parseInstanceData(parse("`foo`", options))).toMatchInlineSnapshot(`
       {
+        "children": [
+          {
+            "type": "id",
+            "value": "123",
+          },
+        ],
         "instances": [
           {
             "children": [
@@ -497,9 +539,6 @@ describe("Plugin Markdown", () => {
             "value": true,
           },
         ],
-        "rootIds": [
-          "123",
-        ],
       }
     `);
   });
@@ -508,6 +547,12 @@ describe("Plugin Markdown", () => {
     expect(parseInstanceData(parse("```js meta\nfoo\n```", options)))
       .toMatchInlineSnapshot(`
       {
+        "children": [
+          {
+            "type": "id",
+            "value": "123",
+          },
+        ],
         "instances": [
           {
             "children": [
@@ -544,9 +589,6 @@ describe("Plugin Markdown", () => {
             "value": "meta",
           },
         ],
-        "rootIds": [
-          "123",
-        ],
       }
     `);
   });
@@ -554,6 +596,12 @@ describe("Plugin Markdown", () => {
   test("list unordered", () => {
     expect(parseInstanceData(parse("- one", options))).toMatchInlineSnapshot(`
       {
+        "children": [
+          {
+            "type": "id",
+            "value": "123",
+          },
+        ],
         "instances": [
           {
             "children": [
@@ -598,9 +646,6 @@ describe("Plugin Markdown", () => {
             "value": false,
           },
         ],
-        "rootIds": [
-          "123",
-        ],
       }
     `);
   });
@@ -608,6 +653,12 @@ describe("Plugin Markdown", () => {
   test("list ordered", () => {
     expect(parseInstanceData(parse("3. one", options))).toMatchInlineSnapshot(`
       {
+        "children": [
+          {
+            "type": "id",
+            "value": "123",
+          },
+        ],
         "instances": [
           {
             "children": [
@@ -659,9 +710,6 @@ describe("Plugin Markdown", () => {
             "value": 3,
           },
         ],
-        "rootIds": [
-          "123",
-        ],
       }
     `);
   });
@@ -669,6 +717,12 @@ describe("Plugin Markdown", () => {
   test("thematic break | separator", () => {
     expect(parseInstanceData(parse("---", options))).toMatchInlineSnapshot(`
       {
+        "children": [
+          {
+            "type": "id",
+            "value": "123",
+          },
+        ],
         "instances": [
           {
             "children": [],
@@ -678,9 +732,6 @@ describe("Plugin Markdown", () => {
           },
         ],
         "props": [],
-        "rootIds": [
-          "123",
-        ],
       }
     `);
   });

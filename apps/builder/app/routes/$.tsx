@@ -5,7 +5,7 @@ import {
   useLoaderData,
   useRouteError,
 } from "@remix-run/react";
-import { type Params, Root, getComponent } from "@webstudio-is/react-sdk";
+import { type Params, Root } from "@webstudio-is/react-sdk";
 import env from "~/env/env.public.server";
 import { sentryException } from "~/shared/sentry";
 import { Canvas } from "~/canvas";
@@ -52,7 +52,7 @@ export const ErrorBoundary = () => {
 
 const Outlet = () => {
   const { params } = useLoaderData<typeof loader>();
-  return <Canvas params={params} getComponent={getComponent} />;
+  return <Canvas params={params} />;
 };
 
 /**

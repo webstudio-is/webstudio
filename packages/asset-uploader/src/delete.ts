@@ -30,7 +30,6 @@ export const deleteAssets = async (
       id: true,
       projectId: true,
       name: true,
-      location: true,
     },
     where: { id: { in: props.ids }, projectId: props.projectId },
   });

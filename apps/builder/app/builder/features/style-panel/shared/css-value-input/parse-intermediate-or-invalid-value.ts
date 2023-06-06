@@ -4,9 +4,8 @@ import type {
   InvalidValue,
 } from "@webstudio-is/css-data";
 import type { IntermediateStyleValue } from "./css-value-input";
-import { parseCssValue } from "../parse-css-value";
 import { evaluateMath } from "./evaluate-math";
-import { units } from "@webstudio-is/css-data";
+import { units, parseCssValue } from "@webstudio-is/css-data";
 import { toKebabCase } from "../keyword-utils";
 
 const unitsList = Object.values(units).flat();

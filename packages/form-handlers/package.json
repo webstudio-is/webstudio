@@ -1,6 +1,6 @@
 {
   "name": "@webstudio-is/form-handlers",
-  "version": "0.65.0",
+  "version": "0.71.0",
   "description": "Webstudio Form Handlers",
   "author": "Webstudio <github@webstudio.is>",
   "homepage": "https://webstudio.is",
@@ -26,13 +26,11 @@
     "typescript": "5.0.3"
   },
   "exports": {
-    ".": {
-      "source": "./src/index.ts",
-      "import": "./lib/index.js",
-      "require": "./lib/cjs/index.js"
-    }
+    "source": "./src/index.ts",
+    "import": "./lib/index.js",
+    "require": "./lib/cjs/index.js",
+    "types": "./lib/types/index.d.ts"
   },
-  "types": "lib/types/index.d.ts",
   "files": [
     "lib/*",
     "src/*",

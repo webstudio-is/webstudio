@@ -20,6 +20,9 @@ export const Default: ComponentStory<typeof IconButton> = () => {
         <IconButton variant="local">
           <CrossIcon fill="currentColor" />
         </IconButton>
+        <IconButton variant="overwritten">
+          <CrossIcon fill="currentColor" />
+        </IconButton>
         <IconButton variant="remote">
           <CrossIcon fill="currentColor" />
         </IconButton>
@@ -32,6 +35,9 @@ export const Default: ComponentStory<typeof IconButton> = () => {
           <CrossIcon fill="currentColor" />
         </IconButton>
         <IconButton variant="local" disabled={true}>
+          <CrossIcon fill="currentColor" />
+        </IconButton>
+        <IconButton variant="overwritten" disabled={true}>
           <CrossIcon fill="currentColor" />
         </IconButton>
         <IconButton variant="remote" disabled={true}>
@@ -48,6 +54,9 @@ export const Default: ComponentStory<typeof IconButton> = () => {
         <IconButton variant="local" data-state={"open"}>
           <CrossIcon fill="currentColor" />
         </IconButton>
+        <IconButton variant="overwritten" data-state={"open"}>
+          <CrossIcon fill="currentColor" />
+        </IconButton>
         <IconButton variant="remote" data-state={"open"}>
           <CrossIcon fill="currentColor" />
         </IconButton>
@@ -60,6 +69,9 @@ export const Default: ComponentStory<typeof IconButton> = () => {
           <CrossIcon fill="currentColor" />
         </IconButton>
         <IconButton variant="local" data-focused={true}>
+          <CrossIcon fill="currentColor" />
+        </IconButton>
+        <IconButton variant="overwritten" data-focused={true}>
           <CrossIcon fill="currentColor" />
         </IconButton>
         <IconButton variant="remote" data-focused={true}>

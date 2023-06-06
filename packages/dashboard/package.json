@@ -1,6 +1,6 @@
 {
   "name": "@webstudio-is/dashboard",
-  "version": "0.65.0",
+  "version": "0.71.0",
   "description": "Webstudio Dashboard",
   "author": "Webstudio <github@webstudio.is>",
   "homepage": "https://webstudio.is",
@@ -17,7 +17,7 @@
     "@webstudio-is/prisma-client": "workspace:^",
     "@webstudio-is/project": "workspace:^",
     "@webstudio-is/trpc-interface": "workspace:^",
-    "zod": "^3.19.1"
+    "zod": "^3.21.4"
   },
   "devDependencies": {
     "@jest/globals": "^29.3.1",
@@ -31,14 +31,15 @@
     ".": {
       "source": "./src/index.ts",
       "import": "./lib/index.js",
-      "require": "./lib/cjs/index.js"
+      "require": "./lib/cjs/index.js",
+      "types": "./lib/types/index.d.ts"
     },
     "./index.server": {
       "source": "./src/index.server.ts",
-      "import": "./lib/index.server.js"
+      "import": "./lib/index.server.js",
+      "types": "./lib/types/index.server.d.ts"
     }
   },
-  "types": "lib/types/index.d.ts",
   "files": [
     "lib/*",
     "src/*",

@@ -10,11 +10,12 @@ import {
   Instances,
 } from "@webstudio-is/project-build";
 import {
+  type AnyComponent,
+  type Components,
   renderWebstudioComponentChildren,
   idAttribute,
   componentAttribute,
 } from "@webstudio-is/react-sdk";
-import type { GetComponent } from "@webstudio-is/react-sdk";
 import {
   instancesStore,
   selectedInstanceRenderStateStore,
@@ -39,7 +40,7 @@ const ContentEditable = ({
   elementRef,
   ...props
 }: {
-  Component: NonNullable<ReturnType<GetComponent>>;
+  Component: AnyComponent;
   elementRef: { current: null | HTMLElement };
   [idAttribute]: Instance["id"];
   [componentAttribute]: Instance["component"];
@@ -94,14 +95,14 @@ type WebstudioComponentDevProps = {
   instance: Instance;
   instanceSelector: InstanceSelector;
   children: Array<JSX.Element | string>;
-  getComponent: GetComponent;
+  components: Components;
 };
 
 export const WebstudioComponentDev = ({
   instance,
   instanceSelector,
   children,
-  getComponent,
+  components,
 }: WebstudioComponentDevProps) => {
   const instanceId = instance.id;
   const instanceElementRef = useRef<HTMLElement>(null);
@@ -162,7 +163,7 @@ export const WebstudioComponentDev = ({
       ? { readOnly: true }
       : undefined;
 
-  const Component = getComponent(instance.component);
+  const Component = components.get(instance.component);
 
   if (Component === undefined) {
     return <></>;

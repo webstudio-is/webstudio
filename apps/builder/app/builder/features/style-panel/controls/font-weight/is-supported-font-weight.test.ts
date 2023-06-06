@@ -6,7 +6,6 @@ const createServerAsset = (meta: FontAsset["meta"]): FontAsset => ({
   id: "111",
   type: "font",
   name: "test",
-  location: "FS",
   projectId: "id",
   size: 2135,
   format: "ttf",

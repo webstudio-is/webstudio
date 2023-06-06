@@ -1,5 +1,13 @@
 import store from "immerhin";
-import { findTreeInstanceIdsExcludingSlotDescendants } from "@webstudio-is/project-build";
+import {
+  Instances,
+  findTreeInstanceIdsExcludingSlotDescendants,
+} from "@webstudio-is/project-build";
+import {
+  type WsEmbedTemplate,
+  type WsComponentMeta,
+  generateDataFromEmbedTemplate,
+} from "@webstudio-is/react-sdk";
 import {
   propsStore,
   stylesStore,
@@ -10,11 +18,11 @@ import {
   selectedStyleSourceSelectorStore,
   textEditingInstanceSelectorStore,
   breakpointsStore,
+  registeredComponentMetasStore,
 } from "./nano-states";
 import {
   type DroppableTarget,
   type InstanceSelector,
-  createComponentInstance,
   findLocalStyleSourcesWithinInstances,
   insertInstancesMutable,
   reparentInstanceMutable,
@@ -27,8 +35,99 @@ import {
 import { removeByMutable } from "./array-utils";
 import { isBaseBreakpoint } from "./breakpoints";
 
-export const insertNewComponentInstance = (
-  component: string,
+export const findClosestDroppableComponentIndex = (
+  metas: Map<string, WsComponentMeta>,
+  componentSelector: string[],
+  childComponents: string[]
+) => {
+  const requiredAncestors = new Set<string>();
+  const invalidAncestors = new Set<string>();
+  for (const childComponent of childComponents) {
+    const childMeta = metas.get(childComponent);
+    if (childMeta?.requiredAncestors) {
+      for (const ancestorComponent of childMeta.requiredAncestors) {
+        requiredAncestors.add(ancestorComponent);
+      }
+    }
+    if (childMeta?.invalidAncestors) {
+      for (const ancestorComponent of childMeta.invalidAncestors) {
+        invalidAncestors.add(ancestorComponent);
+      }
+    }
+  }
+
+  let containerIndex = -1;
+  let requiredFound = false;
+  for (let index = 0; index < componentSelector.length; index += 1) {
+    const ancestorComponent = componentSelector[index];
+    if (invalidAncestors.has(ancestorComponent) === true) {
+      containerIndex = -1;
+      requiredFound = false;
+      continue;
+    }
+    if (requiredAncestors.has(ancestorComponent) === true) {
+      requiredFound = true;
+    }
+    const ancestorMeta = metas.get(ancestorComponent);
+    if (containerIndex === -1 && ancestorMeta?.type === "container") {
+      containerIndex = index;
+    }
+  }
+
+  if (requiredFound || requiredAncestors.size === 0) {
+    return containerIndex;
+  }
+  return -1;
+};
+
+export const findClosestDroppableTarget = (
+  metas: Map<string, WsComponentMeta>,
+  instances: Instances,
+  instanceSelector: InstanceSelector,
+  dragComponents: string[]
+): undefined | DroppableTarget => {
+  const componentSelector: string[] = [];
+  for (const instanceId of instanceSelector) {
+    const component = instances.get(instanceId)?.component;
+    if (component === undefined) {
+      return;
+    }
+    componentSelector.push(component);
+  }
+
+  const droppableIndex = findClosestDroppableComponentIndex(
+    metas,
+    componentSelector,
+    dragComponents
+  );
+  if (droppableIndex === -1) {
+    return;
+  }
+  if (droppableIndex === 0) {
+    return {
+      parentSelector: instanceSelector,
+      position: "end",
+    };
+  }
+
+  const dropTargetSelector = instanceSelector.slice(droppableIndex);
+  const dropTargetInstanceId = instanceSelector[droppableIndex];
+  const dropTargetInstance = instances.get(dropTargetInstanceId);
+  if (dropTargetInstance === undefined) {
+    return;
+  }
+  const lastChildInstanceId = instanceSelector[droppableIndex - 1];
+  const lastChildPosition = dropTargetInstance.children.findIndex(
+    (child) => child.type === "id" && child.value === lastChildInstanceId
+  );
+  return {
+    parentSelector: dropTargetSelector,
+    position: lastChildPosition + 1,
+  };
+};
+
+export const insertTemplate = (
+  template: WsEmbedTemplate,
   dropTarget: DroppableTarget
 ) => {
   const breakpoints = breakpointsStore.get();
@@ -38,12 +137,13 @@ export const insertNewComponentInstance = (
     return;
   }
   const {
+    children,
     instances: insertedInstances,
     props: insertedProps,
     styleSourceSelections: insertedStyleSourceSelections,
     styleSources: insertedStyleSources,
     styles: insertedStyles,
-  } = createComponentInstance(component, baseBreakpoint.id);
+  } = generateDataFromEmbedTemplate(template, baseBreakpoint.id);
   const rootInstanceId = insertedInstances[0].id;
   store.createTransaction(
     [
@@ -57,7 +157,7 @@ export const insertNewComponentInstance = (
       insertInstancesMutable(
         instances,
         insertedInstances,
-        [rootInstanceId],
+        children,
         dropTarget
       );
       insertPropsCopyMutable(props, insertedProps, new Map());
@@ -81,6 +181,23 @@ export const insertNewComponentInstance = (
     ...dropTarget.parentSelector,
   ]);
   selectedStyleSourceSelectorStore.set(undefined);
+};
+
+export const insertNewComponentInstance = (
+  component: string,
+  dropTarget: DroppableTarget
+) => {
+  const metas = registeredComponentMetasStore.get();
+  const componentMeta = metas.get(component);
+  // when template not specified fallback to template with the component
+  const template = componentMeta?.template ?? [
+    {
+      type: "instance",
+      component,
+      children: [],
+    },
+  ];
+  insertTemplate(template, dropTarget);
 };
 
 export const reparentInstance = (

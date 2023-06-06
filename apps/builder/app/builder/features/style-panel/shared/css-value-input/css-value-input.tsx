@@ -33,7 +33,7 @@ import { toValue } from "@webstudio-is/css-engine";
 import { useDebouncedCallback } from "use-debounce";
 import type { StyleSource } from "../style-info";
 import { toPascalCase } from "../keyword-utils";
-import { isValid } from "../parse-css-value";
+import { isValidDeclaration } from "@webstudio-is/css-data";
 import {
   selectedInstanceBrowserStyleStore,
   selectedInstanceUnitSizesStore,
@@ -75,16 +75,16 @@ const useScrub = ({
   useEffect(() => {
     const inputRefCurrent = inputRef.current;
     const scrubRefCurrent = scrubRef.current;
-    const unit = type === "unit" ? valueRef.current.unit : undefined;
 
     if (
       type !== "unit" ||
-      unit === undefined ||
       inputRefCurrent === null ||
       scrubRefCurrent === null
     ) {
       return;
     }
+
+    let unit: Unit = "number";
 
     const validateValue = (numericValue: number) => {
       let value: CssValueInputValue = {
@@ -95,7 +95,7 @@ const useScrub = ({
 
       if (
         value.type === "unit" &&
-        isValid(property, toValue(value)) === false
+        isValidDeclaration(property, toValue(value)) === false
       ) {
         value = parseIntermediateOrInvalidValue(property, {
           type: "intermediate",
@@ -106,7 +106,7 @@ const useScrub = ({
         // In case of negative values for some properties, we might end up with invalid value.
         if (value.type === "invalid") {
           // Try return unitless
-          if (isValid(property, "0")) {
+          if (isValidDeclaration(property, "0")) {
             value = {
               type: "unit",
               unit: "number",
@@ -128,10 +128,17 @@ const useScrub = ({
       // Until we have decision do we use key properties for this or not,
       // on of the solution to get value inside scrub is to use ref and lazy getter.
       // Getter to avoid recreating scrub on every value change
-      getInitialValue: () => {
+      getInitialValue() {
         if (valueRef.current.type === "unit") {
           return valueRef.current.value;
         }
+      },
+      onStart() {
+        // for TS
+        if (valueRef.current.type !== "unit") {
+          return;
+        }
+        unit = valueRef.current.unit;
       },
       onValueInput(event) {
         // Moving focus to container of the input to hide the caret
@@ -250,6 +257,7 @@ type CssValueInputProps = {
   onAbort: () => void;
   icon?: ReactNode;
   prefix?: ReactNode;
+  showSuffix?: boolean;
 };
 
 const initialValue: IntermediateStyleValue = {
@@ -310,6 +318,7 @@ const match = <Item,>(
 export const CssValueInput = ({
   icon,
   prefix,
+  showSuffix = true,
   styleSource,
   property,
   keywords = [],
@@ -567,15 +576,16 @@ export const CssValueInput = ({
   const isKeywordValue = value.type === "keyword" && hasItems;
   const suffixRef = useRef<HTMLDivElement | null>(null);
 
-  const suffix = (
-    <Box ref={suffixRef}>
-      {isUnitValue
-        ? unitSelectElement
-        : isKeywordValue
-        ? keywordButtonElement
-        : null}
-    </Box>
-  );
+  const suffix =
+    showSuffix === false ? null : (
+      <Box ref={suffixRef}>
+        {isUnitValue
+          ? unitSelectElement
+          : isKeywordValue
+          ? keywordButtonElement
+          : null}
+      </Box>
+    );
 
   return (
     <Combobox>

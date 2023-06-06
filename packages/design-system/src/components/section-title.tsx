@@ -40,12 +40,7 @@ const titleButtonLayoutStyle = css({
   height: "100%",
   boxSizing: "border-box",
   paddingLeft: theme.spacing[9],
-  paddingRight: theme.spacing[7],
-  variants: {
-    // We assume that suffix is a <Button prefix={<Icon />} />
-    // (hard to support arbitrary width suffixes here, hopefully we'll never need to)
-    hasSuffix: { true: { paddingRight: theme.spacing[16] } },
-  },
+  paddingRight: theme.spacing[6],
 });
 
 const labelContainerStyle = css({
@@ -73,6 +68,10 @@ const suffixSlotStyle = css({
   top: theme.spacing[4],
 });
 
+const invisibleSuffixStyle = css({
+  visibility: "hidden",
+});
+
 const dotsSlotStyle = css({
   display: "flex",
 });
@@ -85,6 +84,9 @@ const dotStyle = css({
   variants: {
     color: {
       local: { backgroundColor: theme.colors.foregroundLocalFlexUi },
+      overwritten: {
+        backgroundColor: theme.colors.foregroundOverwrittenFlexUi,
+      },
       remote: { backgroundColor: theme.colors.foregroundRemoteFlexUi },
     },
   },
@@ -106,7 +108,7 @@ export const SectionTitle = forwardRef(
     }: ComponentProps<"button"> & {
       /** https://www.radix-ui.com/docs/primitives/components/collapsible#trigger */
       "data-state"?: "open" | "closed";
-      dots?: Array<"local" | "remote">;
+      dots?: Array<"local" | "overwritten" | "remote">;
       css?: CSS;
       /** Primarily for <SectionTitleButton> */
       suffix?: ReactNode;
@@ -126,9 +128,7 @@ export const SectionTitle = forwardRef(
               onKeyDown={handleKeyDown}
             >
               <button
-                className={titleButtonStyle({
-                  hasSuffix: suffix !== undefined,
-                })}
+                className={titleButtonStyle()}
                 data-state={state}
                 ref={ref}
                 {...props}
@@ -139,11 +139,7 @@ export const SectionTitle = forwardRef(
                 Therefore, we render the label in a layer above the SectionTitle button
               */}
               <div className={labelContainerStyle()}>
-                <div
-                  className={titleButtonLayoutStyle({
-                    hasSuffix: suffix !== undefined,
-                  })}
-                >
+                <div className={titleButtonLayoutStyle()}>
                   {children}
 
                   {finalDots.length > 0 && (
@@ -152,6 +148,11 @@ export const SectionTitle = forwardRef(
                         <div key={color} className={dotStyle({ color })} />
                       ))}
                     </div>
+                  )}
+
+                  {suffix && (
+                    /* In case of text overflow we need to place here the same suffix*/
+                    <div className={invisibleSuffixStyle()}>{suffix}</div>
                   )}
                 </div>
               </div>
