@@ -373,16 +373,17 @@ export const color = {
   backgroundSpacingLeftRight: "#eceef0",
   backgroundSpacingHover: "#d7dbdf",
   backgroundStyleSourceToken: "#096cff",
-  backgroundStyleSourceTag: "#d23197",
+  backgroundStyleSourceTag: "#d54113",
   backgroundStyleSourceState: "#00894a",
   backgroundStyleSourceNeutral: "#687076",
   backgroundStyleSourceDisabled: "#9da2a6",
   backgroundStyleSourceGradientToken:
     "linear-gradient(90deg, #096cff00 0%, #096cff 31.87%)",
   backgroundStyleSourceGradientTag:
-    "linear-gradient(90deg, #d2319700 0%, #d23197 31.87%)",
+    "linear-gradient(90deg, #d5411300 0%, #d54113 31.87%)",
   backgroundStyleSourceGradientState:
     "linear-gradient(90deg, #00894a00 0%, #00894a 31.87%)",
+  backgroundStyleSourceBreakpoint: "#bd2fdb",
   backgroundCanvas: "#c7c7c7",
   backgroundTopbar: "#2d2d2d",
   backgroundGradientPrimary:
