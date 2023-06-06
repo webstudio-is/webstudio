@@ -264,13 +264,14 @@ const useVimeo = ({
 
 export type WsVimeoOptions = Omit<
   VimeoPlayerOptions,
-  "dnt" | "interactive_params" | "background"
+  "dnt" | "interactive_params" | "background" | "controls" | "color"
 > & {
   doNotTrack?: VimeoPlayerOptions["dnt"];
   interactiveParams?: VimeoPlayerOptions["interactive_params"];
   previewImage?: boolean;
-  backgroundMode?: boolean;
-  showPlayerControls?: boolean;
+  backgroundMode?: VimeoPlayerOptions["background"];
+  showControls?: VimeoPlayerOptions["controls"];
+  controlsColor?: VimeoPlayerOptions["color"];
 };
 
 type Props = Omit<ComponentProps<typeof defaultTag>, keyof WsVimeoOptions> &
@@ -285,7 +286,7 @@ export const Vimeo = forwardRef<Ref, Props>(
       autopause = true,
       backgroundMode = false,
       byline = false,
-      showPlayerControls = true,
+      showControls = true,
       doNotTrack = false,
       keyboard = true,
       loop = false,
@@ -300,7 +301,7 @@ export const Vimeo = forwardRef<Ref, Props>(
       transparent = true,
       previewImage = false,
       autopip,
-      color,
+      controlsColor,
       interactiveParams,
       texttrack,
       children,
@@ -327,8 +328,8 @@ export const Vimeo = forwardRef<Ref, Props>(
         speed,
         title,
         transparent,
-        color,
-        controls: showPlayerControls,
+        color: controlsColor,
+        controls: showControls,
         interactive_params: interactiveParams,
         background: backgroundMode,
         dnt: doNotTrack,

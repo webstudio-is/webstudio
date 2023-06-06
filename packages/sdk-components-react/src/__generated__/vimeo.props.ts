@@ -58,13 +58,7 @@ export const props: Record<string, PropMeta> = {
   autoCapitalize: { required: false, control: "text", type: "string" },
   autoCorrect: { required: false, control: "text", type: "string" },
   autoSave: { required: false, control: "text", type: "string" },
-  color: {
-    description:
-      "A color value of the playback controls, which is normally #00ADEF. The embed settings of the video might override this value.",
-    required: false,
-    control: "color",
-    type: "string",
-  },
+  color: { required: false, control: "color", type: "string" },
   itemProp: { required: false, control: "text", type: "string" },
   itemScope: { required: false, control: "boolean", type: "boolean" },
   itemType: { required: false, control: "text", type: "string" },
@@ -489,13 +483,6 @@ export const props: Record<string, PropMeta> = {
     type: "boolean",
     defaultValue: false,
   },
-  controls: {
-    description:
-      "true\tWhether to display the player's interactive elements, including the play bar and sharing buttons. Set this option to false for a chromeless experience. To control playback when the play/pause button is hidden, set autoplay to true, use keyboard controls (which remain active), or implement our player SDK.",
-    required: false,
-    control: "boolean",
-    type: "boolean",
-  },
   keyboard: {
     description:
       "Whether to enable keyboard input to trigger player events. This setting doesn't affect tab control.",
@@ -602,10 +589,11 @@ export const props: Record<string, PropMeta> = {
     type: "boolean",
     defaultValue: false,
   },
-  showPlayerControls: {
+  showControls: {
     required: false,
     control: "boolean",
     type: "boolean",
     defaultValue: true,
   },
+  controlsColor: { required: false, control: "color", type: "string" },
 };

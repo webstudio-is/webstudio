@@ -275,8 +275,8 @@ const initialProps: Array<keyof WsVimeoOptions> = [
   "portrait",
   "byline",
   "title",
-  "controls",
-  "color",
+  "showControls",
+  "controlsColor",
 ];
 
 export const propsMeta: WsComponentPropsMeta = {
