@@ -40,6 +40,7 @@ export const WithProjects: ComponentStory<typeof Dashboard> = () => {
       userId: null,
       isDeleted: false,
       isPublished: false,
+      latestBuild: null,
     },
   ];
   const router = createRouter(<Dashboard user={user} projects={projects} />);
