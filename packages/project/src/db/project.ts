@@ -28,6 +28,9 @@ export const loadById = async (
 
   const data = await prisma.project.findUnique({
     where: { id_isDeleted: { id: projectId, isDeleted: false } },
+    include: {
+      latestBuild: true,
+    },
   });
 
   return Project.parse(data);

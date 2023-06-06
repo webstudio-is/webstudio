@@ -62,19 +62,27 @@ model User {
 }
 
 model Project {
-  id            String          @id @default(uuid())
-  createdAt     DateTime        @default(now())
+  id            String                 @id @default(uuid())
+  createdAt     DateTime               @default(now())
   title         String
-  domain        String          @unique
-  user          User?           @relation(fields: [userId], references: [id])
+  domain        String                 @unique
+  user          User?                  @relation(fields: [userId], references: [id])
   userId        String?
   build         Build[]
-  isDeleted     Boolean         @default(false)
+  isDeleted     Boolean                @default(false)
   files         File[]
-  ProjectDomain ProjectDomain[]
+  projectDomain ProjectDomain[]
+  latestBuild   LatestBuildPerProject?
 
   @@unique([id, isDeleted])
   @@unique([domain, isDeleted])
+  @@unique([id, domain])
+}
+
+enum PublishStatus {
+  PENDING
+  PUBLISHED
+  FAILED
 }
 
 model Build {
@@ -94,7 +102,8 @@ model Build {
   props                 String @default("[]")
   instances             String @default("[]")
 
-  deployment String?
+  deployment    String?
+  publishStatus PublishStatus @default(PENDING)
 
   @@id([id, projectId])
 }
@@ -132,13 +141,14 @@ model Domain {
   createdAt DateTime @default(now())
   updatedAt DateTime @default(now()) @updatedAt
 
-  ProjectDomain     ProjectDomain[]
+  ProjectDomain ProjectDomain[]
   // Last known txtRecord of the domain (to check domain ownership)
-  txtRecord         String?
+  txtRecord     String?
   // create, init, pending, active, error
-  status            DomainStatus        @default(INITIALIZING)
+  status        DomainStatus    @default(INITIALIZING)
   // In case of status="error", this will contain the error message
-  error             String?
+  error         String?
+
   projectWithDomain ProjectWithDomain[]
 }
 
@@ -174,7 +184,37 @@ view ProjectWithDomain {
   // To count statistics per user
   userId   String?
 
+  // We can deploy on per domain basis, here for each project domain we have latest build
+  latestBuid LatestBuildPerProjectDomain?
+
   @@id([projectId, domainId])
+}
+
+view LatestBuildPerProjectDomain {
+  domainId          String
+  buildId           String
+  projectId         String
+  projectWithDomain ProjectWithDomain @relation(fields: [projectId, domainId], references: [projectId, domainId])
+
+  isLatestBuild Boolean
+  publishStatus PublishStatus
+  updatedAt     DateTime
+
+  @@id([projectId, domainId])
+}
+
+view LatestBuildPerProject {
+  buildId String
+
+  projectId String
+  domain    String
+  project   Project @relation(fields: [projectId, domain], references: [id, domain])
+
+  isLatestBuild Boolean
+  publishStatus PublishStatus
+  updatedAt     DateTime
+
+  @@id([projectId, domain])
 }
 
 // Dashboard
