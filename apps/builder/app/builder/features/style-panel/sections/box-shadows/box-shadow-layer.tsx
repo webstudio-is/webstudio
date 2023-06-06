@@ -14,6 +14,7 @@ import { useMemo } from "react";
 import { FloatingPanel } from "~/builder/shared/floating-panel";
 import { BoxShadowContent } from "./box-shadow-content";
 import type { RenderCategoryProps } from "../../style-sections";
+import { colord } from "colord";
 
 export const Layer = (
   props: Pick<RenderCategoryProps, "createBatchUpdate"> & {
@@ -29,19 +30,25 @@ export const Layer = (
     let name = "";
     let shadow = "";
     for (const item of Object.values(layer.value)) {
-      if (item.type === "unit" && item.unit !== "number") {
-        name += ` ${item.value}${item.unit}`;
+      if (item.type === "unit") {
+        name +=
+          item.unit === "number"
+            ? ` ${item.value}`
+            : ` ${item.value}${item.unit}`;
+        shadow = name;
       }
 
-      if (
-        item.type === "keyword" ||
-        (item.type === "unit" && item.unit === "number")
-      ) {
-        name += ` ${item.value}`;
+      if (item.type === "rgb") {
+        shadow = `${name} rgba(${item.r}, ${item.g}, ${item.b}, ${item.alpha})`;
+      }
+
+      if (item.type === "keyword") {
+        if (colord(item.value).isValid() === false) {
+          name += ` ${item.value}`;
+        }
+        shadow += ` ${item.value}`;
       }
     }
-
-    shadow = name;
 
     return [name, shadow];
   }, [layer]);
@@ -59,6 +66,7 @@ export const Layer = (
       }
     >
       <CssValueListItem
+        nodrag={true}
         label={<Label truncate>{layerName}</Label>}
         hidden={layer?.hidden}
         buttons={

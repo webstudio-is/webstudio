@@ -33,11 +33,11 @@ export const BoxShadows = (props: RenderCategoryProps) => {
   );
 };
 
-const BoxShadowWrapper: React.FC<
-  RenderCategoryProps & {
+const BoxShadowWrapper = (
+  props: RenderCategoryProps & {
     children: JSX.Element;
   }
-> = (props) => {
+) => {
   const { children, currentStyle, deleteProperty } = props;
   const [isSectionOpen, setSectionStatus] = useState(true);
   const layersStyleSource = getStyleSource(currentStyle[property]);

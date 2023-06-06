@@ -115,21 +115,22 @@ export const TupleValue = z.object({
 
 export type TupleValue = z.infer<typeof TupleValue>;
 
+export const LayerValueItem = z.union([
+  UnitValue,
+  KeywordValue,
+  UnparsedValue,
+  ImageValue,
+  TupleValue,
+  InvalidValue,
+]);
+
+export type LayerValueItem = z.infer<typeof LayerValueItem>;
 // To support background layers https://developer.mozilla.org/en-US/docs/Web/CSS/background
 // and similar comma separated css properties
 // InvalidValue used in case of asset not found
 export const LayersValue = z.object({
   type: z.literal("layers"),
-  value: z.array(
-    z.union([
-      UnitValue,
-      KeywordValue,
-      UnparsedValue,
-      ImageValue,
-      TupleValue,
-      InvalidValue,
-    ])
-  ),
+  value: z.array(LayerValueItem),
 });
 
 export type LayersValue = z.infer<typeof LayersValue>;

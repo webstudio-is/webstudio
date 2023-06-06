@@ -72,6 +72,7 @@ export const BoxShadowContent = (
       css={{
         px: theme.spacing[9],
         py: theme.spacing[9],
+        gap: theme.spacing[3],
       }}
     >
       <Label>

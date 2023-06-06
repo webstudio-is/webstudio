@@ -64,10 +64,6 @@ const ItemButton = styled("button", {
   },
   "&:hover, &[data-active=true]": {
     backgroundColor: theme.colors.backgroundHover,
-
-    [`& ${DragHandleIconStyled}`]: {
-      visibility: "visible",
-    },
   },
   variants: {
     hidden: {
@@ -81,6 +77,7 @@ const ItemButton = styled("button", {
 });
 
 type Props = ComponentProps<typeof ItemButton> & {
+  nodrag?: boolean;
   hidden?: boolean;
   label: React.ReactElement;
   thumbnail?: React.ReactElement;
@@ -120,6 +117,7 @@ export const CssValueListItem = forwardRef(
       focused,
       state,
       active,
+      nodrag,
       "data-state": dataState,
       ...rest
     }: Props,
@@ -153,6 +151,13 @@ export const CssValueListItem = forwardRef(
               data-state={state ?? dataState}
               data-active={active}
               {...rest}
+              css={{
+                "&:hover, &[data-active=true]": {
+                  [`& ${DragHandleIconStyled}`]: {
+                    visibility: nodrag ? "invisible" : "visible",
+                  },
+                },
+              }}
             >
               <DragHandleIconStyled />
 

@@ -1,7 +1,16 @@
-import type { LayersValue, StyleProperty } from "@webstudio-is/css-data";
+import type {
+  LayerValueItem,
+  LayersValue,
+  StyleProperty,
+  TupleValue,
+  UnparsedValue,
+} from "@webstudio-is/css-data";
 import type { RenderCategoryProps } from "../../style-sections";
 
 export const property: StyleProperty = "boxShadow";
+
+const isValidBoxShadowValue = (layer: LayerValueItem) =>
+  layer.type === "tuple" || layer.type === "unparsed";
 
 export const deleteLayer = (
   index: number,
@@ -11,8 +20,7 @@ export const deleteLayer = (
   const batch = createBatchUpdate();
   const layer = layers.value[index];
 
-  const canLayerBeHidden = layer.type === "tuple" || layer.type === "unparsed";
-  if (!canLayerBeHidden) {
+  if (isValidBoxShadowValue(layer) === false) {
     return;
   }
   const newLayers = [...layers.value];
@@ -38,12 +46,14 @@ export const hideLayer = (
   const batch = createBatchUpdate();
   const layer = layers.value[index];
 
-  const canLayerBeHidden = layer.type === "tuple" || layer.type === "unparsed";
-  if (!canLayerBeHidden) {
+  if (isValidBoxShadowValue(layer) === false) {
     return;
   }
   const newLayers = [...layers.value];
-  newLayers.splice(index, 1, { ...layer, hidden: !layer?.hidden });
+  newLayers.splice(index, 1, {
+    ...(layer as TupleValue | UnparsedValue),
+    hidden: !(layer as TupleValue | UnparsedValue)?.hidden,
+  });
   batch.setProperty(property)({
     type: "layers",
     value: newLayers,
@@ -70,8 +80,7 @@ export const updateBoxShadowLayer = (
   const batch = createBatchUpdate();
   const layer = layers.value[index];
 
-  const canLayerBeHidden = layer.type === "tuple" || layer.type === "unparsed";
-  if (!canLayerBeHidden) {
+  if (isValidBoxShadowValue(layer) === false) {
     return;
   }
   const newLayers = [...layers.value];
