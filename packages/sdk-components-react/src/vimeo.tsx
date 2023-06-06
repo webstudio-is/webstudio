@@ -270,6 +270,7 @@ export type WsVimeoOptions = Omit<
   interactiveParams?: VimeoPlayerOptions["interactive_params"];
   previewImage?: boolean;
   backgroundMode?: boolean;
+  showPlayerControls?: boolean;
 };
 
 type Props = Omit<ComponentProps<typeof defaultTag>, keyof WsVimeoOptions> &
@@ -284,7 +285,7 @@ export const Vimeo = forwardRef<Ref, Props>(
       autopause = true,
       backgroundMode = false,
       byline = false,
-      controls = true,
+      showPlayerControls = true,
       doNotTrack = false,
       keyboard = true,
       loop = false,
@@ -315,7 +316,6 @@ export const Vimeo = forwardRef<Ref, Props>(
         autoplay,
         autopause,
         byline,
-        controls,
         keyboard,
         loop,
         muted,
@@ -328,6 +328,7 @@ export const Vimeo = forwardRef<Ref, Props>(
         title,
         transparent,
         color,
+        controls: showPlayerControls,
         interactive_params: interactiveParams,
         background: backgroundMode,
         dnt: doNotTrack,

@@ -495,7 +495,6 @@ export const props: Record<string, PropMeta> = {
     required: false,
     control: "boolean",
     type: "boolean",
-    defaultValue: true,
   },
   keyboard: {
     description:
@@ -602,5 +601,11 @@ export const props: Record<string, PropMeta> = {
     control: "boolean",
     type: "boolean",
     defaultValue: false,
+  },
+  showPlayerControls: {
+    required: false,
+    control: "boolean",
+    type: "boolean",
+    defaultValue: true,
   },
 };
