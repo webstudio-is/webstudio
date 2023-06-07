@@ -7,7 +7,7 @@ import {
 } from "@webstudio-is/react-sdk";
 import { div } from "@webstudio-is/react-sdk/css-normalize";
 import { props } from "./__generated__/vimeo.props";
-import { type WsVimeoOptions } from "./vimeo";
+import { type VimeoOptions } from "./vimeo";
 
 const presetStyle = {
   div,
@@ -304,7 +304,7 @@ export const meta: WsComponentMeta = {
   ],
 };
 
-const initialProps: Array<keyof WsVimeoOptions> = [
+const initialProps: Array<keyof VimeoOptions> = [
   "url",
   "quality",
   "showPreview",
