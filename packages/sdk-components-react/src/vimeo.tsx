@@ -270,7 +270,7 @@ const useVimeo = ({
   return { previewImageUrl, playerStatus, setPlayerStatus, elementRef };
 };
 
-export type WsVimeoOptions = Omit<
+export type VimeoOptions = Omit<
   VimeoPlayerOptions,
   | "dnt"
   | "interactive_params"
@@ -302,8 +302,8 @@ export type WsVimeoOptions = Omit<
   showPortrait?: VimeoPlayerOptions["portrait"];
 };
 
-type Props = Omit<ComponentProps<typeof defaultTag>, keyof WsVimeoOptions> &
-  WsVimeoOptions;
+type Props = Omit<ComponentProps<typeof defaultTag>, keyof VimeoOptions> &
+  VimeoOptions;
 type Ref = ElementRef<typeof defaultTag>;
 
 export const Vimeo = forwardRef<Ref, Props>(
