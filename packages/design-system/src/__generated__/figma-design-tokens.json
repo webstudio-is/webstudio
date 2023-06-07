@@ -606,7 +606,7 @@
           "description": "For the token variant of the Style Source component."
         },
         "tag": {
-          "value": "#d23197",
+          "value": "#d54113",
           "type": "color",
           "description": "For the HTML tag variant of the Style Source component."
         },
@@ -631,13 +631,18 @@
             "type": "color"
           },
           "tag": {
-            "value": "linear-gradient(90deg, #d2319700 0%, #d23197 31.87%)",
+            "value": "linear-gradient(90deg, #d5411300 0%, #d54113 31.87%)",
             "type": "color"
           },
           "state": {
             "value": "linear-gradient(90deg, #00894a00 0%, #00894a 31.87%)",
             "type": "color"
           }
+        },
+        "breakpoint": {
+          "value": "#bd2fdb",
+          "type": "color",
+          "description": "The color of the style source badge that represents a breakpoint. Used in tooltips."
         }
       },
       "canvas": {
@@ -659,12 +664,12 @@
         "vertical": {
           "value": "linear-gradient(180deg, #096cff 0%, #096cff 0.01%, #bd2fdb 100%)",
           "type": "color",
-          "description": "For vertically-oriented elements in the Builder UI that use a brand gradient background. "
+          "description": "For vertically-oriented elements in the Builder UI that use a brand gradient background."
         },
         "horizontal": {
           "value": "linear-gradient(90deg, #4a4efa 0%, #bd2fdb 100%)",
           "type": "color",
-          "description": "For horizontally-oriented elements in the Builder UI that use a brand gradient background. "
+          "description": "For horizontally-oriented elements in the Builder UI that use a brand gradient background."
         },
         "horizontal-reverse": {
           "value": "linear-gradient(90deg, #bd2fdb 0%, #4a4efa 100%)",
@@ -792,7 +797,7 @@
       "main": {
         "value": "#c1c8cd",
         "type": "color",
-        "description": "color for separators, panel borders, preset borders, input fields, select buttons, panel buttons, text area, search field, menu, select menu, spacing controls, "
+        "description": "color for separators, panel borders, preset borders, input fields, select buttons, panel buttons, text area, search field, menu, select menu, spacing controls,"
       },
       "focus": {
         "value": "#096cff",
