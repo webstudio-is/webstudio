@@ -15,13 +15,22 @@ import {
   useContext,
   createContext,
   type ContextType,
+  useMemo,
 } from "react";
 import { ReactSdkContext } from "@webstudio-is/react-sdk";
+import { shallowEqual } from "shallow-equal";
 
 const defaultTag = "div";
 
 // https://developer.vimeo.com/player/sdk/embed
 type VimeoPlayerOptions = {
+  background?: boolean;
+  color?: string;
+  controls?: boolean;
+  dnt?: boolean;
+  interactive_params?: string;
+  title?: boolean;
+  portrait?: boolean;
   // @todo url type to validate url on the input
   /** The ID or the URL of the video on Vimeo. You must supply one of these values to identify the video. When the video's privacy setting is Private, you must use the URL, and the URL must include the h parameter. For more information, see our introductory guide. */
   url?: string;
@@ -31,19 +40,8 @@ type VimeoPlayerOptions = {
   autopip?: boolean;
   /** Whether to start playback of the video automatically. This feature might not work on all devices. */
   autoplay?: boolean;
-  /** Whether the player is in background mode, which hides the playback controls, enables autoplay, and loops the video. */
-  background?: boolean;
   /** Whether to display the video owner's name. */
   byline?: boolean;
-  // @todo use color type to use color control
-  /** A color value of the playback controls, which is normally #00ADEF. The embed settings of the video might override this value. */
-  color?: string;
-  /** true	Whether to display the player's interactive elements, including the play bar and sharing buttons. Set this option to false for a chromeless experience. To control playback when the play/pause button is hidden, set autoplay to true, use keyboard controls (which remain active), or implement our player SDK. */
-  controls?: boolean;
-  /** Whether to prevent the player from tracking session data, including cookies. Keep in mind that setting this argument to true also blocks video stats. */
-  dnt?: boolean;
-  /** Key-value pairs representing dynamic parameters that are utilized on interactive videos with live elements, such as title=my-video,subtitle=interactive. */
-  interactive_params?: string;
   /** Whether to enable keyboard input to trigger player events. This setting doesn't affect tab control. */
   keyboard?: boolean;
   /** Whether to restart the video automatically after reaching the end. */
@@ -54,8 +52,6 @@ type VimeoPlayerOptions = {
   pip?: boolean;
   /** Whether the video plays inline on supported mobile devices. To force the device to play the video in fullscreen mode instead, set this value to false. */
   playsinline?: boolean;
-  /** Whether to display the video owner's portrait. */
-  portrait?: boolean;
   /** For videos on a Vimeo Plus account or higher: the playback quality of the video. Use auto for the best possible quality given available bandwidth and other factors. You can also specify 360p, 540p, 720p, 1080p, 2k, and 4k. */
   quality?: "auto" | "360p" | "540p" | "720p" | "1080p" | "2k" | "4k";
   /** Whether to return a responsive embed code, or one that provides intelligent adjustments based on viewing conditions. We recommend this option for mobile-optimized sites. */
@@ -67,8 +63,6 @@ type VimeoPlayerOptions = {
    * To enable automatically generated closed captions instead, provide the value en-x-autogen. Please note that, at the present time, automatic captions are always in English.
    */
   texttrack?: string;
-  /** Whether the player displays the title overlay. */
-  title?: boolean;
   /** Whether the responsive player and transparent background are enabled. */
   transparent?: boolean;
 };
@@ -84,33 +78,39 @@ const getUrl = (options: VimeoPlayerOptions) => {
     url.pathname = `/video${userUrl.pathname}`;
     // eslint-disable-next-line no-empty
   } catch {}
+
   if (url === undefined) {
     return;
   }
+
   let option: keyof VimeoPlayerOptions;
-
   for (option in options) {
-    if (option === "url") {
-      continue;
-    }
     const value = options[option];
-    if (value === undefined) {
+    if (option === "url" || value === undefined) {
       continue;
     }
-    if (option === "autoplay") {
-      // We always set autoplay to true because we have a button that starts the video
-      url.searchParams.append("autoplay", "true");
-      continue;
-    }
-    // Vimeo needs a hex color value without the hash
-    if (option === "color" && typeof value === "string") {
-      const color = colord(value).toHex().replace("#", "");
-      url.searchParams.append(option, color);
-      continue;
-    }
-
     url.searchParams.append(option, value.toString());
   }
+
+  // We always set autoplay to true because we have a button that starts the video
+  url.searchParams.set("autoplay", "true");
+
+  // Vimeo needs a hex color value without the hash
+  if (typeof options.color === "string") {
+    const color = colord(options.color).toHex().replace("#", "");
+    url.searchParams.set("color", color);
+  }
+
+  // Portrait option won't work if at title is not set to true
+  if (options.portrait) {
+    url.searchParams.set("title", "true");
+  }
+  // Byline won't show up if portrait and title is not set to true
+  if (options.byline) {
+    url.searchParams.set("portrait", "true");
+    url.searchParams.set("title", "true");
+  }
+
   return url.toString();
 };
 
@@ -216,10 +216,10 @@ const loadPreviewImage = async (element: HTMLElement, videoUrl: string) => {
 const useVimeo = ({
   options,
   renderer,
-  previewImage,
+  showPreview,
 }: {
   options: VimeoPlayerOptions;
-  previewImage?: boolean;
+  showPreview?: boolean;
   renderer: ContextType<typeof ReactSdkContext>["renderer"];
 }) => {
   const [videoState, setVideoState] = useState<
@@ -242,36 +242,65 @@ const useVimeo = ({
     ) {
       return;
     }
-    if (previewImage) {
+    if (showPreview) {
+      console.log("show preview");
       loadPreviewImage(elementRef.current, options.url).then(
         setPreviewImageUrl
       );
       return;
     }
     setPreviewImageUrl(undefined);
-  }, [renderer, previewImage, options.url, videoState]);
+  }, [renderer, showPreview, options.url, videoState]);
+
+  const optionsRef = useRef(options);
+  const stableOptions = useMemo(() => {
+    if (shallowEqual(options, optionsRef.current) === false) {
+      optionsRef.current = options;
+    }
+    return optionsRef.current;
+  }, [options]);
 
   useEffect(() => {
     if (elementRef.current === null || videoState === "initial") {
       return;
     }
-    return createPlayer(elementRef.current, options, () => {
+    return createPlayer(elementRef.current, stableOptions, () => {
       setVideoState("ready");
     });
-  }, [...Object.values(options), videoState]);
+  }, [stableOptions, videoState]);
   return { previewImageUrl, setVideoState, elementRef };
 };
 
 export type WsVimeoOptions = Omit<
   VimeoPlayerOptions,
-  "dnt" | "interactive_params" | "background" | "controls" | "color"
+  | "dnt"
+  | "interactive_params"
+  | "background"
+  | "controls"
+  | "color"
+  | "byline"
+  | "title"
+  | "portrait"
 > & {
+  /** Whether the preview image should be loaded from Vimeo API. Ideally don't use it, because it will show up with some delay and will make your site feel slower. */
+  showPreview?: boolean;
+  /** Whether to prevent the player from tracking session data, including cookies. Keep in mind that setting this argument to true also blocks video stats. */
   doNotTrack?: VimeoPlayerOptions["dnt"];
+  /** Key-value pairs representing dynamic parameters that are utilized on interactive videos with live elements, such as title=my-video,subtitle=interactive. */
   interactiveParams?: VimeoPlayerOptions["interactive_params"];
-  previewImage?: boolean;
+  /** Whether the player is in background mode, which hides the playback controls, enables autoplay, and loops the video. */
   backgroundMode?: VimeoPlayerOptions["background"];
+  /** Whether to display the player's interactive elements, including the play bar and sharing buttons. Set this option to false for a chromeless experience. To control playback when the play/pause button is hidden, set autoplay to true, use keyboard controls (which remain active), or implement our player SDK. */
   showControls?: VimeoPlayerOptions["controls"];
+  // @todo use color type to use color control
+  /** A color value of the playback controls, which is normally #00ADEF. The embed settings of the video might override this value. */
   controlsColor?: VimeoPlayerOptions["color"];
+  /** Whether to display the video owner's name. */
+  showByline?: VimeoPlayerOptions["byline"];
+  /** Whether the player displays the title overlay. */
+  showTitle?: VimeoPlayerOptions["title"];
+  /** Whether to display the video owner's portrait. Only works if either title or byline are also enabled */
+  showPortrait?: VimeoPlayerOptions["portrait"];
 };
 
 type Props = Omit<ComponentProps<typeof defaultTag>, keyof WsVimeoOptions> &
@@ -285,7 +314,7 @@ export const Vimeo = forwardRef<Ref, Props>(
       autoplay = false,
       autopause = true,
       backgroundMode = false,
-      byline = false,
+      showByline = false,
       showControls = true,
       doNotTrack = false,
       keyboard = true,
@@ -293,13 +322,13 @@ export const Vimeo = forwardRef<Ref, Props>(
       muted = false,
       pip = false,
       playsinline = true,
-      portrait = true,
+      showPortrait = true,
       quality = "auto",
       responsive = true,
       speed = false,
-      title = false,
+      showTitle = false,
       transparent = true,
-      previewImage = false,
+      showPreview = false,
       autopip,
       controlsColor,
       interactiveParams,
@@ -312,22 +341,23 @@ export const Vimeo = forwardRef<Ref, Props>(
     const { renderer } = useContext(ReactSdkContext);
     const { previewImageUrl, setVideoState, elementRef } = useVimeo({
       renderer,
+      showPreview,
       options: {
         url,
         autoplay,
         autopause,
-        byline,
         keyboard,
         loop,
         muted,
         pip,
         playsinline,
-        portrait,
         quality,
         responsive,
         speed,
-        title,
         transparent,
+        portrait: showPortrait,
+        byline: showByline,
+        title: showTitle,
         color: controlsColor,
         controls: showControls,
         interactive_params: interactiveParams,

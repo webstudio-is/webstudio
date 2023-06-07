@@ -3,13 +3,7 @@ import type { PropMeta } from "@webstudio-is/generate-arg-types";
 export const props: Record<string, PropMeta> = {
   slot: { required: false, control: "text", type: "string" },
   style: { required: false, control: "text", type: "string" },
-  title: {
-    description: "Whether the player displays the title overlay.",
-    required: false,
-    control: "boolean",
-    type: "boolean",
-    defaultValue: false,
-  },
+  title: { required: false, control: "text", type: "string" },
   defaultChecked: { required: false, control: "boolean", type: "boolean" },
   defaultValue: { required: false, control: "text", type: "string" },
   suppressContentEditableWarning: {
@@ -476,13 +470,6 @@ export const props: Record<string, PropMeta> = {
     type: "boolean",
     defaultValue: false,
   },
-  byline: {
-    description: "Whether to display the video owner's name.",
-    required: false,
-    control: "boolean",
-    type: "boolean",
-    defaultValue: false,
-  },
   keyboard: {
     description:
       "Whether to enable keyboard input to trigger player events. This setting doesn't affect tab control.",
@@ -518,13 +505,6 @@ export const props: Record<string, PropMeta> = {
   playsinline: {
     description:
       "Whether the video plays inline on supported mobile devices. To force the device to play the video in fullscreen mode instead, set this value to false.",
-    required: false,
-    control: "boolean",
-    type: "boolean",
-    defaultValue: true,
-  },
-  portrait: {
-    description: "Whether to display the video owner's portrait.",
     required: false,
     control: "boolean",
     type: "boolean",
@@ -571,29 +551,71 @@ export const props: Record<string, PropMeta> = {
     defaultValue: true,
   },
   doNotTrack: {
+    description:
+      "Whether to prevent the player from tracking session data, including cookies. Keep in mind that setting this argument to true also blocks video stats.",
     required: false,
     control: "boolean",
     type: "boolean",
     defaultValue: false,
   },
-  interactiveParams: { required: false, control: "text", type: "string" },
-  previewImage: {
+  interactiveParams: {
+    description:
+      "Key-value pairs representing dynamic parameters that are utilized on interactive videos with live elements, such as title=my-video,subtitle=interactive.",
+    required: false,
+    control: "text",
+    type: "string",
+  },
+  showPreview: {
+    description:
+      "Whether the preview image should be loaded from Vimeo API. Ideally don't use it, because it will show up with some delay and will make your site feel slower.",
     required: false,
     control: "boolean",
     type: "boolean",
     defaultValue: false,
   },
   backgroundMode: {
+    description:
+      "Whether the player is in background mode, which hides the playback controls, enables autoplay, and loops the video.",
     required: false,
     control: "boolean",
     type: "boolean",
     defaultValue: false,
   },
   showControls: {
+    description:
+      "Whether to display the player's interactive elements, including the play bar and sharing buttons. Set this option to false for a chromeless experience. To control playback when the play/pause button is hidden, set autoplay to true, use keyboard controls (which remain active), or implement our player SDK.",
     required: false,
     control: "boolean",
     type: "boolean",
     defaultValue: true,
   },
-  controlsColor: { required: false, control: "color", type: "string" },
+  controlsColor: {
+    description:
+      "A color value of the playback controls, which is normally #00ADEF. The embed settings of the video might override this value.",
+    required: false,
+    control: "color",
+    type: "string",
+  },
+  showByline: {
+    description: "Whether to display the video owner's name.",
+    required: false,
+    control: "boolean",
+    type: "boolean",
+    defaultValue: false,
+  },
+  showTitle: {
+    description: "Whether the player displays the title overlay.",
+    required: false,
+    control: "boolean",
+    type: "boolean",
+    defaultValue: false,
+  },
+  showPortrait: {
+    description:
+      "Whether to display the video owner's portrait. Only works if either title or byline are also enabled",
+    required: false,
+    control: "boolean",
+    type: "boolean",
+    defaultValue: true,
+  },
 };
