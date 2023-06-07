@@ -7,6 +7,9 @@ import {
 import { Image, defaultTag } from "./image";
 import { VimeoContext } from "./vimeo";
 
+// Generated using https://png-pixel.com/
+const base64Preview = `data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mNkOAMAANIAzr59FiYAAAAASUVORK5CYII=`;
+
 type Props = ComponentProps<typeof Image>;
 
 export const VimeoPreviewImage = forwardRef<
@@ -18,7 +21,7 @@ export const VimeoPreviewImage = forwardRef<
   return (
     <Image
       {...rest}
-      src={String(vimeoContext.previewImageUrl ?? src)}
+      src={String(vimeoContext.previewImageUrl ?? src ?? base64Preview)}
       ref={ref}
     />
   );

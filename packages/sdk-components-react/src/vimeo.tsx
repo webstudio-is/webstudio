@@ -213,6 +213,8 @@ const loadPreviewImage = async (element: HTMLElement, videoUrl: string) => {
   return imageUrl;
 };
 
+type PlayerStatus = "initial" | "initialized" | "ready";
+
 const useVimeo = ({
   options,
   renderer,
@@ -222,14 +224,12 @@ const useVimeo = ({
   showPreview?: boolean;
   renderer: ContextType<typeof ReactSdkContext>["renderer"];
 }) => {
-  const [videoState, setVideoState] = useState<
-    "initial" | "initialized" | "ready"
-  >("initial");
+  const [playerStatus, setPlayerStatus] = useState<PlayerStatus>("initial");
   const elementRef = useRef<ElementRef<typeof defaultTag> | null>(null);
   const [previewImageUrl, setPreviewImageUrl] = useState<URL>();
 
   useEffect(() => {
-    setVideoState(
+    setPlayerStatus(
       options.autoplay && renderer !== "canvas" ? "initialized" : "initial"
     );
   }, [options.autoplay, renderer]);
@@ -237,20 +237,19 @@ const useVimeo = ({
   useEffect(() => {
     if (
       elementRef.current === null ||
-      videoState === "ready" ||
+      playerStatus === "ready" ||
       options.url === undefined
     ) {
       return;
     }
     if (showPreview) {
-      console.log("show preview");
       loadPreviewImage(elementRef.current, options.url).then(
         setPreviewImageUrl
       );
       return;
     }
     setPreviewImageUrl(undefined);
-  }, [renderer, showPreview, options.url, videoState]);
+  }, [renderer, showPreview, options.url, playerStatus]);
 
   const optionsRef = useRef(options);
   const stableOptions = useMemo(() => {
@@ -261,14 +260,14 @@ const useVimeo = ({
   }, [options]);
 
   useEffect(() => {
-    if (elementRef.current === null || videoState === "initial") {
+    if (elementRef.current === null || playerStatus === "initial") {
       return;
     }
     return createPlayer(elementRef.current, stableOptions, () => {
-      setVideoState("ready");
+      setPlayerStatus("ready");
     });
-  }, [stableOptions, videoState]);
-  return { previewImageUrl, setVideoState, elementRef };
+  }, [stableOptions, playerStatus]);
+  return { previewImageUrl, playerStatus, setPlayerStatus, elementRef };
 };
 
 export type WsVimeoOptions = Omit<
@@ -339,40 +338,42 @@ export const Vimeo = forwardRef<Ref, Props>(
     ref
   ) => {
     const { renderer } = useContext(ReactSdkContext);
-    const { previewImageUrl, setVideoState, elementRef } = useVimeo({
-      renderer,
-      showPreview,
-      options: {
-        url,
-        autoplay,
-        autopause,
-        keyboard,
-        loop,
-        muted,
-        pip,
-        playsinline,
-        quality,
-        responsive,
-        speed,
-        transparent,
-        portrait: showPortrait,
-        byline: showByline,
-        title: showTitle,
-        color: controlsColor,
-        controls: showControls,
-        interactive_params: interactiveParams,
-        background: backgroundMode,
-        dnt: doNotTrack,
-      },
-    });
+    const { previewImageUrl, playerStatus, setPlayerStatus, elementRef } =
+      useVimeo({
+        renderer,
+        showPreview,
+        options: {
+          url,
+          autoplay,
+          autopause,
+          keyboard,
+          loop,
+          muted,
+          pip,
+          playsinline,
+          quality,
+          responsive,
+          speed,
+          transparent,
+          portrait: showPortrait,
+          byline: showByline,
+          title: showTitle,
+          color: controlsColor,
+          controls: showControls,
+          interactive_params: interactiveParams,
+          background: backgroundMode,
+          dnt: doNotTrack,
+        },
+      });
 
     return (
       <VimeoContext.Provider
         value={{
+          status: playerStatus,
           previewImageUrl,
           onInitPlayer() {
             if (renderer !== "canvas") {
-              setVideoState("initialized");
+              setPlayerStatus("initialized");
             }
           },
         }}
@@ -421,7 +422,9 @@ const EmptyState = () => {
 export const VimeoContext = createContext<{
   previewImageUrl?: URL;
   onInitPlayer: () => void;
+  status: PlayerStatus;
 }>({
   // eslint-disable-next-line @typescript-eslint/no-empty-function
   onInitPlayer: () => {},
+  status: "initial",
 });

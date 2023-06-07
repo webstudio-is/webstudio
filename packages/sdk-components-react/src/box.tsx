@@ -5,7 +5,7 @@ import {
   type ComponentProps,
 } from "react";
 
-const defaultTag = "div";
+export const defaultTag = "div";
 
 // We don't want to enable all tags because Box is usually a container and we have specific components for many tags.
 type Props = ComponentProps<typeof defaultTag> & {

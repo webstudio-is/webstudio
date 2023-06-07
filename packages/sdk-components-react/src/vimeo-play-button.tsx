@@ -12,6 +12,9 @@ type Props = ComponentProps<typeof Button>;
 export const VimeoPlayButton = forwardRef<ElementRef<typeof defaultTag>, Props>(
   (props, ref) => {
     const vimeoContext = useContext(VimeoContext);
+    if (vimeoContext.status !== "initial") {
+      return null;
+    }
     return <Button {...props} onClick={vimeoContext.onInitPlayer} ref={ref} />;
   }
 );

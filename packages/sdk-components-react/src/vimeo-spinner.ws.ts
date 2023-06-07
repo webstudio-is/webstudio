@@ -7,12 +7,12 @@ import {
   propsMeta as imagePropsMeta,
   meta as imageMeta,
 } from "./image.ws";
-import { props } from "./__generated__/vimeo-preview-image.props";
+import { props } from "./__generated__/vimeo-spinner.props";
 
 export const meta: WsComponentMeta = {
   ...imageMeta,
   category: "hidden",
-  label: "Preview Image",
+  label: "Spinner",
   requiredAncestors: ["Vimeo"],
 };
 

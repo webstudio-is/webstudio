@@ -1,4 +1,4 @@
-import { PlayIcon, VimeoIcon } from "@webstudio-is/icons/svg";
+import { PlayIcon, SpinnerIcon, VimeoIcon } from "@webstudio-is/icons/svg";
 import {
   defaultStates,
   type PresetStyle,
@@ -85,20 +85,61 @@ export const meta: WsComponentMeta = {
           props: [
             {
               type: "string",
-              name: "src",
-              // @todo display control just like with an asset with reset button
-              // Generated using https://png-pixel.com/
-              value:
-                "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mNkOAMAANIAzr59FiYAAAAASUVORK5CYII=",
-            },
-            {
-              type: "string",
               name: "alt",
               value: "Vimeo video preview image",
             },
           ],
         },
-
+        {
+          type: "instance",
+          component: "Box",
+          label: "Spinner",
+          styles: [
+            {
+              property: "position",
+              value: { type: "keyword", value: "absolute" },
+            },
+            {
+              property: "top",
+              value: { type: "unit", value: 50, unit: "%" },
+            },
+            {
+              property: "left",
+              value: { type: "unit", value: 50, unit: "%" },
+            },
+            {
+              property: "width",
+              value: { type: "unit", value: 70, unit: "px" },
+            },
+            {
+              property: "height",
+              value: { type: "unit", value: 70, unit: "px" },
+            },
+            {
+              property: "marginTop",
+              value: { type: "unit", value: -35, unit: "px" },
+            },
+            {
+              property: "marginLeft",
+              value: { type: "unit", value: -35, unit: "px" },
+            },
+          ],
+          children: [
+            {
+              type: "instance",
+              component: "HtmlEmbed",
+              label: "Spinner SVG",
+              props: [
+                {
+                  type: "string",
+                  name: "code",
+                  value: SpinnerIcon,
+                },
+              ],
+              children: [],
+            },
+          ],
+        },
         {
           type: "instance",
           component: "VimeoPlayButton",
@@ -111,24 +152,8 @@ export const meta: WsComponentMeta = {
           ],
           styles: [
             {
-              property: "display",
-              value: { type: "keyword", value: "flex" },
-            },
-            {
               property: "position",
               value: { type: "keyword", value: "absolute" },
-            },
-            {
-              property: "alignItems",
-              value: { type: "keyword", value: "center" },
-            },
-            {
-              property: "justifyContent",
-              value: { type: "keyword", value: "center" },
-            },
-            {
-              property: "cursor",
-              value: { type: "keyword", value: "pointer" },
             },
             {
               property: "width",
@@ -153,6 +178,18 @@ export const meta: WsComponentMeta = {
             {
               property: "marginLeft",
               value: { type: "unit", value: -70, unit: "px" },
+            },
+            {
+              property: "display",
+              value: { type: "keyword", value: "flex" },
+            },
+            {
+              property: "alignItems",
+              value: { type: "keyword", value: "center" },
+            },
+            {
+              property: "justifyContent",
+              value: { type: "keyword", value: "center" },
             },
             {
               property: "borderTopStyle",
@@ -185,6 +222,10 @@ export const meta: WsComponentMeta = {
             {
               property: "borderBottomRightRadius",
               value: { type: "unit", value: 5, unit: "px" },
+            },
+            {
+              property: "cursor",
+              value: { type: "keyword", value: "pointer" },
             },
             {
               property: "backgroundColor",
