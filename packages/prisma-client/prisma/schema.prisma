@@ -127,9 +127,11 @@ enum DomainStatus {
 // In the future we can update this table using queue, n8n or temporal workflows.
 // As of now updates are done during UI interactions
 model Domain {
-  id                String              @id @default(uuid())
-  domain            String              @unique
-  createdAt         DateTime            @default(now())
+  id        String   @id @default(uuid())
+  domain    String   @unique
+  createdAt DateTime @default(now())
+  updatedAt DateTime @default(now()) @updatedAt
+
   ProjectDomain     ProjectDomain[]
   // Last known txtRecord of the domain (to check domain ownership)
   txtRecord         String?
@@ -158,6 +160,7 @@ model ProjectDomain {
 
 view ProjectWithDomain {
   projectId String
+
   domainId  String
   domain    Domain @relation(fields: [domainId], references: [id])
   txtRecord String
