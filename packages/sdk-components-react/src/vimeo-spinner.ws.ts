@@ -17,7 +17,6 @@ export const meta: WsComponentMeta = {
   icon: BoxIcon,
   states: defaultStates,
   presetStyle,
-  order: 0,
   category: "hidden",
   label: "Spinner",
   requiredAncestors: ["Vimeo"],

@@ -22,7 +22,6 @@ export const meta: WsComponentMeta = {
   icon: ButtonElementIcon,
   presetStyle,
   states: defaultStates,
-  order: 1,
 };
 
 export const propsMeta: WsComponentPropsMeta = {
