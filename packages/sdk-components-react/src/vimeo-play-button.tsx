@@ -7,6 +7,8 @@ import {
 import { VimeoContext } from "./vimeo";
 import { Button, defaultTag } from "./button";
 
+export { defaultTag };
+
 type Props = ComponentProps<typeof Button>;
 
 export const VimeoPlayButton = forwardRef<ElementRef<typeof defaultTag>, Props>(
