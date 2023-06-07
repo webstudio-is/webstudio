@@ -12,12 +12,5 @@ export const propsMeta: WsComponentPropsMeta = {
       required: false,
     },
   },
-  initialProps: [
-    "href",
-    "target",
-    "prefetch",
-    "reloadDocument",
-    "replace",
-    "preventScrollReset",
-  ],
+  initialProps: ["href", "target", "prefetch"],
 };
