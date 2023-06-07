@@ -54,6 +54,7 @@
     "@webstudio-is/icons": "workspace:^",
     "@webstudio-is/image": "workspace:^",
     "@webstudio-is/react-sdk": "workspace:^",
+    "colord": "^2.9.3",
     "shallow-equal": "^3.1.0"
   },
   "devDependencies": {

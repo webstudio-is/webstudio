@@ -4,10 +4,11 @@ import {
   type ComponentProps,
   useContext,
 } from "react";
-import { Box, defaultTag } from "./box";
 import { VimeoContext } from "./vimeo";
 
-type Props = ComponentProps<typeof Box>;
+const defaultTag = "div";
+
+type Props = ComponentProps<typeof defaultTag>;
 
 export const VimeoSpinner = forwardRef<ElementRef<typeof defaultTag>, Props>(
   (props, ref) => {
@@ -17,7 +18,7 @@ export const VimeoSpinner = forwardRef<ElementRef<typeof defaultTag>, Props>(
       return null;
     }
 
-    return <Box {...props} ref={ref} />;
+    return <div {...props} ref={ref} />;
   }
 );
 

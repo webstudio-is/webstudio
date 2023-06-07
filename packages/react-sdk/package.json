@@ -44,7 +44,6 @@
     "@webstudio-is/fonts": "workspace:^",
     "@webstudio-is/generate-arg-types": "workspace:^",
     "@webstudio-is/project-build": "workspace:^",
-    "colord": "^2.9.3",
     "detect-font": "^0.1.5",
     "html-tags": "^3.2.0",
     "nanoevents": "^7.0.1",
