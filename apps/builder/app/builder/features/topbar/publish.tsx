@@ -53,7 +53,7 @@ type ProjectData =
       error: string;
     };
 
-type PublishButtonProps = {
+type ChangeProjectDomainProps = {
   project: Project;
   projectState: "idle" | "submitting";
   publishIsInProgress: boolean;
@@ -70,7 +70,7 @@ const ChangeProjectDomain = ({
   projectLoad,
   projectState,
   publishIsInProgress,
-}: PublishButtonProps) => {
+}: ChangeProjectDomainProps) => {
   const id = useId();
 
   const {
@@ -472,7 +472,10 @@ const Content = (props: { projectId: Project["id"] }) => {
   );
 };
 
-export const PublishButton = ({ project }: PublishButtonProps) => {
+type PublishProps = {
+  projectId: Project["id"];
+};
+export const PublishButton = ({ projectId }: PublishProps) => {
   const [isOpen, setIsOpen] = useIsPublishDialogOpen();
   const [authPermit] = useAuthPermit();
 
@@ -501,7 +504,7 @@ export const PublishButton = ({ project }: PublishButtonProps) => {
         }}
       >
         <FloatingPanelPopoverTitle>Publish</FloatingPanelPopoverTitle>
-        <Content projectId={project.id} />
+        <Content projectId={projectId} />
       </FloatingPanelPopoverContent>
     </FloatingPanelPopover>
   );
