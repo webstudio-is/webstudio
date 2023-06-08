@@ -30,7 +30,7 @@ import formatDistance from "date-fns/formatDistance";
 
 const trpc = createTrpcFetchProxy<DomainRouter>(builderDomainsPath);
 
-type Domain = {
+export type Domain = {
   projectId: Project["id"];
   domain: {
     domain: string;
@@ -85,6 +85,39 @@ export const getStatus = (projectDomain: Domain) =>
     ? (`VERIFIED_${projectDomain.domain.status}` as const)
     : `UNVERIFIED`;
 
+const PENDING_TIMEOUT = 60 * 3 * 1000;
+
+export const getPublishStatusAndText = ({
+  updatedAt,
+  publishStatus,
+}: Pick<NonNullable<Domain["latestBuid"]>, "updatedAt" | "publishStatus">) => {
+  let status = publishStatus;
+
+  const delta = Date.now() - new Date(updatedAt).getTime();
+  // Assume build failed after 3 minutes
+
+  if (publishStatus === "PENDING" && delta > PENDING_TIMEOUT) {
+    status = "FAILED";
+  }
+
+  const textStart =
+    status === "PUBLISHED"
+      ? "Published"
+      : status === "FAILED"
+      ? "Publish failed"
+      : "Publishing started";
+
+  const statusText = `${textStart} ${formatDistance(
+    new Date(updatedAt),
+    new Date(),
+    {
+      addSuffix: true,
+    }
+  )}`;
+
+  return { statusText, status };
+};
+
 const getStatusText = (props: {
   projectDomain: Domain;
   isLoading: boolean;
@@ -107,25 +140,15 @@ const getStatusText = (props: {
       break;
     case "VERIFIED_ACTIVE":
       isVerifiedActive = true;
-      text = "Status: Active";
+      text = "Status: Active, not published";
 
       if (props.projectDomain.latestBuid !== null) {
-        const { updatedAt, publishStatus } = props.projectDomain.latestBuid;
-        const statusText =
-          publishStatus === "PUBLISHED"
-            ? "Published"
-            : publishStatus === "FAILED"
-            ? "Last publish failed"
-            : "Publishing started";
+        const publishText = getPublishStatusAndText(
+          props.projectDomain.latestBuid
+        );
 
-        // @todo probably publishStatus === "FAILED" must change the whole status
-        text = `${statusText} ${formatDistance(
-          new Date(updatedAt),
-          new Date(),
-          {
-            addSuffix: true,
-          }
-        )}`;
+        text = publishText.statusText;
+        isVerifiedActive = publishText.status !== "FAILED";
       }
       break;
     case "VERIFIED_ERROR":
@@ -180,6 +203,7 @@ const DomainItem = (props: {
     onSuccess?: () => void
   ) => void;
   domainLoadingState: "idle" | "submitting";
+  publishIsInProgress: boolean;
 }) => {
   const {
     send: verify,
@@ -365,7 +389,7 @@ const DomainItem = (props: {
             <Text color="destructive">{verifySystemError}</Text>
           )}
           <Button
-            disabled={isCheckStateInProgress}
+            disabled={props.publishIsInProgress || isCheckStateInProgress}
             color="primary"
             css={{ width: "100%", flexShrink: 0, mt: theme.spacing[3] }}
             onClick={handleVerify}
@@ -384,7 +408,7 @@ const DomainItem = (props: {
             <Text color="destructive">{updateStatusError}</Text>
           )}
           <Button
-            disabled={isCheckStateInProgress}
+            disabled={props.publishIsInProgress || isCheckStateInProgress}
             color="primary"
             css={{ width: "100%", flexShrink: 0, mt: theme.spacing[3] }}
             onClick={handleUpdateStatus}
@@ -403,7 +427,7 @@ const DomainItem = (props: {
       )}
 
       <Button
-        disabled={isRemoveInProgress}
+        disabled={props.publishIsInProgress || isRemoveInProgress}
         color="neutral"
         css={{ width: "100%", flexShrink: 0 }}
         onClick={() => {
@@ -516,6 +540,7 @@ type DomainsProps = {
     onSuccess?: () => void
   ) => void;
   domainLoadingState: "idle" | "submitting";
+  publishIsInProgress: boolean;
 };
 
 export const Domains = ({
@@ -523,6 +548,7 @@ export const Domains = ({
   domains,
   refreshDomainResult,
   domainLoadingState,
+  publishIsInProgress,
 }: DomainsProps) => {
   return (
     <>
@@ -533,6 +559,7 @@ export const Domains = ({
           initiallyOpen={newDomains.has(projectDomain.domain.domain)}
           refreshDomainResult={refreshDomainResult}
           domainLoadingState={domainLoadingState}
+          publishIsInProgress={publishIsInProgress}
         />
       ))}
     </>

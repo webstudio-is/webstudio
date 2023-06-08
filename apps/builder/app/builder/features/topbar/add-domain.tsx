@@ -24,6 +24,7 @@ type DomainsAddProps = {
     onSuccess: () => void
   ) => void;
   domainLoadingState: "idle" | "submitting";
+  publishIsInProgress: boolean;
 };
 
 export const AddDomain = ({
@@ -31,6 +32,7 @@ export const AddDomain = ({
   onCreate,
   refreshDomainResult,
   domainLoadingState,
+  publishIsInProgress,
 }: DomainsAddProps) => {
   const id = useId();
   const {
@@ -95,7 +97,11 @@ export const AddDomain = ({
               autoFocus
               placeholder="your-domain.com"
               value={domain}
-              disabled={state !== "idle" || domainLoadingState !== "idle"}
+              disabled={
+                publishIsInProgress ||
+                state !== "idle" ||
+                domainLoadingState !== "idle"
+              }
               onKeyDown={(event) => {
                 if (event.key === "Enter") {
                   handleCreate();
@@ -128,7 +134,11 @@ export const AddDomain = ({
         )}
 
         <Button
-          disabled={state !== "idle" || domainLoadingState !== "idle"}
+          disabled={
+            publishIsInProgress ||
+            state !== "idle" ||
+            domainLoadingState !== "idle"
+          }
           color={isOpen ? "primary" : "neutral"}
           css={{ width: "100%", flexShrink: 0 }}
           onClick={() => {
