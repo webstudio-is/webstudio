@@ -259,7 +259,7 @@ const Publish = ({
           timeoutHandle = setTimeout(() => {
             refresh();
             execRefresh();
-          }, 10000);
+          }, timeout);
         }
       };
 
