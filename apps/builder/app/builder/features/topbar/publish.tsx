@@ -29,6 +29,7 @@ import {
   getPublishStatusAndText,
   getStatus,
   type Domain,
+  PENDING_TIMEOUT,
 } from "./domains";
 import { CollapsibleDomainSection } from "./collapsible-domain-section";
 import {
@@ -246,9 +247,13 @@ const Publish = ({
     if (publishIsInProgress) {
       let timeoutHandle: TimeoutId;
       let totalCalls = 0;
+      const timeout = 10000;
+      // Repeat few more times than timeout
+      const repeat = PENDING_TIMEOUT / timeout + 5;
+
       // Call refresh
       const execRefresh = () => {
-        if (totalCalls < 20) {
+        if (totalCalls < repeat) {
           totalCalls += 1;
           clearTimeout(timeoutHandle);
           timeoutHandle = setTimeout(() => {
