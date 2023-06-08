@@ -108,7 +108,7 @@ export const TextControl = ({
   const input = (
     <UniversalInput
       value={localValue.value}
-      rows={meta.rows}
+      defaultRows={meta.rows}
       onChange={localValue.set}
       onBlur={localValue.save}
       onSubmit={localValue.save}
