@@ -46,7 +46,7 @@ export const create = async (
   }
 
   const projectId = uuid();
-  authorizeProject.registerProjectOwner({ projectId }, context);
+  await authorizeProject.registerProjectOwner({ projectId }, context);
 
   const project = await prisma.$transaction(async (client) => {
     const project = await client.project.create({
