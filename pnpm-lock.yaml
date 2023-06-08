@@ -1333,6 +1333,12 @@ importers:
       '@webstudio-is/react-sdk':
         specifier: workspace:^
         version: link:../react-sdk
+      colord:
+        specifier: ^2.9.3
+        version: 2.9.3
+      shallow-equal:
+        specifier: ^3.1.0
+        version: 3.1.0
     devDependencies:
       '@storybook/react':
         specifier: ^6.5.16

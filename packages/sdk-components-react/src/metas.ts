@@ -31,3 +31,7 @@ export { meta as RadioButtonField } from "./radio-button-field.ws";
 export { meta as RadioButton } from "./radio-button.ws";
 export { meta as CheckboxField } from "./checkbox-field.ws";
 export { meta as Checkbox } from "./checkbox.ws";
+export { meta as Vimeo } from "./vimeo.ws";
+export { meta as VimeoPreviewImage } from "./vimeo-preview-image.ws";
+export { meta as VimeoPlayButton } from "./vimeo-play-button.ws";
+export { meta as VimeoSpinner } from "./vimeo-spinner.ws";

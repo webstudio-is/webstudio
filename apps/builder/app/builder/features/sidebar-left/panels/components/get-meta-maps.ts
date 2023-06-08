@@ -10,7 +10,7 @@ export const getMetaMaps = (
   const componentNamesByMeta: Map<WsComponentMeta, string> = new Map();
 
   for (const [name, meta] of metaByComponentName) {
-    if (meta.category === undefined) {
+    if (meta.category === undefined || meta.category === "hidden") {
       continue;
     }
     let categoryMetas = metaByCategory.get(meta.category);

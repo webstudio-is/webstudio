@@ -20,7 +20,7 @@ export const createElementsTree = ({
   Component,
   components,
 }: {
-  renderer?: "canvas";
+  renderer?: "canvas" | "preview";
   instances: Instances;
   rootInstanceId: Instance["id"];
   propsByInstanceIdStore: ReadableAtom<PropsByInstanceId>;

@@ -45,6 +45,7 @@ const EmbedTemplateProp = z.union([
 type EmbedTemplateProp = z.infer<typeof EmbedTemplateProp>;
 
 const EmbedTemplateStyleDeclRaw = z.object({
+  // State selector, e.g. :hover
   state: z.optional(z.string()),
   property: z.string(),
   value: StyleValue,

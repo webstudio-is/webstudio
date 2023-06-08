@@ -65,6 +65,7 @@ const temporaryInstances: Instances = new Map([
 const useElementsTree = (components: Components) => {
   const instances = useStore(instancesStore);
   const page = useStore(selectedPageStore);
+  const [isPreviewMode] = useIsPreviewMode();
   const rootInstanceId = page?.rootInstanceId;
 
   if (typeof window === "undefined") {
@@ -92,7 +93,7 @@ const useElementsTree = (components: Components) => {
 
   return useMemo(() => {
     return createElementsTree({
-      renderer: "canvas",
+      renderer: isPreviewMode ? "preview" : "canvas",
       instances: instances.size === 0 ? temporaryInstances : instances,
       // fallback to temporary root instance to render scripts
       // and receive real data from builder
@@ -103,7 +104,7 @@ const useElementsTree = (components: Components) => {
       Component: WebstudioComponentDev,
       components,
     });
-  }, [instances, rootInstanceId, components, pagesMapStore]);
+  }, [instances, rootInstanceId, components, pagesMapStore, isPreviewMode]);
 };
 
 const DesignMode = () => {
