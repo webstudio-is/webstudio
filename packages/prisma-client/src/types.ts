@@ -12,4 +12,5 @@ export type {
   ProjectWithDomain,
   LatestBuildPerProjectDomain,
   LatestBuildPerProject,
+  PublishStatus,
 } from "./__generated__";

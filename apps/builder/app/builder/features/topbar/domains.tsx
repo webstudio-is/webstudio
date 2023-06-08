@@ -24,6 +24,9 @@ import type { DomainStatus } from "@webstudio-is/prisma-client";
 import { CollapsibleDomainSection } from "./collapsible-domain-section";
 import env from "~/shared/env";
 import { useCallback, useEffect, useState } from "react";
+import type { PublishStatus } from "@webstudio-is/prisma-client";
+// eslint-disable-next-line import/no-internal-modules
+import formatDistance from "date-fns/formatDistance";
 
 const trpc = createTrpcFetchProxy<DomainRouter>(builderDomainsPath);
 
@@ -38,6 +41,14 @@ type Domain = {
   txtRecord: string;
   cname: string;
   verified: boolean;
+  latestBuid: null | {
+    projectId: string;
+    buildId: string;
+    isLatestBuild: boolean;
+    publishStatus: PublishStatus;
+    updatedAt: string;
+    domainId: string;
+  };
 };
 
 const InputEllipsis = styled(InputField, {
@@ -97,6 +108,25 @@ const getStatusText = (props: {
     case "VERIFIED_ACTIVE":
       isVerifiedActive = true;
       text = "Status: Active";
+
+      if (props.projectDomain.latestBuid !== null) {
+        const { updatedAt, publishStatus } = props.projectDomain.latestBuid;
+        const statusText =
+          publishStatus === "PUBLISHED"
+            ? "Published"
+            : publishStatus === "FAILED"
+            ? "Last publish failed"
+            : "Publishing started";
+
+        // @todo probably publishStatus === "FAILED" must change the whole status
+        text = `${statusText} ${formatDistance(
+          new Date(updatedAt),
+          new Date(),
+          {
+            addSuffix: true,
+          }
+        )}`;
+      }
       break;
     case "VERIFIED_ERROR":
       text = props.projectDomain.domain.error ?? text;

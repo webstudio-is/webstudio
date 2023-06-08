@@ -4,6 +4,9 @@ CREATE TYPE "PublishStatus" AS ENUM ('PENDING', 'PUBLISHED', 'FAILED');
 -- AlterTable
 ALTER TABLE "Build" ADD COLUMN     "publishStatus" "PublishStatus" NOT NULL DEFAULT 'PENDING';
 
+-- Update existing and published
+UPDATE "Build" SET "publishStatus" = 'PUBLISHED' WHERE deployment IS NOT NULL;
+
 -- CreateIndex
 CREATE UNIQUE INDEX "Project_id_domain_key" ON "Project"("id", "domain");
 
