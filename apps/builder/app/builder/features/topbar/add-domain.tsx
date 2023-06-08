@@ -23,22 +23,22 @@ type DomainsAddProps = {
     input: { projectId: Project["id"] },
     onSuccess: () => void
   ) => void;
-  domainLoadingState: "idle" | "submitting";
-  publishIsInProgress: boolean;
+  domainState: "idle" | "submitting";
+  isPublishing: boolean;
 };
 
 export const AddDomain = ({
   projectId,
   onCreate,
   refreshDomainResult,
-  domainLoadingState,
-  publishIsInProgress,
+  domainState,
+  isPublishing,
 }: DomainsAddProps) => {
   const id = useId();
   const {
     send: create,
-    state,
-    error: createSystemError,
+    state: сreateState,
+    error: сreateSystemError,
   } = trpc.create.useMutation();
   const [isOpen, setIsOpen] = useState(false);
   const [domain, setDomain] = useState("");
@@ -98,9 +98,7 @@ export const AddDomain = ({
               placeholder="your-domain.com"
               value={domain}
               disabled={
-                publishIsInProgress ||
-                state !== "idle" ||
-                domainLoadingState !== "idle"
+                isPublishing || сreateState !== "idle" || domainState !== "idle"
               }
               onKeyDown={(event) => {
                 if (event.key === "Enter") {
@@ -123,10 +121,10 @@ export const AddDomain = ({
                 <Text color="destructive">{error}</Text>
               </>
             )}
-            {createSystemError !== undefined && (
+            {сreateSystemError !== undefined && (
               <>
                 {/* Something happened with network, api etc */}
-                <Text color="destructive">{createSystemError}</Text>
+                <Text color="destructive">{сreateSystemError}</Text>
                 <Text color="subtle">Please try again later</Text>
               </>
             )}
@@ -135,9 +133,7 @@ export const AddDomain = ({
 
         <Button
           disabled={
-            publishIsInProgress ||
-            state !== "idle" ||
-            domainLoadingState !== "idle"
+            isPublishing || сreateState !== "idle" || domainState !== "idle"
           }
           color={isOpen ? "primary" : "neutral"}
           css={{ width: "100%", flexShrink: 0 }}

@@ -57,7 +57,7 @@ type ProjectData =
 type ChangeProjectDomainProps = {
   project: Project;
   projectState: "idle" | "submitting";
-  publishIsInProgress: boolean;
+  isPublishing: boolean;
   projectLoad: (
     props: { projectId: Project["id"] },
     callback: (projectData: ProjectData) => void
@@ -70,7 +70,7 @@ const ChangeProjectDomain = ({
   project,
   projectLoad,
   projectState,
-  publishIsInProgress,
+  isPublishing,
 }: ChangeProjectDomainProps) => {
   const id = useId();
 
@@ -184,7 +184,7 @@ const ChangeProjectDomain = ({
             placeholder="Domain"
             value={domain}
             disabled={
-              publishIsInProgress ||
+              isPublishing ||
               updateProjectDomainState !== "idle" ||
               projectState !== "idle"
             }
@@ -226,15 +226,15 @@ const Publish = ({
   domainsToPublish,
   refresh,
 
-  publishIsInProgress,
-  setPublishIsInProgress,
+  isPublishing,
+  setIsPublishing,
 }: {
   project: Project;
   domainsToPublish: Domain[];
   refresh: () => void;
 
-  publishIsInProgress: boolean;
-  setPublishIsInProgress: (publishIsInProgress: boolean) => void;
+  isPublishing: boolean;
+  setIsPublishing: (isPublishing: boolean) => void;
 }) => {
   const {
     send: publish,
@@ -244,7 +244,7 @@ const Publish = ({
   } = trpc.publish.useMutation();
 
   useEffect(() => {
-    if (publishIsInProgress) {
+    if (isPublishing) {
       let timeoutHandle: TimeoutId;
       let totalCalls = 0;
       const timeout = 10000;
@@ -269,7 +269,7 @@ const Publish = ({
         clearTimeout(timeoutHandle);
       };
     }
-  }, [publishIsInProgress, refresh]);
+  }, [isPublishing, refresh]);
 
   return (
     <Flex
@@ -293,16 +293,16 @@ const Publish = ({
 
       <Tooltip
         content={
-          publishState !== "idle" || publishIsInProgress
+          publishState !== "idle" || isPublishing
             ? "Publish process in progress"
             : undefined
         }
       >
         <Button
           color="positive"
-          disabled={publishState !== "idle" || publishIsInProgress}
+          disabled={publishState !== "idle" || isPublishing}
           onClick={() => {
-            setPublishIsInProgress(true);
+            setIsPublishing(true);
 
             publish(
               {
@@ -329,7 +329,7 @@ const Content = (props: { projectId: Project["id"] }) => {
   const {
     data: domainsResult,
     load: domainRefresh,
-    state: domainLoadingState,
+    state: domainState,
     error: domainSystemError,
   } = trpc.findMany.useQuery();
 
@@ -377,12 +377,11 @@ const Content = (props: { projectId: Project["id"] }) => {
     [latestBuilds]
   );
 
-  const [publishIsInProgress, setPublishIsInProgress] =
-    useState(hasPendingState);
+  const [isPublishing, setIsPublishing] = useState(hasPendingState);
 
   useEffect(() => {
-    setPublishIsInProgress(hasPendingState);
-  }, [hasPendingState, setPublishIsInProgress]);
+    setIsPublishing(hasPendingState);
+  }, [hasPendingState, setIsPublishing]);
 
   return (
     <>
@@ -406,7 +405,7 @@ const Content = (props: { projectId: Project["id"] }) => {
             projectLoad={projectLoad}
             projectState={projectState}
             project={projectData.project}
-            publishIsInProgress={publishIsInProgress}
+            isPublishing={isPublishing}
           />
         )}
 
@@ -421,8 +420,8 @@ const Content = (props: { projectId: Project["id"] }) => {
                 newDomains={newDomains}
                 domains={domainsResult.data}
                 refreshDomainResult={domainRefresh}
-                domainLoadingState={domainLoadingState}
-                publishIsInProgress={publishIsInProgress}
+                domainState={domainState}
+                isPublishing={isPublishing}
               />
             )}
             {domainsResult?.success === false && (
@@ -448,13 +447,13 @@ const Content = (props: { projectId: Project["id"] }) => {
           <AddDomain
             projectId={props.projectId}
             refreshDomainResult={domainRefresh}
-            domainLoadingState={domainLoadingState}
+            domainState={domainState}
             onCreate={(domain) => {
               setNewDomains((prev) => {
                 return new Set([...prev, domain]);
               });
             }}
-            publishIsInProgress={publishIsInProgress}
+            isPublishing={isPublishing}
           />
         </>
       )}
@@ -467,8 +466,8 @@ const Content = (props: { projectId: Project["id"] }) => {
             projectLoad({ projectId: props.projectId });
             domainRefresh({ projectId: props.projectId });
           }}
-          publishIsInProgress={publishIsInProgress}
-          setPublishIsInProgress={setPublishIsInProgress}
+          isPublishing={isPublishing}
+          setIsPublishing={setIsPublishing}
         />
       ) : (
         <Box css={{ height: theme.spacing[8] }} />

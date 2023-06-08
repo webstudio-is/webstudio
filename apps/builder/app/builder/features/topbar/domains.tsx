@@ -202,8 +202,8 @@ const DomainItem = (props: {
     input: { projectId: Project["id"] },
     onSuccess?: () => void
   ) => void;
-  domainLoadingState: "idle" | "submitting";
-  publishIsInProgress: boolean;
+  domainState: "idle" | "submitting";
+  isPublishing: boolean;
 }) => {
   const {
     send: verify,
@@ -229,12 +229,12 @@ const DomainItem = (props: {
   const [isStatusLoading, setIsStatusLoading] = useState(true);
 
   const isRemoveInProgress =
-    removeState !== "idle" || props.domainLoadingState !== "idle";
+    removeState !== "idle" || props.domainState !== "idle";
 
   const isCheckStateInProgress =
     verifyState !== "idle" ||
     updateStatusState !== "idle" ||
-    props.domainLoadingState !== "idle";
+    props.domainState !== "idle";
 
   const status = props.projectDomain.verified
     ? (`VERIFIED_${props.projectDomain.domain.status}` as `VERIFIED_${DomainStatus}`)
@@ -389,7 +389,7 @@ const DomainItem = (props: {
             <Text color="destructive">{verifySystemError}</Text>
           )}
           <Button
-            disabled={props.publishIsInProgress || isCheckStateInProgress}
+            disabled={props.isPublishing || isCheckStateInProgress}
             color="primary"
             css={{ width: "100%", flexShrink: 0, mt: theme.spacing[3] }}
             onClick={handleVerify}
@@ -408,7 +408,7 @@ const DomainItem = (props: {
             <Text color="destructive">{updateStatusError}</Text>
           )}
           <Button
-            disabled={props.publishIsInProgress || isCheckStateInProgress}
+            disabled={props.isPublishing || isCheckStateInProgress}
             color="primary"
             css={{ width: "100%", flexShrink: 0, mt: theme.spacing[3] }}
             onClick={handleUpdateStatus}
@@ -427,7 +427,7 @@ const DomainItem = (props: {
       )}
 
       <Button
-        disabled={props.publishIsInProgress || isRemoveInProgress}
+        disabled={props.isPublishing || isRemoveInProgress}
         color="neutral"
         css={{ width: "100%", flexShrink: 0 }}
         onClick={() => {
@@ -539,16 +539,16 @@ type DomainsProps = {
     input: { projectId: Project["id"] },
     onSuccess?: () => void
   ) => void;
-  domainLoadingState: "idle" | "submitting";
-  publishIsInProgress: boolean;
+  domainState: "idle" | "submitting";
+  isPublishing: boolean;
 };
 
 export const Domains = ({
   newDomains,
   domains,
   refreshDomainResult,
-  domainLoadingState,
-  publishIsInProgress,
+  domainState,
+  isPublishing,
 }: DomainsProps) => {
   return (
     <>
@@ -558,8 +558,8 @@ export const Domains = ({
           projectDomain={projectDomain}
           initiallyOpen={newDomains.has(projectDomain.domain.domain)}
           refreshDomainResult={refreshDomainResult}
-          domainLoadingState={domainLoadingState}
-          publishIsInProgress={publishIsInProgress}
+          domainState={domainState}
+          isPublishing={isPublishing}
         />
       ))}
     </>
