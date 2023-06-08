@@ -1,5 +1,11 @@
 import { v4 as uuid } from "uuid";
-import { prisma, type Project, type Domain } from "@webstudio-is/prisma-client";
+import {
+  prisma,
+  type Project,
+  type Domain,
+  type ProjectWithDomain,
+  type LatestBuildPerProjectDomain,
+} from "@webstudio-is/prisma-client";
 import {
   authorizeProject,
   type AppContext,
@@ -8,13 +14,21 @@ import {
 import { validateDomain } from "./validate";
 import { cnameFromUserId } from "./cname-from-user-id";
 
-const getProjectDomains = async (projectId: Project["id"]) =>
+export type ProjectDomain = ProjectWithDomain & {
+  domain: Domain;
+  latestBuid: null | LatestBuildPerProjectDomain;
+};
+
+const getProjectDomains = async (
+  projectId: Project["id"]
+): Promise<ProjectDomain[]> =>
   await prisma.projectWithDomain.findMany({
     where: {
       projectId,
     },
     include: {
       domain: true,
+      latestBuid: true,
     },
     orderBy: [
       {
@@ -27,8 +41,7 @@ export const findMany = async (
   props: { projectId: Project["id"] },
   context: AppContext
 ): Promise<
-  | { success: false; error: string }
-  | { success: true; data: Awaited<ReturnType<typeof getProjectDomains>> }
+  { success: false; error: string } | { success: true; data: ProjectDomain[] }
 > => {
   // Only builder of the project can list domains
   const canList = await authorizeProject.hasProjectPermit(

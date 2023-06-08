@@ -58,6 +58,7 @@
     "@webstudio-is/sdk-components-react-remix": "workspace:^",
     "@webstudio-is/trpc-interface": "workspace:^",
     "colord": "^2.9.3",
+    "date-fns": "^2.30.0",
     "debug": "^4.3.4",
     "detect-font": "^0.1.5",
     "downshift": "^6.1.7",

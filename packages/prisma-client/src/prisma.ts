@@ -58,7 +58,7 @@ prisma.$on("query", (e) => {
   );
 
   // eslint-disable-next-line no-console
-  console.log("Params: " + e.params.slice(0, 100));
+  console.log("Params: " + e.params.slice(0, 200));
   // eslint-disable-next-line no-console
   console.log("Duration: " + e.duration + "ms");
 });

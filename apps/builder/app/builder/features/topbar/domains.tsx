@@ -24,10 +24,13 @@ import type { DomainStatus } from "@webstudio-is/prisma-client";
 import { CollapsibleDomainSection } from "./collapsible-domain-section";
 import env from "~/shared/env";
 import { useCallback, useEffect, useState } from "react";
+import type { PublishStatus } from "@webstudio-is/prisma-client";
+// eslint-disable-next-line import/no-internal-modules
+import formatDistance from "date-fns/formatDistance";
 
 const trpc = createTrpcFetchProxy<DomainRouter>(builderDomainsPath);
 
-type Domain = {
+export type Domain = {
   projectId: Project["id"];
   domain: {
     domain: string;
@@ -38,6 +41,14 @@ type Domain = {
   txtRecord: string;
   cname: string;
   verified: boolean;
+  latestBuid: null | {
+    projectId: string;
+    buildId: string;
+    isLatestBuild: boolean;
+    publishStatus: PublishStatus;
+    updatedAt: string;
+    domainId: string;
+  };
 };
 
 const InputEllipsis = styled(InputField, {
@@ -74,6 +85,39 @@ export const getStatus = (projectDomain: Domain) =>
     ? (`VERIFIED_${projectDomain.domain.status}` as const)
     : `UNVERIFIED`;
 
+export const PENDING_TIMEOUT = 60 * 3 * 1000;
+
+export const getPublishStatusAndText = ({
+  updatedAt,
+  publishStatus,
+}: Pick<NonNullable<Domain["latestBuid"]>, "updatedAt" | "publishStatus">) => {
+  let status = publishStatus;
+
+  const delta = Date.now() - new Date(updatedAt).getTime();
+  // Assume build failed after 3 minutes
+
+  if (publishStatus === "PENDING" && delta > PENDING_TIMEOUT) {
+    status = "FAILED";
+  }
+
+  const textStart =
+    status === "PUBLISHED"
+      ? "Published"
+      : status === "FAILED"
+      ? "Publish failed"
+      : "Publishing started";
+
+  const statusText = `${textStart} ${formatDistance(
+    new Date(updatedAt),
+    new Date(),
+    {
+      addSuffix: true,
+    }
+  )}`;
+
+  return { statusText, status };
+};
+
 const getStatusText = (props: {
   projectDomain: Domain;
   isLoading: boolean;
@@ -96,7 +140,16 @@ const getStatusText = (props: {
       break;
     case "VERIFIED_ACTIVE":
       isVerifiedActive = true;
-      text = "Status: Active";
+      text = "Status: Active, not published";
+
+      if (props.projectDomain.latestBuid !== null) {
+        const publishText = getPublishStatusAndText(
+          props.projectDomain.latestBuid
+        );
+
+        text = publishText.statusText;
+        isVerifiedActive = publishText.status !== "FAILED";
+      }
       break;
     case "VERIFIED_ERROR":
       text = props.projectDomain.domain.error ?? text;
@@ -149,7 +202,8 @@ const DomainItem = (props: {
     input: { projectId: Project["id"] },
     onSuccess?: () => void
   ) => void;
-  domainLoadingState: "idle" | "submitting";
+  domainState: "idle" | "submitting";
+  isPublishing: boolean;
 }) => {
   const {
     send: verify,
@@ -175,12 +229,12 @@ const DomainItem = (props: {
   const [isStatusLoading, setIsStatusLoading] = useState(true);
 
   const isRemoveInProgress =
-    removeState !== "idle" || props.domainLoadingState !== "idle";
+    removeState !== "idle" || props.domainState !== "idle";
 
   const isCheckStateInProgress =
     verifyState !== "idle" ||
     updateStatusState !== "idle" ||
-    props.domainLoadingState !== "idle";
+    props.domainState !== "idle";
 
   const status = props.projectDomain.verified
     ? (`VERIFIED_${props.projectDomain.domain.status}` as `VERIFIED_${DomainStatus}`)
@@ -335,7 +389,7 @@ const DomainItem = (props: {
             <Text color="destructive">{verifySystemError}</Text>
           )}
           <Button
-            disabled={isCheckStateInProgress}
+            disabled={props.isPublishing || isCheckStateInProgress}
             color="primary"
             css={{ width: "100%", flexShrink: 0, mt: theme.spacing[3] }}
             onClick={handleVerify}
@@ -354,7 +408,7 @@ const DomainItem = (props: {
             <Text color="destructive">{updateStatusError}</Text>
           )}
           <Button
-            disabled={isCheckStateInProgress}
+            disabled={props.isPublishing || isCheckStateInProgress}
             color="primary"
             css={{ width: "100%", flexShrink: 0, mt: theme.spacing[3] }}
             onClick={handleUpdateStatus}
@@ -373,7 +427,7 @@ const DomainItem = (props: {
       )}
 
       <Button
-        disabled={isRemoveInProgress}
+        disabled={props.isPublishing || isRemoveInProgress}
         color="neutral"
         css={{ width: "100%", flexShrink: 0 }}
         onClick={() => {
@@ -485,14 +539,16 @@ type DomainsProps = {
     input: { projectId: Project["id"] },
     onSuccess?: () => void
   ) => void;
-  domainLoadingState: "idle" | "submitting";
+  domainState: "idle" | "submitting";
+  isPublishing: boolean;
 };
 
 export const Domains = ({
   newDomains,
   domains,
   refreshDomainResult,
-  domainLoadingState,
+  domainState,
+  isPublishing,
 }: DomainsProps) => {
   return (
     <>
@@ -502,7 +558,8 @@ export const Domains = ({
           projectDomain={projectDomain}
           initiallyOpen={newDomains.has(projectDomain.domain.domain)}
           refreshDomainResult={refreshDomainResult}
-          domainLoadingState={domainLoadingState}
+          domainState={domainState}
+          isPublishing={isPublishing}
         />
       ))}
     </>

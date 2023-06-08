@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import {
   Button,
   useId,
@@ -16,6 +16,7 @@ import {
   InputField,
   Separator,
   ScrollArea,
+  Box,
 } from "@webstudio-is/design-system";
 import { useIsPublishDialogOpen } from "../../shared/nano-states";
 import { validateProjectDomain, type Project } from "@webstudio-is/project";
@@ -23,7 +24,13 @@ import { getPublishedUrl } from "~/shared/router-utils";
 import { theme } from "@webstudio-is/design-system";
 import { useAuthPermit } from "~/shared/nano-states";
 import { isFeatureEnabled } from "@webstudio-is/feature-flags";
-import { Domains, getStatus } from "./domains";
+import {
+  Domains,
+  getPublishStatusAndText,
+  getStatus,
+  type Domain,
+  PENDING_TIMEOUT,
+} from "./domains";
 import { CollapsibleDomainSection } from "./collapsible-domain-section";
 import {
   CheckCircleIcon,
@@ -37,9 +44,34 @@ import { AddDomain } from "./add-domain";
 
 const trpc = createTrpcFetchProxy<DomainRouter>(builderDomainsPath);
 
-type PublishButtonProps = { project: Project };
+type ProjectData =
+  | {
+      success: true;
+      project: Project;
+    }
+  | {
+      success: false;
+      error: string;
+    };
 
-const ChangeProjectDomain = (props: PublishButtonProps) => {
+type ChangeProjectDomainProps = {
+  project: Project;
+  projectState: "idle" | "submitting";
+  isPublishing: boolean;
+  projectLoad: (
+    props: { projectId: Project["id"] },
+    callback: (projectData: ProjectData) => void
+  ) => void;
+};
+
+type TimeoutId = undefined | ReturnType<typeof setTimeout>;
+
+const ChangeProjectDomain = ({
+  project,
+  projectLoad,
+  projectState,
+  isPublishing,
+}: ChangeProjectDomainProps) => {
   const id = useId();
 
   const {
@@ -48,24 +80,12 @@ const ChangeProjectDomain = (props: PublishButtonProps) => {
     error: updateProjectSystemError,
   } = trpc.updateProjectDomain.useMutation();
 
-  const {
-    load: loadProject,
-    data: projectData,
-    state: projectState,
-    error: projectSystemError,
-  } = trpc.project.useQuery();
-
-  const [domain, setDomain] = useState(props.project.domain);
+  const [domain, setDomain] = useState(project.domain);
   const [error, setError] = useState<string>();
-
-  let project = props.project;
-  if (projectData?.success) {
-    project = projectData.project;
-  }
 
   const refreshProject = useCallback(
     () =>
-      loadProject({ projectId: props.project.id }, (projectData) => {
+      projectLoad({ projectId: project.id }, (projectData) => {
         if (projectData?.success === false) {
           setError(projectData.error);
           return;
@@ -73,7 +93,7 @@ const ChangeProjectDomain = (props: PublishButtonProps) => {
 
         setDomain(projectData.project.domain);
       }),
-    [loadProject, props.project.id]
+    [projectLoad, project.id]
   );
 
   useEffect(() => {
@@ -107,32 +127,20 @@ const ChangeProjectDomain = (props: PublishButtonProps) => {
     });
   };
 
-  if (projectSystemError !== undefined) {
-    return (
-      <Flex
-        css={{
-          m: theme.spacing[9],
-          overflowWrap: "anywhere",
-        }}
-        gap={2}
-        direction={"column"}
-      >
-        <Text color="destructive">{projectSystemError}</Text>
-        <Text color="subtle">Please try again later</Text>
-      </Flex>
-    );
-  }
-
-  if (projectData === undefined) {
-    return <div />;
-  }
+  const { statusText, status } =
+    project.latestBuild != null
+      ? getPublishStatusAndText(project.latestBuild)
+      : {
+          statusText: "Not published",
+          status: "PENDING",
+        };
 
   return (
     <CollapsibleDomainSection
       title={publishedUrl.host}
       suffix={
         <Grid flow="column">
-          <Tooltip content={error !== undefined ? error : "Everything is ok"}>
+          <Tooltip content={error !== undefined ? error : statusText}>
             <Flex
               align={"center"}
               justify={"center"}
@@ -141,12 +149,16 @@ const ChangeProjectDomain = (props: PublishButtonProps) => {
                 width: theme.spacing[12],
                 height: theme.spacing[12],
                 color:
-                  error !== undefined
+                  error !== undefined || status === "FAILED"
                     ? theme.colors.foregroundDestructive
                     : theme.colors.foregroundSuccessText,
               }}
             >
-              {error !== undefined ? <AlertIcon /> : <CheckCircleIcon />}
+              {error !== undefined || status === "FAILED" ? (
+                <AlertIcon />
+              ) : (
+                <CheckCircleIcon />
+              )}
             </Flex>
           </Tooltip>
 
@@ -172,7 +184,9 @@ const ChangeProjectDomain = (props: PublishButtonProps) => {
             placeholder="Domain"
             value={domain}
             disabled={
-              updateProjectDomainState !== "idle" || projectState !== "idle"
+              isPublishing ||
+              updateProjectDomainState !== "idle" ||
+              projectState !== "idle"
             }
             onChange={(event) => {
               setError(undefined);
@@ -208,11 +222,19 @@ const ChangeProjectDomain = (props: PublishButtonProps) => {
 };
 
 const Publish = ({
-  projectId,
-  domains,
+  project,
+  domainsToPublish,
+  refresh,
+
+  isPublishing,
+  setIsPublishing,
 }: {
-  projectId: Project["id"];
-  domains: string[];
+  project: Project;
+  domainsToPublish: Domain[];
+  refresh: () => void;
+
+  isPublishing: boolean;
+  setIsPublishing: (isPublishing: boolean) => void;
 }) => {
   const {
     send: publish,
@@ -220,6 +242,34 @@ const Publish = ({
     data: publishData,
     error: publishSystemError,
   } = trpc.publish.useMutation();
+
+  useEffect(() => {
+    if (isPublishing) {
+      let timeoutHandle: TimeoutId;
+      let totalCalls = 0;
+      const timeout = 10000;
+      // Repeat few more times than timeout
+      const repeat = PENDING_TIMEOUT / timeout + 5;
+
+      // Call refresh
+      const execRefresh = () => {
+        if (totalCalls < repeat) {
+          totalCalls += 1;
+          clearTimeout(timeoutHandle);
+          timeoutHandle = setTimeout(() => {
+            refresh();
+            execRefresh();
+          }, timeout);
+        }
+      };
+
+      execRefresh();
+
+      return () => {
+        clearTimeout(timeoutHandle);
+      };
+    }
+  }, [isPublishing, refresh]);
 
   return (
     <Flex
@@ -241,54 +291,137 @@ const Publish = ({
         <Text color="destructive">{publishData.error}</Text>
       )}
 
-      <Button
-        color="positive"
-        disabled={publishState !== "idle"}
-        onClick={() => {
-          publish({ projectId, domains });
-        }}
+      <Tooltip
+        content={
+          publishState !== "idle" || isPublishing
+            ? "Publish process in progress"
+            : undefined
+        }
       >
-        Publish
-      </Button>
+        <Button
+          color="positive"
+          disabled={publishState !== "idle" || isPublishing}
+          onClick={() => {
+            setIsPublishing(true);
+
+            publish(
+              {
+                projectId: project.id,
+                domains: domainsToPublish.map(
+                  (projectDomain) => projectDomain.domain.domain
+                ),
+              },
+              () => {
+                refresh();
+              }
+            );
+          }}
+        >
+          Publish
+        </Button>
+      </Tooltip>
     </Flex>
   );
 };
 
-const Content = (props: PublishButtonProps) => {
+const Content = (props: { projectId: Project["id"] }) => {
   const [newDomains, setNewDomains] = useState(new Set<string>());
   const {
     data: domainsResult,
-    load: refreshDomainResult,
-    state: domainLoadingState,
+    load: domainRefresh,
+    state: domainState,
+    error: domainSystemError,
   } = trpc.findMany.useQuery();
 
-  useEffect(() => {
-    refreshDomainResult({ projectId: props.project.id });
-  }, [refreshDomainResult, props.project.id]);
+  const {
+    load: projectLoad,
+    data: projectData,
+    state: projectState,
+    error: projectSystemError,
+  } = trpc.project.useQuery();
 
-  // In the future we would allow to select what domains to publish,
-  // now we just publish all verified and active domains
-  const domainsToPublish = domainsResult?.success
-    ? domainsResult.data
-        .filter(
-          (projectDomain) => getStatus(projectDomain) === "VERIFIED_ACTIVE"
-        )
-        .map((projectDomain) => projectDomain.domain.domain)
-    : [];
+  useEffect(() => {
+    projectLoad({ projectId: props.projectId });
+    domainRefresh({ projectId: props.projectId });
+  }, [domainRefresh, props.projectId, projectLoad]);
+
+  const domainsToPublish = useMemo(
+    () =>
+      domainsResult?.success
+        ? domainsResult.data.filter(
+            (projectDomain) => getStatus(projectDomain) === "VERIFIED_ACTIVE"
+          )
+        : [],
+    [domainsResult]
+  );
+
+  const latestBuilds = useMemo(
+    () => [
+      projectData?.success ? projectData.project.latestBuild ?? null : null,
+      ...domainsToPublish.map((domain) => domain.latestBuid),
+    ],
+    [domainsToPublish, projectData]
+  );
+
+  const hasPendingState = useMemo(
+    () =>
+      latestBuilds.some((latestBuild) => {
+        if (latestBuild === null) {
+          return false;
+        }
+        const { status } = getPublishStatusAndText(latestBuild);
+        if (status === "PENDING") {
+          return true;
+        }
+      }),
+    [latestBuilds]
+  );
+
+  const [isPublishing, setIsPublishing] = useState(hasPendingState);
+
+  useEffect(() => {
+    setIsPublishing(hasPendingState);
+  }, [hasPendingState, setIsPublishing]);
 
   return (
     <>
       <ScrollArea>
-        <ChangeProjectDomain project={props.project} />
+        {projectSystemError !== undefined && (
+          <Flex
+            css={{
+              m: theme.spacing[9],
+              overflowWrap: "anywhere",
+            }}
+            gap={2}
+            direction={"column"}
+          >
+            <Text color="destructive">{projectSystemError}</Text>
+            <Text color="subtle">Please try again later</Text>
+          </Flex>
+        )}
+
+        {projectData?.success && (
+          <ChangeProjectDomain
+            projectLoad={projectLoad}
+            projectState={projectState}
+            project={projectData.project}
+            isPublishing={isPublishing}
+          />
+        )}
 
         {isFeatureEnabled("domains") && (
           <>
+            {domainSystemError !== undefined && (
+              <Text color="destructive">{domainSystemError}</Text>
+            )}
+
             {domainsResult?.success === true && (
               <Domains
                 newDomains={newDomains}
                 domains={domainsResult.data}
-                refreshDomainResult={refreshDomainResult}
-                domainLoadingState={domainLoadingState}
+                refreshDomainResult={domainRefresh}
+                domainState={domainState}
+                isPublishing={isPublishing}
               />
             )}
             {domainsResult?.success === false && (
@@ -312,24 +445,41 @@ const Content = (props: PublishButtonProps) => {
           </Flex>
 
           <AddDomain
-            projectId={props.project.id}
-            refreshDomainResult={refreshDomainResult}
-            domainLoadingState={domainLoadingState}
+            projectId={props.projectId}
+            refreshDomainResult={domainRefresh}
+            domainState={domainState}
             onCreate={(domain) => {
               setNewDomains((prev) => {
                 return new Set([...prev, domain]);
               });
             }}
+            isPublishing={isPublishing}
           />
         </>
       )}
 
-      <Publish projectId={props.project.id} domains={domainsToPublish} />
+      {projectData?.success === true ? (
+        <Publish
+          project={projectData.project}
+          domainsToPublish={domainsToPublish}
+          refresh={() => {
+            projectLoad({ projectId: props.projectId });
+            domainRefresh({ projectId: props.projectId });
+          }}
+          isPublishing={isPublishing}
+          setIsPublishing={setIsPublishing}
+        />
+      ) : (
+        <Box css={{ height: theme.spacing[8] }} />
+      )}
     </>
   );
 };
 
-export const PublishButton = ({ project }: PublishButtonProps) => {
+type PublishProps = {
+  projectId: Project["id"];
+};
+export const PublishButton = ({ projectId }: PublishProps) => {
   const [isOpen, setIsOpen] = useIsPublishDialogOpen();
   const [authPermit] = useAuthPermit();
 
@@ -358,7 +508,7 @@ export const PublishButton = ({ project }: PublishButtonProps) => {
         }}
       >
         <FloatingPanelPopoverTitle>Publish</FloatingPanelPopoverTitle>
-        <Content project={project} />
+        <Content projectId={projectId} />
       </FloatingPanelPopoverContent>
     </FloatingPanelPopover>
   );

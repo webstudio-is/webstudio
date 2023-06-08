@@ -71,7 +71,7 @@ export const Topbar = ({ gridArea, project, publish }: TopbarProps) => {
           <SyncStatus />
           <PreviewButton />
           <ShareButton projectId={project.id} />
-          <PublishButton project={project} />
+          <PublishButton projectId={project.id} />
         </ToolbarToggleGroup>
       </Toolbar>
     </nav>

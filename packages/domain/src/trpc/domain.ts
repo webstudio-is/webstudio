@@ -13,6 +13,7 @@ export const domainRouter = router({
     .query(async ({ input, ctx }) => {
       try {
         const project = await projectDb.project.loadById(input.projectId, ctx);
+
         return {
           success: true,
           project,
@@ -28,17 +29,18 @@ export const domainRouter = router({
     .input(z.object({ projectId: z.string(), domains: z.array(z.string()) }))
     .mutation(async ({ input, ctx }) => {
       try {
+        const project = await projectDb.project.loadById(input.projectId, ctx);
+
         const build = await createProductionBuild(
           {
             projectId: input.projectId,
             deployment: {
               domains: input.domains,
+              projectDomain: project.domain,
             },
           },
           ctx
         );
-
-        const project = await projectDb.project.loadById(input.projectId, ctx);
 
         const { deploymentTrpc, env } = ctx.deployment;
 
