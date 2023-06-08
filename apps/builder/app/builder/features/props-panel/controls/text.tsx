@@ -21,6 +21,18 @@ type UniversalInputProps = Omit<
   onSubmit: () => void;
 };
 
+/**
+ * UniversalInput component allows to dynamically decide if we need a single-line input or a multi-line textarea.
+ * Problem it is solving is that we don't know from data type string if user needs a textarea or an input.
+ *
+ * Single-line mode:
+ * - enter saves
+ * - shift+enter - adds newline and saves
+ *
+ * Multiline-mode:
+ * - enter saves and ads newline
+ * - cmd+enter - saves, no newline
+ */
 const UniversalInput = ({
   value,
   defaultRows,
