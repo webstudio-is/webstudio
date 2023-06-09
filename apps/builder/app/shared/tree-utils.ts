@@ -127,6 +127,7 @@ const adjustChildrenPosition = (
  */
 const wrapEditableChildrenAroundDropTargetMutable = (
   instances: Instances,
+  props: Props,
   metas: Map<string, WsComponentMeta>,
   dropTarget: DroppableTarget
 ) => {
@@ -160,11 +161,19 @@ const wrapEditableChildrenAroundDropTargetMutable = (
     const leftSpan: Instance = {
       id: nanoid(),
       type: "instance",
-      component: "SpanContainer",
+      component: "TextBlock",
       children: parentInstance.children.slice(0, position),
     };
     newChildren.push({ type: "id", value: leftSpan.id });
     instances.set(leftSpan.id, leftSpan);
+    const tagProp: Prop = {
+      id: nanoid(),
+      instanceId: leftSpan.id,
+      type: "string",
+      name: "tag",
+      value: "span",
+    };
+    props.set(tagProp.id, tagProp);
     newPosition = 1;
   }
   // create right span when not in the end
@@ -172,11 +181,19 @@ const wrapEditableChildrenAroundDropTargetMutable = (
     const rightSpan: Instance = {
       id: nanoid(),
       type: "instance",
-      component: "SpanContainer",
+      component: "TextBlock",
       children: parentInstance.children.slice(position),
     };
     newChildren.push({ type: "id", value: rightSpan.id });
     instances.set(rightSpan.id, rightSpan);
+    const tagProp: Prop = {
+      id: nanoid(),
+      instanceId: rightSpan.id,
+      type: "string",
+      name: "tag",
+      value: "span",
+    };
+    props.set(tagProp.id, tagProp);
   }
   parentInstance.children = newChildren;
   return {
@@ -203,6 +220,7 @@ const getSlotFragmentSelector = (
 
 export const reparentInstanceMutable = (
   instances: Instances,
+  props: Props,
   metas: Map<string, WsComponentMeta>,
   instanceSelector: InstanceSelector,
   dropTarget: DroppableTarget
@@ -215,8 +233,12 @@ export const reparentInstanceMutable = (
   dropTarget =
     getInstanceOrCreateFragmentIfNecessary(instances, dropTarget) ?? dropTarget;
   dropTarget =
-    wrapEditableChildrenAroundDropTargetMutable(instances, metas, dropTarget) ??
-    dropTarget;
+    wrapEditableChildrenAroundDropTargetMutable(
+      instances,
+      props,
+      metas,
+      dropTarget
+    ) ?? dropTarget;
   const [parentId] = dropTarget.parentSelector;
   const nextParent = instances.get(parentId);
   const instance = instances.get(instanceId);
@@ -315,6 +337,7 @@ export const findLocalStyleSourcesWithinInstances = (
 
 export const insertInstancesMutable = (
   instances: Instances,
+  props: Props,
   metas: Map<string, WsComponentMeta>,
   insertedInstances: Instance[],
   children: Instance["children"],
@@ -323,8 +346,12 @@ export const insertInstancesMutable = (
   dropTarget =
     getInstanceOrCreateFragmentIfNecessary(instances, dropTarget) ?? dropTarget;
   dropTarget =
-    wrapEditableChildrenAroundDropTargetMutable(instances, metas, dropTarget) ??
-    dropTarget;
+    wrapEditableChildrenAroundDropTargetMutable(
+      instances,
+      props,
+      metas,
+      dropTarget
+    ) ?? dropTarget;
   const [parentId] = dropTarget.parentSelector;
   const parentInstance = instances.get(parentId);
   if (parentInstance === undefined) {
@@ -352,6 +379,7 @@ export const insertInstancesMutable = (
 
 export const insertInstancesCopyMutable = (
   instances: Instances,
+  props: Props,
   metas: Map<string, WsComponentMeta>,
   copiedInstances: Instance[],
   dropTarget: DroppableTarget
@@ -416,6 +444,7 @@ export const insertInstancesCopyMutable = (
 
   insertInstancesMutable(
     instances,
+    props,
     metas,
     copiedInstancesWithNewIds,
     // consider the first instance as child

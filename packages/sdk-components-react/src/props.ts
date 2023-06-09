@@ -10,7 +10,6 @@ export { propsMeta as Link } from "./link.ws";
 export { propsMeta as LinkBlock } from "./link-block.ws";
 export { propsMeta as RichTextLink } from "./rich-text-link.ws";
 export { propsMeta as Span } from "./span.ws";
-export { propsMeta as SpanContainer } from "./span-container.ws";
 export { propsMeta as Bold } from "./bold.ws";
 export { propsMeta as Italic } from "./italic.ws";
 export { propsMeta as Superscript } from "./superscript.ws";

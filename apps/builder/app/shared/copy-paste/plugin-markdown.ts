@@ -228,6 +228,7 @@ export const onPaste = (clipboardData: string) => {
   store.createTransaction([instancesStore, propsStore], (instances, props) => {
     insertInstancesMutable(
       instances,
+      props,
       registeredComponentMetasStore.get(),
       data.instances,
       data.children,

@@ -191,6 +191,7 @@ export const insertTemplate = (
     (instances, props, styleSourceSelections, styleSources, styles) => {
       insertInstancesMutable(
         instances,
+        props,
         registeredComponentMetasStore.get(),
         insertedInstances,
         children,
@@ -240,9 +241,10 @@ export const reparentInstance = (
   targetInstanceSelector: InstanceSelector,
   dropTarget: DroppableTarget
 ) => {
-  store.createTransaction([instancesStore], (instances) => {
+  store.createTransaction([instancesStore, propsStore], (instances, props) => {
     reparentInstanceMutable(
       instances,
+      props,
       registeredComponentMetasStore.get(),
       targetInstanceSelector,
       dropTarget
