@@ -10,6 +10,7 @@ export { meta as Link } from "./link.ws";
 export { meta as LinkBlock } from "./link-block.ws";
 export { meta as RichTextLink } from "./rich-text-link.ws";
 export { meta as Span } from "./span.ws";
+export { meta as SpanContainer } from "./span-container.ws";
 export { meta as Bold } from "./bold.ws";
 export { meta as Italic } from "./italic.ws";
 export { meta as Superscript } from "./superscript.ws";

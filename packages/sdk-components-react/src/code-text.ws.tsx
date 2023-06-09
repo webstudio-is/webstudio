@@ -37,7 +37,7 @@ const presetStyle = {
 
 export const meta: WsComponentMeta = {
   category: "general",
-  type: "rich-text",
+  type: "container",
   label: "Code Text",
   icon: CodeTextIcon,
   states: defaultStates,

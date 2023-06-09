@@ -25,8 +25,8 @@ const presetStyle = {
 
 export const meta: WsComponentMeta = {
   category: "general",
-  type: "rich-text",
-  label: "Link Text",
+  type: "container",
+  label: "Link",
   icon: LinkIcon,
   presetStyle,
   order: 1,

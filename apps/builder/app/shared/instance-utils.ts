@@ -34,6 +34,41 @@ import {
 } from "./tree-utils";
 import { removeByMutable } from "./array-utils";
 import { isBaseBreakpoint } from "./breakpoints";
+import { getElementByInstanceSelector } from "./dom-utils";
+
+export const findClosestEditableInstanceSelector = (
+  instanceSelector: InstanceSelector,
+  instances: Instances,
+  metas: Map<string, WsComponentMeta>
+) => {
+  for (const instanceId of instanceSelector) {
+    const instance = instances.get(instanceId);
+    if (instance === undefined) {
+      return;
+    }
+    const meta = metas.get(instance.component);
+    if (meta === undefined) {
+      return;
+    }
+    if (meta.type !== "container") {
+      continue;
+    }
+    // only container with rich-text-child children and text can be edited
+    for (const child of instance.children) {
+      if (child.type === "id") {
+        const childInstance = instances.get(child.value);
+        if (childInstance === undefined) {
+          return;
+        }
+        const childMeta = metas.get(childInstance.component);
+        if (childMeta?.type !== "rich-text-child") {
+          return;
+        }
+      }
+    }
+    return getAncestorInstanceSelector(instanceSelector, instanceId);
+  }
+};
 
 export const findClosestDroppableComponentIndex = (
   metas: Map<string, WsComponentMeta>,
@@ -156,6 +191,7 @@ export const insertTemplate = (
     (instances, props, styleSourceSelections, styleSources, styles) => {
       insertInstancesMutable(
         instances,
+        registeredComponentMetasStore.get(),
         insertedInstances,
         children,
         dropTarget
@@ -205,7 +241,12 @@ export const reparentInstance = (
   dropTarget: DroppableTarget
 ) => {
   store.createTransaction([instancesStore], (instances) => {
-    reparentInstanceMutable(instances, targetInstanceSelector, dropTarget);
+    reparentInstanceMutable(
+      instances,
+      registeredComponentMetasStore.get(),
+      targetInstanceSelector,
+      dropTarget
+    );
   });
   selectedInstanceSelectorStore.set(targetInstanceSelector);
   selectedStyleSourceSelectorStore.set(undefined);
@@ -300,6 +341,32 @@ export const deleteSelectedInstance = () => {
     return;
   }
   deleteInstance(selectedInstanceSelector);
+};
+
+export const enterEditingMode = (event?: KeyboardEvent) => {
+  const selectedInstanceSelector = selectedInstanceSelectorStore.get();
+  if (selectedInstanceSelector === undefined) {
+    return;
+  }
+  const editableInstanceSelector = findClosestEditableInstanceSelector(
+    selectedInstanceSelector,
+    instancesStore.get(),
+    registeredComponentMetasStore.get()
+  );
+  if (editableInstanceSelector === undefined) {
+    return;
+  }
+  const element = getElementByInstanceSelector(editableInstanceSelector);
+  if (element === undefined) {
+    return;
+  }
+  // When an event is triggered from the Builder,
+  // the canvas element may be unfocused, so it's important to focus the element on the canvas.
+  element.focus();
+  // Prevents inserting a newline when entering text-editing mode
+  event?.preventDefault();
+  selectedInstanceSelectorStore.set(editableInstanceSelector);
+  textEditingInstanceSelectorStore.set(editableInstanceSelector);
 };
 
 export const escapeSelection = () => {

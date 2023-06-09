@@ -21,7 +21,7 @@ const presetStyle = {
 
 export const meta: WsComponentMeta = {
   category: "text",
-  type: "rich-text",
+  type: "container",
   label: "Text Block",
   icon: TextBlockIcon,
   states: defaultStates,

@@ -10,6 +10,7 @@ export { Link } from "./link";
 export { LinkBlock } from "./link-block";
 export { RichTextLink } from "./rich-text-link";
 export { Span } from "./span";
+export { SpanContainer } from "./span-container";
 export { Bold } from "./bold";
 export { Italic } from "./italic";
 export { Superscript } from "./superscript";
