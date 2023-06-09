@@ -17,8 +17,8 @@
   },
   "devDependencies": {
     "@types/css-tree": "^2.3.1",
-    "@webstudio-is/scripts": "workspace:^",
     "@webstudio-is/jest-config": "workspace:^",
+    "@webstudio-is/scripts": "workspace:^",
     "@webstudio-is/tsconfig": "workspace:^",
     "camelcase": "^6.3.0",
     "html-tags": "^3.2.0",
@@ -26,7 +26,7 @@
     "mdn-data": "2.0.30",
     "tsx": "^3.12.6",
     "type-fest": "^3.7.1",
-    "typescript": "5.0.3",
+    "typescript": "5.1.3",
     "zod": "^3.21.4"
   },
   "peerDependencies": {
@@ -48,8 +48,8 @@
   "sideEffects": false,
   "dependencies": {
     "colord": "^2.9.3",
+    "css-tree": "^2.3.1",
     "hyphenate-style-name": "^1.0.4",
-    "warn-once": "^0.1.1",
-    "css-tree": "^2.3.1"
+    "warn-once": "^0.1.1"
   }
 }
