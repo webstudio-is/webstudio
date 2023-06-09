@@ -49,7 +49,7 @@ export const meta: WsComponentMeta = {
               value: { type: "keyword", value: "absolute" },
             },
             {
-              property: "objectPosition",
+              property: "objectFit",
               value: { type: "keyword", value: "cover" },
             },
             {
