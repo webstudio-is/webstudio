@@ -21,7 +21,8 @@ export const loader = async ({ request }: LoaderArgs) => {
         "/login?returnTo=" + currentUrl.pathname + currentUrl.search
       );
     }
-    return redirect(returnToUrl.origin);
+    returnToUrl.searchParams.set("token", _session);
+    return redirect(returnToUrl.href);
   } catch (error) {
     // If a Response is thrown, we're rethrowing it for Remix to handle.
     // https://remix.run/docs/en/v1/api/conventions#throwing-responses-in-loaders
