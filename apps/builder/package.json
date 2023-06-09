@@ -80,6 +80,7 @@
     "react-color": "^2.19.3",
     "react-dom": "^18.2.0",
     "react-hotkeys-hook": "^4.3.5",
+    "react-script-hook": "^1.7.2",
     "react-use": "^17.3.2",
     "remix-auth": "^3.2.2",
     "remix-auth-form": "^1.1.2",

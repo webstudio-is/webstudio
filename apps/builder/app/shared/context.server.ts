@@ -48,6 +48,15 @@ const createDeploymentContext = (request: Request) => {
   return context;
 };
 
+const createEntriContext = () => {
+  return {
+    env: {
+      ENTRI_APPLICATION_ID: env.ENTRI_APPLICATION_ID,
+      ENTRI_SECRET: env.ENTRI_SECRET,
+    },
+  };
+};
+
 /**
  * argument buildEnv==="prod" only if we are loading project with production build
  */
@@ -55,10 +64,11 @@ export const createContext = async (request: Request): Promise<AppContext> => {
   const authorization = await createAuthorizationContext(request);
   const domain = createDomainContext(request);
   const deployment = createDeploymentContext(request);
-
+  const entri = createEntriContext();
   return {
     authorization,
     domain,
     deployment,
+    entri,
   };
 };
