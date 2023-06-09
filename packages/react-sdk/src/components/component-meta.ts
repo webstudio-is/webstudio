@@ -11,6 +11,7 @@ export type PresetStyle<Tag extends HtmlTags = HtmlTags> = Partial<
 // so they can be exported separately and potentially tree-shaken
 const WsComponentPropsMeta = z.object({
   props: z.record(PropMeta),
+  // Props that will be always visible in properties panel.
   initialProps: z.array(z.string()).optional(),
 });
 

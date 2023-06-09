@@ -39,7 +39,7 @@ export const registerComponentPropsMetas = (
     nextPropsMetas.set(componentName, {
       // order of initialProps must be preserved
       initialProps: [...initialProps, ...requiredProps],
-      props: propsMeta.props,
+      props,
     });
   }
   registeredComponentPropsMetasStore.set(nextPropsMetas);
