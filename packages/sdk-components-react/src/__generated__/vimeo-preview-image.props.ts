@@ -482,6 +482,5 @@ export const props: Record<string, PropMeta> = {
     type: "string",
   },
   quality: { required: false, control: "number", type: "number" },
-  loader: { required: true, control: "text", type: "string" },
   optimize: { required: false, control: "boolean", type: "boolean" },
 };

@@ -13,8 +13,6 @@ const WsComponentPropsMeta = z.object({
   props: z.record(PropMeta),
   // Props that will be always visible in properties panel.
   initialProps: z.array(z.string()).optional(),
-  // Props that will never show up in properties panel.
-  ignoredProps: z.array(z.string()).optional(),
 });
 
 export type WsComponentPropsMeta = z.infer<typeof WsComponentPropsMeta>;

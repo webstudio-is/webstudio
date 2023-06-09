@@ -53,5 +53,4 @@ export const propsMeta: WsComponentPropsMeta = {
     ...propsOverrides,
   },
   initialProps: ["src", "width", "height", "alt", "loading"],
-  ignoredProps: ["loader"],
 };
