@@ -168,7 +168,7 @@ const wrapEditableChildrenAroundDropTargetMutable = (
     newPosition = 1;
   }
   // create right span when not in the end
-  if (position < parentInstance.children.length - 1) {
+  if (position < parentInstance.children.length) {
     const rightSpan: Instance = {
       id: nanoid(),
       type: "instance",

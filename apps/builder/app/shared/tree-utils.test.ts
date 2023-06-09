@@ -226,12 +226,38 @@ test("insert instances tree into target", () => {
 
 describe("insert instances into container with text or rich text children", () => {
   test("insert in the end after text", () => {
-    const instances = new Map([
-      createInstancePair("root", "Body", [{ type: "id", value: "box" }]),
-      createInstancePair("box", "Box", [{ type: "text", value: "text" }]),
-    ]);
+    const getInstances = () =>
+      new Map([
+        createInstancePair("root", "Body", [{ type: "id", value: "box" }]),
+        createInstancePair("box", "Box", [{ type: "text", value: "text" }]),
+      ]);
+
+    const instances1 = getInstances();
     insertInstancesMutable(
-      instances,
+      instances1,
+      baseMetasMap,
+      [createInstance("inserted", "Box", [])],
+      [{ type: "id", value: "inserted" }],
+      {
+        parentSelector: ["box", "root"],
+        position: 0,
+      }
+    );
+    expect(Array.from(instances1.entries())).toEqual([
+      createInstancePair("root", "Body", [{ type: "id", value: "box" }]),
+      createInstancePair("box", "Box", [
+        { type: "id", value: "inserted" },
+        { type: "id", value: expectString },
+      ]),
+      createInstancePair(expectString, "SpanContainer", [
+        { type: "text", value: "text" },
+      ]),
+      createInstancePair("inserted", "Box", []),
+    ]);
+
+    const instances2 = getInstances();
+    insertInstancesMutable(
+      instances2,
       baseMetasMap,
       [createInstance("inserted", "Box", [])],
       [{ type: "id", value: "inserted" }],
@@ -240,7 +266,7 @@ describe("insert instances into container with text or rich text children", () =
         position: "end",
       }
     );
-    expect(Array.from(instances.entries())).toEqual([
+    expect(Array.from(instances2.entries())).toEqual([
       createInstancePair("root", "Body", [{ type: "id", value: "box" }]),
       createInstancePair("box", "Box", [
         { type: "id", value: expectString },
