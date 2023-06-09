@@ -15,7 +15,7 @@ const presetStyle = {
 
 export const meta: WsComponentMeta = {
   category: "general",
-  type: "rich-text",
+  type: "container",
   requiredAncestors: ["List"],
   label: "List Item",
   icon: ListItemIcon,

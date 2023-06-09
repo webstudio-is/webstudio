@@ -13,10 +13,10 @@ import {
   instancesStore,
   registeredComponentMetasStore,
 } from "~/shared/nano-states";
-import { textEditingInstanceSelectorStore } from "~/shared/nano-states";
 import { publish, useSubscribe } from "~/shared/pubsub";
 import {
   findClosestDroppableComponentIndex,
+  findClosestEditableInstanceSelector,
   insertNewComponentInstance,
   reparentInstance,
 } from "~/shared/instance-utils";
@@ -27,7 +27,6 @@ import {
 } from "~/shared/dom-utils";
 import {
   type InstanceSelector,
-  getAncestorInstanceSelector,
   areInstanceSelectorsEqual,
 } from "~/shared/tree-utils";
 
@@ -56,23 +55,6 @@ export type DragEndPayload = {
 };
 
 export type DragMovePayload = { canvasCoordinates: Point };
-
-const findClosestRichTextInstanceSelector = (
-  instanceSelector: InstanceSelector
-) => {
-  const instances = instancesStore.get();
-  const metas = registeredComponentMetasStore.get();
-  for (const instanceId of instanceSelector) {
-    const instance = instances.get(instanceId);
-    if (
-      instance !== undefined &&
-      metas.get(instance.component)?.type === "rich-text"
-    ) {
-      return getAncestorInstanceSelector(instanceSelector, instanceId);
-    }
-  }
-  return;
-};
 
 const findClosestDroppableInstanceSelector = (
   instanceSelector: InstanceSelector,
@@ -221,18 +203,16 @@ export const useDragAndDrop = () => {
         return false;
       }
       // cannot drag while editing text
-      if (
-        areInstanceSelectorsEqual(
-          instanceSelector,
-          textEditingInstanceSelectorStore.get()
-        )
-      ) {
+      if (element.closest("[contenteditable=true]")) {
         return false;
       }
       // When trying to drag an instance inside editor, drag the editor instead
       return (
-        findClosestRichTextInstanceSelector(instanceSelector) ??
-        instanceSelector
+        findClosestEditableInstanceSelector(
+          instanceSelector,
+          instancesStore.get(),
+          registeredComponentMetasStore.get()
+        ) ?? instanceSelector
       );
     },
 

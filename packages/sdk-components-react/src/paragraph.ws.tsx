@@ -15,7 +15,7 @@ const presetStyle = {
 
 export const meta: WsComponentMeta = {
   category: "text",
-  type: "rich-text",
+  type: "container",
   label: "Paragraph",
   icon: TextAlignLeftIcon,
   states: defaultStates,

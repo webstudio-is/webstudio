@@ -1,4 +1,5 @@
 import { getInstanceSelectorFromElement } from "~/shared/dom-utils";
+import { findClosestEditableInstanceSelector } from "~/shared/instance-utils";
 import {
   instancesStore,
   registeredComponentMetasStore,
@@ -7,33 +8,12 @@ import {
 } from "~/shared/nano-states";
 import { textEditingInstanceSelectorStore } from "~/shared/nano-states";
 import { publish } from "~/shared/pubsub";
-import {
-  type InstanceSelector,
-  getAncestorInstanceSelector,
-} from "~/shared/tree-utils";
 
 declare module "~/shared/pubsub" {
   export interface PubsubMap {
     clickCanvas: undefined;
   }
 }
-
-const findClosestRichTextInstanceSelector = (
-  instanceSelector: InstanceSelector
-) => {
-  const instances = instancesStore.get();
-  const metas = registeredComponentMetasStore.get();
-  for (const instanceId of instanceSelector) {
-    const instance = instances.get(instanceId);
-    if (
-      instance !== undefined &&
-      metas.get(instance.component)?.type === "rich-text"
-    ) {
-      return getAncestorInstanceSelector(instanceSelector, instanceId);
-    }
-  }
-  return;
-};
 
 export const subscribeInstanceSelection = () => {
   let mouseDownElement: undefined | Element = undefined;
@@ -77,13 +57,16 @@ export const subscribeInstanceSelection = () => {
 
     // the second click in a double click.
     if (event.detail === 2) {
-      const richTextInstanceSelector =
-        findClosestRichTextInstanceSelector(instanceSelector);
+      const editableInstanceSelector = findClosestEditableInstanceSelector(
+        instanceSelector,
+        instancesStore.get(),
+        registeredComponentMetasStore.get()
+      );
 
       // enable text editor when double click on its instance or one of its descendants
-      if (richTextInstanceSelector) {
-        selectedInstanceSelectorStore.set(richTextInstanceSelector);
-        textEditingInstanceSelectorStore.set(richTextInstanceSelector);
+      if (editableInstanceSelector) {
+        selectedInstanceSelectorStore.set(editableInstanceSelector);
+        textEditingInstanceSelectorStore.set(editableInstanceSelector);
         selectedStyleSourceSelectorStore.set(undefined);
       }
     }

@@ -23,7 +23,7 @@ const presetStyle = {
 
 export const meta: WsComponentMeta = {
   category: "text",
-  type: "rich-text",
+  type: "container",
   label: "Heading",
   icon: HeadingIcon,
   states: defaultStates,

@@ -1,4 +1,4 @@
-import { test, expect } from "@jest/globals";
+import { test, expect, describe } from "@jest/globals";
 import type {
   Breakpoint,
   Instance,
@@ -10,6 +10,7 @@ import type {
   StyleSourceSelection,
 } from "@webstudio-is/project-build";
 import { getStyleDeclKey } from "@webstudio-is/project-build";
+import * as baseMetas from "@webstudio-is/sdk-components-react/metas";
 import {
   type InstanceSelector,
   cloneStyles,
@@ -24,6 +25,8 @@ import {
   reparentInstanceMutable,
   mergeNewBreakpointsMutable,
 } from "./tree-utils";
+
+const baseMetasMap = new Map(Object.entries(baseMetas));
 
 const expectString = expect.any(String) as unknown as string;
 
@@ -157,6 +160,8 @@ test("insert instances tree into target", () => {
 
   insertInstancesMutable(
     instances,
+    new Map(),
+    baseMetasMap,
     [
       createInstance("inserted1", "Box", [{ type: "id", value: "inserted2" }]),
       createInstance("inserted2", "Box", []),
@@ -186,6 +191,8 @@ test("insert instances tree into target", () => {
 
   insertInstancesMutable(
     instances,
+    new Map(),
+    baseMetasMap,
     [
       createInstance("inserted3", "Box", [{ type: "id", value: "inserted4" }]),
       createInstance("inserted4", "Box", []),
@@ -219,6 +226,145 @@ test("insert instances tree into target", () => {
   ]);
 });
 
+describe("insert instances into container with text or rich text children", () => {
+  test("insert in the end after text", () => {
+    const getInstances = () =>
+      new Map([
+        createInstancePair("root", "Body", [{ type: "id", value: "box" }]),
+        createInstancePair("box", "Box", [{ type: "text", value: "text" }]),
+      ]);
+
+    const instances1 = getInstances();
+    insertInstancesMutable(
+      instances1,
+      new Map(),
+      baseMetasMap,
+      [createInstance("inserted", "Box", [])],
+      [{ type: "id", value: "inserted" }],
+      {
+        parentSelector: ["box", "root"],
+        position: 0,
+      }
+    );
+    expect(Array.from(instances1.entries())).toEqual([
+      createInstancePair("root", "Body", [{ type: "id", value: "box" }]),
+      createInstancePair("box", "Box", [
+        { type: "id", value: "inserted" },
+        { type: "id", value: expectString },
+      ]),
+      createInstancePair(expectString, "TextBlock", [
+        { type: "text", value: "text" },
+      ]),
+      createInstancePair("inserted", "Box", []),
+    ]);
+
+    const instances2 = getInstances();
+    insertInstancesMutable(
+      instances2,
+      new Map(),
+      baseMetasMap,
+      [createInstance("inserted", "Box", [])],
+      [{ type: "id", value: "inserted" }],
+      {
+        parentSelector: ["box", "root"],
+        position: "end",
+      }
+    );
+    expect(Array.from(instances2.entries())).toEqual([
+      createInstancePair("root", "Body", [{ type: "id", value: "box" }]),
+      createInstancePair("box", "Box", [
+        { type: "id", value: expectString },
+        { type: "id", value: "inserted" },
+      ]),
+      createInstancePair(expectString, "TextBlock", [
+        { type: "text", value: "text" },
+      ]),
+      createInstancePair("inserted", "Box", []),
+    ]);
+  });
+
+  test("insert container between rich text children", () => {
+    const getInstances = () =>
+      new Map([
+        createInstancePair("root", "Body", [{ type: "id", value: "box" }]),
+        createInstancePair("box", "Box", [
+          { type: "id", value: "bold" },
+          { type: "text", value: "text" },
+          { type: "id", value: "italic" },
+        ]),
+        createInstancePair("bold", "Bold", [{ type: "text", value: "bold" }]),
+        createInstancePair("italic", "Italic", [
+          { type: "text", value: "italic" },
+        ]),
+      ]);
+
+    // insert before text
+    const instances1 = getInstances();
+    insertInstancesMutable(
+      instances1,
+      new Map(),
+      baseMetasMap,
+      [createInstance("inserted", "Box", [])],
+      [{ type: "id", value: "inserted" }],
+      {
+        parentSelector: ["box", "root"],
+        position: 1,
+      }
+    );
+    expect(Array.from(instances1.entries())).toEqual([
+      createInstancePair("root", "Body", [{ type: "id", value: "box" }]),
+      createInstancePair("box", "Box", [
+        { type: "id", value: expectString },
+        { type: "id", value: "inserted" },
+        { type: "id", value: expectString },
+      ]),
+      createInstancePair("bold", "Bold", [{ type: "text", value: "bold" }]),
+      createInstancePair("italic", "Italic", [
+        { type: "text", value: "italic" },
+      ]),
+      createInstancePair(expectString, "TextBlock", [
+        { type: "id", value: "bold" },
+      ]),
+      createInstancePair(expectString, "TextBlock", [
+        { type: "text", value: "text" },
+        { type: "id", value: "italic" },
+      ]),
+      createInstancePair("inserted", "Box", []),
+    ]);
+
+    // insert after text
+    const instances2 = getInstances();
+    insertInstancesMutable(
+      instances2,
+      new Map(),
+      baseMetasMap,
+      [createInstance("inserted", "Box", [])],
+      [{ type: "id", value: "inserted" }],
+      {
+        parentSelector: ["box", "root"],
+        position: 2,
+      }
+    );
+    expect(Array.from(instances2.entries())).toEqual([
+      createInstancePair("root", "Body", [{ type: "id", value: "box" }]),
+      createInstancePair("box", "Box", [
+        { type: "id", value: expectString },
+        { type: "id", value: "inserted" },
+      ]),
+      createInstancePair("bold", "Bold", [{ type: "text", value: "bold" }]),
+      createInstancePair("italic", "Italic", [
+        { type: "text", value: "italic" },
+      ]),
+      createInstancePair(expectString, "TextBlock", [
+        { type: "id", value: "bold" },
+        { type: "text", value: "text" },
+        { type: "id", value: "italic" },
+      ]),
+      createInstancePair("inserted", "Box", []),
+    ]);
+  });
+});
+
 test("reparent instance into target", () => {
   const instances: Instances = new Map([
     createInstancePair("root", "Body", [
@@ -238,10 +384,16 @@ test("reparent instance into target", () => {
     createInstancePair("box13", "Box", []),
   ]);
 
-  reparentInstanceMutable(instances, ["target", "root"], {
-    parentSelector: ["box1", "root"],
-    position: 1,
-  });
+  reparentInstanceMutable(
+    instances,
+    new Map(),
+    baseMetasMap,
+    ["target", "root"],
+    {
+      parentSelector: ["box1", "root"],
+      position: 1,
+    }
+  );
   expect(instances).toEqual(
     new Map([
       createInstancePair("root", "Body", [
@@ -262,10 +414,16 @@ test("reparent instance into target", () => {
     ])
   );
 
-  reparentInstanceMutable(instances, ["target", "box1", "root"], {
-    parentSelector: ["box1", "root"],
-    position: 3,
-  });
+  reparentInstanceMutable(
+    instances,
+    new Map(),
+    baseMetasMap,
+    ["target", "box1", "root"],
+    {
+      parentSelector: ["box1", "root"],
+      position: 3,
+    }
+  );
   expect(instances).toEqual(
     new Map([
       createInstancePair("root", "Body", [
@@ -286,10 +444,16 @@ test("reparent instance into target", () => {
     ])
   );
 
-  reparentInstanceMutable(instances, ["target", "box1", "root"], {
-    parentSelector: ["root"],
-    position: "end",
-  });
+  reparentInstanceMutable(
+    instances,
+    new Map(),
+    baseMetasMap,
+    ["target", "box1", "root"],
+    {
+      parentSelector: ["root"],
+      position: "end",
+    }
+  );
   expect(instances).toEqual(
     new Map([
       createInstancePair("root", "Body", [
@@ -332,10 +496,16 @@ test("reparent instance into slot", () => {
   ]);
 
   // reuse existing fragment when drop into slot
-  reparentInstanceMutable(instances, ["box2", "root"], {
-    parentSelector: ["slot1", "root"],
-    position: "end",
-  });
+  reparentInstanceMutable(
+    instances,
+    new Map(),
+    baseMetasMap,
+    ["box2", "root"],
+    {
+      parentSelector: ["slot1", "root"],
+      position: "end",
+    }
+  );
   expect(instances).toEqual(
     new Map([
       createInstancePair("root", "Body", [
@@ -361,10 +531,16 @@ test("reparent instance into slot", () => {
   );
 
   // create new fragment when drop into empty slot
-  reparentInstanceMutable(instances, ["box2", "fragment11", "slot1", "root"], {
-    parentSelector: ["slot3", "root"],
-    position: "end",
-  });
+  reparentInstanceMutable(
+    instances,
+    new Map(),
+    baseMetasMap,
+    ["box2", "fragment11", "slot1", "root"],
+    {
+      parentSelector: ["slot3", "root"],
+      position: "end",
+    }
+  );
   expect(instances).toEqual(
     new Map([
       createInstancePair("root", "Body", [
@@ -393,10 +569,16 @@ test("reparent instance into slot", () => {
   );
 
   // prevent reparenting into own children to avoid infinite loop
-  reparentInstanceMutable(instances, ["slot1", "root"], {
-    parentSelector: ["fragment11", "slot1", "root"],
-    position: "end",
-  });
+  reparentInstanceMutable(
+    instances,
+    new Map(),
+    baseMetasMap,
+    ["slot1", "root"],
+    {
+      parentSelector: ["fragment11", "slot1", "root"],
+      position: "end",
+    }
+  );
   expect(instances).toEqual(
     new Map([
       createInstancePair("root", "Body", [
@@ -444,6 +626,8 @@ test("insert tree of instances copy and provide map from ids map", () => {
   ];
   const copiedInstanceIds = insertInstancesCopyMutable(
     instances,
+    new Map(),
+    baseMetasMap,
     copiedInstances,
     {
       parentSelector: ["3", "1"],
@@ -493,6 +677,8 @@ test("insert slot or do nothing when slot is cyclic", () => {
   // insert slot own descendant
   let copiedInstanceIds = insertInstancesCopyMutable(
     instances,
+    new Map(),
+    baseMetasMap,
     copiedInstances,
     {
       parentSelector: ["child", "fragment", "slot", "root"],
@@ -514,10 +700,16 @@ test("insert slot or do nothing when slot is cyclic", () => {
   ]);
 
   // do not insert slot into itself
-  copiedInstanceIds = insertInstancesCopyMutable(instances, copiedInstances, {
-    parentSelector: ["slot", "root"],
-    position: "end",
-  });
+  copiedInstanceIds = insertInstancesCopyMutable(
+    instances,
+    new Map(),
+    baseMetasMap,
+    copiedInstances,
+    {
+      parentSelector: ["slot", "root"],
+      position: "end",
+    }
+  );
   expect(copiedInstanceIds).toEqual(new Map());
   expect(Array.from(instances.entries())).toEqual([
     createInstancePair("root", "Body", [
@@ -533,10 +725,16 @@ test("insert slot or do nothing when slot is cyclic", () => {
   ]);
 
   // insert slot into sibling
-  copiedInstanceIds = insertInstancesCopyMutable(instances, copiedInstances, {
-    parentSelector: ["sibling", "root"],
-    position: "end",
-  });
+  copiedInstanceIds = insertInstancesCopyMutable(
+    instances,
+    new Map(),
+    baseMetasMap,
+    copiedInstances,
+    {
+      parentSelector: ["sibling", "root"],
+      position: "end",
+    }
+  );
   expect(copiedInstanceIds).toEqual(new Map([["slot", expectString]]));
   expect(Array.from(instances.entries())).toEqual([
     createInstancePair("root", "Body", [
@@ -562,10 +760,16 @@ test("insert slot or do nothing when slot is cyclic", () => {
     ]),
     createInstance("slot2box", "Box", []),
   ];
-  copiedInstanceIds = insertInstancesCopyMutable(instances, copiedInstances, {
-    parentSelector: ["root"],
-    position: "end",
-  });
+  copiedInstanceIds = insertInstancesCopyMutable(
+    instances,
+    new Map(),
+    baseMetasMap,
+    copiedInstances,
+    {
+      parentSelector: ["root"],
+      position: "end",
+    }
+  );
   expect(copiedInstanceIds).toEqual(new Map([["slot2", expectString]]));
   expect(Array.from(instances.entries())).toEqual([
     createInstancePair("root", "Body", [
