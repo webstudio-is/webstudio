@@ -29,9 +29,15 @@ export const registerComponentPropsMetas = (
   const prevPropsMetas = registeredComponentPropsMetasStore.get();
   const nextPropsMetas = new Map(prevPropsMetas);
   for (const [componentName, propsMeta] of Object.entries(newPropsMetas)) {
-    const { initialProps = [], props } = propsMeta;
-    const requiredProps: string[] = [];
+    const { initialProps = [], props, ignoredProps = [] } = propsMeta;
+    const filteredProps: typeof props = {};
     for (const [name, value] of Object.entries(props)) {
+      if (ignoredProps.includes(name) === false) {
+        filteredProps[name] = value;
+      }
+    }
+    const requiredProps: string[] = [];
+    for (const [name, value] of Object.entries(filteredProps)) {
       if (value.required && initialProps.includes(name) === false) {
         requiredProps.push(name);
       }
@@ -39,7 +45,7 @@ export const registerComponentPropsMetas = (
     nextPropsMetas.set(componentName, {
       // order of initialProps must be preserved
       initialProps: [...initialProps, ...requiredProps],
-      props: propsMeta.props,
+      props: filteredProps,
     });
   }
   registeredComponentPropsMetasStore.set(nextPropsMetas);

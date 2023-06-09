@@ -19,4 +19,5 @@ export const meta: WsComponentMeta = {
 export const propsMeta: WsComponentPropsMeta = {
   props: { ...props, ...imagePropsOverrides },
   initialProps: imagePropsMeta.initialProps,
+  ignoredProps: imagePropsMeta.ignoredProps,
 };

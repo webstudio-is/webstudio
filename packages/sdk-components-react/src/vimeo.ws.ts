@@ -88,6 +88,11 @@ export const meta: WsComponentMeta = {
               name: "alt",
               value: "Vimeo video preview image",
             },
+            {
+              type: "string",
+              name: "sizes",
+              value: "100vw",
+            },
           ],
         },
         {
