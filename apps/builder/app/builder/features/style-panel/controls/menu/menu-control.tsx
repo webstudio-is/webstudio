@@ -9,7 +9,11 @@ export const MenuControl = ({
   items: passedItems,
   styleValue,
   setProperty,
-}: Pick<ControlProps, "property" | "items" | "setProperty"> & {
+  deleteProperty,
+}: Pick<
+  ControlProps,
+  "property" | "items" | "setProperty" | "deleteProperty"
+> & {
   styleValue?: StyleValueInfo;
 }) => {
   const { label, items: defaultItems } = styleConfigByName(property);
@@ -41,6 +45,9 @@ export const MenuControl = ({
       value={String(currentValue)}
       onChange={setValue}
       onHover={(value) => setValue(value, { isEphemeral: true })}
+      onReset={() => {
+        deleteProperty(property);
+      }}
     />
   );
 };
