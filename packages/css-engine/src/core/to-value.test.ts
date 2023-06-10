@@ -116,7 +116,7 @@ describe("Convert WS CSS Values to native CSS strings", () => {
       }
     );
 
-    expect(value).toBe("auto,10px,calc(10px),url(foo.png)");
+    expect(value).toBe("auto, 10px, calc(10px), url(foo.png)");
   });
 
   test("tuple", () => {
