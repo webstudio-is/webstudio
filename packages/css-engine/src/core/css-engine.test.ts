@@ -37,7 +37,9 @@ describe("CssEngine", () => {
     });
     expect(engine.cssText).toMatchInlineSnapshot(`
       "@media all and (min-width: 0px) {
-        .c1 { color: red }
+        .c1 {
+          color: red
+        }
       }"
     `);
   });
@@ -50,7 +52,9 @@ describe("CssEngine", () => {
     });
     expect(engine.cssText).toMatchInlineSnapshot(`
       "@media all and (max-width: 1000px) {
-        .c1 { color: red }
+        .c1 {
+          color: red
+        }
       }"
     `);
   });
@@ -63,7 +67,9 @@ describe("CssEngine", () => {
     });
     expect(engine.cssText).toMatchInlineSnapshot(`
       "@media all and (min-width: 360px) and (max-width: 1000px) {
-        .c1 { color: red }
+        .c1 {
+          color: red
+        }
       }"
     `);
   });
@@ -75,7 +81,9 @@ describe("CssEngine", () => {
     });
     expect(engine.cssText).toMatchInlineSnapshot(`
       "@media all {
-        .c { display: block }
+        .c {
+          display: block
+        }
       }"
     `);
     engine.addStyleRule(".c1", {
@@ -84,8 +92,12 @@ describe("CssEngine", () => {
     });
     expect(engine.cssText).toMatchInlineSnapshot(`
       "@media all {
-        .c { display: block }
-        .c1 { color: red }
+        .c {
+          display: block
+        }
+        .c1 {
+          color: red
+        }
       }"
     `);
 
@@ -97,11 +109,17 @@ describe("CssEngine", () => {
     // Default media query should allways be the first to have the lowest source order specificity
     expect(engine.cssText).toMatchInlineSnapshot(`
       "@media all {
-        .c { display: block }
-        .c1 { color: red }
+        .c {
+          display: block
+        }
+        .c1 {
+          color: red
+        }
       }
       @media all and (min-width: 0px) {
-        .c1 { color: blue }
+        .c1 {
+          color: blue
+        }
       }"
     `);
   });
@@ -127,13 +145,19 @@ describe("CssEngine", () => {
     // Default media query should allways be the first to have the lowest source order specificity
     expect(engine.cssText).toMatchInlineSnapshot(`
       "@media all {
-        .c3 { display: block }
+        .c3 {
+          display: block
+        }
       }
       @media all and (min-width: 0px) {
-        .c1 { display: block }
+        .c1 {
+          display: block
+        }
       }
       @media all and (min-width: 300px) {
-        .c2 { display: flex }
+        .c2 {
+          display: flex
+        }
       }"
     `);
   });
@@ -149,8 +173,12 @@ describe("CssEngine", () => {
     });
     expect(engine.cssText).toMatchInlineSnapshot(`
       "@media all {
-        .c0 { display: block }
-        .c1 { display: flex }
+        .c0 {
+          display: block
+        }
+        .c1 {
+          display: flex
+        }
       }"
     `);
 
@@ -166,8 +194,12 @@ describe("CssEngine", () => {
     });
     expect(engine.cssText).toMatchInlineSnapshot(`
       "@media all {
-        .c1 { display: flex }
-        .c0 { display: block }
+        .c1 {
+          display: flex
+        }
+        .c0 {
+          display: block
+        }
       }"
     `);
   });
@@ -183,7 +215,10 @@ describe("CssEngine", () => {
     });
     expect(engine.cssText).toMatchInlineSnapshot(`
       "@media all and (min-width: 0px) {
-        .c { display: block; color: red }
+        .c {
+          display: block;
+          color: red
+        }
       }"
     `);
   });
@@ -198,7 +233,9 @@ describe("CssEngine", () => {
     });
     expect(engine.cssText).toMatchInlineSnapshot(`
       "@media all and (min-width: 0px) {
-        .c { background-color: red }
+        .c {
+          background-color: red
+        }
       }"
     `);
   });
@@ -214,12 +251,18 @@ describe("CssEngine", () => {
     });
     expect(engine.cssText).toMatchInlineSnapshot(`
       "@media all and (min-width: 0px) {
-        .c { display: block; color: red }
+        .c {
+          display: block;
+          color: red
+        }
       }"
     `);
-    expect(rule1.cssText).toMatchInlineSnapshot(
-      `".c { display: block; color: red }"`
-    );
+    expect(rule1.cssText).toMatchInlineSnapshot(`
+      ".c {
+        display: block;
+        color: red
+      }"
+    `);
     engine.addStyleRule(".c2", {
       style: {
         ...style0,
@@ -229,8 +272,14 @@ describe("CssEngine", () => {
     });
     expect(engine.cssText).toMatchInlineSnapshot(`
       "@media all and (min-width: 0px) {
-        .c { display: block; color: red }
-        .c2 { display: block; color: green }
+        .c {
+          display: block;
+          color: red
+        }
+        .c2 {
+          display: block;
+          color: green
+        }
       }"
     `);
   });
@@ -246,22 +295,34 @@ describe("CssEngine", () => {
     });
     expect(engine.cssText).toMatchInlineSnapshot(`
       "@media all and (min-width: 0px) {
-        .c { display: block; color: red }
+        .c {
+          display: block;
+          color: red
+        }
       }"
     `);
-    expect(rule.cssText).toMatchInlineSnapshot(
-      `".c { display: block; color: red }"`
-    );
+    expect(rule.cssText).toMatchInlineSnapshot(`
+      ".c {
+        display: block;
+        color: red
+      }"
+    `);
 
     rule.styleMap.set("color", { type: "keyword", value: "green" });
 
-    expect(rule.cssText).toMatchInlineSnapshot(
-      `".c { display: block; color: green }"`
-    );
+    expect(rule.cssText).toMatchInlineSnapshot(`
+      ".c {
+        display: block;
+        color: green
+      }"
+    `);
 
     expect(engine.cssText).toMatchInlineSnapshot(`
       "@media all and (min-width: 0px) {
-        .c { display: block; color: green }
+        .c {
+          display: block;
+          color: green
+        }
       }"
     `);
   });
@@ -276,13 +337,17 @@ describe("CssEngine", () => {
     });
     expect(engine.cssText).toMatchInlineSnapshot(`
       "@media all and (min-width: 0px) {
-        .c { color: red }
+        .c {
+          color: red
+        }
       }"
     `);
     engine.addMediaRule(mediaId0, { minWidth: 10 });
     expect(engine.cssText).toMatchInlineSnapshot(`
       "@media all and (min-width: 10px) {
-        .c { color: red }
+        .c {
+          color: red
+        }
       }"
     `);
   });
@@ -295,13 +360,17 @@ describe("CssEngine", () => {
     });
     expect(engine.cssText).toMatchInlineSnapshot(`
       "@media all and (min-width: 0px) {
-        .c { display: block }
+        .c {
+          display: block
+        }
       }"
     `);
     engine.addMediaRule(mediaId0, mediaRuleOptions0);
     expect(engine.cssText).toMatchInlineSnapshot(`
       "@media all and (min-width: 0px) {
-        .c { display: block }
+        .c {
+          display: block
+        }
       }"
     `);
   });
@@ -366,7 +435,9 @@ describe("CssEngine", () => {
     rule.styleMap.delete("display");
     expect(engine.cssText).toMatchInlineSnapshot(`
       "@media all {
-        .c { color: black }
+        .c {
+          color: black
+        }
       }"
     `);
   });
@@ -408,7 +479,9 @@ describe("CssEngine", () => {
     rule.styleMap.delete("display");
     expect(engine.cssText).toMatchInlineSnapshot(`
       "@media all {
-        .c { background-image: url(foo.png) }
+        .c {
+          background-image: url(foo.png)
+        }
       }"
     `);
   });

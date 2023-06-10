@@ -6,6 +6,7 @@ class StylePropertyMap {
   #styleMap: Map<StyleProperty, StyleValue | undefined> = new Map();
   #isDirty = false;
   #string = "";
+  #indent = 0;
   #transformValue?: TransformValue;
   onChange?: () => void;
   constructor(transformValue?: TransformValue) {
@@ -35,20 +36,25 @@ class StylePropertyMap {
     this.#isDirty = true;
     this.onChange?.();
   }
-  toString() {
-    if (this.#isDirty === false) {
+  toString({ indent = 0 } = {}) {
+    if (this.#isDirty === false && indent === this.#indent) {
       return this.#string;
     }
+    this.#indent = indent;
     const block: Array<string> = [];
+    const spaces = " ".repeat(indent);
     for (const [property, value] of this.#styleMap) {
       if (value === undefined) {
         continue;
       }
       block.push(
-        `${toProperty(property)}: ${toValue(value, this.#transformValue)}`
+        `${spaces}${toProperty(property)}: ${toValue(
+          value,
+          this.#transformValue
+        )}`
       );
     }
-    this.#string = block.join("; ");
+    this.#string = block.join(";\n");
     this.#isDirty = false;
     return this.#string;
   }
@@ -75,7 +81,13 @@ export class StyleRule {
     this.onChange?.();
   };
   get cssText() {
-    return `${this.selectorText} { ${this.styleMap} }`;
+    return this.toString();
+  }
+  toString(options = { indent: 0 }) {
+    const spaces = " ".repeat(options.indent);
+    return `${spaces}${this.selectorText} {\n${this.styleMap.toString({
+      indent: options.indent + 2,
+    })}\n${spaces}}`;
   }
 }
 
@@ -98,12 +110,15 @@ export class MediaRule {
     return rule;
   }
   get cssText() {
+    return this.toString();
+  }
+  toString() {
     if (this.rules.length === 0) {
       return "";
     }
     const rules = [];
     for (const rule of this.rules) {
-      rules.push(`  ${rule.cssText}`);
+      rules.push(rule.toString({ indent: 2 }));
     }
     let conditionText = "";
     const { minWidth, maxWidth } = this.options;
@@ -125,6 +140,9 @@ export class PlaintextRule {
   constructor(cssText: string) {
     this.cssText = cssText;
   }
+  toString() {
+    return this.cssText;
+  }
 }
 
 export type FontFaceOptions = {
@@ -141,6 +159,9 @@ export class FontFaceRule {
     this.options = options;
   }
   get cssText() {
+    return this.toString();
+  }
+  toString() {
     const decls = [];
     const { fontFamily, fontStyle, fontWeight, fontDisplay, src } =
       this.options;
