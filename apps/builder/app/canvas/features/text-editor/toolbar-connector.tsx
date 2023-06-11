@@ -43,7 +43,6 @@ const $toggleSpan = () => {
   const selection = $getSelection();
   if ($isRangeSelection(selection)) {
     const spans = $getSpanNodes(selection);
-    console.log(spans);
     if (spans.length === 0) {
       // lexical creates separate text node when style property do not match
       $patchStyleText(selection, {
