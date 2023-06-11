@@ -135,7 +135,14 @@ export const SpaceSection = ({
     >
       <SpaceLayout
         ref={layoutRef}
-        onClick={() => setOpenProperty(hoverTarget?.property)}
+        onClick={(event) => {
+          const property = hoverTarget?.property;
+          if (event.altKey && property) {
+            deleteProperty(property);
+            return;
+          }
+          setOpenProperty(property);
+        }}
         onHover={handleHover}
         onFocus={keyboardNavigation.hadnleFocus}
         onBlur={keyboardNavigation.handleBlur}

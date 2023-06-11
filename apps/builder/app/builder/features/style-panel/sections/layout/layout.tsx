@@ -124,9 +124,11 @@ const GapInput = ({
 const FlexGap = ({
   style,
   createBatchUpdate,
+  deleteProperty,
 }: {
   style: StyleInfo;
   createBatchUpdate: CreateBatchUpdate;
+  deleteProperty: RenderCategoryProps["deleteProperty"];
 }) => {
   const batchUpdate = createBatchUpdate();
 
@@ -155,7 +157,19 @@ const FlexGap = ({
     >
       <Box css={{ gridArea: "columnGap" }}>
         <GapInput
-          icon={<GapHorizontalIcon />}
+          icon={
+            <GapHorizontalIcon
+              onClick={(event) => {
+                if (event.altKey) {
+                  event.preventDefault();
+                  deleteProperty("columnGap");
+                  if (isLinked) {
+                    deleteProperty("rowGap");
+                  }
+                }
+              }}
+            />
+          }
           style={style}
           property="columnGap"
           intermediateValue={intermediateColumnGap}
@@ -204,7 +218,19 @@ const FlexGap = ({
 
       <Box css={{ gridArea: "rowGap" }}>
         <GapInput
-          icon={<GapVerticalIcon />}
+          icon={
+            <GapVerticalIcon
+              onClick={(event) => {
+                if (event.altKey) {
+                  event.preventDefault();
+                  deleteProperty("rowGap");
+                  if (isLinked) {
+                    deleteProperty("columnGap");
+                  }
+                }
+              }}
+            />
+          }
           style={style}
           property="rowGap"
           intermediateValue={intermediateRowGap}
@@ -257,6 +283,7 @@ const Toggle = ({
   valueOff,
   currentStyle,
   setProperty,
+  deleteProperty,
 }: {
   property: StyleProperty;
   iconOn: ReactNode;
@@ -265,6 +292,7 @@ const Toggle = ({
   valueOff: string;
   currentStyle: RenderCategoryProps["currentStyle"];
   setProperty: RenderCategoryProps["setProperty"];
+  deleteProperty: RenderCategoryProps["deleteProperty"];
 }) => {
   const { label } = styleConfigByName(property);
   const styleValue = currentStyle[property]?.value;
@@ -274,6 +302,12 @@ const Toggle = ({
   return (
     <Tooltip content={label} delayDuration={400} disableHoverableContent={true}>
       <ToggleButton
+        onClick={(event) => {
+          if (event.altKey) {
+            event.preventDefault();
+            deleteProperty(property);
+          }
+        }}
         pressed={isPressed}
         onPressedChange={(isPressed) => {
           setProperty(property)({
@@ -292,10 +326,12 @@ const Toggle = ({
 const LayoutSectionFlex = ({
   currentStyle,
   setProperty,
+  deleteProperty,
   createBatchUpdate,
 }: {
   currentStyle: RenderCategoryProps["currentStyle"];
   setProperty: RenderCategoryProps["setProperty"];
+  deleteProperty: RenderCategoryProps["deleteProperty"];
   createBatchUpdate: RenderCategoryProps["createBatchUpdate"];
 }) => {
   const batchUpdate = createBatchUpdate();
@@ -322,6 +358,7 @@ const LayoutSectionFlex = ({
               valueOff="row"
               currentStyle={currentStyle}
               setProperty={setProperty}
+              deleteProperty={deleteProperty}
             />
             <Toggle
               property="flexWrap"
@@ -331,6 +368,7 @@ const LayoutSectionFlex = ({
               valueOff="nowrap"
               currentStyle={currentStyle}
               setProperty={setProperty}
+              deleteProperty={deleteProperty}
             />
           </Flex>
           <Flex css={{ gap: theme.spacing[7] }}>
@@ -338,24 +376,31 @@ const LayoutSectionFlex = ({
               property="alignItems"
               styleValue={mapNormalTo("stretch", currentStyle.alignItems)}
               setProperty={setProperty}
+              deleteProperty={deleteProperty}
             />
             <MenuControl
               property="justifyContent"
               styleValue={mapNormalTo("start", currentStyle.justifyContent)}
               setProperty={setProperty}
+              deleteProperty={deleteProperty}
             />
             {showAlignContent && (
               <MenuControl
                 property="alignContent"
                 styleValue={mapNormalTo("stretch", currentStyle.alignContent)}
                 setProperty={setProperty}
+                deleteProperty={deleteProperty}
               />
             )}
           </Flex>
         </Flex>
       </Flex>
 
-      <FlexGap style={currentStyle} createBatchUpdate={createBatchUpdate} />
+      <FlexGap
+        style={currentStyle}
+        createBatchUpdate={createBatchUpdate}
+        deleteProperty={deleteProperty}
+      />
     </Flex>
   );
 };
@@ -433,6 +478,7 @@ export const LayoutSection = ({
           <LayoutSectionFlex
             currentStyle={currentStyle}
             setProperty={setProperty}
+            deleteProperty={deleteProperty}
             createBatchUpdate={createBatchUpdate}
           />
         )}
