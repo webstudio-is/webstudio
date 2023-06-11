@@ -20,8 +20,9 @@ const presetStyle = {
 } satisfies PresetStyle<typeof defaultTag>;
 
 export const meta: WsComponentMeta = {
+  category: "forms",
   type: "control",
-  label: "Checkbox Input",
+  label: "Checkbox",
   icon: CheckboxCheckedIcon,
   presetStyle,
   order: 6,
@@ -34,6 +35,23 @@ export const meta: WsComponentMeta = {
     { selector: ":enabled", label: "Enabled" },
     { selector: ":read-only", label: "Read Only" },
     { selector: ":read-write", label: "Read Write" },
+  ],
+  template: [
+    {
+      type: "instance",
+      component: "Label",
+      label: "Checkbox Field",
+      children: [
+        { type: "instance", component: "Checkbox", children: [] },
+        {
+          type: "instance",
+          component: "Text",
+          label: "Checkbox Label",
+          props: [{ type: "string", name: "tag", value: "span" }],
+          children: [{ type: "text", value: "Checkbox" }],
+        },
+      ],
+    },
   ],
 };
 
