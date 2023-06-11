@@ -64,7 +64,7 @@ export const meta: WsComponentMeta = {
           children: [
             {
               type: "instance",
-              component: "TextBlock",
+              component: "Text",
               children: [
                 { type: "text", value: "Thank you for getting in touch!" },
               ],
@@ -77,7 +77,7 @@ export const meta: WsComponentMeta = {
           children: [
             {
               type: "instance",
-              component: "TextBlock",
+              component: "Text",
               children: [
                 { type: "text", value: "Sorry, something went wrong." },
               ],
