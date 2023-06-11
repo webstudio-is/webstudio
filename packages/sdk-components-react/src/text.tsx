@@ -12,10 +12,10 @@ type Props = ComponentProps<typeof defaultTag> & {
   tag?: "div" | "span" | "figcaption";
 };
 
-export const TextBlock = forwardRef<ElementRef<typeof defaultTag>, Props>(
+export const Text = forwardRef<ElementRef<typeof defaultTag>, Props>(
   ({ tag = defaultTag, ...props }, ref) => {
     return createElement(tag, { ...props, ref });
   }
 );
 
-TextBlock.displayName = "TextBlock";
+Text.displayName = "Text";
