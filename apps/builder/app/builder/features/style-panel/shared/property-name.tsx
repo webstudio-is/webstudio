@@ -1,184 +1,83 @@
-import { useState, type ReactElement } from "react";
+import { useState, type ReactElement, type MouseEventHandler } from "react";
 import { useStore } from "@nanostores/react";
 import type { StyleProperty } from "@webstudio-is/css-data";
-import { toValue } from "@webstudio-is/css-engine";
+import { createCssEngine } from "@webstudio-is/css-engine";
 import {
   theme,
   Button,
   Flex,
-  Box,
   Label,
   Tooltip,
-  Separator,
-  Popover,
-  PopoverTrigger,
-  PopoverPortal,
-  PopoverContent,
   Text,
 } from "@webstudio-is/design-system";
-import { UndoIcon } from "@webstudio-is/icons";
-import {
-  breakpointsStore,
-  instancesStore,
-  styleSourcesStore,
-} from "~/shared/nano-states";
+import { ResetIcon } from "@webstudio-is/icons";
+import { selectedInstanceSelectorStore } from "~/shared/nano-states";
 import { type StyleInfo, type StyleSource, getStyleSource } from "./style-info";
+import { humanizeString } from "~/shared/string-utils";
+import { useInstanceStyleData } from "./style-info";
 
-const PropertyPopoverContent = ({
+const TooltipContent = ({
+  title,
   properties,
+  description,
   style,
   styleSource,
   onReset,
+  onClose,
 }: {
+  title: string;
+  description: string;
   properties: StyleProperty[];
   style: StyleInfo;
   styleSource: StyleSource;
   onReset: () => void;
+  onClose: () => void;
 }) => {
-  const breakpoints = useStore(breakpointsStore);
-  const instances = useStore(instancesStore);
-  const styleSources = useStore(styleSourcesStore);
-
-  if (styleSource === "local") {
-    return (
-      <>
-        <Flex
-          align="start"
-          css={{ px: theme.spacing[4], py: theme.spacing[3] }}
-        >
-          <Button onClick={() => onReset()} prefix={<UndoIcon />}>
-            Reset
-          </Button>
-        </Flex>
-        <Separator />
-        <Box
-          css={{
-            px: theme.spacing[4],
-            py: theme.spacing[3],
-            // @todo this info looks undone, limit width as a fast fix for huge text like in backgrounds
-            maxWidth: theme.spacing[30],
-          }}
-        >
-          {properties.map((property) => {
-            const styleValueInfo = style[property];
-
-            if (styleValueInfo?.nextSource) {
-              const { value, styleSourceId } = styleValueInfo.nextSource;
-              const styleSource = styleSources.get(styleSourceId);
-              let name: undefined | string = undefined;
-              if (styleSource?.type === "local") {
-                name = "local style source";
-              }
-              if (styleSource?.type === "token") {
-                name = `"${styleSource.name}" token`;
-              }
-              return (
-                <Text key={property} color="subtle">
-                  The value of {property} is overriden by {toValue(value)} from{" "}
-                  {name}
-                </Text>
-              );
-            }
-
-            if (styleValueInfo?.previousSource) {
-              const { value, styleSourceId } = styleValueInfo.previousSource;
-              const styleSource = styleSources.get(styleSourceId);
-              let name: undefined | string = undefined;
-              if (styleSource?.type === "local") {
-                name = "local style source";
-              }
-              if (styleSource?.type === "token") {
-                name = `"${styleSource.name}" token`;
-              }
-              return (
-                <Text key={property} color="subtle">
-                  Resetting will change {property} value to {toValue(value)}{" "}
-                  from {name}
-                </Text>
-              );
-            }
-
-            if (styleValueInfo?.cascaded) {
-              const { value, breakpointId } = styleValueInfo.cascaded;
-              const breakpoint = breakpoints.get(breakpointId);
-              return (
-                <Text key={property} color="subtle">
-                  Resetting will change {property} to cascaded {toValue(value)}{" "}
-                  from {breakpoint?.label}
-                </Text>
-              );
-            }
-
-            if (
-              styleValueInfo?.inherited &&
-              styleValueInfo.preset === undefined
-            ) {
-              const { value, instanceId } = styleValueInfo.inherited;
-              const instance = instances.get(instanceId);
-              return (
-                <Text key={property} color="subtle">
-                  Resetting will change {property} to inherited {toValue(value)}{" "}
-                  from {instance?.component}
-                </Text>
-              );
-            }
-
-            return (
-              <Text key={property} color="subtle">
-                Resetting will change to initial value
-              </Text>
-            );
-          })}
-        </Box>
-      </>
-    );
+  const selectedInstanceSelector = useStore(selectedInstanceSelectorStore);
+  const instanceStyle = useInstanceStyleData(selectedInstanceSelector);
+  const instanceStyleReduced = { ...instanceStyle };
+  let property: StyleProperty;
+  for (property in instanceStyle) {
+    if (properties.includes(property) === false) {
+      delete instanceStyleReduced[property];
+    }
   }
+  // @todo consider reusing CssPreview component
+  const cssEngine = createCssEngine();
+  const rule = cssEngine.addStyleRule("instance", {
+    style: instanceStyleReduced,
+  });
+  const cssText = rule.styleMap.toString();
+  const handlePreventDefault: MouseEventHandler = (event) => {
+    // Prevent closing tooltip
+    event.preventDefault();
+  };
 
   return (
-    <Box css={{ px: theme.spacing[4], py: theme.spacing[3] }}>
-      {properties.map((property) => {
-        const styleValueInfo = style[property];
-        const source =
-          styleValueInfo?.nextSource ?? styleValueInfo?.previousSource;
-
-        if (source) {
-          const { styleSourceId } = source;
-          const styleSource = styleSources.get(styleSourceId);
-          let name: undefined | string = undefined;
-          if (styleSource?.type === "local") {
-            name = "local style source";
-          }
-          if (styleSource?.type === "token") {
-            name = `"${styleSource.name}" token`;
-          }
-          return (
-            <Text key={property} color="subtle">
-              {property} value is defined in {name}
-            </Text>
-          );
-        }
-
-        if (styleValueInfo?.cascaded) {
-          const { breakpointId } = styleValueInfo.cascaded;
-          const breakpoint = breakpoints.get(breakpointId);
-          return (
-            <Text key={property} color="subtle">
-              {property} value is cascaded from {breakpoint?.label}
-            </Text>
-          );
-        }
-
-        if (styleValueInfo?.inherited && styleValueInfo.preset === undefined) {
-          const { instanceId } = styleValueInfo.inherited;
-          const instance = instances.get(instanceId);
-          return (
-            <Text key={property} color="subtle">
-              {property} value is inherited from {instance?.component}
-            </Text>
-          );
-        }
-      })}
-    </Box>
+    <Flex direction="column" gap="2" css={{ maxWidth: theme.spacing[28] }}>
+      <Text variant="titles">{title}</Text>
+      <Text
+        variant="monoBold"
+        css={{ color: theme.colors.foregroundMoreSubtle }}
+      >
+        {cssText}
+      </Text>
+      {description && <Text>{description}</Text>}
+      {styleSource === "local" && (
+        <Button
+          color="dark"
+          prefix={<ResetIcon />}
+          css={{ flexGrow: 1 }}
+          onMouseDown={handlePreventDefault}
+          onClickCapture={() => {
+            onReset();
+            onClose();
+          }}
+        >
+          Reset value
+        </Button>
+      )}
+    </Flex>
   );
 };
 
@@ -195,76 +94,49 @@ export const PropertyName = ({
   label,
   onReset,
 }: PropertyNameProps) => {
-  const properties = Array.isArray(property) ? property : [property];
+  const isMultiple = Array.isArray(property);
+  const properties = isMultiple ? property : [property];
   const styleSource = getStyleSource(
     ...properties.map((property) => style[property])
   );
   const [isOpen, setIsOpen] = useState(false);
-  const isPopoverEnabled =
-    styleSource === "local" ||
-    styleSource === "overwritten" ||
-    styleSource === "remote";
-
-  const labelElement = (
-    <Flex shrink gap={1} align="center">
-      {typeof label === "string" ? (
-        <Label color={styleSource} truncate>
-          {label}
-        </Label>
-      ) : (
-        label
-      )}
-    </Flex>
-  );
-
-  if (isPopoverEnabled) {
-    return (
-      <Flex align="center">
-        <Popover modal open={isOpen} onOpenChange={setIsOpen}>
-          <PopoverTrigger
-            asChild
-            aria-label="Show proprety description"
-            onClick={(event) => {
-              event.preventDefault();
-              if (event.altKey) {
-                onReset();
-                return;
-              }
-              setIsOpen(true);
-            }}
-          >
-            {labelElement}
-          </PopoverTrigger>
-          <PopoverPortal>
-            <PopoverContent align="start" onClick={() => setIsOpen(false)}>
-              <PropertyPopoverContent
-                properties={properties}
-                style={style}
-                styleSource={styleSource}
-                onReset={onReset}
-              />
-            </PopoverContent>
-          </PopoverPortal>
-        </Popover>
-      </Flex>
-    );
-  }
 
   return (
     <Flex align="center">
-      {typeof label === "string" ? (
-        <Tooltip
-          content={label}
-          delayDuration={600}
-          disableHoverableContent={true}
+      <Tooltip
+        open={isOpen}
+        onOpenChange={setIsOpen}
+        content={
+          <TooltipContent
+            title={isMultiple ? "@todo" : humanizeString(property as string)}
+            description="The text will not wrap (break to the next line) if it overflows the container."
+            properties={properties}
+            style={style}
+            styleSource={styleSource}
+            onReset={onReset}
+            onClose={() => {
+              setIsOpen(false);
+            }}
+          />
+        }
+      >
+        <Flex
+          shrink
+          gap={1}
+          align="center"
+          onClick={() => {
+            setIsOpen(true);
+          }}
         >
-          {labelElement}
-        </Tooltip>
-      ) : (
-        // It's on purpose to not wrap labelElement in Tooltip,
-        // it can be a complex element with its own tooltip or no tooltip at all like SectionTitle
-        labelElement
-      )}
+          {typeof label === "string" ? (
+            <Label color={styleSource} truncate>
+              {label}
+            </Label>
+          ) : (
+            label
+          )}
+        </Flex>
+      </Tooltip>
     </Flex>
   );
 };

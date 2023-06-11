@@ -19,7 +19,7 @@ export type TooltipProps = ComponentProps<typeof TooltipPrimitive.Root> &
 const Content = styled(TooltipPrimitive.Content, {
   backgroundColor: theme.colors.hiContrast,
   color: theme.colors.loContrast,
-  borderRadius: theme.borderRadius[4],
+  borderRadius: theme.borderRadius[7],
   padding: theme.spacing[5],
   zIndex: theme.zIndices[1],
   position: "relative",
@@ -82,7 +82,7 @@ export const Tooltip = forwardRef(
             sideOffset={5}
             {...props}
           >
-            <Text>{content}</Text>
+            {typeof content === "string" ? <Text>{content}</Text> : content}
             <Box css={{ color: theme.colors.transparentExtreme }}>
               <Arrow offset={5} width={11} height={5} />
             </Box>
