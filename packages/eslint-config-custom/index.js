@@ -52,6 +52,15 @@ module.exports = {
         ],
       },
     ],
+    "no-restricted-syntax": [
+      "error",
+      {
+        message:
+          "Do not import default from React, use a named imports instead",
+        selector:
+          'ImportDeclaration[source.value="react"] ImportDefaultSpecifier',
+      },
+    ],
   },
   overrides: [
     {

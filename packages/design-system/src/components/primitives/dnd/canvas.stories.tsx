@@ -1,5 +1,5 @@
 import type { ComponentMeta } from "@storybook/react";
-import React, { useState, useRef } from "react";
+import { type CSSProperties, useState, useRef } from "react";
 import { Box } from "../../box";
 import { useDrop, type DropTarget } from "./use-drop";
 import { useDrag } from "./use-drag";
@@ -15,7 +15,7 @@ const ROOT_ID = "root";
 
 type ItemData = {
   id: string;
-  style: React.CSSProperties;
+  style: CSSProperties;
   acceptsChildren: boolean;
   children: ItemData[];
 };
