@@ -1,4 +1,9 @@
-import React from "react";
+import {
+  type ComponentProps,
+  type ElementRef,
+  type ReactNode,
+  forwardRef,
+} from "react";
 import { CrossLargeIcon } from "@webstudio-is/icons";
 import * as PopoverPrimitive from "@radix-ui/react-popover";
 import { Box } from "../box";
@@ -10,8 +15,8 @@ import { Separator } from "../separator";
 import { styled, type CSS } from "../../stitches.config";
 import { theme } from "../../stitches.config";
 
-type PopoverProps = React.ComponentProps<typeof PopoverPrimitive.Root> & {
-  children: React.ReactNode;
+type PopoverProps = ComponentProps<typeof PopoverPrimitive.Root> & {
+  children: ReactNode;
 };
 
 export const DeprecatedPopover = ({ children, ...props }: PopoverProps) => {
@@ -30,7 +35,7 @@ const StyledContent = styled(PopoverPrimitive.Content, panelStyle, {
   flexDirection: "column",
 });
 
-type PopoverContentPrimitiveProps = React.ComponentProps<
+type PopoverContentPrimitiveProps = ComponentProps<
   typeof PopoverPrimitive.Content
 >;
 
@@ -39,8 +44,8 @@ type PopoverContentProps = PopoverContentPrimitiveProps & {
   hideArrow?: boolean;
 };
 
-export const DeprecatedPopoverContent = React.forwardRef<
-  React.ElementRef<typeof StyledContent>,
+export const DeprecatedPopoverContent = forwardRef<
+  ElementRef<typeof StyledContent>,
   PopoverContentProps
 >(({ children, hideArrow, ...props }, fowardedRef) => (
   <StyledContent

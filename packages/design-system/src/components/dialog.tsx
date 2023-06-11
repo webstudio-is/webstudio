@@ -1,4 +1,9 @@
-import React, { type ReactNode, type ComponentProps, type Ref } from "react";
+import {
+  type ReactNode,
+  type ComponentProps,
+  type Ref,
+  forwardRef,
+} from "react";
 import * as Primitive from "@radix-ui/react-dialog";
 import { css, theme, keyframes, type CSS } from "../stitches.config";
 import { PanelTitle } from "./panel-title";
@@ -15,7 +20,7 @@ export const DialogClose = Primitive.Close;
 // https://www.radix-ui.com/docs/primitives/components/dialog#description
 export const DialogDescription = Primitive.Description;
 
-export const DialogContent = React.forwardRef(
+export const DialogContent = forwardRef(
   (
     {
       children,

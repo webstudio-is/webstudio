@@ -1,5 +1,5 @@
 // @todo this should be a local customization in sidebar left, not a reusable component
-import React from "react";
+import { type ComponentProps, type ElementRef, forwardRef } from "react";
 import { type CSS, styled } from "../stitches.config";
 import * as TabsPrimitive from "@radix-ui/react-tabs";
 import { theme } from "../stitches.config";
@@ -51,11 +51,11 @@ const StyledTabsList = styled(TabsPrimitive.List, {
   flexGrow: 1,
 });
 
-type TabsListPrimitiveProps = React.ComponentProps<typeof TabsPrimitive.List>;
+type TabsListPrimitiveProps = ComponentProps<typeof TabsPrimitive.List>;
 type TabsListProps = TabsListPrimitiveProps & { css?: CSS };
 
-export const SidebarTabsList = React.forwardRef<
-  React.ElementRef<typeof StyledTabsList>,
+export const SidebarTabsList = forwardRef<
+  ElementRef<typeof StyledTabsList>,
   TabsListProps
 >((props, forwardedRef) => (
   <>

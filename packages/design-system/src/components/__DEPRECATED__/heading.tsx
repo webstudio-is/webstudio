@@ -1,4 +1,4 @@
-import React from "react";
+import { type ComponentProps, type ElementRef, forwardRef } from "react";
 import { DeprecatedText } from "./text";
 import type { VariantProps, CSS } from "../../stitches.config";
 import merge from "lodash.merge";
@@ -11,11 +11,11 @@ type HeadingVariants = { size?: HeadingSizeVariants } & Omit<
   VariantProps<typeof DeprecatedText>,
   "size"
 >;
-type HeadingProps = React.ComponentProps<typeof DEFAULT_TAG> &
+type HeadingProps = ComponentProps<typeof DEFAULT_TAG> &
   HeadingVariants & { css?: CSS; as?: string };
 
-export const DeprecatedHeading = React.forwardRef<
-  React.ElementRef<typeof DEFAULT_TAG>,
+export const DeprecatedHeading = forwardRef<
+  ElementRef<typeof DEFAULT_TAG>,
   HeadingProps
 >((props, forwardedRef) => {
   // '2' here is the default heading size variant
