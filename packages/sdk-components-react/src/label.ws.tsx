@@ -1,4 +1,4 @@
-import { TextBlockIcon } from "@webstudio-is/icons/svg";
+import { TextIcon } from "@webstudio-is/icons/svg";
 import {
   type WsComponentMeta,
   type WsComponentPropsMeta,
@@ -20,7 +20,7 @@ export const meta: WsComponentMeta = {
   category: "forms",
   type: "container",
   label: "Input Label",
-  icon: TextBlockIcon,
+  icon: TextIcon,
   states: defaultStates,
   presetStyle,
   order: 2,
