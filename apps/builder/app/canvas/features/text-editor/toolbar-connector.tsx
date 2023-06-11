@@ -24,7 +24,7 @@ export const $isSpanNode = (node: TextNode) => {
 };
 
 export const $setNodeSpan = (node: TextNode) => {
-  return node.setStyle(`${spanTriggerName}:;`);
+  return node.setStyle(`${spanTriggerName}: 1;`);
 };
 
 const $getSpanNodes = (selection: RangeSelection) => {
@@ -43,10 +43,11 @@ const $toggleSpan = () => {
   const selection = $getSelection();
   if ($isRangeSelection(selection)) {
     const spans = $getSpanNodes(selection);
+    console.log(spans);
     if (spans.length === 0) {
       // lexical creates separate text node when style property do not match
       $patchStyleText(selection, {
-        [spanTriggerName]: "",
+        [spanTriggerName]: "1",
       });
     } else {
       // clear span nodes style
@@ -62,7 +63,7 @@ const $clearText = () => {
   if ($isRangeSelection(selection)) {
     // split nodes by selection and mark with style
     $patchStyleText(selection, {
-      "--clear-selection-trigger": "",
+      "--clear-selection-trigger": "1",
     });
     // recompute selection to get new splitted nodes
     const newSelection = $getSelection();
