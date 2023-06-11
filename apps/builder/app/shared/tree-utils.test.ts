@@ -252,7 +252,7 @@ describe("insert instances into container with text or rich text children", () =
         { type: "id", value: "inserted" },
         { type: "id", value: expectString },
       ]),
-      createInstancePair(expectString, "TextBlock", [
+      createInstancePair(expectString, "Text", [
         { type: "text", value: "text" },
       ]),
       createInstancePair("inserted", "Box", []),
@@ -276,7 +276,7 @@ describe("insert instances into container with text or rich text children", () =
         { type: "id", value: expectString },
         { type: "id", value: "inserted" },
       ]),
-      createInstancePair(expectString, "TextBlock", [
+      createInstancePair(expectString, "Text", [
         { type: "text", value: "text" },
       ]),
       createInstancePair("inserted", "Box", []),
@@ -322,10 +322,8 @@ describe("insert instances into container with text or rich text children", () =
       createInstancePair("italic", "Italic", [
         { type: "text", value: "italic" },
       ]),
-      createInstancePair(expectString, "TextBlock", [
-        { type: "id", value: "bold" },
-      ]),
-      createInstancePair(expectString, "TextBlock", [
+      createInstancePair(expectString, "Text", [{ type: "id", value: "bold" }]),
+      createInstancePair(expectString, "Text", [
         { type: "text", value: "text" },
         { type: "id", value: "italic" },
       ]),
@@ -355,7 +353,7 @@ describe("insert instances into container with text or rich text children", () =
       createInstancePair("italic", "Italic", [
         { type: "text", value: "italic" },
       ]),
-      createInstancePair(expectString, "TextBlock", [
+      createInstancePair(expectString, "Text", [
         { type: "id", value: "bold" },
         { type: "text", value: "text" },
         { type: "id", value: "italic" },

@@ -161,7 +161,7 @@ const wrapEditableChildrenAroundDropTargetMutable = (
     const leftSpan: Instance = {
       id: nanoid(),
       type: "instance",
-      component: "TextBlock",
+      component: "Text",
       children: parentInstance.children.slice(0, position),
     };
     newChildren.push({ type: "id", value: leftSpan.id });
@@ -181,7 +181,7 @@ const wrapEditableChildrenAroundDropTargetMutable = (
     const rightSpan: Instance = {
       id: nanoid(),
       type: "instance",
-      component: "TextBlock",
+      component: "Text",
       children: parentInstance.children.slice(position),
     };
     newChildren.push({ type: "id", value: rightSpan.id });

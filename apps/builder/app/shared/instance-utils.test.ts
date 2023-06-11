@@ -22,7 +22,7 @@ const createFakeComponentMetas = (
     Item: { ...base, type: "container", ...itemMeta },
     AnotherItem: { ...base, type: "container", ...anotherItemMeta },
     Bold: { ...base, type: "rich-text-child" },
-    TextBlock: { ...base, type: "container" },
+    Text: { ...base, type: "container" },
     Form: { ...base, type: "container" },
     Box: { ...base, type: "container" },
     Div: { ...base, type: "container" },
@@ -120,7 +120,7 @@ describe("find closest droppable component index", () => {
     expect(
       findClosestDroppableComponentIndex(
         createFakeComponentMetas({}),
-        ["Bold", "Italic", "TextBlock", "Box", "Body"],
+        ["Bold", "Italic", "Text", "Box", "Body"],
         ["Item"]
       )
     ).toEqual(2);
