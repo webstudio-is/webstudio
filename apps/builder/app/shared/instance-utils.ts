@@ -334,7 +334,12 @@ export const deleteInstance = (instanceSelector: InstanceSelector) => {
 };
 
 export const deleteSelectedInstance = () => {
+  const textEditingInstanceSelector = textEditingInstanceSelectorStore.get();
   const selectedInstanceSelector = selectedInstanceSelectorStore.get();
+  // cannot delete instance while editing
+  if (textEditingInstanceSelector) {
+    return;
+  }
   // @todo tell user they can't delete root
   if (
     selectedInstanceSelector === undefined ||

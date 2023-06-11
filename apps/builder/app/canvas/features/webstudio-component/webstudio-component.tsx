@@ -49,13 +49,24 @@ const ContentEditable = ({
 
   const ref = useCallback(
     (rootElement: null | HTMLElement) => {
+      // button with contentEditable does not let to press space
+      // so add span inside and use it as editor element in lexical
+      if (rootElement?.tagName === "BUTTON") {
+        const span = document.createElement("span");
+        span.contentEditable = "true";
+        rootElement.appendChild(span);
+        rootElement = span;
+      }
+      if (rootElement) {
+        rootElement.contentEditable = "true";
+      }
       editor.setRootElement(rootElement);
       elementRef.current = rootElement ?? null;
     },
     [editor, elementRef]
   );
 
-  return <Component ref={ref} {...props} contentEditable={true} />;
+  return <Component ref={ref} {...props} />;
 };
 
 type UserProps = Record<Prop["name"], Prop["value"]>;

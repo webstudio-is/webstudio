@@ -26,9 +26,16 @@ export const meta: WsComponentMeta = {
     { selector: ":enabled", label: "Enabled" },
   ],
   order: 1,
+  template: [
+    {
+      type: "instance",
+      component: "Button",
+      children: [{ type: "text", value: "Button you can edit" }],
+    },
+  ],
 };
 
 export const propsMeta: WsComponentPropsMeta = {
   props,
-  initialProps: ["type", "innerText", "aria-label"],
+  initialProps: ["type", "aria-label"],
 };
