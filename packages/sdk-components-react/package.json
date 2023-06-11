@@ -1,6 +1,6 @@
 {
   "name": "@webstudio-is/sdk-components-react",
-  "version": "0.71.0",
+  "version": "0.72.0",
   "description": "Webstudio default library for react",
   "author": "Webstudio <github@webstudio.is>",
   "homepage": "https://webstudio.is",
@@ -66,6 +66,6 @@
     "@webstudio-is/tsconfig": "workspace:^",
     "react": "^18.2.0",
     "react-dom": "^18.2.0",
-    "typescript": "5.0.3"
+    "typescript": "5.1.3"
   }
 }

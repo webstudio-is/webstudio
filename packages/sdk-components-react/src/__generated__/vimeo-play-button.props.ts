@@ -455,5 +455,4 @@ export const props: Record<string, PropMeta> = {
     control: "text",
     type: "string",
   },
-  innerText: { required: false, control: "text", type: "string" },
 };

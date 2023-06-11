@@ -61,7 +61,7 @@ const presetStyle = {
 
 export const meta: WsComponentMeta = {
   category: "text",
-  type: "rich-text",
+  type: "container",
   label: "Blockquote",
   icon: BlockquoteIcon,
   states: defaultStates,

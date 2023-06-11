@@ -23,20 +23,22 @@ type DomainsAddProps = {
     input: { projectId: Project["id"] },
     onSuccess: () => void
   ) => void;
-  domainLoadingState: "idle" | "submitting";
+  domainState: "idle" | "submitting";
+  isPublishing: boolean;
 };
 
 export const AddDomain = ({
   projectId,
   onCreate,
   refreshDomainResult,
-  domainLoadingState,
+  domainState,
+  isPublishing,
 }: DomainsAddProps) => {
   const id = useId();
   const {
     send: create,
-    state,
-    error: createSystemError,
+    state: сreateState,
+    error: сreateSystemError,
   } = trpc.create.useMutation();
   const [isOpen, setIsOpen] = useState(false);
   const [domain, setDomain] = useState("");
@@ -95,7 +97,9 @@ export const AddDomain = ({
               autoFocus
               placeholder="your-domain.com"
               value={domain}
-              disabled={state !== "idle" || domainLoadingState !== "idle"}
+              disabled={
+                isPublishing || сreateState !== "idle" || domainState !== "idle"
+              }
               onKeyDown={(event) => {
                 if (event.key === "Enter") {
                   handleCreate();
@@ -117,10 +121,10 @@ export const AddDomain = ({
                 <Text color="destructive">{error}</Text>
               </>
             )}
-            {createSystemError !== undefined && (
+            {сreateSystemError !== undefined && (
               <>
                 {/* Something happened with network, api etc */}
-                <Text color="destructive">{createSystemError}</Text>
+                <Text color="destructive">{сreateSystemError}</Text>
                 <Text color="subtle">Please try again later</Text>
               </>
             )}
@@ -128,7 +132,9 @@ export const AddDomain = ({
         )}
 
         <Button
-          disabled={state !== "idle" || domainLoadingState !== "idle"}
+          disabled={
+            isPublishing || сreateState !== "idle" || domainState !== "idle"
+          }
           color={isOpen ? "primary" : "neutral"}
           css={{ width: "100%", flexShrink: 0 }}
           onClick={() => {

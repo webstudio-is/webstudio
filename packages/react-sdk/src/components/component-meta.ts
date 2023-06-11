@@ -11,6 +11,7 @@ export type PresetStyle<Tag extends HtmlTags = HtmlTags> = Partial<
 // so they can be exported separately and potentially tree-shaken
 const WsComponentPropsMeta = z.object({
   props: z.record(PropMeta),
+  // Props that will be always visible in properties panel.
   initialProps: z.array(z.string()).optional(),
 });
 
@@ -44,18 +45,11 @@ export const defaultStates: ComponentState[] = [
 
 const WsComponentMeta = z.object({
   category: z.enum(componentCategories).optional(),
-  // container - can accept other components with dnd
+  // container - can accept other components with dnd or be edited as text
   // control - usually form controls like inputs, without children
   // embed - images, videos or other embeddable components, without children
-  // rich-text - editable text component
   // rich-text-child - formatted text fragment, not listed in components list
-  type: z.enum([
-    "container",
-    "control",
-    "embed",
-    "rich-text",
-    "rich-text-child",
-  ]),
+  type: z.enum(["container", "control", "embed", "rich-text-child"]),
   requiredAncestors: z.optional(z.array(z.string())),
   invalidAncestors: z.optional(z.array(z.string())),
   stylable: z.optional(z.boolean()),

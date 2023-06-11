@@ -283,6 +283,8 @@ export const onPaste = (clipboardData: string) => {
 
       const copiedInstanceIds = insertInstancesCopyMutable(
         instances,
+        props,
+        registeredComponentMetasStore.get(),
         data.instances,
         dropTarget
       );

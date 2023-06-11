@@ -49,7 +49,7 @@ export const meta: WsComponentMeta = {
               value: { type: "keyword", value: "absolute" },
             },
             {
-              property: "objectPosition",
+              property: "objectFit",
               value: { type: "keyword", value: "cover" },
             },
             {
@@ -87,6 +87,11 @@ export const meta: WsComponentMeta = {
               type: "string",
               name: "alt",
               value: "Vimeo video preview image",
+            },
+            {
+              type: "string",
+              name: "sizes",
+              value: "100vw",
             },
           ],
         },

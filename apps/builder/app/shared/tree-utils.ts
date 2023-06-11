@@ -19,6 +19,7 @@ import {
   StyleSourcesList,
 } from "@webstudio-is/project-build";
 import { equalMedia } from "@webstudio-is/css-engine";
+import type { WsComponentMeta } from "@webstudio-is/react-sdk";
 
 // slots can have multiple parents so instance should be addressed
 // with full rendered path to avoid double selections with slots
@@ -56,9 +57,10 @@ export type DroppableTarget = {
 
 const getInstanceOrCreateFragmentIfNecessary = (
   instances: Instances,
-  instanceId: Instance["id"]
+  dropTarget: DroppableTarget
 ) => {
-  const instance = instances.get(instanceId);
+  const [parentId] = dropTarget.parentSelector;
+  const instance = instances.get(parentId);
   if (instance === undefined) {
     return;
   }
@@ -76,14 +78,128 @@ const getInstanceOrCreateFragmentIfNecessary = (
       };
       instances.set(id, fragment);
       instance.children.push({ type: "id", value: id });
-      return fragment;
+      return {
+        parentSelector: [fragment.id, ...dropTarget.parentSelector],
+        position: dropTarget.position,
+      };
     }
     // first slot child is always fragment
     if (instance.children[0].type === "id") {
-      return instances.get(instance.children[0].value);
+      const fragmentId = instance.children[0].value;
+      return {
+        parentSelector: [fragmentId, ...dropTarget.parentSelector],
+        position: dropTarget.position,
+      };
     }
   }
-  return instance;
+  return;
+};
+
+/**
+ * Navigator tree and canvas dnd do not have text representation
+ * and position does not consider it and include only instances.
+ * This function adjust the position to consider text children
+ */
+const adjustChildrenPosition = (
+  children: Instance["children"],
+  position: number
+) => {
+  let newPosition = 0;
+  let idPosition = 0;
+  for (let index = 0; index < children.length; index += 1) {
+    newPosition = index;
+    if (idPosition === position) {
+      return newPosition;
+    }
+    const child = children[index];
+    if (child.type === "id") {
+      idPosition += 1;
+    }
+  }
+  // the index after last item
+  return newPosition + 1;
+};
+
+/**
+ * Wrap children before and after drop target with spans
+ * to preserve lexical specific components while allowing
+ * to insert into editable components
+ */
+const wrapEditableChildrenAroundDropTargetMutable = (
+  instances: Instances,
+  props: Props,
+  metas: Map<string, WsComponentMeta>,
+  dropTarget: DroppableTarget
+) => {
+  const [parentId] = dropTarget.parentSelector;
+  const parentInstance = instances.get(parentId);
+  if (parentInstance === undefined) {
+    return;
+  }
+  // wrap only containers with text and rich text childre
+  for (const child of parentInstance.children) {
+    if (child.type === "id") {
+      const childInstance = instances.get(child.value);
+      if (childInstance === undefined) {
+        return;
+      }
+      const childMeta = metas.get(childInstance.component);
+      if (childMeta?.type !== "rich-text-child") {
+        return;
+      }
+    }
+  }
+  const position =
+    dropTarget.position === "end"
+      ? parentInstance.children.length
+      : adjustChildrenPosition(parentInstance.children, dropTarget.position);
+
+  const newChildren: Instance["children"] = [];
+  let newPosition = 0;
+  // create left span when not at the beginning
+  if (position !== 0) {
+    const leftSpan: Instance = {
+      id: nanoid(),
+      type: "instance",
+      component: "TextBlock",
+      children: parentInstance.children.slice(0, position),
+    };
+    newChildren.push({ type: "id", value: leftSpan.id });
+    instances.set(leftSpan.id, leftSpan);
+    const tagProp: Prop = {
+      id: nanoid(),
+      instanceId: leftSpan.id,
+      type: "string",
+      name: "tag",
+      value: "span",
+    };
+    props.set(tagProp.id, tagProp);
+    newPosition = 1;
+  }
+  // create right span when not in the end
+  if (position < parentInstance.children.length) {
+    const rightSpan: Instance = {
+      id: nanoid(),
+      type: "instance",
+      component: "TextBlock",
+      children: parentInstance.children.slice(position),
+    };
+    newChildren.push({ type: "id", value: rightSpan.id });
+    instances.set(rightSpan.id, rightSpan);
+    const tagProp: Prop = {
+      id: nanoid(),
+      instanceId: rightSpan.id,
+      type: "string",
+      name: "tag",
+      value: "span",
+    };
+    props.set(tagProp.id, tagProp);
+  }
+  parentInstance.children = newChildren;
+  return {
+    parentSelector: dropTarget.parentSelector,
+    position: newPosition,
+  };
 };
 
 const getSlotFragmentSelector = (
@@ -104,6 +220,8 @@ const getSlotFragmentSelector = (
 
 export const reparentInstanceMutable = (
   instances: Instances,
+  props: Props,
+  metas: Map<string, WsComponentMeta>,
   instanceSelector: InstanceSelector,
   dropTarget: DroppableTarget
 ) => {
@@ -112,10 +230,17 @@ export const reparentInstanceMutable = (
     parentInstanceId === undefined
       ? undefined
       : instances.get(parentInstanceId);
-  const nextParent = getInstanceOrCreateFragmentIfNecessary(
-    instances,
-    dropTarget.parentSelector[0]
-  );
+  dropTarget =
+    getInstanceOrCreateFragmentIfNecessary(instances, dropTarget) ?? dropTarget;
+  dropTarget =
+    wrapEditableChildrenAroundDropTargetMutable(
+      instances,
+      props,
+      metas,
+      dropTarget
+    ) ?? dropTarget;
+  const [parentId] = dropTarget.parentSelector;
+  const nextParent = instances.get(parentId);
   const instance = instances.get(instanceId);
 
   // delect is target is one of own descendants
@@ -212,14 +337,23 @@ export const findLocalStyleSourcesWithinInstances = (
 
 export const insertInstancesMutable = (
   instances: Instances,
+  props: Props,
+  metas: Map<string, WsComponentMeta>,
   insertedInstances: Instance[],
   children: Instance["children"],
   dropTarget: DroppableTarget
 ) => {
-  const parentInstance = getInstanceOrCreateFragmentIfNecessary(
-    instances,
-    dropTarget.parentSelector[0]
-  );
+  dropTarget =
+    getInstanceOrCreateFragmentIfNecessary(instances, dropTarget) ?? dropTarget;
+  dropTarget =
+    wrapEditableChildrenAroundDropTargetMutable(
+      instances,
+      props,
+      metas,
+      dropTarget
+    ) ?? dropTarget;
+  const [parentId] = dropTarget.parentSelector;
+  const parentInstance = instances.get(parentId);
   if (parentInstance === undefined) {
     return;
   }
@@ -245,6 +379,8 @@ export const insertInstancesMutable = (
 
 export const insertInstancesCopyMutable = (
   instances: Instances,
+  props: Props,
+  metas: Map<string, WsComponentMeta>,
   copiedInstances: Instance[],
   dropTarget: DroppableTarget
 ) => {
@@ -308,6 +444,8 @@ export const insertInstancesCopyMutable = (
 
   insertInstancesMutable(
     instances,
+    props,
+    metas,
     copiedInstancesWithNewIds,
     // consider the first instance as child
     [

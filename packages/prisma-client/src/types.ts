@@ -9,4 +9,8 @@ export type {
   AuthorizationToken,
   DomainStatus,
   Domain,
+  ProjectWithDomain,
+  LatestBuildPerProjectDomain,
+  LatestBuildPerProject,
+  PublishStatus,
 } from "./__generated__";

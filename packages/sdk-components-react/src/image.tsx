@@ -40,7 +40,7 @@ const imagePlaceholderSvg = `data:image/svg+xml;base64,${btoa(`<svg
   />
 </svg>`)}`;
 
-type Props = ComponentPropsWithoutRef<typeof WebstudioImage>;
+type Props = Omit<ComponentPropsWithoutRef<typeof WebstudioImage>, "loader">;
 
 export const Image = forwardRef<ElementRef<typeof defaultTag>, Props>(
   (props, ref) => {

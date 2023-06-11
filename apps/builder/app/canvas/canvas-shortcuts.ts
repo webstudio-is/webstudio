@@ -2,8 +2,7 @@ import { useHotkeys } from "react-hotkeys-hook";
 import { shortcuts, instanceTreeShortcuts, options } from "~/shared/shortcuts";
 import { publish, useSubscribe } from "~/shared/pubsub";
 import { isPreviewModeStore } from "~/shared/nano-states";
-import { enterEditingMode } from "~/shared/nano-states";
-import { escapeSelection } from "~/shared/instance-utils";
+import { enterEditingMode, escapeSelection } from "~/shared/instance-utils";
 
 declare module "~/shared/pubsub" {
   export interface PubsubMap {

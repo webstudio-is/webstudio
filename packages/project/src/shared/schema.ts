@@ -16,6 +16,16 @@ export const Project = z.object({
   userId: z.string().nullable(),
   isDeleted: z.boolean(),
   domain: z.string(),
+  latestBuild: z.optional(
+    z
+      .object({
+        buildId: z.string(),
+        isLatestBuild: z.boolean(),
+        publishStatus: z.enum(["PENDING", "PUBLISHED", "FAILED"]),
+        updatedAt: z.date().transform((date) => date.toISOString()),
+      })
+      .nullable()
+  ),
 });
 export type Project = z.infer<typeof Project>;
 

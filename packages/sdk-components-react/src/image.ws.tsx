@@ -37,9 +37,6 @@ export const meta: WsComponentMeta = {
   order: 0,
 };
 
-// "loader" is our internal prop not intended to show up in the props panel
-const { loader, ...publicProps } = props;
-
 // Automatically generated props don't have the right control.
 export const propsOverrides = {
   src: {
@@ -52,7 +49,7 @@ export const propsOverrides = {
 
 export const propsMeta: WsComponentPropsMeta = {
   props: {
-    ...publicProps,
+    ...props,
     ...propsOverrides,
   },
   initialProps: ["src", "width", "height", "alt", "loading"],

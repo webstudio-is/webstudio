@@ -30,6 +30,9 @@ export const deploymentRouter = router({
     .input(PublishInput)
     .output(Output)
     .mutation(async ({ input, ctx }) => {
-      return { success: false, error: "Not implemented" };
+      return {
+        success: false,
+        error: `Not implemented, use buildId=${input.buildId}`,
+      };
     }),
 });

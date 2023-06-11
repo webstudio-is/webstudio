@@ -1,37 +1,112 @@
-import { describe, it, expect } from "@jest/globals";
+import { describe, test, expect } from "@jest/globals";
 import type { WsComponentMeta } from "@webstudio-is/react-sdk";
 import * as defaultMetas from "@webstudio-is/sdk-components-react/metas";
-import type { Instance } from "@webstudio-is/project-build";
+import type { Instance, Instances } from "@webstudio-is/project-build";
 import {
   findClosestDroppableComponentIndex,
   findClosestDroppableTarget,
+  findClosestEditableInstanceSelector,
 } from "./instance-utils";
 
 const defaultMetasMap = new Map(Object.entries(defaultMetas));
 
-describe("find closest droppable component index", () => {
-  const createFakeComponentMetas = (
-    itemMeta: Partial<WsComponentMeta>,
-    anotherItemMeta?: Partial<WsComponentMeta>
-  ): Map<string, WsComponentMeta> => {
-    const base = {
-      label: "",
-      Icon: () => null,
-    };
-    const configs = {
-      Item: { ...base, type: "container", ...itemMeta },
-      AnotherItem: { ...base, type: "container", ...anotherItemMeta },
-      Bold: { ...base, type: "rich-text-child" },
-      TextBlock: { ...base, type: "rich-text" },
-      Form: { ...base, type: "container" },
-      Box: { ...base, type: "container" },
-      Div: { ...base, type: "container" },
-      Body: { ...base, type: "container" },
-    } as const;
-    return new Map(Object.entries(configs)) as Map<string, WsComponentMeta>;
+const createFakeComponentMetas = (
+  itemMeta: Partial<WsComponentMeta>,
+  anotherItemMeta?: Partial<WsComponentMeta>
+): Map<string, WsComponentMeta> => {
+  const base = {
+    label: "",
+    Icon: () => null,
   };
+  const configs = {
+    Item: { ...base, type: "container", ...itemMeta },
+    AnotherItem: { ...base, type: "container", ...anotherItemMeta },
+    Bold: { ...base, type: "rich-text-child" },
+    TextBlock: { ...base, type: "container" },
+    Form: { ...base, type: "container" },
+    Box: { ...base, type: "container" },
+    Div: { ...base, type: "container" },
+    Body: { ...base, type: "container" },
+  } as const;
+  return new Map(Object.entries(configs)) as Map<string, WsComponentMeta>;
+};
 
-  it("finds container", () => {
+const createInstancePair = (
+  id: Instance["id"],
+  component: string,
+  children: Instance["children"]
+): [Instance["id"], Instance] => {
+  return [id, { type: "instance", id, component, children }];
+};
+
+describe("find closest editable instance selector", () => {
+  test("searches closest container", () => {
+    const instances: Instances = new Map([
+      createInstancePair("body", "Body", [{ type: "id", value: "box" }]),
+      createInstancePair("box", "Box", [
+        { type: "text", value: "some text" },
+        { type: "id", value: "bold" },
+      ]),
+      createInstancePair("bold", "Bold", [
+        { type: "text", value: "some-bold" },
+      ]),
+    ]);
+    expect(
+      findClosestEditableInstanceSelector(
+        ["bold", "box", "body"],
+        instances,
+        createFakeComponentMetas({})
+      )
+    ).toEqual(["box", "body"]);
+    expect(
+      findClosestEditableInstanceSelector(
+        ["box", "body"],
+        instances,
+        createFakeComponentMetas({})
+      )
+    ).toEqual(["box", "body"]);
+  });
+
+  test("skips when container has anything except rich-text-child or text", () => {
+    const instances: Instances = new Map([
+      createInstancePair("body", "Body", [{ type: "id", value: "box" }]),
+      createInstancePair("box", "Box", [
+        { type: "text", value: "some text" },
+        { type: "id", value: "bold" },
+        { type: "id", value: "child-box" },
+      ]),
+      createInstancePair("bold", "Bold", [
+        { type: "text", value: "some-bold" },
+      ]),
+      createInstancePair("child-box", "Box", [
+        { type: "text", value: "child-box" },
+      ]),
+    ]);
+    expect(
+      findClosestEditableInstanceSelector(
+        ["bold", "box", "body"],
+        instances,
+        createFakeComponentMetas({})
+      )
+    ).toEqual(undefined);
+  });
+
+  test("considers empty container as editable", () => {
+    const instances: Instances = new Map([
+      createInstancePair("body", "Body", []),
+    ]);
+    expect(
+      findClosestEditableInstanceSelector(
+        ["body"],
+        instances,
+        createFakeComponentMetas({})
+      )
+    ).toEqual(["body"]);
+  });
+});
+
+describe("find closest droppable component index", () => {
+  test("finds container", () => {
     expect(
       findClosestDroppableComponentIndex(
         createFakeComponentMetas({}),
@@ -41,17 +116,17 @@ describe("find closest droppable component index", () => {
     ).toEqual(0);
   });
 
-  it("skips non containers", () => {
+  test("skips non containers", () => {
     expect(
       findClosestDroppableComponentIndex(
         createFakeComponentMetas({}),
-        ["Bold", "TextBlock", "Box", "Body"],
+        ["Bold", "Italic", "TextBlock", "Box", "Body"],
         ["Item"]
       )
     ).toEqual(2);
   });
 
-  it("can be dropped into itself", () => {
+  test("can be dropped into itself", () => {
     expect(
       findClosestDroppableComponentIndex(
         createFakeComponentMetas({}),
@@ -61,7 +136,7 @@ describe("find closest droppable component index", () => {
     ).toEqual(0);
   });
 
-  it("can be forbidden to drop into itself", () => {
+  test("can be forbidden to drop into itself", () => {
     expect(
       findClosestDroppableComponentIndex(
         createFakeComponentMetas({
@@ -73,7 +148,7 @@ describe("find closest droppable component index", () => {
     ).toEqual(2);
   });
 
-  it("requires some ancestor", () => {
+  test("requires some ancestor", () => {
     expect(
       findClosestDroppableComponentIndex(
         createFakeComponentMetas({
@@ -94,7 +169,7 @@ describe("find closest droppable component index", () => {
     ).toEqual(0);
   });
 
-  it("considers both required and invalid ancestors", () => {
+  test("considers both required and invalid ancestors", () => {
     expect(
       findClosestDroppableComponentIndex(
         createFakeComponentMetas({
@@ -117,7 +192,7 @@ describe("find closest droppable component index", () => {
     ).toEqual(-1);
   });
 
-  it("considers multiple children", () => {
+  test("considers multiple children", () => {
     expect(
       findClosestDroppableComponentIndex(
         createFakeComponentMetas(
@@ -158,7 +233,7 @@ describe("find closest droppable target", () => {
     return [id, { type: "instance", id, component, children }];
   };
 
-  it("puts in the end if closest instance is container", () => {
+  test("puts in the end if closest instance is container", () => {
     const instances = new Map([
       createInstancePair("body", "Body", [{ type: "id", value: "box" }]),
       createInstancePair("box", "Box", [{ type: "id", value: "paragraph" }]),
@@ -187,7 +262,7 @@ describe("find closest droppable target", () => {
     ).toEqual(undefined);
   });
 
-  it("puts in the end of root instance", () => {
+  test("puts in the end of root instance", () => {
     const instances = new Map([
       createInstancePair("body", "Body", [{ type: "id", value: "box" }]),
       createInstancePair("box", "Box", [{ type: "id", value: "paragraph" }]),
@@ -200,10 +275,9 @@ describe("find closest droppable target", () => {
     });
   });
 
-  it("finds closest container and puts after its child within selection", () => {
+  test("finds closest container and puts after its child within selection", () => {
     const instances = new Map([
-      createInstancePair("body", "Body", [{ type: "id", value: "box" }]),
-      createInstancePair("box", "Box", [{ type: "id", value: "paragraph" }]),
+      createInstancePair("body", "Body", [{ type: "id", value: "paragraph" }]),
       createInstancePair("paragraph", "Paragraph", [
         { type: "id", value: "bold" },
       ]),
@@ -213,26 +287,26 @@ describe("find closest droppable target", () => {
       findClosestDroppableTarget(
         defaultMetasMap,
         instances,
-        ["bold", "paragraph", "box", "body"],
+        ["bold", "paragraph", "body"],
         ["Box"]
       )
     ).toEqual({
-      parentSelector: ["box", "body"],
+      parentSelector: ["paragraph", "body"],
       position: 1,
     });
   });
 
-  it("puts multiple children", () => {
+  test("puts multiple children", () => {
     const instances = new Map([
       createInstancePair("body", "Body", [{ type: "id", value: "box" }]),
-      createInstancePair("box", "Box", [{ type: "id", value: "paragraph" }]),
-      createInstancePair("paragraph", "Paragraph", []),
+      createInstancePair("box", "Box", [{ type: "id", value: "bold" }]),
+      createInstancePair("bold", "Bold", []),
     ]);
     expect(
       findClosestDroppableTarget(
         defaultMetasMap,
         instances,
-        ["paragraph", "box", "body"],
+        ["bold", "box", "body"],
         ["Box", "Form"]
       )
     ).toEqual({
