@@ -1,9 +1,9 @@
 import {
   styled,
   Flex,
-  Tooltip,
   ToggleGroup,
   ToggleGroupItem,
+  EnhancedTooltip,
 } from "@webstudio-is/design-system";
 import type { StyleSource } from "../../shared/style-info";
 import { theme } from "@webstudio-is/design-system";
@@ -36,9 +36,9 @@ export const ToggleGroupControl = ({
             value={value}
             source={styleSource}
           >
-            <Tooltip content={label} delayDuration={0}>
+            <EnhancedTooltip content={label}>
               <Flex>{child}</Flex>
-            </Tooltip>
+            </EnhancedTooltip>
           </ToggleGroupControlItem>
         );
       })}

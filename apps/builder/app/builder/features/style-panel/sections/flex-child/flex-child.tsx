@@ -54,7 +54,7 @@ const FlexChildSectionAlign = (props: RenderCategoryProps) => {
     <Grid css={{ gridTemplateColumns: "4fr auto" }}>
       <PropertyName
         style={currentStyle}
-        property="alignSelf"
+        properties={["alignSelf"]}
         label="Align"
         onReset={() => deleteProperty("alignSelf")}
       />
@@ -107,7 +107,7 @@ const FlexChildSectionSizing = (props: RenderCategoryProps) => {
     <Grid css={{ gridTemplateColumns: "4fr auto" }}>
       <PropertyName
         style={currentStyle}
-        property={["flexGrow", "flexShrink"]}
+        properties={["flexGrow", "flexShrink"]}
         label="Sizing"
         onReset={() => {
           setSizing.deleteProperty("flexGrow");
@@ -192,7 +192,7 @@ const FlexChildSectionSizingPopover = ({
           <Grid css={{ gridTemplateColumns: "auto", gap: theme.spacing[3] }}>
             <PropertyName
               style={currentStyle}
-              property="flexBasis"
+              properties={["flexBasis"]}
               label="Basis"
               onReset={() => deleteProperty("flexBasis")}
             />
@@ -206,7 +206,7 @@ const FlexChildSectionSizingPopover = ({
           <Grid css={{ gridTemplateColumns: "auto", gap: theme.spacing[3] }}>
             <PropertyName
               style={currentStyle}
-              property="flexGrow"
+              properties={["flexGrow"]}
               label="Grow"
               onReset={() => deleteProperty("flexGrow")}
             />
@@ -220,7 +220,7 @@ const FlexChildSectionSizingPopover = ({
           <Grid css={{ gridTemplateColumns: "auto", gap: theme.spacing[3] }}>
             <PropertyName
               style={currentStyle}
-              property="flexShrink"
+              properties={["flexShrink"]}
               label="Shrink"
               onReset={() => deleteProperty("flexShrink")}
             />
@@ -249,7 +249,7 @@ const FlexChildSectionOrder = (props: RenderCategoryProps) => {
     <Grid css={{ gridTemplateColumns: "4fr auto" }}>
       <PropertyName
         style={currentStyle}
-        property="order"
+        properties={["order"]}
         label="Order"
         onReset={() => deleteProperty("order")}
       />
@@ -303,7 +303,7 @@ const FlexChildSectionOrderPopover = (props: RenderCategoryProps) => {
           <Grid css={{ gridTemplateColumns: "4fr 6fr" }}>
             <PropertyName
               style={currentStyle}
-              property="order"
+              properties={["order"]}
               label="Order"
               onReset={() => deleteProperty("order")}
             />

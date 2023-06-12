@@ -71,7 +71,7 @@ export const BorderStyle = (
     >
       <PropertyName
         style={props.currentStyle}
-        property={borderStyleProperties}
+        properties={borderStyleProperties}
         label={"Style"}
         onReset={() => deleteBorderProperties(firstPropertyName)}
       />

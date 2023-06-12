@@ -182,7 +182,8 @@ const BackgroundsCollapsibleSection = ({
         >
           <PropertyName
             style={currentStyle}
-            property={layeredBackgroundProps}
+            title="Backgrounds"
+            properties={layeredBackgroundProps}
             label={
               <SectionTitleLabel color={layersStyleSource}>
                 {label}
@@ -307,7 +308,7 @@ export const BackgroundsSection = (props: RenderCategoryProps) => {
         >
           <PropertyName
             style={currentStyle}
-            property={"backgroundColor"}
+            properties={["backgroundColor"]}
             label={"Color"}
             onReset={() => deleteProperty("backgroundColor")}
           />

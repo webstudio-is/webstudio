@@ -36,7 +36,7 @@ const SizeField = ({
     <Grid gap={1}>
       <PropertyName
         label={label}
-        property={property}
+        properties={[property]}
         style={style}
         onReset={() => deleteProperty(property)}
       />
@@ -116,7 +116,7 @@ export const SizeSection = ({
         />
         <PropertyName
           label={styleConfigByName("aspectRatio").label}
-          property="aspectRatio"
+          properties={["aspectRatio"]}
           style={style}
           onReset={() => deleteProperty("aspectRatio")}
         />
@@ -128,7 +128,7 @@ export const SizeSection = ({
         />
         <PropertyName
           label={styleConfigByName("overflow").label}
-          property="overflow"
+          properties={["overflow"]}
           style={style}
           onReset={() => deleteProperty("overflow")}
         />
@@ -163,7 +163,7 @@ export const SizeSection = ({
         />
         <PropertyName
           label={styleConfigByName("objectFit").label}
-          property="objectFit"
+          properties={["objectFit"]}
           style={style}
           onReset={() => deleteProperty("objectFit")}
         />
@@ -177,7 +177,7 @@ export const SizeSection = ({
       <Flex justify="between">
         <PropertyName
           label={styleConfigByName("objectPosition").label}
-          property="objectPosition"
+          properties={["objectPosition"]}
           style={style}
           onReset={() => deleteProperty("objectPosition")}
         />
