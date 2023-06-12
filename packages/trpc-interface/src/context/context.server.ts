@@ -27,6 +27,16 @@ type DomainContext = {
   domainTrpc: TrpcInterfaceClient["domain"];
 };
 
+// https://developers.entri.com/docs/install
+type EntriContext = {
+  entryApi: {
+    getEntriToken: () => Promise<{
+      token: string;
+      applicationId: string;
+    }>;
+  };
+};
+
 type DeploymentContext = {
   deploymentTrpc: TrpcInterfaceClient["deployment"];
   env: {
@@ -44,4 +54,5 @@ export type AppContext = {
   authorization: AuthorizationContext;
   domain: DomainContext;
   deployment: DeploymentContext;
+  entri: EntriContext;
 };

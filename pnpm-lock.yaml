@@ -236,6 +236,9 @@ importers:
       react-hotkeys-hook:
         specifier: ^4.3.5
         version: 4.3.5(react-dom@18.2.0)(react@18.2.0)
+      react-script-hook:
+        specifier: ^1.7.2
+        version: 1.7.2(react-dom@18.2.0)(react@18.2.0)
       react-use:
         specifier: ^17.3.2
         version: 17.4.0(react-dom@18.2.0)(react@18.2.0)
@@ -17333,6 +17336,16 @@ packages:
     dependencies:
       '@remix-run/router': 1.5.0
       react: 18.2.0
+
+  /react-script-hook@1.7.2(react-dom@18.2.0)(react@18.2.0):
+    resolution: {integrity: sha512-fhyCEfXb94fag34UPRF0zry1XGwmVY+79iibWwTqAoOiCzYJQOYTiWJ7CnqglA9tMSV8g45cQpHCMcBwr7dwhA==}
+    peerDependencies:
+      react: ^16.8.6 || 17 - 18
+      react-dom: ^16.8.6 || 17 - 18
+    dependencies:
+      react: 18.2.0
+      react-dom: 18.2.0(react@18.2.0)
+    dev: false
 
   /react-shallow-renderer@16.15.0(react@18.2.0):
     resolution: {integrity: sha512-oScf2FqQ9LFVQgA73vr86xl2NaOIX73rh+YFqcOp68CWj56tSfgtGKrEbyhCj0rSijyG9M1CYprTh39fBi5hzA==}
