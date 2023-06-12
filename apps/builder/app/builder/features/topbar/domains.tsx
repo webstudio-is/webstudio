@@ -561,17 +561,9 @@ const DomainItem = (props: {
         <Entri
           dnsRecords={dnsRecords}
           domain={props.projectDomain.domain.domain}
-          onSuccess={() => {
-            if (status === "UNVERIFIED") {
-              handleVerify();
-              return;
-            }
-
-            handleUpdateStatus();
-          }}
           onClose={() => {
             // Sometimes Entri modal dialog hangs even if it's successful,
-            // until they fix that, we'll just refresh the status here
+            // until they fix that, we'll just refresh the status here on every onClose event
             if (status === "UNVERIFIED") {
               handleVerify();
               return;

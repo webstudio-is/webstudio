@@ -29,9 +29,11 @@ type DomainContext = {
 
 // https://developers.entri.com/docs/install
 type EntriContext = {
-  env: {
-    ENTRI_APPLICATION_ID: string;
-    ENTRI_SECRET: string | undefined;
+  entryApi: {
+    getEntriToken: () => Promise<{
+      token: string;
+      applicationId: string;
+    }>;
   };
 };
 

@@ -7,45 +7,15 @@ import { createProductionBuild } from "@webstudio-is/project-build/index.server"
 
 const { router, procedure } = initTRPC.context<AppContext>().create();
 
-const EntryResponse = z.object({
-  auth_token: z.string(),
-});
-
 export const domainRouter = router({
   getEntriToken: procedure.query(async ({ ctx }) => {
     try {
-      const {
-        env: { ENTRI_APPLICATION_ID, ENTRI_SECRET },
-      } = ctx.entri;
-
-      if (ENTRI_SECRET === undefined) {
-        throw new Error(`ENTRI_SECRET is not defined`);
-      }
-
-      const entryResponse = await fetch("https://api.goentri.com/token", {
-        method: "POST",
-        body: JSON.stringify({
-          // These values come from the Entri dashboard
-          applicationId: ENTRI_APPLICATION_ID,
-          secret: ENTRI_SECRET,
-        }),
-        headers: {
-          "Content-Type": "application/json",
-          Accept: "application/json",
-        },
-      });
-
-      if (entryResponse.ok === false) {
-        throw new Error(`Entri API error: ${await entryResponse.text()}`);
-      }
-
-      const entryJson = await entryResponse.json();
-      const responseData = EntryResponse.parse(entryJson);
+      const result = await ctx.entri.entryApi.getEntriToken();
 
       return {
         success: true,
-        token: responseData.auth_token,
-        applicationId: ENTRI_APPLICATION_ID,
+        token: result.token,
+        applicationId: result.applicationId,
       } as const;
     } catch (error) {
       return {
