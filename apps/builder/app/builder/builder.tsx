@@ -12,6 +12,7 @@ import { Inspector } from "./features/inspector";
 import { isCanvasPointerEventsEnabledStore } from "./shared/nano-states";
 import { Topbar } from "./features/topbar";
 import builderStyles from "./builder.css";
+// eslint-disable-next-line import/no-internal-modules
 import prismStyles from "prismjs/themes/prism-solarizedlight.min.css";
 import { Footer } from "./features/footer";
 import {
