@@ -79,18 +79,14 @@ const UniversalInput = ({
         // Insert the newline at the caret position.
         if (event.shiftKey && isMultiline === false) {
           const element = event.currentTarget;
-          if (element.selectionStart || element.selectionStart === 0) {
-            const startPos = element.selectionStart;
-            const endPos = element.selectionEnd;
-            element.value =
-              value.substring(0, startPos) +
-              "\n" +
-              value.substring(endPos, value.length);
-            element.selectionStart = startPos + 1;
-            element.selectionEnd = startPos + 1;
-          } else {
-            element.value = value + "\n";
-          }
+          const startPos = element.selectionStart;
+          const endPos = element.selectionEnd;
+          element.value =
+            value.substring(0, startPos) +
+            "\n" +
+            value.substring(endPos, value.length);
+          element.selectionStart = startPos + 1;
+          element.selectionEnd = startPos + 1;
           handleChange(element.value);
         }
         // Both single-line and multi-line inputs should submit on Enter.
