@@ -1,8 +1,11 @@
 import { mergeRefs } from "@react-aria/utils";
-import React, {
+import {
   type ComponentProps,
   type RefObject,
   type FocusEventHandler,
+  forwardRef,
+  useRef,
+  useCallback,
 } from "react";
 import { useFocusWithin } from "@react-aria/interactions";
 import { css, styled, theme } from "../../stitches.config";
@@ -221,9 +224,9 @@ export const useDeprecatedTextFieldFocus = ({
   RefObject<HTMLInputElement>,
   ComponentProps<typeof DeprecatedTextFieldContainer>
 ] => {
-  const ref = React.useRef<HTMLInputElement>(null);
+  const ref = useRef<HTMLInputElement>(null);
 
-  const onClickCapture = React.useCallback(() => {
+  const onClickCapture = useCallback(() => {
     ref.current?.focus();
   }, [ref]);
 
@@ -260,7 +263,7 @@ export type DeprecatedTextFieldProps = Pick<
     suffix?: React.ReactNode;
   };
 
-export const DeprecatedTextField = React.forwardRef<
+export const DeprecatedTextField = forwardRef<
   HTMLDivElement,
   DeprecatedTextFieldProps
 >((props, forwardedRef) => {

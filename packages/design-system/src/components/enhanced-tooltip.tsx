@@ -1,7 +1,8 @@
-import React, {
+import {
   type Ref,
   type ComponentProps,
   type FocusEvent,
+  forwardRef,
   useRef,
   useState,
   createContext,
@@ -52,7 +53,7 @@ export const useEnhancedTooltipProps = () => useContext(EnhancedTooltipContext);
  * 1. Don't show the tooltip if any click or key-down was made inside Tooltip.Trigger
  * 2. Show Tooltip on focus after the delay
  **/
-export const EnhancedTooltip = React.forwardRef(
+export const EnhancedTooltip = forwardRef(
   (
     props: Omit<TooltipProps, "open" | "onOpenChange">,
     ref: Ref<HTMLDivElement>

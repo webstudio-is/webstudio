@@ -1,3 +1,4 @@
+import { Fragment } from "react";
 import type { StyleProperty } from "@webstudio-is/css-data";
 import {
   categories,
@@ -10,7 +11,6 @@ import type { StyleInfo } from "./shared/style-info";
 import { useStore } from "@nanostores/react";
 import { selectedInstanceSelectorStore } from "~/shared/nano-states";
 import { useInstanceStyleData } from "./shared/style-info";
-import React from "react";
 
 export type StyleSettingsProps = {
   currentStyle: StyleInfo;
@@ -50,9 +50,7 @@ export const StyleSettings = ({
 
     if (shouldRenderCategory(categoryProps, parentStyle)) {
       all.push(
-        <React.Fragment key={category}>
-          {renderCategory(categoryProps)}
-        </React.Fragment>
+        <Fragment key={category}>{renderCategory(categoryProps)}</Fragment>
       );
     }
   }

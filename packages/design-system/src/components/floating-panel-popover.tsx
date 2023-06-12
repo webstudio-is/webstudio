@@ -1,4 +1,9 @@
-import React, { type ComponentProps, type Ref, type ReactNode } from "react";
+import {
+  type ComponentProps,
+  type Ref,
+  type ReactNode,
+  forwardRef,
+} from "react";
 import * as Primitive from "@radix-ui/react-popover";
 import { css, theme, type CSS } from "../stitches.config";
 import { PanelTitle } from "./panel-title";
@@ -13,7 +18,7 @@ const contentStyle = css(floatingPanelStyle, {
   overflowY: "auto",
 });
 
-export const FloatingPanelPopoverContent = React.forwardRef(
+export const FloatingPanelPopoverContent = forwardRef(
   (
     {
       children,

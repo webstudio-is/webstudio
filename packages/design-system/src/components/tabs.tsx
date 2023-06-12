@@ -1,4 +1,4 @@
-import React from "react";
+import { type ComponentProps, type ElementRef, forwardRef } from "react";
 import { styled, type CSS } from "../stitches.config";
 import * as TabsPrimitive from "@radix-ui/react-tabs";
 import { DeprecatedText2 } from "./__DEPRECATED__/text2";
@@ -62,11 +62,11 @@ const StyledTabsList = styled(TabsPrimitive.List, {
   },
 });
 
-type TabsListPrimitiveProps = React.ComponentProps<typeof TabsPrimitive.List>;
+type TabsListPrimitiveProps = ComponentProps<typeof TabsPrimitive.List>;
 type TabsListProps = TabsListPrimitiveProps & { css?: CSS };
 
-export const TabsList = React.forwardRef<
-  React.ElementRef<typeof StyledTabsList>,
+export const TabsList = forwardRef<
+  ElementRef<typeof StyledTabsList>,
   TabsListProps
 >((props, forwardedRef) => (
   <>

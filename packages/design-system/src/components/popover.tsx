@@ -1,4 +1,4 @@
-import React, { type ComponentProps, type Ref } from "react";
+import { type ComponentProps, type Ref, forwardRef } from "react";
 import * as Primitive from "@radix-ui/react-popover";
 import { css, theme, styled, type CSS } from "../stitches.config";
 import { Separator } from "./separator";
@@ -36,7 +36,7 @@ const Arrow = () => (
   </Primitive.Arrow>
 );
 
-export const PopoverContent = React.forwardRef(
+export const PopoverContent = forwardRef(
   (
     {
       children,

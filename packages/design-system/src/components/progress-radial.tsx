@@ -1,15 +1,13 @@
-import React from "react";
+import { type ComponentProps, type ElementRef, forwardRef } from "react";
 import type { CSS } from "../stitches.config";
 import * as ProgressPrimitive from "@radix-ui/react-progress";
 import { Box } from "./box";
 
-type ProgressBarPrimitiveProps = React.ComponentProps<
-  typeof ProgressPrimitive.Root
->;
+type ProgressBarPrimitiveProps = ComponentProps<typeof ProgressPrimitive.Root>;
 type ProgressRadialProps = ProgressBarPrimitiveProps & { css?: CSS };
 
-export const ProgressRadial = React.forwardRef<
-  React.ElementRef<typeof ProgressPrimitive.Root>,
+export const ProgressRadial = forwardRef<
+  ElementRef<typeof ProgressPrimitive.Root>,
   ProgressRadialProps
 >(({ value, max = 100, css, ...props }, forwardedRef) => {
   const percentage = value != null ? Math.round((value / max) * 100) : 0;

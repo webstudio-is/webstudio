@@ -1,4 +1,4 @@
-import React from "react";
+import { type ComponentProps, type ElementRef, forwardRef } from "react";
 import { styled, type CSS } from "../stitches.config";
 import * as SliderPrimitive from "@radix-ui/react-slider";
 import { theme } from "../stitches.config";
@@ -85,7 +85,7 @@ export const StyledSlider = styled(SliderPrimitive.Root, {
 });
 
 type SliderPrimitiveProps = Omit<
-  React.ComponentProps<typeof SliderPrimitive.Root>,
+  ComponentProps<typeof SliderPrimitive.Root>,
   "value" | "defaultValue"
 > & {
   value?: number | number[];
@@ -103,28 +103,27 @@ const toArrayValue = (value?: Array<number> | number) => {
   return [value];
 };
 
-export const Slider = React.forwardRef<
-  React.ElementRef<typeof StyledSlider>,
-  SliderProps
->(({ value, defaultValue, ...props }, forwardedRef) => {
-  const realValue = value || defaultValue || 0;
-  const hasRange = Array.isArray(realValue);
-  const thumbsArray = hasRange ? realValue : [realValue];
+export const Slider = forwardRef<ElementRef<typeof StyledSlider>, SliderProps>(
+  ({ value, defaultValue, ...props }, forwardedRef) => {
+    const realValue = value || defaultValue || 0;
+    const hasRange = Array.isArray(realValue);
+    const thumbsArray = hasRange ? realValue : [realValue];
 
-  return (
-    <StyledSlider
-      {...props}
-      ref={forwardedRef}
-      value={toArrayValue(value)}
-      defaultValue={toArrayValue(defaultValue)}
-    >
-      <SliderTrack>
-        <SliderRange />
-      </SliderTrack>
-      {thumbsArray?.map((_, i: number) => (
-        <SliderThumb key={i} />
-      ))}
-    </StyledSlider>
-  );
-});
+    return (
+      <StyledSlider
+        {...props}
+        ref={forwardedRef}
+        value={toArrayValue(value)}
+        defaultValue={toArrayValue(defaultValue)}
+      >
+        <SliderTrack>
+          <SliderRange />
+        </SliderTrack>
+        {thumbsArray?.map((_, i: number) => (
+          <SliderThumb key={i} />
+        ))}
+      </StyledSlider>
+    );
+  }
+);
 Slider.displayName = "Slider";
