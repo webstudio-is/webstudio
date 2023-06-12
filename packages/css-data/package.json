@@ -11,6 +11,7 @@
     "dev": "build-package --watch",
     "build": "build-package",
     "build:mdn-data": "tsx ./bin/mdn-data.ts ./src/__generated__ &&  prettier --write \"./src/__generated__/**/*.ts\"",
+    "build:descriptions": "tsx ./bin/property-value-descriptions.ts",
     "dts": "tsc --declarationDir lib/types",
     "lint": "eslint ./src --ext .ts,.tsx --max-warnings 0",
     "test": "NODE_OPTIONS=--experimental-vm-modules jest"
@@ -50,6 +51,8 @@
     "colord": "^2.9.3",
     "css-tree": "^2.3.1",
     "hyphenate-style-name": "^1.0.4",
+    "openai": "^3.2.1",
+    "undici": "^5.22.1",
     "warn-once": "^0.1.1"
   }
 }
