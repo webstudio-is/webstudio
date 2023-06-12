@@ -208,6 +208,7 @@ export const PropertyName = ({
   onReset,
 }: PropertyNameProps) => {
   const [isOpen, setIsOpen] = useState(false);
+  console.log({ label, title, properties });
   // When we have multiple properties, they must be originating from the same source, so we can just use one.
   const property = properties[0];
 
