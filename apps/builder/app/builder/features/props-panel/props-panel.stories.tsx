@@ -113,17 +113,18 @@ assetsStore.set(
 
 type PropMeta = WsComponentPropsMeta["props"][string];
 
-const textProp = (label?: string): PropMeta => ({
+const textProp = (label?: string, defaultValue?: string): PropMeta => ({
   type: "string",
   control: "text",
   required: false,
+  rows: 2,
   label,
+  defaultValue,
 });
 
 const shortTextProp = (label?: string): PropMeta => ({
   type: "string",
   control: "text",
-  rows: 0,
   required: false,
   label,
 });
@@ -192,7 +193,7 @@ const checkProp = (options = defaultOptions, label?: string): PropMeta => ({
 
 const componentPropsMeta: WsComponentPropsMeta = {
   props: {
-    initialText: textProp(),
+    initialText: textProp("", "multi\nline"),
     initialShortText: shortTextProp(),
     initialNumber: numberProp(),
     initialBoolean: booleanProp(),

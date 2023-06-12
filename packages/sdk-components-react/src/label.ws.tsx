@@ -37,10 +37,7 @@ export const propsMeta: WsComponentPropsMeta = {
   props: {
     ...props,
     htmlFor: {
-      required: false,
-      control: "text",
-      type: "string",
-      rows: 0,
+      ...props.htmlFor,
       label: "For",
     },
   },
