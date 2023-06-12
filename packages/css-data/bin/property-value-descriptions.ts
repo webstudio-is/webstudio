@@ -1,6 +1,7 @@
 /* eslint-disable no-console, func-style */
 import * as fs from "node:fs";
 import * as path from "node:path";
+import type { CreateChatCompletionResponse } from "openai";
 import { fetch } from "undici";
 import { keywordValues } from "../src/__generated__/keyword-values";
 
@@ -347,7 +348,7 @@ async function generate(message: string): Promise<string | [number, string]> {
     return [response.status, response.statusText];
   }
 
-  const completion = await response.json();
+  const completion = (await response.json()) as CreateChatCompletionResponse;
 
   const content = completion.choices[0].message?.content.trim() || "";
 
