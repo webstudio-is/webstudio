@@ -9,6 +9,7 @@ import {
   Label,
   Tooltip,
   Text,
+  ScrollArea,
 } from "@webstudio-is/design-system";
 import { ResetIcon } from "@webstudio-is/icons";
 import {
@@ -128,13 +129,20 @@ const TooltipContent = ({
     <Flex direction="column" gap="2" css={{ maxWidth: theme.spacing[28] }}>
       <Text variant="titles">{title}</Text>
       {cssText && (
-        <Text
-          variant="monoBold"
-          color="moreSubtle"
-          css={{ maxHeight: "3em", overflow: "auto" }}
-        >
-          {cssText}
-        </Text>
+        <ScrollArea>
+          <Text
+            variant="mono"
+            color="moreSubtle"
+            css={{
+              whiteSpace: "break-spaces",
+              maxHeight: "3em",
+              userSelect: "text",
+              cursor: "text",
+            }}
+          >
+            {cssText}
+          </Text>
+        </ScrollArea>
       )}
       {description && <Text>{description}</Text>}
       {showValueOrigin && (
@@ -144,19 +152,19 @@ const TooltipContent = ({
           css={{ paddingBottom: theme.spacing[5] }}
         >
           <Text color="moreSubtle">Value comes from</Text>
-          <Flex gap="1">
+          <Flex gap="1" wrap="wrap">
             {breakpointName && (
-              <StyleSourceBadge source="breakpoint" variant="small" truncate>
+              <StyleSourceBadge source="breakpoint" variant="small">
                 {breakpointName}
               </StyleSourceBadge>
             )}
             {sourceName && (
-              <StyleSourceBadge source="token" variant="small" truncate>
+              <StyleSourceBadge source="token" variant="small">
                 {sourceName}
               </StyleSourceBadge>
             )}
             {instance && (
-              <StyleSourceBadge source="instance" variant="small" truncate>
+              <StyleSourceBadge source="instance" variant="small">
                 {instance.label || instance.component}
               </StyleSourceBadge>
             )}

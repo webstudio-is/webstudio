@@ -309,6 +309,7 @@ export const BackgroundsSection = (props: RenderCategoryProps) => {
           <PropertyName
             style={currentStyle}
             properties={["backgroundColor"]}
+            title={"Background Color"}
             label={"Color"}
             onReset={() => deleteProperty("backgroundColor")}
           />

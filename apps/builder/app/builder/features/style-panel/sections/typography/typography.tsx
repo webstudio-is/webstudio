@@ -85,6 +85,7 @@ export const TypographySectionFont = (props: RenderCategoryProps) => {
         <PropertyName
           style={currentStyle}
           label="Font"
+          title="Font Family"
           properties={["fontFamily"]}
           onReset={() => deleteProperty("fontFamily")}
         />
@@ -99,6 +100,7 @@ export const TypographySectionFont = (props: RenderCategoryProps) => {
         <PropertyName
           style={currentStyle}
           label="Weight"
+          title="Font Weight"
           properties={["fontWeight"]}
           onReset={() => deleteProperty("fontWeight")}
         />
@@ -142,6 +144,7 @@ export const TypographySectionSizing = (props: RenderCategoryProps) => {
           style={currentStyle}
           properties={["fontSize"]}
           label="Size"
+          title="Font Size"
           onReset={() => deleteProperty("fontSize")}
         />
         <TextControl
@@ -156,6 +159,7 @@ export const TypographySectionSizing = (props: RenderCategoryProps) => {
           style={currentStyle}
           properties={["lineHeight"]}
           label="Height"
+          title="Line Height"
           onReset={() => deleteProperty("lineHeight")}
         />
         <TextControl
@@ -170,6 +174,7 @@ export const TypographySectionSizing = (props: RenderCategoryProps) => {
           style={currentStyle}
           properties={["letterSpacing"]}
           label="Spacing"
+          title="Letter Spacing"
           onReset={() => deleteProperty("letterSpacing")}
         />
         <TextControl
@@ -209,22 +214,22 @@ export const TypographySectionAdvanced = (props: RenderCategoryProps) => {
           items={[
             {
               child: <TextAlignLeftIcon />,
-              label: "align: left",
+              label: "text-align: left",
               value: "start",
             },
             {
               child: <TextAlignCenterIcon />,
-              label: "align: center",
+              label: "text-align: center",
               value: "center",
             },
             {
               child: <TextAlignRightIcon />,
-              label: "align: right",
+              label: "text-align: end",
               value: "end",
             },
             {
               child: <TextAlignJustifyIcon />,
-              label: "align: justify",
+              label: "text-align: justify",
               value: "justify",
             },
           ]}
@@ -241,12 +246,12 @@ export const TypographySectionAdvanced = (props: RenderCategoryProps) => {
             },
             {
               child: <TextUnderlineIcon />,
-              label: "Underline",
+              label: "text-decoration: underline",
               value: "underline",
             },
             {
               child: <TextStrikethroughIcon />,
-              label: "Line through",
+              label: "text-decoration: line-through",
               value: "line-through",
             },
           ]}
@@ -271,17 +276,17 @@ export const TypographySectionAdvanced = (props: RenderCategoryProps) => {
             },
             {
               child: <TextUppercaseIcon />,
-              label: "Uppercase",
+              label: "text-transform: uppercase",
               value: "uppercase",
             },
             {
               child: <TextCapitalizeIcon />,
-              label: "Capitalize",
+              label: "text-transform: capitalize",
               value: "capitalize",
             },
             {
               child: <TextLowercaseIcon />,
-              label: "Lowercase",
+              label: "text-transform: lowercase",
               value: "lowercase",
             },
           ]}
@@ -298,7 +303,7 @@ export const TypographySectionAdvanced = (props: RenderCategoryProps) => {
             },
             {
               child: <TextItalicIcon />,
-              label: "Italic",
+              label: "font-style: italic",
               value: "italic",
             },
           ]}
