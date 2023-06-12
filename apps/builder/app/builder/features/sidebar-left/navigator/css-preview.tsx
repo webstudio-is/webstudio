@@ -46,6 +46,7 @@ export const CssPreview = () => {
         <pre tabIndex={0} className={preStyle()}>
           <code
             className="language-css"
+            style={{ whiteSpace: "break-spaces" }}
             dangerouslySetInnerHTML={{ __html: code }}
           ></code>
         </pre>

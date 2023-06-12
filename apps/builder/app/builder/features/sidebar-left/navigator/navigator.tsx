@@ -1,4 +1,4 @@
-import { Flex } from "@webstudio-is/design-system";
+import { Flex, Separator } from "@webstudio-is/design-system";
 import { NavigatorTree } from "~/builder/shared/navigator-tree";
 import { Header, CloseButton } from "../header";
 import type { Publish } from "~/shared/pubsub";
@@ -22,6 +22,7 @@ export const Navigator = ({ isClosable, onClose, publish }: NavigatorProps) => {
       />
       <Flex grow direction="column" justify="end">
         <NavigatorTree />
+        <Separator />
         <CssPreview />
       </Flex>
     </Flex>
