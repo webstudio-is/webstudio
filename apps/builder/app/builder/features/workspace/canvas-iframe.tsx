@@ -8,9 +8,7 @@ const iframeStyle = css({
       none: {
         pointerEvents: "none",
       },
-      auto: {
-        pointerEvents: "auto",
-      },
+      auto: {},
     },
   },
 });
