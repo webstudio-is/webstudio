@@ -1,10 +1,4 @@
-import {
-  InputField,
-  Flex,
-  theme,
-  useId,
-  TextArea,
-} from "@webstudio-is/design-system";
+import { Flex, theme, useId, TextArea } from "@webstudio-is/design-system";
 import {
   type ControlProps,
   getLabel,
@@ -12,69 +6,93 @@ import {
   VerticalLayout,
   HorizontalLayout,
 } from "../shared";
+import { useState, type ComponentProps } from "react";
 
-type ImplementationProps = {
-  label: string;
-  id: string;
+const countLines = (value: string) => (value.match(/\n/g) || "").length + 1;
+
+type UniversalInputProps = Omit<
+  ComponentProps<typeof TextArea>,
+  "onChange" | "value" | "onSubmit"
+> & {
+  defaultRows?: number;
+  maxRows?: number;
   value: string;
   onChange: (value: string) => void;
-  onDelete?: () => void;
+  onSubmit: () => void;
 };
 
-const AsInput = ({
-  label,
-  id,
+/**
+ * UniversalInput component allows to dynamically decide if we need a single-line input or a multi-line textarea.
+ * Problem it is solving is that we don't know from data type string if user needs a textarea or an input.
+ *
+ * Single-line mode:
+ * - enter saves
+ * - shift+enter - adds newline and saves
+ *
+ * Multiline-mode:
+ * - enter saves and ads newline
+ * - cmd+enter - saves, no newline
+ */
+const UniversalInput = ({
   value,
+  defaultRows,
+  maxRows = 10,
   onChange,
-  onDelete,
-}: ImplementationProps) => {
-  const localValue = useLocalValue(value, onChange);
-
-  return (
-    <HorizontalLayout label={label} id={id} onDelete={onDelete}>
-      <InputField
-        id={id}
-        value={localValue.value}
-        onChange={(event) => localValue.set(event.target.value)}
-        onBlur={localValue.save}
-        onKeyDown={(event) => {
-          if (event.key === "Enter") {
-            localValue.save();
-          }
-        }}
-        css={{ width: theme.spacing[22] }}
-      />
-    </HorizontalLayout>
+  onSubmit,
+  ...rest
+}: UniversalInputProps) => {
+  const [rows, setRows] = useState<number>(() =>
+    Math.min(defaultRows || countLines(value), maxRows)
   );
-};
 
-const AsTextarea = ({
-  label,
-  id,
-  value,
-  onChange,
-  onDelete,
-  rows,
-}: ImplementationProps & { rows: number }) => {
-  const localValue = useLocalValue(value, onChange);
+  const handleChange = (value: string) => {
+    setRows(Math.min(countLines(value), maxRows));
+    onChange(value);
+  };
 
   return (
-    <VerticalLayout label={label} id={id} onDelete={onDelete}>
-      <Flex css={{ py: theme.spacing[2] }}>
-        <TextArea
-          id={id}
-          value={localValue.value}
-          onChange={(event) => localValue.set(event.target.value)}
-          onBlur={localValue.save}
-          rows={rows ?? 1}
-          onKeyDown={(event) => {
-            if (event.key === "Enter" && event.metaKey) {
-              localValue.save();
-            }
-          }}
-        />
-      </Flex>
-    </VerticalLayout>
+    <TextArea
+      {...rest}
+      css={
+        rows > 1
+          ? { resize: "vertical" }
+          : { resize: "none", whiteSpace: "nowrap", overflow: "hidden" }
+      }
+      defaultValue={value}
+      onChange={(event) => {
+        const { value } = event.target;
+        handleChange(value);
+      }}
+      onBlur={(event) => {
+        handleChange(value);
+        onSubmit();
+      }}
+      rows={rows}
+      onKeyDown={(event) => {
+        if (event.key !== "Enter") {
+          return;
+        }
+        const isMultiline = rows > 1;
+        if (isMultiline === false) {
+          event.preventDefault();
+        }
+        // Insert the newline at the caret position.
+        if (event.shiftKey && isMultiline === false) {
+          const element = event.currentTarget;
+          const startPos = element.selectionStart;
+          const endPos = element.selectionEnd;
+          element.value =
+            value.substring(0, startPos) +
+            "\n" +
+            value.substring(endPos, value.length);
+          element.selectionStart = startPos + 1;
+          element.selectionEnd = startPos + 1;
+          handleChange(element.value);
+        }
+        // Both single-line and multi-line inputs should submit on Enter.
+        onSubmit();
+      }}
+    />
   );
 };
 
@@ -85,19 +103,37 @@ export const TextControl = ({
   onChange,
   onDelete,
 }: ControlProps<"text", "string">) => {
-  const props: ImplementationProps = {
-    id: useId(),
-    label: getLabel(meta, propName),
-    value: prop?.value ?? "",
-    onChange(value) {
-      onChange({ type: "string", value });
-    },
-    onDelete,
-  };
+  const localValue = useLocalValue(prop?.value ?? "", (value) => {
+    onChange({ type: "string", value });
+  });
+  const id = useId();
+  const label = getLabel(meta, propName);
+  const [initialRows] = useState(
+    () => meta.rows ?? countLines(localValue.value)
+  );
+  const isMultiline = initialRows > 1;
 
-  return meta.rows === 0 ? (
-    <AsInput {...props} />
-  ) : (
-    <AsTextarea {...props} rows={meta.rows ?? 1} />
+  const input = (
+    <UniversalInput
+      value={localValue.value}
+      defaultRows={meta.rows}
+      onChange={localValue.set}
+      onBlur={localValue.save}
+      onSubmit={localValue.save}
+    />
+  );
+
+  if (isMultiline) {
+    return (
+      <VerticalLayout label={label} id={id} onDelete={onDelete}>
+        <Flex css={{ py: theme.spacing[2] }}>{input}</Flex>
+      </VerticalLayout>
+    );
+  }
+
+  return (
+    <HorizontalLayout label={label} id={id} onDelete={onDelete}>
+      <Flex css={{ width: theme.spacing[22] }}>{input}</Flex>
+    </HorizontalLayout>
   );
 };

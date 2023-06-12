@@ -12,6 +12,8 @@ import { Inspector } from "./features/inspector";
 import { isCanvasPointerEventsEnabledStore } from "./shared/nano-states";
 import { Topbar } from "./features/topbar";
 import builderStyles from "./builder.css";
+// eslint-disable-next-line import/no-internal-modules
+import prismStyles from "prismjs/themes/prism-solarizedlight.min.css";
 import { Footer } from "./features/footer";
 import {
   CanvasIframe,
@@ -50,7 +52,10 @@ registerContainers();
 
 // Can cause FOUC because of remix-island, be very accurate adding anything here
 export const links = () => {
-  return [{ rel: "stylesheet", href: builderStyles }];
+  return [
+    { rel: "stylesheet", href: builderStyles },
+    { rel: "stylesheet", href: prismStyles },
+  ];
 };
 
 const useSetProject = (project: Project) => {
@@ -86,15 +91,12 @@ const SidePanel = ({
   gridArea,
   css,
 }: SidePanelProps) => {
-  if (isPreviewMode === true) {
-    return null;
-  }
   return (
     <Box
       as="aside"
       css={{
         gridArea,
-        display: "flex",
+        display: isPreviewMode ? "none" : "flex",
         flexDirection: "column",
         px: 0,
         fg: 0,

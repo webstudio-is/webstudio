@@ -224,6 +224,9 @@ importers:
       pretty-bytes:
         specifier: ^6.0.0
         version: 6.0.0
+      prismjs:
+        specifier: ^1.28.0
+        version: 1.28.0
       react:
         specifier: 18.2.0
         version: 18.2.0
@@ -236,6 +239,9 @@ importers:
       react-hotkeys-hook:
         specifier: ^4.3.5
         version: 4.3.5(react-dom@18.2.0)(react@18.2.0)
+      react-script-hook:
+        specifier: ^1.7.2
+        version: 1.7.2(react-dom@18.2.0)(react@18.2.0)
       react-use:
         specifier: ^17.3.2
         version: 17.4.0(react-dom@18.2.0)(react@18.2.0)
@@ -300,6 +306,9 @@ importers:
       '@types/lodash.debounce':
         specifier: ^4.0.6
         version: 4.0.7
+      '@types/prismjs':
+        specifier: ^1.26.0
+        version: 1.26.0
       '@types/react':
         specifier: ^18.0.35
         version: 18.0.35
@@ -8739,6 +8748,10 @@ packages:
 
   /@types/pretty-hrtime@1.0.1:
     resolution: {integrity: sha512-VjID5MJb1eGKthz2qUerWT8+R4b9N+CHvGCzg9fn4kWZgaF9AhdYikQio3R7wV8YY1NsQKPaCwKz1Yff+aHNUQ==}
+
+  /@types/prismjs@1.26.0:
+    resolution: {integrity: sha512-ZTaqn/qSqUuAq1YwvOFQfVW1AR/oQJlLSZVustdjwI+GZ8kr0MSHBj0tsXPW1EqHubx50gtBEjbPGsdZwQwCjQ==}
+    dev: true
 
   /@types/prop-types@15.7.5:
     resolution: {integrity: sha512-JCB8C6SnDoQf0cNycqd/35A7MjcnK+ZTqE7judS6o7utxUCg6imJg3QK2qzHKszlTjcj2cn+NwMB2i96ubpj7w==}
@@ -17371,6 +17384,16 @@ packages:
     dependencies:
       '@remix-run/router': 1.5.0
       react: 18.2.0
+
+  /react-script-hook@1.7.2(react-dom@18.2.0)(react@18.2.0):
+    resolution: {integrity: sha512-fhyCEfXb94fag34UPRF0zry1XGwmVY+79iibWwTqAoOiCzYJQOYTiWJ7CnqglA9tMSV8g45cQpHCMcBwr7dwhA==}
+    peerDependencies:
+      react: ^16.8.6 || 17 - 18
+      react-dom: ^16.8.6 || 17 - 18
+    dependencies:
+      react: 18.2.0
+      react-dom: 18.2.0(react@18.2.0)
+    dev: false
 
   /react-shallow-renderer@16.15.0(react@18.2.0):
     resolution: {integrity: sha512-oScf2FqQ9LFVQgA73vr86xl2NaOIX73rh+YFqcOp68CWj56tSfgtGKrEbyhCj0rSijyG9M1CYprTh39fBi5hzA==}

@@ -24,7 +24,7 @@ export const meta: WsComponentMeta = {
     {
       type: "instance",
       component: "Paragraph",
-      children: [{ type: "text", value: "Pragraph you can edit" }],
+      children: [{ type: "text", value: "Paragraph you can edit" }],
     },
   ],
   order: 2,

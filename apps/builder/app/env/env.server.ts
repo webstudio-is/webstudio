@@ -71,6 +71,12 @@ const env = {
    * without ending slash
    */
   RESIZE_ORIGIN: process.env.RESIZE_ORIGIN,
+
+  /**
+   * Entri API credentials
+   */
+  ENTRI_APPLICATION_ID: process.env.ENTRI_APPLICATION_ID ?? "webstudio",
+  ENTRI_SECRET: process.env.ENTRI_SECRET,
 };
 
 export type ServerEnv = typeof env;

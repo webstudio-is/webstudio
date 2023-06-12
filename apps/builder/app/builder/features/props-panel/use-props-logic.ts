@@ -117,7 +117,6 @@ const systemPropsMeta: { name: string; meta: PropMeta }[] = [
       required: false,
       control: "text",
       type: "string",
-      rows: 0,
       label: "ID",
     },
   },

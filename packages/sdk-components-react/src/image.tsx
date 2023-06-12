@@ -3,6 +3,7 @@ import {
   type ElementRef,
   forwardRef,
   useMemo,
+  useContext,
 } from "react";
 import {
   Image as WebstudioImage,
@@ -11,7 +12,7 @@ import {
 import {
   usePropAsset,
   getInstanceIdFromComponentProps,
-  getParams,
+  ReactSdkContext,
 } from "@webstudio-is/react-sdk";
 
 export const defaultTag = "img";
@@ -44,12 +45,12 @@ type Props = Omit<ComponentPropsWithoutRef<typeof WebstudioImage>, "loader">;
 
 export const Image = forwardRef<ElementRef<typeof defaultTag>, Props>(
   (props, ref) => {
+    const { imageBaseUrl } = useContext(ReactSdkContext);
     const asset = usePropAsset(getInstanceIdFromComponentProps(props), "src");
 
     const loader = useMemo(() => {
-      const params = getParams();
-      return createImageLoader({ imageBaseUrl: params.imageBaseUrl });
-    }, []);
+      return createImageLoader({ imageBaseUrl });
+    }, [imageBaseUrl]);
 
     const src = asset?.name ?? props.src;
 
