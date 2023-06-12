@@ -64,7 +64,7 @@ export const CollapsibleSectionBase = ({
 
       <Collapsible.Content asChild>
         <Flex
-          gap="3"
+          gap="2"
           direction="column"
           css={{
             pb: theme.spacing[9],
