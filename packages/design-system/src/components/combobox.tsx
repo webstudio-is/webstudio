@@ -97,7 +97,9 @@ export const Combobox = Popper;
 
 export const ComboboxContent = forwardRef(
   (props: ComponentProps<typeof PopperContent>, ref: Ref<HTMLDivElement>) => (
-    <Portal>
+    // @radix-ui/react-popover adds pointer-events: none to body
+    // so need to reset for combobox rendered inside of popover
+    <Portal style={{ pointerEvents: "auto" }}>
       <PopperContent ref={ref} {...props} />
     </Portal>
   )
@@ -292,7 +294,7 @@ export const useCombobox = <Item,>({
   const enhancedGetMenuProps = useCallback(
     (options?: Parameters<typeof getMenuProps>[0]) => {
       return {
-        ...getMenuProps(options),
+        ...getMenuProps(options, { suppressRefError: true }),
         state: isOpen ? "open" : "closed",
         empty: filteredItems.length === 0,
       };

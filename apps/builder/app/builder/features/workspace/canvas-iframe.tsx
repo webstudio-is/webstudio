@@ -9,7 +9,12 @@ const iframeStyle = css({
         pointerEvents: "none",
       },
       auto: {
-        pointerEvents: "auto",
+        // radix popover set pointer-events: none on body
+        // and aria-hidden=true on all its children when open
+        // here prevent pointer-events: auto when root is "hidden"
+        'body > :not([aria-hidden="true"]) &': {
+          pointerEvents: "auto",
+        },
       },
     },
   },
