@@ -15,7 +15,9 @@ import { ResetIcon } from "@webstudio-is/icons";
 import {
   breakpointsStore,
   instancesStore,
+  selectedBreakpointStore,
   selectedInstanceStore,
+  selectedStyleSourceStore,
   styleSourcesStore,
 } from "~/shared/nano-states";
 import {
@@ -25,15 +27,17 @@ import {
 } from "./style-info";
 import { humanizeString } from "~/shared/string-utils";
 import { StyleSourceBadge } from "../style-source";
-import type { StyleSources } from "@webstudio-is/project-build";
-import { isBaseBreakpoint } from "~/shared/breakpoints";
+import type { StyleSource, StyleSources } from "@webstudio-is/project-build";
 
 const getSourceName = (
   styleSources: StyleSources,
-  styleValueInfo?: StyleValueInfo
+  styleValueInfo: StyleValueInfo,
+  selectedStyleSource?: StyleSource
 ) => {
-  if (styleValueInfo === undefined) {
-    return;
+  if (styleValueInfo.local) {
+    return selectedStyleSource?.type === "token"
+      ? selectedStyleSource.name
+      : "Local";
   }
 
   if (styleValueInfo.nextSource) {
@@ -95,28 +99,33 @@ const TooltipContent = ({
   onClose: () => void;
 }) => {
   const breakpoints = useStore(breakpointsStore);
+  const selectedBreakpoint = useStore(selectedBreakpointStore);
   const instances = useStore(instancesStore);
   const styleSources = useStore(styleSourcesStore);
   let instance = useStore(selectedInstanceStore);
+  const selectedStyleSource = useStore(selectedStyleSourceStore);
 
   // When we have multiple properties, they must be originating from the same source, so we can just use one.
   const styleValueInfo = style[properties[0]];
-  const styleSource = getStyleSource(styleValueInfo);
-  const sourceName = getSourceName(styleSources, styleValueInfo);
-  const showValueOrigin =
-    styleSource === "overwritten" || styleSource === "remote";
-  const cssText = getCssText(properties, style);
-  let breakpointName;
 
-  const breakpointId = styleValueInfo?.cascaded?.breakpointId;
-  if (breakpointId) {
-    const breakpoint = breakpoints.get(breakpointId);
-    if (breakpoint) {
-      breakpointName = isBaseBreakpoint(breakpoint)
-        ? "Base"
-        : breakpoint?.minWidth ?? breakpoint?.maxWidth;
-    }
+  if (styleValueInfo === undefined) {
+    return null;
   }
+
+  const styleSource = getStyleSource(styleValueInfo);
+  const sourceName = getSourceName(
+    styleSources,
+    styleValueInfo,
+    selectedStyleSource
+  );
+  const cssText = getCssText(properties, style);
+  let breakpoint = selectedBreakpoint;
+  if (styleValueInfo?.cascaded) {
+    const { breakpointId } = styleValueInfo.cascaded;
+    breakpoint = breakpoints.get(breakpointId);
+  }
+  const breakpointName = breakpoint?.minWidth ?? breakpoint?.maxWidth ?? "Base";
+
   if (styleValueInfo?.inherited && styleValueInfo.preset === undefined) {
     instance = instances.get(styleValueInfo.inherited.instanceId);
   }
@@ -141,32 +150,26 @@ const TooltipContent = ({
         </ScrollArea>
       )}
       {description && <Text>{description}</Text>}
-      {showValueOrigin && (
-        <Flex
-          direction="column"
-          gap="1"
-          css={{ paddingBottom: theme.spacing[5] }}
-        >
-          <Text color="moreSubtle">Value comes from</Text>
-          <Flex gap="1" wrap="wrap">
-            {breakpointName && (
-              <StyleSourceBadge source="breakpoint" variant="small">
-                {breakpointName}
-              </StyleSourceBadge>
-            )}
-            {sourceName && (
-              <StyleSourceBadge source="token" variant="small">
-                {sourceName}
-              </StyleSourceBadge>
-            )}
-            {instance && (
-              <StyleSourceBadge source="instance" variant="small">
-                {instance.label || instance.component}
-              </StyleSourceBadge>
-            )}
-          </Flex>
+      <Flex
+        direction="column"
+        gap="1"
+        css={{ paddingBottom: theme.spacing[5] }}
+      >
+        <Text color="moreSubtle">Value comes from</Text>
+        <Flex gap="1" wrap="wrap">
+          <StyleSourceBadge source="breakpoint" variant="small">
+            {breakpointName}
+          </StyleSourceBadge>
+          <StyleSourceBadge source="token" variant="small">
+            {sourceName}
+          </StyleSourceBadge>
+          {instance && (
+            <StyleSourceBadge source="instance" variant="small">
+              {instance.label || instance.component}
+            </StyleSourceBadge>
+          )}
         </Flex>
-      )}
+      </Flex>
       {(styleSource === "local" || styleSource === "overwritten") && (
         <Button
           color="dark"
