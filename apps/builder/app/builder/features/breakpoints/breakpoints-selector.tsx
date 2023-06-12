@@ -1,5 +1,6 @@
 import {
   EnhancedTooltip,
+  Text,
   Toolbar,
   ToolbarToggleGroup,
   ToolbarToggleItem,
@@ -16,33 +17,30 @@ const getTooltipContent = (breakpoint: Breakpoint) => {
   if (isBaseBreakpoint(breakpoint)) {
     return (
       <>
-        <strong>Base breakpoint</strong>
+        <Text variant="regularBold">Base</Text>
         <br />
-        <br />
-        Base breakpoint styles apply at all breakpoints, unless they are edited
-        at a larger or smaller breakpoint. Start you styling here.
+        Styles on Base apply to all viewport sizes unless overwritten by another
+        breakpoint. Start your styling here.
       </>
     );
   }
   if (breakpoint.maxWidth !== undefined) {
     return (
       <>
-        <strong>{breakpoint.maxWidth}px and down</strong>
+        <Text variant="regularBold">{breakpoint.maxWidth}</Text>
         <br />
-        <br />
-        Styles added here will apply at {breakpoint.maxWidth}px and down, unless
-        they are edited at a smaller breakpoint.
+        Styles on this breakpoint apply to viewport widths {breakpoint.maxWidth}
+        px and down, unless overwritten by a smaller breakpoint.
       </>
     );
   }
   if (breakpoint.minWidth !== undefined) {
     return (
       <>
-        <strong>{breakpoint.minWidth}px and up</strong>
+        <Text variant="regularBold">{breakpoint.minWidth}</Text>
         <br />
-        <br />
-        Styles added here will apply at {breakpoint.minWidth}px and up, unless
-        they are edited at a larger breakpoint.
+        Styles on this breakpoint apply to viewport widths {breakpoint.minWidth}
+        px and up, unless overwritten by a larger breakpoint.
       </>
     );
   }
@@ -78,7 +76,7 @@ export const BreakpointsSelector = ({
               <EnhancedTooltip
                 key={breakpoint.id}
                 content={getTooltipContent(breakpoint)}
-                css={{ maxWidth: 220 }}
+                css={{ maxWidth: 240 }}
               >
                 <ToolbarToggleItem
                   variant="subtle"
