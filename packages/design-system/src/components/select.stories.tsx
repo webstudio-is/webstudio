@@ -1,6 +1,6 @@
 import type { ComponentStory } from "@storybook/react";
 import { GapVerticalIcon } from "@webstudio-is/icons";
-import React from "react";
+import { useState } from "react";
 import { NestedIconLabel } from "./nested-icon-label";
 import { Select, type SelectOption } from "./select";
 
@@ -10,7 +10,7 @@ export default {
 
 export const Simple: ComponentStory<typeof Select> = () => {
   const options = ["Apple", "Banana", "Orange"];
-  const [value, setValue] = React.useState(options[0]);
+  const [value, setValue] = useState(options[0]);
   return (
     <Select name="fruit" options={options} value={value} onChange={setValue} />
   );
@@ -66,7 +66,7 @@ export const WithComplexItems: ComponentStory<typeof Select> = () => {
     grape: { icon: "🍇" },
   } as const;
   const options = Object.keys(items);
-  const [value, setValue] = React.useState(options[0]);
+  const [value, setValue] = useState(options[0]);
   const getLabel = (option: SelectOption) =>
     value && option in items
       ? `${items[option as keyof typeof items]?.icon} ${option}`
@@ -86,7 +86,7 @@ export const Boundaries: ComponentStory<typeof Select> = () => {
   const items = Array(100)
     .fill(0)
     .map((_, index) => `Item ${index}`);
-  const [value, setValue] = React.useState(items[0]);
+  const [value, setValue] = useState(items[0]);
   return (
     <Select name="fruit" options={items} value={value} onChange={setValue} />
   );

@@ -1,9 +1,10 @@
 import * as Primitive from "@radix-ui/react-select";
-import React, {
+import {
   type ReactNode,
   type Ref,
   type ComponentProps,
   useMemo,
+  forwardRef,
 } from "react";
 import {
   menuCss,
@@ -70,7 +71,7 @@ type SelectItemProps = ComponentProps<typeof StyledItem> & {
   children: ReactNode;
   icon?: ReactNode;
 };
-export const SelectItem = React.forwardRef(SelectItemBase);
+export const SelectItem = forwardRef(SelectItemBase);
 
 export type SelectOption = string;
 
@@ -182,6 +183,6 @@ const SelectBase = <Option,>(
   );
 };
 
-export const Select = React.forwardRef(SelectBase) as <Option>(
+export const Select = forwardRef(SelectBase) as <Option>(
   props: SelectProps<Option> & { ref?: Ref<HTMLButtonElement> }
 ) => JSX.Element | null;

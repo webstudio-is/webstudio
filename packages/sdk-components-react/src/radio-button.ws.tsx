@@ -20,8 +20,9 @@ const presetStyle = {
 } satisfies PresetStyle<typeof defaultTag>;
 
 export const meta: WsComponentMeta = {
+  category: "forms",
   type: "control",
-  label: "Radio Input",
+  label: "Radio",
   icon: RadioCheckedIcon,
   presetStyle,
   order: 5,
@@ -34,6 +35,23 @@ export const meta: WsComponentMeta = {
     { selector: ":enabled", label: "Enabled" },
     { selector: ":read-only", label: "Read Only" },
     { selector: ":read-write", label: "Read Write" },
+  ],
+  template: [
+    {
+      type: "instance",
+      component: "Label",
+      label: "Radio Field",
+      children: [
+        { type: "instance", component: "RadioButton", props: [], children: [] },
+        {
+          type: "instance",
+          component: "Text",
+          label: "Radio Label",
+          props: [{ type: "string", name: "tag", value: "span" }],
+          children: [{ type: "text", value: "Radio" }],
+        },
+      ],
+    },
   ],
 };
 

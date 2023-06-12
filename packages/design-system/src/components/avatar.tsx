@@ -1,4 +1,9 @@
-import React from "react";
+import {
+  type ComponentProps,
+  type ElementRef,
+  type ReactNode,
+  forwardRef,
+} from "react";
 import { styled, type VariantProps, type CSS } from "../stitches.config";
 import * as AvatarPrimitive from "@radix-ui/react-avatar";
 import { Box } from "./box";
@@ -240,22 +245,22 @@ export const AvatarGroup = styled("div", {
   },
 });
 
-type StatusVariants = React.ComponentProps<typeof Status>;
+type StatusVariants = ComponentProps<typeof Status>;
 type StatusColors = Pick<StatusVariants, "variant">;
 
 type AvatarVariants = VariantProps<typeof StyledAvatar>;
-type AvatarPrimitiveProps = React.ComponentProps<typeof AvatarPrimitive.Root>;
+type AvatarPrimitiveProps = ComponentProps<typeof AvatarPrimitive.Root>;
 type AvatarOwnProps = AvatarPrimitiveProps &
   AvatarVariants & {
     css?: CSS;
     alt?: string;
     src?: string;
-    fallback?: React.ReactNode;
+    fallback?: ReactNode;
     status?: StatusColors["variant"];
   };
 
-export const Avatar = React.forwardRef<
-  React.ElementRef<typeof StyledAvatar>,
+export const Avatar = forwardRef<
+  ElementRef<typeof StyledAvatar>,
   AvatarOwnProps
 >(
   (

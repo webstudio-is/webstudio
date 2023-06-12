@@ -15,12 +15,13 @@ import { theme } from "../stitches.config";
 
 export const IconButtonWithMenu = ({
   variant,
-  icon: Icon,
+  icon,
   label,
   value,
   items,
   onChange,
   onHover,
+  onReset,
 }: {
   variant: "default" | "preset" | "local" | "overwritten" | "remote";
   icon?: JSX.Element;
@@ -33,6 +34,7 @@ export const IconButtonWithMenu = ({
   }>;
   onChange?: (value: string) => void;
   onHover?: (value: string) => void;
+  onReset?: () => void;
 }) => {
   return (
     <DropdownMenu modal={false}>
@@ -42,7 +44,17 @@ export const IconButtonWithMenu = ({
         disableHoverableContent={true}
       >
         <DropdownMenuTrigger asChild>
-          <IconButton variant={variant}>{Icon}</IconButton>
+          <IconButton
+            variant={variant}
+            onPointerDown={(event) => {
+              if (event.altKey) {
+                event.preventDefault();
+                onReset?.();
+              }
+            }}
+          >
+            {icon}
+          </IconButton>
         </DropdownMenuTrigger>
       </Tooltip>
       <DropdownMenuPortal>

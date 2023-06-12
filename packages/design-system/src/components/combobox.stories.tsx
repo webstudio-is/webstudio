@@ -1,5 +1,5 @@
 import { MagnifyingGlassIcon } from "@webstudio-is/icons";
-import React, { useCallback } from "react";
+import { useCallback, useState } from "react";
 import { DeprecatedTextField } from "./__DEPRECATED__/text-field";
 import {
   ComboboxListboxItem,
@@ -14,7 +14,7 @@ import type {
 } from "downshift";
 
 export const Complex = () => {
-  const [value, setValue] = React.useState<string | null>(null);
+  const [value, setValue] = useState<string | null>(null);
 
   const stateReducer = useCallback(
     (

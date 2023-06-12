@@ -15,7 +15,7 @@ const presetStyle = {
 
 export const meta: WsComponentMeta = {
   type: "rich-text-child",
-  label: "Styled Text",
+  label: "Text",
   icon: PaintBrushIcon,
   states: defaultStates,
   presetStyle,

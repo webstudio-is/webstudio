@@ -40,7 +40,7 @@ const createInstancePair = (
 };
 
 const instances: Instances = new Map([
-  createInstancePair("1", "TextBlock", [
+  createInstancePair("1", "Text", [
     { type: "text", value: "Paragraph you can edit " },
     { type: "id", value: "2" },
     { type: "id", value: "3" },
