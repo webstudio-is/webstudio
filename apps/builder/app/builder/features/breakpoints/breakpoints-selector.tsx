@@ -1,4 +1,6 @@
 import {
+  EnhancedTooltip,
+  Text,
   Toolbar,
   ToolbarToggleGroup,
   ToolbarToggleItem,
@@ -8,8 +10,41 @@ import { CascadeIndicator } from "./cascade-indicator";
 import { BpStarOffIcon, BpStarOnIcon } from "@webstudio-is/icons";
 import { useSetInitialCanvasWidth } from ".";
 import { selectedBreakpointIdStore } from "~/shared/nano-states";
-import { groupBreakpoints } from "~/shared/breakpoints";
+import { groupBreakpoints, isBaseBreakpoint } from "~/shared/breakpoints";
 import type { Breakpoint, Breakpoints } from "@webstudio-is/project-build";
+
+const getTooltipContent = (breakpoint: Breakpoint) => {
+  if (isBaseBreakpoint(breakpoint)) {
+    return (
+      <>
+        <Text variant="regularBold">Base</Text>
+        <br />
+        Styles on Base apply to all viewport sizes unless overwritten by another
+        breakpoint. Start your styling here.
+      </>
+    );
+  }
+  if (breakpoint.maxWidth !== undefined) {
+    return (
+      <>
+        <Text variant="regularBold">{breakpoint.maxWidth}px and down</Text>
+        <br />
+        Styles on this breakpoint apply to viewport widths {breakpoint.maxWidth}
+        px and down, unless overwritten by a smaller breakpoint.
+      </>
+    );
+  }
+  if (breakpoint.minWidth !== undefined) {
+    return (
+      <>
+        <Text variant="regularBold">{breakpoint.minWidth}px and up</Text>
+        <br />
+        Styles on this breakpoint apply to viewport widths {breakpoint.minWidth}
+        px and up, unless overwritten by a larger breakpoint.
+      </>
+    );
+  }
+};
 
 type BreakpointsSelector = {
   breakpoints: Breakpoints;
@@ -38,26 +73,31 @@ export const BreakpointsSelector = ({
         {groupBreakpoints(Array.from(breakpoints.values())).map(
           (breakpoint) => {
             return (
-              <ToolbarToggleItem
-                variant="subtle"
-                ref={(node) => {
-                  if (node) {
-                    refs.current.set(breakpoint.id, node);
-                    return;
-                  }
-                  refs.current.delete(breakpoint.id);
-                }}
-                value={breakpoint.id}
+              <EnhancedTooltip
                 key={breakpoint.id}
+                content={getTooltipContent(breakpoint)}
+                css={{ maxWidth: 240 }}
               >
-                {breakpoint.minWidth ??
-                  breakpoint.maxWidth ??
-                  (breakpoint.id === selectedBreakpoint.id ? (
-                    <BpStarOnIcon size={22} />
-                  ) : (
-                    <BpStarOffIcon size={22} />
-                  ))}
-              </ToolbarToggleItem>
+                <ToolbarToggleItem
+                  variant="subtle"
+                  ref={(node) => {
+                    if (node) {
+                      refs.current.set(breakpoint.id, node);
+                      return;
+                    }
+                    refs.current.delete(breakpoint.id);
+                  }}
+                  value={breakpoint.id}
+                >
+                  {breakpoint.minWidth ??
+                    breakpoint.maxWidth ??
+                    (breakpoint.id === selectedBreakpoint.id ? (
+                      <BpStarOnIcon size={22} />
+                    ) : (
+                      <BpStarOffIcon size={22} />
+                    ))}
+                </ToolbarToggleItem>
+              </EnhancedTooltip>
             );
           }
         )}
