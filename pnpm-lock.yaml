@@ -224,6 +224,9 @@ importers:
       pretty-bytes:
         specifier: ^6.0.0
         version: 6.0.0
+      prismjs:
+        specifier: ^1.28.0
+        version: 1.28.0
       react:
         specifier: 18.2.0
         version: 18.2.0
@@ -303,6 +306,9 @@ importers:
       '@types/lodash.debounce':
         specifier: ^4.0.6
         version: 4.0.7
+      '@types/prismjs':
+        specifier: ^1.26.0
+        version: 1.26.0
       '@types/react':
         specifier: ^18.0.35
         version: 18.0.35
@@ -8736,6 +8742,10 @@ packages:
 
   /@types/pretty-hrtime@1.0.1:
     resolution: {integrity: sha512-VjID5MJb1eGKthz2qUerWT8+R4b9N+CHvGCzg9fn4kWZgaF9AhdYikQio3R7wV8YY1NsQKPaCwKz1Yff+aHNUQ==}
+
+  /@types/prismjs@1.26.0:
+    resolution: {integrity: sha512-ZTaqn/qSqUuAq1YwvOFQfVW1AR/oQJlLSZVustdjwI+GZ8kr0MSHBj0tsXPW1EqHubx50gtBEjbPGsdZwQwCjQ==}
+    dev: true
 
   /@types/prop-types@15.7.5:
     resolution: {integrity: sha512-JCB8C6SnDoQf0cNycqd/35A7MjcnK+ZTqE7judS6o7utxUCg6imJg3QK2qzHKszlTjcj2cn+NwMB2i96ubpj7w==}
