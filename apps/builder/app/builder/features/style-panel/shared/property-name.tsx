@@ -15,7 +15,6 @@ import { ResetIcon } from "@webstudio-is/icons";
 import {
   breakpointsStore,
   instancesStore,
-  selectedInstanceSelectorStore,
   selectedInstanceStore,
   styleSourcesStore,
 } from "~/shared/nano-states";
@@ -25,7 +24,6 @@ import {
   type StyleValueInfo,
 } from "./style-info";
 import { humanizeString } from "~/shared/string-utils";
-import { useInstanceStyleData } from "./style-info";
 import { StyleSourceBadge } from "../style-source";
 import type { StyleSources } from "@webstudio-is/project-build";
 import { isBaseBreakpoint } from "~/shared/breakpoints";
@@ -64,7 +62,7 @@ const getSourceName = (
 // @todo consider reusing CssPreview component
 const getCssText = (
   properties: readonly StyleProperty[],
-  instanceStyle: Style
+  instanceStyle: StyleInfo
 ) => {
   const cssEngine = createCssEngine();
   const style: Style = {};
@@ -72,7 +70,7 @@ const getCssText = (
   for (property in instanceStyle) {
     const value = instanceStyle[property];
     if (value && properties.includes(property)) {
-      style[property] = value;
+      style[property] = value.value;
     }
   }
   const rule = cssEngine.addStyleRule("instance", {
@@ -96,8 +94,6 @@ const TooltipContent = ({
   onReset: () => void;
   onClose: () => void;
 }) => {
-  const selectedInstanceSelector = useStore(selectedInstanceSelectorStore);
-  const instanceStyle = useInstanceStyleData(selectedInstanceSelector);
   const breakpoints = useStore(breakpointsStore);
   const instances = useStore(instancesStore);
   const styleSources = useStore(styleSourcesStore);
@@ -109,7 +105,7 @@ const TooltipContent = ({
   const sourceName = getSourceName(styleSources, styleValueInfo);
   const showValueOrigin =
     styleSource === "overwritten" || styleSource === "remote";
-  const cssText = getCssText(properties, instanceStyle);
+  const cssText = getCssText(properties, style);
   let breakpointName;
 
   const breakpointId = styleValueInfo?.cascaded?.breakpointId;
