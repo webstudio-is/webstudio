@@ -6,7 +6,6 @@ import {
   Grid,
   SmallToggleButton,
   ToggleButton,
-  Tooltip,
 } from "@webstudio-is/design-system";
 import type { StyleProperty, StyleValue } from "@webstudio-is/css-data";
 import { toValue } from "@webstudio-is/css-engine";
@@ -46,18 +45,14 @@ const GapLinked = ({
   isLinked: boolean;
   onChange: (isLinked: boolean) => void;
 }) => (
-  <Tooltip
-    content={isLinked ? "Unlink gap values" : "Link gap values"}
-    delayDuration={400}
-    disableHoverableContent={true}
-  >
+  <EnhancedTooltip content={isLinked ? "Unlink gap values" : "Link gap values"}>
     <SmallToggleButton
       pressed={isLinked}
       onPressedChange={onChange}
       variant="normal"
       icon={isLinked ? <Link2Icon /> : <Link2UnlinkedIcon />}
     />
-  </Tooltip>
+  </EnhancedTooltip>
 );
 
 const GapInput = ({
@@ -79,45 +74,43 @@ const GapInput = ({
 }) => {
   const { label, items } = styleConfigByName(property);
   return (
-    <EnhancedTooltip content={label}>
-      <Box>
-        <CssValueInput
-          styleSource={getStyleSource(style[property])}
-          icon={icon}
-          property="columnGap"
-          value={style[property]?.value}
-          intermediateValue={intermediateValue}
-          keywords={items.map((item) => ({
-            type: "keyword",
-            value: item.name,
-          }))}
-          onChange={(styleValue) => {
-            onIntermediateChange(styleValue);
-            if (styleValue === undefined) {
-              onPreviewChange();
-              return;
-            }
-            if (styleValue.type !== "intermediate") {
-              onPreviewChange(styleValue);
-            }
-          }}
-          onHighlight={(styleValue) => {
-            if (styleValue !== undefined) {
-              onPreviewChange(styleValue);
-            } else {
-              onPreviewChange();
-            }
-          }}
-          onChangeComplete={({ value }) => {
-            onChange(value);
-            onIntermediateChange(undefined);
-          }}
-          onAbort={() => {
+    <Box>
+      <CssValueInput
+        styleSource={getStyleSource(style[property])}
+        icon={<EnhancedTooltip content={label}>{icon}</EnhancedTooltip>}
+        property="columnGap"
+        value={style[property]?.value}
+        intermediateValue={intermediateValue}
+        keywords={items.map((item) => ({
+          type: "keyword",
+          value: item.name,
+        }))}
+        onChange={(styleValue) => {
+          onIntermediateChange(styleValue);
+          if (styleValue === undefined) {
             onPreviewChange();
-          }}
-        />
-      </Box>
-    </EnhancedTooltip>
+            return;
+          }
+          if (styleValue.type !== "intermediate") {
+            onPreviewChange(styleValue);
+          }
+        }}
+        onHighlight={(styleValue) => {
+          if (styleValue !== undefined) {
+            onPreviewChange(styleValue);
+          } else {
+            onPreviewChange();
+          }
+        }}
+        onChangeComplete={({ value }) => {
+          onChange(value);
+          onIntermediateChange(undefined);
+        }}
+        onAbort={() => {
+          onPreviewChange();
+        }}
+      />
+    </Box>
   );
 };
 
@@ -300,7 +293,7 @@ const Toggle = ({
     styleValue?.type === "keyword" && styleValue?.value === valueOn;
 
   return (
-    <Tooltip content={label} delayDuration={400} disableHoverableContent={true}>
+    <EnhancedTooltip content={label}>
       <ToggleButton
         onClick={(event) => {
           if (event.altKey) {
@@ -319,7 +312,7 @@ const Toggle = ({
       >
         {isPressed ? iconOn : iconOff}
       </ToggleButton>
-    </Tooltip>
+    </EnhancedTooltip>
   );
 };
 
@@ -459,7 +452,7 @@ export const LayoutSection = ({
         >
           <PropertyName
             style={currentStyle}
-            property="display"
+            properties={["display"]}
             label={label}
             onReset={() => deleteProperty("display")}
           />

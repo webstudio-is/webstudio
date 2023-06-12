@@ -106,6 +106,7 @@ export * from "./refresh";
 export * from "./repeat-column";
 export * from "./repeat-grid";
 export * from "./repeat-row";
+export * from "./reset";
 export * from "./scroll";
 export * from "./section-link";
 export * from "./shrink";

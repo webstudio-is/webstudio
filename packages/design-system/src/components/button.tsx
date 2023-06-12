@@ -123,7 +123,7 @@ const StyledButton = styled("button", {
   },
 });
 
-const TextContainer = styled("span", textVariants.labelsTitleCase, {
+const TextContainer = styled("span", textVariants.labelsSentenceCase, {
   padding: `0 ${theme.spacing[2]}`,
   overflow: "hidden",
   textOverflow: "ellipsis",

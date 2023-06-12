@@ -1,10 +1,5 @@
 import type { Breakpoint } from "@webstudio-is/project-build";
-import {
-  theme,
-  Button,
-  Flex,
-  DeprecatedParagraph,
-} from "@webstudio-is/design-system";
+import { theme, Button, Flex, Text } from "@webstudio-is/design-system";
 
 type ConfirmationDialogProps = {
   onAbort: () => void;
@@ -23,11 +18,11 @@ export const ConfirmationDialog = ({
       direction="column"
       css={{ px: theme.spacing[11], py: theme.spacing[5], width: 300 }}
     >
-      <DeprecatedParagraph>{`Are you sure you want to delete "${breakpoint.label}"?`}</DeprecatedParagraph>
-      <DeprecatedParagraph>
+      <Text>{`Are you sure you want to delete "${breakpoint.label}"?`}</Text>
+      <Text>
         {`Deleting a breakpoint will also delete all styles associated with this
         breakpoint.`}
-      </DeprecatedParagraph>
+      </Text>
       <Flex justify="end" gap="2">
         <Button
           onClick={() => {

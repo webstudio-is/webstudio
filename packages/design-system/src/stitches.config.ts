@@ -294,10 +294,9 @@ const {
       4: "4px",
       5: "5px",
       6: "6px",
+      7: "8px",
       round: "50%",
       pill: "9999px",
-      // Legacy - don't use unless specified in Figma
-      7: "8px",
     },
     zIndices: {
       1: "100",

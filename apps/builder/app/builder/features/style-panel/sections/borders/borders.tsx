@@ -84,7 +84,7 @@ export const BordersSection = (props: RenderCategoryProps) => {
         >
           <PropertyName
             style={currentStyle}
-            property={borderColorProperty}
+            properties={[borderColorProperty]}
             label={"Color"}
             onReset={() => deleteAllBorderColorProperties(borderColorProperty)}
           />

@@ -106,6 +106,7 @@ export { RefreshIcon } from "./refresh";
 export { RepeatColumnIcon } from "./repeat-column";
 export { RepeatGridIcon } from "./repeat-grid";
 export { RepeatRowIcon } from "./repeat-row";
+export { ResetIcon } from "./reset";
 export { ScrollIcon } from "./scroll";
 export { SectionLinkIcon } from "./section-link";
 export { ShrinkIcon } from "./shrink";

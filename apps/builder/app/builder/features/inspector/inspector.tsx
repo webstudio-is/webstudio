@@ -106,7 +106,7 @@ export const Inspector = ({ publish, navigatorLayout }: InspectorProps) => {
 
   return (
     <EnhancedTooltipProvider
-      delayDuration={1600}
+      delayDuration={1200}
       disableHoverableContent={false}
       skipDelayDuration={0}
     >

@@ -85,7 +85,8 @@ export const TypographySectionFont = (props: RenderCategoryProps) => {
         <PropertyName
           style={currentStyle}
           label="Font"
-          property="fontFamily"
+          title="Font Family"
+          properties={["fontFamily"]}
           onReset={() => deleteProperty("fontFamily")}
         />
         <FontFamilyControl
@@ -99,7 +100,8 @@ export const TypographySectionFont = (props: RenderCategoryProps) => {
         <PropertyName
           style={currentStyle}
           label="Weight"
-          property="fontWeight"
+          title="Font Weight"
+          properties={["fontWeight"]}
           onReset={() => deleteProperty("fontWeight")}
         />
         <FontWeightControl
@@ -113,7 +115,7 @@ export const TypographySectionFont = (props: RenderCategoryProps) => {
         <PropertyName
           style={currentStyle}
           label="Color"
-          property="color"
+          properties={["color"]}
           onReset={() => deleteProperty("color")}
         />
         <ColorControl
@@ -140,8 +142,9 @@ export const TypographySectionSizing = (props: RenderCategoryProps) => {
       <Grid css={{ gridTemplateColumns: "auto", gap: theme.spacing[3] }}>
         <PropertyName
           style={currentStyle}
-          property="fontSize"
+          properties={["fontSize"]}
           label="Size"
+          title="Font Size"
           onReset={() => deleteProperty("fontSize")}
         />
         <TextControl
@@ -154,8 +157,9 @@ export const TypographySectionSizing = (props: RenderCategoryProps) => {
       <Grid css={{ gridTemplateColumns: "auto", gap: theme.spacing[3] }}>
         <PropertyName
           style={currentStyle}
-          property="lineHeight"
+          properties={["lineHeight"]}
           label="Height"
+          title="Line Height"
           onReset={() => deleteProperty("lineHeight")}
         />
         <TextControl
@@ -168,8 +172,9 @@ export const TypographySectionSizing = (props: RenderCategoryProps) => {
       <Grid css={{ gridTemplateColumns: "auto", gap: theme.spacing[3] }}>
         <PropertyName
           style={currentStyle}
-          property="letterSpacing"
+          properties={["letterSpacing"]}
           label="Spacing"
+          title="Letter Spacing"
           onReset={() => deleteProperty("letterSpacing")}
         />
         <TextControl
@@ -209,22 +214,22 @@ export const TypographySectionAdvanced = (props: RenderCategoryProps) => {
           items={[
             {
               child: <TextAlignLeftIcon />,
-              label: "align: left",
+              label: "text-align: left",
               value: "start",
             },
             {
               child: <TextAlignCenterIcon />,
-              label: "align: center",
+              label: "text-align: center",
               value: "center",
             },
             {
               child: <TextAlignRightIcon />,
-              label: "align: right",
+              label: "text-align: end",
               value: "end",
             },
             {
               child: <TextAlignJustifyIcon />,
-              label: "align: justify",
+              label: "text-align: justify",
               value: "justify",
             },
           ]}
@@ -241,12 +246,12 @@ export const TypographySectionAdvanced = (props: RenderCategoryProps) => {
             },
             {
               child: <TextUnderlineIcon />,
-              label: "Underline",
+              label: "text-decoration: underline",
               value: "underline",
             },
             {
               child: <TextStrikethroughIcon />,
-              label: "Line through",
+              label: "text-decoration: line-through",
               value: "line-through",
             },
           ]}
@@ -271,17 +276,17 @@ export const TypographySectionAdvanced = (props: RenderCategoryProps) => {
             },
             {
               child: <TextUppercaseIcon />,
-              label: "Uppercase",
+              label: "text-transform: uppercase",
               value: "uppercase",
             },
             {
               child: <TextCapitalizeIcon />,
-              label: "Capitalize",
+              label: "text-transform: capitalize",
               value: "capitalize",
             },
             {
               child: <TextLowercaseIcon />,
-              label: "Lowercase",
+              label: "text-transform: lowercase",
               value: "lowercase",
             },
           ]}
@@ -298,7 +303,7 @@ export const TypographySectionAdvanced = (props: RenderCategoryProps) => {
             },
             {
               child: <TextItalicIcon />,
-              label: "Italic",
+              label: "font-style: italic",
               value: "italic",
             },
           ]}
@@ -324,7 +329,7 @@ export const TypographySectionAdvancedPopover = (
           <Grid css={{ gridTemplateColumns: "4fr 6fr" }}>
             <PropertyName
               style={currentStyle}
-              property="whiteSpace"
+              properties={["whiteSpace"]}
               label="White Space"
               onReset={() => deleteProperty("whiteSpace")}
             />
@@ -338,7 +343,7 @@ export const TypographySectionAdvancedPopover = (
           <Grid css={{ gridTemplateColumns: "4fr auto" }}>
             <PropertyName
               style={currentStyle}
-              property="direction"
+              properties={["direction"]}
               label="Direction"
               onReset={() => deleteProperty("direction")}
             />
@@ -363,7 +368,7 @@ export const TypographySectionAdvancedPopover = (
           <Grid css={{ gridTemplateColumns: "4fr auto" }}>
             <PropertyName
               style={currentStyle}
-              property="hyphens"
+              properties={["hyphens"]}
               label="Hyphens"
               onReset={() => deleteProperty("hyphens")}
             />
@@ -388,7 +393,7 @@ export const TypographySectionAdvancedPopover = (
           <Grid css={{ gridTemplateColumns: "4fr auto" }}>
             <PropertyName
               style={currentStyle}
-              property="textOverflow"
+              properties={["textOverflow"]}
               label="Text Overflow"
               onReset={() => deleteProperty("textOverflow")}
             />
