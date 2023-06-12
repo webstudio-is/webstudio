@@ -191,6 +191,9 @@ const walkSyntax = (
       return;
     }
     if (node.type === "Type") {
+      if (node.name === "deprecated-system-color") {
+        return;
+      }
       const nestedSyntax = syntaxes[node.name as keyof typeof syntaxes]?.syntax;
       if (nestedSyntax === undefined) {
         enter(node);
