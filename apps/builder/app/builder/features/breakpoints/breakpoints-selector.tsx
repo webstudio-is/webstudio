@@ -27,7 +27,7 @@ const getTooltipContent = (breakpoint: Breakpoint) => {
   if (breakpoint.maxWidth !== undefined) {
     return (
       <>
-        <Text variant="regularBold">{breakpoint.maxWidth}</Text>
+        <Text variant="regularBold">{breakpoint.maxWidth}px and down</Text>
         <br />
         Styles on this breakpoint apply to viewport widths {breakpoint.maxWidth}
         px and down, unless overwritten by a smaller breakpoint.
@@ -37,7 +37,7 @@ const getTooltipContent = (breakpoint: Breakpoint) => {
   if (breakpoint.minWidth !== undefined) {
     return (
       <>
-        <Text variant="regularBold">{breakpoint.minWidth}</Text>
+        <Text variant="regularBold">{breakpoint.minWidth}px and up</Text>
         <br />
         Styles on this breakpoint apply to viewport widths {breakpoint.minWidth}
         px and up, unless overwritten by a larger breakpoint.
