@@ -151,7 +151,7 @@ export const HorizontalLayout = ({
   children,
 }: LayoutProps) => (
   <Flex
-    css={{ height: theme.spacing[13] }}
+    css={{ minHeight: theme.spacing[13] }}
     justify="between"
     align="center"
     gap="2"
