@@ -63,7 +63,18 @@ export const i = baseStyle;
 
 export const img = baseStyle;
 
-export const a = baseStyle;
+export const a = [
+  ...baseStyle,
+  {
+    property: "color",
+    value: { type: "rgb", r: 0, g: 0, b: 238, alpha: 1 },
+  },
+  {
+    state: ":visited",
+    property: "color",
+    value: { type: "rgb", r: 85, g: 26, b: 139, alpha: 1 },
+  },
+] satisfies Styles;
 export const li = baseStyle;
 export const ul = baseStyle;
 export const ol = baseStyle;
