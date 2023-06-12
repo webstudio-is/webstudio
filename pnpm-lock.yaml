@@ -471,6 +471,9 @@ importers:
       html-tags:
         specifier: ^3.2.0
         version: 3.2.0
+      isomorphic-fetch:
+        specifier: ^3.0.0
+        version: 3.0.0
       jest:
         specifier: ^29.3.1
         version: 29.3.1(@types/node@18.11.18)
@@ -14003,7 +14006,6 @@ packages:
       whatwg-fetch: 3.6.2
     transitivePeerDependencies:
       - encoding
-    dev: false
 
   /isomorphic-unfetch@3.1.0:
     resolution: {integrity: sha512-geDJjpoZ8N0kWexiwkX8F9NkTsXhetLPVbZFQ+JTW239QNOwvB0gniuR1Wc6f0AMTn7/mFGyXvHTifrCp/GH8Q==}
@@ -19982,7 +19984,6 @@ packages:
 
   /whatwg-fetch@3.6.2:
     resolution: {integrity: sha512-bJlen0FcuU/0EMLrdbJ7zOnW6ITZLrZMIarMUVmdKtsGvZna8vxKYaexICWPfZ8qwf9fzNq+UEIZrnSaApt6RA==}
-    dev: false
 
   /whatwg-url@5.0.0:
     resolution: {integrity: sha512-saE57nupxk6v3HY35+jzBwYa0rKSy0XR8JSxZPwgLr7ys0IBzhGviA1/TUGJLmSVqs8pb9AnvICXEuOHLprYTw==}
