@@ -8,10 +8,10 @@ import {
   DropdownMenuRadioGroup,
   DropdownMenuRadioItem,
 } from "./dropdown-menu";
-import { Tooltip } from "./tooltip";
 import { IconButton } from "./icon-button";
 import { Flex } from "./flex";
 import { theme } from "../stitches.config";
+import { EnhancedTooltip } from "./enhanced-tooltip";
 
 export const IconButtonWithMenu = ({
   variant,
@@ -38,11 +38,7 @@ export const IconButtonWithMenu = ({
 }) => {
   return (
     <DropdownMenu modal={false}>
-      <Tooltip
-        content={label}
-        delayDuration={400}
-        disableHoverableContent={true}
-      >
+      <EnhancedTooltip content={label}>
         <DropdownMenuTrigger asChild>
           <IconButton
             variant={variant}
@@ -56,7 +52,7 @@ export const IconButtonWithMenu = ({
             {icon}
           </IconButton>
         </DropdownMenuTrigger>
-      </Tooltip>
+      </EnhancedTooltip>
       <DropdownMenuPortal>
         <DropdownMenuContent sideOffset={4} collisionPadding={16} side="bottom">
           <DropdownMenuRadioGroup value={value} onValueChange={onChange}>

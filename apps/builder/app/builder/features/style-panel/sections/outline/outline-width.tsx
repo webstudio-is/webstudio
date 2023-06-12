@@ -30,7 +30,7 @@ export const OutlineWidth = (
       gap={2}
     >
       <PropertyName
-        property={property}
+        properties={[property]}
         style={props.currentStyle}
         label={"Width"}
         onReset={() => deleteProperty(property)}

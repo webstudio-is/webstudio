@@ -29,7 +29,7 @@ export const EffectsSection = ({
       >
         <PropertyName
           label={styleConfigByName("cursor").label}
-          property="cursor"
+          properties={["cursor"]}
           style={style}
           onReset={() => deleteProperty("cursor")}
         />
@@ -42,7 +42,7 @@ export const EffectsSection = ({
 
         <PropertyName
           label={styleConfigByName("opacity").label}
-          property="opacity"
+          properties={["opacity"]}
           style={style}
           onReset={() => deleteProperty("opacity")}
         />

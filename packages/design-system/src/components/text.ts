@@ -28,6 +28,7 @@ export const textStyle = css({
       main: { color: theme.colors.foregroundMain },
       contrast: { color: theme.colors.foregroundContrastMain },
       subtle: { color: theme.colors.foregroundSubtle },
+      moreSubtle: { color: theme.colors.foregroundTextMoreSubtle },
       disabled: { color: theme.colors.foregroundDisabled },
       success: { color: theme.colors.foregroundSuccessText },
       destructive: {

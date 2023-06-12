@@ -40,7 +40,7 @@ export const OutlineSection = (props: RenderCategoryProps) => {
         >
           <PropertyName
             style={currentStyle}
-            property={property}
+            properties={[property]}
             label={"Color"}
             onReset={() => deleteProperty(property)}
           />

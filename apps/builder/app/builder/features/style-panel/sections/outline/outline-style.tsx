@@ -47,7 +47,7 @@ export const OutlineStyle = (
       gap={2}
     >
       <PropertyName
-        property={property}
+        properties={[property]}
         style={props.currentStyle}
         label={"Style"}
         onReset={() => deleteProperty(property)}
