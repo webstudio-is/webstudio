@@ -38,6 +38,15 @@ export const parseBackground = (
   };
 };
 
+const cssTreeTryParseValue = (input: string) => {
+  try {
+    const ast = csstree.parse(input, { context: "value" });
+    return ast;
+  } catch {
+    return undefined;
+  }
+};
+
 export const backgroundToLonghand = (
   background: string
 ): {
@@ -62,7 +71,14 @@ export const backgroundToLonghand = (
       : tokenStream;
   }
 
-  const cssAst = csstree.parse(tokenStream, { context: "value" });
+  const cssAst = cssTreeTryParseValue(tokenStream);
+
+  if (cssAst === undefined) {
+    return {
+      backgroundImage: [],
+      backgroundColor: undefined,
+    };
+  }
 
   let backgroundColorRaw: string | undefined;
 

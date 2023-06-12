@@ -611,10 +611,10 @@ export const CssValueInput = ({
             css={{ cursor: "default" }}
           />
         </ComboboxAnchor>
-        <ComboboxContent align="start" sideOffset={2} collisionPadding={10}>
-          <ComboboxListbox {...menuProps}>
-            {isOpen &&
-              items.map((item, index) => (
+        {isOpen && (
+          <ComboboxContent align="start" sideOffset={2} collisionPadding={10}>
+            <ComboboxListbox {...menuProps}>
+              {items.map((item, index) => (
                 <ComboboxListboxItem
                   {...getItemProps({ item, index })}
                   key={index}
@@ -622,8 +622,9 @@ export const CssValueInput = ({
                   {itemToString(item)}
                 </ComboboxListboxItem>
               ))}
-          </ComboboxListbox>
-        </ComboboxContent>
+            </ComboboxListbox>
+          </ComboboxContent>
+        )}
       </Box>
     </Combobox>
   );

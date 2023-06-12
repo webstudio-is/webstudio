@@ -91,7 +91,9 @@ export const toValue = (
   }
 
   if (value.type === "layers") {
-    return value.value.map((value) => toValue(value, transformValue)).join(",");
+    return value.value
+      .map((value) => toValue(value, transformValue))
+      .join(", ");
   }
 
   if (value.type === "tuple") {

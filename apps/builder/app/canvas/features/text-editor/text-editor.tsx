@@ -191,7 +191,7 @@ export const TextEditor = ({
       <RichTextPlugin
         ErrorBoundary={LexicalErrorBoundary}
         contentEditable={contentEditable}
-        placeholder=""
+        placeholder={<></>}
       />
       <LinkPlugin />
       <HistoryPlugin />

@@ -18,4 +18,4 @@ export {
   usePropAsset,
   getInstanceIdFromComponentProps,
 } from "./props";
-export { ReactSdkContext } from "./context";
+export { type Params, ReactSdkContext } from "./context";

@@ -1,8 +1,8 @@
-import { forwardRef, type ComponentProps } from "react";
+import { forwardRef, type ComponentProps, useContext } from "react";
 import {
   usePropUrl,
   getInstanceIdFromComponentProps,
-  getParams,
+  ReactSdkContext,
 } from "@webstudio-is/react-sdk";
 
 export const defaultTag = "a";
@@ -13,9 +13,8 @@ type Props = Omit<ComponentProps<"a">, "target"> & {
 };
 
 export const Link = forwardRef<HTMLAnchorElement, Props>((props, ref) => {
+  const { assetBaseUrl } = useContext(ReactSdkContext);
   const href = usePropUrl(getInstanceIdFromComponentProps(props), "href");
-
-  const { assetBaseUrl } = getParams();
 
   let url = "#";
 

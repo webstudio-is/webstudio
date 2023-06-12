@@ -2,6 +2,7 @@ import type { AppContext } from "@webstudio-is/trpc-interface/index.server";
 import env from "~/env/env.server";
 import { authenticator } from "~/services/auth.server";
 import { trpcClient } from "~/services/trpc.server";
+import { entryApi } from "./entri/entri-api.server";
 
 const createAuthorizationContext = async (
   request: Request
@@ -48,6 +49,12 @@ const createDeploymentContext = (request: Request) => {
   return context;
 };
 
+const createEntriContext = () => {
+  return {
+    entryApi,
+  };
+};
+
 /**
  * argument buildEnv==="prod" only if we are loading project with production build
  */
@@ -55,10 +62,11 @@ export const createContext = async (request: Request): Promise<AppContext> => {
   const authorization = await createAuthorizationContext(request);
   const domain = createDomainContext(request);
   const deployment = createDeploymentContext(request);
-
+  const entri = createEntriContext();
   return {
     authorization,
     domain,
     deployment,
+    entri,
   };
 };

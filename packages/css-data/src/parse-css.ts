@@ -61,11 +61,24 @@ const parseCssValue = function parseCssValue(
   };
 };
 
+const cssTreeTryParse = (input: string) => {
+  try {
+    const ast = csstree.parse(input);
+    return ast;
+  } catch {
+    return undefined;
+  }
+};
+
 export const parseCss = function cssToWS(css: string) {
-  const ast = csstree.parse(css);
+  const ast = cssTreeTryParse(css);
 
   let selectors: Selector[] = [];
   const styles: Styles = {};
+
+  if (ast === undefined) {
+    return styles;
+  }
 
   csstree.walk(ast, (node, item) => {
     if (node.type === "SelectorList") {

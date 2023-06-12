@@ -48,21 +48,16 @@ const getCanvasStyle = (
   canvasWidth?: number
 ) => {
   let canvasHeight;
-  let canvasLeft;
 
   if (workspaceRect?.height) {
     canvasHeight = workspaceRect.height / (scale / 100);
   }
 
-  if (workspaceRect?.width && canvasWidth) {
-    canvasLeft = Math.max((workspaceRect.width - canvasWidth) / 2, 0);
-  }
-
   return {
     width: canvasWidth,
     height: canvasHeight ?? "100%",
-    left: canvasLeft ?? 0,
-    transform: `scale(${scale}%)`,
+    left: "50%",
+    transform: `scale(${scale}%) translateX(-50%)`,
   };
 };
 
