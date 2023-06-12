@@ -1,7 +1,7 @@
 /* eslint-disable no-console, func-style */
-import fetch from "isomorphic-fetch";
 import * as fs from "node:fs";
 import * as path from "node:path";
+import { fetch } from "undici";
 import { keywordValues } from "../src/__generated__/keyword-values";
 
 /**
