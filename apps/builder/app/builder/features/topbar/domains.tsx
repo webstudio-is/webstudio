@@ -9,6 +9,7 @@ import {
   styled,
   Flex,
   NestedInputButton,
+  Separator,
 } from "@webstudio-is/design-system";
 import type { DomainRouter } from "@webstudio-is/domain/index.server";
 import type { Project } from "@webstudio-is/project";
@@ -27,6 +28,7 @@ import { useCallback, useEffect, useState } from "react";
 import type { PublishStatus } from "@webstudio-is/prisma-client";
 // eslint-disable-next-line import/no-internal-modules
 import formatDistance from "date-fns/formatDistance";
+import { Entri } from "./entri";
 
 const trpc = createTrpcFetchProxy<DomainRouter>(builderDomainsPath);
 
@@ -355,6 +357,22 @@ const DomainItem = (props: {
     isLoading: false,
   });
 
+  const cnameRecord = {
+    type: "CNAME",
+    host: cnameEntryName,
+    value: cnameEntryValue,
+    ttl: 300,
+  } as const;
+
+  const txtRecord = {
+    type: "TXT",
+    host: txtEntryName,
+    value: props.projectDomain.txtRecord,
+    ttl: 300,
+  } as const;
+
+  const dnsRecords = [cnameRecord, txtRecord];
+
   return (
     <CollapsibleDomainSection
       initiallyOpen={props.initiallyOpen}
@@ -488,7 +506,7 @@ const DomainItem = (props: {
         </Text>
 
         <Grid
-          gap={1}
+          gap={2}
           css={{
             gridTemplateColumns: `${theme.spacing[18]} ${theme.spacing[18]} 1fr`,
           }}
@@ -506,27 +524,54 @@ const DomainItem = (props: {
           <InputEllipsis readOnly value="CNAME" />
           <InputEllipsis
             readOnly
-            value={cnameEntryName}
-            suffix={<CopyToClipboard text={cnameEntryName} />}
+            value={cnameRecord.host}
+            suffix={<CopyToClipboard text={cnameRecord.host} />}
           />
           <InputEllipsis
             readOnly
-            value={cnameEntryValue}
-            suffix={<CopyToClipboard text={cnameEntryValue} />}
+            value={cnameRecord.value}
+            suffix={<CopyToClipboard text={cnameRecord.value} />}
           />
 
           <InputEllipsis readOnly value="TXT" />
           <InputEllipsis
             readOnly
-            value={txtEntryName}
-            suffix={<CopyToClipboard text={txtEntryName} />}
+            value={txtRecord.host}
+            suffix={<CopyToClipboard text={txtRecord.host} />}
           />
           <InputEllipsis
             readOnly
-            value={props.projectDomain.txtRecord}
-            suffix={<CopyToClipboard text={props.projectDomain.txtRecord} />}
+            value={txtRecord.value}
+            suffix={<CopyToClipboard text={txtRecord.value} />}
           />
         </Grid>
+
+        <Grid
+          gap={2}
+          align={"center"}
+          css={{
+            gridTemplateColumns: `1fr auto 1fr`,
+          }}
+        >
+          <Separator css={{ alignSelf: "unset" }} />
+          <Text color="main">OR</Text>
+          <Separator css={{ alignSelf: "unset" }} />
+        </Grid>
+
+        <Entri
+          dnsRecords={dnsRecords}
+          domain={props.projectDomain.domain.domain}
+          onClose={() => {
+            // Sometimes Entri modal dialog hangs even if it's successful,
+            // until they fix that, we'll just refresh the status here on every onClose event
+            if (status === "UNVERIFIED") {
+              handleVerify();
+              return;
+            }
+
+            handleUpdateStatus();
+          }}
+        />
       </Grid>
     </CollapsibleDomainSection>
   );
