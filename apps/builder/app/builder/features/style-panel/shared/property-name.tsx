@@ -131,7 +131,7 @@ const TooltipContent = ({
       {cssText && (
         <ScrollArea>
           <Text
-            variant="mono"
+            variant="monoBold"
             color="moreSubtle"
             css={{
               whiteSpace: "break-spaces",
