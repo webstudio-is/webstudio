@@ -23,7 +23,6 @@ import { validateProjectDomain, type Project } from "@webstudio-is/project";
 import { getPublishedUrl } from "~/shared/router-utils";
 import { theme } from "@webstudio-is/design-system";
 import { useAuthPermit } from "~/shared/nano-states";
-import { isFeatureEnabled } from "@webstudio-is/feature-flags";
 import {
   Domains,
   getPublishStatusAndText,
@@ -409,54 +408,46 @@ const Content = (props: { projectId: Project["id"] }) => {
           />
         )}
 
-        {isFeatureEnabled("domains") && (
-          <>
-            {domainSystemError !== undefined && (
-              <Text color="destructive">{domainSystemError}</Text>
-            )}
+        {domainSystemError !== undefined && (
+          <Text color="destructive">{domainSystemError}</Text>
+        )}
 
-            {domainsResult?.success === true && (
-              <Domains
-                newDomains={newDomains}
-                domains={domainsResult.data}
-                refreshDomainResult={domainRefresh}
-                domainState={domainState}
-                isPublishing={isPublishing}
-              />
-            )}
-            {domainsResult?.success === false && (
-              <Label
-                css={{
-                  overflowWrap: "anywhere",
-                  color: theme.colors.foregroundDestructive,
-                }}
-              >
-                <div>{domainsResult.error}</div>
-              </Label>
-            )}
-          </>
+        {domainsResult?.success === true && (
+          <Domains
+            newDomains={newDomains}
+            domains={domainsResult.data}
+            refreshDomainResult={domainRefresh}
+            domainState={domainState}
+            isPublishing={isPublishing}
+          />
+        )}
+        {domainsResult?.success === false && (
+          <Label
+            css={{
+              overflowWrap: "anywhere",
+              color: theme.colors.foregroundDestructive,
+            }}
+          >
+            <div>{domainsResult.error}</div>
+          </Label>
         )}
       </ScrollArea>
 
-      {isFeatureEnabled("domains") && (
-        <>
-          <Flex direction="column" justify="end" css={{ height: 0 }}>
-            <Separator />
-          </Flex>
+      <Flex direction="column" justify="end" css={{ height: 0 }}>
+        <Separator />
+      </Flex>
 
-          <AddDomain
-            projectId={props.projectId}
-            refreshDomainResult={domainRefresh}
-            domainState={domainState}
-            onCreate={(domain) => {
-              setNewDomains((prev) => {
-                return new Set([...prev, domain]);
-              });
-            }}
-            isPublishing={isPublishing}
-          />
-        </>
-      )}
+      <AddDomain
+        projectId={props.projectId}
+        refreshDomainResult={domainRefresh}
+        domainState={domainState}
+        onCreate={(domain) => {
+          setNewDomains((prev) => {
+            return new Set([...prev, domain]);
+          });
+        }}
+        isPublishing={isPublishing}
+      />
 
       {projectData?.success === true ? (
         <Publish
