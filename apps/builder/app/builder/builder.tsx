@@ -91,15 +91,12 @@ const SidePanel = ({
   gridArea,
   css,
 }: SidePanelProps) => {
-  if (isPreviewMode === true) {
-    return null;
-  }
   return (
     <Box
       as="aside"
       css={{
         gridArea,
-        display: "flex",
+        display: isPreviewMode ? "none" : "flex",
         flexDirection: "column",
         px: 0,
         fg: 0,
