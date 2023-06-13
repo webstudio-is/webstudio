@@ -40,6 +40,7 @@ import { createTrpcFetchProxy } from "~/shared/remix/trpc-remix-proxy";
 import { builderDomainsPath } from "~/shared/router-utils";
 import type { DomainRouter } from "@webstudio-is/domain/index.server";
 import { AddDomain } from "./add-domain";
+import { LoadingAnimatedIcon } from "@webstudio-is/icons";
 
 const trpc = createTrpcFetchProxy<DomainRouter>(builderDomainsPath);
 
@@ -270,6 +271,8 @@ const Publish = ({
     }
   }, [isPublishing, refresh]);
 
+  const isPublishInProgress = publishState !== "idle" || isPublishing;
+
   return (
     <Flex
       css={{
@@ -292,14 +295,13 @@ const Publish = ({
 
       <Tooltip
         content={
-          publishState !== "idle" || isPublishing
-            ? "Publish process in progress"
-            : undefined
+          isPublishInProgress ? "Publish process in progress" : undefined
         }
       >
         <Button
           color="positive"
-          disabled={publishState !== "idle" || isPublishing}
+          disabled={isPublishInProgress}
+          prefix={isPublishInProgress && <LoadingAnimatedIcon />}
           onClick={() => {
             setIsPublishing(true);
 
@@ -316,7 +318,7 @@ const Publish = ({
             );
           }}
         >
-          Publish
+          {isPublishInProgress === false && "Publish"}
         </Button>
       </Tooltip>
     </Flex>
