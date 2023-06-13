@@ -151,13 +151,11 @@ const TooltipContent = ({
     selectedStyleSource
   );
   const cssText = getCssText(properties, style);
-  let breakpoint = selectedBreakpoint;
-  if (styleValueInfo?.cascaded) {
-    const { breakpointId } = styleValueInfo.cascaded;
-    breakpoint = breakpoints.get(breakpointId);
-  }
-
-  const breakpointName = breakpoint?.minWidth ?? breakpoint?.maxWidth ?? "Base";
+  const breakpointName = getBreakpointName(
+    styleValueInfo,
+    breakpoints,
+    selectedBreakpoint
+  );
 
   if (styleValueInfo.inherited && styleValueInfo.local === undefined) {
     instance = instances.get(styleValueInfo.inherited.instanceId);
