@@ -1,7 +1,12 @@
 import { useState, type ReactElement } from "react";
 import { useStore } from "@nanostores/react";
-import type { Style, StyleProperty } from "@webstudio-is/css-data";
-import { createCssEngine } from "@webstudio-is/css-engine";
+import {
+  declarationDescriptions,
+  propertyDescriptions,
+  type Style,
+  type StyleProperty,
+} from "@webstudio-is/css-data";
+import { createCssEngine, toValue } from "@webstudio-is/css-engine";
 import {
   theme,
   Button,
@@ -15,7 +20,9 @@ import { ResetIcon } from "@webstudio-is/icons";
 import {
   breakpointsStore,
   instancesStore,
+  selectedBreakpointStore,
   selectedInstanceStore,
+  selectedStyleSourceStore,
   styleSourcesStore,
 } from "~/shared/nano-states";
 import {
@@ -25,37 +32,51 @@ import {
 } from "./style-info";
 import { humanizeString } from "~/shared/string-utils";
 import { StyleSourceBadge } from "../style-source";
-import type { StyleSources } from "@webstudio-is/project-build";
-import { isBaseBreakpoint } from "~/shared/breakpoints";
+import type {
+  Breakpoint,
+  Breakpoints,
+  StyleSource,
+  StyleSources,
+} from "@webstudio-is/project-build";
 
+// We don't return source name only in case of preset or default value.
 const getSourceName = (
   styleSources: StyleSources,
-  styleValueInfo?: StyleValueInfo
+  styleValueInfo: StyleValueInfo,
+  selectedStyleSource?: StyleSource
 ) => {
-  if (styleValueInfo === undefined) {
-    return;
-  }
-
   if (styleValueInfo.nextSource) {
     const { styleSourceId } = styleValueInfo.nextSource;
     const styleSource = styleSources.get(styleSourceId);
     if (styleSource?.type === "local") {
-      return "local";
+      return "Local";
     }
     if (styleSource?.type === "token") {
       return styleSource.name;
     }
+  }
+
+  if (styleValueInfo.local) {
+    return selectedStyleSource?.type === "token"
+      ? selectedStyleSource.name
+      : "Local";
   }
 
   if (styleValueInfo.previousSource) {
     const { styleSourceId } = styleValueInfo.previousSource;
     const styleSource = styleSources.get(styleSourceId);
     if (styleSource?.type === "local") {
-      return "local";
+      return "Local";
     }
     if (styleSource?.type === "token") {
       return styleSource.name;
     }
+  }
+
+  if (styleValueInfo.cascaded) {
+    return selectedStyleSource?.type === "token"
+      ? selectedStyleSource.name
+      : "Local";
   }
 };
 
@@ -79,45 +100,94 @@ const getCssText = (
   return rule.styleMap.toString();
 };
 
+const getBreakpointName = (
+  styleValueInfo: StyleValueInfo,
+  breakpoints: Breakpoints,
+  selectedBreakpoint?: Breakpoint
+) => {
+  let breakpoint;
+  if (
+    styleValueInfo.local ||
+    styleValueInfo.previousSource ||
+    styleValueInfo.nextSource
+  ) {
+    breakpoint = selectedBreakpoint;
+  } else if (styleValueInfo.cascaded) {
+    const { breakpointId } = styleValueInfo.cascaded;
+    breakpoint = breakpoints.get(breakpointId);
+  }
+
+  return breakpoint?.minWidth ?? breakpoint?.maxWidth ?? "Base";
+};
+
+const getDescription = (
+  styleValueInfo: StyleValueInfo,
+  properties: readonly StyleProperty[]
+) => {
+  // @todo we don't know how to show a description in this case
+  if (properties.length > 1) {
+    return;
+  }
+  // @todo reuse it with CssPreview
+  const styleValue =
+    styleValueInfo.local ??
+    styleValueInfo.nextSource?.value ??
+    styleValueInfo.previousSource?.value ??
+    styleValueInfo.cascaded?.value ??
+    styleValueInfo.preset ??
+    styleValueInfo.inherited?.value;
+
+  const property = properties[0];
+  const key = `${property}:${toValue(styleValue)}`;
+  if (key in declarationDescriptions) {
+    return declarationDescriptions[key as keyof typeof declarationDescriptions];
+  }
+  return propertyDescriptions[property as keyof typeof propertyDescriptions];
+};
+
 const TooltipContent = ({
   title,
   properties,
-  description,
   style,
   onReset,
   onClose,
 }: {
   title: string;
-  description?: string;
   properties: readonly StyleProperty[];
   style: StyleInfo;
   onReset: () => void;
   onClose: () => void;
 }) => {
   const breakpoints = useStore(breakpointsStore);
+  const selectedBreakpoint = useStore(selectedBreakpointStore);
   const instances = useStore(instancesStore);
   const styleSources = useStore(styleSourcesStore);
   let instance = useStore(selectedInstanceStore);
+  const selectedStyleSource = useStore(selectedStyleSourceStore);
 
   // When we have multiple properties, they must be originating from the same source, so we can just use one.
   const styleValueInfo = style[properties[0]];
-  const styleSource = getStyleSource(styleValueInfo);
-  const sourceName = getSourceName(styleSources, styleValueInfo);
-  const showValueOrigin =
-    styleSource === "overwritten" || styleSource === "remote";
-  const cssText = getCssText(properties, style);
-  let breakpointName;
 
-  const breakpointId = styleValueInfo?.cascaded?.breakpointId;
-  if (breakpointId) {
-    const breakpoint = breakpoints.get(breakpointId);
-    if (breakpoint) {
-      breakpointName = isBaseBreakpoint(breakpoint)
-        ? "Base"
-        : breakpoint?.minWidth ?? breakpoint?.maxWidth;
-    }
+  if (styleValueInfo === undefined) {
+    return null;
   }
-  if (styleValueInfo?.inherited && styleValueInfo.preset === undefined) {
+
+  const description = getDescription(styleValueInfo, properties);
+
+  const styleSource = getStyleSource(styleValueInfo);
+  const sourceName = getSourceName(
+    styleSources,
+    styleValueInfo,
+    selectedStyleSource
+  );
+  const cssText = getCssText(properties, style);
+  const breakpointName = getBreakpointName(
+    styleValueInfo,
+    breakpoints,
+    selectedBreakpoint
+  );
+
+  if (styleValueInfo.inherited && styleValueInfo.local === undefined) {
     instance = instances.get(styleValueInfo.inherited.instanceId);
   }
 
@@ -141,7 +211,7 @@ const TooltipContent = ({
         </ScrollArea>
       )}
       {description && <Text>{description}</Text>}
-      {showValueOrigin && (
+      {sourceName && (
         <Flex
           direction="column"
           gap="1"
@@ -149,16 +219,12 @@ const TooltipContent = ({
         >
           <Text color="moreSubtle">Value comes from</Text>
           <Flex gap="1" wrap="wrap">
-            {breakpointName && (
-              <StyleSourceBadge source="breakpoint" variant="small">
-                {breakpointName}
-              </StyleSourceBadge>
-            )}
-            {sourceName && (
-              <StyleSourceBadge source="token" variant="small">
-                {sourceName}
-              </StyleSourceBadge>
-            )}
+            <StyleSourceBadge source="breakpoint" variant="small">
+              {breakpointName}
+            </StyleSourceBadge>
+            <StyleSourceBadge source="token" variant="small">
+              {sourceName}
+            </StyleSourceBadge>
             {instance && (
               <StyleSourceBadge source="instance" variant="small">
                 {instance.label || instance.component}
@@ -218,7 +284,6 @@ export const PropertyName = ({
               title ??
               (typeof label === "string" ? label : humanizeString(property))
             }
-            //description="The text will not wrap (break to the next line) if it overflows the container."
             properties={properties}
             style={style}
             onReset={onReset}
