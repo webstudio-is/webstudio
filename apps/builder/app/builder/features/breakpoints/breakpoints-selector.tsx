@@ -65,7 +65,7 @@ export const BreakpointsSelector = ({
         type="single"
         value={selectedBreakpoint.id}
         onValueChange={(breakpointId: string) => {
-          if (!breakpointId) {
+          if (!breakpointId.length) {
             return;
           }
           selectedBreakpointIdStore.set(breakpointId);
