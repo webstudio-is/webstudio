@@ -84,7 +84,11 @@ export const TabContent = ({ publish, onSetActiveTab }: TabContentProps) => {
                           return null;
                         }
                         return (
-                          <Tooltip content={meta.label} key={component}>
+                          <Tooltip
+                            content={meta.description ?? meta.label}
+                            key={component}
+                            css={{ maxWidth: theme.spacing[28] }}
+                          >
                             <ComponentCard
                               {...pressProps}
                               {...{ [dragItemAttribute]: component }}
