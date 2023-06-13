@@ -27,7 +27,12 @@ import {
 } from "./style-info";
 import { humanizeString } from "~/shared/string-utils";
 import { StyleSourceBadge } from "../style-source";
-import type { StyleSource, StyleSources } from "@webstudio-is/project-build";
+import type {
+  Breakpoint,
+  Breakpoints,
+  StyleSource,
+  StyleSources,
+} from "@webstudio-is/project-build";
 
 // We don't return source name only in case of preset or default value.
 const getSourceName = (
@@ -88,6 +93,26 @@ const getCssText = (
     style,
   });
   return rule.styleMap.toString();
+};
+
+const getBreakpointName = (
+  styleValueInfo: StyleValueInfo,
+  breakpoints: Breakpoints,
+  selectedBreakpoint?: Breakpoint
+) => {
+  let breakpoint;
+  if (
+    styleValueInfo.local ||
+    styleValueInfo.previousSource ||
+    styleValueInfo.nextSource
+  ) {
+    breakpoint = selectedBreakpoint;
+  } else if (styleValueInfo.cascaded) {
+    const { breakpointId } = styleValueInfo.cascaded;
+    breakpoint = breakpoints.get(breakpointId);
+  }
+
+  return breakpoint?.minWidth ?? breakpoint?.maxWidth ?? "Base";
 };
 
 const TooltipContent = ({
