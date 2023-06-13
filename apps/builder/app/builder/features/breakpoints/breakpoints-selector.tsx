@@ -65,6 +65,9 @@ export const BreakpointsSelector = ({
         type="single"
         value={selectedBreakpoint.id}
         onValueChange={(breakpointId: string) => {
+          if (!breakpointId) {
+            return;
+          }
           selectedBreakpointIdStore.set(breakpointId);
           setInitialCanvasWidth(breakpointId);
         }}
