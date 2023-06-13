@@ -5,6 +5,10 @@ export const html: Html = exportedHtml;
 
 export * from "./__generated__/keyword-values";
 export * from "./__generated__/units";
+export {
+  properties as propertyDescriptions,
+  declarations as declarationDescriptions,
+} from "./__generated__/property-value-descriptions";
 export * from "./schema";
 
 // longhand property parsers

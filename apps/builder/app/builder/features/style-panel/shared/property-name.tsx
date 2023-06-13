@@ -1,7 +1,12 @@
 import { useState, type ReactElement } from "react";
 import { useStore } from "@nanostores/react";
-import type { Style, StyleProperty } from "@webstudio-is/css-data";
-import { createCssEngine } from "@webstudio-is/css-engine";
+import {
+  declarationDescriptions,
+  propertyDescriptions,
+  type Style,
+  type StyleProperty,
+} from "@webstudio-is/css-data";
+import { createCssEngine, toValue } from "@webstudio-is/css-engine";
 import {
   theme,
   Button,
@@ -115,16 +120,39 @@ const getBreakpointName = (
   return breakpoint?.minWidth ?? breakpoint?.maxWidth ?? "Base";
 };
 
+const getDescription = (
+  styleValueInfo: StyleValueInfo,
+  properties: readonly StyleProperty[]
+) => {
+  // @todo we don't know how to show a description in this case
+  if (properties.length > 1) {
+    return;
+  }
+  // @todo reuse it with CssPreview
+  const styleValue =
+    styleValueInfo.local ??
+    styleValueInfo.nextSource?.value ??
+    styleValueInfo.previousSource?.value ??
+    styleValueInfo.cascaded?.value ??
+    styleValueInfo.preset ??
+    styleValueInfo.inherited?.value;
+
+  const property = properties[0];
+  const key = `${property}:${toValue(styleValue)}`;
+  if (key in declarationDescriptions) {
+    return declarationDescriptions[key as keyof typeof declarationDescriptions];
+  }
+  return propertyDescriptions[property as keyof typeof propertyDescriptions];
+};
+
 const TooltipContent = ({
   title,
   properties,
-  description,
   style,
   onReset,
   onClose,
 }: {
   title: string;
-  description?: string;
   properties: readonly StyleProperty[];
   style: StyleInfo;
   onReset: () => void;
@@ -143,6 +171,8 @@ const TooltipContent = ({
   if (styleValueInfo === undefined) {
     return null;
   }
+
+  const description = getDescription(styleValueInfo, properties);
 
   const styleSource = getStyleSource(styleValueInfo);
   const sourceName = getSourceName(
@@ -254,7 +284,6 @@ export const PropertyName = ({
               title ??
               (typeof label === "string" ? label : humanizeString(property))
             }
-            //description="The text will not wrap (break to the next line) if it overflows the container."
             properties={properties}
             style={style}
             onReset={onReset}
