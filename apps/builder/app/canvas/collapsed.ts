@@ -154,6 +154,10 @@ const recalculate = () => {
   }
 
   for (const [element, value] of parentsWithAbsoluteChildren.entries()) {
+    // HTML is not part of webstudio data so skip to not process
+    if (element.tagName === "HTML") {
+      continue;
+    }
     // All children are absolute or fixed
     if (value === 0) {
       elementsToRecalculate.push(element);
