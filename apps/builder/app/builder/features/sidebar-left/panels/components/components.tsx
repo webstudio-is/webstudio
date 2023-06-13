@@ -85,7 +85,7 @@ export const TabContent = ({ publish, onSetActiveTab }: TabContentProps) => {
                         }
                         return (
                           <Tooltip
-                            content={meta.description || meta.label}
+                            content={meta.description ?? meta.label}
                             key={component}
                             css={{ maxWidth: theme.spacing[28] }}
                           >
