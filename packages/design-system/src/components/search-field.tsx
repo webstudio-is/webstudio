@@ -16,12 +16,20 @@ import { InputField } from "./input-field";
 import { IconButton } from "./icon-button";
 
 const SearchIcon = styled(MagnifyingGlassIcon, {
+  // need to center icon vertically
+  display: "block",
   color: theme.colors.hint,
   padding: theme.spacing[3],
 });
 
 const AbortButton = styled(IconButton, {
   marginRight: theme.spacing[3],
+  variants: {
+    hidden: {
+      false: { visibility: "hidden" },
+      true: {},
+    },
+  },
 });
 
 const SearchFieldBase: ForwardRefRenderFunction<
@@ -44,24 +52,26 @@ const SearchFieldBase: ForwardRefRenderFunction<
     <InputField
       {...rest}
       ref={ref}
-      type="search"
+      // search field implements own reset button
+      // type=search does not work here because
+      // brings native reset button
+      type="text"
       value={value}
       inputRef={inputRef}
       prefix={<SearchIcon />}
       suffix={
-        value.length > 0 ? (
-          <AbortButton
-            aria-label="Reset search"
-            title="Reset search"
-            tabIndex={-1}
-            onClick={() => {
-              setValue("");
-              onCancel?.();
-            }}
-          >
-            <CrossCircledFilledIcon />
-          </AbortButton>
-        ) : null
+        <AbortButton
+          hidden={value.length > 0 ? "true" : "false"}
+          aria-label="Reset search"
+          title="Reset search"
+          tabIndex={-1}
+          onClick={() => {
+            setValue("");
+            onCancel?.();
+          }}
+        >
+          <CrossCircledFilledIcon />
+        </AbortButton>
       }
       onChange={(event) => {
         setValue(event.target.value);
