@@ -4,13 +4,15 @@ import {
   textVariants,
   theme,
 } from "@webstudio-is/design-system";
-import { useInstanceStyleData } from "../../style-panel/shared/style-info";
-import { selectedInstanceSelectorStore } from "~/shared/nano-states";
-import { useStore } from "@nanostores/react";
+import {
+  type StyleInfo,
+  useStyleInfo,
+} from "../../style-panel/shared/style-info";
 import { createCssEngine } from "@webstudio-is/css-engine";
 import { CollapsibleSection } from "~/builder/shared/collapsible-section";
 import { useMemo } from "react";
 import * as Prism from "prismjs";
+import type { Style, StyleProperty } from "@webstudio-is/css-data";
 
 const preStyle = css(textVariants.mono, {
   margin: 0,
@@ -19,18 +21,45 @@ const preStyle = css(textVariants.mono, {
   cursor: "text",
 });
 
+const getCssText = (instanceStyle: StyleInfo) => {
+  const cssEngine = createCssEngine();
+  const style: Style = {};
+  let property: StyleProperty;
+  for (property in instanceStyle) {
+    const value = instanceStyle[property];
+
+    if (value) {
+      const userDefinedStyle: Style | undefined =
+        value.local ??
+        value.nextSource?.value ??
+        value.previousSource?.value ??
+        value.cascaded?.value ??
+        value.preset ??
+        value.inherited?.value;
+
+      if (userDefinedStyle === undefined) {
+        continue;
+      }
+
+      style[property] = value.value;
+    }
+  }
+  const rule = cssEngine.addStyleRule("instance", {
+    style,
+  });
+  return rule.styleMap.toString();
+};
+
 const useHighlightedCss = () => {
-  const selectedInstanceSelector = useStore(selectedInstanceSelectorStore);
-  const style = useInstanceStyleData(selectedInstanceSelector);
+  const currentStyle = useStyleInfo();
+
   return useMemo(() => {
-    if (Object.keys(style).length === 0) {
+    if (Object.keys(currentStyle).length === 0) {
       return;
     }
-    const cssEngine = createCssEngine();
-    const rule = cssEngine.addStyleRule("instance", { style });
-    const cssText = rule.styleMap.toString();
+    const cssText = getCssText(currentStyle);
     return Prism.highlight(cssText, Prism.languages.css, "css");
-  }, [style]);
+  }, [currentStyle]);
 };
 
 export const CssPreview = () => {
