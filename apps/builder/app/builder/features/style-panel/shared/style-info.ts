@@ -78,6 +78,7 @@ export type StyleValueInfo = {
   cascaded?: CascadedValueInfo;
   inherited?: InheritedValueInfo;
   preset?: StyleValue;
+  htmlValue?: StyleValue;
 };
 
 export type StyleInfo = {
@@ -130,6 +131,11 @@ export const getStyleSource = (
   for (const info of styleValueInfos) {
     if (info?.preset !== undefined) {
       return "preset";
+    }
+  }
+  for (const info of styleValueInfos) {
+    if (info?.htmlValue !== undefined) {
+      return "default";
     }
   }
   for (const info of styleValueInfos) {
@@ -581,8 +587,8 @@ export const useStyleInfo = () => {
     for (const property of styleProperties) {
       // temporary solution until we start computing all styles from data
       const computed = browserStyle?.[property];
+      const htmlValue = htmlStyle?.[property];
       const defaultValue =
-        htmlStyle?.[property] ??
         CUSTOM_DEFAULT_VALUES[property] ??
         properties[property as keyof typeof properties].initial;
       const preset = presetStyle?.[property];
@@ -597,6 +603,7 @@ export const useStyleInfo = () => {
         previousSource?.value ??
         cascaded?.value ??
         preset ??
+        htmlValue ??
         inherited?.value ??
         defaultValue;
       if (value) {
@@ -609,6 +616,7 @@ export const useStyleInfo = () => {
             cascaded,
             inherited,
             preset,
+            htmlValue,
             currentColor: computed,
           };
         } else {
@@ -620,6 +628,7 @@ export const useStyleInfo = () => {
             cascaded,
             inherited,
             preset,
+            htmlValue,
           };
         }
       }
