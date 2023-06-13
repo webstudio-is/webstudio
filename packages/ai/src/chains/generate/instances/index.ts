@@ -1,25 +1,59 @@
-import { parseJsx } from "@builder.io/mitosis";
 import { WsEmbedTemplate } from "@webstudio-is/react-sdk";
 import type { Model as BaseModel } from "../../../models/types";
-import { getCode, mitosisJSONToWsEmbedTemplate } from "../../../post-process";
-import { formatPrompt } from "../../format-prompt";
-import { type Chain, type ChainMessage } from "../../types";
+import { findById } from "../../../utils/find-by-id";
+import { formatPrompt } from "../../../utils/format-prompt";
+import { getCode } from "../../../utils/get-code";
+import { getPalette } from "../../../utils/get-palette";
+import { jsxToWSEmbedTemplate } from "../../../utils/jsx";
+import { traverseTemplate } from "../../../utils/traverse-template";
+import { type Chain, type ChainMessage, type ElementType } from "../../types";
 import { prompt as promptTemplate } from "./__generated__/generate.prompt";
 
 export const create = <ModelMessageFormat>(): Chain<
   BaseModel<ModelMessageFormat>
 > =>
   async function chain({ model, context }) {
-    const { prompts, messages } = context;
+    const { prompts, messages, api, projectId, buildId, instanceId } = context;
 
+    const build = await api.getBuild({ projectId, buildId });
+
+    type InstanceType = ElementType<typeof build.instances>[1];
+    const rootInstance = findById<InstanceType>(build.instances, instanceId);
+
+    if (rootInstance === undefined) {
+      throw new Error("Instance does not exist");
+    }
+
+    // Prepare prompt variables...
     if (prompts.style) {
       prompts.style = `in ${prompts.style.replace(/https?:\/\//, "")} style.`;
     }
+
+    if (prompts.components) {
+      prompts.components = JSON.parse(prompts.components)
+        .map((name: string) => `\t | "${name}"`)
+        .join("\n");
+    }
+
+    prompts.selectedInstance =
+      rootInstance.component === "Body"
+        ? ""
+        : `- The root instance's componens it \`${rootInstance.component}\``;
+
+    const { palette, colorMode } = getPalette(
+      build.styles.map(([name, value]) => value)
+    );
+
+    prompts.palette =
+      palette.join(", ") || "generate an aesthetically pleasing one.";
+    prompts.colorMode = colorMode;
 
     const userMessage: ChainMessage = [
       "user",
       formatPrompt(prompts, promptTemplate),
     ];
+
+    console.log({ userMessage });
 
     const requestMessages = model.generateMessages([...messages, userMessage]);
 
@@ -29,20 +63,12 @@ export const create = <ModelMessageFormat>(): Chain<
 
     const jsx = getCode(response, "jsx");
 
-    const parsed = parseJsx(
-      `export default function App() {\n return ${jsx}\n}`,
-      {
-        typescript: false,
-      }
-    );
-
-    const json = JSON.parse(
-      mitosisJSONToWsEmbedTemplate()({ component: parsed })
-    );
+    const json = jsxToWSEmbedTemplate(jsx);
 
     // @todo if there are Image instances with alt attribute
-    // use the alt to get random images from upslash
-    // https://source.unsplash.com/random/?<query>&w=960
+    // const descriptions = collectDescriptions(json);
+    // const imageUrls = await generateImagesUrls(descriptions);
+    // insertImageUrls(json, descriptions, imageUrls);
 
     try {
       // validate the template

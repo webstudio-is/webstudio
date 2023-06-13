@@ -4,8 +4,13 @@ export const formatPrompt = function getMessage(
 ) {
   let message = template;
   Object.entries(prompts).forEach(([key, value]) => {
-    // @todo escape key
-    message = message.replace(new RegExp(`{${key}}`, "g"), value);
+    if (typeof value === "string") {
+      // @todo escape key
+      message = message.replace(
+        new RegExp(`{${key}}`, "g"),
+        value.replace(/`/g, "\\`")
+      );
+    }
   });
   return message;
 };

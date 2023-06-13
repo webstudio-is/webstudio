@@ -6,9 +6,11 @@ import {
 } from "@webstudio-is/react-sdk";
 import vm from "node:vm";
 import type { Model as BaseModel } from "../../../models/types";
-import { getCode } from "../../../post-process";
-import { formatPrompt } from "../../format-prompt";
-import { type Chain, type ChainMessage } from "../../types";
+import { findById } from "../../../utils/find-by-id";
+import { formatPrompt } from "../../../utils/format-prompt";
+import { getCode } from "../../../utils/get-code";
+import { getPalette } from "../../../utils/get-palette";
+import { type Chain, type ChainMessage, type ElementType } from "../../types";
 import { prompt as promptTemplate } from "./__generated__/tweak.prompt";
 import { examples, wrapExample } from "./examples";
 
@@ -20,12 +22,42 @@ export const create = <ModelMessageFormat>(): Chain<
 
     const build = await api.getBuild({ projectId, buildId });
 
+    type InstanceType = ElementType<typeof build.instances>[1];
+    const rootInstance = findById<InstanceType>(build.instances, instanceId);
+
+    if (rootInstance === undefined) {
+      throw new Error("Instance does not exist");
+    }
+
     const template = toTeamplate({ build, instanceId });
+
+    console.log({ template });
+
+    // Prepare prompt variables...
+    if (prompts.components) {
+      prompts.components = JSON.parse(prompts.components)
+        .map((name: string) => `| "${name}"`)
+        .join("\n");
+    }
+
+    prompts.selectedInstance =
+      rootInstance.component === "Body"
+        ? ""
+        : `- The root instance's componens it \`${rootInstance.component}\``;
+
+    const { palette, colorMode } = getPalette(
+      build.styles.map(([name, value]) => value)
+    );
+
+    prompts.palette = palette.join(", ") || `come up with an awesome one!`;
+    prompts.colorMode = colorMode;
 
     const userMessage: ChainMessage = [
       "user",
       formatPrompt(prompts, promptTemplate),
     ];
+
+    // console.log({ userMessage });
 
     const examplesMessages: ChainMessage[] = [
       ["user", "Here are some examples:"],
@@ -90,8 +122,6 @@ export const create = <ModelMessageFormat>(): Chain<
     };
   };
 
-type ElementType<T> = T extends (infer U)[] ? U : never;
-
 const toTeamplate = function toTeamplate({
   build,
   instanceId,
@@ -151,6 +181,14 @@ const toTeamplate = function toTeamplate({
       templateInstance.styles = styles;
     }
 
+    templateInstance.props = build.props
+      .filter(
+        ([id, prop]) =>
+          prop.instanceId === instanceId &&
+          false === ["asset", "page"].includes(prop.type)
+      )
+      .map(([id, { type, name, value }]) => ({ type, name, value }));
+
     templateInstance.children = instance.children.flatMap((child) => {
       if (child.type === "text") {
         return child;
@@ -166,12 +204,4 @@ const toTeamplate = function toTeamplate({
   };
 
   return processInstances(rootInstance, []);
-};
-
-const findById = function findById<SourceType>(
-  source: [string, SourceType][],
-  searchId: string
-) {
-  const found = source.find(([id]) => id === searchId);
-  return found ? found[1] : undefined;
 };

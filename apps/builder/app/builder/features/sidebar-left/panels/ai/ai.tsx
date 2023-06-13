@@ -19,7 +19,7 @@ import {
 } from "~/shared/nano-states";
 
 import { EyeconOpenIcon } from "@webstudio-is/icons";
-import { useState } from "react";
+import { useMemo, useState } from "react";
 import type { Publish } from "~/shared/pubsub";
 import { aiGenerationPath } from "~/shared/router-utils";
 import { CloseButton, Header } from "../../header";
@@ -31,6 +31,7 @@ import {
   type WsEmbedTemplate,
 } from "@webstudio-is/react-sdk";
 
+import { useStore } from "@nanostores/react";
 import {
   deleteInstance,
   findClosestDroppableTarget,
@@ -208,12 +209,6 @@ export const TabContent = ({ publish, onSetActiveTab }: TabContentProps) => {
 
     const responses: AIGenerationResponses = [];
 
-    // if (isEdit) {
-    //   (responses: AIEditTweakResponseType[] = [])
-    // } else {
-    //   (responses: AIGenerationResponseType[] = [])
-    // }
-
     for (let i = 0; i < steps.length; ) {
       const step = steps[i];
 
@@ -297,6 +292,15 @@ export const TabContent = ({ publish, onSetActiveTab }: TabContentProps) => {
     });
   };
 
+  const metas = useStore(registeredComponentMetasStore);
+
+  const components = useMemo(() => {
+    const exclude = ["Body", "Slot"];
+    return JSON.stringify(
+      [...metas.keys()].filter((name) => !exclude.includes(name))
+    );
+  }, [metas]);
+
   return (
     <>
       <Flex css={{ height: "100%", flexDirection: "column" }}>
@@ -325,6 +329,7 @@ export const TabContent = ({ publish, onSetActiveTab }: TabContentProps) => {
               id="ai-prompt-style"
               disabled={aiGenerationState.state !== "idle"}
             />
+            <input type="hidden" name="components" value={components} />
             <Box css={{ display: "flex", gap: theme.spacing[2] }}>
               <Button
                 css={{ width: "100%" }}

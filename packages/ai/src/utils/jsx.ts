@@ -1,25 +1,22 @@
-import { type MitosisComponent, type MitosisNode } from "@builder.io/mitosis";
-import { fromMarkdown as parseMarkdown } from "mdast-util-from-markdown";
-import { visit } from "unist-util-visit";
+import {
+  parseJsx,
+  type MitosisComponent,
+  type MitosisNode,
+} from "@builder.io/mitosis";
+import type { PropsList } from "@webstudio-is/project-build";
+import type { WsEmbedTemplate } from "@webstudio-is/react-sdk";
 
-export const getCode = function getCode(response: string, lang: string) {
-  const tree = parseMarkdown(response);
-  let code = response;
-  const codeBlocks: string[] = [];
-
-  visit(tree, "code", (node) => {
-    if (node.lang === lang) {
-      codeBlocks.unshift(node.value.trim());
-    } else if (!node.lang) {
-      codeBlocks.push(node.value.trim());
+export const jsxToWSEmbedTemplate = (jsx: string) => {
+  const parsed = parseJsx(
+    `export default function App() {\n return ${jsx}\n}`,
+    {
+      typescript: false,
     }
-  });
+  );
 
-  if (codeBlocks.length > 0) {
-    code = codeBlocks[0];
-  }
-
-  return code;
+  return JSON.parse(
+    mitosisJSONToWsEmbedTemplate()({ component: parsed })
+  ) as WsEmbedTemplate;
 };
 
 type ProcessedValue = ReturnType<typeof processValue>;
@@ -64,12 +61,14 @@ const processValue = function processValue(value: MitosisNode) {
   const type = value["@type"];
 
   if (type === "@builder.io/mitosis/node") {
+    const { class: className, ...props } = value.properties;
     return {
       type: "instance",
       component: value.name === "div" ? "Box" : value.name,
+      props: getProps(props),
       styles:
-        typeof value.properties.class === "string"
-          ? value.properties.class.split(" ").map((name) => ({
+        typeof className === "string"
+          ? className.split(" ").map((name) => ({
               property: name,
               value: {
                 type: "invalid",
@@ -82,4 +81,14 @@ const processValue = function processValue(value: MitosisNode) {
   }
 
   return value;
+};
+
+const getProps = function getProps(props: MitosisNode["properties"]) {
+  const p: PropsList = [];
+  Object.entries(props).forEach(([prop, value]) => {
+    if (prop === "alt") {
+      p.push({ type: "string", name: "alt", value });
+    }
+  });
+  return p;
 };

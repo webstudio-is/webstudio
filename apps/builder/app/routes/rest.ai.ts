@@ -26,7 +26,8 @@ const RequestSchema = zfd.formData(
   z.intersection(
     z.object({
       prompt: zfd.text(z.string().max(1380)),
-      style: zfd.text(z.string().optional()).optional(),
+      style: zfd.text(z.string().max(140).optional()).optional(),
+      components: zfd.text(z.string().optional()).optional(),
       messages: zfd.repeatableOfType(zfd.text()).optional(),
       instanceId: zfd.text(),
       projectId: zfd.text(),
@@ -86,7 +87,7 @@ export const action = async ({ request }: ActionArgs) => {
     apiKey: env.OPENAI_KEY,
     organization: env.OPENAI_ORG,
     temperature: 0,
-    model: "gpt-3.5-turbo",
+    model: "gpt-3.5-turbo-0613",
   });
 
   // @todo 1. Revisit this because technically every Chain could use a different Model
@@ -116,7 +117,11 @@ export const action = async ({ request }: ActionArgs) => {
         return build;
       },
     },
-    prompts: { request: formData.prompt, style: formData.style || "" },
+    prompts: {
+      request: formData.prompt,
+      style: formData.style || "",
+      components: formData.components || "",
+    },
     messages: (formData.messages || []).map((message) => JSON.parse(message)),
     projectId: formData.projectId,
     buildId: formData.buildId,
