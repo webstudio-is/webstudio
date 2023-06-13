@@ -29,37 +29,44 @@ import { humanizeString } from "~/shared/string-utils";
 import { StyleSourceBadge } from "../style-source";
 import type { StyleSource, StyleSources } from "@webstudio-is/project-build";
 
+// We don't return source name only in case of preset or default value.
 const getSourceName = (
   styleSources: StyleSources,
   styleValueInfo: StyleValueInfo,
   selectedStyleSource?: StyleSource
 ) => {
+  if (styleValueInfo.nextSource) {
+    const { styleSourceId } = styleValueInfo.nextSource;
+    const styleSource = styleSources.get(styleSourceId);
+    if (styleSource?.type === "local") {
+      return "Local";
+    }
+    if (styleSource?.type === "token") {
+      return styleSource.name;
+    }
+  }
+
   if (styleValueInfo.local) {
     return selectedStyleSource?.type === "token"
       ? selectedStyleSource.name
       : "Local";
   }
 
-  if (styleValueInfo.nextSource) {
-    const { styleSourceId } = styleValueInfo.nextSource;
+  if (styleValueInfo.previousSource) {
+    const { styleSourceId } = styleValueInfo.previousSource;
     const styleSource = styleSources.get(styleSourceId);
     if (styleSource?.type === "local") {
-      return "local";
+      return "Local";
     }
     if (styleSource?.type === "token") {
       return styleSource.name;
     }
   }
 
-  if (styleValueInfo.previousSource) {
-    const { styleSourceId } = styleValueInfo.previousSource;
-    const styleSource = styleSources.get(styleSourceId);
-    if (styleSource?.type === "local") {
-      return "local";
-    }
-    if (styleSource?.type === "token") {
-      return styleSource.name;
-    }
+  if (styleValueInfo.cascaded) {
+    return selectedStyleSource?.type === "token"
+      ? selectedStyleSource.name
+      : "Local";
   }
 };
 
@@ -124,9 +131,10 @@ const TooltipContent = ({
     const { breakpointId } = styleValueInfo.cascaded;
     breakpoint = breakpoints.get(breakpointId);
   }
+
   const breakpointName = breakpoint?.minWidth ?? breakpoint?.maxWidth ?? "Base";
 
-  if (styleValueInfo?.inherited && styleValueInfo.preset === undefined) {
+  if (styleValueInfo.inherited && styleValueInfo.local === undefined) {
     instance = instances.get(styleValueInfo.inherited.instanceId);
   }
 
@@ -150,26 +158,28 @@ const TooltipContent = ({
         </ScrollArea>
       )}
       {description && <Text>{description}</Text>}
-      <Flex
-        direction="column"
-        gap="1"
-        css={{ paddingBottom: theme.spacing[5] }}
-      >
-        <Text color="moreSubtle">Value comes from</Text>
-        <Flex gap="1" wrap="wrap">
-          <StyleSourceBadge source="breakpoint" variant="small">
-            {breakpointName}
-          </StyleSourceBadge>
-          <StyleSourceBadge source="token" variant="small">
-            {sourceName}
-          </StyleSourceBadge>
-          {instance && (
-            <StyleSourceBadge source="instance" variant="small">
-              {instance.label || instance.component}
+      {sourceName && (
+        <Flex
+          direction="column"
+          gap="1"
+          css={{ paddingBottom: theme.spacing[5] }}
+        >
+          <Text color="moreSubtle">Value comes from</Text>
+          <Flex gap="1" wrap="wrap">
+            <StyleSourceBadge source="breakpoint" variant="small">
+              {breakpointName}
             </StyleSourceBadge>
-          )}
+            <StyleSourceBadge source="token" variant="small">
+              {sourceName}
+            </StyleSourceBadge>
+            {instance && (
+              <StyleSourceBadge source="instance" variant="small">
+                {instance.label || instance.component}
+              </StyleSourceBadge>
+            )}
+          </Flex>
         </Flex>
-      </Flex>
+      )}
       {(styleSource === "local" || styleSource === "overwritten") && (
         <Button
           color="dark"
