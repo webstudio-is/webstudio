@@ -1,0 +1,97 @@
+diff --git a/index.d.ts b/index.d.ts
+index e6a09d2756a7d942d7dbf2d6b9437deb06e8eb31..46120815179b6176100a045a599b92ecaa6be89c 100755
+--- a/index.d.ts
++++ b/index.d.ts
+@@ -546,48 +546,7 @@ export interface WalkOptionsVisit<NodeType extends CssNode = CssNode> {
+     reverse?: boolean | undefined;
+ }
+ 
+-export type WalkOptions =
+-    WalkOptionsVisit<AnPlusB>
+-    | WalkOptionsVisit<Atrule>
+-    | WalkOptionsVisit<AtrulePrelude>
+-    | WalkOptionsVisit<AttributeSelector>
+-    | WalkOptionsVisit<Block>
+-    | WalkOptionsVisit<Brackets>
+-    | WalkOptionsVisit<CDC>
+-    | WalkOptionsVisit<CDO>
+-    | WalkOptionsVisit<ClassSelector>
+-    | WalkOptionsVisit<Combinator>
+-    | WalkOptionsVisit<Comment>
+-    | WalkOptionsVisit<Declaration>
+-    | WalkOptionsVisit<DeclarationList>
+-    | WalkOptionsVisit<Dimension>
+-    | WalkOptionsVisit<FunctionNode>
+-    | WalkOptionsVisit<Hash>
+-    | WalkOptionsVisit<IdSelector>
+-    | WalkOptionsVisit<Identifier>
+-    | WalkOptionsVisit<MediaFeature>
+-    | WalkOptionsVisit<MediaQuery>
+-    | WalkOptionsVisit<MediaQueryList>
+-    | WalkOptionsVisit<Nth>
+-    | WalkOptionsVisit<NumberNode>
+-    | WalkOptionsVisit<Operator>
+-    | WalkOptionsVisit<Parentheses>
+-    | WalkOptionsVisit<Percentage>
+-    | WalkOptionsVisit<PseudoClassSelector>
+-    | WalkOptionsVisit<PseudoElementSelector>
+-    | WalkOptionsVisit<Ratio>
+-    | WalkOptionsVisit<Raw>
+-    | WalkOptionsVisit<Rule>
+-    | WalkOptionsVisit<Selector>
+-    | WalkOptionsVisit<SelectorList>
+-    | WalkOptionsVisit<StringNode>
+-    | WalkOptionsVisit<StyleSheet>
+-    | WalkOptionsVisit<TypeSelector>
+-    | WalkOptionsVisit<UnicodeRange>
+-    | WalkOptionsVisit<Url>
+-    | WalkOptionsVisit<Value>
+-    | WalkOptionsVisit<WhiteSpace>
+-    | WalkOptionsNoVisit;
++export type WalkOptions = WalkOptionsNoVisit;
+ 
+ export function walk(ast: CssNode, options: EnterOrLeaveFn | WalkOptions): void;
+ 
+@@ -851,9 +810,30 @@ export class SyntaxReferenceError extends SyntaxError {
+     reference: string;
+ }
+ 
+-export interface LexerMatchResult {
+-    error: Error | SyntaxMatchError | SyntaxReferenceError | null;
+-}
++type Match =
++  | {
++      syntax: DSNodeProperty;
++      match: Match[];
++    }
++  | {
++      syntax: DSNodeType;
++      match: Match[];
++    }
++  | {
++      syntax: DSNodeKeyword;
++      token: string;
++    }
++  | { syntax: null };
++
++export type LexerMatchResult =
++  | {
++      matched: null;
++      error: Error | SyntaxMatchError | SyntaxReferenceError;
++    }
++  | {
++      matched: Match;
++      error: null;
++    };
+ 
+ export class Lexer {
+     matchAtruleDescriptor(atruleName: string, descriptorName: string, value: CssNode | string): LexerMatchResult;
+@@ -864,6 +844,8 @@ export class Lexer {
+     match(syntax: DSNode | string, value: CssNode | string): LexerMatchResult;
+ }
+ 
++export declare const lexer: Lexer;
++
+ export function fork(extension: {
+     atrules?: Record<string, string> | undefined,
+     properties?: Record<string, string> | undefined,
