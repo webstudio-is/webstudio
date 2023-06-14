@@ -66,7 +66,6 @@ export const BreakpointsSelector = ({
         value={selectedBreakpoint.id}
         onValueChange={(breakpointId: string) => {
           if (!breakpoints.has(breakpointId)) {
-            // Return if the provided breakpoint id is not available in the store
             return;
           }
           selectedBreakpointIdStore.set(breakpointId);
