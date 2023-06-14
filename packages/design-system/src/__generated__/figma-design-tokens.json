@@ -634,8 +634,8 @@
             "value": "linear-gradient(90deg, #d5411300 0%, #d54113 31.87%)",
             "type": "color"
           },
-          "state": {
-            "value": "linear-gradient(90deg, #00894a00 0%, #00894a 31.87%)",
+          "unselected": {
+            "value": "linear-gradient(90deg, #68707600 0%, #687076 31.87%)",
             "type": "color"
           }
         },
