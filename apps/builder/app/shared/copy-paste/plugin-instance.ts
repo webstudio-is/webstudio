@@ -19,7 +19,6 @@ import {
   instancesStore,
   selectedPageStore,
   breakpointsStore,
-  selectedStyleSourceSelectorStore,
   assetsStore,
   projectStore,
   registeredComponentMetasStore,
