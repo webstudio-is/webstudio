@@ -65,6 +65,11 @@ export const BreakpointsSelector = ({
         type="single"
         value={selectedBreakpoint.id}
         onValueChange={(breakpointId: string) => {
+          // onValueChange gives empty string when unselected
+          // which is not part of breakpoints so do nothing in this case
+          if (breakpoints.has(breakpointId) === false) {
+            return;
+          }
           selectedBreakpointIdStore.set(breakpointId);
           setInitialCanvasWidth(breakpointId);
         }}
