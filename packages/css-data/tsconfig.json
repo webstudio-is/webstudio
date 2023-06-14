@@ -1,9 +1,3 @@
 {
-  "extends": "@webstudio-is/tsconfig/base.json",
-  "include": ["src", "bin"],
-  "compilerOptions": {
-    "module": "ES2020",
-    "target": "ES2020",
-    "outDir": "./lib"
-  }
+  "extends": "@webstudio-is/tsconfig/base.json"
 }

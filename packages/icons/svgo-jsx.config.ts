@@ -2,7 +2,7 @@ import * as fs from "fs/promises";
 import * as path from "path";
 import type { Config } from "@svgo/jsx";
 
-const template = ({
+const template: Config["template"] = ({
   sourceFile,
   componentName,
   jsx,

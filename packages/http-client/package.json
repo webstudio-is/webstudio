@@ -8,7 +8,7 @@
   "scripts": {
     "dev": "build-package --watch",
     "build": "build-package",
-    "dts": "tsc --declarationDir lib/types",
+    "dts": "tsc --project tsconfig.dts.json",
     "test": "NODE_OPTIONS=--experimental-vm-modules jest",
     "typecheck": "tsc --noEmit --emitDeclarationOnly false",
     "lint": "eslint ./src --ext .ts,.tsx --max-warnings 0",

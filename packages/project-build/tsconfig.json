@@ -1,8 +1,3 @@
 {
-  "extends": "@webstudio-is/tsconfig/base.json",
-  "include": ["src"],
-  "compilerOptions": {
-    "module": "ES2020",
-    "target": "ES2020"
-  }
+  "extends": "@webstudio-is/tsconfig/base.json"
 }
