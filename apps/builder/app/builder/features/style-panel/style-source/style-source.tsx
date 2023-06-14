@@ -25,6 +25,7 @@ const menuTriggerVisibilityVar = cssVars.define("menu-trigger-visibility");
 const menuTriggerVisibilityOverrideVar = cssVars.define(
   "menu-trigger-visibility-override"
 );
+const menuTriggerGradientVar = cssVars.define("menu-trigger-gradient");
 
 export const menuCssVars = ({
   show,
@@ -60,25 +61,9 @@ const MenuTrigger = styled("button", {
     menuTriggerVisibilityOverrideVar,
     cssVars.use(menuTriggerVisibilityVar)
   ),
-  background: "transparent",
-  variants: {
-    source: {
-      local: {
-        "&:hover": {
-          background: theme.colors.backgroundButtonHover,
-        },
-      },
-      token: {
-        "&:hover": {
-          background: theme.colors.backgroundButtonHover,
-        },
-      },
-      tag: {
-        "&:hover": {
-          background: theme.colors.backgroundButtonHover,
-        },
-      },
-    },
+  background: theme.colors.backgroundButtonHover,
+  "&:hover, &[data-state=open]": {
+    ...menuCssVars({ show: true }),
   },
 });
 
@@ -92,36 +77,23 @@ const MenuTriggerGradient = styled(Box, {
     menuTriggerVisibilityOverrideVar,
     cssVars.use(menuTriggerVisibilityVar)
   ),
+  background: cssVars.use(menuTriggerGradientVar),
   borderTopRightRadius: theme.borderRadius[4],
   borderBottomRightRadius: theme.borderRadius[4],
   pointerEvents: "none",
-  variants: {
-    source: {
-      local: {
-        background: theme.colors.backgroundStyleSourceGradientToken,
-      },
-      token: {
-        background: theme.colors.backgroundStyleSourceGradientToken,
-      },
-      tag: {
-        background: theme.colors.backgroundStyleSourceGradientTag,
-      },
-    },
-  },
 });
 
 type MenuProps = {
-  source: ItemSource;
   children: ReactNode;
 };
 
 const Menu = (props: MenuProps) => {
   return (
     <DropdownMenu modal>
-      <MenuTriggerGradient source={props.source} />
       <DropdownMenuTrigger asChild>
-        <MenuTrigger aria-label="Menu Button" source={props.source}>
-          <ChevronDownIcon />
+        <MenuTrigger aria-label="Menu Button">
+          <MenuTriggerGradient />
+          <ChevronDownIcon style={{ position: "relative" }} />
         </MenuTrigger>
       </DropdownMenuTrigger>
       <DropdownMenuPortal>
@@ -282,12 +254,17 @@ const StyleSourceContainer = styled(Box, {
     source: {
       local: {
         backgroundColor: theme.colors.backgroundStyleSourceToken,
+        [menuTriggerGradientVar]:
+          theme.colors.backgroundStyleSourceGradientToken,
       },
       token: {
         backgroundColor: theme.colors.backgroundStyleSourceToken,
+        [menuTriggerGradientVar]:
+          theme.colors.backgroundStyleSourceGradientToken,
       },
       tag: {
         backgroundColor: theme.colors.backgroundStyleSourceTag,
+        [menuTriggerGradientVar]: theme.colors.backgroundStyleSourceGradientTag,
       },
     },
     selected: {
@@ -295,6 +272,8 @@ const StyleSourceContainer = styled(Box, {
       false: {
         "&:not(:hover)": {
           backgroundColor: theme.colors.backgroundStyleSourceNeutral,
+          [menuTriggerGradientVar]:
+            theme.colors.backgroundStyleSourceGradientUnselected,
         },
       },
     },
@@ -397,7 +376,7 @@ export const StyleSource = ({
       {stateLabel !== undefined && (
         <StyleSourceState>{stateLabel}</StyleSourceState>
       )}
-      {showMenu && <Menu source={source}>{menuItems}</Menu>}
+      {showMenu && <Menu>{menuItems}</Menu>}
     </StyleSourceContainer>
   );
 };
