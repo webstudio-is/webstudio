@@ -19,7 +19,6 @@ import {
   instancesStore,
   selectedPageStore,
   breakpointsStore,
-  selectedStyleSourceSelectorStore,
   assetsStore,
   projectStore,
   registeredComponentMetasStore,
@@ -314,14 +313,6 @@ export const onPaste = (clipboardData: string) => {
         copiedStyleSourceIds,
         mergedBreakpointIds
       );
-
-      // first item is guaranteed root of copied tree
-      const copiedRootInstanceId = Array.from(copiedInstanceIds.values())[0];
-      selectedInstanceSelectorStore.set([
-        copiedRootInstanceId,
-        ...instanceSelector,
-      ]);
-      selectedStyleSourceSelectorStore.set(undefined);
     }
   );
 };
