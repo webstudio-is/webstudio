@@ -327,6 +327,20 @@ const Publish = ({
   );
 };
 
+const ErrorText = ({ children }: { children: string }) => (
+  <Flex
+    css={{
+      m: theme.spacing[9],
+      overflowWrap: "anywhere",
+    }}
+    gap={2}
+    direction={"column"}
+  >
+    <Text color="destructive">{children}</Text>
+    <Text color="subtle">Please try again later</Text>
+  </Flex>
+);
+
 const Content = (props: { projectId: Project["id"] }) => {
   const [newDomains, setNewDomains] = useState(new Set<string>());
   const {
@@ -390,17 +404,7 @@ const Content = (props: { projectId: Project["id"] }) => {
     <>
       <ScrollArea>
         {projectSystemError !== undefined && (
-          <Flex
-            css={{
-              m: theme.spacing[9],
-              overflowWrap: "anywhere",
-            }}
-            gap={2}
-            direction={"column"}
-          >
-            <Text color="destructive">{projectSystemError}</Text>
-            <Text color="subtle">Please try again later</Text>
-          </Flex>
+          <ErrorText>{projectSystemError}</ErrorText>
         )}
 
         {projectData?.success && (
@@ -412,10 +416,6 @@ const Content = (props: { projectId: Project["id"] }) => {
           />
         )}
 
-        {domainSystemError !== undefined && (
-          <Text color="destructive">{domainSystemError}</Text>
-        )}
-
         {domainsResult?.success === true && (
           <Domains
             newDomains={newDomains}
@@ -425,15 +425,13 @@ const Content = (props: { projectId: Project["id"] }) => {
             isPublishing={isPublishing}
           />
         )}
+
+        {domainSystemError !== undefined && (
+          <ErrorText>{domainSystemError}</ErrorText>
+        )}
+
         {domainsResult?.success === false && (
-          <Label
-            css={{
-              overflowWrap: "anywhere",
-              color: theme.colors.foregroundDestructive,
-            }}
-          >
-            <div>{domainsResult.error}</div>
-          </Label>
+          <ErrorText>{domainsResult.error}</ErrorText>
         )}
       </ScrollArea>
 
