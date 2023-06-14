@@ -8,7 +8,7 @@
   "scripts": {
     "dev": "build-package --watch",
     "build": "build-package",
-    "dts": "tsc --declarationDir lib/types",
+    "dts": "tsc --project tsconfig.dts.json",
     "generate": "rm -fr src/__generated__ && NODE_OPTIONS='--loader=tsx' svgo-jsx svgo-jsx.config.ts && tsx svg-string.ts",
     "typecheck": "tsc --noEmit --emitDeclarationOnly false",
     "lint": "eslint ./src --ext .ts,.tsx --max-warnings 0",

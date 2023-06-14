@@ -32,7 +32,7 @@
     "checks": "pnpm typecheck && pnpm lint && pnpm test",
     "dev": "build-package --watch",
     "build": "build-package",
-    "dts": "tsc --declarationDir lib/types"
+    "dts": "tsc --project tsconfig.dts.json"
   },
   "dependencies": {
     "@webstudio-is/css-data": "workspace:^",

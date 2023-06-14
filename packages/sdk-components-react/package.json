@@ -36,7 +36,7 @@
     "dev": "build-package --watch",
     "build": "build-package",
     "build:args": "generate-arg-types './src/*.tsx !./src/*.stories.tsx !./src/*.ws.tsx' && prettier --write \"**/*.props.ts\"",
-    "dts": "tsc --declarationDir lib/types",
+    "dts": "tsc --project tsconfig.dts.json",
     "typecheck": "tsc --noEmit --emitDeclarationOnly false",
     "lint": "eslint ./src --ext .ts,.tsx --max-warnings 0",
     "checks": "pnpm typecheck && pnpm lint",

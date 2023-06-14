@@ -1,15 +1,4 @@
 {
   "extends": "@webstudio-is/tsconfig/base.json",
-  "include": [
-    "./src",
-    "./src/**/__generated__/*.json",
-    "../../@types/**/*.d.ts"
-  ],
-  "compilerOptions": {
-    "lib": ["DOM", "DOM.Iterable", "ES2020"],
-    "module": "ES2020",
-    "target": "ES2020",
-    "outDir": "./lib",
-    "rootDir": "./src"
-  }
+  "include": ["./", "../../@types/**/*.d.ts"]
 }

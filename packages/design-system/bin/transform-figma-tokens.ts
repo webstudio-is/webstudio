@@ -173,7 +173,7 @@ const printFontWeight = (path: string[], unparsedValue: unknown) => {
 
 const printFontFamily = (path: string[], unparsedValue: unknown) => {
   const value = parse(path, unparsedValue, FontFamilySchema);
-  return fontFamilyMapping[value] || value;
+  return fontFamilyMapping[value as keyof typeof fontFamilyMapping] || value;
 };
 
 const printFontSize = (path: string[], unparsedValue: unknown) => {
@@ -300,7 +300,9 @@ const main = () => {
     // no need to check for __proto__ (prototype polution)
     // because we know pathToName returns a string without "_"
     record[pathToName(path, type)] =
-      type in printerByType ? printerByType[type](path, value) : value;
+      type in printerByType
+        ? printerByType[type as keyof typeof printerByType](path, value)
+        : value;
   });
 
   writeFileSync(
