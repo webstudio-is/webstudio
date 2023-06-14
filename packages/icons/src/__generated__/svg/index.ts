@@ -90,6 +90,7 @@ export { LinkIcon } from "./link";
 export { ListItemIcon } from "./list-item";
 export { ListIcon } from "./list";
 export { LoadingAnimatedIcon } from "./loading-animated";
+export { LoadingColorfulAnimatedIcon } from "./loading-colorful-animated";
 export { LoadingDotsIcon } from "./loading-dots";
 export { MenuEllipsesIcon } from "./menu-ellipses";
 export { MinusIcon } from "./minus";

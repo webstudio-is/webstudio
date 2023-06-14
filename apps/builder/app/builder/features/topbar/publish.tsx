@@ -40,7 +40,7 @@ import { createTrpcFetchProxy } from "~/shared/remix/trpc-remix-proxy";
 import { builderDomainsPath } from "~/shared/router-utils";
 import type { DomainRouter } from "@webstudio-is/domain/index.server";
 import { AddDomain } from "./add-domain";
-import { LoadingAnimatedIcon } from "@webstudio-is/icons";
+import { LoadingColorfulAnimatedIcon } from "@webstudio-is/icons";
 
 const trpc = createTrpcFetchProxy<DomainRouter>(builderDomainsPath);
 
@@ -301,7 +301,9 @@ const Publish = ({
         <Button
           color="positive"
           disabled={isPublishInProgress}
-          prefix={isPublishInProgress && <LoadingAnimatedIcon />}
+          prefix={
+            isPublishInProgress && <LoadingColorfulAnimatedIcon size={32} />
+          }
           onClick={() => {
             setIsPublishing(true);
 

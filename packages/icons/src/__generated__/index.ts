@@ -90,6 +90,7 @@ export * from "./link";
 export * from "./list-item";
 export * from "./list";
 export * from "./loading-animated";
+export * from "./loading-colorful-animated";
 export * from "./loading-dots";
 export * from "./menu-ellipses";
 export * from "./minus";
