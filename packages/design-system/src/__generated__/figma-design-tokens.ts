@@ -381,8 +381,8 @@ export const color = {
     "linear-gradient(90deg, #096cff00 0%, #096cff 31.87%)",
   backgroundStyleSourceGradientTag:
     "linear-gradient(90deg, #d5411300 0%, #d54113 31.87%)",
-  backgroundStyleSourceGradientState:
-    "linear-gradient(90deg, #00894a00 0%, #00894a 31.87%)",
+  backgroundStyleSourceGradientUnselected:
+    "linear-gradient(90deg, #68707600 0%, #687076 31.87%)",
   backgroundStyleSourceBreakpoint: "#bd2fdb",
   backgroundCanvas: "#c7c7c7",
   backgroundTopbar: "#2d2d2d",
