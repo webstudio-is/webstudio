@@ -120,40 +120,61 @@ const getBreakpointName = (
   return breakpoint?.minWidth ?? breakpoint?.maxWidth ?? "Base";
 };
 
+const getStyleValue = (styleValueInfo: undefined | StyleValueInfo) => {
+  return (
+    styleValueInfo?.local ??
+    styleValueInfo?.nextSource?.value ??
+    styleValueInfo?.previousSource?.value ??
+    styleValueInfo?.cascaded?.value ??
+    styleValueInfo?.preset ??
+    styleValueInfo?.htmlValue ??
+    styleValueInfo?.inherited?.value
+  );
+};
+
 const getDescription = (
-  styleValueInfo: StyleValueInfo,
-  properties: readonly StyleProperty[]
+  properties: readonly StyleProperty[],
+  shorthandProperty: undefined | string,
+  instanceStyle: StyleInfo
 ) => {
-  // @todo we don't know how to show a description in this case
+  if (shorthandProperty !== undefined) {
+    const styleValues = properties.map((property) =>
+      toValue(getStyleValue(instanceStyle[property]))
+    );
+    const declarationKey =
+      `${shorthandProperty}:${styleValues.join()}` as keyof typeof declarationDescriptions;
+    const propertyKey = shorthandProperty as keyof typeof propertyDescriptions;
+    const description =
+      declarationDescriptions[declarationKey] ??
+      propertyDescriptions[propertyKey];
+    if (description !== undefined) {
+      return description;
+    }
+  }
   if (properties.length > 1) {
     return;
   }
-  // @todo reuse it with CssPreview
-  const styleValue =
-    styleValueInfo.local ??
-    styleValueInfo.nextSource?.value ??
-    styleValueInfo.previousSource?.value ??
-    styleValueInfo.cascaded?.value ??
-    styleValueInfo.preset ??
-    styleValueInfo.inherited?.value;
-
-  const property = properties[0];
-  const key = `${property}:${toValue(styleValue)}`;
-  if (key in declarationDescriptions) {
-    return declarationDescriptions[key as keyof typeof declarationDescriptions];
-  }
-  return propertyDescriptions[property as keyof typeof propertyDescriptions];
+  const propertyKey = properties[0] as keyof typeof propertyDescriptions;
+  const styleValueInfo = instanceStyle[properties[0] as keyof StyleInfo];
+  const styleValue = toValue(getStyleValue(styleValueInfo));
+  const declarationKey =
+    `${properties[0]}:${styleValue}` as keyof typeof declarationDescriptions;
+  return (
+    declarationDescriptions[declarationKey] ?? propertyDescriptions[propertyKey]
+  );
 };
 
 const TooltipContent = ({
   title,
   properties,
+  shorthandProperty,
   style,
   onReset,
   onClose,
 }: {
   title: string;
   properties: readonly StyleProperty[];
+  shorthandProperty?: string;
   style: StyleInfo;
   onReset: () => void;
   onClose: () => void;
@@ -172,7 +193,7 @@ const TooltipContent = ({
     return null;
   }
 
-  const description = getDescription(styleValueInfo, properties);
+  const description = getDescription(properties, shorthandProperty, style);
 
   const styleSource = getStyleSource(styleValueInfo);
   const sourceName = getSourceName(
@@ -257,6 +278,7 @@ const TooltipContent = ({
 type PropertyNameProps = {
   style: StyleInfo;
   properties: readonly StyleProperty[];
+  shorthandProperty?: string;
   label: string | ReactElement;
   title?: string;
   onReset: () => void;
@@ -266,6 +288,7 @@ export const PropertyName = ({
   style,
   title,
   properties,
+  shorthandProperty,
   label,
   onReset,
 }: PropertyNameProps) => {
@@ -285,6 +308,7 @@ export const PropertyName = ({
               (typeof label === "string" ? label : humanizeString(property))
             }
             properties={properties}
+            shorthandProperty={shorthandProperty}
             style={style}
             onReset={onReset}
             onClose={() => {

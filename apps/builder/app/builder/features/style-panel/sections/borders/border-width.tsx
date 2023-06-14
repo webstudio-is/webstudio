@@ -39,6 +39,7 @@ export const BorderWidth = (
       createBatchUpdate={props.createBatchUpdate}
       label="Width"
       borderPropertyOptions={borderPropertyOptions}
+      shorthandProperty="borderWidth"
       individualModeIcon={<BorderWidthIndividualIcon />}
     />
   );

@@ -29,6 +29,7 @@ export const BorderProperty = ({
   createBatchUpdate,
   individualModeIcon,
   borderPropertyOptions,
+  shorthandProperty,
   label,
 }: Pick<
   RenderCategoryProps,
@@ -38,6 +39,7 @@ export const BorderProperty = ({
   borderPropertyOptions: Partial<{
     [property in StyleProperty]: { icon?: ReactNode };
   }>;
+  shorthandProperty?: string;
   label: string;
 }) => {
   const borderProperties = Object.keys(borderPropertyOptions) as Array<
@@ -116,6 +118,7 @@ export const BorderProperty = ({
         <PropertyName
           style={currentStyle}
           properties={borderProperties}
+          shorthandProperty={shorthandProperty}
           label={label}
           onReset={() => deleteBorderProperties(firstPropertyName)}
         />

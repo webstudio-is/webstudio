@@ -108,6 +108,7 @@ const FlexChildSectionSizing = (props: RenderCategoryProps) => {
       <PropertyName
         style={currentStyle}
         properties={["flexGrow", "flexShrink"]}
+        shorthandProperty="sizing"
         label="Sizing"
         onReset={() => {
           setSizing.deleteProperty("flexGrow");
@@ -123,20 +124,44 @@ const FlexChildSectionSizing = (props: RenderCategoryProps) => {
         onValueChange={(value) => {
           switch (value) {
             case "none": {
-              setSizing.setProperty("flexGrow")("0");
-              setSizing.setProperty("flexShrink")("0");
+              setSizing.setProperty("flexGrow")({
+                type: "unit",
+                value: 0,
+                unit: "number",
+              });
+              setSizing.setProperty("flexShrink")({
+                type: "unit",
+                value: 0,
+                unit: "number",
+              });
               setSizing.publish();
               break;
             }
             case "grow": {
-              setSizing.setProperty("flexGrow")("1");
-              setSizing.setProperty("flexShrink")("0");
+              setSizing.setProperty("flexGrow")({
+                type: "unit",
+                value: 1,
+                unit: "number",
+              });
+              setSizing.setProperty("flexShrink")({
+                type: "unit",
+                value: 0,
+                unit: "number",
+              });
               setSizing.publish();
               break;
             }
             case "shrink": {
-              setSizing.setProperty("flexGrow")("0");
-              setSizing.setProperty("flexShrink")("1");
+              setSizing.setProperty("flexGrow")({
+                type: "unit",
+                value: 0,
+                unit: "number",
+              });
+              setSizing.setProperty("flexShrink")({
+                type: "unit",
+                value: 1,
+                unit: "number",
+              });
               setSizing.publish();
               break;
             }

@@ -37,6 +37,8 @@ export const properties = {
   backgroundRepeat: "Sets the size of a background image",
   backgroundSize:
     "Defines how an element should behave if its content overflows its block-level container",
+  background:
+    "Sets background color, image or gradient and composes them with layers",
   blockOverflow: "Sets the height of an element",
   blockSize: "Sets the width of an element",
   borderBlockColor: "Sets the color of the block borders",
@@ -88,6 +90,10 @@ export const properties = {
   borderTopRightRadius: "Sets the radius of the top right border",
   borderTopStyle: "Sets the style of the top border",
   borderTopWidth: "Sets the width of the top border",
+  borderWidth: "Sets the width of the border",
+  borderStyle: "Sets the style of the border",
+  borderColor: "Sets the color of the border",
+  borderRadius: "Sets the radius of border",
   bottom: "Sets the distance between the bottom edge and the parent container",
   boxDecorationBreak:
     "Specifies how box decorations should be broken between lines",
@@ -140,6 +146,7 @@ export const properties = {
   flexGrow:
     "Specifies the ability of a flex item to grow to fill available space",
   flexShrink: "Specifies the ability of a flex item to shrink if necessary",
+  sizing: "Specifies the ability of a flex item to grow or shrink",
   flexWrap:
     "Specifies whether flex items are forced onto one line or can wrap onto multiple lines",
   float: "Specifies the horizontal alignment of an element",
@@ -177,7 +184,7 @@ export const properties = {
   gridTemplateColumns: "Sets the size of the first letter in a block of text",
   gridTemplateRows: "Sets the starting position of a grid item's column",
   hangingPunctuation: "Sets the ending position of a grid item's column",
-  height: "Sets the starting position of a grid item's row",
+  height: "Sets the height of an element",
   hyphenateCharacter: "Sets the ending position of a grid item's row",
   hyphens: "Defines named grid areas within the grid container",
   imageOrientation:
@@ -1272,6 +1279,14 @@ export const declarations = {
   "borderTopStyle:inherit":
     "Sets the style of the top border to be the same as its parent element",
   "borderTopStyle:unset": "Removes any previously set style for the top border",
+  "borderStyle:none,none,none,none":
+    "Sets the style of the border to no border",
+  "borderStyle:solid,solid,solid,solid":
+    "Sets the style of the border to a solid line",
+  "borderStyle:dashed,dashed,dashed,dashed":
+    "Sets the style of the border to a dashed line",
+  "borderStyle:dotted,dotted,dotted,dotted":
+    "Sets the style of the border to a dotted line",
   "borderTopWidth:thin": "Sets the width of the top border to be thin",
   "borderTopWidth:medium":
     "Sets the width of the top border to be the default value",
@@ -1962,6 +1977,9 @@ export const declarations = {
   "flexShrink:inherit":
     "Inherits the amount of space a flex item will shrink from its parent element",
   "flexShrink:unset": "Sets the ability for a flex item to shrink if necessary",
+  "sizing:0,0": "Flex item doesn't grow or shrink",
+  "sizing:1,0": "Flex item grows to fill available space",
+  "sizing:0,1": "Flex item shrinks if necessary",
   "flexWrap:nowrap": "Prevents flex items from wrapping to a new line",
   "flexWrap:wrap": "Allows flex items to wrap to a new line if necessary",
   "flexWrap:wrap-reverse":

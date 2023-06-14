@@ -184,6 +184,7 @@ const BackgroundsCollapsibleSection = ({
             style={currentStyle}
             title="Backgrounds"
             properties={layeredBackgroundProps}
+            shorthandProperty="background"
             label={
               <SectionTitleLabel color={layersStyleSource}>
                 {label}

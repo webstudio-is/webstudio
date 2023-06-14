@@ -39,6 +39,7 @@ export const BorderRadius = (
       createBatchUpdate={props.createBatchUpdate}
       label="Radius"
       borderPropertyOptions={borderPropertyOptions}
+      shorthandProperty="borderRadius"
       individualModeIcon={<BorderRadiusIndividualIcon />}
     />
   );
