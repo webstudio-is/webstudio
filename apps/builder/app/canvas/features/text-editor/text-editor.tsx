@@ -141,7 +141,7 @@ export const TextEditor = ({
 
     // reset paragraph styles and make it work inside <a>
     engine.addPlaintextRule(`
-      .${paragraphClassName} { display: inline; margin: 0; }
+      .${paragraphClassName} { display: inline-block; margin: 0; }
     `);
     /// set italic style for bold italic combination on the same element
     engine.addPlaintextRule(`
