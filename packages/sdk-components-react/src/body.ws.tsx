@@ -12,11 +12,6 @@ import type { defaultTag } from "./body";
 const presetStyle = {
   body: [
     ...body,
-
-    {
-      property: "minHeight",
-      value: { type: "unit", unit: "%", value: 100 },
-    },
     {
       property: "fontFamily",
       value: { type: "keyword", value: "Arial" },
