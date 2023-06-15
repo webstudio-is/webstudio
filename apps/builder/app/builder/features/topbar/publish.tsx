@@ -316,7 +316,7 @@ const Publish = ({
             );
           }}
         >
-          {isPublishInProgress === false && "Publish"}
+          Publish
         </Button>
       </Tooltip>
     </Flex>
