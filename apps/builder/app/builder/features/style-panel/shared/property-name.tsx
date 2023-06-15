@@ -1,12 +1,9 @@
 import { useState, type ReactElement } from "react";
 import { useStore } from "@nanostores/react";
 import {
-  declarationDescriptions,
-  propertyDescriptions,
-  type Style,
   type StyleProperty,
+  propertyDescriptions,
 } from "@webstudio-is/css-data";
-import { createCssEngine, toValue } from "@webstudio-is/css-engine";
 import {
   theme,
   Button,
@@ -17,6 +14,13 @@ import {
   ScrollArea,
 } from "@webstudio-is/design-system";
 import { ResetIcon } from "@webstudio-is/icons";
+import type {
+  Breakpoint,
+  Breakpoints,
+  StyleSource,
+  StyleSources,
+} from "@webstudio-is/project-build";
+import { toProperty } from "@webstudio-is/css-engine";
 import {
   breakpointsStore,
   instancesStore,
@@ -32,12 +36,6 @@ import {
 } from "./style-info";
 import { humanizeString } from "~/shared/string-utils";
 import { StyleSourceBadge } from "../style-source";
-import type {
-  Breakpoint,
-  Breakpoints,
-  StyleSource,
-  StyleSources,
-} from "@webstudio-is/project-build";
 
 // We don't return source name only in case of preset or default value.
 const getSourceName = (
@@ -80,26 +78,6 @@ const getSourceName = (
   }
 };
 
-// @todo consider reusing CssPreview component
-const getCssText = (
-  properties: readonly StyleProperty[],
-  instanceStyle: StyleInfo
-) => {
-  const cssEngine = createCssEngine();
-  const style: Style = {};
-  let property: StyleProperty;
-  for (property in instanceStyle) {
-    const value = instanceStyle[property];
-    if (value && properties.includes(property)) {
-      style[property] = value.value;
-    }
-  }
-  const rule = cssEngine.addStyleRule("instance", {
-    style,
-  });
-  return rule.styleMap.toString();
-};
-
 const getBreakpointName = (
   styleValueInfo: StyleValueInfo,
   breakpoints: Breakpoints,
@@ -120,40 +98,25 @@ const getBreakpointName = (
   return breakpoint?.minWidth ?? breakpoint?.maxWidth ?? "Base";
 };
 
-const getDescription = (
-  styleValueInfo: StyleValueInfo,
-  properties: readonly StyleProperty[]
-) => {
-  // @todo we don't know how to show a description in this case
+const getDescription = (properties: StyleProperty[]) => {
   if (properties.length > 1) {
     return;
   }
-  // @todo reuse it with CssPreview
-  const styleValue =
-    styleValueInfo.local ??
-    styleValueInfo.nextSource?.value ??
-    styleValueInfo.previousSource?.value ??
-    styleValueInfo.cascaded?.value ??
-    styleValueInfo.preset ??
-    styleValueInfo.inherited?.value;
-
   const property = properties[0];
-  const key = `${property}:${toValue(styleValue)}`;
-  if (key in declarationDescriptions) {
-    return declarationDescriptions[key as keyof typeof declarationDescriptions];
-  }
   return propertyDescriptions[property as keyof typeof propertyDescriptions];
 };
 
 const TooltipContent = ({
   title,
+  description,
   properties,
   style,
   onReset,
   onClose,
 }: {
   title: string;
-  properties: readonly StyleProperty[];
+  description?: string;
+  properties: StyleProperty[];
   style: StyleInfo;
   onReset: () => void;
   onClose: () => void;
@@ -172,7 +135,7 @@ const TooltipContent = ({
     return null;
   }
 
-  const description = getDescription(styleValueInfo, properties);
+  const descriptionWithFallback = description ?? getDescription(properties);
 
   const styleSource = getStyleSource(styleValueInfo);
   const sourceName = getSourceName(
@@ -180,7 +143,6 @@ const TooltipContent = ({
     styleValueInfo,
     selectedStyleSource
   );
-  const cssText = getCssText(properties, style);
   const breakpointName = getBreakpointName(
     styleValueInfo,
     breakpoints,
@@ -194,23 +156,21 @@ const TooltipContent = ({
   return (
     <Flex direction="column" gap="2" css={{ maxWidth: theme.spacing[28] }}>
       <Text variant="titles">{title}</Text>
-      {cssText && (
-        <ScrollArea>
-          <Text
-            variant="monoBold"
-            color="moreSubtle"
-            css={{
-              whiteSpace: "break-spaces",
-              maxHeight: "3em",
-              userSelect: "text",
-              cursor: "text",
-            }}
-          >
-            {cssText}
-          </Text>
-        </ScrollArea>
-      )}
-      {description && <Text>{description}</Text>}
+      <ScrollArea>
+        <Text
+          variant="monoBold"
+          color="moreSubtle"
+          css={{
+            whiteSpace: "break-spaces",
+            maxHeight: "3em",
+            userSelect: "text",
+            cursor: "text",
+          }}
+        >
+          {properties.map(toProperty).join("\n")}
+        </Text>
+      </ScrollArea>
+      {descriptionWithFallback && <Text>{descriptionWithFallback}</Text>}
       {sourceName && (
         <Flex
           direction="column"
@@ -256,15 +216,17 @@ const TooltipContent = ({
 
 type PropertyNameProps = {
   style: StyleInfo;
-  properties: readonly StyleProperty[];
+  properties: StyleProperty[];
   label: string | ReactElement;
   title?: string;
+  description?: string;
   onReset: () => void;
 };
 
 export const PropertyName = ({
   style,
   title,
+  description,
   properties,
   label,
   onReset,
@@ -284,6 +246,7 @@ export const PropertyName = ({
               title ??
               (typeof label === "string" ? label : humanizeString(property))
             }
+            description={description}
             properties={properties}
             style={style}
             onReset={onReset}
