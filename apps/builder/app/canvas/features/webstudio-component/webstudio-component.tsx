@@ -1,4 +1,4 @@
-import { type MouseEvent, type FormEvent, useEffect, useState } from "react";
+import { type MouseEvent, type FormEvent, useEffect } from "react";
 import { Suspense, lazy, useCallback, useMemo, useRef } from "react";
 import { useStore } from "@nanostores/react";
 import { useLexicalComposerContext } from "@lexical/react/LexicalComposerContext";
@@ -32,9 +32,6 @@ import {
 } from "~/shared/tree-utils";
 import { SelectedInstanceConnector } from "./selected-instance-connector";
 import { handleLinkClick } from "./link";
-import { colord } from "colord";
-import { createCssEngine, type CssEngine } from "@webstudio-is/css-engine";
-import { nanoid } from "nanoid";
 
 const TextEditor = lazy(() => import("../text-editor"));
 
@@ -49,50 +46,9 @@ const ContentEditable = ({
   [componentAttribute]: Instance["component"];
 }) => {
   const [editor] = useLexicalComposerContext();
-  const [caretClassName] = useState(() => `a${nanoid()}`);
-  const engineRef = useRef<CssEngine | undefined>();
 
   const ref = useCallback(
     (rootElement: null | HTMLElement) => {
-      if (rootElement === null) {
-        if (engineRef.current !== undefined) {
-          engineRef.current.unmount();
-          engineRef.current = undefined;
-        }
-      }
-
-      if (rootElement !== null) {
-        const elementColor = window.getComputedStyle(rootElement).color;
-
-        const color = colord(elementColor).toRgb();
-        if (color.a < 0.1) {
-          // Apply caret color with animated color
-          const engine = createCssEngine({ name: "text-editor-caret" });
-          engineRef.current = engine;
-
-          // Animation on cursor needed to make it visible on any background
-          engine.addPlaintextRule(`
-
-            @keyframes ${caretClassName}-keyframes {
-              from {caret-color: #666;}
-              to {caret-color: #999;}
-            }
-
-            .${caretClassName} {
-              animation-name: ${caretClassName}-keyframes;
-              animation-duration: 0.5s;
-              animation-iteration-count: infinite;
-              animation-direction: alternate;
-            }
-          `);
-
-          if (rootElement.classList.contains(caretClassName) === false) {
-            rootElement.classList.add(caretClassName);
-          }
-          engine.render();
-        }
-      }
-
       // button with contentEditable does not let to press space
       // so add span inside and use it as editor element in lexical
       if (rootElement?.tagName === "BUTTON") {
@@ -107,7 +63,7 @@ const ContentEditable = ({
       editor.setRootElement(rootElement);
       elementRef.current = rootElement ?? null;
     },
-    [caretClassName, editor, elementRef]
+    [editor, elementRef]
   );
 
   return <Component ref={ref} {...props} />;

@@ -28,6 +28,7 @@ import { idAttribute } from "@webstudio-is/react-sdk";
 import type { InstanceSelector } from "~/shared/tree-utils";
 import { ToolbarConnectorPlugin } from "./toolbar-connector";
 import { type Refs, $convertToLexical, $convertToUpdates } from "./interop";
+import { colord } from "colord";
 
 const BindInstanceToNodePlugin = ({ refs }: { refs: Refs }) => {
   const [editor] = useLexicalComposerContext();
@@ -50,6 +51,56 @@ const AutofocusPlugin = () => {
   useEffect(() => {
     editor.focus();
   }, [editor]);
+
+  return null;
+};
+
+/**
+ * In case of text color is near transparent, make caret visible with color animation between #666 and #999
+ */
+const CaretColorPlugin = () => {
+  const [editor] = useLexicalComposerContext();
+  const caretClassName = useState(() => `a${nanoid()}`)[0];
+
+  useEffect(() => {
+    const rootElement = editor.getRootElement();
+
+    if (rootElement === null) {
+      return;
+    }
+
+    const elementColor = window.getComputedStyle(rootElement).color;
+
+    const color = colord(elementColor).toRgb();
+    if (color.a < 0.1) {
+      // Apply caret color with animated color
+      const engine = createCssEngine({ name: "text-editor-caret" });
+
+      // Animation on cursor needed to make it visible on any background
+      engine.addPlaintextRule(`
+
+        @keyframes ${caretClassName}-keyframes {
+          from {caret-color: #666;}
+          to {caret-color: #999;}
+        }
+
+        .${caretClassName} {
+          animation-name: ${caretClassName}-keyframes;
+          animation-duration: 0.5s;
+          animation-iteration-count: infinite;
+          animation-direction: alternate;
+        }
+      `);
+
+      rootElement.classList.add(caretClassName);
+      engine.render();
+
+      return () => {
+        rootElement.classList.remove(caretClassName);
+        engine.unmount();
+      };
+    }
+  }, [caretClassName, editor]);
 
   return null;
 };
@@ -179,6 +230,7 @@ export const TextEditor = ({
     <LexicalComposer initialConfig={initialConfig}>
       <AutofocusPlugin />
       <RemoveParagaphsPlugin />
+      <CaretColorPlugin />
       <ToolbarConnectorPlugin
         onSelectNode={(nodeKey) => {
           const instanceId = refs.get(`${nodeKey}:span`);
