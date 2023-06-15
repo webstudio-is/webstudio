@@ -85,7 +85,6 @@ export const TypographySectionFont = (props: RenderCategoryProps) => {
         <PropertyName
           style={currentStyle}
           label="Font"
-          title="Font Family"
           properties={["fontFamily"]}
           onReset={() => deleteProperty("fontFamily")}
         />
@@ -100,7 +99,6 @@ export const TypographySectionFont = (props: RenderCategoryProps) => {
         <PropertyName
           style={currentStyle}
           label="Weight"
-          title="Font Weight"
           properties={["fontWeight"]}
           onReset={() => deleteProperty("fontWeight")}
         />
@@ -144,7 +142,6 @@ export const TypographySectionSizing = (props: RenderCategoryProps) => {
           style={currentStyle}
           properties={["fontSize"]}
           label="Size"
-          title="Font Size"
           onReset={() => deleteProperty("fontSize")}
         />
         <TextControl
@@ -159,7 +156,6 @@ export const TypographySectionSizing = (props: RenderCategoryProps) => {
           style={currentStyle}
           properties={["lineHeight"]}
           label="Height"
-          title="Line Height"
           onReset={() => deleteProperty("lineHeight")}
         />
         <TextControl
@@ -174,7 +170,6 @@ export const TypographySectionSizing = (props: RenderCategoryProps) => {
           style={currentStyle}
           properties={["letterSpacing"]}
           label="Spacing"
-          title="Letter Spacing"
           onReset={() => deleteProperty("letterSpacing")}
         />
         <TextControl
