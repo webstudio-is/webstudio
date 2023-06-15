@@ -87,6 +87,19 @@ export const Button = ({
       </StoryGrid>
     </StorySection>
 
+    <StorySection title="Preserves size when pending">
+      <StoryGrid
+        css={{
+          alignItems: "flex-start",
+        }}
+      >
+        <ButtonComponent>Any content to preserve size</ButtonComponent>
+        <ButtonComponent state="pending">
+          Any content to preserve size
+        </ButtonComponent>
+      </StoryGrid>
+    </StorySection>
+
     <StorySection title="Used as a Trigger for something that opens">
       <Popover defaultOpen>
         <PopoverTrigger asChild>

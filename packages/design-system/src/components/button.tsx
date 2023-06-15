@@ -11,6 +11,8 @@ import {
 } from "react";
 import { textVariants } from "./text";
 import { styled, theme } from "../stitches.config";
+import { LoadingDotsIcon } from "@webstudio-is/icons";
+import { Flex } from "./flex";
 
 const colors = [
   "primary",
@@ -127,6 +129,15 @@ const TextContainer = styled("span", textVariants.labelsSentenceCase, {
   padding: `0 ${theme.spacing[2]}`,
   overflow: "hidden",
   textOverflow: "ellipsis",
+  position: "relative",
+  variants: {
+    // "hidden" is used to hide the text when the button is in a pending state but preserving the button size
+    hidden: {
+      true: {
+        visibility: "hidden",
+      },
+    },
+  },
 });
 
 type ButtonProps = {
@@ -182,11 +193,25 @@ export const Button = forwardRef(
       >
         {prefix}
         {children && (
-          <TextContainer>
+          <TextContainer hidden={state === "pending"}>
             {children}
-            {state === "pending" ? "…" : ""}
+            {state === "pending" && (
+              <Flex
+                css={{
+                  position: "absolute",
+                  inset: 0,
+                  visibility: "visible",
+                  pointerEvents: "none",
+                }}
+                justify={"center"}
+                align={"center"}
+              >
+                <LoadingDotsIcon />
+              </Flex>
+            )}
           </TextContainer>
         )}
+
         {suffix}
       </StyledButton>
     );
