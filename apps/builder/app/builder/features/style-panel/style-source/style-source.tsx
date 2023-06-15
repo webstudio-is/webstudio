@@ -125,19 +125,24 @@ const useEditableText = ({
   const getValue = () => elementRef.current?.textContent ?? "";
 
   useEffect(() => {
-    if (elementRef.current === null) {
+    const element = elementRef.current;
+    if (element === null) {
       return;
     }
 
     if (isEditing) {
-      elementRef.current.setAttribute("contenteditable", "plaintext-only");
-      elementRef.current.focus();
-      getSelection()?.selectAllChildren(elementRef.current);
-      lastValueRef.current = getValue();
+      element.setAttribute("contenteditable", "plaintext-only");
+      // the next frame is necessary when newly created element
+      // need to get focus, for example after duplicate operation
+      requestAnimationFrame(() => {
+        element.focus();
+        getSelection()?.selectAllChildren(element);
+        lastValueRef.current = getValue();
+      });
       return;
     }
 
-    elementRef.current?.removeAttribute("contenteditable");
+    element.removeAttribute("contenteditable");
   }, [isEditing]);
 
   const handleFinishEditing = (
