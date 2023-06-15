@@ -14,6 +14,13 @@ import {
   ScrollArea,
 } from "@webstudio-is/design-system";
 import { ResetIcon } from "@webstudio-is/icons";
+import type {
+  Breakpoint,
+  Breakpoints,
+  StyleSource,
+  StyleSources,
+} from "@webstudio-is/project-build";
+import { toProperty } from "@webstudio-is/css-engine";
 import {
   breakpointsStore,
   instancesStore,
@@ -29,12 +36,6 @@ import {
 } from "./style-info";
 import { humanizeString } from "~/shared/string-utils";
 import { StyleSourceBadge } from "../style-source";
-import type {
-  Breakpoint,
-  Breakpoints,
-  StyleSource,
-  StyleSources,
-} from "@webstudio-is/project-build";
 
 // We don't return source name only in case of preset or default value.
 const getSourceName = (
@@ -166,7 +167,7 @@ const TooltipContent = ({
             cursor: "text",
           }}
         >
-          {properties.join("\n")}
+          {properties.map(toProperty).join("\n")}
         </Text>
       </ScrollArea>
       {descriptionWithFallback && <Text>{descriptionWithFallback}</Text>}
