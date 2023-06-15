@@ -71,7 +71,18 @@ const ContentEditable = ({
           engineRef.current = engine;
 
           engine.addPlaintextRule(`
-            .${caretClassName} { caret-color: #999; }
+
+            @keyframes ${caretClassName}-keyframes {
+              from {caret-color: #666;}
+              to {caret-color: #999;}
+            }
+
+            .${caretClassName} {
+              animation-name: ${caretClassName}-keyframes;
+              animation-duration: 0.5s;
+              animation-iteration-count: infinite;
+              animation-direction: alternate;
+            }
           `);
 
           if (rootElement.classList.contains(caretClassName) === false) {
