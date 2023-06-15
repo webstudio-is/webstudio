@@ -70,6 +70,7 @@ const ContentEditable = ({
           const engine = createCssEngine({ name: "text-editor-caret" });
           engineRef.current = engine;
 
+          // Animation on cursor needed to make it visible on any background
           engine.addPlaintextRule(`
 
             @keyframes ${caretClassName}-keyframes {
