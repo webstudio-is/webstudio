@@ -33,14 +33,14 @@
   "exports": {
     ".": {
       "source": "./src/index.ts",
+      "types": "./lib/types/index.d.ts",
       "import": "./lib/index.js",
-      "require": "./lib/cjs/index.js",
-      "types": "./lib/types/index.d.ts"
+      "require": "./lib/cjs/index.js"
     },
     "./index.server": {
       "source": "./src/index.server.ts",
-      "import": "./lib/index.server.js",
-      "types": "./lib/types/index.server.d.ts"
+      "types": "./lib/types/index.server.d.ts",
+      "import": "./lib/index.server.js"
     }
   },
   "files": [
