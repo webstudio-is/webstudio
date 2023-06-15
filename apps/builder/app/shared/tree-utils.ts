@@ -133,7 +133,7 @@ const wrapEditableChildrenAroundDropTargetMutable = (
 ) => {
   const [parentId] = dropTarget.parentSelector;
   const parentInstance = instances.get(parentId);
-  if (parentInstance === undefined) {
+  if (parentInstance === undefined || parentInstance.children.length === 0) {
     return;
   }
   // wrap only containers with text and rich text childre
