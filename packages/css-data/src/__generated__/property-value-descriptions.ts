@@ -177,7 +177,7 @@ export const properties = {
   gridTemplateColumns: "Sets the size of the first letter in a block of text",
   gridTemplateRows: "Sets the starting position of a grid item's column",
   hangingPunctuation: "Sets the ending position of a grid item's column",
-  height: "Sets the starting position of a grid item's row",
+  height: "Sets the height of an element",
   hyphenateCharacter: "Sets the ending position of a grid item's row",
   hyphens: "Defines named grid areas within the grid container",
   imageOrientation:

@@ -18,12 +18,12 @@ import { PropertyName } from "../../shared/property-name";
 import type { RenderCategoryProps } from "../../style-sections";
 import { deleteAllProperties, setAllProperties } from "./border-utils";
 
-const borderStyleProperties = [
+const borderStyleProperties: StyleProperty[] = [
   "borderTopStyle",
   "borderRightStyle",
   "borderLeftStyle",
   "borderBottomStyle",
-] as const satisfies readonly StyleProperty[];
+];
 
 const borderStyleValues = [
   { value: "none", Icon: SmallXIcon },
@@ -73,6 +73,7 @@ export const BorderStyle = (
         style={props.currentStyle}
         properties={borderStyleProperties}
         label={"Style"}
+        description="Sets the style of the border"
         onReset={() => deleteBorderProperties(firstPropertyName)}
       />
 

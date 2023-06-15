@@ -30,6 +30,7 @@ export const BorderProperty = ({
   individualModeIcon,
   borderPropertyOptions,
   label,
+  description,
 }: Pick<
   RenderCategoryProps,
   "currentStyle" | "setProperty" | "deleteProperty" | "createBatchUpdate"
@@ -39,6 +40,7 @@ export const BorderProperty = ({
     [property in StyleProperty]: { icon?: ReactNode };
   }>;
   label: string;
+  description?: string;
 }) => {
   const borderProperties = Object.keys(borderPropertyOptions) as Array<
     keyof typeof borderPropertyOptions
@@ -117,6 +119,7 @@ export const BorderProperty = ({
           style={currentStyle}
           properties={borderProperties}
           label={label}
+          description={description}
           onReset={() => deleteBorderProperties(firstPropertyName)}
         />
 

@@ -109,6 +109,7 @@ const FlexChildSectionSizing = (props: RenderCategoryProps) => {
         style={currentStyle}
         properties={["flexGrow", "flexShrink"]}
         label="Sizing"
+        description="Specifies the ability of a flex item to grow or shrink"
         onReset={() => {
           setSizing.deleteProperty("flexGrow");
           setSizing.deleteProperty("flexShrink");
