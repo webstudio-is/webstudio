@@ -39,15 +39,15 @@
   "exports": {
     ".": {
       "source": "./src/index.ts",
+      "types": "./lib/types/index.d.ts",
       "import": "./lib/index.js",
-      "require": "./lib/cjs/index.js",
-      "types": "./lib/types/index.d.ts"
+      "require": "./lib/cjs/index.js"
     },
     "./svg": {
       "source": "./src/__generated__/svg/index.ts",
+      "types": "./lib/types/__generated__/svg/index.d.ts",
       "import": "./lib/__generated__/svg/index.js",
-      "require": "./lib/cjs/__generated__/svg/index.js",
-      "types": "./lib/types/__generated__/svg/index.d.ts"
+      "require": "./lib/cjs/__generated__/svg/index.js"
     }
   },
   "files": [

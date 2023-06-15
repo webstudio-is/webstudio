@@ -53,15 +53,15 @@
   "exports": {
     ".": {
       "source": "./src/index.ts",
+      "types": "./lib/types/index.d.ts",
       "import": "./lib/index.js",
-      "require": "./lib/cjs/index.js",
-      "types": "./lib/types/index.d.ts"
+      "require": "./lib/cjs/index.js"
     },
     "./css-normalize": {
       "source": "./src/css/normalize.ts",
+      "types": "./lib/types/css/normalize.d.ts",
       "import": "./lib/css/normalize.js",
-      "require": "./lib/cjs/css/normalize.js",
-      "types": "./lib/types/css/normalize.d.ts"
+      "require": "./lib/cjs/css/normalize.js"
     }
   },
   "files": [
