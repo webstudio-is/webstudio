@@ -131,6 +131,7 @@ const TextContainer = styled("span", textVariants.labelsSentenceCase, {
   textOverflow: "ellipsis",
   position: "relative",
   variants: {
+    // "hidden" is used to hide the text when the button is in a pending state but preserving the button size
     hidden: {
       true: {
         visibility: "hidden",
