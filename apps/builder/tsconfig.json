@@ -8,9 +8,7 @@
     "../../@types/**/*.d.ts"
   ],
   "compilerOptions": {
-    "paths": {
-      "~/*": ["app/*"]
-    },
+    "paths": { "~/*": ["app/*"] },
     "baseUrl": ".",
     "rootDir": "./app",
     "declaration": false,
