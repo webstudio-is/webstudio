@@ -27,28 +27,28 @@ type ToggleGroupProps = ComponentProps<
   color?: Color;
 };
 
-const BaseToggleGroup = ({
-  color = "default",
-  children,
-  onValueChange,
-  ...props
-}: ToggleGroupProps) => {
-  return (
-    <ToggleGroupContext.Provider value={{ color }}>
-      <ToggleGroupPrimitive.ToggleGroup
-        {...props}
-        onValueChange={(newValue: string | string[]) => {
-          // prevent unselecting buttons when only single can be selected
-          if (newValue !== "") {
-            onValueChange?.(newValue as string & string[]);
-          }
-        }}
-      >
-        {children}
-      </ToggleGroupPrimitive.ToggleGroup>
-    </ToggleGroupContext.Provider>
-  );
-};
+const BaseToggleGroup = forwardRef<ElementRef<"div">, ToggleGroupProps>(
+  ({ color = "default", children, onValueChange, ...props }, ref) => {
+    return (
+      <ToggleGroupContext.Provider value={{ color }}>
+        <ToggleGroupPrimitive.ToggleGroup
+          ref={ref}
+          {...props}
+          onValueChange={(newValue: string | string[]) => {
+            // prevent unselecting buttons when only single can be selected
+            if (newValue !== "") {
+              onValueChange?.(newValue as string & string[]);
+            }
+          }}
+        >
+          {children}
+        </ToggleGroupPrimitive.ToggleGroup>
+      </ToggleGroupContext.Provider>
+    );
+  }
+);
+
+BaseToggleGroup.displayName = "BaseToggleGroup";
 
 export const ToggleGroup = styled(BaseToggleGroup, {
   boxSizing: "border-box",
@@ -93,6 +93,8 @@ const BaseToggleGroupButton = forwardRef<
   );
 });
 
+BaseToggleGroupButton.displayName = "BaseToggleGroupButton";
+
 type ToggleGroupButtonProps = ComponentProps<typeof ToggleGroupPrimitive.Item>;
 
 export const ToggleGroupButton = forwardRef<
@@ -105,3 +107,5 @@ export const ToggleGroupButton = forwardRef<
     </ToggleGroupPrimitive.Item>
   );
 });
+
+ToggleGroupButton.displayName = "ToggleGroupButton";
