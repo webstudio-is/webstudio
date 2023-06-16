@@ -45,7 +45,7 @@ const createRequest = (config: ModelConfig): ModelRequest<ModelMessageFormat> =>
         body: JSON.stringify({
           model: config.model || "gpt-3.5-turbo",
           messages,
-          temperature: 0,
+          temperature: config.temperature,
         }),
       }
     ).then((response) => {

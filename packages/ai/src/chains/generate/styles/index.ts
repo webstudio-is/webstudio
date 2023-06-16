@@ -29,15 +29,15 @@ export const create = <ModelMessageFormat>(): Chain<
     }
 
     if (prompts.components) {
-      prompts.components = JSON.parse(prompts.components)
-        .map((name: string) => `\t | "${name}"`)
-        .join("\n");
+      prompts.components = JSON.parse(prompts.components).join(", ");
+      // .map((name: string) => ` - ${name}`)
+      // .join("\n");
     }
 
     prompts.selectedInstance =
       rootInstance.component === "Body"
         ? ""
-        : `- The root instance's componens it \`${rootInstance.component}\``;
+        : `- The selected instance component is \`${rootInstance.component}\``;
 
     const { palette, colorMode } = getPalette(
       build.styles.map(([name, value]) => value)

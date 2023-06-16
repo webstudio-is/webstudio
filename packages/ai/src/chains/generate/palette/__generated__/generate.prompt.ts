@@ -19,8 +19,10 @@ type Palette: {
 I need a palette with 8 beautiful colors as well as a color mode suggestion for the following design request:
 
 \`\`\`
-{request} {style}
+{request}
 \`\`\`
+
+{style}
 
 Respond with a \`Palette\` as JSON code block that I can parse. The palette should also include the \`colorMode\`.
 `;

@@ -83,13 +83,6 @@ export const action = async ({ request }: ActionArgs) => {
   }
   /* End of Permissions check */
 
-  const model = createGptModel({
-    apiKey: env.OPENAI_KEY,
-    organization: env.OPENAI_ORG,
-    temperature: 0,
-    model: "gpt-3.5-turbo-0613",
-  });
-
   // @todo 1. Revisit this because technically every Chain could use a different Model
   const context: ChainContext = {
     api: {
@@ -145,6 +138,13 @@ export const action = async ({ request }: ActionArgs) => {
     if (typeof chain !== "function") {
       throw new Error(`Invalid step ${step}`);
     }
+
+    const model = createGptModel({
+      apiKey: env.OPENAI_KEY,
+      organization: env.OPENAI_ORG,
+      temperature: step === "styles" ? 0 : 0,
+      model: "gpt-3.5-turbo",
+    });
 
     const chainResponse = await chain({ model, context });
 

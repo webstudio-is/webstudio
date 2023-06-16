@@ -43,7 +43,7 @@ export const create = <ModelMessageFormat>(): Chain<
     prompts.selectedInstance =
       rootInstance.component === "Body"
         ? ""
-        : `- The root instance's componens it \`${rootInstance.component}\``;
+        : `- The selectedInstance is a \`${rootInstance.component}\``;
 
     const { palette, colorMode } = getPalette(
       build.styles.map(([name, value]) => value)

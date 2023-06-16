@@ -33,6 +33,8 @@ generate an executable JavaScript function called \`edit\` to fulfill the follow
 {request}
 \`\`\`
 
+Try to infer whether the request applies only to the selected Instance or to its descendants too and make edits accordingly. For example when setting a background color it might make sense to only set it on the selected Instance.
+
 The \`edit\` function has the following signature:
 
 \`\`\`typescript
@@ -61,9 +63,7 @@ Rules:
 - Don't add side-effects.
 - Don't rely on globals.
 - Use hex or rgb(a) for colors.
-
-Additional project details:
-
-- Palette: {palette}
+- Use the following color palette or add new colors when it makes sense: {palette}
 - Current Color mode: {colorMode}
+  {selectedInstance}
 `;
