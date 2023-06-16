@@ -30,22 +30,20 @@ if (args.includes("--force")) {
 const fileName = "property-value-descriptions.ts";
 const targetPath = path.join(process.cwd(), "src", "__generated__");
 
-let propertiesDescriptions: Record<string, string> = {};
-let declarationsDescriptions: Record<string, string> = {};
+let propertiesGenerated: Record<string, string> = {};
+let propertiesOverrides: Record<string, string> = {};
+let declarationsGenerated: Record<string, string> = {};
+let declarationsOverrides: Record<string, string> = {};
 
 try {
   ({
-    properties: propertiesDescriptions,
-    declarations: declarationsDescriptions,
+    propertiesGenerated = {},
+    propertiesOverrides = {},
+    declarationsGenerated = {},
+    declarationsOverrides = {},
     // eslint-disable-next-line @typescript-eslint/ban-ts-comment
     // @ts-ignore Fix this else it'll complain that we cannot use top-level await.
   } = await import(path.join(targetPath, fileName)));
-  if (propertiesDescriptions === undefined) {
-    propertiesDescriptions = {};
-  }
-  if (!declarationsDescriptions) {
-    declarationsDescriptions = {};
-  }
 } catch (error) {}
 
 const batchSize = 16;
@@ -55,10 +53,12 @@ const batchSize = 16;
  */
 const newPropertiesNames = Object.keys(keywordValues)
   // Slice to generate only X - useful for testing.
-  // .slice(0, 1)
+  // .slice(0, 30)
   .filter(
     (property) =>
-      forceRegenerate || typeof propertiesDescriptions[property] !== "string"
+      forceRegenerate ||
+      (typeof propertiesGenerated[property] !== "string" &&
+        typeof propertiesOverrides[property] !== "string")
   );
 
 for (let i = 0; i < newPropertiesNames.length; ) {
@@ -77,36 +77,30 @@ for (let i = 0; i < newPropertiesNames.length; ) {
 
   // eslint-disable-next-line @typescript-eslint/ban-ts-comment
   // @ts-ignore Fix this else it'll complain that we cannot use top-level await.
-  const result = await generate(`
-Please generate a good, newbie friendly and self-explanatory description (max 140 characters) for all the CSS properties in the following list:
+
+  const result = await generate(
+    `
+I created a no-code app for building websites. People who don't know HTML and CSS can use it to create sites easily. My app has a styles panel where the can tweak CSS properties for the selected element. Every control consists of a label and an input field. The label is the CSS property name. When the user hover over the property name we show a tooltip with information about the property.
+
+The fundamental purpose of tooltip information is to teach users how to use a part of the UI to accomplish their intentions, therefore explanations should be descriptive and educative. Here is an example of a good explanation and a bad one:
+
+- Good: "Controls the visual appearance of checkboxes, radio buttons, and other form controls."
+- Bad: "Controls the white space of an element". That's frustratingly useless because it just repeats the property name (white-space) without adding any teaching information.
+
+I will now give you a list of CSS properties and I want you to generate a matching list of explanations that are no longer than 200 characters and teach the user what is the property about! I looked at  https://css-tricks.com/almanac/properties/ and their explanations seem very good!
+
+Here is the list of CSS properties:
 
 \`\`\`
 ${properties.map((name) => `- ${name}`).join("\n")}
 \`\`\`
 
-Respond with a matching bulleted list of the same length which contains all the descriptions as Markdown code block.
+Respond with a matching list of explanations as a markdown code block.
+Very important: don't repeat the property name at the beginning of the explanation!
 
-Important:
-
-- The response list should include a description for every property in the list above.
-- The descriptions should be beginner friendly and understandable by someone who doesn't know CSS.
-- Don't add any other explanation.
-- Don't repeat the property names in the descriptions.
-
-Example properties list (input):
-
-\`\`\`
-- background-color
-- flex-direction
-\`\`\`
-
-Example response:
-
-\`\`\`markdown
-- Sets the background color
-- Sets the flex container main axis direction
-\`\`\`
-`);
+The response should start with \`\`\`markdown
+`.trim()
+  );
 
   if (Array.isArray(result)) {
     // Retry
@@ -130,12 +124,18 @@ Example response:
   }
 
   properties.forEach((name, index) => {
-    propertiesDescriptions[name] = descriptions[index];
+    propertiesGenerated[name] = descriptions[index]
+      .replace(new RegExp(`^\`?${name}\`?:`), "")
+      .trim();
   });
 
   writeFile({
-    properties: propertiesDescriptions,
-    declarations: declarationsDescriptions,
+    propertiesGenerated,
+    propertiesOverrides,
+    properties: `{ ...propertiesGenerated, ...propertiesOverrides }`,
+    declarationsGenerated,
+    declarationsOverrides,
+    declarations: `{ ...declarationsGenerated, ...declarationsOverrides }`,
   });
 
   i += batchSize;
@@ -156,13 +156,15 @@ Object.entries(keywordValues)
       const descriptionKey = `${keyword}:${value}`;
       if (
         !forceRegenerate &&
-        typeof declarationsDescriptions[descriptionKey] === "string"
+        (typeof declarationsGenerated[descriptionKey] === "string" ||
+          typeof declarationsOverrides[descriptionKey] === "string")
       ) {
         return;
       }
 
       const property = toKebabCase(keyword);
 
+      const excludedProperties = ["boxShadow"];
       // We are currently skipping generation for color-related properies. Uncomment the code below to enable colors generation.
       // Also add the following line to the GPT prompt:
       // "When you encounter a declaration where the value is \`{color}\` make the description generic: this is a template that I will later use for all my colors."
@@ -176,7 +178,9 @@ Object.entries(keywordValues)
       //   "transparent",
       //   "none"
       // ];
-      if (
+      if (excludedProperties.includes(keyword)) {
+        return;
+      } else if (
         keyword.toLowerCase().includes("color")
         // && !nonColorValues.includes(value)
       ) {
@@ -200,51 +204,52 @@ Object.entries(keywordValues)
     });
   });
 
-const newDescriptionsEntries = Object.entries(newDeclarationsDescriptions);
+const newDeclarationsDescriptionsEntries = Object.entries(
+  newDeclarationsDescriptions
+);
 
-for (let i = 0; i < newDescriptionsEntries.length; ) {
-  const batch = newDescriptionsEntries.slice(i, i + batchSize);
+for (let i = 0; i < newDeclarationsDescriptionsEntries.length; ) {
+  const batch = newDeclarationsDescriptionsEntries.slice(i, i + batchSize);
 
   const list = batch.map(([descriptionKey, declaration]) => `- ${declaration}`);
 
   console.log(
     `[${Math.floor(i / batchSize) + 1}/${Math.ceil(
-      newDescriptionsEntries.length / batchSize
+      newDeclarationsDescriptionsEntries.length / batchSize
     )}] Generating declarations descriptions.`
   );
 
   // eslint-disable-next-line @typescript-eslint/ban-ts-comment
   // @ts-ignore Fix this else it'll complain that we cannot use top-level await.
-  const result = await generate(`
-Please generate a good, newbie friendly and self-explanatory description (max 140 characters) for all the CSS declarations in the following list:
+  const result = await generate(
+    `
+I created a no-code app for building websites. People who don't know HTML and CSS can use it to create sites easily. My app has a styles panel where the can tweak CSS properties and values for the selected element. Every control consists of a label and an input field. The label is the CSS property name whereas the input contains the property value. When the user hover over the property name we show a tooltip with information about the declaration (property and its value).
+
+The fundamental purpose of tooltip information is to teach users how to use a part of the UI to accomplish their intentions, therefore explanations should be descriptive and educative. Here is an example of a bad explanation and a good one:
+
+- Bad explanation for \`align-content: normal\`: "Aligns content as usual.".
+- Good explanation for \`align-content: normal\`: "- The items are packed in their default position as if no align-content value was set."
+
+I will now give you a list of CSS declarations and I want you to generate a matching list of explanations that are no longer than 200 characters and teach the user what is the declaration about! Include a description of what both the property and its value do.
+
+Here is the list of CSS declarations:
 
 \`\`\`
 ${list.join("\n")}
 \`\`\`
 
-Respond with a matching bulleted list of the same length which contains all the descriptions as Markdown code block.
+Respond with a matching list of explanations as a markdown code block.
+Don't repeat the declaration at the beginning of the explanation:
 
-Important:
+Wrong:
+\`- \\\`align-content: normal\\\` - Aligns content as usual.\`
 
-- The response should include a description for every declaration above.
-- The descriptions should be beginner friendly and understandable by someone who doesn't know CSS.
-- Don't add any other explanation.
-- Don't include the declarations (input) in the descriptions (output).
+Correct:
+\`- The items are packed in their default position as if no align-content value was set.\`
 
-Example declarations list (input):
-
-\`\`\`
-- align-items: center
-- flex-direction: row
-\`\`\`
-
-Example response:
-
-\`\`\`markdown
-- Sets the alignment of flex items to the center of the container
-- Sets the flex container main axis direction to row
-\`\`\`
-`);
+The response should start with \`\`\`markdown
+`.trim()
+  );
 
   if (Array.isArray(result)) {
     // Retry
@@ -268,13 +273,15 @@ Example response:
   }
 
   batch.forEach((value, index) => {
-    const [descriptionKey] = value;
-    const description = descriptions[index];
+    const [descriptionKey, decl] = value;
+    const description = descriptions[index]
+      .replace(new RegExp(`^\`${decl}\` -`), "")
+      .trim();
     if (descriptionKey.endsWith(":{color}")) {
       const colors = propertyColors[descriptionKey];
       if (colors) {
         colors.forEach((color) => {
-          declarationsDescriptions[descriptionKey.replace("{color}", color)] =
+          declarationsGenerated[descriptionKey.replace("{color}", color)] =
             description.replace("{color}", color);
         });
       } else {
@@ -283,13 +290,17 @@ Example response:
         );
       }
     } else {
-      declarationsDescriptions[descriptionKey] = description;
+      declarationsGenerated[descriptionKey] = description;
     }
   });
 
   writeFile({
-    properties: propertiesDescriptions,
-    declarations: declarationsDescriptions,
+    propertiesGenerated,
+    propertiesOverrides,
+    properties: `{ ...propertiesGenerated, ...propertiesOverrides }`,
+    declarationsGenerated,
+    declarationsOverrides,
+    declarations: `{ ...declarationsGenerated, ...declarationsOverrides }`,
   });
 
   i += batchSize;
@@ -307,7 +318,7 @@ function writeFile(descriptions: Record<string, any>) {
       .map(
         ([binding, value]) =>
           `export const ${binding} = ` +
-          JSON.stringify(value, null, 2) +
+          (typeof value === "string" ? value : JSON.stringify(value, null, 2)) +
           " as const;"
       )
       .join("\n\n");
@@ -340,7 +351,7 @@ async function generate(message: string): Promise<string | [number, string]> {
     body: JSON.stringify({
       model: "gpt-3.5-turbo",
       messages: [{ role: "user", content: message }],
-      temperature: 0.5,
+      temperature: 1,
     }),
   });
 
