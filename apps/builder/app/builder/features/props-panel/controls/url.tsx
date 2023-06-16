@@ -7,7 +7,7 @@ import {
   InputField,
   Flex,
   ToggleGroup,
-  ToggleGroupItem,
+  ToggleGroupButton,
   Select,
   Tooltip,
   Label,
@@ -385,9 +385,9 @@ export const UrlControl = ({
           }}
         >
           {Object.entries(modes).map(([key, { icon, label }]) => (
-            <ToggleGroupItem value={key} key={key}>
-              <Tooltip content={label}>{icon}</Tooltip>
-            </ToggleGroupItem>
+            <Tooltip key={key} content={label}>
+              <ToggleGroupButton value={key}>{icon}</ToggleGroupButton>
+            </Tooltip>
           ))}
         </ToggleGroup>
       </Flex>

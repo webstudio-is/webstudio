@@ -10,7 +10,7 @@ import {
   Grid,
   Label,
   ToggleGroup,
-  ToggleGroupItem,
+  ToggleGroupButton,
   Separator,
   styled,
   Tooltip,
@@ -133,12 +133,12 @@ export const BackgroundContent = (props: BackgroundContentProps) => {
               }
             }}
           >
-            <ToggleGroupItem value={"image"}>
+            <ToggleGroupButton value={"image"}>
               <Flex css={{ px: theme.spacing[2] }}>Image</Flex>
-            </ToggleGroupItem>
-            <ToggleGroupItem value={"gradient"}>
+            </ToggleGroupButton>
+            <ToggleGroupButton value={"gradient"}>
               <Flex css={{ px: theme.spacing[2] }}>Gradient</Flex>
-            </ToggleGroupItem>
+            </ToggleGroupButton>
           </ToggleGroup>
         </Flex>
       </BackgroundSection>
@@ -308,12 +308,12 @@ export const BackgroundContent = (props: BackgroundContentProps) => {
                 });
               }}
             >
-              <ToggleGroupItem value={"scroll"}>
+              <ToggleGroupButton value={"scroll"}>
                 <Flex css={{ px: theme.spacing[3] }}>Scroll</Flex>
-              </ToggleGroupItem>
-              <ToggleGroupItem value={"fixed"}>
+              </ToggleGroupButton>
+              <ToggleGroupButton value={"fixed"}>
                 <Flex css={{ px: theme.spacing[3] }}>Fixed</Flex>
-              </ToggleGroupItem>
+              </ToggleGroupButton>
             </ToggleGroup>
           </Flex>
 
