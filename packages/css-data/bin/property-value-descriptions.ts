@@ -5,6 +5,15 @@ import type { CreateChatCompletionResponse } from "openai";
 import { fetch } from "undici";
 import { keywordValues } from "../src/__generated__/keyword-values";
 
+const propertiesPrompt = fs.readFileSync(
+  path.join(process.cwd(), "bin", "prompts", "properties.prompt.md"),
+  "utf-8"
+);
+const declarationsPrompt = fs.readFileSync(
+  path.join(process.cwd(), "bin", "prompts", "declarations.prompt.md"),
+  "utf-8"
+);
+
 /**
  * Using ChatGPT, this scripts generates descriptions for CSS properties and declarations (property-value).
  * It uses `keywordValues` to get a list of all the properties and values.
@@ -79,27 +88,10 @@ for (let i = 0; i < newPropertiesNames.length; ) {
   // @ts-ignore Fix this else it'll complain that we cannot use top-level await.
 
   const result = await generate(
-    `
-I created a no-code app for building websites. People who don't know HTML and CSS can use it to create sites easily. My app has a styles panel where the can tweak CSS properties for the selected element. Every control consists of a label and an input field. The label is the CSS property name. When the user hover over the property name we show a tooltip with information about the property.
-
-The fundamental purpose of tooltip information is to teach users how to use a part of the UI to accomplish their intentions, therefore explanations should be descriptive and educative. Here is an example of a good explanation and a bad one:
-
-- Good: "Controls the visual appearance of checkboxes, radio buttons, and other form controls."
-- Bad: "Controls the white space of an element". That's frustratingly useless because it just repeats the property name (white-space) without adding any teaching information.
-
-I will now give you a list of CSS properties and I want you to generate a matching list of explanations that are no longer than 200 characters and teach the user what is the property about! I looked at  https://css-tricks.com/almanac/properties/ and their explanations seem very good!
-
-Here is the list of CSS properties:
-
-\`\`\`
-${properties.map((name) => `- ${name}`).join("\n")}
-\`\`\`
-
-Respond with a matching list of explanations as a markdown code block.
-Very important: don't repeat the property name at the beginning of the explanation!
-
-The response should start with \`\`\`markdown
-`.trim()
+    propertiesPrompt.replace(
+      "{properties}",
+      properties.map((name) => `- ${name}`).join("\n")
+    )
   );
 
   if (Array.isArray(result)) {
@@ -222,33 +214,7 @@ for (let i = 0; i < newDeclarationsDescriptionsEntries.length; ) {
   // eslint-disable-next-line @typescript-eslint/ban-ts-comment
   // @ts-ignore Fix this else it'll complain that we cannot use top-level await.
   const result = await generate(
-    `
-I created a no-code app for building websites. People who don't know HTML and CSS can use it to create sites easily. My app has a styles panel where the can tweak CSS properties and values for the selected element. Every control consists of a label and an input field. The label is the CSS property name whereas the input contains the property value. When the user hover over the property name we show a tooltip with information about the declaration (property and its value).
-
-The fundamental purpose of tooltip information is to teach users how to use a part of the UI to accomplish their intentions, therefore explanations should be descriptive and educative. Here is an example of a bad explanation and a good one:
-
-- Bad explanation for \`align-content: normal\`: "Aligns content as usual.".
-- Good explanation for \`align-content: normal\`: "- The items are packed in their default position as if no align-content value was set."
-
-I will now give you a list of CSS declarations and I want you to generate a matching list of explanations that are no longer than 200 characters and teach the user what is the declaration about! Include a description of what both the property and its value do.
-
-Here is the list of CSS declarations:
-
-\`\`\`
-${list.join("\n")}
-\`\`\`
-
-Respond with a matching list of explanations as a markdown code block.
-Don't repeat the declaration at the beginning of the explanation:
-
-Wrong:
-\`- \\\`align-content: normal\\\` - Aligns content as usual.\`
-
-Correct:
-\`- The items are packed in their default position as if no align-content value was set.\`
-
-The response should start with \`\`\`markdown
-`.trim()
+    declarationsPrompt.replace("{declarations}", list.join("\n"))
   );
 
   if (Array.isArray(result)) {
