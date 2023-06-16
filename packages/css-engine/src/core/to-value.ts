@@ -91,13 +91,21 @@ export const toValue = (
   }
 
   if (value.type === "layers") {
-    return value.value
-      .filter((layer) => layer.type === "tuple" && !layer.hidden)
+    const valueString = value.value
       .map((layer) => toValue(layer, transformValue))
+      .filter((value) => value !== "none")
       .join(", ");
+    return valueString === "" ? "none" : valueString;
   }
 
   if (value.type === "tuple") {
+    if (value.hidden) {
+      // We assume that property is background-image and use this to hide background layers
+      // In the future we might want to have a more generic way to hide values
+      // i.e. have knowledge about property-name, as none is property specific
+      return "none";
+    }
+
     return value.value.map((value) => toValue(value, transformValue)).join(" ");
   }
 
