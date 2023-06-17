@@ -1,19 +1,18 @@
-import { useState } from "react";
 import {
   SectionTitle,
-  SectionTitleLabel,
   SectionTitleButton,
+  SectionTitleLabel,
 } from "@webstudio-is/design-system";
-import { PropertyName } from "../../shared/property-name";
+import { PlusIcon } from "@webstudio-is/icons";
+import { CollapsibleSectionBase } from "~/builder/shared/collapsible-section";
 import { FloatingPanel } from "~/builder/shared/floating-panel";
+import { useState } from "react";
+import { getDots } from "../../shared/collapsible-section";
+import { PropertyName } from "../../shared/property-name";
+import { getStyleSource } from "../../shared/style-info";
 import type { RenderCategoryProps } from "../../style-sections";
 import { BoxShadowContent } from "./box-shadow-content";
-
-import { CollapsibleSectionBase } from "~/builder/shared/collapsible-section";
 import { BoxShadowLayersList } from "./box-shadow-list";
-import { getStyleSource } from "../../shared/style-info";
-import { PlusIcon } from "@webstudio-is/icons";
-import { getDots } from "../../shared/collapsible-section";
 import { property } from "./utils";
 
 const label = "Box Shadow";
@@ -70,7 +69,7 @@ const BoxShadowWrapper = (
         >
           <PropertyName
             style={currentStyle}
-            property={property}
+            properties={[property]}
             label={
               <SectionTitleLabel color={layersStyleSource}>
                 {label}
