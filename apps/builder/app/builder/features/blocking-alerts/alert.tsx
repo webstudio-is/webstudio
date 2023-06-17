@@ -3,7 +3,10 @@ import { AlertIcon } from "@webstudio-is/icons";
 
 const containerStyle = css({
   position: "absolute",
-  inset: 0,
+  top: 0,
+  left: 0,
+  width: "100vw",
+  height: "100vh",
   zIndex: theme.zIndices.max,
   background: "rgba(0, 0, 0, 0.9)",
 });
