@@ -39,6 +39,16 @@ export const BlockingAlerts = () => {
     .filter(Boolean)
     .pop();
 
+  useEffect(() => {
+    if (message === undefined) {
+      document.body.style.overflow = "";
+      document.documentElement.style.overflow = "";
+    } else {
+      document.body.style.overflow = "hidden";
+      document.documentElement.style.overflow = "hidden";
+    }
+  }, [message]);
+
   if (message === undefined) {
     return null;
   }
