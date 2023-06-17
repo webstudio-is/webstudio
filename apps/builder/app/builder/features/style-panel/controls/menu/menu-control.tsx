@@ -43,8 +43,10 @@ export const MenuControl = ({
       label={label}
       items={items}
       value={String(currentValue)}
-      onChange={setValue}
-      onHover={(value) => setValue(value, { isEphemeral: true })}
+      onChange={(value) => setValue({ type: "keyword", value })}
+      onHover={(value) =>
+        setValue({ type: "keyword", value }, { isEphemeral: true })
+      }
       onReset={() => {
         deleteProperty(property);
       }}

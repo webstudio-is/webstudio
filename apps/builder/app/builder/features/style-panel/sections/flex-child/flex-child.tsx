@@ -60,7 +60,7 @@ const FlexChildSectionAlign = (props: RenderCategoryProps) => {
       />
       <ToggleGroupControl
         styleSource={getStyleSource(currentStyle.alignSelf)}
-        onValueChange={(value) => setAlignSelf(value)}
+        onValueChange={(value) => setAlignSelf({ type: "keyword", value })}
         value={toValue(currentStyle.alignSelf?.value)}
         items={[
           {
@@ -124,20 +124,44 @@ const FlexChildSectionSizing = (props: RenderCategoryProps) => {
         onValueChange={(value) => {
           switch (value) {
             case "none": {
-              setSizing.setProperty("flexGrow")("0");
-              setSizing.setProperty("flexShrink")("0");
+              setSizing.setProperty("flexGrow")({
+                type: "unit",
+                value: 0,
+                unit: "number",
+              });
+              setSizing.setProperty("flexShrink")({
+                type: "unit",
+                value: 0,
+                unit: "number",
+              });
               setSizing.publish();
               break;
             }
             case "grow": {
-              setSizing.setProperty("flexGrow")("1");
-              setSizing.setProperty("flexShrink")("0");
+              setSizing.setProperty("flexGrow")({
+                type: "unit",
+                value: 1,
+                unit: "number",
+              });
+              setSizing.setProperty("flexShrink")({
+                type: "unit",
+                value: 0,
+                unit: "number",
+              });
               setSizing.publish();
               break;
             }
             case "shrink": {
-              setSizing.setProperty("flexGrow")("0");
-              setSizing.setProperty("flexShrink")("1");
+              setSizing.setProperty("flexGrow")({
+                type: "unit",
+                value: 0,
+                unit: "number",
+              });
+              setSizing.setProperty("flexShrink")({
+                type: "unit",
+                value: 1,
+                unit: "number",
+              });
               setSizing.publish();
               break;
             }
@@ -261,7 +285,7 @@ const FlexChildSectionOrder = (props: RenderCategoryProps) => {
             case "0":
             case "1":
             case "-1": {
-              setOrder(value);
+              setOrder({ type: "unit", value: Number(value), unit: "number" });
               break;
             }
           }

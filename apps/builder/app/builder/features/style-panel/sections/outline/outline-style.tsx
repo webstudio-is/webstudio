@@ -60,7 +60,9 @@ export const OutlineStyle = (
         }}
         type="single"
         value={outlineStyleValue}
-        onValueChange={(value) => setProperty(property)(value)}
+        onValueChange={(value) =>
+          setProperty(property)({ type: "keyword", value })
+        }
       >
         {outlineStyleValues.map(({ value, Icon }) => (
           <ToggleGroupItem key={value} value={value}>
