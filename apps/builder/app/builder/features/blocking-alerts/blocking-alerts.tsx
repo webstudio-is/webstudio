@@ -39,15 +39,6 @@ export const BlockingAlerts = () => {
     .filter(Boolean)
     .pop();
 
-  // prevent scroll on mobile
-  useEffect(() => {
-    if (message === undefined) {
-      document.documentElement.style.overflow = "";
-    } else {
-      document.documentElement.style.overflow = "hidden";
-    }
-  }, [message]);
-
   if (message === undefined) {
     return null;
   }
