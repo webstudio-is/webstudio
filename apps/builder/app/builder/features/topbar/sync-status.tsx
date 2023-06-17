@@ -3,7 +3,7 @@ import { atom } from "nanostores";
 import { Flex, rawTheme, Tooltip } from "@webstudio-is/design-system";
 import { OfflineIcon } from "@webstudio-is/icons";
 import { useEffect } from "react";
-import { queueStatus } from "~/builder/shared/sync";
+import { jobStatus } from "~/builder/shared/sync";
 
 const isOnlineStore = atom(false);
 
@@ -18,7 +18,7 @@ const subscribeIsOnline = () => {
 };
 
 export const SyncStatus = () => {
-  const status = useStore(queueStatus);
+  const status = useStore(jobStatus);
   const isOnline = useStore(isOnlineStore);
   useEffect(subscribeIsOnline, []);
 

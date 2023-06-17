@@ -1,11 +1,11 @@
 import { useEffect, useRef } from "react";
 import { useBeforeUnload } from "react-use";
-import { sync } from "immerhin";
+import { sync, type SyncItem } from "immerhin";
 import type { Project } from "@webstudio-is/project";
 import type { Build } from "@webstudio-is/project-build";
 import type { AuthPermit } from "@webstudio-is/trpc-interface/index.server";
 import { restPatchPath } from "~/shared/router-utils";
-import { enqueue, dequeue, queueStatus } from "./queue";
+import { scheduleJob, executeJob, jobStatus } from "./job";
 
 // Periodic check for new entries to group them into one job/call in sync queue.
 const NEW_ENTRIES_INTERVAL = 1000;
@@ -19,8 +19,8 @@ const INTERVAL_ERROR = 5000;
 const useRecoveryCheck = () => {
   useEffect(() => {
     const intervalId = setInterval(() => {
-      if (queueStatus.get() === "recovering") {
-        dequeue();
+      if (jobStatus.get() === "recovering") {
+        executeJob();
       }
     }, INTERVAL_RECOVERY);
 
@@ -31,14 +31,17 @@ const useRecoveryCheck = () => {
 const useErrorCheck = () => {
   useEffect(() => {
     const intervalId = setInterval(() => {
-      if (queueStatus.get() === "failed") {
-        dequeue();
+      if (jobStatus.get() === "failed") {
+        executeJob();
       }
     }, INTERVAL_ERROR);
 
     return () => clearInterval(intervalId);
   }, []);
 };
+
+const scheduledTransactions: SyncItem[] = [];
+const pendingTransactions: SyncItem[] = [];
 
 const useNewEntriesCheck = ({
   buildId,
@@ -65,12 +68,15 @@ const useNewEntriesCheck = ({
       if (transactions.length === 0) {
         return;
       }
+      scheduledTransactions.push(...transactions);
 
-      enqueue(async () => {
+      scheduleJob(async () => {
+        pendingTransactions.push(...scheduledTransactions);
+        scheduledTransactions.splice(0);
         const response = await fetch(restPatchPath({ authToken }), {
           method: "post",
           body: JSON.stringify({
-            transactions,
+            transactions: pendingTransactions,
             buildId,
             projectId,
             // provide latest stored version to server
@@ -81,6 +87,7 @@ const useNewEntriesCheck = ({
           const result = await response.json();
           if (result.status === "ok") {
             lastVersion.current += 1;
+            pendingTransactions.splice(0);
             return { ok: true };
           }
           // when versions mismatched ask user to reload
@@ -94,9 +101,11 @@ const useNewEntriesCheck = ({
             if (shouldReload) {
               location.reload();
             }
+            pendingTransactions.splice(0);
             return { ok: false, retry: false };
           }
         }
+        pendingTransactions.splice(0);
         return { ok: false, retry: true };
       });
     }, NEW_ENTRIES_INTERVAL);
@@ -118,7 +127,7 @@ export const useSyncServer = (props: UserSyncServerProps) => {
   useRecoveryCheck();
   useErrorCheck();
   useBeforeUnload(
-    () => queueStatus.get() !== "idle",
+    () => jobStatus.get() !== "idle",
     "You have unsaved changes. Are you sure you want to leave?"
   );
 };
