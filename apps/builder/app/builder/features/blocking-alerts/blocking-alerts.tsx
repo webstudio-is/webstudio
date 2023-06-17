@@ -39,12 +39,11 @@ export const BlockingAlerts = () => {
     .filter(Boolean)
     .pop();
 
+  // prevent scroll on mobile
   useEffect(() => {
     if (message === undefined) {
-      document.body.style.overflow = "";
       document.documentElement.style.overflow = "";
     } else {
-      document.body.style.overflow = "hidden";
       document.documentElement.style.overflow = "hidden";
     }
   }, [message]);
