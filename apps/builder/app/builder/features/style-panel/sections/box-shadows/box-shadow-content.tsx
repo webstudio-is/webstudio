@@ -1,15 +1,16 @@
-import { useState } from "react";
 import type { InvalidValue, LayersValue } from "@webstudio-is/css-data";
+import { parseBoxShadow } from "@webstudio-is/css-data";
 import {
   Flex,
   Label,
+  Text,
   TextArea,
   theme,
   Tooltip,
 } from "@webstudio-is/design-system";
-import type { RenderCategoryProps } from "../../style-sections";
-import { parseBoxShadow } from "@webstudio-is/css-data";
 import { InformationIcon } from "@webstudio-is/icons";
+import { useState } from "react";
+import type { RenderCategoryProps } from "../../style-sections";
 import { addBoxShadow } from "./utils";
 
 type IntermediateValue = {
@@ -81,12 +82,12 @@ export const BoxShadowContent = (
           <Tooltip
             variant="wrapped"
             content={
-              <>
+              <Text variant="labelsTitleCase">
                 Paste a box-shadow, for example:
                 <br />
                 <br />
                 box-shadow(...)
-              </>
+              </Text>
             }
           >
             <InformationIcon />
