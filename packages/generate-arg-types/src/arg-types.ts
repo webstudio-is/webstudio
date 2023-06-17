@@ -69,6 +69,8 @@ export const getArgType = (propItem: PropItem): PropMeta | undefined => {
         return makePropMeta("boolean", "boolean");
       case "number":
         return makePropMeta("number", "number");
+      case "string":
+        return makePropMeta("string", "text");
       case "string | number":
       case "number | string":
         if (defaultValue?.value === "") {
@@ -96,8 +98,12 @@ export const getArgType = (propItem: PropItem): PropMeta | undefined => {
       case "symbol":
         return;
       default:
-        // @todo: we need some checks here. for example type.name can be "ImageLoader"
-        return makePropMeta("string", "text");
+        // cast complex aria types to string
+        if (name === "role" || name.startsWith("aria-")) {
+          return makePropMeta("string", "text");
+        }
+        // ignore the rest of complex types
+        return;
     }
   } catch (error) {
     // eslint-disable-next-line no-console
