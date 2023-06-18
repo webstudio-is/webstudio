@@ -38,7 +38,7 @@
     "@webstudio-is/css-data": "workspace:^",
     "@webstudio-is/prisma-client": "workspace:^",
     "@webstudio-is/trpc-interface": "workspace:^",
-    "nanoid": "^3.2.0",
+    "nanoid": "^3.3.6",
     "zod": "^3.21.4"
   },
   "devDependencies": {

@@ -192,8 +192,8 @@ importers:
         specifier: ^9.0.12
         version: 9.0.15
       immerhin:
-        specifier: ^0.4.0
-        version: 0.4.0
+        specifier: ^0.5.0
+        version: 0.5.0
       jose:
         specifier: ^4.11.2
         version: 4.11.2
@@ -216,8 +216,8 @@ importers:
         specifier: ^7.0.1
         version: 7.0.1
       nanoid:
-        specifier: ^3.2.0
-        version: 3.3.4
+        specifier: ^3.3.6
+        version: 3.3.6
       nanostores:
         specifier: ^0.7.1
         version: 0.7.1
@@ -382,8 +382,8 @@ importers:
         specifier: ^9.0.12
         version: 9.0.15
       nanoid:
-        specifier: ^3.2.0
-        version: 3.3.4
+        specifier: ^3.3.6
+        version: 3.3.6
       sharp:
         specifier: ^0.30.7
         version: 0.30.7
@@ -1113,8 +1113,8 @@ importers:
         specifier: ^1.2.6
         version: 1.2.6
       nanoid:
-        specifier: ^3.2.0
-        version: 3.3.4
+        specifier: ^3.3.6
+        version: 3.3.6
       umzug:
         specifier: ^3.2.1
         version: 3.2.1
@@ -1168,8 +1168,8 @@ importers:
         specifier: workspace:^
         version: link:../trpc-interface
       nanoid:
-        specifier: ^3.2.0
-        version: 3.3.4
+        specifier: ^3.3.6
+        version: 3.3.6
       slugify:
         specifier: ^1.6.5
         version: 1.6.5
@@ -1205,8 +1205,8 @@ importers:
         specifier: workspace:^
         version: link:../trpc-interface
       nanoid:
-        specifier: ^3.2.0
-        version: 3.3.4
+        specifier: ^3.3.6
+        version: 3.3.6
       zod:
         specifier: ^3.21.4
         version: 3.21.4
@@ -1266,8 +1266,8 @@ importers:
         specifier: ^7.0.1
         version: 7.0.1
       nanoid:
-        specifier: ^3.2.0
-        version: 3.3.4
+        specifier: ^3.3.6
+        version: 3.3.6
       nanostores:
         specifier: ^0.7.1
         version: 0.7.1
@@ -8392,7 +8392,7 @@ packages:
       fs-extra: 9.1.0
       global: 4.4.0
       isomorphic-unfetch: 3.1.0
-      nanoid: 3.3.4
+      nanoid: 3.3.6
       read-pkg-up: 7.0.1
       regenerator-runtime: 0.13.11
     transitivePeerDependencies:
@@ -10164,10 +10164,6 @@ packages:
     resolution: {integrity: sha512-gQxTNE/GAfIIrmHLUE3oJyp5FO6HRBfhjnw4/wMmA63ZGDJnWBmgY/lyQBpnDUkGmAhbSe39tx2d/iTOAfglwQ==}
     dependencies:
       node-int64: 0.4.0
-
-  /bson-objectid@2.0.4:
-    resolution: {integrity: sha512-vgnKAUzcDoa+AeyYwXCoHyF2q6u/8H46dxu5JN+4/TZeq/Dlinn0K6GvxsCLb3LHUJl0m/TLiEK31kUwtgocMQ==}
-    dev: false
 
   /buffer-from@1.1.2:
     resolution: {integrity: sha512-E+XQCRwSbaaiChtv6k6Dwgc+bx+Bs6vuKJHHl5kox/BaKbhiXzqQOwK4cO22yElGp2OCmjwVhT3HmxgyPGnJfQ==}
@@ -13496,11 +13492,11 @@ packages:
     resolution: {integrity: sha512-2eB/sswms9AEUSkOm4SbV5Y7Vmt/bKRwByd52jfLkW4OLYeaTP3EEiJ9agqU0O/tq6Dk62Zfj+TJSqfm1rLVGQ==}
     dev: false
 
-  /immerhin@0.4.0:
-    resolution: {integrity: sha512-o/nh3n80wd/Iku33thGAovobcnCfYHuoxDFY1dDijIX4xppd4Hb3KdfwJDdq99kF8iqCHJjUhEx/iYTiqz1pqw==}
+  /immerhin@0.5.0:
+    resolution: {integrity: sha512-s0MJ45StYo4mChJmQiz/hcw9a5nQD9VHrQCGj1+FiS1TK62X+AA/7XFUR8YbP9b735mS841aKx5tXQNTmOpUJA==}
     dependencies:
-      bson-objectid: 2.0.4
       immer: 9.0.15
+      nanoid: 3.3.6
     dev: false
 
   /import-fresh@3.3.0:
@@ -15875,8 +15871,8 @@ packages:
     engines: {node: ^14.0.0 || ^16.0.0 || >=18.0.0}
     dev: false
 
-  /nanoid@3.3.4:
-    resolution: {integrity: sha512-MqBkQh/OHTS2egovRtLk45wEyNXwF+cokD+1YPf9u5VfJiRdAiRwB2froX5Co9Rh20xs4siNPm8naNotSD6RBw==}
+  /nanoid@3.3.6:
+    resolution: {integrity: sha512-BGcqMMJuToF7i1rt+2PWSNVnWIkGCU78jBG3RxO/bZlnZPK2Cmi2QaffxGO/2RvWi9sL+FAiRiXMgsyxQ1DIDA==}
     engines: {node: ^10 || ^12 || ^13.7 || ^14 || >=15.0.1}
     hasBin: true
 
@@ -16876,7 +16872,7 @@ packages:
     resolution: {integrity: sha512-tP7u/Sn/dVxK2NnruI4H9BG+x+Wxz6oeZ1cJ8P6G/PZY0IKk4k/63TDsQf2kQq3+qoJeLm2kIBUNlZe3zgb4Zg==}
     engines: {node: ^10 || ^12 || >=14}
     dependencies:
-      nanoid: 3.3.4
+      nanoid: 3.3.6
       picocolors: 1.0.0
       source-map-js: 1.0.2
 
@@ -20140,7 +20136,7 @@ packages:
       chokidar: 3.5.3
       esbuild: 0.16.3
       miniflare: 2.13.0
-      nanoid: 3.3.4
+      nanoid: 3.3.6
       path-to-regexp: 6.2.1
       selfsigned: 2.1.1
       source-map: 0.7.4
