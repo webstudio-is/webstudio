@@ -1,4574 +1,4004 @@
 // This file was auto-generated
-export const properties = {
-  accentColor: "Sets the color used for highlighting or emphasis",
-  alignContent: "Sets how flex items are positioned on the cross axis",
-  alignItems: "Sets how flex items are positioned on the main axis",
-  alignSelf: "Sets how a flex item is positioned within its container",
-  alignTracks: "Sets how tracks are aligned in a grid container",
-  animationComposition: "Combines multiple animations into a single animation",
-  animationDelay: "Sets the delay before starting an animation",
-  animationDirection: "Sets the direction of an animation",
-  animationDuration: "Sets the duration of an animation",
+export const propertiesGenerated = {
+  accentColor: "Sets the color used for highlighting user interface controls.",
+  alignContent: "Aligns a flex container's lines within the flex container.",
+  alignItems: "Aligns items along the cross axis of a flex container.",
+  alignSelf: "Aligns a flex item along the cross axis of its container.",
+  alignTracks: "Defines how tracks are aligned in a grid container.",
+  animationComposition: "Specifies whether an animation is additive or not.",
+  animationDelay: "Defines a delay for the start of an animation.",
+  animationDirection:
+    "Defines whether an animation should play forwards, backwards, or alternate.",
+  animationDuration:
+    "Specifies how long an animation should take to complete one cycle.",
   animationFillMode:
-    "Sets how an animation should apply styles before and after it is run",
-  animationIterationCount: "Sets the number of times an animation should run",
-  animationName: "Sets the name of an animation",
-  animationPlayState: "Sets the play state of an animation",
-  animationTimingFunction: "Sets the speed curve of an animation",
-  animationTimeline: "Sets the timeline of an animation",
-  appearance: "Sets the element's appearance (e.g. button, checkbox, etc.)",
-  aspectRatio: "Sets the aspect ratio of an element",
-  backdropFilter: "Applies a filter effect to the backdrop of an element",
-  backfaceVisibility:
-    "Determines whether or not an element should be visible when turned away from the screen",
+    "Sets which values are applied before/after the animation.",
+  animationIterationCount: "Defines how many times an animation should play.",
+  animationName: "Specifies the name of an animation to apply to an element.",
+  animationPlayState: "Specifies whether an animation is running or paused.",
+  animationTimingFunction:
+    "Specifies how an animation progresses over one cycle.",
+  animationTimeline: "Defines the timeline of an animation.",
+  appearance:
+    "Determines whether an element should be styled like a standard HTML element or not.",
+  aspectRatio: "Controls the aspect ratio of an element's box.",
+  backdropFilter: "Applies a filter effect to the background of an element.",
+  backfaceVisibility: "Defines whether the back face of an element is visible.",
   backgroundAttachment:
-    "Sets how the background image is positioned relative to the element",
+    "Sets whether a background image is fixed or scrolls with the rest of the page.",
   backgroundBlendMode:
-    "Specifies how multiple background images are blended together",
-  backgroundClip:
-    "Determines the area of an element where the background image can be displayed",
-  backgroundColor: "Sets the background color of an element",
-  backgroundImage: "Sets one or more background images for an element",
-  backgroundOrigin:
-    "Specifies where the background image is positioned within an element",
-  backgroundPosition: "Specifies the horizontal position of a background image",
-  backgroundPositionX: "Specifies the vertical position of a background image",
-  backgroundPositionY: "Sets how a background image is repeated",
-  backgroundRepeat: "Sets the size of a background image",
-  backgroundSize:
-    "Defines how an element should behave if its content overflows its block-level container",
-  blockOverflow: "Sets the height of an element",
-  blockSize: "Sets the width of an element",
-  borderBlockColor: "Sets the color of the block borders",
-  borderBlockStyle: "Sets the style of the block borders",
-  borderBlockWidth: "Sets the width of the block borders",
-  borderBlockEndColor: "Sets the color of the block end border",
-  borderBlockEndStyle: "Sets the style of the block end border",
-  borderBlockEndWidth: "Sets the width of the block end border",
-  borderBlockStartColor: "Sets the color of the block start border",
-  borderBlockStartStyle: "Sets the style of the block start border",
-  borderBlockStartWidth: "Sets the width of the block start border",
-  borderBottomColor: "Sets the color of the bottom border",
+    "Defines how background images blend with each other and the element's background color.",
+  backgroundClip: "Specifies the area where the background image is visible.",
+  backgroundColor: "Sets the background color of an element.",
+  backgroundImage: "Sets one or more background images for an element.",
+  backgroundOrigin: "Specifies where the background image(s) come from.",
+  backgroundPosition: "Sets the starting position of a background image.",
+  backgroundPositionX:
+    "Sets the horizontal starting position of a background image.",
+  backgroundPositionY:
+    "Sets the vertical starting position of a background image.",
+  backgroundRepeat: "Sets how a background image will be repeated.",
+  backgroundSize: "Sets the size of a background image.",
+  blockOverflow:
+    "Defines how to handle content that overflows the block container.",
+  blockSize: "Defines the height of an element's content box.",
+  borderBlockColor:
+    "Controls the color of the border of a block-level element.",
+  borderBlockStyle:
+    "Controls the style of the border of a block-level element.",
+  borderBlockWidth:
+    "Controls the width of the border of a block-level element.",
+  borderBlockEndColor:
+    "Controls the color of the border at the end of a block-level element.",
+  borderBlockEndStyle:
+    "Controls the style of the border at the end of a block-level element.",
+  borderBlockEndWidth:
+    "Controls the width of the border at the end of a block-level element.",
+  borderBlockStartColor:
+    "Controls the color of the border at the start of a block-level element.",
+  borderBlockStartStyle:
+    "Controls the style of the border at the start of a block-level element.",
+  borderBlockStartWidth:
+    "Controls the width of the border at the start of a block-level element.",
+  borderBottomColor: "Controls the color of the bottom border of an element.",
   borderBottomLeftRadius:
-    "Sets the radius of the bottom left corner of the element",
+    "Controls the radius of the bottom-left corner of an element.",
   borderBottomRightRadius:
-    "Sets the radius of the bottom right corner of the element",
-  borderBottomStyle: "Sets the style of the bottom border",
-  borderBottomWidth: "Sets the width of the bottom border",
+    "Controls the radius of the bottom-right corner of an element.",
+  borderBottomStyle: "Controls the style of the bottom border of an element.",
+  borderBottomWidth: "Controls the width of the bottom border of an element.",
   borderCollapse:
-    "Sets whether the table borders should be collapsed into a single border",
-  borderEndEndRadius: "Sets the radius of the bottom end corner of the element",
-  borderEndStartRadius: "Sets the radius of the border end start corner",
+    "Controls whether the borders of table cells are collapsed or separated.",
+  borderEndEndRadius:
+    "Controls the radius of the end of the border at the end of a block-level element.",
+  borderEndStartRadius:
+    "Controls the radius of the rounded border corners at the end and start of a box.",
   borderImageOutset:
-    "Sets the amount by which the border image area extends beyond the border box",
-  borderImageRepeat: "Sets how the border image is repeated",
-  borderImageSlice: "Determines the inward offsets of the border image area",
-  borderImageSource: "Sets the image to be used as a border",
-  borderImageWidth: "Sets the width of the border image",
-  borderInlineColor: "Sets the color of the inline border",
-  borderInlineStyle: "Sets the style of the inline border",
-  borderInlineWidth: "Sets the width of the inline border",
-  borderInlineEndColor: "Sets the color of the inline end border",
-  borderInlineEndStyle: "Sets the style of the inline end border",
-  borderInlineEndWidth: "Sets the width of the inline end border",
-  borderInlineStartColor: "Sets the color of the inline start border",
-  borderInlineStartStyle: "Sets the style of the inline start border",
-  borderInlineStartWidth: "Sets the width of the inline start border",
-  borderLeftColor: "Sets the color of the left border",
-  borderLeftStyle: "Sets the style of the left border",
-  borderLeftWidth: "Sets the width of the left border",
-  borderRightColor: "Sets the color of the right border",
-  borderRightStyle: "Sets the style of the right border",
-  borderRightWidth: "Sets the width of the right border",
-  borderSpacing: "Sets the spacing between adjacent borders",
-  borderStartEndRadius: "Sets the radius of the border on the starting end",
-  borderStartStartRadius: "Sets the radius of the border on the starting start",
-  borderTopColor: "Sets the color of the top border",
-  borderTopLeftRadius: "Sets the radius of the top left border",
-  borderTopRightRadius: "Sets the radius of the top right border",
-  borderTopStyle: "Sets the style of the top border",
-  borderTopWidth: "Sets the width of the top border",
-  bottom: "Sets the distance between the bottom edge and the parent container",
+    "Determines the amount by which the border image area extends beyond the border box.",
+  borderImageRepeat: "Specifies how the border image is repeated.",
+  borderImageSlice: "Defines how to slice the border image.",
+  borderImageSource: "Specifies the path to the image to be used as a border.",
+  borderImageWidth: "Specifies the width of the border image.",
+  borderInlineColor: "Sets the color of the inline border.",
+  borderInlineStyle: "Sets the style of the inline border.",
+  borderInlineWidth: "Sets the width of the inline border.",
+  borderInlineEndColor:
+    "Sets the color of the inline border at the end of a box.",
+  borderInlineEndStyle:
+    "Sets the style of the inline border at the end of a box.",
+  borderInlineEndWidth:
+    "Sets the width of the inline border at the end of a box.",
+  borderInlineStartColor:
+    "Sets the color of the inline border at the start of a box.",
+  borderInlineStartStyle:
+    "Sets the style of the inline border at the start of a box.",
+  borderInlineStartWidth:
+    "Sets the width of the inline border at the start of a box.",
+  borderLeftColor: "Sets the color of the left border.",
+  borderLeftStyle: "Style of the left border of an element",
+  borderLeftWidth: "Width of the left border of an element",
+  borderRightColor: "Color of the right border of an element",
+  borderRightStyle: "Style of the right border of an element",
+  borderRightWidth: "Width of the right border of an element",
+  borderSpacing: "Distance between adjacent borders of elements",
+  borderStartEndRadius: "Radius of bottom right corner in block flow",
+  borderStartStartRadius: "Radius of top left corner in block flow",
+  borderTopColor: "Color of the top border of an element",
+  borderTopLeftRadius: "Radius of top left corner of an element",
+  borderTopRightRadius: "Radius of top right corner of an element",
+  borderTopStyle: "Style of the top border of an element",
+  borderTopWidth: "Width of the top border of an element",
+  bottom:
+    "Distance between the bottom edge of an element and the bottom edge of its containing block",
   boxDecorationBreak:
-    "Specifies how box decorations should be broken between lines",
-  boxShadow: "Adds a shadow to an element",
-  boxSizing: "Determines how the box model is calculated",
-  breakAfter: "Specifies how page breaks should occur after an element",
-  breakBefore: "Specifies how page breaks should occur before an element",
-  breakInside: "Specifies how page breaks should occur within an element",
-  captionSide: "Specifies the placement of a table caption",
-  caretColor: "Sets the color of the text input caret",
-  caretShape: "Specifies the shape of the text input caret",
-  clear: "Clears floated elements from both sides of an element",
-  clip: "Clips an absolutely positioned element",
-  clipPath: "Specifies the clipping path for an element",
-  color: "Sets the color of text",
-  printColorAdjust: "Specifies how colors should be adjusted when printing",
-  colorScheme: "Specifies the color scheme for the page",
+    "Specifies how the background, padding, border, and box shadow of an element are broken across multiple lines",
+  boxShadow: "Shadow effect around an element",
+  boxSizing: "Determines how the sizing of an element is calculated.",
+  breakAfter: "Specifies how page breaks should occur after an element.",
+  breakBefore: "Specifies how page breaks should occur before an element.",
+  breakInside: "Specifies how page breaks should occur within an element.",
+  captionSide: "Specifies the position of a table caption.",
+  caretColor: "Specifies the color of the cursor caret.",
+  caretShape: "Specifies the shape of the cursor caret.",
+  clear:
+    "Specifies which sides of an element where other floating elements are not allowed.",
+  clip: "Clips an absolutely positioned element.",
+  clipPath: "Clips an element to a specific shape.",
+  color: "Specifies the color of text.",
+  printColorAdjust: "Specifies how colors are adjusted during printing.",
+  colorScheme: "Specifies the preferred color scheme for the user agent.",
   columnCount:
-    "Specifies the number of columns an element should be divided into",
-  columnFill: "Specifies how to fill columns with content",
-  columnGap: "Specifies the gap between columns",
-  columnRuleColor: "Sets the color of the rule between columns",
-  columnRuleStyle: "Sets the style of the rule between columns",
-  columnRuleWidth: "Sets the width of the rule between columns",
-  columnSpan: "Specifies how many columns an element should span across",
-  columnWidth: "Sets the width of columns",
-  contain:
-    "Specifies how an element should be contained within its parent container",
-  containIntrinsicBlockSize:
-    "Specifies the minimum block size an element should be contained within",
-  containIntrinsicHeight:
-    "Specifies the minimum height an element should be contained within",
-  containIntrinsicInlineSize:
-    "Specifies the minimum inline size an element should be contained within",
-  containIntrinsicWidth:
-    "Specifies the minimum width an element should be contained within",
-  content: "Inserts content before or after an element",
-  contentVisibility: "Specifies whether an element's content is visible or not",
-  counterIncrement: "Increases the value of a counter",
-  counterReset: "Resets the value of a counter",
-  counterSet: "Sets the value of a counter",
+    "Specifies the number of columns an element should be divided into.",
+  columnFill: "Specifies how to fill columns, balancing content.",
+  columnGap: "Specifies the gap between columns.",
+  columnRuleColor: "Sets the color of the rule between columns.",
+  columnRuleStyle: "Sets the style of the rule between columns.",
+  columnRuleWidth: "Sets the width of the rule between columns.",
+  columnSpan: "Specifies how many columns an element should span across.",
+  columnWidth: "Sets the width of columns in multi-column layouts.",
+  contain: "Defines the scope of potential element re-layouts.",
+  containIntrinsicBlockSize: "Specifies the ideal block size of the element.",
+  containIntrinsicHeight: "Specifies the ideal height of the element.",
+  containIntrinsicInlineSize: "Specifies the ideal inline size of the element.",
+  containIntrinsicWidth: "Specifies the ideal width of the element.",
+  content:
+    "Inserts generated content, like icons or text, before or after an element.",
+  contentVisibility: "Controls whether an element's content is visible.",
+  counterIncrement: "Increments the value of one or more CSS counters.",
+  counterReset: "Resets the value of one or more CSS counters.",
+  counterSet: "Sets the value of one or more CSS counters.",
   cursor:
-    "Sets the type of cursor to be displayed when hovering over an element",
-  direction: "Sets the text direction",
-  display: "Defines how an element should be displayed",
-  emptyCells: "Controls the rendering of empty cells in a table",
-  filter: "Applies visual effects (like blur or color shift) to an element",
-  flexBasis: "Specifies the initial size of a flex item",
-  flexDirection: "Defines the direction of the flex container",
-  flexGrow:
-    "Specifies the ability of a flex item to grow to fill available space",
-  flexShrink: "Specifies the ability of a flex item to shrink if necessary",
+    "Defines the type of cursor to be displayed when pointing over an element.",
+  direction:
+    "Sets the direction of text, either left-to-right or right-to-left.",
+  display: "Determines how an element is rendered on the page.",
+  emptyCells:
+    "Controls the display of borders and backgrounds for empty table cells.",
+  filter: "Applies visual effects (blur, grayscale, etc.) to an element.",
+  flexBasis:
+    "Sets the initial size of a flex item before free space is distributed.",
+  flexDirection: "Sets the direction of the main axis in a flex container.",
+  flexGrow: "Determines how much a flex item will grow relative to others.",
+  flexShrink: "Determines how much a flex item will shrink relative to others.",
   flexWrap:
-    "Specifies whether flex items are forced onto one line or can wrap onto multiple lines",
-  float: "Specifies the horizontal alignment of an element",
-  fontFamily: "Sets the font family for text",
+    "Controls whether flex items are forced onto one line or can wrap onto multiple lines.",
+  float: "Positions an element to the left or right of its container.",
+  fontFamily: "Sets the font family of text content.",
   fontFeatureSettings:
-    "Enables control over advanced typographic features in OpenType fonts",
-  fontKerning: "Controls the spacing between glyphs in a font",
-  fontLanguageOverride: "Overrides the language of the font",
-  fontOpticalSizing:
-    "Enables consistent sizing of fonts for optimal readability",
+    "Enables or disables font features like ligatures and kerning.",
+  fontKerning: "Controls the usage of kerning in fonts.",
+  fontLanguageOverride: "Overrides the language of text content.",
+  fontOpticalSizing: "Enables or disables optical sizing of fonts.",
   fontVariationSettings:
-    "Enables fine control over OpenType font features such as kerning and ligatures.",
-  fontSize: "Sets the size of the font",
-  fontSizeAdjust: "Adjusts the font size to optimize legibility",
-  fontStretch: "Stretches or compresses the font horizontally",
-  fontStyle: "Sets the style of the font (normal, italic, oblique)",
-  fontSynthesis: "Controls the synthesis of fonts",
-  fontVariant: "Sets the variant of the font (normal, small-caps)",
-  fontVariantAlternates: "Controls alternate glyphs for certain characters",
-  fontVariantCaps: "Controls capitalization of text",
-  fontVariantEastAsian: "Controls alternate glyphs for East Asian scripts",
-  fontVariantLigatures: "Controls which ligatures are used in the font",
-  fontVariantNumeric: "Controls display of numeric characters",
-  fontVariantPosition: "Controls the position of the font variant",
-  fontWeight: "Sets the weight (boldness) of the font",
-  forcedColorAdjust: "Controls how colors are adjusted for accessibility",
-  gridAutoColumns: "Sets the size of auto-generated columns in a grid",
-  gridAutoFlow: "Controls how items are placed in auto-generated grid tracks",
-  gridAutoRows: "Sets the height of an element",
-  gridColumnEnd: "Sets the character used to hyphenate words",
-  gridColumnStart: "Sets whether words can be hyphenated",
-  gridRowEnd: "Sets the orientation of an image",
-  gridRowStart: "Sets the algorithm used to render an image",
-  gridTemplateAreas: "Sets the resolution of an image",
-  gridTemplateColumns: "Sets the size of the first letter in a block of text",
-  gridTemplateRows: "Sets the starting position of a grid item's column",
-  hangingPunctuation: "Sets the ending position of a grid item's column",
-  height: "Sets the height of an element",
-  hyphenateCharacter: "Sets the ending position of a grid item's row",
-  hyphens: "Defines named grid areas within the grid container",
-  imageOrientation:
-    "Defines the number and sizes of columns in a grid container",
-  imageRendering: "Defines the number and sizes of rows in a grid container",
-  imageResolution: "Sets the character used for hanging punctuation",
-  initialLetter: "Sets the size of auto-generated rows in a grid container",
-  initialLetterAlign: "Aligns the first letter of a block element",
-  inlineSize: "Sets the width of an inline element",
-  inputSecurity: "Controls the visibility of entered text",
+    "Enables or disables font variations like weight and width.",
+  fontSize: "The size of the font.",
+  fontSizeAdjust: "Preserve the readability of text when font fallback occurs.",
+  fontStretch: "The width variation of the font.",
+  fontStyle: "The style of the font (italic, oblique, normal).",
+  fontSynthesis: "The synthesis method used when rendering fonts.",
+  fontVariant: "The variation of the font (normal, small-caps).",
+  fontVariantAlternates: "Alternate glyphs for specific characters.",
+  fontVariantCaps: "Control of the capitalization of text.",
+  fontVariantEastAsian: "Alternate glyphs for East Asian scripts.",
+  fontVariantLigatures: "Control of ligatures and contextual forms.",
+  fontVariantNumeric:
+    "Alternate glyphs for numbers, fractions, and ordinal markers.",
+  fontVariantPosition: "Control of superscript and subscript glyphs.",
+  fontWeight: "The weight (boldness) of the font.",
+  forcedColorAdjust: "Control of forced background and foreground colors.",
+  gridAutoColumns: "The size of columns that are not explicitly set.",
+  gridAutoFlow: "The placement of grid items in the grid container.",
+  gridAutoRows: "Defines the size of rows not explicitly set in a grid.",
+  gridColumnEnd: "Defines the end position of a grid item's column.",
+  gridColumnStart: "Defines the start position of a grid item's column.",
+  gridRowEnd: "Defines the end position of a grid item's row.",
+  gridRowStart: "Defines the start position of a grid item's row.",
+  gridTemplateAreas: "Defines named grid areas for the grid container.",
+  gridTemplateColumns: "Defines the number and size of columns in a grid.",
+  gridTemplateRows: "Defines the number and size of rows in a grid.",
+  hangingPunctuation:
+    "Controls whether punctuation marks should hang outside the margin box of a block container.",
+  height: "Defines the height of an element.",
+  hyphenateCharacter: "Defines the character used as a hyphenation point.",
+  hyphens: "Controls hyphenation of text in block elements.",
+  imageOrientation: "Defines the orientation of an image.",
+  imageRendering: "Controls image scaling and pixelation.",
+  imageResolution: "Defines the pixel density of an image.",
+  initialLetter:
+    "Controls the styling of the first letter of a block-level element.",
+  initialLetterAlign:
+    "Controls the alignment of the first letter or character of an element.",
+  inlineSize: "Sets the size of an element in the inline direction.",
+  inputSecurity:
+    "Determines whether or not the text entered into a password field is visible.",
   insetBlockEnd:
-    "Sets the distance from the bottom of a block element to its content",
+    "Sets the block-end position of an element relative to its nearest positioned ancestor.",
   insetBlockStart:
-    "Sets the distance from the top of a block element to its content",
+    "Sets the block-start position of an element relative to its nearest positioned ancestor.",
   insetInlineEnd:
-    "Sets the distance from the right of an inline element to its content",
+    "Sets the inline-end position of an element relative to its nearest positioned ancestor.",
   insetInlineStart:
-    "Sets the distance from the left of an inline element to its content",
-  isolation: "Determines if an element should create a new stacking context",
-  justifyContent: "Aligns items along the main axis of a flex container",
-  justifyItems: "Aligns items along the cross axis of a flex container",
-  justifySelf:
-    "Aligns a single flex item along the main axis of a flex container",
-  justifyTracks: "Defines the alignment of grid tracks along the main axis",
-  left: "Sets the distance from the left edge of an element to its containing element",
-  letterSpacing: "Sets the space between characters in a block of text",
-  lineBreak: "Controls how lines are broken in a block of text",
-  lineClamp: "Limits the number of lines in a block of text",
-  lineHeight: "Sets the height of each line of text",
-  lineHeightStep: "Sets the distance between lines of text",
-  listStyleImage: "Sets the image used as a bullet point for a list",
-  listStylePosition: "Sets the position of the bullet point for a list",
-  listStyleType: "Sets the type of bullet point for a list",
-  marginBlockEnd: "Sets the margin at the bottom of an element",
-  marginBlockStart: "Sets the margin at the top of an element",
-  marginBottom: "Sets the margin at the bottom of an element",
+    "Sets the inline-start position of an element relative to its nearest positioned ancestor.",
+  isolation:
+    "Determines whether an element should create a new stacking context.",
+  justifyContent: "Aligns flex items along the main axis of their container.",
+  justifyItems:
+    "Aligns items inside a grid cell along both the row and column axis.",
+  justifySelf: "Aligns a grid item along both the row and column axis.",
+  justifyTracks: "Aligns grid tracks along the row or column axis.",
+  left: "Sets the left position of an element relative to its nearest positioned ancestor.",
+  letterSpacing: "Controls the spacing between characters in a block of text.",
+  lineBreak:
+    "Specifies how lines should break within words and other elements.",
+  lineClamp:
+    "Limits the number of lines of text that can be displayed within an element.",
+  lineHeight: "Controls the height of each line of text.",
+  lineHeightStep: "Controls the step used to increment line-height.",
+  listStyleImage: "Specifies an image as the list-item marker.",
+  listStylePosition: "Specifies the position of the list-item markers.",
+  listStyleType: "Specifies the type of list-item marker.",
+  marginBlockEnd: "Sets the margin at the bottom of a block-level element.",
+  marginBlockStart: "Sets the margin at the top of a block-level element.",
+  marginBottom: "Sets the margin at the bottom of an element.",
   marginInlineEnd:
-    "Sets the margin at the end of an element (right margin in LTR, left in RTL)",
+    "Sets the margin on the right side of an inline-level element.",
   marginInlineStart:
-    "Sets the margin at the start of an element (left margin in LTR, right in RTL)",
-  marginLeft: "Sets the left margin of an element",
-  marginRight: "Sets the right margin of an element",
-  marginTop: "Sets the top margin of an element",
+    "Sets the margin on the left side of an inline-level element.",
+  marginLeft: "Sets the margin on the left side of an element.",
+  marginRight: "Sets the margin on the right side of an element.",
+  marginTop: "Sets the margin at the top of an element.",
   marginTrim:
-    "Sets whether an element's margin should be included in its width",
-  maskBorderMode: "Sets the border mode for an element's mask",
-  maskBorderOutset: "Sets the outset of an element's mask border",
-  maskBorderRepeat: "Repeats the mask border image",
-  maskBorderSlice: "Slices the mask border image",
-  maskBorderSource: "Sets the source for the mask border image",
-  maskBorderWidth: "Sets the width of the mask border image",
-  maskClip: "Clips the mask to the specified shape",
-  maskComposite: "Sets the compositing operation for the mask border image",
-  maskImage: "Sets the image to be used as the mask border",
-  maskMode: "Sets the blending mode for the mask border image",
+    "Determines whether a margin is collapsed with its parent element.",
+  maskBorderMode: "Specifies how to fill the border of a masked element.",
+  maskBorderOutset:
+    "Specifies the distance by which to extend the border image.",
+  maskBorderRepeat: "Repeats the mask border image in the mask painting area.",
+  maskBorderSlice:
+    "Specifies inward offsets from the top, right, bottom, and left edges of the mask image.",
+  maskBorderSource: "Determines the mask border image.",
+  maskBorderWidth: "Specifies the widths of the mask border.",
+  maskClip: "Limits the painting area to the area inside the mask.",
+  maskComposite:
+    "Specifies how the mask image is composited with the element's background.",
+  maskImage: "Sets the mask image of an element.",
+  maskMode: "Specifies how mask images are combined.",
   maskOrigin:
-    "Specifies the position of the mask area relative to the mask position",
-  maskPosition: "Specifies the position of the mask area",
-  maskRepeat: "Repeats the mask image",
-  maskSize: "Sets the size of the mask image",
-  maskType: "Specifies the type of mask",
-  masonryAutoFlow: "Sets the auto-placement algorithm for masonry layout",
-  mathDepth: "Sets the depth of the math expressions",
-  mathShift: "Sets the baseline shift of the math expressions",
-  mathStyle: "Sets the math font style",
-  maxBlockSize: "Sets the maximum block size",
-  maxHeight: "Sets the maximum height",
-  maxInlineSize: "Sets the maximum inline size",
-  maxLines: "Sets the maximum number of lines",
-  maxWidth: "Sets the maximum width",
-  minBlockSize: "Sets the minimum block size",
-  minHeight: "Sets the minimum height",
-  minInlineSize: "Sets the minimum inline size",
-  minWidth: "Sets the minimum width",
-  mixBlendMode: "Sets the blending mode for element backgrounds",
-  objectFit: "Sets how an element's content fits within its container",
+    "Determines the position of the mask image relative to the mask position.",
+  maskPosition: "Sets the initial position of the mask image.",
+  maskRepeat: "Specifies how the mask image is repeated.",
+  maskSize: "Specifies the size of the mask image.",
+  maskType: "Specifies the type of mask.",
+  masonryAutoFlow: "Controls the flow direction and arrangement of grid items.",
+  mathDepth:
+    "Sets the minimum height of an element that contains math content.",
+  mathShift:
+    "Determines the amount of extra space to add between math content and the surrounding text.",
+  mathStyle: "Sets the display style for MathML formulas.",
+  maxBlockSize: "Specifies the maximum block-level size of an element.",
+  maxHeight: "Sets the maximum height of an element.",
+  maxInlineSize: "Specifies the maximum inline size of an element.",
+  maxLines: "Sets the maximum number of lines for an element.",
+  maxWidth: "Sets the maximum width of an element.",
+  minBlockSize: "Specifies the minimum block-level size of an element.",
+  minHeight: "Sets the minimum height of an element.",
+  minInlineSize: "Specifies the minimum inline size of an element.",
+  minWidth: "Sets the minimum width of an element.",
+  mixBlendMode: "Specifies how an element blends with its background.",
+  objectFit: "Specifies how the content of an element should fit.",
   objectPosition:
-    "Sets the position of an element's content within its container",
+    "Specifies the alignment of the replaced element inside its container.",
   offsetAnchor:
-    "Sets the point of an element to be positioned relative to its anchor point",
-  offsetDistance: "Sets the distance an element is offset from its position",
-  offsetPath:
-    "Sets the path an element follows when it is offset from its position",
+    "Sets the positioning reference for an absolutely positioned element.",
+  offsetDistance:
+    "Specifies the distance between an element and its positioned container.",
+  offsetPath: "Specifies a motion path for an absolutely positioned element.",
   offsetPosition:
-    "Sets the distance between an element and its positioned ancestor",
-  offsetRotate: "Sets the angle of rotation of an element",
-  opacity: "Sets the transparency level of an element",
-  order: "Sets the order in which flex items appear",
-  orphans:
-    "Sets the minimum number of lines in a block container that must be left at the bottom",
-  outlineColor: "Sets the color of an outline",
+    "Controls the position of a positioned element relative to its containing block.",
+  offsetRotate:
+    "Controls the rotation of an element around a fixed point in degrees.",
+  opacity: "Controls the transparency of an element.",
+  order: "Controls the order in which an element appears in a flex container.",
+  orphans: "Controls the minimum number of lines for the last line of a block.",
+  outlineColor: "Controls the color of an element's outline.",
   outlineOffset:
-    "Sets the space between an outline and the border edge of an element",
-  outlineStyle: "Sets the style of an outline",
-  outlineWidth: "Sets the width of an outline",
-  overflow: "Sets how content will behave when it overflows its container",
+    "Controls the space between an element's outline and its border.",
+  outlineStyle: "Controls the style of an element's outline.",
+  outlineWidth: "Controls the width of an element's outline.",
+  overflow:
+    "Controls how content overflows its container when it is too large.",
   overflowAnchor:
-    "Sets the behavior of the anchor point of an element when it's scrolled out of view",
-  overflowBlock:
-    "Sets how content will behave when it overflows the block container",
+    "Controls whether or not to allow an element to be anchored to a specific point in the viewport.",
+  overflowBlock: "Controls how content overflows its container vertically.",
   overflowClipMargin:
-    "Sets the amount of space between the edge of an element and its overflow content",
-  overflowInline:
-    "Sets how content will behave when it overflows the inline container",
-  overflowWrap: "Sets how content will wrap when it overflows the line box",
-  overflowX:
-    "Sets how content will behave when it overflows the horizontal axis",
-  overflowY: "Controls scrolling behavior when content overflows vertically",
-  overscrollBehavior: "Controls scrolling behavior when content overflows",
-  overscrollBehaviorBlock:
-    "Controls scrolling behavior when content overflows vertically in a block container",
-  overscrollBehaviorInline:
-    "Controls scrolling behavior when content overflows horizontally in an inline container",
-  overscrollBehaviorX:
-    "Controls scrolling behavior when content overflows horizontally",
-  overscrollBehaviorY:
-    "Controls scrolling behavior when content overflows vertically",
-  paddingBlockEnd: "Sets the padding at the bottom of an element",
-  paddingBlockStart: "Sets the padding at the top of an element",
-  paddingBottom: "Sets the padding at the bottom of an element",
-  paddingInlineEnd: "Sets the padding at the end of an inline element",
-  paddingInlineStart: "Sets the padding at the start of an inline element",
-  paddingLeft: "Sets the padding on the left side of an element",
-  paddingRight: "Sets the padding on the right side of an element",
-  paddingTop: "Sets the padding at the top of an element",
-  pageBreakAfter: "Sets the page break behavior after an element",
-  pageBreakBefore: "Sets the page break behavior before an element",
-  pageBreakInside: "Controls page breaks inside an element",
-  paintOrder: "Specifies the order of paint layers",
-  perspective: "Sets the 3D perspective for transformed elements",
-  perspectiveOrigin: "Sets the position of the 3D perspective",
-  pointerEvents:
-    "Controls whether an element can be the target of pointer events",
-  position: "Sets the position type of an element",
-  quotes: "Defines quotation marks for a document",
-  resize: "Allows resizing of an element",
+    "Controls the margin that is used to clip the overflow of an element.",
+  overflowInline: "Controls how content overflows its container horizontally.",
+  overflowWrap:
+    "Controls how words should be wrapped when they are too long for their container.",
+  overflowX: "Controls how content overflows its container horizontally only.",
+  overflowY: "overflowY",
+  overscrollBehavior: "overscrollBehavior",
+  overscrollBehaviorBlock: "overscrollBehaviorBlock",
+  overscrollBehaviorInline: "overscrollBehaviorInline",
+  overscrollBehaviorX: "overscrollBehaviorX",
+  overscrollBehaviorY: "overscrollBehaviorY",
+  paddingBlockEnd: "paddingBlockEnd",
+  paddingBlockStart: "paddingBlockStart",
+  paddingBottom: "paddingBottom",
+  paddingInlineEnd: "paddingInlineEnd",
+  paddingInlineStart: "paddingInlineStart",
+  paddingLeft: "paddingLeft",
+  paddingRight: "paddingRight",
+  paddingTop: "paddingTop",
+  pageBreakAfter: "pageBreakAfter",
+  pageBreakBefore: "pageBreakBefore",
+  pageBreakInside: "Controls whether a page break occurs inside an element.",
+  paintOrder: "Specifies the order in which shapes are filled.",
+  perspective: "Defines the perspective from which an element is viewed.",
+  perspectiveOrigin: "Defines the position of the perspective element.",
+  pointerEvents: "Determines whether an element can be clicked.",
+  position: "Sets the position of an element.",
+  quotes: "Defines the quotation marks for a blockquote.",
+  resize: "Allows users to resize an element.",
   right:
-    "Sets the distance between the right edge of an element and the right edge of its containing block",
-  rotate: "Rotates an element clockwise or counterclockwise",
-  rowGap: "Sets the gap between rows in a grid or flex layout",
-  rubyAlign: "Aligns ruby text containers within a ruby container",
-  rubyMerge: "Merges adjacent ruby text containers",
-  rubyPosition: "Sets the position of ruby text containers",
-  scale: "Scales an element in 2D or 3D space",
-  scrollbarColor: "Sets the color of the scrollbar track and thumb",
+    "Sets the distance between the right edge of an element and its container.",
+  rotate: "Rotates an element.",
+  rowGap: "Sets the size of the gap between rows in a grid.",
+  rubyAlign:
+    "Aligns ruby text to the start, center, or end of a ruby container.",
+  rubyMerge: "Determines how ruby text is merged between adjacent elements.",
+  rubyPosition: "Sets the position of the ruby text container.",
+  scale: "Scales an element up or down.",
+  scrollbarColor: "Sets the color of the scrollbar track and thumb.",
   scrollbarGutter:
-    "Sets the width of the space between the scrollbar and the edge of the element",
-  scrollbarWidth: "Sets the width of the scrollbar track",
-  scrollBehavior: "Sets the scrolling behavior for the element",
-  scrollMarginBlockStart:
-    "Sets the margin at the beginning of the vertical scrollbar",
-  scrollMarginBlockEnd: "Sets the margin at the end of the vertical scrollbar",
-  scrollMarginBottom: "Sets the margin at the bottom of the element",
+    "Controls the size of the gutter (space) between scrollbar and element.",
+  scrollbarWidth: "Controls the width of the scrollbar.",
+  scrollBehavior: "Controls the smoothness of a scroll animation.",
+  scrollMarginBlockStart: "Controls the margin before the starting of a block.",
+  scrollMarginBlockEnd: "Controls the margin after the ending of a block.",
+  scrollMarginBottom: "Controls the margin at the bottom of an element.",
   scrollMarginInlineStart:
-    "Sets the margin at the beginning of the horizontal scrollbar",
+    "Controls the margin before the starting of an inline element.",
   scrollMarginInlineEnd:
-    "Sets the margin at the end of the horizontal scrollbar",
-  scrollMarginLeft: "Sets the margin at the left of the element",
-  scrollMarginRight: "Sets the margin at the right of the element",
-  scrollMarginTop: "Sets the margin at the top of the element",
+    "Controls the margin after the ending of an inline element.",
+  scrollMarginLeft: "Controls the margin at the left side of an element.",
+  scrollMarginRight: "Controls the margin at the right side of an element.",
+  scrollMarginTop: "Controls the margin at the top of an element.",
   scrollPaddingBlockStart:
-    "Sets the padding at the beginning of the vertical scrollbar",
-  scrollPaddingBlockEnd:
-    "Sets the padding at the end of the vertical scrollbar",
-  scrollPaddingBottom: "Sets the padding at the bottom of the element",
+    "Controls the padding before the starting of a block.",
+  scrollPaddingBlockEnd: "Controls the padding after the ending of a block.",
+  scrollPaddingBottom: "Controls the padding at the bottom of an element.",
   scrollPaddingInlineStart:
-    "Sets the padding at the beginning of the horizontal scrollbar",
+    "Controls the padding before the starting of an inline element.",
   scrollPaddingInlineEnd:
-    "Sets the padding at the end of the horizontal scrollbar",
-  scrollPaddingLeft: "Sets padding on the left of scrollable content",
-  scrollPaddingRight: "Sets padding on the right of scrollable content",
-  scrollPaddingTop: "Sets padding on the top of scrollable content",
-  scrollSnapAlign: "Defines how scroll snap points are aligned",
+    "Controls the padding after the ending of an inline element.",
+  scrollPaddingLeft: "The padding area to the left of a scroll container.",
+  scrollPaddingRight: "The padding area to the right of a scroll container.",
+  scrollPaddingTop: "The padding area above a scroll container.",
+  scrollSnapAlign:
+    "Defines where a snap point will be aligned within a scroll container.",
   scrollSnapStop:
-    "Defines whether or not to stop on snap points during scrolling",
-  scrollSnapType: "Defines the type of scroll snap behavior",
-  scrollTimelineAxis: "Defines the scrolling axis for scroll-linked animations",
-  scrollTimelineName: "Defines a name for a scroll-linked animation timeline",
-  shapeImageThreshold: "Sets the minimum alpha channel value for shapes",
-  shapeMargin: "Sets the margin between a shape and its surrounding content",
-  shapeOutside: "Defines an area that content should flow around",
-  tabSize: "Sets the width of tabs",
-  tableLayout: "Defines the algorithm for laying out table cells",
-  textAlign: "Sets the horizontal alignment of text",
+    "Defines whether the scroll container should stop on a snap point.",
+  scrollSnapType: "Defines the type of snap points used in a scroll container.",
+  scrollTimelineAxis: "Defines the axis of the scroll timeline.",
+  scrollTimelineName: "Defines the name of the scroll timeline.",
+  shapeImageThreshold:
+    "Defines the alpha channel threshold for shape detection.",
+  shapeMargin:
+    "Defines the margin between a shape and its surrounding content.",
+  shapeOutside: "Defines a shape to wrap content around.",
+  tabSize: "Defines the width of a tab character.",
+  tableLayout:
+    "Defines the algorithm used to lay out table cells, rows, and columns.",
+  textAlign: "Defines the horizontal alignment of text.",
   textAlignLast:
-    "Defines the horizontal alignment of the last line of text in a block",
+    "Defines the horizontal alignment of the last line of text in a block.",
   textCombineUpright:
-    "Defines whether or not to combine multiple characters into a single glyph",
-  textDecorationColor: "Sets the color of text decoration",
-  textDecorationLine: "Sets the type of text decoration",
+    "Defines the combination of text in vertical orientation.",
+  textDecorationColor:
+    "Controls color of underlines, overlines, and strikethroughs.",
+  textDecorationLine: "Specifies underlines, overlines, and strikethroughs.",
   textDecorationSkip:
-    "Specifies which parts of the text decoration should be skipped",
+    "Specifies which parts of text decoration are skipped over.",
   textDecorationSkipInk:
-    "Specifies which parts of the text decoration should not be considered for underlining",
-  textDecorationStyle: "Sets the style of text decoration",
-  textDecorationThickness: "Sets the thickness of text decoration",
-  textEmphasisColor: "Sets the color of text emphasis marks",
-  textEmphasisPosition: "Sets the position of text emphasis marks",
-  textEmphasisStyle: "Sets the style of text emphasis marks",
-  textIndent: "Sets the indentation of the first line of text",
-  textJustify: "Specifies how text should be justified",
-  textOrientation: "Sets the orientation of text",
-  textOverflow: "Specifies how overflowed content should be handled",
-  textRendering: "Sets the quality of text rendering",
-  textShadow: "Adds a shadow to text",
-  textSizeAdjust: "Allows controlling the adjustment of font size",
-  textTransform: "Converts text to uppercase, lowercase or capitalized",
-  textUnderlineOffset: "Sets the distance between text and underline",
-  textUnderlinePosition: "Sets the position of underline relative to text",
-  top: "Sets the distance from the top edge of the containing element",
-  touchAction: "Sets how touch input is handled",
-  transform: "Applies 2D or 3D transformation to an element",
-  transformBox: "Determines the layout of transformed elements",
-  transformOrigin: "Sets the origin point of a transformation",
-  transformStyle: "Specifies how nested elements are transformed",
-  transitionDelay: "Sets the delay before a transition effect starts",
-  transitionDuration: "Sets the duration of a transition effect",
-  transitionProperty: "Specifies the CSS properties to be transitioned",
-  transitionTimingFunction: "Sets the speed curve of a transition effect",
-  translate: "Translates an element on the horizontal and/or vertical axis",
-  unicodeBidi: "Sets the level of embedding within a text direction",
-  userSelect: "Controls whether an element can be selected by the user",
-  verticalAlign: "Aligns elements vertically",
-  visibility: "Controls element visibility",
-  whiteSpace: "Determines how white space is handled",
-  widows:
-    "Sets the minimum number of lines for a paragraph at the bottom of a page",
-  width: "Sets the width of an element",
-  willChange: "Specifies which properties should be hardware-accelerated",
-  wordBreak: "Controls how words break when reaching the end of a line",
-  wordSpacing: "Sets the spacing between words",
-  wordWrap: "Controls how words wrap when reaching the end of a line",
-  writingMode: "Sets the direction of the writing mode",
-  zIndex: "Controls the stacking order of elements",
+    "Specifies which parts of text decoration are skipped over, taking into account the ink area.",
+  textDecorationStyle:
+    "Specifies the style of underlines, overlines, and strikethroughs.",
+  textDecorationThickness:
+    "Specifies the thickness of underlines, overlines, and strikethroughs.",
+  textEmphasisColor: "Controls color of text emphasis marks.",
+  textEmphasisPosition: "Specifies position of text emphasis marks.",
+  textEmphasisStyle: "Specifies style of text emphasis marks.",
+  textIndent:
+    "Specifies how much horizontal space is before the first line of text.",
+  textJustify: "Specifies how the last line of a text is aligned.",
+  textOrientation: "Specifies the orientation of text within a line.",
+  textOverflow: "Specifies how overflowed content is displayed.",
+  textRendering: "Specifies quality of text rendering.",
+  textShadow: "Adds shadow to text.",
+  textSizeAdjust: "Controls the sizing of text relative to its container.",
+  textTransform: "Controls the capitalization of text.",
+  textUnderlineOffset:
+    "Controls the distance between the text and its underline.",
+  textUnderlinePosition:
+    "Controls the position of the underline in relation to the text.",
+  top: "Controls the vertical position of an element relative to its container.",
+  touchAction: "Controls how touch inputs are handled by the browser.",
+  transform: "Applies a 2D or 3D transformation to an element.",
+  transformBox: "Defines the layout box to which the transform applies.",
+  transformOrigin: "Controls the origin point of a transform.",
+  transformStyle: "Controls how nested elements are rendered in 3D space.",
+  transitionDelay: "Controls the delay before a transition effect starts.",
+  transitionDuration: "Controls the duration of a transition effect.",
+  transitionProperty:
+    "Controls which CSS properties are affected by a transition effect.",
+  transitionTimingFunction: "Controls the speed curve of a transition effect.",
+  translate: "Translates an element along the X and/or Y axis.",
+  unicodeBidi: "Controls the handling of bidirectional text.",
+  userSelect: "Controls whether an element can be selected by the user.",
+  verticalAlign: "Aligns inline-level elements vertically.",
+  visibility: "Determines whether an element is visible or hidden.",
+  whiteSpace: "Determines how white space inside an element is handled.",
+  widows: "Sets the minimum number of lines in a block container.",
+  width: "Sets the width of an element.",
+  willChange: "Lets you inform the browser about property changes in advance.",
+  wordBreak:
+    "Determines how words should break when reaching the end of a line.",
+  wordSpacing: "Sets the spacing between words.",
+  wordWrap:
+    "Determines whether to break words if the text exceeds the container.",
+  writingMode: "Sets the direction in which lines of text are written.",
+  zIndex:
+    "Sets the stack order of an element. Higher value means closer to the top.",
 } as const;
 
-export const declarations = {
+export const propertiesOverrides = {} as const;
+
+export const properties = {
+  ...propertiesGenerated,
+  ...propertiesOverrides,
+} as const;
+
+export const declarationsGenerated = {
   "alignContent:normal":
-    "Aligns multiple lines of flex items in the container to the normal position",
+    "Aligns and distributes grid items along the cross axis with different spacing options.",
   "alignContent:first":
-    "Aligns the first line of flex items in the container to the top of the container",
+    "Aligns and distributes grid items along the cross axis, prioritizing the first line.",
   "alignContent:last":
-    "Aligns the last line of flex items in the container to the bottom of the container",
-  "alignContent:baseline":
-    "Aligns the flex items to the baseline of the container",
+    "Aligns and distributes grid items along the cross axis, prioritizing the last line.",
+  "alignContent:baseline": "Aligns grid items with their baselines.",
   "alignContent:space-between":
-    "Distributes the flex items evenly with space between them",
+    "Aligns and distributes grid items with equal space between them.",
   "alignContent:space-around":
-    "Distributes the flex items evenly with space around them",
+    "Aligns and distributes grid items with equal space around them.",
   "alignContent:space-evenly":
-    "Distributes the flex items evenly with equal space around them",
-  "alignContent:stretch": "Stretches the flex items to fill the container",
-  "alignContent:unsafe": "Allows the use of unsafe alignment values",
-  "alignContent:safe": "Allows the use of only safe alignment values",
-  "alignContent:center": "Aligns the flex items to the center of the container",
-  "alignContent:start": "Aligns the flex items to the start of the container",
-  "alignContent:end": "Aligns the flex items to the end of the container",
+    "Aligns and distributes grid items with equal space between them and around the edges.",
+  "alignContent:stretch": "Stretches grid items to fill the container.",
+  "alignContent:unsafe": "Enables alignment modes that are considered risky.",
+  "alignContent:safe": "Enables alignment modes that are safe to use.",
+  "alignContent:center": "Centers and aligns grid items to the center.",
+  "alignContent:start": "Aligns grid items to the start of the container.",
+  "alignContent:end": "Aligns grid items to the end of the container.",
   "alignContent:flex-start":
-    "Aligns the flex items to the start of the flex container",
-  "alignContent:flex-end":
-    "Aligns the flex items to the end of the flex container",
-  "alignContent:initial": "Sets the default alignment for the container",
-  "alignContent:inherit": "Inherit the alignment of the parent element",
-  "alignContent:unset": "Reset the alignment of the element",
-  "alignItems:normal": "Align items to their default position",
-  "alignItems:stretch": "Stretch items to fill the container",
-  "alignItems:first": "Align items to the first baseline",
-  "alignItems:last": "Align items to the last baseline",
-  "alignItems:baseline": "Align items to their baseline",
-  "alignItems:unsafe": "Unsafe alignment of items",
-  "alignItems:safe": "Safe alignment of items",
-  "alignItems:center": "Center align items vertically",
-  "alignItems:start": "Align items to the start of the container",
-  "alignItems:end": "Align items to the end of the container",
-  "alignItems:self-start": "Align items to the start of their flex container",
-  "alignItems:self-end": "Align items to the end of their flex container",
-  "alignItems:flex-start": "Align items to the start of their flex line",
-  "alignItems:flex-end": "Align items to the end of their flex line",
-  "alignItems:initial": "Sets the default alignment for flex items",
-  "alignItems:inherit": "Inherit the alignment from the parent element",
-  "alignItems:unset": "Resets the alignment to the default value",
-  "alignSelf:auto": "Aligns a single flex item to its default position",
+    "Aligns grid items to the start of the first line.",
+  "alignContent:flex-end": "Aligns grid items to the end of the last line.",
+  "alignContent:initial": "Sets the default alignment for align-content.",
+  "alignContent:inherit":
+    "The element inherits the align-content value of its parent.",
+  "alignContent:unset":
+    "The element aligns its content as if it applies the initial values of all properties.",
+  "alignItems:normal":
+    "The default, stretches the element vertically depending on the height of the container.",
+  "alignItems:stretch":
+    "Stretches the element vertically to fill the container.",
+  "alignItems:first": "Stretches flex items from the first baseline.",
+  "alignItems:last": "Stretches flex items from the last baseline.",
+  "alignItems:baseline":
+    "Aligns the element with the baseline of the parent container.",
+  "alignItems:unsafe":
+    "Aligns the element with the unsafe region of the container.",
+  "alignItems:safe":
+    "Aligns the element with the safe region of the container.",
+  "alignItems:center":
+    "Aligns the element vertically centered with respect to the container element.",
+  "alignItems:start": "Aligns the element at the start of the container.",
+  "alignItems:end": "Aligns the element at the end of the container.",
+  "alignItems:self-start": "Aligns the element at the start of itself.",
+  "alignItems:self-end": "Aligns the element at the end of itself.",
+  "alignItems:flex-start":
+    "Aligns the element at the start of the flex container.",
+  "alignItems:flex-end": "Aligns the element at the end of the flex container.",
+  "alignItems:initial": "Items are aligned to their default position.",
+  "alignItems:inherit":
+    "Inherits the align-items property from the parent element.",
+  "alignItems:unset": "Resets the align-items property to its default value.",
+  "alignSelf:auto": "Default alignment for the individual flex item.",
   "alignSelf:normal":
-    "Resets the alignment of a single flex item to its default value",
-  "alignSelf:stretch": "Stretches a single flex item to fill the container",
-  "alignSelf:first": "Aligns a single flex item to the first baseline position",
-  "alignSelf:last": "Aligns a single flex item to the last baseline position",
-  "alignSelf:baseline": "Aligns a single flex item to the baseline position",
-  "alignSelf:unsafe": "Allows a single flex item to overflow its container",
-  "alignSelf:safe":
-    "Prevents a single flex item from overflowing its container",
-  "alignSelf:center":
-    "Aligns a single flex item to the center of the container",
-  "alignSelf:start": "Aligns a single flex item to the start of the container",
-  "alignSelf:end": "Aligns a single flex item to the end of the container",
-  "alignSelf:self-start":
-    "Aligns a single flex item to the start of its container",
-  "alignSelf:self-end": "Aligns a single flex item to the end of its container",
-  "alignSelf:flex-start": "Aligns a flex item to the start of the cross axis",
-  "alignSelf:flex-end": "Aligns a flex item to the end of the cross axis",
-  "alignSelf:initial": "Sets the default alignment of a flex item",
-  "alignSelf:inherit": "Inherits the alignment of its parent element",
-  "alignSelf:unset": "Resets the alignment to its default value",
-  "alignTracks:normal": "Aligns grid tracks to their normal position",
+    'Same as "stretch", but only for flex items that haven\'t specified a `flex-basis` value.',
+  "alignSelf:stretch": "Stretch to fill the container (the default value).",
+  "alignSelf:first": "Places the item at the start of the cross axis.",
+  "alignSelf:last": "Places the item at the end of the cross axis.",
+  "alignSelf:baseline":
+    "Aligns the baseline of the flex item with the baseline of the parent container.",
+  "alignSelf:unsafe": "Enables a kind of backwards compatibility mode.",
+  "alignSelf:safe": "Applies all but potentially hazardous alignment values.",
+  "alignSelf:center": "Centers the flex item vertically.",
+  "alignSelf:start": "Places the item at the start of the cross axis.",
+  "alignSelf:end": "Places the item at the end of the cross axis.",
+  "alignSelf:self-start": "Places the item at the start of the cross axis.",
+  "alignSelf:self-end": "Places the item at the end of the cross axis.",
+  "alignSelf:flex-start": "Aligns flex items to the start of the cross axis.",
+  "alignSelf:flex-end": "Aligns flex items to the end of the cross axis.",
+  "alignSelf:initial": "Sets the align-self property to its default value.",
+  "alignSelf:inherit":
+    "Inherits the align-self property from its parent element.",
+  "alignSelf:unset":
+    "Sets the align-self property to its inherited value, or to its default value.",
+  "alignTracks:normal":
+    "Aligns grid tracks using the default alignment of their grid container.",
   "alignTracks:first":
-    "Aligns grid tracks to the first baseline of their content",
+    "Aligns the first grid track to the first baseline of the grid container.",
   "alignTracks:last":
-    "Aligns grid tracks to the last baseline of their content",
-  "alignTracks:baseline": "Aligns grid tracks to their text baseline",
+    "Aligns the last grid track to the last baseline of the grid container.",
+  "alignTracks:baseline": "Aligns grid tracks to their baseline.",
   "alignTracks:space-between":
-    "Aligns grid tracks with equal spacing between them",
+    "Distributes the grid tracks evenly, with the first track at the start and the last track at the end.",
   "alignTracks:space-around":
-    "Aligns grid tracks with equal spacing around them",
+    "Distributes the grid tracks evenly, with equal space before and after the first and last tracks.",
   "alignTracks:space-evenly":
-    "Aligns grid tracks with equal spacing between and around them",
-  "alignTracks:stretch": "Stretches grid tracks to fill the grid container",
-  "alignTracks:unsafe": "Allows grid tracks to overlap their grid area",
-  "alignTracks:safe": "Prevents grid tracks from overlapping their grid area",
-  "alignTracks:center": "Aligns grid tracks to the center of their grid area",
-  "alignTracks:start": "Aligns grid tracks to the start of the grid area",
-  "alignTracks:end": "Aligns grid tracks to the end of the grid area",
+    "Distributes the grid tracks evenly, with equal space between them.",
+  "alignTracks:stretch":
+    "Stretches the grid tracks to fill the grid container.",
+  "alignTracks:unsafe":
+    "Enables overflow alignment of grid tracks when they exceed the grid container's size.",
+  "alignTracks:safe":
+    "Disables overflow alignment of grid tracks when they exceed the grid container's size.",
+  "alignTracks:center": "Centers the grid tracks in the grid container.",
+  "alignTracks:start": "Aligns the grid tracks to the start of the grid area.",
+  "alignTracks:end": "Aligns the grid tracks to the end of the grid area.",
   "alignTracks:flex-start":
-    "Aligns grid tracks to the start of the first grid line",
-  "alignTracks:flex-end": "Aligns grid tracks to the end of the last grid line",
-  "alignTracks:initial":
-    "Sets the alignment of grid tracks to its default value",
-  "alignTracks:inherit":
-    "Inherits the alignment of grid tracks from its parent element",
-  "alignTracks:unset":
-    "Resets the alignment of grid tracks to its initial value",
+    "Aligns the grid tracks to the start of the flex container.",
+  "alignTracks:flex-end":
+    "Aligns the grid tracks to the end of the flex container.",
+  "alignTracks:initial": "Sets the alignment to its default value.",
+  "alignTracks:inherit": "Inherits the alignment from its parent element.",
+  "alignTracks:unset": "Resets the alignment to its natural value.",
   "animationComposition:initial":
-    "Sets the animation composition to its default value",
+    "Sets the animation's composition to its default value.",
   "animationComposition:inherit":
-    "Inherits the animation composition from its parent element",
+    "Inherits the animation's composition from its parent element.",
   "animationComposition:unset":
-    "Resets the animation composition to its initial value",
-  "animationDelay:initial":
-    "Sets the delay before the animation starts to its default value",
+    "Resets the animation's composition to its natural value.",
+  "animationDelay:initial": "Sets the animation delay to its default value.",
   "animationDelay:inherit":
-    "Inherits the delay before the animation starts from its parent element",
-  "animationDelay:unset":
-    "Resets the delay before the animation starts to its initial value",
-  "animationDirection:normal":
-    "Sets the direction of the animation to normal (forwards)",
-  "animationDirection:reverse":
-    "Sets the direction of the animation to reverse (backwards)",
+    "Inherits the animation delay from its parent element.",
+  "animationDelay:unset": "Resets the animation delay to its natural value.",
+  "animationDirection:normal": "Plays the animation in its default direction.",
+  "animationDirection:reverse": "Plays the animation in reverse direction.",
   "animationDirection:alternate":
-    "Sets the direction of the animation to alternate (forwards and backwards)",
+    "Plays the animation in alternate forward and reverse directions.",
   "animationDirection:alternate-reverse":
-    "Sets the direction of animation to alternate and reverses it on every iteration",
-  "animationDirection:initial": "Sets the initial direction of animation",
+    "The animation plays backwards on every odd iteration starting from the last keyframe",
+  "animationDirection:initial":
+    "Sets an animation to its default values defined by the browser's stylesheet",
   "animationDirection:inherit":
-    "Inherits the direction of animation from the parent element",
+    "Inherits the animation-direction property from the parent element",
   "animationDirection:unset":
-    "Resets the direction of animation to the default value",
+    "Inherits the animation-direction property from the parent element, or sets to initial if there is no parent",
   "animationDuration:initial":
-    "Sets the duration of animation to the initial value",
+    "Sets the duration of an animation to its default value (0)",
   "animationDuration:inherit":
-    "Inherits the duration of animation from the parent element",
+    "Inherits the animation-duration property from the parent element",
   "animationDuration:unset":
-    "Resets the duration of animation to the default value",
+    "Inherits the animation-duration property from the parent element, or sets to initial if there is no parent",
   "animationFillMode:none":
-    "Sets how the element behaves before and after the animation. No effect before or after animation",
+    "The animation will not apply any styles to the target before or after its execution",
   "animationFillMode:forwards":
-    "Sets how the element behaves after the animation is finished. Stays in the end state of animation",
+    "The target will retain the styles applied by the last keyframe",
   "animationFillMode:backwards":
-    "Sets how the element behaves before the animation starts. Starts from the beginning state of animation",
+    "The target will retain the styles applied by the first keyframe",
   "animationFillMode:both":
-    "Sets how the element behaves before and after the animation. Starts from the beginning state and stays in the end state of animation",
+    "The target will retain the styles applied by both the first and last keyframe",
   "animationFillMode:initial":
-    "Sets the initial value of how the element behaves before and after the animation",
+    "Sets the animation-fill-mode property to its default value (none)",
   "animationFillMode:inherit":
-    "Inherits the value of how the element behaves before and after the animation from the parent element",
+    "Inherits the animation-fill-mode property from the parent element",
   "animationFillMode:unset":
-    "Resets the value of how the element behaves before and after the animation to the default value",
-  "animationIterationCount:infinite":
-    "Sets the number of times the animation should repeat. Repeats infinitely",
+    "Inherits the animation-fill-mode property from the parent element, or sets to initial if there is no parent",
+  "animationIterationCount:infinite": "The animation will repeat indefinitely",
   "animationIterationCount:initial":
-    "Sets the initial number of times the animation should repeat",
+    "Sets the number of times an animation should run to its default value (1)",
   "animationIterationCount:inherit":
-    "Sets the number of times an animation should run to the same value as its parent element",
+    "Inherits the iteration count from the parent element.",
   "animationIterationCount:unset":
-    "Sets the number of times an animation should run to the default value",
-  "animationName:none":
-    "Removes the animation name, preventing animation from running",
-  "animationName:initial": "Sets the animation name to the default value",
+    "Resets the iteration count to its inherited value.",
+  "animationName:none": "No animation is applied.",
+  "animationName:initial": "Specifies the default value of the property.",
   "animationName:inherit":
-    "Inherits the animation name from the parent element",
-  "animationName:unset": "Resets the animation name to the default value",
-  "animationPlayState:running": "Sets the animation to running state",
-  "animationPlayState:paused": "Pauses the animation at its current state",
-  "animationPlayState:initial": "Sets the animation to the default state",
+    "Inherits the animation name from the parent element.",
+  "animationName:unset": "Resets the animation name to its inherited value.",
+  "animationPlayState:running": "The animation is playing.",
+  "animationPlayState:paused": "The animation is paused.",
+  "animationPlayState:initial": "Specifies the default value of the property.",
   "animationPlayState:inherit":
-    "Inherits the animation play state from the parent element",
-  "animationPlayState:unset":
-    "Resets the animation play state to the default value",
-  "animationTimingFunction:linear":
-    "Specifies the speed curve of the animation as linear",
+    "Inherits the play state from the parent element.",
+  "animationPlayState:unset": "Resets the play state to its inherited value.",
+  "animationTimingFunction:linear": "The animation has a constant speed.",
   "animationTimingFunction:ease":
-    "Specifies the speed curve of the animation as ease (slow start, fast end)",
+    "The animation starts slow, gets faster in the middle, and slows down at the end.",
   "animationTimingFunction:ease-in":
-    "Specifies the speed curve of the animation as ease-in (slow start)",
+    "The animation starts slow and gets faster.",
   "animationTimingFunction:ease-out":
-    "Specifies the speed curve of the animation as ease-out (fast end)",
+    "The animation starts fast and slows down.",
   "animationTimingFunction:ease-in-out":
-    "Specifies the speed curve of the animation as ease-in-out (slow start and end)",
+    "The animation starts slow, gets faster, and slows down again.```",
   "animationTimingFunction:step-start":
-    "Sets the timing function for an animation to start immediately",
+    "Specifies an abrupt change in the animation's progress at the start of each interval.",
   "animationTimingFunction:step-end":
-    "Sets the timing function for an animation to end immediately",
+    "Specifies an abrupt change in the animation's progress at the end of each interval.",
   "animationTimingFunction:initial":
-    "Resets the timing function for an animation to its default value",
+    "Sets the animation's timing function to its default value.",
   "animationTimingFunction:inherit":
-    "Inherits the timing function for an animation from its parent element",
+    "Inherits the animation's timing function from its parent element.",
   "animationTimingFunction:unset":
-    "Unsets the timing function for an animation, allowing it to fallback to its parent value",
+    "Resets the animation's timing function to its natural value.",
   "animationTimeline:auto":
-    "Sets the timeline for an animation to be automatically determined",
-  "animationTimeline:none": "Disables the timeline for an animation",
+    "Sets the animation to play forwards and backwards once.",
+  "animationTimeline:none": "Disables the animation.",
   "animationTimeline:initial":
-    "Resets the timeline for an animation to its default value",
+    "Sets the animation's timeline to its default value.",
   "animationTimeline:inherit":
-    "Inherits the timeline for an animation from its parent element",
+    "Inherits the animation's timeline from its parent element.",
   "animationTimeline:unset":
-    "Unsets the timeline for an animation, allowing it to fallback to its parent value",
-  "appearance:none": "Removes the default styling for an element",
+    "Resets the animation's timeline to its natural value.",
+  "appearance:none": "Removes the default appearance of form controls.",
   "appearance:auto":
-    "Allows the browser to determine the default styling for an element",
+    "Allows the browser to display the default appearance of form controls.",
   "appearance:textfield":
-    "Sets the appearance of an element to a text input field",
+    "Displays an input field with no border or other decoration.",
   "appearance:menulist-button":
-    "Sets the appearance of an element to a dropdown menu button",
+    "Displays a drop-down list box with an arrow button.",
   "appearance:searchfield":
-    "Sets the appearance of an element to a search input field",
-  "appearance:textarea":
-    "Sets the appearance of an element to a text area input field",
+    "Displays a search field with a magnifying glass icon.",
+  "appearance:textarea": "Displays a multi-line text input box.",
   "appearance:push-button":
-    "Sets the appearance of an element to a push button",
-  "appearance:slider-horizontal":
-    "Sets the appearance of an element to a horizontal slider",
-  "appearance:checkbox": "Sets the appearance of an element to a checkbox",
-  "appearance:radio": "Sets the appearance of an element to a radio button",
-  "appearance:square-button":
-    "Sets the appearance of an element to a square button",
-  "appearance:menulist":
-    "Sets the appearance of an element to a drop-down menu",
-  "appearance:listbox": "Sets the appearance of an element to a list box",
-  "appearance:meter": "Sets the appearance of an element to a meter",
-  "appearance:progress-bar":
-    "Sets the appearance of an element to a progress bar",
-  "appearance:button": "Sets the appearance of an element to a button",
-  "appearance:initial":
-    "Sets the appearance of an element to its initial value",
-  "appearance:inherit": "Inherits the appearance of the parent element",
+    "Renders an element as a clickable button with a border.",
+  "appearance:slider-horizontal": "Renders a slider in a horizontal direction.",
+  "appearance:checkbox": "Renders an element as a checkbox.",
+  "appearance:radio": "Renders an element as a radio button.",
+  "appearance:square-button": "Renders an element as a square button.",
+  "appearance:menulist": "Renders an element as a dropdown menu.",
+  "appearance:listbox": "Renders an element as a list box.",
+  "appearance:meter":
+    "Renders an element as a progress indicator (like a speedometer).",
+  "appearance:progress-bar": "Renders an element as a horizontal progress bar.",
+  "appearance:button": "Renders an element as a button.",
+  "appearance:initial": "Sets the appearance property to its default value.",
+  "appearance:inherit":
+    "Inherits the appearance property from its parent element.",
   "appearance:unset":
-    "Resets the appearance of an element to its default value",
-  "aspectRatio:auto": "Sets the aspect ratio of an element to automatic",
-  "aspectRatio:initial":
-    "Sets the aspect ratio of an element to its initial value",
-  "aspectRatio:inherit": "Inherits the aspect ratio of the parent element",
-  "aspectRatio:unset":
-    "Sets the aspect ratio of an element to the default value",
-  "backdropFilter:none": "Specifies that no backdrop filter should be applied",
+    "Sets the appearance property to its inherited value if it exists, otherwise its initial value.",
+  "aspectRatio:auto":
+    "Sets the height of an element based on its width and the aspect ratio.",
+  "aspectRatio:initial": "Sets the aspect ratio property to its default value.",
+  "aspectRatio:inherit":
+    "Inherits the aspect ratio property from its parent element.",
+  "aspectRatio:unset": "Uses the intrinsic aspect ratio of the element.",
+  "backdropFilter:none": "No backdrop filtering effect is applied.",
   "backdropFilter:initial":
-    "Specifies that the backdrop filter should use the default value",
+    "Sets backdrop-filter property to its default value.",
   "backdropFilter:inherit":
-    "Specifies that the backdrop filter should be inherited from the parent element",
+    "Inherits the backdrop-filter property from its parent element.",
   "backdropFilter:unset":
-    "Specifies that the backdrop filter should be set to the default value",
-  "backfaceVisibility:visible":
-    "Specifies whether or not an element should be visible when turned away from the screen",
-  "backfaceVisibility:hidden":
-    "Specifies that an element should not be visible when turned away from the screen",
+    "Sets backdrop-filter property to its inherited value.",
+  "backfaceVisibility:visible": "The back face is visible.",
+  "backfaceVisibility:hidden": "The back face is hidden.",
   "backfaceVisibility:initial":
-    "Specifies that an element should use the default backface-visibility value",
+    "Sets backface-visibility property to its default value.",
   "backfaceVisibility:inherit":
-    "Specifies that an element should inherit the backface-visibility value from its parent element",
+    "Inherits the backface-visibility property from its parent element.",
   "backfaceVisibility:unset":
-    "Specifies that an element should use the default backface-visibility value",
+    "Sets backface-visibility property to its inherited value.",
   "backgroundAttachment:scroll":
-    "Sets the background image to scroll with the content of an element",
+    "The background image will scroll with the page.",
   "backgroundAttachment:fixed":
-    "Sets the background image to be fixed in place and not move with the content of an element",
+    "The background image will not scroll with the page.",
   "backgroundAttachment:local":
-    "Sets the background image to be fixed in place relative to the element itself",
+    "The background image will scroll within the element.",
   "backgroundAttachment:initial":
-    "Sets the background image to use the default value",
+    "Sets background-attachment property to its default value.",
   "backgroundAttachment:inherit":
-    "Specifies that an element should inherit the background-attachment value from its parent element",
+    "Inherits the background-attachment property from its parent element.",
   "backgroundAttachment:unset":
-    "Specifies that an element should use the default background-attachment value",
-  "backgroundBlendMode:normal":
-    "Sets the blending mode for the background image to normal",
+    "Sets background-attachment property to its inherited value.",
+  "backgroundBlendMode:normal": "The background image(s) are displayed as-is.",
   "backgroundBlendMode:multiply":
-    "Sets the blending mode for the background image to multiply",
+    "The pixels of the top layer are multiplied with the bottom layer.",
   "backgroundBlendMode:screen":
-    "Sets the blending mode for the background image to screen",
-  "backgroundBlendMode:overlay":
-    "Sets the blending mode for the background image to overlay",
+    "The pixels of the top layer are screened onto the bottom layer.",
+  "backgroundBlendMode:overlay": "Combines multiply and screen blend modes.",
   "backgroundBlendMode:darken":
-    "Sets the blending mode for the background image to darken",
+    "Displays the darker of the layers at each pixel.",
   "backgroundBlendMode:lighten":
-    "Sets the blending mode for the background image to lighten",
+    "Displays the lighter of the layers at each pixel.",
   "backgroundBlendMode:color-dodge":
-    "Sets the blending mode for the background image to color-dodge",
+    "Brightens the bottom layer to reflect the top layer.",
   "backgroundBlendMode:color-burn":
-    "Sets the blending mode for the background image to color-burn",
+    "Darkens the bottom layer to reflect the top layer.",
   "backgroundBlendMode:hard-light":
-    "Sets the blending mode for the background image to hard-light",
+    "Multiplies or screens the layers, depending on the top layer.",
   "backgroundBlendMode:soft-light":
-    "Sets the blending mode for the background image to soft-light",
+    "Darkens or lightens the layers, depending on the top layer.",
   "backgroundBlendMode:difference":
-    "Sets the blending mode for the background image to difference",
+    "Subtracts the darker from the lighter layer.",
   "backgroundBlendMode:exclusion":
-    "Sets the blending mode for the background image to exclusion",
+    "Produces an effect similar to difference, but with low-contrast.",
   "backgroundBlendMode:hue":
-    "Sets the blending mode for the background image to hue",
+    "Uses the hue of the top layer with the saturation and luminosity of the bottom layer.",
   "backgroundBlendMode:saturation":
-    "Sets the blending mode for the background image to saturation",
+    "Uses the saturation of the top layer with the hue and luminosity of the bottom layer.",
   "backgroundBlendMode:color":
-    "Sets the blending mode for the background image to color",
+    "Uses the hue and saturation of the top layer with the luminosity of the bottom layer.",
   "backgroundBlendMode:luminosity":
-    "Sets the blending mode for the background image to luminosity",
+    "Uses the luminosity of the top layer with the hue and saturation of the bottom layer.",
   "backgroundBlendMode:initial":
-    "Sets the blending mode for the background image to the default value",
+    "The blending mode is set to its initial value.",
   "backgroundBlendMode:inherit":
-    "Sets the blending mode for the background image to inherit from the parent element",
-  "backgroundBlendMode:unset":
-    "Resets the blending mode for the background image to the default value",
+    "The blending mode is inherited from its parent element.",
+  "backgroundBlendMode:unset": "The blending mode is set to its default value.",
   "backgroundClip:border-box":
-    "Determines the background clipping area as the border box",
+    "The background image is clipped to the border box.",
   "backgroundClip:padding-box":
-    "Determines the background clipping area as the padding box",
+    "The background image is clipped to the padding box.",
   "backgroundClip:content-box":
-    "Determines the background clipping area as the content box",
-  "backgroundClip:text":
-    "Determines the background clipping area as the text area",
-  "backgroundClip:initial":
-    "Sets the background clipping area to the default value",
+    "The background image is clipped to the content box.",
+  "backgroundClip:text": "The background image is rendered within the text.",
+  "backgroundClip:initial": "The clipping area is set to the border box.",
   "backgroundClip:inherit":
-    "Sets the background clipping area to inherit from the parent element",
-  "backgroundClip:unset":
-    "Resets the background clipping area to the default value",
-  "backgroundImage:none": "Removes the background image from the element",
-  "backgroundImage:initial": "Sets the background image to the default value",
+    "The clipping area is inherited from its parent element.",
+  "backgroundClip:unset": "The clipping area is set to its default value.",
+  "backgroundImage:none": "No background image is displayed.",
+  "backgroundImage:initial":
+    "The background image is set to its initial value.",
   "backgroundImage:inherit":
-    "Sets the background image to inherit from the parent element",
-  "backgroundImage:unset": "Resets the background image to the default value",
+    "The background image is inherited from its parent element.",
+  "backgroundImage:unset": "The background image is set to its default value.",
   "backgroundOrigin:border-box":
-    "Determines the background image positioning area as the border box",
+    "The background image originates from the border box.",
   "backgroundOrigin:padding-box":
-    "Determines the background image positioning area as the padding box",
+    "The background image originates from the padding box.",
   "backgroundOrigin:content-box":
-    "Sets the background image origin to the content box",
+    "Determines the background positioning area as the content-box.",
   "backgroundOrigin:initial":
-    "Sets the initial value of the background image origin",
+    "Sets the background positioning area to its default value.",
   "backgroundOrigin:inherit":
-    "Inherits the background image origin from the parent element",
+    "Inherits the background positioning area from its parent element.",
   "backgroundOrigin:unset":
-    "Resets the background image origin to its default value",
-  "backgroundPosition:left":
-    "Sets the horizontal and vertical position of the background image to the left",
+    "Resets the background positioning area to its inherited value.",
+  "backgroundPosition:left": "Sets the background image position to the left.",
   "backgroundPosition:center":
-    "Sets the horizontal and vertical position of the background image to the center",
+    "Sets the background image position to the center.",
   "backgroundPosition:right":
-    "Sets the horizontal and vertical position of the background image to the right",
-  "backgroundPosition:top":
-    "Sets the horizontal and vertical position of the background image to the top",
+    "Sets the background image position to the right.",
+  "backgroundPosition:top": "Sets the background image position to the top.",
   "backgroundPosition:bottom":
-    "Sets the horizontal and vertical position of the background image to the bottom",
+    "Sets the background image position to the bottom.",
   "backgroundPosition:initial":
-    "Sets the initial value of the background image position",
+    "Sets the background image position to its default values.",
   "backgroundPosition:inherit":
-    "Inherits the background image position from the parent element",
+    "Inherits the background image position from its parent element.",
   "backgroundPosition:unset":
-    "Resets the background image position to its default value",
+    "Resets the background image position to its inherited value.",
   "backgroundPositionX:center":
-    "Sets the horizontal position of the background image to the center",
+    "Sets the horizontal position of the background image to the center.",
   "backgroundPositionX:left":
-    "Sets the horizontal position of the background image to the left",
+    "Sets the horizontal position of the background image to the left.",
   "backgroundPositionX:right":
-    "Sets the horizontal position of the background image to the right",
+    "Sets the horizontal position of the background image to the right.",
   "backgroundPositionX:x-start":
-    "Sets the horizontal position of the background image to the start of the element.",
+    "Sets the horizontal position of the background image to the left in LTR and right in RTL.",
   "backgroundPositionX:x-end":
-    "Sets the horizontal position of the background image to the end of the element",
+    "Sets the horizontal position of the background image's right edge to the right of the container.",
   "backgroundPositionX:initial":
-    "Sets the horizontal position of the background image to its initial value",
+    "Sets the default value for the horizontal position of the background image.",
   "backgroundPositionX:inherit":
-    "Inherits the horizontal position of the background image from its parent element",
+    "Inherit the horizontal position of the background image from the parent element.",
   "backgroundPositionX:unset":
-    "Resets the horizontal position of the background image to its default value",
-  "backgroundPositionY:center":
-    "Sets the vertical position of the background image to the center of the element",
+    "Resets the horizontal position of the background image to its default value.",
+  "backgroundPositionY:center": "Vertically centers the background image.",
   "backgroundPositionY:top":
-    "Sets the vertical position of the background image to the top of the element",
+    "Places the background image at the top of the container.",
   "backgroundPositionY:bottom":
-    "Sets the vertical position of the background image to the bottom of the element",
+    "Places the background image at the bottom of the container.",
   "backgroundPositionY:y-start":
-    "Sets the vertical position of the background image to the start of the element",
+    "Sets the vertical position of the background image's top edge to the top of the container.",
   "backgroundPositionY:y-end":
-    "Sets the vertical position of the background image to the end of the element",
+    "Sets the vertical position of the background image's bottom edge to the bottom of the container.",
   "backgroundPositionY:initial":
-    "Sets the vertical position of the background image to its initial value",
+    "Sets the default value for the vertical position of the background image.",
   "backgroundPositionY:inherit":
-    "Inherits the vertical position of the background image from its parent element",
+    "Inherit the vertical position of the background image from the parent element.",
   "backgroundPositionY:unset":
-    "Resets the vertical position of the background image to its default value",
-  "backgroundRepeat:repeat-x": "Repeats the background image horizontally",
-  "backgroundRepeat:repeat-y": "Repeats the background image vertically",
+    "Resets the vertical position of the background image to its default value.",
+  "backgroundRepeat:repeat-x": "Repeats the background image horizontally.",
+  "backgroundRepeat:repeat-y": "Repeats the background image vertically.",
   "backgroundRepeat:repeat":
-    "Repeats the background image both horizontally and vertically",
+    "Repeats the background image horizontally and vertically.",
   "backgroundRepeat:space":
-    "Repeats the background image with space between each repetition",
-  "backgroundRepeat:round": "Sets how a background image should repeat: round",
-  "backgroundRepeat:no-repeat":
-    "Sets how a background image should repeat: no-repeat",
-  "backgroundRepeat:initial": "Sets the default background repeat behavior",
+    "Repeats the background image horizontally and vertically, spacing out the images so that the last one touches the right and bottom edge of the container.",
+  "backgroundRepeat:round": "Repeats the background image in a circle.",
+  "backgroundRepeat:no-repeat": "Does not repeat the background image.",
+  "backgroundRepeat:initial":
+    "Sets the default value for the background repeat property.",
   "backgroundRepeat:inherit":
-    "Inherits the background repeat behavior from the parent element",
+    "Inherits the background repeat property from its parent element.",
   "backgroundRepeat:unset":
-    "Resets the background repeat behavior to the default value",
-  "backgroundSize:auto": "Sets how a background image should be sized: auto",
-  "backgroundSize:cover": "Sets how a background image should be sized: cover",
+    "Resets the background repeat property to its default value.",
+  "backgroundSize:auto": "Sets the background image size to its original size.",
+  "backgroundSize:cover":
+    "Resizes the background image to cover the entire container.",
   "backgroundSize:contain":
-    "Sets how a background image should be sized: contain",
-  "backgroundSize:initial": "Sets the default background size behavior",
+    "Resizes the background image to fit inside the container.",
+  "backgroundSize:initial":
+    "Sets the default value for the background size property.",
   "backgroundSize:inherit":
-    "Inherits the background size behavior from the parent element",
+    "Inherits the background size property from its parent element.",
   "backgroundSize:unset":
-    "Resets the background size behavior to the default value",
-  "blockOverflow:clip": "Clips the content inside a block element",
-  "blockOverflow:ellipsis":
-    "Truncates the content inside a block element with an ellipsis",
-  "blockOverflow:initial": "Sets the default block element overflow behavior",
-  "blockOverflow:inherit":
-    "Inherits the block element overflow behavior from the parent element",
-  "blockOverflow:unset":
-    "Resets the block element overflow behavior to the default value",
-  "blockSize:auto":
-    "Sets the height of a block element to adjust automatically according to its content",
+    "Resets the background size property to its default value.",
+  "blockOverflow:clip": "Clips the overflow content.",
+  "blockOverflow:ellipsis": "Adds an ellipsis when content overflows.",
+  "blockOverflow:initial": "Sets the default value for block overflow.",
+  "blockOverflow:inherit": "Inherits block overflow from its parent.",
+  "blockOverflow:unset": "Resets block overflow to its default value.",
+  "blockSize:auto": "The block element fills all available space.",
   "blockSize:min-content":
-    "Sets the height of a block element to the minimum height required by its content",
+    "The height is the minimum required to contain contents.",
   "blockSize:max-content":
-    "Sets the height of a block element to the maximum height allowed by its content",
+    "The height is the maximum required to contain contents.",
   "blockSize:fit-content":
-    "Sets the height of a block element to the maximum height allowed by its content, but with a limit",
-  "blockSize:initial":
-    "Sets the height of a block element to its default value",
-  "blockSize:inherit":
-    "Inherits the height of a block element from its parent element",
-  "blockSize:unset":
-    "Resets the height of a block element to its default value",
-  "borderBlockStyle:none":
-    "Removes the border on the top and bottom sides of a block element",
-  "borderBlockStyle:hidden":
-    "Hides the border on the top and bottom sides of a block element",
-  "borderBlockStyle:dotted":
-    "Creates a dotted border on the top and bottom sides of a block element",
-  "borderBlockStyle:dashed":
-    "Creates a dashed border on the top and bottom sides of a block element",
-  "borderBlockStyle:solid":
-    "Creates a solid border on the top and bottom sides of a block element",
-  "borderBlockStyle:double":
-    "Creates a double border on the top and bottom sides of a block element",
-  "borderBlockStyle:groove":
-    "Creates a 3D grooved border on the top and bottom sides of a block element",
-  "borderBlockStyle:ridge":
-    "Creates a 3D ridged border on the top and bottom sides of a block element",
-  "borderBlockStyle:inset":
-    "Creates a 3D inset border on the top and bottom sides of a block element",
-  "borderBlockStyle:outset":
-    "Sets the style of the block-level border to be outset",
-  "borderBlockStyle:initial":
-    "Sets the style of the block-level border to its initial value",
-  "borderBlockStyle:inherit":
-    "Inherits the style of the block-level border from its parent element",
-  "borderBlockStyle:unset":
-    "Resets the style of the block-level border to its default value",
-  "borderBlockWidth:thin": "Sets the width of the block-level border to thin",
-  "borderBlockWidth:medium":
-    "Sets the width of the block-level border to medium",
-  "borderBlockWidth:thick": "Sets the width of the block-level border to thick",
-  "borderBlockWidth:initial":
-    "Sets the width of the block-level border to its initial value",
-  "borderBlockWidth:inherit":
-    "Inherits the width of the block-level border from its parent element",
+    "The height is the smallest required to contain contents.",
+  "blockSize:initial": "Sets the height to the default value.",
+  "blockSize:inherit": "Inherits the height from the parent element.",
+  "blockSize:unset": "Sets the height to its natural value.",
+  "borderBlockStyle:none": "Disables all borders.",
+  "borderBlockStyle:hidden": "Border is not visible, but still affects layout.",
+  "borderBlockStyle:dotted": "Dot-style border.",
+  "borderBlockStyle:dashed": "Dashed border.",
+  "borderBlockStyle:solid": "Solid border.",
+  "borderBlockStyle:double": "Double border.",
+  "borderBlockStyle:groove": "3D grooved border.",
+  "borderBlockStyle:ridge": "3D ridged border.",
+  "borderBlockStyle:inset": "3D inset border.",
+  "borderBlockStyle:outset": "Adds an outset border to block element.",
+  "borderBlockStyle:initial": "Resets border to initial value.",
+  "borderBlockStyle:inherit": "Inherits border style from parent element.",
+  "borderBlockStyle:unset": "Resets border to inherited or initial value.",
+  "borderBlockWidth:thin": "Sets a thin border for block element.",
+  "borderBlockWidth:medium": "Sets a medium border for block element.",
+  "borderBlockWidth:thick": "Sets a thick border for block element.",
+  "borderBlockWidth:initial": "Resets border width to initial value.",
+  "borderBlockWidth:inherit": "Inherits border width from parent element.",
   "borderBlockWidth:unset":
-    "Resets the width of the block-level border to its default value",
-  "borderBlockEndStyle:none": "Sets the style of the block-end border to none",
-  "borderBlockEndStyle:hidden":
-    "Sets the style of the block-end border to hidden",
+    "Resets border width to inherited or initial value.",
+  "borderBlockEndStyle:none": "Removes border from the end of a block element.",
+  "borderBlockEndStyle:hidden": "Hides border at the end of a block element.",
   "borderBlockEndStyle:dotted":
-    "Sets the style of the block-end border to dotted",
+    "Adds a dotted border at the end of a block element.",
   "borderBlockEndStyle:dashed":
-    "Sets the style of the block-end border to dashed",
+    "Adds a dashed border at the end of a block element.",
   "borderBlockEndStyle:solid":
-    "Sets the style of the block-end border to solid",
+    "Adds a solid border at the end of a block element.",
   "borderBlockEndStyle:double":
-    "Sets the style of the block-end border to double",
+    "Adds a double border at the end of a block element.",
   "borderBlockEndStyle:groove":
-    "Sets the style of the bottom border of a block element to a 3D groove",
-  "borderBlockEndStyle:ridge":
-    "Sets the style of the bottom border of a block element to a 3D ridge",
-  "borderBlockEndStyle:inset":
-    "Sets the style of the bottom border of a block element to a 3D inset",
+    "Creates a groove border on the block-end side.",
+  "borderBlockEndStyle:ridge": "Creates a ridge border on the block-end side.",
+  "borderBlockEndStyle:inset": "Creates an inset border on the block-end side.",
   "borderBlockEndStyle:outset":
-    "Sets the style of the bottom border of a block element to a 3D outset",
+    "Creates an outset border on the block-end side.",
   "borderBlockEndStyle:initial":
-    "Sets the style of the bottom border of a block element to the default value",
+    "Sets the border-block-end-style to its default value.",
   "borderBlockEndStyle:inherit":
-    "Inherits the style of the bottom border of a block element from its parent element",
+    "Inherits the border-block-end-style property from the parent.",
   "borderBlockEndStyle:unset":
-    "Sets the style of the bottom border of a block element to the initial value",
-  "borderBlockEndWidth:thin":
-    "Sets the width of the bottom border of a block element to a thin line",
+    "Resets the border-block-end-style property to its inherited value.",
+  "borderBlockEndWidth:thin": "Creates a thin border on the block-end side.",
   "borderBlockEndWidth:medium":
-    "Sets the width of the bottom border of a block element to a medium line",
-  "borderBlockEndWidth:thick":
-    "Sets the width of the bottom border of a block element to a thick line",
+    "Creates a medium border on the block-end side.",
+  "borderBlockEndWidth:thick": "Creates a thick border on the block-end side.",
   "borderBlockEndWidth:initial":
-    "Sets the width of the bottom border of a block element to the default value",
+    "Sets the border-block-end-width to its default value.",
   "borderBlockEndWidth:inherit":
-    "Inherits the width of the bottom border of a block element from its parent element",
+    "Inherits the border-block-end-width property from the parent.",
   "borderBlockEndWidth:unset":
-    "Sets the width of the bottom border of a block element to the initial value",
-  "borderBlockStartStyle:none":
-    "Sets the style of the top border of a block element to no border",
-  "borderBlockStartStyle:hidden":
-    "Sets the style of the top border of a block element to a hidden border",
+    "Resets the border-block-end-width property to its inherited value.",
+  "borderBlockStartStyle:none": "Removes the border on the block-start side.",
+  "borderBlockStartStyle:hidden": "Hides the border on the block-start side.",
   "borderBlockStartStyle:dotted":
-    "Sets the style of the top border of a block element to a dotted line",
+    "Creates a dotted border on the block-start side.",
   "borderBlockStartStyle:dashed":
-    "Sets the style of the top border of a block element to dashed",
+    "Sets the style of the top border of a block to dashed.",
   "borderBlockStartStyle:solid":
-    "Sets the style of the top border of a block element to solid",
+    "Sets the style of the top border of a block to solid.",
   "borderBlockStartStyle:double":
-    "Sets the style of the top border of a block element to double",
+    "Sets the style of the top border of a block to double.",
   "borderBlockStartStyle:groove":
-    "Sets the style of the top border of a block element to groove",
+    "Sets the style of the top border of a block to groove.",
   "borderBlockStartStyle:ridge":
-    "Sets the style of the top border of a block element to ridge",
+    "Sets the style of the top border of a block to ridge.",
   "borderBlockStartStyle:inset":
-    "Sets the style of the top border of a block element to inset",
+    "Sets the style of the top border of a block to inset.",
   "borderBlockStartStyle:outset":
-    "Sets the style of the top border of a block element to outset",
+    "Sets the style of the top border of a block to outset.",
   "borderBlockStartStyle:initial":
-    "Sets the style of the top border of a block element to its default value",
+    "Sets the style of the top border of a block to its default value.",
   "borderBlockStartStyle:inherit":
-    "Inherits the style of the top border of a block element from its parent element",
+    "Inherits the style of the top border of a block from its parent element.",
   "borderBlockStartStyle:unset":
-    "Removes the style of the top border of a block element",
+    "Resets the style of the top border of a block to its inherited value or default if none.",
   "borderBlockStartWidth:thin":
-    "Sets the width of the top border of a block element to thin",
+    "Sets the thickness of the top border of a block to thin.",
   "borderBlockStartWidth:medium":
-    "Sets the width of the top border of a block element to medium",
+    "Sets the thickness of the top border of a block to medium.",
   "borderBlockStartWidth:thick":
-    "Sets the width of the top border of a block element to thick",
+    "Sets the thickness of the top border of a block to thick.",
   "borderBlockStartWidth:initial":
-    "Sets the width of the top border of a block element to its default value",
+    "Sets the thickness of the top border of a block to its default value.",
   "borderBlockStartWidth:inherit":
-    "Inherits the width of the top border of a block element from its parent element",
+    "Inherits the thickness of the top border of a block from its parent element.",
   "borderBlockStartWidth:unset":
-    "Removes the width of the top border of a block element",
+    "Resets the thickness of the top border of a block to its inherited value or default if none.",
   "borderBottomLeftRadius:initial":
-    "Sets the radius of the bottom left corner of an element's border to its initial value",
+    "Sets the initial value for the bottom-left corner radius of an element's border.",
   "borderBottomLeftRadius:inherit":
-    "Sets the radius of the bottom left corner of an element's border to the same value as its parent element",
+    "Inherits the bottom-left corner radius value from the parent element.",
   "borderBottomLeftRadius:unset":
-    "Resets the radius of the bottom left corner of an element's border to the default value",
+    "Removes the bottom-left corner radius value, falling back to the defined border radius.",
   "borderBottomRightRadius:initial":
-    "Sets the radius of the bottom right corner of an element's border to its initial value",
+    "Sets the initial value for the bottom-right corner radius of an element's border.",
   "borderBottomRightRadius:inherit":
-    "Sets the radius of the bottom right corner of an element's border to the same value as its parent element",
+    "Inherits the bottom-right corner radius value from the parent element.",
   "borderBottomRightRadius:unset":
-    "Resets the radius of the bottom right corner of an element's border to the default value",
-  "borderBottomStyle:none": "Removes the bottom border of an element",
-  "borderBottomStyle:hidden": "Hides the bottom border of an element",
+    "Removes the bottom-right corner radius value, falling back to the defined border radius.",
+  "borderBottomStyle:none":
+    "Sets the style for the bottom border of an element to have no visible border.",
+  "borderBottomStyle:hidden":
+    "Sets the style for the bottom border of an element to be hidden, but still take up space.",
   "borderBottomStyle:dotted":
-    "Sets the bottom border of an element to a dotted line",
+    "Sets the style for the bottom border of an element to be a series of dots.",
   "borderBottomStyle:dashed":
-    "Sets the bottom border of an element to a dashed line",
+    "Sets the style for the bottom border of an element to be a series of dashed lines.",
   "borderBottomStyle:solid":
-    "Sets the bottom border of an element to a solid line",
+    "Sets the style for the bottom border of an element to be a single solid line.",
   "borderBottomStyle:double":
-    "Sets the bottom border of an element to a double line",
+    "Sets the style for the bottom border of an element to be a double line (two parallel lines).",
   "borderBottomStyle:groove":
-    "Sets the bottom border of an element to a 3D groove",
+    "Sets the style for the bottom border of an element to be a three-dimensional groove.",
   "borderBottomStyle:ridge":
-    "Sets the bottom border of an element to a 3D ridge",
+    "Sets the style for the bottom border of an element to be a three-dimensional ridge.",
   "borderBottomStyle:inset":
-    "Sets the bottom border of an element to a 3D inset",
+    'Sets the style for the bottom border of an element to be an "inset" 3D groove.',
   "borderBottomStyle:outset":
-    "Sets the bottom border of an element to a 3D outset",
-  "borderBottomStyle:initial":
-    "Sets the style of the bottom border to its initial value",
+    'Sets the style for the bottom border of an element to be an "outset" 3D ridge.',
+  "borderBottomStyle:initial": "Controls the style of the bottom border.",
   "borderBottomStyle:inherit":
-    "Sets the style of the bottom border to inherit from its parent element",
+    "Sets the bottom border style to its parent's value.",
   "borderBottomStyle:unset":
-    "Sets the style of the bottom border to its default value",
+    "Sets the bottom border style to the default value.",
   "borderBottomWidth:thin":
-    "Sets the width of the bottom border to a thin size",
+    'Sets the thickness of the bottom border to "thin".',
   "borderBottomWidth:medium":
-    "Sets the width of the bottom border to a medium size",
+    'Sets the thickness of the bottom border to "medium".',
   "borderBottomWidth:thick":
-    "Sets the width of the bottom border to a thick size",
+    'Sets the thickness of the bottom border to "thick".',
   "borderBottomWidth:initial":
-    "Sets the width of the bottom border to its initial value",
+    "Sets the bottom border width to its default value.",
   "borderBottomWidth:inherit":
-    "Sets the width of the bottom border to inherit from its parent element",
+    "Sets the bottom border width to its parent's value.",
   "borderBottomWidth:unset":
-    "Sets the width of the bottom border to its default value",
-  "borderCollapse:collapse":
-    "Determines whether the border of a table should be collapsed into a single border or separated",
-  "borderCollapse:separate":
-    "Sets the border of a table to collapse into a single border",
-  "borderCollapse:initial": "Sets the border of a table to its initial value",
+    "Sets the bottom border width to the default value.",
+  "borderCollapse:collapse": "Merges the borders of adjacent cells.",
+  "borderCollapse:separate": "Separates the borders of adjacent cells.",
+  "borderCollapse:initial":
+    "Sets the border-collpase value to its default value.",
   "borderCollapse:inherit":
-    "Sets the border of a table to inherit from its parent element",
-  "borderCollapse:unset": "Sets the border of a table to its default value",
+    "Sets the border-collapse value to its parent's value.",
+  "borderCollapse:unset":
+    "Sets the border-collapse value to the default value.",
   "borderEndEndRadius:initial":
-    "Sets the radius of the bottom end corner of an element to its initial value",
+    "Sets the end-end corner radius of the border to the default value.",
   "borderEndEndRadius:inherit":
-    "Sets the radius of the bottom end corner of an element to inherit from its parent element",
+    "Sets the end-end corner radius of the border to its parent's value.",
   "borderEndEndRadius:unset":
-    "Sets the radius of the bottom-right corner of an element's border to its default value",
+    "The border radius of the corner where the end and the bottom edges meet is reset to its initial value.",
   "borderEndStartRadius:initial":
-    "Sets the radius of the bottom-left corner of an element's border to its initial value",
+    "The border radius of the corner where the end and the top edges meet is set to its initial value.",
   "borderEndStartRadius:inherit":
-    "Sets the radius of the bottom-left corner of an element's border to the same value as its parent element",
+    "The border radius of the corner where the end and the top edges meet is inherited from its parent element.",
   "borderEndStartRadius:unset":
-    "Sets the radius of the bottom-left corner of an element's border to its default value",
+    "The border radius of the corner where the end and the top edges meet is reset to its initial value.",
   "borderImageOutset:initial":
-    "Sets the amount by which an element's border image is extended beyond its border box to its initial value",
+    "The border image expands beyond the border box by the width of the border, which is set to its initial value.",
   "borderImageOutset:inherit":
-    "Sets the amount by which an element's border image is extended beyond its border box to the same value as its parent element",
+    "The border image expands beyond the border box by the width of the border, which is inherited from its parent element.",
   "borderImageOutset:unset":
-    "Sets the amount by which an element's border image is extended beyond its border box to its default value",
+    "The border image expands beyond the border box by the width of the border, which is reset to its initial value.",
   "borderImageRepeat:stretch":
-    "Sets how the border image is repeated to stretch to fill the border area",
+    "The border image is stretched to fill the area of the border box.",
   "borderImageRepeat:repeat":
-    "Sets how the border image is repeated to repeat along the border area",
+    "The border image is repeated both horizontally and vertically to fill the area of the border box.",
   "borderImageRepeat:round":
-    "Sets how the border image is repeated to be sized and repeated to fill the border area",
+    "The border image is rescaled so that it repeats across each side exactly n times.",
   "borderImageRepeat:space":
-    "Sets how the border image is repeated to be spaced out to fill the border area",
+    "The border image is repeated as much as possible without clipping and it is spaced out along the border.",
   "borderImageRepeat:initial":
-    "Sets how the border image is repeated to its initial value",
+    "The border image is set to its initial value, which is 'stretch'.",
   "borderImageRepeat:inherit":
-    "Sets how the border image is repeated to the same value as its parent element",
+    "The border image is inherited from its parent element.",
   "borderImageRepeat:unset":
-    "Sets how the border image is repeated to its default value",
+    "The border image is reset to its initial value, which is 'stretch'.",
   "borderImageSlice:fill":
-    "Sets the inward offsets of an element's border image slices to fill",
+    "The entire border image will be displayed, where 'fill' is equivalent to '100%'.",
   "borderImageSlice:initial":
-    "Sets the inward offsets of an element's border image slices to its initial value",
+    "The border image is sliced using the default values, which is 100%.",
   "borderImageSlice:inherit":
-    "Sets the slicing of the border image to inherit from the parent element",
-  "borderImageSlice:unset":
-    "Resets the slicing of the border image to its default value",
-  "borderImageSource:none":
-    "Removes the border image source (no image will be displayed)",
+    "The border image slices use the computed values from the parent element.",
+  "borderImageSlice:unset": "The border image slices use the initial value.",
+  "borderImageSource:none": "No image is used for the border.",
   "borderImageSource:initial":
-    "Sets the border image source to its initial value (default image)",
+    "The border image source is set to its initial value.",
   "borderImageSource:inherit":
-    "Inherits the border image source from the parent element",
-  "borderImageSource:unset":
-    "Resets the border image source to its default value",
+    "The border image source uses the computed value from the parent element.",
+  "borderImageSource:unset": "The border image source uses the unset value.",
   "borderImageWidth:auto":
-    "Sets the width of the border image to adjust automatically",
+    "The border image width is equal to the width of the border area.",
   "borderImageWidth:initial":
-    "Resets the width of the border image to its default value",
+    "The border image width is set to its initial value.",
   "borderImageWidth:inherit":
-    "Inherits the width of the border image from the parent element",
-  "borderImageWidth:unset":
-    "Resets the width of the border image to its default value",
-  "borderInlineStyle:none":
-    "Sets the inline border style to none (no border will be displayed)",
-  "borderInlineStyle:hidden":
-    "Sets the inline border style to hidden (border is invisible but still takes up space)",
-  "borderInlineStyle:dotted": "Sets the inline border style to a dotted line",
-  "borderInlineStyle:dashed": "Sets the inline border style to a dashed line",
-  "borderInlineStyle:solid": "Sets the inline border style to a solid line",
-  "borderInlineStyle:double": "Sets the inline border style to a double line",
+    "The border image width uses the computed value from the parent element.",
+  "borderImageWidth:unset": "The border image width uses the unset value.",
+  "borderInlineStyle:none": "No border is displayed.",
+  "borderInlineStyle:hidden": "A hidden border is displayed.",
+  "borderInlineStyle:dotted": "A dotted border is displayed.",
+  "borderInlineStyle:dashed": "A dashed border is displayed.",
+  "borderInlineStyle:solid": "A solid border is displayed.",
+  "borderInlineStyle:double": "A double border is displayed.",
   "borderInlineStyle:groove":
-    "Sets the style of the inline border to a 3D groove",
+    "Sets the style of the inline border to a 3D groove.",
   "borderInlineStyle:ridge":
-    "Sets the style of the inline border to a 3D ridge",
+    "Sets the style of the inline border to a 3D ridge.",
   "borderInlineStyle:inset":
-    "Sets the style of the inline border to a 3D inset",
+    "Sets the style of the inline border to a 3D inset.",
   "borderInlineStyle:outset":
-    "Sets the style of the inline border to a 3D outset",
+    "Sets the style of the inline border to a 3D outset.",
   "borderInlineStyle:initial":
-    "Sets the style of the inline border to its initial value",
+    "Sets the style of the inline border to its default value.",
   "borderInlineStyle:inherit":
-    "Inherits the style of the inline border from its parent element",
+    "Inherits the style of the inline border from the parent element.",
   "borderInlineStyle:unset":
-    "Resets the style of the inline border to its default value",
+    "Resets the style of the inline border to its inherited value.",
   "borderInlineWidth:thin":
-    "Sets the width of the inline border to a thin line",
+    "Sets the width of the inline border to a thin line.",
   "borderInlineWidth:medium":
-    "Sets the width of the inline border to a medium line",
+    "Sets the width of the inline border to a medium line.",
   "borderInlineWidth:thick":
-    "Sets the width of the inline border to a thick line",
+    "Sets the width of the inline border to a thick line.",
   "borderInlineWidth:initial":
-    "Sets the width of the inline border to its initial value",
+    "Sets the width of the inline border to its default value.",
   "borderInlineWidth:inherit":
-    "Inherits the width of the inline border from its parent element",
+    "Inherits the width of the inline border from the parent element.",
   "borderInlineWidth:unset":
-    "Resets the width of the inline border to its default value",
+    "Resets the width of the inline border to its inherited value.",
   "borderInlineEndStyle:none":
-    "Sets the style of the inline end border to none",
+    "Sets the style of the ending side of the inline border to none.",
   "borderInlineEndStyle:hidden":
-    "Sets the style of the inline end border to hidden",
+    "Sets the style of the ending side of the inline border to hidden.",
   "borderInlineEndStyle:dotted":
-    "Sets the style of the inline end border to a dotted line",
+    "Sets the style of the ending side of the inline border to a dotted line.",
   "borderInlineEndStyle:dashed":
-    "Sets the style of the border segment at the end of a line to dashed",
+    "Creates a dashed border on the end inline side.",
   "borderInlineEndStyle:solid":
-    "Sets the style of the border segment at the end of a line to solid",
+    "Creates a solid border on the end inline side.",
   "borderInlineEndStyle:double":
-    "Sets the style of the border segment at the end of a line to double",
+    "Creates a double border on the end inline side.",
   "borderInlineEndStyle:groove":
-    "Sets the style of the border segment at the end of a line to groove",
+    "Creates a 3D grooved border on the end inline side.",
   "borderInlineEndStyle:ridge":
-    "Sets the style of the border segment at the end of a line to ridge",
+    "Creates a 3D ridged border on the end inline side.",
   "borderInlineEndStyle:inset":
-    "Sets the style of the border segment at the end of a line to inset",
+    "Creates a 3D inset border on the end inline side.",
   "borderInlineEndStyle:outset":
-    "Sets the style of the border segment at the end of a line to outset",
+    "Creates a 3D outset border on the end inline side.",
   "borderInlineEndStyle:initial":
-    "Sets the style of the border segment at the end of a line to its default value",
+    "Sets the border style to its default value on the end inline side.",
   "borderInlineEndStyle:inherit":
-    "Inherits the border segment style of the parent element",
+    "Inherits the border style from the parent element on the end inline side.",
   "borderInlineEndStyle:unset":
-    "Resets the border segment style to its default value",
+    "Resets the border style to its inherited value on the end inline side.",
   "borderInlineEndWidth:thin":
-    "Sets the width of the border segment at the end of a line to thin",
+    "Sets the border width to a thin size on the end inline side.",
   "borderInlineEndWidth:medium":
-    "Sets the width of the border segment at the end of a line to medium",
+    "Sets the border width to a medium size on the end inline side.",
   "borderInlineEndWidth:thick":
-    "Sets the width of the border segment at the end of a line to thick",
+    "Sets the border width to a thick size on the end inline side.",
   "borderInlineEndWidth:initial":
-    "Sets the width of the border segment at the end of a line to its default value",
+    "Sets the border width to its default value on the end inline side.",
   "borderInlineEndWidth:inherit":
-    "Inherits the border segment width of the parent element",
+    "Inherits the border width from the parent element on the end inline side.",
   "borderInlineEndWidth:unset":
-    "Resets the border segment width to its default value",
+    "Resets the border width to its inherited value on the end inline side.",
   "borderInlineStartStyle:none":
-    "Sets the style of the start border edge of an inline element to none",
+    "No border on the starting side of an inline element",
   "borderInlineStartStyle:hidden":
-    "Sets the style of the start border edge of an inline element to hidden",
+    "Border is the same as `none`, but still takes up space",
   "borderInlineStartStyle:dotted":
-    "Sets the style of the start border edge of an inline element to a series of dots",
+    "Dotted border on the starting side of an inline element",
   "borderInlineStartStyle:dashed":
-    "Sets the style of the start border edge of an inline element to a series of dashes",
+    "Dashed border on the starting side of an inline element",
   "borderInlineStartStyle:solid":
-    "Sets the style of the start border edge of an inline element to a single line",
+    "Solid border on the starting side of an inline element",
   "borderInlineStartStyle:double":
-    "Sets the style of the start border edge of an inline element to two parallel lines",
+    "Double border on the starting side of an inline element",
   "borderInlineStartStyle:groove":
-    "Sets the style of the start border edge of an inline element to a 3D groove",
+    "3D grooved border on the starting side of an inline element",
   "borderInlineStartStyle:ridge":
-    "Sets the style of the start border edge of an inline element to a 3D ridge",
+    "3D ridged border on the starting side of an inline element",
   "borderInlineStartStyle:inset":
-    "Sets the style of the start border edge of an inline element to a 3D inset",
+    "3D inset border on the starting side of an inline element",
   "borderInlineStartStyle:outset":
-    "Sets the style of the start border edge of an inline element to a 3D outset",
-  "borderInlineStartStyle:initial":
-    "Sets the style of the start border edge of an inline element to its default value",
+    "3D outset border on the starting side of an inline element",
+  "borderInlineStartStyle:initial": "Sets the property to its default value",
   "borderInlineStartStyle:inherit":
-    "Inherits the style of the start border edge of an inline element from its parent element",
-  "borderInlineStartStyle:unset":
-    "Resets the style of the start border edge of an inline element to its initial value",
+    "Inherits the property from its parent element",
+  "borderInlineStartStyle:unset": "Resets the property to its inherited value",
   "borderInlineStartWidth:thin":
-    "Sets the width of the start border edge of an inline element to a thin line",
+    "Thin width border on the starting side of an inline element",
   "borderInlineStartWidth:medium":
-    "Sets the width of the start border edge of an inline element to a medium line",
+    "Medium width border on the starting side of an inline element",
   "borderInlineStartWidth:thick":
-    "Sets the width of the start border edge of an inline element to a thick line",
+    "Thick width border on the starting side of an inline element",
   "borderInlineStartWidth:initial":
-    "Sets the width of the starting inline border to the initial value",
+    "The inline start border width is set to its initial value.",
   "borderInlineStartWidth:inherit":
-    "Sets the width of the starting inline border to be inherited from the parent element",
+    "The inline start border width is inherited from its parent.",
   "borderInlineStartWidth:unset":
-    "Sets the width of the starting inline border to the default value",
-  "borderLeftStyle:none": "Sets the left border style to none (no border)",
-  "borderLeftStyle:hidden":
-    "Sets the left border style to hidden (border is invisible but still takes up space)",
-  "borderLeftStyle:dotted": "Sets the left border style to a series of dots",
-  "borderLeftStyle:dashed": "Sets the left border style to a series of dashes",
-  "borderLeftStyle:solid": "Sets the left border style to a single solid line",
-  "borderLeftStyle:double": "Sets the left border style to a double line",
-  "borderLeftStyle:groove": "Sets the left border style to a 3D groove",
-  "borderLeftStyle:ridge": "Sets the left border style to a 3D ridge",
-  "borderLeftStyle:inset":
-    "Sets the left border style to an inset (looks like it's pressed in)",
-  "borderLeftStyle:outset":
-    "Sets the left border style to an outset (looks like it's popping out)",
-  "borderLeftStyle:initial": "Sets the left border style to the initial value",
+    "The inline start border width is set to its default value.",
+  "borderLeftStyle:none": "No left border is shown.",
+  "borderLeftStyle:hidden": "Same as none, but takes up space.",
+  "borderLeftStyle:dotted": "A dotted border is shown.",
+  "borderLeftStyle:dashed": "A dashed border is shown.",
+  "borderLeftStyle:solid": "A solid border is shown.",
+  "borderLeftStyle:double": "A double border is shown.",
+  "borderLeftStyle:groove": "A 3D grooved border is shown.",
+  "borderLeftStyle:ridge": "A 3D ridged border is shown.",
+  "borderLeftStyle:inset": "A 3D inset border is shown.",
+  "borderLeftStyle:outset": "A 3D outset border is shown.",
+  "borderLeftStyle:initial":
+    "The left border style is set to its initial value.",
   "borderLeftStyle:inherit":
-    "Sets the left border style to be inherited from the parent element",
-  "borderLeftStyle:unset": "Sets the left border style to the default value",
-  "borderLeftWidth:thin": "Sets the width of the left border to a thin size",
+    "The left border style is inherited from its parent.",
+  "borderLeftStyle:unset": "The left border style is set to its default value.",
+  "borderLeftWidth:thin":
+    "Sets the thickness of the left border to a thin line.",
   "borderLeftWidth:medium":
-    "Sets the width of the left border to a medium size",
-  "borderLeftWidth:thick": "Sets the width of the left border to a thick size",
+    "Sets the thickness of the left border to a medium line.",
+  "borderLeftWidth:thick":
+    "Sets the thickness of the left border to a thick line.",
   "borderLeftWidth:initial":
-    "Sets the width of the left border to the initial value",
+    "Sets the thickness of the left border to its default value.",
   "borderLeftWidth:inherit":
-    "Sets the width of the left border to the same value as its parent element",
+    "Inherits the thickness of the left border from its parent element.",
   "borderLeftWidth:unset":
-    "Sets the width of the left border to the default value",
-  "borderRightStyle:none": "Sets the style of the right border to none",
-  "borderRightStyle:hidden": "Sets the style of the right border to hidden",
-  "borderRightStyle:dotted":
-    "Sets the style of the right border to a dotted line",
-  "borderRightStyle:dashed":
-    "Sets the style of the right border to a dashed line",
-  "borderRightStyle:solid":
-    "Sets the style of the right border to a solid line",
-  "borderRightStyle:double":
-    "Sets the style of the right border to a double line",
-  "borderRightStyle:groove":
-    "Sets the style of the right border to a 3D groove",
-  "borderRightStyle:ridge": "Sets the style of the right border to a 3D ridge",
-  "borderRightStyle:inset": "Sets the style of the right border to a 3D inset",
-  "borderRightStyle:outset":
-    "Sets the style of the right border to a 3D outset",
-  "borderRightStyle:initial":
-    "Sets the style of the right border to its initial value",
+    "Sets the thickness of the left border to its default value, unless it's inherited.",
+  "borderRightStyle:none": "Removes the right border.",
+  "borderRightStyle:hidden": "Same as none, but occupies space.",
+  "borderRightStyle:dotted": "Sets the right border to a dotted line.",
+  "borderRightStyle:dashed": "Sets the right border to a dashed line.",
+  "borderRightStyle:solid": "Sets the right border to a solid line.",
+  "borderRightStyle:double": "Sets the right border to a double line.",
+  "borderRightStyle:groove": "Sets the right border to a 3D groove.",
+  "borderRightStyle:ridge": "Sets the right border to a 3D ridge.",
+  "borderRightStyle:inset": "Sets the right border to a 3D inset.",
+  "borderRightStyle:outset": "Sets the right border to a 3D outset.",
+  "borderRightStyle:initial": "Sets the border style to its default value.",
   "borderRightStyle:inherit":
-    "Sets the style of the right border to be inherited from its parent element",
-  "borderRightStyle:unset":
-    "Sets the style of the right border to its default value",
-  "borderRightWidth:thin": "Sets the width of the right border to a thin size",
+    "Inherits the border style from its parent element.",
+  "borderRightStyle:unset": "Resets the border style to its initial value.",
+  "borderRightWidth:thin": "Sets the width of the right border to a thin size.",
   "borderRightWidth:medium":
-    "Sets the width of the right border to a medium size",
+    "Sets the width of the right border to a medium size.",
   "borderRightWidth:thick":
-    "Sets the width of the right border to a thick size",
+    "Sets the width of the right border to a thick size.",
   "borderRightWidth:initial":
-    "Sets the width of the right border to its initial value",
+    "Sets the width of the right border to its default value.",
   "borderRightWidth:inherit":
-    "Sets the width of the right border to be inherited from its parent element",
+    "Inherits the width of the right border from its parent element.",
   "borderRightWidth:unset":
-    "Sets the width of the right border to its default value",
+    "Resets the width of the right border to its initial value.",
   "borderSpacing:initial":
-    "Sets the distance between the borders of adjacent cells to its initial value",
+    "Sets the distance between cells to its default value.",
   "borderSpacing:inherit":
-    "Sets the distance between the borders of adjacent cells to be inherited from its parent element",
+    "Inherits the distance between cells from its parent element.",
   "borderSpacing:unset":
-    "Sets the distance between the borders of adjacent cells to its default value",
+    "Resets the distance between cells to its initial value.",
   "borderStartEndRadius:initial":
-    "Sets the radius of the start and end corners of the border to its initial value",
+    "Sets the border radius of the end and start edges to its default value.",
   "borderStartEndRadius:inherit":
-    "Sets the radius of the start and end corners of the border to be inherited from its parent element",
+    "Inherits the border radius of the end and start edges from its parent element.",
   "borderStartEndRadius:unset":
-    "Sets the radius of the start and end corners of the border to its default value",
+    "Resets the border radius of the end and start edges to its initial value.",
   "borderStartStartRadius:initial":
-    "Sets the radius of the start and start corners of the border to its initial value",
+    "Sets the border radius of the start edge to its default value.",
   "borderStartStartRadius:inherit":
-    "Sets the radius of the top-left corner of a border to the inherited value",
+    "Inherits the border radius of the parent element for the top left corner.",
   "borderStartStartRadius:unset":
-    "Resets the radius of the top-left corner of a border to the default value",
+    "Resets the border radius of the top left corner to the default value.",
   "borderTopLeftRadius:initial":
-    "Sets the radius of the top-left corner of a border to the initial value",
+    "Sets the top left corner of the border to the default radius value.",
   "borderTopLeftRadius:inherit":
-    "Sets the radius of the top-left corner of a border to the inherited value",
+    "Inherits the top left border radius of the parent element.",
   "borderTopLeftRadius:unset":
-    "Resets the radius of the top-left corner of a border to the default value",
+    "Resets the top left corner of the border to its default value.",
   "borderTopRightRadius:initial":
-    "Sets the radius of the top-right corner of a border to the initial value",
+    "Sets the top right corner of the border to the default radius value.",
   "borderTopRightRadius:inherit":
-    "Sets the radius of the top-right corner of a border to the inherited value",
+    "Inherits the top right corner border radius of the parent element.",
   "borderTopRightRadius:unset":
-    "Resets the radius of the top-right corner of a border to the default value",
-  "borderTopStyle:none": "Sets the style of the top border to no border",
-  "borderTopStyle:hidden":
-    "Sets the style of the top border to a hidden border",
-  "borderTopStyle:dotted": "Sets the style of the top border to a dotted line",
-  "borderTopStyle:dashed": "Sets the style of the top border to a dashed line",
-  "borderTopStyle:solid": "Sets the style of the top border to a solid line",
-  "borderTopStyle:double": "Sets the style of the top border to a double line",
-  "borderTopStyle:groove": "Sets the style of the top border to a 3D groove",
-  "borderTopStyle:ridge": "Sets the style of the top border to a 3D ridge",
+    "Resets the top right corner of the border to its default value.",
+  "borderTopStyle:none": "Displays no top border.",
+  "borderTopStyle:hidden": "Hides the top border.",
+  "borderTopStyle:dotted": "Displays a dotted top border.",
+  "borderTopStyle:dashed": "Displays a dashed top border.",
+  "borderTopStyle:solid": "Displays a solid top border.",
+  "borderTopStyle:double": "Displays a double top border.",
+  "borderTopStyle:groove": "Displays a 3D grooved top border.",
+  "borderTopStyle:ridge": "Displays a 3D ridged top border.",
   "borderTopStyle:inset":
-    "Sets the style of the top border to appear as if it is pushed inwards",
+    'Creates an "inset" border, which makes it look like the content is carved into the page.',
   "borderTopStyle:outset":
-    "Sets the style of the top border to appear as if it is coming outwards",
+    'Creates an "outset" border, which makes it look like the content is popping out of the page.',
   "borderTopStyle:initial":
-    "Sets the style of the top border to the default value",
+    "Sets the border-style property to its default value.",
   "borderTopStyle:inherit":
-    "Sets the style of the top border to be the same as its parent element",
-  "borderTopStyle:unset": "Removes any previously set style for the top border",
-  "borderTopWidth:thin": "Sets the width of the top border to be thin",
-  "borderTopWidth:medium":
-    "Sets the width of the top border to be the default value",
-  "borderTopWidth:thick": "Sets the width of the top border to be thick",
+    "Inherits the border-style property from its parent element.",
+  "borderTopStyle:unset":
+    "Resets the border-style property to its inherited value if it was set, otherwise sets it to the initial value.",
+  "borderTopWidth:thin": "Sets the width of the top border to a thin size.",
+  "borderTopWidth:medium": "Sets the width of the top border to a medium size.",
+  "borderTopWidth:thick": "Sets the width of the top border to a thick size.",
   "borderTopWidth:initial":
-    "Sets the width of the top border to the default value",
+    "Sets the border-width property to its default value.",
   "borderTopWidth:inherit":
-    "Sets the width of the top border to be the same as its parent element",
-  "borderTopWidth:unset": "Removes any previously set width for the top border",
+    "Inherits the border-width property from its parent element.",
+  "borderTopWidth:unset":
+    "Resets the border-width property to its inherited value if it was set, otherwise sets it to the initial value.",
   "bottom:auto":
-    "Sets the distance between the bottom edge of an element and the bottom edge of its containing element to be the default value",
-  "bottom:initial":
-    "Sets the distance between the bottom edge of an element and the bottom edge of its containing element to be the default value",
-  "bottom:inherit":
-    "Sets the distance between the bottom edge of an element and the bottom edge of its containing element to be the same as its parent element",
+    "Sets the bottom position to be automatically determined by the browser.",
+  "bottom:initial": "Sets the bottom position to its default value.",
+  "bottom:inherit": "Inherits the bottom position from its parent element.",
   "bottom:unset":
-    "Removes any previously set distance between the bottom edge of an element and the bottom edge of its containing element",
+    "Resets the bottom position to its inherited value if it was set, otherwise sets it to the initial value.",
   "boxDecorationBreak:slice":
-    "Sets the way an element's box should be broken if it spans across multiple lines to slice it",
+    "The background, padding, and border of a box are broken and wrapped around each line of text.",
   "boxDecorationBreak:clone":
-    "Sets how box decorations should be broken between lines",
-  "boxDecorationBreak:initial":
-    "Sets the default value for box-decoration-break property",
+    "The element's background, border, and box-shadow are cloned to each fragment.",
+  "boxDecorationBreak:initial": "The default value is applied.",
   "boxDecorationBreak:inherit":
-    "Inherits the box-decoration-break property from its parent element",
+    "The value is inherited from the parent element.",
   "boxDecorationBreak:unset":
-    "Resets the box-decoration-break property to its default value",
-  "boxShadow:none": "Removes the box shadow from an element",
-  "boxShadow:inset": "Adds an inner shadow to an element",
-  "boxShadow:transparent": "Sets the box shadow to be transparent",
-  "boxShadow:aliceblue": "Sets the box shadow color to aliceblue",
-  "boxShadow:antiquewhite": "Sets the box shadow color to antiquewhite",
-  "boxShadow:aqua": "Sets the box shadow color to aqua",
-  "boxShadow:aquamarine": "Sets the box shadow color to aquamarine",
-  "boxShadow:azure": "Sets the box shadow color to azure",
-  "boxShadow:beige": "Sets the box shadow color to beige",
-  "boxShadow:bisque": "Sets the box shadow color to bisque",
-  "boxShadow:black": "Sets the box shadow color to black",
-  "boxShadow:blanchedalmond": "Sets the box shadow color to blanchedalmond",
-  "boxShadow:blue": "Adds a blue shadow to an element",
-  "boxShadow:blueviolet": "Adds a blueviolet shadow to an element",
-  "boxShadow:brown": "Adds a brown shadow to an element",
-  "boxShadow:burlywood": "Adds a burlywood shadow to an element",
-  "boxShadow:cadetblue": "Adds a cadetblue shadow to an element",
-  "boxShadow:chartreuse": "Adds a chartreuse shadow to an element",
-  "boxShadow:chocolate": "Adds a chocolate shadow to an element",
-  "boxShadow:coral": "Adds a coral shadow to an element",
-  "boxShadow:cornflowerblue": "Adds a cornflowerblue shadow to an element",
-  "boxShadow:cornsilk": "Adds a cornsilk shadow to an element",
-  "boxShadow:crimson": "Adds a crimson shadow to an element",
-  "boxShadow:cyan": "Adds a cyan shadow to an element",
-  "boxShadow:darkblue": "Adds a darkblue shadow to an element",
-  "boxShadow:darkcyan": "Adds a darkcyan shadow to an element",
-  "boxShadow:darkgoldenrod": "Adds a darkgoldenrod shadow to an element",
-  "boxShadow:darkgray": "Adds a darkgray shadow to an element",
-  "boxShadow:darkgreen": "Adds a dark green shadow to an element",
-  "boxShadow:darkgrey": "Adds a dark grey shadow to an element",
-  "boxShadow:darkkhaki": "Adds a dark khaki shadow to an element",
-  "boxShadow:darkmagenta": "Adds a dark magenta shadow to an element",
-  "boxShadow:darkolivegreen": "Adds a dark olive green shadow to an element",
-  "boxShadow:darkorange": "Adds a dark orange shadow to an element",
-  "boxShadow:darkorchid": "Adds a dark orchid shadow to an element",
-  "boxShadow:darkred": "Adds a dark red shadow to an element",
-  "boxShadow:darksalmon": "Adds a dark salmon shadow to an element",
-  "boxShadow:darkseagreen": "Adds a dark sea green shadow to an element",
-  "boxShadow:darkslateblue": "Adds a dark slate blue shadow to an element",
-  "boxShadow:darkslategray": "Adds a dark slate gray shadow to an element",
-  "boxShadow:darkslategrey": "Adds a dark slate grey shadow to an element",
-  "boxShadow:darkturquoise": "Adds a dark turquoise shadow to an element",
-  "boxShadow:darkviolet": "Adds a dark violet shadow to an element",
-  "boxShadow:deeppink": "Adds a deep pink shadow to an element",
-  "boxShadow:deepskyblue": "Adds a deepskyblue shadow to an element's box",
-  "boxShadow:dimgray": "Adds a dimgray shadow to an element's box",
-  "boxShadow:dimgrey": "Adds a dimgrey shadow to an element's box",
-  "boxShadow:dodgerblue": "Adds a dodgerblue shadow to an element's box",
-  "boxShadow:firebrick": "Adds a firebrick shadow to an element's box",
-  "boxShadow:floralwhite": "Adds a floralwhite shadow to an element's box",
-  "boxShadow:forestgreen": "Adds a forestgreen shadow to an element's box",
-  "boxShadow:fuchsia": "Adds a fuchsia shadow to an element's box",
-  "boxShadow:gainsboro": "Adds a gainsboro shadow to an element's box",
-  "boxShadow:ghostwhite": "Adds a ghostwhite shadow to an element's box",
-  "boxShadow:gold": "Adds a gold shadow to an element's box",
-  "boxShadow:goldenrod": "Adds a goldenrod shadow to an element's box",
-  "boxShadow:gray": "Adds a gray shadow to an element's box",
-  "boxShadow:green": "Adds a green shadow to an element's box",
-  "boxShadow:greenyellow": "Adds a greenyellow shadow to an element's box",
-  "boxShadow:grey": "Adds a grey shadow to an element's box",
-  "boxShadow:honeydew": "Adds a honeydew colored shadow to an element's box",
-  "boxShadow:hotpink": "Adds a hotpink colored shadow to an element's box",
-  "boxShadow:indianred": "Adds an indianred colored shadow to an element's box",
-  "boxShadow:indigo": "Adds an indigo colored shadow to an element's box",
-  "boxShadow:ivory": "Adds an ivory colored shadow to an element's box",
-  "boxShadow:khaki": "Adds a khaki colored shadow to an element's box",
-  "boxShadow:lavender": "Adds a lavender colored shadow to an element's box",
-  "boxShadow:lavenderblush":
-    "Adds a lavenderblush colored shadow to an element's box",
-  "boxShadow:lawngreen": "Adds a lawngreen colored shadow to an element's box",
-  "boxShadow:lemonchiffon":
-    "Adds a lemonchiffon colored shadow to an element's box",
-  "boxShadow:lightblue": "Adds a lightblue colored shadow to an element's box",
-  "boxShadow:lightcoral":
-    "Adds a lightcoral colored shadow to an element's box",
-  "boxShadow:lightcyan": "Adds a lightcyan colored shadow to an element's box",
-  "boxShadow:lightgoldenrodyellow":
-    "Adds a lightgoldenrodyellow colored shadow to an element's box",
-  "boxShadow:lightgray": "Adds a lightgray colored shadow to an element's box",
-  "boxShadow:lightgreen":
-    "Adds a lightgreen colored shadow to an element's box",
-  "boxShadow:lightgrey": "Adds a light grey shadow effect to an element",
-  "boxShadow:lightpink": "Adds a light pink shadow effect to an element",
-  "boxShadow:lightsalmon": "Adds a light salmon shadow effect to an element",
-  "boxShadow:lightseagreen":
-    "Adds a light sea green shadow effect to an element",
-  "boxShadow:lightskyblue": "Adds a light sky blue shadow effect to an element",
-  "boxShadow:lightslategray":
-    "Adds a light slate gray shadow effect to an element",
-  "boxShadow:lightslategrey":
-    "Adds a light slate grey shadow effect to an element",
-  "boxShadow:lightsteelblue":
-    "Adds a light steel blue shadow effect to an element",
-  "boxShadow:lightyellow": "Adds a light yellow shadow effect to an element",
-  "boxShadow:lime": "Adds a lime shadow effect to an element",
-  "boxShadow:limegreen": "Adds a lime green shadow effect to an element",
-  "boxShadow:linen": "Adds a linen shadow effect to an element",
-  "boxShadow:magenta": "Adds a magenta shadow effect to an element",
-  "boxShadow:maroon": "Adds a maroon shadow effect to an element",
-  "boxShadow:mediumaquamarine":
-    "Adds a medium aquamarine shadow effect to an element",
-  "boxShadow:mediumblue": "Adds a medium blue shadow effect to an element",
-  "boxShadow:mediumorchid": "Adds a medium orchid shadow to an element",
-  "boxShadow:mediumpurple": "Adds a medium purple shadow to an element",
-  "boxShadow:mediumseagreen": "Adds a medium sea green shadow to an element",
-  "boxShadow:mediumslateblue": "Adds a medium slate blue shadow to an element",
-  "boxShadow:mediumspringgreen":
-    "Adds a medium spring green shadow to an element",
-  "boxShadow:mediumturquoise": "Adds a medium turquoise shadow to an element",
-  "boxShadow:mediumvioletred": "Adds a medium violet-red shadow to an element",
-  "boxShadow:midnightblue": "Adds a midnight blue shadow to an element",
-  "boxShadow:mintcream": "Adds a mint cream shadow to an element",
-  "boxShadow:mistyrose": "Adds a misty rose shadow to an element",
-  "boxShadow:moccasin": "Adds a moccasin shadow to an element",
-  "boxShadow:navajowhite": "Adds a navajo white shadow to an element",
-  "boxShadow:navy": "Adds a navy shadow to an element",
-  "boxShadow:oldlace": "Adds an old lace shadow to an element",
-  "boxShadow:olive": "Adds an olive shadow to an element",
-  "boxShadow:olivedrab": "Adds an olive drab shadow to an element",
-  "boxShadow:orange": "Adds an orange shadow to an element",
-  "boxShadow:orangered": "Adds an orangered shadow to an element",
-  "boxShadow:orchid": "Adds an orchid shadow to an element",
-  "boxShadow:palegoldenrod": "Adds a palegoldenrod shadow to an element",
-  "boxShadow:palegreen": "Adds a palegreen shadow to an element",
-  "boxShadow:paleturquoise": "Adds a paleturquoise shadow to an element",
-  "boxShadow:palevioletred": "Adds a palevioletred shadow to an element",
-  "boxShadow:papayawhip": "Adds a papayawhip shadow to an element",
-  "boxShadow:peachpuff": "Adds a peachpuff shadow to an element",
-  "boxShadow:peru": "Adds a peru shadow to an element",
-  "boxShadow:pink": "Adds a pink shadow to an element",
-  "boxShadow:plum": "Adds a plum shadow to an element",
-  "boxShadow:powderblue": "Adds a powderblue shadow to an element",
-  "boxShadow:purple": "Adds a purple shadow to an element",
-  "boxShadow:rebeccapurple": "Adds a rebeccapurple shadow to an element",
-  "boxShadow:red": "Adds a red shadow to an element",
-  "boxShadow:rosybrown": "Adds a rosy brown shadow to an element",
-  "boxShadow:royalblue": "Adds a royal blue shadow to an element",
-  "boxShadow:saddlebrown": "Adds a saddle brown shadow to an element",
-  "boxShadow:salmon": "Adds a salmon shadow to an element",
-  "boxShadow:sandybrown": "Adds a sandy brown shadow to an element",
-  "boxShadow:seagreen": "Adds a sea green shadow to an element",
-  "boxShadow:seashell": "Adds a seashell shadow to an element",
-  "boxShadow:sienna": "Adds a sienna shadow to an element",
-  "boxShadow:silver": "Adds a silver shadow to an element",
-  "boxShadow:skyblue": "Adds a sky blue shadow to an element",
-  "boxShadow:slateblue": "Adds a slate blue shadow to an element",
-  "boxShadow:slategray": "Adds a slate gray shadow to an element",
-  "boxShadow:slategrey": "Adds a slate grey shadow to an element",
-  "boxShadow:snow": "Adds a snow shadow to an element",
-  "boxShadow:springgreen": "Adds a spring green shadow to an element",
-  "boxShadow:steelblue": "Adds a steel blue shadow to an element",
-  "boxShadow:tan": "Creates a tan shadow around an element",
-  "boxShadow:teal": "Creates a teal shadow around an element",
-  "boxShadow:thistle": "Creates a thistle shadow around an element",
-  "boxShadow:tomato": "Creates a tomato shadow around an element",
-  "boxShadow:turquoise": "Creates a turquoise shadow around an element",
-  "boxShadow:violet": "Creates a violet shadow around an element",
-  "boxShadow:wheat": "Creates a wheat shadow around an element",
-  "boxShadow:white": "Creates a white shadow around an element",
-  "boxShadow:whitesmoke": "Creates a whitesmoke shadow around an element",
-  "boxShadow:yellow": "Creates a yellow shadow around an element",
-  "boxShadow:yellowgreen": "Creates a yellowgreen shadow around an element",
-  "boxShadow:currentColor":
-    "Creates a shadow with the same color as the element's current color",
-  "boxShadow:ActiveBorder":
-    "Creates a shadow with the color of the active window border",
-  "boxShadow:ActiveCaption":
-    "Creates a shadow with the color of the active window caption",
-  "boxShadow:AppWorkspace":
-    "Creates a shadow with the color of the application workspace",
-  "boxShadow:Background":
-    "Creates a shadow with the color of the background of the element",
-  "boxShadow:ButtonFace":
-    "Adds a shadow effect to a box with a ButtonFace color",
-  "boxShadow:ButtonHighlight":
-    "Adds a shadow effect to a box with a ButtonHighlight color",
-  "boxShadow:ButtonShadow":
-    "Adds a shadow effect to a box with a ButtonShadow color",
-  "boxShadow:ButtonText":
-    "Adds a shadow effect to a box with a ButtonText color",
-  "boxShadow:CaptionText": "Adds a shadow effect to the text of a caption",
-  "boxShadow:GrayText": "Adds a shadow effect to gray text",
-  "boxShadow:Highlight": "Adds a shadow effect to a box with a Highlight color",
-  "boxShadow:HighlightText":
-    "Adds a shadow effect to the text of a highlighted area",
-  "boxShadow:InactiveBorder": "Adds a shadow effect to an inactive border",
-  "boxShadow:InactiveCaption": "Adds a shadow effect to an inactive caption",
-  "boxShadow:InactiveCaptionText":
-    "Adds a shadow effect to the text of an inactive caption",
-  "boxShadow:InfoBackground":
-    "Adds a shadow effect to the background of an informational message",
-  "boxShadow:InfoText":
-    "Adds a shadow effect to the text of an informational message",
-  "boxShadow:Menu": "Adds a shadow effect to a menu",
-  "boxShadow:MenuText": "Adds a shadow effect to the text of a menu item",
-  "boxShadow:Scrollbar": "Adds a shadow effect to a scrollbar",
-  "boxShadow:ThreeDDarkShadow": "Adds a dark shadow to the box",
-  "boxShadow:ThreeDFace": "Adds a face to the 3D box",
-  "boxShadow:ThreeDHighlight": "Adds a highlight to the 3D box",
-  "boxShadow:ThreeDLightShadow": "Adds a light shadow to the box",
-  "boxShadow:ThreeDShadow": "Adds a shadow to the 3D box",
-  "boxShadow:Window": "Adds a shadow to the window",
-  "boxShadow:WindowFrame": "Adds a frame to the window",
-  "boxShadow:WindowText": "Adds text to the window",
-  "boxShadow:initial": "Resets the box-shadow property to its default value",
-  "boxShadow:inherit":
-    "Inherits the box-shadow property from its parent element",
-  "boxShadow:unset": "Resets the box-sizing property to its initial value",
+    "The value is inherited, unless there is no inherited value, then it's set to initial.",
   "boxSizing:content-box":
-    "Sets the sizing method to include the content and padding, but not border or margin",
+    "The width and height properties only apply to the content, not including padding or border.",
   "boxSizing:border-box":
-    "Sets the sizing method to include the content, padding, and border, but not margin",
-  "boxSizing:initial": "Resets the box-sizing property to its initial value",
-  "boxSizing:inherit":
-    "Inherits the box-sizing property from its parent element",
-  "boxSizing:unset": "Resets the box-sizing property to its initial value",
-  "breakAfter:auto": "Sets where a page break should occur if needed",
-  "breakAfter:avoid": "Avoids creating a page break after the element",
-  "breakAfter:always": "Forces a page break after the element",
-  "breakAfter:all": "Forces a page break after all HTML elements",
+    "The width and height properties apply to the content, including padding and border.",
+  "boxSizing:initial": "The default value is applied.",
+  "boxSizing:inherit": "The value is inherited from the parent element.",
+  "boxSizing:unset":
+    "The value is inherited, unless there is no inherited value, then it's set to initial.",
+  "breakAfter:auto":
+    "The browser determines where to insert a page break after the element.",
+  "breakAfter:avoid": "Avoids page breaks after the element.",
+  "breakAfter:always": "Inserts a page break after the element.",
+  "breakAfter:all": "Inserts a page break after all elements.",
   "breakAfter:avoid-page":
-    "Avoids creating a page break after the element that would split a page",
-  "breakAfter:page": "Forces a page break after the next page",
-  "breakAfter:left": "Forces a page break after the next left-hand page",
-  "breakAfter:right": "Forces a page break after the next right-hand page",
-  "breakAfter:recto": "Forces a page break after the next odd-numbered page",
-  "breakAfter:verso": "Forces a page break after the next even-numbered page",
-  "breakAfter:avoid-column":
-    "Avoids creating a page break after the element that would split a column",
-  "breakAfter:column": "Forces a page break after the next column",
-  "breakAfter:avoid-region":
-    "Avoids creating a page break after the element that would split a region",
-  "breakAfter:region": "Forces a page break after the next region",
-  "breakAfter:initial": "Sets the property to its default value",
-  "breakAfter:inherit": "Inherits the property from its parent element",
-  "breakAfter:unset": "Unsets the page break after an element",
-  "breakBefore:auto": "Sets the page break before an element to automatic",
-  "breakBefore:avoid": "Sets the page break before an element to avoid",
-  "breakBefore:always": "Sets the page break before an element to always occur",
+    "Avoids page breaks within a page spanned by the element.",
+  "breakAfter:page":
+    "Inserts a page break after the element, forcing the next page to be right-hand.",
+  "breakAfter:left":
+    "Inserts a page break after the element, forcing the next page to be left-hand.",
+  "breakAfter:right": "Forces a page break immediately after the element.",
+  "breakAfter:recto": "Forces a page break after a right-handed page.",
+  "breakAfter:verso": "Forces a page break after a left-handed page.",
+  "breakAfter:avoid-column": "Avoids a page break inside a column.",
+  "breakAfter:column": "Forces a page break inside a column.",
+  "breakAfter:avoid-region": "Avoids a page break inside a region.",
+  "breakAfter:region": "Forces a page break inside a region.",
+  "breakAfter:initial": "Sets this property to its default value.",
+  "breakAfter:inherit": "Inherits this property from its parent element.",
+  "breakAfter:unset": "Sets this property to its parent's computed value.",
+  "breakBefore:auto": "Allows a page break before or after the element.",
+  "breakBefore:avoid": "Avoids a page break before or after the element.",
+  "breakBefore:always": "Forces a page break before the element.",
   "breakBefore:all":
-    "Sets the page break before an element to occur on all pages",
-  "breakBefore:avoid-page":
-    "Sets the page break before an element to avoid the next page",
-  "breakBefore:page":
-    "Sets the page break before an element to occur on the next page",
+    "Forces the break of a multi-column element to the next page.",
+  "breakBefore:avoid-page": "Avoids a page break before the element.",
+  "breakBefore:page": "Forces a page break before the element.",
   "breakBefore:left":
-    "Sets the page break before an element to occur on the left-hand page",
+    "Forces a page break so that the next page starts on the left side of a physical paper.",
   "breakBefore:right":
-    "Sets the page break before an element to occur on the right-hand page",
+    "Forces a page break so that the next page starts on the right side of a physical paper.",
   "breakBefore:recto":
-    "Sets the page break before an element to occur on a recto page",
+    "Forces a page break so that the next page starts on the recto side of a paper (the front side).",
   "breakBefore:verso":
-    "Sets the page break before an element to occur on a verso page",
+    "Forces a page break so that the next page starts on the verso side of a paper (the back side).",
   "breakBefore:avoid-column":
-    "Sets the page break before an element to avoid the next column",
+    "Avoids a page break before the element, if it would cause it to be split across columns.",
   "breakBefore:column":
-    "Sets the page break before an element to occur at the start of a new column",
+    "Forces a page break before the element, always starting a new column.",
   "breakBefore:avoid-region":
-    "Sets the page break before an element to avoid the next region",
+    "Avoids a page break before the element, if it would cause it to be split across regions.",
   "breakBefore:region":
-    "Sets the page break before an element to occur at the start of a new region",
-  "breakBefore:initial":
-    "Sets the page break before an element to its default value",
+    "Forces a page break before the element, always starting a new region.",
+  "breakBefore:initial": "Sets the break-before property to its default value.",
   "breakBefore:inherit":
-    "Sets if a page break should occur before an element (inherits from parent)",
+    "Inherits the break-before property from its parent element.",
   "breakBefore:unset":
-    "Resets the 'break-before' property to its default value",
+    "Resets the break-before property to its inherited value, or to the default value if there is no inherited value.",
   "breakInside:auto":
-    "Sets if a page break should occur inside an element (default behavior)",
+    "Allows the element to be broken across pages or columns as necessary.",
   "breakInside:avoid":
-    "Sets if a page break should avoid breaking inside an element",
+    "Avoids a page or column break inside the element, if possible.",
   "breakInside:avoid-page":
-    "Sets if a page break should avoid breaking inside an element, forcing a new page",
+    "Avoids a page break inside the element, if possible.",
   "breakInside:avoid-column":
-    "Sets if a page break should avoid breaking inside an element, forcing a new column",
+    "Avoids a column break inside the element, if possible.",
   "breakInside:avoid-region":
-    "Sets if a page break should avoid breaking inside an element, forcing a new region",
+    "Avoids a region break inside the element, if possible.",
   "breakInside:initial":
-    "Resets the 'break-inside' property to its default value",
+    "Fragmentation behavior is determined by the parent element.",
   "breakInside:inherit":
-    "Sets if a page break should occur inside an element (inherits from parent)",
+    "Inherits the fragmentation behavior of the parent element.",
   "breakInside:unset":
-    "Resets the 'break-inside' property to its initial value",
-  "captionSide:top": "Aligns the table caption to the top of the table",
-  "captionSide:bottom": "Aligns the table caption to the bottom of the table",
+    "Fragmentation behavior is determined by the parent, but can be overridden.",
+  "captionSide:top": "Sets the position of the table caption above the table.",
+  "captionSide:bottom":
+    "Sets the position of the table caption below the table.",
   "captionSide:block-start":
-    "Aligns the table caption to the start of the block container",
+    "Sets the position of the table caption at the start of the block.",
   "captionSide:block-end":
-    "Aligns the table caption to the end of the block container",
+    "Sets the position of the table caption at the end of the block.",
   "captionSide:inline-start":
-    "Aligns the table caption to the start of the inline container",
+    "Sets the position of the table caption at the start of the inline content.",
   "captionSide:inline-end":
-    "Aligns the table caption to the end of the inline container",
-  "captionSide:initial": "Sets the position of table captions to initial value",
+    "Sets the position of the table caption at the end of the inline content.",
+  "captionSide:initial":
+    "Sets the position of the table caption to the default value.",
   "captionSide:inherit":
-    "Inherits the position of table captions from the parent element",
+    "Inherits the position of the table caption from the parent element.",
   "captionSide:unset":
-    "Resets the position of table captions to its default value",
-  "caretShape:auto": "Sets the shape of the caret to automatic",
-  "caretShape:bar": "Sets the shape of the caret to a vertical bar",
-  "caretShape:block": "Sets the shape of the caret to a rectangular block",
-  "caretShape:underscore": "Sets the shape of the caret to an underscore",
-  "caretShape:initial": "Sets the shape of the caret to its initial value",
-  "caretShape:inherit":
-    "Inherits the shape of the caret from the parent element",
-  "caretShape:unset": "Resets the shape of the caret to its default value",
-  "clear:none": "Clears floats on neither side of an element",
-  "clear:left": "Clears floats on the left side of an element",
-  "clear:right": "Clears floats on the right side of an element",
-  "clear:both": "Clears floats on both sides of an element",
+    "Sets the position of the table caption to the initial value.",
+  "caretShape:auto": "The shape of the input caret is browser specific.",
+  "caretShape:bar": "The input caret is a vertical bar.",
+  "caretShape:block": "The input caret is a solid square block.",
+  "caretShape:underscore": "The input caret is a horizontal underscore.",
+  "caretShape:initial":
+    "Displays a caret that resembles a solid triangle pointing up.",
+  "caretShape:inherit": "Inherits the caret shape from its parent element.",
+  "caretShape:unset": "Resets the caret shape to its default value.",
+  "clear:none": "The element is not moved down to clear past floated elements.",
+  "clear:left":
+    "The element is moved down to clear past left floated elements.",
+  "clear:right":
+    "The element is moved down to clear past right floated elements.",
+  "clear:both":
+    "The element is moved down to clear past both left and right floated elements.",
   "clear:inline-start":
-    "Clears floats on the side of an element closest to the beginning of the line",
+    "The element is moved down to clear past left floated elements if the element is an inline-start.",
   "clear:inline-end":
-    "Clears floats on the side of an element closest to the end of the line.",
+    "The element is moved down to clear past right floated elements if the element is an inline-end.",
   "clear:initial":
-    "Sets the clearing behavior of an element to its initial value",
-  "clear:inherit":
-    "Sets the clearing behavior of an element to the value of its parent element",
-  "clear:unset":
-    "Sets the clearing behavior of an element to the default value",
-  "clip:auto":
-    "Specifies whether an element is clipped or not (default behavior)",
-  "clip:initial":
-    "Sets the clipping behavior of an element to its initial value",
-  "clip:inherit":
-    "Sets the clipping behavior of an element to the value of its parent element",
-  "clip:unset": "Sets the clipping behavior of an element to the default value",
-  "clipPath:border-box":
-    "Defines a clipping path for an element using the border box of the element",
-  "clipPath:padding-box":
-    "Defines a clipping path for an element using the padding box of the element",
-  "clipPath:content-box":
-    "Defines a clipping path for an element using the content box of the element",
-  "clipPath:margin-box":
-    "Defines a clipping path for an element using the margin box of the element",
-  "clipPath:fill-box":
-    "Defines a clipping path for an element using the fill box of the element",
-  "clipPath:stroke-box":
-    "Defines a clipping path for an element using the stroke box of the element",
-  "clipPath:view-box":
-    "Defines a clipping path for an element using the view box of the element",
-  "clipPath:none": "Defines no clipping path for an element (default behavior)",
-  "clipPath:initial":
-    "Sets the clipping path of an element to its initial value",
-  "clipPath:inherit": "Sets the clipping path to inherit from parent element",
-  "clipPath:unset":
-    "Removes the clipping path set previously and sets it to default",
+    "The element is moved down to clear past both left and right floated elements.",
+  "clear:inherit": "Inherits the clearance from its parent element.",
+  "clear:unset": "Resets the clearance to its default value.",
+  "clip:auto": "The element is not clipped.",
+  "clip:initial": "Resets the clipping to its default value.",
+  "clip:inherit": "Inherits the clipping from its parent element.",
+  "clip:unset": "Resets the clipping to its default value.",
+  "clipPath:border-box": "Applies clipping to the border-box of an element.",
+  "clipPath:padding-box": "Applies clipping to the padding-box of an element.",
+  "clipPath:content-box": "Applies clipping to the content-box of an element.",
+  "clipPath:margin-box": "Applies clipping to the margin-box of an element.",
+  "clipPath:fill-box": "Applies clipping to the fill-box of an element.",
+  "clipPath:stroke-box": "Applies clipping to the stroke-box of an element.",
+  "clipPath:view-box": "Applies clipping to the view-box of an element.",
+  "clipPath:none": "Defines no clip path.",
+  "clipPath:initial": "Sets the clip path to its default value.",
+  "clipPath:inherit":
+    "Specifies that the clip path should be inherited from the parent element.",
+  "clipPath:unset": "Resets the clip-path property to its inherited value.",
   "columnCount:auto":
-    "Sets the number of columns to be displayed automatically",
-  "columnCount:initial": "Sets the number of columns to default value",
+    "The number of columns will be determined by other CSS properties.",
+  "columnCount:initial": "Sets the number of columns to its default value.",
   "columnCount:inherit":
-    "Sets the number of columns to inherit from parent element",
-  "columnCount:unset":
-    "Removes the number of columns set previously and sets it to default",
+    "Specifies that the number of columns should be inherited from the parent element.",
+  "columnCount:unset": "Resets the number of columns to its inherited value.",
   "columnFill:auto":
-    "Sets the rule for how to fill columns with content when there is extra space in the container",
-  "columnFill:balance":
-    "Sets the rule for how to balance the content across all columns",
+    "Fills columns progressively and balances content between them.",
+  "columnFill:balance": "Distributes content evenly between columns.",
   "columnFill:balance-all":
-    "Sets the rule for how to balance the content across all columns including the last one",
-  "columnFill:initial":
-    "Sets the rule for how to fill columns with content to default",
-  "columnFill:inherit":
-    "Sets the rule for how to fill columns with content to inherit from parent element",
-  "columnFill:unset":
-    "Removes the rule for how to fill columns set previously and sets it to default",
-  "columnGap:normal": "Sets the size of the gap between columns to normal",
-  "columnGap:initial": "Sets the size of the gap between columns to default",
-  "columnGap:inherit":
-    "Sets the size of the gap between columns to inherit from parent element",
-  "columnGap:unset":
-    "Removes the size of the gap between columns set previously and sets it to default",
-  "columnRuleStyle:none": "Sets the style of the rule between columns to none",
-  "columnRuleStyle:hidden":
-    "Sets the style of the rule between columns to hidden",
-  "columnRuleStyle:dotted":
-    "Sets the style of the rule between columns to a series of dots",
-  "columnRuleStyle:dashed":
-    "Sets the style of the rule between columns to a series of dashes",
-  "columnRuleStyle:solid":
-    "Sets the style of the rule between columns to a single solid line",
-  "columnRuleStyle:double":
-    "Sets the style of the rule between columns to two parallel solid lines",
-  "columnRuleStyle:groove":
-    "Sets the style of the rule between columns to a 3D groove",
+    "Distributes content evenly, even when using `break-after` or `break-before`.",
+  "columnFill:initial": "Resets the property to its default value.",
+  "columnFill:inherit": "Inherits the property from its parent element.",
+  "columnFill:unset": "Resets the property to its inherited value.",
+  "columnGap:normal": "Sets the normal gap between columns.",
+  "columnGap:initial": "Resets the property to its default value.",
+  "columnGap:inherit": "Inherits the property from its parent element.",
+  "columnGap:unset": "Resets the property to its inherited value.",
+  "columnRuleStyle:none": "No column rule style is displayed.",
+  "columnRuleStyle:hidden": "Same as `none`, but still takes up space.",
+  "columnRuleStyle:dotted": "Sets the column rule to a dotted line.",
+  "columnRuleStyle:dashed": "Sets the column rule to a dashed line.",
+  "columnRuleStyle:solid": "Sets the column rule to a solid line.",
+  "columnRuleStyle:double": "Sets the column rule to a double line.",
+  "columnRuleStyle:groove": "Sets the column rule to a 3D grooved line.",
   "columnRuleStyle:ridge":
-    "Sets the style of the rule between columns to a 3D ridge",
+    "The column rule will be displayed with a ridge-like pattern.",
   "columnRuleStyle:inset":
-    "Sets the style of the rule between columns to a 3D inset",
+    "The column rule will be displayed with an inward pointing pattern.",
   "columnRuleStyle:outset":
-    "Sets the style of the rule between columns to a 3D outset",
+    "The column rule will be displayed with an outward pointing pattern.",
   "columnRuleStyle:initial":
-    "Sets the style of the rule between columns to its default value",
+    "Resets the column rule style back to its default value.",
   "columnRuleStyle:inherit":
-    "Inherits the style of the rule between columns from its parent element",
+    "Inherits the column rule style from its parent element.",
   "columnRuleStyle:unset":
-    "Sets the style of the rule between columns to its initial value",
+    "Resets the column rule style to its inherited value or to the default value if there is no inherited value.",
   "columnRuleWidth:thin":
-    "Sets the width of the rule between columns to a thin line",
+    "The column rule will be displayed with a thin width.",
   "columnRuleWidth:medium":
-    "Sets the width of the rule between columns to a medium line",
+    "The column rule will be displayed with a medium width.",
   "columnRuleWidth:thick":
-    "Sets the width of the rule between columns to a thick line",
+    "The column rule will be displayed with a thick width.",
   "columnRuleWidth:initial":
-    "Sets the width of the line between columns to the default value",
+    "Resets the column rule width back to its default value.",
   "columnRuleWidth:inherit":
-    "Sets the width of the line between columns to the same as its parent element",
+    "Inherits the column rule width from its parent element.",
   "columnRuleWidth:unset":
-    "Resets the width of the line between columns to its default value",
-  "columnSpan:none": "The element should span across none of the columns",
-  "columnSpan:all": "The element should span across all columns",
-  "columnSpan:initial": "Sets the element to span across none of the columns",
+    "Resets the column rule width to its inherited value or to the default value if there is no inherited value.",
+  "columnSpan:none": "The element will span across only one column.",
+  "columnSpan:all": "The element will span across all columns.",
+  "columnSpan:initial":
+    "Resets the column span value back to its default value.",
   "columnSpan:inherit":
-    "Sets the element to inherit the column span value from its parent element",
-  "columnSpan:unset": "Resets the element to its default column span value",
-  "columnWidth:auto": "Sets the width of the columns to adjust automatically",
-  "columnWidth:initial": "Sets the width of the columns to its default value",
+    "Inherits the column span value from its parent element.",
+  "columnSpan:unset":
+    "The element is treated as normal and can span multiple columns.",
+  "columnWidth:auto":
+    "The width of each column is determined by the content it contains.",
+  "columnWidth:initial": "Sets the width of the columns to the default value.",
   "columnWidth:inherit":
-    "Sets the width of the columns to inherit from its parent element",
-  "columnWidth:unset": "Resets the width of the columns to its default value",
-  "contain:none": "The element does not establish a new formatting context",
-  "contain:strict": "The element establishes a new formatting context",
-  "contain:content":
-    "The element should be contained within its own content box",
-  "contain:size": "The element should be contained within its own border box",
-  "contain:inline-size":
-    "Limits the size of an element to its inline content width",
-  "contain:layout":
-    "Optimizes the rendering of an element by isolating it from the rest of the page",
-  "contain:style":
-    "Defines how an element's styles are applied and inherited by its descendants",
-  "contain:paint": "Defines the area of an element that needs to be painted",
-  "contain:initial": "Resets the value of a property to its default value",
-  "contain:inherit": "Inherits the value of a property from its parent element",
-  "contain:unset": "Resets the value of a property to its initial value",
+    "Inherits the width of the columns from the parent element.",
+  "columnWidth:unset": "Sets the width of the columns to the default value.",
+  "contain:none": "The element does not have any boxes nested inside.",
+  "contain:strict": "The element has a fully contained subtree.",
+  "contain:content": "The element has a partially contained subtree.",
+  "contain:size": "The element fully contains all its content.",
+  "contain:inline-size": "The element fully contains its inline content.",
+  "contain:layout": "The element does not affect the layout of other elements.",
+  "contain:style": "The element does not affect the styles of other elements.",
+  "contain:paint":
+    "The element does not affect the painting of other elements.",
+  "contain:initial": "Sets the containment to its default value.",
+  "contain:inherit": "Inherits the containment from the parent element.",
+  "contain:unset": "Sets the containment to its default value.",
   "containIntrinsicBlockSize:none":
-    "Disables the automatic sizing of an element's block size",
+    "The size of the element is not an intrinsic size.",
   "containIntrinsicBlockSize:auto":
-    "Enables the automatic sizing of an element's block size",
+    "The intrinsic size of the element is its content size.",
   "containIntrinsicBlockSize:initial":
-    "Resets the value of an element's block size to its initial value",
+    "Resets the property to its initial value.",
   "containIntrinsicBlockSize:inherit":
-    "Inherits the value of an element's block size from its parent element",
+    "Inherits the property from its parent element.",
   "containIntrinsicBlockSize:unset":
-    "Resets the value of an element's block size to its default value",
+    "Resets the property to its inherited value, or to the default value.",
   "containIntrinsicHeight:none":
-    "Disables the automatic sizing of an element's height",
+    "The height of the element is not an intrinsic size.",
   "containIntrinsicHeight:auto":
-    "Enables the automatic sizing of an element's height",
-  "containIntrinsicHeight:initial":
-    "Resets the value of an element's height to its initial value",
+    "The intrinsic size of the element is its content height.",
+  "containIntrinsicHeight:initial": "Resets the property to its initial value.",
   "containIntrinsicHeight:inherit":
-    "Inherits the value of an element's height from its parent element",
+    "Inherits the property from its parent element.",
   "containIntrinsicHeight:unset":
-    "Sets the height of an element to its intrinsic height",
+    "Resets the property to its inherited value, or to the default value.",
   "containIntrinsicInlineSize:none":
-    "Sets the inline size of an element to not be constrained by its container",
+    "The size of the element is not an intrinsic size.",
   "containIntrinsicInlineSize:auto":
-    "Sets the inline size of an element to be determined by its content",
+    "The intrinsic size of the element is its content size.",
   "containIntrinsicInlineSize:initial":
-    "Sets the inline size of an element to its initial value",
+    "Resets the property to its initial value.",
   "containIntrinsicInlineSize:inherit":
-    "Sets the inline size of an element to be inherited from its parent",
+    "Inherits the property from its parent element.",
   "containIntrinsicInlineSize:unset":
-    "Unsets the inline size of an element to allow it to be determined by its content",
+    "Resets the property to its inherited value, or to the default value.",
   "containIntrinsicWidth:none":
-    "Sets the width of an element to not be constrained by its container",
+    "The width of the element is not an intrinsic size.",
   "containIntrinsicWidth:auto":
-    "Sets the width of an element to be determined by its content",
+    "contain-intrinsic-width: auto - Element can use its intrinsic width to determine size.",
   "containIntrinsicWidth:initial":
-    "Sets the width of an element to its initial value",
+    "contain-intrinsic-width: initial - Set intrinsic width as the maximum width.",
   "containIntrinsicWidth:inherit":
-    "Sets the width of an element to be inherited from its parent",
+    "contain-intrinsic-width: inherit - Takes the contain-intrinsic-width of the parent element.",
   "containIntrinsicWidth:unset":
-    "Unsets the width of an element to allow it to be determined by its content",
-  "content:normal": "Sets the content to be normal text",
-  "content:none": "Removes the content of an element",
-  "content:contents": "Sets the content to be the children of an element",
-  "content:open-quote": "Sets the content to be an opening quotation mark",
-  "content:close-quote": "Sets the content to be a closing quotation mark",
-  "content:no-open-quote": "Hides opening quotation marks in generated content",
+    "contain-intrinsic-width: unset - Inherits its value from the parent element if available.",
+  "content:normal": "content: normal - Uses normal content.",
+  "content:none": "content: none - No content is generated.",
+  "content:contents":
+    "content: contents - Parent becomes the parent of the first child, instead of its actual parent.",
+  "content:open-quote":
+    "content: open-quote - The opening quote is generated before the content.",
+  "content:close-quote":
+    "content: close-quote - The closing quote is generated after the content.",
+  "content:no-open-quote": "content: no-open-quote - Quotes are not generated.",
   "content:no-close-quote":
-    "Hides closing quotation marks in generated content",
-  "content:initial": "Sets the initial value of a property",
-  "content:inherit": "Inherits the value of a property from its parent element",
-  "content:unset": "Resets the value of a property to its default value",
-  "contentVisibility:visible": "Controls when an element's content is rendered",
+    "content: no-close-quote - Quotes are not generated.",
+  "content:initial":
+    "content: initial - Sets the property to its default value.",
+  "content:inherit":
+    "content: inherit - Inherits the property from its parents element.",
+  "content:unset":
+    "content: unset - Inherits the property from its parents element if it exists, else initial.",
+  "contentVisibility:visible":
+    "content-visibility: visible - The element is visible.",
   "contentVisibility:auto":
-    "Allows the browser to choose when an element's content is rendered",
-  "contentVisibility:hidden": "Hides an element's content",
+    "content-visibility: auto - User agent makes the content visible only when needed.",
+  "contentVisibility:hidden":
+    "Hides an element and its content from rendering.",
   "contentVisibility:initial":
-    "Sets the initial value of the content-visibility property",
+    "Sets the element's content to visible by default.",
   "contentVisibility:inherit":
-    "Inherits the value of the content-visibility property from its parent element",
+    "Inherits the content-visibility value from the parent.",
   "contentVisibility:unset":
-    "Resets the value of the content-visibility property to its default value",
-  "counterIncrement:none": "Sets the value of a counter to 0",
-  "counterIncrement:initial": "Sets the initial value of a counter to 0",
+    "Unsets the content-visibility value and uses the default behavior.",
+  "counterIncrement:none": "Disables incrementing of a CSS counter.",
+  "counterIncrement:initial": "Sets the counter to 0 for the current element.",
   "counterIncrement:inherit":
-    "Inherits the value of a counter from its parent element",
+    "Inherits the counter value from the parent element.",
   "counterIncrement:unset":
-    "Resets the value of a counter to its default value",
-  "counterReset:none": "Sets the value of a counter to 0",
-  "counterReset:initial": "Resets the value of a counter to its initial value",
-  "counterReset:inherit":
-    "Resets the value of a counter to the value of its parent element",
-  "counterReset:unset": "Resets the value of a counter to its default value",
-  "counterSet:none": "Removes the counter value",
-  "counterSet:initial": "Sets the counter value to its initial value",
-  "counterSet:inherit":
-    "Sets the counter value to the value of its parent element",
-  "counterSet:unset": "Sets the counter value to its default value",
-  "cursor:auto": "Sets the cursor to the default cursor",
-  "cursor:default": "Sets the cursor to the standard arrow cursor",
-  "cursor:none": "Removes the cursor",
-  "cursor:context-menu": "Sets the cursor to the context menu cursor",
-  "cursor:help": "Sets the cursor to the help cursor",
-  "cursor:pointer": "Sets the cursor to the pointing hand cursor",
-  "cursor:progress": "Sets the cursor to the progress cursor",
-  "cursor:wait": "Sets the cursor to the waiting cursor",
-  "cursor:cell": "Sets the cursor to the cell (table) cursor",
-  "cursor:crosshair": "Sets the cursor to a crosshair",
-  "cursor:text": "Sets the cursor to a text input cursor",
-  "cursor:vertical-text": "Sets the cursor to a vertical text input cursor",
-  "cursor:alias": "Sets the cursor to indicate an alias or shortcut",
-  "cursor:copy": "Sets the cursor to indicate copying",
-  "cursor:move": "Sets the cursor to indicate moving",
-  "cursor:no-drop": "Sets the cursor to indicate that dropping is not allowed",
-  "cursor:not-allowed":
-    "Sets the cursor to indicate that the action is not allowed",
-  "cursor:e-resize": "Sets the cursor to indicate resizing from the east side",
-  "cursor:n-resize": "Sets the cursor to indicate resizing from the north side",
-  "cursor:ne-resize":
-    "Sets the cursor to indicate resizing from the northeast side",
-  "cursor:nw-resize":
-    "Sets the cursor to indicate resizing from the northwest side",
-  "cursor:s-resize": "Sets the cursor to indicate resizing from the south side",
-  "cursor:se-resize":
-    "Sets the cursor to indicate resizing from the southeast side",
-  "cursor:sw-resize":
-    "Sets the cursor to indicate resizing from the southwest side",
-  "cursor:w-resize": "Sets the cursor to indicate resizing from the west side",
-  "cursor:ew-resize": "Sets the cursor to a horizontal resize arrow",
-  "cursor:ns-resize": "Sets the cursor to a vertical resize arrow",
+    "Removes the counter limit and resets the value to its initial state.",
+  "counterReset:none": "Disables resetting of a CSS counter.",
+  "counterReset:initial":
+    "Resets the counter value to 0 for the current element.",
+  "counterReset:inherit": "Inherits the counter value from the parent element.",
+  "counterReset:unset":
+    "Removes the counter limit and resets the value to its initial state.",
+  "counterSet:none": "Removes the specified counter value.",
+  "counterSet:initial":
+    "Sets the counter value to the default value defined in the content's counter style.",
+  "counterSet:inherit": "Inherits the counter value from the parent element.",
+  "counterSet:unset":
+    "Removes the counter limit and resets the value to its initial state.",
+  "cursor:auto": "Uses the platform's default cursor.",
+  "cursor:default": "Sets default arrow cursor.",
+  "cursor:none": "Hides the cursor.",
+  "cursor:context-menu": "Indicates context menu is available.",
+  "cursor:help": "Indicates help is available.",
+  "cursor:pointer": "Sets cursor as a hand.",
+  "cursor:progress": "Indicates an operation in progress.",
+  "cursor:wait": "Indicates the app is busy.",
+  "cursor:cell": "Sets cursor as a cell.",
+  "cursor:crosshair": "Sets cursor as a crosshair.",
+  "cursor:text": "Sets cursor as a text.",
+  "cursor:vertical-text": "Sets cursor as a vertical text.",
+  "cursor:alias": "Sets cursor as an alias.",
+  "cursor:copy": "Sets cursor as copy pointer.",
+  "cursor:move": "Indicates the object can be moved.",
+  "cursor:no-drop": "Indicates an object cannot be dropped here.```",
+  "cursor:not-allowed": 'Changes the cursor to a "not allowed" sign.',
+  "cursor:e-resize": "Changes the cursor to an east-resize arrow.",
+  "cursor:n-resize": "Changes the cursor to a north-resize arrow.",
+  "cursor:ne-resize": "Changes the cursor to a northeast-resize arrow.",
+  "cursor:nw-resize": "Changes the cursor to a northwest-resize arrow.",
+  "cursor:s-resize": "Changes the cursor to a south-resize arrow.",
+  "cursor:se-resize": "Changes the cursor to a southeast-resize arrow.",
+  "cursor:sw-resize": "Changes the cursor to a southwest-resize arrow.",
+  "cursor:w-resize": "Changes the cursor to a west-resize arrow.",
+  "cursor:ew-resize": "Changes the cursor to an east-west-resize arrow.",
+  "cursor:ns-resize": "Changes the cursor to a north-south-resize arrow.",
   "cursor:nesw-resize":
-    "Sets the cursor to a diagonal resize arrow pointing northeast and southwest",
+    "Changes the cursor to a northeast-southwest-resize arrow.",
   "cursor:nwse-resize":
-    "Sets the cursor to a diagonal resize arrow pointing northwest and southeast",
+    "Changes the cursor to a northwest-southeast-resize arrow.",
   "cursor:col-resize":
-    "Sets the cursor to a horizontal resize arrow with two vertical lines",
+    "Changes the cursor to a vertical resize arrow over columns.",
   "cursor:row-resize":
-    "Sets the cursor to a vertical resize arrow with two horizontal lines",
-  "cursor:all-scroll": "Sets the cursor to a move arrow in all directions",
-  "cursor:zoom-in": "Sets the cursor to a magnifying glass with a plus sign",
-  "cursor:zoom-out": "Sets the cursor to a magnifying glass with a minus sign",
-  "cursor:grab": "Sets the cursor to a closed hand grabbing something",
-  "cursor:grabbing": "Sets the cursor to an open hand grabbing something",
-  "cursor:initial": "Sets the cursor to the default cursor",
-  "cursor:inherit": "Inherits the cursor from the parent element",
-  "cursor:unset": "Resets the cursor to the default browser value",
-  "direction:ltr": "Sets the text direction to left-to-right",
-  "direction:rtl": "Sets the text direction to right-to-left",
-  "direction:initial": "Sets the text direction to the default value",
-  "direction:inherit": "Inherits the text direction from the parent element",
-  "direction:unset": "Resets the text direction to the default value",
-  "display:block": "Displays the element as a block-level element",
-  "display:inline": "Displays the element as an inline-level element",
+    "Changes the cursor to a horizontal resize arrow over rows.",
+  "cursor:all-scroll": "Changes the cursor to a move arrow in all directions.",
+  "cursor:zoom-in": "Changes the cursor to a zoom-in icon.",
+  "cursor:zoom-out": "Changes the cursor to a zoom-out icon.",
+  "cursor:grab": "Changes the cursor to a hand icon when you hover over it.",
+  "cursor:grabbing":
+    "Changes the cursor to a grabbing hand icon when you click and hold on it.",
+  "cursor:initial": "Sets the cursor to its initial value.",
+  "cursor:inherit": "Inherits the cursor value from its parent element.",
+  "cursor:unset":
+    "Unsets the cursor value, letting the browser choose the appropriate one.",
+  "direction:ltr": "Sets text to flow from left-to-right.",
+  "direction:rtl": "Sets text to flow from right-to-left.",
+  "direction:initial": "Sets direction to its initial value.",
+  "direction:inherit": "Inherits direction value from its parent element.",
+  "direction:unset":
+    "Unsets direction value, letting the browser choose the appropriate one.",
+  "display:block": "Displays an element as a block-level element.",
+  "display:inline": "Displays an element as an inline-level element.",
   "display:run-in":
-    "Displays the element as either block or inline, depending on context",
-  "display:flow": "Displays the element as a block-level flow container box",
-  "display:flow-root":
-    "Displays the element as a block-level element and establishes a new block formatting context",
-  "display:table": "Displays the element as a table element",
-  "display:flex": "Displays the element as a flex container",
-  "display:grid": "Displays the element as a grid container",
-  "display:ruby": "Displays the element as a ruby container",
-  "display:list-item": "Displays the element as a list-item element",
-  "display:table-row-group":
-    "Displays the element as a table-row-group element",
+    "Displays an element as either block or inline, depending on context.",
+  "display:flow":
+    "Displays an element as a flow container block, but the box itself is not a block box.",
+  "display:flow-root": "Establishes a new block formatting context.",
+  "display:table": "Displays an element as a table.",
+  "display:flex": "Displays an element as a block-level flex container.",
+  "display:grid": "Displays an element as a grid container.",
+  "display:ruby": "Displays an element as a block container box with a marker.",
+  "display:list-item": "Displays an element as a list-item.",
+  "display:table-row-group": "Displays an element as a table row group.",
   "display:table-header-group":
-    "Displays the element as a table-header-group element",
+    "Displays an element as a table header row group.",
   "display:table-footer-group":
-    "Displays the element as a table-footer-group element",
-  "display:table-row": "Displays an element as a table row",
-  "display:table-cell": "Displays an element as a table cell",
-  "display:table-column-group":
-    "Displays a group of table columns as a single entity",
-  "display:table-column": "Displays an element as a table column",
-  "display:table-caption": "Displays a table caption above the table",
-  "display:ruby-base":
-    "Displays an element as the base text for a ruby annotation",
-  "display:ruby-text":
-    "Displays an element as the ruby text component of a ruby annotation",
-  "display:ruby-base-container":
-    "Displays an element as the container for the base text component of a ruby annotation",
-  "display:ruby-text-container":
-    "Displays an element as the container for the ruby text component of a ruby annotation",
-  "display:contents": "Makes the element's children a sibling of the element",
-  "display:none": "Hides the element",
-  "display:inline-block":
-    "Displays an element as an inline-level block container",
+    "Displays an element as a table footer row group.",
+  "display:table-row": "Displays an element as a table row.",
+  "display:table-cell": "Displays an element as a table cell.",
+  "display:table-column-group": "Displays an element as a table column group.",
+  "display:table-column": "Displays an element as a table column.",
+  "display:table-caption": "Displays an element as a table caption.",
+  "display:ruby-base": "Displays an element as a ruby base container box.",
+  "display:ruby-text": "Displays an element as a ruby text container box.",
+  "display:ruby-base-container": "Makes the element a ruby base container.",
+  "display:ruby-text-container": "Makes the element a ruby text container.",
+  "display:contents": "Makes children the box's content.",
+  "display:none": "The element is not displayed.",
+  "display:inline-block": "Makes the element an inline-level block container.",
   "display:inline-list-item":
-    "Displays an element as an inline-level list-item block container",
-  "display:inline-table": "Displays an element as an inline-level table",
-  "display:inline-flex":
-    "Displays an element as an inline-level flex container",
-  "display:inline-grid":
-    "Displays an element as an inline-level grid container",
-  "display:initial": "Sets the initial value for an element's display property",
-  "display:inherit":
-    "Inherits the display property value from the parent element",
-  "display:unset": "Resets the display property to the default value",
-  "emptyCells:show": "Shows the border and background of empty table cells",
-  "emptyCells:hide": "Hides the border and background of empty table cells",
-  "emptyCells:initial": "Sets the empty-cells property to its default value",
-  "emptyCells:inherit":
-    "Inherits the empty-cells property value from the parent element",
-  "emptyCells:unset": "Resets the empty-cells property to the default value",
-  "filter:none": "Removes any filter effects applied to an element",
-  "filter:initial": "Sets the filter property to its default value",
+    "Makes the element an inline-level list-item container.",
+  "display:inline-table": "Makes the element an inline-level table container.",
+  "display:inline-flex": "Makes the element an inline-level flex container.",
+  "display:inline-grid": "Makes the element an inline-level grid container.",
+  "display:initial": "Sets display to its default value.",
+  "display:inherit": "Inherits display from its parent element.",
+  "display:unset":
+    "Sets display to its default value if it is inherited, otherwise to inherit.",
+  "emptyCells:show": "Shows borders and backgrounds of empty table cells.",
+  "emptyCells:hide": "Hides borders and backgrounds of empty table cells.",
+  "emptyCells:initial": "Sets empty-cells to its default value.",
+  "emptyCells:inherit": "Inherits empty-cells from its parent element.",
+  "emptyCells:unset":
+    "The table cells will adopt their parent's `empty-cells` behavior when unset.",
+  "filter:none":
+    "The `filter` value is set to none, indicating no initial filtering.",
+  "filter:initial":
+    "The `filter` value is set to default, indicating an initial filter state.",
   "filter:inherit":
-    "Inherits the filter property value from the parent element",
-  "filter:unset": "Resets the filter property to the default value",
+    "The `filter` value is set to inherit, adopting the parent element's filter value.",
+  "filter:unset":
+    "The element's initial main size axis is set to its content size.",
   "flexBasis:content":
-    "Sets the initial size of a flex item along the main axis to fit its content",
+    "The element's initial main size axis is set to auto, based on content and flex-grow.",
   "flexBasis:auto":
-    "Sets the initial size of a flex item along the main axis to auto",
+    "The element's initial main size axis is set to its minimum content size.",
   "flexBasis:min-content":
-    "Sets the initial size of a flex item along the main axis to fit its minimum content",
+    "The element's initial main size axis is set to its maximum content size.",
   "flexBasis:max-content":
-    "Sets the initial size of a flex item along the main axis to fit its maximum content",
+    "The element's initial main size axis is set to the available space.",
   "flexBasis:fit-content":
-    "Sets the initial main size of a flex item to fit its content",
+    "The element's initial main size axis is set to its default value.",
   "flexBasis:initial":
-    "Sets the initial main size of a flex item to its default value",
+    "The element inherits its main size axis value from its parent element.",
   "flexBasis:inherit":
-    "Inherits the main size of a flex item from its parent element",
-  "flexBasis:unset": "Resets the main size of a flex item to its default value",
+    "The element's main size axis value is determined by the browser.",
+  "flexBasis:unset":
+    "The element's main size axis value is unset, adopting the default value.",
   "flexDirection:row":
-    "Sets the direction of the main axis of a flex container to horizontal (left to right)",
+    "The flex items's main axis layout is set to a horizontal direction (left to right).",
   "flexDirection:row-reverse":
-    "Sets the direction of the main axis of a flex container to horizontal (right to left)",
+    "The flex items's main axis layout is set to a horizontal direction (right to left).",
   "flexDirection:column":
-    "Sets the direction of the main axis of a flex container to vertical (top to bottom)",
+    "The flex items's main axis layout is set to a vertical direction (top to bottom).",
   "flexDirection:column-reverse":
-    "Sets the direction of the main axis of a flex container to vertical (bottom to top)",
+    "The main axis runs vertically and starts from the bottom with flex-direction: column-reverse.",
   "flexDirection:initial":
-    "Sets the initial direction of the main axis of a flex container to horizontal (left to right)",
+    "Sets the initial value of the flex-direction property.",
   "flexDirection:inherit":
-    "Inherits the direction of the main axis of a flex container from its parent element",
+    "Inherits the flex-direction property from its parent element.",
   "flexDirection:unset":
-    "Resets the direction of the main axis of a flex container to its default value",
-  "flexGrow:initial":
-    "Sets the initial amount of space a flex item will grow relative to the rest",
+    "Resets the flex-direction property value to the browser's default setting.",
+  "flexGrow:initial": "Sets the initial value of the flex-grow property.",
   "flexGrow:inherit":
-    "Inherits the amount of space a flex item will grow from its parent element",
+    "Inherits the flex-grow property from its parent element.",
   "flexGrow:unset":
-    "Resets the amount of space a flex item will grow to its default value",
-  "flexShrink:initial":
-    "Sets the initial amount of space a flex item will shrink relative to the rest",
+    "Resets the flex-grow property value to the browser's default setting.",
+  "flexShrink:initial": "Sets the initial value of the flex-shrink property.",
   "flexShrink:inherit":
-    "Inherits the amount of space a flex item will shrink from its parent element",
-  "flexShrink:unset": "Sets the ability for a flex item to shrink if necessary",
-  "flexWrap:nowrap": "Prevents flex items from wrapping to a new line",
-  "flexWrap:wrap": "Allows flex items to wrap to a new line if necessary",
+    "Inherits the flex-shrink property from its parent element.",
+  "flexShrink:unset":
+    "Resets the flex-shrink property value to the browser's default setting.",
+  "flexWrap:nowrap": "No wrapping occurs with flex-wrap: nowrap.",
+  "flexWrap:wrap":
+    "Wraps items onto multiple lines from row to row with flex-wrap: wrap.",
   "flexWrap:wrap-reverse":
-    "Allows flex items to wrap to a new line in reverse order",
-  "flexWrap:initial": "Sets the default value for flex-wrap property",
-  "flexWrap:inherit": "Inherits the flex-wrap property from the parent element",
-  "flexWrap:unset": "Resets the flex-wrap property to its default value",
-  "float:left": "Positions an element on the left side of its container",
-  "float:right": "Positions an element on the right side of its container",
-  "float:none": "Removes any float property previously set",
-  "float:inline-start":
-    "Positions an element at the beginning of its container, depending on the text direction",
-  "float:inline-end":
-    "Positions an element at the end of its container, depending on the text direction",
-  "float:initial": "Sets the default value for float property",
-  "float:inherit": "Inherits the float property from the parent element",
-  "float:unset": "Resets the float property to its default value",
-  "fontFamily:serif": "Sets the font family of an element to a serif font",
-  "fontFamily:sans-serif": "Sets the font family to a sans-serif typeface",
-  "fontFamily:cursive": "Sets the font family to a cursive typeface",
-  "fontFamily:fantasy": "Sets the font family to a decorative fantasy typeface",
-  "fontFamily:monospace":
-    "Sets the font family to a fixed-width monospace typeface",
-  "fontFamily:initial": "Sets the font family to the browser's default font",
-  "fontFamily:inherit": "Inherits the font family from the parent element",
-  "fontFamily:unset": "Resets the font family to the initial value",
-  "fontFeatureSettings:normal":
-    "Sets the font feature settings to the default value",
-  "fontFeatureSettings:on":
-    "Enables font features that are available for the selected font",
-  "fontFeatureSettings:off":
-    "Disables font features that are available for the selected font",
+    "Wraps items onto multiple lines from row to row in reverse with flex-wrap: wrap-reverse.",
+  "flexWrap:initial": "Sets the initial value for the flex-wrap property.",
+  "flexWrap:inherit":
+    "Inherits the flex-wrap property from its parent element.",
+  "flexWrap:unset":
+    "Resets the flex-wrap property to the browser's default setting.",
+  "float:left": "The element moves to the left of its container.",
+  "float:right": "The element moves to the right of its container.",
+  "float:none": "The element does not float.",
+  "float:inline-start": "The element moves to the start of the line.",
+  "float:inline-end": "The element moves to the end of the line.",
+  "float:initial": "The element floats according to the parent element.",
+  "float:inherit":
+    "The element inherits the float value from its parent element.",
+  "float:unset":
+    "The element floats according to the parent element, or it is not floated.",
+  "fontFamily:serif": "Sets the font to a serif typeface.",
+  "fontFamily:sans-serif": "Sets the font to a sans-serif typeface.",
+  "fontFamily:cursive": "Sets the font to a cursive typeface.",
+  "fontFamily:fantasy": "Sets the font to a fantasy typeface.",
+  "fontFamily:monospace": "Sets the font to a monospace typeface.",
+  "fontFamily:initial": "Sets the font to its initial value.",
+  "fontFamily:inherit": "Inherits the font family from its parent element.",
+  "fontFamily:unset":
+    "Sets the font family to the parent element value or default if no parent value.",
+  "fontFeatureSettings:normal": "Disables all OpenType font features.",
+  "fontFeatureSettings:on": "Enables all OpenType font features.",
+  "fontFeatureSettings:off": "Disables all OpenType font features.",
   "fontFeatureSettings:initial":
-    "Resets the font feature settings to the initial value",
+    "Sets to default OpenType font feature settings.",
   "fontFeatureSettings:inherit":
-    "Inherits the font feature settings from the parent element",
-  "fontFeatureSettings:unset":
-    "Resets the font feature settings to the default value",
-  "fontKerning:auto":
-    "Enables or disables the font kerning feature automatically",
-  "fontKerning:normal": "Enables the font kerning feature",
-  "fontKerning:none": "Disables the font kerning feature",
-  "fontKerning:initial":
-    "Sets the spacing between pairs of letters to the default value",
-  "fontKerning:inherit":
-    "Inherits the spacing between pairs of letters from the parent element",
-  "fontKerning:unset":
-    "Resets the spacing between pairs of letters to the default value",
-  "fontLanguageOverride:normal":
-    "Specifies normal font behavior regarding language-specific glyphs and ligatures",
+    "Inherits OpenType font feature settings from parent.",
+  "fontFeatureSettings:unset": "Unsets OpenType font feature settings.",
+  "fontKerning:auto": "Browser decides if to use kerning or not.",
+  "fontKerning:normal": "Enables font kerning where applicable.",
+  "fontKerning:none": "Disables font kerning.",
+  "fontKerning:initial": "Sets font kerning to default value.",
+  "fontKerning:inherit": "Inherits font kerning from parent element.",
+  "fontKerning:unset": "Unsets font kerning.",
+  "fontLanguageOverride:normal": "No language-based glyph substitution occurs.",
   "fontLanguageOverride:initial":
-    "Resets the language-specific glyphs and ligatures to the default value",
+    "Sets font language override to default value.",
   "fontLanguageOverride:inherit":
-    "Inherits the language-specific glyphs and ligatures from the parent element",
-  "fontLanguageOverride:unset":
-    "Resets the language-specific glyphs and ligatures to the default value",
-  "fontOpticalSizing:auto": "Enables automatic optical sizing of fonts",
-  "fontOpticalSizing:none": "Disables optical sizing of fonts",
-  "fontOpticalSizing:initial":
-    "Resets the optical sizing of fonts to the default value",
+    "Inherits font language override from parent element.",
+  "fontLanguageOverride:unset": "Removes language-based glyph substitution.",
+  "fontOpticalSizing:auto":
+    "The font size is adjusted based on the font family and the document's font size.",
+  "fontOpticalSizing:none":
+    "Do not adjust the font size based on the font family.",
+  "fontOpticalSizing:initial": "Sets the font size to its default value.",
   "fontOpticalSizing:inherit":
-    "Inherits the optical sizing of fonts from the parent element",
+    "Inherits the font size from the parent element.",
   "fontOpticalSizing:unset":
-    "Resets the optical sizing of fonts to the default value",
-  "fontVariationSettings:normal": "Specifies normal font variation settings",
+    "Sets the font size to its inherited value if it exists, else it sets it to its default value.",
+  "fontVariationSettings:normal":
+    "Reset all font variation settings to their normal values.",
   "fontVariationSettings:initial":
-    "Resets the font variation settings to the default value",
+    "Sets the font variation settings to its default value.",
   "fontVariationSettings:inherit":
-    "Inherits the font variation settings from the parent element",
+    "Inherits the font variation settings from the parent element.",
   "fontVariationSettings:unset":
-    "Resets the font variation settings to the default value",
-  "fontSize:xx-small": "Sets the font size to the smallest possible size",
-  "fontSize:x-small":
-    "Sets the font size to a slightly larger size than xx-small",
-  "fontSize:small": "Sets the font size to a small size",
-  "fontSize:medium": "Sets the font size to a medium size",
-  "fontSize:large": "Sets the font size to a large size",
-  "fontSize:x-large": "Sets the font size to a slightly larger size than large",
-  "fontSize:xx-large": "Sets the font size to a larger size than x-large",
+    "Sets the font variation settings to its inherited value if it exists, else it sets it to its default value.",
+  "fontSize:xx-small": "Sets the font size to an extremely small size.",
+  "fontSize:x-small": "Sets the font size to an extra small size.",
+  "fontSize:small": "Sets the font size to a small size.",
+  "fontSize:medium": "Sets the font size to a medium size.",
+  "fontSize:large": "Sets the font size to a large size.",
+  "fontSize:x-large": "Sets the font size to an extra large size.",
+  "fontSize:xx-large": "Sets the font size to an extremely large size.",
   "fontSize:xxx-large":
-    "Sets the font size to an even larger size than xx-large",
+    "font-size: xxx-large - Sets font size to the largest size available.",
   "fontSize:larger":
-    "Sets the font size to a larger size than the parent element",
+    "font-size: larger - Increases font size relative to parent element.",
   "fontSize:smaller":
-    "Sets the font size to a smaller size than the parent element",
-  "fontSize:initial": "Sets the font size to the default size",
-  "fontSize:inherit": "Inherits the font size from the parent element",
-  "fontSize:unset": "Resets the font size to the default size",
-  "fontSizeAdjust:none": "Disables the font size adjustment",
+    "font-size: smaller - Decreases font size relative to parent element.",
+  "fontSize:initial":
+    "font-size: initial - Sets font size to its default value.",
+  "fontSize:inherit":
+    "font-size: inherit - Inherits font size from parent element.",
+  "fontSize:unset":
+    "font-size: unset - Sets font size to its default value or inherits from parent element.",
+  "fontSizeAdjust:none":
+    "font-size-adjust: none - Disables font size adjustment.",
   "fontSizeAdjust:ex-height":
-    "Adjusts the font size based on the x-height of the first choice font",
+    "font-size-adjust: ex-height - Adjusts font size based on x-height of font.",
   "fontSizeAdjust:cap-height":
-    "Adjusts the font size based on the cap height of the first choice font",
+    "font-size-adjust: cap-height - Adjusts font size based on capital letter height.",
   "fontSizeAdjust:ch-width":
-    'Adjusts font size based on character width of "0" (zero)',
+    "font-size-adjust: ch-width - Adjusts font size based on character width.",
   "fontSizeAdjust:ic-width":
-    'Adjusts font size based on character width of the digit "1"',
+    "font-size-adjust: ic-width - Adjusts font size based on ideographic character width.",
   "fontSizeAdjust:ic-height":
-    "Adjusts font size based on character height of uppercase letters",
+    "font-size-adjust: ic-height - Adjusts font size based on ideographic character height.",
   "fontSizeAdjust:from-font":
-    "Adjusts font size based on font information (not recommended)",
-  "fontSizeAdjust:initial": "Sets font size adjustment to default value",
-  "fontSizeAdjust:inherit": "Inherits font size adjustment from parent element",
-  "fontSizeAdjust:unset": "Resets font size adjustment to its default value",
-  "fontStretch:normal":
-    "Sets the width of characters in a font to a normal value",
-  "fontStretch:ultra-condensed":
-    "Narrows the width of characters in a font to an extreme degree",
-  "fontStretch:extra-condensed":
-    "Narrows the width of characters in a font to a high degree",
-  "fontStretch:condensed":
-    "Narrows the width of characters in a font to a moderate degree",
-  "fontStretch:semi-condensed":
-    "Narrows the width of characters in a font to a slight degree",
-  "fontStretch:semi-expanded":
-    "Widens the width of characters in a font to a slight degree",
-  "fontStretch:expanded":
-    "Widens the width of characters in a font to a moderate degree",
-  "fontStretch:extra-expanded":
-    "Widens the width of characters in a font to a high degree",
-  "fontStretch:ultra-expanded":
-    "Widens the width of characters in a font to an extreme degree",
-  "fontStretch:initial": "Sets the font width to the default value",
-  "fontStretch:inherit": "Inherits the font width from the parent element",
-  "fontStretch:unset": "Resets the font width to the default value",
-  "fontStyle:normal": "Sets the font style to the default value",
-  "fontStyle:italic": "Sets the font style to italic",
-  "fontStyle:oblique": "Sets the font style to oblique",
-  "fontStyle:initial": "Sets the font style to the default value",
-  "fontStyle:inherit": "Inherits the font style from the parent element",
-  "fontStyle:unset": "Resets the font style to the default value",
-  "fontSynthesis:none": "Disables font synthesis",
-  "fontSynthesis:weight": "Enables font synthesis for font weight",
-  "fontSynthesis:style": "Enables font synthesis for font style",
-  "fontSynthesis:small-caps": "Enables font synthesis for small-caps",
-  "fontSynthesis:initial": "Sets the font synthesis to the default value",
-  "fontSynthesis:inherit":
-    "Inherits the font synthesis from the parent element",
-  "fontSynthesis:unset": "Resets the font synthesis to the default value",
-  "fontVariant:normal": "Sets the font to normal variant",
-  "fontVariant:none": "Removes any font variant",
-  "fontVariant:common-ligatures": "Enables common ligatures in the font",
-  "fontVariant:no-common-ligatures": "Disables common ligatures in the font",
+    "font-size-adjust: from-font - Adjusts font size based on the font's own metrics.",
+  "fontSizeAdjust:initial":
+    "font-size-adjust: initial - Sets font size adjustment to its default value.",
+  "fontSizeAdjust:inherit":
+    "font-size-adjust: inherit - Inherits font size adjustment from parent element.",
+  "fontSizeAdjust:unset":
+    "font-size-adjust: unset - Sets font size adjustment to its default value or inherits from parent element.",
+  "fontStretch:normal": "The font is not stretched or condensed.",
+  "fontStretch:ultra-condensed": "The font is ultra-condensed.",
+  "fontStretch:extra-condensed": "The font is extra-condensed.",
+  "fontStretch:condensed": "The font is condensed.",
+  "fontStretch:semi-condensed": "The font is somewhat condensed.",
+  "fontStretch:semi-expanded": "The font is somewhat expanded.",
+  "fontStretch:expanded": "The font is expanded.",
+  "fontStretch:extra-expanded": "The font is extra-expanded.",
+  "fontStretch:ultra-expanded": "The font is ultra-expanded.",
+  "fontStretch:initial": "Sets font-stretch to its default value.",
+  "fontStretch:inherit": "Inherits font-stretch from the parent element.",
+  "fontStretch:unset": "Resets font-stretch to its inherited value.",
+  "fontStyle:normal": "The font is in its normal style.",
+  "fontStyle:italic": "The font is in italic style.",
+  "fontStyle:oblique": "The font is tilted to the right using oblique style.",
+  "fontStyle:initial": "Sets font-style to its default value.",
+  "fontStyle:inherit": "Inherits font style from parent element.",
+  "fontStyle:unset": "Resets font style to inherit value.",
+  "fontSynthesis:none":
+    "Disables font synthesis for weight, style and small-caps.",
+  "fontSynthesis:weight": "Allows font synthesis for font weight.",
+  "fontSynthesis:style": "Allows font synthesis for font style.",
+  "fontSynthesis:small-caps": "Allows font synthesis for small-caps.",
+  "fontSynthesis:initial": "Sets font synthesis to its default value.",
+  "fontSynthesis:inherit": "Inherits font synthesis from parent element.",
+  "fontSynthesis:unset": "Resets font synthesis to inherit value.",
+  "fontVariant:normal": "Displays text in normal font variant.",
+  "fontVariant:none": "Disables font variants.",
+  "fontVariant:common-ligatures": "Enables common-ligatures font variant.",
+  "fontVariant:no-common-ligatures": "Disables common-ligatures font variant.",
   "fontVariant:discretionary-ligatures":
-    "Enables discretionary ligatures in the font",
+    "Enables discretionary-ligatures font variant.",
   "fontVariant:no-discretionary-ligatures":
-    "Disables discretionary ligatures in the font",
+    "Disables discretionary-ligatures font variant.",
   "fontVariant:historical-ligatures":
-    "Enables historical ligatures in the font",
+    "Enables historical-ligatures font variant.",
   "fontVariant:no-historical-ligatures":
-    "Disables historical ligatures in the font",
-  "fontVariant:contextual": "Enables contextual alternates in the font",
-  "fontVariant:no-contextual": "Disables contextual alternates in the font",
-  "fontVariant:historical-forms": "Enables historical forms in the font",
-  "fontVariant:small-caps": "Sets the font to small caps",
-  "fontVariant:all-small-caps":
-    "Sets all lowercase letters to small caps in the font",
-  "fontVariant:petite-caps": "Sets the font to petite caps",
-  "fontVariant:all-petite-caps":
-    "Sets all lowercase letters to petite caps in the font",
-  "fontVariant:unicase": "Sets the font to unicase variant",
-  "fontVariant:titling-caps":
-    "Changes the font to all caps with larger first letters",
-  "fontVariant:lining-nums":
-    "Changes the font to use numbers that are the same height as uppercase letters",
-  "fontVariant:oldstyle-nums":
-    "Changes the font to use numbers with varying heights and shapes",
+    "Disables display of historical ligatures.",
+  "fontVariant:contextual": "Enables display of contextual alternates.",
+  "fontVariant:no-contextual": "Disables display of contextual alternates.",
+  "fontVariant:historical-forms": "Enables display of historical forms.",
+  "fontVariant:small-caps": "Uses small caps instead of lowercase letters.",
+  "fontVariant:all-small-caps": "Uses small caps for all letters.",
+  "fontVariant:petite-caps": "Uses a smaller caps font for lowercase.",
+  "fontVariant:all-petite-caps": "Uses a smaller caps font for all letters.",
+  "fontVariant:unicase":
+    "Uses uppercase and lowercase letters as equal height.",
+  "fontVariant:titling-caps": "Uses uppercase letters with increased height.",
+  "fontVariant:lining-nums": "Uses lining figures.",
+  "fontVariant:oldstyle-nums": "Uses figures with varying heights.",
   "fontVariant:proportional-nums":
-    "Changes the font to use numbers with varying widths",
-  "fontVariant:tabular-nums":
-    "Changes the font to use numbers that are aligned in columns",
-  "fontVariant:diagonal-fractions":
-    "Changes the font to use diagonal fractions",
-  "fontVariant:stacked-fractions": "Changes the font to use stacked fractions",
+    "Uses figures with widths proportional to regular characters.",
+  "fontVariant:tabular-nums": "Uses figures with equal widths.",
+  "fontVariant:diagonal-fractions": "Uses diagonal fraction glyphs.",
+  "fontVariant:stacked-fractions": "Uses horizontally stacked fraction glyphs.",
   "fontVariant:ordinal":
-    "Changes the font to use superscripted ordinal numbers",
+    "Uses small caps for uppercase letters and replaces lowercase letters with lowercase small caps.",
   "fontVariant:slashed-zero":
-    "Changes the font to use a zero with a slash to differentiate from the letter O",
-  "fontVariant:jis78":
-    "Changes the font to use Japanese Industrial Standards for characters",
-  "fontVariant:jis83":
-    "Changes the font to use Japanese Industrial Standards for characters",
-  "fontVariant:jis90":
-    "Changes the font to use Japanese Industrial Standards for characters",
-  "fontVariant:jis04":
-    "Changes the font to use Japanese Industrial Standards for characters",
-  "fontVariant:simplified":
-    "Changes the font to use simplified Chinese characters",
-  "fontVariant:traditional":
-    "Changes the font to use traditional Chinese characters",
-  "fontVariant:full-width": "Changes the font to use full-width characters",
-  "fontVariant:proportional-width":
-    "Sets the font to use characters with proportional width",
-  "fontVariant:ruby": "Sets the font to display ruby annotations",
-  "fontVariant:initial": "Resets the font-variant to the default value",
-  "fontVariant:inherit": "Inherits the font-variant from the parent element",
-  "fontVariant:unset": "Removes any font-variant set by the parent element",
-  "fontVariantAlternates:normal":
-    "Sets the font to use normal variant alternates",
+    "Uses a slash through the zero to distinguish it from the capital letter O.",
+  "fontVariant:jis78": "Sets the font to use the JIS78 character set.",
+  "fontVariant:jis83": "Sets the font to use the JIS83 character set.",
+  "fontVariant:jis90": "Sets the font to use the JIS90 character set.",
+  "fontVariant:jis04": "Sets the font to use the JIS2004 character set.",
+  "fontVariant:simplified": "Uses simplified Chinese characters.",
+  "fontVariant:traditional": "Uses traditional Chinese characters.",
+  "fontVariant:full-width": "Expands the characters to full width.",
+  "fontVariant:proportional-width": "Uses characters with proportional width.",
+  "fontVariant:ruby": "Adds annotations to East Asian text.",
+  "fontVariant:initial": "Sets the font-variant to its default value.",
+  "fontVariant:inherit": "Inherits the font-variant from the parent element.",
+  "fontVariant:unset": "Resets the font-variant to its inherited value.",
+  "fontVariantAlternates:normal": "Uses normal font variant alternates.",
   "fontVariantAlternates:historical-forms":
-    "Sets the font to use historical variant alternates",
+    "Uses historical font variant alternates.",
   "fontVariantAlternates:initial":
-    "Resets the font-variant-alternates to the default value",
+    "font-variant-alternates: initial - No alternate glyphs.",
   "fontVariantAlternates:inherit":
-    "Inherits the font-variant-alternates from the parent element",
+    "font-variant-alternates: inherit - Inherits the value from its parent element.",
   "fontVariantAlternates:unset":
-    "Removes any font-variant-alternates set by the parent element",
-  "fontVariantCaps:normal": "Sets the font to use normal capitalization",
+    "font-variant-alternates: unset - Resets to its natural value.",
+  "fontVariantCaps:normal":
+    "font-variant-caps: normal - No effect on capitalization.",
   "fontVariantCaps:small-caps":
-    "Sets the font to use small capitals for the lowercase letters",
+    "font-variant-caps: small-caps - Small caps for lowercase letters.",
   "fontVariantCaps:all-small-caps":
-    "Sets the font to use small capitals for all letters",
+    "font-variant-caps: all-small-caps - All lowercase letters converted to small caps.",
   "fontVariantCaps:petite-caps":
-    "Sets the font to use petite capitals for the lowercase letters",
+    "font-variant-caps: petite-caps - Shorter small caps than small-caps.",
   "fontVariantCaps:all-petite-caps":
-    "Sets the font to use petite capitals for all letters",
-  "fontVariantCaps:unicase": "Sets the font to use unicase characters",
+    "font-variant-caps: all-petite-caps - All lowercase letters converted to shorter small caps than small-caps.",
+  "fontVariantCaps:unicase":
+    "font-variant-caps: unicase - A mixture of uppercase and lowercase letters.",
   "fontVariantCaps:titling-caps":
-    "Sets the font to use titling capital letters",
-  "fontVariantCaps:initial": "Resets font-variant-caps to its initial value",
+    "font-variant-caps: titling-caps - All-capital letters.",
+  "fontVariantCaps:initial": "font-variant-caps: initial - Default value.",
   "fontVariantCaps:inherit":
-    "Inherits font-variant-caps from the parent element",
-  "fontVariantCaps:unset": "Sets the font-variant-caps to the default value",
+    "font-variant-caps: inherit - Inherits the value from its parent element.",
+  "fontVariantCaps:unset":
+    "font-variant-caps: unset - Resets to its natural value.",
   "fontVariantEastAsian:normal":
-    "Sets the font to use normal East Asian characters",
+    "font-variant-east-asian: normal - Uses the default glyphs for East Asian languages.",
   "fontVariantEastAsian:jis78":
-    "Sets the font to use JIS78 East Asian characters",
+    "font-variant-east-asian: jis78 - Uses JIS78 glyphs for East Asian languages.",
   "fontVariantEastAsian:jis83":
-    "Sets the font to use JIS83 East Asian characters",
-  "fontVariantEastAsian:jis90":
-    "Sets the font to use JIS90 East Asian characters",
+    "font-variant-east-asian: jis83 - Uses JIS83 glyphs for East Asian languages.",
+  "fontVariantEastAsian:jis90": "Use JIS 90 font variants for East Asian text.",
   "fontVariantEastAsian:jis04":
-    "Sets the font to use JIS04 East Asian characters",
+    "Use JIS 2004 font variants for East Asian text.",
   "fontVariantEastAsian:simplified":
-    "Sets the font to use simplified East Asian characters",
+    "Use simplified Chinese font variants for East Asian text.",
   "fontVariantEastAsian:traditional":
-    "Sets the font to use traditional East Asian characters",
+    "Use traditional Chinese font variants for East Asian text.",
   "fontVariantEastAsian:full-width":
-    "Sets the font to use full-width East Asian characters",
+    "Use full-width font variants for East Asian text.",
   "fontVariantEastAsian:proportional-width":
-    "Sets the font to use proportional-width East Asian characters",
+    "Use proportional-width font variants for East Asian text.",
   "fontVariantEastAsian:ruby":
-    "Sets the font to use East Asian ruby characters",
+    "Use ruby (pronunciation aids) font variants for East Asian text.",
   "fontVariantEastAsian:initial":
-    "Resets font-variant-east-asian to its initial value",
+    "Sets the font-variant-east-asian property to its default value.",
   "fontVariantEastAsian:inherit":
-    "Inherits font-variant-east-asian from the parent element",
+    "Inherits the font-variant-east-asian property from its parent element.",
   "fontVariantEastAsian:unset":
-    "Sets the font variant for East Asian characters to the default value",
-  "fontVariantLigatures:normal": "Enables the use of ligatures in the font",
-  "fontVariantLigatures:none": "Disables the use of ligatures in the font",
+    "Resets the font-variant-east-asian property to its inherited value.",
+  "fontVariantLigatures:normal": "Enables common ligatures for font display.",
+  "fontVariantLigatures:none": "Disables all ligatures for font display.",
   "fontVariantLigatures:common-ligatures":
-    "Enables the use of common ligatures in the font",
+    "Enables common ligatures for font display.",
   "fontVariantLigatures:no-common-ligatures":
-    "Disables the use of common ligatures in the font",
+    "Disables common ligatures for font display.",
   "fontVariantLigatures:discretionary-ligatures":
-    "Enables the use of discretionary ligatures in the font",
+    "Enables discretionary ligatures for font display.",
   "fontVariantLigatures:no-discretionary-ligatures":
-    "Disables the use of discretionary ligatures in the font",
+    "Disables discretionary ligatures for font display.",
   "fontVariantLigatures:historical-ligatures":
-    "Enables the use of historical ligatures in the font",
+    "Enables historical ligatures for text.",
   "fontVariantLigatures:no-historical-ligatures":
-    "Disables the use of historical ligatures in the font",
+    "Disables historical ligatures for text.",
   "fontVariantLigatures:contextual":
-    "Enables the use of contextual ligatures in the font",
+    "Enables ligatures for contextual alternatives.",
   "fontVariantLigatures:no-contextual":
-    "Disables the use of contextual ligatures in the font",
-  "fontVariantLigatures:initial": "Sets the font variant to its initial value",
+    "Disables ligatures for contextual alternatives.",
+  "fontVariantLigatures:initial":
+    "Sets font-variant-ligatures to its default value.",
   "fontVariantLigatures:inherit":
-    "Inherits the font variant from the parent element",
-  "fontVariantLigatures:unset": "Sets the font variant to the default value",
+    "Inherits font-variant-ligatures from parent element.",
+  "fontVariantLigatures:unset":
+    "Resets font-variant-ligatures to its inherited value.",
   "fontVariantNumeric:normal":
-    "Sets the font variant for numeric characters to the default value",
+    "Resets all font-variant-numeric values to their defaults.",
   "fontVariantNumeric:lining-nums":
-    "Enables the use of lining numerals in the font",
+    "Replaces lowercase numbers with uppercase numbers.",
   "fontVariantNumeric:oldstyle-nums":
-    "Changes the appearance of numbers to be old-style",
+    "Replaces numbers with ones that have varying heights.",
   "fontVariantNumeric:proportional-nums":
-    "Changes the appearance of numbers to be proportional",
+    "Replaces numbers with ones that have varying widths.",
   "fontVariantNumeric:tabular-nums":
-    "Changes the appearance of numbers to be tabular",
+    "Replaces numbers with ones that align vertically.",
   "fontVariantNumeric:diagonal-fractions":
-    "Changes the appearance of numbers to use diagonal fractions",
+    "Replaces numbers with diagonal fractions.",
   "fontVariantNumeric:stacked-fractions":
-    "Changes the appearance of numbers to use stacked fractions",
-  "fontVariantNumeric:ordinal":
-    "Changes the appearance of numbers to be ordinal",
-  "fontVariantNumeric:slashed-zero":
-    "Changes the appearance of numbers to use a slashed zero",
-  "fontVariantNumeric:initial":
-    "Sets the font-variant-numeric property to its default value",
+    "Replaces numbers with stacked fractions.",
+  "fontVariantNumeric:ordinal": "Renders superscript characters correctly.",
+  "fontVariantNumeric:slashed-zero": "Replaces 0 with a slashed character.",
+  "fontVariantNumeric:initial": "The font displays numbers as normal.",
   "fontVariantNumeric:inherit":
-    "Inherits the font-variant-numeric property from the parent element",
+    "The font inherits its parent's numeric font variant.",
   "fontVariantNumeric:unset":
-    "Resets the font-variant-numeric property to its default value",
-  "fontVariantPosition:normal": "Sets the position of text to be normal",
-  "fontVariantPosition:sub": "Sets the position of text to be subscripted",
-  "fontVariantPosition:super": "Sets the position of text to be superscripted",
+    "The font inherits its parent's numeric font variant, or is set to normal if there is no inheritance.",
+  "fontVariantPosition:normal": "No variation on glyph position.",
+  "fontVariantPosition:sub": "The element displays its text as a subscript.",
+  "fontVariantPosition:super":
+    "The element displays its text as a superscript.",
   "fontVariantPosition:initial":
-    "Sets the font-variant-position property to its default value",
+    "The element displays its text as subscript or superscript.",
   "fontVariantPosition:inherit":
-    "Inherits the font-variant-position property from the parent element",
+    "The element inherits its parent's `font-variant-position`.",
   "fontVariantPosition:unset":
-    "Resets the font-variant-position property to its default value",
-  "fontWeight:normal": "Sets the font weight to normal",
-  "fontWeight:bold": "Sets the font weight to bold",
+    "The element inherits its parent's `font-variant-position`.",
+  "fontWeight:normal": "The font displays normal weight.",
+  "fontWeight:bold": "The font displays bold weight.",
   "fontWeight:bolder":
-    "Sets the font weight to a bolder value than the parent element",
+    "The font displays a weight higher than the parent value.",
   "fontWeight:lighter":
-    "Sets the font weight to a lighter value than the parent element",
-  "fontWeight:initial":
-    "Sets the font weight to the initial value defined by the browser",
-  "fontWeight:inherit": "Inherits the font weight from the parent element",
-  "fontWeight:unset": "Resets the font weight to the default value",
+    "The font displays a weight lighter than the parent value.",
+  "fontWeight:initial": "The font displays its normal weight.",
+  "fontWeight:inherit": "The font inherits the weight of its parent.",
+  "fontWeight:unset": "The font inherits the weight of its parent.",
   "gridAutoColumns:min-content":
-    "Sets the width of grid columns to the minimum content size",
+    "Grid auto columns are set to the minimum value necessary to fit the grid items.",
   "gridAutoColumns:max-content":
-    "Sets the width of grid columns to the maximum content size",
+    "Grid auto columns are set to the maximum value to fit their grid items.",
   "gridAutoColumns:auto":
-    "Sets the width of grid columns to the automatic size",
+    "Grid auto columns are set to their default value based on the size of their grid items.",
   "gridAutoColumns:initial":
-    "Resets the width of grid columns to the initial value defined by the browser",
+    "Grid auto columns are set to their default value.",
   "gridAutoColumns:inherit":
-    "Inherits the width of grid columns from the parent element",
+    "Grid auto columns inherit their value from their parent element.",
   "gridAutoColumns:unset":
-    "Resets the width of grid columns to the default value",
+    "Grid auto columns are set to their default value if it exists, otherwise it behaves like inherit.",
   "gridAutoFlow:row":
-    "Sets the direction of auto-placement for grid items to rows",
+    "Grid items are placed along the grid's rows and positioned in the order they appear in the source code.",
   "gridAutoFlow:column":
-    "Sets the direction of auto-placement for grid items to columns",
+    "Grid items are placed along the grid's columns and positioned in the order they appear in the source code.",
   "gridAutoFlow:dense":
-    "Enables grid items to be placed outside of the normal flow to fill in gaps",
-  "gridAutoFlow:initial":
-    "Defines how grid items are placed in the grid when there are no more explicit rows or columns",
+    "Grid items are placed along both grid axes and empty cells are filled in the order they appear in the source code.",
+  "gridAutoFlow:initial": "Grid auto flow is set to its initial value.",
   "gridAutoFlow:inherit":
-    "Inherits the grid-auto-flow property from its parent element",
+    "Grid auto flow inherits its value from its parent element.",
   "gridAutoFlow:unset":
-    "Resets the grid-auto-flow property to its default value",
+    "Grid auto flow is set to its default value if it exists, otherwise it behaves like inherit.",
   "gridAutoRows:min-content":
-    "Sets the size of automatically generated rows in the grid to the minimum content size of their content",
+    "Grid auto rows are set to the minimum value necessary to fit the grid items.",
   "gridAutoRows:max-content":
-    "Sets the size of automatically generated rows in the grid to the maximum content size of their content",
+    "Grid auto rows are set to the maximum value to fit their grid items.",
   "gridAutoRows:auto":
-    "Sets the size of automatically generated rows in the grid to the height of the grid container",
-  "gridAutoRows:initial":
-    "Resets the grid-auto-rows property to its default value",
-  "gridAutoRows:inherit":
-    "Inherits the grid-auto-rows property from its parent element",
-  "gridAutoRows:unset":
-    "Resets the grid-auto-rows property to its initial value",
-  "gridColumnEnd:auto":
-    "Defines the ending position of a grid item within the grid column axis",
-  "gridColumnEnd:span":
-    "Defines the number of columns a grid item should span within the grid column axis",
-  "gridColumnEnd:initial":
-    "Resets the grid-column-end property to its initial value",
-  "gridColumnEnd:inherit":
-    "Inherits the grid-column-end property from its parent element",
-  "gridColumnEnd:unset":
-    "Resets the grid-column-end property to its default value",
-  "gridColumnStart:auto":
-    "Defines the starting position of a grid item within the grid column axis",
-  "gridColumnStart:span":
-    "Defines the number of columns a grid item should span within the grid column axis",
-  "gridColumnStart:initial":
-    "Sets the starting position of a grid item's column to the default value",
-  "gridColumnStart:inherit":
-    "Inherits the starting position of a grid item's column from its parent element",
-  "gridColumnStart:unset":
-    "Resets the starting position of a grid item's column to its initial value",
-  "gridRowEnd:auto":
-    "Sets the ending position of a grid item's row to be determined by the size of its content",
-  "gridRowEnd:span":
-    "Sets the ending position of a grid item's row to span a specific number of rows",
-  "gridRowEnd:initial":
-    "Sets the ending position of a grid item's row to the default value",
-  "gridRowEnd:inherit":
-    "Inherits the ending position of a grid item's row from its parent element",
-  "gridRowEnd:unset":
-    "Resets the ending position of a grid item's row to its initial value",
-  "gridRowStart:auto":
-    "Sets the starting position of a grid item's row to be determined by the size of its content",
-  "gridRowStart:span":
-    "Sets the starting position of a grid item's row to span a specific number of rows",
-  "gridRowStart:initial":
-    "Sets the starting position of a grid item's row to the default value",
+    "Grid auto rows are set to their default value based on the size of their grid items.",
+  "gridAutoRows:initial": "Grid auto rows are set to their default value.",
+  "gridAutoRows:inherit": "Rows sized by parent",
+  "gridAutoRows:unset": "Use default row size",
+  "gridColumnEnd:auto": "End at next implicit grid line",
+  "gridColumnEnd:span": "End after spanned columns",
+  "gridColumnEnd:initial": "Use default column end position",
+  "gridColumnEnd:inherit": "Inherit column end position",
+  "gridColumnEnd:unset": "Unset column end position",
+  "gridColumnStart:auto": "Start at next implicit grid line",
+  "gridColumnStart:span": "Start from spanned columns",
+  "gridColumnStart:initial": "Use default column start position",
+  "gridColumnStart:inherit": "Inherit column start position",
+  "gridColumnStart:unset": "Unset column start position",
+  "gridRowEnd:auto": "End at next implicit grid line",
+  "gridRowEnd:span": "End after spanned rows",
+  "gridRowEnd:initial": "Use default row end position",
+  "gridRowEnd:inherit": "Inherit row end position",
+  "gridRowEnd:unset": "The grid item extends to the last row line.",
+  "gridRowStart:auto": "The grid item starts on the next grid row.",
+  "gridRowStart:span": "The grid item spans across a number of grid rows.",
+  "gridRowStart:initial": "The grid item starts at the first row.",
   "gridRowStart:inherit":
-    "Inherits the starting position of a grid item's row from its parent element",
-  "gridRowStart:unset":
-    "Resets the starting position of a grid item's row to its initial value",
-  "gridTemplateAreas:none":
-    "Defines named grid areas, or creates a grid template without any named areas",
+    "The grid item inherits its start position from its parent.",
+  "gridRowStart:unset": "The grid item starts at the first row line.",
+  "gridTemplateAreas:none": "The grid container has no named grid areas.",
   "gridTemplateAreas:initial":
-    "Inherits the grid template areas from its parent element",
+    "The grid container uses the initial value for grid areas.",
   "gridTemplateAreas:inherit":
-    "Resets the grid template areas to its initial value",
-  "gridTemplateAreas:unset": "Sets the layout of grid items to an unset value",
-  "gridTemplateColumns:none": "Sets the layout of grid columns to none",
+    "The grid container inherits the grid areas value from its parent.",
+  "gridTemplateAreas:unset": "The grid container has no named grid areas.",
+  "gridTemplateColumns:none":
+    "The grid container has no fixed number of grid columns.",
   "gridTemplateColumns:min-content":
-    "Sets the layout of grid columns to the smallest possible content size",
+    "The columns size to fit the content with minimum width.",
   "gridTemplateColumns:max-content":
-    "Sets the layout of grid columns to the largest possible content size",
+    "The columns size to fit the content with maximum width.",
   "gridTemplateColumns:auto":
-    "Sets the layout of grid columns to an automatic value",
+    "The columns size according to their intrinsic width.",
   "gridTemplateColumns:subgrid":
-    "Sets the layout of grid columns to inherit the size of their parent element",
+    "The grid container inherits grid columns from its parent.",
   "gridTemplateColumns:initial":
-    "Sets the layout of grid columns to their initial values",
+    "The grid container uses the initial value for grid columns.",
   "gridTemplateColumns:inherit":
-    "Sets the layout of grid columns to inherit from their parent element",
+    "The grid-template-columns value is inherited from the parent element.",
   "gridTemplateColumns:unset":
-    "Sets the layout of grid columns to an unset value",
-  "gridTemplateRows:none": "Sets the layout of grid rows to none",
+    "The grid-template-columns value is set to the initial value.",
+  "gridTemplateRows:none": "No grid rows are created.",
   "gridTemplateRows:min-content":
-    "Sets the layout of grid rows to the smallest possible content size",
+    "Grid rows are set to their minimum content height.",
   "gridTemplateRows:max-content":
-    "Sets the layout of grid rows to the largest possible content size",
-  "gridTemplateRows:auto": "Sets the layout of grid rows to an automatic value",
+    "Grid rows are set to their maximum content height.",
+  "gridTemplateRows:auto": "Grid rows are set to their default auto value.",
   "gridTemplateRows:subgrid":
-    "Sets the layout of grid rows to inherit the size of their parent element",
+    "The grid-template-rows value is inherited from a named grid.",
   "gridTemplateRows:initial":
-    "Sets the layout of grid rows to their initial values",
+    "The grid-template-rows value is set to the initial value.",
   "gridTemplateRows:inherit":
-    "Sets the layout of grid rows to inherit from their parent element",
-  "gridTemplateRows:unset": "Sets the rows of a CSS grid to their default size",
-  "hangingPunctuation:none":
-    "Removes any extra punctuation marks at the beginning or end of a line",
-  "hangingPunctuation:first":
-    "Adds extra punctuation marks at the beginning of a line",
+    "The grid-template-rows value is inherited from the parent element.",
+  "gridTemplateRows:unset":
+    "The grid-template-rows value is set to the initial value.",
+  "hangingPunctuation:none": "No hanging punctuation is allowed.",
+  "hangingPunctuation:first": "Only the first line ending is allowed to hang.",
   "hangingPunctuation:force-end":
-    "Forces extra punctuation marks at the end of a line",
+    "All lines are forced to hang, even with whitelines.",
   "hangingPunctuation:allow-end":
-    "Allows extra punctuation marks at the end of a line",
-  "hangingPunctuation:last":
-    "Adds extra punctuation marks at the end of a line",
+    "Only the last line ending is allowed to hang.",
+  "hangingPunctuation:last": "Only the last line ending is allowed to hang.",
   "hangingPunctuation:initial":
-    "Sets the hanging punctuation to its default value",
+    "Hanging punctuation is set to the initial value.",
   "hangingPunctuation:inherit":
-    "Inherits the hanging punctuation from the parent element",
+    "Inherits the hanging punctuation behavior from the parent element.",
   "hangingPunctuation:unset":
-    "Resets the hanging punctuation to its initial value",
-  "height:auto": "Sets the height of an element to adjust automatically",
+    "Resets the hanging punctuation to its default behavior.",
+  "height:auto": "Sets the height to fit the content automatically.",
   "height:min-content":
-    "Sets the height of an element to the minimum content size",
+    "Sets the height to the minimum height required for the content to fit.",
   "height:max-content":
-    "Sets the height of an element to the maximum content size",
-  "height:fit-content": "Sets the height of an element to fit its content size",
-  "height:initial": "Sets the height of an element to its default value",
-  "height:inherit": "Inherits the height of an element from the parent element",
-  "height:unset": "Resets the height of an element to its initial value",
-  "hyphenateCharacter:auto":
-    "Sets the character used for hyphenation to default",
+    "Sets the height to the maximum height required for the content to fit.",
+  "height:fit-content":
+    "Sets the height to the smallest possible size while still fitting the content.",
+  "height:initial": "Sets the height to its default value.",
+  "height:inherit": "Inherits the height value from the parent element.",
+  "height:unset": "Resets the height to its default value.",
+  "hyphenateCharacter:auto": "Determines the automatic hyphenation character.",
   "hyphenateCharacter:initial":
-    "Sets the character used for hyphenation to its initial value",
+    "Sets the hyphenation character to its default value.",
   "hyphenateCharacter:inherit":
-    "Inherits the character used for hyphenation from its parent element",
+    "Inherits the hyphenation character from the parent element.",
   "hyphenateCharacter:unset":
-    "Resets the character used for hyphenation to its default value",
-  "hyphens:none": "Disables hyphenation for a block of text",
-  "hyphens:manual":
-    "Specifies that hyphenation should be done manually by the author",
-  "hyphens:auto": "Enables automatic hyphenation for a block of text",
-  "hyphens:initial": "Sets the hyphenation to its initial value",
-  "hyphens:inherit": "Inherits the hyphenation from its parent element",
-  "hyphens:unset": "Resets the hyphenation to its default value",
-  "imageOrientation:from-image":
-    "Sets the orientation of an image to the value specified in the image file",
-  "imageOrientation:flip": "Flips an image horizontally or vertically",
-  "imageOrientation:initial": "Sets the image orientation to its initial value",
-  "imageOrientation:inherit":
-    "Inherits the image orientation from its parent element",
-  "imageOrientation:unset": "Resets the image orientation to its default value",
-  "imageRendering:auto":
-    "Specifies how an image should be rendered in the browser",
-  "imageRendering:crisp-edges": "Sets how images are rendered with sharp edges",
-  "imageRendering:pixelated": "Sets how images are rendered with crisp pixels",
-  "imageRendering:initial": "Sets the default image rendering method",
-  "imageRendering:inherit":
-    "Inherits the image rendering method from the parent element",
-  "imageRendering:unset":
-    "Resets the image rendering method to the default value",
-  "imageResolution:from-image":
-    "Sets the preferred resolution of an image to the resolution of the image file",
-  "imageResolution:snap":
-    "Sets the preferred resolution of an image to snap to the nearest pixel",
-  "imageResolution:initial":
-    "Resets the preferred image resolution to the default value",
-  "imageResolution:inherit":
-    "Inherits the preferred image resolution from the parent element",
-  "imageResolution:unset":
-    "Resets the preferred image resolution to the default value",
+    "Resets the hyphenation character to its default value.",
+  "hyphens:none": "Disables hyphenation.",
+  "hyphens:manual": "Specifies where hyphens should be added, if at all.",
+  "hyphens:auto": "Allows the browser to automatically hyphenate words.",
+  "hyphens:initial": "Words are not divided into hyphens.",
+  "hyphens:inherit": "Words inherit hyphenation from their parent element.",
+  "hyphens:unset": "The property is set to its inherited value.",
+  "imageOrientation:from-image": "Orientation set by image metadata.",
+  "imageOrientation:flip": "Vertical flip of the image orientation.",
+  "imageOrientation:initial": "Orientation sets to its default value.",
+  "imageOrientation:inherit": "Inherit orientation from parent element.",
+  "imageOrientation:unset": "The property is set to its inherited value.",
+  "imageRendering:auto": "Default rendering, with optimization.",
+  "imageRendering:crisp-edges": "No anti-aliasing on the image.",
+  "imageRendering:pixelated": "Pixelated image rendering.",
+  "imageRendering:initial": "Property will inherit its initial value.",
+  "imageRendering:inherit": "Inherit value from parent element.",
+  "imageRendering:unset": "The property is set to its inherited value.",
+  "imageResolution:from-image": "Determines pixels per inch from the image.",
+  "imageResolution:snap": "Image resolution snaps to the nearest integer.",
+  "imageResolution:initial": "Sets the image resolution to the default value.",
+  "imageResolution:inherit": "Inherits image resolution from parent element.",
+  "imageResolution:unset": "Resets image resolution to the default value.",
   "initialLetter:normal":
-    "Sets the styling of the first letter of a block-level element to normal",
-  "initialLetter:initial":
-    "Resets the styling of the first letter of a block-level element to the default value",
+    "Sets default styling for the dropped initial letter.",
+  "initialLetter:initial": "Sets the initial letter to its default value.",
   "initialLetter:inherit":
-    "Inherits the styling of the first letter of a block-level element from the parent element",
+    "Inherits the dropped initial letter style from the parent element.",
   "initialLetter:unset":
-    "Resets the styling of the first letter of a block-level element to the default value",
-  "initialLetterAlign:auto":
-    "Sets the alignment of the first letter of a block-level element to automatic",
+    "Resets the dropped initial letter style to the default value.",
+  "initialLetterAlign:auto": "Aligns initial letter as specified by the font.",
   "initialLetterAlign:alphabetic":
-    "Sets the alignment of the first letter of a block-level element to the alphabetic baseline",
-  "initialLetterAlign:hanging":
-    "Sets the alignment of the first letter of a block-level element to hang from the line",
+    "Aligns initial letter to the alphabetic baseline.",
+  "initialLetterAlign:hanging": "Aligns initial letter to hanging baseline.",
   "initialLetterAlign:ideographic":
-    "Sets the alignment of the first letter of a block-level element to ideographic (East Asian) rules",
+    "Aligns initial letter to the ideographic baseline.",
   "initialLetterAlign:initial":
-    "Sets the initial alignment of the first letter of a block-level element",
+    "Sets initial letter alignment to default value.",
   "initialLetterAlign:inherit":
-    "Inherits the alignment of the first letter of a block-level element from its parent element",
+    "Inherits initial-letter alignment from the parent element.",
   "initialLetterAlign:unset":
-    "Resets the alignment of the first letter of a block-level element to the default value",
-  "inlineSize:auto":
-    "Sets the width of an element to be determined by its content",
+    "Resets initial-letter alignment to default value.",
+  "inlineSize:auto": "Sets the inline size to the content's default size.",
   "inlineSize:min-content":
-    "Sets the minimum width required to display the element's content",
+    "Sets the inline size to the minimum size required to contain content.",
   "inlineSize:max-content":
-    "Sets the maximum width that the element can expand to display its content",
+    "Sets the inline size of an element to fit its content up to a maximum size.",
   "inlineSize:fit-content":
-    "Sets the optimal width required to display the element's content",
-  "inlineSize:initial": "Sets the initial width of an element",
-  "inlineSize:inherit":
-    "Inherits the width of an element from its parent element",
-  "inlineSize:unset": "Resets the width of an element to the default value",
+    "Sets the inline size of an element to fit its content as closely as possible.",
+  "inlineSize:initial":
+    "Sets the inline size of an element to its default value.",
+  "inlineSize:inherit": "Inherits the inline size of the parent element.",
+  "inlineSize:unset": "Removes any previously set inline size value.",
   "inputSecurity:auto":
-    "Sets the security level for an input field to be determined automatically by the browser",
-  "inputSecurity:none": "Disables the security level for an input field",
-  "inputSecurity:initial": "Sets the initial security level for an input field",
+    "Allows the browser to determine the security level for form input fields.",
+  "inputSecurity:none": "Disables security measures for form input fields.",
+  "inputSecurity:initial":
+    "Sets the security level of form input fields to its default value.",
   "inputSecurity:inherit":
-    "Inherits the security level for an input field from its parent element.",
-  "inputSecurity:unset": "Unsets any security restrictions on an input field",
+    "Inherits the security level of the parent element for form input fields.",
+  "inputSecurity:unset":
+    "Removes any previously set security level value for form input fields.",
   "insetBlockEnd:auto":
-    "Sets the distance between the end of an element and the end of its parent block container to automatic",
+    "Sets the inset block end (bottom) to its default value, auto.",
   "insetBlockEnd:initial":
-    "Sets the distance between the end of an element and the end of its parent block container to its initial value",
+    "Sets the inset block end (bottom) to its initial value.",
   "insetBlockEnd:inherit":
-    "Sets the distance between the end of an element and the end of its parent block container to the same value as its parent",
+    "Inherits the inset block end (bottom) from the parent element.",
   "insetBlockEnd:unset":
-    "Resets the distance between the end of an element and the end of its parent block container",
+    "Removes any previously set inset block end (bottom) value.",
   "insetBlockStart:auto":
-    "Sets the distance between the start of an element and the start of its parent block container to automatic",
+    "Sets the inset block start (top) to its default value, auto.",
   "insetBlockStart:initial":
-    "Sets the distance between the start of an element and the start of its parent block container to its initial value",
+    "Sets the inset block start (top) to its initial value.",
   "insetBlockStart:inherit":
-    "Sets the distance between the start of an element and the start of its parent block container to the same value as its parent",
-  "insetBlockStart:unset":
-    "Resets the distance between the start of an element and the start of its parent block container",
+    "The block start position of an element is inherited from its parent.",
+  "insetBlockStart:unset": "The block start position of an element is unset.",
   "insetInlineEnd:auto":
-    "Sets the distance between the end of an element and the end of its parent inline container to automatic",
+    "The inline end position of an element is automatically determined.",
   "insetInlineEnd:initial":
-    "Sets the distance between the end of an element and the end of its parent inline container to its initial value",
+    "The inline end position of an element is set to its initial value.",
   "insetInlineEnd:inherit":
-    "Sets the distance between the end of an element and the end of its parent inline container to the same value as its parent",
-  "insetInlineEnd:unset":
-    "Resets the distance between the end of an element and the end of its parent inline container",
+    "The inline end position of an element is inherited from its parent.",
+  "insetInlineEnd:unset": "The inline end position of an element is unset.",
   "insetInlineStart:auto":
-    "Sets the distance between the start of an element and the start of its parent inline container to automatic",
+    "The inline start position of an element is automatically determined.",
   "insetInlineStart:initial":
-    "Sets the distance between the start of an element and the start of its parent inline container to its initial value",
+    "The inline start position of an element is set to its initial value.",
   "insetInlineStart:inherit":
-    "Sets the distance between the start of an element and the start of its parent inline container to the same value as its parent.",
-  "insetInlineStart:unset": "Unsets the inline start inset (positioning)",
+    "The inline start position of an element is inherited from its parent.",
+  "insetInlineStart:unset": "The inline start position of an element is unset.",
   "isolation:auto":
-    "Determines if an element should create a new stacking context",
-  "isolation:isolate": "Creates a new stacking context for an element",
-  "isolation:initial": "Sets isolation to its default value",
-  "isolation:inherit": "Inherits isolation from its parent element",
-  "isolation:unset": "Unsets isolation from its parent element",
-  "justifyContent:normal": "Aligns flex items to the center of the container",
+    "Determines whether an element must create a new stacking context.",
+  "isolation:isolate": "Forces an element to create a new stacking context.",
+  "isolation:initial": "Sets the isolation of an element to its initial value.",
+  "isolation:inherit":
+    "The isolation of an element is inherited from its parent.",
+  "isolation:unset": "The isolation of an element is unset.",
+  "justifyContent:normal":
+    "The items are packed in their default position as if no justify-content value was set.",
   "justifyContent:space-between":
-    "Distributes flex items with equal spacing, except for the first and last item",
+    "Items are evenly distributed with equal space between them.",
   "justifyContent:space-around":
-    "Distributes flex items with equal spacing around them",
+    "Items are evenly distributed with equal space on both sides of them.",
   "justifyContent:space-evenly":
-    "Distributes flex items with equal spacing between them",
-  "justifyContent:stretch": "Stretches flex items to fill the container",
-  "justifyContent:unsafe": "Allows unsafe alignment of flex items",
-  "justifyContent:safe": "Allows safe alignment of flex items",
-  "justifyContent:center":
-    "Centers flex items along the main axis of the container",
-  "justifyContent:start": "Aligns flex items to the start of the container",
-  "justifyContent:end": "Aligns flex items to the end of the container",
-  "justifyContent:flex-start":
-    "Aligns flex items to the start of the container",
-  "justifyContent:flex-end": "Aligns flex items to the end of the container",
-  "justifyContent:left": "Aligns flex items to the left of the container",
-  "justifyContent:right": "Aligns flex items to the right of the container",
-  "justifyContent:initial":
-    "Sets the justify-content property to its default value",
-  "justifyContent:inherit":
-    "Inherits the justify-content property from the parent element",
+    "Items are evenly distributed with equal space between them and around the edges.",
+  "justifyContent:stretch": "Items are stretched to fit container.",
+  "justifyContent:unsafe":
+    "Allows content to potentially overlap container boundary. Use with caution.",
+  "justifyContent:safe":
+    "Ensures that content does not overlap container boundary.",
+  "justifyContent:center": "Items are centered horizontally.",
+  "justifyContent:start": "Items start at the beginning of the container.",
+  "justifyContent:end": "Items end at the end of the container.",
+  "justifyContent:flex-start": "Items align to the start of the cross axis.",
+  "justifyContent:flex-end": "Items align to the end of the cross axis.",
+  "justifyContent:left": "Items are aligned to the left of the container.",
+  "justifyContent:right": "Items are aligned to the right of the container.",
+  "justifyContent:initial": "Sets the property to its default value.",
+  "justifyContent:inherit": "Inherits the property from its parent element.",
   "justifyContent:unset":
-    "Sets the justify-content property to its initial value",
-  "justifyItems:normal": "Aligns flex items along the inline axis",
-  "justifyItems:stretch": "Stretches flex items to fit the container",
-  "justifyItems:first":
-    "Aligns the first flex item to the start of the container",
-  "justifyItems:last": "Aligns the last flex item to the end of the container",
-  "justifyItems:baseline": "Aligns flex items to the baseline of the container",
-  "justifyItems:unsafe": "Allows unsafe alignment of flex items",
-  "justifyItems:safe": "Allows safe alignment of flex items",
-  "justifyItems:center": "Aligns flex items to the center of the container",
-  "justifyItems:start": "Aligns flex items to the start of the container",
-  "justifyItems:end": "Aligns flex items to the end of the container",
-  "justifyItems:self-start": "Aligns flex items to the start of the container",
-  "justifyItems:self-end": "Aligns flex items to the end of their content box",
+    "Resets the property to its default value if it has been set before, otherwise behaves like inherit.",
+  "justifyItems:normal":
+    "The grid items are aligned according to the default alignment for the items.",
+  "justifyItems:stretch": "The grid items are stretched to fill the grid area.",
+  "justifyItems:first": "Invalid value.",
+  "justifyItems:last": "Invalid value.",
+  "justifyItems:baseline":
+    "The grid items are aligned such that their baselines align.",
+  "justifyItems:unsafe":
+    "The grid items are aligned as if `start` if values are unsafe.",
+  "justifyItems:safe":
+    "The grid items are aligned as if `center` if values are unsafe.",
+  "justifyItems:center": "The grid items are centered in the grid area.",
+  "justifyItems:start":
+    "The grid items are aligned to the start of the grid area.",
+  "justifyItems:end": "The grid items are aligned to the end of the grid area.",
+  "justifyItems:self-start":
+    "The grid items are aligned to the start of the grid area for their respective axis.",
+  "justifyItems:self-end":
+    "The grid items are aligned to the end of the grid area for their respective axis.",
   "justifyItems:flex-start":
-    "Aligns flex items to the start of the flex container",
-  "justifyItems:flex-end": "Aligns flex items to the end of the flex container",
-  "justifyItems:left": "Aligns flex items to the left of the container",
-  "justifyItems:right": "Aligns flex items to the right of the container",
-  "justifyItems:legacy": "Uses the legacy alignment mode",
-  "justifyItems:initial": "Sets the default value for justify-items property",
-  "justifyItems:inherit":
-    "Inherits the value of the justify-items property from the parent element",
-  "justifyItems:unset":
-    "Resets the value of the justify-items property to its default value",
-  "justifySelf:auto":
-    "Aligns a single flex item along the main axis of the container",
-  "justifySelf:normal": "Resets the justify-self property to its default value",
-  "justifySelf:stretch":
-    "Stretches a single flex item to fill the entire container",
-  "justifySelf:first":
-    "Aligns a single flex item to the first baseline of the container",
-  "justifySelf:last":
-    "Aligns a single flex item to the last baseline of the container",
-  "justifySelf:baseline":
-    "Aligns a grid item along the baseline of its grid area",
-  "justifySelf:unsafe":
-    "Allows the use of non-standard values for justify-self",
+    "The grid items are aligned to the start of the axis lines.",
+  "justifyItems:flex-end":
+    "The grid items are aligned to the end of the axis lines.",
+  "justifyItems:left":
+    "The grid items are aligned to the left of the grid area container.",
+  "justifyItems:right":
+    "The grid items are aligned to the right of the grid area container.",
+  "justifyItems:legacy": "Aligns items according to their legacy alignment.",
+  "justifyItems:initial": "Sets the alignment to its default value.",
+  "justifyItems:inherit": "Inherits the alignment from its parent element.",
+  "justifyItems:unset": "Resets the alignment to its inherited value.",
+  "justifySelf:auto": "The browser selects the alignment.",
+  "justifySelf:normal":
+    "The browser places the item according to the container's alignment rules.",
+  "justifySelf:stretch": "Stretches the item to fit the container.",
+  "justifySelf:first": "Places the item at the start of the grid area.",
+  "justifySelf:last": "Places the item at the end of the grid area.",
+  "justifySelf:baseline": "Aligns the item along the baseline.",
+  "justifySelf:unsafe": "Allows the item to be placed outside the grid area.",
   "justifySelf:safe":
-    "Prevents content from overlapping unsafe regions of a grid area",
-  "justifySelf:center": "Centers a grid item within its grid area",
-  "justifySelf:start": "Aligns a grid item to the start of its grid area",
-  "justifySelf:end": "Aligns a grid item to the end of its grid area",
-  "justifySelf:self-start":
-    "Aligns a grid item to the start of its grid area's content area",
+    "Prevents the item from being placed outside the grid area.",
+  "justifySelf:center": "Centers the item horizontally.",
+  "justifySelf:start": "Places the item at the start of the row.",
+  "justifySelf:end": "Places the item at the end of the row.",
+  "justifySelf:self-start": "Aligns the item at the start of its grid area.",
   "justifySelf:self-end":
-    "Aligns a grid item to the end of its grid area's content area",
-  "justifySelf:flex-start": "Aligns a grid item to the start of the row axis",
-  "justifySelf:flex-end": "Aligns a grid item to the end of the row axis",
-  "justifySelf:left": "Aligns a grid item to the left of its grid area",
-  "justifySelf:right": "Aligns a grid item to the right of its grid area",
+    "Aligns the content of a grid item to the end of its grid cell along the inline (row) axis.",
+  "justifySelf:flex-start":
+    "Aligns a flex item to the start (beginning) of the container along the main axis.",
+  "justifySelf:flex-end":
+    "Aligns a flex item to the end of the container along the main axis.",
+  "justifySelf:left":
+    "Aligns the content of an element to the left of its container.",
+  "justifySelf:right":
+    "Aligns the content of an element to the right of its container.",
   "justifySelf:initial":
-    "Resets the justify-self property to its default value",
+    "Sets the alignment of the element to its default (initial) value.",
   "justifySelf:inherit":
-    "Inherits the justify-self property from its parent element",
+    "Inherits the alignment of the element from its parent element.",
   "justifySelf:unset":
-    "Sets the justify-self property to its default value, but allows inheritance",
+    "Resets the alignment of the element to its natural (unset) value.",
   "justifyTracks:normal":
-    "Sets the distribution of space between grid tracks to a normal value",
-  "justifyTracks:space-between": "Aligns grid items with space between them",
-  "justifyTracks:space-around": "Aligns grid items with space around them",
+    "Aligns grid items according to their order in the grid container.",
+  "justifyTracks:space-between":
+    "Distributes the grid items with equal space between them, but not around the outer edges.",
+  "justifyTracks:space-around":
+    "Distributes the grid items with equal space around them.",
   "justifyTracks:space-evenly":
-    "Aligns grid items with equal space between them",
-  "justifyTracks:stretch": "Stretches grid items to fill the container",
-  "justifyTracks:unsafe": "Allows potentially unsafe alignment of grid items",
-  "justifyTracks:safe": "Allows safe alignment of grid items",
-  "justifyTracks:center": "Centers grid items horizontally",
-  "justifyTracks:start": "Aligns grid items to the start of the container",
-  "justifyTracks:end": "Aligns grid items to the end of the container",
+    "Distributes the grid items with equal space around them, including the outer edges.",
+  "justifyTracks:stretch":
+    "Stretches the grid items to fill the available space in the grid container.",
+  "justifyTracks:unsafe":
+    "Enables user agents to optimize the grid by increasing the number of tracks.",
+  "justifyTracks:safe":
+    "Disables user agents from optimizing the grid and sets the tracks to their minimum size.",
+  "justifyTracks:center":
+    "Centers the grid items horizontally in the grid container.",
+  "justifyTracks:start":
+    "Aligns justification content to the start of the grid area.",
+  "justifyTracks:end":
+    "Aligns justification content to the end of the grid area.",
   "justifyTracks:flex-start":
-    "Aligns grid items to the start of the flex container",
+    "Aligns justification content to the start of the flex container.",
   "justifyTracks:flex-end":
-    "Aligns grid items to the end of the flex container",
-  "justifyTracks:left": "Aligns grid items to the left of the container",
-  "justifyTracks:right": "Aligns grid items to the right of the container",
-  "justifyTracks:initial": "Sets the default value for justify-tracks property",
+    "Aligns justification content to the end of the flex container.",
+  "justifyTracks:left":
+    "Aligns justification content to the left of the grid area.",
+  "justifyTracks:right":
+    "Aligns justification content to the right of the grid area.",
+  "justifyTracks:initial": "Sets justification content to its default value.",
   "justifyTracks:inherit":
-    "Inherits the value of the justify-tracks property from its parent element",
+    "Inherits the justification content from the parent element.",
   "justifyTracks:unset":
-    "Resets the value of the justify-tracks property to its default value",
-  "left:auto": "Sets the left position to default (automatic)",
-  "left:initial": "Sets the left position to its default value (usually 0)",
-  "left:inherit": "Inherits the left position from the parent element",
-  "left:unset": "Resets the left position to its initial value (usually 0)",
-  "letterSpacing:normal": "Sets the spacing between letters to normal",
-  "letterSpacing:initial":
-    "Resets the letter spacing to its initial value (usually normal)",
+    "Unsets the justification content, allowing inheritance.",
+  "left:auto": "Sets the left position to be determined by the browser.",
+  "left:initial": "Sets the left position to its default value.",
+  "left:inherit": "Inherits the left position from the parent element.",
+  "left:unset": "Unsets the left position, allowing inheritance.",
+  "letterSpacing:normal": "Sets normal spacing between characters.",
+  "letterSpacing:initial": "Sets the letter-spacing to its default value.",
   "letterSpacing:inherit":
-    "Inherits the letter spacing from the parent element",
+    "Inherits the letter-spacing from the parent element.",
   "letterSpacing:unset":
-    "Resets the letter spacing to its initial value (usually normal)",
-  "lineBreak:auto": "Sets the line breaking rules to automatic",
-  "lineBreak:loose":
-    "Sets the line breaking rules to prioritize loose wrapping",
-  "lineBreak:normal": "Sets the line breaking rules to normal wrapping",
-  "lineBreak:strict": "Sets the line breaking rules to strict wrapping",
-  "lineBreak:anywhere":
-    "Sets the line breaking rules to allow breaking anywhere",
-  "lineBreak:initial":
-    "Resets the line breaking rules to its initial value (usually normal)",
+    "Sets the spacing between characters to the parent element's value.",
+  "lineBreak:auto": "Lines can break between any two letters.",
+  "lineBreak:loose": "Lines can break between any two grapheme clusters.",
+  "lineBreak:normal":
+    "Only break at allowed break points like spaces and hyphens.",
+  "lineBreak:strict":
+    "Breaks are allowed only between characters with a mandatory break opportunity.",
+  "lineBreak:anywhere": "Lines can break at any character.",
+  "lineBreak:initial": "Sets the line break behavior to its default value.",
   "lineBreak:inherit":
-    "Inherits the line breaking rules from the parent element",
-  "lineBreak:unset":
-    "Resets the line breaking rules to its initial value (usually normal)",
+    "Inherits the line break behavior from the parent element.",
+  "lineBreak:unset": "Sets the line break behavior to its inherited value.",
   "lineClamp:none":
-    "Sets the maximum number of lines that can be displayed in a block of text",
+    "The block container is shown as many lines as determined by its content.",
   "lineClamp:initial":
-    "Resets the maximum number of lines that can be displayed in a block of text to the default value",
+    "Sets the number of lines that a block container should display to its default value.",
   "lineClamp:inherit":
-    "Inherits the maximum number of lines that can be displayed in a block of text from the parent element",
+    "Inherits the number of lines that a block container should display from the parent element.",
   "lineClamp:unset":
-    "Removes the maximum number of lines that can be displayed in a block of text",
+    "Sets the number of lines that a block container should display to its inherited value.",
   "lineHeight:normal":
-    "Sets the height of each line of text to the default value",
-  "lineHeight:initial":
-    "Resets the height of each line of text to the default value",
-  "lineHeight:inherit":
-    "Inherits the height of each line of text from the parent element",
-  "lineHeight:unset": "Removes the height of each line of text",
+    "Sets the line height to a normal value. The default value depends on the user agent.",
+  "lineHeight:initial": "Sets the line height to its default value.",
+  "lineHeight:inherit": "Inherits the line height from the parent element.",
+  "lineHeight:unset": "Sets the line height to the browser's default value.",
   "lineHeightStep:initial":
-    "Sets the increment of line height to the default value",
+    "Sets the increment used in line-height computations to the CSS initial value.",
   "lineHeightStep:inherit":
-    "Inherits the increment of line height from the parent element",
-  "lineHeightStep:unset": "Removes the increment of line height",
-  "listStyleImage:none": "Removes the image used as a bullet point in a list",
+    "Sets the increment used in line-height computations to the parent element's value.",
+  "lineHeightStep:unset":
+    "Sets the increment used in line-height computations to the browser's default value.",
+  "listStyleImage:none":
+    "Removes the marker from a list item for the CSS unset value.",
   "listStyleImage:initial":
-    "Resets the image used as a bullet point in a list to the default value",
+    "Sets the marker to the initial value defined by the user agent for a list item.",
   "listStyleImage:inherit":
-    "Inherits the image used as a bullet point in a list from the parent element",
-  "listStyleImage:unset": "Removes the image used as a bullet point in a list",
+    "Sets the marker to the value specified in the parent element for a list item.",
+  "listStyleImage:unset":
+    "Resets the marker to its default none value for a list item.",
   "listStylePosition:inside":
-    "Sets the position of the bullet point in a list to be inside the list item",
+    "Sets the marker position to the inside of a list item.",
   "listStylePosition:outside":
-    "Sets the position of list item markers outside the list item",
-  "listStylePosition:initial": "Sets the initial position of list item markers",
+    "Sets the marker position to the outside of a list item.",
+  "listStylePosition:initial":
+    "Sets the marker position to its default value for a list item.",
   "listStylePosition:inherit":
-    "Inherits the position of list item markers from the parent element",
+    "Inherits the marker position from the parent element for a list item.",
   "listStylePosition:unset":
-    "Resets the position of list item markers to the default value",
-  "listStyleType:none": "Removes list item markers",
-  "listStyleType:initial": "Sets the initial type of list item markers",
-  "listStyleType:inherit":
-    "Inherits the type of list item markers from the parent element",
-  "listStyleType:unset":
-    "Resets the type of list item markers to the default value",
-  "marginBlockEnd:auto": "Sets the margin at the end of a block to automatic",
-  "marginBlockEnd:initial": "Sets the initial margin at the end of a block",
-  "marginBlockEnd:inherit":
-    "Inherits the margin at the end of a block from the parent element",
-  "marginBlockEnd:unset":
-    "Resets the margin at the end of a block to the default value",
-  "marginBlockStart:auto":
-    "Sets the margin at the start of a block to automatic",
-  "marginBlockStart:initial": "Sets the initial margin at the start of a block",
-  "marginBlockStart:inherit":
-    "Inherits the margin at the start of a block from the parent element",
-  "marginBlockStart:unset":
-    "Resets the margin at the start of a block to the default value",
-  "marginBottom:auto":
-    "Sets the amount of space below an element to be automatically calculated",
-  "marginBottom:initial":
-    "Sets the amount of space below an element to its initial value",
-  "marginBottom:inherit":
-    "Inherits the amount of space below an element from its parent element",
-  "marginBottom:unset":
-    "Resets the amount of space below an element to the default value",
-  "marginInlineEnd:auto":
-    "Sets the amount of space to the left of an element to be automatically calculated",
-  "marginInlineEnd:initial":
-    "Sets the amount of space to the left of an element to its initial value",
+    "Resets the marker position to the browser's default value for a list item.",
+  "listStyleType:none": "Removes the marker from a list item.",
+  "listStyleType:initial":
+    "Sets the marker to the initial value defined by the user agent.",
+  "listStyleType:inherit": "Inherits the marker from the parent element.",
+  "listStyleType:unset": "Removes the list item marker and uses default.",
+  "marginBlockEnd:auto": "Automatically computes the bottom margin.",
+  "marginBlockEnd:initial": "Sets the bottom margin to its default value.",
+  "marginBlockEnd:inherit": "Sets the bottom margin to its parent's value.",
+  "marginBlockEnd:unset": "Inherits or sets the bottom margin to its default.",
+  "marginBlockStart:auto": "Automatically computes the top margin.",
+  "marginBlockStart:initial": "Sets the top margin to its default value.",
+  "marginBlockStart:inherit": "Sets the top margin to its parent's value.",
+  "marginBlockStart:unset": "Inherits or sets the top margin to its default.",
+  "marginBottom:auto": "Automatically computes the bottom margin.",
+  "marginBottom:initial": "Sets the bottom margin to its default value.",
+  "marginBottom:inherit": "Sets the bottom margin to its parent's value.",
+  "marginBottom:unset": "Inherits or sets the bottom margin to its default.",
+  "marginInlineEnd:auto": "Automatically computes the right/left margin.",
+  "marginInlineEnd:initial": "Sets the right/left margin to its default value.",
   "marginInlineEnd:inherit":
-    "Inherits the amount of space to the left of an element from its parent element",
-  "marginInlineEnd:unset":
-    "Resets the amount of space to the left of an element to the default value",
+    "Sets the right/left margin to its parent's value.",
+  "marginInlineEnd:unset": "Removes margin on the end inline side.",
   "marginInlineStart:auto":
-    "Sets the amount of space to the right of an element to be automatically calculated",
+    "Sets margin to automatic on the inline start side.",
   "marginInlineStart:initial":
-    "Sets the amount of space to the right of an element to its initial value",
+    "Sets margin to default on the inline start side.",
   "marginInlineStart:inherit":
-    "Inherits the amount of space to the right of an element from its parent element",
-  "marginInlineStart:unset":
-    "Resets the amount of space to the right of an element to the default value",
-  "marginLeft:auto":
-    "Sets the amount of space to the left of an element to be automatically calculated",
-  "marginLeft:initial":
-    "Sets the amount of space to the left of an element to its initial value",
+    "Inherits margin from the parent element on the inline start side.",
+  "marginInlineStart:unset": "Removes margin on the start inline side.",
+  "marginLeft:auto": "Sets margin to automatic on the left side.",
+  "marginLeft:initial": "Sets margin to default on the left side.",
   "marginLeft:inherit":
-    "Inherits the amount of space to the left of an element from its parent element",
-  "marginLeft:unset":
-    "Resets the amount of space to the left of an element to the default value",
-  "marginRight:auto":
-    "Centers an element horizontally within its parent element",
-  "marginRight:initial": "Resets margin-right to its default value",
-  "marginRight:inherit": "Inherits margin-right from its parent element",
-  "marginRight:unset": "Removes margin-right from an element",
-  "marginTop:auto": "Centers an element vertically within its parent element",
-  "marginTop:initial": "Resets margin-top to its default value",
-  "marginTop:inherit": "Inherits margin-top from its parent element",
-  "marginTop:unset": "Removes margin-top from an element",
-  "marginTrim:none": "Specifies how margins should be trimmed",
-  "marginTrim:in-flow": "Only trims margins that overlap other in-flow content",
-  "marginTrim:all":
-    "Trims all margins, including those that don't overlap other content",
-  "marginTrim:initial": "Resets margin-trim to its default value",
-  "marginTrim:inherit": "Inherits margin-trim from its parent element",
-  "marginTrim:unset": "Removes margin-trim from an element",
-  "maskBorderMode:luminance": "Specifies the blending mode for the mask border",
-  "maskBorderMode:alpha": "Specifies the alpha channel for the mask border",
-  "maskBorderMode:initial":
-    "Sets the mode for the mask border to initial value",
-  "maskBorderMode:inherit":
-    "Inherits the mode for the mask border from the parent element",
-  "maskBorderMode:unset":
-    "Resets the mode for the mask border to the default value",
-  "maskBorderOutset:initial":
-    "Sets the outset for the mask border to initial value",
-  "maskBorderOutset:inherit":
-    "Inherits the outset for the mask border from the parent element",
-  "maskBorderOutset:unset":
-    "Resets the outset for the mask border to the default value",
+    "Inherits margin from the parent element on the left side.",
+  "marginLeft:unset": "Removes margin on the left side.",
+  "marginRight:auto": "Sets margin to automatic on the right side.",
+  "marginRight:initial": "Sets margin to default on the right side.",
+  "marginRight:inherit":
+    "Inherits margin from the parent element on the right side.",
+  "marginRight:unset": "Removes margin on the right side.",
+  "marginTop:auto": "Sets margin to automatic on the top side.",
+  "marginTop:initial": "Sets margin to default on the top side.",
+  "marginTop:inherit":
+    "Inherits margin from the parent element on the top side.",
+  "marginTop:unset": "Removes margin on top side of the element.",
+  "marginTrim:none": "No trimming of margin.",
+  "marginTrim:in-flow": "Trims only the margin perpendicular to the flow.",
+  "marginTrim:all": "Trims all margins.",
+  "marginTrim:initial": "Takes the default value of ‘none’",
+  "marginTrim:inherit": "Inherits the property from its parent element.",
+  "marginTrim:unset": "Unsets the value of this property.",
+  "maskBorderMode:luminance":
+    "The mask border uses the luminance of the mask and the image",
+  "maskBorderMode:alpha": "The mask border uses the alpha values of the mask.",
+  "maskBorderMode:initial": "Uses the default value.",
+  "maskBorderMode:inherit": "Inherits from the parent element.",
+  "maskBorderMode:unset": "Unsets value of the property.",
+  "maskBorderOutset:initial": "Uses the initial value.",
+  "maskBorderOutset:inherit": "Inherits from the parent element.",
+  "maskBorderOutset:unset": "Unsets the value of the property.",
   "maskBorderRepeat:stretch":
-    "Specifies how to repeat the mask border image by stretching it",
-  "maskBorderRepeat:repeat":
-    "Specifies how to repeat the mask border image by repeating it",
-  "maskBorderRepeat:round":
-    "Specifies how to repeat the mask border image by rounding the edges",
-  "maskBorderRepeat:space":
-    "Specifies how to repeat the mask border image by spacing it out",
+    "Stretches the image to fill the size of the mask.",
+  "maskBorderRepeat:repeat": "Repeats the mask border image.",
+  "maskBorderRepeat:round": "Rounds the mask border image.",
+  "maskBorderRepeat:space": "Spaces the mask border image.",
   "maskBorderRepeat:initial":
-    "Resets the repeat value for the mask border to the initial value",
+    "Sets the mask border repeat to its default value.",
   "maskBorderRepeat:inherit":
-    "Inherits the repeat value for the mask border from the parent element",
+    "Inherits the mask border repeat from the parent element.",
   "maskBorderRepeat:unset":
-    "Resets the repeat value for the mask border to the default value",
-  "maskBorderSlice:fill": "Sets the slice value for the mask border to fill",
-  "maskBorderSlice:initial":
-    "Resets the slice value for the mask border to the initial value",
+    "Sets the mask border repeat to its inherited value, or default if there is no inheritance.",
+  "maskBorderSlice:fill":
+    "Fills the mask border slice with the mask border image.",
+  "maskBorderSlice:initial": "Sets the mask border slice to its default value.",
   "maskBorderSlice:inherit":
-    "Inherits the slice value for the mask border from the parent element",
-  "maskBorderSlice:unset": "Sets the slice size of the mask border to default",
-  "maskBorderSource:none": "Sets the image source for the mask border to none",
+    "Inherits the mask border slice from the parent element.",
+  "maskBorderSlice:unset":
+    "Sets the mask border slice to its inherited value, or default if there is no inheritance.",
+  "maskBorderSource:none": "Specifies no mask border source image.",
   "maskBorderSource:initial":
-    "Sets the image source for the mask border to default",
+    "Sets the mask border source to its default value.",
   "maskBorderSource:inherit":
-    "Inherits the image source for the mask border from the parent element",
+    "Inherits the mask border source from the parent element.",
   "maskBorderSource:unset":
-    "Resets the image source for the mask border to default",
-  "maskBorderWidth:auto": "Sets the width of the mask border to automatic",
-  "maskBorderWidth:initial": "Sets the width of the mask border to default",
+    "Sets the mask border source to its inherited value, or default if there is no inheritance.",
+  "maskBorderWidth:auto": "Sets the mask border width to its default value.",
+  "maskBorderWidth:initial": "Sets the mask border width to its default value.",
   "maskBorderWidth:inherit":
-    "Inherits the width of the mask border from the parent element",
-  "maskBorderWidth:unset": "Resets the width of the mask border to default",
-  "maskClip:border-box": "Sets the area of the mask to the border box",
-  "maskClip:padding-box": "Sets the area of the mask to the padding box",
-  "maskClip:content-box": "Sets the area of the mask to the content box",
-  "maskClip:margin-box": "Sets the area of the mask to the margin box",
-  "maskClip:fill-box": "Sets the area of the mask to the fill box",
-  "maskClip:stroke-box": "Sets the area of the mask to the stroke box",
-  "maskClip:view-box": "Sets the area of the mask to the view box",
-  "maskClip:no-clip":
-    "Sets the portion of an element that is visible through a mask to the entire element",
-  "maskClip:initial":
-    "Sets the portion of an element that is visible through a mask to the default value",
-  "maskClip:inherit": "Inherits the mask clipping from the parent element",
-  "maskClip:unset": "Resets the mask clipping to the default value",
-  "maskComposite:add":
-    "Sets the method of combining the mask image with the background to addition",
+    "Inherits the mask border width from the parent element.",
+  "maskBorderWidth:unset":
+    "Returns the mask border width to its default value.",
+  "maskClip:border-box": "Clips the mask image to the border box.",
+  "maskClip:padding-box": "Clips the mask image to the padding box.",
+  "maskClip:content-box": "Clips the mask image to the content box.",
+  "maskClip:margin-box": "Clips the mask image to the margin box.",
+  "maskClip:fill-box": "Clips the mask image to the painted area.",
+  "maskClip:stroke-box": "Clips the mask image to the stroke area.",
+  "maskClip:view-box": "Clips the mask image to the viewport.",
+  "maskClip:no-clip": "No clip is applied to the mask image.",
+  "maskClip:initial": "Sets the mask clip to its default value.",
+  "maskClip:inherit": "Inherits the mask clip value from the parent element.",
+  "maskClip:unset": "Returns the mask clip to its default value.",
+  "maskComposite:add": "Adds the mask image to the destination image.",
   "maskComposite:subtract":
-    "Sets the method of combining the mask image with the background to subtraction",
+    "Subtracts the mask image from the destination image.",
   "maskComposite:intersect":
-    "Sets the method of combining the mask image with the background to intersection",
+    "Intersects the mask image with the destination image.",
   "maskComposite:exclude":
-    "Sets the method of combining the mask image with the background to exclusion",
+    "The source and mask images are combined by excluding the overlapping parts of the mask.",
   "maskComposite:initial":
-    "Sets the method of combining the mask image with the background to the default value",
+    "Sets the mask composite property to its default value.",
   "maskComposite:inherit":
-    "Inherits the method of combining the mask image with the background from the parent element",
+    "Inherits the mask composite property from a parent element.",
   "maskComposite:unset":
-    "Resets the method of combining the mask image with the background to the default value",
-  "maskImage:none": "Removes the mask image from the element",
-  "maskImage:initial": "Sets the mask image to the default value",
-  "maskImage:inherit": "Inherits the mask image from the parent element",
-  "maskImage:unset": "Resets the mask image to the default value",
-  "maskMode:alpha":
-    "Sets the transparency of the mask to be based on the alpha channel of the mask image",
-  "maskMode:luminance":
-    "Sets the mask mode to use the luminance of the mask image",
-  "maskMode:match-source":
-    "Sets the mask mode to match the alpha channel of the mask image",
-  "maskMode:initial": "Sets the mask mode to its default value",
-  "maskMode:inherit": "Inherits the mask mode from its parent element",
+    "Resets the mask composite property to its inherited value, or to its initial value if it has no inherited value.",
+  "maskImage:none": "No mask image is displayed.",
+  "maskImage:initial": "Sets the mask image property to its default value.",
+  "maskImage:inherit":
+    "Inherits the mask image property from a parent element.",
+  "maskImage:unset":
+    "Resets the mask image property to its inherited value, or to its initial value if it has no inherited value.",
+  "maskMode:alpha": "The mask is treated as an alpha mask.",
+  "maskMode:luminance": "The mask is treated as a luminance mask.",
+  "maskMode:match-source": "The mask is treated as a luminance+alpha mask.",
+  "maskMode:initial": "Sets the mask mode property to its default value.",
+  "maskMode:inherit": "Inherits the mask mode property from a parent element.",
   "maskMode:unset":
-    "Unsets the mask mode, allowing the parent element to apply its own mask mode",
+    "Resets the mask mode property to its inherited value, or to its initial value if it has no inherited value.",
   "maskOrigin:border-box":
-    "Sets the origin of the mask image to the border box of the element",
+    "The mask is positioned relative to the border box of the element.",
   "maskOrigin:padding-box":
-    "Sets the origin of the mask image to the padding box of the element",
+    "The mask is positioned relative to the padding box of the element.",
   "maskOrigin:content-box":
-    "Sets the origin of the mask image to the content box of the element",
+    "The image of the mask is positioned relative to the content box.",
   "maskOrigin:margin-box":
-    "Sets the origin of the mask image to the margin box of the element",
+    "The image of the mask is positioned relative to the margin box.",
   "maskOrigin:fill-box":
-    "Sets the origin of the mask image to the fill box of the element",
+    "The image of the mask is positioned relative to the fill box.",
   "maskOrigin:stroke-box":
-    "Sets the origin of the mask image to the stroke box of the element",
+    "The image of the mask is positioned relative to the stroke box.",
   "maskOrigin:view-box":
-    "Sets the origin of the mask image to the view box of the element",
-  "maskOrigin:initial":
-    "Sets the origin of the mask image to its default value",
+    "The image of the mask is positioned relative to the viewBox of the referenced SVG.",
+  "maskOrigin:initial": "Sets the mask-origin property to its default value.",
   "maskOrigin:inherit":
-    "Inherits the origin of the mask image from its parent element",
-  "maskOrigin:unset":
-    "Unsets the origin of the mask image, allowing the parent element to apply its own mask origin",
-  "maskPosition:left":
-    "Sets the position of the mask image to the left of the element",
-  "maskPosition:center":
-    "Sets the position of a mask image to the center of the masked element",
-  "maskPosition:right":
-    "Sets the position of a mask image to the right of the masked element",
-  "maskPosition:top":
-    "Sets the position of a mask image to the top of the masked element",
-  "maskPosition:bottom":
-    "Sets the position of a mask image to the bottom of the masked element",
+    "Inherits the mask-origin property from its parent element.",
+  "maskOrigin:unset": "Resets the mask-origin property to its inherited value.",
+  "maskPosition:left": "Positions the mask image horizontally to the left.",
+  "maskPosition:center": "Positions the mask image horizontally to the center.",
+  "maskPosition:right": "Positions the mask image horizontally to the right.",
+  "maskPosition:top": "Positions the mask image vertically to the top.",
+  "maskPosition:bottom": "Positions the mask image vertically to the bottom.",
   "maskPosition:initial":
-    "Sets the position of a mask image to its default value",
+    "Sets the mask-position property to its default value.",
   "maskPosition:inherit":
-    "Sets the position of a mask image to inherit from its parent element",
+    "Inherits the mask-position property from its parent element.",
   "maskPosition:unset":
-    "Sets the position of a mask image to its initial value",
-  "maskRepeat:repeat-x": "Repeats a mask image horizontally",
-  "maskRepeat:repeat-y": "Repeats a mask image vertically",
-  "maskRepeat:repeat": "Repeats a mask image both horizontally and vertically",
+    "Resets the mask-position property to its inherited value.",
+  "maskRepeat:repeat-x": "Repeats the mask image horizontally.",
+  "maskRepeat:repeat-y": "Repeats the mask image vertically.",
+  "maskRepeat:repeat": "Repeats the mask image in both directions.",
   "maskRepeat:space":
-    "Repeats a mask image, but adjusts the spacing between repetitions",
+    "Scales the mask image to fill space between repetitions.",
   "maskRepeat:round":
-    "Repeats a mask image, but scales it to fit the masked element",
-  "maskRepeat:no-repeat": "Does not repeat a mask image",
-  "maskRepeat:initial": "Sets the mask image repetition to its default value",
+    "Scales the mask image to fit the space between repetitions.",
+  "maskRepeat:no-repeat": "Displays the mask image only once.",
+  "maskRepeat:initial": "Sets the mask repeat property to default value.",
   "maskRepeat:inherit":
-    "Inherits the mask image repetition from its parent element",
-  "maskRepeat:unset": "Sets the mask image repetition to its initial value",
-  "maskSize:auto": "Sets the size of the mask to fit the masked element",
-  "maskSize:cover": "Sets the size of the mask to cover the masked element",
-  "maskSize:contain": "Sets the size of the mask to contain the masked element",
-  "maskSize:initial": "Sets the initial size of the mask",
-  "maskSize:inherit": "Inherits the size of the mask from the parent element",
-  "maskSize:unset": "Resets the size of the mask to the default value",
+    "Inherits the mask repeat property from the parent element.",
+  "maskRepeat:unset":
+    "Resets the mask repeat property to its inherited value, if any, or initial value.",
+  "maskSize:auto": "Sets the size of the mask image to its original size.",
+  "maskSize:cover": "Scales the mask image to cover the entire element.",
+  "maskSize:contain": "Scales the mask image to fit within the element.",
+  "maskSize:initial": "Sets the mask size property to default value.",
+  "maskSize:inherit":
+    "Inherits the mask size property from the parent element.",
+  "maskSize:unset":
+    "Resets the mask size property to its inherited value, if any, or initial value.",
   "maskType:luminance":
-    "Sets the type of mask to use the luminance channel of the masked element",
-  "maskType:alpha":
-    "Sets the type of mask to use the alpha channel of the masked element",
-  "maskType:initial": "Sets the initial type of mask",
-  "maskType:inherit": "Inherits the type of mask from the parent element",
-  "maskType:unset": "Resets the type of mask to the default value",
-  "masonryAutoFlow:pack": "Sets the layout algorithm to pack the masonry grid",
+    "Defines the luminance threshold used for an SVG mask image.",
+  "maskType:alpha": "Applies an alpha mask to the element.",
+  "maskType:initial": "Sets the mask type to its default value.",
+  "maskType:inherit": "Inherits the mask type from the parent element.",
+  "maskType:unset": "Resets the mask type to its inherited value.",
+  "masonryAutoFlow:pack": "Places items in the grid as tightly as possible.",
   "masonryAutoFlow:next":
-    "Sets the layout algorithm to place items in the next available position",
+    "Places items in the next available position in the grid.",
   "masonryAutoFlow:definite-first":
-    "Sets the layout algorithm to place definite items first and then auto-placed items",
+    "Places items in their source order until space runs out.",
   "masonryAutoFlow:ordered":
-    "Sets the layout algorithm to place items in the order they appear in the source code",
-  "masonryAutoFlow:initial":
-    "Sets the initial layout algorithm of the masonry grid",
-  "masonryAutoFlow:inherit":
-    "Sets the flow of masonry items to inherit from its parent element",
-  "masonryAutoFlow:unset":
-    "Resets the flow of masonry items to the default value",
+    "Sorts and places items in the grid as defined in the source order.",
+  "masonryAutoFlow:initial": "Sets the flow to its default value.",
+  "masonryAutoFlow:inherit": "Inherits the flow from the parent element.",
+  "masonryAutoFlow:unset": "Resets the flow to its inherited value.",
   "mathDepth:auto-add":
-    "Sets the depth of mathematical expressions to automatically adjust to the content",
-  "mathDepth:initial":
-    "Resets the depth of mathematical expressions to the default value",
-  "mathDepth:inherit":
-    "Sets the depth of mathematical expressions to inherit from its parent element",
-  "mathDepth:unset":
-    "Resets the depth of mathematical expressions to the initial value",
-  "mathShift:normal":
-    "Sets the vertical position of mathematical expressions to normal",
+    "Automatically adds a math script element to the document body if the depth is exceeded.",
+  "mathDepth:initial": "Sets the math depth to its default value.",
+  "mathDepth:inherit": "Inherits the math depth from the parent element.",
+  "mathDepth:unset": "Resets the math depth to its inherited value.",
+  "mathShift:normal": "Resets the math shift to its default value.",
   "mathShift:compact":
-    "Sets the vertical position of mathematical expressions to compact",
-  "mathShift:initial":
-    "Resets the vertical position of mathematical expressions to the default value",
+    "Reduces the amount of whitespace between math elements.",
+  "mathShift:initial": "Sets the math shift to its default value.",
   "mathShift:inherit":
-    "Sets the vertical position of mathematical expressions to inherit from its parent element",
+    "Sets the math shift to the same value as its parent element.",
   "mathShift:unset":
-    "Resets the vertical position of mathematical expressions to the initial value",
+    "Sets the math shift to its inherited value if it exists, otherwise its initial value.",
   "mathStyle:normal":
-    "Sets the rendering style of mathematical expressions to normal",
+    "Sets the rendering style to normal, which is typically upright.",
   "mathStyle:compact":
-    "Sets the rendering style of mathematical expressions to compact",
-  "mathStyle:initial":
-    "Resets the rendering style of mathematical expressions to the default value",
+    "Sets the rendering style to a more compact, condensed version.",
+  "mathStyle:initial": "Sets the math style to its default value.",
   "mathStyle:inherit":
-    "Sets the rendering style of mathematical expressions to inherit from its parent element",
+    "Sets the math style to the same value as its parent element.",
   "mathStyle:unset":
-    "Resets the rendering style of mathematical expressions to the initial value",
-  "maxBlockSize:none": "Sets the maximum block size to its default value",
+    "Sets the math style to its inherited value if it exists, otherwise its initial value.",
+  "maxBlockSize:none": "Sets no maximum height for the block element.",
   "maxBlockSize:min-content":
-    "Sets the maximum block size to the smallest possible size",
+    "Sets the maximum height to the minimum content height.",
   "maxBlockSize:max-content":
-    "Sets the maximum block size to the largest possible size",
-  "maxBlockSize:fit-content": "Sets the maximum block size to fit its content",
-  "maxBlockSize:initial": "Sets the maximum block size to its initial value",
+    "Sets the maximum height to the maximum content height.",
+  "maxBlockSize:fit-content":
+    "Sets the maximum height to fit within the available space.",
+  "maxBlockSize:initial": "Sets the maximum height to its default value.",
   "maxBlockSize:inherit":
-    "Inherits the maximum block size from its parent element",
-  "maxBlockSize:unset": "Resets the maximum block size to its default value",
-  "maxHeight:none": "Sets the maximum height to its default value",
+    "Sets the maximum height to the same value as its parent element.",
+  "maxBlockSize:unset":
+    "Sets the maximum height to its inherited value if it exists, otherwise its initial value.",
+  "maxHeight:none": "No limit on the maximum height.",
   "maxHeight:min-content":
-    "Sets the maximum height to the smallest possible size",
+    "Maximum height is the smallest possible height to show content.",
   "maxHeight:max-content":
-    "Sets the maximum height to the largest possible size",
-  "maxHeight:fit-content": "Sets the maximum height to fit its content",
-  "maxHeight:initial": "Sets the maximum height to its initial value",
-  "maxHeight:inherit": "Inherits the maximum height from its parent element",
-  "maxHeight:unset": "Resets the maximum height to its default value",
-  "maxInlineSize:none": "Sets the maximum inline size to its default value",
+    "Maximum height is the maximum height required to show all content.",
+  "maxHeight:fit-content":
+    "Maximum height is the height required to fit all content, with a max limit if set.",
+  "maxHeight:initial":
+    'Maximum height is the initial value set by the browser (usually "none").',
+  "maxHeight:inherit": "Maximum height is inherited from the parent element.",
+  "maxHeight:unset":
+    'Maximum height is unset, which means it behaves as "initial" in most cases.',
+  "maxInlineSize:none":
+    "No limit on the maximum size of an inline-level element.",
   "maxInlineSize:min-content":
-    "Sets the maximum inline size to the smallest possible size",
+    "Maximum size is the smallest possible width to show content.",
   "maxInlineSize:max-content":
-    "Sets the maximum size of an element to its maximum content width",
+    "Maximum size is the maximum width required to show all content.",
   "maxInlineSize:fit-content":
-    "Sets the maximum size of an element to fit its content width, but not exceed the container width",
+    "Maximum size is the width required to fit all content, with a max limit if set.",
   "maxInlineSize:initial":
-    "Sets the maximum size of an element to its initial value",
-  "maxInlineSize:inherit":
-    "Inherits the maximum size of an element from its parent element",
+    'Maximum size is the initial value set by the browser (usually "auto").',
+  "maxInlineSize:inherit": "Maximum size is inherited from the parent element.",
   "maxInlineSize:unset":
-    "Resets the maximum size of an element to its default value",
-  "maxLines:none":
-    "Sets the maximum number of lines an element can have to none",
+    'Maximum size is unset, which means it behaves as "initial" in most cases.',
+  "maxLines:none": "No limit on the number of lines an element can have.",
   "maxLines:initial":
-    "Inherits the maximum number of lines an element can have from its parent element",
-  "maxLines:inherit":
-    "Resets the maximum number of lines an element can have to its default value",
-  "maxLines:unset":
-    "Resets the maximum number of lines an element can have to its default value",
-  "maxWidth:none":
-    "Sets the maximum width of an element to none, meaning there is no maximum width",
+    'The number of lines is the initial value set by the browser (usually "none").',
+  "maxLines:inherit": "Inherits max-lines value from the parent element.",
+  "maxLines:unset": "Allows the max-lines value to be inherited or cascaded.",
+  "maxWidth:none": "Element has no maximum width limit.",
   "maxWidth:min-content":
-    "Sets the maximum width of an element to its minimum content width",
+    "Element's width is determined by its smallest-sized content.",
   "maxWidth:max-content":
-    "Sets the maximum width of an element to its maximum content width",
+    "Element's width is determined by its largest-sized content.",
   "maxWidth:fit-content":
-    "Sets the maximum width of an element to fit its content width, but not exceed the container width",
-  "maxWidth:initial":
-    "Sets the maximum width of an element to its initial value",
-  "maxWidth:inherit":
-    "Inherits the maximum width of an element from its parent element",
-  "maxWidth:unset":
-    "Resets the maximum width of an element to its default value",
-  "minBlockSize:auto":
-    "Sets the minimum height or width of an element to automatically adjust based on content",
+    "Element's width is determined by wrapping its content.",
+  "maxWidth:initial": "Sets the initial value of max-width property.",
+  "maxWidth:inherit": "Inherits the max-width value from the parent element.",
+  "maxWidth:unset": "Allows the max-width value to be inherited or cascaded.",
+  "minBlockSize:auto": "Element's block size is determined by its content.",
   "minBlockSize:min-content":
-    "Sets the minimum height or width of an element to the minimum content size",
+    "Element's block size is determined by its smallest-sized content.",
   "minBlockSize:max-content":
-    "Sets the minimum height or width of an element to the maximum content size",
+    "Element's block size is determined by its largest-sized content.",
   "minBlockSize:fit-content":
-    "Sets the minimum height or width of an element to the fitting content size",
-  "minBlockSize:initial":
-    "Sets the minimum height or width of an element to its initial value",
+    "Element's block size is determined by wrapping its content.",
+  "minBlockSize:initial": "Sets the initial value of min-block-size property.",
   "minBlockSize:inherit":
-    "Inherits the minimum height or width from the parent element",
+    "Inherits the min-block-size value from the parent element.",
   "minBlockSize:unset":
-    "Resets the minimum height or width to its default value",
+    "Allows the min-block-size value to be inherited or cascaded.",
   "minHeight:auto":
-    "Sets the minimum height of an element to automatically adjust based on content",
+    "The element's minimum height is determined by its content.",
   "minHeight:min-content":
-    "Sets the minimum height of an element to the minimum content size",
+    "The element's minimum height is set to the smallest height required by its content.",
   "minHeight:max-content":
-    "Sets the minimum height of an element to the maximum content size",
+    "The element's minimum height is set to the largest height required by its content.",
   "minHeight:fit-content":
-    "Sets the minimum height of an element to the fitting content size",
+    "The element's minimum height is set to the height required by its content, but limited by the specified maximum height.",
   "minHeight:initial":
-    "Sets the minimum height of an element to its initial value",
-  "minHeight:inherit": "Inherits the minimum height from the parent element",
-  "minHeight:unset": "Resets the minimum height to its default value",
+    "The element's minimum height is set to its default value.",
+  "minHeight:inherit":
+    "The element's minimum height is inherited from its parent element.",
+  "minHeight:unset":
+    "The element's minimum height is set to the value of its parent element if it has one, otherwise it's set to its initial value.",
   "minInlineSize:auto":
-    "Sets the minimum width of an element to automatically adjust based on content",
+    "The element's minimum inline size is determined by its content.",
   "minInlineSize:min-content":
-    "Sets the minimum width of an element to the minimum content size",
+    "The element's minimum inline size is set to the smallest width required by its content.",
   "minInlineSize:max-content":
-    "Sets the minimum width of an element to the smallest possible content width",
+    "The element's minimum inline size is set to the largest width required by its content.",
   "minInlineSize:fit-content":
-    "Sets the minimum width of an element to the size of its content or the maximum width if it's smaller",
+    "The element's minimum inline size is set to the width required by its content, but limited by the specified maximum width.",
   "minInlineSize:initial":
-    "Sets the minimum width of an element to its default value",
+    "The element's minimum inline size is set to its default value.",
   "minInlineSize:inherit":
-    "Sets the minimum width of an element to the same value as its parent element",
+    "The element's minimum inline size is inherited from its parent element.",
   "minInlineSize:unset":
-    "Removes the minimum width of an element, allowing it to be smaller than its content",
-  "minWidth:auto":
-    "Sets the minimum width of an element to its default value (auto)",
+    "The element's minimum inline size is set to the value of its parent element if it has one, otherwise it's set to its initial value.",
+  "minWidth:auto": "The element's minimum width is determined by its content.",
   "minWidth:min-content":
-    "Sets the minimum width of an element to the smallest possible content width",
+    "The element's minimum width is set to the smallest width required by its content.",
   "minWidth:max-content":
-    "Sets the minimum width of an element to the maximum width of its content",
+    "The minimum width is set to the intrinsic width of the content.",
   "minWidth:fit-content":
-    "Sets the minimum width of an element to the size of its content or the maximum width if it's smaller",
+    "The minimum width is set to the fit-content of the element.",
   "minWidth:initial":
-    "Sets the minimum width of an element to its default value",
-  "minWidth:inherit":
-    "Sets the minimum width of an element to the same value as its parent element",
+    "The minimum width is set to the default value defined by the browser.",
+  "minWidth:inherit": "The minimum width is inherited from the parent element.",
   "minWidth:unset":
-    "Removes the minimum width of an element, allowing it to be smaller than its content",
-  "mixBlendMode:normal": "Sets the blending mode of an element to normal",
-  "mixBlendMode:multiply": "Sets the blending mode of an element to multiply",
-  "mixBlendMode:screen": "Sets the blending mode of an element to screen",
-  "mixBlendMode:overlay": "Sets the blending mode of an element to overlay",
-  "mixBlendMode:darken":
-    "Changes the way colors blend in the background with a darker effect",
+    "The minimum width is set to the default value or inherited from the parent element.",
+  "mixBlendMode:normal": "The element is displayed with normal blending mode.",
+  "mixBlendMode:multiply":
+    "The element is displayed with multiply blending mode.",
+  "mixBlendMode:screen": "The element is displayed with screen blending mode.",
+  "mixBlendMode:overlay":
+    "The element is displayed with overlay blending mode.",
+  "mixBlendMode:darken": "The element is displayed with darken blending mode.",
   "mixBlendMode:lighten":
-    "Changes the way colors blend in the background with a lighter effect",
+    "The element is displayed with lighten blending mode.",
   "mixBlendMode:color-dodge":
-    "Changes the way colors blend in the background with a brighter effect",
+    "The element is displayed with color-dodge blending mode.",
   "mixBlendMode:color-burn":
-    "Changes the way colors blend in the background with a darker effect and increases contrast",
+    "The element is displayed with color-burn blending mode.",
   "mixBlendMode:hard-light":
-    "Changes the way colors blend in the background with a brighter effect and increases contrast",
+    "The element is displayed with hard-light blending mode.",
   "mixBlendMode:soft-light":
-    "Changes the way colors blend in the background with a softer effect and decreases contrast",
+    "The element is displayed with soft-light blending mode.",
   "mixBlendMode:difference":
-    "Changes the way colors blend in the background by showing the difference between them",
-  "mixBlendMode:exclusion":
-    "Changes the way colors blend in the background by excluding a color from the result",
-  "mixBlendMode:hue":
-    "Changes the way colors blend in the background by showing the hue of the top layer",
+    "The element is displayed with difference blending mode.",
+  "mixBlendMode:exclusion": "Blends elements by excluding the colors.",
+  "mixBlendMode:hue": "Blends elements by keeping the hue of the top layer.",
   "mixBlendMode:saturation":
-    "Changes the way colors blend in the background by showing the saturation of the top layer",
+    "Blends elements by keeping the saturation of the top layer.",
   "mixBlendMode:color":
-    "Changes the way colors blend in the background by showing the color of the top layer",
+    "Blends elements by keeping the color of the top layer.",
   "mixBlendMode:luminosity":
-    "Changes the way colors blend in the background by showing the luminosity of the top layer",
-  "mixBlendMode:plus-lighter":
-    "Changes the way colors blend in the background by adding the values of the top and background layers",
-  "mixBlendMode:initial": "Sets the mix-blend-mode to its default value",
+    "Blends elements by keeping the luminosity of the top layer.",
+  "mixBlendMode:plus-lighter": "Blends elements by adding the colors.",
+  "mixBlendMode:initial": "Sets the mix-blend-mode to its default value.",
   "mixBlendMode:inherit":
-    "Inherits the mix-blend-mode property from its parent element",
-  "mixBlendMode:unset":
-    "Resets the mix-blend-mode property to its initial value",
-  "objectFit:fill":
-    "Sets how an image or video should be resized to fill its container",
+    "Inherits the mix-blend-mode from the parent element.",
+  "mixBlendMode:unset": "Resets the mix-blend-mode to its inherited value.",
+  "objectFit:fill": "Resizes the element to fill the container.",
   "objectFit:contain":
-    "Sets how an image or video should be resized to fit within its container",
+    "Resizes the element to fit within the container while preserving its aspect ratio.",
   "objectFit:cover":
-    "Sets how an image or video should be resized to cover its container",
-  "objectFit:none": "Prevents an image or video from being resized",
+    "Resizes the element to cover the container while preserving its aspect ratio.",
+  "objectFit:none":
+    "Resizes the element without regard to the container or its aspect ratio.",
   "objectFit:scale-down":
-    "Sets how an image or video should be resized to fit within its container, but only if it would be smaller than its natural size",
-  "objectFit:initial": "Sets the object fit to its default value",
-  "objectFit:inherit": "Inherits the object fit from its parent element",
-  "objectFit:unset": "Resets the object fit to its default value",
+    "Resizes the element to the smaller of its natural size and the container.",
+  "objectFit:initial": "Sets the object-fit to its default value.",
+  "objectFit:inherit": "Inherits the object-fit from the parent element.",
+  "objectFit:unset":
+    "object-fit: unset - The replaced element retains its intrinsic size and aspect ratio.",
   "objectPosition:left":
-    "Sets the horizontal alignment of an image or video within its container to the left",
+    "object-position: left - Position the replaced element in the left.",
   "objectPosition:center":
-    "Sets the horizontal and vertical alignment of an image or video within its container to the center",
+    "object-position: center - Position the replaced element in the center.",
   "objectPosition:right":
-    "Sets the horizontal alignment of an image or video within its container to the right",
+    "object-position: right - Position the replaced element in the right.",
   "objectPosition:top":
-    "Sets the vertical alignment of an image or video within its container to the top",
+    "object-position: top - Position the replaced element in the top.",
   "objectPosition:bottom":
-    "Sets the vertical alignment of an image or video within its container to the bottom",
-  "objectPosition:initial": "Resets the object position to its default value",
+    "object-position: bottom - Position the replaced element in the bottom.",
+  "objectPosition:initial":
+    "object-position: initial - Sets the object-position to its default value.",
   "objectPosition:inherit":
-    "Inherits the object position from its parent element",
-  "objectPosition:unset": "Resets the object position to its default value",
+    "object-position: inherit - Inherits the object-position from its parent element.",
+  "objectPosition:unset":
+    "object-position: unset - Inherits the object-position from its parent element, or its own default value.",
   "offsetAnchor:auto":
-    "Sets the position where an element is anchored for offset positioning to auto",
+    "offset-anchor: auto - The object is placed at a specified offset from a specific point on the region.",
   "offsetAnchor:left":
-    "Sets the position where an element is anchored for offset positioning to the left side",
+    "offset-anchor: left - The offset is calculated relative to the left edge of the region.",
   "offsetAnchor:center":
-    "Sets the position where an element is anchored for offset positioning to the center",
+    "offset-anchor: center - The offset is calculated relative to the center of the region.",
   "offsetAnchor:right":
-    "Sets the position where an element is anchored for offset positioning to the right side",
+    "offset-anchor: right - The offset is calculated relative to the right edge of the region.",
   "offsetAnchor:top":
-    "Sets the position where an element is anchored for offset positioning to the top side",
+    "offset-anchor: top - The offset is calculated relative to the top edge of the region.",
   "offsetAnchor:bottom":
-    "Sets the position where an element is anchored for offset positioning to the bottom side",
+    "offset-anchor: bottom - The offset is calculated relative to the bottom edge of the region.",
   "offsetAnchor:initial":
-    "Sets the initial value of the offset-anchor property",
+    "offset-anchor: initial - Sets the property to its default value.",
   "offsetAnchor:inherit":
-    "Inherits the offset-anchor property value from its parent element",
-  "offsetAnchor:unset":
-    "Resets the offset-anchor property to its default value",
-  "offsetDistance:initial":
-    "Sets the initial value of the offset-distance property",
+    "Sets the anchor point to the computed value of the parent.",
+  "offsetAnchor:unset": "Resets the anchor point to the initial value.",
+  "offsetDistance:initial": "Sets the distance to the initial value.",
   "offsetDistance:inherit":
-    "Inherits the offset-distance property value from its parent element",
-  "offsetDistance:unset":
-    "Resets the offset-distance property to its default value",
-  "offsetPath:none": "Specifies that no offset path should be used",
+    "Sets the distance to the computed value of the parent.",
+  "offsetDistance:unset": "Resets the distance to the initial value.",
+  "offsetPath:none": "Disables any transformation.",
   "offsetPath:border-box":
-    "Specifies that the offset path should be calculated from the border box of the element",
+    "Applies the transformation to the border box of the element.",
   "offsetPath:padding-box":
-    "Specifies that the offset path should be calculated from the padding box of the element",
+    "Applies the transformation to the padding box of the element.",
   "offsetPath:content-box":
-    "Specifies that the offset path should be calculated from the content box of the element",
+    "Applies the transformation to the content box of the element.",
   "offsetPath:margin-box":
-    "Sets the path the element is offset along to the margin box of its parent",
+    "Applies the transformation to the margin box of the element.",
   "offsetPath:fill-box":
-    "Sets the path the element is offset along to the fill box of its parent",
+    "Applies the transformation to the fill box of the element.",
   "offsetPath:stroke-box":
-    "Sets the path the element is offset along to the stroke box of its parent",
+    "Applies the transformation to the stroke box of the element.",
   "offsetPath:view-box":
-    "Sets the path the element is offset along to the view box of its parent",
-  "offsetPath:initial": "Sets the offset path to its default value",
-  "offsetPath:inherit": "Inherits the offset path from its parent element",
-  "offsetPath:unset": "Resets the offset path to its initial value",
+    "Applies the transformation to the nearest SVG container.",
+  "offsetPath:initial": "Sets the path to the initial value.",
+  "offsetPath:inherit": "Sets the path to the computed value of the parent.",
+  "offsetPath:unset": "Resets the path to the initial value.",
   "offsetPosition:auto":
-    "Sets the horizontal offset position of the element to automatic",
+    "The element is placed according to normal inline/block layout.",
   "offsetPosition:left":
-    "Sets the horizontal offset position of the element to the left of its parent",
+    "The element is positioned to the left of the container.",
   "offsetPosition:center":
-    "Sets the horizontal offset position of the element to the center of its parent",
+    "The element is positioned in the center of the container.",
   "offsetPosition:right":
-    "Sets the horizontal offset position of the element to the right of its parent",
+    "The element is positioned to the right of the container.",
   "offsetPosition:top":
-    "Sets the vertical offset position of the element to the top of its parent",
+    "The element is positioned to the top of the container.",
   "offsetPosition:bottom":
-    "Sets the vertical offset position of the element to the bottom of its parent",
-  "offsetPosition:initial": "Resets the offset position to its default value",
-  "offsetPosition:inherit": "Inherits the offset position from its parent",
-  "offsetPosition:unset": "Resets the offset position to its initial value",
-  "offsetRotate:auto":
-    "Sets the rotation angle of an element relative to its offset position to automatic",
-  "offsetRotate:reverse":
-    "Sets the rotation angle of an element relative to its offset position to reverse",
-  "offsetRotate:initial":
-    "Sets the rotation angle of an element relative to its offset position to its initial value",
-  "offsetRotate:inherit":
-    "Inherits the rotation angle of an element relative to its offset position from its parent element",
+    "The element is positioned to the bottom of the container.",
+  "offsetPosition:initial": "The property to its default value.",
+  "offsetPosition:inherit":
+    "The property is inherited from the parent element.",
+  "offsetPosition:unset":
+    "The property acts as either inherit or initial depending on the presence of a parent rule.",
+  "offsetRotate:auto": "The element is placed in its default rotation.",
+  "offsetRotate:reverse": "The element is placed in reverse order.",
+  "offsetRotate:initial": "The property to its default value.",
+  "offsetRotate:inherit": "The property is inherited from the parent element.",
   "offsetRotate:unset":
-    "Resets the rotation angle of an element relative to its offset position to its default value",
-  "opacity:initial": "Sets the initial opacity value of an element",
-  "opacity:inherit":
-    "Inherits the opacity value of an element from its parent element",
-  "opacity:unset":
-    "Resets the opacity value of an element to its default value",
-  "order:initial":
-    "Sets the initial order value of an element in a flex container",
+    "The property acts as either inherit or initial depending on the presence of a parent rule.",
+  "opacity:initial": "The element is transparent.",
+  "opacity:inherit": "The property is inherited from the parent element.",
+  "opacity:unset": "Sets the opacity to its initial value (1).",
+  "order:initial": "Sets the order of the element to its default value (0).",
   "order:inherit":
-    "Inherits the order value of an element in a flex container from its parent element",
+    "Sets the order of the element to be the same as its parent.",
   "order:unset":
-    "Resets the order value of an element in a flex container to its default value",
+    "Sets the order of the element to its inherited value or 0 if none.",
   "orphans:initial":
-    "Sets the initial number of lines in a block element that can be displayed at the bottom of a page or column",
+    "Sets the minimum number of lines in a block container that must be left in a single page to its initial value (2).",
   "orphans:inherit":
-    "Inherits the number of lines in a block element that can be displayed at the bottom of a page or column from its parent element",
+    "Inherits the minimum number of lines in a block container that must be left in a single page from its parent.",
   "orphans:unset":
-    "Resets the number of lines in a block element that can be displayed at the bottom of a page or column to its default value",
+    "Sets the minimum number of lines in a block container that must be left in a single page to its inherited value or 2 if none.",
   "outlineOffset:initial":
-    "Sets the initial distance between an outline and the edge of an element",
+    "Sets the space between an outline and the edge of its containing block to its initial value (0).",
   "outlineOffset:inherit":
-    "Inherits the distance between an outline and the edge of an element from its parent element",
+    "Inherits the space between an outline and the edge of its containing block from its parent.",
   "outlineOffset:unset":
-    "Sets the distance between an element and its outline to the default value",
-  "outlineStyle:auto": "Sets the style of an outline to a default value",
-  "outlineStyle:none": "Removes the outline from an element",
-  "outlineStyle:hidden":
-    "Hides the outline of an element, but still preserves its space",
-  "outlineStyle:dotted": "Sets the style of an outline to a series of dots",
-  "outlineStyle:dashed": "Sets the style of an outline to a series of dashes",
-  "outlineStyle:solid": "Sets the style of an outline to a solid line",
-  "outlineStyle:double": "Sets the style of an outline to a double line",
-  "outlineStyle:groove": "Sets the style of an outline to a 3D groove line",
-  "outlineStyle:ridge": "Sets the style of an outline to a 3D ridge line",
-  "outlineStyle:inset": "Sets the style of an outline to a 3D inset line",
-  "outlineStyle:outset": "Sets the style of an outline to a 3D outset line",
-  "outlineStyle:initial": "Sets the initial value of an outline style property",
-  "outlineStyle:inherit":
-    "Inherits the outline style property from its parent element",
-  "outlineStyle:unset":
-    "Sets the distance between an element and its outline to the default value of unset",
-  "outlineWidth:thin": "Sets the width of an outline to a thin line",
-  "outlineWidth:medium": "Sets the width of an outline to a medium thickness",
-  "outlineWidth:thick": "Sets the width of an outline to a thick thickness",
-  "outlineWidth:initial": "Sets the width of an outline to its default value",
-  "outlineWidth:inherit":
-    "Inherits the width of an outline from its parent element",
-  "outlineWidth:unset": "Resets the width of an outline to its default value",
-  "overflow:visible": "Allows content to overflow the container",
-  "overflow:hidden": "Clips content that overflows the container",
-  "overflow:clip":
-    "Clips content that overflows the container and hides the scrollbar",
-  "overflow:scroll":
-    "Allows content to overflow the container and shows a scrollbar when necessary",
-  "overflow:auto":
-    "Automatically sets the overflow property based on the content and container size",
-  "overflow:initial": "Sets the overflow property to its default value",
-  "overflow:inherit": "Inherits the overflow property from its parent element",
-  "overflow:unset": "Resets the overflow property to its initial value",
-  "overflowAnchor:auto":
-    "Sets how the container is anchored when its content overflows",
-  "overflowAnchor:none":
-    "Disables anchoring of the container when its content overflows",
-  "overflowAnchor:initial":
-    "Resets the overflow-anchor property to its initial value",
-  "overflowAnchor:inherit":
-    "Sets the behavior for scrolling overflow content to inherit from the parent element",
-  "overflowAnchor:unset":
-    "Sets the behavior for scrolling overflow content to its default value",
-  "overflowBlock:visible":
-    "Sets the behavior for overflow content in the block axis to be visible",
-  "overflowBlock:hidden":
-    "Sets the behavior for overflow content in the block axis to be hidden",
-  "overflowBlock:clip":
-    "Sets the behavior for overflow content in the block axis to be clipped",
-  "overflowBlock:scroll":
-    "Sets the behavior for overflow content in the block axis to be scrollable",
-  "overflowBlock:auto":
-    "Sets the behavior for overflow content in the block axis to be scrollable if needed",
+    "Sets the space between an outline and the edge of its containing block to its inherited value or 0 if none.",
+  "outlineStyle:auto":
+    "Sets the style of the outline to a style determined by the browser.",
+  "outlineStyle:none": "Removes the outline of an element.",
+  "outlineStyle:hidden": "Same as none except for accessibility purposes.",
+  "outlineStyle:dotted": "Sets the style of the outline to a series of dots.",
+  "outlineStyle:dashed": "Sets the style of the outline to a series of dashes.",
+  "outlineStyle:solid": "Sets the style of the outline to a solid line.",
+  "outlineStyle:double": "Creates a double line outline.",
+  "outlineStyle:groove": "Creates a 3D engraved outline.",
+  "outlineStyle:ridge": "Creates a 3D embossed outline.",
+  "outlineStyle:inset": "Creates an inset style outline.",
+  "outlineStyle:outset": "Creates an outset style outline.",
+  "outlineStyle:initial": "Sets the outline style to default.",
+  "outlineStyle:inherit": "Inherits the outline style from the parent element.",
+  "outlineStyle:unset": "Resets the outline style to its inherited value.",
+  "outlineWidth:thin": "Creates a thin outline.",
+  "outlineWidth:medium": "Creates a medium width outline.",
+  "outlineWidth:thick": "Creates a thick outline.",
+  "outlineWidth:initial": "Sets the outline width to default.",
+  "outlineWidth:inherit": "Inherits the outline width from the parent element.",
+  "outlineWidth:unset": "Resets the outline width to its inherited value.",
+  "overflow:visible": "Content overflows the element box.",
+  "overflow:hidden": "Hides the content that overflows the element box.",
+  "overflow:clip": "Clips the content with no scrollbars.",
+  "overflow:scroll": "Adds scrollbars if content overflows.",
+  "overflow:auto": "Adds scrollbars only if content overflows.",
+  "overflow:initial": "Sets the default value for an element.",
+  "overflow:inherit": "Inherits overflow value from parent element.",
+  "overflow:unset": "Sets the value to its natural behavior.",
+  "overflowAnchor:auto": "Automatically chooses the best anchor point.",
+  "overflowAnchor:none": "No anchor point is used.",
+  "overflowAnchor:initial": "Sets the default value for an element.",
+  "overflowAnchor:inherit": "Inherits from the parent element.",
+  "overflowAnchor:unset": "Sets the value to its natural behavior.",
+  "overflowBlock:visible": "Lets the content overflow the block.",
+  "overflowBlock:hidden": "Clips the content at the block's edge.",
+  "overflowBlock:clip": "Refuses to paint at or outside the block.",
+  "overflowBlock:scroll": "Adds scrollbars when content overflows.",
+  "overflowBlock:auto": "Adds scrollbars if content overflows.",
   "overflowBlock:initial":
-    "Sets the behavior for overflow content in the block axis to its initial value",
+    "Specifies the default value for the overflow-block property.",
   "overflowBlock:inherit":
-    "Sets the behavior for scrolling overflow content in the block axis to inherit from the parent element",
+    "Specifies that the value of the overflow-block property should be inherited from its parent element.",
   "overflowBlock:unset":
-    "Sets the behavior for scrolling overflow content in the block axis to its default value",
+    "Specifies that the value of the overflow-block property should be inherited if possible, or else behave like auto.",
   "overflowClipMargin:content-box":
-    "Sets the box model area for clipping overflow content to the content box",
+    "Specifies that the overflow area should not include the element's padding, only its content box.",
   "overflowClipMargin:padding-box":
-    "Sets the box model area for clipping overflow content to the padding box",
+    "Specifies that the overflow area should include the element's padding box, but not its border.",
   "overflowClipMargin:border-box":
-    "Sets the box model area for clipping overflow content to the border box",
+    "Specifies that the overflow area should include the element's entire box, including its border.",
   "overflowClipMargin:initial":
-    "Sets the box model area for clipping overflow content to its initial value",
+    "Specifies the default value for the overflow-clip-margin property.",
   "overflowClipMargin:inherit":
-    "Sets the box model area for clipping overflow content to inherit from the parent element",
+    "Specifies that the value of the overflow-clip-margin property should be inherited from its parent element.",
   "overflowClipMargin:unset":
-    "Sets the box model area for clipping overflow content to its default value",
+    "Specifies that the value of the overflow-clip-margin property should be inherited if possible, or else behave like auto.",
   "overflowInline:visible":
-    "Sets the behavior of content that overflows the inline axis to be visible",
+    "Specifies that the content is not clipped and may be rendered outside the element's box.",
   "overflowInline:hidden":
-    "Sets the behavior of content that overflows the inline axis to be hidden",
+    "Specifies that the content is clipped and not visible outside the element's box.",
   "overflowInline:clip":
-    "Sets the behavior of content that overflows the inline axis to be clipped",
+    "Specifies that the content is clipped and not visible outside the element's box.",
   "overflowInline:scroll":
-    "Sets the behavior of content that overflows the inline axis to be scrollable",
+    "Specifies that the content is clipped and a scrollbar is added to see the rest of the content.",
   "overflowInline:auto":
-    "Sets the behavior of content that overflows the inline axis to be scrollable if needed",
+    "Specifies that the content is clipped if necessary and a scrollbar is added to see the rest of the content.",
   "overflowInline:initial":
-    "Sets the behavior of content that overflows the inline axis to be the default value",
+    "Specifies the default value for the overflow-inline property.",
   "overflowInline:inherit":
-    "Inherits the behavior of the parent element for content that overflows the inline axis",
+    "Specifies that the value of the overflow-inline property should be inherited from its parent element.",
   "overflowInline:unset":
-    "Unsets the behavior of content that overflows the inline axis to the default value",
+    "The inline content is not clipped and it flows out of the container.",
   "overflowWrap:normal":
-    "Sets the behavior of text that overflows the container to be normal",
+    "Breaks words only when necessary, keeping whole words together.",
   "overflowWrap:break-word":
-    "Sets the behavior of text that overflows the container to break to the next line",
+    "Breaks words at any character, when they exceed the container width.",
   "overflowWrap:anywhere":
-    "Sets the behavior of text that overflows the container to break anywhere, not just at word boundaries",
-  "overflowWrap:initial":
-    "Sets the behavior of text that overflows the container to be the default value",
-  "overflowWrap:inherit":
-    "Inherits the behavior of the parent element for text that overflows the container",
-  "overflowWrap:unset":
-    "Unsets the behavior of text that overflows the container to the default value",
+    "Allows word breaking at arbitrary points, including within words.",
+  "overflowWrap:initial": "Sets the default value of a property.",
+  "overflowWrap:inherit": "Inherits a property from its parent element.",
+  "overflowWrap:unset": "Resets to its default value.",
   "overflowX:visible":
-    "Sets the behavior of content that overflows the horizontal axis to be visible",
-  "overflowX:hidden":
-    "Sets the behavior of content that overflows the horizontal axis to be hidden",
+    "The content is not clipped and may be rendered outside the content box.",
+  "overflowX:hidden": "The content is clipped and not visible.",
   "overflowX:clip":
-    "Clips the content that overflows the element's left and right edges",
+    "Creates no scrolling mechanism but clips the content at the borders of the element.",
   "overflowX:scroll":
-    "Adds a horizontal scrollbar to the element if its content overflows its left and right edges",
+    "Creates a scrolling mechanism for the content outside the box.",
   "overflowX:auto":
-    "Adds a horizontal scrollbar to the element if its content overflows its left and right edges, only if necessary",
-  "overflowX:initial":
-    "Sets the horizontal overflow behavior to its default value",
-  "overflowX:inherit":
-    "Inherits the horizontal overflow behavior from its parent element",
-  "overflowX:unset":
-    "Resets the horizontal overflow behavior to its initial value",
+    "Adds a horizontal scrollbar when the content exceeds the borders of the element.",
+  "overflowX:initial": "Sets the default value of a property.",
+  "overflowX:inherit": "Inherits a property from its parent element.",
+  "overflowX:unset": "Resets to its default value.",
   "overflowY:visible":
-    "Displays the content that overflows the element's top and bottom edges",
-  "overflowY:hidden":
-    "Hides the content that overflows the element's top and bottom edges",
-  "overflowY:clip":
-    "Clips the content that overflows the element's top and bottom edges",
+    "The content is not clipped and may be rendered outside the content box.",
+  "overflowY:hidden": "Hides any content that overflows the element.",
+  "overflowY:clip": "Clips any content that overflows the element.",
   "overflowY:scroll":
-    "Adds a vertical scrollbar to the element if its content overflows its top and bottom edges",
+    "Adds a vertical scrollbar when content overflows the element.",
   "overflowY:auto":
-    "Adds a vertical scrollbar to the element if its content overflows its top and bottom edges, only if necessary",
-  "overflowY:initial":
-    "Sets the vertical overflow behavior to its default value",
+    "Adds a vertical scrollbar when content overflows the element, only when necessary.",
+  "overflowY:initial": "Sets the `overflow-y` property to its default value.",
   "overflowY:inherit":
-    "Inherits the vertical overflow behavior from its parent element",
-  "overflowY:unset":
-    "Resets the vertical overflow behavior to its initial value",
+    "Inherits the `overflow-y` property from its parent element.",
+  "overflowY:unset": "Removes any user-defined `overflow-y` value.",
   "overscrollBehavior:contain":
-    "Determines whether or not the browser should allow a user to over-scroll the element's boundaries",
-  "overscrollBehavior:none": "Disables over-scrolling for the element",
+    "Prevents pull-to-refresh and rubber band scrolling outside of the element.",
+  "overscrollBehavior:none":
+    "Disables all overscrolling of the element's content.",
   "overscrollBehavior:auto":
-    "Enables/disables the behavior when scrolling past the edge of a container (auto = default)",
+    "Enables overscrolling of the element's content if there is any.",
   "overscrollBehavior:initial":
-    "Sets the default behavior when scrolling past the edge of a container",
+    "Sets the `overscroll-behavior` property to its default value.",
   "overscrollBehavior:inherit":
-    "Inherits the overscroll behavior from the parent element",
+    "Inherits the `overscroll-behavior` property from its parent element.",
   "overscrollBehavior:unset":
-    "Resets the overscroll behavior to the default value",
+    "Remotes any user-defined `overscroll-behavior` value.",
   "overscrollBehaviorBlock:contain":
-    "Sets the behavior when scrolling past the edge of the container in the block direction (e.g. vertical)",
+    "Disallows scrolling of the vertical axis of the element, unless it's a scroll container.",
   "overscrollBehaviorBlock:none":
-    "Disables the overscroll behavior in the block direction",
+    "Enables rubber-banding of the vertical axis of the element during a paginated sequence.",
   "overscrollBehaviorBlock:auto":
-    "Enables the default overscroll behavior in the block direction",
+    "Enables rubber-banding of the vertical axis of the element, only if there is any overscroll.",
   "overscrollBehaviorBlock:initial":
-    "Sets the default behavior when scrolling past the edge of the container in the block direction",
+    "Default value, scroll of the element is constrained by its parent's scrollable area.",
   "overscrollBehaviorBlock:inherit":
-    "Inherits the overscroll behavior in the block direction from the parent element",
+    "The value is inherited from the parent element.",
   "overscrollBehaviorBlock:unset":
-    "Resets the overscroll behavior in the block direction to the default value",
+    "The value is either `inherit` or `initial` depending on the inherited value.",
   "overscrollBehaviorInline:contain":
-    "Sets the behavior when scrolling past the edge of the container in the inline direction (e.g. horizontal)",
+    "Scroll chaining is disabled when the scroll reaches an end boundary.",
   "overscrollBehaviorInline:none":
-    "Disables the overscroll behavior in the inline direction",
+    "Scroll chaining is disabled in inline direction.",
   "overscrollBehaviorInline:auto":
-    "Enables the default overscroll behavior in the inline direction",
+    "Default value, scroll chaining occurs as normal.",
   "overscrollBehaviorInline:initial":
-    "Sets the default behavior when scrolling past the edge of the container in the inline direction",
+    "Scroll chaining is enabled as normal in inline direction.",
   "overscrollBehaviorInline:inherit":
-    "Inherits the overscroll behavior in the inline direction from the parent element",
+    "The value is inherited from the parent element.",
   "overscrollBehaviorInline:unset":
-    "Resets the overscroll behavior in the inline direction to the default value",
+    "The value is either `inherit` or `initial` depending on the inherited value.",
   "overscrollBehaviorX:contain":
-    "Determines how scrolling is handled horizontally when reaching the edge of an element",
+    "Scroll chaining is disabled when the scroll reaches an end boundary for horizontal direction.",
   "overscrollBehaviorX:none":
-    "Disables horizontal scrolling beyond the edge of an element",
+    "Scroll chaining is disabled in horizontal direction.",
   "overscrollBehaviorX:auto":
-    "Allows horizontal scrolling beyond the edge of an element",
+    "Default value, scroll chaining occurs as normal in horizontal direction.",
   "overscrollBehaviorX:initial":
-    "Resets horizontal scrolling to the default value",
+    "Scroll chaining is enabled as normal in horizontal direction.",
   "overscrollBehaviorX:inherit":
-    "Inherits horizontal scrolling behavior from the parent element",
+    "The value is inherited from the parent element.",
   "overscrollBehaviorX:unset":
-    "Unsets horizontal scrolling behavior to the default value",
+    "The value is either `inherit` or `initial` depending on the inherited value.",
   "overscrollBehaviorY:contain":
-    "Determines how scrolling is handled vertically when reaching the edge of an element",
+    "Scroll chaining is disabled when the scroll reaches an end boundary for vertical direction.",
   "overscrollBehaviorY:none":
-    "Disables vertical scrolling beyond the edge of an element",
+    "Disables overshooting scrolling behavior on the Y axis.",
   "overscrollBehaviorY:auto":
-    "Allows vertical scrolling beyond the edge of an element",
+    "Enables overshooting scrolling behavior on the Y axis.",
   "overscrollBehaviorY:initial":
-    "Resets vertical scrolling to the default value",
+    "Sets the Y axis overshooting behavior to its default value.",
   "overscrollBehaviorY:inherit":
-    "Inherits vertical scrolling behavior from the parent element",
+    "Sets the Y axis overshooting behavior to be the same as its parent.",
   "overscrollBehaviorY:unset":
-    "Unsets vertical scrolling behavior to the default value",
+    "Sets the Y axis overshooting behavior to its inherited value, or default value if there is no inherited value.",
   "paddingBlockEnd:initial":
-    "Resets the block-end padding to the default value",
+    "Sets the end padding of a block-level element to its default value.",
   "paddingBlockEnd:inherit":
-    "Inherits the block-end padding from the parent element",
-  "paddingBlockEnd:unset": "Unsets the block-end padding to the default value",
+    "Sets the end padding of a block-level element to be the same as its parent.",
+  "paddingBlockEnd:unset":
+    "Sets the end padding of a block-level element to its inherited value, or default value if there is no inherited value.",
   "paddingBlockStart:initial":
-    "Resets the block-start padding to the default value",
+    "Sets the start padding of a block-level element to its default value.",
   "paddingBlockStart:inherit":
-    "Sets the amount of padding at the start of the block to the same value as its parent",
-  "paddingBlockStart:unset": "Removes any padding at the start of the block",
+    "Sets the start padding of a block-level element to be the same as its parent.",
+  "paddingBlockStart:unset":
+    "Sets the start padding of a block-level element to its inherited value, or default value if there is no inherited value.",
   "paddingBottom:initial":
-    "Sets the amount of padding at the bottom of the element to the default value",
+    "Sets the bottom padding of an element to its default value.",
   "paddingBottom:inherit":
-    "Sets the amount of padding at the bottom of the element to the same value as its parent",
-  "paddingBottom:unset": "Removes any padding at the bottom of the element",
+    "Sets the bottom padding of an element to be the same as its parent.",
+  "paddingBottom:unset":
+    "Sets the bottom padding of an element to its inherited value, or default value if there is no inherited value.",
   "paddingInlineEnd:initial":
-    "Sets the amount of padding at the end of the inline direction to the default value",
+    "Sets the end padding of an inline-level element to its default value.",
   "paddingInlineEnd:inherit":
-    "Sets the amount of padding at the end of the inline direction to the same value as its parent",
+    "Sets the end padding of an inline-level element to be the same as its parent.",
   "paddingInlineEnd:unset":
-    "Removes any padding at the end of the inline direction",
+    "Removes all padding on the end side of an inline element.",
   "paddingInlineStart:initial":
-    "Sets the amount of padding at the start of the inline direction to the default value",
+    "Sets the padding on the start side of an inline element to its default value.",
   "paddingInlineStart:inherit":
-    "Sets the amount of padding at the start of the inline direction to the same value as its parent",
+    "Sets the padding on the start side of an inline element to the computed value of its parent.",
   "paddingInlineStart:unset":
-    "Removes any padding at the start of the inline direction",
+    "Removes all padding on the start side of an inline element.",
   "paddingLeft:initial":
-    "Sets the amount of padding at the left side of the element to the default value",
+    "Sets the left padding of an element to its default value.",
   "paddingLeft:inherit":
-    "Sets the amount of padding at the left side of the element to the same value as its parent",
-  "paddingLeft:unset": "Removes any padding at the left side of the element",
+    "Sets the left padding of an element to the computed value of its parent.",
+  "paddingLeft:unset": "Removes the left padding of an element.",
   "paddingRight:initial":
-    "Sets the amount of padding at the right side of the element to the default value",
+    "Sets the right padding of an element to its default value.",
   "paddingRight:inherit":
-    "Sets the amount of padding at the right side of the element to the same value as its parent",
-  "paddingRight:unset": "Unsets the padding on the right side of an element",
+    "Sets the right padding of an element to the computed value of its parent.",
+  "paddingRight:unset": "Removes the right padding of an element.",
   "paddingTop:initial":
-    "Sets the padding on the top of an element to its default value",
+    "Sets the top padding of an element to its default value.",
   "paddingTop:inherit":
-    "Inherits the padding on the top of an element from its parent",
-  "paddingTop:unset": "Unsets the padding on the top of an element",
-  "pageBreakAfter:auto":
-    "Sets the page break behavior after an element to automatic",
-  "pageBreakAfter:always":
-    "Sets the page break behavior after an element to always force a page break",
-  "pageBreakAfter:avoid":
-    "Sets the page break behavior after an element to avoid breaking a page",
+    "Sets the top padding of an element to the computed value of its parent.",
+  "paddingTop:unset": "Removes the top padding of an element.",
+  "pageBreakAfter:auto": "Adds a page break after an element if necessary.",
+  "pageBreakAfter:always": "Adds a page break after an element always.",
+  "pageBreakAfter:avoid": "Avoids a page break after an element if possible.",
   "pageBreakAfter:left":
-    "Sets the page break behavior after an element to start a new page on the left side",
+    "Forces a page break after the element, placing the next page left.",
   "pageBreakAfter:right":
-    "Sets the page break behavior after an element to start a new page on the right side",
+    "Forces a page break after the element, placing the next page right.",
   "pageBreakAfter:recto":
-    "Sets the page break behavior after an element to start a new page on the recto side (right in Western languages)",
+    "Forces a page break after the element, placing the next page on a right-hand page.",
   "pageBreakAfter:verso":
-    "Sets the page break behavior after an element to start a new page on the verso side (left in Western languages)",
-  "pageBreakAfter:initial":
-    "Sets the page break behavior after an element to its default value",
-  "pageBreakAfter:inherit":
-    "Inherits the page break behavior after an element from its parent",
-  "pageBreakAfter:unset":
-    "Unsets the page break behavior after an element to allow the browser to decide",
+    "Forces a page break after the element, placing the next page on a left-hand page.",
+  "pageBreakAfter:initial": "Sets the property to its default value `auto`.",
+  "pageBreakAfter:inherit": "Inherits the property from its parent element.",
+  "pageBreakAfter:unset": "Resets the property to its natural value.",
   "pageBreakBefore:auto":
-    "Sets the page break behavior before an element to automatic",
-  "pageBreakBefore:always":
-    "Sets the page break behavior before an element to always force a page break",
-  "pageBreakBefore:avoid": "Avoids page break before element",
-  "pageBreakBefore:left": "Forces page break before element to left page",
-  "pageBreakBefore:right": "Forces page break before element to right page",
-  "pageBreakBefore:recto": "Forces page break before element to recto page",
-  "pageBreakBefore:verso": "Forces page break before element to verso page",
-  "pageBreakBefore:initial": "Sets page break before element to default value",
-  "pageBreakBefore:inherit":
-    "Inherits page break before element from parent element",
-  "pageBreakBefore:unset": "Unsets page break before element",
-  "pageBreakInside:auto":
-    "Sets page break behavior inside element to default value",
-  "pageBreakInside:avoid": "Avoids page break inside element",
-  "pageBreakInside:initial": "Sets page break inside element to default value",
-  "pageBreakInside:inherit":
-    "Inherits page break inside element from parent element",
-  "pageBreakInside:unset": "Unsets page break inside element",
-  "paintOrder:normal":
-    "Sets the painting order of SVG elements to default value",
-  "paintOrder:fill": "Sets the painting order of SVG elements to fill first",
-  "paintOrder:stroke":
-    "Sets the painting order of SVG elements to stroke first",
-  "paintOrder:markers": "Sets the order in which markers should be painted",
-  "paintOrder:initial": "Sets paint order to default",
-  "paintOrder:inherit": "Inherits paint order from parent element",
-  "paintOrder:unset": "Resets paint order to default",
-  "perspective:none": "Defines the perspective from which an element is viewed",
-  "perspective:initial": "Resets perspective to default",
-  "perspective:inherit": "Inherits perspective from parent element",
-  "perspective:unset": "Resets perspective to default",
+    "Determines if a page break should occur before the element.",
+  "pageBreakBefore:always": "Forces a page break before the element.",
+  "pageBreakBefore:avoid": "Avoids a page break before the element.",
+  "pageBreakBefore:left":
+    "Forces a page break before the element, placing the next page left.",
+  "pageBreakBefore:right":
+    "Forces a page break before the element, placing the next page right.",
+  "pageBreakBefore:recto":
+    "Forces a page break before the element, placing the next page on a right-hand page.",
+  "pageBreakBefore:verso":
+    "Forces a page break before the element, placing the next page on a left-hand page.",
+  "pageBreakBefore:initial": "Sets the property to its default value `auto`.",
+  "pageBreakBefore:inherit": "Inherits the property from its parent element.",
+  "pageBreakBefore:unset":
+    "`page-break-before` - Specifies whether a page break is allowed before an element.",
+  "pageBreakInside:auto": "Allows breaks inside the element if necessary.",
+  "pageBreakInside:avoid": "Avoids breaks inside the element if possible.",
+  "pageBreakInside:initial": "Sets the default value.",
+  "pageBreakInside:inherit": "Inherits the property from its parent element.",
+  "pageBreakInside:unset": "Resets to its default value.",
+  "paintOrder:normal": "Renders elements in default order.",
+  "paintOrder:fill": "Renders fills before strokes and markers.",
+  "paintOrder:stroke": "Renders strokes before fills and markers.",
+  "paintOrder:markers":
+    "Renders markers after filling and stroking, regardless of their order in the code.",
+  "paintOrder:initial": "Sets the default value.",
+  "paintOrder:inherit": "Inherits the property from its parent element.",
+  "paintOrder:unset": "Resets to its default value.",
+  "perspective:none": "Disables the perspective.",
+  "perspective:initial": "Sets the default value.",
+  "perspective:inherit": "Inherits the property from its parent element.",
+  "perspective:unset": "perspective: unset - Resets the perspective property.",
   "perspectiveOrigin:left":
-    "Sets the position of the vanishing point for 3D transformations",
+    "perspective-origin: left - Defines the position of the observer.",
   "perspectiveOrigin:center":
-    "Sets the vanishing point to the center of the element for 3D transformations",
+    "perspective-origin: center - Defines the position of the observer.",
   "perspectiveOrigin:right":
-    "Sets the vanishing point to the right of the element for 3D transformations",
+    "perspective-origin: right - Defines the position of the observer.",
   "perspectiveOrigin:top":
-    "Sets the vanishing point to the top of the element for 3D transformations",
+    "perspective-origin: top - Defines the position of the observer.",
   "perspectiveOrigin:bottom":
-    "Sets the vanishing point to the bottom of the element for 3D transformations",
-  "perspectiveOrigin:initial": "Resets the vanishing point to default",
+    "perspective-origin: bottom - Defines the position of the observer.",
+  "perspectiveOrigin:initial":
+    "perspective-origin: initial - Sets the initial value of the property.",
   "perspectiveOrigin:inherit":
-    "Inherits the vanishing point from parent element",
-  "perspectiveOrigin:unset": "Resets the vanishing point to default",
+    "perspective-origin: inherit - Inherits the property from its parent.",
+  "perspectiveOrigin:unset":
+    "perspective-origin: unset - Resets the property to its default value.",
   "pointerEvents:auto":
-    "Allows the element to be interacted with using the mouse pointer",
+    "pointer-events: auto - Specifes that the element should behave as usual.",
   "pointerEvents:none":
-    "Prevents the element from being interacted with using the mouse pointer",
+    "pointer-events: none - Disables all pointer events on the element.",
   "pointerEvents:visiblePainted":
-    "Allows the element to be interacted with using the mouse pointer only on visible parts that have been painted",
+    "pointer-events: visiblePainted - Allows events on visible painted areas.",
   "pointerEvents:visibleFill":
-    "Allows the element to be interacted with using the mouse pointer only on visible parts that have a fill color",
+    "pointer-events: visibleFill - Allows events on visible filled areas.",
   "pointerEvents:visibleStroke":
-    "Allows the element to be interacted with using the mouse pointer only on visible parts that have a stroke color",
+    "pointer-events: visibleStroke - Allows events on visible stroked areas.",
   "pointerEvents:visible":
-    "Allows the element to be interacted with using the mouse pointer on all visible parts",
+    "pointer-events: visible - Allows events on visible areas.",
   "pointerEvents:painted":
-    "Allows the element to be interacted with using the mouse pointer only on parts that have been painted",
-  "pointerEvents:fill":
-    "Allows the element to be interacted with using the mouse pointer only on parts that have a fill color",
-  "pointerEvents:stroke":
-    "Allows the element to be interacted with using the mouse pointer only on parts that have a stroke color",
-  "pointerEvents:all":
-    "Allows the element to be interacted with using the mouse pointer on all parts",
-  "pointerEvents:initial":
-    "Sets the pointer-events property to its default value",
-  "pointerEvents:inherit":
-    "Inherits the pointer-events property from its parent element",
-  "pointerEvents:unset":
-    "Sets the pointer-events property to its initial value",
-  "position:static": "Sets the position of the element to its default position",
+    "pointer-events: painted - Allows events on painted areas.",
+  "pointerEvents:fill": "Only the fill area of the element is clickable",
+  "pointerEvents:stroke": "Only the stroke area of the element is clickable",
+  "pointerEvents:all": "The element and its contents are clickable",
+  "pointerEvents:initial": "The pointer behavior is inherited from the parent",
+  "pointerEvents:inherit": "The pointer behavior is inherited from the parent",
+  "pointerEvents:unset": "The pointer behavior is the default",
+  "position:static": "The element is positioned according to normal flows",
   "position:relative":
-    "Sets the position of the element relative to its normal position",
+    "The element is positioned relative to its normal position",
   "position:absolute":
-    "Sets the position of the element relative to its closest positioned ancestor element or to the containing block",
-  "position:sticky": "Sets an element to be fixed in place on the screen",
-  "position:fixed":
-    "Sets an element to be positioned relative to the browser window",
-  "position:initial": "Resets an element's position to its default value",
-  "position:inherit": "Inherits an element's position from its parent element",
-  "position:unset": "Removes any previously set position value from an element",
-  "quotes:none": "Disables quotation marks for a block of text",
-  "quotes:auto": "Enables automatic quotation marks for a block of text",
+    "The element is positioned relative to its first positioned ancestor",
+  "position:sticky":
+    "The element is positioned relative to the closest scrolling ancestor",
+  "position:fixed": "The element is positioned relative to the browser window",
+  "position:initial": "The position property is set to its default value",
+  "position:inherit":
+    "The position property is inherited from the parent element",
+  "position:unset": "The position property is set to the default value",
+  "quotes:none": "No quotes are added to the content",
+  "quotes:auto": "Quotes are added to the content automatically",
   "quotes:initial":
-    "Resets quotation marks to their default value for a block of text",
+    "Sets the quotes for embedded content marks to their initial value.",
   "quotes:inherit":
-    "Inherits quotation marks from the parent element for a block of text",
-  "quotes:unset":
-    "Removes any previously set quotation mark value from a block of text",
-  "resize:none": "Disables resizing of an element",
+    "Inherits quotes for embedded content marks from the parent element.",
+  "quotes:unset": "Removes any inherited quotes for embedded content marks.",
+  "resize:none": "Prevents resizing of the element in any direction.",
   "resize:both":
-    "Allows resizing of an element in both horizontal and vertical directions",
-  "resize:horizontal":
-    "Allows resizing of an element only in horizontal direction",
-  "resize:vertical": "Allows resizing of an element only in vertical direction",
-  "resize:block": "Allows resizing of an element as a block-level element",
-  "resize:inline": "Allows resizing of an element as an inline-level element",
-  "resize:initial": "Allows or prevents the resizing of an element",
-  "resize:inherit": "Inherits the resize property from its parent element",
-  "resize:unset": "Resets the resize property to its default value",
-  "right:auto":
-    "Sets the position of an element to the right side of its container",
-  "right:initial": "Resets the right property to its default value",
-  "right:inherit": "Inherits the right property from its parent element",
-  "right:unset": "Resets the right property to its initial value",
-  "rotate:none": "Defines a 2D rotation transformation",
-  "rotate:x": "Defines a rotation transformation along the x-axis",
-  "rotate:y": "Defines a rotation transformation along the y-axis",
-  "rotate:z": "Defines a rotation transformation along the z-axis",
-  "rotate:initial": "Resets the rotation property to its initial value",
-  "rotate:inherit": "Inherits the rotation property from its parent element",
-  "rotate:unset": "Resets the rotation property to its default value",
-  "rowGap:normal": "Sets the gap between rows in a grid layout to normal",
-  "rowGap:initial": "Resets the row-gap property to its default value",
-  "rowGap:inherit":
-    "Sets the gap between rows to the same value as the parent element",
-  "rowGap:unset": "Removes the gap between rows",
-  "rubyAlign:start": "Aligns ruby text to the start of the container",
-  "rubyAlign:center": "Centers ruby text within the container",
+    "Allows resizing of the element both horizontally and vertically.",
+  "resize:horizontal": "Allows horizontal resizing of the element only.",
+  "resize:vertical": "Allows vertical resizing of the element only.",
+  "resize:block": "Allows resizing of the element as a block box.",
+  "resize:inline": "Allows resizing of the element as an inline box.",
+  "resize:initial": "Sets resizing for the element to its initial value.",
+  "resize:inherit":
+    "Inherits resizing for the element from the parent element.",
+  "resize:unset": "Removes any inherited resizing for the element.",
+  "right:auto": "Aligns the element to the right of its containing element.",
+  "right:initial":
+    "Sets the right position of the element to its initial value.",
+  "right:inherit":
+    "Inherits the right position of the element from the parent element.",
+  "right:unset": "Removes any inherited right position for the element.",
+  "rotate:none": "Element stays in its initial position.",
+  "rotate:x": "Element is rotated along the x-axis.",
+  "rotate:y": "Element is rotated along the y-axis.",
+  "rotate:z": "Element is rotated along the z-axis.",
+  "rotate:initial": "Element is not rotated.",
+  "rotate:inherit": "Inherits the rotation value from the parent element.",
+  "rotate:unset": "Element uses the browser default value.",
+  "rowGap:normal": "Default gap between rows in a grid.",
+  "rowGap:initial": "Reset to the default gap between rows.",
+  "rowGap:inherit": "Gets the gap value from the parent element.",
+  "rowGap:unset": "Uses the browser default gap between rows.",
+  "rubyAlign:start": "Aligns ruby text to the start of each base element.",
+  "rubyAlign:center": "Centers ruby text over each base element.",
   "rubyAlign:space-between":
-    "Distributes ruby text evenly between the start and end of the container",
-  "rubyAlign:space-around": "Distributes ruby text evenly around the container",
-  "rubyAlign:initial": "Sets ruby alignment to its default value",
+    "Spaces ruby text evenly between each base element.",
+  "rubyAlign:space-around": "Spaces ruby text evenly around each base element.",
+  "rubyAlign:initial": "Resets ruby text alignment to the default value.",
   "rubyAlign:inherit":
-    "Sets ruby alignment to the same value as the parent element",
-  "rubyAlign:unset":
-    "Removes the explicit ruby alignment value, allowing the browser to use its default",
-  "rubyMerge:separate": "Separates ruby text into individual elements",
-  "rubyMerge:collapse": "Collapses ruby text into a single element",
-  "rubyMerge:auto":
-    "Automatically decides whether to separate or collapse ruby text",
-  "rubyMerge:initial": "Sets ruby merge to its default value",
+    "The ruby alignment is inherited from the parent element",
+  "rubyAlign:unset": "The ruby alignment is determined by normal CSS rules",
+  "rubyMerge:separate": "The ruby text is separate from surrounding text",
+  "rubyMerge:collapse": "The ruby text is merged with surrounding text",
+  "rubyMerge:auto": "The ruby text is merged if the browser supports it",
+  "rubyMerge:initial": "The ruby text is separate from surrounding text",
   "rubyMerge:inherit":
-    "Sets ruby merge to the same value as the parent element",
-  "rubyMerge:unset":
-    "Removes the explicit ruby merge value, allowing the browser to use its default",
-  "rubyPosition:alternate":
-    "Alternates ruby text position between the start and end of the container",
-  "rubyPosition:over": "Sets the position of ruby text over the base text",
-  "rubyPosition:under": "Sets the position of ruby text under the base text",
+    "The ruby text merge value is inherited from the parent element",
+  "rubyMerge:unset": "The ruby text merge is determined by normal CSS rules",
+  "rubyPosition:alternate": "Alternate ruby text above and below base text",
+  "rubyPosition:over":
+    "Vertical ruby text above base text, centered relative to it",
+  "rubyPosition:under": "Ruby text under base text",
   "rubyPosition:inter-character":
-    "Sets the position of ruby text between characters of the base text",
-  "rubyPosition:initial": "Sets the default position of ruby text",
+    "Ruby text as annotations to specific characters",
+  "rubyPosition:initial": "The ruby position is above base text",
   "rubyPosition:inherit":
-    "Inherits the position of ruby text from the parent element",
-  "rubyPosition:unset": "Resets the position of ruby text to its default value",
-  "scale:none": "Disables scaling of an element",
-  "scale:initial": "Sets the default scaling of an element",
-  "scale:inherit": "Inherits the scaling of an element from the parent element",
-  "scale:unset": "Resets the scaling of an element to its default value",
-  "scrollbarGutter:auto": "Sets the scrollbar gutter behavior to automatic",
-  "scrollbarGutter:stable": "Sets the scrollbar gutter behavior to stable",
-  "scrollbarGutter:both-edges":
-    "Sets the scrollbar gutter behavior to both edges",
-  "scrollbarGutter:initial": "Sets the default scrollbar gutter behavior",
-  "scrollbarGutter:inherit":
-    "Inherits the scrollbar gutter behavior from the parent element",
+    "The ruby position is inherited from the parent element",
+  "rubyPosition:unset": "The ruby position is determined by normal CSS rules",
+  "scale:none": "The element is not resized",
+  "scale:initial": "Scale is set to its initial value.",
+  "scale:inherit": "Scale is inherited from its parent element.",
+  "scale:unset": "Scale is either inherited or set to its initial value.",
+  "scrollbarGutter:auto": "Gutter appears when necessary.",
+  "scrollbarGutter:stable": "Gutter is always visible.",
+  "scrollbarGutter:both-edges": "Gutter is placed on both edges.",
+  "scrollbarGutter:initial": "Gutter adopts default behavior.",
+  "scrollbarGutter:inherit": "Gutter inherits value from parent.",
   "scrollbarGutter:unset":
-    "Resets the scrollbar gutter behavior to its default value",
-  "scrollbarWidth:auto": "Sets the width of the scrollbar to the default value",
-  "scrollbarWidth:thin": "Sets the width of the scrollbar to a thin value",
-  "scrollbarWidth:none": "Removes the scrollbar from the element",
-  "scrollbarWidth:initial":
-    "Sets the width of the scrollbar to its initial value",
-  "scrollbarWidth:inherit":
-    "Inherits the width of the scrollbar from the parent element",
+    "Gutter is either inherited or adopts default behavior.",
+  "scrollbarWidth:auto": "Width varies by browser or device.",
+  "scrollbarWidth:thin": "Width is set to a thin value.",
+  "scrollbarWidth:none": "Width is set to zero.",
+  "scrollbarWidth:initial": "Width adopts default behavior.",
+  "scrollbarWidth:inherit": "Width inherits value from parent.",
   "scrollbarWidth:unset":
-    "Resets the width of the scrollbar to its default value",
-  "scrollBehavior:auto": "Sets the scrolling behavior to the default value",
-  "scrollBehavior:smooth":
-    "Sets the scrolling behavior to a smooth animated effect",
-  "scrollBehavior:initial": "Sets the scrolling behavior to its initial value",
-  "scrollBehavior:inherit":
-    "Inherits the scrolling behavior from the parent element",
-  "scrollBehavior:unset": "Resets the scrolling behavior to its default value",
-  "scrollMarginBlockStart:initial":
-    "Sets the margin at the start of the scroll snap area to its initial value",
+    "Width is either inherited or adopts default behavior.",
+  "scrollBehavior:auto": "Scroll animation is browser-dependent.",
+  "scrollBehavior:smooth": "Enables a smooth scrolling effect.",
+  "scrollBehavior:initial": "Sets scrolling behavior to default.",
+  "scrollBehavior:inherit": "Inherits scrolling behavior from parent element.",
+  "scrollBehavior:unset":
+    "Sets scrolling behavior to default or inherited value.",
+  "scrollMarginBlockStart:initial": "Sets block-start margin to default.",
   "scrollMarginBlockStart:inherit":
-    "Inherits the margin at the start of the scroll snap area from the parent element",
+    "Inherits block-start margin from parent element.",
   "scrollMarginBlockStart:unset":
-    "Resets the margin at the start of the scroll snap area to its default value",
-  "scrollMarginBlockEnd:initial":
-    "Sets the margin at the end of the scroll snap area to its initial value",
+    "Sets block-start margin to default or inherited value.",
+  "scrollMarginBlockEnd:initial": "Sets block-end margin to default.",
   "scrollMarginBlockEnd:inherit":
-    "Inherits the margin at the end of the scroll snap area from the parent element",
+    "Inherits block-end margin from parent element.",
   "scrollMarginBlockEnd:unset":
-    "Sets the amount of space between the bottom of an element and the bottom of its container to the default value",
-  "scrollMarginBottom:initial":
-    "Sets the amount of space between the bottom of an element and the bottom of its container to the initial value",
-  "scrollMarginBottom:inherit":
-    "Sets the amount of space between the bottom of an element and the bottom of its container to the same value as its parent element",
+    "Sets block-end margin to default or inherited value.",
+  "scrollMarginBottom:initial": "Sets bottom margin to default.",
+  "scrollMarginBottom:inherit": "Inherits bottom margin from parent element.",
   "scrollMarginBottom:unset":
-    "Resets the amount of space between the bottom of an element and the bottom of its container to the default value",
-  "scrollMarginInlineStart:initial":
-    "Sets the amount of space between the start edge of an element and the start edge of its container to the initial value",
+    "Sets bottom margin to default or inherited value.",
+  "scrollMarginInlineStart:initial": "Sets inline-start margin to default.",
   "scrollMarginInlineStart:inherit":
-    "Sets the amount of space between the start edge of an element and the start edge of its container to the same value as its parent element",
+    "Inherits inline-start margin from parent element.",
   "scrollMarginInlineStart:unset":
-    "Resets the amount of space between the start edge of an element and the start edge of its container to the default value",
+    "Sets inline-start margin to default or inherited value.",
   "scrollMarginInlineEnd:initial":
-    "Sets the amount of space between the end edge of an element and the end edge of its container to the initial value",
+    "Sets inline end margin to its default value.",
   "scrollMarginInlineEnd:inherit":
-    "Sets the amount of space between the end edge of an element and the end edge of its container to the same value as its parent element",
+    "Inherits inline end margin from its parent element.",
   "scrollMarginInlineEnd:unset":
-    "Resets the amount of space between the end edge of an element and the end edge of its container to the default value",
-  "scrollMarginLeft:initial":
-    "Sets the amount of space between the left edge of an element and the left edge of its container to the initial value",
-  "scrollMarginLeft:inherit":
-    "Sets the amount of space between the left edge of an element and the left edge of its container to the same value as its parent element",
-  "scrollMarginLeft:unset":
-    "Resets the amount of space between the left edge of an element and the left edge of its container to the default value",
-  "scrollMarginRight:initial":
-    "Sets the amount of space between the right edge of an element and the right edge of its container to the initial value",
-  "scrollMarginRight:inherit":
-    "Sets the amount of space between the right edge of an element and the right edge of its container to the same value as its parent element",
-  "scrollMarginRight:unset":
-    "Resets the amount of space between the right edge of an element and the right edge of its container to the default value",
-  "scrollMarginTop:initial":
-    "Sets the top margin of the scroll snap area to its initial value",
-  "scrollMarginTop:inherit":
-    "Sets the top margin of the scroll snap area to the value of its parent element",
-  "scrollMarginTop:unset":
-    "Sets the top margin of the scroll snap area to its default value",
-  "scrollPaddingBlockStart:auto":
-    "Sets the block start padding of the scroll snap area to automatic calculation",
+    "Resets inline end margin to its inherited value.",
+  "scrollMarginLeft:initial": "Sets left margin to its default value.",
+  "scrollMarginLeft:inherit": "Inherits left margin from its parent element.",
+  "scrollMarginLeft:unset": "Resets left margin to its inherited value.",
+  "scrollMarginRight:initial": "Sets right margin to its default value.",
+  "scrollMarginRight:inherit": "Inherits right margin from its parent element.",
+  "scrollMarginRight:unset": "Resets right margin to its inherited value.",
+  "scrollMarginTop:initial": "Sets top margin to its default value.",
+  "scrollMarginTop:inherit": "Inherits top margin from its parent element.",
+  "scrollMarginTop:unset": "Resets top margin to its inherited value.",
+  "scrollPaddingBlockStart:auto": 'Sets the block start padding to "auto".',
   "scrollPaddingBlockStart:initial":
-    "Sets the block start padding of the scroll snap area to its initial value",
+    "Sets the block start padding to its default value.",
   "scrollPaddingBlockStart:inherit":
-    "Sets the block start padding of the scroll snap area to the value of its parent element",
+    "Inherits the block start padding from its parent element.",
   "scrollPaddingBlockStart:unset":
-    "Sets the block start padding of the scroll snap area to its default value",
+    "Resets the block start padding to its inherited value.",
   "scrollPaddingBlockEnd:auto":
-    "Sets the block end padding of the scroll snap area to automatic calculation",
-  "scrollPaddingBlockEnd:initial":
-    "Sets the block end padding of the scroll snap area to its initial value",
+    "The padding for the bottom of the scroll area adapts to the available space.",
+  "scrollPaddingBlockEnd:initial": "Sets the padding to its default value.",
   "scrollPaddingBlockEnd:inherit":
-    "Sets the block end padding of the scroll snap area to the value of its parent element",
+    "The padding will be inherited from its parent element.",
   "scrollPaddingBlockEnd:unset":
-    "Sets the block end padding of the scroll snap area to its default value",
+    "The padding will be set to its inherited value if any, otherwise it will be set to its initial value (`0`).",
   "scrollPaddingBottom:auto":
-    "Sets the bottom padding of the scroll snap area to automatic calculation",
-  "scrollPaddingBottom:initial":
-    "Sets the bottom padding of the scroll snap area to its initial value",
+    "The padding for the bottom of the scroll area adapts to the available space.",
+  "scrollPaddingBottom:initial": "Sets the padding to its default value.",
   "scrollPaddingBottom:inherit":
-    "Sets the bottom padding of the scroll snap area to the value of its parent element",
+    "The padding will be inherited from its parent element.",
   "scrollPaddingBottom:unset":
-    "Sets the bottom padding of the scroll snap area to its default value",
+    "The padding will be set to its inherited value if any, otherwise it will be set to its initial value (`0`).",
   "scrollPaddingInlineStart:auto":
-    "Sets the inline start padding of the scroll snap area to automatic calculation",
-  "scrollPaddingInlineStart:initial":
-    "Sets the amount of padding to be added to the start of a horizontally scrolling container",
+    "The padding for the start of the scroll area adapts to available space.",
+  "scrollPaddingInlineStart:initial": "Sets the padding to its default value.",
   "scrollPaddingInlineStart:inherit":
-    "Inherits the scroll-padding-inline-start property from its parent element",
+    "The padding will be inherited from its parent element.",
   "scrollPaddingInlineStart:unset":
-    "Resets the scroll-padding-inline-start property to its default value",
+    "The padding will be set to its inherited value if any, otherwise it will be set to its initial value (`0`).",
   "scrollPaddingInlineEnd:auto":
-    "Sets the amount of padding to be added to the end of a horizontally scrolling container",
-  "scrollPaddingInlineEnd:initial":
-    "Sets the scroll-padding-inline-end property to its default value",
+    "The padding for the end of the scroll area adapts to available space.",
+  "scrollPaddingInlineEnd:initial": "Sets the padding to its default value.",
   "scrollPaddingInlineEnd:inherit":
-    "Inherits the scroll-padding-inline-end property from its parent element",
+    "The padding will be inherited from its parent element.",
   "scrollPaddingInlineEnd:unset":
-    "Resets the scroll-padding-inline-end property to its default value",
+    "The padding will be set to its inherited value if any, otherwise it will be set to its initial value (`0`).",
   "scrollPaddingLeft:auto":
-    "Sets the amount of padding to be added to the left side of a scrolling container",
-  "scrollPaddingLeft:initial":
-    "Sets the scroll-padding-left property to its default value",
-  "scrollPaddingLeft:inherit":
-    "Inherits the scroll-padding-left property from its parent element",
+    "Automatically sets the padding-left to allow for scrollbars.",
+  "scrollPaddingLeft:initial": "Sets padding-left to its default value.",
+  "scrollPaddingLeft:inherit": "Sets padding-left to the value of its parent.",
   "scrollPaddingLeft:unset":
-    "Resets the scroll-padding-left property to its default value",
+    "Sets padding-left to its inherited value, or default if none.",
   "scrollPaddingRight:auto":
-    "Sets the amount of padding to be added to the right side of a scrolling container",
-  "scrollPaddingRight:initial":
-    "Sets the scroll-padding-right property to its default value",
+    "Automatically sets the padding-right to allow for scrollbars.",
+  "scrollPaddingRight:initial": "Sets padding-right to its default value.",
   "scrollPaddingRight:inherit":
-    "Inherits the scroll-padding-right property from its parent element",
+    "Sets padding-right to the value of its parent.",
   "scrollPaddingRight:unset":
-    "Resets the scroll-padding-right property to its default value",
+    "Sets padding-right to its inherited value, or default if none.",
   "scrollPaddingTop:auto":
-    "Sets the amount of padding to be added to the top of a scrolling container",
-  "scrollPaddingTop:initial":
-    "Sets the amount of padding added to the top of a scrollable element to its initial value",
-  "scrollPaddingTop:inherit":
-    "Sets the amount of padding added to the top of a scrollable element to the value of its parent element",
+    "Automatically sets the padding-top to allow for scrollbars.",
+  "scrollPaddingTop:initial": "Sets padding-top to its default value.",
+  "scrollPaddingTop:inherit": "Sets padding-top to the value of its parent.",
   "scrollPaddingTop:unset":
-    "Sets the amount of padding added to the top of a scrollable element to its default value",
-  "scrollSnapAlign:none":
-    "Disables snapping of scroll positions to specific alignments",
+    "Sets padding-top to its inherited value, or default if none.",
+  "scrollSnapAlign:none": "Disables snapping behavior.",
   "scrollSnapAlign:start":
-    "Snaps the scroll position to the start of the nearest snap point",
+    "Snaps to the start of each snap area, respecting directionality.",
   "scrollSnapAlign:end":
-    "Snaps the scroll position to the end of the nearest snap point",
-  "scrollSnapAlign:center":
-    "Snaps the scroll position to the center of the nearest snap point",
-  "scrollSnapAlign:initial":
-    "Sets the alignment of snap points to its initial value",
+    "Snaps to the end of each snap area, respecting directionality.",
+  "scrollSnapAlign:center": "Snaps to the center of each snap area.",
+  "scrollSnapAlign:initial": "The snap point gets aligned to the nearest one.",
   "scrollSnapAlign:inherit":
-    "Sets the alignment of snap points to the value of its parent element",
+    "Inherits the scroll-snap-align value from the parent element.",
   "scrollSnapAlign:unset":
-    "Sets the alignment of snap points to its default value",
-  "scrollSnapStop:normal":
-    "Determines whether or not to stop on snap points while scrolling",
-  "scrollSnapStop:always": "Always stops on snap points while scrolling",
+    "Resets the scroll-snap-align value to its default value.",
+  "scrollSnapStop:normal": "Snap points act normally.",
+  "scrollSnapStop:always":
+    "Interpolates the scroll position to the nearest snap point.",
   "scrollSnapStop:initial":
-    "Sets snap point stopping behavior to its initial value",
+    "Resets the scroll-snap-stop value to its default value.",
   "scrollSnapStop:inherit":
-    "Sets snap point stopping behavior to the value of its parent element",
+    "Inherits the scroll-snap-stop value from the parent element.",
   "scrollSnapStop:unset":
-    "Sets snap point stopping behavior to its default value",
-  "scrollSnapType:none": "Disables snap point behavior for scroll snapping",
-  "scrollSnapType:x":
-    "Defines how elements snap into place during scrolling in the horizontal direction",
-  "scrollSnapType:y":
-    "Defines how elements snap into place during scrolling in the vertical direction",
+    "Resets the scroll-snap-stop value to its default value.",
+  "scrollSnapType:none": "No snapping is performed.",
+  "scrollSnapType:x": "The scroll-snap-align applies on the horizontal axis.",
+  "scrollSnapType:y": "The scroll-snap-align applies on the vertical axis.",
   "scrollSnapType:block":
-    "Defines how elements snap into place when the scrolling container is a block-level element",
+    "The scroll-snap-align applies to the whole block container.",
   "scrollSnapType:inline":
-    "Defines how elements snap into place when the scrolling container is an inline-level element",
-  "scrollSnapType:both":
-    "Defines how elements snap into place during scrolling in both horizontal and vertical directions",
-  "scrollSnapType:mandatory":
-    "Forces elements to snap into place during scrolling",
+    "The scroll-snap-align applies to the inline content.",
+  "scrollSnapType:both": "The scroll-snap-align applies on both axes.",
+  "scrollSnapType:mandatory": "Forces snap points to snap.",
   "scrollSnapType:proximity":
-    "Defines how elements snap into place based on their proximity to a snap point",
-  "scrollSnapType:initial": "Sets the scroll-snap-type to its default value",
+    "Snap points must be at a certain proximity to snap.",
+  "scrollSnapType:initial": "Defines how scroll positions are snapped.",
   "scrollSnapType:inherit":
-    "Inherits the scroll-snap-type property from its parent element",
+    "Inherits the scroll-snapping type from the parent element.",
   "scrollSnapType:unset":
-    "Resets the scroll-snap-type property to its default value",
+    "Resets the scroll-snapping type to its initial value.",
   "scrollTimelineAxis:block":
-    "Defines the scroll timeline axis for scroll-linked animations to be block",
+    "Defines the scrolling axis for a scroll timeline.",
   "scrollTimelineAxis:inline":
-    "Defines the scroll timeline axis for scroll-linked animations to be inline",
+    "Defines the scrolling axis for a scroll timeline.",
   "scrollTimelineAxis:vertical":
-    "Defines the scroll timeline axis for scroll-linked animations to be vertical",
+    "Defines the scrolling axis for a scroll timeline.",
   "scrollTimelineAxis:horizontal":
-    "Defines the scroll timeline axis for scroll-linked animations to be horizontal",
-  "scrollTimelineAxis:initial":
-    "Sets the scroll-timeline-axis to its default value",
+    "Defines the scrolling axis for a scroll timeline.",
+  "scrollTimelineAxis:initial": "Sets the scrolling axis to its default value.",
   "scrollTimelineAxis:inherit":
-    "Inherits the scroll-timeline-axis property from its parent element",
-  "scrollTimelineAxis:unset":
-    "Sets the scroll timeline axis to its initial value",
-  "scrollTimelineName:none": "Removes the scroll timeline name",
+    "Inherits the scrolling axis from the parent element.",
+  "scrollTimelineAxis:unset": "Resets the scrolling axis to its initial value.",
+  "scrollTimelineName:none": "Removes a previously set scroll timeline.",
   "scrollTimelineName:initial":
-    "Sets the scroll timeline name to its initial value",
+    "Sets the scroll timeline to its default value.",
   "scrollTimelineName:inherit":
-    "Inherits the scroll timeline name from its parent element",
+    "Inherits the scroll timeline name from the parent element.",
   "scrollTimelineName:unset":
-    "Resets the scroll timeline name to its default value",
+    "Resets the scroll timeline name to its initial value.",
   "shapeImageThreshold:initial":
-    "Sets the threshold for alpha channel of images to its initial value",
+    "Sets the transparency threshold for the `shape-outside` property.",
   "shapeImageThreshold:inherit":
-    "Inherits the threshold for alpha channel of images from its parent element",
+    "Inherits the transparency threshold from the parent element.",
   "shapeImageThreshold:unset":
-    "Resets the threshold for alpha channel of images to its default value",
-  "shapeMargin:initial": "Sets the margin shape to its initial value",
-  "shapeMargin:inherit": "Inherits the margin shape from its parent element",
-  "shapeMargin:unset": "Resets the margin shape to its default value",
-  "shapeOutside:none": "Removes the shape that wraps around an element",
-  "shapeOutside:border-box":
-    "Sets the shape that wraps around an element to the border box",
+    "Specifies the alpha channel threshold used to extract shape.",
+  "shapeMargin:initial": "Specifies the margin shape of an element.",
+  "shapeMargin:inherit":
+    "Inherits the shape-margin property from its parent element.",
+  "shapeMargin:unset": "Resets the margin shape to its default value.",
+  "shapeOutside:none": "No shape is created around an element.",
+  "shapeOutside:border-box": "The shape extends to border box of the element.",
   "shapeOutside:padding-box":
-    "Sets the shape that wraps around an element to the padding box",
+    "The shape extends to padding box of the element.",
   "shapeOutside:content-box":
-    "Sets the shape that wraps around an element to the content box",
-  "shapeOutside:margin-box":
-    "Sets the shape that wraps around an element to the margin box",
-  "shapeOutside:initial": "Defines the shape that content flows around",
-  "shapeOutside:inherit": "Inherits the shape from its parent element",
-  "shapeOutside:unset": "Resets the shape to its initial value",
-  "tabSize:initial": "Sets the size of tab characters in a block of text",
-  "tabSize:inherit": "Inherits the tab size from its parent element",
-  "tabSize:unset": "Resets the tab size to its initial value",
-  "tableLayout:auto": "Sets the layout algorithm used for a table",
-  "tableLayout:fixed": "Forces the table to use a fixed layout algorithm",
-  "tableLayout:initial": "Resets the table layout to its initial value",
-  "tableLayout:inherit": "Inherits the table layout from its parent element",
-  "tableLayout:unset": "Resets the table layout to its initial value",
-  "textAlign:start": "Aligns text to the start of the line",
-  "textAlign:end": "Aligns text to the end of the line",
-  "textAlign:left": "Aligns text to the left side of the container",
-  "textAlign:right": "Aligns text to the right side of the container",
-  "textAlign:center": "Centers text horizontally within the container",
+    "The shape extends to content box of the element.",
+  "shapeOutside:margin-box": "The shape extends to margin box of the element.",
+  "shapeOutside:initial": "Sets the shape to its default value.",
+  "shapeOutside:inherit":
+    "Inherits the shape-outside property from its parent element.",
+  "shapeOutside:unset": "Resets the shape to its default value.",
+  "tabSize:initial":
+    "Specifies the default tab size for the text within an element.",
+  "tabSize:inherit": "Inherits the tab-size property from its parent element.",
+  "tabSize:unset": "Resets the tab-size property to its default value.",
+  "tableLayout:auto": "Default table layout algorithm is used for the table.",
+  "tableLayout:fixed": "Table layout algorithm uses fixed layout.",
+  "tableLayout:initial": "Sets default value for table-layout.",
+  "tableLayout:inherit":
+    "The value of the table-layout property is inherited from its parent element.",
+  "tableLayout:unset":
+    "The value of this property is inherited from the parent element if it exists, or else it is set to its initial value.",
+  "textAlign:start": "Aligns the text at the start of the line.",
+  "textAlign:end": "Aligns the text at the end of the line.",
+  "textAlign:left": "`text-align: left`- Aligns the text to the left.",
+  "textAlign:right": "`text-align: right`- Aligns the text to the right.",
+  "textAlign:center": "`text-align: center`- Centers the text.",
   "textAlign:justify":
-    "Aligns text to both left and right margins, creating equal spacing between words",
+    "`text-align: justify`- Stretches the text to fit the whole line.",
   "textAlign:match-parent":
-    "Aligns text to the same position as its parent element",
-  "textAlign:initial": "Resets the text alignment to its default value",
-  "textAlign:inherit": "Inherits the text alignment from its parent element",
-  "textAlign:unset": "Removes any previously set text alignment",
+    "`text-align: match-parent`- Aligns the text to its parent element.",
+  "textAlign:initial":
+    "`text-align: initial`- Sets the text alignment to the default value.",
+  "textAlign:inherit":
+    "`text-align: inherit`- The text alignment is inherited from its parent element.",
+  "textAlign:unset":
+    "`text-align: unset`- The text alignment is set to its default value or inherited from its parent element.",
   "textAlignLast:auto":
-    "Sets the alignment of the last line of text in a block container",
+    "`text-align-last: auto`- Aligns the last line of text to the left",
   "textAlignLast:start":
-    "Aligns the last line of text to the left edge of the container",
+    "`text-align-last: start`- Aligns the last line of text at the start of the paragraph.",
   "textAlignLast:end":
-    "Aligns the last line of text to the right edge of the container",
-  "textAlignLast:left": "Aligns the last line of text to the left margin",
-  "textAlignLast:right": "Aligns the last line of text to the right margin",
-  "textAlignLast:center": "Centers the last line of text",
+    "Aligns the last line of a text block to the right side.",
+  "textAlignLast:left":
+    "Aligns the last line of a text block to the left side.",
+  "textAlignLast:right":
+    "Aligns the last line of a text block to the right side.",
+  "textAlignLast:center": "Aligns the last line of a text block to the center.",
   "textAlignLast:justify":
-    "Justifies the last line of text, creating equal spacing between words",
-  "textAlignLast:initial":
-    "Resets the alignment of the last line of text to its default value",
+    "Stretches the last line of a text block to fill the available width.",
+  "textAlignLast:initial": "Sets the text alignment to its default value.",
   "textAlignLast:inherit":
-    "Inherits the alignment of the last line of text from its parent element",
-  "textAlignLast:unset":
-    "Removes any previously set alignment of the last line of text",
+    "Inherits the text alignment property from its parent element.",
+  "textAlignLast:unset": "Resets the text alignment to its inherited value.",
   "textCombineUpright:none":
-    "Disables the combination of characters in vertical text flow",
-  "textCombineUpright:all": "Combines upright text in all characters",
-  "textCombineUpright:digits": "Combines upright text only in digits",
+    "Displays upright text as usual (without combining characters).",
+  "textCombineUpright:all":
+    "Combines all upright text, including punctuation and symbols.",
+  "textCombineUpright:digits": "Combines only digits in upright text.",
   "textCombineUpright:initial":
-    "Resets text-combine-upright to its default value",
+    "Sets the upright text combination to its default value.",
   "textCombineUpright:inherit":
-    "Inherits text-combine-upright from the parent element",
+    "Inherits the upright text combination property from its parent element.",
   "textCombineUpright:unset":
-    "Unsets text-combine-upright, allowing inheritance from the parent or default value",
-  "textDecorationLine:none": "Removes text decoration",
-  "textDecorationLine:underline": "Adds underline text decoration",
-  "textDecorationLine:overline": "Adds overline text decoration",
-  "textDecorationLine:line-through": "Adds line-through text decoration",
-  "textDecorationLine:blink": "Adds blink text decoration",
+    "Resets the upright text combination to its inherited value.",
+  "textDecorationLine:none": "No text decoration is applied.",
+  "textDecorationLine:underline": "Adds an underline decoration to the text.",
+  "textDecorationLine:overline": "Adds an overline to the text.",
+  "textDecorationLine:line-through": "Adds a line through the text.",
+  "textDecorationLine:blink":
+    "Makes the text blink on and off (not widely supported).",
   "textDecorationLine:spelling-error":
-    "Adds red underline to text with spelling errors",
+    "Underlines text in red to indicate spelling error.",
   "textDecorationLine:grammar-error":
-    "Adds green underline to text with grammar errors",
+    "Underlines text in green to indicate grammar error.",
   "textDecorationLine:initial":
-    "Resets text-decoration-line to its default value",
+    "Sets the text decoration to its default value.",
   "textDecorationLine:inherit":
-    "Inherits text-decoration-line from the parent element",
+    "Inherits the text decoration from the parent element.",
   "textDecorationLine:unset":
-    "Unsets text-decoration-line, allowing inheritance from the parent or default value",
-  "textDecorationSkip:none":
-    "Determines which parts of the text decoration should not be applied",
+    "`text-decoration-line: unset`- Removes the text decoration if it has been set for the parent element.",
+  "textDecorationSkip:none": "No part of the text decoration is skipped.",
   "textDecorationSkip:objects":
-    "Skips adding underline or line-through decoration on objects in text",
-  "textDecorationSkip:spaces":
-    "Skips adding underline or line-through decoration on spaces in text",
-  "textDecorationSkip:leading-spaces":
-    "Skips adding underline or line-through decoration on leading spaces in text",
-  "textDecorationSkip:trailing-spaces":
-    "Skips adding underline or line-through decoration on trailing spaces in text",
-  "textDecorationSkip:edges":
-    "Skips adding underline or line-through decoration on edges in text",
+    "Skips any element with an object-fit or clip property.",
+  "textDecorationSkip:spaces": "Skips white spaces.",
+  "textDecorationSkip:leading-spaces": "Skips leading white spaces.",
+  "textDecorationSkip:trailing-spaces": "Skips trailing white spaces.",
+  "textDecorationSkip:edges": "Skips the edges of inline boxes.",
   "textDecorationSkip:box-decoration":
-    "Skips adding underline or line-through decoration on box decorations in text",
+    "Skips any element with a box-decoration-break property.",
   "textDecorationSkip:initial":
-    "Sets the text decoration skip property to its default value",
+    "Sets the text decoration skip to its default value.",
   "textDecorationSkip:inherit":
-    "Inherits the text decoration skip property from its parent element",
+    "Inherits the text-decoration-skip value from the parent element.",
   "textDecorationSkip:unset":
-    "Resets the text decoration skip property to its default value",
+    "Removes the text-decoration-skip value defined in the parent element.",
   "textDecorationSkipInk:auto":
-    "Controls whether the ink in text should be skipped when adding underline or line-through decoration automatically",
-  "textDecorationSkipInk:all":
-    "Skips adding underline or line-through decoration on all ink in text",
-  "textDecorationSkipInk:none":
-    "Does not skip any ink in text when adding underline or line-through decoration",
+    "Allows the browser to determine what part of the text should be skipped.",
+  "textDecorationSkipInk:all": "Skips the entire ink area of the text.",
+  "textDecorationSkipInk:none": "Text decoration is not skipped.",
   "textDecorationSkipInk:initial":
-    "Sets the text decoration skip ink property to its default value",
+    "Sets the text decoration skip ink to its default value.",
   "textDecorationSkipInk:inherit":
-    "Inherits the text decoration skip ink property from its parent element",
+    "Inherits the text-decoration-skip-ink value from the parent element.",
   "textDecorationSkipInk:unset":
-    "Resets the text decoration skip ink property to its default value",
-  "textDecorationStyle:solid": "Sets the style of the text decoration to solid",
-  "textDecorationStyle:double": "Creates a double underline for text",
-  "textDecorationStyle:dotted": "Creates a dotted underline for text",
-  "textDecorationStyle:dashed": "Creates a dashed underline for text",
-  "textDecorationStyle:wavy": "Creates a wavy underline for text",
+    "Removes the text-decoration-skip-ink value from the parent element.",
+  "textDecorationStyle:solid": "Creates a solid underline for text decoration.",
+  "textDecorationStyle:double":
+    "Creates a double underline for text decoration.",
+  "textDecorationStyle:dotted":
+    "Creates a dotted underline for text decoration.",
+  "textDecorationStyle:dashed":
+    "Creates a dashed underline for text decoration.",
+  "textDecorationStyle:wavy": "Creates a wavy underline for text decoration.",
   "textDecorationStyle:initial":
-    "Sets the text decoration style to the default value",
+    "Sets the text decoration style to its default value.",
   "textDecorationStyle:inherit":
-    "Inherits the text decoration style from the parent element",
+    "Inherits the text-decoration-style value from the parent element.",
   "textDecorationStyle:unset":
-    "Resets the text decoration style to the default value",
-  "textDecorationThickness:auto":
-    "Sets the thickness of the text decoration to adjust automatically",
-  "textDecorationThickness:from-font":
-    "Sets the thickness of the text decoration to be based on the font size",
-  "textDecorationThickness:initial":
-    "Sets the thickness of the text decoration to the default value",
+    "Removes the text-decoration-style value defined in the parent element.",
+  "textDecorationThickness:auto": "Thickness determined by the browser.",
+  "textDecorationThickness:from-font": "Thickness based on the font size.",
+  "textDecorationThickness:initial": "Use default value.",
   "textDecorationThickness:inherit":
-    "Inherits the thickness of the text decoration from the parent element",
-  "textDecorationThickness:unset":
-    "Resets the thickness of the text decoration to the default value",
-  "textEmphasisPosition:over":
-    "Positions the text emphasis mark above the text",
-  "textEmphasisPosition:under":
-    "Positions the text emphasis mark below the text",
-  "textEmphasisPosition:right":
-    "Positions the text emphasis mark to the right of the text",
-  "textEmphasisPosition:left":
-    "Positions the text emphasis mark to the left of the text",
-  "textEmphasisPosition:initial":
-    "Sets the position of text emphasis marks to the default position",
-  "textEmphasisPosition:inherit":
-    "Inherits the position of text emphasis marks from the parent element",
-  "textEmphasisPosition:unset":
-    "Resets the position of text emphasis marks to the default value",
-  "textEmphasisStyle:none": "Removes text emphasis marks from the text",
-  "textEmphasisStyle:filled":
-    "Fills the text emphasis marks with the current text color",
-  "textEmphasisStyle:open": "Leaves the text emphasis marks open",
-  "textEmphasisStyle:dot": "Displays text emphasis marks as dots",
-  "textEmphasisStyle:circle": "Displays text emphasis marks as circles",
+    "Inherits the value of the parent element.",
+  "textDecorationThickness:unset": "Resets the value to its default.",
+  "textEmphasisPosition:over": "Emphasis mark above the text.",
+  "textEmphasisPosition:under": "Emphasis mark below the text.",
+  "textEmphasisPosition:right": "Emphasis mark to the right of the text.",
+  "textEmphasisPosition:left": "Emphasis mark to the left of the text.",
+  "textEmphasisPosition:initial": "Use default value.",
+  "textEmphasisPosition:inherit": "Inherits the value of the parent element.",
+  "textEmphasisPosition:unset": "Resets the value to its default.",
+  "textEmphasisStyle:none": "No emphasis mark.",
+  "textEmphasisStyle:filled": "Filled emphasis mark.",
+  "textEmphasisStyle:open": "Hollow emphasis mark.",
+  "textEmphasisStyle:dot": "Small dot emphasis mark.",
+  "textEmphasisStyle:circle": "Adds a circular emphasis mark to text.",
   "textEmphasisStyle:double-circle":
-    "Displays text emphasis marks as double circles",
-  "textEmphasisStyle:triangle": "Displays text emphasis marks as triangles",
-  "textEmphasisStyle:sesame": "Displays text emphasis marks as sesame seeds",
+    "Adds double circular emphasis mark to text.",
+  "textEmphasisStyle:triangle": "Adds a triangular emphasis mark to text.",
+  "textEmphasisStyle:sesame": "Adds a sesame seed emphasis mark to text.",
   "textEmphasisStyle:initial":
-    "Sets the style of text emphasis marks to the default value",
+    "Sets the text emphasis style to its default value.",
   "textEmphasisStyle:inherit":
-    "Inherits the style of text emphasis marks from the parent element",
+    "Inherits the text emphasis style from its parent element.",
   "textEmphasisStyle:unset":
-    "Resets the style of text emphasis marks to the default value",
-  "textIndent:hanging": "Indents the first line of a block of text",
-  "textIndent:each-line": "Indents each line of a block of text",
-  "textIndent:initial":
-    "Sets the amount of space between the beginning of a line of text and the beginning of the first letter",
+    "Resets the text emphasis style to its inherited value or initial if none.",
+  "textIndent:hanging":
+    "The first line of text indents to the left of the subsequent lines.",
+  "textIndent:each-line": "Text wraps and subsequent lines indent.",
+  "textIndent:initial": "Sets the text indentation to its default value.",
   "textIndent:inherit":
-    "Inherits the text-indent property from the parent element",
-  "textIndent:unset": "Resets the text-indent property to its default value",
-  "textJustify:auto":
-    "Specifies how text should be justified when there is extra space within the content box",
+    "Inherits the text indentation from its parent element.",
+  "textIndent:unset":
+    "Resets the text indentation to its inherited value or initial if none.",
+  "textJustify:auto": "Default justification algorithm is used.",
   "textJustify:inter-character":
-    "Specifies that each character should be treated as a separate justification opportunity",
-  "textJustify:inter-word":
-    "Specifies that only spaces between words should be justification opportunities",
-  "textJustify:none": "Specifies that text should not be justified",
-  "textJustify:initial":
-    "Resets the text-justify property to its default value",
-  "textJustify:inherit":
-    "Inherits the text-justify property from the parent element",
-  "textJustify:unset": "Resets the text-justify property to its initial value",
-  "textOrientation:mixed":
-    "Specifies the orientation of characters within a line of text",
-  "textOrientation:upright":
-    "Specifies that characters should be oriented vertically",
-  "textOrientation:sideways":
-    "Specifies that characters should be oriented sideways",
+    "Character-by-character justification is used.",
+  "textJustify:inter-word": "Word-by-word justification is used.",
+  "textJustify:none":
+    "Spaces do not expand and words may be hyphenated to justify.",
+  "textJustify:initial": "Justifies text according to browser default.",
+  "textJustify:inherit": "Inherits the text justification from parent element.",
+  "textJustify:unset": "Resets text justification to its natural value.",
+  "textOrientation:mixed": "Allows horizontal and vertical text in same block.",
+  "textOrientation:upright": "Vertically aligns text upright.",
+  "textOrientation:sideways": "Rotates letters on their side.",
   "textOrientation:initial":
-    "Resets the text-orientation property to its default value",
-  "textOrientation:inherit":
-    "Inherits the text-orientation property from the parent element",
-  "textOrientation:unset":
-    "Resets the text-orientation property to its initial value",
-  "textOverflow:clip": "Clips overflowing text",
-  "textOverflow:ellipsis": "Truncates overflowing text with an ellipsis",
-  "textOverflow:initial": "Sets text overflow to default",
-  "textOverflow:inherit": "Inherits text overflow from parent element",
-  "textOverflow:unset": "Resets text overflow to default",
-  "textRendering:auto": "Sets text rendering to default",
-  "textRendering:optimizeSpeed": "Optimizes text rendering for speed",
-  "textRendering:optimizeLegibility": "Optimizes text rendering for legibility",
+    "Sets text orientation according to browser default.",
+  "textOrientation:inherit": "Inherits text orientation from parent element.",
+  "textOrientation:unset": "Resets text orientation to its natural value.",
+  "textOverflow:clip": "Clips overflowing text.",
+  "textOverflow:ellipsis": "Shows an ellipsis when text overflows.",
+  "textOverflow:initial": "Sets text overflow to default.",
+  "textOverflow:inherit": "Inherits overflow behavior from parent element.",
+  "textOverflow:unset": "Resets text overflow to its natural value.",
+  "textRendering:auto": "Uses the browser's default text rendering method.",
+  "textRendering:optimizeSpeed": "Optimizes the text rendered for speed.",
+  "textRendering:optimizeLegibility":
+    "Font is rendered for maximum readability.",
   "textRendering:geometricPrecision":
-    "Optimizes text rendering for geometric precision",
-  "textRendering:initial": "Resets text rendering to default",
-  "textRendering:inherit": "Inherits text rendering from parent element",
-  "textRendering:unset": "Resets text rendering to default",
-  "textShadow:none": "Removes text shadow",
-  "textShadow:transparent": "Sets text shadow to transparent",
-  "textShadow:aliceblue": "Sets text shadow to aliceblue color",
-  "textShadow:antiquewhite": "Sets text shadow to antiquewhite color",
-  "textShadow:aqua": "Adds an aqua shadow to text",
-  "textShadow:aquamarine": "Adds an aquamarine shadow to text",
-  "textShadow:azure": "Adds an azure shadow to text",
-  "textShadow:beige": "Adds a beige shadow to text",
-  "textShadow:bisque": "Adds a bisque shadow to text",
-  "textShadow:black": "Adds a black shadow to text",
-  "textShadow:blanchedalmond": "Adds a blanchedalmond shadow to text",
-  "textShadow:blue": "Adds a blue shadow to text",
-  "textShadow:blueviolet": "Adds a blueviolet shadow to text",
-  "textShadow:brown": "Adds a brown shadow to text",
-  "textShadow:burlywood": "Adds a burlywood shadow to text",
-  "textShadow:cadetblue": "Adds a cadetblue shadow to text",
-  "textShadow:chartreuse": "Adds a chartreuse shadow to text",
-  "textShadow:chocolate": "Adds a chocolate shadow to text",
-  "textShadow:coral": "Adds a coral shadow to text",
-  "textShadow:cornflowerblue": "Adds a cornflowerblue shadow to text",
-  "textShadow:cornsilk": "Adds a cornsilk shadow effect to text",
-  "textShadow:crimson": "Adds a crimson shadow effect to text",
-  "textShadow:cyan": "Adds a cyan shadow effect to text",
-  "textShadow:darkblue": "Adds a dark blue shadow effect to text",
-  "textShadow:darkcyan": "Adds a dark cyan shadow effect to text",
-  "textShadow:darkgoldenrod": "Adds a dark goldenrod shadow effect to text",
-  "textShadow:darkgray": "Adds a dark gray shadow effect to text",
-  "textShadow:darkgreen": "Adds a dark green shadow effect to text",
-  "textShadow:darkgrey": "Adds a dark grey shadow effect to text",
-  "textShadow:darkkhaki": "Adds a dark khaki shadow effect to text",
-  "textShadow:darkmagenta": "Adds a dark magenta shadow effect to text",
-  "textShadow:darkolivegreen": "Adds a dark olive green shadow effect to text",
-  "textShadow:darkorange": "Adds a dark orange shadow effect to text",
-  "textShadow:darkorchid": "Adds a dark orchid shadow effect to text",
-  "textShadow:darkred": "Adds a dark red shadow effect to text",
-  "textShadow:darksalmon": "Adds a dark salmon shadow effect to text",
-  "textShadow:darkseagreen":
-    "Creates a shadow effect behind text with a dark sea green color",
-  "textShadow:darkslateblue":
-    "Creates a shadow effect behind text with a dark slate blue color",
-  "textShadow:darkslategray":
-    "Creates a shadow effect behind text with a dark slate gray color",
-  "textShadow:darkslategrey":
-    "Creates a shadow effect behind text with a dark slate gray color",
-  "textShadow:darkturquoise":
-    "Creates a shadow effect behind text with a dark turquoise color",
-  "textShadow:darkviolet":
-    "Creates a shadow effect behind text with a dark violet color",
-  "textShadow:deeppink":
-    "Creates a shadow effect behind text with a deep pink color",
-  "textShadow:deepskyblue":
-    "Creates a shadow effect behind text with a deep sky blue color",
-  "textShadow:dimgray":
-    "Creates a shadow effect behind text with a dim gray color",
-  "textShadow:dimgrey":
-    "Creates a shadow effect behind text with a dim gray color",
-  "textShadow:dodgerblue":
-    "Creates a shadow effect behind text with a dodger blue color",
-  "textShadow:firebrick":
-    "Creates a shadow effect behind text with a firebrick color",
-  "textShadow:floralwhite":
-    "Creates a shadow effect behind text with a floral white color",
-  "textShadow:forestgreen":
-    "Creates a shadow effect behind text with a forest green color",
-  "textShadow:fuchsia":
-    "Creates a shadow effect behind text with a fuchsia color",
-  "textShadow:gainsboro":
-    "Creates a shadow effect behind text with a gainsboro color",
-  "textShadow:ghostwhite": "Adds a ghostwhite shadow to text",
-  "textShadow:gold": "Adds a gold shadow to text",
-  "textShadow:goldenrod": "Adds a goldenrod shadow to text",
-  "textShadow:gray": "Adds a gray shadow to text",
-  "textShadow:green": "Adds a green shadow to text",
-  "textShadow:greenyellow": "Adds a greenyellow shadow to text",
-  "textShadow:grey": "Adds a grey shadow to text",
-  "textShadow:honeydew": "Adds a honeydew shadow to text",
-  "textShadow:hotpink": "Adds a hotpink shadow to text",
-  "textShadow:indianred": "Adds an indianred shadow to text",
-  "textShadow:indigo": "Adds an indigo shadow to text",
-  "textShadow:ivory": "Adds an ivory shadow to text",
-  "textShadow:khaki": "Adds a khaki shadow to text",
-  "textShadow:lavender": "Adds a lavender shadow to text",
-  "textShadow:lavenderblush": "Adds a lavenderblush shadow to text",
-  "textShadow:lawngreen": "Adds a lawngreen shadow to text",
-  "textShadow:lemonchiffon":
-    "Adds a shadow effect to text in a lemonchiffon color",
-  "textShadow:lightblue": "Adds a shadow effect to text in a lightblue color",
-  "textShadow:lightcoral": "Adds a shadow effect to text in a lightcoral color",
-  "textShadow:lightcyan": "Adds a shadow effect to text in a lightcyan color",
+    "Font is rendered with geometric precision.",
+  "textRendering:initial": "Sets the font rendering to its default value.",
+  "textRendering:inherit":
+    "Sets the font rendering to that of its parent element.",
+  "textRendering:unset": "Resets font rendering to its inherited value.",
+  "textShadow:none": "Disables text shadow.",
+  "textShadow:transparent": "Adds a transparent text shadow.",
+  "textShadow:aliceblue": "Adds a light blue text shadow.",
+  "textShadow:antiquewhite": "Adds an antique white text shadow.",
+  "textShadow:aqua": "Adds an aqua text shadow.",
+  "textShadow:aquamarine": "Adds an aquamarine text shadow.",
+  "textShadow:azure": "Adds an azure text shadow.",
+  "textShadow:beige": "Adds a beige text shadow.",
+  "textShadow:bisque": "Adds a bisque text shadow.",
+  "textShadow:black": "Adds a black text shadow.",
+  "textShadow:blanchedalmond": "Adds a blanched almond text shadow.",
+  "textShadow:blue": "Adds a blue shadow to text.",
+  "textShadow:blueviolet": "Adds a blue-violet shadow to text.",
+  "textShadow:brown": "Adds a brown shadow to text.",
+  "textShadow:burlywood": "Adds a burlywood shadow to text.",
+  "textShadow:cadetblue": "Adds a cadet blue shadow to text.",
+  "textShadow:chartreuse": "Adds a chartreuse shadow to text.",
+  "textShadow:chocolate": "Adds a chocolate shadow to text.",
+  "textShadow:coral": "Adds a coral shadow to text.",
+  "textShadow:cornflowerblue": "Adds a cornflower blue shadow to text.",
+  "textShadow:cornsilk": "Adds a cornsilk shadow to text.",
+  "textShadow:crimson": "Adds a crimson shadow to text.",
+  "textShadow:cyan": "Adds a cyan shadow to text.",
+  "textShadow:darkblue": "Adds a dark blue shadow to text.",
+  "textShadow:darkcyan": "Adds a dark cyan shadow to text.",
+  "textShadow:darkgoldenrod": "Adds a dark goldenrod shadow to text.",
+  "textShadow:darkgray": "Adds a dark gray shadow to text.",
+  "textShadow:darkgreen": "Adds a dark green shadow to the text.",
+  "textShadow:darkgrey": "Adds a dark grey shadow to the text.",
+  "textShadow:darkkhaki": "Adds a dark khaki shadow to the text.",
+  "textShadow:darkmagenta": "Adds a dark magenta shadow to the text.",
+  "textShadow:darkolivegreen": "Adds a dark olive green shadow to the text.",
+  "textShadow:darkorange": "Adds a dark orange shadow to the text.",
+  "textShadow:darkorchid": "Adds a dark orchid shadow to the text.",
+  "textShadow:darkred": "Adds a dark red shadow to the text.",
+  "textShadow:darksalmon": "Adds a dark salmon shadow to the text.",
+  "textShadow:darkseagreen": "Adds a dark sea green shadow to the text.",
+  "textShadow:darkslateblue": "Adds a dark slate blue shadow to the text.",
+  "textShadow:darkslategray": "Adds a dark slate gray shadow to the text.",
+  "textShadow:darkslategrey": "Adds a dark slate grey shadow to the text.",
+  "textShadow:darkturquoise": "Adds a dark turquoise shadow to the text.",
+  "textShadow:darkviolet": "Adds a dark violet shadow to the text.",
+  "textShadow:deeppink": "Adds a deep pink shadow to the text.",
+  "textShadow:deepskyblue": "Adds a deep sky blue shadow to text.",
+  "textShadow:dimgray": "Adds a dim gray shadow to text.",
+  "textShadow:dimgrey": "Adds a dim gray shadow to text.",
+  "textShadow:dodgerblue": "Adds a dodger blue shadow to text.",
+  "textShadow:firebrick": "Adds a fire brick shadow to text.",
+  "textShadow:floralwhite": "Adds a floral white shadow to text.",
+  "textShadow:forestgreen": "Adds a forest green shadow to text.",
+  "textShadow:fuchsia": "Adds a fuchsia shadow to text.",
+  "textShadow:gainsboro": "Adds a gainsboro shadow to text.",
+  "textShadow:ghostwhite": "Adds a ghost white shadow to text.",
+  "textShadow:gold": "Adds a gold shadow to text.",
+  "textShadow:goldenrod": "Adds a goldenrod shadow to text.",
+  "textShadow:gray": "Adds a gray shadow to text.",
+  "textShadow:green": "Adds a green shadow to text.",
+  "textShadow:greenyellow": "Adds a green yellow shadow to text.",
+  "textShadow:grey": "Adds a gray shadow to text.",
+  "textShadow:honeydew": "Adds a honeydew-colored shadow to the text.",
+  "textShadow:hotpink": "Adds a hot pink-colored shadow to the text.",
+  "textShadow:indianred": "Adds an Indian red-colored shadow to the text.",
+  "textShadow:indigo": "Adds an indigo-colored shadow to the text.",
+  "textShadow:ivory": "Adds an ivory-colored shadow to the text.",
+  "textShadow:khaki": "Adds a khaki-colored shadow to the text.",
+  "textShadow:lavender": "Adds a lavender-colored shadow to the text.",
+  "textShadow:lavenderblush":
+    "Adds a lavender blush-colored shadow to the text.",
+  "textShadow:lawngreen": "Adds a lawn green-colored shadow to the text.",
+  "textShadow:lemonchiffon": "Adds a lemon chiffon-colored shadow to the text.",
+  "textShadow:lightblue": "Adds a light blue-colored shadow to the text.",
+  "textShadow:lightcoral": "Adds a light coral-colored shadow to the text.",
+  "textShadow:lightcyan": "Adds a light cyan-colored shadow to the text.",
   "textShadow:lightgoldenrodyellow":
-    "Adds a shadow effect to text in a lightgoldenrodyellow color",
-  "textShadow:lightgray": "Adds a shadow effect to text in a lightgray color",
-  "textShadow:lightgreen": "Adds a shadow effect to text in a lightgreen color",
-  "textShadow:lightgrey": "Adds a shadow effect to text in a lightgrey color",
-  "textShadow:lightpink": "Adds a shadow effect to text in a lightpink color",
-  "textShadow:lightsalmon":
-    "Adds a shadow effect to text in a lightsalmon color",
-  "textShadow:lightseagreen":
-    "Adds a shadow effect to text in a lightseagreen color",
-  "textShadow:lightskyblue":
-    "Adds a shadow effect to text in a lightskyblue color",
-  "textShadow:lightslategray":
-    "Adds a shadow effect to text in a lightslategray color",
-  "textShadow:lightslategrey":
-    "Adds a shadow effect to text in a lightslategrey color",
-  "textShadow:lightsteelblue":
-    "Adds a shadow effect to text in a lightsteelblue color",
-  "textShadow:lightyellow":
-    "Adds a shadow effect to text in a lightyellow color",
-  "textShadow:lime": "Adds a lime-colored shadow behind text",
-  "textShadow:limegreen": "Adds a limegreen-colored shadow behind text",
-  "textShadow:linen": "Adds a linen-colored shadow behind text",
-  "textShadow:magenta": "Adds a magenta-colored shadow behind text",
-  "textShadow:maroon": "Adds a maroon-colored shadow behind text",
-  "textShadow:mediumaquamarine":
-    "Adds a mediumaquamarine-colored shadow behind text",
-  "textShadow:mediumblue": "Adds a mediumblue-colored shadow behind text",
-  "textShadow:mediumorchid": "Adds a mediumorchid-colored shadow behind text",
-  "textShadow:mediumpurple": "Adds a mediumpurple-colored shadow behind text",
-  "textShadow:mediumseagreen":
-    "Adds a mediumseagreen-colored shadow behind text",
-  "textShadow:mediumslateblue":
-    "Adds a mediumslateblue-colored shadow behind text",
-  "textShadow:mediumspringgreen":
-    "Adds a mediumspringgreen-colored shadow behind text",
-  "textShadow:mediumturquoise":
-    "Adds a mediumturquoise-colored shadow behind text",
-  "textShadow:mediumvioletred":
-    "Adds a mediumvioletred-colored shadow behind text",
-  "textShadow:midnightblue": "Adds a midnightblue-colored shadow behind text",
-  "textShadow:mintcream": "Adds a mintcream-colored shadow behind text",
-  "textShadow:mistyrose": "Adds a mistyrose shadow to text",
-  "textShadow:moccasin": "Adds a moccasin shadow to text",
-  "textShadow:navajowhite": "Adds a navajowhite shadow to text",
-  "textShadow:navy": "Adds a navy shadow to text",
-  "textShadow:oldlace": "Adds an oldlace shadow to text",
-  "textShadow:olive": "Adds an olive shadow to text",
-  "textShadow:olivedrab": "Adds an olivedrab shadow to text",
-  "textShadow:orange": "Adds an orange shadow to text",
-  "textShadow:orangered": "Adds an orangered shadow to text",
-  "textShadow:orchid": "Adds an orchid shadow to text",
-  "textShadow:palegoldenrod": "Adds a palegoldenrod shadow to text",
-  "textShadow:palegreen": "Adds a palegreen shadow to text",
-  "textShadow:paleturquoise": "Adds a paleturquoise shadow to text",
-  "textShadow:palevioletred": "Adds a palevioletred shadow to text",
-  "textShadow:papayawhip": "Adds a papayawhip shadow to text",
-  "textShadow:peachpuff": "Adds a peachpuff shadow to text",
-  "textShadow:peru":
-    "Adds a shadow effect to text with a light brown color (peru)",
-  "textShadow:pink": "Adds a shadow effect to text with a pink color",
-  "textShadow:plum":
-    "Adds a shadow effect to text with a purple-red color (plum)",
-  "textShadow:powderblue":
-    "Adds a shadow effect to text with a pale blue color (powderblue)",
-  "textShadow:purple": "Adds a shadow effect to text with a dark purple color",
-  "textShadow:rebeccapurple":
-    "Adds a shadow effect to text with a dark purple-blue color (rebeccapurple)",
-  "textShadow:red": "Adds a shadow effect to text with a red color",
-  "textShadow:rosybrown":
-    "Adds a shadow effect to text with a light brown-pink color (rosybrown)",
-  "textShadow:royalblue":
-    "Adds a shadow effect to text with a bright blue color (royalblue)",
-  "textShadow:saddlebrown":
-    "Adds a shadow effect to text with a dark brown color (saddlebrown)",
-  "textShadow:salmon":
-    "Adds a shadow effect to text with a pink-orange color (salmon)",
-  "textShadow:sandybrown":
-    "Adds a shadow effect to text with a light brown-orange color (sandybrown)",
-  "textShadow:seagreen":
-    "Adds a shadow effect to text with a green color (seagreen)",
-  "textShadow:seashell":
-    "Adds a shadow effect to text with a pale pink color (seashell)",
-  "textShadow:sienna":
-    "Adds a shadow effect to text with a dark brown-orange color (sienna)",
-  "textShadow:silver": "Adds a shadow effect to text with a silver color",
-  "textShadow:skyblue": "Adds a sky blue shadow to text",
-  "textShadow:slateblue": "Adds a slate blue shadow to text",
-  "textShadow:slategray": "Adds a slate gray shadow to text",
-  "textShadow:slategrey": "Adds a slate gray shadow to text",
-  "textShadow:snow": "Adds a snow shadow to text",
-  "textShadow:springgreen": "Adds a spring green shadow to text",
-  "textShadow:steelblue": "Adds a steel blue shadow to text",
-  "textShadow:tan": "Adds a tan shadow to text",
-  "textShadow:teal": "Adds a teal shadow to text",
-  "textShadow:thistle": "Adds a thistle shadow to text",
-  "textShadow:tomato": "Adds a tomato shadow to text",
-  "textShadow:turquoise": "Adds a turquoise shadow to text",
-  "textShadow:violet": "Adds a violet shadow to text",
-  "textShadow:wheat": "Adds a wheat shadow to text",
-  "textShadow:white": "Adds a white shadow to text",
-  "textShadow:whitesmoke": "Adds a white smoke shadow to text",
-  "textShadow:yellow": "Adds a yellow shadow to text",
-  "textShadow:yellowgreen": "Adds a yellowgreen shadow to text",
-  "textShadow:currentColor":
-    "Adds a shadow to text with the same color as the text itself",
-  "textShadow:ActiveBorder":
-    "Adds a shadow to text with the color of the active window border",
-  "textShadow:ActiveCaption":
-    "Adds a shadow to text with the color of the active window caption",
-  "textShadow:AppWorkspace":
-    "Adds a shadow to text with the color of the application workspace",
-  "textShadow:Background":
-    "Adds a shadow to text with the color of the background",
-  "textShadow:ButtonFace":
-    "Adds a shadow to text with the color of the button face",
-  "textShadow:ButtonHighlight":
-    "Adds a shadow to text with the color of the button highlight",
-  "textShadow:ButtonShadow":
-    "Adds a shadow to text with the color of the button shadow",
-  "textShadow:ButtonText":
-    "Adds a shadow to text with the color of the button text",
-  "textShadow:CaptionText":
-    "Adds a shadow to text with the color of the window caption text",
-  "textShadow:GrayText":
-    "Adds a shadow to text with the color of the gray text",
-  "textShadow:Highlight":
-    "Adds a shadow to text with the color of the highlight",
-  "textShadow:HighlightText":
-    "Adds a shadow to text with the color of the highlighted text",
-  "textShadow:InactiveBorder":
-    "Adds a shadow to text with the color of the inactive window border",
-  "textShadow:InactiveCaption":
-    "Adds a shadow to text with the color of inactive caption",
-  "textShadow:InactiveCaptionText":
-    "Adds a shadow to text with the color of inactive caption text",
-  "textShadow:InfoBackground":
-    "Adds a shadow to text with the color of info background",
-  "textShadow:InfoText": "Adds a shadow to text with the color of info text",
-  "textShadow:Menu": "Adds a shadow to text with the color of menu",
-  "textShadow:MenuText": "Adds a shadow to text with the color of menu text",
-  "textShadow:Scrollbar": "Adds a shadow to text with the color of scrollbar",
-  "textShadow:ThreeDDarkShadow":
-    "Adds a shadow to text with the color of 3D dark shadow",
-  "textShadow:ThreeDFace": "Adds a shadow to text with the color of 3D face",
-  "textShadow:ThreeDHighlight":
-    "Adds a shadow to text with the color of 3D highlight",
-  "textShadow:ThreeDLightShadow":
-    "Adds a shadow to text with the color of 3D light shadow",
-  "textShadow:ThreeDShadow":
-    "Adds a shadow to text with the color of 3D shadow",
-  "textShadow:Window": "Adds a shadow to text with the color of window",
-  "textShadow:WindowFrame":
-    "Adds a shadow to text with the color of window frame",
-  "textShadow:WindowText":
-    "Adds a shadow to text with the color of window text",
-  "textShadow:initial": "Resets the text shadow to its default value",
-  "textShadow:inherit":
-    "Adds a shadow to text, using the same value as its parent element",
-  "textShadow:unset": "Removes any shadow from text",
+    "Adds a light goldenrod yellow-colored shadow to the text.",
+  "textShadow:lightgray": "Adds a light gray-colored shadow to the text.",
+  "textShadow:lightgreen": "Adds a light green-colored shadow to the text.",
+  "textShadow:lightgrey": "Adds a light grey shadow to text.",
+  "textShadow:lightpink": "Adds a light pink shadow to text.",
+  "textShadow:lightsalmon": "Adds a light salmon shadow to text.",
+  "textShadow:lightseagreen": "Adds a light sea green shadow to text.",
+  "textShadow:lightskyblue": "Adds a light sky blue shadow to text.",
+  "textShadow:lightslategray": "Adds a light slate gray shadow to text.",
+  "textShadow:lightslategrey": "Adds a light slate grey shadow to text.",
+  "textShadow:lightsteelblue": "Adds a light steel blue shadow to text.",
+  "textShadow:lightyellow": "Adds a light yellow shadow to text.",
+  "textShadow:lime": "Adds a lime shadow to text.",
+  "textShadow:limegreen": "Adds a lime green shadow to text.",
+  "textShadow:linen": "Adds a linen colored shadow to text.",
+  "textShadow:magenta": "Adds a magenta shadow to text.",
+  "textShadow:maroon": "Adds a maroon shadow to text.",
+  "textShadow:mediumaquamarine": "Adds a medium aquamarine shadow to text.",
+  "textShadow:mediumblue": "Adds a medium blue shadow to text.",
+  "textShadow:mediumorchid": "Adds a medium orchid shadow to text.",
+  "textShadow:mediumpurple": "Adds a medium purple shadow to text.",
+  "textShadow:mediumseagreen": "Adds a medium sea green shadow to text.",
+  "textShadow:mediumslateblue": "Adds a medium slate blue shadow to text.",
+  "textShadow:mediumspringgreen": "Adds a medium spring green shadow to text.",
+  "textShadow:mediumturquoise": "Adds a medium turquoise shadow to text.",
+  "textShadow:mediumvioletred": "Adds a medium violet red shadow to text.",
+  "textShadow:midnightblue": "Adds a midnight blue shadow to text.",
+  "textShadow:mintcream": "Adds a mint cream shadow to text.",
+  "textShadow:mistyrose": "Adds a misty rose shadow to text.",
+  "textShadow:moccasin": "Adds a moccasin shadow to text.",
+  "textShadow:navajowhite": "Adds a navajo white shadow to text.",
+  "textShadow:navy": "Adds a navy shadow to text.",
+  "textShadow:oldlace": "Adds an old lace shadow to text.",
+  "textShadow:olive": "Adds an olive shadow to text.",
+  "textShadow:olivedrab": "Adds an olive drab shadow to text.",
+  "textShadow:orange": "Applies an orange shadow to text.",
+  "textShadow:orangered": "Applies an orange-red shadow to text.",
+  "textShadow:orchid": "Applies a purple-pink shadow to text.",
+  "textShadow:palegoldenrod": "Applies a pale goldenrod shadow to text.",
+  "textShadow:palegreen": "Applies a pale green shadow to text.",
+  "textShadow:paleturquoise": "Applies a pale turquoise shadow to text.",
+  "textShadow:palevioletred": "Applies a pale violet-red shadow to text.",
+  "textShadow:papayawhip": "Applies a papaya-whip shadow to text.",
+  "textShadow:peachpuff": "Applies a peach-puff shadow to text.",
+  "textShadow:peru": "Applies a dark orange-brown shadow to text.",
+  "textShadow:pink": "Applies a pink shadow to text.",
+  "textShadow:plum": "Applies a purple shadow to text.",
+  "textShadow:powderblue": "Applies a powder-blue shadow to text.",
+  "textShadow:purple": "Applies a dark purple shadow to text.",
+  "textShadow:rebeccapurple": "Applies a dark purple shadow to text.",
+  "textShadow:red": "Applies a red shadow to text.",
+  "textShadow:rosybrown": "Adds a rosybrown shadow to text.",
+  "textShadow:royalblue": "Adds a royalblue shadow to text.",
+  "textShadow:saddlebrown": "Adds a saddlebrown shadow to text.",
+  "textShadow:salmon": "Adds a salmon shadow to text.",
+  "textShadow:sandybrown": "Adds a sandybrown shadow to text.",
+  "textShadow:seagreen": "Adds a seagreen shadow to text.",
+  "textShadow:seashell": "Adds a seashell shadow to text.",
+  "textShadow:sienna": "Adds a sienna shadow to text.",
+  "textShadow:silver": "Adds a silver shadow to text.",
+  "textShadow:skyblue": "Adds a skyblue shadow to text.",
+  "textShadow:slateblue": "Adds a slateblue shadow to text.",
+  "textShadow:slategray": "Adds a slategray shadow to text.",
+  "textShadow:slategrey": "Adds a slategrey shadow to text.",
+  "textShadow:snow": "Adds a snow shadow to text.",
+  "textShadow:springgreen": "Adds a springgreen shadow to text.",
+  "textShadow:steelblue": "Adds a steelblue shadow to text.",
+  "textShadow:tan": "Adds a tan shadow to text.",
+  "textShadow:teal": "Adds a teal shadow to text.",
+  "textShadow:thistle": "Adds a thistle shadow to text.",
+  "textShadow:tomato": "Adds a tomato shadow to text.",
+  "textShadow:turquoise": "Adds a turquoise shadow to text.",
+  "textShadow:violet": "Adds a violet shadow to text.",
+  "textShadow:wheat": "Adds a wheat shadow to text.",
+  "textShadow:white": "Adds a white shadow to text.",
+  "textShadow:whitesmoke": "Adds a whitesmoke shadow to text.",
+  "textShadow:yellow": "Adds a yellow shadow to text.",
+  "textShadow:yellowgreen": "Adds a yellowgreen shadow to text.",
+  "textShadow:currentColor": "Adds a shadow with the same color as the text.",
+  "textShadow:initial": "Sets the default value of the property.",
+  "textShadow:inherit": "Inherits the value from the parent element.",
+  "textShadow:unset": "Resets the value to its default state.",
   "textSizeAdjust:none":
-    "Prevents the browser from adjusting the font size based on the user's preferences",
-  "textSizeAdjust:auto":
-    "Allows the browser to adjust the font size based on the user's preferences",
-  "textSizeAdjust:initial":
-    "Sets the font size adjustment to its default value",
-  "textSizeAdjust:inherit":
-    "Inherits the font size adjustment value from its parent element",
-  "textSizeAdjust:unset":
-    "Resets the font size adjustment to its initial value",
-  "textTransform:none": "Displays text in its original capitalization",
-  "textTransform:capitalize":
-    "Capitalizes the first letter of each word in the text",
-  "textTransform:uppercase": "Displays all text in uppercase letters",
-  "textTransform:lowercase": "Displays all text in lowercase letters",
-  "textTransform:full-width": "Displays text in full-width characters",
-  "textTransform:full-size-kana": "Displays text in full-size Kana characters",
-  "textTransform:initial":
-    "Resets the text transformation to its initial value",
-  "textTransform:inherit":
-    "Inherits the text transformation value from its parent element",
-  "textTransform:unset": "Resets the text transformation to its default value",
-  "textUnderlineOffset:auto":
-    "Sets the offset distance between text and underline to automatic",
-  "textUnderlineOffset:initial":
-    "Sets the offset distance between text and underline to default",
-  "textUnderlineOffset:inherit":
-    "Inherits the offset distance between text and underline from parent element",
-  "textUnderlineOffset:unset":
-    "Resets offset distance between text and underline to default",
-  "textUnderlinePosition:auto":
-    "Sets the position of underline relative to text to automatic",
-  "textUnderlinePosition:from-font":
-    "Sets the position of underline relative to text according to font",
-  "textUnderlinePosition:under":
-    "Sets the position of underline relative to text to under the text",
-  "textUnderlinePosition:left":
-    "Sets the position of underline relative to text to the left of text",
-  "textUnderlinePosition:right":
-    "Sets the position of underline relative to text to the right of text",
-  "textUnderlinePosition:initial":
-    "Resets the position of underline relative to text to default",
+    "Prevents mobile devices from adjusting font size based on user preferences.",
+  "textSizeAdjust:auto": "Allows users to adjust the font size.",
+  "textSizeAdjust:initial": "Specifies the default font size behavior.",
+  "textSizeAdjust:inherit": "Inherits font size adjustment behavior.",
+  "textSizeAdjust:unset": "Uses default value if no value is declared.",
+  "textTransform:none": "No text capitalization or transformation.",
+  "textTransform:capitalize": "Capitalizes first letter of each word.",
+  "textTransform:uppercase": "Converts text to UPPERCASE.",
+  "textTransform:lowercase": "Converts text to lowercase.",
+  "textTransform:full-width": "Converts to full width characters.",
+  "textTransform:full-size-kana": "Changes to full width for Japanese.",
+  "textTransform:initial": "Resets to initial capitalization or conversion.",
+  "textTransform:inherit": "Inherits text capitalization or conversion.",
+  "textTransform:unset": "Uses default value if no value is declared.",
+  "textUnderlineOffset:auto": "Allows the browser to adjust underline offset.",
+  "textUnderlineOffset:initial": "Specifies default underline offset.",
+  "textUnderlineOffset:inherit": "Inherits underline offset behavior.",
+  "textUnderlineOffset:unset": "The default offset of underlines.",
+  "textUnderlinePosition:auto": "Automatically aligns underlines.",
+  "textUnderlinePosition:from-font": "Uses the font's underline position.",
+  "textUnderlinePosition:under": "Underlines text.",
+  "textUnderlinePosition:left": "Underlines text, aligned to the left.",
+  "textUnderlinePosition:right": "Underlines text, aligned to the right.",
+  "textUnderlinePosition:initial": "Sets underline position to the default.",
   "textUnderlinePosition:inherit":
-    "Inherits the position of underline relative to text from parent element",
-  "textUnderlinePosition:unset":
-    "Resets the position of underline relative to text to default",
-  "top:auto": "Sets the top edge of an element to automatic",
-  "top:initial": "Sets the top edge of an element to default",
-  "top:inherit": "Inherits the top edge of an element from parent element",
-  "top:unset": "Resets the top edge of an element to default",
-  "touchAction:auto": "Sets how touch events are handled on an element",
-  "touchAction:none": "Allows touch events on an element",
-  "touchAction:pan-x": "Disallows touch events on an element",
-  "touchAction:pan-left": "Allows horizontal panning on an element",
-  "touchAction:pan-right": "Allows leftward horizontal panning on an element",
-  "touchAction:pan-y": "Allows rightward horizontal panning on an element",
-  "touchAction:pan-up": "Allows vertical panning on an element",
-  "touchAction:pan-down": "Allows upward vertical panning on an element",
-  "touchAction:pinch-zoom": "Allows downward vertical panning on an element",
-  "touchAction:manipulation": "Allows pinch zooming on an element",
-  "touchAction:initial": "Allows user manipulation of an element",
-  "touchAction:inherit": "Sets the touch-action property to its default value",
-  "touchAction:unset":
-    "Inherits the touch-action property from its parent element",
-  "transform:none": "Unsets the touch-action property",
-  "transform:initial":
-    "Sets the transformation of an element to its default state",
-  "transform:inherit":
-    "Inherits the transformation of an element from its parent element",
-  "transform:unset": "Sets the transformation to the default value",
-  "transformBox:content-box":
-    "Defines the reference box for the transformation to be the content box",
-  "transformBox:border-box":
-    "Defines the reference box for the transformation to be the border box",
-  "transformBox:fill-box":
-    "Defines the reference box for the transformation to be the area filled by the element",
+    "Inherits underline position from the parent element.",
+  "textUnderlinePosition:unset": "Removes any set underline position.",
+  "top:auto": "The browser determines the top position.",
+  "top:initial": "Sets the top position to its default value.",
+  "top:inherit": "Inherits the top position from the parent element.",
+  "top:unset": "Removes any set top position.",
+  "touchAction:auto": "The browser determines the touch action.",
+  "touchAction:none": "Disables touch actions on the specified element.",
+  "touchAction:pan-x": "Allows horizontal panning through touch actions.",
+  "touchAction:pan-left": "Allows panning to the left.",
+  "touchAction:pan-right": "Allows panning to the right.",
+  "touchAction:pan-y": "Allows panning on the y-axis only.",
+  "touchAction:pan-up": "Allows panning upwards.",
+  "touchAction:pan-down": "Allows panning downwards.",
+  "touchAction:pinch-zoom": "Allows pinch zooming on touch devices.",
+  "touchAction:manipulation": "Allows any touch-gesture to be performed.",
+  "touchAction:initial": "Uses the default touch action.",
+  "touchAction:inherit":
+    "Inherits the touch-action value from the parent element.",
+  "touchAction:unset": "Resets the touch-action value to its original value.",
+  "transform:none": "Disables any transformations.",
+  "transform:initial": "Applies the default transform values.",
+  "transform:inherit": "Inherits the transform value from the parent element.",
+  "transform:unset": "Resets the transform value to its original value.",
+  "transformBox:content-box": "Sets the transform origin to the content box.",
+  "transformBox:border-box": "Sets the transform origin to the border box.",
+  "transformBox:fill-box": "Applies transformations to the fill bounding box.",
   "transformBox:stroke-box":
-    "Defines the reference box for the transformation to be the area stroked by the element's outline",
+    "Applies transformations to the stroke bounding box.",
   "transformBox:view-box":
-    "Defines the reference box for the transformation to be the viewport",
-  "transformBox:initial":
-    "Sets the reference box for the transformation to the initial value",
-  "transformBox:inherit":
-    "Inherits the reference box for the transformation from the parent element",
+    "Applies transformations to the nearest SVG viewport.",
+  "transformBox:initial": "Sets the property to its default value.",
+  "transformBox:inherit": "Inherits the property from its parent element.",
   "transformBox:unset":
-    "Resets the reference box for the transformation to the default value",
+    "Resets the property to its inherited value (or default if no inheritable value).",
   "transformOrigin:left":
-    "Sets the point of origin for the transformation to the left side of the element",
+    "Sets the horizontal position of the transform origin to the left.",
   "transformOrigin:center":
-    "Sets the point of origin for the transformation to the center of the element",
+    "Sets the horizontal position of the transform origin to the center.",
   "transformOrigin:right":
-    "Sets the point of origin for the transformation to the right side of the element",
+    "Sets the horizontal position of the transform origin to the right.",
   "transformOrigin:top":
-    "Sets the point of origin for the transformation to the top of the element",
+    "Sets the vertical position of the transform origin to the top.",
   "transformOrigin:bottom":
-    "Sets the point of origin for the transformation to the bottom of the element",
-  "transformOrigin:initial":
-    "Sets the point of origin for the transformation to the initial value",
-  "transformOrigin:inherit":
-    "Inherits the point of origin for the transformation from the parent element",
+    "Sets the vertical position of the transform origin to the bottom.",
+  "transformOrigin:initial": "Sets the property to its default value.",
+  "transformOrigin:inherit": "Inherits the property from its parent element.",
   "transformOrigin:unset":
-    "Sets the point of origin for a CSS transform to the default value",
-  "transformStyle:flat":
-    "Defines how a transformed element is displayed in 3D space",
+    "Resets the property to its inherited value (or default if no inheritable value).",
+  "transformStyle:flat": "Disables 3D rendering effects on child elements.",
   "transformStyle:preserve-3d":
-    "Defines how a transformed element is displayed in 3D space, preserving its 3D transformations",
+    "Allows child elements to be transformed in 3D perspective.",
   "transformStyle:initial":
-    "Sets the transform-style property to its default value",
+    "The child elements don't preserve the 3D transformation of the parent.",
   "transformStyle:inherit":
-    "Inherits the transform-style property from its parent element",
+    "The child elements inherit the 3D transformation of the parent.",
   "transformStyle:unset":
-    "Resets the transform-style property to the default value",
+    "The property takes its parent value or initial if there is no parent except `transform-style: inherit`.",
   "transitionDelay:initial":
-    "Sets the delay time for a CSS transition to its initial value",
-  "transitionDelay:inherit":
-    "Inherits the delay time for a CSS transition from its parent element",
+    "No delay between the transition effect and the initiation.",
+  "transitionDelay:inherit": "Inherits the delay time from the parent element.",
   "transitionDelay:unset":
-    "Resets the delay time for a CSS transition to the default value",
+    "Sets to the property's parent value if any, or initial.",
   "transitionDuration:initial":
-    "Sets the duration of a CSS transition to its initial value",
+    "Duration takes no time to run the transition effect.",
   "transitionDuration:inherit":
-    "Inherits the duration of a CSS transition from its parent element",
+    "Inherits the duration time from the parent element.",
   "transitionDuration:unset":
-    "Resets the duration of a CSS transition to the default value",
+    "Sets to the property's parent value if any, or initial.",
   "transitionProperty:none":
-    "Specifies which CSS properties should transition over time",
+    "No CSS properties mentioned for transition effect.",
   "transitionProperty:all":
-    "Specifies that all CSS properties should transition over time",
+    "Involves all CSS properties mentioned in the effect.",
   "transitionProperty:initial":
-    "Resets the transition-property property to its initial value",
+    "Includes only the initial property value in the effect.",
   "transitionProperty:inherit":
-    "Inherits the transition-property property from its parent element",
-  "transitionProperty:unset": "Sets which CSS properties should transition",
+    "Inherits the properties from the parent element.",
+  "transitionProperty:unset":
+    "Sets to the property's parent value if any, or initial.",
   "transitionTimingFunction:linear":
-    "Sets the speed curve of a transition to linear",
+    "The transition effect runs at a constant speed.",
   "transitionTimingFunction:ease":
-    "Sets the speed curve of a transition to ease",
+    "The transition effect starts slowly, runs quickly in the middle, and ends slowly at the end.",
   "transitionTimingFunction:ease-in":
-    "Sets the speed curve of a transition to ease-in",
+    "Specifies a transition effect with a slow start.",
   "transitionTimingFunction:ease-out":
-    "Sets the speed curve of a transition to ease-out",
+    "Specifies a transition effect with a slow end.",
   "transitionTimingFunction:ease-in-out":
-    "Sets the speed curve of a transition to ease-in-out",
+    "Specifies a transition effect with a slow start and end.",
   "transitionTimingFunction:step-start":
-    "Sets the speed curve of a transition to start abruptly",
+    "Specifies a transition effect with an immediate start.",
   "transitionTimingFunction:step-end":
-    "Sets the speed curve of a transition to end abruptly",
+    "Specifies a transition effect with an immediate end.",
   "transitionTimingFunction:initial":
-    "Sets the speed curve of a transition to default",
+    "Sets a CSS property to its default value.",
   "transitionTimingFunction:inherit":
-    "Sets the speed curve of a transition to inherit from parent element",
+    "Inherits the CSS property from its parent element.",
   "transitionTimingFunction:unset":
-    "Sets the speed curve of a transition to not set",
-  "translate:none": "Sets no translation for an element",
-  "translate:initial": "Sets the initial translation for an element",
-  "translate:inherit": "Inherits the translation from parent element",
-  "translate:unset": "Sets no translation for an element",
-  "unicodeBidi:normal": "Sets the level of bidi embedding to normal",
-  "unicodeBidi:embed": "Sets the directionality of text to embed",
-  "unicodeBidi:isolate": "Sets the directionality of text to isolate",
-  "unicodeBidi:bidi-override": "Overrides the current directionality of text",
+    "Resets the CSS property to its inherited value.",
+  "translate:none": "Specifies no translation.",
+  "translate:initial": "Sets a CSS property to its default value.",
+  "translate:inherit": "Inherits the CSS property from its parent element.",
+  "translate:unset": "Resets the CSS property to its inherited value.",
+  "unicodeBidi:normal":
+    "The element does not override the base direction of the text.",
+  "unicodeBidi:embed": "The element overrides the base direction of the text.",
+  "unicodeBidi:isolate":
+    "The element isolates the text from its surrounding text.",
+  "unicodeBidi:bidi-override":
+    "Overrides the base direction of the text and sets the directionality to right-to-left or left-to-right as determined by the first strong directional character.",
   "unicodeBidi:isolate-override":
-    "Overrides the current directionality of text and isolates it",
-  "unicodeBidi:plaintext": "Sets the directionality of text to plaintext",
-  "unicodeBidi:initial": "Sets the directionality of text to its initial value",
-  "unicodeBidi:inherit":
-    "Inherits the directionality of text from the parent element",
-  "unicodeBidi:unset": "Resets the directionality of text to its default value",
-  "userSelect:auto": "Sets the ability to select text to automatic",
-  "userSelect:text": "Sets the ability to select text to enabled",
-  "userSelect:none": "Disables the ability to select text",
-  "userSelect:contain": "Limits the ability to select text to certain elements",
+    "Overrides the element's bidirectional algorithm.",
+  "unicodeBidi:plaintext":
+    "The element's content is treated as embedded in a left-to-right direction block.",
+  "unicodeBidi:initial": "Sets this property to its default value.",
+  "unicodeBidi:inherit": "Inherits this property from its parent element.",
+  "unicodeBidi:unset":
+    "Sets this property to its inherited value if it exists, otherwise, it'll be the same as the initial value.",
+  "userSelect:auto":
+    "The default value, enables text selection within the element.",
+  "userSelect:text":
+    "Allows the selection of text contained within the element.",
+  "userSelect:none": "Disables user selection of the element's content.",
+  "userSelect:contain":
+    "Allows selection of an element's children, but not the own element content.",
   "userSelect:all":
-    "Allows the ability to select all elements, including those that are usually unselectable",
-  "userSelect:initial":
-    "Resets the ability to select text to its initial value",
-  "userSelect:inherit":
-    "Inherits the ability to select text from the parent element",
-  "userSelect:unset": "Resets the ability to select text to its default value",
+    "Enables selecting the element's content and child elements.",
+  "userSelect:initial": "Sets the property to its default value of `auto`.",
+  "userSelect:inherit": "Inherits this property from parent element.",
+  "userSelect:unset":
+    "Inherits the property if possible; otherwise defaults to `auto`.",
   "verticalAlign:baseline":
-    "Aligns an element's baseline with the baseline of its parent element",
+    "Aligns the baseline of the element with the baseline of its parent text element.",
   "verticalAlign:sub":
-    "Aligns an element's subscript with the baseline of its parent element",
+    "Aligns the element vertically to the subscript baseline of the parent.",
   "verticalAlign:super":
-    "Aligns an element's superscript with the baseline of its parent element",
+    "Aligns the element vertically to the superscript baseline of the parent.",
   "verticalAlign:text-top":
-    "Aligns an element's top with the top of the parent element's font",
+    "Aligns the top of the element with the top of the parent's content.",
   "verticalAlign:text-bottom":
-    "Aligns an element's bottom with the bottom of the parent element's font",
+    "Aligns the bottom of the element with the bottom of the parent's content.",
   "verticalAlign:middle":
-    "Aligns an element's middle with the middle of the parent element's font",
+    "Aligns the middle of the element with the baseline plus half the x-height of the parent.",
   "verticalAlign:top":
-    "Aligns an element's top with the top of the parent element",
+    "Aligns the top of the element with the top of the tallest element in the parent.",
   "verticalAlign:bottom":
-    "Aligns an element's bottom with the bottom of the parent element",
-  "verticalAlign:initial": "Sets the vertical alignment to its default value",
-  "verticalAlign:inherit":
-    "Inherits the vertical alignment from its parent element",
-  "verticalAlign:unset": "Resets the vertical alignment to its initial value",
-  "visibility:visible": "Makes an element visible",
-  "visibility:hidden": "Hides an element but still takes up space",
-  "visibility:collapse": "Hides an element and collapses the space it takes up",
-  "visibility:initial": "Resets the visibility to its default value",
-  "visibility:inherit": "Inherits the visibility from its parent element",
-  "visibility:unset": "Sets the visibility of an element to its default value",
-  "whiteSpace:normal": "Defines how white space inside an element is handled",
+    "Aligns the bottom of the element with the lowest element in the parent.",
+  "verticalAlign:initial": "Sets the property to its default value.",
+  "verticalAlign:inherit": "Inherits the value from the parent element.",
+  "verticalAlign:unset": "Resets the property to its natural value.",
+  "visibility:visible": "The element is visible.",
+  "visibility:hidden": "The element is hidden but takes up space.",
+  "visibility:collapse": "The element is hidden and does not take up space.",
+  "visibility:initial": "Sets the property value to its default value.",
+  "visibility:inherit": "Inherits the value from the parent element.",
+  "visibility:unset": "Resets the property to its natural value.",
+  "whiteSpace:normal":
+    "Sequences of whitespace are collapsed. Newlines are treated as spaces.",
   "whiteSpace:pre":
-    "Defines how white space inside an element is handled, preserving spaces and line breaks",
-  "whiteSpace:nowrap":
-    "Defines how white space inside an element is handled, not allowing line breaks",
-  "whiteSpace:pre-wrap":
-    "Defines how white space inside an element is handled, preserving spaces and allowing line breaks",
-  "whiteSpace:pre-line":
-    "Defines how white space inside an element is handled, preserving line breaks but not spaces",
-  "whiteSpace:break-spaces":
-    "Defines how white space inside an element is handled, allowing line breaks only when necessary",
-  "whiteSpace:initial": "Sets the white-space property to its default value",
+    "Sequences of whitespace are preserved, newlines are treated as line breaks.",
+  "whiteSpace:nowrap": "Keeps text in a single line without wrapping.",
+  "whiteSpace:pre-wrap": "Allows wrapping at specified points.",
+  "whiteSpace:pre-line": "Allows different lines to have different indents.",
+  "whiteSpace:break-spaces": "Allows long words to break at any character.",
+  "whiteSpace:initial":
+    "Sets the white-space declaration to its initial value.",
   "whiteSpace:inherit":
-    "Inherits the white-space property from its parent element",
-  "whiteSpace:unset": "Resets the white-space property to its initial value",
-  "widows:initial":
-    "Sets the minimum number of lines for an element to display at the bottom of a page",
-  "widows:inherit":
-    "Inherits the number of lines for an element to display at the bottom of a page from its parent element",
-  "widows:unset":
-    "Resets the number of lines for an element to display at the bottom of a page to its default value",
-  "width:auto": "Sets the width of an element to its default value",
-  "width:min-content":
-    "Sets the width of an element to fit its content, with minimum width constraint",
-  "width:max-content":
-    "Sets the width of an element to fit its content, with maximum width constraint",
-  "width:fit-content": "Sets the element width to fit its content",
-  "width:initial": "Sets the initial width of the element",
-  "width:inherit": "Inherits the width property from its parent element",
-  "width:unset":
-    "Unsets the width property, allowing it to revert to its default value",
-  "willChange:auto":
-    "Indicates the CSS property that will be changed and how it will be animated",
-  "willChange:scroll-position":
-    "Indicates the CSS property that will be changed to scroll-position and how it will be animated",
-  "willChange:contents":
-    "Indicates the CSS property that will be changed to contents and how it will be animated",
-  "willChange:initial": "Sets the initial value of the will-change property",
-  "willChange:inherit":
-    "Inherits the will-change property from its parent element",
-  "willChange:unset":
-    "Unsets the will-change property, allowing it to revert to its default value",
-  "wordBreak:normal":
-    "Determines how words should be broken when reaching the end of a line",
-  "wordBreak:break-all":
-    "Breaks words when reaching the end of a line, even if it means breaking within the word",
-  "wordBreak:keep-all": "Prevents words from breaking at the end of a line",
-  "wordBreak:break-word":
-    "Breaks words when reaching the end of a line, but only if necessary",
-  "wordBreak:initial": "Sets the initial value of the word-break property",
-  "wordBreak:inherit":
-    "Inherits the word-break property from its parent element",
-  "wordBreak:unset":
-    "Sets how words should break when reaching the end of a line",
-  "wordSpacing:normal": "Sets the amount of space between words to normal",
-  "wordSpacing:initial":
-    "Sets the amount of space between words to the default value",
-  "wordSpacing:inherit":
-    "Inherits the amount of space between words from the parent element",
-  "wordSpacing:unset":
-    "Resets the amount of space between words to the default value",
-  "wordWrap:normal":
-    "Sets how words should wrap when reaching the end of a line",
-  "wordWrap:break-word":
-    "Allows words to break and wrap to the next line when reaching the end of a line",
-  "wordWrap:initial": "Sets how words should wrap to the default value",
-  "wordWrap:inherit": "Inherits how words should wrap from the parent element",
-  "wordWrap:unset": "Resets how words should wrap to the default value",
-  "writingMode:horizontal-tb":
-    "Sets the direction of horizontal text to left-to-right",
-  "writingMode:vertical-rl":
-    "Sets the direction of vertical text to right-to-left",
-  "writingMode:vertical-lr":
-    "Sets the direction of vertical text to left-to-right",
-  "writingMode:sideways-rl":
-    "Sets the direction of sideways text to right-to-left",
-  "writingMode:sideways-lr":
-    "Sets the direction of sideways text to left-to-right",
-  "writingMode:initial": "Sets the direction of text to the default value",
-  "writingMode:inherit":
-    "Sets the direction for text to be inherited from the parent element",
-  "writingMode:unset": "Resets the direction for text to the default value",
-  "zIndex:auto":
-    "Sets the stacking order of an element to be automatically determined",
-  "zIndex:initial":
-    "Sets the stacking order of an element to its default value",
-  "zIndex:inherit":
-    "Sets the stacking order of an element to be inherited from the parent element",
+    "Inherits the white-space value from the parent element.",
+  "whiteSpace:unset":
+    "The white-space property is set to its parent's computed value.",
+  "widows:initial": "Sets the minimum number of lines in a block container.",
+  "widows:inherit": "Uses the widows value from the parent element.",
+  "widows:unset": "Resets the widows value to its initial value.",
+  "width:auto": "Sets the width property to its default value (auto).",
+  "width:min-content": "Expands the elements to fit their entire content.",
+  "width:max-content": "Shrinks the element to fit its minimum content.",
+  "width:fit-content": "Expands the element to fit the available width.",
+  "width:initial": "Sets the width property to its initial value.",
+  "width:inherit": "Inherits the width value from the parent element.",
+  "width:unset": "The element inherits its width property from its parent.",
+  "willChange:auto": "The browser decides which properties to animate.",
+  "willChange:scroll-position": "The position of the element will be animated.",
+  "willChange:contents": "Changes in element content will be animated.",
+  "willChange:initial": "Sets the default property value.",
+  "willChange:inherit": "Inherits the will-change property value.",
+  "willChange:unset": "Resets the will-change property value.",
+  "wordBreak:normal": "Breaks words based on browser default.",
+  "wordBreak:break-all": "Allows unbroken words to be broken.",
+  "wordBreak:keep-all": "Keeps all words on the same line.",
+  "wordBreak:break-word": "Breaks words only when necessary.",
+  "wordBreak:initial": "Sets the default property value.",
+  "wordBreak:inherit": "Inherits the word-break property value.",
+  "wordBreak:unset": "Resets the word-break property value.",
+  "wordSpacing:normal": "Words are spaced based on browser default.",
+  "wordSpacing:initial": "Sets the default property value.",
+  "wordSpacing:inherit": "Inherits word-spacing from parent element.",
+  "wordSpacing:unset": "Removes inherited word-spacing.",
+  "wordWrap:normal": "Default behavior, no word wrapping.",
+  "wordWrap:break-word": "Breaks long words if they don't fit.",
+  "wordWrap:initial": "Sets the property to its default value.",
+  "wordWrap:inherit": "Inherits the property from parent element.",
+  "wordWrap:unset": "Removes inherited word-wrap.",
+  "writingMode:horizontal-tb": "Default horizontal, top to bottom.",
+  "writingMode:vertical-rl": "Vertical, right to left.",
+  "writingMode:vertical-lr": "Vertical, left to right.",
+  "writingMode:sideways-rl": "Letters laid on their right side, top to bottom.",
+  "writingMode:sideways-lr": "Letters laid on their left side, top to bottom.",
+  "writingMode:initial": "Sets the property to its default value.",
+  "writingMode:inherit": "Inherits the property from parent element.",
+  "writingMode:unset": "Removes inherited writing-mode.",
+  "zIndex:auto": "Default, elements stack in order of appearance.",
+  "zIndex:initial": "Sets the z-index to its default value.",
+  "zIndex:inherit": "Inherits the z-index from its parent element.",
   "zIndex:unset":
-    "Resets the stacking order of an element to the default value",
+    "Resets the z-index to its inherited value, or default if there is none.",
+} as const;
+
+export const declarationsOverrides = {} as const;
+
+export const declarations = {
+  ...declarationsGenerated,
+  ...declarationsOverrides,
 } as const;
