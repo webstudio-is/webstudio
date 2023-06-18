@@ -42,7 +42,8 @@ const normalizedValues = {
   "font-family": inheritValue,
   "font-size": inheritValue,
   "line-height": inheritValue,
-  color: inheritValue,
+  // canvastext
+  color: { type: "keyword", value: "black" },
   "column-gap": {
     type: "unit",
     value: 0,

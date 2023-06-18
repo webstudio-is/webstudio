@@ -190,12 +190,26 @@ export const ColorPicker = ({
   const rgbValue = styleValueToRgbaColor(currentValue);
 
   // Change prefix color in sync with color picker, don't change during input changed
-  const prefixColor = styleValueResolve(
+  let prefixColor = styleValueResolve(
     currentValue.type === "keyword" || currentValue.type === "rgb"
       ? currentValue
       : value,
     currentColor
   );
+  // consider inherit on color same as currentColor
+  if (
+    property === "color" &&
+    prefixColor.type === "keyword" &&
+    prefixColor.value === "inherit"
+  ) {
+    prefixColor = {
+      type: "rgb",
+      r: currentColor.r,
+      g: currentColor.g,
+      b: currentColor.b,
+      alpha: currentColor.alpha,
+    };
+  }
 
   const prefixColorRgba = styleValueToRgbaColor(prefixColor);
 

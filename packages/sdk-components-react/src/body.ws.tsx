@@ -24,12 +24,6 @@ const presetStyle = {
       property: "lineHeight",
       value: { type: "unit", unit: "number", value: 1.5 },
     },
-    // temporary set root color
-    // until builder start to fallback "inherit" to black
-    {
-      property: "color",
-      value: { type: "keyword", value: "black" },
-    },
   ],
 } satisfies PresetStyle<typeof defaultTag>;
 
