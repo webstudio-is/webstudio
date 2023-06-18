@@ -116,12 +116,15 @@ export const useStyleData = ({ selectedInstance, publish }: UseStyleData) => {
           styleSources.set(selectedStyleSource.id, selectedStyleSource);
           const selectionValues =
             styleSourceSelections.get(instanceId)?.values ?? [];
-          styleSourceSelections.set(instanceId, {
-            instanceId,
-            values: selectionValues.includes(styleSourceSelector.styleSourceId)
-              ? selectionValues
-              : [...selectionValues, styleSourceSelector.styleSourceId],
-          });
+          if (
+            selectionValues.includes(styleSourceSelector.styleSourceId) ===
+            false
+          ) {
+            styleSourceSelections.set(instanceId, {
+              instanceId,
+              values: [...selectionValues, styleSourceSelector.styleSourceId],
+            });
+          }
 
           for (const update of updates) {
             if (update.operation === "set") {
