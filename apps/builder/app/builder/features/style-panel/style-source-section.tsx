@@ -295,6 +295,16 @@ const renameStyleSource = (id: StyleSource["id"], label: string) => {
   });
 };
 
+const clearStyles = (styleSourceId: StyleSource["id"]) => {
+  store.createTransaction([stylesStore], (styles) => {
+    for (const [styleDeclKey, styleDecl] of styles) {
+      if (styleDecl.styleSourceId === styleSourceId) {
+        styles.delete(styleDeclKey);
+      }
+    }
+  });
+};
+
 const componentStatesStore = computed(
   [selectedInstanceStore, registeredComponentMetasStore],
   (selectedInstance, registeredComponentMetas) => {
@@ -375,6 +385,7 @@ export const StyleSourcesSection = () => {
           convertLocalStyleSourceToToken(id);
           setEditingItemId(id);
         }}
+        onClearStyles={clearStyles}
         onRemoveItem={(id) => {
           removeStyleSourceFromInstance(id);
         }}
