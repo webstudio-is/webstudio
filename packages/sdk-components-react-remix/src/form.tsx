@@ -81,7 +81,7 @@ const withoutMessages = (children: ReactNode) =>
 
 export const Form = forwardRef<
   ElementRef<typeof defaultTag>,
-  Omit<ComponentProps<typeof defaultTag>, "method" | "action"> & {
+  ComponentProps<typeof defaultTag> & {
     initialState?: "initial" | "success" | "error";
   }
 >(({ children, initialState = "initial", ...props }, ref) => {
