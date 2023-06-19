@@ -18,13 +18,11 @@ import {
   parseBreakpoints,
   serializeBreakpoints,
 } from "./breakpoints";
-import { parseStyles, serializeStyles } from "./styles";
-import { parseStyleSources, serializeStyleSources } from "./style-sources";
-import {
-  parseStyleSourceSelections,
-  serializeStyleSourceSelections,
-} from "./style-source-selections";
-import { parseProps, serializeProps } from "./props";
+import { parseStyles } from "./styles";
+import { parseStyleSources } from "./style-sources";
+import { parseStyleSourceSelections } from "./style-source-selections";
+import { parseProps } from "./props";
+import { parseDataSources } from "../schema/data-sources";
 import { parseInstances, serializeInstances } from "./instances";
 import { parseDeployment, serializeDeployment } from "./deployment";
 import type { Deployment } from "../schema/deployment";
@@ -50,6 +48,7 @@ const parseBuild = async (build: DbBuild): Promise<Build> => {
       parseStyleSourceSelections(build.styleSourceSelections, skipValidation)
     );
     const props = Array.from(parseProps(build.props, skipValidation));
+    const dataSources = Array.from(parseDataSources(build.dataSources));
     const instances = Array.from(
       parseInstances(build.instances, skipValidation)
     );
@@ -67,6 +66,7 @@ const parseBuild = async (build: DbBuild): Promise<Build> => {
       styleSources,
       styleSourceSelections,
       props,
+      dataSources,
       instances,
       deployment,
     };
@@ -160,10 +160,6 @@ export const createBuild = async (
       projectId: props.projectId,
       pages: JSON.stringify(newPages),
       breakpoints: serializeBreakpoints(new Map(createInitialBreakpoints())),
-      styles: serializeStyles(new Map()),
-      styleSources: serializeStyleSources(new Map()),
-      styleSourceSelections: serializeStyleSourceSelections(new Map()),
-      props: serializeProps(new Map()),
       instances: serializeInstances(new Map(newInstances)),
     },
   });
