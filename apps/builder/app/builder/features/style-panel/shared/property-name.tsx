@@ -115,10 +115,10 @@ const TooltipContent = ({
   onClose,
 }: {
   title: string;
-  description?: string;
+  description?: React.ReactNode;
   properties: StyleProperty[];
   style: StyleInfo;
-  onReset: () => void;
+  onReset?: undefined | (() => void);
   onClose: () => void;
 }) => {
   const breakpoints = useStore(breakpointsStore);
@@ -193,44 +193,47 @@ const TooltipContent = ({
           </Flex>
         </Flex>
       )}
-      {(styleSource === "local" || styleSource === "overwritten") && (
-        <Button
-          color="dark"
-          prefix={<ResetIcon />}
-          css={{ flexGrow: 1 }}
-          onMouseDown={(event) => {
-            // Prevent closing tooltip
-            event.preventDefault();
-          }}
-          onClickCapture={() => {
-            onReset();
-            onClose();
-          }}
-        >
-          Reset value
-        </Button>
-      )}
+      {(styleSource === "local" || styleSource === "overwritten") &&
+        onReset !== undefined && (
+          <Button
+            color="dark"
+            prefix={<ResetIcon />}
+            css={{ flexGrow: 1 }}
+            onMouseDown={(event) => {
+              // Prevent closing tooltip
+              event.preventDefault();
+            }}
+            onClickCapture={() => {
+              onReset();
+              onClose();
+            }}
+          >
+            Reset value
+          </Button>
+        )}
     </Flex>
   );
 };
 
-type PropertyNameProps = {
+type PropertyNameInternalProps = {
   style: StyleInfo;
   properties: StyleProperty[];
   label: string | ReactElement;
   title?: string;
-  description?: string;
-  onReset: () => void;
+  description?: React.ReactNode;
+  onReset?: undefined | (() => void);
+  disabled?: boolean;
 };
 
-export const PropertyName = ({
+const PropertyNameInternal = ({
   style,
   title,
   description,
   properties,
   label,
   onReset,
-}: PropertyNameProps) => {
+  disabled,
+}: PropertyNameInternalProps) => {
   const [isOpen, setIsOpen] = useState(false);
   // When we have multiple properties, they must be originating from the same source, so we can just use one.
   const property = properties[0];
@@ -265,7 +268,15 @@ export const PropertyName = ({
           }}
         >
           {typeof label === "string" && property ? (
-            <Label color={getStyleSource(style[property])} truncate>
+            <Label
+              color={
+                onReset === undefined
+                  ? "default"
+                  : getStyleSource(style[property])
+              }
+              truncate
+              disabled={disabled}
+            >
               {label}
             </Label>
           ) : (
@@ -276,3 +287,62 @@ export const PropertyName = ({
     </Flex>
   );
 };
+
+type PropertyNameProps = {
+  style: StyleInfo;
+  properties: StyleProperty[];
+  label: string | ReactElement;
+  title?: string;
+  description?: React.ReactNode;
+  onReset: () => void;
+};
+
+export const PropertyName = ({
+  style,
+  title,
+  description,
+  properties,
+  label,
+  onReset,
+}: PropertyNameProps) => (
+  <PropertyNameInternal
+    style={style}
+    title={title}
+    description={description}
+    properties={properties}
+    label={label}
+    onReset={onReset}
+  />
+);
+
+type NonResetablePropertyNameProps = {
+  style: StyleInfo;
+  properties: StyleProperty[];
+  label: string | ReactElement;
+  title?: string;
+  description?: React.ReactNode;
+  disabled?: boolean;
+};
+/**
+ * Some properties like layered background-image, background-size are non resetable.
+ * UI of background would be unreadable, imagine you have
+ * background-size inherited from one source, background-image from the other,
+ * Every property have different amount of layers. The final result on the screen would be a mess.
+ */
+export const NonResetablePropertyName = ({
+  style,
+  title,
+  description,
+  properties,
+  label,
+  disabled,
+}: NonResetablePropertyNameProps) => (
+  <PropertyNameInternal
+    style={style}
+    title={title}
+    description={description}
+    properties={properties}
+    label={label}
+    disabled={disabled}
+  />
+);

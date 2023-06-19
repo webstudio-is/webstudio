@@ -1,4 +1,4 @@
-import { Grid, Label, Select, theme } from "@webstudio-is/design-system";
+import { Grid, Select, theme } from "@webstudio-is/design-system";
 import { toValue } from "@webstudio-is/css-engine";
 import { styleConfigByName } from "../../shared/configs";
 import { toPascalCase } from "../../shared/keyword-utils";
@@ -11,6 +11,7 @@ import {
   TupleValueItem,
 } from "@webstudio-is/css-data";
 import type { SetValue } from "../../shared/use-style-data";
+import { NonResetablePropertyName } from "../../shared/property-name";
 
 const StyleKeywordAuto = { type: "keyword" as const, value: "auto" };
 
@@ -72,9 +73,11 @@ export const BackgroundSize = (
         align="center"
         gap={2}
       >
-        <Label color="default" truncate>
-          Size
-        </Label>
+        <NonResetablePropertyName
+          style={props.currentStyle}
+          properties={[property]}
+          label="Size"
+        />
 
         <Select
           // show empty field instead of radix placeholder
@@ -104,13 +107,21 @@ export const BackgroundSize = (
         gapX={2}
         gapY={1}
       >
-        <Label color="default" disabled={customSizeDisabled} truncate>
-          Width
-        </Label>
+        <NonResetablePropertyName
+          style={props.currentStyle}
+          properties={[property]}
+          label="Width"
+          description="The width of the background image."
+          disabled={customSizeDisabled}
+        />
 
-        <Label color="default" disabled={customSizeDisabled} truncate>
-          Height
-        </Label>
+        <NonResetablePropertyName
+          style={props.currentStyle}
+          properties={[property]}
+          label="Height"
+          description="The height of the background image."
+          disabled={customSizeDisabled}
+        />
 
         <CssValueInputContainer
           disabled={customSizeDisabled}
