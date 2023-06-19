@@ -3118,7 +3118,7 @@ export const properties = {
     inherited: true,
     initial: {
       type: "keyword",
-      value: "startOrNamelessValueIfLTRRightIfRTL",
+      value: "start",
     },
     popularity: 0.89287477,
     appliesTo: "blockContainers",
