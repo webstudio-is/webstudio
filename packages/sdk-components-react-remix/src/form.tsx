@@ -7,7 +7,11 @@ import {
   forwardRef,
 } from "react";
 import { useFetcher } from "@remix-run/react";
-import { formIdFieldName } from "@webstudio-is/form-handlers";
+import {
+  formIdFieldName,
+  formActionFieldName,
+  formMethodFieldName,
+} from "@webstudio-is/form-handlers";
 import { getInstanceIdFromComponentProps } from "@webstudio-is/react-sdk";
 
 export const defaultTag = "form";
@@ -81,10 +85,10 @@ const withoutMessages = (children: ReactNode) =>
 
 export const Form = forwardRef<
   ElementRef<typeof defaultTag>,
-  Omit<ComponentProps<typeof defaultTag>, "method" | "action"> & {
+  ComponentProps<typeof defaultTag> & {
     initialState?: "initial" | "success" | "error";
   }
->(({ children, initialState = "initial", ...props }, ref) => {
+>(({ children, initialState = "initial", action, method, ...props }, ref) => {
   const fetcher = useFetcher();
 
   const state =
@@ -99,6 +103,8 @@ export const Form = forwardRef<
   return (
     <fetcher.Form {...props} method="post" data-state={state} ref={ref}>
       <input type="hidden" name={formIdFieldName} value={instanceId} />
+      <input type="hidden" name={formActionFieldName} value={action} />
+      <input type="hidden" name={formMethodFieldName} value={method} />
       {state === "success"
         ? onlySuccessMessage(children)
         : state === "error"

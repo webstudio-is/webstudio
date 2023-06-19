@@ -1,6 +1,9 @@
 import type { Build } from "@webstudio-is/project-build";
 
-export const formIdFieldName = "ws--form-id";
+export const formHiddenFieldPrefix = "ws--form";
+export const formIdFieldName = `${formHiddenFieldPrefix}-id`;
+export const formActionFieldName = `${formHiddenFieldPrefix}-action`;
+export const formMethodFieldName = `${formHiddenFieldPrefix}--form-method`;
 
 // Input data common for all handlers
 export type FormInfo = {
@@ -9,6 +12,9 @@ export type FormInfo = {
   formData: FormData;
   toEmail: string;
   fromEmail: string;
+  // null as serializable
+  action: string | null;
+  method: "get" | "post";
 };
 
 export type EmailInfo = {
@@ -25,7 +31,9 @@ export type Result = { success: true } | { success: false; errors: string[] };
 /** Returns form entries that should be send in email: removes `File` entries and `formId` */
 export const getFormEntries = (formData: FormData): [string, string][] =>
   [...formData.entries()].flatMap(([key, value]) =>
-    key !== formIdFieldName && typeof value === "string" ? [[key, value]] : []
+    key.startsWith(formHiddenFieldPrefix) === false && typeof value === "string"
+      ? [[key, value]]
+      : []
   );
 
 export const getFormId = (formData: FormData) => {

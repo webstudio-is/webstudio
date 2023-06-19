@@ -36,6 +36,7 @@ export const textStyle = css({
         // destructive in most cases used to show 3rd party errors
         // we don't want it to break layout
         overflowWrap: "anywhere",
+        userSelect: "auto",
       },
     },
     align: {

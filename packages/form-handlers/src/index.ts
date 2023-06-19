@@ -1,6 +1,9 @@
 export {
   formToEmail,
   formIdFieldName,
+  formActionFieldName,
+  formMethodFieldName,
+  formHiddenFieldPrefix,
   getFormId,
   hasMatchingForm,
   type EmailInfo,
