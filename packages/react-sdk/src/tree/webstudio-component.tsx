@@ -40,13 +40,18 @@ export const WebstudioComponent = ({
   components,
   ...rest
 }: WebstudioComponentProps) => {
-  const instanceProps = useInstanceProps(instance.id);
+  const { [showAttribute]: show = true, ...instanceProps } = useInstanceProps(
+    instance.id
+  );
   const props = {
     ...instanceProps,
     ...rest,
     [idAttribute]: instance.id,
     [componentAttribute]: instance.component,
   };
+  if (show === false) {
+    return <></>;
+  }
   const Component = components.get(instance.component);
   if (Component === undefined) {
     return <></>;
@@ -60,4 +65,5 @@ export const WebstudioComponent = ({
 
 export const idAttribute = "data-ws-id";
 export const componentAttribute = "data-ws-component";
+export const showAttribute = "data-ws-show";
 export const collapsedAttribute = "data-ws-collapsed";

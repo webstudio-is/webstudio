@@ -1,7 +1,10 @@
 import { useState } from "react";
 import { nanoid } from "nanoid";
 import type { Instance, Prop } from "@webstudio-is/project-build";
-import type { WsComponentPropsMeta } from "@webstudio-is/react-sdk";
+import {
+  type WsComponentPropsMeta,
+  showAttribute,
+} from "@webstudio-is/react-sdk";
 import type { PropMeta, PropValue } from "./shared";
 
 type PropOrName = { prop?: Prop; propName: string };
@@ -114,10 +117,20 @@ const systemPropsMeta: { name: string; meta: PropMeta }[] = [
   {
     name: "id",
     meta: {
+      label: "ID",
       required: false,
       control: "text",
       type: "string",
-      label: "ID",
+    },
+  },
+  {
+    name: showAttribute,
+    meta: {
+      label: "Show",
+      required: false,
+      defaultValue: true,
+      control: "boolean",
+      type: "boolean",
     },
   },
 ];
@@ -137,7 +150,10 @@ export const usePropsLogic = ({
   const initialPropsNames = new Set(meta.initialProps ?? []);
 
   const systemProps = systemPropsMeta.map(({ name, meta }) => {
-    const saved = getAndDelete(unprocessedSaved, name);
+    let saved = getAndDelete(unprocessedSaved, name);
+    if (saved === undefined && meta.defaultValue !== undefined) {
+      saved = getStartingProp(instanceId, meta, name);
+    }
     getAndDelete(unprocessedKnown, name);
     initialPropsNames.delete(name);
     return { prop: saved, propName: name, meta };

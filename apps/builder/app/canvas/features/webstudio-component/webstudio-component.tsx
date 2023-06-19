@@ -15,6 +15,7 @@ import {
   renderWebstudioComponentChildren,
   idAttribute,
   componentAttribute,
+  showAttribute,
 } from "@webstudio-is/react-sdk";
 import {
   instancesStore,
@@ -127,7 +128,7 @@ export const WebstudioComponentDev = ({
   );
 
   const instanceProps = useInstanceProps(instance.id);
-  const userProps = useMemo(() => {
+  const { [showAttribute]: show = true, ...userProps } = useMemo(() => {
     const result: UserProps = {};
     if (instanceProps === undefined) {
       return result;
@@ -175,6 +176,10 @@ export const WebstudioComponentDev = ({
       : undefined;
 
   const Component = components.get(instance.component);
+
+  if (show === false) {
+    return <></>;
+  }
 
   if (Component === undefined) {
     return <></>;
