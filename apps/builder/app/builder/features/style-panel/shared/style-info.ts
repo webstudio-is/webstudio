@@ -594,30 +594,22 @@ export const useStyleInfo = () => {
       const previousSource = previousSourceInfo[property];
       const nextSource = nextSourceInfo[property];
       const local = selectedStyle?.[property];
-      const value =
+      const ownValue =
         local ??
         nextSource?.value ??
         previousSource?.value ??
         cascaded?.value ??
         preset ??
-        htmlValue ??
-        inherited?.value ??
-        defaultValue;
+        htmlValue;
+      const inheritedValue = inherited?.value;
+      const value = ownValue ?? inheritedValue ?? defaultValue;
       if (value) {
         if (property === "color") {
-          const ownValue =
-            local ??
-            nextSource?.value ??
-            previousSource?.value ??
-            cascaded?.value ??
-            preset ??
-            htmlValue;
           const ownColor =
             ownValue?.type === "keyword" &&
             (ownValue.value === "inherit" || ownValue.value === "currentColor")
               ? undefined
               : ownValue;
-          const inheritedValue = inherited?.value;
           const inheritedColor =
             inheritedValue?.type === "keyword" &&
             (inheritedValue.value === "inherit" ||
