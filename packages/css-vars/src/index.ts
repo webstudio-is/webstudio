@@ -1,14 +1,12 @@
-let counter = -1;
-
-const unique = <Name extends string>(name: Name) => {
-  return `${name}-${++counter}` as const;
-};
-
-const define = <Name extends string>(name: Name, unique = false) => {
-  if (unique) {
-    return `--${name}` as const;
+const WEBSTUDIO_CSS_VARIABLE_POSTFIX = "-webstudio-variable";
+const cssVarsSet = new Set<string>();
+const define = <Name extends string>(name: Name) => {
+  if (cssVarsSet.has(name)) {
+    throw new Error(`Variable ${name} already defined`);
   }
-  return `--${name}-${++counter}` as const;
+  cssVarsSet.add(name);
+
+  return `--${name}${WEBSTUDIO_CSS_VARIABLE_POSTFIX}` as const;
 };
 
 type AppendString<
@@ -31,4 +29,4 @@ const use = <Args extends string[]>(...args: Args) => {
   return `var(${args.join(", ") as Join<Args, ", ">})` as const;
 };
 
-export const cssVars = { define, use, unique };
+export const cssVars = { define, use };
