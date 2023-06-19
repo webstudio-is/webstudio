@@ -143,8 +143,8 @@ export const FlexGrid = ({
               onClick={() => {
                 const justifyContent = alignment[x];
                 const alignItems = alignment[y];
-                setAlignItems(alignItems);
-                setJustifyContent(justifyContent);
+                setAlignItems({ type: "keyword", value: alignItems });
+                setJustifyContent({ type: "keyword", value: justifyContent });
                 batchUpdate.publish();
               }}
             >

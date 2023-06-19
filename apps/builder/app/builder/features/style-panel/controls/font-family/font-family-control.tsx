@@ -18,7 +18,14 @@ export const FontFamilyControl = ({
   return (
     <FloatingPanel
       title="Fonts"
-      content={<FontsManager value={toValue(value)} onChange={setValue} />}
+      content={
+        <FontsManager
+          value={toValue(value)}
+          onChange={(newValue) => {
+            setValue({ type: "fontFamily", value: [newValue] });
+          }}
+        />
+      }
       onOpenChange={setIsOpen}
     >
       <DeprecatedTextField

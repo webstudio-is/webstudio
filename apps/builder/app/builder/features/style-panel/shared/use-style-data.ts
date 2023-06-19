@@ -1,7 +1,6 @@
 import { useCallback } from "react";
 import { useStore } from "@nanostores/react";
 import store from "immerhin";
-import warnOnce from "warn-once";
 import {
   type Breakpoint,
   type Instance,
@@ -10,15 +9,13 @@ import {
 import type { StyleProperty, StyleValue } from "@webstudio-is/css-data";
 import type { Publish } from "~/shared/pubsub";
 import {
+  selectedBreakpointStore,
   selectedOrLastStyleSourceSelectorStore,
   selectedStyleSourceStore,
   styleSourceSelectionsStore,
   styleSourcesStore,
   stylesStore,
 } from "~/shared/nano-states";
-import { selectedBreakpointStore } from "~/shared/nano-states";
-// @todo: must be removed, now it's only for compatibility with existing code
-import { parseCssValue } from "@webstudio-is/css-data";
 import { useStyleInfo } from "./style-info";
 
 export type StyleUpdate =
@@ -53,9 +50,8 @@ type UseStyleData = {
 
 export type StyleUpdateOptions = { isEphemeral: boolean };
 
-// @todo: style must have StyleValue type always, get rid of string.
 export type SetValue = (
-  style: string | StyleValue,
+  style: StyleValue,
   options?: StyleUpdateOptions
 ) => void;
 
@@ -67,9 +63,7 @@ export type DeleteProperty = (
 ) => void;
 
 export type CreateBatchUpdate = () => {
-  setProperty: (
-    property: StyleProperty
-  ) => (style: string | StyleValue) => void;
+  setProperty: (property: StyleProperty) => (style: StyleValue) => void;
   deleteProperty: (property: StyleProperty) => void;
   publish: (options?: StyleUpdateOptions) => void;
 };
@@ -154,32 +148,11 @@ export const useStyleData = ({ selectedInstance, publish }: UseStyleData) => {
     [publish, selectedBreakpoint, selectedInstance]
   );
 
-  // @deprecated should not be called
-  const toStyleValue = (property: StyleProperty, value: string) => {
-    if (property === "fontFamily") {
-      return { type: "fontFamily" as const, value: [value] };
-    }
-
-    return parseCssValue(property, value);
-  };
-
   const setProperty = useCallback<SetProperty>(
     (property) => {
-      return (inputOrStyle, options = { isEphemeral: false }) => {
-        warnOnce(
-          typeof inputOrStyle === "string",
-          "setProperty should be called with a style object, string is deprecated"
-        );
-
-        const nextValue =
-          typeof inputOrStyle === "string"
-            ? toStyleValue(property, inputOrStyle)
-            : inputOrStyle;
-
-        if (nextValue.type !== "invalid") {
-          const updates = [
-            { operation: "set" as const, property, value: nextValue },
-          ];
+      return (value, options = { isEphemeral: false }) => {
+        if (value.type !== "invalid") {
+          const updates = [{ operation: "set" as const, property, value }];
           const type = options.isEphemeral ? "preview" : "update";
 
           publishUpdates(type, updates);
@@ -202,17 +175,7 @@ export const useStyleData = ({ selectedInstance, publish }: UseStyleData) => {
     let updates: StyleUpdates["updates"] = [];
 
     const setProperty = (property: StyleProperty) => {
-      const setValue = (inputOrStyle: string | StyleValue) => {
-        warnOnce(
-          typeof inputOrStyle === "string",
-          "setProperty should be called with a style object, string is deprecated"
-        );
-
-        const value =
-          typeof inputOrStyle === "string"
-            ? toStyleValue(property, inputOrStyle)
-            : inputOrStyle;
-
+      const setValue = (value: StyleValue) => {
         if (value.type === "invalid") {
           return;
         }

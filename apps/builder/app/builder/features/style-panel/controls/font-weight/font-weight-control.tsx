@@ -114,7 +114,7 @@ export const FontWeightControl = ({
           (option) => option.label === label
         );
         if (selected) {
-          setValue(selected.weight);
+          setValue({ type: "keyword", value: selected.weight });
         }
       }}
     />
