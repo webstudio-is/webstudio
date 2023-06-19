@@ -121,9 +121,9 @@ const systemPropsMeta: { name: string; meta: PropMeta }[] = [
     },
   },
   {
-    name: "condition",
+    name: "__show",
     meta: {
-      label: "Condition",
+      label: "Show",
       required: false,
       defaultValue: true,
       control: "boolean",

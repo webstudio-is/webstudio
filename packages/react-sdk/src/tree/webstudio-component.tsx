@@ -40,14 +40,14 @@ export const WebstudioComponent = ({
   components,
   ...rest
 }: WebstudioComponentProps) => {
-  const { condition = true, ...instanceProps } = useInstanceProps(instance.id);
+  const { __show = true, ...instanceProps } = useInstanceProps(instance.id);
   const props = {
     ...instanceProps,
     ...rest,
     [idAttribute]: instance.id,
     [componentAttribute]: instance.component,
   };
-  if (condition === false) {
+  if (__show === false) {
     return <></>;
   }
   const Component = components.get(instance.component);
