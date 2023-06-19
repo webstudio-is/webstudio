@@ -3,45 +3,95 @@ import {
   type MitosisComponent,
   type MitosisNode,
 } from "@builder.io/mitosis";
+import { parseCss } from "@webstudio-is/css-data";
 import type { PropsList } from "@webstudio-is/project-build";
 import type { WsEmbedTemplate } from "@webstudio-is/react-sdk";
+import { traverseTemplate } from "./traverse-template";
 
-export const jsxToWSEmbedTemplate = (jsx: string) => {
+export const jsxToWSEmbedTemplate = (
+  jsx: string,
+  options = { parseStyles: true }
+) => {
   const parsed = parseJsx(
-    `export default function App() {\n return ${jsx}\n}`,
+    `export default function App() {\n return <Fragment>${jsx}</Fragment>\n}`,
     {
       typescript: false,
     }
   );
 
-  return JSON.parse(
-    mitosisJSONToWsEmbedTemplate()({ component: parsed })
+  const styles: string[] = [];
+
+  const parseStyles = function parseStyles(node: ProcessedValue) {
+    if (node && typeof node.type === "string" && node.type === "styles") {
+      styles.push(node.value);
+      // delete style nodes
+      return null;
+    }
+    return node;
+  };
+
+  const json = JSON.parse(
+    mitosisJSONToWsEmbedTemplate(
+      options.parseStyles ? { onNode: parseStyles } : undefined
+    )({ component: parsed })
   ) as WsEmbedTemplate;
+
+  if (styles.length > 0) {
+    const styleDecls = parseCss(styles.join("\n"));
+
+    traverseTemplate(json, (node) => {
+      if (node.type === "instance") {
+        if (node.styles) {
+          node.styles = node.styles
+            .flatMap((style) => {
+              const className = style.property;
+              return styleDecls[className];
+            })
+            .filter(Boolean);
+        }
+      }
+    });
+  }
+
+  return json[0].type === "instance" && json[0].component === "Fragment"
+    ? json[0].children
+    : json;
 };
 
 type ProcessedValue = ReturnType<typeof processValue>;
+const createReplacer = function createReplacer(
+  onNode: (node: ProcessedValue) => ProcessedValue | null = (node) => node
+) {
+  function replacer<U>(key: string, value: U): ProcessedValue[];
+  function replacer(key: "children", value: MitosisNode[]): ProcessedValue[];
+  // eslint-disable-next-line func-style
+  function replacer(key: string, value: MitosisNode[]): ProcessedValue[] {
+    if (key === "children" && Array.isArray(value)) {
+      return value.map(processValue).filter((v) => onNode(v) !== null);
+    }
 
-function replacer<U>(key: string, value: U): ProcessedValue[];
-function replacer(key: "children", value: MitosisNode[]): ProcessedValue[];
-// eslint-disable-next-line func-style
-function replacer(key: string, value: MitosisNode[]): ProcessedValue[] {
-  if (key === "children" && Array.isArray(value)) {
-    return value.map(processValue).filter((v) => v !== null);
+    if (key !== null && Array.isArray(value)) {
+      return value.map(processValue).filter((v) => onNode(v) !== null);
+    }
+
+    return value;
   }
 
-  if (key !== null && Array.isArray(value)) {
-    return value.map((value) => processValue(value)).filter((v) => v !== null);
-  }
-
-  return value;
-}
+  return replacer;
+};
 
 // @todo this is a Mitosis generator - add plugins hooks etc.
 export const mitosisJSONToWsEmbedTemplate = function componentToWsEmbedTemplate(
-  options = {}
+  options = { onNode: (node: ProcessedValue) => node }
 ) {
   return ({ component }: { component: MitosisComponent }) => {
-    return JSON.stringify(component.children, replacer);
+    return JSON.stringify(
+      component.children.length === 1 &&
+        component.children[0].name === "Fragment"
+        ? component.children[0].children
+        : component.children,
+      createReplacer(options.onNode)
+    );
   };
 };
 
@@ -61,6 +111,16 @@ const processValue = function processValue(value: MitosisNode) {
   const type = value["@type"];
 
   if (type === "@builder.io/mitosis/node") {
+    if (value.name === "style") {
+      const styles = value.children
+        .filter((child) => child.bindings._text?.code)
+        .map((child) => child.bindings._text?.code)
+        .join("\n");
+      return {
+        type: "styles",
+        value: styles,
+      };
+    }
     const { class: className, ...props } = value.properties;
     return {
       type: "instance",

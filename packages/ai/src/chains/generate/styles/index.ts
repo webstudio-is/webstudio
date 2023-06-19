@@ -1,11 +1,13 @@
-import { parseCss } from "@webstudio-is/css-data";
+import { parseCss, type RgbValue } from "@webstudio-is/css-data";
 import type { Model as BaseModel } from "../../../models/types";
 import { findById } from "../../../utils/find-by-id";
 import { formatPrompt } from "../../../utils/format-prompt";
 import { getCode } from "../../../utils/get-code";
 import { getPalette, rgbaToHex } from "../../../utils/get-palette";
 import { type Chain, type ChainMessage, type ElementType } from "../../types";
-import { prompt as palettePromptTemplate } from "../palette/__generated__/generate.prompt";
+import { prompt as palettePromptTemplate } from "../palette/__generated__/pick.prompt";
+import { colors } from "../palette/colors";
+import { gradients } from "../palette/gradients";
 import { prompt as promptTemplate } from "./__generated__/generate.prompt";
 
 export const create = <ModelMessageFormat>(): Chain<
@@ -25,7 +27,10 @@ export const create = <ModelMessageFormat>(): Chain<
 
     // Prepare prompt variables...
     if (prompts.style) {
-      prompts.style = `in ${prompts.style.replace(/https?:\/\//, "")} style.`;
+      prompts.style = `- The result style should be influenced by: ${prompts.style.replace(
+        /https?:\/\//,
+        ""
+      )}`;
     }
 
     if (prompts.components) {
@@ -45,19 +50,33 @@ export const create = <ModelMessageFormat>(): Chain<
 
     prompts.palette = palette.join(", ");
     prompts.colorMode = colorMode;
+    prompts.gradients = "";
 
     if (prompts.palette === "") {
       console.log("Generating palette");
-      const paletteRequestMessages = model.generateMessages([
-        ["user", formatPrompt(prompts, palettePromptTemplate)],
-      ]);
+      const paletteMessage: ChainMessage = [
+        "user",
+        formatPrompt(
+          {
+            ...prompts,
+            colors: colors
+              .map(([name, shades]) => `  - ${name}: ${shades.join(", ")}`)
+              .join("\n"),
+          },
+          palettePromptTemplate
+        ),
+      ];
+      console.log(paletteMessage[1]);
+      const paletteRequestMessages = model.generateMessages([paletteMessage]);
 
       try {
         const response = await model.request({
           messages: paletteRequestMessages,
         });
 
-        const { palette, colorMode } = JSON.parse(getCode(response, "json"));
+        const { palette, colorMode, gradients } = JSON.parse(
+          getCode(response, "json")
+        );
 
         if (palette) {
           prompts.palette = palette.map(rgbaToHex).join(", ");
@@ -65,6 +84,19 @@ export const create = <ModelMessageFormat>(): Chain<
 
         if (colorMode) {
           prompts.colorMode = colorMode;
+        }
+
+        if (gradients) {
+          prompts.gradients =
+            `- Available background gradients (color stops sets):\n` +
+            // gradients
+            //   .sort(() => Math.random() - 0.5)
+            //   .slice(0, 4)
+            //   .map((g) => `  - ${g}`)
+            //   .join("\n");
+            (gradients as RgbValue[][])
+              .map((colors) => `  - ${colors.map(rgbaToHex).join(", ")}`)
+              .join("\n");
         }
 
         console.log({ prompts });
@@ -78,9 +110,9 @@ export const create = <ModelMessageFormat>(): Chain<
       formatPrompt(prompts, promptTemplate),
     ];
 
-    const requestMessages = model.generateMessages([...messages, userMessage]);
+    console.log(userMessage[1]);
 
-    console.log({ requestMessages });
+    const requestMessages = model.generateMessages([...messages, userMessage]);
 
     const response = await model.request({
       messages: requestMessages,

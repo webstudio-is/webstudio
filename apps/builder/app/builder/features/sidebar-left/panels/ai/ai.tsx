@@ -68,6 +68,7 @@ type EmbedTemplateProps = {
 
 type AIAction = "generate" | "edit";
 type AIGenerateResponseType =
+  | { step: "full"; response: { json: WsEmbedTemplate; code: string } }
   | { step: "instances"; response: { json: WsEmbedTemplate; code: string } }
   | { step: "styles"; response: { json: EmbedTemplateStyles[]; code: string } }
   | { step: "props"; response: { json: EmbedTemplateProps[]; code: string } };
@@ -87,6 +88,7 @@ type AIGenerationSteps = (
 )["step"];
 
 const labels: Record<AIGenerationSteps, string> = {
+  full: "Generating page",
   instances: "Generating content",
   styles: "Styling content",
   props: "Adding some functionality",
@@ -94,6 +96,31 @@ const labels: Record<AIGenerationSteps, string> = {
 };
 
 const onAIComplete = {
+  generateFull: (responses: AIGenerateResponseType[], instanceId: string) => {
+    const template = responses[0].response.json;
+
+    const selectedInstanceSelector = selectedInstanceSelectorStore.get();
+
+    if (
+      !selectedInstanceSelector ||
+      selectedInstanceSelector[0] !== instanceId
+    ) {
+      throw new Error("Invalid selected instance");
+    }
+
+    const dropTarget = findClosestDroppableTarget(
+      registeredComponentMetasStore.get(),
+      instancesStore.get(),
+      selectedInstanceSelector,
+      []
+    );
+
+    if (dropTarget) {
+      insertTemplate(template, dropTarget);
+    } else {
+      throw new Error("Invalid selected instance");
+    }
+  },
   generate: (responses: AIGenerateResponseType[], instanceId: string) => {
     const styles = responses[1].response.json;
     const template = JSON.parse(
@@ -206,6 +233,7 @@ export const TabContent = ({ publish, onSetActiveTab }: TabContentProps) => {
     const steps: AIGenerationSteps[] = isEdit
       ? ["tweak"]
       : ["instances", "styles"];
+    // : ["full"];
 
     const responses: AIGenerationResponses = [];
 

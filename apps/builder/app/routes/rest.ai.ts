@@ -1,6 +1,7 @@
 import type { ActionArgs } from "@remix-run/node";
 import {
   createEditTweakChain,
+  createGenerateFullChain,
   createGenerateInstancesChain,
   createGenerateStylesChain,
   createGptModel,
@@ -36,7 +37,7 @@ const RequestSchema = zfd.formData(
     z.union([
       z.object({
         _action: zfd.text(z.enum(["generate"])),
-        steps: zfd.repeatableOfType(z.enum(["instances", "styles"])),
+        steps: zfd.repeatableOfType(z.enum(["full", "instances", "styles"])),
       }),
       z.object({
         _action: zfd.text(z.enum(["edit"])),
@@ -49,6 +50,7 @@ type RequestSchema = z.infer<typeof RequestSchema>;
 
 const chains = {
   generate: {
+    full: createGenerateFullChain<GPTModelMessageFormat>(),
     instances: createGenerateInstancesChain<GPTModelMessageFormat>(),
     styles: createGenerateStylesChain<GPTModelMessageFormat>(),
   },
@@ -128,7 +130,7 @@ export const action = async ({ request }: ActionArgs) => {
     // @todo Remove this hard coded if/else see @todo 1.
     const chain =
       action === "generate"
-        ? step === "instances" || step === "styles"
+        ? step === "instances" || step === "styles" || step === "full"
           ? chains[action][step]
           : null
         : action === "edit" && step === "tweak"

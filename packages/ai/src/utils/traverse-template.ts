@@ -1,15 +1,19 @@
 import { WsEmbedTemplate } from "@webstudio-is/react-sdk";
 import type { ElementType } from "..";
 
+export type NodeType =
+  | ElementType<WsEmbedTemplate>
+  | { type: "styles"; value: string };
+
 export const traverseTemplate = function traverseTemplate(
-  template: WsEmbedTemplate,
-  fn: (node: ElementType<WsEmbedTemplate>) => void
+  template: NodeType[],
+  fn: (node: NodeType, parent: NodeType | NodeType[]) => void
 ) {
   template.forEach((node) => {
-    fn(node);
+    fn(node, template);
 
     if (node.type === "instance" && node.children.length > 0) {
-      traverseTemplate(node.children, fn);
+      traverseTemplate(node.children, (n, _) => fn(n, node));
     }
   });
 };

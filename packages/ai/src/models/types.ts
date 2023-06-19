@@ -4,6 +4,8 @@ export type ModelGenerateMessages<ModelMessage> = (
   messages: ChainMessages
 ) => ModelMessage[];
 
+export type ModelGenerateImage = (prompt: string) => Promise<string>;
+
 export type ModelRequest<ModelMessageFormat> = ({
   messages,
 }: {
@@ -12,5 +14,6 @@ export type ModelRequest<ModelMessageFormat> = ({
 
 export type Model<ModelMessageFormat> = {
   generateMessages: ModelGenerateMessages<ModelMessageFormat>;
+  generateImage: ModelGenerateImage;
   request: ModelRequest<ModelMessageFormat>;
 };

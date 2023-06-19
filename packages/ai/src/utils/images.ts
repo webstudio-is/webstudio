@@ -29,9 +29,23 @@ export const generateImagesUrls = async function generateImagesUrls(
   return Promise.all(
     descriptions.map((desc) =>
       // TODO find an api to generate images
-      fetch(`https://api.com/?query=${encodeURIComponent(desc)}`)
+      fetch("https://api.openai.com/v1/images/generations", {
+        headers: {
+          "Content-Type": "application/json",
+          Accept: "application/json",
+          Authorization: `Bearer ${config.apiKey}`,
+          "OpenAI-Organization": config.organization,
+        },
+        body: JSON.stringify({
+          prompt: desc,
+          n: 1,
+          size: "512x512",
+          response_format: "url",
+        }),
+      })
+        // fetch(`https://api.com/?query=${encodeURIComponent(desc)}`)
         .then((r) => r.json())
-        .then((r) => r[0].url)
+        .then((r) => r.data[0].url)
         .catch((e) => "")
     )
   );

@@ -3,16 +3,12 @@ import type { Model as BaseModel } from "../../../models/types";
 import { findById } from "../../../utils/find-by-id";
 import { formatPrompt } from "../../../utils/format-prompt";
 import { getCode } from "../../../utils/get-code";
-import { getPalette } from "../../../utils/get-palette";
-import {
-  collectDescriptions,
-  generateImagesUrls,
-  insertImagesUrls,
-} from "../../../utils/images";
+import { getPalette, rgbaToHex } from "../../../utils/get-palette";
 import { jsxToWSEmbedTemplate } from "../../../utils/jsx";
-import { traverseTemplate } from "../../../utils/traverse-template";
 import { type Chain, type ChainMessage, type ElementType } from "../../types";
-import { prompt as promptTemplate } from "./__generated__/generate.prompt";
+import { prompt as palettePromptTemplate } from "../palette/__generated__/generate.prompt";
+import { prompt as promptSystem } from "./__generated__/system.prompt";
+import { prompt as promptUser } from "./__generated__/user.prompt";
 
 export const create = <ModelMessageFormat>(): Chain<
   BaseModel<ModelMessageFormat>
@@ -31,10 +27,7 @@ export const create = <ModelMessageFormat>(): Chain<
 
     // Prepare prompt variables...
     if (prompts.style) {
-      prompts.style = `- The result style should be influenced by: ${prompts.style.replace(
-        /https?:\/\//,
-        ""
-      )}`;
+      prompts.style = `in ${prompts.style.replace(/https?:\/\//, "")} style.`;
     }
 
     if (prompts.components) {
@@ -57,18 +50,52 @@ export const create = <ModelMessageFormat>(): Chain<
       build.styles.map(([name, value]) => value)
     );
 
-    prompts.palette =
-      palette.join(", ") || "generate an aesthetically pleasing one.";
+    prompts.palette = palette.join(", ");
     prompts.colorMode = colorMode;
+
+    if (prompts.palette === "") {
+      const paletteRequestMessages = model.generateMessages([
+        ["user", formatPrompt(prompts, palettePromptTemplate)],
+      ]);
+
+      try {
+        const response = await model.request({
+          messages: paletteRequestMessages,
+        });
+
+        const { palette, colorMode } = JSON.parse(getCode(response, "json"));
+
+        if (palette) {
+          prompts.palette = palette.map(rgbaToHex).join(", ");
+        }
+
+        if (colorMode) {
+          prompts.colorMode = colorMode;
+        }
+      } catch (error) {
+        prompts.palette = "generate an aesthetically pleasing one.";
+      }
+    }
+
+    const systemMessage: ChainMessage = [
+      "system",
+      formatPrompt(prompts, promptSystem),
+    ];
+
+    console.log(systemMessage[1]);
 
     const userMessage: ChainMessage = [
       "user",
-      formatPrompt(prompts, promptTemplate),
+      formatPrompt(prompts, promptUser),
     ];
 
     console.log(userMessage[1]);
 
-    const requestMessages = model.generateMessages([...messages, userMessage]);
+    const requestMessages = model.generateMessages([
+      ...messages,
+      systemMessage,
+      userMessage,
+    ]);
 
     const response = await model.request({
       messages: requestMessages,
@@ -76,28 +103,12 @@ export const create = <ModelMessageFormat>(): Chain<
 
     const jsx = getCode(response, "jsx");
 
-    let json;
-
-    try {
-      json = jsxToWSEmbedTemplate(jsx, { parseStyles: false });
-    } catch (error) {
-      console.log({ jsx });
-      throw error;
-    }
+    const json = jsxToWSEmbedTemplate(jsx);
 
     // @todo if there are Image instances with alt attribute
-    try {
-      const descriptions = collectDescriptions(json);
-      console.log({ descriptions });
-      const imageUrls = await Promise.all(
-        descriptions.map((description) => model.generateImage(description))
-      );
-      console.log(descriptions, imageUrls);
-      // generateImagesUrls(descriptions, model.generateImages);
-      insertImagesUrls(json, descriptions, imageUrls);
-    } catch (error) {
-      console.log("image generation failed", error);
-    }
+    // const descriptions = collectDescriptions(json);
+    // const imageUrls = await generateImagesUrls(descriptions);
+    // insertImageUrls(json, descriptions, imageUrls);
 
     try {
       // validate the template
