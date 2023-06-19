@@ -1,7 +1,10 @@
 import { useState } from "react";
 import { nanoid } from "nanoid";
 import type { Instance, Prop } from "@webstudio-is/project-build";
-import type { WsComponentPropsMeta } from "@webstudio-is/react-sdk";
+import {
+  type WsComponentPropsMeta,
+  showAttribute,
+} from "@webstudio-is/react-sdk";
 import type { PropMeta, PropValue } from "./shared";
 
 type PropOrName = { prop?: Prop; propName: string };
@@ -121,7 +124,7 @@ const systemPropsMeta: { name: string; meta: PropMeta }[] = [
     },
   },
   {
-    name: "__show",
+    name: showAttribute,
     meta: {
       label: "Show",
       required: false,
