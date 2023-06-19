@@ -6,6 +6,7 @@ import type { Instance } from "./schema/instances";
 import type { Prop } from "./schema/props";
 import type { StyleSourceSelection } from "./schema/style-source-selections";
 import type { Deployment } from "./schema/deployment";
+import type { DataSource } from "./schema/data-sources";
 
 export type Build = {
   id: string;
@@ -19,5 +20,6 @@ export type Build = {
   styleSourceSelections: [Instance["id"], StyleSourceSelection][];
   props: [Prop["id"], Prop][];
   instances: [Instance["id"], Instance][];
+  dataSources: [DataSource["id"], DataSource][];
   deployment?: Deployment | undefined;
 };

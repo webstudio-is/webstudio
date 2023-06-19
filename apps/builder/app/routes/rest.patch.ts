@@ -8,6 +8,9 @@ import {
   Instances,
   Pages,
   Props,
+  DataSources,
+  parseDataSources,
+  serializeDataSources,
   StyleSourceSelections,
   StyleSources,
   Styles,
@@ -82,6 +85,7 @@ export const action = async ({ request }: ActionArgs) => {
     breakpoints?: Breakpoints;
     instances?: Instances;
     props?: Props;
+    dataSources?: DataSources;
     styleSources?: StyleSources;
     styleSourceSelections?: StyleSourceSelections;
     styles?: Styles;
@@ -156,6 +160,13 @@ export const action = async ({ request }: ActionArgs) => {
         continue;
       }
 
+      if (namespace === "dataSources") {
+        const dataSources =
+          buildData.dataSources ?? parseDataSources(build.dataSources);
+        buildData.dataSources = applyPatches(dataSources, patches);
+        continue;
+      }
+
       if (namespace === "breakpoints") {
         const breakpoints =
           buildData.breakpoints ??
@@ -201,6 +212,12 @@ export const action = async ({ request }: ActionArgs) => {
 
   if (buildData.props) {
     dbBuildData.props = serializeProps(Props.parse(buildData.props));
+  }
+
+  if (buildData.dataSources) {
+    dbBuildData.dataSources = serializeDataSources(
+      DataSources.parse(buildData.dataSources)
+    );
   }
 
   if (buildData.styleSources) {
