@@ -212,6 +212,7 @@ type StyleSourceInputProps<Item extends IntermediateItem> = {
   onSelectAutocompleteItem?: (item: Item) => void;
   onRemoveItem?: (id: Item["id"]) => void;
   onDeleteItem?: (id: Item["id"]) => void;
+  onClearStyles?: (id: Item["id"]) => void;
   onDuplicateItem?: (id: Item["id"]) => void;
   onConvertToToken?: (id: Item["id"]) => void;
   onCreateItem?: (label: string) => void;
@@ -275,6 +276,7 @@ const renderMenuItems = (props: {
   onEnable?: (itemId: IntermediateItem["id"]) => void;
   onRemove?: (itemId: IntermediateItem["id"]) => void;
   onDelete?: (itemId: IntermediateItem["id"]) => void;
+  onClearStyles?: (itemId: IntermediateItem["id"]) => void;
 }) => {
   return (
     <>
@@ -293,6 +295,14 @@ const renderMenuItems = (props: {
           onSelect={() => props.onConvertToToken?.(props.item.id)}
         >
           Convert to token
+        </DropdownMenuItem>
+      )}
+      {props.item.source === "local" && (
+        <DropdownMenuItem
+          destructive={true}
+          onSelect={() => props.onClearStyles?.(props.item.id)}
+        >
+          Clear styles
         </DropdownMenuItem>
       )}
       {/* @todo implement disabling
@@ -451,6 +461,7 @@ export const StyleSourceInput = (
                 onEdit: props.onEditItem,
                 onRemove: props.onRemoveItem,
                 onDelete: props.onDeleteItem,
+                onClearStyles: props.onClearStyles,
               })
             }
             onChangeItem={props.onChangeItem}
