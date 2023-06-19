@@ -933,7 +933,7 @@ export const properties = {
     inherited: true,
     initial: {
       type: "keyword",
-      value: "inherit",
+      value: "black",
     },
     popularity: 0.90791486,
     appliesTo: "allElementsAndText",

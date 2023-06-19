@@ -21,7 +21,6 @@ import { compareMedia } from "@webstudio-is/css-engine";
 import {
   type StyleSourceSelector,
   instancesStore,
-  selectedInstanceBrowserStyleStore,
   selectedInstanceSelectorStore,
   selectedInstanceIntanceToTagStore,
   stylesIndexStore,
@@ -418,7 +417,6 @@ export const useStyleInfo = () => {
   const selectedOrLastStyleSourceSelector = useStore(
     selectedOrLastStyleSourceSelectorStore
   );
-  const browserStyle = useStore(selectedInstanceBrowserStyleStore);
   const selectedInstanceIntanceToTag = useStore(
     selectedInstanceIntanceToTagStore
   );
@@ -586,7 +584,6 @@ export const useStyleInfo = () => {
     const styleInfoData: StyleInfo = {};
     for (const property of styleProperties) {
       // temporary solution until we start computing all styles from data
-      const computed = browserStyle?.[property];
       const htmlValue = htmlStyle?.[property];
       const defaultValue =
         CUSTOM_DEFAULT_VALUES[property] ??
@@ -597,17 +594,29 @@ export const useStyleInfo = () => {
       const previousSource = previousSourceInfo[property];
       const nextSource = nextSourceInfo[property];
       const local = selectedStyle?.[property];
-      const value =
+      const ownValue =
         local ??
         nextSource?.value ??
         previousSource?.value ??
         cascaded?.value ??
         preset ??
-        htmlValue ??
-        inherited?.value ??
-        defaultValue;
+        htmlValue;
+      const inheritedValue = inherited?.value;
+      const value = ownValue ?? inheritedValue ?? defaultValue;
       if (value) {
         if (property === "color") {
+          const ownColor =
+            ownValue?.type === "keyword" &&
+            (ownValue.value === "inherit" || ownValue.value === "currentColor")
+              ? undefined
+              : ownValue;
+          const inheritedColor =
+            inheritedValue?.type === "keyword" &&
+            (inheritedValue.value === "inherit" ||
+              inheritedValue.value === "currentColor")
+              ? undefined
+              : inheritedValue;
+          const currentColor = ownColor ?? inheritedColor ?? defaultValue;
           styleInfoData[property] = {
             value,
             local,
@@ -617,7 +626,7 @@ export const useStyleInfo = () => {
             inherited,
             preset,
             htmlValue,
-            currentColor: computed,
+            currentColor,
           };
         } else {
           styleInfoData[property] = {
@@ -636,7 +645,6 @@ export const useStyleInfo = () => {
     return styleInfoData;
   }, [
     htmlStyle,
-    browserStyle,
     presetStyle,
     inheritedInfo,
     cascadedInfo,
