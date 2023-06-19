@@ -111,14 +111,12 @@ export const PositionControl = ({
             deleteProperty={deleteProperty}
           />
 
-          <Box css={{ flexShrink: 0 }}>
-            <NonResetablePropertyName
-              style={currentStyle}
-              properties={[property]}
-              description="Top position offset"
-              label="Top"
-            />
-          </Box>
+          <NonResetablePropertyName
+            style={currentStyle}
+            properties={[property]}
+            description="Top position offset"
+            label="Top"
+          />
 
           <CssValueInputContainer
             label={label}
