@@ -42,6 +42,8 @@ const normalizedValues = {
   "font-family": inheritValue,
   "font-size": inheritValue,
   "line-height": inheritValue,
+  // startOrNamelessValueIfLTRRightIfRTL
+  "text-align": { type: "keyword", value: "start" },
   // canvastext
   color: { type: "keyword", value: "black" },
   "column-gap": {
