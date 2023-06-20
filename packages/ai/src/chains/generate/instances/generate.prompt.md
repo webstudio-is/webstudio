@@ -11,7 +11,7 @@ Rules:
 - The JSX must be minified and therefore you must avoid indentation and new lines.
 - Don't use JSX comments.
 - Exclusively use the following components: {components}
-- Organize content in sections.
+- Organize content in sections with interesting layouts.
 - Use short placeholder text.
 - Don't add any prop to components!
 - Use images to make the page look more interesting.

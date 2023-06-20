@@ -86,18 +86,18 @@ export const create = <ModelMessageFormat>(): Chain<
     }
 
     // @todo if there are Image instances with alt attribute
-    try {
-      const descriptions = collectDescriptions(json);
-      console.log({ descriptions });
-      const imageUrls = await Promise.all(
-        descriptions.map((description) => model.generateImage(description))
-      );
-      console.log(descriptions, imageUrls);
-      // generateImagesUrls(descriptions, model.generateImages);
-      insertImagesUrls(json, descriptions, imageUrls);
-    } catch (error) {
-      console.log("image generation failed", error);
-    }
+    // try {
+    //   const descriptions = collectDescriptions(json);
+    //   console.log({ descriptions });
+    //   const imageUrls = await Promise.all(
+    //     descriptions.map((description) => model.generateImage(description))
+    //   );
+    //   console.log(descriptions, imageUrls);
+    //   // generateImagesUrls(descriptions, model.generateImages);
+    //   insertImagesUrls(json, descriptions, imageUrls);
+    // } catch (error) {
+    //   console.log("image generation failed", error);
+    // }
 
     try {
       // validate the template

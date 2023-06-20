@@ -8,8 +8,6 @@ import { type Chain, type ChainMessage, type ElementType } from "../../types";
 import { prompt as palettePromptTemplate } from "../palette/__generated__/pick.prompt";
 import { colors } from "../palette/colors";
 import { gradients } from "../palette/gradients";
-import { prompt as themePromptTemplate } from "../theme/__generated__/generate.prompt";
-import { themeDefaults } from "../theme/theme-defaults";
 import { prompt as promptTemplate } from "./__generated__/generate.prompt";
 
 export const create = <ModelMessageFormat>(): Chain<
@@ -46,21 +44,66 @@ export const create = <ModelMessageFormat>(): Chain<
         ? ""
         : `- The selected instance component is \`${rootInstance.component}\``;
 
-    const themeMessage: ChainMessage = [
-      "user",
-      formatPrompt(prompts, themePromptTemplate),
-    ];
+    const { palette, colorMode } = getPalette(
+      build.styles.map(([name, value]) => value)
+    );
 
-    const themeRequestMessages = model.generateMessages([themeMessage]);
-
-    const themeResponse = await model.request({
-      messages: themeRequestMessages,
-    });
-
-    const { colorMode, theme } = JSON.parse(getCode(themeResponse, "json"));
-
+    prompts.palette = palette.join(", ");
     prompts.colorMode = colorMode;
-    prompts.theme = JSON.stringify({ ...themeDefaults, ...theme });
+    prompts.gradients = "";
+
+    if (prompts.palette === "") {
+      console.log("Generating palette");
+      const paletteMessage: ChainMessage = [
+        "user",
+        formatPrompt(
+          {
+            ...prompts,
+            colors: colors
+              .map(([name, shades]) => `  - ${name}: ${shades.join(", ")}`)
+              .join("\n"),
+          },
+          palettePromptTemplate
+        ),
+      ];
+      console.log(paletteMessage[1]);
+      const paletteRequestMessages = model.generateMessages([paletteMessage]);
+
+      try {
+        const response = await model.request({
+          messages: paletteRequestMessages,
+        });
+
+        const { palette, colorMode, gradients } = JSON.parse(
+          getCode(response, "json")
+        );
+
+        if (palette) {
+          prompts.palette = palette.map(rgbaToHex).join(", ");
+        }
+
+        if (colorMode) {
+          prompts.colorMode = colorMode;
+        }
+
+        if (gradients) {
+          prompts.gradients =
+            `- Available background gradients (color stops sets):\n` +
+            // gradients
+            //   .sort(() => Math.random() - 0.5)
+            //   .slice(0, 4)
+            //   .map((g) => `  - ${g}`)
+            //   .join("\n");
+            (gradients as RgbValue[][])
+              .map((colors) => `  - ${colors.map(rgbaToHex).join(", ")}`)
+              .join("\n");
+        }
+
+        console.log({ prompts });
+      } catch (error) {
+        prompts.palette = "generate an aesthetically pleasing one.";
+      }
+    }
 
     const userMessage: ChainMessage = [
       "user",
