@@ -8,6 +8,7 @@ import {
   StyleSourcesList,
   StylesList,
   Breakpoint,
+  DataSource,
 } from "@webstudio-is/project-build";
 import { StyleValue, type StyleProperty } from "@webstudio-is/css-data";
 import type { Simplify } from "type-fest";
@@ -23,21 +24,25 @@ const EmbedTemplateProp = z.union([
   z.object({
     type: z.literal("number"),
     name: z.string(),
+    dataSourceReference: z.optional(z.string()),
     value: z.number(),
   }),
   z.object({
     type: z.literal("string"),
     name: z.string(),
+    dataSourceReference: z.optional(z.string()),
     value: z.string(),
   }),
   z.object({
     type: z.literal("boolean"),
     name: z.string(),
+    dataSourceReference: z.optional(z.string()),
     value: z.boolean(),
   }),
   z.object({
     type: z.literal("string[]"),
     name: z.string(),
+    dataSourceReference: z.optional(z.string()),
     value: z.array(z.string()),
   }),
 ]);
@@ -91,6 +96,7 @@ const createInstancesFromTemplate = (
   treeTemplate: WsEmbedTemplate,
   instances: InstancesList,
   props: PropsList,
+  dataSourceByReference: Map<string, DataSource>,
   styleSourceSelections: StyleSourceSelectionsList,
   styleSources: StyleSourcesList,
   styles: StylesList,
@@ -104,10 +110,34 @@ const createInstancesFromTemplate = (
       // populate props
       if (item.props) {
         for (const prop of item.props) {
+          const propId = nanoid();
+          if (prop.dataSourceReference === undefined) {
+            props.push({ id: propId, instanceId, ...prop });
+            continue;
+          }
+          let dataSource = dataSourceByReference.get(prop.dataSourceReference);
+          if (dataSource === undefined) {
+            const id = nanoid();
+            const name = prop.dataSourceReference;
+            if (prop.type === "boolean") {
+              const { type, value: defaultValue } = prop;
+              dataSource = { id, name, type, defaultValue };
+            } else if (prop.type === "string") {
+              const { type, value: defaultValue } = prop;
+              dataSource = { id, name, type, defaultValue };
+            } else {
+              // ensure only number and string[] are not mapped to data sources
+              prop.type satisfies "number" | "string[]";
+              continue;
+            }
+            dataSourceByReference.set(name, dataSource);
+          }
           props.push({
-            id: nanoid(),
+            id: propId,
             instanceId,
-            ...prop,
+            type: "dataSource",
+            name: prop.name,
+            value: dataSource.id,
           });
         }
       }
@@ -148,6 +178,7 @@ const createInstancesFromTemplate = (
         item.children,
         instances,
         props,
+        dataSourceByReference,
         styleSourceSelections,
         styleSources,
         styles,
@@ -175,6 +206,7 @@ export const generateDataFromEmbedTemplate = (
 ) => {
   const instances: InstancesList = [];
   const props: PropsList = [];
+  const dataSourceByReference = new Map<string, DataSource>();
   const styleSourceSelections: StyleSourceSelectionsList = [];
   const styleSources: StyleSourcesList = [];
   const styles: StylesList = [];
@@ -183,6 +215,7 @@ export const generateDataFromEmbedTemplate = (
     treeTemplate,
     instances,
     props,
+    dataSourceByReference,
     styleSourceSelections,
     styleSources,
     styles,
@@ -192,6 +225,7 @@ export const generateDataFromEmbedTemplate = (
     children,
     instances,
     props,
+    dataSources: Array.from(dataSourceByReference.values()),
     styleSourceSelections,
     styleSources,
     styles,

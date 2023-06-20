@@ -7,6 +7,7 @@ import type { Asset, Assets } from "@webstudio-is/asset-uploader";
 import type { ItemDropTarget, Placement } from "@webstudio-is/design-system";
 import type {
   Breakpoint,
+  DataSources,
   Instance,
   Prop,
   Props,
@@ -58,6 +59,8 @@ export const rootInstanceStore = computed(
     return instances.get(selectedPage.rootInstanceId);
   }
 );
+
+export const dataSourcesStore = atom<DataSources>(new Map());
 
 export const propsStore = atom<Props>(new Map());
 export const propsIndexStore = computed(propsStore, (props) => {
