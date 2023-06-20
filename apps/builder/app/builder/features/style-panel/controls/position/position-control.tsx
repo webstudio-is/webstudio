@@ -3,12 +3,13 @@ import {
   type StyleValue,
   TupleValueItem,
 } from "@webstudio-is/css-data";
-import { Flex, Label, PositionGrid, theme } from "@webstudio-is/design-system";
+import { Flex, Grid, PositionGrid } from "@webstudio-is/design-system";
 import type { ControlProps } from "../../style-sections";
 import { styleConfigByName } from "../../shared/configs";
 import { getStyleSource } from "../../shared/style-info";
 import { CssValueInputContainer } from "./css-value-input-container";
 import type { SetValue } from "../../shared/use-style-data";
+import { NonResetablePropertyName } from "../../shared/property-name";
 
 const toPosition = (value: TupleValue) => {
   return {
@@ -67,7 +68,12 @@ export const PositionControl = ({
 
   return (
     <Flex direction="column" gap="1">
-      <Label>Position</Label>
+      <NonResetablePropertyName
+        style={currentStyle}
+        properties={[property]}
+        label="Position"
+      />
+
       <Flex gap="6">
         <PositionGrid
           selectedPosition={toPosition(value)}
@@ -81,36 +87,47 @@ export const PositionControl = ({
             });
           }}
         />
-        <Flex
-          css={{ my: theme.spacing[3] }}
-          direction="column"
-          justify="between"
+        <Grid
+          css={{
+            gridTemplateColumns: "max-content 1fr",
+          }}
+          align="center"
+          gapX="2"
         >
-          <Flex align="center" gap="2">
-            <Label>Left</Label>
-            <CssValueInputContainer
-              label={label}
-              property={property}
-              styleSource={styleSource}
-              keywords={keywords}
-              value={value.value[0]}
-              setValue={setValueX}
-              deleteProperty={deleteProperty}
-            />
-          </Flex>
-          <Flex align="center" gap="2">
-            <Label>Top</Label>
-            <CssValueInputContainer
-              label={label}
-              property={property}
-              styleSource={styleSource}
-              keywords={keywords}
-              value={value.value[1]}
-              setValue={setValueY}
-              deleteProperty={deleteProperty}
-            />
-          </Flex>
-        </Flex>
+          <NonResetablePropertyName
+            style={currentStyle}
+            properties={[property]}
+            description="Left position offset"
+            label="Left"
+          />
+
+          <CssValueInputContainer
+            label={label}
+            property={property}
+            styleSource={styleSource}
+            keywords={keywords}
+            value={value.value[0]}
+            setValue={setValueX}
+            deleteProperty={deleteProperty}
+          />
+
+          <NonResetablePropertyName
+            style={currentStyle}
+            properties={[property]}
+            description="Top position offset"
+            label="Top"
+          />
+
+          <CssValueInputContainer
+            label={label}
+            property={property}
+            styleSource={styleSource}
+            keywords={keywords}
+            value={value.value[1]}
+            setValue={setValueY}
+            deleteProperty={deleteProperty}
+          />
+        </Grid>
       </Flex>
     </Flex>
   );
