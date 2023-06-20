@@ -18,7 +18,7 @@ export const loader = async ({
     const buildId = params.buildId;
 
     if (buildId === undefined) {
-      throw json("Required project id", { status: 400 });
+      throw json("Required build id", { status: 400 });
     }
 
     const context = await createContext(request);
