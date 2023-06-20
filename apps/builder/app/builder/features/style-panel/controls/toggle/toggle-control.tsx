@@ -1,15 +1,13 @@
 import {
-  styled,
   Flex,
   ToggleGroup,
-  ToggleGroupItem,
+  ToggleGroupButton,
   EnhancedTooltip,
 } from "@webstudio-is/design-system";
 import type { StyleSource } from "../../shared/style-info";
-import { theme } from "@webstudio-is/design-system";
 
 export type ToggleGroupControlProps = {
-  styleSource: StyleSource;
+  styleSource?: StyleSource;
   value: string;
   items: { child: JSX.Element; label: string; value: string }[];
   onValueChange?: (value: string) => void;
@@ -24,6 +22,7 @@ export const ToggleGroupControl = ({
 }: ToggleGroupControlProps) => {
   return (
     <ToggleGroup
+      color={styleSource}
       type="single"
       value={value}
       onValueChange={onValueChange}
@@ -31,44 +30,13 @@ export const ToggleGroupControl = ({
     >
       {items.map(({ child, label, value }, index) => {
         return (
-          <ToggleGroupControlItem
-            key={index}
-            value={value}
-            source={styleSource}
-          >
-            <EnhancedTooltip content={label}>
+          <EnhancedTooltip key={index} content={label}>
+            <ToggleGroupButton value={value}>
               <Flex>{child}</Flex>
-            </EnhancedTooltip>
-          </ToggleGroupControlItem>
+            </ToggleGroupButton>
+          </EnhancedTooltip>
         );
       })}
     </ToggleGroup>
   );
 };
-
-const ToggleGroupControlItem = styled(ToggleGroupItem, {
-  variants: {
-    source: {
-      default: {},
-      preset: {},
-      local: {
-        "&[data-state=on]": {
-          color: theme.colors.foregroundLocalMain,
-          backgroundColor: theme.colors.backgroundLocalMain,
-        },
-      },
-      overwritten: {
-        "&[data-state=on]": {
-          color: theme.colors.foregroundOverwrittenMain,
-          backgroundColor: theme.colors.backgroundOverwrittenMain,
-        },
-      },
-      remote: {
-        "&[data-state=on]": {
-          color: theme.colors.foregroundRemoteMain,
-          backgroundColor: theme.colors.backgroundRemoteMain,
-        },
-      },
-    },
-  },
-});

@@ -3,7 +3,7 @@ import {
   Grid,
   theme,
   ToggleGroup,
-  ToggleGroupItem,
+  ToggleGroupButton,
   Tooltip,
 } from "@webstudio-is/design-system";
 import {
@@ -65,11 +65,11 @@ export const OutlineStyle = (
         }
       >
         {outlineStyleValues.map(({ value, Icon }) => (
-          <ToggleGroupItem key={value} value={value}>
-            <Tooltip content={toPascalCase(value)}>
+          <Tooltip key={value} content={toPascalCase(value)}>
+            <ToggleGroupButton value={value}>
               <Icon />
-            </Tooltip>
-          </ToggleGroupItem>
+            </ToggleGroupButton>
+          </Tooltip>
         ))}
       </ToggleGroup>
     </Grid>

@@ -15,7 +15,6 @@ import {
   ScrollIcon,
   AutoScrollIcon,
 } from "@webstudio-is/icons";
-import { getStyleSource } from "../../shared/style-info";
 import { CollapsibleSection } from "../../shared/collapsible-section";
 import { theme } from "@webstudio-is/design-system";
 import { ToggleGroupControl } from "../../controls/toggle/toggle-control";
@@ -133,7 +132,6 @@ export const SizeSection = ({
           onReset={() => deleteProperty("overflow")}
         />
         <ToggleGroupControl
-          styleSource={getStyleSource(style.overflow)}
           items={[
             {
               child: <EyeconOpenIcon />,

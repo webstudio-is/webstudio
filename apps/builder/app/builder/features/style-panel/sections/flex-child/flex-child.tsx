@@ -19,7 +19,6 @@ import {
   MenuEllipsesIcon,
 } from "@webstudio-is/icons";
 import { FloatingPanel } from "~/builder/shared/floating-panel";
-import { getStyleSource } from "../../shared/style-info";
 import { CollapsibleSection } from "../../shared/collapsible-section";
 
 const properties: StyleProperty[] = [
@@ -59,7 +58,6 @@ const FlexChildSectionAlign = (props: RenderCategoryProps) => {
         onReset={() => deleteProperty("alignSelf")}
       />
       <ToggleGroupControl
-        styleSource={getStyleSource(currentStyle.alignSelf)}
         onValueChange={(value) => setAlignSelf({ type: "keyword", value })}
         value={toValue(currentStyle.alignSelf?.value)}
         items={[
@@ -117,10 +115,6 @@ const FlexChildSectionSizing = (props: RenderCategoryProps) => {
         }}
       />
       <ToggleGroupControl
-        styleSource={getStyleSource(
-          currentStyle.flexGrow,
-          currentStyle.flexShrink
-        )}
         onValueChange={(value) => {
           switch (value) {
             case "none": {
@@ -279,7 +273,6 @@ const FlexChildSectionOrder = (props: RenderCategoryProps) => {
         onReset={() => deleteProperty("order")}
       />
       <ToggleGroupControl
-        styleSource={getStyleSource(currentStyle.order)}
         onValueChange={(value) => {
           switch (value) {
             case "0":
