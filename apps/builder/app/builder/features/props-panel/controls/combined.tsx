@@ -15,6 +15,10 @@ export const renderControl = ({
   prop,
   ...rest
 }: ControlProps<string, string> & { key?: string }) => {
+  if (prop?.type === "dataSource") {
+    throw Error("Data source is not resolved");
+  }
+
   if (
     meta.control === "text" &&
     (prop === undefined || prop.type === "string")

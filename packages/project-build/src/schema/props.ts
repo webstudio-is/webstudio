@@ -46,6 +46,12 @@ export const Prop = z.union([
     type: z.literal("string[]"),
     value: z.array(z.string()),
   }),
+  z.object({
+    ...baseProp,
+    type: z.literal("dataSource"),
+    // data source id
+    value: z.string(),
+  }),
 ]);
 
 export type Prop = z.infer<typeof Prop>;

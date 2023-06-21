@@ -22,6 +22,7 @@ import {
   assetsStore,
   projectStore,
   registeredComponentMetasStore,
+  dataSourcesStore,
 } from "../nano-states";
 import {
   type InstanceSelector,
@@ -132,7 +133,8 @@ const getAssetsUsedInProps = (props: Prop[], foundAssetsIds = new Set()) => {
       prop.type === "string" ||
       prop.type === "boolean" ||
       prop.type === "page" ||
-      prop.type === "string[]"
+      prop.type === "string[]" ||
+      prop.type === "dataSource"
     ) {
       continue;
     }
@@ -159,9 +161,25 @@ const getTreeData = (targetInstanceSelector: InstanceSelector) => {
   // first item is guaranteed root of copied tree
   const treeInstances = getMapValuesByKeysSet(instances, treeInstanceIds);
 
+  const dataSources = dataSourcesStore.get();
   const treeProps = getMapValuesBy(propsStore.get(), (prop) =>
     treeInstanceIds.has(prop.instanceId)
-  );
+  ).map((prop) => {
+    // unbind data source from prop
+    if (prop.type === "dataSource") {
+      const dataSource = dataSources.get(prop.value);
+      if (dataSource) {
+        const { id, name, ...rest } = dataSource;
+        return {
+          id: prop.id,
+          instanceId: prop.instanceId,
+          name: prop.name,
+          ...rest,
+        } satisfies Prop;
+      }
+    }
+    return prop;
+  });
 
   const treeStyleSourceSelections = getMapValuesByKeysSet(
     styleSourceSelections,

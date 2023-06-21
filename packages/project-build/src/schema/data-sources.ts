@@ -7,13 +7,14 @@ export const DataSource = z.union([
     id: DataSourceId,
     name: z.string(),
     type: z.literal("string"),
-    defaultValue: z.string(),
+    // initial value of data source store
+    value: z.string(),
   }),
   z.object({
     id: DataSourceId,
     name: z.string(),
     type: z.literal("boolean"),
-    defaultValue: z.boolean(),
+    value: z.boolean(),
   }),
 ]);
 

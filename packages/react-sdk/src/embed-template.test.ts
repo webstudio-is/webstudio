@@ -1,5 +1,6 @@
 import { expect, test } from "@jest/globals";
 import { generateDataFromEmbedTemplate } from "./embed-template";
+import { showAttribute } from "./tree";
 
 const expectString = expect.any(String) as unknown as string;
 
@@ -44,6 +45,7 @@ test("generate data for embedding from instances and text", () => {
       },
     ],
     props: [],
+    dataSources: [],
     styleSourceSelections: [],
     styleSources: [],
     styles: [],
@@ -112,6 +114,7 @@ test("generate data for embedding from props", () => {
         value: "value3",
       },
     ],
+    dataSources: [],
     styleSourceSelections: [],
     styleSources: [],
     styles: [],
@@ -163,6 +166,7 @@ test("generate data for embedding from styles", () => {
       },
     ],
     props: [],
+    dataSources: [],
     styleSourceSelections: [
       {
         instanceId: expectString,
@@ -206,5 +210,77 @@ test("generate data for embedding from styles", () => {
         value: { type: "keyword", value: "black" },
       },
     ],
+  });
+});
+
+test("generate data for embedding from props bound to data sources", () => {
+  expect(
+    generateDataFromEmbedTemplate(
+      [
+        {
+          type: "instance",
+          component: "Box1",
+          props: [
+            {
+              type: "boolean",
+              name: "showOtherBox",
+              dataSourceRef: "showOtherBoxDataSource",
+              value: false,
+            },
+          ],
+          children: [],
+        },
+        {
+          type: "instance",
+          component: "Box2",
+          props: [
+            {
+              type: "boolean",
+              name: showAttribute,
+              dataSourceRef: "showOtherBoxDataSource",
+              value: false,
+            },
+          ],
+          children: [],
+        },
+      ],
+      defaultBreakpointId
+    )
+  ).toEqual({
+    children: [
+      { type: "id", value: expectString },
+      { type: "id", value: expectString },
+    ],
+    instances: [
+      { type: "instance", id: expectString, component: "Box1", children: [] },
+      { type: "instance", id: expectString, component: "Box2", children: [] },
+    ],
+    props: [
+      {
+        id: expectString,
+        instanceId: expectString,
+        type: "dataSource",
+        name: "showOtherBox",
+        value: expectString,
+      },
+      {
+        id: expectString,
+        instanceId: expectString,
+        type: "dataSource",
+        name: showAttribute,
+        value: expectString,
+      },
+    ],
+    dataSources: [
+      {
+        id: expectString,
+        name: "showOtherBoxDataSource",
+        type: "boolean",
+        value: false,
+      },
+    ],
+    styleSourceSelections: [],
+    styleSources: [],
+    styles: [],
   });
 });

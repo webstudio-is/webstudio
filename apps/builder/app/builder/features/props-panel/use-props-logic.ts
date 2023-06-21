@@ -77,6 +77,10 @@ const getDefaultMetaForType = (type: Prop["type"]): PropMeta => {
       throw new Error(
         "A prop with type string[] must have a meta, we can't provide a default one because we need a list of options"
       );
+    case "dataSource":
+      throw new Error(
+        "A prop with type dataSource must have a meta, we can't provide a default one because we need a list of options"
+      );
     default:
       throw new Error(`Usupported data type: ${type satisfies never}`);
   }

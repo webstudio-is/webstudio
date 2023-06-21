@@ -8,6 +8,7 @@ import {
   pagesStore,
   instancesStore,
   propsStore,
+  dataSourcesStore,
   breakpointsStore,
   stylesStore,
   styleSourcesStore,
@@ -66,6 +67,7 @@ export const registerContainers = () => {
   store.register("styleSources", styleSourcesStore);
   store.register("styleSourceSelections", styleSourceSelectionsStore);
   store.register("props", propsStore);
+  store.register("dataSources", dataSourcesStore);
   store.register("assets", assetsStore);
   // synchronize whole states
   clientStores.set("project", projectStore);
