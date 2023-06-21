@@ -228,6 +228,9 @@ export const PropertyTooltip = ({
     <Tooltip
       open={isOpen}
       onOpenChange={setIsOpen}
+      // prevent closing tooltip before click handlers on content are triggered
+      onMouseDown={(event) => event.preventDefault()}
+      // close tooltip when click on content
       onClick={() => setIsOpen(false)}
       triggerProps={openWithClick ? { onClick: () => setIsOpen(true) } : {}}
       content={
