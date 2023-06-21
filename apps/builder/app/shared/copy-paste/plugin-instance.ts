@@ -168,26 +168,15 @@ const getTreeData = (targetInstanceSelector: InstanceSelector) => {
     // unbind data source from prop
     if (prop.type === "dataSource") {
       const dataSource = dataSources.get(prop.value);
-      if (dataSource?.type === "string") {
+      if (dataSource) {
+        const { id, name, ...rest } = dataSource;
         return {
           id: prop.id,
           instanceId: prop.instanceId,
           name: prop.name,
-          type: dataSource.type,
-          value: dataSource.defaultValue,
+          ...rest,
         } satisfies Prop;
       }
-      if (dataSource?.type === "boolean") {
-        return {
-          id: prop.id,
-          instanceId: prop.instanceId,
-          name: prop.name,
-          type: dataSource.type,
-          value: dataSource.defaultValue,
-        } satisfies Prop;
-      }
-      // ensure all data source types are mapped to props
-      dataSource satisfies undefined;
     }
     return prop;
   });

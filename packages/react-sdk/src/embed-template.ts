@@ -118,16 +118,12 @@ const createInstancesFromTemplate = (
           let dataSource = dataSourceByReference.get(prop.dataSourceReference);
           if (dataSource === undefined) {
             const id = nanoid();
-            const name = prop.dataSourceReference;
-            if (prop.type === "boolean") {
-              const { type, value: defaultValue } = prop;
-              dataSource = { id, name, type, defaultValue };
-            } else if (prop.type === "string") {
-              const { type, value: defaultValue } = prop;
-              dataSource = { id, name, type, defaultValue };
+            const { name: propName, dataSourceReference: name, ...rest } = prop;
+            if (rest.type === "boolean" || rest.type === "string") {
+              dataSource = { id, name, ...rest };
             } else {
               // ensure only number and string[] are not mapped to data sources
-              prop.type satisfies "number" | "string[]";
+              rest.type satisfies "number" | "string[]";
               continue;
             }
             dataSourceByReference.set(name, dataSource);

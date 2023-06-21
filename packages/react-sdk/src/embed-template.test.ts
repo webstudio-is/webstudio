@@ -276,7 +276,7 @@ test("generate data for embedding from props bound to data sources", () => {
         id: expectString,
         name: "showOtherBoxDataSource",
         type: "boolean",
-        defaultValue: false,
+        value: false,
       },
     ],
     styleSourceSelections: [],
