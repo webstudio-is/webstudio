@@ -106,7 +106,7 @@ const getDescription = (properties: StyleProperty[]) => {
   return propertyDescriptions[property as keyof typeof propertyDescriptions];
 };
 
-export const PropertyTooltipContent = ({
+const TooltipContent = ({
   title,
   description,
   properties,
@@ -231,7 +231,7 @@ export const PropertyTooltip = ({
       onClick={() => setIsOpen(false)}
       triggerProps={openWithClick ? { onClick: () => setIsOpen(true) } : {}}
       content={
-        <PropertyTooltipContent
+        <TooltipContent
           title={title}
           description={description}
           properties={properties}
