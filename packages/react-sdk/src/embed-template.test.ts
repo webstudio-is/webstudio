@@ -224,7 +224,7 @@ test("generate data for embedding from props bound to data sources", () => {
             {
               type: "boolean",
               name: "showOtherBox",
-              dataSourceReference: "showOtherBoxDataSource",
+              dataSourceRef: "showOtherBoxDataSource",
               value: false,
             },
           ],
@@ -237,7 +237,7 @@ test("generate data for embedding from props bound to data sources", () => {
             {
               type: "boolean",
               name: showAttribute,
-              dataSourceReference: "showOtherBoxDataSource",
+              dataSourceRef: "showOtherBoxDataSource",
               value: false,
             },
           ],

@@ -24,25 +24,25 @@ const EmbedTemplateProp = z.union([
   z.object({
     type: z.literal("number"),
     name: z.string(),
-    dataSourceReference: z.optional(z.string()),
+    dataSourceRef: z.optional(z.string()),
     value: z.number(),
   }),
   z.object({
     type: z.literal("string"),
     name: z.string(),
-    dataSourceReference: z.optional(z.string()),
+    dataSourceRef: z.optional(z.string()),
     value: z.string(),
   }),
   z.object({
     type: z.literal("boolean"),
     name: z.string(),
-    dataSourceReference: z.optional(z.string()),
+    dataSourceRef: z.optional(z.string()),
     value: z.boolean(),
   }),
   z.object({
     type: z.literal("string[]"),
     name: z.string(),
-    dataSourceReference: z.optional(z.string()),
+    dataSourceRef: z.optional(z.string()),
     value: z.array(z.string()),
   }),
 ]);
@@ -96,7 +96,7 @@ const createInstancesFromTemplate = (
   treeTemplate: WsEmbedTemplate,
   instances: InstancesList,
   props: PropsList,
-  dataSourceByReference: Map<string, DataSource>,
+  dataSourceByRef: Map<string, DataSource>,
   styleSourceSelections: StyleSourceSelectionsList,
   styleSources: StyleSourcesList,
   styles: StylesList,
@@ -111,14 +111,14 @@ const createInstancesFromTemplate = (
       if (item.props) {
         for (const prop of item.props) {
           const propId = nanoid();
-          if (prop.dataSourceReference === undefined) {
+          if (prop.dataSourceRef === undefined) {
             props.push({ id: propId, instanceId, ...prop });
             continue;
           }
-          let dataSource = dataSourceByReference.get(prop.dataSourceReference);
+          let dataSource = dataSourceByRef.get(prop.dataSourceRef);
           if (dataSource === undefined) {
             const id = nanoid();
-            const { name: propName, dataSourceReference: name, ...rest } = prop;
+            const { name: propName, dataSourceRef: name, ...rest } = prop;
             if (rest.type === "boolean" || rest.type === "string") {
               dataSource = { id, name, ...rest };
             } else {
@@ -126,7 +126,7 @@ const createInstancesFromTemplate = (
               rest.type satisfies "number" | "string[]";
               continue;
             }
-            dataSourceByReference.set(name, dataSource);
+            dataSourceByRef.set(name, dataSource);
           }
           props.push({
             id: propId,
@@ -174,7 +174,7 @@ const createInstancesFromTemplate = (
         item.children,
         instances,
         props,
-        dataSourceByReference,
+        dataSourceByRef,
         styleSourceSelections,
         styleSources,
         styles,
@@ -202,7 +202,7 @@ export const generateDataFromEmbedTemplate = (
 ) => {
   const instances: InstancesList = [];
   const props: PropsList = [];
-  const dataSourceByReference = new Map<string, DataSource>();
+  const dataSourceByRef = new Map<string, DataSource>();
   const styleSourceSelections: StyleSourceSelectionsList = [];
   const styleSources: StyleSourcesList = [];
   const styles: StylesList = [];
@@ -211,7 +211,7 @@ export const generateDataFromEmbedTemplate = (
     treeTemplate,
     instances,
     props,
-    dataSourceByReference,
+    dataSourceByRef,
     styleSourceSelections,
     styleSources,
     styles,
@@ -221,7 +221,7 @@ export const generateDataFromEmbedTemplate = (
     children,
     instances,
     props,
-    dataSources: Array.from(dataSourceByReference.values()),
+    dataSources: Array.from(dataSourceByRef.values()),
     styleSourceSelections,
     styleSources,
     styles,
