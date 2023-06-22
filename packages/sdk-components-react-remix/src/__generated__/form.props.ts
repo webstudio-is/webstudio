@@ -7,12 +7,7 @@ export const props: Record<string, PropMeta> = {
   acceptCharset: { required: false, control: "text", type: "string" },
   action: { required: false, control: "text", type: "string" },
   autoComplete: { required: false, control: "text", type: "string" },
-  encType: {
-    required: false,
-    control: "text",
-    type: "string",
-    defaultValue: "application/x-www-form-urlencoded",
-  },
+  encType: { required: false, control: "text", type: "string" },
   method: { required: false, control: "text", type: "string" },
   name: { required: false, control: "text", type: "string" },
   noValidate: { required: false, control: "boolean", type: "boolean" },
