@@ -37,7 +37,7 @@ export const ReactSdkContext = createContext<
     assetsStore: ReadableAtom<Assets>;
     pagesStore: ReadableAtom<Pages>;
     dataSourceValuesStore: ReadableAtom<Map<DataSource["id"], unknown>>;
-    setState: (
+    setDataSourceValue: (
       instanceId: Instance["id"],
       prop: Prop["name"],
       value: unknown
@@ -50,7 +50,7 @@ export const ReactSdkContext = createContext<
   assetsStore: atom(new Map()),
   pagesStore: atom(new Map()),
   dataSourceValuesStore: atom(new Map()),
-  setState: () => {
-    throw Error("React SDK setState is not implemented");
+  setDataSourceValue: () => {
+    throw Error("React SDK setDataSourceValue is not implemented");
   },
 });

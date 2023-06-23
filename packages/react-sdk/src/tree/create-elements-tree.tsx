@@ -74,7 +74,7 @@ export const createElementsTree = ({
         renderer,
         imageBaseUrl,
         assetBaseUrl,
-        setState: (instanceId, propName, value) => {
+        setDataSourceValue: (instanceId, propName, value) => {
           const propsByInstanceId = propsByInstanceIdStore.get();
           const props = propsByInstanceId.get(instanceId);
           const prop = props?.find((prop) => prop.name === propName);
