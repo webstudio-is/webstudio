@@ -293,12 +293,12 @@ const FlexChildSectionOrder = (props: RenderCategoryProps) => {
           {
             child: <OrderFirstIcon />,
             label: "Make first",
-            value: "1",
+            value: "-1",
           },
           {
             child: <OrderLastIcon />,
             label: "Make last",
-            value: "-1",
+            value: "1",
           },
           {
             child: <FlexChildSectionOrderPopover {...props} />,
