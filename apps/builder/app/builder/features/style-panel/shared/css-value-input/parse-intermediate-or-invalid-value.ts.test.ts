@@ -372,6 +372,66 @@ describe("Colors", () => {
     });
   });
 
+  test("color with value hex", () => {
+    const result = parseIntermediateOrInvalidValue("color", {
+      type: "intermediate",
+      value: "#f00",
+    });
+
+    expect(result).toEqual({
+      type: "rgb",
+      alpha: 1,
+      r: 255,
+      g: 0,
+      b: 0,
+    });
+  });
+
+  test("color with value with long hex", () => {
+    const result = parseIntermediateOrInvalidValue("color", {
+      type: "intermediate",
+      value: "#f0ee0f",
+    });
+
+    expect(result).toEqual({
+      type: "rgb",
+      alpha: 1,
+      r: 240,
+      g: 238,
+      b: 15,
+    });
+  });
+
+  test("color with value hex without #", () => {
+    const result = parseIntermediateOrInvalidValue("color", {
+      type: "intermediate",
+      value: "f00",
+    });
+
+    expect(result).toEqual({
+      type: "rgb",
+      alpha: 1,
+      r: 255,
+      g: 0,
+      b: 0,
+    });
+  });
+
+  test("color with value long hex without #", () => {
+    const result = parseIntermediateOrInvalidValue("color", {
+      type: "intermediate",
+      value: "f0ee0f",
+    });
+
+    expect(result).toEqual({
+      type: "rgb",
+      alpha: 1,
+      r: 240,
+      g: 238,
+      b: 15,
+    });
+  });
+
   test("color with value rgba(0,0,0,0)", () => {
     const result = parseIntermediateOrInvalidValue("color", {
       type: "intermediate",

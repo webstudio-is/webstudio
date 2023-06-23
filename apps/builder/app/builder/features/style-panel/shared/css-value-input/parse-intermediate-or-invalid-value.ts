@@ -84,6 +84,13 @@ export const parseIntermediateOrInvalidValue = (
     }
   }
 
+  // Last chance probably it's a color without #
+  styleInput = parseCssValue(property, `#${value}`);
+
+  if (styleInput.type !== "invalid") {
+    return styleInput;
+  }
+
   // If we are here it means that value can be Valid but our parseCssValue can't handle it
   // or value is invalid
   return {
