@@ -26,17 +26,36 @@ export const getPropsByInstanceId = (props: Props) => {
 // this utility is be used only for preview with static props
 // so there is no need to use computed to optimize rerenders
 export const useInstanceProps = (instanceId: Instance["id"]) => {
-  const { propsByInstanceIdStore } = useContext(ReactSdkContext);
-  const propsByInstanceId = useStore(propsByInstanceIdStore);
-  const instanceProps = propsByInstanceId.get(instanceId);
-  const instancePropsObject: Record<Prop["name"], Prop["value"]> = {};
-  if (instanceProps) {
-    for (const prop of instanceProps) {
-      if (prop.type !== "asset" && prop.type !== "page") {
-        instancePropsObject[prop.name] = prop.value;
+  const { propsByInstanceIdStore, dataSourceValuesStore } =
+    useContext(ReactSdkContext);
+  const instancePropsObjectStore = useMemo(() => {
+    return computed(
+      [propsByInstanceIdStore, dataSourceValuesStore],
+      (propsByInstanceId, dataSourceValues) => {
+        const instancePropsObject: Record<Prop["name"], unknown> = {};
+        const instanceProps = propsByInstanceId.get(instanceId);
+        if (instanceProps === undefined) {
+          return instancePropsObject;
+        }
+        for (const prop of instanceProps) {
+          if (prop.type === "asset" || prop.type === "page") {
+            continue;
+          }
+          if (prop.type === "dataSource") {
+            const dataSourceId = prop.value;
+            const value = dataSourceValues.get(dataSourceId);
+            if (value !== undefined) {
+              instancePropsObject[prop.name] = value;
+            }
+            continue;
+          }
+          instancePropsObject[prop.name] = prop.value;
+        }
+        return instancePropsObject;
       }
-    }
-  }
+    );
+  }, [propsByInstanceIdStore, dataSourceValuesStore, instanceId]);
+  const instancePropsObject = useStore(instancePropsObjectStore);
   return instancePropsObject;
 };
 

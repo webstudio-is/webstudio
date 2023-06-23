@@ -1,6 +1,6 @@
 import { useEffect } from "react";
 import { useStore } from "@nanostores/react";
-import type { Instance, Prop, StyleDecl } from "@webstudio-is/project-build";
+import type { Instance, StyleDecl } from "@webstudio-is/project-build";
 import { getBrowserStyle, idAttribute } from "@webstudio-is/react-sdk";
 import { subscribe } from "~/shared/pubsub";
 import { subscribeWindowResize } from "~/shared/dom-hooks";
@@ -78,7 +78,7 @@ export const SelectedInstanceConnector = ({
   instanceElementRef: { current: null | HTMLElement };
   instance: Instance;
   instanceStyles: StyleDecl[];
-  instanceProps: undefined | Prop[];
+  instanceProps: unknown;
   instanceSelector: InstanceSelector;
 }) => {
   const instances = useStore(instancesStore);

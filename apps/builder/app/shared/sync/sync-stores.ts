@@ -27,6 +27,7 @@ import {
   synchronizedBreakpointsStores,
   selectedStyleSourceSelectorStore,
   synchronizedComponentsMetaStores,
+  dataSourceValuesStore,
 } from "~/shared/nano-states";
 
 enableMapSet();
@@ -71,6 +72,7 @@ export const registerContainers = () => {
   store.register("assets", assetsStore);
   // synchronize whole states
   clientStores.set("project", projectStore);
+  clientStores.set("dataSourceValues", dataSourceValuesStore);
   clientStores.set("selectedPageId", selectedPageIdStore);
   clientStores.set("selectedInstanceSelector", selectedInstanceSelectorStore);
   clientStores.set(
