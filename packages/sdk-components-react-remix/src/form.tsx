@@ -7,11 +7,7 @@ import {
   forwardRef,
 } from "react";
 import { useFetcher } from "@remix-run/react";
-import {
-  formIdFieldName,
-  formActionFieldName,
-  formMethodFieldName,
-} from "@webstudio-is/form-handlers";
+import { formIdFieldName } from "@webstudio-is/form-handlers";
 import { getInstanceIdFromComponentProps } from "@webstudio-is/react-sdk";
 
 export const defaultTag = "form";
@@ -103,8 +99,6 @@ export const Form = forwardRef<
   return (
     <fetcher.Form {...props} method="post" data-state={state} ref={ref}>
       <input type="hidden" name={formIdFieldName} value={instanceId} />
-      <input type="hidden" name={formActionFieldName} value={action} />
-      <input type="hidden" name={formMethodFieldName} value={method} />
       {state === "success"
         ? onlySuccessMessage(children)
         : state === "error"
