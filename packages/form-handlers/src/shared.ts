@@ -1,6 +1,7 @@
 import type { Build } from "@webstudio-is/project-build";
 
-export const formIdFieldName = "ws--form-id";
+export const formHiddenFieldPrefix = "ws--form";
+export const formIdFieldName = `${formHiddenFieldPrefix}-id`;
 
 // Input data common for all handlers
 export type FormInfo = {
@@ -9,6 +10,9 @@ export type FormInfo = {
   formData: FormData;
   toEmail: string;
   fromEmail: string;
+  // null as serializable
+  action: string | null;
+  method: "get" | "post";
 };
 
 export type EmailInfo = {
@@ -25,7 +29,9 @@ export type Result = { success: true } | { success: false; errors: string[] };
 /** Returns form entries that should be send in email: removes `File` entries and `formId` */
 export const getFormEntries = (formData: FormData): [string, string][] =>
   [...formData.entries()].flatMap(([key, value]) =>
-    key !== formIdFieldName && typeof value === "string" ? [[key, value]] : []
+    key.startsWith(formHiddenFieldPrefix) === false && typeof value === "string"
+      ? [[key, value]]
+      : []
   );
 
 export const getFormId = (formData: FormData) => {
@@ -123,4 +129,42 @@ export const hasMatchingForm = (
   // @todo:
   // We could also check that each entry in formData has a corresponding input control in the tree,
   // but that seem like an overkill for now.
+};
+
+export const getFormProperties = (
+  formData: FormData,
+  instances: Build["instances"],
+  props: Build["props"]
+) => {
+  const formId = getFormId(formData);
+
+  if (formId === undefined) {
+    return undefined;
+  }
+
+  const hasForm = instances.some(
+    ([, instance]) => instance.id === formId && instance.component === "Form"
+  );
+
+  if (hasForm === false) {
+    return undefined;
+  }
+
+  const objectProps = Object.fromEntries(
+    props
+      .filter(([_, value]) => value.instanceId === formId)
+      .map(([_, value]) => [value.name, value])
+  );
+
+  const action =
+    objectProps.action?.type === "string"
+      ? objectProps.action.value
+      : undefined;
+
+  const method =
+    objectProps.method?.type === "string"
+      ? objectProps.method.value
+      : undefined;
+
+  return { action, method };
 };

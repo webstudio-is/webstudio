@@ -50,6 +50,8 @@ export const n8nHandler = async ({
     email: formToEmail(formInfo),
     // globally unique form id (can be used for unsubscribing)
     formId: [formInfo.projectId, formId].join("--"),
+    action: formInfo.action,
+    method: formInfo.method,
     formData: Object.fromEntries(getFormEntries(formInfo.formData)),
   };
 
