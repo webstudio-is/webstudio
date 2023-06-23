@@ -20,9 +20,15 @@ export const Link = forwardRef<HTMLAnchorElement, Props>((props, ref) => {
 
   switch (href?.type) {
     case "page":
-      url = href.page.path === "" ? "/" : href.page.path;
-      if (href.hash !== undefined) {
-        url += `#${href.hash}`;
+      {
+        url = href.page.path === "" ? "/" : href.page.path;
+        const urlTo = new URL(url, "https://any-valid.url");
+        url = urlTo.pathname;
+
+        if (href.hash !== undefined) {
+          urlTo.hash = href.hash;
+          url = `${urlTo.pathname}${urlTo.hash}`;
+        }
       }
       break;
     case "asset":
