@@ -61,9 +61,6 @@ export {
   EnhancedTooltipProvider,
   useEnhancedTooltipProps,
 } from "./components/enhanced-tooltip";
-export { Link } from "./components/link";
-export { Panel } from "./components/panel";
-export * from "./components/slider";
 export * from "./components/avatar";
 export * from "./components/icon-button-with-menu";
 export * from "./components/tree";
