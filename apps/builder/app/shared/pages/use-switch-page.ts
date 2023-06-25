@@ -81,6 +81,7 @@ export const useSyncPageUrl = () => {
     const searchParamsPageId = searchParams.get("pageId") ?? pages.homePage.id;
     const searchParamsPageHash = searchParams.get("pageHash") ?? "";
 
+    // Do not navigate on popstate change
     if (searchParamsPageId === page.id && searchParamsPageHash === pageHash) {
       return;
     }
