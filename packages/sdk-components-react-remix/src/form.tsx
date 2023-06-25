@@ -5,10 +5,16 @@ import {
   Children,
   cloneElement,
   forwardRef,
+  useRef,
+  useEffect,
+  useContext,
 } from "react";
-import { useFetcher } from "@remix-run/react";
+import { useFetcher, type Fetcher } from "@remix-run/react";
 import { formIdFieldName } from "@webstudio-is/form-handlers";
-import { getInstanceIdFromComponentProps } from "@webstudio-is/react-sdk";
+import {
+  ReactSdkContext,
+  getInstanceIdFromComponentProps,
+} from "@webstudio-is/react-sdk";
 
 export const defaultTag = "form";
 
@@ -79,25 +85,67 @@ const withoutMessages = (children: ReactNode) =>
     return withoutMessages(child);
   });
 
+const useOnFetchEnd = <Data,>(
+  fetcher: Fetcher<Data>,
+  handler: (data: Data) => void
+) => {
+  const latestHandler = useRef(handler);
+  latestHandler.current = handler;
+
+  const prevFetcher = useRef(fetcher);
+  useEffect(() => {
+    if (
+      prevFetcher.current.state !== fetcher.state &&
+      fetcher.state === "idle" &&
+      fetcher.data !== undefined
+    ) {
+      latestHandler.current(fetcher.data);
+    }
+    prevFetcher.current = fetcher;
+  }, [fetcher]);
+};
+
+type State = "initial" | "success" | "error";
+
 export const Form = forwardRef<
   ElementRef<typeof defaultTag>,
   ComponentProps<typeof defaultTag> & {
     initialState?: "initial" | "success" | "error";
+    state?: State;
+    initial?: boolean;
+    success?: boolean;
+    error?: boolean;
   }
->(({ children, initialState = "initial", action, method, ...props }, ref) => {
+>((props, ref) => {
+  const {
+    children,
+    initialState = "initial",
+    action,
+    method,
+    state = "initial",
+    initial = true,
+    success = false,
+    error = false,
+    ...rest
+  } = props;
+  const { setDataSourceValue } = useContext(ReactSdkContext);
+
   const fetcher = useFetcher();
 
-  const state =
-    fetcher.type === "done"
-      ? fetcher.data?.success === true
-        ? "success"
-        : "error"
-      : initialState;
+  const instanceId = getInstanceIdFromComponentProps(rest);
 
-  const instanceId = getInstanceIdFromComponentProps(props);
+  useOnFetchEnd(fetcher, (data) => {
+    const state: State = data?.success === true ? "success" : "error";
+    const success = state === "success";
+    const error = state === "error";
+    setDataSourceValue(instanceId, "state", state);
+    setDataSourceValue(instanceId, "initial", false);
+    setDataSourceValue(instanceId, "success", success);
+    setDataSourceValue(instanceId, "error", error);
+  });
 
   return (
-    <fetcher.Form {...props} method="post" data-state={state} ref={ref}>
+    <fetcher.Form {...rest} method="post" data-state={state} ref={ref}>
       <input type="hidden" name={formIdFieldName} value={instanceId} />
       {state === "success"
         ? onlySuccessMessage(children)

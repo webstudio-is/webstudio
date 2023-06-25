@@ -369,13 +369,14 @@ export const props: Record<string, PropMeta> = {
   dir: { required: false, control: "text", type: "string" },
   draggable: { required: false, control: "boolean", type: "boolean" },
   encType: { required: false, control: "text", type: "string" },
+  error: { required: false, control: "boolean", type: "boolean" },
   hidden: { required: false, control: "boolean", type: "boolean" },
   id: { required: false, control: "text", type: "string" },
+  initial: { required: false, control: "boolean", type: "boolean" },
   initialState: {
     required: false,
     control: "radio",
     type: "string",
-    defaultValue: "initial",
     options: ["initial", "success", "error"],
   },
   inputMode: {
@@ -424,6 +425,13 @@ export const props: Record<string, PropMeta> = {
   security: { required: false, control: "text", type: "string" },
   slot: { required: false, control: "text", type: "string" },
   spellCheck: { required: false, control: "boolean", type: "boolean" },
+  state: {
+    required: false,
+    control: "radio",
+    type: "string",
+    options: ["initial", "success", "error"],
+  },
+  success: { required: false, control: "boolean", type: "boolean" },
   suppressContentEditableWarning: {
     required: false,
     control: "boolean",
