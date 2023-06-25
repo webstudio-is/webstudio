@@ -131,7 +131,12 @@ export const BackgroundContent = (props: BackgroundContentProps) => {
               }
             }}
           >
-            <ToggleGroupButton value={"image"}>
+            {/* looks like now when dialog is open first toggle group buttons need to have autoFocus
+          otherwise the following "Choose image" button is focused
+          https://github.com/radix-ui/primitives/pull/2027
+          https://github.com/radix-ui/primitives/issues/1910
+          */}
+            <ToggleGroupButton value={"image"} autoFocus={true}>
               <Flex css={{ px: theme.spacing[2] }}>Image</Flex>
             </ToggleGroupButton>
             <ToggleGroupButton value={"gradient"}>
