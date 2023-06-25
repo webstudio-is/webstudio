@@ -1,6 +1,7 @@
 import { type ReadableAtom, atom } from "nanostores";
 import { createContext } from "react";
 import type { Assets } from "@webstudio-is/asset-uploader";
+import type { DataSource, Instance, Prop } from "@webstudio-is/project-build";
 import type { Pages, PropsByInstanceId } from "./props";
 
 export type Params = {
@@ -35,6 +36,12 @@ export const ReactSdkContext = createContext<
     propsByInstanceIdStore: ReadableAtom<PropsByInstanceId>;
     assetsStore: ReadableAtom<Assets>;
     pagesStore: ReadableAtom<Pages>;
+    dataSourceValuesStore: ReadableAtom<Map<DataSource["id"], unknown>>;
+    setDataSourceValue: (
+      instanceId: Instance["id"],
+      prop: Prop["name"],
+      value: unknown
+    ) => void;
   }
 >({
   imageBaseUrl: "/",
@@ -42,4 +49,8 @@ export const ReactSdkContext = createContext<
   propsByInstanceIdStore: atom(new Map()),
   assetsStore: atom(new Map()),
   pagesStore: atom(new Map()),
+  dataSourceValuesStore: atom(new Map()),
+  setDataSourceValue: () => {
+    throw Error("React SDK setDataSourceValue is not implemented");
+  },
 });

@@ -1,6 +1,6 @@
 import { useStore } from "@nanostores/react";
 import store from "immerhin";
-import type { Instance } from "@webstudio-is/project-build";
+import type { Instance, Prop } from "@webstudio-is/project-build";
 import {
   theme,
   useCombobox,
@@ -17,9 +17,11 @@ import {
 } from "@webstudio-is/design-system";
 import type { Publish } from "~/shared/pubsub";
 import {
+  dataSourceValuesStore,
+  dataSourcesStore,
+  propsIndexStore,
   propsStore,
   registeredComponentPropsMetasStore,
-  useInstanceProps,
 } from "~/shared/nano-states";
 import { CollapsibleSectionWithAddButton } from "~/builder/shared/collapsible-section";
 import {
@@ -216,6 +218,8 @@ export const PropsPanelContainer = ({
   const propsMeta = useStore(registeredComponentPropsMetasStore).get(
     instance.component
   );
+  const dataSources = useStore(dataSourcesStore);
+  const dataSourceValues = useStore(dataSourceValuesStore);
   if (propsMeta === undefined) {
     throw new Error(`Could not get meta for compoent "${instance.component}"`);
   }
@@ -225,18 +229,57 @@ export const PropsPanelContainer = ({
     publish,
   });
 
+  const { propsByInstanceId } = useStore(propsIndexStore);
+
+  const instanceProps =
+    propsByInstanceId.get(instance.id)?.flatMap((prop) => {
+      if (prop.type !== "dataSource") {
+        return [prop];
+      }
+      // convert data source prop to typed prop
+      const dataSourceId = prop.value;
+      const dataSource = dataSources.get(dataSourceId);
+      const dataSourceValue = dataSourceValues.get(dataSourceId);
+      if (dataSource === undefined) {
+        return [];
+      }
+      return [
+        {
+          id: prop.id,
+          instanceId: prop.instanceId,
+          name: prop.name,
+          required: prop.required,
+          type: dataSource.type,
+          // temporary suppression for simplification
+          // will be refactored once data sources ui is ready
+          // eslint-disable-next-line @typescript-eslint/no-explicit-any
+          value: (dataSourceValue ?? dataSource?.value) as any,
+        } satisfies Prop,
+      ];
+    }) ?? [];
+
   const logic = usePropsLogic({
-    props: useInstanceProps(instance.id),
+    props: instanceProps,
     meta: propsMeta,
     instanceId: instance.id,
     updateProp: (update) => {
-      store.createTransaction([propsStore], (props) => {
-        props.set(update.id, update);
-      });
+      const props = propsStore.get();
+      const prop = props.get(update.id);
+      // update data source instead when real prop has data source type
+      if (prop?.type === "dataSource") {
+        const dataSourceId = prop.value;
+        const dataSourceValues = new Map(dataSourceValuesStore.get());
+        dataSourceValues.set(dataSourceId, update.value);
+        dataSourceValuesStore.set(dataSourceValues);
+      } else if (prop) {
+        store.createTransaction([propsStore], (props) => {
+          props.set(update.id, update);
+        });
+      }
     },
-    deleteProp: (id) => {
+    deleteProp: (propId) => {
       store.createTransaction([propsStore], (props) => {
-        props.delete(id);
+        props.delete(propId);
       });
     },
   });

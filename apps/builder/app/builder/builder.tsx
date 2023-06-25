@@ -31,6 +31,7 @@ import {
   useSetAuthPermit,
   useSetAuthToken,
   useSetBreakpoints,
+  useSetDataSources,
   useSetInstances,
   useSetIsPreviewMode,
   useSetPages,
@@ -245,6 +246,7 @@ export const Builder = ({
   useSetPages(build.pages);
   useSetBreakpoints(build.breakpoints);
   useSetProps(build.props);
+  useSetDataSources(build.dataSources);
   useSetStyles(build.styles);
   useSetStyleSources(build.styleSources);
   useSetStyleSourceSelections(build.styleSourceSelections);

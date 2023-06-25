@@ -1,7 +1,7 @@
 import { useMemo, useEffect } from "react";
 import { useStore } from "@nanostores/react";
 import { computed } from "nanostores";
-import type { Instances, Page } from "@webstudio-is/project-build";
+import type { DataSource, Instances, Page } from "@webstudio-is/project-build";
 import {
   type Params,
   type Components,
@@ -32,6 +32,8 @@ import {
   selectedPageStore,
   registerComponentMetas,
   registerComponentPropsMetas,
+  dataSourceValuesStore,
+  dataSourcesStore,
 } from "~/shared/nano-states";
 import { useDragAndDrop } from "./shared/use-drag-drop";
 import { useCopyPaste } from "~/shared/copy-paste";
@@ -102,6 +104,24 @@ const useElementsTree = (components: Components, params: Params) => {
       propsByInstanceIdStore,
       assetsStore,
       pagesStore: pagesMapStore,
+      dataSourceValuesStore: computed(
+        [dataSourcesStore, dataSourceValuesStore],
+        (dataSources, dataSourceValues) => {
+          const newValues = new Map<DataSource["id"], unknown>();
+          for (const [dataSourceId, dataSource] of dataSources) {
+            newValues.set(dataSourceId, dataSource.value);
+          }
+          for (const [dataSourceId, dataSourceValue] of dataSourceValues) {
+            newValues.set(dataSourceId, dataSourceValue);
+          }
+          return newValues;
+        }
+      ),
+      onDataSourceUpdate: (dataSourceId, value) => {
+        const dataSourceValues = new Map(dataSourceValuesStore.get());
+        dataSourceValues.set(dataSourceId, value);
+        dataSourceValuesStore.set(dataSourceValues);
+      },
       Component: WebstudioComponentDev,
       components,
     });

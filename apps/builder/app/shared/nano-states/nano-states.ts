@@ -7,6 +7,7 @@ import type { Asset, Assets } from "@webstudio-is/asset-uploader";
 import type { ItemDropTarget, Placement } from "@webstudio-is/design-system";
 import type {
   Breakpoint,
+  DataSource,
   DataSources,
   Instance,
   Prop,
@@ -61,6 +62,16 @@ export const rootInstanceStore = computed(
 );
 
 export const dataSourcesStore = atom<DataSources>(new Map());
+export const dataSourceValuesStore = atom<Map<DataSource["id"], unknown>>(
+  new Map()
+);
+export const useSetDataSources = (
+  dataSources: [DataSource["id"], DataSource][]
+) => {
+  useSyncInitializeOnce(() => {
+    dataSourcesStore.set(new Map(dataSources));
+  });
+};
 
 export const propsStore = atom<Props>(new Map());
 export const propsIndexStore = computed(propsStore, (props) => {
@@ -82,18 +93,6 @@ export const useSetProps = (props: [Prop["id"], Prop][]) => {
   useSyncInitializeOnce(() => {
     propsStore.set(new Map(props));
   });
-};
-export const useInstanceProps = (instanceId: undefined | Instance["id"]) => {
-  const instancePropsStore = useMemo(() => {
-    return shallowComputed([propsIndexStore], (propsIndex) => {
-      if (instanceId === undefined) {
-        return [];
-      }
-      return propsIndex.propsByInstanceId.get(instanceId) ?? [];
-    });
-  }, [instanceId]);
-  const instanceProps = useStore(instancePropsStore);
-  return instanceProps;
 };
 
 export const stylesStore = atom<Styles>(new Map());

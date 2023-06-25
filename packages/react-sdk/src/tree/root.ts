@@ -1,6 +1,6 @@
-import type { ComponentProps } from "react";
-import { atom } from "nanostores";
-import type { Build, Page } from "@webstudio-is/project-build";
+import { useRef, type ComponentProps } from "react";
+import { atom, type WritableAtom } from "nanostores";
+import type { Build, DataSource, Page } from "@webstudio-is/project-build";
 import type { Asset } from "@webstudio-is/asset-uploader";
 import { createElementsTree } from "./create-elements-tree";
 import { WebstudioComponent } from "./webstudio-component";
@@ -17,7 +17,7 @@ export type Data = {
 };
 
 export type RootPropsData = Omit<Data, "build"> & {
-  build: Pick<Data["build"], "instances" | "props">;
+  build: Pick<Data["build"], "instances" | "props" | "dataSources">;
 };
 
 type RootProps = {
@@ -31,6 +31,21 @@ export const InstanceRoot = ({
   Component,
   components,
 }: RootProps): JSX.Element | null => {
+  const dataSourceValuesStoreRef = useRef<
+    undefined | WritableAtom<Map<DataSource["id"], unknown>>
+  >(undefined);
+  // initialize store with default data source values
+  if (dataSourceValuesStoreRef.current === undefined) {
+    dataSourceValuesStoreRef.current = atom(
+      new Map(
+        data.build.dataSources.map(([dataSourceId, dataSource]) => [
+          dataSourceId,
+          dataSource.value,
+        ])
+      )
+    );
+  }
+  const dataSourceValuesStore = dataSourceValuesStoreRef.current;
   return createElementsTree({
     imageBaseUrl: data.params?.imageBaseUrl ?? "/",
     assetBaseUrl: data.params?.assetBaseUrl ?? "/",
@@ -41,6 +56,12 @@ export const InstanceRoot = ({
     ),
     assetsStore: atom(new Map(data.assets.map((asset) => [asset.id, asset]))),
     pagesStore: atom(new Map(data.pages.map((page) => [page.id, page]))),
+    dataSourceValuesStore,
+    onDataSourceUpdate: (dataSourceId, value) => {
+      const dataSourceValues = new Map(dataSourceValuesStore.get());
+      dataSourceValues.set(dataSourceId, value);
+      dataSourceValuesStore.set(dataSourceValues);
+    },
     Component: Component ?? WebstudioComponent,
     components,
   });
