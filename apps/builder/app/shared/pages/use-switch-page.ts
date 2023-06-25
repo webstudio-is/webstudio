@@ -24,9 +24,12 @@ export const switchPage = (pageId?: Page["id"], pageHash?: string) => {
 
   const page = findPageByIdOrPath(pages, pageId ?? "");
 
-  selectedInstanceSelectorStore.set(undefined);
+  // selectedInstanceSelectorStore.set(undefined);
   selectedPageHashStore.set(pageHash ?? "");
   selectedPageIdStore.set(page?.id ?? pages.homePage.id);
+  selectedInstanceSelectorStore.set([
+    page?.rootInstanceId ?? pages.homePage.rootInstanceId,
+  ]);
 };
 
 const setPageStateFromUrl = () => {
