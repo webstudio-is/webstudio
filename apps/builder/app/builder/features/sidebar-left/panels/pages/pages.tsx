@@ -27,7 +27,7 @@ import { CloseButton, Header } from "../../header";
 import { SettingsPanel } from "./settings-panel";
 import { NewPageSettings, PageSettings } from "./settings";
 import { pagesStore, selectedPageIdStore } from "~/shared/nano-states";
-import { useSwitchPage } from "~/shared/pages";
+import { switchPage } from "~/shared/pages";
 
 type TabContentProps = {
   onSetActiveTab: (tabName: TabName) => void;
@@ -228,8 +228,6 @@ const PagesPanel = ({
 
 export const TabContent = (props: TabContentProps) => {
   const currentPageId = useStore(selectedPageIdStore);
-  const switchPage = useSwitchPage();
-
   const newPageId = "new-page";
   const [editingPageId, setEditingPageId] = useState<string>();
 

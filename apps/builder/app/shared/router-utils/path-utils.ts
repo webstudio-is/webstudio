@@ -18,12 +18,18 @@ export const builderPath = ({
   projectId,
   pageId,
   authToken,
+  pageHash,
 }: {
   projectId: string;
   pageId?: string;
   authToken?: string;
+  pageHash?: string;
 }) => {
-  return `/builder/${projectId}${searchParams({ pageId, authToken })}`;
+  return `/builder/${projectId}${searchParams({
+    pageId,
+    authToken,
+    pageHash,
+  })}`;
 };
 
 export const builderUrl = (props: {
