@@ -12,12 +12,6 @@ export const useSetPages = (pages: Pages) => {
 export const selectedPageIdStore = atom<undefined | Page["id"]>(undefined);
 export const selectedPageHashStore = atom<string>("");
 
-export const useSetSelectedPageId = (pageId: Page["id"]) => {
-  useSyncInitializeOnce(() => {
-    selectedPageIdStore.set(pageId);
-  });
-};
-
 export const selectedPageStore = computed(
   [pagesStore, selectedPageIdStore],
   (pages, selectedPageId) => {

@@ -1,6 +1,6 @@
 import { useStore } from "@nanostores/react";
 import { useNavigate } from "@remix-run/react";
-import type { Page } from "@webstudio-is/project-build";
+import { findPageByIdOrPath, type Page } from "@webstudio-is/project-build";
 import { useEffect } from "react";
 import {
   authTokenStore,
@@ -22,9 +22,11 @@ export const switchPage = (pageId?: Page["id"], pageHash?: string) => {
     return;
   }
 
+  const page = findPageByIdOrPath(pages, pageId ?? "");
+
   selectedInstanceSelectorStore.set(undefined);
   selectedPageHashStore.set(pageHash ?? "");
-  selectedPageIdStore.set(pageId ?? pages.homePage.id);
+  selectedPageIdStore.set(page?.id ?? pages.homePage.id);
 };
 
 const setPageStateFromUrl = () => {
@@ -59,6 +61,15 @@ export const useSyncPageUrl = () => {
     const pages = pagesStore.get();
 
     if (page === undefined || project === undefined || pages === undefined) {
+      return;
+    }
+
+    const searchParams = new URLSearchParams(window.location.search);
+
+    const searchParamsPageId = searchParams.get("pageId") ?? pages.homePage.id;
+    const searchParamsPageHash = searchParams.get("pageHash") ?? "";
+
+    if (searchParamsPageId === page.id && searchParamsPageHash === pageHash) {
       return;
     }
 
