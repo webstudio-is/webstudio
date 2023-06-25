@@ -111,7 +111,7 @@ const useScrub = ({
               type: "unit",
               unit,
               value: 0,
-            };
+            } as const;
           }
 
           // Try unitless (in case of unit above was `number`
@@ -120,7 +120,7 @@ const useScrub = ({
               type: "unit",
               unit: "number",
               value: 0,
-            };
+            } as const;
           }
         }
       }
@@ -156,8 +156,6 @@ const useScrub = ({
         scrubRef.current?.focus();
 
         const value = validateValue(event.value);
-
-        console.log(value);
 
         onChangeRef.current(value);
       },
