@@ -249,11 +249,9 @@ export const Builder = ({
   useSetStyleSourceSelections(build.styleSourceSelections);
   useSetInstances(build.instances);
 
-  // Update page url on page change
   useSyncPageUrl();
 
   useSetAssets(assets);
-
   useSetAuthToken(authToken);
   useSetAuthPermit(authPermit);
 

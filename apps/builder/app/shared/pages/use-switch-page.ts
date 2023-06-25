@@ -42,6 +42,15 @@ const setPageStateFromUrl = () => {
   switchPage(pageId, pageHash);
 };
 
+/**
+ * Sync
+ *  - searchParams to atoms
+ *    - initial loading
+ *    - popstate
+ *
+ *  - atoms to searchParams
+ *    - on atom change
+ */
 export const useSyncPageUrl = () => {
   const navigate = useNavigate();
   const page = useStore(selectedPageStore);
