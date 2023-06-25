@@ -15,16 +15,14 @@ import { builderPath } from "~/shared/router-utils";
 import { useSyncInitializeOnce } from "../hook-utils";
 
 export const switchPage = (pageId?: Page["id"], pageHash?: string) => {
-  const project = projectStore.get();
   const pages = pagesStore.get();
 
-  if (project === undefined || pages === undefined) {
+  if (pages === undefined) {
     return;
   }
 
   const page = findPageByIdOrPath(pages, pageId ?? "");
 
-  // selectedInstanceSelectorStore.set(undefined);
   selectedPageHashStore.set(pageHash ?? "");
   selectedPageIdStore.set(page?.id ?? pages.homePage.id);
   selectedInstanceSelectorStore.set([
