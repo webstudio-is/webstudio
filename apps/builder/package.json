@@ -9,9 +9,8 @@
     "start-local": "dotenv -e .env npm start",
     "dev": "remix dev",
     "typecheck": "tsc --noEmit --emitDeclarationOnly false",
-    "lint": "eslint . --ext .ts,.tsx --max-warnings 0",
     "test": "NODE_OPTIONS=--experimental-vm-modules jest",
-    "checks": "pnpm lint && pnpm typecheck && pnpm test",
+    "checks": "pnpm typecheck && pnpm test",
     "storybook:run": "start-storybook -p 6006",
     "storybook:build": "build-storybook",
     "ci:migrate": "migrations migrate --force"
@@ -112,7 +111,6 @@
     "@types/react-dom": "^18.0.11",
     "@types/uuid": "^8.3.4",
     "@types/w3c-css-typed-object-model-level-1": "^20180410.0.4",
-    "@webstudio-is/eslint-config-custom": "workspace:^",
     "@webstudio-is/jest-config": "workspace:^",
     "@webstudio-is/storybook-config": "workspace:^",
     "@webstudio-is/tsconfig": "workspace:^",

@@ -8,11 +8,10 @@
   "scripts": {
     "typecheck": "tsc --noEmit --emitDeclarationOnly false",
     "test": "NODE_OPTIONS=--experimental-vm-modules jest",
-    "checks": "pnpm typecheck && pnpm lint",
+    "checks": "pnpm typecheck",
     "dev": "build-package --watch",
     "build": "build-package",
-    "dts": "tsc --project tsconfig.dts.json",
-    "lint": "eslint ./src --ext .ts,.tsx --max-warnings 0"
+    "dts": "tsc --project tsconfig.dts.json"
   },
   "dependencies": {
     "@trpc/client": "^10.9.0",

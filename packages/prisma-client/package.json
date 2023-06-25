@@ -7,8 +7,7 @@
   "type": "module",
   "scripts": {
     "typecheck": "tsc --noEmit --emitDeclarationOnly false",
-    "lint": "eslint ./src --ext .ts,.tsx --max-warnings 0",
-    "checks": "pnpm typecheck && pnpm lint",
+    "checks": "pnpm typecheck",
     "dev": "prisma generate --watch & build-package --watch --no-generated-as-entries",
     "build": "prisma format && prisma generate && build-package --no-generated-as-entries",
     "dts": "tsc --declarationDir lib",
