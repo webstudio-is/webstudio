@@ -11,8 +11,7 @@
     "dts": "tsc --declarationDir lib/types",
     "generate": "rm -fr src/__generated__ && NODE_OPTIONS='--loader=tsx' svgo-jsx svgo-jsx.config.ts && tsx svg-string.ts && prettier --write ./",
     "typecheck": "tsc --noEmit --emitDeclarationOnly false",
-    "lint": "eslint ./src --ext .ts,.tsx --max-warnings 0",
-    "checks": "pnpm typecheck && pnpm lint",
+    "checks": "pnpm typecheck",
     "storybook:run": "start-storybook -p 6006",
     "storybook:build": "build-storybook"
   },

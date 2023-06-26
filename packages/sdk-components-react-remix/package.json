@@ -38,8 +38,7 @@
     "build:args": "generate-arg-types './src/*.tsx !./src/**/*.stories.tsx !./src/**/*.ws.tsx' && prettier --write \"**/*.props.ts\"",
     "dts": "tsc --project tsconfig.dts.json",
     "typecheck": "tsc --noEmit --emitDeclarationOnly false",
-    "lint": "eslint ./src --ext .ts,.tsx --max-warnings 0",
-    "checks": "pnpm typecheck && pnpm lint"
+    "checks": "pnpm typecheck"
   },
   "peerDependencies": {
     "@remix-run/react": "^1.15.0",

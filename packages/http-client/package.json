@@ -11,8 +11,7 @@
     "dts": "tsc --project tsconfig.dts.json",
     "test": "NODE_OPTIONS=--experimental-vm-modules jest",
     "typecheck": "tsc --noEmit --emitDeclarationOnly false",
-    "lint": "eslint ./src --ext .ts,.tsx --max-warnings 0",
-    "checks": "pnpm typecheck && pnpm lint"
+    "checks": "pnpm typecheck"
   },
   "devDependencies": {
     "@jest/globals": "^29.3.1",

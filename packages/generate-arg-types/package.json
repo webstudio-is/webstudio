@@ -10,8 +10,7 @@
     "build": "build-package",
     "dts": "tsc --project tsconfig.dts.json",
     "typecheck": "tsc --noEmit --emitDeclarationOnly false",
-    "checks": "pnpm typecheck && pnpm lint",
-    "lint": "eslint ./src --ext .ts,.tsx --max-warnings 0"
+    "checks": "pnpm typecheck"
   },
   "dependencies": {
     "@types/fs-extra": "^9.0.13",

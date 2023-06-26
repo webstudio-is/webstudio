@@ -11,9 +11,8 @@
     "build-figma-tokens": "tsx ./bin/transform-figma-tokens.ts",
     "dts": "tsc --project tsconfig.dts.json",
     "typecheck": "tsc --noEmit --emitDeclarationOnly false",
-    "lint": "eslint ./src --ext .ts,.tsx --max-warnings 0",
     "test": "NODE_OPTIONS=--experimental-vm-modules jest",
-    "checks": "pnpm typecheck && pnpm lint && pnpm test",
+    "checks": "pnpm typecheck && pnpm test",
     "storybook:run": "start-storybook -p 6006",
     "storybook:build": "build-storybook"
   },

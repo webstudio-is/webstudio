@@ -62,6 +62,7 @@ module.exports = {
       },
     ],
   },
+  ignorePatterns: ["*.d.ts"],
   overrides: [
     {
       files: ["**/app/routes/**/*.{ts,tsx}"],
