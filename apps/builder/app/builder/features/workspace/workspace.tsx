@@ -20,7 +20,8 @@ const workspaceStyle = css({
   flexGrow: 1,
   background: theme.colors.backgroundCanvas,
   position: "relative",
-  overflow: "hidden",
+  overflow: "clip",
+  alignSelf: "stretch",
 });
 
 const canvasContainerStyle = css({
@@ -52,6 +53,8 @@ const getCanvasStyle = (
   if (workspaceRect?.height) {
     canvasHeight = workspaceRect.height / (scale / 100);
   }
+
+  console.log(canvasHeight);
 
   return {
     width: canvasWidth,
