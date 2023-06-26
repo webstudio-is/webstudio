@@ -97,5 +97,6 @@ jobs:
         uses: chromaui/action@v1
         with:
           projectToken: ${{ secrets.CHROMATIC_ROOT }}
+          buildScriptName: storybook:build
         env:
           DEPLOYED_URLS: ${{ toJSON(needs.chromatic.outputs) }}
