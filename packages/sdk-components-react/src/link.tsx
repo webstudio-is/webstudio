@@ -25,7 +25,7 @@ export const Link = forwardRef<HTMLAnchorElement, Props>((props, ref) => {
       url = urlTo.pathname;
 
       if (href.hash !== undefined) {
-        urlTo.hash = href.hash;
+        urlTo.hash = encodeURIComponent(href.hash);
         url = `${urlTo.pathname}${urlTo.hash}`;
       }
       break;

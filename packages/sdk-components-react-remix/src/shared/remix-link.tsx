@@ -27,7 +27,7 @@ export const wrapLinkComponent = (BaseLink: typeof Link) => {
       to = urlTo.pathname;
 
       if (href.hash !== undefined) {
-        urlTo.hash = href.hash;
+        urlTo.hash = encodeURIComponent(href.hash);
         to = `${urlTo.pathname}${urlTo.hash}`;
       }
 
