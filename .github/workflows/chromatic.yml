@@ -71,6 +71,7 @@ jobs:
         with:
           projectToken: ${{ secrets[matrix.chromaticSecretKey] }}
           workingDir: ${{ matrix.workingDir }}
+          buildScriptName: storybook:build
 
       - name: Save deployed URL
         id: deployed-url
