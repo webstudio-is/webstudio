@@ -15,6 +15,7 @@ import {
   styleSourceSelectionsStore,
   assetsStore,
   selectedPageIdStore,
+  selectedPageHashStore,
   selectedInstanceSelectorStore,
   selectedInstanceBrowserStyleStore,
   selectedInstanceUnitSizesStore,
@@ -74,6 +75,7 @@ export const registerContainers = () => {
   clientStores.set("project", projectStore);
   clientStores.set("dataSourceValues", dataSourceValuesStore);
   clientStores.set("selectedPageId", selectedPageIdStore);
+  clientStores.set("selectedPageHash", selectedPageHashStore);
   clientStores.set("selectedInstanceSelector", selectedInstanceSelectorStore);
   clientStores.set(
     "selectedInstanceBrowserStyle",

@@ -1,13 +1,7 @@
 import type { MouseEvent } from "react";
-import { findPageByIdOrPath, type Page } from "@webstudio-is/project-build";
+import { findPageByIdOrPath } from "@webstudio-is/project-build";
 import { pagesStore, isPreviewModeStore } from "~/shared/nano-states";
-import { publish } from "~/shared/pubsub";
-
-declare module "~/shared/pubsub" {
-  export interface PubsubMap {
-    switchPage: { pageId: Page["id"] };
-  }
-}
+import { switchPage } from "~/shared/pages";
 
 const isAbsoluteUrl = (href: string) => {
   try {
@@ -31,16 +25,17 @@ export const handleLinkClick = (event: MouseEvent) => {
     return;
   }
 
-  const [withoutHash] = href.split("#");
-
-  const page = findPageByIdOrPath(pages, withoutHash);
-
-  if (page) {
-    publish({ type: "switchPage", payload: { pageId: page.id } });
+  if (isAbsoluteUrl(href)) {
+    window.open(href, "_blank");
     return;
   }
 
-  if (isAbsoluteUrl(href)) {
-    window.open(href, "_blank");
+  const pageHref = new URL(href, "https://any-valid.url");
+
+  const page = findPageByIdOrPath(pages, pageHref.pathname);
+
+  if (page) {
+    switchPage(page.id, pageHref.hash);
+    return;
   }
 };

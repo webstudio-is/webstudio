@@ -23,9 +23,6 @@ import {
 import { usePublishShortcuts } from "./shared/shortcuts";
 import {
   projectStore,
-  selectedInstanceSelectorStore,
-  selectedPageIdStore,
-  selectedPageStore,
   useIsPreviewMode,
   useSetAssets,
   useSetAuthPermit,
@@ -44,10 +41,9 @@ import { type Settings, useClientSettings } from "./shared/client-settings";
 import { getBuildUrl } from "~/shared/router-utils";
 import { useCopyPaste } from "~/shared/copy-paste";
 import type { Asset } from "@webstudio-is/asset-uploader";
-import { useSearchParams } from "@remix-run/react";
-import { useSyncInitializeOnce } from "~/shared/hook-utils";
 import { BlockingAlerts } from "./features/blocking-alerts";
 import { useStore } from "@nanostores/react";
+import { useSyncPageUrl } from "~/shared/pages";
 
 registerContainers();
 
@@ -243,6 +239,7 @@ export const Builder = ({
   authToken,
   authPermit,
 }: BuilderProps) => {
+  useSetProject(project);
   useSetPages(build.pages);
   useSetBreakpoints(build.breakpoints);
   useSetProps(build.props);
@@ -252,29 +249,12 @@ export const Builder = ({
   useSetStyleSourceSelections(build.styleSourceSelections);
   useSetInstances(build.instances);
 
-  const [searchParams] = useSearchParams();
-  const pageId = searchParams.get("pageId") ?? build.pages.homePage.id;
-
-  useSyncInitializeOnce(() => {
-    selectedPageIdStore.set(pageId);
-    const page = selectedPageStore.get();
-    if (page) {
-      selectedInstanceSelectorStore.set([page.rootInstanceId]);
-    }
-  });
-  useEffect(() => {
-    selectedPageIdStore.set(pageId);
-    const page = selectedPageStore.get();
-    if (page) {
-      selectedInstanceSelectorStore.set([page.rootInstanceId]);
-    }
-  }, [pageId]);
+  useSyncPageUrl();
 
   useSetAssets(assets);
-
   useSetAuthToken(authToken);
   useSetAuthPermit(authPermit);
-  useSetProject(project);
+
   const [publish, publishRef] = usePublish();
   useBuilderStore(publish);
   useSyncServer({
