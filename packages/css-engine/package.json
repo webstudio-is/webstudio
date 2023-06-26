@@ -12,8 +12,8 @@
     "build": "build-package",
     "dts": "tsc --project tsconfig.dts.json",
     "test": "NODE_OPTIONS=--experimental-vm-modules jest",
-    "storybook:run": "start-storybook -p 6006",
-    "storybook:build": "build-storybook"
+    "storybook:dev": "storybook dev -p 6006",
+    "storybook:build": "storybook build"
   },
   "dependencies": {
     "@webstudio-is/css-data": "workspace:^",
@@ -24,7 +24,6 @@
   },
   "devDependencies": {
     "@jest/globals": "^29.3.1",
-    "@storybook/react": "^6.5.16",
     "@types/hyphenate-style-name": "^1.0.0",
     "@types/react": "^18.0.35",
     "@types/react-dom": "^18.0.11",

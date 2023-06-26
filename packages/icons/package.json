@@ -12,11 +12,10 @@
     "generate": "rm -fr src/__generated__ && NODE_OPTIONS='--loader=tsx' svgo-jsx svgo-jsx.config.ts && tsx svg-string.ts && prettier --write ./",
     "typecheck": "tsc --noEmit --emitDeclarationOnly false",
     "checks": "pnpm typecheck",
-    "storybook:run": "start-storybook -p 6006",
-    "storybook:build": "build-storybook"
+    "storybook:dev": "storybook dev -p 6006",
+    "storybook:build": "storybook build"
   },
   "devDependencies": {
-    "@storybook/react": "^6.5.16",
     "@svgo/jsx": "^0.4.2",
     "@types/react": "^18.0.35",
     "@webstudio-is/scripts": "workspace:^",

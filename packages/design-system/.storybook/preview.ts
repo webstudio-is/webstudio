@@ -1,9 +1,9 @@
+import type { Preview } from "@storybook/react";
 import "@webstudio-is/storybook-config/setup-fonts";
+import { decorators } from "@webstudio-is/storybook-config/decorators";
 import { color } from "../src/__generated__/figma-design-tokens";
 
-export { decorators } from "@webstudio-is/storybook-config/decorators";
-
-export const parameters = {
+const parameters = {
   actions: { argTypesRegex: "^on[A-Z].*" },
   controls: {
     matchers: {
@@ -23,3 +23,8 @@ export const parameters = {
     ],
   },
 };
+
+export default {
+  decorators,
+  parameters,
+} satisfies Preview;
