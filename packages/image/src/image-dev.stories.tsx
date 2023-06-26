@@ -1,7 +1,7 @@
 // Story for image development, see https://github.com/webstudio-is/webstudio-builder/issues/387
 
 import type * as React from "react";
-import type { ComponentMeta, ComponentStory } from "@storybook/react";
+import type { Meta, ComponentStory } from "@storybook/react";
 import { Image as ImagePrimitive, createImageLoader } from "./";
 
 // to not allow include local assets everywhere, just enable it for this file
@@ -11,7 +11,7 @@ import localLogoImage from "../storybook-assets/logo.webp"; // eslint-disable-li
 
 export default {
   title: "Components/ImageDev",
-} as ComponentMeta<typeof ImagePrimitive>;
+} satisfies Meta<typeof ImagePrimitive>;
 
 type ImageProps = React.ComponentProps<typeof ImagePrimitive>;
 
