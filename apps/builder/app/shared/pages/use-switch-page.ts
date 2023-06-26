@@ -102,8 +102,17 @@ export const useHashLinkSync = () => {
   const pageHash = useStore(selectedPageHashStore);
 
   useEffect(() => {
+    if (pageHash === "") {
+      return;
+    }
+
+    let elementId = decodeURIComponent(pageHash);
+    if (elementId.startsWith("#")) {
+      elementId = elementId.slice(1);
+    }
+
     // Try find element to scroll to
-    const element = document.getElementById(pageHash.replace("#", ""));
+    const element = document.getElementById(elementId);
     if (element !== null) {
       element.scrollIntoView();
     }
