@@ -94,3 +94,18 @@ export const useSyncPageUrl = () => {
     );
   }, [navigate, page, pageHash]);
 };
+
+/**
+ * Synchronize pageHash with scrolling position
+ */
+export const useHashLinkSync = () => {
+  const pageHash = useStore(selectedPageHashStore);
+
+  useEffect(() => {
+    // Try find element to scroll to
+    const element = document.getElementById(pageHash.replace("#", ""));
+    if (element !== null) {
+      element.scrollIntoView();
+    }
+  }, [pageHash]);
+};
