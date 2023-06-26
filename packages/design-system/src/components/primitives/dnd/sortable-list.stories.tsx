@@ -216,7 +216,8 @@ export default {
   },
   argTypes: {
     direction: {
-      control: { type: "select", options: ["horizontal", "vertical", "wrap"] },
+      control: "select",
+      options: ["horizontal", "vertical", "wrap"],
     },
   },
 } as ComponentMeta<typeof SortableList>;

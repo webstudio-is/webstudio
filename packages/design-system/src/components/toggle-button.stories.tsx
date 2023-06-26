@@ -53,14 +53,13 @@ export const Demo = ({
 );
 
 Demo.argTypes = {
-  variant: {
-    defaultValue: "default",
-    control: { type: "inline-radio", options: toggleButtonVariants },
-  },
-  disabled: {
-    defaultValue: false,
-    control: { type: "boolean" },
-  },
+  variant: { control: "inline-radio", options: toggleButtonVariants },
+  disabled: { control: "boolean" },
+};
+
+Demo.args = {
+  variant: "default",
+  disabled: false,
 };
 
 Demo.storyName = "Toggle Button";
