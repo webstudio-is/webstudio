@@ -103,6 +103,8 @@ export const useHashLinkSync = () => {
 
   useEffect(() => {
     if (pageHash === "") {
+      // native browser behavior is to do nothing if hash is empty
+      // remix scroll to top, we emulate native
       return;
     }
 
@@ -116,5 +118,7 @@ export const useHashLinkSync = () => {
     if (element !== null) {
       element.scrollIntoView();
     }
+    // Remix scroll to top if element not found
+    // browser do nothing
   }, [pageHash]);
 };
