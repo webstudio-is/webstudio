@@ -116,25 +116,19 @@ export const Button = ({
 );
 
 Button.argTypes = {
-  children: { defaultValue: "Button", control: "text" },
-  color: {
-    defaultValue: "primary",
-    control: { type: "inline-radio", options: colors },
-  },
-  prefix: {
-    defaultValue: "undefined",
-    control: { type: "inline-radio", options: Object.keys(iconsMap) },
-  },
-  suffix: {
-    defaultValue: "undefined",
-    control: { type: "inline-radio", options: Object.keys(iconsMap) },
-  },
-  disabled: { defaultValue: false, control: "boolean" },
-  state: {
-    defaultValue: "auto",
-    control: {
-      type: "inline-radio",
-      options: states,
-    },
-  },
+  children: { control: "text" },
+  color: { control: "inline-radio", options: colors },
+  prefix: { control: "inline-radio", options: Object.keys(iconsMap) },
+  suffix: { control: "inline-radio", options: Object.keys(iconsMap) },
+  disabled: { control: "boolean" },
+  state: { control: "inline-radio", options: states },
+};
+
+Button.args = {
+  children: "Button",
+  color: "primary",
+  prefix: "undefined",
+  suffix: "undefined",
+  disabled: false,
+  state: "auto",
 };

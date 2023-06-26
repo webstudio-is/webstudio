@@ -130,15 +130,9 @@ export const Demo = ({
 );
 
 Demo.argTypes = {
-  type: {
-    control: { type: "inline-radio", options: ["single", "multiple"] },
-  },
-  color: {
-    control: { type: "inline-radio", options: toggleGroupColors },
-  },
-  disabled: {
-    control: { type: "boolean" },
-  },
+  type: { control: "inline-radio", options: ["single", "multiple"] },
+  color: { control: "inline-radio", options: toggleGroupColors },
+  disabled: { control: "boolean" },
 };
 
 Demo.storyName = "Toggle Group";
