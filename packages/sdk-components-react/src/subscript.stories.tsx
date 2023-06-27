@@ -1,16 +1,16 @@
 import type { ComponentStory, ComponentMeta } from "@storybook/react";
-import { Bold as BoldPrimitive } from "./bold";
+import { Subscript as SubscriptPrimitive } from "./subscript";
 
 export default {
-  title: "Components/Bold",
-  component: BoldPrimitive,
-} as ComponentMeta<typeof BoldPrimitive>;
+  title: "Components/Subscript",
+  component: SubscriptPrimitive,
+} as ComponentMeta<typeof SubscriptPrimitive>;
 
-const Template: ComponentStory<typeof BoldPrimitive> = (args) => (
-  <BoldPrimitive {...args} />
+const Template: ComponentStory<typeof SubscriptPrimitive> = (args) => (
+  <SubscriptPrimitive {...args} />
 );
 
-export const Bold = Template.bind({});
-Bold.args = {
-  children: "some bold text",
+export const Subscript = Template.bind({});
+Subscript.args = {
+  children: "some subscript text",
 };

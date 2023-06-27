@@ -58,9 +58,9 @@ export default {
   title: "All Icons",
   component: Icons,
   argTypes: {
-    testColor: {
-      name: "Test color",
-      defaultValue: false,
-    },
+    testColor: { control: "boolean", name: "Test color" },
+  },
+  args: {
+    testColor: false,
   },
 };

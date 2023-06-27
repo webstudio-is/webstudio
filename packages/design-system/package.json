@@ -13,12 +13,12 @@
     "typecheck": "tsc --noEmit --emitDeclarationOnly false",
     "test": "NODE_OPTIONS=--experimental-vm-modules jest",
     "checks": "pnpm typecheck && pnpm test",
-    "storybook:run": "start-storybook -p 6006",
-    "storybook:build": "build-storybook"
+    "storybook:dev": "storybook dev -p 6006",
+    "storybook:build": "storybook build"
   },
   "devDependencies": {
     "@jest/globals": "^29.3.1",
-    "@storybook/react": "^6.5.16",
+    "@storybook/react": "^7.0.23",
     "@testing-library/react-hooks": "^8.0.1",
     "@types/lodash.merge": "^4.6.6",
     "@types/react": "^18.0.35",

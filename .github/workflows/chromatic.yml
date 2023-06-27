@@ -71,6 +71,7 @@ jobs:
         with:
           projectToken: ${{ secrets[matrix.chromaticSecretKey] }}
           workingDir: ${{ matrix.workingDir }}
+          buildScriptName: storybook:build
 
       - name: Save deployed URL
         id: deployed-url
@@ -87,6 +88,7 @@ jobs:
       - uses: actions/checkout@v3
         with:
           fetch-depth: 2 # we need to fetch at least parent commit to satisfy Chromatic
+          ref: ${{ github.event.pull_request.head.sha || github.sha }} # HEAD commit instead of merge commit
 
       - uses: ./.github/actions/ci-setup
 
@@ -95,5 +97,6 @@ jobs:
         uses: chromaui/action@v1
         with:
           projectToken: ${{ secrets.CHROMATIC_ROOT }}
+          buildScriptName: storybook:build
         env:
           DEPLOYED_URLS: ${{ toJSON(needs.chromatic.outputs) }}
