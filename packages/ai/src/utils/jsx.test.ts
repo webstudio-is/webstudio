@@ -7,8 +7,7 @@ describe("jsx", () => {
   test("valid template", () => {
     const parsed = jsxToWSEmbedTemplate(jsx.trim(), { parseStyles: false });
     // console.log(JSON.stringify(parsed));
-    console.log(parsed[0].styles);
-    // expect(() => WsEmbedTemplate.parse(parsed)).not.toThrow();
+    expect(() => WsEmbedTemplate.parse(parsed)).not.toThrow();
   });
 });
 

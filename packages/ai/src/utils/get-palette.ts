@@ -62,6 +62,34 @@ export const getPalette = (styles: StyleDecl[], asHex = true) => {
   };
 };
 
+export const convertThemeColorsToRgbValue = (theme) => {
+  for (const name in theme.background) {
+    theme.background[name] = hexToRgbValue(theme.background[name]);
+  }
+  for (const name in theme.foreground) {
+    theme.foreground[name] = hexToRgbValue(theme.foreground[name]);
+  }
+  theme.gradients = theme.gradients.map((gradient) =>
+    gradient.map(hexToRgbValue)
+  );
+  return theme;
+};
+
+export const hexToRgbValue = function (color: string): RgbValue {
+  const parsed = parseCssValue("color", color);
+  if (parsed.type === "rgb") {
+    return parsed;
+  }
+
+  return {
+    type: "rgb",
+    r: 0,
+    g: 0,
+    b: 0,
+    alpha: 0,
+  };
+};
+
 export const rgbaToHex = function rgbaToHex(color: RgbValue): string {
   const { r, g, b, alpha } = color;
 

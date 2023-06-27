@@ -78,6 +78,7 @@ type AIGenerateResponseType =
   | { step: "styles"; response: { json: EmbedTemplateStyles[]; code: string } }
   | { step: "props"; response: { json: EmbedTemplateProps[]; code: string } }
   | { step: "theme"; response: { json: any; code: string } }
+  | { step: "page"; response: { json: WsEmbedTemplate; code: string } }
   | {
       step: "components";
       response: { json: EmbedTemplateStyles[]; code: string };
@@ -105,6 +106,8 @@ const labels: Record<AIGenerationSteps, string> = {
   styles: "Styling content",
   props: "Adding some functionality",
   tweak: "Tweaking",
+  theme: "Generating a theme",
+  page: "Generating UI",
 };
 
 const onAIComplete = {
@@ -244,6 +247,8 @@ export const TabContent = ({ publish, onSetActiveTab }: TabContentProps) => {
     { state: "idle" }
   );
 
+  const [aiTheme, setAiTheme] = useState(null);
+
   const handleSubmit = async (event) => {
     event.preventDefault();
     if (aiGenerationState.state !== "idle") {
@@ -277,124 +282,145 @@ export const TabContent = ({ publish, onSetActiveTab }: TabContentProps) => {
 
     const steps: AIGenerationSteps[] = isEdit
       ? ["tweak"]
-      : ["expand", "theme", "components", "screen"];
+      : ["expand", "theme", "components", "screen", "page"];
     // : ["full"];
 
-    const data = {
-      sections: [],
-      theme: null,
-      componentsStyles: null,
-      screens: [],
-    };
+    // const data = {
+    //   sections: [],
+    //   theme: null,
+    //   componentsStyles: null,
+    //   screens: [],
+    // };
 
-    const expandFormData = getBaseFormData(baseData, "expand");
-    const expandRequest = request(form.action, {
-      method: form.method,
-      body: expandFormData,
-    });
+    let existingTheme = aiTheme;
 
-    setAiGenerationState({
-      state: "generating",
-      step: "theme",
-      progress: ((steps.indexOf("theme") - 1) * 100) / steps.length,
-    });
-
-    const themeFormData = getBaseFormData(baseData, "theme");
-    data.theme = await request(form.action, {
-      method: form.method,
-      body: themeFormData,
-    });
-
-    if (data.theme === null) {
+    // const expandFormData = getBaseFormData(baseData, "expand");
+    // const expandRequest = request(form.action, {
+    //   method: form.method,
+    //   body: expandFormData,
+    // });
+    if (existingTheme === null) {
       setAiGenerationState({
-        state: "idle",
+        state: "generating",
+        step: "theme",
+        progress: 0,
       });
-      return;
+
+      const themeFormData = getBaseFormData(baseData, "theme");
+      existingTheme = await request(form.action, {
+        method: form.method,
+        body: themeFormData,
+      });
+
+      if (existingTheme === null) {
+        setAiGenerationState({
+          state: "idle",
+        });
+        return;
+      }
+
+      setAiTheme(() => existingTheme);
+
+      setAiGenerationState({
+        state: "generating",
+        step: "theme",
+        progress: 35,
+      });
     }
 
-    data.sections = await expandRequest;
-
-    if (data.sections === null) {
-      setAiGenerationState({
-        state: "idle",
-      });
-      return;
-    }
-
-    setAiGenerationState({
-      state: "generating",
-      step: "components",
-      progress: (steps.indexOf("components") * 100) / steps.length,
-    });
-
-    const componentsStylesFormData = getBaseFormData(baseData, "components");
-    componentsStylesFormData.append("theme", JSON.stringify(data.theme));
-    data.componentsStyles = await request(form.action, {
+    const pageFormData = getBaseFormData(baseData, "page");
+    pageFormData.append("theme", JSON.stringify(existingTheme));
+    const template = await request(form.action, {
       method: form.method,
-      body: componentsStylesFormData,
+      body: pageFormData,
     });
-
-    if (data.componentsStyles === null) {
-      setAiGenerationState({
-        state: "idle",
-      });
-      return;
-    }
-
-    const generating = data.sections
-      .slice(0, 4)
-      .map((sectionDescription, index) => {
-        let retries = 3;
-        let success = false;
-        let tId = null;
-        return async function generate() {
-          while (success === false && retries > 0) {
-            const sectionFormData = getBaseFormData(baseData, "screen");
-            sectionFormData.append("theme", JSON.stringify(data.theme));
-            sectionFormData.append(
-              "componentsStyles",
-              JSON.stringify(data.componentsStyles)
-            );
-            sectionFormData.append("screenPrompt", sectionDescription);
-
-            const controller = new AbortController();
-            const signal = controller.signal;
-
-            tId = setTimeout(() => {
-              controller.abort();
-            }, 40000);
-
-            const response = await request(form.action, {
-              method: form.method,
-              body: sectionFormData,
-              signal,
-            });
-
-            if (tId) {
-              clearTimeout(tId);
-            }
-
-            if (response === null) {
-              console.log(`Generation of section ${index} failed.`);
-              retries -= 1;
-              continue;
-            }
-            success = true;
-            console.log({ response });
-            onAIComplete.generateSection(response, instance.id, 1);
-
-            return response[0];
-          }
-        };
-      })
-      .flatMap((generateSection, index) => {
-        console.log(`Generating section ${index}`);
-        return generateSection();
-      });
-
-    const template = await Promise.all(generating);
-
     console.log({ template });
+
+    onAIComplete.generateSection(template, instance.id, 1);
+
+    // data.sections = await expandRequest;
+
+    // if (data.sections === null) {
+    //   setAiGenerationState({
+    //     state: "idle",
+    //   });
+    //   return;
+    // }
+
+    // setAiGenerationState({
+    //   state: "generating",
+    //   step: "components",
+    //   progress: (steps.indexOf("components") * 100) / steps.length,
+    // });
+
+    // const componentsStylesFormData = getBaseFormData(baseData, "components");
+    // componentsStylesFormData.append("theme", JSON.stringify(data.theme));
+    // data.componentsStyles = await request(form.action, {
+    //   method: form.method,
+    //   body: componentsStylesFormData,
+    // });
+
+    // if (data.componentsStyles === null) {
+    //   setAiGenerationState({
+    //     state: "idle",
+    //   });
+    //   return;
+    // }
+
+    // const generating = data.sections
+    //   .slice(0, 4)
+    //   .map((sectionDescription, index) => {
+    //     let retries = 3;
+    //     let success = false;
+    //     let tId = null;
+    //     return async function generate() {
+    //       while (success === false && retries > 0) {
+    //         const sectionFormData = getBaseFormData(baseData, "screen");
+    //         sectionFormData.append("theme", JSON.stringify(data.theme));
+    //         sectionFormData.append(
+    //           "componentsStyles",
+    //           JSON.stringify(data.componentsStyles)
+    //         );
+    //         sectionFormData.append("screenPrompt", sectionDescription);
+
+    //         const controller = new AbortController();
+    //         const signal = controller.signal;
+
+    //         tId = setTimeout(() => {
+    //           controller.abort();
+    //         }, 40000);
+
+    //         const response = await request(form.action, {
+    //           method: form.method,
+    //           body: sectionFormData,
+    //           signal,
+    //         });
+
+    //         if (tId) {
+    //           clearTimeout(tId);
+    //         }
+
+    //         if (response === null) {
+    //           console.log(`Generation of section ${index} failed.`);
+    //           retries -= 1;
+    //           continue;
+    //         }
+    //         success = true;
+    //         console.log({ response });
+    //         onAIComplete.generateSection(response, instance.id, 1);
+
+    //         return response[0];
+    //       }
+    //     };
+    //   })
+    //   .flatMap((generateSection, index) => {
+    //     console.log(`Generating section ${index}`);
+    //     return generateSection();
+    //   });
+
+    // const template = await Promise.all(generating);
+
+    // console.log({ template });
 
     // onAIComplete.generateSection(
     //   template.filter((instance) => instance !== null),

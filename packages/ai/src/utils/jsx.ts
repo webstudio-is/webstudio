@@ -194,6 +194,9 @@ const getProps = function getProps(props: MitosisNode["properties"]) {
     if (prop === "alt") {
       p.push({ type: "string", name: "alt", value });
     }
+    if (prop === "variants") {
+      p.push({ type: "string[]", name: "variants", value });
+    }
   });
   return p;
 };

@@ -1,6 +1,8 @@
 import type { ActionArgs } from "@remix-run/node";
 import {
   createEditTweakChain,
+  createGenerateDesignSystemPageChain,
+  createGenerateDesignSystemThemeChain,
   createGenerateFullComponentsChain,
   createGenerateFullExpandChain,
   createGenerateFullScreenChain,
@@ -44,7 +46,7 @@ const RequestSchema = zfd.formData(
       z.object({
         _action: zfd.text(z.enum(["generate"])),
         steps: zfd.repeatableOfType(
-          z.enum(["expand", "theme", "components", "screen"])
+          z.enum(["expand", "theme", "components", "screen", "page"])
         ),
       }),
       // z.object({
@@ -65,6 +67,8 @@ const chains = {
     // full: createGenerateFullChain<GPTModelMessageFormat>(),
     instances: createGenerateInstancesChain<GPTModelMessageFormat>(),
     styles: createGenerateStylesChain<GPTModelMessageFormat>(),
+    page: createGenerateDesignSystemPageChain<GPTModelMessageFormat>(),
+    theme: createGenerateDesignSystemThemeChain<GPTModelMessageFormat>(),
   },
   edit: {
     tweak: createEditTweakChain<GPTModelMessageFormat>(),
@@ -153,13 +157,16 @@ export const action = async ({ request }: ActionArgs) => {
 
     switch (action) {
       case "generate":
-        if (
-          step === "expand" ||
-          step === "theme" ||
-          step === "components" ||
-          step === "screen"
-        ) {
-          chain = chains.full[step];
+        // if (
+        //   step === "expand" ||
+        //   step === "theme" ||
+        //   step === "components" ||
+        //   step === "screen"
+        // ) {
+        //   chain = chains.full[step];
+        // }
+        if (step === "theme" || step === "page") {
+          chain = chains.generate[step];
         }
         break;
     }
@@ -180,7 +187,7 @@ export const action = async ({ request }: ActionArgs) => {
     const model = createGptModel({
       apiKey: env.OPENAI_KEY,
       organization: env.OPENAI_ORG,
-      temperature: step === "components" ? 0 : 0.7,
+      temperature: step === "components" ? 0 : 0.5,
       model: step === "components" ? "gpt-3.5-turbo-16k" : "gpt-3.5-turbo", //step !== "screen" ? "gpt-3.5-turbo" : "gpt-3.5-turbo-16k",
     });
 
