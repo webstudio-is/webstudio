@@ -60,9 +60,9 @@ export const MenuControl = ({
             <IconButton
               variant={styleSource}
               onPointerDown={(event) => {
+                // tooltip reset property when click with altKey
                 if (event.altKey) {
                   event.preventDefault();
-                  deleteProperty(property);
                 }
               }}
             >

@@ -230,7 +230,18 @@ export const PropertyTooltip = ({
       onOpenChange={setIsOpen}
       // prevent closing tooltip on content click
       onPointerDown={(event) => event.preventDefault()}
-      triggerProps={openWithClick ? { onClick: () => setIsOpen(true) } : {}}
+      triggerProps={{
+        onClick: (event) => {
+          if (event.altKey) {
+            event.preventDefault();
+            onReset?.();
+            return;
+          }
+          if (openWithClick) {
+            setIsOpen(true);
+          }
+        },
+      }}
       content={
         <TooltipContent
           title={title}
@@ -281,16 +292,7 @@ const PropertyNameInternal = ({
         style={style}
         onReset={onReset}
       >
-        <Flex
-          shrink
-          gap={1}
-          align="center"
-          onClick={(event) => {
-            if (event.altKey) {
-              onReset?.();
-            }
-          }}
-        >
+        <Flex shrink gap={1} align="center">
           {typeof label === "string" && property ? (
             <Label
               color={

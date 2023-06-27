@@ -306,12 +306,6 @@ const Toggle = ({
       onReset={() => deleteProperty(property)}
     >
       <ToggleButton
-        onClick={(event) => {
-          if (event.altKey) {
-            event.preventDefault();
-            deleteProperty(property);
-          }
-        }}
         pressed={isPressed}
         onPressedChange={(isPressed) => {
           setProperty(property)({
