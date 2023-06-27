@@ -59,6 +59,7 @@ const FlexChildSectionAlign = (props: RenderCategoryProps) => {
       />
       <ToggleGroupControl
         onValueChange={(value) => setAlignSelf({ type: "keyword", value })}
+        onReset={() => deleteProperty("alignSelf")}
         value={toValue(currentStyle.alignSelf?.value)}
         items={[
           {
@@ -100,7 +101,11 @@ const FlexChildSectionAlign = (props: RenderCategoryProps) => {
 const FlexChildSectionSizing = (props: RenderCategoryProps) => {
   const { createBatchUpdate, currentStyle } = props;
   const setSizing = createBatchUpdate();
-
+  const onReset = () => {
+    setSizing.deleteProperty("flexGrow");
+    setSizing.deleteProperty("flexShrink");
+    setSizing.publish();
+  };
   return (
     <Grid css={{ gridTemplateColumns: "4fr auto" }}>
       <PropertyName
@@ -108,13 +113,10 @@ const FlexChildSectionSizing = (props: RenderCategoryProps) => {
         properties={["flexGrow", "flexShrink"]}
         label="Sizing"
         description="Specifies the ability of a flex item to grow or shrink"
-        onReset={() => {
-          setSizing.deleteProperty("flexGrow");
-          setSizing.deleteProperty("flexShrink");
-          setSizing.publish();
-        }}
+        onReset={onReset}
       />
       <ToggleGroupControl
+        onReset={onReset}
         onValueChange={(value) => {
           switch (value) {
             case "none": {
@@ -273,6 +275,7 @@ const FlexChildSectionOrder = (props: RenderCategoryProps) => {
         onReset={() => deleteProperty("order")}
       />
       <ToggleGroupControl
+        onReset={() => deleteProperty("order")}
         onValueChange={(value) => {
           switch (value) {
             case "0":

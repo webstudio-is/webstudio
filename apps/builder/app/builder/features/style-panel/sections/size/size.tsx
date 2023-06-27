@@ -132,6 +132,7 @@ export const SizeSection = ({
           onReset={() => deleteProperty("overflow")}
         />
         <ToggleGroupControl
+          onReset={() => deleteProperty("overflow")}
           items={[
             {
               child: <EyeconOpenIcon />,
