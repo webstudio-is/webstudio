@@ -1,14 +1,13 @@
 {
   "name": "@webstudio-is/prisma-client",
-  "version": "0.74.0",
+  "version": "0.75.0",
   "description": "Webstudio Prisma layer",
   "author": "Webstudio <github@webstudio.is>",
   "homepage": "https://webstudio.is",
   "type": "module",
   "scripts": {
     "typecheck": "tsc --noEmit --emitDeclarationOnly false",
-    "lint": "eslint ./src --ext .ts,.tsx --max-warnings 0",
-    "checks": "pnpm typecheck && pnpm lint",
+    "checks": "pnpm typecheck",
     "dev": "prisma generate --watch & build-package --watch --no-generated-as-entries",
     "build": "prisma format && prisma generate && build-package --no-generated-as-entries",
     "dts": "tsc --declarationDir lib",
@@ -30,9 +29,9 @@
   },
   "exports": {
     "source": "./src/index.ts",
+    "types": "./lib/index.d.ts",
     "import": "./lib/index.js",
-    "require": "./lib/cjs/index.js",
-    "types": "./lib/index.d.ts"
+    "require": "./lib/cjs/index.js"
   },
   "license": "MIT",
   "private": false,
@@ -42,7 +41,7 @@
     "dotenv": "^16.0.0",
     "execa": "^6.1.0",
     "minimist": "^1.2.6",
-    "nanoid": "^3.2.0",
+    "nanoid": "^3.3.6",
     "umzug": "^3.2.1",
     "uuid": "^9.0.0"
   },

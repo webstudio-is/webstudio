@@ -1,6 +1,6 @@
 {
   "name": "@webstudio-is/react-sdk",
-  "version": "0.74.0",
+  "version": "0.75.0",
   "description": "Webstudio JavaScript / TypeScript API",
   "author": "Webstudio <github@webstudio.is>",
   "homepage": "https://webstudio.is",
@@ -9,11 +9,10 @@
     "dev": "build-package --watch",
     "build": "build-package",
     "build:args": "generate-arg-types './src/components/*.tsx ./src/app/custom-components/*.tsx !./src/**/*.stories.tsx !./src/**/*.ws.tsx' && prettier --write \"**/*.props.ts\"",
-    "dts": "tsc --declarationDir lib/types",
+    "dts": "tsc --project tsconfig.dts.json",
     "typecheck": "tsc --noEmit --emitDeclarationOnly false",
     "test": "NODE_OPTIONS=--experimental-vm-modules jest --passWithNoTests",
-    "lint": "eslint ./src --ext .ts,.tsx --max-warnings 0",
-    "checks": "pnpm typecheck && pnpm lint && pnpm test"
+    "checks": "pnpm typecheck && pnpm test"
   },
   "devDependencies": {
     "@jest/globals": "^29.3.1",
@@ -47,21 +46,21 @@
     "detect-font": "^0.1.5",
     "html-tags": "^3.2.0",
     "nanoevents": "^7.0.1",
-    "nanoid": "^3.2.0",
+    "nanoid": "^3.3.6",
     "nanostores": "^0.7.1"
   },
   "exports": {
     ".": {
       "source": "./src/index.ts",
+      "types": "./lib/types/index.d.ts",
       "import": "./lib/index.js",
-      "require": "./lib/cjs/index.js",
-      "types": "./lib/types/index.d.ts"
+      "require": "./lib/cjs/index.js"
     },
     "./css-normalize": {
       "source": "./src/css/normalize.ts",
+      "types": "./lib/types/css/normalize.d.ts",
       "import": "./lib/css/normalize.js",
-      "require": "./lib/cjs/css/normalize.js",
-      "types": "./lib/types/css/normalize.d.ts"
+      "require": "./lib/cjs/css/normalize.js"
     }
   },
   "files": [

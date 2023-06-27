@@ -1,6 +1,6 @@
 {
   "name": "@webstudio-is/project-build",
-  "version": "0.74.0",
+  "version": "0.75.0",
   "description": "Webstudio Project Build",
   "author": "Webstudio <github@webstudio.is>",
   "homepage": "https://webstudio.is",
@@ -9,14 +9,14 @@
   "exports": {
     ".": {
       "source": "./src/index.ts",
+      "types": "./lib/types/index.d.ts",
       "import": "./lib/index.js",
-      "require": "./lib/cjs/index.js",
-      "types": "./lib/types/index.d.ts"
+      "require": "./lib/cjs/index.js"
     },
     "./index.server": {
       "source": "./src/index.server.ts",
-      "import": "./lib/index.server.js",
-      "types": "./lib/types/index.server.d.ts"
+      "types": "./lib/types/index.server.d.ts",
+      "import": "./lib/index.server.js"
     }
   },
   "files": [
@@ -28,17 +28,16 @@
   "scripts": {
     "typecheck": "tsc --noEmit --emitDeclarationOnly false",
     "test": "NODE_OPTIONS=--experimental-vm-modules jest",
-    "lint": "eslint ./src --ext .ts,.tsx --max-warnings 0",
-    "checks": "pnpm typecheck && pnpm lint && pnpm test",
+    "checks": "pnpm typecheck && pnpm test",
     "dev": "build-package --watch",
     "build": "build-package",
-    "dts": "tsc --declarationDir lib/types"
+    "dts": "tsc --project tsconfig.dts.json"
   },
   "dependencies": {
     "@webstudio-is/css-data": "workspace:^",
     "@webstudio-is/prisma-client": "workspace:^",
     "@webstudio-is/trpc-interface": "workspace:^",
-    "nanoid": "^3.2.0",
+    "nanoid": "^3.3.6",
     "zod": "^3.21.4"
   },
   "devDependencies": {

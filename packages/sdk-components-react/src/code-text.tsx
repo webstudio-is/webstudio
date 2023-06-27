@@ -8,10 +8,10 @@ import { cssVars } from "@webstudio-is/css-vars";
 
 export const defaultTag = "code";
 
-export const displayVarNamespace = cssVars.unique("code-display");
+export const displayVarNamespace = cssVars.define("code-display");
 
 const blockStyle = {
-  [cssVars.define(displayVarNamespace, true)]: "block",
+  [cssVars.define(displayVarNamespace)]: "block",
 };
 
 type Props = Omit<ComponentProps<typeof defaultTag>, "inline"> & {

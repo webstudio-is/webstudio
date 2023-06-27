@@ -19,6 +19,7 @@ import {
   textEditingInstanceSelectorStore,
   breakpointsStore,
   registeredComponentMetasStore,
+  dataSourcesStore,
 } from "./nano-states";
 import {
   type DroppableTarget,
@@ -175,6 +176,7 @@ export const insertTemplate = (
     children,
     instances: insertedInstances,
     props: insertedProps,
+    dataSources: insertedDataSources,
     styleSourceSelections: insertedStyleSourceSelections,
     styleSources: insertedStyleSources,
     styles: insertedStyles,
@@ -184,11 +186,19 @@ export const insertTemplate = (
     [
       instancesStore,
       propsStore,
+      dataSourcesStore,
       styleSourceSelectionsStore,
       styleSourcesStore,
       stylesStore,
     ],
-    (instances, props, styleSourceSelections, styleSources, styles) => {
+    (
+      instances,
+      props,
+      dataSources,
+      styleSourceSelections,
+      styleSources,
+      styles
+    ) => {
       insertInstancesMutable(
         instances,
         props,
@@ -198,6 +208,9 @@ export const insertTemplate = (
         dropTarget
       );
       insertPropsCopyMutable(props, insertedProps, new Map());
+      for (const dataSource of insertedDataSources) {
+        dataSources.set(dataSource.id, dataSource);
+      }
       insertStyleSourcesCopyMutable(
         styleSources,
         insertedStyleSources,

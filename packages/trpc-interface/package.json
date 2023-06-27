@@ -1,6 +1,6 @@
 {
   "name": "@webstudio-is/trpc-interface",
-  "version": "0.74.0",
+  "version": "0.75.0",
   "description": "Webstudio TRPC Interface",
   "author": "Webstudio <github@webstudio.is>",
   "homepage": "https://webstudio.is",
@@ -8,11 +8,10 @@
   "scripts": {
     "typecheck": "tsc --noEmit --emitDeclarationOnly false",
     "test": "NODE_OPTIONS=--experimental-vm-modules jest",
-    "checks": "pnpm typecheck && pnpm lint",
+    "checks": "pnpm typecheck",
     "dev": "build-package --watch",
     "build": "build-package",
-    "dts": "tsc --declarationDir lib/types",
-    "lint": "eslint ./src --ext .ts,.tsx --max-warnings 0"
+    "dts": "tsc --project tsconfig.dts.json"
   },
   "dependencies": {
     "@trpc/client": "^10.9.0",

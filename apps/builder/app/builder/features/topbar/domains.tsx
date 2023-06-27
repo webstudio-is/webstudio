@@ -571,6 +571,7 @@ const DomainItem = (props: {
 
             handleUpdateStatus();
           }}
+          isPublishing={props.isPublishing}
         />
       </Grid>
     </CollapsibleDomainSection>

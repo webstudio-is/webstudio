@@ -55,16 +55,12 @@ export {
   SidebarTabsTrigger,
 } from "./components/sidebar-tabs";
 export { Card } from "./components/card";
-export { Toggle } from "./components/toggle";
 export { Tooltip, InputErrorsTooltip } from "./components/tooltip";
 export {
   EnhancedTooltip,
   EnhancedTooltipProvider,
   useEnhancedTooltipProps,
 } from "./components/enhanced-tooltip";
-export { Link } from "./components/link";
-export { Panel } from "./components/panel";
-export * from "./components/slider";
 export * from "./components/avatar";
 export * from "./components/icon-button-with-menu";
 export * from "./components/tree";

@@ -1,0 +1,7 @@
+{
+  "extends": "./tsconfig.json",
+  "include": ["src", "../../@types/**/*.d.ts"],
+  "compilerOptions": {
+    "declarationDir": "lib/types"
+  }
+}

@@ -23,9 +23,14 @@ export const wrapLinkComponent = (BaseLink: typeof Link) => {
 
     if (href?.type === "page") {
       let to = href.page.path === "" ? "/" : href.page.path;
+      const urlTo = new URL(to, "https://any-valid.url");
+      to = urlTo.pathname;
+
       if (href.hash !== undefined) {
-        to += `#${href.hash}`;
+        urlTo.hash = href.hash;
+        to = `${urlTo.pathname}${urlTo.hash}`;
       }
+
       return <RemixLink {...props} to={to} ref={ref} />;
     }
 

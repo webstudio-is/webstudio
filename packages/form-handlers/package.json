@@ -1,6 +1,6 @@
 {
   "name": "@webstudio-is/form-handlers",
-  "version": "0.74.0",
+  "version": "0.75.0",
   "description": "Webstudio Form Handlers",
   "author": "Webstudio <github@webstudio.is>",
   "homepage": "https://webstudio.is",
@@ -8,11 +8,10 @@
   "scripts": {
     "typecheck": "tsc --noEmit --emitDeclarationOnly false",
     "test": "NODE_OPTIONS=--experimental-vm-modules jest",
-    "checks": "pnpm typecheck && pnpm lint",
+    "checks": "pnpm typecheck",
     "dev": "build-package --watch",
     "build": "build-package",
-    "dts": "tsc --declarationDir lib/types",
-    "lint": "eslint ./src --ext .ts,.tsx --max-warnings 0"
+    "dts": "tsc --project tsconfig.dts.json"
   },
   "dependencies": {
     "@webstudio-is/project-build": "workspace:^"
@@ -27,9 +26,9 @@
   },
   "exports": {
     "source": "./src/index.ts",
+    "types": "./lib/types/index.d.ts",
     "import": "./lib/index.js",
-    "require": "./lib/cjs/index.js",
-    "types": "./lib/types/index.d.ts"
+    "require": "./lib/cjs/index.js"
   },
   "files": [
     "lib/*",

@@ -1,8 +1,10 @@
 export {
   formToEmail,
   formIdFieldName,
+  formHiddenFieldPrefix,
   getFormId,
   hasMatchingForm,
+  getFormProperties,
   type EmailInfo,
   type FormInfo,
 } from "./shared";

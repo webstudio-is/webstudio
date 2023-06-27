@@ -58,7 +58,7 @@ export const toggleItemStyle = css(textVariants.labelsTitleCase, {
   transition: "200ms background",
 
   "&:focus-visible": toolbarItemFocusRing,
-  "&:hover, &[data-state=on], &[data-state=open]": {
+  "&:hover, &[data-state=on], &[data-state=open], &[aria-checked=true]": {
     background: theme.colors.backgroundTopbarHover,
   },
   variants: {
@@ -69,7 +69,7 @@ export const toggleItemStyle = css(textVariants.labelsTitleCase, {
     variant: {
       subtle: {
         color: theme.colors.foregroundSubtle,
-        "&:hover, &[data-state=on]": {
+        "&:hover, &[data-state=on], &[aria-checked=true]": {
           color: "inherit",
         },
       },

@@ -1,11 +1,10 @@
 import { type MouseEvent, type FormEvent, useEffect } from "react";
-import { Suspense, lazy, useCallback, useMemo, useRef } from "react";
+import { Suspense, lazy, useCallback, useRef } from "react";
 import { useStore } from "@nanostores/react";
 import { useLexicalComposerContext } from "@lexical/react/LexicalComposerContext";
 import store from "immerhin";
 import {
   type Instance,
-  type Prop,
   findTreeInstanceIds,
   Instances,
 } from "@webstudio-is/project-build";
@@ -15,13 +14,14 @@ import {
   renderWebstudioComponentChildren,
   idAttribute,
   componentAttribute,
+  showAttribute,
+  useInstanceProps,
 } from "@webstudio-is/react-sdk";
 import {
   instancesStore,
   selectedInstanceRenderStateStore,
   selectedInstanceSelectorStore,
   selectedStyleSourceSelectorStore,
-  useInstanceProps,
   useInstanceStyles,
 } from "~/shared/nano-states";
 import { textEditingInstanceSelectorStore } from "~/shared/nano-states";
@@ -68,8 +68,6 @@ const ContentEditable = ({
 
   return <Component ref={ref} {...props} />;
 };
-
-type UserProps = Record<Prop["name"], Prop["value"]>;
 
 // this utility is temporary solution to compute instance selectors
 // for rich text subtree which cannot have slots so its safe to traverse ancestors
@@ -127,18 +125,7 @@ export const WebstudioComponentDev = ({
   );
 
   const instanceProps = useInstanceProps(instance.id);
-  const userProps = useMemo(() => {
-    const result: UserProps = {};
-    if (instanceProps === undefined) {
-      return result;
-    }
-    for (const item of instanceProps) {
-      if (item.type !== "asset" && item.type !== "page") {
-        result[item.name] = item.value;
-      }
-    }
-    return result;
-  }, [instanceProps]);
+  const { [showAttribute]: show = true, ...userProps } = instanceProps;
 
   const isSelected = areInstanceSelectorsEqual(
     selectedInstanceSelector,
@@ -175,6 +162,10 @@ export const WebstudioComponentDev = ({
       : undefined;
 
   const Component = components.get(instance.component);
+
+  if (show === false) {
+    return <></>;
+  }
 
   if (Component === undefined) {
     return <></>;

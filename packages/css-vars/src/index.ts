@@ -1,34 +1,19 @@
-let counter = -1;
+/**
+ * To reduce probability of intersection with any existing CSS variables
+ */
+const CSS_VARIABLE_POSTFIX = "-w7ovd";
 
-const unique = <Name extends string>(name: Name) => {
-  return `${name}-${++counter}` as const;
-};
+const cssVarsSet = new Set<string>();
 
-const define = <Name extends string>(name: Name, unique = false) => {
-  if (unique) {
-    return `--${name}` as const;
+const define = <Name extends string>(name: Name) => {
+  if (cssVarsSet.has(name)) {
+    throw new Error(`Variable ${name} already defined`);
   }
-  return `--${name}-${++counter}` as const;
+  cssVarsSet.add(name);
+
+  return `--${name}${CSS_VARIABLE_POSTFIX}` as const;
 };
 
-type AppendString<
-  TResult extends string,
-  TDelimiter extends string,
-  TNextPart extends string
-> = TResult extends "" ? TNextPart : `${TResult}${TDelimiter}${TNextPart}`;
+const use = (...args: string[]) => `var(${args.join(", ")})`;
 
-type Join<
-  TInput extends readonly string[],
-  TDelimiter extends string,
-  TResult extends string = ""
-> = TInput extends []
-  ? TResult
-  : TInput extends [string, ...infer Rest extends string[]]
-  ? Join<Rest, TDelimiter, AppendString<TResult, TDelimiter, TInput[0]>>
-  : never;
-
-const use = <Args extends string[]>(...args: Args) => {
-  return `var(${args.join(", ") as Join<Args, ", ">})` as const;
-};
-
-export const cssVars = { define, use, unique };
+export const cssVars = { define, use };

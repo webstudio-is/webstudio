@@ -8,12 +8,10 @@ import {
   theme,
   Flex,
   Grid,
-  Label,
   ToggleGroup,
-  ToggleGroupItem,
+  ToggleGroupButton,
   Separator,
   styled,
-  Tooltip,
 } from "@webstudio-is/design-system";
 import { ImageControl, SelectControl, PositionControl } from "../../controls";
 import type { StyleInfo } from "../../shared/style-info";
@@ -39,10 +37,10 @@ import {
   RepeatColumnIcon,
   RepeatRowIcon,
   CrossSmallIcon,
-  InformationIcon,
 } from "@webstudio-is/icons";
 import { toValue } from "@webstudio-is/css-engine";
 import { BackgroundGradient } from "./background-gradient";
+import { NonResetablePropertyName } from "../../shared/property-name";
 
 type BackgroundContentProps = {
   currentStyle: StyleInfo;
@@ -133,12 +131,17 @@ export const BackgroundContent = (props: BackgroundContentProps) => {
               }
             }}
           >
-            <ToggleGroupItem value={"image"}>
+            {/* looks like now when dialog is open first toggle group buttons need to have autoFocus
+          otherwise the following "Choose image" button is focused
+          https://github.com/radix-ui/primitives/pull/2027
+          https://github.com/radix-ui/primitives/issues/1910
+          */}
+            <ToggleGroupButton value={"image"} autoFocus={true}>
               <Flex css={{ px: theme.spacing[2] }}>Image</Flex>
-            </ToggleGroupItem>
-            <ToggleGroupItem value={"gradient"}>
+            </ToggleGroupButton>
+            <ToggleGroupButton value={"gradient"}>
               <Flex css={{ px: theme.spacing[2] }}>Gradient</Flex>
-            </ToggleGroupItem>
+            </ToggleGroupButton>
           </ToggleGroup>
         </Flex>
       </BackgroundSection>
@@ -153,9 +156,11 @@ export const BackgroundContent = (props: BackgroundContentProps) => {
         >
           {imageGradientToggle === "image" && (
             <>
-              <Label color="default" truncate>
-                Image
-              </Label>
+              <NonResetablePropertyName
+                style={props.currentStyle}
+                properties={["backgroundImage"]}
+                label="Image"
+              />
 
               <FloatingPanelProvider container={elementRef}>
                 <ImageControl
@@ -170,28 +175,23 @@ export const BackgroundContent = (props: BackgroundContentProps) => {
 
           {imageGradientToggle === "gradient" && (
             <Flex css={{ gridColumn: "span 2" }} direction="column">
-              <Label color="default">
-                <Flex align={"center"} gap={1}>
-                  Code
-                  <Tooltip
-                    variant="wrapped"
-                    content={
-                      <>
-                        Paste a CSS gradient, for example:
-                        <br />
-                        <br />
-                        linear-gradient(...)
-                        <br />
-                        <br />
-                        If pasting from figma, remove the “background” property
-                        name.
-                      </>
-                    }
-                  >
-                    <InformationIcon />
-                  </Tooltip>
-                </Flex>
-              </Label>
+              <NonResetablePropertyName
+                style={props.currentStyle}
+                description={
+                  <>
+                    Paste a CSS gradient, for example:
+                    <br />
+                    <br />
+                    linear-gradient(...)
+                    <br />
+                    <br />
+                    If pasting from figma, remove the “background” property
+                    name.
+                  </>
+                }
+                properties={["backgroundImage"]}
+                label="Code"
+              />
 
               <BackgroundGradient
                 setProperty={setProperty}
@@ -202,9 +202,11 @@ export const BackgroundContent = (props: BackgroundContentProps) => {
             </Flex>
           )}
 
-          <Label color="default" truncate>
-            Clip
-          </Label>
+          <NonResetablePropertyName
+            style={props.currentStyle}
+            properties={["backgroundClip"]}
+            label="Clip"
+          />
 
           <SelectControl
             setProperty={setProperty}
@@ -213,9 +215,11 @@ export const BackgroundContent = (props: BackgroundContentProps) => {
             property="backgroundClip"
           />
 
-          <Label color="default" truncate>
-            Origin
-          </Label>
+          <NonResetablePropertyName
+            style={props.currentStyle}
+            properties={["backgroundOrigin"]}
+            label="Origin"
+          />
 
           <SelectControl
             setProperty={setProperty}
@@ -252,9 +256,11 @@ export const BackgroundContent = (props: BackgroundContentProps) => {
         >
           {imageGradientToggle === "image" && (
             <>
-              <Label color="default" truncate>
-                Repeat
-              </Label>
+              <NonResetablePropertyName
+                style={props.currentStyle}
+                properties={["backgroundRepeat"]}
+                label="Repeat"
+              />
 
               <Flex css={{ justifySelf: "end" }}>
                 <ToggleGroupControl
@@ -293,9 +299,11 @@ export const BackgroundContent = (props: BackgroundContentProps) => {
             </>
           )}
 
-          <Label color="default" truncate>
-            Attachment
-          </Label>
+          <NonResetablePropertyName
+            style={props.currentStyle}
+            properties={["backgroundAttachment"]}
+            label="Attachment"
+          />
 
           <Flex css={{ justifySelf: "end" }}>
             <ToggleGroup
@@ -308,18 +316,20 @@ export const BackgroundContent = (props: BackgroundContentProps) => {
                 });
               }}
             >
-              <ToggleGroupItem value={"scroll"}>
+              <ToggleGroupButton value={"scroll"}>
                 <Flex css={{ px: theme.spacing[3] }}>Scroll</Flex>
-              </ToggleGroupItem>
-              <ToggleGroupItem value={"fixed"}>
+              </ToggleGroupButton>
+              <ToggleGroupButton value={"fixed"}>
                 <Flex css={{ px: theme.spacing[3] }}>Fixed</Flex>
-              </ToggleGroupItem>
+              </ToggleGroupButton>
             </ToggleGroup>
           </Flex>
 
-          <Label color="default" truncate>
-            Blend mode
-          </Label>
+          <NonResetablePropertyName
+            style={props.currentStyle}
+            properties={["backgroundBlendMode"]}
+            label="Blend mode"
+          />
 
           <SelectControl
             setProperty={setProperty}

@@ -1,8 +1,8 @@
 /* eslint-disable no-console */
 
-import { execSync } from "child_process";
+import { readFileSync, writeFileSync, existsSync, rmSync } from "node:fs";
+import { execSync } from "node:child_process";
 import camelCase from "camelcase";
-import { readFileSync, writeFileSync, existsSync, rmSync } from "fs";
 import { z, type ZodType, type ZodTypeDef } from "zod";
 
 const SOURCE_FILE = "./src/__generated__/figma-design-tokens.json";
@@ -173,7 +173,7 @@ const printFontWeight = (path: string[], unparsedValue: unknown) => {
 
 const printFontFamily = (path: string[], unparsedValue: unknown) => {
   const value = parse(path, unparsedValue, FontFamilySchema);
-  return fontFamilyMapping[value] || value;
+  return fontFamilyMapping[value as keyof typeof fontFamilyMapping] || value;
 };
 
 const printFontSize = (path: string[], unparsedValue: unknown) => {
@@ -300,7 +300,9 @@ const main = () => {
     // no need to check for __proto__ (prototype polution)
     // because we know pathToName returns a string without "_"
     record[pathToName(path, type)] =
-      type in printerByType ? printerByType[type](path, value) : value;
+      type in printerByType
+        ? printerByType[type as keyof typeof printerByType](path, value)
+        : value;
   });
 
   writeFileSync(

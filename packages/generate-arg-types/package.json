@@ -1,6 +1,6 @@
 {
   "name": "@webstudio-is/generate-arg-types",
-  "version": "0.74.0",
+  "version": "0.75.0",
   "description": "Generate components property types",
   "author": "Webstudio <github@webstudio.is>",
   "homepage": "https://webstudio.is",
@@ -8,10 +8,9 @@
   "scripts": {
     "dev": "build-package --watch",
     "build": "build-package",
-    "dts": "tsc --declarationDir lib/types",
+    "dts": "tsc --project tsconfig.dts.json",
     "typecheck": "tsc --noEmit --emitDeclarationOnly false",
-    "checks": "pnpm typecheck && pnpm lint",
-    "lint": "eslint ./src --ext .ts,.tsx --max-warnings 0"
+    "checks": "pnpm typecheck"
   },
   "dependencies": {
     "@types/fs-extra": "^9.0.13",
@@ -37,8 +36,8 @@
   },
   "exports": {
     "source": "./src/index.ts",
-    "import": "./lib/index.js",
-    "types": "./lib/types/index.d.ts"
+    "types": "./lib/types/index.d.ts",
+    "import": "./lib/index.js"
   },
   "license": "MIT",
   "private": false,

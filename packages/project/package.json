@@ -1,17 +1,16 @@
 {
   "name": "@webstudio-is/project",
-  "version": "0.74.0",
+  "version": "0.75.0",
   "description": "Webstudio Project",
   "author": "Webstudio <github@webstudio.is>",
   "homepage": "https://webstudio.is",
   "type": "module",
   "scripts": {
     "typecheck": "tsc --noEmit --emitDeclarationOnly false",
-    "checks": "pnpm typecheck && pnpm lint",
+    "checks": "pnpm typecheck",
     "dev": "build-package --watch",
     "build": "build-package",
-    "dts": "tsc --declarationDir lib/types",
-    "lint": "eslint ./src --ext .ts,.tsx --max-warnings 0"
+    "dts": "tsc --project tsconfig.dts.json"
   },
   "dependencies": {
     "@trpc/server": "^10.9.0",
@@ -19,7 +18,7 @@
     "@webstudio-is/prisma-client": "workspace:^",
     "@webstudio-is/project-build": "workspace:^",
     "@webstudio-is/trpc-interface": "workspace:^",
-    "nanoid": "^3.2.0",
+    "nanoid": "^3.3.6",
     "slugify": "^1.6.5",
     "uuid": "^9.0.0",
     "zod": "^3.21.4"
@@ -33,14 +32,14 @@
   "exports": {
     ".": {
       "source": "./src/index.ts",
+      "types": "./lib/types/index.d.ts",
       "import": "./lib/index.js",
-      "require": "./lib/cjs/index.js",
-      "types": "./lib/types/index.d.ts"
+      "require": "./lib/cjs/index.js"
     },
     "./index.server": {
       "source": "./src/index.server.ts",
-      "import": "./lib/index.server.js",
-      "types": "./lib/types/index.server.d.ts"
+      "types": "./lib/types/index.server.d.ts",
+      "import": "./lib/index.server.js"
     }
   },
   "files": [

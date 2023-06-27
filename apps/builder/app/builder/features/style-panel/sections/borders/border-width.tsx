@@ -38,6 +38,7 @@ export const BorderWidth = (
       deleteProperty={props.deleteProperty}
       createBatchUpdate={props.createBatchUpdate}
       label="Width"
+      description="Sets the width of the border"
       borderPropertyOptions={borderPropertyOptions}
       individualModeIcon={<BorderWidthIndividualIcon />}
     />

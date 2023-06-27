@@ -2,7 +2,11 @@ import { type ComponentProps, Fragment } from "react";
 import type { ReadableAtom } from "nanostores";
 import { Scripts, ScrollRestoration } from "@remix-run/react";
 import type { Assets } from "@webstudio-is/asset-uploader";
-import type { Instance, Instances } from "@webstudio-is/project-build";
+import type {
+  DataSource,
+  Instance,
+  Instances,
+} from "@webstudio-is/project-build";
 import type { Components } from "../components/components-utils";
 import { ReactSdkContext, type Params } from "../context";
 import type { Pages, PropsByInstanceId } from "../props";
@@ -19,6 +23,8 @@ export const createElementsTree = ({
   propsByInstanceIdStore,
   assetsStore,
   pagesStore,
+  dataSourceValuesStore,
+  onDataSourceUpdate,
   Component,
   components,
 }: Params & {
@@ -27,6 +33,8 @@ export const createElementsTree = ({
   propsByInstanceIdStore: ReadableAtom<PropsByInstanceId>;
   assetsStore: ReadableAtom<Assets>;
   pagesStore: ReadableAtom<Pages>;
+  dataSourceValuesStore: ReadableAtom<Map<DataSource["id"], unknown>>;
+  onDataSourceUpdate: (dataSourceId: DataSource["id"], value: unknown) => void;
   Component: (props: ComponentProps<typeof WebstudioComponent>) => JSX.Element;
   components: Components;
 }) => {
@@ -62,9 +70,20 @@ export const createElementsTree = ({
         propsByInstanceIdStore,
         assetsStore,
         pagesStore,
+        dataSourceValuesStore,
         renderer,
         imageBaseUrl,
         assetBaseUrl,
+        setDataSourceValue: (instanceId, propName, value) => {
+          const propsByInstanceId = propsByInstanceIdStore.get();
+          const props = propsByInstanceId.get(instanceId);
+          const prop = props?.find((prop) => prop.name === propName);
+          if (prop?.type !== "dataSource") {
+            throw Error(`${propName} is not data source`);
+          }
+          const dataSourceId = prop.value;
+          onDataSourceUpdate(dataSourceId, value);
+        },
       }}
     >
       {root}

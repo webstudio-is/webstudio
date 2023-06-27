@@ -82,7 +82,9 @@ if (noGeneratedAsEntries) {
 }
 
 if (watch) {
+  // eslint-disable-next-line no-console
   console.info("watching...");
 } else {
+  // eslint-disable-next-line no-console
   console.info("build succeeded");
 }

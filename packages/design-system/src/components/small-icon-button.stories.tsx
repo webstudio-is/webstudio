@@ -32,7 +32,7 @@ export const Demo = ({
           <StoryGrid horizontal key={variant}>
             {states.map((state) => (
               <SmallIconButton
-                key={state}
+                key={state ?? "undefined"}
                 title={`${variant} ${state}`}
                 icon={<TrashIcon />}
                 state={state}
@@ -50,7 +50,7 @@ export const Demo = ({
           <StoryGrid horizontal key={variant}>
             {states.map((state) => (
               <SmallIconButton
-                key={state}
+                key={state ?? "undefined"}
                 title={`${variant} ${state}`}
                 icon={<TrashIcon />}
                 state={state}
@@ -66,25 +66,17 @@ export const Demo = ({
 );
 
 Demo.argTypes = {
-  icon: {
-    defaultValue: "<MenuIcon>",
-    control: { type: "inline-radio", options: Object.keys(iconsMap) },
-  },
-  variant: {
-    defaultValue: "normal",
-    control: { type: "inline-radio", options: smallIconButtonVariants },
-  },
-  state: {
-    defaultValue: undefined,
-    control: {
-      type: "inline-radio",
-      options: states,
-    },
-  },
-  focused: {
-    defaultValue: false,
-    control: { type: "boolean" },
-  },
+  icon: { control: "inline-radio", options: Object.keys(iconsMap) },
+  variant: { control: "inline-radio", options: smallIconButtonVariants },
+  state: { control: "inline-radio", options: states },
+  focused: { control: "boolean" },
+};
+
+Demo.args = {
+  icon: "<MenuIcon>",
+  variant: "normal",
+  state: undefined,
+  focused: false,
 };
 
 Demo.storyName = "Small Icon Button";

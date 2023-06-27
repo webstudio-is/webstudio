@@ -7,11 +7,10 @@
   "type": "module",
   "scripts": {
     "typecheck": "tsc --noEmit --emitDeclarationOnly false",
-    "checks": "pnpm typecheck && pnpm lint",
+    "checks": "pnpm typecheck",
     "dev": "build-package --watch",
     "build": "build-package",
-    "dts": "tsc --declarationDir lib/types",
-    "lint": "eslint ./src --ext .ts,.tsx --max-warnings 0"
+    "dts": "tsc --project tsconfig.dts.json"
   },
   "dependencies": {},
   "devDependencies": {
@@ -20,8 +19,8 @@
   },
   "exports": {
     "source": "./src/index.ts",
-    "import": "./lib/index.js",
-    "types": "./lib/types/index.d.ts"
+    "types": "./lib/types/index.d.ts",
+    "import": "./lib/index.js"
   },
   "files": [
     "lib/*",

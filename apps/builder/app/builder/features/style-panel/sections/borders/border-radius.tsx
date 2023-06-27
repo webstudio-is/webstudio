@@ -38,6 +38,7 @@ export const BorderRadius = (
       deleteProperty={props.deleteProperty}
       createBatchUpdate={props.createBatchUpdate}
       label="Radius"
+      description="Sets the radius of border"
       borderPropertyOptions={borderPropertyOptions}
       individualModeIcon={<BorderRadiusIndividualIcon />}
     />

@@ -8,12 +8,14 @@ import {
   pagesStore,
   instancesStore,
   propsStore,
+  dataSourcesStore,
   breakpointsStore,
   stylesStore,
   styleSourcesStore,
   styleSourceSelectionsStore,
   assetsStore,
   selectedPageIdStore,
+  selectedPageHashStore,
   selectedInstanceSelectorStore,
   selectedInstanceBrowserStyleStore,
   selectedInstanceUnitSizesStore,
@@ -26,6 +28,7 @@ import {
   synchronizedBreakpointsStores,
   selectedStyleSourceSelectorStore,
   synchronizedComponentsMetaStores,
+  dataSourceValuesStore,
 } from "~/shared/nano-states";
 
 enableMapSet();
@@ -66,10 +69,13 @@ export const registerContainers = () => {
   store.register("styleSources", styleSourcesStore);
   store.register("styleSourceSelections", styleSourceSelectionsStore);
   store.register("props", propsStore);
+  store.register("dataSources", dataSourcesStore);
   store.register("assets", assetsStore);
   // synchronize whole states
   clientStores.set("project", projectStore);
+  clientStores.set("dataSourceValues", dataSourceValuesStore);
   clientStores.set("selectedPageId", selectedPageIdStore);
+  clientStores.set("selectedPageHash", selectedPageHashStore);
   clientStores.set("selectedInstanceSelector", selectedInstanceSelectorStore);
   clientStores.set(
     "selectedInstanceBrowserStyle",

@@ -89,6 +89,7 @@ export { Link2Icon } from "./link-2";
 export { LinkIcon } from "./link";
 export { ListItemIcon } from "./list-item";
 export { ListIcon } from "./list";
+export { LoadingDotsIcon } from "./loading-dots";
 export { MenuEllipsesIcon } from "./menu-ellipses";
 export { MinusIcon } from "./minus";
 export { NoWrapIcon } from "./no-wrap";

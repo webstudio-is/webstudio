@@ -1,19 +1,18 @@
 {
   "name": "@webstudio-is/css-data",
-  "version": "0.74.0",
+  "version": "0.75.0",
   "description": "CSS Data",
   "author": "Webstudio <github@webstudio.is>",
   "homepage": "https://webstudio.is",
   "type": "module",
   "scripts": {
     "typecheck": "tsc --noEmit --emitDeclarationOnly false",
-    "checks": "pnpm typecheck && pnpm lint",
+    "checks": "pnpm typecheck",
     "dev": "build-package --watch",
     "build": "build-package",
     "build:mdn-data": "tsx ./bin/mdn-data.ts ./src/__generated__ &&  prettier --write \"./src/__generated__/**/*.ts\"",
     "build:descriptions": "tsx ./bin/property-value-descriptions.ts",
-    "dts": "tsc --declarationDir lib/types",
-    "lint": "eslint ./src --ext .ts,.tsx --max-warnings 0",
+    "dts": "tsc --project tsconfig.dts.json",
     "test": "NODE_OPTIONS=--experimental-vm-modules jest"
   },
   "devDependencies": {
@@ -35,9 +34,9 @@
   },
   "exports": {
     "source": "./src/index.ts",
+    "types": "./lib/types/index.d.ts",
     "import": "./lib/index.js",
-    "require": "./lib/cjs/index.js",
-    "types": "./lib/types/index.d.ts"
+    "require": "./lib/cjs/index.js"
   },
   "files": [
     "lib/*",

@@ -152,7 +152,8 @@ const useFixDragOverCanvas = () => {
 export type CssColorPickerValueInput =
   | RgbValue
   | KeywordValue
-  | IntermediateStyleValue;
+  | IntermediateStyleValue
+  | InvalidValue;
 
 type ColorPickerProps = {
   onChange: (value: CssColorPickerValueInput | undefined) => void;
@@ -190,12 +191,26 @@ export const ColorPicker = ({
   const rgbValue = styleValueToRgbaColor(currentValue);
 
   // Change prefix color in sync with color picker, don't change during input changed
-  const prefixColor = styleValueResolve(
+  let prefixColor = styleValueResolve(
     currentValue.type === "keyword" || currentValue.type === "rgb"
       ? currentValue
       : value,
     currentColor
   );
+  // consider inherit on color same as currentColor
+  if (
+    property === "color" &&
+    prefixColor.type === "keyword" &&
+    prefixColor.value === "inherit"
+  ) {
+    prefixColor = {
+      type: "rgb",
+      r: currentColor.r,
+      g: currentColor.g,
+      b: currentColor.b,
+      alpha: currentColor.alpha,
+    };
+  }
 
   const prefixColorRgba = styleValueToRgbaColor(prefixColor);
 
@@ -304,6 +319,7 @@ export const ColorPicker = ({
           styleValue?.type === "rgb" ||
           styleValue?.type === "keyword" ||
           styleValue?.type === "intermediate" ||
+          styleValue?.type === "invalid" ||
           styleValue === undefined
         ) {
           onChange(styleValue);
@@ -317,19 +333,14 @@ export const ColorPicker = ({
       }}
       onHighlight={onHighlight}
       onChangeComplete={({ value }) => {
-        if (
-          value.type === "rgb" ||
-          value.type === "keyword" ||
-          value.type === "invalid"
-        ) {
+        if (value.type === "rgb" || value.type === "keyword") {
           onChangeComplete({ value });
+          return;
         }
-
-        onChangeComplete({
-          value: {
-            type: "invalid",
-            value: toValue(value),
-          },
+        // In case value is parsed to something wrong
+        onChange({
+          type: "invalid",
+          value: toValue(value),
         });
       }}
       onAbort={onAbort}

@@ -361,6 +361,28 @@ describe("insert instances into container with text or rich text children", () =
       createInstancePair("inserted", "Box", []),
     ]);
   });
+
+  test("insert container without children", () => {
+    const getInstances = () =>
+      new Map([createInstancePair("root", "Body", [])]);
+
+    const instances1 = getInstances();
+    insertInstancesMutable(
+      instances1,
+      new Map(),
+      baseMetasMap,
+      [createInstance("inserted", "Box", [])],
+      [{ type: "id", value: "inserted" }],
+      {
+        parentSelector: ["root"],
+        position: 1,
+      }
+    );
+    expect(Array.from(instances1.entries())).toEqual([
+      createInstancePair("root", "Body", [{ type: "id", value: "inserted" }]),
+      createInstancePair("inserted", "Box", []),
+    ]);
+  });
 });
 
 test("reparent instance into target", () => {

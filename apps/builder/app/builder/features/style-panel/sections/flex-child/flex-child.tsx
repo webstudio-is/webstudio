@@ -19,7 +19,6 @@ import {
   MenuEllipsesIcon,
 } from "@webstudio-is/icons";
 import { FloatingPanel } from "~/builder/shared/floating-panel";
-import { getStyleSource } from "../../shared/style-info";
 import { CollapsibleSection } from "../../shared/collapsible-section";
 
 const properties: StyleProperty[] = [
@@ -59,8 +58,7 @@ const FlexChildSectionAlign = (props: RenderCategoryProps) => {
         onReset={() => deleteProperty("alignSelf")}
       />
       <ToggleGroupControl
-        styleSource={getStyleSource(currentStyle.alignSelf)}
-        onValueChange={(value) => setAlignSelf(value)}
+        onValueChange={(value) => setAlignSelf({ type: "keyword", value })}
         value={toValue(currentStyle.alignSelf?.value)}
         items={[
           {
@@ -109,6 +107,7 @@ const FlexChildSectionSizing = (props: RenderCategoryProps) => {
         style={currentStyle}
         properties={["flexGrow", "flexShrink"]}
         label="Sizing"
+        description="Specifies the ability of a flex item to grow or shrink"
         onReset={() => {
           setSizing.deleteProperty("flexGrow");
           setSizing.deleteProperty("flexShrink");
@@ -116,27 +115,47 @@ const FlexChildSectionSizing = (props: RenderCategoryProps) => {
         }}
       />
       <ToggleGroupControl
-        styleSource={getStyleSource(
-          currentStyle.flexGrow,
-          currentStyle.flexShrink
-        )}
         onValueChange={(value) => {
           switch (value) {
             case "none": {
-              setSizing.setProperty("flexGrow")("0");
-              setSizing.setProperty("flexShrink")("0");
+              setSizing.setProperty("flexGrow")({
+                type: "unit",
+                value: 0,
+                unit: "number",
+              });
+              setSizing.setProperty("flexShrink")({
+                type: "unit",
+                value: 0,
+                unit: "number",
+              });
               setSizing.publish();
               break;
             }
             case "grow": {
-              setSizing.setProperty("flexGrow")("1");
-              setSizing.setProperty("flexShrink")("0");
+              setSizing.setProperty("flexGrow")({
+                type: "unit",
+                value: 1,
+                unit: "number",
+              });
+              setSizing.setProperty("flexShrink")({
+                type: "unit",
+                value: 0,
+                unit: "number",
+              });
               setSizing.publish();
               break;
             }
             case "shrink": {
-              setSizing.setProperty("flexGrow")("0");
-              setSizing.setProperty("flexShrink")("1");
+              setSizing.setProperty("flexGrow")({
+                type: "unit",
+                value: 0,
+                unit: "number",
+              });
+              setSizing.setProperty("flexShrink")({
+                type: "unit",
+                value: 1,
+                unit: "number",
+              });
               setSizing.publish();
               break;
             }
@@ -254,13 +273,12 @@ const FlexChildSectionOrder = (props: RenderCategoryProps) => {
         onReset={() => deleteProperty("order")}
       />
       <ToggleGroupControl
-        styleSource={getStyleSource(currentStyle.order)}
         onValueChange={(value) => {
           switch (value) {
             case "0":
             case "1":
             case "-1": {
-              setOrder(value);
+              setOrder({ type: "unit", value: Number(value), unit: "number" });
               break;
             }
           }
@@ -275,12 +293,12 @@ const FlexChildSectionOrder = (props: RenderCategoryProps) => {
           {
             child: <OrderFirstIcon />,
             label: "Make first",
-            value: "1",
+            value: "-1",
           },
           {
             child: <OrderLastIcon />,
             label: "Make last",
-            value: "-1",
+            value: "1",
           },
           {
             child: <FlexChildSectionOrderPopover {...props} />,

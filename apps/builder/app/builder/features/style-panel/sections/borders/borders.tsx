@@ -12,12 +12,12 @@ import { BorderWidth } from "./border-width";
 
 const { items: borderColorItems } = styleConfigByName("borderTopColor");
 
-const borderColorProperties = [
+const borderColorProperties: StyleProperty[] = [
   "borderTopColor",
   "borderRightColor",
   "borderBottomColor",
   "borderLeftColor",
-] as const;
+];
 
 const properties: StyleProperty[] = [
   ...borderColorProperties,
@@ -84,8 +84,9 @@ export const BordersSection = (props: RenderCategoryProps) => {
         >
           <PropertyName
             style={currentStyle}
-            properties={[borderColorProperty]}
+            properties={borderColorProperties}
             label={"Color"}
+            description="Sets the color of the border"
             onReset={() => deleteAllBorderColorProperties(borderColorProperty)}
           />
 

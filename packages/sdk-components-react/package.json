@@ -1,6 +1,6 @@
 {
   "name": "@webstudio-is/sdk-components-react",
-  "version": "0.74.0",
+  "version": "0.75.0",
   "description": "Webstudio default library for react",
   "author": "Webstudio <github@webstudio.is>",
   "homepage": "https://webstudio.is",
@@ -15,33 +15,32 @@
   "exports": {
     ".": {
       "source": "./src/components.ts",
+      "types": "./lib/types/components.d.ts",
       "import": "./lib/components.js",
-      "require": "./lib/cjs/components.js",
-      "types": "./lib/types/components.d.ts"
+      "require": "./lib/cjs/components.js"
     },
     "./metas": {
       "source": "./src/metas.ts",
+      "types": "./lib/types/metas.d.ts",
       "import": "./lib/metas.js",
-      "require": "./lib/cjs/metas.js",
-      "types": "./lib/types/metas.d.ts"
+      "require": "./lib/cjs/metas.js"
     },
     "./props": {
       "source": "./src/props.ts",
+      "types": "./lib/types/props.d.ts",
       "import": "./lib/props.js",
-      "require": "./lib/cjs/props.js",
-      "types": "./lib/types/props.d.ts"
+      "require": "./lib/cjs/props.js"
     }
   },
   "scripts": {
     "dev": "build-package --watch",
     "build": "build-package",
     "build:args": "generate-arg-types './src/*.tsx !./src/*.stories.tsx !./src/*.ws.tsx' && prettier --write \"**/*.props.ts\"",
-    "dts": "tsc --declarationDir lib/types",
+    "dts": "tsc --project tsconfig.dts.json",
     "typecheck": "tsc --noEmit --emitDeclarationOnly false",
-    "lint": "eslint ./src --ext .ts,.tsx --max-warnings 0",
-    "checks": "pnpm typecheck && pnpm lint",
-    "storybook:run": "start-storybook -p 6006",
-    "storybook:build": "build-storybook"
+    "checks": "pnpm typecheck",
+    "storybook:dev": "storybook dev -p 6006",
+    "storybook:build": "storybook build"
   },
   "peerDependencies": {
     "react": "^18.2.0",
@@ -58,7 +57,7 @@
     "shallow-equal": "^3.1.0"
   },
   "devDependencies": {
-    "@storybook/react": "^6.5.16",
+    "@storybook/react": "^7.0.23",
     "@types/react": "^18.0.35",
     "@types/react-dom": "^18.0.11",
     "@webstudio-is/scripts": "workspace:^",
