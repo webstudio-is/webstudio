@@ -221,7 +221,7 @@ type PropertyNameInternalProps = {
   label: string | ReactElement;
   title?: string;
   description?: React.ReactNode;
-  onReset?: undefined | (() => void);
+  onReset?: () => void;
   disabled?: boolean;
 };
 
@@ -263,7 +263,11 @@ const PropertyNameInternal = ({
           shrink
           gap={1}
           align="center"
-          onClick={() => {
+          onClick={(event) => {
+            if (event.altKey) {
+              onReset?.();
+              return;
+            }
             setIsOpen(true);
           }}
         >
