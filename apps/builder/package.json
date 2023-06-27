@@ -11,8 +11,8 @@
     "typecheck": "tsc --noEmit --emitDeclarationOnly false",
     "test": "NODE_OPTIONS=--experimental-vm-modules jest",
     "checks": "pnpm typecheck && pnpm test",
-    "storybook:run": "start-storybook -p 6006",
-    "storybook:build": "build-storybook",
+    "storybook:dev": "storybook dev -p 6006",
+    "storybook:build": "storybook build",
     "ci:migrate": "migrations migrate --force"
   },
   "dependencies": {
@@ -101,7 +101,7 @@
     "@babel/preset-typescript": "^7.21.0",
     "@jest/globals": "^29.3.1",
     "@remix-run/dev": "1.15.0",
-    "@storybook/react": "^6.5.16",
+    "@storybook/react": "^7.0.23",
     "@testing-library/react-hooks": "^8.0.1",
     "@types/hyphenate-style-name": "^1.0.0",
     "@types/lodash.debounce": "^4.0.6",
