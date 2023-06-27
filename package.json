@@ -37,7 +37,7 @@
     "typescript": "5.1.3"
   },
   "engines": {
-    "node": "16",
+    "node": "18",
     "pnpm": "8.4",
     "yarn": "This project is configured to use pnpm"
   },
