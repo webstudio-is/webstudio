@@ -271,6 +271,7 @@ export const BackgroundContent = (props: BackgroundContentProps) => {
                       value,
                     })
                   }
+                  onReset={() => deleteProperty("backgroundRepeat")}
                   value={toValue(props.currentStyle.backgroundRepeat?.value)}
                   items={[
                     {

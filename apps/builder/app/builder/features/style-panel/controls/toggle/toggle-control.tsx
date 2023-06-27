@@ -11,6 +11,7 @@ export type ToggleGroupControlProps = {
   value: string;
   items: { child: JSX.Element; label: string; value: string }[];
   onValueChange?: (value: string) => void;
+  onReset: () => void;
 };
 
 // @todo refactor this control to follow the standard interface we otherwise have for all controls
@@ -19,6 +20,7 @@ export const ToggleGroupControl = ({
   value = "",
   items = [],
   onValueChange,
+  onReset,
 }: ToggleGroupControlProps) => {
   return (
     <ToggleGroup
@@ -31,7 +33,14 @@ export const ToggleGroupControl = ({
       {items.map(({ child, label, value }, index) => {
         return (
           <EnhancedTooltip key={index} content={label}>
-            <ToggleGroupButton value={value}>
+            <ToggleGroupButton
+              value={value}
+              onClick={(event) => {
+                if (event.altKey) {
+                  onReset?.();
+                }
+              }}
+            >
               <Flex>{child}</Flex>
             </ToggleGroupButton>
           </EnhancedTooltip>
