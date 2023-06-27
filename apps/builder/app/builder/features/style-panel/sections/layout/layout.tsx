@@ -22,14 +22,10 @@ import {
 import type { RenderCategoryProps } from "../../style-sections";
 import { FlexGrid } from "./shared/flex-grid";
 import { MenuControl, SelectControl } from "../../controls";
-import { PropertyName } from "../../shared/property-name";
+import { PropertyName, PropertyTooltip } from "../../shared/property-name";
 import { styleConfigByName } from "../../shared/configs";
 import type { CreateBatchUpdate } from "../../shared/use-style-data";
-import {
-  getStyleSource,
-  type StyleInfo,
-  type StyleValueInfo,
-} from "../../shared/style-info";
+import { getStyleSource, type StyleInfo } from "../../shared/style-info";
 import { CollapsibleSection } from "../../shared/collapsible-section";
 import {
   type IntermediateStyleValue,
@@ -261,12 +257,22 @@ const FlexGap = ({
 };
 
 const mapNormalTo = (
-  toValue: string,
-  current?: StyleValueInfo
-): StyleValueInfo | undefined =>
-  current?.value.type === "keyword" && current?.value.value === "normal"
-    ? { ...current, value: { type: "keyword", value: toValue } }
-    : current;
+  style: StyleInfo,
+  property: StyleProperty,
+  newValue: string
+): StyleInfo => {
+  const styleInfoValue = style[property]?.value;
+  if (styleInfoValue?.type === "keyword" && styleInfoValue.value === "normal") {
+    return {
+      ...style,
+      [property]: {
+        ...style[property],
+        value: { type: "keyword", value: newValue },
+      },
+    };
+  }
+  return style;
+};
 
 const Toggle = ({
   property,
@@ -293,14 +299,13 @@ const Toggle = ({
     styleValue?.type === "keyword" && styleValue?.value === valueOn;
 
   return (
-    <EnhancedTooltip content={label}>
+    <PropertyTooltip
+      title={label}
+      properties={[property]}
+      style={currentStyle}
+      onReset={() => deleteProperty(property)}
+    >
       <ToggleButton
-        onClick={(event) => {
-          if (event.altKey) {
-            event.preventDefault();
-            deleteProperty(property);
-          }
-        }}
         pressed={isPressed}
         onPressedChange={(isPressed) => {
           setProperty(property)({
@@ -312,7 +317,7 @@ const Toggle = ({
       >
         {isPressed ? iconOn : iconOff}
       </ToggleButton>
-    </EnhancedTooltip>
+    </PropertyTooltip>
   );
 };
 
@@ -367,20 +372,28 @@ const LayoutSectionFlex = ({
           <Flex css={{ gap: theme.spacing[7] }}>
             <MenuControl
               property="alignItems"
-              styleValue={mapNormalTo("stretch", currentStyle.alignItems)}
+              currentStyle={mapNormalTo(currentStyle, "alignItems", "stretch")}
               setProperty={setProperty}
               deleteProperty={deleteProperty}
             />
             <MenuControl
               property="justifyContent"
-              styleValue={mapNormalTo("start", currentStyle.justifyContent)}
+              currentStyle={mapNormalTo(
+                currentStyle,
+                "justifyContent",
+                "start"
+              )}
               setProperty={setProperty}
               deleteProperty={deleteProperty}
             />
             {showAlignContent && (
               <MenuControl
                 property="alignContent"
-                styleValue={mapNormalTo("stretch", currentStyle.alignContent)}
+                currentStyle={mapNormalTo(
+                  currentStyle,
+                  "alignContent",
+                  "stretch"
+                )}
                 setProperty={setProperty}
                 deleteProperty={deleteProperty}
               />
