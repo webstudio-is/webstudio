@@ -38,7 +38,6 @@ export const ToggleGroupControl = ({
               onClick={(event) => {
                 if (event.altKey) {
                   onReset?.();
-                  return;
                 }
               }}
             >
