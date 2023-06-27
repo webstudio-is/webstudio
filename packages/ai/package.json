@@ -47,6 +47,7 @@
     "@webstudio-is/project": "workspace:^",
     "@webstudio-is/project-build": "workspace:^",
     "@webstudio-is/react-sdk": "workspace:^",
+    "json5": "^2.2.3",
     "langchain": "^0.0.78",
     "mdast-util-from-markdown": "^1.3.0",
     "openai": "^3.2.1",

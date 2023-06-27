@@ -23,33 +23,55 @@ export const collectDescriptions = function collectDescriptions(
   return imagesDescriptions;
 };
 
-export const generateImagesUrls = async function generateImagesUrls(
+export const generateImagesUrlsUnsplash = async function generateImagesUrls(
   descriptions: string[]
 ): Promise<string[]> {
   return Promise.all(
-    descriptions.map((desc) =>
-      // TODO find an api to generate images
-      fetch("https://api.openai.com/v1/images/generations", {
-        headers: {
-          "Content-Type": "application/json",
-          Accept: "application/json",
-          Authorization: `Bearer ${config.apiKey}`,
-          "OpenAI-Organization": config.organization,
-        },
-        body: JSON.stringify({
-          prompt: desc,
-          n: 1,
-          size: "512x512",
-          response_format: "url",
-        }),
-      })
-        // fetch(`https://api.com/?query=${encodeURIComponent(desc)}`)
-        .then((r) => r.json())
-        .then((r) => r.data[0].url)
-        .catch((e) => "")
-    )
+    descriptions.map((description) => {
+      const size = description.slice(0, description.indexOf(":"));
+      const [w, h] = size.split("x");
+      let url = `https://source.unsplash.com/random/?${encodeURIComponent(
+        description.slice(size.length)
+      )}&w=${w}&h=${h}`;
+
+      if (isNaN(Number(w)) || isNaN(Number(h))) {
+        url = `https://source.unsplash.com/random/?${encodeURIComponent(
+          description
+        )}&w=250&h=250`;
+      }
+
+      return url;
+    })
   );
 };
+
+// export const generateImagesUrlsOpenAI = async function generateImagesUrls(
+//   descriptions: string[]
+// ): Promise<string[]> {
+//   return Promise.all(
+//     descriptions.map((desc) =>
+//       // TODO find an api to generate images
+//       fetch("https://api.openai.com/v1/images/generations", {
+//         headers: {
+//           "Content-Type": "application/json",
+//           Accept: "application/json",
+//           Authorization: `Bearer ${config.apiKey}`,
+//           "OpenAI-Organization": config.organization,
+//         },
+//         body: JSON.stringify({
+//           prompt: desc,
+//           n: 1,
+//           size: "512x512",
+//           response_format: "url",
+//         }),
+//       })
+//         // fetch(`https://api.com/?query=${encodeURIComponent(desc)}`)
+//         .then((r) => r.json())
+//         .then((r) => r.data[0].url)
+//         .catch((e) => "")
+//     )
+//   );
+// };
 
 export const insertImagesUrls = function insertImages(
   template: WsEmbedTemplate,

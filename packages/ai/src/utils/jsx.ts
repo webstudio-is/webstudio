@@ -3,9 +3,18 @@ import {
   type MitosisComponent,
   type MitosisNode,
 } from "@builder.io/mitosis";
-import { parseCss } from "@webstudio-is/css-data";
+import {
+  StyleValue,
+  parseCss,
+  parseCssDecl,
+  type StyleProperty,
+} from "@webstudio-is/css-data";
 import type { PropsList } from "@webstudio-is/project-build";
-import type { WsEmbedTemplate } from "@webstudio-is/react-sdk";
+import type {
+  EmbedTemplateStyleDecl,
+  WsEmbedTemplate,
+} from "@webstudio-is/react-sdk";
+import json5 from "json5";
 import { traverseTemplate } from "./traverse-template";
 
 export const jsxToWSEmbedTemplate = (
@@ -122,20 +131,56 @@ const processValue = function processValue(value: MitosisNode) {
       };
     }
     const { class: className, ...props } = value.properties;
+    // const styles = typeof className === "string"
+    //   ? className.split(" ").map((name) => ({
+    //       property: name,
+    //       value: {
+    //         type: "invalid",
+    //         value: name,
+    //       },
+    //     }))
+    //   : []
+    let styles: EmbedTemplateStyleDecl[] = [];
+
+    if (value.bindings.style) {
+      // @todo Replace `eval` with json5.parse or something
+      const code = json5.parse(value.bindings.style.code);
+
+      styles = Object.entries(code).flatMap(([property, value]) => {
+        const parsedStyles: EmbedTemplateStyleDecl[] = [];
+
+        (
+          Object.entries(parseCssDecl(property, value)) as [
+            StyleProperty,
+            StyleValue
+          ][]
+        ).forEach(([property, value]) => {
+          try {
+            StyleValue.parse(value);
+            parsedStyles.push({
+              property,
+              value,
+            });
+          } catch (error) {
+            if (process.env.NODE_ENV !== "production") {
+              // eslint-disable-next-line no-console
+              console.warn(
+                true,
+                `Declaration parsing for \`${value.name}.${property}: ${value}\` failed`
+              );
+            }
+          }
+        });
+
+        return parsedStyles;
+      });
+    }
+
     return {
       type: "instance",
       component: value.name === "div" ? "Box" : value.name,
       props: getProps(props),
-      styles:
-        typeof className === "string"
-          ? className.split(" ").map((name) => ({
-              property: name,
-              value: {
-                type: "invalid",
-                value: name,
-              },
-            }))
-          : [],
+      styles,
       children: value.children || [],
     };
   }

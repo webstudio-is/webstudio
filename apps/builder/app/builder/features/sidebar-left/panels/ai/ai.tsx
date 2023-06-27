@@ -32,6 +32,7 @@ import {
 } from "@webstudio-is/react-sdk";
 
 import { useStore } from "@nanostores/react";
+import { formData } from "zod-form-data";
 import {
   deleteInstance,
   findClosestDroppableTarget,
@@ -67,11 +68,22 @@ type EmbedTemplateProps = {
 };
 
 type AIAction = "generate" | "edit";
+type AIGenerateScreenResponseType = {
+  step: "screen";
+  response: { json: WsEmbedTemplate; code: string };
+};
 type AIGenerateResponseType =
   | { step: "full"; response: { json: WsEmbedTemplate; code: string } }
   | { step: "instances"; response: { json: WsEmbedTemplate; code: string } }
   | { step: "styles"; response: { json: EmbedTemplateStyles[]; code: string } }
-  | { step: "props"; response: { json: EmbedTemplateProps[]; code: string } };
+  | { step: "props"; response: { json: EmbedTemplateProps[]; code: string } }
+  | { step: "theme"; response: { json: any; code: string } }
+  | {
+      step: "components";
+      response: { json: EmbedTemplateStyles[]; code: string };
+    }
+  | AIGenerateScreenResponseType
+  | { step: "expand"; response: { json: string[]; code: string } };
 
 type AIEditTweakResponseType = {
   step: "tweak";
@@ -96,8 +108,41 @@ const labels: Record<AIGenerationSteps, string> = {
 };
 
 const onAIComplete = {
-  generateFull: (responses: AIGenerateResponseType[], instanceId: string) => {
-    const template = responses[0].response.json;
+  generateSection: (
+    template: WsEmbedTemplate,
+    instanceId: string,
+    index: number
+  ) => {
+    const selectedInstanceSelector = selectedInstanceSelectorStore.get();
+
+    if (
+      !selectedInstanceSelector ||
+      selectedInstanceSelector[0] !== instanceId
+    ) {
+      throw new Error("Invalid selected instance");
+    }
+
+    const dropTarget = findClosestDroppableTarget(
+      registeredComponentMetasStore.get(),
+      instancesStore.get(),
+      selectedInstanceSelector,
+      []
+    );
+
+    if (dropTarget) {
+      dropTarget.position = index;
+      insertTemplate(template, dropTarget);
+
+      selectedInstanceSelectorStore.set([
+        instanceId,
+        ...dropTarget.parentSelector,
+      ]);
+    } else {
+      throw new Error("Invalid selected instance");
+    }
+  },
+  generate: (responses: AIGenerateResponseType[], instanceId: string) => {
+    const template = responses[responses.length - 1].response.json;
 
     const selectedInstanceSelector = selectedInstanceSelectorStore.get();
 
@@ -121,7 +166,7 @@ const onAIComplete = {
       throw new Error("Invalid selected instance");
     }
   },
-  generate: (responses: AIGenerateResponseType[], instanceId: string) => {
+  generateOld: (responses: AIGenerateResponseType[], instanceId: string) => {
     const styles = responses[1].response.json;
     const template = JSON.parse(
       JSON.stringify(responses[0].response.json, function replacer(key, value) {
@@ -232,8 +277,135 @@ export const TabContent = ({ publish, onSetActiveTab }: TabContentProps) => {
 
     const steps: AIGenerationSteps[] = isEdit
       ? ["tweak"]
-      : ["instances", "styles"];
+      : ["expand", "theme", "components", "screen"];
     // : ["full"];
+
+    const data = {
+      sections: [],
+      theme: null,
+      componentsStyles: null,
+      screens: [],
+    };
+
+    const expandFormData = getBaseFormData(baseData, "expand");
+    const expandRequest = request(form.action, {
+      method: form.method,
+      body: expandFormData,
+    });
+
+    setAiGenerationState({
+      state: "generating",
+      step: "theme",
+      progress: ((steps.indexOf("theme") - 1) * 100) / steps.length,
+    });
+
+    const themeFormData = getBaseFormData(baseData, "theme");
+    data.theme = await request(form.action, {
+      method: form.method,
+      body: themeFormData,
+    });
+
+    if (data.theme === null) {
+      setAiGenerationState({
+        state: "idle",
+      });
+      return;
+    }
+
+    data.sections = await expandRequest;
+
+    if (data.sections === null) {
+      setAiGenerationState({
+        state: "idle",
+      });
+      return;
+    }
+
+    setAiGenerationState({
+      state: "generating",
+      step: "components",
+      progress: (steps.indexOf("components") * 100) / steps.length,
+    });
+
+    const componentsStylesFormData = getBaseFormData(baseData, "components");
+    componentsStylesFormData.append("theme", JSON.stringify(data.theme));
+    data.componentsStyles = await request(form.action, {
+      method: form.method,
+      body: componentsStylesFormData,
+    });
+
+    if (data.componentsStyles === null) {
+      setAiGenerationState({
+        state: "idle",
+      });
+      return;
+    }
+
+    const generating = data.sections
+      .slice(0, 4)
+      .map((sectionDescription, index) => {
+        let retries = 3;
+        let success = false;
+        let tId = null;
+        return async function generate() {
+          while (success === false && retries > 0) {
+            const sectionFormData = getBaseFormData(baseData, "screen");
+            sectionFormData.append("theme", JSON.stringify(data.theme));
+            sectionFormData.append(
+              "componentsStyles",
+              JSON.stringify(data.componentsStyles)
+            );
+            sectionFormData.append("screenPrompt", sectionDescription);
+
+            const controller = new AbortController();
+            const signal = controller.signal;
+
+            tId = setTimeout(() => {
+              controller.abort();
+            }, 40000);
+
+            const response = await request(form.action, {
+              method: form.method,
+              body: sectionFormData,
+              signal,
+            });
+
+            if (tId) {
+              clearTimeout(tId);
+            }
+
+            if (response === null) {
+              console.log(`Generation of section ${index} failed.`);
+              retries -= 1;
+              continue;
+            }
+            success = true;
+            console.log({ response });
+            onAIComplete.generateSection(response, instance.id, 1);
+
+            return response[0];
+          }
+        };
+      })
+      .flatMap((generateSection, index) => {
+        console.log(`Generating section ${index}`);
+        return generateSection();
+      });
+
+    const template = await Promise.all(generating);
+
+    console.log({ template });
+
+    // onAIComplete.generateSection(
+    //   template.filter((instance) => instance !== null),
+    //   instance.id,
+    //   1
+    // );
+
+    setAiGenerationState({
+      state: "idle",
+    });
+    return;
 
     const responses: AIGenerationResponses = [];
 
@@ -254,25 +426,34 @@ export const TabContent = ({ publish, onSetActiveTab }: TabContentProps) => {
 
       formData.append("steps", step);
 
-      if (responses.length > 0) {
-        // Send previous response for context.
-        const message = [
-          "assistant",
-          JSON.stringify(responses[i - 1].response.code),
-        ];
-
-        if (Array.isArray(context[i])) {
-          context[i].push(message);
-        } else {
-          context[i] = [message];
-        }
+      if (responses[0]) {
+        formData.append("theme", JSON.stringify(responses[0].response.json));
       }
-
-      if (Array.isArray(context[i]) && context[i].length > 0) {
-        context[i].forEach((message) => {
-          formData.append("messages", JSON.stringify(message));
-        });
+      if (responses[1]) {
+        formData.append(
+          "componentsStyles",
+          JSON.stringify(responses[1].response.json)
+        );
       }
+      // if (responses.length > 0) {
+      //   // Send previous response for context.
+      //   const message = [
+      //     "assistant",
+      //     JSON.stringify(responses[i - 1].response.code),
+      //   ];
+
+      //   if (Array.isArray(context[i])) {
+      //     context[i].push(message);
+      //   } else {
+      //     context[i] = [message];
+      //   }
+      // }
+
+      // if (Array.isArray(context[i]) && context[i].length > 0) {
+      //   context[i].forEach((message) => {
+      //     formData.append("messages", JSON.stringify(message));
+      //   });
+      // }
 
       const res = await fetch(form.action, {
         method: form.method,
@@ -294,6 +475,7 @@ export const TabContent = ({ publish, onSetActiveTab }: TabContentProps) => {
 
       if (!response.errors && step === response[0][0]) {
         responses.push({ step, response: response[0][1] });
+        console.log(response[0][1]);
         i++;
       } else {
         // eslint-disable-next-line no-console
@@ -428,6 +610,37 @@ export const TabContent = ({ publish, onSetActiveTab }: TabContentProps) => {
 };
 
 export const icon = <EyeconOpenIcon />;
+
+const request = (...args) =>
+  fetch(...args)
+    .then((res) => {
+      if (res.ok === false) {
+        return null;
+      }
+      return res.json();
+    })
+    .then((res) => {
+      if (res === null) {
+        return null;
+      }
+      console.log(res[0][0], res[0][1]);
+      return res[0][1].json;
+    })
+    .catch(() => null);
+
+const getBaseFormData = function getBaseFormData(
+  baseData: FormData,
+  step: string
+) {
+  const formData = new FormData();
+
+  for (const [key, value] of baseData.entries()) {
+    formData.append(key, value);
+  }
+
+  formData.append("steps", step);
+  return formData;
+};
 
 // onClick={(e) => {
 //   e.preventDefault();

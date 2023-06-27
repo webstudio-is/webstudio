@@ -11,35 +11,33 @@ import {
 } from "@webstudio-is/design-system";
 
 import {
-  breakpointsStore,
   instancesStore,
+  projectStore,
   registeredComponentMetasStore,
-  rootInstanceStore,
   selectedInstanceSelectorStore,
   selectedInstanceStore,
-  styleSourceSelectionsStore,
-  stylesStore,
 } from "~/shared/nano-states";
 
 import { EyeconOpenIcon } from "@webstudio-is/icons";
-import { useState } from "react";
+import { useMemo, useState } from "react";
 import type { Publish } from "~/shared/pubsub";
 import { aiGenerationPath } from "~/shared/router-utils";
 import { CloseButton, Header } from "../../header";
 import type { TabName } from "../../types";
 
 import {
-  generateCssText,
   type EmbedTemplateProp,
   type EmbedTemplateStyleDecl,
   type WsEmbedTemplate,
 } from "@webstudio-is/react-sdk";
 
+import { useStore } from "@nanostores/react";
 import {
   deleteInstance,
   findClosestDroppableTarget,
   findSelectedInstance,
   insertTemplate,
+  replaceTemplate,
 } from "~/shared/instance-utils";
 
 type TabContentProps = {
@@ -54,6 +52,7 @@ type AIGenerationState =
   | {
       state: "generating";
       step: AIGenerationSteps;
+      progress: number;
     };
 
 // @todo Rewrite the type definitions below
@@ -66,219 +65,63 @@ type EmbedTemplateProps = {
   props: EmbedTemplateProp[];
   children: EmbedTemplateProps[];
 };
-type AIGenerationResponse =
+
+type AIAction = "generate" | "edit";
+type AIGenerateResponseType =
+  | { step: "full"; response: { json: WsEmbedTemplate; code: string } }
   | { step: "instances"; response: { json: WsEmbedTemplate; code: string } }
   | { step: "styles"; response: { json: EmbedTemplateStyles[]; code: string } }
   | { step: "props"; response: { json: EmbedTemplateProps[]; code: string } };
 
-type AIGenerationResponses = Array<AIGenerationResponse>;
-
-type AIGenerationSteps = AIGenerationResponse["step"];
-
-const labels: Record<AIGenerationSteps, string> = {
-  instances: "components",
-  styles: "styles",
-  props: "components props",
+type AIEditTweakResponseType = {
+  step: "tweak";
+  response: { json: WsEmbedTemplate; code: string };
 };
 
-const selectedInstanceToTemplateAndStyleSourceSelections =
-  function selectedInstanceToTemplateAndStyleSourceSelections(
-    instances = instancesStore.get(),
-    selectedInstance = selectedInstanceStore.get() || rootInstanceStore.get(),
-    styleSourceSelections = styleSourceSelectionsStore.get()
-  ) {
-    let jsx = "";
-    const templateStyleSourceSelections = new Map();
+type AIGenerationResponses = Array<
+  AIGenerateResponseType | AIEditTweakResponseType
+>;
 
-    if (!selectedInstance) {
-      return { template: {}, jsx, styleSourceSelections };
-    }
+type AIGenerationSteps = (
+  | AIGenerateResponseType
+  | AIEditTweakResponseType
+)["step"];
 
-    const processInstances = function processInstances(
-      template: typeof selectedInstance
+const labels: Record<AIGenerationSteps, string> = {
+  full: "Generating page",
+  instances: "Generating content",
+  styles: "Styling content",
+  props: "Adding some functionality",
+  tweak: "Tweaking",
+};
+
+const onAIComplete = {
+  generateFull: (responses: AIGenerateResponseType[], instanceId: string) => {
+    const template = responses[0].response.json;
+
+    const selectedInstanceSelector = selectedInstanceSelectorStore.get();
+
+    if (
+      !selectedInstanceSelector ||
+      selectedInstanceSelector[0] !== instanceId
     ) {
-      jsx += `<${template.component}`;
-
-      if (styleSourceSelections.has(template.id)) {
-        templateStyleSourceSelections.set(
-          template.id,
-          styleSourceSelections.get(template.id)
-        );
-
-        jsx += ` className="${template.id}"`;
-      }
-
-      jsx += `>`;
-
-      template.children.map((child) => {
-        if (child.type === "text") {
-          jsx += child.value;
-          return child;
-        }
-        const instanceId = child.value;
-        const childInstance = instances.get(instanceId);
-        return childInstance ? processInstances(childInstance) : undefined;
-      });
-
-      jsx += `</${template.component}>`;
-
-      return template;
-    };
-
-    const template = processInstances(selectedInstance);
-
-    return {
-      template,
-      jsx,
-      styleSourceSelections: templateStyleSourceSelections,
-    };
-  };
-
-export const TabContent = ({ publish, onSetActiveTab }: TabContentProps) => {
-  // @todo Decide whether it makes sense to make "styles" optional
-  // i.e. add a checkbox to tick if the user wants styles.
-  const steps: AIGenerationSteps[] = ["instances", "styles"];
-  const [aiGenerationState, setAiGenerationState] = useState<AIGenerationState>(
-    { state: "idle" }
-  );
-
-  const handleSubmit = async (event) => {
-    event.preventDefault();
-    if (aiGenerationState.state !== "idle") {
-      return;
-    }
-    // const selectedInstanceSelector = selectedInstanceSelectorStore.get();
-    // console.log(selectedInstanceSelector);
-    // console.log(
-    //   findClosestDroppableTarget(
-    //     instancesStore.get(),
-    //     selectedInstanceSelector.slice(1),
-    //     []
-    //   )
-    // );
-    // console.log(findSelectedInstance());
-
-    // return;
-
-    const context = [];
-
-    const form = event.currentTarget as HTMLFormElement;
-    const baseData = new FormData(form);
-
-    const submitter = event.submitter || document.activeElement;
-
-    const isEdit =
-      submitter && submitter.name === "_action"
-        ? submitter.value === "edit"
-        : false;
-
-    baseData.append("_action", isEdit ? "edit" : "generate");
-
-    if (isEdit) {
-      const { jsx, styleSourceSelections } =
-        selectedInstanceToTemplateAndStyleSourceSelections();
-
-      const css = generateCssText(
-        {
-          assets: [],
-          breakpoints: breakpointsStore.get().entries(),
-          styles: stylesStore.get().entries(),
-          styleSourceSelections: styleSourceSelections.entries(),
-          componentMetas: new Map(),
-        },
-        {
-          assetBaseUrl: "/",
-          createSelector: ({ idAttribute, instanceId, state }) =>
-            `.${instanceId}${state ?? ""}`,
-        }
-      )
-        .replace(/\s\s+/g, " ")
-        .replace(/\n/g, "");
-
-      context.push(
-        ...[jsx, css].map((content) => [
-          {
-            role: "assistant",
-            content,
-          },
-        ])
-      );
+      throw new Error("Invalid selected instance");
     }
 
-    const responses: AIGenerationResponses = [
-      // {
-      //   step: "instances",
-      //   response: exampleInstances,
-      // },
-    ];
+    const dropTarget = findClosestDroppableTarget(
+      registeredComponentMetasStore.get(),
+      instancesStore.get(),
+      selectedInstanceSelector,
+      []
+    );
 
-    for (let i = 0; i < steps.length; ) {
-      const step = steps[i];
-
-      setAiGenerationState({
-        state: "generating",
-        step,
-      });
-
-      const formData = new FormData();
-
-      for (const [key, value] of baseData.entries()) {
-        formData.append(key, value);
-      }
-
-      formData.append("steps", step);
-
-      if (responses.length > 0) {
-        // Send previous response for context.
-        const message = {
-          role: "assistant",
-          content: JSON.stringify(responses[i - 1].response.code),
-        };
-        if (Array.isArray(context[i])) {
-          context[i].push(message);
-        } else {
-          context[i] = [message];
-        }
-
-        // formData.append(
-        //   "messages",
-        //   JSON.stringify([
-        //     {
-        //       role: "assistant",
-        //       content: JSON.stringify(responses[i - 1].response.code),
-        //     },
-        //   ])
-        // );
-      }
-
-      if (Array.isArray(context[i]) && context[i].length > 0) {
-        formData.append("messages", JSON.stringify(context[i]));
-      }
-
-      const res = await fetch(form.action, {
-        method: form.method,
-        body: formData,
-      });
-
-      const response = await res.json();
-
-      // @todo add abort logic if aiGenerationState.state is changed.
-
-      if (!response.errors && step === response[0][0]) {
-        responses.push({ step, response: response[0][1] });
-        i++;
-      } else {
-        console.log(response.errors);
-        // @todo Handle failures - perhaps use expontential backoff retry.
-        if (!window.confirm(`Something went wrong. Retry?`)) {
-          setAiGenerationState({
-            state: "idle",
-          });
-          return;
-        }
-      }
+    if (dropTarget) {
+      insertTemplate(template, dropTarget);
+    } else {
+      throw new Error("Invalid selected instance");
     }
-
+  },
+  generate: (responses: AIGenerateResponseType[], instanceId: string) => {
     const styles = responses[1].response.json;
     const template = JSON.parse(
       JSON.stringify(responses[0].response.json, function replacer(key, value) {
@@ -295,29 +138,181 @@ export const TabContent = ({ publish, onSetActiveTab }: TabContentProps) => {
       })
     );
 
-    console.log({ template });
+    const selectedInstanceSelector = selectedInstanceSelectorStore.get();
 
-    if (isEdit) {
-      const selectedInstanceSelector = selectedInstanceSelectorStore.get();
+    if (
+      !selectedInstanceSelector ||
+      selectedInstanceSelector[0] !== instanceId
+    ) {
+      throw new Error("Invalid selected instance");
+    }
 
-      if (selectedInstanceSelector && selectedInstanceSelector.length > 1) {
-        const replacementDropTarget = findClosestDroppableTarget(
-          registeredComponentMetasStore.get(),
-          instancesStore.get(),
-          selectedInstanceSelector.slice(1),
-          []
-        );
-        if (replacementDropTarget) {
-          deleteInstance(selectedInstanceSelector);
-          insertTemplate(template, replacementDropTarget);
-        }
-      } else {
-        const dropTarget = findSelectedInstance();
-        dropTarget && insertTemplate(template, dropTarget);
-      }
+    const dropTarget = findClosestDroppableTarget(
+      registeredComponentMetasStore.get(),
+      instancesStore.get(),
+      selectedInstanceSelector,
+      []
+    );
+
+    if (dropTarget) {
+      insertTemplate(template, dropTarget);
     } else {
-      const dropTarget = findSelectedInstance();
-      dropTarget && insertTemplate(template, dropTarget);
+      throw new Error("Invalid selected instance");
+    }
+  },
+  edit: (responses: AIEditTweakResponseType[], instanceId: string) => {
+    const template = responses[0].response.json;
+
+    const selectedInstanceSelector = selectedInstanceSelectorStore.get();
+
+    if (
+      !selectedInstanceSelector ||
+      selectedInstanceSelector[0] !== instanceId
+    ) {
+      // eslint-disable-next-line no-console
+      console.log("Invalid selected instance");
+      return;
+    }
+
+    replaceTemplate(template, selectedInstanceSelector);
+    // Replace an existing instance with the current one
+    // const replacementDropTarget = findClosestDroppableTarget(
+    //   registeredComponentMetasStore.get(),
+    //   instancesStore.get(),
+    //   selectedInstanceSelector,
+    //   []
+    // );
+
+    // if (replacementDropTarget) {
+
+    //   console.log({ replacementDropTarget });
+    //   deleteInstance(selectedInstanceSelector);
+    //   insertTemplate(template, replacementDropTarget);
+    // }
+  },
+};
+
+export const TabContent = ({ publish, onSetActiveTab }: TabContentProps) => {
+  // @todo Decide whether it makes sense to make "styles" optional
+  // i.e. add a checkbox to tick if the user wants styles.
+  const [aiGenerationState, setAiGenerationState] = useState<AIGenerationState>(
+    { state: "idle" }
+  );
+
+  const handleSubmit = async (event) => {
+    event.preventDefault();
+    if (aiGenerationState.state !== "idle") {
+      return;
+    }
+
+    const context = [];
+
+    const form = event.currentTarget as HTMLFormElement;
+    const baseData = new FormData(form);
+
+    const submitter = event.submitter || document.activeElement;
+
+    const isEdit =
+      submitter && submitter.name === "_action"
+        ? submitter.value === "edit"
+        : false;
+
+    const action: AIAction = isEdit ? "edit" : "generate";
+    baseData.append("_action", action);
+
+    let instance = selectedInstanceStore.get();
+    const project = projectStore.get();
+
+    if (!instance || !project) {
+      return;
+    }
+
+    baseData.append("instanceId", instance.id);
+    baseData.append("projectId", project.id);
+
+    const steps: AIGenerationSteps[] = isEdit
+      ? ["tweak"]
+      : ["instances", "styles"];
+    // : ["full"];
+
+    const responses: AIGenerationResponses = [];
+
+    for (let i = 0; i < steps.length; ) {
+      const step = steps[i];
+
+      setAiGenerationState({
+        state: "generating",
+        step,
+        progress: (steps.indexOf(step) * 100) / steps.length,
+      });
+
+      const formData = new FormData();
+
+      for (const [key, value] of baseData.entries()) {
+        formData.append(key, value);
+      }
+
+      formData.append("steps", step);
+
+      if (responses.length > 0) {
+        // Send previous response for context.
+        const message = [
+          "assistant",
+          JSON.stringify(responses[i - 1].response.code),
+        ];
+
+        if (Array.isArray(context[i])) {
+          context[i].push(message);
+        } else {
+          context[i] = [message];
+        }
+      }
+
+      if (Array.isArray(context[i]) && context[i].length > 0) {
+        context[i].forEach((message) => {
+          formData.append("messages", JSON.stringify(message));
+        });
+      }
+
+      const res = await fetch(form.action, {
+        method: form.method,
+        body: formData,
+      });
+
+      if (!res.ok) {
+        if (!window.confirm(`Something went wrong. Retry?`)) {
+          setAiGenerationState({
+            state: "idle",
+          });
+          return;
+        }
+      }
+
+      const response = await res.json();
+
+      // @todo add abort logic if aiGenerationState.state is changed.
+
+      if (!response.errors && step === response[0][0]) {
+        responses.push({ step, response: response[0][1] });
+        i++;
+      } else {
+        // eslint-disable-next-line no-console
+        console.log(response.errors);
+        // @todo Handle failures - perhaps use expontential backoff retry.
+        if (!window.confirm(`Something went wrong. Retry?`)) {
+          setAiGenerationState({
+            state: "idle",
+          });
+          return;
+        }
+      }
+    }
+
+    const instanceId = instance.id;
+    instance = selectedInstanceStore.get();
+    // Make sure that the instance still exists.
+    if (instance && instanceId === instance.id) {
+      onAIComplete[action](responses, instanceId);
     }
 
     setAiGenerationState({
@@ -325,10 +320,14 @@ export const TabContent = ({ publish, onSetActiveTab }: TabContentProps) => {
     });
   };
 
-  const progress =
-    aiGenerationState.state === "idle"
-      ? 0
-      : (steps.indexOf(aiGenerationState.step) * 100) / steps.length;
+  const metas = useStore(registeredComponentMetasStore);
+
+  const components = useMemo(() => {
+    const exclude = ["Body", "Slot"];
+    return JSON.stringify(
+      [...metas.keys()].filter((name) => !exclude.includes(name))
+    );
+  }, [metas]);
 
   return (
     <>
@@ -351,6 +350,14 @@ export const TabContent = ({ publish, onSetActiveTab }: TabContentProps) => {
               required
               disabled={aiGenerationState.state !== "idle"}
             />
+            <Label htmlFor="ai-prompt-style">style</Label>
+            <input
+              type="text"
+              name="style"
+              id="ai-prompt-style"
+              disabled={aiGenerationState.state !== "idle"}
+            />
+            <input type="hidden" name="components" value={components} />
             <Box css={{ display: "flex", gap: theme.spacing[2] }}>
               <Button
                 css={{ width: "100%" }}
@@ -358,6 +365,21 @@ export const TabContent = ({ publish, onSetActiveTab }: TabContentProps) => {
                 name="_action"
                 value="edit"
                 type="submit"
+                // onClick={(e) => {
+                //   e.preventDefault();
+                //   const instance = selectedInstanceStore.get();
+                //   if (instance) {
+                //     onAIComplete.edit(
+                //       [
+                //         {
+                //           step: "tweak",
+                //           response: { code: "", json: template },
+                //         },
+                //       ],
+                //       instance.id
+                //     );
+                //   }
+                // }}
               >
                 Edit
               </Button>
@@ -389,9 +411,13 @@ export const TabContent = ({ publish, onSetActiveTab }: TabContentProps) => {
               gap="2"
               css={{ flexDirection: "column", p: theme.spacing[9] }}
             >
-              <Text>🪄 Generating {labels[aiGenerationState.step]}...</Text>
-              <progress value={progress} max="100" style={{ width: "100%" }}>
-                {progress}%
+              <Text>🪄 {labels[aiGenerationState.step]}...</Text>
+              <progress
+                value={aiGenerationState.progress}
+                max="100"
+                style={{ width: "100%" }}
+              >
+                {aiGenerationState.progress}%
               </progress>
             </Flex>
           </DialogContent>
@@ -402,3 +428,76 @@ export const TabContent = ({ publish, onSetActiveTab }: TabContentProps) => {
 };
 
 export const icon = <EyeconOpenIcon />;
+
+// onClick={(e) => {
+//   e.preventDefault();
+//   const instance = selectedInstanceStore.get();
+//   if (instance) {
+//     onAIComplete.edit(
+//       [
+//         {
+//           step: "tweak",
+//           response: { code: "", json: template },
+//         },
+//       ],
+//       instance.id
+//     );
+//   }
+// }}
+const template = [
+  {
+    type: "instance",
+    component: "Heading",
+    children: [
+      {
+        type: "text",
+        value: "Welcome to Stripe",
+      },
+    ],
+    styles: [
+      {
+        property: "fontSize",
+        value: {
+          type: "unit",
+          unit: "px",
+          value: 48,
+        },
+      },
+      {
+        property: "fontWeight",
+        value: {
+          type: "keyword",
+          value: "bold",
+        },
+      },
+      {
+        property: "marginBottom",
+        value: {
+          type: "unit",
+          unit: "px",
+          value: 20,
+        },
+      },
+      // {
+      //   property: "color",
+      //   value: {
+      //     type: "rgb",
+      //     alpha: 1,
+      //     r: 255,
+      //     g: 0,
+      //     b: 0,
+      //   },
+      // },
+      {
+        property: "color",
+        value: {
+          type: "rgb",
+          alpha: 1,
+          r: 0,
+          g: 0,
+          b: 255,
+        },
+      },
+    ],
+  },
+];
