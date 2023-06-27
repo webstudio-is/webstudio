@@ -228,10 +228,8 @@ export const PropertyTooltip = ({
     <Tooltip
       open={isOpen}
       onOpenChange={setIsOpen}
-      // prevent closing tooltip before click handlers on content are triggered
-      onMouseDown={(event) => event.preventDefault()}
-      // close tooltip when click on content
-      onClick={() => setIsOpen(false)}
+      // prevent closing tooltip on content click
+      onPointerDown={(event) => event.preventDefault()}
       triggerProps={openWithClick ? { onClick: () => setIsOpen(true) } : {}}
       content={
         <TooltipContent
@@ -239,7 +237,10 @@ export const PropertyTooltip = ({
           description={description}
           properties={properties}
           style={style}
-          onReset={onReset}
+          onReset={() => {
+            onReset?.();
+            setIsOpen(false);
+          }}
         />
       }
     >

@@ -50,24 +50,26 @@ export const MenuControl = ({
   return (
     <DropdownMenu modal={false}>
       <DropdownMenuTrigger asChild>
-        <IconButton
-          variant={styleSource}
-          onPointerDown={(event) => {
-            if (event.altKey) {
-              event.preventDefault();
-              deleteProperty(property);
-            }
-          }}
-        >
+        <div>
           <PropertyTooltip
             title={label}
             properties={[property]}
             style={currentStyle}
             onReset={() => deleteProperty(property)}
           >
-            {items.find(({ name }) => name === currentValue)?.icon ?? <></>}
+            <IconButton
+              variant={styleSource}
+              onPointerDown={(event) => {
+                if (event.altKey) {
+                  event.preventDefault();
+                  deleteProperty(property);
+                }
+              }}
+            >
+              {items.find(({ name }) => name === currentValue)?.icon ?? <></>}
+            </IconButton>
           </PropertyTooltip>
-        </IconButton>
+        </div>
       </DropdownMenuTrigger>
       <DropdownMenuPortal>
         <DropdownMenuContent sideOffset={4} collisionPadding={16} side="bottom">
