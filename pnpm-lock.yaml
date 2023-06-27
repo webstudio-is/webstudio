@@ -1074,27 +1074,18 @@ importers:
       '@inquirer/confirm':
         specifier: ^0.0.25-alpha.0
         version: 0.0.25-alpha.0
-      '@types/minimist':
-        specifier: ^1.2.2
-        version: 1.2.2
       dotenv:
         specifier: ^16.0.0
         version: 16.0.1
       execa:
         specifier: ^6.1.0
         version: 6.1.0
-      minimist:
-        specifier: ^1.2.6
-        version: 1.2.6
       nanoid:
         specifier: ^3.3.6
         version: 3.3.6
       umzug:
         specifier: ^3.2.1
         version: 3.2.1
-      uuid:
-        specifier: ^9.0.0
-        version: 9.0.0
     devDependencies:
       '@prisma/client':
         specifier: ^4.14.0
@@ -1102,9 +1093,6 @@ importers:
       '@types/node':
         specifier: ^18.11.18
         version: 18.11.18
-      '@types/uuid':
-        specifier: ^8.3.4
-        version: 8.3.4
       '@webstudio-is/scripts':
         specifier: workspace:^
         version: link:../scripts
@@ -8454,10 +8442,6 @@ packages:
   /@types/minimatch@5.1.2:
     resolution: {integrity: sha512-K0VQKziLUWkVKiRVrx4a40iPaxTUefQmjtkQofBkYRcoaaL/8rhwDWww9qWbrgicNOgnpIsMxyNIUM4+n6dUIA==}
 
-  /@types/minimist@1.2.2:
-    resolution: {integrity: sha512-jhuKLIRrhvCPLqwPcx6INqmKeiA5EWrsCOPhrlFSrbrmU4ZMPjj5Ul/oLCMDO98XRUIwVm78xICz4EPCektzeQ==}
-    dev: false
-
   /@types/ms@0.7.31:
     resolution: {integrity: sha512-iiUgKzV9AuaEkZqkOLDIvlQiL6ltuZd9tGcW3gwpnX8JbuiuhFlEGmmFXEXkN50Cvq7Os88IY2v0dkDqXYWVgA==}
 
@@ -14084,10 +14068,6 @@ packages:
     engines: {node: '>=10'}
     dependencies:
       brace-expansion: 2.0.1
-
-  /minimist@1.2.6:
-    resolution: {integrity: sha512-Jsjnk4bw3YJqYzbdyBiNsPWHPfO++UGG749Cxs6peCu5Xg4nrena6OVxOYxrQTqww0Jmwt+Ref8rggumkTLz9Q==}
-    dev: false
 
   /minimist@1.2.7:
     resolution: {integrity: sha512-bzfL1YUZsP41gmu/qjrEk0Q6i2ix/cVeAhbCbqH9u3zYutS1cLg00qhrD0M2MVdCcx4Sc0UpP2eBWo9rotpq6g==}
