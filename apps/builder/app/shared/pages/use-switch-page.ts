@@ -10,6 +10,7 @@ import {
   selectedPageIdStore,
   selectedPageHashStore,
   selectedInstanceSelectorStore,
+  isPreviewModeStore,
 } from "~/shared/nano-states";
 import { builderPath } from "~/shared/router-utils";
 import { useSyncInitializeOnce } from "../hook-utils";
@@ -37,6 +38,8 @@ const setPageStateFromUrl = () => {
   const pageId = searchParams.get("pageId") ?? pages?.homePage.id;
   const pageHash = searchParams.get("pageHash") ?? "";
 
+  isPreviewModeStore.set(searchParams.get("mode") === "preview");
+
   switchPage(pageId, pageHash);
 };
 
@@ -53,6 +56,7 @@ export const useSyncPageUrl = () => {
   const navigate = useNavigate();
   const page = useStore(selectedPageStore);
   const pageHash = useStore(selectedPageHashStore);
+  const isPreviewMode = useStore(isPreviewModeStore);
 
   // Get pageId and pageHash from URL
   useSyncInitializeOnce(() => {
@@ -78,9 +82,14 @@ export const useSyncPageUrl = () => {
 
     const searchParamsPageId = searchParams.get("pageId") ?? pages.homePage.id;
     const searchParamsPageHash = searchParams.get("pageHash") ?? "";
+    const searchParamsIsPreviewMode = searchParams.get("mode") === "preview";
 
     // Do not navigate on popstate change
-    if (searchParamsPageId === page.id && searchParamsPageHash === pageHash) {
+    if (
+      searchParamsPageId === page.id &&
+      searchParamsPageHash === pageHash &&
+      searchParamsIsPreviewMode === isPreviewMode
+    ) {
       return;
     }
 
@@ -90,7 +99,8 @@ export const useSyncPageUrl = () => {
         pageId: page.id === pages.homePage.id ? undefined : page.id,
         authToken: authTokenStore.get(),
         pageHash: pageHash === "" ? undefined : pageHash,
+        mode: isPreviewMode ? "preview" : undefined,
       })
     );
-  }, [navigate, page, pageHash]);
+  }, [isPreviewMode, navigate, page, pageHash]);
 };
