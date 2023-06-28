@@ -21,14 +21,6 @@ export const create = <ModelMessageFormat>(): Chain<
   async function chain({ model, context }) {
     const { prompts } = context;
 
-    // Prepare prompt variables...
-    if (prompts.style) {
-      prompts.style = `- The result style should be influenced by: ${prompts.style.replace(
-        /https?:\/\//,
-        ""
-      )}`;
-    }
-
     if (prompts.components) {
       prompts.components = (JSON.parse(prompts.components) as string[])
         .map((componentName, index) => `- ${componentName}`)

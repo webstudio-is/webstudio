@@ -27,14 +27,6 @@ export const create = <ModelMessageFormat>(): Chain<
       throw new Error("Instance does not exist");
     }
 
-    // Prepare prompt variables...
-    if (prompts.style) {
-      prompts.style = `- The result style should be influenced by: ${prompts.style.replace(
-        /https?:\/\//,
-        ""
-      )}`;
-    }
-
     if (prompts.components) {
       prompts.components = JSON.parse(prompts.components).join(", ");
       // .map((name: string) => ` - ${name}`)

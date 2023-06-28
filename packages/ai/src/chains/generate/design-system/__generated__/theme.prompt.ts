@@ -4,9 +4,9 @@ export const prompt = `You are a designer and the client came to you with the fo
 {request}
 \`\`\`
 
-Your task is to:
+Your task is to be very creative and do the following:
 
-- Produce a theme for the request: we will use in the final designs. Select colors (their hex value) from the Tailwind CSS color palette. Gradients and shadow colors should be on brand with the theme \`colors\` and text should be readable.
+- Infer a beautiful theme for the request: we will use in the final designs. Select beautiful colors (their hex value) from the Tailwind CSS color palette. Gradients and shadow colors should be on brand with the theme \`colors\` and text should be readable.
 - Determine whether the design should be in light or dark mode
 
 Respond with a JSON object that strictly follows the following TypeScript definitions:
@@ -36,8 +36,10 @@ type Theme = {
       [HexColor, HexColor]
     ];
     fontFamily: {
-      base: FontName; // generally a simple sans-serif font
-      headings: FontName; // generally a simple sans-serif font
+      // generally a simple sans-serif or system-ui font
+      base: FontName;
+      // generally a simple sans-serif or system-ui font
+      headings: FontName;
     };
     shadowsColors: [RgbaColor, RgbaColor, RgbaColor, RgbaColor];
   };

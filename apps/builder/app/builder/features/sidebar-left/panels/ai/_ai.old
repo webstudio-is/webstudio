@@ -4,6 +4,7 @@ import {
   Dialog,
   DialogContent,
   Flex,
+  IconButton,
   Label,
   Text,
   TextArea,
@@ -18,8 +19,8 @@ import {
   selectedInstanceStore,
 } from "~/shared/nano-states";
 
-import { EyeconOpenIcon } from "@webstudio-is/icons";
-import { useMemo, useState } from "react";
+import { EyeconOpenIcon, SpinnerIcon } from "@webstudio-is/icons";
+import { useEffect, useMemo, useRef, useState } from "react";
 import type { Publish } from "~/shared/pubsub";
 import { aiGenerationPath } from "~/shared/router-utils";
 import { CloseButton, Header } from "../../header";
@@ -32,6 +33,7 @@ import {
 } from "@webstudio-is/react-sdk";
 
 import { useStore } from "@nanostores/react";
+import { formData } from "zod-form-data";
 import {
   deleteInstance,
   findClosestDroppableTarget,
@@ -67,11 +69,24 @@ type EmbedTemplateProps = {
 };
 
 type AIAction = "generate" | "edit";
+type AIGenerateScreenResponseType = {
+  step: "screen";
+  response: { json: WsEmbedTemplate; code: string };
+};
 type AIGenerateResponseType =
   | { step: "full"; response: { json: WsEmbedTemplate; code: string } }
   | { step: "instances"; response: { json: WsEmbedTemplate; code: string } }
   | { step: "styles"; response: { json: EmbedTemplateStyles[]; code: string } }
-  | { step: "props"; response: { json: EmbedTemplateProps[]; code: string } };
+  | { step: "props"; response: { json: EmbedTemplateProps[]; code: string } }
+  | { step: "theme"; response: { json: any; code: string } }
+  | { step: "page"; response: { json: WsEmbedTemplate; code: string } }
+  | {
+      step: "components";
+      response: { json: EmbedTemplateStyles[]; code: string };
+    }
+  | AIGenerateScreenResponseType
+  | { step: "enhance"; response: { json: string[]; code: string } }
+  | { step: "expand"; response: { json: string[]; code: string } };
 
 type AIEditTweakResponseType = {
   step: "tweak";
@@ -93,11 +108,45 @@ const labels: Record<AIGenerationSteps, string> = {
   styles: "Styling content",
   props: "Adding some functionality",
   tweak: "Tweaking",
+  theme: "Generating a theme",
+  page: "Generating UI",
 };
 
 const onAIComplete = {
-  generateFull: (responses: AIGenerateResponseType[], instanceId: string) => {
-    const template = responses[0].response.json;
+  generateSection: (
+    template: WsEmbedTemplate,
+    instanceId: string,
+    index: number
+  ) => {
+    const selectedInstanceSelector = selectedInstanceSelectorStore.get();
+
+    if (
+      !selectedInstanceSelector ||
+      selectedInstanceSelector[0] !== instanceId
+    ) {
+      throw new Error("Invalid selected instance");
+    }
+
+    const dropTarget = findClosestDroppableTarget(
+      registeredComponentMetasStore.get(),
+      instancesStore.get(),
+      selectedInstanceSelector,
+      []
+    );
+
+    if (dropTarget) {
+      insertTemplate(template, dropTarget);
+
+      selectedInstanceSelectorStore.set([
+        instanceId,
+        ...dropTarget.parentSelector,
+      ]);
+    } else {
+      throw new Error("Invalid selected instance");
+    }
+  },
+  generate: (responses: AIGenerateResponseType[], instanceId: string) => {
+    const template = responses[responses.length - 1].response.json;
 
     const selectedInstanceSelector = selectedInstanceSelectorStore.get();
 
@@ -121,7 +170,7 @@ const onAIComplete = {
       throw new Error("Invalid selected instance");
     }
   },
-  generate: (responses: AIGenerateResponseType[], instanceId: string) => {
+  generateOld: (responses: AIGenerateResponseType[], instanceId: string) => {
     const styles = responses[1].response.json;
     const template = JSON.parse(
       JSON.stringify(responses[0].response.json, function replacer(key, value) {
@@ -199,13 +248,121 @@ export const TabContent = ({ publish, onSetActiveTab }: TabContentProps) => {
     { state: "idle" }
   );
 
+  const [generation, setGeneration] = useState<{
+    url: string;
+    baseData: FormData;
+  }>(null);
+
+  const aiTheme = useRef(null);
+  const aiAbort = useRef<AbortController>(null);
+
+  useEffect(() => {
+    if (generation === null) {
+      return;
+    }
+    aiAbort.current = new AbortController();
+    const signal = aiAbort.current.signal;
+
+    const run = async function run() {
+      const { url, baseData } = generation;
+
+      let existingTheme = aiTheme.current;
+      let enhancedPrompt = null;
+
+      const enhanceFormData = getBaseFormData(baseData, "enhance");
+      const enhanceRequest = retry(
+        () =>
+          request(url, {
+            method: "POST",
+            body: enhanceFormData,
+            signal,
+          }),
+        2,
+        30000
+      );
+
+      let themeRequest = Promise.resolve(existingTheme);
+
+      if (existingTheme === null) {
+      setAiGenerationState({
+        state: "generating",
+        step: "theme",
+        progress: 0,
+      });
+
+      const themeFormData = getBaseFormData(baseData, "theme");
+      themeRequest = request(url, {
+        method: "POST",
+        body: themeFormData,
+      });
+    }
+
+    [existingTheme, enhancedPrompt] = await Promise.all([
+      themeRequest,
+      enhanceRequest,
+    ]);
+
+    console.log({ enhancedPrompt });
+
+    if (existingTheme === null) {
+      setAiGenerationState({
+        state: "idle",
+      });
+      return;
+    }
+
+    aiTheme.current = existingTheme
+
+    setAiGenerationState({
+      state: "generating",
+      step: "page",
+      progress: 35,
+    });
+
+    const generationPromises = (
+      Array.isArray(enhancedPrompt) || [baseData.get("prompt")]
+    ).map((prompt, index) => {
+      console.log(`Generating section ${index}: ${prompt}`);
+
+      const pageFormData = getBaseFormData(baseData, "page");
+      pageFormData.append("theme", JSON.stringify(existingTheme));
+      pageFormData.delete("prompt");
+      pageFormData.append("prompt", prompt);
+
+      return retry(() =>
+        request(url, {
+          method: "POST",
+          body: pageFormData,
+        })
+      ).then((template) => {
+        if (template) {
+          console.log(`Section ${index} OK.`, template);
+          onAIComplete.generateSection(template, pageFormData.get('instanceId'), 1);
+          return template;
+        } else {
+          return null;
+        }
+      });
+    });
+
+    await Promise.all(generationPromises);
+    setAiGenerationState({
+        state: "idle",
+      });
+    };
+
+    run();
+
+    return () => {
+      aiAbort.current?.abort();
+    };
+  }, [generation]);
+
   const handleSubmit = async (event) => {
     event.preventDefault();
     if (aiGenerationState.state !== "idle") {
       return;
     }
-
-    const context = [];
 
     const form = event.currentTarget as HTMLFormElement;
     const baseData = new FormData(form);
@@ -230,11 +387,226 @@ export const TabContent = ({ publish, onSetActiveTab }: TabContentProps) => {
     baseData.append("instanceId", instance.id);
     baseData.append("projectId", project.id);
 
+    setGeneration({
+      url: form.action,
+      baseData,
+    });
+
+    return;
+
     const steps: AIGenerationSteps[] = isEdit
       ? ["tweak"]
-      : ["instances", "styles"];
+      : ["expand", "theme", "components", "screen", "page"];
     // : ["full"];
 
+    // const data = {
+    //   sections: [],
+    //   theme: null,
+    //   componentsStyles: null,
+    //   screens: [],
+    // };
+
+    let existingTheme = aiTheme;
+    let enhancedPrompt = null;
+
+    const enhanceFormData = getBaseFormData(baseData, "enhance");
+    const enhanceRequest = retry(
+      () =>
+        request(form.action, {
+          method: form.method,
+          body: enhanceFormData,
+        }),
+      2,
+      30000
+    );
+
+    let themeRequest = Promise.resolve(existingTheme);
+    // const expandFormData = getBaseFormData(baseData, "expand");
+    // const expandRequest = request(form.action, {
+    //   method: form.method,
+    //   body: expandFormData,
+    // });
+    if (existingTheme === null) {
+      setAiGenerationState({
+        state: "generating",
+        step: "theme",
+        progress: 0,
+      });
+
+      const themeFormData = getBaseFormData(baseData, "theme");
+      themeRequest = request(form.action, {
+        method: form.method,
+        body: themeFormData,
+      });
+    }
+
+    [existingTheme, enhancedPrompt] = await Promise.all([
+      themeRequest,
+      enhanceRequest,
+    ]);
+
+    console.log({ enhancedPrompt });
+
+    if (existingTheme === null) {
+      setAiGenerationState({
+        state: "idle",
+      });
+      return;
+    }
+
+    setAiTheme(() => existingTheme);
+
+    setAiGenerationState({
+      state: "generating",
+      step: "page",
+      progress: 35,
+    });
+
+    const generationPromises = (
+      Array.isArray(enhancedPrompt) || [baseData.get("prompt")]
+    ).map((prompt, index) => {
+      console.log(`Generating section ${index}: ${prompt}`);
+
+      const pageFormData = getBaseFormData(baseData, "page");
+      pageFormData.append("theme", JSON.stringify(existingTheme));
+      pageFormData.delete("prompt");
+      pageFormData.append("prompt", prompt);
+
+      return retry(() =>
+        request(form.action, {
+          method: form.method,
+          body: pageFormData,
+        })
+      ).then((template) => {
+        if (template) {
+          console.log(`Section ${index} OK.`, template);
+          onAIComplete.generateSection(template, instance.id, 1);
+          return template;
+        } else {
+          return null;
+        }
+      });
+    });
+
+    await Promise.all(generationPromises);
+
+    // const pageFormData = getBaseFormData(baseData, "page");
+    // pageFormData.append("theme", JSON.stringify(existingTheme));
+    // if (Array.isArray(enhancedPrompt)) {
+    //   const prompt = pageFormData.get("prompt");
+    //   pageFormData.delete("prompt");
+    //   pageFormData.append(
+    //     "prompt",
+    //     prompt + "\n\n" + enhancedPrompt.map((s) => `- ${s}`).join("\n")
+    //   );
+    // }
+    // const template = await retry(() =>
+    //   request(form.action, {
+    //     method: form.method,
+    //     body: pageFormData,
+    //   })
+    // );
+    // console.log({ template });
+
+    // if (template) {
+    //   onAIComplete.generateSection(template, instance.id, 1);
+    // }
+
+    // data.sections = await expandRequest;
+
+    // if (data.sections === null) {
+    //   setAiGenerationState({
+    //     state: "idle",
+    //   });
+    //   return;
+    // }
+
+    // setAiGenerationState({
+    //   state: "generating",
+    //   step: "components",
+    //   progress: (steps.indexOf("components") * 100) / steps.length,
+    // });
+
+    // const componentsStylesFormData = getBaseFormData(baseData, "components");
+    // componentsStylesFormData.append("theme", JSON.stringify(data.theme));
+    // data.componentsStyles = await request(form.action, {
+    //   method: form.method,
+    //   body: componentsStylesFormData,
+    // });
+
+    // if (data.componentsStyles === null) {
+    //   setAiGenerationState({
+    //     state: "idle",
+    //   });
+    //   return;
+    // }
+
+    // const generating = data.sections
+    //   .slice(0, 4)
+    //   .map((sectionDescription, index) => {
+    //     let retries = 3;
+    //     let success = false;
+    //     let tId = null;
+    //     return async function generate() {
+    //       while (success === false && retries > 0) {
+    //         const sectionFormData = getBaseFormData(baseData, "screen");
+    //         sectionFormData.append("theme", JSON.stringify(data.theme));
+    //         sectionFormData.append(
+    //           "componentsStyles",
+    //           JSON.stringify(data.componentsStyles)
+    //         );
+    //         sectionFormData.append("screenPrompt", sectionDescription);
+
+    //         const controller = new AbortController();
+    //         const signal = controller.signal;
+
+    //         tId = setTimeout(() => {
+    //           controller.abort();
+    //         }, 40000);
+
+    //         const response = await request(form.action, {
+    //           method: form.method,
+    //           body: sectionFormData,
+    //           signal,
+    //         });
+
+    //         if (tId) {
+    //           clearTimeout(tId);
+    //         }
+
+    //         if (response === null) {
+    //           console.log(`Generation of section ${index} failed.`);
+    //           retries -= 1;
+    //           continue;
+    //         }
+    //         success = true;
+    //         console.log({ response });
+    //         onAIComplete.generateSection(response, instance.id, 1);
+
+    //         return response[0];
+    //       }
+    //     };
+    //   })
+    //   .flatMap((generateSection, index) => {
+    //     console.log(`Generating section ${index}`);
+    //     return generateSection();
+    //   });
+
+    // const template = await Promise.all(generating);
+
+    // console.log({ template });
+
+    // onAIComplete.generateSection(
+    //   template.filter((instance) => instance !== null),
+    //   instance.id,
+    //   1
+    // );
+
+    setAiGenerationState({
+      state: "idle",
+    });
+    return;
+    const context = [];
     const responses: AIGenerationResponses = [];
 
     for (let i = 0; i < steps.length; ) {
@@ -254,25 +626,34 @@ export const TabContent = ({ publish, onSetActiveTab }: TabContentProps) => {
 
       formData.append("steps", step);
 
-      if (responses.length > 0) {
-        // Send previous response for context.
-        const message = [
-          "assistant",
-          JSON.stringify(responses[i - 1].response.code),
-        ];
-
-        if (Array.isArray(context[i])) {
-          context[i].push(message);
-        } else {
-          context[i] = [message];
-        }
+      if (responses[0]) {
+        formData.append("theme", JSON.stringify(responses[0].response.json));
       }
-
-      if (Array.isArray(context[i]) && context[i].length > 0) {
-        context[i].forEach((message) => {
-          formData.append("messages", JSON.stringify(message));
-        });
+      if (responses[1]) {
+        formData.append(
+          "componentsStyles",
+          JSON.stringify(responses[1].response.json)
+        );
       }
+      // if (responses.length > 0) {
+      //   // Send previous response for context.
+      //   const message = [
+      //     "assistant",
+      //     JSON.stringify(responses[i - 1].response.code),
+      //   ];
+
+      //   if (Array.isArray(context[i])) {
+      //     context[i].push(message);
+      //   } else {
+      //     context[i] = [message];
+      //   }
+      // }
+
+      // if (Array.isArray(context[i]) && context[i].length > 0) {
+      //   context[i].forEach((message) => {
+      //     formData.append("messages", JSON.stringify(message));
+      //   });
+      // }
 
       const res = await fetch(form.action, {
         method: form.method,
@@ -294,6 +675,7 @@ export const TabContent = ({ publish, onSetActiveTab }: TabContentProps) => {
 
       if (!response.errors && step === response[0][0]) {
         responses.push({ step, response: response[0][1] });
+        console.log(response[0][1]);
         i++;
       } else {
         // eslint-disable-next-line no-console
@@ -396,38 +778,116 @@ export const TabContent = ({ publish, onSetActiveTab }: TabContentProps) => {
           </form>
         </Flex>
       </Flex>
+
       {aiGenerationState.state !== "idle" ? (
-        <Dialog defaultOpen={true}>
-          <DialogContent
-            // @todo Add ability to abort generation requests.
-            onInteractOutside={(event) => {
-              event.preventDefault();
-            }}
-            onEscapeKeyDown={(event) => {
-              event.preventDefault();
-            }}
-          >
-            <Flex
-              gap="2"
-              css={{ flexDirection: "column", p: theme.spacing[9] }}
-            >
-              <Text>🪄 {labels[aiGenerationState.step]}...</Text>
-              <progress
-                value={aiGenerationState.progress}
-                max="100"
-                style={{ width: "100%" }}
-              >
-                {aiGenerationState.progress}%
-              </progress>
+        <Flex
+          css={{
+            position: "fixed",
+            top: theme.spacing[12],
+            left: "50%",
+            transform: "translateX(-50%)",
+            width: "100%",
+            maxWidth: 300,
+            padding: theme.spacing[8],
+            borderRadius: theme.borderRadius[6],
+            backdropFilter: "blur(5px)",
+            backgroundColor: theme.colors.whiteA11,
+            boxShadow: theme.shadows.brandElevationBig,
+          }}
+          direction="column"
+          gap="2"
+          justify="center"
+          align="center"
+        >
+          <Box css={{ widht: "70%" }}>
+            <Text>🪄 {labels[aiGenerationState.step]}...</Text>
+          </Box>
+          <Button css={{ widht: "70%" }}>
+            <Flex gap="2">
+              <SpinnerIcon />
+              STOP
             </Flex>
-          </DialogContent>
-        </Dialog>
-      ) : null}
+          </Button>
+        </Flex>
+      ) : // <Dialog defaultOpen={true}>
+      //   <DialogContent
+      //     // @todo Add ability to abort generation requests.
+      //     onInteractOutside={(event) => {
+      //       event.preventDefault();
+      //     }}
+      //     onEscapeKeyDown={(event) => {
+      //       event.preventDefault();
+      //     }}
+      //   >
+      //     <Flex
+      //       gap="2"
+      //       css={{ flexDirection: "column", p: theme.spacing[9] }}
+      //     >
+      //       <Text>🪄 {labels[aiGenerationState.step]}...</Text>
+      //       <progress
+      //         value={aiGenerationState.progress}
+      //         max="100"
+      //         style={{ width: "100%" }}
+      //       >
+      //         {aiGenerationState.progress}%
+      //       </progress>
+      //     </Flex>
+      //   </DialogContent>
+      // </Dialog>
+      null}
     </>
   );
 };
 
 export const icon = <EyeconOpenIcon />;
+
+const request = (...args) =>
+  fetch(...args)
+    .then((res) => {
+      if (res.ok === false) {
+        return null;
+      }
+      return res.json();
+    })
+    .then((res) => {
+      if (res === null) {
+        return null;
+      }
+      console.log(res[0][0], res[0][1]);
+      return res[0][1].json;
+    })
+    .catch((error) => (error.name === "AbortError" ? error : null));
+
+const retry = function retry<T>(
+  fn: () => Promise<T> | T,
+  times = 3,
+  timeout = 45000
+): Promise<T> | T {
+  const result = fn();
+  if (result instanceof Promise) {
+    return result.then((value) => {
+      if (value instanceof Error) {
+        return null;
+      }
+      return value === null && times > 0 ? retry(fn, times - 1) : value;
+    });
+  }
+  return result === null && times > 0 ? retry(fn, times - 1) : result;
+};
+
+const getBaseFormData = function getBaseFormData(
+  baseData: FormData,
+  step: string
+) {
+  const formData = new FormData();
+
+  for (const [key, value] of baseData.entries()) {
+    formData.append(key, value);
+  }
+
+  formData.append("steps", step);
+  return formData;
+};
 
 // onClick={(e) => {
 //   e.preventDefault();

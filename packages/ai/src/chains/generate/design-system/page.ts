@@ -23,14 +23,6 @@ export const create = <ModelMessageFormat>(): Chain<
   async function chain({ model, context }) {
     const { prompts } = context;
 
-    // Prepare prompt variables...
-    if (prompts.style) {
-      prompts.style = `- The result style should be influenced by: ${prompts.style.replace(
-        /https?:\/\//,
-        ""
-      )}`;
-    }
-
     if (prompts.components) {
       prompts.components = (JSON.parse(prompts.components) as string[])
         .map((componentName, index) => {
@@ -55,15 +47,20 @@ export const create = <ModelMessageFormat>(): Chain<
       formatPrompt(prompts, promptTemplate),
     ];
 
-    console.log(requestMessage[1]);
+    // console.log(requestMessage[1]);
 
     const response = await model.request({
       messages: model.generateMessages([requestMessage]),
     });
 
-    const jsx = getCode(response, "jsx");
+    const jsx = getCode(response, "jsx").trim();
 
-    if (jsx.trim() === "") {
+    if (
+      jsx === "" ||
+      jsx.startsWith("<") === false ||
+      jsx.endsWith(">") === false
+    ) {
+      console.log(response);
       throw new Error("Invalid result");
     }
 
@@ -76,17 +73,20 @@ export const create = <ModelMessageFormat>(): Chain<
       throw error;
     }
 
+    // Resolve base styles, variants and inline styles.
     const actualTheme = convertThemeColorsToRgbValue(theme.theme);
     traverseTemplate(json, (node) => {
-      if (node.type === "instance" && node.props) {
+      if (node.type === "instance") {
         const variants = ["base"];
-        node.props = node.props.filter((prop) => {
-          if (prop.name === "variants") {
-            variants.push(...(prop.value as string[]));
-            return false;
-          }
-          return true;
-        });
+        if (node.props) {
+          node.props = node.props.filter((prop) => {
+            if (prop.name === "variants") {
+              variants.push(...(prop.value as string[]));
+              return false;
+            }
+            return true;
+          });
+        }
         const componentStyles = componentsStyles[node.component];
         if (variants.length > 0 && componentStyles !== undefined) {
           node.styles = node.styles || [];
@@ -94,12 +94,12 @@ export const create = <ModelMessageFormat>(): Chain<
             node.styles.map((styleDecl) => styleDecl.property)
           );
           variants
+            .reverse()
             .flatMap((variant) =>
               componentStyles[variant]
                 ? componentStyles[variant](actualTheme)
                 : []
             )
-            .reverse()
             .forEach((styleDecl) => {
               if (applied.has(styleDecl.property) === false) {
                 applied.add(styleDecl.property);

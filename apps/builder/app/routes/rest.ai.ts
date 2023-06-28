@@ -1,6 +1,7 @@
 import type { ActionArgs } from "@remix-run/node";
 import {
   createEditTweakChain,
+  createGenerateDesignSystemEnhanceChain,
   createGenerateDesignSystemPageChain,
   createGenerateDesignSystemThemeChain,
   createGenerateFullComponentsChain,
@@ -31,9 +32,8 @@ type StepName = z.infer<typeof StepSchema>;
 const RequestSchema = zfd.formData(
   z.intersection(
     z.object({
-      prompt: zfd.text(z.string().max(1380)),
+      prompt: zfd.text(z.string().max(3380)),
       screenPrompt: zfd.text(z.string().max(1380).optional()).optional(),
-      style: zfd.text(z.string().max(140).optional()).optional(),
       components: zfd.text(z.string().optional()).optional(),
       componentsStyles: zfd.text(z.string().optional()).optional(),
       theme: zfd.text(z.string().optional()).optional(),
@@ -46,7 +46,7 @@ const RequestSchema = zfd.formData(
       z.object({
         _action: zfd.text(z.enum(["generate"])),
         steps: zfd.repeatableOfType(
-          z.enum(["expand", "theme", "components", "screen", "page"])
+          z.enum(["expand", "theme", "components", "screen", "page", "enhance"])
         ),
       }),
       // z.object({
@@ -69,6 +69,7 @@ const chains = {
     styles: createGenerateStylesChain<GPTModelMessageFormat>(),
     page: createGenerateDesignSystemPageChain<GPTModelMessageFormat>(),
     theme: createGenerateDesignSystemThemeChain<GPTModelMessageFormat>(),
+    enhance: createGenerateDesignSystemEnhanceChain<GPTModelMessageFormat>(),
   },
   edit: {
     tweak: createEditTweakChain<GPTModelMessageFormat>(),
@@ -137,7 +138,6 @@ export const action = async ({ request }: ActionArgs) => {
     prompts: {
       request: formData.prompt,
       screenPrompt: formData.screenPrompt || "",
-      style: formData.style || "",
       components: formData.components || "",
       componentsStyles: formData.componentsStyles || "",
       theme: formData.theme || "",
@@ -165,7 +165,7 @@ export const action = async ({ request }: ActionArgs) => {
         // ) {
         //   chain = chains.full[step];
         // }
-        if (step === "theme" || step === "page") {
+        if (step === "theme" || step === "page" || step === "enhance") {
           chain = chains.generate[step];
         }
         break;
@@ -187,8 +187,9 @@ export const action = async ({ request }: ActionArgs) => {
     const model = createGptModel({
       apiKey: env.OPENAI_KEY,
       organization: env.OPENAI_ORG,
-      temperature: step === "components" ? 0 : 0.5,
+      temperature: step === "theme" ? 1 : 0.5,
       model: step === "components" ? "gpt-3.5-turbo-16k" : "gpt-3.5-turbo", //step !== "screen" ? "gpt-3.5-turbo" : "gpt-3.5-turbo-16k",
+      // model: "gpt-4",
     });
 
     const chainResponse = await chain({ model, context });

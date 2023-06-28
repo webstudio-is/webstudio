@@ -142,18 +142,35 @@ const processValue = function processValue(value: MitosisNode) {
     //   : []
     let styles: EmbedTemplateStyleDecl[] = [];
 
-    if (value.bindings.style) {
+    const bindings = Object.fromEntries(
+      Object.entries(value.bindings).map(([key, value]) => {
+        try {
+          return [key, json5.parse(value.code)];
+        } catch (error) {
+          return [key, value];
+        }
+      })
+    );
+
+    if (bindings.style) {
       // @todo Replace `eval` with json5.parse or something
-      const code = json5.parse(value.bindings.style.code);
+      const code = bindings.style;
+      const component = value.name;
+      delete bindings.style;
 
       styles = Object.entries(code).flatMap(([property, value]) => {
         const parsedStyles: EmbedTemplateStyleDecl[] = [];
 
         (
-          Object.entries(parseCssDecl(property, value)) as [
-            StyleProperty,
-            StyleValue
-          ][]
+          Object.entries(
+            parseCssDecl(
+              property,
+              typeof value === "number" &&
+                unitlessNumbers.has(property) === false
+                ? `${value}px`
+                : value
+            )
+          ) as [StyleProperty, StyleValue][]
         ).forEach(([property, value]) => {
           try {
             StyleValue.parse(value);
@@ -166,7 +183,9 @@ const processValue = function processValue(value: MitosisNode) {
               // eslint-disable-next-line no-console
               console.warn(
                 true,
-                `Declaration parsing for \`${value.name}.${property}: ${value}\` failed`
+                `Declaration parsing for \`${component}.${property}: ${JSON.stringify(
+                  value
+                )}\` failed`
               );
             }
           }
@@ -179,7 +198,7 @@ const processValue = function processValue(value: MitosisNode) {
     return {
       type: "instance",
       component: value.name === "div" ? "Box" : value.name,
-      props: getProps(props),
+      props: getProps({ ...props, ...bindings }),
       styles,
       children: value.children || [],
     };
@@ -200,3 +219,51 @@ const getProps = function getProps(props: MitosisNode["properties"]) {
   });
   return p;
 };
+
+const unitlessNumbers = new Set([
+  "animationIterationCount",
+  "aspectRatio",
+  "borderImageOutset",
+  "borderImageSlice",
+  "borderImageWidth",
+  "boxFlex",
+  "boxFlexGroup",
+  "boxOrdinalGroup",
+  "columnCount",
+  "flex",
+  "flexGrow",
+  "flexOrder",
+  "flexPositive",
+  "flexShrink",
+  "flexNegative",
+  "fontWeight",
+  "gridRow",
+  "gridRowEnd",
+  "gridRowGap",
+  "gridRowStart",
+  "gridColumn",
+  "gridColumnEnd",
+  "gridColumnGap",
+  "gridColumnStart",
+  "lineClamp",
+  "opacity",
+  "order",
+  "orphans",
+  "tabSize",
+  "widows",
+  "zIndex",
+  "zoom",
+  "fillOpacity",
+  "floodOpacity",
+  "stopOpacity",
+  "strokeDasharray",
+  "strokeDashoffset",
+  "strokeMiterlimit",
+  "strokeOpacity",
+  "strokeWidth",
+  "scale",
+  "scaleX",
+  "scaleY",
+  "scaleZ",
+  "shadowOpacity",
+]);

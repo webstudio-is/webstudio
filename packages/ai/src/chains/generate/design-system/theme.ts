@@ -37,64 +37,37 @@ export const create = <ModelMessageFormat>(): Chain<
   };
 
 export const themeDefaults = {
-  fontSize: [10, 12, 14, 16, 18, 20, 24, 28],
-  spacing: [4, 8, 12, 16, 20, 24, 28, 32],
-  borderRadius: [2, 4, 6, 8, 10, 12, 16, 20],
+  fontSize: [12, 14, 16, 18, 20, 24, 30, 36, 48, 60, 72, 96, 128],
+  spacing: [2, 4, 8, 12, 16, 20, 24, 28, 32, 36, 40, 64, 80, 128],
+  borderRadius: [4, 6, 8, 10, 12, 16, 20],
 };
-// fontSize: {
-//   xs: "10px",
-//   s: "12px",
-//   m: "14px",
-//   l: "16px",
-//   xl: "18px",
-//   "2xl": "20px",
-//   "3xl": "24px",
-//   "4xl": "28px",
-// },
-// spacing: {
-//   xs: "4px",
-//   s: "8px",
-//   m: "12px",
-//   l: "16px",
-//   xl: "20px",
-//   "2xl": "24px",
-//   "3xl": "28px",
-//   "4xl": "32px",
-// },
-// borderRadius: {
-//   xs: "2px",
-//   s: "4px",
-//   m: "6px",
-//   l: "8px",
-//   xl: "10px",
-//   "2xl": "12px",
-//   "3xl": "16px",
-//   "4xl": "20px",
-// },
 
 // Theme visualizer
+// const theme = {}
 // const styles = document.body.appendChild(document.createElement("style"));
 // styles.innerHTML = `
 // body { display: flex; gap: 20px }
-// div {   width: 50px; height: 50px;}
+// div { padding: 1em 2em; border-radius: 1em; margin-bottom: 0.5em; font-family: sans-serif; text-align: center; }
+// .gradient { padding: 3em }
 // `
 
-// const theme = {}
-
 // let c = document.body.appendChild(document.createElement("section"));
-// theme.colors.forEach((color) => {
+// Object.entries(theme.background).forEach(([name,color]) => {
 //   const d = c.appendChild(document.createElement("div"));
+//   d.textContent = name
 //   d.style.backgroundColor = color.trim();
 // });
 
 // c = document.body.appendChild(document.createElement("section"));
-// theme.text.forEach((color) => {
+// Object.entries(theme.foreground).forEach(([name,color]) => {
 //   const d = c.appendChild(document.createElement("div"));
+//    d.textContent = name
 //   d.style.backgroundColor = color.trim();
 // });
 
 // c = document.body.appendChild(document.createElement("section"));
 // theme.gradients.forEach((color) => {
 //   const d = c.appendChild(document.createElement("div"));
+//   d.classList.add('gradient')
 //   d.style.backgroundImage = `linear-gradient(${color[0]}, ${color[1]})`;
 // });

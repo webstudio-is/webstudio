@@ -6,5 +6,6 @@ export { create as createGenerateFullThemeChain } from "./full/theme";
 export { create as createGenerateInstancesChain } from "./instances";
 export { create as createGenerateStylesChain } from "./styles";
 
+export { create as createGenerateDesignSystemEnhanceChain } from "./design-system/enhance";
 export { create as createGenerateDesignSystemPageChain } from "./design-system/page";
 export { create as createGenerateDesignSystemThemeChain } from "./design-system/theme";

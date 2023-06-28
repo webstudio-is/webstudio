@@ -1,12 +1,22 @@
+import type {
+  RgbValue,
+  StyleProperty,
+  StyleValue,
+} from "@webstudio-is/css-data";
 import type { EmbedTemplateStyleDecl } from "@webstudio-is/react-sdk";
 
-const transparent = {
+const transparent: RgbValue = {
   type: "rgb",
   r: 0,
   g: 0,
   b: 0,
   alpha: 0,
 };
+
+const systemFont =
+  'system-ui, "Segoe UI", Roboto, Helvetica, Arial, sans-serif, "Apple Color Emoji", "Segoe UI Emoji", "Segoe UI Symbol"'
+    .replace(/['"]/g, "")
+    .split(/,\s*/);
 
 export const componentsStyles: Record<
   string,
@@ -36,24 +46,57 @@ export const componentsStyles: Record<
     ],
   },
   Box: {
-    base: (theme) => [],
-    landingSection: (theme) => [
+    base: (theme) => [
+      { property: "color", value: theme.foreground.base },
       {
-        property: "paddingLeft",
-        value: { type: "unit", value: theme.spacing[3], unit: "px" },
+        property: "fontSize",
+        value: { type: "unit", value: theme.fontSize[2], unit: "px" },
       },
       {
-        property: "paddingRight",
-        value: { type: "unit", value: theme.spacing[3], unit: "px" },
+        property: "fontFamily",
+        value: { type: "fontFamily", value: systemFont },
       },
       {
-        property: "paddingTop",
-        value: { type: "unit", value: theme.spacing[3], unit: "px" },
+        property: "width",
+        value: { type: "unit", value: 100, unit: "%" },
       },
+      ...expand("marginHorizontal", { type: "keyword", value: "auto" }),
+      ...expand("borderRadius", {
+        type: "unit",
+        value: 0,
+        unit: "px",
+      }),
+    ],
+    sectionContainer: (theme) => [
+      ...expand("padding", {
+        type: "unit",
+        value: theme.spacing[3],
+        unit: "px",
+      }),
+    ],
+    sectionContent: (theme) => [
       {
-        property: "paddingBottom",
-        value: { type: "unit", value: theme.spacing[3], unit: "px" },
+        property: "maxWidth",
+        value: { type: "unit", value: 1024, unit: "px" },
       },
+      ...expand("paddingHorizontal", {
+        type: "unit",
+        value: theme.spacing[3],
+        unit: "px",
+      }),
+      ...expand("paddingVertical", {
+        type: "unit",
+        value: theme.spacing[1],
+        unit: "px",
+      }),
+    ],
+    logoNav: (theme) => [
+      { property: "display", value: { type: "keyword", value: "flex" } },
+      {
+        property: "justifyContent",
+        value: { type: "keyword", value: "space-between" },
+      },
+      { property: "alignItems", value: { type: "keyword", value: "center" } },
     ],
     card: (theme) => [
       { property: "backgroundColor", value: theme.background.base },
@@ -65,168 +108,79 @@ export const componentsStyles: Record<
           value: `0 3px 8px ${theme.shadowsColors[0]}`,
         },
       },
-      {
-        property: "borderTopLeftRadius",
-        value: { type: "unit", value: theme.borderRadius[2], unit: "px" },
-      },
-      {
-        property: "borderTopRightRadius",
-        value: { type: "unit", value: theme.borderRadius[2], unit: "px" },
-      },
-      {
-        property: "borderBottomRightRadius",
-        value: { type: "unit", value: theme.borderRadius[2], unit: "px" },
-      },
-      {
-        property: "borderBottomLeftRadius",
-        value: { type: "unit", value: theme.borderRadius[2], unit: "px" },
-      },
-      {
-        property: "paddingLeft",
-        value: { type: "unit", value: theme.spacing[3], unit: "px" },
-      },
-      {
-        property: "paddingRight",
-        value: { type: "unit", value: theme.spacing[3], unit: "px" },
-      },
-      {
-        property: "paddingTop",
-        value: { type: "unit", value: theme.spacing[3], unit: "px" },
-      },
-      {
-        property: "paddingBottom",
-        value: { type: "unit", value: theme.spacing[3], unit: "px" },
-      },
+      ...expand("borderRadius", {
+        type: "unit",
+        value: theme.borderRadius[2],
+        unit: "px",
+      }),
+      ...expand("padding", {
+        type: "unit",
+        value: theme.spacing[3],
+        unit: "px",
+      }),
     ],
   },
   Button: {
     base: (theme) => [
       { property: "backgroundColor", value: theme.background.base },
       { property: "color", value: theme.foreground.base },
-      {
-        property: "borderTopWidth",
-        value: { type: "unit", value: 1, unit: "px" },
-      },
-      {
-        property: "borderRightWidth",
-        value: { type: "unit", value: 1, unit: "px" },
-      },
-      {
-        property: "borderBottomWidth",
-        value: { type: "unit", value: 1, unit: "px" },
-      },
-      {
-        property: "borderLeftWidth",
-        value: { type: "unit", value: 1, unit: "px" },
-      },
-      {
-        property: "borderTopStyle",
-        value: { type: "keyword", value: "solid" },
-      },
-      {
-        property: "borderRightStyle",
-        value: { type: "keyword", value: "solid" },
-      },
-      {
-        property: "borderBottomStyle",
-        value: { type: "keyword", value: "solid" },
-      },
-      {
-        property: "borderLeftStyle",
-        value: { type: "keyword", value: "solid" },
-      },
-      {
-        property: "borderTopColor",
-        value: theme.background.base,
-      },
-      {
-        property: "borderRightColor",
-        value: theme.background.base,
-      },
-      {
-        property: "borderBottomColor",
-        value: theme.background.base,
-      },
-      {
-        property: "borderLeftColor",
-        value: theme.background.base,
-      },
-      {
-        property: "borderTopLeftRadius",
-        value: { type: "unit", value: theme.borderRadius[1], unit: "px" },
-      },
-      {
-        property: "borderTopRightRadius",
-        value: { type: "unit", value: theme.borderRadius[1], unit: "px" },
-      },
-      {
-        property: "borderBottomRightRadius",
-        value: { type: "unit", value: theme.borderRadius[1], unit: "px" },
-      },
-      {
-        property: "borderBottomLeftRadius",
-        value: { type: "unit", value: theme.borderRadius[1], unit: "px" },
-      },
-      {
-        property: "paddingLeft",
-        value: { type: "unit", value: theme.spacing[3], unit: "px" },
-      },
-      {
-        property: "paddingRight",
-        value: { type: "unit", value: theme.spacing[3], unit: "px" },
-      },
-      {
-        property: "paddingTop",
-        value: { type: "unit", value: theme.spacing[2], unit: "px" },
-      },
-      {
-        property: "paddingBottom",
-        value: { type: "unit", value: theme.spacing[2], unit: "px" },
-      },
+      { property: "cursor", value: { type: "keyword", value: "pointer" } },
+      ...expand("borderWidth", {
+        type: "unit",
+        value: 1,
+        unit: "px",
+      }),
+      ...expand("borderStyle", { type: "keyword", value: "solid" }),
+      ...expand("borderColor", theme.background.base),
+      ...expand("borderRadius", {
+        type: "unit",
+        value: theme.borderRadius[1],
+        unit: "px",
+      }),
+      ...expand("paddingHorizontal", {
+        type: "unit",
+        value: theme.spacing[3],
+        unit: "px",
+      }),
+      ...expand("paddingVertical", {
+        type: "unit",
+        value: theme.spacing[2],
+        unit: "px",
+      }),
     ],
     primary: (theme) => [
       { property: "backgroundColor", value: theme.background.accent },
       { property: "color", value: theme.foreground.accent },
-      {
-        property: "borderTopColor",
-        value: theme.background.accent,
-      },
-      {
-        property: "borderRightColor",
-        value: theme.background.accent,
-      },
-      {
-        property: "borderBottomColor",
-        value: theme.background.accent,
-      },
-      {
-        property: "borderLeftColor",
-        value: theme.background.accent,
-      },
+      ...expand("borderColor", theme.background.accent),
     ],
     secondary: (theme) => [
       { property: "backgroundColor", value: theme.background.secondary },
       { property: "color", value: theme.foreground.secondary },
-      {
-        property: "borderTopColor",
-        value: theme.background.secondary,
-      },
-      {
-        property: "borderRightColor",
-        value: theme.background.secondary,
-      },
-      {
-        property: "borderBottomColor",
-        value: theme.background.secondary,
-      },
-      {
-        property: "borderLeftColor",
-        value: theme.background.secondary,
-      },
+      ...expand("borderColor", theme.background.secondary),
     ],
     outline: (theme) => [
       { property: "backgroundColor", value: transparent },
-      { property: "backgroundColor", value: theme.background.base },
+      ...expand("borderWidth", {
+        type: "unit",
+        value: 1,
+        unit: "px",
+      }),
+      ...expand("borderStyle", { type: "keyword", value: "solid" }),
+      ...expand("borderColor", theme.foreground.base),
+    ],
+    round: (theme) => [
+      ...expand("borderRadius", {
+        type: "unit",
+        value: 1.3,
+        unit: "em",
+      }),
+    ],
+    square: (theme) => [
+      ...expand("borderRadius", {
+        type: "unit",
+        value: 0,
+        unit: "px",
+      }),
     ],
   },
   // Checkbox: {},
@@ -242,61 +196,32 @@ export const componentsStyles: Record<
       },
       { property: "backgroundColor", value: theme.background.secondary },
       { property: "color", value: theme.foreground.secondary },
-      {
-        property: "borderTopLeftRadius",
-        value: { type: "unit", value: theme.borderRadius[1], unit: "px" },
-      },
-      {
-        property: "borderTopRightRadius",
-        value: { type: "unit", value: theme.borderRadius[1], unit: "px" },
-      },
-      {
-        property: "borderBottomRightRadius",
-        value: { type: "unit", value: theme.borderRadius[1], unit: "px" },
-      },
-      {
-        property: "borderBottomLeftRadius",
-        value: { type: "unit", value: theme.borderRadius[1], unit: "px" },
-      },
+      ...expand("borderRadius", {
+        type: "unit",
+        value: theme.borderRadius[1],
+        unit: "px",
+      }),
     ],
     block: (theme) => [
       {
         property: "display",
         value: { type: "keyword", value: "inline-block" },
       },
-      {
-        property: "borderTopLeftRadius",
-        value: { type: "unit", value: theme.borderRadius[3], unit: "px" },
-      },
-      {
-        property: "borderTopRightRadius",
-        value: { type: "unit", value: theme.borderRadius[3], unit: "px" },
-      },
-      {
-        property: "borderBottomRightRadius",
-        value: { type: "unit", value: theme.borderRadius[3], unit: "px" },
-      },
-      {
-        property: "borderBottomLeftRadius",
-        value: { type: "unit", value: theme.borderRadius[3], unit: "px" },
-      },
-
-      {
-        property: "paddingLeft",
-        value: { type: "unit", value: theme.spacing[3], unit: "px" },
-      },
-      {
-        property: "paddingRight",
-        value: { type: "unit", value: theme.spacing[3], unit: "px" },
-      },
-      {
-        property: "paddingTop",
-        value: { type: "unit", value: theme.spacing[2], unit: "px" },
-      },
-      {
-        property: "paddingBottom",
-        value: { type: "unit", value: theme.spacing[2], unit: "px" },
-      },
+      ...expand("borderRadius", {
+        type: "unit",
+        value: theme.borderRadius[3],
+        unit: "px",
+      }),
+      ...expand("paddingHorizontal", {
+        type: "unit",
+        value: theme.spacing[3],
+        unit: "px",
+      }),
+      ...expand("paddingVertical", {
+        type: "unit",
+        value: theme.spacing[2],
+        unit: "px",
+      }),
     ],
   },
   // ErrorMessage: {}
@@ -314,7 +239,7 @@ export const componentsStyles: Record<
     small: (theme) => [
       {
         property: "fontSize",
-        value: { type: "unit", value: theme.fontSize[3], unit: "px" },
+        value: { type: "unit", value: theme.fontSize[4], unit: "px" },
       },
     ],
     medium: (theme) => [
@@ -326,7 +251,7 @@ export const componentsStyles: Record<
     large: (theme) => [
       {
         property: "fontSize",
-        value: { type: "unit", value: theme.fontSize[7], unit: "px" },
+        value: { type: "unit", value: theme.fontSize[8], unit: "px" },
       },
     ],
   },
@@ -345,98 +270,64 @@ export const componentsStyles: Record<
         property: "minWidth",
         value: { type: "unit", value: 1, unit: "px" },
       },
+      ...expand("borderRadius", {
+        type: "unit",
+        value: theme.borderRadius[4],
+        unit: "px",
+      }),
     ],
-    rounded: (theme) => [
-      {
-        property: "borderTopLeftRadius",
-        value: { type: "unit", value: theme.borderRadius[4], unit: "px" },
-      },
-      {
-        property: "borderTopRightRadius",
-        value: { type: "unit", value: theme.borderRadius[4], unit: "px" },
-      },
-      {
-        property: "borderBottomRightRadius",
-        value: { type: "unit", value: theme.borderRadius[4], unit: "px" },
-      },
-      {
-        property: "borderBottomLeftRadius",
-        value: { type: "unit", value: theme.borderRadius[4], unit: "px" },
-      },
+    noRounded: (theme) => [
+      ...expand("borderRadius", {
+        type: "unit",
+        value: 0,
+        unit: "px",
+      }),
     ],
     roundedSmall: (theme) => [
-      {
-        property: "borderTopLeftRadius",
-        value: { type: "unit", value: theme.borderRadius[1], unit: "px" },
-      },
-      {
-        property: "borderTopRightRadius",
-        value: { type: "unit", value: theme.borderRadius[1], unit: "px" },
-      },
-      {
-        property: "borderBottomRightRadius",
-        value: { type: "unit", value: theme.borderRadius[1], unit: "px" },
-      },
-      {
-        property: "borderBottomLeftRadius",
-        value: { type: "unit", value: theme.borderRadius[1], unit: "px" },
-      },
+      ...expand("borderRadius", {
+        type: "unit",
+        value: theme.borderRadius[1],
+        unit: "px",
+      }),
     ],
     circle: (theme) => [
-      {
-        property: "borderTopLeftRadius",
-        value: { type: "unit", value: 100, unit: "%" },
-      },
-      {
-        property: "borderTopRightRadius",
-        value: { type: "unit", value: 100, unit: "%" },
-      },
-      {
-        property: "borderBottomRightRadius",
-        value: { type: "unit", value: 100, unit: "%" },
-      },
-      {
-        property: "borderBottomLeftRadius",
-        value: { type: "unit", value: 100, unit: "%" },
-      },
+      ...expand("borderRadius", {
+        type: "unit",
+        value: 100,
+        unit: "%",
+      }),
     ],
   },
   Input: {
     base: (theme) => [
+      {
+        property: "width",
+        value: { type: "unit", value: 100, unit: "%" },
+      },
       { property: "backgroundColor", value: theme.background.input },
       { property: "color", value: theme.foreground.input },
-      {
-        property: "borderTopLeftRadius",
-        value: { type: "unit", value: theme.borderRadius[1], unit: "px" },
-      },
-      {
-        property: "borderTopRightRadius",
-        value: { type: "unit", value: theme.borderRadius[1], unit: "px" },
-      },
-      {
-        property: "borderBottomRightRadius",
-        value: { type: "unit", value: theme.borderRadius[1], unit: "px" },
-      },
-      {
-        property: "borderBottomLeftRadius",
-        value: { type: "unit", value: theme.borderRadius[1], unit: "px" },
-      },
-      {
-        property: "paddingLeft",
-        value: { type: "unit", value: theme.spacing[3], unit: "px" },
-      },
-      {
-        property: "paddingRight",
-        value: { type: "unit", value: theme.spacing[3], unit: "px" },
-      },
-      {
-        property: "paddingTop",
-        value: { type: "unit", value: theme.spacing[2], unit: "px" },
-      },
-      {
-        property: "paddingBottom",
-        value: { type: "unit", value: theme.spacing[2], unit: "px" },
-      },
+      ...expand("borderRadius", {
+        type: "unit",
+        value: theme.borderRadius[1],
+        unit: "px",
+      }),
+      ...expand("borderWidth", {
+        type: "unit",
+        value: 1,
+        unit: "px",
+      }),
+      ...expand("borderStyle", { type: "keyword", value: "solid" }),
+      ...expand("borderColor", theme.background.input),
+      ...expand("paddingHorizontal", {
+        type: "unit",
+        value: theme.spacing[3],
+        unit: "px",
+      }),
+      ...expand("paddingVertical", {
+        type: "unit",
+        value: theme.spacing[2],
+        unit: "px",
+      }),
     ],
   },
   Italic: {
@@ -451,7 +342,7 @@ export const componentsStyles: Record<
     base: (theme) => [
       { property: "color", value: theme.foreground.accent },
       {
-        property: "textDecorationStyle",
+        property: "textDecorationLine",
         value: { type: "keyword", value: "none" },
       },
     ],
@@ -462,22 +353,11 @@ export const componentsStyles: Record<
         property: "listStyleType",
         value: { type: "keyword", value: "none" },
       },
-      {
-        property: "paddingLeft",
-        value: { type: "unit", value: 0, unit: "px" },
-      },
-      {
-        property: "paddingRight",
-        value: { type: "unit", value: 0, unit: "px" },
-      },
-      {
-        property: "paddingTop",
-        value: { type: "unit", value: 0, unit: "px" },
-      },
-      {
-        property: "paddingBottom",
-        value: { type: "unit", value: 0, unit: "px" },
-      },
+      ...expand("padding", {
+        type: "unit",
+        value: 0,
+        unit: "px",
+      }),
     ],
   },
   ListItem: {
@@ -490,7 +370,15 @@ export const componentsStyles: Record<
   },
   // Paragraph: {}
   // RadioButton: {}
-  // RichTextLink: {}
+  RichTextLink: {
+    base: (theme) => [
+      { property: "color", value: theme.foreground.accent },
+      {
+        property: "textDecorationLine",
+        value: { type: "keyword", value: "none" },
+      },
+    ],
+  },
   Separator: {
     base: (theme) => [
       { property: "backgroundColor", value: theme.background.input },
@@ -503,63 +391,121 @@ export const componentsStyles: Record<
   // Superscript: {},
   Text: {
     base: (theme) => [
-      { property: "color", value: theme.foreground.base },
       {
         property: "fontSize",
-        value: { type: "unit", value: theme.fontSize[3], unit: "px" },
+        value: { type: "unit", value: theme.fontSize[2], unit: "px" },
+      },
+      {
+        property: "fontFamily",
+        value: { type: "fontFamily", value: systemFont },
       },
     ],
     subtle: (theme) => [{ property: "color", value: theme.foreground.subtle }],
     small: (theme) => [
       {
         property: "fontSize",
-        value: { type: "unit", value: theme.fontSize[2], unit: "px" },
+        value: { type: "unit", value: theme.fontSize[0], unit: "px" },
       },
     ],
     medium: (theme) => [
       {
         property: "fontSize",
-        value: { type: "unit", value: theme.fontSize[5], unit: "px" },
+        value: { type: "unit", value: theme.fontSize[3], unit: "px" },
       },
     ],
     large: (theme) => [
       {
         property: "fontSize",
-        value: { type: "unit", value: theme.fontSize[7], unit: "px" },
+        value: { type: "unit", value: theme.fontSize[6], unit: "px" },
       },
     ],
   },
   Textarea: {
     base: (theme) => [
+      {
+        property: "width",
+        value: { type: "unit", value: 100, unit: "%" },
+      },
       { property: "backgroundColor", value: theme.background.input },
       { property: "color", value: theme.foreground.input },
-      {
-        property: "borderTopLeftRadius",
-        value: { type: "unit", value: theme.borderRadius[1], unit: "px" },
-      },
-
-      {
-        property: "paddingLeft",
-        value: { type: "unit", value: theme.spacing[3], unit: "px" },
-      },
-      {
-        property: "paddingRight",
-        value: { type: "unit", value: theme.spacing[3], unit: "px" },
-      },
-      {
-        property: "paddingTop",
-        value: { type: "unit", value: theme.spacing[2], unit: "px" },
-      },
-      {
-        property: "paddingBottom",
-        value: { type: "unit", value: theme.spacing[2], unit: "px" },
-      },
+      ...expand("borderWidth", {
+        type: "unit",
+        value: 1,
+        unit: "px",
+      }),
+      ...expand("borderStyle", { type: "keyword", value: "solid" }),
+      ...expand("borderColor", theme.background.input),
+      ...expand("borderRadius", {
+        type: "unit",
+        value: theme.borderRadius[1],
+        unit: "px",
+      }),
+      ...expand("paddingHorizontal", {
+        type: "unit",
+        value: theme.spacing[3],
+        unit: "px",
+      }),
+      ...expand("paddingVertical", {
+        type: "unit",
+        value: theme.spacing[2],
+        unit: "px",
+      }),
     ],
   },
   // Vimeo: {}
   // VimeoPlayButton: {}
   // VimeoPreviewImage: {}
   // VimeoSpinner: {}
+};
+
+// @todo remove all the as EmbedTemplateStyleDecl
+const expand = function expand(
+  property: StyleProperty | string,
+  value: StyleValue
+): EmbedTemplateStyleDecl[] {
+  if (property.endsWith("Horizontal")) {
+    return ["Right", "Left"].map(
+      (side) =>
+        ({
+          property: `${property.slice(0, -10)}${side}`,
+          value,
+        } as EmbedTemplateStyleDecl)
+    );
+  }
+
+  if (property.endsWith("Vertical")) {
+    return ["Top", "Bottom"].map(
+      (side) =>
+        ({
+          property: `${property.slice(0, -8)}${side}`,
+          value,
+        } as EmbedTemplateStyleDecl)
+    );
+  }
+
+  if (property === "margin" || property === "padding") {
+    return ["Top", "Right", "Bottom", "Left"].map(
+      (side) =>
+        ({ property: `${property}${side}`, value } as EmbedTemplateStyleDecl)
+    );
+  }
+
+  if (property === "borderRadius") {
+    return ["TopRight", "TopLeft", "BottomRight", "BottomLeft"].map(
+      (side) =>
+        ({ property: `border${side}Radius`, value } as EmbedTemplateStyleDecl)
+    );
+  } else if (property.startsWith("border")) {
+    return ["Top", "Right", "Bottom", "Left"].map(
+      (side) =>
+        ({
+          property: `border${side}${property.slice(6)}`,
+          value,
+        } as EmbedTemplateStyleDecl)
+    );
+  }
+
+  return [{ property, value } as EmbedTemplateStyleDecl];
 };
 
 // - Blockquote

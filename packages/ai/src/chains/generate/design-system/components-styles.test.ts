@@ -17,9 +17,9 @@ describe("components styles", () => {
 });
 
 const theme = convertThemeColorsToRgbValue({
-  fontSize: [10, 12, 14, 16, 18, 20, 24, 28],
-  spacing: [4, 8, 12, 16, 20, 24, 28, 32],
-  borderRadius: [2, 4, 6, 8, 10, 12, 16, 20],
+  fontSize: [12, 14, 16, 18, 20, 24, 30, 36, 48, 60, 72, 96, 128],
+  spacing: [2, 4, 8, 12, 16, 20, 24, 28, 32, 36, 40, 64, 80, 128],
+  borderRadius: [4, 6, 8, 10, 12, 16, 20],
   background: {
     base: "#1A202C",
     accent: "#2D3748",

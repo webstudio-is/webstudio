@@ -4,6 +4,7 @@ import {
   Dialog,
   DialogContent,
   Flex,
+  IconButton,
   Label,
   Text,
   TextArea,
@@ -18,8 +19,8 @@ import {
   selectedInstanceStore,
 } from "~/shared/nano-states";
 
-import { EyeconOpenIcon } from "@webstudio-is/icons";
-import { useMemo, useState } from "react";
+import { EyeconOpenIcon, SpinnerIcon } from "@webstudio-is/icons";
+import { useEffect, useMemo, useRef, useState } from "react";
 import type { Publish } from "~/shared/pubsub";
 import { aiGenerationPath } from "~/shared/router-utils";
 import { CloseButton, Header } from "../../header";
@@ -84,6 +85,7 @@ type AIGenerateResponseType =
       response: { json: EmbedTemplateStyles[]; code: string };
     }
   | AIGenerateScreenResponseType
+  | { step: "enhance"; response: { json: string[]; code: string } }
   | { step: "expand"; response: { json: string[]; code: string } };
 
 type AIEditTweakResponseType = {
@@ -247,15 +249,154 @@ export const TabContent = ({ publish, onSetActiveTab }: TabContentProps) => {
     { state: "idle" }
   );
 
-  const [aiTheme, setAiTheme] = useState(null);
+  const [generation, setGeneration] = useState<{
+    url: string;
+    baseData: FormData;
+  }>(null);
+
+  const aiTheme = useRef(null);
+  const aiAbort = useRef<AbortController>(null);
+
+  useEffect(() => {
+    if (generation === null) {
+      return;
+    }
+    aiAbort.current = new AbortController();
+    const signal = aiAbort.current.signal;
+
+    const { url, baseData } = generation;
+
+    const run = async function run() {
+      let existingTheme = aiTheme.current;
+      let enhancedPrompt = null;
+
+      console.log({ existingTheme });
+
+      const enhanceFormData = getBaseFormData(baseData, "enhance");
+      const enhanceRequest = retry(
+        () =>
+          Promise.resolve({
+            type: "section",
+            subject: "",
+          }),
+        // request(url, {
+        //   method: "POST",
+        //   body: enhanceFormData,
+        //   signal,
+        // }),
+        2,
+        30000
+      );
+
+      let themeRequest = Promise.resolve(existingTheme);
+
+      if (existingTheme === null) {
+        setAiGenerationState({
+          state: "generating",
+          step: "theme",
+          progress: 0,
+        });
+
+        const themeFormData = getBaseFormData(baseData, "theme");
+        themeRequest = request(url, {
+          method: "POST",
+          body: themeFormData,
+          signal,
+        });
+      }
+
+      [existingTheme, enhancedPrompt] = await Promise.all([
+        themeRequest,
+        enhanceRequest,
+      ]);
+
+      console.log({ enhancedPrompt });
+
+      if (existingTheme === null || existingTheme instanceof Error) {
+        setAiGenerationState({
+          state: "idle",
+        });
+        return;
+      }
+
+      aiTheme.current = existingTheme;
+
+      setAiGenerationState({
+        state: "generating",
+        step: "page",
+        progress: 35,
+      });
+
+      const userPrompt = baseData.get("prompt");
+      const prompts =
+        enhancedPrompt.type === "full-page" &&
+        Array.isArray(enhancedPrompt.sections)
+          ? enhancedPrompt.sections.map(
+              (prompt) =>
+                `We are working on the following project:\n${enhancedPrompt.subject}\n\nPlease create the following UI:\n${prompt}`
+            )
+          : [userPrompt];
+
+      const indexMap: number[] = [];
+      const getIndexForInsertion = function getIndexForInsertion(
+        indexMap: number[],
+        currentIndex: number
+      ) {
+        const previousIndexes = indexMap.filter(
+          (index) => index < currentIndex
+        );
+        return previousIndexes.length;
+      };
+
+      const generationPromises = prompts.map((prompt, index) => {
+        console.log(`Generating section ${index}: ${prompt}`);
+
+        const pageFormData = getBaseFormData(baseData, "page");
+        pageFormData.append("theme", JSON.stringify(existingTheme));
+        pageFormData.delete("prompt");
+        pageFormData.append("prompt", prompt);
+
+        return retry(() =>
+          request(url, {
+            method: "POST",
+            body: pageFormData,
+            signal,
+          })
+        ).then((template) => {
+          if (template) {
+            console.log(`Section ${index} OK.`, template);
+            const insertIndex = getIndexForInsertion(indexMap, index);
+            indexMap[index] = insertIndex;
+            onAIComplete.generateSection(
+              template,
+              pageFormData.get("instanceId"),
+              insertIndex
+            );
+            return template;
+          } else {
+            return null;
+          }
+        });
+      });
+
+      await Promise.all(generationPromises);
+      setAiGenerationState({
+        state: "idle",
+      });
+    };
+
+    run();
+
+    return () => {
+      aiAbort.current?.abort();
+    };
+  }, [generation]);
 
   const handleSubmit = async (event) => {
     event.preventDefault();
     if (aiGenerationState.state !== "idle") {
       return;
     }
-
-    const context = [];
 
     const form = event.currentTarget as HTMLFormElement;
     const baseData = new FormData(form);
@@ -270,7 +411,7 @@ export const TabContent = ({ publish, onSetActiveTab }: TabContentProps) => {
     const action: AIAction = isEdit ? "edit" : "generate";
     baseData.append("_action", action);
 
-    let instance = selectedInstanceStore.get();
+    const instance = selectedInstanceStore.get();
     const project = projectStore.get();
 
     if (!instance || !project) {
@@ -280,251 +421,9 @@ export const TabContent = ({ publish, onSetActiveTab }: TabContentProps) => {
     baseData.append("instanceId", instance.id);
     baseData.append("projectId", project.id);
 
-    const steps: AIGenerationSteps[] = isEdit
-      ? ["tweak"]
-      : ["expand", "theme", "components", "screen", "page"];
-    // : ["full"];
-
-    // const data = {
-    //   sections: [],
-    //   theme: null,
-    //   componentsStyles: null,
-    //   screens: [],
-    // };
-
-    let existingTheme = aiTheme;
-
-    // const expandFormData = getBaseFormData(baseData, "expand");
-    // const expandRequest = request(form.action, {
-    //   method: form.method,
-    //   body: expandFormData,
-    // });
-    if (existingTheme === null) {
-      setAiGenerationState({
-        state: "generating",
-        step: "theme",
-        progress: 0,
-      });
-
-      const themeFormData = getBaseFormData(baseData, "theme");
-      existingTheme = await request(form.action, {
-        method: form.method,
-        body: themeFormData,
-      });
-
-      if (existingTheme === null) {
-        setAiGenerationState({
-          state: "idle",
-        });
-        return;
-      }
-
-      setAiTheme(() => existingTheme);
-
-      setAiGenerationState({
-        state: "generating",
-        step: "theme",
-        progress: 35,
-      });
-    }
-
-    const pageFormData = getBaseFormData(baseData, "page");
-    pageFormData.append("theme", JSON.stringify(existingTheme));
-    const template = await request(form.action, {
-      method: form.method,
-      body: pageFormData,
-    });
-    console.log({ template });
-
-    onAIComplete.generateSection(template, instance.id, 1);
-
-    // data.sections = await expandRequest;
-
-    // if (data.sections === null) {
-    //   setAiGenerationState({
-    //     state: "idle",
-    //   });
-    //   return;
-    // }
-
-    // setAiGenerationState({
-    //   state: "generating",
-    //   step: "components",
-    //   progress: (steps.indexOf("components") * 100) / steps.length,
-    // });
-
-    // const componentsStylesFormData = getBaseFormData(baseData, "components");
-    // componentsStylesFormData.append("theme", JSON.stringify(data.theme));
-    // data.componentsStyles = await request(form.action, {
-    //   method: form.method,
-    //   body: componentsStylesFormData,
-    // });
-
-    // if (data.componentsStyles === null) {
-    //   setAiGenerationState({
-    //     state: "idle",
-    //   });
-    //   return;
-    // }
-
-    // const generating = data.sections
-    //   .slice(0, 4)
-    //   .map((sectionDescription, index) => {
-    //     let retries = 3;
-    //     let success = false;
-    //     let tId = null;
-    //     return async function generate() {
-    //       while (success === false && retries > 0) {
-    //         const sectionFormData = getBaseFormData(baseData, "screen");
-    //         sectionFormData.append("theme", JSON.stringify(data.theme));
-    //         sectionFormData.append(
-    //           "componentsStyles",
-    //           JSON.stringify(data.componentsStyles)
-    //         );
-    //         sectionFormData.append("screenPrompt", sectionDescription);
-
-    //         const controller = new AbortController();
-    //         const signal = controller.signal;
-
-    //         tId = setTimeout(() => {
-    //           controller.abort();
-    //         }, 40000);
-
-    //         const response = await request(form.action, {
-    //           method: form.method,
-    //           body: sectionFormData,
-    //           signal,
-    //         });
-
-    //         if (tId) {
-    //           clearTimeout(tId);
-    //         }
-
-    //         if (response === null) {
-    //           console.log(`Generation of section ${index} failed.`);
-    //           retries -= 1;
-    //           continue;
-    //         }
-    //         success = true;
-    //         console.log({ response });
-    //         onAIComplete.generateSection(response, instance.id, 1);
-
-    //         return response[0];
-    //       }
-    //     };
-    //   })
-    //   .flatMap((generateSection, index) => {
-    //     console.log(`Generating section ${index}`);
-    //     return generateSection();
-    //   });
-
-    // const template = await Promise.all(generating);
-
-    // console.log({ template });
-
-    // onAIComplete.generateSection(
-    //   template.filter((instance) => instance !== null),
-    //   instance.id,
-    //   1
-    // );
-
-    setAiGenerationState({
-      state: "idle",
-    });
-    return;
-
-    const responses: AIGenerationResponses = [];
-
-    for (let i = 0; i < steps.length; ) {
-      const step = steps[i];
-
-      setAiGenerationState({
-        state: "generating",
-        step,
-        progress: (steps.indexOf(step) * 100) / steps.length,
-      });
-
-      const formData = new FormData();
-
-      for (const [key, value] of baseData.entries()) {
-        formData.append(key, value);
-      }
-
-      formData.append("steps", step);
-
-      if (responses[0]) {
-        formData.append("theme", JSON.stringify(responses[0].response.json));
-      }
-      if (responses[1]) {
-        formData.append(
-          "componentsStyles",
-          JSON.stringify(responses[1].response.json)
-        );
-      }
-      // if (responses.length > 0) {
-      //   // Send previous response for context.
-      //   const message = [
-      //     "assistant",
-      //     JSON.stringify(responses[i - 1].response.code),
-      //   ];
-
-      //   if (Array.isArray(context[i])) {
-      //     context[i].push(message);
-      //   } else {
-      //     context[i] = [message];
-      //   }
-      // }
-
-      // if (Array.isArray(context[i]) && context[i].length > 0) {
-      //   context[i].forEach((message) => {
-      //     formData.append("messages", JSON.stringify(message));
-      //   });
-      // }
-
-      const res = await fetch(form.action, {
-        method: form.method,
-        body: formData,
-      });
-
-      if (!res.ok) {
-        if (!window.confirm(`Something went wrong. Retry?`)) {
-          setAiGenerationState({
-            state: "idle",
-          });
-          return;
-        }
-      }
-
-      const response = await res.json();
-
-      // @todo add abort logic if aiGenerationState.state is changed.
-
-      if (!response.errors && step === response[0][0]) {
-        responses.push({ step, response: response[0][1] });
-        console.log(response[0][1]);
-        i++;
-      } else {
-        // eslint-disable-next-line no-console
-        console.log(response.errors);
-        // @todo Handle failures - perhaps use expontential backoff retry.
-        if (!window.confirm(`Something went wrong. Retry?`)) {
-          setAiGenerationState({
-            state: "idle",
-          });
-          return;
-        }
-      }
-    }
-
-    const instanceId = instance.id;
-    instance = selectedInstanceStore.get();
-    // Make sure that the instance still exists.
-    if (instance && instanceId === instance.id) {
-      onAIComplete[action](responses, instanceId);
-    }
-
-    setAiGenerationState({
-      state: "idle",
+    setGeneration({
+      url: form.action,
+      baseData,
     });
   };
 
@@ -556,13 +455,6 @@ export const TabContent = ({ publish, onSetActiveTab }: TabContentProps) => {
               id="ai-prompt"
               maxLength={1380}
               required
-              disabled={aiGenerationState.state !== "idle"}
-            />
-            <Label htmlFor="ai-prompt-style">style</Label>
-            <input
-              type="text"
-              name="style"
-              id="ai-prompt-style"
               disabled={aiGenerationState.state !== "idle"}
             />
             <input type="hidden" name="components" value={components} />
@@ -604,33 +496,70 @@ export const TabContent = ({ publish, onSetActiveTab }: TabContentProps) => {
           </form>
         </Flex>
       </Flex>
+
       {aiGenerationState.state !== "idle" ? (
-        <Dialog defaultOpen={true}>
-          <DialogContent
-            // @todo Add ability to abort generation requests.
-            onInteractOutside={(event) => {
-              event.preventDefault();
-            }}
-            onEscapeKeyDown={(event) => {
-              event.preventDefault();
+        <Flex
+          css={{
+            position: "fixed",
+            top: theme.spacing[12],
+            left: "50%",
+            transform: "translateX(-50%)",
+            width: "100%",
+            maxWidth: 300,
+            padding: theme.spacing[8],
+            borderRadius: theme.borderRadius[6],
+            backdropFilter: "blur(5px)",
+            backgroundColor: theme.colors.whiteA11,
+            boxShadow: theme.shadows.brandElevationBig,
+          }}
+          direction="column"
+          gap="2"
+          justify="center"
+          align="center"
+        >
+          <Box css={{ widht: "70%" }}>
+            <Text>🪄 {labels[aiGenerationState.step]}...</Text>
+          </Box>
+          <Button
+            css={{ widht: "70%" }}
+            onClick={() => {
+              if (window.confirm("Are you sure you want to abort?")) {
+                aiAbort.current?.abort();
+              }
             }}
           >
-            <Flex
-              gap="2"
-              css={{ flexDirection: "column", p: theme.spacing[9] }}
-            >
-              <Text>🪄 {labels[aiGenerationState.step]}...</Text>
-              <progress
-                value={aiGenerationState.progress}
-                max="100"
-                style={{ width: "100%" }}
-              >
-                {aiGenerationState.progress}%
-              </progress>
+            <Flex gap="2">
+              <SpinnerIcon />
+              STOP
             </Flex>
-          </DialogContent>
-        </Dialog>
-      ) : null}
+          </Button>
+        </Flex>
+      ) : // <Dialog defaultOpen={true}>
+      //   <DialogContent
+      //     // @todo Add ability to abort generation requests.
+      //     onInteractOutside={(event) => {
+      //       event.preventDefault();
+      //     }}
+      //     onEscapeKeyDown={(event) => {
+      //       event.preventDefault();
+      //     }}
+      //   >
+      //     <Flex
+      //       gap="2"
+      //       css={{ flexDirection: "column", p: theme.spacing[9] }}
+      //     >
+      //       <Text>🪄 {labels[aiGenerationState.step]}...</Text>
+      //       <progress
+      //         value={aiGenerationState.progress}
+      //         max="100"
+      //         style={{ width: "100%" }}
+      //       >
+      //         {aiGenerationState.progress}%
+      //       </progress>
+      //     </Flex>
+      //   </DialogContent>
+      // </Dialog>
+      null}
     </>
   );
 };
@@ -652,7 +581,24 @@ const request = (...args) =>
       console.log(res[0][0], res[0][1]);
       return res[0][1].json;
     })
-    .catch(() => null);
+    .catch((error) => (error.name === "AbortError" ? error : null));
+
+const retry = function retry<T>(
+  fn: () => Promise<T> | T,
+  times = 3,
+  timeout = 45000
+): Promise<T> | T {
+  const result = fn();
+  if (result instanceof Promise) {
+    return result.then((value) => {
+      if (value instanceof Error) {
+        return null;
+      }
+      return value === null && times > 0 ? retry(fn, times - 1) : value;
+    });
+  }
+  return result === null && times > 0 ? retry(fn, times - 1) : result;
+};
 
 const getBaseFormData = function getBaseFormData(
   baseData: FormData,
