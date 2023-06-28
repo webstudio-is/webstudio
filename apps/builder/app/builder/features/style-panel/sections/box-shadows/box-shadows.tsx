@@ -45,7 +45,7 @@ export const BoxShadows = (props: RenderCategoryProps) => {
 
                 if (value?.type === "layers") {
                   // Adding layers we had before
-                  layers.value = [...layers.value, ...value?.value];
+                  layers.value = [...layers.value, ...value.value];
                 }
                 addBoxShadow(layers, props.createBatchUpdate);
                 setIsOpen(true);
