@@ -17,26 +17,7 @@ import { parseBoxShadow } from "@webstudio-is/css-data";
 const label = "Box Shadow";
 
 export const BoxShadows = (props: RenderCategoryProps) => {
-  const { currentStyle } = props;
-  const value = currentStyle[property]?.value;
-
-  return (
-    <BoxShadowWrapper {...props}>
-      {value?.type === "layers" && value.value.length > 0 ? (
-        <BoxShadowLayersList layers={value} {...props} />
-      ) : (
-        <></>
-      )}
-    </BoxShadowWrapper>
-  );
-};
-
-const BoxShadowWrapper = (
-  props: RenderCategoryProps & {
-    children: JSX.Element;
-  }
-) => {
-  const { children, currentStyle, deleteProperty } = props;
+  const { currentStyle, deleteProperty } = props;
   const [isOpen, setIsOpen] = useState(true);
   const layersStyleSource = getStyleSource(currentStyle[property]);
   const value = currentStyle[property]?.value;
@@ -85,7 +66,9 @@ const BoxShadowWrapper = (
         </SectionTitle>
       }
     >
-      {children}
+      {value?.type === "layers" && value.value.length > 0 && (
+        <BoxShadowLayersList layers={value} {...props} />
+      )}
     </CollapsibleSectionBase>
   );
 };

@@ -82,11 +82,11 @@ export const BoxShadowContent = (
           <Tooltip
             variant="wrapped"
             content={
-              <Text variant="labelsTitleCase">
-                Paste a box-shadow, for example:
+              <Text>
+                Paste a box-shadow value, for example:
                 <br />
                 <br />
-                box-shadow(...)
+                0px 2px 5px 0px rgba(0, 0, 0, 0.2)
               </Text>
             }
           >
