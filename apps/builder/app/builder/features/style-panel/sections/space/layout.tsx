@@ -236,6 +236,7 @@ type LayoutProps = {
   onKeyDown?: ComponentProps<"div">["onKeyDown"];
   onClick?: ComponentProps<"div">["onClick"];
   onMouseLeave?: ComponentProps<"div">["onMouseLeave"];
+  onMouseMove?: ComponentProps<"div">["onMouseMove"];
   onHover: (hoverTarget: HoverTagret | undefined) => void;
   activeProperties?: ReadonlyArray<SpaceStyleProperty>;
   renderCell: (args: { property: SpaceStyleProperty }) => React.ReactNode;
@@ -250,6 +251,7 @@ export const SpaceLayout = forwardRef(
       onClick,
       onHover,
       onMouseLeave,
+      onMouseMove,
       activeProperties,
       renderCell,
     }: LayoutProps,
@@ -272,11 +274,12 @@ export const SpaceLayout = forwardRef(
 
     return (
       <Container
-        onClick={onClick}
         onFocus={onFocus}
         onBlur={onBlur}
+        onClick={onClick}
         onKeyDown={onKeyDown}
         onMouseLeave={onMouseLeave}
+        onMouseMove={onMouseMove}
         tabIndex={0}
         ref={ref}
       >
