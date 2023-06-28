@@ -20,7 +20,8 @@ const workspaceStyle = css({
   flexGrow: 1,
   background: theme.colors.backgroundCanvas,
   position: "relative",
-  overflow: "hidden",
+  // Prevent scrollIntoView from scrolling the whole page
+  overflow: "clip",
 });
 
 const canvasContainerStyle = css({

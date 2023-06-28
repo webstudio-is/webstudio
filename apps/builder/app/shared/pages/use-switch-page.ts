@@ -104,3 +104,31 @@ export const useSyncPageUrl = () => {
     );
   }, [isPreviewMode, navigate, page, pageHash]);
 };
+
+/**
+ * Synchronize pageHash with scrolling position
+ */
+export const useHashLinkSync = () => {
+  const pageHash = useStore(selectedPageHashStore);
+
+  useEffect(() => {
+    if (pageHash === "") {
+      // native browser behavior is to do nothing if hash is empty
+      // remix scroll to top, we emulate native
+      return;
+    }
+
+    let elementId = decodeURIComponent(pageHash);
+    if (elementId.startsWith("#")) {
+      elementId = elementId.slice(1);
+    }
+
+    // Try find element to scroll to
+    const element = document.getElementById(elementId);
+    if (element !== null) {
+      element.scrollIntoView();
+    }
+    // Remix scroll to top if element not found
+    // browser do nothing
+  }, [pageHash]);
+};

@@ -19,6 +19,7 @@ import {
 } from "@webstudio-is/react-sdk";
 import {
   instancesStore,
+  isPreviewModeStore,
   selectedInstanceRenderStateStore,
   selectedInstanceSelectorStore,
   selectedStyleSourceSelectorStore,
@@ -131,6 +132,7 @@ export const WebstudioComponentDev = ({
     selectedInstanceSelector,
     instanceSelector
   );
+  const isPreviewMode = useStore(isPreviewModeStore);
 
   // Scroll the selected instance into view when selected from navigator.
   useEffect(() => {
@@ -157,7 +159,8 @@ export const WebstudioComponentDev = ({
   });
 
   const readonlyProps =
-    instance.component === "Input" || instance.component === "Textarea"
+    isPreviewMode === false &&
+    (instance.component === "Input" || instance.component === "Textarea")
       ? { readOnly: true }
       : undefined;
 
