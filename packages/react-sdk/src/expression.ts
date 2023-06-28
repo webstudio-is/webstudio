@@ -122,7 +122,6 @@ export const executeExpression = (
         deps.add(identifier);
         return identifier;
       }
-
       throw Error(`Unknown dependency "${identifier}"`);
     });
     depsById.set(id, deps);
