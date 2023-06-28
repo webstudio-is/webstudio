@@ -209,6 +209,7 @@ export const SpaceSection = ({
         onBlur={focusProps.onBlur}
         onKeyDown={keyboardNavigation.handleKeyDown}
         onMouseMove={keyboardNavigation.handleMouseMove}
+        onMouseLeave={keyboardNavigation.handleMouseLeave}
         activeProperties={activeProperties}
         renderCell={({ property }) => (
           <Cell

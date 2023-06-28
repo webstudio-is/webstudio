@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useRef } from "react";
 import type { FocusEvent, KeyboardEvent } from "react";
 import type { SpaceStyleProperty } from "./types";
 
@@ -33,6 +33,8 @@ export const useKeyboardNavigation = ({
 
   const [isActive, setIsActive] = useState(false);
 
+  const isMouseInsideRef = useRef(false);
+
   const handleActiveChange = (value: boolean) => {
     setIsActive(value);
 
@@ -63,6 +65,11 @@ export const useKeyboardNavigation = ({
 
   const handleMouseMove = () => {
     handleActiveChange(false);
+    isMouseInsideRef.current = true;
+  };
+
+  const handleMouseLeave = () => {
+    isMouseInsideRef.current = false;
   };
 
   const handleKeyDown = (event: KeyboardEvent<HTMLElement>) => {
@@ -82,7 +89,7 @@ export const useKeyboardNavigation = ({
 
       handleActiveChange(true);
 
-      if (isActive) {
+      if (isActive || isMouseInsideRef.current) {
         setActiveProperty(
           (property) => movementMap[property][movementKeys.indexOf(key)]
         );
@@ -100,9 +107,9 @@ export const useKeyboardNavigation = ({
     activeProperty,
     isActive,
     handleHover,
-    handleMouseMove,
-
     // these are supposed to be put on the root element of the control
+    handleMouseMove,
+    handleMouseLeave,
     handleFocus,
     handleBlur,
     handleKeyDown,
