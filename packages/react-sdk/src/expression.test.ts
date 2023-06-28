@@ -53,46 +53,40 @@ test("transform identifiers", () => {
 test("execute expression", () => {
   const variables = new Map();
   const expressions = new Map([["exp1", "1 + 1"]]);
-  expect(
-    executeExpression("exp1", "$ws$dataSource$", variables, expressions)
-  ).toEqual(2);
+  expect(executeExpression("exp1", variables, expressions)).toEqual(2);
 });
 
 test("execute expression dependent on variables", () => {
   const variables = new Map([["var1", 5]]);
-  const expressions = new Map([["exp1", "$ws$dataSource$var1 + 1"]]);
-  expect(
-    executeExpression("exp1", "$ws$dataSource$", variables, expressions)
-  ).toEqual(6);
+  const expressions = new Map([["exp1", "var1 + 1"]]);
+  expect(executeExpression("exp1", variables, expressions)).toEqual(6);
 });
 
 test("execute expression dependent on other expressions", () => {
   const variables = new Map([["var1", 3]]);
   const expressions = new Map([
-    ["exp1", "$ws$dataSource$exp0 + 1"],
-    ["exp0", "$ws$dataSource$var1 + 2"],
+    ["exp1", "exp0 + 1"],
+    ["exp0", "var1 + 2"],
   ]);
-  expect(
-    executeExpression("exp1", "$ws$dataSource$", variables, expressions)
-  ).toEqual(6);
+  expect(executeExpression("exp1", variables, expressions)).toEqual(6);
 });
 
 test("forbid circular expressions", () => {
   const variables = new Map([["var1", 3]]);
   const expressions = new Map([
-    ["exp0", "$ws$dataSource$exp2 + 1"],
-    ["exp1", "$ws$dataSource$exp0 + 2"],
-    ["exp2", "$ws$dataSource$exp1 + 3"],
+    ["exp0", "exp2 + 1"],
+    ["exp1", "exp0 + 2"],
+    ["exp2", "exp1 + 3"],
   ]);
   expect(() => {
-    executeExpression("exp1", "$ws$dataSource$", variables, expressions);
-  }).toThrowError(/\$ws\$dataSource\$exp2 is not defined/);
+    executeExpression("exp1", variables, expressions);
+  }).toThrowError(/exp2 is not defined/);
 });
 
 test("make sure dependency exists", () => {
   const variables = new Map();
-  const expressions = new Map([["exp1", "$ws$dataSource$var1 + 1"]]);
+  const expressions = new Map([["exp1", "var1 + 1"]]);
   expect(() => {
-    executeExpression("exp1", "$ws$dataSource$", variables, expressions);
-  }).toThrowError(/Unknown dependency "\$ws\$dataSource\$var1"/);
+    executeExpression("exp1", variables, expressions);
+  }).toThrowError(/Unknown dependency "var1"/);
 });

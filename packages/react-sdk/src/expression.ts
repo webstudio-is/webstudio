@@ -111,7 +111,6 @@ export const validateExpression = (
 
 export const executeExpression = (
   expressionId: string,
-  variablePrefix: string,
   variables: Map<string, unknown>,
   expressions: Map<string, string>
 ) => {
@@ -119,13 +118,11 @@ export const executeExpression = (
   for (const [id, code] of expressions) {
     const deps = new Set<string>();
     validateExpression(code, (identifier) => {
-      if (identifier.startsWith(variablePrefix)) {
-        const depId = identifier.slice(variablePrefix.length);
-        if (variables.has(depId) || expressions.has(depId)) {
-          deps.add(depId);
-          return identifier;
-        }
+      if (variables.has(identifier) || expressions.has(identifier)) {
+        deps.add(identifier);
+        return identifier;
       }
+
       throw Error(`Unknown dependency "${identifier}"`);
     });
     depsById.set(id, deps);
@@ -147,7 +144,7 @@ export const executeExpression = (
   // execute chain of expressions
   let header = "";
   for (const [id, value] of variables) {
-    header += `const ${variablePrefix}${id} = ${JSON.stringify(value)};\n`;
+    header += `const ${id} = ${JSON.stringify(value)};\n`;
   }
   for (const id of sortedExpressions) {
     const code = expressions.get(id);
@@ -156,7 +153,7 @@ export const executeExpression = (
     }
     const executeFn = new Function(`${header}\nreturn (${code});`);
     const value = executeFn();
-    header += `const ${variablePrefix}${id} = ${JSON.stringify(value)};\n`;
+    header += `const ${id} = ${JSON.stringify(value)};\n`;
     if (id === expressionId) {
       return value;
     }
