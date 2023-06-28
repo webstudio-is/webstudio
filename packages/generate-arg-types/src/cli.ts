@@ -14,7 +14,7 @@ const options = {
   shouldRemoveUndefinedFromOptional: true,
 };
 
-const componentsGlobString = process.argv.pop();
+const componentsGlobString = process.argv.slice(2).pop();
 const tsConfigPath = path.resolve(process.cwd(), "./tsconfig.json");
 
 if (typeof componentsGlobString === "undefined") {

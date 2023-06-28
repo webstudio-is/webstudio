@@ -315,7 +315,10 @@ for (property in filteredProperties) {
   };
 }
 
-const targetDir = path.join(process.cwd(), process.argv.pop() as string);
+const targetDir = path.join(
+  process.cwd(),
+  process.argv.slice(2).pop() as string
+);
 
 if (!fs.existsSync(targetDir)) {
   fs.mkdirSync(targetDir, { recursive: true });

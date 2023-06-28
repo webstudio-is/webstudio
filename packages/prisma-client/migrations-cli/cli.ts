@@ -3,7 +3,7 @@
 import * as dotenv from "dotenv";
 import * as commands from "./commands";
 import * as logger from "./logger";
-import args from "./args";
+import * as args from "./args";
 import { UserError } from "./errors";
 
 const USAGE = `Usage: migrations <command> [--dev]
@@ -22,11 +22,11 @@ Arguments
 `;
 
 const main = async () => {
-  if (args.dev) {
+  if (args.values.dev) {
     dotenv.config();
   }
 
-  const command = args._[0];
+  const command = args.positionals[0];
 
   if (command === undefined) {
     logger.info(USAGE);
@@ -34,7 +34,7 @@ const main = async () => {
   }
 
   if (command === "create-schema") {
-    const name = args._[1];
+    const name = args.positionals[1];
     if (name === undefined) {
       throw new UserError(
         "Missing name for migration.\nUsage: migrations create-schema <name>"
@@ -45,7 +45,7 @@ const main = async () => {
   }
 
   if (command === "create-data") {
-    const name = args._[1];
+    const name = args.positionals[1];
     if (name === undefined) {
       throw new UserError(
         "Missing name for migration.\nUsage: migrations create-data <name>"
@@ -66,7 +66,7 @@ const main = async () => {
   }
 
   if (command === "resolve") {
-    const type = args._[1];
+    const type = args.positionals[1];
 
     if (type === undefined || (type !== "applied" && type !== "rolled-back")) {
       throw new UserError(
@@ -74,7 +74,7 @@ const main = async () => {
       );
     }
 
-    const name = args._[2];
+    const name = args.positionals[2];
     if (name === undefined) {
       throw new UserError(
         "Missing name of migration.\nUsage: migrations resolve <applied|rolled-back> <migration-name>"
