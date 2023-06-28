@@ -1,19 +1,12 @@
 import { json, type LoaderArgs } from "@remix-run/node";
-import type { Data } from "@webstudio-is/react-sdk";
 import { db as projectDb } from "@webstudio-is/project/index.server";
 import { sentryException } from "~/shared/sentry";
-import { loadProductionCanvasData } from "~/shared/db";
 import { createContext } from "~/shared/context.server";
-import { getUserById, type User } from "~/shared/db/user.server";
 
 export const loader = async ({
   params,
   request,
-}: LoaderArgs): Promise<
-  Data & { user: { email: User["email"] } | undefined } & {
-    projectDomain: string;
-  }
-> => {
+}: LoaderArgs): Promise<{ buildId: string | null }> => {
   try {
     const projectId = params.projectId;
 
@@ -24,22 +17,10 @@ export const loader = async ({
     const context = await createContext(request);
 
     const project = await projectDb.project.loadById(projectId, context);
-    const buildId = project.latestBuild?.buildId ?? undefined;
-
-    if (buildId === undefined) {
-      throw json("Project not yet published", { status: 400 });
-    }
-    const pagesCanvasData = await loadProductionCanvasData(buildId, context);
-
-    const user =
-      project === null || project.userId === null
-        ? undefined
-        : await getUserById(project.userId);
+    const buildId = project.latestBuild?.buildId ?? null;
 
     return {
-      ...pagesCanvasData,
-      user: user ? { email: user.email } : undefined,
-      projectDomain: project.domain,
+      buildId,
     };
   } catch (error) {
     // If a Response is thrown, we're rethrowing it for Remix to handle.
