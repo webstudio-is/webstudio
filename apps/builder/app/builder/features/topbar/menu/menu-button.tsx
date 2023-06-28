@@ -5,7 +5,7 @@ import {
   rawTheme,
   toggleItemStyle,
 } from "@webstudio-is/design-system";
-import { HamburgerMenuIcon, WebstudioIcon } from "@webstudio-is/icons";
+import { ChevronDownIcon, WebstudioIcon } from "@webstudio-is/icons";
 
 const size = rawTheme.spacing[9];
 
@@ -13,9 +13,17 @@ const containerTransformVar = cssVars.define("container-transform");
 
 const triggerStyle = css({
   position: "relative",
-  [containerTransformVar]: `translateZ(-${size}) rotateY(0deg)`,
-  "&[data-state=open], &:hover": {
-    [containerTransformVar]: `translateZ(-${size}) rotateY(-90deg)`,
+  span: {
+    transformOrigin: "bottom center",
+    transition: "all 150ms ease",
+    color: "$foregroundTextMoreSubtle",
+  },
+  "span:nth-child(1)": {
+    marginRight: "2px",
+  },
+  "&:hover span:nth-child(2), &[data-state=open] span:nth-child(2)": {
+    transform: "translateY(2px)",
+    color: "$foregroundContrastMain",
   },
 });
 
@@ -23,29 +31,16 @@ const innerContainerStyle = css({
   width: "100%",
   height: "100%",
   transformStyle: "preserve-3d",
-  transition: "transform 200ms",
-  transform: cssVars.use(containerTransformVar),
+  transition: "all 150ms ease",
+  display: "flex",
+  alignItems: "center",
+  justifyContent: "center",
 });
 
 const faceStyle = css({
   display: "flex",
   alignItems: "center",
   justifyContent: "center",
-  position: "absolute",
-  width: "100%",
-  height: "100%",
-  variants: {
-    front: {
-      true: {
-        transform: `rotateY(0deg) translateZ(${size})`,
-      },
-    },
-    back: {
-      true: {
-        transform: `rotateY(90deg) translateZ(${size})`,
-      },
-    },
-  },
 });
 
 export const MenuButton = () => {
@@ -55,11 +50,11 @@ export const MenuButton = () => {
       aria-label="Menu Button"
     >
       <span className={innerContainerStyle()}>
-        <span className={faceStyle({ front: true })}>
+        <span className={faceStyle()}>
           <WebstudioIcon width="22" height="22" />
         </span>
-        <span className={faceStyle({ back: true })}>
-          <HamburgerMenuIcon size={22} />
+        <span className={faceStyle()}>
+          <ChevronDownIcon width="16" />
         </span>
       </span>
     </DropdownMenuTrigger>
