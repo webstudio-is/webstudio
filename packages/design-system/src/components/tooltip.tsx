@@ -79,7 +79,9 @@ export const Tooltip = forwardRef(
             ref={ref}
             side="top"
             align="center"
-            sideOffset={5}
+            sideOffset={2}
+            collisionPadding={8}
+            arrowPadding={8}
             {...props}
           >
             {typeof content === "string" ? <Text>{content}</Text> : content}

@@ -115,22 +115,17 @@ export const Demo = ({
 );
 
 Demo.argTypes = {
-  variant: {
-    defaultValue: "normal",
-    control: { type: "inline-radio", options: smallToggleButtonVariants },
-  },
-  pressed: {
-    defaultValue: false,
-    control: { type: "boolean" },
-  },
-  disabled: {
-    defaultValue: false,
-    control: { type: "boolean" },
-  },
-  focused: {
-    defaultValue: false,
-    control: { type: "boolean" },
-  },
+  variant: { control: "inline-radio", options: smallToggleButtonVariants },
+  pressed: { control: "boolean" },
+  disabled: { control: "boolean" },
+  focused: { control: "boolean" },
+};
+
+Demo.args = {
+  variant: "normal",
+  pressed: false,
+  disabled: false,
+  focused: false,
 };
 
 Demo.storyName = "Small Toggle Button";

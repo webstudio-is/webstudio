@@ -1,22 +1,33 @@
-import { IconButtonWithMenu } from "@webstudio-is/design-system";
+import { toValue } from "@webstudio-is/css-engine";
+import {
+  DropdownMenu,
+  DropdownMenuArrow,
+  DropdownMenuContent,
+  DropdownMenuPortal,
+  DropdownMenuRadioGroup,
+  DropdownMenuRadioItem,
+  DropdownMenuTrigger,
+  Flex,
+  IconButton,
+  theme,
+} from "@webstudio-is/design-system";
 import type { ControlProps } from "../../style-sections";
 import { iconConfigs, styleConfigByName } from "../../shared/configs";
-import { toValue } from "@webstudio-is/css-engine";
-import { getStyleSource, type StyleValueInfo } from "../../shared/style-info";
+import { getStyleSource } from "../../shared/style-info";
+import { PropertyTooltip } from "../../shared/property-name";
 
 export const MenuControl = ({
+  currentStyle,
   property,
   items: passedItems,
-  styleValue,
   setProperty,
   deleteProperty,
 }: Pick<
   ControlProps,
-  "property" | "items" | "setProperty" | "deleteProperty"
-> & {
-  styleValue?: StyleValueInfo;
-}) => {
+  "currentStyle" | "property" | "items" | "setProperty" | "deleteProperty"
+>) => {
   const { label, items: defaultItems } = styleConfigByName(property);
+  const styleValue = currentStyle[property];
   const value = styleValue?.value;
   const styleSource = getStyleSource(styleValue);
 
@@ -37,19 +48,71 @@ export const MenuControl = ({
     .filter((item) => item.icon);
 
   return (
-    <IconButtonWithMenu
-      variant={styleSource}
-      icon={items.find(({ name }) => name === currentValue)?.icon}
-      label={label}
-      items={items}
-      value={String(currentValue)}
-      onChange={(value) => setValue({ type: "keyword", value })}
-      onHover={(value) =>
-        setValue({ type: "keyword", value }, { isEphemeral: true })
-      }
-      onReset={() => {
-        deleteProperty(property);
-      }}
-    />
+    <DropdownMenu modal={false}>
+      <DropdownMenuTrigger asChild>
+        <div>
+          <PropertyTooltip
+            title={label}
+            properties={[property]}
+            style={currentStyle}
+            onReset={() => deleteProperty(property)}
+          >
+            <IconButton
+              variant={styleSource}
+              onPointerDown={(event) => {
+                // tooltip reset property when click with altKey
+                if (event.altKey) {
+                  event.preventDefault();
+                }
+              }}
+            >
+              {items.find(({ name }) => name === currentValue)?.icon ?? <></>}
+            </IconButton>
+          </PropertyTooltip>
+        </div>
+      </DropdownMenuTrigger>
+      <DropdownMenuPortal>
+        <DropdownMenuContent sideOffset={4} collisionPadding={16} side="bottom">
+          <DropdownMenuRadioGroup
+            value={currentValue}
+            onValueChange={(value) => setValue({ type: "keyword", value })}
+          >
+            {items.map(({ name, label, icon }) => {
+              return (
+                <DropdownMenuRadioItem
+                  key={name}
+                  value={label}
+                  onFocus={() =>
+                    setValue(
+                      { type: "keyword", value: name },
+                      { isEphemeral: true }
+                    )
+                  }
+                  onBlur={() =>
+                    setValue(
+                      { type: "keyword", value: currentValue },
+                      { isEphemeral: true }
+                    )
+                  }
+                >
+                  <Flex
+                    css={{
+                      width: theme.spacing[11],
+                      height: theme.spacing[11],
+                    }}
+                    align="center"
+                    justify="center"
+                  >
+                    {icon}
+                  </Flex>
+                  {label}
+                </DropdownMenuRadioItem>
+              );
+            })}
+          </DropdownMenuRadioGroup>
+          <DropdownMenuArrow />
+        </DropdownMenuContent>
+      </DropdownMenuPortal>
+    </DropdownMenu>
   );
 };

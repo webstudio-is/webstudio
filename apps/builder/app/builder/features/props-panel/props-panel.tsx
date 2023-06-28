@@ -271,7 +271,7 @@ export const PropsPanelContainer = ({
         const dataSourceValues = new Map(dataSourceValuesStore.get());
         dataSourceValues.set(dataSourceId, update.value);
         dataSourceValuesStore.set(dataSourceValues);
-      } else if (prop) {
+      } else {
         store.createTransaction([propsStore], (props) => {
           props.set(update.id, update);
         });

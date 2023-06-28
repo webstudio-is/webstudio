@@ -7,13 +7,12 @@
   "type": "module",
   "scripts": {
     "typecheck": "tsc --noEmit --emitDeclarationOnly false",
-    "checks": "pnpm typecheck && pnpm lint",
+    "checks": "pnpm typecheck",
     "dev": "build-package --watch",
     "build": "build-package",
     "build:mdn-data": "tsx ./bin/mdn-data.ts ./src/__generated__ &&  prettier --write \"./src/__generated__/**/*.ts\"",
     "build:descriptions": "tsx ./bin/property-value-descriptions.ts",
     "dts": "tsc --project tsconfig.dts.json",
-    "lint": "eslint ./src --ext .ts,.tsx --max-warnings 0",
     "test": "NODE_OPTIONS=--experimental-vm-modules jest"
   },
   "devDependencies": {

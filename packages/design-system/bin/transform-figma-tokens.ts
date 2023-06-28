@@ -1,8 +1,8 @@
 /* eslint-disable no-console */
 
-import { execSync } from "child_process";
+import { readFileSync, writeFileSync, existsSync, rmSync } from "node:fs";
+import { execSync } from "node:child_process";
 import camelCase from "camelcase";
-import { readFileSync, writeFileSync, existsSync, rmSync } from "fs";
 import { z, type ZodType, type ZodTypeDef } from "zod";
 
 const SOURCE_FILE = "./src/__generated__/figma-design-tokens.json";

@@ -8,13 +8,12 @@
   "scripts": {
     "typecheck": "tsc --noEmit --emitDeclarationOnly false",
     "test": "NODE_OPTIONS=--experimental-vm-modules jest",
-    "checks": "pnpm typecheck && pnpm lint && pnpm test",
+    "checks": "pnpm typecheck && pnpm test",
     "dev": "build-package --watch",
     "build": "build-package",
     "dts": "tsc --project tsconfig.dts.json",
-    "lint": "eslint ./src --ext .ts,.tsx --max-warnings 0",
-    "storybook:run": "start-storybook -p 6006",
-    "storybook:build": "build-storybook"
+    "storybook:dev": "storybook dev -p 6006",
+    "storybook:build": "storybook build"
   },
   "dependencies": {
     "react": "^18.2.0",
@@ -22,7 +21,7 @@
   },
   "devDependencies": {
     "@jest/globals": "^29.3.1",
-    "@storybook/react": "^6.5.16",
+    "@storybook/react": "^7.0.23",
     "@types/react": "^18.0.35",
     "@webstudio-is/jest-config": "workspace:^",
     "@webstudio-is/scripts": "workspace:^",

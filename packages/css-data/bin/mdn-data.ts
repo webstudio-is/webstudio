@@ -1,4 +1,6 @@
 /* eslint-disable import/no-internal-modules */
+import * as fs from "node:fs";
+import * as path from "node:path";
 // eslint-disable-next-line @typescript-eslint/ban-ts-comment
 // @ts-ignore @todo add missing type defitions for definitionSyntax, type DSNode, type CssNode
 import { parse, definitionSyntax, type DSNode, type CssNode } from "css-tree";
@@ -7,8 +9,6 @@ import syntaxes from "mdn-data/css/syntaxes.json";
 import data from "css-tree/dist/data";
 import { popularityIndex } from "../src/popularity-index";
 import camelCase from "camelcase";
-import * as fs from "fs";
-import * as path from "path";
 import type {
   KeywordValue,
   StyleValue,

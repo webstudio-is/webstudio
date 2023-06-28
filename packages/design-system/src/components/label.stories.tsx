@@ -100,10 +100,13 @@ const LabelStory: ComponentStory<typeof Label> = ({
 export { LabelStory as Label };
 
 LabelStory.argTypes = {
-  children: { defaultValue: "Label text", control: "text" },
-  color: {
-    defaultValue: "default",
-    control: { type: "inline-radio", options: colors },
-  },
-  disabled: { defaultValue: false, control: "boolean" },
+  children: { control: "text" },
+  color: { control: "inline-radio", options: colors },
+  disabled: { control: "boolean" },
+};
+
+LabelStory.args = {
+  children: "Label text",
+  color: "default",
+  disabled: false,
 };

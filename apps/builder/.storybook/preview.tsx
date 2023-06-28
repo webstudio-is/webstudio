@@ -1,11 +1,12 @@
 import * as React from "react";
+import type { Preview } from "@storybook/react";
 import { TooltipProvider } from "@radix-ui/react-tooltip";
 import { theme, globalCss } from "@webstudio-is/design-system";
 import { setEnv } from "@webstudio-is/feature-flags";
 import "@webstudio-is/storybook-config/setup-fonts";
 import { decorators as globalDecorators } from "@webstudio-is/storybook-config/decorators";
 
-export const parameters = {
+const parameters = {
   actions: { argTypesRegex: "^on[A-Z].*" },
   controls: {
     matchers: {
@@ -23,7 +24,7 @@ const globalStyles = globalCss({
   },
 });
 
-export const decorators = [
+const decorators = [
   ...globalDecorators,
   (StoryFn: any) => {
     globalStyles();
@@ -35,3 +36,8 @@ export const decorators = [
     );
   },
 ];
+
+export default {
+  parameters,
+  decorators,
+} satisfies Preview;

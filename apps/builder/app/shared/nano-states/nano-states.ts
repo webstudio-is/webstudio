@@ -347,11 +347,6 @@ export const hoveredInstanceSelectorStore = atom<undefined | InstanceSelector>(
 
 export const isPreviewModeStore = atom<boolean>(false);
 export const useIsPreviewMode = () => useValue(isPreviewModeStore);
-export const useSetIsPreviewMode = (isPreviewMode: boolean) => {
-  useSyncInitializeOnce(() => {
-    isPreviewModeStore.set(isPreviewMode);
-  });
-};
 
 const authPermitStore = atom<AuthPermit>("view");
 export const useAuthPermit = () => useValue(authPermitStore);

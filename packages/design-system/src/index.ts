@@ -62,7 +62,6 @@ export {
   useEnhancedTooltipProps,
 } from "./components/enhanced-tooltip";
 export * from "./components/avatar";
-export * from "./components/icon-button-with-menu";
 export * from "./components/tree";
 
 // No need to align

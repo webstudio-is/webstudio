@@ -19,16 +19,19 @@ export const builderPath = ({
   pageId,
   authToken,
   pageHash,
+  mode,
 }: {
   projectId: string;
   pageId?: string;
   authToken?: string;
   pageHash?: string;
+  mode?: "preview";
 }) => {
   return `/builder/${projectId}${searchParams({
     pageId,
     authToken,
     pageHash,
+    mode,
   })}`;
 };
 

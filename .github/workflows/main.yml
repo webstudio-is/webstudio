@@ -35,11 +35,14 @@ jobs:
         with:
           path: |
             ./node_modules/.cache/prettier/.prettier-cache
+            ./node_modules/.cache/eslint/.eslint-cache
           key: checks-${{ github.sha }}
           restore-keys: checks-
 
       - run: echo ===SHA USED=== ${{ github.event.pull_request.head.sha || github.sha }} # todo: remove after check whats happening on main
 
       - run: pnpm prettier --cache --check "**/*.{js,md,ts,tsx}"
+
+      - run: pnpm eslint . --ext .ts,.tsx --max-warnings 0 --cache --cache-strategy=content --cache-location=node_modules/.cache/eslint/.eslint-cache
 
       - run: pnpm turbo run size-test build checks dts

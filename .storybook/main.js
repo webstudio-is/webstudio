@@ -13,10 +13,8 @@ module.exports = {
       { title: key, url, expanded: false },
     ])
   ),
-  features: {
-    storyStoreV7: true,
-  },
-  core: {
-    builder: "@storybook/builder-vite",
+  framework: {
+    name: "@storybook/react-vite",
+    options: {},
   },
 };
