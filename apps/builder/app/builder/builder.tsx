@@ -30,7 +30,6 @@ import {
   useSetBreakpoints,
   useSetDataSources,
   useSetInstances,
-  useSetIsPreviewMode,
   useSetPages,
   useSetProps,
   useSetStyles,
@@ -265,7 +264,7 @@ export const Builder = ({
     version: build.version,
   });
   useSharedShortcuts({ source: "builder" });
-  useSetIsPreviewMode(authPermit === "view");
+
   const [isPreviewMode] = useIsPreviewMode();
   usePublishShortcuts(publish);
   const { onRef: onRefReadCanvas, onTransitionEnd } = useReadCanvasRect();
