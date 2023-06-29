@@ -11,7 +11,7 @@ import { PropertyName } from "../../shared/property-name";
 import { getStyleSource } from "../../shared/style-info";
 import type { RenderCategoryProps } from "../../style-sections";
 import { BoxShadowLayers } from "./box-shadow-layers";
-import { addBoxShadow, property } from "./utils";
+import { addBoxShadow, property } from "./box-shadow-utils";
 
 const label = "Box Shadow";
 

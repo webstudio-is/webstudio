@@ -12,7 +12,7 @@ import {
   hideLayer,
   swapLayers,
   updateBoxShadowLayer,
-} from "./utils";
+} from "./box-shadow-utils";
 import { useMemo } from "react";
 
 type BoxShadowLayerProperies = RenderCategoryProps & {
