@@ -31,14 +31,7 @@ export const BoxShadowContent = (
 ) => {
   const [intermediateValue, setIntermediateValue] = useState<
     IntermediateValue | InvalidValue | undefined
-  >(
-    "onEditLayer" in props
-      ? {
-          type: "intermediate",
-          value: props.value,
-        }
-      : undefined
-  );
+  >();
 
   const handleChange = (value: string) => {
     setIntermediateValue({
