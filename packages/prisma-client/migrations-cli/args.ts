@@ -1,5 +1,14 @@
-import minimist from "minimist";
+import { parseArgs } from "node:util";
 
-export default minimist(process.argv.slice(2), {
-  boolean: ["dev", "force"],
-}) as { _: string[]; dev: boolean; force: boolean };
+export const { values, positionals } = parseArgs({
+  args: process.argv.slice(2),
+  allowPositionals: true,
+  options: {
+    dev: {
+      type: "boolean",
+    },
+    force: {
+      type: "boolean",
+    },
+  },
+});

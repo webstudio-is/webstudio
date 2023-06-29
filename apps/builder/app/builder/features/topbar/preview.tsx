@@ -16,6 +16,7 @@ export const PreviewButton = () => {
       value="preview"
       aria-label="Toggle Preview"
       variant="preview"
+      data-state={isPreviewMode ? "on" : "off"}
       onClick={() => setIsPreviewMode(isPreviewMode === false)}
       tabIndex={0}
     >

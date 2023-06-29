@@ -1,4 +1,3 @@
-import fetch from "isomorphic-fetch";
 import type { Data } from "@webstudio-is/react-sdk";
 
 export const loadProject = async ({

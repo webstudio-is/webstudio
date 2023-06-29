@@ -462,9 +462,6 @@ importers:
       openai:
         specifier: ^3.2.1
         version: 3.2.1
-      undici:
-        specifier: ^5.22.1
-        version: 5.22.1
       warn-once:
         specifier: ^0.1.1
         version: 0.1.1
@@ -947,17 +944,10 @@ importers:
         version: 5.1.3
 
   packages/http-client:
-    dependencies:
-      isomorphic-fetch:
-        specifier: ^3.0.0
-        version: 3.0.0
     devDependencies:
       '@jest/globals':
         specifier: ^29.3.1
         version: 29.3.1
-      '@types/isomorphic-fetch':
-        specifier: ^0.0.36
-        version: 0.0.36
       '@webstudio-is/jest-config':
         specifier: workspace:^
         version: link:../jest-config
@@ -1074,27 +1064,18 @@ importers:
       '@inquirer/confirm':
         specifier: ^0.0.25-alpha.0
         version: 0.0.25-alpha.0
-      '@types/minimist':
-        specifier: ^1.2.2
-        version: 1.2.2
       dotenv:
         specifier: ^16.0.0
         version: 16.0.1
       execa:
         specifier: ^6.1.0
         version: 6.1.0
-      minimist:
-        specifier: ^1.2.6
-        version: 1.2.6
       nanoid:
         specifier: ^3.3.6
         version: 3.3.6
       umzug:
         specifier: ^3.2.1
         version: 3.2.1
-      uuid:
-        specifier: ^9.0.0
-        version: 9.0.0
     devDependencies:
       '@prisma/client':
         specifier: ^4.14.0
@@ -1102,9 +1083,6 @@ importers:
       '@types/node':
         specifier: ^18.11.18
         version: 18.11.18
-      '@types/uuid':
-        specifier: ^8.3.4
-        version: 8.3.4
       '@webstudio-is/scripts':
         specifier: workspace:^
         version: link:../scripts
@@ -1236,6 +1214,9 @@ importers:
       html-tags:
         specifier: ^3.2.0
         version: 3.2.0
+      jsep:
+        specifier: ^1.3.8
+        version: 1.3.8
       nanoevents:
         specifier: ^7.0.1
         version: 7.0.1
@@ -1502,9 +1483,6 @@ importers:
       '@webstudio-is/prisma-client':
         specifier: workspace:^
         version: link:../prisma-client
-      node-fetch:
-        specifier: '2'
-        version: 2.6.9
       ts-custom-error:
         specifier: ^3.3.1
         version: 3.3.1
@@ -8379,10 +8357,6 @@ packages:
     resolution: {integrity: sha512-sjO5w5XZTF2zKepC9ZOv8e0K6n5JVuCjhD/9WRxsDTJTX7Oz3APlN5Arsio8cFj/zrHBqv8jIKBuUOVIr9ckUQ==}
     dev: true
 
-  /@types/isomorphic-fetch@0.0.36:
-    resolution: {integrity: sha512-ulw4d+vW1HKn4oErSmNN2HYEcHGq0N1C5exlrMM0CRqX1UUpFhGb5lwiom5j9KN3LBJJDLRmYIZz1ghm7FIzZw==}
-    dev: true
-
   /@types/istanbul-lib-coverage@2.0.4:
     resolution: {integrity: sha512-z/QT1XN4K4KYuslS23k62yDIDLwLFkzxOuMplDtObz0+y7VqJCaO2o+SPwHCvLFZh7xazvvoor2tA/hPz9ee7g==}
 
@@ -8453,10 +8427,6 @@ packages:
 
   /@types/minimatch@5.1.2:
     resolution: {integrity: sha512-K0VQKziLUWkVKiRVrx4a40iPaxTUefQmjtkQofBkYRcoaaL/8rhwDWww9qWbrgicNOgnpIsMxyNIUM4+n6dUIA==}
-
-  /@types/minimist@1.2.2:
-    resolution: {integrity: sha512-jhuKLIRrhvCPLqwPcx6INqmKeiA5EWrsCOPhrlFSrbrmU4ZMPjj5Ul/oLCMDO98XRUIwVm78xICz4EPCektzeQ==}
-    dev: false
 
   /@types/ms@0.7.31:
     resolution: {integrity: sha512-iiUgKzV9AuaEkZqkOLDIvlQiL6ltuZd9tGcW3gwpnX8JbuiuhFlEGmmFXEXkN50Cvq7Os88IY2v0dkDqXYWVgA==}
@@ -9486,6 +9456,7 @@ packages:
     engines: {node: '>=10.16.0'}
     dependencies:
       streamsearch: 1.1.0
+    dev: true
 
   /bytes-iec@3.1.1:
     resolution: {integrity: sha512-fey6+4jDK7TFtFg/klGSvNKJctyU7n2aQdnM+CO0ruLPbqqMOM8Tio0Pc+deqUeVKX1tL5DQep1zQ7+37aTAsA==}
@@ -12511,15 +12482,6 @@ packages:
     resolution: {integrity: sha512-WhB9zCku7EGTj/HQQRz5aUQEUeoQZH2bWcltRErOpymJ4boYE6wL9Tbr23krRPSZ+C5zqNSrSw+Cc7sZZ4b7vg==}
     engines: {node: '>=0.10.0'}
 
-  /isomorphic-fetch@3.0.0:
-    resolution: {integrity: sha512-qvUtwJ3j6qwsF3jLxkZ72qCgjMysPzDfeV240JHiGZsANBYd+EEuu35v7dfrJ9Up0Ak07D7GGSkGhCHTqg/5wA==}
-    dependencies:
-      node-fetch: 2.6.9
-      whatwg-fetch: 3.6.2
-    transitivePeerDependencies:
-      - encoding
-    dev: false
-
   /isomorphic-unfetch@3.1.0:
     resolution: {integrity: sha512-geDJjpoZ8N0kWexiwkX8F9NkTsXhetLPVbZFQ+JTW239QNOwvB0gniuR1Wc6f0AMTn7/mFGyXvHTifrCp/GH8Q==}
     dependencies:
@@ -13146,6 +13108,11 @@ packages:
       write-file-atomic: 2.4.3
     transitivePeerDependencies:
       - supports-color
+
+  /jsep@1.3.8:
+    resolution: {integrity: sha512-qofGylTGgYj9gZFsHuyWAN4jr35eJ66qJCK4eKDnldohuUoQFbU3iZn2zjvEbd9wOAhP9Wx5DsAAduTyE1PSWQ==}
+    engines: {node: '>= 10.16.0'}
+    dev: false
 
   /jsesc@0.5.0:
     resolution: {integrity: sha512-uZz5UnB7u4T9LvwmFqXii7pZSouaRPorGs5who1Ip7VO0wxanFvBL7GkM6dTHlgX+jhBApRetaWpnDabOeTcnA==}
@@ -14084,10 +14051,6 @@ packages:
     engines: {node: '>=10'}
     dependencies:
       brace-expansion: 2.0.1
-
-  /minimist@1.2.6:
-    resolution: {integrity: sha512-Jsjnk4bw3YJqYzbdyBiNsPWHPfO++UGG749Cxs6peCu5Xg4nrena6OVxOYxrQTqww0Jmwt+Ref8rggumkTLz9Q==}
-    dev: false
 
   /minimist@1.2.7:
     resolution: {integrity: sha512-bzfL1YUZsP41gmu/qjrEk0Q6i2ix/cVeAhbCbqH9u3zYutS1cLg00qhrD0M2MVdCcx4Sc0UpP2eBWo9rotpq6g==}
@@ -16450,6 +16413,7 @@ packages:
   /streamsearch@1.1.0:
     resolution: {integrity: sha512-Mcc5wHehp9aXz1ax6bZUyY5afg9u2rv5cqQI3mRrYkGC8rW2hM02jWuwjtL++LS5qinSyhj2QfLyNsuc+VsExg==}
     engines: {node: '>=10.0.0'}
+    dev: true
 
   /string-argv@0.3.1:
     resolution: {integrity: sha512-a1uQGz7IyVy9YwhqjZIZu1c8JO8dNIe20xBmSS6qu9kv++k3JGzCVmprbNN5Kn+BgzD5E7YYwg1CcjuJMRNsvg==}
@@ -17040,13 +17004,6 @@ packages:
       busboy: 1.6.0
     dev: true
 
-  /undici@5.22.1:
-    resolution: {integrity: sha512-Ji2IJhFXZY0x/0tVBXeQwgPlLWw13GVzpsWPQ3rV50IFMMof2I55PZZxtm4P6iNq+L5znYN9nSTAq0ZyE6lSJw==}
-    engines: {node: '>=14.0'}
-    dependencies:
-      busboy: 1.6.0
-    dev: false
-
   /unfetch@4.2.0:
     resolution: {integrity: sha512-F9p7yYCn6cIW9El1zi0HI6vqpeIvBsr3dSuRO6Xuppb1u5rXpCPmMvLSyECLhybr9isec8Ohl0hPekMVrEinDA==}
 
@@ -17502,10 +17459,6 @@ packages:
 
   /webpack-virtual-modules@0.4.6:
     resolution: {integrity: sha512-5tyDlKLqPfMqjT3Q9TAqf2YqjwmnUleZwzJi1A5qXnlBCdj2AtOJ6wAWdglTIDOPgOiOrXeBeFcsQ8+aGQ6QbA==}
-
-  /whatwg-fetch@3.6.2:
-    resolution: {integrity: sha512-bJlen0FcuU/0EMLrdbJ7zOnW6ITZLrZMIarMUVmdKtsGvZna8vxKYaexICWPfZ8qwf9fzNq+UEIZrnSaApt6RA==}
-    dev: false
 
   /whatwg-url@5.0.0:
     resolution: {integrity: sha512-saE57nupxk6v3HY35+jzBwYa0rKSy0XR8JSxZPwgLr7ys0IBzhGviA1/TUGJLmSVqs8pb9AnvICXEuOHLprYTw==}

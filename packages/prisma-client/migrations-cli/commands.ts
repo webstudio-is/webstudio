@@ -6,7 +6,7 @@ import { inspect } from "node:util";
 import * as prismaMigrations from "./prisma-migrations";
 import { umzug } from "./umzug";
 import * as logger from "./logger";
-import args from "./args";
+import * as args from "./args";
 import { UserError } from "./errors";
 
 const templateFilePath = path.join(
@@ -16,7 +16,7 @@ const templateFilePath = path.join(
 const lockfilePath = path.join(prismaMigrations.migrationsDir, "lockfile");
 
 const ensureUserWantsToContinue = async (defaultResult = false) => {
-  if (args.force) {
+  if (args.values.force) {
     return;
   }
 
@@ -237,7 +237,7 @@ ${schemaContent}`;
 
 const up = async () => {
   let locker: FileLocker | undefined;
-  if (args.dev) {
+  if (args.values.dev) {
     locker = new FileLocker({ path: lockfilePath });
   }
 
@@ -289,7 +289,7 @@ export const migrate = async () => {
     process.exit(0);
   }
 
-  if (args.dev) {
+  if (args.values.dev) {
     logger.info("You're about to apply the following migration(s):");
     logger.info("");
     for (const migration of status.pending) {

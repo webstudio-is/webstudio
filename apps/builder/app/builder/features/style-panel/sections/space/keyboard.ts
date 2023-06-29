@@ -1,5 +1,5 @@
-import { useState } from "react";
-import type { FocusEvent, KeyboardEvent, MouseEvent } from "react";
+import { useState, useRef } from "react";
+import type { FocusEvent, KeyboardEvent } from "react";
 import type { SpaceStyleProperty } from "./types";
 
 const movementKeys = [
@@ -28,45 +28,54 @@ export const useKeyboardNavigation = ({
   const [activeProperty, setActiveProperty] =
     useState<SpaceStyleProperty>("marginTop");
 
+  const [hoverActiveProperty, setHoverActiveProperty] =
+    useState<SpaceStyleProperty>("marginTop");
+
   const [isActive, setIsActive] = useState(false);
 
-  const hadnleFocus = (event: FocusEvent<HTMLElement>) => {
+  const isMouseInsideRef = useRef(false);
+
+  const handleActiveChange = (value: boolean) => {
+    setIsActive(value);
+
+    if (value === false) {
+      setActiveProperty(hoverActiveProperty);
+    }
+  };
+
+  const handleFocus = (event: FocusEvent<Element>) => {
     if (event.currentTarget.matches(":focus-visible")) {
-      setIsActive(true);
+      handleActiveChange(true);
     }
   };
 
   const handleBlur = () => {
-    setIsActive(false);
+    handleActiveChange(false);
   };
 
   const handleHover = (property: SpaceStyleProperty | undefined) => {
-    // switch to mouse navigation if user starts to use mouse
-    setIsActive(false);
-
     // keep active property in sync with hover (makes UX more intuitive)
     if (property) {
-      setActiveProperty(property);
+      setHoverActiveProperty(property);
+      if (isActive === false) {
+        setActiveProperty(property);
+      }
     }
   };
 
-  // switch back to keyboard navigation on mouse leave
-  const handleMouseLeave = (event: MouseEvent<HTMLElement>) => {
-    if (event.currentTarget.matches(":focus-visible")) {
-      setIsActive(true);
-    }
+  const handleMouseMove = () => {
+    handleActiveChange(false);
+    isMouseInsideRef.current = true;
+  };
+
+  const handleMouseLeave = () => {
+    isMouseInsideRef.current = false;
   };
 
   const handleKeyDown = (event: KeyboardEvent<HTMLElement>) => {
     // ignore events originating from popover input or something
     if (event.target !== event.currentTarget) {
       return;
-    }
-
-    // 1. handle transition from :focus to :focus-visible
-    // 2. switch from mouse navigation back to keyboard navigation if user starts to use keyboard
-    if (event.currentTarget.matches(":focus-visible")) {
-      setIsActive(true);
     }
 
     if (
@@ -77,12 +86,18 @@ export const useKeyboardNavigation = ({
     ) {
       event.preventDefault(); // prevent scrolling
       const key = event.key;
-      setActiveProperty(
-        (property) => movementMap[property][movementKeys.indexOf(key)]
-      );
+
+      handleActiveChange(true);
+
+      if (isActive || isMouseInsideRef.current) {
+        setActiveProperty(
+          (property) => movementMap[property][movementKeys.indexOf(key)]
+        );
+      }
     }
 
     if (event.key === "Enter") {
+      handleActiveChange(true);
       event.preventDefault(); // not sure we need this, but just in case
       onOpen(activeProperty);
     }
@@ -92,11 +107,11 @@ export const useKeyboardNavigation = ({
     activeProperty,
     isActive,
     handleHover,
-
     // these are supposed to be put on the root element of the control
-    hadnleFocus,
+    handleMouseMove,
+    handleMouseLeave,
+    handleFocus,
     handleBlur,
     handleKeyDown,
-    handleMouseLeave,
   };
 };

@@ -33,6 +33,10 @@ export const loadById = async (
     },
   });
 
+  if (data === null) {
+    throw new Error(`Project ${projectId} not found`);
+  }
+
   return Project.parse(data);
 };
 

@@ -1,4 +1,10 @@
-import { type ComponentProps, useState, useRef } from "react";
+import {
+  type ComponentProps,
+  type FocusEvent,
+  useState,
+  useRef,
+  type FocusEventHandler,
+} from "react";
 import type { RenderCategoryProps } from "../../style-sections";
 import { SpaceLayout } from "./layout";
 import { ValueText } from "./value-text";
@@ -10,6 +16,7 @@ import { SpaceTooltip } from "./tooltip";
 import { getStyleSource } from "../../shared/style-info";
 import { CollapsibleSection } from "../../shared/collapsible-section";
 import { useKeyboardNavigation } from "./keyboard";
+import { useDebouncedCallback } from "use-debounce";
 
 const Cell = ({
   isPopoverOpen,
@@ -75,6 +82,48 @@ const Cell = ({
   );
 };
 
+/**
+ * useFocusWithin does't work with popovers, implement it using debounce
+ */
+const useFocusWithinDebounce = (
+  props: {
+    onFocusWithin: FocusEventHandler<Element>;
+    onBlurWithin: FocusEventHandler<Element>;
+  },
+  timeout: number
+) => {
+  const isFocusedRef = useRef(false);
+
+  const handleFocusBlur = useDebouncedCallback(
+    (isFocus: boolean, event: FocusEvent<Element>) => {
+      if (isFocus && isFocusedRef.current === false) {
+        isFocusedRef.current = true;
+        props.onFocusWithin(event);
+        return;
+      }
+      if (isFocus === false && isFocusedRef.current === true) {
+        isFocusedRef.current = false;
+        props.onBlurWithin(event);
+      }
+    },
+    timeout
+  );
+
+  const handleFocus = (event: FocusEvent<Element>) => {
+    // ...event because we debounce handleFocusBlur, and react reuses events
+    handleFocusBlur(true, { ...event });
+  };
+
+  const handleBlur = (event: FocusEvent<Element>) => {
+    handleFocusBlur(false, event);
+  };
+
+  return {
+    onFocus: handleFocus,
+    onBlur: handleBlur,
+  };
+};
+
 export const SpaceSection = ({
   setProperty,
   deleteProperty,
@@ -109,6 +158,14 @@ export const SpaceSection = ({
     onOpen: setOpenProperty,
   });
 
+  const focusProps = useFocusWithinDebounce(
+    {
+      onFocusWithin: keyboardNavigation.handleFocus,
+      onBlurWithin: keyboardNavigation.handleBlur,
+    },
+    100
+  );
+
   // by deafult highlight hovered or scrubbed properties
   let activeProperties = scrubStatus.properties;
 
@@ -127,6 +184,10 @@ export const SpaceSection = ({
     keyboardNavigation.handleHover(target?.property);
   };
 
+  const activeProperty = keyboardNavigation.isActive
+    ? keyboardNavigation.activeProperty
+    : hoverTarget?.property;
+
   return (
     <CollapsibleSection
       label="Space"
@@ -144,9 +205,10 @@ export const SpaceSection = ({
           setOpenProperty(property);
         }}
         onHover={handleHover}
-        onFocus={keyboardNavigation.hadnleFocus}
-        onBlur={keyboardNavigation.handleBlur}
+        onFocus={focusProps.onFocus}
+        onBlur={focusProps.onBlur}
         onKeyDown={keyboardNavigation.handleKeyDown}
+        onMouseMove={keyboardNavigation.handleMouseMove}
         onMouseLeave={keyboardNavigation.handleMouseLeave}
         activeProperties={activeProperties}
         renderCell={({ property }) => (
@@ -168,7 +230,7 @@ export const SpaceSection = ({
             onHover={handleHover}
             property={property}
             scrubStatus={scrubStatus}
-            isActive={activeProperties.includes(property)}
+            isActive={activeProperty === property}
             currentStyle={currentStyle}
           />
         )}

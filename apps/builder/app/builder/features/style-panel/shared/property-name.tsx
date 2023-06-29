@@ -112,14 +112,12 @@ const TooltipContent = ({
   properties,
   style,
   onReset,
-  onClose,
 }: {
-  title: string;
+  title?: string;
   description?: React.ReactNode;
   properties: StyleProperty[];
   style: StyleInfo;
   onReset?: undefined | (() => void);
-  onClose: () => void;
 }) => {
   const breakpoints = useStore(breakpointsStore);
   const selectedBreakpoint = useStore(selectedBreakpointStore);
@@ -155,7 +153,7 @@ const TooltipContent = ({
 
   return (
     <Flex direction="column" gap="2" css={{ maxWidth: theme.spacing[28] }}>
-      <Text variant="titles">{title}</Text>
+      <Text variant="titles">{title ?? humanizeString(properties[0])}</Text>
       <ScrollArea>
         <Text
           variant="monoBold"
@@ -199,19 +197,66 @@ const TooltipContent = ({
             color="dark"
             prefix={<ResetIcon />}
             css={{ flexGrow: 1 }}
-            onMouseDown={(event) => {
-              // Prevent closing tooltip
-              event.preventDefault();
-            }}
-            onClickCapture={() => {
-              onReset();
-              onClose();
-            }}
+            onClick={onReset}
           >
             Reset value
           </Button>
         )}
     </Flex>
+  );
+};
+
+export const PropertyTooltip = ({
+  openWithClick = false,
+  title,
+  description,
+  properties,
+  style,
+  onReset,
+  children,
+}: {
+  openWithClick?: boolean;
+  title?: string;
+  description?: React.ReactNode;
+  properties: StyleProperty[];
+  style: StyleInfo;
+  onReset?: undefined | (() => void);
+  children: ReactElement;
+}) => {
+  const [isOpen, setIsOpen] = useState(false);
+  return (
+    <Tooltip
+      open={isOpen}
+      onOpenChange={setIsOpen}
+      // prevent closing tooltip on content click
+      onPointerDown={(event) => event.preventDefault()}
+      triggerProps={{
+        onClick: (event) => {
+          if (event.altKey) {
+            event.preventDefault();
+            onReset?.();
+            return;
+          }
+          if (openWithClick) {
+            setIsOpen(true);
+          }
+        },
+      }}
+      content={
+        <TooltipContent
+          title={title}
+          description={description}
+          properties={properties}
+          style={style}
+          onReset={() => {
+            onReset?.();
+            setIsOpen(false);
+          }}
+        />
+      }
+    >
+      {children}
+    </Tooltip>
   );
 };
 
@@ -234,43 +279,20 @@ const PropertyNameInternal = ({
   onReset,
   disabled,
 }: PropertyNameInternalProps) => {
-  const [isOpen, setIsOpen] = useState(false);
   // When we have multiple properties, they must be originating from the same source, so we can just use one.
   const property = properties[0];
 
   return (
     <Flex align="center">
-      <Tooltip
-        open={isOpen}
-        onOpenChange={setIsOpen}
-        content={
-          <TooltipContent
-            title={
-              title ??
-              (typeof label === "string" ? label : humanizeString(property))
-            }
-            description={description}
-            properties={properties}
-            style={style}
-            onReset={onReset}
-            onClose={() => {
-              setIsOpen(false);
-            }}
-          />
-        }
+      <PropertyTooltip
+        openWithClick={true}
+        title={title ?? (typeof label === "string" ? label : undefined)}
+        description={description}
+        properties={properties}
+        style={style}
+        onReset={onReset}
       >
-        <Flex
-          shrink
-          gap={1}
-          align="center"
-          onClick={(event) => {
-            if (event.altKey) {
-              onReset?.();
-              return;
-            }
-            setIsOpen(true);
-          }}
-        >
+        <Flex shrink gap={1} align="center">
           {typeof label === "string" && property ? (
             <Label
               color={
@@ -287,7 +309,7 @@ const PropertyNameInternal = ({
             label
           )}
         </Flex>
-      </Tooltip>
+      </PropertyTooltip>
     </Flex>
   );
 };
