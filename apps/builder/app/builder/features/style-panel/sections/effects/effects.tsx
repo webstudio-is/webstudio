@@ -63,6 +63,18 @@ export const EffectsSection = ({
           setProperty={setProperty}
           deleteProperty={deleteProperty}
         />
+        <PropertyName
+          label={"Blend Mode"}
+          properties={["mixBlendMode"]}
+          style={style}
+          onReset={() => deleteProperty("mixBlendMode")}
+        />
+        <SelectControl
+          property={"mixBlendMode"}
+          currentStyle={style}
+          setProperty={setProperty}
+          deleteProperty={deleteProperty}
+        />
       </Grid>
     </CollapsibleSection>
   );
