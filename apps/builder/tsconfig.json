@@ -1,5 +1,4 @@
 {
-  // Extends can't use node's resolution rn https://github.com/dividab/tsconfig-paths/issues/209#issuecomment-1177261091
   "extends": "../../packages/tsconfig/remix.json",
   "include": [
     "remix.env.d.ts",
@@ -8,10 +7,14 @@
     "../../@types/**/*.d.ts"
   ],
   "compilerOptions": {
-    "paths": { "~/*": ["app/*"] },
+    "paths": {
+      "~/*": ["app/*"]
+    },
     "baseUrl": ".",
     "rootDir": "./app",
     "declaration": false,
-    "declarationDir": null
+    "emitDeclarationOnly": false,
+    "declarationDir": null,
+    "noEmit": true
   }
 }

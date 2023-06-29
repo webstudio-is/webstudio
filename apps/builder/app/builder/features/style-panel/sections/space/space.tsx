@@ -27,12 +27,14 @@ const Cell = ({
   isActive,
   scrubStatus,
   currentStyle,
+  tooltipProperties,
 }: {
   isPopoverOpen: boolean;
   onPopoverClose: () => void;
   onChange: ComponentProps<typeof InputPopover>["onChange"];
   onHover: (target: HoverTagret | undefined) => void;
   property: SpaceStyleProperty;
+  tooltipProperties: SpaceStyleProperty[];
   isActive: boolean;
   scrubStatus: ReturnType<typeof useScrub>;
   currentStyle: RenderCategoryProps["currentStyle"];
@@ -58,7 +60,11 @@ const Cell = ({
         onClose={onPopoverClose}
       />
       {isActive && isPopoverOpen === false && scrubStatus.isActive === false ? (
-        <SpaceTooltip property={property} />
+        <SpaceTooltip
+          property={property}
+          properties={tooltipProperties}
+          style={currentStyle}
+        />
       ) : null}
       <ValueText
         css={{
@@ -168,10 +174,12 @@ export const SpaceSection = ({
 
   // by deafult highlight hovered or scrubbed properties
   let activeProperties = scrubStatus.properties;
+  let tooltipProperties = [...scrubStatus.properties];
 
   // if keyboard navigation is active, highlight its active property
   if (keyboardNavigation.isActive) {
     activeProperties = [keyboardNavigation.activeProperty];
+    tooltipProperties = [keyboardNavigation.activeProperty];
   }
 
   // if popover is open, highlight its property and hovered properties
@@ -179,7 +187,20 @@ export const SpaceSection = ({
     activeProperties = [openProperty, ...scrubStatus.properties];
   }
 
+  const handleHoverUndefined = useDebouncedCallback(() => {
+    setHoverTarget(undefined);
+    keyboardNavigation.handleHover(undefined);
+  }, 100);
+
   const handleHover = (target: HoverTagret | undefined) => {
+    if (target === undefined) {
+      // Debounce the mouseleave event to prevent delays when moving between cells.
+      // This resolves the issue where the tooltip content changes when repositioned (e.g., when alt/shift clicked),
+      // causing rapid mouseleave and mouseenter events in the space section.
+      handleHoverUndefined();
+      return;
+    }
+    handleHoverUndefined.cancel();
     setHoverTarget(target);
     keyboardNavigation.handleHover(target?.property);
   };
@@ -229,6 +250,7 @@ export const SpaceSection = ({
             }}
             onHover={handleHover}
             property={property}
+            tooltipProperties={tooltipProperties}
             scrubStatus={scrubStatus}
             isActive={activeProperty === property}
             currentStyle={currentStyle}

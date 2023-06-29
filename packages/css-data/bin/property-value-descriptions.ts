@@ -3,6 +3,7 @@ import * as fs from "node:fs";
 import * as path from "node:path";
 import type { CreateChatCompletionResponse } from "openai";
 import { keywordValues } from "../src/__generated__/keyword-values";
+import warnOnce from "warn-once";
 
 const propertiesPrompt = fs.readFileSync(
   path.join(process.cwd(), "bin", "prompts", "properties.prompt.md"),
@@ -71,6 +72,12 @@ const newPropertiesNames = Object.keys(keywordValues)
         typeof propertiesOverrides[property] !== "string")
   );
 
+let retries = 0;
+
+const backoff = (num: number) => {
+  return Math.floor(Math.pow(2, Math.min(num, 4)) * 1000);
+};
+
 for (let i = 0; i < newPropertiesNames.length; ) {
   const properties = newPropertiesNames.slice(i, i + batchSize);
 
@@ -85,9 +92,6 @@ for (let i = 0; i < newPropertiesNames.length; ) {
     continue;
   }
 
-  // eslint-disable-next-line @typescript-eslint/ban-ts-comment
-  // @ts-ignore Fix this else it'll complain that we cannot use top-level await.
-
   const result = await generate(
     propertiesPrompt.replace(
       "{properties}",
@@ -98,7 +102,13 @@ for (let i = 0; i < newPropertiesNames.length; ) {
   if (Array.isArray(result)) {
     // Retry
     if (result[0] === 429) {
-      console.log(`❌  Error: 429 ${result[1]}. Retrying...`);
+      console.log(
+        `❌  Error: 429 ${result[1]}. Retrying after sleep ${backoff(
+          retries
+        )}...`
+      );
+      await new Promise((resolve) => setTimeout(resolve, backoff(retries)));
+      retries++;
       continue;
     }
 
@@ -294,27 +304,30 @@ function writeFile(descriptions: Record<string, unknown>) {
 }
 
 async function generate(message: string): Promise<string | [number, string]> {
-  if (!process.env.OPENAI_KEY) {
+  const { OPENAI_ORG, OPENAI_KEY } = process.env;
+
+  if (OPENAI_KEY === undefined) {
     throw new Error("Missing OpenAI key (process.env.OPENAI_KEY)");
   }
 
-  if (
-    typeof process.env.OPENAI_ORG !== "string" ||
-    !process.env.OPENAI_ORG.startsWith("org-")
-  ) {
-    throw new Error(
+  const headers: HeadersInit = {
+    "Content-Type": "application/json",
+    Accept: "application/json",
+    Authorization: `Bearer ${process.env.OPENAI_KEY}`,
+  };
+
+  if (OPENAI_ORG?.startsWith("org-")) {
+    headers["OpenAI-Organization"] = OPENAI_ORG;
+  } else {
+    warnOnce(
+      true,
       "Missing OpenAI org (process.env.OPENAI_ORG) or invalid org"
     );
   }
 
   const response = await fetch("https://api.openai.com/v1/chat/completions", {
     method: "POST",
-    headers: {
-      "Content-Type": "application/json",
-      Accept: "application/json",
-      Authorization: `Bearer ${process.env.OPENAI_KEY}`,
-      "OpenAI-Organization": process.env.OPENAI_ORG,
-    },
+    headers,
     body: JSON.stringify({
       model: "gpt-3.5-turbo",
       messages: [{ role: "user", content: message }],

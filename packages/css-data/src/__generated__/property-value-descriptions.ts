@@ -323,12 +323,16 @@ export const propertiesGenerated = {
   overscrollBehaviorY: "overscrollBehaviorY",
   paddingBlockEnd: "paddingBlockEnd",
   paddingBlockStart: "paddingBlockStart",
-  paddingBottom: "paddingBottom",
+  paddingBottom:
+    "Defines the space between the content of an element and its bottom border. Can affect layout height.",
   paddingInlineEnd: "paddingInlineEnd",
   paddingInlineStart: "paddingInlineStart",
-  paddingLeft: "paddingLeft",
-  paddingRight: "paddingRight",
-  paddingTop: "paddingTop",
+  paddingLeft:
+    "Defines the space between the content of an element and its left border. Can affect layout width.",
+  paddingRight:
+    "Defines the space between the content of an element and its right border. Can affect layout width.",
+  paddingTop:
+    "Defines the space between the content of an element and its top border. Can affect layout height.",
   pageBreakAfter: "pageBreakAfter",
   pageBreakBefore: "pageBreakBefore",
   pageBreakInside: "Controls whether a page break occurs inside an element.",

@@ -1,14 +1,12 @@
-import {
-  styled,
-  Tooltip,
-  useEnhancedTooltipProps,
-} from "@webstudio-is/design-system";
+import { styled, useEnhancedTooltipProps } from "@webstudio-is/design-system";
 import type { SpaceStyleProperty } from "./types";
 import { useDebounce } from "use-debounce";
 import { useState } from "react";
+import { PropertyTooltip } from "../../shared/property-name";
+import type { StyleInfo } from "../../shared/style-info";
 
 // trigger is used only for positioning
-const Trigger = styled("div", {
+const PositionTrigger = styled("div", {
   position: "absolute",
   width: "100%",
   height: "100%",
@@ -17,32 +15,80 @@ const Trigger = styled("div", {
   left: 0,
 });
 
-const labels = {
-  paddingTop: "Padding Top",
-  paddingRight: "Padding Right",
-  paddingBottom: "Padding Bottom",
-  paddingLeft: "Padding Left",
-  marginTop: "Margin Top",
-  marginRight: "Margin Right",
-  marginBottom: "Margin Bottom",
-  marginLeft: "Margin Left",
-};
-
 const sides = {
   paddingTop: "top",
   paddingRight: "left",
-  paddingBottom: "top",
-  paddingLeft: "right",
+  paddingBottom: "bottom",
+  paddingLeft: "left",
   marginTop: "top",
   marginRight: "left",
-  marginBottom: "top",
+  marginBottom: "bottom",
   marginLeft: "right",
 } as const;
 
+const propertyContents: {
+  properties: SpaceStyleProperty[];
+  label: string;
+  description: string;
+}[] = [
+  // Padding
+  {
+    properties: ["paddingTop", "paddingBottom"],
+    label: "Vertical Padding",
+    description:
+      "Defines the space between the content of an element and its top and bottom border. Can affect layout height.",
+  },
+
+  {
+    properties: ["paddingLeft", "paddingRight"],
+    label: "Horizontal Padding",
+    description:
+      "Defines the space between the content of an element and its left and right border. Can affect layout width.",
+  },
+
+  {
+    properties: ["paddingTop", "paddingBottom", "paddingLeft", "paddingRight"],
+    label: "Padding",
+    description:
+      "Defines the space between the content of an element and its border. Can affect layout size.",
+  },
+  // Margin
+  {
+    properties: ["marginTop", "marginBottom"],
+    label: "Vertical Margin",
+    description: "Sets the margin at the top and bottom of an element.",
+  },
+
+  {
+    properties: ["marginLeft", "marginRight"],
+    label: "Horizontal Margin",
+    description: "Sets the margin at the left and right of an element.",
+  },
+
+  {
+    properties: ["marginTop", "marginBottom", "marginLeft", "marginRight"],
+    label: "Margin",
+    description: "Sets the margin of an element.",
+  },
+];
+
+const isSameUnorderedArrays = (arrA: string[], arrB: string[]) => {
+  if (arrA.length !== arrB.length) {
+    return false;
+  }
+
+  const union = new Set([...arrA, ...arrB]);
+  return union.size === arrA.length;
+};
+
 export const SpaceTooltip = ({
   property,
+  properties,
+  style,
 }: {
   property: SpaceStyleProperty;
+  properties: SpaceStyleProperty[];
+  style: StyleInfo;
 }) => {
   const { delayDuration } = useEnhancedTooltipProps();
   const [initialOpen, setInitialOpen] = useState(false);
@@ -51,15 +97,20 @@ export const SpaceTooltip = ({
   if (initialOpen === false) {
     setInitialOpen(true);
   }
+  const propertyContent = propertyContents.find((propertyContent) =>
+    isSameUnorderedArrays(propertyContent.properties, properties)
+  );
 
   return (
-    <Tooltip
+    <PropertyTooltip
+      properties={properties}
+      style={style}
+      title={propertyContent?.label}
+      description={propertyContent?.description}
       open={open}
-      content={labels[property]}
       side={sides[property]}
-      disableHoverableContent
     >
-      <Trigger />
-    </Tooltip>
+      <PositionTrigger />
+    </PropertyTooltip>
   );
 };
