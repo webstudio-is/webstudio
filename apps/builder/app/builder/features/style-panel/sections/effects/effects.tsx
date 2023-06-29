@@ -28,30 +28,6 @@ export const EffectsSection = ({
         }}
       >
         <PropertyName
-          label={styleConfigByName("cursor").label}
-          properties={["cursor"]}
-          style={style}
-          onReset={() => deleteProperty("cursor")}
-        />
-        <SelectControl
-          property={"cursor"}
-          currentStyle={style}
-          setProperty={setProperty}
-          deleteProperty={deleteProperty}
-        />
-        <PropertyName
-          label={styleConfigByName("pointerEvents").label}
-          properties={["pointerEvents"]}
-          style={style}
-          onReset={() => deleteProperty("pointerEvents")}
-        />
-        <SelectControl
-          property={"pointerEvents"}
-          currentStyle={style}
-          setProperty={setProperty}
-          deleteProperty={deleteProperty}
-        />
-        <PropertyName
           label={styleConfigByName("opacity").label}
           properties={["opacity"]}
           style={style}
@@ -71,6 +47,30 @@ export const EffectsSection = ({
         />
         <SelectControl
           property={"mixBlendMode"}
+          currentStyle={style}
+          setProperty={setProperty}
+          deleteProperty={deleteProperty}
+        />
+        <PropertyName
+          label={styleConfigByName("cursor").label}
+          properties={["cursor"]}
+          style={style}
+          onReset={() => deleteProperty("cursor")}
+        />
+        <SelectControl
+          property={"cursor"}
+          currentStyle={style}
+          setProperty={setProperty}
+          deleteProperty={deleteProperty}
+        />
+        <PropertyName
+          label={styleConfigByName("pointerEvents").label}
+          properties={["pointerEvents"]}
+          style={style}
+          onReset={() => deleteProperty("pointerEvents")}
+        />
+        <SelectControl
+          property={"pointerEvents"}
           currentStyle={style}
           setProperty={setProperty}
           deleteProperty={deleteProperty}
