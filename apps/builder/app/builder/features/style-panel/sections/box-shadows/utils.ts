@@ -1,4 +1,4 @@
-import type { LayersValue } from "@webstudio-is/css-data";
+import { parseBoxShadow, type LayersValue } from "@webstudio-is/css-data";
 import type { RenderCategoryProps } from "../../style-sections";
 import type { StyleInfo } from "../../shared/style-info";
 import type { CreateBatchUpdate } from "../../shared/use-style-data";
@@ -56,11 +56,26 @@ export const hideLayer = (
 };
 
 export const addBoxShadow = (
-  layers: LayersValue,
+  shadow: string,
+  style: StyleInfo,
   createBatchUpdate: RenderCategoryProps["createBatchUpdate"]
 ) => {
+  const parsedLayers = parseBoxShadow(shadow);
+  // Will never be invalid, just a TS guard.
+  if (parsedLayers.type === "invalid") {
+    return;
+  }
+
+  const layers = style[property]?.value;
+
+  // Initially its none, so we can just set it.
+  if (layers?.type === "layers") {
+    // Adding layers we had before
+    parsedLayers.value = [...parsedLayers.value, ...layers.value];
+  }
+
   const batch = createBatchUpdate();
-  batch.setProperty(property)(layers);
+  batch.setProperty(property)(parsedLayers);
   batch.publish();
 };
 

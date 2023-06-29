@@ -12,7 +12,6 @@ import { getStyleSource } from "../../shared/style-info";
 import type { RenderCategoryProps } from "../../style-sections";
 import { BoxShadowLayers } from "./box-shadow-layers";
 import { addBoxShadow, property } from "./utils";
-import { parseBoxShadow } from "@webstudio-is/css-data";
 
 const label = "Box Shadow";
 
@@ -35,19 +34,12 @@ export const BoxShadows = (props: RenderCategoryProps) => {
             <SectionTitleButton
               prefix={<PlusIcon />}
               onClick={() => {
-                const layers = parseBoxShadow(
-                  "0px 2px 5px 0px rgba(0, 0, 0, 0.2)"
+                addBoxShadow(
+                  // Just using some default shadow by default
+                  "0px 2px 5px 0px rgba(0, 0, 0, 0.2)",
+                  currentStyle,
+                  props.createBatchUpdate
                 );
-                // Will never be invalid.
-                if (layers.type === "invalid") {
-                  return;
-                }
-
-                if (value?.type === "layers") {
-                  // Adding layers we had before
-                  layers.value = [...layers.value, ...value.value];
-                }
-                addBoxShadow(layers, props.createBatchUpdate);
                 setIsOpen(true);
               }}
             />
