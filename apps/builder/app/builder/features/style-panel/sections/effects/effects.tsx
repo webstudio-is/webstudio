@@ -39,7 +39,18 @@ export const EffectsSection = ({
           setProperty={setProperty}
           deleteProperty={deleteProperty}
         />
-
+        <PropertyName
+          label={styleConfigByName("pointerEvents").label}
+          properties={["pointerEvents"]}
+          style={style}
+          onReset={() => deleteProperty("pointerEvents")}
+        />
+        <SelectControl
+          property={"pointerEvents"}
+          currentStyle={style}
+          setProperty={setProperty}
+          deleteProperty={deleteProperty}
+        />
         <PropertyName
           label={styleConfigByName("opacity").label}
           properties={["opacity"]}
