@@ -82,6 +82,7 @@ const ItemButton = styled("button", {
 });
 
 type Props = ComponentProps<typeof ItemButton> & {
+  id: string;
   index: number;
   nodrag?: boolean;
   hidden?: boolean;
@@ -125,6 +126,7 @@ export const CssValueListItem = forwardRef(
       active,
       nodrag,
       index,
+      id,
       "data-state": dataState,
       ...rest
     }: Props,
@@ -154,6 +156,7 @@ export const CssValueListItem = forwardRef(
           >
             <ItemButton
               ref={ref}
+              data-id={id}
               data-focused={focused}
               data-state={state ?? dataState}
               data-active={active}
@@ -206,12 +209,23 @@ export const CssValueListItem = forwardRef(
 
 CssValueListItem.displayName = "CssValueListItem";
 
-export const CssValueListArrowFocus = (props: { children: ReactNode }) => {
+export const CssValueListArrowFocus = ({
+  children,
+  dragItemId,
+}: {
+  children: ReactNode;
+  dragItemId?: string;
+}) => {
   return (
     <ArrowFocus
       render={({ handleKeyDown }) => (
         <Box
-          css={{ display: "contents" }}
+          css={{
+            display: "contents",
+            pointerEvents: dragItemId ? "none" : "auto",
+            // to make DnD work we have to disable scrolling using touch
+            touchAction: "none",
+          }}
           onKeyDown={(event) => {
             if (event.key === "ArrowUp" || event.key === "ArrowDown") {
               handleKeyDown(event, {
@@ -221,7 +235,7 @@ export const CssValueListArrowFocus = (props: { children: ReactNode }) => {
             }
           }}
         >
-          {props.children}
+          {children}
         </Box>
       )}
     />

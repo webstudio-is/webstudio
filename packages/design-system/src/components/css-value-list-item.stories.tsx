@@ -1,5 +1,8 @@
 import { css, styled, theme } from "../stitches.config";
-import { CssValueListItem } from "./css-value-list-item";
+import {
+  CssValueListArrowFocus,
+  CssValueListItem,
+} from "./css-value-list-item";
 import { Label, labelColors } from "./label";
 import { SmallToggleButton } from "./small-toggle-button";
 import {
@@ -15,9 +18,6 @@ import {
   FloatingPanelPopoverTrigger,
 } from "./floating-panel-popover";
 import { StorySection, StoryGrid } from "./storybook";
-import { ArrowFocus } from "./primitives/arrow-focus";
-import { Box } from "./box";
-import type { ReactNode } from "react";
 
 export default {
   component: CssValueListItem,
@@ -71,6 +71,7 @@ const ListItem = (props: {
       focused={props.focused}
       active={props.active}
       index={props.index}
+      id={String(props.index)}
       buttons={
         <>
           <SmallToggleButton
@@ -93,28 +94,6 @@ const ListItem = (props: {
   );
 };
 
-const ListItemsFocusWrap = (props: { children: ReactNode }) => {
-  return (
-    <ArrowFocus
-      render={({ handleKeyDown }) => (
-        <Box
-          css={{ display: "contents" }}
-          onKeyDown={(event) => {
-            if (event.key === "ArrowUp" || event.key === "ArrowDown") {
-              handleKeyDown(event, {
-                accept: (element) => {
-                  return element.getAttribute(LIST_ITEM_ATTRIBUTE) === "true";
-                },
-              });
-            }
-          }}
-        >
-          {props.children}
-        </Box>
-      )}
-    />
-  );
-};
 export const Declarative = (props: {
   hidden: boolean;
   focused: boolean;
@@ -128,6 +107,7 @@ export const Declarative = (props: {
         <FloatingPanelPopover>
           <FloatingPanelPopoverTrigger asChild>
             <CssValueListItem
+              id="0"
               index={0}
               label={
                 <Label disabled={props.hidden} color={props.labelColor}>
@@ -164,7 +144,7 @@ export const Declarative = (props: {
 
       <StorySection title="Overflows">
         <StoryGrid>
-          <ListItemsFocusWrap>
+          <>
             {labelColors.map((labelColor, index) => (
               <ListItem
                 key={labelColor}
@@ -177,13 +157,13 @@ export const Declarative = (props: {
                 label="Very long text, very long text"
               />
             ))}
-          </ListItemsFocusWrap>
+          </>
         </StoryGrid>
       </StorySection>
 
       <StorySection title="Variants">
         <StoryGrid>
-          <ListItemsFocusWrap>
+          <CssValueListArrowFocus>
             {labelColors.map((labelColor, index) => (
               <ListItem
                 key={labelColor}
@@ -219,13 +199,13 @@ export const Declarative = (props: {
                 focused={false}
               />
             ))}
-          </ListItemsFocusWrap>
+          </CssValueListArrowFocus>
         </StoryGrid>
       </StorySection>
 
       <StorySection title="Active">
         <StoryGrid>
-          <ListItemsFocusWrap>
+          <CssValueListArrowFocus>
             {labelColors.map((labelColor, index) => (
               <ListItem
                 key={labelColor}
@@ -261,7 +241,7 @@ export const Declarative = (props: {
                 focused={false}
               />
             ))}
-          </ListItemsFocusWrap>
+          </CssValueListArrowFocus>
         </StoryGrid>
       </StorySection>
     </Panel>

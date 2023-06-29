@@ -98,8 +98,8 @@ const Layer = (props: {
       }
     >
       <CssValueListItem
+        id={props.id}
         active={props.isHighlighted}
-        data-id={props.id}
         index={props.index}
         label={
           <Label truncate onReset={props.deleteLayer}>
@@ -203,7 +203,7 @@ export const BackgroundsSection = (props: RenderCategoryProps) => {
 
   const { items } = styleConfigByName("backgroundColor");
 
-  const layers = useMemo(
+  const sortableItems = useMemo(
     () =>
       Array.from(Array(layersCount), (_, index) => ({
         id: `${index}`,
@@ -213,7 +213,7 @@ export const BackgroundsSection = (props: RenderCategoryProps) => {
   );
 
   const { dragItemId, placementIndicator, sortableRefCallback } = useSortable({
-    items: layers,
+    items: sortableItems,
     onSort: (newIndex, oldIndex) => {
       swapLayers(newIndex, oldIndex, currentStyle, createBatchUpdate);
     },
@@ -228,18 +228,9 @@ export const BackgroundsSection = (props: RenderCategoryProps) => {
       category={props.category}
     >
       <Flex gap={1} direction="column">
-        <CssValueListArrowFocus>
-          <Flex
-            gap={1}
-            direction="column"
-            ref={sortableRefCallback}
-            css={{
-              pointerEvents: dragItemId ? "none" : "auto",
-              // to make DnD work we have to disable scrolling using touch
-              touchAction: "none",
-            }}
-          >
-            {layers.map((layer, index) => (
+        <CssValueListArrowFocus dragItemId={dragItemId}>
+          <Flex gap={1} direction="column" ref={sortableRefCallback}>
+            {sortableItems.map((layer, index) => (
               <Layer
                 id={layer.id}
                 index={index}

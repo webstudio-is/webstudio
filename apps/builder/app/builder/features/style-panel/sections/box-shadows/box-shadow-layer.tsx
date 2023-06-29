@@ -18,14 +18,16 @@ import { colord } from "colord";
 
 export const Layer = (
   props: Pick<RenderCategoryProps, "createBatchUpdate"> & {
+    id: string;
     index: number;
     layer: TupleValue;
+    isHighlighted: boolean;
     onLayerHide: (index: number) => void;
     onDeleteLayer: (index: number) => void;
     onEditLayer: (index: number, layers: LayersValue) => void;
   }
 ) => {
-  const { index, layer, onDeleteLayer, onLayerHide } = props;
+  const { index, id, layer, isHighlighted, onDeleteLayer, onLayerHide } = props;
   const [layerName, shadow] = useMemo(() => {
     let name = "";
     let shadow = "";
@@ -66,10 +68,11 @@ export const Layer = (
       }
     >
       <CssValueListItem
-        nodrag={true}
+        active={isHighlighted}
         label={<Label truncate>{layerName}</Label>}
         hidden={layer?.hidden}
         index={index}
+        id={id}
         buttons={
           <>
             <SmallToggleButton

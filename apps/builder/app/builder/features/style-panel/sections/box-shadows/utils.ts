@@ -1,7 +1,9 @@
-import type { LayersValue, StyleProperty } from "@webstudio-is/css-data";
+import type { LayersValue } from "@webstudio-is/css-data";
 import type { RenderCategoryProps } from "../../style-sections";
+import type { StyleInfo } from "../../shared/style-info";
+import type { CreateBatchUpdate } from "../../shared/use-style-data";
 
-export const property: StyleProperty = "boxShadow";
+export const property = "boxShadow";
 
 export const deleteLayer = (
   index: number,
@@ -79,6 +81,44 @@ export const updateBoxShadowLayer = (
   batch.setProperty(property)({
     type: "layers",
     value: newLayers,
+  });
+
+  batch.publish();
+};
+
+export const getLayerCount = (style: StyleInfo) => {
+  const value = style[property]?.value;
+  const layers = value?.type === "layers" ? value : undefined;
+  return layers?.value.length ?? 0;
+};
+
+export const getValue = (style: StyleInfo) => {
+  const value = style[property]?.value;
+  return value?.type === "layers" && value.value.length > 0 ? value : undefined;
+};
+
+export const swapLayers = (
+  newIndex: number,
+  oldIndex: number,
+  style: StyleInfo,
+  createBatchUpdate: CreateBatchUpdate
+) => {
+  const batch = createBatchUpdate();
+  const value = getValue(style);
+
+  if (value === undefined) {
+    return;
+  }
+
+  const newValue = [...value.value];
+
+  newValue.splice(oldIndex, 1);
+
+  newValue.splice(newIndex, 0, value.value[oldIndex]);
+
+  batch.setProperty(property)({
+    ...value,
+    value: newValue,
   });
 
   batch.publish();

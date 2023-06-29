@@ -10,7 +10,7 @@ import { getDots } from "../../shared/collapsible-section";
 import { PropertyName } from "../../shared/property-name";
 import { getStyleSource } from "../../shared/style-info";
 import type { RenderCategoryProps } from "../../style-sections";
-import { BoxShadowLayersList } from "./box-shadow-list";
+import { BoxShadowLayers } from "./box-shadow-layers";
 import { addBoxShadow, property } from "./utils";
 import { parseBoxShadow } from "@webstudio-is/css-data";
 
@@ -67,7 +67,7 @@ export const BoxShadows = (props: RenderCategoryProps) => {
       }
     >
       {value?.type === "layers" && value.value.length > 0 && (
-        <BoxShadowLayersList layers={value} {...props} />
+        <BoxShadowLayers layers={value} {...props} />
       )}
     </CollapsibleSectionBase>
   );
