@@ -12,9 +12,10 @@ import {
   SectionTitleButton,
   SectionTitleLabel,
   SmallIconButton,
+  SmallToggleButton,
   theme,
+  useSortable,
 } from "@webstudio-is/design-system";
-import { SmallToggleButton } from "@webstudio-is/design-system";
 import {
   EyeconOpenIcon,
   EyeconClosedIcon,
@@ -41,7 +42,6 @@ import {
 } from "./background-layers";
 import { BackgroundContent } from "./background-content";
 import { getLayerName, LayerThumbnail } from "./background-thumbnail";
-import { useSortable } from "./use-sortable";
 import { useMemo } from "react";
 import type { RgbValue, StyleProperty } from "@webstudio-is/css-data";
 import {
