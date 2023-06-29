@@ -100,7 +100,7 @@ export const toValue = (
 
   if (value.type === "tuple") {
     if (value.hidden) {
-      // We assume that property is background-image and use this to hide background layers
+      // We assume that property is box-shadow and use this to hide box-shadow layers
       // In the future we might want to have a more generic way to hide values
       // i.e. have knowledge about property-name, as none is property specific
       return "none";
