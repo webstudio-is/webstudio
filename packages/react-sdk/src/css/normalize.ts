@@ -124,8 +124,16 @@ export const body = [
     property: "fontFamily",
     value: {
       type: "keyword",
-      value: `system-ui, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif, 'Apple Color Emoji', 'Segoe UI Emoji'`,
+      value: "Arial, sans-serif",
     },
+  },
+  {
+    property: "fontSize",
+    value: { type: "unit", unit: "px", value: 16 },
+  },
+  {
+    property: "lineHeight",
+    value: { type: "unit", unit: "number", value: 1.2 },
   },
   boxSizing,
   ...borders,
