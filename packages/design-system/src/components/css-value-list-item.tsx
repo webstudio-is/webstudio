@@ -4,12 +4,17 @@ import {
   forwardRef,
   Children,
   useMemo,
+  type ReactNode,
 } from "react";
 import { styled } from "../stitches.config";
 import { Flex } from "./flex";
+import { Box } from "./box";
 import { theme } from "../stitches.config";
 import { DragHandleIcon } from "@webstudio-is/icons";
 import { ArrowFocus } from "./primitives/arrow-focus";
+
+const LIST_ITEM_ATTRIBUTE = "data-list-item";
+const listItemAttributes = { [LIST_ITEM_ATTRIBUTE]: true };
 
 const DragHandleIconStyled = styled(DragHandleIcon, {
   visibility: "hidden",
@@ -77,6 +82,7 @@ const ItemButton = styled("button", {
 });
 
 type Props = ComponentProps<typeof ItemButton> & {
+  index: number;
   nodrag?: boolean;
   hidden?: boolean;
   label: React.ReactElement;
@@ -118,6 +124,7 @@ export const CssValueListItem = forwardRef(
       state,
       active,
       nodrag,
+      index,
       "data-state": dataState,
       ...rest
     }: Props,
@@ -150,6 +157,8 @@ export const CssValueListItem = forwardRef(
               data-focused={focused}
               data-state={state ?? dataState}
               data-active={active}
+              tabIndex={index === 0 ? 0 : -1}
+              {...listItemAttributes}
               {...rest}
               css={{
                 "&:hover, &[data-active=true]": {
@@ -196,3 +205,25 @@ export const CssValueListItem = forwardRef(
 );
 
 CssValueListItem.displayName = "CssValueListItem";
+
+export const CssValueListItemsArrowFocus = (props: { children: ReactNode }) => {
+  return (
+    <ArrowFocus
+      render={({ handleKeyDown }) => (
+        <Box
+          css={{ display: "contents" }}
+          onKeyDown={(event) => {
+            if (event.key === "ArrowUp" || event.key === "ArrowDown") {
+              handleKeyDown(event, {
+                accept: (element) =>
+                  element.getAttribute(LIST_ITEM_ATTRIBUTE) === "true",
+              });
+            }
+          }}
+        >
+          {props.children}
+        </Box>
+      )}
+    />
+  );
+};

@@ -54,7 +54,7 @@ const ListItem = (props: {
   active: boolean;
   focused: undefined | boolean;
   label?: React.ReactNode;
-  tabIndex?: -1 | 0;
+  index: number;
 }) => {
   const [pressed, onPressedChange] = React.useState(false);
 
@@ -70,7 +70,7 @@ const ListItem = (props: {
       state={props.state}
       focused={props.focused}
       active={props.active}
-      tabIndex={props.tabIndex ?? 0}
+      index={props.index}
       buttons={
         <>
           <SmallToggleButton
@@ -128,6 +128,7 @@ export const Declarative = (props: {
         <FloatingPanelPopover>
           <FloatingPanelPopoverTrigger asChild>
             <CssValueListItem
+              index={0}
               label={
                 <Label disabled={props.hidden} color={props.labelColor}>
                   Image
@@ -167,7 +168,7 @@ export const Declarative = (props: {
             {labelColors.map((labelColor, index) => (
               <ListItem
                 key={labelColor}
-                tabIndex={index === 0 ? 0 : -1}
+                index={index}
                 hidden={false}
                 active={false}
                 labelColor={labelColor}
@@ -186,7 +187,7 @@ export const Declarative = (props: {
             {labelColors.map((labelColor, index) => (
               <ListItem
                 key={labelColor}
-                tabIndex={index === 0 ? 0 : -1}
+                index={index}
                 hidden={false}
                 active={false}
                 labelColor={labelColor}
@@ -198,7 +199,7 @@ export const Declarative = (props: {
             {labelColors.map((labelColor) => (
               <ListItem
                 key={labelColor}
-                tabIndex={-1}
+                index={-1}
                 hidden={true}
                 active={false}
                 labelColor={labelColor}
@@ -207,10 +208,10 @@ export const Declarative = (props: {
               />
             ))}
 
-            {labelColors.map((labelColor) => (
+            {labelColors.map((labelColor, index) => (
               <ListItem
                 key={labelColor}
-                tabIndex={-1}
+                index={index}
                 hidden={false}
                 active={false}
                 labelColor={labelColor}
@@ -228,7 +229,7 @@ export const Declarative = (props: {
             {labelColors.map((labelColor, index) => (
               <ListItem
                 key={labelColor}
-                tabIndex={index === 0 ? 0 : -1}
+                index={index}
                 hidden={false}
                 active={true}
                 labelColor={labelColor}
@@ -237,10 +238,10 @@ export const Declarative = (props: {
               />
             ))}
 
-            {labelColors.map((labelColor) => (
+            {labelColors.map((labelColor, index) => (
               <ListItem
                 key={labelColor}
-                tabIndex={-1}
+                index={index}
                 hidden={true}
                 active={true}
                 labelColor={labelColor}
@@ -249,10 +250,10 @@ export const Declarative = (props: {
               />
             ))}
 
-            {labelColors.map((labelColor) => (
+            {labelColors.map((labelColor, index) => (
               <ListItem
                 key={labelColor}
-                tabIndex={-1}
+                index={index}
                 hidden={false}
                 active={true}
                 labelColor={labelColor}

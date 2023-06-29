@@ -69,6 +69,7 @@ export const Layer = (
         nodrag={true}
         label={<Label truncate>{layerName}</Label>}
         hidden={layer?.hidden}
+        index={index}
         buttons={
           <>
             <SmallToggleButton
