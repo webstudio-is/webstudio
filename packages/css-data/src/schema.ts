@@ -115,7 +115,7 @@ export const TupleValue = z.object({
 
 export type TupleValue = z.infer<typeof TupleValue>;
 
-export const LayerValueItem = z.union([
+const LayerValueItem = z.union([
   UnitValue,
   KeywordValue,
   UnparsedValue,
