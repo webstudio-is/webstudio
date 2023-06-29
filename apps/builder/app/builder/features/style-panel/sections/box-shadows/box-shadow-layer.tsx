@@ -19,8 +19,8 @@ import { toValue } from "@webstudio-is/css-engine";
 
 const useLayer = (layer: TupleValue) => {
   return useMemo(() => {
-    let name = [];
-    let shadow = [];
+    const name = [];
+    const shadow = [];
     for (const item of Object.values(layer.value)) {
       if (item.type === "unit") {
         const value = toValue(item);
