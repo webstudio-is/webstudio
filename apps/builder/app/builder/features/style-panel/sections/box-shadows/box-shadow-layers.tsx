@@ -68,7 +68,7 @@ export const BoxShadowLayers = ({
               id={id}
               index={index}
               layer={layer}
-              isHighlighted={dragItemId == id}
+              isHighlighted={dragItemId === id}
               onLayerHide={handleHideLayer}
               onDeleteLayer={handleDeleteLayer}
               createBatchUpdate={createBatchUpdate}
