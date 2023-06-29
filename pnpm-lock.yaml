@@ -1214,6 +1214,9 @@ importers:
       html-tags:
         specifier: ^3.2.0
         version: 3.2.0
+      jsep:
+        specifier: ^1.3.8
+        version: 1.3.8
       nanoevents:
         specifier: ^7.0.1
         version: 7.0.1
@@ -13105,6 +13108,11 @@ packages:
       write-file-atomic: 2.4.3
     transitivePeerDependencies:
       - supports-color
+
+  /jsep@1.3.8:
+    resolution: {integrity: sha512-qofGylTGgYj9gZFsHuyWAN4jr35eJ66qJCK4eKDnldohuUoQFbU3iZn2zjvEbd9wOAhP9Wx5DsAAduTyE1PSWQ==}
+    engines: {node: '>= 10.16.0'}
+    dev: false
 
   /jsesc@0.5.0:
     resolution: {integrity: sha512-uZz5UnB7u4T9LvwmFqXii7pZSouaRPorGs5who1Ip7VO0wxanFvBL7GkM6dTHlgX+jhBApRetaWpnDabOeTcnA==}
