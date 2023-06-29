@@ -124,7 +124,7 @@ export const body = [
     property: "fontFamily",
     value: {
       type: "keyword",
-      value: `system-ui, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif, 'Apple Color Emoji', 'Segoe UI Emoji'`,
+      value: "Arial, sans-serif",
     },
   },
   {
