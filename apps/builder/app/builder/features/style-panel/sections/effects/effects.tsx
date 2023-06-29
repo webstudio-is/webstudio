@@ -75,6 +75,18 @@ export const EffectsSection = ({
           setProperty={setProperty}
           deleteProperty={deleteProperty}
         />
+        <PropertyName
+          label={styleConfigByName("userSelect").label}
+          properties={["userSelect"]}
+          style={style}
+          onReset={() => deleteProperty("userSelect")}
+        />
+        <SelectControl
+          property={"userSelect"}
+          currentStyle={style}
+          setProperty={setProperty}
+          deleteProperty={deleteProperty}
+        />
       </Grid>
     </CollapsibleSection>
   );
