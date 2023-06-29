@@ -1,23 +1,18 @@
 import type { ComponentMeta } from "@storybook/react";
 import { type ComponentProps, useState } from "react";
 import { parseCssValue } from "@webstudio-is/css-data";
-import { SpaceLayout } from "./layout";
+import { SpaceLayout } from "../space/layout";
 import { ValueText as ValueTextComponent } from "./value-text";
 
 export const ValueText = (
   args: Pick<ComponentProps<typeof ValueTextComponent>, "source" | "value">
 ) => {
-  const [hovered, setHovered] = useState<{ property: string }>();
+  const [_hovered, setHovered] = useState<{ property: string }>();
   return (
     <SpaceLayout
       onHover={setHovered}
       onClick={() => null}
-      renderCell={({ property }) => (
-        <ValueTextComponent
-          isActive={property === hovered?.property}
-          {...args}
-        />
-      )}
+      renderCell={({ property }) => <ValueTextComponent {...args} />}
     />
   );
 };

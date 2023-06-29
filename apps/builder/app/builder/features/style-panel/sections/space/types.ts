@@ -13,7 +13,7 @@ export const spacePropertiesNames = [
 
 export type SpaceStyleProperty = (typeof spacePropertiesNames)[number];
 
-export type HoverTagret = {
+export type HoverTarget = {
   property: SpaceStyleProperty;
   element: SVGElement | HTMLElement;
 };

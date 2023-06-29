@@ -1,7 +1,7 @@
 import { styled, useId } from "@webstudio-is/design-system";
 import { forwardRef } from "react";
 import type { ComponentProps, Ref } from "react";
-import type { HoverTagret, SpaceStyleProperty } from "./types";
+import type { HoverTarget, SpaceStyleProperty } from "./types";
 import { spacePropertiesNames } from "./types";
 import { theme } from "@webstudio-is/design-system";
 
@@ -160,6 +160,7 @@ const Cell = styled("div", {
   alignItems: "center",
   justifyContent: "center",
   maxWidth: "100%",
+  padding: theme.spacing[2],
   variants: {
     property: {
       marginTop: { gridColumn: "2 / 5", gridRow: "1" },
@@ -237,7 +238,7 @@ type LayoutProps = {
   onClick?: ComponentProps<"div">["onClick"];
   onMouseLeave?: ComponentProps<"div">["onMouseLeave"];
   onMouseMove?: ComponentProps<"div">["onMouseMove"];
-  onHover: (hoverTarget: HoverTagret | undefined) => void;
+  onHover: (hoverTarget: HoverTarget | undefined) => void;
   activeProperties?: ReadonlyArray<SpaceStyleProperty>;
   renderCell: (args: { property: SpaceStyleProperty }) => React.ReactNode;
 };
