@@ -2,7 +2,6 @@
 import * as fs from "node:fs";
 import * as path from "node:path";
 import type { CreateChatCompletionResponse } from "openai";
-import { fetch } from "undici";
 import { keywordValues } from "../src/__generated__/keyword-values";
 
 const propertiesPrompt = fs.readFileSync(
