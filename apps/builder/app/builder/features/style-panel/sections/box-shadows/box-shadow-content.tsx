@@ -67,13 +67,14 @@ export const BoxShadowContent = (props: BoxShadowContentProps) => {
     <Flex
       direction="column"
       css={{
-        px: theme.spacing[9],
-        py: theme.spacing[9],
+        px: theme.spacing[5],
+        py: theme.spacing[5],
         gap: theme.spacing[3],
+        minWidth: theme.spacing[30],
       }}
     >
       <Label>
-        <Flex align={"center"} gap={2}>
+        <Flex align={"center"} gap={1}>
           Code
           <Tooltip
             variant="wrapped"

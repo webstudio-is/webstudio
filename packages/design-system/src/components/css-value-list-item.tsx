@@ -73,6 +73,7 @@ const ItemButton = styled("button", {
   variants: {
     hidden: {
       true: {
+        opacity: 0.2,
         [`& ${ThumbHolder}`]: {
           opacity: 0.2,
         },
@@ -127,6 +128,7 @@ export const CssValueListItem = forwardRef(
       nodrag,
       index,
       id,
+      hidden,
       "data-state": dataState,
       ...rest
     }: Props,
@@ -163,6 +165,7 @@ export const CssValueListItem = forwardRef(
               tabIndex={index === 0 ? 0 : -1}
               {...listItemAttributes}
               {...rest}
+              hidden={hidden}
               css={{
                 "&:hover, &[data-active=true]": {
                   [`& ${DragHandleIconStyled}`]: {
@@ -170,6 +173,7 @@ export const CssValueListItem = forwardRef(
                   },
                 },
               }}
+              disabled={hidden ?? true}
             >
               <DragHandleIconStyled />
 
