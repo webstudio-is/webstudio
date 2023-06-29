@@ -15,6 +15,34 @@ import { FloatingPanel } from "~/builder/shared/floating-panel";
 import { BoxShadowContent } from "./box-shadow-content";
 import type { RenderCategoryProps } from "../../style-sections";
 import { colord } from "colord";
+import { toValue } from "@webstudio-is/css-engine";
+
+const useLayer = (layer: TupleValue) => {
+  return useMemo(() => {
+    let name = [];
+    let shadow = [];
+    for (const item of Object.values(layer.value)) {
+      if (item.type === "unit") {
+        const value = toValue(item);
+        name.push(value);
+        shadow.push(value);
+      }
+
+      if (item.type === "rgb") {
+        shadow.push(toValue(item));
+      }
+
+      if (item.type === "keyword") {
+        if (colord(item.value).isValid() === false) {
+          name.push(item.value);
+        }
+        shadow.push(item.value);
+      }
+    }
+
+    return [name.join(" "), shadow.join(" ")];
+  }, [layer]);
+};
 
 export const Layer = (
   props: Pick<RenderCategoryProps, "createBatchUpdate"> & {
@@ -28,32 +56,7 @@ export const Layer = (
   }
 ) => {
   const { index, id, layer, isHighlighted, onDeleteLayer, onLayerHide } = props;
-  const [layerName, shadow] = useMemo(() => {
-    let name = "";
-    let shadow = "";
-    for (const item of Object.values(layer.value)) {
-      if (item.type === "unit") {
-        name +=
-          item.unit === "number"
-            ? ` ${item.value}`
-            : ` ${item.value}${item.unit}`;
-        shadow = name;
-      }
-
-      if (item.type === "rgb") {
-        shadow = `${name} rgba(${item.r}, ${item.g}, ${item.b}, ${item.alpha})`;
-      }
-
-      if (item.type === "keyword") {
-        if (colord(item.value).isValid() === false) {
-          name += ` ${item.value}`;
-        }
-        shadow += ` ${item.value}`;
-      }
-    }
-
-    return [name, shadow];
-  }, [layer]);
+  const [layerName, shadow] = useLayer(layer);
 
   return (
     <FloatingPanel

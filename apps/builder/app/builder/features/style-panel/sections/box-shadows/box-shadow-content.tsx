@@ -11,24 +11,19 @@ import {
 import { InformationIcon } from "@webstudio-is/icons";
 import { useState } from "react";
 import type { RenderCategoryProps } from "../../style-sections";
-import { addBoxShadow } from "./utils";
 
 type IntermediateValue = {
   type: "intermediate";
   value: string;
 };
 
-type BoxShadowEditProps = Pick<RenderCategoryProps, "createBatchUpdate"> & {
-  index: number;
-  value: string;
+const useContent = ({
+  onEditLayer,
+  index,
+}: {
   onEditLayer: (index: number, layers: LayersValue) => void;
-};
-
-type BoxShadowContentProps = Pick<RenderCategoryProps, "createBatchUpdate">;
-
-export const BoxShadowContent = (
-  props: BoxShadowContentProps | BoxShadowEditProps
-) => {
+  index: number;
+}) => {
   const [intermediateValue, setIntermediateValue] = useState<
     IntermediateValue | InvalidValue | undefined
   >();
@@ -53,13 +48,21 @@ export const BoxShadowContent = (
       return;
     }
 
-    if ("onEditLayer" in props) {
-      props.onEditLayer(props.index, layers);
-    } else {
-      addBoxShadow(layers, props.createBatchUpdate);
-    }
+    onEditLayer(index, layers);
   };
 
+  return { handleChange, handleComplete, intermediateValue };
+};
+
+type BoxShadowContentProps = {
+  index: number;
+  value: string;
+  onEditLayer: (index: number, layers: LayersValue) => void;
+  createBatchUpdate: RenderCategoryProps["createBatchUpdate"];
+};
+
+export const BoxShadowContent = (props: BoxShadowContentProps) => {
+  const { intermediateValue, handleChange, handleComplete } = useContent(props);
   return (
     <Flex
       direction="column"
@@ -90,7 +93,7 @@ export const BoxShadowContent = (
       <TextArea
         rows={3}
         name="description"
-        value={intermediateValue?.value ?? ""}
+        value={intermediateValue?.value ?? props.value ?? ""}
         css={{ minHeight: theme.spacing[14] }}
         state={intermediateValue?.type === "invalid" ? "invalid" : undefined}
         onChange={(event) => handleChange(event.target.value)}
