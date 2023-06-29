@@ -1,5 +1,5 @@
 import type { LayersValue } from "@webstudio-is/css-data";
-import { CssValueListItemsArrowFocus, Flex } from "@webstudio-is/design-system";
+import { CssValueListArrowFocus, Flex } from "@webstudio-is/design-system";
 import type { RenderCategoryProps } from "../../style-sections";
 import { Layer } from "./box-shadow-layer";
 import { deleteLayer, hideLayer, updateBoxShadowLayer } from "./utils";
@@ -25,7 +25,7 @@ export const BoxShadowLayersList = ({
   };
 
   return (
-    <CssValueListItemsArrowFocus>
+    <CssValueListArrowFocus>
       <Flex direction="column" gap={2}>
         {layers.value.map((layer, index) => {
           if (layer.type === "tuple") {
@@ -44,6 +44,6 @@ export const BoxShadowLayersList = ({
           return null;
         })}
       </Flex>
-    </CssValueListItemsArrowFocus>
+    </CssValueListArrowFocus>
   );
 };

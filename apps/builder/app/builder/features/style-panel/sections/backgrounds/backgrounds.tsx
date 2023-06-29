@@ -4,7 +4,7 @@ import { styleConfigByName } from "../../shared/configs";
 import { FloatingPanel } from "~/builder/shared/floating-panel";
 import {
   CssValueListItem,
-  CssValueListItemsArrowFocus,
+  CssValueListArrowFocus,
   Flex,
   Grid,
   Label,
@@ -228,7 +228,7 @@ export const BackgroundsSection = (props: RenderCategoryProps) => {
       category={props.category}
     >
       <Flex gap={1} direction="column">
-        <CssValueListItemsArrowFocus>
+        <CssValueListArrowFocus>
           <Flex
             gap={1}
             direction="column"
@@ -271,7 +271,7 @@ export const BackgroundsSection = (props: RenderCategoryProps) => {
 
             {placementIndicator}
           </Flex>
-        </CssValueListItemsArrowFocus>
+        </CssValueListArrowFocus>
 
         <Grid
           css={{

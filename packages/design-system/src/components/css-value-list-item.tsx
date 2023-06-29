@@ -206,7 +206,7 @@ export const CssValueListItem = forwardRef(
 
 CssValueListItem.displayName = "CssValueListItem";
 
-export const CssValueListItemsArrowFocus = (props: { children: ReactNode }) => {
+export const CssValueListArrowFocus = (props: { children: ReactNode }) => {
   return (
     <ArrowFocus
       render={({ handleKeyDown }) => (
