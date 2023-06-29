@@ -10,21 +10,7 @@ import { props } from "./__generated__/body.props";
 import type { defaultTag } from "./body";
 
 const presetStyle = {
-  body: [
-    ...body,
-    {
-      property: "fontFamily",
-      value: { type: "keyword", value: "Arial" },
-    },
-    {
-      property: "fontSize",
-      value: { type: "unit", unit: "px", value: 14 },
-    },
-    {
-      property: "lineHeight",
-      value: { type: "unit", unit: "number", value: 1.5 },
-    },
-  ],
+  body,
 } satisfies PresetStyle<typeof defaultTag>;
 
 export const meta: WsComponentMeta = {
