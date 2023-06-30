@@ -369,16 +369,8 @@ export const props: Record<string, PropMeta> = {
   dir: { required: false, control: "text", type: "string" },
   draggable: { required: false, control: "boolean", type: "boolean" },
   encType: { required: false, control: "text", type: "string" },
-  error: { required: false, control: "boolean", type: "boolean" },
   hidden: { required: false, control: "boolean", type: "boolean" },
   id: { required: false, control: "text", type: "string" },
-  initial: { required: false, control: "boolean", type: "boolean" },
-  initialState: {
-    required: false,
-    control: "radio",
-    type: "string",
-    options: ["initial", "success", "error"],
-  },
   inputMode: {
     description:
       "Hints at the type of data that might be entered by the user while editing the element or its contents\n@see https://html.spec.whatwg.org/multipage/interaction.html#input-modalities:-the-inputmode-attribute",
@@ -429,9 +421,9 @@ export const props: Record<string, PropMeta> = {
     required: false,
     control: "radio",
     type: "string",
+    defaultValue: "initial",
     options: ["initial", "success", "error"],
   },
-  success: { required: false, control: "boolean", type: "boolean" },
   suppressContentEditableWarning: {
     required: false,
     control: "boolean",
