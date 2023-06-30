@@ -55,6 +55,7 @@ export const Form = forwardRef<
   return (
     <fetcher.Form {...rest} method="post" data-state={state} ref={ref}>
       <input type="hidden" name={formIdFieldName} value={instanceId} />
+      {children}
     </fetcher.Form>
   );
 });
