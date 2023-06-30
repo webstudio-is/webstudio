@@ -173,7 +173,7 @@ export const CssValueListItem = forwardRef(
                   },
                 },
               }}
-              disabled={hidden ?? true}
+              disabled={hidden === true}
             >
               <DragHandleIconStyled />
 
