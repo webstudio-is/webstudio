@@ -1,5 +1,10 @@
 import { expect, test } from "@jest/globals";
-import { executeExpressions, validateExpression } from "./expression";
+import {
+  decodeDataSourceVariable,
+  encodeDataSourceVariable,
+  executeExpressions,
+  validateExpression,
+} from "./expression";
 
 test("allow literals and array expressions", () => {
   expect(
@@ -98,4 +103,14 @@ test("make sure dependency exists", () => {
   expect(() => {
     executeExpressions(variables, expressions);
   }).toThrowError(/Unknown dependency "var1"/);
+});
+
+test("encode/decode variable names", () => {
+  expect(encodeDataSourceVariable("my--id")).toEqual(
+    "$ws$dataSource$my__DASH____DASH__id"
+  );
+  expect(decodeDataSourceVariable(encodeDataSourceVariable("my--id"))).toEqual(
+    "my--id"
+  );
+  expect(decodeDataSourceVariable("myVarName")).toEqual(undefined);
 });

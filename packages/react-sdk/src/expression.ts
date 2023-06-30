@@ -160,3 +160,22 @@ export const executeExpressions = (
 
   return values;
 };
+
+const dataSourceVariablePrefix = "$ws$dataSource$";
+
+// data source id is generated with nanoid which has "-" in alphabeta
+// here "-" is encoded with "__DASH__' in variable name
+// https://github.com/ai/nanoid/blob/047686abad8f15aff05f3a2eeedb7c98b6847392/url-alphabet/index.js
+
+export const encodeDataSourceVariable = (id: string) => {
+  const encoded = id.replaceAll("-", "__DASH__");
+  return `${dataSourceVariablePrefix}${encoded}`;
+};
+
+export const decodeDataSourceVariable = (name: string) => {
+  if (name.startsWith(dataSourceVariablePrefix)) {
+    const encoded = name.slice(dataSourceVariablePrefix.length);
+    return encoded.replaceAll("__DASH__", "-");
+  }
+  return;
+};

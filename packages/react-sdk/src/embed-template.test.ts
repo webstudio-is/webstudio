@@ -1,9 +1,5 @@
 import { expect, test } from "@jest/globals";
-import {
-  generateDataFromEmbedTemplate,
-  decodeDataSourceVariable,
-  encodeDataSourceVariable,
-} from "./embed-template";
+import { generateDataFromEmbedTemplate } from "./embed-template";
 import { showAttribute } from "./tree";
 
 const expectString = expect.any(String);
@@ -384,14 +380,4 @@ test("generate data for embedding from props bound to data source expressions", 
     styleSources: [],
     styles: [],
   });
-});
-
-test("encode/decode variable names", () => {
-  expect(encodeDataSourceVariable("my--id")).toEqual(
-    "$ws$dataSource$my__DASH____DASH__id"
-  );
-  expect(decodeDataSourceVariable(encodeDataSourceVariable("my--id"))).toEqual(
-    "my--id"
-  );
-  expect(decodeDataSourceVariable("myVarName")).toEqual(undefined);
 });

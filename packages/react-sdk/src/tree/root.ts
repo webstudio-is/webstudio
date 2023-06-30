@@ -12,11 +12,11 @@ import { WebstudioComponent } from "./webstudio-component";
 import { getPropsByInstanceId } from "../props";
 import type { Components } from "../components/components-utils";
 import type { Params } from "../context";
-import { executeExpressions } from "../expression";
 import {
+  executeExpressions,
   encodeDataSourceVariable,
   decodeDataSourceVariable,
-} from "../embed-template";
+} from "../expression";
 
 const computeExpressions = (
   dataSources: [DataSource["id"], DataSource][],
