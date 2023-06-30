@@ -34,6 +34,19 @@ const ThumbHolder = styled("div", {
  */
 const sharedPaddingRight = theme.spacing[9];
 
+const IconButtonsWrapper = styled(Flex, {
+  position: "absolute",
+  right: 0,
+  top: 0,
+  bottom: 0,
+  paddingRight: sharedPaddingRight,
+  visibility: "hidden",
+});
+
+const FakeIconButtonsWrapper = styled(Flex, {
+  paddingLeft: theme.spacing[5],
+});
+
 /**
  * Should be a button as otherwise radix trigger doesn't work with keyboard interactions
  */
@@ -67,9 +80,6 @@ const ItemButton = styled("button", {
     outline: "none",
     backgroundColor: theme.colors.backgroundHover,
   },
-  "&:hover, &[data-active=true]": {
-    backgroundColor: theme.colors.backgroundHover,
-  },
   variants: {
     hidden: {
       true: {
@@ -100,14 +110,19 @@ type Props = ComponentProps<typeof ItemButton> & {
 const ItemWrapper = styled("div", {
   position: "relative",
   width: "100%",
-});
-
-const IconButtonsWrapper = styled(Flex, {
-  position: "absolute",
-  right: 0,
-  top: 0,
-  bottom: 0,
-  paddingRight: sharedPaddingRight,
+  "&:hover, &[data-active=true]": {
+    [`& ${ItemButton}`]: {
+      backgroundColor: theme.colors.backgroundHover,
+    },
+    [`& ${DragHandleIconStyled}`]: {
+      visibility: "visible",
+    },
+  },
+  "&:hover, &[data-active=true], &:focus-within": {
+    [`& ${IconButtonsWrapper}`]: {
+      visibility: "visible",
+    },
+  },
 });
 
 const FakeSmallButton = styled("div", {
@@ -153,6 +168,7 @@ export const CssValueListItem = forwardRef(
                 handleKeyDown(event);
               }
             }}
+            data-active={active}
           >
             <ItemButton
               ref={ref}
@@ -180,13 +196,9 @@ export const CssValueListItem = forwardRef(
             Warning: validateDOMNesting(...): <button> cannot appear as a descendant of <button>
             Real buttons will be placed on top of fake buttons
           */}
-              <Flex
-                shrink={false}
-                css={{ paddingLeft: theme.spacing[5] }}
-                gap={2}
-              >
+              <FakeIconButtonsWrapper shrink={false} gap={2}>
                 {fakeButtons}
-              </Flex>
+              </FakeIconButtonsWrapper>
             </ItemButton>
 
             {/*
