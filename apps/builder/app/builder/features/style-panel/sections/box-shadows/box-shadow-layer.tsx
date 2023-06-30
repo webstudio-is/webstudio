@@ -39,13 +39,15 @@ const useLayer = (layer: TupleValue) => {
       }
 
       if (item.type === "rgb") {
+        color = toValue(item);
         shadow.push(toValue(item));
       }
 
       if (item.type === "keyword") {
         if (colord(item.value).isValid() === false) {
-          color = item.value;
           name.push(item.value);
+        } else {
+          color = item.value;
         }
         shadow.push(item.value);
       }
