@@ -4,6 +4,8 @@ import {
   SmallIconButton,
   SmallToggleButton,
   CssValueListItem,
+  styled,
+  theme,
 } from "@webstudio-is/design-system";
 import {
   EyeconClosedIcon,
@@ -17,10 +19,18 @@ import type { RenderCategoryProps } from "../../style-sections";
 import { colord } from "colord";
 import { toValue } from "@webstudio-is/css-engine";
 
+const LayerThumbnail = styled("div", {
+  width: theme.spacing[10],
+  height: theme.spacing[10],
+});
+
 const useLayer = (layer: TupleValue) => {
   return useMemo(() => {
     const name = [];
     const shadow = [];
+    let color =
+      "repeating-conic-gradient(rgba(0, 0, 0, 0.22) 0%, rgba(0, 0, 0, 0.22) 25%, transparent 0%, transparent 50%) 0% 33.33% / 40% 40%";
+
     for (const item of Object.values(layer.value)) {
       if (item.type === "unit") {
         const value = toValue(item);
@@ -34,13 +44,14 @@ const useLayer = (layer: TupleValue) => {
 
       if (item.type === "keyword") {
         if (colord(item.value).isValid() === false) {
+          color = item.value;
           name.push(item.value);
         }
         shadow.push(item.value);
       }
     }
 
-    return [name.join(" "), shadow.join(" ")];
+    return [name.join(" "), shadow.join(" "), color];
   }, [layer]);
 };
 
@@ -56,7 +67,7 @@ export const Layer = (
   }
 ) => {
   const { index, id, layer, isHighlighted, onDeleteLayer, onLayerHide } = props;
-  const [layerName, shadow] = useLayer(layer);
+  const [layerName, shadow, color] = useLayer(layer);
 
   return (
     <FloatingPanel
@@ -71,11 +82,12 @@ export const Layer = (
       }
     >
       <CssValueListItem
+        id={id}
         active={isHighlighted}
+        index={index}
         label={<Label truncate>{layerName}</Label>}
         hidden={layer?.hidden}
-        index={index}
-        id={id}
+        thumbnail={<LayerThumbnail css={{ background: color }} />}
         buttons={
           <>
             <SmallToggleButton
