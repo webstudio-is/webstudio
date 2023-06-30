@@ -591,8 +591,9 @@
           "type": "color"
         },
         "left-right": {
-          "value": "#eceef0",
-          "type": "color"
+          "value": "#f1f3f5",
+          "type": "color",
+          "description": "Left and right padding and margin background colors for the Position section UI."
         },
         "hover": {
           "value": "#d7dbdf",
@@ -903,6 +904,10 @@
           "type": "color",
           "description": "For the flex control grid border when the value is overwritten."
         }
+      },
+      "primary": {
+        "value": "#096cff",
+        "type": "color"
       }
     },
     "foreground": {
@@ -1060,6 +1065,11 @@
           "type": "color",
           "description": "For the flex control grid when the value is overwritten."
         }
+      },
+      "inverse-primary": {
+        "value": "#ff22ae",
+        "type": "color",
+        "description": "The inverse color of our primary blue, when we want a contrasting highlight."
       }
     },
     "Brand": {
