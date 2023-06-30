@@ -96,8 +96,7 @@ export const BoxShadowContent = (props: BoxShadowContentProps) => {
         rows={3}
         name="description"
         value={intermediateValue?.value ?? props.value ?? ""}
-        style={textVariants.mono}
-        css={{ minHeight: theme.spacing[14] }}
+        css={{ minHeight: theme.spacing[14], ...textVariants.mono }}
         state={intermediateValue?.type === "invalid" ? "invalid" : undefined}
         onChange={(event) => handleChange(event.target.value)}
         onKeyDown={(event) => {

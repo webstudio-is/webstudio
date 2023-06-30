@@ -88,8 +88,7 @@ export const BackgroundGradient = (
   return (
     <TextArea
       ref={textAreaRef}
-      style={textVariants.mono}
-      css={{ minHeight: theme.spacing[14] }}
+      css={{ minHeight: theme.spacing[14], ...textVariants.mono }}
       rows={2}
       name="description"
       disabled={props.disabled}
