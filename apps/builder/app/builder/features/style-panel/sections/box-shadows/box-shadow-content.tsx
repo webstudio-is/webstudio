@@ -5,6 +5,7 @@ import {
   Label,
   Text,
   TextArea,
+  textVariants,
   theme,
   Tooltip,
 } from "@webstudio-is/design-system";
@@ -95,6 +96,7 @@ export const BoxShadowContent = (props: BoxShadowContentProps) => {
         rows={3}
         name="description"
         value={intermediateValue?.value ?? props.value ?? ""}
+        style={textVariants.mono}
         css={{ minHeight: theme.spacing[14] }}
         state={intermediateValue?.type === "invalid" ? "invalid" : undefined}
         onChange={(event) => handleChange(event.target.value)}
