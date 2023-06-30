@@ -18,6 +18,7 @@ import {
 import type { Publish } from "~/shared/pubsub";
 import {
   dataSourceValuesStore,
+  dataSourceVariablesStore,
   dataSourcesStore,
   propsIndexStore,
   propsStore,
@@ -208,6 +209,22 @@ export const PropsPanel = (props: PropsPanelProps) => {
   );
 };
 
+const getPropTypeAndValue = (value: unknown) => {
+  if (typeof value === "boolean") {
+    return { type: "boolean", value } as const;
+  }
+  if (typeof value === "number") {
+    return { type: "number", value } as const;
+  }
+  if (typeof value === "string") {
+    return { type: "string", value } as const;
+  }
+  if (Array.isArray(value)) {
+    return { type: "string[]", value } as const;
+  }
+  throw Error(`Unexpected prop value ${value}`);
+};
+
 export const PropsPanelContainer = ({
   selectedInstance: instance,
   publish,
@@ -249,11 +266,8 @@ export const PropsPanelContainer = ({
           instanceId: prop.instanceId,
           name: prop.name,
           required: prop.required,
-          type: dataSource.type,
-          // temporary suppression for simplification
-          // will be refactored once data sources ui is ready
-          // eslint-disable-next-line @typescript-eslint/no-explicit-any
-          value: (dataSourceValue ?? dataSource?.value) as any,
+          // infer type from value
+          ...getPropTypeAndValue(dataSourceValue),
         } satisfies Prop,
       ];
     }) ?? [];
@@ -268,9 +282,9 @@ export const PropsPanelContainer = ({
       // update data source instead when real prop has data source type
       if (prop?.type === "dataSource") {
         const dataSourceId = prop.value;
-        const dataSourceValues = new Map(dataSourceValuesStore.get());
-        dataSourceValues.set(dataSourceId, update.value);
-        dataSourceValuesStore.set(dataSourceValues);
+        const dataSourceVariables = new Map(dataSourceVariablesStore.get());
+        dataSourceVariables.set(dataSourceId, update.value);
+        dataSourceVariablesStore.set(dataSourceVariables);
       } else {
         store.createTransaction([propsStore], (props) => {
           props.set(update.id, update);
