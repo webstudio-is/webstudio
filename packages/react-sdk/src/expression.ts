@@ -109,8 +109,7 @@ export const validateExpression = (
   return generateCode(expression, true, transformIdentifier);
 };
 
-export const executeExpression = (
-  expressionId: string,
+export const executeExpressions = (
   variables: Map<string, unknown>,
   expressions: Map<string, string>
 ) => {
@@ -145,6 +144,9 @@ export const executeExpression = (
   for (const [id, value] of variables) {
     header += `const ${id} = ${JSON.stringify(value)};\n`;
   }
+
+  const values = new Map<string, unknown>();
+
   for (const id of sortedExpressions) {
     const code = expressions.get(id);
     if (code === undefined) {
@@ -153,8 +155,8 @@ export const executeExpression = (
     const executeFn = new Function(`${header}\nreturn (${code});`);
     const value = executeFn();
     header += `const ${id} = ${JSON.stringify(value)};\n`;
-    if (id === expressionId) {
-      return value;
-    }
+    values.set(id, value);
   }
+
+  return values;
 };
