@@ -1,5 +1,10 @@
 import { expect, test } from "@jest/globals";
-import { executeExpression, validateExpression } from "./expression";
+import {
+  decodeDataSourceVariable,
+  encodeDataSourceVariable,
+  executeExpressions,
+  validateExpression,
+} from "./expression";
 
 test("allow literals and array expressions", () => {
   expect(
@@ -53,13 +58,17 @@ test("transform identifiers", () => {
 test("execute expression", () => {
   const variables = new Map();
   const expressions = new Map([["exp1", "1 + 1"]]);
-  expect(executeExpression("exp1", variables, expressions)).toEqual(2);
+  expect(executeExpressions(variables, expressions)).toEqual(
+    new Map([["exp1", 2]])
+  );
 });
 
 test("execute expression dependent on variables", () => {
   const variables = new Map([["var1", 5]]);
   const expressions = new Map([["exp1", "var1 + 1"]]);
-  expect(executeExpression("exp1", variables, expressions)).toEqual(6);
+  expect(executeExpressions(variables, expressions)).toEqual(
+    new Map([["exp1", 6]])
+  );
 });
 
 test("execute expression dependent on other expressions", () => {
@@ -68,7 +77,12 @@ test("execute expression dependent on other expressions", () => {
     ["exp1", "exp0 + 1"],
     ["exp0", "var1 + 2"],
   ]);
-  expect(executeExpression("exp1", variables, expressions)).toEqual(6);
+  expect(executeExpressions(variables, expressions)).toEqual(
+    new Map([
+      ["exp1", 6],
+      ["exp0", 5],
+    ])
+  );
 });
 
 test("forbid circular expressions", () => {
@@ -79,7 +93,7 @@ test("forbid circular expressions", () => {
     ["exp2", "exp1 + 3"],
   ]);
   expect(() => {
-    executeExpression("exp1", variables, expressions);
+    executeExpressions(variables, expressions);
   }).toThrowError(/exp2 is not defined/);
 });
 
@@ -87,6 +101,16 @@ test("make sure dependency exists", () => {
   const variables = new Map();
   const expressions = new Map([["exp1", "var1 + 1"]]);
   expect(() => {
-    executeExpression("exp1", variables, expressions);
+    executeExpressions(variables, expressions);
   }).toThrowError(/Unknown dependency "var1"/);
+});
+
+test("encode/decode variable names", () => {
+  expect(encodeDataSourceVariable("my--id")).toEqual(
+    "$ws$dataSource$my__DASH____DASH__id"
+  );
+  expect(decodeDataSourceVariable(encodeDataSourceVariable("my--id"))).toEqual(
+    "my--id"
+  );
+  expect(decodeDataSourceVariable("myVarName")).toEqual(undefined);
 });

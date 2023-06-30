@@ -109,8 +109,7 @@ export const validateExpression = (
   return generateCode(expression, true, transformIdentifier);
 };
 
-export const executeExpression = (
-  expressionId: string,
+export const executeExpressions = (
   variables: Map<string, unknown>,
   expressions: Map<string, string>
 ) => {
@@ -145,6 +144,9 @@ export const executeExpression = (
   for (const [id, value] of variables) {
     header += `const ${id} = ${JSON.stringify(value)};\n`;
   }
+
+  const values = new Map<string, unknown>();
+
   for (const id of sortedExpressions) {
     const code = expressions.get(id);
     if (code === undefined) {
@@ -153,8 +155,27 @@ export const executeExpression = (
     const executeFn = new Function(`${header}\nreturn (${code});`);
     const value = executeFn();
     header += `const ${id} = ${JSON.stringify(value)};\n`;
-    if (id === expressionId) {
-      return value;
-    }
+    values.set(id, value);
   }
+
+  return values;
+};
+
+const dataSourceVariablePrefix = "$ws$dataSource$";
+
+// data source id is generated with nanoid which has "-" in alphabeta
+// here "-" is encoded with "__DASH__' in variable name
+// https://github.com/ai/nanoid/blob/047686abad8f15aff05f3a2eeedb7c98b6847392/url-alphabet/index.js
+
+export const encodeDataSourceVariable = (id: string) => {
+  const encoded = id.replaceAll("-", "__DASH__");
+  return `${dataSourceVariablePrefix}${encoded}`;
+};
+
+export const decodeDataSourceVariable = (name: string) => {
+  if (name.startsWith(dataSourceVariablePrefix)) {
+    const encoded = name.slice(dataSourceVariablePrefix.length);
+    return encoded.replaceAll("__DASH__", "-");
+  }
+  return;
 };

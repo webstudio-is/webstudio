@@ -2,7 +2,7 @@ import { expect, test } from "@jest/globals";
 import { generateDataFromEmbedTemplate } from "./embed-template";
 import { showAttribute } from "./tree";
 
-const expectString = expect.any(String) as unknown as string;
+const expectString = expect.any(String);
 
 const defaultBreakpointId = "base";
 
@@ -213,7 +213,7 @@ test("generate data for embedding from styles", () => {
   });
 });
 
-test("generate data for embedding from props bound to data sources", () => {
+test("generate data for embedding from props bound to data source variables", () => {
   expect(
     generateDataFromEmbedTemplate(
       [
@@ -224,8 +224,11 @@ test("generate data for embedding from props bound to data sources", () => {
             {
               type: "boolean",
               name: "showOtherBox",
-              dataSourceRef: "showOtherBoxDataSource",
               value: false,
+              dataSourceRef: {
+                type: "variable",
+                name: "showOtherBoxDataSource",
+              },
             },
           ],
           children: [],
@@ -237,8 +240,11 @@ test("generate data for embedding from props bound to data sources", () => {
             {
               type: "boolean",
               name: showAttribute,
-              dataSourceRef: "showOtherBoxDataSource",
               value: false,
+              dataSourceRef: {
+                type: "variable",
+                name: "showOtherBoxDataSource",
+              },
             },
           ],
           children: [],
@@ -273,10 +279,101 @@ test("generate data for embedding from props bound to data sources", () => {
     ],
     dataSources: [
       {
+        type: "variable",
         id: expectString,
         name: "showOtherBoxDataSource",
-        type: "boolean",
-        value: false,
+        value: {
+          type: "boolean",
+          value: false,
+        },
+      },
+    ],
+    styleSourceSelections: [],
+    styleSources: [],
+    styles: [],
+  });
+});
+
+test("generate data for embedding from props bound to data source expressions", () => {
+  expect(
+    generateDataFromEmbedTemplate(
+      [
+        {
+          type: "instance",
+          component: "Box1",
+          props: [
+            {
+              type: "string",
+              name: "state",
+              value: "initial",
+              dataSourceRef: {
+                type: "variable",
+                name: "boxState",
+              },
+            },
+          ],
+          children: [],
+        },
+        {
+          type: "instance",
+          component: "Box2",
+          props: [
+            {
+              type: "boolean",
+              name: showAttribute,
+              value: false,
+              dataSourceRef: {
+                type: "expression",
+                name: "boxStateSuccess",
+                code: `boxState === 'success'`,
+              },
+            },
+          ],
+          children: [],
+        },
+      ],
+      defaultBreakpointId
+    )
+  ).toEqual({
+    children: [
+      { type: "id", value: expectString },
+      { type: "id", value: expectString },
+    ],
+    instances: [
+      { type: "instance", id: expectString, component: "Box1", children: [] },
+      { type: "instance", id: expectString, component: "Box2", children: [] },
+    ],
+    props: [
+      {
+        id: expectString,
+        instanceId: expectString,
+        type: "dataSource",
+        name: "state",
+        value: expectString,
+      },
+      {
+        id: expectString,
+        instanceId: expectString,
+        type: "dataSource",
+        name: showAttribute,
+        value: expectString,
+      },
+    ],
+    dataSources: [
+      {
+        type: "variable",
+        id: expectString,
+        name: "boxState",
+        value: {
+          type: "string",
+          value: "initial",
+        },
+      },
+      {
+        type: "expression",
+        id: expectString,
+        name: "boxStateSuccess",
+        code: expect.stringMatching(/\$ws\$dataSource\$\w+ === 'success'/),
       },
     ],
     styleSourceSelections: [],

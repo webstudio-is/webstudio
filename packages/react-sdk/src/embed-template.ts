@@ -12,6 +12,7 @@ import {
 } from "@webstudio-is/project-build";
 import { StyleValue, type StyleProperty } from "@webstudio-is/css-data";
 import type { Simplify } from "type-fest";
+import { encodeDataSourceVariable, validateExpression } from "./expression";
 
 const EmbedTemplateText = z.object({
   type: z.literal("text"),
@@ -20,29 +21,41 @@ const EmbedTemplateText = z.object({
 
 type EmbedTemplateText = z.infer<typeof EmbedTemplateText>;
 
+const DataSourceRef = z.union([
+  z.object({
+    type: z.literal("variable"),
+    name: z.string(),
+  }),
+  z.object({
+    type: z.literal("expression"),
+    name: z.string(),
+    code: z.string(),
+  }),
+]);
+
 const EmbedTemplateProp = z.union([
   z.object({
     type: z.literal("number"),
     name: z.string(),
-    dataSourceRef: z.optional(z.string()),
+    dataSourceRef: z.optional(DataSourceRef),
     value: z.number(),
   }),
   z.object({
     type: z.literal("string"),
     name: z.string(),
-    dataSourceRef: z.optional(z.string()),
+    dataSourceRef: z.optional(DataSourceRef),
     value: z.string(),
   }),
   z.object({
     type: z.literal("boolean"),
     name: z.string(),
-    dataSourceRef: z.optional(z.string()),
+    dataSourceRef: z.optional(DataSourceRef),
     value: z.boolean(),
   }),
   z.object({
     type: z.literal("string[]"),
     name: z.string(),
-    dataSourceRef: z.optional(z.string()),
+    dataSourceRef: z.optional(DataSourceRef),
     value: z.array(z.string()),
   }),
 ]);
@@ -115,18 +128,30 @@ const createInstancesFromTemplate = (
             props.push({ id: propId, instanceId, ...prop });
             continue;
           }
-          let dataSource = dataSourceByRef.get(prop.dataSourceRef);
+          let dataSource = dataSourceByRef.get(prop.dataSourceRef.name);
           if (dataSource === undefined) {
             const id = nanoid();
-            const { name: propName, dataSourceRef: name, ...rest } = prop;
-            if (rest.type === "boolean" || rest.type === "string") {
-              dataSource = { id, name, ...rest };
+            const { name: propName, dataSourceRef, ...rest } = prop;
+            if (dataSourceRef.type === "variable") {
+              dataSource = {
+                type: "variable",
+                id,
+                name: dataSourceRef.name,
+                value: rest,
+              };
+              dataSourceByRef.set(dataSourceRef.name, dataSource);
+            } else if (dataSourceRef.type === "expression") {
+              dataSource = {
+                type: "expression",
+                id,
+                name: dataSourceRef.name,
+                code: dataSourceRef.code,
+              };
+              dataSourceByRef.set(dataSourceRef.name, dataSource);
             } else {
-              // ensure only number and string[] are not mapped to data sources
-              rest.type satisfies "number" | "string[]";
+              dataSourceRef satisfies never;
               continue;
             }
-            dataSourceByRef.set(name, dataSource);
           }
           props.push({
             id: propId,
@@ -217,11 +242,24 @@ export const generateDataFromEmbedTemplate = (
     styles,
     defaultBreakpointId
   );
+
+  // replace all references with variable names
+  const dataSources: DataSource[] = [];
+  for (const dataSource of dataSourceByRef.values()) {
+    if (dataSource.type === "expression") {
+      dataSource.code = validateExpression(dataSource.code, (ref) => {
+        const id = dataSourceByRef.get(ref)?.id ?? ref;
+        return encodeDataSourceVariable(id);
+      });
+    }
+    dataSources.push(dataSource);
+  }
+
   return {
     children,
     instances,
     props,
-    dataSources: Array.from(dataSourceByRef.values()),
+    dataSources,
     styleSourceSelections,
     styleSources,
     styles,
