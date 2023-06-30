@@ -13,9 +13,9 @@ import type { RenderCategoryProps } from "../../style-sections";
 import { BoxShadowLayers } from "./box-shadow-layers";
 import { addBoxShadow, property } from "./box-shadow-utils";
 
-const label = "Box Shadow";
+const label = "Box Shadows";
 
-export const BoxShadows = (props: RenderCategoryProps) => {
+export const BoxShadowsSection = (props: RenderCategoryProps) => {
   const { currentStyle, deleteProperty } = props;
   const [isOpen, setIsOpen] = useState(true);
   const layersStyleSource = getStyleSource(currentStyle[property]);
@@ -46,6 +46,7 @@ export const BoxShadows = (props: RenderCategoryProps) => {
           }
         >
           <PropertyName
+            title="Box Shadows"
             style={currentStyle}
             properties={[property]}
             label={

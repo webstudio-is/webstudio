@@ -22,7 +22,7 @@ import {
   BordersSection,
   OutlineSection,
   EffectsSection,
-  BoxShadows,
+  BoxShadowsSection,
 } from "./sections";
 
 export const categories = [
@@ -35,7 +35,7 @@ export const categories = [
   "position",
   "backgrounds",
   "borders",
-  "boxShadow",
+  "boxShadows",
   "outline",
   "effects",
 ];
@@ -145,5 +145,5 @@ export const sections: {
   borders: BordersSection,
   outline: OutlineSection,
   effects: EffectsSection,
-  boxShadow: BoxShadows,
+  boxShadows: BoxShadowsSection,
 };
