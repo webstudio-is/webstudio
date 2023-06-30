@@ -7,6 +7,15 @@ import type {
 } from "@webstudio-is/css-data";
 import { colord } from "colord";
 
+const cssTreeTryParseValue = (input: string) => {
+  try {
+    const ast = csstree.parse(input, { context: "value" });
+    return ast;
+  } catch {
+    return undefined;
+  }
+};
+
 export const parseBoxShadow = (
   boxShadow: string
 ): LayersValue | InvalidValue => {
@@ -23,9 +32,16 @@ export const parseBoxShadow = (
       : tokenStream;
   }
 
-  const ast = csstree.parse(tokenStream, { context: "value" });
-  const parsed = csstree.lexer.matchProperty("box-shadow", ast);
+  const cssAst = cssTreeTryParseValue(tokenStream);
 
+  if (cssAst === undefined) {
+    return {
+      type: "invalid",
+      value: boxShadow,
+    };
+  }
+
+  const parsed = csstree.lexer.matchProperty("box-shadow", cssAst);
   if (parsed.error) {
     return {
       type: "invalid",
@@ -35,7 +51,7 @@ export const parseBoxShadow = (
 
   const layers: TupleValue[] = [];
 
-  csstree.walk(ast, (node) => {
+  csstree.walk(cssAst, (node) => {
     if (node.type === "Value") {
       const children = node.children;
       let layer: csstree.CssNode[] = [];
