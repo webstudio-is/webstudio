@@ -43,12 +43,12 @@ const style = css({
 
 export const ColorThumb = forwardRef<
   ElementRef<typeof Box>,
-  Omit<ComponentProps<typeof Box>, "color"> & { color: RgbaColor }
+  Omit<ComponentProps<typeof Box>, "color"> & { color: RgbaColor | undefined }
 >(({ color, css, ...rest }, ref) => {
-  const colorString = colord(color).toRgbString();
+  const colorString = colord(color || transparent).toRgbString();
   // @todo transparent icon can be better
   const background =
-    color.a < 1
+    color === null || (color && color.a < 1)
       ? // chessboard 5x5
         `repeating-conic-gradient(rgba(0,0,0,0.22) 0% 25%, transparent 0% 50%) 0% 33.33% / 40% 40%, ${colorString}`
       : colorString;
@@ -62,7 +62,8 @@ export const ColorThumb = forwardRef<
       transparent,
       borderColorSwatch,
       clamp(
-        (distanceToStartDrawBorder - distance(whiteColor, color)) /
+        (distanceToStartDrawBorder -
+          distance(whiteColor, color || transparent)) /
           distanceToStartDrawBorder,
         0,
         1

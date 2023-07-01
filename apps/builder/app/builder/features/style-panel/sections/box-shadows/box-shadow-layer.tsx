@@ -14,7 +14,7 @@ import { useMemo } from "react";
 import { FloatingPanel } from "~/builder/shared/floating-panel";
 import { BoxShadowContent } from "./box-shadow-content";
 import type { RenderCategoryProps } from "../../style-sections";
-import { colord } from "colord";
+import { colord, type RgbaColor } from "colord";
 import { toValue } from "@webstudio-is/css-engine";
 import { ColorThumb } from "../../shared/color-thumb";
 
@@ -22,7 +22,7 @@ const useLayer = (layer: TupleValue) => {
   return useMemo(() => {
     const name = [];
     const shadow = [];
-    let color;
+    let color: RgbaColor | undefined;
     for (const item of Object.values(layer.value)) {
       if (item.type === "unit") {
         const value = toValue(item);
@@ -31,7 +31,7 @@ const useLayer = (layer: TupleValue) => {
       }
 
       if (item.type === "rgb") {
-        color = item;
+        color = colord(toValue(item)).toRgb();
         shadow.push(toValue(item));
       }
 
@@ -39,7 +39,7 @@ const useLayer = (layer: TupleValue) => {
         if (colord(item.value).isValid() === false) {
           name.push(item.value);
         } else {
-          color = item.value;
+          color = colord(item.value).toRgb();
         }
         shadow.push(item.value);
       }
