@@ -3,7 +3,6 @@ import type { PropMeta } from "@webstudio-is/generate-arg-types";
 export const props: Record<string, PropMeta> = {
   form: { required: false, control: "text", type: "string" },
   slot: { required: false, control: "text", type: "string" },
-  style: { required: false, control: "text", type: "string" },
   title: { required: false, control: "text", type: "string" },
   disabled: { required: false, control: "boolean", type: "boolean" },
   formAction: { required: false, control: "text", type: "string" },
@@ -18,9 +17,7 @@ export const props: Record<string, PropMeta> = {
     type: "string",
     options: ["button", "submit", "reset"],
   },
-  value: { required: false, control: "text", type: "string" },
   defaultChecked: { required: false, control: "boolean", type: "boolean" },
-  defaultValue: { required: false, control: "text", type: "string" },
   suppressContentEditableWarning: {
     required: false,
     control: "boolean",
@@ -34,7 +31,6 @@ export const props: Record<string, PropMeta> = {
   accessKey: { required: false, control: "text", type: "string" },
   autoFocus: { required: false, control: "boolean", type: "boolean" },
   className: { required: false, control: "text", type: "string" },
-  contentEditable: { required: false, control: "text", type: "string" },
   contextMenu: { required: false, control: "text", type: "string" },
   dir: { required: false, control: "text", type: "string" },
   draggable: { required: false, control: "boolean", type: "boolean" },
@@ -56,7 +52,6 @@ export const props: Record<string, PropMeta> = {
   about: { required: false, control: "text", type: "string" },
   content: { required: false, control: "text", type: "string" },
   datatype: { required: false, control: "text", type: "string" },
-  inlist: { required: false, control: "text", type: "string" },
   prefix: { required: false, control: "text", type: "string" },
   property: { required: false, control: "text", type: "string" },
   rel: { required: false, control: "text", type: "string" },
