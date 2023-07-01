@@ -3,37 +3,36 @@ import { PropMeta } from "./types";
 
 export type FilterPredicate = (prop: PropItem) => boolean;
 
-const validAttributes = (prop: PropItem) => {
+const isValid = (prop: PropItem) => {
   if (prop.parent) {
     // Pass *HTML (both ButtonHTMLAttributes and HTMLAttributes), Aria, and SVG attributes through
     const matcher = /.?(HTML|SVG|Aria)Attributes/;
     // @todo: Add a test for this
-    return prop.parent.name.match(matcher);
+    return prop.parent.name.match(matcher) !== null;
   }
   // Always allow component's own props
   return true;
 };
 
-export const propsToArgTypes = (
-  props: Record<string, PropItem>,
-  filter?: FilterPredicate
-) => {
-  const filterFn = filter ?? validAttributes;
+export const propsToArgTypes = (props: Record<string, PropItem>) => {
   const entries = Object.entries(props);
-  return entries.reduce((result, current) => {
-    const [propName, prop] = current;
+  return entries
+    .sort((item1, item2) => {
+      return item1[0].localeCompare(item2[0]);
+    })
+    .reduce((result, current) => {
+      const [propName, prop] = current;
+      // Filter out props
+      if (isValid(prop) === false) {
+        return result;
+      }
 
-    // Filter out props
-    if (!filterFn(prop)) {
+      const argType = getArgType(prop);
+      if (argType != null) {
+        result[propName] = argType;
+      }
       return result;
-    }
-
-    const argType = getArgType(prop);
-    if (argType != null) {
-      result[propName] = argType;
-    }
-    return result;
-  }, {} as Record<string, PropMeta>);
+    }, {} as Record<string, PropMeta>);
 };
 
 const matchers = {
