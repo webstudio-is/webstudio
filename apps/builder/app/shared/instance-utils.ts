@@ -275,8 +275,16 @@ export const deleteInstance = (instanceSelector: InstanceSelector) => {
       styleSourceSelectionsStore,
       styleSourcesStore,
       stylesStore,
+      dataSourcesStore,
     ],
-    (instances, props, styleSourceSelections, styleSources, styles) => {
+    (
+      instances,
+      props,
+      styleSourceSelections,
+      styleSources,
+      styles,
+      dataSources
+    ) => {
       let targetInstanceId = instanceSelector[0];
       const parentInstanceId = instanceSelector[1];
       const grandparentInstanceId = instanceSelector[2];
@@ -318,10 +326,18 @@ export const deleteInstance = (instanceSelector: InstanceSelector) => {
       for (const instanceId of instanceIds) {
         instances.delete(instanceId);
       }
-      // delete props and styles of deleted instance and its descendants
+      // delete props, data sources and styles of deleted instance and its descendants
       for (const prop of props.values()) {
         if (instanceIds.has(prop.instanceId)) {
           props.delete(prop.id);
+        }
+      }
+      for (const dataSource of dataSources.values()) {
+        if (
+          dataSource.scopeInstanceId !== undefined &&
+          instanceIds.has(dataSource.scopeInstanceId)
+        ) {
+          dataSources.delete(dataSource.id);
         }
       }
       for (const instanceId of instanceIds) {

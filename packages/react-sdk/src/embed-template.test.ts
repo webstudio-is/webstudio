@@ -281,6 +281,7 @@ test("generate data for embedding from props bound to data source variables", ()
       {
         type: "variable",
         id: expectString,
+        scopeInstanceId: expectString,
         name: "showOtherBoxDataSource",
         value: {
           type: "boolean",
@@ -363,6 +364,7 @@ test("generate data for embedding from props bound to data source expressions", 
       {
         type: "variable",
         id: expectString,
+        scopeInstanceId: expectString,
         name: "boxState",
         value: {
           type: "string",
@@ -372,6 +374,7 @@ test("generate data for embedding from props bound to data source expressions", 
       {
         type: "expression",
         id: expectString,
+        scopeInstanceId: expectString,
         name: "boxStateSuccess",
         code: expect.stringMatching(/\$ws\$dataSource\$\w+ === 'success'/),
       },

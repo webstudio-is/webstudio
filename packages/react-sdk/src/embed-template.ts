@@ -136,6 +136,8 @@ const createInstancesFromTemplate = (
               dataSource = {
                 type: "variable",
                 id,
+                // the first instance where data source is appeared in becomes its scope
+                scopeInstanceId: instanceId,
                 name: dataSourceRef.name,
                 value: rest,
               };
@@ -144,6 +146,7 @@ const createInstancesFromTemplate = (
               dataSource = {
                 type: "expression",
                 id,
+                scopeInstanceId: instanceId,
                 name: dataSourceRef.name,
                 code: dataSourceRef.code,
               };

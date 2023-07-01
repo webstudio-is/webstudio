@@ -26,12 +26,14 @@ export const DataSource = z.union([
   z.object({
     type: z.literal("variable"),
     id: DataSourceId,
+    scopeInstanceId: z.optional(z.string()),
     name: z.string(),
     value: DataSourceVariableValue,
   }),
   z.object({
     type: z.literal("expression"),
     id: DataSourceId,
+    scopeInstanceId: z.optional(z.string()),
     name: z.string(),
     code: z.string(),
   }),
