@@ -3,22 +3,18 @@ import { PropMeta } from "./types";
 
 export type FilterPredicate = (prop: PropItem) => boolean;
 
-const validAttributes = (prop: PropItem) => {
+const isValid = (prop: PropItem) => {
   if (prop.parent) {
     // Pass *HTML (both ButtonHTMLAttributes and HTMLAttributes), Aria, and SVG attributes through
     const matcher = /.?(HTML|SVG|Aria)Attributes/;
     // @todo: Add a test for this
-    return prop.parent.name.match(matcher);
+    return prop.parent.name.match(matcher) !== null;
   }
   // Always allow component's own props
   return true;
 };
 
-export const propsToArgTypes = (
-  props: Record<string, PropItem>,
-  filter?: FilterPredicate
-) => {
-  const filterFn = filter ?? validAttributes;
+export const propsToArgTypes = (props: Record<string, PropItem>) => {
   const entries = Object.entries(props);
   return entries
     .sort((item1, item2) => {
@@ -26,9 +22,8 @@ export const propsToArgTypes = (
     })
     .reduce((result, current) => {
       const [propName, prop] = current;
-
       // Filter out props
-      if (filterFn(prop) === false) {
+      if (isValid(prop) === false) {
         return result;
       }
 
