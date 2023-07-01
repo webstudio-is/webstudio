@@ -20,20 +20,24 @@ export const propsToArgTypes = (
 ) => {
   const filterFn = filter ?? validAttributes;
   const entries = Object.entries(props);
-  return entries.reduce((result, current) => {
-    const [propName, prop] = current;
+  return entries
+    .sort((item1, item2) => {
+      return item1[0].localeCompare(item2[0]);
+    })
+    .reduce((result, current) => {
+      const [propName, prop] = current;
 
-    // Filter out props
-    if (!filterFn(prop)) {
+      // Filter out props
+      if (filterFn(prop) === false) {
+        return result;
+      }
+
+      const argType = getArgType(prop);
+      if (argType != null) {
+        result[propName] = argType;
+      }
       return result;
-    }
-
-    const argType = getArgType(prop);
-    if (argType != null) {
-      result[propName] = argType;
-    }
-    return result;
-  }, {} as Record<string, PropMeta>);
+    }, {} as Record<string, PropMeta>);
 };
 
 const matchers = {
