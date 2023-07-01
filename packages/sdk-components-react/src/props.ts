@@ -23,8 +23,6 @@ export { propsMeta as ListItem } from "./list-item.ws";
 export { propsMeta as Separator } from "./separator.ws";
 export { propsMeta as CodeText } from "./code-text.ws";
 export { propsMeta as Label } from "./label.ws";
-export { propsMeta as SuccessMessage } from "./success-message.ws";
-export { propsMeta as ErrorMessage } from "./error-message.ws";
 export { propsMeta as Textarea } from "./textarea.ws";
 export { propsMeta as RadioButton } from "./radio-button.ws";
 export { propsMeta as Checkbox } from "./checkbox.ws";

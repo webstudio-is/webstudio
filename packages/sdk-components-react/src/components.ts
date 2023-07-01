@@ -23,8 +23,6 @@ export { ListItem } from "./list-item";
 export { Separator } from "./separator";
 export { CodeText } from "./code-text";
 export { Label } from "./label";
-export { SuccessMessage } from "./success-message";
-export { ErrorMessage } from "./error-message";
 export { Textarea } from "./textarea";
 export { RadioButton } from "./radio-button";
 export { Checkbox } from "./checkbox";
