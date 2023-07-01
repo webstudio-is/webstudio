@@ -4,8 +4,6 @@ import {
   SmallIconButton,
   SmallToggleButton,
   CssValueListItem,
-  styled,
-  theme,
 } from "@webstudio-is/design-system";
 import {
   EyeconClosedIcon,
@@ -18,19 +16,13 @@ import { BoxShadowContent } from "./box-shadow-content";
 import type { RenderCategoryProps } from "../../style-sections";
 import { colord } from "colord";
 import { toValue } from "@webstudio-is/css-engine";
-
-const LayerThumbnail = styled("div", {
-  width: theme.spacing[10],
-  height: theme.spacing[10],
-});
+import { ColorThumb } from "../../shared/color-thumb";
 
 const useLayer = (layer: TupleValue) => {
   return useMemo(() => {
     const name = [];
     const shadow = [];
-    let color =
-      "repeating-conic-gradient(rgba(0, 0, 0, 0.22) 0%, rgba(0, 0, 0, 0.22) 25%, transparent 0%, transparent 50%) 0% 33.33% / 40% 40%";
-
+    let color;
     for (const item of Object.values(layer.value)) {
       if (item.type === "unit") {
         const value = toValue(item);
@@ -39,7 +31,7 @@ const useLayer = (layer: TupleValue) => {
       }
 
       if (item.type === "rgb") {
-        color = toValue(item);
+        color = item;
         shadow.push(toValue(item));
       }
 
@@ -53,7 +45,7 @@ const useLayer = (layer: TupleValue) => {
       }
     }
 
-    return [name.join(" "), shadow.join(" "), color];
+    return { name: name.join(" "), shadow: shadow.join(" "), color };
   }, [layer]);
 };
 
@@ -69,7 +61,7 @@ export const Layer = (
   }
 ) => {
   const { index, id, layer, isHighlighted, onDeleteLayer, onLayerHide } = props;
-  const [layerName, shadow, color] = useLayer(layer);
+  const { name, shadow, color } = useLayer(layer);
 
   return (
     <FloatingPanel
@@ -87,9 +79,9 @@ export const Layer = (
         id={id}
         active={isHighlighted}
         index={index}
-        label={<Label truncate>{layerName}</Label>}
+        label={<Label truncate>{name}</Label>}
         hidden={layer?.hidden}
-        thumbnail={<LayerThumbnail css={{ background: color }} />}
+        thumbnail={<ColorThumb color={color} />}
         buttons={
           <>
             <SmallToggleButton

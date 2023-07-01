@@ -1,4 +1,4 @@
-import { rawTheme, Box, theme } from "@webstudio-is/design-system";
+import { rawTheme, Box, theme, css } from "@webstudio-is/design-system";
 import { colord, type RgbaColor } from "colord";
 import { forwardRef, type ElementRef, type ComponentProps } from "react";
 
@@ -33,10 +33,18 @@ const clamp = (value: number, min: number, max: number) => {
   return Math.min(Math.max(value, min), max);
 };
 
+const style = css({
+  width: theme.spacing[10],
+  height: theme.spacing[10],
+  backgroundBlendMode: "difference",
+  borderRadius: 2,
+  borderStyle: "solid",
+});
+
 export const ColorThumb = forwardRef<
   ElementRef<typeof Box>,
-  ComponentProps<typeof Box> & { color: RgbaColor }
->(({ color, ...rest }, ref) => {
+  Omit<ComponentProps<typeof Box>, "color"> & { color: RgbaColor }
+>(({ color, css, ...rest }, ref) => {
   const colorString = colord(color).toRgbString();
   // @todo transparent icon can be better
   const background =
@@ -64,18 +72,13 @@ export const ColorThumb = forwardRef<
 
   return (
     <Box
+      {...rest}
       ref={ref}
       css={{
-        margin: theme.spacing[3],
-        width: theme.spacing[10],
-        height: theme.spacing[10],
-        backgroundBlendMode: "difference",
-        borderRadius: 2,
         background,
         borderColor,
-        borderStyle: "solid",
       }}
-      {...rest}
+      className={style({ css })}
     />
   );
 });

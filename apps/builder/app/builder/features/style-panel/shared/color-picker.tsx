@@ -1,11 +1,4 @@
-import {
-  forwardRef,
-  useEffect,
-  useState,
-  type ComponentProps,
-  type RefObject,
-  type ElementRef,
-} from "react";
+import { useEffect, useState } from "react";
 import { colord, extend, type RgbaColor } from "colord";
 import namesPlugin from "colord/plugins/names";
 import { type ColorResult, type RGBColor, SketchPicker } from "react-color";
@@ -17,12 +10,10 @@ import type {
   StyleValue,
 } from "@webstudio-is/css-data";
 import {
-  Box,
   Popover,
   PopoverTrigger,
   PopoverContent,
   css,
-  rawTheme,
 } from "@webstudio-is/design-system";
 import { toValue } from "@webstudio-is/css-engine";
 import { theme } from "@webstudio-is/design-system";
@@ -216,7 +207,7 @@ export const ColorPicker = ({
         aria-label="Open color picker"
         onClick={() => setDisplayColorPicker((shown) => !shown)}
       >
-        <ColorThumb color={rgbValue} />
+        <ColorThumb color={rgbValue} css={{ margin: theme.spacing[3] }} />
       </PopoverTrigger>
 
       <PopoverContent>
