@@ -46,7 +46,7 @@ export const meta: WsComponentMeta = {
       children: [
         {
           type: "instance",
-          label: "FormContent",
+          label: "Form Content",
           component: "Box",
           props: [
             {
@@ -93,7 +93,7 @@ export const meta: WsComponentMeta = {
 
         {
           type: "instance",
-          label: "SuccessMessage",
+          label: "Success Message",
           component: "Box",
           props: [
             {
@@ -114,7 +114,7 @@ export const meta: WsComponentMeta = {
 
         {
           type: "instance",
-          label: "ErrorMessage",
+          label: "Error Message",
           component: "Box",
           props: [
             {
