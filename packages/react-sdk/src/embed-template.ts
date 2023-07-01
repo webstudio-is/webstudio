@@ -136,6 +136,7 @@ const createInstancesFromTemplate = (
               dataSource = {
                 type: "variable",
                 id,
+                scopeInstanceId: instanceId,
                 name: dataSourceRef.name,
                 value: rest,
               };
@@ -144,6 +145,7 @@ const createInstancesFromTemplate = (
               dataSource = {
                 type: "expression",
                 id,
+                scopeInstanceId: instanceId,
                 name: dataSourceRef.name,
                 code: dataSourceRef.code,
               };

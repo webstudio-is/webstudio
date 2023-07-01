@@ -37,6 +37,12 @@ test("forbid call expressions", () => {
   }).toThrowError(/Cannot call "this.fn1"/);
 });
 
+test("forbid ternary", () => {
+  expect(() => {
+    validateExpression("var1 ? var2 : var3");
+  }).toThrowError(/Ternary operator is not supported/);
+});
+
 test("forbid multiple expressions", () => {
   expect(() => {
     validateExpression("a b");

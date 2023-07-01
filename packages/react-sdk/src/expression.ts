@@ -93,11 +93,13 @@ const generateCode = (
     }
     return "this";
   }
+  if (node.type === "ConditionalExpression") {
+    throw Error("Ternary operator is not supported");
+  }
   if (node.type === "Compound") {
     throw Error("Cannot use multiple expressions");
   }
-  // plugin is not added
-  node.type satisfies "ConditionalExpression";
+  node satisfies never;
   return "";
 };
 
