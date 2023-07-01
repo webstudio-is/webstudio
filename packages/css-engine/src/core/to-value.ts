@@ -92,8 +92,14 @@ export const toValue = (
 
   if (value.type === "layers") {
     const valueString = value.value
-      .filter((layer) => "hidden" in layer && layer.hidden === false)
-      .map((layer) => toValue(layer, transformValue))
+      .filter(
+        (layer) =>
+          "hidden" in layer === false ||
+          ("hidden" in layer && layer.hidden === false)
+      )
+      .map((layer) => {
+        return toValue(layer, transformValue);
+      })
       .join(", ");
     return valueString === "" ? "none" : valueString;
   }

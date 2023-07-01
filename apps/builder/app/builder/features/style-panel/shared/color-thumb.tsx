@@ -82,3 +82,5 @@ export const ColorThumb = forwardRef<
     />
   );
 });
+
+ColorThumb.displayName = "ColorThumb";
