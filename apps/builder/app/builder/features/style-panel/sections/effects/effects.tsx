@@ -28,6 +28,30 @@ export const EffectsSection = ({
         }}
       >
         <PropertyName
+          label={styleConfigByName("opacity").label}
+          properties={["opacity"]}
+          style={style}
+          onReset={() => deleteProperty("opacity")}
+        />
+        <TextControl
+          property={"opacity"}
+          currentStyle={style}
+          setProperty={setProperty}
+          deleteProperty={deleteProperty}
+        />
+        <PropertyName
+          label={"Blend Mode"}
+          properties={["mixBlendMode"]}
+          style={style}
+          onReset={() => deleteProperty("mixBlendMode")}
+        />
+        <SelectControl
+          property={"mixBlendMode"}
+          currentStyle={style}
+          setProperty={setProperty}
+          deleteProperty={deleteProperty}
+        />
+        <PropertyName
           label={styleConfigByName("cursor").label}
           properties={["cursor"]}
           style={style}
@@ -39,15 +63,26 @@ export const EffectsSection = ({
           setProperty={setProperty}
           deleteProperty={deleteProperty}
         />
-
         <PropertyName
-          label={styleConfigByName("opacity").label}
-          properties={["opacity"]}
+          label={styleConfigByName("pointerEvents").label}
+          properties={["pointerEvents"]}
           style={style}
-          onReset={() => deleteProperty("opacity")}
+          onReset={() => deleteProperty("pointerEvents")}
         />
-        <TextControl
-          property={"opacity"}
+        <SelectControl
+          property={"pointerEvents"}
+          currentStyle={style}
+          setProperty={setProperty}
+          deleteProperty={deleteProperty}
+        />
+        <PropertyName
+          label={styleConfigByName("userSelect").label}
+          properties={["userSelect"]}
+          style={style}
+          onReset={() => deleteProperty("userSelect")}
+        />
+        <SelectControl
+          property={"userSelect"}
           currentStyle={style}
           setProperty={setProperty}
           deleteProperty={deleteProperty}
