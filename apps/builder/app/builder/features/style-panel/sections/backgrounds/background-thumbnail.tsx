@@ -14,13 +14,12 @@ import { toValue } from "@webstudio-is/css-engine";
 import { toPascalCase } from "../../shared/keyword-utils";
 
 const Thumbnail = styled("div", {
+  borderRadius: 2,
   width: theme.spacing[10],
   height: theme.spacing[10],
 });
 
-const NoneThumbnail = styled("div", {
-  width: theme.spacing[10],
-  height: theme.spacing[10],
+const NoneThumbnail = styled(Thumbnail, {
   background:
     "repeating-conic-gradient(rgba(0,0,0,0.22) 0% 25%, transparent 0% 50%) 0% 33.33% / 40% 40%",
 });
