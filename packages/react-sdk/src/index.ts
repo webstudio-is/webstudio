@@ -20,4 +20,9 @@ export {
   getInstanceIdFromComponentProps,
 } from "./props";
 export { type Params, ReactSdkContext } from "./context";
-export { validateExpression, executeExpression } from "./expression";
+export {
+  validateExpression,
+  executeExpressions,
+  encodeDataSourceVariable,
+  decodeDataSourceVariable,
+} from "./expression";

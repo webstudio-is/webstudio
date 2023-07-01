@@ -22,7 +22,7 @@ import {
   assetsStore,
   projectStore,
   registeredComponentMetasStore,
-  dataSourcesStore,
+  dataSourceValuesStore,
 } from "../nano-states";
 import {
   type InstanceSelector,
@@ -143,6 +143,22 @@ const getAssetsUsedInProps = (props: Prop[], foundAssetsIds = new Set()) => {
   return foundAssetsIds;
 };
 
+const getPropTypeAndValue = (value: unknown) => {
+  if (typeof value === "boolean") {
+    return { type: "boolean", value } as const;
+  }
+  if (typeof value === "number") {
+    return { type: "number", value } as const;
+  }
+  if (typeof value === "string") {
+    return { type: "string", value } as const;
+  }
+  if (Array.isArray(value)) {
+    return { type: "string[]", value } as const;
+  }
+  throw Error(`Unexpected prop value ${value}`);
+};
+
 const getTreeData = (targetInstanceSelector: InstanceSelector) => {
   // @todo tell user they can't copy or cut root
   if (targetInstanceSelector.length === 1) {
@@ -161,22 +177,20 @@ const getTreeData = (targetInstanceSelector: InstanceSelector) => {
   // first item is guaranteed root of copied tree
   const treeInstances = getMapValuesByKeysSet(instances, treeInstanceIds);
 
-  const dataSources = dataSourcesStore.get();
+  const dataSourceValues = dataSourceValuesStore.get();
   const treeProps = getMapValuesBy(propsStore.get(), (prop) =>
     treeInstanceIds.has(prop.instanceId)
   ).map((prop) => {
     // unbind data source from prop
+    // @todo improve the logic and allow to copy data sources for scoped components
     if (prop.type === "dataSource") {
-      const dataSource = dataSources.get(prop.value);
-      if (dataSource) {
-        const { id, name, ...rest } = dataSource;
-        return {
-          id: prop.id,
-          instanceId: prop.instanceId,
-          name: prop.name,
-          ...rest,
-        } satisfies Prop;
-      }
+      const value = dataSourceValues.get(prop.value);
+      return {
+        id: prop.id,
+        instanceId: prop.instanceId,
+        name: prop.name,
+        ...getPropTypeAndValue(value),
+      } satisfies Prop;
     }
     return prop;
   });

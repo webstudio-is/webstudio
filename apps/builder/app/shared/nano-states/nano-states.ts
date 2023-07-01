@@ -20,6 +20,11 @@ import type {
   StyleSourceSelection,
   StyleSourceSelections,
 } from "@webstudio-is/project-build";
+import {
+  executeExpressions,
+  encodeDataSourceVariable,
+  decodeDataSourceVariable,
+} from "@webstudio-is/react-sdk";
 import type { Style } from "@webstudio-is/css-data";
 import type { DragStartPayload } from "~/canvas/shared/use-drag-drop";
 import { useSyncInitializeOnce } from "../hook-utils";
@@ -62,7 +67,7 @@ export const rootInstanceStore = computed(
 );
 
 export const dataSourcesStore = atom<DataSources>(new Map());
-export const dataSourceValuesStore = atom<Map<DataSource["id"], unknown>>(
+export const dataSourceVariablesStore = atom<Map<DataSource["id"], unknown>>(
   new Map()
 );
 export const useSetDataSources = (
@@ -72,6 +77,39 @@ export const useSetDataSources = (
     dataSourcesStore.set(new Map(dataSources));
   });
 };
+export const dataSourceValuesStore = computed(
+  [dataSourcesStore, dataSourceVariablesStore],
+  (dataSources, dataSourceVariables) => {
+    const outputValues = new Map<DataSource["id"], unknown>();
+    const variables = new Map<string, unknown>();
+    const expressions = new Map<string, string>();
+    for (const [dataSourceId, dataSource] of dataSources) {
+      const name = encodeDataSourceVariable(dataSourceId);
+      if (dataSource.type === "variable") {
+        const value =
+          dataSourceVariables.get(dataSourceId) ?? dataSource.value.value;
+        variables.set(name, value);
+        outputValues.set(dataSourceId, value);
+      }
+      if (dataSource.type === "expression") {
+        expressions.set(name, dataSource.code);
+      }
+    }
+    try {
+      const outputVariables = executeExpressions(variables, expressions);
+      for (const [name, value] of outputVariables) {
+        const id = decodeDataSourceVariable(name);
+        if (id !== undefined) {
+          outputValues.set(id, value);
+        }
+      }
+    } catch (error) {
+      // eslint-disable-next-line no-console
+      console.error(error);
+    }
+    return outputValues;
+  }
+);
 
 export const propsStore = atom<Props>(new Map());
 export const propsIndexStore = computed(propsStore, (props) => {
