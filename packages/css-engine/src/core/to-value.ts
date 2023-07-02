@@ -91,9 +91,17 @@ export const toValue = (
   }
 
   if (value.type === "layers") {
-    return value.value
-      .map((value) => toValue(value, transformValue))
+    const valueString = value.value
+      .filter(
+        (layer) =>
+          "hidden" in layer === false ||
+          ("hidden" in layer && layer.hidden === false)
+      )
+      .map((layer) => {
+        return toValue(layer, transformValue);
+      })
       .join(", ");
+    return valueString === "" ? "none" : valueString;
   }
 
   if (value.type === "tuple") {

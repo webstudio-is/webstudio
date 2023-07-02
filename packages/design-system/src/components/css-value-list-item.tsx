@@ -4,12 +4,17 @@ import {
   forwardRef,
   Children,
   useMemo,
+  type ReactNode,
 } from "react";
 import { styled } from "../stitches.config";
 import { Flex } from "./flex";
+import { Box } from "./box";
 import { theme } from "../stitches.config";
 import { DragHandleIcon } from "@webstudio-is/icons";
 import { ArrowFocus } from "./primitives/arrow-focus";
+
+const LIST_ITEM_ATTRIBUTE = "data-list-item";
+const listItemAttributes = { [LIST_ITEM_ATTRIBUTE]: true };
 
 const DragHandleIconStyled = styled(DragHandleIcon, {
   visibility: "hidden",
@@ -28,6 +33,19 @@ const ThumbHolder = styled("div", {
  * We draw button above rela button positions, therefore we need to have same padding
  */
 const sharedPaddingRight = theme.spacing[9];
+
+const IconButtonsWrapper = styled(Flex, {
+  position: "absolute",
+  right: 0,
+  top: 0,
+  bottom: 0,
+  paddingRight: sharedPaddingRight,
+  visibility: "hidden",
+});
+
+const FakeIconButtonsWrapper = styled(Flex, {
+  paddingLeft: theme.spacing[5],
+});
 
 /**
  * Should be a button as otherwise radix trigger doesn't work with keyboard interactions
@@ -62,16 +80,10 @@ const ItemButton = styled("button", {
     outline: "none",
     backgroundColor: theme.colors.backgroundHover,
   },
-  "&:hover, &[data-active=true]": {
-    backgroundColor: theme.colors.backgroundHover,
-
-    [`& ${DragHandleIconStyled}`]: {
-      visibility: "visible",
-    },
-  },
   variants: {
     hidden: {
       true: {
+        opacity: 0.2,
         [`& ${ThumbHolder}`]: {
           opacity: 0.2,
         },
@@ -81,9 +93,11 @@ const ItemButton = styled("button", {
 });
 
 type Props = ComponentProps<typeof ItemButton> & {
+  id: string;
+  index: number;
   hidden?: boolean;
   label: React.ReactElement;
-  thumbnail: React.ReactElement;
+  thumbnail?: React.ReactElement;
   buttons?: React.ReactElement;
   // to support Radix trigger asChild
   "data-state"?: "open";
@@ -96,14 +110,19 @@ type Props = ComponentProps<typeof ItemButton> & {
 const ItemWrapper = styled("div", {
   position: "relative",
   width: "100%",
-});
-
-const IconButtonsWrapper = styled(Flex, {
-  position: "absolute",
-  right: 0,
-  top: 0,
-  bottom: 0,
-  paddingRight: sharedPaddingRight,
+  "&:hover, &[data-active=true]": {
+    [`& ${ItemButton}`]: {
+      backgroundColor: theme.colors.backgroundHover,
+    },
+    [`& ${DragHandleIconStyled}`]: {
+      visibility: "visible",
+    },
+  },
+  "&:hover, &[data-active=true], &:focus-within": {
+    [`& ${IconButtonsWrapper}`]: {
+      visibility: "visible",
+    },
+  },
 });
 
 const FakeSmallButton = styled("div", {
@@ -120,6 +139,9 @@ export const CssValueListItem = forwardRef(
       focused,
       state,
       active,
+      index,
+      id,
+      hidden,
       "data-state": dataState,
       ...rest
     }: Props,
@@ -146,18 +168,24 @@ export const CssValueListItem = forwardRef(
                 handleKeyDown(event);
               }
             }}
+            data-active={active}
           >
             <ItemButton
               ref={ref}
+              data-id={id}
               data-focused={focused}
               data-state={state ?? dataState}
               data-active={active}
+              tabIndex={index === 0 ? 0 : -1}
+              {...listItemAttributes}
               {...rest}
+              hidden={hidden}
+              disabled={hidden === true}
             >
               <DragHandleIconStyled />
 
               <Flex gap={2} shrink>
-                <ThumbHolder>{thumbnail}</ThumbHolder>
+                {thumbnail ? <ThumbHolder>{thumbnail}</ThumbHolder> : null}
                 {label}
               </Flex>
 
@@ -168,13 +196,9 @@ export const CssValueListItem = forwardRef(
             Warning: validateDOMNesting(...): <button> cannot appear as a descendant of <button>
             Real buttons will be placed on top of fake buttons
           */}
-              <Flex
-                shrink={false}
-                css={{ paddingLeft: theme.spacing[5] }}
-                gap={2}
-              >
+              <FakeIconButtonsWrapper shrink={false} gap={2}>
                 {fakeButtons}
-              </Flex>
+              </FakeIconButtonsWrapper>
             </ItemButton>
 
             {/*
@@ -191,3 +215,36 @@ export const CssValueListItem = forwardRef(
 );
 
 CssValueListItem.displayName = "CssValueListItem";
+
+export const CssValueListArrowFocus = ({
+  children,
+  dragItemId,
+}: {
+  children: ReactNode;
+  dragItemId?: string;
+}) => {
+  return (
+    <ArrowFocus
+      render={({ handleKeyDown }) => (
+        <Box
+          css={{
+            display: "contents",
+            pointerEvents: dragItemId ? "none" : "auto",
+            // to make DnD work we have to disable scrolling using touch
+            touchAction: "none",
+          }}
+          onKeyDown={(event) => {
+            if (event.key === "ArrowUp" || event.key === "ArrowDown") {
+              handleKeyDown(event, {
+                accept: (element) =>
+                  element.getAttribute(LIST_ITEM_ATTRIBUTE) === "true",
+              });
+            }
+          }}
+        >
+          {children}
+        </Box>
+      )}
+    />
+  );
+};

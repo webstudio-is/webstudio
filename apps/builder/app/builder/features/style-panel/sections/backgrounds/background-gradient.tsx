@@ -1,6 +1,6 @@
 import type { InvalidValue, RgbValue } from "@webstudio-is/css-data";
 import { parseCssValue, parseBackground } from "@webstudio-is/css-data";
-import { TextArea, theme } from "@webstudio-is/design-system";
+import { TextArea, textVariants, theme } from "@webstudio-is/design-system";
 import { useEffect, useRef, useState } from "react";
 import type { ControlProps } from "../../style-sections";
 
@@ -88,7 +88,7 @@ export const BackgroundGradient = (
   return (
     <TextArea
       ref={textAreaRef}
-      css={{ minHeight: theme.spacing[14] }}
+      css={{ minHeight: theme.spacing[14], ...textVariants.mono }}
       rows={2}
       name="description"
       disabled={props.disabled}

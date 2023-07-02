@@ -99,31 +99,38 @@ const UnsetValue = z.object({
 });
 export type UnsetValue = z.infer<typeof UnsetValue>;
 
-export const TupleValueItem = z.union([UnitValue, KeywordValue, UnparsedValue]);
+export const TupleValueItem = z.union([
+  UnitValue,
+  KeywordValue,
+  UnparsedValue,
+  RgbValue,
+]);
 export type TupleValueItem = z.infer<typeof TupleValueItem>;
 
 export const TupleValue = z.object({
   type: z.literal("tuple"),
   value: z.array(TupleValueItem),
+  hidden: z.boolean().optional(),
 });
 
 export type TupleValue = z.infer<typeof TupleValue>;
 
+const LayerValueItem = z.union([
+  UnitValue,
+  KeywordValue,
+  UnparsedValue,
+  ImageValue,
+  TupleValue,
+  InvalidValue,
+]);
+
+export type LayerValueItem = z.infer<typeof LayerValueItem>;
 // To support background layers https://developer.mozilla.org/en-US/docs/Web/CSS/background
 // and similar comma separated css properties
 // InvalidValue used in case of asset not found
 export const LayersValue = z.object({
   type: z.literal("layers"),
-  value: z.array(
-    z.union([
-      UnitValue,
-      KeywordValue,
-      UnparsedValue,
-      ImageValue,
-      TupleValue,
-      InvalidValue,
-    ])
-  ),
+  value: z.array(LayerValueItem),
 });
 
 export type LayersValue = z.infer<typeof LayersValue>;
