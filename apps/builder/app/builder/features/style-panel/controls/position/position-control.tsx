@@ -12,6 +12,11 @@ import type { SetValue } from "../../shared/use-style-data";
 import { NonResetablePropertyName } from "../../shared/property-name";
 
 const toPosition = (value: TupleValue) => {
+  // Should never actually happen, just for TS
+  if (value.value[0].type !== "unit" || value.value[1].type !== "unit") {
+    return { x: 0, y: 0 };
+  }
+
   return {
     x: value.value[0].value,
     y: value.value[1].value,

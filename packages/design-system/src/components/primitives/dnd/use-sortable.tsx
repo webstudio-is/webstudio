@@ -1,14 +1,13 @@
 import { useState, useRef } from "react";
 import { createPortal } from "react-dom";
+import { useDrop, type DropTarget } from "./use-drop";
+import { useDrag } from "./use-drag";
+import type { Placement } from "./geometry-utils";
+import { useDragCursor } from "./use-drag-cursor";
 import {
-  type Placement,
   PlacementIndicator,
   computeIndicatorPlacement,
-  useDrag,
-  useDragCursor,
-  useDrop,
-  type DropTarget,
-} from "@webstudio-is/design-system";
+} from "./placement-indicator";
 
 type UseSortable<Item> = {
   items: Array<Item>;

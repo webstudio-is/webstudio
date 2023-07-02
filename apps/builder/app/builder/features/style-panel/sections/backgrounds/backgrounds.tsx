@@ -3,9 +3,8 @@ import type { RenderCategoryProps } from "../../style-sections";
 import { styleConfigByName } from "../../shared/configs";
 import { FloatingPanel } from "~/builder/shared/floating-panel";
 import {
-  ArrowFocus,
-  Box,
   CssValueListItem,
+  CssValueListArrowFocus,
   Flex,
   Grid,
   Label,
@@ -13,9 +12,10 @@ import {
   SectionTitleButton,
   SectionTitleLabel,
   SmallIconButton,
+  SmallToggleButton,
   theme,
+  useSortable,
 } from "@webstudio-is/design-system";
-import { SmallToggleButton } from "@webstudio-is/design-system";
 import {
   EyeconOpenIcon,
   EyeconClosedIcon,
@@ -42,8 +42,7 @@ import {
 } from "./background-layers";
 import { BackgroundContent } from "./background-content";
 import { getLayerName, LayerThumbnail } from "./background-thumbnail";
-import { useSortable } from "./use-sortable";
-import { useMemo, type ReactNode } from "react";
+import { useMemo } from "react";
 import type { RgbValue, StyleProperty } from "@webstudio-is/css-data";
 import {
   CollapsibleSectionBase,
@@ -51,13 +50,9 @@ import {
 } from "~/builder/shared/collapsible-section";
 import { getDots } from "../../shared/collapsible-section";
 
-const LIST_ITEM_ATTRIBUTE = "data-list-item";
-
-const listItemAttributes = { [LIST_ITEM_ATTRIBUTE]: true };
-
 const Layer = (props: {
   id: string;
-  tabIndex: -1 | 0;
+  index: number;
   isHighlighted: boolean;
   layerStyle: StyleInfo;
   setProperty: SetBackgroundProperty;
@@ -103,9 +98,9 @@ const Layer = (props: {
       }
     >
       <CssValueListItem
+        id={props.id}
         active={props.isHighlighted}
-        data-id={props.id}
-        tabIndex={props.tabIndex}
+        index={props.index}
         label={
           <Label truncate onReset={props.deleteLayer}>
             {getLayerName(props.layerStyle, assets)}
@@ -132,7 +127,6 @@ const Layer = (props: {
             />
           </>
         }
-        {...listItemAttributes}
       />
     </FloatingPanel>
   );
@@ -202,28 +196,6 @@ const BackgroundsCollapsibleSection = ({
   );
 };
 
-const ListItemsFocusWrap = (props: { children: ReactNode }) => {
-  return (
-    <ArrowFocus
-      render={({ handleKeyDown }) => (
-        <Box
-          css={{ display: "contents" }}
-          onKeyDown={(event) => {
-            if (event.key === "ArrowUp" || event.key === "ArrowDown") {
-              handleKeyDown(event, {
-                accept: (element) =>
-                  element.getAttribute(LIST_ITEM_ATTRIBUTE) === "true",
-              });
-            }
-          }}
-        >
-          {props.children}
-        </Box>
-      )}
-    />
-  );
-};
-
 export const BackgroundsSection = (props: RenderCategoryProps) => {
   const { setProperty, deleteProperty, currentStyle, createBatchUpdate } =
     props;
@@ -231,7 +203,7 @@ export const BackgroundsSection = (props: RenderCategoryProps) => {
 
   const { items } = styleConfigByName("backgroundColor");
 
-  const layers = useMemo(
+  const sortableItems = useMemo(
     () =>
       Array.from(Array(layersCount), (_, index) => ({
         id: `${index}`,
@@ -241,7 +213,7 @@ export const BackgroundsSection = (props: RenderCategoryProps) => {
   );
 
   const { dragItemId, placementIndicator, sortableRefCallback } = useSortable({
-    items: layers,
+    items: sortableItems,
     onSort: (newIndex, oldIndex) => {
       swapLayers(newIndex, oldIndex, currentStyle, createBatchUpdate);
     },
@@ -256,21 +228,12 @@ export const BackgroundsSection = (props: RenderCategoryProps) => {
       category={props.category}
     >
       <Flex gap={1} direction="column">
-        <ListItemsFocusWrap>
-          <Flex
-            gap={1}
-            direction="column"
-            ref={sortableRefCallback}
-            css={{
-              pointerEvents: dragItemId ? "none" : "auto",
-              // to make DnD work we have to disable scrolling using touch
-              touchAction: "none",
-            }}
-          >
-            {layers.map((layer, index) => (
+        <CssValueListArrowFocus dragItemId={dragItemId}>
+          <Flex gap={1} direction="column" ref={sortableRefCallback}>
+            {sortableItems.map((layer, index) => (
               <Layer
                 id={layer.id}
-                tabIndex={index === 0 ? 0 : -1}
+                index={index}
                 key={layer.id}
                 isHighlighted={dragItemId === layer.id}
                 layerStyle={getLayerBackgroundStyleInfo(
@@ -299,7 +262,7 @@ export const BackgroundsSection = (props: RenderCategoryProps) => {
 
             {placementIndicator}
           </Flex>
-        </ListItemsFocusWrap>
+        </CssValueListArrowFocus>
 
         <Grid
           css={{
