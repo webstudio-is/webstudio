@@ -371,13 +371,6 @@ export const props: Record<string, PropMeta> = {
   encType: { required: false, control: "text", type: "string" },
   hidden: { required: false, control: "boolean", type: "boolean" },
   id: { required: false, control: "text", type: "string" },
-  initialState: {
-    required: false,
-    control: "radio",
-    type: "string",
-    defaultValue: "initial",
-    options: ["initial", "success", "error"],
-  },
   inputMode: {
     description:
       "Hints at the type of data that might be entered by the user while editing the element or its contents\n@see https://html.spec.whatwg.org/multipage/interaction.html#input-modalities:-the-inputmode-attribute",
@@ -424,6 +417,13 @@ export const props: Record<string, PropMeta> = {
   security: { required: false, control: "text", type: "string" },
   slot: { required: false, control: "text", type: "string" },
   spellCheck: { required: false, control: "boolean", type: "boolean" },
+  state: {
+    required: false,
+    control: "radio",
+    type: "string",
+    defaultValue: "initial",
+    options: ["initial", "success", "error"],
+  },
   suppressContentEditableWarning: {
     required: false,
     control: "boolean",

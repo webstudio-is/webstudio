@@ -1,9 +1,10 @@
 import { FormIcon } from "@webstudio-is/icons/svg";
 import { form } from "@webstudio-is/react-sdk/css-normalize";
-import type {
-  PresetStyle,
-  WsComponentMeta,
-  WsComponentPropsMeta,
+import {
+  type PresetStyle,
+  type WsComponentMeta,
+  type WsComponentPropsMeta,
+  showAttribute,
 } from "@webstudio-is/react-sdk";
 import type { defaultTag } from "./form";
 import { props } from "./__generated__/form.props";
@@ -18,6 +19,7 @@ const presetStyle = {
 export const meta: WsComponentMeta = {
   category: "forms",
   type: "container",
+  invalidAncestors: ["Form"],
   label: "Form",
   icon: FormIcon,
   presetStyle,
@@ -30,59 +32,103 @@ export const meta: WsComponentMeta = {
     {
       type: "instance",
       component: "Form",
+      props: [
+        {
+          name: "state",
+          type: "string",
+          value: "initial",
+          dataSourceRef: {
+            type: "variable",
+            name: "formState",
+          },
+        },
+      ],
       children: [
         {
           type: "instance",
-          component: "Label",
-          children: [{ type: "text", value: "Name" }],
-        },
-        {
-          type: "instance",
-          component: "Input",
-          props: [{ type: "string", name: "name", value: "name" }],
-          children: [],
-        },
-        {
-          type: "instance",
-          component: "Label",
-          children: [{ type: "text", value: "Email" }],
-        },
-        {
-          type: "instance",
-          component: "Input",
-          props: [{ type: "string", name: "name", value: "email" }],
-          children: [],
-        },
-        {
-          type: "instance",
-          component: "Button",
-          children: [{ type: "text", value: "Submit" }],
-        },
-        {
-          type: "instance",
-          component: "SuccessMessage",
+          label: "Form Content",
+          component: "Box",
+          props: [
+            {
+              name: showAttribute,
+              type: "boolean",
+              value: false,
+              dataSourceRef: {
+                type: "expression",
+                name: "formInitial",
+                code: `formState === 'initial' || formState === 'error'`,
+              },
+            },
+          ],
           children: [
             {
               type: "instance",
-              component: "Text",
-              children: [
-                { type: "text", value: "Thank you for getting in touch!" },
-              ],
+              component: "Label",
+              children: [{ type: "text", value: "Name" }],
+            },
+            {
+              type: "instance",
+              component: "Input",
+              props: [{ type: "string", name: "name", value: "name" }],
+              children: [],
+            },
+            {
+              type: "instance",
+              component: "Label",
+              children: [{ type: "text", value: "Email" }],
+            },
+            {
+              type: "instance",
+              component: "Input",
+              props: [{ type: "string", name: "name", value: "email" }],
+              children: [],
+            },
+            {
+              type: "instance",
+              component: "Button",
+              children: [{ type: "text", value: "Submit" }],
             },
           ],
         },
+
         {
           type: "instance",
-          component: "ErrorMessage",
-          children: [
+          label: "Success Message",
+          component: "Box",
+          props: [
             {
-              type: "instance",
-              component: "Text",
-              children: [
-                { type: "text", value: "Sorry, something went wrong." },
-              ],
+              name: showAttribute,
+              type: "boolean",
+              value: false,
+              dataSourceRef: {
+                type: "expression",
+                name: "formSuccess",
+                code: `formState === 'success'`,
+              },
             },
           ],
+          children: [
+            { type: "text", value: "Thank you for getting in touch!" },
+          ],
+        },
+
+        {
+          type: "instance",
+          label: "Error Message",
+          component: "Box",
+          props: [
+            {
+              name: showAttribute,
+              type: "boolean",
+              value: false,
+              dataSourceRef: {
+                type: "expression",
+                name: "formError",
+                code: `formState === 'error'`,
+              },
+            },
+          ],
+          children: [{ type: "text", value: "Sorry, something went wrong." }],
         },
       ],
     },
@@ -91,5 +137,5 @@ export const meta: WsComponentMeta = {
 
 export const propsMeta: WsComponentPropsMeta = {
   props,
-  initialProps: ["initialState"],
+  initialProps: ["state"],
 };

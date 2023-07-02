@@ -23,8 +23,6 @@ export { meta as ListItem } from "./list-item.ws";
 export { meta as Separator } from "./separator.ws";
 export { meta as CodeText } from "./code-text.ws";
 export { meta as Label } from "./label.ws";
-export { meta as SuccessMessage } from "./success-message.ws";
-export { meta as ErrorMessage } from "./error-message.ws";
 export { meta as Textarea } from "./textarea.ws";
 export { meta as RadioButton } from "./radio-button.ws";
 export { meta as Checkbox } from "./checkbox.ws";

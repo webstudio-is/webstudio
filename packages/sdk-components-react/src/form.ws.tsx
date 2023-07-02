@@ -19,6 +19,7 @@ const presetStyle = {
 export const meta: WsComponentMeta = {
   category: "forms",
   type: "container",
+  invalidAncestors: ["Form"],
   label: "Form",
   icon: FormIcon,
   states: defaultStates,

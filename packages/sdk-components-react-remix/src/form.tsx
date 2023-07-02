@@ -1,109 +1,61 @@
 import {
-  type ReactNode,
   type ElementRef,
   type ComponentProps,
-  Children,
-  cloneElement,
   forwardRef,
+  useRef,
+  useEffect,
+  useContext,
 } from "react";
-import { useFetcher } from "@remix-run/react";
+import { useFetcher, type Fetcher } from "@remix-run/react";
 import { formIdFieldName } from "@webstudio-is/form-handlers";
-import { getInstanceIdFromComponentProps } from "@webstudio-is/react-sdk";
+import {
+  ReactSdkContext,
+  getInstanceIdFromComponentProps,
+} from "@webstudio-is/react-sdk";
 
 export const defaultTag = "form";
 
-const isComponentNode = (
-  component: string,
-  node: Exclude<ReactNode, null | number | string | boolean | undefined>
-) => "props" in node && node.props.instance?.component === component;
+const useOnFetchEnd = <Data,>(
+  fetcher: Fetcher<Data>,
+  handler: (data: Data) => void
+) => {
+  const latestHandler = useRef(handler);
+  latestHandler.current = handler;
 
-const onlyErrorMessage = (children: ReactNode) =>
-  Children.map(children, (child): ReactNode => {
-    if (typeof child !== "object" || child === null) {
-      return null;
-    }
-
-    if (isComponentNode("ErrorMessage", child)) {
-      return child;
-    }
-
-    if ("props" in child) {
-      const newChildren = onlyErrorMessage(child.props.children);
-      return Children.toArray(newChildren).some((child) => child !== null)
-        ? cloneElement(child, { children: newChildren })
-        : null;
-    }
-
-    return onlyErrorMessage(child);
-  });
-
-const onlySuccessMessage = (children: ReactNode) =>
-  Children.map(children, (child): ReactNode => {
-    if (typeof child !== "object" || child === null) {
-      return null;
-    }
-
-    if (isComponentNode("SuccessMessage", child)) {
-      return child;
-    }
-
-    if ("props" in child) {
-      const newChildren = onlySuccessMessage(child.props.children);
-      return Children.toArray(newChildren).some((child) => child !== null)
-        ? cloneElement(child, { children: newChildren })
-        : null;
-    }
-
-    return onlySuccessMessage(child);
-  });
-
-const withoutMessages = (children: ReactNode) =>
-  Children.map(children, (child): ReactNode => {
-    if (typeof child !== "object" || child === null) {
-      return child;
-    }
-
+  const prevFetcher = useRef(fetcher);
+  useEffect(() => {
     if (
-      isComponentNode("ErrorMessage", child) ||
-      isComponentNode("SuccessMessage", child)
+      prevFetcher.current.state !== fetcher.state &&
+      fetcher.state === "idle" &&
+      fetcher.data !== undefined
     ) {
-      return null;
+      latestHandler.current(fetcher.data);
     }
+    prevFetcher.current = fetcher;
+  }, [fetcher]);
+};
 
-    if ("props" in child) {
-      return cloneElement(child, {
-        children: withoutMessages(child.props.children),
-      });
-    }
-
-    return withoutMessages(child);
-  });
+type State = "initial" | "success" | "error";
 
 export const Form = forwardRef<
   ElementRef<typeof defaultTag>,
-  ComponentProps<typeof defaultTag> & {
-    initialState?: "initial" | "success" | "error";
-  }
->(({ children, initialState = "initial", action, method, ...props }, ref) => {
+  ComponentProps<typeof defaultTag> & { state?: State }
+>(({ children, action, method, state = "initial", ...rest }, ref) => {
+  const { setDataSourceValue } = useContext(ReactSdkContext);
+
   const fetcher = useFetcher();
 
-  const state =
-    fetcher.type === "done"
-      ? fetcher.data?.success === true
-        ? "success"
-        : "error"
-      : initialState;
+  const instanceId = getInstanceIdFromComponentProps(rest);
 
-  const instanceId = getInstanceIdFromComponentProps(props);
+  useOnFetchEnd(fetcher, (data) => {
+    const state: State = data?.success === true ? "success" : "error";
+    setDataSourceValue(instanceId, "state", state);
+  });
 
   return (
-    <fetcher.Form {...props} method="post" data-state={state} ref={ref}>
+    <fetcher.Form {...rest} method="post" data-state={state} ref={ref}>
       <input type="hidden" name={formIdFieldName} value={instanceId} />
-      {state === "success"
-        ? onlySuccessMessage(children)
-        : state === "error"
-        ? onlyErrorMessage(children)
-        : withoutMessages(children)}
+      {children}
     </fetcher.Form>
   );
 });
