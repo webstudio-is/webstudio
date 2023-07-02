@@ -58,7 +58,12 @@ const getCanvasStyle = (
     width: canvasWidth,
     height: canvasHeight ?? "100%",
     left: "50%",
-    transform: `scale(${scale}%) translateX(-50%)`,
+    // Chrome on Windows has a bug and makes everrything slightly blurry if scale(1) is used together with translateX.
+    // We have done a lot of comparisons between various fixes and they were producing slightly different sharpness,
+    // using scale 0.9999 with opacity 0.9999 works best.
+    // User Agent Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/114.0.0.0 Safari/537.36
+    transform: `scale(${scale === 1 ? 0.9999 : scale}%) translateX(-50%)`,
+    opacity: 0.9999,
   };
 };
 
