@@ -111,15 +111,42 @@ export const validateExpression = (
   return generateCode(expression, true, transformIdentifier);
 };
 
-export const executeExpressions = (
-  variables: Map<string, unknown>,
+const sortTopologically = (
+  list: Set<string>,
+  depsById: Map<string, Set<string>>,
+  explored = new Set<string>(),
+  sorted: string[] = []
+) => {
+  for (const id of list) {
+    if (explored.has(id)) {
+      continue;
+    }
+    explored.add(id);
+    const deps = depsById.get(id);
+    if (deps) {
+      sortTopologically(deps, depsById, explored, sorted);
+    }
+    sorted.push(id);
+  }
+  return sorted;
+};
+
+/**
+ * Generates a function body expecting map as _variables argument
+ * and outputing map of results
+ */
+export const generateExpressionsComputation = (
+  variables: Set<string>,
   expressions: Map<string, string>
 ) => {
   const depsById = new Map<string, Set<string>>();
   for (const [id, code] of expressions) {
     const deps = new Set<string>();
     validateExpression(code, (identifier) => {
-      if (variables.has(identifier) || expressions.has(identifier)) {
+      if (variables.has(identifier)) {
+        return identifier;
+      }
+      if (expressions.has(identifier)) {
         deps.add(identifier);
         return identifier;
       }
@@ -128,38 +155,45 @@ export const executeExpressions = (
     depsById.set(id, deps);
   }
 
-  // sort topologically
-  const sortedExpressions = Array.from(expressions.keys()).sort(
-    (left, right) => {
-      if (depsById.get(left)?.has(right)) {
-        return 1;
-      }
-      if (depsById.get(right)?.has(left)) {
-        return -1;
-      }
-      return 0;
-    }
+  const sortedExpressions = sortTopologically(
+    new Set(expressions.keys()),
+    depsById
   );
 
-  // execute chain of expressions
-  let header = "";
-  for (const [id, value] of variables) {
-    header += `const ${id} = ${JSON.stringify(value)};\n`;
-  }
+  // generate code computing all expressions
+  let generatedCode = "";
 
-  const values = new Map<string, unknown>();
+  for (const id of variables) {
+    generatedCode += `const ${id} = _variables.get('${id}');\n`;
+  }
 
   for (const id of sortedExpressions) {
     const code = expressions.get(id);
     if (code === undefined) {
       continue;
     }
-    const executeFn = new Function(`${header}\nreturn (${code});`);
-    const value = executeFn();
-    header += `const ${id} = ${JSON.stringify(value)};\n`;
-    values.set(id, value);
+    generatedCode += `const ${id} = (${code});\n`;
   }
 
+  generatedCode += `return new Map([\n`;
+  for (const id of sortedExpressions) {
+    generatedCode += `  ['${id}', ${id}],\n`;
+  }
+  generatedCode += `]);`;
+
+  return generatedCode;
+};
+
+export const executeExpressions = (
+  variables: Map<string, unknown>,
+  expressions: Map<string, string>
+) => {
+  const generatedCode = generateExpressionsComputation(
+    new Set(variables.keys()),
+    expressions
+  );
+  const executeFn = new Function("_variables", generatedCode);
+  const values = executeFn(variables) as Map<string, unknown>;
   return values;
 };
 
