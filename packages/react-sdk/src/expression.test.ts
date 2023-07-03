@@ -119,7 +119,7 @@ test("forbid circular expressions", () => {
   ]);
   expect(() => {
     executeExpressions(variables, expressions);
-  }).toThrowError(/Cannot access 'exp2' before initialization/);
+  }).toThrowError(/Cannot access 'exp0' before initialization/);
 });
 
 test("make sure dependency exists", () => {

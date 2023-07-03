@@ -111,6 +111,26 @@ export const validateExpression = (
   return generateCode(expression, true, transformIdentifier);
 };
 
+const sortTopologically = (
+  list: Set<string>,
+  depsById: Map<string, Set<string>>,
+  explored = new Set<string>(),
+  sorted: string[] = []
+) => {
+  for (const id of list) {
+    if (explored.has(id)) {
+      return sorted;
+    }
+    explored.add(id);
+    const deps = depsById.get(id);
+    if (deps) {
+      sortTopologically(deps, depsById, explored, sorted);
+    }
+    sorted.push(id);
+  }
+  return sorted;
+};
+
 /**
  * Generates a function body expecting map as _variables argument
  * and outputing map of results
@@ -123,7 +143,10 @@ export const generateExpressionsComputation = (
   for (const [id, code] of expressions) {
     const deps = new Set<string>();
     validateExpression(code, (identifier) => {
-      if (variables.has(identifier) || expressions.has(identifier)) {
+      if (variables.has(identifier)) {
+        return identifier;
+      }
+      if (expressions.has(identifier)) {
         deps.add(identifier);
         return identifier;
       }
@@ -132,17 +155,9 @@ export const generateExpressionsComputation = (
     depsById.set(id, deps);
   }
 
-  // sort topologically
-  const sortedExpressions = Array.from(expressions.keys()).sort(
-    (left, right) => {
-      if (depsById.get(left)?.has(right)) {
-        return 1;
-      }
-      if (depsById.get(right)?.has(left)) {
-        return -1;
-      }
-      return 0;
-    }
+  const sortedExpressions = sortTopologically(
+    new Set(expressions.keys()),
+    depsById
   );
 
   // generate code comoputing all expressions
