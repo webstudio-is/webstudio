@@ -10,6 +10,7 @@ import {
   Flex,
   Label,
   Tooltip,
+  type TooltipProps,
   Text,
   ScrollArea,
 } from "@webstudio-is/design-system";
@@ -123,33 +124,54 @@ const TooltipContent = ({
   const selectedBreakpoint = useStore(selectedBreakpointStore);
   const instances = useStore(instancesStore);
   const styleSources = useStore(styleSourcesStore);
-  let instance = useStore(selectedInstanceStore);
+  const instance = useStore(selectedInstanceStore);
   const selectedStyleSource = useStore(selectedStyleSourceStore);
-
-  // When we have multiple properties, they must be originating from the same source, so we can just use one.
-  const styleValueInfo = style[properties[0]];
-
-  if (styleValueInfo === undefined) {
-    return null;
-  }
 
   const descriptionWithFallback = description ?? getDescription(properties);
 
-  const styleSource = getStyleSource(styleValueInfo);
-  const sourceName = getSourceName(
-    styleSources,
-    styleValueInfo,
-    selectedStyleSource
-  );
-  const breakpointName = getBreakpointName(
-    styleValueInfo,
-    breakpoints,
-    selectedBreakpoint
-  );
+  const breakpointSet = new Set<string>();
+  const styleSourceNameSet = new Set<string>();
+  const instanceSet = new Set<string>();
 
-  if (styleValueInfo.inherited && styleValueInfo.local === undefined) {
-    instance = instances.get(styleValueInfo.inherited.instanceId);
+  for (const property of properties) {
+    const styleValueInfo = style[property];
+
+    if (styleValueInfo === undefined) {
+      continue;
+    }
+
+    const sourceName = getSourceName(
+      styleSources,
+      styleValueInfo,
+      selectedStyleSource
+    );
+
+    if (sourceName !== undefined) {
+      styleSourceNameSet.add(sourceName);
+    }
+
+    const breakpointName = getBreakpointName(
+      styleValueInfo,
+      breakpoints,
+      selectedBreakpoint
+    );
+
+    breakpointSet.add(`${breakpointName}`);
+
+    let instanceTitle = instance?.label ?? instance?.component;
+    if (styleValueInfo.inherited && styleValueInfo.local === undefined) {
+      const localInstance = instances.get(styleValueInfo.inherited.instanceId);
+      instanceTitle = localInstance?.label ?? localInstance?.component;
+    }
+
+    if (instanceTitle !== undefined) {
+      instanceSet.add(instanceTitle);
+    }
   }
+
+  const styleSourcesList = properties.map((property) =>
+    getStyleSource(style[property])
+  );
 
   return (
     <Flex direction="column" gap="2" css={{ maxWidth: theme.spacing[28] }}>
@@ -169,7 +191,7 @@ const TooltipContent = ({
         </Text>
       </ScrollArea>
       {descriptionWithFallback && <Text>{descriptionWithFallback}</Text>}
-      {sourceName && (
+      {styleSourceNameSet.size > 0 && (
         <Flex
           direction="column"
           gap="1"
@@ -177,21 +199,36 @@ const TooltipContent = ({
         >
           <Text color="moreSubtle">Value comes from</Text>
           <Flex gap="1" wrap="wrap">
-            <StyleSourceBadge source="breakpoint" variant="small">
-              {breakpointName}
-            </StyleSourceBadge>
-            <StyleSourceBadge source="token" variant="small">
-              {sourceName}
-            </StyleSourceBadge>
-            {instance && (
-              <StyleSourceBadge source="instance" variant="small">
-                {instance.label || instance.component}
+            {Array.from(breakpointSet).map((breakpointName) => (
+              <StyleSourceBadge
+                key={breakpointName}
+                source="breakpoint"
+                variant="small"
+              >
+                {breakpointName}
               </StyleSourceBadge>
-            )}
+            ))}
+
+            {Array.from(styleSourceNameSet).map((sourceName) => (
+              <StyleSourceBadge key={sourceName} source="token" variant="small">
+                {sourceName}
+              </StyleSourceBadge>
+            ))}
+
+            {Array.from(instanceSet).map((instanceTitle) => (
+              <StyleSourceBadge
+                key={instanceTitle}
+                source="instance"
+                variant="small"
+              >
+                {instanceTitle}
+              </StyleSourceBadge>
+            ))}
           </Flex>
         </Flex>
       )}
-      {(styleSource === "local" || styleSource === "overwritten") &&
+      {(styleSourcesList.includes("local") ||
+        styleSourcesList.includes("overwritten")) &&
         onReset !== undefined && (
           <Button
             color="dark"
@@ -214,6 +251,9 @@ export const PropertyTooltip = ({
   style,
   onReset,
   children,
+  open,
+  onOpenChange,
+  side,
 }: {
   openWithClick?: boolean;
   title?: string;
@@ -222,12 +262,20 @@ export const PropertyTooltip = ({
   style: StyleInfo;
   onReset?: undefined | (() => void);
   children: ReactElement;
+  open?: boolean;
+  onOpenChange?: (isOpen: boolean) => void;
+  side?: TooltipProps["side"];
 }) => {
-  const [isOpen, setIsOpen] = useState(false);
+  const [isOpenInternal, setIsOpenInternal] = useState(open ?? false);
+
+  const handleIsOpen = onOpenChange ?? setIsOpenInternal;
+  const isOpen = open ?? isOpenInternal;
+
   return (
     <Tooltip
       open={isOpen}
-      onOpenChange={setIsOpen}
+      onOpenChange={handleIsOpen}
+      side={side}
       // prevent closing tooltip on content click
       onPointerDown={(event) => event.preventDefault()}
       triggerProps={{
@@ -238,7 +286,7 @@ export const PropertyTooltip = ({
             return;
           }
           if (openWithClick) {
-            setIsOpen(true);
+            handleIsOpen(true);
           }
         },
       }}
@@ -248,12 +296,17 @@ export const PropertyTooltip = ({
           description={description}
           properties={properties}
           style={style}
-          onReset={() => {
-            onReset?.();
-            setIsOpen(false);
-          }}
+          onReset={
+            onReset
+              ? () => {
+                  onReset();
+                  handleIsOpen(false);
+                }
+              : undefined
+          }
         />
       }
+      disableHoverableContent={onReset === undefined}
     >
       {children}
     </Tooltip>

@@ -3,7 +3,6 @@
   "display": "Remix",
   "extends": "./base.json",
   "compilerOptions": {
-    "noEmit": true,
     "jsx": "react-jsx",
     "target": "ES2021",
     "module": "ES2020",

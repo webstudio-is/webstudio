@@ -17,6 +17,7 @@ import { getStyleSource } from "../../shared/style-info";
 import { CollapsibleSection } from "../../shared/collapsible-section";
 import { useKeyboardNavigation } from "./keyboard";
 import { useDebouncedCallback } from "use-debounce";
+import type { CreateBatchUpdate } from "../../shared/use-style-data";
 
 const Cell = ({
   isPopoverOpen,
@@ -27,6 +28,7 @@ const Cell = ({
   isActive,
   scrubStatus,
   currentStyle,
+  createBatchUpdate,
 }: {
   isPopoverOpen: boolean;
   onPopoverClose: () => void;
@@ -36,6 +38,7 @@ const Cell = ({
   isActive: boolean;
   scrubStatus: ReturnType<typeof useScrub>;
   currentStyle: RenderCategoryProps["currentStyle"];
+  createBatchUpdate: CreateBatchUpdate;
 }) => {
   const styleInfo = currentStyle[property];
   const finalValue =
@@ -57,27 +60,31 @@ const Cell = ({
         onChange={onChange}
         onClose={onPopoverClose}
       />
-      {isActive && isPopoverOpen === false && scrubStatus.isActive === false ? (
-        <SpaceTooltip property={property} />
-      ) : null}
-      <ValueText
-        css={{
-          // We want value to have `default` cursor to indicate that it's clickable,
-          // unlike the rest of the value area that has cursor that indicates scrubbing.
-          // Click and scrub works everywhere anyway, but we want cursors to be different.
-          //
-          // In order to have control over cursor we're setting pointerEvents to "all" here
-          // because SpaceLayout sets it to "none" for cells' content.
-          pointerEvents: "all",
-        }}
-        value={finalValue}
-        isActive={isActive}
-        source={styleSource}
-        onMouseEnter={(event) =>
-          onHover({ property, element: event.currentTarget })
-        }
-        onMouseLeave={() => onHover(undefined)}
-      />
+      <SpaceTooltip
+        property={property}
+        style={currentStyle}
+        createBatchUpdate={createBatchUpdate}
+        preventOpen={scrubStatus.isActive}
+      >
+        <ValueText
+          css={{
+            // We want value to have `default` cursor to indicate that it's clickable,
+            // unlike the rest of the value area that has cursor that indicates scrubbing.
+            // Click and scrub works everywhere anyway, but we want cursors to be different.
+            //
+            // In order to have control over cursor we're setting pointerEvents to "all" here
+            // because SpaceLayout sets it to "none" for cells' content.
+            pointerEvents: "all",
+          }}
+          value={finalValue}
+          isActive={isActive}
+          source={styleSource}
+          onMouseEnter={(event) =>
+            onHover({ property, element: event.currentTarget })
+          }
+          onMouseLeave={() => onHover(undefined)}
+        />
+      </SpaceTooltip>
     </>
   );
 };
@@ -179,7 +186,20 @@ export const SpaceSection = ({
     activeProperties = [openProperty, ...scrubStatus.properties];
   }
 
+  const handleHoverUndefined = useDebouncedCallback(() => {
+    setHoverTarget(undefined);
+    keyboardNavigation.handleHover(undefined);
+  }, 100);
+
   const handleHover = (target: HoverTagret | undefined) => {
+    if (target === undefined) {
+      // Debounce the mouseleave event to prevent delays when moving between cells.
+      // This resolves the issue where the tooltip content changes when repositioned (e.g., when alt/shift clicked),
+      // causing rapid mouseleave and mouseenter events in the space section.
+      handleHoverUndefined();
+      return;
+    }
+    handleHoverUndefined.cancel();
     setHoverTarget(target);
     keyboardNavigation.handleHover(target?.property);
   };
@@ -207,10 +227,10 @@ export const SpaceSection = ({
         onHover={handleHover}
         onFocus={focusProps.onFocus}
         onBlur={focusProps.onBlur}
+        activeProperties={activeProperties}
         onKeyDown={keyboardNavigation.handleKeyDown}
         onMouseMove={keyboardNavigation.handleMouseMove}
         onMouseLeave={keyboardNavigation.handleMouseLeave}
-        activeProperties={activeProperties}
         renderCell={({ property }) => (
           <Cell
             isPopoverOpen={openProperty === property}
@@ -232,6 +252,7 @@ export const SpaceSection = ({
             scrubStatus={scrubStatus}
             isActive={activeProperty === property}
             currentStyle={currentStyle}
+            createBatchUpdate={createBatchUpdate}
           />
         )}
       />

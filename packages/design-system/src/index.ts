@@ -55,7 +55,11 @@ export {
   SidebarTabsTrigger,
 } from "./components/sidebar-tabs";
 export { Card } from "./components/card";
-export { Tooltip, InputErrorsTooltip } from "./components/tooltip";
+export {
+  Tooltip,
+  InputErrorsTooltip,
+  type TooltipProps,
+} from "./components/tooltip";
 export {
   EnhancedTooltip,
   EnhancedTooltipProvider,
