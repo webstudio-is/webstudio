@@ -1,23 +1,14 @@
-import { styled, useEnhancedTooltipProps } from "@webstudio-is/design-system";
 import type { SpaceStyleProperty } from "./types";
-import { useDebounce } from "use-debounce";
-import { useState } from "react";
 import { PropertyTooltip } from "../../shared/property-name";
 import type { StyleInfo } from "../../shared/style-info";
-
-// trigger is used only for positioning
-const PositionTrigger = styled("div", {
-  position: "absolute",
-  width: "100%",
-  height: "100%",
-  pointerEvents: "none",
-  top: 0,
-  left: 0,
-});
+import type { ReactElement } from "react";
+import { useModifierKeys } from "../../shared/modifier-keys";
+import { getModifiersGroup } from "./scrub";
+import type { CreateBatchUpdate } from "../../shared/use-style-data";
 
 const sides = {
   paddingTop: "top",
-  paddingRight: "left",
+  paddingRight: "top",
   paddingBottom: "bottom",
   paddingLeft: "left",
   marginTop: "top",
@@ -72,7 +63,10 @@ const propertyContents: {
   },
 ];
 
-const isSameUnorderedArrays = (arrA: string[], arrB: string[]) => {
+const isSameUnorderedArrays = (
+  arrA: readonly string[],
+  arrB: readonly string[]
+) => {
   if (arrA.length !== arrB.length) {
     return false;
   }
@@ -83,20 +77,19 @@ const isSameUnorderedArrays = (arrA: string[], arrB: string[]) => {
 
 export const SpaceTooltip = ({
   property,
-  properties,
   style,
+  children,
+  createBatchUpdate,
 }: {
   property: SpaceStyleProperty;
-  properties: SpaceStyleProperty[];
   style: StyleInfo;
+  children: ReactElement;
+  createBatchUpdate: CreateBatchUpdate;
 }) => {
-  const { delayDuration } = useEnhancedTooltipProps();
-  const [initialOpen, setInitialOpen] = useState(false);
-  const [open] = useDebounce(initialOpen, delayDuration ?? 0);
+  const modifiers = useModifierKeys();
 
-  if (initialOpen === false) {
-    setInitialOpen(true);
-  }
+  const properties = [...getModifiersGroup(property, modifiers)];
+
   const propertyContent = propertyContents.find((propertyContent) =>
     isSameUnorderedArrays(propertyContent.properties, properties)
   );
@@ -107,10 +100,16 @@ export const SpaceTooltip = ({
       style={style}
       title={propertyContent?.label}
       description={propertyContent?.description}
-      open={open}
       side={sides[property]}
+      onReset={() => {
+        const batch = createBatchUpdate();
+        for (const property of properties) {
+          batch.deleteProperty(property);
+        }
+        batch.publish();
+      }}
     >
-      <PositionTrigger />
+      <div>{children}</div>
     </PropertyTooltip>
   );
 };

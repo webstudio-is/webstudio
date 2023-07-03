@@ -148,7 +148,7 @@ const circleGroups = [
   ["marginTop", "marginRight", "marginBottom", "marginLeft"],
 ] as const;
 
-const getModifiersGroup = (
+export const getModifiersGroup = (
   property: SpaceStyleProperty,
   modifiers: { shiftKey: boolean; altKey: boolean }
 ) => {

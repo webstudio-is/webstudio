@@ -133,8 +133,6 @@ const TooltipContent = ({
   const styleSourceNameSet = new Set<string>();
   const instanceSet = new Set<string>();
 
-  const styleSource = getStyleSource(style[properties[0]]);
-
   for (const property of properties) {
     const styleValueInfo = style[property];
 
@@ -170,6 +168,10 @@ const TooltipContent = ({
       instanceSet.add(instanceTitle);
     }
   }
+
+  const styleSourcesList = properties.map((property) =>
+    getStyleSource(style[property])
+  );
 
   return (
     <Flex direction="column" gap="2" css={{ maxWidth: theme.spacing[28] }}>
@@ -225,7 +227,8 @@ const TooltipContent = ({
           </Flex>
         </Flex>
       )}
-      {(styleSource === "local" || styleSource === "overwritten") &&
+      {(styleSourcesList.includes("local") ||
+        styleSourcesList.includes("overwritten")) &&
         onReset !== undefined && (
           <Button
             color="dark"
