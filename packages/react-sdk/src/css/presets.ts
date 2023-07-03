@@ -29,11 +29,11 @@ export const outline: Styles = [
 export const margins = [
   {
     property: "marginTop",
-    value: { type: "unit", value: 0, unit: "number" },
+    value: { type: "unit", value: 0, unit: "px" },
   },
   {
     property: "marginRight",
-    value: { type: "unit", value: 0, unit: "number" },
+    value: { type: "unit", value: 0, unit: "px" },
   },
   {
     property: "marginBottom",
@@ -41,7 +41,18 @@ export const margins = [
   },
   {
     property: "marginLeft",
-    value: { type: "unit", value: 0, unit: "number" },
+    value: { type: "unit", value: 0, unit: "px" },
+  },
+] satisfies Styles;
+
+export const verticalMargins = [
+  {
+    property: "marginTop",
+    value: { type: "unit", value: 0, unit: "px" },
+  },
+  {
+    property: "marginBottom",
+    value: { type: "unit", value: 0, unit: "px" },
   },
 ] satisfies Styles;
 
@@ -78,7 +89,7 @@ export const blockquote = [
 ] satisfies Styles;
 
 export const h1 = [
-  ...margins,
+  ...verticalMargins,
   {
     property: "fontSize",
     value: { type: "unit", value: 38, unit: "px" },
@@ -86,7 +97,7 @@ export const h1 = [
 ] satisfies Styles;
 
 export const h2 = [
-  ...margins,
+  ...verticalMargins,
   {
     property: "fontSize",
     value: { type: "unit", value: 32, unit: "px" },
@@ -94,7 +105,7 @@ export const h2 = [
 ] satisfies Styles;
 
 export const h3 = [
-  ...margins,
+  ...verticalMargins,
   {
     property: "fontSize",
     value: { type: "unit", value: 24, unit: "px" },
@@ -102,7 +113,7 @@ export const h3 = [
 ] satisfies Styles;
 
 export const h4 = [
-  ...margins,
+  ...verticalMargins,
   {
     property: "fontSize",
     value: { type: "unit", value: 18, unit: "px" },
@@ -110,7 +121,7 @@ export const h4 = [
 ] satisfies Styles;
 
 export const h5 = [
-  ...margins,
+  ...verticalMargins,
   {
     property: "fontSize",
     value: { type: "unit", value: 14, unit: "px" },
@@ -118,7 +129,7 @@ export const h5 = [
 ] satisfies Styles;
 
 export const h6 = [
-  ...margins,
+  ...verticalMargins,
   {
     property: "fontSize",
     value: { type: "unit", value: 12, unit: "px" },

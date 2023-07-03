@@ -76,7 +76,7 @@ export const li = baseStyle;
 export const ul = baseStyle;
 export const ol = baseStyle;
 
-export const p = [...baseStyle, ...presets.margins];
+export const p = [...baseStyle, ...presets.verticalMargins];
 export const span = baseStyle;
 
 // @todo for now not applied to html, as we don't have html element
