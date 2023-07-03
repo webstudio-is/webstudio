@@ -64,6 +64,7 @@ const Cell = ({
         property={property}
         style={currentStyle}
         createBatchUpdate={createBatchUpdate}
+        preventOpen={scrubStatus.isActive}
       >
         <ValueText
           css={{

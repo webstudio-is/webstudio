@@ -1,7 +1,7 @@
 import type { SpaceStyleProperty } from "./types";
 import { PropertyTooltip } from "../../shared/property-name";
 import type { StyleInfo } from "../../shared/style-info";
-import type { ReactElement } from "react";
+import { useState, type ReactElement } from "react";
 import { useModifierKeys } from "../../shared/modifier-keys";
 import { getModifiersGroup } from "./scrub";
 import type { CreateBatchUpdate } from "../../shared/use-style-data";
@@ -80,12 +80,16 @@ export const SpaceTooltip = ({
   style,
   children,
   createBatchUpdate,
+  preventOpen,
 }: {
   property: SpaceStyleProperty;
   style: StyleInfo;
   children: ReactElement;
   createBatchUpdate: CreateBatchUpdate;
+  preventOpen: boolean;
 }) => {
+  const [open, setOpen] = useState(false);
+
   const modifiers = useModifierKeys();
 
   const properties = [...getModifiersGroup(property, modifiers)];
@@ -94,8 +98,17 @@ export const SpaceTooltip = ({
     isSameUnorderedArrays(propertyContent.properties, properties)
   );
 
+  const handleOpenChange = (value: boolean) => {
+    if (preventOpen && value === true) {
+      return;
+    }
+    setOpen(value);
+  };
+
   return (
     <PropertyTooltip
+      open={open}
+      onOpenChange={handleOpenChange}
       properties={properties}
       style={style}
       title={propertyContent?.label}
