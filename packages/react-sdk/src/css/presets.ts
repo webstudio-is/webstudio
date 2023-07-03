@@ -26,7 +26,7 @@ export const outline: Styles = [
   },
 ];
 
-export const blockquote = [
+export const marginReset = [
   {
     property: "marginTop",
     value: { type: "unit", value: 0, unit: "number" },
@@ -37,12 +37,16 @@ export const blockquote = [
   },
   {
     property: "marginBottom",
-    value: { type: "unit", value: 10, unit: "px" },
+    value: { type: "unit", value: 0, unit: "px" },
   },
   {
     property: "marginLeft",
     value: { type: "unit", value: 0, unit: "number" },
   },
+] satisfies Styles;
+
+export const blockquote = [
+  ...marginReset,
   {
     property: "paddingTop",
     value: { type: "unit", value: 10, unit: "px" },
@@ -59,7 +63,6 @@ export const blockquote = [
     property: "paddingRight",
     value: { type: "unit", value: 20, unit: "px" },
   },
-
   {
     property: "borderLeftWidth",
     value: { type: "unit", value: 5, unit: "px" },
@@ -74,41 +77,16 @@ export const blockquote = [
   },
 ] satisfies Styles;
 
-export const figure = [
-  {
-    property: "marginTop",
-    value: { type: "unit", value: 0, unit: "number" },
-  },
-  {
-    property: "marginRight",
-    value: { type: "unit", value: 0, unit: "number" },
-  },
-  {
-    property: "marginBottom",
-    value: { type: "unit", value: 10, unit: "px" },
-  },
-  {
-    property: "marginLeft",
-    value: { type: "unit", value: 0, unit: "number" },
-  },
-] satisfies Styles;
-
 export const h1 = [
+  ...marginReset,
   {
     property: "fontSize",
     value: { type: "unit", value: 38, unit: "px" },
   },
-  {
-    property: "marginTop",
-    value: { type: "unit", value: 20, unit: "px" },
-  },
-  {
-    property: "marginBottom",
-    value: { type: "unit", value: 10, unit: "px" },
-  },
 ] satisfies Styles;
 
 export const h2 = [
+  ...marginReset,
   {
     property: "fontSize",
     value: { type: "unit", value: 32, unit: "px" },
@@ -116,6 +94,7 @@ export const h2 = [
 ] satisfies Styles;
 
 export const h3 = [
+  ...marginReset,
   {
     property: "fontSize",
     value: { type: "unit", value: 24, unit: "px" },
@@ -123,17 +102,15 @@ export const h3 = [
 ] satisfies Styles;
 
 export const h4 = [
+  ...marginReset,
   {
     property: "fontSize",
     value: { type: "unit", value: 18, unit: "px" },
   },
-  {
-    property: "marginBottom",
-    value: { type: "unit", value: 10, unit: "px" },
-  },
 ] satisfies Styles;
 
 export const h5 = [
+  ...marginReset,
   {
     property: "fontSize",
     value: { type: "unit", value: 14, unit: "px" },
@@ -141,30 +118,9 @@ export const h5 = [
 ] satisfies Styles;
 
 export const h6 = [
+  ...marginReset,
   {
     property: "fontSize",
     value: { type: "unit", value: 12, unit: "px" },
-  },
-] satisfies Styles;
-
-export const p = [
-  {
-    property: "marginTop",
-    value: { type: "unit", value: 0, unit: "number" },
-  },
-  {
-    property: "marginBottom",
-    value: { type: "unit", value: 10, unit: "px" },
-  },
-] satisfies Styles;
-
-export const hr = [
-  {
-    property: "marginTop",
-    value: { type: "unit", value: 8, unit: "px" },
-  },
-  {
-    property: "marginBottom",
-    value: { type: "unit", value: 8, unit: "px" },
   },
 ] satisfies Styles;
