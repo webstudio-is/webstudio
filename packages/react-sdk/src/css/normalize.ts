@@ -51,7 +51,7 @@ export const blockquote = [
   ...baseStyle,
   ...presets.blockquote,
 ] satisfies Styles;
-export const figure = [...baseStyle, ...presets.marginReset] satisfies Styles;
+export const figure = [...baseStyle, ...presets.margins] satisfies Styles;
 export const footer = baseStyle;
 export const header = baseStyle;
 export const main = baseStyle;
@@ -76,7 +76,7 @@ export const li = baseStyle;
 export const ul = baseStyle;
 export const ol = baseStyle;
 
-export const p = [...baseStyle, ...presets.marginReset];
+export const p = [...baseStyle, ...presets.margins];
 export const span = baseStyle;
 
 // @todo for now not applied to html, as we don't have html element
@@ -164,7 +164,7 @@ export const hr = [
   },
   boxSizing,
   ...presets.borders,
-  ...presets.marginReset,
+  ...presets.margins,
 ] satisfies Styles;
 
 /**

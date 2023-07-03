@@ -26,7 +26,7 @@ export const outline: Styles = [
   },
 ];
 
-export const marginReset = [
+export const margins = [
   {
     property: "marginTop",
     value: { type: "unit", value: 0, unit: "number" },
@@ -46,7 +46,7 @@ export const marginReset = [
 ] satisfies Styles;
 
 export const blockquote = [
-  ...marginReset,
+  ...margins,
   {
     property: "paddingTop",
     value: { type: "unit", value: 10, unit: "px" },
@@ -78,7 +78,7 @@ export const blockquote = [
 ] satisfies Styles;
 
 export const h1 = [
-  ...marginReset,
+  ...margins,
   {
     property: "fontSize",
     value: { type: "unit", value: 38, unit: "px" },
@@ -86,7 +86,7 @@ export const h1 = [
 ] satisfies Styles;
 
 export const h2 = [
-  ...marginReset,
+  ...margins,
   {
     property: "fontSize",
     value: { type: "unit", value: 32, unit: "px" },
@@ -94,7 +94,7 @@ export const h2 = [
 ] satisfies Styles;
 
 export const h3 = [
-  ...marginReset,
+  ...margins,
   {
     property: "fontSize",
     value: { type: "unit", value: 24, unit: "px" },
@@ -102,7 +102,7 @@ export const h3 = [
 ] satisfies Styles;
 
 export const h4 = [
-  ...marginReset,
+  ...margins,
   {
     property: "fontSize",
     value: { type: "unit", value: 18, unit: "px" },
@@ -110,7 +110,7 @@ export const h4 = [
 ] satisfies Styles;
 
 export const h5 = [
-  ...marginReset,
+  ...margins,
   {
     property: "fontSize",
     value: { type: "unit", value: 14, unit: "px" },
@@ -118,7 +118,7 @@ export const h5 = [
 ] satisfies Styles;
 
 export const h6 = [
-  ...marginReset,
+  ...margins,
   {
     property: "fontSize",
     value: { type: "unit", value: 12, unit: "px" },
