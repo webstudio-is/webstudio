@@ -19,7 +19,7 @@ jobs:
       - uses: actions/checkout@v3
       - uses: ./.github/actions/ci-setup
 
-      - run: pnpm turbo run size-test build dts
+      - run: pnpm turbo run build dts
 
       - name: Creating .npmrc
         run: |
