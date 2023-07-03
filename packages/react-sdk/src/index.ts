@@ -22,6 +22,7 @@ export {
 export { type Params, ReactSdkContext } from "./context";
 export {
   validateExpression,
+  generateExpressionsComputation,
   executeExpressions,
   encodeDataSourceVariable,
   decodeDataSourceVariable,

@@ -111,7 +111,11 @@ export const validateExpression = (
   return generateCode(expression, true, transformIdentifier);
 };
 
-export const executeExpressions = (
+/**
+ * Generates a function body expecting map as _variables argument
+ * and outputing map of results
+ */
+export const generateExpressionsComputation = (
   variables: Map<string, unknown>,
   expressions: Map<string, string>
 ) => {
@@ -141,25 +145,37 @@ export const executeExpressions = (
     }
   );
 
-  // execute chain of expressions
-  let header = "";
-  for (const [id, value] of variables) {
-    header += `const ${id} = ${JSON.stringify(value)};\n`;
-  }
+  // generate code comoputing all expressions
+  let generatedCode = "";
 
-  const values = new Map<string, unknown>();
+  for (const id of variables.keys()) {
+    generatedCode += `const ${id} = _variables.get('${id}');\n`;
+  }
 
   for (const id of sortedExpressions) {
     const code = expressions.get(id);
     if (code === undefined) {
       continue;
     }
-    const executeFn = new Function(`${header}\nreturn (${code});`);
-    const value = executeFn();
-    header += `const ${id} = ${JSON.stringify(value)};\n`;
-    values.set(id, value);
+    generatedCode += `const ${id} = (${code});\n`;
   }
 
+  generatedCode += `return new Map([\n`;
+  for (const id of sortedExpressions) {
+    generatedCode += `  ['${id}', ${id}],\n`;
+  }
+  generatedCode += `]);`;
+
+  return generatedCode;
+};
+
+export const executeExpressions = (
+  variables: Map<string, unknown>,
+  expressions: Map<string, string>
+) => {
+  const generatedCode = generateExpressionsComputation(variables, expressions);
+  const executeFn = new Function("_variables", generatedCode);
+  const values = executeFn(variables) as Map<string, unknown>;
   return values;
 };
 

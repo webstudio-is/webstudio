@@ -3,6 +3,7 @@ import {
   decodeDataSourceVariable,
   encodeDataSourceVariable,
   executeExpressions,
+  generateExpressionsComputation,
   validateExpression,
 } from "./expression";
 
@@ -61,6 +62,24 @@ test("transform identifiers", () => {
   );
 });
 
+test("generate expressions computation", () => {
+  const variables = new Map([["var1", 3]]);
+  const expressions = new Map([
+    ["exp0", "var1 + 2"],
+    ["exp1", "exp0 + 1"],
+  ]);
+  expect(generateExpressionsComputation(variables, expressions))
+    .toMatchInlineSnapshot(`
+    "const var1 = _variables.get('var1');
+    const exp0 = (var1 + 2);
+    const exp1 = (exp0 + 1);
+    return new Map([
+      ['exp0', exp0],
+      ['exp1', exp1],
+    ]);"
+  `);
+});
+
 test("execute expression", () => {
   const variables = new Map();
   const expressions = new Map([["exp1", "1 + 1"]]);
@@ -77,7 +96,7 @@ test("execute expression dependent on variables", () => {
   );
 });
 
-test("execute expression dependent on other expressions", () => {
+test("execute expression dependent on another expressions", () => {
   const variables = new Map([["var1", 3]]);
   const expressions = new Map([
     ["exp1", "exp0 + 1"],
@@ -100,7 +119,7 @@ test("forbid circular expressions", () => {
   ]);
   expect(() => {
     executeExpressions(variables, expressions);
-  }).toThrowError(/exp2 is not defined/);
+  }).toThrowError(/Cannot access 'exp2' before initialization/);
 });
 
 test("make sure dependency exists", () => {

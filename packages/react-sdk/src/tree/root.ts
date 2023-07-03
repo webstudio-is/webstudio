@@ -12,45 +12,6 @@ import { WebstudioComponent } from "./webstudio-component";
 import { getPropsByInstanceId } from "../props";
 import type { Components } from "../components/components-utils";
 import type { Params } from "../context";
-import {
-  executeExpressions,
-  encodeDataSourceVariable,
-  decodeDataSourceVariable,
-} from "../expression";
-
-const computeExpressions = (
-  dataSources: [DataSource["id"], DataSource][],
-  dataSourceValues: Map<DataSource["id"], unknown>
-) => {
-  const outputValues = new Map<DataSource["id"], unknown>();
-  const variables = new Map<string, unknown>();
-  const expressions = new Map<string, string>();
-  for (const [dataSourceId, dataSource] of dataSources) {
-    const name = encodeDataSourceVariable(dataSourceId);
-    if (dataSource.type === "variable") {
-      const value =
-        dataSourceValues.get(dataSourceId) ?? dataSource.value.value;
-      variables.set(name, value);
-      outputValues.set(dataSourceId, value);
-    }
-    if (dataSource.type === "expression") {
-      expressions.set(name, dataSource.code);
-    }
-  }
-  try {
-    const outputVariables = executeExpressions(variables, expressions);
-    for (const [name, value] of outputVariables) {
-      const id = decodeDataSourceVariable(name);
-      if (id !== undefined) {
-        outputValues.set(id, value);
-      }
-    }
-  } catch (error) {
-    // eslint-disable-next-line no-console
-    console.error(error);
-  }
-  return outputValues;
-};
 
 export type Data = {
   page: Page;
@@ -64,39 +25,58 @@ export type RootPropsData = Omit<Data, "build"> & {
   build: Pick<Data["build"], "instances" | "props" | "dataSources">;
 };
 
+type DataSourceValues = Map<DataSource["id"], unknown>;
+
 type RootProps = {
   data: RootPropsData;
+  computeExpressions: (values: DataSourceValues) => DataSourceValues;
   Component?: (props: ComponentProps<typeof WebstudioComponent>) => JSX.Element;
   components: Components;
 };
 
 export const InstanceRoot = ({
   data,
+  computeExpressions,
   Component,
   components,
 }: RootProps): JSX.Element | null => {
   const dataSourceVariablesStoreRef = useRef<
-    undefined | WritableAtom<Map<DataSource["id"], unknown>>
+    undefined | WritableAtom<DataSourceValues>
   >(undefined);
-  // initialize store with default data source values
   if (dataSourceVariablesStoreRef.current === undefined) {
-    const dataSourceVariables = new Map<DataSource["id"], unknown>();
-    for (const [dataSourceId, dataSource] of data.build.dataSources) {
-      dataSourceVariables.set(dataSourceId, dataSource);
-    }
-    dataSourceVariablesStoreRef.current = atom(dataSourceVariables);
+    dataSourceVariablesStoreRef.current = atom(new Map());
   }
   const dataSourceVariablesStore = dataSourceVariablesStoreRef.current;
 
   const dataSourceValuesStoreRef = useRef<
-    undefined | ReadableAtom<Map<DataSource["id"], unknown>>
+    undefined | ReadableAtom<DataSourceValues>
   >(undefined);
-  // initialize store with default data source values
   if (dataSourceValuesStoreRef.current === undefined) {
     dataSourceValuesStoreRef.current = computed(
       dataSourceVariablesStore,
       (dataSourceVariables) => {
-        return computeExpressions(data.build.dataSources, dataSourceVariables);
+        // set vriables with defaults
+        const dataSourceValues: DataSourceValues = new Map();
+        for (const [dataSourceId, dataSource] of data.build.dataSources) {
+          if (dataSource.type === "variable") {
+            const value =
+              dataSourceVariables.get(dataSourceId) ?? dataSource.value.value;
+            dataSourceValues.set(dataSourceId, value);
+          }
+        }
+
+        // set expression values
+        try {
+          const result = computeExpressions(dataSourceValues);
+          for (const [id, value] of result) {
+            dataSourceValues.set(id, value);
+          }
+        } catch (error) {
+          // eslint-disable-next-line no-console
+          console.error(error);
+        }
+
+        return dataSourceValues;
       }
     );
   }
