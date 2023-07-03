@@ -136,7 +136,7 @@ const sortTopologically = (
  * and outputing map of results
  */
 export const generateExpressionsComputation = (
-  variables: Map<string, unknown>,
+  variables: Set<string>,
   expressions: Map<string, string>
 ) => {
   const depsById = new Map<string, Set<string>>();
@@ -163,7 +163,7 @@ export const generateExpressionsComputation = (
   // generate code comoputing all expressions
   let generatedCode = "";
 
-  for (const id of variables.keys()) {
+  for (const id of variables) {
     generatedCode += `const ${id} = _variables.get('${id}');\n`;
   }
 
@@ -188,7 +188,10 @@ export const executeExpressions = (
   variables: Map<string, unknown>,
   expressions: Map<string, string>
 ) => {
-  const generatedCode = generateExpressionsComputation(variables, expressions);
+  const generatedCode = generateExpressionsComputation(
+    new Set(variables.keys()),
+    expressions
+  );
   const executeFn = new Function("_variables", generatedCode);
   const values = executeFn(variables) as Map<string, unknown>;
   return values;

@@ -63,7 +63,7 @@ test("transform identifiers", () => {
 });
 
 test("generate expressions computation", () => {
-  const variables = new Map([["var1", 3]]);
+  const variables = new Set(["var1"]);
   const expressions = new Map([
     ["exp0", "var1 + 2"],
     ["exp1", "exp0 + 1"],
