@@ -63,19 +63,25 @@ test("transform identifiers", () => {
 });
 
 test("generate expressions computation", () => {
-  const variables = new Set(["var1"]);
+  const variables = new Set(["var0"]);
   const expressions = new Map([
-    ["exp0", "var1 + 2"],
-    ["exp1", "exp0 + 1"],
+    ["exp3", "exp2 + exp1"],
+    ["exp1", "var0"],
+    ["exp2", "exp1"],
+    ["exp4", "exp2"],
   ]);
   expect(generateExpressionsComputation(variables, expressions))
     .toMatchInlineSnapshot(`
-    "const var1 = _variables.get('var1');
-    const exp0 = (var1 + 2);
-    const exp1 = (exp0 + 1);
+    "const var0 = _variables.get('var0');
+    const exp1 = (var0);
+    const exp2 = (exp1);
+    const exp3 = (exp2 + exp1);
+    const exp4 = (exp2);
     return new Map([
-      ['exp0', exp0],
       ['exp1', exp1],
+      ['exp2', exp2],
+      ['exp3', exp3],
+      ['exp4', exp4],
     ]);"
   `);
 });

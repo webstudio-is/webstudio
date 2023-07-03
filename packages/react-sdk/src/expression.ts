@@ -119,7 +119,7 @@ const sortTopologically = (
 ) => {
   for (const id of list) {
     if (explored.has(id)) {
-      return sorted;
+      continue;
     }
     explored.add(id);
     const deps = depsById.get(id);
