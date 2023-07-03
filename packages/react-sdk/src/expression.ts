@@ -160,7 +160,7 @@ export const generateExpressionsComputation = (
     depsById
   );
 
-  // generate code comoputing all expressions
+  // generate code computing all expressions
   let generatedCode = "";
 
   for (const id of variables) {
