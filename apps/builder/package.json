@@ -1,9 +1,10 @@
 {
   "name": "@webstudio-is/builder",
-  "version": "0.77.0",
+  "version": "0.78.0",
   "private": true,
   "description": "Webstudio Builder UI as a service",
   "scripts": {
+    "prebuild": "pnpm remix --version",
     "build": "remix build",
     "start": "remix-serve build",
     "start-local": "dotenv -e .env npm start",
