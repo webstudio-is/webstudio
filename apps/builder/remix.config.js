@@ -26,6 +26,7 @@ module.exports = {
     "character-entities",
     /mdast-/,
     "unist-util-stringify-position",
+    "node-fetch",
   ],
   // appDirectory: "app",
   // assetsBuildDirectory: "public/build",
