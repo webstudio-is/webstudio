@@ -197,7 +197,7 @@ test("compute inherited styles", () => {
         "instanceId": "1",
         "value": {
           "type": "keyword",
-          "value": "Arial, sans-serif",
+          "value": "Arial, Roboto, sans-serif",
         },
       },
       "fontSize": {

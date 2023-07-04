@@ -132,7 +132,7 @@ export const body = [
     property: "fontFamily",
     value: {
       type: "keyword",
-      value: "Arial, sans-serif",
+      value: "Arial, Roboto, sans-serif",
     },
   },
   {
