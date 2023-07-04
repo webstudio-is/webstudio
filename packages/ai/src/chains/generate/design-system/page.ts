@@ -14,7 +14,9 @@ import {
 import { jsxToWSEmbedTemplate } from "../../../utils/jsx";
 import { traverseTemplate } from "../../../utils/traverse-template";
 import { type Chain, type ChainMessage } from "../../types";
-import { prompt as promptTemplate } from "./__generated__/page.prompt";
+// import { prompt as promptTemplate } from "./__generated__/page.prompt";
+import { prompt as promptSystemTemplate } from "./__generated__/page.system.prompt";
+import { prompt as promptUserTemplate } from "./__generated__/page.user.prompt";
 import { componentsStyles } from "./components-styles";
 
 export const create = <ModelMessageFormat>(): Chain<
@@ -42,15 +44,29 @@ export const create = <ModelMessageFormat>(): Chain<
     prompts.theme = JSON.stringify(theme.theme);
     prompts.colorMode = theme.colorMode;
 
+    // const requestMessage: ChainMessage = [
+    //   "user",
+    //   formatPrompt(prompts, promptTemplate),
+    // ];
+
+    const systemMessage: ChainMessage = [
+      "system",
+      formatPrompt(prompts, promptSystemTemplate),
+    ];
+
     const requestMessage: ChainMessage = [
       "user",
-      formatPrompt(prompts, promptTemplate),
+      formatPrompt(prompts, promptUserTemplate),
     ];
 
     // console.log(requestMessage[1]);
 
+    const messages = model.generateMessages([systemMessage, requestMessage]);
+
+    console.log(JSON.stringify(messages, null, 2));
+
     const response = await model.request({
-      messages: model.generateMessages([requestMessage]),
+      messages,
     });
 
     const jsx = getCode(response, "jsx").trim();
@@ -89,7 +105,9 @@ export const create = <ModelMessageFormat>(): Chain<
         }
         const componentStyles = componentsStyles[node.component];
         if (variants.length > 0 && componentStyles !== undefined) {
-          node.styles = node.styles || [];
+          if (node.styles == null) {
+            node.styles = [];
+          }
           const applied = new Set(
             node.styles.map((styleDecl) => styleDecl.property)
           );
@@ -97,13 +115,71 @@ export const create = <ModelMessageFormat>(): Chain<
             .reverse()
             .flatMap((variant) =>
               componentStyles[variant]
-                ? componentStyles[variant](actualTheme)
+                ? componentStyles[variant](actualTheme, theme.colorMode)
                 : []
             )
             .forEach((styleDecl) => {
+              if (node.styles == null) {
+                node.styles = [];
+              }
+
               if (applied.has(styleDecl.property) === false) {
                 applied.add(styleDecl.property);
                 node.styles.push(styleDecl);
+              } else if (
+                styleDecl.property === "backgroundImage" &&
+                styleDecl.value.type !== "invalid"
+              ) {
+                // Merge layers.
+                //
+                // {
+                //   property: "backgroundImage",
+                //   value: {
+                //     type: "layers",
+                //     value: [
+                //       {
+                //         type: "image",
+                //         value: {
+                //           type: "asset",
+                //           value: "https://url..."
+                //         },
+                //       },
+                //     ],
+                //   },
+                // }
+
+                const backgroundImageIndex = node.styles.findIndex(
+                  (decl) => decl.property === "backgroundImage"
+                );
+                const declValue =
+                  backgroundImageIndex > -1
+                    ? node.styles[backgroundImageIndex]?.value
+                    : null;
+
+                declValue &&
+                  console.log(
+                    "backgroundImage",
+                    JSON.stringify(declValue, null, 2),
+                    JSON.stringify(styleDecl, null, 2)
+                  );
+
+                if (declValue && declValue.type === "invalid") {
+                  node.styles[backgroundImageIndex] = styleDecl;
+                } else if (
+                  backgroundImageIndex > -1 &&
+                  declValue &&
+                  declValue.type === "layers" &&
+                  styleDecl.value.type === "layers"
+                ) {
+                  declValue.value.push(...styleDecl.value.value);
+                  node.styles[backgroundImageIndex] = {
+                    property: "backgroundImage",
+                    value: declValue,
+                  };
+                } else {
+                  applied.add(styleDecl.property);
+                  node.styles.push(styleDecl);
+                }
               }
             });
         }

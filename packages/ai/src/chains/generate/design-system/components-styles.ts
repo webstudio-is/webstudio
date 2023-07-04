@@ -4,6 +4,7 @@ import type {
   StyleValue,
 } from "@webstudio-is/css-data";
 import type { EmbedTemplateStyleDecl } from "@webstudio-is/react-sdk";
+import { svgToBase64 } from "../../../utils/to-base64";
 
 const transparent: RgbValue = {
   type: "rgb",
@@ -20,7 +21,10 @@ const systemFont =
 
 export const componentsStyles: Record<
   string,
-  Record<string, (theme: any) => EmbedTemplateStyleDecl[]>
+  Record<
+    string,
+    (theme: any, colorMode?: "light" | "dark") => EmbedTemplateStyleDecl[]
+  >
 > = {
   Blockquote: {
     base: (theme) => [
@@ -46,27 +50,51 @@ export const componentsStyles: Record<
     ],
   },
   Box: {
-    base: (theme) => [
-      { property: "color", value: theme.foreground.base },
-      {
-        property: "fontSize",
-        value: { type: "unit", value: theme.fontSize[2], unit: "px" },
-      },
-      {
-        property: "fontFamily",
-        value: { type: "fontFamily", value: systemFont },
-      },
-      {
-        property: "width",
-        value: { type: "unit", value: 100, unit: "%" },
-      },
-      ...expand("marginHorizontal", { type: "keyword", value: "auto" }),
-      ...expand("borderRadius", {
-        type: "unit",
-        value: 0,
-        unit: "px",
-      }),
-    ],
+    base: (theme, colorMode = "light") => {
+      const bgs = Object.values(backgroundPatterns);
+      const pattern = bgs[Math.floor(Math.random() * bgs.length)];
+
+      return [
+        { property: "color", value: theme.foreground.base },
+        {
+          property: "fontSize",
+          value: { type: "unit", value: theme.fontSize[2], unit: "px" },
+        },
+        {
+          property: "fontFamily",
+          value: { type: "fontFamily", value: systemFont },
+        },
+        {
+          property: "width",
+          value: { type: "unit", value: 100, unit: "%" },
+        },
+        ...expand("marginHorizontal", { type: "keyword", value: "auto" }),
+        ...expand("borderRadius", {
+          type: "unit",
+          value: 0,
+          unit: "px",
+        }),
+        {
+          property: "backgroundImage",
+          value: {
+            type: "layers",
+            value: [
+              {
+                type: "image",
+                value: {
+                  type: "asset",
+                  value: pattern(
+                    colorMode === "light"
+                      ? "rgba(0,0,0,0.2)"
+                      : "rgba(255,255,255,0.2)"
+                  ),
+                },
+              },
+            ],
+          },
+        },
+      ];
+    },
     sectionContainer: (theme) => [
       ...expand("padding", {
         type: "unit",
@@ -119,6 +147,70 @@ export const componentsStyles: Record<
         unit: "px",
       }),
     ],
+    gradientVertical: (theme) => {
+      const gradient =
+        theme.gradients[Math.floor(Math.random() * theme.gradients.length)];
+
+      return [
+        {
+          property: "backgroundImage",
+          value: {
+            type: "layers",
+            value: [
+              {
+                type: "keyword",
+                value: `linear-gradient(180deg, ${gradient[0]}, ${gradient[1]})`,
+              },
+            ],
+          },
+        },
+      ];
+    },
+    gradient45degrees: (theme) => {
+      const gradient =
+        theme.gradients[Math.floor(Math.random() * theme.gradients.length)];
+
+      return [
+        {
+          property: "backgroundImage",
+          value: {
+            type: "layers",
+            value: [
+              {
+                type: "keyword",
+                value: `linear-gradient(135deg, ${gradient[0]}, ${gradient[1]})`,
+              },
+            ],
+          },
+        },
+      ];
+    },
+    withBackgroundPattern: (theme, colorMode) => {
+      const bgs = Object.values(backgroundPatterns);
+      const pattern = bgs[Math.floor(Math.random() * bgs.length)];
+
+      return [
+        {
+          property: "backgroundImage",
+          value: {
+            type: "layers",
+            value: [
+              {
+                type: "image",
+                value: {
+                  type: "asset",
+                  value: pattern(
+                    colorMode === "light"
+                      ? "rgba(0,0,0,0.2)"
+                      : "rgba(255,255,255,0.2)"
+                  ),
+                },
+              },
+            ],
+          },
+        },
+      ];
+    },
   },
   Button: {
     base: (theme) => [
@@ -506,6 +598,25 @@ const expand = function expand(
   }
 
   return [{ property, value } as EmbedTemplateStyleDecl];
+};
+
+export const backgroundPatterns = {
+  dots: (color: string) =>
+    svgToBase64(
+      `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1000 1000">\n  <defs>\n    <pattern id="grid-pattern" width="20" height="20" patternUnits="userSpaceOnUse">\n      <circle cx="10" cy="10" r="1" fill="${color}" />\n    </pattern>\n  </defs>\n  <rect width="100%" height="100%" fill="url(#grid-pattern)" />\n</svg>`
+    ),
+  doubleDots: (color: string) =>
+    svgToBase64(
+      `<svg xmlns="http://www.w3.org/2000/svg" width="1000" height="1000" viewBox="0 0 1000 1000">\n  <pattern id="stars" width="50" height="50" patternUnits="userSpaceOnUse">\n    <circle cx="25" cy="25" r="2" fill="rgba(0,0,0,0.1)" />\n    <circle cx="12.5" cy="12.5" r="1" fill="${color}" />\n  </pattern>\n  <rect fill="url(#stars)" width="100%" height="100%" />\n</svg>`
+    ),
+  graph: (color: string) =>
+    svgToBase64(
+      `<svg xmlns='http://www.w3.org/2000/svg' width='100' height='100' viewBox='0 0 100 100'><g fill-rule='evenodd'><g fill='${color}' fill-opacity='0.28'><path opacity='.5' d='M96 95h4v1h-4v4h-1v-4h-9v4h-1v-4h-9v4h-1v-4h-9v4h-1v-4h-9v4h-1v-4h-9v4h-1v-4h-9v4h-1v-4h-9v4h-1v-4h-9v4h-1v-4H0v-1h15v-9H0v-1h15v-9H0v-1h15v-9H0v-1h15v-9H0v-1h15v-9H0v-1h15v-9H0v-1h15v-9H0v-1h15v-9H0v-1h15V0h1v15h9V0h1v15h9V0h1v15h9V0h1v15h9V0h1v15h9V0h1v15h9V0h1v15h9V0h1v15h9V0h1v15h4v1h-4v9h4v1h-4v9h4v1h-4v9h4v1h-4v9h4v1h-4v9h4v1h-4v9h4v1h-4v9h4v1h-4v9zm-1 0v-9h-9v9h9zm-10 0v-9h-9v9h9zm-10 0v-9h-9v9h9zm-10 0v-9h-9v9h9zm-10 0v-9h-9v9h9zm-10 0v-9h-9v9h9zm-10 0v-9h-9v9h9zm-10 0v-9h-9v9h9zm-9-10h9v-9h-9v9zm10 0h9v-9h-9v9zm10 0h9v-9h-9v9zm10 0h9v-9h-9v9zm10 0h9v-9h-9v9zm10 0h9v-9h-9v9zm10 0h9v-9h-9v9zm10 0h9v-9h-9v9zm9-10v-9h-9v9h9zm-10 0v-9h-9v9h9zm-10 0v-9h-9v9h9zm-10 0v-9h-9v9h9zm-10 0v-9h-9v9h9zm-10 0v-9h-9v9h9zm-10 0v-9h-9v9h9zm-10 0v-9h-9v9h9zm-9-10h9v-9h-9v9zm10 0h9v-9h-9v9zm10 0h9v-9h-9v9zm10 0h9v-9h-9v9zm10 0h9v-9h-9v9zm10 0h9v-9h-9v9zm10 0h9v-9h-9v9zm10 0h9v-9h-9v9zm9-10v-9h-9v9h9zm-10 0v-9h-9v9h9zm-10 0v-9h-9v9h9zm-10 0v-9h-9v9h9zm-10 0v-9h-9v9h9zm-10 0v-9h-9v9h9zm-10 0v-9h-9v9h9zm-10 0v-9h-9v9h9zm-9-10h9v-9h-9v9zm10 0h9v-9h-9v9zm10 0h9v-9h-9v9zm10 0h9v-9h-9v9zm10 0h9v-9h-9v9zm10 0h9v-9h-9v9zm10 0h9v-9h-9v9zm10 0h9v-9h-9v9zm9-10v-9h-9v9h9zm-10 0v-9h-9v9h9zm-10 0v-9h-9v9h9zm-10 0v-9h-9v9h9zm-10 0v-9h-9v9h9zm-10 0v-9h-9v9h9zm-10 0v-9h-9v9h9zm-10 0v-9h-9v9h9zm-9-10h9v-9h-9v9zm10 0h9v-9h-9v9zm10 0h9v-9h-9v9zm10 0h9v-9h-9v9zm10 0h9v-9h-9v9zm10 0h9v-9h-9v9zm10 0h9v-9h-9v9zm10 0h9v-9h-9v9z'/><path d='M6 5V0H5v5H0v1h5v94h1V6h94V5H6z'/></g></g></svg>`
+    ),
+  cross: (color: string) =>
+    svgToBase64(
+      `<svg width='60' height='60' viewBox='0 0 60 60' xmlns='http://www.w3.org/2000/svg'><g fill='none' fill-rule='evenodd'><g fill='${color}' fill-opacity='0.4'><path d='M36 34v-4h-2v4h-4v2h4v4h2v-4h4v-2h-4zm0-30V0h-2v4h-4v2h4v4h2V6h4V4h-4zM6 34v-4H4v4H0v2h4v4h2v-4h4v-2H6zM6 4V0H4v4H0v2h4v4h2V6h4V4H6z'/></g></g></svg>`
+    ),
 };
 
 // - Blockquote

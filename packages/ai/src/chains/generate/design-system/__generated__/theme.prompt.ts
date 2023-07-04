@@ -30,6 +30,7 @@ type Theme = {
       subtle: HexColor;
       input: HexColor;
     };
+    /* Some beautiful gradients. Never fade to white unless the second color is light gray. */
     gradients: [
       [HexColor, HexColor],
       [HexColor, HexColor],

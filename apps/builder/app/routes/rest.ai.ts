@@ -184,10 +184,21 @@ export const action = async ({ request }: ActionArgs) => {
       throw new Error(`Invalid step ${step}`);
     }
 
+    let temperature = 0.5;
+
+    switch (step) {
+      case "theme":
+        temperature = 1;
+        break;
+      case "page":
+        temperature = 1;
+        break;
+    }
+
     const model = createGptModel({
       apiKey: env.OPENAI_KEY,
       organization: env.OPENAI_ORG,
-      temperature: step === "theme" ? 1 : 0.5,
+      temperature,
       model: step === "components" ? "gpt-3.5-turbo-16k" : "gpt-3.5-turbo", //step !== "screen" ? "gpt-3.5-turbo" : "gpt-3.5-turbo-16k",
       // model: "gpt-4",
     });

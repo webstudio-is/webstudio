@@ -275,15 +275,15 @@ export const TabContent = ({ publish, onSetActiveTab }: TabContentProps) => {
       const enhanceFormData = getBaseFormData(baseData, "enhance");
       const enhanceRequest = retry(
         () =>
-          Promise.resolve({
-            type: "section",
-            subject: "",
+          // Promise.resolve({
+          //   type: "section",
+          //   subject: "",
+          // }),
+          request(url, {
+            method: "POST",
+            body: enhanceFormData,
+            signal,
           }),
-        // request(url, {
-        //   method: "POST",
-        //   body: enhanceFormData,
-        //   signal,
-        // }),
         2,
         30000
       );

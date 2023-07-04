@@ -1,4 +1,6 @@
 import type { WsEmbedTemplate } from "@webstudio-is/react-sdk";
+import { social } from "../chains/generate/design-system/resources/logo";
+import { svgToBase64 } from "./to-base64";
 import { traverseTemplate } from "./traverse-template";
 
 export const collectDescriptions = function collectDescriptions(
@@ -26,8 +28,21 @@ export const collectDescriptions = function collectDescriptions(
 export const generateImagesUrlsUnsplash = async function generateImagesUrls(
   descriptions: string[]
 ): Promise<string[]> {
+  const availableIcons = Object.keys(social);
+
   return Promise.all(
     descriptions.map((description) => {
+      const iconName = availableIcons.find((iconName) =>
+        description.toLowerCase().includes(iconName)
+      );
+
+      if (
+        typeof iconName === "string" &&
+        typeof social[iconName] === "function"
+      ) {
+        return svgToBase64(social[iconName]("currentColor"));
+      }
+
       const size = description.slice(0, description.indexOf(":"));
       const [w, h] = size.split("x");
       let url = `https://source.unsplash.com/random/?${encodeURIComponent(
@@ -78,18 +93,51 @@ export const insertImagesUrls = function insertImages(
   descriptions: string[],
   imagesUrls: string[]
 ) {
+  console.log("insertImagesUrls");
   traverseTemplate(template, (node) => {
     if (node.type === "instance") {
-      const description = node.props?.find(
+      const altIndex = node.props?.findIndex(
         (prop) =>
           prop.name === "alt" &&
           typeof prop.value === "string" &&
           prop.value.trim()
       );
-      if (description && description.type === "string") {
-        const index = descriptions.indexOf(description.value);
-        if (index > -1 && imagesUrls[index]) {
-          node.props = node.props || [];
+
+      const alt =
+        node.props && altIndex != null && altIndex > -1
+          ? node.props[altIndex]
+          : null;
+
+      if (altIndex != null && alt?.type === "string") {
+        const index = descriptions.indexOf(alt.value);
+        if (imagesUrls[index]) {
+          if (node.props == null) {
+            node.props = [];
+          }
+
+          // determine image size
+          const size = alt.value.slice(0, alt.value.indexOf(":"));
+          const [width, height] = size.split("x");
+
+          if (Number(width) && Number(height)) {
+            if (node.styles == null) {
+              node.styles = [];
+            }
+
+            node.styles.push({
+              property: "width",
+              value: { type: "unit", value: Number(width), unit: "px" },
+            });
+            node.styles.push({
+              property: "height",
+              value: { type: "unit", value: Number(height), unit: "px" },
+            });
+          }
+
+          // remove size from images alt (description)
+          alt.value = alt.value.slice(size.length + 1);
+          node.props[altIndex] = alt;
+
           node.props.push({
             type: "string",
             name: "src",
