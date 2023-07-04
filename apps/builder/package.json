@@ -4,6 +4,7 @@
   "private": true,
   "description": "Webstudio Builder UI as a service",
   "scripts": {
+    "prebuild": "pnpm remix --version",
     "build": "remix build",
     "start": "remix-serve build",
     "start-local": "dotenv -e .env npm start",
