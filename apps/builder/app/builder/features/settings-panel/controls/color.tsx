@@ -4,47 +4,42 @@ import {
   getLabel,
   useLocalValue,
   HorizontalLayout,
-} from "../shared";
+} from "../props-section/shared";
 
-export const NumberControl = ({
+// @todo:
+//   use ColorPicker (need to refactor it first,
+//   as it's currently tailored to work with styles only)
+
+export const ColorControl = ({
   meta,
   prop,
   propName,
   onChange,
   onDelete,
-  onSoftDelete,
-}: ControlProps<"number", "number">) => {
+}: ControlProps<"color", "string">) => {
   const id = useId();
 
-  const localValue = useLocalValue(prop ? prop.value : "", (value) => {
-    if (typeof value === "number") {
-      onChange({ type: "number", value });
-    }
-    if (value === "") {
-      onSoftDelete();
-    }
-  });
+  const localValue = useLocalValue(prop?.value ?? "", (value) =>
+    onChange({ type: "string", value })
+  );
 
   return (
     <HorizontalLayout
-      id={id}
       label={getLabel(meta, propName)}
+      id={id}
       onDelete={onDelete}
     >
       <InputField
         id={id}
-        type="number"
         value={localValue.value}
-        onChange={({ target: { valueAsNumber, value } }) =>
-          localValue.set(Number.isNaN(valueAsNumber) ? value : valueAsNumber)
-        }
+        onChange={(event) => localValue.set(event.target.value)}
         onBlur={localValue.save}
         onKeyDown={(event) => {
           if (event.key === "Enter") {
             localValue.save();
           }
         }}
-        css={{ width: theme.spacing[21] }}
+        css={{ width: theme.spacing[22] }}
       />
     </HorizontalLayout>
   );

@@ -6,7 +6,12 @@ import {
   theme,
 } from "@webstudio-is/design-system";
 import { humanizeString } from "~/shared/string-utils";
-import { type ControlProps, getLabel, VerticalLayout, Label } from "../shared";
+import {
+  type ControlProps,
+  getLabel,
+  VerticalLayout,
+  Label,
+} from "../props-section/shared";
 
 const add = (array: string[], item: string) => {
   if (array.includes(item)) {

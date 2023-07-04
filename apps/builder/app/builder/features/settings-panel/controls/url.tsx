@@ -30,7 +30,7 @@ import {
   getLabel,
   useLocalValue,
   VerticalLayout,
-} from "../shared";
+} from "../props-section/shared";
 import { SelectAsset } from "./select-asset";
 
 type UrlControlProps = ControlProps<"url", "string" | "page" | "asset">;

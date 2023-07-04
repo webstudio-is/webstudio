@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { PropsPanel } from "./props-panel";
+import { PropsSection } from "./props-section";
 import { usePropsLogic } from "./use-props-logic";
 import {
   assetsStore,
@@ -381,7 +381,7 @@ export const Story = () => {
   return (
     <div style={{ display: "flex", gap: 12 }}>
       <div style={{ width: 240, border: "dashed 3px #e3e3e3" }}>
-        <PropsPanel
+        <PropsSection
           instanceId={instanceId}
           propsLogic={logic}
           component="Button"

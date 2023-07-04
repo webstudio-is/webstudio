@@ -1,6 +1,10 @@
 import { Flex, theme, useId, Select } from "@webstudio-is/design-system";
 import { humanizeString } from "~/shared/string-utils";
-import { type ControlProps, getLabel, VerticalLayout } from "../shared";
+import {
+  type ControlProps,
+  getLabel,
+  VerticalLayout,
+} from "../props-section/shared";
 
 export const SelectControl = ({
   meta,

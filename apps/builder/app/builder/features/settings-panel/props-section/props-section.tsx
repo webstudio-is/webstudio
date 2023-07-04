@@ -29,7 +29,7 @@ import {
   useStyleData,
   type SetProperty as SetCssProperty,
 } from "~/builder/features/style-panel/shared/use-style-data";
-import { renderControl } from "./controls/combined";
+import { renderControl } from "../controls/combined";
 import {
   usePropsLogic,
   type NameAndLabel,
@@ -99,7 +99,12 @@ const PropsCombobox = ({
 };
 
 const renderProperty = (
-  { propsLogic: logic, setCssProperty, component, instanceId }: PropsPanelProps,
+  {
+    propsLogic: logic,
+    setCssProperty,
+    component,
+    instanceId,
+  }: PropsSectionProps,
   { prop, propName, meta }: PropAndMeta,
   deletable?: boolean
 ) =>
@@ -148,7 +153,7 @@ const AddPropertyForm = ({
   </Flex>
 );
 
-type PropsPanelProps = {
+type PropsSectionProps = {
   propsLogic: ReturnType<typeof usePropsLogic>;
   component: Instance["component"];
   instanceId: string;
@@ -156,7 +161,7 @@ type PropsPanelProps = {
 };
 
 // A UI componet with minimum logic that can be demoed in Storybook etc.
-export const PropsPanel = (props: PropsPanelProps) => {
+export const PropsSection = (props: PropsSectionProps) => {
   const { propsLogic: logic } = props;
 
   const [addingProp, setAddingProp] = useState(false);
@@ -225,7 +230,7 @@ const getPropTypeAndValue = (value: unknown) => {
   throw Error(`Unexpected prop value ${value}`);
 };
 
-export const PropsPanelContainer = ({
+export const PropsSectionContainer = ({
   selectedInstance: instance,
   publish,
 }: {
@@ -298,8 +303,15 @@ export const PropsPanelContainer = ({
     },
   });
 
+  const isPropsSectionVisible =
+    propsMeta && Object.keys(propsMeta.props).length !== 0;
+
+  if (isPropsSectionVisible === false) {
+    return null;
+  }
+
   return (
-    <PropsPanel
+    <PropsSection
       propsLogic={logic}
       component={instance.component}
       instanceId={instance.id}
