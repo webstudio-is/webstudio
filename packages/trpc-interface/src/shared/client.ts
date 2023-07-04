@@ -5,6 +5,7 @@ import {
   type SharedRouter,
 } from "./shared-router";
 import { callerLink } from "../trpc-caller-link";
+import fetch from "node-fetch";
 
 type SharedClientOptions = {
   url: string;
@@ -20,6 +21,7 @@ export const createTrpcProxyServiceClient = (
       links: [
         httpBatchLink({
           url: options.url,
+          fetch: fetch as never,
           headers: () => ({
             Authorization: options.token,
             // We use this header for SaaS preview service discovery proxy
