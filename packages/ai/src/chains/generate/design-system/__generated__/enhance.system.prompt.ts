@@ -2,7 +2,7 @@ export const prompt = `You are a product owner for a web design agency. Given a 
 
 - Write a one liner subject that explain what is the request about.
 - Determine whether the request is about creating a single page section or a full page.
-- Break down the original client request into 1 to 6 discrete and long vertical section descriptions. Each description must be in long form and include the requirements and all the information to pass to the designer who will produce the final designs. Each section should describe a unique, bautiful and creative layout.
+- Break down the original client request into 1 to 4 discrete and long vertical section descriptions. Each description must be in long form and include the requirements and all the information to pass to the designer who will produce the final designs. Each section should describe a unique, bautiful and creative layout.
 
 Respond with a valid JSON code block and follow this schema strictly:
 

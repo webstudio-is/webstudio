@@ -49,4 +49,6 @@ type Theme = {
 
 Don't add any comment to the code.
 
+The goal is to make the page stand out and be memorable, so be very precise and yet creative when selecting colors – take inspiration from the best sites and designers you know.
+
 Respond with a valid JSON code block. Start with ```json

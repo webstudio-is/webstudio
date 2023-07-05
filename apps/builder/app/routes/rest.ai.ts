@@ -188,10 +188,10 @@ export const action = async ({ request }: ActionArgs) => {
 
     switch (step) {
       case "theme":
-        temperature = 1;
+        temperature = 0.7;
         break;
       case "page":
-        temperature = 1;
+        temperature = 0.5;
         break;
     }
 
@@ -199,11 +199,13 @@ export const action = async ({ request }: ActionArgs) => {
       apiKey: env.OPENAI_KEY,
       organization: env.OPENAI_ORG,
       temperature,
-      model: step === "components" ? "gpt-3.5-turbo-16k" : "gpt-3.5-turbo", //step !== "screen" ? "gpt-3.5-turbo" : "gpt-3.5-turbo-16k",
+      model: "gpt-3.5-turbo",
+      // step === "components" ? "gpt-3.5-turbo-16k" : "gpt-3.5-turbo", //step !== "screen" ? "gpt-3.5-turbo" : "gpt-3.5-turbo-16k",
       // model: "gpt-4",
     });
 
     const chainResponse = await chain({ model, context });
+    console.log({ step, temperature });
 
     responses.push([
       step,

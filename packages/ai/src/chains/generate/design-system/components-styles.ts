@@ -50,51 +50,27 @@ export const componentsStyles: Record<
     ],
   },
   Box: {
-    base: (theme, colorMode = "light") => {
-      const bgs = Object.values(backgroundPatterns);
-      const pattern = bgs[Math.floor(Math.random() * bgs.length)];
-
-      return [
-        { property: "color", value: theme.foreground.base },
-        {
-          property: "fontSize",
-          value: { type: "unit", value: theme.fontSize[2], unit: "px" },
-        },
-        {
-          property: "fontFamily",
-          value: { type: "fontFamily", value: systemFont },
-        },
-        {
-          property: "width",
-          value: { type: "unit", value: 100, unit: "%" },
-        },
-        ...expand("marginHorizontal", { type: "keyword", value: "auto" }),
-        ...expand("borderRadius", {
-          type: "unit",
-          value: 0,
-          unit: "px",
-        }),
-        {
-          property: "backgroundImage",
-          value: {
-            type: "layers",
-            value: [
-              {
-                type: "image",
-                value: {
-                  type: "asset",
-                  value: pattern(
-                    colorMode === "light"
-                      ? "rgba(0,0,0,0.2)"
-                      : "rgba(255,255,255,0.2)"
-                  ),
-                },
-              },
-            ],
-          },
-        },
-      ];
-    },
+    base: (theme, colorMode = "light") => [
+      { property: "color", value: theme.foreground.base },
+      {
+        property: "fontSize",
+        value: { type: "unit", value: theme.fontSize[2], unit: "px" },
+      },
+      {
+        property: "fontFamily",
+        value: { type: "fontFamily", value: systemFont },
+      },
+      {
+        property: "width",
+        value: { type: "unit", value: 100, unit: "%" },
+      },
+      ...expand("marginHorizontal", { type: "keyword", value: "auto" }),
+      ...expand("borderRadius", {
+        type: "unit",
+        value: 0,
+        unit: "px",
+      }),
+    ],
     sectionContainer: (theme) => [
       ...expand("padding", {
         type: "unit",
@@ -118,6 +94,24 @@ export const componentsStyles: Record<
         unit: "px",
       }),
     ],
+    horizontalNavigation: (theme) => [
+      { property: "display", value: { type: "keyword", value: "flex" } },
+      {
+        property: "rowGap",
+        value: { type: "unit", value: theme.spacing[3], unit: "number" },
+      },
+      {
+        property: "columnGap",
+        value: { type: "unit", value: theme.spacing[3], unit: "number" },
+      },
+    ],
+    rightNavigation: (theme) => [
+      { property: "display", value: { type: "keyword", value: "flex" } },
+      {
+        property: "justifyContent",
+        value: { type: "keyword", value: "flex-end" },
+      },
+    ],
     logoNav: (theme) => [
       { property: "display", value: { type: "keyword", value: "flex" } },
       {
@@ -138,7 +132,7 @@ export const componentsStyles: Record<
       },
       ...expand("borderRadius", {
         type: "unit",
-        value: theme.borderRadius[2],
+        value: theme.borderRadius[4],
         unit: "px",
       }),
       ...expand("padding", {
@@ -198,8 +192,8 @@ export const componentsStyles: Record<
               {
                 type: "image",
                 value: {
-                  type: "asset",
-                  value: pattern(
+                  type: "url",
+                  url: pattern(
                     colorMode === "light"
                       ? "rgba(0,0,0,0.2)"
                       : "rgba(255,255,255,0.2)"
@@ -222,6 +216,7 @@ export const componentsStyles: Record<
         value: 1,
         unit: "px",
       }),
+      { property: "whiteSpace", value: { type: "keyword", value: "nowrap" } },
       ...expand("borderStyle", { type: "keyword", value: "solid" }),
       ...expand("borderColor", theme.background.base),
       ...expand("borderRadius", {
@@ -437,6 +432,19 @@ export const componentsStyles: Record<
         property: "textDecorationLine",
         value: { type: "keyword", value: "none" },
       },
+    ],
+    navLink: (theme) => [
+      { property: "whiteSpace", value: { type: "keyword", value: "nowrap" } },
+      ...expand("paddingHorizontal", {
+        type: "unit",
+        value: theme.spacing[3],
+        unit: "px",
+      }),
+      ...expand("paddingVertical", {
+        type: "unit",
+        value: theme.spacing[2],
+        unit: "px",
+      }),
     ],
   },
   List: {

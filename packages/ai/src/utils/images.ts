@@ -1,5 +1,5 @@
 import type { WsEmbedTemplate } from "@webstudio-is/react-sdk";
-import { social } from "../chains/generate/design-system/resources/logo";
+import { logos, social } from "../chains/generate/design-system/resources/logo";
 import { svgToBase64 } from "./to-base64";
 import { traverseTemplate } from "./traverse-template";
 
@@ -40,16 +40,28 @@ export const generateImagesUrlsUnsplash = async function generateImagesUrls(
         typeof iconName === "string" &&
         typeof social[iconName] === "function"
       ) {
-        return svgToBase64(social[iconName]("currentColor"));
+        return social[iconName]("currentColor");
+        // svgToBase64(social[iconName]("currentColor"));
       }
 
       const size = description.slice(0, description.indexOf(":"));
-      const [w, h] = size.split("x");
-      let url = `https://source.unsplash.com/random/?${encodeURIComponent(
-        description.slice(size.length)
-      )}&w=${w}&h=${h}`;
+      const sizes = size.split("x");
+      const width = Number(sizes[0]);
+      const height = Number(sizes[1]);
 
-      if (isNaN(Number(w)) || isNaN(Number(h))) {
+      if (description.toLowerCase().includes("logo")) {
+        const logo = logos[Math.floor(Math.random() * logos.length)];
+        return logo({
+          color: "currentColor",
+          size: isNaN(height) ? "2em" : `${height}px`,
+        });
+      }
+
+      let url = `https://source.unsplash.com/random/?${encodeURIComponent(
+        description.slice(size.length + 1)
+      )}&w=${width}&h=${height}`;
+
+      if (isNaN(width) || isNaN(height)) {
         url = `https://source.unsplash.com/random/?${encodeURIComponent(
           description
         )}&w=250&h=250`;
@@ -93,7 +105,6 @@ export const insertImagesUrls = function insertImages(
   descriptions: string[],
   imagesUrls: string[]
 ) {
-  console.log("insertImagesUrls");
   traverseTemplate(template, (node) => {
     if (node.type === "instance") {
       const altIndex = node.props?.findIndex(
@@ -117,32 +128,43 @@ export const insertImagesUrls = function insertImages(
 
           // determine image size
           const size = alt.value.slice(0, alt.value.indexOf(":"));
-          const [width, height] = size.split("x");
+          const sizes = size.split("x");
+          const width = Number(sizes[0]);
+          const height = Number(sizes[1]);
 
-          if (Number(width) && Number(height)) {
+          if (width && height) {
             if (node.styles == null) {
               node.styles = [];
             }
 
             node.styles.push({
-              property: "width",
-              value: { type: "unit", value: Number(width), unit: "px" },
-            });
-            node.styles.push({
-              property: "height",
-              value: { type: "unit", value: Number(height), unit: "px" },
+              property: "maxWidth",
+              value: { type: "unit", value: width, unit: "px" },
             });
           }
 
+          const isSvg = imagesUrls[index].startsWith("<svg");
+          if (isSvg) {
+            alt.name = "title";
+            node.component = "HtmlEmbed";
+          }
           // remove size from images alt (description)
           alt.value = alt.value.slice(size.length + 1);
           node.props[altIndex] = alt;
 
-          node.props.push({
-            type: "string",
-            name: "src",
-            value: imagesUrls[index],
-          });
+          if (isSvg) {
+            node.props.push({
+              type: "string",
+              name: "code",
+              value: imagesUrls[index],
+            });
+          } else {
+            node.props.push({
+              type: "string",
+              name: "src",
+              value: imagesUrls[index],
+            });
+          }
         }
       }
     }
