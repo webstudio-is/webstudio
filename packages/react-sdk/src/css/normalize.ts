@@ -16,7 +16,7 @@
  */
 
 // webstudio custom opinionated presets
-import * as presets from "./presets";
+import { borders, outline } from "./presets";
 import type { EmbedTemplateStyleDecl } from "../embed-template";
 
 export type Styles = EmbedTemplateStyleDecl[];
@@ -37,21 +37,13 @@ const boxSizing = {
  *   box-sizing: border-box;
   }
 */
-const baseStyle = [
-  boxSizing,
-  ...presets.borders,
-  ...presets.outline,
-] satisfies Styles;
+const baseStyle = [boxSizing, ...borders, ...outline] satisfies Styles;
 
 export const div = baseStyle;
 export const address = baseStyle;
 export const article = baseStyle;
 export const aside = baseStyle;
-export const blockquote = [
-  ...baseStyle,
-  ...presets.blockquote,
-] satisfies Styles;
-export const figure = [...baseStyle, ...presets.margins] satisfies Styles;
+export const figure = baseStyle;
 export const footer = baseStyle;
 export const header = baseStyle;
 export const main = baseStyle;
@@ -60,12 +52,12 @@ export const section = baseStyle;
 export const form = baseStyle;
 export const label = baseStyle;
 
-export const h1 = [...baseStyle, ...presets.h1] satisfies Styles;
-export const h2 = [...baseStyle, ...presets.h2] satisfies Styles;
-export const h3 = [...baseStyle, ...presets.h3] satisfies Styles;
-export const h4 = [...baseStyle, ...presets.h4] satisfies Styles;
-export const h5 = [...baseStyle, ...presets.h5] satisfies Styles;
-export const h6 = [...baseStyle, ...presets.h6] satisfies Styles;
+export const h1 = baseStyle;
+export const h2 = baseStyle;
+export const h3 = baseStyle;
+export const h4 = baseStyle;
+export const h5 = baseStyle;
+export const h6 = baseStyle;
 
 export const i = baseStyle;
 
@@ -76,7 +68,7 @@ export const li = baseStyle;
 export const ul = baseStyle;
 export const ol = baseStyle;
 
-export const p = [...baseStyle, ...presets.verticalMargins];
+export const p = baseStyle;
 export const span = baseStyle;
 
 // @todo for now not applied to html, as we don't have html element
@@ -102,7 +94,7 @@ export const html = [
     value: { type: "unit", value: 4, unit: "number" },
   },
   boxSizing,
-  ...presets.borders,
+  ...borders,
 ] satisfies Styles;
 
 /**
@@ -144,7 +136,7 @@ export const body = [
     value: { type: "unit", unit: "number", value: 1.2 },
   },
   boxSizing,
-  ...presets.borders,
+  ...borders,
 ] satisfies Styles;
 
 /**
@@ -163,8 +155,7 @@ export const hr = [
     value: { type: "keyword", value: "inherit" },
   },
   boxSizing,
-  ...presets.borders,
-  ...presets.margins,
+  ...borders,
 ] satisfies Styles;
 
 /**
@@ -186,7 +177,7 @@ export const b = [
     value: { type: "keyword", value: "700" },
   },
   boxSizing,
-  ...presets.borders,
+  ...borders,
 ] satisfies Styles;
 export const strong = b;
 
@@ -209,7 +200,7 @@ export const code = [
     value: { type: "unit", value: 1, unit: "em" },
   },
   boxSizing,
-  ...presets.borders,
+  ...borders,
 ] satisfies Styles;
 
 export const kbd = code;
@@ -226,7 +217,7 @@ export const small = [
     value: { type: "unit", value: 80, unit: "%" },
   },
   boxSizing,
-  ...presets.borders,
+  ...borders,
 ] satisfies Styles;
 
 /**
@@ -251,7 +242,7 @@ const subSupBase = [
     value: { type: "keyword", value: "baseline" },
   },
   boxSizing,
-  ...presets.borders,
+  ...borders,
 ] satisfies Styles;
 
 export const sub = [
@@ -286,7 +277,7 @@ export const table = [
     property: "textIndent",
     value: { type: "unit", value: 0, unit: "number" },
   },
-  ...presets.borders,
+  ...borders,
   /* 2 */
   {
     property: "borderTopColor",
@@ -349,7 +340,7 @@ const buttonBase = [
     value: { type: "unit", value: 0, unit: "number" },
   },
   boxSizing,
-  ...presets.borders,
+  ...borders,
 ] satisfies Styles;
 
 export const input = buttonBase;
@@ -436,7 +427,7 @@ export const legend = [
     value: { type: "unit", value: 0, unit: "number" },
   },
   boxSizing,
-  ...presets.borders,
+  ...borders,
 ] satisfies Styles;
 
 /**
@@ -449,7 +440,7 @@ export const progress = [
     value: { type: "keyword", value: "baseline" },
   },
   boxSizing,
-  ...presets.borders,
+  ...borders,
 ] satisfies Styles;
 
 /**
@@ -512,5 +503,5 @@ export const summary = [
     value: { type: "keyword", value: "list-item" },
   },
   boxSizing,
-  ...presets.borders,
+  ...borders,
 ] satisfies Styles;
