@@ -65,10 +65,17 @@ export const InstanceTree = (
       if (meta === undefined) {
         return <></>;
       }
+      const label = getInstanceLabel(props.itemData, meta);
       return (
         <TreeItemBody {...props} selectionEvent="focus">
-          <TreeItemLabel prefix={<MetaIcon icon={meta.icon} />}>
-            {getInstanceLabel(props.itemData, meta)}
+          <TreeItemLabel
+            onChangeValue={(val) => {
+              console.log(`renderItem`, val);
+            }}
+            label={label}
+            prefix={<MetaIcon icon={meta.icon} />}
+          >
+            {label}
           </TreeItemLabel>
         </TreeItemBody>
       );

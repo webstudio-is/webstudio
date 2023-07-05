@@ -14,6 +14,7 @@ import {
   type ItemSelector,
   areItemSelectorsEqual,
 } from "./item-utils";
+import { useEditable } from "../primitives/use-editable";
 
 export const INDENT = 16;
 const ITEM_HEIGHT = 32;
@@ -333,9 +334,9 @@ export const TreeItemBody = <Data extends { id: string }>({
         {children}
       </ItemButton>
 
-      {/* We can't nest the collapsible trigger and suffix inside the ItemButton because 
-          <button> can't be nested inside <button>, 
-          click events will be mixed up, 
+      {/* We can't nest the collapsible trigger and suffix inside the ItemButton because
+          <button> can't be nested inside <button>,
+          click events will be mixed up,
           may hurt accessibility, etc. */}
 
       {shouldRenderExpandButton && (
@@ -356,20 +357,59 @@ export const TreeItemBody = <Data extends { id: string }>({
   );
 };
 
+const EditableText = styled(DeprecatedText2, {
+  variants: {
+    isEditing: {
+      true: {
+        background: "white",
+        padding: theme.spacing[3],
+        borderRadius: theme.spacing[3],
+        color: theme.colors.hiContrast,
+        outline: "none",
+        cursor: "auto",
+        textOverflow: "clip",
+      },
+    },
+  },
+});
+
 export const TreeItemLabel = ({
   children,
   prefix,
+  label,
+  onChangeValue,
 }: {
   children: React.ReactNode;
   prefix?: React.ReactNode;
-}) => (
-  <>
-    {prefix}
-    <DeprecatedText2 truncate css={{ ml: prefix ? theme.spacing[3] : 0 }}>
-      {children}
-    </DeprecatedText2>
-  </>
-);
+  label: string;
+  onChangeValue?: (val: string) => void;
+}) => {
+  const { ref, handlers, isEditing } = useEditable({
+    isEditable: onChangeValue ? true : false,
+    onChangeValue: (val) => {
+      if (onChangeValue) {
+        onChangeValue(val);
+      }
+    },
+  });
+
+  return (
+    <>
+      {prefix}
+      <EditableText
+        ref={ref}
+        truncate
+        css={{
+          ml: prefix ? theme.spacing[3] : 0,
+        }}
+        {...handlers}
+        isEditing={isEditing}
+      >
+        {children}
+      </EditableText>
+    </>
+  );
+};
 
 export type TreeNodeProps<Data extends { id: ItemId }> = {
   itemData: Data;
