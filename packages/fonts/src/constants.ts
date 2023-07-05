@@ -1,7 +1,7 @@
 import type { FontFormat } from "./schema";
 
 export const SYSTEM_FONTS = new Map([
-  ["Arial", ["sans-serif"]],
+  ["Arial", ["Roboto", "sans-serif"]],
   ["Times New Roman", ["sans"]],
   ["Courier New", ["monospace"]],
   ["system-ui", []],
