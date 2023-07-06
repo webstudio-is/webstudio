@@ -36,5 +36,5 @@ export const meta: WsComponentMeta = {
 
 export const propsMeta: WsComponentPropsMeta = {
   props,
-  initialProps: ["name", "type", "placeholder", "required", "autoFocus"],
+  initialProps: ["id", "name", "type", "placeholder", "required", "autoFocus"],
 };

@@ -166,7 +166,8 @@ export const PropsSection = (props: PropsSectionProps) => {
 
   const [addingProp, setAddingProp] = useState(false);
 
-  const hasAddedProps = logic.addedProps.length > 0 || addingProp;
+  const hasItems =
+    logic.addedProps.length > 0 || addingProp || logic.initialProps.length > 0;
 
   return (
     <>
@@ -176,39 +177,24 @@ export const PropsSection = (props: PropsSectionProps) => {
 
       <Separator />
 
-      {logic.initialProps.length > 0 && (
-        <>
-          <Row
-            css={{
-              paddingTop: theme.spacing[5],
-              paddingBottom: theme.spacing[5],
-            }}
-          >
-            {logic.initialProps.map((item) => renderProperty(props, item))}
-          </Row>
-          <Separator />
-        </>
-      )}
-
       <CollapsibleSectionWithAddButton
-        label="Custom Properties"
+        label="Properties"
         onAdd={() => setAddingProp(true)}
-        hasItems={hasAddedProps}
+        hasItems={hasItems}
       >
-        {hasAddedProps && (
-          <Flex gap="2" direction="column">
-            {logic.addedProps.map((item) => renderProperty(props, item, true))}
-            {addingProp && (
-              <AddPropertyForm
-                availableProps={logic.remainingProps}
-                onPropSelected={(propName) => {
-                  setAddingProp(false);
-                  logic.handleAdd(propName);
-                }}
-              />
-            )}
-          </Flex>
-        )}
+        <Flex gap="2" direction="column">
+          {logic.initialProps.map((item) => renderProperty(props, item))}
+          {logic.addedProps.map((item) => renderProperty(props, item, true))}
+          {addingProp && (
+            <AddPropertyForm
+              availableProps={logic.remainingProps}
+              onPropSelected={(propName) => {
+                setAddingProp(false);
+                logic.handleAdd(propName);
+              }}
+            />
+          )}
+        </Flex>
       </CollapsibleSectionWithAddButton>
     </>
   );

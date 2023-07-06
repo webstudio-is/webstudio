@@ -119,15 +119,6 @@ const getAndDelete = <Value>(map: Map<string, Value>, key: string) => {
 
 const systemPropsMeta: { name: string; meta: PropMeta }[] = [
   {
-    name: "id",
-    meta: {
-      label: "ID",
-      required: false,
-      control: "text",
-      type: "string",
-    },
-  },
-  {
     name: showAttribute,
     meta: {
       label: "Show",
