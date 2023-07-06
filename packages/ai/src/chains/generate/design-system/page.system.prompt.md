@@ -40,7 +40,7 @@ Design guidelines:
 - Headers with logo and navigation should be properly aligned.
 - Logos should be square and not too big if part of a header.
 - Titles and subtitles should pop and be interesting, bold and very creative.
-- Do not use placeholder text. Instead craft some text that is creative and exciting and fits the client request.
+- Do not use lorem ipsum placeholder text. Instead craft some text that is creative and exciting and fits the client request.
 - Do not use placeholder names like Jon or Jane Doe but rather invent random ones.
 - If a section has a form, make sure that its background works well with the theme's `background.input` color.
 - Add a gap between columns, for this the container can use flexbox and `rowGap`.

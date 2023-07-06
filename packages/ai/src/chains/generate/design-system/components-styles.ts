@@ -71,7 +71,7 @@ export const componentsStyles: Record<
         unit: "px",
       }),
     ],
-    sectionContainer: (theme) => [
+    topLevelContainer: (theme) => [
       ...expand("padding", {
         type: "unit",
         value: theme.spacing[3],

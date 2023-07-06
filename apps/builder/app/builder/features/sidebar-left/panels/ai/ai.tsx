@@ -310,7 +310,7 @@ export const TabContent = ({ publish, onSetActiveTab }: TabContentProps) => {
         enhanceRequest,
       ]);
 
-      console.log({ enhancedPrompt });
+      // console.log({ enhancedPrompt });
 
       if (existingTheme === null || existingTheme instanceof Error) {
         setAiGenerationState({
@@ -333,9 +333,12 @@ export const TabContent = ({ publish, onSetActiveTab }: TabContentProps) => {
         Array.isArray(enhancedPrompt.sections)
           ? enhancedPrompt.sections.map(
               (prompt) =>
-                `We are working on the following project:\n${enhancedPrompt.subject}.\n\nThe overall project details:\n${userPrompt}\n\nAt this stage we want you to create the following part of the UI:\n${prompt}`
+                // `We are working on the following project:\n${enhancedPrompt.subject}.\n\nThe overall project details:\n${userPrompt}\n\nAt this stage we want you to create the following part of the UI:\n${prompt}`
+                `We are working on the following project:\n${enhancedPrompt.subject}.\n\nAt this stage we want you to create the following part of the UI:\n${prompt}`
             )
-          : [userPrompt];
+          : [enhancedPrompt.subject || userPrompt];
+
+      console.log(prompts.join("\n------------------------\n"));
 
       const indexMap: number[] = [];
       const getIndexForInsertion = function getIndexForInsertion(
@@ -349,7 +352,7 @@ export const TabContent = ({ publish, onSetActiveTab }: TabContentProps) => {
       };
 
       const generationPromises = prompts.map((prompt, index) => {
-        console.log(`Generating section ${index}: ${prompt}`);
+        // console.log(`Generating section ${index}: ${prompt}`);
 
         const pageFormData = getBaseFormData(baseData, "page");
         pageFormData.append("theme", JSON.stringify(existingTheme));

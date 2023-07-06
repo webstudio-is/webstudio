@@ -53,7 +53,7 @@ export const generateImagesUrlsUnsplash = async function generateImagesUrls(
         const logo = logos[Math.floor(Math.random() * logos.length)];
         return logo({
           color: "currentColor",
-          size: isNaN(height) ? "2em" : `${height}px`,
+          size: isNaN(height) ? "2em" : `${Math.min(100, height)}px`,
         });
       }
 
