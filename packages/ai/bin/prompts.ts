@@ -31,6 +31,6 @@ prompts.forEach((filePath) => {
 
   const content = fs.readFileSync(filePath, "utf-8").replace(/`/g, "\\`");
 
-  fs.writeFileSync(generatedPath, `export const prompt = \`${content}\`;`);
+  fs.writeFileSync(generatedPath, `export const prompt = \`${content}\`;\n`);
   console.log(`Done generating argTypes for ${generatedPath}`);
 });

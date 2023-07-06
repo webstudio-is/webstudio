@@ -128,22 +128,40 @@ export const insertImagesUrls = function insertImages(
 
           // determine image size
           const size = alt.value.slice(0, alt.value.indexOf(":"));
-          const sizes = size.split("x");
-          const width = Number(sizes[0]);
-          const height = Number(sizes[1]);
+          // const sizes = size.split("x");
+          // const width = Number(sizes[0]);
+          // const height = Number(sizes[1]);
 
-          if (width && height) {
-            if (node.styles == null) {
-              node.styles = [];
-            }
+          // if (width && height && isSvg) {
+          //   if (node.styles == null) {
+          //     node.styles = [];
+          //   }
+          //   const idx = node.styles.findIndex(
+          //     (decl) => decl.property === "maxWidth"
+          //   );
 
-            node.styles.push({
-              property: "maxWidth",
-              value: { type: "unit", value: width, unit: "px" },
-            });
-          }
+          //   if (idx > -1) {
+          //     node.styles[idx].value = {
+          //       type: "unit",
+          //       value: width,
+          //       unit: "px",
+          //     };
+          //   } else {
+          //     node.styles.push({
+          //       property: "maxWidth",
+          //       value: { type: "unit", value: width, unit: "px" },
+          //     });
+          //   }
+          //   console.log(
+          //     alt.value,
+          //     width,
+          //     height,
+          //     JSON.stringify(node.styles, null, 2)
+          //   );
+          // }
 
           const isSvg = imagesUrls[index].startsWith("<svg");
+
           if (isSvg) {
             alt.name = "title";
             node.component = "HtmlEmbed";

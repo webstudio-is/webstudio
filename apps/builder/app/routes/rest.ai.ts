@@ -188,7 +188,10 @@ export const action = async ({ request }: ActionArgs) => {
 
     switch (step) {
       case "theme":
-        temperature = 0.7;
+        temperature = 0.5;
+        break;
+      case "enhance":
+        temperature = 0.25;
         break;
       case "page":
         temperature = 0.5;

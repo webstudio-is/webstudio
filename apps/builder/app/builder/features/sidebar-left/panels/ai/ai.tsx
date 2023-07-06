@@ -333,7 +333,7 @@ export const TabContent = ({ publish, onSetActiveTab }: TabContentProps) => {
         Array.isArray(enhancedPrompt.sections)
           ? enhancedPrompt.sections.map(
               (prompt) =>
-                `We are working on the following project:\n${enhancedPrompt.subject}\n\nPlease create the following UI:\n${prompt}`
+                `We are working on the following project:\n${enhancedPrompt.subject}.\n\nThe overall project details:\n${userPrompt}\n\nAt this stage we want you to create the following part of the UI:\n${prompt}`
             )
           : [userPrompt];
 

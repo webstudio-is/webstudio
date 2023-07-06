@@ -105,7 +105,7 @@ export const componentsStyles: Record<
         value: { type: "unit", value: theme.spacing[3], unit: "number" },
       },
     ],
-    rightNavigation: (theme) => [
+    rightAlignedNavigation: (theme) => [
       { property: "display", value: { type: "keyword", value: "flex" } },
       {
         property: "justifyContent",
