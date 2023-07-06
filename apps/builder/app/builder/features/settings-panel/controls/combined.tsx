@@ -8,7 +8,7 @@ import { SelectControl } from "./select";
 import { BooleanControl } from "./boolean";
 import { FileControl } from "./file";
 import { UrlControl } from "./url";
-import type { ControlProps } from "../props-section/shared";
+import type { ControlProps } from "../shared";
 
 export const renderControl = ({
   meta,

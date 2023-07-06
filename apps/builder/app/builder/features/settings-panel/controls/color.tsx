@@ -4,7 +4,7 @@ import {
   getLabel,
   useLocalValue,
   HorizontalLayout,
-} from "../props-section/shared";
+} from "../shared";
 
 // @todo:
 //   use ColorPicker (need to refactor it first,

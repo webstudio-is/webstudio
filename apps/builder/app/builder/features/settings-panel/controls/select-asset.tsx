@@ -10,7 +10,7 @@ import {
 import { assetsStore } from "~/shared/nano-states";
 import { FloatingPanel } from "~/builder/shared/floating-panel";
 import { ImageManager } from "~/builder/shared/image-manager";
-import { type ControlProps } from "../props-section/shared";
+import { type ControlProps } from "../shared";
 import { acceptToMimeCategories } from "@webstudio-is/asset-uploader";
 import { TrashIcon } from "@webstudio-is/icons";
 

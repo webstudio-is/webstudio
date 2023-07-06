@@ -5,7 +5,7 @@ import {
   useLocalValue,
   VerticalLayout,
   HorizontalLayout,
-} from "../props-section/shared";
+} from "../shared";
 import { useState, type ComponentProps } from "react";
 
 const countLines = (value: string) => (value.match(/\n/g) || "").length + 1;

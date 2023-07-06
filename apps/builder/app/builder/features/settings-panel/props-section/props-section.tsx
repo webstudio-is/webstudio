@@ -35,17 +35,11 @@ import {
   type NameAndLabel,
   type PropAndMeta,
 } from "./use-props-logic";
-import { getLabel } from "./shared";
-import { useState, type ReactNode } from "react";
+import { Row, getLabel } from "../shared";
+import { useState } from "react";
 
 const itemToString = (item: NameAndLabel | null) =>
   item ? getLabel(item, item.name) : "";
-
-const Row = ({ children, css }: { children: ReactNode; css?: CSS }) => (
-  <Flex css={{ px: theme.spacing[9], ...css }} gap="2" direction="column">
-    {children}
-  </Flex>
-);
 
 const PropsCombobox = ({
   items,

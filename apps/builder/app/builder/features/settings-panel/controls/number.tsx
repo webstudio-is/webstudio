@@ -4,7 +4,7 @@ import {
   getLabel,
   useLocalValue,
   HorizontalLayout,
-} from "../props-section/shared";
+} from "../shared";
 
 export const NumberControl = ({
   meta,

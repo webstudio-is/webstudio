@@ -5,7 +5,7 @@ import {
   getLabel,
   VerticalLayout,
   useLocalValue,
-} from "../props-section/shared";
+} from "../shared";
 import { SelectAsset } from "./select-asset";
 
 type FileControlProps = ControlProps<"file", "asset" | "string">;

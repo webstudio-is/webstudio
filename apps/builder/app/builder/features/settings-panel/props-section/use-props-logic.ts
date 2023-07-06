@@ -5,7 +5,7 @@ import {
   type WsComponentPropsMeta,
   showAttribute,
 } from "@webstudio-is/react-sdk";
-import type { PropMeta, PropValue } from "./shared";
+import type { PropMeta, PropValue } from "../shared";
 
 type PropOrName = { prop?: Prop; propName: string };
 export type PropAndMeta = { prop?: Prop; propName: string; meta: PropMeta };

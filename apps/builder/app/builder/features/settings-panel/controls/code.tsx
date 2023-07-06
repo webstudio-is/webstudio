@@ -1,4 +1,4 @@
-import type { ControlProps } from "../props-section/shared";
+import type { ControlProps } from "../shared";
 import { TextControl } from "./text";
 
 export const CodeControl = ({

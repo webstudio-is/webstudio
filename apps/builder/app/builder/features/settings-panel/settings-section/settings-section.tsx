@@ -5,6 +5,7 @@ import {
   selectedInstanceStore,
 } from "~/shared/nano-states";
 import { useSettingsLogic } from "./use-settings-logic";
+import { HorizontalLayout, Row } from "../shared";
 
 export const SettingsSection = () => {
   const { setLabel, handleBlur, handleKeyDown } = useSettingsLogic();
@@ -15,19 +16,20 @@ export const SettingsSection = () => {
   }
   const label = metas.get(selectedInstance.component)?.label;
   return (
-    <Flex gap="1" direction="column" grow css={{ px: theme.spacing[9] }}>
-      <Label>Instance Name</Label>
-      <InputField
-        /* Key is required, otherwise when label is undefined, previous value stayed */
-        key={selectedInstance.id}
-        onBlur={handleBlur}
-        onKeyDown={handleKeyDown}
-        placeholder={label}
-        defaultValue={selectedInstance.label}
-        onChange={(event) => {
-          setLabel(event.target.value.trim());
-        }}
-      />
-    </Flex>
+    <Row>
+      <HorizontalLayout label="Name">
+        <InputField
+          /* Key is required, otherwise when label is undefined, previous value stayed */
+          key={selectedInstance.id}
+          onBlur={handleBlur}
+          onKeyDown={handleKeyDown}
+          placeholder={label}
+          defaultValue={selectedInstance.label}
+          onChange={(event) => {
+            setLabel(event.target.value.trim());
+          }}
+        />
+      </HorizontalLayout>
+    </Row>
   );
 };

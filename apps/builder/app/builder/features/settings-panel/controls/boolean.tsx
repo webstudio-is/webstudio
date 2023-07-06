@@ -1,9 +1,5 @@
 import { Switch, useId } from "@webstudio-is/design-system";
-import {
-  type ControlProps,
-  getLabel,
-  HorizontalLayout,
-} from "../props-section/shared";
+import { type ControlProps, getLabel, HorizontalLayout } from "../shared";
 
 export const BooleanControl = ({
   meta,
