@@ -159,6 +159,7 @@ const Input = forwardRef(
   ) => (
     <input
       {...props}
+      spellCheck={false}
       data-input-field-input // to distinguish from potential other inputs in prefix/suffix
       data-color={color}
       disabled={disabled}
