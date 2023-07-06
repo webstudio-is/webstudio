@@ -376,12 +376,10 @@ const EditableText = styled(DeprecatedText2, {
 export const TreeItemLabel = ({
   children,
   prefix,
-  label,
   onChangeValue,
 }: {
   children: React.ReactNode;
   prefix?: React.ReactNode;
-  label: string;
   onChangeValue?: (val: string) => void;
 }) => {
   const { ref, handlers, isEditing } = useEditable({

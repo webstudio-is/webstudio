@@ -8,6 +8,7 @@ import {
   type TreeItemRenderProps,
 } from "@webstudio-is/design-system";
 import type { Instance } from "@webstudio-is/project-build";
+import store from "immerhin";
 import { type WsComponentMeta } from "@webstudio-is/react-sdk";
 import {
   instancesStore,
@@ -59,6 +60,16 @@ export const InstanceTree = (
     [instances]
   );
 
+  const updateInstanceLabel = useCallback((instanceId: string, val: string) => {
+    store.createTransaction([instancesStore], (instances) => {
+      const instance = instances.get(instanceId);
+      if (instance === undefined) {
+        return;
+      }
+      instance.label = val;
+    });
+  }, []);
+
   const renderItem = useCallback(
     (props: TreeItemRenderProps<Instance>) => {
       const meta = metas.get(props.itemData.component);
@@ -69,10 +80,7 @@ export const InstanceTree = (
       return (
         <TreeItemBody {...props} selectionEvent="focus">
           <TreeItemLabel
-            onChangeValue={(val) => {
-              console.log(`renderItem`, val);
-            }}
-            label={label}
+            onChangeValue={(val) => updateInstanceLabel(props.itemData.id, val)}
             prefix={<MetaIcon icon={meta.icon} />}
           >
             {label}
@@ -80,7 +88,7 @@ export const InstanceTree = (
         </TreeItemBody>
       );
     },
-    [metas]
+    [metas, updateInstanceLabel]
   );
 
   return (
