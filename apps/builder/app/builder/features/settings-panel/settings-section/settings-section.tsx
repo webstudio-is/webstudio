@@ -1,5 +1,5 @@
 import { useStore } from "@nanostores/react";
-import { Flex, Label, theme, InputField } from "@webstudio-is/design-system";
+import { InputField } from "@webstudio-is/design-system";
 import {
   registeredComponentMetasStore,
   selectedInstanceStore,

@@ -7,7 +7,7 @@ import {
 } from "@webstudio-is/react-sdk";
 import { div } from "@webstudio-is/react-sdk/css-normalize";
 import { props } from "./__generated__/vimeo.props";
-import { Vimeo, type VimeoOptions } from "./vimeo";
+import { Vimeo } from "./vimeo";
 import type { ComponentProps } from "react";
 
 const presetStyle = {

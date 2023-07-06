@@ -11,7 +11,6 @@ import {
   ComboboxListboxItem,
   Separator,
   Flex,
-  type CSS,
   InputField,
   NestedInputButton,
 } from "@webstudio-is/design-system";

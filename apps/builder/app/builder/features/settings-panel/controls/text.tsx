@@ -108,10 +108,7 @@ export const TextControl = ({
   });
   const id = useId();
   const label = getLabel(meta, propName);
-  const [initialRows] = useState(
-    () => meta.rows ?? countLines(localValue.value)
-  );
-  const isMultiline = initialRows > 1;
+  const isTwoColumnLayout = meta.rows && meta.rows < 2 ? true : false;
 
   const input = (
     <UniversalInput
@@ -123,17 +120,17 @@ export const TextControl = ({
     />
   );
 
-  if (isMultiline) {
+  if (isTwoColumnLayout) {
     return (
-      <VerticalLayout label={label} id={id} onDelete={onDelete}>
-        <Flex css={{ py: theme.spacing[2] }}>{input}</Flex>
-      </VerticalLayout>
+      <HorizontalLayout label={label} id={id} onDelete={onDelete}>
+        <Flex css={{ width: theme.spacing[22] }}>{input}</Flex>
+      </HorizontalLayout>
     );
   }
 
   return (
-    <HorizontalLayout label={label} id={id} onDelete={onDelete}>
-      <Flex css={{ width: theme.spacing[22] }}>{input}</Flex>
-    </HorizontalLayout>
+    <VerticalLayout label={label} id={id} onDelete={onDelete}>
+      <Flex css={{ py: theme.spacing[2] }}>{input}</Flex>
+    </VerticalLayout>
   );
 };
