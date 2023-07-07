@@ -66,6 +66,7 @@ export const TextArea = forwardRef(
 
     return (
       <textarea
+        spellCheck={false}
         className={style({
           css: { height, minHeight: height, ...css },
           state,
