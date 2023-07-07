@@ -44,6 +44,8 @@ export type TreeProps<Data extends { id: string }> = {
     dropTarget: { itemSelector: ItemSelector; position: number | "end" };
   }) => void;
   onCancel: () => void;
+  isEditing: ItemId | null;
+  setEditing: (val: ItemId) => void;
 };
 
 const sharedDropOptions = {
@@ -75,6 +77,8 @@ export const Tree = <Data extends { id: string }>({
   onDragItemChange,
   onDragEnd,
   onCancel,
+  isEditing,
+  setEditing,
 }: TreeProps<Data>) => {
   const { getIsExpanded, setIsExpanded } = useExpandState({
     selectedItemSelector,
@@ -259,6 +263,8 @@ export const Tree = <Data extends { id: string }>({
     getIsExpanded,
     setIsExpanded,
     onEsc: dragHandlers.cancelCurrentDrag,
+    setEditing,
+    isEditing,
   });
 
   return (
@@ -278,11 +284,12 @@ export const Tree = <Data extends { id: string }>({
       }}
       onScroll={dropHandlers.handleScroll}
     >
+      {/* This is the root node for the whole tree */}
       <Box
         ref={keyboardNavigation.rootRef}
-        onKeyDown={keyboardNavigation.handleKeyDown}
-        onClick={keyboardNavigation.handleClick}
         onBlur={keyboardNavigation.handleBlur}
+        onKeyDown={keyboardNavigation.handleKeyDown}
+        onDoubleClick={keyboardNavigation.handleDoubleClick}
       >
         <TreeNode
           renderItem={renderItem}
@@ -300,7 +307,6 @@ export const Tree = <Data extends { id: string }>({
           dropTargetItemSelector={shiftedDropTarget?.itemSelector}
         />
       </Box>
-
       {shiftedDropTarget?.placement &&
         createPortal(
           <ListPositionIndicator
@@ -323,6 +329,8 @@ const useKeyboardNavigation = <Data extends { id: string }>({
   getIsExpanded,
   setIsExpanded,
   onEsc,
+  setEditing,
+  isEditing,
 }: {
   root: Data;
   selectedItemSelector: undefined | ItemSelector;
@@ -331,6 +339,8 @@ const useKeyboardNavigation = <Data extends { id: string }>({
   getIsExpanded: (itemSelector: ItemSelector) => boolean;
   setIsExpanded: (itemSelector: ItemSelector, isExpanded: boolean) => void;
   onEsc: () => void;
+  setEditing: (itemId: ItemId) => void;
+  isEditing: null | ItemId;
 }) => {
   const flatCurrentlyExpandedTree = useMemo(() => {
     const result: ItemSelector[] = [];
@@ -354,6 +364,10 @@ const useKeyboardNavigation = <Data extends { id: string }>({
   const handleKeyDown = (event: ReactKeyboardEvent) => {
     // skip if nothing is selected in the tree
     if (selectedItemSelector === undefined) {
+      return;
+    }
+
+    if (isEditing !== null) {
       return;
     }
 
@@ -460,6 +474,20 @@ const useKeyboardNavigation = <Data extends { id: string }>({
     },
     handleBlur() {
       hadFocus.current = false;
+    },
+    handleDoubleClick(event: React.MouseEvent<Element>) {
+      const itemButton = (event.target as HTMLElement).closest(
+        "[data-item-button-id]"
+      );
+      if (itemButton === null || !(itemButton instanceof HTMLElement)) {
+        return;
+      }
+
+      const itemId = itemButton.dataset.itemButtonId;
+      if (itemId === undefined) {
+        return;
+      }
+      setEditing(itemId);
     },
   };
 };

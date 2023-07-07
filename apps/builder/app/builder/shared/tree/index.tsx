@@ -1,4 +1,4 @@
-import { useCallback } from "react";
+import { useCallback, useState } from "react";
 import { useStore } from "@nanostores/react";
 import {
   Tree,
@@ -6,6 +6,8 @@ import {
   TreeItemBody,
   type TreeProps,
   type TreeItemRenderProps,
+  styled,
+  theme,
 } from "@webstudio-is/design-system";
 import type { Instance } from "@webstudio-is/project-build";
 import store from "immerhin";
@@ -15,6 +17,8 @@ import {
   registeredComponentMetasStore,
 } from "~/shared/nano-states";
 import { MetaIcon } from "../meta-icon";
+import type { ItemId } from "node_modules/@webstudio-is/design-system/src/components/tree/item-utils";
+import { useEditable } from "./use-editable";
 
 export const InstanceTree = (
   props: Omit<
@@ -24,6 +28,7 @@ export const InstanceTree = (
 ) => {
   const metas = useStore(registeredComponentMetasStore);
   const instances = useStore(instancesStore);
+  const [isEditing, setEditing] = useState<ItemId | null>(null);
 
   const canLeaveParent = useCallback(
     (instanceId: Instance["id"]) => {
@@ -79,16 +84,20 @@ export const InstanceTree = (
       const label = getInstanceLabel(props.itemData, meta);
       return (
         <TreeItemBody {...props} selectionEvent="focus">
-          <TreeItemLabel
-            onChangeValue={(val) => updateInstanceLabel(props.itemData.id, val)}
+          <EditableTreeItem
+            isEditing={props.itemData.id === isEditing}
+            onChangeValue={(val) => {
+              updateInstanceLabel(props.itemData.id, val);
+              setEditing(null);
+            }}
             prefix={<MetaIcon icon={meta.icon} />}
           >
             {label}
-          </TreeItemLabel>
+          </EditableTreeItem>
         </TreeItemBody>
       );
     },
-    [metas, updateInstanceLabel]
+    [metas, updateInstanceLabel, isEditing]
   );
 
   return (
@@ -97,6 +106,8 @@ export const InstanceTree = (
       canLeaveParent={canLeaveParent}
       getItemChildren={getItemChildren}
       renderItem={renderItem}
+      isEditing={isEditing}
+      setEditing={setEditing}
     />
   );
 };
@@ -107,3 +118,43 @@ export const getInstanceLabel = (
 ) => {
   return instance.label || meta.label;
 };
+
+const EditableTreeItem = ({
+  onChangeValue,
+  isEditing,
+  prefix,
+  children,
+}: {
+  isEditing: boolean;
+  prefix?: React.ReactNode;
+  children: React.ReactNode;
+  onChangeValue: (val: string) => void;
+}) => {
+  const { ref, handlers } = useEditable({
+    isEditing,
+    onChangeValue,
+  });
+
+  return (
+    <EditableText ref={ref} {...handlers} isEditing={isEditing} prefix={prefix}>
+      {children}
+    </EditableText>
+  );
+};
+
+const EditableText = styled(TreeItemLabel, {
+  variants: {
+    isEditing: {
+      true: {
+        background: "white",
+        padding: theme.spacing[3],
+        borderRadius: theme.spacing[3],
+        color: theme.colors.hiContrast,
+        outline: "none",
+        cursor: "auto",
+        textOverflow: "clip",
+        userSelect: "auto",
+      },
+    },
+  },
+});

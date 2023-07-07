@@ -1,26 +1,24 @@
 import {
   useRef,
   useEffect,
-  useState,
   type KeyboardEventHandler,
   type KeyboardEvent,
   type FocusEvent,
 } from "react";
 
 export const useEditable = ({
-  isEditable,
+  isEditing,
   onChangeValue,
 }: {
-  isEditable: boolean;
+  isEditing: boolean;
   onChangeValue: (value: string) => void;
 }) => {
-  const [isEditing, setEditMode] = useState(false);
   const elementRef = useRef<HTMLDivElement>(null);
   const lastValueRef = useRef<string>("");
   const getValue = () => elementRef.current?.textContent ?? "";
+  const element = elementRef.current;
 
   useEffect(() => {
-    const element = elementRef.current;
     if (element === null) {
       return;
     }
@@ -41,10 +39,7 @@ export const useEditable = ({
   const handleFinishEditing = (
     event: KeyboardEvent<Element> | FocusEvent<Element>
   ) => {
-    event.preventDefault();
-    if (isEditing) {
-      setEditMode(false);
-    }
+    event.stopPropagation();
     onChangeValue(getValue());
     lastValueRef.current = "";
   };
@@ -61,16 +56,8 @@ export const useEditable = ({
     }
   };
 
-  const handleDoubleClick = () => {
-    if (isEditable && isEditing === false) {
-      setEditMode(true);
-    }
-  };
-
   const handlers = {
     onKeyDown: handleKeyDown,
-    onblur: handleFinishEditing,
-    onDoubleClick: handleDoubleClick,
   };
 
   return { ref: elementRef, handlers, isEditing };

@@ -1,4 +1,11 @@
-import { useRef, useEffect, useMemo, useState } from "react";
+import {
+  useRef,
+  useEffect,
+  useMemo,
+  useState,
+  forwardRef,
+  type ForwardRefRenderFunction,
+} from "react";
 import {
   ChevronFilledDownIcon,
   ChevronFilledRightIcon,
@@ -14,7 +21,6 @@ import {
   type ItemSelector,
   areItemSelectorsEqual,
 } from "./item-utils";
-import { useEditable } from "../primitives/use-editable";
 
 export const INDENT = 16;
 const ITEM_HEIGHT = 32;
@@ -357,57 +363,31 @@ export const TreeItemBody = <Data extends { id: string }>({
   );
 };
 
-const EditableText = styled(DeprecatedText2, {
-  variants: {
-    isEditing: {
-      true: {
-        background: "white",
-        padding: theme.spacing[3],
-        borderRadius: theme.spacing[3],
-        color: theme.colors.hiContrast,
-        outline: "none",
-        cursor: "auto",
-        textOverflow: "clip",
-      },
-    },
-  },
-});
-
-export const TreeItemLabel = ({
-  children,
-  prefix,
-  onChangeValue,
-}: {
-  children: React.ReactNode;
-  prefix?: React.ReactNode;
-  onChangeValue?: (val: string) => void;
-}) => {
-  const { ref, handlers, isEditing } = useEditable({
-    isEditable: onChangeValue ? true : false,
-    onChangeValue: (val) => {
-      if (onChangeValue) {
-        onChangeValue(val);
-      }
-    },
-  });
-
+export const TreeItemLabelBase: ForwardRefRenderFunction<
+  HTMLDivElement,
+  {
+    children: React.ReactNode;
+    prefix?: React.ReactNode;
+  }
+> = ({ children, prefix, ...restProps }, ref) => {
   return (
     <>
       {prefix}
-      <EditableText
+      <DeprecatedText2
         ref={ref}
         truncate
         css={{
           ml: prefix ? theme.spacing[3] : 0,
         }}
-        {...handlers}
-        isEditing={isEditing}
+        {...restProps}
       >
         {children}
-      </EditableText>
+      </DeprecatedText2>
     </>
   );
 };
+
+export const TreeItemLabel = forwardRef(TreeItemLabelBase);
 
 export type TreeNodeProps<Data extends { id: ItemId }> = {
   itemData: Data;
