@@ -227,7 +227,7 @@ test("add only used variables in effectful expression", () => {
 test("forbid not allowed variables in effectful expression", () => {
   expect(() => {
     generateEffectfulExpression(`var0 = var0 + var1`, new Set(["var0"]));
-  }).toThrowError(/Unknown dependency \"var1\"/);
+  }).toThrowError(/Unknown dependency "var1"/);
 });
 
 test("execute effectful expression", () => {
