@@ -170,7 +170,7 @@ test("make sure dependency exists", () => {
   const variables = new Map();
   const expressions = new Map([["exp1", "var1 + 1"]]);
   expect(() => {
-    executeComputingExpressions(variables, expressions);
+    executeComputingExpressions(expressions, variables);
   }).toThrowError(/Unknown dependency "var1"/);
 });
 
