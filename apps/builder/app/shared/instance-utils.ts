@@ -19,6 +19,7 @@ import {
   textEditingInstanceSelectorStore,
   breakpointsStore,
   registeredComponentMetasStore,
+  editInstanceNameSelectorStore,
   dataSourcesStore,
 } from "./nano-states";
 import {
