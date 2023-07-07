@@ -12,7 +12,7 @@ type Comparable = Record<string, any> | any[] | null | undefined;
 
 export const shallowComputed = <
   Value extends Comparable,
-  OriginStores extends AnyStore[]
+  OriginStores extends AnyStore[],
 >(
   stores: [...OriginStores],
   cb: (...values: StoreValues<OriginStores>) => Value
