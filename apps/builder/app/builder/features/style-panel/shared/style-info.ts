@@ -44,6 +44,7 @@ type CascadedProperties = {
 
 type InheritedValueInfo = {
   instanceId: string;
+  styleSourceId?: StyleSourceType["id"];
   value: StyleValue;
 };
 
@@ -329,6 +330,7 @@ export const getInheritedInfo = (
         ) {
           inheritedStyle[styleDecl.property] = {
             instanceId: ancestorInstance.id,
+            styleSourceId: styleDecl.styleSourceId,
             value: styleDecl.value,
           };
         }
