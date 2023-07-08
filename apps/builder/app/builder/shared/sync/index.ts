@@ -1,2 +1,1 @@
-export { useSyncServer } from "./sync-server";
-export { queueStatus } from "./queue";
+export { useSyncServer, queueStatus } from "./sync-server";
