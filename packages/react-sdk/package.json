@@ -30,7 +30,7 @@
     "zod": "^3.21.4"
   },
   "peerDependencies": {
-    "@remix-run/react": "^1.15.0",
+    "@remix-run/react": "^1.18.0",
     "react": "^18.2.0",
     "react-dom": "^18.2.0",
     "zod": "^3.19.1"
