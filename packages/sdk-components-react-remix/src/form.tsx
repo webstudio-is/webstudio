@@ -40,7 +40,7 @@ type State = "initial" | "success" | "error";
 export const Form = forwardRef<
   ElementRef<typeof defaultTag>,
   ComponentProps<typeof defaultTag> & {
-    state?: State,
+    state?: State;
     encType?: FormProps["encType"];
   }
 >(({ children, action, method, state = "initial", ...rest }, ref) => {
