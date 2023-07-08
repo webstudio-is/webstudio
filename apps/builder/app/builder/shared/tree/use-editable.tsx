@@ -34,7 +34,7 @@ export const useEditable = ({
     }
 
     element.removeAttribute("contenteditable");
-  }, [isEditing]);
+  }, [isEditing, element]);
 
   const handleFinishEditing = (
     event: KeyboardEvent<Element> | FocusEvent<Element>
