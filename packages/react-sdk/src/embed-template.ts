@@ -250,9 +250,11 @@ export const generateDataFromEmbedTemplate = (
   const dataSources: DataSource[] = [];
   for (const dataSource of dataSourceByRef.values()) {
     if (dataSource.type === "expression") {
-      dataSource.code = validateExpression(dataSource.code, (ref) => {
-        const id = dataSourceByRef.get(ref)?.id ?? ref;
-        return encodeDataSourceVariable(id);
+      dataSource.code = validateExpression(dataSource.code, {
+        transformIdentifier: (ref) => {
+          const id = dataSourceByRef.get(ref)?.id ?? ref;
+          return encodeDataSourceVariable(id);
+        },
       });
     }
     dataSources.push(dataSource);

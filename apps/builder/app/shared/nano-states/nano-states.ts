@@ -21,7 +21,7 @@ import type {
   StyleSourceSelections,
 } from "@webstudio-is/project-build";
 import {
-  executeExpressions,
+  executeComputingExpressions,
   encodeDataSourceVariable,
   decodeDataSourceVariable,
 } from "@webstudio-is/react-sdk";
@@ -96,7 +96,10 @@ export const dataSourceValuesStore = computed(
       }
     }
     try {
-      const outputVariables = executeExpressions(variables, expressions);
+      const outputVariables = executeComputingExpressions(
+        expressions,
+        variables
+      );
       for (const [name, value] of outputVariables) {
         const id = decodeDataSourceVariable(name);
         if (id !== undefined) {
