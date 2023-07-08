@@ -103,7 +103,9 @@ const syncServer = async function ({
             break polling;
           }
         }
-      } catch {}
+      } catch {
+        //
+      }
     }
   }
 };
