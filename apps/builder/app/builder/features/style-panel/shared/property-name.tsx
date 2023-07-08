@@ -77,6 +77,12 @@ const getSourceName = (
       ? selectedStyleSource.name
       : "Local";
   }
+
+  if (styleValueInfo.inherited?.styleSourceId !== undefined) {
+    const { styleSourceId } = styleValueInfo.inherited;
+    const styleSource = styleSources.get(styleSourceId);
+    return styleSource?.type === "token" ? styleSource.name : "Local";
+  }
 };
 
 const getBreakpointName = (
@@ -191,7 +197,9 @@ const TooltipContent = ({
         </Text>
       </ScrollArea>
       {descriptionWithFallback && <Text>{descriptionWithFallback}</Text>}
-      {styleSourceNameSet.size > 0 && (
+      {(styleSourceNameSet.size > 0 ||
+        // show badges when inherited from preset
+        (instanceSet.size > 0 && styleSourcesList.includes("remote"))) && (
         <Flex
           direction="column"
           gap="1"
