@@ -134,7 +134,8 @@ const getAssetsUsedInProps = (props: Prop[], foundAssetsIds = new Set()) => {
       prop.type === "boolean" ||
       prop.type === "page" ||
       prop.type === "string[]" ||
-      prop.type === "dataSource"
+      prop.type === "dataSource" ||
+      prop.type === "action"
     ) {
       continue;
     }

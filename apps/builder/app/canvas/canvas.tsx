@@ -6,6 +6,9 @@ import {
   type Params,
   type Components,
   createElementsTree,
+  executeEffectfulExpression,
+  encodeVariablesMap,
+  decodeVariablesMap,
 } from "@webstudio-is/react-sdk";
 import * as baseComponents from "@webstudio-is/sdk-components-react";
 import * as baseComponentMetas from "@webstudio-is/sdk-components-react/metas";
@@ -106,9 +109,16 @@ const useElementsTree = (components: Components, params: Params) => {
       assetsStore,
       pagesStore: pagesMapStore,
       dataSourceValuesStore,
-      onDataSourceUpdate: (dataSourceId, value) => {
+      executeEffectfulExpression: (code, values) => {
+        return decodeVariablesMap(
+          executeEffectfulExpression(code, encodeVariablesMap(values))
+        );
+      },
+      onDataSourceUpdate: (newValues) => {
         const dataSourceVariables = new Map(dataSourceVariablesStore.get());
-        dataSourceVariables.set(dataSourceId, value);
+        for (const [dataSourceId, value] of newValues) {
+          dataSourceVariables.set(dataSourceId, value);
+        }
         dataSourceVariablesStore.set(dataSourceVariables);
       },
       Component: WebstudioComponentDev,

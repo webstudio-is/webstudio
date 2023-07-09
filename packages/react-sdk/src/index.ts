@@ -27,5 +27,7 @@ export {
   generateEffectfulExpression,
   executeEffectfulExpression,
   encodeDataSourceVariable,
+  encodeVariablesMap,
   decodeDataSourceVariable,
+  decodeVariablesMap,
 } from "./expression";

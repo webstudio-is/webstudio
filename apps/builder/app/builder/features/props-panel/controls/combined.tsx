@@ -19,6 +19,10 @@ export const renderControl = ({
     throw Error("Data source is not resolved");
   }
 
+  if (prop?.type === "action") {
+    return;
+  }
+
   if (
     meta.control === "text" &&
     (prop === undefined || prop.type === "string")

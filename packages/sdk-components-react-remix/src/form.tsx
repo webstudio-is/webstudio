@@ -41,7 +41,7 @@ export const Form = forwardRef<
   ElementRef<typeof defaultTag>,
   ComponentProps<typeof defaultTag> & { state?: State }
 >(({ children, action, method, state = "initial", ...rest }, ref) => {
-  const { setDataSourceValue } = useContext(ReactSdkContext);
+  const { setBoundDataSourceValue } = useContext(ReactSdkContext);
 
   const fetcher = useFetcher();
 
@@ -49,7 +49,7 @@ export const Form = forwardRef<
 
   useOnFetchEnd(fetcher, (data) => {
     const state: State = data?.success === true ? "success" : "error";
-    setDataSourceValue(instanceId, "state", state);
+    setBoundDataSourceValue(instanceId, "state", state);
   });
 
   return (
