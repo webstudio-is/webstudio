@@ -2,8 +2,10 @@ import { expect, test } from "@jest/globals";
 import {
   decodeDataSourceVariable,
   encodeDataSourceVariable,
-  executeExpressions,
-  generateExpressionsComputation,
+  executeComputingExpressions,
+  executeEffectfulExpression,
+  generateComputingExpressions,
+  generateEffectfulExpression,
   validateExpression,
 } from "./expression";
 
@@ -15,6 +17,13 @@ test("allow literals and array expressions", () => {
 
 test("allow unary and binary expressions", () => {
   expect(validateExpression(`[-1, 1 + 1]`)).toEqual(`[-1, 1 + 1]`);
+});
+
+test("optionally allow assignment expressions", () => {
+  expect(() => {
+    validateExpression(`a = 2`);
+  }).toThrowError(/Cannot use assignment in this expression/);
+  expect(validateExpression(`a = 2`, { effectful: true })).toEqual(`a = 2`);
 });
 
 test("forbid member expressions", () => {
@@ -44,6 +53,21 @@ test("forbid ternary", () => {
   }).toThrowError(/Ternary operator is not supported/);
 });
 
+test("forbid increment and decrement", () => {
+  expect(() => {
+    validateExpression("++var1");
+  }).toThrowError(/"\+\+" operator is not supported/);
+  expect(() => {
+    validateExpression("var1++");
+  }).toThrowError(/"\+\+" operator is not supported/);
+  expect(() => {
+    validateExpression("--var1");
+  }).toThrowError(/"--" operator is not supported/);
+  expect(() => {
+    validateExpression("var1--");
+  }).toThrowError(/"--" operator is not supported/);
+});
+
 test("forbid multiple expressions", () => {
   expect(() => {
     validateExpression("a b");
@@ -57,12 +81,14 @@ test("forbid multiple expressions", () => {
 });
 
 test("transform identifiers", () => {
-  expect(validateExpression(`a + b`, (id) => `$ws$${id}`)).toEqual(
-    `$ws$a + $ws$b`
-  );
+  expect(
+    validateExpression(`a + b`, {
+      transformIdentifier: (id) => `$ws$${id}`,
+    })
+  ).toEqual(`$ws$a + $ws$b`);
 });
 
-test("generate expressions computation", () => {
+test("generate computing expressions", () => {
   const variables = new Set(["var0"]);
   const expressions = new Map([
     ["exp3", "exp2 + exp1"],
@@ -70,7 +96,7 @@ test("generate expressions computation", () => {
     ["exp2", "exp1"],
     ["exp4", "exp2"],
   ]);
-  expect(generateExpressionsComputation(variables, expressions))
+  expect(generateComputingExpressions(expressions, variables))
     .toMatchInlineSnapshot(`
     "const var0 = _variables.get('var0');
     const exp1 = (var0);
@@ -86,10 +112,22 @@ test("generate expressions computation", () => {
   `);
 });
 
+test("add only used variables in computing expression", () => {
+  const expressions = new Map([["exp1", "var0"]]);
+  expect(generateComputingExpressions(expressions, new Set(["var0", "var1"])))
+    .toMatchInlineSnapshot(`
+    "const var0 = _variables.get('var0');
+    const exp1 = (var0);
+    return new Map([
+      ['exp1', exp1],
+    ]);"
+  `);
+});
+
 test("execute expression", () => {
   const variables = new Map();
   const expressions = new Map([["exp1", "1 + 1"]]);
-  expect(executeExpressions(variables, expressions)).toEqual(
+  expect(executeComputingExpressions(expressions, variables)).toEqual(
     new Map([["exp1", 2]])
   );
 });
@@ -97,7 +135,7 @@ test("execute expression", () => {
 test("execute expression dependent on variables", () => {
   const variables = new Map([["var1", 5]]);
   const expressions = new Map([["exp1", "var1 + 1"]]);
-  expect(executeExpressions(variables, expressions)).toEqual(
+  expect(executeComputingExpressions(expressions, variables)).toEqual(
     new Map([["exp1", 6]])
   );
 });
@@ -108,7 +146,7 @@ test("execute expression dependent on another expressions", () => {
     ["exp1", "exp0 + 1"],
     ["exp0", "var1 + 2"],
   ]);
-  expect(executeExpressions(variables, expressions)).toEqual(
+  expect(executeComputingExpressions(expressions, variables)).toEqual(
     new Map([
       ["exp1", 6],
       ["exp0", 5],
@@ -124,7 +162,7 @@ test("forbid circular expressions", () => {
     ["exp2", "exp1 + 3"],
   ]);
   expect(() => {
-    executeExpressions(variables, expressions);
+    executeComputingExpressions(expressions, variables);
   }).toThrowError(/Cannot access 'exp0' before initialization/);
 });
 
@@ -132,7 +170,7 @@ test("make sure dependency exists", () => {
   const variables = new Map();
   const expressions = new Map([["exp1", "var1 + 1"]]);
   expect(() => {
-    executeExpressions(variables, expressions);
+    executeComputingExpressions(expressions, variables);
   }).toThrowError(/Unknown dependency "var1"/);
 });
 
@@ -144,4 +182,60 @@ test("encode/decode variable names", () => {
     "my--id"
   );
   expect(decodeDataSourceVariable("myVarName")).toEqual(undefined);
+});
+
+test("generate effectful expression", () => {
+  expect(
+    generateEffectfulExpression(`var0 = var0 + var1`, new Set(["var0", "var1"]))
+  ).toMatchInlineSnapshot(`
+    "let var0 = _variables.get('var0');
+    let var1 = _variables.get('var1');
+    var0 = var0 + var1;
+    return new Map([
+      ['var0', var0],
+    ]);"
+  `);
+
+  expect(
+    generateEffectfulExpression(`var0 = var1 + 1`, new Set(["var0", "var1"]))
+  ).toMatchInlineSnapshot(`
+    "let var1 = _variables.get('var1');
+    let var0;
+    var0 = var1 + 1;
+    return new Map([
+      ['var0', var0],
+    ]);"
+  `);
+});
+
+test("add only used variables in effectful expression", () => {
+  expect(
+    generateEffectfulExpression(
+      `var0 = var1 + 1`,
+      new Set(["var0", "var1", "var2"])
+    )
+  ).toMatchInlineSnapshot(`
+    "let var1 = _variables.get('var1');
+    let var0;
+    var0 = var1 + 1;
+    return new Map([
+      ['var0', var0],
+    ]);"
+  `);
+});
+
+test("forbid not allowed variables in effectful expression", () => {
+  expect(() => {
+    generateEffectfulExpression(`var0 = var0 + var1`, new Set(["var0"]));
+  }).toThrowError(/Unknown dependency "var1"/);
+});
+
+test("execute effectful expression", () => {
+  const variables = new Map([
+    ["var0", 2],
+    ["var1", 3],
+  ]);
+  expect(executeEffectfulExpression(`var0 = var0 + var1`, variables)).toEqual(
+    new Map([["var0", 5]])
+  );
 });

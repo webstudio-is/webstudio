@@ -197,11 +197,12 @@ test("compute inherited styles", () => {
         "instanceId": "1",
         "value": {
           "type": "keyword",
-          "value": "Arial, sans-serif",
+          "value": "Arial, Roboto, sans-serif",
         },
       },
       "fontSize": {
         "instanceId": "1",
+        "styleSourceId": "styleSourceId1",
         "value": {
           "type": "unit",
           "unit": "px",
@@ -210,6 +211,7 @@ test("compute inherited styles", () => {
       },
       "fontWeight": {
         "instanceId": "2",
+        "styleSourceId": "styleSourceId2",
         "value": {
           "type": "keyword",
           "value": "600",
