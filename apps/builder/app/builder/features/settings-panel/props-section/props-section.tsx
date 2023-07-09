@@ -68,7 +68,7 @@ const PropsCombobox = ({
           <InputField
             autoFocus
             {...combobox.getInputProps()}
-            placeholder="Property"
+            placeholder="New Property"
             suffix={<NestedInputButton {...combobox.getToggleButtonProps()} />}
           />
         </ComboboxAnchor>
