@@ -58,6 +58,7 @@ export const useEditable = ({
 
   const handlers = {
     onKeyDown: handleKeyDown,
+    onBlur: handleFinishEditing,
   };
 
   return { ref: elementRef, handlers, isEditing };

@@ -19,7 +19,6 @@ import {
 } from "~/shared/nano-states";
 import { MetaIcon } from "../meta-icon";
 import { useEditable } from "./use-editable";
-import { useHotkeys } from "react-hotkeys-hook";
 
 export const InstanceTree = (
   props: Omit<
@@ -30,17 +29,6 @@ export const InstanceTree = (
   const metas = useStore(registeredComponentMetasStore);
   const instances = useStore(instancesStore);
   const editInstanceName = useStore(editInstanceNameSelectorStore);
-
-  useHotkeys(`ctrl+r, meta+r`, () => {
-    if (
-      props.selectedItemSelector === undefined ||
-      editInstanceName ||
-      props.selectedItemSelector?.length === 0
-    ) {
-      return;
-    }
-    editInstanceNameSelectorStore.set(props.selectedItemSelector[0]);
-  });
 
   const canLeaveParent = useCallback(
     (instanceId: Instance["id"]) => {
