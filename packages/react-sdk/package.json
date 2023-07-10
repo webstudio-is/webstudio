@@ -36,6 +36,7 @@
     "zod": "^3.19.1"
   },
   "dependencies": {
+    "@jsep-plugin/assignment": "^1.2.1",
     "@nanostores/react": "^0.4.1",
     "@webstudio-is/asset-uploader": "workspace:^",
     "@webstudio-is/css-data": "workspace:^",

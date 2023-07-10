@@ -258,7 +258,7 @@ const requestPointerLock = (
     cursorNode.style.filter = `drop-shadow(${
       state.direction === "horizontal" ? "0 1px" : "1px 0"
     } 1.1px rgba(0,0,0,.4))`;
-    cursorNode.style.position = "absolute";
+    cursorNode.style.position = "fixed";
     cursorNode.style.zIndex = Number.MAX_SAFE_INTEGER.toString();
     cursorNode.style.left = `${event.clientX}px`;
     cursorNode.style.top = `${event.clientY}px`;

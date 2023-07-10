@@ -1,27 +1,37 @@
 import jsep from "jsep";
+import jsepAssignment from "@jsep-plugin/assignment";
+import type {
+  UpdateExpression,
+  AssignmentExpression,
+} from "@jsep-plugin/assignment";
 
-type TransformIdentifier = (id: string) => string;
+jsep.plugins.register(jsepAssignment);
 
-type Node = jsep.CoreExpression;
+type TransformIdentifier = (id: string, assignee: boolean) => string;
+
+type Node = jsep.CoreExpression | UpdateExpression | AssignmentExpression;
 
 const generateCode = (
   node: Node,
   failOnForbidden: boolean,
+  effectful: boolean,
   transformIdentifier: TransformIdentifier
 ): string => {
   if (node.type === "Identifier") {
-    return transformIdentifier(node.name);
+    return transformIdentifier(node.name, false);
   }
   if (node.type === "MemberExpression") {
     if (failOnForbidden) {
       const object = generateCode(
         node.object as Node,
         false,
+        effectful,
         transformIdentifier
       );
       const property = generateCode(
         node.property as Node,
         false,
+        effectful,
         transformIdentifier
       );
       throw Error(`Cannot access "${property}" of "${object}"`);
@@ -29,11 +39,13 @@ const generateCode = (
     const object = generateCode(
       node.object as Node,
       failOnForbidden,
+      effectful,
       transformIdentifier
     );
     const property = generateCode(
       node.property as Node,
       failOnForbidden,
+      effectful,
       transformIdentifier
     );
     return `${object}.${property}`;
@@ -45,6 +57,7 @@ const generateCode = (
     const arg = generateCode(
       node.argument as Node,
       failOnForbidden,
+      effectful,
       transformIdentifier
     );
     return `${node.operator}${arg}`;
@@ -53,18 +66,25 @@ const generateCode = (
     const left = generateCode(
       node.left as Node,
       failOnForbidden,
+      effectful,
       transformIdentifier
     );
     const right = generateCode(
       node.right as Node,
       failOnForbidden,
+      effectful,
       transformIdentifier
     );
     return `${left} ${node.operator} ${right}`;
   }
   if (node.type === "ArrayExpression") {
     const elements = node.elements.map((element) =>
-      generateCode(element as Node, failOnForbidden, transformIdentifier)
+      generateCode(
+        element as Node,
+        failOnForbidden,
+        effectful,
+        transformIdentifier
+      )
     );
     return `[${elements.join(", ")}]`;
   }
@@ -73,6 +93,7 @@ const generateCode = (
       const callee = generateCode(
         node.callee as Node,
         false,
+        effectful,
         transformIdentifier
       );
       throw Error(`Cannot call "${callee}"`);
@@ -80,10 +101,11 @@ const generateCode = (
     const callee = generateCode(
       node.callee as Node,
       failOnForbidden,
+      effectful,
       transformIdentifier
     );
     const args = node.arguments.map((arg) =>
-      generateCode(arg as Node, failOnForbidden, transformIdentifier)
+      generateCode(arg as Node, failOnForbidden, effectful, transformIdentifier)
     );
     return `${callee}(${args.join(", ")})`;
   }
@@ -99,16 +121,43 @@ const generateCode = (
   if (node.type === "Compound") {
     throw Error("Cannot use multiple expressions");
   }
+  if (node.type === "AssignmentExpression") {
+    if (node.operator !== "=") {
+      throw Error(`Only "=" assignment operator is supported`);
+    }
+    if (effectful === false) {
+      throw Error(`Cannot use assignment in this expression`);
+    }
+    const left = generateCode(
+      node.left as Node,
+      failOnForbidden,
+      effectful,
+      // override and mark all identifiers inside of left expression as assignee
+      (id) => transformIdentifier(id, true)
+    );
+    const right = generateCode(
+      node.right as Node,
+      failOnForbidden,
+      effectful,
+      transformIdentifier
+    );
+    return `${left} ${node.operator} ${right}`;
+  }
+  if (node.type === "UpdateExpression") {
+    throw Error(`"${node.operator}" operator is not supported`);
+  }
   node satisfies never;
   return "";
 };
 
 export const validateExpression = (
   code: string,
-  transformIdentifier: TransformIdentifier = (id) => id
+  options?: { effectful?: boolean; transformIdentifier?: TransformIdentifier }
 ) => {
+  const { effectful = false, transformIdentifier = (id: string) => id } =
+    options ?? {};
   const expression = jsep(code) as Node;
-  return generateCode(expression, true, transformIdentifier);
+  return generateCode(expression, true, effectful, transformIdentifier);
 };
 
 const sortTopologically = (
@@ -135,22 +184,26 @@ const sortTopologically = (
  * Generates a function body expecting map as _variables argument
  * and outputing map of results
  */
-export const generateExpressionsComputation = (
-  variables: Set<string>,
-  expressions: Map<string, string>
+export const generateComputingExpressions = (
+  expressions: Map<string, string>,
+  allowedVariables: Set<string>
 ) => {
   const depsById = new Map<string, Set<string>>();
+  const inputVariables = new Set<string>();
   for (const [id, code] of expressions) {
     const deps = new Set<string>();
-    validateExpression(code, (identifier) => {
-      if (variables.has(identifier)) {
-        return identifier;
-      }
-      if (expressions.has(identifier)) {
-        deps.add(identifier);
-        return identifier;
-      }
-      throw Error(`Unknown dependency "${identifier}"`);
+    validateExpression(code, {
+      transformIdentifier: (identifier) => {
+        if (allowedVariables.has(identifier)) {
+          inputVariables.add(identifier);
+          return identifier;
+        }
+        if (expressions.has(identifier)) {
+          deps.add(identifier);
+          return identifier;
+        }
+        throw Error(`Unknown dependency "${identifier}"`);
+      },
     });
     depsById.set(id, deps);
   }
@@ -163,7 +216,7 @@ export const generateExpressionsComputation = (
   // generate code computing all expressions
   let generatedCode = "";
 
-  for (const id of variables) {
+  for (const id of inputVariables) {
     generatedCode += `const ${id} = _variables.get('${id}');\n`;
   }
 
@@ -184,13 +237,70 @@ export const generateExpressionsComputation = (
   return generatedCode;
 };
 
-export const executeExpressions = (
-  variables: Map<string, unknown>,
-  expressions: Map<string, string>
+export const executeComputingExpressions = (
+  expressions: Map<string, string>,
+  variables: Map<string, unknown>
 ) => {
-  const generatedCode = generateExpressionsComputation(
-    new Set(variables.keys()),
-    expressions
+  const generatedCode = generateComputingExpressions(
+    expressions,
+    new Set(variables.keys())
+  );
+  const executeFn = new Function("_variables", generatedCode);
+  const values = executeFn(variables) as Map<string, unknown>;
+  return values;
+};
+
+export const generateEffectfulExpression = (
+  code: string,
+  allowedVariables: Set<string>
+) => {
+  const inputVariables = new Set<string>();
+  const outputVariables = new Set<string>();
+  validateExpression(code, {
+    effectful: true,
+    transformIdentifier: (identifier, assignee) => {
+      if (allowedVariables.has(identifier)) {
+        if (assignee) {
+          outputVariables.add(identifier);
+        } else {
+          inputVariables.add(identifier);
+        }
+        return identifier;
+      }
+      throw Error(`Unknown dependency "${identifier}"`);
+    },
+  });
+
+  // generate code computing all expressions
+  let generatedCode = "";
+
+  for (const id of inputVariables) {
+    generatedCode += `let ${id} = _variables.get('${id}');\n`;
+  }
+  for (const id of outputVariables) {
+    if (inputVariables.has(id) === false) {
+      generatedCode += `let ${id};\n`;
+    }
+  }
+
+  generatedCode += `${code};\n`;
+
+  generatedCode += `return new Map([\n`;
+  for (const id of outputVariables) {
+    generatedCode += `  ['${id}', ${id}],\n`;
+  }
+  generatedCode += `]);`;
+
+  return generatedCode;
+};
+
+export const executeEffectfulExpression = (
+  code: string,
+  variables: Map<string, unknown>
+) => {
+  const generatedCode = generateEffectfulExpression(
+    code,
+    new Set(variables.keys())
   );
   const executeFn = new Function("_variables", generatedCode);
   const values = executeFn(variables) as Map<string, unknown>;
