@@ -15,14 +15,14 @@
     },
     {
       "path": "functions/*.js",
-      "limit": "230 kB",
+      "limit": "237 kB",
       "gzip": false
     }
   ],
   "dependencies": {
-    "@remix-run/cloudflare": "^1.15.0",
-    "@remix-run/cloudflare-pages": "^1.15.0",
-    "@remix-run/react": "^1.15.0",
+    "@remix-run/cloudflare": "^1.18.1",
+    "@remix-run/cloudflare-pages": "^1.18.1",
+    "@remix-run/react": "^1.18.1",
     "@webstudio-is/project": "workspace:^",
     "@webstudio-is/project-build": "workspace:^",
     "@webstudio-is/react-sdk": "workspace:^",
@@ -32,7 +32,7 @@
     "react-dom": "^18.2.0"
   },
   "devDependencies": {
-    "@remix-run/dev": "^1.15.0",
+    "@remix-run/dev": "^1.18.1",
     "@size-limit/file": "^8.2.4",
     "@types/react": "^18.0.35",
     "@types/react-dom": "^18.0.11",
