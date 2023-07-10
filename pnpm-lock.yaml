@@ -1438,6 +1438,9 @@ importers:
       '@types/react-dom':
         specifier: ^18.0.11
         version: 18.0.11
+      '@webstudio-is/tsconfig':
+        specifier: workspace:^
+        version: link:../tsconfig
       size-limit:
         specifier: ^8.2.4
         version: 8.2.4

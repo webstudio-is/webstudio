@@ -1,6 +1,7 @@
 {
-  "extends": "../../packages/tsconfig/remix.json",
+  "extends": "@webstudio-is/tsconfig/base.json",
   "include": [
+    "app",
     "remix.env.d.ts",
     "**/*.ts",
     "**/*.tsx",
