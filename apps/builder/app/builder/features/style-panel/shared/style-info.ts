@@ -411,17 +411,17 @@ export const getNextSourceInfo = (
 /**
  * combine all local, cascaded, inherited and browser styles
  */
-export const useStyleInfo = () => {
+const useStyleInfoByInstanceAndStyleSource = (
+  instanceSelector: InstanceSelector | undefined,
+  styleSourceSelector: StyleSourceSelector | undefined
+) => {
   const breakpoints = useStore(breakpointsStore);
   const selectedBreakpoint = useStore(selectedBreakpointStore);
   const selectedBreakpointId = selectedBreakpoint?.id;
-  const selectedInstanceSelector = useStore(selectedInstanceSelectorStore);
-  const selectedOrLastStyleSourceSelector = useStore(
-    selectedOrLastStyleSourceSelectorStore
-  );
-  const selectedInstanceIntanceToTag = useStore(
-    selectedInstanceIntanceToTagStore
-  );
+
+  // We do not move selectedInstanceIntanceToTagStore out of here as it contains ascendants of selected element
+  // And we do not gonna iterate over children
+  const instanceToTag = useStore(selectedInstanceIntanceToTagStore);
 
   const instances = useStore(instancesStore);
   const metas = useStore(registeredComponentMetasStore);
@@ -432,20 +432,16 @@ export const useStyleInfo = () => {
   const selectedStyle = useMemo(() => {
     if (
       selectedBreakpointId === undefined ||
-      selectedOrLastStyleSourceSelector === undefined
+      styleSourceSelector === undefined
     ) {
       return {};
     }
     return getSelectedStyle(
       stylesByStyleSourceId,
       selectedBreakpointId,
-      selectedOrLastStyleSourceSelector
+      styleSourceSelector
     );
-  }, [
-    stylesByStyleSourceId,
-    selectedBreakpointId,
-    selectedOrLastStyleSourceSelector,
-  ]);
+  }, [stylesByStyleSourceId, selectedBreakpointId, styleSourceSelector]);
 
   const cascadedBreakpointIds = useMemo(
     () => getCascadedBreakpointIds(breakpoints, selectedBreakpointId),
@@ -455,8 +451,8 @@ export const useStyleInfo = () => {
   const inheritedInfo = useMemo(() => {
     if (
       selectedBreakpointId === undefined ||
-      selectedInstanceSelector === undefined ||
-      selectedInstanceIntanceToTag === undefined
+      instanceSelector === undefined ||
+      instanceToTag === undefined
     ) {
       return {};
     }
@@ -464,8 +460,8 @@ export const useStyleInfo = () => {
       instances,
       metas,
       stylesByInstanceId,
-      selectedInstanceSelector,
-      selectedInstanceIntanceToTag,
+      instanceSelector,
+      instanceToTag,
       cascadedBreakpointIds,
       selectedBreakpointId
     );
@@ -475,25 +471,25 @@ export const useStyleInfo = () => {
     stylesByInstanceId,
     cascadedBreakpointIds,
     selectedBreakpointId,
-    selectedInstanceSelector,
-    selectedInstanceIntanceToTag,
+    instanceSelector,
+    instanceToTag,
   ]);
 
   const cascadedInfo = useMemo(() => {
-    if (selectedInstanceSelector === undefined) {
+    if (instanceSelector === undefined) {
       return {};
     }
     return getCascadedInfo(
       stylesByInstanceId,
-      selectedInstanceSelector[0],
+      instanceSelector[0],
       cascadedBreakpointIds
     );
-  }, [stylesByInstanceId, selectedInstanceSelector, cascadedBreakpointIds]);
+  }, [stylesByInstanceId, instanceSelector, cascadedBreakpointIds]);
 
   const previousSourceInfo = useMemo(() => {
     if (
-      selectedInstanceSelector === undefined ||
-      selectedOrLastStyleSourceSelector === undefined ||
+      instanceSelector === undefined ||
+      styleSourceSelector === undefined ||
       selectedBreakpointId === undefined
     ) {
       return {};
@@ -501,22 +497,22 @@ export const useStyleInfo = () => {
     return getPreviousSourceInfo(
       styleSourceSelections,
       stylesByInstanceId,
-      selectedInstanceSelector,
-      selectedOrLastStyleSourceSelector,
+      instanceSelector,
+      styleSourceSelector,
       selectedBreakpointId
     );
   }, [
     styleSourceSelections,
     stylesByInstanceId,
-    selectedInstanceSelector,
-    selectedOrLastStyleSourceSelector,
+    instanceSelector,
+    styleSourceSelector,
     selectedBreakpointId,
   ]);
 
   const nextSourceInfo = useMemo(() => {
     if (
-      selectedInstanceSelector === undefined ||
-      selectedOrLastStyleSourceSelector === undefined ||
+      instanceSelector === undefined ||
+      styleSourceSelector === undefined ||
       selectedBreakpointId === undefined
     ) {
       return {};
@@ -524,27 +520,24 @@ export const useStyleInfo = () => {
     return getNextSourceInfo(
       styleSourceSelections,
       stylesByInstanceId,
-      selectedInstanceSelector,
-      selectedOrLastStyleSourceSelector,
+      instanceSelector,
+      styleSourceSelector,
       selectedBreakpointId
     );
   }, [
     styleSourceSelections,
     stylesByInstanceId,
-    selectedInstanceSelector,
-    selectedOrLastStyleSourceSelector,
+    instanceSelector,
+    styleSourceSelector,
     selectedBreakpointId,
   ]);
 
   const presetStyle = useMemo(() => {
-    const selectedInstanceId = selectedInstanceSelector?.[0];
-    if (
-      selectedInstanceId === undefined ||
-      selectedOrLastStyleSourceSelector === undefined
-    ) {
+    const selectedInstanceId = instanceSelector?.[0];
+    if (selectedInstanceId === undefined || styleSourceSelector === undefined) {
       return;
     }
-    const tagName = selectedInstanceIntanceToTag?.get(selectedInstanceId);
+    const tagName = instanceToTag?.get(selectedInstanceId);
     const component = getInstanceComponent(instances, selectedInstanceId);
     if (tagName === undefined || component === undefined) {
       return;
@@ -552,22 +545,16 @@ export const useStyleInfo = () => {
     return getPresetStyleRule(
       metas.get(component),
       tagName,
-      selectedOrLastStyleSourceSelector
+      styleSourceSelector
     );
-  }, [
-    instances,
-    metas,
-    selectedInstanceSelector,
-    selectedInstanceIntanceToTag,
-    selectedOrLastStyleSourceSelector,
-  ]);
+  }, [instances, metas, instanceSelector, instanceToTag, styleSourceSelector]);
 
   const htmlStyle = useMemo(() => {
-    const instanceId = selectedInstanceSelector?.[0];
+    const instanceId = instanceSelector?.[0];
     if (instanceId === undefined) {
       return;
     }
-    const tagName = selectedInstanceIntanceToTag?.get(instanceId);
+    const tagName = instanceToTag?.get(instanceId);
     if (tagName === undefined) {
       return;
     }
@@ -580,7 +567,7 @@ export const useStyleInfo = () => {
       style[styleDecl.property] = styleDecl.value;
     }
     return style;
-  }, [selectedInstanceSelector, selectedInstanceIntanceToTag]);
+  }, [instanceSelector, instanceToTag]);
 
   const styleInfoData = useMemo(() => {
     const styleInfoData: StyleInfo = {};
@@ -658,98 +645,76 @@ export const useStyleInfo = () => {
   return styleInfoData;
 };
 
-export const useInstanceStyleData = (
+export const useStyleInfo = () => {
+  const instanceSelector = useStore(selectedInstanceSelectorStore);
+
+  const styleSourceSelector = useStore(selectedOrLastStyleSourceSelectorStore);
+
+  return useStyleInfoByInstanceAndStyleSource(
+    instanceSelector,
+    styleSourceSelector
+  );
+};
+
+const isAncestorOrSelfOfSelectedInstance = (
+  instanceSelector: InstanceSelector
+) => {
+  const selectedInstanceSelector = selectedInstanceSelectorStore.get();
+
+  if (selectedInstanceSelector === undefined) {
+    return false;
+  }
+
+  if (instanceSelector.length > selectedInstanceSelector.length) {
+    return false;
+  }
+
+  if (instanceSelector.length === 0) {
+    return false;
+  }
+
+  const deltaLength = selectedInstanceSelector.length - instanceSelector.length;
+  return instanceSelector.every(
+    (instance, index) =>
+      instance === selectedInstanceSelector[index + deltaLength]
+  );
+};
+
+export const useStyleInfoByInstanceId = (
   instanceSelector: InstanceSelector | undefined
 ) => {
-  const instances = useStore(instancesStore);
-  const metas = useStore(registeredComponentMetasStore);
-  const { stylesByInstanceId } = useStore(stylesIndexStore);
-  const breakpoints = useStore(breakpointsStore);
-  const selectedBreakpoint = useStore(selectedBreakpointStore);
+  const styleSourceSelections = useStore(styleSourceSelectionsStore);
 
-  // We assume that instance ancestor contains tags we need to get preset styles
-  // Its not always true, but to extract parent styles it works well
-  const selectedInstanceIntanceToTag = useStore(
-    selectedInstanceIntanceToTagStore
-  );
-
-  const selectedBreakpointId = selectedBreakpoint?.id;
-
-  const presetStyle = useMemo(() => {
-    const instanceId = instanceSelector?.[0];
-    if (instanceId === undefined) {
-      return;
-    }
-    const tagName = selectedInstanceIntanceToTag?.get(instanceId);
-    const component = getInstanceComponent(instances, instanceId);
-    if (tagName === undefined || component === undefined) {
-      return;
-    }
-    return getPresetStyleRule(metas.get(component), tagName);
-  }, [instances, metas, instanceSelector, selectedInstanceIntanceToTag]);
-
-  const cascadedBreakpointIds = useMemo(
-    () => getCascadedBreakpointIds(breakpoints, selectedBreakpointId),
-    [breakpoints, selectedBreakpointId]
-  );
-
-  const selfAndCascadeInfo = useMemo(() => {
-    if (instanceSelector === undefined || selectedBreakpointId === undefined) {
-      return {};
-    }
-    return getCascadedInfo(stylesByInstanceId, instanceSelector[0], [
-      ...cascadedBreakpointIds,
-      selectedBreakpointId,
-    ]);
-  }, [
-    stylesByInstanceId,
-    instanceSelector,
-    cascadedBreakpointIds,
-    selectedBreakpointId,
-  ]);
-
-  const inheritedInfo = useMemo(() => {
-    if (
-      selectedBreakpointId === undefined ||
-      instanceSelector === undefined ||
-      selectedInstanceIntanceToTag === undefined
-    ) {
-      return {};
-    }
-    return getInheritedInfo(
-      instances,
-      metas,
-      stylesByInstanceId,
-      instanceSelector,
-      selectedInstanceIntanceToTag,
-      cascadedBreakpointIds,
-      selectedBreakpointId
+  if (
+    instanceSelector !== undefined &&
+    isAncestorOrSelfOfSelectedInstance(instanceSelector) === false
+  ) {
+    // eslint-disable-next-line no-console
+    console.error(
+      `The style works correctly only on ancestors of the selected element,
+       as our style data only includes information about these ancestors.
+       See selectedInstanceIntanceToTagStore for details.`
     );
-  }, [
-    instances,
-    metas,
-    stylesByInstanceId,
-    cascadedBreakpointIds,
-    selectedBreakpointId,
+  }
+
+  const [selectedInstanceId] = instanceSelector ?? [];
+
+  const styleSourceIds =
+    selectedInstanceId !== undefined
+      ? styleSourceSelections.get(selectedInstanceId)?.values ?? []
+      : [];
+
+  const lastStyleSourceId = styleSourceIds.at(-1);
+
+  const lastStyleSource: StyleSourceSelector | undefined =
+    lastStyleSourceId !== undefined
+      ? {
+          styleSourceId: lastStyleSourceId,
+        }
+      : undefined;
+
+  return useStyleInfoByInstanceAndStyleSource(
     instanceSelector,
-    selectedInstanceIntanceToTag,
-  ]);
-
-  const styleData = useMemo(() => {
-    const styleData: Style = {};
-    for (const property of styleProperties) {
-      // temporary solution until we start computing all styles from data
-      const preset = presetStyle?.[property];
-      const inherited = inheritedInfo[property];
-      const cascaded = selfAndCascadeInfo[property];
-      const value = cascaded?.value ?? inherited?.value ?? preset;
-
-      if (value) {
-        styleData[property] = value;
-      }
-    }
-    return styleData;
-  }, [presetStyle, selfAndCascadeInfo, inheritedInfo]);
-
-  return styleData;
+    lastStyleSource
+  );
 };
