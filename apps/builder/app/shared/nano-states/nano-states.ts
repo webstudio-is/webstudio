@@ -116,7 +116,6 @@ export const dataSourceValuesStore = computed(
 
 export const propsStore = atom<Props>(new Map());
 export const propsIndexStore = computed(propsStore, (props) => {
-  console.log("propsIndexStore", props);
   const propsByInstanceId = new Map<Instance["id"], Prop[]>();
   for (const prop of props.values()) {
     const { instanceId } = prop;
