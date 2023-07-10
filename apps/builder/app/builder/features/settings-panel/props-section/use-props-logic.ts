@@ -274,7 +274,7 @@ export const usePropsLogic = ({
     if (prop) {
       updateProp(prop);
     }
-    setAddedNames((prev) => [...prev, propName]);
+    setAddedNames((prev) => [propName, ...prev]);
   };
 
   const handleChange = ({ prop, propName }: PropOrName, value: PropValue) => {
