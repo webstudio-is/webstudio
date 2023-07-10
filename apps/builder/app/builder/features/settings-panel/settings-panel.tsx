@@ -1,6 +1,6 @@
 import type { Publish } from "~/shared/pubsub";
-import { SettingsSection } from "./settings-section";
 import type { Instance } from "@webstudio-is/project-build";
+import { SettingsSection } from "./settings-section/settings-section";
 import { PropsSectionContainer } from "./props-section/props-section";
 
 export const SettingsPanelContainer = ({

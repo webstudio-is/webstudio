@@ -1,6 +1,5 @@
-import { useStore } from "@nanostores/react";
 import store from "immerhin";
-import type { Instance, Prop } from "@webstudio-is/project-build";
+import type { Instance } from "@webstudio-is/project-build";
 import {
   theme,
   useCombobox,
@@ -15,14 +14,7 @@ import {
   NestedInputButton,
 } from "@webstudio-is/design-system";
 import type { Publish } from "~/shared/pubsub";
-import {
-  dataSourceValuesStore,
-  dataSourceVariablesStore,
-  dataSourcesStore,
-  propsIndexStore,
-  propsStore,
-  registeredComponentPropsMetasStore,
-} from "~/shared/nano-states";
+import { dataSourceVariablesStore, propsStore } from "~/shared/nano-states";
 import { CollapsibleSectionWithAddButton } from "~/builder/shared/collapsible-section";
 import {
   useStyleData,
@@ -176,37 +168,21 @@ export const PropsSection = (props: PropsSectionProps) => {
         hasItems={hasItems}
       >
         <Flex gap="2" direction="column">
-          {logic.initialProps.map((item) => renderProperty(props, item))}
-          {logic.addedProps.map((item) => renderProperty(props, item, true))}
           {addingProp && (
             <AddPropertyForm
-              availableProps={logic.remainingProps}
+              availableProps={logic.availableProps}
               onPropSelected={(propName) => {
                 setAddingProp(false);
                 logic.handleAdd(propName);
               }}
             />
           )}
+          {logic.addedProps.map((item) => renderProperty(props, item, true))}
+          {logic.initialProps.map((item) => renderProperty(props, item))}
         </Flex>
       </CollapsibleSectionWithAddButton>
     </>
   );
-};
-
-const getPropTypeAndValue = (value: unknown) => {
-  if (typeof value === "boolean") {
-    return { type: "boolean", value } as const;
-  }
-  if (typeof value === "number") {
-    return { type: "number", value } as const;
-  }
-  if (typeof value === "string") {
-    return { type: "string", value } as const;
-  }
-  if (Array.isArray(value)) {
-    return { type: "string[]", value } as const;
-  }
-  throw Error(`Unexpected prop value ${value}`);
 };
 
 export const PropsSectionContainer = ({
@@ -216,50 +192,13 @@ export const PropsSectionContainer = ({
   publish: Publish;
   selectedInstance: Instance;
 }) => {
-  const propsMeta = useStore(registeredComponentPropsMetasStore).get(
-    instance.component
-  );
-  const dataSources = useStore(dataSourcesStore);
-  const dataSourceValues = useStore(dataSourceValuesStore);
-  if (propsMeta === undefined) {
-    throw new Error(`Could not get meta for compoent "${instance.component}"`);
-  }
-
   const { setProperty: setCssProperty } = useStyleData({
     selectedInstance: instance,
     publish,
   });
 
-  const { propsByInstanceId } = useStore(propsIndexStore);
-
-  const instanceProps =
-    propsByInstanceId.get(instance.id)?.flatMap((prop) => {
-      if (prop.type !== "dataSource") {
-        return [prop];
-      }
-      // convert data source prop to typed prop
-      const dataSourceId = prop.value;
-      const dataSource = dataSources.get(dataSourceId);
-      const dataSourceValue = dataSourceValues.get(dataSourceId);
-      if (dataSource === undefined) {
-        return [];
-      }
-      return [
-        {
-          id: prop.id,
-          instanceId: prop.instanceId,
-          name: prop.name,
-          required: prop.required,
-          // infer type from value
-          ...getPropTypeAndValue(dataSourceValue),
-        } satisfies Prop,
-      ];
-    }) ?? [];
-
   const logic = usePropsLogic({
-    props: instanceProps,
-    meta: propsMeta,
-    instanceId: instance.id,
+    instance,
     updateProp: (update) => {
       const props = propsStore.get();
       const prop = props.get(update.id);
@@ -282,10 +221,9 @@ export const PropsSectionContainer = ({
     },
   });
 
-  const isPropsSectionVisible =
-    propsMeta && Object.keys(propsMeta.props).length !== 0;
+  const hasMetaProps = Object.keys(logic.meta.props).length !== 0;
 
-  if (isPropsSectionVisible === false) {
+  if (hasMetaProps === false) {
     return null;
   }
 
