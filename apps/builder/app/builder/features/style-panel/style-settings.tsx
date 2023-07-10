@@ -10,7 +10,7 @@ import type { SetProperty, CreateBatchUpdate } from "./shared/use-style-data";
 import type { StyleInfo } from "./shared/style-info";
 import { useStore } from "@nanostores/react";
 import { selectedInstanceSelectorStore } from "~/shared/nano-states";
-import { useInstanceStyleData } from "./shared/style-info";
+import { useStyleInfoByInstanceId } from "./shared/style-info";
 
 export type StyleSettingsProps = {
   currentStyle: StyleInfo;
@@ -26,8 +26,9 @@ const useParentStyle = () => {
     selectedInstanceSelector?.length === 1
       ? undefined
       : selectedInstanceSelector?.slice(1);
-  const parentInstanceStyleData = useInstanceStyleData(parentInstanceSelector);
-  return parentInstanceStyleData;
+  const parentStyleInfo = useStyleInfoByInstanceId(parentInstanceSelector);
+
+  return parentStyleInfo;
 };
 
 export const StyleSettings = ({
