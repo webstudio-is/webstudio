@@ -68,7 +68,7 @@ const useScrub = ({
 
   valueRef.current = value;
 
-  const type = valueRef.current.type;
+  // const type = valueRef.current.type;
 
   // Since scrub is going to call onChange and onChangeComplete callbacks, it will result in a new value and potentially new callback refs.
   // We need this effect to ONLY run when type or unit changes, but not when callbacks or value.value changes.
@@ -76,8 +76,12 @@ const useScrub = ({
     const inputRefCurrent = inputRef.current;
     const scrubRefCurrent = scrubRef.current;
 
+    const { current } = valueRef;
+
+    // Support only auto keyword to be scrubbable
     if (
-      type !== "unit" ||
+      (current.type !== "unit" &&
+        !(current.type === "keyword" && current.value === "auto")) ||
       inputRefCurrent === null ||
       scrubRefCurrent === null
     ) {
@@ -88,7 +92,7 @@ const useScrub = ({
 
     const validateValue = (numericValue: number) => {
       let value: CssValueInputValue = {
-        type,
+        type: "unit",
         unit,
         value: numericValue,
       };
@@ -141,12 +145,20 @@ const useScrub = ({
         if (valueRef.current.type === "unit") {
           return valueRef.current.value;
         }
+
+        if (
+          valueRef.current.type === "keyword" &&
+          valueRef.current.value === "auto"
+        ) {
+          return 0;
+        }
       },
       onStart() {
         // for TS
         if (valueRef.current.type !== "unit") {
           return;
         }
+
         unit = valueRef.current.unit;
       },
       onValueInput(event) {
@@ -173,7 +185,7 @@ const useScrub = ({
       },
       shouldHandleEvent: shouldHandleEvent,
     });
-  }, [type, shouldHandleEvent, property]);
+  }, [shouldHandleEvent, property]);
 
   return [scrubRef, inputRef];
 };
