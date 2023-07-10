@@ -14,8 +14,8 @@
     "dts": "tsc --project tsconfig.dts.json"
   },
   "dependencies": {
-    "@aws-sdk/client-s3": "^3.131.0",
-    "@aws-sdk/lib-storage": "^3.131.0",
+    "@aws-crypto/sha256-js": "^4.0.0",
+    "@aws-sdk/signature-v4": "^3.357.0",
     "@webstudio-is/fonts": "workspace:^",
     "@webstudio-is/prisma-client": "workspace:^",
     "@webstudio-is/trpc-interface": "workspace:^",
