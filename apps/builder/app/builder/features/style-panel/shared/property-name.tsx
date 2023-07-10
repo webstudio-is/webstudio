@@ -353,7 +353,7 @@ const PropertyNameInternal = ({
         style={style}
         onReset={onReset}
       >
-        <Flex shrink gap={1} align="center">
+        <Flex shrink grow gap={1} align="center">
           {typeof label === "string" && property ? (
             <Label
               color={
