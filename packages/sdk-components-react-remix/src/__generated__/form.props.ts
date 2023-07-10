@@ -368,7 +368,16 @@ export const props: Record<string, PropMeta> = {
   defaultChecked: { required: false, control: "boolean", type: "boolean" },
   dir: { required: false, control: "text", type: "string" },
   draggable: { required: false, control: "boolean", type: "boolean" },
-  encType: { required: false, control: "text", type: "string" },
+  encType: {
+    required: false,
+    control: "radio",
+    type: "string",
+    options: [
+      "application/x-www-form-urlencoded",
+      "multipart/form-data",
+      "text/plain",
+    ],
+  },
   hidden: { required: false, control: "boolean", type: "boolean" },
   id: { required: false, control: "text", type: "string" },
   inputMode: {

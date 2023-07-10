@@ -6,7 +6,7 @@ import {
   useEffect,
   useContext,
 } from "react";
-import { useFetcher, type Fetcher } from "@remix-run/react";
+import { useFetcher, type Fetcher, type FormProps } from "@remix-run/react";
 import { formIdFieldName } from "@webstudio-is/form-handlers";
 import {
   ReactSdkContext,
@@ -39,7 +39,10 @@ type State = "initial" | "success" | "error";
 
 export const Form = forwardRef<
   ElementRef<typeof defaultTag>,
-  ComponentProps<typeof defaultTag> & { state?: State }
+  ComponentProps<typeof defaultTag> & {
+    state?: State;
+    encType?: FormProps["encType"];
+  }
 >(({ children, action, method, state = "initial", ...rest }, ref) => {
   const { setDataSourceValue } = useContext(ReactSdkContext);
 
