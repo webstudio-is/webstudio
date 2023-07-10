@@ -67,7 +67,9 @@ const Toolbar = ({ state, onToggle }: ToolbarProps) => {
       };
       computePosition(reference, floating, {
         placement: "top",
-        middleware: [flip(), shift({ padding: 4 }), offset(12)],
+        // offset should be first for shift and flip
+        // to consider it while detecting overflow
+        middleware: [offset(12), shift({ padding: 4 }), flip()],
       }).then(({ x, y }) => {
         floating.style.transform = `translate(${x}px, ${y}px)`;
       });
