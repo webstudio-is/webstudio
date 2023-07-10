@@ -1,7 +1,7 @@
 import { Grid } from "@webstudio-is/design-system";
 import { toValue } from "@webstudio-is/css-engine";
 import { styleConfigByName } from "./shared/configs";
-import type { Style, StyleProperty } from "@webstudio-is/css-data";
+import type { StyleProperty } from "@webstudio-is/css-data";
 import type {
   SetProperty,
   DeleteProperty,
@@ -119,11 +119,11 @@ export const renderCategory = ({
 
 export const shouldRenderCategory = (
   { currentStyle, category }: RenderCategoryProps,
-  parentStyle: Style
+  parentStyle: StyleInfo
 ) => {
   switch (category) {
     case "flexChild":
-      return toValue(parentStyle.display).includes("flex");
+      return toValue(parentStyle.display?.value).includes("flex");
     case "gridChild":
       return toValue(currentStyle.display?.value).includes("grid");
   }
