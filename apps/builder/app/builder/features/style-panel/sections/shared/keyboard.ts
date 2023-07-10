@@ -1,7 +1,6 @@
 import { useState, useRef } from "react";
 import type { FocusEvent, FocusEventHandler, KeyboardEvent } from "react";
 import { useDebouncedCallback } from "use-debounce";
-// import type { SpaceStyleProperty } from "./types";
 
 const movementKeys = [
   "ArrowUp",
