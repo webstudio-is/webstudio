@@ -16,15 +16,13 @@ import {
 } from "@webstudio-is/design-system";
 import type { Publish } from "~/shared/pubsub";
 import { StylePanel } from "~/builder/features/style-panel";
-import { PropsPanelContainer } from "~/builder/features/props-panel";
+import { SettingsPanelContainer } from "~/builder/features/settings-panel";
 import { FloatingPanelProvider } from "~/builder/shared/floating-panel";
 import {
   selectedInstanceStore,
   isDraggingStore,
   registeredComponentMetasStore,
-  registeredComponentPropsMetasStore,
 } from "~/shared/nano-states";
-import { SettingsPanel } from "../settings-panel";
 import { NavigatorTree } from "~/builder/shared/navigator-tree";
 import type { Settings } from "~/builder/shared/client-settings";
 import { MetaIcon } from "~/builder/shared/meta-icon";
@@ -73,7 +71,6 @@ export const Inspector = ({ publish, navigatorLayout }: InspectorProps) => {
   const [tab, setTab] = useState("style");
   const isDragging = useStore(isDraggingStore);
   const metas = useStore(registeredComponentMetasStore);
-  const propsMetas = useStore(registeredComponentPropsMetasStore);
 
   if (navigatorLayout === "docked" && isDragging) {
     return <NavigatorTree />;
@@ -93,14 +90,10 @@ export const Inspector = ({ publish, navigatorLayout }: InspectorProps) => {
   }
 
   const meta = metas.get(selectedInstance.component);
-  const propsMeta = propsMetas.get(selectedInstance.component);
   const isStyleTabVisible = meta?.stylable ?? true;
-  const isPropsTabVisible =
-    propsMeta && Object.keys(propsMeta.props).length !== 0;
 
   const availableTabs = [
     isStyleTabVisible ? "style" : undefined,
-    isPropsTabVisible ? "props" : undefined,
     "settings",
   ].filter((tab) => tab);
 
@@ -122,10 +115,6 @@ export const Inspector = ({ publish, navigatorLayout }: InspectorProps) => {
               {isStyleTabVisible && (
                 <PanelTabsTrigger value="style">Style</PanelTabsTrigger>
               )}
-              {/* @note: events would be part of props */}
-              {isPropsTabVisible && (
-                <PanelTabsTrigger value="props">Properties</PanelTabsTrigger>
-              )}
               <PanelTabsTrigger value="settings">Settings</PanelTabsTrigger>
             </PanelTabsList>
             <PanelTabsContent value="style" css={contentStyle} tabIndex={-1}>
@@ -135,22 +124,16 @@ export const Inspector = ({ publish, navigatorLayout }: InspectorProps) => {
                 selectedInstance={selectedInstance}
               />
             </PanelTabsContent>
-            <PanelTabsContent value="props" css={contentStyle} tabIndex={-1}>
+            <PanelTabsContent value="settings" css={contentStyle} tabIndex={-1}>
               <ScrollArea>
                 <InstanceInfo instance={selectedInstance} />
-                <PropsPanelContainer
+                <SettingsPanelContainer
                   publish={publish}
                   key={
                     selectedInstance.id /* Re-render when instance changes */
                   }
                   selectedInstance={selectedInstance}
                 />
-              </ScrollArea>
-            </PanelTabsContent>
-            <PanelTabsContent value="settings" css={contentStyle} tabIndex={-1}>
-              <ScrollArea>
-                <InstanceInfo instance={selectedInstance} />
-                <SettingsPanel />
               </ScrollArea>
             </PanelTabsContent>
           </Flex>

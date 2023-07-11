@@ -18,6 +18,7 @@ import {
   Box,
   Flex,
   theme,
+  type CSS,
 } from "@webstudio-is/design-system";
 import { humanizeString } from "~/shared/string-utils";
 
@@ -161,5 +162,11 @@ export const HorizontalLayout = ({
       {children}
       {onDelete && <RemovePropButton onClick={onDelete} />}
     </Flex>
+  </Flex>
+);
+
+export const Row = ({ children, css }: { children: ReactNode; css?: CSS }) => (
+  <Flex css={{ px: theme.spacing[9], ...css }} gap="2" direction="column">
+    {children}
   </Flex>
 );

@@ -52,5 +52,5 @@ export const propsMeta: WsComponentPropsMeta = {
     ...props,
     ...propsOverrides,
   },
-  initialProps: ["src", "width", "height", "alt", "loading"],
+  initialProps: ["id", "src", "width", "height", "alt", "loading"],
 };

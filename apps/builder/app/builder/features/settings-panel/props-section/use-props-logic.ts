@@ -2,10 +2,17 @@ import { useState } from "react";
 import { nanoid } from "nanoid";
 import type { Instance, Prop } from "@webstudio-is/project-build";
 import {
-  type WsComponentPropsMeta,
   showAttribute,
+  type WsComponentPropsMeta,
 } from "@webstudio-is/react-sdk";
-import type { PropMeta, PropValue } from "./shared";
+import type { PropMeta, PropValue } from "../shared";
+import { useStore } from "@nanostores/react";
+import {
+  dataSourceValuesStore,
+  dataSourcesStore,
+  propsIndexStore,
+  registeredComponentPropsMetasStore,
+} from "~/shared/nano-states";
 
 type PropOrName = { prop?: Prop; propName: string };
 export type PropAndMeta = { prop?: Prop; propName: string; meta: PropMeta };
@@ -96,14 +103,13 @@ const getDefaultMetaForType = (type: Prop["type"]): PropMeta => {
 };
 
 type UsePropsLogicInput = {
-  props: Prop[];
-  meta: WsComponentPropsMeta;
-  instanceId: Instance["id"];
+  instance: Instance;
   updateProp: (update: Prop) => void;
   deleteProp: (id: Prop["id"]) => void;
 };
 
 type UsePropsLogicOutput = {
+  meta: WsComponentPropsMeta;
   /** Similar to Initial, but displayed as a separate group in UI etc.
    * Currentrly used only for the ID prop. */
   systemProps: PropAndMeta[];
@@ -112,7 +118,7 @@ type UsePropsLogicOutput = {
   /** Optional props that were added by user */
   addedProps: PropAndMeta[];
   /** List of remaining props still available to add */
-  remainingProps: NameAndLabel[];
+  availableProps: NameAndLabel[];
   handleAdd: (propName: string) => void;
   handleChange: (prop: PropOrName, value: PropValue) => void;
   handleDelete: (prop: PropOrName) => void;
@@ -128,15 +134,6 @@ const getAndDelete = <Value>(map: Map<string, Value>, key: string) => {
 
 const systemPropsMeta: { name: string; meta: PropMeta }[] = [
   {
-    name: "id",
-    meta: {
-      label: "ID",
-      required: false,
-      control: "text",
-      type: "string",
-    },
-  },
-  {
     name: showAttribute,
     meta: {
       label: "Show",
@@ -148,14 +145,63 @@ const systemPropsMeta: { name: string; meta: PropMeta }[] = [
   },
 ];
 
+const getPropTypeAndValue = (value: unknown) => {
+  if (typeof value === "boolean") {
+    return { type: "boolean", value } as const;
+  }
+  if (typeof value === "number") {
+    return { type: "number", value } as const;
+  }
+  if (typeof value === "string") {
+    return { type: "string", value } as const;
+  }
+  if (Array.isArray(value)) {
+    return { type: "string[]", value } as const;
+  }
+  throw Error(`Unexpected prop value ${value}`);
+};
+
 /** usePropsLogic expects that key={instanceId} is used on the ancestor component */
 export const usePropsLogic = ({
-  props: savedProps,
-  meta,
-  instanceId,
+  instance,
   updateProp,
   deleteProp,
 }: UsePropsLogicInput): UsePropsLogicOutput => {
+  const meta = useStore(registeredComponentPropsMetasStore).get(
+    instance.component
+  );
+  const dataSources = useStore(dataSourcesStore);
+  const dataSourceValues = useStore(dataSourceValuesStore);
+  const { propsByInstanceId } = useStore(propsIndexStore);
+
+  if (meta === undefined) {
+    throw new Error(`Could not get meta for component "${instance.component}"`);
+  }
+
+  const savedProps =
+    propsByInstanceId.get(instance.id)?.flatMap((prop) => {
+      if (prop.type !== "dataSource") {
+        return [prop];
+      }
+      // convert data source prop to typed prop
+      const dataSourceId = prop.value;
+      const dataSource = dataSources.get(dataSourceId);
+      const dataSourceValue = dataSourceValues.get(dataSourceId);
+      if (dataSource === undefined) {
+        return [];
+      }
+      return [
+        {
+          id: prop.id,
+          instanceId: prop.instanceId,
+          name: prop.name,
+          required: prop.required,
+          // infer type from value
+          ...getPropTypeAndValue(dataSourceValue),
+        } satisfies Prop,
+      ];
+    }) ?? [];
+
   // we will delete items from these maps as we categorize the props
   const unprocessedSaved = new Map(savedProps.map((prop) => [prop.name, prop]));
   const unprocessedKnown = new Map(Object.entries(meta.props));
@@ -163,9 +209,9 @@ export const usePropsLogic = ({
   const initialPropsNames = new Set(meta.initialProps ?? []);
 
   const systemProps = systemPropsMeta.map(({ name, meta }) => {
-    let saved = getAndDelete(unprocessedSaved, name);
+    let saved = getAndDelete<Prop>(unprocessedSaved, name);
     if (saved === undefined) {
-      saved = getStartingProp(instanceId, meta, name);
+      saved = getStartingProp(instance.id, meta, name);
     }
     getAndDelete(unprocessedKnown, name);
     initialPropsNames.delete(name);
@@ -173,7 +219,7 @@ export const usePropsLogic = ({
   });
 
   const initialProps: PropAndMeta[] = Array.from(initialPropsNames, (name) => {
-    const saved = getAndDelete(unprocessedSaved, name);
+    const saved = getAndDelete<Prop>(unprocessedSaved, name);
     const known = getAndDelete(unprocessedKnown, name);
 
     if (known === undefined) {
@@ -194,7 +240,7 @@ export const usePropsLogic = ({
     //   - they think that width is set to 0, but it's actually not set at all
     //
     if (prop === undefined) {
-      prop = getStartingProp(instanceId, known, name);
+      prop = getStartingProp(instance.id, known, name);
     }
 
     return { prop, propName: name, meta: known };
@@ -231,19 +277,19 @@ export const usePropsLogic = ({
   const handleAdd = (propName: string) => {
     const propMeta = unprocessedKnown.get(propName);
     if (propMeta === undefined) {
-      throw new Error(`Attempting to add a prop not lised in remainingProps`);
+      throw new Error(`Attempting to add a prop not lised in availableProps`);
     }
-    const prop = getStartingProp(instanceId, propMeta, propName);
+    const prop = getStartingProp(instance.id, propMeta, propName);
     if (prop) {
       updateProp(prop);
     }
-    setAddedNames((prev) => [...prev, propName]);
+    setAddedNames((prev) => [propName, ...prev]);
   };
 
   const handleChange = ({ prop, propName }: PropOrName, value: PropValue) => {
     updateProp(
       prop === undefined
-        ? { id: nanoid(), instanceId, name: propName, ...value }
+        ? { id: nanoid(), instanceId: instance.id, name: propName, ...value }
         : { ...prop, ...value }
     );
   };
@@ -260,10 +306,11 @@ export const usePropsLogic = ({
   };
 
   return {
+    meta,
     systemProps,
     initialProps,
     addedProps,
-    remainingProps: Array.from(
+    availableProps: Array.from(
       unprocessedKnown.entries(),
       ([name, { label }]) => ({ name, label })
     ),
