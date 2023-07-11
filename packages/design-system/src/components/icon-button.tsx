@@ -40,7 +40,7 @@ export const IconButton = styled("button", {
     borderColor: "transparent",
     backgroundColor: theme.colors.backgroundActive,
     color: theme.colors.foregroundContrastMain,
-    "&:hover": {
+    "&:hover, &[data-hovered=true]": {
       borderColor: "transparent",
       backgroundColor: theme.colors.backgroundActive,
       color: theme.colors.foregroundContrastMain,
@@ -51,7 +51,7 @@ export const IconButton = styled("button", {
     variant: {
       default: {
         color: theme.colors.foregroundMain,
-        "&:hover": {
+        "&:hover, &[data-hovered=true]": {
           backgroundColor: theme.colors.backgroundHover,
         },
         // According to the design https://www.figma.com/file/sfCE7iLS0k25qCxiifQNLE/%F0%9F%93%9A-Webstudio-Library?node-id=4-3199&t=lpT9jFuaiUnz1Foa-0
@@ -61,7 +61,7 @@ export const IconButton = styled("button", {
           backgroundColor: theme.colors.backgroundPresetMain,
           borderColor: theme.colors.borderMain,
 
-          "&:hover": {
+          "&:hover, &[data-hovered=true]": {
             backgroundColor: theme.colors.backgroundHover,
           },
         },
@@ -75,7 +75,7 @@ export const IconButton = styled("button", {
         backgroundColor: theme.colors.backgroundPresetMain,
         borderColor: theme.colors.borderMain,
         color: theme.colors.foregroundMain,
-        "&:hover": {
+        "&:hover, &[data-hovered=true]": {
           backgroundColor: theme.colors.backgroundPresetHover,
         },
         "&:disabled": {
@@ -87,7 +87,7 @@ export const IconButton = styled("button", {
         backgroundColor: theme.colors.backgroundLocalMain,
         borderColor: theme.colors.borderLocalMain,
         color: theme.colors.foregroundLocalMain,
-        "&:hover": {
+        "&:hover, &[data-hovered=true]": {
           backgroundColor: theme.colors.backgroundLocalHover,
         },
         "&:disabled": {
@@ -99,7 +99,7 @@ export const IconButton = styled("button", {
         backgroundColor: theme.colors.backgroundOverwrittenMain,
         borderColor: theme.colors.borderOverwrittenMain,
         color: theme.colors.foregroundOverwrittenMain,
-        "&:hover": {
+        "&:hover, &[data-hovered=true]": {
           backgroundColor: theme.colors.backgroundOverwrittenHover,
         },
         "&:disabled": {
@@ -111,7 +111,7 @@ export const IconButton = styled("button", {
         backgroundColor: theme.colors.backgroundRemoteMain,
         borderColor: theme.colors.borderRemoteMain,
         color: theme.colors.foregroundRemoteMain,
-        "&:hover": {
+        "&:hover, &[data-hovered=true]": {
           backgroundColor: theme.colors.backgroundRemoteHover,
         },
         "&:disabled": {

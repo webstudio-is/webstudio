@@ -18,16 +18,21 @@ const ToggleGroupButtons = () => {
       <ToggleGroupButton value="one">
         <BorderRadiusIndividualIcon fill="currentColor" />
       </ToggleGroupButton>
-      <ToggleGroupButton value="two">
+      <ToggleGroupButton value="two" data-focused={true}>
         <BorderRadiusIndividualIcon fill="currentColor" />
       </ToggleGroupButton>
-      <ToggleGroupButton value="three">
+      <ToggleGroupButton value="three" data-hovered={true}>
         <BorderRadiusIndividualIcon fill="currentColor" />
       </ToggleGroupButton>
       <ToggleGroupButton value="four">
         <BorderRadiusIndividualIcon fill="currentColor" />
       </ToggleGroupButton>
-      <ToggleGroupButton value="five">
+      <ToggleGroupButton
+        value="five"
+        data-hovered={true}
+        data-focused={true}
+        aria-checked={true}
+      >
         <BorderRadiusIndividualIcon fill="currentColor" />
       </ToggleGroupButton>
       <ToggleGroupButton value="six">
