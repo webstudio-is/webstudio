@@ -1,14 +1,9 @@
-import type { ComponentStory, ComponentMeta } from "@storybook/react";
+import type { Meta, StoryObj } from "@storybook/react";
 import { Separator as SeparatorPrimitive } from "./separator";
 
 export default {
   title: "Components/Separator",
   component: SeparatorPrimitive,
-} as ComponentMeta<typeof SeparatorPrimitive>;
+} satisfies Meta<typeof SeparatorPrimitive>;
 
-const Template: ComponentStory<typeof SeparatorPrimitive> = (args) => (
-  <SeparatorPrimitive {...args} />
-);
-
-export const Separator = Template.bind({});
-Separator.args = {};
+export const Separator: StoryObj<typeof SeparatorPrimitive> = {};

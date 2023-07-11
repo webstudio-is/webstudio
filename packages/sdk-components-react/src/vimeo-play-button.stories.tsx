@@ -1,17 +1,13 @@
-import type { ComponentStory, ComponentMeta } from "@storybook/react";
+import type { Meta, StoryObj } from "@storybook/react";
 import { VimeoPlayButton as VimeoPlayButtonPrimitive } from "./vimeo-play-button";
 
 export default {
-  title: "Components/Vimeo Preview Image",
+  title: "Components/Vimeo Play Button",
   component: VimeoPlayButtonPrimitive,
-} as ComponentMeta<typeof VimeoPlayButtonPrimitive>;
+} satisfies Meta<typeof VimeoPlayButtonPrimitive>;
 
-const Template: ComponentStory<typeof VimeoPlayButtonPrimitive> = (args) => (
-  <VimeoPlayButtonPrimitive
-    {...args}
-    style={{ minHeight: 20, outline: "1px solid black" }}
-  />
-);
-
-export const VimeoPlayButton = Template.bind({});
-VimeoPlayButton.args = {};
+export const VimeoPlayButton: StoryObj<typeof VimeoPlayButtonPrimitive> = {
+  args: {
+    style: { minHeight: 20, outline: "1px solid black" },
+  },
+};

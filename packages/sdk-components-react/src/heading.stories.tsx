@@ -1,16 +1,13 @@
-import type { ComponentStory, ComponentMeta } from "@storybook/react";
+import type { Meta, StoryObj } from "@storybook/react";
 import { Heading as HeadingPrimitive } from "./heading";
 
 export default {
   title: "Components/Heading",
   component: HeadingPrimitive,
-} as ComponentMeta<typeof HeadingPrimitive>;
+} satisfies Meta<typeof HeadingPrimitive>;
 
-const Template: ComponentStory<typeof HeadingPrimitive> = (args) => (
-  <HeadingPrimitive {...args} />
-);
-
-export const Heading = Template.bind({});
-Heading.args = {
-  children: "Heading",
+export const Heading: StoryObj<typeof HeadingPrimitive> = {
+  args: {
+    children: "Heading",
+  },
 };

@@ -1,17 +1,13 @@
-import type { ComponentStory, ComponentMeta } from "@storybook/react";
+import type { Meta, StoryObj } from "@storybook/react";
 import { VimeoSpinner as VimeoSpinnerPrimitive } from "./vimeo-spinner";
 
 export default {
-  title: "Components/Vimeo Preview Image",
+  title: "Components/Vimeo Spinner",
   component: VimeoSpinnerPrimitive,
-} as ComponentMeta<typeof VimeoSpinnerPrimitive>;
+} satisfies Meta<typeof VimeoSpinnerPrimitive>;
 
-const Template: ComponentStory<typeof VimeoSpinnerPrimitive> = (args) => (
-  <VimeoSpinnerPrimitive
-    {...args}
-    style={{ minHeight: 20, outline: "1px solid black" }}
-  />
-);
-
-export const VimeoSpinner = Template.bind({});
-VimeoSpinner.args = {};
+export const VimeoSpinner: StoryObj<typeof VimeoSpinnerPrimitive> = {
+  args: {
+    style: { minHeight: 20, outline: "1px solid black" },
+  },
+};

@@ -98,12 +98,9 @@
     "zod": "^3.21.4"
   },
   "devDependencies": {
-    "@babel/core": "^7.21.0",
-    "@babel/plugin-transform-typescript": "^7.21.0",
-    "@babel/preset-typescript": "^7.21.0",
     "@jest/globals": "^29.3.1",
     "@remix-run/dev": "^1.18.1",
-    "@storybook/react": "^7.0.23",
+    "@storybook/react": "^7.0.26",
     "@testing-library/react-hooks": "^8.0.1",
     "@types/hyphenate-style-name": "^1.0.0",
     "@types/lodash.debounce": "^4.0.6",

@@ -25,13 +25,13 @@
     "pre-commit": "./node_modules/.bin/nano-staged"
   },
   "devDependencies": {
-    "@storybook/react-vite": "^7.0.23",
+    "@storybook/react-vite": "^7.0.26",
     "@types/css-tree": "^2.3.1",
     "@webstudio-is/eslint-config-custom": "workspace:^",
     "nano-staged": "^0.8.0",
     "prettier": "2.8.7",
     "simple-git-hooks": "^2.8.1",
-    "storybook": "^7.0.23",
+    "storybook": "^7.0.26",
     "tsx": "^3.12.6",
     "turbo": "^1.8.6",
     "typescript": "5.1.3"
