@@ -202,6 +202,7 @@ test("compute inherited styles", () => {
       },
       "fontSize": {
         "instanceId": "1",
+        "styleSourceId": "styleSourceId1",
         "value": {
           "type": "unit",
           "unit": "px",
@@ -210,6 +211,7 @@ test("compute inherited styles", () => {
       },
       "fontWeight": {
         "instanceId": "2",
+        "styleSourceId": "styleSourceId2",
         "value": {
           "type": "keyword",
           "value": "600",
