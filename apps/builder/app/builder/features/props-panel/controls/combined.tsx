@@ -19,6 +19,7 @@ export const renderControl = ({
     throw Error("Data source is not resolved");
   }
 
+  // @todo remove once ui for action is implemented
   if (prop?.type === "action") {
     return;
   }

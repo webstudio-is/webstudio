@@ -187,6 +187,7 @@ export const WebstudioComponentDev = ({
         // https://developer.mozilla.org/en-US/docs/Web/API/Navigation_API
         handleLinkClick(event);
       } else if (typeof userProps.onClick === "function") {
+        // bypass onClick for non-link component, for example button
         userProps.onClick(event);
       }
     },
@@ -194,6 +195,7 @@ export const WebstudioComponentDev = ({
       // Prevent submitting the form when clicking a button type submit
       event.preventDefault();
       if (typeof userProps.onSubmit === "function") {
+        // bypass handler
         userProps.onSubmit(event);
       }
     },
