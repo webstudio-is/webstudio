@@ -1,16 +1,13 @@
-import type { ComponentStory, ComponentMeta } from "@storybook/react";
+import type { Meta, StoryObj } from "@storybook/react";
 import { Paragraph as ParagraphPrimitive } from "./paragraph";
 
 export default {
   title: "Components/Paragraph",
   component: ParagraphPrimitive,
-} as ComponentMeta<typeof ParagraphPrimitive>;
+} satisfies Meta<typeof ParagraphPrimitive>;
 
-const Template: ComponentStory<typeof ParagraphPrimitive> = (args) => (
-  <ParagraphPrimitive {...args} />
-);
-
-export const Paragraph = Template.bind({});
-Paragraph.args = {
-  children: "paragraph",
+export const Paragraph: StoryObj<typeof ParagraphPrimitive> = {
+  args: {
+    children: "paragraph",
+  },
 };

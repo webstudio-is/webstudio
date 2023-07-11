@@ -1,16 +1,13 @@
-import type { ComponentStory, ComponentMeta } from "@storybook/react";
+import type { Meta, StoryObj } from "@storybook/react";
 import { Span as SpanPrimitive } from "./span";
 
 export default {
   title: "Components/Span",
   component: SpanPrimitive,
-} as ComponentMeta<typeof SpanPrimitive>;
+} satisfies Meta<typeof SpanPrimitive>;
 
-const Template: ComponentStory<typeof SpanPrimitive> = (args) => (
-  <SpanPrimitive {...args} />
-);
-
-export const Span = Template.bind({});
-Span.args = {
-  children: "some span text",
+export const Span: StoryObj<typeof SpanPrimitive> = {
+  args: {
+    children: "some span text",
+  },
 };
