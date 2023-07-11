@@ -27,6 +27,7 @@ export const IconButton = styled("button", {
 
   "&[data-focused=true], &:focus-visible": {
     outline: `2px solid ${theme.colors.borderFocus}`,
+    outlineOffset: -2,
   },
 
   "&:disabled": {
