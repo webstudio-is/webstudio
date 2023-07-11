@@ -1,17 +1,13 @@
-import type { ComponentStory, ComponentMeta } from "@storybook/react";
+import type { Meta, StoryObj } from "@storybook/react";
 import { Box as BoxPrimitive } from "./box";
 
 export default {
   title: "Components/Box",
   component: BoxPrimitive,
-} as ComponentMeta<typeof BoxPrimitive>;
+} satisfies Meta<typeof BoxPrimitive>;
 
-const Template: ComponentStory<typeof BoxPrimitive> = (args) => (
-  <BoxPrimitive
-    {...args}
-    style={{ minHeight: 20, outline: "1px solid black" }}
-  />
-);
-
-export const Box = Template.bind({});
-Box.args = {};
+export const Box: StoryObj<typeof BoxPrimitive> = {
+  args: {
+    children: "Box",
+  },
+};

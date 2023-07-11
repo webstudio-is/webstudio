@@ -57,6 +57,13 @@ export const getStartingValue = (meta: PropMeta): PropValue | undefined => {
       value: meta.defaultValue ?? [],
     };
   }
+
+  if (meta.type === "action") {
+    return {
+      type: "action",
+      value: [],
+    };
+  }
 };
 
 const getStartingProp = (
@@ -70,6 +77,8 @@ const getStartingProp = (
 
 const getDefaultMetaForType = (type: Prop["type"]): PropMeta => {
   switch (type) {
+    case "action":
+      return { type: "action", control: "action", required: false };
     case "string":
       return { type: "string", control: "text", required: false };
     case "number":
@@ -201,7 +210,7 @@ export const usePropsLogic = ({
 
   const systemProps = systemPropsMeta.map(({ name, meta }) => {
     let saved = getAndDelete<Prop>(unprocessedSaved, name);
-    if (saved === undefined && meta.defaultValue !== undefined) {
+    if (saved === undefined) {
       saved = getStartingProp(instance.id, meta, name);
     }
     getAndDelete(unprocessedKnown, name);
@@ -230,7 +239,7 @@ export const usePropsLogic = ({
     //   - where 0 is a fallback when no default is available
     //   - they think that width is set to 0, but it's actually not set at all
     //
-    if (prop === undefined && known.defaultValue !== undefined) {
+    if (prop === undefined) {
       prop = getStartingProp(instance.id, known, name);
     }
 

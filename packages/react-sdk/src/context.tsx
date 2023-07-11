@@ -31,13 +31,20 @@ export type Params = {
   assetBaseUrl: string;
 };
 
+export type DataSourceValues = Map<DataSource["id"], unknown>;
+
 export const ReactSdkContext = createContext<
   Params & {
     propsByInstanceIdStore: ReadableAtom<PropsByInstanceId>;
     assetsStore: ReadableAtom<Assets>;
     pagesStore: ReadableAtom<Pages>;
-    dataSourceValuesStore: ReadableAtom<Map<DataSource["id"], unknown>>;
-    setDataSourceValue: (
+    dataSourceValuesStore: ReadableAtom<DataSourceValues>;
+    executeEffectfulExpression: (
+      expression: string,
+      values: DataSourceValues
+    ) => DataSourceValues;
+    setDataSourceValues: (newValues: DataSourceValues) => void;
+    setBoundDataSourceValue: (
       instanceId: Instance["id"],
       prop: Prop["name"],
       value: unknown
@@ -50,7 +57,13 @@ export const ReactSdkContext = createContext<
   assetsStore: atom(new Map()),
   pagesStore: atom(new Map()),
   dataSourceValuesStore: atom(new Map()),
-  setDataSourceValue: () => {
-    throw Error("React SDK setDataSourceValue is not implemented");
+  executeEffectfulExpression: () => {
+    throw Error("React SDK executeEffectfulExpression is not implemented");
+  },
+  setDataSourceValues: () => {
+    throw Error("React SDK setBoundDataSourceValue is not implemented");
+  },
+  setBoundDataSourceValue: () => {
+    throw Error("React SDK setBoundDataSourceValue is not implemented");
   },
 });

@@ -1,16 +1,13 @@
-import type { ComponentStory, ComponentMeta } from "@storybook/react";
+import type { Meta, StoryObj } from "@storybook/react";
 import { Blockquote as BlockquotePrimitive } from "./blockquote";
 
 export default {
   title: "Components/Blockquote",
   component: BlockquotePrimitive,
-} as ComponentMeta<typeof BlockquotePrimitive>;
+} satisfies Meta<typeof BlockquotePrimitive>;
 
-const Template: ComponentStory<typeof BlockquotePrimitive> = (args) => (
-  <BlockquotePrimitive {...args} />
-);
-
-export const Blockquote = Template.bind({});
-Blockquote.args = {
-  children: "Blockquote",
+export const Blockquote: StoryObj<typeof BlockquotePrimitive> = {
+  args: {
+    children: "Blockquote",
+  },
 };

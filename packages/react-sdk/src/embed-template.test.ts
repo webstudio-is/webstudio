@@ -307,10 +307,7 @@ test("generate data for embedding from props bound to data source expressions", 
               type: "string",
               name: "state",
               value: "initial",
-              dataSourceRef: {
-                type: "variable",
-                name: "boxState",
-              },
+              dataSourceRef: { type: "variable", name: "boxState" },
             },
           ],
           children: [],
@@ -377,6 +374,89 @@ test("generate data for embedding from props bound to data source expressions", 
         scopeInstanceId: expectString,
         name: "boxStateSuccess",
         code: expect.stringMatching(/\$ws\$dataSource\$\w+ === 'success'/),
+      },
+    ],
+    styleSourceSelections: [],
+    styleSources: [],
+    styles: [],
+  });
+});
+
+test("generate data for embedding from action props", () => {
+  expect(
+    generateDataFromEmbedTemplate(
+      [
+        {
+          type: "instance",
+          component: "Box1",
+          props: [
+            {
+              type: "string",
+              name: "state",
+              value: "initial",
+              dataSourceRef: { type: "variable", name: "boxState" },
+            },
+          ],
+          children: [
+            {
+              type: "instance",
+              component: "Box2",
+              props: [
+                {
+                  type: "action",
+                  name: "onClick",
+                  value: [{ type: "execute", code: `boxState = 'success'` }],
+                },
+              ],
+              children: [],
+            },
+          ],
+        },
+      ],
+      defaultBreakpointId
+    )
+  ).toEqual({
+    children: [{ type: "id", value: expectString }],
+    instances: [
+      {
+        type: "instance",
+        id: expectString,
+        component: "Box1",
+        children: [{ type: "id", value: expectString }],
+      },
+      { type: "instance", id: expectString, component: "Box2", children: [] },
+    ],
+    props: [
+      {
+        id: expectString,
+        instanceId: expectString,
+        type: "dataSource",
+        name: "state",
+        value: expectString,
+      },
+      {
+        id: expectString,
+        instanceId: expectString,
+        type: "action",
+        name: "onClick",
+        value: [
+          {
+            type: "execute",
+            code: expect.stringMatching(/\$ws\$dataSource\$\w+ = 'success'/),
+          },
+        ],
+      },
+    ],
+    dataSources: [
+      {
+        type: "variable",
+        id: expectString,
+        scopeInstanceId: expectString,
+        name: "boxState",
+        value: {
+          type: "string",
+          value: "initial",
+        },
       },
     ],
     styleSourceSelections: [],

@@ -26,8 +26,13 @@ export const getPropsByInstanceId = (props: Props) => {
 // this utility is be used only for preview with static props
 // so there is no need to use computed to optimize rerenders
 export const useInstanceProps = (instanceId: Instance["id"]) => {
-  const { propsByInstanceIdStore, dataSourceValuesStore } =
-    useContext(ReactSdkContext);
+  const {
+    propsByInstanceIdStore,
+    dataSourceValuesStore,
+    executeEffectfulExpression,
+    setDataSourceValues,
+    renderer,
+  } = useContext(ReactSdkContext);
   const instancePropsObjectStore = useMemo(() => {
     return computed(
       [propsByInstanceIdStore, dataSourceValuesStore],
@@ -49,12 +54,37 @@ export const useInstanceProps = (instanceId: Instance["id"]) => {
             }
             continue;
           }
+          if (prop.type === "action") {
+            instancePropsObject[prop.name] = () => {
+              // prevent all actions in canvas mode
+              if (renderer === "canvas") {
+                return;
+              }
+              for (const value of prop.value) {
+                if (value.type === "execute") {
+                  const newValues = executeEffectfulExpression(
+                    value.code,
+                    dataSourceValues
+                  );
+                  setDataSourceValues(newValues);
+                }
+              }
+            };
+            continue;
+          }
           instancePropsObject[prop.name] = prop.value;
         }
         return instancePropsObject;
       }
     );
-  }, [propsByInstanceIdStore, dataSourceValuesStore, instanceId]);
+  }, [
+    propsByInstanceIdStore,
+    dataSourceValuesStore,
+    instanceId,
+    renderer,
+    executeEffectfulExpression,
+    setDataSourceValues,
+  ]);
   const instancePropsObject = useStore(instancePropsObjectStore);
   return instancePropsObject;
 };

@@ -1,14 +1,13 @@
-import type { ComponentStory, ComponentMeta } from "@storybook/react";
+import type { Meta, StoryObj } from "@storybook/react";
 import { Form as FormPrimitive } from "./form";
 
 export default {
   title: "Components/Form",
   component: FormPrimitive,
-} as ComponentMeta<typeof FormPrimitive>;
+} satisfies Meta<typeof FormPrimitive>;
 
-const Template: ComponentStory<typeof FormPrimitive> = (args) => (
-  <FormPrimitive {...args} />
-);
-
-export const Form = Template.bind({});
-Form.args = {};
+export const Form: StoryObj<typeof FormPrimitive> = {
+  args: {
+    children: "Form",
+  },
+};
