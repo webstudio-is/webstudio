@@ -155,6 +155,12 @@ const Date = z.object({
   defaultValue: z.string().optional(),
 });
 
+const Action = z.object({
+  ...common,
+  control: z.literal("action"),
+  type: z.literal("action"),
+});
+
 export const PropMeta = z.union([
   Number,
   Range,
@@ -172,6 +178,7 @@ export const PropMeta = z.union([
   Url,
   ObjectType,
   Date,
+  Action,
 ]);
 
 export type PropMeta = z.infer<typeof PropMeta>;
