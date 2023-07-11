@@ -44,8 +44,8 @@ export type TreeProps<Data extends { id: string }> = {
     dropTarget: { itemSelector: ItemSelector; position: number | "end" };
   }) => void;
   onCancel: () => void;
-  isEditingItemName: ItemId | undefined;
-  onEditItemName: (itemId: ItemId) => void;
+  editingItemId: ItemId | undefined;
+  onItemEditingStart: (itemId: ItemId) => void;
 };
 
 const sharedDropOptions = {
@@ -77,8 +77,8 @@ export const Tree = <Data extends { id: string }>({
   onDragItemChange,
   onDragEnd,
   onCancel,
-  onEditItemName,
-  isEditingItemName,
+  editingItemId,
+  onItemEditingStart,
 }: TreeProps<Data>) => {
   const { getIsExpanded, setIsExpanded } = useExpandState({
     selectedItemSelector,
@@ -263,8 +263,8 @@ export const Tree = <Data extends { id: string }>({
     getIsExpanded,
     setIsExpanded,
     onEsc: dragHandlers.cancelCurrentDrag,
-    isEditingItemName,
-    onEditItemName,
+    editingItemId,
+    onItemEditingStart,
   });
 
   return (
@@ -329,8 +329,8 @@ const useKeyboardNavigation = <Data extends { id: string }>({
   getIsExpanded,
   setIsExpanded,
   onEsc,
-  isEditingItemName,
-  onEditItemName,
+  editingItemId,
+  onItemEditingStart,
 }: {
   root: Data;
   selectedItemSelector: undefined | ItemSelector;
@@ -339,8 +339,8 @@ const useKeyboardNavigation = <Data extends { id: string }>({
   getIsExpanded: (itemSelector: ItemSelector) => boolean;
   setIsExpanded: (itemSelector: ItemSelector, isExpanded: boolean) => void;
   onEsc: () => void;
-  isEditingItemName: ItemId | undefined;
-  onEditItemName: (itemId: ItemId) => void;
+  editingItemId: ItemId | undefined;
+  onItemEditingStart: (itemId: ItemId) => void;
 }) => {
   const flatCurrentlyExpandedTree = useMemo(() => {
     const result: ItemSelector[] = [];
@@ -367,7 +367,7 @@ const useKeyboardNavigation = <Data extends { id: string }>({
       return;
     }
 
-    if (isEditingItemName !== undefined) {
+    if (editingItemId !== undefined) {
       return;
     }
 
@@ -456,7 +456,7 @@ const useKeyboardNavigation = <Data extends { id: string }>({
     rootRef,
     handleKeyDown,
     handleClick(event: React.MouseEvent<Element>) {
-      if (isEditingItemName) {
+      if (editingItemId) {
         return;
       }
 
@@ -491,7 +491,7 @@ const useKeyboardNavigation = <Data extends { id: string }>({
       if (itemId === undefined) {
         return;
       }
-      onEditItemName(itemId);
+      onItemEditingStart(itemId);
     },
   };
 };

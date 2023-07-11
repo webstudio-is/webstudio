@@ -1,4 +1,5 @@
 import type { ComponentMeta } from "@storybook/react";
+import { action } from "@storybook/addon-actions";
 import { useState } from "react";
 import { Tree } from "./tree";
 import { type Item, findItemById, reparent } from "./test-tree-data";
@@ -84,8 +85,9 @@ export const StressTest = () => {
   return (
     <Flex css={{ width: 300, height: 500, flexDirection: "column" }}>
       <Tree
-        isEditingItemName={undefined}
-        onEditItemName={() => {
+        editingItemId={undefined}
+        onItemEditingStart={() => {
+          action("onItemEditingStart");
           return;
         }}
         findClosestDroppableIndex={(itemSelector) => {

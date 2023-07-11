@@ -5,6 +5,7 @@ import {
   useState,
   forwardRef,
   type ForwardRefRenderFunction,
+  useLayoutEffect,
 } from "react";
 import {
   ChevronFilledDownIcon,
@@ -13,7 +14,7 @@ import {
 import { cssVars } from "@webstudio-is/css-vars";
 import { Box } from "../box";
 import { Flex } from "../flex";
-import { DeprecatedText2 } from "../__DEPRECATED__/text2";
+import { Text } from "../text";
 import { styled } from "../../stitches.config";
 import { theme } from "../../stitches.config";
 import {
@@ -21,6 +22,7 @@ import {
   type ItemSelector,
   areItemSelectorsEqual,
 } from "./item-utils";
+import { mergeRefs } from "@react-aria/utils";
 
 export const INDENT = 16;
 const ITEM_HEIGHT = 32;
@@ -369,11 +371,11 @@ export const TreeItemLabelBase: ForwardRefRenderFunction<
     children: React.ReactNode;
     prefix?: React.ReactNode;
   }
-> = ({ children, prefix, ...restProps }, ref) => {
+> = ({ label, children, prefix, ...restProps }, ref) => {
   return (
     <>
       {prefix}
-      <DeprecatedText2
+      <Text
         ref={ref}
         truncate
         css={{
@@ -382,7 +384,7 @@ export const TreeItemLabelBase: ForwardRefRenderFunction<
         {...restProps}
       >
         {children}
-      </DeprecatedText2>
+      </Text>
     </>
   );
 };

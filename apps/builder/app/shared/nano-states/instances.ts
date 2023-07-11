@@ -10,9 +10,7 @@ export const selectedInstanceSelectorStore = atom<undefined | InstanceSelector>(
   undefined
 );
 
-export const editInstanceNameSelectorStore = atom<undefined | ItemId>(
-  undefined
-);
+export const editingItemIdStore = atom<undefined | ItemId>(undefined);
 
 export const textEditingInstanceSelectorStore = atom<
   undefined | InstanceSelector

@@ -16,25 +16,28 @@ export const useEditable = ({
   const elementRef = useRef<HTMLDivElement>(null);
   const lastValueRef = useRef<string>("");
   const getValue = () => elementRef.current?.textContent ?? "";
-  const element = elementRef.current;
 
   useEffect(() => {
-    if (element === null) {
+    if (elementRef.current === null) {
       return;
     }
 
     if (isEditing) {
-      element.setAttribute("contenteditable", "plaintext-only");
+      elementRef.current.setAttribute("contenteditable", "plaintext-only");
       requestAnimationFrame(() => {
-        element.focus();
-        getSelection()?.selectAllChildren(element);
+        if (elementRef.current === null) {
+          return;
+        }
+
+        elementRef.current.focus();
+        getSelection()?.selectAllChildren(elementRef.current);
         lastValueRef.current = getValue();
       });
       return;
     }
 
-    element.removeAttribute("contenteditable");
-  }, [isEditing, element]);
+    elementRef.current.removeAttribute("contenteditable");
+  }, [isEditing]);
 
   const handleFinishEditing = (
     event: KeyboardEvent<Element> | FocusEvent<Element>
