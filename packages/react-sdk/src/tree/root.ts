@@ -1,4 +1,4 @@
-import { useRef, type ComponentProps } from "react";
+import { useRef, type ComponentProps, useCallback } from "react";
 import {
   atom,
   computed,
@@ -85,6 +85,17 @@ export const InstanceRoot = ({
   }
   const dataSourceValuesStore = dataSourceValuesStoreRef.current;
 
+  const onDataSourceUpdate = useCallback(
+    (newValues: DataSourceValues) => {
+      const dataSourceVariables = new Map(dataSourceVariablesStore.get());
+      for (const [dataSourceId, value] of newValues) {
+        dataSourceVariables.set(dataSourceId, value);
+      }
+      dataSourceVariablesStore.set(dataSourceVariables);
+    },
+    [dataSourceVariablesStore]
+  );
+
   return createElementsTree({
     imageBaseUrl: data.params?.imageBaseUrl ?? "/",
     assetBaseUrl: data.params?.assetBaseUrl ?? "/",
@@ -97,13 +108,7 @@ export const InstanceRoot = ({
     pagesStore: atom(new Map(data.pages.map((page) => [page.id, page]))),
     executeEffectfulExpression,
     dataSourceValuesStore,
-    onDataSourceUpdate: (newValues) => {
-      const dataSourceVariables = new Map(dataSourceVariablesStore.get());
-      for (const [dataSourceId, value] of newValues) {
-        dataSourceVariables.set(dataSourceId, value);
-      }
-      dataSourceVariablesStore.set(dataSourceVariables);
-    },
+    onDataSourceUpdate,
     Component: Component ?? WebstudioComponent,
     components,
   });

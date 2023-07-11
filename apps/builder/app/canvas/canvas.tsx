@@ -1,7 +1,7 @@
 import { useMemo, useEffect } from "react";
 import { useStore } from "@nanostores/react";
 import { computed } from "nanostores";
-import type { Instances, Page } from "@webstudio-is/project-build";
+import type { DataSource, Instances, Page } from "@webstudio-is/project-build";
 import {
   type Params,
   type Components,
@@ -67,6 +67,21 @@ const temporaryInstances: Instances = new Map([
   ],
 ]);
 
+const executeEffectfulExpressionWithDecodedVariables: typeof executeEffectfulExpression =
+  (code, values) => {
+    return decodeVariablesMap(
+      executeEffectfulExpression(code, encodeVariablesMap(values))
+    );
+  };
+
+const onDataSourceUpdate = (newValues: Map<DataSource["id"], unknown>) => {
+  const dataSourceVariables = new Map(dataSourceVariablesStore.get());
+  for (const [dataSourceId, value] of newValues) {
+    dataSourceVariables.set(dataSourceId, value);
+  }
+  dataSourceVariablesStore.set(dataSourceVariables);
+};
+
 const useElementsTree = (components: Components, params: Params) => {
   const instances = useStore(instancesStore);
   const page = useStore(selectedPageStore);
@@ -109,18 +124,9 @@ const useElementsTree = (components: Components, params: Params) => {
       assetsStore,
       pagesStore: pagesMapStore,
       dataSourceValuesStore,
-      executeEffectfulExpression: (code, values) => {
-        return decodeVariablesMap(
-          executeEffectfulExpression(code, encodeVariablesMap(values))
-        );
-      },
-      onDataSourceUpdate: (newValues) => {
-        const dataSourceVariables = new Map(dataSourceVariablesStore.get());
-        for (const [dataSourceId, value] of newValues) {
-          dataSourceVariables.set(dataSourceId, value);
-        }
-        dataSourceVariablesStore.set(dataSourceVariables);
-      },
+      executeEffectfulExpression:
+        executeEffectfulExpressionWithDecodedVariables,
+      onDataSourceUpdate,
       Component: WebstudioComponentDev,
       components,
     });

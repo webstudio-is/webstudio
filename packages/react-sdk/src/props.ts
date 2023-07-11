@@ -83,6 +83,7 @@ export const useInstanceProps = (instanceId: Instance["id"]) => {
     instanceId,
     renderer,
     executeEffectfulExpression,
+    setDataSourceValues,
   ]);
   const instancePropsObject = useStore(instancePropsObjectStore);
   return instancePropsObject;
