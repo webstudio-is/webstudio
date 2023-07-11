@@ -90,9 +90,6 @@ const BaseToggleGroupButton = forwardRef<
         width: "auto",
         height: theme.spacing[11],
         minWidth: theme.spacing[11],
-        // accept only 16px icons or text
-        // paddingLeft: theme.spacing[3],
-        // paddingRight: theme.spacing[3],
         borderRadius: theme.borderRadius[2],
         ...textVariants.labelsTitleCase,
       }}
