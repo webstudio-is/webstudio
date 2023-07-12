@@ -77,7 +77,7 @@ export const ToggleGroupControl = ({
 }: ToggleGroupControlProps) => {
   // Issue 1: The tooltip's grace area is too big and overlaps with nearby buttons,
   // preventing the tooltip from changing when the buttons are hovered over in certain cases.
-  // Issue 2: When using radix-ui, if the tooltip's open state is explicitly changed,
+  // Issue 2: When using radix-ui, if the tooltip's open state is explicitly changed (out of radix onOpenChange handler),
   // it starts opening all tooltips without any delay.
   // To solve issue 1 and allow tooltips to change on button hover,
   // we close the button tooltip in the ToggleGroupButton.onMouseLeave handler. However, this action causes issue 2.
