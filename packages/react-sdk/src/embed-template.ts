@@ -21,11 +21,13 @@ const EmbedTemplateText = z.object({
 
 type EmbedTemplateText = z.infer<typeof EmbedTemplateText>;
 
+const DataSourceVariableRef = z.object({
+  type: z.literal("variable"),
+  name: z.string(),
+});
+
 const DataSourceRef = z.union([
-  z.object({
-    type: z.literal("variable"),
-    name: z.string(),
-  }),
+  DataSourceVariableRef,
   z.object({
     type: z.literal("expression"),
     name: z.string(),
@@ -57,6 +59,16 @@ const EmbedTemplateProp = z.union([
     name: z.string(),
     dataSourceRef: z.optional(DataSourceRef),
     value: z.array(z.string()),
+  }),
+  z.object({
+    type: z.literal("action"),
+    name: z.string(),
+    value: z.array(
+      z.object({
+        type: z.literal("execute"),
+        code: z.string(),
+      })
+    ),
   }),
 ]);
 
@@ -124,6 +136,29 @@ const createInstancesFromTemplate = (
       if (item.props) {
         for (const prop of item.props) {
           const propId = nanoid();
+          // action cannot be bound to data source
+          if (prop.type === "action") {
+            props.push({
+              id: propId,
+              instanceId,
+              type: "action",
+              name: prop.name,
+              value: prop.value.map((value) => {
+                return {
+                  type: "execute",
+                  // replace all references with variable names
+                  code: validateExpression(value.code, {
+                    effectful: true,
+                    transformIdentifier: (ref) => {
+                      const id = dataSourceByRef.get(ref)?.id ?? ref;
+                      return encodeDataSourceVariable(id);
+                    },
+                  }),
+                };
+              }),
+            });
+            continue;
+          }
           if (prop.dataSourceRef === undefined) {
             props.push({ id: propId, instanceId, ...prop });
             continue;
@@ -148,7 +183,13 @@ const createInstancesFromTemplate = (
                 id,
                 scopeInstanceId: instanceId,
                 name: dataSourceRef.name,
-                code: dataSourceRef.code,
+                // replace all references with variable names
+                code: validateExpression(dataSourceRef.code, {
+                  transformIdentifier: (ref) => {
+                    const id = dataSourceByRef.get(ref)?.id ?? ref;
+                    return encodeDataSourceVariable(id);
+                  },
+                }),
               };
               dataSourceByRef.set(dataSourceRef.name, dataSource);
             } else {
@@ -246,25 +287,11 @@ export const generateDataFromEmbedTemplate = (
     defaultBreakpointId
   );
 
-  // replace all references with variable names
-  const dataSources: DataSource[] = [];
-  for (const dataSource of dataSourceByRef.values()) {
-    if (dataSource.type === "expression") {
-      dataSource.code = validateExpression(dataSource.code, {
-        transformIdentifier: (ref) => {
-          const id = dataSourceByRef.get(ref)?.id ?? ref;
-          return encodeDataSourceVariable(id);
-        },
-      });
-    }
-    dataSources.push(dataSource);
-  }
-
   return {
     children,
     instances,
     props,
-    dataSources,
+    dataSources: Array.from(dataSourceByRef.values()),
     styleSourceSelections,
     styleSources,
     styles,

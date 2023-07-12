@@ -1,6 +1,5 @@
-import { useStore } from "@nanostores/react";
 import store from "immerhin";
-import type { Instance, Prop } from "@webstudio-is/project-build";
+import type { Instance } from "@webstudio-is/project-build";
 import {
   theme,
   useCombobox,
@@ -11,41 +10,27 @@ import {
   ComboboxListboxItem,
   Separator,
   Flex,
-  type CSS,
   InputField,
   NestedInputButton,
 } from "@webstudio-is/design-system";
 import type { Publish } from "~/shared/pubsub";
-import {
-  dataSourceValuesStore,
-  dataSourceVariablesStore,
-  dataSourcesStore,
-  propsIndexStore,
-  propsStore,
-  registeredComponentPropsMetasStore,
-} from "~/shared/nano-states";
+import { dataSourceVariablesStore, propsStore } from "~/shared/nano-states";
 import { CollapsibleSectionWithAddButton } from "~/builder/shared/collapsible-section";
 import {
   useStyleData,
   type SetProperty as SetCssProperty,
 } from "~/builder/features/style-panel/shared/use-style-data";
-import { renderControl } from "./controls/combined";
+import { renderControl } from "../controls/combined";
 import {
   usePropsLogic,
   type NameAndLabel,
   type PropAndMeta,
 } from "./use-props-logic";
-import { getLabel } from "./shared";
-import { useState, type ReactNode } from "react";
+import { Row, getLabel } from "../shared";
+import { useState } from "react";
 
 const itemToString = (item: NameAndLabel | null) =>
   item ? getLabel(item, item.name) : "";
-
-const Row = ({ children, css }: { children: ReactNode; css?: CSS }) => (
-  <Flex css={{ px: theme.spacing[9], ...css }} gap="2" direction="column">
-    {children}
-  </Flex>
-);
 
 const PropsCombobox = ({
   items,
@@ -75,7 +60,7 @@ const PropsCombobox = ({
           <InputField
             autoFocus
             {...combobox.getInputProps()}
-            placeholder="Property"
+            placeholder="New Property"
             suffix={<NestedInputButton {...combobox.getToggleButtonProps()} />}
           />
         </ComboboxAnchor>
@@ -99,7 +84,12 @@ const PropsCombobox = ({
 };
 
 const renderProperty = (
-  { propsLogic: logic, setCssProperty, component, instanceId }: PropsPanelProps,
+  {
+    propsLogic: logic,
+    setCssProperty,
+    component,
+    instanceId,
+  }: PropsSectionProps,
   { prop, propName, meta }: PropAndMeta,
   deletable?: boolean
 ) =>
@@ -148,7 +138,7 @@ const AddPropertyForm = ({
   </Flex>
 );
 
-type PropsPanelProps = {
+type PropsSectionProps = {
   propsLogic: ReturnType<typeof usePropsLogic>;
   component: Instance["component"];
   instanceId: string;
@@ -156,12 +146,13 @@ type PropsPanelProps = {
 };
 
 // A UI componet with minimum logic that can be demoed in Storybook etc.
-export const PropsPanel = (props: PropsPanelProps) => {
+export const PropsSection = (props: PropsSectionProps) => {
   const { propsLogic: logic } = props;
 
   const [addingProp, setAddingProp] = useState(false);
 
-  const hasAddedProps = logic.addedProps.length > 0 || addingProp;
+  const hasItems =
+    logic.addedProps.length > 0 || addingProp || logic.initialProps.length > 0;
 
   return (
     <>
@@ -171,111 +162,43 @@ export const PropsPanel = (props: PropsPanelProps) => {
 
       <Separator />
 
-      {logic.initialProps.length > 0 && (
-        <>
-          <Row
-            css={{
-              paddingTop: theme.spacing[5],
-              paddingBottom: theme.spacing[5],
-            }}
-          >
-            {logic.initialProps.map((item) => renderProperty(props, item))}
-          </Row>
-          <Separator />
-        </>
-      )}
-
       <CollapsibleSectionWithAddButton
-        label="Custom Properties"
+        label="Properties"
         onAdd={() => setAddingProp(true)}
-        hasItems={hasAddedProps}
+        hasItems={hasItems}
       >
-        {hasAddedProps && (
-          <Flex gap="2" direction="column">
-            {logic.addedProps.map((item) => renderProperty(props, item, true))}
-            {addingProp && (
-              <AddPropertyForm
-                availableProps={logic.remainingProps}
-                onPropSelected={(propName) => {
-                  setAddingProp(false);
-                  logic.handleAdd(propName);
-                }}
-              />
-            )}
-          </Flex>
-        )}
+        <Flex gap="2" direction="column">
+          {addingProp && (
+            <AddPropertyForm
+              availableProps={logic.availableProps}
+              onPropSelected={(propName) => {
+                setAddingProp(false);
+                logic.handleAdd(propName);
+              }}
+            />
+          )}
+          {logic.addedProps.map((item) => renderProperty(props, item, true))}
+          {logic.initialProps.map((item) => renderProperty(props, item))}
+        </Flex>
       </CollapsibleSectionWithAddButton>
     </>
   );
 };
 
-const getPropTypeAndValue = (value: unknown) => {
-  if (typeof value === "boolean") {
-    return { type: "boolean", value } as const;
-  }
-  if (typeof value === "number") {
-    return { type: "number", value } as const;
-  }
-  if (typeof value === "string") {
-    return { type: "string", value } as const;
-  }
-  if (Array.isArray(value)) {
-    return { type: "string[]", value } as const;
-  }
-  throw Error(`Unexpected prop value ${value}`);
-};
-
-export const PropsPanelContainer = ({
+export const PropsSectionContainer = ({
   selectedInstance: instance,
   publish,
 }: {
   publish: Publish;
   selectedInstance: Instance;
 }) => {
-  const propsMeta = useStore(registeredComponentPropsMetasStore).get(
-    instance.component
-  );
-  const dataSources = useStore(dataSourcesStore);
-  const dataSourceValues = useStore(dataSourceValuesStore);
-  if (propsMeta === undefined) {
-    throw new Error(`Could not get meta for compoent "${instance.component}"`);
-  }
-
   const { setProperty: setCssProperty } = useStyleData({
     selectedInstance: instance,
     publish,
   });
 
-  const { propsByInstanceId } = useStore(propsIndexStore);
-
-  const instanceProps =
-    propsByInstanceId.get(instance.id)?.flatMap((prop) => {
-      if (prop.type !== "dataSource") {
-        return [prop];
-      }
-      // convert data source prop to typed prop
-      const dataSourceId = prop.value;
-      const dataSource = dataSources.get(dataSourceId);
-      const dataSourceValue = dataSourceValues.get(dataSourceId);
-      if (dataSource === undefined) {
-        return [];
-      }
-      return [
-        {
-          id: prop.id,
-          instanceId: prop.instanceId,
-          name: prop.name,
-          required: prop.required,
-          // infer type from value
-          ...getPropTypeAndValue(dataSourceValue),
-        } satisfies Prop,
-      ];
-    }) ?? [];
-
   const logic = usePropsLogic({
-    props: instanceProps,
-    meta: propsMeta,
-    instanceId: instance.id,
+    instance,
     updateProp: (update) => {
       const props = propsStore.get();
       const prop = props.get(update.id);
@@ -298,8 +221,14 @@ export const PropsPanelContainer = ({
     },
   });
 
+  const hasMetaProps = Object.keys(logic.meta.props).length !== 0;
+
+  if (hasMetaProps === false) {
+    return null;
+  }
+
   return (
-    <PropsPanel
+    <PropsSection
       propsLogic={logic}
       component={instance.component}
       instanceId={instance.id}

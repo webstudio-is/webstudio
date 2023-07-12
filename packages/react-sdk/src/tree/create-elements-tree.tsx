@@ -2,13 +2,13 @@ import { type ComponentProps, Fragment } from "react";
 import type { ReadableAtom } from "nanostores";
 import { Scripts, ScrollRestoration } from "@remix-run/react";
 import type { Assets } from "@webstudio-is/asset-uploader";
-import type {
-  DataSource,
-  Instance,
-  Instances,
-} from "@webstudio-is/project-build";
+import type { Instance, Instances } from "@webstudio-is/project-build";
 import type { Components } from "../components/components-utils";
-import { ReactSdkContext, type Params } from "../context";
+import {
+  type Params,
+  type DataSourceValues,
+  ReactSdkContext,
+} from "../context";
 import type { Pages, PropsByInstanceId } from "../props";
 import type { WebstudioComponent } from "./webstudio-component";
 
@@ -24,6 +24,7 @@ export const createElementsTree = ({
   assetsStore,
   pagesStore,
   dataSourceValuesStore,
+  executeEffectfulExpression,
   onDataSourceUpdate,
   Component,
   components,
@@ -33,8 +34,12 @@ export const createElementsTree = ({
   propsByInstanceIdStore: ReadableAtom<PropsByInstanceId>;
   assetsStore: ReadableAtom<Assets>;
   pagesStore: ReadableAtom<Pages>;
-  dataSourceValuesStore: ReadableAtom<Map<DataSource["id"], unknown>>;
-  onDataSourceUpdate: (dataSourceId: DataSource["id"], value: unknown) => void;
+  executeEffectfulExpression: (
+    expression: string,
+    values: DataSourceValues
+  ) => DataSourceValues;
+  dataSourceValuesStore: ReadableAtom<DataSourceValues>;
+  onDataSourceUpdate: (newValues: DataSourceValues) => void;
   Component: (props: ComponentProps<typeof WebstudioComponent>) => JSX.Element;
   components: Components;
 }) => {
@@ -74,7 +79,9 @@ export const createElementsTree = ({
         renderer,
         imageBaseUrl,
         assetBaseUrl,
-        setDataSourceValue: (instanceId, propName, value) => {
+        executeEffectfulExpression,
+        setDataSourceValues: onDataSourceUpdate,
+        setBoundDataSourceValue: (instanceId, propName, value) => {
           const propsByInstanceId = propsByInstanceIdStore.get();
           const props = propsByInstanceId.get(instanceId);
           const prop = props?.find((prop) => prop.name === propName);
@@ -82,7 +89,9 @@ export const createElementsTree = ({
             throw Error(`${propName} is not data source`);
           }
           const dataSourceId = prop.value;
-          onDataSourceUpdate(dataSourceId, value);
+          const newValues = new Map();
+          newValues.set(dataSourceId, value);
+          onDataSourceUpdate(newValues);
         },
       }}
     >

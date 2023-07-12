@@ -1,10 +1,6 @@
 import * as csstree from "css-tree";
-import { LayersValue, TupleValue } from "@webstudio-is/css-data";
-import type {
-  InvalidValue,
-  TupleValueItem,
-  Unit,
-} from "@webstudio-is/css-data";
+import { LayersValue, TupleValue } from "../schema";
+import type { InvalidValue, TupleValueItem, Unit } from "../schema";
 import { colord } from "colord";
 
 const cssTreeTryParseValue = (input: string) => {

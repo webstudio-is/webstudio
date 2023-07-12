@@ -1,65 +1,42 @@
-import type { SpaceStyleProperty } from "./types";
 import { PropertyTooltip } from "../../shared/property-name";
 import type { StyleInfo } from "../../shared/style-info";
 import { useState, type ReactElement } from "react";
 import { useModifierKeys } from "../../shared/modifier-keys";
-import { getSpaceModifiersGroup } from "../shared/scrub";
+import { getPositionModifiersGroup } from "../shared/scrub";
 import type { CreateBatchUpdate } from "../../shared/use-style-data";
+import type { PositionProperty } from "./position-layout";
 
 const sides = {
-  paddingTop: "top",
-  paddingRight: "top",
-  paddingBottom: "bottom",
-  paddingLeft: "left",
-  marginTop: "top",
-  marginRight: "left",
-  marginBottom: "bottom",
-  marginLeft: "right",
+  top: "top",
+  right: "left",
+  bottom: "bottom",
+  left: "left",
 } as const;
 
 const propertyContents: {
-  properties: SpaceStyleProperty[];
+  properties: PositionProperty[];
   label: string;
   description: string;
 }[] = [
-  // Padding
   {
-    properties: ["paddingTop", "paddingBottom"],
-    label: "Vertical Padding",
+    properties: ["top", "bottom"],
+    label: "Vertical position",
     description:
-      "Defines the space between the content of an element and its top and bottom border. Can affect layout height.",
+      "Sets the top and bottom position of an element relative to its nearest positioned ancestor.",
   },
 
   {
-    properties: ["paddingLeft", "paddingRight"],
-    label: "Horizontal Padding",
+    properties: ["left", "right"],
+    label: "Horizontal position",
     description:
-      "Defines the space between the content of an element and its left and right border. Can affect layout width.",
+      "Sets the left and right position of an element relative to its nearest positioned ancestor.",
   },
 
   {
-    properties: ["paddingTop", "paddingBottom", "paddingLeft", "paddingRight"],
+    properties: ["top", "right", "bottom", "left"],
     label: "Padding",
     description:
-      "Defines the space between the content of an element and its border. Can affect layout size.",
-  },
-  // Margin
-  {
-    properties: ["marginTop", "marginBottom"],
-    label: "Vertical Margin",
-    description: "Sets the margin at the top and bottom of an element.",
-  },
-
-  {
-    properties: ["marginLeft", "marginRight"],
-    label: "Horizontal Margin",
-    description: "Sets the margin at the left and right of an element.",
-  },
-
-  {
-    properties: ["marginTop", "marginBottom", "marginLeft", "marginRight"],
-    label: "Margin",
-    description: "Sets the margin of an element.",
+      "Sets the top, right, bottom and left position of an element relative to its nearest positioned ancestor.",
   },
 ];
 
@@ -75,14 +52,14 @@ const isSameUnorderedArrays = (
   return union.size === arrA.length;
 };
 
-export const SpaceTooltip = ({
+export const PositionTooltip = ({
   property,
   style,
   children,
   createBatchUpdate,
   preventOpen,
 }: {
-  property: SpaceStyleProperty;
+  property: PositionProperty;
   style: StyleInfo;
   children: ReactElement;
   createBatchUpdate: CreateBatchUpdate;
@@ -92,7 +69,7 @@ export const SpaceTooltip = ({
 
   const modifiers = useModifierKeys();
 
-  const properties = [...getSpaceModifiersGroup(property, modifiers)];
+  const properties = [...getPositionModifiersGroup(property, modifiers)];
 
   const propertyContent = propertyContents.find((propertyContent) =>
     isSameUnorderedArrays(propertyContent.properties, properties)

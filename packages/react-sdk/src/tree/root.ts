@@ -1,17 +1,17 @@
-import { useRef, type ComponentProps } from "react";
+import { useRef, type ComponentProps, useCallback } from "react";
 import {
   atom,
   computed,
   type ReadableAtom,
   type WritableAtom,
 } from "nanostores";
-import { type Build, type Page, DataSource } from "@webstudio-is/project-build";
+import { type Build, type Page } from "@webstudio-is/project-build";
 import type { Asset } from "@webstudio-is/asset-uploader";
 import { createElementsTree } from "./create-elements-tree";
 import { WebstudioComponent } from "./webstudio-component";
 import { getPropsByInstanceId } from "../props";
 import type { Components } from "../components/components-utils";
-import type { Params } from "../context";
+import type { Params, DataSourceValues } from "../context";
 
 export type Data = {
   page: Page;
@@ -25,18 +25,21 @@ export type RootPropsData = Omit<Data, "build"> & {
   build: Pick<Data["build"], "instances" | "props" | "dataSources">;
 };
 
-type DataSourceValues = Map<DataSource["id"], unknown>;
-
 type RootProps = {
   data: RootPropsData;
-  computeExpressions: (values: DataSourceValues) => DataSourceValues;
+  executeComputingExpressions: (values: DataSourceValues) => DataSourceValues;
+  executeEffectfulExpression: (
+    expression: string,
+    values: DataSourceValues
+  ) => DataSourceValues;
   Component?: (props: ComponentProps<typeof WebstudioComponent>) => JSX.Element;
   components: Components;
 };
 
 export const InstanceRoot = ({
   data,
-  computeExpressions,
+  executeComputingExpressions,
+  executeEffectfulExpression,
   Component,
   components,
 }: RootProps): JSX.Element | null => {
@@ -67,7 +70,7 @@ export const InstanceRoot = ({
 
         // set expression values
         try {
-          const result = computeExpressions(dataSourceValues);
+          const result = executeComputingExpressions(dataSourceValues);
           for (const [id, value] of result) {
             dataSourceValues.set(id, value);
           }
@@ -82,6 +85,17 @@ export const InstanceRoot = ({
   }
   const dataSourceValuesStore = dataSourceValuesStoreRef.current;
 
+  const onDataSourceUpdate = useCallback(
+    (newValues: DataSourceValues) => {
+      const dataSourceVariables = new Map(dataSourceVariablesStore.get());
+      for (const [dataSourceId, value] of newValues) {
+        dataSourceVariables.set(dataSourceId, value);
+      }
+      dataSourceVariablesStore.set(dataSourceVariables);
+    },
+    [dataSourceVariablesStore]
+  );
+
   return createElementsTree({
     imageBaseUrl: data.params?.imageBaseUrl ?? "/",
     assetBaseUrl: data.params?.assetBaseUrl ?? "/",
@@ -92,12 +106,9 @@ export const InstanceRoot = ({
     ),
     assetsStore: atom(new Map(data.assets.map((asset) => [asset.id, asset]))),
     pagesStore: atom(new Map(data.pages.map((page) => [page.id, page]))),
+    executeEffectfulExpression,
     dataSourceValuesStore,
-    onDataSourceUpdate: (dataSourceId, value) => {
-      const dataSourceVariables = new Map(dataSourceVariablesStore.get());
-      dataSourceVariables.set(dataSourceId, value);
-      dataSourceVariablesStore.set(dataSourceVariables);
-    },
+    onDataSourceUpdate,
     Component: Component ?? WebstudioComponent,
     components,
   });

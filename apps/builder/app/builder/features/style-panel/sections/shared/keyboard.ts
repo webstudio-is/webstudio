@@ -1,6 +1,6 @@
 import { useState, useRef } from "react";
-import type { FocusEvent, KeyboardEvent } from "react";
-import type { SpaceStyleProperty } from "./types";
+import type { FocusEvent, FocusEventHandler, KeyboardEvent } from "react";
+import { useDebouncedCallback } from "use-debounce";
 
 const movementKeys = [
   "ArrowUp",
@@ -9,7 +9,7 @@ const movementKeys = [
   "ArrowLeft",
 ] as const;
 
-const movementMap = {
+export const movementMapSpace = {
   marginTop: ["marginBottom", "marginRight", "paddingTop", "marginLeft"],
   marginRight: ["marginTop", "marginLeft", "marginBottom", "paddingRight"],
   marginBottom: ["paddingBottom", "marginRight", "marginTop", "marginLeft"],
@@ -20,16 +20,79 @@ const movementMap = {
   paddingLeft: ["paddingTop", "paddingTop", "paddingBottom", "marginLeft"],
 } as const;
 
-export const useKeyboardNavigation = ({
-  onOpen,
-}: {
-  onOpen: (property: SpaceStyleProperty) => void;
-}) => {
-  const [activeProperty, setActiveProperty] =
-    useState<SpaceStyleProperty>("marginTop");
+export const movementMapPosition = {
+  top: ["bottom", "right", "bottom", "left"],
+  right: ["top", "left", "bottom", "left"],
+  bottom: ["top", "right", "top", "left"],
+  left: ["top", "right", "bottom", "right"],
+} as const;
 
-  const [hoverActiveProperty, setHoverActiveProperty] =
-    useState<SpaceStyleProperty>("marginTop");
+/**
+ * useFocusWithin does't work with popovers, implement it using debounce
+ */
+const useFocusWithinDebounce = (
+  props: {
+    onFocusWithin: FocusEventHandler<Element>;
+    onBlurWithin: FocusEventHandler<Element>;
+  },
+  timeout: number
+) => {
+  const isFocusedRef = useRef(false);
+
+  const handleFocusBlur = useDebouncedCallback(
+    (isFocus: boolean, event: FocusEvent<Element>) => {
+      if (isFocus && isFocusedRef.current === false) {
+        isFocusedRef.current = true;
+        props.onFocusWithin(event);
+        return;
+      }
+      if (isFocus === false && isFocusedRef.current === true) {
+        isFocusedRef.current = false;
+        props.onBlurWithin(event);
+      }
+    },
+    timeout
+  );
+
+  const handleFocus = (event: FocusEvent<Element>) => {
+    // ...event because we debounce handleFocusBlur, and react reuses events
+    handleFocusBlur(true, { ...event });
+  };
+
+  const handleBlur = (event: FocusEvent<Element>) => {
+    handleFocusBlur(false, event);
+  };
+
+  return {
+    onFocus: handleFocus,
+    onBlur: handleBlur,
+  };
+};
+
+export const useKeyboardNavigation = <
+  P extends string,
+  T extends {
+    readonly [key in P]: readonly [
+      ArrowUp: P,
+      ArrowRight: P,
+      ArrowDown: P,
+      ArrowLeft: P
+    ];
+  }
+>({
+  onOpen,
+  movementMap,
+}: {
+  onOpen: (property: keyof T) => void;
+  movementMap: T;
+}) => {
+  const [activeProperty, setActiveProperty] = useState<keyof T>(
+    Object.keys(movementMap)[0] as P
+  );
+
+  const [hoverActiveProperty, setHoverActiveProperty] = useState<keyof T>(
+    Object.keys(movementMap)[0] as P
+  );
 
   const [isActive, setIsActive] = useState(false);
 
@@ -43,17 +106,25 @@ export const useKeyboardNavigation = ({
     }
   };
 
-  const handleFocus = (event: FocusEvent<Element>) => {
+  const handleFocusInternal = (event: FocusEvent<Element>) => {
     if (event.currentTarget.matches(":focus-visible")) {
       handleActiveChange(true);
     }
   };
 
-  const handleBlur = () => {
+  const handleBlurInternal = () => {
     handleActiveChange(false);
   };
 
-  const handleHover = (property: SpaceStyleProperty | undefined) => {
+  const { onFocus: handleFocus, onBlur: handleBlur } = useFocusWithinDebounce(
+    {
+      onFocusWithin: handleFocusInternal,
+      onBlurWithin: handleBlurInternal,
+    },
+    100
+  );
+
+  const handleHover = (property: keyof T | undefined) => {
     // keep active property in sync with hover (makes UX more intuitive)
     if (property) {
       setHoverActiveProperty(property);

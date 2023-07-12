@@ -307,6 +307,8 @@ export const executeEffectfulExpression = (
   return values;
 };
 
+type Values = Map<string, unknown>;
+
 const dataSourceVariablePrefix = "$ws$dataSource$";
 
 // data source id is generated with nanoid which has "-" in alphabeta
@@ -318,10 +320,29 @@ export const encodeDataSourceVariable = (id: string) => {
   return `${dataSourceVariablePrefix}${encoded}`;
 };
 
+export const encodeVariablesMap = (values: Values) => {
+  const encodedValues: Values = new Map();
+  for (const [id, value] of values) {
+    encodedValues.set(encodeDataSourceVariable(id), value);
+  }
+  return encodedValues;
+};
+
 export const decodeDataSourceVariable = (name: string) => {
   if (name.startsWith(dataSourceVariablePrefix)) {
     const encoded = name.slice(dataSourceVariablePrefix.length);
     return encoded.replaceAll("__DASH__", "-");
   }
   return;
+};
+
+export const decodeVariablesMap = (values: Values) => {
+  const decodedValues: Values = new Map();
+  for (const [name, value] of values) {
+    const id = decodeDataSourceVariable(name);
+    if (id !== undefined) {
+      decodedValues.set(id, value);
+    }
+  }
+  return decodedValues;
 };

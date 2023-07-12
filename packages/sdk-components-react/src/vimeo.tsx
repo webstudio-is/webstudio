@@ -413,8 +413,9 @@ const EmptyState = () => {
         fontSize: "1.2em",
       }}
     >
-      Open the Properties panel and paste a video URL, e.g.
-      https://vimeo.com/831343124.
+      {
+        'Open the "Settings" panel and paste a video URL, e.g. https://vimeo.com/831343124.'
+      }
     </div>
   );
 };

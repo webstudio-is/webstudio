@@ -1,16 +1,13 @@
-import type { ComponentStory, ComponentMeta } from "@storybook/react";
+import type { Meta, StoryObj } from "@storybook/react";
 import { CodeText as CodeTextPrimitive } from "./code-text";
 
 export default {
   title: "Components/CodeText",
   component: CodeTextPrimitive,
-} as ComponentMeta<typeof CodeTextPrimitive>;
+} satisfies Meta<typeof CodeTextPrimitive>;
 
-const Template: ComponentStory<typeof CodeTextPrimitive> = (args) => (
-  <CodeTextPrimitive {...args} />
-);
-
-export const CodeText = Template.bind({});
-CodeText.args = {
-  children: "alert('Hello World!')",
+export const CodeText: StoryObj<typeof CodeTextPrimitive> = {
+  args: {
+    children: "alert('Hello World!')",
+  },
 };

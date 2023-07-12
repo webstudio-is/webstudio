@@ -1,38 +1,53 @@
-import type { StyleValue, UnitValue } from "@webstudio-is/css-data";
+import type {
+  StyleProperty,
+  StyleValue,
+  UnitValue,
+} from "@webstudio-is/css-data";
 import { numericScrubControl } from "@webstudio-is/design-system";
 import { useState, useEffect, useRef } from "react";
 import { useModifierKeys } from "../../shared/modifier-keys";
 import type { StyleUpdateOptions } from "../../shared/use-style-data";
-import type { SpaceStyleProperty, HoverTagret } from "./types";
+import type { SpaceStyleProperty } from "../space/types";
 import { isValidDeclaration } from "@webstudio-is/css-data";
 import { parseIntermediateOrInvalidValue } from "../../shared/css-value-input/parse-intermediate-or-invalid-value";
 import { toValue } from "@webstudio-is/css-engine";
 import type { CssValueInputValue } from "../../shared/css-value-input/css-value-input";
+import type { PositionProperty } from "../position/position-layout";
 
-type Values = Partial<Record<SpaceStyleProperty, StyleValue>>;
-
-type ScrubStatus = {
+type ScrubStatus<P extends string> = {
   isActive: boolean;
 
   // Properties that should be affected on the next pointer move.
   // We keep track of these properties even when scrub is not active.
-  properties: ReadonlyArray<SpaceStyleProperty>;
+  properties: ReadonlyArray<P>;
 
   // When scrub is active, this contains ephemeral values for all properties
   // that have been affected during current scrub.
   //
   // Note that Object.keys(values) != properties above,
   // because user can press and release modifier keys multiple times during scrub.
-  values: Values;
+  values: Partial<Record<P, StyleValue>>;
 };
 
-export const useScrub = (props: {
+type HoverTarget<P> = {
+  property: P;
+  element: HTMLElement | SVGElement;
+};
+
+export const useScrub = <P extends StyleProperty>(props: {
   value?: StyleValue;
-  target: HoverTagret | undefined;
-  onChange: (values: Values, options: StyleUpdateOptions) => void;
-}): ScrubStatus => {
+  target: HoverTarget<P> | undefined;
+  getModifiersGroup: (
+    property: P,
+    modifiers: { shiftKey: boolean; altKey: boolean }
+  ) => ReadonlyArray<P>;
+  onChange: (
+    values: Partial<Record<P, StyleValue>>,
+    options: StyleUpdateOptions
+  ) => void;
+}): ScrubStatus<P> => {
   // we want to hold on to the target while scrub is active even if hover changes
-  const [activeTarget, setActiveTarget] = useState<HoverTagret>();
+  const [activeTarget, setActiveTarget] = useState<HoverTarget<P>>();
   const finalTarget = activeTarget ?? props.target;
 
   const modifiers = useModifierKeys();
@@ -40,9 +55,9 @@ export const useScrub = (props: {
   const properties =
     finalTarget === undefined
       ? []
-      : getModifiersGroup(finalTarget.property, modifiers);
+      : props.getModifiersGroup(finalTarget.property, modifiers);
 
-  const [values, setValues] = useState<Values>({});
+  const [values, setValues] = useState<Partial<Record<P, StyleValue>>>({});
 
   // we need these in useEffect, but don't want as dependencies
   const nonDependencies = useRef({ props, values, properties });
@@ -103,7 +118,8 @@ export const useScrub = (props: {
 
     return numericScrubControl(finalTarget.element, {
       direction:
-        property.endsWith("Left") || property.endsWith("Right")
+        property.toLowerCase().endsWith("left") ||
+        property.toLowerCase().endsWith("right")
           ? "horizontal"
           : "vertical",
       getInitialValue() {
@@ -112,6 +128,9 @@ export const useScrub = (props: {
           unitRef.current = value.unit;
           return value.value;
         }
+        // In case of Auto value
+        unitRef.current = "px";
+        return 0;
       },
       onValueInput(event) {
         handleChange(event, true);
@@ -136,28 +155,50 @@ export const useScrub = (props: {
   };
 };
 
-const opposingGroups = [
+const opposingSpaceGroups = [
   ["paddingTop", "paddingBottom"],
   ["paddingRight", "paddingLeft"],
   ["marginTop", "marginBottom"],
   ["marginRight", "marginLeft"],
 ] as const;
 
-const circleGroups = [
+const circleSpaceGroups = [
   ["paddingTop", "paddingRight", "paddingBottom", "paddingLeft"],
   ["marginTop", "marginRight", "marginBottom", "marginLeft"],
 ] as const;
 
-export const getModifiersGroup = (
+export const getSpaceModifiersGroup = (
   property: SpaceStyleProperty,
   modifiers: { shiftKey: boolean; altKey: boolean }
 ) => {
   let groups: ReadonlyArray<ReadonlyArray<SpaceStyleProperty>> = [];
 
   if (modifiers.shiftKey) {
-    groups = circleGroups;
+    groups = circleSpaceGroups;
   } else if (modifiers.altKey) {
-    groups = opposingGroups;
+    groups = opposingSpaceGroups;
+  }
+
+  return groups.find((group) => group.includes(property)) ?? [property];
+};
+
+const opposingPositionGroups = [
+  ["top", "bottom"],
+  ["left", "right"],
+] as const;
+
+const circlePositionGroups = [["top", "right", "bottom", "left"]] as const;
+
+export const getPositionModifiersGroup = (
+  property: PositionProperty,
+  modifiers: { shiftKey: boolean; altKey: boolean }
+) => {
+  let groups: ReadonlyArray<ReadonlyArray<PositionProperty>> = [];
+
+  if (modifiers.shiftKey) {
+    groups = circlePositionGroups;
+  } else if (modifiers.altKey) {
+    groups = opposingPositionGroups;
   }
 
   return groups.find((group) => group.includes(property)) ?? [property];

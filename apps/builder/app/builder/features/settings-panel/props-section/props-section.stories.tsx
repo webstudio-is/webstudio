@@ -1,11 +1,12 @@
 import { useState } from "react";
-import { PropsPanel } from "./props-panel";
+import { PropsSection } from "./props-section";
 import { usePropsLogic } from "./use-props-logic";
 import {
   assetsStore,
   instancesStore,
   pagesStore,
   propsStore,
+  registerComponentPropsMetas,
   selectedPageIdStore,
 } from "~/shared/nano-states";
 import { setMockEnv } from "~/shared/env";
@@ -85,11 +86,23 @@ const addLinkableSections = (
     };
     props.set(prop.id, prop);
   }
+  return rootInstance;
 };
 
 addLinkableSections(["contacts", "about"]);
-addLinkableSections(["company", "employees"], pagesStore.get()?.pages[0]);
+const rootInstance = addLinkableSections(
+  ["company", "employees"],
+  pagesStore.get()?.pages[0]
+);
 selectedPageIdStore.set(pagesStore.get()?.homePage.id);
+
+const instance: Instance = {
+  id: instanceId,
+  type: "instance",
+  component: "Box",
+  children: [],
+};
+rootInstance?.children.push({ type: "id", value: instance.id });
 
 const imageAsset = (name = "cat", format = "jpg"): Asset => ({
   id: unique(),
@@ -191,57 +204,59 @@ const checkProp = (options = defaultOptions, label?: string): PropMeta => ({
   label,
 });
 
-const componentPropsMeta: WsComponentPropsMeta = {
-  props: {
-    initialText: textProp("", "multi\nline"),
-    initialShortText: shortTextProp(),
-    initialNumber: numberProp(),
-    initialBoolean: booleanProp(),
-    initialColor: colorProp(),
-    initialRadio: radioProp(),
-    initialSelect: selectProp(),
-    initialCheck: checkProp(),
-    initialUrl: urlProp(),
-    initialFile: fileProp("Initial File (PNG only)", ".png"),
-    addedText: textProp(),
-    addedShortText: shortTextProp(),
-    addedNumber: numberProp(),
-    addedBoolean: booleanProp(),
-    addedColor: colorProp(),
-    addedRadio: radioProp(),
-    addedSelect: selectProp(),
-    addedCheck: checkProp(),
-    addedUrlUrl: urlProp("Added URL (URL)"),
-    addedUrlPage: urlProp("Added URL (Page)"),
-    addedUrlSection: urlProp("Added URL (Section)"),
-    addedUrlEmail: urlProp("Added URL (Email)"),
-    addedUrlPhone: urlProp("Added URL (Phone)"),
-    addedUrlAttachment: urlProp("Added URL (Attachment)"),
-    addedFile: fileProp(),
-    availableText: textProp(),
-    availableShortText: shortTextProp(),
-    availableNumber: numberProp(),
-    availableBoolean: booleanProp(),
-    availableColor: colorProp(),
-    availableRadio: radioProp(),
-    availableSelect: selectProp(),
-    availableCheck: checkProp(),
-    availableUrl: urlProp(),
-    availableFile: fileProp(),
+registerComponentPropsMetas({
+  Box: {
+    props: {
+      initialText: textProp("", "multi\nline"),
+      initialShortText: shortTextProp(),
+      initialNumber: numberProp(),
+      initialBoolean: booleanProp(),
+      initialColor: colorProp(),
+      initialRadio: radioProp(),
+      initialSelect: selectProp(),
+      initialCheck: checkProp(),
+      initialUrl: urlProp(),
+      initialFile: fileProp("Initial File (PNG only)", ".png"),
+      addedText: textProp(),
+      addedShortText: shortTextProp(),
+      addedNumber: numberProp(),
+      addedBoolean: booleanProp(),
+      addedColor: colorProp(),
+      addedRadio: radioProp(),
+      addedSelect: selectProp(),
+      addedCheck: checkProp(),
+      addedUrlUrl: urlProp("Added URL (URL)"),
+      addedUrlPage: urlProp("Added URL (Page)"),
+      addedUrlSection: urlProp("Added URL (Section)"),
+      addedUrlEmail: urlProp("Added URL (Email)"),
+      addedUrlPhone: urlProp("Added URL (Phone)"),
+      addedUrlAttachment: urlProp("Added URL (Attachment)"),
+      addedFile: fileProp(),
+      availableText: textProp(),
+      availableShortText: shortTextProp(),
+      availableNumber: numberProp(),
+      availableBoolean: booleanProp(),
+      availableColor: colorProp(),
+      availableRadio: radioProp(),
+      availableSelect: selectProp(),
+      availableCheck: checkProp(),
+      availableUrl: urlProp(),
+      availableFile: fileProp(),
+    },
+    initialProps: [
+      "initialText",
+      "initialShortText",
+      "initialNumber",
+      "initialBoolean",
+      "initialColor",
+      "initialRadio",
+      "initialSelect",
+      "initialCheck",
+      "initialUrl",
+      "initialFile",
+    ],
   },
-  initialProps: [
-    "initialText",
-    "initialShortText",
-    "initialNumber",
-    "initialBoolean",
-    "initialColor",
-    "initialRadio",
-    "initialSelect",
-    "initialCheck",
-    "initialUrl",
-    "initialFile",
-  ],
-};
+});
 
 const startingProps: Prop[] = [
   {
@@ -358,22 +373,20 @@ export const Story = () => {
   const [props, setProps] = useState(startingProps);
 
   const handleDelete = (id: Prop["id"]) => {
-    setProps((currernt) => currernt.filter((prop) => prop.id !== id));
+    setProps((current) => current.filter((prop) => prop.id !== id));
   };
 
   const handleUpdate = (prop: Prop) => {
-    setProps((currernt) => {
-      const exists = currernt.find((item) => item.id === prop.id) !== undefined;
+    setProps((current) => {
+      const exists = current.find((item) => item.id === prop.id) !== undefined;
       return exists
-        ? currernt.map((item) => (item.id === prop.id ? prop : item))
-        : [...currernt, prop];
+        ? current.map((item) => (item.id === prop.id ? prop : item))
+        : [...current, prop];
     });
   };
 
   const logic = usePropsLogic({
-    props,
-    meta: componentPropsMeta,
-    instanceId,
+    instance,
     updateProp: handleUpdate,
     deleteProp: handleDelete,
   });
@@ -381,7 +394,7 @@ export const Story = () => {
   return (
     <div style={{ display: "flex", gap: 12 }}>
       <div style={{ width: 240, border: "dashed 3px #e3e3e3" }}>
-        <PropsPanel
+        <PropsSection
           instanceId={instanceId}
           propsLogic={logic}
           component="Button"
