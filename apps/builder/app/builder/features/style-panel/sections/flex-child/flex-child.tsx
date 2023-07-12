@@ -64,33 +64,49 @@ const FlexChildSectionAlign = (props: RenderCategoryProps) => {
         items={[
           {
             child: <SmallXIcon />,
-            label: "Do not align self",
+            title: "Align",
+            description:
+              "The element's alignment is determined by its parent's align-items property.",
             value: "auto",
+            propertyValues: "align-self: auto;",
           },
           {
             child: <ASStartIcon />,
-            label: "align-self: flex-start",
-            value: "start",
+            title: "Align",
+            description:
+              "The element is aligned at the start of the cross axis.",
+            value: "flex-start",
+            propertyValues: "align-self: flex-start;",
           },
           {
             child: <ASEndIcon />,
-            label: "align-self: flex-end",
-            value: "end",
+            title: "Align",
+            description: "The element is aligned at the end of the cross axis.",
+            value: "flex-end",
+            propertyValues: "align-self: flex-end;",
           },
           {
             child: <ASCenterIcon />,
-            label: "align-self: center",
+            title: "Align",
+            description: "The element is centered along the cross axis.",
             value: "center",
+            propertyValues: "align-self: center;",
           },
           {
             child: <ASStretchIcon />,
-            label: "align-self: stretch",
+            title: "Align",
+            description:
+              "The element is stretched to fill the entire cross axis.",
             value: "stretch",
+            propertyValues: "align-self: stretch;",
           },
           {
             child: <ASBaselineIcon />,
-            label: "align-self: baseline",
+            title: "Align",
+            description:
+              "The element is aligned to the baseline of the parent.",
             value: "baseline",
+            propertyValues: "align-self: baseline;",
           },
         ]}
       />
@@ -170,23 +186,38 @@ const FlexChildSectionSizing = (props: RenderCategoryProps) => {
         items={[
           {
             child: <SmallXIcon />,
-            label: "Don't grow or shrink",
+            title: "Flex",
+            description: "Don't grow or shrink",
             value: "none",
+            propertyValues: ["flex-grow: 0;", "flex-shrink: 0;"],
           },
           {
             child: <GrowIcon />,
-            label: "Grow if possible",
+            title: "Flex",
+            description:
+              "Item will expand to take up available space within a flex container if needed, but it will not shrink if there is limited space.",
             value: "grow",
+            propertyValues: ["flex-grow: 1;", "flex-shrink: 0;"],
           },
           {
             child: <ShrinkIcon />,
-            label: "Shrink if needed",
+            title: "Flex",
+            description:
+              "Item will not grow to take up available space within a flex container, but it will shrink if there is limited space",
             value: "shrink",
+            propertyValues: ["flex-grow: 0;", "flex-shrink: 1;"],
           },
           {
             child: <FlexChildSectionSizingPopover {...props} />,
-            label: "More sizing options",
+            title: "Flex",
+            description:
+              "More sizing options, set flex-basis, flex-grow, flex-shrink individually",
             value: "",
+            propertyValues: [
+              `flex-basis: ${toValue(currentStyle.flexBasis?.value)};`,
+              `flex-grow: ${toValue(currentStyle.flexGrow?.value)};`,
+              `flex-shrink: ${toValue(currentStyle.flexShrink?.value)};`,
+            ],
           },
         ]}
       />
@@ -290,23 +321,31 @@ const FlexChildSectionOrder = (props: RenderCategoryProps) => {
         items={[
           {
             child: <SmallXIcon />,
-            label: "Dont't change",
+            title: "Order",
+            description: "Dont't change",
             value: "0",
+            propertyValues: "order: 0;",
           },
           {
             child: <OrderFirstIcon />,
-            label: "Make first",
+            title: "Order",
+            description: "Make first",
             value: "-1",
+            propertyValues: "order: -1;",
           },
           {
             child: <OrderLastIcon />,
-            label: "Make last",
+            title: "Order",
+            description: "Make last",
             value: "1",
+            propertyValues: "order: 1;",
           },
           {
             child: <FlexChildSectionOrderPopover {...props} />,
-            label: "Customize order",
+            title: "Order",
+            description: "Customize order",
             value: "",
+            propertyValues: `order: ${toValue(currentStyle.order?.value)};`,
           },
         ]}
       />

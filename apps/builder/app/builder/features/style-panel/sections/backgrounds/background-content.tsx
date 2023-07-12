@@ -276,23 +276,35 @@ export const BackgroundContent = (props: BackgroundContentProps) => {
                   items={[
                     {
                       child: <CrossSmallIcon />,
-                      label: "background-repeat: no-repeat",
+                      title: "BackgroundRepeat",
+                      description:
+                        "This value indicates that the background image will not be repeated and will appear only once.",
                       value: "no-repeat",
+                      propertyValues: "background-repeat: no-repeat",
                     },
                     {
                       child: <RepeatGridIcon />,
-                      label: "background-repeat: repeat",
+                      title: "BackgroundRepeat",
+                      description:
+                        "This value indicates that the background image will be repeated both horizontally and vertically to fill the entire background area.",
                       value: "repeat",
+                      propertyValues: "background-repeat: repeat",
                     },
                     {
                       child: <RepeatColumnIcon />,
-                      label: "background-repeat: repeat-y",
+                      title: "BackgroundRepeat",
+                      description:
+                        "This value indicates that the background image will be repeated only vertically.",
                       value: "repeat-y",
+                      propertyValues: "background-repeat: repeat-y",
                     },
                     {
                       child: <RepeatRowIcon />,
-                      label: "background-repeat: repeat-x",
+                      title: "BackgroundRepeat",
+                      description:
+                        "This value indicates that the background image will be repeated only horizontally.",
                       value: "repeat-x",
+                      propertyValues: "background-repeat: repeat-x",
                     },
                   ]}
                 />
