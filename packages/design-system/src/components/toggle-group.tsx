@@ -61,13 +61,20 @@ export const ToggleGroup = styled(BaseToggleGroup, {
   borderRadius: theme.borderRadius[4],
 });
 
+const IconButtonStyled = styled(IconButton, {
+  "&[data-focused=true], &:focus-visible": {
+    // To not overlap focus-ring by the next button
+    zIndex: 0,
+  },
+});
+
 const BaseToggleGroupButton = forwardRef<
   ElementRef<"button">,
   ComponentProps<typeof IconButton>
 >((props, ref) => {
   const { color } = useContext(ToggleGroupContext);
   return (
-    <IconButton
+    <IconButtonStyled
       ref={ref}
       {...props}
       variant={
@@ -83,9 +90,6 @@ const BaseToggleGroupButton = forwardRef<
         width: "auto",
         height: theme.spacing[11],
         minWidth: theme.spacing[11],
-        // accept only 16px icons or text
-        paddingLeft: theme.spacing[3],
-        paddingRight: theme.spacing[3],
         borderRadius: theme.borderRadius[2],
         ...textVariants.labelsTitleCase,
       }}
