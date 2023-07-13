@@ -11,15 +11,7 @@ import {
   Flex,
 } from "@webstudio-is/design-system";
 import { ChevronDownIcon } from "@webstudio-is/icons";
-import {
-  useEffect,
-  useLayoutEffect,
-  useRef,
-  type KeyboardEvent,
-  type KeyboardEventHandler,
-  type FocusEvent,
-  type ReactNode,
-} from "react";
+import { useLayoutEffect, useRef, type ReactNode } from "react";
 import { useContentEditable } from "~/shared/dom-hooks";
 
 const menuTriggerVisibilityVar = cssVars.define("menu-trigger-visibility");
