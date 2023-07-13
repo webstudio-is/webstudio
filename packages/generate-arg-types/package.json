@@ -13,9 +13,7 @@
     "checks": "pnpm typecheck"
   },
   "dependencies": {
-    "@types/fs-extra": "^9.0.13",
     "fast-glob": "^3.2.12",
-    "fs-extra": "^10.1.0",
     "react-docgen-typescript": "^2.2.2",
     "zod": "^3.21.4"
   },
