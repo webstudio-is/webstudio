@@ -31,7 +31,7 @@ export const useContentEditable = ({
     if (element.hasAttribute("contenteditable") === isEditing) {
       return;
     }
-    console.log({ isEditing });
+
     if (isEditing) {
       element.setAttribute("contenteditable", "plaintext-only");
       // the next frame is necessary when newly created element
