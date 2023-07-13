@@ -76,8 +76,8 @@ importers:
         specifier: ^0.11.1
         version: 0.11.1(lexical@0.11.1)
       '@nanostores/react':
-        specifier: ^0.4.1
-        version: 0.4.1(nanostores@0.7.1)(react@18.2.0)
+        specifier: ^0.7.1
+        version: 0.7.1(nanostores@0.9.3)(react@18.2.0)
       '@radix-ui/react-select':
         specifier: ^1.2.2
         version: 1.2.2(@types/react-dom@18.0.11)(@types/react@18.0.35)(react-dom@18.2.0)(react@18.2.0)
@@ -211,14 +211,14 @@ importers:
         specifier: ^2.0.1
         version: 2.0.1
       nanoevents:
-        specifier: ^7.0.1
-        version: 7.0.1
+        specifier: ^8.0.0
+        version: 8.0.0
       nanoid:
-        specifier: ^3.3.6
-        version: 3.3.6
+        specifier: ^4.0.2
+        version: 4.0.2
       nanostores:
-        specifier: ^0.7.1
-        version: 0.7.1
+        specifier: ^0.9.3
+        version: 0.9.3
       no-case:
         specifier: ^3.0.4
         version: 3.0.4
@@ -226,8 +226,8 @@ importers:
         specifier: ^3.3.1
         version: 3.3.1
       pretty-bytes:
-        specifier: ^6.0.0
-        version: 6.0.0
+        specifier: ^6.1.0
+        version: 6.1.0
       prismjs:
         specifier: ^1.28.0
         version: 1.28.0
@@ -268,8 +268,8 @@ importers:
         specifier: ^3.1.0
         version: 3.1.0
       slugify:
-        specifier: ^1.6.5
-        version: 1.6.5
+        specifier: ^1.6.6
+        version: 1.6.6
       title-case:
         specifier: ^3.0.3
         version: 3.0.3
@@ -338,8 +338,8 @@ importers:
         specifier: ^7.1.0
         version: 7.1.0
       html-tags:
-        specifier: ^3.2.0
-        version: 3.2.0
+        specifier: ^3.3.1
+        version: 3.3.1
       jest:
         specifier: ^29.3.1
         version: 29.3.1(@types/node@18.11.18)
@@ -374,8 +374,8 @@ importers:
         specifier: ^9.0.12
         version: 9.0.15
       nanoid:
-        specifier: ^3.3.6
-        version: 3.3.6
+        specifier: ^4.0.2
+        version: 4.0.2
       sharp:
         specifier: ^0.30.7
         version: 0.30.7
@@ -473,11 +473,11 @@ importers:
         specifier: workspace:^
         version: link:../tsconfig
       camelcase:
-        specifier: ^6.3.0
-        version: 6.3.0
+        specifier: ^7.0.1
+        version: 7.0.1
       html-tags:
-        specifier: ^3.2.0
-        version: 3.2.0
+        specifier: ^3.3.1
+        version: 3.3.1
       jest:
         specifier: ^29.3.1
         version: 29.3.1(@types/node@18.11.18)
@@ -685,8 +685,8 @@ importers:
         specifier: workspace:^
         version: link:../icons
       camelcase:
-        specifier: ^6.3.0
-        version: 6.3.0
+        specifier: ^7.0.1
+        version: 7.0.1
       downshift:
         specifier: ^6.1.7
         version: 6.1.7(react@18.2.0)
@@ -1065,8 +1065,8 @@ importers:
         specifier: ^6.1.0
         version: 6.1.0
       nanoid:
-        specifier: ^3.3.6
-        version: 3.3.6
+        specifier: ^4.0.2
+        version: 4.0.2
       umzug:
         specifier: ^3.2.1
         version: 3.2.1
@@ -1114,11 +1114,11 @@ importers:
         specifier: workspace:^
         version: link:../trpc-interface
       nanoid:
-        specifier: ^3.3.6
-        version: 3.3.6
+        specifier: ^4.0.2
+        version: 4.0.2
       slugify:
-        specifier: ^1.6.5
-        version: 1.6.5
+        specifier: ^1.6.6
+        version: 1.6.6
       uuid:
         specifier: ^9.0.0
         version: 9.0.0
@@ -1151,8 +1151,8 @@ importers:
         specifier: workspace:^
         version: link:../trpc-interface
       nanoid:
-        specifier: ^3.3.6
-        version: 3.3.6
+        specifier: ^4.0.2
+        version: 4.0.2
       zod:
         specifier: ^3.21.4
         version: 3.21.4
@@ -1185,8 +1185,8 @@ importers:
         specifier: ^1.2.1
         version: 1.2.1(jsep@1.3.8)
       '@nanostores/react':
-        specifier: ^0.4.1
-        version: 0.4.1(nanostores@0.7.1)(react@18.2.0)
+        specifier: ^0.7.1
+        version: 0.7.1(nanostores@0.9.3)(react@18.2.0)
       '@webstudio-is/asset-uploader':
         specifier: workspace:^
         version: link:../asset-uploader
@@ -1209,20 +1209,20 @@ importers:
         specifier: ^0.1.5
         version: 0.1.5
       html-tags:
-        specifier: ^3.2.0
-        version: 3.2.0
+        specifier: ^3.3.1
+        version: 3.3.1
       jsep:
         specifier: ^1.3.8
         version: 1.3.8
       nanoevents:
-        specifier: ^7.0.1
-        version: 7.0.1
+        specifier: ^8.0.0
+        version: 8.0.0
       nanoid:
-        specifier: ^3.3.6
-        version: 3.3.6
+        specifier: ^4.0.2
+        version: 4.0.2
       nanostores:
-        specifier: ^0.7.1
-        version: 0.7.1
+        specifier: ^0.9.3
+        version: 0.9.3
     devDependencies:
       '@jest/globals':
         specifier: ^29.3.1
@@ -5640,16 +5640,15 @@ packages:
       - utf-8-validate
     dev: true
 
-  /@nanostores/react@0.4.1(nanostores@0.7.1)(react@18.2.0):
-    resolution: {integrity: sha512-lsv0CYrMxczbXtoV/mxFVEoL/uVjEjseoP89srO/5yNAOkJka+dSFS7LYyWEbuvCPO7EgbtkvRpO5V+OztKQOw==}
-    engines: {node: ^14.0.0 || ^16.0.0 || >=18.0.0}
+  /@nanostores/react@0.7.1(nanostores@0.9.3)(react@18.2.0):
+    resolution: {integrity: sha512-EXQg9N4MdI4eJQz/AZLIx3hxQ6BuBmV4Q55bCd5YCSgEOAW7tGTsIZxpRXxvxLXzflNvHTBvfrDNY38TlSVBkQ==}
+    engines: {node: ^16.0.0 || ^18.0.0 || >=20.0.0}
     peerDependencies:
-      nanostores: ^0.7.0
+      nanostores: ^0.9.0
       react: '>=18.0.0'
     dependencies:
-      nanostores: 0.7.1
+      nanostores: 0.9.3
       react: 18.2.0
-      use-sync-external-store: 1.2.0(react@18.2.0)
     dev: false
 
   /@ndelangen/get-tarball@3.0.9:
@@ -7966,7 +7965,7 @@ packages:
       acorn-jsx: 5.3.2(acorn@7.4.1)
       acorn-walk: 7.2.0
       escodegen: 2.0.0
-      html-tags: 3.2.0
+      html-tags: 3.3.1
       lodash: 4.17.21
       prop-types: 15.8.1
       react: 18.2.0
@@ -9504,6 +9503,10 @@ packages:
   /camelcase@6.3.0:
     resolution: {integrity: sha512-Gmy6FhYlCY7uOElZUSbxo2UCDH8owEk996gkbrpsgGtrJLM3J7jGxl9Ic7Qwwj4ivOE5AWZWRMecDdF7hqGjFA==}
     engines: {node: '>=10'}
+
+  /camelcase@7.0.1:
+    resolution: {integrity: sha512-xlx1yCK2Oc1APsPXDL2LdlNP6+uu8OCDdhOBSVT279M/S+y75O30C2VuD8T2ogdePBBl7PfPF4504tnLgX3zfw==}
+    engines: {node: '>=14.16'}
 
   /caniuse-lite@1.0.30001462:
     resolution: {integrity: sha512-PDd20WuOBPiasZ7KbFnmQRyuLE7cFXW2PVd7dmALzbkUXEP46upAuCDm9eY9vho8fgNMGmbAX92QBZHzcnWIqw==}
@@ -11858,8 +11861,8 @@ packages:
     resolution: {integrity: sha512-lNovG8CMCCmcVB1Q7xggMSf7tqPCijZXaH4gL6iE8BFghdQCbaY5Met9i1x2Ex8m/cZHDUtXK9H6/znKamRP8Q==}
     dev: true
 
-  /html-tags@3.2.0:
-    resolution: {integrity: sha512-vy7ClnArOZwCnqZgvv+ddgHgJiAFXe3Ge9ML5/mBctVJoUoYPCdxVucOywjDARn6CVoh3dRSFdPHy2sX80L0Wg==}
+  /html-tags@3.3.1:
+    resolution: {integrity: sha512-ztqyC3kLto0e9WbNp0aeP+M3kTt+nbaIveGmUxAtZa+8iFgKLUOD4YKM5j+f3QD89bra7UeumolZHKuOXnTmeQ==}
     engines: {node: '>=8'}
 
   /http-cache-semantics@4.1.1:
@@ -14115,15 +14118,21 @@ packages:
       picocolors: 1.0.0
     dev: true
 
-  /nanoevents@7.0.1:
-    resolution: {integrity: sha512-o6lpKiCxLeijK4hgsqfR6CNToPyRU3keKyyI6uwuHRvpRTbZ0wXw51WRgyldVugZqoJfkGFrjrIenYH3bfEO3Q==}
-    engines: {node: ^14.0.0 || ^16.0.0 || >=18.0.0}
+  /nanoevents@8.0.0:
+    resolution: {integrity: sha512-bYYwNCdNc5ea6/Lwh1uioU1/7aaKa3EPmNQ2weTm8PWSpbWrsaWHePe0Zq4SF+D3F3JX3cn+QdktOPCf1meOqw==}
+    engines: {node: ^16.0.0 || ^18.0.0 || >=20.0.0}
     dev: false
 
   /nanoid@3.3.6:
     resolution: {integrity: sha512-BGcqMMJuToF7i1rt+2PWSNVnWIkGCU78jBG3RxO/bZlnZPK2Cmi2QaffxGO/2RvWi9sL+FAiRiXMgsyxQ1DIDA==}
     engines: {node: ^10 || ^12 || ^13.7 || ^14 || >=15.0.1}
     hasBin: true
+
+  /nanoid@4.0.2:
+    resolution: {integrity: sha512-7ZtY5KTCNheRGfEFxnedV5zFiORN1+Y1N6zvPTnHQd8ENUvfaDBeuJDZb2bN/oXwXxu3qkTXDzy57W5vAmDTBw==}
+    engines: {node: ^14 || ^16 || >=18}
+    hasBin: true
+    dev: false
 
   /nanomatch@1.2.13:
     resolution: {integrity: sha512-fpoe2T0RbHwBTBUOftAfBPaDEi06ufaUai0mE6Yn1kacc3SnTErfb/h+X94VXzI64rKFHYImXSvdwGGCmwOqCA==}
@@ -14150,9 +14159,9 @@ packages:
       picocolors: 1.0.0
     dev: true
 
-  /nanostores@0.7.1:
-    resolution: {integrity: sha512-7HenoVpZOjRudHCmAVWKloBTk3+Ozw49KuRWq/pNlEIIVS3x9dID+I5z3Rhjxl1muhHwv4dFhpT+0FebT9jvaA==}
-    engines: {node: ^14.0.0 || ^16.0.0 || >=18.0.0}
+  /nanostores@0.9.3:
+    resolution: {integrity: sha512-KobZjcVyNndNrb5DAjfs0WG0lRcZu5Q1BOrfTOxokFLi25zFrWPjg+joXC6kuDqNfSt9fQwppyjUBkRPtsL+8w==}
+    engines: {node: ^16.0.0 || ^18.0.0 || >=20.0.0}
     dev: false
 
   /napi-build-utils@1.0.2:
@@ -14914,8 +14923,8 @@ packages:
     engines: {node: '>=10.13.0'}
     hasBin: true
 
-  /pretty-bytes@6.0.0:
-    resolution: {integrity: sha512-6UqkYefdogmzqAZWzJ7laYeJnaXDy2/J+ZqiiMtS7t7OfpXWTlaeGMwX8U6EFvPV/YWWEKRkS8hKS4k60WHTOg==}
+  /pretty-bytes@6.1.0:
+    resolution: {integrity: sha512-Rk753HI8f4uivXi4ZCIYdhmG1V+WKzvRMg/X+M42a6t7D07RcmopXJMDNk6N++7Bl75URRGsb40ruvg7Hcp2wQ==}
     engines: {node: ^14.13.1 || >=16.0.0}
     dev: false
 
@@ -16115,8 +16124,8 @@ packages:
     resolution: {integrity: sha512-g9Q1haeby36OSStwb4ntCGGGaKsaVSjQ68fBxoQcutl5fS1vuY18H3wSt3jFyFtrkx+Kz0V1G85A4MyAdDMi2Q==}
     engines: {node: '>=8'}
 
-  /slugify@1.6.5:
-    resolution: {integrity: sha512-8mo9bslnBO3tr5PEVFzMPIWwWnipGS0xVbYf65zxDqfNwmzYn1LpiKNrR6DlClusuvo+hDHd1zKpmfAe83NQSQ==}
+  /slugify@1.6.6:
+    resolution: {integrity: sha512-h+z7HKHYXj6wJU+AnS/+IH8Uh9fdcX1Lrhg1/VMdf9PwoBQXFcXiAdsy2tSK0P6gKwJLXp02r90ahUCqHk9rrw==}
     engines: {node: '>=8.0.0'}
     dev: false
 
@@ -17205,14 +17214,6 @@ packages:
       detect-node-es: 1.1.0
       react: 18.2.0
       tslib: 2.5.0
-    dev: false
-
-  /use-sync-external-store@1.2.0(react@18.2.0):
-    resolution: {integrity: sha512-eEgnFxGQ1Ife9bzYs6VLi8/4X6CObHMw9Qr9tPY43iKwsPw8xE8+EFsf/2cFZ5S3esXgpWgtSCtLNS41F+sKPA==}
-    peerDependencies:
-      react: ^16.8.0 || ^17.0.0 || ^18.0.0
-    dependencies:
-      react: 18.2.0
     dev: false
 
   /use@3.1.1:

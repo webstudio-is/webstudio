@@ -18,6 +18,7 @@ module.exports = {
   serverDependenciesToBundle: [
     /@webstudio-is\/(?!prisma-client)/,
     "pretty-bytes",
+    "nanoid",
     "nanoevents",
     "nanostores",
     "@nanostores/react",
