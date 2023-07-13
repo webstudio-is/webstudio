@@ -755,21 +755,12 @@ importers:
         specifier: ^3.21.4
         version: 3.21.4
     devDependencies:
-      '@jest/globals':
-        specifier: ^29.6.1
-        version: 29.6.1
-      '@webstudio-is/jest-config':
-        specifier: workspace:^
-        version: link:../jest-config
       '@webstudio-is/scripts':
         specifier: workspace:^
         version: link:../scripts
       '@webstudio-is/tsconfig':
         specifier: workspace:^
         version: link:../tsconfig
-      jest:
-        specifier: ^29.6.1
-        version: 29.6.1(@types/node@18.11.18)
       typescript:
         specifier: 5.1.3
         version: 5.1.3
