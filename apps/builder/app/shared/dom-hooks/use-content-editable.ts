@@ -27,6 +27,11 @@ export const useContentEditable = ({
       return;
     }
 
+    // Nothing changed, do nothing
+    if (element.hasAttribute("contenteditable") === isEditing) {
+      return;
+    }
+    console.log({ isEditing });
     if (isEditing) {
       element.setAttribute("contenteditable", "plaintext-only");
       // the next frame is necessary when newly created element
@@ -38,15 +43,14 @@ export const useContentEditable = ({
       });
       return;
     }
-    if (element.hasAttribute("contenteditable")) {
-      element.removeAttribute("contenteditable");
-      // This is needed to force layout to recalc max-width when editing is done,
-      // because otherwise, layout will keep the value from before engaging contenteditable.
-      const { parentElement } = element;
-      if (parentElement) {
-        parentElement.removeChild(element);
-        parentElement.appendChild(element);
-      }
+
+    element.removeAttribute("contenteditable");
+    // This is needed to force layout to recalc max-width when editing is done,
+    // because otherwise, layout will keep the value from before engaging contenteditable.
+    const { parentElement } = element;
+    if (parentElement) {
+      parentElement.removeChild(element);
+      parentElement.appendChild(element);
     }
   }, [isEditing]);
 
