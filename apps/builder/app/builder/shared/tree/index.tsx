@@ -146,7 +146,6 @@ const TreeItem = ({
       {...handlers}
       isEditing={isEditing}
       prefix={prefix}
-      label={children?.toString()}
     >
       {children}
     </EditableTreeItemLabel>

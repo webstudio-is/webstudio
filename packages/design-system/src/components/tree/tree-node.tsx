@@ -371,7 +371,7 @@ export const TreeItemLabelBase: ForwardRefRenderFunction<
     children: React.ReactNode;
     prefix?: React.ReactNode;
   }
-> = ({ label, children, prefix, ...restProps }, ref) => {
+> = ({ children, prefix, ...restProps }, ref) => {
   return (
     <>
       {prefix}
