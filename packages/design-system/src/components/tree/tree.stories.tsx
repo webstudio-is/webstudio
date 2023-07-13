@@ -88,7 +88,6 @@ export const StressTest = () => {
         editingItemId={undefined}
         onItemEditingStart={() => {
           action("onItemEditingStart");
-          return;
         }}
         findClosestDroppableIndex={(itemSelector) => {
           return itemSelector.findIndex((itemId) => {

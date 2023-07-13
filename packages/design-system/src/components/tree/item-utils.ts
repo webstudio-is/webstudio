@@ -1,3 +1,4 @@
+import { useLayoutEffect, useRef } from "react";
 import type { ChildrenOrientation } from "../primitives/dnd/geometry-utils";
 
 export type ItemId = string;
@@ -49,4 +50,27 @@ export const areItemSelectorsEqual = (
     return false;
   }
   return left.join(",") === right.join(",");
+};
+
+export const useForceRecalStyle = <Element extends HTMLElement>(
+  property: string,
+  calculate: boolean
+) => {
+  const ref = useRef<Element>(null);
+  useLayoutEffect(() => {
+    const element = ref.current;
+    if (calculate === false || element === null) {
+      return;
+    }
+    element.style.setProperty(property, "initial");
+    const restore = () => {
+      element.style.removeProperty(property);
+    };
+    const requestId = requestAnimationFrame(restore);
+    return () => {
+      cancelAnimationFrame(requestId);
+      restore();
+    };
+  }, [calculate, property]);
+  return ref;
 };

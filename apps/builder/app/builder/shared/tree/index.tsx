@@ -23,7 +23,11 @@ import { useEditable } from "./use-editable";
 export const InstanceTree = (
   props: Omit<
     TreeProps<Instance>,
-    "renderItem" | "canLeaveParent" | "getItemChildren"
+    | "renderItem"
+    | "canLeaveParent"
+    | "getItemChildren"
+    | "editingItemId"
+    | "onItemEditingStart"
   >
 ) => {
   const metas = useStore(registeredComponentMetasStore);
@@ -85,10 +89,12 @@ export const InstanceTree = (
         return <></>;
       }
       const label = getInstanceLabel(props.itemData, meta);
+      const isEditing = props.itemData.id === editingItemId;
+
       return (
-        <TreeItemBody {...props} selectionEvent="focus">
+        <TreeItemBody {...props} selectionEvent="focus" isEditing={isEditing}>
           <TreeItem
-            isEditing={props.itemData.id === editingItemId}
+            isEditing={isEditing}
             onChangeValue={(val) => {
               updateInstanceLabel(props.itemData.id, val);
               editingItemIdStore.set(undefined);

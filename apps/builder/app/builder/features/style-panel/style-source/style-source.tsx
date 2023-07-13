@@ -233,6 +233,7 @@ const useForceRecalcStyle = <Element extends HTMLElement>(
     if (calculate === false || element === null) {
       return;
     }
+
     element.style.setProperty(property, "initial");
     const restore = () => {
       element.style.removeProperty(property);

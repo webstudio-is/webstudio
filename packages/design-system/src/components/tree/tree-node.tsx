@@ -5,7 +5,6 @@ import {
   useState,
   forwardRef,
   type ForwardRefRenderFunction,
-  useLayoutEffect,
 } from "react";
 import {
   ChevronFilledDownIcon,
@@ -21,8 +20,8 @@ import {
   type ItemId,
   type ItemSelector,
   areItemSelectorsEqual,
+  useForceRecalStyle,
 } from "./item-utils";
-import { mergeRefs } from "@react-aria/utils";
 
 export const INDENT = 16;
 const ITEM_HEIGHT = 32;
@@ -246,6 +245,7 @@ export type TreeItemRenderProps<Data extends { id: string }> = {
   onToggle: () => void;
 };
 
+const property = "max-width";
 export const TreeItemBody = <Data extends { id: string }>({
   isAlwaysExpanded,
   onSelect,
@@ -265,12 +265,14 @@ export const TreeItemBody = <Data extends { id: string }>({
   forceFocus = false,
   selectionEvent = "click",
   onToggle,
+  isEditing = false,
 }: TreeItemRenderProps<Data> & {
   children: React.ReactNode;
   suffix?: React.ReactNode;
   suffixWidth?: string;
   alwaysShowSuffix?: boolean;
   forceFocus?: boolean;
+  isEditing?: boolean;
   selectionEvent?: "click" | "focus";
 }) => {
   const [focusTarget, setFocusTarget] = useState<
@@ -278,6 +280,11 @@ export const TreeItemBody = <Data extends { id: string }>({
   >();
   const itemButtonRef = useRef<HTMLButtonElement>(null);
   const suffixContainerRef = useRef<HTMLDivElement>(null);
+  const itemContainerRef = useForceRecalStyle<HTMLDivElement>(
+    property,
+    isEditing
+  );
+
   const updateFocusTarget = () => {
     if (document.activeElement === itemButtonRef.current) {
       setFocusTarget("item-button");
@@ -328,6 +335,7 @@ export const TreeItemBody = <Data extends { id: string }>({
       onFocus={updateFocusTarget}
       onBlur={updateFocusTarget}
       css={{ [suffixWidthVar]: suffixWidth }}
+      ref={itemContainerRef}
     >
       <ItemButton
         type="button"
