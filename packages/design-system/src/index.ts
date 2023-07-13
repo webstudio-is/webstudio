@@ -86,12 +86,9 @@ export * from "./components/primitives/list";
 
 // Deprecated
 
-export * from "./components/__DEPRECATED__/text";
 export * from "./components/__DEPRECATED__/text2";
 export { DeprecatedButton } from "./components/__DEPRECATED__/button";
 export { DeprecatedIconButton } from "./components/__DEPRECATED__/icon-button";
-export { DeprecatedHeading } from "./components/__DEPRECATED__/heading";
-export { DeprecatedLabel } from "./components/__DEPRECATED__/label";
 export * from "./components/__DEPRECATED__/popover";
 export * from "./components/__DEPRECATED__/text-field";
 export * from "./components/__DEPRECATED__/list";
