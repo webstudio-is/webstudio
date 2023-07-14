@@ -309,7 +309,6 @@ const FlexChildSectionOrder = (props: RenderCategoryProps) => {
       />
       <ToggleGroupControl
         style={props.currentStyle}
-        onReset={() => deleteProperty("order")}
         onValueChange={(value) => {
           switch (value) {
             case "0":

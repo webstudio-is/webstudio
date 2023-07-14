@@ -6,6 +6,7 @@ import {
 import type { StyleInfo, StyleSource } from "../../shared/style-info";
 import { useState, type ReactElement } from "react";
 import { PropertyTooltip } from "../../shared/property-name";
+import type { StyleProperty } from "@webstudio-is/css-data";
 
 export type ToggleGroupControlProps = {
   style: StyleInfo;
@@ -19,7 +20,8 @@ export type ToggleGroupControlProps = {
     propertyValues: string | string[];
   }[];
   onValueChange?: (value: string) => void;
-  onReset: () => void;
+  onReset?: () => void;
+  properties?: StyleProperty[] | undefined;
 };
 
 const ToggleGroupButtonWithTooltip = ({
@@ -33,17 +35,19 @@ const ToggleGroupButtonWithTooltip = ({
   onTooltipOpenChange,
   onMouseEnter,
   style,
+  properties,
 }: {
   title: string;
   value: string;
   propertyValues: string | string[];
   description: React.ReactNode;
   children: ReactElement;
-  onReset: () => void;
+  onReset?: () => void;
   tooltipOpen: boolean;
   onTooltipOpenChange: (open: boolean) => void;
   onMouseEnter: (event: React.MouseEvent<HTMLButtonElement>) => void;
   style: StyleInfo;
+  properties?: StyleProperty[] | undefined;
 }) => {
   const scrollableContent = Array.isArray(propertyValues)
     ? propertyValues.map((propertyValue) => (
@@ -58,8 +62,9 @@ const ToggleGroupButtonWithTooltip = ({
       title={title}
       scrollableContent={scrollableContent}
       description={description}
-      properties={[]}
+      properties={properties ?? []}
       style={style}
+      onReset={onReset}
     >
       <ToggleGroupButton
         onMouseEnter={onMouseEnter}
@@ -84,6 +89,7 @@ export const ToggleGroupControl = ({
   onValueChange,
   onReset,
   style,
+  properties,
 }: ToggleGroupControlProps) => {
   // Issue: The tooltip's grace area is too big and overlaps with nearby buttons,
   // preventing the tooltip from changing when the buttons are hovered over in certain cases.
@@ -103,16 +109,20 @@ export const ToggleGroupControl = ({
       css={{ width: "fit-content" }}
     >
       {items.map(
-        ({ child, title, value, description, propertyValues }, index) => {
+        (
+          { child, title, value: itemValue, description, propertyValues },
+          index
+        ) => {
           return (
             <ToggleGroupButtonWithTooltip
               key={index}
               style={style}
               title={title}
               propertyValues={propertyValues}
+              properties={itemValue === value ? properties : []}
               description={description}
-              value={value}
-              onReset={onReset}
+              value={itemValue}
+              onReset={itemValue === value ? onReset : undefined}
               tooltipOpen={openTootips[index]}
               onTooltipOpenChange={(open) => {
                 setOpenTooltips((openTooltips) => {

@@ -208,6 +208,7 @@ export const TypographySectionAdvanced = (props: RenderCategoryProps) => {
           onValueChange={(value) => setTextAlign({ type: "keyword", value })}
           onReset={() => deleteProperty("textAlign")}
           value={String(getTextAlign(toValue(currentStyle.textAlign?.value)))}
+          properties={["textAlign"]}
           items={[
             {
               child: <TextAlignLeftIcon />,
@@ -248,6 +249,7 @@ export const TypographySectionAdvanced = (props: RenderCategoryProps) => {
             setTextDecorationLine({ type: "keyword", value })
           }
           onReset={() => deleteProperty("textDecorationLine")}
+          properties={["textDecorationLine"]}
           value={toValue(currentStyle.textDecorationLine?.value)}
           items={[
             {
@@ -288,6 +290,7 @@ export const TypographySectionAdvanced = (props: RenderCategoryProps) => {
           onValueChange={(value) =>
             setTextTransform({ type: "keyword", value })
           }
+          properties={["textTransform"]}
           onReset={() => deleteProperty("textTransform")}
           value={toValue(currentStyle.textTransform?.value)}
           items={[
@@ -330,6 +333,7 @@ export const TypographySectionAdvanced = (props: RenderCategoryProps) => {
           styleSource={getStyleSource(currentStyle.fontStyle)}
           onValueChange={(value) => setFontStyle({ type: "keyword", value })}
           onReset={() => deleteProperty("fontStyle")}
+          properties={["fontStyle"]}
           value={toValue(currentStyle.fontStyle?.value)}
           items={[
             {
@@ -401,6 +405,7 @@ export const TypographySectionAdvancedPopover = (
                 setDirection({ type: "keyword", value })
               }
               onReset={() => deleteProperty("direction")}
+              properties={["direction"]}
               value={toValue(currentStyle.direction?.value)}
               items={[
                 {
@@ -433,6 +438,7 @@ export const TypographySectionAdvancedPopover = (
               style={currentStyle}
               onValueChange={(value) => setHyphens({ type: "keyword", value })}
               onReset={() => deleteProperty("hyphens")}
+              properties={["hyphens"]}
               value={toValue(currentStyle.hyphens?.value)}
               items={[
                 {
@@ -467,6 +473,7 @@ export const TypographySectionAdvancedPopover = (
                 setTextOverflow({ type: "keyword", value })
               }
               onReset={() => deleteProperty("textOverflow")}
+              properties={["textOverflow"]}
               value={toValue(currentStyle.textOverflow?.value)}
               items={[
                 {
