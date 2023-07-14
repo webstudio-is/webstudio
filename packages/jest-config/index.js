@@ -3,6 +3,9 @@
  */
 module.exports = {
   testEnvironment: "node",
+  testEnvironmentOptions: {
+    customExportConditions: ["source"],
+  },
   testMatch: ["<rootDir>/src/**/*.test.ts"],
   transform: {
     "^.+\\.tsx?$": [

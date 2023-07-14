@@ -132,27 +132,39 @@ export const SizeSection = ({
           onReset={() => deleteProperty("overflow")}
         />
         <ToggleGroupControl
-          onReset={() => deleteProperty("overflow")}
+          style={style}
           items={[
             {
               child: <EyeconOpenIcon />,
-              label: "Visible",
+              title: "Overflow",
+              description:
+                "Content is fully visible and extends beyond the container if it exceeds its size.",
               value: "visible",
+              propertyValues: "overflow: visible;",
             },
             {
               child: <EyeconClosedIcon />,
-              label: "Hidden",
+              title: "Overflow",
+              description:
+                "Content that exceeds the container's size is clipped and hidden without scrollbars.",
               value: "hidden",
+              propertyValues: "overflow: hidden;",
             },
             {
               child: <ScrollIcon />,
-              label: "Scroll",
+              title: "Overflow",
+              description:
+                "Scrollbars are added to the container, allowing users to scroll and view the exceeding content.",
               value: "scroll",
+              propertyValues: "overflow: scroll;",
             },
             {
               child: <AutoScrollIcon />,
-              label: "Auto",
+              title: "Overflow",
+              description:
+                "Scrollbars are added to the container only when necessary, based on the content size.",
               value: "auto",
+              propertyValues: "overflow: auto;",
             },
           ]}
           value={toValue(style.overflow?.value)}

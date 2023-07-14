@@ -79,7 +79,7 @@ export const renderProperty = ({
   }
 
   return (
-    <Grid key={property} css={{ gridTemplateColumns: "4fr 6fr" }}>
+    <Grid key={property} css={{ gridTemplateColumns: "4fr 6fr" }} gap={2}>
       <PropertyName
         style={currentStyle}
         properties={[property]}

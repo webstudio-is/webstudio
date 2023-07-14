@@ -15,14 +15,14 @@
     "checks": "pnpm typecheck && pnpm test"
   },
   "devDependencies": {
-    "@jest/globals": "^29.3.1",
+    "@jest/globals": "^29.6.1",
     "@remix-run/react": "^1.18.1",
     "@types/react": "^18.0.35",
     "@types/react-dom": "^18.0.11",
     "@webstudio-is/jest-config": "workspace:^",
     "@webstudio-is/scripts": "workspace:^",
     "@webstudio-is/tsconfig": "workspace:^",
-    "jest": "^29.3.1",
+    "jest": "^29.6.1",
     "react": "^18.2.0",
     "react-dom": "^18.2.0",
     "type-fest": "^3.7.1",
