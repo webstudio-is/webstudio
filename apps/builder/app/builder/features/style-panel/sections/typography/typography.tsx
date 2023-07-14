@@ -404,8 +404,6 @@ export const TypographySectionAdvancedPopover = (
               onValueChange={(value) =>
                 setDirection({ type: "keyword", value })
               }
-              onReset={() => deleteProperty("direction")}
-              properties={["direction"]}
               value={toValue(currentStyle.direction?.value)}
               items={[
                 {
@@ -437,8 +435,6 @@ export const TypographySectionAdvancedPopover = (
             <ToggleGroupControl
               style={currentStyle}
               onValueChange={(value) => setHyphens({ type: "keyword", value })}
-              onReset={() => deleteProperty("hyphens")}
-              properties={["hyphens"]}
               value={toValue(currentStyle.hyphens?.value)}
               items={[
                 {
@@ -472,8 +468,6 @@ export const TypographySectionAdvancedPopover = (
               onValueChange={(value) =>
                 setTextOverflow({ type: "keyword", value })
               }
-              onReset={() => deleteProperty("textOverflow")}
-              properties={["textOverflow"]}
               value={toValue(currentStyle.textOverflow?.value)}
               items={[
                 {
