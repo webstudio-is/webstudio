@@ -11,15 +11,8 @@ import {
   Flex,
 } from "@webstudio-is/design-system";
 import { ChevronDownIcon } from "@webstudio-is/icons";
-import {
-  useEffect,
-  useLayoutEffect,
-  useRef,
-  type KeyboardEvent,
-  type KeyboardEventHandler,
-  type FocusEvent,
-  type ReactNode,
-} from "react";
+import { useLayoutEffect, useRef, type ReactNode } from "react";
+import { useContentEditable } from "~/shared/dom-hooks";
 
 const menuTriggerVisibilityVar = cssVars.define("menu-trigger-visibility");
 const menuTriggerVisibilityOverrideVar = cssVars.define(
@@ -109,79 +102,6 @@ const Menu = (props: MenuProps) => {
 
 export type ItemSource = "token" | "tag" | "local";
 
-const useEditableText = ({
-  isEditable,
-  isEditing,
-  onChangeEditing,
-  onChangeValue,
-}: {
-  isEditable: boolean;
-  isEditing: boolean;
-  onChangeEditing: (isEditing: boolean) => void;
-  onChangeValue: (value: string) => void;
-}) => {
-  const elementRef = useRef<HTMLDivElement>(null);
-  const lastValueRef = useRef<string>("");
-  const getValue = () => elementRef.current?.textContent ?? "";
-
-  useEffect(() => {
-    const element = elementRef.current;
-    if (element === null) {
-      return;
-    }
-
-    if (isEditing) {
-      element.setAttribute("contenteditable", "plaintext-only");
-      // the next frame is necessary when newly created element
-      // need to get focus, for example after duplicate operation
-      requestAnimationFrame(() => {
-        element.focus();
-        getSelection()?.selectAllChildren(element);
-        lastValueRef.current = getValue();
-      });
-      return;
-    }
-
-    element.removeAttribute("contenteditable");
-  }, [isEditing]);
-
-  const handleFinishEditing = (
-    event: KeyboardEvent<Element> | FocusEvent<Element>
-  ) => {
-    event.preventDefault();
-    if (isEditing) {
-      onChangeEditing(false);
-    }
-    onChangeValue(getValue());
-    lastValueRef.current = "";
-  };
-
-  const handleKeyDown: KeyboardEventHandler = (event) => {
-    if (event.key === "Enter") {
-      handleFinishEditing(event);
-      return;
-    }
-    if (event.key === "Escape" && elementRef.current !== null) {
-      elementRef.current.textContent = lastValueRef.current;
-      handleFinishEditing(event);
-    }
-  };
-
-  const handleDoubleClick = () => {
-    if (isEditable) {
-      onChangeEditing(true);
-    }
-  };
-
-  const handlers = {
-    onKeyDown: handleKeyDown,
-    onBlur: handleFinishEditing,
-    onDoubleClick: handleDoubleClick,
-  };
-
-  return { ref: elementRef, handlers };
-};
-
 type EditableTextProps = {
   label: string;
   isEditable: boolean;
@@ -197,7 +117,7 @@ const EditableText = ({
   onChangeEditing,
   onChangeValue,
 }: EditableTextProps) => {
-  const { ref, handlers } = useEditableText({
+  const { ref, handlers } = useContentEditable({
     isEditable,
     isEditing,
     onChangeEditing,
