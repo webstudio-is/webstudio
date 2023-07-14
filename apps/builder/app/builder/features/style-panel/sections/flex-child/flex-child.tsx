@@ -360,7 +360,7 @@ const FlexChildSectionOrderPopover = (props: RenderCategoryProps) => {
       title="Order"
       content={
         <Grid css={{ padding: theme.spacing[9] }}>
-          <Grid css={{ gridTemplateColumns: "4fr 6fr" }}>
+          <Grid css={{ gridTemplateColumns: "4fr 6fr" }} gap={2}>
             <PropertyName
               style={currentStyle}
               properties={["order"]}

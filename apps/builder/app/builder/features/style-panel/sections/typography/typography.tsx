@@ -81,7 +81,7 @@ export const TypographySectionFont = (props: RenderCategoryProps) => {
         gap: theme.spacing[5],
       }}
     >
-      <Grid css={{ gridTemplateColumns: "4fr 6fr" }}>
+      <Grid css={{ gridTemplateColumns: "4fr 6fr" }} gap={2}>
         <PropertyName
           style={currentStyle}
           label="Font"
@@ -95,7 +95,7 @@ export const TypographySectionFont = (props: RenderCategoryProps) => {
           deleteProperty={deleteProperty}
         />
       </Grid>
-      <Grid css={{ gridTemplateColumns: "4fr 6fr" }}>
+      <Grid css={{ gridTemplateColumns: "4fr 6fr" }} gap={2}>
         <PropertyName
           style={currentStyle}
           label="Weight"
@@ -109,7 +109,7 @@ export const TypographySectionFont = (props: RenderCategoryProps) => {
           deleteProperty={deleteProperty}
         />
       </Grid>
-      <Grid css={{ gridTemplateColumns: "4fr 6fr" }}>
+      <Grid css={{ gridTemplateColumns: "4fr 6fr" }} gap={2}>
         <PropertyName
           style={currentStyle}
           label="Color"
@@ -363,8 +363,14 @@ export const TypographySectionAdvancedPopover = (
     <FloatingPanel
       title="Advanced Typography"
       content={
-        <Grid css={{ padding: theme.spacing[9], gap: theme.spacing[9] }}>
-          <Grid css={{ gridTemplateColumns: "4fr 6fr" }}>
+        <Grid
+          css={{
+            padding: theme.spacing[9],
+            gap: theme.spacing[9],
+            width: theme.spacing[30],
+          }}
+        >
+          <Grid css={{ gridTemplateColumns: "4fr 6fr" }} gap={2}>
             <PropertyName
               style={currentStyle}
               properties={["whiteSpace"]}
