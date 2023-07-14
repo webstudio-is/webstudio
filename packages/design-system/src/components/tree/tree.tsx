@@ -45,7 +45,6 @@ export type TreeProps<Data extends { id: string }> = {
   }) => void;
   onCancel: () => void;
   editingItemId: ItemId | undefined;
-  onItemEditingStart: (itemId: ItemId) => void;
 };
 
 const sharedDropOptions = {
@@ -78,7 +77,6 @@ export const Tree = <Data extends { id: string }>({
   onDragEnd,
   onCancel,
   editingItemId,
-  onItemEditingStart,
 }: TreeProps<Data>) => {
   const { getIsExpanded, setIsExpanded } = useExpandState({
     selectedItemSelector,
@@ -264,7 +262,6 @@ export const Tree = <Data extends { id: string }>({
     setIsExpanded,
     onEsc: dragHandlers.cancelCurrentDrag,
     editingItemId,
-    onItemEditingStart,
   });
 
   return (
@@ -289,7 +286,6 @@ export const Tree = <Data extends { id: string }>({
         onBlur={keyboardNavigation.handleBlur}
         onKeyDown={keyboardNavigation.handleKeyDown}
         onClick={keyboardNavigation.handleClick}
-        onDoubleClick={keyboardNavigation.handleDoubleClick}
       >
         <TreeNode
           renderItem={renderItem}
@@ -330,7 +326,6 @@ const useKeyboardNavigation = <Data extends { id: string }>({
   setIsExpanded,
   onEsc,
   editingItemId,
-  onItemEditingStart,
 }: {
   root: Data;
   selectedItemSelector: undefined | ItemSelector;
@@ -340,7 +335,6 @@ const useKeyboardNavigation = <Data extends { id: string }>({
   setIsExpanded: (itemSelector: ItemSelector, isExpanded: boolean) => void;
   onEsc: () => void;
   editingItemId: ItemId | undefined;
-  onItemEditingStart: (itemId: ItemId) => void;
 }) => {
   const flatCurrentlyExpandedTree = useMemo(() => {
     const result: ItemSelector[] = [];
@@ -478,20 +472,6 @@ const useKeyboardNavigation = <Data extends { id: string }>({
     },
     handleBlur() {
       hadFocus.current = false;
-    },
-    handleDoubleClick(event: React.MouseEvent<Element>) {
-      const itemButton = (event.target as HTMLElement).closest(
-        "[data-item-button-id]"
-      );
-      if (itemButton === null || !(itemButton instanceof HTMLElement)) {
-        return;
-      }
-
-      const itemId = itemButton.dataset.itemButtonId;
-      if (itemId === undefined) {
-        return;
-      }
-      onItemEditingStart(itemId);
     },
   };
 };

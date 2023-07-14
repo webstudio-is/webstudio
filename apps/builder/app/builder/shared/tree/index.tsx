@@ -18,16 +18,12 @@ import {
   registeredComponentMetasStore,
 } from "~/shared/nano-states";
 import { MetaIcon } from "../meta-icon";
-import { useEditable } from "./use-editable";
+import { useContentEditable } from "~/shared/dom-hooks";
 
 export const InstanceTree = (
   props: Omit<
     TreeProps<Instance>,
-    | "renderItem"
-    | "canLeaveParent"
-    | "getItemChildren"
-    | "editingItemId"
-    | "onItemEditingStart"
+    "renderItem" | "canLeaveParent" | "getItemChildren" | "editingItemId"
   >
 ) => {
   const metas = useStore(registeredComponentMetasStore);
@@ -94,10 +90,15 @@ export const InstanceTree = (
       return (
         <TreeItemBody {...props} selectionEvent="focus" isEditing={isEditing}>
           <TreeItem
+            isEditable={true}
             isEditing={isEditing}
             onChangeValue={(val) => {
               updateInstanceLabel(props.itemData.id, val);
-              editingItemIdStore.set(undefined);
+            }}
+            onChangeEditing={(isEditing) => {
+              editingItemIdStore.set(
+                isEditing === true ? props.itemData.id : undefined
+              );
             }}
             prefix={<MetaIcon icon={meta.icon} />}
           >
@@ -116,9 +117,6 @@ export const InstanceTree = (
       getItemChildren={getItemChildren}
       renderItem={renderItem}
       editingItemId={editingItemId}
-      onItemEditingStart={(instanceId) => {
-        editingItemIdStore.set(instanceId);
-      }}
     />
   );
 };
@@ -131,19 +129,25 @@ export const getInstanceLabel = (
 };
 
 const TreeItem = ({
-  onChangeValue,
-  isEditing,
   prefix,
   children,
+  isEditing,
+  isEditable = false,
+  onChangeValue,
+  onChangeEditing,
 }: {
+  isEditable: boolean;
   isEditing: boolean;
   prefix?: React.ReactNode;
   children: React.ReactNode;
   onChangeValue: (value: string) => void;
+  onChangeEditing: (isEditing: boolean) => void;
 }) => {
-  const { ref, handlers } = useEditable({
+  const { ref, handlers } = useContentEditable({
+    isEditable,
     isEditing,
     onChangeValue,
+    onChangeEditing,
   });
 
   return (
