@@ -1,4 +1,5 @@
 import { useCallback, useEffect } from "react";
+import { useUnmount } from "react-use";
 import { type Publish, usePublish } from "~/shared/pubsub";
 import type { Build } from "@webstudio-is/project-build";
 import type { Project } from "@webstudio-is/project";
@@ -22,6 +23,7 @@ import {
 } from "./features/workspace";
 import { usePublishShortcuts } from "./shared/shortcuts";
 import {
+  pagesStore,
   projectStore,
   useIsPreviewMode,
   useSetAssets,
@@ -247,6 +249,10 @@ export const Builder = ({
   useSetStyleSources(build.styleSources);
   useSetStyleSourceSelections(build.styleSourceSelections);
   useSetInstances(build.instances);
+
+  useUnmount(() => {
+    pagesStore.set(undefined);
+  });
 
   useSyncPageUrl();
 
