@@ -67,7 +67,7 @@ export const NavigatorTree = () => {
       }
     }
     return Array.from(dragComponents);
-  }, [dragPayload, instances]);
+  }, [dragPayload, instances, metas]);
 
   const findClosestDroppableIndex = useCallback(
     (instanceSelector: InstanceSelector) => {
