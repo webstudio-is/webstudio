@@ -1,7 +1,10 @@
 import { useCallback, useMemo } from "react";
 import { useStore } from "@nanostores/react";
 import { shallowEqual } from "shallow-equal";
-import type { Instance } from "@webstudio-is/project-build";
+import {
+  findTreeInstanceIds,
+  type Instance,
+} from "@webstudio-is/project-build";
 import {
   hoveredInstanceSelectorStore,
   instancesStore,
@@ -18,6 +21,7 @@ import {
   reparentInstance,
 } from "~/shared/instance-utils";
 import { InstanceTree } from "./tree";
+import { generateDataFromEmbedTemplate } from "@webstudio-is/react-sdk";
 
 export const NavigatorTree = () => {
   const selectedInstanceSelector = useStore(selectedInstanceSelectorStore);
@@ -33,24 +37,40 @@ export const NavigatorTree = () => {
       ? dragPayload.dragInstanceSelector
       : undefined;
 
-  const dragComponent = useMemo(() => {
-    let dragComponent: undefined | string;
+  // collect components of drag component and all its descendants
+  const dragComponents = useMemo(() => {
+    const dragComponents = new Set<Instance["component"]>();
     if (dragPayload?.type === "insert") {
-      dragComponent = dragPayload.dragComponent;
+      const template = metas.get(dragPayload.dragComponent)?.template;
+      if (template) {
+        // ignore breakpoint, here only instances are important
+        // @todo optimize by traversing only instances
+        const { instances } = generateDataFromEmbedTemplate(
+          template,
+          "__placeholder__"
+        );
+        for (const instance of instances) {
+          dragComponents.add(instance.component);
+        }
+      }
     }
     if (dragPayload?.type === "reparent") {
-      dragComponent = instances.get(
+      const instanceIds = findTreeInstanceIds(
+        instances,
         dragPayload.dragInstanceSelector[0]
-      )?.component;
+      );
+      for (const instanceId of instanceIds) {
+        const instance = instances.get(instanceId);
+        if (instance) {
+          dragComponents.add(instance.component);
+        }
+      }
     }
-    return dragComponent;
-  }, [dragPayload, instances]);
+    return Array.from(dragComponents);
+  }, [dragPayload, instances, metas]);
 
   const findClosestDroppableIndex = useCallback(
     (instanceSelector: InstanceSelector) => {
-      if (dragComponent === undefined) {
-        return -1;
-      }
       const componentSelector: string[] = [];
       for (const instanceId of instanceSelector) {
         const component = instances.get(instanceId)?.component;
@@ -59,11 +79,13 @@ export const NavigatorTree = () => {
         }
         componentSelector.push(component);
       }
-      return findClosestDroppableComponentIndex(metas, componentSelector, [
-        dragComponent,
-      ]);
+      return findClosestDroppableComponentIndex(
+        metas,
+        componentSelector,
+        dragComponents
+      );
     },
-    [instances, metas, dragComponent]
+    [instances, metas, dragComponents]
   );
 
   const isItemHidden = useCallback(

@@ -1,5 +1,8 @@
 import { useLayoutEffect, useRef } from "react";
-import type { Instance } from "@webstudio-is/project-build";
+import {
+  findTreeInstanceIds,
+  type Instance,
+} from "@webstudio-is/project-build";
 import {
   type Point,
   type Placement,
@@ -29,6 +32,7 @@ import {
   type InstanceSelector,
   areInstanceSelectorsEqual,
 } from "~/shared/tree-utils";
+import { generateDataFromEmbedTemplate } from "@webstudio-is/react-sdk";
 
 declare module "~/shared/pubsub" {
   export interface PubsubMap {
@@ -61,17 +65,34 @@ const findClosestDroppableInstanceSelector = (
   dragPayload: DragStartPayload
 ) => {
   const instances = instancesStore.get();
-  let dragComponent: undefined | string;
-  if (dragPayload.type === "insert") {
-    dragComponent = dragPayload.dragComponent;
+  const metas = registeredComponentMetasStore.get();
+
+  const dragComponents = new Set<Instance["component"]>();
+  if (dragPayload?.type === "insert") {
+    const template = metas.get(dragPayload.dragComponent)?.template;
+    if (template) {
+      // ignore breakpoint, here only instances are important
+      // @todo optimize by traversing only instances
+      const { instances } = generateDataFromEmbedTemplate(
+        template,
+        "__placeholder__"
+      );
+      for (const instance of instances) {
+        dragComponents.add(instance.component);
+      }
+    }
   }
-  if (dragPayload.type === "reparent") {
-    dragComponent = instances.get(
+  if (dragPayload?.type === "reparent") {
+    const instanceIds = findTreeInstanceIds(
+      instances,
       dragPayload.dragInstanceSelector[0]
-    )?.component;
-  }
-  if (dragComponent === undefined) {
-    return;
+    );
+    for (const instanceId of instanceIds) {
+      const instance = instances.get(instanceId);
+      if (instance) {
+        dragComponents.add(instance.component);
+      }
+    }
   }
 
   const componentSelector: string[] = [];
@@ -86,7 +107,7 @@ const findClosestDroppableInstanceSelector = (
   const droppableIndex = findClosestDroppableComponentIndex(
     registeredComponentMetasStore.get(),
     componentSelector,
-    [dragComponent]
+    Array.from(dragComponents)
   );
   if (droppableIndex === -1) {
     return;
