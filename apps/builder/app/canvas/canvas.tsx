@@ -45,7 +45,8 @@ import { useWindowResizeDebounced } from "~/shared/dom-hooks";
 import { subscribeInstanceSelection } from "./instance-selection";
 import { subscribeInstanceHovering } from "./instance-hovering";
 import { useHashLinkSync } from "~/shared/pages";
-import { useMount } from "~/shared/hook-utils/use-mount";
+// eslint-disable-next-line import/no-internal-modules
+import useMount from "react-use/lib/useMount";
 
 registerContainers();
 
