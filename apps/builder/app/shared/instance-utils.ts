@@ -4,9 +4,9 @@ import {
   findTreeInstanceIdsExcludingSlotDescendants,
 } from "@webstudio-is/project-build";
 import {
-  type WsEmbedTemplate,
   type WsComponentMeta,
   generateDataFromEmbedTemplate,
+  type EmbedTemplateData,
 } from "@webstudio-is/react-sdk";
 import {
   propsStore,
@@ -162,16 +162,10 @@ export const findClosestDroppableTarget = (
   };
 };
 
-export const insertTemplate = (
-  template: WsEmbedTemplate,
+export const insertTemplateData = (
+  templateData: EmbedTemplateData,
   dropTarget: DroppableTarget
 ) => {
-  const breakpoints = breakpointsStore.get();
-  const breakpointValues = Array.from(breakpoints.values());
-  const baseBreakpoint = breakpointValues.find(isBaseBreakpoint);
-  if (baseBreakpoint === undefined) {
-    return;
-  }
   const {
     children,
     instances: insertedInstances,
@@ -180,7 +174,7 @@ export const insertTemplate = (
     styleSourceSelections: insertedStyleSourceSelections,
     styleSources: insertedStyleSources,
     styles: insertedStyles,
-  } = generateDataFromEmbedTemplate(template, baseBreakpoint.id);
+  } = templateData;
   const rootInstanceId = insertedInstances[0].id;
   store.createTransaction(
     [
@@ -247,7 +241,17 @@ export const insertNewComponentInstance = (
       children: [],
     },
   ];
-  insertTemplate(template, dropTarget);
+  const breakpoints = breakpointsStore.get();
+  const breakpointValues = Array.from(breakpoints.values());
+  const baseBreakpoint = breakpointValues.find(isBaseBreakpoint);
+  if (baseBreakpoint === undefined) {
+    return;
+  }
+  const templateData = generateDataFromEmbedTemplate(
+    template,
+    baseBreakpoint.id
+  );
+  insertTemplateData(templateData, dropTarget);
 };
 
 export const reparentInstance = (

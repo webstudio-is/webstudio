@@ -297,3 +297,7 @@ export const generateDataFromEmbedTemplate = (
     styles,
   };
 };
+
+export type EmbedTemplateData = ReturnType<
+  typeof generateDataFromEmbedTemplate
+>;
