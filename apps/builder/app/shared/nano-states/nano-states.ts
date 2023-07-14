@@ -27,7 +27,8 @@ import {
 } from "@webstudio-is/react-sdk";
 import type { Style } from "@webstudio-is/css-data";
 import type { DragStartPayload } from "~/canvas/shared/use-drag-drop";
-import { useMount } from "~/shared/hook-utils/use-mount";
+// eslint-disable-next-line import/no-internal-modules
+import useMount from "react-use/lib/useMount";
 import { shallowComputed } from "../store-utils";
 import { type InstanceSelector } from "../tree-utils";
 import type { htmlTags as HtmlTags } from "html-tags";
