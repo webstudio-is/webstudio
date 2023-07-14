@@ -276,7 +276,7 @@ export const BackgroundContent = (props: BackgroundContentProps) => {
                   items={[
                     {
                       child: <CrossSmallIcon />,
-                      title: "BackgroundRepeat",
+                      title: "Background Repeat",
                       description:
                         "This value indicates that the background image will not be repeated and will appear only once.",
                       value: "no-repeat",
@@ -284,7 +284,7 @@ export const BackgroundContent = (props: BackgroundContentProps) => {
                     },
                     {
                       child: <RepeatGridIcon />,
-                      title: "BackgroundRepeat",
+                      title: "Background Repeat",
                       description:
                         "This value indicates that the background image will be repeated both horizontally and vertically to fill the entire background area.",
                       value: "repeat",
@@ -292,7 +292,7 @@ export const BackgroundContent = (props: BackgroundContentProps) => {
                     },
                     {
                       child: <RepeatColumnIcon />,
-                      title: "BackgroundRepeat",
+                      title: "Background Repeat",
                       description:
                         "This value indicates that the background image will be repeated only vertically.",
                       value: "repeat-y",
@@ -300,7 +300,7 @@ export const BackgroundContent = (props: BackgroundContentProps) => {
                     },
                     {
                       child: <RepeatRowIcon />,
-                      title: "BackgroundRepeat",
+                      title: "Background Repeat",
                       description:
                         "This value indicates that the background image will be repeated only horizontally.",
                       value: "repeat-x",
