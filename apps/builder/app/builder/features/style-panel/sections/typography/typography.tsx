@@ -203,6 +203,7 @@ export const TypographySectionAdvanced = (props: RenderCategoryProps) => {
         }}
       >
         <ToggleGroupControl
+          style={currentStyle}
           styleSource={getStyleSource(currentStyle.textAlign)}
           onValueChange={(value) => setTextAlign({ type: "keyword", value })}
           onReset={() => deleteProperty("textAlign")}
@@ -241,6 +242,7 @@ export const TypographySectionAdvanced = (props: RenderCategoryProps) => {
           ]}
         />
         <ToggleGroupControl
+          style={currentStyle}
           styleSource={getStyleSource(currentStyle.textDecorationLine)}
           onValueChange={(value) =>
             setTextDecorationLine({ type: "keyword", value })
@@ -281,6 +283,7 @@ export const TypographySectionAdvanced = (props: RenderCategoryProps) => {
         }}
       >
         <ToggleGroupControl
+          style={currentStyle}
           styleSource={getStyleSource(currentStyle.textTransform)}
           onValueChange={(value) =>
             setTextTransform({ type: "keyword", value })
@@ -323,6 +326,7 @@ export const TypographySectionAdvanced = (props: RenderCategoryProps) => {
           ]}
         />
         <ToggleGroupControl
+          style={currentStyle}
           styleSource={getStyleSource(currentStyle.fontStyle)}
           onValueChange={(value) => setFontStyle({ type: "keyword", value })}
           onReset={() => deleteProperty("fontStyle")}
@@ -392,6 +396,7 @@ export const TypographySectionAdvancedPopover = (
               onReset={() => deleteProperty("direction")}
             />
             <ToggleGroupControl
+              style={currentStyle}
               onValueChange={(value) =>
                 setDirection({ type: "keyword", value })
               }
@@ -425,6 +430,7 @@ export const TypographySectionAdvancedPopover = (
               onReset={() => deleteProperty("hyphens")}
             />
             <ToggleGroupControl
+              style={currentStyle}
               onValueChange={(value) => setHyphens({ type: "keyword", value })}
               onReset={() => deleteProperty("hyphens")}
               value={toValue(currentStyle.hyphens?.value)}
@@ -456,6 +462,7 @@ export const TypographySectionAdvancedPopover = (
               onReset={() => deleteProperty("textOverflow")}
             />
             <ToggleGroupControl
+              style={currentStyle}
               onValueChange={(value) =>
                 setTextOverflow({ type: "keyword", value })
               }

@@ -132,6 +132,7 @@ export const SizeSection = ({
           onReset={() => deleteProperty("overflow")}
         />
         <ToggleGroupControl
+          style={style}
           onReset={() => deleteProperty("overflow")}
           items={[
             {

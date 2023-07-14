@@ -3,11 +3,12 @@ import {
   ToggleGroup,
   ToggleGroupButton,
 } from "@webstudio-is/design-system";
-import type { StyleSource } from "../../shared/style-info";
-import { ValueTooltip } from "../../shared/value-tooltip";
+import type { StyleInfo, StyleSource } from "../../shared/style-info";
 import { useState, type ReactElement } from "react";
+import { PropertyTooltip } from "../../shared/property-name";
 
 export type ToggleGroupControlProps = {
+  style: StyleInfo;
   styleSource?: StyleSource;
   value: string;
   items: {
@@ -31,6 +32,7 @@ const ToggleGroupButtonWithTooltip = ({
   tooltipOpen,
   onTooltipOpenChange,
   onMouseEnter,
+  style,
 }: {
   title: string;
   value: string;
@@ -41,14 +43,23 @@ const ToggleGroupButtonWithTooltip = ({
   tooltipOpen: boolean;
   onTooltipOpenChange: (open: boolean) => void;
   onMouseEnter: (event: React.MouseEvent<HTMLButtonElement>) => void;
+  style: StyleInfo;
 }) => {
+  const scrollableContent = Array.isArray(propertyValues)
+    ? propertyValues.map((propertyValue) => (
+        <div key={propertyValue}>{propertyValue}</div>
+      ))
+    : propertyValues;
+
   return (
-    <ValueTooltip
+    <PropertyTooltip
       open={tooltipOpen}
       onOpenChange={onTooltipOpenChange}
       title={title}
-      propertyValues={propertyValues}
+      scrollableContent={scrollableContent}
       description={description}
+      properties={[]}
+      style={style}
     >
       <ToggleGroupButton
         onMouseEnter={onMouseEnter}
@@ -61,7 +72,7 @@ const ToggleGroupButtonWithTooltip = ({
       >
         <Flex>{children}</Flex>
       </ToggleGroupButton>
-    </ValueTooltip>
+    </PropertyTooltip>
   );
 };
 
@@ -72,6 +83,7 @@ export const ToggleGroupControl = ({
   items = [],
   onValueChange,
   onReset,
+  style,
 }: ToggleGroupControlProps) => {
   // Issue: The tooltip's grace area is too big and overlaps with nearby buttons,
   // preventing the tooltip from changing when the buttons are hovered over in certain cases.
@@ -95,6 +107,7 @@ export const ToggleGroupControl = ({
           return (
             <ToggleGroupButtonWithTooltip
               key={index}
+              style={style}
               title={title}
               propertyValues={propertyValues}
               description={description}

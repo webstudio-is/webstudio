@@ -264,6 +264,7 @@ export const BackgroundContent = (props: BackgroundContentProps) => {
 
               <Flex css={{ justifySelf: "end" }}>
                 <ToggleGroupControl
+                  style={props.currentStyle}
                   styleSource={"default"}
                   onValueChange={(value) =>
                     setProperty("backgroundRepeat")({

@@ -58,6 +58,7 @@ const FlexChildSectionAlign = (props: RenderCategoryProps) => {
         onReset={() => deleteProperty("alignSelf")}
       />
       <ToggleGroupControl
+        style={props.currentStyle}
         onValueChange={(value) => setAlignSelf({ type: "keyword", value })}
         onReset={() => deleteProperty("alignSelf")}
         value={toValue(currentStyle.alignSelf?.value)}
@@ -132,6 +133,7 @@ const FlexChildSectionSizing = (props: RenderCategoryProps) => {
         onReset={onReset}
       />
       <ToggleGroupControl
+        style={props.currentStyle}
         onReset={onReset}
         onValueChange={(value) => {
           switch (value) {
@@ -306,6 +308,7 @@ const FlexChildSectionOrder = (props: RenderCategoryProps) => {
         onReset={() => deleteProperty("order")}
       />
       <ToggleGroupControl
+        style={props.currentStyle}
         onReset={() => deleteProperty("order")}
         onValueChange={(value) => {
           switch (value) {
