@@ -2,6 +2,10 @@ import { type Options, useHotkeys } from "react-hotkeys-hook";
 import store from "immerhin";
 import { deleteSelectedInstance } from "../instance-utils";
 import { selectBreakpointByOrder } from "../breakpoints";
+import {
+  editingItemIdStore,
+  selectedInstanceSelectorStore,
+} from "../nano-states";
 
 export const shortcuts = {
   esc: "esc",
@@ -48,6 +52,20 @@ export const useSharedShortcuts = ({
       enableOnFormTags: source === "canvas",
       enableOnContentEditable: false,
     },
+    []
+  );
+
+  useHotkeys(
+    "meta+e, 'ctrl+e",
+    () => {
+      const selectedInstanceSelector = selectedInstanceSelectorStore.get();
+      if (selectedInstanceSelector === undefined) {
+        return;
+      }
+      const targetInstanceId = selectedInstanceSelector[0];
+      editingItemIdStore.set(targetInstanceId);
+    },
+    {},
     []
   );
 

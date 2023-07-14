@@ -2,12 +2,15 @@ import { atom, computed } from "nanostores";
 import type { Instance, Instances } from "@webstudio-is/project-build";
 import type { InstanceSelector } from "../tree-utils";
 import { useSyncInitializeOnce } from "../hook-utils";
+import type { ItemId } from "node_modules/@webstudio-is/design-system/src/components/tree/item-utils";
 
 export const isResizingCanvasStore = atom(false);
 
 export const selectedInstanceSelectorStore = atom<undefined | InstanceSelector>(
   undefined
 );
+
+export const editingItemIdStore = atom<undefined | ItemId>(undefined);
 
 export const textEditingInstanceSelectorStore = atom<
   undefined | InstanceSelector

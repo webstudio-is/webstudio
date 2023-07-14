@@ -84,6 +84,7 @@ export const StressTest = () => {
   return (
     <Flex css={{ width: 300, height: 500, flexDirection: "column" }}>
       <Tree
+        editingItemId={undefined}
         findClosestDroppableIndex={(itemSelector) => {
           return itemSelector.findIndex((itemId) => {
             const item = findItemById(root, itemId);

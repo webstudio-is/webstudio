@@ -11,7 +11,7 @@ import {
   Flex,
 } from "@webstudio-is/design-system";
 import { ChevronDownIcon } from "@webstudio-is/icons";
-import { useLayoutEffect, useRef, type ReactNode } from "react";
+import { type ReactNode } from "react";
 import { useContentEditable } from "~/shared/dom-hooks";
 
 const menuTriggerVisibilityVar = cssVars.define("menu-trigger-visibility");
@@ -141,31 +141,6 @@ const EditableText = ({
   );
 };
 
-// Forces layout to recalc max-width when editing is done, because otherwise,
-// layout will keep the value from before engaging contenteditable.
-const useForceRecalcStyle = <Element extends HTMLElement>(
-  property: string,
-  calculate: boolean
-) => {
-  const ref = useRef<Element>(null);
-  useLayoutEffect(() => {
-    const element = ref.current;
-    if (calculate === false || element === null) {
-      return;
-    }
-    element.style.setProperty(property, "initial");
-    const restore = () => {
-      element.style.removeProperty(property);
-    };
-    const requestId = requestAnimationFrame(restore);
-    return () => {
-      cancelAnimationFrame(requestId);
-      restore();
-    };
-  }, [calculate, property]);
-  return ref;
-};
-
 const StyleSourceContainer = styled(Box, {
   display: "inline-flex",
   borderRadius: theme.borderRadius[3],
@@ -270,7 +245,6 @@ export const StyleSource = ({
   onChangeEditing,
   onSelect,
 }: StyleSourceProps) => {
-  const ref = useForceRecalcStyle<HTMLDivElement>("max-width", isEditing);
   const showMenu = isEditing === false && isDragging === false;
 
   return (
@@ -281,7 +255,6 @@ export const StyleSource = ({
       disabled={disabled}
       aria-current={selected && state === undefined}
       role="button"
-      ref={ref}
     >
       <Flex css={{ flexGrow: 1, padding: theme.spacing[2] }}>
         <StyleSourceButton

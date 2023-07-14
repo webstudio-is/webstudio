@@ -44,6 +44,7 @@ export type TreeProps<Data extends { id: string }> = {
     dropTarget: { itemSelector: ItemSelector; position: number | "end" };
   }) => void;
   onCancel: () => void;
+  editingItemId: ItemId | undefined;
 };
 
 const sharedDropOptions = {
@@ -75,6 +76,7 @@ export const Tree = <Data extends { id: string }>({
   onDragItemChange,
   onDragEnd,
   onCancel,
+  editingItemId,
 }: TreeProps<Data>) => {
   const { getIsExpanded, setIsExpanded } = useExpandState({
     selectedItemSelector,
@@ -259,6 +261,7 @@ export const Tree = <Data extends { id: string }>({
     getIsExpanded,
     setIsExpanded,
     onEsc: dragHandlers.cancelCurrentDrag,
+    editingItemId,
   });
 
   return (
@@ -280,9 +283,9 @@ export const Tree = <Data extends { id: string }>({
     >
       <Box
         ref={keyboardNavigation.rootRef}
+        onBlur={keyboardNavigation.handleBlur}
         onKeyDown={keyboardNavigation.handleKeyDown}
         onClick={keyboardNavigation.handleClick}
-        onBlur={keyboardNavigation.handleBlur}
       >
         <TreeNode
           renderItem={renderItem}
@@ -300,7 +303,6 @@ export const Tree = <Data extends { id: string }>({
           dropTargetItemSelector={shiftedDropTarget?.itemSelector}
         />
       </Box>
-
       {shiftedDropTarget?.placement &&
         createPortal(
           <ListPositionIndicator
@@ -323,6 +325,7 @@ const useKeyboardNavigation = <Data extends { id: string }>({
   getIsExpanded,
   setIsExpanded,
   onEsc,
+  editingItemId,
 }: {
   root: Data;
   selectedItemSelector: undefined | ItemSelector;
@@ -331,6 +334,7 @@ const useKeyboardNavigation = <Data extends { id: string }>({
   getIsExpanded: (itemSelector: ItemSelector) => boolean;
   setIsExpanded: (itemSelector: ItemSelector, isExpanded: boolean) => void;
   onEsc: () => void;
+  editingItemId: ItemId | undefined;
 }) => {
   const flatCurrentlyExpandedTree = useMemo(() => {
     const result: ItemSelector[] = [];
@@ -354,6 +358,10 @@ const useKeyboardNavigation = <Data extends { id: string }>({
   const handleKeyDown = (event: ReactKeyboardEvent) => {
     // skip if nothing is selected in the tree
     if (selectedItemSelector === undefined) {
+      return;
+    }
+
+    if (editingItemId !== undefined) {
       return;
     }
 
@@ -442,6 +450,10 @@ const useKeyboardNavigation = <Data extends { id: string }>({
     rootRef,
     handleKeyDown,
     handleClick(event: React.MouseEvent<Element>) {
+      if (editingItemId) {
+        return;
+      }
+
       // When clicking on an item button make sure it gets focused.
       // (see https://zellwk.com/blog/inconsistent-button-behavior/)
       const itemButton = (event.target as HTMLElement).closest(

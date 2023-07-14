@@ -1,4 +1,11 @@
-import { useRef, useEffect, useMemo, useState } from "react";
+import {
+  useRef,
+  useEffect,
+  useMemo,
+  useState,
+  forwardRef,
+  type ForwardRefRenderFunction,
+} from "react";
 import {
   ChevronFilledDownIcon,
   ChevronFilledRightIcon,
@@ -6,7 +13,7 @@ import {
 import { cssVars } from "@webstudio-is/css-vars";
 import { Box } from "../box";
 import { Flex } from "../flex";
-import { DeprecatedText2 } from "../__DEPRECATED__/text2";
+import { Text } from "../text";
 import { styled } from "../../stitches.config";
 import { theme } from "../../stitches.config";
 import {
@@ -256,12 +263,14 @@ export const TreeItemBody = <Data extends { id: string }>({
   forceFocus = false,
   selectionEvent = "click",
   onToggle,
+  isEditing = false,
 }: TreeItemRenderProps<Data> & {
   children: React.ReactNode;
   suffix?: React.ReactNode;
   suffixWidth?: string;
   alwaysShowSuffix?: boolean;
   forceFocus?: boolean;
+  isEditing?: boolean;
   selectionEvent?: "click" | "focus";
 }) => {
   const [focusTarget, setFocusTarget] = useState<
@@ -269,6 +278,7 @@ export const TreeItemBody = <Data extends { id: string }>({
   >();
   const itemButtonRef = useRef<HTMLButtonElement>(null);
   const suffixContainerRef = useRef<HTMLDivElement>(null);
+
   const updateFocusTarget = () => {
     if (document.activeElement === itemButtonRef.current) {
       setFocusTarget("item-button");
@@ -333,9 +343,9 @@ export const TreeItemBody = <Data extends { id: string }>({
         {children}
       </ItemButton>
 
-      {/* We can't nest the collapsible trigger and suffix inside the ItemButton because 
-          <button> can't be nested inside <button>, 
-          click events will be mixed up, 
+      {/* We can't nest the collapsible trigger and suffix inside the ItemButton because
+          <button> can't be nested inside <button>,
+          click events will be mixed up,
           may hurt accessibility, etc. */}
 
       {shouldRenderExpandButton && (
@@ -356,20 +366,31 @@ export const TreeItemBody = <Data extends { id: string }>({
   );
 };
 
-export const TreeItemLabel = ({
-  children,
-  prefix,
-}: {
-  children: React.ReactNode;
-  prefix?: React.ReactNode;
-}) => (
-  <>
-    {prefix}
-    <DeprecatedText2 truncate css={{ ml: prefix ? theme.spacing[3] : 0 }}>
-      {children}
-    </DeprecatedText2>
-  </>
-);
+export const TreeItemLabelBase: ForwardRefRenderFunction<
+  HTMLDivElement,
+  {
+    children: React.ReactNode;
+    prefix?: React.ReactNode;
+  }
+> = ({ children, prefix, ...restProps }, ref) => {
+  return (
+    <>
+      {prefix}
+      <Text
+        ref={ref}
+        truncate
+        css={{
+          ml: prefix ? theme.spacing[3] : 0,
+        }}
+        {...restProps}
+      >
+        {children}
+      </Text>
+    </>
+  );
+};
+
+export const TreeItemLabel = forwardRef(TreeItemLabelBase);
 
 export type TreeNodeProps<Data extends { id: ItemId }> = {
   itemData: Data;
