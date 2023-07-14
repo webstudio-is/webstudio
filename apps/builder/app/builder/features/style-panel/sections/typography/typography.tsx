@@ -213,7 +213,7 @@ export const TypographySectionAdvanced = (props: RenderCategoryProps) => {
               title: "Text Align",
               description: "Aligns the text based on the writing direction.",
               value: "start",
-              propertyValues: "text-align: left",
+              propertyValues: "text-align: left;",
             },
             {
               child: <TextAlignCenterIcon />,
@@ -221,14 +221,14 @@ export const TypographySectionAdvanced = (props: RenderCategoryProps) => {
               description:
                 "Centers the text horizontally within its container.",
               value: "center",
-              propertyValues: "text-align: center",
+              propertyValues: "text-align: center;",
             },
             {
               child: <TextAlignRightIcon />,
               title: "Text Align",
               description: "Aligns the text based on the writing direction.",
               value: "end",
-              propertyValues: "text-align: right",
+              propertyValues: "text-align: right;",
             },
             {
               child: <TextAlignJustifyIcon />,
@@ -236,7 +236,7 @@ export const TypographySectionAdvanced = (props: RenderCategoryProps) => {
               description:
                 "Adjusts word spacing to align text to both the left and right edges of the container",
               value: "justify",
-              propertyValues: "text-align: justify",
+              propertyValues: "text-align: justify;",
             },
           ]}
         />
@@ -253,14 +253,14 @@ export const TypographySectionAdvanced = (props: RenderCategoryProps) => {
               title: "Text Decoration Line",
               description: "No decoration is applied to the text.",
               value: "none",
-              propertyValues: "text-decoration-line: none",
+              propertyValues: "text-decoration-line: none;",
             },
             {
               title: "Text Decoration Line",
               child: <TextUnderlineIcon />,
               description: " Adds a horizontal line underneath the text.",
               value: "underline",
-              propertyValues: "text-decoration-line: underline",
+              propertyValues: "text-decoration-line: underline;",
             },
             {
               title: "Text Decoration Line",
@@ -268,7 +268,7 @@ export const TypographySectionAdvanced = (props: RenderCategoryProps) => {
               description:
                 "Draws a horizontal line through the middle of the text.",
               value: "line-through",
-              propertyValues: "text-decoration-line: line-through",
+              propertyValues: "text-decoration-line: line-through;",
             },
           ]}
         />
@@ -294,7 +294,7 @@ export const TypographySectionAdvanced = (props: RenderCategoryProps) => {
               description:
                 "No transformation is applied to the text. The text appears as it is.",
               value: "none",
-              propertyValues: "text-transform: none",
+              propertyValues: "text-transform: none;",
             },
             {
               child: <TextUppercaseIcon />,
@@ -302,7 +302,7 @@ export const TypographySectionAdvanced = (props: RenderCategoryProps) => {
               description:
                 "Transforms the text to appear in all uppercase letters.",
               value: "uppercase",
-              propertyValues: "text-transform: uppercase",
+              propertyValues: "text-transform: uppercase;",
             },
             {
               child: <TextCapitalizeIcon />,
@@ -310,7 +310,7 @@ export const TypographySectionAdvanced = (props: RenderCategoryProps) => {
               description:
                 "Transforms the first character of each word to uppercase, while the remaining characters are in lowercase.",
               value: "capitalize",
-              propertyValues: "text-transform: capitalize",
+              propertyValues: "text-transform: capitalize;",
             },
             {
               child: <TextLowercaseIcon />,
@@ -318,7 +318,7 @@ export const TypographySectionAdvanced = (props: RenderCategoryProps) => {
               description:
                 " Transforms the text to appear in all lowercase letters.",
               value: "lowercase",
-              propertyValues: "text-transform: lowercase",
+              propertyValues: "text-transform: lowercase;",
             },
           ]}
         />
@@ -334,7 +334,7 @@ export const TypographySectionAdvanced = (props: RenderCategoryProps) => {
               description:
                 "The default value. The text appears in a normal, upright style.",
               value: "normal",
-              propertyValues: "font-style: normal",
+              propertyValues: "font-style: normal;",
             },
             {
               child: <TextItalicIcon />,
@@ -342,7 +342,7 @@ export const TypographySectionAdvanced = (props: RenderCategoryProps) => {
               description:
                 "The text appears in italic style, where it is slanted to the right.",
               value: "italic",
-              propertyValues: "font-style: italic",
+              propertyValues: "font-style: italic;",
             },
           ]}
         />
@@ -398,7 +398,7 @@ export const TypographySectionAdvancedPopover = (
                   description:
                     "Sets the text direction to left-to-right, which is the default for most languages.",
                   value: "ltr",
-                  propertyValues: "direction: ltr",
+                  propertyValues: "direction: ltr;",
                 },
                 {
                   child: <TextDirectionRTLIcon />,
@@ -406,7 +406,7 @@ export const TypographySectionAdvancedPopover = (
                   description:
                     "Sets the text direction to right-to-left, typically used for languages such as Arabic or Hebrew.",
                   value: "rtl",
-                  propertyValues: "direction: rtl",
+                  propertyValues: "direction: rtl;",
                 },
               ]}
             />
@@ -429,7 +429,7 @@ export const TypographySectionAdvancedPopover = (
                   description:
                     "Disables hyphenation of words. Words will not be hyphenated even if they exceed the width of their container.",
                   value: "manual",
-                  propertyValues: "hyphens: none",
+                  propertyValues: "hyphens: none;",
                 },
                 {
                   child: <TextHyphenIcon />,
@@ -437,7 +437,7 @@ export const TypographySectionAdvancedPopover = (
                   description:
                     "Enables automatic hyphenation of words. The browser will hyphenate long words at appropriate points to fit within the width of their container.",
                   value: "auto",
-                  propertyValues: "hyphens: auto",
+                  propertyValues: "hyphens: auto;",
                 },
               ]}
             />
@@ -462,7 +462,7 @@ export const TypographySectionAdvancedPopover = (
                   description:
                     "The overflowing text is clipped and hidden without any indication.",
                   value: "clip",
-                  propertyValues: "text-overflow: clip",
+                  propertyValues: "text-overflow: clip;",
                 },
                 {
                   child: <TextTruncateIcon />,
@@ -470,7 +470,7 @@ export const TypographySectionAdvancedPopover = (
                   description:
                     "The overflowing text is truncated with an ellipsis (...) to indicate that there is more content. To make the text-overflow: ellipsis property work, you need to set the following CSS properties: white-space: nowrap; overflow: hidden;",
                   value: "ellipsis",
-                  propertyValues: "text-overflow: ellipsis",
+                  propertyValues: "text-overflow: ellipsis;",
                 },
               ]}
             />
