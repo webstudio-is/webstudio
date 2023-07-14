@@ -20,7 +20,6 @@ import {
   type ItemId,
   type ItemSelector,
   areItemSelectorsEqual,
-  useForceRecalStyle,
 } from "./item-utils";
 
 export const INDENT = 16;
@@ -245,7 +244,6 @@ export type TreeItemRenderProps<Data extends { id: string }> = {
   onToggle: () => void;
 };
 
-const property = "max-width";
 export const TreeItemBody = <Data extends { id: string }>({
   isAlwaysExpanded,
   onSelect,
@@ -280,10 +278,6 @@ export const TreeItemBody = <Data extends { id: string }>({
   >();
   const itemButtonRef = useRef<HTMLButtonElement>(null);
   const suffixContainerRef = useRef<HTMLDivElement>(null);
-  const itemContainerRef = useForceRecalStyle<HTMLDivElement>(
-    property,
-    isEditing
-  );
 
   const updateFocusTarget = () => {
     if (document.activeElement === itemButtonRef.current) {
@@ -335,7 +329,6 @@ export const TreeItemBody = <Data extends { id: string }>({
       onFocus={updateFocusTarget}
       onBlur={updateFocusTarget}
       css={{ [suffixWidthVar]: suffixWidth }}
-      ref={itemContainerRef}
     >
       <ItemButton
         type="button"
