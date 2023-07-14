@@ -2,7 +2,7 @@ import { useStore } from "@nanostores/react";
 import { useNavigate } from "@remix-run/react";
 import { findPageByIdOrPath, type Page } from "@webstudio-is/project-build";
 import { useEffect } from "react";
-import { useMount } from "react-use";
+import { useMount } from "~/shared/hook-utils/use-mount";
 import {
   authTokenStore,
   pagesStore,
