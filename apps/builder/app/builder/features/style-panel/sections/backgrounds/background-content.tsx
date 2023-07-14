@@ -264,6 +264,7 @@ export const BackgroundContent = (props: BackgroundContentProps) => {
 
               <Flex css={{ justifySelf: "end" }}>
                 <ToggleGroupControl
+                  style={props.currentStyle}
                   styleSource={"default"}
                   onValueChange={(value) =>
                     setProperty("backgroundRepeat")({
@@ -271,28 +272,39 @@ export const BackgroundContent = (props: BackgroundContentProps) => {
                       value,
                     })
                   }
-                  onReset={() => deleteProperty("backgroundRepeat")}
                   value={toValue(props.currentStyle.backgroundRepeat?.value)}
                   items={[
                     {
                       child: <CrossSmallIcon />,
-                      label: "background-repeat: no-repeat",
+                      title: "Background Repeat",
+                      description:
+                        "This value indicates that the background image will not be repeated and will appear only once.",
                       value: "no-repeat",
+                      propertyValues: "background-repeat: no-repeat;",
                     },
                     {
                       child: <RepeatGridIcon />,
-                      label: "background-repeat: repeat",
+                      title: "Background Repeat",
+                      description:
+                        "This value indicates that the background image will be repeated both horizontally and vertically to fill the entire background area.",
                       value: "repeat",
+                      propertyValues: "background-repeat: repeat;",
                     },
                     {
                       child: <RepeatColumnIcon />,
-                      label: "background-repeat: repeat-y",
+                      title: "Background Repeat",
+                      description:
+                        "This value indicates that the background image will be repeated only vertically.",
                       value: "repeat-y",
+                      propertyValues: "background-repeat: repeat-y;",
                     },
                     {
                       child: <RepeatRowIcon />,
-                      label: "background-repeat: repeat-x",
+                      title: "Background Repeat",
+                      description:
+                        "This value indicates that the background image will be repeated only horizontally.",
                       value: "repeat-x",
+                      propertyValues: "background-repeat: repeat-x;",
                     },
                   ]}
                 />

@@ -1,4 +1,4 @@
-import { useState, type ReactElement } from "react";
+import { useState, type ReactElement, type ReactNode } from "react";
 import { useStore } from "@nanostores/react";
 import {
   type StyleProperty,
@@ -116,13 +116,15 @@ const getDescription = (properties: StyleProperty[]) => {
 const TooltipContent = ({
   title,
   description,
+  scrollableContent,
   properties,
   style,
   onReset,
 }: {
   title?: string;
-  description?: React.ReactNode;
+  description?: ReactNode;
   properties: StyleProperty[];
+  scrollableContent?: ReactNode;
   style: StyleInfo;
   onReset?: undefined | (() => void);
 }) => {
@@ -193,7 +195,7 @@ const TooltipContent = ({
             cursor: "text",
           }}
         >
-          {properties.map(toProperty).join("\n")}
+          {scrollableContent ?? properties.map(toProperty).join("\n")}
         </Text>
       </ScrollArea>
       {descriptionWithFallback && <Text>{descriptionWithFallback}</Text>}
@@ -255,6 +257,7 @@ export const PropertyTooltip = ({
   openWithClick = false,
   title,
   description,
+  scrollableContent,
   properties,
   style,
   onReset,
@@ -265,7 +268,8 @@ export const PropertyTooltip = ({
 }: {
   openWithClick?: boolean;
   title?: string;
-  description?: React.ReactNode;
+  description?: ReactNode;
+  scrollableContent?: ReactNode;
   properties: StyleProperty[];
   style: StyleInfo;
   onReset?: undefined | (() => void);
@@ -302,6 +306,7 @@ export const PropertyTooltip = ({
         <TooltipContent
           title={title}
           description={description}
+          scrollableContent={scrollableContent}
           properties={properties}
           style={style}
           onReset={
@@ -314,7 +319,6 @@ export const PropertyTooltip = ({
           }
         />
       }
-      disableHoverableContent={onReset === undefined}
     >
       {children}
     </Tooltip>
@@ -326,7 +330,7 @@ type PropertyNameInternalProps = {
   properties: StyleProperty[];
   label: string | ReactElement;
   title?: string;
-  description?: React.ReactNode;
+  description?: ReactNode;
   onReset?: () => void;
   disabled?: boolean;
 };
@@ -380,7 +384,7 @@ type PropertyNameProps = {
   properties: StyleProperty[];
   label: string | ReactElement;
   title?: string;
-  description?: React.ReactNode;
+  description?: ReactNode;
   onReset: () => void;
 };
 
@@ -407,7 +411,7 @@ type NonResetablePropertyNameProps = {
   properties: StyleProperty[];
   label: string | ReactElement;
   title?: string;
-  description?: React.ReactNode;
+  description?: ReactNode;
   disabled?: boolean;
 };
 /**
