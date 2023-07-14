@@ -3,7 +3,6 @@ import {
   ToggleGroup,
   ToggleGroupButton,
 } from "@webstudio-is/design-system";
-import { TooltipProvider } from "@radix-ui/react-tooltip";
 import type { StyleSource } from "../../shared/style-info";
 import { ValueTooltip } from "../../shared/value-tooltip";
 import { useState, type ReactElement } from "react";
@@ -29,6 +28,9 @@ const ToggleGroupButtonWithTooltip = ({
   children,
   value,
   onReset,
+  tooltipOpen,
+  onTooltipOpenChange,
+  onMouseEnter,
 }: {
   title: string;
   value: string;
@@ -36,24 +38,20 @@ const ToggleGroupButtonWithTooltip = ({
   description: React.ReactNode;
   children: ReactElement;
   onReset: () => void;
+  tooltipOpen: boolean;
+  onTooltipOpenChange: (open: boolean) => void;
+  onMouseEnter: (event: React.MouseEvent<HTMLButtonElement>) => void;
 }) => {
-  const [open, setOpen] = useState(false);
-
   return (
     <ValueTooltip
-      open={open}
-      onOpenChange={setOpen}
+      open={tooltipOpen}
+      onOpenChange={onTooltipOpenChange}
       title={title}
       propertyValues={propertyValues}
       description={description}
     >
       <ToggleGroupButton
-        onMouseLeave={(event) => {
-          // The tooltip's grace area is too big and overlaps with nearby buttons,
-          // preventing the tooltip from changing when the buttons are hovered over in certain cases.
-          // Close the tooltip on mouse leave to allow the tooltip to change on button hover.
-          setOpen(false);
-        }}
+        onMouseEnter={onMouseEnter}
         value={value}
         onClick={(event) => {
           if (event.altKey) {
@@ -75,46 +73,54 @@ export const ToggleGroupControl = ({
   onValueChange,
   onReset,
 }: ToggleGroupControlProps) => {
-  // Issue 1: The tooltip's grace area is too big and overlaps with nearby buttons,
+  // Issue: The tooltip's grace area is too big and overlaps with nearby buttons,
   // preventing the tooltip from changing when the buttons are hovered over in certain cases.
-  // Issue 2: When using radix-ui, if the tooltip's open state is explicitly changed (out of radix onOpenChange handler),
-  // it starts opening all tooltips without any delay.
-  // To solve issue 1 and allow tooltips to change on button hover,
-  // we close the button tooltip in the ToggleGroupButton.onMouseLeave handler. However, this action causes issue 2.
-  // To avoid issue 2, we use our own TooltipProvider for the ToggleGroup
-  // and reset/rerender it in the ToggleGroup's onMouseLeave handler.
-  // This effectively reinitializes its internal state.
-  const [reset, setReset] = useState(0);
+  // To solve issue and allow tooltips to change on button hover,
+  // we close the button tooltip in the ToggleGroupButton.onMouseEnter handler.
+  // onMouseEnter used to preserve default hovering behavior on tooltip.
+  const [openTootips, setOpenTooltips] = useState(() =>
+    Array.from(items, () => false)
+  );
 
   return (
-    <TooltipProvider key={reset}>
-      <ToggleGroup
-        color={styleSource}
-        type="single"
-        value={value}
-        onValueChange={onValueChange}
-        css={{ width: "fit-content" }}
-        onMouseLeave={() => {
-          setReset((reset) => reset + 1);
-        }}
-      >
-        {items.map(
-          ({ child, title, value, description, propertyValues }, index) => {
-            return (
-              <ToggleGroupButtonWithTooltip
-                key={index}
-                title={title}
-                propertyValues={propertyValues}
-                description={description}
-                value={value}
-                onReset={onReset}
-              >
-                {child}
-              </ToggleGroupButtonWithTooltip>
-            );
-          }
-        )}
-      </ToggleGroup>
-    </TooltipProvider>
+    <ToggleGroup
+      color={styleSource}
+      type="single"
+      value={value}
+      onValueChange={onValueChange}
+      css={{ width: "fit-content" }}
+    >
+      {items.map(
+        ({ child, title, value, description, propertyValues }, index) => {
+          return (
+            <ToggleGroupButtonWithTooltip
+              key={index}
+              title={title}
+              propertyValues={propertyValues}
+              description={description}
+              value={value}
+              onReset={onReset}
+              tooltipOpen={openTootips[index]}
+              onTooltipOpenChange={(open) => {
+                setOpenTooltips((openTooltips) => {
+                  const newOpenTooltips = [...openTooltips];
+                  newOpenTooltips[index] = open;
+                  return newOpenTooltips;
+                });
+              }}
+              onMouseEnter={(event) => {
+                setOpenTooltips((openTooltips) => {
+                  return openTooltips.map((openTooltip, i) =>
+                    i !== index ? false : openTooltip
+                  );
+                });
+              }}
+            >
+              {child}
+            </ToggleGroupButtonWithTooltip>
+          );
+        }
+      )}
+    </ToggleGroup>
   );
 };
