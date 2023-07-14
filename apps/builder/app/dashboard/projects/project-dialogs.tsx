@@ -98,8 +98,25 @@ const useCreateProject = () => {
   const { send, data, state } = trpc.create.useMutation();
   const [errors, setErrors] = useState<string>();
 
-  // For unknown reason React sometimes skips `useEffect(, [data])` (some race condition)
-  // This fixes that race condition.
+  // There's an occasional issue where React skips `useEffect(, [data])`, possibly due to a race condition.
+  // To frequently replicate this issue:
+  // 1. Create 20 projects
+  // 2. Turn on CPU 6x slowdown in Chrome dev tools
+
+  // Upon creating a new project, you'll find that it doesn't redirect to the new project page.
+  // The problem is that `useEffect` with either `data` or `data?.id` as a dependency is not triggered.
+
+  // Some working fixes:
+  // 1. Non-remix fetch - using createTrpcFetchProxy
+  // 2. Use this code inside useEffect:
+  //      if (ref.current !== data?.projectId) { doRedirect(); }; ref.current = data?.projectId;
+  // 3. Use useState as shown below
+  //
+  // Some observations:
+  // The issue seems related to the amount of rendering, possibly due to concurrent React's features.
+  // It's also related to Remix's useFetcher, which may be using setState or something similar
+  // in a way that's not compatible with concurrent React.
+
   const [projectId, setProjectId] = useState<DashboardProject["id"]>();
 
   if (projectId !== data?.id) {
