@@ -7,6 +7,7 @@ import {
   IconButton,
   css,
   Flex,
+  Grid,
   Text,
   theme,
   Box,
@@ -203,10 +204,10 @@ export const ProjectCard = ({
         tabIndex={0}
         onKeyDown={handleKeyDown}
       >
-        <Flex className={thumbnailStyle()}>
+        <Grid className={thumbnailStyle()}>
           <ThumbnailLink title={title} to={linkPath} ref={thumbnailRef} />
           {isTransitioning && <Spinner />}
-        </Flex>
+        </Grid>
 
         <Flex
           justify="between"

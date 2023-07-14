@@ -98,12 +98,20 @@ const useCreateProject = () => {
   const { send, data, state } = trpc.create.useMutation();
   const [errors, setErrors] = useState<string>();
 
+  // For unknown reason React sometimes skips `useEffect(, [data])` (some race condition)
+  // This fixes that race condition.
+  const [projectId, setProjectId] = useState<DashboardProject["id"]>();
+
+  if (projectId !== data?.id) {
+    setProjectId(data?.id);
+  }
+
   useEffect(() => {
-    if (data === undefined) {
+    if (projectId === undefined) {
       return;
     }
-    navigate(builderPath({ projectId: data.id }));
-  }, [data, navigate]);
+    navigate(builderPath({ projectId }));
+  }, [projectId, navigate]);
 
   const handleSubmit = ({ title }: { title: string }) => {
     const parsed = Title.safeParse(title);
