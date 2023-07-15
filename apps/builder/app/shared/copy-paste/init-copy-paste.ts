@@ -88,7 +88,6 @@ export const initCopyPaste = (plugins: Plugin[]) => {
       // this shouldn't matter, but just in case
       event.preventDefault();
       const data = event.clipboardData.getData(mimeType).trim();
-      console.log(data);
       if (data && onPaste?.(data)) {
         break;
       }
