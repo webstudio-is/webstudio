@@ -10,7 +10,13 @@ import type { defaultTag } from "./input";
 import { props } from "./__generated__/input.props";
 
 const presetStyle = {
-  input,
+  input: [
+    ...input,
+    {
+      property: "display",
+      value: { type: "keyword", value: "block" },
+    },
+  ],
 } satisfies PresetStyle<typeof defaultTag>;
 
 export const meta: WsComponentMeta = {

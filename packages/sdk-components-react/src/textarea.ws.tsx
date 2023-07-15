@@ -14,6 +14,10 @@ const presetStyle = {
     ...textarea,
     // resize doesn't work well while on canvas
     { property: "resize", value: { type: "keyword", value: "none" } },
+    {
+      property: "display",
+      value: { type: "keyword", value: "block" },
+    },
   ],
 } satisfies PresetStyle<typeof defaultTag>;
 
