@@ -1,7 +1,6 @@
 import { atom, computed } from "nanostores";
 import type { Page, Pages } from "@webstudio-is/project-build";
-// eslint-disable-next-line import/no-internal-modules
-import useMount from "react-use/lib/useMount";
+import { useMount } from "~/shared/hook-utils/use-mount";
 
 export const pagesStore = atom<undefined | Pages>(undefined);
 export const useSetPages = (pages: Pages) => {

@@ -2,8 +2,7 @@ import { useStore } from "@nanostores/react";
 import { useNavigate } from "@remix-run/react";
 import { findPageByIdOrPath, type Page } from "@webstudio-is/project-build";
 import { useEffect } from "react";
-// eslint-disable-next-line import/no-internal-modules
-import useMount from "react-use/lib/useMount";
+import { useMount } from "~/shared/hook-utils/use-mount";
 import {
   authTokenStore,
   pagesStore,
