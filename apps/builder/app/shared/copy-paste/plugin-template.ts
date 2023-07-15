@@ -29,15 +29,15 @@ const parse = (clipboardData: string): WsEmbedTemplate | undefined => {
   }
 };
 
-export const mimeType = "application/json";
+export const mimeType = "text/plain";
 
-export const onPaste = (clipboardData: string) => {
+export const onPaste = (clipboardData: string): boolean => {
   const template = parse(clipboardData);
 
   const selectedPage = selectedPageStore.get();
 
   if (template === undefined || selectedPage === undefined) {
-    return;
+    return false;
   }
 
   // paste to the root if nothing is selected
@@ -48,7 +48,7 @@ export const onPaste = (clipboardData: string) => {
   const breakpointValues = Array.from(breakpoints.values());
   const baseBreakpoint = breakpointValues.find(isBaseBreakpoint);
   if (baseBreakpoint === undefined) {
-    return;
+    return false;
   }
   const templateData = generateDataFromEmbedTemplate(
     template,
@@ -64,7 +64,8 @@ export const onPaste = (clipboardData: string) => {
     dragComponents
   );
   if (dropTarget === undefined) {
-    return;
+    return false;
   }
   insertTemplateData(templateData, dropTarget);
+  return true;
 };
