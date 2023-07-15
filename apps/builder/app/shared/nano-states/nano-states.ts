@@ -27,7 +27,7 @@ import {
 } from "@webstudio-is/react-sdk";
 import type { Style } from "@webstudio-is/css-data";
 import type { DragStartPayload } from "~/canvas/shared/use-drag-drop";
-import { useSyncInitializeOnce } from "../hook-utils";
+import { useMount } from "~/shared/hook-utils/use-mount";
 import { shallowComputed } from "../store-utils";
 import { type InstanceSelector } from "../tree-utils";
 import type { htmlTags as HtmlTags } from "html-tags";
@@ -73,7 +73,7 @@ export const dataSourceVariablesStore = atom<Map<DataSource["id"], unknown>>(
 export const useSetDataSources = (
   dataSources: [DataSource["id"], DataSource][]
 ) => {
-  useSyncInitializeOnce(() => {
+  useMount(() => {
     dataSourcesStore.set(new Map(dataSources));
   });
 };
@@ -131,7 +131,7 @@ export const propsIndexStore = computed(propsStore, (props) => {
   };
 });
 export const useSetProps = (props: [Prop["id"], Prop][]) => {
-  useSyncInitializeOnce(() => {
+  useMount(() => {
     propsStore.set(new Map(props));
   });
 };
@@ -139,7 +139,7 @@ export const useSetProps = (props: [Prop["id"], Prop][]) => {
 export const stylesStore = atom<Styles>(new Map());
 
 export const useSetStyles = (styles: [StyleDeclKey, StyleDecl][]) => {
-  useSyncInitializeOnce(() => {
+  useMount(() => {
     stylesStore.set(new Map(styles));
   });
 };
@@ -178,7 +178,7 @@ export const availableStyleSourcesStore = shallowComputed(
 export const useSetStyleSources = (
   styleSources: [StyleSource["id"], StyleSource][]
 ) => {
-  useSyncInitializeOnce(() => {
+  useMount(() => {
     styleSourcesStore.set(new Map(styleSources));
   });
 };
@@ -189,7 +189,7 @@ export const styleSourceSelectionsStore = atom<StyleSourceSelections>(
 export const useSetStyleSourceSelections = (
   styleSourceSelections: [Instance["id"], StyleSourceSelection][]
 ) => {
-  useSyncInitializeOnce(() => {
+  useMount(() => {
     styleSourceSelectionsStore.set(new Map(styleSourceSelections));
   });
 };
@@ -248,14 +248,14 @@ export const stylesIndexStore = computed(
 export const useSetBreakpoints = (
   breakpoints: [Breakpoint["id"], Breakpoint][]
 ) => {
-  useSyncInitializeOnce(() => {
+  useMount(() => {
     breakpointsStore.set(new Map(breakpoints));
   });
 };
 
 export const assetsStore = atom<Assets>(new Map());
 export const useSetAssets = (assets: [Asset["id"], Asset][]) => {
-  useSyncInitializeOnce(() => {
+  useMount(() => {
     assetsStore.set(new Map(assets));
   });
 };
@@ -392,7 +392,7 @@ export const useIsPreviewMode = () => useValue(isPreviewModeStore);
 const authPermitStore = atom<AuthPermit>("view");
 export const useAuthPermit = () => useValue(authPermitStore);
 export const useSetAuthPermit = (authPermit: AuthPermit) => {
-  useSyncInitializeOnce(() => {
+  useMount(() => {
     authPermitStore.set(authPermit);
   });
 };
@@ -400,7 +400,7 @@ export const useSetAuthPermit = (authPermit: AuthPermit) => {
 export const authTokenStore = atom<string | undefined>(undefined);
 export const useAuthToken = () => useValue(authTokenStore);
 export const useSetAuthToken = (authToken: string | undefined) => {
-  useSyncInitializeOnce(() => {
+  useMount(() => {
     authTokenStore.set(authToken);
   });
 };

@@ -1,10 +1,10 @@
 import { atom, computed } from "nanostores";
 import type { Page, Pages } from "@webstudio-is/project-build";
-import { useSyncInitializeOnce } from "../hook-utils";
+import { useMount } from "~/shared/hook-utils/use-mount";
 
 export const pagesStore = atom<undefined | Pages>(undefined);
 export const useSetPages = (pages: Pages) => {
-  useSyncInitializeOnce(() => {
+  useMount(() => {
     pagesStore.set(pages);
   });
 };

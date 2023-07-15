@@ -40,12 +40,12 @@ import {
 } from "~/shared/nano-states";
 import { useDragAndDrop } from "./shared/use-drag-drop";
 import { useCopyPaste } from "~/shared/copy-paste";
-import { useSyncInitializeOnce } from "~/shared/hook-utils";
 import { setDataCollapsed, subscribeCollapsedToPubSub } from "./collapsed";
 import { useWindowResizeDebounced } from "~/shared/dom-hooks";
 import { subscribeInstanceSelection } from "./instance-selection";
 import { subscribeInstanceHovering } from "./instance-hovering";
 import { useHashLinkSync } from "~/shared/pages";
+import { useMount } from "~/shared/hook-utils/use-mount";
 
 registerContainers();
 
@@ -167,7 +167,7 @@ export const Canvas = ({ params }: CanvasProps): JSX.Element | null => {
   const components = new Map(
     Object.entries({ ...baseComponents, ...remixComponents })
   ) as Components;
-  useSyncInitializeOnce(() => {
+  useMount(() => {
     registerComponentMetas(baseComponentMetas);
     registerComponentPropsMetas(baseComponentPropsMetas);
     registerComponentMetas(remixComponentMetas);
