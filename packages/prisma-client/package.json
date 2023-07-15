@@ -29,8 +29,7 @@
   "exports": {
     "source": "./src/index.ts",
     "types": "./lib/index.d.ts",
-    "import": "./lib/index.js",
-    "require": "./lib/cjs/index.js"
+    "import": "./lib/index.js"
   },
   "license": "MIT",
   "private": false,
