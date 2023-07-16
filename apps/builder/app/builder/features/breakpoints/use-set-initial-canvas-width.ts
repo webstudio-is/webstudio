@@ -59,24 +59,18 @@ export const useSetCanvasWidth = () => {
           selectedBreakpoint,
           workspaceRect.width
         );
-
-        if (canvasWidthStore.get() !== width) {
-          canvasWidthStore.set(width);
-        }
+        canvasWidthStore.set(width);
       }
     };
 
     const unsubscribeBreakpointStore = breakpointsStore.subscribe(update);
-    const unsubscribeRectStore =
-      workspaceRectStore.get() === undefined
-        ? workspaceRectStore.listen((workspaceRect) => {
-            if (workspaceRect === undefined) {
-              return;
-            }
-            unsubscribeRectStore?.();
-            update();
-          })
-        : undefined;
+    const unsubscribeRectStore = workspaceRectStore.listen((workspaceRect) => {
+      if (workspaceRect === undefined) {
+        return;
+      }
+      unsubscribeRectStore?.();
+      update();
+    });
 
     return () => {
       unsubscribeBreakpointStore();
