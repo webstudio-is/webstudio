@@ -29,7 +29,7 @@ const canvasContainerStyle = css({
   transformOrigin: "0 0",
 });
 
-function useMeasureWorkspace() {
+const useMeasureWorkspace = () => {
   const ref = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
@@ -38,7 +38,6 @@ function useMeasureWorkspace() {
       return;
     }
     const observer = new ResizeObserver((entries) => {
-      console.log(entries[0].contentRect);
       workspaceRectStore.set(entries[0].contentRect);
     });
     observer.observe(element);
@@ -48,7 +47,7 @@ function useMeasureWorkspace() {
   }, []);
 
   return ref;
-}
+};
 
 const getCanvasStyle = (
   scale: number,
