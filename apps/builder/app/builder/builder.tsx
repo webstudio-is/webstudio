@@ -25,6 +25,7 @@ import { usePublishShortcuts } from "./shared/shortcuts";
 import {
   pagesStore,
   projectStore,
+  selectedBreakpointIdStore,
   useIsPreviewMode,
   useSetAssets,
   useSetAuthPermit,
@@ -251,7 +252,9 @@ export const Builder = ({
   useSetInstances(build.instances);
 
   useUnmount(() => {
+    // $todo reset all stores
     pagesStore.set(undefined);
+    selectedBreakpointIdStore.set(undefined);
   });
 
   useSyncPageUrl();
