@@ -196,11 +196,11 @@ export const parse = (clipboardData: string, options?: Options) => {
   return { props, instances, children };
 };
 
-export const onPaste = (clipboardData: string) => {
+export const onPaste = (clipboardData: string): boolean => {
   const data = parse(clipboardData);
   const selectedPage = selectedPageStore.get();
   if (data === undefined || selectedPage === undefined) {
-    return;
+    return false;
   }
   // paste to the root if nothing is selected
   const instanceSelector = selectedInstanceSelectorStore.get() ?? [
@@ -216,7 +216,7 @@ export const onPaste = (clipboardData: string) => {
     dragComponents
   );
   if (dropTarget === undefined) {
-    return;
+    return false;
   }
   store.createTransaction([instancesStore, propsStore], (instances, props) => {
     insertInstancesMutable(
@@ -231,4 +231,5 @@ export const onPaste = (clipboardData: string) => {
       props.set(prop.id, prop);
     }
   });
+  return true;
 };

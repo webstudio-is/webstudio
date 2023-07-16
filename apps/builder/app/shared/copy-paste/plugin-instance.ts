@@ -252,7 +252,7 @@ const parse = (clipboardData: string): InstanceData | undefined => {
 
 export const mimeType = "application/json";
 
-export const onPaste = (clipboardData: string) => {
+export const onPaste = (clipboardData: string): boolean => {
   const data = parse(clipboardData);
 
   const selectedPage = selectedPageStore.get();
@@ -263,7 +263,7 @@ export const onPaste = (clipboardData: string) => {
     selectedPage === undefined ||
     project === undefined
   ) {
-    return;
+    return false;
   }
 
   // paste to the root if nothing is selected
@@ -280,7 +280,7 @@ export const onPaste = (clipboardData: string) => {
     dragComponents
   );
   if (dropTarget === undefined) {
-    return;
+    return false;
   }
 
   store.createTransaction(
@@ -350,6 +350,7 @@ export const onPaste = (clipboardData: string) => {
       );
     }
   );
+  return true;
 };
 
 export const onCopy = () => {

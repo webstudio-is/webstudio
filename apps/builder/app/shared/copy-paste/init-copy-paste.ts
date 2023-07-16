@@ -28,57 +28,54 @@ const isValidClipboardEvent = (event: ClipboardEvent) => {
   return true;
 };
 
-type Options = {
+const defaultMimeType = "application/json";
+
+type Plugin = {
   mimeType?: string;
   onCopy?: () => undefined | string;
   onCut?: () => undefined | string;
-  onPaste?: (data: string) => void;
+  onPaste?: (data: string) => boolean;
 };
 
-export const initCopyPaste = (options: Options) => {
-  const { mimeType = "application/json", onCopy, onCut, onPaste } = options;
-
+export const initCopyPaste = (plugins: Plugin[]) => {
   const handleCopy = (event: ClipboardEvent) => {
     if (
-      onCopy === undefined ||
       event.clipboardData === null ||
       isValidClipboardEvent(event) === false
     ) {
       return;
     }
-
-    const data = onCopy();
-    if (data === undefined) {
-      return;
+    for (const { mimeType = defaultMimeType, onCopy } of plugins) {
+      const data = onCopy?.();
+      if (data) {
+        // must prevent default, otherwise setData() will not work
+        event.preventDefault();
+        event.clipboardData.setData(mimeType, data);
+        break;
+      }
     }
-
-    // must prevent default, otherwise setData() will not work
-    event.preventDefault();
-    event.clipboardData.setData(mimeType, data);
   };
 
   const handleCut = (event: ClipboardEvent) => {
     if (
-      onCut === undefined ||
       event.clipboardData === null ||
       isValidClipboardEvent(event) === false
     ) {
       return;
     }
-
-    const data = onCut();
-    if (data === undefined) {
-      return;
+    for (const { mimeType = defaultMimeType, onCut } of plugins) {
+      const data = onCut?.();
+      if (data) {
+        // must prevent default, otherwise setData() will not work
+        event.preventDefault();
+        event.clipboardData.setData(mimeType, data);
+        break;
+      }
     }
-
-    // must prevent default, otherwise setData() will not work
-    event.preventDefault();
-    event.clipboardData.setData(mimeType, data);
   };
 
   const handlePaste = (event: ClipboardEvent) => {
     if (
-      onPaste === undefined ||
       event.clipboardData === null ||
       // we might want a separate predicate for paste,
       // but for now the logic is the same
@@ -87,35 +84,25 @@ export const initCopyPaste = (options: Options) => {
       return;
     }
 
-    // this shouldn't matter, but just in case
-    event.preventDefault();
-    const data = event.clipboardData.getData(mimeType).trim();
-    if (data) {
-      onPaste(data);
+    for (const { mimeType = defaultMimeType, onPaste } of plugins) {
+      // this shouldn't matter, but just in case
+      event.preventDefault();
+      const data = event.clipboardData.getData(mimeType).trim();
+      if (data && onPaste?.(data)) {
+        break;
+      }
     }
   };
 
-  if (onCopy) {
-    document.addEventListener("copy", handleCopy);
-  }
-  if (onCut) {
-    document.addEventListener("cut", handleCut);
-  }
-  if (onPaste) {
-    // Capture is required so we get the element before content-editable removes it
-    // This way we can detect when we are inside content-editable and ignore the event
-    document.addEventListener("paste", handlePaste, { capture: true });
-  }
+  document.addEventListener("copy", handleCopy);
+  document.addEventListener("cut", handleCut);
+  // Capture is required so we get the element before content-editable removes it
+  // This way we can detect when we are inside content-editable and ignore the event
+  document.addEventListener("paste", handlePaste, { capture: true });
 
   return () => {
-    if (onCopy) {
-      document.removeEventListener("copy", handleCopy);
-    }
-    if (onCut) {
-      document.removeEventListener("cut", handleCut);
-    }
-    if (onPaste) {
-      document.removeEventListener("paste", handlePaste, { capture: true });
-    }
+    document.removeEventListener("copy", handleCopy);
+    document.removeEventListener("cut", handleCut);
+    document.removeEventListener("paste", handlePaste, { capture: true });
   };
 };
