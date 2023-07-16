@@ -37,7 +37,6 @@ const useMeasureWorkspace = () => {
     if (element === null) {
       return;
     }
-    console.log(element);
     const observer = new ResizeObserver((entries) => {
       workspaceRectStore.set(entries[0].contentRect);
     });
@@ -83,7 +82,6 @@ const useCanvasStyle = () => {
   const scale = useStore(scaleStore);
   const workspaceRect = useStore(workspaceRectStore);
   const [canvasWidth] = useCanvasWidth();
-  console.log(workspaceRect, canvasWidth);
   return getCanvasStyle(scale, workspaceRect, canvasWidth);
 };
 
