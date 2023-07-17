@@ -12,8 +12,7 @@ import {
 } from "~/shared/nano-states";
 import { textEditingInstanceSelectorStore } from "~/shared/nano-states";
 import { CanvasTools } from "./canvas-tools";
-import { useMeasure } from "react-use";
-import { useEffect } from "react";
+import { useEffect, useRef } from "react";
 import { useSetCanvasWidth } from "../breakpoints";
 
 const workspaceStyle = css({
@@ -30,16 +29,23 @@ const canvasContainerStyle = css({
   transformOrigin: "0 0",
 });
 
-const useSetWorkspaceRect = () => {
-  const workspaceRect = useStore(workspaceRectStore);
-  const [ref, rect] = useMeasure<HTMLDivElement>();
+const useMeasureWorkspace = () => {
+  const ref = useRef<HTMLDivElement>(null);
+
   useEffect(() => {
-    if (rect.width === 0 || rect.height === 0) {
+    const element = ref.current;
+    if (element === null) {
       return;
     }
-    // Little lie to safe the trouble of importing the type it uses everywhere.
-    workspaceRectStore.set(rect as DOMRect);
-  }, [workspaceRect, rect]);
+    const observer = new ResizeObserver((entries) => {
+      workspaceRectStore.set(entries[0].contentRect);
+    });
+    observer.observe(element);
+    return () => {
+      observer.disconnect();
+    };
+  }, []);
+
   return ref;
 };
 
@@ -91,7 +97,7 @@ export const Workspace = ({
   publish,
 }: WorkspaceProps) => {
   const canvasStyle = useCanvasStyle();
-  const workspaceRef = useSetWorkspaceRect();
+  const workspaceRef = useMeasureWorkspace();
   useSetCanvasWidth();
   const handleWorkspaceClick = () => {
     selectedInstanceSelectorStore.set(undefined);
