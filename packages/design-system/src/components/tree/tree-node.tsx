@@ -263,14 +263,12 @@ export const TreeItemBody = <Data extends { id: string }>({
   forceFocus = false,
   selectionEvent = "click",
   onToggle,
-  isEditing = false,
 }: TreeItemRenderProps<Data> & {
   children: React.ReactNode;
   suffix?: React.ReactNode;
   suffixWidth?: string;
   alwaysShowSuffix?: boolean;
   forceFocus?: boolean;
-  isEditing?: boolean;
   selectionEvent?: "click" | "focus";
 }) => {
   const [focusTarget, setFocusTarget] = useState<

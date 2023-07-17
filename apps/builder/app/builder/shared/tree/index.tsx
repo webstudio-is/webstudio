@@ -88,7 +88,7 @@ export const InstanceTree = (
       const isEditing = props.itemData.id === editingItemId;
 
       return (
-        <TreeItemBody {...props} selectionEvent="focus" isEditing={isEditing}>
+        <TreeItemBody {...props} selectionEvent="focus">
           <TreeItem
             isEditable={true}
             isEditing={isEditing}
