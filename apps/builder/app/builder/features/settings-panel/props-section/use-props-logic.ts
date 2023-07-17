@@ -218,14 +218,17 @@ export const usePropsLogic = ({
     return { prop: saved, propName: name, meta };
   });
 
-  const initialProps: PropAndMeta[] = Array.from(initialPropsNames, (name) => {
+  const initialProps: PropAndMeta[] = [];
+  for (const name of initialPropsNames) {
     const saved = getAndDelete<Prop>(unprocessedSaved, name);
     const known = getAndDelete(unprocessedKnown, name);
 
     if (known === undefined) {
-      throw new Error(
+      // eslint-disable-next-line no-console
+      console.error(
         `The prop "${name}" is defined in meta.initialProps but not in meta.props`
       );
+      continue;
     }
 
     let prop = saved;
@@ -243,8 +246,8 @@ export const usePropsLogic = ({
       prop = getStartingProp(instance.id, known, name);
     }
 
-    return { prop, propName: name, meta: known };
-  });
+    initialProps.push({ prop, propName: name, meta: known });
+  }
 
   // We keep track of names because sometime prop is in the list but not actually added/saved
   // Also makes order stable etc.
@@ -252,9 +255,10 @@ export const usePropsLogic = ({
     Array.from(unprocessedSaved.values(), (prop) => prop.name)
   );
 
-  const addedProps: PropAndMeta[] = addedNames.map((name) => {
+  const addedProps: PropAndMeta[] = [];
+  for (const name of addedNames) {
     const saved = getAndDelete(unprocessedSaved, name);
-    const known = getAndDelete(unprocessedKnown, name);
+    let known = getAndDelete(unprocessedKnown, name);
 
     // @todo:
     //   if meta is undefined, this means it's a "custom attribute"
@@ -262,17 +266,15 @@ export const usePropsLogic = ({
     //   we'll show it as a regular optional prop for now
     if (known === undefined) {
       if (saved === undefined) {
-        throw new Error(`Cannot find meta for a newly added prop "${name}`);
+        // eslint-disable-next-line no-console
+        console.error(`Cannot find meta for a newly added prop "${name}`);
+        continue;
       }
-      return {
-        prop: saved,
-        propName: name,
-        meta: getDefaultMetaForType(saved.type),
-      };
+      known = getDefaultMetaForType(saved.type);
     }
 
-    return { prop: saved, propName: name, meta: known };
-  });
+    initialProps.push({ prop: saved, propName: name, meta: known });
+  }
 
   const handleAdd = (propName: string) => {
     const propMeta = unprocessedKnown.get(propName);
