@@ -420,8 +420,6 @@ const useKeyboardNavigation = <Data extends { id: string }>({
 
   const hadFocus = useRef(false);
   const prevRoot = useRef(root);
-  const prevEditingItemId = useRef(editingItemId);
-
   useEffect(() => {
     const haveFocus =
       rootRef.current?.contains(document.activeElement) === true;
@@ -441,25 +439,11 @@ const useKeyboardNavigation = <Data extends { id: string }>({
     }
   }, [root, rootRef, selectedItemSelector, setFocus]);
 
-  // When we stop editing an item, we want to focus it back again.
-  // To continue keyboard navigation.
-  useEffect(() => {
-    const isEditingItemChanged =
-      editingItemId === undefined &&
-      prevEditingItemId.current !== editingItemId;
-
-    if (isEditingItemChanged === true && selectedItemSelector !== undefined) {
-      setFocus(selectedItemSelector, "restoring");
-    }
-  }, [editingItemId, selectedItemSelector, setFocus]);
-
   // onBlur doesn't fire when the activeElement is removed from the DOM
   useEffect(() => {
     const haveFocus =
       rootRef.current?.contains(document.activeElement) === true;
     hadFocus.current = haveFocus;
-
-    prevEditingItemId.current = editingItemId;
   });
 
   return {

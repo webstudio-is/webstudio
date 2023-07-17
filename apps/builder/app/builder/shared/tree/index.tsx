@@ -146,7 +146,13 @@ const TreeItem = ({
   const { ref, handlers } = useContentEditable({
     isEditable,
     isEditing,
-    onChangeValue,
+    onChangeValue: (value: string) => {
+      onChangeValue(value);
+      const button = ref.current?.closest(
+        "[data-item-button-id]"
+      ) as HTMLElement;
+      button?.focus();
+    },
     onChangeEditing,
   });
 
