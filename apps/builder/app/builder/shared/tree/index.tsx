@@ -88,7 +88,7 @@ export const InstanceTree = (
       const isEditing = props.itemData.id === editingItemId;
 
       return (
-        <TreeItemBody {...props} selectionEvent="focus" isEditing={isEditing}>
+        <TreeItemBody {...props} selectionEvent="focus">
           <TreeItem
             isEditable={true}
             isEditing={isEditing}
@@ -146,7 +146,13 @@ const TreeItem = ({
   const { ref, handlers } = useContentEditable({
     isEditable,
     isEditing,
-    onChangeValue,
+    onChangeValue: (value: string) => {
+      onChangeValue(value);
+      const button = ref.current?.closest(
+        "[data-item-button-id]"
+      ) as HTMLElement;
+      button?.focus();
+    },
     onChangeEditing,
   });
 
