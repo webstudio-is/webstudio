@@ -224,6 +224,7 @@ export const usePropsLogic = ({
     const known = getAndDelete(unprocessedKnown, name);
 
     if (known === undefined) {
+      // eslint-disable-next-line no-console
       console.error(
         `The prop "${name}" is defined in meta.initialProps but not in meta.props`
       );
@@ -265,6 +266,7 @@ export const usePropsLogic = ({
     //   we'll show it as a regular optional prop for now
     if (known === undefined) {
       if (saved === undefined) {
+        // eslint-disable-next-line no-console
         console.error(`Cannot find meta for a newly added prop "${name}`);
         continue;
       }
