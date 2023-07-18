@@ -39,7 +39,7 @@ if (componentFiles.length === 0) {
 const tsConfigParser = withCustomConfig(tsConfigPath, options);
 
 // For each component file generate argTypes based on the propTypes
-componentFiles.forEach((filePath) => {
+for (const filePath of componentFiles) {
   const generatedDir = path.join(path.dirname(filePath), GENERATED_FILES_DIR);
 
   if (!fs.existsSync(generatedDir)) {
@@ -49,14 +49,38 @@ componentFiles.forEach((filePath) => {
   const generatedFile = `${path.basename(filePath, ".tsx")}.props.ts`;
   const generatedPath = path.join(generatedDir, generatedFile);
 
-  const res = tsConfigParser.parse(filePath);
-  const argTypes = propsToArgTypes(res[0].props);
+  const componentDocs = tsConfigParser.parse(filePath);
+
+  if (componentDocs.length === 0) {
+    console.error(`No propTypes found for ${filePath}`);
+    continue;
+  }
+
   fs.ensureFileSync(generatedPath);
-  fs.writeFileSync(
-    generatedPath,
-    `import type { PropMeta } from "@webstudio-is/generate-arg-types";\n\nexport const props: Record<string, PropMeta> = ${JSON.stringify(
-      argTypes
-    )}`
-  );
+
+  let fileContent = `import type { PropMeta } from "@webstudio-is/generate-arg-types";\n`;
+
+  if (componentDocs.length === 1) {
+    const argTypes = propsToArgTypes(componentDocs[0].props);
+
+    fileContent = `${fileContent}
+      export const props: Record<string, PropMeta> = ${JSON.stringify(
+        argTypes
+      )}`;
+  } else {
+    for (const componentDoc of componentDocs) {
+      const componentName = componentDoc.displayName;
+
+      const argTypes = propsToArgTypes(componentDoc.props);
+
+      fileContent = `${fileContent}
+        export const props${componentName}: Record<string, PropMeta> = ${JSON.stringify(
+        argTypes
+      )}`;
+    }
+  }
+
+  fs.writeFileSync(generatedPath, fileContent);
+
   console.log(`Done generating argTypes for ${generatedPath}`);
-});
+}
