@@ -113,7 +113,7 @@ type WebstudioComponentDevProps = {
 export const WebstudioComponentDev = forwardRef<
   HTMLElement,
   WebstudioComponentDevProps
->(({ instance, instanceSelector, children, components }, ref) => {
+>(({ instance, instanceSelector, children, components, ...restProps }, ref) => {
   const instanceId = instance.id;
   const instanceElementRef = useRef<HTMLElement>(null);
   const instanceStyles = useInstanceStyles(instanceId);
@@ -212,7 +212,12 @@ export const WebstudioComponentDev = forwardRef<
           instanceProps={instanceProps}
         />
       )}
-      <Component {...props} ref={mergeRefs(instanceElementRef, ref)}>
+      {/* @todo restProps are radix events and props, for event handlers we need to composeEventHandlers like in radix */}
+      <Component
+        {...restProps}
+        {...props}
+        ref={mergeRefs(instanceElementRef, ref)}
+      >
         {renderWebstudioComponentChildren(children)}
       </Component>
     </>
