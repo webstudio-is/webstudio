@@ -44,7 +44,7 @@ const imagePlaceholderSvg = `data:image/svg+xml;base64,${btoa(`<svg
 type Props = Omit<ComponentPropsWithoutRef<typeof WebstudioImage>, "loader">;
 
 export const Image = forwardRef<ElementRef<typeof defaultTag>, Props>(
-  (props, ref) => {
+  ({ loading = "lazy", ...props }, ref) => {
     const { imageBaseUrl } = useContext(ReactSdkContext);
     const asset = usePropAsset(getInstanceIdFromComponentProps(props), "src");
 
@@ -56,7 +56,13 @@ export const Image = forwardRef<ElementRef<typeof defaultTag>, Props>(
 
     if (asset == null || loader == null) {
       return (
-        <img key={src} {...props} src={src || imagePlaceholderSvg} ref={ref} />
+        <img
+          key={src}
+          loading={loading}
+          {...props}
+          src={src || imagePlaceholderSvg}
+          ref={ref}
+        />
       );
     }
 
@@ -72,6 +78,7 @@ export const Image = forwardRef<ElementRef<typeof defaultTag>, Props>(
          * prevents showing outdated images on route change.
          **/
         key={src}
+        loading={loading}
         {...props}
         loader={loader}
         src={src}

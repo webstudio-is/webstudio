@@ -159,6 +159,7 @@ const Action = z.object({
   ...common,
   control: z.literal("action"),
   type: z.literal("action"),
+  defaultValue: z.undefined().optional(),
 });
 
 export const PropMeta = z.union([

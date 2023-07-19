@@ -204,13 +204,15 @@ export const usePropsLogic = ({
 
   // we will delete items from these maps as we categorize the props
   const unprocessedSaved = new Map(savedProps.map((prop) => [prop.name, prop]));
-  const unprocessedKnown = new Map(Object.entries(meta.props));
+  const unprocessedKnown = new Map<Prop["name"], PropMeta>(
+    Object.entries(meta.props)
+  );
 
   const initialPropsNames = new Set(meta.initialProps ?? []);
 
   const systemProps = systemPropsMeta.map(({ name, meta }) => {
     let saved = getAndDelete<Prop>(unprocessedSaved, name);
-    if (saved === undefined) {
+    if (saved === undefined && meta.defaultValue !== undefined) {
       saved = getStartingProp(instance.id, meta, name);
     }
     getAndDelete(unprocessedKnown, name);
@@ -242,7 +244,7 @@ export const usePropsLogic = ({
     //   - where 0 is a fallback when no default is available
     //   - they think that width is set to 0, but it's actually not set at all
     //
-    if (prop === undefined) {
+    if (prop === undefined && known.defaultValue !== undefined) {
       prop = getStartingProp(instance.id, known, name);
     }
 
@@ -273,7 +275,7 @@ export const usePropsLogic = ({
       known = getDefaultMetaForType(saved.type);
     }
 
-    initialProps.push({ prop: saved, propName: name, meta: known });
+    addedProps.push({ prop: saved, propName: name, meta: known });
   }
 
   const handleAdd = (propName: string) => {

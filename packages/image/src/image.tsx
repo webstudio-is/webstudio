@@ -43,10 +43,6 @@ export const Image = forwardRef<ElementRef<typeof defaultTag>, ImageProps>(
   }
 );
 
-Image.defaultProps = {
-  src: "",
-};
-
 Image.displayName = "Image";
 
 const imagePlaceholderSvg = `data:image/svg+xml;base64,${btoa(`<svg
