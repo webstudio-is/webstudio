@@ -376,6 +376,7 @@ export const TreeItemLabelBase: ForwardRefRenderFunction<
       {prefix}
       <Text
         ref={ref}
+        variant="labelsSentenceCase"
         truncate
         css={{
           ml: prefix ? theme.spacing[3] : 0,
