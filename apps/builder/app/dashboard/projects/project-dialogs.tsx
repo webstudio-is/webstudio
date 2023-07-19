@@ -9,7 +9,7 @@ import {
   theme,
 } from "@webstudio-is/design-system";
 import { PlusIcon } from "@webstudio-is/icons";
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useState } from "react";
 import { useNavigate } from "@remix-run/react";
 import { dashboardProjectPath, builderPath } from "~/shared/router-utils";
 import { createTrpcRemixProxy } from "~/shared/remix/trpc-remix-proxy";
