@@ -415,6 +415,7 @@ export const props: Record<string, PropMeta> = {
     required: false,
     control: "radio",
     type: "string",
+    defaultValue: "lazy",
     options: ["eager", "lazy"],
   },
   nonce: { required: false, control: "text", type: "string" },
