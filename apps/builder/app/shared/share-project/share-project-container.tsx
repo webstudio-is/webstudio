@@ -16,17 +16,12 @@ const useShareProjectContainer = (projectId: Project["id"]) => {
   const { send: removeToken } = trpc.remove.useMutation();
   const { send: updateToken } = trpc.update.useMutation();
   const [links, setLinks] = useState(data ?? []);
-  useEffect(() => {
-    if (projectId === undefined) {
-      return;
-    }
 
-    load({ projectId });
+  useEffect(() => {
+    load({ projectId }, (data) => {
+      setLinks(data ?? []);
+    });
   }, [load, projectId]);
-
-  useEffect(() => {
-    setLinks(data ?? []);
-  }, [data, setLinks]);
 
   const handleChangeDebounced = useDebouncedCallback((link: LinkOptions) => {
     if (projectId === undefined) {
