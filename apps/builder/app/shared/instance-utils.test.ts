@@ -3,9 +3,11 @@ import type { WsComponentMeta } from "@webstudio-is/react-sdk";
 import * as defaultMetas from "@webstudio-is/sdk-components-react/metas";
 import type { Instance, Instances } from "@webstudio-is/project-build";
 import {
+  computeInstancesConstraints,
   findClosestDroppableComponentIndex,
   findClosestDroppableTarget,
   findClosestEditableInstanceSelector,
+  type InsertConstraints,
 } from "./instance-utils";
 
 const defaultMetasMap = new Map(Object.entries(defaultMetas));
@@ -37,6 +39,11 @@ const createInstancePair = (
   children: Instance["children"]
 ): [Instance["id"], Instance] => {
   return [id, { type: "instance", id, component, children }];
+};
+
+const emptyInsertConstraints: InsertConstraints = {
+  requiredAncestors: new Set(),
+  invalidAncestors: new Set(),
 };
 
 describe("find closest editable instance selector", () => {
@@ -105,13 +112,60 @@ describe("find closest editable instance selector", () => {
   });
 });
 
+describe("compute instances constraints", () => {
+  const base = {
+    type: "container",
+    label: "",
+    icon: "",
+  } as const;
+
+  test("combine required ancestors excluding already resolved ones", () => {
+    const metas = new Map<string, WsComponentMeta>([
+      ["Button", { ...base, requiredAncestors: ["Form"] }],
+      ["Checkbox", { ...base, requiredAncestors: ["Form", "Label"] }],
+      ["Label", { ...base, requiredAncestors: ["Body"] }],
+    ]);
+    // button
+    // label
+    //   checkbox
+    const instances = new Map<Instance["id"], Instance>([
+      createInstancePair("button", "Button", []),
+      createInstancePair("label", "Label", [{ type: "id", value: "checkbox" }]),
+      createInstancePair("checkbox", "Checkbox", []),
+    ]);
+    expect(
+      computeInstancesConstraints(metas, instances, ["button", "label"])
+    ).toEqual({
+      requiredAncestors: new Set(["Body", "Form"]),
+      invalidAncestors: new Set(),
+    });
+  });
+
+  test("combine invalid ancestors of all instances", () => {
+    const metas = new Map<string, WsComponentMeta>([
+      ["Button", { ...base, invalidAncestors: ["Button"] }],
+      ["Form", { ...base, invalidAncestors: ["Button", "Form"] }],
+    ]);
+    // form
+    //   button
+    const instances = new Map<Instance["id"], Instance>([
+      createInstancePair("form", "Form", [{ type: "id", value: "button" }]),
+      createInstancePair("button", "Button", []),
+    ]);
+    expect(computeInstancesConstraints(metas, instances, ["form"])).toEqual({
+      requiredAncestors: new Set(),
+      invalidAncestors: new Set(["Button", "Form"]),
+    });
+  });
+});
+
 describe("find closest droppable component index", () => {
   test("finds container", () => {
     expect(
       findClosestDroppableComponentIndex(
         createFakeComponentMetas({}),
         ["Box", "Body"],
-        ["Item"]
+        emptyInsertConstraints
       )
     ).toEqual(0);
   });
@@ -121,29 +175,20 @@ describe("find closest droppable component index", () => {
       findClosestDroppableComponentIndex(
         createFakeComponentMetas({}),
         ["Bold", "Italic", "Text", "Box", "Body"],
-        ["Item"]
+        emptyInsertConstraints
       )
     ).toEqual(2);
   });
 
-  test("can be dropped into itself", () => {
+  test("considers invalid ancestors", () => {
     expect(
       findClosestDroppableComponentIndex(
         createFakeComponentMetas({}),
         ["Box", "Item", "Body"],
-        ["Item"]
-      )
-    ).toEqual(0);
-  });
-
-  test("can be forbidden to drop into itself", () => {
-    expect(
-      findClosestDroppableComponentIndex(
-        createFakeComponentMetas({
-          invalidAncestors: ["Item"],
-        }),
-        ["Box", "Item", "Body"],
-        ["Item"]
+        {
+          requiredAncestors: new Set(),
+          invalidAncestors: new Set(["Item"]),
+        }
       )
     ).toEqual(2);
   });
@@ -151,20 +196,22 @@ describe("find closest droppable component index", () => {
   test("requires some ancestor", () => {
     expect(
       findClosestDroppableComponentIndex(
-        createFakeComponentMetas({
-          requiredAncestors: ["Form"],
-        }),
+        createFakeComponentMetas({}),
         ["Box", "Body"],
-        ["Item"]
+        {
+          requiredAncestors: new Set(["Form"]),
+          invalidAncestors: new Set(),
+        }
       )
     ).toEqual(-1);
     expect(
       findClosestDroppableComponentIndex(
-        createFakeComponentMetas({
-          requiredAncestors: ["Form"],
-        }),
+        createFakeComponentMetas({}),
         ["Box", "Form", "Body"],
-        ["Item"]
+        {
+          requiredAncestors: new Set(["Form"]),
+          invalidAncestors: new Set(),
+        }
       )
     ).toEqual(0);
   });
@@ -172,55 +219,24 @@ describe("find closest droppable component index", () => {
   test("considers both required and invalid ancestors", () => {
     expect(
       findClosestDroppableComponentIndex(
-        createFakeComponentMetas({
-          requiredAncestors: ["Form"],
-          invalidAncestors: ["Box"],
-        }),
+        createFakeComponentMetas({}),
         ["Div", "Box", "Form", "Body"],
-        ["Item"]
+        {
+          requiredAncestors: new Set(["Form"]),
+          invalidAncestors: new Set(["Box"]),
+        }
       )
     ).toEqual(2);
     expect(
       findClosestDroppableComponentIndex(
-        createFakeComponentMetas({
-          requiredAncestors: ["Form"],
-          invalidAncestors: ["Box"],
-        }),
+        createFakeComponentMetas({}),
         ["Div", "Form", "Box", "Body"],
-        ["Item"]
+        {
+          requiredAncestors: new Set(["Form"]),
+          invalidAncestors: new Set(["Box"]),
+        }
       )
     ).toEqual(-1);
-  });
-
-  test("considers multiple children", () => {
-    expect(
-      findClosestDroppableComponentIndex(
-        createFakeComponentMetas(
-          {
-            requiredAncestors: ["Form"],
-          },
-          {
-            requiredAncestors: ["Box"],
-          }
-        ),
-        ["Div", "Form", "Body"],
-        ["Item", "AnotherItem"]
-      )
-    ).toEqual(0);
-    expect(
-      findClosestDroppableComponentIndex(
-        createFakeComponentMetas(
-          {
-            requiredAncestors: ["Form"],
-          },
-          {
-            requiredAncestors: ["Box"],
-          }
-        ),
-        ["Div", "Box", "Body"],
-        ["Item", "AnotherItem"]
-      )
-    ).toEqual(0);
   });
 });
 
@@ -246,7 +262,7 @@ describe("find closest droppable target", () => {
         defaultMetasMap,
         instances,
         ["box", "body"],
-        ["Box"]
+        emptyInsertConstraints
       )
     ).toEqual({
       parentSelector: ["box", "body"],
@@ -257,7 +273,7 @@ describe("find closest droppable target", () => {
         defaultMetasMap,
         instances,
         ["not-existing", "body"],
-        ["Box"]
+        emptyInsertConstraints
       )
     ).toEqual(undefined);
   });
@@ -268,7 +284,12 @@ describe("find closest droppable target", () => {
       createInstancePair("box", "Box", [{ type: "id", value: "paragraph" }]),
     ]);
     expect(
-      findClosestDroppableTarget(defaultMetasMap, instances, ["body"], ["Box"])
+      findClosestDroppableTarget(
+        defaultMetasMap,
+        instances,
+        ["body"],
+        emptyInsertConstraints
+      )
     ).toEqual({
       parentSelector: ["body"],
       position: "end",
@@ -288,29 +309,10 @@ describe("find closest droppable target", () => {
         defaultMetasMap,
         instances,
         ["bold", "paragraph", "body"],
-        ["Box"]
+        emptyInsertConstraints
       )
     ).toEqual({
       parentSelector: ["paragraph", "body"],
-      position: 1,
-    });
-  });
-
-  test("puts multiple children", () => {
-    const instances = new Map([
-      createInstancePair("body", "Body", [{ type: "id", value: "box" }]),
-      createInstancePair("box", "Box", [{ type: "id", value: "bold" }]),
-      createInstancePair("bold", "Bold", []),
-    ]);
-    expect(
-      findClosestDroppableTarget(
-        defaultMetasMap,
-        instances,
-        ["bold", "box", "body"],
-        ["Box", "Form"]
-      )
-    ).toEqual({
-      parentSelector: ["box", "body"],
       position: 1,
     });
   });

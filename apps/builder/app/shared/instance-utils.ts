@@ -1,6 +1,7 @@
 import store from "immerhin";
 import {
-  Instances,
+  type Instance,
+  type Instances,
   findTreeInstanceIdsExcludingSlotDescendants,
 } from "@webstudio-is/project-build";
 import {
@@ -71,26 +72,81 @@ export const findClosestEditableInstanceSelector = (
   }
 };
 
-export const findClosestDroppableComponentIndex = (
+const traverseInstancesConstraints = (
   metas: Map<string, WsComponentMeta>,
-  componentSelector: string[],
-  childComponents: string[]
+  instances: Instances,
+  instanceId: Instance["id"],
+  requiredAncestors: Set<Instance["component"]>,
+  invalidAncestors: Set<Instance["component"]>,
+  componentSelector: string[] = []
 ) => {
-  const requiredAncestors = new Set<string>();
-  const invalidAncestors = new Set<string>();
-  for (const childComponent of childComponents) {
-    const childMeta = metas.get(childComponent);
-    if (childMeta?.requiredAncestors) {
-      for (const ancestorComponent of childMeta.requiredAncestors) {
-        requiredAncestors.add(ancestorComponent);
-      }
-    }
-    if (childMeta?.invalidAncestors) {
-      for (const ancestorComponent of childMeta.invalidAncestors) {
-        invalidAncestors.add(ancestorComponent);
+  const instance = instances.get(instanceId);
+  if (instance === undefined) {
+    return;
+  }
+  const meta = metas.get(instance.component);
+  if (meta === undefined) {
+    return;
+  }
+  if (meta.requiredAncestors) {
+    for (const requiredAncestor of meta.requiredAncestors) {
+      if (componentSelector.includes(requiredAncestor) === false) {
+        requiredAncestors.add(requiredAncestor);
       }
     }
   }
+  if (meta.invalidAncestors) {
+    for (const invalidAncestor of meta.invalidAncestors) {
+      invalidAncestors.add(invalidAncestor);
+    }
+  }
+  for (const child of instance.children) {
+    if (child.type === "id") {
+      traverseInstancesConstraints(
+        metas,
+        instances,
+        child.value,
+        requiredAncestors,
+        invalidAncestors,
+        [instance.component, ...componentSelector]
+      );
+    }
+  }
+};
+
+export type InsertConstraints = {
+  requiredAncestors: Set<Instance["component"]>;
+  invalidAncestors: Set<Instance["component"]>;
+};
+
+export const computeInstancesConstraints = (
+  metas: Map<string, WsComponentMeta>,
+  instances: Instances,
+  rootInstanceIds: Instance["id"][]
+): InsertConstraints => {
+  const requiredAncestors = new Set<string>();
+  const invalidAncestors = new Set<string>();
+  for (const instanceId of rootInstanceIds) {
+    traverseInstancesConstraints(
+      metas,
+      instances,
+      instanceId,
+      requiredAncestors,
+      invalidAncestors
+    );
+  }
+  return {
+    requiredAncestors,
+    invalidAncestors,
+  };
+};
+
+export const findClosestDroppableComponentIndex = (
+  metas: Map<string, WsComponentMeta>,
+  componentSelector: string[],
+  constraints: InsertConstraints
+) => {
+  const { requiredAncestors, invalidAncestors } = constraints;
 
   let containerIndex = -1;
   let requiredFound = false;
@@ -120,7 +176,7 @@ export const findClosestDroppableTarget = (
   metas: Map<string, WsComponentMeta>,
   instances: Instances,
   instanceSelector: InstanceSelector,
-  dragComponents: string[]
+  insertConstraints: InsertConstraints
 ): undefined | DroppableTarget => {
   const componentSelector: string[] = [];
   for (const instanceId of instanceSelector) {
@@ -134,7 +190,7 @@ export const findClosestDroppableTarget = (
   const droppableIndex = findClosestDroppableComponentIndex(
     metas,
     componentSelector,
-    dragComponents
+    insertConstraints
   );
   if (droppableIndex === -1) {
     return;
@@ -227,10 +283,7 @@ export const insertTemplateData = (
   selectedStyleSourceSelectorStore.set(undefined);
 };
 
-export const insertNewComponentInstance = (
-  component: string,
-  dropTarget: DroppableTarget
-) => {
+export const getComponentTemplateData = (component: string) => {
   const metas = registeredComponentMetasStore.get();
   const componentMeta = metas.get(component);
   // when template not specified fallback to template with the component
@@ -247,11 +300,7 @@ export const insertNewComponentInstance = (
   if (baseBreakpoint === undefined) {
     return;
   }
-  const templateData = generateDataFromEmbedTemplate(
-    template,
-    baseBreakpoint.id
-  );
-  insertTemplateData(templateData, dropTarget);
+  return generateDataFromEmbedTemplate(template, baseBreakpoint.id);
 };
 
 export const reparentInstance = (

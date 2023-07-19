@@ -34,7 +34,11 @@ import {
   findLocalStyleSourcesWithinInstances,
   mergeNewBreakpointsMutable,
 } from "../tree-utils";
-import { deleteInstance, findClosestDroppableTarget } from "../instance-utils";
+import {
+  computeInstancesConstraints,
+  deleteInstance,
+  findClosestDroppableTarget,
+} from "../instance-utils";
 import { getMapValuesBy, getMapValuesByKeysSet } from "../array-utils";
 import { Asset } from "@webstudio-is/asset-uploader";
 
@@ -266,18 +270,20 @@ export const onPaste = (clipboardData: string): boolean => {
     return false;
   }
 
+  const metas = registeredComponentMetasStore.get();
+  const newInstances = new Map(
+    data.instances.map((instance) => [instance.id, instance])
+  );
+  const rootInstanceId = data.instances[0].id;
   // paste to the root if nothing is selected
   const instanceSelector = selectedInstanceSelectorStore.get() ?? [
     selectedPage.rootInstanceId,
   ];
-  const dragComponents = Array.from(
-    new Set(data.instances.map((instance) => instance.component))
-  );
   const dropTarget = findClosestDroppableTarget(
-    registeredComponentMetasStore.get(),
+    metas,
     instancesStore.get(),
     instanceSelector,
-    dragComponents
+    computeInstancesConstraints(metas, newInstances, [rootInstanceId])
   );
   if (dropTarget === undefined) {
     return false;

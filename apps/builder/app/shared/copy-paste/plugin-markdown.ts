@@ -5,7 +5,10 @@ import { fromMarkdown } from "mdast-util-from-markdown";
 import type { Instance, Prop } from "@webstudio-is/project-build";
 import { nanoid } from "nanoid";
 import { insertInstancesMutable } from "../tree-utils";
-import { findClosestDroppableTarget } from "../instance-utils";
+import {
+  computeInstancesConstraints,
+  findClosestDroppableTarget,
+} from "../instance-utils";
 import {
   instancesStore,
   propsStore,
@@ -202,18 +205,22 @@ export const onPaste = (clipboardData: string): boolean => {
   if (data === undefined || selectedPage === undefined) {
     return false;
   }
+  const metas = registeredComponentMetasStore.get();
+  const newInstances = new Map(
+    data.instances.map((instance) => [instance.id, instance])
+  );
+  const rootInstanceIds = data.children
+    .filter((child) => child.type === "id")
+    .map((child) => child.value);
   // paste to the root if nothing is selected
   const instanceSelector = selectedInstanceSelectorStore.get() ?? [
     selectedPage.rootInstanceId,
   ];
-  const dragComponents = Array.from(
-    new Set(data.instances.map((instance) => instance.component))
-  );
   const dropTarget = findClosestDroppableTarget(
-    registeredComponentMetasStore.get(),
+    metas,
     instancesStore.get(),
     instanceSelector,
-    dragComponents
+    computeInstancesConstraints(metas, newInstances, rootInstanceIds)
   );
   if (dropTarget === undefined) {
     return false;

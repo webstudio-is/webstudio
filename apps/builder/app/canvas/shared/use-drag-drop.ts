@@ -1,8 +1,5 @@
 import { useLayoutEffect, useRef } from "react";
-import {
-  findTreeInstanceIds,
-  type Instance,
-} from "@webstudio-is/project-build";
+import type { Instance } from "@webstudio-is/project-build";
 import {
   type Point,
   type Placement,
@@ -18,10 +15,13 @@ import {
 } from "~/shared/nano-states";
 import { publish, useSubscribe } from "~/shared/pubsub";
 import {
+  computeInstancesConstraints,
   findClosestDroppableComponentIndex,
   findClosestEditableInstanceSelector,
-  insertNewComponentInstance,
+  getComponentTemplateData,
+  insertTemplateData,
   reparentInstance,
+  type InsertConstraints,
 } from "~/shared/instance-utils";
 import {
   getElementByInstanceSelector,
@@ -67,32 +67,36 @@ const findClosestDroppableInstanceSelector = (
   const instances = instancesStore.get();
   const metas = registeredComponentMetasStore.get();
 
-  const dragComponents = new Set<Instance["component"]>();
+  let insertConstraints: undefined | InsertConstraints;
   if (dragPayload?.type === "insert") {
     const template = metas.get(dragPayload.dragComponent)?.template;
     if (template) {
       // ignore breakpoint, here only instances are important
       // @todo optimize by traversing only instances
-      const { instances } = generateDataFromEmbedTemplate(
+      const { children, instances } = generateDataFromEmbedTemplate(
         template,
         "__placeholder__"
       );
-      for (const instance of instances) {
-        dragComponents.add(instance.component);
-      }
+      const newInstances = new Map(
+        instances.map((instance) => [instance.id, instance])
+      );
+      const rootInstanceIds = children
+        .filter((child) => child.type === "id")
+        .map((child) => child.value);
+      insertConstraints = computeInstancesConstraints(
+        metas,
+        newInstances,
+        rootInstanceIds
+      );
     }
   }
   if (dragPayload?.type === "reparent") {
-    const instanceIds = findTreeInstanceIds(
-      instances,
-      dragPayload.dragInstanceSelector[0]
-    );
-    for (const instanceId of instanceIds) {
-      const instance = instances.get(instanceId);
-      if (instance) {
-        dragComponents.add(instance.component);
-      }
-    }
+    insertConstraints = computeInstancesConstraints(metas, instances, [
+      dragPayload.dragInstanceSelector[0],
+    ]);
+  }
+  if (insertConstraints === undefined) {
+    return;
   }
 
   const componentSelector: string[] = [];
@@ -107,7 +111,7 @@ const findClosestDroppableInstanceSelector = (
   const droppableIndex = findClosestDroppableComponentIndex(
     registeredComponentMetasStore.get(),
     componentSelector,
-    Array.from(dragComponents)
+    insertConstraints
   );
   if (droppableIndex === -1) {
     return;
@@ -325,7 +329,13 @@ export const useDragAndDrop = () => {
 
     if (dropTarget && dragPayload && isCanceled === false) {
       if (dragPayload.type === "insert") {
-        insertNewComponentInstance(dragPayload.dragComponent, {
+        const templateData = getComponentTemplateData(
+          dragPayload.dragComponent
+        );
+        if (templateData === undefined) {
+          return;
+        }
+        insertTemplateData(templateData, {
           parentSelector: dropTarget.itemSelector,
           position: dropTarget.indexWithinChildren,
         });
