@@ -1,18 +1,27 @@
-# Webstudio Builder
+  <img width="1512" alt="Screenshot 2023-07-12 at 19 43 21" src="https://github.com/webstudio-is/.github/assets/52824/bc2afd25-06bd-407b-a9e4-9ef2f626e550">
+  <br /><br />
+<section align="center">
+  Webstudio is an Open Source Visual Development Platform for developers, designers, and cross-functional teams. You own the data, components, and infrastructure. You can use the hosted version or roll out your own.
+</section>
+<br /><br />
 
-Open Source alternative to Webflow Designer
+## Learning ressources
+
+- [Blog](https://webstudio.is/blog)
+- [Community documentation](https://github.com/webstudio-is/webstudio/tree/main/docs)
+- [Brand and product design](https://github.com/webstudio-is/webstudio-design/)
+
+## Social Media
+
+- [Twitter](https://twitter.com/getwebstudio)
+- [Youtube](https://www.youtube.com/@getwebstudio)
+- [Discord](https://discord.gg/UNdyrDkq5r)
 
 ## Contributing
 
-Don't hesitate to reach out if you have questions around contributing to the
-project.
-
-[Contributing guide](https://github.com/webstudio-is/webstudio/blob/main/docs/contributing.md)
-
-## Community
-
-[Twitter](https://twitter.com/getwebstudio)
-
-[Discussions](https://github.com/webstudio-is/webstudio/discussions)
-
-[Discord](https://discord.gg/UNdyrDkq5r)
+- [Contributing guide](https://github.com/webstudio-is/webstudio/blob/main/docs/contributing.md)
+- [Github Discussions](https://github.com/webstudio-is/webstudio/discussions)
+- [Wishlist](https://github.com/webstudio-is/webstudio/discussions/categories/wishlist)
+- [Builder Issues tracker](https://github.com/webstudio-is/webstudio-builder/issues)
+- [Roadmap](https://github.com/orgs/webstudio-is/projects)
+- [Design Assets and docs](https://github.com/webstudio-is/webstudio-design)
