@@ -1,10 +1,7 @@
 import { useCallback, useMemo } from "react";
 import { useStore } from "@nanostores/react";
 import { shallowEqual } from "shallow-equal";
-import {
-  findTreeInstanceIds,
-  type Instance,
-} from "@webstudio-is/project-build";
+import type { Instance } from "@webstudio-is/project-build";
 import {
   hoveredInstanceSelectorStore,
   instancesStore,
@@ -17,8 +14,10 @@ import {
 } from "~/shared/nano-states";
 import type { InstanceSelector } from "~/shared/tree-utils";
 import {
+  computeInstancesConstraints,
   findClosestDroppableComponentIndex,
   reparentInstance,
+  type InsertConstraints,
 } from "~/shared/instance-utils";
 import { InstanceTree } from "./tree";
 import { generateDataFromEmbedTemplate } from "@webstudio-is/react-sdk";
@@ -37,40 +36,41 @@ export const NavigatorTree = () => {
       ? dragPayload.dragInstanceSelector
       : undefined;
 
-  // collect components of drag component and all its descendants
-  const dragComponents = useMemo(() => {
-    const dragComponents = new Set<Instance["component"]>();
+  const insertConstraints: undefined | InsertConstraints = useMemo(() => {
     if (dragPayload?.type === "insert") {
       const template = metas.get(dragPayload.dragComponent)?.template;
       if (template) {
         // ignore breakpoint, here only instances are important
         // @todo optimize by traversing only instances
-        const { instances } = generateDataFromEmbedTemplate(
+        const { children, instances } = generateDataFromEmbedTemplate(
           template,
           "__placeholder__"
         );
-        for (const instance of instances) {
-          dragComponents.add(instance.component);
-        }
+        const newInstances = new Map(
+          instances.map((instance) => [instance.id, instance])
+        );
+        const rootInstanceIds = children
+          .filter((child) => child.type === "id")
+          .map((child) => child.value);
+        return computeInstancesConstraints(
+          metas,
+          newInstances,
+          rootInstanceIds
+        );
       }
     }
     if (dragPayload?.type === "reparent") {
-      const instanceIds = findTreeInstanceIds(
-        instances,
-        dragPayload.dragInstanceSelector[0]
-      );
-      for (const instanceId of instanceIds) {
-        const instance = instances.get(instanceId);
-        if (instance) {
-          dragComponents.add(instance.component);
-        }
-      }
+      return computeInstancesConstraints(metas, instances, [
+        dragPayload.dragInstanceSelector[0],
+      ]);
     }
-    return Array.from(dragComponents);
   }, [dragPayload, instances, metas]);
 
   const findClosestDroppableIndex = useCallback(
     (instanceSelector: InstanceSelector) => {
+      if (insertConstraints === undefined) {
+        return -1;
+      }
       const componentSelector: string[] = [];
       for (const instanceId of instanceSelector) {
         const component = instances.get(instanceId)?.component;
@@ -82,10 +82,10 @@ export const NavigatorTree = () => {
       return findClosestDroppableComponentIndex(
         metas,
         componentSelector,
-        dragComponents
+        insertConstraints
       );
     },
-    [instances, metas, dragComponents]
+    [instances, metas, insertConstraints]
   );
 
   const isItemHidden = useCallback(

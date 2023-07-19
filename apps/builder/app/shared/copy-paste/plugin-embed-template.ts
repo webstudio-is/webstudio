@@ -11,6 +11,7 @@ import {
   breakpointsStore,
 } from "../nano-states";
 import {
+  computeInstancesConstraints,
   findClosestDroppableTarget,
   insertTemplateData,
 } from "../instance-utils";
@@ -54,14 +55,18 @@ export const onPaste = (clipboardData: string): boolean => {
     template,
     baseBreakpoint.id
   );
-  const dragComponents = Array.from(
-    new Set(templateData.instances.map((instance) => instance.component))
+  const metas = registeredComponentMetasStore.get();
+  const newInstances = new Map(
+    templateData.instances.map((instance) => [instance.id, instance])
   );
+  const rootInstanceIds = templateData.children
+    .filter((child) => child.type === "id")
+    .map((child) => child.value);
   const dropTarget = findClosestDroppableTarget(
-    registeredComponentMetasStore.get(),
+    metas,
     instancesStore.get(),
     instanceSelector,
-    dragComponents
+    computeInstancesConstraints(metas, newInstances, rootInstanceIds)
   );
   if (dropTarget === undefined) {
     return false;

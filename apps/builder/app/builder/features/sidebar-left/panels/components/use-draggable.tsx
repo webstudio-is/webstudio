@@ -23,8 +23,10 @@ import {
   scaleStore,
 } from "~/builder/shared/nano-states";
 import {
+  computeInstancesConstraints,
   findClosestDroppableTarget,
-  insertNewComponentInstance,
+  getComponentTemplateData,
+  insertTemplateData,
 } from "~/shared/instance-utils";
 import { MetaIcon } from "~/builder/shared/meta-icon";
 
@@ -176,6 +178,16 @@ export const useDraggable = ({
     if (selectedPage === undefined) {
       return;
     }
+    const templateData = getComponentTemplateData(component);
+    if (templateData === undefined) {
+      return;
+    }
+    const newInstances = new Map(
+      templateData.instances.map((instance) => [instance.id, instance])
+    );
+    const rootInstanceIds = templateData.children
+      .filter((child) => child.type === "id")
+      .map((child) => child.value);
     const instanceSelector = selectedInstanceSelectorStore.get() ?? [
       selectedPage.rootInstanceId,
     ];
@@ -185,7 +197,7 @@ export const useDraggable = ({
       instancesStore.get(),
       // fallback to root as drop target
       instanceSelector,
-      [component]
+      computeInstancesConstraints(metas, newInstances, rootInstanceIds)
     );
     if (dropTarget === undefined) {
       const meta = metas.get(component);
@@ -194,7 +206,7 @@ export const useDraggable = ({
       }
       return;
     }
-    insertNewComponentInstance(component, dropTarget);
+    insertTemplateData(templateData, dropTarget);
   };
 
   return {
