@@ -1,4 +1,4 @@
-import { type MouseEvent, type FormEvent, useEffect } from "react";
+import { type MouseEvent, type FormEvent, useEffect, forwardRef } from "react";
 import { Suspense, lazy, useCallback, useRef } from "react";
 import { useStore } from "@nanostores/react";
 import { useLexicalComposerContext } from "@lexical/react/LexicalComposerContext";
@@ -33,6 +33,7 @@ import {
 } from "~/shared/tree-utils";
 import { SelectedInstanceConnector } from "./selected-instance-connector";
 import { handleLinkClick } from "./link";
+import { mergeRefs } from "@react-aria/utils";
 
 const TextEditor = lazy(() => import("../text-editor"));
 
@@ -108,12 +109,11 @@ type WebstudioComponentDevProps = {
   components: Components;
 };
 
-export const WebstudioComponentDev = ({
-  instance,
-  instanceSelector,
-  children,
-  components,
-}: WebstudioComponentDevProps) => {
+// eslint-disable-next-line react/display-name
+export const WebstudioComponentDev = forwardRef<
+  HTMLElement,
+  WebstudioComponentDevProps
+>(({ instance, instanceSelector, children, components }, ref) => {
   const instanceId = instance.id;
   const instanceElementRef = useRef<HTMLElement>(null);
   const instanceStyles = useInstanceStyles(instanceId);
@@ -212,7 +212,7 @@ export const WebstudioComponentDev = ({
           instanceProps={instanceProps}
         />
       )}
-      <Component {...props} ref={instanceElementRef}>
+      <Component {...props} ref={mergeRefs(instanceElementRef, ref)}>
         {renderWebstudioComponentChildren(children)}
       </Component>
     </>
@@ -264,4 +264,4 @@ export const WebstudioComponentDev = ({
       />
     </Suspense>
   );
-};
+});
