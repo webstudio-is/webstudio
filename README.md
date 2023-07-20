@@ -1,5 +1,6 @@
-  <img width="1512" alt="Screenshot 2023-07-12 at 19 43 21" src="https://github.com/webstudio-is/.github/assets/52824/bc2afd25-06bd-407b-a9e4-9ef2f626e550">
-  <br /><br />
+<img width="1512" alt="builder-screenshot" src="https://github.com/webstudio-is/.github/blob/main/assets/builder-screenshot.png?raw=true">
+<br /><br />
+
 <section align="center">
   Webstudio is an Open Source Visual Development Platform for developers, designers, and cross-functional teams. You own the data, components, and infrastructure. You can use the hosted version or roll out your own.
 </section>
