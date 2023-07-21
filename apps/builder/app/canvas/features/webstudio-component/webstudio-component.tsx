@@ -16,6 +16,7 @@ import {
   componentAttribute,
   showAttribute,
   useInstanceProps,
+  selectorIdAttribute,
 } from "@webstudio-is/react-sdk";
 import {
   instancesStore,
@@ -180,6 +181,7 @@ export const WebstudioComponentDev = forwardRef<
     tabIndex: 0,
     [componentAttribute]: instance.component,
     [idAttribute]: instance.id,
+    [selectorIdAttribute]: instanceSelector.join(","),
     onClick: (event: MouseEvent) => {
       event.preventDefault();
       if (event.currentTarget instanceof HTMLAnchorElement) {

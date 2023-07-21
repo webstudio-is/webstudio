@@ -16,12 +16,14 @@ const idAttribute = "data-ws-id" as const;
 const componentAttribute = "data-ws-component" as const;
 const showAttribute = "data-ws-show" as const;
 const collapsedAttribute = "data-ws-collapsed" as const;
+const selectorIdAttribute = "data-ws-parent-id" as const;
 
 type WebstudioAttributes =
   | typeof idAttribute
   | typeof componentAttribute
   | typeof showAttribute
-  | typeof collapsedAttribute;
+  | typeof collapsedAttribute
+  | typeof selectorIdAttribute;
 
 type WebstudioAtributesProps = { [key in WebstudioAttributes]: string };
 
@@ -48,6 +50,7 @@ export const Tooltip = forwardRef<
       [componentAttribute]: componentAttributeValue,
       [showAttribute]: showAttributeValue,
       [collapsedAttribute]: collapsedAttributeValue,
+      [selectorIdAttribute]: parentIdAttributeValue,
       ...props
     },
     ref
@@ -60,6 +63,7 @@ export const Tooltip = forwardRef<
         [componentAttribute]: componentAttributeValue,
         [showAttribute]: showAttributeValue,
         [collapsedAttribute]: collapsedAttributeValue,
+        [selectorIdAttribute]: parentIdAttributeValue,
       }}
     >
       <TooltipPrimitive.Root {...props} />
@@ -79,6 +83,7 @@ export const TooltipTrigger = forwardRef<
       [componentAttribute]: componentAttributeValue,
       [showAttribute]: showAttributeValue,
       [collapsedAttribute]: collapsedAttributeValue,
+      [selectorIdAttribute]: parentIdAttributeValue,
       children,
       ...props
     },
@@ -95,6 +100,7 @@ export const TooltipTrigger = forwardRef<
           [componentAttribute]: componentAttributeValue,
           [showAttribute]: showAttributeValue,
           [collapsedAttribute]: collapsedAttributeValue,
+          [selectorIdAttribute]: parentIdAttributeValue,
         }}
       >
         <TooltipPrimitive.Trigger asChild={true} {...props}>
