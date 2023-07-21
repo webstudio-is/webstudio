@@ -153,13 +153,22 @@ const useIsScreenReaderDescendant = (ref: RefObject<HTMLElement>) => {
   return isScreenReaderDescendant;
 };
 
-type HandlerName = `on${string}`;
-
 /**
  * For some components that are wrapped with Radix Slot components (where asChild=true),
  * events are passed implicitly. We aim to merge these implicit events with the explicitly defined ones.
  **/
-type ImplicitEvents = Record<HandlerName, (event: never) => void>;
+type ImplicitEvents = {
+  onClick?: undefined | ((event: never) => void);
+  onSubmit?: undefined | ((event: never) => void);
+  /**
+   * We ignore the remaining events because we currently detect events using the 'on' prefix.
+   * This approach (defining type like above instead of Partial<Record<`on${string}`, Handler>>)
+   * is necessary due to our TypeScript settings, where 'no exactOptionalPropertyTypes' is set,
+   * which makes it impossible to define a Partial<Record<>> with optional keys.
+   *  (without exactOptionalPropertyTypes ts defines it as {[key: string]: Handler | undefined)}
+   *   instead of {[key: string]?: Handler | undefined)})
+   **/
+};
 
 // eslint-disable-next-line react/display-name
 export const WebstudioComponentDev = forwardRef<
@@ -275,7 +284,7 @@ export const WebstudioComponentDev = forwardRef<
       propHandler !== undefined &&
       typeof propHandler === "function"
     ) {
-      composedHandlers[key as HandlerName] = composeEventHandlers(
+      composedHandlers[key as keyof ImplicitEvents] = composeEventHandlers(
         value,
         propHandler
       );
