@@ -2,7 +2,6 @@ import { RadioCheckedIcon } from "@webstudio-is/icons/svg";
 import {
   type WsComponentMeta,
   type WsComponentPropsMeta,
-  // defaultStates,
 } from "@webstudio-is/react-sdk";
 
 import {
@@ -36,7 +35,6 @@ export const metaTooltip: WsComponentMeta = {
   label: "Tooltip",
   icon: RadioCheckedIcon,
   order: 15,
-  // states: [...defaultStates],
   template: [
     {
       type: "instance",
