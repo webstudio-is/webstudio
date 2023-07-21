@@ -61,8 +61,36 @@ export const WebstudioComponent = forwardRef<
   );
 });
 
-export const idAttribute = "data-ws-id";
-export const selectorIdAttribute = "data-ws-parent-id";
-export const componentAttribute = "data-ws-component";
-export const showAttribute = "data-ws-show";
-export const collapsedAttribute = "data-ws-collapsed";
+export const idAttribute = "data-ws-id" as const;
+export const selectorIdAttribute = "data-ws-parent-id" as const;
+export const componentAttribute = "data-ws-component" as const;
+export const showAttribute = "data-ws-show" as const;
+export const collapsedAttribute = "data-ws-collapsed" as const;
+
+export type WebstudioAttributes = {
+  [idAttribute]?: string | undefined;
+  [selectorIdAttribute]?: string | undefined;
+  [componentAttribute]?: string | undefined;
+  [showAttribute]?: string | undefined;
+  [collapsedAttribute]?: string | undefined;
+};
+
+export const splitPropsWithWebstudioAttributes = <
+  P extends WebstudioAttributes
+>({
+  [idAttribute]: idAttributeValue,
+  [componentAttribute]: componentAttributeValue,
+  [showAttribute]: showAttributeValue,
+  [collapsedAttribute]: collapsedAttributeValue,
+  [selectorIdAttribute]: parentIdAttributeValue,
+  ...props
+}: P): [WebstudioAttributes, Omit<P, keyof WebstudioAttributes>] => [
+  {
+    [idAttribute]: idAttributeValue,
+    [componentAttribute]: componentAttributeValue,
+    [showAttribute]: showAttributeValue,
+    [collapsedAttribute]: collapsedAttributeValue,
+    [selectorIdAttribute]: parentIdAttributeValue,
+  },
+  props,
+];

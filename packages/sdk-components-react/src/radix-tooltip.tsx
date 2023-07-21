@@ -1,31 +1,11 @@
 /* eslint-disable react/display-name */
 // We can't use .displayName until this is merged https://github.com/styleguidist/react-docgen-typescript/pull/449
 
-// meta.stylable
-/*
- className={cn(
-      "z-50 overflow-hidden rounded-md border bg-popover px-3 py-1.5 text-sm text-popover-foreground shadow-md animate-in fade-in-0 zoom-in-95 data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=closed]:zoom-out-95 data-[side=bottom]:slide-in-from-top-2 data-[side=left]:slide-in-from-right-2 data-[side=right]:slide-in-from-left-2 data-[side=top]:slide-in-from-bottom-2",
-      className
-    )}
-
-*/
-
 import * as TooltipPrimitive from "@radix-ui/react-tooltip";
-
-const idAttribute = "data-ws-id" as const;
-const componentAttribute = "data-ws-component" as const;
-const showAttribute = "data-ws-show" as const;
-const collapsedAttribute = "data-ws-collapsed" as const;
-const selectorIdAttribute = "data-ws-parent-id" as const;
-
-type WebstudioAttributes =
-  | typeof idAttribute
-  | typeof componentAttribute
-  | typeof showAttribute
-  | typeof collapsedAttribute
-  | typeof selectorIdAttribute;
-
-type WebstudioAtributesProps = { [key in WebstudioAttributes]: string };
+import {
+  splitPropsWithWebstudioAttributes,
+  type WebstudioAttributes,
+} from "@webstudio-is/react-sdk";
 
 import {
   forwardRef,
@@ -35,81 +15,45 @@ import {
   type ReactNode,
 } from "react";
 
-// ref={instanceElementRef}
-
+/**
+ * Tooltip, TooltipTrigger are htmlless components, in our system in order to make them work
+ * we need to wrap htmlless attributes with a div with display: contents
+ */
 const DisplayContentsStyle = { display: "contents" };
 
 export const Tooltip = forwardRef<
   ElementRef<"div">,
-  WebstudioAtributesProps &
-    ComponentPropsWithoutRef<typeof TooltipPrimitive.Root>
->(
-  (
-    {
-      [idAttribute]: idAttributeValue,
-      [componentAttribute]: componentAttributeValue,
-      [showAttribute]: showAttributeValue,
-      [collapsedAttribute]: collapsedAttributeValue,
-      [selectorIdAttribute]: parentIdAttributeValue,
-      ...props
-    },
-    ref
-  ) => (
-    <div
-      ref={ref}
-      style={DisplayContentsStyle}
-      {...{
-        [idAttribute]: idAttributeValue,
-        [componentAttribute]: componentAttributeValue,
-        [showAttribute]: showAttributeValue,
-        [collapsedAttribute]: collapsedAttributeValue,
-        [selectorIdAttribute]: parentIdAttributeValue,
-      }}
-    >
-      <TooltipPrimitive.Root {...props} />
-    </div>
-  )
-);
+  WebstudioAttributes & ComponentPropsWithoutRef<typeof TooltipPrimitive.Root>
+>((props, ref) => {
+  const [webstudioAttributes, restProps] =
+    splitPropsWithWebstudioAttributes(props);
 
-// To avoid issues like button inside button, we make asChild=true the default
-// Also we set meta.stylable = false to not have any styling issues
+  return (
+    <div ref={ref} style={DisplayContentsStyle} {...webstudioAttributes}>
+      <TooltipPrimitive.Root {...restProps} />
+    </div>
+  );
+});
+
 export const TooltipTrigger = forwardRef<
   ElementRef<"div">,
-  WebstudioAtributesProps & { children: ReactNode }
->(
-  (
-    {
-      [idAttribute]: idAttributeValue,
-      [componentAttribute]: componentAttributeValue,
-      [showAttribute]: showAttributeValue,
-      [collapsedAttribute]: collapsedAttributeValue,
-      [selectorIdAttribute]: parentIdAttributeValue,
-      children,
-      ...props
-    },
-    ref
-  ) => {
-    const firstChild = Children.toArray(children)[0];
+  WebstudioAttributes & { children: ReactNode }
+>(({ children, ...props }, ref) => {
+  const firstChild = Children.toArray(children)[0];
+  const [webstudioAttributes, restProps] =
+    splitPropsWithWebstudioAttributes(props);
 
-    return (
-      <div
-        ref={ref}
-        style={DisplayContentsStyle}
-        {...{
-          [idAttribute]: idAttributeValue,
-          [componentAttribute]: componentAttributeValue,
-          [showAttribute]: showAttributeValue,
-          [collapsedAttribute]: collapsedAttributeValue,
-          [selectorIdAttribute]: parentIdAttributeValue,
-        }}
-      >
-        <TooltipPrimitive.Trigger asChild={true} {...props}>
-          {firstChild ?? <button>Add button or link</button>}
-        </TooltipPrimitive.Trigger>
-      </div>
-    );
-  }
-);
+  /**
+   * We are forcing asChild=true for the Trigger to make it work with our components in a consistent way
+   */
+  return (
+    <div ref={ref} style={DisplayContentsStyle} {...webstudioAttributes}>
+      <TooltipPrimitive.Trigger asChild={true} {...restProps}>
+        {firstChild ?? <button>Add button or link</button>}
+      </TooltipPrimitive.Trigger>
+    </div>
+  );
+});
 
 export const TooltipContent = forwardRef<
   ElementRef<typeof TooltipPrimitive.Content>,
