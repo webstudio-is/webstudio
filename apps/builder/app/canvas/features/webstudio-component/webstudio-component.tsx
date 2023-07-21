@@ -42,6 +42,7 @@ import {
 import { SelectedInstanceConnector } from "./selected-instance-connector";
 import { handleLinkClick } from "./link";
 import { mergeRefs } from "@react-aria/utils";
+import { composeEventHandlers } from "@radix-ui/primitive";
 
 const TextEditor = lazy(() => import("../text-editor"));
 
@@ -152,10 +153,18 @@ const useIsScreenReaderDescendant = (ref: RefObject<HTMLElement>) => {
   return isScreenReaderDescendant;
 };
 
+type HandlerName = `on${string}`;
+
+/**
+ * For some components that are wrapped with Radix Slot components (where asChild=true),
+ * events are passed implicitly. We aim to merge these implicit events with the explicitly defined ones.
+ **/
+type ImplicitEvents = Record<HandlerName, (event: never) => void>;
+
 // eslint-disable-next-line react/display-name
 export const WebstudioComponentDev = forwardRef<
   HTMLElement,
-  WebstudioComponentDevProps
+  WebstudioComponentDevProps & ImplicitEvents
 >(({ instance, instanceSelector, children, components, ...restProps }, ref) => {
   const instanceId = instance.id;
   const instanceElementRef = useRef<HTMLElement>(null);
@@ -227,9 +236,6 @@ export const WebstudioComponentDev = forwardRef<
     ...userProps,
     ...readonlyProps,
     tabIndex: 0,
-    [componentAttribute]: instance.component,
-    [idAttribute]: instance.id,
-    [selectorIdAttribute]: instanceSelector.join(","),
     onClick: (event: MouseEvent) => {
       event.preventDefault();
       if (event.currentTarget instanceof HTMLAnchorElement) {
@@ -249,7 +255,26 @@ export const WebstudioComponentDev = forwardRef<
         userProps.onSubmit(event);
       }
     },
+    [componentAttribute]: instance.component,
+    [idAttribute]: instance.id,
+    [selectorIdAttribute]: instanceSelector.join(","),
   };
+
+  const composedHandlers: ImplicitEvents = {};
+  // Compose radix-like event handlers with webstudio handlers
+  for (const [key, value] of Object.entries(restProps)) {
+    const propHandler = props[key as keyof typeof props];
+    if (
+      key.startsWith("on") &&
+      propHandler !== undefined &&
+      typeof propHandler === "function"
+    ) {
+      composedHandlers[key as HandlerName] = composeEventHandlers(
+        value,
+        propHandler
+      );
+    }
+  }
 
   const instanceElement = (
     <>
@@ -266,6 +291,7 @@ export const WebstudioComponentDev = forwardRef<
       <Component
         {...restProps}
         {...props}
+        {...composedHandlers}
         ref={mergeRefs(instanceElementRef, ref)}
       >
         {renderWebstudioComponentChildren(children)}
