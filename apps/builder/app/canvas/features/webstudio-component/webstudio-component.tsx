@@ -1,4 +1,11 @@
-import { type MouseEvent, type FormEvent, useEffect, forwardRef } from "react";
+import {
+  type MouseEvent,
+  type FormEvent,
+  useEffect,
+  forwardRef,
+  type RefObject,
+  useState,
+} from "react";
 import { Suspense, lazy, useCallback, useRef } from "react";
 import { useStore } from "@nanostores/react";
 import { useLexicalComposerContext } from "@lexical/react/LexicalComposerContext";
@@ -110,6 +117,43 @@ type WebstudioComponentDevProps = {
   components: Components;
 };
 
+/**
+ * Radix uses VisuallyHiddenPrimitive.Root component to expose content of various hidden elements to screen readers
+ * https://github.com/radix-ui/primitives/blob/main/packages/react/visually-hidden/src/VisuallyHidden.tsx
+ *
+ * It's done but just using same Conent children, what cause duplicated react elements
+ * and breaks our isSelected logic.
+ *
+ * To avoid this we try to detect if instance is descendant of VisuallyHiddenPrimitive.Root and do not render it
+ */
+const useIsScreenReaderDescendant = (ref: RefObject<HTMLElement>) => {
+  const [isScreenReaderDescendant, setIsScreenReaderDescendant] =
+    useState(false);
+
+  useEffect(() => {
+    if (ref.current !== null) {
+      for (
+        let element: HTMLElement | null = ref.current;
+        element !== null;
+        element = element.parentElement
+      ) {
+        if (
+          element.style.overflow === "hidden" &&
+          element.style.clip === "rect(0px, 0px, 0px, 0px)" &&
+          element.style.position === "absolute" &&
+          element.style.width === "1px" &&
+          element.style.height === "1px"
+        ) {
+          setIsScreenReaderDescendant(true);
+          return;
+        }
+      }
+    }
+  }, [ref]);
+
+  return isScreenReaderDescendant;
+};
+
 // eslint-disable-next-line react/display-name
 export const WebstudioComponentDev = forwardRef<
   HTMLElement,
@@ -158,6 +202,12 @@ export const WebstudioComponentDev = forwardRef<
       }
     }
   });
+
+  const isScreenReaderDescendant =
+    useIsScreenReaderDescendant(instanceElementRef);
+  if (isScreenReaderDescendant) {
+    return <></>;
+  }
 
   const readonlyProps =
     isPreviewMode === false &&
