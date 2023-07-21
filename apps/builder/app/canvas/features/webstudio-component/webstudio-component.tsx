@@ -261,7 +261,8 @@ export const WebstudioComponentDev = forwardRef<
   };
 
   const composedHandlers: ImplicitEvents = {};
-  // Compose radix-like event handlers with webstudio handlers
+
+  // Compose radix implicit event handlers with user-defined ones (e.g. onClick, onSubmit)
   for (const [key, value] of Object.entries(restProps)) {
     const propHandler = props[key as keyof typeof props];
     if (
