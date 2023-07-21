@@ -262,7 +262,12 @@ export const WebstudioComponentDev = forwardRef<
 
   const composedHandlers: ImplicitEvents = {};
 
-  // Compose radix implicit event handlers with user-defined ones (e.g. onClick, onSubmit)
+  /**
+   * We combine Radix's implicit event handlers with user-defined ones, such as onClick or onSubmit.
+   * For instance, a Button within a TooltipTrigger receives
+   * an onClick handler from the TooltipTrigger.
+   * We might also need an additional onClick handler on the Button for other purposes (setting variable).
+   **/
   for (const [key, value] of Object.entries(restProps)) {
     const propHandler = props[key as keyof typeof props];
     if (
@@ -288,7 +293,6 @@ export const WebstudioComponentDev = forwardRef<
           instanceProps={instanceProps}
         />
       )}
-      {/* @todo restProps are radix events and props, for event handlers we need to composeEventHandlers like in radix */}
       <Component
         {...restProps}
         {...props}
