@@ -9,6 +9,7 @@ import {
   breakpointsStore,
   instancesStore,
   registeredComponentMetasStore,
+  selectedPageStore,
   stylesIndexStore,
 } from "~/shared/nano-states";
 import { selectedBreakpointStore } from "~/shared/nano-states";
@@ -92,8 +93,17 @@ const getInstanceSize = (instanceId: string, tagName: HtmlTags | undefined) => {
   };
 };
 
+const MAX_SIZE_TO_USE_OPTIMIZATION = 50;
+
 const recalculate = () => {
-  const instanceIds = Array.from(instanceIdSet);
+  const rootInstanceId = selectedPageStore.get()?.rootInstanceId;
+
+  const instanceIds =
+    instanceIdSet.size < MAX_SIZE_TO_USE_OPTIMIZATION
+      ? Array.from(instanceIdSet)
+      : rootInstanceId !== undefined
+      ? [rootInstanceId]
+      : [];
   instanceIdSet.clear();
   if (instanceIds.length === 0) {
     return;

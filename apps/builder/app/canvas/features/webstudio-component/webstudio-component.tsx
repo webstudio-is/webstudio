@@ -43,6 +43,7 @@ import { SelectedInstanceConnector } from "./selected-instance-connector";
 import { handleLinkClick } from "./link";
 import { mergeRefs } from "@react-aria/utils";
 import { composeEventHandlers } from "@radix-ui/primitive";
+import { setDataCollapsed } from "~/canvas/collapsed";
 
 const TextEditor = lazy(() => import("../text-editor"));
 
@@ -170,6 +171,24 @@ type ImplicitEvents = {
    **/
 };
 
+const existingElements = new Set<string>();
+
+/**
+ * We are identifying newly created instances like Tooltips and ensuring the calculation of 'collapsed' elements.
+ */
+const useCollapsedOnNewElement = (instanceId: Instance["id"]) => {
+  useEffect(() => {
+    if (existingElements.has(instanceId) === false) {
+      setDataCollapsed(instanceId);
+    }
+
+    existingElements.add(instanceId);
+    return () => {
+      existingElements.delete(instanceId);
+    };
+  }, [instanceId]);
+};
+
 // eslint-disable-next-line react/display-name
 export const WebstudioComponentDev = forwardRef<
   HTMLElement,
@@ -194,6 +213,8 @@ export const WebstudioComponentDev = forwardRef<
     instanceSelector
   );
   const isPreviewMode = useStore(isPreviewModeStore);
+
+  useCollapsedOnNewElement(instanceId);
 
   // Scroll the selected instance into view when selected from navigator.
   useEffect(() => {
