@@ -16,8 +16,10 @@ import {
 } from "react";
 
 /**
- * Tooltip, TooltipTrigger are htmlless components, in our system in order to make them work
- * we need to wrap htmlless attributes with a div with display: contents
+ * Tooltip and TooltipTrigger are HTML-less components.
+ * To make them work in our system, we wrap their attributes with a div that has a display: contents property.
+ *
+ * These divs function like fragments, with all web studio-related attributes attached to them.
  */
 const DisplayContentsStyle = { display: "contents" };
 
@@ -35,6 +37,12 @@ export const Tooltip = forwardRef<
   );
 });
 
+/**
+ * We're not exposing the 'asChild' property for the Trigger.
+ * Instead, we're enforcing 'asChild=true' for the Trigger and making it style-less.
+ * This avoids situations where the Trigger inadvertently passes all styles to its child,
+ * which would prevent us from displaying styles properly in the builder.
+ */
 export const TooltipTrigger = forwardRef<
   ElementRef<"div">,
   WebstudioAttributes & { children: ReactNode }
@@ -43,9 +51,6 @@ export const TooltipTrigger = forwardRef<
   const [webstudioAttributes, restProps] =
     splitPropsWithWebstudioAttributes(props);
 
-  /**
-   * We are forcing asChild=true for the Trigger to make it work with our components in a consistent way
-   */
   return (
     <div ref={ref} style={DisplayContentsStyle} {...webstudioAttributes}>
       <TooltipPrimitive.Trigger asChild={true} {...restProps}>

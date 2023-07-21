@@ -118,13 +118,11 @@ type WebstudioComponentDevProps = {
 };
 
 /**
- * Radix uses VisuallyHiddenPrimitive.Root component to expose content of various hidden elements to screen readers
- * https://github.com/radix-ui/primitives/blob/main/packages/react/visually-hidden/src/VisuallyHidden.tsx
- *
- * It's done but just using same Conent children, what cause duplicated react elements
- * and breaks our isSelected logic.
- *
- * To avoid this we try to detect if instance is descendant of VisuallyHiddenPrimitive.Root and do not render it
+ * Radix's VisuallyHiddenPrimitive.Root https://github.com/radix-ui/primitives/blob/main/packages/react/visually-hidden/src/VisuallyHidden.tsx
+ * component makes content from hidden elements accessible to screen readers.
+ * Using the same Content children, however, leads to duplicated React elements, breaking our 'isSelected' logic.
+ * To prevent this, we check if an instance is a descendant of VisuallyHiddenPrimitive.Root, and if so,
+ * we avoid rendering it.
  */
 const useIsScreenReaderDescendant = (ref: RefObject<HTMLElement>) => {
   const [isScreenReaderDescendant, setIsScreenReaderDescendant] =
