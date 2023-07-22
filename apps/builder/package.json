@@ -64,7 +64,7 @@
     "downshift": "^6.1.7",
     "hyphenate-style-name": "^1.0.4",
     "immer": "^9.0.12",
-    "immerhin": "^0.5.0",
+    "immerhin": "^0.6.1",
     "jose": "^4.11.2",
     "lexical": "^0.11.1",
     "match-sorter": "^6.3.1",

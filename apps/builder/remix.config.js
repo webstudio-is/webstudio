@@ -28,6 +28,7 @@ module.exports = {
     /mdast-/,
     "unist-util-stringify-position",
     "node-fetch",
+    "immerhin",
   ],
   // appDirectory: "app",
   // assetsBuildDirectory: "public/build",
