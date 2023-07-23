@@ -4,6 +4,7 @@
   "private": true,
   "sideEffects": false,
   "scripts": {
+    "generate": "echo 0",
     "size-test": "rm -rf ./public && rm -rf ./functions && remix build && size-limit",
     "typecheck": "tsc --noEmit --emitDeclarationOnly false"
   },

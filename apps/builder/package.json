@@ -4,6 +4,7 @@
   "private": true,
   "description": "Webstudio Builder UI as a service",
   "scripts": {
+    "generate": "echo 0",
     "prebuild": "pnpm remix --version",
     "build": "remix build",
     "start": "remix-serve build",

@@ -3,6 +3,7 @@
   "private": true,
   "version": "0.0.0",
   "scripts": {
+    "generate": "echo 0",
     "deploy": "wrangler publish src/index.ts",
     "local-dev": "wrangler dev src/index.ts"
   },

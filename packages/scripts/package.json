@@ -11,6 +11,7 @@
     "build-package": "./build-package.ts"
   },
   "scripts": {
+    "generate": "echo 0",
     "checks": "tsc --noEmit --emitDeclarationOnly false"
   },
   "dependencies": {

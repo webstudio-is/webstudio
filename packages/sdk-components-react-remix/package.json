@@ -33,6 +33,7 @@
     }
   },
   "scripts": {
+    "generate": "echo 0",
     "dev": "build-package --watch",
     "build": "build-package",
     "build:args": "generate-arg-types './src/*.tsx !./src/**/*.stories.tsx !./src/**/*.ws.tsx' && prettier --write \"**/*.props.ts\"",

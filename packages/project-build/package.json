@@ -26,6 +26,7 @@
   ],
   "sideEffects": false,
   "scripts": {
+    "generate": "echo 0",
     "typecheck": "tsc --noEmit --emitDeclarationOnly false",
     "test": "NODE_OPTIONS=--experimental-vm-modules jest",
     "checks": "pnpm typecheck && pnpm test",
