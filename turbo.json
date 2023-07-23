@@ -19,6 +19,9 @@
     },
     "size-test": {
       "dependsOn": ["^build"]
+    },
+    "generate": {
+      "cache": false
     }
   }
 }
