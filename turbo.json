@@ -7,12 +7,9 @@
       "outputs": ["lib/**", "dist/**", "build/**", "api/**", "public/build/**"]
     },
     "dts": {
-      "dependsOn": ["build", "^dts"],
       "outputs": ["lib/types/**"]
     },
-    "checks": {
-      "dependsOn": ["build", "^checks"]
-    },
+    "checks": {},
     "storybook:build": {
       "dependsOn": ["build"],
       "outputs": ["storybook-static/**"]
