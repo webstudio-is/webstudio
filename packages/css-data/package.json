@@ -26,7 +26,7 @@
     "mdn-data": "2.0.30",
     "tsx": "^3.12.6",
     "type-fest": "^3.7.1",
-    "typescript": "5.1.3",
+    "typescript": "5.1.6",
     "zod": "^3.21.4"
   },
   "peerDependencies": {
