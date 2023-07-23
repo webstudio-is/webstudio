@@ -3,13 +3,16 @@
   "globalEnv": ["AUTH_SECRET", "DATABASE_URL", "NODE_ENV"],
   "pipeline": {
     "build": {
-      "dependsOn": ["^build"],
+      "dependsOn": ["generate", "^build"],
       "outputs": ["lib/**", "dist/**", "build/**", "api/**", "public/build/**"]
     },
     "dts": {
+      "dependsOn": ["generate", "^generate"],
       "outputs": ["lib/types/**"]
     },
-    "checks": {},
+    "checks": {
+      "dependsOn": ["generate", "^generate"]
+    },
     "storybook:build": {
       "dependsOn": ["build"],
       "outputs": ["storybook-static/**"]

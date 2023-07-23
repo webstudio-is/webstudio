@@ -9,7 +9,8 @@
     "typecheck": "tsc --noEmit --emitDeclarationOnly false",
     "checks": "pnpm typecheck",
     "dev": "prisma generate --watch & build-package --watch --no-generated-as-entries",
-    "build": "prisma format && prisma generate && build-package --no-generated-as-entries",
+    "generate": "prisma format && prisma generate",
+    "build": "build-package --no-generated-as-entries",
     "dts": "tsc --declarationDir lib",
     "migrations": "./migrations-cli/cli.ts"
   },
