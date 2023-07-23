@@ -6,7 +6,7 @@
   "homepage": "https://webstudio.is",
   "type": "module",
   "scripts": {
-    "typecheck": "tsc --noEmit --emitDeclarationOnly false",
+    "typecheck": "tsc",
     "checks": "pnpm typecheck",
     "dev": "build-package --watch",
     "build": "build-package",

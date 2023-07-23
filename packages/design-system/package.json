@@ -10,7 +10,7 @@
     "build": "build-package",
     "build-figma-tokens": "tsx ./bin/transform-figma-tokens.ts",
     "dts": "tsc --project tsconfig.dts.json",
-    "typecheck": "tsc --noEmit --emitDeclarationOnly false",
+    "typecheck": "tsc",
     "test": "NODE_OPTIONS=--experimental-vm-modules jest",
     "checks": "pnpm typecheck && pnpm test",
     "storybook:dev": "storybook dev -p 6006",

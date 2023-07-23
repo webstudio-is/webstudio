@@ -9,7 +9,7 @@
     "dev": "build-package --watch",
     "build": "build-package",
     "dts": "tsc --project tsconfig.dts.json",
-    "typecheck": "tsc --noEmit --emitDeclarationOnly false",
+    "typecheck": "tsc",
     "checks": "pnpm typecheck"
   },
   "dependencies": {

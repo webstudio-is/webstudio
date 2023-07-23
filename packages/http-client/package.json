@@ -10,7 +10,7 @@
     "build": "build-package",
     "dts": "tsc --project tsconfig.dts.json",
     "test": "NODE_OPTIONS=--experimental-vm-modules jest",
-    "typecheck": "tsc --noEmit --emitDeclarationOnly false",
+    "typecheck": "tsc",
     "checks": "pnpm typecheck"
   },
   "devDependencies": {

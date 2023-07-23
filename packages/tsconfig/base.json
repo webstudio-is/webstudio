@@ -21,6 +21,10 @@
     "noFallthroughCasesInSwitch": true,
     "verbatimModuleSyntax": true,
     "emitDeclarationOnly": true,
-    "declaration": true
+    "declaration": true,
+    // types should be generated to provide additional checks
+    // needed only for generation
+    // there is no other way to enable these checks
+    "declarationDir": "node_modules/.ws-typecheck-tmp"
   }
 }

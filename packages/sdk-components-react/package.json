@@ -37,7 +37,7 @@
     "build": "build-package",
     "build:args": "generate-arg-types './src/*.tsx !./src/*.stories.tsx !./src/*.ws.tsx' && prettier --write \"**/*.props.ts\"",
     "dts": "tsc --project tsconfig.dts.json",
-    "typecheck": "tsc --noEmit --emitDeclarationOnly false",
+    "typecheck": "tsc",
     "checks": "pnpm typecheck",
     "storybook:dev": "storybook dev -p 6006",
     "storybook:build": "storybook build"
