@@ -4,6 +4,7 @@ import {
   encodeDataSourceVariable,
   executeComputingExpressions,
   executeEffectfulExpression,
+  computeExpressionsDependencies,
   generateComputingExpressions,
   generateEffectfulExpression,
   validateExpression,
@@ -237,5 +238,35 @@ test("execute effectful expression", () => {
   ]);
   expect(executeEffectfulExpression(`var0 = var0 + var1`, variables)).toEqual(
     new Map([["var0", 5]])
+  );
+});
+
+test("compute expressions dependencies", () => {
+  const expressions = new Map([
+    ["exp1", `var1`],
+    ["exp2", `exp1 + exp1`],
+    ["exp3", `exp1 + exp2`],
+    ["exp4", `var1 + exp1`],
+  ]);
+  expect(computeExpressionsDependencies(expressions)).toEqual(
+    new Map([
+      ["exp4", new Set(["var1", "exp1"])],
+      ["exp3", new Set(["var1", "exp1", "exp2"])],
+      ["exp2", new Set(["var1", "exp1"])],
+      ["exp1", new Set(["var1"])],
+    ])
+  );
+});
+
+test("handle cyclic dependencies", () => {
+  const expressions = new Map([
+    ["exp1", `exp2 + var1`],
+    ["exp2", `exp1 + var1`],
+  ]);
+  expect(computeExpressionsDependencies(expressions)).toEqual(
+    new Map([
+      ["exp2", new Set(["var1", "exp1", "exp2"])],
+      ["exp1", new Set(["var1", "exp1", "exp2"])],
+    ])
   );
 });

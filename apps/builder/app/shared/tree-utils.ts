@@ -2,6 +2,7 @@ import { nanoid } from "nanoid";
 import {
   Breakpoint,
   Breakpoints,
+  DataSource,
   findTreeInstanceIds,
   findTreeInstanceIdsExcludingSlotDescendants,
   getStyleDeclKey,
@@ -490,7 +491,8 @@ export const insertStyleSourcesCopyMutable = (
 export const insertPropsCopyMutable = (
   props: Props,
   copiedProps: Prop[],
-  copiedInstanceIds: Map<Instance["id"], Instance["id"]>
+  copiedInstanceIds: Map<Instance["id"], Instance["id"]>,
+  copiedDataSourceIds: Map<DataSource["id"], DataSource["id"]>
 ) => {
   for (const prop of copiedProps) {
     const newInstanceId = copiedInstanceIds.get(prop.instanceId);
@@ -505,11 +507,20 @@ export const insertPropsCopyMutable = (
 
     // copy prop before inserting
     const newPropId = nanoid();
-    props.set(newPropId, {
-      ...prop,
-      id: newPropId,
-      instanceId: newInstanceId,
-    });
+    if (prop.type === "dataSource") {
+      props.set(newPropId, {
+        ...prop,
+        id: newPropId,
+        instanceId: newInstanceId,
+        value: copiedDataSourceIds.get(prop.value) ?? prop.value,
+      });
+    } else {
+      props.set(newPropId, {
+        ...prop,
+        id: newPropId,
+        instanceId: newInstanceId,
+      });
+    }
   }
 };
 

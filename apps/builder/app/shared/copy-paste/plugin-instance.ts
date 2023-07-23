@@ -1,7 +1,9 @@
+import { nanoid } from "nanoid";
 import store from "immerhin";
 import { z } from "zod";
 import {
   Breakpoint,
+  DataSource,
   findTreeInstanceIds,
   Instance,
   Prop,
@@ -10,6 +12,13 @@ import {
   StyleSourceSelection,
   StyleSourceSelections,
 } from "@webstudio-is/project-build";
+import { Asset } from "@webstudio-is/asset-uploader";
+import {
+  encodeDataSourceVariable,
+  validateExpression,
+  decodeDataSourceVariable,
+  computeExpressionsDependencies,
+} from "@webstudio-is/react-sdk";
 import {
   propsStore,
   stylesStore,
@@ -23,6 +32,7 @@ import {
   projectStore,
   registeredComponentMetasStore,
   dataSourceValuesStore,
+  dataSourcesStore,
 } from "../nano-states";
 import {
   type InstanceSelector,
@@ -40,7 +50,6 @@ import {
   findClosestDroppableTarget,
 } from "../instance-utils";
 import { getMapValuesBy, getMapValuesByKeysSet } from "../array-utils";
-import { Asset } from "@webstudio-is/asset-uploader";
 
 const version = "@webstudio/instance/v0.1";
 
@@ -48,6 +57,7 @@ const InstanceData = z.object({
   breakpoints: z.array(Breakpoint),
   instances: z.array(Instance),
   props: z.array(Prop),
+  dataSources: z.array(DataSource),
   styleSourceSelections: z.array(StyleSourceSelection),
   styleSources: z.array(StyleSource),
   styles: z.array(StyleDecl),
@@ -182,14 +192,61 @@ const getTreeData = (targetInstanceSelector: InstanceSelector) => {
   // first item is guaranteed root of copied tree
   const treeInstances = getMapValuesByKeysSet(instances, treeInstanceIds);
 
+  const dataSources = dataSourcesStore.get();
+  const expressions = new Map<string, string>();
+  for (const dataSource of dataSources.values()) {
+    if (dataSource.type === "expression") {
+      expressions.set(encodeDataSourceVariable(dataSource.id), dataSource.code);
+    }
+  }
+  const dependencies = computeExpressionsDependencies(expressions);
+
+  const treeDataSources = getMapValuesBy(dataSources, (dataSource) => {
+    if (dataSource.type === "expression") {
+      const expressionDeps = dependencies.get(
+        encodeDataSourceVariable(dataSource.id)
+      );
+      if (expressionDeps) {
+        for (const dependency of expressionDeps) {
+          const dataSourceId = decodeDataSourceVariable(dependency);
+          if (dataSourceId === undefined) {
+            continue;
+          }
+          const dataSource = dataSources.get(dataSourceId);
+          if (dataSource === undefined) {
+            continue;
+          }
+          if (
+            dataSource.scopeInstanceId === undefined ||
+            treeInstanceIds.has(dataSource.scopeInstanceId) === false
+          ) {
+            return false;
+          }
+        }
+      }
+    }
+    return (
+      dataSource.scopeInstanceId !== undefined &&
+      treeInstanceIds.has(dataSource.scopeInstanceId)
+    );
+  });
+  const treeDataSourceIds = new Set(
+    treeDataSources.map((dataSource) => dataSource.id)
+  );
+
   const dataSourceValues = dataSourceValuesStore.get();
   const treeProps = getMapValuesBy(propsStore.get(), (prop) =>
     treeInstanceIds.has(prop.instanceId)
   ).map((prop) => {
-    // unbind data source from prop
-    // @todo improve the logic and allow to copy data sources for scoped components
     if (prop.type === "dataSource") {
-      const value = dataSourceValues.get(prop.value);
+      const dataSourceId = prop.value;
+      // copy data source if scoped to one of copied instances
+      if (treeDataSourceIds.has(dataSourceId)) {
+        return prop;
+      }
+      // convert data source prop to typed prop
+      // when data source is not scoped to one of copied instances
+      const value = dataSourceValues.get(dataSourceId);
       return {
         id: prop.id,
         instanceId: prop.instanceId,
@@ -232,6 +289,7 @@ const getTreeData = (targetInstanceSelector: InstanceSelector) => {
     breakpoints: treeBreapoints,
     instances: treeInstances,
     styleSources: treeStyleSources,
+    dataSources: treeDataSources,
     props: treeProps,
     styleSourceSelections: treeStyleSourceSelections,
     styles: treeStyles,
@@ -293,6 +351,7 @@ export const onPaste = (clipboardData: string): boolean => {
     [
       breakpointsStore,
       instancesStore,
+      dataSourcesStore,
       styleSourcesStore,
       propsStore,
       styleSourceSelectionsStore,
@@ -302,6 +361,7 @@ export const onPaste = (clipboardData: string): boolean => {
     (
       breakpoints,
       instances,
+      dataSources,
       styleSources,
       props,
       styleSourceSelections,
@@ -329,6 +389,49 @@ export const onPaste = (clipboardData: string): boolean => {
         dropTarget
       );
 
+      const copiedDataSourceIds = new Map<DataSource["id"], DataSource["id"]>();
+      for (const dataSource of data.dataSources) {
+        copiedDataSourceIds.set(dataSource.id, nanoid());
+      }
+
+      for (const dataSource of data.dataSources) {
+        let { scopeInstanceId } = dataSource;
+        if (scopeInstanceId !== undefined) {
+          scopeInstanceId = copiedInstanceIds.get(scopeInstanceId);
+        }
+        const newId = copiedDataSourceIds.get(dataSource.id);
+        if (newId === undefined) {
+          continue;
+        }
+        if (dataSource.type === "variable") {
+          dataSources.set(newId, {
+            ...dataSource,
+            id: newId,
+            scopeInstanceId,
+          });
+        }
+        if (dataSource.type === "expression") {
+          dataSources.set(newId, {
+            ...dataSource,
+            id: newId,
+            scopeInstanceId,
+            code: validateExpression(dataSource.code, {
+              transformIdentifier: (id) => {
+                const dataSourceId = decodeDataSourceVariable(id);
+                if (dataSourceId === undefined) {
+                  return id;
+                }
+                const newId = copiedDataSourceIds.get(dataSourceId);
+                if (newId === undefined) {
+                  return id;
+                }
+                return encodeDataSourceVariable(newId);
+              },
+            }),
+          });
+        }
+      }
+
       const localStyleSourceIds = findLocalStyleSourcesWithinInstances(
         data.styleSources,
         data.styleSourceSelections,
@@ -341,7 +444,12 @@ export const onPaste = (clipboardData: string): boolean => {
         localStyleSourceIds
       );
 
-      insertPropsCopyMutable(props, data.props, copiedInstanceIds);
+      insertPropsCopyMutable(
+        props,
+        data.props,
+        copiedInstanceIds,
+        copiedDataSourceIds
+      );
       insertStyleSourceSelectionsCopyMutable(
         styleSourceSelections,
         data.styleSourceSelections,

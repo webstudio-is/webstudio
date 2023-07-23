@@ -307,6 +307,50 @@ export const executeEffectfulExpression = (
   return values;
 };
 
+const computeExpressionDependencies = (
+  expressions: Map<string, string>,
+  expressionId: string,
+  dependencies: Map<string, Set<string>>
+) => {
+  // prevent recalculating expressions over again
+  const depsById = dependencies.get(expressionId);
+  if (depsById) {
+    return depsById;
+  }
+  const parentDeps = new Set<string>();
+  const code = expressions.get(expressionId);
+  if (code === undefined) {
+    return parentDeps;
+  }
+  // write before recursive call to avoid infinite cycle
+  dependencies.set(expressionId, parentDeps);
+  validateExpression(code, {
+    transformIdentifier: (id) => {
+      parentDeps.add(id);
+      const childDeps = computeExpressionDependencies(
+        expressions,
+        id,
+        dependencies
+      );
+      for (const depId of childDeps) {
+        parentDeps.add(depId);
+      }
+      return id;
+    },
+  });
+  return parentDeps;
+};
+
+export const computeExpressionsDependencies = (
+  expressions: Map<string, string>
+) => {
+  const dependencies = new Map<string, Set<string>>();
+  for (const id of expressions.keys()) {
+    computeExpressionDependencies(expressions, id, dependencies);
+  }
+  return dependencies;
+};
+
 type Values = Map<string, unknown>;
 
 const dataSourceVariablePrefix = "$ws$dataSource$";

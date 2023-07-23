@@ -190,8 +190,8 @@ importers:
         specifier: ^9.0.12
         version: 9.0.15
       immerhin:
-        specifier: ^0.5.0
-        version: 0.5.0
+        specifier: ^0.6.1
+        version: 0.6.1
       jose:
         specifier: ^4.11.2
         version: 4.11.2
@@ -11925,8 +11925,8 @@ packages:
     resolution: {integrity: sha512-2eB/sswms9AEUSkOm4SbV5Y7Vmt/bKRwByd52jfLkW4OLYeaTP3EEiJ9agqU0O/tq6Dk62Zfj+TJSqfm1rLVGQ==}
     dev: false
 
-  /immerhin@0.5.0:
-    resolution: {integrity: sha512-s0MJ45StYo4mChJmQiz/hcw9a5nQD9VHrQCGj1+FiS1TK62X+AA/7XFUR8YbP9b735mS841aKx5tXQNTmOpUJA==}
+  /immerhin@0.6.1:
+    resolution: {integrity: sha512-HQUPluF2Mx7n/EAj1HHG3NQDyl1aHnxxWHIpWije2oHO1wEjkUlwHoHMPEjkgGu/zMamV8gfkMiQtrGCOmdOOw==}
     dependencies:
       immer: 9.0.15
       nanoid: 3.3.6

@@ -26,6 +26,7 @@ export {
   executeComputingExpressions,
   generateEffectfulExpression,
   executeEffectfulExpression,
+  computeExpressionsDependencies,
   encodeDataSourceVariable,
   encodeVariablesMap,
   decodeDataSourceVariable,

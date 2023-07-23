@@ -257,7 +257,7 @@ export const insertTemplateData = (
         children,
         dropTarget
       );
-      insertPropsCopyMutable(props, insertedProps, new Map());
+      insertPropsCopyMutable(props, insertedProps, new Map(), new Map());
       for (const dataSource of insertedDataSources) {
         dataSources.set(dataSource.id, dataSource);
       }
