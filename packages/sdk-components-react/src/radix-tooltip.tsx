@@ -16,6 +16,14 @@ import {
 } from "react";
 
 /**
+ * We don't have support for boolean or undefined nor in UI not at Data variables,
+ * instead of binding on "open" prop we bind variable on a isOpen prop to be able to show Tooltip in the builder
+ **/
+type BuilderTooltipProps = {
+  isOpen: "initial" | "open" | "closed";
+};
+
+/**
  * Tooltip and TooltipTrigger are HTML-less components.
  * To make them work in our system, we wrap their attributes with a div that has a display: contents property.
  *
@@ -25,14 +33,20 @@ const DisplayContentsStyle = { display: "contents" };
 
 export const Tooltip = forwardRef<
   ElementRef<"div">,
-  WebstudioAttributes & ComponentPropsWithoutRef<typeof TooltipPrimitive.Root>
->((props, ref) => {
+  WebstudioAttributes &
+    ComponentPropsWithoutRef<typeof TooltipPrimitive.Root> &
+    BuilderTooltipProps
+>(({ open: openProp, isOpen, ...props }, ref) => {
   const [webstudioAttributes, restProps] =
     splitPropsWithWebstudioAttributes(props);
 
+  const open =
+    openProp ??
+    (isOpen === "open" ? true : isOpen === "closed" ? false : undefined);
+
   return (
     <div ref={ref} style={DisplayContentsStyle} {...webstudioAttributes}>
-      <TooltipPrimitive.Root {...restProps} />
+      <TooltipPrimitive.Root open={open} {...restProps} />
     </div>
   );
 });

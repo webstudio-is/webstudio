@@ -40,6 +40,18 @@ export const metaTooltip: WsComponentMeta = {
       type: "instance",
       component: "Tooltip",
       label: "Tooltip",
+      props: [
+        {
+          name: "isOpen",
+          // We don't have support for boolean or undefined, instead of binding on open we bind on a string
+          type: "string",
+          value: "initial",
+          dataSourceRef: {
+            type: "variable",
+            name: "isOpen",
+          },
+        },
+      ],
       children: [
         {
           type: "instance",
@@ -80,6 +92,7 @@ export const metaTooltip: WsComponentMeta = {
 
 export const propsMetaTooltip: WsComponentPropsMeta = {
   props: propsTooltip,
+  initialProps: ["isOpen", "delayDuration", "disableHoverableContent"],
 };
 
 export const propsMetaTooltipTrigger: WsComponentPropsMeta = {
@@ -88,4 +101,5 @@ export const propsMetaTooltipTrigger: WsComponentPropsMeta = {
 
 export const propsMetaTooltipContent: WsComponentPropsMeta = {
   props: propsTooltipContent,
+  initialProps: ["side", "sideOffset", "align", "alignOffset"],
 };
