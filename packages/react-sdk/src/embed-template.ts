@@ -66,6 +66,7 @@ const EmbedTemplateProp = z.union([
     value: z.array(
       z.object({
         type: z.literal("execute"),
+        args: z.optional(z.array(z.string())),
         code: z.string(),
       })
     ),
@@ -144,12 +145,18 @@ const createInstancesFromTemplate = (
               type: "action",
               name: prop.name,
               value: prop.value.map((value) => {
+                const args = value.args ?? [];
                 return {
                   type: "execute",
+                  args,
                   // replace all references with variable names
                   code: validateExpression(value.code, {
                     effectful: true,
                     transformIdentifier: (ref) => {
+                      // bypass arguments without changes
+                      if (args.includes(ref)) {
+                        return ref;
+                      }
                       const id = dataSourceByRef.get(ref)?.id ?? ref;
                       return encodeDataSourceVariable(id);
                     },

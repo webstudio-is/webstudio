@@ -58,6 +58,7 @@ export const Prop = z.union([
     value: z.array(
       z.object({
         type: z.literal("execute"),
+        args: z.array(z.string()),
         code: z.string(),
       })
     ),

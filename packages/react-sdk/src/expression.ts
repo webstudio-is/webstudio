@@ -252,6 +252,7 @@ export const executeComputingExpressions = (
 
 export const generateEffectfulExpression = (
   code: string,
+  args: Set<string>,
   allowedVariables: Set<string>
 ) => {
   const inputVariables = new Set<string>();
@@ -259,6 +260,9 @@ export const generateEffectfulExpression = (
   validateExpression(code, {
     effectful: true,
     transformIdentifier: (identifier, assignee) => {
+      if (args.has(identifier)) {
+        return identifier;
+      }
       if (allowedVariables.has(identifier)) {
         if (assignee) {
           outputVariables.add(identifier);
@@ -274,6 +278,9 @@ export const generateEffectfulExpression = (
   // generate code computing all expressions
   let generatedCode = "";
 
+  for (const id of args) {
+    generatedCode += `let ${id} = _args.get('${id}');\n`;
+  }
   for (const id of inputVariables) {
     generatedCode += `let ${id} = _variables.get('${id}');\n`;
   }
@@ -296,14 +303,16 @@ export const generateEffectfulExpression = (
 
 export const executeEffectfulExpression = (
   code: string,
+  args: Map<string, unknown>,
   variables: Map<string, unknown>
 ) => {
   const generatedCode = generateEffectfulExpression(
     code,
+    new Set(args.keys()),
     new Set(variables.keys())
   );
-  const executeFn = new Function("_variables", generatedCode);
-  const values = executeFn(variables) as Map<string, unknown>;
+  const executeFn = new Function("_variables", "_args", generatedCode);
+  const values = executeFn(variables, args) as Map<string, unknown>;
   return values;
 };
 

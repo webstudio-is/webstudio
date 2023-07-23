@@ -36,6 +36,7 @@ export const createElementsTree = ({
   pagesStore: ReadableAtom<Pages>;
   executeEffectfulExpression: (
     expression: string,
+    args: DataSourceValues,
     values: DataSourceValues
   ) => DataSourceValues;
   dataSourceValuesStore: ReadableAtom<DataSourceValues>;
