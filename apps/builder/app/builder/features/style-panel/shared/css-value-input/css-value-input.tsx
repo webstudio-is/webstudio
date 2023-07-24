@@ -54,7 +54,7 @@ const useScrub = ({
   shouldHandleEvent?: (node: Node) => boolean;
 }): [
   React.MutableRefObject<HTMLDivElement | null>,
-  React.MutableRefObject<HTMLInputElement | null>
+  React.MutableRefObject<HTMLInputElement | null>,
 ] => {
   const scrubRef = useRef<HTMLDivElement | null>(null);
   const inputRef = useRef<HTMLInputElement | null>(null);

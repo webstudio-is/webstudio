@@ -12,15 +12,18 @@ export const propsToArgTypes = (props: Record<string, PropItem>) => {
       })
       // Exclude webstudio builder props see react-sdk/src/tree/webstudio-component.tsx
       .filter(([propName]) => propName.startsWith("data-ws-") === false)
-      .reduce((result, current) => {
-        const [propName, prop] = current;
+      .reduce(
+        (result, current) => {
+          const [propName, prop] = current;
 
-        const argType = getArgType(prop);
-        if (argType != null) {
-          result[propName] = argType;
-        }
-        return result;
-      }, {} as Record<string, PropMeta>)
+          const argType = getArgType(prop);
+          if (argType != null) {
+            result[propName] = argType;
+          }
+          return result;
+        },
+        {} as Record<string, PropMeta>
+      )
   );
 };
 

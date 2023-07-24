@@ -25,7 +25,7 @@ export const serializeBreakpoints = (breakpointssMap: Breakpoints) => {
 
 export const createInitialBreakpoints = (): [
   Breakpoint["id"],
-  Breakpoint
+  Breakpoint,
 ][] => {
   return initialBreakpoints.map((breakpoint) => {
     const id = nanoid();

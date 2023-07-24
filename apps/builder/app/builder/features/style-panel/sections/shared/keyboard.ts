@@ -76,9 +76,9 @@ export const useKeyboardNavigation = <
       ArrowUp: P,
       ArrowRight: P,
       ArrowDown: P,
-      ArrowLeft: P
+      ArrowLeft: P,
     ];
-  }
+  },
 >({
   onOpen,
   movementMap,

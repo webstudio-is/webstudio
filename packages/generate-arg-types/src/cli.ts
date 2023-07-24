@@ -69,8 +69,8 @@ for (const filePath of componentFiles) {
 
       fileContent = `${fileContent}
         export const props${componentName}: Record<string, PropMeta> = ${JSON.stringify(
-        argTypes
-      )}`;
+          argTypes
+        )}`;
     }
   }
 

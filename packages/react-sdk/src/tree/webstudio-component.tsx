@@ -76,7 +76,7 @@ export type WebstudioAttributes = {
 };
 
 export const splitPropsWithWebstudioAttributes = <
-  P extends WebstudioAttributes
+  P extends WebstudioAttributes,
 >({
   [idAttribute]: idAttributeValue,
   [componentAttribute]: componentAttributeValue,
