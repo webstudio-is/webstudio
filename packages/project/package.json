@@ -6,7 +6,7 @@
   "homepage": "https://webstudio.is",
   "type": "module",
   "scripts": {
-    "typecheck": "tsc --noEmit --emitDeclarationOnly false",
+    "typecheck": "tsc",
     "checks": "pnpm typecheck",
     "dev": "build-package --watch",
     "build": "build-package",
@@ -27,7 +27,7 @@
     "@types/uuid": "^8.3.4",
     "@webstudio-is/scripts": "workspace:^",
     "@webstudio-is/tsconfig": "workspace:^",
-    "typescript": "5.1.3"
+    "typescript": "5.1.6"
   },
   "exports": {
     ".": {

@@ -1,4 +1,4 @@
-import type { ComponentMeta } from "@storybook/react";
+import type { Meta } from "@storybook/react";
 import { useState } from "react";
 import { Tree } from "./tree";
 import { type Item, findItemById, reparent } from "./test-tree-data";
@@ -127,4 +127,4 @@ export const StressTest = () => {
 
 export default {
   component: Tree,
-} as ComponentMeta<typeof Tree>;
+} satisfies Meta<typeof Tree>;

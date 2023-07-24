@@ -1,4 +1,4 @@
-import type { ComponentMeta } from "@storybook/react";
+import type { Meta } from "@storybook/react";
 import { type CSSProperties, useState, useRef } from "react";
 import { Box } from "../../box";
 import { useDrop, type DropTarget } from "./use-drop";
@@ -361,4 +361,4 @@ export const Canvas = () => {
 
 export default {
   component: Canvas,
-} as ComponentMeta<typeof Canvas>;
+} satisfies Meta<typeof Canvas>;

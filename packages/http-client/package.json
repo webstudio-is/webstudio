@@ -10,7 +10,7 @@
     "build": "build-package",
     "dts": "tsc --project tsconfig.dts.json",
     "test": "NODE_OPTIONS=--experimental-vm-modules jest",
-    "typecheck": "tsc --noEmit --emitDeclarationOnly false",
+    "typecheck": "tsc",
     "checks": "pnpm typecheck"
   },
   "devDependencies": {
@@ -21,7 +21,7 @@
     "@webstudio-is/scripts": "workspace:^",
     "@webstudio-is/tsconfig": "workspace:^",
     "jest": "^29.6.1",
-    "typescript": "5.1.3"
+    "typescript": "5.1.6"
   },
   "exports": {
     "source": "./src/index.ts",

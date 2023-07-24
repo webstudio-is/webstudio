@@ -10,7 +10,7 @@
     "build": "build-package",
     "build-figma-tokens": "tsx ./bin/transform-figma-tokens.ts",
     "dts": "tsc --project tsconfig.dts.json",
-    "typecheck": "tsc --noEmit --emitDeclarationOnly false",
+    "typecheck": "tsc",
     "test": "NODE_OPTIONS=--experimental-vm-modules jest",
     "checks": "pnpm typecheck && pnpm test",
     "storybook:dev": "storybook dev -p 6006",
@@ -30,7 +30,7 @@
     "react": "^18.2.0",
     "react-dom": "^18.2.0",
     "tsx": "^3.12.6",
-    "typescript": "5.1.3"
+    "typescript": "5.1.6"
   },
   "peerDependencies": {
     "react": "^18.2.0",

@@ -26,7 +26,7 @@
   ],
   "sideEffects": false,
   "scripts": {
-    "typecheck": "tsc --noEmit --emitDeclarationOnly false",
+    "typecheck": "tsc",
     "test": "NODE_OPTIONS=--experimental-vm-modules jest",
     "checks": "pnpm typecheck && pnpm test",
     "dev": "build-package --watch",
@@ -47,6 +47,6 @@
     "@webstudio-is/tsconfig": "workspace:^",
     "jest": "^29.6.1",
     "type-fest": "^3.7.1",
-    "typescript": "5.1.3"
+    "typescript": "5.1.6"
   }
 }

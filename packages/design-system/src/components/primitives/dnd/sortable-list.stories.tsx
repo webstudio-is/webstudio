@@ -1,4 +1,4 @@
-import type { ComponentMeta } from "@storybook/react";
+import type { Meta } from "@storybook/react";
 import { useState, useRef } from "react";
 import { Box } from "../../box";
 import { styled } from "../../../stitches.config";
@@ -220,4 +220,4 @@ export default {
       options: ["horizontal", "vertical", "wrap"],
     },
   },
-} as ComponentMeta<typeof SortableList>;
+} satisfies Meta<typeof SortableList>;

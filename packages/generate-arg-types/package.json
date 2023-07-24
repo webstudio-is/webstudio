@@ -9,7 +9,7 @@
     "dev": "build-package --watch",
     "build": "build-package",
     "dts": "tsc --project tsconfig.dts.json",
-    "typecheck": "tsc --noEmit --emitDeclarationOnly false",
+    "typecheck": "tsc",
     "checks": "pnpm typecheck"
   },
   "dependencies": {
@@ -21,7 +21,7 @@
     "@webstudio-is/scripts": "workspace:^",
     "@webstudio-is/tsconfig": "workspace:^",
     "tsx": "^3.12.6",
-    "typescript": "5.1.3"
+    "typescript": "5.1.6"
   },
   "files": [
     "lib/*",

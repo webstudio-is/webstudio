@@ -37,7 +37,7 @@
     "build": "build-package",
     "build:args": "generate-arg-types './src/*.tsx !./src/**/*.stories.tsx !./src/**/*.ws.tsx' && prettier --write \"**/*.props.ts\"",
     "dts": "tsc --project tsconfig.dts.json",
-    "typecheck": "tsc --noEmit --emitDeclarationOnly false",
+    "typecheck": "tsc",
     "checks": "pnpm typecheck"
   },
   "peerDependencies": {
@@ -60,6 +60,6 @@
     "@webstudio-is/tsconfig": "workspace:^",
     "react": "^18.2.0",
     "react-dom": "^18.2.0",
-    "typescript": "5.1.3"
+    "typescript": "5.1.6"
   }
 }
