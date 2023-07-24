@@ -122,11 +122,13 @@ type WebstudioComponentDevProps = {
 /**
  * Radix's VisuallyHiddenPrimitive.Root https://github.com/radix-ui/primitives/blob/main/packages/react/visually-hidden/src/VisuallyHidden.tsx
  * component makes content from hidden elements accessible to screen readers.
+ * react-aria VisuallyHidden https://github.com/adobe/react-spectrum/blob/e4bc3269fa41aa096700445c6bfa9c8620545e6a/packages/%40react-aria/visually-hidden/src/VisuallyHidden.tsx#L32-L43
+ * The problem we're addressing is that the Radix reuses the same Content children for VisuallyHiddenPrimitive.Root within the Tooltip component.
  * Using the same Content children, however, leads to duplicated React elements, breaking our 'isSelected' logic.
  * To prevent this, we check if an instance is a descendant of VisuallyHiddenPrimitive.Root, and if so,
  * we avoid rendering it.
  */
-const useIsScreenReaderDescendant = (ref: RefObject<HTMLElement>) => {
+const useIsVisuallyHidden = (ref: RefObject<HTMLElement>) => {
   const [isScreenReaderDescendant, setIsScreenReaderDescendant] =
     useState(false);
 
@@ -155,7 +157,8 @@ const useIsScreenReaderDescendant = (ref: RefObject<HTMLElement>) => {
 };
 
 /**
- * For some components that are wrapped with Radix Slot components (where asChild=true),
+ * For some components that are wrapped with Radix Slot like components (Triggers etc where asChild=true),
+ * Slots in react-aria https://react-spectrum.adobe.com/react-spectrum/layout.html#slots
  * events are passed implicitly. We aim to merge these implicit events with the explicitly defined ones.
  **/
 type ImplicitEvents = {
@@ -240,8 +243,7 @@ export const WebstudioComponentDev = forwardRef<
     }
   });
 
-  const isScreenReaderDescendant =
-    useIsScreenReaderDescendant(instanceElementRef);
+  const isScreenReaderDescendant = useIsVisuallyHidden(instanceElementRef);
   if (isScreenReaderDescendant) {
     return <></>;
   }
