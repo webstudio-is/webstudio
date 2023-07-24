@@ -111,19 +111,19 @@
         "type": "fontWeights"
       },
       "manrope-6": {
-        "value": "Bold",
-        "type": "fontWeights"
-      },
-      "manrope-7": {
         "value": "Regular",
         "type": "fontWeights"
       },
-      "manrope-8": {
+      "manrope-7": {
         "value": "SemiBold",
         "type": "fontWeights"
       },
-      "manrope-9": {
+      "manrope-8": {
         "value": "ExtraLight",
+        "type": "fontWeights"
+      },
+      "manrope-9": {
+        "value": "ExtraBold",
         "type": "fontWeights"
       },
       "roboto-mono-3": {
@@ -302,7 +302,7 @@
     "Space Section Unit Text": {
       "value": {
         "fontFamily": "{fontFamilies.inter}",
-        "fontWeight": "{fontWeights.inter-5}",
+        "fontWeight": "{fontWeights.inter-2}",
         "lineHeight": "{lineHeights.1}",
         "fontSize": "{fontSize.0}",
         "letterSpacing": "{letterSpacing.1}",
@@ -1100,7 +1100,7 @@
       "Large Title": {
         "value": {
           "fontFamily": "{fontFamilies.manrope}",
-          "fontWeight": "{fontWeights.manrope-6}",
+          "fontWeight": "{fontWeights.manrope-5}",
           "lineHeight": "{lineHeights.7}",
           "fontSize": "{fontSize.6}",
           "letterSpacing": "{letterSpacing.3}",
@@ -1114,7 +1114,7 @@
       "Medium Title": {
         "value": {
           "fontFamily": "{fontFamilies.manrope}",
-          "fontWeight": "{fontWeights.manrope-6}",
+          "fontWeight": "{fontWeights.manrope-5}",
           "lineHeight": "{lineHeights.9}",
           "fontSize": "{fontSize.5}",
           "letterSpacing": "{letterSpacing.3}",
@@ -1128,7 +1128,7 @@
       "Section Title": {
         "value": {
           "fontFamily": "{fontFamilies.manrope}",
-          "fontWeight": "{fontWeights.manrope-6}",
+          "fontWeight": "{fontWeights.manrope-5}",
           "lineHeight": "{lineHeights.6}",
           "fontSize": "{fontSize.4}",
           "letterSpacing": "{letterSpacing.2}",
@@ -1142,7 +1142,7 @@
       "regular": {
         "value": {
           "fontFamily": "{fontFamilies.manrope}",
-          "fontWeight": "{fontWeights.manrope-7}",
+          "fontWeight": "{fontWeights.manrope-6}",
           "lineHeight": "{lineHeights.8}",
           "fontSize": "{fontSize.3}",
           "letterSpacing": "{letterSpacing.2}",
@@ -1156,7 +1156,7 @@
       "small": {
         "value": {
           "fontFamily": "{fontFamilies.manrope}",
-          "fontWeight": "{fontWeights.manrope-8}",
+          "fontWeight": "{fontWeights.manrope-7}",
           "lineHeight": "{lineHeights.0}",
           "fontSize": "{fontSize.2}",
           "letterSpacing": "{letterSpacing.4}",
@@ -1171,7 +1171,7 @@
         "Default": {
           "value": {
             "fontFamily": "{fontFamilies.manrope}",
-            "fontWeight": "{fontWeights.manrope-9}",
+            "fontWeight": "{fontWeights.manrope-8}",
             "lineHeight": "{lineHeights.10}",
             "fontSize": "{fontSize.7}",
             "letterSpacing": "{letterSpacing.5}",
@@ -1185,7 +1185,7 @@
         "Hover": {
           "value": {
             "fontFamily": "{fontFamilies.manrope}",
-            "fontWeight": "{fontWeights.manrope-10}",
+            "fontWeight": "{fontWeights.manrope-9}",
             "lineHeight": "{lineHeights.10}",
             "fontSize": "{fontSize.7}",
             "letterSpacing": "{letterSpacing.5}",
@@ -1201,7 +1201,7 @@
         "Default": {
           "value": {
             "fontFamily": "{fontFamilies.manrope}",
-            "fontWeight": "{fontWeights.manrope-7}",
+            "fontWeight": "{fontWeights.manrope-6}",
             "lineHeight": "{lineHeights.7}",
             "fontSize": "{fontSize.6}",
             "letterSpacing": "{letterSpacing.3}",
@@ -1215,7 +1215,7 @@
         "Hover": {
           "value": {
             "fontFamily": "{fontFamilies.manrope}",
-            "fontWeight": "{fontWeights.manrope-10}",
+            "fontWeight": "{fontWeights.manrope-9}",
             "lineHeight": "{lineHeights.7}",
             "fontSize": "{fontSize.6}",
             "letterSpacing": "{letterSpacing.3}",
@@ -1231,7 +1231,7 @@
         "regular": {
           "value": {
             "fontFamily": "{fontFamilies.manrope}",
-            "fontWeight": "{fontWeights.manrope-8}",
+            "fontWeight": "{fontWeights.manrope-7}",
             "lineHeight": "{lineHeights.8}",
             "fontSize": "{fontSize.3}",
             "letterSpacing": "{letterSpacing.2}",
@@ -1245,7 +1245,7 @@
         "cta": {
           "value": {
             "fontFamily": "{fontFamilies.manrope}",
-            "fontWeight": "{fontWeights.manrope-6}",
+            "fontWeight": "{fontWeights.manrope-5}",
             "lineHeight": "{lineHeights.4}",
             "fontSize": "{fontSize.5}",
             "letterSpacing": "{letterSpacing.3}",
