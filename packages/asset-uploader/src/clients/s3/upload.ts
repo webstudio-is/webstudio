@@ -1,4 +1,4 @@
-import type { SignatureV4 } from "@aws-sdk/signature-v4";
+import type { SignatureV4 } from "@smithy/signature-v4";
 import { toUint8Array } from "../../utils/to-uint8-array";
 import { getAssetData } from "../../utils/get-asset-data";
 import { createSizeLimiter } from "../../utils/size-limiter";
