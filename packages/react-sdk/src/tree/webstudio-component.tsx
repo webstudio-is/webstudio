@@ -62,7 +62,7 @@ export const WebstudioComponent = forwardRef<
 });
 
 export const idAttribute = "data-ws-id" as const;
-export const selectorIdAttribute = "data-ws-parent-id" as const;
+export const selectorIdAttribute = "data-ws-selector" as const;
 export const componentAttribute = "data-ws-component" as const;
 export const showAttribute = "data-ws-show" as const;
 export const collapsedAttribute = "data-ws-collapsed" as const;
