@@ -193,6 +193,20 @@ test("compute inherited styles", () => {
     )
   ).toMatchInlineSnapshot(`
     {
+      "MozOsxFontSmoothing": {
+        "instanceId": "1",
+        "value": {
+          "type": "keyword",
+          "value": "grayscale",
+        },
+      },
+      "WebkitFontSmoothing": {
+        "instanceId": "1",
+        "value": {
+          "type": "keyword",
+          "value": "antialiased",
+        },
+      },
       "fontFamily": {
         "instanceId": "1",
         "value": {
