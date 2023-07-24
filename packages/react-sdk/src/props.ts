@@ -55,15 +55,20 @@ export const useInstanceProps = (instanceId: Instance["id"]) => {
             continue;
           }
           if (prop.type === "action") {
-            instancePropsObject[prop.name] = () => {
+            instancePropsObject[prop.name] = (...args: unknown[]) => {
               // prevent all actions in canvas mode
               if (renderer === "canvas") {
                 return;
               }
               for (const value of prop.value) {
                 if (value.type === "execute") {
+                  const argsMap = new Map<string, unknown>();
+                  for (const [i, name] of value.args.entries()) {
+                    argsMap.set(name, args[i]);
+                  }
                   const newValues = executeEffectfulExpression(
                     value.code,
+                    argsMap,
                     dataSourceValues
                   );
                   setDataSourceValues(newValues);

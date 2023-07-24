@@ -407,6 +407,17 @@ test("generate data for embedding from action props", () => {
                   name: "onClick",
                   value: [{ type: "execute", code: `boxState = 'success'` }],
                 },
+                {
+                  type: "action",
+                  name: "onChange",
+                  value: [
+                    {
+                      type: "execute",
+                      args: ["value"],
+                      code: `boxState = value`,
+                    },
+                  ],
+                },
               ],
               children: [],
             },
@@ -442,7 +453,21 @@ test("generate data for embedding from action props", () => {
         value: [
           {
             type: "execute",
+            args: [],
             code: expect.stringMatching(/\$ws\$dataSource\$\w+ = 'success'/),
+          },
+        ],
+      },
+      {
+        id: expectString,
+        instanceId: expectString,
+        type: "action",
+        name: "onChange",
+        value: [
+          {
+            type: "execute",
+            args: ["value"],
+            code: expect.stringMatching(/\$ws\$dataSource\$\w+ = value/),
           },
         ],
       },

@@ -41,6 +41,7 @@ export const ReactSdkContext = createContext<
     dataSourceValuesStore: ReadableAtom<DataSourceValues>;
     executeEffectfulExpression: (
       expression: string,
+      args: DataSourceValues,
       values: DataSourceValues
     ) => DataSourceValues;
     setDataSourceValues: (newValues: DataSourceValues) => void;

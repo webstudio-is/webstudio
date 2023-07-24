@@ -187,7 +187,11 @@ test("encode/decode variable names", () => {
 
 test("generate effectful expression", () => {
   expect(
-    generateEffectfulExpression(`var0 = var0 + var1`, new Set(["var0", "var1"]))
+    generateEffectfulExpression(
+      `var0 = var0 + var1`,
+      new Set(),
+      new Set(["var0", "var1"])
+    )
   ).toMatchInlineSnapshot(`
     "let var0 = _variables.get('var0');
     let var1 = _variables.get('var1');
@@ -198,7 +202,11 @@ test("generate effectful expression", () => {
   `);
 
   expect(
-    generateEffectfulExpression(`var0 = var1 + 1`, new Set(["var0", "var1"]))
+    generateEffectfulExpression(
+      `var0 = var1 + 1`,
+      new Set(),
+      new Set(["var0", "var1"])
+    )
   ).toMatchInlineSnapshot(`
     "let var1 = _variables.get('var1');
     let var0;
@@ -213,6 +221,7 @@ test("add only used variables in effectful expression", () => {
   expect(
     generateEffectfulExpression(
       `var0 = var1 + 1`,
+      new Set(),
       new Set(["var0", "var1", "var2"])
     )
   ).toMatchInlineSnapshot(`
@@ -225,10 +234,34 @@ test("add only used variables in effectful expression", () => {
   `);
 });
 
-test("forbid not allowed variables in effectful expression", () => {
+test("support effectful expression arguments", () => {
+  expect(
+    generateEffectfulExpression(
+      `var0 = arg0 + 1`,
+      new Set(["arg0"]),
+      new Set(["var0"])
+    )
+  ).toMatchInlineSnapshot(`
+    "let arg0 = _args.get('arg0');
+    let var0;
+    var0 = arg0 + 1;
+    return new Map([
+      ['var0', var0],
+    ]);"
+  `);
+});
+
+test("forbid not allowed variables or arguments in effectful expression", () => {
   expect(() => {
-    generateEffectfulExpression(`var0 = var0 + var1`, new Set(["var0"]));
+    generateEffectfulExpression(
+      `var0 = var0 + var1`,
+      new Set(),
+      new Set(["var0"])
+    );
   }).toThrowError(/Unknown dependency "var1"/);
+  expect(() => {
+    generateEffectfulExpression(`var0 = arg0`, new Set(), new Set(["var0"]));
+  }).toThrowError(/Unknown dependency "arg0"/);
 });
 
 test("execute effectful expression", () => {
@@ -236,9 +269,13 @@ test("execute effectful expression", () => {
     ["var0", 2],
     ["var1", 3],
   ]);
-  expect(executeEffectfulExpression(`var0 = var0 + var1`, variables)).toEqual(
-    new Map([["var0", 5]])
-  );
+  expect(
+    executeEffectfulExpression(`var0 = var0 + var1`, new Map(), variables)
+  ).toEqual(new Map([["var0", 5]]));
+
+  expect(
+    executeEffectfulExpression(`arg0 = 5`, new Map([["arg0", 0]]), new Map())
+  ).toEqual(new Map());
 });
 
 test("compute expressions dependencies", () => {
