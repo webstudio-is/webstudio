@@ -35,6 +35,7 @@ const getCssText = (instanceStyle: StyleInfo) => {
   const cascadedStyles: StyleValueInfoMap = new Map();
   const presetStyles: StyleValueInfoMap = new Map();
 
+  // Aggregate styles by category so we can group them when rendering.
   let property: StyleProperty;
   for (property in instanceStyle) {
     const value = instanceStyle[property];
@@ -57,6 +58,11 @@ const getCssText = (instanceStyle: StyleInfo) => {
       inheritedStyles.set(property, value.value);
       continue;
     }
+    if (value.value) {
+      // Doesn't need handling
+      continue;
+    }
+    throw new Error("Unknown style source");
   }
 
   const result: Array<string> = [];
