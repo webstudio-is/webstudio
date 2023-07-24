@@ -98,12 +98,16 @@ const MAX_SIZE_TO_USE_OPTIMIZATION = 50;
 const recalculate = () => {
   const rootInstanceId = selectedPageStore.get()?.rootInstanceId;
 
+  // Below algorithm quickly finds the common ancestor of all elements with an instanceId.
+  // However, for a large number of elements, it's more efficient to calculate from the root.
+  // In almost all cases, if instanceIdsSet >= MAX_SIZE_TO_USE_OPTIMIZATION, it likely includes all elements.
   const instanceIds =
     instanceIdSet.size < MAX_SIZE_TO_USE_OPTIMIZATION
       ? Array.from(instanceIdSet)
       : rootInstanceId !== undefined
       ? [rootInstanceId]
       : [];
+
   instanceIdSet.clear();
   if (instanceIds.length === 0) {
     return;
