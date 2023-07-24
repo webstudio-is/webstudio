@@ -68,9 +68,9 @@ const temporaryInstances: Instances = new Map([
 ]);
 
 const executeEffectfulExpressionWithDecodedVariables: typeof executeEffectfulExpression =
-  (code, values) => {
+  (code, args, values) => {
     return decodeVariablesMap(
-      executeEffectfulExpression(code, encodeVariablesMap(values))
+      executeEffectfulExpression(code, args, encodeVariablesMap(values))
     );
   };
 

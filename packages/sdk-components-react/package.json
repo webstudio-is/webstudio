@@ -47,6 +47,7 @@
     "react-dom": "^18.2.0"
   },
   "dependencies": {
+    "@radix-ui/react-tooltip": "^1.0.6",
     "@react-aria/utils": "^3.13.3",
     "@webstudio-is/css-vars": "workspace:^",
     "@webstudio-is/generate-arg-types": "workspace:^",
@@ -57,7 +58,7 @@
     "shallow-equal": "^3.1.0"
   },
   "devDependencies": {
-    "@storybook/react": "^7.0.26",
+    "@storybook/react": "^7.1.0",
     "@types/react": "^18.0.35",
     "@types/react-dom": "^18.0.11",
     "@webstudio-is/scripts": "workspace:^",

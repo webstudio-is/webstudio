@@ -1,5 +1,5 @@
 import type { Instance } from "@webstudio-is/project-build";
-import { idAttribute } from "@webstudio-is/react-sdk";
+import { idAttribute, selectorIdAttribute } from "@webstudio-is/react-sdk";
 import type { InstanceSelector } from "./tree-utils";
 
 export const getInstanceIdFromElement = (
@@ -10,16 +10,13 @@ export const getInstanceIdFromElement = (
 
 // traverse dom to the root and find all instances
 export const getInstanceSelectorFromElement = (element: Element) => {
-  const instanceSelector: InstanceSelector = [];
-  let matched: undefined | Element =
+  // Change logic to support Portals
+  const matched: undefined | Element =
     element.closest(`[${idAttribute}]`) ?? undefined;
-  while (matched) {
-    const instanceId = matched.getAttribute(idAttribute) ?? undefined;
-    if (instanceId !== undefined) {
-      instanceSelector.push(instanceId);
-    }
-    matched = matched.parentElement?.closest(`[${idAttribute}]`) ?? undefined;
-  }
+
+  const instanceSelector: InstanceSelector =
+    matched?.getAttribute(selectorIdAttribute)?.split(",") ?? [];
+
   if (instanceSelector.length === 0) {
     return;
   }
@@ -29,12 +26,11 @@ export const getInstanceSelectorFromElement = (element: Element) => {
 export const getElementByInstanceSelector = (
   instanceSelector: InstanceSelector | Readonly<InstanceSelector>
 ) => {
-  // query instance from root to target
-  const domSelector = instanceSelector
-    .map((id) => `[${idAttribute}="${id}"]`)
-    .reverse()
-    .join(" ");
-  return document.querySelector<HTMLElement>(domSelector) ?? undefined;
+  return (
+    document.querySelector<HTMLElement>(
+      `[${selectorIdAttribute}="${instanceSelector.join(",")}"]`
+    ) ?? undefined
+  );
 };
 
 type Rect = {

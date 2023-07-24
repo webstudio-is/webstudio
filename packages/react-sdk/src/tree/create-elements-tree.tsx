@@ -1,4 +1,8 @@
-import { type ComponentProps, Fragment } from "react";
+import {
+  Fragment,
+  type ForwardRefExoticComponent,
+  type RefAttributes,
+} from "react";
 import type { ReadableAtom } from "nanostores";
 import { Scripts, ScrollRestoration } from "@remix-run/react";
 import type { Assets } from "@webstudio-is/asset-uploader";
@@ -10,7 +14,7 @@ import {
   ReactSdkContext,
 } from "../context";
 import type { Pages, PropsByInstanceId } from "../props";
-import type { WebstudioComponent } from "./webstudio-component";
+import type { WebstudioComponentProps } from "./webstudio-component";
 
 type InstanceSelector = Instance["id"][];
 
@@ -36,11 +40,15 @@ export const createElementsTree = ({
   pagesStore: ReadableAtom<Pages>;
   executeEffectfulExpression: (
     expression: string,
+    args: DataSourceValues,
     values: DataSourceValues
   ) => DataSourceValues;
   dataSourceValuesStore: ReadableAtom<DataSourceValues>;
   onDataSourceUpdate: (newValues: DataSourceValues) => void;
-  Component: (props: ComponentProps<typeof WebstudioComponent>) => JSX.Element;
+
+  Component: ForwardRefExoticComponent<
+    WebstudioComponentProps & RefAttributes<HTMLElement>
+  >;
   components: Components;
 }) => {
   const rootInstance = instances.get(rootInstanceId);
@@ -110,7 +118,9 @@ const createInstanceChildrenElements = ({
   instances: Instances;
   instanceSelector: InstanceSelector;
   children: Instance["children"];
-  Component: (props: ComponentProps<typeof WebstudioComponent>) => JSX.Element;
+  Component: ForwardRefExoticComponent<
+    WebstudioComponentProps & RefAttributes<HTMLElement>
+  >;
   components: Components;
 }) => {
   const elements = [];
@@ -152,7 +162,9 @@ const createInstanceElement = ({
 }: {
   instance: Instance;
   instanceSelector: InstanceSelector;
-  Component: (props: ComponentProps<typeof WebstudioComponent>) => JSX.Element;
+  Component: ForwardRefExoticComponent<
+    WebstudioComponentProps & RefAttributes<HTMLElement>
+  >;
   children?: Array<JSX.Element | string>;
   components: Components;
 }) => {

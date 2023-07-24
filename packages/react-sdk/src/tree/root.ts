@@ -1,4 +1,9 @@
-import { useRef, type ComponentProps, useCallback } from "react";
+import {
+  useRef,
+  useCallback,
+  type ForwardRefExoticComponent,
+  type RefAttributes,
+} from "react";
 import {
   atom,
   computed,
@@ -8,7 +13,10 @@ import {
 import { type Build, type Page } from "@webstudio-is/project-build";
 import type { Asset } from "@webstudio-is/asset-uploader";
 import { createElementsTree } from "./create-elements-tree";
-import { WebstudioComponent } from "./webstudio-component";
+import {
+  WebstudioComponent,
+  type WebstudioComponentProps,
+} from "./webstudio-component";
 import { getPropsByInstanceId } from "../props";
 import type { Components } from "../components/components-utils";
 import type { Params, DataSourceValues } from "../context";
@@ -32,7 +40,9 @@ type RootProps = {
     expression: string,
     values: DataSourceValues
   ) => DataSourceValues;
-  Component?: (props: ComponentProps<typeof WebstudioComponent>) => JSX.Element;
+  Component?: ForwardRefExoticComponent<
+    WebstudioComponentProps & RefAttributes<HTMLElement>
+  >;
   components: Components;
 };
 

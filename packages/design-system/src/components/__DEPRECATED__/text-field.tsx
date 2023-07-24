@@ -222,7 +222,7 @@ export const useDeprecatedTextFieldFocus = ({
   onBlur?: FocusEventHandler<HTMLInputElement>;
 }): [
   RefObject<HTMLInputElement>,
-  ComponentProps<typeof DeprecatedTextFieldContainer>
+  ComponentProps<typeof DeprecatedTextFieldContainer>,
 ] => {
   const ref = useRef<HTMLInputElement>(null);
 
