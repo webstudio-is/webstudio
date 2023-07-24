@@ -26,6 +26,7 @@ import {
 import { MetaIcon } from "~/builder/shared/meta-icon";
 import { registeredComponentMetasStore } from "~/shared/nano-states";
 import { getMetaMaps } from "./get-meta-maps";
+import { isFeatureEnabled } from "@webstudio-is/feature-flags";
 
 type TabContentProps = {
   onSetActiveTab: (tabName: TabName) => void;
@@ -67,6 +68,9 @@ export const TabContent = ({ publish, onSetActiveTab }: TabContentProps) => {
       <ScrollArea>
         {componentCategories
           .filter((category) => category !== "hidden")
+          .filter((category) =>
+            isFeatureEnabled("radix") ? true : category !== "radix"
+          )
           .map((category) => (
             <CollapsibleSection label={category} key={category} fullWidth>
               <ArrowFocus

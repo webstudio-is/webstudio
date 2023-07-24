@@ -78,6 +78,9 @@ importers:
       '@nanostores/react':
         specifier: ^0.7.1
         version: 0.7.1(nanostores@0.9.3)(react@18.2.0)
+      '@radix-ui/primitive':
+        specifier: 1.0.1
+        version: 1.0.1
       '@radix-ui/react-select':
         specifier: ^1.2.2
         version: 1.2.2(@types/react-dom@18.0.11)(@types/react@18.0.35)(react-dom@18.2.0)(react@18.2.0)
@@ -1240,6 +1243,9 @@ importers:
 
   packages/sdk-components-react:
     dependencies:
+      '@radix-ui/react-tooltip':
+        specifier: ^1.0.6
+        version: 1.0.6(@types/react-dom@18.0.11)(@types/react@18.0.35)(react-dom@18.2.0)(react@18.2.0)
       '@react-aria/utils':
         specifier: ^3.13.3
         version: 3.13.3(react@18.2.0)

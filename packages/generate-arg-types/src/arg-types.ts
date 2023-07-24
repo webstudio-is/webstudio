@@ -5,19 +5,23 @@ export type FilterPredicate = (prop: PropItem) => boolean;
 
 export const propsToArgTypes = (props: Record<string, PropItem>) => {
   const entries = Object.entries(props);
-  return entries
-    .sort((item1, item2) => {
-      return item1[0].localeCompare(item2[0]);
-    })
-    .reduce((result, current) => {
-      const [propName, prop] = current;
+  return (
+    entries
+      .sort((item1, item2) => {
+        return item1[0].localeCompare(item2[0]);
+      })
+      // Exclude webstudio builder props see react-sdk/src/tree/webstudio-component.tsx
+      .filter(([propName]) => propName.startsWith("data-ws-") === false)
+      .reduce((result, current) => {
+        const [propName, prop] = current;
 
-      const argType = getArgType(prop);
-      if (argType != null) {
-        result[propName] = argType;
-      }
-      return result;
-    }, {} as Record<string, PropMeta>);
+        const argType = getArgType(prop);
+        if (argType != null) {
+          result[propName] = argType;
+        }
+        return result;
+      }, {} as Record<string, PropMeta>)
+  );
 };
 
 const matchers = {

@@ -22,6 +22,7 @@ export const componentCategories = [
   "text",
   "media",
   "forms",
+  "radix",
   "hidden",
 ] as const;
 

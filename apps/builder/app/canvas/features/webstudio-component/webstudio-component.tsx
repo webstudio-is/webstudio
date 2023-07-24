@@ -1,4 +1,11 @@
-import { type MouseEvent, type FormEvent, useEffect } from "react";
+import {
+  type MouseEvent,
+  type FormEvent,
+  useEffect,
+  forwardRef,
+  type RefObject,
+  useState,
+} from "react";
 import { Suspense, lazy, useCallback, useRef } from "react";
 import { useStore } from "@nanostores/react";
 import { useLexicalComposerContext } from "@lexical/react/LexicalComposerContext";
@@ -16,6 +23,7 @@ import {
   componentAttribute,
   showAttribute,
   useInstanceProps,
+  selectorIdAttribute,
 } from "@webstudio-is/react-sdk";
 import {
   instancesStore,
@@ -33,6 +41,9 @@ import {
 } from "~/shared/tree-utils";
 import { SelectedInstanceConnector } from "./selected-instance-connector";
 import { handleLinkClick } from "./link";
+import { mergeRefs } from "@react-aria/utils";
+import { composeEventHandlers } from "@radix-ui/primitive";
+import { setDataCollapsed } from "~/canvas/collapsed";
 
 const TextEditor = lazy(() => import("../text-editor"));
 
@@ -108,12 +119,84 @@ type WebstudioComponentDevProps = {
   components: Components;
 };
 
-export const WebstudioComponentDev = ({
-  instance,
-  instanceSelector,
-  children,
-  components,
-}: WebstudioComponentDevProps) => {
+/**
+ * Radix's VisuallyHiddenPrimitive.Root https://github.com/radix-ui/primitives/blob/main/packages/react/visually-hidden/src/VisuallyHidden.tsx
+ * component makes content from hidden elements accessible to screen readers.
+ * react-aria VisuallyHidden https://github.com/adobe/react-spectrum/blob/e4bc3269fa41aa096700445c6bfa9c8620545e6a/packages/%40react-aria/visually-hidden/src/VisuallyHidden.tsx#L32-L43
+ * The problem we're addressing is that the Radix reuses the same Content children for VisuallyHiddenPrimitive.Root within the Tooltip component.
+ * Using the same Content children, however, leads to duplicated React elements, breaking our 'isSelected' logic.
+ * To prevent this, we check if an instance is a descendant of VisuallyHiddenPrimitive.Root, and if so,
+ * we avoid rendering it.
+ */
+const useIsVisuallyHidden = (ref: RefObject<HTMLElement>) => {
+  const [isScreenReaderDescendant, setIsScreenReaderDescendant] =
+    useState(false);
+
+  useEffect(() => {
+    if (ref.current !== null) {
+      for (
+        let element: HTMLElement | null = ref.current;
+        element !== null;
+        element = element.parentElement
+      ) {
+        if (
+          element.style.overflow === "hidden" &&
+          element.style.clip === "rect(0px, 0px, 0px, 0px)" &&
+          element.style.position === "absolute" &&
+          element.style.width === "1px" &&
+          element.style.height === "1px"
+        ) {
+          setIsScreenReaderDescendant(true);
+          return;
+        }
+      }
+    }
+  }, [ref]);
+
+  return isScreenReaderDescendant;
+};
+
+/**
+ * For some components that are wrapped with Radix Slot-like components (Triggers etc where asChild=true),
+ * Slots in react-aria https://react-spectrum.adobe.com/react-spectrum/layout.html#slots
+ * events are passed implicitly. We aim to merge these implicit events with the explicitly defined ones.
+ **/
+type ImplicitEvents = {
+  onClick?: undefined | ((event: never) => void);
+  onSubmit?: undefined | ((event: never) => void);
+  /**
+   * We ignore the remaining events because we currently detect events using the 'on' prefix.
+   * This approach (defining type like above instead of Partial<Record<`on${string}`, Handler>>)
+   * is necessary due to our TypeScript settings, where 'no exactOptionalPropertyTypes' is set,
+   * which makes it impossible to define a Partial<Record<>> with optional keys.
+   *  (without exactOptionalPropertyTypes ts defines it as {[key: string]: Handler | undefined)}
+   *   instead of {[key: string]?: Handler | undefined)})
+   **/
+};
+
+const existingElements = new Set<string>();
+
+/**
+ * We are identifying newly created instances like Tooltips and ensuring the calculation of 'collapsed' elements.
+ */
+const useCollapsedOnNewElement = (instanceId: Instance["id"]) => {
+  useEffect(() => {
+    if (existingElements.has(instanceId) === false) {
+      setDataCollapsed(instanceId);
+    }
+
+    existingElements.add(instanceId);
+    return () => {
+      existingElements.delete(instanceId);
+    };
+  }, [instanceId]);
+};
+
+// eslint-disable-next-line react/display-name
+export const WebstudioComponentDev = forwardRef<
+  HTMLElement,
+  WebstudioComponentDevProps & ImplicitEvents
+>(({ instance, instanceSelector, children, components, ...restProps }, ref) => {
   const instanceId = instance.id;
   const instanceElementRef = useRef<HTMLElement>(null);
   const instanceStyles = useInstanceStyles(instanceId);
@@ -133,6 +216,8 @@ export const WebstudioComponentDev = ({
     instanceSelector
   );
   const isPreviewMode = useStore(isPreviewModeStore);
+
+  useCollapsedOnNewElement(instanceId);
 
   // Scroll the selected instance into view when selected from navigator.
   useEffect(() => {
@@ -158,6 +243,11 @@ export const WebstudioComponentDev = ({
     }
   });
 
+  const isScreenReaderDescendant = useIsVisuallyHidden(instanceElementRef);
+  if (isScreenReaderDescendant) {
+    return <></>;
+  }
+
   const readonlyProps =
     isPreviewMode === false &&
     (instance.component === "Input" || instance.component === "Textarea")
@@ -178,8 +268,6 @@ export const WebstudioComponentDev = ({
     ...userProps,
     ...readonlyProps,
     tabIndex: 0,
-    [componentAttribute]: instance.component,
-    [idAttribute]: instance.id,
     onClick: (event: MouseEvent) => {
       event.preventDefault();
       if (event.currentTarget instanceof HTMLAnchorElement) {
@@ -199,7 +287,32 @@ export const WebstudioComponentDev = ({
         userProps.onSubmit(event);
       }
     },
+    [componentAttribute]: instance.component,
+    [idAttribute]: instance.id,
+    [selectorIdAttribute]: instanceSelector.join(","),
   };
+
+  const composedHandlers: ImplicitEvents = {};
+
+  /**
+   * We combine Radix's implicit event handlers with user-defined ones, such as onClick or onSubmit.
+   * For instance, a Button within a TooltipTrigger receives
+   * an onClick handler from the TooltipTrigger.
+   * We might also need an additional onClick handler on the Button for other purposes (setting variable).
+   **/
+  for (const [key, value] of Object.entries(restProps)) {
+    const propHandler = props[key as keyof typeof props];
+    if (
+      key.startsWith("on") &&
+      propHandler !== undefined &&
+      typeof propHandler === "function"
+    ) {
+      composedHandlers[key as keyof ImplicitEvents] = composeEventHandlers(
+        value,
+        propHandler
+      );
+    }
+  }
 
   const instanceElement = (
     <>
@@ -212,7 +325,12 @@ export const WebstudioComponentDev = ({
           instanceProps={instanceProps}
         />
       )}
-      <Component {...props} ref={instanceElementRef}>
+      <Component
+        {...restProps}
+        {...props}
+        {...composedHandlers}
+        ref={mergeRefs(instanceElementRef, ref)}
+      >
         {renderWebstudioComponentChildren(children)}
       </Component>
     </>
@@ -264,4 +382,4 @@ export const WebstudioComponentDev = ({
       />
     </Suspense>
   );
-};
+});

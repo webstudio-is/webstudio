@@ -1,4 +1,4 @@
-import { Fragment } from "react";
+import { Fragment, forwardRef } from "react";
 import type { Instance } from "@webstudio-is/project-build";
 import type { Components } from "../components/components-utils";
 import { useInstanceProps } from "../props";
@@ -26,20 +26,18 @@ export const renderWebstudioComponentChildren = (
   });
 };
 
-type WebstudioComponentProps = {
+export type WebstudioComponentProps = {
   instance: Instance;
   instanceSelector: Instance["id"][];
   children: Array<JSX.Element | string>;
   components: Components;
 };
 
-export const WebstudioComponent = ({
-  instance,
-  instanceSelector,
-  children,
-  components,
-  ...rest
-}: WebstudioComponentProps) => {
+// eslint-disable-next-line react/display-name
+export const WebstudioComponent = forwardRef<
+  HTMLElement,
+  WebstudioComponentProps
+>(({ instance, instanceSelector, children, components, ...rest }, ref) => {
   const { [showAttribute]: show = true, ...instanceProps } = useInstanceProps(
     instance.id
   );
@@ -57,13 +55,42 @@ export const WebstudioComponent = ({
     return <></>;
   }
   return (
-    <Component {...props}>
+    <Component {...props} ref={ref}>
       {renderWebstudioComponentChildren(children)}
     </Component>
   );
+});
+
+export const idAttribute = "data-ws-id" as const;
+export const selectorIdAttribute = "data-ws-selector" as const;
+export const componentAttribute = "data-ws-component" as const;
+export const showAttribute = "data-ws-show" as const;
+export const collapsedAttribute = "data-ws-collapsed" as const;
+
+export type WebstudioAttributes = {
+  [idAttribute]?: string | undefined;
+  [selectorIdAttribute]?: string | undefined;
+  [componentAttribute]?: string | undefined;
+  [showAttribute]?: string | undefined;
+  [collapsedAttribute]?: string | undefined;
 };
 
-export const idAttribute = "data-ws-id";
-export const componentAttribute = "data-ws-component";
-export const showAttribute = "data-ws-show";
-export const collapsedAttribute = "data-ws-collapsed";
+export const splitPropsWithWebstudioAttributes = <
+  P extends WebstudioAttributes
+>({
+  [idAttribute]: idAttributeValue,
+  [componentAttribute]: componentAttributeValue,
+  [showAttribute]: showAttributeValue,
+  [collapsedAttribute]: collapsedAttributeValue,
+  [selectorIdAttribute]: parentIdAttributeValue,
+  ...props
+}: P): [WebstudioAttributes, Omit<P, keyof WebstudioAttributes>] => [
+  {
+    [idAttribute]: idAttributeValue,
+    [componentAttribute]: componentAttributeValue,
+    [showAttribute]: showAttributeValue,
+    [collapsedAttribute]: collapsedAttributeValue,
+    [selectorIdAttribute]: parentIdAttributeValue,
+  },
+  props,
+];

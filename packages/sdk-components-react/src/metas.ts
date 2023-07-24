@@ -30,3 +30,8 @@ export { meta as Vimeo } from "./vimeo.ws";
 export { meta as VimeoPreviewImage } from "./vimeo-preview-image.ws";
 export { meta as VimeoPlayButton } from "./vimeo-play-button.ws";
 export { meta as VimeoSpinner } from "./vimeo-spinner.ws";
+export {
+  metaTooltip as Tooltip,
+  metaTooltipContent as TooltipContent,
+  metaTooltipTrigger as TooltipTrigger,
+} from "./radix-tooltip.ws";
