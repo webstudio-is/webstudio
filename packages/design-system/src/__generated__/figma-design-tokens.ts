@@ -37,10 +37,10 @@ export const fontWeights = {
   inter4: 600,
   robotoMono4: 700,
   manrope5: 700,
-  manrope6: 700,
-  manrope7: 400,
-  manrope8: 600,
-  manrope9: 200,
+  manrope6: 400,
+  manrope7: 600,
+  manrope8: 200,
+  manrope9: 800,
   robotoMono3: 500,
   inter5: 600,
   manrope10: 800,
@@ -159,7 +159,7 @@ export const typography = {
   spaceSectionUnitText: {
     fontFamily:
       "Inter Variable, InterVariable, Inter, -apple-system, system-ui, sans-serif",
-    fontWeight: 600,
+    fontWeight: 500,
     fontSize: "8px",
     lineHeight: "8px",
     letterSpacing: "0.01em",
