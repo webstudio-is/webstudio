@@ -157,7 +157,7 @@ const useIsVisuallyHidden = (ref: RefObject<HTMLElement>) => {
 };
 
 /**
- * For some components that are wrapped with Radix Slot like components (Triggers etc where asChild=true),
+ * For some components that are wrapped with Radix Slot-like components (Triggers etc where asChild=true),
  * Slots in react-aria https://react-spectrum.adobe.com/react-spectrum/layout.html#slots
  * events are passed implicitly. We aim to merge these implicit events with the explicitly defined ones.
  **/
