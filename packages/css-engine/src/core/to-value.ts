@@ -1,12 +1,8 @@
 import type { StyleValue } from "@webstudio-is/css-data";
+import { captureError } from "@webstudio-is/error-utils";
 import { DEFAULT_FONT_FALLBACK, SYSTEM_FONTS } from "@webstudio-is/fonts";
 
 export type TransformValue = (styleValue: StyleValue) => undefined | StyleValue;
-
-// exhaustive check, should never happen in runtime as ts would give error
-const assertUnreachable = (_arg: never, errorMessage: string) => {
-  throw new Error(errorMessage);
-};
 
 const fallbackTransform: TransformValue = (styleValue) => {
   if (styleValue.type === "fontFamily") {
@@ -108,9 +104,5 @@ export const toValue = (
     return value.value.map((value) => toValue(value, transformValue)).join(" ");
   }
 
-  // Will give ts error in case of missing type
-  assertUnreachable(value, `Unknown value type`);
-
-  // Will never happen
-  throw new Error("Unknown value type");
+  return captureError(new Error("Unknown value type"), value);
 };

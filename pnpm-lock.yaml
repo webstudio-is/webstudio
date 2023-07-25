@@ -138,6 +138,9 @@ importers:
       '@webstudio-is/domain':
         specifier: workspace:^
         version: link:../../packages/domain
+      '@webstudio-is/error-utils':
+        specifier: workspace:^
+        version: link:../../packages/error-utils
       '@webstudio-is/feature-flags':
         specifier: workspace:^
         version: link:../../packages/feature-flags
@@ -496,6 +499,9 @@ importers:
       '@webstudio-is/css-data':
         specifier: workspace:^
         version: link:../css-data
+      '@webstudio-is/error-utils':
+        specifier: workspace:^
+        version: link:../error-utils
       '@webstudio-is/fonts':
         specifier: workspace:^
         version: link:../fonts
@@ -751,6 +757,18 @@ importers:
       zod:
         specifier: ^3.21.4
         version: 3.21.4
+    devDependencies:
+      '@webstudio-is/scripts':
+        specifier: workspace:^
+        version: link:../scripts
+      '@webstudio-is/tsconfig':
+        specifier: workspace:^
+        version: link:../tsconfig
+      typescript:
+        specifier: 5.1.6
+        version: 5.1.6
+
+  packages/error-utils:
     devDependencies:
       '@webstudio-is/scripts':
         specifier: workspace:^

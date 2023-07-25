@@ -14,6 +14,7 @@ import { CollapsibleSection } from "~/builder/shared/collapsible-section";
 import { useMemo } from "react";
 import * as Prism from "prismjs";
 import type { Style, StyleProperty } from "@webstudio-is/css-data";
+import { captureError } from "@webstudio-is/error-utils";
 
 const preStyle = css(textVariants.mono, {
   margin: 0,
@@ -62,7 +63,7 @@ const getCssText = (instanceStyle: StyleInfo) => {
       // Doesn't need handling
       continue;
     }
-    throw new Error("Unknown style source");
+    captureError(new Error("Unknown style source"), value);
   }
 
   const result: Array<string> = [];
