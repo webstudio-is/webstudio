@@ -84,17 +84,17 @@ export const metaTooltip: WsComponentMeta = {
            *  z-50 overflow-hidden rounded-md border bg-popover px-3 py-1.5 text-sm text-popover-foreground shadow-md
            **/
           styles: [
-            ...tc.z(50),
-            ...tc.overflow("hidden"),
-            ...tc.rounded("md"),
-            ...tc.border(),
-            ...tc.bg("popover"),
-            ...tc.px(3),
-            ...tc.py(1.5),
-            ...tc.text("sm"),
-            ...tc.text("popoverForeground"),
-            ...tc.shadow("md"),
-          ],
+            tc.z(50),
+            tc.overflow("hidden"),
+            tc.rounded("md"),
+            tc.border(),
+            tc.bg("popover"),
+            tc.px(3),
+            tc.py(1.5),
+            tc.text("sm"),
+            tc.text("popoverForeground"),
+            tc.shadow("md"),
+          ].flat(),
           children: [
             {
               type: "instance",
