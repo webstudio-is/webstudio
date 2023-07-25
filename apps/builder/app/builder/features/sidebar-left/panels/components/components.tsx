@@ -62,7 +62,7 @@ export const TabContent = ({ publish, onSetActiveTab }: TabContentProps) => {
       ref={draggableContainerRef}
     >
       <Header
-        title="Add"
+        title="Components"
         suffix={<CloseButton onClick={() => onSetActiveTab("none")} />}
       />
       <ScrollArea>
