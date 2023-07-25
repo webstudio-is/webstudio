@@ -5,7 +5,7 @@
   "description": "Command line util for building packages fast",
   "author": "Webstudio <github@webstudio.is>",
   "homepage": "https://webstudio.is",
-  "license": "MIT",
+  "license": "AGPL-3.0-or-later",
   "type": "module",
   "bin": {
     "build-package": "./build-package.ts"

@@ -4,7 +4,7 @@
   "description": "Webstudio components for Remix",
   "author": "Webstudio <github@webstudio.is>",
   "homepage": "https://webstudio.is",
-  "license": "MIT",
+  "license": "AGPL-3.0-or-later",
   "private": false,
   "type": "module",
   "files": [

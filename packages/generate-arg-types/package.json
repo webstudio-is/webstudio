@@ -37,7 +37,7 @@
     "types": "./lib/types/index.d.ts",
     "import": "./lib/index.js"
   },
-  "license": "MIT",
+  "license": "AGPL-3.0-or-later",
   "private": false,
   "sideEffects": false
 }

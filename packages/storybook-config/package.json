@@ -2,7 +2,7 @@
   "name": "@webstudio-is/storybook-config",
   "private": true,
   "version": "0.0.0",
-  "license": "MIT",
+  "license": "AGPL-3.0-or-later",
   "main": "index.ts",
   "dependencies": {
     "@fontsource/inter": "^4.5.15",

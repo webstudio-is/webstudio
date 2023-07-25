@@ -124,5 +124,5 @@
     "typescript": "5.1.6"
   },
   "sideEffects": false,
-  "license": "MIT"
+  "license": "AGPL-3.0-or-later"
 }
