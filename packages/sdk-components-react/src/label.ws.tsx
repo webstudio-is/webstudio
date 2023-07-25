@@ -1,4 +1,4 @@
-import { TextIcon } from "@webstudio-is/icons/svg";
+import { LabelIcon } from "@webstudio-is/icons/svg";
 import {
   type WsComponentMeta,
   type WsComponentPropsMeta,
@@ -21,7 +21,7 @@ export const meta: WsComponentMeta = {
   invalidAncestors: ["Button"],
   type: "container",
   label: "Input Label",
-  icon: TextIcon,
+  icon: LabelIcon,
   states: defaultStates,
   presetStyle,
   order: 2,
