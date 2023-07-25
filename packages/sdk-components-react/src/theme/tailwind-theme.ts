@@ -1,27 +1,19 @@
 // eslint-disable-next-line import/no-internal-modules
-import config from "tailwindcss/defaultConfig";
+import defaultTheme from "tailwindcss/defaultTheme"; // Imported theme https://github.com/tailwindlabs/tailwindcss/blob/e0c52a9332a64ef7eb0ba23d2a0fd5a16fe57ab7/stubs/config.full.js
+import type { EvaluatedDefaultTheme } from "./radix-common-types";
+import { colors } from "./tailwind-colors";
 
-type Theme = NonNullable<(typeof config)["theme"]>;
+const localTheme = { ...defaultTheme };
+localTheme.colors = colors;
 
-type ThemeProperties = keyof Theme;
-
-type Extract<K> = NonNullable<K> extends infer X
-  ? X extends (...args: never[]) => infer T
-    ? T
-    : X
-  : K;
-
-type ThemeResolved = {
-  [key in keyof Theme]: Extract<Theme[key]>;
-};
-
-export const theme = <T extends ThemeProperties>(name: T): ThemeResolved[T] => {
-  const value = config?.theme?.[name];
+export const theme = <T extends keyof EvaluatedDefaultTheme>(
+  name: T
+): EvaluatedDefaultTheme[T] => {
+  const value = localTheme?.[name] as unknown;
 
   if (typeof value === "function") {
-    // eslint-disable-next-line @typescript-eslint/no-unsafe-call, @typescript-eslint/no-unsafe-return
-    return value({ theme, colors: {} });
+    return value({ theme, colors });
   }
 
-  return value;
+  return value as never;
 };

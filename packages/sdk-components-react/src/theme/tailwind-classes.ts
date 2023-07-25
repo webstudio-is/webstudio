@@ -2,53 +2,64 @@
  * Quik and dirty implementation of tailwind classes conversion to webstudio styles.
  */
 import type { EmbedTemplateStyleDecl } from "@webstudio-is/react-sdk";
-import * as variables from "./radix-variables";
 import { theme } from "./tailwind-theme";
-import { parseCssValue } from "@webstudio-is/css-data";
+import { parseCssValue, parseBoxShadow } from "@webstudio-is/css-data";
+import type { EvaluatedDefaultTheme } from "./radix-common-types";
 
 // https://github.com/tailwindlabs/tailwindcss/blob/master/src/css/preflight.css
-export const preflight = (): EmbedTemplateStyleDecl[] => [
-  {
-    property: "borderTopStyle",
-    value: { type: "keyword", value: "solid" },
-  },
-  {
-    property: "borderRightStyle",
-    value: { type: "keyword", value: "solid" },
-  },
-  {
-    property: "borderBottomStyle",
-    value: { type: "keyword", value: "solid" },
-  },
-  {
-    property: "borderLeftStyle",
-    value: { type: "keyword", value: "solid" },
-  },
+const preflight = (): EmbedTemplateStyleDecl[] => {
+  const borderColorValue = parseCssValue("color", theme("colors")["border"]);
 
-  {
-    property: "borderTopColor",
-    value: variables.border,
-  },
-  {
-    property: "borderRightColor",
-    value: variables.border,
-  },
-  {
-    property: "borderBottomColor",
-    value: variables.border,
-  },
-  {
-    property: "borderLeftColor",
-    value: variables.border,
-  },
-];
+  return [
+    {
+      property: "borderTopStyle",
+      value: { type: "keyword", value: "solid" },
+    },
+    {
+      property: "borderRightStyle",
+      value: { type: "keyword", value: "solid" },
+    },
+    {
+      property: "borderBottomStyle",
+      value: { type: "keyword", value: "solid" },
+    },
+    {
+      property: "borderLeftStyle",
+      value: { type: "keyword", value: "solid" },
+    },
 
-export const z = (value: number): EmbedTemplateStyleDecl[] => [
-  {
-    property: "zIndex",
-    value: { type: "unit", value, unit: "number" },
-  },
-];
+    {
+      property: "borderTopColor",
+      value: borderColorValue,
+    },
+    {
+      property: "borderRightColor",
+      value: borderColorValue,
+    },
+    {
+      property: "borderBottomColor",
+      value: borderColorValue,
+    },
+    {
+      property: "borderLeftColor",
+      value: borderColorValue,
+    },
+  ];
+};
+
+export const z = (
+  zIndex?: StringEnumToNumeric<keyof EvaluatedDefaultTheme["zIndex"]>
+): EmbedTemplateStyleDecl[] => {
+  const valueString = theme("zIndex")[zIndex ?? "auto"];
+  const value = parseCssValue("zIndex", valueString);
+
+  return [
+    {
+      property: "zIndex",
+      value,
+    },
+  ];
+};
 
 export const overflow = (
   value: "hidden" | "visible" | "scroll" | "auto"
@@ -59,31 +70,46 @@ export const overflow = (
   },
 ];
 
-export const rounded = (value: "md"): EmbedTemplateStyleDecl[] => [
-  {
-    property: "borderTopLeftRadius",
-    value: variables.radius,
-  },
-  {
-    property: "borderTopRightRadius",
-    value: variables.radius,
-  },
-  {
-    property: "borderBottomRightRadius",
-    value: variables.radius,
-  },
-  {
-    property: "borderBottomLeftRadius",
-    value: variables.radius,
-  },
-];
+export const rounded = (
+  radius?: keyof EvaluatedDefaultTheme["borderRadius"]
+): EmbedTemplateStyleDecl[] => {
+  const valueString = theme("borderRadius")[radius ?? "DEFAULT"];
+  const value = parseCssValue("borderTopWidth", valueString);
 
-export const border = (borderWidth?: number): EmbedTemplateStyleDecl[] => {
-  const key = `${borderWidth ?? "DEFAULT"}`;
+  return [
+    {
+      property: "borderTopLeftRadius",
+      value,
+    },
+    {
+      property: "borderTopRightRadius",
+      value,
+    },
+    {
+      property: "borderBottomRightRadius",
+      value,
+    },
+    {
+      property: "borderBottomLeftRadius",
+      value,
+    },
+  ];
+};
+
+type StringEnumToNumeric<T extends string> = T extends `${infer Z extends
+  number}`
+  ? Z
+  : never;
+
+export const border = (
+  borderWidth?: StringEnumToNumeric<keyof EvaluatedDefaultTheme["borderWidth"]>
+): EmbedTemplateStyleDecl[] => {
+  const key = `${borderWidth ?? "DEFAULT"}` as const;
   const valueString = theme("borderWidth")?.[key] ?? "1px";
 
   const value = parseCssValue("borderTopWidth", valueString);
   return [
+    ...preflight(),
     { property: "borderTopWidth", value },
     { property: "borderRightWidth", value },
     { property: "borderBottomWidth", value },
@@ -91,8 +117,10 @@ export const border = (borderWidth?: number): EmbedTemplateStyleDecl[] => {
   ];
 };
 
-export const px = (padding: number): EmbedTemplateStyleDecl[] => {
-  const key = `${padding}`;
+export const px = (
+  padding: StringEnumToNumeric<keyof EvaluatedDefaultTheme["padding"]>
+): EmbedTemplateStyleDecl[] => {
+  const key = `${padding}` as const;
   const valueString = theme("padding")?.[key] ?? "0";
   const value = parseCssValue("paddingLeft", valueString);
 
@@ -102,9 +130,11 @@ export const px = (padding: number): EmbedTemplateStyleDecl[] => {
   ];
 };
 
-export const py = (padding: number): EmbedTemplateStyleDecl[] => {
-  const key = `${padding}`;
-  const valueString = theme("padding")?.[key] ?? "0";
+export const py = (
+  padding: StringEnumToNumeric<keyof EvaluatedDefaultTheme["padding"]>
+): EmbedTemplateStyleDecl[] => {
+  const key = `${padding}` as const;
+  const valueString = theme("padding")[key];
   const value = parseCssValue("paddingTop", valueString);
 
   return [
@@ -113,91 +143,79 @@ export const py = (padding: number): EmbedTemplateStyleDecl[] => {
   ];
 };
 
-export const p = (padding: number): EmbedTemplateStyleDecl[] => {
+export const p = (
+  padding: StringEnumToNumeric<keyof EvaluatedDefaultTheme["padding"]>
+): EmbedTemplateStyleDecl[] => {
   return [...px(padding), ...py(padding)];
 };
 
-export const bg = (color: "popover"): EmbedTemplateStyleDecl[] => {
+export const bg = (
+  color: keyof EvaluatedDefaultTheme["colors"]
+): EmbedTemplateStyleDecl[] => {
+  const value = parseCssValue("backgroundColor", theme("colors")[color]);
   return [
     {
       property: "backgroundColor",
-      value: variables[color],
+      value,
     },
   ];
 };
 
-const textSizes = ["sm", "base", "lg"] as const;
-type TextSize = (typeof textSizes)[number];
+const textSizes = [
+  "sm",
+  "base",
+  "lg",
+  "xs",
+  "xl",
+  "2xl",
+  "3xl",
+  "4xl",
+  "5xl",
+  "6xl",
+  "7xl",
+  "8xl",
+  "9xl",
+] as const satisfies readonly (keyof EvaluatedDefaultTheme["fontSize"])[];
+type TextSize = keyof EvaluatedDefaultTheme["fontSize"];
 
 const isTextSize = (value: string): value is TextSize =>
   textSizes.includes(value as TextSize);
 
 export const text = (
-  sizeOrColor: TextSize | "popoverForeground"
+  sizeOrColor: TextSize | keyof EvaluatedDefaultTheme["colors"]
 ): EmbedTemplateStyleDecl[] => {
-  const result: EmbedTemplateStyleDecl[] = [];
-
   if (isTextSize(sizeOrColor)) {
-    const valueArr = theme("fontSize")?.[sizeOrColor];
-    // === false not working because of ts
-    if (!Array.isArray(valueArr)) {
-      return [];
-    }
-
-    const [fontSizeString, lineHeightStringOrObject] = valueArr;
+    const valueArr = theme("fontSize")[sizeOrColor];
+    const [fontSizeString, { lineHeight: lineHeightString }] = valueArr;
 
     const fontSize = parseCssValue("fontSize", fontSizeString);
-    const lineHeightString =
-      typeof lineHeightStringOrObject === "string"
-        ? lineHeightStringOrObject
-        : lineHeightStringOrObject.lineHeight;
-
-    result.push({ property: "fontSize", value: fontSize });
-    if (lineHeightString !== undefined) {
-      const lineHeight = parseCssValue("lineHeight", lineHeightString);
-      result.push({ property: "lineHeight", value: lineHeight });
-    }
-    return result;
+    const lineHeight = parseCssValue("lineHeight", lineHeightString);
+    return [
+      { property: "fontSize", value: fontSize },
+      { property: "lineHeight", value: lineHeight },
+    ];
   }
+
+  const value = parseCssValue("color", theme("colors")[sizeOrColor]);
 
   return [
     {
       property: "color",
-      value: variables[sizeOrColor],
+      value,
     },
   ];
 };
 
-export const shadow = (shadowSize: "md"): EmbedTemplateStyleDecl[] => {
+export const shadow = (
+  shadowSize: keyof EvaluatedDefaultTheme["boxShadow"]
+): EmbedTemplateStyleDecl[] => {
+  const valueString = theme("boxShadow")[shadowSize];
+  const value = parseBoxShadow(valueString);
+
   return [
     {
       property: "boxShadow",
-      value: {
-        type: "layers",
-
-        value: [
-          {
-            type: "tuple",
-            value: [
-              { type: "unit", unit: "px", value: 0 },
-              { type: "unit", unit: "px", value: 4 },
-              { type: "unit", unit: "px", value: 6 },
-              { type: "unit", unit: "px", value: -1 },
-              { type: "rgb", alpha: 0.1, r: 0, g: 0, b: 0 },
-            ],
-          },
-          {
-            type: "tuple",
-            value: [
-              { type: "unit", unit: "px", value: 0 },
-              { type: "unit", unit: "px", value: 2 },
-              { type: "unit", unit: "px", value: 4 },
-              { type: "unit", unit: "px", value: -2 },
-              { type: "rgb", alpha: 0.1, r: 0, g: 0, b: 0 },
-            ],
-          },
-        ],
-      },
+      value,
     },
   ];
 };

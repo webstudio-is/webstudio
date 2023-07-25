@@ -84,7 +84,6 @@ export const metaTooltip: WsComponentMeta = {
            *  z-50 overflow-hidden rounded-md border bg-popover px-3 py-1.5 text-sm text-popover-foreground shadow-md
            **/
           styles: [
-            ...tc.preflight(),
             ...tc.z(50),
             ...tc.overflow("hidden"),
             ...tc.rounded("md"),

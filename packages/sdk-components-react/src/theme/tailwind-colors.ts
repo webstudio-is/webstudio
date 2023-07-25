@@ -8,52 +8,13 @@
  * Copyright (c) 2023 shadcn
  **/
 
-import type { StyleValue } from "@webstudio-is/css-data";
-
-/**
- * --popover: 0 0% 100%;
- * same as rgb(255, 255, 255)
- **/
-export const popover = {
-  type: "rgb",
-  alpha: 1,
-  r: 255,
-  g: 255,
-  b: 255,
-} as const satisfies StyleValue;
-
-/**
- * --popover-foreground: 222.2 84% 4.9%;
- * same as rgb(2, 8, 23)
- **/
-export const popoverForeground = {
-  type: "rgb",
-  alpha: 1,
-  r: 2,
-  g: 8,
-  b: 23,
-} as const satisfies StyleValue;
-
-/**
- * --border: 214.3 31.8% 91.4%;
- * same as --border:rgb(226, 232, 240)
- **/
-export const border = {
-  type: "rgb",
-  alpha: 1,
-  r: 226,
-  g: 232,
-  b: 240,
-} as const satisfies StyleValue;
-
-/**
- * --radius: 0.5rem;
- **/
-export const radius = {
-  type: "unit",
-  value: 0.5,
-  unit: "rem",
-} as const satisfies StyleValue;
+export const colors = {
+  transparent: "transparent",
+  current: "currentColor",
+  popover: "rgb(255, 255, 255)",
+  popoverForeground: "rgb(2, 8, 23)",
+  border: "rgb(226, 232, 240)",
+} as const;
 
 /*
 // Not used, leave it for the following components.
