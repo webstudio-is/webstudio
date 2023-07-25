@@ -32,7 +32,7 @@
     "import": "./lib/index.js",
     "require": "./lib/cjs/index.js"
   },
-  "license": "MIT",
+  "license": "AGPL-3.0-or-later",
   "private": false,
   "dependencies": {
     "@inquirer/confirm": "^0.0.25-alpha.0",

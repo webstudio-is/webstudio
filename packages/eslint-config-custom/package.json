@@ -2,7 +2,7 @@
   "name": "@webstudio-is/eslint-config-custom",
   "version": "1.0.6",
   "main": "index.js",
-  "license": "MIT",
+  "license": "AGPL-3.0-or-later",
   "dependencies": {
     "@typescript-eslint/eslint-plugin": "^5.60.0",
     "@typescript-eslint/parser": "^5.60.0",
