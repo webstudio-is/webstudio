@@ -8,6 +8,7 @@ import properties from "mdn-data/css/properties.json";
 import syntaxes from "mdn-data/css/syntaxes.json";
 import data from "css-tree/dist/data";
 import { popularityIndex } from "../src/popularity-index";
+import * as customData from "../src/custom-data";
 import camelCase from "camelcase";
 import type {
   KeywordValue,
@@ -245,16 +246,7 @@ const filteredProperties: FilteredProperties = (() => {
   return result;
 })();
 
-const propertiesData: {
-  // It's string because we camel-cased it
-  [property: string]: {
-    unitGroups: string[];
-    inherited: boolean;
-    initial: StyleValue;
-    popularity: number;
-    appliesTo: string;
-  };
-} = {};
+const propertiesData = { ...customData.propertiesData };
 
 const patchAppliesTo = (property: Property, config: Value) => {
   // see https://github.com/mdn/data/issues/585 alignItems and justifyItems have appliesTo = "allElements"
@@ -344,7 +336,7 @@ const nonStandardValues = {
 const commonKeywords = ["initial", "inherit", "unset"];
 
 const keywordValues = (() => {
-  const result: Record<string, string[]> = {};
+  const result = { ...customData.keywordValues };
 
   for (const property in filteredProperties) {
     const keywords = new Set<string>();

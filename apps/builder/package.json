@@ -47,6 +47,7 @@
     "@webstudio-is/dashboard": "workspace:^",
     "@webstudio-is/design-system": "workspace:^",
     "@webstudio-is/domain": "workspace:^",
+    "@webstudio-is/error-utils": "workspace:^",
     "@webstudio-is/feature-flags": "workspace:^",
     "@webstudio-is/fonts": "workspace:^",
     "@webstudio-is/icons": "workspace:^",

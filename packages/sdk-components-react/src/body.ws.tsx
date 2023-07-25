@@ -10,7 +10,17 @@ import { props } from "./__generated__/body.props";
 import type { defaultTag } from "./body";
 
 const presetStyle = {
-  body,
+  body: [
+    ...body,
+    {
+      property: "WebkitFontSmoothing",
+      value: { type: "keyword", value: "antialiased" },
+    },
+    {
+      property: "MozOsxFontSmoothing",
+      value: { type: "keyword", value: "grayscale" },
+    },
+  ],
 } satisfies PresetStyle<typeof defaultTag>;
 
 export const meta: WsComponentMeta = {

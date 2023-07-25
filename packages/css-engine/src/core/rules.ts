@@ -23,6 +23,9 @@ class StylePropertyMap {
   has(property: StyleProperty) {
     return this.#styleMap.has(property);
   }
+  get size() {
+    return this.#styleMap.size;
+  }
   keys() {
     return this.#styleMap.keys();
   }
