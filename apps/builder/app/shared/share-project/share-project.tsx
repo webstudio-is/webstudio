@@ -10,7 +10,7 @@ import {
   rawTheme,
   Separator,
   Switch,
-  DeprecatedTextField,
+  InputField,
   theme,
   Tooltip,
   useId,
@@ -69,11 +69,21 @@ const Menu = ({
   onChangeName,
   onDelete,
 }: MenuProps) => {
-  const [isOpen, setIsOpen] = useState(false);
+  const [isOpen, setIsOpen] = useState(true);
+  const [customLinkName, setCustomLinkName] = useState<string>(name);
   const handleCheckedChange = (relation: Relation) => (checked: boolean) => {
     if (checked) {
       onChangePermission(relation);
     }
+  };
+
+  const saveCustomLinkName = () => {
+    if (customLinkName.length === 0) {
+      return;
+    }
+
+    onChangeName(customLinkName);
+    setIsOpen(false);
   };
 
   return (
@@ -88,15 +98,14 @@ const Menu = ({
       <PopoverContent css={{ zIndex: theme.zIndices[1] }}>
         <Item>
           <Label>Name</Label>
-          <DeprecatedTextField
+          <InputField
             autoFocus
-            value={name}
-            onChange={(event) => {
-              onChangeName(event.target.value);
-            }}
+            color={customLinkName.length === 0 ? "error" : undefined}
+            value={customLinkName}
+            onChange={(event) => setCustomLinkName(event.target.value)}
             onKeyDown={(event) => {
               if (event.key === "Enter") {
-                setIsOpen(false);
+                saveCustomLinkName();
               }
             }}
           />
