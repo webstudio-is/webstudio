@@ -105,6 +105,7 @@ export const border = (
   borderWidth?: StringEnumToNumeric<keyof EvaluatedDefaultTheme["borderWidth"]>
 ): EmbedTemplateStyleDecl[] => {
   const key = `${borderWidth ?? "DEFAULT"}` as const;
+
   const valueString = theme("borderWidth")?.[key] ?? "1px";
 
   const value = parseCssValue("borderTopWidth", valueString);

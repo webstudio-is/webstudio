@@ -3,8 +3,8 @@ import defaultTheme from "tailwindcss/defaultTheme"; // Imported theme https://g
 import type { EvaluatedDefaultTheme } from "./radix-common-types";
 import { colors } from "./tailwind-colors";
 
+// Override the default theme with our own colors and other values if needed
 const localTheme = { ...defaultTheme };
-localTheme.colors = colors;
 
 export const theme = <T extends keyof EvaluatedDefaultTheme>(
   name: T
@@ -17,3 +17,8 @@ export const theme = <T extends keyof EvaluatedDefaultTheme>(
 
   return value as never;
 };
+
+// Override with our own colors, and other values if needed
+localTheme.colors = colors;
+localTheme.borderRadius = { ...theme("borderRadius") };
+localTheme.borderRadius.DEFAULT = "0.5rem";
