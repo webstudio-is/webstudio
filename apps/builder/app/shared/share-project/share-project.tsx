@@ -69,7 +69,7 @@ const Menu = ({
   onChangeName,
   onDelete,
 }: MenuProps) => {
-  const [isOpen, setIsOpen] = useState(true);
+  const [isOpen, setIsOpen] = useState(false);
   const [customLinkName, setCustomLinkName] = useState<string>(name);
   const handleCheckedChange = (relation: Relation) => (checked: boolean) => {
     if (checked) {
