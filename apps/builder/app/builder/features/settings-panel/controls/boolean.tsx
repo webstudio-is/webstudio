@@ -20,6 +20,7 @@ export const BooleanControl = ({
         id={id}
         checked={prop?.value ?? false}
         onCheckedChange={(value) => onChange({ type: "boolean", value })}
+        css={{ justifySelf: "end" }}
       />
     </HorizontalLayout>
   );

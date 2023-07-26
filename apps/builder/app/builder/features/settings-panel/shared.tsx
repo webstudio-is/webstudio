@@ -17,6 +17,7 @@ import {
   Tooltip,
   Box,
   Flex,
+  Grid,
   theme,
   type CSS,
 } from "@webstudio-is/design-system";
@@ -151,18 +152,28 @@ export const HorizontalLayout = ({
   onDelete,
   children,
 }: LayoutProps) => (
-  <Flex
-    css={{ minHeight: theme.spacing[13] }}
-    justify="between"
+  <Grid
+    css={{
+      gridTemplateColumns: `${theme.spacing[19]} 1fr`,
+      minHeight: theme.spacing[13],
+    }}
     align="center"
     gap="2"
   >
     <Label htmlFor={id}>{label}</Label>
-    <Flex align="center" gap="2">
+    <Grid
+      css={{
+        gridTemplateColumns: `1fr`,
+        gridAutoFlow: "column",
+        gridAutoColumns: "auto",
+      }}
+      align="center"
+      gap="2"
+    >
       {children}
       {onDelete && <RemovePropButton onClick={onDelete} />}
-    </Flex>
-  </Flex>
+    </Grid>
+  </Grid>
 );
 
 export const Row = ({ children, css }: { children: ReactNode; css?: CSS }) => (
