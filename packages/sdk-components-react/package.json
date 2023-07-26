@@ -49,13 +49,15 @@
   "dependencies": {
     "@radix-ui/react-tooltip": "^1.0.6",
     "@react-aria/utils": "^3.13.3",
+    "@webstudio-is/css-data": "workspace:^",
     "@webstudio-is/css-vars": "workspace:^",
     "@webstudio-is/generate-arg-types": "workspace:^",
     "@webstudio-is/icons": "workspace:^",
     "@webstudio-is/image": "workspace:^",
     "@webstudio-is/react-sdk": "workspace:^",
     "colord": "^2.9.3",
-    "shallow-equal": "^3.1.0"
+    "shallow-equal": "^3.1.0",
+    "tailwindcss": "^3.3.3"
   },
   "devDependencies": {
     "@storybook/react": "^7.1.0",
