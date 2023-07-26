@@ -128,6 +128,7 @@ const EditableText = ({
     <Text
       truncate
       ref={ref}
+      spellCheck={false}
       css={{
         outline: "none",
         textOverflow: isEditing ? "clip" : "ellipsis",
@@ -194,7 +195,6 @@ const StyleSourceButton = styled("button", {
   display: "block",
   boxSizing: "border-box",
   maxWidth: "100%",
-  padding: theme.spacing[3],
   variants: {
     isEditing: {
       true: {
@@ -207,7 +207,7 @@ const StyleSourceButton = styled("button", {
 });
 
 const StyleSourceState = styled(Text, {
-  padding: theme.spacing[4],
+  padding: theme.spacing[3],
   backgroundColor: theme.colors.backgroundStyleSourceToken,
   borderTopRightRadius: theme.borderRadius[3],
   borderBottomRightRadius: theme.borderRadius[3],
@@ -256,7 +256,7 @@ export const StyleSource = ({
       aria-current={selected && state === undefined}
       role="button"
     >
-      <Flex css={{ flexGrow: 1, padding: theme.spacing[2] }}>
+      <Flex css={{ flexGrow: 1, py: theme.spacing[2], px: theme.spacing[3] }}>
         <StyleSourceButton
           disabled={disabled || isEditing}
           isEditing={isEditing}
@@ -272,7 +272,9 @@ export const StyleSource = ({
         </StyleSourceButton>
       </Flex>
       {stateLabel !== undefined && (
-        <StyleSourceState>{stateLabel}</StyleSourceState>
+        <StyleSourceState css={{ lineHeight: 1 }}>
+          {stateLabel}
+        </StyleSourceState>
       )}
       {showMenu && <Menu>{menuItems}</Menu>}
     </StyleSourceContainer>

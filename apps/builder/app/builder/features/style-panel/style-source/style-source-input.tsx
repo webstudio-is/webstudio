@@ -73,7 +73,6 @@ const TextFieldContainer = styled("div", {
   gap: theme.spacing[3],
   p: theme.spacing[3],
   borderRadius: theme.borderRadius[4],
-  minHeight: theme.spacing[12],
   minWidth: 0,
   border: `1px solid ${theme.colors.borderMain}`,
   "&:focus-within": {
