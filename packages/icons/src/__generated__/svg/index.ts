@@ -84,6 +84,7 @@ export { JCEndIcon } from "./j-c-end";
 export { JCSpaceAroundIcon } from "./j-c-space-around";
 export { JCSpaceBetweenIcon } from "./j-c-space-between";
 export { JCStartIcon } from "./j-c-start";
+export { LabelIcon } from "./label";
 export { Link2UnlinkedIcon } from "./link-2-unlinked";
 export { Link2Icon } from "./link-2";
 export { LinkIcon } from "./link";
