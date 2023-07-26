@@ -26,7 +26,7 @@ jobs:
       - uses: ./.github/actions/ci-setup
 
       - name: Build Storybook for Design System
-        run: pnpm turbo run storybook:build --filter=@webstudio-is/design-system
+        run: pnpm run --filter=@webstudio-is/design-system storybook:build
 
       - name: Lost Pixel
         uses: lost-pixel/lost-pixel@v3.1.0
@@ -47,7 +47,7 @@ jobs:
       - uses: ./.github/actions/ci-setup
 
       - name: Build Storybook for Builder
-        run: pnpm turbo run storybook:build --filter=@webstudio-is/builder
+        run: pnpm run --filter=@webstudio-is/builder storybook:build
 
       - name: Lost Pixel
         uses: lost-pixel/lost-pixel@v3.1.0
