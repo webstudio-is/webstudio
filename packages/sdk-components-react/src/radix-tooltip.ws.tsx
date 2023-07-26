@@ -98,15 +98,8 @@ export const metaTooltip: WsComponentMeta = {
           children: [
             {
               type: "instance",
-              component: "Box",
-              props: [],
-              children: [
-                {
-                  type: "instance",
-                  component: "Text",
-                  children: [{ type: "text", value: "The text you can edit" }],
-                },
-              ],
+              component: "Text",
+              children: [{ type: "text", value: "The text you can edit" }],
             },
           ],
         },
