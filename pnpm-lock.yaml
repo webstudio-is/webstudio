@@ -1019,6 +1019,9 @@ importers:
       '@jest/types':
         specifier: ^29.6.1
         version: 29.6.1
+      esbuild:
+        specifier: ^0.18.16
+        version: 0.18.16
       jest:
         specifier: ^29.6.1
         version: 29.6.1(@types/node@18.11.18)
