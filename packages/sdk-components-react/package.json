@@ -61,7 +61,7 @@
   },
   "devDependencies": {
     "@storybook/react": "^7.1.0",
-    "@types/react": "^18.2.15",
+    "@types/react": "^18.2.16",
     "@types/react-dom": "^18.2.7",
     "@webstudio-is/scripts": "workspace:^",
     "@webstudio-is/storybook-config": "workspace:^",
