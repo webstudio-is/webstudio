@@ -14,6 +14,7 @@ import {
 // @todo add [data-state] to button and link
 export const metaTooltipTrigger: WsComponentMeta = {
   category: "hidden",
+  detachable: false,
   invalidAncestors: [],
   type: "container",
   label: "TooltipTrigger",
@@ -23,6 +24,7 @@ export const metaTooltipTrigger: WsComponentMeta = {
 
 export const metaTooltipContent: WsComponentMeta = {
   category: "hidden",
+  detachable: false,
   invalidAncestors: [],
   type: "container",
   label: "TooltipContent",
