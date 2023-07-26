@@ -48,7 +48,7 @@
   },
   "dependencies": {
     "@radix-ui/react-tooltip": "^1.0.6",
-    "@react-aria/utils": "^3.13.3",
+    "@react-aria/utils": "^3.18.0",
     "@webstudio-is/css-data": "workspace:^",
     "@webstudio-is/css-vars": "workspace:^",
     "@webstudio-is/generate-arg-types": "workspace:^",
@@ -61,8 +61,8 @@
   },
   "devDependencies": {
     "@storybook/react": "^7.1.0",
-    "@types/react": "^18.0.35",
-    "@types/react-dom": "^18.0.11",
+    "@types/react": "^18.2.16",
+    "@types/react-dom": "^18.2.7",
     "@webstudio-is/scripts": "workspace:^",
     "@webstudio-is/storybook-config": "workspace:^",
     "@webstudio-is/tsconfig": "workspace:^",

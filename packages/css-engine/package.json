@@ -26,8 +26,8 @@
   "devDependencies": {
     "@jest/globals": "^29.6.1",
     "@types/hyphenate-style-name": "^1.0.0",
-    "@types/react": "^18.0.35",
-    "@types/react-dom": "^18.0.11",
+    "@types/react": "^18.2.16",
+    "@types/react-dom": "^18.2.7",
     "@webstudio-is/jest-config": "workspace:^",
     "@webstudio-is/scripts": "workspace:^",
     "@webstudio-is/storybook-config": "workspace:^",
