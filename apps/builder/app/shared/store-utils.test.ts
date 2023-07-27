@@ -50,4 +50,7 @@ test("shallowComputed provides same reference when object/array values not chang
     { type: "a", value: 4 },
   ]);
   prevList = computedList;
+
+  list.off();
+  filtered.off();
 });

@@ -70,6 +70,62 @@ const getMapDifference = <Type extends Map<unknown, unknown>>(
   return difference;
 };
 
+describe("paste target", () => {
+  // body0
+  //   box1
+  //   box2
+  const instances: Instances = toMap([
+    createInstance("body0", "Body", [
+      { type: "id", value: "box1" },
+      { type: "id", value: "box2" },
+    ]),
+    createInstance("box1", "Box", []),
+    createInstance("box2", "Box", []),
+  ] satisfies Instance[]);
+
+  test("is inside selected instance", () => {
+    instancesStore.set(instances);
+    selectedInstanceSelectorStore.set(["box1", "body0"]);
+    const clipboardData = onCopy() ?? "";
+    selectedInstanceSelectorStore.set(["box2", "body0"]);
+    onPaste(clipboardData);
+
+    const instancesDifference = getMapDifference(
+      instances,
+      instancesStore.get()
+    );
+    const [newBox1] = instancesDifference.keys();
+    expect(instancesStore.get().get("box2")).toEqual(
+      createInstance("box2", "Box", [{ type: "id", value: newBox1 }])
+    );
+    expect(instancesDifference).toEqual(
+      toMap([createInstance(newBox1, "Box", [])])
+    );
+  });
+
+  test("is after selected instance when same as copied", () => {
+    instancesStore.set(instances);
+    selectedInstanceSelectorStore.set(["box1", "body0"]);
+    onPaste(onCopy() ?? "");
+
+    const instancesDifference = getMapDifference(
+      instances,
+      instancesStore.get()
+    );
+    const [newBox1] = instancesDifference.keys();
+    expect(instancesStore.get().get("body0")).toEqual(
+      createInstance("body0", "Body", [
+        { type: "id", value: "box1" },
+        { type: "id", value: newBox1 },
+        { type: "id", value: "box2" },
+      ])
+    );
+    expect(instancesDifference).toEqual(
+      toMap([createInstance(newBox1, "Box", [])])
+    );
+  });
+});
+
 describe("data sources", () => {
   // body0
   //   box1
