@@ -508,7 +508,7 @@ const DomainItem = (props: {
         <Grid
           gap={2}
           css={{
-            gridTemplateColumns: `${theme.spacing[18]} ${theme.spacing[18]} 1fr`,
+            gridTemplateColumns: `${theme.spacing[18]} 1fr 1fr`,
           }}
         >
           <Text color="subtle" variant={"titles"}>

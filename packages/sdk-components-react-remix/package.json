@@ -4,7 +4,7 @@
   "description": "Webstudio components for Remix",
   "author": "Webstudio <github@webstudio.is>",
   "homepage": "https://webstudio.is",
-  "license": "MIT",
+  "license": "AGPL-3.0-or-later",
   "private": false,
   "type": "module",
   "files": [
@@ -54,8 +54,8 @@
   },
   "devDependencies": {
     "@remix-run/react": "^1.18.1",
-    "@types/react": "^18.0.35",
-    "@types/react-dom": "^18.0.11",
+    "@types/react": "^18.2.16",
+    "@types/react-dom": "^18.2.7",
     "@webstudio-is/scripts": "workspace:^",
     "@webstudio-is/tsconfig": "workspace:^",
     "react": "^18.2.0",

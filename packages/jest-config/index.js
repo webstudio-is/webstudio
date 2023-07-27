@@ -8,15 +8,7 @@ module.exports = {
   },
   testMatch: ["<rootDir>/src/**/*.test.ts"],
   transform: {
-    "^.+\\.tsx?$": [
-      require.resolve("esbuild-jest"),
-      {
-        // This is needed for inline snapshots to work
-        // See: https://github.com/aelbore/esbuild-jest#setting-up-jest-config-file-with-transformoptions
-        sourcemap: true,
-        format: "esm",
-      },
-    ],
+    "^.+\\.tsx?$": require.resolve("./esbuild-jest.js"),
     "^.+\\.webp$": require.resolve("./file-transform.js"),
   },
   moduleNameMapper: {
