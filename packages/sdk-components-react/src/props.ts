@@ -40,3 +40,9 @@ export {
   propsMetaPopoverContent as PopoverContent,
   propsMetaPopoverTrigger as PopoverTrigger,
 } from "./radix-popover.ws";
+export {
+  propsMetaDialog as Dialog,
+  propsMetaDialogContent as DialogContent,
+  propsMetaDialogTrigger as DialogTrigger,
+  propsMetaDialogOverlay as DialogOverlay,
+} from "./radix-dialog.ws";

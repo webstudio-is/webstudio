@@ -82,7 +82,6 @@ export const metaPopover: WsComponentMeta = {
           props: [],
           /**
            *  z-50 w-72 rounded-md border bg-popover p-4 text-popover-foreground shadow-md outline-none
-           *  z-50 overflow-hidden rounded-md border bg-popover px-3 py-1.5 text-sm text-popover-foreground shadow-md
            **/
           styles: [
             tc.z(50),

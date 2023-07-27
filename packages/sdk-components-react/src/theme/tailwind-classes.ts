@@ -101,6 +101,10 @@ type StringEnumToNumeric<T extends string> = T extends `${infer Z extends
   ? Z
   : never;
 
+type NonNumeric<T extends string> = T extends `${infer Z extends number}`
+  ? never
+  : T;
+
 export const border = (
   borderWidth?: StringEnumToNumeric<keyof EvaluatedDefaultTheme["borderWidth"]>
 ): EmbedTemplateStyleDecl[] => {
@@ -151,24 +155,120 @@ export const p = (
 };
 
 export const w = (
-  spacing: StringEnumToNumeric<keyof EvaluatedDefaultTheme["spacing"]>
+  spacing:
+    | StringEnumToNumeric<keyof EvaluatedDefaultTheme["width"]>
+    | NonNumeric<keyof EvaluatedDefaultTheme["width"]>
 ): EmbedTemplateStyleDecl[] => {
   const key = `${spacing}` as const;
-  const valueString = theme("spacing")?.[key] ?? "0";
+  const valueString = theme("width")?.[key] ?? "0";
   const value = parseCssValue("width", valueString);
 
   return [{ property: "width", value }];
 };
 
+export const maxW = (
+  spacing:
+    | StringEnumToNumeric<keyof EvaluatedDefaultTheme["maxWidth"]>
+    | NonNumeric<keyof EvaluatedDefaultTheme["maxWidth"]>
+): EmbedTemplateStyleDecl[] => {
+  const key = `${spacing}` as const;
+  const valueString = theme("maxWidth")?.[key] ?? "0";
+  const value = parseCssValue("width", valueString);
+
+  return [{ property: "maxWidth", value }];
+};
+
+export const inset = (
+  spacing: StringEnumToNumeric<keyof EvaluatedDefaultTheme["spacing"]>
+): EmbedTemplateStyleDecl[] => {
+  const key = `${spacing}` as const;
+  const valueString = theme("spacing")?.[key] ?? "0";
+  const value = parseCssValue("left", valueString);
+
+  return [
+    { property: "top", value },
+    { property: "right", value },
+    { property: "bottom", value },
+    { property: "left", value },
+  ];
+};
+
+export const centerAbsolute = (): EmbedTemplateStyleDecl[] => [
+  {
+    property: "top",
+    value: { type: "unit", value: 50, unit: "%" },
+  },
+  {
+    property: "left",
+    value: { type: "unit", value: 50, unit: "%" },
+  },
+
+  {
+    property: "transform",
+    value: {
+      type: "tuple",
+      value: [
+        { type: "unparsed", value: "translateX(-50%)" },
+        { type: "unparsed", value: "translateY(-50%)" },
+      ],
+    },
+  },
+
+  // translate-x-[-50%] translate-y-[-50%]
+];
+
+export const backdropBlur = (
+  blur: keyof EvaluatedDefaultTheme["blur"]
+): EmbedTemplateStyleDecl[] => {
+  const valueString = theme("blur")[blur];
+  const value = {
+    type: "unparsed" as const,
+    value: `blur(${valueString})`,
+  };
+
+  return [{ property: "backdropFilter", value }];
+};
+
 export const bg = (
-  color: keyof EvaluatedDefaultTheme["colors"]
+  color: keyof EvaluatedDefaultTheme["colors"],
+  alpha?: number
 ): EmbedTemplateStyleDecl[] => {
   const value = parseCssValue("backgroundColor", theme("colors")[color]);
+
+  if (alpha !== undefined && value.type === "rgb") {
+    value.alpha = alpha / 100;
+  }
+
   return [
     {
       property: "backgroundColor",
       value,
     },
+  ];
+};
+
+export const fixed = (): EmbedTemplateStyleDecl[] => {
+  return [{ property: "position", value: { type: "keyword", value: "fixed" } }];
+};
+
+export const grid = (): EmbedTemplateStyleDecl[] => {
+  return [{ property: "display", value: { type: "keyword", value: "grid" } }];
+};
+
+export const flex = (): EmbedTemplateStyleDecl[] => {
+  return [{ property: "display", value: { type: "keyword", value: "flex" } }];
+};
+
+export const gap = (
+  gapValue: StringEnumToNumeric<keyof EvaluatedDefaultTheme["spacing"]>
+): EmbedTemplateStyleDecl[] => {
+  const key = `${gapValue}` as const;
+  const valueString = theme("spacing")?.[key] ?? "0";
+  const value = parseCssValue("rowGap", valueString);
+
+  return [
+    { property: "rowGap", value },
+    { property: "columnGap", value },
   ];
 };
 
