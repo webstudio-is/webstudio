@@ -226,11 +226,11 @@ export const WebstudioComponentDev = forwardRef<
     ...readonlyProps,
     tabIndex: 0,
     onClick: (event: MouseEvent) => {
-      event.preventDefault();
       if (event.currentTarget instanceof HTMLAnchorElement) {
         // @todo use Navigation API once implemented everywhere
         // https://developer.mozilla.org/en-US/docs/Web/API/Navigation_API
         handleLinkClick(event);
+        event.preventDefault();
       } else if (typeof userProps.onClick === "function") {
         // bypass onClick for non-link component, for example button
         userProps.onClick(event);

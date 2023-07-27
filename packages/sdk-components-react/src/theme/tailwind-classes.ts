@@ -150,6 +150,16 @@ export const p = (
   return [...px(padding), ...py(padding)];
 };
 
+export const w = (
+  spacing: StringEnumToNumeric<keyof EvaluatedDefaultTheme["spacing"]>
+): EmbedTemplateStyleDecl[] => {
+  const key = `${spacing}` as const;
+  const valueString = theme("spacing")?.[key] ?? "0";
+  const value = parseCssValue("width", valueString);
+
+  return [{ property: "width", value }];
+};
+
 export const bg = (
   color: keyof EvaluatedDefaultTheme["colors"]
 ): EmbedTemplateStyleDecl[] => {
@@ -158,6 +168,27 @@ export const bg = (
     {
       property: "backgroundColor",
       value,
+    },
+  ];
+};
+
+export const outline = (value: "none"): EmbedTemplateStyleDecl[] => {
+  return [
+    {
+      property: "outlineWidth",
+      value: { type: "unit", value: 2, unit: "px" },
+    },
+    {
+      property: "outlineStyle",
+      value: { type: "keyword", value: "solid" },
+    },
+    {
+      property: "outlineColor",
+      value: { type: "keyword", value: "transparent" },
+    },
+    {
+      property: "outlineOffset",
+      value: { type: "unit", value: 2, unit: "px" },
     },
   ];
 };

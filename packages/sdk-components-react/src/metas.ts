@@ -35,3 +35,9 @@ export {
   metaTooltipContent as TooltipContent,
   metaTooltipTrigger as TooltipTrigger,
 } from "./radix-tooltip.ws";
+
+export {
+  metaPopover as Popover,
+  metaPopoverContent as PopoverContent,
+  metaPopoverTrigger as PopoverTrigger,
+} from "./radix-popover.ws";
