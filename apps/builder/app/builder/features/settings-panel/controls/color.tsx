@@ -1,4 +1,4 @@
-import { InputField, theme, useId } from "@webstudio-is/design-system";
+import { InputField, useId } from "@webstudio-is/design-system";
 import {
   type ControlProps,
   getLabel,
@@ -39,7 +39,6 @@ export const ColorControl = ({
             localValue.save();
           }
         }}
-        css={{ width: theme.spacing[22] }}
       />
     </HorizontalLayout>
   );
