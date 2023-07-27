@@ -1,11 +1,4 @@
-import {
-  type MouseEvent,
-  type FormEvent,
-  useEffect,
-  forwardRef,
-  type RefObject,
-  useState,
-} from "react";
+import { type MouseEvent, type FormEvent, useEffect, forwardRef } from "react";
 import { Suspense, lazy, useCallback, useRef } from "react";
 import { useStore } from "@nanostores/react";
 import { useLexicalComposerContext } from "@lexical/react/LexicalComposerContext";
@@ -44,6 +37,7 @@ import { handleLinkClick } from "./link";
 import { mergeRefs } from "@react-aria/utils";
 import { composeEventHandlers } from "@radix-ui/primitive";
 import { setDataCollapsed } from "~/canvas/collapsed";
+import { useIsVisuallyHidden } from "./visually-hidden";
 
 const TextEditor = lazy(() => import("../text-editor"));
 
@@ -117,43 +111,6 @@ type WebstudioComponentDevProps = {
   instanceSelector: InstanceSelector;
   children: Array<JSX.Element | string>;
   components: Components;
-};
-
-/**
- * Radix's VisuallyHiddenPrimitive.Root https://github.com/radix-ui/primitives/blob/main/packages/react/visually-hidden/src/VisuallyHidden.tsx
- * component makes content from hidden elements accessible to screen readers.
- * react-aria VisuallyHidden https://github.com/adobe/react-spectrum/blob/e4bc3269fa41aa096700445c6bfa9c8620545e6a/packages/%40react-aria/visually-hidden/src/VisuallyHidden.tsx#L32-L43
- * The problem we're addressing is that the Radix reuses the same Content children for VisuallyHiddenPrimitive.Root within the Tooltip component.
- * Using the same Content children, however, leads to duplicated React elements, breaking our 'isSelected' logic.
- * To prevent this, we check if an instance is a descendant of VisuallyHiddenPrimitive.Root, and if so,
- * we avoid rendering it.
- */
-const useIsVisuallyHidden = (ref: RefObject<HTMLElement>) => {
-  const [isScreenReaderDescendant, setIsScreenReaderDescendant] =
-    useState(false);
-
-  useEffect(() => {
-    if (ref.current !== null) {
-      for (
-        let element: HTMLElement | null = ref.current;
-        element !== null;
-        element = element.parentElement
-      ) {
-        if (
-          element.style.overflow === "hidden" &&
-          element.style.clip === "rect(0px, 0px, 0px, 0px)" &&
-          element.style.position === "absolute" &&
-          element.style.width === "1px" &&
-          element.style.height === "1px"
-        ) {
-          setIsScreenReaderDescendant(true);
-          return;
-        }
-      }
-    }
-  }, [ref]);
-
-  return isScreenReaderDescendant;
 };
 
 /**

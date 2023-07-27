@@ -19,6 +19,7 @@ import { selectedInstanceOutlineStore } from "~/shared/nano-states";
 import type { UnitSizes } from "~/builder/features/style-panel/shared/css-value-input/convert-units";
 import { setDataCollapsed } from "~/canvas/collapsed";
 import { type InstanceSelector } from "~/shared/tree-utils";
+import { getIsVisuallyHidden } from "./visually-hidden";
 
 const isHtmlTag = (tag: string): tag is HtmlTags =>
   htmlTags.includes(tag as HtmlTags);
@@ -92,6 +93,11 @@ export const SelectedInstanceConnector = ({
     if (element === null) {
       return;
     }
+
+    if (getIsVisuallyHidden(element)) {
+      return;
+    }
+
     const showOutline = () => {
       if (isResizingCanvasStore.get()) {
         return;
