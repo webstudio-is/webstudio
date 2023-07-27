@@ -70,7 +70,8 @@ export const InstanceRoot = ({
       (dataSourceVariables) => {
         // set vriables with defaults
         const dataSourceValues: DataSourceValues = new Map();
-        for (const [dataSourceId, dataSource] of data.build.dataSources) {
+        const dataSources = data.build?.dataSources || [];
+        for (const [dataSourceId, dataSource] of dataSources) {
           if (dataSource.type === "variable") {
             const value =
               dataSourceVariables.get(dataSourceId) ?? dataSource.value.value;
