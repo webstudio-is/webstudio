@@ -213,3 +213,13 @@ export const getInstanceIdFromComponentProps = (
 ) => {
   return props[idAttribute] as string;
 };
+
+export const useIndexOfTypeWithinRequiredAncestors = (
+  props: Record<string, unknown>,
+  ancestorComponent: Instance["component"]
+) => {
+  const { indexesOfTypeWithinRequiredAncestors } = useContext(ReactSdkContext);
+  const instanceId = getInstanceIdFromComponentProps(props);
+  const key = `${ancestorComponent}:${instanceId}` as const;
+  return indexesOfTypeWithinRequiredAncestors.get(key) ?? -1;
+};

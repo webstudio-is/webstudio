@@ -3,6 +3,7 @@ import { createContext } from "react";
 import type { Assets } from "@webstudio-is/asset-uploader";
 import type { DataSource, Instance, Prop } from "@webstudio-is/project-build";
 import type { Pages, PropsByInstanceId } from "./props";
+import type { IndexesOfTypeWithinRequiredAncestors } from "./instance-utils";
 
 export type Params = {
   renderer?: "canvas" | "preview";
@@ -50,6 +51,7 @@ export const ReactSdkContext = createContext<
       prop: Prop["name"],
       value: unknown
     ) => void;
+    indexesOfTypeWithinRequiredAncestors: IndexesOfTypeWithinRequiredAncestors;
   }
 >({
   imageBaseUrl: "/",
@@ -67,4 +69,5 @@ export const ReactSdkContext = createContext<
   setBoundDataSourceValue: () => {
     throw Error("React SDK setBoundDataSourceValue is not implemented");
   },
+  indexesOfTypeWithinRequiredAncestors: new Map(),
 });
