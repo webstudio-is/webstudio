@@ -6,6 +6,7 @@ import {
   editingItemIdStore,
   selectedInstanceSelectorStore,
 } from "../nano-states";
+import { onCopy, onPaste } from "../copy-paste/plugin-instance";
 
 export const shortcuts = {
   esc: "esc",
@@ -52,6 +53,16 @@ export const useSharedShortcuts = ({
       enableOnFormTags: source === "canvas",
       enableOnContentEditable: false,
     },
+    []
+  );
+
+  useHotkeys(
+    "meta+d, ctrl+d",
+    (event) => {
+      event.preventDefault();
+      onPaste(onCopy() ?? "");
+    },
+    {},
     []
   );
 

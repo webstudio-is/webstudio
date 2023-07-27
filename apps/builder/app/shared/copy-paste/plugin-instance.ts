@@ -1,3 +1,4 @@
+import { shallowEqual } from "shallow-equal";
 import { nanoid } from "nanoid";
 import store from "immerhin";
 import { z } from "zod";
@@ -43,6 +44,7 @@ import {
   insertStyleSourceSelectionsCopyMutable,
   findLocalStyleSourcesWithinInstances,
   mergeNewBreakpointsMutable,
+  type DroppableTarget,
 } from "../tree-utils";
 import {
   computeInstancesConstraints,
@@ -54,6 +56,7 @@ import { getMapValuesBy, getMapValuesByKeysSet } from "../array-utils";
 const version = "@webstudio/instance/v0.1";
 
 const InstanceData = z.object({
+  instanceSelector: z.array(z.string()),
   breakpoints: z.array(Breakpoint),
   instances: z.array(Instance),
   props: z.array(Prop),
@@ -286,6 +289,7 @@ const getTreeData = (targetInstanceSelector: InstanceSelector) => {
   );
 
   return {
+    instanceSelector: targetInstanceSelector,
     breakpoints: treeBreapoints,
     instances: treeInstances,
     styleSources: treeStyleSources,
@@ -337,15 +341,36 @@ export const onPaste = (clipboardData: string): boolean => {
   const instanceSelector = selectedInstanceSelectorStore.get() ?? [
     selectedPage.rootInstanceId,
   ];
-  const dropTarget = findClosestDroppableTarget(
-    metas,
-    instancesStore.get(),
-    instanceSelector,
-    computeInstancesConstraints(metas, newInstances, [rootInstanceId])
-  );
-  if (dropTarget === undefined) {
+  let potentialDropTarget: undefined | DroppableTarget;
+  if (shallowEqual(instanceSelector, data.instanceSelector)) {
+    // paste after selected instance
+    const instances = instancesStore.get();
+    // body is not allowed to copy
+    // so clipboard always have at least two level instance selector
+    const [currentInstanceId, parentInstanceId] = instanceSelector;
+    const parentInstance = instances.get(parentInstanceId);
+    if (parentInstance === undefined) {
+      return false;
+    }
+    const indexWithinChildren = parentInstance.children.findIndex(
+      (child) => child.type === "id" && child.value === currentInstanceId
+    );
+    potentialDropTarget = {
+      parentSelector: instanceSelector.slice(1),
+      position: indexWithinChildren + 1,
+    };
+  } else {
+    potentialDropTarget = findClosestDroppableTarget(
+      metas,
+      instancesStore.get(),
+      instanceSelector,
+      computeInstancesConstraints(metas, newInstances, [rootInstanceId])
+    );
+  }
+  if (potentialDropTarget === undefined) {
     return false;
   }
+  const dropTarget = potentialDropTarget;
 
   store.createTransaction(
     [
