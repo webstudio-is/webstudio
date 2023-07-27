@@ -341,7 +341,7 @@ export const onPaste = (clipboardData: string): boolean => {
   const instanceSelector = selectedInstanceSelectorStore.get() ?? [
     selectedPage.rootInstanceId,
   ];
-  let dropTarget: undefined | DroppableTarget;
+  let potentialDropTarget: undefined | DroppableTarget;
   if (shallowEqual(instanceSelector, data.instanceSelector)) {
     // paste after selected instance
     const instances = instancesStore.get();
@@ -355,21 +355,22 @@ export const onPaste = (clipboardData: string): boolean => {
     const indexWithinChildren = parentInstance.children.findIndex(
       (child) => child.type === "id" && child.value === currentInstanceId
     );
-    dropTarget = {
+    potentialDropTarget = {
       parentSelector: instanceSelector.slice(1),
       position: indexWithinChildren + 1,
     };
   } else {
-    dropTarget = findClosestDroppableTarget(
+    potentialDropTarget = findClosestDroppableTarget(
       metas,
       instancesStore.get(),
       instanceSelector,
       computeInstancesConstraints(metas, newInstances, [rootInstanceId])
     );
   }
-  if (dropTarget === undefined) {
+  if (potentialDropTarget === undefined) {
     return false;
   }
+  const dropTarget = potentialDropTarget;
 
   store.createTransaction(
     [
