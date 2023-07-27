@@ -1,7 +1,9 @@
 import { useCallback, useMemo } from "react";
 import { useStore } from "@nanostores/react";
 import { shallowEqual } from "shallow-equal";
+import { toast } from "@webstudio-is/design-system";
 import type { Instance } from "@webstudio-is/project-build";
+import { generateDataFromEmbedTemplate } from "@webstudio-is/react-sdk";
 import {
   hoveredInstanceSelectorStore,
   instancesStore,
@@ -18,9 +20,9 @@ import {
   findClosestDroppableComponentIndex,
   reparentInstance,
   type InsertConstraints,
+  isInstanceDetachable,
 } from "~/shared/instance-utils";
 import { InstanceTree } from "./tree";
-import { generateDataFromEmbedTemplate } from "@webstudio-is/react-sdk";
 
 export const NavigatorTree = () => {
   const selectedInstanceSelector = useStore(selectedInstanceSelectorStore);
@@ -139,6 +141,12 @@ export const NavigatorTree = () => {
       onSelect={handleSelect}
       onHover={hoveredInstanceSelectorStore.set}
       onDragItemChange={(dragInstanceSelector) => {
+        if (isInstanceDetachable(dragInstanceSelector) === false) {
+          toast.error(
+            "This instance can not be moved outside of its parent component."
+          );
+          return;
+        }
         setState((state) => ({
           ...state,
           dragPayload: {

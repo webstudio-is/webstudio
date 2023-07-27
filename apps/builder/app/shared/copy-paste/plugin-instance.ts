@@ -2,6 +2,7 @@ import { shallowEqual } from "shallow-equal";
 import { nanoid } from "nanoid";
 import store from "immerhin";
 import { z } from "zod";
+import { toast } from "@webstudio-is/design-system";
 import {
   Breakpoint,
   DataSource,
@@ -50,6 +51,7 @@ import {
   computeInstancesConstraints,
   deleteInstance,
   findClosestDroppableTarget,
+  isInstanceDetachable,
 } from "../instance-utils";
 import { getMapValuesBy, getMapValuesByKeysSet } from "../array-utils";
 
@@ -178,6 +180,13 @@ const getPropTypeAndValue = (value: unknown) => {
 };
 
 const getTreeData = (targetInstanceSelector: InstanceSelector) => {
+  if (isInstanceDetachable(targetInstanceSelector) === false) {
+    toast.error(
+      "This instance can not be moved outside of its parent component."
+    );
+    return;
+  }
+
   // @todo tell user they can't copy or cut root
   if (targetInstanceSelector.length === 1) {
     return;

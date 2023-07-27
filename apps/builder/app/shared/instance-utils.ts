@@ -1,4 +1,5 @@
 import store from "immerhin";
+import { toast } from "@webstudio-is/design-system";
 import {
   type Instance,
   type Instances,
@@ -70,6 +71,21 @@ export const findClosestEditableInstanceSelector = (
     }
     return getAncestorInstanceSelector(instanceSelector, instanceId);
   }
+};
+
+export const isInstanceDetachable = (instanceSelector: InstanceSelector) => {
+  const instances = instancesStore.get();
+  const metas = registeredComponentMetasStore.get();
+  const [instanceId] = instanceSelector;
+  const instance = instances.get(instanceId);
+  if (instance === undefined) {
+    return false;
+  }
+  const meta = metas.get(instance.component);
+  if (meta === undefined) {
+    return false;
+  }
+  return meta.detachable ?? true;
 };
 
 const traverseInstancesConstraints = (
@@ -321,6 +337,12 @@ export const reparentInstance = (
 };
 
 export const deleteInstance = (instanceSelector: InstanceSelector) => {
+  if (isInstanceDetachable(instanceSelector) === false) {
+    toast.error(
+      "This instance can not be moved outside of its parent component."
+    );
+    return;
+  }
   store.createTransaction(
     [
       instancesStore,

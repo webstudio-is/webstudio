@@ -54,6 +54,10 @@ const WsComponentMeta = z.object({
   requiredAncestors: z.optional(z.array(z.string())),
   invalidAncestors: z.optional(z.array(z.string())),
   stylable: z.optional(z.boolean()),
+  // specifies whether the instance can be deleted,
+  // copied or dragged out of its parent instance
+  // true by default
+  detachable: z.optional(z.boolean()),
   label: z.string(),
   description: z.string().optional(),
   icon: z.string(),

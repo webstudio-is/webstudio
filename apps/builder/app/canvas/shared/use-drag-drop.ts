@@ -8,6 +8,7 @@ import {
   useDrag,
   useDrop,
   computeIndicatorPlacement,
+  toast,
 } from "@webstudio-is/design-system";
 import {
   instancesStore,
@@ -22,6 +23,7 @@ import {
   insertTemplateData,
   reparentInstance,
   type InsertConstraints,
+  isInstanceDetachable,
 } from "~/shared/instance-utils";
 import {
   getElementByInstanceSelector,
@@ -242,6 +244,12 @@ export const useDragAndDrop = () => {
     },
 
     onStart({ data: dragInstanceSelector }) {
+      if (isInstanceDetachable(dragInstanceSelector) === false) {
+        toast.error(
+          "This instance can not be moved outside of its parent component."
+        );
+        return;
+      }
       publish({
         type: "dragStart",
         payload: {
