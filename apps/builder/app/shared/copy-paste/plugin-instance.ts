@@ -266,6 +266,51 @@ const getTreeData = (targetInstanceSelector: InstanceSelector) => {
         ...getPropTypeAndValue(value),
       } satisfies Prop;
     }
+    if (prop.type === "action") {
+      return {
+        ...prop,
+        value: prop.value.flatMap((value) => {
+          if (value.type !== "execute") {
+            return [value];
+          }
+          let shouldKeepAction = true;
+          validateExpression(value.code, {
+            effectful: true,
+            transformIdentifier: (identifier) => {
+              if (value.args.includes(identifier)) {
+                return identifier;
+              }
+              const id = decodeDataSourceVariable(identifier);
+              if (id === undefined) {
+                return identifier;
+              }
+              if (treeDataSourceIds.has(id) === false) {
+                shouldKeepAction = false;
+                return identifier;
+              }
+              const identifierDeps = dependencies.get(id);
+              if (identifierDeps) {
+                for (const dependency of identifierDeps) {
+                  const id = decodeDataSourceVariable(dependency);
+                  if (id === undefined) {
+                    continue;
+                  }
+                  if (treeDataSourceIds.has(id) === false) {
+                    shouldKeepAction = false;
+                    return identifier;
+                  }
+                }
+              }
+              return identifier;
+            },
+          });
+          if (shouldKeepAction) {
+            return [value];
+          }
+          return [];
+        }),
+      };
+    }
     return prop;
   });
 
@@ -480,7 +525,36 @@ export const onPaste = (clipboardData: string): boolean => {
 
       insertPropsCopyMutable(
         props,
-        data.props,
+        data.props.map((prop) => {
+          if (prop.type === "action") {
+            return {
+              ...prop,
+              value: prop.value.map((value) => {
+                if (value.type !== "execute") {
+                  return value;
+                }
+                return {
+                  ...value,
+                  code: validateExpression(value.code, {
+                    effectful: true,
+                    transformIdentifier: (id) => {
+                      const dataSourceId = decodeDataSourceVariable(id);
+                      if (dataSourceId === undefined) {
+                        return id;
+                      }
+                      const newId = copiedDataSourceIds.get(dataSourceId);
+                      if (newId === undefined) {
+                        return id;
+                      }
+                      return encodeDataSourceVariable(newId);
+                    },
+                  }),
+                };
+              }),
+            };
+          }
+          return prop;
+        }),
         copiedInstanceIds,
         copiedDataSourceIds
       );

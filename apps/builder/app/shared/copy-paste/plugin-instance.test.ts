@@ -173,6 +173,19 @@ describe("data sources", () => {
       name: "show",
       value: "box2$stateInitial",
     },
+    {
+      id: "box2$onChange",
+      instanceId: "box2",
+      type: "action",
+      name: "onChange",
+      value: [
+        {
+          type: "execute",
+          args: ["value"],
+          code: `$ws$dataSource$box1$state = value`,
+        },
+      ],
+    },
   ] satisfies Prop[]);
 
   test("are copy pasted when scoped to copied instances", () => {
@@ -212,7 +225,7 @@ describe("data sources", () => {
     );
 
     const propsDifference = getMapDifference(props, propsStore.get());
-    const [newProp1, newProp2, newProp3] = propsDifference.keys();
+    const [newProp1, newProp2, newProp3, newProp4] = propsDifference.keys();
     expect(propsDifference).toEqual(
       toMap([
         {
@@ -232,6 +245,18 @@ describe("data sources", () => {
           id: newProp3,
           instanceId: newBox2,
           value: newDataSource2,
+        },
+        {
+          ...props.get("box2$onChange"),
+          id: newProp4,
+          instanceId: newBox2,
+          value: [
+            {
+              type: "execute",
+              args: ["value"],
+              code: `${encodeDataSourceVariable(newDataSource1)} = value`,
+            },
+          ],
         },
       ])
     );
@@ -259,7 +284,7 @@ describe("data sources", () => {
     expect(dataSourcesDifference).toEqual(new Map());
 
     const propsDifference = getMapDifference(props, propsStore.get());
-    const [newProp1, newProp2] = propsDifference.keys();
+    const [newProp1, newProp2, newProp3] = propsDifference.keys();
     expect(propsDifference).toEqual(
       toMap([
         {
@@ -275,6 +300,13 @@ describe("data sources", () => {
           type: "boolean",
           name: "show",
           value: true,
+        },
+        {
+          id: newProp3,
+          instanceId: newBox2,
+          type: "action",
+          name: "onChange",
+          value: [],
         },
       ])
     );
