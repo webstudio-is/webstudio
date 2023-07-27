@@ -245,7 +245,9 @@ export const useDragAndDrop = () => {
 
     onStart({ data: dragInstanceSelector }) {
       if (isInstanceDetachable(dragInstanceSelector) === false) {
-        toast.error("Cannot drag instance without its parent instance");
+        toast.error(
+          "This instance can not be moved outside of its parent component."
+        );
         return;
       }
       publish({

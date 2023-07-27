@@ -178,7 +178,9 @@ const getPropTypeAndValue = (value: unknown) => {
 
 const getTreeData = (targetInstanceSelector: InstanceSelector) => {
   if (isInstanceDetachable(targetInstanceSelector) === false) {
-    toast.error("Cannot copy instance without its parent instance");
+    toast.error(
+      "This instance can not be moved outside of its parent component."
+    );
     return;
   }
 

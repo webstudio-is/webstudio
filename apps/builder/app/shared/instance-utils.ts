@@ -338,7 +338,9 @@ export const reparentInstance = (
 
 export const deleteInstance = (instanceSelector: InstanceSelector) => {
   if (isInstanceDetachable(instanceSelector) === false) {
-    toast.error("Cannot delete instance without its parent instance");
+    toast.error(
+      "This instance can not be moved outside of its parent component."
+    );
     return;
   }
   store.createTransaction(
