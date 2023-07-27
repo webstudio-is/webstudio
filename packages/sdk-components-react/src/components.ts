@@ -31,3 +31,4 @@ export { VimeoPreviewImage } from "./vimeo-preview-image";
 export { VimeoPlayButton } from "./vimeo-play-button";
 export { VimeoSpinner } from "./vimeo-spinner";
 export { Tooltip, TooltipContent, TooltipTrigger } from "./radix-tooltip";
+export { Popover, PopoverContent, PopoverTrigger } from "./radix-popover";
