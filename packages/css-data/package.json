@@ -22,7 +22,7 @@
     "@webstudio-is/tsconfig": "workspace:^",
     "camelcase": "^7.0.1",
     "html-tags": "^3.3.1",
-    "jest": "^29.6.1",
+    "jest": "^29.6.2",
     "mdn-data": "2.0.30",
     "tsx": "^3.12.6",
     "type-fest": "^3.7.1",

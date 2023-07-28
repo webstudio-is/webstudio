@@ -33,11 +33,11 @@
   },
   "devDependencies": {
     "@remix-run/dev": "^1.18.1",
-    "@size-limit/file": "^8.2.4",
+    "@size-limit/file": "^8.2.6",
     "@types/react": "^18.2.16",
     "@types/react-dom": "^18.2.7",
     "@webstudio-is/tsconfig": "workspace:^",
-    "size-limit": "^8.2.4",
+    "size-limit": "^8.2.6",
     "typescript": "5.1.6"
   }
 }
