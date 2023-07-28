@@ -37,4 +37,7 @@ export {
   DialogContent,
   DialogTrigger,
   DialogOverlay,
+  DialogClose,
+  DialogDescription,
+  DialogTitle,
 } from "./radix-dialog";

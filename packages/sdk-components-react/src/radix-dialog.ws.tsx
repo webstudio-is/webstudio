@@ -10,6 +10,9 @@ import {
   propsDialogContent,
   propsDialogTrigger,
   propsDialogOverlay,
+  propsDialogClose,
+  propsDialogTitle,
+  propsDialogDescription,
 } from "./__generated__/radix-dialog.props";
 
 // @todo add [data-state] to button and link
@@ -35,6 +38,30 @@ export const metaDialogOverlay: WsComponentMeta = {
   invalidAncestors: [],
   type: "container",
   label: "DialogOverlay",
+  icon: RadioCheckedIcon,
+};
+
+export const metaDialogTitle: WsComponentMeta = {
+  category: "hidden",
+  invalidAncestors: [],
+  type: "container",
+  label: "DialogTitle",
+  icon: RadioCheckedIcon,
+};
+
+export const metaDialogDescription: WsComponentMeta = {
+  category: "hidden",
+  invalidAncestors: [],
+  type: "container",
+  label: "DialogDescription",
+  icon: RadioCheckedIcon,
+};
+
+export const metaDialogClose: WsComponentMeta = {
+  category: "hidden",
+  invalidAncestors: [],
+  type: "container",
+  label: "DialogClose",
   icon: RadioCheckedIcon,
 };
 
@@ -127,6 +154,7 @@ export const metaDialog: WsComponentMeta = {
                 tc.bg("background"),
                 tc.p(6),
                 tc.shadow("lg"),
+                tc.relative(),
               ].flat(),
               children: [
                 {
@@ -159,5 +187,20 @@ export const propsMetaDialogContent: WsComponentPropsMeta = {
 
 export const propsMetaDialogOverlay: WsComponentPropsMeta = {
   props: propsDialogOverlay,
+  initialProps: [],
+};
+
+export const propsMetaDialogClose: WsComponentPropsMeta = {
+  props: propsDialogClose,
+  initialProps: [],
+};
+
+export const propsMetaDialogTitle: WsComponentPropsMeta = {
+  props: propsDialogTitle,
+  initialProps: [],
+};
+
+export const propsMetaDialogDescription: WsComponentPropsMeta = {
+  props: propsDialogDescription,
   initialProps: [],
 };

@@ -86,3 +86,6 @@ export const DialogOverlay = forwardRef<
 });
 
 export const DialogContent = DialogPrimitive.Content;
+export const DialogClose = DialogPrimitive.Close;
+export const DialogTitle = DialogPrimitive.Title;
+export const DialogDescription = DialogPrimitive.Description;

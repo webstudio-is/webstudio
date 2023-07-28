@@ -271,6 +271,12 @@ export const fixed = (): EmbedTemplateStyleDecl[] => {
   return [{ property: "position", value: { type: "keyword", value: "fixed" } }];
 };
 
+export const relative = (): EmbedTemplateStyleDecl[] => {
+  return [
+    { property: "position", value: { type: "keyword", value: "relative" } },
+  ];
+};
+
 export const grid = (): EmbedTemplateStyleDecl[] => {
   return [{ property: "display", value: { type: "keyword", value: "grid" } }];
 };

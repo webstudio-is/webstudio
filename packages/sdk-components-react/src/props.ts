@@ -45,4 +45,7 @@ export {
   propsMetaDialogContent as DialogContent,
   propsMetaDialogTrigger as DialogTrigger,
   propsMetaDialogOverlay as DialogOverlay,
+  propsMetaDialogClose as DialogClose,
+  propsMetaDialogDescription as DialogDescription,
+  propsMetaDialogTitle as DialogTitle,
 } from "./radix-dialog.ws";
