@@ -275,8 +275,23 @@ export const grid = (): EmbedTemplateStyleDecl[] => {
   return [{ property: "display", value: { type: "keyword", value: "grid" } }];
 };
 
-export const flex = (): EmbedTemplateStyleDecl[] => {
-  return [{ property: "display", value: { type: "keyword", value: "flex" } }];
+const flexDirection = { row: "row", col: "column" } as const;
+type FlexDirection = keyof typeof flexDirection;
+
+export const flex = (flexParam?: FlexDirection): EmbedTemplateStyleDecl[] => {
+  if (flexParam === undefined) {
+    return [{ property: "display", value: { type: "keyword", value: "flex" } }];
+  }
+
+  return [
+    {
+      property: "flexDirection",
+      value: {
+        type: "keyword",
+        value: flexDirection[flexParam],
+      },
+    },
+  ];
 };
 
 export const gap = (

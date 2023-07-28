@@ -119,6 +119,7 @@ export const metaDialog: WsComponentMeta = {
                 tc.z(50),
                 // tc.grid(), we don't have grid use flex instead
                 tc.flex(),
+                tc.flex("col"),
                 tc.gap(4),
                 tc.m("auto"),
                 tc.maxW("lg"),
