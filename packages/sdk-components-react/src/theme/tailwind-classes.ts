@@ -123,7 +123,9 @@ export const border = (
 };
 
 export const px = (
-  padding: StringEnumToNumeric<keyof EvaluatedDefaultTheme["padding"]>
+  padding:
+    | StringEnumToNumeric<keyof EvaluatedDefaultTheme["padding"]>
+    | NonNumeric<keyof EvaluatedDefaultTheme["padding"]>
 ): EmbedTemplateStyleDecl[] => {
   const key = `${padding}` as const;
   const valueString = theme("padding")?.[key] ?? "0";
@@ -136,7 +138,9 @@ export const px = (
 };
 
 export const py = (
-  padding: StringEnumToNumeric<keyof EvaluatedDefaultTheme["padding"]>
+  padding:
+    | StringEnumToNumeric<keyof EvaluatedDefaultTheme["padding"]>
+    | NonNumeric<keyof EvaluatedDefaultTheme["padding"]>
 ): EmbedTemplateStyleDecl[] => {
   const key = `${padding}` as const;
   const valueString = theme("padding")[key];
@@ -149,9 +153,49 @@ export const py = (
 };
 
 export const p = (
-  padding: StringEnumToNumeric<keyof EvaluatedDefaultTheme["padding"]>
+  padding:
+    | StringEnumToNumeric<keyof EvaluatedDefaultTheme["padding"]>
+    | NonNumeric<keyof EvaluatedDefaultTheme["padding"]>
 ): EmbedTemplateStyleDecl[] => {
   return [...px(padding), ...py(padding)];
+};
+
+export const mx = (
+  margin:
+    | StringEnumToNumeric<keyof EvaluatedDefaultTheme["margin"]>
+    | NonNumeric<keyof EvaluatedDefaultTheme["margin"]>
+): EmbedTemplateStyleDecl[] => {
+  const key = `${margin}` as const;
+  const valueString = theme("margin")?.[key] ?? "0";
+  const value = parseCssValue("marginLeft", valueString);
+
+  return [
+    { property: "marginLeft", value },
+    { property: "marginRight", value },
+  ];
+};
+
+export const my = (
+  margin:
+    | StringEnumToNumeric<keyof EvaluatedDefaultTheme["margin"]>
+    | NonNumeric<keyof EvaluatedDefaultTheme["margin"]>
+): EmbedTemplateStyleDecl[] => {
+  const key = `${margin}` as const;
+  const valueString = theme("margin")[key];
+  const value = parseCssValue("marginTop", valueString);
+
+  return [
+    { property: "marginTop", value },
+    { property: "marginBottom", value },
+  ];
+};
+
+export const m = (
+  margin:
+    | StringEnumToNumeric<keyof EvaluatedDefaultTheme["margin"]>
+    | NonNumeric<keyof EvaluatedDefaultTheme["margin"]>
+): EmbedTemplateStyleDecl[] => {
+  return [...mx(margin), ...my(margin)];
 };
 
 export const w = (
@@ -192,30 +236,6 @@ export const inset = (
     { property: "left", value },
   ];
 };
-
-export const centerAbsolute = (): EmbedTemplateStyleDecl[] => [
-  {
-    property: "top",
-    value: { type: "unit", value: 50, unit: "%" },
-  },
-  {
-    property: "left",
-    value: { type: "unit", value: 50, unit: "%" },
-  },
-
-  {
-    property: "transform",
-    value: {
-      type: "tuple",
-      value: [
-        { type: "unparsed", value: "translateX(-50%)" },
-        { type: "unparsed", value: "translateY(-50%)" },
-      ],
-    },
-  },
-
-  // translate-x-[-50%] translate-y-[-50%]
-];
 
 export const backdropBlur = (
   blur: keyof EvaluatedDefaultTheme["blur"]

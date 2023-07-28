@@ -89,46 +89,51 @@ export const metaDialog: WsComponentMeta = {
           component: "DialogOverlay",
           label: "Dialog Overlay",
           props: [],
-          children: [],
-          // fixed inset-0 z-50 bg-background/80 backdrop-blur-sm
+          /**
+           * fixed inset-0 z-50 bg-background/80 backdrop-blur-sm
+           * flex
+           **/
           styles: [
             tc.fixed(),
             tc.inset(0),
             tc.z(50),
             tc.bg("background", 80),
             tc.backdropBlur("sm"),
-          ].flat(),
-        },
-        {
-          type: "instance",
-          component: "DialogContent",
-          label: "Dialog Content",
-          props: [],
-          /**
-           * fixed w-full z-50
-           * grid gap-4 max-w-lg
-           * left-[50%] top-[50%] translate-x-[-50%] translate-y-[-50%]
-           * border bg-background p-6 shadow-lg
-           **/
-          styles: [
-            tc.fixed(),
-            tc.w("full"),
-            tc.z(50),
-            // tc.grid(), we don't have grid use flex instead
+            // To allow positioning Content
             tc.flex(),
-            tc.gap(4),
-            tc.maxW("lg"),
-            tc.centerAbsolute(),
-            tc.border(),
-            tc.bg("background"),
-            tc.p(6),
-            tc.shadow("lg"),
           ].flat(),
           children: [
             {
               type: "instance",
-              component: "Text",
-              children: [{ type: "text", value: "The text you can edit" }],
+              component: "DialogContent",
+              label: "Dialog Content",
+              props: [],
+              /**
+               * fixed w-full z-50
+               * grid gap-4 max-w-lg
+               * m-auto
+               * border bg-background p-6 shadow-lg
+               **/
+              styles: [
+                tc.w("full"),
+                tc.z(50),
+                // tc.grid(), we don't have grid use flex instead
+                tc.flex(),
+                tc.gap(4),
+                tc.m("auto"),
+                tc.maxW("lg"),
+                tc.border(),
+                tc.bg("background"),
+                tc.p(6),
+                tc.shadow("lg"),
+              ].flat(),
+              children: [
+                {
+                  type: "instance",
+                  component: "Text",
+                  children: [{ type: "text", value: "The text you can edit" }],
+                },
+              ],
             },
           ],
         },

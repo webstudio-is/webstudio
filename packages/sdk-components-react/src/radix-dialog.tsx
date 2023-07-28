@@ -5,7 +5,6 @@ import * as DialogPrimitive from "@radix-ui/react-dialog";
 import {
   splitPropsWithWebstudioAttributes,
   type WebstudioAttributes,
-  type WebstudioComponentProps,
 } from "@webstudio-is/react-sdk";
 
 import {
@@ -14,7 +13,6 @@ import {
   type ComponentPropsWithoutRef,
   Children,
   type ReactNode,
-  type ReactElement,
 } from "react";
 
 /**
@@ -38,7 +36,7 @@ export const Dialog = forwardRef<
   WebstudioAttributes &
     ComponentPropsWithoutRef<typeof DialogPrimitive.Root> &
     BuilderDialogProps
->(({ open: openProp, isOpen, children, ...props }, ref) => {
+>(({ open: openProp, isOpen, ...props }, ref) => {
   const [webstudioAttributes, restProps] =
     splitPropsWithWebstudioAttributes(props);
 
@@ -46,27 +44,9 @@ export const Dialog = forwardRef<
     openProp ??
     (isOpen === "open" ? true : isOpen === "closed" ? false : undefined);
 
-  const dialogTriggers: ReactElement[] = [];
-  const dialogContent: ReactNode[] = [];
-
-  Children.forEach(children, (child) => {
-    if (child !== null && typeof child === "object" && "props" in child) {
-      const instanceProps: WebstudioComponentProps = child.props;
-
-      if (instanceProps.instance.component === "DialogTrigger") {
-        dialogTriggers.push(child);
-        return;
-      }
-    }
-    dialogContent.push(child);
-  });
-
   return (
     <div ref={ref} style={DisplayContentsStyle} {...webstudioAttributes}>
-      <DialogPrimitive.Root open={open} {...restProps}>
-        {dialogTriggers}
-        <DialogPrimitive.Portal>{dialogContent}</DialogPrimitive.Portal>
-      </DialogPrimitive.Root>
+      <DialogPrimitive.Root open={open} {...restProps} />
     </div>
   );
 });
@@ -94,6 +74,15 @@ export const DialogTrigger = forwardRef<
   );
 });
 
-export const DialogOverlay = DialogPrimitive.Overlay;
+export const DialogOverlay = forwardRef<
+  ElementRef<"div">,
+  ComponentPropsWithoutRef<typeof DialogPrimitive.Overlay>
+>((props, ref) => {
+  return (
+    <DialogPrimitive.DialogPortal>
+      <DialogPrimitive.Overlay ref={ref} {...props} />
+    </DialogPrimitive.DialogPortal>
+  );
+});
 
 export const DialogContent = DialogPrimitive.Content;
