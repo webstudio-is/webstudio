@@ -5,6 +5,6 @@
   "dependencies": {
     "@jest/types": "^29.6.1",
     "esbuild": "^0.18.16",
-    "jest": "^29.6.1"
+    "jest": "^29.6.2"
   }
 }

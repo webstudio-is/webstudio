@@ -100,7 +100,7 @@
     "zod": "^3.21.4"
   },
   "devDependencies": {
-    "@jest/globals": "^29.6.1",
+    "@jest/globals": "^29.6.2",
     "@remix-run/dev": "^1.18.1",
     "@storybook/react": "^7.1.0",
     "@testing-library/react-hooks": "^8.0.1",
@@ -118,7 +118,7 @@
     "dotenv": "^16.0.0",
     "dotenv-cli": "^7.1.0",
     "html-tags": "^3.3.1",
-    "jest": "^29.6.1",
+    "jest": "^29.6.2",
     "react-test-renderer": "^18.2.0",
     "type-fest": "^3.7.1",
     "typescript": "5.1.6"

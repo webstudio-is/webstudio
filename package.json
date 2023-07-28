@@ -31,7 +31,7 @@
     "@webstudio-is/eslint-config-custom": "workspace:^",
     "nano-staged": "^0.8.0",
     "prettier": "3.0.0",
-    "simple-git-hooks": "^2.8.1",
+    "simple-git-hooks": "^2.9.0",
     "storybook": "^7.1.0",
     "tsx": "^3.12.6",
     "turbo": "^1.8.6",
