@@ -1,3 +1,6 @@
+/* eslint-disable react/display-name */
+// We can't use .displayName until this is merged https://github.com/styleguidist/react-docgen-typescript/pull/449
+
 import {
   type ReactNode,
   type ForwardRefExoticComponent,
