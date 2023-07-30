@@ -144,7 +144,6 @@ export const metaDialog: WsComponentMeta = {
               styles: [
                 tc.w("full"),
                 tc.z(50),
-                // tc.grid(), we don't have grid use flex instead
                 tc.flex(),
                 tc.flex("col"),
                 tc.gap(4),
