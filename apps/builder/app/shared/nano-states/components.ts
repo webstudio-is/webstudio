@@ -1,3 +1,4 @@
+import type { ExoticComponent } from "react";
 import { atom } from "nanostores";
 import {
   namespaceEmbedTemplateComponents,
@@ -6,8 +7,6 @@ import {
   type WsComponentPropsMeta,
 } from "@webstudio-is/react-sdk";
 import type { Instance } from "@webstudio-is/project-build";
-
-export type ComponentsRecord = Record<Instance["component"], AnyComponent>;
 
 export const registeredComponentsStore = atom(new Map<string, AnyComponent>());
 
@@ -26,7 +25,9 @@ export const registerComponentLibrary = ({
   propsMetas,
 }: {
   namespace?: string;
-  components: ComponentsRecord;
+  // simplify adding component libraries
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  components: Record<Instance["component"], ExoticComponent<any>>;
   metas: Record<Instance["component"], WsComponentMeta>;
   propsMetas: Record<Instance["component"], WsComponentPropsMeta>;
 }) => {

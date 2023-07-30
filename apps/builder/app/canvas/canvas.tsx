@@ -16,6 +16,9 @@ import * as baseComponentPropsMetas from "@webstudio-is/sdk-components-react/pro
 import * as remixComponents from "@webstudio-is/sdk-components-react-remix";
 import * as remixComponentMetas from "@webstudio-is/sdk-components-react-remix/metas";
 import * as remixComponentPropsMetas from "@webstudio-is/sdk-components-react-remix/props";
+import * as radixComponents from "@webstudio-is/sdk-components-react-radix";
+import * as radixComponentMetas from "@webstudio-is/sdk-components-react-radix/metas";
+import * as radixComponentPropsMetas from "@webstudio-is/sdk-components-react-radix/props";
 import { publish } from "~/shared/pubsub";
 import {
   handshakenStore,
@@ -36,7 +39,6 @@ import {
   registerComponentLibrary,
   dataSourceValuesStore,
   dataSourceVariablesStore,
-  type ComponentsRecord,
   registeredComponentsStore,
 } from "~/shared/nano-states";
 import { useDragAndDrop } from "./shared/use-drag-drop";
@@ -158,14 +160,20 @@ export const Canvas = ({ params }: CanvasProps): JSX.Element | null => {
 
   useMount(() => {
     registerComponentLibrary({
-      components: baseComponents as unknown as ComponentsRecord,
+      components: baseComponents,
       metas: baseComponentMetas,
       propsMetas: baseComponentPropsMetas,
     });
     registerComponentLibrary({
-      components: remixComponents as unknown as ComponentsRecord,
+      components: remixComponents,
       metas: remixComponentMetas,
       propsMetas: remixComponentPropsMetas,
+    });
+    registerComponentLibrary({
+      namespace: "@webstudio-is/sdk-components-react-radix",
+      components: radixComponents,
+      metas: radixComponentMetas,
+      propsMetas: radixComponentPropsMetas,
     });
   });
 
