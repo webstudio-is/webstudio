@@ -25,6 +25,8 @@ export const registerComponentLibrary = ({
   propsMetas,
 }: {
   namespace?: string;
+  // simplify adding component libraries
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   components: Record<Instance["component"], ExoticComponent<any>>;
   metas: Record<Instance["component"], WsComponentMeta>;
   propsMetas: Record<Instance["component"], WsComponentPropsMeta>;
