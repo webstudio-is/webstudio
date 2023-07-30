@@ -1,0 +1,4 @@
+{
+  "extends": "@webstudio-is/tsconfig/base.json",
+  "include": ["./", "../../@types/**/*.d.ts"]
+}

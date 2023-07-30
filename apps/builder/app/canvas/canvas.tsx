@@ -16,6 +16,9 @@ import * as baseComponentPropsMetas from "@webstudio-is/sdk-components-react/pro
 import * as remixComponents from "@webstudio-is/sdk-components-react-remix";
 import * as remixComponentMetas from "@webstudio-is/sdk-components-react-remix/metas";
 import * as remixComponentPropsMetas from "@webstudio-is/sdk-components-react-remix/props";
+import * as radixComponents from "@webstudio-is/sdk-components-react-radix";
+import * as radixComponentMetas from "@webstudio-is/sdk-components-react-radix/metas";
+import * as radixComponentPropsMetas from "@webstudio-is/sdk-components-react-radix/props";
 import { publish } from "~/shared/pubsub";
 import {
   handshakenStore,
@@ -166,6 +169,12 @@ export const Canvas = ({ params }: CanvasProps): JSX.Element | null => {
       components: remixComponents as unknown as ComponentsRecord,
       metas: remixComponentMetas,
       propsMetas: remixComponentPropsMetas,
+    });
+    registerComponentLibrary({
+      namespace: "@webstudio-is/sdk-components-react-radix",
+      components: radixComponents as unknown as ComponentsRecord,
+      metas: radixComponentMetas,
+      propsMetas: radixComponentPropsMetas,
     });
   });
 

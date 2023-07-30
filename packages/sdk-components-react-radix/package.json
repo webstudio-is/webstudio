@@ -1,0 +1,62 @@
+{
+  "name": "@webstudio-is/sdk-components-react-radix",
+  "version": "0.82.0",
+  "description": "Webstudio wrapper for radix library",
+  "author": "Webstudio <github@webstudio.is>",
+  "homepage": "https://webstudio.is",
+  "license": "AGPL-3.0-or-later",
+  "private": false,
+  "type": "module",
+  "sideEffects": false,
+  "files": [
+    "lib/*",
+    "src/*"
+  ],
+  "exports": {
+    ".": {
+      "source": "./src/components.ts",
+      "types": "./lib/types/components.d.ts",
+      "import": "./lib/components.js",
+      "require": "./lib/cjs/components.js"
+    },
+    "./metas": {
+      "source": "./src/metas.ts",
+      "types": "./lib/types/metas.d.ts",
+      "import": "./lib/metas.js",
+      "require": "./lib/cjs/metas.js"
+    },
+    "./props": {
+      "source": "./src/props.ts",
+      "types": "./lib/types/props.d.ts",
+      "import": "./lib/props.js",
+      "require": "./lib/cjs/props.js"
+    }
+  },
+  "scripts": {
+    "dev": "build-package --watch",
+    "build": "build-package",
+    "build:args": "generate-arg-types './src/*.tsx !./src/*.stories.tsx !./src/*.ws.tsx' && prettier --write \"**/*.props.ts\"",
+    "dts": "tsc --project tsconfig.dts.json",
+    "typecheck": "tsc",
+    "checks": "pnpm typecheck"
+  },
+  "peerDependencies": {
+    "react": "^18.2.0",
+    "react-dom": "^18.2.0"
+  },
+  "dependencies": {
+    "@radix-ui/react-collapsible": "^1.0.3",
+    "@webstudio-is/generate-arg-types": "workspace:^",
+    "@webstudio-is/icons": "workspace:^",
+    "@webstudio-is/react-sdk": "workspace:^"
+  },
+  "devDependencies": {
+    "@types/react": "^18.2.16",
+    "@types/react-dom": "^18.2.7",
+    "@webstudio-is/scripts": "workspace:^",
+    "@webstudio-is/tsconfig": "workspace:^",
+    "react": "^18.2.0",
+    "react-dom": "^18.2.0",
+    "typescript": "^5.1.6"
+  }
+}
