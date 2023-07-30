@@ -16,7 +16,6 @@ export const colors = {
   border: "rgb(226, 232, 240)",
   background: "rgb(255, 255, 255)",
   ring: "rgb(148, 163, 184)",
-
   mutedForeground: "rgb(100, 116, 139)",
 } as const;
 
@@ -27,8 +26,6 @@ export const colors = {
 --foreground: 222.2 84% 4.9%;
 
 --muted: 210 40% 96.1%;
---muted-foreground: 215.4 16.3% 46.9%;
-
 --card: 0 0% 100%;
 --card-foreground: 222.2 84% 4.9%;
 
