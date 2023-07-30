@@ -23,6 +23,7 @@ export const metaDialogTrigger: WsComponentMeta = {
   label: "DialogTrigger",
   icon: RadioCheckedIcon,
   stylable: false,
+  detachable: false,
 };
 
 export const metaDialogContent: WsComponentMeta = {
@@ -31,6 +32,7 @@ export const metaDialogContent: WsComponentMeta = {
   type: "container",
   label: "DialogContent",
   icon: RadioCheckedIcon,
+  detachable: false,
 };
 
 export const metaDialogOverlay: WsComponentMeta = {
@@ -39,6 +41,7 @@ export const metaDialogOverlay: WsComponentMeta = {
   type: "container",
   label: "DialogOverlay",
   icon: RadioCheckedIcon,
+  detachable: false,
 };
 
 export const metaDialogTitle: WsComponentMeta = {
