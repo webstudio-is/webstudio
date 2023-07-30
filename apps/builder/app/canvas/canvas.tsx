@@ -33,10 +33,11 @@ import {
   instancesStore,
   useIsPreviewMode,
   selectedPageStore,
-  registerComponentMetas,
-  registerComponentPropsMetas,
+  registerComponentLibrary,
   dataSourceValuesStore,
   dataSourceVariablesStore,
+  type ComponentsRecord,
+  registeredComponentsStore,
 } from "~/shared/nano-states";
 import { useDragAndDrop } from "./shared/use-drag-drop";
 import { useCopyPaste } from "~/shared/copy-paste";
@@ -46,6 +47,7 @@ import { subscribeInstanceSelection } from "./instance-selection";
 import { subscribeInstanceHovering } from "./instance-hovering";
 import { useHashLinkSync } from "~/shared/pages";
 import { useMount } from "~/shared/hook-utils/use-mount";
+import { Scripts, ScrollRestoration } from "@remix-run/react";
 
 registerContainers();
 
@@ -53,19 +55,6 @@ const propsByInstanceIdStore = computed(
   propsIndexStore,
   (propsIndex) => propsIndex.propsByInstanceId
 );
-
-const temporaryRootInstanceId = "temporaryRootInstance";
-const temporaryInstances: Instances = new Map([
-  [
-    temporaryRootInstanceId,
-    {
-      type: "instance",
-      id: temporaryRootInstanceId,
-      component: "Body",
-      children: [],
-    },
-  ],
-]);
 
 const executeEffectfulExpressionWithDecodedVariables: typeof executeEffectfulExpression =
   (code, args, values) => {
@@ -82,11 +71,14 @@ const onDataSourceUpdate = (newValues: Map<DataSource["id"], unknown>) => {
   dataSourceVariablesStore.set(dataSourceVariables);
 };
 
-const useElementsTree = (components: Components, params: Params) => {
-  const instances = useStore(instancesStore);
+const useElementsTree = (
+  components: Components,
+  instances: Instances,
+  params: Params
+) => {
   const page = useStore(selectedPageStore);
   const [isPreviewMode] = useIsPreviewMode();
-  const rootInstanceId = page?.rootInstanceId;
+  const rootInstanceId = page?.rootInstanceId ?? "";
 
   if (typeof window === "undefined") {
     // @todo remove after https://github.com/webstudio-is/webstudio-builder/issues/1313 now its needed to be sure that no leaks exists
@@ -116,10 +108,10 @@ const useElementsTree = (components: Components, params: Params) => {
       renderer: isPreviewMode ? "preview" : "canvas",
       imageBaseUrl: params.imageBaseUrl,
       assetBaseUrl: params.assetBaseUrl,
-      instances: instances.size === 0 ? temporaryInstances : instances,
+      instances,
       // fallback to temporary root instance to render scripts
       // and receive real data from builder
-      rootInstanceId: rootInstanceId ?? temporaryRootInstanceId,
+      rootInstanceId,
       propsByInstanceIdStore,
       assetsStore,
       pagesStore: pagesMapStore,
@@ -164,14 +156,17 @@ export const Canvas = ({ params }: CanvasProps): JSX.Element | null => {
   useCanvasStore(publish);
   const [isPreviewMode] = useIsPreviewMode();
 
-  const components = new Map(
-    Object.entries({ ...baseComponents, ...remixComponents })
-  ) as Components;
   useMount(() => {
-    registerComponentMetas(baseComponentMetas);
-    registerComponentPropsMetas(baseComponentPropsMetas);
-    registerComponentMetas(remixComponentMetas);
-    registerComponentPropsMetas(remixComponentPropsMetas);
+    registerComponentLibrary({
+      components: baseComponents as unknown as ComponentsRecord,
+      metas: baseComponentMetas,
+      propsMetas: baseComponentPropsMetas,
+    });
+    registerComponentLibrary({
+      components: remixComponents as unknown as ComponentsRecord,
+      metas: remixComponentMetas,
+      propsMetas: remixComponentPropsMetas,
+    });
   });
 
   // e.g. toggling preview is still needed in both modes
@@ -197,7 +192,18 @@ export const Canvas = ({ params }: CanvasProps): JSX.Element | null => {
 
   useHashLinkSync();
 
-  const elements = useElementsTree(components, params);
+  const components = useStore(registeredComponentsStore);
+  const instances = useStore(instancesStore);
+  const elements = useElementsTree(components, instances, params);
+
+  if (components.size === 0 || instances.size === 0) {
+    return (
+      <body>
+        <ScrollRestoration />
+        <Scripts />
+      </body>
+    );
+  }
 
   return (
     <>

@@ -1,7 +1,7 @@
 import { z } from "zod";
 import { nanoid } from "nanoid";
 import {
-  type Instance,
+  Instance,
   type InstancesList,
   PropsList,
   StyleSourceSelectionsList,
@@ -308,3 +308,29 @@ export const generateDataFromEmbedTemplate = (
 export type EmbedTemplateData = ReturnType<
   typeof generateDataFromEmbedTemplate
 >;
+
+export const namespaceEmbedTemplateComponents = (
+  template: WsEmbedTemplate,
+  namespace: string,
+  components: Set<EmbedTemplateInstance["component"]>
+): WsEmbedTemplate => {
+  return template.map((item) => {
+    if (item.type === "text") {
+      return item;
+    }
+    if (item.type === "instance") {
+      const prefix = components.has(item.component) ? `${namespace}:` : "";
+      return {
+        ...item,
+        component: `${prefix}${item.component}`,
+        children: namespaceEmbedTemplateComponents(
+          item.children,
+          namespace,
+          components
+        ),
+      };
+    }
+    item satisfies never;
+    throw Error("Impossible case");
+  });
+};
