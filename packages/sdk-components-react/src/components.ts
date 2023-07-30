@@ -32,3 +32,12 @@ export { VimeoPlayButton } from "./vimeo-play-button";
 export { VimeoSpinner } from "./vimeo-spinner";
 export { Tooltip, TooltipContent, TooltipTrigger } from "./radix-tooltip";
 export { Popover, PopoverContent, PopoverTrigger } from "./radix-popover";
+export {
+  Dialog,
+  DialogContent,
+  DialogTrigger,
+  DialogOverlay,
+  DialogClose,
+  DialogDescription,
+  DialogTitle,
+} from "./radix-dialog";

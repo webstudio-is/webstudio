@@ -12,7 +12,7 @@ export const theme = <T extends keyof EvaluatedDefaultTheme>(
   const value = localTheme?.[name] as unknown;
 
   if (typeof value === "function") {
-    return value({ theme, colors });
+    return value({ theme, colors, breakpoints: () => ({}) });
   }
 
   return value as never;

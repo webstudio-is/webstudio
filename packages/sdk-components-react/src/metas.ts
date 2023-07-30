@@ -41,3 +41,13 @@ export {
   metaPopoverContent as PopoverContent,
   metaPopoverTrigger as PopoverTrigger,
 } from "./radix-popover.ws";
+
+export {
+  metaDialog as Dialog,
+  metaDialogContent as DialogContent,
+  metaDialogTrigger as DialogTrigger,
+  metaDialogOverlay as DialogOverlay,
+  metaDialogClose as DialogClose,
+  metaDialogDescription as DialogDescription,
+  metaDialogTitle as DialogTitle,
+} from "./radix-dialog.ws";

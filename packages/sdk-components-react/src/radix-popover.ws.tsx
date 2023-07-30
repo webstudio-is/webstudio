@@ -19,6 +19,7 @@ export const metaPopoverTrigger: WsComponentMeta = {
   label: "PopoverTrigger",
   icon: RadioCheckedIcon,
   stylable: false,
+  detachable: false,
 };
 
 export const metaPopoverContent: WsComponentMeta = {
@@ -27,6 +28,7 @@ export const metaPopoverContent: WsComponentMeta = {
   type: "container",
   label: "PopoverContent",
   icon: RadioCheckedIcon,
+  detachable: false,
 };
 
 /**
@@ -82,7 +84,6 @@ export const metaPopover: WsComponentMeta = {
           props: [],
           /**
            *  z-50 w-72 rounded-md border bg-popover p-4 text-popover-foreground shadow-md outline-none
-           *  z-50 overflow-hidden rounded-md border bg-popover px-3 py-1.5 text-sm text-popover-foreground shadow-md
            **/
           styles: [
             tc.z(50),

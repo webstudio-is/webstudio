@@ -467,4 +467,29 @@ type DefaultTheme = {
 export type EvaluatedDefaultTheme = DefaultTheme & {
   padding: DefaultTheme["spacing"];
   colors: typeof colors;
+  width: DefaultTheme["spacing"] & Record<"full", string>;
+  height: DefaultTheme["spacing"];
+  margin: DefaultTheme["spacing"] & Record<"auto", string>;
+  maxWidth: DefaultTheme["spacing"] &
+    Record<
+      | "none"
+      | "0"
+      | "xs"
+      | "sm"
+      | "md"
+      | "lg"
+      | "xl"
+      | "2xl"
+      | "3xl"
+      | "4xl"
+      | "5xl"
+      | "6xl"
+      | "7xl"
+      | "full"
+      | "min"
+      | "max"
+      | "fit"
+      | "prose",
+      string
+    >;
 };
