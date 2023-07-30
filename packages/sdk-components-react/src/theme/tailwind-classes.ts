@@ -210,6 +210,33 @@ export const w = (
   return [{ property: "width", value }];
 };
 
+export const h = (
+  spacing:
+    | StringEnumToNumeric<keyof EvaluatedDefaultTheme["height"]>
+    | NonNumeric<keyof EvaluatedDefaultTheme["height"]>
+): EmbedTemplateStyleDecl[] => {
+  const key = `${spacing}` as const;
+  const valueString = theme("height")?.[key] ?? "0";
+  const value = parseCssValue("height", valueString);
+
+  return [{ property: "height", value }];
+};
+
+export const opacity = (
+  opacity: StringEnumToNumeric<keyof EvaluatedDefaultTheme["opacity"]>
+): EmbedTemplateStyleDecl[] => {
+  const key = `${opacity}` as const;
+  const valueString = theme("opacity")?.[key] ?? "0";
+  const value = parseCssValue("opacity", valueString);
+
+  return [
+    {
+      property: "opacity",
+      value,
+    },
+  ];
+};
+
 export const maxW = (
   spacing:
     | StringEnumToNumeric<keyof EvaluatedDefaultTheme["maxWidth"]>
@@ -222,20 +249,41 @@ export const maxW = (
   return [{ property: "maxWidth", value }];
 };
 
-export const inset = (
+const positionStyle = (
+  property: "left" | "right" | "top" | "bottom",
   spacing: StringEnumToNumeric<keyof EvaluatedDefaultTheme["spacing"]>
-): EmbedTemplateStyleDecl[] => {
+): EmbedTemplateStyleDecl => {
   const key = `${spacing}` as const;
   const valueString = theme("spacing")?.[key] ?? "0";
-  const value = parseCssValue("left", valueString);
+  const value = parseCssValue(property, valueString);
 
-  return [
-    { property: "top", value },
-    { property: "right", value },
-    { property: "bottom", value },
-    { property: "left", value },
-  ];
+  return { property, value };
 };
+
+export const top = (
+  spacing: StringEnumToNumeric<keyof EvaluatedDefaultTheme["spacing"]>
+): EmbedTemplateStyleDecl[] => [positionStyle("top", spacing)];
+
+export const right = (
+  spacing: StringEnumToNumeric<keyof EvaluatedDefaultTheme["spacing"]>
+): EmbedTemplateStyleDecl[] => [positionStyle("right", spacing)];
+
+export const bottom = (
+  spacing: StringEnumToNumeric<keyof EvaluatedDefaultTheme["spacing"]>
+): EmbedTemplateStyleDecl[] => [positionStyle("bottom", spacing)];
+
+export const left = (
+  spacing: StringEnumToNumeric<keyof EvaluatedDefaultTheme["spacing"]>
+): EmbedTemplateStyleDecl[] => [positionStyle("left", spacing)];
+
+export const inset = (
+  spacing: StringEnumToNumeric<keyof EvaluatedDefaultTheme["spacing"]>
+): EmbedTemplateStyleDecl[] => [
+  positionStyle("left", spacing),
+  positionStyle("right", spacing),
+  positionStyle("top", spacing),
+  positionStyle("bottom", spacing),
+];
 
 export const backdropBlur = (
   blur: keyof EvaluatedDefaultTheme["blur"]
@@ -277,8 +325,62 @@ export const relative = (): EmbedTemplateStyleDecl[] => {
   ];
 };
 
+export const absolute = (): EmbedTemplateStyleDecl[] => {
+  return [
+    { property: "position", value: { type: "keyword", value: "absolute" } },
+  ];
+};
+
 export const grid = (): EmbedTemplateStyleDecl[] => {
   return [{ property: "display", value: { type: "keyword", value: "grid" } }];
+};
+
+const alignItems = {
+  start: "flex-start",
+  end: "flex-end",
+  center: "center",
+  baseline: "baseline",
+  stretch: "stretch",
+} as const;
+type AlignItems = keyof typeof alignItems;
+
+export const items = (
+  alignItemsParam: AlignItems
+): EmbedTemplateStyleDecl[] => {
+  return [
+    {
+      property: "alignItems",
+      value: {
+        type: "keyword",
+        value: alignItems[alignItemsParam],
+      },
+    },
+  ];
+};
+
+const justifyContent = {
+  start: "flex-start",
+  end: "flex-end",
+  center: "center",
+  between: "space-between",
+  around: "space-around",
+  evenly: "space-evenly",
+  stretch: "stretch",
+} as const;
+type JustifyContent = keyof typeof justifyContent;
+
+export const justify = (
+  justifyContentParam: JustifyContent
+): EmbedTemplateStyleDecl[] => {
+  return [
+    {
+      property: "justifyContent",
+      value: {
+        type: "keyword",
+        value: justifyContent[justifyContentParam],
+      },
+    },
+  ];
 };
 
 const flexDirection = { row: "row", col: "column" } as const;
@@ -391,4 +493,54 @@ export const shadow = (
       value,
     },
   ];
+};
+
+export const ring = (
+  ringColor: keyof EvaluatedDefaultTheme["colors"],
+  ringWidth: StringEnumToNumeric<keyof EvaluatedDefaultTheme["ringWidth"]>,
+  ringOffsetColor: keyof EvaluatedDefaultTheme["colors"] = "background",
+  ringOffsetWidth: StringEnumToNumeric<
+    keyof EvaluatedDefaultTheme["ringOffsetWidth"]
+  > = 0,
+  inset: "inset" | "" = ""
+): EmbedTemplateStyleDecl[] => {
+  const ringWidthUnits = theme("ringWidth")[ringWidth];
+  const ringOffsetWidthUnits = theme("ringOffsetWidth")[ringOffsetWidth];
+  const ringColorRgb = theme("colors")[ringColor];
+  const ringOffsetColorRgb = theme("colors")[ringOffsetColor];
+  const ringOffsetShadow = `${inset} 0 0 0 ${ringOffsetWidthUnits} ${ringOffsetColorRgb}`;
+
+  const ringWidthParsed = parseFloat(ringWidthUnits);
+  const ringOffsetWidthParsed = parseFloat(ringOffsetWidthUnits);
+
+  const ringShadow = `${inset} 0 0 0 ${
+    ringWidthParsed + ringOffsetWidthParsed
+  }px ${ringColorRgb}`;
+
+  const value = parseBoxShadow(`${ringOffsetShadow}, ${ringShadow}`);
+
+  return [
+    {
+      property: "boxShadow",
+      value,
+    },
+  ];
+};
+
+export const hover = (
+  value: EmbedTemplateStyleDecl[]
+): EmbedTemplateStyleDecl[] => {
+  return value.map((decl) => ({
+    ...decl,
+    state: ":hover",
+  }));
+};
+
+export const focus = (
+  value: EmbedTemplateStyleDecl[]
+): EmbedTemplateStyleDecl[] => {
+  return value.map((decl) => ({
+    ...decl,
+    state: ":focus",
+  }));
 };

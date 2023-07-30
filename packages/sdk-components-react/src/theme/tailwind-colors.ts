@@ -15,6 +15,7 @@ export const colors = {
   popoverForeground: "rgb(2, 8, 23)",
   border: "rgb(226, 232, 240)",
   background: "rgb(255, 255, 255)",
+  ring: "rgb(148, 163, 184)",
 } as const;
 
 /*
