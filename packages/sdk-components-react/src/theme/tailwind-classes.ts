@@ -415,6 +415,30 @@ export const gap = (
   ];
 };
 
+export const leading = (
+  lineHeight:
+    | StringEnumToNumeric<keyof EvaluatedDefaultTheme["lineHeight"]>
+    | NonNumeric<keyof EvaluatedDefaultTheme["lineHeight"]>
+): EmbedTemplateStyleDecl[] => {
+  const key = `${lineHeight}` as const;
+  const valueString = theme("lineHeight")[key];
+  const value = parseCssValue("lineHeight", valueString);
+
+  return [{ property: "lineHeight", value }];
+};
+
+export const tracking = (
+  letterSpacing:
+    | StringEnumToNumeric<keyof EvaluatedDefaultTheme["letterSpacing"]>
+    | NonNumeric<keyof EvaluatedDefaultTheme["letterSpacing"]>
+): EmbedTemplateStyleDecl[] => {
+  const key = `${letterSpacing}` as const;
+  const valueString = theme("letterSpacing")[key];
+  const value = parseCssValue("letterSpacing", valueString);
+
+  return [{ property: "letterSpacing", value }];
+};
+
 export const outline = (value: "none"): EmbedTemplateStyleDecl[] => {
   return [
     {

@@ -16,6 +16,8 @@ export const colors = {
   border: "rgb(226, 232, 240)",
   background: "rgb(255, 255, 255)",
   ring: "rgb(148, 163, 184)",
+
+  mutedForeground: "rgb(100, 116, 139)",
 } as const;
 
 /*

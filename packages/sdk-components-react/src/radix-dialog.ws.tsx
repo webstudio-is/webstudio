@@ -159,6 +159,63 @@ export const metaDialog: WsComponentMeta = {
               children: [
                 {
                   type: "instance",
+                  component: "Box",
+                  label: "Dialog Header",
+                  props: [],
+                  styles: [tc.flex(), tc.flex("col"), tc.gap(1)].flat(),
+                  children: [
+                    {
+                      type: "instance",
+                      component: "DialogTitle",
+                      label: "Dialog Title",
+                      props: [],
+                      /**
+                       * text-lg leading-none tracking-tight
+                       **/
+                      styles: [
+                        tc.my(0),
+                        tc.leading("none"),
+                        tc.text("lg"),
+                        tc.tracking("tight"),
+                      ].flat(),
+                      children: [
+                        {
+                          type: "text",
+                          value: "Dialog Title",
+                        },
+                      ],
+                    },
+                    {
+                      type: "instance",
+                      component: "DialogDescription",
+                      label: "Dialog Description",
+                      props: [],
+                      /**
+                       * text-sm text-muted-foreground
+                       **/
+                      styles: [
+                        tc.my(0),
+                        tc.text("sm"),
+                        tc.text("mutedForeground"),
+                      ].flat(),
+                      children: [
+                        {
+                          type: "text",
+                          value: "dialog description text you can edit",
+                        },
+                      ],
+                    },
+                  ],
+                },
+
+                {
+                  type: "instance",
+                  component: "Text",
+                  children: [{ type: "text", value: "The text you can edit" }],
+                },
+
+                {
+                  type: "instance",
                   component: "DialogClose",
                   label: "Dialog Close",
                   props: [],
@@ -186,19 +243,7 @@ export const metaDialog: WsComponentMeta = {
                     tc.hover(tc.opacity(100)),
                     tc.focus(tc.ring("ring", 2, "background", 2)),
                   ].flat(),
-                  children: [
-                    {
-                      type: "instance",
-                      component: "Text",
-                      children: [{ type: "text", value: "✕" }],
-                    },
-                  ],
-                },
-
-                {
-                  type: "instance",
-                  component: "Text",
-                  children: [{ type: "text", value: "The text you can edit" }],
+                  children: [{ type: "text", value: "✕" }],
                 },
               ],
             },
