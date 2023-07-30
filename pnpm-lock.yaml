@@ -1178,9 +1178,6 @@ importers:
       '@webstudio-is/project-build':
         specifier: workspace:^
         version: link:../project-build
-      detect-font:
-        specifier: ^0.1.5
-        version: 0.1.5
       html-tags:
         specifier: ^3.3.1
         version: 3.3.1

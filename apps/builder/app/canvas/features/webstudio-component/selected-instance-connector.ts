@@ -1,7 +1,7 @@
 import { useEffect } from "react";
 import { useStore } from "@nanostores/react";
 import type { Instance, StyleDecl } from "@webstudio-is/project-build";
-import { getBrowserStyle, idAttribute } from "@webstudio-is/react-sdk";
+import { idAttribute } from "@webstudio-is/react-sdk";
 import { subscribe } from "~/shared/pubsub";
 import { subscribeWindowResize } from "~/shared/dom-hooks";
 import {
@@ -20,6 +20,7 @@ import type { UnitSizes } from "~/builder/features/style-panel/shared/css-value-
 import { setDataCollapsed } from "~/canvas/collapsed";
 import { type InstanceSelector } from "~/shared/tree-utils";
 import { getIsVisuallyHidden } from "./visually-hidden";
+import { getBrowserStyle } from "./get-browser-style";
 
 const isHtmlTag = (tag: string): tag is HtmlTags =>
   htmlTags.includes(tag as HtmlTags);

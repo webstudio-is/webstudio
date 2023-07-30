@@ -1,6 +1,6 @@
 {
   "extends": "./tsconfig.json",
-  "include": ["src", "../../@types/**/*.d.ts"],
+  "include": ["src"],
   "exclude": ["**/*.stories.tsx"],
   "compilerOptions": {
     "declarationDir": "lib/types"
