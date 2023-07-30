@@ -4,12 +4,12 @@ import type {
   WsComponentPropsMeta,
 } from "@webstudio-is/react-sdk";
 import {
-  propsRadixCollapsible,
-  propsRadixCollapsibleContent,
-  propsRadixCollapsibleTrigger,
-} from "./__generated__/radix-collapsible.props";
+  propsCollapsible,
+  propsCollapsibleContent,
+  propsCollapsibleTrigger,
+} from "./__generated__/collapsible.props";
 
-export const metaRadixCollapsible: WsComponentMeta = {
+export const metaCollapsible: WsComponentMeta = {
   category: "radix",
   type: "container",
   label: "Collapsible",
@@ -17,7 +17,7 @@ export const metaRadixCollapsible: WsComponentMeta = {
   template: [
     {
       type: "instance",
-      component: "RadixCollapsible",
+      component: "Collapsible",
       props: [
         {
           name: "open",
@@ -43,7 +43,7 @@ export const metaRadixCollapsible: WsComponentMeta = {
       children: [
         {
           type: "instance",
-          component: "RadixCollapsibleTrigger",
+          component: "CollapsibleTrigger",
           children: [
             {
               type: "instance",
@@ -54,7 +54,7 @@ export const metaRadixCollapsible: WsComponentMeta = {
         },
         {
           type: "instance",
-          component: "RadixCollapsibleContent",
+          component: "CollapsibleContent",
           children: [
             {
               type: "instance",
@@ -68,7 +68,7 @@ export const metaRadixCollapsible: WsComponentMeta = {
   ],
 };
 
-export const metaRadixCollapsibleTrigger: WsComponentMeta = {
+export const metaCollapsibleTrigger: WsComponentMeta = {
   category: "hidden",
   type: "container",
   label: "Collapsible Trigger",
@@ -77,7 +77,7 @@ export const metaRadixCollapsibleTrigger: WsComponentMeta = {
   detachable: false,
 };
 
-export const metaRadixCollapsibleContent: WsComponentMeta = {
+export const metaCollapsibleContent: WsComponentMeta = {
   category: "hidden",
   type: "container",
   label: "Collapsible Content",
@@ -85,9 +85,9 @@ export const metaRadixCollapsibleContent: WsComponentMeta = {
   detachable: false,
 };
 
-export const propsMetaRadixCollapsible: WsComponentPropsMeta = {
+export const propsMetaCollapsible: WsComponentPropsMeta = {
   props: {
-    ...propsRadixCollapsible,
+    ...propsCollapsible,
     onOpenChange: {
       type: "action",
       control: "action",
@@ -97,10 +97,10 @@ export const propsMetaRadixCollapsible: WsComponentPropsMeta = {
   initialProps: ["open", "onOpenChange"],
 };
 
-export const propsMetaRadixCollapsibleTrigger: WsComponentPropsMeta = {
-  props: propsRadixCollapsibleTrigger,
+export const propsMetaCollapsibleTrigger: WsComponentPropsMeta = {
+  props: propsCollapsibleTrigger,
 };
 
-export const propsMetaRadixCollapsibleContent: WsComponentPropsMeta = {
-  props: propsRadixCollapsibleContent,
+export const propsMetaCollapsibleContent: WsComponentPropsMeta = {
+  props: propsCollapsibleContent,
 };

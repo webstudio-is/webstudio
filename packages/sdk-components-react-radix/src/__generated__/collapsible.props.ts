@@ -1,6 +1,6 @@
 import type { PropMeta } from "@webstudio-is/generate-arg-types";
 
-export const propsRadixCollapsible: Record<string, PropMeta> = {
+export const propsCollapsible: Record<string, PropMeta> = {
   about: { required: false, control: "text", type: "string" },
   accessKey: { required: false, control: "text", type: "string" },
   "aria-activedescendant": {
@@ -468,8 +468,8 @@ export const propsRadixCollapsible: Record<string, PropMeta> = {
   },
   vocab: { required: false, control: "text", type: "string" },
 };
-export const propsRadixCollapsibleTrigger: Record<string, PropMeta> = {};
-export const propsRadixCollapsibleContent: Record<string, PropMeta> = {
+export const propsCollapsibleTrigger: Record<string, PropMeta> = {};
+export const propsCollapsibleContent: Record<string, PropMeta> = {
   about: { required: false, control: "text", type: "string" },
   accessKey: { required: false, control: "text", type: "string" },
   "aria-activedescendant": {

@@ -1,5 +1,5 @@
 export {
-  propsMetaRadixCollapsible as RadixCollapsible,
-  propsMetaRadixCollapsibleTrigger as RadixCollapsibleTrigger,
-  propsMetaRadixCollapsibleContent as RadixCollapsibleContent,
-} from "./radix-collapsible.ws";
+  propsMetaCollapsible as Collapsible,
+  propsMetaCollapsibleTrigger as CollapsibleTrigger,
+  propsMetaCollapsibleContent as CollapsibleContent,
+} from "./collapsible.ws";

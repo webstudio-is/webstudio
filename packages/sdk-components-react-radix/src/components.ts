@@ -1,5 +1,5 @@
 export {
-  RadixCollapsible,
-  RadixCollapsibleTrigger,
-  RadixCollapsibleContent,
-} from "./radix-collapsible";
+  Collapsible,
+  CollapsibleTrigger,
+  CollapsibleContent,
+} from "./collapsible";

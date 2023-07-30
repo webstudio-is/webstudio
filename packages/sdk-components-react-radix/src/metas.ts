@@ -1,5 +1,5 @@
 export {
-  metaRadixCollapsible as RadixCollapsible,
-  metaRadixCollapsibleTrigger as RadixCollapsibleTrigger,
-  metaRadixCollapsibleContent as RadixCollapsibleContent,
-} from "./radix-collapsible.ws";
+  metaCollapsible as Collapsible,
+  metaCollapsibleTrigger as CollapsibleTrigger,
+  metaCollapsibleContent as CollapsibleContent,
+} from "./collapsible.ws";

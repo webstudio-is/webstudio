@@ -8,19 +8,15 @@ import {
   forwardRef,
   Children,
 } from "react";
-import {
-  Collapsible,
-  CollapsibleTrigger,
-  CollapsibleContent,
-} from "@radix-ui/react-collapsible";
+import { Root, Trigger, Content } from "@radix-ui/react-collapsible";
 import {
   type WebstudioAttributes,
   splitPropsWithWebstudioAttributes,
 } from "@webstudio-is/react-sdk";
 
-export const RadixCollapsible: ForwardRefExoticComponent<
-  Omit<ComponentPropsWithRef<typeof Collapsible>, "defaultOpen" | "asChild">
-> = Collapsible;
+export const Collapsible: ForwardRefExoticComponent<
+  Omit<ComponentPropsWithRef<typeof Root>, "defaultOpen" | "asChild">
+> = Root;
 
 /**
  * CollapsibleTrigger is HTML-less components.
@@ -36,7 +32,7 @@ const displayContentsStyle = { display: "contents" };
  * This avoids situations where the Trigger inadvertently passes all styles to its child,
  * which would prevent us from displaying styles properly in the builder.
  */
-export const RadixCollapsibleTrigger = forwardRef<
+export const CollapsibleTrigger = forwardRef<
   HTMLDivElement,
   WebstudioAttributes & { children: ReactNode }
 >(({ children, ...props }, ref) => {
@@ -45,13 +41,13 @@ export const RadixCollapsibleTrigger = forwardRef<
     splitPropsWithWebstudioAttributes(props);
   return (
     <div ref={ref} style={displayContentsStyle} {...webstudioAttributes}>
-      <CollapsibleTrigger asChild={true} {...restProps}>
+      <Trigger asChild={true} {...restProps}>
         {firstChild ?? <button>Add button</button>}
-      </CollapsibleTrigger>
+      </Trigger>
     </div>
   );
 });
 
-export const RadixCollapsibleContent: ForwardRefExoticComponent<
-  Omit<ComponentPropsWithRef<typeof CollapsibleContent>, "asChild">
-> = CollapsibleContent;
+export const CollapsibleContent: ForwardRefExoticComponent<
+  Omit<ComponentPropsWithRef<typeof Content>, "asChild">
+> = Content;
