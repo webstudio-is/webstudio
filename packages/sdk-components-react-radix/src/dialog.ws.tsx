@@ -4,7 +4,6 @@ import {
   type WsComponentPropsMeta,
 } from "@webstudio-is/react-sdk";
 import * as tc from "./theme/tailwind-classes";
-
 import {
   propsDialog,
   propsDialogContent,
@@ -13,7 +12,7 @@ import {
   propsDialogClose,
   propsDialogTitle,
   propsDialogDescription,
-} from "./__generated__/radix-dialog.props";
+} from "./__generated__/dialog.props";
 
 // @todo add [data-state] to button and link
 export const metaDialogTrigger: WsComponentMeta = {

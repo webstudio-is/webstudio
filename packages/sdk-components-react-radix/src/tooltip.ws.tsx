@@ -4,12 +4,11 @@ import {
   type WsComponentPropsMeta,
 } from "@webstudio-is/react-sdk";
 import * as tc from "./theme/tailwind-classes";
-
 import {
   propsTooltip,
   propsTooltipContent,
   propsTooltipTrigger,
-} from "./__generated__/radix-tooltip.props";
+} from "./__generated__/tooltip.props";
 
 // @todo add [data-state] to button and link
 export const metaTooltipTrigger: WsComponentMeta = {

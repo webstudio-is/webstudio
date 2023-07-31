@@ -4,12 +4,11 @@ import {
   type WsComponentPropsMeta,
 } from "@webstudio-is/react-sdk";
 import * as tc from "./theme/tailwind-classes";
-
 import {
   propsPopover,
   propsPopoverContent,
   propsPopoverTrigger,
-} from "./__generated__/radix-popover.props";
+} from "./__generated__/popover.props";
 
 // @todo add [data-state] to button and link
 export const metaPopoverTrigger: WsComponentMeta = {
