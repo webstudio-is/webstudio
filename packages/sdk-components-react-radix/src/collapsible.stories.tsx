@@ -14,7 +14,7 @@ export default {
 export const Collapsible: StoryObj<typeof CollapsiblePrimitive> = {
   render: () =>
     renderComponentTemplate({
-      componentName: "Collapsible",
+      name: "Collapsible",
       components: { ...baseComponents, ...radixComponents },
       metas: { ...baseMetas, ...radixMetas },
     }),
