@@ -341,11 +341,8 @@ importers:
         specifier: workspace:^
         version: link:../../packages/tsconfig
       dotenv:
-        specifier: ^16.0.0
-        version: 16.0.1
-      dotenv-cli:
-        specifier: ^7.1.0
-        version: 7.1.0
+        specifier: ^16.3.1
+        version: 16.3.1
       html-tags:
         specifier: ^3.3.1
         version: 3.3.1
@@ -1035,8 +1032,8 @@ importers:
         specifier: ^0.0.25-alpha.0
         version: 0.0.25-alpha.0
       dotenv:
-        specifier: ^16.0.0
-        version: 16.0.1
+        specifier: ^16.3.1
+        version: 16.3.1
       execa:
         specifier: ^6.1.0
         version: 6.1.0
@@ -5789,7 +5786,7 @@ packages:
       cacache: 15.3.0
       chalk: 4.1.2
       chokidar: 3.5.3
-      dotenv: 16.0.1
+      dotenv: 16.3.1
       esbuild: 0.17.6
       esbuild-plugins-node-modules-polyfill: 1.1.0(esbuild@0.17.6)
       execa: 5.1.1
@@ -9029,16 +9026,6 @@ packages:
       domhandler: 5.0.3
     dev: true
 
-  /dotenv-cli@7.1.0:
-    resolution: {integrity: sha512-motytjZFQB3ZtGTIN4c0vnFgv4kuNZ2WxVnGY6PVFiygCzkm3IFBBguDUzezd9HgNA0OYYd6vNCWlozs0Q1Zxg==}
-    hasBin: true
-    dependencies:
-      cross-spawn: 7.0.3
-      dotenv: 16.0.1
-      dotenv-expand: 10.0.0
-      minimist: 1.2.7
-    dev: true
-
   /dotenv-expand@10.0.0:
     resolution: {integrity: sha512-GopVGCpVS1UKH75VKHGuQFqS1Gusej0z4FyQkPdwjil2gNIv+LNsqBlboOzpJFZKVT95GkCyWJbBSdFEFUWI2A==}
     engines: {node: '>=12'}
@@ -9048,8 +9035,8 @@ packages:
     engines: {node: '>=10'}
     dev: true
 
-  /dotenv@16.0.1:
-    resolution: {integrity: sha512-1K6hR6wtk2FviQ4kEiSjFiH5rpzEVi8WW0x96aztHVMhEspNpc4DVOUTEHtEva5VThQ8IaBX1Pe4gSzpVVUsKQ==}
+  /dotenv@16.3.1:
+    resolution: {integrity: sha512-IPzF4w4/Rd94bA9imS68tZBaYyBWSCE47V1RGuMrB94iyTOIEwRmVL2x/4An+6mETpLrKJ5hQkB8W4kFAadeIQ==}
     engines: {node: '>=12'}
 
   /downshift@6.1.7(react@18.2.0):
@@ -11650,7 +11637,7 @@ packages:
     engines: {node: '>=14.0.0'}
     dependencies:
       app-root-dir: 1.0.2
-      dotenv: 16.0.1
+      dotenv: 16.3.1
       dotenv-expand: 10.0.0
 
   /leven@3.1.0:
