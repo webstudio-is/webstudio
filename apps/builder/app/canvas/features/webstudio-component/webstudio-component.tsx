@@ -179,6 +179,12 @@ export const WebstudioComponentDev = forwardRef<
   // Scroll the selected instance into view when selected from navigator.
   useEffect(() => {
     if (isSelected) {
+      if (instanceElementRef.current === null) {
+        // Component may have no ref, for example Tooltip, try to select any Element inside
+
+        return;
+      }
+
       instanceElementRef.current?.scrollIntoView({
         behavior: "smooth",
         block: "nearest",

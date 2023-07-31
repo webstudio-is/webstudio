@@ -28,7 +28,7 @@ const isHtmlTag = (tag: string): tag is HtmlTags =>
 const setOutline = (instanceId: Instance["id"], element: HTMLElement) => {
   selectedInstanceOutlineStore.set({
     instanceId,
-    rect: getAllElementsBoundingBox(element),
+    rect: getAllElementsBoundingBox([element]),
   });
 };
 
