@@ -1,6 +1,7 @@
 import { useMemo, useEffect } from "react";
 import { useStore } from "@nanostores/react";
 import { computed } from "nanostores";
+import { Scripts, ScrollRestoration } from "@remix-run/react";
 import type { DataSource, Instances, Page } from "@webstudio-is/project-build";
 import {
   type Params,
@@ -49,7 +50,6 @@ import { subscribeInstanceSelection } from "./instance-selection";
 import { subscribeInstanceHovering } from "./instance-hovering";
 import { useHashLinkSync } from "~/shared/pages";
 import { useMount } from "~/shared/hook-utils/use-mount";
-import { Scripts, ScrollRestoration } from "@remix-run/react";
 
 registerContainers();
 
@@ -123,6 +123,12 @@ const useElementsTree = (
       onDataSourceUpdate,
       Component: WebstudioComponentDev,
       components,
+      scripts: (
+        <>
+          <ScrollRestoration />
+          <Scripts />
+        </>
+      ),
     });
   }, [
     params,

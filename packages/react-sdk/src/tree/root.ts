@@ -3,6 +3,7 @@ import {
   useCallback,
   type ForwardRefExoticComponent,
   type RefAttributes,
+  type ReactNode,
 } from "react";
 import {
   atom,
@@ -45,6 +46,7 @@ type RootProps = {
     WebstudioComponentProps & RefAttributes<HTMLElement>
   >;
   components: Components;
+  scripts?: ReactNode;
 };
 
 export const InstanceRoot = ({
@@ -53,6 +55,7 @@ export const InstanceRoot = ({
   executeEffectfulExpression,
   Component,
   components,
+  scripts,
 }: RootProps): JSX.Element | null => {
   const dataSourceVariablesStoreRef = useRef<
     undefined | WritableAtom<DataSourceValues>
@@ -122,5 +125,6 @@ export const InstanceRoot = ({
     onDataSourceUpdate,
     Component: Component ?? WebstudioComponent,
     components,
+    scripts,
   });
 };

@@ -32,3 +32,4 @@ export {
   decodeDataSourceVariable,
   decodeVariablesMap,
 } from "./expression";
+export { renderComponentTemplate } from "./component-renderer";
