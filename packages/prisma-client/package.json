@@ -36,7 +36,7 @@
   "private": false,
   "dependencies": {
     "@inquirer/confirm": "^0.0.25-alpha.0",
-    "dotenv": "^16.0.0",
+    "dotenv": "^16.3.1",
     "execa": "^6.1.0",
     "nanoid": "^4.0.2",
     "umzug": "^3.2.1"

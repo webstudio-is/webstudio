@@ -10,8 +10,7 @@
  * `dot-env` makes it so that when you run this file the `process.env` is always populated with your `.env` file if it finds one,
  * if not it will read the environment variables set by your hosting provider like remix does.
  */
-// eslint-disable-next-line @typescript-eslint/no-var-requires
-require("dotenv").config();
+require("dotenv/config");
 
 const REQUIRED_ENVS = ["DATABASE_URL", "AUTH_SECRET"];
 const S3_KEYS = [
