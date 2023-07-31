@@ -14,20 +14,20 @@ import {
 } from "./expression";
 
 export const renderComponentTemplate = ({
-  component,
+  componentName,
   metas,
   components,
 }: {
-  component: Instance["component"];
+  componentName: Instance["component"];
   metas: Record<string, WsComponentMeta>;
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   components: Record<string, ExoticComponent<any>>;
 }) => {
   const data = generateDataFromEmbedTemplate(
-    metas[component].template ?? [
+    metas[componentName].template ?? [
       {
         type: "instance",
-        component,
+        component: componentName,
         children: [],
       },
     ],
