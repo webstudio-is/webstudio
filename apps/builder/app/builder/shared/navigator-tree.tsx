@@ -3,7 +3,6 @@ import { useStore } from "@nanostores/react";
 import { shallowEqual } from "shallow-equal";
 import { toast } from "@webstudio-is/design-system";
 import type { Instance } from "@webstudio-is/project-build";
-import { generateDataFromEmbedTemplate } from "@webstudio-is/react-sdk";
 import {
   hoveredInstanceSelectorStore,
   instancesStore,
@@ -21,6 +20,7 @@ import {
   reparentInstance,
   type InsertConstraints,
   isInstanceDetachable,
+  getComponentTemplateData,
 } from "~/shared/instance-utils";
 import { InstanceTree } from "./tree";
 
@@ -40,14 +40,9 @@ export const NavigatorTree = () => {
 
   const insertConstraints: undefined | InsertConstraints = useMemo(() => {
     if (dragPayload?.type === "insert") {
-      const template = metas.get(dragPayload.dragComponent)?.template;
-      if (template) {
-        // ignore breakpoint, here only instances are important
-        // @todo optimize by traversing only instances
-        const { children, instances } = generateDataFromEmbedTemplate(
-          template,
-          "__placeholder__"
-        );
+      const templateData = getComponentTemplateData(dragPayload.dragComponent);
+      if (templateData) {
+        const { children, instances } = templateData;
         const newInstances = new Map(
           instances.map((instance) => [instance.id, instance])
         );
