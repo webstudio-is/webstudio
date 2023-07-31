@@ -38,6 +38,7 @@ type RootProps = {
   executeComputingExpressions: (values: DataSourceValues) => DataSourceValues;
   executeEffectfulExpression: (
     expression: string,
+    args: DataSourceValues,
     values: DataSourceValues
   ) => DataSourceValues;
   Component?: ForwardRefExoticComponent<
