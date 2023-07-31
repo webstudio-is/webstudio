@@ -1261,21 +1261,9 @@ importers:
 
   packages/sdk-components-react:
     dependencies:
-      '@radix-ui/react-dialog':
-        specifier: ^1.0.4
-        version: 1.0.4(@types/react-dom@18.2.7)(@types/react@18.2.16)(react-dom@18.2.0)(react@18.2.0)
-      '@radix-ui/react-popover':
-        specifier: ^1.0.6
-        version: 1.0.6(@types/react-dom@18.2.7)(@types/react@18.2.16)(react-dom@18.2.0)(react@18.2.0)
-      '@radix-ui/react-tooltip':
-        specifier: ^1.0.6
-        version: 1.0.6(@types/react-dom@18.2.7)(@types/react@18.2.16)(react-dom@18.2.0)(react@18.2.0)
       '@react-aria/utils':
         specifier: ^3.18.0
         version: 3.18.0(react@18.2.0)
-      '@webstudio-is/css-data':
-        specifier: workspace:^
-        version: link:../css-data
       '@webstudio-is/css-vars':
         specifier: workspace:^
         version: link:../css-vars
@@ -1297,9 +1285,6 @@ importers:
       shallow-equal:
         specifier: ^3.1.0
         version: 3.1.0
-      tailwindcss:
-        specifier: ^3.3.3
-        version: 3.3.3
     devDependencies:
       '@storybook/react':
         specifier: ^7.1.0
@@ -1334,6 +1319,18 @@ importers:
       '@radix-ui/react-collapsible':
         specifier: ^1.0.3
         version: 1.0.3(@types/react-dom@18.2.7)(@types/react@18.2.16)(react-dom@18.2.0)(react@18.2.0)
+      '@radix-ui/react-dialog':
+        specifier: ^1.0.4
+        version: 1.0.4(@types/react-dom@18.2.7)(@types/react@18.2.16)(react-dom@18.2.0)(react@18.2.0)
+      '@radix-ui/react-popover':
+        specifier: ^1.0.6
+        version: 1.0.6(@types/react-dom@18.2.7)(@types/react@18.2.16)(react-dom@18.2.0)(react@18.2.0)
+      '@radix-ui/react-tooltip':
+        specifier: ^1.0.6
+        version: 1.0.6(@types/react-dom@18.2.7)(@types/react@18.2.16)(react-dom@18.2.0)(react@18.2.0)
+      '@webstudio-is/css-data':
+        specifier: workspace:^
+        version: link:../css-data
       '@webstudio-is/generate-arg-types':
         specifier: workspace:^
         version: link:../generate-arg-types
@@ -1343,6 +1340,9 @@ importers:
       '@webstudio-is/react-sdk':
         specifier: workspace:^
         version: link:../react-sdk
+      tailwindcss:
+        specifier: ^3.3.3
+        version: 3.3.3
     devDependencies:
       '@storybook/react':
         specifier: ^7.1.0

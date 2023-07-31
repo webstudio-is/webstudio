@@ -30,24 +30,3 @@ export { meta as Vimeo } from "./vimeo.ws";
 export { meta as VimeoPreviewImage } from "./vimeo-preview-image.ws";
 export { meta as VimeoPlayButton } from "./vimeo-play-button.ws";
 export { meta as VimeoSpinner } from "./vimeo-spinner.ws";
-export {
-  metaTooltip as Tooltip,
-  metaTooltipContent as TooltipContent,
-  metaTooltipTrigger as TooltipTrigger,
-} from "./radix-tooltip.ws";
-
-export {
-  metaPopover as Popover,
-  metaPopoverContent as PopoverContent,
-  metaPopoverTrigger as PopoverTrigger,
-} from "./radix-popover.ws";
-
-export {
-  metaDialog as Dialog,
-  metaDialogContent as DialogContent,
-  metaDialogTrigger as DialogTrigger,
-  metaDialogOverlay as DialogOverlay,
-  metaDialogClose as DialogClose,
-  metaDialogDescription as DialogDescription,
-  metaDialogTitle as DialogTitle,
-} from "./radix-dialog.ws";
