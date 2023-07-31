@@ -36,6 +36,8 @@ module.exports = {
     return ["../../packages/**/lib/**.js"];
   },
 
+  // remix will disable all polyfills by default
+  serverNodeBuiltinsPolyfill: { modules: {} },
   future: {
     v2_errorBoundary: true,
     v2_routeConvention: true,
