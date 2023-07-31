@@ -1438,6 +1438,9 @@ importers:
       '@webstudio-is/sdk-components-react':
         specifier: workspace:^
         version: link:../sdk-components-react
+      isbot:
+        specifier: ^3.6.13
+        version: 3.6.13
       react:
         specifier: ^18.2.0
         version: 18.2.0
@@ -7612,7 +7615,7 @@ packages:
     dependencies:
       '@remix-run/node': 1.19.1
       '@remix-run/server-runtime': 1.19.1
-      isbot: 3.6.10
+      isbot: 3.6.13
       react: 18.2.0
       react-dom: 18.2.0(react@18.2.0)
     dev: false
@@ -10980,8 +10983,8 @@ packages:
     resolution: {integrity: sha512-xHjhDr3cNBK0BzdUJSPXZntQUx/mwMS5Rw4A7lPJ90XGAO6ISP/ePDNuo0vhqOZU+UD5JoodwCAAoZQd3FeAKw==}
     dev: false
 
-  /isbot@3.6.10:
-    resolution: {integrity: sha512-+I+2998oyP4oW9+OTQD8TS1r9P6wv10yejukj+Ksj3+UR5pUhsZN3f8W7ysq0p1qxpOVNbl5mCuv0bCaF8y5iQ==}
+  /isbot@3.6.13:
+    resolution: {integrity: sha512-uoP4uK5Dc2CrabmK+Gue1jTL+scHiCc1c9rblRpJwG8CPxjLIv8jmGyyGRGkbPOweayhkskdZsEQXG6p+QCQrg==}
     engines: {node: '>=12'}
     dev: false
 

@@ -11,6 +11,8 @@ module.exports = {
 
   server: "./server.js",
   ignoredRouteFiles: ["**/.*"],
+  // remix will disable all polifills by default
+  serverNodeBuiltinsPolyfill: { modules: {} },
   future: {
     v2_errorBoundary: true,
     v2_normalizeFormMethod: true,
