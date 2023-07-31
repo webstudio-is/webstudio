@@ -2,9 +2,9 @@ import {
   Fragment,
   type ForwardRefExoticComponent,
   type RefAttributes,
+  type ReactNode,
 } from "react";
 import type { ReadableAtom } from "nanostores";
-import { Scripts, ScrollRestoration } from "@remix-run/react";
 import type { Assets } from "@webstudio-is/asset-uploader";
 import type { Instance, Instances } from "@webstudio-is/project-build";
 import type { Components } from "../components/components-utils";
@@ -32,6 +32,7 @@ export const createElementsTree = ({
   onDataSourceUpdate,
   Component,
   components,
+  scripts,
 }: Params & {
   instances: Instances;
   rootInstanceId: Instance["id"];
@@ -50,6 +51,7 @@ export const createElementsTree = ({
     WebstudioComponentProps & RefAttributes<HTMLElement>
   >;
   components: Components;
+  scripts?: ReactNode;
 }) => {
   const rootInstance = instances.get(rootInstanceId);
   if (rootInstance === undefined) {
@@ -71,8 +73,7 @@ export const createElementsTree = ({
     children: [
       <Fragment key="children">
         {children}
-        <ScrollRestoration />
-        <Scripts />
+        {scripts}
       </Fragment>,
     ],
     components,

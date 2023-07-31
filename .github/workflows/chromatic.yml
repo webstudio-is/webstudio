@@ -49,6 +49,10 @@ jobs:
             chromaticSecretKey: CHROMATIC_REACT_SDK_TOKEN
             workingDir: packages/sdk-components-react
 
+          - project: sdk-components-react-radix
+            chromaticSecretKey: CHROMATIC_REACT_SDK_TOKEN
+            workingDir: packages/sdk-components-react-radix
+
     outputs:
       builder-app: ${{ steps.deployed-url.outputs.builder-app }}
       css-engine: ${{ steps.deployed-url.outputs.css-engine }}

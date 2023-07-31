@@ -38,7 +38,9 @@
     "build:args": "generate-arg-types './src/*.tsx !./src/*.stories.tsx !./src/*.ws.tsx' && prettier --write \"**/*.props.ts\"",
     "dts": "tsc --project tsconfig.dts.json",
     "typecheck": "tsc",
-    "checks": "pnpm typecheck"
+    "checks": "pnpm typecheck",
+    "storybook:dev": "storybook dev -p 6006",
+    "storybook:build": "storybook build"
   },
   "peerDependencies": {
     "react": "^18.2.0",
@@ -51,9 +53,12 @@
     "@webstudio-is/react-sdk": "workspace:^"
   },
   "devDependencies": {
+    "@storybook/react": "^7.1.0",
     "@types/react": "^18.2.16",
     "@types/react-dom": "^18.2.7",
     "@webstudio-is/scripts": "workspace:^",
+    "@webstudio-is/sdk-components-react": "workspace:^",
+    "@webstudio-is/storybook-config": "workspace:^",
     "@webstudio-is/tsconfig": "workspace:^",
     "react": "^18.2.0",
     "react-dom": "^18.2.0",
