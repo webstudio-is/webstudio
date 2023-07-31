@@ -1,5 +1,6 @@
 import { useCallback, useEffect } from "react";
 import { useUnmount } from "react-use";
+import { TooltipProvider } from "@radix-ui/react-tooltip";
 import { type Publish, usePublish } from "~/shared/pubsub";
 import type { Build } from "@webstudio-is/project-build";
 import type { Project } from "@webstudio-is/project";
@@ -297,40 +298,42 @@ export const Builder = ({
   });
 
   return (
-    <ChromeWrapper isPreviewMode={isPreviewMode}>
-      <Topbar gridArea="header" project={project} publish={publish} />
-      <Main>
-        <Workspace onTransitionEnd={onTransitionEnd} publish={publish}>
-          <CanvasIframe
-            ref={iframeRefCallback}
-            src={canvasUrl}
-            pointerEvents={isCanvasPointerEventsEnabled ? "auto" : "none"}
-            title={project.title}
-            css={{
-              height: "100%",
-              width: "100%",
-              backgroundColor: "#fff",
-            }}
-          />
-        </Workspace>
-      </Main>
-      <SidePanel gridArea="sidebar" isPreviewMode={isPreviewMode}>
-        <SidebarLeft publish={publish} />
-      </SidePanel>
-      <NavigatorPanel
-        isPreviewMode={isPreviewMode}
-        navigatorLayout={navigatorLayout}
-        publish={publish}
-      />
-      <SidePanel
-        gridArea="inspector"
-        isPreviewMode={isPreviewMode}
-        css={{ overflow: "hidden" }}
-      >
-        <Inspector publish={publish} navigatorLayout={navigatorLayout} />
-      </SidePanel>
-      {isPreviewMode === false && <Footer />}
-      <BlockingAlerts />
-    </ChromeWrapper>
+    <TooltipProvider>
+      <ChromeWrapper isPreviewMode={isPreviewMode}>
+        <Topbar gridArea="header" project={project} publish={publish} />
+        <Main>
+          <Workspace onTransitionEnd={onTransitionEnd} publish={publish}>
+            <CanvasIframe
+              ref={iframeRefCallback}
+              src={canvasUrl}
+              pointerEvents={isCanvasPointerEventsEnabled ? "auto" : "none"}
+              title={project.title}
+              css={{
+                height: "100%",
+                width: "100%",
+                backgroundColor: "#fff",
+              }}
+            />
+          </Workspace>
+        </Main>
+        <SidePanel gridArea="sidebar" isPreviewMode={isPreviewMode}>
+          <SidebarLeft publish={publish} />
+        </SidePanel>
+        <NavigatorPanel
+          isPreviewMode={isPreviewMode}
+          navigatorLayout={navigatorLayout}
+          publish={publish}
+        />
+        <SidePanel
+          gridArea="inspector"
+          isPreviewMode={isPreviewMode}
+          css={{ overflow: "hidden" }}
+        >
+          <Inspector publish={publish} navigatorLayout={navigatorLayout} />
+        </SidePanel>
+        {isPreviewMode === false && <Footer />}
+        <BlockingAlerts />
+      </ChromeWrapper>
+    </TooltipProvider>
   );
 };

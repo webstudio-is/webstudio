@@ -46,7 +46,9 @@ export const Tooltip = forwardRef<
 
   return (
     <div ref={ref} style={DisplayContentsStyle} {...webstudioAttributes}>
-      <TooltipPrimitive.Root open={open} {...restProps} />
+      <TooltipPrimitive.Provider>
+        <TooltipPrimitive.Root open={open} {...restProps} />
+      </TooltipPrimitive.Provider>
     </div>
   );
 });
