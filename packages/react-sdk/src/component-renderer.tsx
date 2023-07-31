@@ -20,6 +20,7 @@ export const renderComponentTemplate = ({
 }: {
   component: Instance["component"];
   metas: Record<string, WsComponentMeta>;
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   components: Record<string, ExoticComponent<any>>;
 }) => {
   const data = generateDataFromEmbedTemplate(
