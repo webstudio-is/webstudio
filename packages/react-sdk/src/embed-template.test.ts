@@ -223,15 +223,14 @@ test("generate data for embedding from props bound to data source variables", ()
         {
           type: "instance",
           component: "Box1",
+          dataSources: {
+            showOtherBoxDataSource: { type: "variable", initialValue: false },
+          },
           props: [
             {
-              type: "boolean",
+              type: "dataSource",
               name: "showOtherBox",
-              value: false,
-              dataSourceRef: {
-                type: "variable",
-                name: "showOtherBoxDataSource",
-              },
+              dataSourceName: "showOtherBoxDataSource",
             },
           ],
           children: [],
@@ -241,13 +240,9 @@ test("generate data for embedding from props bound to data source variables", ()
           component: "Box2",
           props: [
             {
-              type: "boolean",
+              type: "dataSource",
               name: showAttribute,
-              value: false,
-              dataSourceRef: {
-                type: "variable",
-                name: "showOtherBoxDataSource",
-              },
+              dataSourceName: "showOtherBoxDataSource",
             },
           ],
           children: [],
@@ -305,12 +300,18 @@ test("generate data for embedding from props bound to data source expressions", 
         {
           type: "instance",
           component: "Box1",
+          dataSources: {
+            boxState: { type: "variable", initialValue: "initial" },
+            boxStateSuccess: {
+              type: "expression",
+              code: `boxState === 'success'`,
+            },
+          },
           props: [
             {
-              type: "string",
+              type: "dataSource",
               name: "state",
-              value: "initial",
-              dataSourceRef: { type: "variable", name: "boxState" },
+              dataSourceName: "boxState",
             },
           ],
           children: [],
@@ -320,14 +321,9 @@ test("generate data for embedding from props bound to data source expressions", 
           component: "Box2",
           props: [
             {
-              type: "boolean",
+              type: "dataSource",
               name: showAttribute,
-              value: false,
-              dataSourceRef: {
-                type: "expression",
-                name: "boxStateSuccess",
-                code: `boxState === 'success'`,
-              },
+              dataSourceName: "boxStateSuccess",
             },
           ],
           children: [],
@@ -392,12 +388,14 @@ test("generate data for embedding from action props", () => {
         {
           type: "instance",
           component: "Box1",
+          dataSources: {
+            boxState: { type: "variable", initialValue: "initial" },
+          },
           props: [
             {
-              type: "string",
+              type: "dataSource",
               name: "state",
-              value: "initial",
-              dataSourceRef: { type: "variable", name: "boxState" },
+              dataSourceName: "boxState",
             },
           ],
           children: [

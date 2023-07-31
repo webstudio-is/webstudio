@@ -32,15 +32,14 @@ export const meta: WsComponentMeta = {
     {
       type: "instance",
       component: "Form",
+      dataSources: {
+        formState: { type: "variable", initialValue: "initial" },
+      },
       props: [
         {
+          type: "dataSource",
           name: "state",
-          type: "string",
-          value: "initial",
-          dataSourceRef: {
-            type: "variable",
-            name: "formState",
-          },
+          dataSourceName: "formState",
         },
       ],
       children: [
@@ -48,16 +47,17 @@ export const meta: WsComponentMeta = {
           type: "instance",
           label: "Form Content",
           component: "Box",
+          dataSources: {
+            formInitial: {
+              type: "expression",
+              code: `formState === 'initial' || formState === 'error'`,
+            },
+          },
           props: [
             {
+              type: "dataSource",
               name: showAttribute,
-              type: "boolean",
-              value: false,
-              dataSourceRef: {
-                type: "expression",
-                name: "formInitial",
-                code: `formState === 'initial' || formState === 'error'`,
-              },
+              dataSourceName: "formInitial",
             },
           ],
           children: [
@@ -95,16 +95,17 @@ export const meta: WsComponentMeta = {
           type: "instance",
           label: "Success Message",
           component: "Box",
+          dataSources: {
+            formSuccess: {
+              type: "expression",
+              code: `formState === 'success'`,
+            },
+          },
           props: [
             {
+              type: "dataSource",
               name: showAttribute,
-              type: "boolean",
-              value: false,
-              dataSourceRef: {
-                type: "expression",
-                name: "formSuccess",
-                code: `formState === 'success'`,
-              },
+              dataSourceName: "formSuccess",
             },
           ],
           children: [
@@ -116,16 +117,17 @@ export const meta: WsComponentMeta = {
           type: "instance",
           label: "Error Message",
           component: "Box",
+          dataSources: {
+            formError: {
+              type: "expression",
+              code: `formState === 'error'`,
+            },
+          },
           props: [
             {
+              type: "dataSource",
               name: showAttribute,
-              type: "boolean",
-              value: false,
-              dataSourceRef: {
-                type: "expression",
-                name: "formError",
-                code: `formState === 'error'`,
-              },
+              dataSourceName: "formError",
             },
           ],
           children: [{ type: "text", value: "Sorry, something went wrong." }],
