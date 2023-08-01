@@ -1,4 +1,4 @@
-import produce from "immer";
+import { produce } from "immer";
 import type { ItemSelector } from "./item-utils";
 
 export type Item = {

@@ -69,7 +69,7 @@
     "@webstudio-is/icons": "workspace:^",
     "camelcase": "^7.0.1",
     "downshift": "^6.1.7",
-    "immer": "^9.0.12",
+    "immer": "^10.0.2",
     "match-sorter": "^6.3.1",
     "react-hot-toast": "^2.4.1",
     "token-transformer": "^0.0.28",

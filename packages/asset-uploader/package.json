@@ -19,7 +19,7 @@
     "@webstudio-is/fonts": "workspace:^",
     "@webstudio-is/prisma-client": "workspace:^",
     "@webstudio-is/trpc-interface": "workspace:^",
-    "immer": "^9.0.12",
+    "immer": "^10.0.2",
     "nanoid": "^4.0.2",
     "sharp": "^0.30.7",
     "warn-once": "^0.1.1"

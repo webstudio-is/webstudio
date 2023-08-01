@@ -196,11 +196,11 @@ importers:
         specifier: ^1.0.4
         version: 1.0.4
       immer:
-        specifier: ^9.0.12
-        version: 9.0.15
+        specifier: ^10.0.2
+        version: 10.0.2
       immerhin:
-        specifier: ^0.6.1
-        version: 0.6.1
+        specifier: ^0.7.0
+        version: 0.7.0
       jose:
         specifier: ^4.11.2
         version: 4.11.2
@@ -377,8 +377,8 @@ importers:
         specifier: workspace:^
         version: link:../trpc-interface
       immer:
-        specifier: ^9.0.12
-        version: 9.0.15
+        specifier: ^10.0.2
+        version: 10.0.2
       nanoid:
         specifier: ^4.0.2
         version: 4.0.2
@@ -682,8 +682,8 @@ importers:
         specifier: ^6.1.7
         version: 6.1.7(react@18.2.0)
       immer:
-        specifier: ^9.0.12
-        version: 9.0.15
+        specifier: ^10.0.2
+        version: 10.0.2
       match-sorter:
         specifier: ^6.3.1
         version: 6.3.1
@@ -10628,15 +10628,15 @@ packages:
     resolution: {integrity: sha512-MAb38BcSbH0eHNBxn7ql2NH/kX33OkB3lZ1BNdh7ENeRChHTYsTvWrMubiIAMNS2llXEEgZ1MUOBtXChP3kaFQ==}
     engines: {node: '>= 4'}
 
-  /immer@9.0.15:
-    resolution: {integrity: sha512-2eB/sswms9AEUSkOm4SbV5Y7Vmt/bKRwByd52jfLkW4OLYeaTP3EEiJ9agqU0O/tq6Dk62Zfj+TJSqfm1rLVGQ==}
+  /immer@10.0.2:
+    resolution: {integrity: sha512-Rx3CqeqQ19sxUtYV9CU911Vhy8/721wRFnJv3REVGWUmoAcIwzifTsdmJte/MV+0/XpM35LZdQMBGkRIoLPwQA==}
     dev: false
 
-  /immerhin@0.6.1:
-    resolution: {integrity: sha512-HQUPluF2Mx7n/EAj1HHG3NQDyl1aHnxxWHIpWije2oHO1wEjkUlwHoHMPEjkgGu/zMamV8gfkMiQtrGCOmdOOw==}
+  /immerhin@0.7.0:
+    resolution: {integrity: sha512-nzaOZY6PqssWqxi+NVWD5EuWUJlD7NrrD/cPq6kCahJCQ6LMUXG7oP+CeRNNEOvDULYidoBxfJ7mDtA0bRqTSQ==}
     dependencies:
-      immer: 9.0.15
-      nanoid: 3.3.6
+      immer: 10.0.2
+      nanoid: 4.0.2
     dev: false
 
   /import-fresh@3.3.0:
