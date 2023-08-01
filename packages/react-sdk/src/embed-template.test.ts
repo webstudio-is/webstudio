@@ -1,8 +1,5 @@
 import { expect, test } from "@jest/globals";
-import {
-  generateDataFromEmbedTemplate,
-  namespaceEmbedTemplateComponents,
-} from "./embed-template";
+import { generateDataFromEmbedTemplate, namespaceMeta } from "./embed-template";
 import { showAttribute } from "./tree";
 
 const expectString = expect.any(String);
@@ -493,48 +490,62 @@ test("generate data for embedding from action props", () => {
 
 test("add namespace to selected components in embed template", () => {
   expect(
-    namespaceEmbedTemplateComponents(
-      [
-        {
-          type: "instance",
-          component: "Tooltip",
-          children: [
-            { type: "text", value: "Some text" },
-            {
-              type: "instance",
-              component: "Box",
-              children: [
-                {
-                  type: "instance",
-                  component: "Button",
-                  children: [],
-                },
-              ],
-            },
-          ],
-        },
-      ],
+    namespaceMeta(
+      {
+        type: "container",
+        label: "",
+        icon: "",
+        requiredAncestors: ["Button", "Box"],
+        invalidAncestors: ["Tooltip"],
+        template: [
+          {
+            type: "instance",
+            component: "Tooltip",
+            children: [
+              { type: "text", value: "Some text" },
+              {
+                type: "instance",
+                component: "Box",
+                children: [
+                  {
+                    type: "instance",
+                    component: "Button",
+                    children: [],
+                  },
+                ],
+              },
+            ],
+          },
+        ],
+      },
       "my-namespace",
       new Set(["Tooltip", "Button"])
     )
-  ).toEqual([
-    {
-      type: "instance",
-      component: "my-namespace:Tooltip",
-      children: [
-        { type: "text", value: "Some text" },
-        {
-          type: "instance",
-          component: "Box",
-          children: [
-            {
-              type: "instance",
-              component: "my-namespace:Button",
-              children: [],
-            },
-          ],
-        },
-      ],
-    },
-  ]);
+  ).toEqual({
+    type: "container",
+    label: "",
+    icon: "",
+    requiredAncestors: ["my-namespace:Button", "Box"],
+    invalidAncestors: ["my-namespace:Tooltip"],
+    template: [
+      {
+        type: "instance",
+        component: "my-namespace:Tooltip",
+        children: [
+          { type: "text", value: "Some text" },
+          {
+            type: "instance",
+            component: "Box",
+            children: [
+              {
+                type: "instance",
+                component: "my-namespace:Button",
+                children: [],
+              },
+            ],
+          },
+        ],
+      },
+    ],
+  });
 });

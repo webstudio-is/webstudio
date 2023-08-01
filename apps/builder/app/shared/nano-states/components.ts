@@ -1,7 +1,7 @@
 import type { ExoticComponent } from "react";
 import { atom } from "nanostores";
 import {
-  namespaceEmbedTemplateComponents,
+  namespaceMeta,
   type AnyComponent,
   type WsComponentMeta,
   type WsComponentPropsMeta,
@@ -43,15 +43,12 @@ export const registerComponentLibrary = ({
   const prevMetas = registeredComponentMetasStore.get();
   const nextMetas = new Map(prevMetas);
   for (const [componentName, meta] of Object.entries(metas)) {
-    const newMeta = { ...meta };
-    if (meta.template !== undefined && namespace !== undefined) {
-      meta.template = namespaceEmbedTemplateComponents(
-        meta.template,
-        namespace,
-        new Set(Object.keys(metas))
-      );
-    }
-    nextMetas.set(`${prefix}${componentName}`, newMeta);
+    nextMetas.set(
+      `${prefix}${componentName}`,
+      namespace === undefined
+        ? meta
+        : namespaceMeta(meta, namespace, new Set(Object.keys(metas)))
+    );
   }
   registeredComponentMetasStore.set(nextMetas);
 
