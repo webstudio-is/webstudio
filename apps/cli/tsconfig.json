@@ -1,9 +1,3 @@
 {
-  "extends": "@webstudio-is/tsconfig/base.json",
-  "include": ["src"],
-  "compilerOptions": {
-    "baseUrl": ".",
-    "customConditions": null,
-    "incremental": true
-  }
+  "extends": "@webstudio-is/tsconfig/base.json"
 }

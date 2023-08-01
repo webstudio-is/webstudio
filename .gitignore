@@ -51,6 +51,7 @@ packages/**/lib
 generated
 storybook-static
 tsconfig.tsbuildinfo
+lib/
 
 # to save thunder https://marketplace.visualstudio.com/items?itemName=rangav.vscode-thunder-client files
 .thunder

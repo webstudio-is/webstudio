@@ -31,8 +31,7 @@ export const deleteFolderIfExists = async (generatedDir: string) => {
   } catch (err) {
     if (err.code === "ENOENT") {
       return;
-    } else {
-      console.error("Error while deleting the folder: \n", err);
     }
+    throw err;
   }
 };

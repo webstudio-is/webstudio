@@ -1,12 +1,13 @@
-import { stdin as input, stdout as output } from "node:process";
+import { stdin as input, stdout as output, exit } from "node:process";
 import * as readline from "node:readline/promises";
-import { readFile } from "node:fs/promises";
+import { readFile, writeFile } from "node:fs/promises";
 import { GLOBAL_CONFIG_FILE } from "./constants";
 import type { Command } from "./types";
 
-export const link: Command = async (args) => {
+export const link: Command = async () => {
   const rl = readline.createInterface({ input, output });
   const shareLink = await rl.question(`Paste share link (with build access): `);
+
   try {
     const shareLinkUrl = new URL(shareLink);
     const host = shareLinkUrl.origin;
@@ -31,14 +32,16 @@ export const link: Command = async (args) => {
       },
     };
 
-    await fs.writeFile(GLOBAL_CONFIG_FILE, JSON.stringify(newConfig, null, 2));
-
+    await writeFile(GLOBAL_CONFIG_FILE, JSON.stringify(newConfig, null, 2));
     rl.close();
-    console.log(`Saved credentials for project ${projectId}.`);
-    return;
+    console.log(`Saved credentials for project ${projectId}. \n
+You can find your config at ${GLOBAL_CONFIG_FILE}
+      `);
+
+    exit(0);
   } catch (error) {
     console.error(error);
     console.error("Invalid share link.");
-    process.exit(1);
+    exit(1);
   }
 };

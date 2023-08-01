@@ -6,17 +6,12 @@ const GLOBAL_CONFIG_FILE_NAME = "webstudio-config.json";
 export const GLOBAL_CONFIG_FILE = join(APP_CONFIG, GLOBAL_CONFIG_FILE_NAME);
 
 export const CLI_ARGS_OPTIONS = {
-  debug: {
-    type: <const>"boolean",
-    short: "d",
-    default: false,
-  },
   version: {
-    type: <const>"boolean",
+    type: "boolean" as const,
     short: "v",
   },
   help: {
-    type: <const>"boolean",
+    type: "boolean" as const,
     short: "h",
   },
 };
