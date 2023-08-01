@@ -12,10 +12,11 @@ import {
   executeComputingExpressions,
   executeEffectfulExpression,
 } from "./expression";
+import { getIndexesOfTypeWithinRequiredAncestors } from "./instance-utils";
 
 export const renderComponentTemplate = ({
   name,
-  metas,
+  metas: metasRecord,
   components,
 }: {
   name: Instance["component"];
@@ -23,8 +24,9 @@ export const renderComponentTemplate = ({
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   components: Record<string, ExoticComponent<any>>;
 }) => {
+  const metas = new Map(Object.entries(metasRecord));
   const data = generateDataFromEmbedTemplate(
-    metas[name].template ?? [
+    metas.get(name)?.template ?? [
       {
         type: "instance",
         component: name,
@@ -33,6 +35,20 @@ export const renderComponentTemplate = ({
     ],
     "base"
   );
+  const instances: [Instance["id"], Instance][] = [
+    [
+      "root",
+      {
+        type: "instance",
+        id: "root",
+        component: "Box",
+        children: data.children,
+      },
+    ],
+    ...data.instances.map(
+      (instance) => [instance.id, instance] satisfies [Instance["id"], Instance]
+    ),
+  ];
   return (
     <>
       <style>
@@ -45,7 +61,7 @@ export const renderComponentTemplate = ({
               item.instanceId,
               item,
             ]),
-            componentMetas: new Map(Object.entries(metas)),
+            componentMetas: metas,
           },
           { assetBaseUrl: "/" }
         )}
@@ -63,21 +79,7 @@ export const renderComponentTemplate = ({
           pages: [],
           assets: [],
           build: {
-            instances: [
-              [
-                "root",
-                {
-                  type: "instance",
-                  id: "root",
-                  component: "Box",
-                  children: data.children,
-                },
-              ],
-              ...data.instances.map(
-                (instance) =>
-                  [instance.id, instance] satisfies [Instance["id"], Instance]
-              ),
-            ],
+            instances,
             props: data.props.map((prop) => [prop.id, prop]),
             dataSources: data.dataSources.map((dataSource) => [
               dataSource.id,
@@ -104,6 +106,11 @@ export const renderComponentTemplate = ({
         }}
         Component={WebstudioComponent}
         components={new Map(Object.entries(components))}
+        indexesOfTypeWithinRequiredAncestors={getIndexesOfTypeWithinRequiredAncestors(
+          metas,
+          new Map(instances),
+          ["root"]
+        )}
       />
     </>
   );

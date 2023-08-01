@@ -10,6 +10,7 @@ import {
   executeEffectfulExpression,
   encodeVariablesMap,
   decodeVariablesMap,
+  getIndexesOfTypeWithinRequiredAncestors,
 } from "@webstudio-is/react-sdk";
 import * as baseComponents from "@webstudio-is/sdk-components-react";
 import * as baseComponentMetas from "@webstudio-is/sdk-components-react/metas";
@@ -41,6 +42,7 @@ import {
   dataSourceValuesStore,
   dataSourceVariablesStore,
   registeredComponentsStore,
+  registeredComponentMetasStore,
 } from "~/shared/nano-states";
 import { useDragAndDrop } from "./shared/use-drag-drop";
 import { useCopyPaste } from "~/shared/copy-paste";
@@ -78,6 +80,7 @@ const useElementsTree = (
   instances: Instances,
   params: Params
 ) => {
+  const metas = useStore(registeredComponentMetasStore);
   const page = useStore(selectedPageStore);
   const [isPreviewMode] = useIsPreviewMode();
   const rootInstanceId = page?.rootInstanceId ?? "";
@@ -105,15 +108,22 @@ const useElementsTree = (
     []
   );
 
+  const indexesOfTypeWithinRequiredAncestors = useMemo(() => {
+    return getIndexesOfTypeWithinRequiredAncestors(
+      metas,
+      instances,
+      page ? [page.rootInstanceId] : []
+    );
+  }, [metas, instances, page]);
+
   return useMemo(() => {
     return createElementsTree({
       renderer: isPreviewMode ? "preview" : "canvas",
       imageBaseUrl: params.imageBaseUrl,
       assetBaseUrl: params.assetBaseUrl,
       instances,
-      // fallback to temporary root instance to render scripts
-      // and receive real data from builder
       rootInstanceId,
+      indexesOfTypeWithinRequiredAncestors,
       propsByInstanceIdStore,
       assetsStore,
       pagesStore: pagesMapStore,
@@ -137,6 +147,7 @@ const useElementsTree = (
     components,
     pagesMapStore,
     isPreviewMode,
+    indexesOfTypeWithinRequiredAncestors,
   ]);
 };
 

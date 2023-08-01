@@ -21,6 +21,7 @@ import {
 import { getPropsByInstanceId } from "../props";
 import type { Components } from "../components/components-utils";
 import type { Params, DataSourceValues } from "../context";
+import type { IndexesOfTypeWithinRequiredAncestors } from "../instance-utils";
 
 export type Data = {
   page: Page;
@@ -36,6 +37,7 @@ export type RootPropsData = Omit<Data, "build"> & {
 
 type RootProps = {
   data: RootPropsData;
+  indexesOfTypeWithinRequiredAncestors: IndexesOfTypeWithinRequiredAncestors;
   executeComputingExpressions: (values: DataSourceValues) => DataSourceValues;
   executeEffectfulExpression: (
     expression: string,
@@ -51,6 +53,7 @@ type RootProps = {
 
 export const InstanceRoot = ({
   data,
+  indexesOfTypeWithinRequiredAncestors,
   executeComputingExpressions,
   executeEffectfulExpression,
   Component,
@@ -120,6 +123,7 @@ export const InstanceRoot = ({
     ),
     assetsStore: atom(new Map(data.assets.map((asset) => [asset.id, asset]))),
     pagesStore: atom(new Map(data.pages.map((page) => [page.id, page]))),
+    indexesOfTypeWithinRequiredAncestors,
     executeEffectfulExpression,
     dataSourceValuesStore,
     onDataSourceUpdate,

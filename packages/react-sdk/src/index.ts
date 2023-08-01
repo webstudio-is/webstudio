@@ -18,6 +18,7 @@ export {
   usePropUrl,
   usePropAsset,
   getInstanceIdFromComponentProps,
+  useIndexOfTypeWithinRequiredAncestors,
 } from "./props";
 export { type Params, ReactSdkContext } from "./context";
 export {
@@ -33,3 +34,4 @@ export {
   decodeVariablesMap,
 } from "./expression";
 export { renderComponentTemplate } from "./component-renderer";
+export { getIndexesOfTypeWithinRequiredAncestors } from "./instance-utils";
