@@ -53,6 +53,11 @@ const WsComponentMeta = z.object({
   type: z.enum(["container", "control", "embed", "rich-text-child"]),
   requiredAncestors: z.optional(z.array(z.string())),
   invalidAncestors: z.optional(z.array(z.string())),
+  // when this field is specified component receives
+  // prop with index of same components withiin specified ancestor
+  // important to automatically enumerate collections without
+  // naming every item manually
+  indexWithinAncestor: z.optional(z.string()),
   stylable: z.optional(z.boolean()),
   // specifies whether the instance can be deleted,
   // copied or dragged out of its parent instance

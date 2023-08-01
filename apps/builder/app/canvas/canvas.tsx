@@ -10,7 +10,7 @@ import {
   executeEffectfulExpression,
   encodeVariablesMap,
   decodeVariablesMap,
-  getIndexesOfTypeWithinRequiredAncestors,
+  getIndexesWithinAncestors,
 } from "@webstudio-is/react-sdk";
 import * as baseComponents from "@webstudio-is/sdk-components-react";
 import * as baseComponentMetas from "@webstudio-is/sdk-components-react/metas";
@@ -108,8 +108,8 @@ const useElementsTree = (
     []
   );
 
-  const indexesOfTypeWithinRequiredAncestors = useMemo(() => {
-    return getIndexesOfTypeWithinRequiredAncestors(
+  const indexesWithinAncestors = useMemo(() => {
+    return getIndexesWithinAncestors(
       metas,
       instances,
       page ? [page.rootInstanceId] : []
@@ -123,7 +123,7 @@ const useElementsTree = (
       assetBaseUrl: params.assetBaseUrl,
       instances,
       rootInstanceId,
-      indexesOfTypeWithinRequiredAncestors,
+      indexesWithinAncestors,
       propsByInstanceIdStore,
       assetsStore,
       pagesStore: pagesMapStore,
@@ -147,7 +147,7 @@ const useElementsTree = (
     components,
     pagesMapStore,
     isPreviewMode,
-    indexesOfTypeWithinRequiredAncestors,
+    indexesWithinAncestors,
   ]);
 };
 

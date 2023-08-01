@@ -497,6 +497,7 @@ test("add namespace to selected components in embed template", () => {
         icon: "",
         requiredAncestors: ["Button", "Box"],
         invalidAncestors: ["Tooltip"],
+        indexWithinAncestor: "Tooltip",
         template: [
           {
             type: "instance",
@@ -527,6 +528,7 @@ test("add namespace to selected components in embed template", () => {
     icon: "",
     requiredAncestors: ["my-namespace:Button", "Box"],
     invalidAncestors: ["my-namespace:Tooltip"],
+    indexWithinAncestor: "my-namespace:Tooltip",
     template: [
       {
         type: "instance",

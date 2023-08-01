@@ -12,7 +12,7 @@ import {
   executeComputingExpressions,
   executeEffectfulExpression,
 } from "./expression";
-import { getIndexesOfTypeWithinRequiredAncestors } from "./instance-utils";
+import { getIndexesWithinAncestors } from "./instance-utils";
 
 export const renderComponentTemplate = ({
   name,
@@ -106,7 +106,7 @@ export const renderComponentTemplate = ({
         }}
         Component={WebstudioComponent}
         components={new Map(Object.entries(components))}
-        indexesOfTypeWithinRequiredAncestors={getIndexesOfTypeWithinRequiredAncestors(
+        indexesWithinAncestors={getIndexesWithinAncestors(
           metas,
           new Map(instances),
           ["root"]
