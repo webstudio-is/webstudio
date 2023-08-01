@@ -8,7 +8,6 @@ export const getIndexesWithinAncestors = (
   instances: Instances,
   rootIds: Instance["id"][]
 ) => {
-  console.log("hello");
   const ancestors = new Set<Instance["component"]>();
   for (const meta of metas.values()) {
     if (meta.indexWithinAncestor !== undefined) {
