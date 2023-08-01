@@ -1,0 +1,31 @@
+{
+  "name": "@webstudio-is/cli",
+  "version": "0.83.0",
+  "description": "Webstudio CLI",
+  "author": "Webstudio <github@webstudio.is>",
+  "homepage": "https://webstudio.is",
+  "type": "module",
+  "bin": {
+    "webstudio": "./bin/cli.js"
+  },
+  "scripts": {
+    "format": "prettier --write \"**/*.{ts,tsx,md}\"",
+    "build": "pnpm format && pnpm clean && esbuild ./src/* --outdir=./lib --platform=node",
+    "clean": "rm -fr ./lib"
+  },
+  "license": "MIT",
+  "dependencies": {
+    "@webstudio-is/asset-uploader": "workspace:^",
+    "@webstudio-is/project-build": "workspace:^",
+    "@webstudio-is/react-sdk": "workspace:^",
+    "env-paths": "^3.0.0",
+    "zx": "^7.2.3"
+  },
+  "devDependencies": {
+    "@types/node": "^18.13.0",
+    "@webstudio-is/eslint-config-custom": "workspace:^",
+    "@webstudio-is/tsconfig": "workspace:^",
+    "esbuild": "^0.18.16",
+    "prettier": "3.0.0"
+  }
+}
