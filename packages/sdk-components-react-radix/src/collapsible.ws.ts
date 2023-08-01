@@ -1,4 +1,8 @@
-import { RadioUncheckedIcon, RadioCheckedIcon } from "@webstudio-is/icons/svg";
+import {
+  CollapsibleIcon,
+  TriggerIcon,
+  ContentIcon,
+} from "@webstudio-is/icons/svg";
 import type {
   WsComponentMeta,
   WsComponentPropsMeta,
@@ -13,7 +17,7 @@ export const metaCollapsible: WsComponentMeta = {
   category: "radix",
   type: "container",
   label: "Collapsible",
-  icon: RadioUncheckedIcon,
+  icon: CollapsibleIcon,
   template: [
     {
       type: "instance",
@@ -71,7 +75,7 @@ export const metaCollapsibleTrigger: WsComponentMeta = {
   category: "hidden",
   type: "container",
   label: "Collapsible Trigger",
-  icon: RadioCheckedIcon,
+  icon: TriggerIcon,
   stylable: false,
   detachable: false,
 };
@@ -80,7 +84,7 @@ export const metaCollapsibleContent: WsComponentMeta = {
   category: "hidden",
   type: "container",
   label: "Collapsible Content",
-  icon: RadioCheckedIcon,
+  icon: ContentIcon,
   detachable: false,
 };
 

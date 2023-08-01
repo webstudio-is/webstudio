@@ -1,4 +1,4 @@
-import { RadioCheckedIcon } from "@webstudio-is/icons/svg";
+import { TooltipIcon, TriggerIcon, ContentIcon } from "@webstudio-is/icons/svg";
 import {
   type WsComponentMeta,
   type WsComponentPropsMeta,
@@ -17,7 +17,7 @@ export const metaTooltipTrigger: WsComponentMeta = {
   invalidAncestors: [],
   type: "container",
   label: "TooltipTrigger",
-  icon: RadioCheckedIcon,
+  icon: TriggerIcon,
   stylable: false,
 };
 
@@ -27,7 +27,7 @@ export const metaTooltipContent: WsComponentMeta = {
   invalidAncestors: [],
   type: "container",
   label: "TooltipContent",
-  icon: RadioCheckedIcon,
+  icon: ContentIcon,
 };
 
 /**
@@ -43,7 +43,7 @@ export const metaTooltip: WsComponentMeta = {
   invalidAncestors: [],
   type: "container",
   label: "Tooltip",
-  icon: RadioCheckedIcon,
+  icon: TooltipIcon,
   order: 15,
   stylable: false,
   template: [
