@@ -106,6 +106,11 @@ export const useSelectedInstance = () => {
       return;
     }
 
+    elements[0].scrollIntoView({
+      behavior: "smooth",
+      block: "nearest",
+    });
+
     const updateElements = () => {
       elements = getElementsByInstanceSelector(selectedInstanceSelector);
     };

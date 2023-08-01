@@ -37,7 +37,6 @@ import { handleLinkClick } from "./link";
 import { mergeRefs } from "@react-aria/utils";
 import { composeEventHandlers } from "@radix-ui/primitive";
 import { setDataCollapsed } from "~/canvas/collapsed";
-import { useIsVisuallyHidden } from "./visually-hidden";
 
 const TextEditor = lazy(() => import("../text-editor"));
 
@@ -160,7 +159,6 @@ export const WebstudioComponentDev = forwardRef<
   useCssRules({ instanceId: instance.id, instanceStyles });
   const instances = useStore(instancesStore);
 
-  const selectedInstanceSelector = useStore(selectedInstanceSelectorStore);
   const textEditingInstanceSelector = useStore(
     textEditingInstanceSelectorStore
   );
@@ -168,29 +166,9 @@ export const WebstudioComponentDev = forwardRef<
   const instanceProps = useInstanceProps(instance.id);
   const { [showAttribute]: show = true, ...userProps } = instanceProps;
 
-  const isSelected = areInstanceSelectorsEqual(
-    selectedInstanceSelector,
-    instanceSelector
-  );
   const isPreviewMode = useStore(isPreviewModeStore);
 
   useCollapsedOnNewElement(instanceId);
-
-  // Scroll the selected instance into view when selected from navigator.
-  useEffect(() => {
-    if (isSelected) {
-      if (instanceElementRef.current === null) {
-        // Component may have no ref, for example Tooltip, try to select any Element inside
-
-        return;
-      }
-
-      instanceElementRef.current?.scrollIntoView({
-        behavior: "smooth",
-        block: "nearest",
-      });
-    }
-  }, [isSelected]);
 
   // this assumes presence of `useStore(selectedInstanceSelectorStore)` above
   // we rely on root re-rendering after selected instance changes
@@ -205,11 +183,6 @@ export const WebstudioComponentDev = forwardRef<
       }
     }
   });
-
-  const isScreenReaderDescendant = useIsVisuallyHidden(instanceElementRef);
-  if (isScreenReaderDescendant) {
-    return <></>;
-  }
 
   const readonlyProps =
     isPreviewMode === false &&
