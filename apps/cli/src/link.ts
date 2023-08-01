@@ -2,7 +2,7 @@ import { stdin as input, stdout as output, exit } from "node:process";
 import * as readline from "node:readline/promises";
 import { readFile, writeFile } from "node:fs/promises";
 import { GLOBAL_CONFIG_FILE } from "./constants";
-import type { Command } from "./types";
+import type { Command } from "./args";
 
 export const link: Command = async () => {
   const rl = readline.createInterface({ input, output });

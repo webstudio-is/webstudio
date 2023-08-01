@@ -1,8 +1,10 @@
 import { parseArgs } from "node:util";
-import { CLI_ARGS_OPTIONS, GLOBAL_CONFIG_FILE } from "./constants";
-import { ensureFileInPath, showHelp } from "./utils";
+import { GLOBAL_CONFIG_FILE } from "./constants";
+import { ensureFileInPath } from "./utils";
 import { link } from "./link";
-import type { Commands, SupportedCommands } from "./types";
+import { showHelp, CLI_ARGS_OPTIONS, Commands } from "./args";
+import type { SupportedCommands } from "./args";
+import packageJSON from "../package.json" assert { type: "json" };
 
 const commands: SupportedCommands = {
   link,
@@ -17,12 +19,19 @@ export const main = async () => {
       allowPositionals: true,
     });
 
-    console.log(args.positionals);
+    if (args.values?.version) {
+      console.log(packageJSON.version);
+      return;
+    }
+
+    if (args.values?.help) {
+      showHelp();
+      return;
+    }
 
     const command = commands[args.positionals[2] as Commands];
-
     if (command === undefined) {
-      throw new Error(`Command ${args.positionals[0]} is not supported`);
+      throw new Error(`No command provided`);
     }
 
     await command(args);

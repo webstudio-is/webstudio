@@ -1,8 +1,5 @@
 import { dirname } from "node:path";
 import { access, mkdir, writeFile, constants, rm } from "node:fs/promises";
-import { HELP } from "./constants";
-
-export const showHelp = () => console.log(HELP);
 
 export const ensureFileInPath = async (filePath: string, content?: string) => {
   const dir = dirname(filePath);
