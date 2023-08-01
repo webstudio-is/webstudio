@@ -32,7 +32,7 @@ import {
   type InstanceSelector,
   areInstanceSelectorsEqual,
 } from "~/shared/tree-utils";
-import { SelectedInstanceConnector } from "./selected-instance-connector";
+// import { SelectedInstanceConnector } from "./selected-instance-connector";
 import { handleLinkClick } from "./link";
 import { mergeRefs } from "@react-aria/utils";
 import { composeEventHandlers } from "@radix-ui/primitive";
@@ -279,15 +279,6 @@ export const WebstudioComponentDev = forwardRef<
 
   const instanceElement = (
     <>
-      {isSelected && (
-        <SelectedInstanceConnector
-          instanceElementRef={instanceElementRef}
-          instance={instance}
-          instanceSelector={instanceSelector}
-          instanceStyles={instanceStyles}
-          instanceProps={instanceProps}
-        />
-      )}
       <Component
         {...restProps}
         {...props}

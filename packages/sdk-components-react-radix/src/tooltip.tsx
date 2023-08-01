@@ -37,19 +37,14 @@ export const Tooltip = forwardRef<
     ComponentPropsWithoutRef<typeof TooltipPrimitive.Root> &
     BuilderTooltipProps
 >(({ open: openProp, isOpen, ...props }, ref) => {
-  const [webstudioAttributes, restProps] =
-    splitPropsWithWebstudioAttributes(props);
-
   const open =
     openProp ??
     (isOpen === "open" ? true : isOpen === "closed" ? false : undefined);
 
   return (
-    <div ref={ref} style={DisplayContentsStyle} {...webstudioAttributes}>
-      <TooltipPrimitive.Provider>
-        <TooltipPrimitive.Root open={open} {...restProps} />
-      </TooltipPrimitive.Provider>
-    </div>
+    <TooltipPrimitive.Provider>
+      <TooltipPrimitive.Root open={open} {...props} />
+    </TooltipPrimitive.Provider>
   );
 });
 

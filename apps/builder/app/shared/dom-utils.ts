@@ -113,6 +113,11 @@ export const getAllElementsBoundingBox = (elements: Element[]): DOMRect => {
     }
   }
 
+  if (rects.length === 0) {
+    // To preserve position even if width/height is 0
+    return elements[0].getBoundingClientRect();
+  }
+
   const { top, right, bottom, left } = rects.reduce(sumRects);
 
   return DOMRect.fromRect({
