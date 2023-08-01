@@ -51,16 +51,15 @@ export const metaPopover: WsComponentMeta = {
       type: "instance",
       component: "Popover",
       label: "Popover",
+      dataSources: {
+        // We don't have support for boolean or undefined, instead of binding on open we bind on a string
+        isOpen: { type: "variable", initialValue: "initial" },
+      },
       props: [
         {
+          type: "dataSource",
           name: "isOpen",
-          // We don't have support for boolean or undefined, instead of binding on open we bind on a string
-          type: "string",
-          value: "initial",
-          dataSourceRef: {
-            type: "variable",
-            name: "isOpen",
-          },
+          dataSourceName: "isOpen",
         },
       ],
       children: [
