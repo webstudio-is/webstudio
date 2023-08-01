@@ -13,6 +13,7 @@ import {
 import { StyleValue, type StyleProperty } from "@webstudio-is/css-data";
 import type { Simplify } from "type-fest";
 import { encodeDataSourceVariable, validateExpression } from "./expression";
+import type { WsComponentMeta } from "./components/component-meta";
 
 const EmbedTemplateText = z.object({
   type: z.literal("text"),
@@ -337,7 +338,7 @@ export type EmbedTemplateData = ReturnType<
   typeof generateDataFromEmbedTemplate
 >;
 
-export const namespaceEmbedTemplateComponents = (
+const namespaceEmbedTemplateComponents = (
   template: WsEmbedTemplate,
   namespace: string,
   components: Set<EmbedTemplateInstance["component"]>
@@ -361,4 +362,30 @@ export const namespaceEmbedTemplateComponents = (
     item satisfies never;
     throw Error("Impossible case");
   });
+};
+
+export const namespaceMeta = (
+  meta: WsComponentMeta,
+  namespace: string,
+  components: Set<EmbedTemplateInstance["component"]>
+) => {
+  const newMeta = { ...meta };
+  if (newMeta.requiredAncestors) {
+    newMeta.requiredAncestors = newMeta.requiredAncestors.map((component) =>
+      components.has(component) ? `${namespace}:${component}` : component
+    );
+  }
+  if (newMeta.invalidAncestors) {
+    newMeta.invalidAncestors = newMeta.invalidAncestors.map((component) =>
+      components.has(component) ? `${namespace}:${component}` : component
+    );
+  }
+  if (newMeta.template) {
+    newMeta.template = namespaceEmbedTemplateComponents(
+      newMeta.template,
+      namespace,
+      components
+    );
+  }
+  return newMeta;
 };
