@@ -1,27 +1,21 @@
 import type { Instance, Instances } from "@webstudio-is/project-build";
 import type { WsComponentMeta } from "./components/component-meta";
 
-export type IndexesOfTypeWithinRequiredAncestors = Map<
-  // ancestorInstanceComponent;childInstanceId
-  `${Instance["component"]}:${Instance["id"]}`,
-  number
->;
+export type IndexesWithinAncestors = Map<Instance["id"], number>;
 
-export const getIndexesOfTypeWithinRequiredAncestors = (
+export const getIndexesWithinAncestors = (
   metas: Map<Instance["component"], WsComponentMeta>,
   instances: Instances,
   rootIds: Instance["id"][]
 ) => {
-  const requiredAncestors = new Set<Instance["component"]>();
+  const ancestors = new Set<Instance["component"]>();
   for (const meta of metas.values()) {
-    if (meta.requiredAncestors) {
-      for (const ancestorComponent of meta.requiredAncestors) {
-        requiredAncestors.add(ancestorComponent);
-      }
+    if (meta.indexWithinAncestor !== undefined) {
+      ancestors.add(meta.indexWithinAncestor);
     }
   }
 
-  const indexes: IndexesOfTypeWithinRequiredAncestors = new Map();
+  const indexes: IndexesWithinAncestors = new Map();
 
   const traverseInstances = (
     instances: Instances,
@@ -39,21 +33,19 @@ export const getIndexesOfTypeWithinRequiredAncestors = (
     if (meta === undefined) {
       return;
     }
-    if (requiredAncestors.has(instance.component)) {
+
+    if (ancestors.has(instance.component)) {
       latestIndexes = new Map(latestIndexes);
       latestIndexes.set(instance.component, new Map());
     }
 
-    if (meta.requiredAncestors) {
-      for (const ancestorComponent of meta.requiredAncestors) {
-        const ancestorIndexes = latestIndexes.get(ancestorComponent);
-        if (ancestorIndexes === undefined) {
-          continue;
-        }
+    if (meta.indexWithinAncestor !== undefined) {
+      const ancestorIndexes = latestIndexes.get(meta.indexWithinAncestor);
+      if (ancestorIndexes !== undefined) {
         let index = ancestorIndexes.get(instance.component) ?? -1;
         index += 1;
         ancestorIndexes.set(instance.component, index);
-        indexes.set(`${ancestorComponent}:${instance.id}`, index);
+        indexes.set(instance.id, index);
       }
     }
 

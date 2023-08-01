@@ -4,7 +4,7 @@ import { useStore } from "@nanostores/react";
 import type { Instance, Page, Prop, Props } from "@webstudio-is/project-build";
 import type { Asset, Assets } from "@webstudio-is/asset-uploader";
 import { ReactSdkContext } from "./context";
-import { idAttribute } from "./tree/webstudio-component";
+import { idAttribute, indexAttribute } from "./tree/webstudio-component";
 
 export type PropsByInstanceId = Map<Instance["id"], Prop[]>;
 
@@ -32,12 +32,17 @@ export const useInstanceProps = (instanceId: Instance["id"]) => {
     executeEffectfulExpression,
     setDataSourceValues,
     renderer,
+    indexesWithinAncestors,
   } = useContext(ReactSdkContext);
+  const index = indexesWithinAncestors.get(instanceId);
   const instancePropsObjectStore = useMemo(() => {
     return computed(
       [propsByInstanceIdStore, dataSourceValuesStore],
       (propsByInstanceId, dataSourceValues) => {
         const instancePropsObject: Record<Prop["name"], unknown> = {};
+        if (index !== undefined) {
+          instancePropsObject[indexAttribute] = index.toString();
+        }
         const instanceProps = propsByInstanceId.get(instanceId);
         if (instanceProps === undefined) {
           return instancePropsObject;
@@ -89,6 +94,7 @@ export const useInstanceProps = (instanceId: Instance["id"]) => {
     renderer,
     executeEffectfulExpression,
     setDataSourceValues,
+    index,
   ]);
   const instancePropsObject = useStore(instancePropsObjectStore);
   return instancePropsObject;
@@ -214,12 +220,8 @@ export const getInstanceIdFromComponentProps = (
   return props[idAttribute] as string;
 };
 
-export const useIndexOfTypeWithinRequiredAncestors = (
-  props: Record<string, unknown>,
-  ancestorComponent: Instance["component"]
+export const getIndexWithinAncestorFromComponentProps = (
+  props: Record<string, unknown>
 ) => {
-  const { indexesOfTypeWithinRequiredAncestors } = useContext(ReactSdkContext);
-  const instanceId = getInstanceIdFromComponentProps(props);
-  const key = `${ancestorComponent}:${instanceId}` as const;
-  return indexesOfTypeWithinRequiredAncestors.get(key) ?? -1;
+  return props[indexAttribute] as string | undefined;
 };

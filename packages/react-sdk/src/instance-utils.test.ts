@@ -1,6 +1,6 @@
 import { test, expect } from "@jest/globals";
 import type { Instance, Instances } from "@webstudio-is/project-build";
-import { getIndexesOfTypeWithinRequiredAncestors } from "./instance-utils";
+import { getIndexesWithinAncestors } from "./instance-utils";
 import type { WsComponentMeta } from ".";
 
 const getIdValuePair = <T extends { id: string }>(item: T) =>
@@ -21,7 +21,7 @@ const createMeta = (meta?: Partial<WsComponentMeta>) => {
   return { type: "container", label: "", icon: "", ...meta } as const;
 };
 
-test("get indexes of type within required ancestors", () => {
+test("get indexes within ancestors", () => {
   // body0
   //   tabs1
   //     tabs1list
@@ -70,22 +70,20 @@ test("get indexes of type within required ancestors", () => {
     ["Body", createMeta()],
     ["Box", createMeta()],
     ["Tabs", createMeta()],
-    ["TabsList", createMeta({ requiredAncestors: ["Tabs"] })],
-    ["TabsTrigger", createMeta({ requiredAncestors: ["TabsList"] })],
-    ["TabsContent", createMeta({ requiredAncestors: ["Tabs"] })],
+    ["TabsList", createMeta({ indexWithinAncestor: "Tabs" })],
+    ["TabsTrigger", createMeta({ indexWithinAncestor: "TabsList" })],
+    ["TabsContent", createMeta({ indexWithinAncestor: "Tabs" })],
   ]);
-  expect(
-    getIndexesOfTypeWithinRequiredAncestors(metas, instances, ["body0"])
-  ).toEqual(
+  expect(getIndexesWithinAncestors(metas, instances, ["body0"])).toEqual(
     new Map([
-      ["Tabs:tabs1list", 0],
-      ["TabsList:tabs1trigger1", 0],
-      ["TabsList:tabs1trigger2", 1],
-      ["Tabs:tabs1content1", 0],
-      ["Tabs:tabs1content2", 1],
-      ["Tabs:tabs2list", 0],
-      ["TabsList:tabs2trigger1", 0],
-      ["Tabs:tabs2content1", 0],
+      ["tabs1list", 0],
+      ["tabs1trigger1", 0],
+      ["tabs1trigger2", 1],
+      ["tabs1content1", 0],
+      ["tabs1content2", 1],
+      ["tabs2list", 0],
+      ["tabs2trigger1", 0],
+      ["tabs2content1", 0],
     ])
   );
 });

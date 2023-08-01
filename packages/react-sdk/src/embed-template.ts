@@ -380,6 +380,11 @@ export const namespaceMeta = (
       components.has(component) ? `${namespace}:${component}` : component
     );
   }
+  if (newMeta.indexWithinAncestor) {
+    newMeta.indexWithinAncestor = components.has(newMeta.indexWithinAncestor)
+      ? `${namespace}:${newMeta.indexWithinAncestor}`
+      : newMeta.indexWithinAncestor;
+  }
   if (newMeta.template) {
     newMeta.template = namespaceEmbedTemplateComponents(
       newMeta.template,
