@@ -23,3 +23,4 @@ export {
   SheetTitle,
   SheetDescription,
 } from "./sheet";
+export { Tabs, TabsList, TabsTrigger, TabsContent } from "./tabs";
