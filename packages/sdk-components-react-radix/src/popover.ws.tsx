@@ -1,5 +1,6 @@
 import { PopoverIcon, TriggerIcon, ContentIcon } from "@webstudio-is/icons/svg";
 import {
+  type PresetStyle,
   type WsComponentMeta,
   type WsComponentPropsMeta,
 } from "@webstudio-is/react-sdk";
@@ -9,6 +10,11 @@ import {
   propsPopoverContent,
   propsPopoverTrigger,
 } from "./__generated__/popover.props";
+import { div } from "@webstudio-is/react-sdk/css-normalize";
+
+const presetStyle = {
+  div,
+} satisfies PresetStyle<"div">;
 
 // @todo add [data-state] to button and link
 export const metaPopoverTrigger: WsComponentMeta = {
@@ -25,6 +31,7 @@ export const metaPopoverContent: WsComponentMeta = {
   category: "hidden",
   invalidAncestors: [],
   type: "container",
+  presetStyle,
   label: "PopoverContent",
   icon: ContentIcon,
   detachable: false,

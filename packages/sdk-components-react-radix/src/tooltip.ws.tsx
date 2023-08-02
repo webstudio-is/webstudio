@@ -1,5 +1,6 @@
 import { TooltipIcon, TriggerIcon, ContentIcon } from "@webstudio-is/icons/svg";
 import {
+  type PresetStyle,
   type WsComponentMeta,
   type WsComponentPropsMeta,
 } from "@webstudio-is/react-sdk";
@@ -9,6 +10,11 @@ import {
   propsTooltipContent,
   propsTooltipTrigger,
 } from "./__generated__/tooltip.props";
+import { div } from "@webstudio-is/react-sdk/css-normalize";
+
+const presetStyle = {
+  div,
+} satisfies PresetStyle<"div">;
 
 // @todo add [data-state] to button and link
 export const metaTooltipTrigger: WsComponentMeta = {
@@ -26,6 +32,7 @@ export const metaTooltipContent: WsComponentMeta = {
   detachable: false,
   invalidAncestors: [],
   type: "container",
+  presetStyle,
   label: "TooltipContent",
   icon: ContentIcon,
 };

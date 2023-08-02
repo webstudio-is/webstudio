@@ -8,6 +8,7 @@ import {
   ButtonElementIcon,
 } from "@webstudio-is/icons/svg";
 import {
+  type PresetStyle,
   type WsComponentMeta,
   type WsComponentPropsMeta,
 } from "@webstudio-is/react-sdk";
@@ -21,6 +22,16 @@ import {
   propsDialogTitle,
   propsDialogDescription,
 } from "./__generated__/dialog.props";
+
+import { div, button } from "@webstudio-is/react-sdk/css-normalize";
+
+const presetStyle = {
+  div,
+} satisfies PresetStyle<"div">;
+
+const buttonPresetStyle = {
+  button,
+} satisfies PresetStyle<"button">;
 
 // @todo add [data-state] to button and link
 export const metaDialogTrigger: WsComponentMeta = {
@@ -38,6 +49,7 @@ export const metaDialogContent: WsComponentMeta = {
   invalidAncestors: [],
   type: "container",
   label: "DialogContent",
+  presetStyle,
   icon: ContentIcon,
   detachable: false,
 };
@@ -47,6 +59,7 @@ export const metaDialogOverlay: WsComponentMeta = {
   invalidAncestors: [],
   type: "container",
   label: "DialogOverlay",
+  presetStyle,
   icon: OverlayIcon,
   detachable: false,
 };
@@ -55,6 +68,7 @@ export const metaDialogTitle: WsComponentMeta = {
   category: "hidden",
   invalidAncestors: [],
   type: "container",
+  presetStyle,
   label: "DialogTitle",
   icon: HeadingIcon,
 };
@@ -63,6 +77,7 @@ export const metaDialogDescription: WsComponentMeta = {
   category: "hidden",
   invalidAncestors: [],
   type: "container",
+  presetStyle,
   label: "DialogDescription",
   icon: TextIcon,
 };
@@ -71,6 +86,7 @@ export const metaDialogClose: WsComponentMeta = {
   category: "hidden",
   invalidAncestors: [],
   type: "container",
+  presetStyle: buttonPresetStyle,
   label: "DialogClose",
   icon: ButtonElementIcon,
 };
