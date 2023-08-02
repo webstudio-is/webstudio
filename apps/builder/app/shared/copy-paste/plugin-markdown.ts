@@ -1,7 +1,7 @@
 import store from "immerhin";
-import { gfm } from "micromark-extension-gfm";
-import type { Root } from "mdast";
 import { fromMarkdown } from "mdast-util-from-markdown";
+import { gfmFromMarkdown } from "mdast-util-gfm";
+import { gfm } from "micromark-extension-gfm";
 import type { Instance, Prop } from "@webstudio-is/project-build";
 import { nanoid } from "nanoid";
 import { insertInstancesMutable } from "../tree-utils";
@@ -17,7 +17,10 @@ import {
   selectedPageStore,
 } from "../nano-states";
 
-const micromarkOptions = { extensions: [gfm()] };
+const micromarkOptions = {
+  extensions: [gfm()],
+  mdastExtensions: [gfmFromMarkdown()],
+};
 
 export const mimeType = "text/plain";
 
@@ -41,6 +44,8 @@ const astTypeComponentMap: Record<string, Instance["component"]> = {
 };
 
 type Options = { generateId?: typeof nanoid };
+
+type Root = ReturnType<typeof fromMarkdown>;
 
 const toInstanceData = (
   instances: Instance[],

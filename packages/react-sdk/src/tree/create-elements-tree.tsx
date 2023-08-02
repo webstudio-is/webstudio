@@ -15,6 +15,7 @@ import {
 } from "../context";
 import type { Pages, PropsByInstanceId } from "../props";
 import type { WebstudioComponentProps } from "./webstudio-component";
+import type { IndexesWithinAncestors } from "../instance-utils";
 
 type InstanceSelector = Instance["id"][];
 
@@ -30,6 +31,7 @@ export const createElementsTree = ({
   dataSourceValuesStore,
   executeEffectfulExpression,
   onDataSourceUpdate,
+  indexesWithinAncestors,
   Component,
   components,
   scripts,
@@ -46,6 +48,7 @@ export const createElementsTree = ({
   ) => DataSourceValues;
   dataSourceValuesStore: ReadableAtom<DataSourceValues>;
   onDataSourceUpdate: (newValues: DataSourceValues) => void;
+  indexesWithinAncestors: IndexesWithinAncestors;
 
   Component: ForwardRefExoticComponent<
     WebstudioComponentProps & RefAttributes<HTMLElement>
@@ -88,6 +91,7 @@ export const createElementsTree = ({
         renderer,
         imageBaseUrl,
         assetBaseUrl,
+        indexesWithinAncestors,
         executeEffectfulExpression,
         setDataSourceValues: onDataSourceUpdate,
         setBoundDataSourceValue: (instanceId, propName, value) => {

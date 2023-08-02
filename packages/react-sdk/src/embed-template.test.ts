@@ -1,8 +1,5 @@
 import { expect, test } from "@jest/globals";
-import {
-  generateDataFromEmbedTemplate,
-  namespaceEmbedTemplateComponents,
-} from "./embed-template";
+import { generateDataFromEmbedTemplate, namespaceMeta } from "./embed-template";
 import { showAttribute } from "./tree";
 
 const expectString = expect.any(String);
@@ -223,15 +220,14 @@ test("generate data for embedding from props bound to data source variables", ()
         {
           type: "instance",
           component: "Box1",
+          dataSources: {
+            showOtherBoxDataSource: { type: "variable", initialValue: false },
+          },
           props: [
             {
-              type: "boolean",
+              type: "dataSource",
               name: "showOtherBox",
-              value: false,
-              dataSourceRef: {
-                type: "variable",
-                name: "showOtherBoxDataSource",
-              },
+              dataSourceName: "showOtherBoxDataSource",
             },
           ],
           children: [],
@@ -241,13 +237,9 @@ test("generate data for embedding from props bound to data source variables", ()
           component: "Box2",
           props: [
             {
-              type: "boolean",
+              type: "dataSource",
               name: showAttribute,
-              value: false,
-              dataSourceRef: {
-                type: "variable",
-                name: "showOtherBoxDataSource",
-              },
+              dataSourceName: "showOtherBoxDataSource",
             },
           ],
           children: [],
@@ -305,12 +297,18 @@ test("generate data for embedding from props bound to data source expressions", 
         {
           type: "instance",
           component: "Box1",
+          dataSources: {
+            boxState: { type: "variable", initialValue: "initial" },
+            boxStateSuccess: {
+              type: "expression",
+              code: `boxState === 'success'`,
+            },
+          },
           props: [
             {
-              type: "string",
+              type: "dataSource",
               name: "state",
-              value: "initial",
-              dataSourceRef: { type: "variable", name: "boxState" },
+              dataSourceName: "boxState",
             },
           ],
           children: [],
@@ -320,14 +318,9 @@ test("generate data for embedding from props bound to data source expressions", 
           component: "Box2",
           props: [
             {
-              type: "boolean",
+              type: "dataSource",
               name: showAttribute,
-              value: false,
-              dataSourceRef: {
-                type: "expression",
-                name: "boxStateSuccess",
-                code: `boxState === 'success'`,
-              },
+              dataSourceName: "boxStateSuccess",
             },
           ],
           children: [],
@@ -392,12 +385,14 @@ test("generate data for embedding from action props", () => {
         {
           type: "instance",
           component: "Box1",
+          dataSources: {
+            boxState: { type: "variable", initialValue: "initial" },
+          },
           props: [
             {
-              type: "string",
+              type: "dataSource",
               name: "state",
-              value: "initial",
-              dataSourceRef: { type: "variable", name: "boxState" },
+              dataSourceName: "boxState",
             },
           ],
           children: [
@@ -495,48 +490,64 @@ test("generate data for embedding from action props", () => {
 
 test("add namespace to selected components in embed template", () => {
   expect(
-    namespaceEmbedTemplateComponents(
-      [
-        {
-          type: "instance",
-          component: "Tooltip",
-          children: [
-            { type: "text", value: "Some text" },
-            {
-              type: "instance",
-              component: "Box",
-              children: [
-                {
-                  type: "instance",
-                  component: "Button",
-                  children: [],
-                },
-              ],
-            },
-          ],
-        },
-      ],
+    namespaceMeta(
+      {
+        type: "container",
+        label: "",
+        icon: "",
+        requiredAncestors: ["Button", "Box"],
+        invalidAncestors: ["Tooltip"],
+        indexWithinAncestor: "Tooltip",
+        template: [
+          {
+            type: "instance",
+            component: "Tooltip",
+            children: [
+              { type: "text", value: "Some text" },
+              {
+                type: "instance",
+                component: "Box",
+                children: [
+                  {
+                    type: "instance",
+                    component: "Button",
+                    children: [],
+                  },
+                ],
+              },
+            ],
+          },
+        ],
+      },
       "my-namespace",
       new Set(["Tooltip", "Button"])
     )
-  ).toEqual([
-    {
-      type: "instance",
-      component: "my-namespace:Tooltip",
-      children: [
-        { type: "text", value: "Some text" },
-        {
-          type: "instance",
-          component: "Box",
-          children: [
-            {
-              type: "instance",
-              component: "my-namespace:Button",
-              children: [],
-            },
-          ],
-        },
-      ],
-    },
-  ]);
+  ).toEqual({
+    type: "container",
+    label: "",
+    icon: "",
+    requiredAncestors: ["my-namespace:Button", "Box"],
+    invalidAncestors: ["my-namespace:Tooltip"],
+    indexWithinAncestor: "my-namespace:Tooltip",
+    template: [
+      {
+        type: "instance",
+        component: "my-namespace:Tooltip",
+        children: [
+          { type: "text", value: "Some text" },
+          {
+            type: "instance",
+            component: "Box",
+            children: [
+              {
+                type: "instance",
+                component: "my-namespace:Button",
+                children: [],
+              },
+            ],
+          },
+        ],
+      },
+    ],
+  });
 });
