@@ -8,6 +8,7 @@ import {
   ButtonElementIcon,
 } from "@webstudio-is/icons/svg";
 import {
+  type PresetStyle,
   type WsComponentMeta,
   type WsComponentPropsMeta,
 } from "@webstudio-is/react-sdk";
@@ -21,6 +22,17 @@ import {
   propsSheetTitle,
   propsSheetDescription,
 } from "./__generated__/sheet.props";
+
+import { div, nav } from "@webstudio-is/react-sdk/css-normalize";
+import type { SheetContent } from "./sheet";
+import type { ComponentProps } from "react";
+
+type BoxTags = NonNullable<ComponentProps<typeof SheetContent>["tag"]>;
+
+const contentPresetStyle = {
+  div,
+  nav,
+} satisfies PresetStyle<BoxTags>;
 
 // @todo add [data-state] to button and link
 export const metaSheetTrigger: WsComponentMeta = {
@@ -40,6 +52,7 @@ export const metaSheetContent: WsComponentMeta = {
   label: "SheetContent",
   icon: ContentIcon,
   detachable: false,
+  presetStyle: contentPresetStyle,
   states: [
     { selector: "[data-side=top]", label: "Top Side" },
     { selector: "[data-side=right]", label: "Right Side" },
@@ -143,6 +156,8 @@ export const metaSheet: WsComponentMeta = {
             tc.backdropBlur("sm"),
             // To allow positioning Content
             tc.flex(),
+            tc.flex("col"),
+            tc.overflow("auto"),
           ].flat(),
           children: [
             {
@@ -167,23 +182,18 @@ export const metaSheet: WsComponentMeta = {
                 tc.p(6),
                 tc.shadow("lg"),
                 tc.relative(),
+                tc.grow(),
 
                 tc.state(
-                  [tc.my(0), tc.ml(0), tc.mr("auto"), tc.maxW("sm")].flat(),
+                  [tc.mr("auto"), tc.maxW("sm")].flat(),
                   "[data-side=left]"
                 ),
                 tc.state(
-                  [tc.my(0), tc.mr(0), tc.ml("auto"), tc.maxW("sm")].flat(),
+                  [tc.ml("auto"), tc.maxW("sm")].flat(),
                   "[data-side=right]"
                 ),
-                tc.state(
-                  [tc.mx(0), tc.mt(0), tc.mb("auto")].flat(),
-                  "[data-side=top]"
-                ),
-                tc.state(
-                  [tc.mx(0), tc.mb(0), tc.mt("auto")].flat(),
-                  "[data-side=bottom]"
-                ),
+                tc.state([tc.mb("auto")].flat(), "[data-side=top]"),
+                tc.state([tc.mt("auto")].flat(), "[data-side=bottom]"),
               ].flat(),
               children: [
                 {

@@ -406,6 +406,19 @@ export const flex = (flexParam?: FlexDirection): EmbedTemplateStyleDecl[] => {
   ];
 };
 
+export const grow = (): EmbedTemplateStyleDecl[] => {
+  return [
+    {
+      property: "flexGrow",
+      value: {
+        type: "unit",
+        value: 1,
+        unit: "number",
+      },
+    },
+  ];
+};
+
 export const gap = (
   gapValue: StringEnumToNumeric<keyof EvaluatedDefaultTheme["spacing"]>
 ): EmbedTemplateStyleDecl[] => {
