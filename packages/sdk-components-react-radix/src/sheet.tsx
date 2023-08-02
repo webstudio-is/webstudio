@@ -19,15 +19,22 @@ export const SheetContent = forwardRef<
     tag?: "div" | "nav";
     side?: "top" | "right" | "bottom" | "left";
   }
->(({ tag: Tag = "nav", side = "left", children, ...props }, ref) => {
-  return (
-    <Dialog.DialogContent
-      asChild={true}
-      role="navigation"
-      data-side={side}
-      {...props}
-    >
-      <Tag ref={ref}>{children}</Tag>
-    </Dialog.DialogContent>
-  );
-});
+>(
+  (
+    { tag = "nav", side = "left", role = "navigation", children, ...props },
+    ref
+  ) => {
+    // Do not do this at args like { tag: Tag = "nav" }, generate-arg-types will not find defaultValue in that case
+    const Tag = tag;
+    return (
+      <Dialog.DialogContent
+        asChild={true}
+        data-side={side}
+        role={role}
+        {...props}
+      >
+        <Tag ref={ref}>{children}</Tag>
+      </Dialog.DialogContent>
+    );
+  }
+);

@@ -294,7 +294,7 @@ export const propsMetaSheetTrigger: WsComponentPropsMeta = {
 
 export const propsMetaSheetContent: WsComponentPropsMeta = {
   props: propsSheetContent,
-  initialProps: ["side"],
+  initialProps: ["side", "role", "tag"],
 };
 
 export const propsMetaSheetOverlay: WsComponentPropsMeta = {
