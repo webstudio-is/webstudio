@@ -1,0 +1,6 @@
+{
+  "extends": "@webstudio-is/tsconfig/base.json",
+  "compilerOptions": {
+    "module": "esnext"
+  }
+}

@@ -1,0 +1,24 @@
+{
+  "name": "@webstudio-is/cli",
+  "version": "0.83.0",
+  "description": "Webstudio CLI",
+  "author": "Webstudio <github@webstudio.is>",
+  "homepage": "https://webstudio.is",
+  "type": "module",
+  "bin": {
+    "webstudio": "./bin.js"
+  },
+  "scripts": {
+    "dev": "build-package --watch",
+    "build": "build-package"
+  },
+  "license": "MIT",
+  "dependencies": {
+    "env-paths": "^3.0.0"
+  },
+  "devDependencies": {
+    "@types/node": "^18.13.0",
+    "@webstudio-is/scripts": "workspace:^",
+    "@webstudio-is/tsconfig": "workspace:^"
+  }
+}
