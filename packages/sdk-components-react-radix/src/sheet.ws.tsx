@@ -182,14 +182,12 @@ export const metaSheet: WsComponentMeta = {
                 tc.p(6),
                 tc.shadow("lg"),
                 tc.relative(),
-                tc.grow(),
-
                 tc.state(
-                  [tc.mr("auto"), tc.maxW("sm")].flat(),
+                  [tc.mr("auto"), tc.maxW("sm"), tc.grow()].flat(),
                   "[data-side=left]"
                 ),
                 tc.state(
-                  [tc.ml("auto"), tc.maxW("sm")].flat(),
+                  [tc.ml("auto"), tc.maxW("sm"), tc.grow()].flat(),
                   "[data-side=right]"
                 ),
                 tc.state([tc.mb("auto")].flat(), "[data-side=top]"),
