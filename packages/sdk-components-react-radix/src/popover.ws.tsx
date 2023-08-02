@@ -1,4 +1,4 @@
-import { RadioCheckedIcon } from "@webstudio-is/icons/svg";
+import { PopoverIcon, TriggerIcon, ContentIcon } from "@webstudio-is/icons/svg";
 import {
   type WsComponentMeta,
   type WsComponentPropsMeta,
@@ -16,7 +16,7 @@ export const metaPopoverTrigger: WsComponentMeta = {
   invalidAncestors: [],
   type: "container",
   label: "PopoverTrigger",
-  icon: RadioCheckedIcon,
+  icon: TriggerIcon,
   stylable: false,
   detachable: false,
 };
@@ -26,7 +26,7 @@ export const metaPopoverContent: WsComponentMeta = {
   invalidAncestors: [],
   type: "container",
   label: "PopoverContent",
-  icon: RadioCheckedIcon,
+  icon: ContentIcon,
   detachable: false,
 };
 
@@ -43,7 +43,7 @@ export const metaPopover: WsComponentMeta = {
   invalidAncestors: [],
   type: "container",
   label: "Popover",
-  icon: RadioCheckedIcon,
+  icon: PopoverIcon,
   order: 15,
   stylable: false,
   template: [

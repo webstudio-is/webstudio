@@ -1,4 +1,12 @@
-import { RadioCheckedIcon } from "@webstudio-is/icons/svg";
+import {
+  DialogIcon,
+  TriggerIcon,
+  ContentIcon,
+  OverlayIcon,
+  HeadingIcon,
+  TextIcon,
+  ButtonElementIcon,
+} from "@webstudio-is/icons/svg";
 import {
   type WsComponentMeta,
   type WsComponentPropsMeta,
@@ -20,7 +28,7 @@ export const metaDialogTrigger: WsComponentMeta = {
   invalidAncestors: [],
   type: "container",
   label: "DialogTrigger",
-  icon: RadioCheckedIcon,
+  icon: TriggerIcon,
   stylable: false,
   detachable: false,
 };
@@ -30,7 +38,7 @@ export const metaDialogContent: WsComponentMeta = {
   invalidAncestors: [],
   type: "container",
   label: "DialogContent",
-  icon: RadioCheckedIcon,
+  icon: ContentIcon,
   detachable: false,
 };
 
@@ -39,7 +47,7 @@ export const metaDialogOverlay: WsComponentMeta = {
   invalidAncestors: [],
   type: "container",
   label: "DialogOverlay",
-  icon: RadioCheckedIcon,
+  icon: OverlayIcon,
   detachable: false,
 };
 
@@ -48,7 +56,7 @@ export const metaDialogTitle: WsComponentMeta = {
   invalidAncestors: [],
   type: "container",
   label: "DialogTitle",
-  icon: RadioCheckedIcon,
+  icon: HeadingIcon,
 };
 
 export const metaDialogDescription: WsComponentMeta = {
@@ -56,7 +64,7 @@ export const metaDialogDescription: WsComponentMeta = {
   invalidAncestors: [],
   type: "container",
   label: "DialogDescription",
-  icon: RadioCheckedIcon,
+  icon: TextIcon,
 };
 
 export const metaDialogClose: WsComponentMeta = {
@@ -64,7 +72,7 @@ export const metaDialogClose: WsComponentMeta = {
   invalidAncestors: [],
   type: "container",
   label: "DialogClose",
-  icon: RadioCheckedIcon,
+  icon: ButtonElementIcon,
 };
 
 /**
@@ -80,7 +88,7 @@ export const metaDialog: WsComponentMeta = {
   invalidAncestors: [],
   type: "container",
   label: "Dialog",
-  icon: RadioCheckedIcon,
+  icon: DialogIcon,
   order: 15,
   stylable: false,
   template: [
