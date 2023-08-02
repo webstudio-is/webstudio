@@ -1,20 +1,22 @@
 import { parseArgs } from "node:util";
 
-export const showHelp = () => console.log(HELP);
+export const showHelp = () => console.info(HELP);
 
 export enum Commands {
   "link" = "link",
 }
 
+type DefaultArgs = Pick<
+  ReturnType<
+    typeof parseArgs<{
+      options: typeof CLI_ARGS_OPTIONS;
+    }>
+  >,
+  "values"
+>;
+
 export type Command = (
-  args: Pick<
-    ReturnType<
-      typeof parseArgs<{
-        options: typeof CLI_ARGS_OPTIONS;
-      }>
-    >,
-    "values"
-  > & { positionals: string[] }
+  args: DefaultArgs & { positionals: string[] }
 ) => Promise<void>;
 export type SupportedCommands = Record<Commands, Command>;
 

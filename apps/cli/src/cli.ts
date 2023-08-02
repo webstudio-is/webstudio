@@ -12,7 +12,7 @@ const commands: SupportedCommands = {
 
 export const main = async () => {
   try {
-    await ensureFileInPath(GLOBAL_CONFIG_FILE, JSON.stringify({}));
+    await ensureFileInPath(GLOBAL_CONFIG_FILE, "{}");
     const args = parseArgs({
       args: process.argv.slice(2),
       options: CLI_ARGS_OPTIONS,
@@ -20,7 +20,7 @@ export const main = async () => {
     });
 
     if (args.values?.version) {
-      console.log(packageJSON.version);
+      console.info(packageJSON.version);
       return;
     }
 
@@ -29,7 +29,7 @@ export const main = async () => {
       return;
     }
 
-    const command = commands[args.positionals[2] as Commands];
+    const command = commands[args.positionals[0] as Commands];
     if (command === undefined) {
       throw new Error(`No command provided`);
     }
@@ -37,6 +37,6 @@ export const main = async () => {
     await command(args);
   } catch (error) {
     console.error(error);
-    console.log(showHelp());
+    showHelp();
   }
 };

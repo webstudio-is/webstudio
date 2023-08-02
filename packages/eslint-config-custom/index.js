@@ -71,7 +71,7 @@ module.exports = {
       },
     },
     {
-      files: ["**/cli/**/*.{ts, tsx}"],
+      files: ["**/cli/**/*.{js,ts,tsx}"],
       rules: {
         "no-console": "off",
       },

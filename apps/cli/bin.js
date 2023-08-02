@@ -1,6 +1,6 @@
 #!/usr/bin/env node --experimental-specifier-resolution=node
 /* eslint-disable-next-line */
-import { main } from "../lib/index";
+import { main } from "./lib/cli";
 
 try {
   await main();

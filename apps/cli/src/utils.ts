@@ -8,7 +8,7 @@ export const ensureFileInPath = async (filePath: string, content?: string) => {
 
   try {
     await access(filePath, constants.F_OK);
-  } catch (err) {
+  } catch {
     await writeFile(filePath, content || "", "utf8");
   }
 };
@@ -16,7 +16,7 @@ export const ensureFileInPath = async (filePath: string, content?: string) => {
 export const ensureFolderExists = async (folderPath: string) => {
   try {
     await access(folderPath, constants.F_OK);
-  } catch (err) {
+  } catch {
     await mkdir(folderPath, { recursive: true });
   }
 };
@@ -24,11 +24,10 @@ export const ensureFolderExists = async (folderPath: string) => {
 export const deleteFolderIfExists = async (generatedDir: string) => {
   try {
     await rm(generatedDir, { recursive: true });
-    console.log("Folder deleted successfully (if it existed).");
-  } catch (err) {
-    if (err.code === "ENOENT") {
+  } catch (error) {
+    if (error.code === "ENOENT") {
       return;
     }
-    throw err;
+    throw error;
   }
 };

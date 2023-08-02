@@ -361,9 +361,6 @@ importers:
 
   apps/cli:
     dependencies:
-      '@webstudio-is/scripts':
-        specifier: workspace:^
-        version: link:../../packages/scripts
       env-paths:
         specifier: ^3.0.0
         version: 3.0.0
@@ -371,6 +368,9 @@ importers:
       '@types/node':
         specifier: ^18.13.0
         version: 18.13.0
+      '@webstudio-is/scripts':
+        specifier: workspace:^
+        version: link:../../packages/scripts
       '@webstudio-is/tsconfig':
         specifier: workspace:^
         version: link:../../packages/tsconfig

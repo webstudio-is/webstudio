@@ -6,7 +6,7 @@
   "homepage": "https://webstudio.is",
   "type": "module",
   "bin": {
-    "webstudio": "./bin/cli.js"
+    "webstudio": "./bin.js"
   },
   "scripts": {
     "dev": "build-package --watch",
@@ -14,11 +14,11 @@
   },
   "license": "MIT",
   "dependencies": {
-    "@webstudio-is/scripts": "workspace:^",
     "env-paths": "^3.0.0"
   },
   "devDependencies": {
     "@types/node": "^18.13.0",
+    "@webstudio-is/scripts": "workspace:^",
     "@webstudio-is/tsconfig": "workspace:^"
   }
 }

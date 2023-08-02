@@ -17,7 +17,7 @@ export const link: Command = async () => {
       throw new Error("Invalid share link.");
     }
     const projectId = paths[1];
-    if (!token || !projectId || !host) {
+    if (token === undefined || projectId === undefined || host === undefined) {
       throw new Error("Invalid share link.");
     }
 
@@ -34,7 +34,7 @@ export const link: Command = async () => {
 
     await writeFile(GLOBAL_CONFIG_FILE, JSON.stringify(newConfig, null, 2));
     rl.close();
-    console.log(`Saved credentials for project ${projectId}. \n
+    console.info(`Saved credentials for project ${projectId}.
 You can find your config at ${GLOBAL_CONFIG_FILE}
       `);
 
