@@ -86,7 +86,7 @@ export const getPresetStyleRules = (
   const presetStyleRules = new Map<string, Style>();
   for (const [tag, styles] of Object.entries(presetStyle)) {
     for (const styleDecl of styles) {
-      const selector = `${tag}:where([${componentAttribute}=${component}])${
+      const selector = `${tag}:where([${componentAttribute}="${component}"])${
         styleDecl.state ?? ""
       }`;
       let rule = presetStyleRules.get(selector);

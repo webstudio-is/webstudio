@@ -4,6 +4,7 @@ import {
   ContentIcon,
 } from "@webstudio-is/icons/svg";
 import type {
+  PresetStyle,
   WsComponentMeta,
   WsComponentPropsMeta,
 } from "@webstudio-is/react-sdk";
@@ -12,10 +13,16 @@ import {
   propsCollapsibleContent,
   propsCollapsibleTrigger,
 } from "./__generated__/collapsible.props";
+import { div } from "@webstudio-is/react-sdk/css-normalize";
+
+const presetStyle = {
+  div,
+} satisfies PresetStyle<"div">;
 
 export const metaCollapsible: WsComponentMeta = {
   category: "radix",
   type: "container",
+  presetStyle,
   label: "Collapsible",
   icon: CollapsibleIcon,
   template: [
@@ -83,6 +90,7 @@ export const metaCollapsibleTrigger: WsComponentMeta = {
 export const metaCollapsibleContent: WsComponentMeta = {
   category: "hidden",
   type: "container",
+  presetStyle,
   label: "Collapsible Content",
   icon: ContentIcon,
   detachable: false,
