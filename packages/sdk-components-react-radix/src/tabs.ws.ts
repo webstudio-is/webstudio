@@ -1,4 +1,9 @@
-import { RadioCheckedIcon } from "@webstudio-is/icons/svg";
+import {
+  ContentIcon,
+  HeaderIcon,
+  TabsIcon,
+  TriggerIcon,
+} from "@webstudio-is/icons/svg";
 import type {
   EmbedTemplateStyleDecl,
   WsComponentMeta,
@@ -55,7 +60,7 @@ export const metaTabs: WsComponentMeta = {
   category: "radix",
   type: "container",
   label: "Tabs",
-  icon: RadioCheckedIcon,
+  icon: TabsIcon,
   template: [
     {
       type: "instance",
@@ -143,7 +148,7 @@ export const metaTabsList: WsComponentMeta = {
   detachable: false,
   type: "container",
   label: "Tabs List",
-  icon: RadioCheckedIcon,
+  icon: HeaderIcon,
   requiredAncestors: ["Tabs"],
 };
 
@@ -151,7 +156,7 @@ export const metaTabsTrigger: WsComponentMeta = {
   category: "hidden",
   type: "container",
   label: "Tabs Trigger",
-  icon: RadioCheckedIcon,
+  icon: TriggerIcon,
   requiredAncestors: ["TabsList"],
   invalidAncestors: ["TabsTrigger"],
   indexWithinAncestor: "Tabs",
@@ -168,7 +173,7 @@ export const metaTabsContent: WsComponentMeta = {
   category: "hidden",
   type: "container",
   label: "Tabs Content",
-  icon: RadioCheckedIcon,
+  icon: ContentIcon,
   requiredAncestors: ["Tabs"],
   indexWithinAncestor: "Tabs",
   template: [
