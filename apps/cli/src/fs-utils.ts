@@ -1,5 +1,13 @@
 import { dirname } from "node:path";
-import { access, mkdir, writeFile, constants, rm } from "node:fs/promises";
+import {
+  access,
+  mkdir,
+  writeFile,
+  constants,
+  rm,
+  readFile,
+} from "node:fs/promises";
+import { GLOBAL_CONFIG_FILE, type GlobalConfig } from "./constants";
 
 export const ensureFileInPath = async (filePath: string, content?: string) => {
   const dir = dirname(filePath);
@@ -29,5 +37,14 @@ export const deleteFolderIfExists = async (generatedDir: string) => {
       return;
     }
     throw error;
+  }
+};
+
+export const loadGlobalConfigFile = async (): Promise<GlobalConfig | null> => {
+  try {
+    const content = await readFile(GLOBAL_CONFIG_FILE, "utf8");
+    return JSON.parse(content);
+  } catch (error) {
+    return null;
   }
 };

@@ -1,13 +1,16 @@
 import { parseArgs } from "node:util";
+import { exit } from "node:process";
 import { GLOBAL_CONFIG_FILE } from "./constants";
-import { ensureFileInPath } from "./utils";
-import { link } from "./link";
+import { ensureFileInPath } from "./fs-utils";
+import { link } from "./commands/link";
+import { sync } from "./commands/sync";
 import { showHelp, CLI_ARGS_OPTIONS, Commands } from "./args";
 import type { SupportedCommands } from "./args";
 import packageJSON from "../package.json" assert { type: "json" };
 
 const commands: SupportedCommands = {
   link,
+  sync,
 };
 
 export const main = async () => {
@@ -35,8 +38,10 @@ export const main = async () => {
     }
 
     await command(args);
+    exit(0);
   } catch (error) {
     console.error(error);
     showHelp();
+    exit(1);
   }
 };
