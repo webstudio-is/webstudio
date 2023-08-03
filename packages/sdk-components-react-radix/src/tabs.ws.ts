@@ -6,9 +6,11 @@ import {
 } from "@webstudio-is/icons/svg";
 import type {
   EmbedTemplateStyleDecl,
+  PresetStyle,
   WsComponentMeta,
   WsComponentPropsMeta,
 } from "@webstudio-is/react-sdk";
+import { div } from "@webstudio-is/react-sdk/css-normalize";
 import * as tc from "./theme/tailwind-classes";
 import {
   propsTabs,
@@ -16,6 +18,10 @@ import {
   propsTabsTrigger,
   propsTabsContent,
 } from "./__generated__/tabs.props";
+
+const presetStyle = {
+  div,
+} satisfies PresetStyle<"div">;
 
 /**
  * Styles source without animations:
@@ -61,6 +67,7 @@ export const metaTabs: WsComponentMeta = {
   type: "container",
   label: "Tabs",
   icon: TabsIcon,
+  presetStyle,
   template: [
     {
       type: "instance",
@@ -150,6 +157,7 @@ export const metaTabsList: WsComponentMeta = {
   label: "Tabs List",
   icon: HeaderIcon,
   requiredAncestors: ["Tabs"],
+  presetStyle,
 };
 
 export const metaTabsTrigger: WsComponentMeta = {
@@ -176,6 +184,7 @@ export const metaTabsContent: WsComponentMeta = {
   icon: ContentIcon,
   requiredAncestors: ["Tabs"],
   indexWithinAncestor: "Tabs",
+  presetStyle,
   template: [
     {
       type: "instance",
