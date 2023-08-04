@@ -69,7 +69,7 @@ export const subscribeInstanceHovering = () => {
       return;
     }
 
-    const instanceId = instanceSelector[0];
+    const [instanceId] = instanceSelector;
     const instances = instancesStore.get();
     const instance = instances.get(instanceId);
     if (instance === undefined) {
