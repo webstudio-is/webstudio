@@ -150,7 +150,7 @@ export const VerticalLayout = ({
 export const HorizontalLayout = ({
   label,
   id,
-  labelSize,
+  labelSize = "default",
   onDelete,
   children,
 }: LayoutProps) => (
