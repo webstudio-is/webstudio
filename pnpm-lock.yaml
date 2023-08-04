@@ -374,6 +374,9 @@ importers:
       '@webstudio-is/tsconfig':
         specifier: workspace:^
         version: link:../../packages/tsconfig
+      tsx:
+        specifier: ^3.12.6
+        version: 3.12.6
 
   packages/asset-uploader:
     dependencies:

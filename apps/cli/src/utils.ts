@@ -1,6 +1,24 @@
 import { dirname } from "node:path";
 import { access, mkdir, writeFile, constants, rm } from "node:fs/promises";
 
+export interface File {
+  name: string;
+  content: string;
+  encoding: "utf-8";
+}
+
+export interface Folder {
+  name: string;
+  files: File[];
+  subFolders: Folder[];
+}
+
+export enum ProjectType {
+  "vercel" = "vercel",
+  "defaults" = "defaults",
+  "remix-app-server" = "remix-app-server",
+}
+
 export const ensureFileInPath = async (filePath: string, content?: string) => {
   const dir = dirname(filePath);
 

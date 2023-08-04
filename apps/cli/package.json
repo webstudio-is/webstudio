@@ -9,14 +9,16 @@
     "webstudio": "./bin.js"
   },
   "scripts": {
-    "dev": "build-package --watch",
-    "build": "build-package"
+    "build:templates": "tsx ./templates/build.ts",
+    "dev": "pnpm build:templates && build-package --watch",
+    "build": "pnpm build:templates && build-package"
   },
   "license": "MIT",
   "dependencies": {
     "env-paths": "^3.0.0"
   },
   "devDependencies": {
+    "tsx": "^3.12.6",
     "@types/node": "^18.13.0",
     "@webstudio-is/scripts": "workspace:^",
     "@webstudio-is/tsconfig": "workspace:^"
