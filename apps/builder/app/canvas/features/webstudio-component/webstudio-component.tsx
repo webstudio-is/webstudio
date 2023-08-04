@@ -1,5 +1,12 @@
-import { type MouseEvent, type FormEvent, useEffect, forwardRef } from "react";
-import { Suspense, lazy, useCallback, useRef } from "react";
+import {
+  type MouseEvent,
+  type FormEvent,
+  useEffect,
+  forwardRef,
+  type ForwardedRef,
+  useRef,
+} from "react";
+import { Suspense, lazy } from "react";
 import { useStore } from "@nanostores/react";
 import { useLexicalComposerContext } from "@lexical/react/LexicalComposerContext";
 import store from "immerhin";
@@ -45,32 +52,35 @@ const ContentEditable = ({
   ...props
 }: {
   Component: AnyComponent;
-  elementRef: { current: null | HTMLElement };
+  elementRef: ForwardedRef<HTMLElement>;
   [idAttribute]: Instance["id"];
   [componentAttribute]: Instance["component"];
 }) => {
   const [editor] = useLexicalComposerContext();
 
-  const ref = useCallback(
-    (rootElement: null | HTMLElement) => {
-      // button with contentEditable does not let to press space
-      // so add span inside and use it as editor element in lexical
-      if (rootElement?.tagName === "BUTTON") {
-        const span = document.createElement("span");
-        span.contentEditable = "true";
-        rootElement.appendChild(span);
-        rootElement = span;
-      }
-      if (rootElement) {
-        rootElement.contentEditable = "true";
-      }
-      editor.setRootElement(rootElement);
-      elementRef.current = rootElement ?? null;
-    },
-    [editor, elementRef]
-  );
+  const ref = useRef<HTMLElement>(null);
 
-  return <Component ref={ref} {...props} />;
+  useEffect(() => {
+    let rootElement = ref.current;
+
+    if (rootElement == null) {
+      return;
+    }
+
+    if (rootElement?.tagName === "BUTTON") {
+      const span = document.createElement("span");
+      span.contentEditable = "true";
+      rootElement.appendChild(span);
+      rootElement = span;
+    }
+    if (rootElement) {
+      rootElement.contentEditable = "true";
+    }
+
+    editor.setRootElement(rootElement);
+  }, [editor]);
+
+  return <Component ref={mergeRefs(ref, elementRef)} {...props} />;
 };
 
 // this utility is temporary solution to compute instance selectors
@@ -153,7 +163,6 @@ export const WebstudioComponentDev = forwardRef<
   WebstudioComponentDevProps & ImplicitEvents
 >(({ instance, instanceSelector, children, components, ...restProps }, ref) => {
   const instanceId = instance.id;
-  const instanceElementRef = useRef<HTMLElement>(null);
   const instanceStyles = useInstanceStyles(instanceId);
   useCssRules({ instanceId: instance.id, instanceStyles });
   const instances = useStore(instancesStore);
@@ -251,12 +260,7 @@ export const WebstudioComponentDev = forwardRef<
 
   const instanceElement = (
     <>
-      <Component
-        {...restProps}
-        {...props}
-        {...composedHandlers}
-        ref={mergeRefs(instanceElementRef, ref)}
-      >
+      <Component {...restProps} {...props} {...composedHandlers} ref={ref}>
         {renderWebstudioComponentChildren(children)}
       </Component>
     </>
@@ -275,11 +279,7 @@ export const WebstudioComponentDev = forwardRef<
         rootInstanceSelector={instanceSelector}
         instances={instances}
         contentEditable={
-          <ContentEditable
-            {...props}
-            elementRef={instanceElementRef}
-            Component={Component}
-          />
+          <ContentEditable {...props} elementRef={ref} Component={Component} />
         }
         onChange={(instancesList) => {
           store.createTransaction([instancesStore], (instances) => {
