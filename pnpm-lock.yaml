@@ -51,15 +51,15 @@ importers:
       '@floating-ui/dom':
         specifier: ^1.4.5
         version: 1.4.5
-      '@fontsource/inter':
-        specifier: ^4.5.15
-        version: 4.5.15
-      '@fontsource/manrope':
-        specifier: ^4.5.13
-        version: 4.5.13
+      '@fontsource-variable/inter':
+        specifier: ^5.0.7
+        version: 5.0.7
+      '@fontsource-variable/manrope':
+        specifier: ^5.0.7
+        version: 5.0.7
       '@fontsource/roboto-mono':
-        specifier: ^4.5.10
-        version: 4.5.10
+        specifier: ^5.0.7
+        version: 5.0.7
       '@lexical/headless':
         specifier: ^0.11.3
         version: 0.11.3(lexical@0.11.3)
@@ -1488,15 +1488,15 @@ importers:
 
   packages/storybook-config:
     dependencies:
-      '@fontsource/inter':
-        specifier: ^4.5.15
-        version: 4.5.15
-      '@fontsource/manrope':
-        specifier: ^4.5.13
-        version: 4.5.13
+      '@fontsource-variable/inter':
+        specifier: ^5.0.7
+        version: 5.0.7
+      '@fontsource-variable/manrope':
+        specifier: ^5.0.7
+        version: 5.0.7
       '@fontsource/roboto-mono':
-        specifier: ^4.5.10
-        version: 4.5.10
+        specifier: ^5.0.7
+        version: 5.0.7
       '@storybook/addon-essentials':
         specifier: ^7.1.0
         version: 7.1.0(react-dom@18.2.0)(react@18.2.0)
@@ -3776,16 +3776,16 @@ packages:
       react-dom: 18.2.0(react@18.2.0)
     dev: false
 
-  /@fontsource/inter@4.5.15:
-    resolution: {integrity: sha512-FzleM9AxZQK2nqsTDtBiY0PMEVWvnKnuu2i09+p6DHvrHsuucoV2j0tmw+kAT3L4hvsLdAIDv6MdGehsPIdT+Q==}
+  /@fontsource-variable/inter@5.0.7:
+    resolution: {integrity: sha512-aOG0xPnkjV9w5Iw9maGWYyM3P2ivRKCFHkzbSVN2MAmwsMQJP3Dkr6Og1FSHoQBZjGx4SfMWTU72h+dXthND5g==}
     dev: false
 
-  /@fontsource/manrope@4.5.13:
-    resolution: {integrity: sha512-UFN5DMGBp8nFpwhPQXfpSbsEm4OVISqUKQy+rA+pb1zYGoH+OGN1woKEND8VLx+pC7rY3nrPRCJvSuuOaNdW7Q==}
+  /@fontsource-variable/manrope@5.0.7:
+    resolution: {integrity: sha512-oINx3CaHesmOXHTcrKyAKhXCPZC5Lk7ozNJ27iS74uKfgbBXUWhrEYLDPnNB1UrzLg8kui+TqI8VbfeSltzObQ==}
     dev: false
 
-  /@fontsource/roboto-mono@4.5.10:
-    resolution: {integrity: sha512-KrJdmkqz6DszT2wV/bbhXef4r0hV3B0vw2mAqei8A2kRnvq+gcJLmmIeQ94vu9VEXrUQzos5M9lH1TAAXpRphw==}
+  /@fontsource/roboto-mono@5.0.7:
+    resolution: {integrity: sha512-P7VYxIxAGBxqH3ZyWCGi0zKg9kdO6YGu2U3IJKl6rQyRAZ29Y5V1VBY2XocfRaIocGqIaB5t+0P/RBt9alDn4w==}
     dev: false
 
   /@gar/promisify@1.1.3:
