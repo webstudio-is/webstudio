@@ -2,10 +2,6 @@
 // We can't use .displayName until this is merged https://github.com/styleguidist/react-docgen-typescript/pull/449
 
 import * as PopoverPrimitive from "@radix-ui/react-popover";
-import {
-  splitPropsWithWebstudioAttributes,
-  type WebstudioAttributes,
-} from "@webstudio-is/react-sdk";
 
 import {
   forwardRef,
@@ -23,32 +19,15 @@ type BuilderPopoverProps = {
   isOpen: "initial" | "open" | "closed";
 };
 
-/**
- * Popover and PopoverTrigger are HTML-less components.
- * To make them work in our system, we wrap their attributes with a div that has a display: contents property.
- *
- * These divs function like fragments, with all web studio-related attributes attached to them.
- */
-const DisplayContentsStyle = { display: "contents" };
-
 export const Popover = forwardRef<
   ElementRef<"div">,
-  WebstudioAttributes &
-    ComponentPropsWithoutRef<typeof PopoverPrimitive.Root> &
-    BuilderPopoverProps
+  ComponentPropsWithoutRef<typeof PopoverPrimitive.Root> & BuilderPopoverProps
 >(({ open: openProp, isOpen, ...props }, ref) => {
-  const [webstudioAttributes, restProps] =
-    splitPropsWithWebstudioAttributes(props);
-
   const open =
     openProp ??
     (isOpen === "open" ? true : isOpen === "closed" ? false : undefined);
 
-  return (
-    <div ref={ref} style={DisplayContentsStyle} {...webstudioAttributes}>
-      <PopoverPrimitive.Root open={open} {...restProps} />
-    </div>
-  );
+  return <PopoverPrimitive.Root open={open} {...props} />;
 });
 
 /**
@@ -58,19 +37,15 @@ export const Popover = forwardRef<
  * which would prevent us from displaying styles properly in the builder.
  */
 export const PopoverTrigger = forwardRef<
-  ElementRef<"div">,
-  WebstudioAttributes & { children: ReactNode }
+  ElementRef<"button">,
+  { children: ReactNode }
 >(({ children, ...props }, ref) => {
   const firstChild = Children.toArray(children)[0];
-  const [webstudioAttributes, restProps] =
-    splitPropsWithWebstudioAttributes(props);
 
   return (
-    <div ref={ref} style={DisplayContentsStyle} {...webstudioAttributes}>
-      <PopoverPrimitive.Trigger asChild={true} {...restProps}>
-        {firstChild ?? <button>Add button or link</button>}
-      </PopoverPrimitive.Trigger>
-    </div>
+    <PopoverPrimitive.Trigger asChild={true} ref={ref} {...props}>
+      {firstChild ?? <button>Add button or link</button>}
+    </PopoverPrimitive.Trigger>
   );
 });
 

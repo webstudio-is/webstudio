@@ -52,7 +52,7 @@ import { subscribeInstanceSelection } from "./instance-selection";
 import { subscribeInstanceHovering } from "./instance-hovering";
 import { useHashLinkSync } from "~/shared/pages";
 import { useMount } from "~/shared/hook-utils/use-mount";
-import { useSelectedInstance } from "./features/webstudio-component/selected-instance-connector";
+import { useSelectedInstance } from "./instance-selected-react";
 
 registerContainers();
 

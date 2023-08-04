@@ -1,7 +1,7 @@
 import type { Instance } from "@webstudio-is/project-build";
 import { idAttribute, selectorIdAttribute } from "@webstudio-is/react-sdk";
 import type { InstanceSelector } from "./tree-utils";
-import { getIsVisuallyHidden } from "~/canvas/features/webstudio-component/visually-hidden";
+import { getIsVisuallyHidden } from "./visually-hidden";
 
 export const getInstanceIdFromElement = (
   element: Element
