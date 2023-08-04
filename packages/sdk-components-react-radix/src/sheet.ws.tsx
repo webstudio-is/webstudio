@@ -1,5 +1,5 @@
 import {
-  DialogIcon,
+  HamburgerMenuIcon,
   TriggerIcon,
   ContentIcon,
   OverlayIcon,
@@ -14,16 +14,24 @@ import {
 } from "@webstudio-is/react-sdk";
 import * as tc from "./theme/tailwind-classes";
 import {
-  propsDialog,
-  propsDialogContent,
-  propsDialogTrigger,
-  propsDialogOverlay,
-  propsDialogClose,
-  propsDialogTitle,
-  propsDialogDescription,
-} from "./__generated__/dialog.props";
+  propsSheet,
+  propsSheetContent,
+  propsSheetTrigger,
+  propsSheetOverlay,
+  propsSheetClose,
+  propsSheetTitle,
+  propsSheetDescription,
+} from "./__generated__/sheet.props";
+import { div, nav, button, h2, p } from "@webstudio-is/react-sdk/css-normalize";
+import type { SheetContent } from "./sheet";
+import type { ComponentProps } from "react";
 
-import { div, button, h2, p } from "@webstudio-is/react-sdk/css-normalize";
+type ContentTags = NonNullable<ComponentProps<typeof SheetContent>["tag"]>;
+
+const contentPresetStyle = {
+  div,
+  nav,
+} satisfies PresetStyle<ContentTags>;
 
 const presetStyle = {
   div,
@@ -42,84 +50,84 @@ const descriptionPresetStyle = {
 } satisfies PresetStyle<"p">;
 
 // @todo add [data-state] to button and link
-export const metaDialogTrigger: WsComponentMeta = {
+export const metaSheetTrigger: WsComponentMeta = {
   category: "hidden",
-  invalidAncestors: [],
   type: "container",
-  label: "DialogTrigger",
+  label: "SheetTrigger",
   icon: TriggerIcon,
   stylable: false,
   detachable: false,
 };
 
-export const metaDialogContent: WsComponentMeta = {
+export const metaSheetContent: WsComponentMeta = {
   category: "hidden",
-  invalidAncestors: [],
   type: "container",
-  label: "DialogContent",
-  presetStyle,
+  label: "SheetContent",
   icon: ContentIcon,
   detachable: false,
+  presetStyle: contentPresetStyle,
+  states: [
+    { selector: "[data-side=top]", label: "Top Side" },
+    { selector: "[data-side=right]", label: "Right Side" },
+    { selector: "[data-side=bottom]", label: "Bottom Side" },
+    { selector: "[data-side=left]", label: "Left Side" },
+  ],
 };
 
-export const metaDialogOverlay: WsComponentMeta = {
+export const metaSheetOverlay: WsComponentMeta = {
   category: "hidden",
-  invalidAncestors: [],
   type: "container",
-  label: "DialogOverlay",
   presetStyle,
+  label: "SheetOverlay",
   icon: OverlayIcon,
   detachable: false,
 };
 
-export const metaDialogTitle: WsComponentMeta = {
+export const metaSheetTitle: WsComponentMeta = {
   category: "hidden",
-  invalidAncestors: [],
   type: "container",
   presetStyle: titlePresetStyle,
-  label: "DialogTitle",
+  label: "SheetTitle",
   icon: HeadingIcon,
 };
 
-export const metaDialogDescription: WsComponentMeta = {
+export const metaSheetDescription: WsComponentMeta = {
   category: "hidden",
-  invalidAncestors: [],
   type: "container",
   presetStyle: descriptionPresetStyle,
-  label: "DialogDescription",
+  label: "SheetDescription",
   icon: TextIcon,
 };
 
-export const metaDialogClose: WsComponentMeta = {
+export const metaSheetClose: WsComponentMeta = {
   category: "hidden",
-  invalidAncestors: [],
   type: "container",
   presetStyle: buttonPresetStyle,
-  label: "DialogClose",
+  label: "SheetClose",
   icon: ButtonElementIcon,
 };
 
 /**
  * Styles source without animations:
- * https://github.com/shadcn-ui/ui/blob/main/apps/www/registry/default/ui/dialog.tsx
+ * https://github.com/shadcn-ui/ui/blob/main/apps/www/registry/default/ui/sheet.tsx
  *
  * Attributions
  * MIT License
  * Copyright (c) 2023 shadcn
  **/
-export const metaDialog: WsComponentMeta = {
+export const metaSheet: WsComponentMeta = {
   category: "radix",
-  invalidAncestors: [],
+
   type: "container",
-  label: "Dialog",
-  icon: DialogIcon,
+  label: "Sheet",
+  icon: HamburgerMenuIcon,
   order: 15,
   stylable: false,
   template: [
     {
       type: "instance",
-      component: "Dialog",
-      label: "Dialog",
+      component: "Sheet",
+      label: "Sheet",
       dataSources: {
         // We don't have support for boolean or undefined, instead of binding on open we bind on a string
         isOpen: { type: "variable", initialValue: "initial" },
@@ -134,8 +142,7 @@ export const metaDialog: WsComponentMeta = {
       children: [
         {
           type: "instance",
-          component: "DialogTrigger",
-          props: [],
+          component: "SheetTrigger",
           children: [
             {
               type: "instance",
@@ -146,9 +153,8 @@ export const metaDialog: WsComponentMeta = {
         },
         {
           type: "instance",
-          component: "DialogOverlay",
-          label: "Dialog Overlay",
-          props: [],
+          component: "SheetOverlay",
+          label: "Sheet Overlay",
           /**
            * fixed inset-0 z-50 bg-background/80 backdrop-blur-sm
            * flex
@@ -161,13 +167,14 @@ export const metaDialog: WsComponentMeta = {
             tc.backdropBlur("sm"),
             // To allow positioning Content
             tc.flex(),
+            tc.flex("col"),
+            tc.overflow("auto"),
           ].flat(),
           children: [
             {
               type: "instance",
-              component: "DialogContent",
-              label: "Dialog Content",
-              props: [],
+              component: "SheetContent",
+              label: "Sheet Content",
               /**
                * fixed w-full z-50
                * grid gap-4 max-w-lg
@@ -180,27 +187,33 @@ export const metaDialog: WsComponentMeta = {
                 tc.flex(),
                 tc.flex("col"),
                 tc.gap(4),
-                tc.m("auto"),
-                tc.maxW("lg"),
                 tc.border(),
                 tc.bg("background"),
                 tc.p(6),
                 tc.shadow("lg"),
                 tc.relative(),
+                tc.state(
+                  [tc.mr("auto"), tc.maxW("sm"), tc.grow()].flat(),
+                  "[data-side=left]"
+                ),
+                tc.state(
+                  [tc.ml("auto"), tc.maxW("sm"), tc.grow()].flat(),
+                  "[data-side=right]"
+                ),
+                tc.state([tc.mb("auto")].flat(), "[data-side=top]"),
+                tc.state([tc.mt("auto")].flat(), "[data-side=bottom]"),
               ].flat(),
               children: [
                 {
                   type: "instance",
                   component: "Box",
-                  label: "Dialog Header",
-                  props: [],
+                  label: "Sheet Header",
                   styles: [tc.flex(), tc.flex("col"), tc.gap(1)].flat(),
                   children: [
                     {
                       type: "instance",
-                      component: "DialogTitle",
-                      label: "Dialog Title",
-                      props: [],
+                      component: "SheetTitle",
+                      label: "Sheet Title",
                       /**
                        * text-lg leading-none tracking-tight
                        **/
@@ -213,15 +226,14 @@ export const metaDialog: WsComponentMeta = {
                       children: [
                         {
                           type: "text",
-                          value: "Dialog Title",
+                          value: "Sheet Title",
                         },
                       ],
                     },
                     {
                       type: "instance",
-                      component: "DialogDescription",
-                      label: "Dialog Description",
-                      props: [],
+                      component: "SheetDescription",
+                      label: "Sheet Description",
                       /**
                        * text-sm text-muted-foreground
                        **/
@@ -233,7 +245,7 @@ export const metaDialog: WsComponentMeta = {
                       children: [
                         {
                           type: "text",
-                          value: "dialog description text you can edit",
+                          value: "sheet description text you can edit",
                         },
                       ],
                     },
@@ -248,9 +260,8 @@ export const metaDialog: WsComponentMeta = {
 
                 {
                   type: "instance",
-                  component: "DialogClose",
-                  label: "Dialog Close",
-                  props: [],
+                  component: "SheetClose",
+                  label: "Sheet Close",
                   /**
                    * absolute right-4 top-4
                    * rounded-sm opacity-70
@@ -286,36 +297,36 @@ export const metaDialog: WsComponentMeta = {
   ],
 };
 
-export const propsMetaDialog: WsComponentPropsMeta = {
-  props: propsDialog,
+export const propsMetaSheet: WsComponentPropsMeta = {
+  props: propsSheet,
   initialProps: ["isOpen", "modal"],
 };
 
-export const propsMetaDialogTrigger: WsComponentPropsMeta = {
-  props: propsDialogTrigger,
+export const propsMetaSheetTrigger: WsComponentPropsMeta = {
+  props: propsSheetTrigger,
 };
 
-export const propsMetaDialogContent: WsComponentPropsMeta = {
-  props: propsDialogContent,
+export const propsMetaSheetContent: WsComponentPropsMeta = {
+  props: propsSheetContent,
+  initialProps: ["side", "role", "tag"],
+};
+
+export const propsMetaSheetOverlay: WsComponentPropsMeta = {
+  props: propsSheetOverlay,
   initialProps: [],
 };
 
-export const propsMetaDialogOverlay: WsComponentPropsMeta = {
-  props: propsDialogOverlay,
+export const propsMetaSheetClose: WsComponentPropsMeta = {
+  props: propsSheetClose,
   initialProps: [],
 };
 
-export const propsMetaDialogClose: WsComponentPropsMeta = {
-  props: propsDialogClose,
+export const propsMetaSheetTitle: WsComponentPropsMeta = {
+  props: propsSheetTitle,
   initialProps: [],
 };
 
-export const propsMetaDialogTitle: WsComponentPropsMeta = {
-  props: propsDialogTitle,
-  initialProps: [],
-};
-
-export const propsMetaDialogDescription: WsComponentPropsMeta = {
-  props: propsDialogDescription,
+export const propsMetaSheetDescription: WsComponentPropsMeta = {
+  props: propsSheetDescription,
   initialProps: [],
 };

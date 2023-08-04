@@ -22,3 +22,12 @@ export {
   propsMetaTooltipTrigger as TooltipTrigger,
   propsMetaTooltipContent as TooltipContent,
 } from "./tooltip.ws";
+export {
+  propsMetaSheet as Sheet,
+  propsMetaSheetTrigger as SheetTrigger,
+  propsMetaSheetOverlay as SheetOverlay,
+  propsMetaSheetContent as SheetContent,
+  propsMetaSheetClose as SheetClose,
+  propsMetaSheetTitle as SheetTitle,
+  propsMetaSheetDescription as SheetDescription,
+} from "./sheet.ws";
