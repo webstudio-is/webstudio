@@ -32,7 +32,6 @@ import {
   type InstanceSelector,
   areInstanceSelectorsEqual,
 } from "~/shared/tree-utils";
-// import { SelectedInstanceConnector } from "./selected-instance-connector";
 import { handleLinkClick } from "./link";
 import { mergeRefs } from "@react-aria/utils";
 import { composeEventHandlers } from "@radix-ui/primitive";
