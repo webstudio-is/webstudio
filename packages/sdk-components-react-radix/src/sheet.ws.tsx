@@ -143,7 +143,6 @@ export const metaSheet: WsComponentMeta = {
         {
           type: "instance",
           component: "SheetTrigger",
-          props: [],
           children: [
             {
               type: "instance",
@@ -156,7 +155,6 @@ export const metaSheet: WsComponentMeta = {
           type: "instance",
           component: "SheetOverlay",
           label: "Sheet Overlay",
-          props: [],
           /**
            * fixed inset-0 z-50 bg-background/80 backdrop-blur-sm
            * flex
@@ -177,7 +175,6 @@ export const metaSheet: WsComponentMeta = {
               type: "instance",
               component: "SheetContent",
               label: "Sheet Content",
-              props: [],
               /**
                * fixed w-full z-50
                * grid gap-4 max-w-lg
@@ -211,14 +208,12 @@ export const metaSheet: WsComponentMeta = {
                   type: "instance",
                   component: "Box",
                   label: "Sheet Header",
-                  props: [],
                   styles: [tc.flex(), tc.flex("col"), tc.gap(1)].flat(),
                   children: [
                     {
                       type: "instance",
                       component: "SheetTitle",
                       label: "Sheet Title",
-                      props: [],
                       /**
                        * text-lg leading-none tracking-tight
                        **/
@@ -239,7 +234,6 @@ export const metaSheet: WsComponentMeta = {
                       type: "instance",
                       component: "SheetDescription",
                       label: "Sheet Description",
-                      props: [],
                       /**
                        * text-sm text-muted-foreground
                        **/
@@ -268,7 +262,6 @@ export const metaSheet: WsComponentMeta = {
                   type: "instance",
                   component: "SheetClose",
                   label: "Sheet Close",
-                  props: [],
                   /**
                    * absolute right-4 top-4
                    * rounded-sm opacity-70
