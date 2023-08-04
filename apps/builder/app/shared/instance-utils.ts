@@ -39,6 +39,13 @@ import { removeByMutable } from "./array-utils";
 import { isBaseBreakpoint } from "./breakpoints";
 import { getElementByInstanceSelector } from "./dom-utils";
 
+export const getInstanceLabel = (
+  instance: { label?: string },
+  meta: WsComponentMeta
+) => {
+  return instance.label || meta.label;
+};
+
 export const findClosestEditableInstanceSelector = (
   instanceSelector: InstanceSelector,
   instances: Instances,

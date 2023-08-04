@@ -46,7 +46,7 @@ export const metaDialogTrigger: WsComponentMeta = {
   category: "hidden",
   invalidAncestors: [],
   type: "container",
-  label: "DialogTrigger",
+  label: "Dialog Trigger",
   icon: TriggerIcon,
   stylable: false,
   detachable: false,
@@ -56,7 +56,7 @@ export const metaDialogContent: WsComponentMeta = {
   category: "hidden",
   invalidAncestors: [],
   type: "container",
-  label: "DialogContent",
+  label: "Dialog Content",
   presetStyle,
   icon: ContentIcon,
   detachable: false,
@@ -66,7 +66,7 @@ export const metaDialogOverlay: WsComponentMeta = {
   category: "hidden",
   invalidAncestors: [],
   type: "container",
-  label: "DialogOverlay",
+  label: "Dialog Overlay",
   presetStyle,
   icon: OverlayIcon,
   detachable: false,
@@ -77,7 +77,7 @@ export const metaDialogTitle: WsComponentMeta = {
   invalidAncestors: [],
   type: "container",
   presetStyle: titlePresetStyle,
-  label: "DialogTitle",
+  label: "Dialog Title",
   icon: HeadingIcon,
 };
 
@@ -86,7 +86,7 @@ export const metaDialogDescription: WsComponentMeta = {
   invalidAncestors: [],
   type: "container",
   presetStyle: descriptionPresetStyle,
-  label: "DialogDescription",
+  label: "Dialog Description",
   icon: TextIcon,
 };
 
@@ -95,7 +95,7 @@ export const metaDialogClose: WsComponentMeta = {
   invalidAncestors: [],
   type: "container",
   presetStyle: buttonPresetStyle,
-  label: "DialogClose",
+  label: "Dialog Close",
   icon: ButtonElementIcon,
 };
 
@@ -119,7 +119,6 @@ export const metaDialog: WsComponentMeta = {
     {
       type: "instance",
       component: "Dialog",
-      label: "Dialog",
       dataSources: {
         // We don't have support for boolean or undefined, instead of binding on open we bind on a string
         isOpen: { type: "variable", initialValue: "initial" },
@@ -147,7 +146,6 @@ export const metaDialog: WsComponentMeta = {
         {
           type: "instance",
           component: "DialogOverlay",
-          label: "Dialog Overlay",
           props: [],
           /**
            * fixed inset-0 z-50 bg-background/80 backdrop-blur-sm
@@ -166,7 +164,6 @@ export const metaDialog: WsComponentMeta = {
             {
               type: "instance",
               component: "DialogContent",
-              label: "Dialog Content",
               props: [],
               /**
                * fixed w-full z-50
@@ -199,7 +196,6 @@ export const metaDialog: WsComponentMeta = {
                     {
                       type: "instance",
                       component: "DialogTitle",
-                      label: "Dialog Title",
                       props: [],
                       /**
                        * text-lg leading-none tracking-tight
@@ -220,7 +216,6 @@ export const metaDialog: WsComponentMeta = {
                     {
                       type: "instance",
                       component: "DialogDescription",
-                      label: "Dialog Description",
                       props: [],
                       /**
                        * text-sm text-muted-foreground
@@ -249,7 +244,6 @@ export const metaDialog: WsComponentMeta = {
                 {
                   type: "instance",
                   component: "DialogClose",
-                  label: "Dialog Close",
                   props: [],
                   /**
                    * absolute right-4 top-4
