@@ -22,22 +22,36 @@ import {
   propsSheetTitle,
   propsSheetDescription,
 } from "./__generated__/sheet.props";
-
-import { div, nav } from "@webstudio-is/react-sdk/css-normalize";
+import { div, nav, button, h2, p } from "@webstudio-is/react-sdk/css-normalize";
 import type { SheetContent } from "./sheet";
 import type { ComponentProps } from "react";
 
-type BoxTags = NonNullable<ComponentProps<typeof SheetContent>["tag"]>;
+type ContentTags = NonNullable<ComponentProps<typeof SheetContent>["tag"]>;
 
 const contentPresetStyle = {
   div,
   nav,
-} satisfies PresetStyle<BoxTags>;
+} satisfies PresetStyle<ContentTags>;
+
+const presetStyle = {
+  div,
+} satisfies PresetStyle<"div">;
+
+const buttonPresetStyle = {
+  button,
+} satisfies PresetStyle<"button">;
+
+const titlePresetStyle = {
+  h2,
+} satisfies PresetStyle<"h2">;
+
+const descriptionPresetStyle = {
+  p,
+} satisfies PresetStyle<"p">;
 
 // @todo add [data-state] to button and link
 export const metaSheetTrigger: WsComponentMeta = {
   category: "hidden",
-  invalidAncestors: [],
   type: "container",
   label: "SheetTrigger",
   icon: TriggerIcon,
@@ -47,7 +61,6 @@ export const metaSheetTrigger: WsComponentMeta = {
 
 export const metaSheetContent: WsComponentMeta = {
   category: "hidden",
-  invalidAncestors: [],
   type: "container",
   label: "SheetContent",
   icon: ContentIcon,
@@ -63,8 +76,8 @@ export const metaSheetContent: WsComponentMeta = {
 
 export const metaSheetOverlay: WsComponentMeta = {
   category: "hidden",
-  invalidAncestors: [],
   type: "container",
+  presetStyle,
   label: "SheetOverlay",
   icon: OverlayIcon,
   detachable: false,
@@ -72,24 +85,24 @@ export const metaSheetOverlay: WsComponentMeta = {
 
 export const metaSheetTitle: WsComponentMeta = {
   category: "hidden",
-  invalidAncestors: [],
   type: "container",
+  presetStyle: titlePresetStyle,
   label: "SheetTitle",
   icon: HeadingIcon,
 };
 
 export const metaSheetDescription: WsComponentMeta = {
   category: "hidden",
-  invalidAncestors: [],
   type: "container",
+  presetStyle: descriptionPresetStyle,
   label: "SheetDescription",
   icon: TextIcon,
 };
 
 export const metaSheetClose: WsComponentMeta = {
   category: "hidden",
-  invalidAncestors: [],
   type: "container",
+  presetStyle: buttonPresetStyle,
   label: "SheetClose",
   icon: ButtonElementIcon,
 };
@@ -104,7 +117,7 @@ export const metaSheetClose: WsComponentMeta = {
  **/
 export const metaSheet: WsComponentMeta = {
   category: "radix",
-  invalidAncestors: [],
+
   type: "container",
   label: "Sheet",
   icon: HamburgerMenuIcon,

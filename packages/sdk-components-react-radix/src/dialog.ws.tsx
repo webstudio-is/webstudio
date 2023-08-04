@@ -23,7 +23,7 @@ import {
   propsDialogDescription,
 } from "./__generated__/dialog.props";
 
-import { div, button } from "@webstudio-is/react-sdk/css-normalize";
+import { div, button, h2, p } from "@webstudio-is/react-sdk/css-normalize";
 
 const presetStyle = {
   div,
@@ -32,6 +32,14 @@ const presetStyle = {
 const buttonPresetStyle = {
   button,
 } satisfies PresetStyle<"button">;
+
+const titlePresetStyle = {
+  h2,
+} satisfies PresetStyle<"h2">;
+
+const descriptionPresetStyle = {
+  p,
+} satisfies PresetStyle<"p">;
 
 // @todo add [data-state] to button and link
 export const metaDialogTrigger: WsComponentMeta = {
@@ -68,7 +76,7 @@ export const metaDialogTitle: WsComponentMeta = {
   category: "hidden",
   invalidAncestors: [],
   type: "container",
-  presetStyle,
+  presetStyle: titlePresetStyle,
   label: "DialogTitle",
   icon: HeadingIcon,
 };
@@ -77,7 +85,7 @@ export const metaDialogDescription: WsComponentMeta = {
   category: "hidden",
   invalidAncestors: [],
   type: "container",
-  presetStyle,
+  presetStyle: descriptionPresetStyle,
   label: "DialogDescription",
   icon: TextIcon,
 };
