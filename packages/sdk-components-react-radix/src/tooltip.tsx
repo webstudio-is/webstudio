@@ -56,8 +56,14 @@ export const TooltipTrigger = forwardRef<
 export const TooltipContent = forwardRef<
   ElementRef<typeof TooltipPrimitive.Content>,
   ComponentPropsWithoutRef<typeof TooltipPrimitive.Content>
->(({ sideOffset = 4, ...props }, ref) => (
+>(({ sideOffset = 4, hideWhenDetached = true, ...props }, ref) => (
   <TooltipPrimitive.Portal>
-    <TooltipPrimitive.Content ref={ref} sideOffset={sideOffset} {...props} />
+    <TooltipPrimitive.Content
+      ref={ref}
+      // Do not show content if trigger is detached
+      hideWhenDetached={hideWhenDetached}
+      sideOffset={sideOffset}
+      {...props}
+    />
   </TooltipPrimitive.Portal>
 ));

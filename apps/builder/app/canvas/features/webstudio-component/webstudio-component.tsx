@@ -258,9 +258,14 @@ export const WebstudioComponentDev = forwardRef<
     }
   }
 
+  // Do not pass Radix handlers in edit mode
+  const componentProps = isPreviewMode
+    ? { ...restProps, ...props, ...composedHandlers }
+    : props;
+
   const instanceElement = (
     <>
-      <Component {...restProps} {...props} {...composedHandlers} ref={ref}>
+      <Component {...componentProps} ref={ref}>
         {renderWebstudioComponentChildren(children)}
       </Component>
     </>
@@ -279,7 +284,11 @@ export const WebstudioComponentDev = forwardRef<
         rootInstanceSelector={instanceSelector}
         instances={instances}
         contentEditable={
-          <ContentEditable {...props} elementRef={ref} Component={Component} />
+          <ContentEditable
+            {...componentProps}
+            elementRef={ref}
+            Component={Component}
+          />
         }
         onChange={(instancesList) => {
           store.createTransaction([instancesStore], (instances) => {
