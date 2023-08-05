@@ -418,7 +418,12 @@ export const propsPopoverContent: Record<string, PropMeta> = {
   dir: { required: false, control: "text", type: "string" },
   draggable: { required: false, control: "boolean", type: "boolean" },
   hidden: { required: false, control: "boolean", type: "boolean" },
-  hideWhenDetached: { required: false, control: "boolean", type: "boolean" },
+  hideWhenDetached: {
+    required: false,
+    control: "boolean",
+    type: "boolean",
+    defaultValue: true,
+  },
   id: { required: false, control: "text", type: "string" },
   inputMode: {
     description:

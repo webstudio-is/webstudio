@@ -52,13 +52,19 @@ export const PopoverTrigger = forwardRef<
 export const PopoverContent = forwardRef<
   ElementRef<typeof PopoverPrimitive.Content>,
   ComponentPropsWithoutRef<typeof PopoverPrimitive.Content>
->(({ sideOffset = 4, align = "center", ...props }, ref) => (
-  <PopoverPrimitive.Portal>
-    <PopoverPrimitive.Content
-      ref={ref}
-      align="center"
-      sideOffset={sideOffset}
-      {...props}
-    />
-  </PopoverPrimitive.Portal>
-));
+>(
+  (
+    { sideOffset = 4, align = "center", hideWhenDetached = true, ...props },
+    ref
+  ) => (
+    <PopoverPrimitive.Portal>
+      <PopoverPrimitive.Content
+        ref={ref}
+        align="center"
+        sideOffset={sideOffset}
+        hideWhenDetached={hideWhenDetached}
+        {...props}
+      />
+    </PopoverPrimitive.Portal>
+  )
+);
