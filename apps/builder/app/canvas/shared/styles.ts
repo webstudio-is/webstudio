@@ -66,15 +66,15 @@ const helperStyles = [
     box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.7);
   }`,
   // Has no width, will collapse
-  `[${idAttribute}]:where(:not(body)[${collapsedAttribute}="w"]) {
+  `[${idAttribute}]:where(:not(body):not([data-lexical-editor])[${collapsedAttribute}="w"]) {
     padding-right: 50px;
   }`,
   // Has no height, will collapse
-  `[${idAttribute}]:where(:not(body)[${collapsedAttribute}="h"]) {
+  `[${idAttribute}]:where(:not(body):not([data-lexical-editor])[${collapsedAttribute}="h"]) {
     padding-top: 50px;
   }`,
   // Has no width or height, will collapse
-  `[${idAttribute}]:where(:not(body)[${collapsedAttribute}="wh"]) {
+  `[${idAttribute}]:where(:not(body):not([data-lexical-editor])[${collapsedAttribute}="wh"]) {
     padding-right: 50px;
     padding-top: 50px;
   }`,
