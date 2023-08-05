@@ -103,7 +103,7 @@
   "devDependencies": {
     "@jest/globals": "^29.6.2",
     "@remix-run/dev": "^1.19.1",
-    "@storybook/react": "^7.1.0",
+    "@storybook/react": "^7.2.1",
     "@testing-library/react-hooks": "^8.0.1",
     "@types/hyphenate-style-name": "^1.0.0",
     "@types/lodash.debounce": "^4.0.6",

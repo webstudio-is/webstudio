@@ -8,11 +8,11 @@
     "@fontsource-variable/inter": "^5.0.7",
     "@fontsource-variable/manrope": "^5.0.7",
     "@fontsource/roboto-mono": "^5.0.7",
-    "@storybook/addon-essentials": "^7.1.0",
-    "@storybook/addon-links": "^7.1.0",
-    "@storybook/react": "^7.1.0",
-    "@storybook/react-vite": "^7.1.0",
-    "storybook": "^7.1.0",
-    "vite": "^4.4.6"
+    "@storybook/addon-essentials": "^7.2.1",
+    "@storybook/addon-links": "^7.2.1",
+    "@storybook/react": "^7.2.1",
+    "@storybook/react-vite": "^7.2.1",
+    "storybook": "^7.2.1",
+    "vite": "^4.4.8"
   }
 }
