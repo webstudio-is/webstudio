@@ -36,16 +36,16 @@ const getRectForRelativeRect = (
   rel: DOMRect,
   scale: number
 ) => {
-  const normalizedScale = scale / 100;
+  const scaleRatio = scale / 100;
   return {
-    x: parent.x + rel.x * normalizedScale,
-    y: parent.y + rel.y * normalizedScale,
-    width: rel.width * normalizedScale,
-    height: rel.height * normalizedScale,
-    top: parent.top + rel.top * normalizedScale,
-    left: parent.left + rel.left * normalizedScale,
-    bottom: parent.top + rel.bottom * normalizedScale,
-    right: parent.left + rel.right * normalizedScale,
+    x: parent.x + rel.x * scaleRatio,
+    y: parent.y + rel.y * scaleRatio,
+    width: rel.width * scaleRatio,
+    height: rel.height * scaleRatio,
+    top: parent.top + rel.top * scaleRatio,
+    left: parent.left + rel.left * scaleRatio,
+    bottom: parent.top + rel.bottom * scaleRatio,
+    right: parent.left + rel.right * scaleRatio,
   };
 };
 
