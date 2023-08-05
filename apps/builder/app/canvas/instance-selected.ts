@@ -201,14 +201,21 @@ export const subscribeSelectedInstance = (
 
   // detect movement of the element within same parent
   // React prevent remount when key stays the same
+  // `attributes: true` fixes issues with popups after trigger text editing
+  // that cause radix to incorrectly set content in a wrong position at first render
   const mutationObserver = new MutationObserver(update);
 
   const updateObservers = () => {
     for (const element of elements) {
       resizeObserver.observe(element);
+
       const parent = element?.parentElement;
       if (parent) {
-        mutationObserver.observe(parent, { childList: true });
+        mutationObserver.observe(parent, {
+          childList: true,
+          attributes: true,
+          attributeFilter: ["style", "class"],
+        });
       }
     }
   };
