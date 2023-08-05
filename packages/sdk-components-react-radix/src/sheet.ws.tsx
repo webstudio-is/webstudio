@@ -53,7 +53,7 @@ const descriptionPresetStyle = {
 export const metaSheetTrigger: WsComponentMeta = {
   category: "hidden",
   type: "container",
-  label: "SheetTrigger",
+  label: "Sheet Trigger",
   icon: TriggerIcon,
   stylable: false,
   detachable: false,
@@ -62,7 +62,7 @@ export const metaSheetTrigger: WsComponentMeta = {
 export const metaSheetContent: WsComponentMeta = {
   category: "hidden",
   type: "container",
-  label: "SheetContent",
+  label: "Sheet Content",
   icon: ContentIcon,
   detachable: false,
   presetStyle: contentPresetStyle,
@@ -78,7 +78,7 @@ export const metaSheetOverlay: WsComponentMeta = {
   category: "hidden",
   type: "container",
   presetStyle,
-  label: "SheetOverlay",
+  label: "Sheet Overlay",
   icon: OverlayIcon,
   detachable: false,
 };
@@ -87,7 +87,7 @@ export const metaSheetTitle: WsComponentMeta = {
   category: "hidden",
   type: "container",
   presetStyle: titlePresetStyle,
-  label: "SheetTitle",
+  label: "Sheet Title",
   icon: HeadingIcon,
 };
 
@@ -95,7 +95,7 @@ export const metaSheetDescription: WsComponentMeta = {
   category: "hidden",
   type: "container",
   presetStyle: descriptionPresetStyle,
-  label: "SheetDescription",
+  label: "Sheet Description",
   icon: TextIcon,
 };
 
@@ -103,7 +103,7 @@ export const metaSheetClose: WsComponentMeta = {
   category: "hidden",
   type: "container",
   presetStyle: buttonPresetStyle,
-  label: "SheetClose",
+  label: "Sheet Close",
   icon: ButtonElementIcon,
 };
 
@@ -127,7 +127,6 @@ export const metaSheet: WsComponentMeta = {
     {
       type: "instance",
       component: "Sheet",
-      label: "Sheet",
       dataSources: {
         // We don't have support for boolean or undefined, instead of binding on open we bind on a string
         isOpen: { type: "variable", initialValue: "initial" },
@@ -154,7 +153,6 @@ export const metaSheet: WsComponentMeta = {
         {
           type: "instance",
           component: "SheetOverlay",
-          label: "Sheet Overlay",
           /**
            * fixed inset-0 z-50 bg-background/80 backdrop-blur-sm
            * flex
@@ -174,7 +172,6 @@ export const metaSheet: WsComponentMeta = {
             {
               type: "instance",
               component: "SheetContent",
-              label: "Sheet Content",
               /**
                * fixed w-full z-50
                * grid gap-4 max-w-lg
@@ -213,7 +210,6 @@ export const metaSheet: WsComponentMeta = {
                     {
                       type: "instance",
                       component: "SheetTitle",
-                      label: "Sheet Title",
                       /**
                        * text-lg leading-none tracking-tight
                        **/
@@ -233,7 +229,6 @@ export const metaSheet: WsComponentMeta = {
                     {
                       type: "instance",
                       component: "SheetDescription",
-                      label: "Sheet Description",
                       /**
                        * text-sm text-muted-foreground
                        **/
@@ -261,7 +256,6 @@ export const metaSheet: WsComponentMeta = {
                 {
                   type: "instance",
                   component: "SheetClose",
-                  label: "Sheet Close",
                   /**
                    * absolute right-4 top-4
                    * rounded-sm opacity-70

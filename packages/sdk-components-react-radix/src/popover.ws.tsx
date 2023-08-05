@@ -21,7 +21,7 @@ export const metaPopoverTrigger: WsComponentMeta = {
   category: "hidden",
   invalidAncestors: [],
   type: "container",
-  label: "PopoverTrigger",
+  label: "Popover Trigger",
   icon: TriggerIcon,
   stylable: false,
   detachable: false,
@@ -32,7 +32,7 @@ export const metaPopoverContent: WsComponentMeta = {
   invalidAncestors: [],
   type: "container",
   presetStyle,
-  label: "PopoverContent",
+  label: "Popover Content",
   icon: ContentIcon,
   detachable: false,
 };
@@ -57,7 +57,6 @@ export const metaPopover: WsComponentMeta = {
     {
       type: "instance",
       component: "Popover",
-      label: "Popover",
       dataSources: {
         // We don't have support for boolean or undefined, instead of binding on open we bind on a string
         isOpen: { type: "variable", initialValue: "initial" },
@@ -85,7 +84,6 @@ export const metaPopover: WsComponentMeta = {
         {
           type: "instance",
           component: "PopoverContent",
-          label: "Popover Content",
           props: [],
           /**
            *  z-50 w-72 rounded-md border bg-popover p-4 text-popover-foreground shadow-md outline-none

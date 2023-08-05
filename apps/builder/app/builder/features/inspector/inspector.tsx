@@ -26,7 +26,7 @@ import {
 import { NavigatorTree } from "~/builder/shared/navigator-tree";
 import type { Settings } from "~/builder/shared/client-settings";
 import { MetaIcon } from "~/builder/shared/meta-icon";
-import { getInstanceLabel } from "~/builder/shared/tree";
+import { getInstanceLabel } from "~/shared/instance-utils";
 
 const InstanceInfo = ({ instance }: { instance: Instance }) => {
   const metas = useStore(registeredComponentMetasStore);
