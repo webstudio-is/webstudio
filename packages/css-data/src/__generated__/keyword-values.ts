@@ -2,6 +2,19 @@
 export const keywordValues = {
   WebkitFontSmoothing: ["auto", "none", "antialiased", "subpixel-antialiased"],
   MozOsxFontSmoothing: ["auto", "grayscale"],
+  listStyleType: [
+    "disc",
+    "circle",
+    "square",
+    "decimal",
+    "georgian",
+    "trad-chinese-informal",
+    "kannada",
+    "none",
+    "initial",
+    "inherit",
+    "unset",
+  ],
   accentColor: [
     "auto",
     "transparent",
@@ -2877,7 +2890,6 @@ export const keywordValues = {
     "inherit",
     "unset",
   ],
-  printColorAdjust: ["economy", "exact", "initial", "inherit", "unset"],
   colorScheme: [
     "normal",
     "light",
@@ -3080,6 +3092,15 @@ export const keywordValues = {
   containIntrinsicHeight: ["none", "auto", "initial", "inherit", "unset"],
   containIntrinsicInlineSize: ["none", "auto", "initial", "inherit", "unset"],
   containIntrinsicWidth: ["none", "auto", "initial", "inherit", "unset"],
+  containerName: ["none", "initial", "inherit", "unset"],
+  containerType: [
+    "normal",
+    "size",
+    "inline-size",
+    "initial",
+    "inherit",
+    "unset",
+  ],
   content: [
     "normal",
     "none",
@@ -3227,6 +3248,7 @@ export const keywordValues = {
   fontKerning: ["auto", "normal", "none", "initial", "inherit", "unset"],
   fontLanguageOverride: ["normal", "initial", "inherit", "unset"],
   fontOpticalSizing: ["auto", "none", "initial", "inherit", "unset"],
+  fontPalette: ["normal", "light", "dark", "initial", "inherit", "unset"],
   fontVariationSettings: ["normal", "initial", "inherit", "unset"],
   fontSize: [
     "xx-small",
@@ -3352,6 +3374,15 @@ export const keywordValues = {
     "inherit",
     "unset",
   ],
+  fontVariantEmoji: [
+    "normal",
+    "text",
+    "emoji",
+    "unicode",
+    "initial",
+    "inherit",
+    "unset",
+  ],
   fontVariantLigatures: [
     "normal",
     "none",
@@ -3461,6 +3492,7 @@ export const keywordValues = {
     "unset",
   ],
   hyphenateCharacter: ["auto", "initial", "inherit", "unset"],
+  hyphenateLimitChars: ["auto", "initial", "inherit", "unset"],
   hyphens: ["none", "manual", "auto", "initial", "inherit", "unset"],
   imageOrientation: ["from-image", "flip", "initial", "inherit", "unset"],
   imageRendering: [
@@ -3596,7 +3628,6 @@ export const keywordValues = {
   lineHeightStep: ["initial", "inherit", "unset"],
   listStyleImage: ["none", "initial", "inherit", "unset"],
   listStylePosition: ["inside", "outside", "initial", "inherit", "unset"],
-  listStyleType: ["none", "initial", "inherit", "unset"],
   marginBlockEnd: ["auto", "initial", "inherit", "unset"],
   marginBlockStart: ["auto", "initial", "inherit", "unset"],
   marginBottom: ["auto", "initial", "inherit", "unset"],
@@ -4142,6 +4173,7 @@ export const keywordValues = {
   paddingLeft: ["initial", "inherit", "unset"],
   paddingRight: ["initial", "inherit", "unset"],
   paddingTop: ["initial", "inherit", "unset"],
+  page: ["auto", "initial", "inherit", "unset"],
   pageBreakAfter: [
     "auto",
     "always",
@@ -4212,6 +4244,7 @@ export const keywordValues = {
     "inherit",
     "unset",
   ],
+  printColorAdjust: ["economy", "exact", "initial", "inherit", "unset"],
   quotes: ["none", "auto", "initial", "inherit", "unset"],
   resize: [
     "none",
@@ -5164,6 +5197,7 @@ export const keywordValues = {
     "inherit",
     "unset",
   ],
+  viewTransitionName: ["none", "initial", "inherit", "unset"],
   visibility: ["visible", "hidden", "collapse", "initial", "inherit", "unset"],
   whiteSpace: [
     "normal",

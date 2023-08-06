@@ -363,7 +363,8 @@ const keywordValues = (() => {
     }
 
     if (keywords.size !== 0) {
-      result[camelCase(property)] = Array.from(keywords);
+      const key = camelCase(property);
+      result[key] = [...(result[key] ?? []), ...Array.from(keywords)];
     }
   }
 

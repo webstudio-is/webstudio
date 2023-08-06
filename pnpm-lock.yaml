@@ -495,8 +495,8 @@ importers:
         specifier: ^29.6.2
         version: 29.6.2(@types/node@18.13.0)
       mdn-data:
-        specifier: 2.0.30
-        version: 2.0.30
+        specifier: 2.0.32
+        version: 2.0.32
       tsx:
         specifier: ^3.12.6
         version: 3.12.6
@@ -12187,6 +12187,10 @@ packages:
 
   /mdn-data@2.0.30:
     resolution: {integrity: sha512-GaqWWShW4kv/G9IEucWScBx9G1/vsFZZJUO+tD26M8J8z3Kw5RDQjaoZe03YAClgeS/SWPOcb4nkFBTEi5DUEA==}
+
+  /mdn-data@2.0.32:
+    resolution: {integrity: sha512-dGzrfhOPm47P8qlChU77TGlCEcFNOCDAhCbHP53LST3FR5jSB5JSHaPjyYW2uFd2CV6D6z4tzCGW09pTxSn0aA==}
+    dev: true
 
   /mdurl@1.0.1:
     resolution: {integrity: sha512-/sKlQJCBYVY9Ers9hqzKou4H6V5UWc/M59TH2dvkt+84itfnq7uFOMLpOiOS4ujvHP4etln18fmIxA5R5fll0g==}
