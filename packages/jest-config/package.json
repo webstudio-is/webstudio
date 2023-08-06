@@ -4,7 +4,7 @@
   "license": "AGPL-3.0-or-later",
   "dependencies": {
     "@jest/types": "^29.6.1",
-    "esbuild": "^0.18.16",
+    "esbuild": "^0.18.17",
     "jest": "^29.6.2"
   }
 }
