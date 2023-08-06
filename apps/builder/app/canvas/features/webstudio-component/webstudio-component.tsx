@@ -5,6 +5,7 @@ import {
   forwardRef,
   type ForwardedRef,
   useRef,
+  useLayoutEffect,
 } from "react";
 import { Suspense, lazy } from "react";
 import { useStore } from "@nanostores/react";
@@ -42,6 +43,7 @@ import { handleLinkClick } from "./link";
 import { mergeRefs } from "@react-aria/utils";
 import { composeEventHandlers } from "@radix-ui/primitive";
 import { setDataCollapsed } from "~/canvas/collapsed";
+import { getIsVisuallyHidden } from "~/shared/visually-hidden";
 
 const TextEditor = lazy(() => import("../text-editor"));
 
@@ -56,10 +58,17 @@ const ContentEditable = ({
 
   const ref = useRef<HTMLElement>(null);
 
-  useEffect(() => {
+  /**
+   * useLayoutEffect to be sure that editor plugins on useEffect would have access to rootElement
+   */
+  useLayoutEffect(() => {
     let rootElement = ref.current;
 
     if (rootElement == null) {
+      return;
+    }
+
+    if (getIsVisuallyHidden(rootElement)) {
       return;
     }
 
