@@ -14,7 +14,7 @@
     "checks": "tsc --noEmit --emitDeclarationOnly false"
   },
   "dependencies": {
-    "esbuild": "^0.18.17",
+    "esbuild": "^0.18.18",
     "totalist": "^3.0.1"
   },
   "devDependencies": {
