@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useRef } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import {
   type RangeSelection,
   type TextNode,
@@ -91,14 +91,14 @@ const getSelectionClienRect = () => {
   return domRange.getBoundingClientRect();
 };
 
-export const ToolbarConnectorPlugin = ({
+const ToolbarConnectorPluginInternal = ({
   onSelectNode,
 }: {
   onSelectNode: (nodeKey: string) => void;
 }) => {
   const [editor] = useLexicalComposerContext();
-  const isMouseDownRef = useRef(false);
 
+  const isMouseDownRef = useRef(false);
   // control toolbar state on data or selection updates
   const updateToolbar = useCallback(() => {
     const selection = $getSelection();
@@ -274,4 +274,33 @@ export const ToolbarConnectorPlugin = ({
   });
 
   return null;
+};
+
+export const ToolbarConnectorPlugin = ({
+  onSelectNode,
+}: {
+  onSelectNode: (nodeKey: string) => void;
+}) => {
+  const [editor] = useLexicalComposerContext();
+  const [hasRootElement, setHasRootElement] = useState(false);
+
+  useEffect(() => {
+    const rootElement = editor.getRootElement();
+
+    /**
+     * We don't set root element for VisuallyHidden nodes
+     * and need to prevent Toolbar events in this case
+     */
+    if (rootElement === null) {
+      return;
+    }
+
+    setHasRootElement(true);
+  }, [editor]);
+
+  if (hasRootElement === false) {
+    return null;
+  }
+
+  return <ToolbarConnectorPluginInternal onSelectNode={onSelectNode} />;
 };
