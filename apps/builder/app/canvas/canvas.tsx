@@ -235,10 +235,14 @@ export const Canvas = ({ params }: CanvasProps): JSX.Element | null => {
   return (
     <>
       <GlobalStyles params={params} />
+      {elements}
+      {
+        // Call hooks after render to ensure effects are last.
+        // Helps improve outline calculations as all styles are then applied.
+      }
       {isPreviewMode === false && handshaken === true && (
         <DesignMode params={params} />
       )}
-      {elements}
     </>
   );
 };

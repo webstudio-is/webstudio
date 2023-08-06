@@ -16,7 +16,6 @@ import {
   Instances,
 } from "@webstudio-is/project-build";
 import {
-  type AnyComponent,
   type Components,
   renderWebstudioComponentChildren,
   idAttribute,
@@ -47,14 +46,15 @@ import { setDataCollapsed } from "~/canvas/collapsed";
 const TextEditor = lazy(() => import("../text-editor"));
 
 const ContentEditable = ({
-  Component,
-  elementRef,
-  ...props
+  renderComponentWithRef,
 }: {
-  Component: AnyComponent;
-  elementRef: ForwardedRef<HTMLElement>;
-  [idAttribute]: Instance["id"];
-  [componentAttribute]: Instance["component"];
+  // Component: AnyComponent;
+  // elementRef: ForwardedRef<HTMLElement>;
+  // [idAttribute]: Instance["id"];
+  // [componentAttribute]: Instance["component"];
+  renderComponentWithRef: (
+    elementRef: ForwardedRef<HTMLElement>
+  ) => JSX.Element;
 }) => {
   const [editor] = useLexicalComposerContext();
 
@@ -80,7 +80,7 @@ const ContentEditable = ({
     editor.setRootElement(rootElement);
   }, [editor]);
 
-  return <Component ref={mergeRefs(ref, elementRef)} {...props} />;
+  return renderComponentWithRef(ref);
 };
 
 // this utility is temporary solution to compute instance selectors
@@ -175,6 +175,15 @@ export const WebstudioComponentDev = forwardRef<
   const { [showAttribute]: show = true, ...userProps } = instanceProps;
 
   const isPreviewMode = useStore(isPreviewModeStore);
+
+  /**
+   * Prevents edited element from having a size of 0 on the first render.
+   * Directly using `renderWebstudioComponentChildren(children)` in Text Edit
+   * conflicts with React due to lexical node changes.
+   */
+  const initialContentEditableContent = useRef(
+    renderWebstudioComponentChildren(children)
+  );
 
   useCollapsedOnNewElement(instanceId);
 
@@ -275,6 +284,8 @@ export const WebstudioComponentDev = forwardRef<
     areInstanceSelectorsEqual(textEditingInstanceSelector, instanceSelector) ===
     false
   ) {
+    initialContentEditableContent.current =
+      renderWebstudioComponentChildren(children);
     return instanceElement;
   }
 
@@ -285,9 +296,11 @@ export const WebstudioComponentDev = forwardRef<
         instances={instances}
         contentEditable={
           <ContentEditable
-            {...componentProps}
-            elementRef={ref}
-            Component={Component}
+            renderComponentWithRef={(elementRef) => (
+              <Component {...componentProps} ref={mergeRefs(ref, elementRef)}>
+                {initialContentEditableContent.current}
+              </Component>
+            )}
           />
         }
         onChange={(instancesList) => {

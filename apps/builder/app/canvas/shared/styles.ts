@@ -66,6 +66,7 @@ const helperStyles = [
     box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.7);
   }`,
   // Has no width, will collapse
+  // Avoid uncollapsing the element being edited using `:not([data-lexical-editor])`.
   `[${idAttribute}]:where(:not(body):not([data-lexical-editor])[${collapsedAttribute}="w"]) {
     padding-right: 50px;
   }`,
