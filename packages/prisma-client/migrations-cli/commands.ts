@@ -141,8 +141,8 @@ const isNoopSql = (sqlScript: string) => {
   );
 };
 
-const ensureNoChangesInPrismaSchema = () => {
-  const sqlScript = prismaMigrations.cliDiff();
+const ensureNoChangesInPrismaSchema = async () => {
+  const sqlScript = await prismaMigrations.cliDiff();
   if (isNoopSql(sqlScript ?? "") === false) {
     throw new UserError(
       "There are changes in schema.prisma. Please create a schema migration first."
@@ -159,7 +159,7 @@ export const createSchema = async ({ name }: { name: string }) => {
   // We need the database to be up to date before we can do a diff.
   ensureNoPending(status);
 
-  const sqlScript = prismaMigrations.cliDiff();
+  const sqlScript = await prismaMigrations.cliDiff();
 
   if (isNoopSql(sqlScript ?? "")) {
     logger.info("No changes to apply");
@@ -186,7 +186,7 @@ export const createData = async ({ name }: { name: string }) => {
 
   ensureNoFailed(status);
   ensureNoPending(status);
-  ensureNoChangesInPrismaSchema();
+  await ensureNoChangesInPrismaSchema();
 
   const migrationName = prismaMigrations.generateMigrationName(name);
 
@@ -216,7 +216,7 @@ ${schemaContent}`;
   writeFile(schemaFilePath, schemaContent);
   logger.info(`Created: ${schemaFilePath}`);
 
-  prismaMigrations.generateMigrationClient(migrationName);
+  await prismaMigrations.generateMigrationClient(migrationName);
   logger.info(
     `Created: ${path.join(
       prismaMigrations.migrationsDir,
