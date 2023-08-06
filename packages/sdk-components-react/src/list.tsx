@@ -4,29 +4,36 @@ import {
   type ElementRef,
   type ComponentProps,
 } from "react";
-import type { keywordValues } from "@webstudio-is/css-data";
 
 const unorderedTag = "ul";
 const orderedTag = "ol";
 
 export type ListTag = typeof unorderedTag | typeof orderedTag;
 
-type ListStyleType = (typeof keywordValues)["listStyleType"];
+export const listStyleTypes = [
+  "disc",
+  "circle",
+  "square",
+  "decimal",
+  "georgian",
+  "trad-chinese-informal",
+  "kannada",
+] as const;
 
 type Props = ComponentProps<typeof unorderedTag> &
   ComponentProps<typeof orderedTag> & {
     ordered?: boolean;
-    listStyleType?: ListStyleType;
+    listStyleType?: (typeof listStyleTypes)[number];
   };
 
 export const List = forwardRef<
   ElementRef<typeof unorderedTag | typeof orderedTag>,
   Props
->(({ ordered = false, listStyleType = "disk", ...props }, ref) => {
+>(({ ordered = false, listStyleType = "disc", ...props }, ref) => {
   const tag = ordered ? orderedTag : unorderedTag;
   return createElement(tag, {
     ...props,
-    ["data-style-type"]: listStyleType,
+    ["data-list-style-type"]: listStyleType,
     ref,
   });
 });

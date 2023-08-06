@@ -23,7 +23,7 @@ export const props: Record<string, PropMeta> = {
     required: false,
     control: "select",
     type: "string",
-    options: ["list", "none", "both", "inline"],
+    options: ["list", "none", "inline", "both"],
   },
   "aria-braillelabel": {
     description:
@@ -123,7 +123,7 @@ export const props: Record<string, PropMeta> = {
     required: false,
     control: "select",
     type: "string",
-    options: ["link", "none", "copy", "move", "execute", "popup"],
+    options: ["link", "none", "copy", "execute", "move", "popup"],
   },
   "aria-errormessage": {
     description:
@@ -281,10 +281,10 @@ export const props: Record<string, PropMeta> = {
     type: "string",
     options: [
       "text",
-      "all",
       "additions",
       "additions removals",
       "additions text",
+      "all",
       "removals",
       "removals additions",
       "removals text",
@@ -403,6 +403,7 @@ export const props: Record<string, PropMeta> = {
     control: "select",
     type: "string",
     options: [
+      "decimal",
       "search",
       "text",
       "none",
@@ -410,7 +411,6 @@ export const props: Record<string, PropMeta> = {
       "url",
       "email",
       "numeric",
-      "decimal",
     ],
   },
   is: {
@@ -426,6 +426,21 @@ export const props: Record<string, PropMeta> = {
   itemScope: { required: false, control: "boolean", type: "boolean" },
   itemType: { required: false, control: "text", type: "string" },
   lang: { required: false, control: "text", type: "string" },
+  listStyleType: {
+    required: false,
+    control: "select",
+    type: "string",
+    defaultValue: "disc",
+    options: [
+      "disc",
+      "circle",
+      "square",
+      "decimal",
+      "georgian",
+      "trad-chinese-informal",
+      "kannada",
+    ],
+  },
   nonce: { required: false, control: "text", type: "string" },
   ordered: {
     required: false,

@@ -26,7 +26,11 @@ export const componentCategories = [
   "hidden",
 ] as const;
 
-export const stateCategories = ["states", "component-states"] as const;
+export const stateCategories = [
+  "states",
+  "component-states",
+  "component-states-more",
+] as const;
 
 export const ComponentState = z.object({
   category: z.enum(stateCategories).optional(),
