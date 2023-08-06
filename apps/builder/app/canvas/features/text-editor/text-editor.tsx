@@ -49,8 +49,15 @@ const AutofocusPlugin = () => {
   const [editor] = useLexicalComposerContext();
 
   useEffect(() => {
+    const rootElement = editor.getRootElement();
+
+    if (rootElement === null) {
+      return;
+    }
+
     editor.focus();
-  }, [editor]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   return null;
 };

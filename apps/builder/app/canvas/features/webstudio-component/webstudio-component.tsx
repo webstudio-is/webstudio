@@ -5,6 +5,7 @@ import {
   forwardRef,
   type ForwardedRef,
   useRef,
+  useLayoutEffect,
 } from "react";
 import { Suspense, lazy } from "react";
 import { useStore } from "@nanostores/react";
@@ -16,7 +17,6 @@ import {
   Instances,
 } from "@webstudio-is/project-build";
 import {
-  type AnyComponent,
   type Components,
   renderWebstudioComponentChildren,
   idAttribute,
@@ -43,27 +43,32 @@ import { handleLinkClick } from "./link";
 import { mergeRefs } from "@react-aria/utils";
 import { composeEventHandlers } from "@radix-ui/primitive";
 import { setDataCollapsed } from "~/canvas/collapsed";
+import { getIsVisuallyHidden } from "~/shared/visually-hidden";
 
 const TextEditor = lazy(() => import("../text-editor"));
 
 const ContentEditable = ({
-  Component,
-  elementRef,
-  ...props
+  renderComponentWithRef,
 }: {
-  Component: AnyComponent;
-  elementRef: ForwardedRef<HTMLElement>;
-  [idAttribute]: Instance["id"];
-  [componentAttribute]: Instance["component"];
+  renderComponentWithRef: (
+    elementRef: ForwardedRef<HTMLElement>
+  ) => JSX.Element;
 }) => {
   const [editor] = useLexicalComposerContext();
 
   const ref = useRef<HTMLElement>(null);
 
-  useEffect(() => {
+  /**
+   * useLayoutEffect to be sure that editor plugins on useEffect would have access to rootElement
+   */
+  useLayoutEffect(() => {
     let rootElement = ref.current;
 
     if (rootElement == null) {
+      return;
+    }
+
+    if (getIsVisuallyHidden(rootElement)) {
       return;
     }
 
@@ -80,7 +85,7 @@ const ContentEditable = ({
     editor.setRootElement(rootElement);
   }, [editor]);
 
-  return <Component ref={mergeRefs(ref, elementRef)} {...props} />;
+  return renderComponentWithRef(ref);
 };
 
 // this utility is temporary solution to compute instance selectors
@@ -175,6 +180,15 @@ export const WebstudioComponentDev = forwardRef<
   const { [showAttribute]: show = true, ...userProps } = instanceProps;
 
   const isPreviewMode = useStore(isPreviewModeStore);
+
+  /**
+   * Prevents edited element from having a size of 0 on the first render.
+   * Directly using `renderWebstudioComponentChildren(children)` in Text Edit
+   * conflicts with React due to lexical node changes.
+   */
+  const initialContentEditableContent = useRef(
+    renderWebstudioComponentChildren(children)
+  );
 
   useCollapsedOnNewElement(instanceId);
 
@@ -275,6 +289,8 @@ export const WebstudioComponentDev = forwardRef<
     areInstanceSelectorsEqual(textEditingInstanceSelector, instanceSelector) ===
     false
   ) {
+    initialContentEditableContent.current =
+      renderWebstudioComponentChildren(children);
     return instanceElement;
   }
 
@@ -285,9 +301,11 @@ export const WebstudioComponentDev = forwardRef<
         instances={instances}
         contentEditable={
           <ContentEditable
-            {...componentProps}
-            elementRef={ref}
-            Component={Component}
+            renderComponentWithRef={(elementRef) => (
+              <Component {...componentProps} ref={mergeRefs(ref, elementRef)}>
+                {initialContentEditableContent.current}
+              </Component>
+            )}
           />
         }
         onChange={(instancesList) => {
