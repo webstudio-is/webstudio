@@ -8,8 +8,6 @@ import {
   $createLineBreakNode,
   $getSelection,
   $isRangeSelection,
-  $createRangeSelection,
-  $setSelection,
 } from "lexical";
 import { LinkNode } from "@lexical/link";
 import { LexicalComposer } from "@lexical/react/LexicalComposer";
