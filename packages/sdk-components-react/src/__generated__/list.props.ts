@@ -23,7 +23,7 @@ export const props: Record<string, PropMeta> = {
     required: false,
     control: "select",
     type: "string",
-    options: ["list", "none", "inline", "both"],
+    options: ["list", "none", "both", "inline"],
   },
   "aria-braillelabel": {
     description:
@@ -123,7 +123,7 @@ export const props: Record<string, PropMeta> = {
     required: false,
     control: "select",
     type: "string",
-    options: ["link", "none", "copy", "execute", "move", "popup"],
+    options: ["link", "none", "copy", "move", "execute", "popup"],
   },
   "aria-errormessage": {
     description:
@@ -281,10 +281,10 @@ export const props: Record<string, PropMeta> = {
     type: "string",
     options: [
       "text",
+      "all",
       "additions",
       "additions removals",
       "additions text",
-      "all",
       "removals",
       "removals additions",
       "removals text",

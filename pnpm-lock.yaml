@@ -1277,6 +1277,9 @@ importers:
       '@react-aria/utils':
         specifier: ^3.18.0
         version: 3.18.0(react@18.2.0)
+      '@webstudio-is/css-data':
+        specifier: workspace:^
+        version: link:../css-data
       '@webstudio-is/css-vars':
         specifier: workspace:^
         version: link:../css-vars

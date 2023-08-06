@@ -48,6 +48,7 @@
   },
   "dependencies": {
     "@react-aria/utils": "^3.18.0",
+    "@webstudio-is/css-data": "workspace:^",
     "@webstudio-is/css-vars": "workspace:^",
     "@webstudio-is/generate-arg-types": "workspace:^",
     "@webstudio-is/icons": "workspace:^",
