@@ -66,7 +66,12 @@ const helperStyles = [
     box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.7);
   }`,
   // Has no width, will collapse
-  // Avoid uncollapsing the element being edited using `:not([data-lexical-editor])`.
+  // Ensure the TextEditor element doesn't uncollapse unintentionally:
+  // 1. Some TextEditor elements might appear empty for a few cycles after creation. (depends on existance of initial child)
+  // 2. If detected as empty, the collapsing algorithm could wrongly uncollapse them.
+  // 3. We prevent this by excluding elements with `data-lexical-editor`.
+  // 4. This rule is used here and not in collapsing detection because `data-lexical-editor` might not be set instantly.
+  //    Mistakes in collapsing will be corrected in the next cycle.
   `[${idAttribute}]:where(:not(body):not([data-lexical-editor])[${collapsedAttribute}="w"]) {
     padding-right: 50px;
   }`,
