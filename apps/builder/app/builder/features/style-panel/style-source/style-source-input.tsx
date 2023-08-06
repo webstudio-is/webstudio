@@ -330,6 +330,10 @@ const renderMenuItems = (props: {
       )}
 
       {stateCategories.map((currentCategory) => {
+        if (currentCategory === "component-states-more") {
+          // @todo implement the sumenu for more states because we are trying to keep the menu short
+          return;
+        }
         const categoryStates = props.states.filter(
           ({ category }) => (category ?? "states") === currentCategory
         );
