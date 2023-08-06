@@ -48,10 +48,6 @@ const TextEditor = lazy(() => import("../text-editor"));
 const ContentEditable = ({
   renderComponentWithRef,
 }: {
-  // Component: AnyComponent;
-  // elementRef: ForwardedRef<HTMLElement>;
-  // [idAttribute]: Instance["id"];
-  // [componentAttribute]: Instance["component"];
   renderComponentWithRef: (
     elementRef: ForwardedRef<HTMLElement>
   ) => JSX.Element;
