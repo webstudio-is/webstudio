@@ -156,7 +156,11 @@ const clone = async (
     });
 
     await cloneBuild(
-      { projectId: newProjectId, deployment: undefined },
+      {
+        fromProjectId: project.id,
+        toProjectId: newProjectId,
+        deployment: undefined,
+      },
       context,
       client
     );
