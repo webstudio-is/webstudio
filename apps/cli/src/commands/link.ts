@@ -1,8 +1,14 @@
-import { stdin as input, stdout as output, exit } from "node:process";
+import { stdin as input, stdout as output, cwd } from "node:process";
+import { join } from "node:path";
 import * as readline from "node:readline/promises";
 import { readFile, writeFile } from "node:fs/promises";
-import { GLOBAL_CONFIG_FILE } from "../constants";
+import {
+  GLOBAL_CONFIG_FILE,
+  LOCAL_CONFIG_FILE_NAME,
+  PROJECT_NAME,
+} from "../constants";
 import type { Command } from "../args";
+import { ensureFileInPath } from "../fs-utils";
 
 export const link: Command = async () => {
   const rl = readline.createInterface({ input, output });
@@ -36,6 +42,11 @@ export const link: Command = async () => {
     console.info(`Saved credentials for project ${projectId}.
   You can find your config at ${GLOBAL_CONFIG_FILE}
         `);
+
+    await ensureFileInPath(
+      join(cwd(), PROJECT_NAME, LOCAL_CONFIG_FILE_NAME),
+      JSON.stringify({ projectId }, null, 2)
+    );
   } catch (error) {
     if (error.code === "ENONET") {
       throw new Error(`Global config file is not found`);

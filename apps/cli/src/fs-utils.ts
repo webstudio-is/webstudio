@@ -40,10 +40,10 @@ export const deleteFolderIfExists = async (generatedDir: string) => {
   }
 };
 
-export const loadGlobalConfigFile = async (): Promise<GlobalConfig | null> => {
+export const loadJSONFile = async <T>(filePath: string): Promise<T | null> => {
   try {
-    const content = await readFile(GLOBAL_CONFIG_FILE, "utf8");
-    return JSON.parse(content);
+    const content = await readFile(filePath, "utf8");
+    return JSON.parse(content) as T;
   } catch (error) {
     return null;
   }

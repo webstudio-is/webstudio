@@ -1,5 +1,5 @@
 import { parseArgs } from "node:util";
-import { exit } from "node:process";
+import { exit, argv } from "node:process";
 import { GLOBAL_CONFIG_FILE } from "./constants";
 import { ensureFileInPath } from "./fs-utils";
 import { link } from "./commands/link";
@@ -16,28 +16,30 @@ const commands: SupportedCommands = {
 export const main = async () => {
   try {
     await ensureFileInPath(GLOBAL_CONFIG_FILE, "{}");
+
     const args = parseArgs({
-      args: process.argv.slice(2),
+      args: argv.slice(2),
       options: CLI_ARGS_OPTIONS,
       allowPositionals: true,
     });
 
     if (args.values?.version) {
       console.info(packageJSON.version);
-      return;
+      exit(0);
     }
 
     if (args.values?.help) {
       showHelp();
-      return;
+      exit(0);
     }
 
-    const command = commands[args.positionals[0] as Commands];
+    const commandId = argv[2];
+    const command = commands[commandId];
     if (command === undefined) {
       throw new Error(`No command provided`);
     }
 
-    await command(args);
+    await command({ ...args, positionals: args.positionals.slice(1) });
     exit(0);
   } catch (error) {
     console.error(error);

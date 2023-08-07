@@ -5,19 +5,17 @@ export const showHelp = () =>
   console.info(
     stripIndent(`
 Usage:
-  $ webstudio commands [flags...] \n
+  $ webstudio commands [flags...]
+
 Commands:
-  link <shared link> \t Login to Webstudio with shared link \n
-Flags:
+  link       Link to an existing webstudio project
+  sync       Sync the linked webstudio project with the latest build
+
+  Flags:
   --help     -h     Show this help message
   --version  -v     Show the version of this script
 `)
   );
-
-export enum Commands {
-  "link" = "link",
-  "sync" = "sync",
-}
 
 type DefaultArgs = Pick<
   ReturnType<
@@ -28,10 +26,15 @@ type DefaultArgs = Pick<
   "values"
 >;
 
+type Commands = "link" | "sync";
+
 export type Command = (
   args: DefaultArgs & { positionals: string[] }
 ) => Promise<void>;
-export type SupportedCommands = Record<Commands, Command>;
+
+export type SupportedCommands = {
+  [key in Commands]: Command;
+} & { [key: string]: Command };
 
 export const CLI_ARGS_OPTIONS = {
   version: {
