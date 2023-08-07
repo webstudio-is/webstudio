@@ -8,11 +8,13 @@ import {
 } from "@webstudio-is/design-system";
 import {
   instancesStore,
+  registeredComponentMetasStore,
   selectedInstanceSelectorStore,
   selectedStyleSourceSelectorStore,
 } from "~/shared/nano-states";
 import { getAncestorInstanceSelector } from "~/shared/tree-utils";
 import { textEditingInstanceSelectorStore } from "~/shared/nano-states";
+import { getInstanceLabel } from "~/shared/instance-utils";
 
 type BreadcrumbProps = {
   children: JSX.Element | string;
@@ -42,6 +44,7 @@ const Breadcrumb = ({ children, onClick }: BreadcrumbProps) => {
 export const Breadcrumbs = () => {
   const instances = useStore(instancesStore);
   const selectedInstanceSelector = useStore(selectedInstanceSelectorStore);
+  const metas = useStore(registeredComponentMetasStore);
 
   return (
     <Flex align="center" css={{ height: "100%" }}>
@@ -59,6 +62,10 @@ export const Breadcrumbs = () => {
             if (instance === undefined) {
               return;
             }
+            const meta = metas.get(instance.component);
+            if (meta === undefined) {
+              return;
+            }
             return (
               <Breadcrumb
                 key={instance.id}
@@ -73,7 +80,7 @@ export const Breadcrumbs = () => {
                   selectedStyleSourceSelectorStore.set(undefined);
                 }}
               >
-                {instance.label || instance.component}
+                {getInstanceLabel(instance, meta)}
               </Breadcrumb>
             );
           })

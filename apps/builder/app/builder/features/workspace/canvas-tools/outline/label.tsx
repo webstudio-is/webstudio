@@ -3,9 +3,9 @@ import { useStore } from "@nanostores/react";
 import { styled, type Rect } from "@webstudio-is/design-system";
 import type { Instance } from "@webstudio-is/project-build";
 import { theme } from "@webstudio-is/design-system";
-import { getInstanceLabel } from "~/builder/shared/tree";
 import { MetaIcon } from "~/builder/shared/meta-icon";
 import { registeredComponentMetasStore } from "~/shared/nano-states";
+import { getInstanceLabel } from "~/shared/instance-utils";
 
 type LabelPosition = "top" | "inside" | "bottom";
 type LabelRefCallback = (element: HTMLElement | null) => void;

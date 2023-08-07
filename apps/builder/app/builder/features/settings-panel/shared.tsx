@@ -127,6 +127,7 @@ export const useLocalValue = <Type,>(
 type LayoutProps = {
   label: string;
   id?: string;
+  labelSize?: "default" | "large";
   onDelete?: () => void;
   children: ReactNode;
 };
@@ -149,12 +150,15 @@ export const VerticalLayout = ({
 export const HorizontalLayout = ({
   label,
   id,
+  labelSize = "default",
   onDelete,
   children,
 }: LayoutProps) => (
   <Grid
     css={{
-      gridTemplateColumns: `${theme.spacing[19]} 1fr`,
+      gridTemplateColumns: `${
+        labelSize === "default" ? theme.spacing[19] : theme.spacing[24]
+      } 1fr`,
       minHeight: theme.spacing[13],
     }}
     align="center"

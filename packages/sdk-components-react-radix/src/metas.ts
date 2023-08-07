@@ -22,3 +22,12 @@ export {
   metaTooltipTrigger as TooltipTrigger,
   metaTooltipContent as TooltipContent,
 } from "./tooltip.ws";
+export {
+  metaSheet as Sheet,
+  metaSheetTrigger as SheetTrigger,
+  metaSheetOverlay as SheetOverlay,
+  metaSheetContent as SheetContent,
+  metaSheetClose as SheetClose,
+  metaSheetTitle as SheetTitle,
+  metaSheetDescription as SheetDescription,
+} from "./sheet.ws";

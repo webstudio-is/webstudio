@@ -9,22 +9,10 @@ import {
   Children,
 } from "react";
 import { Root, Trigger, Content } from "@radix-ui/react-collapsible";
-import {
-  type WebstudioAttributes,
-  splitPropsWithWebstudioAttributes,
-} from "@webstudio-is/react-sdk";
 
 export const Collapsible: ForwardRefExoticComponent<
   Omit<ComponentPropsWithRef<typeof Root>, "defaultOpen" | "asChild">
 > = Root;
-
-/**
- * CollapsibleTrigger is HTML-less components.
- * To make them work in our system, we wrap their attributes with a div that has a display: contents property.
- *
- * These divs function like fragments, with all web studio-related attributes attached to them.
- */
-const displayContentsStyle = { display: "contents" };
 
 /**
  * We're not exposing the 'asChild' property for the Trigger.
@@ -33,18 +21,14 @@ const displayContentsStyle = { display: "contents" };
  * which would prevent us from displaying styles properly in the builder.
  */
 export const CollapsibleTrigger = forwardRef<
-  HTMLDivElement,
-  WebstudioAttributes & { children: ReactNode }
+  HTMLButtonElement,
+  { children: ReactNode }
 >(({ children, ...props }, ref) => {
   const firstChild = Children.toArray(children)[0];
-  const [webstudioAttributes, restProps] =
-    splitPropsWithWebstudioAttributes(props);
   return (
-    <div ref={ref} style={displayContentsStyle} {...webstudioAttributes}>
-      <Trigger asChild={true} {...restProps}>
-        {firstChild ?? <button>Add button</button>}
-      </Trigger>
-    </div>
+    <Trigger asChild={true} ref={ref} {...props}>
+      {firstChild ?? <button>Add button</button>}
+    </Trigger>
   );
 });
 

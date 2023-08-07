@@ -15,6 +15,7 @@ export const BooleanControl = ({
       id={id}
       label={getLabel(meta, propName)}
       onDelete={onDelete}
+      labelSize="large"
     >
       <Switch
         id={id}
