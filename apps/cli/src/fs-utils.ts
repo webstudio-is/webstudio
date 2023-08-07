@@ -7,7 +7,6 @@ import {
   rm,
   readFile,
 } from "node:fs/promises";
-import { GLOBAL_CONFIG_FILE, type GlobalConfig } from "./constants";
 
 export const ensureFileInPath = async (filePath: string, content?: string) => {
   const dir = dirname(filePath);
