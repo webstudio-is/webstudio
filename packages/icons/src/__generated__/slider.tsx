@@ -7,7 +7,7 @@ import type { IconProps } from "../types";
 export const SliderIcon = forwardRef<SVGSVGElement, IconProps>(
   ({ color = "currentColor", size = 16, ...props }, forwardedRef) => {
     return (
-      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 22 22" width={size} height={size} fill={color} {...props} ref={forwardedRef}><path fillRule="evenodd" d="M4.867 11.9H2.75a.9.9 0 1 1 0-1.8h2.117a3.502 3.502 0 0 1 6.766 0h7.617a.9.9 0 0 1 0 1.8h-7.617a3.502 3.502 0 0 1-6.766 0ZM6.25 11a2 2 0 1 1 4 0 2 2 0 0 1-4 0Z" clipRule="evenodd" /></svg>
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 16 16" width={size} height={size} fill={color} {...props} ref={forwardedRef}><path fillRule="evenodd" d="M3.473 8.8H2a.8.8 0 0 1 0-1.6h1.473a2.651 2.651 0 0 1 5.054 0H14a.8.8 0 0 1 0 1.6H8.527a2.651 2.651 0 0 1-5.054 0ZM4.65 8a1.35 1.35 0 1 1 2.7 0 1.35 1.35 0 0 1-2.7 0Z" clipRule="evenodd" /></svg>
     );
   }
 );

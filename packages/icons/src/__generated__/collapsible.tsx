@@ -7,7 +7,7 @@ import type { IconProps } from "../types";
 export const CollapsibleIcon = forwardRef<SVGSVGElement, IconProps>(
   ({ color = "currentColor", size = 16, ...props }, forwardedRef) => {
     return (
-      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 22 22" width={size} height={size} fill={color} {...props} ref={forwardedRef}><path fillRule="evenodd" d="M11.003 1.079a.75.75 0 0 1 .75.75v3.694l1.499-1.499a.75.75 0 0 1 1.06 1.06l-2.778 2.78a.75.75 0 0 1-1.061 0l-2.78-2.78a.75.75 0 0 1 1.062-1.06l1.498 1.499V1.829a.75.75 0 0 1 .75-.75ZM2 11a.75.75 0 0 1 .75-.75h16.5a.75.75 0 0 1 0 1.5H2.75A.75.75 0 0 1 2 11Zm9 2.911a.75.75 0 0 1 .53.22l2.781 2.78a.75.75 0 1 1-1.06 1.061l-1.501-1.5v3.705a.75.75 0 0 1-1.5 0v-3.705l-1.5 1.5a.75.75 0 0 1-1.061-1.06l2.78-2.781a.75.75 0 0 1 .531-.22Z" clipRule="evenodd" /></svg>
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 16 16" width={size} height={size} fill={color} {...props} ref={forwardedRef}><path fillRule="evenodd" d="M8.002.68a.65.65 0 0 1 .65.65v2.434l.912-.911a.65.65 0 1 1 .919.919L8.462 5.793a.65.65 0 0 1-.92 0l-2.02-2.021a.65.65 0 0 1 .919-.92l.911.912V1.33a.65.65 0 0 1 .65-.65ZM1.35 8A.65.65 0 0 1 2 7.35h12a.65.65 0 1 1 0 1.3H2A.65.65 0 0 1 1.35 8Zm6.19 2.203a.65.65 0 0 1 .92 0l2.022 2.022a.65.65 0 1 1-.92.92l-.912-.913v2.442a.65.65 0 0 1-1.3 0v-2.442l-.913.913a.65.65 0 0 1-.919-.92l2.022-2.022Z" clipRule="evenodd" /></svg>
     );
   }
 );

@@ -167,14 +167,15 @@ export const createBuild = async (
 
 export const cloneBuild = async (
   props: {
-    projectId: Build["projectId"];
+    fromProjectId: Build["projectId"];
+    toProjectId: Build["projectId"];
     deployment: Deployment | undefined;
   },
   _context: AppContext,
   client: Prisma.TransactionClient
 ) => {
   const build = await prisma.build.findFirst({
-    where: { projectId: props.projectId, deployment: null },
+    where: { projectId: props.fromProjectId, deployment: null },
   });
 
   if (build === null) {
@@ -189,7 +190,7 @@ export const cloneBuild = async (
     deployment: props.deployment
       ? serializeDeployment(props.deployment)
       : undefined,
-    projectId: props.projectId,
+    projectId: props.toProjectId,
   };
 
   const result = await client.build.create({
@@ -220,7 +221,11 @@ export const createProductionBuild = async (
 
   return await prisma.$transaction(async (client) => {
     return await cloneBuild(
-      { projectId: props.projectId, deployment: props.deployment },
+      {
+        fromProjectId: props.projectId,
+        toProjectId: props.projectId,
+        deployment: props.deployment,
+      },
       context,
       client
     );
