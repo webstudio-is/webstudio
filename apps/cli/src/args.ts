@@ -1,7 +1,18 @@
 import { parseArgs } from "node:util";
 import stripIndent from "strip-indent";
 
-export const showHelp = () => console.info(stripIndent(HELP));
+export const showHelp = () =>
+  console.info(
+    stripIndent(`
+Usage:
+  $ webstudio commands [flags...] \n
+Commands:
+  link <shared link> \t Login to Webstudio with shared link \n
+Flags:
+  --help     -h     Show this help message
+  --version  -v     Show the version of this script
+`)
+  );
 
 export enum Commands {
   "link" = "link",
@@ -32,12 +43,3 @@ export const CLI_ARGS_OPTIONS = {
     short: "h",
   },
 };
-
-export const HELP = `\n Usage:
-\t $ webstudio commands [flags...] \n
-\t Commands:
-\t\t link <shared link> \t Login to Webstudio with shared link \n
-\t Flags:
-\t\t --help, -h \t\t Show this help message
-\t\t --version, -v \t\t Show the version of this script
-`;
