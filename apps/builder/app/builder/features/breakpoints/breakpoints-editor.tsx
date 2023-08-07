@@ -93,7 +93,7 @@ const BreakpointEditorItem = ({
         <Flex direction="column" gap="1">
           <InputField
             type="text"
-            defaultValue={breakpoint.minWidth ?? breakpoint.maxWidth ?? 0}
+            defaultValue={breakpoint.label}
             placeholder="Breakpoint name"
             name="label"
             minLength={1}
