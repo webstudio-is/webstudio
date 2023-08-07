@@ -53,7 +53,7 @@
     "@webstudio-is/sdk-components-react": "workspace:^"
   },
   "devDependencies": {
-    "@remix-run/react": "^1.19.1",
+    "@remix-run/react": "^1.19.2",
     "@types/react": "^18.2.16",
     "@types/react-dom": "^18.2.7",
     "@webstudio-is/scripts": "workspace:^",

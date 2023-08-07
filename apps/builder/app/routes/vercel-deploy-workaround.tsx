@@ -1,11 +1,8 @@
 import type { LinksFunction } from "@remix-run/node";
 
 import { Root } from "~/shared/remix";
-// eslint-disable-next-line import/no-internal-modules
-import interFont from "@fontsource/inter/variable.css";
-// eslint-disable-next-line import/no-internal-modules
-import manropeVariableFont from "@fontsource/manrope/variable.css";
-// eslint-disable-next-line import/no-internal-modules
+import interFont from "@fontsource-variable/inter/index.css";
+import manropeVariableFont from "@fontsource-variable/manrope/index.css";
 import robotoMonoFont from "@fontsource/roboto-mono/index.css";
 // eslint-disable-next-line import/no-internal-modules
 import appCss from "../shared/app.css";

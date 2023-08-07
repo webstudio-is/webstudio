@@ -160,42 +160,46 @@ export const p = (
   return [...px(padding), ...py(padding)];
 };
 
-export const mx = (
-  margin:
-    | StringEnumToNumeric<keyof EvaluatedDefaultTheme["margin"]>
-    | NonNumeric<keyof EvaluatedDefaultTheme["margin"]>
-): EmbedTemplateStyleDecl[] => {
-  const key = `${margin}` as const;
-  const valueString = theme("margin")?.[key] ?? "0";
-  const value = parseCssValue("marginLeft", valueString);
+const marginProperty =
+  (property: "marginTop" | "marginRight" | "marginBottom" | "marginLeft") =>
+  (
+    margin:
+      | StringEnumToNumeric<keyof EvaluatedDefaultTheme["margin"]>
+      | NonNumeric<keyof EvaluatedDefaultTheme["margin"]>
+  ): EmbedTemplateStyleDecl[] => {
+    const key = `${margin}` as const;
+    const valueString = theme("margin")?.[key] ?? "0";
+    const value = parseCssValue(property, valueString);
 
-  return [
-    { property: "marginLeft", value },
-    { property: "marginRight", value },
-  ];
+    return [{ property, value }];
+  };
+
+export const ml: ReturnType<typeof marginProperty> = (margin) => {
+  return marginProperty("marginLeft")(margin);
 };
 
-export const my = (
-  margin:
-    | StringEnumToNumeric<keyof EvaluatedDefaultTheme["margin"]>
-    | NonNumeric<keyof EvaluatedDefaultTheme["margin"]>
-): EmbedTemplateStyleDecl[] => {
-  const key = `${margin}` as const;
-  const valueString = theme("margin")[key];
-  const value = parseCssValue("marginTop", valueString);
-
-  return [
-    { property: "marginTop", value },
-    { property: "marginBottom", value },
-  ];
+export const mr: ReturnType<typeof marginProperty> = (margin) => {
+  return marginProperty("marginRight")(margin);
 };
 
-export const m = (
-  margin:
-    | StringEnumToNumeric<keyof EvaluatedDefaultTheme["margin"]>
-    | NonNumeric<keyof EvaluatedDefaultTheme["margin"]>
-): EmbedTemplateStyleDecl[] => {
-  return [...mx(margin), ...my(margin)];
+export const mt: ReturnType<typeof marginProperty> = (margin) => {
+  return marginProperty("marginTop")(margin);
+};
+
+export const mb: ReturnType<typeof marginProperty> = (margin) => {
+  return marginProperty("marginBottom")(margin);
+};
+
+export const mx: ReturnType<typeof marginProperty> = (margin) => {
+  return [ml(margin), mr(margin)].flat();
+};
+
+export const my: ReturnType<typeof marginProperty> = (margin) => {
+  return [mt(margin), mb(margin)].flat();
+};
+
+export const m: ReturnType<typeof marginProperty> = (margin) => {
+  return [mx(margin), my(margin)].flat();
 };
 
 export const w = (
@@ -402,6 +406,19 @@ export const flex = (flexParam?: FlexDirection): EmbedTemplateStyleDecl[] => {
   ];
 };
 
+export const grow = (): EmbedTemplateStyleDecl[] => {
+  return [
+    {
+      property: "flexGrow",
+      value: {
+        type: "unit",
+        value: 1,
+        unit: "number",
+      },
+    },
+  ];
+};
+
 export const gap = (
   gapValue: StringEnumToNumeric<keyof EvaluatedDefaultTheme["spacing"]>
 ): EmbedTemplateStyleDecl[] => {
@@ -566,5 +583,15 @@ export const focus = (
   return value.map((decl) => ({
     ...decl,
     state: ":focus",
+  }));
+};
+
+export const state = (
+  value: EmbedTemplateStyleDecl[],
+  state: string
+): EmbedTemplateStyleDecl[] => {
+  return value.map((decl) => ({
+    ...decl,
+    state,
   }));
 };

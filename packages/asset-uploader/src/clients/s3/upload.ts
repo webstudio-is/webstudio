@@ -1,5 +1,5 @@
+import { arrayBuffer } from "node:stream/consumers";
 import type { SignatureV4 } from "@smithy/signature-v4";
-import { toUint8Array } from "../../utils/to-uint8-array";
 import { getAssetData } from "../../utils/get-asset-data";
 import { createSizeLimiter } from "../../utils/size-limiter";
 
@@ -28,7 +28,7 @@ export const uploadToS3 = async ({
   // this has to be a stream that goes directly to s3
   // Size check has to happen as you stream and interrupted when size is too big
   // Also check if S3 client has an option to check the size limit
-  const data = await toUint8Array(limitSize(dataStream));
+  const data = await arrayBuffer(limitSize(dataStream));
 
   const url = new URL(`/${bucket}/${name}`, endpoint);
 
@@ -64,7 +64,7 @@ export const uploadToS3 = async ({
   const assetData = await getAssetData({
     type: type.startsWith("image") ? "image" : "font",
     size: data.byteLength,
-    data,
+    data: new Uint8Array(data),
   });
 
   return assetData;

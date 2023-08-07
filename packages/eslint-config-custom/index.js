@@ -49,6 +49,8 @@ module.exports = {
           "colord/plugins/*",
           "react/*",
           "react-dom/*",
+          "@fontsource/**",
+          "@fontsource-variable/**",
         ],
       },
     ],

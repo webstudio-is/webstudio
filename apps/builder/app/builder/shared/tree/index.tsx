@@ -11,7 +11,6 @@ import {
 } from "@webstudio-is/design-system";
 import type { Instance } from "@webstudio-is/project-build";
 import store from "immerhin";
-import { type WsComponentMeta } from "@webstudio-is/react-sdk";
 import {
   editingItemIdStore,
   instancesStore,
@@ -19,6 +18,7 @@ import {
 } from "~/shared/nano-states";
 import { MetaIcon } from "../meta-icon";
 import { useContentEditable } from "~/shared/dom-hooks";
+import { getInstanceLabel } from "~/shared/instance-utils";
 
 export const InstanceTree = (
   props: Omit<
@@ -119,13 +119,6 @@ export const InstanceTree = (
       editingItemId={editingItemId}
     />
   );
-};
-
-export const getInstanceLabel = (
-  instance: { label?: string },
-  meta: WsComponentMeta
-) => {
-  return instance.label || meta.label;
 };
 
 const TreeItem = ({

@@ -52,6 +52,7 @@ import { subscribeInstanceSelection } from "./instance-selection";
 import { subscribeInstanceHovering } from "./instance-hovering";
 import { useHashLinkSync } from "~/shared/pages";
 import { useMount } from "~/shared/hook-utils/use-mount";
+import { useSelectedInstance } from "./instance-selected-react";
 
 registerContainers();
 
@@ -160,6 +161,7 @@ const DesignMode = ({ params }: { params: Params }) => {
   // in both places
   useCopyPaste();
 
+  useSelectedInstance();
   useEffect(subscribeInstanceSelection, []);
   useEffect(subscribeInstanceHovering, []);
 
@@ -233,10 +235,14 @@ export const Canvas = ({ params }: CanvasProps): JSX.Element | null => {
   return (
     <>
       <GlobalStyles params={params} />
+      {elements}
+      {
+        // Call hooks after render to ensure effects are last.
+        // Helps improve outline calculations as all styles are then applied.
+      }
       {isPreviewMode === false && handshaken === true && (
         <DesignMode params={params} />
       )}
-      {elements}
     </>
   );
 };

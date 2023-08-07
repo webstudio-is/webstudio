@@ -2,10 +2,6 @@
 // We can't use .displayName until this is merged https://github.com/styleguidist/react-docgen-typescript/pull/449
 
 import * as DialogPrimitive from "@radix-ui/react-dialog";
-import {
-  splitPropsWithWebstudioAttributes,
-  type WebstudioAttributes,
-} from "@webstudio-is/react-sdk";
 
 import {
   forwardRef,
@@ -23,32 +19,15 @@ type BuilderDialogProps = {
   isOpen: "initial" | "open" | "closed";
 };
 
-/**
- * Dialog and DialogTrigger are HTML-less components.
- * To make them work in our system, we wrap their attributes with a div that has a display: contents property.
- *
- * These divs function like fragments, with all web studio-related attributes attached to them.
- */
-const DisplayContentsStyle = { display: "contents" };
-
 export const Dialog = forwardRef<
   ElementRef<"div">,
-  WebstudioAttributes &
-    ComponentPropsWithoutRef<typeof DialogPrimitive.Root> &
-    BuilderDialogProps
+  ComponentPropsWithoutRef<typeof DialogPrimitive.Root> & BuilderDialogProps
 >(({ open: openProp, isOpen, ...props }, ref) => {
-  const [webstudioAttributes, restProps] =
-    splitPropsWithWebstudioAttributes(props);
-
   const open =
     openProp ??
     (isOpen === "open" ? true : isOpen === "closed" ? false : undefined);
 
-  return (
-    <div ref={ref} style={DisplayContentsStyle} {...webstudioAttributes}>
-      <DialogPrimitive.Root open={open} {...restProps} />
-    </div>
-  );
+  return <DialogPrimitive.Root open={open} {...props} />;
 });
 
 /**
@@ -59,18 +38,14 @@ export const Dialog = forwardRef<
  */
 export const DialogTrigger = forwardRef<
   ElementRef<"div">,
-  WebstudioAttributes & { children: ReactNode }
+  { children: ReactNode }
 >(({ children, ...props }, ref) => {
   const firstChild = Children.toArray(children)[0];
-  const [webstudioAttributes, restProps] =
-    splitPropsWithWebstudioAttributes(props);
 
   return (
-    <div ref={ref} style={DisplayContentsStyle} {...webstudioAttributes}>
-      <DialogPrimitive.Trigger asChild={true} {...restProps}>
-        {firstChild ?? <button>Add button or link</button>}
-      </DialogPrimitive.Trigger>
-    </div>
+    <DialogPrimitive.Trigger asChild={true} {...props}>
+      {firstChild ?? <button>Add button or link</button>}
+    </DialogPrimitive.Trigger>
   );
 });
 

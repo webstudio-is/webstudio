@@ -14,6 +14,7 @@ import {
 import { selectedInstanceSelectorStore } from "~/shared/nano-states";
 import { type TextToolbarState, textToolbarStore } from "~/shared/nano-states";
 import type { Publish } from "~/shared/pubsub";
+import { scaleStore } from "~/builder/shared/nano-states";
 
 type Format =
   | "bold"
@@ -30,25 +31,31 @@ declare module "~/shared/pubsub" {
   }
 }
 
-const getRectForRelativeRect = (parent: DOMRect, rel: DOMRect) => {
+const getRectForRelativeRect = (
+  parent: DOMRect,
+  rel: DOMRect,
+  scale: number
+) => {
+  const scaleRatio = scale / 100;
   return {
-    x: parent.x + rel.x,
-    y: parent.y + rel.y,
-    width: rel.width,
-    height: rel.height,
-    top: parent.top + rel.top,
-    left: parent.left + rel.left,
-    bottom: parent.top + rel.bottom,
-    right: parent.left + rel.right,
+    x: parent.x + rel.x * scaleRatio,
+    y: parent.y + rel.y * scaleRatio,
+    width: rel.width * scaleRatio,
+    height: rel.height * scaleRatio,
+    top: parent.top + rel.top * scaleRatio,
+    left: parent.left + rel.left * scaleRatio,
+    bottom: parent.top + rel.bottom * scaleRatio,
+    right: parent.left + rel.right * scaleRatio,
   };
 };
 
 type ToolbarProps = {
   state: TextToolbarState;
   onToggle: (value: Format) => void;
+  scale: number;
 };
 
-const Toolbar = ({ state, onToggle }: ToolbarProps) => {
+const Toolbar = ({ state, onToggle, scale }: ToolbarProps) => {
   const rootRef = useRef<HTMLDivElement | null>(null);
 
   useEffect(() => {
@@ -60,7 +67,8 @@ const Toolbar = ({ state, onToggle }: ToolbarProps) => {
       const parent = rootRef.current.parentElement;
       const newRect = getRectForRelativeRect(
         parent.getBoundingClientRect(),
-        state.selectionRect
+        state.selectionRect,
+        scale
       );
       const reference = {
         getBoundingClientRect: () => newRect,
@@ -74,7 +82,7 @@ const Toolbar = ({ state, onToggle }: ToolbarProps) => {
         floating.style.transform = `translate(${x}px, ${y}px)`;
       });
     }
-  }, [state.selectionRect]);
+  }, [state.selectionRect, scale]);
 
   const isCleared =
     state.isBold === false &&
@@ -183,6 +191,7 @@ type TextToolbarProps = {
 
 export const TextToolbar = ({ publish }: TextToolbarProps) => {
   const textToolbar = useStore(textToolbarStore);
+  const scale = useStore(scaleStore);
   const selectedInstanceSelector = useStore(selectedInstanceSelectorStore);
 
   if (
@@ -195,6 +204,7 @@ export const TextToolbar = ({ publish }: TextToolbarProps) => {
   return (
     <Toolbar
       state={textToolbar}
+      scale={scale}
       onToggle={(value) =>
         publish({
           type: "formatTextToolbar",
