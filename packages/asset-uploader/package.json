@@ -21,16 +21,15 @@
     "@webstudio-is/sdk": "workspace:^",
     "@webstudio-is/trpc-interface": "workspace:^",
     "fontkit": "^2.0.2",
+    "image-size": "^1.0.2",
     "immer": "^10.0.2",
     "nanoid": "^4.0.2",
-    "sharp": "^0.30.7",
     "warn-once": "^0.1.1"
   },
   "devDependencies": {
     "@jest/globals": "^29.6.4",
     "@types/fontkit": "^2.0.3",
     "@types/node": "^18.11.18",
-    "@types/sharp": "^0.30.4",
     "@webstudio-is/jest-config": "workspace:^",
     "@webstudio-is/tsconfig": "workspace:^",
     "jest": "^29.6.4",
