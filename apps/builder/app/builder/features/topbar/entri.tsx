@@ -36,7 +36,7 @@ export const Entri = ({
           showDialog();
         }}
       >
-        Configure automatically with entri
+        Configure automatically
       </Button>
     </>
   );

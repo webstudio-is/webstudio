@@ -11,6 +11,12 @@ module.exports = {
 
   server: "./server.js",
   ignoredRouteFiles: ["**/.*"],
+  serverNodeBuiltinsPolyfill: {
+    modules: {
+      // remix cannot build nanoid for cloudlare without polyfills
+      crypto: true,
+    },
+  },
   future: {
     v2_errorBoundary: true,
     v2_normalizeFormMethod: true,

@@ -123,7 +123,7 @@ export const TextControl = ({
   if (isTwoColumnLayout) {
     return (
       <HorizontalLayout label={label} id={id} onDelete={onDelete}>
-        <Flex css={{ width: theme.spacing[22] }}>{input}</Flex>
+        <Flex>{input}</Flex>
       </HorizontalLayout>
     );
   }

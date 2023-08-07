@@ -1,0 +1,72 @@
+{
+  "name": "@webstudio-is/sdk-components-react-radix",
+  "version": "0.83.0",
+  "description": "Webstudio wrapper for radix library",
+  "author": "Webstudio <github@webstudio.is>",
+  "homepage": "https://webstudio.is",
+  "license": "AGPL-3.0-or-later",
+  "private": false,
+  "type": "module",
+  "sideEffects": false,
+  "files": [
+    "lib/*",
+    "src/*"
+  ],
+  "exports": {
+    ".": {
+      "source": "./src/components.ts",
+      "types": "./lib/types/components.d.ts",
+      "import": "./lib/components.js",
+      "require": "./lib/cjs/components.js"
+    },
+    "./metas": {
+      "source": "./src/metas.ts",
+      "types": "./lib/types/metas.d.ts",
+      "import": "./lib/metas.js",
+      "require": "./lib/cjs/metas.js"
+    },
+    "./props": {
+      "source": "./src/props.ts",
+      "types": "./lib/types/props.d.ts",
+      "import": "./lib/props.js",
+      "require": "./lib/cjs/props.js"
+    }
+  },
+  "scripts": {
+    "dev": "build-package --watch",
+    "build": "build-package",
+    "build:args": "generate-arg-types './src/*.tsx !./src/*.stories.tsx !./src/*.ws.tsx' && prettier --write \"**/*.props.ts\"",
+    "dts": "tsc --project tsconfig.dts.json",
+    "typecheck": "tsc",
+    "checks": "pnpm typecheck",
+    "storybook:dev": "storybook dev -p 6006",
+    "storybook:build": "storybook build"
+  },
+  "peerDependencies": {
+    "react": "^18.2.0",
+    "react-dom": "^18.2.0"
+  },
+  "dependencies": {
+    "@radix-ui/react-collapsible": "^1.0.3",
+    "@radix-ui/react-dialog": "^1.0.4",
+    "@radix-ui/react-popover": "^1.0.6",
+    "@radix-ui/react-tooltip": "^1.0.6",
+    "@webstudio-is/css-data": "workspace:^",
+    "@webstudio-is/generate-arg-types": "workspace:^",
+    "@webstudio-is/icons": "workspace:^",
+    "@webstudio-is/react-sdk": "workspace:^",
+    "tailwindcss": "^3.3.3"
+  },
+  "devDependencies": {
+    "@storybook/react": "^7.2.1",
+    "@types/react": "^18.2.16",
+    "@types/react-dom": "^18.2.7",
+    "@webstudio-is/scripts": "workspace:^",
+    "@webstudio-is/sdk-components-react": "workspace:^",
+    "@webstudio-is/storybook-config": "workspace:^",
+    "@webstudio-is/tsconfig": "workspace:^",
+    "react": "^18.2.0",
+    "react-dom": "^18.2.0",
+    "typescript": "^5.1.6"
+  }
+}

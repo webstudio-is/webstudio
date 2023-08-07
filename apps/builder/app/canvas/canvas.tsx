@@ -1,6 +1,7 @@
 import { useMemo, useEffect } from "react";
 import { useStore } from "@nanostores/react";
 import { computed } from "nanostores";
+import { Scripts, ScrollRestoration } from "@remix-run/react";
 import type { DataSource, Instances, Page } from "@webstudio-is/project-build";
 import {
   type Params,
@@ -9,6 +10,7 @@ import {
   executeEffectfulExpression,
   encodeVariablesMap,
   decodeVariablesMap,
+  getIndexesWithinAncestors,
 } from "@webstudio-is/react-sdk";
 import * as baseComponents from "@webstudio-is/sdk-components-react";
 import * as baseComponentMetas from "@webstudio-is/sdk-components-react/metas";
@@ -16,6 +18,9 @@ import * as baseComponentPropsMetas from "@webstudio-is/sdk-components-react/pro
 import * as remixComponents from "@webstudio-is/sdk-components-react-remix";
 import * as remixComponentMetas from "@webstudio-is/sdk-components-react-remix/metas";
 import * as remixComponentPropsMetas from "@webstudio-is/sdk-components-react-remix/props";
+import * as radixComponents from "@webstudio-is/sdk-components-react-radix";
+import * as radixComponentMetas from "@webstudio-is/sdk-components-react-radix/metas";
+import * as radixComponentPropsMetas from "@webstudio-is/sdk-components-react-radix/props";
 import { publish } from "~/shared/pubsub";
 import {
   handshakenStore,
@@ -33,10 +38,11 @@ import {
   instancesStore,
   useIsPreviewMode,
   selectedPageStore,
-  registerComponentMetas,
-  registerComponentPropsMetas,
+  registerComponentLibrary,
   dataSourceValuesStore,
   dataSourceVariablesStore,
+  registeredComponentsStore,
+  registeredComponentMetasStore,
 } from "~/shared/nano-states";
 import { useDragAndDrop } from "./shared/use-drag-drop";
 import { useCopyPaste } from "~/shared/copy-paste";
@@ -46,6 +52,7 @@ import { subscribeInstanceSelection } from "./instance-selection";
 import { subscribeInstanceHovering } from "./instance-hovering";
 import { useHashLinkSync } from "~/shared/pages";
 import { useMount } from "~/shared/hook-utils/use-mount";
+import { useSelectedInstance } from "./instance-selected-react";
 
 registerContainers();
 
@@ -53,19 +60,6 @@ const propsByInstanceIdStore = computed(
   propsIndexStore,
   (propsIndex) => propsIndex.propsByInstanceId
 );
-
-const temporaryRootInstanceId = "temporaryRootInstance";
-const temporaryInstances: Instances = new Map([
-  [
-    temporaryRootInstanceId,
-    {
-      type: "instance",
-      id: temporaryRootInstanceId,
-      component: "Body",
-      children: [],
-    },
-  ],
-]);
 
 const executeEffectfulExpressionWithDecodedVariables: typeof executeEffectfulExpression =
   (code, args, values) => {
@@ -82,11 +76,15 @@ const onDataSourceUpdate = (newValues: Map<DataSource["id"], unknown>) => {
   dataSourceVariablesStore.set(dataSourceVariables);
 };
 
-const useElementsTree = (components: Components, params: Params) => {
-  const instances = useStore(instancesStore);
+const useElementsTree = (
+  components: Components,
+  instances: Instances,
+  params: Params
+) => {
+  const metas = useStore(registeredComponentMetasStore);
   const page = useStore(selectedPageStore);
   const [isPreviewMode] = useIsPreviewMode();
-  const rootInstanceId = page?.rootInstanceId;
+  const rootInstanceId = page?.rootInstanceId ?? "";
 
   if (typeof window === "undefined") {
     // @todo remove after https://github.com/webstudio-is/webstudio-builder/issues/1313 now its needed to be sure that no leaks exists
@@ -111,15 +109,22 @@ const useElementsTree = (components: Components, params: Params) => {
     []
   );
 
+  const indexesWithinAncestors = useMemo(() => {
+    return getIndexesWithinAncestors(
+      metas,
+      instances,
+      page ? [page.rootInstanceId] : []
+    );
+  }, [metas, instances, page]);
+
   return useMemo(() => {
     return createElementsTree({
       renderer: isPreviewMode ? "preview" : "canvas",
       imageBaseUrl: params.imageBaseUrl,
       assetBaseUrl: params.assetBaseUrl,
-      instances: instances.size === 0 ? temporaryInstances : instances,
-      // fallback to temporary root instance to render scripts
-      // and receive real data from builder
-      rootInstanceId: rootInstanceId ?? temporaryRootInstanceId,
+      instances,
+      rootInstanceId,
+      indexesWithinAncestors,
       propsByInstanceIdStore,
       assetsStore,
       pagesStore: pagesMapStore,
@@ -129,6 +134,12 @@ const useElementsTree = (components: Components, params: Params) => {
       onDataSourceUpdate,
       Component: WebstudioComponentDev,
       components,
+      scripts: (
+        <>
+          <ScrollRestoration />
+          <Scripts />
+        </>
+      ),
     });
   }, [
     params,
@@ -137,6 +148,7 @@ const useElementsTree = (components: Components, params: Params) => {
     components,
     pagesMapStore,
     isPreviewMode,
+    indexesWithinAncestors,
   ]);
 };
 
@@ -149,6 +161,7 @@ const DesignMode = ({ params }: { params: Params }) => {
   // in both places
   useCopyPaste();
 
+  useSelectedInstance();
   useEffect(subscribeInstanceSelection, []);
   useEffect(subscribeInstanceHovering, []);
 
@@ -164,14 +177,23 @@ export const Canvas = ({ params }: CanvasProps): JSX.Element | null => {
   useCanvasStore(publish);
   const [isPreviewMode] = useIsPreviewMode();
 
-  const components = new Map(
-    Object.entries({ ...baseComponents, ...remixComponents })
-  ) as Components;
   useMount(() => {
-    registerComponentMetas(baseComponentMetas);
-    registerComponentPropsMetas(baseComponentPropsMetas);
-    registerComponentMetas(remixComponentMetas);
-    registerComponentPropsMetas(remixComponentPropsMetas);
+    registerComponentLibrary({
+      components: baseComponents,
+      metas: baseComponentMetas,
+      propsMetas: baseComponentPropsMetas,
+    });
+    registerComponentLibrary({
+      components: remixComponents,
+      metas: remixComponentMetas,
+      propsMetas: remixComponentPropsMetas,
+    });
+    registerComponentLibrary({
+      namespace: "@webstudio-is/sdk-components-react-radix",
+      components: radixComponents,
+      metas: radixComponentMetas,
+      propsMetas: radixComponentPropsMetas,
+    });
   });
 
   // e.g. toggling preview is still needed in both modes
@@ -197,15 +219,30 @@ export const Canvas = ({ params }: CanvasProps): JSX.Element | null => {
 
   useHashLinkSync();
 
-  const elements = useElementsTree(components, params);
+  const components = useStore(registeredComponentsStore);
+  const instances = useStore(instancesStore);
+  const elements = useElementsTree(components, instances, params);
+
+  if (components.size === 0 || instances.size === 0) {
+    return (
+      <body>
+        <ScrollRestoration />
+        <Scripts />
+      </body>
+    );
+  }
 
   return (
     <>
       <GlobalStyles params={params} />
+      {elements}
+      {
+        // Call hooks after render to ensure effects are last.
+        // Helps improve outline calculations as all styles are then applied.
+      }
       {isPreviewMode === false && handshaken === true && (
         <DesignMode params={params} />
       )}
-      {elements}
     </>
   );
 };

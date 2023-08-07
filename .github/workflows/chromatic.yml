@@ -23,7 +23,15 @@ jobs:
     strategy:
       matrix:
         project:
-          [builder-app, css-engine, design-system, icons, image, sdk-components-react]
+          [
+            builder-app,
+            css-engine,
+            design-system,
+            icons,
+            image,
+            sdk-components-react,
+            sdk-components-react-radix,
+          ]
         include:
           - project: builder-app
             chromaticSecretKey: CHROMATIC_DESIGNER_APP_TOKEN
@@ -49,6 +57,10 @@ jobs:
             chromaticSecretKey: CHROMATIC_REACT_SDK_TOKEN
             workingDir: packages/sdk-components-react
 
+          - project: sdk-components-react-radix
+            chromaticSecretKey: CHROMATIC_REACT_SDK_TOKEN
+            workingDir: packages/sdk-components-react-radix
+
     outputs:
       builder-app: ${{ steps.deployed-url.outputs.builder-app }}
       css-engine: ${{ steps.deployed-url.outputs.css-engine }}
@@ -56,6 +68,7 @@ jobs:
       icons: ${{ steps.deployed-url.outputs.icons }}
       image: ${{ steps.deployed-url.outputs.image }}
       sdk-components-react: ${{ steps.deployed-url.outputs.sdk-components-react }}
+      sdk-components-react-radix: ${{ steps.deployed-url.outputs.sdk-components-react-radix }}
 
     steps:
       - uses: actions/checkout@v3

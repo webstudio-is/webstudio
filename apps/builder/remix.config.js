@@ -23,10 +23,16 @@ module.exports = {
     "nanostores",
     "@nanostores/react",
     /micromark/,
+    /mdast-/,
+    /unist-/,
     "decode-named-character-reference",
     "character-entities",
-    /mdast-/,
-    "unist-util-stringify-position",
+    "devlop",
+    "ccount",
+    "markdown-table",
+    "zwitch",
+    "escape-string-regexp",
+    "longest-streak",
     "node-fetch",
     "immerhin",
   ],
@@ -36,6 +42,8 @@ module.exports = {
     return ["../../packages/**/lib/**.js"];
   },
 
+  // remix will disable all polyfills by default
+  serverNodeBuiltinsPolyfill: { modules: {} },
   future: {
     v2_errorBoundary: true,
     v2_routeConvention: true,

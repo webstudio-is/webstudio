@@ -1,6 +1,8 @@
+import { shallowEqual } from "shallow-equal";
 import { nanoid } from "nanoid";
 import store from "immerhin";
 import { z } from "zod";
+import { toast } from "@webstudio-is/design-system";
 import {
   Breakpoint,
   DataSource,
@@ -43,17 +45,20 @@ import {
   insertStyleSourceSelectionsCopyMutable,
   findLocalStyleSourcesWithinInstances,
   mergeNewBreakpointsMutable,
+  type DroppableTarget,
 } from "../tree-utils";
 import {
   computeInstancesConstraints,
   deleteInstance,
   findClosestDroppableTarget,
+  isInstanceDetachable,
 } from "../instance-utils";
 import { getMapValuesBy, getMapValuesByKeysSet } from "../array-utils";
 
 const version = "@webstudio/instance/v0.1";
 
 const InstanceData = z.object({
+  instanceSelector: z.array(z.string()),
   breakpoints: z.array(Breakpoint),
   instances: z.array(Instance),
   props: z.array(Prop),
@@ -175,6 +180,13 @@ const getPropTypeAndValue = (value: unknown) => {
 };
 
 const getTreeData = (targetInstanceSelector: InstanceSelector) => {
+  if (isInstanceDetachable(targetInstanceSelector) === false) {
+    toast.error(
+      "This instance can not be moved outside of its parent component."
+    );
+    return;
+  }
+
   // @todo tell user they can't copy or cut root
   if (targetInstanceSelector.length === 1) {
     return;
@@ -254,6 +266,51 @@ const getTreeData = (targetInstanceSelector: InstanceSelector) => {
         ...getPropTypeAndValue(value),
       } satisfies Prop;
     }
+    if (prop.type === "action") {
+      return {
+        ...prop,
+        value: prop.value.flatMap((value) => {
+          if (value.type !== "execute") {
+            return [value];
+          }
+          let shouldKeepAction = true;
+          validateExpression(value.code, {
+            effectful: true,
+            transformIdentifier: (identifier) => {
+              if (value.args.includes(identifier)) {
+                return identifier;
+              }
+              const id = decodeDataSourceVariable(identifier);
+              if (id === undefined) {
+                return identifier;
+              }
+              if (treeDataSourceIds.has(id) === false) {
+                shouldKeepAction = false;
+                return identifier;
+              }
+              const identifierDeps = dependencies.get(id);
+              if (identifierDeps) {
+                for (const dependency of identifierDeps) {
+                  const id = decodeDataSourceVariable(dependency);
+                  if (id === undefined) {
+                    continue;
+                  }
+                  if (treeDataSourceIds.has(id) === false) {
+                    shouldKeepAction = false;
+                    return identifier;
+                  }
+                }
+              }
+              return identifier;
+            },
+          });
+          if (shouldKeepAction) {
+            return [value];
+          }
+          return [];
+        }),
+      };
+    }
     return prop;
   });
 
@@ -286,6 +343,7 @@ const getTreeData = (targetInstanceSelector: InstanceSelector) => {
   );
 
   return {
+    instanceSelector: targetInstanceSelector,
     breakpoints: treeBreapoints,
     instances: treeInstances,
     styleSources: treeStyleSources,
@@ -337,15 +395,36 @@ export const onPaste = (clipboardData: string): boolean => {
   const instanceSelector = selectedInstanceSelectorStore.get() ?? [
     selectedPage.rootInstanceId,
   ];
-  const dropTarget = findClosestDroppableTarget(
-    metas,
-    instancesStore.get(),
-    instanceSelector,
-    computeInstancesConstraints(metas, newInstances, [rootInstanceId])
-  );
-  if (dropTarget === undefined) {
+  let potentialDropTarget: undefined | DroppableTarget;
+  if (shallowEqual(instanceSelector, data.instanceSelector)) {
+    // paste after selected instance
+    const instances = instancesStore.get();
+    // body is not allowed to copy
+    // so clipboard always have at least two level instance selector
+    const [currentInstanceId, parentInstanceId] = instanceSelector;
+    const parentInstance = instances.get(parentInstanceId);
+    if (parentInstance === undefined) {
+      return false;
+    }
+    const indexWithinChildren = parentInstance.children.findIndex(
+      (child) => child.type === "id" && child.value === currentInstanceId
+    );
+    potentialDropTarget = {
+      parentSelector: instanceSelector.slice(1),
+      position: indexWithinChildren + 1,
+    };
+  } else {
+    potentialDropTarget = findClosestDroppableTarget(
+      metas,
+      instancesStore.get(),
+      instanceSelector,
+      computeInstancesConstraints(metas, newInstances, [rootInstanceId])
+    );
+  }
+  if (potentialDropTarget === undefined) {
     return false;
   }
+  const dropTarget = potentialDropTarget;
 
   store.createTransaction(
     [
@@ -446,7 +525,36 @@ export const onPaste = (clipboardData: string): boolean => {
 
       insertPropsCopyMutable(
         props,
-        data.props,
+        data.props.map((prop) => {
+          if (prop.type === "action") {
+            return {
+              ...prop,
+              value: prop.value.map((value) => {
+                if (value.type !== "execute") {
+                  return value;
+                }
+                return {
+                  ...value,
+                  code: validateExpression(value.code, {
+                    effectful: true,
+                    transformIdentifier: (id) => {
+                      const dataSourceId = decodeDataSourceVariable(id);
+                      if (dataSourceId === undefined) {
+                        return id;
+                      }
+                      const newId = copiedDataSourceIds.get(dataSourceId);
+                      if (newId === undefined) {
+                        return id;
+                      }
+                      return encodeDataSourceVariable(newId);
+                    },
+                  }),
+                };
+              }),
+            };
+          }
+          return prop;
+        }),
         copiedInstanceIds,
         copiedDataSourceIds
       );

@@ -8,6 +8,7 @@ import {
   useDrag,
   useDrop,
   computeIndicatorPlacement,
+  toast,
 } from "@webstudio-is/design-system";
 import {
   instancesStore,
@@ -22,6 +23,7 @@ import {
   insertTemplateData,
   reparentInstance,
   type InsertConstraints,
+  isInstanceDetachable,
 } from "~/shared/instance-utils";
 import {
   getElementByInstanceSelector,
@@ -32,7 +34,6 @@ import {
   type InstanceSelector,
   areInstanceSelectorsEqual,
 } from "~/shared/tree-utils";
-import { generateDataFromEmbedTemplate } from "@webstudio-is/react-sdk";
 
 declare module "~/shared/pubsub" {
   export interface PubsubMap {
@@ -69,14 +70,9 @@ const findClosestDroppableInstanceSelector = (
 
   let insertConstraints: undefined | InsertConstraints;
   if (dragPayload?.type === "insert") {
-    const template = metas.get(dragPayload.dragComponent)?.template;
-    if (template) {
-      // ignore breakpoint, here only instances are important
-      // @todo optimize by traversing only instances
-      const { children, instances } = generateDataFromEmbedTemplate(
-        template,
-        "__placeholder__"
-      );
+    const templateData = getComponentTemplateData(dragPayload.dragComponent);
+    if (templateData) {
+      const { children, instances } = templateData;
       const newInstances = new Map(
         instances.map((instance) => [instance.id, instance])
       );
@@ -242,6 +238,12 @@ export const useDragAndDrop = () => {
     },
 
     onStart({ data: dragInstanceSelector }) {
+      if (isInstanceDetachable(dragInstanceSelector) === false) {
+        toast.error(
+          "This instance can not be moved outside of its parent component."
+        );
+        return;
+      }
       publish({
         type: "dragStart",
         payload: {

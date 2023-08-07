@@ -30,8 +30,3 @@ export { propsMeta as Vimeo } from "./vimeo.ws";
 export { propsMeta as VimeoPreviewImage } from "./vimeo-preview-image.ws";
 export { propsMeta as VimeoPlayButton } from "./vimeo-play-button.ws";
 export { propsMeta as VimeoSpinner } from "./vimeo-spinner.ws";
-export {
-  propsMetaTooltip as Tooltip,
-  propsMetaTooltipContent as TooltipContent,
-  propsMetaTooltipTrigger as TooltipTrigger,
-} from "./radix-tooltip.ws";

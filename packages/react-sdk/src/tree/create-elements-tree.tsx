@@ -2,9 +2,9 @@ import {
   Fragment,
   type ForwardRefExoticComponent,
   type RefAttributes,
+  type ReactNode,
 } from "react";
 import type { ReadableAtom } from "nanostores";
-import { Scripts, ScrollRestoration } from "@remix-run/react";
 import type { Assets } from "@webstudio-is/asset-uploader";
 import type { Instance, Instances } from "@webstudio-is/project-build";
 import type { Components } from "../components/components-utils";
@@ -15,6 +15,7 @@ import {
 } from "../context";
 import type { Pages, PropsByInstanceId } from "../props";
 import type { WebstudioComponentProps } from "./webstudio-component";
+import type { IndexesWithinAncestors } from "../instance-utils";
 
 type InstanceSelector = Instance["id"][];
 
@@ -30,8 +31,10 @@ export const createElementsTree = ({
   dataSourceValuesStore,
   executeEffectfulExpression,
   onDataSourceUpdate,
+  indexesWithinAncestors,
   Component,
   components,
+  scripts,
 }: Params & {
   instances: Instances;
   rootInstanceId: Instance["id"];
@@ -45,11 +48,13 @@ export const createElementsTree = ({
   ) => DataSourceValues;
   dataSourceValuesStore: ReadableAtom<DataSourceValues>;
   onDataSourceUpdate: (newValues: DataSourceValues) => void;
+  indexesWithinAncestors: IndexesWithinAncestors;
 
   Component: ForwardRefExoticComponent<
     WebstudioComponentProps & RefAttributes<HTMLElement>
   >;
   components: Components;
+  scripts?: ReactNode;
 }) => {
   const rootInstance = instances.get(rootInstanceId);
   if (rootInstance === undefined) {
@@ -71,8 +76,7 @@ export const createElementsTree = ({
     children: [
       <Fragment key="children">
         {children}
-        <ScrollRestoration />
-        <Scripts />
+        {scripts}
       </Fragment>,
     ],
     components,
@@ -87,6 +91,7 @@ export const createElementsTree = ({
         renderer,
         imageBaseUrl,
         assetBaseUrl,
+        indexesWithinAncestors,
         executeEffectfulExpression,
         setDataSourceValues: onDataSourceUpdate,
         setBoundDataSourceValue: (instanceId, propName, value) => {

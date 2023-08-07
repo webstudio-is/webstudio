@@ -49,6 +49,8 @@ module.exports = {
           "colord/plugins/*",
           "react/*",
           "react-dom/*",
+          "@fontsource/**",
+          "@fontsource-variable/**",
         ],
       },
     ],
@@ -68,6 +70,12 @@ module.exports = {
       files: ["**/app/routes/**/*.{ts,tsx}"],
       rules: {
         "unicorn/filename-case": "off",
+      },
+    },
+    {
+      files: ["**/cli/**/*.{js,ts,tsx}"],
+      rules: {
+        "no-console": "off",
       },
     },
   ],

@@ -87,6 +87,18 @@ export const EffectsSection = ({
           setProperty={setProperty}
           deleteProperty={deleteProperty}
         />
+        <PropertyName
+          label={styleConfigByName("backdropFilter").label}
+          properties={["backdropFilter"]}
+          style={style}
+          onReset={() => deleteProperty("backdropFilter")}
+        />
+        <TextControl
+          property={"backdropFilter"}
+          currentStyle={style}
+          setProperty={setProperty}
+          deleteProperty={deleteProperty}
+        />
       </Grid>
     </CollapsibleSection>
   );

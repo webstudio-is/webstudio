@@ -25,13 +25,21 @@ export const props: Record<string, PropMeta> = {
     type: "string",
     options: ["list", "none", "inline", "both"],
   },
-  "aria-busy": {
+  "aria-braillelabel": {
     description:
-      "Indicates an element is being modified and that assistive technologies MAY want to wait until the modifications are complete before exposing them to the user.",
+      "Defines a string value that labels the current element, which is intended to be converted into Braille.\n@see aria-label.",
     required: false,
-    control: "boolean",
-    type: "boolean",
+    control: "text",
+    type: "string",
   },
+  "aria-brailleroledescription": {
+    description:
+      "Defines a human-readable, author-localized abbreviated description for the role of an element, which is intended to be converted into Braille.\n@see aria-roledescription.",
+    required: false,
+    control: "text",
+    type: "string",
+  },
+  "aria-busy": { required: false, control: "boolean", type: "boolean" },
   "aria-checked": {
     description:
       'Indicates the current "checked" state of checkboxes, radio buttons, and other widgets.\n@see aria-pressed\n@see aria-selected.',
@@ -52,6 +60,13 @@ export const props: Record<string, PropMeta> = {
     required: false,
     control: "number",
     type: "number",
+  },
+  "aria-colindextext": {
+    description:
+      "Defines a human readable text alternative of aria-colindex.\n@see aria-rowindextext.",
+    required: false,
+    control: "text",
+    type: "string",
   },
   "aria-colspan": {
     description:
@@ -77,6 +92,13 @@ export const props: Record<string, PropMeta> = {
   "aria-describedby": {
     description:
       "Identifies the element (or elements) that describes the object.\n@see aria-labelledby",
+    required: false,
+    control: "text",
+    type: "string",
+  },
+  "aria-description": {
+    description:
+      "Defines a string value that describes or annotates the current element.\n@see related aria-describedby.",
     required: false,
     control: "text",
     type: "string",
@@ -298,6 +320,13 @@ export const props: Record<string, PropMeta> = {
     control: "number",
     type: "number",
   },
+  "aria-rowindextext": {
+    description:
+      "Defines a human readable text alternative of aria-rowindex.\n@see aria-colindextext.",
+    required: false,
+    control: "text",
+    type: "string",
+  },
   "aria-rowspan": {
     description:
       "Defines the number of rows spanned by a cell or gridcell within a table, grid, or treegrid.\n@see aria-rowindex\n@see aria-colspan.",
@@ -374,9 +403,9 @@ export const props: Record<string, PropMeta> = {
     control: "select",
     type: "string",
     options: [
+      "search",
       "text",
       "none",
-      "search",
       "tel",
       "url",
       "email",

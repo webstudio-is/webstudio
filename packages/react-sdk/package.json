@@ -1,6 +1,6 @@
 {
   "name": "@webstudio-is/react-sdk",
-  "version": "0.82.0",
+  "version": "0.83.0",
   "description": "Webstudio JavaScript / TypeScript API",
   "author": "Webstudio <github@webstudio.is>",
   "homepage": "https://webstudio.is",
@@ -15,14 +15,14 @@
     "checks": "pnpm typecheck && pnpm test"
   },
   "devDependencies": {
-    "@jest/globals": "^29.6.1",
-    "@remix-run/react": "^1.18.1",
+    "@jest/globals": "^29.6.2",
+    "@remix-run/react": "^1.19.2",
     "@types/react": "^18.2.16",
     "@types/react-dom": "^18.2.7",
     "@webstudio-is/jest-config": "workspace:^",
     "@webstudio-is/scripts": "workspace:^",
     "@webstudio-is/tsconfig": "workspace:^",
-    "jest": "^29.6.1",
+    "jest": "^29.6.2",
     "react": "^18.2.0",
     "react-dom": "^18.2.0",
     "type-fest": "^3.7.1",
@@ -30,7 +30,7 @@
     "zod": "^3.21.4"
   },
   "peerDependencies": {
-    "@remix-run/react": "^1.18.0",
+    "@remix-run/react": "^1.19.1",
     "react": "^18.2.0",
     "react-dom": "^18.2.0",
     "zod": "^3.19.1"
@@ -44,7 +44,6 @@
     "@webstudio-is/fonts": "workspace:^",
     "@webstudio-is/generate-arg-types": "workspace:^",
     "@webstudio-is/project-build": "workspace:^",
-    "detect-font": "^0.1.5",
     "html-tags": "^3.3.1",
     "jsep": "^1.3.8",
     "nanoevents": "^8.0.0",

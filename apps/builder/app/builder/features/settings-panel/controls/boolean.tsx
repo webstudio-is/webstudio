@@ -15,11 +15,13 @@ export const BooleanControl = ({
       id={id}
       label={getLabel(meta, propName)}
       onDelete={onDelete}
+      labelSize="large"
     >
       <Switch
         id={id}
         checked={prop?.value ?? false}
         onCheckedChange={(value) => onChange({ type: "boolean", value })}
+        css={{ justifySelf: "end" }}
       />
     </HorizontalLayout>
   );
