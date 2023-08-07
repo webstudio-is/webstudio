@@ -73,9 +73,16 @@ const ContentEditable = ({
     }
 
     if (rootElement?.tagName === "BUTTON") {
+      // button with contentEditable does not let to press space
+      // so add span inside and use it as editor element in lexical
       const span = document.createElement("span");
       span.contentEditable = "true";
+      const child = rootElement.firstChild;
+      if (child !== null) {
+        span.appendChild(child);
+      }
       rootElement.appendChild(span);
+
       rootElement = span;
     }
     if (rootElement) {
