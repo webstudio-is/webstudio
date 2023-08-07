@@ -103,6 +103,7 @@ const Menu = ({
             color={customLinkName.length === 0 ? "error" : undefined}
             value={customLinkName}
             onChange={(event) => setCustomLinkName(event.target.value)}
+            onBlur={saveCustomLinkName}
             onKeyDown={(event) => {
               if (event.key === "Enter") {
                 saveCustomLinkName();
