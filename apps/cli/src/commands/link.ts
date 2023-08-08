@@ -2,11 +2,7 @@ import { stdin as input, stdout as output, cwd } from "node:process";
 import { join } from "node:path";
 import * as readline from "node:readline/promises";
 import { readFile, writeFile } from "node:fs/promises";
-import {
-  GLOBAL_CONFIG_FILE,
-  LOCAL_CONFIG_FILE_NAME,
-  PROJECT_NAME,
-} from "../constants";
+import { GLOBAL_CONFIG_FILE, LOCAL_CONFIG_FILE } from "../config";
 import type { Command } from "../args";
 import { ensureFileInPath } from "../fs-utils";
 
@@ -44,7 +40,7 @@ export const link: Command = async () => {
         `);
 
     await ensureFileInPath(
-      join(cwd(), PROJECT_NAME, LOCAL_CONFIG_FILE_NAME),
+      join(cwd(), LOCAL_CONFIG_FILE),
       JSON.stringify({ projectId }, null, 2)
     );
   } catch (error) {

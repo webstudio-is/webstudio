@@ -1,6 +1,6 @@
 import { parseArgs } from "node:util";
 import { exit, argv } from "node:process";
-import { GLOBAL_CONFIG_FILE } from "./constants";
+import { GLOBAL_CONFIG_FILE } from "./config";
 import { ensureFileInPath } from "./fs-utils";
 import { link } from "./commands/link";
 import { sync } from "./commands/sync";
