@@ -22,7 +22,7 @@ export const metaTooltipTrigger: WsComponentMeta = {
   detachable: false,
   invalidAncestors: [],
   type: "container",
-  label: "TooltipTrigger",
+  label: "Tooltip Trigger",
   icon: TriggerIcon,
   stylable: false,
 };
@@ -33,7 +33,7 @@ export const metaTooltipContent: WsComponentMeta = {
   invalidAncestors: [],
   type: "container",
   presetStyle,
-  label: "TooltipContent",
+  label: "Tooltip Content",
   icon: ContentIcon,
 };
 
@@ -57,7 +57,6 @@ export const metaTooltip: WsComponentMeta = {
     {
       type: "instance",
       component: "Tooltip",
-      label: "Tooltip",
       dataSources: {
         // We don't have support for boolean or undefined, instead of binding on open we bind on a string
         isOpen: { type: "variable", initialValue: "initial" },
@@ -85,7 +84,6 @@ export const metaTooltip: WsComponentMeta = {
         {
           type: "instance",
           component: "TooltipContent",
-          label: "Tooltip Content",
           props: [],
           /**
            *  z-50 overflow-hidden rounded-md border bg-popover px-3 py-1.5 text-sm text-popover-foreground shadow-md

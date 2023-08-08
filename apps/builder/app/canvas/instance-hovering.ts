@@ -6,10 +6,11 @@ import {
 import { hoveredInstanceOutlineStore } from "~/shared/nano-states";
 import {
   getAllElementsBoundingBox,
-  getElementByInstanceSelector,
+  getElementsByInstanceSelector,
   getInstanceSelectorFromElement,
 } from "~/shared/dom-utils";
 import { subscribeScrollState } from "./shared/scroll-state";
+import type { InstanceSelector } from "~/shared/tree-utils";
 
 type TimeoutId = undefined | ReturnType<typeof setTimeout>;
 
@@ -44,27 +45,41 @@ export const subscribeInstanceHovering = () => {
       hoveredInstanceSelectorStore.set(undefined);
       hoveredInstanceOutlineStore.set(undefined);
     }, 100);
+
+    // Fixes the bug, that new hover occures during timeout
+    const unsubscribe = hoveredInstanceSelectorStore.listen(() => {
+      clearTimeout(mouseOutTimeoutId);
+      unsubscribe();
+    });
   };
 
   const eventOptions = { passive: true };
   window.addEventListener("mouseover", handleMouseOver, eventOptions);
   window.addEventListener("mouseout", handleMouseOut, eventOptions);
 
-  // debounce is used to avoid laggy hover because of iframe message delay
-  const updateHoveredRect = (element: Element) => {
-    const instanceId = element.getAttribute(idAttribute) ?? undefined;
-    if (instanceId === undefined) {
+  const updateHoveredRect = (
+    elements: Element[],
+    instanceSelector: Readonly<InstanceSelector>
+  ) => {
+    if (elements.length === 0) {
       return;
     }
+
+    if (instanceSelector.length === 0) {
+      return;
+    }
+
+    const [instanceId] = instanceSelector;
     const instances = instancesStore.get();
     const instance = instances.get(instanceId);
     if (instance === undefined) {
       return;
     }
+
     if (!isScrolling) {
       hoveredInstanceOutlineStore.set({
         instanceId: instance.id,
-        rect: getAllElementsBoundingBox(element),
+        rect: getAllElementsBoundingBox(elements),
       });
     }
   };
@@ -79,7 +94,13 @@ export const subscribeInstanceHovering = () => {
     onScrollEnd() {
       isScrolling = false;
       if (hoveredElement !== undefined) {
-        updateHoveredRect(hoveredElement);
+        const instanceSelector = getInstanceSelectorFromElement(hoveredElement);
+
+        if (instanceSelector === undefined) {
+          return;
+        }
+
+        updateHoveredRect([hoveredElement], instanceSelector);
       }
     },
   });
@@ -88,10 +109,8 @@ export const subscribeInstanceHovering = () => {
   const unsubscribeHoveredInstanceId = hoveredInstanceSelectorStore.subscribe(
     (instanceSelector) => {
       if (instanceSelector) {
-        const element = getElementByInstanceSelector(instanceSelector);
-        if (element !== undefined) {
-          updateHoveredRect(element);
-        }
+        const elements = getElementsByInstanceSelector(instanceSelector);
+        updateHoveredRect(elements, instanceSelector);
       } else {
         hoveredInstanceOutlineStore.set(undefined);
       }

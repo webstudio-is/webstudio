@@ -1,5 +1,13 @@
-import { type MouseEvent, type FormEvent, useEffect, forwardRef } from "react";
-import { Suspense, lazy, useCallback, useRef } from "react";
+import {
+  type MouseEvent,
+  type FormEvent,
+  useEffect,
+  forwardRef,
+  type ForwardedRef,
+  useRef,
+  useLayoutEffect,
+} from "react";
+import { Suspense, lazy } from "react";
 import { useStore } from "@nanostores/react";
 import { useLexicalComposerContext } from "@lexical/react/LexicalComposerContext";
 import store from "immerhin";
@@ -9,7 +17,6 @@ import {
   Instances,
 } from "@webstudio-is/project-build";
 import {
-  type AnyComponent,
   type Components,
   renderWebstudioComponentChildren,
   idAttribute,
@@ -32,47 +39,60 @@ import {
   type InstanceSelector,
   areInstanceSelectorsEqual,
 } from "~/shared/tree-utils";
-import { SelectedInstanceConnector } from "./selected-instance-connector";
 import { handleLinkClick } from "./link";
 import { mergeRefs } from "@react-aria/utils";
 import { composeEventHandlers } from "@radix-ui/primitive";
 import { setDataCollapsed } from "~/canvas/collapsed";
-import { useIsVisuallyHidden } from "./visually-hidden";
+import { getIsVisuallyHidden } from "~/shared/visually-hidden";
 
 const TextEditor = lazy(() => import("../text-editor"));
 
 const ContentEditable = ({
-  Component,
-  elementRef,
-  ...props
+  renderComponentWithRef,
 }: {
-  Component: AnyComponent;
-  elementRef: { current: null | HTMLElement };
-  [idAttribute]: Instance["id"];
-  [componentAttribute]: Instance["component"];
+  renderComponentWithRef: (
+    elementRef: ForwardedRef<HTMLElement>
+  ) => JSX.Element;
 }) => {
   const [editor] = useLexicalComposerContext();
 
-  const ref = useCallback(
-    (rootElement: null | HTMLElement) => {
+  const ref = useRef<HTMLElement>(null);
+
+  /**
+   * useLayoutEffect to be sure that editor plugins on useEffect would have access to rootElement
+   */
+  useLayoutEffect(() => {
+    let rootElement = ref.current;
+
+    if (rootElement == null) {
+      return;
+    }
+
+    if (getIsVisuallyHidden(rootElement)) {
+      return;
+    }
+
+    if (rootElement?.tagName === "BUTTON") {
       // button with contentEditable does not let to press space
       // so add span inside and use it as editor element in lexical
-      if (rootElement?.tagName === "BUTTON") {
-        const span = document.createElement("span");
-        span.contentEditable = "true";
-        rootElement.appendChild(span);
-        rootElement = span;
+      const span = document.createElement("span");
+      span.contentEditable = "true";
+      const child = rootElement.firstChild;
+      if (child !== null) {
+        span.appendChild(child);
       }
-      if (rootElement) {
-        rootElement.contentEditable = "true";
-      }
-      editor.setRootElement(rootElement);
-      elementRef.current = rootElement ?? null;
-    },
-    [editor, elementRef]
-  );
+      rootElement.appendChild(span);
 
-  return <Component ref={ref} {...props} />;
+      rootElement = span;
+    }
+    if (rootElement) {
+      rootElement.contentEditable = "true";
+    }
+
+    editor.setRootElement(rootElement);
+  }, [editor]);
+
+  return renderComponentWithRef(ref);
 };
 
 // this utility is temporary solution to compute instance selectors
@@ -155,12 +175,10 @@ export const WebstudioComponentDev = forwardRef<
   WebstudioComponentDevProps & ImplicitEvents
 >(({ instance, instanceSelector, children, components, ...restProps }, ref) => {
   const instanceId = instance.id;
-  const instanceElementRef = useRef<HTMLElement>(null);
   const instanceStyles = useInstanceStyles(instanceId);
   useCssRules({ instanceId: instance.id, instanceStyles });
   const instances = useStore(instancesStore);
 
-  const selectedInstanceSelector = useStore(selectedInstanceSelectorStore);
   const textEditingInstanceSelector = useStore(
     textEditingInstanceSelectorStore
   );
@@ -168,23 +186,18 @@ export const WebstudioComponentDev = forwardRef<
   const instanceProps = useInstanceProps(instance.id);
   const { [showAttribute]: show = true, ...userProps } = instanceProps;
 
-  const isSelected = areInstanceSelectorsEqual(
-    selectedInstanceSelector,
-    instanceSelector
-  );
   const isPreviewMode = useStore(isPreviewModeStore);
 
-  useCollapsedOnNewElement(instanceId);
+  /**
+   * Prevents edited element from having a size of 0 on the first render.
+   * Directly using `renderWebstudioComponentChildren(children)` in Text Edit
+   * conflicts with React due to lexical node changes.
+   */
+  const initialContentEditableContent = useRef(
+    renderWebstudioComponentChildren(children)
+  );
 
-  // Scroll the selected instance into view when selected from navigator.
-  useEffect(() => {
-    if (isSelected) {
-      instanceElementRef.current?.scrollIntoView({
-        behavior: "smooth",
-        block: "nearest",
-      });
-    }
-  }, [isSelected]);
+  useCollapsedOnNewElement(instanceId);
 
   // this assumes presence of `useStore(selectedInstanceSelectorStore)` above
   // we rely on root re-rendering after selected instance changes
@@ -199,11 +212,6 @@ export const WebstudioComponentDev = forwardRef<
       }
     }
   });
-
-  const isScreenReaderDescendant = useIsVisuallyHidden(instanceElementRef);
-  if (isScreenReaderDescendant) {
-    return <></>;
-  }
 
   const readonlyProps =
     isPreviewMode === false &&
@@ -271,23 +279,14 @@ export const WebstudioComponentDev = forwardRef<
     }
   }
 
+  // Do not pass Radix handlers in edit mode
+  const componentProps = isPreviewMode
+    ? { ...restProps, ...props, ...composedHandlers }
+    : props;
+
   const instanceElement = (
     <>
-      {isSelected && (
-        <SelectedInstanceConnector
-          instanceElementRef={instanceElementRef}
-          instance={instance}
-          instanceSelector={instanceSelector}
-          instanceStyles={instanceStyles}
-          instanceProps={instanceProps}
-        />
-      )}
-      <Component
-        {...restProps}
-        {...props}
-        {...composedHandlers}
-        ref={mergeRefs(instanceElementRef, ref)}
-      >
+      <Component {...componentProps} ref={ref}>
         {renderWebstudioComponentChildren(children)}
       </Component>
     </>
@@ -297,6 +296,8 @@ export const WebstudioComponentDev = forwardRef<
     areInstanceSelectorsEqual(textEditingInstanceSelector, instanceSelector) ===
     false
   ) {
+    initialContentEditableContent.current =
+      renderWebstudioComponentChildren(children);
     return instanceElement;
   }
 
@@ -307,9 +308,11 @@ export const WebstudioComponentDev = forwardRef<
         instances={instances}
         contentEditable={
           <ContentEditable
-            {...props}
-            elementRef={instanceElementRef}
-            Component={Component}
+            renderComponentWithRef={(elementRef) => (
+              <Component {...componentProps} ref={mergeRefs(ref, elementRef)}>
+                {initialContentEditableContent.current}
+              </Component>
+            )}
           />
         }
         onChange={(instancesList) => {

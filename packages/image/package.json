@@ -21,7 +21,7 @@
   },
   "devDependencies": {
     "@jest/globals": "^29.6.2",
-    "@storybook/react": "^7.1.0",
+    "@storybook/react": "^7.2.1",
     "@types/react": "^18.2.16",
     "@webstudio-is/jest-config": "workspace:^",
     "@webstudio-is/scripts": "workspace:^",

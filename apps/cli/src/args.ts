@@ -1,10 +1,21 @@
 import { parseArgs } from "node:util";
+import stripIndent from "strip-indent";
 
-export const showHelp = () => console.info(HELP);
+export const showHelp = () =>
+  console.info(
+    stripIndent(`
+      Usage:
+      $ webstudio commands [flags...]
 
-export enum Commands {
-  "link" = "link",
-}
+      Commands:
+      link       Link to an existing webstudio project
+      sync       Sync the linked webstudio project with the latest build
+
+     Flags:
+     --help     -h     Show this help message
+    --version  -v     Show the version of this script
+`)
+  );
 
 type DefaultArgs = Pick<
   ReturnType<
@@ -15,10 +26,15 @@ type DefaultArgs = Pick<
   "values"
 >;
 
+type Commands = "link" | "sync";
+
 export type Command = (
   args: DefaultArgs & { positionals: string[] }
 ) => Promise<void>;
-export type SupportedCommands = Record<Commands, Command>;
+
+export type SupportedCommands = {
+  [key in Commands]: Command;
+} & { [key: string]: Command };
 
 export const CLI_ARGS_OPTIONS = {
   version: {
@@ -30,13 +46,3 @@ export const CLI_ARGS_OPTIONS = {
     short: "h",
   },
 };
-
-export const HELP = `Usage:
-    $ webstudio commands [flags...]
-  Commands:
-    link <shared link>              Login to Webstudio with shared link
-
-    Flags:
-    --help, -h                      Show this help message
-    --version, -v                   Show the version of this script
-`;
