@@ -41,6 +41,9 @@ export const CollapsibleContent: ForwardRefExoticComponent<
 
 const namespace = "@webstudio-is/sdk-components-react-radix";
 
+// For each CollapsibleContent component within the selection,
+// we identify its closest parent Collapsible component
+// and update its open prop bound to variable.
 export const hooksCollapsible: Hook = {
   onNavigatorUnselect: (context, event) => {
     for (const instance of event.instanceSelection) {

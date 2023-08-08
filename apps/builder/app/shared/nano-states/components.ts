@@ -27,6 +27,9 @@ declare module "~/shared/pubsub" {
   }
 }
 
+// subscribe component hooks emitted from builder
+// and invoke all hooks
+// name and data is mapped to [name](context, data)
 export const subscribeComponentHooks = () => {
   return subscribe("emitComponentHook", (data) => {
     const hooks = registeredComponentHooksStore.get();

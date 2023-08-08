@@ -1,5 +1,11 @@
 import type { Instance, Prop } from "@webstudio-is/project-build";
 
+/**
+ * Hooks are subscriptions to builder events
+ * with limited way to interact with it.
+ * Called independently from components.
+ */
+
 export type HookContext = {
   setPropVariable: (
     instanceId: Instance["id"],
