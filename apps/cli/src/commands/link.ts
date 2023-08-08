@@ -1,4 +1,4 @@
-import { stdin as input, stdout as output, cwd } from "node:process";
+import { stdin, stdout, cwd } from "node:process";
 import { join } from "node:path";
 import * as readline from "node:readline/promises";
 import { readFile, writeFile } from "node:fs/promises";
@@ -7,13 +7,14 @@ import type { Command } from "../args";
 import { ensureFileInPath } from "../fs-utils";
 
 export const link: Command = async () => {
-  const rl = readline.createInterface({ input, output });
+  const rl = readline.createInterface({ input: stdin, output: stdout });
   const shareLink = await rl.question(`Paste share link (with build access): `);
 
   const shareLinkUrl = new URL(shareLink);
   const host = shareLinkUrl.origin;
   const token = shareLinkUrl.searchParams.get("authToken");
-  const paths = shareLinkUrl.pathname.split("/").filter(Boolean);
+  const paths = shareLinkUrl.pathname.split("/").slice(1);
+
   if (paths[0] !== "builder" || paths.length !== 2) {
     throw new Error("Invalid share link.");
   }

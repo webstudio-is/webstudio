@@ -25,12 +25,12 @@ export const main = async () => {
 
     if (args.values?.version) {
       console.info(packageJSON.version);
-      exit(0);
+      return;
     }
 
     if (args.values?.help) {
       showHelp();
-      exit(0);
+      return;
     }
 
     const commandId = argv[2];
@@ -40,7 +40,6 @@ export const main = async () => {
     }
 
     await command({ ...args, positionals: args.positionals.slice(1) });
-    exit(0);
   } catch (error) {
     console.error(error);
     showHelp();
