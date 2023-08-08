@@ -9,6 +9,11 @@ import {
   Children,
 } from "react";
 import { Root, Trigger, Content } from "@radix-ui/react-collapsible";
+import type {
+  Hook,
+  HookContext,
+  InstanceSelector,
+} from "@webstudio-is/react-sdk";
 
 export const Collapsible: ForwardRefExoticComponent<
   Omit<ComponentPropsWithRef<typeof Root>, "defaultOpen" | "asChild">
@@ -35,3 +40,70 @@ export const CollapsibleTrigger = forwardRef<
 export const CollapsibleContent: ForwardRefExoticComponent<
   Omit<ComponentPropsWithRef<typeof Content>, "asChild">
 > = Content;
+
+/* BUILDER HOOKS */
+
+const namespace = "@webstudio-is/sdk-components-react-radix";
+
+const onCollapsibleContentMatched = (
+  context: HookContext,
+  instanceSelector: InstanceSelector,
+  callback: (collapsibleId: string) => void
+) => {
+  let isContentSelected = false;
+  for (const instanceId of instanceSelector) {
+    const instance = context.instances.get(instanceId);
+    if (instance === undefined) {
+      continue;
+    }
+    if (instance.component === `${namespace}:CollapsibleContent`) {
+      isContentSelected = true;
+    }
+    if (
+      instance.component === `${namespace}:Collapsible` &&
+      isContentSelected
+    ) {
+      isContentSelected = false;
+      callback(instance.id);
+    }
+  }
+};
+
+const findOpenPropVariableId = (context: HookContext, instanceId: string) => {
+  for (const prop of context.props.values()) {
+    if (
+      prop.instanceId === instanceId &&
+      prop.name === "open" &&
+      prop.type === "dataSource"
+    ) {
+      return prop.value;
+    }
+  }
+};
+
+export const hooksCollapsible: Hook = {
+  onNavigatorDeselect: (context, event) => {
+    onCollapsibleContentMatched(
+      context,
+      event.instanceSelector,
+      (collapsibleId) => {
+        const variableId = findOpenPropVariableId(context, collapsibleId);
+        if (variableId) {
+          context.setVariable(variableId, false);
+        }
+      }
+    );
+  },
+  onNavigatorSelect: (context, event) => {
+    onCollapsibleContentMatched(
+      context,
+      event.instanceSelector,
+      (collapsibleId) => {
+        const variableId = findOpenPropVariableId(context, collapsibleId);
+        if (variableId) {
+          context.setVariable(variableId, true);
+        }
+      }
+    );
+  },
+};

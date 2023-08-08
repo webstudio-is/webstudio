@@ -5,10 +5,50 @@ import {
   type AnyComponent,
   type WsComponentMeta,
   type WsComponentPropsMeta,
+  type Hook,
+  type HookContext,
 } from "@webstudio-is/react-sdk";
 import type { Instance } from "@webstudio-is/project-build";
+import { subscribe } from "~/shared/pubsub";
+import { instancesStore } from "./instances";
+import { dataSourceVariablesStore, propsStore } from "./nano-states";
+
+type HookCommand = NonNullable<
+  {
+    [Name in keyof Hook]: {
+      name: Name;
+      data: Parameters<NonNullable<Hook[Name]>>[1];
+    };
+  }[keyof Hook]
+>;
+
+declare module "~/shared/pubsub" {
+  export interface PubsubMap {
+    emitComponentHook: HookCommand;
+  }
+}
+
+export const subscribeComponentHooks = () => {
+  return subscribe("emitComponentHook", (data) => {
+    const hooks = registeredComponentHooksStore.get();
+    for (const hook of hooks) {
+      const context: HookContext = {
+        instances: instancesStore.get(),
+        props: propsStore.get(),
+        setVariable: (dataSourceId, value) => {
+          const dataSourceVariables = new Map(dataSourceVariablesStore.get());
+          dataSourceVariables.set(dataSourceId, value);
+          dataSourceVariablesStore.set(dataSourceVariables);
+        },
+      };
+      hook[data.name]?.(context, data.data);
+    }
+  });
+};
 
 export const registeredComponentsStore = atom(new Map<string, AnyComponent>());
+
+export const registeredComponentHooksStore = atom<Hook[]>([]);
 
 export const registeredComponentMetasStore = atom(
   new Map<string, WsComponentMeta>()
@@ -23,6 +63,7 @@ export const registerComponentLibrary = ({
   components,
   metas,
   propsMetas,
+  hooks,
 }: {
   namespace?: string;
   // simplify adding component libraries
@@ -30,6 +71,7 @@ export const registerComponentLibrary = ({
   components: Record<Instance["component"], ExoticComponent<any>>;
   metas: Record<Instance["component"], WsComponentMeta>;
   propsMetas: Record<Instance["component"], WsComponentPropsMeta>;
+  hooks?: Hook[];
 }) => {
   const prefix = namespace === undefined ? "" : `${namespace}:`;
 
@@ -51,6 +93,12 @@ export const registerComponentLibrary = ({
     );
   }
   registeredComponentMetasStore.set(nextMetas);
+
+  if (hooks) {
+    const prevHooks = registeredComponentHooksStore.get();
+    const nextHooks = [...prevHooks, ...hooks];
+    registeredComponentHooksStore.set(nextHooks);
+  }
 
   const prevPropsMetas = registeredComponentPropsMetasStore.get();
   const nextPropsMetas = new Map(prevPropsMetas);

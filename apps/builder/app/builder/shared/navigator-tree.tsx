@@ -22,9 +22,10 @@ import {
   isInstanceDetachable,
   getComponentTemplateData,
 } from "~/shared/instance-utils";
+import type { Publish } from "~/shared/pubsub";
 import { InstanceTree } from "./tree";
 
-export const NavigatorTree = () => {
+export const NavigatorTree = ({ publish }: { publish: Publish }) => {
   const selectedInstanceSelector = useStore(selectedInstanceSelectorStore);
   const rootInstance = useStore(rootInstanceStore);
   const instances = useStore(instancesStore);
@@ -115,9 +116,33 @@ export const NavigatorTree = () => {
       shallowEqual(selectedInstanceSelectorStore.get(), instanceSelector) ===
       false
     ) {
+      const previousInstanceSelector = selectedInstanceSelectorStore.get();
+      if (previousInstanceSelector) {
+        publish({
+          type: "emitComponentHook",
+          payload: {
+            name: "onNavigatorDeselect",
+            data: {
+              instanceSelector: previousInstanceSelector as [
+                string,
+                ...string[],
+              ],
+            },
+          },
+        });
+      }
       selectedInstanceSelectorStore.set(instanceSelector);
       textEditingInstanceSelectorStore.set(undefined);
       selectedStyleSourceSelectorStore.set(undefined);
+      publish({
+        type: "emitComponentHook",
+        payload: {
+          name: "onNavigatorSelect",
+          data: {
+            instanceSelector: instanceSelector as [string, ...string[]],
+          },
+        },
+      });
     }
   }, []);
 
