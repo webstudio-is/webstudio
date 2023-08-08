@@ -2,7 +2,7 @@ import type { Data } from "@webstudio-is/react-sdk";
 
 interface DefaultArgs {
   host: string;
-  authToken: string;
+  authToken?: string;
 }
 
 type ResourceFactory<T, K> = (params: DefaultArgs & T) => Promise<K>;
@@ -18,7 +18,9 @@ export const loadProjectDataById: ResourceFactory<
 
   const url = new URL(params.host);
   url.pathname = `/rest/build/${result.buildId}`;
-  url.searchParams.append("authToken", params.authToken);
+  if (params.authToken) {
+    url.searchParams.append("authToken", params.authToken);
+  }
 
   const response = await fetch(url.href);
 
@@ -37,8 +39,9 @@ export const getLatestBuildUsingProjectId: ResourceFactory<
   const { host, projectId, authToken } = params;
   const url = new URL(host);
   url.pathname = `/rest/buildId/${projectId}`;
-  url.searchParams.append("authToken", authToken);
-
+  if (authToken) {
+    url.searchParams.append("authToken", authToken);
+  }
   const response = await fetch(url.href);
 
   if (response.ok) {
