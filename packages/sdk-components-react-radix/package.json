@@ -30,6 +30,12 @@
       "types": "./lib/types/props.d.ts",
       "import": "./lib/props.js",
       "require": "./lib/cjs/props.js"
+    },
+    "./hooks": {
+      "source": "./src/hooks.ts",
+      "types": "./lib/types/hooks.d.ts",
+      "import": "./lib/hooks.js",
+      "require": "./lib/cjs/hooks.js"
     }
   },
   "scripts": {
