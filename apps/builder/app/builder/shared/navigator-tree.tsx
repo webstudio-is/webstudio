@@ -123,7 +123,7 @@ export const NavigatorTree = ({ publish }: { publish: Publish }) => {
           publish({
             type: "emitComponentHook",
             payload: {
-              name: "onNavigatorDeselect",
+              name: "onNavigatorUnselect",
               data: {
                 instanceSelection: previousInstanceSelector.flatMap((id) => {
                   const instance = instances.get(id);

@@ -16,7 +16,7 @@ type NavigatorEvent = {
 
 export type Hook = {
   onNavigatorSelect?: (context: HookContext, event: NavigatorEvent) => void;
-  onNavigatorDeselect?: (context: HookContext, event: NavigatorEvent) => void;
+  onNavigatorUnselect?: (context: HookContext, event: NavigatorEvent) => void;
 };
 
 export const getClosestInstance = (

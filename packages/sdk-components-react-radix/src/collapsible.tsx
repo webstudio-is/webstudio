@@ -42,7 +42,7 @@ export const CollapsibleContent: ForwardRefExoticComponent<
 const namespace = "@webstudio-is/sdk-components-react-radix";
 
 export const hooksCollapsible: Hook = {
-  onNavigatorDeselect: (context, event) => {
+  onNavigatorUnselect: (context, event) => {
     for (const instance of event.instanceSelection) {
       if (instance.component === `${namespace}:CollapsibleContent`) {
         const collapsible = getClosestInstance(
