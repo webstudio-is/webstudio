@@ -26,7 +26,7 @@ type DefaultArgs = Pick<
   "values"
 >;
 
-type Commands = "link" | "sync";
+type Commands = "link" | "sync" | "build";
 
 export type Command = (
   args: DefaultArgs & { positionals: string[] }
@@ -45,4 +45,29 @@ export const CLI_ARGS_OPTIONS = {
     type: "boolean" as const,
     short: "h",
   },
+  type: {
+    type: "string" as const,
+    short: "t",
+    default: "remix-app-server",
+  },
+};
+
+export type File = {
+  name: string;
+  content: string;
+  encoding: "utf-8";
+};
+
+export type Folder = {
+  name: string;
+  files: File[];
+  subFolders: Folder[];
+};
+
+export type ProjectType = "defaults" | "vercel" | "remix-app-server";
+
+export const SupportedProjects: Record<ProjectType, boolean> = {
+  defaults: true,
+  vercel: true,
+  "remix-app-server": true,
 };

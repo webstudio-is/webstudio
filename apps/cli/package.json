@@ -15,15 +15,21 @@
   },
   "license": "MIT",
   "dependencies": {
+    "@webstudio-is/asset-uploader": "workspace:^",
     "@webstudio-is/http-client": "workspace:^",
+    "@webstudio-is/project-build": "workspace:^",
+    "@webstudio-is/react-sdk": "workspace:^",
+    "@webstudio-is/sdk-components-react": "workspace:^",
+    "@webstudio-is/sdk-components-react-remix": "workspace:^",
+    "deepmerge": "^4.3.1",
     "env-paths": "^3.0.0",
     "ora": "^7.0.1",
     "strip-indent": "^4.0.0"
   },
   "devDependencies": {
-    "tsx": "^3.12.6",
     "@types/node": "^18.13.0",
     "@webstudio-is/scripts": "workspace:^",
-    "@webstudio-is/tsconfig": "workspace:^"
+    "@webstudio-is/tsconfig": "workspace:^",
+    "tsx": "^3.12.6"
   }
 }

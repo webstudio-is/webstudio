@@ -1,4 +1,4 @@
-import { dirname } from "node:path";
+import { dirname, join } from "node:path";
 import {
   access,
   mkdir,
@@ -7,24 +7,9 @@ import {
   rm,
   readFile,
 } from "node:fs/promises";
-
-export interface File {
-  name: string;
-  content: string;
-  encoding: "utf-8";
-}
-
-export interface Folder {
-  name: string;
-  files: File[];
-  subFolders: Folder[];
-}
-
-export enum ProjectType {
-  "vercel" = "vercel",
-  "defaults" = "defaults",
-  "remix-app-server" = "remix-app-server",
-}
+import { cwd } from "node:process";
+import deepmerge from "deepmerge";
+import { type ProjectType, type Folder } from "./args";
 
 export const ensureFileInPath = async (filePath: string, content?: string) => {
   const dir = dirname(filePath);
@@ -63,5 +48,48 @@ export const loadJSONFile = async <T>(filePath: string): Promise<T | null> => {
     return JSON.parse(content) as T;
   } catch (error) {
     return null;
+  }
+};
+
+export const scaffoldProjectTemplate = async (
+  projectType: ProjectType,
+  defaultTemplate: Folder,
+  projectTemplate: Folder
+) => {
+  console.log(`Preparing default configurations for ${projectType}...`);
+  const buildDir = cwd();
+
+  await parseFolderAndWriteFiles(defaultTemplate, buildDir);
+  await parseFolderAndWriteFiles(projectTemplate, buildDir);
+
+  const defaultPackageJSON = JSON.parse(
+    defaultTemplate.files.find((file) => file.name === "package.json")
+      ?.content || "{}"
+  );
+  const projectPackageJSON = JSON.parse(
+    projectTemplate.files.find((file) => file.name === "package.json")
+      ?.content || "{}"
+  );
+  const packageJSON = deepmerge(defaultPackageJSON, projectPackageJSON);
+  await writeFile(
+    join(buildDir, "package.json"),
+    JSON.stringify(packageJSON, null, 2),
+    "utf8"
+  );
+};
+
+const parseFolderAndWriteFiles = async (folder: Folder, path: string) => {
+  for (const file of folder.files) {
+    if (file.name === "package.json") {
+      continue;
+    }
+
+    const filePath = join(path, file.name);
+    await ensureFileInPath(filePath);
+    await writeFile(filePath, file.content, "utf8");
+  }
+
+  for (const subFolder of folder.subFolders) {
+    await parseFolderAndWriteFiles(subFolder, join(path, subFolder.name));
   }
 };

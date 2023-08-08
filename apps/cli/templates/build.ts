@@ -1,10 +1,11 @@
 import { readdirSync, lstatSync, readFileSync, writeFileSync } from "node:fs";
 import { join } from "node:path";
-import { type Folder, ProjectType, ensureFileInPath } from "../src/utils";
+import { type Folder, SupportedProjects } from "../src/args";
+import { ensureFileInPath } from "../src/fs-utils";
 
-const TEMPLATES_TO_BUILD = Object.keys(ProjectType);
+const TEMPLATES_TO_BUILD = Object.keys(SupportedProjects);
 
-console.log("Building Templates...");
+console.info("Building Templates...");
 const parseFolder = (folderPath: string): Folder | undefined => {
   const isDirectory = lstatSync(folderPath).isDirectory();
   if (isDirectory === false) {
@@ -24,8 +25,7 @@ const parseFolder = (folderPath: string): Folder | undefined => {
 
   const files = readdirSync(folderPath);
 
-  for (let i = 0; i < files.length; i++) {
-    const file = files[i];
+  for (const file of files) {
     const filePath = join(folderPath, file);
     const statSync = lstatSync(filePath);
     const isDirectory = statSync.isDirectory();
@@ -58,8 +58,7 @@ const TEMPLATES_JSON_PATH = new URL(
 ).pathname;
 await ensureFileInPath(TEMPLATES_JSON_PATH);
 
-for (let i = 0; i < TEMPLATES_TO_BUILD.length; i++) {
-  const template = TEMPLATES_TO_BUILD[i];
+for (const template of TEMPLATES_TO_BUILD) {
   const templatePath = new URL(`./${template}`, import.meta.url).pathname;
   const templateFiles = parseFolder(templatePath);
   if (templateFiles === undefined) {
@@ -70,13 +69,13 @@ for (let i = 0; i < TEMPLATES_TO_BUILD.length; i++) {
 
 const content = `/*
 
-This is a auto-generated file. Please don't change manually.
+This is an auto-generated file. Please don't change manually.
 If needed to make any changes. Add them to ./templates folder and run pnpm run build:templates
 
 */
 
-import type { Folder, ProjectType } from "../utils"\n
-export const TEMPLATES: Record<ProjectType, Folder> = ${JSON.stringify(
+import type { Folder, ProjectType } from "../args"\n
+export const templates: Record<ProjectType, Folder> = ${JSON.stringify(
   TEMPLATES_JSON,
   null,
   2

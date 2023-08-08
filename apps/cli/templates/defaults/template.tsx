@@ -24,7 +24,7 @@ import {
 import css from "../__generated__/index.css";
 
 export type PageData = Omit<Data, "build"> & {
-  build: Pick<Data["build"], "props" | "instances">;
+  build: Pick<Data["build"], "props" | "instances" | "dataSources">;
 };
 
 export const meta: V2_MetaFunction = () => {
