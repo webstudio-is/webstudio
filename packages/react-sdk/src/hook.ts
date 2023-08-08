@@ -1,18 +1,36 @@
-import type { DataSource, Instances, Props } from "@webstudio-is/project-build";
+import type { Instance, Prop } from "@webstudio-is/project-build";
 
 export type HookContext = {
-  instances: Instances;
-  props: Props;
-  setVariable: (dataSourceId: DataSource["id"], value: unknown) => void;
+  setPropVariable: (
+    instanceId: Instance["id"],
+    propName: Prop["name"],
+    value: unknown
+  ) => void;
 };
 
-export type InstanceSelector = [string, ...string[]];
+export type InstanceSelection = Instance[];
 
 type NavigatorEvent = {
-  instanceSelector: InstanceSelector;
+  instanceSelection: InstanceSelection;
 };
 
 export type Hook = {
   onNavigatorSelect?: (context: HookContext, event: NavigatorEvent) => void;
   onNavigatorDeselect?: (context: HookContext, event: NavigatorEvent) => void;
+};
+
+export const getClosestInstance = (
+  instanceSelection: InstanceSelection,
+  currentInstance: Instance,
+  closestComponent: Instance["component"]
+) => {
+  let matched = false;
+  for (const instance of instanceSelection) {
+    if (currentInstance === instance) {
+      matched = true;
+    }
+    if (matched && instance.component === closestComponent) {
+      return instance;
+    }
+  }
 };

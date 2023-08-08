@@ -117,6 +117,7 @@ export const NavigatorTree = ({ publish }: { publish: Publish }) => {
         shallowEqual(selectedInstanceSelectorStore.get(), instanceSelector) ===
         false
       ) {
+        const instances = instancesStore.get();
         const previousInstanceSelector = selectedInstanceSelectorStore.get();
         if (previousInstanceSelector) {
           publish({
@@ -124,10 +125,10 @@ export const NavigatorTree = ({ publish }: { publish: Publish }) => {
             payload: {
               name: "onNavigatorDeselect",
               data: {
-                instanceSelector: previousInstanceSelector as [
-                  string,
-                  ...string[],
-                ],
+                instanceSelection: previousInstanceSelector.flatMap((id) => {
+                  const instance = instances.get(id);
+                  return instance ? [instance] : [];
+                }),
               },
             },
           });
@@ -140,7 +141,10 @@ export const NavigatorTree = ({ publish }: { publish: Publish }) => {
           payload: {
             name: "onNavigatorSelect",
             data: {
-              instanceSelector: instanceSelector as [string, ...string[]],
+              instanceSelection: instanceSelector.flatMap((id) => {
+                const instance = instances.get(id);
+                return instance ? [instance] : [];
+              }),
             },
           },
         });

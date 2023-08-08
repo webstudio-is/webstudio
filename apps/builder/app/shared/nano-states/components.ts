@@ -10,7 +10,6 @@ import {
 } from "@webstudio-is/react-sdk";
 import type { Instance } from "@webstudio-is/project-build";
 import { subscribe } from "~/shared/pubsub";
-import { instancesStore } from "./instances";
 import { dataSourceVariablesStore, propsStore } from "./nano-states";
 
 type HookCommand = NonNullable<
@@ -33,11 +32,19 @@ export const subscribeComponentHooks = () => {
     const hooks = registeredComponentHooksStore.get();
     for (const hook of hooks) {
       const context: HookContext = {
-        instances: instancesStore.get(),
-        props: propsStore.get(),
-        setVariable: (dataSourceId, value) => {
+        setPropVariable: (instanceId, propName, value) => {
           const dataSourceVariables = new Map(dataSourceVariablesStore.get());
-          dataSourceVariables.set(dataSourceId, value);
+          const props = propsStore.get();
+          for (const prop of props.values()) {
+            if (
+              prop.instanceId === instanceId &&
+              prop.name === propName &&
+              prop.type === "dataSource"
+            ) {
+              const dataSourceId = prop.value;
+              dataSourceVariables.set(dataSourceId, value);
+            }
+          }
           dataSourceVariablesStore.set(dataSourceVariables);
         },
       };
