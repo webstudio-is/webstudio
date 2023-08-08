@@ -4,16 +4,16 @@ import stripIndent from "strip-indent";
 export const showHelp = () =>
   console.info(
     stripIndent(`
-Usage:
-  $ webstudio commands [flags...]
+      Usage:
+      $ webstudio commands [flags...]
 
-Commands:
-  link       Link to an existing webstudio project
-  sync       Sync the linked webstudio project with the latest build
+      Commands:
+      link       Link to an existing webstudio project
+      sync       Sync the linked webstudio project with the latest build
 
-  Flags:
-  --help     -h     Show this help message
-  --version  -v     Show the version of this script
+     Flags:
+     --help     -h     Show this help message
+    --version  -v     Show the version of this script
 `)
   );
 

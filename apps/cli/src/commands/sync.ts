@@ -8,13 +8,13 @@ import type { Command } from "../args";
 import { ensureFileInPath, loadJSONFile } from "../fs-utils";
 import {
   GLOBAL_CONFIG_FILE,
-  LOCAL_CONFIG_FILE_NAME,
+  LOCAL_CONFIG_FILE,
   type GlobalConfig,
   type LocalConfig,
-  LOCAL_BUILD_FILE_NAME,
-} from "../constants";
+  LOCAL_DATA_FILE,
+} from "../config";
 
-export const sync: Command = async (args) => {
+export const sync: Command = async () => {
   const spinner = ora("Syncing project data").start();
 
   spinner.text = "Loading project data from config file";
@@ -27,7 +27,7 @@ export const sync: Command = async (args) => {
   }
 
   const localConfig = await loadJSONFile<LocalConfig>(
-    join(cwd(), LOCAL_CONFIG_FILE_NAME)
+    join(cwd(), LOCAL_CONFIG_FILE)
   );
 
   if (localConfig === null) {
@@ -46,10 +46,11 @@ export const sync: Command = async (args) => {
     host: host,
   });
 
-  const localBuildFilePath = join(cwd(), LOCAL_BUILD_FILE_NAME);
-  await ensureFileInPath(localBuildFilePath);
   spinner.text = "Saving project data to config file";
 
+  const localBuildFilePath = join(cwd(), LOCAL_DATA_FILE);
+  await ensureFileInPath(localBuildFilePath);
   await writeFile(localBuildFilePath, JSON.stringify(project, null, 2), "utf8");
+
   spinner.succeed("Project data synced successfully");
 };
