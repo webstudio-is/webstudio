@@ -199,9 +199,7 @@ export const Canvas = ({ params }: CanvasProps): JSX.Element | null => {
     });
   });
 
-  useEffect(() => {
-    return subscribeComponentHooks();
-  }, []);
+  useEffect(subscribeComponentHooks, []);
 
   // e.g. toggling preview is still needed in both modes
   useCanvasShortcuts();
