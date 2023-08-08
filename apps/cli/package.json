@@ -14,7 +14,10 @@
   },
   "license": "MIT",
   "dependencies": {
-    "env-paths": "^3.0.0"
+    "@webstudio-is/http-client": "workspace:^",
+    "env-paths": "^3.0.0",
+    "ora": "^7.0.1",
+    "strip-indent": "^4.0.0"
   },
   "devDependencies": {
     "@types/node": "^18.13.0",

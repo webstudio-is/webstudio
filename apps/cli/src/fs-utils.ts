@@ -1,5 +1,12 @@
 import { dirname } from "node:path";
-import { access, mkdir, writeFile, constants, rm } from "node:fs/promises";
+import {
+  access,
+  mkdir,
+  writeFile,
+  constants,
+  rm,
+  readFile,
+} from "node:fs/promises";
 
 export const ensureFileInPath = async (filePath: string, content?: string) => {
   const dir = dirname(filePath);
@@ -29,5 +36,14 @@ export const deleteFolderIfExists = async (generatedDir: string) => {
       return;
     }
     throw error;
+  }
+};
+
+export const loadJSONFile = async <T>(filePath: string): Promise<T | null> => {
+  try {
+    const content = await readFile(filePath, "utf8");
+    return JSON.parse(content) as T;
+  } catch (error) {
+    return null;
   }
 };
