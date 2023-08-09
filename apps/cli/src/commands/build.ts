@@ -1,14 +1,14 @@
-import type { Command, ProjectType } from "../args";
+import type { Command, ProjectTarget } from "../args";
 import { prebuild } from "../prebuild";
 import { scaffoldProjectTemplate } from "../fs-utils";
 import { templates } from "../__generated__/templates";
 
 export const build: Command = async (args) => {
-  const projectType = args.values.type as ProjectType;
+  const projectTarget = args.values.type as ProjectTarget;
   await scaffoldProjectTemplate(
-    projectType,
+    projectTarget,
     templates["defaults"],
-    templates[projectType]
+    templates[projectTarget]
   );
   await prebuild();
 };

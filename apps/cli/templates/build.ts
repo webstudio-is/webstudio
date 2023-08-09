@@ -74,8 +74,8 @@ If needed to make any changes. Add them to ./templates folder and run pnpm run b
 
 */
 
-import type { Folder, ProjectType } from "../args"\n
-export const templates: Record<ProjectType, Folder> = ${JSON.stringify(
+import type { Folder, ProjectTarget } from "../args"\n
+export const templates: Record<ProjectTarget, Folder> = ${JSON.stringify(
   TEMPLATES_JSON,
   null,
   2

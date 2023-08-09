@@ -4,15 +4,9 @@ module.exports = {
   serverModuleFormat: "cjs",
   serverDependenciesToBundle: [
     /@webstudio-is\/(?!prisma-client)/,
-    "pretty-bytes",
     "nanoevents",
     "nanostores",
     "@nanostores/react",
-    /micromark/,
-    "decode-named-character-reference",
-    "character-entities",
-    /mdast-/,
-    "unist-util-stringify-position",
   ],
   future: {
     v2_errorBoundary: true,

@@ -1,5 +1,5 @@
 import { join, relative, dirname } from "node:path";
-import { readFileSync, writeFileSync, rmSync } from "node:fs";
+import { readFileSync, writeFileSync, rmSync, rm, mkdir } from "node:fs";
 import {
   generateCssText,
   type Params,
@@ -17,12 +17,7 @@ import * as remixComponentMetas from "@webstudio-is/sdk-components-react-remix/m
 import type { Asset, ImageAsset } from "@webstudio-is/asset-uploader";
 
 import { ASSETS_BASE, LOCAL_DATA_FILE } from "./config";
-import {
-  deleteFolderIfExists,
-  ensureFileInPath,
-  ensureFolderExists,
-  loadJSONFile,
-} from "./fs-utils";
+import { ensureFileInPath, ensureFolderExists, loadJSONFile } from "./fs-utils";
 
 type ComponentsByPage = {
   [path: string]: Set<string>;
@@ -49,12 +44,12 @@ export const prebuild = async () => {
   const appRoot = "app";
 
   const routesDir = join(appRoot, "routes");
-  await deleteFolderIfExists(routesDir);
-  await ensureFolderExists(routesDir);
+  await rm(routesDir, { recursive: true, force: true });
+  await mkdir(routesDir, { recursive: true });
 
   const generatedDir = join(appRoot, "__generated__");
-  await deleteFolderIfExists(generatedDir);
-  await ensureFolderExists(generatedDir);
+  await rm(generatedDir, { recursive: true, force: true });
+  await mkdir(generatedDir, { recursive: true });
 
   await ensureFolderExists(join("public", ASSETS_BASE));
 

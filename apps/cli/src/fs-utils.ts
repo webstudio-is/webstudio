@@ -9,7 +9,7 @@ import {
 } from "node:fs/promises";
 import { cwd } from "node:process";
 import deepmerge from "deepmerge";
-import { type ProjectType, type Folder } from "./args";
+import { type ProjectTarget, type Folder } from "./args";
 
 export const ensureFileInPath = async (filePath: string, content?: string) => {
   const dir = dirname(filePath);
@@ -31,17 +31,6 @@ export const ensureFolderExists = async (folderPath: string) => {
   }
 };
 
-export const deleteFolderIfExists = async (generatedDir: string) => {
-  try {
-    await rm(generatedDir, { recursive: true });
-  } catch (error) {
-    if (error.code === "ENOENT") {
-      return;
-    }
-    throw error;
-  }
-};
-
 export const loadJSONFile = async <T>(filePath: string): Promise<T | null> => {
   try {
     const content = await readFile(filePath, "utf8");
@@ -52,11 +41,11 @@ export const loadJSONFile = async <T>(filePath: string): Promise<T | null> => {
 };
 
 export const scaffoldProjectTemplate = async (
-  projectType: ProjectType,
+  projectTarget: ProjectTarget,
   defaultTemplate: Folder,
   projectTemplate: Folder
 ) => {
-  console.log(`Preparing default configurations for ${projectType}...`);
+  console.log(`Preparing default configurations for ${projectTarget}...`);
   const buildDir = cwd();
 
   await parseFolderAndWriteFiles(defaultTemplate, buildDir);

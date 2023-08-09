@@ -64,9 +64,9 @@ export type Folder = {
   subFolders: Folder[];
 };
 
-export type ProjectType = "defaults" | "vercel" | "remix-app-server";
+export type ProjectTarget = "defaults" | "vercel" | "remix-app-server";
 
-export const SupportedProjects: Record<ProjectType, boolean> = {
+export const SupportedProjects: Record<ProjectTarget, boolean> = {
   defaults: true,
   vercel: true,
   "remix-app-server": true,
