@@ -45,7 +45,7 @@ export const scaffoldProjectTemplate = async (
   defaultTemplate: Folder,
   projectTemplate: Folder
 ) => {
-  console.log(`Preparing default configurations for ${projectTarget}...`);
+  console.info(`Preparing default configurations for ${projectTarget}...`);
   const buildDir = cwd();
 
   await parseFolderAndWriteFiles(defaultTemplate, buildDir);
