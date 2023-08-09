@@ -11,7 +11,7 @@ type Props = Omit<ComponentPropsWithoutRef<typeof Link>, "target"> & {
   target?: "_self" | "_blank" | "_parent" | "_top";
 
   // useful remix props
-  prefetch?: "intent" | "render" | "none";
+  prefetch?: "none" | "intent" | "render" | "viewport";
   reloadDocument?: boolean;
   replace?: boolean;
   preventScrollReset?: boolean;
@@ -34,7 +34,10 @@ export const wrapLinkComponent = (BaseLink: typeof Link) => {
       return <RemixLink {...props} to={to} ref={ref} />;
     }
 
-    return <BaseLink {...props} ref={ref} />;
+    const { prefetch, reloadDocument, replace, preventScrollReset, ...rest } =
+      props;
+
+    return <BaseLink {...rest} ref={ref} />;
   });
 
   Component.displayName = BaseLink.displayName;

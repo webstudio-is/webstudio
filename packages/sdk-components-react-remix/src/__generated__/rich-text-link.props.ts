@@ -434,9 +434,9 @@ export const props: Record<string, PropMeta> = {
   placeholder: { required: false, control: "text", type: "string" },
   prefetch: {
     required: false,
-    control: "radio",
+    control: "select",
     type: "string",
-    options: ["none", "intent", "render"],
+    options: ["none", "intent", "render", "viewport"],
   },
   prefix: { required: false, control: "text", type: "string" },
   preventScrollReset: { required: false, control: "boolean", type: "boolean" },
