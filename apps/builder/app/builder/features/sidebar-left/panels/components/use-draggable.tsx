@@ -9,6 +9,8 @@ import {
   useDrag,
   ComponentCard,
   toast,
+  enableCanvasPointerEvents,
+  disableCanvasPointerEvents,
 } from "@webstudio-is/design-system";
 import {
   instancesStore,
@@ -17,11 +19,7 @@ import {
   selectedPageStore,
 } from "~/shared/nano-states";
 import { useSubscribe, type Publish } from "~/shared/pubsub";
-import {
-  canvasRectStore,
-  isCanvasPointerEventsEnabledStore,
-  scaleStore,
-} from "~/builder/shared/nano-states";
+import { canvasRectStore, scaleStore } from "~/builder/shared/nano-states";
 import {
   computeInstancesConstraints,
   findClosestDroppableTarget,
@@ -144,7 +142,7 @@ export const useDraggable = ({
           dragComponent: componentName,
         },
       });
-      isCanvasPointerEventsEnabledStore.set(false);
+      disableCanvasPointerEvents();
     },
     onMove: (point) => {
       setPoint(point);
@@ -161,7 +159,8 @@ export const useDraggable = ({
         type: "dragEnd",
         payload: { isCanceled },
       });
-      isCanvasPointerEventsEnabledStore.set(true);
+
+      enableCanvasPointerEvents();
     },
   });
 
