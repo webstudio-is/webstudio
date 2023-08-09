@@ -1,6 +1,6 @@
 {
   "name": "@webstudio-is/eslint-config-custom",
-  "version": "1.0.6",
+  "version": "1.0.7",
   "main": "index.js",
   "license": "AGPL-3.0-or-later",
   "dependencies": {
