@@ -61,7 +61,7 @@ const normalizedValues = {
   "text-size-adjust": autoValue,
 } as const;
 
-const beautifyKeyword = (property: string, keyword: string) => {
+const beautifyKeyword = (_property: string, keyword: string) => {
   /*
    * The default value is `invert` or `currentcolor` for some css properties.
    * But that isn't supported in all browsers, example outline-color.
@@ -363,7 +363,8 @@ const keywordValues = (() => {
     }
 
     if (keywords.size !== 0) {
-      result[camelCase(property)] = Array.from(keywords);
+      const key = camelCase(property);
+      result[key] = [...(result[key] ?? []), ...keywords];
     }
   }
 

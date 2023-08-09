@@ -9,8 +9,12 @@ import {
 import type { SetProperty, CreateBatchUpdate } from "./shared/use-style-data";
 import type { StyleInfo } from "./shared/style-info";
 import { useStore } from "@nanostores/react";
-import { selectedInstanceSelectorStore } from "~/shared/nano-states";
+import {
+  selectedInstanceIntanceToTagStore,
+  selectedInstanceSelectorStore,
+} from "~/shared/nano-states";
 import { useStyleInfoByInstanceId } from "./shared/style-info";
+import { computed } from "nanostores";
 
 export type StyleSettingsProps = {
   currentStyle: StyleInfo;
@@ -31,12 +35,23 @@ const useParentStyle = () => {
   return parentStyleInfo;
 };
 
+const selectedInstanceTagStore = computed(
+  [selectedInstanceSelectorStore, selectedInstanceIntanceToTagStore],
+  (instanceSelector, instanceToTag) => {
+    if (instanceSelector === undefined || instanceToTag === undefined) {
+      return;
+    }
+    return instanceToTag.get(instanceSelector[0]);
+  }
+);
+
 export const StyleSettings = ({
   setProperty,
   deleteProperty,
   createBatchUpdate,
   currentStyle,
 }: StyleSettingsProps) => {
+  const selectedInstanceTag = useStore(selectedInstanceTagStore);
   const all = [];
   const parentStyle = useParentStyle();
 
@@ -49,7 +64,7 @@ export const StyleSettings = ({
       category,
     };
 
-    if (shouldRenderCategory(categoryProps, parentStyle)) {
+    if (shouldRenderCategory(categoryProps, parentStyle, selectedInstanceTag)) {
       all.push(
         <Fragment key={category}>{renderCategory(categoryProps)}</Fragment>
       );

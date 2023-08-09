@@ -23,7 +23,7 @@
     "camelcase": "^7.0.1",
     "html-tags": "^3.3.1",
     "jest": "^29.6.2",
-    "mdn-data": "2.0.30",
+    "mdn-data": "2.0.32",
     "tsx": "^3.12.6",
     "type-fest": "^3.7.1",
     "typescript": "5.1.6",
