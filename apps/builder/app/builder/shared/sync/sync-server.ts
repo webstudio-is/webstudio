@@ -104,7 +104,7 @@ const syncServer = async function () {
       // - Project opened after sync, everything is ok.
       if (command.version < (detailsMap.get(command.projectId)?.version ?? 0)) {
         const error =
-          "The project is outdated. Synchronization was incomplete when the project was opened" +
+          "The project is outdated. Synchronization was incomplete when the project was opened. " +
           "Please reload the page to get the latest version.";
         const shouldReload = confirm(error);
 
@@ -117,7 +117,8 @@ const syncServer = async function () {
 
         if (shouldReload === false) {
           toast.error(
-            "Synchronization has been paused. Please reload to continue."
+            "Synchronization has been paused. Please reload to continue.",
+            { id: "outdated-error", duration: Number.POSITIVE_INFINITY }
           );
         }
 
@@ -136,8 +137,16 @@ const syncServer = async function () {
     const details = detailsMap.get(projectId);
 
     if (details === undefined) {
-      toast.error("Project details not found");
-      // throw new Error("Project details not found");
+      const error =
+        "Project details not found. Synchronization has been paused. Please reload to continue.";
+
+      toast.error(error, {
+        id: "details-error",
+        duration: Number.POSITIVE_INFINITY,
+      });
+
+      queueStatus.set({ status: "fatal", error });
+
       return;
     }
 
@@ -186,7 +195,8 @@ const syncServer = async function () {
 
             if (shouldReload === false) {
               toast.error(
-                "Synchronization has been paused. Please reload to continue."
+                "Synchronization has been paused. Please reload to continue.",
+                { duration: Number.POSITIVE_INFINITY }
               );
             }
 
@@ -202,7 +212,10 @@ const syncServer = async function () {
             // We should show error and break synchronization
             queueStatus.set({ status: "fatal", error });
 
-            toast.error(error);
+            toast.error(error, {
+              id: "fatal-error",
+              duration: Number.POSITIVE_INFINITY,
+            });
 
             break polling;
           }
