@@ -15,17 +15,15 @@ export const colors = {
   popoverForeground: "rgb(2, 8, 23)",
   border: "rgb(226, 232, 240)",
   background: "rgb(255, 255, 255)",
+  foreground: "hsl(222.2 84% 4.9%)",
   ring: "rgb(148, 163, 184)",
   mutedForeground: "rgb(100, 116, 139)",
+  muted: `hsl(210 40% 96.1%)`,
 } as const;
 
 /*
 // Not used, leave it for the following components.
 
---background: 0 0% 100%;
---foreground: 222.2 84% 4.9%;
-
---muted: 210 40% 96.1%;
 --card: 0 0% 100%;
 --card-foreground: 222.2 84% 4.9%;
 

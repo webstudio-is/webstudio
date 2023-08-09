@@ -31,3 +31,9 @@ export {
   propsMetaSheetTitle as SheetTitle,
   propsMetaSheetDescription as SheetDescription,
 } from "./sheet.ws";
+export {
+  propsMetaTabs as Tabs,
+  propsMetaTabsList as TabsList,
+  propsMetaTabsTrigger as TabsTrigger,
+  propsMetaTabsContent as TabsContent,
+} from "./tabs.ws";
