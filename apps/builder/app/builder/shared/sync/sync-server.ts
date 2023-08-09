@@ -18,8 +18,12 @@ const INTERVAL_RECOVERY = 2000;
 // After this amount of retries without success, we consider connection status error.
 const MAX_RETRY_RECOVERY = 5;
 
+// We are assuming that error is fatal (unrecoverable) after this amount of attempts with API error.
+const MAX_ALLOWED_API_ERRORS = 5;
+
 // When we reached max failed attempts we will slow down the attempts interval.
 const INTERVAL_ERROR = 5000;
+const MAX_INTERVAL_ERROR = 2 * 60000;
 
 const pause = (timeout: number) => {
   return new Promise((resolve) => setTimeout(resolve, timeout));
@@ -34,6 +38,9 @@ export type QueueStatus =
 
 export const queueStatus = atom<QueueStatus>({ status: "idle" });
 
+const getRandomBetween = (a: number, b: number) => {
+  return Math.random() * (b - a) + a;
+};
 // polling is important to queue new transactions independently
 // from async iterator and batch them into single job
 const pollCommands = async function* () {
@@ -53,6 +60,8 @@ const pollCommands = async function* () {
 
 const retry = async function* () {
   let failedAttempts = 0;
+  let delay = INTERVAL_ERROR;
+
   while (true) {
     yield;
     failedAttempts += 1;
@@ -61,7 +70,13 @@ const retry = async function* () {
       await pause(INTERVAL_RECOVERY);
     } else {
       queueStatus.set({ status: "failed" });
-      await pause(INTERVAL_ERROR);
+
+      // Clamped exponential backoff with decorrelated jitter
+      // to prevent clients from sending simultaneous requests after server issues
+      delay = getRandomBetween(INTERVAL_ERROR, delay * 3);
+      delay = Math.min(delay, MAX_INTERVAL_ERROR);
+
+      await pause(delay);
     }
   }
 };
@@ -129,7 +144,6 @@ const syncServer = async function () {
     // We don't know how to handle api errors. Like parsing errors, etc.
     // Let
     let apiErrorCount = 0;
-    const MAX_ALLOWED_API_ERRORS = 5;
 
     for await (const _ of retry()) {
       // in case of any error continue retrying

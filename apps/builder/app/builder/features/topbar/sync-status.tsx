@@ -37,11 +37,15 @@ export const SyncStatus = () => {
           variant="wrapped"
           content={
             <>
-              Offline changes will be synced with Webstudio once you go online.
               {isOnline ? (
-                ""
+                <>
+                  Experiencing connectivity issues. Your changes will be synced
+                  with Webstudio once resolved.
+                </>
               ) : (
                 <>
+                  Offline changes will be synced with Webstudio once you go
+                  online.
                   <br />
                   Please check your internet connection.
                 </>
