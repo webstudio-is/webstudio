@@ -69,6 +69,7 @@ const handleTooltipOpenChange = (open: boolean) => {
 
   if (openTooltipsCount > 0) {
     disableCanvasPointerEvents();
+    return;
   }
 
   enableCanvasPointerEvents();
