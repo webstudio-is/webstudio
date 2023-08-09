@@ -56,19 +56,22 @@ let openTooltipsCount = 0;
  * The current workaround is to set pointer-events: none on the canvas when the tooltip is open.
  **/
 const handleTooltipOpenChange = (open: boolean) => {
+  if (openTooltipsCount < 0) {
+    // Should be impossible but in case if we've missed a tooltip open/close event,
+    // just enable events and stop this algorithm, to preserve system in working state
+    warnOnce(true, "Tooltip counter can't be less than 0");
+    enableCanvasPointerEvents();
+    return;
+  }
+
   // Multiple tooltips can open simultaneously. Use a counter instead of a boolean to manage them.
   openTooltipsCount = openTooltipsCount + (open ? 1 : -1);
+
   if (openTooltipsCount > 0) {
     disableCanvasPointerEvents();
   }
 
-  if (openTooltipsCount === 0) {
-    enableCanvasPointerEvents();
-  }
-
-  warnOnce(true, "Tooltip counter can't be less than 0");
-  // try to restore if it happens
-  openTooltipsCount = 0;
+  enableCanvasPointerEvents();
 };
 
 export const Tooltip = forwardRef(
