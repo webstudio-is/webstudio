@@ -67,7 +67,7 @@ export const SyncStatus = () => {
       <Flex align="center" justify="center">
         <Tooltip variant="wrapped" content={<>{statusObject.error}</>}>
           <OfflineIcon
-            aria-label={`Sync status: failed`}
+            aria-label={`Sync status: fatal`}
             color={rawTheme.colors.foregroundDestructive}
           />
         </Tooltip>
