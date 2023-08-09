@@ -20,7 +20,7 @@ export const ListItemSection = ({
       currentStyle={style}
       properties={properties}
     >
-      <Grid gap={2} css={{ gridTemplateColumns: `1fr ${theme.spacing[22]}` }}>
+      <Grid gap={2} css={{ gridTemplateColumns: `1fr ${theme.spacing[21]}` }}>
         <PropertyName
           label={styleConfigByName("listStyleType").label}
           properties={["listStyleType"]}
