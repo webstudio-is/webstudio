@@ -387,6 +387,12 @@ export const justify = (
   ];
 };
 
+export const inlineFlex = (): EmbedTemplateStyleDecl[] => {
+  return [
+    { property: "display", value: { type: "keyword", value: "inline-flex" } },
+  ];
+};
+
 const flexDirection = { row: "row", col: "column" } as const;
 type FlexDirection = keyof typeof flexDirection;
 
@@ -522,6 +528,49 @@ export const text = (
   ];
 };
 
+const weights = {
+  thin: "100",
+  extralight: "200",
+  light: "300",
+  normal: "400",
+  medium: "500",
+  semibold: "600",
+  bold: "700",
+  extrabold: "800",
+  black: "900",
+} as const;
+
+export const font = (
+  weight:
+    | "thin"
+    | "extralight"
+    | "light"
+    | "normal"
+    | "medium"
+    | "semibold"
+    | "bold"
+    | "extrabold"
+    | "black"
+): EmbedTemplateStyleDecl[] => {
+  return [
+    {
+      property: "fontWeight",
+      value: { type: "keyword", value: weights[weight] },
+    },
+  ];
+};
+
+export const whitespace = (
+  value: "normal" | "nowrap" | "pre" | "pre-line" | "pre-wrap" | "break-spaces"
+): EmbedTemplateStyleDecl[] => {
+  return [
+    {
+      property: "whiteSpace",
+      value: { type: "keyword", value },
+    },
+  ];
+};
+
 export const shadow = (
   shadowSize: keyof EvaluatedDefaultTheme["boxShadow"]
 ): EmbedTemplateStyleDecl[] => {
@@ -568,6 +617,37 @@ export const ring = (
   ];
 };
 
+export const pointerEvents = (
+  value: "none" | "auto"
+): EmbedTemplateStyleDecl[] => {
+  return [{ property: "pointerEvents", value: { type: "keyword", value } }];
+};
+
+export const transition = (value: "none" | "all"): EmbedTemplateStyleDecl[] => {
+  if (value === "none") {
+    return [
+      {
+        property: "transitionProperty",
+        value: { type: "keyword", value: "all" },
+      },
+    ];
+  }
+  return [
+    {
+      property: "transitionProperty",
+      value: { type: "keyword", value: "all" },
+    },
+    {
+      property: "transitionTimingFunction",
+      value: { type: "unparsed", value: "cubic-bezier(0.4, 0, 0.2, 1)" },
+    },
+    {
+      property: "transitionDuration",
+      value: { type: "unparsed", value: "150ms" },
+    },
+  ];
+};
+
 export const hover = (
   value: EmbedTemplateStyleDecl[]
 ): EmbedTemplateStyleDecl[] => {
@@ -583,6 +663,24 @@ export const focus = (
   return value.map((decl) => ({
     ...decl,
     state: ":focus",
+  }));
+};
+
+export const focusVisible = (
+  value: EmbedTemplateStyleDecl[]
+): EmbedTemplateStyleDecl[] => {
+  return value.map((decl) => ({
+    ...decl,
+    state: ":focus-visible",
+  }));
+};
+
+export const disabled = (
+  value: EmbedTemplateStyleDecl[]
+): EmbedTemplateStyleDecl[] => {
+  return value.map((decl) => ({
+    ...decl,
+    state: ":disabled",
   }));
 };
 

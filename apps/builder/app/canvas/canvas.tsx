@@ -21,6 +21,7 @@ import * as remixComponentPropsMetas from "@webstudio-is/sdk-components-react-re
 import * as radixComponents from "@webstudio-is/sdk-components-react-radix";
 import * as radixComponentMetas from "@webstudio-is/sdk-components-react-radix/metas";
 import * as radixComponentPropsMetas from "@webstudio-is/sdk-components-react-radix/props";
+import { hooks as radixComponentHooks } from "@webstudio-is/sdk-components-react-radix/hooks";
 import { publish } from "~/shared/pubsub";
 import {
   handshakenStore,
@@ -43,6 +44,7 @@ import {
   dataSourceVariablesStore,
   registeredComponentsStore,
   registeredComponentMetasStore,
+  subscribeComponentHooks,
 } from "~/shared/nano-states";
 import { useDragAndDrop } from "./shared/use-drag-drop";
 import { useCopyPaste } from "~/shared/copy-paste";
@@ -193,8 +195,11 @@ export const Canvas = ({ params }: CanvasProps): JSX.Element | null => {
       components: radixComponents,
       metas: radixComponentMetas,
       propsMetas: radixComponentPropsMetas,
+      hooks: radixComponentHooks,
     });
   });
+
+  useEffect(subscribeComponentHooks, []);
 
   // e.g. toggling preview is still needed in both modes
   useCanvasShortcuts();

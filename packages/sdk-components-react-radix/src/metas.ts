@@ -31,3 +31,9 @@ export {
   metaSheetTitle as SheetTitle,
   metaSheetDescription as SheetDescription,
 } from "./sheet.ws";
+export {
+  metaTabs as Tabs,
+  metaTabsList as TabsList,
+  metaTabsTrigger as TabsTrigger,
+  metaTabsContent as TabsContent,
+} from "./tabs.ws";

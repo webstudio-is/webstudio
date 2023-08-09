@@ -35,3 +35,4 @@ export {
 } from "./expression";
 export { renderComponentTemplate } from "./component-renderer";
 export { getIndexesWithinAncestors } from "./instance-utils";
+export * from "./hook";

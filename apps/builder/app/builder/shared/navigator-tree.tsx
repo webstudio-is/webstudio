@@ -22,9 +22,10 @@ import {
   isInstanceDetachable,
   getComponentTemplateData,
 } from "~/shared/instance-utils";
+import type { Publish } from "~/shared/pubsub";
 import { InstanceTree } from "./tree";
 
-export const NavigatorTree = () => {
+export const NavigatorTree = ({ publish }: { publish: Publish }) => {
   const selectedInstanceSelector = useStore(selectedInstanceSelectorStore);
   const rootInstance = useStore(rootInstanceStore);
   const instances = useStore(instancesStore);
@@ -107,19 +108,50 @@ export const NavigatorTree = () => {
     [setState]
   );
 
-  const handleSelect = useCallback((instanceSelector: InstanceSelector) => {
-    // TreeNode is refocused during "delete" hot key here https://github.com/webstudio-is/webstudio-builder/blob/5935d7818fba3739e4f16fe710ea468bf9d0ac78/packages/design-system/src/components/tree/tree.tsx#L435
-    // and then focus cause handleSelect to be called with the same instanceSelector
-    // This avoids additional rerender on node delete
-    if (
-      shallowEqual(selectedInstanceSelectorStore.get(), instanceSelector) ===
-      false
-    ) {
-      selectedInstanceSelectorStore.set(instanceSelector);
-      textEditingInstanceSelectorStore.set(undefined);
-      selectedStyleSourceSelectorStore.set(undefined);
-    }
-  }, []);
+  const handleSelect = useCallback(
+    (instanceSelector: InstanceSelector) => {
+      // TreeNode is refocused during "delete" hot key here https://github.com/webstudio-is/webstudio-builder/blob/5935d7818fba3739e4f16fe710ea468bf9d0ac78/packages/design-system/src/components/tree/tree.tsx#L435
+      // and then focus cause handleSelect to be called with the same instanceSelector
+      // This avoids additional rerender on node delete
+      if (
+        shallowEqual(selectedInstanceSelectorStore.get(), instanceSelector) ===
+        false
+      ) {
+        const instances = instancesStore.get();
+        const previousInstanceSelector = selectedInstanceSelectorStore.get();
+        if (previousInstanceSelector) {
+          publish({
+            type: "emitComponentHook",
+            payload: {
+              name: "onNavigatorUnselect",
+              data: {
+                instanceSelection: previousInstanceSelector.flatMap((id) => {
+                  const instance = instances.get(id);
+                  return instance ? [instance] : [];
+                }),
+              },
+            },
+          });
+        }
+        selectedInstanceSelectorStore.set(instanceSelector);
+        textEditingInstanceSelectorStore.set(undefined);
+        selectedStyleSourceSelectorStore.set(undefined);
+        publish({
+          type: "emitComponentHook",
+          payload: {
+            name: "onNavigatorSelect",
+            data: {
+              instanceSelection: instanceSelector.flatMap((id) => {
+                const instance = instances.get(id);
+                return instance ? [instance] : [];
+              }),
+            },
+          },
+        });
+      }
+    },
+    [publish]
+  );
 
   if (rootInstance === undefined) {
     return null;
