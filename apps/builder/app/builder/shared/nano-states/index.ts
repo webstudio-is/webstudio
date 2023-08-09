@@ -17,8 +17,6 @@ export const useCanvasWidth = () => useValue(canvasWidthStore);
 
 export const canvasRectStore = atom<DOMRect | undefined>();
 
-export const isCanvasPointerEventsEnabledStore = atom<boolean>(true);
-
 export const workspaceRectStore = atom<DOMRect | undefined>();
 
 export const scaleStore = computed(

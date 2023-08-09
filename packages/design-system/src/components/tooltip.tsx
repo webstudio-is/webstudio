@@ -1,11 +1,17 @@
 import type { Ref, ComponentProps, ReactNode, ReactElement } from "react";
-import { Fragment, forwardRef } from "react";
+import { Fragment, forwardRef, useEffect, useRef } from "react";
 import { styled } from "../stitches.config";
 import * as TooltipPrimitive from "@radix-ui/react-tooltip";
+import { useControllableState } from "@radix-ui/react-use-controllable-state";
 import { Box } from "./box";
 import { Text } from "./text";
 import type { CSS } from "../stitches.config";
 import { theme } from "../stitches.config";
+import warnOnce from "warn-once";
+import {
+  disableCanvasPointerEvents,
+  enableCanvasPointerEvents,
+} from "../utilities";
 
 export type TooltipProps = ComponentProps<typeof TooltipPrimitive.Root> &
   Omit<ComponentProps<typeof Content>, "content"> & {
@@ -42,6 +48,32 @@ const Arrow = styled(TooltipPrimitive.Arrow, {
   marginTop: -0.5,
 });
 
+let openTooltipsCount = 0;
+
+/**
+ * When the mouse leaves Tooltip.Content and moves over an iframe, the Radix Tooltip stays open.
+ * This happens because Radix's internal grace area relies on the pointermove event, which isn't triggered over iframes.
+ * The current workaround is to set pointer-events: none on the canvas when the tooltip is open.
+ **/
+const handleTooltipOpenChange = (open: boolean) => {
+  if (openTooltipsCount < 0) {
+    // Should be impossible but in case if we've missed a tooltip open/close event,
+    // just enable events and stop this algorithm, to preserve system in working state
+    warnOnce(true, "Tooltip counter can't be less than 0");
+    enableCanvasPointerEvents();
+    return;
+  }
+
+  // Multiple tooltips can open simultaneously. Use a counter instead of a boolean to manage them.
+  openTooltipsCount = openTooltipsCount + (open ? 1 : -1);
+
+  if (openTooltipsCount > 0) {
+    disableCanvasPointerEvents();
+  }
+
+  enableCanvasPointerEvents();
+};
+
 export const Tooltip = forwardRef(
   (
     {
@@ -50,7 +82,7 @@ export const Tooltip = forwardRef(
       defaultOpen,
       delayDuration,
       disableHoverableContent,
-      open,
+      open: openProp,
       onOpenChange,
       triggerProps,
       ...props
@@ -59,6 +91,32 @@ export const Tooltip = forwardRef(
     },
     ref: Ref<HTMLDivElement>
   ) => {
+    const isOpenRef = useRef(false);
+
+    // We need to intercept tooltip open
+    const [open = false, setOpen] = useControllableState({
+      prop: openProp,
+      defaultProp: defaultOpen,
+      onChange: (open) => {
+        onOpenChange?.(open);
+      },
+    });
+
+    // Manage scenarios where defaultOpen or open is initially set, or when the tooltip is unmounted.
+    useEffect(() => {
+      if (isOpenRef.current !== open) {
+        handleTooltipOpenChange(open);
+        isOpenRef.current = open;
+      }
+
+      return () => {
+        if (isOpenRef.current) {
+          handleTooltipOpenChange(false);
+          isOpenRef.current = false;
+        }
+      };
+    }, [open]);
+
     if (!content) {
       return children;
     }
@@ -67,7 +125,7 @@ export const Tooltip = forwardRef(
       <TooltipPrimitive.Root
         open={open}
         defaultOpen={defaultOpen}
-        onOpenChange={onOpenChange}
+        onOpenChange={setOpen}
         delayDuration={delayDuration}
         disableHoverableContent={disableHoverableContent}
       >

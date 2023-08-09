@@ -1,5 +1,6 @@
 export * from "./stitches.config";
 export * from "./components/storybook";
+export * from "./utilities";
 
 // Aligned with Figma
 

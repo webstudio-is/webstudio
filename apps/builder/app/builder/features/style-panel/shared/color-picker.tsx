@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import { colord, extend, type RgbaColor } from "colord";
 import namesPlugin from "colord/plugins/names";
 import { type ColorResult, type RGBColor, SketchPicker } from "react-color";
@@ -14,14 +14,14 @@ import {
   PopoverTrigger,
   PopoverContent,
   css,
+  enableCanvasPointerEvents,
+  disableCanvasPointerEvents,
 } from "@webstudio-is/design-system";
 import { toValue } from "@webstudio-is/css-engine";
 import { theme } from "@webstudio-is/design-system";
 import type { StyleSource } from "./style-info";
 import { CssValueInput } from "./css-value-input";
 import type { IntermediateStyleValue } from "./css-value-input/css-value-input";
-import { isCanvasPointerEventsEnabledStore } from "~/builder/shared/nano-states";
-import { useStore } from "@nanostores/react";
 import { ColorThumb } from "./color-thumb";
 
 // To support color names
@@ -88,35 +88,6 @@ const styleValueToRgbaColor = (value: CssColorPickerValueInput): RgbaColor => {
   };
 };
 
-// Dragging over canvas iframe with CORS policies will lead to loosing events and getting stuck in mousedown state.
-const useFixDragOverCanvas = () => {
-  const isCanvasPointerEventsEnabled = useStore(
-    isCanvasPointerEventsEnabledStore
-  );
-
-  useEffect(() => {
-    const handleMouseUp = () => {
-      isCanvasPointerEventsEnabledStore.set(true);
-      removeEventListener("mouseup", handleMouseUp);
-    };
-    if (isCanvasPointerEventsEnabled === false) {
-      addEventListener("mouseup", handleMouseUp);
-    }
-    return () => {
-      removeEventListener("mouseup", handleMouseUp);
-    };
-  }, [isCanvasPointerEventsEnabled]);
-
-  const handleChange = (event: MouseEvent) => {
-    // Prevents selection of text during drag.
-    if (event.type === "mousedown") {
-      event.preventDefault();
-      isCanvasPointerEventsEnabledStore.set(false);
-    }
-  };
-  return { handleChange };
-};
-
 export type CssColorPickerValueInput =
   | RgbValue
   | KeywordValue
@@ -151,7 +122,6 @@ export const ColorPicker = ({
   property,
 }: ColorPickerProps) => {
   const [displayColorPicker, setDisplayColorPicker] = useState(false);
-  const canvasFix = useFixDragOverCanvas();
 
   const currentValue =
     intermediateValue ?? styleValueResolve(value, currentColor);
@@ -196,12 +166,18 @@ export const ColorPicker = ({
     return colorResultToRgbValue(newColor);
   };
 
+  const handleOpenChange = (open: boolean) => {
+    setDisplayColorPicker(open);
+    if (open) {
+      // Dragging over canvas iframe with CORS policies will lead to loosing events and getting stuck in mousedown state.
+      disableCanvasPointerEvents();
+      return;
+    }
+    enableCanvasPointerEvents();
+  };
+
   const prefix = (
-    <Popover
-      modal
-      open={displayColorPicker}
-      onOpenChange={setDisplayColorPicker}
-    >
+    <Popover modal open={displayColorPicker} onOpenChange={handleOpenChange}>
       <PopoverTrigger
         asChild
         aria-label="Open color picker"
@@ -214,8 +190,10 @@ export const ColorPicker = ({
         <SketchPicker
           color={rgbValue}
           onChange={(color: ColorResult, event) => {
-            // SketchPicker event can be mouse event, type is wrong.
-            canvasFix.handleChange(event as unknown as MouseEvent);
+            // Prevents selection of text during drag.
+            if (event.type === "mousedown") {
+              event.preventDefault();
+            }
             const newColor = fixColor(color);
             onChange(newColor);
           }}
