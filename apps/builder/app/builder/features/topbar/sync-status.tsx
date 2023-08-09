@@ -75,7 +75,6 @@ export const SyncStatus = () => {
     );
   }
 
-  ((value: never) => {
-    /* exhaustive check */
-  })(statusObject);
+  /* exhaustive check */
+  statusObject satisfies never;
 };
