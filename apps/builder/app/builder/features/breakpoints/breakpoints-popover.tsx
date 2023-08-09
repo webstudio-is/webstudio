@@ -175,9 +175,7 @@ export const BreakpointsPopover = () => {
                               css={{ flexGrow: 1, textAlign: "left" }}
                               as="span"
                             >
-                              {breakpoint.minWidth ??
-                                breakpoint.maxWidth ??
-                                "Base"}
+                              {breakpoint.label}
                             </Box>
                             <PopoverMenuItemRightSlot
                               css={{ color: theme.colors.foregroundSubtle }}
