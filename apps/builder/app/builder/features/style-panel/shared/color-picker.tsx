@@ -14,8 +14,7 @@ import {
   PopoverTrigger,
   PopoverContent,
   css,
-  enableCanvasPointerEvents,
-  disableCanvasPointerEvents,
+  useDisableCanvasPointerEvents,
 } from "@webstudio-is/design-system";
 import { toValue } from "@webstudio-is/css-engine";
 import { theme } from "@webstudio-is/design-system";
@@ -122,6 +121,8 @@ export const ColorPicker = ({
   property,
 }: ColorPickerProps) => {
   const [displayColorPicker, setDisplayColorPicker] = useState(false);
+  const { enableCanvasPointerEvents, disableCanvasPointerEvents } =
+    useDisableCanvasPointerEvents();
 
   const currentValue =
     intermediateValue ?? styleValueResolve(value, currentColor);
@@ -173,6 +174,7 @@ export const ColorPicker = ({
       disableCanvasPointerEvents();
       return;
     }
+
     enableCanvasPointerEvents();
   };
 

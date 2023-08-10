@@ -9,8 +9,7 @@ import {
   useDrag,
   ComponentCard,
   toast,
-  enableCanvasPointerEvents,
-  disableCanvasPointerEvents,
+  useDisableCanvasPointerEvents,
 } from "@webstudio-is/design-system";
 import {
   instancesStore,
@@ -127,6 +126,8 @@ export const useDraggable = ({
   const [point, setPoint] = useState<Point>({ x: 0, y: 0 });
   const canvasRect = useStore(canvasRectStore);
   const scale = useStore(scaleStore);
+  const { enableCanvasPointerEvents, disableCanvasPointerEvents } =
+    useDisableCanvasPointerEvents();
 
   const dragHandlers = useDrag<Instance["component"]>({
     elementToData(element) {

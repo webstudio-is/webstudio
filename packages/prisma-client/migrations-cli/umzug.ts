@@ -25,7 +25,7 @@ export const umzug = new Umzug({
           ...params,
           up: async () => {
             await prismaMigrations.setStarted(params.name, sqlFilePath);
-            prismaMigrations.cliExecute(sqlFilePath);
+            await prismaMigrations.cliExecute(sqlFilePath);
           },
         };
       }
@@ -34,7 +34,7 @@ export const umzug = new Umzug({
         return {
           ...params,
           up: async () => {
-            prismaMigrations.generateMigrationClient(params.name);
+            await prismaMigrations.generateMigrationClient(params.name);
 
             // eslint-disable-next-line @typescript-eslint/no-var-requires
             const migration = await import(tsFilePath);
