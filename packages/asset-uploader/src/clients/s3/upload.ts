@@ -30,7 +30,7 @@ export const uploadToS3 = async ({
   // Also check if S3 client has an option to check the size limit
   const data = await arrayBuffer(limitSize(dataStream));
 
-  const url = new URL(`/${bucket}/${name}`, endpoint);
+  const url = new URL(`/${bucket}/${encodeURIComponent(name)}`, endpoint);
 
   console.log(url.href);
   console.log({
