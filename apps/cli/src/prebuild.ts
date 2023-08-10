@@ -44,12 +44,12 @@ export const prebuild = async () => {
   const appRoot = "app";
 
   const routesDir = join(appRoot, "routes");
-  await rm(routesDir, { recursive: true, force: true });
-  await mkdir(routesDir, { recursive: true });
+  rm(routesDir, { recursive: true, force: true });
+  mkdir(routesDir, { recursive: true });
 
   const generatedDir = join(appRoot, "__generated__");
-  await rm(generatedDir, { recursive: true, force: true });
-  await mkdir(generatedDir, { recursive: true });
+  rm(generatedDir, { recursive: true, force: true });
+  mkdir(generatedDir, { recursive: true });
 
   await ensureFolderExists(join("public", ASSETS_BASE));
 

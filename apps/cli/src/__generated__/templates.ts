@@ -14,13 +14,13 @@ export const templates: Record<ProjectTarget, Folder> = {
       {
         name: "package.json",
         content:
-          '{\n  "private": true,\n  "sideEffects": false,\n  "scripts": {\n    "build": "remix build",\n    "dev": "remix dev",\n    "typecheck": "tsc"\n  },\n  "dependencies": {\n    "@remix-run/css-bundle": "^1.17.1",\n    "@remix-run/node": "^1.17.1",\n    "@remix-run/react": "^1.17.1",\n    "@webstudio-is/react-sdk": "^0.82.0",\n    "@webstudio-is/sdk-components-react-remix": "^0.82.0",\n    "@webstudio-is/sdk-components-react": "^0.82.0",\n    "@webstudio-is/form-handlers": "^0.75.0",\n    "isbot": "^3.6.8",\n    "react": "^18.2.0",\n    "react-dom": "^18.2.0"\n  },\n  "devDependencies": {\n    "@remix-run/serve": "^1.17.1",\n    "@remix-run/dev": "^1.17.1",\n    "@remix-run/eslint-config": "^1.17.1",\n    "@types/react": "^18.0.35",\n    "@types/react-dom": "^18.0.11",\n    "eslint": "^8.38.0",\n    "typescript": "^5.0.4"\n  },\n  "engines": {\n    "node": ">=18.0.0"\n  }\n}\n',
+          '{\n  "private": true,\n  "sideEffects": false,\n  "scripts": {\n    "build": "remix build",\n    "dev": "remix dev",\n    "start": "remix-serve build",\n    "typecheck": "tsc"\n  },\n  "dependencies": {\n    "@remix-run/css-bundle": "^1.17.1",\n    "@remix-run/node": "^1.17.1",\n    "@remix-run/react": "^1.17.1",\n    "@webstudio-is/react-sdk": "^0.82.0",\n    "@webstudio-is/sdk-components-react-remix": "^0.82.0",\n    "@webstudio-is/sdk-components-react": "^0.82.0",\n    "@webstudio-is/form-handlers": "^0.75.0",\n    "isbot": "^3.6.8",\n    "react": "^18.2.0",\n    "react-dom": "^18.2.0"\n  },\n  "devDependencies": {\n    "@remix-run/serve": "^1.19.1",\n    "@remix-run/dev": "^1.19.2",\n    "@remix-run/eslint-config": "^1.19.2",\n    "@types/react": "^18.0.35",\n    "@types/react-dom": "^18.0.11",\n    "eslint": "^8.38.0",\n    "typescript": "^5.0.4"\n  },\n  "engines": {\n    "node": ">=18.0.0"\n  }\n}\n',
         encoding: "utf-8",
       },
       {
         name: "remix.config.js",
         content:
-          '/** @type {import(\'@remix-run/dev\').AppConfig} */\nmodule.exports = {\n  ignoredRouteFiles: ["**/.*"],\n  serverModuleFormat: "cjs",\n  serverDependenciesToBundle: [\n    /@webstudio-is\\/(?!prisma-client)/,\n    "pretty-bytes",\n    "nanoevents",\n    "nanostores",\n    "@nanostores/react",\n    /micromark/,\n    "decode-named-character-reference",\n    "character-entities",\n    /mdast-/,\n    "unist-util-stringify-position",\n  ],\n  future: {\n    v2_errorBoundary: true,\n    v2_headers: true,\n    v2_meta: true,\n    v2_normalizeFormMethod: true,\n    v2_routeConvention: true,\n  },\n};\n',
+          '/** @type {import(\'@remix-run/dev\').AppConfig} */\nmodule.exports = {\n  ignoredRouteFiles: ["**/.*"],\n  serverModuleFormat: "cjs",\n  serverDependenciesToBundle: [\n    /@webstudio-is\\/(?!prisma-client)/,\n    "nanoevents",\n    "nanostores",\n    "@nanostores/react",\n  ],\n  future: {\n    v2_errorBoundary: true,\n    v2_headers: true,\n    v2_meta: true,\n    v2_normalizeFormMethod: true,\n    v2_routeConvention: true,\n  },\n};\n',
         encoding: "utf-8",
       },
       {
@@ -57,25 +57,13 @@ export const templates: Record<ProjectTarget, Folder> = {
       {
         name: "remix.config.js",
         content:
-          '/** @type {import(\'@remix-run/dev\').AppConfig} */\nmodule.exports = {\n  ignoredRouteFiles: ["**/.*"],\n  // When running locally in development mode, we use the built-in remix\n  // server. This does not understand the vercel lambda module format,\n  // so we default back to the standard build output.\n  server: process.env.NODE_ENV === "development" ? undefined : "./server.ts",\n  serverBuildPath: "api/index.js",\n  serverDependenciesToBundle: [\n    /@webstudio-is\\/(?!prisma-client)/,\n    "pretty-bytes",\n    "nanoevents",\n    "nanostores",\n    "@nanostores/react",\n    /micromark/,\n    "decode-named-character-reference",\n    "character-entities",\n    /mdast-/,\n    "unist-util-stringify-position",\n  ],\n  future: {\n    v2_errorBoundary: true,\n    v2_headers: true,\n    v2_meta: true,\n    v2_normalizeFormMethod: true,\n    v2_routeConvention: true,\n  },\n};\n',
+          '/** @type {import(\'@remix-run/dev\').AppConfig} */\nmodule.exports = {\n  ignoredRouteFiles: ["**/.*"],\n  // When running locally in development mode, we use the built-in remix\n  // server. This does not understand the vercel lambda module format,\n  // so we default back to the standard build output.\n  server: process.env.NODE_ENV === "development" ? undefined : "./server.ts",\n  serverBuildPath: "api/index.js",\n  serverDependenciesToBundle: [\n    /@webstudio-is\\/(?!prisma-client)/,\n    "nanoevents",\n    "nanostores",\n    "@nanostores/react",\n  ],\n  future: {\n    v2_errorBoundary: true,\n    v2_headers: true,\n    v2_meta: true,\n    v2_normalizeFormMethod: true,\n    v2_routeConvention: true,\n  },\n};\n',
         encoding: "utf-8",
       },
       {
         name: "server.ts",
         content:
           'import * as build from "@remix-run/dev/server-build";\nimport { installGlobals } from "@remix-run/node";\nimport { createRequestHandler } from "@remix-run/vercel";\n\ninstallGlobals();\n\nexport default createRequestHandler({ build, mode: process.env.NODE_ENV });\n',
-        encoding: "utf-8",
-      },
-    ],
-    subFolders: [],
-  },
-  "remix-app-server": {
-    name: "remix-app-server",
-    files: [
-      {
-        name: "package.json",
-        content:
-          '{\n  "scripts": {\n    "start": "remix-serve build"\n  }\n}\n',
         encoding: "utf-8",
       },
     ],

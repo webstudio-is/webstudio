@@ -1,5 +1,0 @@
-{
-  "scripts": {
-    "start": "remix-serve build"
-  }
-}

@@ -48,7 +48,7 @@ export const CLI_ARGS_OPTIONS = {
   type: {
     type: "string" as const,
     short: "t",
-    default: "remix-app-server",
+    default: "defaults",
   },
 };
 
@@ -64,10 +64,9 @@ export type Folder = {
   subFolders: Folder[];
 };
 
-export type ProjectTarget = "defaults" | "vercel" | "remix-app-server";
+export type ProjectTarget = "defaults" | "vercel";
 
 export const SupportedProjects: Record<ProjectTarget, boolean> = {
   defaults: true,
   vercel: true,
-  "remix-app-server": true,
 };
