@@ -26,7 +26,7 @@
   "devDependencies": {
     "@jest/globals": "^29.6.2",
     "@types/hyphenate-style-name": "^1.0.0",
-    "@types/react": "^18.2.16",
+    "@types/react": "^18.2.20",
     "@types/react-dom": "^18.2.7",
     "@webstudio-is/jest-config": "workspace:^",
     "@webstudio-is/scripts": "workspace:^",
