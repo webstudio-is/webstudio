@@ -56,7 +56,7 @@ export const uploadToS3 = async ({
   const response = await fetch(url, {
     method: s3Request.method,
     headers: s3Request.headers,
-    body: data,
+    body: s3Request.body,
   });
 
   if (response.status !== 200) {
