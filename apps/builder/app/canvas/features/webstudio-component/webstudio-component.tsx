@@ -6,6 +6,7 @@ import {
   type ForwardedRef,
   useRef,
   useLayoutEffect,
+  useContext,
 } from "react";
 import { Suspense, lazy } from "react";
 import { useStore } from "@nanostores/react";
@@ -24,10 +25,10 @@ import {
   showAttribute,
   useInstanceProps,
   selectorIdAttribute,
+  ReactSdkContext,
 } from "@webstudio-is/react-sdk";
 import {
   instancesStore,
-  isPreviewModeStore,
   selectedInstanceRenderStateStore,
   selectedInstanceSelectorStore,
   selectedStyleSourceSelectorStore,
@@ -174,6 +175,7 @@ export const WebstudioComponentDev = forwardRef<
   HTMLElement,
   WebstudioComponentDevProps & ImplicitEvents
 >(({ instance, instanceSelector, children, components, ...restProps }, ref) => {
+  const { renderer } = useContext(ReactSdkContext);
   const instanceId = instance.id;
   const instanceStyles = useInstanceStyles(instanceId);
   useCssRules({ instanceId: instance.id, instanceStyles });
@@ -183,10 +185,9 @@ export const WebstudioComponentDev = forwardRef<
     textEditingInstanceSelectorStore
   );
 
-  const instanceProps = useInstanceProps(instance.id);
-  const { [showAttribute]: show = true, ...userProps } = instanceProps;
-
-  const isPreviewMode = useStore(isPreviewModeStore);
+  const { [showAttribute]: show = true, ...instanceProps } = useInstanceProps(
+    instance.id
+  );
 
   /**
    * Prevents edited element from having a size of 0 on the first render.
@@ -213,12 +214,6 @@ export const WebstudioComponentDev = forwardRef<
     }
   });
 
-  const readonlyProps =
-    isPreviewMode === false &&
-    (instance.component === "Input" || instance.component === "Textarea")
-      ? { readOnly: true }
-      : undefined;
-
   const Component = components.get(instance.component);
 
   if (show === false) {
@@ -229,9 +224,11 @@ export const WebstudioComponentDev = forwardRef<
     return <></>;
   }
 
-  const props = {
-    ...userProps,
-    ...readonlyProps,
+  const props: {
+    [componentAttribute]: string;
+    [idAttribute]: string;
+  } & Record<string, unknown> = {
+    ...instanceProps,
     tabIndex: 0,
     onClick: (event: MouseEvent) => {
       if (event.currentTarget instanceof HTMLAnchorElement) {
@@ -239,17 +236,17 @@ export const WebstudioComponentDev = forwardRef<
         // https://developer.mozilla.org/en-US/docs/Web/API/Navigation_API
         handleLinkClick(event);
         event.preventDefault();
-      } else if (typeof userProps.onClick === "function") {
+      } else if (typeof instanceProps.onClick === "function") {
         // bypass onClick for non-link component, for example button
-        userProps.onClick(event);
+        instanceProps.onClick(event);
       }
     },
     onSubmit: (event: FormEvent) => {
       // Prevent submitting the form when clicking a button type submit
       event.preventDefault();
-      if (typeof userProps.onSubmit === "function") {
+      if (typeof instanceProps.onSubmit === "function") {
         // bypass handler
-        userProps.onSubmit(event);
+        instanceProps.onSubmit(event);
       }
     },
     [componentAttribute]: instance.component,
@@ -257,36 +254,39 @@ export const WebstudioComponentDev = forwardRef<
     [selectorIdAttribute]: instanceSelector.join(","),
   };
 
-  const composedHandlers: ImplicitEvents = {};
-
-  /**
-   * We combine Radix's implicit event handlers with user-defined ones, such as onClick or onSubmit.
-   * For instance, a Button within a TooltipTrigger receives
-   * an onClick handler from the TooltipTrigger.
-   * We might also need an additional onClick handler on the Button for other purposes (setting variable).
-   **/
-  for (const [key, value] of Object.entries(restProps)) {
-    const propHandler = props[key as keyof typeof props];
-    if (
-      key.startsWith("on") &&
-      propHandler !== undefined &&
-      typeof propHandler === "function"
-    ) {
-      composedHandlers[key as keyof ImplicitEvents] = composeEventHandlers(
-        value,
-        propHandler
-      );
+  if (renderer === "canvas") {
+    if (instance.component === "Input" || instance.component === "Textarea") {
+      props.readOnly = true;
     }
   }
 
-  // Do not pass Radix handlers in edit mode
-  const componentProps = isPreviewMode
-    ? { ...restProps, ...props, ...composedHandlers }
-    : props;
+  for (const [name, value] of Object.entries(restProps)) {
+    if (typeof value === "function") {
+      // prevent passing any callbacks from outside while in canvas mode
+      // for example radix triggers bypass callbacks to button child
+      if (renderer === "canvas") {
+        continue;
+      }
+      /**
+       * We combine Radix's implicit event handlers with user-defined ones,
+       * such as onClick or onSubmit. For instance, a Button within
+       * a TooltipTrigger receives an onClick handler from the TooltipTrigger.
+       * We might also need an additional onClick handler on the Button for other
+       * purposes (setting variable).
+       **/
+      if (name.startsWith("on") && typeof props[name] === "function") {
+        props[name] = composeEventHandlers(value, props[name] as typeof value);
+        continue;
+      }
+    }
+    // current props should override bypassed from parent
+    // important for data-ws-* props
+    props[name] = props[name] ?? value;
+  }
 
   const instanceElement = (
     <>
-      <Component {...componentProps} ref={ref}>
+      <Component {...props} ref={ref}>
         {renderWebstudioComponentChildren(children)}
       </Component>
     </>
@@ -309,7 +309,7 @@ export const WebstudioComponentDev = forwardRef<
         contentEditable={
           <ContentEditable
             renderComponentWithRef={(elementRef) => (
-              <Component {...componentProps} ref={mergeRefs(ref, elementRef)}>
+              <Component {...props} ref={mergeRefs(ref, elementRef)}>
                 {initialContentEditableContent.current}
               </Component>
             )}
