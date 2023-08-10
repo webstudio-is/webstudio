@@ -16,12 +16,6 @@ export const propsTooltip: Record<string, PropMeta> = {
     control: "boolean",
     type: "boolean",
   },
-  isOpen: {
-    required: true,
-    control: "radio",
-    type: "string",
-    options: ["open", "initial", "closed"],
-  },
   open: { required: false, control: "boolean", type: "boolean" },
 };
 export const propsTooltipTrigger: Record<string, PropMeta> = {};
