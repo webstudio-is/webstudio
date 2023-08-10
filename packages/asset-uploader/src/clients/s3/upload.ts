@@ -32,6 +32,18 @@ export const uploadToS3 = async ({
 
   const url = new URL(`/${bucket}/${name}`, endpoint);
 
+  console.log(url.href);
+  console.log({
+    "x-amz-date": new Date().toISOString(),
+    "Content-Type": type,
+    "Content-Length": `${data.byteLength}`,
+    "Cache-Control": "public, max-age=31536004,immutable",
+    "x-amz-content-sha256": "UNSIGNED-PAYLOAD",
+    // encodeURIComponent is needed to support special characters like Cyrillic
+    "x-amz-meta-filename": encodeURIComponent(name),
+    // when no ACL passed we do not default since some providers do not support it
+    ...(acl ? { "x-amz-acl": acl } : {}),
+  });
   const s3Request = await signer.sign({
     method: "PUT",
     protocol: url.protocol,
