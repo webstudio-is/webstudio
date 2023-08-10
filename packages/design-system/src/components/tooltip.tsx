@@ -1,5 +1,5 @@
 import type { Ref, ComponentProps, ReactNode, ReactElement } from "react";
-import { Fragment, forwardRef, useEffect, useRef } from "react";
+import { Fragment, forwardRef, useEffect } from "react";
 import { styled } from "../stitches.config";
 import * as TooltipPrimitive from "@radix-ui/react-tooltip";
 import { useControllableState } from "@radix-ui/react-use-controllable-state";
@@ -61,8 +61,6 @@ export const Tooltip = forwardRef(
     },
     ref: Ref<HTMLDivElement>
   ) => {
-    const isOpenRef = useRef(false);
-
     // We need to intercept tooltip open
     const [open = false, setOpen] = useControllableState({
       prop: openProp,
@@ -78,19 +76,12 @@ export const Tooltip = forwardRef(
      * The current workaround is to set pointer-events: none on the canvas when the tooltip is open.
      **/
     useEffect(() => {
-      let enableCanvasPointerEvents: (() => void) | undefined;
-      if (isOpenRef.current !== open) {
-        enableCanvasPointerEvents?.();
-        enableCanvasPointerEvents = disableCanvasPointerEvents();
-        isOpenRef.current = open;
-      }
-
-      return () => {
-        if (isOpenRef.current) {
+      if (open) {
+        const enableCanvasPointerEvents = disableCanvasPointerEvents();
+        return () => {
           enableCanvasPointerEvents?.();
-          isOpenRef.current = false;
-        }
-      };
+        };
+      }
     }, [open]);
 
     if (!content) {
