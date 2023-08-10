@@ -1,3 +1,6 @@
+import { useEffect, useMemo, useRef } from "react";
+import warnOnce from "warn-once";
+
 export const canvasPointerEventsPropertyName = "--canvas-pointer-events";
 
 let disableCount = 0;
@@ -47,4 +50,34 @@ export const disableCanvasPointerEvents = () => {
     disableCount -= 1;
     updateCanvasPointerEvents();
   };
+};
+
+export const useDisableCanvasPointerEvents = () => {
+  const enableCanvasPointerEventsRef = useRef<() => void>();
+
+  const enableDisable = useMemo(
+    () => ({
+      enableCanvasPointerEvents: () => {
+        warnOnce(
+          enableCanvasPointerEventsRef.current === undefined,
+          "enableCanvasPointerEvents was called before disableCanvasPointerEvents, this is not an issue but may indicate the problem with the code."
+        );
+        enableCanvasPointerEventsRef.current?.();
+      },
+      disableCanvasPointerEvents: () => {
+        enableCanvasPointerEventsRef.current?.();
+        enableCanvasPointerEventsRef.current = disableCanvasPointerEvents();
+      },
+    }),
+    []
+  );
+
+  useEffect(
+    () => () => {
+      enableCanvasPointerEventsRef.current?.();
+    },
+    [enableDisable]
+  );
+
+  return enableDisable;
 };

@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from "react";
+import { useState } from "react";
 import { colord, extend, type RgbaColor } from "colord";
 import namesPlugin from "colord/plugins/names";
 import { type ColorResult, type RGBColor, SketchPicker } from "react-color";
@@ -14,7 +14,7 @@ import {
   PopoverTrigger,
   PopoverContent,
   css,
-  disableCanvasPointerEvents,
+  useDisableCanvasPointerEvents,
 } from "@webstudio-is/design-system";
 import { toValue } from "@webstudio-is/css-engine";
 import { theme } from "@webstudio-is/design-system";
@@ -121,7 +121,8 @@ export const ColorPicker = ({
   property,
 }: ColorPickerProps) => {
   const [displayColorPicker, setDisplayColorPicker] = useState(false);
-  const enableCanvasPointerEventsRef = useRef<() => void>();
+  const { enableCanvasPointerEvents, disableCanvasPointerEvents } =
+    useDisableCanvasPointerEvents();
 
   const currentValue =
     intermediateValue ?? styleValueResolve(value, currentColor);
@@ -170,20 +171,12 @@ export const ColorPicker = ({
     setDisplayColorPicker(open);
     if (open) {
       // Dragging over canvas iframe with CORS policies will lead to loosing events and getting stuck in mousedown state.
-      enableCanvasPointerEventsRef.current?.();
-      enableCanvasPointerEventsRef.current = disableCanvasPointerEvents();
+      disableCanvasPointerEvents();
       return;
     }
 
-    enableCanvasPointerEventsRef.current?.();
+    enableCanvasPointerEvents();
   };
-
-  useEffect(
-    () => () => {
-      enableCanvasPointerEventsRef.current?.();
-    },
-    []
-  );
 
   const prefix = (
     <Popover modal open={displayColorPicker} onOpenChange={handleOpenChange}>
