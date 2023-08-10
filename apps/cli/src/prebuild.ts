@@ -1,5 +1,6 @@
 import { join, relative, dirname } from "node:path";
-import { readFileSync, writeFileSync, rmSync, rm, mkdir } from "node:fs";
+import { writeFileSync } from "node:fs";
+import { rm, mkdir } from "node:fs/promises";
 import {
   generateCssText,
   type Params,
@@ -16,6 +17,7 @@ import * as baseComponentMetas from "@webstudio-is/sdk-components-react/metas";
 import * as remixComponentMetas from "@webstudio-is/sdk-components-react-remix/metas";
 import type { Asset, ImageAsset } from "@webstudio-is/asset-uploader";
 
+import { getRouteTemplate } from "./__generated__/router";
 import { ASSETS_BASE, LOCAL_DATA_FILE } from "./config";
 import { ensureFileInPath, ensureFolderExists, loadJSONFile } from "./fs-utils";
 
@@ -44,12 +46,12 @@ export const prebuild = async () => {
   const appRoot = "app";
 
   const routesDir = join(appRoot, "routes");
-  rm(routesDir, { recursive: true, force: true });
-  mkdir(routesDir, { recursive: true });
+  await rm(routesDir, { recursive: true, force: true });
+  await mkdir(routesDir, { recursive: true });
 
   const generatedDir = join(appRoot, "__generated__");
-  rm(generatedDir, { recursive: true, force: true });
-  mkdir(generatedDir, { recursive: true });
+  await rm(generatedDir, { recursive: true, force: true });
+  await mkdir(generatedDir, { recursive: true });
 
   await ensureFolderExists(join("public", ASSETS_BASE));
 
@@ -149,8 +151,6 @@ export const prebuild = async () => {
 
   await ensureFileInPath(join(generatedDir, "index.css"), cssText);
 
-  const templateContent = readFileSync("template.tsx", "utf8");
-
   for (const [pathName, pageComponents] of Object.entries(componentsByPage)) {
     let relativePath = "../__generated__";
     const statements = Array.from(pageComponents).join(", ");
@@ -200,7 +200,7 @@ export const prebuild = async () => {
         "utf8"
       );
 
-      let routeIndexFile = templateContent;
+      let routeIndexFile = getRouteTemplate();
 
       routeIndexFile = routeIndexFile.replace(
         "../__generated__/index",
@@ -219,7 +219,7 @@ export const prebuild = async () => {
     } else {
       writeFileSync(join(generatedDir, `${pathName}.ts`), pageExports, "utf8");
 
-      let routeFile = templateContent;
+      let routeFile = getRouteTemplate();
 
       routeFile = routeFile.replace(
         "../__generated__/index",
@@ -232,11 +232,6 @@ export const prebuild = async () => {
 
       writeFileSync(join(routesDir, `_${pathName}.tsx`), routeFile, "utf8");
     }
-  }
-
-  // Remove template file in Github Actions (CI)
-  if (process.env.CI) {
-    rmSync(join(routesDir, `template.tsx`), { force: true });
   }
 
   if (deployment?.projectDomain === undefined) {

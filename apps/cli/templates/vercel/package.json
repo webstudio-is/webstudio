@@ -1,6 +1,0 @@
-{
-  "dependencies": {
-    "@remix-run/vercel": "^1.17.1",
-    "@vercel/node": "^2.10.3"
-  }
-}

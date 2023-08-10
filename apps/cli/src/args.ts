@@ -10,6 +10,7 @@ export const showHelp = () =>
       Commands:
       link       Link to an existing webstudio project
       sync       Sync the linked webstudio project with the latest build
+      build      Build the linked webstudio project with a remix template.
 
      Flags:
      --help     -h     Show this help message
@@ -64,9 +65,8 @@ export type Folder = {
   subFolders: Folder[];
 };
 
-export type ProjectTarget = "defaults" | "vercel";
+export type ProjectTarget = "defaults";
 
 export const SupportedProjects: Record<ProjectTarget, boolean> = {
   defaults: true,
-  vercel: true,
 };

@@ -1,11 +1,26 @@
 import { readdirSync, lstatSync, readFileSync, writeFileSync } from "node:fs";
+import { rm } from "node:fs/promises";
 import { join } from "node:path";
 import { type Folder, SupportedProjects } from "../src/args";
 import { ensureFileInPath } from "../src/fs-utils";
 
 const TEMPLATES_TO_BUILD = Object.keys(SupportedProjects);
+const TEMPLATES_JSON: Record<string, Folder> = {};
+const TEMPLATES_JSON_PATH = new URL(
+  "../src/__generated__/templates.ts",
+  import.meta.url
+).pathname;
+const ROUTER_TEMPLATE_PATH = new URL(
+  "../src/__generated__/router.ts",
+  import.meta.url
+).pathname;
 
 console.info("Building Templates...");
+await rm(new URL("../src/__generated__", import.meta.url).pathname, {
+  recursive: true,
+  force: true,
+});
+
 const parseFolder = (folderPath: string): Folder | undefined => {
   const isDirectory = lstatSync(folderPath).isDirectory();
   if (isDirectory === false) {
@@ -51,11 +66,6 @@ const parseFolder = (folderPath: string): Folder | undefined => {
   return folder;
 };
 
-const TEMPLATES_JSON: Record<string, Folder> = {};
-const TEMPLATES_JSON_PATH = new URL(
-  "../src/__generated__/templates.ts",
-  import.meta.url
-).pathname;
 await ensureFileInPath(TEMPLATES_JSON_PATH);
 
 for (const template of TEMPLATES_TO_BUILD) {
@@ -82,3 +92,25 @@ export const templates: Record<ProjectTarget, Folder> = ${JSON.stringify(
 )}`;
 
 writeFileSync(TEMPLATES_JSON_PATH, content, "utf-8");
+
+/*
+  Building route template
+*/
+const routeTemplateFile = readFileSync(
+  new URL("./route-template.ts", import.meta.url).pathname,
+  "utf-8"
+);
+const routeTemplateContent = `/*
+
+This is an auto-generated file. Please don't change manually.
+If needed to make any changes. Add them to ./templates folder and run pnpm run build:templates
+
+*/
+
+import { ASSETS_BASE } from "../config";
+
+export const getRouteTemplate = () => {
+  return \`${routeTemplateFile.replace(/ASSETS_BASE/g, "${ASSETS_BASE}")}\`
+  }`;
+
+await ensureFileInPath(ROUTER_TEMPLATE_PATH, routeTemplateContent);

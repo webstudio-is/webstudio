@@ -43,7 +43,7 @@ export const links: LinksFunction = () => {
     if (asset.type === "font") {
       result.push({
         rel: "preload",
-        href: `/cgi/asset/${asset.name}`,
+        href: ASSETS_BASE + asset.name,
         as: "font",
         crossOrigin: "anonymous",
         // @todo add mimeType
@@ -61,7 +61,7 @@ const getRequestHost = (request: Request): string =>
 export const action = async ({ request, context }: ActionArgs) => {
   const formData = await request.formData();
 
-  // We're throwing rather than returning `{ success: false }`
+  // We're throwing rather than returning \`{ success: false }\`
   // because this isn't supposed to happen normally: bug or malicious user
   if (hasMatchingForm(formData, pageData.build.instances) === false) {
     throw json("Form not found", { status: 404 });
@@ -73,7 +73,7 @@ export const action = async ({ request, context }: ActionArgs) => {
     return { success: false };
   }
 
-  // wrapped in try/catch just in cases `new URL()` throws
+  // wrapped in try/catch just in cases \`new URL()\` throws
   // (should not happen)
   let pageUrl: URL;
   try {
@@ -88,7 +88,7 @@ export const action = async ({ request, context }: ActionArgs) => {
     projectId,
     pageUrl: pageUrl.toString(),
     toEmail: email,
-    fromEmail: `${pageUrl.hostname}@webstudio.email`,
+    fromEmail: pageUrl.hostname + "@webstudio.email",
   };
 
   const result = await n8nHandler({
@@ -110,8 +110,8 @@ const Outlet = () => {
     });
   }
 
-  const assetBaseUrl = `/cgi/asset/`;
-  const imageBaseUrl = `/cgi/image/`;
+  const assetBaseUrl = ASSETS_BASE;
+  const imageBaseUrl = ASSETS_BASE;
 
   const params: Data["params"] = {
     assetBaseUrl,
@@ -125,13 +125,6 @@ const Outlet = () => {
     pages: pagesCanvasData.pages,
     params,
   };
-
-  /*
-    TODO:
-    Figure out, what's the executeComputingExpressions function is
-    This needs to be passed, or the projecs break.
-
-  */
 
   return <InstanceRoot data={data} components={components} />;
 };
