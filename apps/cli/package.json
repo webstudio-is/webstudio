@@ -10,7 +10,6 @@
   },
   "scripts": {
     "build:templates": "tsx ./templates/build.ts",
-    "dev": "pnpm build:templates && build-package --watch",
     "build": "pnpm build:templates && build-package"
   },
   "license": "MIT",
