@@ -66,10 +66,10 @@ const namespace = "@webstudio-is/sdk-components-react-radix";
 // and update its open prop bound to variable.
 export const hooksPopover: Hook = {
   onNavigatorUnselect: (context, event) => {
-    for (const instance of event.instanceSelection) {
+    for (const instance of event.instancePath) {
       if (instance.component === `${namespace}:PopoverContent`) {
         const popover = getClosestInstance(
-          event.instanceSelection,
+          event.instancePath,
           instance,
           `${namespace}:Popover`
         );
@@ -80,10 +80,10 @@ export const hooksPopover: Hook = {
     }
   },
   onNavigatorSelect: (context, event) => {
-    for (const instance of event.instanceSelection) {
+    for (const instance of event.instancePath) {
       if (instance.component === `${namespace}:PopoverContent`) {
         const popover = getClosestInstance(
-          event.instanceSelection,
+          event.instancePath,
           instance,
           `${namespace}:Popover`
         );

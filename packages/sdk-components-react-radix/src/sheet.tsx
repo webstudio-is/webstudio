@@ -49,10 +49,10 @@ const namespace = "@webstudio-is/sdk-components-react-radix";
 // and update its open prop bound to variable.
 export const hooksSheet: Hook = {
   onNavigatorUnselect: (context, event) => {
-    for (const instance of event.instanceSelection) {
+    for (const instance of event.instancePath) {
       if (instance.component === `${namespace}:SheetOverlay`) {
         const sheet = getClosestInstance(
-          event.instanceSelection,
+          event.instancePath,
           instance,
           `${namespace}:Sheet`
         );
@@ -63,10 +63,10 @@ export const hooksSheet: Hook = {
     }
   },
   onNavigatorSelect: (context, event) => {
-    for (const instance of event.instanceSelection) {
+    for (const instance of event.instancePath) {
       if (instance.component === `${namespace}:SheetOverlay`) {
         const sheet = getClosestInstance(
-          event.instanceSelection,
+          event.instancePath,
           instance,
           `${namespace}:Sheet`
         );

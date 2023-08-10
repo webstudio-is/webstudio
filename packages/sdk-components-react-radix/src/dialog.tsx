@@ -62,10 +62,10 @@ const namespace = "@webstudio-is/sdk-components-react-radix";
 // and update its open prop bound to variable.
 export const hooksDialog: Hook = {
   onNavigatorUnselect: (context, event) => {
-    for (const instance of event.instanceSelection) {
+    for (const instance of event.instancePath) {
       if (instance.component === `${namespace}:DialogOverlay`) {
         const dialog = getClosestInstance(
-          event.instanceSelection,
+          event.instancePath,
           instance,
           `${namespace}:Dialog`
         );
@@ -76,10 +76,10 @@ export const hooksDialog: Hook = {
     }
   },
   onNavigatorSelect: (context, event) => {
-    for (const instance of event.instanceSelection) {
+    for (const instance of event.instancePath) {
       if (instance.component === `${namespace}:DialogOverlay`) {
         const dialog = getClosestInstance(
-          event.instanceSelection,
+          event.instancePath,
           instance,
           `${namespace}:Dialog`
         );
