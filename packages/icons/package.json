@@ -17,7 +17,7 @@
   },
   "devDependencies": {
     "@svgo/jsx": "^0.4.2",
-    "@types/react": "^18.2.16",
+    "@types/react": "^18.2.20",
     "@webstudio-is/scripts": "workspace:^",
     "@webstudio-is/storybook-config": "workspace:^",
     "@webstudio-is/tsconfig": "workspace:^",
