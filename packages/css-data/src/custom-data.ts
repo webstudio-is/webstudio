@@ -45,3 +45,13 @@ propertiesData.MozOsxFontSmoothing = {
   appliesTo: "allElements",
 };
 keywordValues.MozOsxFontSmoothing = ["auto", "grayscale"];
+
+keywordValues.listStyleType = [
+  "disc",
+  "circle",
+  "square",
+  "decimal",
+  "georgian",
+  "trad-chinese-informal",
+  "kannada",
+];

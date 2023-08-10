@@ -1,3 +1,4 @@
+import type { htmlTags as HtmlTag } from "html-tags";
 import { Grid } from "@webstudio-is/design-system";
 import { toValue } from "@webstudio-is/css-engine";
 import { styleConfigByName } from "./shared/configs";
@@ -23,12 +24,14 @@ import {
   OutlineSection,
   EffectsSection,
   BoxShadowsSection,
+  ListItemSection,
 } from "./sections";
 
 export const categories = [
   "layout",
   "flexChild",
   "gridChild",
+  "listItem",
   "space",
   "size",
   "typography",
@@ -38,7 +41,7 @@ export const categories = [
   "boxShadows",
   "outline",
   "effects",
-];
+] as const;
 
 export type Category = (typeof categories)[number];
 
@@ -119,24 +122,29 @@ export const renderCategory = ({
 
 export const shouldRenderCategory = (
   { currentStyle, category }: RenderCategoryProps,
-  parentStyle: StyleInfo
+  parentStyle: StyleInfo,
+  tag: undefined | HtmlTag
 ) => {
   switch (category) {
     case "flexChild":
       return toValue(parentStyle.display?.value).includes("flex");
     case "gridChild":
       return toValue(currentStyle.display?.value).includes("grid");
+    case "listItem":
+      return tag === "ul" || tag === "ol" || tag === "li";
   }
 
   return true;
 };
 
-export const sections: {
-  [Property in Category]: (props: RenderCategoryProps) => JSX.Element | null;
-} = {
+export const sections: Record<
+  Category,
+  (props: RenderCategoryProps) => JSX.Element | null
+> = {
   layout: LayoutSection,
   flexChild: FlexChildSection,
   gridChild: GridChildSection,
+  listItem: ListItemSection,
   space: SpaceSection,
   size: SizeSection,
   position: PositionSection,

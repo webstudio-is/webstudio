@@ -13,6 +13,7 @@ import {
   PopoverSeparator,
   Separator,
   Box,
+  toast,
 } from "@webstudio-is/design-system";
 import { MinusIcon, PlusIcon } from "@webstudio-is/icons";
 import { breakpointsStore } from "~/shared/nano-states";
@@ -38,31 +39,45 @@ const useHandleChangeComplete = (
   onChangeComplete: (breakpoint: Breakpoint) => void
 ) => {
   const formRef = useRef<HTMLFormElement>(null);
-  const handleChangeComplete = () => {
+  const [formEntries, setFormEntries] =
+    useState<Record<string, FormDataEntryValue>>();
+
+  /**
+   * Read form data using onChange event so we can access values at useEffect unsubscribe
+   */
+  const handleChange = () => {
     const form = formRef.current;
     if (form === null || form.reportValidity() === false) {
       return;
     }
-    const parsed = BreakpointFormData.safeParse(
-      Object.fromEntries(new FormData(form))
-    );
-    // Should never be not successful because the html validator should catch it
-    if (parsed.success) {
-      const newBreakpoint: Breakpoint = {
-        id: breakpoint.id,
-        label: parsed.data.label,
-        [parsed.data.type]: parsed.data.value,
-      };
-      onChangeComplete(newBreakpoint);
+    setFormEntries(Object.fromEntries(new FormData(form)));
+  };
+
+  const handleChangeComplete = () => {
+    if (formEntries === undefined) {
+      return;
     }
+
+    const parsed = BreakpointFormData.safeParse(formEntries);
+    if (parsed.success === false) {
+      toast.error(parsed.error.message);
+      return;
+    }
+
+    const newBreakpoint: Breakpoint = {
+      id: breakpoint.id,
+      label: parsed.data.label,
+      [parsed.data.type]: parsed.data.value,
+    };
+    onChangeComplete(newBreakpoint);
   };
   const handleChangeCompleteRef = useRef(handleChangeComplete);
   handleChangeCompleteRef.current = handleChangeComplete;
 
-  // Handle change when unmounting
+  // Handle change when unmounting (Popup close in our case)
   useEffect(() => handleChangeCompleteRef.current, []);
 
-  return { formRef, handleChangeComplete };
+  return { formRef, handleChangeComplete, handleChange };
 };
 
 const BreakpointEditorItem = ({
@@ -71,10 +86,9 @@ const BreakpointEditorItem = ({
   onChangeComplete,
   onDelete,
 }: BreakpointEditorItemProps) => {
-  const { formRef, handleChangeComplete } = useHandleChangeComplete(
-    breakpoint,
-    onChangeComplete
-  );
+  const { formRef, handleChangeComplete, handleChange } =
+    useHandleChangeComplete(breakpoint, onChangeComplete);
+
   return (
     <Flex gap="2" css={{ mx: theme.spacing[7] }}>
       <form
@@ -89,11 +103,12 @@ const BreakpointEditorItem = ({
           handleChangeComplete();
         }}
         onBlur={handleChangeComplete}
+        onChange={handleChange}
       >
         <Flex direction="column" gap="1">
           <InputField
             type="text"
-            defaultValue={breakpoint.minWidth ?? breakpoint.maxWidth ?? 0}
+            defaultValue={breakpoint.label}
             placeholder="Breakpoint name"
             name="label"
             minLength={1}
