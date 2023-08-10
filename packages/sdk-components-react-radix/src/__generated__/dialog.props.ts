@@ -1,7 +1,6 @@
 import type { PropMeta } from "@webstudio-is/generate-arg-types";
 
 export const propsDialog: Record<string, PropMeta> = {
-  defaultOpen: { required: false, control: "boolean", type: "boolean" },
   modal: { required: false, control: "boolean", type: "boolean" },
   open: { required: false, control: "boolean", type: "boolean" },
 };

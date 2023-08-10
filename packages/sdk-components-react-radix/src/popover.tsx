@@ -13,7 +13,7 @@ import { getClosestInstance, type Hook } from "@webstudio-is/react-sdk";
 // wrap in forwardRef because Root is functional component without ref
 export const Popover = forwardRef<
   HTMLDivElement,
-  ComponentPropsWithoutRef<typeof PopoverPrimitive.Root>
+  Omit<ComponentPropsWithoutRef<typeof PopoverPrimitive.Root>, "defaultOpen">
 >((props, _ref) => {
   return <PopoverPrimitive.Root {...props} />;
 });

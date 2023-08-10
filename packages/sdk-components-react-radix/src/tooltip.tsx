@@ -13,7 +13,7 @@ import {
 
 export const Tooltip = forwardRef<
   HTMLDivElement,
-  ComponentPropsWithoutRef<typeof TooltipPrimitive.Root>
+  Omit<ComponentPropsWithoutRef<typeof TooltipPrimitive.Root>, "defaultOpen">
 >((props, _ref) => {
   return (
     <TooltipPrimitive.Provider>

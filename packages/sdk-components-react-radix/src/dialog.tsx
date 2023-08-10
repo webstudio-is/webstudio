@@ -13,7 +13,7 @@ import { getClosestInstance, type Hook } from "@webstudio-is/react-sdk";
 // wrap in forwardRef because Root is functional component without ref
 export const Dialog = forwardRef<
   HTMLDivElement,
-  ComponentPropsWithoutRef<typeof DialogPrimitive.Root>
+  Omit<ComponentPropsWithoutRef<typeof DialogPrimitive.Root>, "defaultOpen">
 >((props, _ref) => {
   return <DialogPrimitive.Root {...props} />;
 });
