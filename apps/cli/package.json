@@ -20,7 +20,6 @@
     "@webstudio-is/react-sdk": "workspace:^",
     "@webstudio-is/sdk-components-react": "workspace:^",
     "@webstudio-is/sdk-components-react-remix": "workspace:^",
-    "deepmerge": "^4.3.1",
     "env-paths": "^3.0.0",
     "ora": "^7.0.1",
     "strip-indent": "^4.0.0"
