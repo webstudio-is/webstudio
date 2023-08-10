@@ -70,6 +70,8 @@ export const uploadToS3 = async ({
   });
 
   if (response.status !== 200) {
+    console.log(response.status, response.statusText);
+    console.log(await response.text());
     throw Error(`Cannot upload file ${name}`);
   }
 
