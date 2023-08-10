@@ -958,16 +958,6 @@ export const properties = {
     popularity: 0.90791486,
     appliesTo: "allElementsAndText",
   },
-  printColorAdjust: {
-    unitGroups: [],
-    inherited: true,
-    initial: {
-      type: "keyword",
-      value: "economy",
-    },
-    popularity: 0,
-    appliesTo: "allElements",
-  },
   colorScheme: {
     unitGroups: [],
     inherited: true,
@@ -1109,6 +1099,26 @@ export const properties = {
     popularity: 0,
     appliesTo: "elementsForWhichSizeContainmentCanApply",
   },
+  containerName: {
+    unitGroups: [],
+    inherited: false,
+    initial: {
+      type: "keyword",
+      value: "none",
+    },
+    popularity: 0,
+    appliesTo: "allElements",
+  },
+  containerType: {
+    unitGroups: [],
+    inherited: false,
+    initial: {
+      type: "keyword",
+      value: "normal",
+    },
+    popularity: 0,
+    appliesTo: "allElements",
+  },
   content: {
     unitGroups: [],
     inherited: false,
@@ -1127,7 +1137,7 @@ export const properties = {
       value: "visible",
     },
     popularity: 0.04199404,
-    appliesTo: "elementsForWhichLayoutContainmentCanApply",
+    appliesTo: "elementsForWhichSizeContainmentCanApply",
   },
   counterIncrement: {
     unitGroups: ["number"],
@@ -1321,6 +1331,16 @@ export const properties = {
     popularity: 0.0006232,
     appliesTo: "allElements",
   },
+  fontPalette: {
+    unitGroups: [],
+    inherited: true,
+    initial: {
+      type: "keyword",
+      value: "normal",
+    },
+    popularity: 0,
+    appliesTo: "allElementsAndText",
+  },
   fontVariationSettings: {
     unitGroups: ["number"],
     inherited: true,
@@ -1429,6 +1449,16 @@ export const properties = {
     },
     popularity: 0.00328361,
     appliesTo: "allElements",
+  },
+  fontVariantEmoji: {
+    unitGroups: [],
+    inherited: true,
+    initial: {
+      type: "keyword",
+      value: "normal",
+    },
+    popularity: 0,
+    appliesTo: "allElementsAndText",
   },
   fontVariantLigatures: {
     unitGroups: [],
@@ -1602,6 +1632,16 @@ export const properties = {
   },
   hyphenateCharacter: {
     unitGroups: [],
+    inherited: true,
+    initial: {
+      type: "keyword",
+      value: "auto",
+    },
+    popularity: 0,
+    appliesTo: "allElements",
+  },
+  hyphenateLimitChars: {
+    unitGroups: ["number"],
     inherited: true,
     initial: {
       type: "keyword",
@@ -2640,6 +2680,16 @@ export const properties = {
     popularity: 0.82360295,
     appliesTo: "allElementsExceptInternalTableDisplayTypes",
   },
+  page: {
+    unitGroups: [],
+    inherited: false,
+    initial: {
+      type: "keyword",
+      value: "auto",
+    },
+    popularity: 0.00131264,
+    appliesTo: "blockElementsInNormalFlow",
+  },
   pageBreakAfter: {
     unitGroups: [],
     inherited: false,
@@ -2729,6 +2779,16 @@ export const properties = {
       value: "static",
     },
     popularity: 0.92435004,
+    appliesTo: "allElements",
+  },
+  printColorAdjust: {
+    unitGroups: [],
+    inherited: true,
+    initial: {
+      type: "keyword",
+      value: "economy",
+    },
+    popularity: 0,
     appliesTo: "allElements",
   },
   quotes: {
@@ -3521,6 +3581,16 @@ export const properties = {
     },
     popularity: 0.84531302,
     appliesTo: "inlineLevelAndTableCellElements",
+  },
+  viewTransitionName: {
+    unitGroups: [],
+    inherited: false,
+    initial: {
+      type: "keyword",
+      value: "none",
+    },
+    popularity: 0,
+    appliesTo: "allElements",
   },
   visibility: {
     unitGroups: [],

@@ -83,27 +83,26 @@ export const useLocalValue = <Type,>(
   savedValue: Type,
   onSave: (value: Type) => void
 ) => {
-  const [localValue, setLocalValue] = useState(savedValue);
+  const localValueRef = useRef(savedValue);
 
-  // Not using an effect to avoid re-rendering
-  // https://beta.reactjs.org/reference/react/useState#storing-information-from-previous-renders
-  const [previousSavedValue, setPreviousSavedValue] = useState(savedValue);
-  if (equal(previousSavedValue, savedValue) === false) {
-    setLocalValue(savedValue);
-    setPreviousSavedValue(savedValue);
-  }
+  const [_, setRefresh] = useState(0);
 
   const save = () => {
-    if (equal(localValue, savedValue) === false) {
-      onSave(localValue);
+    if (equal(localValueRef.current, savedValue) === false) {
+      // To synchronize with setState immediately followed by save
+      onSave(localValueRef.current);
     }
+  };
+
+  const setLocalValue = (value: Type) => {
+    localValueRef.current = value;
+    setRefresh((refresh) => refresh + 1);
   };
 
   // onBlur will not trigger if control is unmounted when props panel is closed or similar.
   // So we're saving at the unmount
-  const saveRef = useRef(save);
-  saveRef.current = save;
-  useEffect(() => () => saveRef.current(), []);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  useEffect(() => save, []);
 
   return {
     /**
@@ -112,7 +111,7 @@ export const useLocalValue = <Type,>(
      *  - or the latest value set via `set()`
      * (whichever changed most recently)
      */
-    value: localValue,
+    value: localValueRef.current,
     /**
      * Should be called on onChange or similar event
      */

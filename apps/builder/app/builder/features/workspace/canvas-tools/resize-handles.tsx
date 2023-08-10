@@ -1,11 +1,14 @@
 import { useStore } from "@nanostores/react";
 import { findApplicableMedia } from "@webstudio-is/css-engine";
-import { css, numericScrubControl, theme } from "@webstudio-is/design-system";
-import { useEffect, useRef } from "react";
 import {
-  canvasWidthStore,
-  isCanvasPointerEventsEnabledStore,
-} from "~/builder/shared/nano-states";
+  css,
+  disableCanvasPointerEvents,
+  enableCanvasPointerEvents,
+  numericScrubControl,
+  theme,
+} from "@webstudio-is/design-system";
+import { useEffect, useRef } from "react";
+import { canvasWidthStore } from "~/builder/shared/nano-states";
 import { minCanvasWidth } from "~/shared/breakpoints";
 import {
   breakpointsStore,
@@ -113,11 +116,11 @@ const useScrub = ({ side }: { side: "right" | "left" }) => {
       },
       onStatusChange(status) {
         if (status === "scrubbing") {
-          isCanvasPointerEventsEnabledStore.set(false);
+          disableCanvasPointerEvents();
           isResizingCanvasStore.set(true);
           return;
         }
-        isCanvasPointerEventsEnabledStore.set(true);
+        enableCanvasPointerEvents();
         isResizingCanvasStore.set(false);
       },
       onValueInput(event) {

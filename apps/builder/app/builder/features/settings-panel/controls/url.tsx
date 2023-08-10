@@ -1,4 +1,4 @@
-import { type ReactNode, useState } from "react";
+import { type ReactNode, useState, useEffect } from "react";
 import { useStore } from "@nanostores/react";
 import { computed } from "nanostores";
 import {
@@ -49,11 +49,47 @@ const Row = ({ children }: { children: ReactNode }) => (
   </Flex>
 );
 
+const canParse = (value: string) => {
+  try {
+    return Boolean(new URL(value));
+  } catch {
+    return false;
+  }
+};
+
+/**
+ * Add protocol to URL if it appears absolute and valid. Leave it unchanged otherwise.
+ **/
+const addHttpsIfMissing = (url: string) => {
+  if (url.startsWith("//") && canParse(`https:${url}`)) {
+    return new URL(`https:${url}`).href;
+  }
+
+  if (url.startsWith("/")) {
+    return url;
+  }
+
+  if (canParse(url)) {
+    return new URL(url).href;
+  }
+
+  if (canParse(`https://${url}`)) {
+    return new URL(`https://${url}`).href;
+  }
+
+  return url;
+};
+
 const BaseUrl = ({ prop, onChange, id }: BaseControlProps) => {
   const localValue = useLocalValue(
     prop?.type === "string" ? prop.value : "",
     (value) => onChange({ type: "string", value })
   );
+
+  useEffect(() => {
+    return () => localValue.set(addHttpsIfMissing(localValue.value));
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   return (
     <Row>
@@ -62,9 +98,13 @@ const BaseUrl = ({ prop, onChange, id }: BaseControlProps) => {
         value={localValue.value}
         placeholder="http://www.url.com"
         onChange={(event) => localValue.set(event.target.value)}
-        onBlur={localValue.save}
+        onBlur={() => {
+          localValue.set(addHttpsIfMissing(localValue.value));
+          localValue.save();
+        }}
         onKeyDown={(event) => {
           if (event.key === "Enter") {
+            localValue.set(addHttpsIfMissing(localValue.value));
             localValue.save();
           }
         }}
@@ -145,7 +185,7 @@ const BaseEmail = ({ prop, onChange, id }: BaseControlProps) => {
           type="email"
           placeholder="email@address.com"
           onChange={(event) =>
-            localValue.set((value) => ({ ...value, email: event.target.value }))
+            localValue.set({ ...localValue.value, email: event.target.value })
           }
           onBlur={localValue.save}
           onKeyDown={(event) => {
@@ -163,10 +203,10 @@ const BaseEmail = ({ prop, onChange, id }: BaseControlProps) => {
           value={localValue.value.subject}
           placeholder="You've got mail!"
           onChange={(event) =>
-            localValue.set((value) => ({
-              ...value,
+            localValue.set({
+              ...localValue.value,
               subject: event.target.value,
-            }))
+            })
           }
           onBlur={localValue.save}
           onKeyDown={(event) => {

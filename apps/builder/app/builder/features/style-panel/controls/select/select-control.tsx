@@ -12,19 +12,26 @@ export const SelectControl = ({
   items,
 }: ControlProps) => {
   const { items: defaultItems } = styleConfigByName(property);
-  const value = currentStyle[property]?.value;
+  const styleValue = currentStyle[property]?.value;
   const setValue = setProperty(property);
+  const options = (items ?? defaultItems).map(({ name }) => name);
+  const value = toValue(styleValue);
+  // append selected value when not present in the list of options
+  // because radix requires values to always be in the list
+  if (options.includes(value) === false) {
+    options.push(value);
+  }
 
   return (
     <Select
       // show empty field instead of radix placeholder
       // like css value input does
       placeholder=""
-      options={(items ?? defaultItems).map(({ name }) => name)}
+      options={options}
       getLabel={(name) => {
         return toPascalCase(name);
       }}
-      value={toValue(value)}
+      value={value}
       onChange={(name) => {
         const value = parseCssValue(property, name);
         setValue(value);

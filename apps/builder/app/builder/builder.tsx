@@ -11,7 +11,6 @@ import { useSyncServer } from "./shared/sync/sync-server";
 import { useSharedShortcuts } from "~/shared/shortcuts";
 import { SidebarLeft, Navigator } from "./features/sidebar-left";
 import { Inspector } from "./features/inspector";
-import { isCanvasPointerEventsEnabledStore } from "./shared/nano-states";
 import { Topbar } from "./features/topbar";
 import builderStyles from "./builder.css";
 // eslint-disable-next-line import/no-internal-modules
@@ -286,9 +285,6 @@ export const Builder = ({
     },
     [publishRef, onRefReadCanvas]
   );
-  const isCanvasPointerEventsEnabled = useStore(
-    isCanvasPointerEventsEnabledStore
-  );
 
   const navigatorLayout = useNavigatorLayout();
 
@@ -306,7 +302,6 @@ export const Builder = ({
             <CanvasIframe
               ref={iframeRefCallback}
               src={canvasUrl}
-              pointerEvents={isCanvasPointerEventsEnabled ? "auto" : "none"}
               title={project.title}
               css={{
                 height: "100%",
