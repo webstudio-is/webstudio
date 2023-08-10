@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useStore } from "@nanostores/react";
 import { createPortal } from "react-dom";
 import type { Instance } from "@webstudio-is/project-build";
@@ -9,7 +9,6 @@ import {
   useDrag,
   ComponentCard,
   toast,
-  enableCanvasPointerEvents,
   disableCanvasPointerEvents,
 } from "@webstudio-is/design-system";
 import {
@@ -127,6 +126,7 @@ export const useDraggable = ({
   const [point, setPoint] = useState<Point>({ x: 0, y: 0 });
   const canvasRect = useStore(canvasRectStore);
   const scale = useStore(scaleStore);
+  const enableCanvasPointerEventsRef = useRef<() => void>();
 
   const dragHandlers = useDrag<Instance["component"]>({
     elementToData(element) {
@@ -142,7 +142,8 @@ export const useDraggable = ({
           dragComponent: componentName,
         },
       });
-      disableCanvasPointerEvents();
+      enableCanvasPointerEventsRef.current?.();
+      enableCanvasPointerEventsRef.current = disableCanvasPointerEvents();
     },
     onMove: (point) => {
       setPoint(point);
@@ -160,9 +161,16 @@ export const useDraggable = ({
         payload: { isCanceled },
       });
 
-      enableCanvasPointerEvents();
+      enableCanvasPointerEventsRef.current?.();
     },
   });
+
+  useEffect(
+    () => () => {
+      enableCanvasPointerEventsRef.current?.();
+    },
+    []
+  );
 
   useSubscribe("cancelCurrentDrag", () => {
     dragHandlers.cancelCurrentDrag();

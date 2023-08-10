@@ -3,7 +3,6 @@ import { findApplicableMedia } from "@webstudio-is/css-engine";
 import {
   css,
   disableCanvasPointerEvents,
-  enableCanvasPointerEvents,
   numericScrubControl,
   theme,
 } from "@webstudio-is/design-system";
@@ -101,7 +100,10 @@ const useScrub = ({ side }: { side: "right" | "left" }) => {
     if (ref.current === null) {
       return;
     }
-    return numericScrubControl(ref.current, {
+
+    let enableCanvasPointerEvents: (() => void) | undefined;
+
+    const disposeScrubControl = numericScrubControl(ref.current, {
       getInitialValue() {
         return canvasWidthStore.get();
       },
@@ -116,11 +118,13 @@ const useScrub = ({ side }: { side: "right" | "left" }) => {
       },
       onStatusChange(status) {
         if (status === "scrubbing") {
-          disableCanvasPointerEvents();
+          enableCanvasPointerEvents?.();
+          enableCanvasPointerEvents = disableCanvasPointerEvents();
           isResizingCanvasStore.set(true);
           return;
         }
-        enableCanvasPointerEvents();
+        enableCanvasPointerEvents?.();
+
         isResizingCanvasStore.set(false);
       },
       onValueInput(event) {
@@ -128,6 +132,12 @@ const useScrub = ({ side }: { side: "right" | "left" }) => {
         updateBreakpoint(event.value);
       },
     });
+
+    return () => {
+      enableCanvasPointerEvents?.();
+
+      disposeScrubControl();
+    };
   }, [side]);
 
   return ref;
