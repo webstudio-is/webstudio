@@ -106,19 +106,47 @@ type NonNumeric<T extends string> = T extends `${infer Z extends number}`
   : T;
 
 export const border = (
-  borderWidth?: StringEnumToNumeric<keyof EvaluatedDefaultTheme["borderWidth"]>
+  borderWidthOrColor?:
+    | StringEnumToNumeric<keyof EvaluatedDefaultTheme["borderWidth"]>
+    | keyof EvaluatedDefaultTheme["colors"]
 ): EmbedTemplateStyleDecl[] => {
-  const key = `${borderWidth ?? "DEFAULT"}` as const;
+  if (
+    typeof borderWidthOrColor === "number" ||
+    borderWidthOrColor === undefined
+  ) {
+    const key = `${borderWidthOrColor ?? "DEFAULT"}` as const;
 
-  const valueString = theme("borderWidth")?.[key] ?? "1px";
+    const valueString = theme("borderWidth")?.[key] ?? "1px";
 
-  const value = parseCssValue("borderTopWidth", valueString);
+    const value = parseCssValue("borderTopWidth", valueString);
+    return [
+      ...preflight(),
+      { property: "borderTopWidth", value },
+      { property: "borderRightWidth", value },
+      { property: "borderBottomWidth", value },
+      { property: "borderLeftWidth", value },
+    ];
+  }
+
+  const value = parseCssValue("color", theme("colors")[borderWidthOrColor]);
+
   return [
-    ...preflight(),
-    { property: "borderTopWidth", value },
-    { property: "borderRightWidth", value },
-    { property: "borderBottomWidth", value },
-    { property: "borderLeftWidth", value },
+    {
+      property: "borderTopColor",
+      value,
+    },
+    {
+      property: "borderRightColor",
+      value,
+    },
+    {
+      property: "borderBottomColor",
+      value,
+    },
+    {
+      property: "borderLeftColor",
+      value,
+    },
   ];
 };
 
@@ -523,6 +551,32 @@ export const text = (
   return [
     {
       property: "color",
+      value,
+    },
+  ];
+};
+
+export const underline = (): EmbedTemplateStyleDecl[] => {
+  return [
+    {
+      property: "textDecorationLine",
+      value: { type: "keyword", value: "underline" },
+    },
+  ];
+};
+
+export const underlineOffset = (
+  offset: StringEnumToNumeric<
+    keyof EvaluatedDefaultTheme["textUnderlineOffset"]
+  >
+): EmbedTemplateStyleDecl[] => {
+  const key = `${offset}` as const;
+  const valueString = theme("textUnderlineOffset")[key];
+  const value = parseCssValue("textUnderlineOffset", valueString);
+
+  return [
+    {
+      property: "textUnderlineOffset",
       value,
     },
   ];

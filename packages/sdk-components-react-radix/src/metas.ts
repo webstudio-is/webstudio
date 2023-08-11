@@ -37,3 +37,4 @@ export {
   metaTabsTrigger as TabsTrigger,
   metaTabsContent as TabsContent,
 } from "./tabs.ws";
+export { meta as Button } from "./button.ws";
