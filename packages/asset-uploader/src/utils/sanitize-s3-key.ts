@@ -26,3 +26,17 @@ const REPLACE_CHAR = "_";
 export const sanitizeS3Key = (str: string): string => {
   return allRegexps.reduce((r, reg) => r.replace(reg, REPLACE_CHAR), str);
 };
+
+/**
+ * https://github.com/awslabs/smithy-typescript/blob/3d36329c52b44c48c269b962c25f2dc63cd01da6/packages/smithy-client/src/extended-encode-uri-component.ts
+ *
+ * Function that wraps encodeURIComponent to encode additional characters
+ * to fully adhere to RFC 3986.
+ *
+ * https://datatracker.ietf.org/doc/html/rfc3986
+ */
+export const extendedEncodeURIComponent = (str: string): string => {
+  return encodeURIComponent(str).replace(/[!'()*]/g, function (c) {
+    return "%" + c.charCodeAt(0).toString(16).toUpperCase();
+  });
+};
