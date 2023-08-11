@@ -125,7 +125,7 @@ export const NavigatorTree = ({ publish }: { publish: Publish }) => {
             payload: {
               name: "onNavigatorUnselect",
               data: {
-                instanceSelection: previousInstanceSelector.flatMap((id) => {
+                instancePath: previousInstanceSelector.flatMap((id) => {
                   const instance = instances.get(id);
                   return instance ? [instance] : [];
                 }),
@@ -141,7 +141,7 @@ export const NavigatorTree = ({ publish }: { publish: Publish }) => {
           payload: {
             name: "onNavigatorSelect",
             data: {
-              instanceSelection: instanceSelector.flatMap((id) => {
+              instancePath: instanceSelector.flatMap((id) => {
                 const instance = instances.get(id);
                 return instance ? [instance] : [];
               }),

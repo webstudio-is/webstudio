@@ -2,34 +2,22 @@
 // We can't use .displayName until this is merged https://github.com/styleguidist/react-docgen-typescript/pull/449
 
 import * as TooltipPrimitive from "@radix-ui/react-tooltip";
+import { getClosestInstance, type Hook } from "@webstudio-is/react-sdk";
 
 import {
   forwardRef,
-  type ElementRef,
   type ComponentPropsWithoutRef,
-  Children,
   type ReactNode,
+  Children,
 } from "react";
 
-/**
- * We don't have support for boolean or undefined nor in UI not at Data variables,
- * instead of binding on "open" prop we bind variable on a isOpen prop to be able to show Tooltip in the builder
- **/
-type BuilderTooltipProps = {
-  isOpen: "initial" | "open" | "closed";
-};
-
 export const Tooltip = forwardRef<
-  ElementRef<"div">,
-  ComponentPropsWithoutRef<typeof TooltipPrimitive.Root> & BuilderTooltipProps
->(({ open: openProp, isOpen, ...props }, ref) => {
-  const open =
-    openProp ??
-    (isOpen === "open" ? true : isOpen === "closed" ? false : undefined);
-
+  HTMLDivElement,
+  Omit<ComponentPropsWithoutRef<typeof TooltipPrimitive.Root>, "defaultOpen">
+>((props, _ref) => {
   return (
     <TooltipPrimitive.Provider>
-      <TooltipPrimitive.Root open={open} {...props} />
+      <TooltipPrimitive.Root {...props} />
     </TooltipPrimitive.Provider>
   );
 });
@@ -41,7 +29,7 @@ export const Tooltip = forwardRef<
  * which would prevent us from displaying styles properly in the builder.
  */
 export const TooltipTrigger = forwardRef<
-  ElementRef<"button">,
+  HTMLButtonElement,
   { children: ReactNode }
 >(({ children, ...props }, ref) => {
   const firstChild = Children.toArray(children)[0];
@@ -54,7 +42,7 @@ export const TooltipTrigger = forwardRef<
 });
 
 export const TooltipContent = forwardRef<
-  ElementRef<typeof TooltipPrimitive.Content>,
+  HTMLDivElement,
   ComponentPropsWithoutRef<typeof TooltipPrimitive.Content>
 >(({ sideOffset = 4, hideWhenDetached = true, ...props }, ref) => (
   <TooltipPrimitive.Portal>
@@ -67,3 +55,41 @@ export const TooltipContent = forwardRef<
     />
   </TooltipPrimitive.Portal>
 ));
+
+/* BUILDER HOOKS */
+
+const namespace = "@webstudio-is/sdk-components-react-radix";
+
+// For each TooltipContent component within the selection,
+// we identify its closest parent Tooltip component
+// and update its open prop bound to variable.
+export const hooksTooltip: Hook = {
+  onNavigatorUnselect: (context, event) => {
+    for (const instance of event.instancePath) {
+      if (instance.component === `${namespace}:TooltipContent`) {
+        const tooltip = getClosestInstance(
+          event.instancePath,
+          instance,
+          `${namespace}:Tooltip`
+        );
+        if (tooltip) {
+          context.setPropVariable(tooltip.id, "open", false);
+        }
+      }
+    }
+  },
+  onNavigatorSelect: (context, event) => {
+    for (const instance of event.instancePath) {
+      if (instance.component === `${namespace}:TooltipContent`) {
+        const tooltip = getClosestInstance(
+          event.instancePath,
+          instance,
+          `${namespace}:Tooltip`
+        );
+        if (tooltip) {
+          context.setPropVariable(tooltip.id, "open", true);
+        }
+      }
+    }
+  },
+};

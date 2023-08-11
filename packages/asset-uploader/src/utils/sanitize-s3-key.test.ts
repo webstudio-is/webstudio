@@ -1,5 +1,5 @@
 import { describe, test, expect } from "@jest/globals";
-import { sanitizeS3Key } from "./sanitize-s3-key";
+import { extendedEncodeURIComponent, sanitizeS3Key } from "./sanitize-s3-key";
 
 describe("sanitizeS3Key", () => {
   test("Should replace ASCII character ranges 00–1F hex (0–31 decimal) and 7F (127 decimal)", () => {
@@ -44,4 +44,28 @@ describe("sanitizeS3Key", () => {
     const path = `hello-world-привет-мир-😀-😂ĊĴĈ`;
     expect(sanitizeS3Key(path)).toMatch(path);
   });
+});
+
+describe("extendedEncodeURIComponent", () => {
+  const encodedValues: [string, string][] = [
+    ["!", "%21"],
+    ["'", "%27"],
+    ["(", "%28"],
+    [")", "%29"],
+    ["*", "%2A"],
+  ];
+
+  const verify = (table: [string, string][]) => {
+    test.each(table)(`encodes %s as %s`, (input, output) => {
+      expect(extendedEncodeURIComponent(input)).toStrictEqual(output);
+    });
+  };
+
+  verify(encodedValues);
+  verify([
+    encodedValues.reduce(
+      (acc, [input, output]) => [acc[0].concat(input), acc[1].concat(output)],
+      ["", ""]
+    ),
+  ]);
 });

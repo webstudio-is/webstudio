@@ -1,16 +1,18 @@
 import type { ExoticComponent } from "react";
 import { atom } from "nanostores";
 import {
-  namespaceMeta,
   type AnyComponent,
   type WsComponentMeta,
   type WsComponentPropsMeta,
   type Hook,
   type HookContext,
+  namespaceMeta,
+  getIndexesWithinAncestors,
 } from "@webstudio-is/react-sdk";
 import type { Instance } from "@webstudio-is/project-build";
 import { subscribe } from "~/shared/pubsub";
 import { dataSourceVariablesStore, propsStore } from "./nano-states";
+import { instancesStore, selectedPageStore } from ".";
 
 type HookCommand = NonNullable<
   {
@@ -33,8 +35,34 @@ declare module "~/shared/pubsub" {
 export const subscribeComponentHooks = () => {
   return subscribe("emitComponentHook", (data) => {
     const hooks = registeredComponentHooksStore.get();
+    const metas = registeredComponentMetasStore.get();
+    const instances = instancesStore.get();
+    const page = selectedPageStore.get();
+    const indexesWithinAncestors = getIndexesWithinAncestors(
+      metas,
+      instances,
+      page ? [page.rootInstanceId] : []
+    );
     for (const hook of hooks) {
       const context: HookContext = {
+        indexesWithinAncestors,
+
+        getPropValue: (instanceId, propName) => {
+          const props = propsStore.get();
+          for (const prop of props.values()) {
+            if (prop.instanceId === instanceId && prop.name === propName) {
+              if (
+                prop.type === "string" ||
+                prop.type === "number" ||
+                prop.type === "boolean" ||
+                prop.type === "string[]"
+              ) {
+                return prop.value;
+              }
+            }
+          }
+        },
+
         setPropVariable: (instanceId, propName, value) => {
           const dataSourceVariables = new Map(dataSourceVariablesStore.get());
           const props = propsStore.get();

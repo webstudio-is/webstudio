@@ -81,11 +81,7 @@ export const metaTabs: WsComponentMeta = {
           name: "onValueChange",
           type: "action",
           value: [
-            {
-              type: "execute",
-              args: ["value"],
-              code: `tabsValue = value`,
-            },
+            { type: "execute", args: ["value"], code: `tabsValue = value` },
           ],
         },
       ],

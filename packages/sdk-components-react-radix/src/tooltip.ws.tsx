@@ -20,7 +20,6 @@ const presetStyle = {
 export const metaTooltipTrigger: WsComponentMeta = {
   category: "hidden",
   detachable: false,
-  invalidAncestors: [],
   type: "container",
   label: "Tooltip Trigger",
   icon: TriggerIcon,
@@ -30,7 +29,6 @@ export const metaTooltipTrigger: WsComponentMeta = {
 export const metaTooltipContent: WsComponentMeta = {
   category: "hidden",
   detachable: false,
-  invalidAncestors: [],
   type: "container",
   presetStyle,
   label: "Tooltip Content",
@@ -47,7 +45,6 @@ export const metaTooltipContent: WsComponentMeta = {
  **/
 export const metaTooltip: WsComponentMeta = {
   category: "radix",
-  invalidAncestors: [],
   type: "container",
   label: "Tooltip",
   icon: TooltipIcon,
@@ -58,14 +55,20 @@ export const metaTooltip: WsComponentMeta = {
       type: "instance",
       component: "Tooltip",
       dataSources: {
-        // We don't have support for boolean or undefined, instead of binding on open we bind on a string
-        isOpen: { type: "variable", initialValue: "initial" },
+        tooltipOpen: { type: "variable", initialValue: false },
       },
       props: [
         {
           type: "dataSource",
-          name: "isOpen",
-          dataSourceName: "isOpen",
+          name: "open",
+          dataSourceName: "tooltipOpen",
+        },
+        {
+          name: "onOpenChange",
+          type: "action",
+          value: [
+            { type: "execute", args: ["open"], code: `tooltipOpen = open` },
+          ],
         },
       ],
       children: [

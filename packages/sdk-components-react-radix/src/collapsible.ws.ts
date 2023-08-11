@@ -42,11 +42,7 @@ export const metaCollapsible: WsComponentMeta = {
           name: "onOpenChange",
           type: "action",
           value: [
-            {
-              type: "execute",
-              args: ["open"],
-              code: `collapsibleOpen = open`,
-            },
+            { type: "execute", args: ["open"], code: `collapsibleOpen = open` },
           ],
         },
       ],
