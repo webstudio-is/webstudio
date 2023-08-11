@@ -102,7 +102,7 @@ test("generates utils", () => {
     })
   ).toMatchInlineSnapshot(`
 "
-  // eslint-disable
+  /* eslint-disable */
 
   const indexesWithinAncestors = new Map<string, number>([
   ["content1", 0],
@@ -163,7 +163,7 @@ return new Map([
     executeEffectfulExpression,
   };
 
-  // eslint-enable
+  /* eslint-enable */
   "
 `);
 });
