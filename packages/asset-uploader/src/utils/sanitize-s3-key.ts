@@ -15,7 +15,13 @@ const specialRegexps = [/[\x00-\x1F\x7F]+/g, /[&$@=;/:+\s,?]+/g];
 // eslint-disable-next-line no-control-regex
 const avoidRegexps = [/[\x80-\xFF]+/g, /[\\{^}%`\]'"“”>[~<#|]+/g];
 
-const allRegexps = [...specialRegexps, ...avoidRegexps];
+// https://datatracker.ietf.org/doc/html/rfc3986
+// while s3 supports these characters in filename
+// signature v4 requires additional handling of them
+// strip completely to avoid dealing with them at all
+const uriSpecialRegexp = /[!'()*]/g;
+
+const allRegexps = [...specialRegexps, ...avoidRegexps, uriSpecialRegexp];
 
 const REPLACE_CHAR = "_";
 
