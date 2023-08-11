@@ -35,8 +35,8 @@ export const sanitizeS3Key = (str: string): string => {
  *
  * https://datatracker.ietf.org/doc/html/rfc3986
  */
-export function extendedEncodeURIComponent(str: string): string {
+export const extendedEncodeURIComponent = (str: string): string => {
   return encodeURIComponent(str).replace(/[!'()*]/g, function (c) {
     return "%" + c.charCodeAt(0).toString(16).toUpperCase();
   });
-}
+};
