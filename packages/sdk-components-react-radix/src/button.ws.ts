@@ -24,13 +24,27 @@ export const meta: WsComponentMeta = {
     ...defaultStates,
     { selector: ":disabled", label: "Disabled" },
     { selector: ":enabled", label: "Enabled" },
+
     { selector: "[data-variant=default]", label: "Default" },
     { selector: "[data-variant=default]:hover", label: "Default Hover" },
+
     { selector: "[data-variant=destructive]", label: "Destructive" },
+    {
+      selector: "[data-variant=destructive]:hover",
+      label: "Destructive Hover",
+    },
+
     { selector: "[data-variant=outline]", label: "Outline" },
+    { selector: "[data-variant=outline]:hover", label: "Outline Hover" },
+
     { selector: "[data-variant=secondary]", label: "Secondary" },
+    { selector: "[data-variant=secondary]:hover", label: "Secondary Hover" },
+
     { selector: "[data-variant=ghost]", label: "Ghost" },
+    { selector: "[data-variant=ghost]:hover", label: "Ghost Hover" },
+
     { selector: "[data-variant=link]", label: "Link" },
+    { selector: "[data-variant=link]:hover", label: "Link Hover" },
   ],
   order: 1,
   template: [
