@@ -111,30 +111,35 @@ export const renderComponentTemplate = ({
             ]),
           },
         }}
-        executeComputingExpressions={(values) => {
-          const expressions = new Map<string, string>();
-          for (const dataSource of data.dataSources) {
-            const name = encodeDataSourceVariable(dataSource.id);
-            if (dataSource.type === "expression") {
-              expressions.set(name, dataSource.code);
+        utils={{
+          indexesWithinAncestors: getIndexesWithinAncestors(
+            metas,
+            new Map(instances),
+            ["root"]
+          ),
+          executeComputingExpressions: (values) => {
+            const expressions = new Map<string, string>();
+            for (const dataSource of data.dataSources) {
+              const name = encodeDataSourceVariable(dataSource.id);
+              if (dataSource.type === "expression") {
+                expressions.set(name, dataSource.code);
+              }
             }
-          }
-          return decodeVariablesMap(
-            executeComputingExpressions(expressions, encodeVariablesMap(values))
-          );
-        }}
-        executeEffectfulExpression={(code, args, values) => {
-          return decodeVariablesMap(
-            executeEffectfulExpression(code, args, encodeVariablesMap(values))
-          );
+            return decodeVariablesMap(
+              executeComputingExpressions(
+                expressions,
+                encodeVariablesMap(values)
+              )
+            );
+          },
+          executeEffectfulExpression: (code, args, values) => {
+            return decodeVariablesMap(
+              executeEffectfulExpression(code, args, encodeVariablesMap(values))
+            );
+          },
         }}
         Component={WebstudioComponent}
         components={new Map(Object.entries(components))}
-        indexesWithinAncestors={getIndexesWithinAncestors(
-          metas,
-          new Map(instances),
-          ["root"]
-        )}
       />
     </>
   );

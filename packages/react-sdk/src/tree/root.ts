@@ -21,7 +21,7 @@ import {
 import { getPropsByInstanceId } from "../props";
 import type { Components } from "../components/components-utils";
 import type { Params, DataSourceValues } from "../context";
-import type { IndexesWithinAncestors } from "../instance-utils";
+import type { GeneratedUtils } from "../generator";
 
 export type Data = {
   page: Page;
@@ -37,13 +37,7 @@ export type RootPropsData = Omit<Data, "build"> & {
 
 type RootProps = {
   data: RootPropsData;
-  indexesWithinAncestors: IndexesWithinAncestors;
-  executeComputingExpressions: (values: DataSourceValues) => DataSourceValues;
-  executeEffectfulExpression: (
-    expression: string,
-    args: DataSourceValues,
-    values: DataSourceValues
-  ) => DataSourceValues;
+  utils: GeneratedUtils;
   Component?: ForwardRefExoticComponent<
     WebstudioComponentProps & RefAttributes<HTMLElement>
   >;
@@ -53,13 +47,16 @@ type RootProps = {
 
 export const InstanceRoot = ({
   data,
-  indexesWithinAncestors,
-  executeComputingExpressions,
-  executeEffectfulExpression,
+  utils,
   Component,
   components,
   scripts,
 }: RootProps): JSX.Element | null => {
+  const {
+    indexesWithinAncestors,
+    executeComputingExpressions,
+    executeEffectfulExpression,
+  } = utils;
   const dataSourceVariablesStoreRef = useRef<
     undefined | WritableAtom<DataSourceValues>
   >(undefined);
