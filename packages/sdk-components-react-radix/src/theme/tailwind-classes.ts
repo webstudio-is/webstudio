@@ -590,15 +590,6 @@ export const tracking = (
   return [{ property: "letterSpacing", value }];
 };
 
-export const underline = (): EmbedTemplateStyleDecl[] => {
-  return [
-    {
-      property: "textDecorationLine",
-      value: { type: "keyword", value: "underline" },
-    },
-  ];
-};
-
 export const outline = (value: "none"): EmbedTemplateStyleDecl[] => {
   return [
     {
