@@ -25,7 +25,6 @@ export const meta: WsComponentMeta = {
     { selector: ":disabled", label: "Disabled" },
     { selector: "::placeholder", label: "Placeholder" },
     { selector: "::file-selector-button", label: "File Selector Button" },
-    /*
     { selector: ":valid", label: "Valid" },
     { selector: ":invalid", label: "Invalid" },
     { selector: ":required", label: "Required" },
@@ -33,7 +32,6 @@ export const meta: WsComponentMeta = {
     { selector: ":enabled", label: "Enabled" },
     { selector: ":read-only", label: "Read Only" },
     { selector: ":read-write", label: "Read Write" },
-    */
   ],
   order: 1,
   template: [
