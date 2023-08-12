@@ -57,7 +57,8 @@ const accordionTriggerStyles: EmbedTemplateStyleDecl[] = [
 const accordionContentStyles: EmbedTemplateStyleDecl[] = [
   tc.overflow("hidden"),
   tc.text("sm"),
-  tc.transition("all"),
+  // transition does not work with display: none
+  // tc.transition("all"),
   tc.pb(4),
 ].flat();
 
