@@ -254,6 +254,16 @@ export const h = (
   return [{ property: "height", value }];
 };
 
+export const minH = (
+  spacing: StringEnumToNumeric<keyof EvaluatedDefaultTheme["height"]>
+): EmbedTemplateStyleDecl[] => {
+  const key = `${spacing}` as const;
+  const valueString = theme("height")?.[key] ?? "0";
+  const value = parseCssValue("minHeight", valueString);
+
+  return [{ property: "minHeight", value }];
+};
+
 export const opacity = (
   opacity: StringEnumToNumeric<keyof EvaluatedDefaultTheme["opacity"]>
 ): EmbedTemplateStyleDecl[] => {

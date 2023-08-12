@@ -39,3 +39,4 @@ export {
 } from "./tabs.ws";
 export { meta as Button } from "./button.ws";
 export { meta as Input } from "./input.ws";
+export { meta as Textarea } from "./textarea.ws";

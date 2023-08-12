@@ -3,10 +3,10 @@
 
 import { forwardRef, type ComponentPropsWithoutRef } from "react";
 
-export const Input = forwardRef<
-  HTMLInputElement,
-  ComponentPropsWithoutRef<"input">
+export const Textarea = forwardRef<
+  HTMLTextAreaElement,
+  ComponentPropsWithoutRef<"textarea">
   // Make sure children are not passed down to an input, because this will result in error.
 >(({ children: _children, ...props }, ref) => {
-  return <input ref={ref} {...props} />;
+  return <textarea ref={ref} {...props} />;
 });
