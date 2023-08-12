@@ -3,7 +3,11 @@
  */
 import type { EmbedTemplateStyleDecl } from "@webstudio-is/react-sdk";
 import { theme } from "./tailwind-theme";
-import { parseCssValue, parseBoxShadow } from "@webstudio-is/css-data";
+import {
+  parseCssValue,
+  parseBoxShadow,
+  StyleValue,
+} from "@webstudio-is/css-data";
 import type { EvaluatedDefaultTheme } from "./radix-common-types";
 
 // https://github.com/tailwindlabs/tailwindcss/blob/master/src/css/preflight.css
@@ -146,6 +150,43 @@ export const border = (
     {
       property: "borderLeftColor",
       value,
+    },
+  ];
+};
+
+export const borderB = (
+  borderWidthOrColor?:
+    | StringEnumToNumeric<keyof EvaluatedDefaultTheme["borderWidth"]>
+    | keyof EvaluatedDefaultTheme["colors"]
+): EmbedTemplateStyleDecl[] => {
+  let widthValue: StyleValue = { type: "unit", value: 1, unit: "number" };
+  let colorValue: StyleValue = parseCssValue(
+    "color",
+    theme("colors")["border"]
+  );
+  if (
+    typeof borderWidthOrColor === "number" ||
+    borderWidthOrColor === undefined
+  ) {
+    const key = `${borderWidthOrColor ?? "DEFAULT"}` as const;
+    const valueString = theme("borderWidth")[key] ?? "1px";
+    widthValue = parseCssValue("borderTopWidth", valueString);
+  } else {
+    colorValue = parseCssValue("color", theme("colors")[borderWidthOrColor]);
+  }
+
+  return [
+    {
+      property: "borderBottomWidth",
+      value: widthValue,
+    },
+    {
+      property: "borderBottomStyle",
+      value: { type: "keyword", value: "solid" },
+    },
+    {
+      property: "borderBottomColor",
+      value: colorValue,
     },
   ];
 };

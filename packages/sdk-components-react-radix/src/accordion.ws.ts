@@ -11,7 +11,7 @@ import type {
   WsComponentMeta,
   WsComponentPropsMeta,
 } from "@webstudio-is/react-sdk";
-import { div, button } from "@webstudio-is/react-sdk/css-normalize";
+import { div, h3, button } from "@webstudio-is/react-sdk/css-normalize";
 import * as tc from "./theme/tailwind-classes";
 import {
   propsAccordion,
@@ -33,6 +33,9 @@ const presetStyle = {
  * MIT License
  * Copyright (c) 2023 shadcn
  **/
+
+// border-b
+const accordionItemStyles: EmbedTemplateStyleDecl[] = [tc.borderB()].flat();
 
 // flex
 const accordionHeaderStyles: EmbedTemplateStyleDecl[] = [tc.flex()].flat();
@@ -90,6 +93,7 @@ export const metaAccordion: WsComponentMeta = {
         {
           type: "instance",
           component: "AccordionItem",
+          styles: accordionItemStyles,
           children: [
             {
               type: "instance",
@@ -121,6 +125,7 @@ export const metaAccordion: WsComponentMeta = {
         {
           type: "instance",
           component: "AccordionItem",
+          styles: accordionItemStyles,
           children: [
             {
               type: "instance",
@@ -153,6 +158,7 @@ export const metaAccordion: WsComponentMeta = {
         {
           type: "instance",
           component: "AccordionItem",
+          styles: accordionItemStyles,
           children: [
             {
               type: "instance",
@@ -204,7 +210,7 @@ export const metaAccordionHeader: WsComponentMeta = {
   requiredAncestors: ["AccordionItem"],
   detachable: false,
   presetStyle: {
-    div: [div, tc.py(0)].flat(),
+    h3: [h3, tc.my(0)].flat(),
   },
 };
 
