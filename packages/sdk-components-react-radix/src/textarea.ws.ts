@@ -24,14 +24,15 @@ export const meta: WsComponentMeta = {
     ...defaultStates,
     { selector: ":disabled", label: "Disabled" },
     { selector: "::placeholder", label: "Placeholder" },
+    /*
     { selector: ":valid", label: "Valid" },
     { selector: ":invalid", label: "Invalid" },
     { selector: ":required", label: "Required" },
     { selector: ":optional", label: "Optional" },
-    { selector: ":disabled", label: "Disabled" },
     { selector: ":enabled", label: "Enabled" },
     { selector: ":read-only", label: "Read Only" },
     { selector: ":read-write", label: "Read Write" },
+    */
   ],
   order: 1,
   template: [
