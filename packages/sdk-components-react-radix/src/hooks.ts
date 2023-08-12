@@ -5,6 +5,7 @@ import { hooksDialog } from "./dialog";
 import { hooksPopover } from "./popover";
 import { hooksSheet } from "./sheet";
 import { hooksTooltip } from "./tooltip";
+import { hooksAccordion } from "./accordion";
 
 export const hooks: Hook[] = [
   hooksCollapsible,
@@ -13,4 +14,5 @@ export const hooks: Hook[] = [
   hooksPopover,
   hooksSheet,
   hooksTooltip,
+  hooksAccordion,
 ];

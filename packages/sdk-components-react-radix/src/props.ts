@@ -41,3 +41,10 @@ export { propsMeta as Button } from "./button.ws";
 export { propsMeta as Input } from "./input.ws";
 export { propsMeta as Textarea } from "./textarea.ws";
 export { propsMeta as Label } from "./label.ws";
+export {
+  propsMetaAccordion as Accordion,
+  propsMetaAccordionItem as AccordionItem,
+  propsMetaAccordionHeader as AccordionHeader,
+  propsMetaAccordionTrigger as AccordionTrigger,
+  propsMetaAccordionContent as AccordionContent,
+} from "./accordion.ws";

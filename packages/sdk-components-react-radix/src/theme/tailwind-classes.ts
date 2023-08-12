@@ -150,42 +150,46 @@ export const border = (
   ];
 };
 
-export const px = (
-  padding:
-    | StringEnumToNumeric<keyof EvaluatedDefaultTheme["padding"]>
-    | NonNumeric<keyof EvaluatedDefaultTheme["padding"]>
-): EmbedTemplateStyleDecl[] => {
-  const key = `${padding}` as const;
-  const valueString = theme("padding")?.[key] ?? "0";
-  const value = parseCssValue("paddingLeft", valueString);
+const paddingProperty =
+  (property: "paddingTop" | "paddingRight" | "paddingBottom" | "paddingLeft") =>
+  (
+    padding:
+      | StringEnumToNumeric<keyof EvaluatedDefaultTheme["padding"]>
+      | NonNumeric<keyof EvaluatedDefaultTheme["padding"]>
+  ): EmbedTemplateStyleDecl[] => {
+    const key = `${padding}` as const;
+    const valueString = theme("padding")?.[key] ?? "0";
+    const value = parseCssValue(property, valueString);
 
-  return [
-    { property: "paddingLeft", value },
-    { property: "paddingRight", value },
-  ];
+    return [{ property, value }];
+  };
+
+export const pt: ReturnType<typeof paddingProperty> = (padding) => {
+  return paddingProperty("paddingTop")(padding);
 };
 
-export const py = (
-  padding:
-    | StringEnumToNumeric<keyof EvaluatedDefaultTheme["padding"]>
-    | NonNumeric<keyof EvaluatedDefaultTheme["padding"]>
-): EmbedTemplateStyleDecl[] => {
-  const key = `${padding}` as const;
-  const valueString = theme("padding")[key];
-  const value = parseCssValue("paddingTop", valueString);
-
-  return [
-    { property: "paddingTop", value },
-    { property: "paddingBottom", value },
-  ];
+export const pb: ReturnType<typeof paddingProperty> = (padding) => {
+  return paddingProperty("paddingBottom")(padding);
 };
 
-export const p = (
-  padding:
-    | StringEnumToNumeric<keyof EvaluatedDefaultTheme["padding"]>
-    | NonNumeric<keyof EvaluatedDefaultTheme["padding"]>
-): EmbedTemplateStyleDecl[] => {
-  return [...px(padding), ...py(padding)];
+export const pl: ReturnType<typeof paddingProperty> = (padding) => {
+  return paddingProperty("paddingLeft")(padding);
+};
+
+export const pr: ReturnType<typeof paddingProperty> = (padding) => {
+  return paddingProperty("paddingRight")(padding);
+};
+
+export const px: ReturnType<typeof paddingProperty> = (padding) => {
+  return [pl(padding), pr(padding)].flat();
+};
+
+export const py: ReturnType<typeof paddingProperty> = (padding) => {
+  return [pt(padding), pb(padding)].flat();
+};
+
+export const p: ReturnType<typeof paddingProperty> = (padding) => {
+  return [px(padding), py(padding)].flat();
 };
 
 const marginProperty =
@@ -448,9 +452,81 @@ export const inlineFlex = (): EmbedTemplateStyleDecl[] => {
 const flexDirection = { row: "row", col: "column" } as const;
 type FlexDirection = keyof typeof flexDirection;
 
-export const flex = (flexParam?: FlexDirection): EmbedTemplateStyleDecl[] => {
+type FlexSizing = 1 | "auto" | "initial" | "none";
+
+export const flex = (
+  flexParam?: FlexDirection | FlexSizing
+): EmbedTemplateStyleDecl[] => {
   if (flexParam === undefined) {
     return [{ property: "display", value: { type: "keyword", value: "flex" } }];
+  }
+
+  if (flexParam === 1) {
+    return [
+      {
+        property: "flexGrow",
+        value: { type: "unit", value: 1, unit: "number" },
+      },
+      {
+        property: "flexShrink",
+        value: { type: "unit", value: 1, unit: "number" },
+      },
+      {
+        property: "flexBasis",
+        value: { type: "unit", value: 0, unit: "%" },
+      },
+    ];
+  }
+
+  if (flexParam === "auto") {
+    return [
+      {
+        property: "flexGrow",
+        value: { type: "unit", value: 1, unit: "number" },
+      },
+      {
+        property: "flexShrink",
+        value: { type: "unit", value: 1, unit: "number" },
+      },
+      {
+        property: "flexBasis",
+        value: { type: "keyword", value: "auto" },
+      },
+    ];
+  }
+
+  if (flexParam === "initial") {
+    return [
+      {
+        property: "flexGrow",
+        value: { type: "unit", value: 0, unit: "number" },
+      },
+      {
+        property: "flexShrink",
+        value: { type: "unit", value: 1, unit: "number" },
+      },
+      {
+        property: "flexBasis",
+        value: { type: "keyword", value: "auto" },
+      },
+    ];
+  }
+
+  if (flexParam === "none") {
+    return [
+      {
+        property: "flexGrow",
+        value: { type: "unit", value: 0, unit: "number" },
+      },
+      {
+        property: "flexShrink",
+        value: { type: "unit", value: 0, unit: "number" },
+      },
+      {
+        property: "flexBasis",
+        value: { type: "keyword", value: "auto" },
+      },
+    ];
   }
 
   return [
@@ -512,6 +588,15 @@ export const tracking = (
   const value = parseCssValue("letterSpacing", valueString);
 
   return [{ property: "letterSpacing", value }];
+};
+
+export const underline = (): EmbedTemplateStyleDecl[] => {
+  return [
+    {
+      property: "textDecorationLine",
+      value: { type: "keyword", value: "underline" },
+    },
+  ];
 };
 
 export const outline = (value: "none"): EmbedTemplateStyleDecl[] => {
