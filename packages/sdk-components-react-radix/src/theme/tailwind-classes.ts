@@ -269,6 +269,20 @@ export const opacity = (
   ];
 };
 
+export const cursor = (
+  cursor: keyof EvaluatedDefaultTheme["cursor"]
+): EmbedTemplateStyleDecl[] => {
+  const valueString = theme("cursor")?.[cursor] ?? "auto";
+  const value = parseCssValue("cursor", valueString);
+
+  return [
+    {
+      property: "cursor",
+      value,
+    },
+  ];
+};
+
 export const maxW = (
   spacing:
     | StringEnumToNumeric<keyof EvaluatedDefaultTheme["maxWidth"]>

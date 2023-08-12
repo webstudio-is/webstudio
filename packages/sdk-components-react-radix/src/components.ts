@@ -25,3 +25,4 @@ export {
 } from "./sheet";
 export { Tabs, TabsList, TabsTrigger, TabsContent } from "./tabs";
 export { Button } from "./button";
+export { Input } from "./input";

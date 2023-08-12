@@ -38,3 +38,4 @@ export {
   metaTabsContent as TabsContent,
 } from "./tabs.ws";
 export { meta as Button } from "./button.ws";
+export { meta as Input } from "./input.ws";

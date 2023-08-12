@@ -38,3 +38,4 @@ export {
   propsMetaTabsContent as TabsContent,
 } from "./tabs.ws";
 export { propsMeta as Button } from "./button.ws";
+export { propsMeta as Input } from "./input.ws";
