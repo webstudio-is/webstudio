@@ -1,4 +1,4 @@
-import { FormTextFieldIcon } from "@webstudio-is/icons/svg";
+import { FormTextAreaIcon } from "@webstudio-is/icons/svg";
 import {
   defaultStates,
   type PresetStyle,
@@ -18,7 +18,7 @@ export const meta: WsComponentMeta = {
   type: "control",
   label: "Textarea",
   invalidAncestors: ["Button"],
-  icon: FormTextFieldIcon,
+  icon: FormTextAreaIcon,
   presetStyle,
   states: [
     ...defaultStates,
