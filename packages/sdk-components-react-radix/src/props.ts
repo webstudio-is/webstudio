@@ -37,3 +37,4 @@ export {
   propsMetaTabsTrigger as TabsTrigger,
   propsMetaTabsContent as TabsContent,
 } from "./tabs.ws";
+export { propsMeta as Button } from "./button.ws";

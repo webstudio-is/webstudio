@@ -2,7 +2,10 @@ import type { ExoticComponent } from "react";
 import type { Instance } from "@webstudio-is/project-build";
 import { getStyleDeclKey } from "@webstudio-is/project-build";
 import type { WsComponentMeta } from "./components/component-meta";
-import { generateDataFromEmbedTemplate } from "./embed-template";
+import {
+  WsEmbedTemplate,
+  generateDataFromEmbedTemplate,
+} from "./embed-template";
 import { generateCssText } from "./css";
 import { InstanceRoot, WebstudioComponent } from "./tree";
 import {
@@ -18,23 +21,43 @@ export const renderComponentTemplate = ({
   name,
   metas: metasRecord,
   components,
+  props,
 }: {
   name: Instance["component"];
   metas: Record<string, WsComponentMeta>;
+  props?: Record<string, unknown>;
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   components: Record<string, ExoticComponent<any>>;
 }) => {
   const metas = new Map(Object.entries(metasRecord));
-  const data = generateDataFromEmbedTemplate(
-    metas.get(name)?.template ?? [
-      {
-        type: "instance",
-        component: name,
-        children: [],
-      },
-    ],
-    "base"
-  );
+
+  const template: WsEmbedTemplate = metas.get(name)?.template ?? [
+    {
+      type: "instance",
+      component: name,
+      children: [],
+    },
+  ];
+
+  if (template[0].type === "instance" && props !== undefined) {
+    template[0].props = Object.entries(props).map(([prop, value]) => {
+      if (typeof value === "string") {
+        return { type: "string", name: prop, value: value };
+      }
+
+      if (typeof value === "number") {
+        return { type: "number", name: prop, value: value };
+      }
+
+      if (typeof value === "boolean") {
+        return { type: "boolean", name: prop, value: value };
+      }
+      throw new Error(`Unsupported prop ${props} with value ${value}`);
+    });
+  }
+
+  const data = generateDataFromEmbedTemplate(template, "base");
+
   const instances: [Instance["id"], Instance][] = [
     [
       "root",
@@ -49,6 +72,7 @@ export const renderComponentTemplate = ({
       (instance) => [instance.id, instance] satisfies [Instance["id"], Instance]
     ),
   ];
+
   return (
     <>
       <style>
