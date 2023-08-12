@@ -24,6 +24,7 @@ export const meta: WsComponentMeta = {
     ...defaultStates,
     { selector: ":disabled", label: "Disabled" },
     { selector: "::placeholder", label: "Placeholder" },
+    // @todo share https://github.com/webstudio-is/webstudio-builder/issues/2102
     { selector: ":valid", label: "Valid" },
     { selector: ":invalid", label: "Invalid" },
     { selector: ":required", label: "Required" },
