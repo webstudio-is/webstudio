@@ -164,13 +164,6 @@ export const metaTabsTrigger: WsComponentMeta = {
   requiredAncestors: ["TabsList"],
   invalidAncestors: ["TabsTrigger"],
   indexWithinAncestor: "Tabs",
-  template: [
-    {
-      type: "instance",
-      component: "TabsTrigger",
-      children: [{ type: "text", value: "New Tab" }],
-    },
-  ],
 };
 
 export const metaTabsContent: WsComponentMeta = {
@@ -181,13 +174,6 @@ export const metaTabsContent: WsComponentMeta = {
   requiredAncestors: ["Tabs"],
   indexWithinAncestor: "Tabs",
   presetStyle,
-  template: [
-    {
-      type: "instance",
-      component: "TabsContent",
-      children: [{ type: "text", value: "New Tab Content" }],
-    },
-  ],
 };
 
 export const propsMetaTabs: WsComponentPropsMeta = {
