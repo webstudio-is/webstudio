@@ -35,8 +35,4 @@ export const colors = {
 
 --card: 0 0% 100%;
 --card-foreground: 222.2 84% 4.9%;
-
-
---secondary: 210 40% 96.1%;
---secondary-foreground: 222.2 47.4% 11.2%;
 */

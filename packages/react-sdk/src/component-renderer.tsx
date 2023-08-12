@@ -3,7 +3,7 @@ import type { Instance } from "@webstudio-is/project-build";
 import { getStyleDeclKey } from "@webstudio-is/project-build";
 import type { WsComponentMeta } from "./components/component-meta";
 import {
-  EmbedTemplateInstance,
+  WsEmbedTemplate,
   generateDataFromEmbedTemplate,
 } from "./embed-template";
 import { generateCssText } from "./css";
@@ -31,38 +31,26 @@ export const renderComponentTemplate = ({
 }) => {
   const metas = new Map(Object.entries(metasRecord));
 
-  const template = metas.get(name)?.template ?? [
+  const template: WsEmbedTemplate = metas.get(name)?.template ?? [
     {
       type: "instance",
       component: name,
       children: [],
-    } as EmbedTemplateInstance,
+    },
   ];
 
   if (template[0].type === "instance" && props !== undefined) {
     template[0].props = Object.entries(props).map(([prop, value]) => {
       if (typeof value === "string") {
-        return {
-          type: "string",
-          name: prop,
-          value: value,
-        };
+        return { type: "string", name: prop, value: value };
       }
 
       if (typeof value === "number") {
-        return {
-          type: "number",
-          name: prop,
-          value: value,
-        };
+        return { type: "number", name: prop, value: value };
       }
 
       if (typeof value === "boolean") {
-        return {
-          type: "boolean",
-          name: prop,
-          value: value,
-        };
+        return { type: "boolean", name: prop, value: value };
       }
       throw new Error(`Unsupported prop ${props} with value ${value}`);
     });
