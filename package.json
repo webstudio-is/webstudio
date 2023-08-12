@@ -30,7 +30,7 @@
     "@types/css-tree": "^2.3.1",
     "@webstudio-is/eslint-config-custom": "workspace:^",
     "nano-staged": "^0.8.0",
-    "prettier": "3.0.0",
+    "prettier": "3.0.1",
     "simple-git-hooks": "^2.9.0",
     "storybook": "^7.2.1",
     "tsx": "^3.12.6",
