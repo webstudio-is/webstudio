@@ -91,7 +91,7 @@ export const generateUtilsExport = (siteData: PageData) => {
           new Set(executableValue.args),
           variables
         );
-        const generatedFunction = `(_args: Map<string, any>, _variables: Map<string, any>) => { ${generatedCode} })`;
+        const generatedFunction = `(_args: Map<string, any>, _variables: Map<string, any>) => { ${generatedCode} }`;
 
         effectfulExpressionsEntries += `[${codeString}, ${generatedFunction}],\n`;
       }
