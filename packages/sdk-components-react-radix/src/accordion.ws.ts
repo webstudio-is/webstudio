@@ -65,7 +65,6 @@ const accordionContentStyles: EmbedTemplateStyleDecl[] = [
 export const metaAccordion: WsComponentMeta = {
   category: "radix",
   type: "container",
-  label: "Accordion",
   icon: AccordionIcon,
   presetStyle,
   template: [
@@ -196,7 +195,6 @@ export const metaAccordion: WsComponentMeta = {
 export const metaAccordionItem: WsComponentMeta = {
   category: "hidden",
   type: "container",
-  label: "Accordion Item",
   icon: ItemIcon,
   requiredAncestors: ["Accordion"],
   indexWithinAncestor: "Accordion",
@@ -206,7 +204,6 @@ export const metaAccordionItem: WsComponentMeta = {
 export const metaAccordionHeader: WsComponentMeta = {
   category: "hidden",
   type: "container",
-  label: "Accordion Header",
   icon: HeaderIcon,
   requiredAncestors: ["AccordionItem"],
   detachable: false,
@@ -218,7 +215,6 @@ export const metaAccordionHeader: WsComponentMeta = {
 export const metaAccordionTrigger: WsComponentMeta = {
   category: "hidden",
   type: "container",
-  label: "Accordion Trigger",
   icon: TriggerIcon,
   requiredAncestors: ["AccordionHeader"],
   detachable: false,
@@ -246,7 +242,6 @@ export const metaAccordionTrigger: WsComponentMeta = {
 export const metaAccordionContent: WsComponentMeta = {
   category: "hidden",
   type: "container",
-  label: "Accordion Content",
   icon: ContentIcon,
   requiredAncestors: ["AccordionItem"],
   detachable: false,

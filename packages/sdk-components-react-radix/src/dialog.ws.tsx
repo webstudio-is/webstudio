@@ -45,7 +45,6 @@ const descriptionPresetStyle = {
 export const metaDialogTrigger: WsComponentMeta = {
   category: "hidden",
   type: "container",
-  label: "Dialog Trigger",
   icon: TriggerIcon,
   stylable: false,
   detachable: false,
@@ -54,7 +53,6 @@ export const metaDialogTrigger: WsComponentMeta = {
 export const metaDialogContent: WsComponentMeta = {
   category: "hidden",
   type: "container",
-  label: "Dialog Content",
   presetStyle,
   icon: ContentIcon,
   detachable: false,
@@ -63,7 +61,6 @@ export const metaDialogContent: WsComponentMeta = {
 export const metaDialogOverlay: WsComponentMeta = {
   category: "hidden",
   type: "container",
-  label: "Dialog Overlay",
   presetStyle,
   icon: OverlayIcon,
   detachable: false,
@@ -73,7 +70,6 @@ export const metaDialogTitle: WsComponentMeta = {
   category: "hidden",
   type: "container",
   presetStyle: titlePresetStyle,
-  label: "Dialog Title",
   icon: HeadingIcon,
 };
 
@@ -81,7 +77,6 @@ export const metaDialogDescription: WsComponentMeta = {
   category: "hidden",
   type: "container",
   presetStyle: descriptionPresetStyle,
-  label: "Dialog Description",
   icon: TextIcon,
 };
 
@@ -89,7 +84,6 @@ export const metaDialogClose: WsComponentMeta = {
   category: "hidden",
   type: "container",
   presetStyle: buttonPresetStyle,
-  label: "Dialog Close",
   icon: ButtonElementIcon,
 };
 
@@ -104,7 +98,6 @@ export const metaDialogClose: WsComponentMeta = {
 export const metaDialog: WsComponentMeta = {
   category: "radix",
   type: "container",
-  label: "Dialog",
   icon: DialogIcon,
   order: 15,
   stylable: false,
@@ -281,7 +274,7 @@ export const metaDialog: WsComponentMeta = {
 
 export const propsMetaDialog: WsComponentPropsMeta = {
   props: propsDialog,
-  initialProps: ["isOpen", "modal"],
+  initialProps: ["open", "modal"],
 };
 
 export const propsMetaDialogTrigger: WsComponentPropsMeta = {

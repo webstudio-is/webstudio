@@ -16,7 +16,6 @@ const presetStyle = {
 export const meta: WsComponentMeta = {
   category: "radix",
   type: "container",
-  label: "Label",
   icon: LabelIcon,
   presetStyle,
   states: defaultStates,

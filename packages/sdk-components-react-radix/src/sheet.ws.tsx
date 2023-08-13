@@ -53,7 +53,6 @@ const descriptionPresetStyle = {
 export const metaSheetTrigger: WsComponentMeta = {
   category: "hidden",
   type: "container",
-  label: "Sheet Trigger",
   icon: TriggerIcon,
   stylable: false,
   detachable: false,
@@ -62,7 +61,6 @@ export const metaSheetTrigger: WsComponentMeta = {
 export const metaSheetContent: WsComponentMeta = {
   category: "hidden",
   type: "container",
-  label: "Sheet Content",
   icon: ContentIcon,
   detachable: false,
   presetStyle: contentPresetStyle,
@@ -78,7 +76,6 @@ export const metaSheetOverlay: WsComponentMeta = {
   category: "hidden",
   type: "container",
   presetStyle,
-  label: "Sheet Overlay",
   icon: OverlayIcon,
   detachable: false,
 };
@@ -87,7 +84,6 @@ export const metaSheetTitle: WsComponentMeta = {
   category: "hidden",
   type: "container",
   presetStyle: titlePresetStyle,
-  label: "Sheet Title",
   icon: HeadingIcon,
 };
 
@@ -95,7 +91,6 @@ export const metaSheetDescription: WsComponentMeta = {
   category: "hidden",
   type: "container",
   presetStyle: descriptionPresetStyle,
-  label: "Sheet Description",
   icon: TextIcon,
 };
 
@@ -103,7 +98,6 @@ export const metaSheetClose: WsComponentMeta = {
   category: "hidden",
   type: "container",
   presetStyle: buttonPresetStyle,
-  label: "Sheet Close",
   icon: ButtonElementIcon,
 };
 
@@ -119,7 +113,6 @@ export const metaSheet: WsComponentMeta = {
   category: "radix",
 
   type: "container",
-  label: "Sheet",
   icon: HamburgerMenuIcon,
   order: 15,
   stylable: false,
@@ -299,7 +292,7 @@ export const metaSheet: WsComponentMeta = {
 
 export const propsMetaSheet: WsComponentPropsMeta = {
   props: propsSheet,
-  initialProps: ["isOpen", "modal"],
+  initialProps: ["open", "modal"],
 };
 
 export const propsMetaSheetTrigger: WsComponentPropsMeta = {
