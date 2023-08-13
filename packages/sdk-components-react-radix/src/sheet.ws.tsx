@@ -151,7 +151,7 @@ export const metaSheet: WsComponentMeta = {
               {
                 type: "instance",
                 component: "HtmlEmbed",
-                label: "Spinner SVG",
+                label: "Hamburger Menu Svg",
                 props: [
                   {
                     type: "string",
