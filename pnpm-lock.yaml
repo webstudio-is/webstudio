@@ -1307,6 +1307,9 @@ importers:
       colord:
         specifier: ^2.9.3
         version: 2.9.3
+      prismjs:
+        specifier: ^1.29.0
+        version: 1.29.0
       shallow-equal:
         specifier: ^3.1.0
         version: 3.1.0

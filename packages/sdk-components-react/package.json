@@ -30,6 +30,12 @@
       "types": "./lib/types/props.d.ts",
       "import": "./lib/props.js",
       "require": "./lib/cjs/props.js"
+    },
+    "./links": {
+      "source": "./src/links.ts",
+      "types": "./lib/types/links.d.ts",
+      "import": "./lib/links.js",
+      "require": "./lib/cjs/links.js"
     }
   },
   "scripts": {
@@ -54,6 +60,7 @@
     "@webstudio-is/image": "workspace:^",
     "@webstudio-is/react-sdk": "workspace:^",
     "colord": "^2.9.3",
+    "prismjs": "^1.29.0",
     "shallow-equal": "^3.1.0"
   },
   "devDependencies": {
