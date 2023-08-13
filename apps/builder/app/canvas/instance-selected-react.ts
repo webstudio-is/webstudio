@@ -1,7 +1,5 @@
 import { useCallback, useEffect, useState } from "react";
-import { useStore } from "@nanostores/react";
-import { selectedInstanceSelectorStore } from "~/shared/nano-states";
-import { subscribeSelectedInstance } from "./instance-selected";
+import { subscribeSelected } from "./instance-selected";
 
 /**
  * Debounce task execution until useEffect
@@ -23,16 +21,9 @@ const useDebounceEffect = () => {
 };
 
 export const useSelectedInstance = () => {
-  const selectedInstanceSelector = useStore(selectedInstanceSelectorStore);
   const execTaskInEffect = useDebounceEffect();
 
   useEffect(() => {
-    if (selectedInstanceSelector === undefined) {
-      return;
-    }
-    return subscribeSelectedInstance(
-      selectedInstanceSelector,
-      execTaskInEffect
-    );
-  }, [selectedInstanceSelector, execTaskInEffect]);
+    return subscribeSelected(execTaskInEffect);
+  }, [execTaskInEffect]);
 };
