@@ -22,6 +22,7 @@ import {
   propsDialogTitle,
   propsDialogDescription,
 } from "./__generated__/dialog.props";
+import { template as buttonTemplate } from "./button.ws";
 
 import { div, button, h2, p } from "@webstudio-is/react-sdk/css-normalize";
 
@@ -127,13 +128,9 @@ export const metaDialog: WsComponentMeta = {
           type: "instance",
           component: "DialogTrigger",
           props: [],
-          children: [
-            {
-              type: "instance",
-              component: "Button",
-              children: [{ type: "text", value: "Button" }],
-            },
-          ],
+          children: buttonTemplate({
+            children: [{ type: "text", value: "Button" }],
+          }),
         },
         {
           type: "instance",

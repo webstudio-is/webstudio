@@ -11,6 +11,7 @@ import {
   propsTooltipTrigger,
 } from "./__generated__/tooltip.props";
 import { div } from "@webstudio-is/react-sdk/css-normalize";
+import { template as buttonTemplate } from "./button.ws";
 
 const presetStyle = {
   div,
@@ -73,13 +74,9 @@ export const metaTooltip: WsComponentMeta = {
           type: "instance",
           component: "TooltipTrigger",
           props: [],
-          children: [
-            {
-              type: "instance",
-              component: "Button",
-              children: [{ type: "text", value: "Button" }],
-            },
-          ],
+          children: buttonTemplate({
+            children: [{ type: "text", value: "Button" }],
+          }),
         },
         {
           type: "instance",

@@ -25,6 +25,7 @@ import {
 import { div, nav, button, h2, p } from "@webstudio-is/react-sdk/css-normalize";
 import type { SheetContent } from "./sheet";
 import type { ComponentProps } from "react";
+import { template as buttonTemplate } from "./button.ws";
 
 type ContentTags = NonNullable<ComponentProps<typeof SheetContent>["tag"]>;
 
@@ -141,13 +142,27 @@ export const metaSheet: WsComponentMeta = {
         {
           type: "instance",
           component: "SheetTrigger",
-          children: [
-            {
-              type: "instance",
-              component: "Button",
-              children: [{ type: "text", value: "Button" }],
-            },
-          ],
+          children: buttonTemplate({
+            props: [
+              { name: "variant", type: "string", value: "ghost" },
+              { name: "size", type: "string", value: "icon" },
+            ],
+            children: [
+              {
+                type: "instance",
+                component: "HtmlEmbed",
+                label: "Hamburger Menu Svg",
+                props: [
+                  {
+                    type: "string",
+                    name: "code",
+                    value: HamburgerMenuIcon,
+                  },
+                ],
+                children: [],
+              },
+            ],
+          }),
         },
         {
           type: "instance",
