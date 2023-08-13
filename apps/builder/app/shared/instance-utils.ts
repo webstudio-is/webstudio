@@ -41,13 +41,12 @@ import { getElementByInstanceSelector } from "./dom-utils";
 import { humanizeString } from "./string-utils";
 
 const getLabelFromComponentName = (component: Instance["component"]) => {
-  let baseName = component;
   if (component.includes(":")) {
     // strip namespace
     const [_namespace, baseName] = component.split(":");
     component = baseName;
   }
-  return humanizeString(baseName);
+  return humanizeString(component);
 };
 
 export const getInstanceLabel = (
