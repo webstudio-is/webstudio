@@ -11,6 +11,7 @@ import {
   propsPopoverTrigger,
 } from "./__generated__/popover.props";
 import { div } from "@webstudio-is/react-sdk/css-normalize";
+import { template as buttonTemplate } from "./button.ws";
 
 const presetStyle = {
   div,
@@ -73,13 +74,9 @@ export const metaPopover: WsComponentMeta = {
           type: "instance",
           component: "PopoverTrigger",
           props: [],
-          children: [
-            {
-              type: "instance",
-              component: "Button",
-              children: [{ type: "text", value: "Button" }],
-            },
-          ],
+          children: buttonTemplate({
+            children: [{ type: "text", value: "Button" }],
+          }),
         },
         {
           type: "instance",
