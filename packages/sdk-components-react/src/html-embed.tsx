@@ -86,7 +86,10 @@ export const HtmlEmbed = forwardRef<HTMLDivElement, Props>((props, ref) => {
     return <Placeholder innerRef={ref} {...rest} />;
   }
 
-  if (renderer === "canvas" && executeScriptOnCanvas === true) {
+  if (
+    (renderer === "canvas" && executeScriptOnCanvas === true) ||
+    renderer === "preview"
+  ) {
     return <ExecutableHtml innerRef={ref} code={code} {...rest} />;
   }
 
