@@ -23,6 +23,7 @@ import {
   computeInstancesConstraints,
   findClosestDroppableTarget,
   getComponentTemplateData,
+  getInstanceLabel,
   insertTemplateData,
 } from "~/shared/instance-utils";
 import { MetaIcon } from "~/builder/shared/meta-icon";
@@ -51,7 +52,7 @@ const DragLayer = ({
       }}
     >
       <ComponentCard
-        label={meta.label}
+        label={getInstanceLabel({ component }, meta)}
         icon={<MetaIcon size="auto" icon={meta.icon} />}
         style={{
           transform: `translate3d(${point.x}px, ${point.y}px, 0)`,

@@ -65,7 +65,6 @@ const tabsContentStyles: EmbedTemplateStyleDecl[] = [
 export const metaTabs: WsComponentMeta = {
   category: "radix",
   type: "container",
-  label: "Tabs",
   icon: TabsIcon,
   presetStyle,
   template: [
@@ -150,7 +149,6 @@ export const metaTabsList: WsComponentMeta = {
   category: "hidden",
   detachable: false,
   type: "container",
-  label: "Tabs List",
   icon: HeaderIcon,
   requiredAncestors: ["Tabs"],
   presetStyle,
@@ -159,7 +157,6 @@ export const metaTabsList: WsComponentMeta = {
 export const metaTabsTrigger: WsComponentMeta = {
   category: "hidden",
   type: "container",
-  label: "Tabs Trigger",
   icon: TriggerIcon,
   requiredAncestors: ["TabsList"],
   invalidAncestors: ["TabsTrigger"],
@@ -169,7 +166,6 @@ export const metaTabsTrigger: WsComponentMeta = {
 export const metaTabsContent: WsComponentMeta = {
   category: "hidden",
   type: "container",
-  label: "Tabs Content",
   icon: ContentIcon,
   requiredAncestors: ["Tabs"],
   indexWithinAncestor: "Tabs",

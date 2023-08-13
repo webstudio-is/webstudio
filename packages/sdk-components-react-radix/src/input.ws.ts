@@ -17,7 +17,6 @@ export const meta: WsComponentMeta = {
   category: "radix",
   type: "control",
   invalidAncestors: ["Button"],
-  label: "Input",
   icon: FormTextFieldIcon,
   presetStyle,
   states: [

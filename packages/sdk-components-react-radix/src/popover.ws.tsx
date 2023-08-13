@@ -20,7 +20,6 @@ const presetStyle = {
 export const metaPopoverTrigger: WsComponentMeta = {
   category: "hidden",
   type: "container",
-  label: "Popover Trigger",
   icon: TriggerIcon,
   stylable: false,
   detachable: false,
@@ -30,7 +29,6 @@ export const metaPopoverContent: WsComponentMeta = {
   category: "hidden",
   type: "container",
   presetStyle,
-  label: "Popover Content",
   icon: ContentIcon,
   detachable: false,
 };
@@ -46,7 +44,6 @@ export const metaPopoverContent: WsComponentMeta = {
 export const metaPopover: WsComponentMeta = {
   category: "radix",
   type: "container",
-  label: "Popover",
   icon: PopoverIcon,
   order: 15,
   stylable: false,
@@ -117,7 +114,7 @@ export const metaPopover: WsComponentMeta = {
 
 export const propsMetaPopover: WsComponentPropsMeta = {
   props: propsPopover,
-  initialProps: ["isOpen", "modal"],
+  initialProps: ["open", "modal"],
 };
 
 export const propsMetaPopoverTrigger: WsComponentPropsMeta = {

@@ -21,7 +21,6 @@ export const metaTooltipTrigger: WsComponentMeta = {
   category: "hidden",
   detachable: false,
   type: "container",
-  label: "Tooltip Trigger",
   icon: TriggerIcon,
   stylable: false,
 };
@@ -31,7 +30,6 @@ export const metaTooltipContent: WsComponentMeta = {
   detachable: false,
   type: "container",
   presetStyle,
-  label: "Tooltip Content",
   icon: ContentIcon,
 };
 
@@ -46,7 +44,6 @@ export const metaTooltipContent: WsComponentMeta = {
 export const metaTooltip: WsComponentMeta = {
   category: "radix",
   type: "container",
-  label: "Tooltip",
   icon: TooltipIcon,
   order: 15,
   stylable: false,
@@ -118,7 +115,7 @@ export const metaTooltip: WsComponentMeta = {
 
 export const propsMetaTooltip: WsComponentPropsMeta = {
   props: propsTooltip,
-  initialProps: ["isOpen", "delayDuration", "disableHoverableContent"],
+  initialProps: ["open", "delayDuration", "disableHoverableContent"],
 };
 
 export const propsMetaTooltipTrigger: WsComponentPropsMeta = {

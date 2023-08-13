@@ -17,7 +17,6 @@ export const meta: WsComponentMeta = {
   category: "radix",
   type: "container",
   invalidAncestors: ["Button"],
-  label: "Button",
   icon: ButtonElementIcon,
   presetStyle,
   states: [
