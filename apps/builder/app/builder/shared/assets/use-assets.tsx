@@ -103,7 +103,16 @@ const assetContainersStore = computed(
         });
       }
     }
-    return assetContainers;
+
+    return assetContainers.sort((container1, container2) => {
+      if (
+        container1.status === "uploading" ||
+        container2.status === "uploading"
+      ) {
+        return -1;
+      }
+      return container1.asset.createdAt > container2.asset.createdAt ? -1 : 1;
+    });
   }
 );
 
