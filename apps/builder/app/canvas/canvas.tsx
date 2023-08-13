@@ -11,6 +11,7 @@ import {
   encodeVariablesMap,
   decodeVariablesMap,
   getIndexesWithinAncestors,
+  WebstudioComponent,
 } from "@webstudio-is/react-sdk";
 import * as baseComponents from "@webstudio-is/sdk-components-react";
 import * as baseComponentMetas from "@webstudio-is/sdk-components-react/metas";
@@ -134,7 +135,7 @@ const useElementsTree = (
       executeEffectfulExpression:
         executeEffectfulExpressionWithDecodedVariables,
       onDataSourceUpdate,
-      Component: WebstudioComponentDev,
+      Component: isPreviewMode ? WebstudioComponent : WebstudioComponentDev,
       components,
       scripts: (
         <>
