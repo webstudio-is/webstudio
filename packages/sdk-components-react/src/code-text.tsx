@@ -5,10 +5,16 @@ import {
   type ComponentProps,
 } from "react";
 import { cssVars } from "@webstudio-is/css-vars";
+// eslint-disable-next-line import/no-internal-modules
+import prismStyles from "prismjs/themes/prism-solarizedlight.min.css";
 
 export const defaultTag = "code";
 
 export const displayVarNamespace = cssVars.define("code-display");
+
+export const links = () => {
+  return [{ rel: "stylesheet", href: prismStyles }];
+};
 
 const blockStyle = {
   [cssVars.define(displayVarNamespace)]: "block",
