@@ -11,6 +11,8 @@ import {
   instancesStore,
   propsStore,
   dataSourceValuesStore,
+  selectedInstanceSelectorStore,
+  dataSourceVariablesStore,
 } from "~/shared/nano-states";
 import htmlTags, { type htmlTags as HtmlTags } from "html-tags";
 import {
@@ -72,8 +74,8 @@ const calculateUnitSizes = (element: HTMLElement): UnitSizes => {
   };
 };
 
-export const subscribeSelectedInstance = (
-  selectedInstanceSelector: InstanceSelector,
+const subscribeSelectedInstance = (
+  selectedInstanceSelector: Readonly<InstanceSelector>,
   queueTask: (task: () => void) => void
 ) => {
   if (selectedInstanceSelector.length === 0) {
@@ -85,11 +87,7 @@ export const subscribeSelectedInstance = (
 
   let elements = getElementsByInstanceSelector(selectedInstanceSelector);
 
-  if (elements.length === 0) {
-    return;
-  }
-
-  elements[0].scrollIntoView({
+  elements[0]?.scrollIntoView({
     behavior: "smooth",
     block: "nearest",
   });
@@ -192,9 +190,7 @@ export const subscribeSelectedInstance = (
 
   // Lightweight update
   const updateOutline = () => {
-    queueTask(() => {
-      showOutline();
-    });
+    showOutline();
   };
 
   const resizeObserver = new ResizeObserver(update);
@@ -234,6 +230,9 @@ export const subscribeSelectedInstance = (
   const unsubscribePropsStore = propsStore.subscribe(update);
   const unsubscribeDataSourceValuesStore =
     dataSourceValuesStore.subscribe(update);
+
+  const unsubscribeDataSourceVariablesStore =
+    dataSourceVariablesStore.subscribe(update);
 
   const unsubscribeIsResizingCanvas = isResizingCanvasStore.subscribe(
     (isResizing) => {
@@ -278,5 +277,28 @@ export const subscribeSelectedInstance = (
     unsubscribeInstancesStore();
     unsubscribePropsStore();
     unsubscribeDataSourceValuesStore();
+    unsubscribeDataSourceVariablesStore();
+  };
+};
+
+export const subscribeSelected = (queueTask: (task: () => void) => void) => {
+  let previousSelectedInstance: readonly string[] | undefined = undefined;
+  let unsubscribeSelectedInstance = () => {};
+
+  const unsubscribe = selectedInstanceSelectorStore.subscribe(
+    (instanceSelector) => {
+      if (instanceSelector !== previousSelectedInstance) {
+        unsubscribeSelectedInstance();
+        unsubscribeSelectedInstance =
+          subscribeSelectedInstance(instanceSelector ?? [], queueTask) ??
+          (() => {});
+        previousSelectedInstance = instanceSelector;
+      }
+    }
+  );
+
+  return () => {
+    unsubscribe();
+    unsubscribeSelectedInstance();
   };
 };
