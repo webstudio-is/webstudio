@@ -131,7 +131,7 @@ let $ws$dataSource$tabsOpen;
 $ws$dataSource$tabsOpen = open;
 return new Map([
   ['$ws$dataSource$tabsOpen', $ws$dataSource$tabsOpen],
-]); })],
+]); }],
 
   ]);
 
