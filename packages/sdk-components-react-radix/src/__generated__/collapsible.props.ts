@@ -1,6 +1,14 @@
 import type { PropMeta } from "@webstudio-is/generate-arg-types";
 
 export const propsCollapsible: Record<string, PropMeta> = {
+  disabled: { required: false, control: "boolean", type: "boolean" },
+  id: { required: false, control: "text", type: "string" },
+  lang: { required: false, control: "text", type: "string" },
+  open: { required: false, control: "boolean", type: "boolean" },
+  placeholder: { required: false, control: "text", type: "string" },
+  rel: { required: false, control: "text", type: "string" },
+  role: { required: false, control: "text", type: "string" },
+  title: { required: false, control: "text", type: "string" },
   about: { required: false, control: "text", type: "string" },
   accessKey: { required: false, control: "text", type: "string" },
   "aria-activedescendant": {
@@ -393,10 +401,8 @@ export const propsCollapsible: Record<string, PropMeta> = {
   datatype: { required: false, control: "text", type: "string" },
   defaultChecked: { required: false, control: "boolean", type: "boolean" },
   dir: { required: false, control: "text", type: "string" },
-  disabled: { required: false, control: "boolean", type: "boolean" },
   draggable: { required: false, control: "boolean", type: "boolean" },
   hidden: { required: false, control: "boolean", type: "boolean" },
-  id: { required: false, control: "text", type: "string" },
   inputMode: {
     description:
       "Hints at the type of data that might be entered by the user while editing the element or its contents\n@see https://html.spec.whatwg.org/multipage/interaction.html#input-modalities:-the-inputmode-attribute",
@@ -426,18 +432,13 @@ export const propsCollapsible: Record<string, PropMeta> = {
   itemRef: { required: false, control: "text", type: "string" },
   itemScope: { required: false, control: "boolean", type: "boolean" },
   itemType: { required: false, control: "text", type: "string" },
-  lang: { required: false, control: "text", type: "string" },
   nonce: { required: false, control: "text", type: "string" },
-  open: { required: false, control: "boolean", type: "boolean" },
-  placeholder: { required: false, control: "text", type: "string" },
   prefix: { required: false, control: "text", type: "string" },
   property: { required: false, control: "text", type: "string" },
   radioGroup: { required: false, control: "text", type: "string" },
-  rel: { required: false, control: "text", type: "string" },
   resource: { required: false, control: "text", type: "string" },
   results: { required: false, control: "number", type: "number" },
   rev: { required: false, control: "text", type: "string" },
-  role: { required: false, control: "text", type: "string" },
   security: { required: false, control: "text", type: "string" },
   slot: { required: false, control: "text", type: "string" },
   spellCheck: { required: false, control: "boolean", type: "boolean" },
@@ -452,7 +453,6 @@ export const propsCollapsible: Record<string, PropMeta> = {
     type: "boolean",
   },
   tabIndex: { required: false, control: "number", type: "number" },
-  title: { required: false, control: "text", type: "string" },
   translate: {
     required: false,
     control: "radio",
@@ -470,6 +470,12 @@ export const propsCollapsible: Record<string, PropMeta> = {
 };
 export const propsCollapsibleTrigger: Record<string, PropMeta> = {};
 export const propsCollapsibleContent: Record<string, PropMeta> = {
+  id: { required: false, control: "text", type: "string" },
+  lang: { required: false, control: "text", type: "string" },
+  placeholder: { required: false, control: "text", type: "string" },
+  rel: { required: false, control: "text", type: "string" },
+  role: { required: false, control: "text", type: "string" },
+  title: { required: false, control: "text", type: "string" },
   about: { required: false, control: "text", type: "string" },
   accessKey: { required: false, control: "text", type: "string" },
   "aria-activedescendant": {
@@ -864,7 +870,6 @@ export const propsCollapsibleContent: Record<string, PropMeta> = {
   dir: { required: false, control: "text", type: "string" },
   draggable: { required: false, control: "boolean", type: "boolean" },
   hidden: { required: false, control: "boolean", type: "boolean" },
-  id: { required: false, control: "text", type: "string" },
   inputMode: {
     description:
       "Hints at the type of data that might be entered by the user while editing the element or its contents\n@see https://html.spec.whatwg.org/multipage/interaction.html#input-modalities:-the-inputmode-attribute",
@@ -894,17 +899,13 @@ export const propsCollapsibleContent: Record<string, PropMeta> = {
   itemRef: { required: false, control: "text", type: "string" },
   itemScope: { required: false, control: "boolean", type: "boolean" },
   itemType: { required: false, control: "text", type: "string" },
-  lang: { required: false, control: "text", type: "string" },
   nonce: { required: false, control: "text", type: "string" },
-  placeholder: { required: false, control: "text", type: "string" },
   prefix: { required: false, control: "text", type: "string" },
   property: { required: false, control: "text", type: "string" },
   radioGroup: { required: false, control: "text", type: "string" },
-  rel: { required: false, control: "text", type: "string" },
   resource: { required: false, control: "text", type: "string" },
   results: { required: false, control: "number", type: "number" },
   rev: { required: false, control: "text", type: "string" },
-  role: { required: false, control: "text", type: "string" },
   security: { required: false, control: "text", type: "string" },
   slot: { required: false, control: "text", type: "string" },
   spellCheck: { required: false, control: "boolean", type: "boolean" },
@@ -919,7 +920,6 @@ export const propsCollapsibleContent: Record<string, PropMeta> = {
     type: "boolean",
   },
   tabIndex: { required: false, control: "number", type: "number" },
-  title: { required: false, control: "text", type: "string" },
   translate: {
     required: false,
     control: "radio",
