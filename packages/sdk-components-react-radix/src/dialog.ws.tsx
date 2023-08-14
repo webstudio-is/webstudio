@@ -148,6 +148,7 @@ export const metaDialog: WsComponentMeta = {
             tc.backdropBlur("sm"),
             // To allow positioning Content
             tc.flex(),
+            tc.overflow("auto"),
           ].flat(),
           children: [
             {
