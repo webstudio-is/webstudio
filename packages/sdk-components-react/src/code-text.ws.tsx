@@ -6,7 +6,7 @@ import {
   type WsComponentPropsMeta,
 } from "@webstudio-is/react-sdk";
 import { code } from "@webstudio-is/react-sdk/css-normalize";
-import { type defaultTag, displayVarNamespace } from "./code-text";
+import type { defaultTag } from "./code-text";
 import { props } from "./__generated__/code-text.props";
 
 const presetStyle = {
@@ -14,11 +14,11 @@ const presetStyle = {
     ...code,
     {
       property: "display",
-      value: {
-        type: "var",
-        value: displayVarNamespace,
-        fallbacks: [{ type: "keyword", value: "inline-block" }],
-      },
+      value: { type: "keyword", value: "block" },
+    },
+    {
+      property: "whiteSpace",
+      value: { type: "keyword", value: "pre-wrap" },
     },
     {
       property: "paddingLeft",
@@ -54,5 +54,5 @@ export const meta: WsComponentMeta = {
 
 export const propsMeta: WsComponentPropsMeta = {
   props,
-  initialProps: ["id", "inline", "lang", "meta"],
+  initialProps: ["id", "lang"],
 };
