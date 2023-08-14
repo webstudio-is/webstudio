@@ -499,98 +499,91 @@ describe("Plugin Markdown", () => {
 
   test("inline code", () => {
     expect(parseInstanceData(parse("`foo`", options))).toMatchInlineSnapshot(`
-      {
-        "children": [
-          {
-            "type": "id",
-            "value": "123",
-          },
-        ],
-        "instances": [
-          {
-            "children": [
-              {
-                "type": "text",
-                "value": "foo",
-              },
-            ],
-            "component": "Code",
-            "id": "123",
-            "type": "instance",
-          },
-          {
-            "children": [
-              {
-                "type": "id",
-                "value": "123",
-              },
-            ],
-            "component": "Paragraph",
-            "id": "123",
-            "type": "instance",
-          },
-        ],
-        "props": [
-          {
-            "id": "123",
-            "instanceId": "123",
-            "name": "inline",
-            "type": "boolean",
-            "value": true,
-          },
-        ],
-      }
-    `);
+{
+  "children": [
+    {
+      "type": "id",
+      "value": "123",
+    },
+  ],
+  "instances": [
+    {
+      "children": [
+        {
+          "type": "text",
+          "value": "foo",
+        },
+      ],
+      "component": "CodeText",
+      "id": "123",
+      "type": "instance",
+    },
+    {
+      "children": [
+        {
+          "type": "id",
+          "value": "123",
+        },
+      ],
+      "component": "Paragraph",
+      "id": "123",
+      "type": "instance",
+    },
+  ],
+  "props": [
+    {
+      "id": "123",
+      "instanceId": "123",
+      "name": "data-inline",
+      "type": "boolean",
+      "value": true,
+    },
+  ],
+}
+`);
   });
 
   test("code", () => {
     expect(parseInstanceData(parse("```js meta\nfoo\n```", options)))
       .toMatchInlineSnapshot(`
-      {
-        "children": [
-          {
-            "type": "id",
-            "value": "123",
-          },
-        ],
-        "instances": [
-          {
-            "children": [
-              {
-                "type": "text",
-                "value": "foo",
-              },
-            ],
-            "component": "Code",
-            "id": "123",
-            "type": "instance",
-          },
-        ],
-        "props": [
-          {
-            "id": "123",
-            "instanceId": "123",
-            "name": "inline",
-            "type": "boolean",
-            "value": false,
-          },
-          {
-            "id": "123",
-            "instanceId": "123",
-            "name": "lang",
-            "type": "string",
-            "value": "js",
-          },
-          {
-            "id": "123",
-            "instanceId": "123",
-            "name": "meta",
-            "type": "string",
-            "value": "meta",
-          },
-        ],
-      }
-    `);
+{
+  "children": [
+    {
+      "type": "id",
+      "value": "123",
+    },
+  ],
+  "instances": [
+    {
+      "children": [
+        {
+          "type": "text",
+          "value": "foo",
+        },
+      ],
+      "component": "CodeText",
+      "id": "123",
+      "type": "instance",
+    },
+  ],
+  "props": [
+    {
+      "id": "123",
+      "instanceId": "123",
+      "name": "lang",
+      "type": "string",
+      "value": "js",
+    },
+    {
+      "id": "123",
+      "instanceId": "123",
+      "name": "data-meta",
+      "type": "string",
+      "value": "meta",
+    },
+  ],
+}
+`);
   });
 
   test("list unordered", () => {
