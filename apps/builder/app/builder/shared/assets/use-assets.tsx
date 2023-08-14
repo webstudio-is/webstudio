@@ -6,7 +6,12 @@ import { type AssetType, type Asset } from "@webstudio-is/asset-uploader";
 import { toast } from "@webstudio-is/design-system";
 import { sanitizeS3Key } from "@webstudio-is/asset-uploader";
 import { restAssetsUploadPath, restAssetsPath } from "~/shared/router-utils";
-import type { AssetContainer, PreviewAsset } from "./types";
+import type {
+  AssetContainer,
+  PreviewAsset,
+  UploadedAssetContainer,
+  UploadingAssetContainer,
+} from "./types";
 import type { ActionData } from "~/builder/shared/assets";
 import {
   assetsStore,
@@ -75,7 +80,10 @@ const deleteUploadingFileData = (id: FileData["assetId"]) => {
 const assetContainersStore = computed(
   [assetsStore, uploadingFilesDataStore],
   (assets, uploadingFilesData) => {
-    const uploadingAssets = new Map<PreviewAsset["id"], AssetContainer>();
+    const uploadingAssets = new Map<
+      PreviewAsset["id"],
+      UploadingAssetContainer
+    >();
     for (const { assetId, type, file, objectURL } of uploadingFilesData) {
       uploadingAssets.set(assetId, {
         status: "uploading",
@@ -89,21 +97,29 @@ const assetContainersStore = computed(
         },
       });
     }
-    const assetContainers: Array<AssetContainer> = [];
+    const uploadingContainers: UploadingAssetContainer[] = [];
+    const uploadedContainers: UploadedAssetContainer[] = [];
     for (const [assetId, asset] of assets) {
       const uploadingAsset = uploadingAssets.get(assetId);
       if (uploadingAsset) {
-        assetContainers.push(uploadingAsset);
+        uploadingContainers.push(uploadingAsset);
         continue;
       }
       if (asset) {
-        assetContainers.push({
+        uploadedContainers.push({
           status: "uploaded",
           asset,
         });
       }
     }
-    return assetContainers;
+    // sort newest uploaded assets first
+    uploadedContainers.sort(
+      (leftContainer, rightContainer) =>
+        new Date(rightContainer.asset.createdAt).getTime() -
+        new Date(leftContainer.asset.createdAt).getTime()
+    );
+    // put uploading assets first
+    return [...uploadingContainers, ...uploadedContainers];
   }
 );
 
