@@ -23,7 +23,7 @@ export const props: Record<string, PropMeta> = {
     required: false,
     control: "select",
     type: "string",
-    options: ["inline", "list", "none", "both"],
+    options: ["list", "none", "inline", "both"],
   },
   "aria-braillelabel": {
     description:
@@ -390,18 +390,14 @@ export const props: Record<string, PropMeta> = {
   color: { required: false, control: "color", type: "string" },
   content: { required: false, control: "text", type: "string" },
   contextMenu: { required: false, control: "text", type: "string" },
+  "data-inline": { required: false, control: "boolean", type: "boolean" },
+  "data-meta": { required: false, control: "text", type: "string" },
   datatype: { required: false, control: "text", type: "string" },
   defaultChecked: { required: false, control: "boolean", type: "boolean" },
   dir: { required: false, control: "text", type: "string" },
   draggable: { required: false, control: "boolean", type: "boolean" },
   hidden: { required: false, control: "boolean", type: "boolean" },
   id: { required: false, control: "text", type: "string" },
-  inline: {
-    required: false,
-    control: "boolean",
-    type: "boolean",
-    defaultValue: false,
-  },
   inputMode: {
     description:
       "Hints at the type of data that might be entered by the user while editing the element or its contents\n@see https://html.spec.whatwg.org/multipage/interaction.html#input-modalities:-the-inputmode-attribute",
@@ -432,7 +428,6 @@ export const props: Record<string, PropMeta> = {
   itemScope: { required: false, control: "boolean", type: "boolean" },
   itemType: { required: false, control: "text", type: "string" },
   lang: { required: false, control: "text", type: "string" },
-  meta: { required: false, control: "text", type: "string" },
   nonce: { required: false, control: "text", type: "string" },
   placeholder: { required: false, control: "text", type: "string" },
   prefix: { required: false, control: "text", type: "string" },

@@ -35,9 +35,9 @@ const astTypeComponentMap: Record<string, Instance["component"]> = {
   // we need to either have RichTextImage or support Image inside RichText
   image: "Image",
   blockquote: "Blockquote",
-  code: "Code",
+  code: "CodeText",
   // @todo same problem as with image
-  inlineCode: "Code",
+  inlineCode: "CodeText",
   list: "List",
   listItem: "ListItem",
   thematicBreak: "Separator",
@@ -113,7 +113,7 @@ const toInstanceData = (
       props.push({
         id: generateId(),
         type: "boolean",
-        name: "inline",
+        name: "data-inline",
         instanceId: instance.id,
         value: true,
       });
@@ -122,13 +122,6 @@ const toInstanceData = (
       instance.children.push({
         type: "text",
         value: child.value,
-      });
-      props.push({
-        id: generateId(),
-        type: "boolean",
-        name: "inline",
-        instanceId: instance.id,
-        value: false,
       });
       if (child.lang) {
         props.push({
@@ -143,7 +136,7 @@ const toInstanceData = (
         props.push({
           id: generateId(),
           type: "string",
-          name: "meta",
+          name: "data-meta",
           instanceId: instance.id,
           value: child.meta,
         });
