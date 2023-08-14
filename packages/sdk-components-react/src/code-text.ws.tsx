@@ -17,11 +17,6 @@ const presetStyle = {
       value: { type: "keyword", value: "block" },
     },
     {
-      property: "display",
-      state: "[data-inline=true]",
-      value: { type: "keyword", value: "inline-block" },
-    },
-    {
       property: "whiteSpace",
       value: { type: "keyword", value: "pre-wrap" },
     },
@@ -45,14 +40,7 @@ export const meta: WsComponentMeta = {
   type: "container",
   label: "Code Text",
   icon: CodeTextIcon,
-  states: [
-    ...defaultStates,
-    {
-      label: "Data Inline",
-      selector: "[data-inline=true]",
-      category: "component-states",
-    },
-  ],
+  states: defaultStates,
   presetStyle,
   template: [
     {
@@ -66,5 +54,5 @@ export const meta: WsComponentMeta = {
 
 export const propsMeta: WsComponentPropsMeta = {
   props,
-  initialProps: ["id", "lang", "data-meta", "data-inline"],
+  initialProps: ["id", "lang"],
 };

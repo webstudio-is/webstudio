@@ -390,8 +390,6 @@ export const props: Record<string, PropMeta> = {
   color: { required: false, control: "color", type: "string" },
   content: { required: false, control: "text", type: "string" },
   contextMenu: { required: false, control: "text", type: "string" },
-  "data-inline": { required: false, control: "boolean", type: "boolean" },
-  "data-meta": { required: false, control: "text", type: "string" },
   datatype: { required: false, control: "text", type: "string" },
   defaultChecked: { required: false, control: "boolean", type: "boolean" },
   dir: { required: false, control: "text", type: "string" },
