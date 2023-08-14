@@ -105,13 +105,19 @@ const assetContainersStore = computed(
     }
 
     return assetContainers.sort((container1, container2) => {
-      if (
-        container1.status === "uploading" ||
-        container2.status === "uploading"
-      ) {
+      if (container1.status === "uploading") {
         return -1;
       }
-      return container1.asset.createdAt > container2.asset.createdAt ? -1 : 1;
+      if (container2.status === "uploading") {
+        return 1;
+      }
+      if (container1.status === container2.status) {
+        if (container1.asset.createdAt === container2.asset.createdAt) {
+          return 0;
+        }
+        return container1.asset.createdAt > container2.asset.createdAt ? -1 : 1;
+      }
+      return 0;
     });
   }
 );
