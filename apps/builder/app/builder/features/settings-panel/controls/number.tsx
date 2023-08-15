@@ -4,6 +4,7 @@ import {
   getLabel,
   useLocalValue,
   ResponsiveLayout,
+  Label,
 } from "../shared";
 
 export const NumberControl = ({
@@ -27,8 +28,11 @@ export const NumberControl = ({
 
   return (
     <ResponsiveLayout
-      label={getLabel(meta, propName)}
-      id={id}
+      label={
+        <Label htmlFor={id} description={meta.description}>
+          {getLabel(meta, propName)}
+        </Label>
+      }
       onDelete={onDelete}
     >
       <InputField

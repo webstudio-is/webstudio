@@ -26,7 +26,9 @@ export const BooleanControl = ({
       align="center"
       gap="2"
     >
-      <Label htmlFor={id}>{getLabel(meta, propName)}</Label>
+      <Label htmlFor={id} description={meta.description}>
+        {getLabel(meta, propName)}
+      </Label>
       <Switch
         id={id}
         checked={prop?.value ?? false}

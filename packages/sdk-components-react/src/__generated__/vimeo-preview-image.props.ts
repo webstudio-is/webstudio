@@ -2,8 +2,18 @@ import type { PropMeta } from "@webstudio-is/generate-arg-types";
 
 export const props: Record<string, PropMeta> = {
   about: { required: false, control: "text", type: "string" },
-  accessKey: { required: false, control: "text", type: "string" },
-  alt: { required: false, control: "text", type: "string" },
+  accessKey: {
+    required: false,
+    control: "text",
+    type: "string",
+    description: "Keyboard shortcut to activate or add focus to the element.",
+  },
+  alt: {
+    required: false,
+    control: "text",
+    type: "string",
+    description: "Alternative text in case an image can't be displayed.",
+  },
   "aria-activedescendant": {
     description:
       "Identifies the currently active element when DOM focus is on a composite widget, textbox, group, or application.",
@@ -383,19 +393,50 @@ export const props: Record<string, PropMeta> = {
     control: "text",
     type: "string",
   },
-  autoCapitalize: { required: false, control: "text", type: "string" },
+  autoCapitalize: {
+    required: false,
+    control: "text",
+    type: "string",
+    description:
+      "Sets whether input is automatically capitalized when entered by user.",
+  },
   autoCorrect: { required: false, control: "text", type: "string" },
-  autoFocus: { required: false, control: "boolean", type: "boolean" },
+  autoFocus: {
+    required: false,
+    control: "boolean",
+    type: "boolean",
+    description:
+      "The autofocus global attribute is a Boolean attribute indicating that an element should be focused on page load, or when the <dialog> that it is part of is displayed.",
+  },
   autoSave: { required: false, control: "text", type: "string" },
   className: { required: false, control: "text", type: "string" },
-  color: { required: false, control: "color", type: "string" },
-  content: { required: false, control: "text", type: "string" },
-  contextMenu: { required: false, control: "text", type: "string" },
+  color: {
+    required: false,
+    control: "color",
+    type: "string",
+    description:
+      "This attribute sets the text color using either a named color or a  color specified in the hexadecimal #RRGGBB format. Note: This is a legacy attribute. Please use the CSS color property instead.",
+  },
+  content: {
+    required: false,
+    control: "text",
+    type: "string",
+    description:
+      "A value associated with http-equiv orname depending on the context.",
+  },
+  contextMenu: {
+    required: false,
+    control: "text",
+    type: "string",
+    description:
+      "Defines the ID of a menu element which willserve as the element's context menu.",
+  },
   crossOrigin: {
     required: false,
     control: "radio",
     type: "string",
     options: ["", "anonymous", "use-credentials"],
+    description: "How the element handles cross-origin requests",
   },
   datatype: { required: false, control: "text", type: "string" },
   decoding: {
@@ -403,13 +444,43 @@ export const props: Record<string, PropMeta> = {
     control: "radio",
     type: "string",
     options: ["async", "auto", "sync"],
+    description: "Indicates the preferred method to decode the image.",
   },
   defaultChecked: { required: false, control: "boolean", type: "boolean" },
-  dir: { required: false, control: "text", type: "string" },
-  draggable: { required: false, control: "boolean", type: "boolean" },
-  height: { required: false, control: "number", type: "number" },
-  hidden: { required: false, control: "boolean", type: "boolean" },
-  id: { required: false, control: "text", type: "string" },
+  dir: {
+    required: false,
+    control: "text",
+    type: "string",
+    description:
+      "Defines the text direction. Allowed values are ltr (Left-To-Right) or rtl (Right-To-Left)",
+  },
+  draggable: {
+    required: false,
+    control: "boolean",
+    type: "boolean",
+    description: "Defines whether the element can be dragged.",
+  },
+  height: {
+    required: false,
+    control: "number",
+    type: "number",
+    description:
+      "Specifies the height of elements listed here. For all other elements,  use the CSS height property. Note: In some instances, such as div, this is a legacy attribute, in which case the CSS height property should be used instead.",
+  },
+  hidden: {
+    required: false,
+    control: "boolean",
+    type: "boolean",
+    description:
+      "Prevents rendering of given element, while keeping child elements, e.g. script elements, active.",
+  },
+  id: {
+    required: false,
+    control: "text",
+    type: "string",
+    description:
+      "Often used with CSS to style a specific element. The value of this attribute must be unique.",
+  },
   inputMode: {
     description:
       "Hints at the type of data that might be entered by the user while editing the element or its contents\n@see https://html.spec.whatwg.org/multipage/interaction.html#input-modalities:-the-inputmode-attribute",
@@ -439,16 +510,29 @@ export const props: Record<string, PropMeta> = {
   itemRef: { required: false, control: "text", type: "string" },
   itemScope: { required: false, control: "boolean", type: "boolean" },
   itemType: { required: false, control: "text", type: "string" },
-  lang: { required: false, control: "text", type: "string" },
+  lang: {
+    required: false,
+    control: "text",
+    type: "string",
+    description: "Defines the language used in the element.",
+  },
   loading: {
     required: false,
     control: "radio",
     type: "string",
     options: ["eager", "lazy"],
+    description:
+      'Indicates if the element should be loaded lazily (loading="lazy") or loaded immediately (loading="eager").',
   },
   nonce: { required: false, control: "text", type: "string" },
   optimize: { required: false, control: "boolean", type: "boolean" },
-  placeholder: { required: false, control: "text", type: "string" },
+  placeholder: {
+    required: false,
+    control: "text",
+    type: "string",
+    description:
+      "Provides a hint to the user of what can be entered in the field.",
+  },
   prefix: { required: false, control: "text", type: "string" },
   property: { required: false, control: "text", type: "string" },
   quality: { required: false, control: "number", type: "number" },
@@ -468,18 +552,51 @@ export const props: Record<string, PropMeta> = {
       "strict-origin-when-cross-origin",
       "unsafe-url",
     ],
+    description: "Specifies which referrer is sent when fetching the resource.",
   },
-  rel: { required: false, control: "text", type: "string" },
+  rel: {
+    required: false,
+    control: "text",
+    type: "string",
+    description:
+      "Specifies the relationship of the target object to the link object.",
+  },
   resource: { required: false, control: "text", type: "string" },
   results: { required: false, control: "number", type: "number" },
   rev: { required: false, control: "text", type: "string" },
-  role: { required: false, control: "text", type: "string" },
+  role: {
+    required: false,
+    control: "text",
+    type: "string",
+    description:
+      "Defines an explicit role for an element for use by assistive technologies.",
+  },
   security: { required: false, control: "text", type: "string" },
   sizes: { required: false, control: "text", type: "string" },
-  slot: { required: false, control: "text", type: "string" },
-  spellCheck: { required: false, control: "boolean", type: "boolean" },
-  src: { required: false, control: "text", type: "string" },
-  srcSet: { required: false, control: "text", type: "string" },
+  slot: {
+    required: false,
+    control: "text",
+    type: "string",
+    description: "Assigns a slot in a shadow DOM shadow tree to an element.",
+  },
+  spellCheck: {
+    required: false,
+    control: "boolean",
+    type: "boolean",
+    description: "Indicates whether spell checking is allowed for the element.",
+  },
+  src: {
+    required: false,
+    control: "text",
+    type: "string",
+    description: "The URL of the embeddable content.",
+  },
+  srcSet: {
+    required: false,
+    control: "text",
+    type: "string",
+    description: "One or more responsive image candidates.",
+  },
   suppressContentEditableWarning: {
     required: false,
     control: "boolean",
@@ -490,13 +607,27 @@ export const props: Record<string, PropMeta> = {
     control: "boolean",
     type: "boolean",
   },
-  tabIndex: { required: false, control: "number", type: "number" },
-  title: { required: false, control: "text", type: "string" },
+  tabIndex: {
+    required: false,
+    control: "number",
+    type: "number",
+    description:
+      "Overrides the browser's default tab order and follows the one specified instead.",
+  },
+  title: {
+    required: false,
+    control: "text",
+    type: "string",
+    description:
+      "Text to be displayed in a tooltip when hovering over the element.",
+  },
   translate: {
     required: false,
     control: "radio",
     type: "string",
     options: ["yes", "no"],
+    description:
+      "Specify whether an element's attribute values and the values of its text node children are to be translated when the page is localized, or whether to leave them unchanged.",
   },
   typeof: { required: false, control: "text", type: "string" },
   unselectable: {
@@ -507,5 +638,11 @@ export const props: Record<string, PropMeta> = {
   },
   useMap: { required: false, control: "text", type: "string" },
   vocab: { required: false, control: "text", type: "string" },
-  width: { required: false, control: "number", type: "number" },
+  width: {
+    required: false,
+    control: "number",
+    type: "number",
+    description:
+      "For the elements listed here, this establishes the element's width. Note: For all other instances, such as div, this is a legacy attribute, in which case the CSS width property should be used instead.",
+  },
 };
