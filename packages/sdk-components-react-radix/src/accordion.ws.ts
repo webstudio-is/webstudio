@@ -100,7 +100,7 @@ const createAccordionTrigger = ({
             {
               type: "instance",
               component: "HtmlEmbed",
-              label: "Chevron Down Icon",
+              label: "Chevron Icon",
               props: [
                 {
                   type: "string",
