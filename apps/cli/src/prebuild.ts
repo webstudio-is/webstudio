@@ -3,6 +3,7 @@ import { writeFileSync } from "node:fs";
 import { rm, mkdir } from "node:fs/promises";
 import {
   generateCssText,
+  generateUtilsExport,
   type Params,
   type Data,
 } from "@webstudio-is/react-sdk";
@@ -89,6 +90,10 @@ export const prebuild = async () => {
   const componentsByPage: ComponentsByPage = {};
   const siteDataByPage: SiteDataByPage = {};
 
+  const componentMetas = new Map(
+    Object.entries({ ...baseComponentMetas, ...remixComponentMetas })
+  );
+
   for (const page of Object.values(siteData.pages)) {
     const originPath = page.path;
     const path = originPath === "" ? "index" : originPath.replace("/", "");
@@ -140,9 +145,7 @@ export const prebuild = async () => {
       breakpoints: siteData.build?.breakpoints,
       styles: siteData.build?.styles,
       styleSourceSelections: siteData.build?.styleSourceSelections,
-      componentMetas: new Map(
-        Object.entries({ ...baseComponentMetas, ...remixComponentMetas })
-      ),
+      componentMetas,
     },
     {
       assetBaseUrl: ASSETS_BASE,
@@ -154,20 +157,31 @@ export const prebuild = async () => {
   for (const [pathName, pageComponents] of Object.entries(componentsByPage)) {
     let relativePath = "../__generated__";
     const statements = Array.from(pageComponents).join(", ");
+    const pageData = siteDataByPage[pathName];
+
+    const utilsExport = generateUtilsExport({
+      page: pageData.page,
+      metas: componentMetas,
+      instances: new Map(pageData.build.instances),
+      props: new Map(pageData.build.props),
+      dataSources: new Map(pageData.build.dataSources),
+    });
+
     const pageExports = `/* This is a auto generated file for building the project */ \n
     import type { PageData } from "~/routes/template";
     import type { Components } from "@webstudio-is/react-sdk";
+    import * as sdk from "@webstudio-is/react-sdk";
     import { ${statements} } from "@webstudio-is/sdk-components-react";
     import * as remixComponents from "@webstudio-is/sdk-components-react-remix";
     export const components = new Map(Object.entries(Object.assign({ ${statements} }, remixComponents ))) as Components;
     export const fontAssets = ${JSON.stringify(fontAssets)};
-    export const pageData: PageData = ${JSON.stringify(
-      siteDataByPage[pathName]
-    )};
+    export const pageData: PageData = ${JSON.stringify(pageData)};
     export const user: { email: string | null } | undefined = ${JSON.stringify(
       siteData.user
     )};
     export const projectId = "${siteData.build.projectId}";
+
+    ${utilsExport}
     `;
 
     /* Changing the pathName to index for the index page, so that remix will use the index.tsx file as index:true in the manifest file.

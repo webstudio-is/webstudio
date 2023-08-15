@@ -19,6 +19,7 @@ import {
   pageData,
   user,
   projectId,
+  utils,
 } from "../__generated__/index";
 import css from "../__generated__/index.css";
 
@@ -126,7 +127,7 @@ const Outlet = () => {
     params,
   };
 
-  return <InstanceRoot data={data} components={components} />;
+  return <InstanceRoot data={data} components={components} utils={utils} />;
 };
 
 export default Outlet;
