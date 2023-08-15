@@ -585,11 +585,16 @@ export const grow = (): EmbedTemplateStyleDecl[] => {
   return [
     {
       property: "flexGrow",
-      value: {
-        type: "unit",
-        value: 1,
-        unit: "number",
-      },
+      value: { type: "unit", value: 1, unit: "number" },
+    },
+  ];
+};
+
+export const shrink = (value: number): EmbedTemplateStyleDecl[] => {
+  return [
+    {
+      property: "flexGrow",
+      value: { type: "unit", value, unit: "number" },
     },
   ];
 };
@@ -818,7 +823,9 @@ export const pointerEvents = (
   return [{ property: "pointerEvents", value: { type: "keyword", value } }];
 };
 
-export const transition = (value: "none" | "all"): EmbedTemplateStyleDecl[] => {
+export const transition = (
+  value: "none" | "all" | "transform"
+): EmbedTemplateStyleDecl[] => {
   if (value === "none") {
     return [
       {
@@ -830,7 +837,7 @@ export const transition = (value: "none" | "all"): EmbedTemplateStyleDecl[] => {
   return [
     {
       property: "transitionProperty",
-      value: { type: "keyword", value: "all" },
+      value: { type: "keyword", value },
     },
     {
       property: "transitionTimingFunction",
@@ -839,6 +846,15 @@ export const transition = (value: "none" | "all"): EmbedTemplateStyleDecl[] => {
     {
       property: "transitionDuration",
       value: { type: "unparsed", value: "150ms" },
+    },
+  ];
+};
+
+export const duration = (ms: number): EmbedTemplateStyleDecl[] => {
+  return [
+    {
+      property: "transitionDuration",
+      value: { type: "unparsed", value: `${ms}ms` },
     },
   ];
 };
