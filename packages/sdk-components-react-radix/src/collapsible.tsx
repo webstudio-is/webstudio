@@ -45,25 +45,11 @@ const namespace = "@webstudio-is/sdk-components-react-radix";
 // we identify its closest parent Collapsible component
 // and update its open prop bound to variable.
 export const hooksCollapsible: Hook = {
-  onNavigatorUnselect: (context, event) => {
-    for (const instance of event.instanceSelection) {
-      if (instance.component === `${namespace}:CollapsibleContent`) {
-        const collapsible = getClosestInstance(
-          event.instanceSelection,
-          instance,
-          `${namespace}:Collapsible`
-        );
-        if (collapsible) {
-          context.setPropVariable(collapsible.id, "open", false);
-        }
-      }
-    }
-  },
   onNavigatorSelect: (context, event) => {
-    for (const instance of event.instanceSelection) {
+    for (const instance of event.instancePath) {
       if (instance.component === `${namespace}:CollapsibleContent`) {
         const collapsible = getClosestInstance(
-          event.instanceSelection,
+          event.instancePath,
           instance,
           `${namespace}:Collapsible`
         );

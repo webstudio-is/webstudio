@@ -46,7 +46,7 @@
     "@webstudio-is/scripts": "workspace:^",
     "@webstudio-is/tsconfig": "workspace:^",
     "jest": "^29.6.2",
-    "type-fest": "^3.7.1",
+    "type-fest": "^4.2.0",
     "typescript": "5.1.6"
   }
 }

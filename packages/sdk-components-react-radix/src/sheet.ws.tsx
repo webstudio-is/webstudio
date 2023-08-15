@@ -128,14 +128,20 @@ export const metaSheet: WsComponentMeta = {
       type: "instance",
       component: "Sheet",
       dataSources: {
-        // We don't have support for boolean or undefined, instead of binding on open we bind on a string
-        isOpen: { type: "variable", initialValue: "initial" },
+        sheetOpen: { type: "variable", initialValue: false },
       },
       props: [
         {
           type: "dataSource",
-          name: "isOpen",
-          dataSourceName: "isOpen",
+          name: "open",
+          dataSourceName: "sheetOpen",
+        },
+        {
+          name: "onOpenChange",
+          type: "action",
+          value: [
+            { type: "execute", args: ["open"], code: `sheetOpen = open` },
+          ],
         },
       ],
       children: [

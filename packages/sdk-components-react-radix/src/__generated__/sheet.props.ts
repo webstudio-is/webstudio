@@ -1,13 +1,6 @@
 import type { PropMeta } from "@webstudio-is/generate-arg-types";
 
 export const propsSheet: Record<string, PropMeta> = {
-  defaultOpen: { required: false, control: "boolean", type: "boolean" },
-  isOpen: {
-    required: true,
-    control: "radio",
-    type: "string",
-    options: ["open", "initial", "closed"],
-  },
   modal: { required: false, control: "boolean", type: "boolean" },
   open: { required: false, control: "boolean", type: "boolean" },
 };

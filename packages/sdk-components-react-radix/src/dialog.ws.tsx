@@ -44,7 +44,6 @@ const descriptionPresetStyle = {
 // @todo add [data-state] to button and link
 export const metaDialogTrigger: WsComponentMeta = {
   category: "hidden",
-  invalidAncestors: [],
   type: "container",
   label: "Dialog Trigger",
   icon: TriggerIcon,
@@ -54,7 +53,6 @@ export const metaDialogTrigger: WsComponentMeta = {
 
 export const metaDialogContent: WsComponentMeta = {
   category: "hidden",
-  invalidAncestors: [],
   type: "container",
   label: "Dialog Content",
   presetStyle,
@@ -64,7 +62,6 @@ export const metaDialogContent: WsComponentMeta = {
 
 export const metaDialogOverlay: WsComponentMeta = {
   category: "hidden",
-  invalidAncestors: [],
   type: "container",
   label: "Dialog Overlay",
   presetStyle,
@@ -74,7 +71,6 @@ export const metaDialogOverlay: WsComponentMeta = {
 
 export const metaDialogTitle: WsComponentMeta = {
   category: "hidden",
-  invalidAncestors: [],
   type: "container",
   presetStyle: titlePresetStyle,
   label: "Dialog Title",
@@ -83,7 +79,6 @@ export const metaDialogTitle: WsComponentMeta = {
 
 export const metaDialogDescription: WsComponentMeta = {
   category: "hidden",
-  invalidAncestors: [],
   type: "container",
   presetStyle: descriptionPresetStyle,
   label: "Dialog Description",
@@ -92,7 +87,6 @@ export const metaDialogDescription: WsComponentMeta = {
 
 export const metaDialogClose: WsComponentMeta = {
   category: "hidden",
-  invalidAncestors: [],
   type: "container",
   presetStyle: buttonPresetStyle,
   label: "Dialog Close",
@@ -109,7 +103,6 @@ export const metaDialogClose: WsComponentMeta = {
  **/
 export const metaDialog: WsComponentMeta = {
   category: "radix",
-  invalidAncestors: [],
   type: "container",
   label: "Dialog",
   icon: DialogIcon,
@@ -120,14 +113,20 @@ export const metaDialog: WsComponentMeta = {
       type: "instance",
       component: "Dialog",
       dataSources: {
-        // We don't have support for boolean or undefined, instead of binding on open we bind on a string
-        isOpen: { type: "variable", initialValue: "initial" },
+        dialogOpen: { type: "variable", initialValue: false },
       },
       props: [
         {
           type: "dataSource",
-          name: "isOpen",
-          dataSourceName: "isOpen",
+          name: "open",
+          dataSourceName: "dialogOpen",
+        },
+        {
+          name: "onOpenChange",
+          type: "action",
+          value: [
+            { type: "execute", args: ["open"], code: `dialogOpen = open` },
+          ],
         },
       ],
       children: [

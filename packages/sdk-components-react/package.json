@@ -47,7 +47,7 @@
     "react-dom": "^18.2.0"
   },
   "dependencies": {
-    "@react-aria/utils": "^3.18.0",
+    "@react-aria/utils": "^3.19.0",
     "@webstudio-is/css-vars": "workspace:^",
     "@webstudio-is/generate-arg-types": "workspace:^",
     "@webstudio-is/icons": "workspace:^",
@@ -58,7 +58,7 @@
   },
   "devDependencies": {
     "@storybook/react": "^7.2.1",
-    "@types/react": "^18.2.16",
+    "@types/react": "^18.2.20",
     "@types/react-dom": "^18.2.7",
     "@webstudio-is/scripts": "workspace:^",
     "@webstudio-is/storybook-config": "workspace:^",

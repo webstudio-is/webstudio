@@ -5,9 +5,9 @@
   "license": "AGPL-3.0-or-later",
   "main": "index.ts",
   "dependencies": {
-    "@fontsource-variable/inter": "^5.0.7",
-    "@fontsource-variable/manrope": "^5.0.7",
-    "@fontsource/roboto-mono": "^5.0.7",
+    "@fontsource-variable/inter": "^5.0.8",
+    "@fontsource-variable/manrope": "^5.0.8",
+    "@fontsource/roboto-mono": "^5.0.8",
     "@storybook/addon-essentials": "^7.2.1",
     "@storybook/addon-links": "^7.2.1",
     "@storybook/react": "^7.2.1",

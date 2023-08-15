@@ -15,7 +15,7 @@
   },
   "dependencies": {
     "@aws-crypto/sha256-js": "^5.0.0",
-    "@smithy/signature-v4": "^1.0.2",
+    "@smithy/signature-v4": "^2.0.2",
     "@webstudio-is/fonts": "workspace:^",
     "@webstudio-is/prisma-client": "workspace:^",
     "@webstudio-is/trpc-interface": "workspace:^",

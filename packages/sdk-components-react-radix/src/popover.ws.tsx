@@ -19,7 +19,6 @@ const presetStyle = {
 // @todo add [data-state] to button and link
 export const metaPopoverTrigger: WsComponentMeta = {
   category: "hidden",
-  invalidAncestors: [],
   type: "container",
   label: "Popover Trigger",
   icon: TriggerIcon,
@@ -29,7 +28,6 @@ export const metaPopoverTrigger: WsComponentMeta = {
 
 export const metaPopoverContent: WsComponentMeta = {
   category: "hidden",
-  invalidAncestors: [],
   type: "container",
   presetStyle,
   label: "Popover Content",
@@ -47,7 +45,6 @@ export const metaPopoverContent: WsComponentMeta = {
  **/
 export const metaPopover: WsComponentMeta = {
   category: "radix",
-  invalidAncestors: [],
   type: "container",
   label: "Popover",
   icon: PopoverIcon,
@@ -58,14 +55,20 @@ export const metaPopover: WsComponentMeta = {
       type: "instance",
       component: "Popover",
       dataSources: {
-        // We don't have support for boolean or undefined, instead of binding on open we bind on a string
-        isOpen: { type: "variable", initialValue: "initial" },
+        popoverOpen: { type: "variable", initialValue: false },
       },
       props: [
         {
           type: "dataSource",
-          name: "isOpen",
-          dataSourceName: "isOpen",
+          name: "open",
+          dataSourceName: "popoverOpen",
+        },
+        {
+          name: "onOpenChange",
+          type: "action",
+          value: [
+            { type: "execute", args: ["open"], code: `popoverOpen = open` },
+          ],
         },
       ],
       children: [

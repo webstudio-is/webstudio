@@ -1,7 +1,6 @@
 import type { PropMeta } from "@webstudio-is/generate-arg-types";
 
 export const propsTooltip: Record<string, PropMeta> = {
-  defaultOpen: { required: false, control: "boolean", type: "boolean" },
   delayDuration: {
     description:
       "The duration from when the pointer enters the trigger until the tooltip gets opened. This will\noverride the prop with the same name passed to Provider.\n@defaultValue 700",
@@ -15,12 +14,6 @@ export const propsTooltip: Record<string, PropMeta> = {
     required: false,
     control: "boolean",
     type: "boolean",
-  },
-  isOpen: {
-    required: true,
-    control: "radio",
-    type: "string",
-    options: ["open", "initial", "closed"],
   },
   open: { required: false, control: "boolean", type: "boolean" },
 };

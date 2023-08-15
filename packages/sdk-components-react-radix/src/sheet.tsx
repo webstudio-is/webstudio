@@ -3,6 +3,7 @@ import {
   type ElementRef,
   type ComponentPropsWithoutRef,
 } from "react";
+import { getClosestInstance, type Hook } from "@webstudio-is/react-sdk";
 import * as Dialog from "./dialog";
 
 export const Sheet = Dialog.Dialog;
@@ -38,3 +39,41 @@ export const SheetContent = forwardRef<
     );
   }
 );
+
+/* BUILDER HOOKS */
+
+const namespace = "@webstudio-is/sdk-components-react-radix";
+
+// For each SheetOverlay component within the selection,
+// we identify its closest parent Sheet component
+// and update its open prop bound to variable.
+export const hooksSheet: Hook = {
+  onNavigatorUnselect: (context, event) => {
+    for (const instance of event.instancePath) {
+      if (instance.component === `${namespace}:SheetOverlay`) {
+        const sheet = getClosestInstance(
+          event.instancePath,
+          instance,
+          `${namespace}:Sheet`
+        );
+        if (sheet) {
+          context.setPropVariable(sheet.id, "open", false);
+        }
+      }
+    }
+  },
+  onNavigatorSelect: (context, event) => {
+    for (const instance of event.instancePath) {
+      if (instance.component === `${namespace}:SheetOverlay`) {
+        const sheet = getClosestInstance(
+          event.instancePath,
+          instance,
+          `${namespace}:Sheet`
+        );
+        if (sheet) {
+          context.setPropVariable(sheet.id, "open", true);
+        }
+      }
+    }
+  },
+};

@@ -1,4 +1,5 @@
 import type { Instance, Prop } from "@webstudio-is/project-build";
+import type { IndexesWithinAncestors } from "./instance-utils";
 
 /**
  * Hooks are subscriptions to builder events
@@ -7,6 +8,8 @@ import type { Instance, Prop } from "@webstudio-is/project-build";
  */
 
 export type HookContext = {
+  indexesWithinAncestors: IndexesWithinAncestors;
+  getPropValue: (instanceId: Instance["id"], propName: Prop["name"]) => unknown;
   setPropVariable: (
     instanceId: Instance["id"],
     propName: Prop["name"],
@@ -14,10 +17,13 @@ export type HookContext = {
   ) => void;
 };
 
-export type InstanceSelection = Instance[];
+export type InstancePath = Instance[];
 
 type NavigatorEvent = {
-  instanceSelection: InstanceSelection;
+  /**
+   * List of instances from selected to the root
+   */
+  instancePath: InstancePath;
 };
 
 export type Hook = {
@@ -25,13 +31,17 @@ export type Hook = {
   onNavigatorUnselect?: (context: HookContext, event: NavigatorEvent) => void;
 };
 
+/**
+ * Find closest matching instance by component name
+ * by lookup in instance path
+ */
 export const getClosestInstance = (
-  instanceSelection: InstanceSelection,
+  instancePath: InstancePath,
   currentInstance: Instance,
   closestComponent: Instance["component"]
 ) => {
   let matched = false;
-  for (const instance of instanceSelection) {
+  for (const instance of instancePath) {
     if (currentInstance === instance) {
       matched = true;
     }
