@@ -9,7 +9,7 @@ export const defaultTag = "div";
 
 // We don't want to enable all tags because Box is usually a container and we have specific components for many tags.
 type Props = ComponentProps<typeof defaultTag> & {
-  tag?: "div" | "span" | "figcaption";
+  tag?: "div" | "span" | "figcaption" | "cite";
 };
 
 export const Text = forwardRef<ElementRef<typeof defaultTag>, Props>(

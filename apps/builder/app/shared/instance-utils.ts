@@ -38,12 +38,26 @@ import {
 import { removeByMutable } from "./array-utils";
 import { isBaseBreakpoint } from "./breakpoints";
 import { getElementByInstanceSelector } from "./dom-utils";
+import { humanizeString } from "./string-utils";
+
+const getLabelFromComponentName = (component: Instance["component"]) => {
+  if (component.includes(":")) {
+    // strip namespace
+    const [_namespace, baseName] = component.split(":");
+    component = baseName;
+  }
+  return humanizeString(component);
+};
 
 export const getInstanceLabel = (
-  instance: { label?: string },
+  instance: { component: string; label?: string },
   meta: WsComponentMeta
 ) => {
-  return instance.label || meta.label;
+  return (
+    instance.label ||
+    meta.label ||
+    getLabelFromComponentName(instance.component)
+  );
 };
 
 export const findClosestEditableInstanceSelector = (

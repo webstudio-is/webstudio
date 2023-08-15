@@ -1,6 +1,6 @@
 {
   "name": "@webstudio-is/sdk-components-react-radix",
-  "version": "0.86.0",
+  "version": "0.87.1",
   "description": "Webstudio wrapper for radix library",
   "author": "Webstudio <github@webstudio.is>",
   "homepage": "https://webstudio.is",
@@ -53,8 +53,10 @@
     "react-dom": "^18.2.0"
   },
   "dependencies": {
+    "@radix-ui/react-accordion": "^1.1.2",
     "@radix-ui/react-collapsible": "^1.0.3",
     "@radix-ui/react-dialog": "^1.0.4",
+    "@radix-ui/react-label": "^2.0.2",
     "@radix-ui/react-popover": "^1.0.6",
     "@radix-ui/react-tabs": "^1.0.4",
     "@radix-ui/react-tooltip": "^1.0.6",

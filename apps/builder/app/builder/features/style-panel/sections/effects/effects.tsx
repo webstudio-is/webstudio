@@ -99,6 +99,18 @@ export const EffectsSection = ({
           setProperty={setProperty}
           deleteProperty={deleteProperty}
         />
+        <PropertyName
+          label={styleConfigByName("textUnderlineOffset").label}
+          properties={["textUnderlineOffset"]}
+          style={style}
+          onReset={() => deleteProperty("textUnderlineOffset")}
+        />
+        <TextControl
+          property={"textUnderlineOffset"}
+          currentStyle={style}
+          setProperty={setProperty}
+          deleteProperty={deleteProperty}
+        />
       </Grid>
     </CollapsibleSection>
   );

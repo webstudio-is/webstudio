@@ -25,6 +25,7 @@ import {
 import { div, nav, button, h2, p } from "@webstudio-is/react-sdk/css-normalize";
 import type { SheetContent } from "./sheet";
 import type { ComponentProps } from "react";
+import { template as buttonTemplate } from "./button.ws";
 
 type ContentTags = NonNullable<ComponentProps<typeof SheetContent>["tag"]>;
 
@@ -53,7 +54,6 @@ const descriptionPresetStyle = {
 export const metaSheetTrigger: WsComponentMeta = {
   category: "hidden",
   type: "container",
-  label: "Sheet Trigger",
   icon: TriggerIcon,
   stylable: false,
   detachable: false,
@@ -62,7 +62,6 @@ export const metaSheetTrigger: WsComponentMeta = {
 export const metaSheetContent: WsComponentMeta = {
   category: "hidden",
   type: "container",
-  label: "Sheet Content",
   icon: ContentIcon,
   detachable: false,
   presetStyle: contentPresetStyle,
@@ -78,7 +77,6 @@ export const metaSheetOverlay: WsComponentMeta = {
   category: "hidden",
   type: "container",
   presetStyle,
-  label: "Sheet Overlay",
   icon: OverlayIcon,
   detachable: false,
 };
@@ -87,7 +85,6 @@ export const metaSheetTitle: WsComponentMeta = {
   category: "hidden",
   type: "container",
   presetStyle: titlePresetStyle,
-  label: "Sheet Title",
   icon: HeadingIcon,
 };
 
@@ -95,7 +92,6 @@ export const metaSheetDescription: WsComponentMeta = {
   category: "hidden",
   type: "container",
   presetStyle: descriptionPresetStyle,
-  label: "Sheet Description",
   icon: TextIcon,
 };
 
@@ -103,7 +99,6 @@ export const metaSheetClose: WsComponentMeta = {
   category: "hidden",
   type: "container",
   presetStyle: buttonPresetStyle,
-  label: "Sheet Close",
   icon: ButtonElementIcon,
 };
 
@@ -119,7 +114,6 @@ export const metaSheet: WsComponentMeta = {
   category: "radix",
 
   type: "container",
-  label: "Sheet",
   icon: HamburgerMenuIcon,
   order: 15,
   stylable: false,
@@ -148,13 +142,27 @@ export const metaSheet: WsComponentMeta = {
         {
           type: "instance",
           component: "SheetTrigger",
-          children: [
-            {
-              type: "instance",
-              component: "Button",
-              children: [{ type: "text", value: "Button" }],
-            },
-          ],
+          children: buttonTemplate({
+            props: [
+              { name: "variant", type: "string", value: "ghost" },
+              { name: "size", type: "string", value: "icon" },
+            ],
+            children: [
+              {
+                type: "instance",
+                component: "HtmlEmbed",
+                label: "Hamburger Menu Svg",
+                props: [
+                  {
+                    type: "string",
+                    name: "code",
+                    value: HamburgerMenuIcon,
+                  },
+                ],
+                children: [],
+              },
+            ],
+          }),
         },
         {
           type: "instance",
@@ -299,7 +307,7 @@ export const metaSheet: WsComponentMeta = {
 
 export const propsMetaSheet: WsComponentPropsMeta = {
   props: propsSheet,
-  initialProps: ["isOpen", "modal"],
+  initialProps: ["open", "modal"],
 };
 
 export const propsMetaSheetTrigger: WsComponentPropsMeta = {

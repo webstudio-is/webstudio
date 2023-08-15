@@ -23,7 +23,6 @@ export const metaCollapsible: WsComponentMeta = {
   category: "radix",
   type: "container",
   presetStyle,
-  label: "Collapsible",
   icon: CollapsibleIcon,
   template: [
     {
@@ -77,7 +76,6 @@ export const metaCollapsible: WsComponentMeta = {
 export const metaCollapsibleTrigger: WsComponentMeta = {
   category: "hidden",
   type: "container",
-  label: "Collapsible Trigger",
   icon: TriggerIcon,
   stylable: false,
   detachable: false,
@@ -87,7 +85,6 @@ export const metaCollapsibleContent: WsComponentMeta = {
   category: "hidden",
   type: "container",
   presetStyle,
-  label: "Collapsible Content",
   icon: ContentIcon,
   detachable: false,
 };

@@ -27,6 +27,7 @@ import { MetaIcon } from "~/builder/shared/meta-icon";
 import { registeredComponentMetasStore } from "~/shared/nano-states";
 import { getMetaMaps } from "./get-meta-maps";
 import { isFeatureEnabled } from "@webstudio-is/feature-flags";
+import { getInstanceLabel } from "~/shared/instance-utils";
 
 type TabContentProps = {
   onSetActiveTab: (tabName: TabName) => void;
@@ -96,7 +97,7 @@ export const TabContent = ({ publish, onSetActiveTab }: TabContentProps) => {
                             <ComponentCard
                               {...pressProps}
                               {...{ [dragItemAttribute]: component }}
-                              label={meta.label}
+                              label={getInstanceLabel({ component }, meta)}
                               icon={<MetaIcon size="auto" icon={meta.icon} />}
                               tabIndex={index === 0 ? 0 : -1}
                             />

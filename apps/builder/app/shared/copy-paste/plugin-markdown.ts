@@ -1,21 +1,22 @@
-import store from "immerhin";
+import { nanoid } from "nanoid";
 import { fromMarkdown } from "mdast-util-from-markdown";
 import { gfmFromMarkdown } from "mdast-util-gfm";
 import { gfm } from "micromark-extension-gfm";
-import type { Instance, Prop } from "@webstudio-is/project-build";
-import { nanoid } from "nanoid";
-import { insertInstancesMutable } from "../tree-utils";
+import type { Breakpoint, Instance } from "@webstudio-is/project-build";
+import type { EmbedTemplateData } from "@webstudio-is/react-sdk";
 import {
   computeInstancesConstraints,
   findClosestDroppableTarget,
+  insertTemplateData,
 } from "../instance-utils";
 import {
+  breakpointsStore,
   instancesStore,
-  propsStore,
   registeredComponentMetasStore,
   selectedInstanceSelectorStore,
   selectedPageStore,
 } from "../nano-states";
+import { isBaseBreakpoint } from "../breakpoints";
 
 const micromarkOptions = {
   extensions: [gfm()],
@@ -35,9 +36,9 @@ const astTypeComponentMap: Record<string, Instance["component"]> = {
   // we need to either have RichTextImage or support Image inside RichText
   image: "Image",
   blockquote: "Blockquote",
-  code: "Code",
+  code: "CodeText",
   // @todo same problem as with image
-  inlineCode: "Code",
+  inlineCode: "CodeText",
   list: "List",
   listItem: "ListItem",
   thematicBreak: "Separator",
@@ -48,11 +49,13 @@ type Options = { generateId?: typeof nanoid };
 type Root = ReturnType<typeof fromMarkdown>;
 
 const toInstanceData = (
-  instances: Instance[],
-  props: Prop[],
+  data: EmbedTemplateData,
+  breakpointId: Breakpoint["id"],
   ast: { children: Root["children"] },
   options: Options = {}
 ): Instance["children"] => {
+  const { instances, props, styleSources, styleSourceSelections, styles } =
+    data;
   const { generateId = nanoid } = options;
   const children: Instance["children"] = [];
 
@@ -66,24 +69,25 @@ const toInstanceData = (
     if (component === undefined) {
       continue;
     }
+    const instanceId = generateId();
     const instance: Instance = {
       type: "instance",
-      id: generateId(),
+      id: instanceId,
       component,
       children:
         "children" in child
-          ? toInstanceData(instances, props, child, options)
+          ? toInstanceData(data, breakpointId, child, options)
           : [],
     };
     instances.push(instance);
-    children.push({ type: "id", value: instance.id });
+    children.push({ type: "id", value: instanceId });
 
     if (child.type === "heading") {
       props.push({
         id: generateId(),
         type: "string",
         name: "tag",
-        instanceId: instance.id,
+        instanceId,
         value: `h${child.depth}`,
       });
     }
@@ -92,7 +96,7 @@ const toInstanceData = (
         id: generateId(),
         type: "string",
         name: "href",
-        instanceId: instance.id,
+        instanceId,
         value: child.url,
       });
     }
@@ -101,7 +105,7 @@ const toInstanceData = (
         id: generateId(),
         type: "string",
         name: "src",
-        instanceId: instance.id,
+        instanceId,
         value: child.url,
       });
     }
@@ -110,12 +114,14 @@ const toInstanceData = (
         type: "text",
         value: child.value,
       });
-      props.push({
-        id: generateId(),
-        type: "boolean",
-        name: "inline",
-        instanceId: instance.id,
-        value: true,
+      const styleSourceId = generateId();
+      styleSources.push({ type: "local", id: styleSourceId });
+      styleSourceSelections.push({ instanceId, values: [styleSourceId] });
+      styles.push({
+        breakpointId,
+        styleSourceId,
+        property: "display",
+        value: { type: "keyword", value: "inline-block" },
       });
     }
     if (child.type === "code") {
@@ -123,29 +129,13 @@ const toInstanceData = (
         type: "text",
         value: child.value,
       });
-      props.push({
-        id: generateId(),
-        type: "boolean",
-        name: "inline",
-        instanceId: instance.id,
-        value: false,
-      });
       if (child.lang) {
         props.push({
           id: generateId(),
           type: "string",
           name: "lang",
-          instanceId: instance.id,
+          instanceId,
           value: child.lang,
-        });
-      }
-      if (child.meta) {
-        props.push({
-          id: generateId(),
-          type: "string",
-          name: "meta",
-          instanceId: instance.id,
-          value: child.meta,
         });
       }
     }
@@ -155,7 +145,7 @@ const toInstanceData = (
           id: generateId(),
           type: "boolean",
           name: "ordered",
-          instanceId: instance.id,
+          instanceId,
           value: child.ordered,
         });
       }
@@ -164,7 +154,7 @@ const toInstanceData = (
           id: generateId(),
           type: "number",
           name: "start",
-          instanceId: instance.id,
+          instanceId,
           value: child.start,
         });
       }
@@ -175,7 +165,7 @@ const toInstanceData = (
         id: generateId(),
         type: "string",
         name: "title",
-        instanceId: instance.id,
+        instanceId,
         value: child.title,
       });
     }
@@ -184,7 +174,7 @@ const toInstanceData = (
         id: generateId(),
         type: "string",
         name: "alt",
-        instanceId: instance.id,
+        instanceId,
         value: child.alt,
       });
     }
@@ -198,10 +188,23 @@ export const parse = (clipboardData: string, options?: Options) => {
   if (ast.children.length === 0) {
     return;
   }
-  const instances: Instance[] = [];
-  const props: Prop[] = [];
-  const children = toInstanceData(instances, props, ast, options);
-  return { props, instances, children };
+  const breakpoints = breakpointsStore.get();
+  const breakpointValues = Array.from(breakpoints.values());
+  const baseBreakpoint = breakpointValues.find(isBaseBreakpoint);
+  if (baseBreakpoint === undefined) {
+    return;
+  }
+  const data: EmbedTemplateData = {
+    children: [],
+    instances: [],
+    props: [],
+    styles: [],
+    styleSources: [],
+    styleSourceSelections: [],
+    dataSources: [],
+  };
+  data.children = toInstanceData(data, baseBreakpoint.id, ast, options);
+  return data;
 };
 
 export const onPaste = (clipboardData: string): boolean => {
@@ -230,18 +233,6 @@ export const onPaste = (clipboardData: string): boolean => {
   if (dropTarget === undefined) {
     return false;
   }
-  store.createTransaction([instancesStore, propsStore], (instances, props) => {
-    insertInstancesMutable(
-      instances,
-      props,
-      registeredComponentMetasStore.get(),
-      data.instances,
-      data.children,
-      dropTarget
-    );
-    for (const prop of data.props) {
-      props.set(prop.id, prop);
-    }
-  });
+  insertTemplateData(data, dropTarget);
   return true;
 };

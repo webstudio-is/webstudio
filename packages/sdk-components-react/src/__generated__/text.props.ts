@@ -452,10 +452,10 @@ export const props: Record<string, PropMeta> = {
   tabIndex: { required: false, control: "number", type: "number" },
   tag: {
     required: false,
-    control: "radio",
+    control: "select",
     type: "string",
     defaultValue: "div",
-    options: ["div", "figcaption", "span"],
+    options: ["div", "cite", "figcaption", "span"],
   },
   title: { required: false, control: "text", type: "string" },
   translate: {

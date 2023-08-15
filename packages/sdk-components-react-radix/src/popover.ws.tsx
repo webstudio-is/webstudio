@@ -11,6 +11,7 @@ import {
   propsPopoverTrigger,
 } from "./__generated__/popover.props";
 import { div } from "@webstudio-is/react-sdk/css-normalize";
+import { template as buttonTemplate } from "./button.ws";
 
 const presetStyle = {
   div,
@@ -20,7 +21,6 @@ const presetStyle = {
 export const metaPopoverTrigger: WsComponentMeta = {
   category: "hidden",
   type: "container",
-  label: "Popover Trigger",
   icon: TriggerIcon,
   stylable: false,
   detachable: false,
@@ -30,7 +30,6 @@ export const metaPopoverContent: WsComponentMeta = {
   category: "hidden",
   type: "container",
   presetStyle,
-  label: "Popover Content",
   icon: ContentIcon,
   detachable: false,
 };
@@ -46,7 +45,6 @@ export const metaPopoverContent: WsComponentMeta = {
 export const metaPopover: WsComponentMeta = {
   category: "radix",
   type: "container",
-  label: "Popover",
   icon: PopoverIcon,
   order: 15,
   stylable: false,
@@ -76,13 +74,9 @@ export const metaPopover: WsComponentMeta = {
           type: "instance",
           component: "PopoverTrigger",
           props: [],
-          children: [
-            {
-              type: "instance",
-              component: "Button",
-              children: [{ type: "text", value: "Button" }],
-            },
-          ],
+          children: buttonTemplate({
+            children: [{ type: "text", value: "Button" }],
+          }),
         },
         {
           type: "instance",
@@ -117,7 +111,7 @@ export const metaPopover: WsComponentMeta = {
 
 export const propsMetaPopover: WsComponentPropsMeta = {
   props: propsPopover,
-  initialProps: ["isOpen", "modal"],
+  initialProps: ["open", "modal"],
 };
 
 export const propsMetaPopoverTrigger: WsComponentPropsMeta = {

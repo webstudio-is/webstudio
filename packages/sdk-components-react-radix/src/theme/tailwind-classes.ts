@@ -3,7 +3,11 @@
  */
 import type { EmbedTemplateStyleDecl } from "@webstudio-is/react-sdk";
 import { theme } from "./tailwind-theme";
-import { parseCssValue, parseBoxShadow } from "@webstudio-is/css-data";
+import {
+  parseCssValue,
+  parseBoxShadow,
+  StyleValue,
+} from "@webstudio-is/css-data";
 import type { EvaluatedDefaultTheme } from "./radix-common-types";
 
 // https://github.com/tailwindlabs/tailwindcss/blob/master/src/css/preflight.css
@@ -106,58 +110,127 @@ type NonNumeric<T extends string> = T extends `${infer Z extends number}`
   : T;
 
 export const border = (
-  borderWidth?: StringEnumToNumeric<keyof EvaluatedDefaultTheme["borderWidth"]>
+  borderWidthOrColor?:
+    | StringEnumToNumeric<keyof EvaluatedDefaultTheme["borderWidth"]>
+    | keyof EvaluatedDefaultTheme["colors"]
 ): EmbedTemplateStyleDecl[] => {
-  const key = `${borderWidth ?? "DEFAULT"}` as const;
+  if (
+    typeof borderWidthOrColor === "number" ||
+    borderWidthOrColor === undefined
+  ) {
+    const key = `${borderWidthOrColor ?? "DEFAULT"}` as const;
 
-  const valueString = theme("borderWidth")?.[key] ?? "1px";
+    const valueString = theme("borderWidth")?.[key] ?? "1px";
 
-  const value = parseCssValue("borderTopWidth", valueString);
+    const value = parseCssValue("borderTopWidth", valueString);
+    return [
+      ...preflight(),
+      { property: "borderTopWidth", value },
+      { property: "borderRightWidth", value },
+      { property: "borderBottomWidth", value },
+      { property: "borderLeftWidth", value },
+    ];
+  }
+
+  const value = parseCssValue("color", theme("colors")[borderWidthOrColor]);
+
   return [
-    ...preflight(),
-    { property: "borderTopWidth", value },
-    { property: "borderRightWidth", value },
-    { property: "borderBottomWidth", value },
-    { property: "borderLeftWidth", value },
+    {
+      property: "borderTopColor",
+      value,
+    },
+    {
+      property: "borderRightColor",
+      value,
+    },
+    {
+      property: "borderBottomColor",
+      value,
+    },
+    {
+      property: "borderLeftColor",
+      value,
+    },
   ];
 };
 
-export const px = (
-  padding:
-    | StringEnumToNumeric<keyof EvaluatedDefaultTheme["padding"]>
-    | NonNumeric<keyof EvaluatedDefaultTheme["padding"]>
+export const borderB = (
+  borderWidthOrColor?:
+    | StringEnumToNumeric<keyof EvaluatedDefaultTheme["borderWidth"]>
+    | keyof EvaluatedDefaultTheme["colors"]
 ): EmbedTemplateStyleDecl[] => {
-  const key = `${padding}` as const;
-  const valueString = theme("padding")?.[key] ?? "0";
-  const value = parseCssValue("paddingLeft", valueString);
+  let widthValue: StyleValue = { type: "unit", value: 1, unit: "number" };
+  let colorValue: StyleValue = parseCssValue(
+    "color",
+    theme("colors")["border"]
+  );
+  if (
+    typeof borderWidthOrColor === "number" ||
+    borderWidthOrColor === undefined
+  ) {
+    const key = `${borderWidthOrColor ?? "DEFAULT"}` as const;
+    const valueString = theme("borderWidth")[key] ?? "1px";
+    widthValue = parseCssValue("borderTopWidth", valueString);
+  } else {
+    colorValue = parseCssValue("color", theme("colors")[borderWidthOrColor]);
+  }
 
   return [
-    { property: "paddingLeft", value },
-    { property: "paddingRight", value },
+    {
+      property: "borderBottomWidth",
+      value: widthValue,
+    },
+    {
+      property: "borderBottomStyle",
+      value: { type: "keyword", value: "solid" },
+    },
+    {
+      property: "borderBottomColor",
+      value: colorValue,
+    },
   ];
 };
 
-export const py = (
-  padding:
-    | StringEnumToNumeric<keyof EvaluatedDefaultTheme["padding"]>
-    | NonNumeric<keyof EvaluatedDefaultTheme["padding"]>
-): EmbedTemplateStyleDecl[] => {
-  const key = `${padding}` as const;
-  const valueString = theme("padding")[key];
-  const value = parseCssValue("paddingTop", valueString);
+const paddingProperty =
+  (property: "paddingTop" | "paddingRight" | "paddingBottom" | "paddingLeft") =>
+  (
+    padding:
+      | StringEnumToNumeric<keyof EvaluatedDefaultTheme["padding"]>
+      | NonNumeric<keyof EvaluatedDefaultTheme["padding"]>
+  ): EmbedTemplateStyleDecl[] => {
+    const key = `${padding}` as const;
+    const valueString = theme("padding")?.[key] ?? "0";
+    const value = parseCssValue(property, valueString);
 
-  return [
-    { property: "paddingTop", value },
-    { property: "paddingBottom", value },
-  ];
+    return [{ property, value }];
+  };
+
+export const pt: ReturnType<typeof paddingProperty> = (padding) => {
+  return paddingProperty("paddingTop")(padding);
 };
 
-export const p = (
-  padding:
-    | StringEnumToNumeric<keyof EvaluatedDefaultTheme["padding"]>
-    | NonNumeric<keyof EvaluatedDefaultTheme["padding"]>
-): EmbedTemplateStyleDecl[] => {
-  return [...px(padding), ...py(padding)];
+export const pb: ReturnType<typeof paddingProperty> = (padding) => {
+  return paddingProperty("paddingBottom")(padding);
+};
+
+export const pl: ReturnType<typeof paddingProperty> = (padding) => {
+  return paddingProperty("paddingLeft")(padding);
+};
+
+export const pr: ReturnType<typeof paddingProperty> = (padding) => {
+  return paddingProperty("paddingRight")(padding);
+};
+
+export const px: ReturnType<typeof paddingProperty> = (padding) => {
+  return [pl(padding), pr(padding)].flat();
+};
+
+export const py: ReturnType<typeof paddingProperty> = (padding) => {
+  return [pt(padding), pb(padding)].flat();
+};
+
+export const p: ReturnType<typeof paddingProperty> = (padding) => {
+  return [px(padding), py(padding)].flat();
 };
 
 const marginProperty =
@@ -226,6 +299,16 @@ export const h = (
   return [{ property: "height", value }];
 };
 
+export const minH = (
+  spacing: StringEnumToNumeric<keyof EvaluatedDefaultTheme["height"]>
+): EmbedTemplateStyleDecl[] => {
+  const key = `${spacing}` as const;
+  const valueString = theme("height")?.[key] ?? "0";
+  const value = parseCssValue("minHeight", valueString);
+
+  return [{ property: "minHeight", value }];
+};
+
 export const opacity = (
   opacity: StringEnumToNumeric<keyof EvaluatedDefaultTheme["opacity"]>
 ): EmbedTemplateStyleDecl[] => {
@@ -236,6 +319,20 @@ export const opacity = (
   return [
     {
       property: "opacity",
+      value,
+    },
+  ];
+};
+
+export const cursor = (
+  cursor: keyof EvaluatedDefaultTheme["cursor"]
+): EmbedTemplateStyleDecl[] => {
+  const valueString = theme("cursor")?.[cursor] ?? "auto";
+  const value = parseCssValue("cursor", valueString);
+
+  return [
+    {
+      property: "cursor",
       value,
     },
   ];
@@ -396,9 +493,81 @@ export const inlineFlex = (): EmbedTemplateStyleDecl[] => {
 const flexDirection = { row: "row", col: "column" } as const;
 type FlexDirection = keyof typeof flexDirection;
 
-export const flex = (flexParam?: FlexDirection): EmbedTemplateStyleDecl[] => {
+type FlexSizing = 1 | "auto" | "initial" | "none";
+
+export const flex = (
+  flexParam?: FlexDirection | FlexSizing
+): EmbedTemplateStyleDecl[] => {
   if (flexParam === undefined) {
     return [{ property: "display", value: { type: "keyword", value: "flex" } }];
+  }
+
+  if (flexParam === 1) {
+    return [
+      {
+        property: "flexGrow",
+        value: { type: "unit", value: 1, unit: "number" },
+      },
+      {
+        property: "flexShrink",
+        value: { type: "unit", value: 1, unit: "number" },
+      },
+      {
+        property: "flexBasis",
+        value: { type: "unit", value: 0, unit: "%" },
+      },
+    ];
+  }
+
+  if (flexParam === "auto") {
+    return [
+      {
+        property: "flexGrow",
+        value: { type: "unit", value: 1, unit: "number" },
+      },
+      {
+        property: "flexShrink",
+        value: { type: "unit", value: 1, unit: "number" },
+      },
+      {
+        property: "flexBasis",
+        value: { type: "keyword", value: "auto" },
+      },
+    ];
+  }
+
+  if (flexParam === "initial") {
+    return [
+      {
+        property: "flexGrow",
+        value: { type: "unit", value: 0, unit: "number" },
+      },
+      {
+        property: "flexShrink",
+        value: { type: "unit", value: 1, unit: "number" },
+      },
+      {
+        property: "flexBasis",
+        value: { type: "keyword", value: "auto" },
+      },
+    ];
+  }
+
+  if (flexParam === "none") {
+    return [
+      {
+        property: "flexGrow",
+        value: { type: "unit", value: 0, unit: "number" },
+      },
+      {
+        property: "flexShrink",
+        value: { type: "unit", value: 0, unit: "number" },
+      },
+      {
+        property: "flexBasis",
+        value: { type: "keyword", value: "auto" },
+      },
+    ];
   }
 
   return [
@@ -523,6 +692,32 @@ export const text = (
   return [
     {
       property: "color",
+      value,
+    },
+  ];
+};
+
+export const underline = (): EmbedTemplateStyleDecl[] => {
+  return [
+    {
+      property: "textDecorationLine",
+      value: { type: "keyword", value: "underline" },
+    },
+  ];
+};
+
+export const underlineOffset = (
+  offset: StringEnumToNumeric<
+    keyof EvaluatedDefaultTheme["textUnderlineOffset"]
+  >
+): EmbedTemplateStyleDecl[] => {
+  const key = `${offset}` as const;
+  const valueString = theme("textUnderlineOffset")[key];
+  const value = parseCssValue("textUnderlineOffset", valueString);
+
+  return [
+    {
+      property: "textUnderlineOffset",
       value,
     },
   ];

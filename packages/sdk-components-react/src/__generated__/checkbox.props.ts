@@ -394,12 +394,6 @@ export const props: Record<string, PropMeta> = {
   color: { required: false, control: "color", type: "string" },
   content: { required: false, control: "text", type: "string" },
   contextMenu: { required: false, control: "text", type: "string" },
-  crossOrigin: {
-    required: false,
-    control: "radio",
-    type: "string",
-    options: ["", "anonymous", "use-credentials"],
-  },
   datatype: { required: false, control: "text", type: "string" },
   defaultChecked: { required: false, control: "boolean", type: "boolean" },
   dir: { required: false, control: "text", type: "string" },

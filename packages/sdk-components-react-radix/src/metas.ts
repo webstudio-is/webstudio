@@ -37,3 +37,14 @@ export {
   metaTabsTrigger as TabsTrigger,
   metaTabsContent as TabsContent,
 } from "./tabs.ws";
+export { meta as Button } from "./button.ws";
+export { meta as Input } from "./input.ws";
+export { meta as Textarea } from "./textarea.ws";
+export { meta as Label } from "./label.ws";
+export {
+  metaAccordion as Accordion,
+  metaAccordionItem as AccordionItem,
+  metaAccordionHeader as AccordionHeader,
+  metaAccordionTrigger as AccordionTrigger,
+  metaAccordionContent as AccordionContent,
+} from "./accordion.ws";
