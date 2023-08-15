@@ -53,7 +53,7 @@ export const links: LinksFunction = () => {
     if (asset.type === "font") {
       result.push({
         rel: "preload",
-        href: ${ASSETS_BASE} + asset.name,
+        href: "${ASSETS_BASE}" + asset.name,
         as: "font",
         crossOrigin: "anonymous",
         // @todo add mimeType
@@ -120,8 +120,8 @@ const Outlet = () => {
     });
   }
 
-  const assetBaseUrl = ${ASSETS_BASE};
-  const imageBaseUrl = ${ASSETS_BASE};
+  const assetBaseUrl = "${ASSETS_BASE}";
+  const imageBaseUrl = "${ASSETS_BASE}";
 
   const params: Data["params"] = {
     assetBaseUrl,

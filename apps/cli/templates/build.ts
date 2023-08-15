@@ -110,7 +110,7 @@ If needed to make any changes. Add them to ./templates folder and run pnpm run b
 import { ASSETS_BASE } from "../config";
 
 export const getRouteTemplate = () => {
-  return \`${routeTemplateFile.replace(/ASSETS_BASE/g, "${ASSETS_BASE}")}\`
+  return \`${routeTemplateFile.replace(/ASSETS_BASE/g, '"${ASSETS_BASE}"')}\`
   }`;
 
 await ensureFileInPath(ROUTER_TEMPLATE_PATH, routeTemplateContent);
