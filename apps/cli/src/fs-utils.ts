@@ -4,7 +4,6 @@ import {
   mkdir,
   writeFile,
   constants,
-  rm,
   readFile,
 } from "node:fs/promises";
 
@@ -25,17 +24,6 @@ export const ensureFolderExists = async (folderPath: string) => {
     await access(folderPath, constants.F_OK);
   } catch {
     await mkdir(folderPath, { recursive: true });
-  }
-};
-
-export const deleteFolderIfExists = async (generatedDir: string) => {
-  try {
-    await rm(generatedDir, { recursive: true });
-  } catch (error) {
-    if (error.code === "ENOENT") {
-      return;
-    }
-    throw error;
   }
 };
 

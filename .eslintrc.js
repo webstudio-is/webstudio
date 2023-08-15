@@ -6,5 +6,6 @@ module.exports = {
     "**/__generated__/**/*",
     "/packages/prisma-client/prisma/migrations",
     "/codemod",
+    "apps/cli/templates/",
   ],
 };

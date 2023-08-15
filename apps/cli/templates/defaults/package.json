@@ -1,0 +1,34 @@
+{
+  "private": true,
+  "sideEffects": false,
+  "scripts": {
+    "build": "remix build",
+    "dev": "remix dev",
+    "start": "remix-serve build",
+    "typecheck": "tsc"
+  },
+  "dependencies": {
+    "@remix-run/css-bundle": "^1.19.2",
+    "@remix-run/node": "^1.19.2",
+    "@remix-run/react": "^1.19.2",
+    "@webstudio-is/react-sdk": "^0.82.0",
+    "@webstudio-is/sdk-components-react-remix": "^0.82.0",
+    "@webstudio-is/sdk-components-react": "^0.82.0",
+    "@webstudio-is/form-handlers": "^0.75.0",
+    "isbot": "^3.6.8",
+    "react": "^18.2.0",
+    "react-dom": "^18.2.0"
+  },
+  "devDependencies": {
+    "@remix-run/serve": "^1.19.2",
+    "@remix-run/dev": "^1.19.2",
+    "@remix-run/eslint-config": "^1.19.2",
+    "@types/react": "^18.0.35",
+    "@types/react-dom": "^18.0.11",
+    "eslint": "^8.38.0",
+    "typescript": "^5.0.4"
+  },
+  "engines": {
+    "node": ">=18.0.0"
+  }
+}

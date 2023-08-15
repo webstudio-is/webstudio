@@ -4,6 +4,7 @@ import { GLOBAL_CONFIG_FILE } from "./config";
 import { ensureFileInPath } from "./fs-utils";
 import { link } from "./commands/link";
 import { sync } from "./commands/sync";
+import { build } from "./commands/build";
 import { showHelp, CLI_ARGS_OPTIONS } from "./args";
 import type { SupportedCommands } from "./args";
 import packageJSON from "../package.json" assert { type: "json" };
@@ -11,6 +12,7 @@ import packageJSON from "../package.json" assert { type: "json" };
 const commands: SupportedCommands = {
   link,
   sync,
+  build,
 };
 
 export const main = async () => {

@@ -10,6 +10,7 @@ export const showHelp = () =>
       Commands:
       link       Link to an existing webstudio project
       sync       Sync the linked webstudio project with the latest build
+      build      Build the linked webstudio project with a remix template.
 
      Flags:
      --help     -h     Show this help message
@@ -26,7 +27,7 @@ type DefaultArgs = Pick<
   "values"
 >;
 
-type Commands = "link" | "sync";
+type Commands = "link" | "sync" | "build";
 
 export type Command = (
   args: DefaultArgs & { positionals: string[] }
@@ -45,4 +46,27 @@ export const CLI_ARGS_OPTIONS = {
     type: "boolean" as const,
     short: "h",
   },
+  type: {
+    type: "string" as const,
+    short: "t",
+    default: "defaults",
+  },
+};
+
+export type File = {
+  name: string;
+  content: string;
+  encoding: "utf-8";
+};
+
+export type Folder = {
+  name: string;
+  files: File[];
+  subFolders: Folder[];
+};
+
+export type ProjectTarget = "defaults";
+
+export const SupportedProjects: Record<ProjectTarget, boolean> = {
+  defaults: true,
 };
