@@ -24,3 +24,14 @@ export {
   SheetDescription,
 } from "./sheet";
 export { Tabs, TabsList, TabsTrigger, TabsContent } from "./tabs";
+export { Button } from "./button";
+export { Input } from "./input";
+export { Textarea } from "./textarea";
+export { Label } from "./label";
+export {
+  Accordion,
+  AccordionItem,
+  AccordionHeader,
+  AccordionTrigger,
+  AccordionContent,
+} from "./accordion";

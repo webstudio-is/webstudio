@@ -19,6 +19,15 @@ export const colors = {
   ring: "rgb(148, 163, 184)",
   mutedForeground: "rgb(100, 116, 139)",
   muted: `hsl(210 40% 96.1%)`,
+  primary: "rgb(15, 23, 42)",
+  primaryForeground: "hsl(210 40% 98%)",
+  destructive: "rgb(239, 68, 68)",
+  destructiveForeground: "rgb(248, 250, 252)",
+  accent: "rgb(241, 245, 249)",
+  accentForeground: "rgb(15, 23, 42)",
+  input: "rgb(226, 232, 240)",
+  secondary: "rgb(241, 245, 249)",
+  secondaryForeground: "rgb(15, 23, 42)",
 } as const;
 
 /*
@@ -26,20 +35,4 @@ export const colors = {
 
 --card: 0 0% 100%;
 --card-foreground: 222.2 84% 4.9%;
-
---input: 214.3 31.8% 91.4%;
-
---primary: 222.2 47.4% 11.2%;
---primary-foreground: 210 40% 98%;
-
---secondary: 210 40% 96.1%;
---secondary-foreground: 222.2 47.4% 11.2%;
-
---accent: 210 40% 96.1%;
---accent-foreground: 222.2 47.4% 11.2%;
-
---destructive: 0 84.2% 60.2%;
---destructive-foreground: 210 40% 98%;
-
---ring: 215 20.2% 65.1%;
 */

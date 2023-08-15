@@ -15,4 +15,5 @@ module.exports = {
     "^~/(.*)$": "<rootDir>/src/$1",
   },
   extensionsToTreatAsEsm: [".ts", ".tsx"],
+  prettierPath: null,
 };
