@@ -16,6 +16,7 @@
   "dependencies": {
     "@webstudio-is/asset-uploader": "workspace:^",
     "@webstudio-is/http-client": "workspace:^",
+    "@webstudio-is/image": "workspace:^",
     "@webstudio-is/project-build": "workspace:^",
     "@webstudio-is/react-sdk": "workspace:^",
     "@webstudio-is/sdk-components-react": "workspace:^",

@@ -364,6 +364,9 @@ importers:
       '@webstudio-is/http-client':
         specifier: workspace:^
         version: link:../../packages/http-client
+      '@webstudio-is/image':
+        specifier: workspace:^
+        version: link:../../packages/image
       '@webstudio-is/project-build':
         specifier: workspace:^
         version: link:../../packages/project-build

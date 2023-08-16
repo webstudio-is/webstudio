@@ -1,6 +1,6 @@
 import { join, relative, dirname } from "node:path";
 import { writeFileSync } from "node:fs";
-import { rm, mkdir } from "node:fs/promises";
+import { rm, mkdir, writeFile } from "node:fs/promises";
 import {
   generateCssText,
   generateUtilsExport,
@@ -21,6 +21,7 @@ import type { Asset, ImageAsset } from "@webstudio-is/asset-uploader";
 import { getRouteTemplate } from "./__generated__/router";
 import { ASSETS_BASE, LOCAL_DATA_FILE } from "./config";
 import { ensureFileInPath, ensureFolderExists, loadJSONFile } from "./fs-utils";
+import { getImageAttributes, createImageLoader } from "@webstudio-is/image";
 
 type ComponentsByPage = {
   [path: string]: Set<string>;
@@ -41,6 +42,27 @@ type RemixRoutes = {
     path: string;
     file: string;
   }>;
+};
+
+export const downloadImage = async (url: string, name: string) => {
+  try {
+    const response = await fetch(url);
+    if (!response.ok) {
+      throw new Error(
+        `Error while downloading the image. Status code: ${response.status}`
+      );
+    }
+
+    const imageBuffer = await response.arrayBuffer();
+    return writeFile(
+      join("public", ASSETS_BASE, name),
+      Buffer.from(imageBuffer)
+    );
+  } catch (err) {
+    console.error(
+      `Error while downloading the image from ${url}: ${err.message}`
+    );
+  }
 };
 
 export const prebuild = async () => {
@@ -65,6 +87,41 @@ export const prebuild = async () => {
       `Project data is missing, please make sure you the project is synced.`
     );
   }
+
+  const domain = siteData.build.deployment?.projectDomain;
+  if (domain === undefined) {
+    throw new Error(`Project domain is missing from the site data`);
+  }
+
+  const images: Promise<void>[] = [];
+  for (const asset of siteData.assets) {
+    if (asset.type !== "image") {
+      continue;
+    }
+
+    const image = getImageAttributes({
+      /*
+        TODO:
+        We will be adding a option to get the original URL from the loader.
+        Currently the width is set to 400, to get the maximum quality out of it.
+        Before it's implemented.
+      */
+      width: 400,
+      optimize: true,
+      src: asset.name,
+      quality: 100,
+      srcSet: undefined,
+      sizes: undefined,
+      loader: createImageLoader({
+        imageBaseUrl: `https://${domain}.wstd.io/cgi/asset/`,
+      }),
+    });
+
+    if (image?.src) {
+      images.push(downloadImage(image.src, asset.name));
+    }
+  }
+  await Promise.all(images);
 
   const {
     assets,
