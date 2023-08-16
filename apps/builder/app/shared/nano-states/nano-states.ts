@@ -279,6 +279,8 @@ export const selectedInstanceIntanceToTagStore = atom<
   undefined | Map<Instance["id"], HtmlTags>
 >();
 
+export const $selectedInstanceStates = atom(new Set<string>());
+
 /**
  * pending means: previous selected instance unmounted,
  * and we don't know yet whether a new one will mount

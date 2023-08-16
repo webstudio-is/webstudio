@@ -56,9 +56,11 @@ const getSourceName = (
   }
 
   if (styleValueInfo.local) {
+    const state = styleValueInfo.local.state;
+    const suffix = state === undefined ? "" : `:${state}`;
     return selectedStyleSource?.type === "token"
-      ? selectedStyleSource.name
-      : "Local";
+      ? `${selectedStyleSource.name}${suffix}`
+      : `Local${suffix}`;
   }
 
   if (styleValueInfo.previousSource) {

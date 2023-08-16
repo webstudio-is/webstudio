@@ -13,6 +13,9 @@ import {
   dataSourceValuesStore,
   selectedInstanceSelectorStore,
   dataSourceVariablesStore,
+  $selectedInstanceStates,
+  selectedStyleSourceStore,
+  stylesStore,
 } from "~/shared/nano-states";
 import htmlTags, { type htmlTags as HtmlTags } from "html-tags";
 import {
@@ -137,7 +140,7 @@ const subscribeSelectedInstance = (
       return;
     }
 
-    const element = elements[0];
+    const [element] = elements;
     // trigger style recomputing every time instance styles are changed
     selectedInstanceBrowserStyleStore.set(getBrowserStyle(element));
 
@@ -160,6 +163,27 @@ const subscribeSelectedInstance = (
 
     const unitSizes = calculateUnitSizes(element);
     selectedInstanceUnitSizesStore.set(unitSizes);
+
+    const states = new Set<string>();
+    const selectedStyleSourceId = selectedStyleSourceStore.get()?.id;
+    if (selectedStyleSourceId) {
+      const styles = stylesStore.get();
+      for (const styleDecl of styles.values()) {
+        if (
+          styleDecl.styleSourceId === selectedStyleSourceId &&
+          styleDecl.state
+        ) {
+          states.add(styleDecl.state);
+        }
+      }
+    }
+    const activeStates = new Set<string>();
+    for (const state of states) {
+      if (element.matches(state)) {
+        activeStates.add(state);
+      }
+    }
+    $selectedInstanceStates.set(activeStates);
   };
 
   let updateStoreTimeouHandle: undefined | ReturnType<typeof setTimeout>;

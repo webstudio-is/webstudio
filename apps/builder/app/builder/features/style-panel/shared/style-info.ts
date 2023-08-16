@@ -28,6 +28,7 @@ import {
   breakpointsStore,
   styleSourceSelectionsStore,
   registeredComponentMetasStore,
+  $selectedInstanceStates,
 } from "~/shared/nano-states";
 import { selectedBreakpointStore } from "~/shared/nano-states";
 import type { InstanceSelector } from "~/shared/tree-utils";
@@ -61,6 +62,16 @@ type SourceProperties = {
   [property in StyleProperty]?: SourceValueInfo;
 };
 
+type LocalValueInfo = {
+  state: undefined | string;
+  active: boolean;
+  value: StyleValue;
+};
+
+type LocalProperties = {
+  [property in StyleProperty]?: LocalValueInfo;
+};
+
 /*
  * For some cases we are encouraging to use custom defaults, than
  * `initial` values provided by browsers. This helps in controlling the behaviour
@@ -72,7 +83,7 @@ const CUSTOM_DEFAULT_VALUES: Partial<Record<StyleProperty, StyleValue>> = {
 
 export type StyleValueInfo = {
   value: StyleValue;
-  local?: StyleValue;
+  local?: LocalValueInfo;
   previousSource?: SourceValueInfo;
   nextSource?: SourceValueInfo;
   cascaded?: CascadedValueInfo;
@@ -116,7 +127,7 @@ export const getStyleSource = (
   }
   for (const info of styleValueInfos) {
     if (info?.local) {
-      return "local";
+      return info.local.active ? "local" : "remote";
     }
   }
   for (const info of styleValueInfos) {
@@ -154,12 +165,13 @@ for (const [property, value] of Object.entries(properties)) {
   }
 }
 
-const getSelectedStyle = (
+const getLocalStyle = (
   stylesByStyleSourceId: Map<StyleSourceType["id"], StyleDecl[]>,
   breakpointId: string,
-  styleSourceSelector: StyleSourceSelector
+  styleSourceSelector: StyleSourceSelector,
+  states: Set<string>
 ) => {
-  const style: Style = {};
+  const style: LocalProperties = {};
   const instanceStyles = stylesByStyleSourceId.get(
     styleSourceSelector.styleSourceId
   );
@@ -167,20 +179,28 @@ const getSelectedStyle = (
     return style;
   }
   for (const styleDecl of instanceStyles) {
-    // @todo consider making stateless styles remote when state is selected
     if (
       styleDecl.breakpointId === breakpointId &&
       styleDecl.state === undefined
     ) {
-      style[styleDecl.property] = styleDecl.value;
+      style[styleDecl.property] = {
+        state: styleDecl.state,
+        active: styleDecl.state === styleSourceSelector.state,
+        value: styleDecl.value,
+      };
     }
   }
   for (const styleDecl of instanceStyles) {
     if (
       styleDecl.breakpointId === breakpointId &&
-      styleDecl.state === styleSourceSelector.state
+      styleDecl.state !== undefined &&
+      states.has(styleDecl.state)
     ) {
-      style[styleDecl.property] = styleDecl.value;
+      style[styleDecl.property] = {
+        state: styleDecl.state,
+        active: styleDecl.state === styleSourceSelector.state,
+        value: styleDecl.value,
+      };
     }
   }
   return style;
@@ -418,6 +438,7 @@ const useStyleInfoByInstanceAndStyleSource = (
   const breakpoints = useStore(breakpointsStore);
   const selectedBreakpoint = useStore(selectedBreakpointStore);
   const selectedBreakpointId = selectedBreakpoint?.id;
+  const states = useStore($selectedInstanceStates);
 
   // We do not move selectedInstanceIntanceToTagStore out of here as it contains ascendants of selected element
   // And we do not gonna iterate over children
@@ -429,19 +450,25 @@ const useStyleInfoByInstanceAndStyleSource = (
     useStore(stylesIndexStore);
   const styleSourceSelections = useStore(styleSourceSelectionsStore);
 
-  const selectedStyle = useMemo(() => {
+  const localStyle = useMemo(() => {
     if (
       selectedBreakpointId === undefined ||
       styleSourceSelector === undefined
     ) {
       return {};
     }
-    return getSelectedStyle(
+    return getLocalStyle(
       stylesByStyleSourceId,
       selectedBreakpointId,
-      styleSourceSelector
+      styleSourceSelector,
+      states
     );
-  }, [stylesByStyleSourceId, selectedBreakpointId, styleSourceSelector]);
+  }, [
+    stylesByStyleSourceId,
+    selectedBreakpointId,
+    styleSourceSelector,
+    states,
+  ]);
 
   const cascadedBreakpointIds = useMemo(
     () => getCascadedBreakpointIds(breakpoints, selectedBreakpointId),
@@ -582,9 +609,9 @@ const useStyleInfoByInstanceAndStyleSource = (
       const cascaded = cascadedInfo[property];
       const previousSource = previousSourceInfo[property];
       const nextSource = nextSourceInfo[property];
-      const local = selectedStyle?.[property];
+      const local = localStyle?.[property];
       const ownValue =
-        local ??
+        local?.value ??
         nextSource?.value ??
         previousSource?.value ??
         cascaded?.value ??
@@ -639,7 +666,7 @@ const useStyleInfoByInstanceAndStyleSource = (
     cascadedInfo,
     nextSourceInfo,
     previousSourceInfo,
-    selectedStyle,
+    localStyle,
   ]);
 
   return styleInfoData;
