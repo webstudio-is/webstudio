@@ -1,0 +1,1 @@
+export const ChevronLeftIcon = `<svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 16 16" width="100%" height="100%" style="display: block;"><path stroke="#11181C" stroke-linecap="round" stroke-linejoin="round" stroke-width="1.3" d="m9.256 4.499-3.512 3.5 3.512 3.502"/></svg>`;

@@ -9,7 +9,7 @@
     "dev": "build-package --watch",
     "build": "build-package",
     "dts": "tsc --declarationDir lib/types",
-    "generate": "rm -fr src/__generated__ && NODE_OPTIONS='--loader=tsx' svgo-jsx svgo-jsx.config.ts && tsx svg-string.ts && prettier --write ./",
+    "generate": "rm -fr src/__generated__ && NODE_OPTIONS='--loader=tsx' svgo-jsx svgo-jsx.config.ts && tsx svg-string.ts && prettier --write src/__generated__",
     "typecheck": "tsc",
     "checks": "pnpm typecheck",
     "storybook:dev": "storybook dev -p 6006",

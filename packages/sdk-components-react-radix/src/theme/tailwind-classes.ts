@@ -7,8 +7,25 @@ import {
   parseCssValue,
   parseBoxShadow,
   StyleValue,
+  type StyleProperty,
 } from "@webstudio-is/css-data";
 import type { EvaluatedDefaultTheme } from "./radix-common-types";
+
+export const property = (
+  property: StyleProperty,
+  value: string
+): EmbedTemplateStyleDecl => {
+  if (value.startsWith("--")) {
+    return {
+      property,
+      value: { type: "var", value: value.slice(2), fallbacks: [] },
+    };
+  }
+  return {
+    property,
+    value: { type: "unparsed", value },
+  };
+};
 
 // https://github.com/tailwindlabs/tailwindcss/blob/master/src/css/preflight.css
 const preflight = (): EmbedTemplateStyleDecl[] => {
@@ -585,11 +602,16 @@ export const grow = (): EmbedTemplateStyleDecl[] => {
   return [
     {
       property: "flexGrow",
-      value: {
-        type: "unit",
-        value: 1,
-        unit: "number",
-      },
+      value: { type: "unit", value: 1, unit: "number" },
+    },
+  ];
+};
+
+export const shrink = (value: number): EmbedTemplateStyleDecl[] => {
+  return [
+    {
+      property: "flexGrow",
+      value: { type: "unit", value, unit: "number" },
     },
   ];
 };
@@ -818,7 +840,9 @@ export const pointerEvents = (
   return [{ property: "pointerEvents", value: { type: "keyword", value } }];
 };
 
-export const transition = (value: "none" | "all"): EmbedTemplateStyleDecl[] => {
+export const transition = (
+  value: "none" | "all" | "transform"
+): EmbedTemplateStyleDecl[] => {
   if (value === "none") {
     return [
       {
@@ -830,7 +854,7 @@ export const transition = (value: "none" | "all"): EmbedTemplateStyleDecl[] => {
   return [
     {
       property: "transitionProperty",
-      value: { type: "keyword", value: "all" },
+      value: { type: "keyword", value },
     },
     {
       property: "transitionTimingFunction",
@@ -839,6 +863,15 @@ export const transition = (value: "none" | "all"): EmbedTemplateStyleDecl[] => {
     {
       property: "transitionDuration",
       value: { type: "unparsed", value: "150ms" },
+    },
+  ];
+};
+
+export const duration = (ms: number): EmbedTemplateStyleDecl[] => {
+  return [
+    {
+      property: "transitionDuration",
+      value: { type: "unit", value: ms, unit: "ms" },
     },
   ];
 };
