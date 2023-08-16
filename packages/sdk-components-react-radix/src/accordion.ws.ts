@@ -39,12 +39,6 @@ const presetStyle = {
 // border-b
 const accordionItemStyles: EmbedTemplateStyleDecl[] = [tc.borderB()].flat();
 
-const custom = (name: string, value: string) =>
-  ({
-    property: `--${name}`,
-    value: { type: "unparsed", value },
-  }) as const;
-
 const createAccordionTrigger = ({
   children,
 }: {
@@ -66,14 +60,12 @@ const createAccordionTrigger = ({
         tc.justify("between"),
         tc.py(4),
         tc.font("medium"),
-        tc.transition("all"),
         tc.hover([tc.underline()].flat()),
-        custom("accordion-trigger-icon-transform", "rotate(0deg)"),
+        tc.property("--accordion-trigger-icon-transform", "0deg"),
         tc.state(
-          [custom("accordion-trigger-icon-transform", "rotate(180deg)")],
+          [tc.property("--accordion-trigger-icon-transform", "180deg")],
           "[data-state=open]"
         ),
-        // [&[data-state=open]>svg]:rotate-180
       ].flat(),
       children: [
         ...children,
@@ -82,18 +74,11 @@ const createAccordionTrigger = ({
           component: "Box",
           // h-4 w-4 shrink-0 transition-transform duration-200
           styles: [
-            {
-              property: "transform" as const,
-              value: {
-                type: "var" as const,
-                value: "accordion-trigger-icon-transform",
-                fallbacks: [],
-              },
-            },
+            tc.property("rotate", "--accordion-trigger-icon-transform"),
             tc.h(4),
             tc.w(4),
             tc.shrink(0),
-            tc.transition("transform"),
+            tc.transition("all"),
             tc.duration(200),
           ].flat(),
           children: [

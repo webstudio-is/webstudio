@@ -7,8 +7,22 @@ import {
   parseCssValue,
   parseBoxShadow,
   StyleValue,
+  type StyleProperty,
 } from "@webstudio-is/css-data";
 import type { EvaluatedDefaultTheme } from "./radix-common-types";
+
+export const property = (property: StyleProperty, value: string) => {
+  if (value.startsWith("--")) {
+    return {
+      property,
+      value: { type: "var" as const, value: value.slice(2), fallbacks: [] },
+    };
+  }
+  return {
+    property,
+    value: { type: "unparsed" as const, value },
+  };
+};
 
 // https://github.com/tailwindlabs/tailwindcss/blob/master/src/css/preflight.css
 const preflight = (): EmbedTemplateStyleDecl[] => {
