@@ -11,16 +11,19 @@ import {
 } from "@webstudio-is/css-data";
 import type { EvaluatedDefaultTheme } from "./radix-common-types";
 
-export const property = (property: StyleProperty, value: string) => {
+export const property = (
+  property: StyleProperty,
+  value: string
+): EmbedTemplateStyleDecl => {
   if (value.startsWith("--")) {
     return {
       property,
-      value: { type: "var" as const, value: value.slice(2), fallbacks: [] },
+      value: { type: "var", value: value.slice(2), fallbacks: [] },
     };
   }
   return {
     property,
-    value: { type: "unparsed" as const, value },
+    value: { type: "unparsed", value },
   };
 };
 
