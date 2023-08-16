@@ -89,6 +89,7 @@ export { GrowIcon } from "./grow";
 export { HamburgerMenuIcon } from "./hamburger-menu";
 export { HeaderIcon } from "./header";
 export { HeadingIcon } from "./heading";
+export { HelpIcon } from "./help";
 export { ImageIcon } from "./image";
 export { InfoIcon } from "./info";
 export { InformationIcon } from "./information";

@@ -89,6 +89,7 @@ export * from "./grow";
 export * from "./hamburger-menu";
 export * from "./header";
 export * from "./heading";
+export * from "./help";
 export * from "./image";
 export * from "./info";
 export * from "./information";
