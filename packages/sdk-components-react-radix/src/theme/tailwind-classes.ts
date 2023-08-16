@@ -854,7 +854,7 @@ export const duration = (ms: number): EmbedTemplateStyleDecl[] => {
   return [
     {
       property: "transitionDuration",
-      value: { type: "unparsed", value: `${ms}ms` },
+      value: { type: "unit", value: ms, unit: "ms" },
     },
   ];
 };
