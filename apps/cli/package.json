@@ -10,6 +10,7 @@
   },
   "scripts": {
     "build:templates": "tsx ./templates/build.ts",
+    "dev": "build-package --watch",
     "build": "build-package"
   },
   "license": "MIT",
@@ -23,6 +24,7 @@
     "@webstudio-is/sdk-components-react-remix": "workspace:^",
     "env-paths": "^3.0.0",
     "ora": "^7.0.1",
+    "p-limit": "^4.0.0",
     "strip-indent": "^4.0.0"
   },
   "devDependencies": {

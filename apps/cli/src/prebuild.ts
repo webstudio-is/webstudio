@@ -1,6 +1,6 @@
 import { join, relative, dirname } from "node:path";
 import { writeFileSync } from "node:fs";
-import { rm, mkdir, writeFile } from "node:fs/promises";
+import { rm, mkdir, writeFile, access } from "node:fs/promises";
 import {
   generateCssText,
   generateUtilsExport,
@@ -16,12 +16,16 @@ import {
 } from "@webstudio-is/project-build";
 import * as baseComponentMetas from "@webstudio-is/sdk-components-react/metas";
 import * as remixComponentMetas from "@webstudio-is/sdk-components-react-remix/metas";
-import type { Asset, ImageAsset } from "@webstudio-is/asset-uploader";
+import type { Asset, FontAsset } from "@webstudio-is/asset-uploader";
+import pLimit from "p-limit";
+import ora from "ora";
 
 import { getRouteTemplate } from "./__generated__/router";
 import { ASSETS_BASE, LOCAL_DATA_FILE } from "./config";
 import { ensureFileInPath, ensureFolderExists, loadJSONFile } from "./fs-utils";
 import { getImageAttributes, createImageLoader } from "@webstudio-is/image";
+
+const limit = pLimit(10);
 
 type ComponentsByPage = {
   [path: string]: Set<string>;
@@ -44,28 +48,31 @@ type RemixRoutes = {
   }>;
 };
 
-export const downloadImage = async (url: string, name: string) => {
-  try {
-    const response = await fetch(url);
-    if (!response.ok) {
-      throw new Error(
-        `Error while downloading the image. Status code: ${response.status}`
-      );
-    }
+export const downloadAsset = async (url: string, name: string) => {
+  const assetPath = join("public", ASSETS_BASE, name);
 
-    const imageBuffer = await response.arrayBuffer();
-    return writeFile(
-      join("public", ASSETS_BASE, name),
-      Buffer.from(imageBuffer)
-    );
-  } catch (err) {
-    console.error(
-      `Error while downloading the image from ${url}: ${err.message}`
-    );
+  try {
+    await access(assetPath);
+    return;
+  } catch {
+    try {
+      const response = await fetch(url);
+      if (!response.ok) {
+        throw new Error(
+          `Error while downloading the image. Status code: ${response.status}`
+        );
+      }
+
+      const imageBuffer = await response.arrayBuffer();
+      return writeFile(assetPath, Buffer.from(imageBuffer));
+    } catch (err) {
+      console.error(`Error while downloading the image from ${url}: ${err}`);
+    }
   }
 };
 
 export const prebuild = async () => {
+  const spinner = ora("Scaffolding the project files");
   const appRoot = "app";
 
   const routesDir = join(appRoot, "routes");
@@ -91,53 +98,6 @@ export const prebuild = async () => {
   const domain = siteData.build.deployment?.projectDomain;
   if (domain === undefined) {
     throw new Error(`Project domain is missing from the site data`);
-  }
-
-  const images: Promise<void>[] = [];
-  for (const asset of siteData.assets) {
-    if (asset.type !== "image") {
-      continue;
-    }
-
-    const image = getImageAttributes({
-      /*
-        TODO:
-        We will be adding a option to get the original URL from the loader.
-        Currently the width is set to 400, to get the maximum quality out of it.
-        Before it's implemented.
-      */
-      width: 400,
-      optimize: true,
-      src: asset.name,
-      quality: 100,
-      srcSet: undefined,
-      sizes: undefined,
-      loader: createImageLoader({
-        imageBaseUrl: `https://${domain}.wstd.io/cgi/asset/`,
-      }),
-    });
-
-    if (image?.src) {
-      images.push(downloadImage(image.src, asset.name));
-    }
-  }
-  await Promise.all(images);
-
-  const {
-    assets,
-    build: { deployment },
-  } = siteData;
-  const fontAssets: Data["assets"] = [];
-  const imageAssets: ImageAsset[] = [];
-
-  for (const asset of assets) {
-    if (asset.type === "image") {
-      imageAssets.push(asset);
-    }
-
-    if (asset.type === "font") {
-      fontAssets.push(asset);
-    }
   }
 
   const remixRoutes: RemixRoutes = {
@@ -196,21 +156,47 @@ export const prebuild = async () => {
     }
   }
 
-  const cssText = generateCssText(
-    {
-      assets: siteData.assets,
-      breakpoints: siteData.build?.breakpoints,
-      styles: siteData.build?.styles,
-      styleSourceSelections: siteData.build?.styleSourceSelections,
-      componentMetas,
-    },
-    {
-      assetBaseUrl: ASSETS_BASE,
+  const assetsToDownload: Promise<void>[] = [];
+  const fontAssets: FontAsset[] = [];
+  const assetBuildUrl = `https://${domain}.wstd.io/cgi/asset/`;
+
+  for (const asset of siteData.assets) {
+    if (asset.type === "image") {
+      const image = getImageAttributes({
+        /*
+          TODO:
+          https://github.com/webstudio-is/webstudio-builder/issues/2135
+          There should be a option in the loader, that allows to download
+          original image instead of the processed one. Right now, we are using
+          the width from the asset meta
+        */
+        width: asset.meta.width,
+        optimize: true,
+        src: asset.name,
+        quality: 100,
+        srcSet: undefined,
+        sizes: undefined,
+        loader: createImageLoader({
+          imageBaseUrl: assetBuildUrl,
+        }),
+      });
+
+      if (image?.src) {
+        assetsToDownload.push(
+          limit(() => downloadAsset(image.src, asset.name))
+        );
+      }
     }
-  );
 
-  await ensureFileInPath(join(generatedDir, "index.css"), cssText);
+    if (asset.type === "font") {
+      assetsToDownload.push(
+        limit(() => downloadAsset(`${assetBuildUrl}${asset.name}`, asset.name))
+      );
+      fontAssets.push(asset);
+    }
+  }
 
+  spinner.text = "Generating the routes and pages";
   for (const [pathName, pageComponents] of Object.entries(componentsByPage)) {
     let relativePath = "../__generated__";
     const statements = Array.from(pageComponents).join(", ");
@@ -231,7 +217,7 @@ export const prebuild = async () => {
     import { ${statements} } from "@webstudio-is/sdk-components-react";
     import * as remixComponents from "@webstudio-is/sdk-components-react-remix";
     export const components = new Map(Object.entries(Object.assign({ ${statements} }, remixComponents ))) as Components;
-    export const fontAssets = ${JSON.stringify(fontAssets)};
+    export const fontAssets = ${JSON.stringify(fontAssets)}
     export const pageData: PageData = ${JSON.stringify(pageData)};
     export const user: { email: string | null } | undefined = ${JSON.stringify(
       siteData.user
@@ -305,7 +291,24 @@ export const prebuild = async () => {
     }
   }
 
-  if (deployment?.projectDomain === undefined) {
-    throw new Error("Project is not deployed yet, cannot download assets");
-  }
+  spinner.text = "Generating css files";
+  const cssText = generateCssText(
+    {
+      assets: siteData.assets,
+      breakpoints: siteData.build?.breakpoints,
+      styles: siteData.build?.styles,
+      styleSourceSelections: siteData.build?.styleSourceSelections,
+      componentMetas,
+    },
+    {
+      assetBaseUrl: ASSETS_BASE,
+    }
+  );
+
+  await ensureFileInPath(join(generatedDir, "index.css"), cssText);
+
+  spinner.text = "Downloading fonts and images";
+  await Promise.all(assetsToDownload);
+
+  spinner.succeed("Build finished");
 };
