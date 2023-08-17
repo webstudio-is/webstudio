@@ -29,8 +29,7 @@ import { Spinner } from "../spinner";
 
 const containerStyle = css({
   overflow: "hidden",
-  width: theme.spacing[31],
-  height: theme.spacing[29],
+  aspectRatio: "8 / 7",
   borderWidth: 1,
   borderStyle: "solid",
   borderColor: theme.colors.borderMain,

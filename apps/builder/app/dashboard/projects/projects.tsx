@@ -1,4 +1,4 @@
-import { Flex, Text } from "@webstudio-is/design-system";
+import { Flex, Grid, Text } from "@webstudio-is/design-system";
 import { EmptyState } from "./empty-state";
 import { Panel } from "./panel";
 import type { DashboardProject } from "@webstudio-is/dashboard";
@@ -21,11 +21,16 @@ export const Projects = ({ projects, projectTemplates }: ProjectsProps) => {
           <CreateProject />
         </Flex>
         {projects.length === 0 && <EmptyState />}
-        <Flex gap="6" wrap="wrap">
+        <Grid
+          gap="6"
+          css={{
+            gridTemplateColumns: "repeat(auto-fill, minmax(256px, 1fr))",
+          }}
+        >
           {projects.map((project) => {
             return <ProjectCard {...project} key={project.id} />;
           })}
-        </Flex>
+        </Grid>
       </Flex>
 
       {projectTemplates.length > 0 && (
@@ -35,11 +40,16 @@ export const Projects = ({ projects, projectTemplates }: ProjectsProps) => {
               Templates
             </Text>
           </Flex>
-          <Flex gap="6" wrap="wrap">
+          <Grid
+            gap="6"
+            css={{
+              gridTemplateColumns: "repeat(auto-fill, minmax(256px, 1fr))",
+            }}
+          >
             {projectTemplates.map((project) => {
               return <ProjectTemplateCard {...project} key={project.id} />;
             })}
-          </Flex>
+          </Grid>
         </Flex>
       )}
     </Panel>

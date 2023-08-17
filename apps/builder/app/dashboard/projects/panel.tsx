@@ -13,5 +13,5 @@ const panelStyle = css({
 });
 
 export const Panel = (props: ComponentProps<typeof Flex>) => (
-  <Flex direction="column" gap="3" className={panelStyle()} {...props} />
+  <Flex direction="column" gap="5" className={panelStyle()} {...props} />
 );
