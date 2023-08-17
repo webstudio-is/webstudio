@@ -1,6 +1,9 @@
 import { join, relative, dirname } from "node:path";
-import { writeFileSync } from "node:fs";
-import { rm, mkdir, writeFile, access } from "node:fs/promises";
+import { writeFileSync, createWriteStream } from "node:fs";
+import { rm, mkdir, access } from "node:fs/promises";
+import fetch from "node-fetch";
+import { pipeline } from "node:stream";
+import { promisify } from "node:util";
 import {
   generateCssText,
   generateUtilsExport,
@@ -50,23 +53,22 @@ type RemixRoutes = {
 
 export const downloadAsset = async (url: string, name: string) => {
   const assetPath = join("public", ASSETS_BASE, name);
-
   try {
     await access(assetPath);
-    return;
   } catch {
+    const streamPipeline = promisify(pipeline);
     try {
       const response = await fetch(url);
       if (!response.ok) {
-        throw new Error(
-          `Error while downloading the image. Status code: ${response.status}`
-        );
+        throw new Error(`unexpected response ${response.statusText}`);
       }
 
-      const imageBuffer = await response.arrayBuffer();
-      return writeFile(assetPath, Buffer.from(imageBuffer));
-    } catch (err) {
-      console.error(`Error while downloading the image from ${url}: ${err}`);
+      await streamPipeline(
+        response.body as NodeJS.ReadableStream,
+        createWriteStream(assetPath)
+      );
+    } catch (error) {
+      console.error(`Error in downloading file ${name} \n ${error}`);
     }
   }
 };
@@ -196,7 +198,7 @@ export const prebuild = async () => {
     }
   }
 
-  spinner.text = "Generating the routes and pages";
+  spinner.text = "Generating routes and pages";
   for (const [pathName, pageComponents] of Object.entries(componentsByPage)) {
     let relativePath = "../__generated__";
     const statements = Array.from(pageComponents).join(", ");
