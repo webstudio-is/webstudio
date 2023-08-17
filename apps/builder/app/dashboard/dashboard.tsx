@@ -14,16 +14,21 @@ const globalStyles = globalCss({
 type DashboardProps = {
   user: User;
   projects: Array<DashboardProject>;
+  projectTemplates: Array<DashboardProject>;
 };
 
-export const Dashboard = ({ user, projects }: DashboardProps) => {
+export const Dashboard = ({
+  user,
+  projects,
+  projectTemplates,
+}: DashboardProps) => {
   globalStyles();
   return (
     <>
       <Header user={user} />
       <main>
         <Flex justify="center" as="section" css={{ minWidth: "min-content" }}>
-          <Projects projects={projects} />
+          <Projects projects={projects} projectTemplates={projectTemplates} />
         </Flex>
       </main>
     </>

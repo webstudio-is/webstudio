@@ -9,6 +9,7 @@ import { loginPath } from "~/shared/router-utils";
 import { sentryException } from "~/shared/sentry";
 import { ErrorMessage } from "~/shared/error";
 import { createContext } from "~/shared/context.server";
+import env from "~/env/env.server";
 
 export const loader = async ({
   request,
@@ -31,7 +32,17 @@ export const loader = async ({
     .createCaller(context)
     .findMany({ userId: user.id });
 
-  return { user, projects };
+  const projectIds =
+    env.PROJECT_TEMPLATES?.split(",").map((v) => v.trim()) ?? [];
+
+  const projectTemplates =
+    projectIds.length > 0
+      ? await dashboardProjectRouter.createCaller(context).findManyByIds({
+          projectIds,
+        })
+      : [];
+
+  return { user, projects, projectTemplates };
 };
 
 export const ErrorBoundary = () => {

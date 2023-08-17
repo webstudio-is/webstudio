@@ -20,3 +20,27 @@ export const findMany = async (userId: string, context: AppContext) => {
 
   return DashboardProjects.parse(data);
 };
+
+export const findManyByIds = async (
+  projectIds: string[],
+  context: AppContext
+) => {
+  const data = await prisma.dashboardProject.findMany({
+    where: {
+      id: {
+        in: projectIds,
+      },
+      isDeleted: false,
+    },
+    orderBy: [
+      {
+        createdAt: "desc",
+      },
+      {
+        id: "desc",
+      },
+    ],
+  });
+
+  return DashboardProjects.parse(data);
+};

@@ -21,8 +21,9 @@ import {
   DeleteProjectDialog,
   useDuplicate,
   ShareProjectDialog,
+  DuplicateProjectDialog,
 } from "./project-dialogs";
-import { ThumbnailLink } from "./thumbnail-link";
+import { Thumbnail, ThumbnailLink } from "./thumbnail-link";
 import { useNavigation } from "@remix-run/react";
 import { Spinner } from "../spinner";
 
@@ -133,7 +134,7 @@ const Menu = ({
 };
 
 const useProjectCard = () => {
-  const thumbnailRef = useRef<HTMLAnchorElement>(null);
+  const thumbnailRef = useRef<HTMLAnchorElement & HTMLDivElement>(null);
 
   const handleKeyDown = (event: KeyboardEvent<HTMLElement>) => {
     const elements: Array<HTMLElement> = Array.from(
@@ -257,6 +258,64 @@ export const ProjectCard = ({
       <ShareProjectDialog
         isOpen={isShareDialogOpen}
         onOpenChange={setIsShareDialogOpen}
+        projectId={id}
+      />
+    </Box>
+  );
+};
+
+export const ProjectTemplateCard = ({
+  id,
+  title,
+  domain,
+  isPublished,
+}: ProjectCardProps) => {
+  const { thumbnailRef, handleKeyDown } = useProjectCard();
+  const [isDuplicateDialogOpen, setIsDuplicateDialogOpen] = useState(false);
+
+  return (
+    <Box as="article">
+      <Flex
+        direction="column"
+        align="center"
+        shrink={false}
+        className={containerStyle()}
+        tabIndex={0}
+        onKeyDown={handleKeyDown}
+      >
+        <Grid className={thumbnailStyle()}>
+          <Thumbnail
+            title={title}
+            ref={thumbnailRef}
+            onClick={() => {
+              setIsDuplicateDialogOpen(true);
+            }}
+          />
+        </Grid>
+
+        <Flex
+          justify="between"
+          shrink={false}
+          alignSelf="stretch"
+          gap="1"
+          className={footerStyle()}
+        >
+          <Flex direction="column" justify="around">
+            <Text variant="titles" truncate css={{ userSelect: "auto" }}>
+              {title}
+            </Text>
+            {isPublished ? (
+              <PublishedLink domain={domain} tabIndex={-1} />
+            ) : (
+              <Text color="subtle">Not Published</Text>
+            )}
+          </Flex>
+        </Flex>
+      </Flex>
+      <DuplicateProjectDialog
+        isOpen={isDuplicateDialogOpen}
+        onOpenChange={setIsDuplicateDialogOpen}
+        title={title}
         projectId={id}
       />
     </Box>
