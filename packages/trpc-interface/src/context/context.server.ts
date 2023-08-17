@@ -14,6 +14,8 @@ type AuthorizationContext = {
    */
   authToken: string | undefined;
 
+  projectTemplates: string[];
+
   /**
    * Allow service 2 service communications to skip authorization for view calls
    */

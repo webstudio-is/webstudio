@@ -81,7 +81,8 @@ const env = {
   /**
    * Projects as templates in dashboard
    */
-  PROJECT_TEMPLATES: process.env.PROJECT_TEMPLATES,
+  PROJECT_TEMPLATES:
+    process.env.PROJECT_TEMPLATES?.split(",").map((v) => v.trim()) ?? [],
 };
 
 export type ServerEnv = typeof env;

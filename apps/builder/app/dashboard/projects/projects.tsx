@@ -14,22 +14,6 @@ export const Projects = ({ projects, projectTemplates }: ProjectsProps) => {
   return (
     <Panel>
       <Flex direction="column" gap="3">
-        {projectTemplates.length > 0 && (
-          <Flex justify="between">
-            <Text variant="brandSectionTitle" as="h2">
-              Templates
-            </Text>
-          </Flex>
-        )}
-
-        {projectTemplates.length > 0 && (
-          <Flex gap="6" wrap="wrap">
-            {projectTemplates.map((project) => {
-              return <ProjectTemplateCard {...project} key={project.id} />;
-            })}
-          </Flex>
-        )}
-
         <Flex justify="between">
           <Text variant="brandSectionTitle" as="h2">
             Projects
@@ -43,6 +27,21 @@ export const Projects = ({ projects, projectTemplates }: ProjectsProps) => {
           })}
         </Flex>
       </Flex>
+
+      {projectTemplates.length > 0 && (
+        <Flex direction="column" gap="3">
+          <Flex justify="between">
+            <Text variant="brandSectionTitle" as="h2">
+              Templates
+            </Text>
+          </Flex>
+          <Flex gap="6" wrap="wrap">
+            {projectTemplates.map((project) => {
+              return <ProjectTemplateCard {...project} key={project.id} />;
+            })}
+          </Flex>
+        </Flex>
+      )}
     </Panel>
   );
 };

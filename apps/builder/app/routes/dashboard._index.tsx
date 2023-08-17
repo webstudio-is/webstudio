@@ -32,15 +32,13 @@ export const loader = async ({
     .createCaller(context)
     .findMany({ userId: user.id });
 
-  const projectIds =
-    env.PROJECT_TEMPLATES?.split(",").map((v) => v.trim()) ?? [];
+  const projectIds = env.PROJECT_TEMPLATES;
 
-  const projectTemplates =
-    projectIds.length > 0
-      ? await dashboardProjectRouter.createCaller(context).findManyByIds({
-          projectIds,
-        })
-      : [];
+  const projectTemplates = await dashboardProjectRouter
+    .createCaller(context)
+    .findManyByIds({
+      projectIds,
+    });
 
   return { user, projects, projectTemplates };
 };

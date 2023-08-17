@@ -25,6 +25,10 @@ export const findManyByIds = async (
   projectIds: string[],
   context: AppContext
 ) => {
+  if (projectIds.length === 0) {
+    return DashboardProjects.parse([]);
+  }
+
   const data = await prisma.dashboardProject.findMany({
     where: {
       id: {

@@ -225,6 +225,7 @@ const useDuplicateProject = ({
   projectId: DashboardProject["id"];
   onOpenChange: (isOpen: boolean) => void;
 }) => {
+  const navigate = useNavigate();
   const { send, state } = trpc.duplicate.useMutation();
 
   const [errors, setErrors] = useState<string>();
@@ -235,10 +236,16 @@ const useDuplicateProject = ({
       "error" in parsed
         ? parsed.error.issues.map((issue) => issue.message).join("\n")
         : undefined;
+
     setErrors(errors);
+
     if (parsed.success) {
-      send({ projectId, title });
-      onOpenChange(false);
+      send({ projectId, title }, (data) => {
+        if (data?.id) {
+          navigate(builderPath({ projectId: data.id }));
+          onOpenChange(false);
+        }
+      });
     }
   };
 
