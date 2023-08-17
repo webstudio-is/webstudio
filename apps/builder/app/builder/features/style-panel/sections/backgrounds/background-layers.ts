@@ -109,9 +109,13 @@ export const getLayerBackgroundStyleInfo = (
       resultProperty["value"] = styleValue;
     }
 
-    if (localStyle?.type === "layers") {
-      const styleValue = localStyle.value[layerNum];
-      resultProperty["local"] = styleValue;
+    if (localStyle?.value?.type === "layers") {
+      const styleValue = localStyle?.value.value[layerNum];
+      resultProperty["local"] = {
+        state: localStyle.state,
+        active: localStyle.active,
+        value: styleValue,
+      };
     }
 
     if (previousSourceStyle?.value?.type === "layers") {
@@ -167,8 +171,8 @@ export type SetBackgroundProperty = ReturnType<typeof setLayerProperty>;
 const getLayersValue = (styleValue?: StyleValueInfo) => {
   const clonedStyleValue: StyleValueInfo | undefined =
     structuredClone(styleValue);
-  if (clonedStyleValue?.local?.type === "layers") {
-    return clonedStyleValue.local;
+  if (clonedStyleValue?.local?.value.type === "layers") {
+    return clonedStyleValue.local.value;
   }
 
   if (clonedStyleValue?.nextSource?.value?.type === "layers") {
@@ -231,7 +235,7 @@ const normalizeLayers = (
       );
     }
 
-    let isStyleChanged = styleValue?.local?.type !== "layers";
+    let isStyleChanged = styleValue?.local?.value.type !== "layers";
 
     if (newPropertyStyle.value.length !== layerCount) {
       // All background properties must have the same number of layers

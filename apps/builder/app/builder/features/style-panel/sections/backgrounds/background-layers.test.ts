@@ -36,7 +36,10 @@ describe("setLayerProperty", () => {
             ([property]) => property === propertyName
           );
 
-          styleInfo[propertyName] = { value: newValue, local: newValue };
+          styleInfo[propertyName] = {
+            value: newValue,
+            local: { state: undefined, active: true, value: newValue },
+          };
 
           if (index !== -1) {
             changedProps[index] = [propertyName, newValue];
@@ -45,10 +48,10 @@ describe("setLayerProperty", () => {
 
           changedProps.push([propertyName, newValue]);
         },
-      deleteProperty: (propertyName: string) => {
+      deleteProperty: (_propertyName: string) => {
         // not used
       },
-      publish: (options?: unknown) => {
+      publish: (_options?: unknown) => {
         published = true;
       },
     });
@@ -81,7 +84,11 @@ describe("setLayerProperty", () => {
     // Set non array value, should be restored to array
     styleInfo.backgroundClip = {
       value: { type: "keyword", value: "repeat" },
-      local: { type: "keyword", value: "repeat" },
+      local: {
+        state: undefined,
+        active: true,
+        value: { type: "keyword", value: "repeat" },
+      },
     };
     setProperty("backgroundRepeat")({ type: "keyword", value: "no-repeat" });
 
@@ -101,8 +108,12 @@ describe("setLayerProperty", () => {
         value: [],
       },
       local: {
-        type: "layers",
-        value: [],
+        state: undefined,
+        active: false,
+        value: {
+          type: "layers",
+          value: [],
+        },
       },
     };
 
@@ -159,7 +170,10 @@ describe("setLayerProperty", () => {
             ([property]) => property === propertyName
           );
 
-          styleInfo[propertyName] = { value: newValue, local: newValue };
+          styleInfo[propertyName] = {
+            value: newValue,
+            local: { state: undefined, active: true, value: newValue },
+          };
 
           if (index !== -1) {
             changedProps[index] = [propertyName, newValue];
@@ -168,10 +182,10 @@ describe("setLayerProperty", () => {
 
           changedProps.push([propertyName, newValue]);
         },
-      deleteProperty: (propertyName: string) => {
+      deleteProperty: (_propertyName: string) => {
         // not used
       },
-      publish: (options?: unknown) => {
+      publish: (_options?: unknown) => {
         published = true;
       },
     });
@@ -269,12 +283,15 @@ describe("setLayerProperty", () => {
             throw new Error("newValue.type !== layers");
           }
 
-          styleInfo[propertyName] = { value: newValue, local: newValue };
+          styleInfo[propertyName] = {
+            value: newValue,
+            local: { state: undefined, active: true, value: newValue },
+          };
         },
-      deleteProperty: (propertyName: string) => {
+      deleteProperty: (_propertyName: string) => {
         // not used
       },
-      publish: (options?: unknown) => {
+      publish: (_options?: unknown) => {
         published = true;
       },
     });
@@ -426,13 +443,16 @@ describe("deleteLayer", () => {
           throw new Error("newValue.type !== layers");
         }
 
-        styleInfo[propertyName] = { value: newValue, local: newValue };
+        styleInfo[propertyName] = {
+          value: newValue,
+          local: { state: undefined, active: true, value: newValue },
+        };
       },
     deleteProperty: (propertyName: string) => {
       // not used
       deletedProperties.add(propertyName);
     },
-    publish: (options?: unknown) => {
+    publish: (_options?: unknown) => {
       published = true;
     },
   });
@@ -491,12 +511,15 @@ describe("swapLayers", () => {
             throw new Error("newValue.type !== layers");
           }
 
-          styleInfo[propertyName] = { value: newValue, local: newValue };
+          styleInfo[propertyName] = {
+            value: newValue,
+            local: { state: undefined, active: true, value: newValue },
+          };
         },
-      deleteProperty: (propertyName: string) => {
+      deleteProperty: (_propertyName: string) => {
         // not used
       },
-      publish: (options?: unknown) => {
+      publish: (_options?: unknown) => {
         published = true;
       },
     });
@@ -514,7 +537,7 @@ describe("swapLayers", () => {
     });
 
     expect(styleInfo.backgroundImage?.value).toEqual(
-      styleInfo.backgroundImage?.local
+      styleInfo.backgroundImage?.local?.value
     );
 
     swapLayers(0, 1, styleInfo, createBatchUpdate);

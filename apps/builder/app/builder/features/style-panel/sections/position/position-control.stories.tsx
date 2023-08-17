@@ -87,14 +87,18 @@ const bigValue = {
   },
 
   local: {
-    type: "unit",
-    value: 123.27,
-    unit: "rem",
+    state: undefined,
+    active: true,
+    value: {
+      type: "unit",
+      value: 123.27,
+      unit: "rem",
+    },
   },
 } as const;
 
 export const PositionControlComponent = (
-  args: Omit<React.ComponentProps<typeof PositionControl>, "renderCell">
+  _args: Omit<React.ComponentProps<typeof PositionControl>, "renderCell">
 ) => {
   const { styleInfo, setProperty, deleteProperty, createBatchUpdate } =
     useStyleInfo({

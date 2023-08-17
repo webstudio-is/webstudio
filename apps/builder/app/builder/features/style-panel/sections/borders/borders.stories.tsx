@@ -12,7 +12,11 @@ setEnv("*");
 
 const styleInfoInitial: StyleInfo = {
   borderTopColor: {
-    local: { type: "rgb", r: 0, g: 0, b: 0, alpha: 1 },
+    local: {
+      state: undefined,
+      active: true,
+      value: { type: "rgb", r: 0, g: 0, b: 0, alpha: 1 },
+    },
     value: { type: "rgb", r: 0, g: 0, b: 0, alpha: 1 },
   },
 };

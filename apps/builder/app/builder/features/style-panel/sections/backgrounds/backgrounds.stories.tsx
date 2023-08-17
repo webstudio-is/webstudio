@@ -123,7 +123,7 @@ export const Backgrounds = () => {
     useStyleInfo({
       backgroundImage: {
         value: backgroundImageStyle,
-        local: backgroundImageStyle,
+        local: { state: undefined, active: true, value: backgroundImageStyle },
       },
     });
 

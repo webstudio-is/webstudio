@@ -27,12 +27,15 @@ afterEach(() => {
 
 const createBatchUpdate: CreateBatchUpdate = () => ({
   setProperty: (propertyName: StyleProperty) => (newValue: StyleValue) => {
-    styleInfo[propertyName] = { value: newValue, local: newValue };
+    styleInfo[propertyName] = {
+      value: newValue,
+      local: { state: undefined, active: true, value: newValue },
+    };
   },
   deleteProperty: (propertyName: string) => {
     deletedProperties.add(propertyName);
   },
-  publish: (options?: unknown) => {
+  publish: (_options?: unknown) => {
     published = true;
   },
 });
