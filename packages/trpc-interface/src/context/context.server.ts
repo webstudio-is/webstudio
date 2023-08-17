@@ -14,6 +14,9 @@ type AuthorizationContext = {
    */
   authToken: string | undefined;
 
+  /**
+   * project list serves as a template and is accessible to everyone.
+   */
   projectTemplates: string[];
 
   /**
