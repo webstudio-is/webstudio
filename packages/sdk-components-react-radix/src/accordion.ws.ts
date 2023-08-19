@@ -114,6 +114,7 @@ const accordionContentStyles: EmbedTemplateStyleDecl[] = [
 
 export const metaAccordion: WsComponentMeta = {
   category: "radix",
+  order: 3,
   type: "container",
   icon: AccordionIcon,
   presetStyle,

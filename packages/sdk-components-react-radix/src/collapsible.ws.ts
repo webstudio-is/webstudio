@@ -21,6 +21,7 @@ const presetStyle = {
 
 export const metaCollapsible: WsComponentMeta = {
   category: "radix",
+  order: 5,
   type: "container",
   presetStyle,
   icon: CollapsibleIcon,

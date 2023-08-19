@@ -15,6 +15,7 @@ const presetStyle = {
 
 export const meta: WsComponentMeta = {
   category: "radix",
+  order: 104,
   type: "control",
   invalidAncestors: ["Button"],
   icon: FormTextAreaIcon,
@@ -32,7 +33,6 @@ export const meta: WsComponentMeta = {
     { selector: ":read-only", label: "Read Only" },
     { selector: ":read-write", label: "Read Write" },
   ],
-  order: 1,
   template: [
     {
       type: "instance",
