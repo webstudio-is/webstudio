@@ -44,9 +44,9 @@ export const metaPopoverContent: WsComponentMeta = {
  **/
 export const metaPopover: WsComponentMeta = {
   category: "radix",
+  order: 6,
   type: "container",
   icon: PopoverIcon,
-  order: 15,
   stylable: false,
   template: [
     {

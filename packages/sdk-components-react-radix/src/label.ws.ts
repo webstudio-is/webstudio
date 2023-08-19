@@ -15,11 +15,11 @@ const presetStyle = {
 
 export const meta: WsComponentMeta = {
   category: "radix",
+  order: 102,
   type: "container",
   icon: LabelIcon,
   presetStyle,
   states: defaultStates,
-  order: 1,
   template: [
     {
       type: "instance",

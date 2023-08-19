@@ -112,10 +112,9 @@ export const metaSheetClose: WsComponentMeta = {
  **/
 export const metaSheet: WsComponentMeta = {
   category: "radix",
-
+  order: 1,
   type: "container",
   icon: HamburgerMenuIcon,
-  order: 15,
   stylable: false,
   template: [
     {

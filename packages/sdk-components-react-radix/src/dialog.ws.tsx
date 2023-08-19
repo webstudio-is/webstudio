@@ -98,9 +98,9 @@ export const metaDialogClose: WsComponentMeta = {
  **/
 export const metaDialog: WsComponentMeta = {
   category: "radix",
+  order: 4,
   type: "container",
   icon: DialogIcon,
-  order: 15,
   stylable: false,
   template: [
     {

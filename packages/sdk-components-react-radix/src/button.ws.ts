@@ -115,6 +115,7 @@ export const template = (props?: {
 
 export const meta: WsComponentMeta = {
   category: "radix",
+  order: 101,
   type: "container",
   invalidAncestors: ["Button"],
   icon: ButtonElementIcon,
@@ -145,7 +146,6 @@ export const meta: WsComponentMeta = {
     { selector: "[data-variant=link]", label: "Link" },
     { selector: "[data-variant=link]:hover", label: "Link Hover" },
   ],
-  order: 1,
   template: template(),
 };
 

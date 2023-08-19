@@ -64,6 +64,7 @@ const tabsContentStyles: EmbedTemplateStyleDecl[] = [
 
 export const metaTabs: WsComponentMeta = {
   category: "radix",
+  order: 2,
   type: "container",
   icon: TabsIcon,
   presetStyle,
