@@ -415,6 +415,7 @@ const orderedDisplayValues = [
   "block",
   "flex",
   "inline-block",
+  "inline-flex",
   "inline",
   "none",
 ];
