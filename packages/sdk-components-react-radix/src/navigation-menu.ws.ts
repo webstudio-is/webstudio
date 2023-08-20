@@ -35,6 +35,8 @@ const presetStyle = {
 
 const menuItem = (props: {
   title: string;
+  linkPrefix: string;
+  linkCount: number;
 }): NonNullable<WsComponentMeta["template"]> => [
   {
     type: "instance",
@@ -65,19 +67,42 @@ const menuItem = (props: {
             type: "instance",
             component: "Box",
             label: "Content Container",
-            styles: [].flat(),
+            styles: [tc.flex(), tc.gap(4)].flat(),
 
             children: [
               {
                 type: "instance",
-                component: "NavigationMenuLink",
+                component: "Box",
+                styles: [tc.bg("border"), tc.p(4)].flat(),
                 children: [
                   {
-                    type: "instance",
-                    component: "Link",
-                    children: [{ type: "text", value: "Link" }],
+                    type: "text",
+                    value: "Content",
                   },
                 ],
+              },
+
+              {
+                type: "instance",
+                component: "Box",
+                label: "Content Container",
+                styles: [tc.flex(), tc.gap(4), tc.flex("col")].flat(),
+                children: Array.from(Array(props.linkCount), (_, index) => ({
+                  type: "instance",
+                  component: "NavigationMenuLink",
+                  children: [
+                    {
+                      type: "instance",
+                      component: "Link",
+                      children: [
+                        {
+                          type: "text",
+                          value: `${props.linkPrefix} + ${index}`,
+                        },
+                      ],
+                    },
+                  ],
+                })),
               },
             ],
           },
@@ -140,8 +165,16 @@ export const metaNavigationMenu: WsComponentMeta = {
           ].flat(),
 
           children: [
-            ...menuItem({ title: "Item One" }),
-            ...menuItem({ title: "Item Two" }),
+            ...menuItem({
+              title: "Item One",
+              linkCount: 5,
+              linkPrefix: "Link to page",
+            }),
+            ...menuItem({
+              title: "Item Two",
+              linkCount: 3,
+              linkPrefix: "Link to other page",
+            }),
           ],
         },
 
