@@ -20,6 +20,10 @@ export const DataSourceVariableValue = z.union([
     type: z.literal("string[]"),
     value: z.array(z.string()),
   }),
+  z.object({
+    type: z.literal("undefined"),
+    value: z.undefined(),
+  }),
 ]);
 
 export const DataSource = z.union([

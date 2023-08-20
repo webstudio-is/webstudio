@@ -32,6 +32,7 @@ const EmbedTemplateDataSource = z.union([
       z.number(),
       z.boolean(),
       z.array(z.string()),
+      z.undefined(),
     ]),
   }),
   z.object({
@@ -145,6 +146,10 @@ const getDataSourceValue = (
   if (Array.isArray(value)) {
     return { type: "string[]", value };
   }
+  if (value === undefined) {
+    return { type: "undefined", value };
+  }
+
   value satisfies never;
   throw Error("Impossible case");
 };
