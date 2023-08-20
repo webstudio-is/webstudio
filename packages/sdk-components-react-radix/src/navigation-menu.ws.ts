@@ -123,7 +123,7 @@ export const metaNavigationMenu: WsComponentMeta = {
       type: "instance",
       component: "NavigationMenu",
       dataSources: {
-        menuValue: { type: "variable", initialValue: "0" },
+        menuValue: { type: "variable", initialValue: "-1" },
       },
       props: [
         { type: "dataSource", name: "value", dataSourceName: "menuValue" },
@@ -208,7 +208,7 @@ export const metaNavigationMenu: WsComponentMeta = {
               styles: [
                 tc.relative(),
                 tc.mt(1.5),
-                tc.w("full"),
+                // tc.w("full"),
                 tc.overflow("hidden"),
                 tc.rounded("md"),
                 tc.border(),
@@ -246,6 +246,7 @@ export const metaNavigationMenuItem: WsComponentMeta = {
   icon: ItemIcon,
   requiredAncestors: ["NavigationMenu"],
   presetStyle,
+  indexWithinAncestor: "NavigationMenu",
 };
 export const metaNavigationMenuTrigger: WsComponentMeta = {
   category: "hidden",
