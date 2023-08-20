@@ -48,3 +48,13 @@ export {
   propsMetaAccordionTrigger as AccordionTrigger,
   propsMetaAccordionContent as AccordionContent,
 } from "./accordion.ws";
+
+export {
+  propsMetaNavigationMenu as NavigationMenu,
+  propsMetaNavigationMenuList as NavigationMenuList,
+  propsMetaNavigationMenuItem as NavigationMenuItem,
+  propsMetaNavigationMenuTrigger as NavigationMenuTrigger,
+  propsMetaNavigationMenuContent as NavigationMenuContent,
+  propsMetaNavigationMenuLink as NavigationMenuLink,
+  propsMetaNavigationMenuViewport as NavigationMenuViewport,
+} from "./navigation-menu.ws";

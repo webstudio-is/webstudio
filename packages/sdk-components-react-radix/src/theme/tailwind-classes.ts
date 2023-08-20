@@ -369,33 +369,45 @@ export const maxW = (
 
 const positionStyle = (
   property: "left" | "right" | "top" | "bottom",
-  spacing: StringEnumToNumeric<keyof EvaluatedDefaultTheme["spacing"]>
+  spacing:
+    | StringEnumToNumeric<keyof EvaluatedDefaultTheme["inset"]>
+    | NonNumeric<keyof EvaluatedDefaultTheme["inset"]>
 ): EmbedTemplateStyleDecl => {
   const key = `${spacing}` as const;
-  const valueString = theme("spacing")?.[key] ?? "0";
+  const valueString = theme("inset")?.[key] ?? "0";
   const value = parseCssValue(property, valueString);
 
   return { property, value };
 };
 
 export const top = (
-  spacing: StringEnumToNumeric<keyof EvaluatedDefaultTheme["spacing"]>
+  spacing:
+    | StringEnumToNumeric<keyof EvaluatedDefaultTheme["inset"]>
+    | NonNumeric<keyof EvaluatedDefaultTheme["inset"]>
 ): EmbedTemplateStyleDecl[] => [positionStyle("top", spacing)];
 
 export const right = (
-  spacing: StringEnumToNumeric<keyof EvaluatedDefaultTheme["spacing"]>
+  spacing:
+    | StringEnumToNumeric<keyof EvaluatedDefaultTheme["inset"]>
+    | NonNumeric<keyof EvaluatedDefaultTheme["inset"]>
 ): EmbedTemplateStyleDecl[] => [positionStyle("right", spacing)];
 
 export const bottom = (
-  spacing: StringEnumToNumeric<keyof EvaluatedDefaultTheme["spacing"]>
+  spacing:
+    | StringEnumToNumeric<keyof EvaluatedDefaultTheme["inset"]>
+    | NonNumeric<keyof EvaluatedDefaultTheme["inset"]>
 ): EmbedTemplateStyleDecl[] => [positionStyle("bottom", spacing)];
 
 export const left = (
-  spacing: StringEnumToNumeric<keyof EvaluatedDefaultTheme["spacing"]>
+  spacing:
+    | StringEnumToNumeric<keyof EvaluatedDefaultTheme["inset"]>
+    | NonNumeric<keyof EvaluatedDefaultTheme["inset"]>
 ): EmbedTemplateStyleDecl[] => [positionStyle("left", spacing)];
 
 export const inset = (
-  spacing: StringEnumToNumeric<keyof EvaluatedDefaultTheme["spacing"]>
+  spacing:
+    | StringEnumToNumeric<keyof EvaluatedDefaultTheme["inset"]>
+    | NonNumeric<keyof EvaluatedDefaultTheme["inset"]>
 ): EmbedTemplateStyleDecl[] => [
   positionStyle("left", spacing),
   positionStyle("right", spacing),
@@ -413,6 +425,15 @@ export const backdropBlur = (
   };
 
   return [{ property: "backdropFilter", value }];
+};
+
+export const list = (
+  listStyle: keyof EvaluatedDefaultTheme["listStyleType"]
+): EmbedTemplateStyleDecl[] => {
+  const valueString = theme("listStyleType")[listStyle];
+  const value = parseCssValue("listStyleType", valueString);
+
+  return [{ property: "listStyleType", value }];
 };
 
 export const bg = (
