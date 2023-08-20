@@ -1,5 +1,7 @@
 import { z } from "zod";
 import { nanoid } from "nanoid";
+import { titleCase } from "title-case";
+import { noCase } from "no-case";
 import {
   Instance,
   type InstancesList,
@@ -103,6 +105,7 @@ export type EmbedTemplateInstance = {
   label?: string;
   dataSources?: Record<string, EmbedTemplateDataSource>;
   props?: EmbedTemplateProp[];
+  tokens?: string[];
   styles?: EmbedTemplateStyleDecl[];
   children: Array<EmbedTemplateInstance | EmbedTemplateText>;
 };
@@ -115,6 +118,7 @@ export const EmbedTemplateInstance: z.ZodType<EmbedTemplateInstance> = z.lazy(
       label: z.optional(z.string()),
       dataSources: z.optional(z.record(z.string(), EmbedTemplateDataSource)),
       props: z.optional(z.array(EmbedTemplateProp)),
+      tokens: z.optional(z.array(z.string())),
       styles: z.optional(z.array(EmbedTemplateStyleDecl)),
       children: WsEmbedTemplate,
     })
@@ -153,6 +157,7 @@ const createInstancesFromTemplate = (
   styleSourceSelections: StyleSourceSelectionsList,
   styleSources: StyleSourcesList,
   styles: StylesList,
+  metas: Map<Instance["component"], WsComponentMeta>,
   defaultBreakpointId: Breakpoint["id"]
 ) => {
   const parentChildren: Instance["children"] = [];
@@ -243,6 +248,39 @@ const createInstancesFromTemplate = (
         }
       }
 
+      // convert tokens into style sources and styles
+      if (item.tokens) {
+        const meta = metas.get(item.component);
+        if (meta?.presetTokens) {
+          const styleSourceIds: string[] = [];
+          for (const name of item.tokens) {
+            const tokenValue = meta.presetTokens[name];
+            if (tokenValue) {
+              const styleSourceId = `${item.component}:${name}`;
+              styleSourceIds.push(styleSourceId);
+              styleSources.push({
+                type: "token",
+                id: styleSourceId,
+                name: titleCase(noCase(name)),
+              });
+              for (const styleDecl of tokenValue.styles) {
+                styles.push({
+                  breakpointId: defaultBreakpointId,
+                  styleSourceId,
+                  state: styleDecl.state,
+                  property: styleDecl.property,
+                  value: styleDecl.value,
+                });
+              }
+            }
+          }
+          styleSourceSelections.push({
+            instanceId,
+            values: styleSourceIds,
+          });
+        }
+      }
+
       // populate styles
       if (item.styles) {
         const styleSourceId = nanoid();
@@ -283,6 +321,7 @@ const createInstancesFromTemplate = (
         styleSourceSelections,
         styleSources,
         styles,
+        metas,
         defaultBreakpointId
       );
       parentChildren.push({
@@ -303,6 +342,7 @@ const createInstancesFromTemplate = (
 
 export const generateDataFromEmbedTemplate = (
   treeTemplate: WsEmbedTemplate,
+  metas: Map<Instance["component"], WsComponentMeta>,
   defaultBreakpointId: Breakpoint["id"]
 ) => {
   const instances: InstancesList = [];
@@ -320,6 +360,7 @@ export const generateDataFromEmbedTemplate = (
     styleSourceSelections,
     styleSources,
     styles,
+    metas,
     defaultBreakpointId
   );
 

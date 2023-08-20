@@ -3,7 +3,9 @@ import { toast } from "@webstudio-is/design-system";
 import {
   type Instance,
   type Instances,
+  type StyleSource,
   findTreeInstanceIdsExcludingSlotDescendants,
+  getStyleDeclKey,
 } from "@webstudio-is/project-build";
 import {
   type WsComponentMeta,
@@ -31,9 +33,6 @@ import {
   reparentInstanceMutable,
   getAncestorInstanceSelector,
   insertPropsCopyMutable,
-  insertStyleSourcesCopyMutable,
-  insertStyleSourceSelectionsCopyMutable,
-  insertStylesCopyMutable,
 } from "./tree-utils";
 import { removeByMutable } from "./array-utils";
 import { isBaseBreakpoint } from "./breakpoints";
@@ -264,9 +263,6 @@ export const insertTemplateData = (
     instances: insertedInstances,
     props: insertedProps,
     dataSources: insertedDataSources,
-    styleSourceSelections: insertedStyleSourceSelections,
-    styleSources: insertedStyleSources,
-    styles: insertedStyles,
   } = templateData;
   const rootInstanceId = insertedInstances[0].id;
   store.createTransaction(
@@ -298,18 +294,29 @@ export const insertTemplateData = (
       for (const dataSource of insertedDataSources) {
         dataSources.set(dataSource.id, dataSource);
       }
-      insertStyleSourcesCopyMutable(
-        styleSources,
-        insertedStyleSources,
-        new Set()
-      );
-      insertStyleSourceSelectionsCopyMutable(
-        styleSourceSelections,
-        insertedStyleSourceSelections,
-        new Map(),
-        new Map()
-      );
-      insertStylesCopyMutable(styles, insertedStyles, new Map(), new Map());
+
+      // insert only new style sources and their styles to support
+      // embed template tokens which have persistent id
+      // so when user changes these styles and then again add component with token
+      // nothing breaks visually
+      const insertedStyleSources = new Set<StyleSource["id"]>();
+      for (const styleSource of templateData.styleSources) {
+        if (styleSources.has(styleSource.id) === false) {
+          insertedStyleSources.add(styleSource.id);
+          styleSources.set(styleSource.id, styleSource);
+        }
+      }
+      for (const styleDecl of templateData.styles) {
+        if (insertedStyleSources.has(styleDecl.styleSourceId)) {
+          styles.set(getStyleDeclKey(styleDecl), styleDecl);
+        }
+      }
+      for (const styleSourceSelection of templateData.styleSourceSelections) {
+        styleSourceSelections.set(
+          styleSourceSelection.instanceId,
+          styleSourceSelection
+        );
+      }
     }
   );
 
@@ -337,7 +344,7 @@ export const getComponentTemplateData = (component: string) => {
   if (baseBreakpoint === undefined) {
     return;
   }
-  return generateDataFromEmbedTemplate(template, baseBreakpoint.id);
+  return generateDataFromEmbedTemplate(template, metas, baseBreakpoint.id);
 };
 
 export const reparentInstance = (

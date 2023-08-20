@@ -157,23 +157,6 @@ export const useInstanceStyles = (instanceId: undefined | Instance["id"]) => {
 };
 
 export const styleSourcesStore = atom<StyleSources>(new Map());
-/**
- * find all non-local style sources
- * scoped to current tree or whole project
- */
-export const availableStyleSourcesStore = shallowComputed(
-  [styleSourcesStore],
-  (styleSources) => {
-    const availableStylesSources: StyleSource[] = [];
-    for (const styleSource of styleSources.values()) {
-      if (styleSource.type === "local") {
-        continue;
-      }
-      availableStylesSources.push(styleSource);
-    }
-    return availableStylesSources;
-  }
-);
 
 export const useSetStyleSources = (
   styleSources: [StyleSource["id"], StyleSource][]

@@ -56,7 +56,7 @@ export const renderComponentTemplate = ({
     });
   }
 
-  const data = generateDataFromEmbedTemplate(template, "base");
+  const data = generateDataFromEmbedTemplate(template, metas, "base");
 
   const instances: [Instance["id"], Instance][] = [
     [

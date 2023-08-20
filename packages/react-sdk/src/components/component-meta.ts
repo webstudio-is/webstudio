@@ -36,6 +36,11 @@ export const ComponentState = z.object({
 
 export type ComponentState = z.infer<typeof ComponentState>;
 
+const ComponentToken = z.object({
+  variant: z.optional(z.string()),
+  styles: z.array(EmbedTemplateStyleDecl),
+});
+
 export const defaultStates: ComponentState[] = [
   { selector: ":hover", label: "Hover" },
   { selector: ":active", label: "Active" },
@@ -67,6 +72,7 @@ const WsComponentMeta = z.object({
   description: z.string().optional(),
   icon: z.string(),
   presetStyle: z.optional(z.record(z.string(), EmbedTemplateStyleDecl)),
+  presetTokens: z.optional(z.record(z.string(), ComponentToken)),
   states: z.optional(z.array(ComponentState)),
   template: z.optional(WsEmbedTemplate),
   order: z.number().optional(),

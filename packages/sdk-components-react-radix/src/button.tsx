@@ -3,23 +3,9 @@
 
 import { forwardRef, type ComponentPropsWithoutRef } from "react";
 
-type ButtonVariants = {
-  variant:
-    | "default"
-    | "destructive"
-    | "outline"
-    | "secondary"
-    | "ghost"
-    | "link";
-
-  size: "default" | "sm" | "lg" | "icon";
-};
-
 export const Button = forwardRef<
   HTMLButtonElement,
-  ComponentPropsWithoutRef<"button"> & ButtonVariants
->(({ variant = "default", size = "default", ...props }, ref) => {
-  return (
-    <button ref={ref} data-size={size} data-variant={variant} {...props} />
-  );
+  ComponentPropsWithoutRef<"button">
+>((props, ref) => {
+  return <button ref={ref} {...props} />;
 });
