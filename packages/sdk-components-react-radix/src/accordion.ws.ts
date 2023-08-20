@@ -76,6 +76,7 @@ const createAccordionTrigger = ({
         {
           type: "instance",
           component: "Box",
+          label: "Icon Container",
           // h-4 w-4 shrink-0 transition-transform duration-200
           styles: [
             tc.property("rotate", "--accordion-trigger-icon-transform"),
