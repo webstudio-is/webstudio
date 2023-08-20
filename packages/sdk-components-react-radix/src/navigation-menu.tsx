@@ -10,15 +10,10 @@ import {
   Children,
   forwardRef,
   type ComponentPropsWithoutRef,
-  // type ComponentPropsWithoutRef,
-  // type ElementRef,
   type ReactNode,
   useContext,
 } from "react";
 
-// const { renderer } = useContext(ReactSdkContext);
-
-// export const NavigationMenu = NavigationMenuPrimitive.Root;
 export const NavigationMenu = forwardRef<
   HTMLLIElement,
   Omit<
@@ -84,7 +79,7 @@ export const NavigationMenuTrigger = forwardRef<
 
 const namespace = "@webstudio-is/sdk-components-react-radix";
 
-// For each TabsContent component within the selection,
+// For each NavigationMenuItem component within the selection,
 // we identify its closest parent NavigationMenu component
 // and update its open prop bound to variable.
 export const hooksNavigationMenu: Hook = {

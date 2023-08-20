@@ -143,15 +143,7 @@ export const metaNavigationMenu: WsComponentMeta = {
 
       // relative
       // Omiting this: z-10 flex max-w-max flex-1 items-center justify-center
-      styles: [
-        tc.relative(),
-        /*
-        Not useful.
-        tc.flex(),
-        tc.items("center"),
-        tc.justify("center"),
-        */
-      ].flat(),
+      styles: [tc.relative()].flat(),
       children: [
         {
           type: "instance",
@@ -195,32 +187,20 @@ export const metaNavigationMenu: WsComponentMeta = {
             tc.top("full"),
             tc.flex(),
             tc.justify("center"),
-            // tc.w("max"),
-            // tc.h("max"),
           ].flat(),
           children: [
             {
               type: "instance",
               component: "NavigationMenuViewport",
               /*
-              props: [
-                {
-                  name: "forceMount",
-                  type: "boolean",
-                  value: true,
-                },
-              ],
-              */
-              /*
-                'origin-top-center relative mt-1.5 w-full ' +
-                'overflow-hidden rounded-md border bg-popover text-popover-foreground shadow-lg ' +
-                'h-[var(--radix-navigation-menu-viewport-height)] ' +
-                'w-[var(--radix-navigation-menu-viewport-width)] ' +
-                anims(
-                  '[animation-duration:150ms!important] [transition-duration:150ms!important] ' +
-                    'data-[state=open]:animate-in data-[state=closed]:animate-out ' +
-                    'data-[state=closed]:zoom-out-95 data-[state=open]:zoom-in-90 '
-                )
+                origin-top-center relative mt-1.5 w-full
+                overflow-hidden rounded-md border bg-popover text-popover-foreground shadow-lg
+                h-[var(--radix-navigation-menu-viewport-height)]
+                w-[var(--radix-navigation-menu-viewport-width)]
+                // anims
+                [animation-duration:150ms!important] [transition-duration:150ms!important]
+                data-[state=open]:animate-in data-[state=closed]:animate-out
+                data-[state=closed]:zoom-out-95 data-[state=open]:zoom-in-90
               */
               styles: [
                 tc.relative(),
