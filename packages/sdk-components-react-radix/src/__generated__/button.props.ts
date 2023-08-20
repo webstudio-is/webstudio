@@ -445,13 +445,6 @@ export const props: Record<string, PropMeta> = {
   rev: { required: false, control: "text", type: "string" },
   role: { required: false, control: "text", type: "string" },
   security: { required: false, control: "text", type: "string" },
-  size: {
-    required: false,
-    control: "select",
-    type: "string",
-    defaultValue: "default",
-    options: ["default", "sm", "lg", "icon"],
-  },
   slot: { required: false, control: "text", type: "string" },
   spellCheck: { required: false, control: "boolean", type: "boolean" },
   suppressContentEditableWarning: {
@@ -484,20 +477,6 @@ export const props: Record<string, PropMeta> = {
     control: "radio",
     type: "string",
     options: ["on", "off"],
-  },
-  variant: {
-    required: false,
-    control: "select",
-    type: "string",
-    defaultValue: "default",
-    options: [
-      "link",
-      "default",
-      "destructive",
-      "outline",
-      "secondary",
-      "ghost",
-    ],
   },
   vocab: { required: false, control: "text", type: "string" },
 };

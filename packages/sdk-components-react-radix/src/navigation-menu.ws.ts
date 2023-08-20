@@ -49,19 +49,10 @@ const menuItem = (props: {
           children: [{ type: "text", value: props.title }],
         }),
       },
-
       {
         type: "instance",
         component: "NavigationMenuContent",
-        // left-0 top-0 absolute w-max
-        styles: [
-          tc.left(0),
-          tc.top(0),
-          tc.absolute(),
-          tc.w("max"),
-          tc.p(4),
-        ].flat(),
-
+        tokens: ["navigationMenuContent"],
         children: [
           {
             type: "instance",
@@ -118,6 +109,13 @@ export const metaNavigationMenu: WsComponentMeta = {
   type: "container",
   icon: HamburgerMenuIcon,
   presetStyle,
+  presetTokens: {
+    navigationMenu: {
+      // relative
+      // Omiting this: z-10 flex max-w-max flex-1 items-center justify-center
+      styles: [tc.relative()].flat(),
+    },
+  },
   template: [
     {
       type: "instance",
@@ -141,27 +139,13 @@ export const metaNavigationMenu: WsComponentMeta = {
         },
       ],
 
-      // relative
-      // Omiting this: z-10 flex max-w-max flex-1 items-center justify-center
-      styles: [tc.relative()].flat(),
+      tokens: ["navigationMenu"],
+
       children: [
         {
           type: "instance",
           component: "NavigationMenuList",
-          // flex flex-1 list-none items-center justify-center gap-1
-          styles: [
-            // ul defaults in tailwind
-            tc.p(0),
-            tc.m(0),
-            // shadcdn styles
-            tc.flex(),
-            tc.flex(1),
-            tc.list("none"),
-            tc.items("center"),
-            tc.justify("center"),
-            tc.gap(1),
-          ].flat(),
-
+          tokens: ["navigationMenuList"],
           children: [
             ...menuItem({
               title: "Item One",
@@ -188,35 +172,12 @@ export const metaNavigationMenu: WsComponentMeta = {
             tc.flex(),
             tc.justify("center"),
           ].flat(),
+
           children: [
             {
               type: "instance",
               component: "NavigationMenuViewport",
-              /*
-                origin-top-center relative mt-1.5 w-full
-                overflow-hidden rounded-md border bg-popover text-popover-foreground shadow-lg
-                h-[var(--radix-navigation-menu-viewport-height)]
-                w-[var(--radix-navigation-menu-viewport-width)]
-                // anims
-                [animation-duration:150ms!important] [transition-duration:150ms!important]
-                data-[state=open]:animate-in data-[state=closed]:animate-out
-                data-[state=closed]:zoom-out-95 data-[state=open]:zoom-in-90
-              */
-              styles: [
-                tc.relative(),
-                tc.mt(1.5),
-                tc.overflow("hidden"),
-                tc.rounded("md"),
-                tc.border(),
-                tc.bg("popover"),
-                tc.text("popoverForeground"),
-                tc.shadow("lg"),
-                tc.property(
-                  "height",
-                  "--radix-navigation-menu-viewport-height"
-                ),
-                tc.property("width", "--radix-navigation-menu-viewport-width"),
-              ].flat(),
+              tokens: ["navigationMenuViewport"],
               children: [],
             },
           ],
@@ -233,6 +194,22 @@ export const metaNavigationMenuList: WsComponentMeta = {
   icon: HeaderIcon,
   requiredAncestors: ["NavigationMenu"],
   presetStyle,
+  presetTokens: {
+    navigationMenuList: {
+      styles: [
+        // ul defaults in tailwind
+        tc.p(0),
+        tc.m(0),
+        // shadcdn styles
+        tc.flex(),
+        tc.flex(1),
+        tc.list("none"),
+        tc.items("center"),
+        tc.justify("center"),
+        tc.gap(1),
+      ].flat(),
+    },
+  },
 };
 
 export const metaNavigationMenuItem: WsComponentMeta = {
@@ -243,10 +220,12 @@ export const metaNavigationMenuItem: WsComponentMeta = {
   requiredAncestors: ["NavigationMenu"],
   presetStyle,
   indexWithinAncestor: "NavigationMenu",
+  // no default tokens
 };
 export const metaNavigationMenuTrigger: WsComponentMeta = {
   category: "hidden",
   detachable: false,
+  stylable: false,
   type: "container",
   icon: TriggerIcon,
   requiredAncestors: ["NavigationMenuItem"],
@@ -258,6 +237,20 @@ export const metaNavigationMenuContent: WsComponentMeta = {
   type: "container",
   icon: ContentIcon,
   requiredAncestors: ["NavigationMenuItem"],
+
+  presetTokens: {
+    navigationMenuContent: {
+      // left-0 top-0 absolute w-max
+      styles: [
+        tc.left(0),
+        tc.top(0),
+        tc.absolute(),
+        tc.w("max"),
+        tc.p(4),
+      ].flat(),
+    },
+  },
+
   presetStyle,
 };
 
@@ -278,6 +271,32 @@ export const metaNavigationMenuViewport: WsComponentMeta = {
   icon: ExternalLinkIcon,
   requiredAncestors: ["NavigationMenu"],
   presetStyle,
+  presetTokens: {
+    navigationMenuViewport: {
+      /*
+        origin-top-center relative mt-1.5 w-full
+        overflow-hidden rounded-md border bg-popover text-popover-foreground shadow-lg
+        h-[var(--radix-navigation-menu-viewport-height)]
+        w-[var(--radix-navigation-menu-viewport-width)]
+        // anims
+        [animation-duration:150ms!important] [transition-duration:150ms!important]
+        data-[state=open]:animate-in data-[state=closed]:animate-out
+        data-[state=closed]:zoom-out-95 data-[state=open]:zoom-in-90
+      */
+      styles: [
+        tc.relative(),
+        tc.mt(1.5),
+        tc.overflow("hidden"),
+        tc.rounded("md"),
+        tc.border(),
+        tc.bg("popover"),
+        tc.text("popoverForeground"),
+        tc.shadow("lg"),
+        tc.property("height", "--radix-navigation-menu-viewport-height"),
+        tc.property("width", "--radix-navigation-menu-viewport-width"),
+      ].flat(),
+    },
+  },
 };
 
 export const propsMetaNavigationMenu: WsComponentPropsMeta = {
