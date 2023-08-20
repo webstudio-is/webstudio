@@ -3,7 +3,7 @@ import {
   type ControlProps,
   getLabel,
   useLocalValue,
-  HorizontalLayout,
+  ResponsiveLayout,
 } from "../shared";
 
 // @todo:
@@ -24,7 +24,7 @@ export const ColorControl = ({
   );
 
   return (
-    <HorizontalLayout
+    <ResponsiveLayout
       label={getLabel(meta, propName)}
       id={id}
       onDelete={onDelete}
@@ -40,6 +40,6 @@ export const ColorControl = ({
           }
         }}
       />
-    </HorizontalLayout>
+    </ResponsiveLayout>
   );
 };

@@ -4,7 +4,7 @@ import {
   getLabel,
   useLocalValue,
   VerticalLayout,
-  HorizontalLayout,
+  ResponsiveLayout,
 } from "../shared";
 import { useState, type ComponentProps } from "react";
 
@@ -63,7 +63,7 @@ const UniversalInput = ({
         const { value } = event.target;
         handleChange(value);
       }}
-      onBlur={(event) => {
+      onBlur={(_event) => {
         handleChange(value);
         onSubmit();
       }}
@@ -108,7 +108,8 @@ export const TextControl = ({
   });
   const id = useId();
   const label = getLabel(meta, propName);
-  const isTwoColumnLayout = meta.rows && meta.rows < 2 ? true : false;
+  const rows = meta.rows ?? 1;
+  const isTwoColumnLayout = rows < 2;
 
   const input = (
     <UniversalInput
@@ -122,9 +123,9 @@ export const TextControl = ({
 
   if (isTwoColumnLayout) {
     return (
-      <HorizontalLayout label={label} id={id} onDelete={onDelete}>
+      <ResponsiveLayout label={label} id={id} onDelete={onDelete}>
         <Flex>{input}</Flex>
-      </HorizontalLayout>
+      </ResponsiveLayout>
     );
   }
 

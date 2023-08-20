@@ -10,7 +10,6 @@ import { useStore } from "@nanostores/react";
 import {
   dataSourceValuesStore,
   dataSourcesStore,
-  propsIndexStore,
   registeredComponentPropsMetasStore,
 } from "~/shared/nano-states";
 
@@ -104,6 +103,7 @@ const getDefaultMetaForType = (type: Prop["type"]): PropMeta => {
 
 type UsePropsLogicInput = {
   instance: Instance;
+  props: Prop[];
   updateProp: (update: Prop) => void;
   deleteProp: (id: Prop["id"]) => void;
 };
@@ -164,6 +164,7 @@ const getPropTypeAndValue = (value: unknown) => {
 /** usePropsLogic expects that key={instanceId} is used on the ancestor component */
 export const usePropsLogic = ({
   instance,
+  props,
   updateProp,
   deleteProp,
 }: UsePropsLogicInput): UsePropsLogicOutput => {
@@ -172,35 +173,33 @@ export const usePropsLogic = ({
   );
   const dataSources = useStore(dataSourcesStore);
   const dataSourceValues = useStore(dataSourceValuesStore);
-  const { propsByInstanceId } = useStore(propsIndexStore);
 
   if (meta === undefined) {
     throw new Error(`Could not get meta for component "${instance.component}"`);
   }
 
-  const savedProps =
-    propsByInstanceId.get(instance.id)?.flatMap((prop) => {
-      if (prop.type !== "dataSource") {
-        return [prop];
-      }
-      // convert data source prop to typed prop
-      const dataSourceId = prop.value;
-      const dataSource = dataSources.get(dataSourceId);
-      const dataSourceValue = dataSourceValues.get(dataSourceId);
-      if (dataSource === undefined) {
-        return [];
-      }
-      return [
-        {
-          id: prop.id,
-          instanceId: prop.instanceId,
-          name: prop.name,
-          required: prop.required,
-          // infer type from value
-          ...getPropTypeAndValue(dataSourceValue),
-        } satisfies Prop,
-      ];
-    }) ?? [];
+  const savedProps = props.flatMap((prop) => {
+    if (prop.type !== "dataSource") {
+      return [prop];
+    }
+    // convert data source prop to typed prop
+    const dataSourceId = prop.value;
+    const dataSource = dataSources.get(dataSourceId);
+    const dataSourceValue = dataSourceValues.get(dataSourceId);
+    if (dataSource === undefined) {
+      return [];
+    }
+    return [
+      {
+        id: prop.id,
+        instanceId: prop.instanceId,
+        name: prop.name,
+        required: prop.required,
+        // infer type from value
+        ...getPropTypeAndValue(dataSourceValue),
+      } satisfies Prop,
+    ];
+  });
 
   // we will delete items from these maps as we categorize the props
   const unprocessedSaved = new Map(savedProps.map((prop) => [prop.name, prop]));

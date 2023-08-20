@@ -1,5 +1,10 @@
-import { Switch, useId } from "@webstudio-is/design-system";
-import { type ControlProps, getLabel, HorizontalLayout } from "../shared";
+import { Grid, Switch, theme, useId } from "@webstudio-is/design-system";
+import {
+  type ControlProps,
+  getLabel,
+  Label,
+  RemovePropButton,
+} from "../shared";
 
 export const BooleanControl = ({
   meta,
@@ -11,18 +16,23 @@ export const BooleanControl = ({
   const id = useId();
 
   return (
-    <HorizontalLayout
-      id={id}
-      label={getLabel(meta, propName)}
-      onDelete={onDelete}
-      labelSize="large"
+    <Grid
+      css={{
+        gridTemplateColumns: onDelete
+          ? `1fr max-content max-content`
+          : `1fr max-content`,
+        minHeight: theme.spacing[13],
+      }}
+      align="center"
+      gap="2"
     >
+      <Label htmlFor={id}>{getLabel(meta, propName)}</Label>
       <Switch
         id={id}
         checked={prop?.value ?? false}
         onCheckedChange={(value) => onChange({ type: "boolean", value })}
-        css={{ justifySelf: "end" }}
       />
-    </HorizontalLayout>
+      {onDelete && <RemovePropButton onClick={onDelete} />}
+    </Grid>
   );
 };

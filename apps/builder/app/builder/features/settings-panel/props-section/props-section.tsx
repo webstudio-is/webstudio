@@ -1,3 +1,5 @@
+import { useState } from "react";
+import { useStore } from "@nanostores/react";
 import store from "immerhin";
 import type { Instance } from "@webstudio-is/project-build";
 import {
@@ -14,7 +16,11 @@ import {
   NestedInputButton,
 } from "@webstudio-is/design-system";
 import type { Publish } from "~/shared/pubsub";
-import { dataSourceVariablesStore, propsStore } from "~/shared/nano-states";
+import {
+  dataSourceVariablesStore,
+  propsIndexStore,
+  propsStore,
+} from "~/shared/nano-states";
 import { CollapsibleSectionWithAddButton } from "~/builder/shared/collapsible-section";
 import {
   useStyleData,
@@ -27,7 +33,6 @@ import {
   type PropAndMeta,
 } from "./use-props-logic";
 import { Row, getLabel } from "../shared";
-import { useState } from "react";
 
 const itemToString = (item: NameAndLabel | null) =>
   item ? getLabel(item, item.name) : "";
@@ -196,9 +201,11 @@ export const PropsSectionContainer = ({
     selectedInstance: instance,
     publish,
   });
+  const { propsByInstanceId } = useStore(propsIndexStore);
 
   const logic = usePropsLogic({
     instance,
+    props: propsByInstanceId.get(instance.id) ?? [],
     updateProp: (update) => {
       const props = propsStore.get();
       const prop = props.get(update.id);
