@@ -85,7 +85,7 @@ const namespace = "@webstudio-is/sdk-components-react-radix";
 export const hooksNavigationMenu: Hook = {
   onNavigatorUnselect: (context, event) => {
     for (const instance of event.instancePath) {
-      if (instance.component === `${namespace}:NavigationMenuItem`) {
+      if (instance.component === `${namespace}:NavigationMenuContent`) {
         const menu = getClosestInstance(
           event.instancePath,
           instance,
@@ -100,7 +100,7 @@ export const hooksNavigationMenu: Hook = {
   },
   onNavigatorSelect: (context, event) => {
     for (const instance of event.instancePath) {
-      if (instance.component === `${namespace}:NavigationMenuItem`) {
+      if (instance.component === `${namespace}:NavigationMenuContent`) {
         const menu = getClosestInstance(
           event.instancePath,
           instance,

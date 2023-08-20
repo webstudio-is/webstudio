@@ -237,6 +237,7 @@ export const metaNavigationMenuContent: WsComponentMeta = {
   type: "container",
   icon: ContentIcon,
   requiredAncestors: ["NavigationMenuItem"],
+  indexWithinAncestor: "NavigationMenu",
 
   presetTokens: {
     navigationMenuContent: {
