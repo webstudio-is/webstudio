@@ -270,8 +270,7 @@ export const Tree = <Data extends { id: string }>({
       direction="both"
       css={{
         width: "100%",
-        overflowY: "auto",
-        overflowX: "hidden",
+        overflow: "hidden",
         flexBasis: 0,
         flexGrow: 1,
       }}
