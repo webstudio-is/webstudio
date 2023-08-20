@@ -79,9 +79,11 @@ export const ScrollArea = forwardRef(
         >
           {children}
         </Viewport>
-        <ScrollAreaScrollbar orientation="vertical">
-          <ScrollAreaThumb />
-        </ScrollAreaScrollbar>
+        {(direction === "vertical" || direction === "both") && (
+          <ScrollAreaScrollbar orientation="vertical">
+            <ScrollAreaThumb />
+          </ScrollAreaScrollbar>
+        )}
         {(direction === "horizontal" || direction === "both") && (
           <ScrollAreaScrollbar orientation="horizontal">
             <ScrollAreaThumb />

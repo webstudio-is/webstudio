@@ -17,7 +17,7 @@ export const Story = () => {
     </div>
   );
   const css = {
-    height: 200,
+    height: 100,
     width: 100,
     background: theme.colors.backgroundPanel,
   };
@@ -27,7 +27,12 @@ export const Story = () => {
         <ScrollArea css={css}>{content}</ScrollArea>
       </StorySection>
       <StorySection title="Horizontal">
-        <ScrollArea css={css} verticalOnly={false}>
+        <ScrollArea css={css} direction="horizontal">
+          {content}
+        </ScrollArea>
+      </StorySection>
+      <StorySection title="Both">
+        <ScrollArea css={css} direction="both">
           {content}
         </ScrollArea>
       </StorySection>
