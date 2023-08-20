@@ -23,7 +23,7 @@ export const NavigationMenu = forwardRef<
   HTMLLIElement,
   Omit<
     ComponentPropsWithoutRef<typeof NavigationMenuPrimitive.Root>,
-    "orientation"
+    "orientation" | "aria-orientation"
   >
 >(({ value: propsValue, ...props }, ref) => {
   /**
