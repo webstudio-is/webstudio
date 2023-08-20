@@ -12,6 +12,7 @@
  * - Hit Backspace to delete the last Source item when you are in the input
  */
 
+import { nanoid } from "nanoid";
 import {
   Box,
   ComboboxListbox,
@@ -32,6 +33,7 @@ import {
   theme,
   styled,
 } from "@webstudio-is/design-system";
+import { CheckMarkIcon, DotIcon } from "@webstudio-is/icons";
 import {
   forwardRef,
   useState,
@@ -47,7 +49,6 @@ import { type ItemSource, menuCssVars, StyleSource } from "./style-source";
 import { useSortable } from "./use-sortable";
 import { matchSorter } from "match-sorter";
 import { StyleSourceBadge } from "./style-source-badge";
-import { CheckMarkIcon, DotIcon } from "@webstudio-is/icons";
 import { humanizeString } from "~/shared/string-utils";
 
 type IntermediateItem = {
@@ -192,6 +193,7 @@ const TextFieldBase: ForwardRefRenderFunction<
           type={type}
           onClick={onClick}
           ref={mergeRefs(internalInputRef, inputRef ?? null)}
+          spellCheck={false}
           aria-label="New Style Source Input"
         />
       )}
@@ -214,7 +216,7 @@ type StyleSourceInputProps<Item extends IntermediateItem> = {
   onClearStyles?: (id: Item["id"]) => void;
   onDuplicateItem?: (id: Item["id"]) => void;
   onConvertToToken?: (id: Item["id"]) => void;
-  onCreateItem?: (label: string) => void;
+  onCreateItem?: (id: Item["id"], label: string) => void;
   onChangeItem?: (item: Item) => void;
   onSelectItem?: (item: ItemSelector) => void;
   onEditItem?: (id?: Item["id"]) => void;
@@ -233,6 +235,10 @@ const matchOrSuggestToCreate = (
 ): IntermediateItem[] => {
   const matched = matchSorter(items, search, {
     keys: [itemToString],
+  });
+  const order: ItemSource[] = ["token", "componentToken"];
+  matched.sort((leftItem, rightItem) => {
+    return order.indexOf(leftItem.source) - order.indexOf(rightItem.source);
   });
   if (
     search.trim() !== "" &&
@@ -411,7 +417,9 @@ export const StyleSourceInput = (
     onItemSelect(item) {
       setLabel("");
       if (item.id === newItemId) {
-        props.onCreateItem?.(item.label);
+        props.onCreateItem?.(nanoid(), item.label);
+      } else if (item.source === "componentToken") {
+        props.onCreateItem?.(item.id, item.label);
       } else {
         props.onSelectAutocompleteItem?.(item);
       }
@@ -437,6 +445,8 @@ export const StyleSourceInput = (
   });
 
   let hasNewTokenItem = false;
+  let hasGlobalTokenItem = false;
+  let hasComponentTokenItem = false;
 
   const states = props.componentStates ?? [];
 
@@ -479,6 +489,10 @@ export const StyleSourceInput = (
           <ComboboxListbox {...getMenuProps()}>
             {isOpen &&
               items.map((item, index) => {
+                if (item.source === "local") {
+                  return;
+                }
+
                 if (item.id === newItemId) {
                   hasNewTokenItem = true;
                   return (
@@ -499,15 +513,30 @@ export const StyleSourceInput = (
                   );
                 }
 
-                const firstExistingItemIndex = hasNewTokenItem ? 1 : 0;
-                const label = index === firstExistingItemIndex && (
-                  <>
-                    {hasNewTokenItem && <ComboboxSeparator />}
-                    <ComboboxLabel>Existing Tokens</ComboboxLabel>
-                  </>
-                );
-                if (item.source === "local") {
-                  return;
+                let label = null;
+                if (item.source === "token" && hasGlobalTokenItem === false) {
+                  hasGlobalTokenItem = true;
+                  label = (
+                    <>
+                      {hasNewTokenItem && <ComboboxSeparator />}
+                      <ComboboxLabel>Global Tokens</ComboboxLabel>
+                    </>
+                  );
+                }
+
+                if (
+                  item.source === "componentToken" &&
+                  hasComponentTokenItem === false
+                ) {
+                  hasComponentTokenItem = true;
+                  label = (
+                    <>
+                      {(hasNewTokenItem || hasGlobalTokenItem) && (
+                        <ComboboxSeparator />
+                      )}
+                      <ComboboxLabel>Component Tokens</ComboboxLabel>
+                    </>
+                  );
                 }
                 return (
                   <Fragment key={index}>

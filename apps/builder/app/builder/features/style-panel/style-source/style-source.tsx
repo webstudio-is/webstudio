@@ -100,7 +100,7 @@ const Menu = (props: MenuProps) => {
   );
 };
 
-export type ItemSource = "token" | "tag" | "local";
+export type ItemSource = "token" | "componentToken" | "tag" | "local";
 
 type EditableTextProps = {
   label: string;
@@ -159,6 +159,11 @@ const StyleSourceContainer = styled(Box, {
           theme.colors.backgroundStyleSourceGradientToken,
       },
       token: {
+        backgroundColor: theme.colors.backgroundStyleSourceToken,
+        [menuTriggerGradientVar]:
+          theme.colors.backgroundStyleSourceGradientToken,
+      },
+      componentToken: {
         backgroundColor: theme.colors.backgroundStyleSourceToken,
         [menuTriggerGradientVar]:
           theme.colors.backgroundStyleSourceGradientToken,

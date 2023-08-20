@@ -1,3 +1,4 @@
+import { enableMapSet } from "immer";
 import { describe, test, expect } from "@jest/globals";
 import type { WsComponentMeta } from "@webstudio-is/react-sdk";
 import * as defaultMetas from "@webstudio-is/sdk-components-react/metas";
@@ -7,8 +8,19 @@ import {
   findClosestDroppableComponentIndex,
   findClosestDroppableTarget,
   findClosestEditableInstanceSelector,
+  insertTemplateData,
   type InsertConstraints,
 } from "./instance-utils";
+import {
+  instancesStore,
+  styleSourceSelectionsStore,
+  styleSourcesStore,
+  stylesStore,
+} from "./nano-states";
+import { registerContainers } from "./sync";
+
+enableMapSet();
+registerContainers();
 
 const defaultMetasMap = new Map(Object.entries(defaultMetas));
 
@@ -316,4 +328,92 @@ describe("find closest droppable target", () => {
       position: 1,
     });
   });
+});
+
+test("insert template data with only new style sources", () => {
+  instancesStore.set(new Map([createInstancePair("body", "Body", [])]));
+  styleSourceSelectionsStore.set(new Map());
+  styleSourcesStore.set(
+    new Map([["1", { type: "token", id: "1", name: "Zero" }]])
+  );
+  stylesStore.set(
+    new Map([
+      [
+        "1:base:color:",
+        {
+          breakpointId: "base",
+          styleSourceId: "1",
+          property: "color",
+          value: { type: "keyword", value: "red" },
+        },
+      ],
+    ])
+  );
+  insertTemplateData(
+    {
+      children: [{ type: "id", value: "box1" }],
+      instances: [
+        { type: "instance", id: "box1", component: "Box", children: [] },
+      ],
+      props: [],
+      dataSources: [],
+      styleSourceSelections: [{ instanceId: "box1", values: ["1", "2"] }],
+      styleSources: [
+        { type: "token", id: "1", name: "One" },
+        { type: "token", id: "2", name: "Two" },
+      ],
+      styles: [
+        {
+          breakpointId: "base",
+          styleSourceId: "1",
+          property: "color",
+          value: { type: "keyword", value: "black" },
+        },
+        {
+          breakpointId: "base",
+          styleSourceId: "1",
+          property: "backgroundColor",
+          value: { type: "keyword", value: "purple" },
+        },
+        {
+          breakpointId: "base",
+          styleSourceId: "2",
+          property: "color",
+          value: { type: "keyword", value: "green" },
+        },
+      ],
+    },
+    { parentSelector: ["body"], position: "end" }
+  );
+  expect(styleSourceSelectionsStore.get()).toEqual(
+    new Map([["box1", { instanceId: "box1", values: ["1", "2"] }]])
+  );
+  expect(styleSourcesStore.get()).toEqual(
+    new Map([
+      ["1", { type: "token", id: "1", name: "Zero" }],
+      ["2", { type: "token", id: "2", name: "Two" }],
+    ])
+  );
+  expect(stylesStore.get()).toEqual(
+    new Map([
+      [
+        "1:base:color:",
+        {
+          breakpointId: "base",
+          styleSourceId: "1",
+          property: "color",
+          value: { type: "keyword", value: "red" },
+        },
+      ],
+      [
+        "2:base:color:",
+        {
+          breakpointId: "base",
+          styleSourceId: "2",
+          property: "color",
+          value: { type: "keyword", value: "green" },
+        },
+      ],
+    ])
+  );
 });

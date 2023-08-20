@@ -1,6 +1,7 @@
 import { expect, test } from "@jest/globals";
 import { generateDataFromEmbedTemplate, namespaceMeta } from "./embed-template";
 import { showAttribute } from "./tree";
+import type { WsComponentMeta } from "./components/component-meta";
 
 const expectString = expect.any(String);
 
@@ -20,6 +21,7 @@ test("generate data for embedding from instances and text", () => {
           ],
         },
       ],
+      new Map(),
       defaultBreakpointId
     )
   ).toEqual({
@@ -73,6 +75,7 @@ test("generate data for embedding from props", () => {
           ],
         },
       ],
+      new Map(),
       defaultBreakpointId
     )
   ).toEqual({
@@ -147,6 +150,7 @@ test("generate data for embedding from styles", () => {
           ],
         },
       ],
+      new Map(),
       defaultBreakpointId
     )
   ).toEqual({
@@ -245,6 +249,7 @@ test("generate data for embedding from props bound to data source variables", ()
           children: [],
         },
       ],
+      new Map(),
       defaultBreakpointId
     )
   ).toEqual({
@@ -326,6 +331,7 @@ test("generate data for embedding from props bound to data source expressions", 
           children: [],
         },
       ],
+      new Map(),
       defaultBreakpointId
     )
   ).toEqual({
@@ -422,6 +428,7 @@ test("generate data for embedding from action props", () => {
           ],
         },
       ],
+      new Map(),
       defaultBreakpointId
     )
   ).toEqual({
@@ -488,6 +495,93 @@ test("generate data for embedding from action props", () => {
   });
 });
 
+test("generate styles from tokens", () => {
+  const presetTokens: WsComponentMeta["presetTokens"] = {
+    box: {
+      styles: [
+        {
+          property: "width",
+          value: { type: "keyword", value: "max-content" },
+        },
+        {
+          property: "height",
+          value: { type: "keyword", value: "max-content" },
+        },
+      ],
+    },
+    boxBright: {
+      styles: [
+        {
+          property: "color",
+          value: { type: "keyword", value: "red" },
+        },
+        {
+          property: "backgroundColor",
+          value: { type: "keyword", value: "pink" },
+        },
+      ],
+    },
+    boxNone: {
+      styles: [
+        {
+          property: "color",
+          value: { type: "keyword", value: "transparent" },
+        },
+        {
+          property: "backgroundColor",
+          value: { type: "keyword", value: "transparent" },
+        },
+      ],
+    },
+  };
+  const { styleSourceSelections, styleSources, styles } =
+    generateDataFromEmbedTemplate(
+      [
+        {
+          type: "instance",
+          component: "Box",
+          tokens: ["box", "boxBright"],
+          children: [],
+        },
+      ],
+      new Map([["Box", { type: "container", icon: "", presetTokens }]]),
+      defaultBreakpointId
+    );
+  expect(styleSources).toEqual([
+    { id: "Box:box", name: "Box", type: "token" },
+    { id: "Box:boxBright", name: "Box Bright", type: "token" },
+  ]);
+  expect(styleSourceSelections).toEqual([
+    { instanceId: expectString, values: ["Box:box", "Box:boxBright"] },
+  ]);
+  expect(styles).toEqual([
+    {
+      breakpointId: "base",
+      property: "width",
+      styleSourceId: "Box:box",
+      value: { type: "keyword", value: "max-content" },
+    },
+    {
+      breakpointId: "base",
+      property: "height",
+      styleSourceId: "Box:box",
+      value: { type: "keyword", value: "max-content" },
+    },
+    {
+      breakpointId: "base",
+      property: "color",
+      styleSourceId: "Box:boxBright",
+      value: { type: "keyword", value: "red" },
+    },
+    {
+      breakpointId: "base",
+      property: "backgroundColor",
+      styleSourceId: "Box:boxBright",
+      value: { type: "keyword", value: "pink" },
+    },
+  ]);
+});
+
 test("add namespace to selected components in embed template", () => {
   expect(
     namespaceMeta(
@@ -498,10 +592,16 @@ test("add namespace to selected components in embed template", () => {
         requiredAncestors: ["Button", "Box"],
         invalidAncestors: ["Tooltip"],
         indexWithinAncestor: "Tooltip",
+        presetTokens: {
+          base: { styles: [] },
+          small: { styles: [] },
+          large: { styles: [] },
+        },
         template: [
           {
             type: "instance",
             component: "Tooltip",
+            tokens: ["base", "small"],
             children: [
               { type: "text", value: "Some text" },
               {
@@ -529,10 +629,16 @@ test("add namespace to selected components in embed template", () => {
     requiredAncestors: ["my-namespace:Button", "Box"],
     invalidAncestors: ["my-namespace:Tooltip"],
     indexWithinAncestor: "my-namespace:Tooltip",
+    presetTokens: {
+      base: { styles: [] },
+      small: { styles: [] },
+      large: { styles: [] },
+    },
     template: [
       {
         type: "instance",
         component: "my-namespace:Tooltip",
+        tokens: ["base", "small"],
         children: [
           { type: "text", value: "Some text" },
           {
