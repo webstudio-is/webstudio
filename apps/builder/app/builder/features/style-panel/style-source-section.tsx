@@ -94,7 +94,7 @@ const $baseBreakpointId = computed(breakpointsStore, (breakpoints) => {
 
 // metas are rarely change so keep preset token styles computing
 // in separate store
-const $presetTokens = computed(
+export const $presetTokens = computed(
   [registeredComponentMetasStore, $baseBreakpointId],
   (metas, baseBreakpointId) => {
     const presetTokens = new Map<
