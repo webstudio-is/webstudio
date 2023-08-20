@@ -51,36 +51,40 @@ const viewPortStyle = css({
   borderRadius: "inherit",
 
   variants: {
-    verticalOnly: {
+    direction: {
       // https://github.com/radix-ui/primitives/issues/926#issuecomment-1015279283
-      true: { "& > div[style]": { display: "block !important" } },
+      vertical: { "& > div[style]": { display: "block !important" } },
+      horizontal: {},
+      both: {},
     },
   },
 });
 
-type ScrollAreaProps = { css?: CSS; verticalOnly?: boolean } & Pick<
-  ComponentProps<"div">,
-  "onScroll" | "children"
->;
+type ScrollAreaProps = {
+  css?: CSS;
+  direction?: "vertical" | "horizontal" | "both";
+} & Pick<ComponentProps<"div">, "onScroll" | "children">;
 
 export const ScrollArea = forwardRef(
   (
-    { children, css, onScroll, verticalOnly = true }: ScrollAreaProps,
+    { children, css, onScroll, direction = "vertical" }: ScrollAreaProps,
     ref: Ref<HTMLDivElement>
   ) => {
     return (
       <ScrollAreaRoot scrollHideDelay={0} css={css}>
         <Viewport
           ref={ref}
-          className={viewPortStyle({ verticalOnly })}
+          className={viewPortStyle({ direction })}
           onScroll={onScroll}
         >
           {children}
         </Viewport>
-        <ScrollAreaScrollbar orientation="vertical">
-          <ScrollAreaThumb />
-        </ScrollAreaScrollbar>
-        {verticalOnly === false && (
+        {(direction === "vertical" || direction === "both") && (
+          <ScrollAreaScrollbar orientation="vertical">
+            <ScrollAreaThumb />
+          </ScrollAreaScrollbar>
+        )}
+        {(direction === "horizontal" || direction === "both") && (
           <ScrollAreaScrollbar orientation="horizontal">
             <ScrollAreaThumb />
           </ScrollAreaScrollbar>

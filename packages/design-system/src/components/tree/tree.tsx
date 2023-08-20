@@ -266,10 +266,11 @@ export const Tree = <Data extends { id: string }>({
 
   return (
     <ScrollArea
+      // TODO allow resizing of the panel instead.
+      direction="both"
       css={{
         width: "100%",
-        overflowY: "auto",
-        overflowX: "hidden",
+        overflow: "hidden",
         flexBasis: 0,
         flexGrow: 1,
       }}
