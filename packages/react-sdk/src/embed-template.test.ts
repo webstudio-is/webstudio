@@ -548,8 +548,8 @@ test("generate styles from tokens", () => {
       defaultBreakpointId
     );
   expect(styleSources).toEqual([
-    { id: "Box:box", name: "box", type: "token" },
-    { id: "Box:boxBright", name: "boxBright", type: "token" },
+    { id: "Box:box", name: "Box", type: "token" },
+    { id: "Box:boxBright", name: "Box Bright", type: "token" },
   ]);
   expect(styleSourceSelections).toEqual([
     { instanceId: expectString, values: ["Box:box", "Box:boxBright"] },
