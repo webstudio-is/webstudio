@@ -10,78 +10,99 @@ import {
   getIndexesWithinAncestors,
 } from "@webstudio-is/react-sdk";
 import type { Instance } from "@webstudio-is/project-build";
-import { subscribe } from "~/shared/pubsub";
+import type { InstanceSelector } from "../tree-utils";
 import { dataSourceVariablesStore, propsStore } from "./nano-states";
-import { instancesStore, selectedPageStore } from ".";
+import { instancesStore, selectedInstanceSelectorStore } from "./instances";
+import { selectedPageStore } from "./pages";
+import { shallowEqual } from "shallow-equal";
 
-type HookCommand = NonNullable<
-  {
-    [Name in keyof Hook]: {
-      name: Name;
-      data: Parameters<NonNullable<Hook[Name]>>[1];
-    };
-  }[keyof Hook]
->;
+const createHookContext = (): HookContext => {
+  const metas = registeredComponentMetasStore.get();
+  const instances = instancesStore.get();
+  const page = selectedPageStore.get();
+  const indexesWithinAncestors = getIndexesWithinAncestors(
+    metas,
+    instances,
+    page ? [page.rootInstanceId] : []
+  );
 
-declare module "~/shared/pubsub" {
-  export interface PubsubMap {
-    emitComponentHook: HookCommand;
-  }
-}
+  return {
+    indexesWithinAncestors,
 
-// subscribe component hooks emitted from builder
-// and invoke all hooks
-// name and data is mapped to [name](context, data)
+    getPropValue: (instanceId, propName) => {
+      const props = propsStore.get();
+      for (const prop of props.values()) {
+        if (prop.instanceId === instanceId && prop.name === propName) {
+          if (
+            prop.type === "string" ||
+            prop.type === "number" ||
+            prop.type === "boolean" ||
+            prop.type === "string[]"
+          ) {
+            return prop.value;
+          }
+        }
+      }
+    },
+
+    setPropVariable: (instanceId, propName, value) => {
+      const dataSourceVariables = new Map(dataSourceVariablesStore.get());
+      const props = propsStore.get();
+      for (const prop of props.values()) {
+        if (
+          prop.instanceId === instanceId &&
+          prop.name === propName &&
+          prop.type === "dataSource"
+        ) {
+          const dataSourceId = prop.value;
+          dataSourceVariables.set(dataSourceId, value);
+        }
+      }
+      dataSourceVariablesStore.set(dataSourceVariables);
+    },
+  };
+};
+
+// subscribe builder events and invoke all component hooks
 export const subscribeComponentHooks = () => {
-  return subscribe("emitComponentHook", (data) => {
-    const hooks = registeredComponentHooksStore.get();
-    const metas = registeredComponentMetasStore.get();
-    const instances = instancesStore.get();
-    const page = selectedPageStore.get();
-    const indexesWithinAncestors = getIndexesWithinAncestors(
-      metas,
-      instances,
-      page ? [page.rootInstanceId] : []
-    );
-    for (const hook of hooks) {
-      const context: HookContext = {
-        indexesWithinAncestors,
+  let lastSelectedInstanceSelector: undefined | InstanceSelector = undefined;
+  const unsubscribeSelectedInstanceSelector =
+    selectedInstanceSelectorStore.subscribe((instanceSelector) => {
+      // prevent executing hooks when selected instance is not changed
+      if (shallowEqual(lastSelectedInstanceSelector, instanceSelector)) {
+        return;
+      }
+      const hooks = registeredComponentHooksStore.get();
+      const instances = instancesStore.get();
+      if (lastSelectedInstanceSelector) {
+        for (const hook of hooks) {
+          hook.onNavigatorUnselect?.(createHookContext(), {
+            instancePath: lastSelectedInstanceSelector.flatMap((id) => {
+              const instance = instances.get(id);
+              return instance ? [instance] : [];
+            }),
+          });
+        }
+      }
 
-        getPropValue: (instanceId, propName) => {
-          const props = propsStore.get();
-          for (const prop of props.values()) {
-            if (prop.instanceId === instanceId && prop.name === propName) {
-              if (
-                prop.type === "string" ||
-                prop.type === "number" ||
-                prop.type === "boolean" ||
-                prop.type === "string[]"
-              ) {
-                return prop.value;
-              }
-            }
-          }
-        },
+      if (instanceSelector) {
+        for (const hook of hooks) {
+          hook.onNavigatorSelect?.(createHookContext(), {
+            instancePath: instanceSelector.flatMap((id) => {
+              const instance = instances.get(id);
+              return instance ? [instance] : [];
+            }),
+          });
+        }
+      }
 
-        setPropVariable: (instanceId, propName, value) => {
-          const dataSourceVariables = new Map(dataSourceVariablesStore.get());
-          const props = propsStore.get();
-          for (const prop of props.values()) {
-            if (
-              prop.instanceId === instanceId &&
-              prop.name === propName &&
-              prop.type === "dataSource"
-            ) {
-              const dataSourceId = prop.value;
-              dataSourceVariables.set(dataSourceId, value);
-            }
-          }
-          dataSourceVariablesStore.set(dataSourceVariables);
-        },
-      };
-      hook[data.name]?.(context, data.data);
-    }
-  });
+      // store converts values to readonly
+      lastSelectedInstanceSelector = instanceSelector as InstanceSelector;
+    });
+
+  return () => {
+    unsubscribeSelectedInstanceSelector();
+  };
 };
 
 export const registeredComponentsStore = atom(new Map<string, AnyComponent>());
