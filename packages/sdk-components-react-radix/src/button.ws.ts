@@ -21,7 +21,7 @@ export const template = (props?: {
   {
     type: "instance",
     component: "Button",
-    tokens: ["button", "buttonDefault", "buttonSizeDefault"],
+    tokens: ["button", "buttonPrimary", "buttonMd"],
     children: props?.children ?? [{ type: "text", value: "Button" }],
     props: props?.props,
   },
@@ -66,7 +66,7 @@ export const meta: WsComponentMeta = {
     },
 
     // VARIANT
-    buttonDefault: {
+    buttonPrimary: {
       variant: "variant",
       styles: [
         // default: 'bg-primary text-primary-foreground hover:bg-primary/90',
@@ -127,7 +127,7 @@ export const meta: WsComponentMeta = {
     },
 
     // SIZE
-    buttonSizeDefault: {
+    buttonMd: {
       variant: "size",
       styles: [
         // default: 'h-10 px-4 py-2',
@@ -136,7 +136,7 @@ export const meta: WsComponentMeta = {
         tc.py(2),
       ].flat(),
     },
-    buttonSizeSm: {
+    buttonSm: {
       variant: "size",
       styles: [
         // sm: 'h-9 rounded-md px-3',
@@ -144,7 +144,7 @@ export const meta: WsComponentMeta = {
         tc.px(3),
       ].flat(),
     },
-    buttonSizeLg: {
+    buttonLg: {
       variant: "size",
       styles: [
         // lg: 'h-11 rounded-md px-8',
@@ -152,7 +152,7 @@ export const meta: WsComponentMeta = {
         tc.px(8),
       ].flat(),
     },
-    buttonSizeIcon: {
+    buttonIcon: {
       variant: "size",
       styles: [
         // icon: 'h-10 w-10',
