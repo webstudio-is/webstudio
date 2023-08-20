@@ -68,7 +68,11 @@ const createAccordionTrigger = ({
         ),
       ].flat(),
       children: [
-        ...children,
+        {
+          type: "instance",
+          component: "Text",
+          children,
+        },
         {
           type: "instance",
           component: "Box",
