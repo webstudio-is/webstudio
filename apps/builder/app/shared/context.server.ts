@@ -21,6 +21,7 @@ const createAuthorizationContext = async (
     userId: user?.id,
     authToken,
     isServiceCall,
+    projectTemplates: env.PROJECT_TEMPLATES,
     authorizeTrpc: trpcClient.authorize,
   };
 

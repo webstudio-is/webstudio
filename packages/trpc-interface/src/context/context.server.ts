@@ -15,6 +15,11 @@ type AuthorizationContext = {
   authToken: string | undefined;
 
   /**
+   * project list serves as a template and is accessible to everyone.
+   */
+  projectTemplates: string[];
+
+  /**
    * Allow service 2 service communications to skip authorization for view calls
    */
   isServiceCall: boolean;
