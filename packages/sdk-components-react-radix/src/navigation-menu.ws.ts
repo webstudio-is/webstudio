@@ -122,8 +122,9 @@ export const metaNavigationMenu: WsComponentMeta = {
     {
       type: "instance",
       component: "NavigationMenu",
+
       dataSources: {
-        menuValue: { type: "variable", initialValue: "-1" },
+        menuValue: { type: "variable", initialValue: "" },
       },
       props: [
         { type: "dataSource", name: "value", dataSourceName: "menuValue" },
@@ -131,10 +132,15 @@ export const metaNavigationMenu: WsComponentMeta = {
           name: "onValueChange",
           type: "action",
           value: [
-            { type: "execute", args: ["value"], code: `menuValue = value` },
+            {
+              type: "execute",
+              args: ["value"],
+              code: `menuValue = value`,
+            },
           ],
         },
       ],
+
       // relative
       // Omiting this: z-10 flex max-w-max flex-1 items-center justify-center
       styles: [
@@ -189,11 +195,22 @@ export const metaNavigationMenu: WsComponentMeta = {
             tc.top("full"),
             tc.flex(),
             tc.justify("center"),
+            // tc.w("max"),
+            // tc.h("max"),
           ].flat(),
           children: [
             {
               type: "instance",
               component: "NavigationMenuViewport",
+              /*
+              props: [
+                {
+                  name: "forceMount",
+                  type: "boolean",
+                  value: true,
+                },
+              ],
+              */
               /*
                 'origin-top-center relative mt-1.5 w-full ' +
                 'overflow-hidden rounded-md border bg-popover text-popover-foreground shadow-lg ' +
@@ -208,7 +225,6 @@ export const metaNavigationMenu: WsComponentMeta = {
               styles: [
                 tc.relative(),
                 tc.mt(1.5),
-                // tc.w("full"),
                 tc.overflow("hidden"),
                 tc.rounded("md"),
                 tc.border(),

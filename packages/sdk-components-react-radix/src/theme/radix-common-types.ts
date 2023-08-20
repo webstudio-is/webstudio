@@ -469,7 +469,7 @@ export type EvaluatedDefaultTheme = DefaultTheme & {
   colors: typeof colors;
   inset: DefaultTheme["spacing"] & Record<"full", string>;
   width: DefaultTheme["spacing"] & Record<"full" | "max", string>;
-  height: DefaultTheme["spacing"];
+  height: DefaultTheme["spacing"] & Record<"max", string>;
   margin: DefaultTheme["spacing"] & Record<"auto", string>;
   maxWidth: DefaultTheme["spacing"] &
     Record<
