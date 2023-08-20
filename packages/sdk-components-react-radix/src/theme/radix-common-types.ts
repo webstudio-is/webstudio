@@ -467,7 +467,8 @@ type DefaultTheme = {
 export type EvaluatedDefaultTheme = DefaultTheme & {
   padding: DefaultTheme["spacing"];
   colors: typeof colors;
-  width: DefaultTheme["spacing"] & Record<"full", string>;
+  inset: DefaultTheme["spacing"] & Record<"full", string>;
+  width: DefaultTheme["spacing"] & Record<"full" | "max", string>;
   height: DefaultTheme["spacing"];
   margin: DefaultTheme["spacing"] & Record<"auto", string>;
   maxWidth: DefaultTheme["spacing"] &

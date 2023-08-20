@@ -8,15 +8,16 @@ import {
   ExternalLinkIcon,
 } from "@webstudio-is/icons/svg";
 import type {
-  // EmbedTemplateStyleDecl,
   PresetStyle,
   WsComponentMeta,
   WsComponentPropsMeta,
 } from "@webstudio-is/react-sdk";
 
+import { template as buttonTemplate } from "./button.ws";
+
 import { div } from "@webstudio-is/react-sdk/css-normalize";
 
-// import * as tc from "./theme/tailwind-classes";
+import * as tc from "./theme/tailwind-classes";
 
 import {
   propsNavigationMenu,
@@ -31,6 +32,60 @@ import {
 const presetStyle = {
   div,
 } satisfies PresetStyle<"div">;
+
+const menuItem = (props: {
+  title: string;
+}): NonNullable<WsComponentMeta["template"]> => [
+  {
+    type: "instance",
+    component: "NavigationMenuItem",
+    children: [
+      {
+        type: "instance",
+        component: "NavigationMenuTrigger",
+        children: buttonTemplate({
+          children: [{ type: "text", value: props.title }],
+        }),
+      },
+
+      {
+        type: "instance",
+        component: "NavigationMenuContent",
+        // left-0 top-0 absolute w-max
+        styles: [
+          tc.left(0),
+          tc.top(0),
+          tc.absolute(),
+          tc.w("max"),
+          tc.p(4),
+        ].flat(),
+
+        children: [
+          {
+            type: "instance",
+            component: "Box",
+            label: "Content Container",
+            styles: [].flat(),
+
+            children: [
+              {
+                type: "instance",
+                component: "NavigationMenuLink",
+                children: [
+                  {
+                    type: "instance",
+                    component: "Link",
+                    children: [{ type: "text", value: "Link" }],
+                  },
+                ],
+              },
+            ],
+          },
+        ],
+      },
+    ],
+  },
+];
 
 export const metaNavigationMenu: WsComponentMeta = {
   category: "radix",
@@ -55,7 +110,89 @@ export const metaNavigationMenu: WsComponentMeta = {
           ],
         },
       ],
-      children: [],
+      // relative
+      // Omiting this: z-10 flex max-w-max flex-1 items-center justify-center
+      styles: [
+        tc.relative(),
+        /*
+        Not useful.
+        tc.flex(),
+        tc.items("center"),
+        tc.justify("center"),
+        */
+      ].flat(),
+      children: [
+        {
+          type: "instance",
+          component: "NavigationMenuList",
+          // flex flex-1 list-none items-center justify-center gap-1
+          styles: [
+            // ul defaults in tailwind
+            tc.p(0),
+            tc.m(0),
+            // shadcdn styles
+            tc.flex(),
+            tc.flex(1),
+            tc.list("none"),
+            tc.items("center"),
+            tc.justify("center"),
+            tc.gap(1),
+          ].flat(),
+
+          children: [
+            ...menuItem({ title: "Item One" }),
+            ...menuItem({ title: "Item Two" }),
+          ],
+        },
+
+        {
+          type: "instance",
+          component: "Box",
+          label: "Viewport Container",
+          // absolute left-0 top-full flex justify-center
+          styles: [
+            tc.absolute(),
+            tc.left(0),
+            tc.top("full"),
+            tc.flex(),
+            tc.justify("center"),
+          ].flat(),
+          children: [
+            {
+              type: "instance",
+              component: "NavigationMenuViewport",
+              /*
+                'origin-top-center relative mt-1.5 w-full ' +
+                'overflow-hidden rounded-md border bg-popover text-popover-foreground shadow-lg ' +
+                'h-[var(--radix-navigation-menu-viewport-height)] ' +
+                'w-[var(--radix-navigation-menu-viewport-width)] ' +
+                anims(
+                  '[animation-duration:150ms!important] [transition-duration:150ms!important] ' +
+                    'data-[state=open]:animate-in data-[state=closed]:animate-out ' +
+                    'data-[state=closed]:zoom-out-95 data-[state=open]:zoom-in-90 '
+                )
+              */
+              styles: [
+                tc.relative(),
+                tc.mt(1.5),
+                tc.w("full"),
+                tc.overflow("hidden"),
+                tc.rounded("md"),
+                tc.border(),
+                tc.bg("popover"),
+                tc.text("popoverForeground"),
+                tc.shadow("lg"),
+                tc.property(
+                  "height",
+                  "--radix-navigation-menu-viewport-height"
+                ),
+                tc.property("width", "--radix-navigation-menu-viewport-width"),
+              ].flat(),
+              children: [],
+            },
+          ],
+        },
+      ],
     },
   ],
 };
