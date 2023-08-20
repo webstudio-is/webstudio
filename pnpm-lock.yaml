@@ -1239,6 +1239,12 @@ importers:
       nanostores:
         specifier: ^0.9.3
         version: 0.9.3
+      no-case:
+        specifier: ^3.0.4
+        version: 3.0.4
+      title-case:
+        specifier: ^3.0.3
+        version: 3.0.3
     devDependencies:
       '@jest/globals':
         specifier: ^29.6.2

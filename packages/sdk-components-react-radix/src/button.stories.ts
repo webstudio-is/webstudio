@@ -9,19 +9,6 @@ import * as radixMetas from "./metas";
 export default {
   title: "Components/Button",
   component: ButtonPrimitive,
-  argTypes: {
-    variant: {
-      options: [
-        "default",
-        "destructive",
-        "outline",
-        "secondary",
-        "ghost",
-        "link",
-      ],
-      control: { type: "select" },
-    },
-  },
 } satisfies Meta<typeof ButtonPrimitive>;
 
 export const Button: StoryObj<typeof ButtonPrimitive> = {
