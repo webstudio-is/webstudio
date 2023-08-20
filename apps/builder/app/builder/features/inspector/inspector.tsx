@@ -73,7 +73,7 @@ export const Inspector = ({ publish, navigatorLayout }: InspectorProps) => {
   const metas = useStore(registeredComponentMetasStore);
 
   if (navigatorLayout === "docked" && isDragging) {
-    return <NavigatorTree publish={publish} />;
+    return <NavigatorTree />;
   }
 
   if (selectedInstance === undefined) {
