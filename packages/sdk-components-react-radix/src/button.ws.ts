@@ -17,11 +17,12 @@ const presetStyle = {
 export const template = (props?: {
   props?: EmbedTemplateInstance["props"];
   children?: WsComponentMeta["template"];
+  tokens?: string[];
 }): NonNullable<WsComponentMeta["template"]> => [
   {
     type: "instance",
     component: "Button",
-    tokens: ["button", "buttonPrimary", "buttonMd"],
+    tokens: props?.tokens ?? ["button", "buttonPrimary", "buttonMd"],
     children: props?.children ?? [{ type: "text", value: "Button" }],
     props: props?.props,
   },

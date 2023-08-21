@@ -436,6 +436,18 @@ export const list = (
   return [{ property: "listStyleType", value }];
 };
 
+export const select = (selectValue: "none"): EmbedTemplateStyleDecl[] => {
+  return [
+    {
+      property: "userSelect",
+      value: {
+        type: "keyword",
+        value: "none",
+      },
+    },
+  ];
+};
+
 export const bg = (
   color: keyof EvaluatedDefaultTheme["colors"],
   alpha?: number
@@ -526,6 +538,10 @@ export const inlineFlex = (): EmbedTemplateStyleDecl[] => {
   return [
     { property: "display", value: { type: "keyword", value: "inline-flex" } },
   ];
+};
+
+export const block = (): EmbedTemplateStyleDecl[] => {
+  return [{ property: "display", value: { type: "keyword", value: "block" } }];
 };
 
 const flexDirection = { row: "row", col: "column" } as const;
@@ -650,6 +666,45 @@ export const gap = (
   ];
 };
 
+export const lineClamp = (
+  lineClampValue: StringEnumToNumeric<keyof EvaluatedDefaultTheme["lineClamp"]>
+): EmbedTemplateStyleDecl[] => {
+  const key = `${lineClampValue}` as const;
+  const valueString = theme("lineClamp")?.[key];
+
+  return [
+    {
+      property: "overflow",
+      value: {
+        type: "keyword",
+        value: "hidden",
+      },
+    },
+    {
+      property: "display",
+
+      value: {
+        type: "keyword",
+        value: "-webkit-box",
+      },
+    },
+    {
+      property: "-webkit-box-orient" as "display",
+      value: {
+        type: "keyword",
+        value: "vertical",
+      },
+    },
+    {
+      property: "-webkit-line-clamp" as "display",
+      value: {
+        type: "keyword",
+        value: valueString,
+      },
+    },
+  ];
+};
+
 export const leading = (
   lineHeight:
     | StringEnumToNumeric<keyof EvaluatedDefaultTheme["lineHeight"]>
@@ -736,6 +791,15 @@ export const text = (
     {
       property: "color",
       value,
+    },
+  ];
+};
+
+export const noUnderline = (): EmbedTemplateStyleDecl[] => {
+  return [
+    {
+      property: "textDecorationLine",
+      value: { type: "keyword", value: "none" },
     },
   ];
 };
