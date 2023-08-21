@@ -1,8 +1,8 @@
 import {
   ContentIcon,
-  HeaderIcon,
+  ListIcon,
   HamburgerMenuIcon,
-  ItemIcon,
+  ListItemIcon,
   TriggerIcon,
   LinkIcon,
   ExternalLinkIcon,
@@ -377,7 +377,7 @@ export const metaNavigationMenuList: WsComponentMeta = {
   category: "hidden",
   detachable: false,
   type: "container",
-  icon: HeaderIcon,
+  icon: ListIcon,
   requiredAncestors: ["NavigationMenu"],
   presetStyle,
   presetTokens: {
@@ -402,7 +402,7 @@ export const metaNavigationMenuItem: WsComponentMeta = {
   category: "hidden",
   detachable: false,
   type: "container",
-  icon: ItemIcon,
+  icon: ListItemIcon,
   requiredAncestors: ["NavigationMenu"],
   presetStyle,
   indexWithinAncestor: "NavigationMenu",
