@@ -6,10 +6,9 @@ const CSS_VARIABLE_POSTFIX = "-w7ovd";
 const cssVarsSet = new Set<string>();
 
 const define = <Name extends string>(name: Name) => {
-  if (cssVarsSet.has(name)) {
-    throw new Error(`Variable ${name} already defined`);
+  if (cssVarsSet.has(name) === false) {
+    cssVarsSet.add(name);
   }
-  cssVarsSet.add(name);
 
   return `--${name}${CSS_VARIABLE_POSTFIX}` as const;
 };
