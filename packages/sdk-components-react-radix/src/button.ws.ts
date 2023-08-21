@@ -18,6 +18,7 @@ export const template = (props?: {
   props?: EmbedTemplateInstance["props"];
   children?: WsComponentMeta["template"];
   tokens?: string[];
+  styles?: EmbedTemplateInstance["styles"];
 }): NonNullable<WsComponentMeta["template"]> => [
   {
     type: "instance",
@@ -25,6 +26,7 @@ export const template = (props?: {
     tokens: props?.tokens ?? ["button", "buttonPrimary", "buttonMd"],
     children: props?.children ?? [{ type: "text", value: "Button" }],
     props: props?.props,
+    styles: props?.styles,
   },
 ];
 

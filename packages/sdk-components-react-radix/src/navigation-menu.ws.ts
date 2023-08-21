@@ -6,6 +6,7 @@ import {
   TriggerIcon,
   LinkIcon,
   ExternalLinkIcon,
+  ChevronDownIcon,
 } from "@webstudio-is/icons/svg";
 import type {
   PresetStyle,
@@ -195,7 +196,58 @@ const menuItem = (props: {
         component: "NavigationMenuTrigger",
         children: buttonTemplate({
           tokens: ["button", "buttonGhost", "buttonSm"],
-          children: [{ type: "text", value: props.title }],
+          styles: [
+            tc.property("--navigation-menu-trigger-icon-transform", "0deg"),
+            tc.state(
+              [
+                tc.property(
+                  "--navigation-menu-trigger-icon-transform",
+                  "180deg"
+                ),
+              ],
+              "[data-state=open]"
+            ),
+          ].flat(),
+          children: [
+            {
+              type: "instance",
+              component: "Text",
+              children: [{ type: "text", value: props.title }],
+            },
+            {
+              type: "instance",
+              component: "Box",
+              label: "Icon Container",
+              // h-4 w-4 shrink-0 transition-transform duration-200
+              styles: [
+                tc.ml(1),
+                tc.property(
+                  "rotate",
+                  "--navigation-menu-trigger-icon-transform"
+                ),
+                tc.h(4),
+                tc.w(4),
+                tc.shrink(0),
+                tc.transition("all"),
+                tc.duration(200),
+              ].flat(),
+              children: [
+                {
+                  type: "instance",
+                  component: "HtmlEmbed",
+                  label: "Chevron Icon",
+                  props: [
+                    {
+                      type: "string",
+                      name: "code",
+                      value: ChevronDownIcon,
+                    },
+                  ],
+                  children: [],
+                },
+              ],
+            },
+          ],
         }),
       },
       {
