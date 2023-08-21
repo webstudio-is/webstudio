@@ -57,7 +57,7 @@ export const AccordionContent: ForwardRefExoticComponent<
 
 const namespace = "@webstudio-is/sdk-components-react-radix";
 
-// For each AccordionItem component within the selection,
+// For each AccordionContent component within the selection,
 // we identify its closest parent Accordion component
 // and update its open prop bound to variable.
 export const hooksAccordion: Hook = {
