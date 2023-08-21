@@ -1,7 +1,6 @@
 import type { PropMeta } from "@webstudio-is/generate-arg-types";
 
 export const propsSheet: Record<string, PropMeta> = {
-  modal: { required: false, control: "boolean", type: "boolean" },
   open: { required: false, control: "boolean", type: "boolean" },
 };
 export const propsSheetTrigger: Record<string, PropMeta> = {};
@@ -387,7 +386,6 @@ export const propsSheetOverlay: Record<string, PropMeta> = {
     control: "text",
     type: "string",
   },
-  asChild: { required: false, control: "boolean", type: "boolean" },
   autoCapitalize: { required: false, control: "text", type: "string" },
   autoCorrect: { required: false, control: "text", type: "string" },
   autoFocus: { required: false, control: "boolean", type: "boolean" },
@@ -859,7 +857,6 @@ export const propsSheetClose: Record<string, PropMeta> = {
     control: "text",
     type: "string",
   },
-  asChild: { required: false, control: "boolean", type: "boolean" },
   autoCapitalize: { required: false, control: "text", type: "string" },
   autoCorrect: { required: false, control: "text", type: "string" },
   autoFocus: { required: false, control: "boolean", type: "boolean" },
@@ -1345,7 +1342,6 @@ export const propsSheetTitle: Record<string, PropMeta> = {
     control: "text",
     type: "string",
   },
-  asChild: { required: false, control: "boolean", type: "boolean" },
   autoCapitalize: { required: false, control: "text", type: "string" },
   autoCorrect: { required: false, control: "text", type: "string" },
   autoFocus: { required: false, control: "boolean", type: "boolean" },
@@ -1817,7 +1813,6 @@ export const propsSheetDescription: Record<string, PropMeta> = {
     control: "text",
     type: "string",
   },
-  asChild: { required: false, control: "boolean", type: "boolean" },
   autoCapitalize: { required: false, control: "text", type: "string" },
   autoCorrect: { required: false, control: "text", type: "string" },
   autoFocus: { required: false, control: "boolean", type: "boolean" },
@@ -2289,7 +2284,6 @@ export const propsSheetContent: Record<string, PropMeta> = {
     control: "text",
     type: "string",
   },
-  asChild: { required: false, control: "boolean", type: "boolean" },
   autoCapitalize: { required: false, control: "text", type: "string" },
   autoCorrect: { required: false, control: "text", type: "string" },
   autoFocus: { required: false, control: "boolean", type: "boolean" },

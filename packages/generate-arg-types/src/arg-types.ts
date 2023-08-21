@@ -3,7 +3,10 @@ import { PropMeta } from "./types";
 
 export type FilterPredicate = (prop: PropItem) => boolean;
 
-export const propsToArgTypes = (props: Record<string, PropItem>) => {
+export const propsToArgTypes = (
+  props: Record<string, PropItem>,
+  exclude: string[]
+) => {
   const entries = Object.entries(props);
   return (
     entries
@@ -12,6 +15,8 @@ export const propsToArgTypes = (props: Record<string, PropItem>) => {
       })
       // Exclude webstudio builder props see react-sdk/src/tree/webstudio-component.tsx
       .filter(([propName]) => propName.startsWith("data-ws-") === false)
+      // Exclude props that are in the exclude list
+      .filter(([propName]) => exclude.includes(propName) === false)
       .reduce(
         (result, current) => {
           const [propName, prop] = current;

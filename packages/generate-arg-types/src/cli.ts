@@ -6,6 +6,7 @@ import * as path from "node:path";
 import { withCustomConfig } from "react-docgen-typescript";
 import fg from "fast-glob";
 import { propsToArgTypes } from "./arg-types";
+import { parseArgs, type ParseArgsConfig } from "node:util";
 
 const GENERATED_FILES_DIR = "__generated__";
 
@@ -14,7 +15,22 @@ const options = {
   shouldRemoveUndefinedFromOptional: true,
 };
 
-const componentsGlobString = process.argv.slice(2).pop();
+const CLI_ARGS_OPTIONS = {
+  allowPositionals: true,
+  options: {
+    exclude: {
+      type: "string",
+      multiple: true,
+      short: "e",
+    },
+  },
+  strict: true,
+} as const satisfies ParseArgsConfig;
+
+const cliArgs = parseArgs({ args: process.argv.slice(2), ...CLI_ARGS_OPTIONS });
+
+const componentsGlobString = cliArgs.positionals.join(" ");
+
 const tsConfigPath = path.resolve(process.cwd(), "./tsconfig.json");
 
 if (typeof componentsGlobString === "undefined") {
@@ -55,7 +71,10 @@ for (const filePath of componentFiles) {
   let fileContent = `import type { PropMeta } from "@webstudio-is/generate-arg-types";\n`;
 
   if (componentDocs.length === 1) {
-    const argTypes = propsToArgTypes(componentDocs[0].props);
+    const argTypes = propsToArgTypes(
+      componentDocs[0].props,
+      cliArgs.values.exclude ?? []
+    );
 
     fileContent = `${fileContent}
       export const props: Record<string, PropMeta> = ${JSON.stringify(
@@ -65,7 +84,10 @@ for (const filePath of componentFiles) {
     for (const componentDoc of componentDocs) {
       const componentName = componentDoc.displayName;
 
-      const argTypes = propsToArgTypes(componentDoc.props);
+      const argTypes = propsToArgTypes(
+        componentDoc.props,
+        cliArgs.values.exclude ?? []
+      );
 
       fileContent = `${fileContent}
         export const props${componentName}: Record<string, PropMeta> = ${JSON.stringify(
