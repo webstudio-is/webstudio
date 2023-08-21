@@ -464,7 +464,7 @@ export const TreeNode = <Data extends { id: string }>({
           shouldRenderExpandButton,
           isExpanded,
           onToggle: (expandAll) => {
-            let type = isExpanded
+            const type = isExpanded
               ? ("collapse" as const)
               : expandAll
               ? ("expand-all" as const)
