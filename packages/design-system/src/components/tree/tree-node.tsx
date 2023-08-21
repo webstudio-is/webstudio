@@ -241,7 +241,7 @@ export type TreeItemRenderProps<Data extends { id: string }> = {
   isAlwaysExpanded: boolean;
   shouldRenderExpandButton: boolean;
   isExpanded: boolean;
-  onToggle: () => void;
+  onToggle: (expandAll: boolean) => void;
 };
 
 export const TreeItemBody = <Data extends { id: string }>({
@@ -351,7 +351,7 @@ export const TreeItemBody = <Data extends { id: string }>({
           style={{ left: (level - 1) * INDENT + ITEM_PADDING_LEFT }}
           // We don't want this trigger to be focusable
           tabIndex={-1}
-          onClick={onToggle}
+          onClick={(event) => onToggle(event.altKey)}
         >
           {isExpanded ? <ChevronFilledDownIcon /> : <ChevronFilledRightIcon />}
         </CollapsibleTrigger>
@@ -398,7 +398,10 @@ export type TreeNodeProps<Data extends { id: ItemId }> = {
   renderItem: (props: TreeItemRenderProps<Data>) => React.ReactNode;
 
   getIsExpanded: (itemSelector: ItemSelector) => boolean;
-  setIsExpanded?: (itemSelector: ItemSelector, expanded: boolean) => void;
+  setIsExpanded?: (
+    itemSelector: ItemSelector,
+    type: "collapse" | "expand" | "expand-all"
+  ) => void;
 
   selectedItemSelector?: ItemSelector;
   dropTargetItemSelector?: ItemSelector;
@@ -460,7 +463,14 @@ export const TreeNode = <Data extends { id: string }>({
           isAlwaysExpanded,
           shouldRenderExpandButton,
           isExpanded,
-          onToggle: () => setIsExpanded?.(itemSelector, isExpanded === false),
+          onToggle: (expandAll) => {
+            let type = isExpanded
+              ? ("collapse" as const)
+              : expandAll
+              ? ("expand-all" as const)
+              : ("expand" as const);
+            setIsExpanded?.(itemSelector, type);
+          },
         })}
       {isExpandable &&
         isExpanded &&
