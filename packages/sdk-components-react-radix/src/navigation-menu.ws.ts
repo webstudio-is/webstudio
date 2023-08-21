@@ -128,7 +128,7 @@ const navItem = (
         children: [
           {
             type: "instance",
-            component: "Box",
+            component: "Text",
             // text-sm font-medium leading-none
             styles: [
               tc.text("sm"),
