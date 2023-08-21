@@ -174,7 +174,7 @@ const navItemsList = (props: {
   {
     type: "instance",
     component: "Box",
-    label: "Content Container",
+    label: "Flex Column",
     styles: [tc.w(64), tc.flex(), tc.gap(4), tc.flex("col")].flat(),
     children: Array.from(Array(props.count), (_, index) =>
       navItem(components[index + props.offset])
