@@ -145,6 +145,7 @@ export * from "./text";
 export * from "./tooltip";
 export * from "./trigger";
 export * from "./video";
+export * from "./viewport";
 export * from "./vimeo";
 export * from "./webstudio";
 export * from "./wrap";

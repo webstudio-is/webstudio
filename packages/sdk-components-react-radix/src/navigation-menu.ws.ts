@@ -1,12 +1,12 @@
 import {
   ContentIcon,
   ListIcon,
-  HamburgerMenuIcon,
   ListItemIcon,
   TriggerIcon,
-  LinkIcon,
-  ExternalLinkIcon,
+  BoxIcon,
   ChevronDownIcon,
+  ViewportIcon,
+  NavigationMenuIcon,
 } from "@webstudio-is/icons/svg";
 import type {
   PresetStyle,
@@ -272,7 +272,7 @@ export const metaNavigationMenu: WsComponentMeta = {
   category: "radix",
   order: 2,
   type: "container",
-  icon: HamburgerMenuIcon,
+  icon: NavigationMenuIcon,
   presetStyle,
   presetTokens: {
     navigationMenu: {
@@ -446,7 +446,7 @@ export const metaNavigationMenuLink: WsComponentMeta = {
   detachable: true,
   type: "container",
   stylable: false,
-  icon: LinkIcon,
+  icon: BoxIcon,
   requiredAncestors: ["NavigationMenuContent"],
   presetStyle,
 };
@@ -455,7 +455,7 @@ export const metaNavigationMenuViewport: WsComponentMeta = {
   category: "hidden",
   detachable: true,
   type: "container",
-  icon: ExternalLinkIcon,
+  icon: ViewportIcon,
   requiredAncestors: ["NavigationMenu"],
   presetStyle,
   presetTokens: {
