@@ -29,8 +29,6 @@ const CLI_ARGS_OPTIONS = {
 
 const cliArgs = parseArgs({ args: process.argv.slice(2), ...CLI_ARGS_OPTIONS });
 
-console.log(cliArgs);
-
 const componentsGlobString = cliArgs.positionals.join(" ");
 
 const tsConfigPath = path.resolve(process.cwd(), "./tsconfig.json");
