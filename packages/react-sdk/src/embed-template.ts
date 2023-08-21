@@ -248,11 +248,12 @@ const createInstancesFromTemplate = (
         }
       }
 
+      const styleSourceIds: string[] = [];
+
       // convert tokens into style sources and styles
       if (item.tokens) {
         const meta = metas.get(item.component);
         if (meta?.presetTokens) {
-          const styleSourceIds: string[] = [];
           for (const name of item.tokens) {
             const tokenValue = meta.presetTokens[name];
             if (tokenValue) {
@@ -274,10 +275,6 @@ const createInstancesFromTemplate = (
               }
             }
           }
-          styleSourceSelections.push({
-            instanceId,
-            values: styleSourceIds,
-          });
         }
       }
 
@@ -288,10 +285,7 @@ const createInstancesFromTemplate = (
           type: "local",
           id: styleSourceId,
         });
-        styleSourceSelections.push({
-          instanceId,
-          values: [styleSourceId],
-        });
+        styleSourceIds.push(styleSourceId);
         for (const styleDecl of item.styles) {
           styles.push({
             breakpointId: defaultBreakpointId,
@@ -301,6 +295,13 @@ const createInstancesFromTemplate = (
             value: styleDecl.value,
           });
         }
+      }
+
+      if (styleSourceIds.length > 0) {
+        styleSourceSelections.push({
+          instanceId,
+          values: styleSourceIds,
+        });
       }
 
       // populate instances
