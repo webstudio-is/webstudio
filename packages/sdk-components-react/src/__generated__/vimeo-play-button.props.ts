@@ -1,6 +1,20 @@
 import type { PropMeta } from "@webstudio-is/generate-arg-types";
 
 export const props: Record<string, PropMeta> = {
+  disabled: { required: false, control: "boolean", type: "boolean" },
+  id: { required: false, control: "text", type: "string" },
+  lang: { required: false, control: "text", type: "string" },
+  name: { required: false, control: "text", type: "string" },
+  placeholder: { required: false, control: "text", type: "string" },
+  rel: { required: false, control: "text", type: "string" },
+  role: { required: false, control: "text", type: "string" },
+  title: { required: false, control: "text", type: "string" },
+  type: {
+    required: false,
+    control: "radio",
+    type: "string",
+    options: ["button", "submit", "reset"],
+  },
   about: { required: false, control: "text", type: "string" },
   accessKey: { required: false, control: "text", type: "string" },
   "aria-activedescendant": {
@@ -393,7 +407,6 @@ export const props: Record<string, PropMeta> = {
   datatype: { required: false, control: "text", type: "string" },
   defaultChecked: { required: false, control: "boolean", type: "boolean" },
   dir: { required: false, control: "text", type: "string" },
-  disabled: { required: false, control: "boolean", type: "boolean" },
   draggable: { required: false, control: "boolean", type: "boolean" },
   form: { required: false, control: "text", type: "string" },
   formAction: { required: false, control: "text", type: "string" },
@@ -402,7 +415,6 @@ export const props: Record<string, PropMeta> = {
   formNoValidate: { required: false, control: "boolean", type: "boolean" },
   formTarget: { required: false, control: "text", type: "string" },
   hidden: { required: false, control: "boolean", type: "boolean" },
-  id: { required: false, control: "text", type: "string" },
   inputMode: {
     description:
       "Hints at the type of data that might be entered by the user while editing the element or its contents\n@see https://html.spec.whatwg.org/multipage/interaction.html#input-modalities:-the-inputmode-attribute",
@@ -432,18 +444,13 @@ export const props: Record<string, PropMeta> = {
   itemRef: { required: false, control: "text", type: "string" },
   itemScope: { required: false, control: "boolean", type: "boolean" },
   itemType: { required: false, control: "text", type: "string" },
-  lang: { required: false, control: "text", type: "string" },
-  name: { required: false, control: "text", type: "string" },
   nonce: { required: false, control: "text", type: "string" },
-  placeholder: { required: false, control: "text", type: "string" },
   prefix: { required: false, control: "text", type: "string" },
   property: { required: false, control: "text", type: "string" },
   radioGroup: { required: false, control: "text", type: "string" },
-  rel: { required: false, control: "text", type: "string" },
   resource: { required: false, control: "text", type: "string" },
   results: { required: false, control: "number", type: "number" },
   rev: { required: false, control: "text", type: "string" },
-  role: { required: false, control: "text", type: "string" },
   security: { required: false, control: "text", type: "string" },
   slot: { required: false, control: "text", type: "string" },
   spellCheck: { required: false, control: "boolean", type: "boolean" },
@@ -458,18 +465,11 @@ export const props: Record<string, PropMeta> = {
     type: "boolean",
   },
   tabIndex: { required: false, control: "number", type: "number" },
-  title: { required: false, control: "text", type: "string" },
   translate: {
     required: false,
     control: "radio",
     type: "string",
     options: ["yes", "no"],
-  },
-  type: {
-    required: false,
-    control: "radio",
-    type: "string",
-    options: ["button", "submit", "reset"],
   },
   typeof: { required: false, control: "text", type: "string" },
   unselectable: {

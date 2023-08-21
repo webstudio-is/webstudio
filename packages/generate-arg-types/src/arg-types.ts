@@ -5,11 +5,67 @@ export type FilterPredicate = (prop: PropItem) => boolean;
 
 export const propsToArgTypes = (props: Record<string, PropItem>) => {
   const entries = Object.entries(props);
+
+  const ownAndPopularProps: typeof entries = [];
+  const domAndReactProps: typeof entries = [];
+
+  const listOfPopularProps = [
+    "id",
+    "href",
+    "src",
+    "alt",
+    "width",
+    "height",
+    "title",
+    "placeholder",
+    "required",
+    "disabled",
+    "type",
+    "value",
+    "name",
+    "checked",
+    "maxlength",
+    "rel",
+    "target",
+    "autocomplete",
+    "colspan",
+    "rowspan",
+    "lang",
+    "charset",
+    "async",
+    "defer",
+    "method",
+    "action",
+    "enctype",
+    "readonly",
+    "role",
+    "tabindex",
+    "autofocus",
+  ];
+
+  for (const [propName, prop] of entries) {
+    if (listOfPopularProps.includes(propName)) {
+      ownAndPopularProps.push([propName, prop]);
+      continue;
+    }
+
+    if (prop.parent?.fileName?.includes("@types/react/index.d.ts")) {
+      domAndReactProps.push([propName, prop]);
+      continue;
+    }
+
+    ownAndPopularProps.push([propName, prop]);
+  }
+
   return (
-    entries
-      .sort((item1, item2) => {
+    [
+      ...ownAndPopularProps.sort((item1, item2) => {
         return item1[0].localeCompare(item2[0]);
-      })
+      }),
+      ...domAndReactProps.sort((item1, item2) => {
+        return item1[0].localeCompare(item2[0]);
+      }),
+    ]
       // Exclude webstudio builder props see react-sdk/src/tree/webstudio-component.tsx
       .filter(([propName]) => propName.startsWith("data-ws-") === false)
       .reduce(

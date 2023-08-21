@@ -19,8 +19,6 @@ export const propsTooltip: Record<string, PropMeta> = {
 };
 export const propsTooltipTrigger: Record<string, PropMeta> = {};
 export const propsTooltipContent: Record<string, PropMeta> = {
-  about: { required: false, control: "text", type: "string" },
-  accessKey: { required: false, control: "text", type: "string" },
   align: {
     required: false,
     control: "radio",
@@ -28,6 +26,47 @@ export const propsTooltipContent: Record<string, PropMeta> = {
     options: ["center", "start", "end"],
   },
   alignOffset: { required: false, control: "number", type: "number" },
+  "aria-label": {
+    description: "A more descriptive label for accessibility purpose",
+    required: false,
+    control: "text",
+    type: "string",
+  },
+  arrowPadding: { required: false, control: "number", type: "number" },
+  asChild: { required: false, control: "boolean", type: "boolean" },
+  avoidCollisions: { required: false, control: "boolean", type: "boolean" },
+  hideWhenDetached: {
+    required: false,
+    control: "boolean",
+    type: "boolean",
+    defaultValue: true,
+  },
+  id: { required: false, control: "text", type: "string" },
+  lang: { required: false, control: "text", type: "string" },
+  placeholder: { required: false, control: "text", type: "string" },
+  rel: { required: false, control: "text", type: "string" },
+  role: { required: false, control: "text", type: "string" },
+  side: {
+    required: false,
+    control: "select",
+    type: "string",
+    options: ["top", "right", "bottom", "left"],
+  },
+  sideOffset: {
+    required: false,
+    control: "number",
+    type: "number",
+    defaultValue: 4,
+  },
+  sticky: {
+    required: false,
+    control: "radio",
+    type: "string",
+    options: ["partial", "always"],
+  },
+  title: { required: false, control: "text", type: "string" },
+  about: { required: false, control: "text", type: "string" },
+  accessKey: { required: false, control: "text", type: "string" },
   "aria-activedescendant": {
     description:
       "Identifies the currently active element when DOM focus is on a composite widget, textbox, group, or application.",
@@ -202,12 +241,6 @@ export const propsTooltipContent: Record<string, PropMeta> = {
   "aria-keyshortcuts": {
     description:
       "Indicates keyboard shortcuts that an author has implemented to activate or give focus to an element.",
-    required: false,
-    control: "text",
-    type: "string",
-  },
-  "aria-label": {
-    description: "A more descriptive label for accessibility purpose",
     required: false,
     control: "text",
     type: "string",
@@ -406,13 +439,10 @@ export const propsTooltipContent: Record<string, PropMeta> = {
     control: "text",
     type: "string",
   },
-  arrowPadding: { required: false, control: "number", type: "number" },
-  asChild: { required: false, control: "boolean", type: "boolean" },
   autoCapitalize: { required: false, control: "text", type: "string" },
   autoCorrect: { required: false, control: "text", type: "string" },
   autoFocus: { required: false, control: "boolean", type: "boolean" },
   autoSave: { required: false, control: "text", type: "string" },
-  avoidCollisions: { required: false, control: "boolean", type: "boolean" },
   className: { required: false, control: "text", type: "string" },
   color: { required: false, control: "color", type: "string" },
   content: { required: false, control: "text", type: "string" },
@@ -422,13 +452,6 @@ export const propsTooltipContent: Record<string, PropMeta> = {
   dir: { required: false, control: "text", type: "string" },
   draggable: { required: false, control: "boolean", type: "boolean" },
   hidden: { required: false, control: "boolean", type: "boolean" },
-  hideWhenDetached: {
-    required: false,
-    control: "boolean",
-    type: "boolean",
-    defaultValue: true,
-  },
-  id: { required: false, control: "text", type: "string" },
   inputMode: {
     description:
       "Hints at the type of data that might be entered by the user while editing the element or its contents\n@see https://html.spec.whatwg.org/multipage/interaction.html#input-modalities:-the-inputmode-attribute",
@@ -458,38 +481,16 @@ export const propsTooltipContent: Record<string, PropMeta> = {
   itemRef: { required: false, control: "text", type: "string" },
   itemScope: { required: false, control: "boolean", type: "boolean" },
   itemType: { required: false, control: "text", type: "string" },
-  lang: { required: false, control: "text", type: "string" },
   nonce: { required: false, control: "text", type: "string" },
-  placeholder: { required: false, control: "text", type: "string" },
   prefix: { required: false, control: "text", type: "string" },
   property: { required: false, control: "text", type: "string" },
   radioGroup: { required: false, control: "text", type: "string" },
-  rel: { required: false, control: "text", type: "string" },
   resource: { required: false, control: "text", type: "string" },
   results: { required: false, control: "number", type: "number" },
   rev: { required: false, control: "text", type: "string" },
-  role: { required: false, control: "text", type: "string" },
   security: { required: false, control: "text", type: "string" },
-  side: {
-    required: false,
-    control: "select",
-    type: "string",
-    options: ["top", "right", "bottom", "left"],
-  },
-  sideOffset: {
-    required: false,
-    control: "number",
-    type: "number",
-    defaultValue: 4,
-  },
   slot: { required: false, control: "text", type: "string" },
   spellCheck: { required: false, control: "boolean", type: "boolean" },
-  sticky: {
-    required: false,
-    control: "radio",
-    type: "string",
-    options: ["partial", "always"],
-  },
   suppressContentEditableWarning: {
     required: false,
     control: "boolean",
@@ -501,7 +502,6 @@ export const propsTooltipContent: Record<string, PropMeta> = {
     type: "boolean",
   },
   tabIndex: { required: false, control: "number", type: "number" },
-  title: { required: false, control: "text", type: "string" },
   translate: {
     required: false,
     control: "radio",

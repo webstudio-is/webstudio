@@ -1,8 +1,6 @@
 import type { PropMeta } from "@webstudio-is/generate-arg-types";
 
 export const propsTabs: Record<string, PropMeta> = {
-  about: { required: false, control: "text", type: "string" },
-  accessKey: { required: false, control: "text", type: "string" },
   activationMode: {
     description:
       "Whether a tab is activated automatically or manually.\n@defaultValue automatic",
@@ -11,6 +9,35 @@ export const propsTabs: Record<string, PropMeta> = {
     type: "string",
     options: ["automatic", "manual"],
   },
+  dir: {
+    description: "The direction of navigation between toolbar items.",
+    required: false,
+    control: "radio",
+    type: "string",
+    options: ["ltr", "rtl"],
+  },
+  id: { required: false, control: "text", type: "string" },
+  lang: { required: false, control: "text", type: "string" },
+  orientation: {
+    description:
+      "The orientation the tabs are layed out.\nMainly so arrow navigation is done accordingly (left & right vs. up & down)\n@defaultValue horizontal",
+    required: false,
+    control: "radio",
+    type: "string",
+    options: ["horizontal", "vertical"],
+  },
+  placeholder: { required: false, control: "text", type: "string" },
+  rel: { required: false, control: "text", type: "string" },
+  role: { required: false, control: "text", type: "string" },
+  title: { required: false, control: "text", type: "string" },
+  value: {
+    description: "The value for the selected tab, if controlled",
+    required: false,
+    control: "text",
+    type: "string",
+  },
+  about: { required: false, control: "text", type: "string" },
+  accessKey: { required: false, control: "text", type: "string" },
   "aria-activedescendant": {
     description:
       "Identifies the currently active element when DOM focus is on a composite widget, textbox, group, or application.",
@@ -400,16 +427,8 @@ export const propsTabs: Record<string, PropMeta> = {
   contextMenu: { required: false, control: "text", type: "string" },
   datatype: { required: false, control: "text", type: "string" },
   defaultChecked: { required: false, control: "boolean", type: "boolean" },
-  dir: {
-    description: "The direction of navigation between toolbar items.",
-    required: false,
-    control: "radio",
-    type: "string",
-    options: ["ltr", "rtl"],
-  },
   draggable: { required: false, control: "boolean", type: "boolean" },
   hidden: { required: false, control: "boolean", type: "boolean" },
-  id: { required: false, control: "text", type: "string" },
   inputMode: {
     description:
       "Hints at the type of data that might be entered by the user while editing the element or its contents\n@see https://html.spec.whatwg.org/multipage/interaction.html#input-modalities:-the-inputmode-attribute",
@@ -439,25 +458,13 @@ export const propsTabs: Record<string, PropMeta> = {
   itemRef: { required: false, control: "text", type: "string" },
   itemScope: { required: false, control: "boolean", type: "boolean" },
   itemType: { required: false, control: "text", type: "string" },
-  lang: { required: false, control: "text", type: "string" },
   nonce: { required: false, control: "text", type: "string" },
-  orientation: {
-    description:
-      "The orientation the tabs are layed out.\nMainly so arrow navigation is done accordingly (left & right vs. up & down)\n@defaultValue horizontal",
-    required: false,
-    control: "radio",
-    type: "string",
-    options: ["horizontal", "vertical"],
-  },
-  placeholder: { required: false, control: "text", type: "string" },
   prefix: { required: false, control: "text", type: "string" },
   property: { required: false, control: "text", type: "string" },
   radioGroup: { required: false, control: "text", type: "string" },
-  rel: { required: false, control: "text", type: "string" },
   resource: { required: false, control: "text", type: "string" },
   results: { required: false, control: "number", type: "number" },
   rev: { required: false, control: "text", type: "string" },
-  role: { required: false, control: "text", type: "string" },
   security: { required: false, control: "text", type: "string" },
   slot: { required: false, control: "text", type: "string" },
   spellCheck: { required: false, control: "boolean", type: "boolean" },
@@ -472,7 +479,6 @@ export const propsTabs: Record<string, PropMeta> = {
     type: "boolean",
   },
   tabIndex: { required: false, control: "number", type: "number" },
-  title: { required: false, control: "text", type: "string" },
   translate: {
     required: false,
     control: "radio",
@@ -486,15 +492,17 @@ export const propsTabs: Record<string, PropMeta> = {
     type: "string",
     options: ["on", "off"],
   },
-  value: {
-    description: "The value for the selected tab, if controlled",
-    required: false,
-    control: "text",
-    type: "string",
-  },
   vocab: { required: false, control: "text", type: "string" },
 };
 export const propsTabsList: Record<string, PropMeta> = {
+  asChild: { required: false, control: "boolean", type: "boolean" },
+  id: { required: false, control: "text", type: "string" },
+  lang: { required: false, control: "text", type: "string" },
+  loop: { required: false, control: "boolean", type: "boolean" },
+  placeholder: { required: false, control: "text", type: "string" },
+  rel: { required: false, control: "text", type: "string" },
+  role: { required: false, control: "text", type: "string" },
+  title: { required: false, control: "text", type: "string" },
   about: { required: false, control: "text", type: "string" },
   accessKey: { required: false, control: "text", type: "string" },
   "aria-activedescendant": {
@@ -876,7 +884,6 @@ export const propsTabsList: Record<string, PropMeta> = {
     control: "text",
     type: "string",
   },
-  asChild: { required: false, control: "boolean", type: "boolean" },
   autoCapitalize: { required: false, control: "text", type: "string" },
   autoCorrect: { required: false, control: "text", type: "string" },
   autoFocus: { required: false, control: "boolean", type: "boolean" },
@@ -890,7 +897,6 @@ export const propsTabsList: Record<string, PropMeta> = {
   dir: { required: false, control: "text", type: "string" },
   draggable: { required: false, control: "boolean", type: "boolean" },
   hidden: { required: false, control: "boolean", type: "boolean" },
-  id: { required: false, control: "text", type: "string" },
   inputMode: {
     description:
       "Hints at the type of data that might be entered by the user while editing the element or its contents\n@see https://html.spec.whatwg.org/multipage/interaction.html#input-modalities:-the-inputmode-attribute",
@@ -920,18 +926,13 @@ export const propsTabsList: Record<string, PropMeta> = {
   itemRef: { required: false, control: "text", type: "string" },
   itemScope: { required: false, control: "boolean", type: "boolean" },
   itemType: { required: false, control: "text", type: "string" },
-  lang: { required: false, control: "text", type: "string" },
-  loop: { required: false, control: "boolean", type: "boolean" },
   nonce: { required: false, control: "text", type: "string" },
-  placeholder: { required: false, control: "text", type: "string" },
   prefix: { required: false, control: "text", type: "string" },
   property: { required: false, control: "text", type: "string" },
   radioGroup: { required: false, control: "text", type: "string" },
-  rel: { required: false, control: "text", type: "string" },
   resource: { required: false, control: "text", type: "string" },
   results: { required: false, control: "number", type: "number" },
   rev: { required: false, control: "text", type: "string" },
-  role: { required: false, control: "text", type: "string" },
   security: { required: false, control: "text", type: "string" },
   slot: { required: false, control: "text", type: "string" },
   spellCheck: { required: false, control: "boolean", type: "boolean" },
@@ -946,7 +947,6 @@ export const propsTabsList: Record<string, PropMeta> = {
     type: "boolean",
   },
   tabIndex: { required: false, control: "number", type: "number" },
-  title: { required: false, control: "text", type: "string" },
   translate: {
     required: false,
     control: "radio",
@@ -966,6 +966,13 @@ export const propsTabsTrigger: Record<string, PropMeta> = {
   value: { required: true, control: "text", type: "string" },
 };
 export const propsTabsContent: Record<string, PropMeta> = {
+  id: { required: false, control: "text", type: "string" },
+  lang: { required: false, control: "text", type: "string" },
+  placeholder: { required: false, control: "text", type: "string" },
+  rel: { required: false, control: "text", type: "string" },
+  role: { required: false, control: "text", type: "string" },
+  title: { required: false, control: "text", type: "string" },
+  value: { required: true, control: "text", type: "string" },
   about: { required: false, control: "text", type: "string" },
   accessKey: { required: false, control: "text", type: "string" },
   "aria-activedescendant": {
@@ -1360,7 +1367,6 @@ export const propsTabsContent: Record<string, PropMeta> = {
   dir: { required: false, control: "text", type: "string" },
   draggable: { required: false, control: "boolean", type: "boolean" },
   hidden: { required: false, control: "boolean", type: "boolean" },
-  id: { required: false, control: "text", type: "string" },
   inputMode: {
     description:
       "Hints at the type of data that might be entered by the user while editing the element or its contents\n@see https://html.spec.whatwg.org/multipage/interaction.html#input-modalities:-the-inputmode-attribute",
@@ -1390,17 +1396,13 @@ export const propsTabsContent: Record<string, PropMeta> = {
   itemRef: { required: false, control: "text", type: "string" },
   itemScope: { required: false, control: "boolean", type: "boolean" },
   itemType: { required: false, control: "text", type: "string" },
-  lang: { required: false, control: "text", type: "string" },
   nonce: { required: false, control: "text", type: "string" },
-  placeholder: { required: false, control: "text", type: "string" },
   prefix: { required: false, control: "text", type: "string" },
   property: { required: false, control: "text", type: "string" },
   radioGroup: { required: false, control: "text", type: "string" },
-  rel: { required: false, control: "text", type: "string" },
   resource: { required: false, control: "text", type: "string" },
   results: { required: false, control: "number", type: "number" },
   rev: { required: false, control: "text", type: "string" },
-  role: { required: false, control: "text", type: "string" },
   security: { required: false, control: "text", type: "string" },
   slot: { required: false, control: "text", type: "string" },
   spellCheck: { required: false, control: "boolean", type: "boolean" },
@@ -1415,7 +1417,6 @@ export const propsTabsContent: Record<string, PropMeta> = {
     type: "boolean",
   },
   tabIndex: { required: false, control: "number", type: "number" },
-  title: { required: false, control: "text", type: "string" },
   translate: {
     required: false,
     control: "radio",
@@ -1429,6 +1430,5 @@ export const propsTabsContent: Record<string, PropMeta> = {
     type: "string",
     options: ["on", "off"],
   },
-  value: { required: true, control: "text", type: "string" },
   vocab: { required: false, control: "text", type: "string" },
 };
