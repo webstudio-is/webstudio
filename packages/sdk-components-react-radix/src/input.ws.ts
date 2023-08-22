@@ -19,7 +19,6 @@ export const meta: WsComponentMeta = {
   type: "control",
   invalidAncestors: ["Button"],
   icon: FormTextFieldIcon,
-  presetStyle,
   states: [
     ...defaultStates,
     { selector: ":disabled", label: "Disabled" },
@@ -34,10 +33,9 @@ export const meta: WsComponentMeta = {
     { selector: ":read-only", label: "Read Only" },
     { selector: ":read-write", label: "Read Write" },
   ],
-  template: [
-    {
-      type: "instance",
-      component: "Input",
+  presetStyle,
+  presetTokens: {
+    input: {
       styles: [
         // flex h-10 w-full rounded-md border border-input bg-background
         // px-3 py-2 text-sm
@@ -66,7 +64,13 @@ export const meta: WsComponentMeta = {
         ),
         tc.disabled([tc.cursor("not-allowed"), tc.opacity(50)].flat()),
       ].flat(),
-
+    },
+  },
+  template: [
+    {
+      type: "instance",
+      component: "Input",
+      tokens: ["input"],
       children: [],
     },
   ],

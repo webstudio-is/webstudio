@@ -25,7 +25,6 @@ import {
 import { div, nav, button, h2, p } from "@webstudio-is/react-sdk/css-normalize";
 import type { SheetContent } from "./sheet";
 import type { ComponentProps } from "react";
-import { template as buttonTemplate } from "./button.ws";
 
 type ContentTags = NonNullable<ComponentProps<typeof SheetContent>["tag"]>;
 
@@ -71,28 +70,100 @@ export const metaSheetContent: WsComponentMeta = {
     { selector: "[data-side=bottom]", label: "Bottom Side" },
     { selector: "[data-side=left]", label: "Left Side" },
   ],
+  presetTokens: {
+    sheetContent: {
+      /**
+       * fixed w-full z-50
+       * grid gap-4 max-w-lg
+       * m-auto
+       * border bg-background p-6 shadow-lg
+       **/
+      styles: [
+        tc.w("full"),
+        tc.z(50),
+        tc.flex(),
+        tc.flex("col"),
+        tc.gap(4),
+        tc.border(),
+        tc.bg("background"),
+        tc.p(6),
+        tc.shadow("lg"),
+        tc.relative(),
+        tc.state(
+          [tc.mr("auto"), tc.maxW("sm"), tc.grow()].flat(),
+          "[data-side=left]"
+        ),
+        tc.state(
+          [tc.ml("auto"), tc.maxW("sm"), tc.grow()].flat(),
+          "[data-side=right]"
+        ),
+        tc.state([tc.mb("auto")].flat(), "[data-side=top]"),
+        tc.state([tc.mt("auto")].flat(), "[data-side=bottom]"),
+      ].flat(),
+    },
+  },
 };
 
 export const metaSheetOverlay: WsComponentMeta = {
   category: "hidden",
   type: "container",
-  presetStyle,
   icon: OverlayIcon,
   detachable: false,
+  presetStyle,
+  presetTokens: {
+    sheetOverlay: {
+      /**
+       * fixed inset-0 z-50 bg-background/80 backdrop-blur-sm
+       * flex
+       **/
+      styles: [
+        tc.fixed(),
+        tc.inset(0),
+        tc.z(50),
+        tc.bg("background", 80),
+        tc.backdropBlur("sm"),
+        // To allow positioning Content
+        tc.flex(),
+        tc.flex("col"),
+        tc.overflow("auto"),
+      ].flat(),
+    },
+  },
 };
 
 export const metaSheetTitle: WsComponentMeta = {
   category: "hidden",
   type: "container",
-  presetStyle: titlePresetStyle,
   icon: HeadingIcon,
+  presetStyle: titlePresetStyle,
+  presetTokens: {
+    sheetTitle: {
+      /**
+       * text-lg leading-none tracking-tight
+       **/
+      styles: [
+        tc.my(0),
+        tc.leading("none"),
+        tc.text("lg"),
+        tc.tracking("tight"),
+      ].flat(),
+    },
+  },
 };
 
 export const metaSheetDescription: WsComponentMeta = {
   category: "hidden",
   type: "container",
-  presetStyle: descriptionPresetStyle,
   icon: TextIcon,
+  presetStyle: descriptionPresetStyle,
+  presetTokens: {
+    sheetDescription: {
+      /**
+       * text-sm text-muted-foreground
+       **/
+      styles: [tc.my(0), tc.text("sm"), tc.text("mutedForeground")].flat(),
+    },
+  },
 };
 
 export const metaSheetClose: WsComponentMeta = {
@@ -100,6 +171,34 @@ export const metaSheetClose: WsComponentMeta = {
   type: "container",
   presetStyle: buttonPresetStyle,
   icon: ButtonElementIcon,
+  presetTokens: {
+    sheetClose: {
+      /**
+       * absolute right-4 top-4
+       * rounded-sm opacity-70
+       * ring-offset-background
+       * hover:opacity-100 focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2
+       * flex items-center justify-center h-4 w-4
+       **/
+      styles: [
+        tc.absolute(),
+        tc.right(4),
+        tc.top(4),
+        tc.rounded("sm"),
+        tc.opacity(70),
+        tc.flex(),
+        tc.items("center"),
+        tc.justify("center"),
+        tc.h(4),
+        tc.w(4),
+        tc.border(0),
+        tc.bg("transparent"),
+        tc.outline("none"),
+        tc.hover(tc.opacity(100)),
+        tc.focus(tc.ring("ring", 2, "background", 2)),
+      ].flat(),
+    },
+  },
 };
 
 /**
@@ -141,78 +240,38 @@ export const metaSheet: WsComponentMeta = {
         {
           type: "instance",
           component: "SheetTrigger",
-          children: buttonTemplate({
-            props: [
-              { name: "variant", type: "string", value: "ghost" },
-              { name: "size", type: "string", value: "icon" },
-            ],
-            children: [
-              {
-                type: "instance",
-                component: "HtmlEmbed",
-                label: "Hamburger Menu Svg",
-                props: [
-                  {
-                    type: "string",
-                    name: "code",
-                    value: HamburgerMenuIcon,
-                  },
-                ],
-                children: [],
-              },
-            ],
-          }),
+          children: [
+            {
+              type: "instance",
+              component: "Button",
+              tokens: ["button", "buttonGhost", "buttonIcon"],
+              children: [
+                {
+                  type: "instance",
+                  component: "HtmlEmbed",
+                  label: "Hamburger Menu Svg",
+                  props: [
+                    {
+                      type: "string",
+                      name: "code",
+                      value: HamburgerMenuIcon,
+                    },
+                  ],
+                  children: [],
+                },
+              ],
+            },
+          ],
         },
         {
           type: "instance",
           component: "SheetOverlay",
-          /**
-           * fixed inset-0 z-50 bg-background/80 backdrop-blur-sm
-           * flex
-           **/
-          styles: [
-            tc.fixed(),
-            tc.inset(0),
-            tc.z(50),
-            tc.bg("background", 80),
-            tc.backdropBlur("sm"),
-            // To allow positioning Content
-            tc.flex(),
-            tc.flex("col"),
-            tc.overflow("auto"),
-          ].flat(),
+          tokens: ["sheetOverlay"],
           children: [
             {
               type: "instance",
               component: "SheetContent",
-              /**
-               * fixed w-full z-50
-               * grid gap-4 max-w-lg
-               * m-auto
-               * border bg-background p-6 shadow-lg
-               **/
-              styles: [
-                tc.w("full"),
-                tc.z(50),
-                tc.flex(),
-                tc.flex("col"),
-                tc.gap(4),
-                tc.border(),
-                tc.bg("background"),
-                tc.p(6),
-                tc.shadow("lg"),
-                tc.relative(),
-                tc.state(
-                  [tc.mr("auto"), tc.maxW("sm"), tc.grow()].flat(),
-                  "[data-side=left]"
-                ),
-                tc.state(
-                  [tc.ml("auto"), tc.maxW("sm"), tc.grow()].flat(),
-                  "[data-side=right]"
-                ),
-                tc.state([tc.mb("auto")].flat(), "[data-side=top]"),
-                tc.state([tc.mt("auto")].flat(), "[data-side=bottom]"),
-              ].flat(),
+              tokens: ["sheetContent"],
               children: [
                 {
                   type: "instance",
@@ -223,15 +282,7 @@ export const metaSheet: WsComponentMeta = {
                     {
                       type: "instance",
                       component: "SheetTitle",
-                      /**
-                       * text-lg leading-none tracking-tight
-                       **/
-                      styles: [
-                        tc.my(0),
-                        tc.leading("none"),
-                        tc.text("lg"),
-                        tc.tracking("tight"),
-                      ].flat(),
+                      tokens: ["sheetTitle"],
                       children: [
                         {
                           type: "text",
@@ -242,18 +293,11 @@ export const metaSheet: WsComponentMeta = {
                     {
                       type: "instance",
                       component: "SheetDescription",
-                      /**
-                       * text-sm text-muted-foreground
-                       **/
-                      styles: [
-                        tc.my(0),
-                        tc.text("sm"),
-                        tc.text("mutedForeground"),
-                      ].flat(),
+                      tokens: ["sheetDescription"],
                       children: [
                         {
                           type: "text",
-                          value: "sheet description text you can edit",
+                          value: "Sheet description text you can edit",
                         },
                       ],
                     },
@@ -269,30 +313,7 @@ export const metaSheet: WsComponentMeta = {
                 {
                   type: "instance",
                   component: "SheetClose",
-                  /**
-                   * absolute right-4 top-4
-                   * rounded-sm opacity-70
-                   * ring-offset-background
-                   * hover:opacity-100 focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2
-                   * flex items-center justify-center h-4 w-4
-                   **/
-                  styles: [
-                    tc.absolute(),
-                    tc.right(4),
-                    tc.top(4),
-                    tc.rounded("sm"),
-                    tc.opacity(70),
-                    tc.flex(),
-                    tc.items("center"),
-                    tc.justify("center"),
-                    tc.h(4),
-                    tc.w(4),
-                    tc.border(0),
-                    tc.bg("transparent"),
-                    tc.outline("none"),
-                    tc.hover(tc.opacity(100)),
-                    tc.focus(tc.ring("ring", 2, "background", 2)),
-                  ].flat(),
+                  tokens: ["sheetClose"],
                   children: [{ type: "text", value: "✕" }],
                 },
               ],

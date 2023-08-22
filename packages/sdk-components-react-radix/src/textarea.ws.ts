@@ -19,7 +19,6 @@ export const meta: WsComponentMeta = {
   type: "control",
   invalidAncestors: ["Button"],
   icon: FormTextAreaIcon,
-  presetStyle,
   states: [
     ...defaultStates,
     { selector: ":disabled", label: "Disabled" },
@@ -33,10 +32,9 @@ export const meta: WsComponentMeta = {
     { selector: ":read-only", label: "Read Only" },
     { selector: ":read-write", label: "Read Write" },
   ],
-  template: [
-    {
-      type: "instance",
-      component: "Textarea",
+  presetStyle,
+  presetTokens: {
+    textarea: {
       styles: [
         // flex min-h-[80px] w-full rounded-md
         // border border-input bg-background
@@ -62,7 +60,13 @@ export const meta: WsComponentMeta = {
         ),
         tc.disabled([tc.cursor("not-allowed"), tc.opacity(50)].flat()),
       ].flat(),
-
+    },
+  },
+  template: [
+    {
+      type: "instance",
+      component: "Textarea",
+      tokens: ["textarea"],
       children: [],
     },
   ],

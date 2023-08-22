@@ -7,7 +7,6 @@ import {
   ChevronDownIcon,
 } from "@webstudio-is/icons/svg";
 import type {
-  EmbedTemplateStyleDecl,
   PresetStyle,
   WsComponentMeta,
   WsComponentPropsMeta,
@@ -36,9 +35,6 @@ const presetStyle = {
  * Copyright (c) 2023 shadcn
  **/
 
-// border-b
-const accordionItemStyles: EmbedTemplateStyleDecl[] = [tc.borderB()].flat();
-
 const createAccordionTrigger = ({
   children,
 }: {
@@ -46,27 +42,12 @@ const createAccordionTrigger = ({
 }): WsEmbedTemplate[number] => ({
   type: "instance",
   component: "AccordionHeader",
-  // flex
-  styles: [tc.flex()].flat(),
+  tokens: ["accordionHeader"],
   children: [
     {
       type: "instance",
       component: "AccordionTrigger",
-      // flex flex-1 items-center justify-between py-4 font-medium transition-all hover:underline [&[data-state=open]>svg]:rotate-180
-      styles: [
-        tc.flex(),
-        tc.flex(1),
-        tc.items("center"),
-        tc.justify("between"),
-        tc.py(4),
-        tc.font("medium"),
-        tc.hover([tc.underline()].flat()),
-        tc.property("--accordion-trigger-icon-transform", "0deg"),
-        tc.state(
-          [tc.property("--accordion-trigger-icon-transform", "180deg")],
-          "[data-state=open]"
-        ),
-      ].flat(),
+      tokens: ["accordionTrigger"],
       children: [
         {
           type: "instance",
@@ -107,16 +88,6 @@ const createAccordionTrigger = ({
   ],
 });
 
-// overflow-hidden text-sm transition-all data-[state=closed]:animate-accordion-up data-[state=open]:animate-accordion-down
-// pb-4 pt-0
-const accordionContentStyles: EmbedTemplateStyleDecl[] = [
-  tc.overflow("hidden"),
-  tc.text("sm"),
-  // transition does not work with display: none
-  // tc.transition("all"),
-  tc.pb(4),
-].flat();
-
 export const metaAccordion: WsComponentMeta = {
   category: "radix",
   order: 3,
@@ -149,7 +120,7 @@ export const metaAccordion: WsComponentMeta = {
         {
           type: "instance",
           component: "AccordionItem",
-          styles: accordionItemStyles,
+          tokens: ["accordionItem"],
           children: [
             createAccordionTrigger({
               children: [{ type: "text", value: "Is it accessible?" }],
@@ -157,7 +128,7 @@ export const metaAccordion: WsComponentMeta = {
             {
               type: "instance",
               component: "AccordionContent",
-              styles: accordionContentStyles,
+              tokens: ["accordionContent"],
               children: [
                 {
                   type: "text",
@@ -171,7 +142,7 @@ export const metaAccordion: WsComponentMeta = {
         {
           type: "instance",
           component: "AccordionItem",
-          styles: accordionItemStyles,
+          tokens: ["accordionItem"],
           children: [
             createAccordionTrigger({
               children: [{ type: "text", value: "Is it styled?" }],
@@ -179,7 +150,7 @@ export const metaAccordion: WsComponentMeta = {
             {
               type: "instance",
               component: "AccordionContent",
-              styles: accordionContentStyles,
+              tokens: ["accordionContent"],
               children: [
                 {
                   type: "text",
@@ -194,7 +165,7 @@ export const metaAccordion: WsComponentMeta = {
         {
           type: "instance",
           component: "AccordionItem",
-          styles: accordionItemStyles,
+          tokens: ["accordionItem"],
           children: [
             createAccordionTrigger({
               children: [{ type: "text", value: "Is it animated?" }],
@@ -202,7 +173,7 @@ export const metaAccordion: WsComponentMeta = {
             {
               type: "instance",
               component: "AccordionContent",
-              styles: accordionContentStyles,
+              tokens: ["accordionContent"],
               children: [
                 {
                   type: "text",
@@ -225,6 +196,12 @@ export const metaAccordionItem: WsComponentMeta = {
   requiredAncestors: ["Accordion"],
   indexWithinAncestor: "Accordion",
   presetStyle,
+  presetTokens: {
+    // border-b
+    accordionItem: {
+      styles: [tc.borderB()].flat(),
+    },
+  },
 };
 
 export const metaAccordionHeader: WsComponentMeta = {
@@ -235,6 +212,12 @@ export const metaAccordionHeader: WsComponentMeta = {
   detachable: false,
   presetStyle: {
     h3: [h3, tc.my(0)].flat(),
+  },
+  presetTokens: {
+    accordionHeader: {
+      // flex
+      styles: [tc.flex()].flat(),
+    },
   },
 };
 
@@ -263,6 +246,25 @@ export const metaAccordionTrigger: WsComponentMeta = {
       tc.border(0),
     ].flat(),
   },
+  presetTokens: {
+    accordionTrigger: {
+      // flex flex-1 items-center justify-between py-4 font-medium transition-all hover:underline [&[data-state=open]>svg]:rotate-180
+      styles: [
+        tc.flex(),
+        tc.flex(1),
+        tc.items("center"),
+        tc.justify("between"),
+        tc.py(4),
+        tc.font("medium"),
+        tc.hover([tc.underline()].flat()),
+        tc.property("--accordion-trigger-icon-transform", "0deg"),
+        tc.state(
+          [tc.property("--accordion-trigger-icon-transform", "180deg")],
+          "[data-state=open]"
+        ),
+      ].flat(),
+    },
+  },
 };
 
 export const metaAccordionContent: WsComponentMeta = {
@@ -272,6 +274,19 @@ export const metaAccordionContent: WsComponentMeta = {
   requiredAncestors: ["AccordionItem"],
   detachable: false,
   presetStyle,
+  presetTokens: {
+    accordionContent: {
+      // overflow-hidden text-sm transition-all data-[state=closed]:animate-accordion-up data-[state=open]:animate-accordion-down
+      // pb-4 pt-0
+      styles: [
+        tc.overflow("hidden"),
+        tc.text("sm"),
+        // transition does not work with display: none
+        // tc.transition("all"),
+        tc.pb(4),
+      ].flat(),
+    },
+  },
 };
 
 export const propsMetaAccordion: WsComponentPropsMeta = {

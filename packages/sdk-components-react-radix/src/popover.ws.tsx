@@ -11,7 +11,6 @@ import {
   propsPopoverTrigger,
 } from "./__generated__/popover.props";
 import { div } from "@webstudio-is/react-sdk/css-normalize";
-import { template as buttonTemplate } from "./button.ws";
 
 const presetStyle = {
   div,
@@ -32,6 +31,24 @@ export const metaPopoverContent: WsComponentMeta = {
   presetStyle,
   icon: ContentIcon,
   detachable: false,
+  presetTokens: {
+    popoverContent: {
+      /**
+       *  z-50 w-72 rounded-md border bg-popover p-4 text-popover-foreground shadow-md outline-none
+       **/
+      styles: [
+        tc.z(50),
+        tc.w(72),
+        tc.rounded("md"),
+        tc.border(),
+        tc.bg("popover"),
+        tc.p(4),
+        tc.text("popoverForeground"),
+        tc.shadow("md"),
+        tc.outline("none"),
+      ].flat(),
+    },
+  },
 };
 
 /**
@@ -73,29 +90,20 @@ export const metaPopover: WsComponentMeta = {
         {
           type: "instance",
           component: "PopoverTrigger",
-          props: [],
-          children: buttonTemplate({
-            children: [{ type: "text", value: "Button" }],
-          }),
+          children: [
+            {
+              type: "instance",
+              component: "Button",
+              tokens: ["button", "buttonPrimary", "buttonMd"],
+              children: [{ type: "text", value: "Button" }],
+            },
+          ],
         },
         {
           type: "instance",
           component: "PopoverContent",
           props: [],
-          /**
-           *  z-50 w-72 rounded-md border bg-popover p-4 text-popover-foreground shadow-md outline-none
-           **/
-          styles: [
-            tc.z(50),
-            tc.w(72),
-            tc.rounded("md"),
-            tc.border(),
-            tc.bg("popover"),
-            tc.p(4),
-            tc.text("popoverForeground"),
-            tc.shadow("md"),
-            tc.outline("none"),
-          ].flat(),
+          tokens: ["popoverContent"],
           children: [
             {
               type: "instance",

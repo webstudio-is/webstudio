@@ -54,6 +54,7 @@ export const metaCollapsible: WsComponentMeta = {
             {
               type: "instance",
               component: "Button",
+              tokens: ["button", "buttonPrimary", "buttonMd"],
               children: [{ type: "text", value: "Click to toggle content" }],
             },
           ],

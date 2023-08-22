@@ -11,7 +11,6 @@ import {
   propsTooltipTrigger,
 } from "./__generated__/tooltip.props";
 import { div } from "@webstudio-is/react-sdk/css-normalize";
-import { template as buttonTemplate } from "./button.ws";
 
 const presetStyle = {
   div,
@@ -30,8 +29,27 @@ export const metaTooltipContent: WsComponentMeta = {
   category: "hidden",
   detachable: false,
   type: "container",
-  presetStyle,
   icon: ContentIcon,
+  presetStyle,
+  presetTokens: {
+    tooltipContent: {
+      /**
+       *  z-50 overflow-hidden rounded-md border bg-popover px-3 py-1.5 text-sm text-popover-foreground shadow-md
+       **/
+      styles: [
+        tc.z(50),
+        tc.overflow("hidden"),
+        tc.rounded("md"),
+        tc.border(),
+        tc.bg("popover"),
+        tc.px(3),
+        tc.py(1.5),
+        tc.text("sm"),
+        tc.text("popoverForeground"),
+        tc.shadow("md"),
+      ].flat(),
+    },
+  },
 };
 
 /**
@@ -73,30 +91,19 @@ export const metaTooltip: WsComponentMeta = {
         {
           type: "instance",
           component: "TooltipTrigger",
-          props: [],
-          children: buttonTemplate({
-            children: [{ type: "text", value: "Button" }],
-          }),
+          children: [
+            {
+              type: "instance",
+              component: "Button",
+              tokens: ["button", "buttonPrimary", "buttonMd"],
+              children: [{ type: "text", value: "Button" }],
+            },
+          ],
         },
         {
           type: "instance",
           component: "TooltipContent",
-          props: [],
-          /**
-           *  z-50 overflow-hidden rounded-md border bg-popover px-3 py-1.5 text-sm text-popover-foreground shadow-md
-           **/
-          styles: [
-            tc.z(50),
-            tc.overflow("hidden"),
-            tc.rounded("md"),
-            tc.border(),
-            tc.bg("popover"),
-            tc.px(3),
-            tc.py(1.5),
-            tc.text("sm"),
-            tc.text("popoverForeground"),
-            tc.shadow("md"),
-          ].flat(),
+          tokens: ["tooltipContent"],
           children: [
             {
               type: "instance",

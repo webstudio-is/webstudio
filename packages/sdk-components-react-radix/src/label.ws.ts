@@ -18,12 +18,10 @@ export const meta: WsComponentMeta = {
   order: 102,
   type: "container",
   icon: LabelIcon,
-  presetStyle,
   states: defaultStates,
-  template: [
-    {
-      type: "instance",
-      component: "Label",
+  presetStyle,
+  presetTokens: {
+    label: {
       styles: [
         // text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70
         tc.text("sm"),
@@ -31,6 +29,13 @@ export const meta: WsComponentMeta = {
         tc.leading("none"),
         // We are not supporting peer like styles yet
       ].flat(),
+    },
+  },
+  template: [
+    {
+      type: "instance",
+      component: "Label",
+      tokens: ["label"],
       children: [{ type: "text", value: "Form Label" }],
     },
   ],
