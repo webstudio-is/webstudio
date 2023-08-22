@@ -15,6 +15,7 @@ import { useClientSettings } from "~/builder/shared/client-settings";
 import { Flex } from "@webstudio-is/design-system";
 import { theme } from "@webstudio-is/design-system";
 import { BugIcon, HelpIcon } from "@webstudio-is/icons";
+import { HelpPopover } from "./help-popover";
 
 const none = { TabContent: () => null };
 
@@ -63,21 +64,20 @@ export const SidebarLeft = ({ publish }: SidebarLeftProps) => {
           ))}
         </SidebarTabsList>
         <Box css={{ borderRight: `1px solid  ${theme.colors.borderMain}` }}>
-          <Tooltip
-            side="right"
-            content="Ask for help on Discord"
-            delayDuration={0}
-          >
-            <SidebarTabsTrigger
-              as={"button"}
-              aria-label={"Ask for help"}
-              onClick={() => {
-                window.open("https://discord.gg/UNdyrDkq5r");
-              }}
+          <HelpPopover>
+            <Tooltip
+              side="top"
+              content="Ask for help on Discord"
+              delayDuration={0}
             >
-              <HelpIcon size={22} />
-            </SidebarTabsTrigger>
-          </Tooltip>
+              <HelpPopover.Trigger asChild>
+                <SidebarTabsTrigger as={"button"} aria-label={"Ask for help"}>
+                  <HelpIcon size={22} />
+                </SidebarTabsTrigger>
+              </HelpPopover.Trigger>
+            </Tooltip>
+          </HelpPopover>
+
           <Tooltip
             side="right"
             content="Report a bug on Github"
