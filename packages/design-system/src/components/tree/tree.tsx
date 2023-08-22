@@ -130,7 +130,7 @@ export const Tree = <Data extends { id: string }>({
         return;
       }
       if (getIsExpanded(dropTarget.itemSelector) === false) {
-        setIsExpanded(dropTarget.itemSelector, "expand");
+        setIsExpanded(dropTarget.itemSelector, true);
       }
     },
   });
@@ -298,8 +298,8 @@ export const Tree = <Data extends { id: string }>({
           selectedItemSelector={selectedItemSelector}
           itemData={root}
           getIsExpanded={getIsExpanded}
-          setIsExpanded={(itemSelector, type) => {
-            setIsExpanded(itemSelector, type);
+          setIsExpanded={(itemSelector, value, all) => {
+            setIsExpanded(itemSelector, value, all);
             dropHandlers.handleDomMutation();
           }}
           dropTargetItemSelector={shiftedDropTarget?.itemSelector}
@@ -336,7 +336,8 @@ const useKeyboardNavigation = <Data extends { id: string }>({
   getIsExpanded: (itemSelector: ItemSelector) => boolean;
   setIsExpanded: (
     itemSelector: ItemSelector,
-    type: "collapse" | "expand" | "expand-all"
+    value: boolean,
+    all?: boolean
   ) => void;
   onEsc: () => void;
   editingItemId: ItemId | undefined;
@@ -374,15 +375,15 @@ const useKeyboardNavigation = <Data extends { id: string }>({
       event.key === "ArrowRight" &&
       getIsExpanded(selectedItemSelector) === false
     ) {
-      setIsExpanded(selectedItemSelector, "expand");
+      setIsExpanded(selectedItemSelector, true);
     }
     if (event.key === "ArrowLeft" && getIsExpanded(selectedItemSelector)) {
-      setIsExpanded(selectedItemSelector, "collapse");
+      setIsExpanded(selectedItemSelector, false);
     }
     if (event.key === " ") {
       setIsExpanded(
         selectedItemSelector,
-        getIsExpanded(selectedItemSelector) ? "collapse" : "expand"
+        getIsExpanded(selectedItemSelector) === false
       );
       // prevent scrolling
       event.preventDefault();
@@ -537,31 +538,22 @@ const useExpandState = <Data extends { id: string }>({
   );
 
   const setIsExpanded = useCallback(
-    (
-      itemSelector: ItemSelector,
-      type: "collapse" | "expand" | "expand-all"
-    ) => {
+    (itemSelector: ItemSelector, value: boolean, all?: boolean) => {
       setRecord((record) => {
-        if (type === "collapse") {
-          return { ...record, [itemSelector.join()]: false };
-        }
-        if (type === "expand") {
-          return { ...record, [itemSelector.join()]: true };
-        }
-        if (type === "expand-all") {
+        if (all) {
           const newRecord = { ...record };
           const addChildren = (parentSelector: string[]) => {
             for (const child of getItemChildren(parentSelector[0])) {
               const itemSelector = [child.id, ...parentSelector];
-              newRecord[itemSelector.join()] = true;
+              newRecord[itemSelector.join()] = value;
               addChildren(itemSelector);
             }
           };
-          newRecord[itemSelector.join()] = true;
+          newRecord[itemSelector.join()] = value;
           addChildren(itemSelector);
           return newRecord;
         }
-        return record;
+        return { ...record, [itemSelector.join()]: value };
       });
     },
     [getItemChildren]

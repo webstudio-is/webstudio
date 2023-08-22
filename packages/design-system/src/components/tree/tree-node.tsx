@@ -241,7 +241,7 @@ export type TreeItemRenderProps<Data extends { id: string }> = {
   isAlwaysExpanded: boolean;
   shouldRenderExpandButton: boolean;
   isExpanded: boolean;
-  onToggle: (expandAll: boolean) => void;
+  onToggle: (all: boolean) => void;
 };
 
 export const TreeItemBody = <Data extends { id: string }>({
@@ -400,7 +400,8 @@ export type TreeNodeProps<Data extends { id: ItemId }> = {
   getIsExpanded: (itemSelector: ItemSelector) => boolean;
   setIsExpanded?: (
     itemSelector: ItemSelector,
-    type: "collapse" | "expand" | "expand-all"
+    value: boolean,
+    all?: boolean
   ) => void;
 
   selectedItemSelector?: ItemSelector;
@@ -463,13 +464,12 @@ export const TreeNode = <Data extends { id: string }>({
           isAlwaysExpanded,
           shouldRenderExpandButton,
           isExpanded,
-          onToggle: (expandAll) => {
-            const type = isExpanded
-              ? ("collapse" as const)
-              : expandAll
-              ? ("expand-all" as const)
-              : ("expand" as const);
-            setIsExpanded?.(itemSelector, type);
+          onToggle: (all) => {
+            setIsExpanded?.(
+              itemSelector,
+              getIsExpanded(itemSelector) === false,
+              all
+            );
           },
         })}
       {isExpandable &&
