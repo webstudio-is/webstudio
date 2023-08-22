@@ -71,9 +71,7 @@ export const downloadAsset = async (
             }
             resolve(response);
           })
-          .on("error", (error) => {
-            reject(error);
-          });
+          .on("error", reject);
       });
 
       const writableStream = createWriteStream(tempAssetPath);
