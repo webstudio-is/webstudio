@@ -188,7 +188,7 @@ export const props: Record<string, PropMeta> = {
   },
   "aria-label": {
     description:
-      "Defines a string value that labels the current element.\n@see aria-labelledby.",
+      "Provides the accessible name that describes an interactive element if no other accessible name exists, for example in a button that contains an image with no text.",
     required: false,
     control: "text",
     type: "string",
@@ -400,7 +400,7 @@ export const props: Record<string, PropMeta> = {
     control: "boolean",
     type: "boolean",
     description:
-      "The autofocus global attribute is a Boolean attribute indicating that an element should be focused on page load, or when the <dialog> that it is part of is displayed.",
+      "Indicates that an element should be focused on page load, or when its parent dialog is displayed.",
   },
   autopause: {
     description:
@@ -742,7 +742,7 @@ export const props: Record<string, PropMeta> = {
   },
   url: {
     description:
-      "The ID or the URL of the video on Vimeo. You must supply one of these values to identify the video. When the video's privacy setting is Private, you must use the URL, and the URL must include the h parameter. For more information, see our introductory guide.",
+      "The ID or the URL of the video on Vimeo. You must supply one of these values to identify the video. When the video's privacy setting is Private, you must use the URL, and the URL must include the h parameter. For more information, see Vimeo’s introductory guide.",
     required: false,
     control: "text",
     type: "string",

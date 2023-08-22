@@ -188,7 +188,7 @@ export const propsCollapsible: Record<string, PropMeta> = {
   },
   "aria-label": {
     description:
-      "Defines a string value that labels the current element.\n@see aria-labelledby.",
+      "Provides the accessible name that describes an interactive element if no other accessible name exists, for example in a button that contains an image with no text.",
     required: false,
     control: "text",
     type: "string",
@@ -400,7 +400,7 @@ export const propsCollapsible: Record<string, PropMeta> = {
     control: "boolean",
     type: "boolean",
     description:
-      "The autofocus global attribute is a Boolean attribute indicating that an element should be focused on page load, or when the <dialog> that it is part of is displayed.",
+      "Indicates that an element should be focused on page load, or when its parent dialog is displayed.",
   },
   autoSave: { required: false, control: "text", type: "string" },
   className: { required: false, control: "text", type: "string" },
@@ -500,7 +500,7 @@ export const propsCollapsible: Record<string, PropMeta> = {
     control: "boolean",
     type: "boolean",
     description:
-      "Indicates whether the contents are currently visible (in the case ofa <details> element) or whether the dialog is active and can be interacted with (in the case of a <dialog> element).",
+      "Show or hide the content of this component on the canvas. This will not affect the initial state of the component.",
   },
   placeholder: {
     required: false,
@@ -772,7 +772,7 @@ export const propsCollapsibleContent: Record<string, PropMeta> = {
   },
   "aria-label": {
     description:
-      "Defines a string value that labels the current element.\n@see aria-labelledby.",
+      "Provides the accessible name that describes an interactive element if no other accessible name exists, for example in a button that contains an image with no text.",
     required: false,
     control: "text",
     type: "string",
@@ -984,7 +984,7 @@ export const propsCollapsibleContent: Record<string, PropMeta> = {
     control: "boolean",
     type: "boolean",
     description:
-      "The autofocus global attribute is a Boolean attribute indicating that an element should be focused on page load, or when the <dialog> that it is part of is displayed.",
+      "Indicates that an element should be focused on page load, or when its parent dialog is displayed.",
   },
   autoSave: { required: false, control: "text", type: "string" },
   className: { required: false, control: "text", type: "string" },

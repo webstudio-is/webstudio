@@ -188,7 +188,7 @@ export const props: Record<string, PropMeta> = {
   },
   "aria-label": {
     description:
-      "Defines a string value that labels the current element.\n@see aria-labelledby.",
+      "Provides the accessible name that describes an interactive element if no other accessible name exists, for example in a button that contains an image with no text.",
     required: false,
     control: "text",
     type: "string",
@@ -407,7 +407,7 @@ export const props: Record<string, PropMeta> = {
     control: "boolean",
     type: "boolean",
     description:
-      "The autofocus global attribute is a Boolean attribute indicating that an element should be focused on page load, or when the <dialog> that it is part of is displayed.",
+      "Indicates that an element should be focused on page load, or when its parent dialog is displayed.",
   },
   autoSave: { required: false, control: "text", type: "string" },
   className: { required: false, control: "text", type: "string" },
@@ -534,7 +534,7 @@ export const props: Record<string, PropMeta> = {
     control: "text",
     type: "string",
     description:
-      "Name of the element. For example used by the server to identify the fields in form submits.",
+      "This name is important when submitting form data to the server, as it identifies the data associated with the input. When multiple inputs share the same name attribute, they are treated as part of the same group (e.g., radio buttons or checkboxes).",
   },
   nonce: { required: false, control: "text", type: "string" },
   placeholder: {
@@ -565,7 +565,7 @@ export const props: Record<string, PropMeta> = {
     control: "boolean",
     type: "boolean",
     description:
-      "Indicates whether this element is required to fill out or not.",
+      "Indicates whether this form element must be filled before the form can be submitted.",
   },
   resource: { required: false, control: "text", type: "string" },
   results: { required: false, control: "number", type: "number" },

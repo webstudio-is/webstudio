@@ -18,7 +18,7 @@ export const htmlPropsDescriptions = {
   autocomplete:
     "Indicates whether controls in this form can by default have their valuesautomatically completed by the browser.",
   autofocus:
-    "Indicates that an element should be focused on page load, or when its parent component is displayed.",
+    "Indicates that an element should be focused on page load, or when its parent dialog is displayed.",
   autoplay: "The audio or video should play as soon as possible.",
   background:
     "Specifies the URL of an image file. Note: Although browsers and email clients may still support this attribute, it is obsolete. Use CSS background-image instead.",

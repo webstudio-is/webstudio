@@ -12,7 +12,8 @@ export const props: Record<string, PropMeta> = {
     required: false,
     control: "text",
     type: "string",
-    description: "Alternative text in case an image can't be displayed.",
+    description:
+      "Text description of the image, which is very important for accessibility and search engine optimization. Screen readers read this description to users so they know what the image means. Alt text is also displayed on the page if the image can't be loaded for some reason.",
   },
   "aria-activedescendant": {
     description:
@@ -194,7 +195,7 @@ export const props: Record<string, PropMeta> = {
   },
   "aria-label": {
     description:
-      "Defines a string value that labels the current element.\n@see aria-labelledby.",
+      "Provides the accessible name that describes an interactive element if no other accessible name exists, for example in a button that contains an image with no text.",
     required: false,
     control: "text",
     type: "string",
@@ -406,7 +407,7 @@ export const props: Record<string, PropMeta> = {
     control: "boolean",
     type: "boolean",
     description:
-      "The autofocus global attribute is a Boolean attribute indicating that an element should be focused on page load, or when the <dialog> that it is part of is displayed.",
+      "Indicates that an element should be focused on page load, or when its parent dialog is displayed.",
   },
   autoSave: { required: false, control: "text", type: "string" },
   className: { required: false, control: "text", type: "string" },
@@ -464,8 +465,7 @@ export const props: Record<string, PropMeta> = {
     required: false,
     control: "number",
     type: "number",
-    description:
-      "Specifies the height of elements listed here. For all other elements,  use the CSS height property. Note: In some instances, such as div, this is a legacy attribute, in which case the CSS height property should be used instead.",
+    description: "Defines the image’s height in pixels.",
   },
   hidden: {
     required: false,
@@ -522,7 +522,7 @@ export const props: Record<string, PropMeta> = {
     type: "string",
     options: ["eager", "lazy"],
     description:
-      'Indicates if the element should be loaded lazily (loading="lazy") or loaded immediately (loading="eager").',
+      "Determines whether the image will load as soon as possible (Eager), or when it scrolls into view (Lazy). Lazy loading is a great option for pages with many images because it can significantly reduce the time it takes for the page to load initially.",
   },
   nonce: { required: false, control: "text", type: "string" },
   optimize: { required: false, control: "boolean", type: "boolean" },
@@ -642,7 +642,6 @@ export const props: Record<string, PropMeta> = {
     required: false,
     control: "number",
     type: "number",
-    description:
-      "For the elements listed here, this establishes the element's width. Note: For all other instances, such as div, this is a legacy attribute, in which case the CSS width property should be used instead.",
+    description: "Defines the image’s width in pixels.",
   },
 };
