@@ -55,6 +55,7 @@ import { subscribeInstanceHovering } from "./instance-hovering";
 import { useHashLinkSync } from "~/shared/pages";
 import { useMount } from "~/shared/hook-utils/use-mount";
 import { useSelectedInstance } from "./instance-selected-react";
+import { subscribeInterceptedEvents } from "./interceptor";
 
 registerContainers();
 
@@ -223,6 +224,8 @@ export const Canvas = ({ params }: CanvasProps): JSX.Element | null => {
   useEffect(subscribeCollapsedToPubSub, []);
 
   useHashLinkSync();
+
+  useEffect(subscribeInterceptedEvents, []);
 
   const components = useStore(registeredComponentsStore);
   const instances = useStore(instancesStore);

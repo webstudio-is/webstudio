@@ -1,6 +1,4 @@
 import {
-  type MouseEvent,
-  type FormEvent,
   useEffect,
   forwardRef,
   type ForwardedRef,
@@ -40,7 +38,6 @@ import {
   type InstanceSelector,
   areInstanceSelectorsEqual,
 } from "~/shared/tree-utils";
-import { handleLinkClick } from "./link";
 import { mergeRefs } from "@react-aria/utils";
 import { composeEventHandlers } from "@radix-ui/primitive";
 import { setDataCollapsed } from "~/canvas/collapsed";
@@ -134,24 +131,6 @@ type WebstudioComponentDevProps = {
   components: Components;
 };
 
-/**
- * For some components that are wrapped with Radix Slot-like components (Triggers etc where asChild=true),
- * Slots in react-aria https://react-spectrum.adobe.com/react-spectrum/layout.html#slots
- * events are passed implicitly. We aim to merge these implicit events with the explicitly defined ones.
- **/
-type ImplicitEvents = {
-  onClick?: undefined | ((event: never) => void);
-  onSubmit?: undefined | ((event: never) => void);
-  /**
-   * We ignore the remaining events because we currently detect events using the 'on' prefix.
-   * This approach (defining type like above instead of Partial<Record<`on${string}`, Handler>>)
-   * is necessary due to our TypeScript settings, where 'no exactOptionalPropertyTypes' is set,
-   * which makes it impossible to define a Partial<Record<>> with optional keys.
-   *  (without exactOptionalPropertyTypes ts defines it as {[key: string]: Handler | undefined)}
-   *   instead of {[key: string]?: Handler | undefined)})
-   **/
-};
-
 const existingElements = new Set<string>();
 
 /**
@@ -173,7 +152,7 @@ const useCollapsedOnNewElement = (instanceId: Instance["id"]) => {
 // eslint-disable-next-line react/display-name
 export const WebstudioComponentDev = forwardRef<
   HTMLElement,
-  WebstudioComponentDevProps & ImplicitEvents
+  WebstudioComponentDevProps
 >(({ instance, instanceSelector, children, components, ...restProps }, ref) => {
   const { renderer } = useContext(ReactSdkContext);
   const instanceId = instance.id;
@@ -230,35 +209,10 @@ export const WebstudioComponentDev = forwardRef<
   } & Record<string, unknown> = {
     ...instanceProps,
     tabIndex: 0,
-    onClick: (event: MouseEvent) => {
-      if (event.currentTarget instanceof HTMLAnchorElement) {
-        // @todo use Navigation API once implemented everywhere
-        // https://developer.mozilla.org/en-US/docs/Web/API/Navigation_API
-        handleLinkClick(event);
-        event.preventDefault();
-      } else if (typeof instanceProps.onClick === "function") {
-        // bypass onClick for non-link component, for example button
-        instanceProps.onClick(event);
-      }
-    },
-    onSubmit: (event: FormEvent) => {
-      // Prevent submitting the form when clicking a button type submit
-      event.preventDefault();
-      if (typeof instanceProps.onSubmit === "function") {
-        // bypass handler
-        instanceProps.onSubmit(event);
-      }
-    },
     [componentAttribute]: instance.component,
     [idAttribute]: instance.id,
     [selectorIdAttribute]: instanceSelector.join(","),
   };
-
-  if (renderer === "canvas") {
-    if (instance.component === "Input" || instance.component === "Textarea") {
-      props.readOnly = true;
-    }
-  }
 
   for (const [name, value] of Object.entries(restProps)) {
     if (typeof value === "function") {
@@ -275,7 +229,11 @@ export const WebstudioComponentDev = forwardRef<
        * purposes (setting variable).
        **/
       if (name.startsWith("on") && typeof props[name] === "function") {
-        props[name] = composeEventHandlers(value, props[name] as typeof value);
+        type Callback = (event: unknown) => void;
+        props[name] = composeEventHandlers(
+          value as Callback,
+          props[name] as Callback
+        );
         continue;
       }
     }
