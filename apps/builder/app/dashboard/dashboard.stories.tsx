@@ -26,7 +26,9 @@ const createRouter = (element: JSX.Element) =>
   ]);
 
 export const Empty: ComponentStory<typeof Dashboard> = () => {
-  const router = createRouter(<Dashboard user={user} projects={[]} />);
+  const router = createRouter(
+    <Dashboard user={user} projects={[]} projectTemplates={[]} />
+  );
   return <RouterProvider router={router} />;
 };
 
@@ -43,6 +45,8 @@ export const WithProjects: ComponentStory<typeof Dashboard> = () => {
       latestBuild: null,
     },
   ];
-  const router = createRouter(<Dashboard user={user} projects={projects} />);
+  const router = createRouter(
+    <Dashboard user={user} projects={projects} projectTemplates={projects} />
+  );
   return <RouterProvider router={router} />;
 };

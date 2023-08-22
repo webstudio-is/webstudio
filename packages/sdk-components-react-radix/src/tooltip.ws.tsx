@@ -44,9 +44,9 @@ export const metaTooltipContent: WsComponentMeta = {
  **/
 export const metaTooltip: WsComponentMeta = {
   category: "radix",
+  order: 7,
   type: "container",
   icon: TooltipIcon,
-  order: 15,
   stylable: false,
   template: [
     {

@@ -77,6 +77,14 @@ const env = {
    */
   ENTRI_APPLICATION_ID: process.env.ENTRI_APPLICATION_ID ?? "webstudio",
   ENTRI_SECRET: process.env.ENTRI_SECRET,
+
+  /**
+   * Projects as templates in dashboard
+   */
+  PROJECT_TEMPLATES:
+    process.env.PROJECT_TEMPLATES?.split(",").map((projectId) =>
+      projectId.trim()
+    ) ?? [],
 };
 
 export type ServerEnv = typeof env;

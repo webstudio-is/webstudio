@@ -17,6 +17,16 @@ const projectRouter = router({
     .query(async ({ input, ctx }) => {
       return await db.findMany(input.userId, ctx);
     }),
+
+  findManyByIds: procedure
+    .input(
+      z.object({
+        projectIds: z.array(z.string()),
+      })
+    )
+    .query(async ({ input, ctx }) => {
+      return await db.findManyByIds(input.projectIds, ctx);
+    }),
 });
 
 export const dashboardProjectRouter = mergeRouters(

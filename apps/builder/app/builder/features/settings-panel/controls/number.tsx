@@ -3,7 +3,7 @@ import {
   type ControlProps,
   getLabel,
   useLocalValue,
-  HorizontalLayout,
+  ResponsiveLayout,
 } from "../shared";
 
 export const NumberControl = ({
@@ -26,9 +26,9 @@ export const NumberControl = ({
   });
 
   return (
-    <HorizontalLayout
-      id={id}
+    <ResponsiveLayout
       label={getLabel(meta, propName)}
+      id={id}
       onDelete={onDelete}
     >
       <InputField
@@ -45,6 +45,6 @@ export const NumberControl = ({
           }
         }}
       />
-    </HorizontalLayout>
+    </ResponsiveLayout>
   );
 };

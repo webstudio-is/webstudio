@@ -1,21 +1,20 @@
 import type { Meta, StoryObj } from "@storybook/react";
 import { renderComponentTemplate } from "@webstudio-is/react-sdk";
-import { Button as ButtonPrimitive } from "./button";
+import { NavigationMenu as NavigationMenuPrimitive } from "./navigation-menu";
 import * as baseComponents from "@webstudio-is/sdk-components-react";
 import * as baseMetas from "@webstudio-is/sdk-components-react/metas";
 import * as radixComponents from "./components";
 import * as radixMetas from "./metas";
 
 export default {
-  title: "Components/Button",
-  component: ButtonPrimitive,
-} satisfies Meta<typeof ButtonPrimitive>;
+  title: "Components/NavigationMenu",
+  component: NavigationMenuPrimitive,
+} satisfies Meta<typeof NavigationMenuPrimitive>;
 
-export const Button: StoryObj<typeof ButtonPrimitive> = {
-  render: (props) =>
+export const NavigationMenu: StoryObj<typeof NavigationMenuPrimitive> = {
+  render: () =>
     renderComponentTemplate({
-      name: "Button",
-      props: { ...props },
+      name: "NavigationMenu",
       components: { ...baseComponents, ...radixComponents },
       metas: { ...baseMetas, ...radixMetas },
     }),

@@ -391,6 +391,7 @@ export const Story = () => {
 
   const logic = usePropsLogic({
     instance,
+    props,
     updateProp: handleUpdate,
     deleteProp: handleDelete,
   });

@@ -369,33 +369,45 @@ export const maxW = (
 
 const positionStyle = (
   property: "left" | "right" | "top" | "bottom",
-  spacing: StringEnumToNumeric<keyof EvaluatedDefaultTheme["spacing"]>
+  spacing:
+    | StringEnumToNumeric<keyof EvaluatedDefaultTheme["inset"]>
+    | NonNumeric<keyof EvaluatedDefaultTheme["inset"]>
 ): EmbedTemplateStyleDecl => {
   const key = `${spacing}` as const;
-  const valueString = theme("spacing")?.[key] ?? "0";
+  const valueString = theme("inset")?.[key] ?? "0";
   const value = parseCssValue(property, valueString);
 
   return { property, value };
 };
 
 export const top = (
-  spacing: StringEnumToNumeric<keyof EvaluatedDefaultTheme["spacing"]>
+  spacing:
+    | StringEnumToNumeric<keyof EvaluatedDefaultTheme["inset"]>
+    | NonNumeric<keyof EvaluatedDefaultTheme["inset"]>
 ): EmbedTemplateStyleDecl[] => [positionStyle("top", spacing)];
 
 export const right = (
-  spacing: StringEnumToNumeric<keyof EvaluatedDefaultTheme["spacing"]>
+  spacing:
+    | StringEnumToNumeric<keyof EvaluatedDefaultTheme["inset"]>
+    | NonNumeric<keyof EvaluatedDefaultTheme["inset"]>
 ): EmbedTemplateStyleDecl[] => [positionStyle("right", spacing)];
 
 export const bottom = (
-  spacing: StringEnumToNumeric<keyof EvaluatedDefaultTheme["spacing"]>
+  spacing:
+    | StringEnumToNumeric<keyof EvaluatedDefaultTheme["inset"]>
+    | NonNumeric<keyof EvaluatedDefaultTheme["inset"]>
 ): EmbedTemplateStyleDecl[] => [positionStyle("bottom", spacing)];
 
 export const left = (
-  spacing: StringEnumToNumeric<keyof EvaluatedDefaultTheme["spacing"]>
+  spacing:
+    | StringEnumToNumeric<keyof EvaluatedDefaultTheme["inset"]>
+    | NonNumeric<keyof EvaluatedDefaultTheme["inset"]>
 ): EmbedTemplateStyleDecl[] => [positionStyle("left", spacing)];
 
 export const inset = (
-  spacing: StringEnumToNumeric<keyof EvaluatedDefaultTheme["spacing"]>
+  spacing:
+    | StringEnumToNumeric<keyof EvaluatedDefaultTheme["inset"]>
+    | NonNumeric<keyof EvaluatedDefaultTheme["inset"]>
 ): EmbedTemplateStyleDecl[] => [
   positionStyle("left", spacing),
   positionStyle("right", spacing),
@@ -413,6 +425,27 @@ export const backdropBlur = (
   };
 
   return [{ property: "backdropFilter", value }];
+};
+
+export const list = (
+  listStyle: keyof EvaluatedDefaultTheme["listStyleType"]
+): EmbedTemplateStyleDecl[] => {
+  const valueString = theme("listStyleType")[listStyle];
+  const value = parseCssValue("listStyleType", valueString);
+
+  return [{ property: "listStyleType", value }];
+};
+
+export const select = (selectValue: "none"): EmbedTemplateStyleDecl[] => {
+  return [
+    {
+      property: "userSelect",
+      value: {
+        type: "keyword",
+        value: "none",
+      },
+    },
+  ];
 };
 
 export const bg = (
@@ -505,6 +538,10 @@ export const inlineFlex = (): EmbedTemplateStyleDecl[] => {
   return [
     { property: "display", value: { type: "keyword", value: "inline-flex" } },
   ];
+};
+
+export const block = (): EmbedTemplateStyleDecl[] => {
+  return [{ property: "display", value: { type: "keyword", value: "block" } }];
 };
 
 const flexDirection = { row: "row", col: "column" } as const;
@@ -629,6 +666,45 @@ export const gap = (
   ];
 };
 
+export const lineClamp = (
+  lineClampValue: StringEnumToNumeric<keyof EvaluatedDefaultTheme["lineClamp"]>
+): EmbedTemplateStyleDecl[] => {
+  const key = `${lineClampValue}` as const;
+  const valueString = theme("lineClamp")?.[key];
+
+  return [
+    {
+      property: "overflow",
+      value: {
+        type: "keyword",
+        value: "hidden",
+      },
+    },
+    {
+      property: "display",
+
+      value: {
+        type: "keyword",
+        value: "-webkit-box",
+      },
+    },
+    {
+      property: "-webkit-box-orient" as "display",
+      value: {
+        type: "keyword",
+        value: "vertical",
+      },
+    },
+    {
+      property: "-webkit-line-clamp" as "display",
+      value: {
+        type: "keyword",
+        value: valueString,
+      },
+    },
+  ];
+};
+
 export const leading = (
   lineHeight:
     | StringEnumToNumeric<keyof EvaluatedDefaultTheme["lineHeight"]>
@@ -715,6 +791,15 @@ export const text = (
     {
       property: "color",
       value,
+    },
+  ];
+};
+
+export const noUnderline = (): EmbedTemplateStyleDecl[] => {
+  return [
+    {
+      property: "textDecorationLine",
+      value: { type: "keyword", value: "none" },
     },
   ];
 };

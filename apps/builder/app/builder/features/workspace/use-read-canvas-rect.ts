@@ -3,7 +3,7 @@ import { useCallback, useEffect, useState } from "react";
 import {
   scaleStore,
   canvasWidthStore,
-  canvasRectStore,
+  $canvasRect,
 } from "~/builder/shared/nano-states";
 import { useWindowResizeDebounced } from "~/shared/dom-hooks";
 
@@ -16,12 +16,25 @@ export const useReadCanvasRect = () => {
     null
   );
 
+  // react updates dom asynchronously so here schedule rect
+  // computing into effect when react done with dom
+  const [updateCallback, setUpdateCallback] = useState<
+    undefined | (() => void)
+  >(undefined);
+  useEffect(() => {
+    updateCallback?.();
+  }, [updateCallback]);
+
   const updateRect = useCallback(() => {
     if (iframeElement === null) {
       return;
     }
-    const rect = iframeElement.getBoundingClientRect();
-    canvasRectStore.set(rect);
+    // create new function to trigger effect
+    const task = () => {
+      const rect = iframeElement.getBoundingClientRect();
+      $canvasRect.set(rect);
+    };
+    setUpdateCallback(() => task);
   }, [iframeElement]);
 
   useEffect(() => {

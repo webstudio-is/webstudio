@@ -183,7 +183,16 @@ const clone = async (
   return Project.parse(clonedProject);
 };
 
-export const duplicate = async (projectId: string, context: AppContext) => {
+export const duplicate = async (
+  {
+    projectId,
+    title,
+  }: {
+    projectId: string;
+    title?: string | undefined;
+  },
+  context: AppContext
+) => {
   const project = await loadById(projectId, context);
   if (project === null) {
     throw new Error(`Not found project "${projectId}"`);
@@ -191,7 +200,7 @@ export const duplicate = async (projectId: string, context: AppContext) => {
   return await clone(
     {
       project,
-      title: `${project.title} (copy)`,
+      title: title ?? `${project.title} (copy)`,
     },
     context
   );

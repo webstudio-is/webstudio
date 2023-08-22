@@ -62,6 +62,13 @@ export const hasProjectPermit = async (
       return true;
     }
 
+    if (
+      props.permit === "view" &&
+      context.authorization.projectTemplates.includes(props.projectId)
+    ) {
+      return true;
+    }
+
     // Check if the user is allowed to access the project
     if (authorization.userId !== undefined) {
       checks.push(

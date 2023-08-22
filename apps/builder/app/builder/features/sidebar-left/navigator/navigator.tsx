@@ -21,7 +21,7 @@ export const Navigator = ({ isClosable, onClose, publish }: NavigatorProps) => {
         suffix={isClosable && <CloseButton onClick={() => onClose?.()} />}
       />
       <Flex grow direction="column" justify="end">
-        <NavigatorTree publish={publish} />
+        <NavigatorTree />
         <Separator />
         <CssPreview />
       </Flex>

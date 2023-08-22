@@ -1,7 +1,6 @@
 import type { PropMeta } from "@webstudio-is/generate-arg-types";
 
 export const propsPopover: Record<string, PropMeta> = {
-  modal: { required: false, control: "boolean", type: "boolean" },
   open: { required: false, control: "boolean", type: "boolean" },
 };
 export const propsPopoverTrigger: Record<string, PropMeta> = {};
@@ -396,7 +395,6 @@ export const propsPopoverContent: Record<string, PropMeta> = {
     type: "string",
   },
   arrowPadding: { required: false, control: "number", type: "number" },
-  asChild: { required: false, control: "boolean", type: "boolean" },
   autoCapitalize: { required: false, control: "text", type: "string" },
   autoCorrect: { required: false, control: "text", type: "string" },
   autoFocus: { required: false, control: "boolean", type: "boolean" },

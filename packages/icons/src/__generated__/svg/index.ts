@@ -145,6 +145,7 @@ export { TextIcon } from "./text";
 export { TooltipIcon } from "./tooltip";
 export { TriggerIcon } from "./trigger";
 export { VideoIcon } from "./video";
+export { ViewportIcon } from "./viewport";
 export { VimeoIcon } from "./vimeo";
 export { WebstudioIcon } from "./webstudio";
 export { WrapIcon } from "./wrap";

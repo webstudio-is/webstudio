@@ -18,7 +18,7 @@ import {
   selectedPageStore,
 } from "~/shared/nano-states";
 import { useSubscribe, type Publish } from "~/shared/pubsub";
-import { canvasRectStore, scaleStore } from "~/builder/shared/nano-states";
+import { $canvasRect, scaleStore } from "~/builder/shared/nano-states";
 import {
   computeInstancesConstraints,
   findClosestDroppableTarget,
@@ -125,7 +125,7 @@ export const useDraggable = ({
 }) => {
   const [dragComponent, setDragComponent] = useState<Instance["component"]>();
   const [point, setPoint] = useState<Point>({ x: 0, y: 0 });
-  const canvasRect = useStore(canvasRectStore);
+  const canvasRect = useStore($canvasRect);
   const scale = useStore(scaleStore);
   const { enableCanvasPointerEvents, disableCanvasPointerEvents } =
     useDisableCanvasPointerEvents();

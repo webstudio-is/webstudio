@@ -876,7 +876,6 @@ export const propsTabsList: Record<string, PropMeta> = {
     control: "text",
     type: "string",
   },
-  asChild: { required: false, control: "boolean", type: "boolean" },
   autoCapitalize: { required: false, control: "text", type: "string" },
   autoCorrect: { required: false, control: "text", type: "string" },
   autoFocus: { required: false, control: "boolean", type: "boolean" },

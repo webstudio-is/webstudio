@@ -39,9 +39,8 @@ module.exports = {
   // appDirectory: "app",
   // assetsBuildDirectory: "public/build",
   watchPaths: () => {
-    return ["../../packages/**/lib/**.js"];
+    return ["../../packages/*/lib/**.js"];
   },
-
   // remix will disable all polyfills by default
   serverNodeBuiltinsPolyfill: { modules: {} },
   future: {
@@ -50,5 +49,6 @@ module.exports = {
     v2_meta: true,
     v2_normalizeFormMethod: true,
     v2_headers: true,
+    v2_dev: true,
   },
 };

@@ -126,7 +126,6 @@ export const useLocalValue = <Type,>(
 type LayoutProps = {
   label: string;
   id?: string;
-  labelSize?: "default" | "large";
   onDelete?: () => void;
   children: ReactNode;
 };
@@ -149,35 +148,46 @@ export const VerticalLayout = ({
 export const HorizontalLayout = ({
   label,
   id,
-  labelSize = "default",
   onDelete,
   children,
 }: LayoutProps) => (
   <Grid
     css={{
-      gridTemplateColumns: `${
-        labelSize === "default" ? theme.spacing[19] : theme.spacing[24]
-      } 1fr`,
+      gridTemplateColumns: onDelete
+        ? `${theme.spacing[19]} 1fr max-content`
+        : `${theme.spacing[19]} 1fr`,
       minHeight: theme.spacing[13],
     }}
     align="center"
     gap="2"
   >
     <Label htmlFor={id}>{label}</Label>
-    <Grid
-      css={{
-        gridTemplateColumns: `1fr`,
-        gridAutoFlow: "column",
-        gridAutoColumns: "auto",
-      }}
-      align="center"
-      gap="2"
-    >
-      {children}
-      {onDelete && <RemovePropButton onClick={onDelete} />}
-    </Grid>
+    {children}
+    {onDelete && <RemovePropButton onClick={onDelete} />}
   </Grid>
 );
+
+export const ResponsiveLayout = ({
+  label,
+  id,
+  onDelete,
+  children,
+}: LayoutProps) => {
+  // more than 9 characters in label trigger ellipsis
+  // might not cover all cases though
+  if (label.length <= 8) {
+    return (
+      <HorizontalLayout label={label} id={id} onDelete={onDelete}>
+        {children}
+      </HorizontalLayout>
+    );
+  }
+  return (
+    <VerticalLayout label={label} id={id} onDelete={onDelete}>
+      {children}
+    </VerticalLayout>
+  );
+};
 
 export const Row = ({ children, css }: { children: ReactNode; css?: CSS }) => (
   <Flex css={{ px: theme.spacing[9], ...css }} gap="2" direction="column">

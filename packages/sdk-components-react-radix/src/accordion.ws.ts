@@ -68,10 +68,15 @@ const createAccordionTrigger = ({
         ),
       ].flat(),
       children: [
-        ...children,
+        {
+          type: "instance",
+          component: "Text",
+          children,
+        },
         {
           type: "instance",
           component: "Box",
+          label: "Icon Container",
           // h-4 w-4 shrink-0 transition-transform duration-200
           styles: [
             tc.property("rotate", "--accordion-trigger-icon-transform"),
@@ -114,6 +119,7 @@ const accordionContentStyles: EmbedTemplateStyleDecl[] = [
 
 export const metaAccordion: WsComponentMeta = {
   category: "radix",
+  order: 3,
   type: "container",
   icon: AccordionIcon,
   presetStyle,
