@@ -10,7 +10,6 @@
   },
   "scripts": {
     "build:templates": "tsx ./templates/build.ts",
-    "dev": "build-package --watch",
     "build": "build-package"
   },
   "license": "MIT",
