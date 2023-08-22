@@ -382,9 +382,6 @@ importers:
       env-paths:
         specifier: ^3.0.0
         version: 3.0.0
-      node-fetch:
-        specifier: ^3.3.1
-        version: 3.3.1
       ora:
         specifier: ^7.0.1
         version: 7.0.1

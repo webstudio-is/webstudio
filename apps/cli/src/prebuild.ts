@@ -1,9 +1,9 @@
 import { join, relative, dirname } from "node:path";
-import { writeFileSync, createWriteStream } from "node:fs";
-import { rm, mkdir, access } from "node:fs/promises";
-import fetch from "node-fetch";
-import { pipeline } from "node:stream";
-import { promisify } from "node:util";
+import { createWriteStream, writeFileSync } from "node:fs";
+import https from "node:https";
+import type { IncomingMessage } from "node:http";
+import { rm, mkdir, access, mkdtemp, rename } from "node:fs/promises";
+import { tmpdir } from "node:os";
 import {
   generateCssText,
   generateUtilsExport,
@@ -51,22 +51,39 @@ type RemixRoutes = {
   }>;
 };
 
-export const downloadAsset = async (url: string, name: string) => {
+export const downloadAsset = async (
+  url: string,
+  name: string,
+  temporaryDir: string
+) => {
   const assetPath = join("public", ASSETS_BASE, name);
+  const tempAssetPath = join(temporaryDir, name);
   try {
     await access(assetPath);
   } catch {
-    const streamPipeline = promisify(pipeline);
     try {
-      const response = await fetch(url);
-      if (!response.ok) {
-        throw new Error(`unexpected response ${response.statusText}`);
-      }
+      const response = await new Promise<IncomingMessage>((resolve, reject) => {
+        https
+          .get(url, (response) => {
+            if (response.statusCode !== 200) {
+              reject(new Error(`HTTP Error: ${response.statusCode}`));
+              response.resume();
+            }
+            resolve(response);
+          })
+          .on("error", (error) => {
+            reject(error);
+          });
+      });
 
-      await streamPipeline(
-        response.body as NodeJS.ReadableStream,
-        createWriteStream(assetPath)
-      );
+      const writableStream = createWriteStream(tempAssetPath);
+      response.pipe(writableStream);
+
+      await new Promise<void>((resolve) => {
+        writableStream.on("finish", resolve);
+      });
+
+      await rename(tempAssetPath, assetPath);
     } catch (error) {
       console.error(`Error in downloading file ${name} \n ${error}`);
     }
@@ -80,6 +97,8 @@ export const prebuild = async () => {
   const routesDir = join(appRoot, "routes");
   await rm(routesDir, { recursive: true, force: true });
   await mkdir(routesDir, { recursive: true });
+
+  const temporaryDir = await mkdtemp(join(tmpdir(), "webstudio-"));
 
   const generatedDir = join(appRoot, "__generated__");
   await rm(generatedDir, { recursive: true, force: true });
@@ -185,14 +204,20 @@ export const prebuild = async () => {
 
       if (image?.src) {
         assetsToDownload.push(
-          limit(() => downloadAsset(image.src, asset.name))
+          limit(() => downloadAsset(image.src, asset.name, temporaryDir))
         );
       }
     }
 
     if (asset.type === "font") {
       assetsToDownload.push(
-        limit(() => downloadAsset(`${assetBuildUrl}${asset.name}`, asset.name))
+        limit(() =>
+          downloadAsset(
+            `${assetBuildUrl}${asset.name}`,
+            asset.name,
+            temporaryDir
+          )
+        )
       );
       fontAssets.push(asset);
     }
