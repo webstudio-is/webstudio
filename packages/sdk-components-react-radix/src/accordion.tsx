@@ -57,23 +57,30 @@ export const AccordionContent: ForwardRefExoticComponent<
 
 const namespace = "@webstudio-is/sdk-components-react-radix";
 
-// For each AccordionItem component within the selection,
+// For each AccordionContent component within the selection,
 // we identify its closest parent Accordion component
 // and update its open prop bound to variable.
 export const hooksAccordion: Hook = {
   onNavigatorSelect: (context, event) => {
     for (const instance of event.instancePath) {
-      if (instance.component === `${namespace}:AccordionItem`) {
+      if (instance.component === `${namespace}:AccordionContent`) {
         const accordion = getClosestInstance(
           event.instancePath,
           instance,
           `${namespace}:Accordion`
         );
-        const itemValue =
-          context.getPropValue(instance.id, "value") ??
-          context.indexesWithinAncestors.get(instance.id)?.toString();
-        if (accordion && itemValue) {
-          context.setPropVariable(accordion.id, "value", itemValue);
+        const item = getClosestInstance(
+          event.instancePath,
+          instance,
+          `${namespace}:AccordionItem`
+        );
+        if (accordion && item) {
+          const itemValue =
+            context.getPropValue(item.id, "value") ??
+            context.indexesWithinAncestors.get(item.id)?.toString();
+          if (itemValue) {
+            context.setPropVariable(accordion.id, "value", itemValue);
+          }
         }
       }
     }

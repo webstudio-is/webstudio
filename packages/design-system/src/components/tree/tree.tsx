@@ -80,6 +80,7 @@ export const Tree = <Data extends { id: string }>({
 }: TreeProps<Data>) => {
   const { getIsExpanded, setIsExpanded } = useExpandState({
     selectedItemSelector,
+    getItemChildren,
   });
 
   const rootRef = useRef<HTMLElement | null>(null);
@@ -297,8 +298,8 @@ export const Tree = <Data extends { id: string }>({
           selectedItemSelector={selectedItemSelector}
           itemData={root}
           getIsExpanded={getIsExpanded}
-          setIsExpanded={(itemSelector, isExpanded) => {
-            setIsExpanded(itemSelector, isExpanded);
+          setIsExpanded={(itemSelector, value, all) => {
+            setIsExpanded(itemSelector, value, all);
             dropHandlers.handleDomMutation();
           }}
           dropTargetItemSelector={shiftedDropTarget?.itemSelector}
@@ -333,7 +334,11 @@ const useKeyboardNavigation = <Data extends { id: string }>({
   getItemChildren: (itemId: ItemId) => Data[];
   isItemHidden: (itemId: ItemId) => boolean;
   getIsExpanded: (itemSelector: ItemSelector) => boolean;
-  setIsExpanded: (itemSelector: ItemSelector, isExpanded: boolean) => void;
+  setIsExpanded: (
+    itemSelector: ItemSelector,
+    value: boolean,
+    all?: boolean
+  ) => void;
   onEsc: () => void;
   editingItemId: ItemId | undefined;
 }) => {
@@ -376,7 +381,10 @@ const useKeyboardNavigation = <Data extends { id: string }>({
       setIsExpanded(selectedItemSelector, false);
     }
     if (event.key === " ") {
-      setIsExpanded(selectedItemSelector, !getIsExpanded(selectedItemSelector));
+      setIsExpanded(
+        selectedItemSelector,
+        getIsExpanded(selectedItemSelector) === false
+      );
       // prevent scrolling
       event.preventDefault();
     }
@@ -477,10 +485,12 @@ const useKeyboardNavigation = <Data extends { id: string }>({
   };
 };
 
-const useExpandState = ({
+const useExpandState = <Data extends { id: string }>({
   selectedItemSelector,
+  getItemChildren,
 }: {
   selectedItemSelector: undefined | ItemSelector;
+  getItemChildren: (itemId: string) => Data[];
 }) => {
   const [record, setRecord] = useState<Record<string, boolean>>({});
 
@@ -528,10 +538,25 @@ const useExpandState = ({
   );
 
   const setIsExpanded = useCallback(
-    (itemSelector: ItemSelector, expanded: boolean) => {
-      setRecord((record) => ({ ...record, [itemSelector.join()]: expanded }));
+    (itemSelector: ItemSelector, value: boolean, all?: boolean) => {
+      setRecord((record) => {
+        if (all) {
+          const newRecord = { ...record };
+          const addChildren = (parentSelector: string[]) => {
+            for (const child of getItemChildren(parentSelector[0])) {
+              const itemSelector = [child.id, ...parentSelector];
+              newRecord[itemSelector.join()] = value;
+              addChildren(itemSelector);
+            }
+          };
+          newRecord[itemSelector.join()] = value;
+          addChildren(itemSelector);
+          return newRecord;
+        }
+        return { ...record, [itemSelector.join()]: value };
+      });
     },
-    []
+    [getItemChildren]
   );
 
   return { getIsExpanded, setIsExpanded };
