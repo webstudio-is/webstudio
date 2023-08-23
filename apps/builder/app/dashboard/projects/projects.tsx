@@ -6,6 +6,7 @@ import { ProjectCard, ProjectTemplateCard } from "./project-card";
 import { CreateProject } from "./project-dialogs";
 import { HelpPopover } from "~/builder/features/sidebar-left/help-popover";
 import { HelpIcon } from "@webstudio-is/icons";
+import { useState } from "react";
 
 type ProjectsProps = {
   projects: Array<DashboardProject>;
@@ -13,6 +14,8 @@ type ProjectsProps = {
 };
 
 export const Projects = ({ projects, projectTemplates }: ProjectsProps) => {
+  const [isOpen, setIsOpen] = useState(false);
+
   return (
     <Panel>
       <Flex direction="column" gap="3">
@@ -21,7 +24,7 @@ export const Projects = ({ projects, projectTemplates }: ProjectsProps) => {
             Projects
           </Text>
           <Flex gap="2">
-            <HelpPopover side="bottom">
+            <HelpPopover open={isOpen} onOpenChange={setIsOpen} side="bottom">
               <HelpPopover.Trigger asChild>
                 <Button
                   color="gradient"

@@ -28,6 +28,7 @@ export const SidebarLeft = ({ publish }: SidebarLeftProps) => {
   const [activeTab, setActiveTab] = useState<TabName>("none");
   const { TabContent } = activeTab === "none" ? none : panels[activeTab];
   const [clientSettings] = useClientSettings();
+  const [isOpen, setIsOpen] = useState(false);
 
   useSubscribe("clickCanvas", () => {
     setActiveTab("none");
@@ -64,7 +65,7 @@ export const SidebarLeft = ({ publish }: SidebarLeftProps) => {
           ))}
         </SidebarTabsList>
         <Box css={{ borderRight: `1px solid  ${theme.colors.borderMain}` }}>
-          <HelpPopover>
+          <HelpPopover open={isOpen} onOpenChange={setIsOpen}>
             <Tooltip
               side="right"
               content="Learn Webstudio or ask for help"
@@ -72,7 +73,7 @@ export const SidebarLeft = ({ publish }: SidebarLeftProps) => {
             >
               <HelpPopover.Trigger asChild>
                 <SidebarTabsTrigger as={"button"} aria-label={"Ask for help"}>
-                  <HelpIcon size={22} />
+                  <HelpIcon color={isOpen ? "#000" : undefined} size={22} />
                 </SidebarTabsTrigger>
               </HelpPopover.Trigger>
             </Tooltip>

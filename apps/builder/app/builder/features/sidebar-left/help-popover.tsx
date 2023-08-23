@@ -14,7 +14,7 @@ import {
   WebstudioLogoFlatIcon,
   YoutubeIcon,
 } from "@webstudio-is/icons";
-import { useState, type ComponentProps } from "react";
+import { type ComponentProps } from "react";
 
 const StyledLink = styled("a", {
   textDecoration: "none",
@@ -40,14 +40,13 @@ const PopoverItemButton = ({
 export const HelpPopover = ({
   children,
   side = "right",
+  ...popoverProps
 }: {
   children: React.ReactNode;
   side?: "bottom" | "left" | "right" | "top";
-}) => {
-  const [isOpen, setIsOpen] = useState(false);
-
+} & ComponentProps<typeof Popover>) => {
   return (
-    <Popover open={isOpen} onOpenChange={setIsOpen}>
+    <Popover {...popoverProps}>
       {children}
       <PopoverContent
         side={side}
