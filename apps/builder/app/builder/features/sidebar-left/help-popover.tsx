@@ -49,6 +49,9 @@ export const HelpPopover = ({
     <Popover {...popoverProps}>
       {children}
       <PopoverContent
+        avoidCollisions
+        sideOffset={0}
+        collisionPadding={{ bottom: 30 }}
         side={side}
         css={{
           zIndex: theme.zIndices["max"],
