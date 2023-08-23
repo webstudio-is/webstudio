@@ -72,7 +72,13 @@ export const SidebarLeft = ({ publish }: SidebarLeftProps) => {
               delayDuration={0}
             >
               <HelpPopover.Trigger asChild>
-                <SidebarTabsTrigger as={"button"} aria-label={"Ask for help"}>
+                <SidebarTabsTrigger
+                  as={"button"}
+                  aria-label={"Ask for help"}
+                  css={{
+                    backgroundColor: isOpen ? theme.colors.slateA3 : undefined,
+                  }}
+                >
                   <HelpIcon color={isOpen ? "#000" : undefined} size={22} />
                 </SidebarTabsTrigger>
               </HelpPopover.Trigger>
