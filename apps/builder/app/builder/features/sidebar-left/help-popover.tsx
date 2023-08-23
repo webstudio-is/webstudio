@@ -37,16 +37,30 @@ const PopoverItemButton = ({
   </StyledLink>
 );
 
-export const HelpPopover = (props: { children: React.ReactNode }) => {
+export const HelpPopover = ({
+  children,
+  side = "right",
+}: {
+  children: React.ReactNode;
+  side?: "bottom" | "left" | "right" | "top";
+}) => {
   const [isOpen, setIsOpen] = useState(false);
 
   return (
     <Popover open={isOpen} onOpenChange={setIsOpen}>
-      {props.children}
-      <PopoverContent side="right" css={{ zIndex: theme.zIndices["max"] }}>
+      {children}
+      <PopoverContent
+        side={side}
+        css={{
+          zIndex: theme.zIndices["max"],
+          boxShadow: theme.shadows.menuDropShadow,
+          background: "white",
+          border: theme.colors.borderMain,
+        }}
+      >
         <Flex
           direction="column"
-          css={{ padding: `${theme.spacing[5]} ${theme.spacing[7]}` }}
+          css={{ padding: `${theme.spacing[3]} ${theme.spacing[7]}` }}
           gap="2"
         >
           <PopoverItemButton
