@@ -400,7 +400,6 @@ export const metaNavigationMenuList: WsComponentMeta = {
 
 export const metaNavigationMenuItem: WsComponentMeta = {
   category: "hidden",
-  detachable: false,
   type: "container",
   icon: ListItemIcon,
   requiredAncestors: ["NavigationMenu"],
