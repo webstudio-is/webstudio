@@ -66,8 +66,8 @@ export const SidebarLeft = ({ publish }: SidebarLeftProps) => {
         <Box css={{ borderRight: `1px solid  ${theme.colors.borderMain}` }}>
           <HelpPopover>
             <Tooltip
-              side="top"
-              content="Ask for help on Discord"
+              side="right"
+              content="Learn Webstudio or ask for help"
               delayDuration={0}
             >
               <HelpPopover.Trigger asChild>

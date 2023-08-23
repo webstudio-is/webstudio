@@ -4,67 +4,38 @@ import {
   Popover,
   PopoverContent,
   PopoverTrigger,
+  styled,
   theme,
 } from "@webstudio-is/design-system";
 import {
   DiscordIcon,
   GithubIcon,
   TwitterIcon,
-  WebstudioWhiteIcon,
+  WebstudioLogoFlatIcon,
   YoutubeIcon,
 } from "@webstudio-is/icons";
 import { useState, type ComponentProps } from "react";
 
-const PopoverItemButton = (
-  props: ComponentProps<typeof Button> & { background?: string; url?: string }
-) => (
-  <Button
-    css={{
-      background: props.background,
-      paddingTop: theme.spacing[5],
-      paddingBottom: theme.spacing[5],
-      paddingLeft: theme.spacing[7],
-      paddingRight: theme.spacing[7],
-    }}
-    onClick={() => {
-      if (!props.url) {
-        return;
-      }
-      window.open(props.url);
-    }}
-    {...props}
-  />
-);
+const StyledLink = styled("a", {
+  textDecoration: "none",
+  color: "white",
+  display: "inline-flex",
+  cursor: "default",
+});
 
-const popoverItemsList = [
-  {
-    background: theme.colors.red10,
-    content: "Learn the basics with short video",
-    prefix: <YoutubeIcon />,
-  },
-  {
-    background:
-      "linear-gradient(172deg, rgba(23,116,255,1) 0%, rgba(189,47,219,1) 82%)",
-    content: "Learn Webstudio on our blog",
-    prefix: <WebstudioWhiteIcon />,
-  },
-  {
-    background: theme.colors.blue11,
-    content: "Join the conversation on Discord",
-    prefix: <DiscordIcon />,
-    url: "https://discord.gg/UNdyrDkq5r",
-  },
-  {
-    background: theme.colors.black,
-    content: "Start a Github discussion",
-    prefix: <GithubIcon />,
-  },
-  {
-    background: theme.colors.black,
-    content: "Join us on Twitter",
-    prefix: <TwitterIcon />,
-  },
-];
+const PopoverItemButton = ({
+  href,
+  ...buttonProps
+}: ComponentProps<typeof Button> & { href?: string }) => (
+  <StyledLink href={href} target="_blank" referrerPolicy="no-referrer">
+    <Button
+      css={{
+        width: "100%",
+      }}
+      {...buttonProps}
+    />
+  </StyledLink>
+);
 
 export const HelpPopover = (props: { children: React.ReactNode }) => {
   const [isOpen, setIsOpen] = useState(false);
@@ -73,22 +44,54 @@ export const HelpPopover = (props: { children: React.ReactNode }) => {
     <Popover open={isOpen} onOpenChange={setIsOpen}>
       {props.children}
       <PopoverContent side="right" css={{ zIndex: theme.zIndices["max"] }}>
-        <Flex direction="column" css={{ padding: theme.spacing[7] }} gap="1">
-          {popoverItemsList.map((value, index) => (
-            <PopoverItemButton
-              key={index}
-              background={value.background}
-              prefix={value.prefix}
-              url={value.url}
-            >
-              {value.content}
-            </PopoverItemButton>
-          ))}
+        <Flex
+          direction="column"
+          css={{ padding: `${theme.spacing[5]} ${theme.spacing[7]}` }}
+          gap="2"
+        >
+          <PopoverItemButton
+            href="https://www.youtube.com/playlist?list=PL4vVqpngzeT4sDlanyPe99dYl8BgUYCac"
+            prefix={<YoutubeIcon />}
+            color="destructive"
+          >
+            Learn with videos
+          </PopoverItemButton>
+
+          <PopoverItemButton
+            href="https://webstudio.is/blog"
+            prefix={<WebstudioLogoFlatIcon />}
+            color="gradient"
+          >
+            Learn on our blog
+          </PopoverItemButton>
+
+          <PopoverItemButton
+            href="https://discord.gg/UNdyrDkq5r"
+            prefix={<DiscordIcon />}
+            color="primary"
+          >
+            Chat with us on Discord
+          </PopoverItemButton>
+
+          <PopoverItemButton
+            href="https://github.com/webstudio-is/webstudio-community/discussions"
+            prefix={<GithubIcon />}
+            color="dark"
+          >
+            Join Github discussions
+          </PopoverItemButton>
+
+          <PopoverItemButton
+            href="https://twitter.com/getwebstudio"
+            prefix={<TwitterIcon />}
+            color="dark"
+          >
+            Follow us on Twitter
+          </PopoverItemButton>
         </Flex>
       </PopoverContent>
     </Popover>
   );
 };
 
-HelpPopover.displayName = "HelpPopover";
 HelpPopover.Trigger = PopoverTrigger;
