@@ -53,9 +53,6 @@ export const HelpPopover = ({
         side={side}
         css={{
           zIndex: theme.zIndices["max"],
-          boxShadow: theme.shadows.menuDropShadow,
-          background: "white",
-          border: theme.colors.borderMain,
         }}
       >
         <Flex
