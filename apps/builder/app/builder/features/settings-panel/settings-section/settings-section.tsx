@@ -6,6 +6,7 @@ import {
 } from "~/shared/nano-states";
 import { useSettingsLogic } from "./use-settings-logic";
 import { HorizontalLayout, Row } from "../shared";
+import { getInstanceLabel } from "~/shared/instance-utils";
 
 export const SettingsSection = () => {
   const { setLabel, handleBlur, handleKeyDown } = useSettingsLogic();
@@ -14,7 +15,11 @@ export const SettingsSection = () => {
   if (selectedInstance === undefined) {
     return null;
   }
-  const label = metas.get(selectedInstance.component)?.label;
+  const meta = metas.get(selectedInstance.component);
+  if (meta === undefined) {
+    return null;
+  }
+  const placeholder = getInstanceLabel(selectedInstance, meta);
   return (
     <Row>
       <HorizontalLayout label="Name">
@@ -23,7 +28,7 @@ export const SettingsSection = () => {
           key={selectedInstance.id}
           onBlur={handleBlur}
           onKeyDown={handleKeyDown}
-          placeholder={label}
+          placeholder={placeholder}
           defaultValue={selectedInstance.label}
           onChange={(event) => {
             setLabel(event.target.value.trim());
