@@ -147,54 +147,64 @@ export const resolveUrlProp = (
   if (instanceProps === undefined) {
     return;
   }
-  for (const prop of instanceProps) {
-    if (prop.name !== name) {
+
+  let prop = undefined;
+
+  // We had a bug that some props were duplicated https://github.com/webstudio-is/webstudio-builder/pull/2170
+  // Use the latest prop to ensure consistency with the builder settings panel.
+  for (const intanceProp of instanceProps) {
+    if (intanceProp.name !== name) {
       continue;
     }
+    prop = intanceProp;
+  }
 
-    if (prop.type === "page") {
-      if (typeof prop.value === "string") {
-        const page = pages.get(prop.value);
-        return page && { type: "page", page };
-      }
-
-      const { instanceId, pageId } = prop.value;
-
-      const page = pages.get(pageId);
-
-      if (page === undefined) {
-        return;
-      }
-
-      const idProp = props.get(instanceId)?.find((prop) => prop.name === "id");
-
-      return {
-        type: "page",
-        page,
-        instanceId,
-        hash:
-          idProp === undefined || idProp.type !== "string"
-            ? undefined
-            : idProp.value,
-      };
-    }
-
-    if (prop.type === "string") {
-      for (const page of pages.values()) {
-        if (page.path === prop.value) {
-          return { type: "page", page };
-        }
-      }
-      return { type: "string", url: prop.value };
-    }
-
-    if (prop.type === "asset") {
-      const asset = assets.get(prop.value);
-      return asset && { type: "asset", asset };
-    }
-
+  if (prop === undefined) {
     return;
   }
+
+  if (prop.type === "page") {
+    if (typeof prop.value === "string") {
+      const page = pages.get(prop.value);
+      return page && { type: "page", page };
+    }
+
+    const { instanceId, pageId } = prop.value;
+
+    const page = pages.get(pageId);
+
+    if (page === undefined) {
+      return;
+    }
+
+    const idProp = props.get(instanceId)?.find((prop) => prop.name === "id");
+
+    return {
+      type: "page",
+      page,
+      instanceId,
+      hash:
+        idProp === undefined || idProp.type !== "string"
+          ? undefined
+          : idProp.value,
+    };
+  }
+
+  if (prop.type === "string") {
+    for (const page of pages.values()) {
+      if (page.path === prop.value) {
+        return { type: "page", page };
+      }
+    }
+    return { type: "string", url: prop.value };
+  }
+
+  if (prop.type === "asset") {
+    const asset = assets.get(prop.value);
+    return asset && { type: "asset", asset };
+  }
+
+  return;
 };
 
 // this utility is used for link component in both builder and preview
