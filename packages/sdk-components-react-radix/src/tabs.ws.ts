@@ -5,6 +5,7 @@ import {
   TriggerIcon,
 } from "@webstudio-is/icons/svg";
 import type {
+  EmbedTemplateStyleDecl,
   PresetStyle,
   WsComponentMeta,
   WsComponentPropsMeta,
@@ -30,6 +31,39 @@ const presetStyle = {
  * MIT License
  * Copyright (c) 2023 shadcn
  **/
+
+// inline-flex items-center justify-center whitespace-nowrap rounded-sm px-3 py-1.5 text-sm font-medium ring-offset-background transition-all
+// focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2
+// disabled:pointer-events-none disabled:opacity-50
+// data-[state=active]:bg-background data-[state=active]:text-foreground data-[state=active]:shadow-sm
+const tabsTriggerStyles = [
+  tc.inlineFlex(),
+  tc.items("center"),
+  tc.justify("center"),
+  tc.whitespace("nowrap"),
+  tc.rounded("md"),
+  tc.px(3),
+  tc.py(1.5),
+  tc.text("sm"),
+  tc.font("medium"),
+  tc.transition("all"),
+  tc.focusVisible(
+    [tc.outline("none"), tc.ring("ring", 2, "background", 2)].flat()
+  ),
+  tc.disabled([tc.pointerEvents("none"), tc.opacity(50)].flat()),
+  tc.state(
+    [tc.bg("background"), tc.text("foreground"), tc.shadow("sm")].flat(),
+    "[data-state=active]"
+  ),
+].flat();
+
+// mt-2 ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2
+const tabsContentStyles: EmbedTemplateStyleDecl[] = [
+  tc.mt(2),
+  tc.focusVisible(
+    [tc.outline("none"), tc.ring("ring", 2, "background", 2)].flat()
+  ),
+].flat();
 
 export const metaTabs: WsComponentMeta = {
   category: "radix",
@@ -58,18 +92,28 @@ export const metaTabs: WsComponentMeta = {
         {
           type: "instance",
           component: "TabsList",
-          tokens: ["tabsList"],
+          // inline-flex h-10 items-center justify-center rounded-md bg-muted p-1 text-muted-foreground
+          styles: [
+            tc.inlineFlex(),
+            tc.h(10),
+            tc.items("center"),
+            tc.justify("center"),
+            tc.rounded("md"),
+            tc.bg("muted"),
+            tc.p(1),
+            tc.text("mutedForeground"),
+          ].flat(),
           children: [
             {
               type: "instance",
               component: "TabsTrigger",
-              tokens: ["tabsTrigger"],
+              styles: tabsTriggerStyles,
               children: [{ type: "text", value: "Account" }],
             },
             {
               type: "instance",
               component: "TabsTrigger",
-              tokens: ["tabsTrigger"],
+              styles: tabsTriggerStyles,
               children: [{ type: "text", value: "Password" }],
             },
           ],
@@ -77,7 +121,7 @@ export const metaTabs: WsComponentMeta = {
         {
           type: "instance",
           component: "TabsContent",
-          tokens: ["tabsContent"],
+          styles: tabsContentStyles,
           children: [
             { type: "text", value: "Make changes to your account here." },
           ],
@@ -85,7 +129,7 @@ export const metaTabs: WsComponentMeta = {
         {
           type: "instance",
           component: "TabsContent",
-          tokens: ["tabsContent"],
+          styles: tabsContentStyles,
           children: [{ type: "text", value: "Change your password here." }],
         },
       ],
@@ -100,21 +144,6 @@ export const metaTabsList: WsComponentMeta = {
   icon: HeaderIcon,
   requiredAncestors: ["Tabs"],
   presetStyle,
-  presetTokens: {
-    tabsList: {
-      // inline-flex h-10 items-center justify-center rounded-md bg-muted p-1 text-muted-foreground
-      styles: [
-        tc.inlineFlex(),
-        tc.h(10),
-        tc.items("center"),
-        tc.justify("center"),
-        tc.rounded("md"),
-        tc.bg("muted"),
-        tc.p(1),
-        tc.text("mutedForeground"),
-      ].flat(),
-    },
-  },
 };
 
 export const metaTabsTrigger: WsComponentMeta = {
@@ -142,34 +171,6 @@ export const metaTabsTrigger: WsComponentMeta = {
       tc.border(0),
     ].flat(),
   },
-  presetTokens: {
-    tabsTrigger: {
-      // inline-flex items-center justify-center whitespace-nowrap rounded-sm px-3 py-1.5 text-sm font-medium ring-offset-background transition-all
-      // focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2
-      // disabled:pointer-events-none disabled:opacity-50
-      // data-[state=active]:bg-background data-[state=active]:text-foreground data-[state=active]:shadow-sm
-      styles: [
-        tc.inlineFlex(),
-        tc.items("center"),
-        tc.justify("center"),
-        tc.whitespace("nowrap"),
-        tc.rounded("md"),
-        tc.px(3),
-        tc.py(1.5),
-        tc.text("sm"),
-        tc.font("medium"),
-        tc.transition("all"),
-        tc.focusVisible(
-          [tc.outline("none"), tc.ring("ring", 2, "background", 2)].flat()
-        ),
-        tc.disabled([tc.pointerEvents("none"), tc.opacity(50)].flat()),
-        tc.state(
-          [tc.bg("background"), tc.text("foreground"), tc.shadow("sm")].flat(),
-          "[data-state=active]"
-        ),
-      ].flat(),
-    },
-  },
 };
 
 export const metaTabsContent: WsComponentMeta = {
@@ -179,17 +180,6 @@ export const metaTabsContent: WsComponentMeta = {
   requiredAncestors: ["Tabs"],
   indexWithinAncestor: "Tabs",
   presetStyle,
-  presetTokens: {
-    tabsContent: {
-      // mt-2 ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2
-      styles: [
-        tc.mt(2),
-        tc.focusVisible(
-          [tc.outline("none"), tc.ring("ring", 2, "background", 2)].flat()
-        ),
-      ].flat(),
-    },
-  },
 };
 
 export const propsMetaTabs: WsComponentPropsMeta = {
