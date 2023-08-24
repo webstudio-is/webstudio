@@ -1,7 +1,5 @@
 import { join, relative, dirname } from "node:path";
 import { createWriteStream, writeFileSync } from "node:fs";
-import https from "node:https";
-import type { IncomingMessage } from "node:http";
 import { rm, mkdir, access, mkdtemp, rename } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import {
@@ -27,6 +25,7 @@ import { getRouteTemplate } from "./__generated__/router";
 import { ASSETS_BASE, LOCAL_DATA_FILE } from "./config";
 import { ensureFileInPath, ensureFolderExists, loadJSONFile } from "./fs-utils";
 import { getImageAttributes, createImageLoader } from "@webstudio-is/image";
+import { pipeline } from "node:stream/promises";
 
 const limit = pLimit(10);
 
@@ -62,24 +61,21 @@ export const downloadAsset = async (
     await access(assetPath);
   } catch {
     try {
-      const response = await new Promise<IncomingMessage>((resolve, reject) => {
-        https
-          .get(url, (response) => {
-            if (response.statusCode !== 200) {
-              reject(new Error(`HTTP Error: ${response.statusCode}`));
-              response.resume();
-            }
-            resolve(response);
-          })
-          .on("error", reject);
-      });
+      const response = await fetch(url);
+      if (!response.ok) {
+        throw new Error(`Failed to fetch ${url}: ${response.statusText}`);
+      }
 
       const writableStream = createWriteStream(tempAssetPath);
-      response.pipe(writableStream);
-
-      await new Promise<void>((resolve) => {
-        writableStream.on("finish", resolve);
-      });
+      /*
+        We need to cast the response body to a NodeJS.ReadableStream.
+        Since the node typings for `@types/node` doesn't add typings for fetch.
+        And it inherits types from lib.dom.d.ts
+      */
+      await pipeline(
+        response.body as unknown as NodeJS.ReadableStream,
+        writableStream
+      );
 
       await rename(tempAssetPath, assetPath);
     } catch (error) {
@@ -92,6 +88,7 @@ export const prebuild = async () => {
   const spinner = ora("Scaffolding the project files");
   const appRoot = "app";
 
+  spinner.start();
   const routesDir = join(appRoot, "routes");
   await rm(routesDir, { recursive: true, force: true });
   await mkdir(routesDir, { recursive: true });
