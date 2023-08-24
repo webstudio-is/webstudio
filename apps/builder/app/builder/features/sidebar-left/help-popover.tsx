@@ -44,7 +44,7 @@ export const HelpPopover = ({
 }: {
   children: React.ReactNode;
   side?: "bottom" | "left" | "right" | "top";
-} & ComponentProps<typeof Popover>) => {
+} & Pick<ComponentProps<typeof Popover>, "open" | "onOpenChange">) => {
   return (
     <Popover {...popoverProps}>
       {children}
