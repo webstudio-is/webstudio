@@ -306,7 +306,7 @@ export const metaSheet: WsComponentMeta = {
 
 export const propsMetaSheet: WsComponentPropsMeta = {
   props: propsSheet,
-  initialProps: ["open", "modal"],
+  initialProps: ["open"],
 };
 
 export const propsMetaSheetTrigger: WsComponentPropsMeta = {
