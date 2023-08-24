@@ -16,27 +16,6 @@ import {
 } from "@webstudio-is/icons";
 import { type ComponentProps } from "react";
 
-const StyledLink = styled("a", {
-  textDecoration: "none",
-  color: "white",
-  display: "inline-flex",
-  cursor: "default",
-});
-
-const PopoverItemButton = ({
-  href,
-  ...buttonProps
-}: ComponentProps<typeof Button> & { href?: string }) => (
-  <StyledLink href={href} target="_blank" referrerPolicy="no-referrer">
-    <Button
-      css={{
-        width: "100%",
-      }}
-      {...buttonProps}
-    />
-  </StyledLink>
-);
-
 export const HelpPopover = ({
   children,
   side = "right",
@@ -58,49 +37,54 @@ export const HelpPopover = ({
         }}
       >
         <Flex
+          as="form"
+          target="_blank"
           direction="column"
+          align="stretch"
           css={{ padding: `${theme.spacing[3]} ${theme.spacing[7]}` }}
           gap="2"
         >
-          <PopoverItemButton
-            href="https://www.youtube.com/playlist?list=PL4vVqpngzeT4sDlanyPe99dYl8BgUYCac"
+          <Button
+            formAction="https://www.youtube.com/playlist"
+            name="list"
+            value="PL4vVqpngzeT4sDlanyPe99dYl8BgUYCac"
             prefix={<YoutubeIcon />}
             color="destructive"
           >
             Learn with videos
-          </PopoverItemButton>
+          </Button>
 
-          <PopoverItemButton
-            href="https://webstudio.is/blog"
+          <Button
+            formAction="https://webstudio.is/blog"
             prefix={<WebstudioLogoFlatIcon />}
             color="gradient"
           >
             Learn on our blog
-          </PopoverItemButton>
+          </Button>
 
-          <PopoverItemButton
-            href="https://discord.gg/UNdyrDkq5r"
+          <Button
+            formAction="https://discord.gg/UNdyrDkq5r"
             prefix={<DiscordIcon />}
             color="primary"
           >
             Chat with us on Discord
-          </PopoverItemButton>
+          </Button>
 
-          <PopoverItemButton
-            href="https://github.com/webstudio-is/webstudio-community/discussions"
+          <Button
+            formAction="https://github.com/webstudio-is/webstudio-community/discussions"
             prefix={<GithubIcon />}
             color="dark"
           >
             Join Github discussions
-          </PopoverItemButton>
+          </Button>
 
-          <PopoverItemButton
-            href="https://twitter.com/getwebstudio"
+          <Button
+            formAction="https://twitter.com/getwebstudio"
             prefix={<TwitterIcon />}
             color="dark"
           >
             Follow us on Twitter
-          </PopoverItemButton>
+          </Button>
         </Flex>
       </PopoverContent>
     </Popover>
