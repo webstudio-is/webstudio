@@ -111,7 +111,7 @@ export const metaPopover: WsComponentMeta = {
 
 export const propsMetaPopover: WsComponentPropsMeta = {
   props: propsPopover,
-  initialProps: ["open", "modal"],
+  initialProps: ["open"],
 };
 
 export const propsMetaPopoverTrigger: WsComponentPropsMeta = {

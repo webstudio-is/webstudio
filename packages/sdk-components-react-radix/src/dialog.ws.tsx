@@ -272,7 +272,7 @@ export const metaDialog: WsComponentMeta = {
 
 export const propsMetaDialog: WsComponentPropsMeta = {
   props: propsDialog,
-  initialProps: ["open", "modal"],
+  initialProps: ["open"],
 };
 
 export const propsMetaDialogTrigger: WsComponentPropsMeta = {

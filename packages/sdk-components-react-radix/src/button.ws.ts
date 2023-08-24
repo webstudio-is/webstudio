@@ -169,5 +169,5 @@ export const meta: WsComponentMeta = {
 
 export const propsMeta: WsComponentPropsMeta = {
   props,
-  initialProps: ["id", "type", "variant", "size", "aria-label"],
+  initialProps: ["id", "type", "aria-label"],
 };
