@@ -65,7 +65,7 @@ export const SidebarLeft = ({ publish }: SidebarLeftProps) => {
           ))}
         </SidebarTabsList>
         <Box css={{ borderRight: `1px solid  ${theme.colors.borderMain}` }}>
-          <HelpPopover open={isOpen} onOpenChange={setIsOpen}>
+          <HelpPopover onOpenChange={setIsOpen}>
             <Tooltip
               side="right"
               content="Learn Webstudio or ask for help"
@@ -73,13 +73,11 @@ export const SidebarLeft = ({ publish }: SidebarLeftProps) => {
             >
               <HelpPopover.Trigger asChild>
                 <SidebarTabsTrigger
-                  as={"button"}
-                  aria-label={"Ask for help"}
-                  css={{
-                    backgroundColor: isOpen ? theme.colors.slateA3 : undefined,
-                  }}
+                  as="button"
+                  aria-label="Ask for help"
+                  data-state={isOpen ? "active" : undefined}
                 >
-                  <HelpIcon color={isOpen ? "#000" : undefined} size={22} />
+                  <HelpIcon size={22} />
                 </SidebarTabsTrigger>
               </HelpPopover.Trigger>
             </Tooltip>
@@ -91,8 +89,8 @@ export const SidebarLeft = ({ publish }: SidebarLeftProps) => {
             delayDuration={0}
           >
             <SidebarTabsTrigger
-              as={"button"}
-              aria-label={"Report bug"}
+              as="button"
+              aria-label="Report bug"
               onClick={() => {
                 window.open(
                   "https://github.com/webstudio-is/webstudio/discussions/new?category=q-a&labels=bug&title=[Bug]"
