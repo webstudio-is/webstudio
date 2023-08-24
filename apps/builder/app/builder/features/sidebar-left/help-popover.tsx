@@ -5,6 +5,7 @@ import {
   PopoverContent,
   PopoverPortal,
   PopoverTrigger,
+  rawTheme,
   theme,
 } from "@webstudio-is/design-system";
 import {
@@ -31,7 +32,8 @@ export const HelpPopover = ({
         <PopoverContent
           avoidCollisions
           sideOffset={0}
-          collisionPadding={{ bottom: 30 }}
+          // Height of the footer
+          collisionPadding={{ bottom: parseFloat(rawTheme.spacing[11]) }}
           side={side}
           // Sidebar has z-index 1, so we need to be above that using portal + same zindex
           css={{ zIndex: theme.zIndices[1] }}
@@ -40,7 +42,6 @@ export const HelpPopover = ({
             as="form"
             target="_blank"
             direction="column"
-            align="stretch"
             css={{ px: theme.spacing[7], py: theme.spacing[3] }}
             gap="2"
           >
@@ -53,7 +54,6 @@ export const HelpPopover = ({
             >
               Learn with videos
             </Button>
-
             <Button
               formAction="https://webstudio.is/blog"
               prefix={<Webstudio1cIcon />}
@@ -61,7 +61,6 @@ export const HelpPopover = ({
             >
               Learn on our blog
             </Button>
-
             <Button
               formAction="https://discord.gg/UNdyrDkq5r"
               prefix={<DiscordIcon />}
@@ -69,7 +68,6 @@ export const HelpPopover = ({
             >
               Chat with us on Discord
             </Button>
-
             <Button
               formAction="https://github.com/webstudio-is/webstudio-community/discussions"
               prefix={<GithubIcon />}
@@ -77,7 +75,6 @@ export const HelpPopover = ({
             >
               Join Github discussions
             </Button>
-
             <Button
               formAction="https://twitter.com/getwebstudio"
               prefix={<TwitterIcon />}
