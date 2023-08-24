@@ -68,6 +68,7 @@ export { DashIcon } from "./dash";
 export { DashedBorderIcon } from "./dashed-border";
 export { DescriptionIcon } from "./description";
 export { DialogIcon } from "./dialog";
+export { DiscordIcon } from "./discord";
 export { DivIcon } from "./div";
 export { DotIcon } from "./dot";
 export { DottedBorderIcon } from "./dotted-border";

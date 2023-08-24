@@ -68,6 +68,7 @@ export * from "./dash";
 export * from "./dashed-border";
 export * from "./description";
 export * from "./dialog";
+export * from "./discord";
 export * from "./div";
 export * from "./dot";
 export * from "./dotted-border";

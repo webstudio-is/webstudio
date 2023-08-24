@@ -41,7 +41,3 @@ export * from "./text-uppercase";
 export * from "./text-direction-ltr";
 export * from "./text-direction-rtl";
 export * from "./check-mark";
-export * from "./webstudio-logo-flat";
-export * from "./twitter";
-export * from "./youtube";
-export * from "./discord";
