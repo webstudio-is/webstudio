@@ -1,6 +1,7 @@
 import { join, relative, dirname } from "node:path";
-import { writeFileSync } from "node:fs";
-import { rm, mkdir } from "node:fs/promises";
+import { createWriteStream, writeFileSync } from "node:fs";
+import { rm, mkdir, access, mkdtemp, rename } from "node:fs/promises";
+import { tmpdir } from "node:os";
 import {
   generateCssText,
   generateUtilsExport,
@@ -16,11 +17,17 @@ import {
 } from "@webstudio-is/project-build";
 import * as baseComponentMetas from "@webstudio-is/sdk-components-react/metas";
 import * as remixComponentMetas from "@webstudio-is/sdk-components-react-remix/metas";
-import type { Asset, ImageAsset } from "@webstudio-is/asset-uploader";
+import type { Asset, FontAsset } from "@webstudio-is/asset-uploader";
+import pLimit from "p-limit";
+import ora from "ora";
 
 import { getRouteTemplate } from "./__generated__/router";
 import { ASSETS_BASE, LOCAL_DATA_FILE } from "./config";
 import { ensureFileInPath, ensureFolderExists, loadJSONFile } from "./fs-utils";
+import { getImageAttributes, createImageLoader } from "@webstudio-is/image";
+import { pipeline } from "node:stream/promises";
+
+const limit = pLimit(10);
 
 type ComponentsByPage = {
   [path: string]: Set<string>;
@@ -43,12 +50,50 @@ type RemixRoutes = {
   }>;
 };
 
+export const downloadAsset = async (
+  url: string,
+  name: string,
+  temporaryDir: string
+) => {
+  const assetPath = join("public", ASSETS_BASE, name);
+  const tempAssetPath = join(temporaryDir, name);
+  try {
+    await access(assetPath);
+  } catch {
+    try {
+      const response = await fetch(url);
+      if (!response.ok) {
+        throw new Error(`Failed to fetch ${url}: ${response.statusText}`);
+      }
+
+      const writableStream = createWriteStream(tempAssetPath);
+      /*
+        We need to cast the response body to a NodeJS.ReadableStream.
+        Since the node typings for `@types/node` doesn't add typings for fetch.
+        And it inherits types from lib.dom.d.ts
+      */
+      await pipeline(
+        response.body as unknown as NodeJS.ReadableStream,
+        writableStream
+      );
+
+      await rename(tempAssetPath, assetPath);
+    } catch (error) {
+      console.error(`Error in downloading file ${name} \n ${error}`);
+    }
+  }
+};
+
 export const prebuild = async () => {
+  const spinner = ora("Scaffolding the project files");
   const appRoot = "app";
 
+  spinner.start();
   const routesDir = join(appRoot, "routes");
   await rm(routesDir, { recursive: true, force: true });
   await mkdir(routesDir, { recursive: true });
+
+  const temporaryDir = await mkdtemp(join(tmpdir(), "webstudio-"));
 
   const generatedDir = join(appRoot, "__generated__");
   await rm(generatedDir, { recursive: true, force: true });
@@ -66,21 +111,9 @@ export const prebuild = async () => {
     );
   }
 
-  const {
-    assets,
-    build: { deployment },
-  } = siteData;
-  const fontAssets: Data["assets"] = [];
-  const imageAssets: ImageAsset[] = [];
-
-  for (const asset of assets) {
-    if (asset.type === "image") {
-      imageAssets.push(asset);
-    }
-
-    if (asset.type === "font") {
-      fontAssets.push(asset);
-    }
+  const domain = siteData.build.deployment?.projectDomain;
+  if (domain === undefined) {
+    throw new Error(`Project domain is missing from the site data`);
   }
 
   const remixRoutes: RemixRoutes = {
@@ -139,21 +172,53 @@ export const prebuild = async () => {
     }
   }
 
-  const cssText = generateCssText(
-    {
-      assets: siteData.assets,
-      breakpoints: siteData.build?.breakpoints,
-      styles: siteData.build?.styles,
-      styleSourceSelections: siteData.build?.styleSourceSelections,
-      componentMetas,
-    },
-    {
-      assetBaseUrl: ASSETS_BASE,
+  const assetsToDownload: Promise<void>[] = [];
+  const fontAssets: FontAsset[] = [];
+  const assetBuildUrl = `https://${domain}.wstd.io/cgi/asset/`;
+
+  for (const asset of siteData.assets) {
+    if (asset.type === "image") {
+      const image = getImageAttributes({
+        /*
+          TODO:
+          https://github.com/webstudio-is/webstudio-builder/issues/2135
+          There should be a option in the loader, that allows to download
+          original image instead of the processed one. Right now, we are using
+          the width from the asset meta
+        */
+        width: asset.meta.width,
+        optimize: true,
+        src: asset.name,
+        quality: 100,
+        srcSet: undefined,
+        sizes: undefined,
+        loader: createImageLoader({
+          imageBaseUrl: assetBuildUrl,
+        }),
+      });
+
+      if (image?.src) {
+        assetsToDownload.push(
+          limit(() => downloadAsset(image.src, asset.name, temporaryDir))
+        );
+      }
     }
-  );
 
-  await ensureFileInPath(join(generatedDir, "index.css"), cssText);
+    if (asset.type === "font") {
+      assetsToDownload.push(
+        limit(() =>
+          downloadAsset(
+            `${assetBuildUrl}${asset.name}`,
+            asset.name,
+            temporaryDir
+          )
+        )
+      );
+      fontAssets.push(asset);
+    }
+  }
 
+  spinner.text = "Generating routes and pages";
   for (const [pathName, pageComponents] of Object.entries(componentsByPage)) {
     let relativePath = "../__generated__";
     const statements = Array.from(pageComponents).join(", ");
@@ -174,7 +239,7 @@ export const prebuild = async () => {
     import { ${statements} } from "@webstudio-is/sdk-components-react";
     import * as remixComponents from "@webstudio-is/sdk-components-react-remix";
     export const components = new Map(Object.entries(Object.assign({ ${statements} }, remixComponents ))) as Components;
-    export const fontAssets = ${JSON.stringify(fontAssets)};
+    export const fontAssets = ${JSON.stringify(fontAssets)}
     export const pageData: PageData = ${JSON.stringify(pageData)};
     export const user: { email: string | null } | undefined = ${JSON.stringify(
       siteData.user
@@ -248,7 +313,24 @@ export const prebuild = async () => {
     }
   }
 
-  if (deployment?.projectDomain === undefined) {
-    throw new Error("Project is not deployed yet, cannot download assets");
-  }
+  spinner.text = "Generating css files";
+  const cssText = generateCssText(
+    {
+      assets: siteData.assets,
+      breakpoints: siteData.build?.breakpoints,
+      styles: siteData.build?.styles,
+      styleSourceSelections: siteData.build?.styleSourceSelections,
+      componentMetas,
+    },
+    {
+      assetBaseUrl: ASSETS_BASE,
+    }
+  );
+
+  await ensureFileInPath(join(generatedDir, "index.css"), cssText);
+
+  spinner.text = "Downloading fonts and images";
+  await Promise.all(assetsToDownload);
+
+  spinner.succeed("Build finished");
 };

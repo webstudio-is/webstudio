@@ -10,7 +10,7 @@ import type {
   WsComponentMeta,
   WsComponentPropsMeta,
 } from "@webstudio-is/react-sdk";
-import { div } from "@webstudio-is/react-sdk/css-normalize";
+import { button, div } from "@webstudio-is/react-sdk/css-normalize";
 import * as tc from "./theme/tailwind-classes";
 import {
   propsTabs,
@@ -32,8 +32,11 @@ const presetStyle = {
  * Copyright (c) 2023 shadcn
  **/
 
-// inline-flex items-center justify-center whitespace-nowrap rounded-sm px-3 py-1.5 text-sm font-medium ring-offset-background transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 data-[state=active]:bg-background data-[state=active]:text-foreground data-[state=active]:shadow-sm
-const tabsTriggerStyles: EmbedTemplateStyleDecl[] = [
+// inline-flex items-center justify-center whitespace-nowrap rounded-sm px-3 py-1.5 text-sm font-medium ring-offset-background transition-all
+// focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2
+// disabled:pointer-events-none disabled:opacity-50
+// data-[state=active]:bg-background data-[state=active]:text-foreground data-[state=active]:shadow-sm
+const tabsTriggerStyles = [
   tc.inlineFlex(),
   tc.items("center"),
   tc.justify("center"),
@@ -104,26 +107,14 @@ export const metaTabs: WsComponentMeta = {
             {
               type: "instance",
               component: "TabsTrigger",
-              children: [
-                {
-                  type: "instance",
-                  component: "Button",
-                  styles: tabsTriggerStyles,
-                  children: [{ type: "text", value: "Account" }],
-                },
-              ],
+              styles: tabsTriggerStyles,
+              children: [{ type: "text", value: "Account" }],
             },
             {
               type: "instance",
               component: "TabsTrigger",
-              children: [
-                {
-                  type: "instance",
-                  component: "Button",
-                  styles: tabsTriggerStyles,
-                  children: [{ type: "text", value: "Password" }],
-                },
-              ],
+              styles: tabsTriggerStyles,
+              children: [{ type: "text", value: "Password" }],
             },
           ],
         },
@@ -162,6 +153,24 @@ export const metaTabsTrigger: WsComponentMeta = {
   requiredAncestors: ["TabsList"],
   invalidAncestors: ["TabsTrigger"],
   indexWithinAncestor: "Tabs",
+  presetStyle: {
+    button: [
+      button,
+      {
+        property: "backgroundColor",
+        value: { type: "keyword", value: "transparent" },
+      } as const,
+      {
+        property: "backgroundImage",
+        value: { type: "keyword", value: "none" },
+      } as const,
+      {
+        property: "cursor",
+        value: { type: "keyword", value: "pointer" },
+      } as const,
+      tc.border(0),
+    ].flat(),
+  },
 };
 
 export const metaTabsContent: WsComponentMeta = {
