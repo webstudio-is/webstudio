@@ -22,6 +22,7 @@ import {
   getItemSelectorFromElement,
 } from "./item-utils";
 import { ScrollArea } from "../scroll-area";
+import { theme } from "../..";
 
 export type TreeProps<Data extends { id: string }> = {
   root: Data;
@@ -288,6 +289,10 @@ export const Tree = <Data extends { id: string }>({
         onBlur={keyboardNavigation.handleBlur}
         onKeyDown={keyboardNavigation.handleKeyDown}
         onClick={keyboardNavigation.handleClick}
+        css={{
+          // To not intersect last element with the scroll
+          marginBottom: theme.spacing[7],
+        }}
       >
         <TreeNode
           renderItem={renderItem}

@@ -67,9 +67,9 @@ export const Header = ({ user }: { user: User }) => {
       className={containerStyle()}
     >
       <WebstudioIcon width={30} height={23} />
-      <Flex gap="1" align="center">
+      <div>
         <Menu user={user} />
-      </Flex>
+      </div>
     </Flex>
   );
 };
