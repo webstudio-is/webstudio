@@ -253,7 +253,14 @@ const menuItem = (props: {
       {
         type: "instance",
         component: "NavigationMenuContent",
-        tokens: ["navigationMenuContent"],
+        // left-0 top-0 absolute w-max
+        styles: [
+          tc.left(0),
+          tc.top(0),
+          tc.absolute(),
+          tc.w("max"),
+          tc.p(4),
+        ].flat(),
         children: [
           {
             type: "instance",
@@ -274,18 +281,11 @@ export const metaNavigationMenu: WsComponentMeta = {
   type: "container",
   icon: NavigationMenuIcon,
   presetStyle,
-  presetTokens: {
-    navigationMenu: {
-      // relative
-      // Omiting this: z-10 flex max-w-max flex-1 items-center justify-center
-      styles: [tc.relative()].flat(),
-    },
-  },
+
   template: [
     {
       type: "instance",
       component: "NavigationMenu",
-
       dataSources: {
         menuValue: { type: "variable", initialValue: "" },
       },
@@ -303,14 +303,25 @@ export const metaNavigationMenu: WsComponentMeta = {
           ],
         },
       ],
-
-      tokens: ["navigationMenu"],
-
+      // relative
+      // Omiting this: z-10 flex max-w-max flex-1 items-center justify-center
+      styles: [tc.relative()].flat(),
       children: [
         {
           type: "instance",
           component: "NavigationMenuList",
-          tokens: ["navigationMenuList"],
+          styles: [
+            // ul defaults in tailwind
+            tc.p(0),
+            tc.m(0),
+            // shadcdn styles
+            tc.flex(),
+            tc.flex(1),
+            tc.list("none"),
+            tc.items("center"),
+            tc.justify("center"),
+            tc.gap(1),
+          ].flat(),
           children: [
             ...menuItem({
               title: "About",
@@ -363,7 +374,31 @@ export const metaNavigationMenu: WsComponentMeta = {
             {
               type: "instance",
               component: "NavigationMenuViewport",
-              tokens: ["navigationMenuViewport"],
+              /*
+                origin-top-center relative mt-1.5 w-full
+                overflow-hidden rounded-md border bg-popover text-popover-foreground shadow-lg
+                h-[var(--radix-navigation-menu-viewport-height)]
+                w-[var(--radix-navigation-menu-viewport-width)]
+                // anims
+                [animation-duration:150ms!important] [transition-duration:150ms!important]
+                data-[state=open]:animate-in data-[state=closed]:animate-out
+                data-[state=closed]:zoom-out-95 data-[state=open]:zoom-in-90
+              */
+              styles: [
+                tc.relative(),
+                tc.mt(1.5),
+                tc.overflow("hidden"),
+                tc.rounded("md"),
+                tc.border(),
+                tc.bg("popover"),
+                tc.text("popoverForeground"),
+                tc.shadow("lg"),
+                tc.property(
+                  "height",
+                  "--radix-navigation-menu-viewport-height"
+                ),
+                tc.property("width", "--radix-navigation-menu-viewport-width"),
+              ].flat(),
               children: [],
             },
           ],
@@ -380,22 +415,6 @@ export const metaNavigationMenuList: WsComponentMeta = {
   icon: ListIcon,
   requiredAncestors: ["NavigationMenu"],
   presetStyle,
-  presetTokens: {
-    navigationMenuList: {
-      styles: [
-        // ul defaults in tailwind
-        tc.p(0),
-        tc.m(0),
-        // shadcdn styles
-        tc.flex(),
-        tc.flex(1),
-        tc.list("none"),
-        tc.items("center"),
-        tc.justify("center"),
-        tc.gap(1),
-      ].flat(),
-    },
-  },
 };
 
 export const metaNavigationMenuItem: WsComponentMeta = {
@@ -405,7 +424,6 @@ export const metaNavigationMenuItem: WsComponentMeta = {
   requiredAncestors: ["NavigationMenu"],
   presetStyle,
   indexWithinAncestor: "NavigationMenu",
-  // no default tokens
 };
 export const metaNavigationMenuTrigger: WsComponentMeta = {
   category: "hidden",
@@ -423,20 +441,6 @@ export const metaNavigationMenuContent: WsComponentMeta = {
   icon: ContentIcon,
   requiredAncestors: ["NavigationMenuItem"],
   indexWithinAncestor: "NavigationMenu",
-
-  presetTokens: {
-    navigationMenuContent: {
-      // left-0 top-0 absolute w-max
-      styles: [
-        tc.left(0),
-        tc.top(0),
-        tc.absolute(),
-        tc.w("max"),
-        tc.p(4),
-      ].flat(),
-    },
-  },
-
   presetStyle,
 };
 
@@ -457,32 +461,6 @@ export const metaNavigationMenuViewport: WsComponentMeta = {
   icon: ViewportIcon,
   requiredAncestors: ["NavigationMenu"],
   presetStyle,
-  presetTokens: {
-    navigationMenuViewport: {
-      /*
-        origin-top-center relative mt-1.5 w-full
-        overflow-hidden rounded-md border bg-popover text-popover-foreground shadow-lg
-        h-[var(--radix-navigation-menu-viewport-height)]
-        w-[var(--radix-navigation-menu-viewport-width)]
-        // anims
-        [animation-duration:150ms!important] [transition-duration:150ms!important]
-        data-[state=open]:animate-in data-[state=closed]:animate-out
-        data-[state=closed]:zoom-out-95 data-[state=open]:zoom-in-90
-      */
-      styles: [
-        tc.relative(),
-        tc.mt(1.5),
-        tc.overflow("hidden"),
-        tc.rounded("md"),
-        tc.border(),
-        tc.bg("popover"),
-        tc.text("popoverForeground"),
-        tc.shadow("lg"),
-        tc.property("height", "--radix-navigation-menu-viewport-height"),
-        tc.property("width", "--radix-navigation-menu-viewport-width"),
-      ].flat(),
-    },
-  },
 };
 
 export const propsMetaNavigationMenu: WsComponentPropsMeta = {
