@@ -13,13 +13,9 @@ import type {
   WsComponentMeta,
   WsComponentPropsMeta,
 } from "@webstudio-is/react-sdk";
-
-import { template as buttonTemplate } from "./button.ws";
-
 import { div } from "@webstudio-is/react-sdk/css-normalize";
-
 import * as tc from "./theme/tailwind-classes";
-
+import { getButtonStyles } from "./theme/styles";
 import {
   propsNavigationMenu,
   propsNavigationMenuItem,
@@ -194,61 +190,65 @@ const menuItem = (props: {
       {
         type: "instance",
         component: "NavigationMenuTrigger",
-        children: buttonTemplate({
-          tokens: ["button", "buttonGhost", "buttonSm"],
-          styles: [
-            tc.property("--navigation-menu-trigger-icon-transform", "0deg"),
-            tc.state(
-              [
-                tc.property(
-                  "--navigation-menu-trigger-icon-transform",
-                  "180deg"
-                ),
-              ],
-              "[data-state=open]"
-            ),
-          ].flat(),
-          children: [
-            {
-              type: "instance",
-              component: "Text",
-              children: [{ type: "text", value: props.title }],
-            },
-            {
-              type: "instance",
-              component: "Box",
-              label: "Icon Container",
-              // h-4 w-4 shrink-0 transition-transform duration-200
-              styles: [
-                tc.ml(1),
-                tc.property(
-                  "rotate",
-                  "--navigation-menu-trigger-icon-transform"
-                ),
-                tc.h(4),
-                tc.w(4),
-                tc.shrink(0),
-                tc.transition("all"),
-                tc.duration(200),
-              ].flat(),
-              children: [
-                {
-                  type: "instance",
-                  component: "HtmlEmbed",
-                  label: "Chevron Icon",
-                  props: [
-                    {
-                      type: "string",
-                      name: "code",
-                      value: ChevronDownIcon,
-                    },
-                  ],
-                  children: [],
-                },
-              ],
-            },
-          ],
-        }),
+        children: [
+          {
+            type: "instance",
+            component: "Button",
+            styles: [
+              getButtonStyles("ghost", "sm"),
+              tc.property("--navigation-menu-trigger-icon-transform", "0deg"),
+              tc.state(
+                [
+                  tc.property(
+                    "--navigation-menu-trigger-icon-transform",
+                    "180deg"
+                  ),
+                ],
+                "[data-state=open]"
+              ),
+            ].flat(),
+            children: [
+              {
+                type: "instance",
+                component: "Text",
+                children: [{ type: "text", value: props.title }],
+              },
+              {
+                type: "instance",
+                component: "Box",
+                label: "Icon Container",
+                // h-4 w-4 shrink-0 transition-transform duration-200
+                styles: [
+                  tc.ml(1),
+                  tc.property(
+                    "rotate",
+                    "--navigation-menu-trigger-icon-transform"
+                  ),
+                  tc.h(4),
+                  tc.w(4),
+                  tc.shrink(0),
+                  tc.transition("all"),
+                  tc.duration(200),
+                ].flat(),
+                children: [
+                  {
+                    type: "instance",
+                    component: "HtmlEmbed",
+                    label: "Chevron Icon",
+                    props: [
+                      {
+                        type: "string",
+                        name: "code",
+                        value: ChevronDownIcon,
+                      },
+                    ],
+                    children: [],
+                  },
+                ],
+              },
+            ],
+          },
+        ],
       },
       {
         type: "instance",

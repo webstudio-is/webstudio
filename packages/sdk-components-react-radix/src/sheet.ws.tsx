@@ -1,3 +1,4 @@
+import type { ComponentProps } from "react";
 import {
   HamburgerMenuIcon,
   TriggerIcon,
@@ -12,7 +13,9 @@ import {
   type WsComponentMeta,
   type WsComponentPropsMeta,
 } from "@webstudio-is/react-sdk";
+import { div, nav, button, h2, p } from "@webstudio-is/react-sdk/css-normalize";
 import * as tc from "./theme/tailwind-classes";
+import { getButtonStyles } from "./theme/styles";
 import {
   propsSheet,
   propsSheetContent,
@@ -22,10 +25,7 @@ import {
   propsSheetTitle,
   propsSheetDescription,
 } from "./__generated__/sheet.props";
-import { div, nav, button, h2, p } from "@webstudio-is/react-sdk/css-normalize";
 import type { SheetContent } from "./sheet";
-import type { ComponentProps } from "react";
-import { template as buttonTemplate } from "./button.ws";
 
 type ContentTags = NonNullable<ComponentProps<typeof SheetContent>["tag"]>;
 
@@ -141,27 +141,28 @@ export const metaSheet: WsComponentMeta = {
         {
           type: "instance",
           component: "SheetTrigger",
-          children: buttonTemplate({
-            props: [
-              { name: "variant", type: "string", value: "ghost" },
-              { name: "size", type: "string", value: "icon" },
-            ],
-            children: [
-              {
-                type: "instance",
-                component: "HtmlEmbed",
-                label: "Hamburger Menu Svg",
-                props: [
-                  {
-                    type: "string",
-                    name: "code",
-                    value: HamburgerMenuIcon,
-                  },
-                ],
-                children: [],
-              },
-            ],
-          }),
+          children: [
+            {
+              type: "instance",
+              component: "Button",
+              styles: getButtonStyles("ghost", "icon"),
+              children: [
+                {
+                  type: "instance",
+                  component: "HtmlEmbed",
+                  label: "Hamburger Menu Svg",
+                  props: [
+                    {
+                      type: "string",
+                      name: "code",
+                      value: HamburgerMenuIcon,
+                    },
+                  ],
+                  children: [],
+                },
+              ],
+            },
+          ],
         },
         {
           type: "instance",
@@ -253,7 +254,7 @@ export const metaSheet: WsComponentMeta = {
                       children: [
                         {
                           type: "text",
-                          value: "sheet description text you can edit",
+                          value: "Sheet description text you can edit",
                         },
                       ],
                     },

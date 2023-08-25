@@ -12,6 +12,7 @@ import {
   type WsComponentMeta,
   type WsComponentPropsMeta,
 } from "@webstudio-is/react-sdk";
+import { div, button, h2, p } from "@webstudio-is/react-sdk/css-normalize";
 import * as tc from "./theme/tailwind-classes";
 import {
   propsDialog,
@@ -22,9 +23,7 @@ import {
   propsDialogTitle,
   propsDialogDescription,
 } from "./__generated__/dialog.props";
-import { template as buttonTemplate } from "./button.ws";
-
-import { div, button, h2, p } from "@webstudio-is/react-sdk/css-normalize";
+import { getButtonStyles } from "./theme/styles";
 
 const presetStyle = {
   div,
@@ -127,15 +126,18 @@ export const metaDialog: WsComponentMeta = {
         {
           type: "instance",
           component: "DialogTrigger",
-          props: [],
-          children: buttonTemplate({
-            children: [{ type: "text", value: "Button" }],
-          }),
+          children: [
+            {
+              type: "instance",
+              component: "Button",
+              styles: getButtonStyles("outline"),
+              children: [{ type: "text", value: "Button" }],
+            },
+          ],
         },
         {
           type: "instance",
           component: "DialogOverlay",
-          props: [],
           /**
            * fixed inset-0 z-50 bg-background/80 backdrop-blur-sm
            * flex
@@ -154,7 +156,6 @@ export const metaDialog: WsComponentMeta = {
             {
               type: "instance",
               component: "DialogContent",
-              props: [],
               /**
                * fixed w-full z-50
                * grid gap-4 max-w-lg
@@ -180,13 +181,11 @@ export const metaDialog: WsComponentMeta = {
                   type: "instance",
                   component: "Box",
                   label: "Dialog Header",
-                  props: [],
                   styles: [tc.flex(), tc.flex("col"), tc.gap(1)].flat(),
                   children: [
                     {
                       type: "instance",
                       component: "DialogTitle",
-                      props: [],
                       /**
                        * text-lg leading-none tracking-tight
                        **/
@@ -206,7 +205,6 @@ export const metaDialog: WsComponentMeta = {
                     {
                       type: "instance",
                       component: "DialogDescription",
-                      props: [],
                       /**
                        * text-sm text-muted-foreground
                        **/
@@ -218,7 +216,7 @@ export const metaDialog: WsComponentMeta = {
                       children: [
                         {
                           type: "text",
-                          value: "dialog description text you can edit",
+                          value: "Dialog description text you can edit",
                         },
                       ],
                     },
@@ -234,7 +232,6 @@ export const metaDialog: WsComponentMeta = {
                 {
                   type: "instance",
                   component: "DialogClose",
-                  props: [],
                   /**
                    * absolute right-4 top-4
                    * rounded-sm opacity-70
