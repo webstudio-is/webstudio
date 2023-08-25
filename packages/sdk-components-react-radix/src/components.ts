@@ -24,8 +24,6 @@ export {
   SheetDescription,
 } from "./sheet";
 export { Tabs, TabsList, TabsTrigger, TabsContent } from "./tabs";
-export { Input } from "./input";
-export { Textarea } from "./textarea";
 export { Label } from "./label";
 export {
   Accordion,

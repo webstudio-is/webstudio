@@ -37,8 +37,6 @@ export {
   propsMetaTabsTrigger as TabsTrigger,
   propsMetaTabsContent as TabsContent,
 } from "./tabs.ws";
-export { propsMeta as Input } from "./input.ws";
-export { propsMeta as Textarea } from "./textarea.ws";
 export { propsMeta as Label } from "./label.ws";
 export {
   propsMetaAccordion as Accordion,
