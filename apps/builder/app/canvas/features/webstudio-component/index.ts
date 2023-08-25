@@ -1,1 +1,1 @@
-export { WebstudioComponentDev } from "./webstudio-component";
+export * from "./webstudio-component";
