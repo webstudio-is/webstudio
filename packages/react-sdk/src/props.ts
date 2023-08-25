@@ -31,7 +31,6 @@ export const useInstanceProps = (instanceId: Instance["id"]) => {
     dataSourceValuesStore,
     executeEffectfulExpression,
     setDataSourceValues,
-    renderer,
     indexesWithinAncestors,
   } = useContext(ReactSdkContext);
   const index = indexesWithinAncestors.get(instanceId);
@@ -61,10 +60,6 @@ export const useInstanceProps = (instanceId: Instance["id"]) => {
           }
           if (prop.type === "action") {
             instancePropsObject[prop.name] = (...args: unknown[]) => {
-              // prevent all actions in canvas mode
-              if (renderer === "canvas") {
-                return;
-              }
               for (const value of prop.value) {
                 if (value.type === "execute") {
                   const argsMap = new Map<string, unknown>();
@@ -91,7 +86,6 @@ export const useInstanceProps = (instanceId: Instance["id"]) => {
     propsByInstanceIdStore,
     dataSourceValuesStore,
     instanceId,
-    renderer,
     executeEffectfulExpression,
     setDataSourceValues,
     index,

@@ -4,7 +4,6 @@ import {
   type ForwardedRef,
   useRef,
   useLayoutEffect,
-  useContext,
 } from "react";
 import { Suspense, lazy } from "react";
 import { useStore } from "@nanostores/react";
@@ -23,7 +22,6 @@ import {
   showAttribute,
   useInstanceProps,
   selectorIdAttribute,
-  ReactSdkContext,
 } from "@webstudio-is/react-sdk";
 import {
   instancesStore,
@@ -39,7 +37,6 @@ import {
   areInstanceSelectorsEqual,
 } from "~/shared/tree-utils";
 import { mergeRefs } from "@react-aria/utils";
-import { composeEventHandlers } from "@radix-ui/primitive";
 import { setDataCollapsed } from "~/canvas/collapsed";
 import { getIsVisuallyHidden } from "~/shared/visually-hidden";
 
@@ -124,9 +121,9 @@ const getInstanceSelector = (
   return undefined;
 };
 
-type WebstudioComponentDevProps = {
+type WebstudioComponentProps = {
   instance: Instance;
-  instanceSelector: InstanceSelector;
+  instanceSelector: Instance["id"][];
   children: Array<JSX.Element | string>;
   components: Components;
 };
@@ -149,12 +146,52 @@ const useCollapsedOnNewElement = (instanceId: Instance["id"]) => {
   }, [instanceId]);
 };
 
+/**
+ * We combine Radix's implicit event handlers with user-defined ones,
+ * such as onClick or onSubmit. For instance, a Button within
+ * a TooltipTrigger receives an onClick handler from the TooltipTrigger.
+ * We might also need an additional onClick handler on the Button for other
+ * purposes (setting variable).
+ **/
+const mergeProps = (
+  // here we assume all on* props are callbacks
+  // cast to avoid extra checks
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  restProps: Record<string, any>,
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  instanceProps: Record<string, any>,
+  callbackStrategy: "merge" | "delete"
+) => {
+  // merge props into single object
+  const props = { ...restProps, ...instanceProps };
+  for (const propName of Object.keys(props)) {
+    const restPropValue = restProps[propName];
+    const instancePropValue = instanceProps[propName];
+
+    const isHandler = /^on[A-Z]/.test(propName);
+    if (isHandler === false) {
+      continue;
+    }
+    // combine handlers for preview
+    if (callbackStrategy === "merge") {
+      props[propName] = (...args: unknown[]) => {
+        restPropValue?.(...args);
+        instancePropValue?.(...args);
+      };
+    }
+    // delete all handlers from canvas mode
+    if (callbackStrategy === "delete") {
+      delete props[propName];
+    }
+  }
+  return props;
+};
+
 // eslint-disable-next-line react/display-name
-export const WebstudioComponentDev = forwardRef<
+export const WebstudioComponentCanvas = forwardRef<
   HTMLElement,
-  WebstudioComponentDevProps
+  WebstudioComponentProps
 >(({ instance, instanceSelector, children, components, ...restProps }, ref) => {
-  const { renderer } = useContext(ReactSdkContext);
   const instanceId = instance.id;
   const instanceStyles = useInstanceStyles(instanceId);
   useCssRules({ instanceId: instance.id, instanceStyles });
@@ -207,40 +244,14 @@ export const WebstudioComponentDev = forwardRef<
     [componentAttribute]: string;
     [idAttribute]: string;
   } & Record<string, unknown> = {
-    ...instanceProps,
-    tabIndex: 0,
-    [componentAttribute]: instance.component,
-    [idAttribute]: instance.id,
-    [selectorIdAttribute]: instanceSelector.join(","),
-  };
-
-  for (const [name, value] of Object.entries(restProps)) {
-    if (typeof value === "function") {
-      // prevent passing any callbacks from outside while in canvas mode
-      // for example radix triggers bypass callbacks to button child
-      if (renderer === "canvas") {
-        continue;
-      }
-      /**
-       * We combine Radix's implicit event handlers with user-defined ones,
-       * such as onClick or onSubmit. For instance, a Button within
-       * a TooltipTrigger receives an onClick handler from the TooltipTrigger.
-       * We might also need an additional onClick handler on the Button for other
-       * purposes (setting variable).
-       **/
-      if (name.startsWith("on") && typeof props[name] === "function") {
-        type Callback = (event: unknown) => void;
-        props[name] = composeEventHandlers(
-          value as Callback,
-          props[name] as Callback
-        );
-        continue;
-      }
-    }
+    ...mergeProps(restProps, instanceProps, "delete"),
     // current props should override bypassed from parent
     // important for data-ws-* props
-    props[name] = props[name] ?? value;
-  }
+    tabIndex: 0,
+    [selectorIdAttribute]: instanceSelector.join(","),
+    [componentAttribute]: instance.component,
+    [idAttribute]: instance.id,
+  };
 
   const instanceElement = (
     <>
@@ -299,5 +310,34 @@ export const WebstudioComponentDev = forwardRef<
         }}
       />
     </Suspense>
+  );
+});
+
+// eslint-disable-next-line react/display-name
+export const WebstudioComponentPreview = forwardRef<
+  HTMLElement,
+  WebstudioComponentProps
+>(({ instance, instanceSelector, children, components, ...restProps }, ref) => {
+  const instanceStyles = useInstanceStyles(instance.id);
+  useCssRules({ instanceId: instance.id, instanceStyles });
+  const { [showAttribute]: show = true, ...instanceProps } = useInstanceProps(
+    instance.id
+  );
+  const props = {
+    ...mergeProps(restProps, instanceProps, "merge"),
+    [idAttribute]: instance.id,
+    [componentAttribute]: instance.component,
+  };
+  if (show === false) {
+    return <></>;
+  }
+  const Component = components.get(instance.component);
+  if (Component === undefined) {
+    return <></>;
+  }
+  return (
+    <Component {...props} ref={ref}>
+      {renderWebstudioComponentChildren(children)}
+    </Component>
   );
 });

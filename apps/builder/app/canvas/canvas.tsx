@@ -31,7 +31,10 @@ import {
 import { useSharedShortcuts } from "~/shared/shortcuts";
 import { useCanvasShortcuts } from "./canvas-shortcuts";
 import { useManageDesignModeStyles, GlobalStyles } from "./shared/styles";
-import { WebstudioComponentDev } from "./features/webstudio-component";
+import {
+  WebstudioComponentCanvas,
+  WebstudioComponentPreview,
+} from "./features/webstudio-component";
 import {
   propsIndexStore,
   assetsStore,
@@ -135,7 +138,9 @@ const useElementsTree = (
       executeEffectfulExpression:
         executeEffectfulExpressionWithDecodedVariables,
       onDataSourceUpdate,
-      Component: WebstudioComponentDev,
+      Component: isPreviewMode
+        ? WebstudioComponentPreview
+        : WebstudioComponentCanvas,
       components,
       scripts: (
         <>
