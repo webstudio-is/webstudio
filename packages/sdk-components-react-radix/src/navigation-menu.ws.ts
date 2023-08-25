@@ -305,7 +305,7 @@ export const metaNavigationMenu: WsComponentMeta = {
       ],
       // relative
       // Omiting this: z-10 flex max-w-max flex-1 items-center justify-center
-      styles: [tc.relative()].flat(),
+      styles: [tc.relative(), tc.maxW("max")].flat(),
       children: [
         {
           type: "instance",
