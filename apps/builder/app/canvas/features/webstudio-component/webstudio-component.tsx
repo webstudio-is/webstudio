@@ -154,7 +154,11 @@ const useCollapsedOnNewElement = (instanceId: Instance["id"]) => {
  * purposes (setting variable).
  **/
 const mergeProps = (
+  // here we assume all on* props are callbacks
+  // cast to avoid extra checks
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   restProps: Record<string, any>,
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   instanceProps: Record<string, any>,
   callbackStrategy: "merge" | "delete"
 ) => {
