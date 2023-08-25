@@ -13,7 +13,9 @@ const ScrollAreaThumb = styled(Thumb, {
   background: theme.colors.foregroundScrollBar,
   borderRadius: theme.spacing[4],
   // increase target size for touch devices https://www.w3.org/WAI/WCAG21/Understanding/target-size.html
+
   position: "relative",
+
   "&::before": {
     content: '""',
     position: "absolute",
@@ -22,8 +24,24 @@ const ScrollAreaThumb = styled(Thumb, {
     transform: "translate(-50%, -50%)",
     width: "100%",
     height: "100%",
-    minWidth: 16,
-    minHeight: 44,
+  },
+
+  variants: {
+    orientation: {
+      vertical: {
+        "&::before": {
+          minWidth: 16,
+          minHeight: 44,
+        },
+      },
+      horizontal: {
+        minHeight: "100%",
+        "&::before": {
+          minWidth: 44,
+          minHeight: 16,
+        },
+      },
+    },
   },
 });
 
@@ -32,15 +50,31 @@ const ScrollAreaScrollbar = styled(Scrollbar, {
   // ensures no selection
   userSelect: "none",
   // disable browser handling of all panning and scaleUp gestures on touch devices
-  touchAction: "none",
   padding: 2,
-  paddingRight: 3,
+  touchAction: "none",
   '&[data-orientation="vertical"]': {
     width: theme.spacing[6],
+    paddingRight: 3,
   },
   '&[data-orientation="horizontal"]': {
     flexDirection: "column",
     height: theme.spacing[6],
+    paddingBottom: 3,
+  },
+
+  variants: {
+    direction: {
+      both: {
+        "&[data-orientation=vertical]": {
+          marginBottom: theme.spacing[4],
+        },
+        '&[data-orientation="horizontal"]': {
+          marginRight: theme.spacing[4],
+        },
+      },
+      horizontal: {},
+      vertical: {},
+    },
   },
 });
 
@@ -80,13 +114,13 @@ export const ScrollArea = forwardRef(
           {children}
         </Viewport>
         {(direction === "vertical" || direction === "both") && (
-          <ScrollAreaScrollbar orientation="vertical">
-            <ScrollAreaThumb />
+          <ScrollAreaScrollbar orientation="vertical" direction={direction}>
+            <ScrollAreaThumb orientation="vertical" />
           </ScrollAreaScrollbar>
         )}
         {(direction === "horizontal" || direction === "both") && (
-          <ScrollAreaScrollbar orientation="horizontal">
-            <ScrollAreaThumb />
+          <ScrollAreaScrollbar orientation="horizontal" direction={direction}>
+            <ScrollAreaThumb orientation="horizontal" />
           </ScrollAreaScrollbar>
         )}
       </ScrollAreaRoot>
