@@ -54,4 +54,6 @@ export {
   propsMetaSelectViewport as SelectViewport,
   propsMetaSelectContent as SelectContent,
   propsMetaSelectItem as SelectItem,
+  propsMetaSelectItemIndicator as SelectItemIndicator,
+  propsMetaSelectItemText as SelectItemText,
 } from "./select.ws";
