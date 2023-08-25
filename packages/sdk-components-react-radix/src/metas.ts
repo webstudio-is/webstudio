@@ -12,6 +12,7 @@ export {
   metaDialogTitle as DialogTitle,
   metaDialogDescription as DialogDescription,
 } from "./dialog.ws";
+export { meta as Sheet } from "./sheet.ws";
 export {
   metaPopover as Popover,
   metaPopoverTrigger as PopoverTrigger,
@@ -22,15 +23,6 @@ export {
   metaTooltipTrigger as TooltipTrigger,
   metaTooltipContent as TooltipContent,
 } from "./tooltip.ws";
-export {
-  metaSheet as Sheet,
-  metaSheetTrigger as SheetTrigger,
-  metaSheetOverlay as SheetOverlay,
-  metaSheetContent as SheetContent,
-  metaSheetClose as SheetClose,
-  metaSheetTitle as SheetTitle,
-  metaSheetDescription as SheetDescription,
-} from "./sheet.ws";
 export {
   metaTabs as Tabs,
   metaTabsList as TabsList,
