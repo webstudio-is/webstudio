@@ -87,6 +87,24 @@ describe("resolveUrlProp", () => {
     value: unique(),
   };
 
+  const duplicatePropName = unique();
+
+  const duplicateUrlPropFirst: Prop = {
+    type: "string",
+    id: unique(),
+    instanceId,
+    name: duplicatePropName,
+    value: unique(),
+  };
+
+  const duplicateUrlPropSecond: Prop = {
+    type: "string",
+    id: unique(),
+    instanceId,
+    name: duplicatePropName,
+    value: unique(),
+  };
+
   const props: PropsByInstanceId = new Map([
     [
       instanceId,
@@ -96,6 +114,8 @@ describe("resolveUrlProp", () => {
         arbitraryUrlProp,
         assetProp,
         pageSectionProp,
+        duplicateUrlPropFirst,
+        duplicateUrlPropSecond,
       ],
     ],
     [instnaceIdProp.instanceId, [instnaceIdProp]],
@@ -154,6 +174,15 @@ describe("resolveUrlProp", () => {
     expect(resolveUrlProp(instanceId, arbitraryUrlProp.name, stores)).toEqual({
       type: "string",
       url: arbitraryUrlProp.value,
+    });
+  });
+
+  // We had a bug that some props were duplicated https://github.com/webstudio-is/webstudio-builder/pull/2170
+  // Use the latest prop to ensure consistency with the builder settings panel.
+  test("duplicate prop name", () => {
+    expect(resolveUrlProp(instanceId, duplicatePropName, stores)).toEqual({
+      type: "string",
+      url: duplicateUrlPropSecond.value,
     });
   });
 });
