@@ -30,7 +30,7 @@ export const Select = forwardRef<
   if (value === "") {
     value = undefined;
   }
-  return <Root {...props} />;
+  return <Root value={value} {...props} />;
 });
 
 export const SelectTrigger: ForwardRefExoticComponent<
