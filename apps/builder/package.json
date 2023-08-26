@@ -27,7 +27,6 @@
     "@lexical/selection": "^0.11.3",
     "@lexical/utils": "^0.11.3",
     "@nanostores/react": "^0.7.1",
-    "@radix-ui/primitive": "1.0.1",
     "@radix-ui/react-select": "^1.2.2",
     "@radix-ui/react-tooltip": "^1.0.6",
     "@react-aria/interactions": "^3.17.0",

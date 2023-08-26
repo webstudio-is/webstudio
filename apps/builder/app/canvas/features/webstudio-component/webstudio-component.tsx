@@ -1,12 +1,9 @@
 import {
-  type MouseEvent,
-  type FormEvent,
   useEffect,
   forwardRef,
   type ForwardedRef,
   useRef,
   useLayoutEffect,
-  useContext,
 } from "react";
 import { Suspense, lazy } from "react";
 import { useStore } from "@nanostores/react";
@@ -25,7 +22,6 @@ import {
   showAttribute,
   useInstanceProps,
   selectorIdAttribute,
-  ReactSdkContext,
 } from "@webstudio-is/react-sdk";
 import {
   instancesStore,
@@ -40,9 +36,7 @@ import {
   type InstanceSelector,
   areInstanceSelectorsEqual,
 } from "~/shared/tree-utils";
-import { handleLinkClick } from "./link";
 import { mergeRefs } from "@react-aria/utils";
-import { composeEventHandlers } from "@radix-ui/primitive";
 import { setDataCollapsed } from "~/canvas/collapsed";
 import { getIsVisuallyHidden } from "~/shared/visually-hidden";
 
@@ -127,29 +121,11 @@ const getInstanceSelector = (
   return undefined;
 };
 
-type WebstudioComponentDevProps = {
+type WebstudioComponentProps = {
   instance: Instance;
-  instanceSelector: InstanceSelector;
+  instanceSelector: Instance["id"][];
   children: Array<JSX.Element | string>;
   components: Components;
-};
-
-/**
- * For some components that are wrapped with Radix Slot-like components (Triggers etc where asChild=true),
- * Slots in react-aria https://react-spectrum.adobe.com/react-spectrum/layout.html#slots
- * events are passed implicitly. We aim to merge these implicit events with the explicitly defined ones.
- **/
-type ImplicitEvents = {
-  onClick?: undefined | ((event: never) => void);
-  onSubmit?: undefined | ((event: never) => void);
-  /**
-   * We ignore the remaining events because we currently detect events using the 'on' prefix.
-   * This approach (defining type like above instead of Partial<Record<`on${string}`, Handler>>)
-   * is necessary due to our TypeScript settings, where 'no exactOptionalPropertyTypes' is set,
-   * which makes it impossible to define a Partial<Record<>> with optional keys.
-   *  (without exactOptionalPropertyTypes ts defines it as {[key: string]: Handler | undefined)}
-   *   instead of {[key: string]?: Handler | undefined)})
-   **/
 };
 
 const existingElements = new Set<string>();
@@ -170,12 +146,52 @@ const useCollapsedOnNewElement = (instanceId: Instance["id"]) => {
   }, [instanceId]);
 };
 
+/**
+ * We combine Radix's implicit event handlers with user-defined ones,
+ * such as onClick or onSubmit. For instance, a Button within
+ * a TooltipTrigger receives an onClick handler from the TooltipTrigger.
+ * We might also need an additional onClick handler on the Button for other
+ * purposes (setting variable).
+ **/
+const mergeProps = (
+  // here we assume all on* props are callbacks
+  // cast to avoid extra checks
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  restProps: Record<string, any>,
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  instanceProps: Record<string, any>,
+  callbackStrategy: "merge" | "delete"
+) => {
+  // merge props into single object
+  const props = { ...restProps, ...instanceProps };
+  for (const propName of Object.keys(props)) {
+    const restPropValue = restProps[propName];
+    const instancePropValue = instanceProps[propName];
+
+    const isHandler = /^on[A-Z]/.test(propName);
+    if (isHandler === false) {
+      continue;
+    }
+    // combine handlers for preview
+    if (callbackStrategy === "merge") {
+      props[propName] = (...args: unknown[]) => {
+        restPropValue?.(...args);
+        instancePropValue?.(...args);
+      };
+    }
+    // delete all handlers from canvas mode
+    if (callbackStrategy === "delete") {
+      delete props[propName];
+    }
+  }
+  return props;
+};
+
 // eslint-disable-next-line react/display-name
-export const WebstudioComponentDev = forwardRef<
+export const WebstudioComponentCanvas = forwardRef<
   HTMLElement,
-  WebstudioComponentDevProps & ImplicitEvents
+  WebstudioComponentProps
 >(({ instance, instanceSelector, children, components, ...restProps }, ref) => {
-  const { renderer } = useContext(ReactSdkContext);
   const instanceId = instance.id;
   const instanceStyles = useInstanceStyles(instanceId);
   useCssRules({ instanceId: instance.id, instanceStyles });
@@ -228,61 +244,14 @@ export const WebstudioComponentDev = forwardRef<
     [componentAttribute]: string;
     [idAttribute]: string;
   } & Record<string, unknown> = {
-    ...instanceProps,
-    tabIndex: 0,
-    onClick: (event: MouseEvent) => {
-      if (event.currentTarget instanceof HTMLAnchorElement) {
-        // @todo use Navigation API once implemented everywhere
-        // https://developer.mozilla.org/en-US/docs/Web/API/Navigation_API
-        handleLinkClick(event);
-        event.preventDefault();
-      } else if (typeof instanceProps.onClick === "function") {
-        // bypass onClick for non-link component, for example button
-        instanceProps.onClick(event);
-      }
-    },
-    onSubmit: (event: FormEvent) => {
-      // Prevent submitting the form when clicking a button type submit
-      event.preventDefault();
-      if (typeof instanceProps.onSubmit === "function") {
-        // bypass handler
-        instanceProps.onSubmit(event);
-      }
-    },
-    [componentAttribute]: instance.component,
-    [idAttribute]: instance.id,
-    [selectorIdAttribute]: instanceSelector.join(","),
-  };
-
-  if (renderer === "canvas") {
-    if (instance.component === "Input" || instance.component === "Textarea") {
-      props.readOnly = true;
-    }
-  }
-
-  for (const [name, value] of Object.entries(restProps)) {
-    if (typeof value === "function") {
-      // prevent passing any callbacks from outside while in canvas mode
-      // for example radix triggers bypass callbacks to button child
-      if (renderer === "canvas") {
-        continue;
-      }
-      /**
-       * We combine Radix's implicit event handlers with user-defined ones,
-       * such as onClick or onSubmit. For instance, a Button within
-       * a TooltipTrigger receives an onClick handler from the TooltipTrigger.
-       * We might also need an additional onClick handler on the Button for other
-       * purposes (setting variable).
-       **/
-      if (name.startsWith("on") && typeof props[name] === "function") {
-        props[name] = composeEventHandlers(value, props[name] as typeof value);
-        continue;
-      }
-    }
+    ...mergeProps(restProps, instanceProps, "delete"),
     // current props should override bypassed from parent
     // important for data-ws-* props
-    props[name] = props[name] ?? value;
-  }
+    tabIndex: 0,
+    [selectorIdAttribute]: instanceSelector.join(","),
+    [componentAttribute]: instance.component,
+    [idAttribute]: instance.id,
+  };
 
   const instanceElement = (
     <>
@@ -341,5 +310,34 @@ export const WebstudioComponentDev = forwardRef<
         }}
       />
     </Suspense>
+  );
+});
+
+// eslint-disable-next-line react/display-name
+export const WebstudioComponentPreview = forwardRef<
+  HTMLElement,
+  WebstudioComponentProps
+>(({ instance, instanceSelector, children, components, ...restProps }, ref) => {
+  const instanceStyles = useInstanceStyles(instance.id);
+  useCssRules({ instanceId: instance.id, instanceStyles });
+  const { [showAttribute]: show = true, ...instanceProps } = useInstanceProps(
+    instance.id
+  );
+  const props = {
+    ...mergeProps(restProps, instanceProps, "merge"),
+    [idAttribute]: instance.id,
+    [componentAttribute]: instance.component,
+  };
+  if (show === false) {
+    return <></>;
+  }
+  const Component = components.get(instance.component);
+  if (Component === undefined) {
+    return <></>;
+  }
+  return (
+    <Component {...props} ref={ref}>
+      {renderWebstudioComponentChildren(children)}
+    </Component>
   );
 });

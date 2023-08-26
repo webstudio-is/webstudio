@@ -25,9 +25,8 @@ export const parseSubfamily = (subfamily: string) => {
   }
   let weight: FontWeight = "400";
   for (weight in fontWeights) {
-    const { name } = fontWeights[weight];
-    const { alt } = fontWeights[weight];
-    if (subfamilyLow.includes(name) || subfamilyLow.includes(alt)) {
+    const { names } = fontWeights[weight];
+    if (names.some((name) => subfamilyLow.includes(name))) {
       break;
     }
   }

@@ -4,14 +4,14 @@ import {
   type WsComponentMeta,
   type WsComponentPropsMeta,
 } from "@webstudio-is/react-sdk";
+import { div } from "@webstudio-is/react-sdk/css-normalize";
 import * as tc from "./theme/tailwind-classes";
 import {
   propsTooltip,
   propsTooltipContent,
   propsTooltipTrigger,
 } from "./__generated__/tooltip.props";
-import { div } from "@webstudio-is/react-sdk/css-normalize";
-import { template as buttonTemplate } from "./button.ws";
+import { getButtonStyles } from "./theme/styles";
 
 const presetStyle = {
   div,
@@ -73,15 +73,18 @@ export const metaTooltip: WsComponentMeta = {
         {
           type: "instance",
           component: "TooltipTrigger",
-          props: [],
-          children: buttonTemplate({
-            children: [{ type: "text", value: "Button" }],
-          }),
+          children: [
+            {
+              type: "instance",
+              component: "Button",
+              styles: getButtonStyles("outline"),
+              children: [{ type: "text", value: "Button" }],
+            },
+          ],
         },
         {
           type: "instance",
           component: "TooltipContent",
-          props: [],
           /**
            *  z-50 overflow-hidden rounded-md border bg-popover px-3 py-1.5 text-sm text-popover-foreground shadow-md
            **/

@@ -40,4 +40,3 @@ export * from "./text-underline";
 export * from "./text-uppercase";
 export * from "./text-direction-ltr";
 export * from "./text-direction-rtl";
-export * from "./check-mark";

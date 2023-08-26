@@ -23,23 +23,11 @@ export {
   propsMetaTooltipContent as TooltipContent,
 } from "./tooltip.ws";
 export {
-  propsMetaSheet as Sheet,
-  propsMetaSheetTrigger as SheetTrigger,
-  propsMetaSheetOverlay as SheetOverlay,
-  propsMetaSheetContent as SheetContent,
-  propsMetaSheetClose as SheetClose,
-  propsMetaSheetTitle as SheetTitle,
-  propsMetaSheetDescription as SheetDescription,
-} from "./sheet.ws";
-export {
   propsMetaTabs as Tabs,
   propsMetaTabsList as TabsList,
   propsMetaTabsTrigger as TabsTrigger,
   propsMetaTabsContent as TabsContent,
 } from "./tabs.ws";
-export { propsMeta as Button } from "./button.ws";
-export { propsMeta as Input } from "./input.ws";
-export { propsMeta as Textarea } from "./textarea.ws";
 export { propsMeta as Label } from "./label.ws";
 export {
   propsMetaAccordion as Accordion,
@@ -58,3 +46,14 @@ export {
   propsMetaNavigationMenuLink as NavigationMenuLink,
   propsMetaNavigationMenuViewport as NavigationMenuViewport,
 } from "./navigation-menu.ws";
+
+export {
+  propsMetaSelect as Select,
+  propsMetaSelectTrigger as SelectTrigger,
+  propsMetaSelectValue as SelectValue,
+  propsMetaSelectViewport as SelectViewport,
+  propsMetaSelectContent as SelectContent,
+  propsMetaSelectItem as SelectItem,
+  propsMetaSelectItemIndicator as SelectItemIndicator,
+  propsMetaSelectItemText as SelectItemText,
+} from "./select.ws";
