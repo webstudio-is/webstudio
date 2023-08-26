@@ -13,6 +13,7 @@ export const build: Command = async () => {
     await parseFolderAndWriteFiles(templates["defaults"], cwd());
     await prebuild();
   } catch (error) {
+    console.error(error);
     if (error.code === "ENOENT") {
       throw new Error(
         `You need to link a webstudio project before building it. Run \`webstudio link\` to link a project.`

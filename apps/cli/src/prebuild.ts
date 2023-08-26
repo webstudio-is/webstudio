@@ -1,5 +1,5 @@
-import { join, relative, dirname } from "node:path";
-import { createWriteStream, writeFileSync, mkdirSync } from "node:fs";
+import { join } from "node:path";
+import { createWriteStream } from "node:fs";
 import { rm, mkdir, access, mkdtemp, rename } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import {
@@ -14,7 +14,6 @@ import {
   type Prop,
   type Build,
   type Page,
-  DataSource,
 } from "@webstudio-is/project-build";
 import * as baseComponentMetas from "@webstudio-is/sdk-components-react/metas";
 import * as remixComponentMetas from "@webstudio-is/sdk-components-react-remix/metas";
@@ -24,7 +23,7 @@ import ora from "ora";
 
 import { getRouteTemplate } from "./__generated__/router";
 import { ASSETS_BASE, LOCAL_DATA_FILE } from "./config";
-import { ensureFolderExists, loadJSONFile } from "./fs-utils";
+import { ensureFileInPath, ensureFolderExists, loadJSONFile } from "./fs-utils";
 import { getImageAttributes, createImageLoader } from "@webstudio-is/image";
 import { pipeline } from "node:stream/promises";
 
@@ -88,11 +87,6 @@ export const downloadAsset = async (
 export const prebuild = async () => {
   const spinner = ora("Scaffolding the project files");
   const appRoot = "app";
-  const componentsByPage: ComponentsByPage = {};
-  const siteDataByPage: SiteDataByPage = {};
-
-  const assetsToDownload: Promise<void>[] = [];
-  const fontAssets: FontAsset[] = [];
 
   spinner.start();
   const routesDir = join(appRoot, "routes");
@@ -126,18 +120,72 @@ export const prebuild = async () => {
     routes: [],
   };
 
+  const componentsByPage: ComponentsByPage = {};
+  const siteDataByPage: SiteDataByPage = {};
+
+  const componentMetas = new Map(
+    Object.entries({ ...baseComponentMetas, ...remixComponentMetas })
+  );
+
+  for (const page of Object.values(siteData.pages)) {
+    const originPath = page.path;
+    const path = originPath === "" ? "index" : originPath.replace("/", "");
+
+    if (path !== "index") {
+      remixRoutes.routes.push({
+        path: originPath === "" ? "/" : originPath,
+        file: `routes/${path}.tsx`,
+      });
+    }
+
+    const instanceMap = new Map(siteData.build.instances);
+    const pageInstanceSet = findTreeInstanceIds(
+      instanceMap,
+      page.rootInstanceId
+    );
+    const instances: [Instance["id"], Instance][] =
+      siteData.build.instances.filter(([id]) => pageInstanceSet.has(id));
+
+    const props: [Prop["id"], Prop][] = [];
+    for (const [_propId, prop] of siteData.build.props) {
+      if (pageInstanceSet.has(prop.instanceId)) {
+        props.push([prop.id, prop]);
+      }
+    }
+
+    siteDataByPage[path] = {
+      build: {
+        props,
+        instances,
+        dataSources: siteData.build.dataSources,
+      },
+      pages: siteData.pages,
+      page,
+      assets: siteData.assets,
+    };
+
+    componentsByPage[path] = new Set();
+    for (const [_instanceId, instance] of instances) {
+      if (instance.component) {
+        componentsByPage[path].add(instance.component);
+      }
+    }
+  }
+
+  const assetsToDownload: Promise<void>[] = [];
+  const fontAssets: FontAsset[] = [];
   const assetBuildUrl = `https://${domain}.wstd.io/cgi/asset/`;
 
   for (const asset of siteData.assets) {
     if (asset.type === "image") {
       const image = getImageAttributes({
         /*
-            TODO:
-            https://github.com/webstudio-is/webstudio-builder/issues/2135
-            There should be a option in the loader, that allows to download
-            original image instead of the processed one. Right now, we are using
-            the width from the asset meta
-          */
+          TODO:
+          https://github.com/webstudio-is/webstudio-builder/issues/2135
+          There should be a option in the loader, that allows to download
+          original image instead of the processed one. Right now, we are using
+          the width from the asset meta
+        */
         width: asset.meta.width,
         optimize: true,
         src: asset.name,
@@ -170,69 +218,56 @@ export const prebuild = async () => {
     }
   }
 
-  for (const page of Object.values(siteData.pages)) {
-    const originPath = page.path;
-    const path = originPath === "" ? "index" : originPath.replace("/", "");
+  spinner.text = "Generating routes and pages";
+  for (const [pathName, pageComponents] of Object.entries(componentsByPage)) {
+    const statements = Array.from(pageComponents).join(", ");
+    const pageData = siteDataByPage[pathName];
 
-    if (path !== "index") {
-      remixRoutes.routes.push({
-        path: originPath === "" ? "/" : originPath,
-        file: `routes/${path}.tsx`,
-      });
-    }
+    const utilsExport = generateUtilsExport({
+      page: pageData.page,
+      metas: componentMetas,
+      instances: new Map(pageData.build.instances),
+      props: new Map(pageData.build.props),
+      dataSources: new Map(pageData.build.dataSources),
+    });
 
-    const instanceMap = new Map(siteData.build.instances);
-    const pageInstanceSet = findTreeInstanceIds(
-      instanceMap,
-      page.rootInstanceId
+    const pageExports = `/* This is a auto generated file for building the project */ \n
+    import type { PageData } from "~/routes/template";
+    import type { Components } from "@webstudio-is/react-sdk";
+    import * as sdk from "@webstudio-is/react-sdk";
+    import { ${statements} } from "@webstudio-is/sdk-components-react";
+    import * as remixComponents from "@webstudio-is/sdk-components-react-remix";
+    export const components = new Map(Object.entries(Object.assign({ ${statements} }, remixComponents ))) as Components;
+    export const fontAssets = ${JSON.stringify(fontAssets)}
+    export const pageData: PageData = ${JSON.stringify(pageData)};
+    export const user: { email: string | null } | undefined = ${JSON.stringify(
+      siteData.user
+    )};
+    export const projectId = "${siteData.build.projectId}";
+
+    ${utilsExport}
+    `;
+
+    const fileName =
+      pathName === "main" || pathName === "index"
+        ? "_index.tsx"
+        : pathName.split("/").length === 1
+        ? `${pathName}._index.tsx`
+        : `${pathName.split("/").join(".")}.tsx`;
+
+    let routeFile = getRouteTemplate();
+
+    routeFile = routeFile.replace(
+      "../__generated__/index",
+      join("../__generated__", fileName)
     );
-    const instances: [Instance["id"], Instance][] =
-      siteData.build.instances.filter(([id]) => pageInstanceSet.has(id));
-    const dataSources: [DataSource["id"], DataSource][] = [];
 
-    const props: [Prop["id"], Prop][] = [];
-    for (const [_propId, prop] of siteData.build.props) {
-      if (pageInstanceSet.has(prop.instanceId)) {
-        props.push([prop.id, prop]);
-      }
-    }
-
-    for (const [dataSourceId, dataSource] of siteData.build.dataSources) {
-      if (
-        dataSource.scopeInstanceId === undefined ||
-        pageInstanceSet.has(dataSource.scopeInstanceId)
-      ) {
-        dataSources.push([dataSourceId, dataSource]);
-      }
-    }
-
-    siteDataByPage[path] = {
-      build: {
-        props,
-        instances,
-        dataSources,
-      },
-      pages: siteData.pages,
-      page,
-      assets: siteData.assets,
-    };
-
-    componentsByPage[path] = new Set();
-    for (const [_instanceId, instance] of instances) {
-      if (instance.component) {
-        componentsByPage[path].add(instance.component);
-      }
-    }
+    await ensureFileInPath(join(routesDir, fileName), routeFile);
+    await ensureFileInPath(join(generatedDir, fileName), pageExports);
   }
 
-  const componentMetas = new Map(
-    Object.entries({
-      ...baseComponentMetas,
-      ...remixComponentMetas,
-    })
-  );
-
-  let cssText = generateCssText(
+  spinner.text = "Generating css file";
+  const cssText = generateCssText(
     {
       assets: siteData.assets,
       breakpoints: siteData.build?.breakpoints,
@@ -244,144 +279,8 @@ export const prebuild = async () => {
       assetBaseUrl: ASSETS_BASE,
     }
   );
+  await ensureFileInPath(join(generatedDir, "index.css"), cssText);
 
-  cssText = `/* This file was generated by pnpm prebuild from /apps/edge-worker */\n${cssText}`;
-
-  for (const [pathName, pageComponents] of Object.entries(componentsByPage)) {
-    let relativePath = "../__generated__";
-
-    const components = Array.from(pageComponents);
-    const namespaces = new Map<string, Set<string>>();
-    const DEFAULT_NAMESPACE = "@webstudio-is/sdk-components-react";
-    let namespaceId = 0;
-    const namespaceToId = new Map<string, number>();
-
-    for (const component of components) {
-      const nameArr = component.split(":");
-      const [namespace, name] =
-        nameArr.length === 1 ? [undefined, nameArr[0]] : nameArr;
-
-      if (namespaces.has(namespace ?? DEFAULT_NAMESPACE) === false) {
-        namespaces.set(namespace ?? DEFAULT_NAMESPACE, new Set<string>());
-        namespaceToId.set(namespace ?? DEFAULT_NAMESPACE, namespaceId);
-        namespaceId++;
-      }
-
-      namespaces.get(namespace ?? DEFAULT_NAMESPACE)?.add(name);
-    }
-
-    let componentImports = "";
-    let assignComponent = "";
-    for (const [namespace, componentsSet] of namespaces.entries()) {
-      componentImports = `${componentImports}
-      import { ${Array.from(componentsSet)
-        .map(
-          (component) =>
-            `${component} as ${component}_${namespaceToId.get(namespace)}`
-        )
-        .join(", ")} } from "${namespace}";`;
-
-      if (namespace === DEFAULT_NAMESPACE) {
-        assignComponent = `${assignComponent}
-        ${Array.from(componentsSet)
-          .map(
-            (component) =>
-              `"${component}": ${component}_${namespaceToId.get(namespace)}`
-          )
-          .join(",")},`;
-      } else {
-        assignComponent = `${assignComponent}
-        ${Array.from(componentsSet)
-          .map(
-            (component) =>
-              `"${namespace}:${component}": ${component}_${namespaceToId.get(
-                namespace
-              )}`
-          )
-          .join(",")},`;
-      }
-    }
-
-    const pageData = siteDataByPage[pathName];
-
-    const utilsExport = generateUtilsExport({
-      page: pageData.page,
-      metas: componentMetas,
-      instances: new Map(pageData.build.instances),
-      props: new Map(pageData.build.props),
-      dataSources: new Map(pageData.build.dataSources),
-    });
-
-    const pageExports = `
-    /* eslint-disable camelcase */
-    /* eslint-disable prefer-const */
-    // This file was generated by pnpm prebuild from /apps/edge-worker
-    import * as sdk from "@webstudio-is/react-sdk";
-    import type { PageData } from "~/routes/template";
-    import type { Components } from "@webstudio-is/react-sdk";
-    ${componentImports}
-    import * as remixComponents from "@webstudio-is/sdk-components-react-remix";
-    export const components = new Map(Object.entries(Object.assign({ ${assignComponent} }, remixComponents ))) as Components;
-    export const fontAssets = ${JSON.stringify(fontAssets)};
-    export const pageData: PageData = ${JSON.stringify(pageData)};
-    export const user: { email: string | null } | undefined = ${JSON.stringify(
-      siteData.user
-    )};
-    export const projectId = "${siteData.build.projectId}";
-
-    ${utilsExport}
-    `;
-
-    /* Changing the pathName to index for the index page, so that remix will use the index.tsx file as index:true in the manifest file.
-
-    It is generated by @remix-run/cloudflare somewhere here (https://github.com/remix-run/remix/blob/8851599c47f5d372fb537026a9ee0931a8753262/packages/remix-react/routes.tsx#L50). If there was no index.ts file, the manifest file containing all the routing was incorrect and nothing responded to root (/) requests. That is why the main file is renamed to index so Remix will use it as /.
-
-    */
-    pathName === "main" ? "index" : pathName;
-
-    const fileLocationGeneratedDir = join(generatedDir, pathName);
-    const fileLocationRoutesDir = join(routesDir, pathName);
-
-    if (pathName !== "index") {
-      // If the pathName is not index, we need to create the directory structure for the generated files, set the relative path to the generated directory
-      if (!pathName.includes("/")) {
-        mkdirSync(fileLocationGeneratedDir, { recursive: true });
-        mkdirSync(fileLocationRoutesDir, { recursive: true });
-        relativePath = relative(fileLocationRoutesDir, generatedDir);
-      } else {
-        const dirnameRoutesDir = dirname(fileLocationRoutesDir);
-        relativePath = relative(dirnameRoutesDir, generatedDir);
-      }
-    }
-
-    let dataFilePath = join(generatedDir, `${pathName}.ts`);
-    let routeFilePath = join(routesDir, `${pathName}.tsx`);
-
-    let replaceImport = `${relativePath}/${pathName}`;
-    const replaceImportCss = `${relativePath}/index.css`;
-
-    if (!pathName.includes("/") && pathName !== "index") {
-      dataFilePath = join(fileLocationGeneratedDir, `index.ts`);
-      routeFilePath = join(fileLocationRoutesDir, `index.tsx`);
-      replaceImport = `${relativePath}/${pathName}/index`;
-    }
-
-    mkdirSync(dirname(dataFilePath), { recursive: true });
-    writeFileSync(dataFilePath, pageExports, "utf8");
-
-    let routeFile = getRouteTemplate();
-
-    routeFile = routeFile.replace("../__generated__/index", replaceImport);
-    routeFile = routeFile.replace(
-      "../__generated__/index.css",
-      replaceImportCss
-    );
-
-    mkdirSync(dirname(routeFilePath), { recursive: true });
-    writeFileSync(routeFilePath, routeFile, "utf8");
-  }
-
-  writeFileSync(join(generatedDir, "index.css"), cssText, "utf8");
   spinner.text = "Downloading fonts and images";
   await Promise.all(assetsToDownload);
 
