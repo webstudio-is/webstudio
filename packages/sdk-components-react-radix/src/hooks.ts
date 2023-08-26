@@ -7,6 +7,7 @@ import { hooksSheet } from "./sheet";
 import { hooksTooltip } from "./tooltip";
 import { hooksAccordion } from "./accordion";
 import { hooksNavigationMenu } from "./navigation-menu";
+import { hooksSelect } from "./select";
 
 export const hooks: Hook[] = [
   hooksCollapsible,
@@ -17,4 +18,5 @@ export const hooks: Hook[] = [
   hooksTooltip,
   hooksAccordion,
   hooksNavigationMenu,
+  hooksSelect,
 ];

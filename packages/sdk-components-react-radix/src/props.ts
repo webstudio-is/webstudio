@@ -46,3 +46,14 @@ export {
   propsMetaNavigationMenuLink as NavigationMenuLink,
   propsMetaNavigationMenuViewport as NavigationMenuViewport,
 } from "./navigation-menu.ws";
+
+export {
+  propsMetaSelect as Select,
+  propsMetaSelectTrigger as SelectTrigger,
+  propsMetaSelectValue as SelectValue,
+  propsMetaSelectViewport as SelectViewport,
+  propsMetaSelectContent as SelectContent,
+  propsMetaSelectItem as SelectItem,
+  propsMetaSelectItemIndicator as SelectItemIndicator,
+  propsMetaSelectItemText as SelectItemText,
+} from "./select.ws";

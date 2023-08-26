@@ -42,6 +42,7 @@ export { BpStarOnIcon } from "./bp-star-on";
 export { BugIcon } from "./bug";
 export { ButtonElementIcon } from "./button-element";
 export { CheckCircleIcon } from "./check-circle";
+export { CheckMarkIcon } from "./check-mark";
 export { CheckboxCheckedFilledIcon } from "./checkbox-checked-filled";
 export { CheckboxCheckedIcon } from "./checkbox-checked";
 export { CheckboxEmptyIcon } from "./checkbox-empty";

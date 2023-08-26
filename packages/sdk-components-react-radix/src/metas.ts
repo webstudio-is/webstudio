@@ -47,3 +47,14 @@ export {
   metaNavigationMenuLink as NavigationMenuLink,
   metaNavigationMenuViewport as NavigationMenuViewport,
 } from "./navigation-menu.ws";
+
+export {
+  metaSelect as Select,
+  metaSelectTrigger as SelectTrigger,
+  metaSelectValue as SelectValue,
+  metaSelectViewport as SelectViewport,
+  metaSelectContent as SelectContent,
+  metaSelectItem as SelectItem,
+  metaSelectItemIndicator as SelectItemIndicator,
+  metaSelectItemText as SelectItemText,
+} from "./select.ws";

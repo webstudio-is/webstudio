@@ -33,3 +33,14 @@ export {
   NavigationMenuLink,
   NavigationMenuViewport,
 } from "./navigation-menu";
+
+export {
+  Select,
+  SelectTrigger,
+  SelectValue,
+  SelectViewport,
+  SelectContent,
+  SelectItem,
+  SelectItemIndicator,
+  SelectItemText,
+} from "./select";
