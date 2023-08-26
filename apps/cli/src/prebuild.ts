@@ -251,9 +251,7 @@ export const prebuild = async () => {
     const fileName =
       pathName === "main" || pathName === "index"
         ? "_index.tsx"
-        : pathName.split("/").length === 1
-        ? `${pathName}._index.tsx`
-        : `${pathName.split("/").join(".")}.tsx`;
+        : `${pathName.split("/").join(".")}._index.tsx`;
 
     let routeFile = getRouteTemplate();
 
