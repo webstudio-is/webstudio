@@ -58,3 +58,8 @@ export {
   metaSelectItemIndicator as SelectItemIndicator,
   metaSelectItemText as SelectItemText,
 } from "./select.ws";
+
+export {
+  metaSwitch as Switch,
+  metaSwitchThumb as SwitchThumb,
+} from "./switch.ws";

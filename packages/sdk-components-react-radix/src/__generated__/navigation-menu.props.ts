@@ -383,7 +383,6 @@ export const propsNavigationMenu: Record<string, PropMeta> = {
   content: { required: false, control: "text", type: "string" },
   contextMenu: { required: false, control: "text", type: "string" },
   datatype: { required: false, control: "text", type: "string" },
-  defaultChecked: { required: false, control: "boolean", type: "boolean" },
   delayDuration: {
     description:
       "The duration from when the pointer enters the trigger until the tooltip gets opened.\n@defaultValue 200",
@@ -869,7 +868,6 @@ export const propsNavigationMenuList: Record<string, PropMeta> = {
   content: { required: false, control: "text", type: "string" },
   contextMenu: { required: false, control: "text", type: "string" },
   datatype: { required: false, control: "text", type: "string" },
-  defaultChecked: { required: false, control: "boolean", type: "boolean" },
   dir: { required: false, control: "text", type: "string" },
   draggable: { required: false, control: "boolean", type: "boolean" },
   hidden: { required: false, control: "boolean", type: "boolean" },
@@ -1335,7 +1333,6 @@ export const propsNavigationMenuViewport: Record<string, PropMeta> = {
   content: { required: false, control: "text", type: "string" },
   contextMenu: { required: false, control: "text", type: "string" },
   datatype: { required: false, control: "text", type: "string" },
-  defaultChecked: { required: false, control: "boolean", type: "boolean" },
   dir: { required: false, control: "text", type: "string" },
   draggable: { required: false, control: "boolean", type: "boolean" },
   hidden: { required: false, control: "boolean", type: "boolean" },
@@ -1801,7 +1798,6 @@ export const propsNavigationMenuContent: Record<string, PropMeta> = {
   content: { required: false, control: "text", type: "string" },
   contextMenu: { required: false, control: "text", type: "string" },
   datatype: { required: false, control: "text", type: "string" },
-  defaultChecked: { required: false, control: "boolean", type: "boolean" },
   dir: { required: false, control: "text", type: "string" },
   disableOutsidePointerEvents: {
     description:
@@ -2274,7 +2270,6 @@ export const propsNavigationMenuItem: Record<string, PropMeta> = {
   content: { required: false, control: "text", type: "string" },
   contextMenu: { required: false, control: "text", type: "string" },
   datatype: { required: false, control: "text", type: "string" },
-  defaultChecked: { required: false, control: "boolean", type: "boolean" },
   dir: { required: false, control: "text", type: "string" },
   draggable: { required: false, control: "boolean", type: "boolean" },
   hidden: { required: false, control: "boolean", type: "boolean" },

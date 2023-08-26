@@ -1,6 +1,6 @@
 import type { PropMeta } from "@webstudio-is/generate-arg-types";
 
-export const propsCollapsible: Record<string, PropMeta> = {
+export const propsSwitch: Record<string, PropMeta> = {
   about: { required: false, control: "text", type: "string" },
   accessKey: { required: false, control: "text", type: "string" },
   "aria-activedescendant": {
@@ -386,6 +386,7 @@ export const propsCollapsible: Record<string, PropMeta> = {
   autoCorrect: { required: false, control: "text", type: "string" },
   autoFocus: { required: false, control: "boolean", type: "boolean" },
   autoSave: { required: false, control: "text", type: "string" },
+  checked: { required: false, control: "boolean", type: "boolean" },
   className: { required: false, control: "text", type: "string" },
   color: { required: false, control: "color", type: "string" },
   content: { required: false, control: "text", type: "string" },
@@ -394,6 +395,12 @@ export const propsCollapsible: Record<string, PropMeta> = {
   dir: { required: false, control: "text", type: "string" },
   disabled: { required: false, control: "boolean", type: "boolean" },
   draggable: { required: false, control: "boolean", type: "boolean" },
+  form: { required: false, control: "text", type: "string" },
+  formAction: { required: false, control: "text", type: "string" },
+  formEncType: { required: false, control: "text", type: "string" },
+  formMethod: { required: false, control: "text", type: "string" },
+  formNoValidate: { required: false, control: "boolean", type: "boolean" },
+  formTarget: { required: false, control: "text", type: "string" },
   hidden: { required: false, control: "boolean", type: "boolean" },
   id: { required: false, control: "text", type: "string" },
   inputMode: {
@@ -426,13 +433,14 @@ export const propsCollapsible: Record<string, PropMeta> = {
   itemScope: { required: false, control: "boolean", type: "boolean" },
   itemType: { required: false, control: "text", type: "string" },
   lang: { required: false, control: "text", type: "string" },
+  name: { required: false, control: "text", type: "string" },
   nonce: { required: false, control: "text", type: "string" },
-  open: { required: false, control: "boolean", type: "boolean" },
   placeholder: { required: false, control: "text", type: "string" },
   prefix: { required: false, control: "text", type: "string" },
   property: { required: false, control: "text", type: "string" },
   radioGroup: { required: false, control: "text", type: "string" },
   rel: { required: false, control: "text", type: "string" },
+  required: { required: false, control: "boolean", type: "boolean" },
   resource: { required: false, control: "text", type: "string" },
   results: { required: false, control: "number", type: "number" },
   rev: { required: false, control: "text", type: "string" },
@@ -458,6 +466,12 @@ export const propsCollapsible: Record<string, PropMeta> = {
     type: "string",
     options: ["yes", "no"],
   },
+  type: {
+    required: false,
+    control: "radio",
+    type: "string",
+    options: ["button", "submit", "reset"],
+  },
   typeof: { required: false, control: "text", type: "string" },
   unselectable: {
     required: false,
@@ -467,8 +481,7 @@ export const propsCollapsible: Record<string, PropMeta> = {
   },
   vocab: { required: false, control: "text", type: "string" },
 };
-export const propsCollapsibleTrigger: Record<string, PropMeta> = {};
-export const propsCollapsibleContent: Record<string, PropMeta> = {
+export const propsSwitchThumb: Record<string, PropMeta> = {
   about: { required: false, control: "text", type: "string" },
   accessKey: { required: false, control: "text", type: "string" },
   "aria-activedescendant": {

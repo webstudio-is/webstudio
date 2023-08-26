@@ -405,7 +405,6 @@ export const propsPopoverContent: Record<string, PropMeta> = {
   content: { required: false, control: "text", type: "string" },
   contextMenu: { required: false, control: "text", type: "string" },
   datatype: { required: false, control: "text", type: "string" },
-  defaultChecked: { required: false, control: "boolean", type: "boolean" },
   dir: { required: false, control: "text", type: "string" },
   draggable: { required: false, control: "boolean", type: "boolean" },
   hidden: { required: false, control: "boolean", type: "boolean" },
