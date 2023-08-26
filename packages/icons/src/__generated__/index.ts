@@ -123,6 +123,7 @@ export * from "./play";
 export * from "./plus";
 export * from "./popover";
 export * from "./radio-checked";
+export * from "./radio-dot";
 export * from "./radio-unchecked";
 export * from "./refresh";
 export * from "./repeat-column";

@@ -123,6 +123,7 @@ export { PlayIcon } from "./play";
 export { PlusIcon } from "./plus";
 export { PopoverIcon } from "./popover";
 export { RadioCheckedIcon } from "./radio-checked";
+export { RadioDotIcon } from "./radio-dot";
 export { RadioUncheckedIcon } from "./radio-unchecked";
 export { RefreshIcon } from "./refresh";
 export { RepeatColumnIcon } from "./repeat-column";
