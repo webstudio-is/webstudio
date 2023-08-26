@@ -265,7 +265,7 @@ const menuItem = (props: {
           {
             type: "instance",
             component: "Box",
-            label: "Content Container",
+            label: "Content",
             styles: [tc.flex(), tc.gap(4), tc.p(props.padding)].flat(),
             children: props.children,
           },
@@ -415,6 +415,7 @@ export const metaNavigationMenuList: WsComponentMeta = {
   icon: ListIcon,
   requiredAncestors: ["NavigationMenu"],
   presetStyle,
+  label: "Menu List",
 };
 
 export const metaNavigationMenuItem: WsComponentMeta = {
@@ -424,6 +425,7 @@ export const metaNavigationMenuItem: WsComponentMeta = {
   requiredAncestors: ["NavigationMenu"],
   presetStyle,
   indexWithinAncestor: "NavigationMenu",
+  label: "Menu Item",
 };
 export const metaNavigationMenuTrigger: WsComponentMeta = {
   category: "hidden",
@@ -433,6 +435,7 @@ export const metaNavigationMenuTrigger: WsComponentMeta = {
   icon: TriggerIcon,
   requiredAncestors: ["NavigationMenuItem"],
   presetStyle,
+  label: "Menu Trigger",
 };
 export const metaNavigationMenuContent: WsComponentMeta = {
   category: "hidden",
@@ -442,6 +445,7 @@ export const metaNavigationMenuContent: WsComponentMeta = {
   requiredAncestors: ["NavigationMenuItem"],
   indexWithinAncestor: "NavigationMenu",
   presetStyle,
+  label: "Menu Content",
 };
 
 export const metaNavigationMenuLink: WsComponentMeta = {
@@ -452,6 +456,7 @@ export const metaNavigationMenuLink: WsComponentMeta = {
   icon: BoxIcon,
   requiredAncestors: ["NavigationMenuContent"],
   presetStyle,
+  label: "Accessible Link Wrapper",
 };
 
 export const metaNavigationMenuViewport: WsComponentMeta = {
@@ -461,6 +466,7 @@ export const metaNavigationMenuViewport: WsComponentMeta = {
   icon: ViewportIcon,
   requiredAncestors: ["NavigationMenu"],
   presetStyle,
+  label: "Menu Viewport",
 };
 
 export const propsMetaNavigationMenu: WsComponentPropsMeta = {

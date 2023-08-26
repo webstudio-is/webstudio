@@ -117,7 +117,7 @@ export const meta: WsComponentMeta = {
                 {
                   type: "instance",
                   component: "Box",
-                  label: "Nav",
+                  label: "Navigation",
                   props: [
                     { name: "tag", type: "string", value: "nav" },
                     { name: "role", type: "string", value: "navigation" },
@@ -178,38 +178,37 @@ export const meta: WsComponentMeta = {
                         { type: "text", value: "The text you can edit" },
                       ],
                     },
-
-                    {
-                      type: "instance",
-                      component: "DialogClose",
-                      label: "Sheet Close",
-                      /**
-                       * absolute right-4 top-4
-                       * rounded-sm opacity-70
-                       * ring-offset-background
-                       * hover:opacity-100 focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2
-                       * flex items-center justify-center h-4 w-4
-                       **/
-                      styles: [
-                        tc.absolute(),
-                        tc.right(4),
-                        tc.top(4),
-                        tc.rounded("sm"),
-                        tc.opacity(70),
-                        tc.flex(),
-                        tc.items("center"),
-                        tc.justify("center"),
-                        tc.h(4),
-                        tc.w(4),
-                        tc.border(0),
-                        tc.bg("transparent"),
-                        tc.outline("none"),
-                        tc.hover(tc.opacity(100)),
-                        tc.focus(tc.ring("ring", 2, "background", 2)),
-                      ].flat(),
-                      children: [{ type: "text", value: "✕" }],
-                    },
                   ],
+                },
+                {
+                  type: "instance",
+                  component: "DialogClose",
+                  label: "Close Button",
+                  /**
+                   * absolute right-4 top-4
+                   * rounded-sm opacity-70
+                   * ring-offset-background
+                   * hover:opacity-100 focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2
+                   * flex items-center justify-center h-4 w-4
+                   **/
+                  styles: [
+                    tc.absolute(),
+                    tc.right(4),
+                    tc.top(4),
+                    tc.rounded("sm"),
+                    tc.opacity(70),
+                    tc.flex(),
+                    tc.items("center"),
+                    tc.justify("center"),
+                    tc.h(4),
+                    tc.w(4),
+                    tc.border(0),
+                    tc.bg("transparent"),
+                    tc.outline("none"),
+                    tc.hover(tc.opacity(100)),
+                    tc.focus(tc.ring("ring", 2, "background", 2)),
+                  ].flat(),
+                  children: [{ type: "text", value: "✕" }],
                 },
               ],
             },

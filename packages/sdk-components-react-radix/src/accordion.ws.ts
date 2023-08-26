@@ -225,6 +225,7 @@ export const metaAccordionItem: WsComponentMeta = {
   requiredAncestors: ["Accordion"],
   indexWithinAncestor: "Accordion",
   presetStyle,
+  label: "Item",
 };
 
 export const metaAccordionHeader: WsComponentMeta = {
@@ -236,6 +237,7 @@ export const metaAccordionHeader: WsComponentMeta = {
   presetStyle: {
     h3: [h3, tc.my(0)].flat(),
   },
+  label: "Item Header",
 };
 
 export const metaAccordionTrigger: WsComponentMeta = {
@@ -263,6 +265,7 @@ export const metaAccordionTrigger: WsComponentMeta = {
       tc.border(0),
     ].flat(),
   },
+  label: "Item Trigger",
 };
 
 export const metaAccordionContent: WsComponentMeta = {
@@ -272,6 +275,7 @@ export const metaAccordionContent: WsComponentMeta = {
   requiredAncestors: ["AccordionItem"],
   detachable: false,
   presetStyle,
+  label: "Item Content",
 };
 
 export const propsMetaAccordion: WsComponentPropsMeta = {
