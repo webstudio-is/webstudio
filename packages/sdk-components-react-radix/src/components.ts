@@ -47,3 +47,4 @@ export {
 
 export { Switch, SwitchThumb } from "./switch";
 export { Checkbox, CheckboxIndicator } from "./checkbox";
+export { RadioGroup, RadioGroupItem, RadioGroupIndicator } from "./radio-group";

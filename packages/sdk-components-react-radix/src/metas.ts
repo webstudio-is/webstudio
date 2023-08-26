@@ -67,3 +67,8 @@ export {
   metaCheckbox as Checkbox,
   metaCheckboxIndicator as CheckboxIndicator,
 } from "./checkbox.ws";
+export {
+  metaRadioGroup as RadioGroup,
+  metaRadioGroupItem as RadioGroupItem,
+  metaRadioGroupIndicator as RadioGroupIndicator,
+} from "./radio-group.ws";

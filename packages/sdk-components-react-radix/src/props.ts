@@ -66,3 +66,8 @@ export {
   propsMetaCheckbox as Checkbox,
   propsMetaCheckboxIndicator as CheckboxIndicator,
 } from "./checkbox.ws";
+export {
+  propsMetaRadioGroup as RadioGroup,
+  propsMetaRadioGroupItem as RadioGroupItem,
+  propsMetaRadioGroupIndicator as RadioGroupIndicator,
+} from "./radio-group.ws";
