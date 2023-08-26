@@ -4,17 +4,17 @@ import * as baseComponents from "@webstudio-is/sdk-components-react";
 import * as baseMetas from "@webstudio-is/sdk-components-react/metas";
 import * as radixComponents from "./components";
 import * as radixMetas from "./metas";
-import { Switch as SwitchPrimitive } from "./switch";
+import { Checkbox as CheckboxPrimitive } from "./checkbox";
 
 export default {
-  title: "Components/Switch",
-  component: SwitchPrimitive,
-} satisfies Meta<typeof SwitchPrimitive>;
+  title: "Components/Checkbox",
+  component: CheckboxPrimitive,
+} satisfies Meta<typeof CheckboxPrimitive>;
 
-export const Switch: StoryObj<typeof SwitchPrimitive> = {
+export const Checkbox: StoryObj<typeof CheckboxPrimitive> = {
   render: (props) =>
     renderComponentTemplate({
-      name: "Switch",
+      name: "Checkbox",
       props: { ...props },
       components: { ...baseComponents, ...radixComponents },
       metas: { ...baseMetas, ...radixMetas },

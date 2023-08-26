@@ -46,3 +46,4 @@ export {
 } from "./select";
 
 export { Switch, SwitchThumb } from "./switch";
+export { Checkbox, CheckboxIndicator } from "./checkbox";
