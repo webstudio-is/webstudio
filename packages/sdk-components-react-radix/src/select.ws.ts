@@ -67,8 +67,7 @@ const createSelectItem = ({
   children: [
     {
       type: "instance",
-      component: "Text",
-      props: [{ name: "tag", type: "string", value: "span" }],
+      component: "SelectItemIndicator",
       // absolute left-2 flex h-3.5 w-3.5 items-center justify-center
       styles: [
         tc.absolute(),
@@ -82,22 +81,16 @@ const createSelectItem = ({
       children: [
         {
           type: "instance",
-          component: "SelectItemIndicator",
-          children: [
+          component: "HtmlEmbed",
+          label: "Indicator Icon",
+          props: [
             {
-              type: "instance",
-              component: "HtmlEmbed",
-              label: "Indicator Icon",
-              props: [
-                {
-                  type: "string",
-                  name: "code",
-                  value: CheckMarkIcon,
-                },
-              ],
-              children: [],
+              type: "string",
+              name: "code",
+              value: CheckMarkIcon,
             },
           ],
+          children: [],
         },
       ],
     },
