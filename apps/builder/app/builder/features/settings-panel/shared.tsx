@@ -87,10 +87,13 @@ export const useLocalValue = <Type,>(
 
   const [_, setRefresh] = useState(0);
 
+  const onSaveRef = useRef(onSave);
+  onSaveRef.current = onSave;
+
   const save = () => {
     if (equal(localValueRef.current, savedValue) === false) {
       // To synchronize with setState immediately followed by save
-      onSave(localValueRef.current);
+      onSaveRef.current(localValueRef.current);
     }
   };
 

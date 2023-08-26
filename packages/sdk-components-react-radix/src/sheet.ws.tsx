@@ -1,106 +1,7 @@
-import {
-  HamburgerMenuIcon,
-  TriggerIcon,
-  ContentIcon,
-  OverlayIcon,
-  HeadingIcon,
-  TextIcon,
-  ButtonElementIcon,
-} from "@webstudio-is/icons/svg";
-import {
-  type PresetStyle,
-  type WsComponentMeta,
-  type WsComponentPropsMeta,
-} from "@webstudio-is/react-sdk";
+import { HamburgerMenuIcon } from "@webstudio-is/icons/svg";
+import type { WsComponentMeta } from "@webstudio-is/react-sdk";
 import * as tc from "./theme/tailwind-classes";
-import {
-  propsSheet,
-  propsSheetContent,
-  propsSheetTrigger,
-  propsSheetOverlay,
-  propsSheetClose,
-  propsSheetTitle,
-  propsSheetDescription,
-} from "./__generated__/sheet.props";
-import { div, nav, button, h2, p } from "@webstudio-is/react-sdk/css-normalize";
-import type { SheetContent } from "./sheet";
-import type { ComponentProps } from "react";
-import { template as buttonTemplate } from "./button.ws";
-
-type ContentTags = NonNullable<ComponentProps<typeof SheetContent>["tag"]>;
-
-const contentPresetStyle = {
-  div,
-  nav,
-} satisfies PresetStyle<ContentTags>;
-
-const presetStyle = {
-  div,
-} satisfies PresetStyle<"div">;
-
-const buttonPresetStyle = {
-  button,
-} satisfies PresetStyle<"button">;
-
-const titlePresetStyle = {
-  h2,
-} satisfies PresetStyle<"h2">;
-
-const descriptionPresetStyle = {
-  p,
-} satisfies PresetStyle<"p">;
-
-// @todo add [data-state] to button and link
-export const metaSheetTrigger: WsComponentMeta = {
-  category: "hidden",
-  type: "container",
-  icon: TriggerIcon,
-  stylable: false,
-  detachable: false,
-};
-
-export const metaSheetContent: WsComponentMeta = {
-  category: "hidden",
-  type: "container",
-  icon: ContentIcon,
-  detachable: false,
-  presetStyle: contentPresetStyle,
-  states: [
-    { selector: "[data-side=top]", label: "Top Side" },
-    { selector: "[data-side=right]", label: "Right Side" },
-    { selector: "[data-side=bottom]", label: "Bottom Side" },
-    { selector: "[data-side=left]", label: "Left Side" },
-  ],
-};
-
-export const metaSheetOverlay: WsComponentMeta = {
-  category: "hidden",
-  type: "container",
-  presetStyle,
-  icon: OverlayIcon,
-  detachable: false,
-};
-
-export const metaSheetTitle: WsComponentMeta = {
-  category: "hidden",
-  type: "container",
-  presetStyle: titlePresetStyle,
-  icon: HeadingIcon,
-};
-
-export const metaSheetDescription: WsComponentMeta = {
-  category: "hidden",
-  type: "container",
-  presetStyle: descriptionPresetStyle,
-  icon: TextIcon,
-};
-
-export const metaSheetClose: WsComponentMeta = {
-  category: "hidden",
-  type: "container",
-  presetStyle: buttonPresetStyle,
-  icon: ButtonElementIcon,
-};
+import { getButtonStyles } from "./theme/styles";
 
 /**
  * Styles source without animations:
@@ -110,7 +11,7 @@ export const metaSheetClose: WsComponentMeta = {
  * MIT License
  * Copyright (c) 2023 shadcn
  **/
-export const metaSheet: WsComponentMeta = {
+export const meta: WsComponentMeta = {
   category: "radix",
   order: 1,
   type: "container",
@@ -119,7 +20,8 @@ export const metaSheet: WsComponentMeta = {
   template: [
     {
       type: "instance",
-      component: "Sheet",
+      component: "Dialog",
+      label: "Sheet",
       dataSources: {
         sheetOpen: { type: "variable", initialValue: false },
       },
@@ -140,32 +42,35 @@ export const metaSheet: WsComponentMeta = {
       children: [
         {
           type: "instance",
-          component: "SheetTrigger",
-          children: buttonTemplate({
-            props: [
-              { name: "variant", type: "string", value: "ghost" },
-              { name: "size", type: "string", value: "icon" },
-            ],
-            children: [
-              {
-                type: "instance",
-                component: "HtmlEmbed",
-                label: "Hamburger Menu Svg",
-                props: [
-                  {
-                    type: "string",
-                    name: "code",
-                    value: HamburgerMenuIcon,
-                  },
-                ],
-                children: [],
-              },
-            ],
-          }),
+          component: "DialogTrigger",
+          label: "Sheet Trigger",
+          children: [
+            {
+              type: "instance",
+              component: "Button",
+              styles: getButtonStyles("ghost", "icon"),
+              children: [
+                {
+                  type: "instance",
+                  component: "HtmlEmbed",
+                  label: "Hamburger Menu Svg",
+                  props: [
+                    {
+                      type: "string",
+                      name: "code",
+                      value: HamburgerMenuIcon,
+                    },
+                  ],
+                  children: [],
+                },
+              ],
+            },
+          ],
         },
         {
           type: "instance",
-          component: "SheetOverlay",
+          component: "DialogOverlay",
+          label: "Sheet Overlay",
           /**
            * fixed inset-0 z-50 bg-background/80 backdrop-blur-sm
            * flex
@@ -184,7 +89,8 @@ export const metaSheet: WsComponentMeta = {
           children: [
             {
               type: "instance",
-              component: "SheetContent",
+              component: "DialogContent",
+              label: "Sheet Content",
               /**
                * fixed w-full z-50
                * grid gap-4 max-w-lg
@@ -202,73 +108,82 @@ export const metaSheet: WsComponentMeta = {
                 tc.p(6),
                 tc.shadow("lg"),
                 tc.relative(),
-                tc.state(
-                  [tc.mr("auto"), tc.maxW("sm"), tc.grow()].flat(),
-                  "[data-side=left]"
-                ),
-                tc.state(
-                  [tc.ml("auto"), tc.maxW("sm"), tc.grow()].flat(),
-                  "[data-side=right]"
-                ),
-                tc.state([tc.mb("auto")].flat(), "[data-side=top]"),
-                tc.state([tc.mt("auto")].flat(), "[data-side=bottom]"),
+                // side=left
+                tc.mr("auto"),
+                tc.maxW("sm"),
+                tc.grow(),
               ].flat(),
               children: [
                 {
                   type: "instance",
                   component: "Box",
-                  label: "Sheet Header",
-                  styles: [tc.flex(), tc.flex("col"), tc.gap(1)].flat(),
+                  label: "Navigation",
+                  props: [
+                    { name: "tag", type: "string", value: "nav" },
+                    { name: "role", type: "string", value: "navigation" },
+                  ],
                   children: [
                     {
                       type: "instance",
-                      component: "SheetTitle",
-                      /**
-                       * text-lg leading-none tracking-tight
-                       **/
-                      styles: [
-                        tc.my(0),
-                        tc.leading("none"),
-                        tc.text("lg"),
-                        tc.tracking("tight"),
-                      ].flat(),
+                      component: "Box",
+                      label: "Sheet Header",
+                      styles: [tc.flex(), tc.flex("col"), tc.gap(1)].flat(),
                       children: [
                         {
-                          type: "text",
-                          value: "Sheet Title",
+                          type: "instance",
+                          component: "DialogTitle",
+                          label: "Sheet Title",
+                          /**
+                           * text-lg leading-none tracking-tight
+                           **/
+                          styles: [
+                            tc.my(0),
+                            tc.leading("none"),
+                            tc.text("lg"),
+                            tc.tracking("tight"),
+                          ].flat(),
+                          children: [
+                            {
+                              type: "text",
+                              value: "Sheet Title",
+                            },
+                          ],
+                        },
+                        {
+                          type: "instance",
+                          component: "DialogDescription",
+                          label: "Sheet Description",
+                          /**
+                           * text-sm text-muted-foreground
+                           **/
+                          styles: [
+                            tc.my(0),
+                            tc.text("sm"),
+                            tc.text("mutedForeground"),
+                          ].flat(),
+                          children: [
+                            {
+                              type: "text",
+                              value: "Sheet description text you can edit",
+                            },
+                          ],
                         },
                       ],
                     },
+
                     {
                       type: "instance",
-                      component: "SheetDescription",
-                      /**
-                       * text-sm text-muted-foreground
-                       **/
-                      styles: [
-                        tc.my(0),
-                        tc.text("sm"),
-                        tc.text("mutedForeground"),
-                      ].flat(),
+                      component: "Text",
                       children: [
-                        {
-                          type: "text",
-                          value: "sheet description text you can edit",
-                        },
+                        { type: "text", value: "The text you can edit" },
                       ],
                     },
                   ],
                 },
-
                 {
                   type: "instance",
-                  component: "Text",
-                  children: [{ type: "text", value: "The text you can edit" }],
-                },
-
-                {
-                  type: "instance",
-                  component: "SheetClose",
+                  component: "DialogClose",
+                  label: "Close Button",
                   /**
                    * absolute right-4 top-4
                    * rounded-sm opacity-70
@@ -302,38 +217,4 @@ export const metaSheet: WsComponentMeta = {
       ],
     },
   ],
-};
-
-export const propsMetaSheet: WsComponentPropsMeta = {
-  props: propsSheet,
-  initialProps: ["open", "modal"],
-};
-
-export const propsMetaSheetTrigger: WsComponentPropsMeta = {
-  props: propsSheetTrigger,
-};
-
-export const propsMetaSheetContent: WsComponentPropsMeta = {
-  props: propsSheetContent,
-  initialProps: ["side", "role", "tag"],
-};
-
-export const propsMetaSheetOverlay: WsComponentPropsMeta = {
-  props: propsSheetOverlay,
-  initialProps: [],
-};
-
-export const propsMetaSheetClose: WsComponentPropsMeta = {
-  props: propsSheetClose,
-  initialProps: [],
-};
-
-export const propsMetaSheetTitle: WsComponentPropsMeta = {
-  props: propsSheetTitle,
-  initialProps: [],
-};
-
-export const propsMetaSheetDescription: WsComponentPropsMeta = {
-  props: propsSheetDescription,
-  initialProps: [],
 };

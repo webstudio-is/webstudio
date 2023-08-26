@@ -5,6 +5,7 @@ import {
   SidebarTabsContent,
   SidebarTabsList,
   SidebarTabsTrigger,
+  Tooltip,
 } from "@webstudio-is/design-system";
 import { useSubscribe, type Publish } from "~/shared/pubsub";
 import { useDragAndDropState } from "~/shared/nano-states";
@@ -13,7 +14,8 @@ import type { TabName } from "./types";
 import { useClientSettings } from "~/builder/shared/client-settings";
 import { Flex } from "@webstudio-is/design-system";
 import { theme } from "@webstudio-is/design-system";
-import { BugIcon } from "@webstudio-is/icons";
+import { BugIcon, HelpIcon } from "@webstudio-is/icons";
+import { HelpPopover } from "./help-popover";
 
 const none = { TabContent: () => null };
 
@@ -26,6 +28,7 @@ export const SidebarLeft = ({ publish }: SidebarLeftProps) => {
   const [activeTab, setActiveTab] = useState<TabName>("none");
   const { TabContent } = activeTab === "none" ? none : panels[activeTab];
   const [clientSettings] = useClientSettings();
+  const [helpIsOpen, setHelpIsOpen] = useState(false);
 
   useSubscribe("clickCanvas", () => {
     setActiveTab("none");
@@ -62,17 +65,41 @@ export const SidebarLeft = ({ publish }: SidebarLeftProps) => {
           ))}
         </SidebarTabsList>
         <Box css={{ borderRight: `1px solid  ${theme.colors.borderMain}` }}>
-          <SidebarTabsTrigger
-            as={"button"}
-            aria-label={"Report bug"}
-            onClick={() => {
-              window.open(
-                "https://github.com/webstudio-is/webstudio/discussions/new?category=q-a&labels=bug&title=[Bug]"
-              );
-            }}
+          <HelpPopover onOpenChange={setHelpIsOpen}>
+            <Tooltip
+              side="right"
+              content="Learn Webstudio or ask for help"
+              delayDuration={0}
+            >
+              <HelpPopover.Trigger asChild>
+                <SidebarTabsTrigger
+                  as="button"
+                  aria-label="Ask for help"
+                  data-state={helpIsOpen ? "active" : undefined}
+                >
+                  <HelpIcon size={22} />
+                </SidebarTabsTrigger>
+              </HelpPopover.Trigger>
+            </Tooltip>
+          </HelpPopover>
+
+          <Tooltip
+            side="right"
+            content="Report a bug on Github"
+            delayDuration={0}
           >
-            <BugIcon size={22} />
-          </SidebarTabsTrigger>
+            <SidebarTabsTrigger
+              as="button"
+              aria-label="Report bug"
+              onClick={() => {
+                window.open(
+                  "https://github.com/webstudio-is/webstudio/discussions/new?category=q-a&labels=bug&title=[Bug]"
+                );
+              }}
+            >
+              <BugIcon size={22} />
+            </SidebarTabsTrigger>
+          </Tooltip>
         </Box>
 
         <SidebarTabsContent

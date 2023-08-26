@@ -1,26 +1,20 @@
 import type { Meta, StoryObj } from "@storybook/react";
 import { renderComponentTemplate } from "@webstudio-is/react-sdk";
-import { Textarea as TextareaPrimitive } from "./textarea";
+import { Select as SelectPrimitive } from "./select";
 import * as baseComponents from "@webstudio-is/sdk-components-react";
 import * as baseMetas from "@webstudio-is/sdk-components-react/metas";
 import * as radixComponents from "./components";
 import * as radixMetas from "./metas";
 
 export default {
-  title: "Components/Textarea",
-  component: TextareaPrimitive,
-  argTypes: {
-    placeholder: {
-      type: "string",
-    },
-  },
-} satisfies Meta<typeof TextareaPrimitive>;
+  title: "Components/Select",
+  component: SelectPrimitive,
+} satisfies Meta<typeof SelectPrimitive>;
 
-export const Textarea: StoryObj<typeof TextareaPrimitive> = {
-  render: (props) =>
+export const Select: StoryObj<typeof SelectPrimitive> = {
+  render: () =>
     renderComponentTemplate({
-      name: "Textarea",
-      props: { ...props },
+      name: "Select",
       components: { ...baseComponents, ...radixComponents },
       metas: { ...baseMetas, ...radixMetas },
     }),

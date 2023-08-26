@@ -217,6 +217,17 @@ export const PropsSectionContainer = ({
         dataSourceVariablesStore.set(dataSourceVariables);
       } else {
         store.createTransaction([propsStore], (props) => {
+          const istanceProps = propsByInstanceId.get(instance.id) ?? [];
+          // Fixing a bug that caused some props to be duplicated on unmount by removing duplicates.
+          // see for details https://github.com/webstudio-is/webstudio-builder/pull/2170
+          const duplicateProps = istanceProps
+            .filter((prop) => prop.id !== update.id)
+            .filter((prop) => prop.name === update.name);
+
+          for (const prop of duplicateProps) {
+            props.delete(prop.id);
+          }
+
           props.set(update.id, update);
         });
       }
