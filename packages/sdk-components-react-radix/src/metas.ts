@@ -63,3 +63,7 @@ export {
   metaSwitch as Switch,
   metaSwitchThumb as SwitchThumb,
 } from "./switch.ws";
+export {
+  metaCheckbox as Checkbox,
+  metaCheckboxIndicator as CheckboxIndicator,
+} from "./checkbox.ws";

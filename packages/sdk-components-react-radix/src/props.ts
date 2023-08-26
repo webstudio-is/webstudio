@@ -62,3 +62,7 @@ export {
   propsMetaSwitch as Switch,
   propsMetaSwitchThumb as SwitchThumb,
 } from "./switch.ws";
+export {
+  propsMetaCheckbox as Checkbox,
+  propsMetaCheckboxIndicator as CheckboxIndicator,
+} from "./checkbox.ws";
