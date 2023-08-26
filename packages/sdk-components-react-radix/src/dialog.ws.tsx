@@ -85,6 +85,7 @@ export const metaDialogClose: WsComponentMeta = {
   type: "container",
   presetStyle: buttonPresetStyle,
   icon: ButtonElementIcon,
+  label: "Close Button",
 };
 
 /**
