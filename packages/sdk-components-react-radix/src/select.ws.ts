@@ -255,6 +255,7 @@ export const metaSelectTrigger: WsComponentMeta = {
 export const metaSelectValue: WsComponentMeta = {
   category: "hidden",
   type: "container",
+  label: "Value",
   icon: FormTextFieldIcon,
   detachable: false,
   presetStyle: {
@@ -289,6 +290,7 @@ export const metaSelectItem: WsComponentMeta = {
 export const metaSelectItemIndicator: WsComponentMeta = {
   category: "hidden",
   type: "container",
+  label: "Indicator",
   icon: CheckMarkIcon,
   detachable: false,
   requiredAncestors: ["SelectItem"],
@@ -300,6 +302,7 @@ export const metaSelectItemIndicator: WsComponentMeta = {
 export const metaSelectItemText: WsComponentMeta = {
   category: "hidden",
   type: "container",
+  label: "Item Text",
   icon: TextIcon,
   detachable: false,
   requiredAncestors: ["SelectItem"],
