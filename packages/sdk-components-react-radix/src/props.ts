@@ -57,3 +57,8 @@ export {
   propsMetaSelectItemIndicator as SelectItemIndicator,
   propsMetaSelectItemText as SelectItemText,
 } from "./select.ws";
+
+export {
+  propsMetaSwitch as Switch,
+  propsMetaSwitchThumb as SwitchThumb,
+} from "./switch.ws";

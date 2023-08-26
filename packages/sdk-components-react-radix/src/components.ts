@@ -44,3 +44,5 @@ export {
   SelectItemIndicator,
   SelectItemText,
 } from "./select";
+
+export { Switch, SwitchThumb } from "./switch";

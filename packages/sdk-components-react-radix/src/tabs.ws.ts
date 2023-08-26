@@ -12,6 +12,7 @@ import type {
 } from "@webstudio-is/react-sdk";
 import { button, div } from "@webstudio-is/react-sdk/css-normalize";
 import * as tc from "./theme/tailwind-classes";
+import { buttonReset } from "./theme/styles";
 import {
   propsTabs,
   propsTabsList,
@@ -155,22 +156,7 @@ export const metaTabsTrigger: WsComponentMeta = {
   indexWithinAncestor: "Tabs",
   label: "Tab Trigger",
   presetStyle: {
-    button: [
-      button,
-      {
-        property: "backgroundColor",
-        value: { type: "keyword", value: "transparent" },
-      } as const,
-      {
-        property: "backgroundImage",
-        value: { type: "keyword", value: "none" },
-      } as const,
-      {
-        property: "cursor",
-        value: { type: "keyword", value: "pointer" },
-      } as const,
-      tc.border(0),
-    ].flat(),
+    button: [button, buttonReset].flat(),
   },
 };
 

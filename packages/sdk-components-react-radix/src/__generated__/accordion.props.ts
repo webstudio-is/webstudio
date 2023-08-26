@@ -391,7 +391,6 @@ export const propsAccordion: Record<string, PropMeta> = {
   content: { required: false, control: "text", type: "string" },
   contextMenu: { required: false, control: "text", type: "string" },
   datatype: { required: false, control: "text", type: "string" },
-  defaultChecked: { required: false, control: "boolean", type: "boolean" },
   dir: {
     description: "The language read direction.",
     required: false,
@@ -879,7 +878,6 @@ export const propsAccordionItem: Record<string, PropMeta> = {
   content: { required: false, control: "text", type: "string" },
   contextMenu: { required: false, control: "text", type: "string" },
   datatype: { required: false, control: "text", type: "string" },
-  defaultChecked: { required: false, control: "boolean", type: "boolean" },
   dir: { required: false, control: "text", type: "string" },
   disabled: {
     description:
@@ -1359,7 +1357,6 @@ export const propsAccordionHeader: Record<string, PropMeta> = {
   content: { required: false, control: "text", type: "string" },
   contextMenu: { required: false, control: "text", type: "string" },
   datatype: { required: false, control: "text", type: "string" },
-  defaultChecked: { required: false, control: "boolean", type: "boolean" },
   dir: { required: false, control: "text", type: "string" },
   draggable: { required: false, control: "boolean", type: "boolean" },
   hidden: { required: false, control: "boolean", type: "boolean" },
@@ -1825,7 +1822,6 @@ export const propsAccordionTrigger: Record<string, PropMeta> = {
   content: { required: false, control: "text", type: "string" },
   contextMenu: { required: false, control: "text", type: "string" },
   datatype: { required: false, control: "text", type: "string" },
-  defaultChecked: { required: false, control: "boolean", type: "boolean" },
   dir: { required: false, control: "text", type: "string" },
   disabled: { required: false, control: "boolean", type: "boolean" },
   draggable: { required: false, control: "boolean", type: "boolean" },
@@ -2305,7 +2301,6 @@ export const propsAccordionContent: Record<string, PropMeta> = {
   content: { required: false, control: "text", type: "string" },
   contextMenu: { required: false, control: "text", type: "string" },
   datatype: { required: false, control: "text", type: "string" },
-  defaultChecked: { required: false, control: "boolean", type: "boolean" },
   dir: { required: false, control: "text", type: "string" },
   draggable: { required: false, control: "boolean", type: "boolean" },
   hidden: { required: false, control: "boolean", type: "boolean" },

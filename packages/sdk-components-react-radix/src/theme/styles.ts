@@ -61,3 +61,20 @@ export const getButtonStyles = (
 
   return [...styles, ...variantStyles, ...sizeStyles];
 };
+
+export const buttonReset: EmbedTemplateStyleDecl[] = [
+  {
+    property: "backgroundColor",
+    value: { type: "keyword", value: "transparent" },
+  } as const,
+  {
+    property: "backgroundImage",
+    value: { type: "keyword", value: "none" },
+  } as const,
+  {
+    property: "cursor",
+    value: { type: "keyword", value: "pointer" },
+  } as const,
+  tc.border(0),
+  tc.p(0),
+].flat();

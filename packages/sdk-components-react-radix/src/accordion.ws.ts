@@ -15,6 +15,7 @@ import type {
 } from "@webstudio-is/react-sdk";
 import { div, h3, button } from "@webstudio-is/react-sdk/css-normalize";
 import * as tc from "./theme/tailwind-classes";
+import { buttonReset } from "./theme/styles";
 import {
   propsAccordion,
   propsAccordionItem,
@@ -247,23 +248,7 @@ export const metaAccordionTrigger: WsComponentMeta = {
   requiredAncestors: ["AccordionHeader"],
   detachable: false,
   presetStyle: {
-    button: [
-      button,
-      {
-        property: "backgroundColor",
-        value: { type: "keyword", value: "transparent" },
-      } as const,
-      {
-        property: "backgroundImage",
-        value: { type: "keyword", value: "none" },
-      } as const,
-      {
-        property: "cursor",
-        value: { type: "keyword", value: "pointer" },
-      } as const,
-      tc.px(0),
-      tc.border(0),
-    ].flat(),
+    button: [button, buttonReset].flat(),
   },
   label: "Item Trigger",
 };
