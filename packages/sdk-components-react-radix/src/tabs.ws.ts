@@ -153,6 +153,7 @@ export const metaTabsTrigger: WsComponentMeta = {
   requiredAncestors: ["TabsList"],
   invalidAncestors: ["TabsTrigger"],
   indexWithinAncestor: "Tabs",
+  label: "Tab Trigger",
   presetStyle: {
     button: [
       button,
@@ -180,6 +181,7 @@ export const metaTabsContent: WsComponentMeta = {
   requiredAncestors: ["Tabs"],
   indexWithinAncestor: "Tabs",
   presetStyle,
+  label: "Tab Content",
 };
 
 export const propsMetaTabs: WsComponentPropsMeta = {
