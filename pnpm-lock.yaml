@@ -964,9 +964,6 @@ importers:
 
   packages/html-data:
     devDependencies:
-      '@webstudio-is/jest-config':
-        specifier: workspace:^
-        version: link:../jest-config
       '@webstudio-is/tsconfig':
         specifier: workspace:^
         version: link:../tsconfig
