@@ -22,6 +22,7 @@ export const BooleanControl = ({
           ? `1fr max-content max-content`
           : `1fr max-content`,
         minHeight: theme.spacing[13],
+        justifyItems: "start",
       }}
       align="center"
       gap="2"

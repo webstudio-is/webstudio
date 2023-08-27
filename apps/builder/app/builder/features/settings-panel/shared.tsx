@@ -103,34 +103,7 @@ export const Label = ({
   return (
     <Tooltip
       open={isOpen}
-      // prevent closing tooltip on content click
-      onPointerDown={(event) => event.preventDefault()}
-      triggerProps={{
-        onPointerLeave: () => {
-          setIsOpen(false);
-        },
-        ...(openOnClick === false
-          ? {
-              onPointerEnter: () => {
-                setIsOpen(true);
-              },
-              onFocus: () => {
-                setIsOpen(true);
-              },
-              onBlur: () => {
-                setIsOpen(true);
-              },
-            }
-          : {
-              onClick: (event) => {
-                if (event.altKey) {
-                  event.preventDefault();
-                  return;
-                }
-                setIsOpen(!isOpen);
-              },
-            }),
-      }}
+      onOpenChange={setIsOpen}
       content={
         <Flex direction="column" gap="2" css={{ maxWidth: theme.spacing[28] }}>
           <Text variant="titles">{children}</Text>
@@ -138,11 +111,9 @@ export const Label = ({
         </Flex>
       }
     >
-      <Box>
-        <BaseLabel truncate htmlFor={htmlFor} {...rest}>
-          {children}
-        </BaseLabel>
-      </Box>
+      <BaseLabel truncate htmlFor={htmlFor} {...rest}>
+        {children}
+      </BaseLabel>
     </Tooltip>
   );
 };
@@ -202,10 +173,18 @@ type LayoutProps = {
 
 export const VerticalLayout = ({ label, onDelete, children }: LayoutProps) => (
   <Box>
-    <Flex align="center" gap="1" justify="between">
+    <Grid
+      css={{
+        gridTemplateColumns: onDelete ? `1fr max-content` : `1fr`,
+        justifyItems: "start",
+      }}
+      align="center"
+      gap="1"
+      justify="between"
+    >
       {label}
       {onDelete && <RemovePropButton onClick={onDelete} />}
-    </Flex>
+    </Grid>
     {children}
   </Box>
 );
@@ -221,6 +200,7 @@ export const HorizontalLayout = ({
         ? `${theme.spacing[19]} 1fr max-content`
         : `${theme.spacing[19]} 1fr`,
       minHeight: theme.spacing[13],
+      justifyItems: "start",
     }}
     align="center"
     gap="2"
