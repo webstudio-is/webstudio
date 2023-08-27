@@ -178,6 +178,33 @@ const navItemsList = (props: {
   },
 ];
 
+const menuItemLink = (props: {
+  title: string;
+}): NonNullable<WsComponentMeta["template"]> => [
+  {
+    type: "instance",
+    component: "NavigationMenuItem",
+    children: [
+      {
+        type: "instance",
+        component: "NavigationMenuLink",
+        children: [
+          {
+            type: "instance",
+            component: "Link",
+            styles: [
+              getButtonStyles("ghost", "sm"),
+              tc.noUnderline(),
+              tc.text("current"),
+            ].flat(),
+            children: [{ type: "text", value: props.title }],
+          },
+        ],
+      },
+    ],
+  },
+];
+
 const menuItem = (props: {
   title: string;
   children: NonNullable<WsComponentMeta["template"]>;
@@ -354,6 +381,7 @@ export const metaNavigationMenu: WsComponentMeta = {
                 ...navItemsList({ count: 3, offset: 6 }),
               ],
             }),
+            ...menuItemLink({ title: "Standalone" }),
           ],
         },
 
@@ -454,7 +482,10 @@ export const metaNavigationMenuLink: WsComponentMeta = {
   type: "container",
   stylable: false,
   icon: BoxIcon,
-  requiredAncestors: ["NavigationMenuContent"],
+  // https://github.com/webstudio-is/webstudio-builder/issues/2193
+  // requiredAncestors: ["NavigationMenuContent", "NavigationMenuItem"],
+  // Temporary restrict to NavigationMenu
+  requiredAncestors: ["NavigationMenu"],
   presetStyle,
   label: "Accessible Link Wrapper",
 };
