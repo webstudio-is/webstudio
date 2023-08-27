@@ -963,10 +963,6 @@ importers:
         version: 5.1.6
 
   packages/html-data:
-    dependencies:
-      zod:
-        specifier: ^3.19.1
-        version: 3.21.4
     devDependencies:
       '@webstudio-is/jest-config':
         specifier: workspace:^
