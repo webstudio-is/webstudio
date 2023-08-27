@@ -18,6 +18,8 @@ export const meta: WsComponentMeta = {
   category: "media",
   type: "container",
   label: "Vimeo",
+  description:
+    "Add a video to your page that is hosted on Vimeo. Paste a Vimeo URL and configure the video in the Settings tab.",
   order: 1,
   icon: VimeoIcon,
   states: defaultStates,

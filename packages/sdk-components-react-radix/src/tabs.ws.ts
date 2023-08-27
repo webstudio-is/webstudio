@@ -72,6 +72,8 @@ export const metaTabs: WsComponentMeta = {
   type: "container",
   icon: TabsIcon,
   presetStyle,
+  description:
+    "A set of panels with content that are displayed one at a time. Duplicate both a tab trigger and tab content to add more tabs. Triggers and content are connected according to their order in the Navigator.",
   template: [
     {
       type: "instance",

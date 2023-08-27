@@ -306,6 +306,7 @@ export const metaNavigationMenu: WsComponentMeta = {
   category: "radix",
   order: 2,
   type: "container",
+  description: "A collection of links for navigating websites.",
   icon: NavigationMenuIcon,
   presetStyle,
 

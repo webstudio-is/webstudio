@@ -24,6 +24,8 @@ export const meta: WsComponentMeta = {
   invalidAncestors: ["Button"],
   type: "control",
   label: "Checkbox",
+  description:
+    "Use within a form to allow your users to toggle between checked and not checked. Group checkboxes by matching their “Name” properties. Unlike radios, any number of checkboxes in a group can be checked.",
   icon: CheckboxCheckedIcon,
   presetStyle,
   order: 6,
