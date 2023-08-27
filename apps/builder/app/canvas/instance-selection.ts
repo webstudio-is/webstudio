@@ -18,7 +18,7 @@ declare module "~/shared/pubsub" {
 export const subscribeInstanceSelection = () => {
   let pointerDownElement: undefined | Element = undefined;
   let lastPointerUpTime = 0;
-  let clickCount = 0;
+  let clickCount = 1;
 
   const handlePointerDown = (event: PointerEvent) => {
     pointerDownElement = event.target as Element;
