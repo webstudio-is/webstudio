@@ -30,7 +30,6 @@ export const addDescriptions = (
   }
 
   Object.entries(argTypes).forEach(([propName, meta]) => {
-    // if (typeof meta.description !== "string") {
     const description = getDescription(
       componenName,
       propName,
@@ -41,7 +40,6 @@ export const addDescriptions = (
     if (typeof description === "string") {
       argTypes[propName].description = description;
     }
-    // }
   });
 };
 
