@@ -113,10 +113,7 @@ export const hooksNavigationMenu: Hook = {
           `${namespace}:NavigationMenuItem`
         );
 
-        if (menuItem === undefined) {
-          return;
-        }
-        if (menu === undefined) {
+        if (menuItem === undefined || menu === undefined) {
           return;
         }
 
