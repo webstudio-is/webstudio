@@ -17,9 +17,7 @@
     "@webstudio-is/jest-config": "workspace:^",
     "@webstudio-is/tsconfig": "workspace:^"
   },
-  "peerDependencies": {
-    "zod": "^3.19.1"
-  },
+  "peerDependencies": {},
   "exports": {
     "source": "./src/index.ts",
     "types": "./lib/types/index.d.ts",
