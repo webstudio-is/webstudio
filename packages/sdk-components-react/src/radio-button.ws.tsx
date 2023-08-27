@@ -24,6 +24,8 @@ export const meta: WsComponentMeta = {
   invalidAncestors: ["Button"],
   type: "control",
   label: "Radio",
+  description:
+    "Use within a form to allow your users to select a single option from a set of mutually exclusive choices. Group multiple radios by matching their “Name” properties.",
   icon: RadioCheckedIcon,
   presetStyle,
   order: 5,

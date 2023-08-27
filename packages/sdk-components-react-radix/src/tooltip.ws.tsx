@@ -48,6 +48,8 @@ export const metaTooltip: WsComponentMeta = {
   type: "container",
   icon: TooltipIcon,
   stylable: false,
+  description:
+    "Displays content that is related to the trigger, when the trigger is hovered with the mouse or focused with the keyboard. You are reading an example of a tooltip right now.",
   template: [
     {
       type: "instance",

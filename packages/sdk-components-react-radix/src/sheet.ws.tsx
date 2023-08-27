@@ -17,6 +17,8 @@ export const meta: WsComponentMeta = {
   type: "container",
   icon: HamburgerMenuIcon,
   stylable: false,
+  description:
+    "Displays content in a menu that slides out from the side of the screen, triggered by a button. Use this component for a typical mobile hamburger menu.",
   template: [
     {
       type: "instance",

@@ -39,6 +39,8 @@ export const meta: WsComponentMeta = {
   category: "general",
   type: "container",
   label: "Code Text",
+  description:
+    "Use this component when you want to display code as text on the page.",
   icon: CodeTextIcon,
   invalidAncestors: ["CodeText"],
   states: defaultStates,

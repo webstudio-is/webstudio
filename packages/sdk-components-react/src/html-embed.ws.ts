@@ -9,6 +9,7 @@ export const meta: WsComponentMeta = {
   category: "general",
   type: "embed",
   label: "HTML Embed",
+  description: "Used to add HTML code to the page, such as an SVG or script.",
   icon: EmbedIcon,
   stylable: false,
   order: 7,

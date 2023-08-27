@@ -18,6 +18,7 @@ export const meta: WsComponentMeta = {
   type: "container",
   requiredAncestors: ["List"],
   label: "List Item",
+  description: "Adds a new item to an existing list.",
   icon: ListItemIcon,
   states: defaultStates,
   presetStyle,
