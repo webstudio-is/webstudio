@@ -15,6 +15,7 @@
   "dependencies": {
     "fast-glob": "^3.2.12",
     "react-docgen-typescript": "^2.2.2",
+    "@webstudio-is/html-data": "workspace:^",
     "zod": "^3.21.4"
   },
   "devDependencies": {

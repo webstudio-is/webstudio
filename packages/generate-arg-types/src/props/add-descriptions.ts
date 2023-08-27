@@ -1,11 +1,11 @@
 import {
   domAttributesToReact,
   reactPropsToDomAttributes,
-} from "./dom-attributes-react-mappings";
+} from "@webstudio-is/html-data";
 import {
   htmlPropsDescriptions,
   overridePropsDescriptions,
-} from "./descriptions";
+} from "@webstudio-is/html-data";
 import { propsToArgTypes } from "../arg-types";
 
 const ignoreComponents = new Set(["Embed"]);
@@ -15,10 +15,10 @@ const ignoreComponents = new Set(["Embed"]);
  *
  * There are a number of description sources. Below is a list sorted by most specific to less specific.
  *
- * 1. Custom descriptions located in the component's package src/props-descriptions.ts module.
- * 2. Shared overridePropsDescriptions located in this package's ./props/descriptions.ts module.
+ * 1. Custom descriptions located in the component's package @webstudio-is/html-data/src/props-descriptions.ts module.
+ * 2. Shared overridePropsDescriptions located in this package's @webstudio-is/html-data module.
  * 3. Component's meta props descriptions (extracted from inline TypeScript docs).
- * 3. Generic htmlPropsDescriptions located in this package's ./props/descriptions.ts module.
+ * 4. Generic htmlPropsDescriptions located in this package's @webstudio-is/html-data module.
  */
 export const addDescriptions = (
   componenName: string,

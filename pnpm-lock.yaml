@@ -936,6 +936,9 @@ importers:
 
   packages/generate-arg-types:
     dependencies:
+      '@webstudio-is/html-data':
+        specifier: workspace:^
+        version: link:../html-data
       fast-glob:
         specifier: ^3.2.12
         version: 3.2.12
@@ -958,6 +961,61 @@ importers:
       typescript:
         specifier: 5.1.6
         version: 5.1.6
+
+  packages/html-data:
+    dependencies:
+      colord:
+        specifier: ^2.9.3
+        version: 2.9.3
+      css-tree:
+        specifier: ^2.3.1
+        version: 2.3.1(patch_hash=epgcmebti7rfrc2ej4odb3t4jy)
+      hyphenate-style-name:
+        specifier: ^1.0.4
+        version: 1.0.4
+      openai:
+        specifier: ^3.2.1
+        version: 3.2.1
+      warn-once:
+        specifier: ^0.1.1
+        version: 0.1.1
+    devDependencies:
+      '@types/css-tree':
+        specifier: ^2.3.1
+        version: 2.3.1(patch_hash=ac22lciodhaj6xmoeignv36gyq)
+      '@webstudio-is/jest-config':
+        specifier: workspace:^
+        version: link:../jest-config
+      '@webstudio-is/scripts':
+        specifier: workspace:^
+        version: link:../scripts
+      '@webstudio-is/tsconfig':
+        specifier: workspace:^
+        version: link:../tsconfig
+      camelcase:
+        specifier: ^7.0.1
+        version: 7.0.1
+      html-tags:
+        specifier: ^3.3.1
+        version: 3.3.1
+      jest:
+        specifier: ^29.6.2
+        version: 29.6.2(@types/node@18.13.0)
+      mdn-data:
+        specifier: 2.0.32
+        version: 2.0.32
+      tsx:
+        specifier: ^3.12.6
+        version: 3.12.6
+      type-fest:
+        specifier: ^4.2.0
+        version: 4.2.0
+      typescript:
+        specifier: 5.1.6
+        version: 5.1.6
+      zod:
+        specifier: ^3.21.4
+        version: 3.21.4
 
   packages/http-client:
     devDependencies:
