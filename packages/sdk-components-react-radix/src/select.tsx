@@ -37,9 +37,14 @@ export const SelectTrigger: ForwardRefExoticComponent<
   ComponentPropsWithRef<typeof Trigger>
 > = Trigger;
 
-export const SelectValue: ForwardRefExoticComponent<
-  ComponentPropsWithRef<typeof Value>
-> = Value;
+export const SelectValue = forwardRef<
+  HTMLDivElement,
+  Omit<ComponentPropsWithoutRef<typeof Value>, "placeholder"> & {
+    placeholder?: string;
+  }
+>((props, ref) => {
+  return <Value ref={ref} {...props} />;
+});
 
 export const SelectContent = forwardRef<
   HTMLDivElement,
