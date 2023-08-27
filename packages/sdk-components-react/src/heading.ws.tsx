@@ -26,6 +26,7 @@ export const meta: WsComponentMeta = {
   type: "container",
   label: "Heading",
   icon: HeadingIcon,
+  invalidAncestors: ["Heading"],
   states: defaultStates,
   presetStyle,
   template: [

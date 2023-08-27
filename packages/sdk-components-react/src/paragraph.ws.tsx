@@ -18,6 +18,7 @@ export const meta: WsComponentMeta = {
   type: "container",
   label: "Paragraph",
   icon: TextAlignLeftIcon,
+  invalidAncestors: ["Paragraph"],
   states: defaultStates,
   presetStyle,
   template: [

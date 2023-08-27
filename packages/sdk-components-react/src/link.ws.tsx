@@ -28,6 +28,7 @@ export const meta: WsComponentMeta = {
   type: "container",
   label: "Link",
   icon: LinkIcon,
+  invalidAncestors: ["Link"],
   presetStyle,
   order: 1,
   states: [

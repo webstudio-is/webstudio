@@ -142,6 +142,7 @@ export const metaRadioGroup: WsComponentMeta = {
 export const metaRadioGroupItem: WsComponentMeta = {
   category: "hidden",
   type: "container",
+  requiredAncestors: ["RadioGroup"],
   icon: ItemIcon,
   states: defaultStates,
   presetStyle: {
@@ -152,6 +153,7 @@ export const metaRadioGroupItem: WsComponentMeta = {
 export const metaRadioGroupIndicator: WsComponentMeta = {
   category: "hidden",
   type: "container",
+  detachable: false,
   icon: TriggerIcon,
   states: defaultStates,
   presetStyle: {

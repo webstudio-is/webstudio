@@ -114,6 +114,7 @@ export const metaSwitch: WsComponentMeta = {
 export const metaSwitchThumb: WsComponentMeta = {
   category: "hidden",
   type: "container",
+  detachable: false,
   icon: TriggerIcon,
   states: [
     ...defaultStates,
