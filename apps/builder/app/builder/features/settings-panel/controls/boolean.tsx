@@ -22,11 +22,14 @@ export const BooleanControl = ({
           ? `1fr max-content max-content`
           : `1fr max-content`,
         minHeight: theme.spacing[13],
+        justifyItems: "start",
       }}
       align="center"
       gap="2"
     >
-      <Label htmlFor={id}>{getLabel(meta, propName)}</Label>
+      <Label htmlFor={id} description={meta.description}>
+        {getLabel(meta, propName)}
+      </Label>
       <Switch
         id={id}
         checked={prop?.value ?? false}

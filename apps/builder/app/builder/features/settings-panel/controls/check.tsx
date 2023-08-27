@@ -40,7 +40,14 @@ export const CheckControl = ({
   const id = useId();
 
   return (
-    <VerticalLayout label={getLabel(meta, propName)} onDelete={onDelete}>
+    <VerticalLayout
+      label={
+        <Label htmlFor={`${id}:${options[0]}`} description={meta.description}>
+          {getLabel(meta, propName)}
+        </Label>
+      }
+      onDelete={onDelete}
+    >
       <Box css={{ paddingTop: theme.spacing[2] }}>
         {options.map((option) => (
           <CheckboxAndLabel key={option}>

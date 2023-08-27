@@ -18,6 +18,7 @@ import {
   Box,
   Flex,
   Grid,
+  Text,
   theme,
   type CSS,
 } from "@webstudio-is/design-system";
@@ -63,7 +64,7 @@ export const RemovePropButton = (props: { onClick: () => void }) => (
   <SmallIconButton icon={<SubtractIcon />} variant="destructive" {...props} />
 );
 
-export const Label = ({
+const SimpleLabel = ({
   children,
   ...rest
 }: ComponentPropsWithoutRef<typeof BaseLabel> & { children: string }) => {
@@ -77,6 +78,44 @@ export const Label = ({
   );
 
   return truncated ? <Tooltip content={children}>{label}</Tooltip> : label;
+};
+
+type LabelProps = ComponentPropsWithoutRef<typeof BaseLabel> & {
+  htmlFor?: string;
+  children: string;
+  description?: string;
+  openOnClick?: boolean;
+};
+
+export const Label = ({
+  htmlFor,
+  children,
+  description,
+  openOnClick = false,
+  ...rest
+}: LabelProps) => {
+  const [isOpen, setIsOpen] = useState(false);
+
+  if (description == null) {
+    return <SimpleLabel htmlFor={htmlFor}>{children}</SimpleLabel>;
+  }
+
+  return (
+    <Tooltip
+      open={isOpen}
+      onOpenChange={setIsOpen}
+      content={
+        <Flex direction="column" gap="2" css={{ maxWidth: theme.spacing[28] }}>
+          <Text variant="titles">{children}</Text>
+          <Text>{description}</Text>
+        </Flex>
+      }
+    >
+      <BaseLabel truncate htmlFor={htmlFor} {...rest}>
+        {children}
+      </BaseLabel>
+    </Tooltip>
+  );
 };
 
 export const useLocalValue = <Type,>(
@@ -127,30 +166,31 @@ export const useLocalValue = <Type,>(
 };
 
 type LayoutProps = {
-  label: string;
-  id?: string;
+  label: ReturnType<typeof Label>;
   onDelete?: () => void;
   children: ReactNode;
 };
 
-export const VerticalLayout = ({
-  label,
-  id,
-  onDelete,
-  children,
-}: LayoutProps) => (
+export const VerticalLayout = ({ label, onDelete, children }: LayoutProps) => (
   <Box>
-    <Flex align="center" gap="1" justify="between">
-      <Label htmlFor={id}>{label}</Label>
+    <Grid
+      css={{
+        gridTemplateColumns: onDelete ? `1fr max-content` : `1fr`,
+        justifyItems: "start",
+      }}
+      align="center"
+      gap="1"
+      justify="between"
+    >
+      {label}
       {onDelete && <RemovePropButton onClick={onDelete} />}
-    </Flex>
+    </Grid>
     {children}
   </Box>
 );
 
 export const HorizontalLayout = ({
   label,
-  id,
   onDelete,
   children,
 }: LayoutProps) => (
@@ -160,11 +200,12 @@ export const HorizontalLayout = ({
         ? `${theme.spacing[19]} 1fr max-content`
         : `${theme.spacing[19]} 1fr`,
       minHeight: theme.spacing[13],
+      justifyItems: "start",
     }}
     align="center"
     gap="2"
   >
-    <Label htmlFor={id}>{label}</Label>
+    {label}
     {children}
     {onDelete && <RemovePropButton onClick={onDelete} />}
   </Grid>
@@ -172,21 +213,20 @@ export const HorizontalLayout = ({
 
 export const ResponsiveLayout = ({
   label,
-  id,
   onDelete,
   children,
 }: LayoutProps) => {
   // more than 9 characters in label trigger ellipsis
   // might not cover all cases though
-  if (label.length <= 8) {
+  if (label.props.children.length <= 8) {
     return (
-      <HorizontalLayout label={label} id={id} onDelete={onDelete}>
+      <HorizontalLayout label={label} onDelete={onDelete}>
         {children}
       </HorizontalLayout>
     );
   }
   return (
-    <VerticalLayout label={label} id={id} onDelete={onDelete}>
+    <VerticalLayout label={label} onDelete={onDelete}>
       {children}
     </VerticalLayout>
   );

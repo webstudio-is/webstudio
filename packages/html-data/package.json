@@ -1,0 +1,36 @@
+{
+  "name": "@webstudio-is/html-data",
+  "version": "0.88.0",
+  "description": "HTML Data",
+  "author": "Webstudio <github@webstudio.is>",
+  "homepage": "https://webstudio.is",
+  "type": "module",
+  "scripts": {
+    "typecheck": "tsc",
+    "checks": "pnpm typecheck",
+    "dev": "build-package --watch",
+    "build": "build-package",
+    "dts": "tsc --project tsconfig.dts.json",
+    "test": "NODE_OPTIONS=--experimental-vm-modules jest"
+  },
+  "devDependencies": {
+    "@webstudio-is/scripts": "workspace:^",
+    "@webstudio-is/tsconfig": "workspace:^"
+  },
+  "peerDependencies": {},
+  "exports": {
+    "source": "./src/index.ts",
+    "types": "./lib/types/index.d.ts",
+    "import": "./lib/index.js",
+    "require": "./lib/cjs/index.js"
+  },
+  "files": [
+    "lib/*",
+    "src/*",
+    "!*.test.*"
+  ],
+  "license": "AGPL-3.0-or-later",
+  "private": false,
+  "sideEffects": false,
+  "dependencies": {}
+}

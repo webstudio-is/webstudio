@@ -5,6 +5,7 @@ import {
   useLocalValue,
   VerticalLayout,
   ResponsiveLayout,
+  Label,
 } from "../shared";
 import { useState, type ComponentProps } from "react";
 
@@ -113,6 +114,7 @@ export const TextControl = ({
 
   const input = (
     <UniversalInput
+      id={id}
       value={localValue.value}
       defaultRows={meta.rows}
       onChange={localValue.set}
@@ -123,14 +125,28 @@ export const TextControl = ({
 
   if (isTwoColumnLayout) {
     return (
-      <ResponsiveLayout label={label} id={id} onDelete={onDelete}>
+      <ResponsiveLayout
+        label={
+          <Label htmlFor={id} description={meta.description}>
+            {label}
+          </Label>
+        }
+        onDelete={onDelete}
+      >
         <Flex>{input}</Flex>
       </ResponsiveLayout>
     );
   }
 
   return (
-    <VerticalLayout label={label} id={id} onDelete={onDelete}>
+    <VerticalLayout
+      label={
+        <Label htmlFor={id} description={meta.description}>
+          {label}
+        </Label>
+      }
+      onDelete={onDelete}
+    >
       <Flex css={{ py: theme.spacing[2] }}>{input}</Flex>
     </VerticalLayout>
   );
