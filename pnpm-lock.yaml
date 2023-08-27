@@ -964,6 +964,9 @@ importers:
 
   packages/html-data:
     devDependencies:
+      '@webstudio-is/scripts':
+        specifier: workspace:^
+        version: link:../scripts
       '@webstudio-is/tsconfig':
         specifier: workspace:^
         version: link:../tsconfig
