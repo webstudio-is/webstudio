@@ -134,6 +134,7 @@ export const metaCheckbox: WsComponentMeta = {
 export const metaCheckboxIndicator: WsComponentMeta = {
   category: "hidden",
   type: "container",
+  detachable: false,
   icon: TriggerIcon,
   states: defaultStates,
   presetStyle: {

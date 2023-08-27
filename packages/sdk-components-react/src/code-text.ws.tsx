@@ -40,6 +40,7 @@ export const meta: WsComponentMeta = {
   type: "container",
   label: "Code Text",
   icon: CodeTextIcon,
+  invalidAncestors: ["CodeText"],
   states: defaultStates,
   presetStyle,
   template: [
