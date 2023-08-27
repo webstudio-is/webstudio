@@ -93,6 +93,28 @@ export const findClosestEditableInstanceSelector = (
   }
 };
 
+export const findClosestDetachableInstanceSelector = (
+  instanceSelector: InstanceSelector,
+  instances: Instances,
+  metas: Map<string, WsComponentMeta>
+) => {
+  for (const instanceId of instanceSelector) {
+    const instance = instances.get(instanceId);
+    if (instance === undefined) {
+      return;
+    }
+    const meta = metas.get(instance.component);
+    if (meta === undefined) {
+      return;
+    }
+    const detachable = meta.detachable ?? true;
+    if (meta.type !== "container" || detachable === false) {
+      continue;
+    }
+    return getAncestorInstanceSelector(instanceSelector, instanceId);
+  }
+};
+
 export const isInstanceDetachable = (instanceSelector: InstanceSelector) => {
   const instances = instancesStore.get();
   const metas = registeredComponentMetasStore.get();

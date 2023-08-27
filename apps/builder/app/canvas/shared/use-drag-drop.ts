@@ -8,7 +8,6 @@ import {
   useDrag,
   useDrop,
   computeIndicatorPlacement,
-  toast,
 } from "@webstudio-is/design-system";
 import {
   instancesStore,
@@ -18,12 +17,11 @@ import { publish, useSubscribe } from "~/shared/pubsub";
 import {
   computeInstancesConstraints,
   findClosestDroppableComponentIndex,
-  findClosestEditableInstanceSelector,
+  findClosestDetachableInstanceSelector,
   getComponentTemplateData,
   insertTemplateData,
   reparentInstance,
   type InsertConstraints,
-  isInstanceDetachable,
 } from "~/shared/instance-utils";
 import {
   getElementByInstanceSelector,
@@ -229,21 +227,15 @@ export const useDragAndDrop = () => {
       }
       // When trying to drag an instance inside editor, drag the editor instead
       return (
-        findClosestEditableInstanceSelector(
+        findClosestDetachableInstanceSelector(
           instanceSelector,
           instancesStore.get(),
           registeredComponentMetasStore.get()
-        ) ?? instanceSelector
+        ) ?? false
       );
     },
 
     onStart({ data: dragInstanceSelector }) {
-      if (isInstanceDetachable(dragInstanceSelector) === false) {
-        toast.error(
-          "This instance can not be moved outside of its parent component."
-        );
-        return;
-      }
       publish({
         type: "dragStart",
         payload: {

@@ -919,6 +919,7 @@ export const propsSelectValue: Record<string, PropMeta> = {
   itemType: { required: false, control: "text", type: "string" },
   lang: { required: false, control: "text", type: "string" },
   nonce: { required: false, control: "text", type: "string" },
+  placeholder: { required: false, control: "text", type: "string" },
   prefix: { required: false, control: "text", type: "string" },
   property: { required: false, control: "text", type: "string" },
   radioGroup: { required: false, control: "text", type: "string" },
