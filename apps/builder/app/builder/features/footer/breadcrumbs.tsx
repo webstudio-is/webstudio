@@ -16,48 +16,28 @@ import { getAncestorInstanceSelector } from "~/shared/tree-utils";
 import { textEditingInstanceSelectorStore } from "~/shared/nano-states";
 import { getInstanceLabel } from "~/shared/instance-utils";
 
-type BreadcrumbProps = {
-  children: JSX.Element | string;
-  onClick?: () => void;
-};
-
-const Breadcrumb = ({ children, onClick }: BreadcrumbProps) => {
-  return (
-    <>
-      <DeprecatedButton
-        ghost
-        onClick={onClick}
-        css={{
-          color: theme.colors.hiContrast,
-          px: theme.spacing[5],
-          borderRadius: "100vh",
-          height: "100%",
-        }}
-      >
-        {children}
-      </DeprecatedButton>
-      <ChevronRightIcon color="white" />
-    </>
-  );
-};
-
 export const Breadcrumbs = () => {
   const instances = useStore(instancesStore);
   const selectedInstanceSelector = useStore(selectedInstanceSelectorStore);
   const metas = useStore(registeredComponentMetasStore);
 
   return (
-    <Flex align="center" css={{ height: "100%" }}>
+    <Flex
+      align="center"
+      css={{
+        height: "100%",
+        color: theme.colors.hiContrast,
+        px: theme.spacing[3],
+      }}
+    >
       {selectedInstanceSelector === undefined ? (
-        <Breadcrumb>
-          <Text>No instance selected</Text>
-        </Breadcrumb>
+        <Text>No instance selected</Text>
       ) : (
         selectedInstanceSelector
           // start breadcrumbs from the root
           .slice()
           .reverse()
-          .map((instanceId) => {
+          .map((instanceId, index) => {
             const instance = instances.get(instanceId);
             if (instance === undefined) {
               return;
@@ -67,21 +47,32 @@ export const Breadcrumbs = () => {
               return;
             }
             return (
-              <Breadcrumb
-                key={instance.id}
-                onClick={() => {
-                  selectedInstanceSelectorStore.set(
-                    getAncestorInstanceSelector(
-                      selectedInstanceSelector,
-                      instance.id
-                    )
-                  );
-                  textEditingInstanceSelectorStore.set(undefined);
-                  selectedStyleSourceSelectorStore.set(undefined);
-                }}
-              >
-                {getInstanceLabel(instance, meta)}
-              </Breadcrumb>
+              <>
+                <DeprecatedButton
+                  ghost
+                  css={{
+                    px: theme.spacing[5],
+                    borderRadius: "100vh",
+                    height: "100%",
+                  }}
+                  key={instance.id}
+                  onClick={() => {
+                    selectedInstanceSelectorStore.set(
+                      getAncestorInstanceSelector(
+                        selectedInstanceSelector,
+                        instance.id
+                      )
+                    );
+                    textEditingInstanceSelectorStore.set(undefined);
+                    selectedStyleSourceSelectorStore.set(undefined);
+                  }}
+                >
+                  {getInstanceLabel(instance, meta)}
+                </DeprecatedButton>
+                {index < selectedInstanceSelector.length - 1 ? (
+                  <ChevronRightIcon />
+                ) : null}
+              </>
             );
           })
       )}
