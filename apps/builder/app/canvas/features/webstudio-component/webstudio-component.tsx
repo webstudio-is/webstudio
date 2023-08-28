@@ -67,8 +67,9 @@ const ContentEditable = ({
       return;
     }
 
-    if (rootElement?.tagName === "BUTTON") {
-      // button with contentEditable does not let to press space
+    if (rootElement?.tagName === "BUTTON" || rootElement.tagName === "A") {
+      // <button> with contentEditable does not let to press space
+      // <a> stops working with inline-flex when only 1 character left
       // so add span inside and use it as editor element in lexical
       const span = document.createElement("span");
       span.contentEditable = "true";
