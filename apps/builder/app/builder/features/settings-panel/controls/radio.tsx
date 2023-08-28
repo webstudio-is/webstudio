@@ -25,7 +25,14 @@ export const RadioControl = ({
   const id = useId();
 
   return (
-    <VerticalLayout label={getLabel(meta, propName)} onDelete={onDelete}>
+    <VerticalLayout
+      label={
+        <Label htmlFor={id} description={meta.description}>
+          {getLabel(meta, propName)}
+        </Label>
+      }
+      onDelete={onDelete}
+    >
       <Box css={{ paddingTop: theme.spacing[2] }}>
         <RadioGroup
           name="value"

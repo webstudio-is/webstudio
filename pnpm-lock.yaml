@@ -936,6 +936,9 @@ importers:
 
   packages/generate-arg-types:
     dependencies:
+      '@webstudio-is/html-data':
+        specifier: workspace:^
+        version: link:../html-data
       fast-glob:
         specifier: ^3.2.12
         version: 3.2.12
@@ -958,6 +961,15 @@ importers:
       typescript:
         specifier: 5.1.6
         version: 5.1.6
+
+  packages/html-data:
+    devDependencies:
+      '@webstudio-is/scripts':
+        specifier: workspace:^
+        version: link:../scripts
+      '@webstudio-is/tsconfig':
+        specifier: workspace:^
+        version: link:../tsconfig
 
   packages/http-client:
     devDependencies:

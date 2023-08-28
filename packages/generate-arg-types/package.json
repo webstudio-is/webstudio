@@ -1,6 +1,6 @@
 {
   "name": "@webstudio-is/generate-arg-types",
-  "version": "0.88.0",
+  "version": "0.89.0",
   "description": "Generate components property types",
   "author": "Webstudio <github@webstudio.is>",
   "homepage": "https://webstudio.is",
@@ -15,6 +15,7 @@
   "dependencies": {
     "fast-glob": "^3.2.12",
     "react-docgen-typescript": "^2.2.2",
+    "@webstudio-is/html-data": "workspace:^",
     "zod": "^3.21.4"
   },
   "devDependencies": {
