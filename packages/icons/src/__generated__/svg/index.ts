@@ -102,6 +102,7 @@ export { JCSpaceAroundIcon } from "./j-c-space-around";
 export { JCSpaceBetweenIcon } from "./j-c-space-between";
 export { JCStartIcon } from "./j-c-start";
 export { LabelIcon } from "./label";
+export { LargeXIcon } from "./large X";
 export { Link2UnlinkedIcon } from "./link-2-unlinked";
 export { Link2Icon } from "./link-2";
 export { LinkIcon } from "./link";

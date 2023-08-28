@@ -102,6 +102,7 @@ export * from "./j-c-space-around";
 export * from "./j-c-space-between";
 export * from "./j-c-start";
 export * from "./label";
+export * from "./large X";
 export * from "./link-2-unlinked";
 export * from "./link-2";
 export * from "./link";
