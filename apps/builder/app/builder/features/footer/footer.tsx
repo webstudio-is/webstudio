@@ -15,9 +15,7 @@ export const Footer = () => {
         boxShadow: `inset 0 1px 0 0 ${theme.colors.panelOutline}`,
       }}
     >
-      <Box css={{ height: "100%", p: theme.spacing[3] }}>
-        <Breadcrumbs />
-      </Box>
+      <Breadcrumbs />
     </Flex>
   );
 };
