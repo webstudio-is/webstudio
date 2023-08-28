@@ -54,9 +54,25 @@ const MenuTrigger = styled("button", {
     menuTriggerVisibilityOverrideVar,
     cssVars.use(menuTriggerVisibilityVar)
   ),
-  background: theme.colors.backgroundButtonHover,
   "&:hover, &[data-state=open]": {
     ...menuCssVars({ show: true }),
+    "&::after": {
+      content: '""',
+      display: "block",
+      position: "absolute",
+      top: 0,
+      right: 0,
+      width: "100%",
+      height: "100%",
+      visibility: cssVars.use(
+        menuTriggerVisibilityOverrideVar,
+        cssVars.use(menuTriggerVisibilityVar)
+      ),
+      backgroundColor: theme.colors.backgroundButtonHover,
+      borderTopRightRadius: theme.borderRadius[4],
+      borderBottomRightRadius: theme.borderRadius[4],
+      pointerEvents: "none",
+    },
   },
 });
 
