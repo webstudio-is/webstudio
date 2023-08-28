@@ -8,12 +8,13 @@ import type {
   WsComponentMeta,
   WsComponentPropsMeta,
 } from "@webstudio-is/react-sdk";
+import { div } from "@webstudio-is/react-sdk/css-normalize";
 import {
   propsCollapsible,
   propsCollapsibleContent,
   propsCollapsibleTrigger,
 } from "./__generated__/collapsible.props";
-import { div } from "@webstudio-is/react-sdk/css-normalize";
+import { getButtonStyles } from "./theme/styles";
 
 const presetStyle = {
   div,
@@ -25,6 +26,8 @@ export const metaCollapsible: WsComponentMeta = {
   type: "container",
   presetStyle,
   icon: CollapsibleIcon,
+  description:
+    "An interactive component which expands and collapses some content, triggered by a button.",
   template: [
     {
       type: "instance",
@@ -54,6 +57,7 @@ export const metaCollapsible: WsComponentMeta = {
             {
               type: "instance",
               component: "Button",
+              styles: getButtonStyles("outline"),
               children: [{ type: "text", value: "Click to toggle content" }],
             },
           ],

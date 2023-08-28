@@ -12,6 +12,7 @@ import type {
 } from "@webstudio-is/react-sdk";
 import { button, div } from "@webstudio-is/react-sdk/css-normalize";
 import * as tc from "./theme/tailwind-classes";
+import { buttonReset } from "./theme/styles";
 import {
   propsTabs,
   propsTabsList,
@@ -71,6 +72,8 @@ export const metaTabs: WsComponentMeta = {
   type: "container",
   icon: TabsIcon,
   presetStyle,
+  description:
+    "A set of panels with content that are displayed one at a time. Duplicate both a tab trigger and tab content to add more tabs. Triggers and content are connected according to their order in the Navigator.",
   template: [
     {
       type: "instance",
@@ -153,23 +156,9 @@ export const metaTabsTrigger: WsComponentMeta = {
   requiredAncestors: ["TabsList"],
   invalidAncestors: ["TabsTrigger"],
   indexWithinAncestor: "Tabs",
+  label: "Tab Trigger",
   presetStyle: {
-    button: [
-      button,
-      {
-        property: "backgroundColor",
-        value: { type: "keyword", value: "transparent" },
-      } as const,
-      {
-        property: "backgroundImage",
-        value: { type: "keyword", value: "none" },
-      } as const,
-      {
-        property: "cursor",
-        value: { type: "keyword", value: "pointer" },
-      } as const,
-      tc.border(0),
-    ].flat(),
+    button: [button, buttonReset].flat(),
   },
 };
 
@@ -180,6 +169,7 @@ export const metaTabsContent: WsComponentMeta = {
   requiredAncestors: ["Tabs"],
   indexWithinAncestor: "Tabs",
   presetStyle,
+  label: "Tab Content",
 };
 
 export const propsMetaTabs: WsComponentPropsMeta = {

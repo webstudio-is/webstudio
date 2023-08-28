@@ -15,6 +15,7 @@ import type {
 } from "@webstudio-is/react-sdk";
 import { div, h3, button } from "@webstudio-is/react-sdk/css-normalize";
 import * as tc from "./theme/tailwind-classes";
+import { buttonReset } from "./theme/styles";
 import {
   propsAccordion,
   propsAccordionItem,
@@ -123,6 +124,8 @@ export const metaAccordion: WsComponentMeta = {
   type: "container",
   icon: AccordionIcon,
   presetStyle,
+  description:
+    "A vertically stacked set of interactive headings that each reveal an associated section of content. Clicking on the heading will open the item and close other items.",
   template: [
     {
       type: "instance",
@@ -225,6 +228,7 @@ export const metaAccordionItem: WsComponentMeta = {
   requiredAncestors: ["Accordion"],
   indexWithinAncestor: "Accordion",
   presetStyle,
+  label: "Item",
 };
 
 export const metaAccordionHeader: WsComponentMeta = {
@@ -236,6 +240,7 @@ export const metaAccordionHeader: WsComponentMeta = {
   presetStyle: {
     h3: [h3, tc.my(0)].flat(),
   },
+  label: "Item Header",
 };
 
 export const metaAccordionTrigger: WsComponentMeta = {
@@ -245,24 +250,9 @@ export const metaAccordionTrigger: WsComponentMeta = {
   requiredAncestors: ["AccordionHeader"],
   detachable: false,
   presetStyle: {
-    button: [
-      button,
-      {
-        property: "backgroundColor",
-        value: { type: "keyword", value: "transparent" },
-      } as const,
-      {
-        property: "backgroundImage",
-        value: { type: "keyword", value: "none" },
-      } as const,
-      {
-        property: "cursor",
-        value: { type: "keyword", value: "pointer" },
-      } as const,
-      tc.px(0),
-      tc.border(0),
-    ].flat(),
+    button: [button, buttonReset].flat(),
   },
+  label: "Item Trigger",
 };
 
 export const metaAccordionContent: WsComponentMeta = {
@@ -272,6 +262,7 @@ export const metaAccordionContent: WsComponentMeta = {
   requiredAncestors: ["AccordionItem"],
   detachable: false,
   presetStyle,
+  label: "Item Content",
 };
 
 export const propsMetaAccordion: WsComponentPropsMeta = {

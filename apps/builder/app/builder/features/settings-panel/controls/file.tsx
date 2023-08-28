@@ -5,6 +5,7 @@ import {
   getLabel,
   VerticalLayout,
   useLocalValue,
+  Label,
 } from "../shared";
 import { SelectAsset } from "./select-asset";
 
@@ -64,9 +65,12 @@ export const FileControl = ({
 
   return (
     <VerticalLayout
-      label={getLabel(meta, propName)}
+      label={
+        <Label htmlFor={id} description={meta.description}>
+          {getLabel(meta, propName)}
+        </Label>
+      }
       onDelete={onDelete}
-      id={id}
     >
       <Row>
         <UrlInput

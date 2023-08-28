@@ -2,7 +2,12 @@ import type { PropMeta } from "@webstudio-is/generate-arg-types";
 
 export const props: Record<string, PropMeta> = {
   about: { required: false, control: "text", type: "string" },
-  accessKey: { required: false, control: "text", type: "string" },
+  accessKey: {
+    required: false,
+    control: "text",
+    type: "string",
+    description: "Keyboard shortcut to activate or add focus to the element.",
+  },
   "aria-activedescendant": {
     description:
       "Identifies the currently active element when DOM focus is on a composite widget, textbox, group, or application.",
@@ -183,7 +188,7 @@ export const props: Record<string, PropMeta> = {
   },
   "aria-label": {
     description:
-      "Defines a string value that labels the current element.\n@see aria-labelledby.",
+      "Provides the accessible name that describes an interactive element if no other accessible name exists, for example in a button that contains an image with no text.",
     required: false,
     control: "text",
     type: "string",
@@ -382,9 +387,21 @@ export const props: Record<string, PropMeta> = {
     control: "text",
     type: "string",
   },
-  autoCapitalize: { required: false, control: "text", type: "string" },
+  autoCapitalize: {
+    required: false,
+    control: "text",
+    type: "string",
+    description:
+      "Sets whether input is automatically capitalized when entered by user.",
+  },
   autoCorrect: { required: false, control: "text", type: "string" },
-  autoFocus: { required: false, control: "boolean", type: "boolean" },
+  autoFocus: {
+    required: false,
+    control: "boolean",
+    type: "boolean",
+    description:
+      "Indicates that an element should be focused on page load, or when its parent dialog is displayed.",
+  },
   autopause: {
     description:
       "Whether to pause the current video when another Vimeo video on the same page starts to play. Set this value to false to permit simultaneous playback of all the videos on the page. This option has no effect if you've disabled cookies in your browser, either through browser settings or with an extension or plugin.",
@@ -418,9 +435,27 @@ export const props: Record<string, PropMeta> = {
     defaultValue: false,
   },
   className: { required: false, control: "text", type: "string" },
-  color: { required: false, control: "color", type: "string" },
-  content: { required: false, control: "text", type: "string" },
-  contextMenu: { required: false, control: "text", type: "string" },
+  color: {
+    required: false,
+    control: "color",
+    type: "string",
+    description:
+      "This attribute sets the text color using either a named color or a  color specified in the hexadecimal #RRGGBB format. Note: This is a legacy attribute. Please use the CSS color property instead.",
+  },
+  content: {
+    required: false,
+    control: "text",
+    type: "string",
+    description:
+      "A value associated with http-equiv orname depending on the context.",
+  },
+  contextMenu: {
+    required: false,
+    control: "text",
+    type: "string",
+    description:
+      "Defines the ID of a menu element which willserve as the element's context menu.",
+  },
   controlsColor: {
     description:
       "A color value of the playback controls, which is normally #00ADEF. The embed settings of the video might override this value.",
@@ -430,7 +465,13 @@ export const props: Record<string, PropMeta> = {
   },
   datatype: { required: false, control: "text", type: "string" },
   defaultChecked: { required: false, control: "boolean", type: "boolean" },
-  dir: { required: false, control: "text", type: "string" },
+  dir: {
+    required: false,
+    control: "text",
+    type: "string",
+    description:
+      "Defines the text direction. Allowed values are ltr (Left-To-Right) or rtl (Right-To-Left)",
+  },
   doNotTrack: {
     description:
       "Whether to prevent the player from tracking session data, including cookies. Keep in mind that setting this argument to true also blocks video stats.",
@@ -439,9 +480,26 @@ export const props: Record<string, PropMeta> = {
     type: "boolean",
     defaultValue: false,
   },
-  draggable: { required: false, control: "boolean", type: "boolean" },
-  hidden: { required: false, control: "boolean", type: "boolean" },
-  id: { required: false, control: "text", type: "string" },
+  draggable: {
+    required: false,
+    control: "boolean",
+    type: "boolean",
+    description: "Defines whether the element can be dragged.",
+  },
+  hidden: {
+    required: false,
+    control: "boolean",
+    type: "boolean",
+    description:
+      "Prevents rendering of given element, while keeping child elements, e.g. script elements, active.",
+  },
+  id: {
+    required: false,
+    control: "text",
+    type: "string",
+    description:
+      "Often used with CSS to style a specific element. The value of this attribute must be unique.",
+  },
   inputMode: {
     description:
       "Hints at the type of data that might be entered by the user while editing the element or its contents\n@see https://html.spec.whatwg.org/multipage/interaction.html#input-modalities:-the-inputmode-attribute",
@@ -486,7 +544,12 @@ export const props: Record<string, PropMeta> = {
     type: "boolean",
     defaultValue: true,
   },
-  lang: { required: false, control: "text", type: "string" },
+  lang: {
+    required: false,
+    control: "text",
+    type: "string",
+    description: "Defines the language used in the element.",
+  },
   loop: {
     description:
       "Whether to restart the video automatically after reaching the end.",
@@ -512,7 +575,13 @@ export const props: Record<string, PropMeta> = {
     type: "boolean",
     defaultValue: false,
   },
-  placeholder: { required: false, control: "text", type: "string" },
+  placeholder: {
+    required: false,
+    control: "text",
+    type: "string",
+    description:
+      "Provides a hint to the user of what can be entered in the field.",
+  },
   playsinline: {
     description:
       "Whether the video plays inline on supported mobile devices. To force the device to play the video in fullscreen mode instead, set this value to false.",
@@ -533,7 +602,13 @@ export const props: Record<string, PropMeta> = {
     options: ["auto", "360p", "540p", "720p", "1080p", "2k", "4k"],
   },
   radioGroup: { required: false, control: "text", type: "string" },
-  rel: { required: false, control: "text", type: "string" },
+  rel: {
+    required: false,
+    control: "text",
+    type: "string",
+    description:
+      "Specifies the relationship of the target object to the link object.",
+  },
   resource: { required: false, control: "text", type: "string" },
   responsive: {
     description:
@@ -545,7 +620,13 @@ export const props: Record<string, PropMeta> = {
   },
   results: { required: false, control: "number", type: "number" },
   rev: { required: false, control: "text", type: "string" },
-  role: { required: false, control: "text", type: "string" },
+  role: {
+    required: false,
+    control: "text",
+    type: "string",
+    description:
+      "Defines an explicit role for an element for use by assistive technologies.",
+  },
   security: { required: false, control: "text", type: "string" },
   showByline: {
     description: "Whether to display the video owner's name.",
@@ -585,7 +666,12 @@ export const props: Record<string, PropMeta> = {
     type: "boolean",
     defaultValue: false,
   },
-  slot: { required: false, control: "text", type: "string" },
+  slot: {
+    required: false,
+    control: "text",
+    type: "string",
+    description: "Assigns a slot in a shadow DOM shadow tree to an element.",
+  },
   speed: {
     description:
       "Whether the player displays speed controls in the preferences menu and enables the playback rate API.",
@@ -594,7 +680,12 @@ export const props: Record<string, PropMeta> = {
     type: "boolean",
     defaultValue: false,
   },
-  spellCheck: { required: false, control: "boolean", type: "boolean" },
+  spellCheck: {
+    required: false,
+    control: "boolean",
+    type: "boolean",
+    description: "Indicates whether spell checking is allowed for the element.",
+  },
   suppressContentEditableWarning: {
     required: false,
     control: "boolean",
@@ -605,7 +696,13 @@ export const props: Record<string, PropMeta> = {
     control: "boolean",
     type: "boolean",
   },
-  tabIndex: { required: false, control: "number", type: "number" },
+  tabIndex: {
+    required: false,
+    control: "number",
+    type: "number",
+    description:
+      "Overrides the browser's default tab order and follows the one specified instead.",
+  },
   texttrack: {
     description:
       "The text track to display with the video. Specify the text track by its language code (en), the language code and locale (en-US), or the language code and kind (en.captions). For this argument to work, the video must already have a text track of the given type; see our Help Center or Working with Text Track Uploads for more information.\nTo enable automatically generated closed captions instead, provide the value en-x-autogen. Please note that, at the present time, automatic captions are always in English.",
@@ -613,12 +710,20 @@ export const props: Record<string, PropMeta> = {
     control: "text",
     type: "string",
   },
-  title: { required: false, control: "text", type: "string" },
+  title: {
+    required: false,
+    control: "text",
+    type: "string",
+    description:
+      "Text to be displayed in a tooltip when hovering over the element.",
+  },
   translate: {
     required: false,
     control: "radio",
     type: "string",
     options: ["yes", "no"],
+    description:
+      "Specify whether an element's attribute values and the values of its text node children are to be translated when the page is localized, or whether to leave them unchanged.",
   },
   transparent: {
     description:
@@ -637,7 +742,7 @@ export const props: Record<string, PropMeta> = {
   },
   url: {
     description:
-      "The ID or the URL of the video on Vimeo. You must supply one of these values to identify the video. When the video's privacy setting is Private, you must use the URL, and the URL must include the h parameter. For more information, see our introductory guide.",
+      "The ID or the URL of the video on Vimeo. You must supply one of these values to identify the video. When the video's privacy setting is Private, you must use the URL, and the URL must include the h parameter. For more information, see Vimeo’s introductory guide.",
     required: false,
     control: "text",
     type: "string",

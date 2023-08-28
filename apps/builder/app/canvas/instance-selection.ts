@@ -16,26 +16,41 @@ declare module "~/shared/pubsub" {
 }
 
 export const subscribeInstanceSelection = () => {
-  let mouseDownElement: undefined | Element = undefined;
+  let pointerDownElement: undefined | Element = undefined;
+  let lastPointerUpTime = 0;
+  let clickCount = 1;
 
-  const handleMouseDown = (event: MouseEvent) => {
-    mouseDownElement = event.target as Element;
+  const handlePointerDown = (event: PointerEvent) => {
+    pointerDownElement = event.target as Element;
+    // track multiple clicks when pointerdown is fired within 500ms after last pointerup
+    const currentTime = performance.now();
+    if (currentTime - lastPointerUpTime < 500) {
+      clickCount += 1;
+    } else {
+      clickCount = 1;
+    }
   };
 
-  const handleMouseUp = (event: MouseEvent) => {
+  const handlePointerUp = (event: PointerEvent) => {
     const element = event.target as Element;
 
     // when user is selecting text inside content editable and mouse goes up
     // on a different instance - we don't want to select a different instance
     // because that would cancel the text selection.
-    if (mouseDownElement === undefined || mouseDownElement !== element) {
+    if (pointerDownElement === undefined || pointerDownElement !== element) {
       return;
     }
-    mouseDownElement = undefined;
+    pointerDownElement = undefined;
 
-    // notify whole app about click on document
-    // e.g. to hide the side panel
-    publish({ type: "clickCanvas" });
+    // track double clicks manually because pointer events do not support event.detail
+    // for clicks count
+    lastPointerUpTime = performance.now();
+
+    if (clickCount === 1) {
+      // notify whole app about click on document
+      // e.g. to hide the side panel
+      publish({ type: "clickCanvas" });
+    }
 
     // prevent selecting instances inside text editor while editing text
     if (element.closest("[contenteditable=true]")) {
@@ -48,7 +63,7 @@ export const subscribeInstanceSelection = () => {
     }
 
     // the first click in double click or the only one in regular click
-    if (event.detail === 1) {
+    if (clickCount === 1) {
       selectedInstanceSelectorStore.set(instanceSelector);
       // reset text editor when another instance is selected
       textEditingInstanceSelectorStore.set(undefined);
@@ -56,7 +71,7 @@ export const subscribeInstanceSelection = () => {
     }
 
     // the second click in a double click.
-    if (event.detail === 2) {
+    if (clickCount === 2) {
       const editableInstanceSelector = findClosestEditableInstanceSelector(
         instanceSelector,
         instancesStore.get(),
@@ -72,11 +87,11 @@ export const subscribeInstanceSelection = () => {
     }
   };
 
-  addEventListener("mousedown", handleMouseDown, { passive: true });
-  addEventListener("mouseup", handleMouseUp, { passive: true });
+  addEventListener("pointerdown", handlePointerDown, { passive: true });
+  addEventListener("pointerup", handlePointerUp, { passive: true });
 
   return () => {
-    removeEventListener("mousedown", handleMouseDown);
-    removeEventListener("mouseup", handleMouseUp);
+    removeEventListener("pointerdown", handlePointerDown);
+    removeEventListener("pointerup", handlePointerUp);
   };
 };

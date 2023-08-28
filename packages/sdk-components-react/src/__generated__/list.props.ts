@@ -2,7 +2,12 @@ import type { PropMeta } from "@webstudio-is/generate-arg-types";
 
 export const props: Record<string, PropMeta> = {
   about: { required: false, control: "text", type: "string" },
-  accessKey: { required: false, control: "text", type: "string" },
+  accessKey: {
+    required: false,
+    control: "text",
+    type: "string",
+    description: "Keyboard shortcut to activate or add focus to the element.",
+  },
   "aria-activedescendant": {
     description:
       "Identifies the currently active element when DOM focus is on a composite widget, textbox, group, or application.",
@@ -183,7 +188,7 @@ export const props: Record<string, PropMeta> = {
   },
   "aria-label": {
     description:
-      "Defines a string value that labels the current element.\n@see aria-labelledby.",
+      "Provides the accessible name that describes an interactive element if no other accessible name exists, for example in a button that contains an image with no text.",
     required: false,
     control: "text",
     type: "string",
@@ -382,20 +387,73 @@ export const props: Record<string, PropMeta> = {
     control: "text",
     type: "string",
   },
-  autoCapitalize: { required: false, control: "text", type: "string" },
+  autoCapitalize: {
+    required: false,
+    control: "text",
+    type: "string",
+    description:
+      "Sets whether input is automatically capitalized when entered by user.",
+  },
   autoCorrect: { required: false, control: "text", type: "string" },
-  autoFocus: { required: false, control: "boolean", type: "boolean" },
+  autoFocus: {
+    required: false,
+    control: "boolean",
+    type: "boolean",
+    description:
+      "Indicates that an element should be focused on page load, or when its parent dialog is displayed.",
+  },
   autoSave: { required: false, control: "text", type: "string" },
   className: { required: false, control: "text", type: "string" },
-  color: { required: false, control: "color", type: "string" },
-  content: { required: false, control: "text", type: "string" },
-  contextMenu: { required: false, control: "text", type: "string" },
+  color: {
+    required: false,
+    control: "color",
+    type: "string",
+    description:
+      "This attribute sets the text color using either a named color or a  color specified in the hexadecimal #RRGGBB format. Note: This is a legacy attribute. Please use the CSS color property instead.",
+  },
+  content: {
+    required: false,
+    control: "text",
+    type: "string",
+    description:
+      "A value associated with http-equiv orname depending on the context.",
+  },
+  contextMenu: {
+    required: false,
+    control: "text",
+    type: "string",
+    description:
+      "Defines the ID of a menu element which willserve as the element's context menu.",
+  },
   datatype: { required: false, control: "text", type: "string" },
   defaultChecked: { required: false, control: "boolean", type: "boolean" },
-  dir: { required: false, control: "text", type: "string" },
-  draggable: { required: false, control: "boolean", type: "boolean" },
-  hidden: { required: false, control: "boolean", type: "boolean" },
-  id: { required: false, control: "text", type: "string" },
+  dir: {
+    required: false,
+    control: "text",
+    type: "string",
+    description:
+      "Defines the text direction. Allowed values are ltr (Left-To-Right) or rtl (Right-To-Left)",
+  },
+  draggable: {
+    required: false,
+    control: "boolean",
+    type: "boolean",
+    description: "Defines whether the element can be dragged.",
+  },
+  hidden: {
+    required: false,
+    control: "boolean",
+    type: "boolean",
+    description:
+      "Prevents rendering of given element, while keeping child elements, e.g. script elements, active.",
+  },
+  id: {
+    required: false,
+    control: "text",
+    type: "string",
+    description:
+      "Often used with CSS to style a specific element. The value of this attribute must be unique.",
+  },
   inputMode: {
     description:
       "Hints at the type of data that might be entered by the user while editing the element or its contents\n@see https://html.spec.whatwg.org/multipage/interaction.html#input-modalities:-the-inputmode-attribute",
@@ -425,28 +483,74 @@ export const props: Record<string, PropMeta> = {
   itemRef: { required: false, control: "text", type: "string" },
   itemScope: { required: false, control: "boolean", type: "boolean" },
   itemType: { required: false, control: "text", type: "string" },
-  lang: { required: false, control: "text", type: "string" },
+  lang: {
+    required: false,
+    control: "text",
+    type: "string",
+    description: "Defines the language used in the element.",
+  },
   nonce: { required: false, control: "text", type: "string" },
   ordered: {
+    description:
+      "Shows numbers instead of bullets when toggled. See the “List Style Type” property under the “List Item” section in the Style panel for more options.",
     required: false,
     control: "boolean",
     type: "boolean",
     defaultValue: false,
   },
-  placeholder: { required: false, control: "text", type: "string" },
+  placeholder: {
+    required: false,
+    control: "text",
+    type: "string",
+    description:
+      "Provides a hint to the user of what can be entered in the field.",
+  },
   prefix: { required: false, control: "text", type: "string" },
   property: { required: false, control: "text", type: "string" },
   radioGroup: { required: false, control: "text", type: "string" },
-  rel: { required: false, control: "text", type: "string" },
+  rel: {
+    required: false,
+    control: "text",
+    type: "string",
+    description:
+      "Specifies the relationship of the target object to the link object.",
+  },
   resource: { required: false, control: "text", type: "string" },
   results: { required: false, control: "number", type: "number" },
   rev: { required: false, control: "text", type: "string" },
-  reversed: { required: false, control: "boolean", type: "boolean" },
-  role: { required: false, control: "text", type: "string" },
+  reversed: {
+    required: false,
+    control: "boolean",
+    type: "boolean",
+    description:
+      "Indicates whether the list should be displayed in a descending order instead of an ascending order.",
+  },
+  role: {
+    required: false,
+    control: "text",
+    type: "string",
+    description:
+      "Defines an explicit role for an element for use by assistive technologies.",
+  },
   security: { required: false, control: "text", type: "string" },
-  slot: { required: false, control: "text", type: "string" },
-  spellCheck: { required: false, control: "boolean", type: "boolean" },
-  start: { required: false, control: "number", type: "number" },
+  slot: {
+    required: false,
+    control: "text",
+    type: "string",
+    description: "Assigns a slot in a shadow DOM shadow tree to an element.",
+  },
+  spellCheck: {
+    required: false,
+    control: "boolean",
+    type: "boolean",
+    description: "Indicates whether spell checking is allowed for the element.",
+  },
+  start: {
+    required: false,
+    control: "number",
+    type: "number",
+    description: "Defines the first number if other than 1.",
+  },
   suppressContentEditableWarning: {
     required: false,
     control: "boolean",
@@ -457,19 +561,34 @@ export const props: Record<string, PropMeta> = {
     control: "boolean",
     type: "boolean",
   },
-  tabIndex: { required: false, control: "number", type: "number" },
-  title: { required: false, control: "text", type: "string" },
+  tabIndex: {
+    required: false,
+    control: "number",
+    type: "number",
+    description:
+      "Overrides the browser's default tab order and follows the one specified instead.",
+  },
+  title: {
+    required: false,
+    control: "text",
+    type: "string",
+    description:
+      "Text to be displayed in a tooltip when hovering over the element.",
+  },
   translate: {
     required: false,
     control: "radio",
     type: "string",
     options: ["yes", "no"],
+    description:
+      "Specify whether an element's attribute values and the values of its text node children are to be translated when the page is localized, or whether to leave them unchanged.",
   },
   type: {
     required: false,
     control: "select",
     type: "string",
     options: ["a", "i", "1", "A", "I"],
+    description: "Defines the type of the element.",
   },
   typeof: { required: false, control: "text", type: "string" },
   unselectable: {

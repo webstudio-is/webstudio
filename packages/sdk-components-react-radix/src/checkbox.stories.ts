@@ -1,20 +1,20 @@
 import type { Meta, StoryObj } from "@storybook/react";
 import { renderComponentTemplate } from "@webstudio-is/react-sdk";
-import { Button as ButtonPrimitive } from "./button";
 import * as baseComponents from "@webstudio-is/sdk-components-react";
 import * as baseMetas from "@webstudio-is/sdk-components-react/metas";
 import * as radixComponents from "./components";
 import * as radixMetas from "./metas";
+import { Checkbox as CheckboxPrimitive } from "./checkbox";
 
 export default {
-  title: "Components/Button",
-  component: ButtonPrimitive,
-} satisfies Meta<typeof ButtonPrimitive>;
+  title: "Components/Checkbox",
+  component: CheckboxPrimitive,
+} satisfies Meta<typeof CheckboxPrimitive>;
 
-export const Button: StoryObj<typeof ButtonPrimitive> = {
+export const Checkbox: StoryObj<typeof CheckboxPrimitive> = {
   render: (props) =>
     renderComponentTemplate({
-      name: "Button",
+      name: "Checkbox",
       props: { ...props },
       components: { ...baseComponents, ...radixComponents },
       metas: { ...baseMetas, ...radixMetas },

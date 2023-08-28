@@ -6,23 +6,9 @@ import { SelectControl, TextControl } from "../../controls";
 import { PropertyName } from "../../shared/property-name";
 import { styleConfigByName } from "../../shared/configs";
 import { PositionControl } from "./position-control";
-import { useStyleInfoByInstanceId } from "../../shared/style-info";
-import { selectedInstanceSelectorStore } from "~/shared/nano-states";
-import { useStore } from "@nanostores/react";
+import { useParentStyle } from "../../parent-style";
 
 const properties: StyleProperty[] = ["position"];
-
-const useParentStyle = () => {
-  const selectedInstanceSelector = useStore(selectedInstanceSelectorStore);
-  const parentInstanceSelector =
-    // root does not have parent
-    selectedInstanceSelector?.length === 1
-      ? undefined
-      : selectedInstanceSelector?.slice(1);
-  const parentStyleInfo = useStyleInfoByInstanceId(parentInstanceSelector);
-
-  return parentStyleInfo;
-};
 
 const positionControlVisibleProperties = [
   "relative",

@@ -21,6 +21,7 @@ export const meta: WsComponentMeta = {
   type: "container",
   invalidAncestors: ["Form"],
   label: "Form",
+  description: "Collect information from your users using validation rules.",
   icon: FormIcon,
   states: defaultStates,
   presetStyle,

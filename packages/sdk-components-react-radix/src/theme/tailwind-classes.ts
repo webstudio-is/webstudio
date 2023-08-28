@@ -415,6 +415,24 @@ export const inset = (
   positionStyle("bottom", spacing),
 ];
 
+export const aspect = (
+  value: "auto" | "square" | "video"
+): EmbedTemplateStyleDecl[] => {
+  let unparsed: string = value;
+  if (value === "square") {
+    unparsed = "1 / 1";
+  }
+  if (value === "video") {
+    unparsed = "16 / 9";
+  }
+  return [
+    {
+      property: "aspectRatio",
+      value: { type: "unparsed", value: unparsed },
+    },
+  ];
+};
+
 export const backdropBlur = (
   blur: keyof EvaluatedDefaultTheme["blur"]
 ): EmbedTemplateStyleDecl[] => {

@@ -1,6 +1,6 @@
 import { Flex, theme, useId, Select } from "@webstudio-is/design-system";
 import { humanizeString } from "~/shared/string-utils";
-import { type ControlProps, getLabel, VerticalLayout } from "../shared";
+import { type ControlProps, getLabel, VerticalLayout, Label } from "../shared";
 
 export const SelectControl = ({
   meta,
@@ -10,7 +10,6 @@ export const SelectControl = ({
   onDelete,
 }: ControlProps<"select", "string">) => {
   const id = useId();
-  const label = getLabel(meta, propName);
 
   // making sure that the current value is in the list of options
   const options =
@@ -19,7 +18,14 @@ export const SelectControl = ({
       : [prop.value, ...meta.options];
 
   return (
-    <VerticalLayout label={label} id={id} onDelete={onDelete}>
+    <VerticalLayout
+      label={
+        <Label htmlFor={id} description={meta.description}>
+          {getLabel(meta, propName)}
+        </Label>
+      }
+      onDelete={onDelete}
+    >
       <Flex css={{ py: theme.spacing[2] }}>
         <Select
           id={id}

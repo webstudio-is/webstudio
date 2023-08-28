@@ -107,11 +107,21 @@ export const hooksNavigationMenu: Hook = {
           `${namespace}:NavigationMenu`
         );
 
-        const contentValue =
-          context.getPropValue(instance.id, "value") ??
-          context.indexesWithinAncestors.get(instance.id)?.toString();
+        const menuItem = getClosestInstance(
+          event.instancePath,
+          instance,
+          `${namespace}:NavigationMenuItem`
+        );
 
-        if (menu && contentValue) {
+        if (menuItem === undefined || menu === undefined) {
+          return;
+        }
+
+        const contentValue =
+          context.getPropValue(menuItem.id, "value") ??
+          context.indexesWithinAncestors.get(menuItem.id)?.toString();
+
+        if (contentValue) {
           context.setPropVariable(menu.id, "value", contentValue);
         }
       }

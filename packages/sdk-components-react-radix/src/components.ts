@@ -14,19 +14,7 @@ export {
 } from "./dialog";
 export { Popover, PopoverTrigger, PopoverContent } from "./popover";
 export { Tooltip, TooltipTrigger, TooltipContent } from "./tooltip";
-export {
-  Sheet,
-  SheetTrigger,
-  SheetOverlay,
-  SheetContent,
-  SheetClose,
-  SheetTitle,
-  SheetDescription,
-} from "./sheet";
 export { Tabs, TabsList, TabsTrigger, TabsContent } from "./tabs";
-export { Button } from "./button";
-export { Input } from "./input";
-export { Textarea } from "./textarea";
 export { Label } from "./label";
 export {
   Accordion,
@@ -45,3 +33,18 @@ export {
   NavigationMenuLink,
   NavigationMenuViewport,
 } from "./navigation-menu";
+
+export {
+  Select,
+  SelectTrigger,
+  SelectValue,
+  SelectViewport,
+  SelectContent,
+  SelectItem,
+  SelectItemIndicator,
+  SelectItemText,
+} from "./select";
+
+export { Switch, SwitchThumb } from "./switch";
+export { Checkbox, CheckboxIndicator } from "./checkbox";
+export { RadioGroup, RadioGroupItem, RadioGroupIndicator } from "./radio-group";

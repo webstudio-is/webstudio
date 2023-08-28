@@ -13,13 +13,9 @@ import type {
   WsComponentMeta,
   WsComponentPropsMeta,
 } from "@webstudio-is/react-sdk";
-
-import { template as buttonTemplate } from "./button.ws";
-
 import { div } from "@webstudio-is/react-sdk/css-normalize";
-
 import * as tc from "./theme/tailwind-classes";
-
+import { getButtonStyles } from "./theme/styles";
 import {
   propsNavigationMenu,
   propsNavigationMenuItem,
@@ -182,6 +178,33 @@ const navItemsList = (props: {
   },
 ];
 
+const menuItemLink = (props: {
+  title: string;
+}): NonNullable<WsComponentMeta["template"]> => [
+  {
+    type: "instance",
+    component: "NavigationMenuItem",
+    children: [
+      {
+        type: "instance",
+        component: "NavigationMenuLink",
+        children: [
+          {
+            type: "instance",
+            component: "Link",
+            styles: [
+              getButtonStyles("ghost", "sm"),
+              tc.noUnderline(),
+              tc.text("current"),
+            ].flat(),
+            children: [{ type: "text", value: props.title }],
+          },
+        ],
+      },
+    ],
+  },
+];
+
 const menuItem = (props: {
   title: string;
   children: NonNullable<WsComponentMeta["template"]>;
@@ -194,71 +217,82 @@ const menuItem = (props: {
       {
         type: "instance",
         component: "NavigationMenuTrigger",
-        children: buttonTemplate({
-          tokens: ["button", "buttonGhost", "buttonSm"],
-          styles: [
-            tc.property("--navigation-menu-trigger-icon-transform", "0deg"),
-            tc.state(
-              [
-                tc.property(
-                  "--navigation-menu-trigger-icon-transform",
-                  "180deg"
-                ),
-              ],
-              "[data-state=open]"
-            ),
-          ].flat(),
-          children: [
-            {
-              type: "instance",
-              component: "Text",
-              children: [{ type: "text", value: props.title }],
-            },
-            {
-              type: "instance",
-              component: "Box",
-              label: "Icon Container",
-              // h-4 w-4 shrink-0 transition-transform duration-200
-              styles: [
-                tc.ml(1),
-                tc.property(
-                  "rotate",
-                  "--navigation-menu-trigger-icon-transform"
-                ),
-                tc.h(4),
-                tc.w(4),
-                tc.shrink(0),
-                tc.transition("all"),
-                tc.duration(200),
-              ].flat(),
-              children: [
-                {
-                  type: "instance",
-                  component: "HtmlEmbed",
-                  label: "Chevron Icon",
-                  props: [
-                    {
-                      type: "string",
-                      name: "code",
-                      value: ChevronDownIcon,
-                    },
-                  ],
-                  children: [],
-                },
-              ],
-            },
-          ],
-        }),
+        children: [
+          {
+            type: "instance",
+            component: "Button",
+            styles: [
+              getButtonStyles("ghost", "sm"),
+              tc.property("--navigation-menu-trigger-icon-transform", "0deg"),
+              tc.state(
+                [
+                  tc.property(
+                    "--navigation-menu-trigger-icon-transform",
+                    "180deg"
+                  ),
+                ],
+                "[data-state=open]"
+              ),
+            ].flat(),
+            children: [
+              {
+                type: "instance",
+                component: "Text",
+                children: [{ type: "text", value: props.title }],
+              },
+              {
+                type: "instance",
+                component: "Box",
+                label: "Icon Container",
+                // h-4 w-4 shrink-0 transition-transform duration-200
+                styles: [
+                  tc.ml(1),
+                  tc.property(
+                    "rotate",
+                    "--navigation-menu-trigger-icon-transform"
+                  ),
+                  tc.h(4),
+                  tc.w(4),
+                  tc.shrink(0),
+                  tc.transition("all"),
+                  tc.duration(200),
+                ].flat(),
+                children: [
+                  {
+                    type: "instance",
+                    component: "HtmlEmbed",
+                    label: "Chevron Icon",
+                    props: [
+                      {
+                        type: "string",
+                        name: "code",
+                        value: ChevronDownIcon,
+                      },
+                    ],
+                    children: [],
+                  },
+                ],
+              },
+            ],
+          },
+        ],
       },
       {
         type: "instance",
         component: "NavigationMenuContent",
-        tokens: ["navigationMenuContent"],
+        // left-0 top-0 absolute w-max
+        styles: [
+          tc.left(0),
+          tc.top(0),
+          tc.absolute(),
+          tc.w("max"),
+          tc.p(4),
+        ].flat(),
         children: [
           {
             type: "instance",
             component: "Box",
-            label: "Content Container",
+            label: "Content",
             styles: [tc.flex(), tc.gap(4), tc.p(props.padding)].flat(),
             children: props.children,
           },
@@ -272,20 +306,14 @@ export const metaNavigationMenu: WsComponentMeta = {
   category: "radix",
   order: 2,
   type: "container",
+  description: "A collection of links for navigating websites.",
   icon: NavigationMenuIcon,
   presetStyle,
-  presetTokens: {
-    navigationMenu: {
-      // relative
-      // Omiting this: z-10 flex max-w-max flex-1 items-center justify-center
-      styles: [tc.relative()].flat(),
-    },
-  },
+
   template: [
     {
       type: "instance",
       component: "NavigationMenu",
-
       dataSources: {
         menuValue: { type: "variable", initialValue: "" },
       },
@@ -303,14 +331,25 @@ export const metaNavigationMenu: WsComponentMeta = {
           ],
         },
       ],
-
-      tokens: ["navigationMenu"],
-
+      // relative
+      // Omiting this: z-10 flex max-w-max flex-1 items-center justify-center
+      styles: [tc.relative(), tc.maxW("max")].flat(),
       children: [
         {
           type: "instance",
           component: "NavigationMenuList",
-          tokens: ["navigationMenuList"],
+          styles: [
+            // ul defaults in tailwind
+            tc.p(0),
+            tc.m(0),
+            // shadcdn styles
+            tc.flex(),
+            tc.flex(1),
+            tc.list("none"),
+            tc.items("center"),
+            tc.justify("center"),
+            tc.gap(1),
+          ].flat(),
           children: [
             ...menuItem({
               title: "About",
@@ -343,6 +382,7 @@ export const metaNavigationMenu: WsComponentMeta = {
                 ...navItemsList({ count: 3, offset: 6 }),
               ],
             }),
+            ...menuItemLink({ title: "Standalone" }),
           ],
         },
 
@@ -363,7 +403,31 @@ export const metaNavigationMenu: WsComponentMeta = {
             {
               type: "instance",
               component: "NavigationMenuViewport",
-              tokens: ["navigationMenuViewport"],
+              /*
+                origin-top-center relative mt-1.5 w-full
+                overflow-hidden rounded-md border bg-popover text-popover-foreground shadow-lg
+                h-[var(--radix-navigation-menu-viewport-height)]
+                w-[var(--radix-navigation-menu-viewport-width)]
+                // anims
+                [animation-duration:150ms!important] [transition-duration:150ms!important]
+                data-[state=open]:animate-in data-[state=closed]:animate-out
+                data-[state=closed]:zoom-out-95 data-[state=open]:zoom-in-90
+              */
+              styles: [
+                tc.relative(),
+                tc.mt(1.5),
+                tc.overflow("hidden"),
+                tc.rounded("md"),
+                tc.border(),
+                tc.bg("popover"),
+                tc.text("popoverForeground"),
+                tc.shadow("lg"),
+                tc.property(
+                  "height",
+                  "--radix-navigation-menu-viewport-height"
+                ),
+                tc.property("width", "--radix-navigation-menu-viewport-width"),
+              ].flat(),
               children: [],
             },
           ],
@@ -380,22 +444,7 @@ export const metaNavigationMenuList: WsComponentMeta = {
   icon: ListIcon,
   requiredAncestors: ["NavigationMenu"],
   presetStyle,
-  presetTokens: {
-    navigationMenuList: {
-      styles: [
-        // ul defaults in tailwind
-        tc.p(0),
-        tc.m(0),
-        // shadcdn styles
-        tc.flex(),
-        tc.flex(1),
-        tc.list("none"),
-        tc.items("center"),
-        tc.justify("center"),
-        tc.gap(1),
-      ].flat(),
-    },
-  },
+  label: "Menu List",
 };
 
 export const metaNavigationMenuItem: WsComponentMeta = {
@@ -405,7 +454,7 @@ export const metaNavigationMenuItem: WsComponentMeta = {
   requiredAncestors: ["NavigationMenu"],
   presetStyle,
   indexWithinAncestor: "NavigationMenu",
-  // no default tokens
+  label: "Menu Item",
 };
 export const metaNavigationMenuTrigger: WsComponentMeta = {
   category: "hidden",
@@ -415,6 +464,7 @@ export const metaNavigationMenuTrigger: WsComponentMeta = {
   icon: TriggerIcon,
   requiredAncestors: ["NavigationMenuItem"],
   presetStyle,
+  label: "Menu Trigger",
 };
 export const metaNavigationMenuContent: WsComponentMeta = {
   category: "hidden",
@@ -423,21 +473,8 @@ export const metaNavigationMenuContent: WsComponentMeta = {
   icon: ContentIcon,
   requiredAncestors: ["NavigationMenuItem"],
   indexWithinAncestor: "NavigationMenu",
-
-  presetTokens: {
-    navigationMenuContent: {
-      // left-0 top-0 absolute w-max
-      styles: [
-        tc.left(0),
-        tc.top(0),
-        tc.absolute(),
-        tc.w("max"),
-        tc.p(4),
-      ].flat(),
-    },
-  },
-
   presetStyle,
+  label: "Menu Content",
 };
 
 export const metaNavigationMenuLink: WsComponentMeta = {
@@ -446,8 +483,12 @@ export const metaNavigationMenuLink: WsComponentMeta = {
   type: "container",
   stylable: false,
   icon: BoxIcon,
-  requiredAncestors: ["NavigationMenuContent"],
+  // https://github.com/webstudio-is/webstudio-builder/issues/2193
+  // requiredAncestors: ["NavigationMenuContent", "NavigationMenuItem"],
+  // Temporary restrict to NavigationMenu
+  requiredAncestors: ["NavigationMenu"],
   presetStyle,
+  label: "Accessible Link Wrapper",
 };
 
 export const metaNavigationMenuViewport: WsComponentMeta = {
@@ -457,32 +498,7 @@ export const metaNavigationMenuViewport: WsComponentMeta = {
   icon: ViewportIcon,
   requiredAncestors: ["NavigationMenu"],
   presetStyle,
-  presetTokens: {
-    navigationMenuViewport: {
-      /*
-        origin-top-center relative mt-1.5 w-full
-        overflow-hidden rounded-md border bg-popover text-popover-foreground shadow-lg
-        h-[var(--radix-navigation-menu-viewport-height)]
-        w-[var(--radix-navigation-menu-viewport-width)]
-        // anims
-        [animation-duration:150ms!important] [transition-duration:150ms!important]
-        data-[state=open]:animate-in data-[state=closed]:animate-out
-        data-[state=closed]:zoom-out-95 data-[state=open]:zoom-in-90
-      */
-      styles: [
-        tc.relative(),
-        tc.mt(1.5),
-        tc.overflow("hidden"),
-        tc.rounded("md"),
-        tc.border(),
-        tc.bg("popover"),
-        tc.text("popoverForeground"),
-        tc.shadow("lg"),
-        tc.property("height", "--radix-navigation-menu-viewport-height"),
-        tc.property("width", "--radix-navigation-menu-viewport-width"),
-      ].flat(),
-    },
-  },
+  label: "Menu Viewport",
 };
 
 export const propsMetaNavigationMenu: WsComponentPropsMeta = {

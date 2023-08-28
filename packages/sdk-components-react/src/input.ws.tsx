@@ -24,6 +24,8 @@ export const meta: WsComponentMeta = {
   invalidAncestors: ["Button"],
   type: "control",
   label: "Text Input",
+  description:
+    "A single-line text input for collecting string data from your users.",
   icon: FormTextFieldIcon,
   presetStyle,
   order: 3,

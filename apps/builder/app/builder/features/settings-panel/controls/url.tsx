@@ -10,7 +10,6 @@ import {
   ToggleGroupButton,
   Select,
   Tooltip,
-  Label,
 } from "@webstudio-is/design-system";
 import {
   AttachmentIcon,
@@ -30,6 +29,7 @@ import {
   getLabel,
   useLocalValue,
   VerticalLayout,
+  Label,
 } from "../shared";
 import { SelectAsset } from "./select-asset";
 
@@ -402,9 +402,12 @@ export const UrlControl = ({
 
   return (
     <VerticalLayout
-      label={getLabel(meta, propName)}
+      label={
+        <Label htmlFor={id} description={meta.description}>
+          {getLabel(meta, propName)}
+        </Label>
+      }
       onDelete={onDelete}
-      id={id}
     >
       <Flex
         css={{
