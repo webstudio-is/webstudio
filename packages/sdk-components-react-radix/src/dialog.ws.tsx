@@ -6,6 +6,7 @@ import {
   HeadingIcon,
   TextIcon,
   ButtonElementIcon,
+  LargeXIcon,
 } from "@webstudio-is/icons/svg";
 import {
   type PresetStyle,
@@ -23,15 +24,11 @@ import {
   propsDialogTitle,
   propsDialogDescription,
 } from "./__generated__/dialog.props";
-import { getButtonStyles } from "./theme/styles";
+import { buttonReset, getButtonStyles } from "./theme/styles";
 
 const presetStyle = {
   div,
 } satisfies PresetStyle<"div">;
-
-const buttonPresetStyle = {
-  button,
-} satisfies PresetStyle<"button">;
 
 const titlePresetStyle = {
   h2,
@@ -83,7 +80,9 @@ export const metaDialogDescription: WsComponentMeta = {
 export const metaDialogClose: WsComponentMeta = {
   category: "hidden",
   type: "container",
-  presetStyle: buttonPresetStyle,
+  presetStyle: {
+    button: [buttonReset, button].flat(),
+  },
   icon: ButtonElementIcon,
   label: "Close Button",
 };
@@ -259,7 +258,21 @@ export const metaDialog: WsComponentMeta = {
                     tc.hover(tc.opacity(100)),
                     tc.focus(tc.ring("ring", 2, "background", 2)),
                   ].flat(),
-                  children: [{ type: "text", value: "✕" }],
+                  children: [
+                    {
+                      type: "instance",
+                      component: "HtmlEmbed",
+                      label: "Close Icon",
+                      props: [
+                        {
+                          type: "string",
+                          name: "code",
+                          value: LargeXIcon,
+                        },
+                      ],
+                      children: [],
+                    },
+                  ],
                 },
               ],
             },

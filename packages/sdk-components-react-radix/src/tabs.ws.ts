@@ -4,11 +4,12 @@ import {
   TabsIcon,
   TriggerIcon,
 } from "@webstudio-is/icons/svg";
-import type {
-  EmbedTemplateStyleDecl,
-  PresetStyle,
-  WsComponentMeta,
-  WsComponentPropsMeta,
+import {
+  defaultStates,
+  type EmbedTemplateStyleDecl,
+  type PresetStyle,
+  type WsComponentMeta,
+  type WsComponentPropsMeta,
 } from "@webstudio-is/react-sdk";
 import { button, div } from "@webstudio-is/react-sdk/css-normalize";
 import * as tc from "./theme/tailwind-classes";
@@ -157,6 +158,14 @@ export const metaTabsTrigger: WsComponentMeta = {
   invalidAncestors: ["TabsTrigger"],
   indexWithinAncestor: "Tabs",
   label: "Tab Trigger",
+  states: [
+    ...defaultStates,
+    {
+      category: "component-states",
+      label: "Active",
+      selector: "[data-state=active]",
+    },
+  ],
   presetStyle: {
     button: [button, buttonReset].flat(),
   },
@@ -165,11 +174,11 @@ export const metaTabsTrigger: WsComponentMeta = {
 export const metaTabsContent: WsComponentMeta = {
   category: "hidden",
   type: "container",
+  label: "Tab Content",
   icon: ContentIcon,
   requiredAncestors: ["Tabs"],
   indexWithinAncestor: "Tabs",
   presetStyle,
-  label: "Tab Content",
 };
 
 export const propsMetaTabs: WsComponentPropsMeta = {
