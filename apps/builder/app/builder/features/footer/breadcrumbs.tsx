@@ -5,7 +5,6 @@ import {
   DeprecatedButton,
   Flex,
   Text,
-  Box,
 } from "@webstudio-is/design-system";
 import {
   instancesStore,

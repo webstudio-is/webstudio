@@ -1,4 +1,4 @@
-import { Box, Flex, darkTheme } from "@webstudio-is/design-system";
+import { Flex, darkTheme } from "@webstudio-is/design-system";
 import { Breadcrumbs } from "./breadcrumbs";
 import { theme } from "@webstudio-is/design-system";
 
