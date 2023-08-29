@@ -71,10 +71,6 @@ export const buttonReset: EmbedTemplateStyleDecl[] = [
     property: "backgroundImage",
     value: { type: "keyword", value: "none" },
   } as const,
-  {
-    property: "cursor",
-    value: { type: "keyword", value: "pointer" },
-  } as const,
   tc.border(0),
   tc.p(0),
 ].flat();

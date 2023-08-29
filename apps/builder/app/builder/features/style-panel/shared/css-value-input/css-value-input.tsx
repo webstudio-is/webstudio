@@ -132,7 +132,7 @@ const useScrub = ({
     };
 
     return numericScrubControl(scrubRefCurrent, {
-      // @todo: after this https://github.com/webstudio-is/webstudio-builder/issues/564
+      // @todo: after this https://github.com/webstudio-is/webstudio/issues/564
       // we can switch back on using just initial value
       //
       // For now we are reusing controls for different selectedInstanceData,

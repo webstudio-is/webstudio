@@ -483,7 +483,7 @@ export const metaNavigationMenuLink: WsComponentMeta = {
   type: "container",
   stylable: false,
   icon: BoxIcon,
-  // https://github.com/webstudio-is/webstudio-builder/issues/2193
+  // https://github.com/webstudio-is/webstudio/issues/2193
   // requiredAncestors: ["NavigationMenuContent", "NavigationMenuItem"],
   // Temporary restrict to NavigationMenu
   requiredAncestors: ["NavigationMenu"],

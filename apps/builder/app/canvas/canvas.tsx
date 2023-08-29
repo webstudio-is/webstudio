@@ -93,7 +93,7 @@ const useElementsTree = (
   const rootInstanceId = page?.rootInstanceId ?? "";
 
   if (typeof window === "undefined") {
-    // @todo remove after https://github.com/webstudio-is/webstudio-builder/issues/1313 now its needed to be sure that no leaks exists
+    // @todo remove after https://github.com/webstudio-is/webstudio/issues/1313 now its needed to be sure that no leaks exists
     // eslint-disable-next-line no-console
     console.log({
       assetsStore: assetsStore.get().size,

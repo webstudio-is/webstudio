@@ -143,7 +143,7 @@ export const Menu = ({ publish }: MenuProps) => {
             </DropdownMenuItemRightSlot>
           </DropdownMenuItem>
           <DropdownMenuSeparator />
-          {/* https://github.com/webstudio-is/webstudio-builder/issues/499
+          {/* https://github.com/webstudio-is/webstudio/issues/499
 
           <DropdownMenuItem
             onSelect={() => {

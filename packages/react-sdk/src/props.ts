@@ -144,7 +144,7 @@ export const resolveUrlProp = (
 
   let prop = undefined;
 
-  // We had a bug that some props were duplicated https://github.com/webstudio-is/webstudio-builder/pull/2170
+  // We had a bug that some props were duplicated https://github.com/webstudio-is/webstudio/pull/2170
   // Use the latest prop to ensure consistency with the builder settings panel.
   for (const intanceProp of instanceProps) {
     if (intanceProp.name !== name) {

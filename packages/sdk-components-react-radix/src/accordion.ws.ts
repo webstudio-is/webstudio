@@ -6,12 +6,13 @@ import {
   ContentIcon,
   ChevronDownIcon,
 } from "@webstudio-is/icons/svg";
-import type {
-  EmbedTemplateStyleDecl,
-  PresetStyle,
-  WsComponentMeta,
-  WsComponentPropsMeta,
-  WsEmbedTemplate,
+import {
+  defaultStates,
+  type EmbedTemplateStyleDecl,
+  type PresetStyle,
+  type WsComponentMeta,
+  type WsComponentPropsMeta,
+  type WsEmbedTemplate,
 } from "@webstudio-is/react-sdk";
 import { div, h3, button } from "@webstudio-is/react-sdk/css-normalize";
 import * as tc from "./theme/tailwind-classes";
@@ -224,50 +225,58 @@ export const metaAccordion: WsComponentMeta = {
 export const metaAccordionItem: WsComponentMeta = {
   category: "hidden",
   type: "container",
+  label: "Item",
   icon: ItemIcon,
   requiredAncestors: ["Accordion"],
   indexWithinAncestor: "Accordion",
   presetStyle,
-  label: "Item",
 };
 
 export const metaAccordionHeader: WsComponentMeta = {
   category: "hidden",
   type: "container",
+  label: "Item Header",
   icon: HeaderIcon,
   requiredAncestors: ["AccordionItem"],
   detachable: false,
   presetStyle: {
     h3: [h3, tc.my(0)].flat(),
   },
-  label: "Item Header",
 };
 
 export const metaAccordionTrigger: WsComponentMeta = {
   category: "hidden",
   type: "container",
+  label: "Item Trigger",
   icon: TriggerIcon,
   requiredAncestors: ["AccordionHeader"],
   detachable: false,
+  states: [
+    ...defaultStates,
+    {
+      category: "component-states",
+      label: "Open",
+      selector: "[data-state=open]",
+    },
+  ],
   presetStyle: {
     button: [button, buttonReset].flat(),
   },
-  label: "Item Trigger",
 };
 
 export const metaAccordionContent: WsComponentMeta = {
   category: "hidden",
   type: "container",
+  label: "Item Content",
   icon: ContentIcon,
   requiredAncestors: ["AccordionItem"],
   detachable: false,
   presetStyle,
-  label: "Item Content",
 };
 
 export const propsMetaAccordion: WsComponentPropsMeta = {
   props: propsAccordion,
-  initialProps: ["value", "collapsible", "dir", "orientation"],
+  initialProps: ["value", "collapsible"],
 };
 
 export const propsMetaAccordionItem: WsComponentPropsMeta = {

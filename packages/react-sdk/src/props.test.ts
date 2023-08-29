@@ -177,7 +177,7 @@ describe("resolveUrlProp", () => {
     });
   });
 
-  // We had a bug that some props were duplicated https://github.com/webstudio-is/webstudio-builder/pull/2170
+  // We had a bug that some props were duplicated https://github.com/webstudio-is/webstudio/pull/2170
   // Use the latest prop to ensure consistency with the builder settings panel.
   test("duplicate prop name", () => {
     expect(resolveUrlProp(instanceId, duplicatePropName, stores)).toEqual({

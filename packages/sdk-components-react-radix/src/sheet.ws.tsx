@@ -1,4 +1,4 @@
-import { HamburgerMenuIcon } from "@webstudio-is/icons/svg";
+import { HamburgerMenuIcon, LargeXIcon } from "@webstudio-is/icons/svg";
 import type { WsComponentMeta } from "@webstudio-is/react-sdk";
 import * as tc from "./theme/tailwind-classes";
 import { getButtonStyles } from "./theme/styles";
@@ -210,7 +210,21 @@ export const meta: WsComponentMeta = {
                     tc.hover(tc.opacity(100)),
                     tc.focus(tc.ring("ring", 2, "background", 2)),
                   ].flat(),
-                  children: [{ type: "text", value: "✕" }],
+                  children: [
+                    {
+                      type: "instance",
+                      component: "HtmlEmbed",
+                      label: "Close Icon",
+                      props: [
+                        {
+                          type: "string",
+                          name: "code",
+                          value: LargeXIcon,
+                        },
+                      ],
+                      children: [],
+                    },
+                  ],
                 },
               ],
             },
