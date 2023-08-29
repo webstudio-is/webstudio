@@ -23,6 +23,6 @@
 - [Contributing guide](https://github.com/webstudio-is/webstudio/blob/main/docs/contributing.md)
 - [Github Discussions](https://github.com/webstudio-is/webstudio/discussions)
 - [Wishlist](https://github.com/webstudio-is/webstudio/discussions/categories/wishlist)
-- [Builder Issues tracker](https://github.com/webstudio-is/webstudio-builder/issues)
+- [Builder Issues tracker](https://github.com/webstudio-is/webstudio/issues)
 - [Roadmap](https://github.com/orgs/webstudio-is/projects)
 - [Design Assets and docs](https://github.com/webstudio-is/webstudio-design)

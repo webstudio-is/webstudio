@@ -41,7 +41,7 @@ export const PositionSection = ({
   const { items: unfilteredPositionItems } = styleConfigByName("position");
 
   // Filter out "inherit" as we have no a good way to handle it
-  // @todo remove after https://github.com/webstudio-is/webstudio-builder/issues/1536
+  // @todo remove after https://github.com/webstudio-is/webstudio/issues/1536
   const positionItems = unfilteredPositionItems.filter(
     (item) => item.name !== "inherit"
   );

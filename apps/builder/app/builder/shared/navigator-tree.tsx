@@ -108,7 +108,7 @@ export const NavigatorTree = () => {
   );
 
   const handleSelect = useCallback((instanceSelector: InstanceSelector) => {
-    // TreeNode is refocused during "delete" hot key here https://github.com/webstudio-is/webstudio-builder/blob/5935d7818fba3739e4f16fe710ea468bf9d0ac78/packages/design-system/src/components/tree/tree.tsx#L435
+    // TreeNode is refocused during "delete" hot key here https://github.com/webstudio-is/webstudio/blob/5935d7818fba3739e4f16fe710ea468bf9d0ac78/packages/design-system/src/components/tree/tree.tsx#L435
     // and then focus cause handleSelect to be called with the same instanceSelector
     // This avoids additional rerender on node delete
     if (shallowEqual(selectedInstanceSelectorStore.get(), instanceSelector)) {

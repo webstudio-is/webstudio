@@ -181,7 +181,7 @@ export const prebuild = async () => {
       const image = getImageAttributes({
         /*
           TODO:
-          https://github.com/webstudio-is/webstudio-builder/issues/2135
+          https://github.com/webstudio-is/webstudio/issues/2135
           There should be a option in the loader, that allows to download
           original image instead of the processed one. Right now, we are using
           the width from the asset meta
