@@ -9,6 +9,7 @@ import {
   LargeXIcon,
 } from "@webstudio-is/icons/svg";
 import {
+  defaultStates,
   type PresetStyle,
   type WsComponentMeta,
   type WsComponentPropsMeta,
@@ -83,6 +84,7 @@ export const metaDialogClose: WsComponentMeta = {
   presetStyle: {
     button: [buttonReset, button].flat(),
   },
+  states: defaultStates,
   icon: ButtonElementIcon,
   label: "Close Button",
 };
