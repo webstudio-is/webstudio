@@ -12,7 +12,7 @@ import {
   type Data,
 } from "@webstudio-is/react-sdk";
 import { n8nHandler, hasMatchingForm } from "@webstudio-is/form-handlers";
-
+import { Scripts, ScrollRestoration } from "@remix-run/react";
 import {
   fontAssets,
   components,
@@ -127,7 +127,19 @@ const Outlet = () => {
     params,
   };
 
-  return <InstanceRoot data={data} components={components} utils={utils} />;
+  return (
+    <InstanceRoot
+      data={data}
+      components={components}
+      utils={utils}
+      scripts={
+        <>
+          <Scripts />
+          <ScrollRestoration />
+        </>
+      }
+    />
+  );
 };
 
 export default Outlet;

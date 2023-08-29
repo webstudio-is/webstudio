@@ -453,6 +453,9 @@ importers:
       '@webstudio-is/sdk-components-react':
         specifier: workspace:^
         version: link:../sdk-components-react
+      '@webstudio-is/sdk-components-react-radix':
+        specifier: workspace:^
+        version: link:../sdk-components-react-radix
       '@webstudio-is/sdk-components-react-remix':
         specifier: workspace:^
         version: link:../sdk-components-react-remix
