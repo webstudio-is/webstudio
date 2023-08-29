@@ -9,7 +9,7 @@
 ## Learning ressources
 
 - [Blog](https://webstudio.is/blog)
-- [Community documentation](https://github.com/webstudio-is/webstudio/tree/main/docs)
+- [Community documentation](https://github.com/webstudio-is/webstudio-community/tree/main/docs)
 - [Brand and product design](https://github.com/webstudio-is/webstudio-design/)
 
 ## Social Media
@@ -20,9 +20,9 @@
 
 ## Contributing
 
-- [Contributing guide](https://github.com/webstudio-is/webstudio/blob/main/docs/contributing.md)
-- [Github Discussions](https://github.com/webstudio-is/webstudio/discussions)
-- [Wishlist](https://github.com/webstudio-is/webstudio/discussions/categories/wishlist)
+- [Contributing guide](https://github.com/webstudio-is/webstudio-community/blob/main/docs/contributing.md)
+- [Github Discussions](https://github.com/webstudio-is/webstudio-community/discussions)
+- [Wishlist](https://github.com/webstudio-is/webstudio-community/discussions/categories/wishlist)
 - [Builder Issues tracker](https://github.com/webstudio-is/webstudio/issues)
 - [Roadmap](https://github.com/orgs/webstudio-is/projects)
 - [Design Assets and docs](https://github.com/webstudio-is/webstudio-design)
