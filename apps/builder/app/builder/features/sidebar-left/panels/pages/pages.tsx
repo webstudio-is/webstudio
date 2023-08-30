@@ -17,8 +17,8 @@ import {
 import {
   ChevronRightIcon,
   MenuIcon,
-  NewPageIcon,
   PageIcon,
+  PlusIcon,
 } from "@webstudio-is/icons";
 import type { Page, Pages } from "@webstudio-is/project-build";
 import type { Publish } from "~/shared/pubsub";
@@ -197,7 +197,7 @@ const PagesPanel = ({
                 <Button
                   onClick={() => onCreateNewPage()}
                   aria-label="New page"
-                  prefix={<NewPageIcon />}
+                  prefix={<PlusIcon />}
                   color="ghost"
                 />
               </Tooltip>
