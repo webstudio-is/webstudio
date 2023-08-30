@@ -6,7 +6,7 @@ import {
   useEffect,
 } from "react";
 import equal from "fast-deep-equal";
-import type { WsComponentPropsMeta } from "@webstudio-is/react-sdk";
+import type { PropMeta } from "@webstudio-is/react-sdk";
 import type { Prop } from "@webstudio-is/project-build";
 import type { Asset } from "@webstudio-is/asset-uploader";
 import { SubtractIcon } from "@webstudio-is/icons";
@@ -23,8 +23,6 @@ import {
   type CSS,
 } from "@webstudio-is/design-system";
 import { humanizeString } from "~/shared/string-utils";
-
-export type PropMeta = WsComponentPropsMeta["props"][string];
 
 export type PropValue = Prop extends infer T
   ? T extends { value: unknown; type: unknown }

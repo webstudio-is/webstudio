@@ -1,5 +1,5 @@
 import type { PropItem } from "react-docgen-typescript";
-import { PropMeta } from "./types";
+import { PropMeta } from "@webstudio-is/react-sdk";
 
 export type FilterPredicate = (prop: PropItem) => boolean;
 

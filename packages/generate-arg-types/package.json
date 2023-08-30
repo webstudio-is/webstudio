@@ -13,9 +13,10 @@
     "checks": "pnpm typecheck"
   },
   "dependencies": {
+    "@webstudio-is/html-data": "workspace:^",
+    "@webstudio-is/react-sdk": "workspace:^",
     "fast-glob": "^3.2.12",
     "react-docgen-typescript": "^2.2.2",
-    "@webstudio-is/html-data": "workspace:^",
     "zod": "^3.21.4"
   },
   "devDependencies": {
@@ -32,11 +33,6 @@
   ],
   "bin": {
     "generate-arg-types": "./src/cli.ts"
-  },
-  "exports": {
-    "source": "./src/index.ts",
-    "types": "./lib/types/index.d.ts",
-    "import": "./lib/index.js"
   },
   "license": "AGPL-3.0-or-later",
   "private": false,

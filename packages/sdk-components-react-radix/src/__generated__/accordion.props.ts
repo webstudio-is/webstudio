@@ -1,4 +1,4 @@
-import type { PropMeta } from "@webstudio-is/generate-arg-types";
+import type { PropMeta } from "@webstudio-is/react-sdk";
 
 export const propsAccordion: Record<string, PropMeta> = {
   about: { required: false, control: "text", type: "string" },

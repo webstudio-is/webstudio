@@ -41,7 +41,7 @@
   "scripts": {
     "dev": "build-package --watch",
     "build": "build-package",
-    "build:args": "generate-arg-types './src/*.tsx !./src/*.stories.tsx !./src/*.ws.tsx' -e asChild -e modal -e defaultValue -e defaultOpen -e defaultChecked && prettier --write \"**/*.props.ts\"",
+    "build:args": "NODE_OPTIONS=--conditions=source generate-arg-types './src/*.tsx !./src/*.stories.tsx !./src/*.ws.tsx' -e asChild -e modal -e defaultValue -e defaultOpen -e defaultChecked && prettier --write \"**/*.props.ts\"",
     "dts": "tsc --project tsconfig.dts.json",
     "typecheck": "tsc",
     "checks": "pnpm typecheck",
@@ -66,7 +66,6 @@
     "@radix-ui/react-tabs": "^1.0.4",
     "@radix-ui/react-tooltip": "^1.0.6",
     "@webstudio-is/css-data": "workspace:^",
-    "@webstudio-is/generate-arg-types": "workspace:^",
     "@webstudio-is/icons": "workspace:^",
     "@webstudio-is/react-sdk": "workspace:^",
     "tailwindcss": "^3.3.3"
@@ -75,6 +74,7 @@
     "@storybook/react": "^7.2.1",
     "@types/react": "^18.2.20",
     "@types/react-dom": "^18.2.7",
+    "@webstudio-is/generate-arg-types": "workspace:^",
     "@webstudio-is/scripts": "workspace:^",
     "@webstudio-is/sdk-components-react": "workspace:^",
     "@webstudio-is/storybook-config": "workspace:^",

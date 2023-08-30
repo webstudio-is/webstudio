@@ -1,5 +1,5 @@
 import { z } from "zod";
-import { PropMeta } from "@webstudio-is/generate-arg-types";
+import { PropMeta } from "../prop-meta";
 import type { htmlTags as HtmlTags } from "html-tags";
 import { EmbedTemplateStyleDecl, WsEmbedTemplate } from "../embed-template";
 

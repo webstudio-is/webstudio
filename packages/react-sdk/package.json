@@ -8,7 +8,6 @@
   "scripts": {
     "dev": "build-package --watch",
     "build": "build-package",
-    "build:args": "generate-arg-types './src/components/*.tsx ./src/app/custom-components/*.tsx !./src/**/*.stories.tsx !./src/**/*.ws.tsx' && prettier --write \"**/*.props.ts\"",
     "dts": "tsc --project tsconfig.dts.json",
     "typecheck": "tsc",
     "test": "NODE_OPTIONS=--experimental-vm-modules jest --passWithNoTests",
@@ -42,7 +41,6 @@
     "@webstudio-is/css-data": "workspace:^",
     "@webstudio-is/css-engine": "workspace:^",
     "@webstudio-is/fonts": "workspace:^",
-    "@webstudio-is/generate-arg-types": "workspace:^",
     "@webstudio-is/project-build": "workspace:^",
     "html-tags": "^3.3.1",
     "jsep": "^1.3.8",
