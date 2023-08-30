@@ -1,7 +1,7 @@
 ## A migration failed in PREVIEW, how do I fix the PREVIEW database
 
 1. Open a new PR where you'll do the fix
-1. Go to https://vercel.com/webstudio-is/webstudio-builder/settings/environment-variables
+1. Go to https://vercel.com/webstudio-is/webstudio/settings/environment-variables
 1. Set APPLY_MIGRATIONS to "true" for your PR's branch
 1. Fix the failed migration code
 1. Fix the database mannually if the migration have been applied half-way
