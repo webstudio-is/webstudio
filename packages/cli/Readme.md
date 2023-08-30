@@ -48,7 +48,7 @@ The project is scaffolded now. You can run `npm install` and then `npm run dev` 
 - To use a local version of the `cli`, you need to clone the repository.
 
 ```sh
-git clone https://github.com/webstudio-is/webstudio-builder
+git clone https://github.com/webstudio-is/webstudio
 ```
 
 - Then run `pnpm install` to install all the dependencies.
