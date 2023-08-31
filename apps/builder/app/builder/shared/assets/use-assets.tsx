@@ -8,7 +8,6 @@ import { sanitizeS3Key } from "@webstudio-is/asset-uploader";
 import { restAssetsUploadPath, restAssetsPath } from "~/shared/router-utils";
 import type {
   AssetContainer,
-  PreviewAsset,
   UploadedAssetContainer,
   UploadingAssetContainer,
 } from "./types";
@@ -24,17 +23,6 @@ export const deleteAssets = (assetIds: Asset["id"][]) => {
   store.createTransaction([assetsStore], (assets) => {
     for (const assetId of assetIds) {
       assets.delete(assetId);
-    }
-  });
-};
-
-// stubbed asset is necessary to preserve position of asset
-// while uploading and after it is uploaded
-// undefined is not stored in db and only persisted in current session
-const stubAssets = (ids: Asset["id"][]) => {
-  store.createTransaction([assetsStore], (assets) => {
-    for (const assetId of ids) {
-      assets.set(assetId, undefined);
     }
   });
 };
@@ -80,12 +68,9 @@ const deleteUploadingFileData = (id: FileData["assetId"]) => {
 const assetContainersStore = computed(
   [assetsStore, uploadingFilesDataStore],
   (assets, uploadingFilesData) => {
-    const uploadingAssets = new Map<
-      PreviewAsset["id"],
-      UploadingAssetContainer
-    >();
+    const uploadingContainers: UploadingAssetContainer[] = [];
     for (const { assetId, type, file, objectURL } of uploadingFilesData) {
-      uploadingAssets.set(assetId, {
+      uploadingContainers.push({
         status: "uploading",
         objectURL: objectURL,
         asset: {
@@ -97,20 +82,12 @@ const assetContainersStore = computed(
         },
       });
     }
-    const uploadingContainers: UploadingAssetContainer[] = [];
     const uploadedContainers: UploadedAssetContainer[] = [];
-    for (const [assetId, asset] of assets) {
-      const uploadingAsset = uploadingAssets.get(assetId);
-      if (uploadingAsset) {
-        uploadingContainers.push(uploadingAsset);
-        continue;
-      }
-      if (asset) {
-        uploadedContainers.push({
-          status: "uploaded",
-          asset,
-        });
-      }
+    for (const asset of assets.values()) {
+      uploadedContainers.push({
+        status: "uploaded",
+        asset,
+      });
     }
     // sort newest uploaded assets first
     uploadedContainers.sort(
@@ -204,7 +181,6 @@ export const useUploadAsset = () => {
     const filesData = getFilesData(type, files);
 
     addUploadingFilesData(filesData);
-    stubAssets(filesData.map((fileData) => fileData.assetId));
 
     for (const fileData of filesData) {
       const assetId = fileData.assetId;

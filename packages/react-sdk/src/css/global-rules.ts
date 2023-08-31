@@ -14,7 +14,7 @@ export const addGlobalRules = (
 
   const fontAssets: FontAsset[] = [];
   for (const asset of assets.values()) {
-    if (asset?.type === "font") {
+    if (asset.type === "font") {
       fontAssets.push(asset);
     }
   }
