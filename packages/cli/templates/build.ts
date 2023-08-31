@@ -14,6 +14,10 @@ const ROUTER_TEMPLATE_PATH = new URL(
   "../src/__generated__/router.ts",
   import.meta.url
 ).pathname;
+const DEFUALT_ASSETS_PATH = new URL(
+  "../src/__generated__/assets.ts",
+  import.meta.url
+).pathname;
 
 console.info("Building Templates...");
 await rm(new URL("../src/__generated__", import.meta.url).pathname, {
@@ -114,3 +118,58 @@ export const getRouteTemplate = () => {
   }`;
 
 await ensureFileInPath(ROUTER_TEMPLATE_PATH, routeTemplateContent);
+
+/*
+  Building default assets
+*/
+
+const parseAssets = (folderPath: string): Folder | undefined => {
+  const folderName = folderPath.split("/").pop();
+  if (folderName === undefined) {
+    return;
+  }
+
+  const folder: Folder = {
+    name: folderName,
+    files: [],
+    subFolders: [],
+  };
+
+  const files = readdirSync(folderPath);
+  for (const file of files) {
+    const filePath = join(folderPath, file);
+    const statSync = lstatSync(filePath);
+    const isDirectory = statSync.isDirectory();
+    const isFile = statSync.isFile();
+
+    if (isDirectory) {
+      const subFolder = parseAssets(filePath);
+      if (subFolder !== undefined) {
+        folder.subFolders.push(subFolder);
+      }
+    }
+
+    if (isFile) {
+      const content = readFileSync(filePath, "base64");
+      folder.files.push({
+        name: file,
+        content,
+        encoding: "base64",
+      });
+    }
+  }
+
+  return folder;
+};
+
+const assets = parseAssets(new URL("./assets", import.meta.url).pathname);
+
+const assetsContent = `/*
+This is an auto-generated file. Please don't change manually.
+If needed to make any changes. Add them to ./public folder and run pnpm run build:templates
+*/
+
+import type { Folder } from "../args"\n
+export const assets: Folder = ${JSON.stringify(assets, null, 2)}`;
+
+await ensureFileInPath(DEFUALT_ASSETS_PATH, assetsContent);
