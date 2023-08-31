@@ -10,7 +10,7 @@ export const registerToken = async (
   props: {
     projectId: string;
     tokenId: string;
-    relation: "viewers" | "editors" | "builders";
+    relation: "viewers" | "editors" | "builders" | "administrators";
   },
   context: AppContext
 ) => {
@@ -36,9 +36,9 @@ export const registerToken = async (
 export const patchToken = async (
   props: { projectId: string; tokenId: string },
 
-  prevRelation: "viewers" | "editors" | "builders",
+  prevRelation: "viewers" | "editors" | "builders" | "administrators",
 
-  nextRelation: "viewers" | "editors" | "builders",
+  nextRelation: "viewers" | "editors" | "builders" | "administrators",
 
   context: AppContext
 ) => {

@@ -126,6 +126,13 @@ const Menu = ({
             title="Build"
             info="Recipients can view the site and edit content like text and images and change the styles or structure of your site."
           />
+
+          <Permission
+            onCheckedChange={handleCheckedChange("administrators")}
+            checked={relation === "administrators"}
+            title="Admin"
+            info="Recipients can view the site and edit content like text and images and change the styles or structure of your site. Can publish."
+          />
         </Item>
         <Separator />
         <Item>
@@ -153,7 +160,7 @@ const itemStyle = css({
   backgroundColor: theme.colors.backgroundPanel,
 });
 
-type Relation = "viewers" | "editors" | "builders";
+type Relation = "viewers" | "editors" | "builders" | "administrators";
 
 export type LinkOptions = {
   token: string;
