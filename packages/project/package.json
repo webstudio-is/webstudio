@@ -13,7 +13,7 @@
     "dts": "tsc --project tsconfig.dts.json"
   },
   "dependencies": {
-    "@trpc/server": "^10.9.0",
+    "@trpc/server": "^10.38.1",
     "@webstudio-is/asset-uploader": "workspace:^",
     "@webstudio-is/prisma-client": "workspace:^",
     "@webstudio-is/project-build": "workspace:^",

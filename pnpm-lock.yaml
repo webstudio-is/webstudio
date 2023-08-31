@@ -106,8 +106,8 @@ importers:
         specifier: 7.47.0
         version: 7.47.0
       '@trpc/server':
-        specifier: ^10.9.0
-        version: 10.9.0
+        specifier: ^10.38.1
+        version: 10.38.1
       '@vercel/remix':
         specifier: ^1.19.2
         version: 1.19.2(react-dom@18.2.0)(react@18.2.0)
@@ -1145,8 +1145,8 @@ importers:
   packages/project:
     dependencies:
       '@trpc/server':
-        specifier: ^10.9.0
-        version: 10.9.0
+        specifier: ^10.38.1
+        version: 10.38.1
       '@webstudio-is/asset-uploader':
         specifier: workspace:^
         version: link:../asset-uploader
@@ -1619,11 +1619,11 @@ importers:
   packages/trpc-interface:
     dependencies:
       '@trpc/client':
-        specifier: ^10.9.0
-        version: 10.9.0(@trpc/server@10.9.0)
+        specifier: ^10.38.1
+        version: 10.38.1(@trpc/server@10.38.1)
       '@trpc/server':
-        specifier: ^10.9.0
-        version: 10.9.0
+        specifier: ^10.38.1
+        version: 10.38.1
       '@webstudio-is/prisma-client':
         specifier: workspace:^
         version: link:../prisma-client
@@ -7268,16 +7268,16 @@ packages:
     resolution: {integrity: sha512-C5Mc6rdnsaJDjO3UpGW/CQTHtCKaYlScZTly4JIu97Jxo/odCiH0ITnDXSJPTOrEKk/ycSZ0AOgTmkDtkOsvIA==}
     dev: true
 
-  /@trpc/client@10.9.0(@trpc/server@10.9.0):
-    resolution: {integrity: sha512-id6318qpgqllNOuBp7nuciXFPXCe+zae5d4r1hze6Eyp5fFFNO58TqA+4Q44KIcHgpfWyW2egs6iPeql3PrdKA==}
+  /@trpc/client@10.38.1(@trpc/server@10.38.1):
+    resolution: {integrity: sha512-kY7ZV7Eco5SeFIGJX6OBg7AAKkiMt5+1N+GC7N1lTZszrw95ZiNgtkZ5TI6+Un4O+RqrOcqqast6MeExCoyZhQ==}
     peerDependencies:
-      '@trpc/server': 10.9.0
+      '@trpc/server': 10.38.1
     dependencies:
-      '@trpc/server': 10.9.0
+      '@trpc/server': 10.38.1
     dev: false
 
-  /@trpc/server@10.9.0:
-    resolution: {integrity: sha512-5psyZgbvy29pJND32hwkWTMbv6s86IbsPOeDopsgNF0VegZT6Dsijmb7Ub/TDhuJVQVq5u4u5briMXi3SxmBkw==}
+  /@trpc/server@10.38.1:
+    resolution: {integrity: sha512-59mM0Jk3cnWBExSv4Z4cw/776MPwa+rcVNywnV5gyHyK/p5qHtis1b1JPYdTEQZ0zhR+6zeto14rTR51hg+Nuw==}
     dev: false
 
   /@trysound/sax@0.2.0:
