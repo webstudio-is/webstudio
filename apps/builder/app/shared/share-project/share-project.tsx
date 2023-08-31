@@ -19,6 +19,7 @@ import {
 } from "@webstudio-is/design-system";
 import { CopyIcon, InfoIcon, MenuIcon, PlusIcon } from "@webstudio-is/icons";
 import { Fragment, useState, type ComponentProps } from "react";
+import { isFeatureEnabled } from "@webstudio-is/feature-flags";
 
 const Item = (props: ComponentProps<typeof Flex>) => (
   <Flex
@@ -127,12 +128,14 @@ const Menu = ({
             info="Recipients can view the site and edit content like text and images and change the styles or structure of your site."
           />
 
-          <Permission
-            onCheckedChange={handleCheckedChange("administrators")}
-            checked={relation === "administrators"}
-            title="Admin"
-            info="Recipients can view the site and edit content like text and images and change the styles or structure of your site. Can publish."
-          />
+          {isFeatureEnabled("adminRole") && (
+            <Permission
+              onCheckedChange={handleCheckedChange("administrators")}
+              checked={relation === "administrators"}
+              title="Admin"
+              info="Recipients can view the site and edit content like text and images and change the styles or structure of your site. Can publish."
+            />
+          )}
         </Item>
         <Separator />
         <Item>
