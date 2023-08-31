@@ -11,7 +11,7 @@ import {
 } from "~/shared/nano-states";
 import { setMockEnv } from "~/shared/env";
 import type { Instance, Prop } from "@webstudio-is/project-build";
-import type { WsComponentPropsMeta } from "@webstudio-is/react-sdk";
+import type { PropMeta } from "@webstudio-is/react-sdk";
 import { textVariants } from "@webstudio-is/design-system";
 import type { Asset } from "@webstudio-is/asset-uploader";
 // eslint-disable-next-line import/no-internal-modules
@@ -123,8 +123,6 @@ assetsStore.set(
     )
   )
 );
-
-type PropMeta = WsComponentPropsMeta["props"][string];
 
 const textProp = (label?: string, defaultValue?: string): PropMeta => ({
   type: "string",

@@ -1,4 +1,4 @@
-import type { PropMeta } from "@webstudio-is/generate-arg-types";
+import type { PropMeta } from "@webstudio-is/react-sdk";
 
 export const propsSheet: Record<string, PropMeta> = {
   open: {

@@ -942,6 +942,9 @@ importers:
       '@webstudio-is/html-data':
         specifier: workspace:^
         version: link:../html-data
+      '@webstudio-is/react-sdk':
+        specifier: workspace:^
+        version: link:../react-sdk
       fast-glob:
         specifier: ^3.2.12
         version: 3.2.12
@@ -1236,9 +1239,6 @@ importers:
       '@webstudio-is/fonts':
         specifier: workspace:^
         version: link:../fonts
-      '@webstudio-is/generate-arg-types':
-        specifier: workspace:^
-        version: link:../generate-arg-types
       '@webstudio-is/project-build':
         specifier: workspace:^
         version: link:../project-build
@@ -1334,9 +1334,6 @@ importers:
       '@webstudio-is/css-vars':
         specifier: workspace:^
         version: link:../css-vars
-      '@webstudio-is/generate-arg-types':
-        specifier: workspace:^
-        version: link:../generate-arg-types
       '@webstudio-is/icons':
         specifier: workspace:^
         version: link:../icons
@@ -1362,6 +1359,9 @@ importers:
       '@types/react-dom':
         specifier: ^18.2.7
         version: 18.2.7
+      '@webstudio-is/generate-arg-types':
+        specifier: workspace:^
+        version: link:../generate-arg-types
       '@webstudio-is/scripts':
         specifier: workspace:^
         version: link:../scripts
@@ -1422,9 +1422,6 @@ importers:
       '@webstudio-is/css-data':
         specifier: workspace:^
         version: link:../css-data
-      '@webstudio-is/generate-arg-types':
-        specifier: workspace:^
-        version: link:../generate-arg-types
       '@webstudio-is/icons':
         specifier: workspace:^
         version: link:../icons
@@ -1444,6 +1441,9 @@ importers:
       '@types/react-dom':
         specifier: ^18.2.7
         version: 18.2.7
+      '@webstudio-is/generate-arg-types':
+        specifier: workspace:^
+        version: link:../generate-arg-types
       '@webstudio-is/scripts':
         specifier: workspace:^
         version: link:../scripts
@@ -1471,9 +1471,6 @@ importers:
       '@webstudio-is/form-handlers':
         specifier: workspace:^
         version: link:../form-handlers
-      '@webstudio-is/generate-arg-types':
-        specifier: workspace:^
-        version: link:../generate-arg-types
       '@webstudio-is/icons':
         specifier: workspace:^
         version: link:../icons
@@ -1493,6 +1490,9 @@ importers:
       '@types/react-dom':
         specifier: ^18.2.7
         version: 18.2.7
+      '@webstudio-is/generate-arg-types':
+        specifier: workspace:^
+        version: link:../generate-arg-types
       '@webstudio-is/scripts':
         specifier: workspace:^
         version: link:../scripts

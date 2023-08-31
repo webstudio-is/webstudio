@@ -1,4 +1,4 @@
-import type { PropMeta } from "@webstudio-is/generate-arg-types";
+import type { PropMeta } from "@webstudio-is/react-sdk";
 
 export const propsSelect: Record<string, PropMeta> = {
   autoComplete: {
@@ -1171,7 +1171,13 @@ export const propsSelectValue: Record<string, PropMeta> = {
     description: "Defines the language used in the element.",
   },
   nonce: { required: false, control: "text", type: "string" },
-  placeholder: { required: false, control: "text", type: "string" },
+  placeholder: {
+    required: false,
+    control: "text",
+    type: "string",
+    description:
+      "Provides a hint to the user of what can be entered in the field.",
+  },
   prefix: { required: false, control: "text", type: "string" },
   property: { required: false, control: "text", type: "string" },
   radioGroup: { required: false, control: "text", type: "string" },

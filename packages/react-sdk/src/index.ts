@@ -3,6 +3,7 @@ export * from "./tree";
 export * from "./pubsub";
 export * from "./app";
 export * from "./components/components-utils";
+export { PropMeta } from "./prop-meta";
 export {
   type WsComponentPropsMeta,
   type WsComponentMeta,

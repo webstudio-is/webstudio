@@ -2,10 +2,11 @@ import { useState } from "react";
 import { nanoid } from "nanoid";
 import type { Instance, Prop } from "@webstudio-is/project-build";
 import {
-  showAttribute,
+  type PropMeta,
   type WsComponentPropsMeta,
+  showAttribute,
 } from "@webstudio-is/react-sdk";
-import type { PropMeta, PropValue } from "../shared";
+import type { PropValue } from "../shared";
 import { useStore } from "@nanostores/react";
 import {
   dataSourceValuesStore,

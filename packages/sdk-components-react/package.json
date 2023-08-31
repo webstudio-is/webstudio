@@ -35,7 +35,7 @@
   "scripts": {
     "dev": "build-package --watch",
     "build": "build-package",
-    "build:args": "generate-arg-types './src/*.tsx !./src/*.stories.tsx !./src/*.ws.tsx' && prettier --write \"**/*.props.ts\"",
+    "build:args": "NODE_OPTIONS=--conditions=source generate-arg-types './src/*.tsx !./src/*.stories.tsx !./src/*.ws.tsx' && prettier --write \"**/*.props.ts\"",
     "dts": "tsc --project tsconfig.dts.json",
     "typecheck": "tsc",
     "checks": "pnpm typecheck",
@@ -49,7 +49,6 @@
   "dependencies": {
     "@react-aria/utils": "^3.19.0",
     "@webstudio-is/css-vars": "workspace:^",
-    "@webstudio-is/generate-arg-types": "workspace:^",
     "@webstudio-is/icons": "workspace:^",
     "@webstudio-is/image": "workspace:^",
     "@webstudio-is/react-sdk": "workspace:^",
@@ -60,6 +59,7 @@
     "@storybook/react": "^7.2.1",
     "@types/react": "^18.2.20",
     "@types/react-dom": "^18.2.7",
+    "@webstudio-is/generate-arg-types": "workspace:^",
     "@webstudio-is/scripts": "workspace:^",
     "@webstudio-is/storybook-config": "workspace:^",
     "@webstudio-is/tsconfig": "workspace:^",
