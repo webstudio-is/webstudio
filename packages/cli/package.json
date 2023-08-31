@@ -20,6 +20,7 @@
     "@webstudio-is/project-build": "workspace:^",
     "@webstudio-is/react-sdk": "workspace:^",
     "@webstudio-is/sdk-components-react": "workspace:^",
+    "@webstudio-is/sdk-components-react-radix": "workspace:^",
     "@webstudio-is/sdk-components-react-remix": "workspace:^",
     "env-paths": "^3.0.0",
     "ora": "^7.0.1",
