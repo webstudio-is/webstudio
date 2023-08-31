@@ -43,9 +43,7 @@ export const createImageValueTransformer =
   };
 
 export const generateCssText = (data: Data, options: CssOptions) => {
-  const assets = new Map<Asset["id"], Asset>(
-    data.assets.map((asset) => [asset.id, asset])
-  );
+  const assets: Assets = new Map(data.assets.map((asset) => [asset.id, asset]));
   const breakpoints = new Map(data.breakpoints);
   const styles = new Map(data.styles);
   const styleSourceSelections = new Map(data.styleSourceSelections);

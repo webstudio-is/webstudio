@@ -46,10 +46,6 @@ export const patchAssets = async (
   // add new assets found in patched version
   const addedAssets: Asset[] = [];
   for (const [assetId, asset] of patchedAssets) {
-    // skip stubbed assets
-    if (asset === undefined) {
-      continue;
-    }
     if (assets.has(assetId) === false) {
       addedAssets.push(asset);
     }
