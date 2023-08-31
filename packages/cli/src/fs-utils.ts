@@ -52,3 +52,26 @@ export const parseFolderAndWriteFiles = async (
     await parseFolderAndWriteFiles(subFolder, join(path, subFolder.name));
   }
 };
+
+export const parseFolderAndWriteAssets = async (
+  folder: Folder,
+  path: string
+) => {
+  for (const file of folder.files) {
+    const filePath = join(path, file.name);
+    /*
+      For default assets, we can skip writing them again to the destination if a file already exists.
+      This will help in users replacing the default asset with their own
+    */
+    try {
+      await access(filePath);
+    } catch (error) {
+      await ensureFileInPath(filePath, file.content);
+      await writeFile(filePath, file.content, file.encoding);
+    }
+  }
+
+  for (const subFolder of folder.subFolders) {
+    await parseFolderAndWriteAssets(subFolder, join(path, subFolder.name));
+  }
+};

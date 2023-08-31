@@ -150,7 +150,7 @@ const parseAssets = (folderPath: string): Folder | undefined => {
     }
 
     if (isFile) {
-      const content = Buffer.from(readFileSync(filePath)).toString("base64");
+      const content = readFileSync(filePath, "base64");
       folder.files.push({
         name: file,
         content,

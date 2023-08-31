@@ -8,6 +8,7 @@ export const build: Command = async () => {
     await access(LOCAL_DATA_FILE);
     await prebuild();
   } catch (error) {
+    console.log(error);
     if (error.code === "ENOENT") {
       throw new Error(
         `You need to link a webstudio project before building it. Run \`webstudio link\` to link a project.`

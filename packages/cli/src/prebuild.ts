@@ -34,6 +34,7 @@ import {
   ensureFolderExists,
   loadJSONFile,
   parseFolderAndWriteFiles,
+  parseFolderAndWriteAssets,
 } from "./fs-utils";
 import { getImageAttributes, createImageLoader } from "@webstudio-is/image";
 import { pipeline } from "node:stream/promises";
@@ -103,7 +104,7 @@ export const prebuild = async () => {
   await parseFolderAndWriteFiles(templates["defaults"], cwd());
 
   spinner.text = "Generating assets";
-  await parseFolderAndWriteFiles(assets, cwd());
+  await parseFolderAndWriteAssets(assets, cwd());
 
   const appRoot = "app";
   const routesDir = join(appRoot, "routes");
