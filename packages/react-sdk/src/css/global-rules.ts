@@ -1,5 +1,5 @@
 import type { CssEngine } from "@webstudio-is/css-engine";
-import type { Assets, FontAsset } from "@webstudio-is/asset-uploader";
+import type { Assets, FontAsset } from "@webstudio-is/site-data";
 import { getFontFaces } from "@webstudio-is/fonts";
 
 export const addGlobalRules = (
