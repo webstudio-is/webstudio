@@ -36,7 +36,7 @@
     "@remix-run/serve": "^1.19.2",
     "@sentry/remix": "^7.47.0",
     "@sentry/types": "7.47.0",
-    "@trpc/server": "^10.9.0",
+    "@trpc/server": "^10.38.1",
     "@vercel/remix": "^1.19.2",
     "@webstudio-is/asset-uploader": "workspace:^",
     "@webstudio-is/authorization-token": "workspace:^",
