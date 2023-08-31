@@ -14,7 +14,7 @@ import {
   StyleSourceSelection,
   StyleSourceSelections,
 } from "@webstudio-is/project-build";
-import { Asset } from "@webstudio-is/site-data";
+import { Asset } from "@webstudio-is/sdk";
 import {
   encodeDataSourceVariable,
   validateExpression,

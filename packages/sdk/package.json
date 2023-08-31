@@ -1,5 +1,5 @@
 {
-  "name": "@webstudio-is/site-data",
+  "name": "@webstudio-is/sdk",
   "version": "0.91.0",
   "description": "Webstudio site data schema",
   "author": "Webstudio <github@webstudio.is>",

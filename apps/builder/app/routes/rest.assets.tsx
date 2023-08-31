@@ -1,5 +1,5 @@
 import type { ActionArgs, LoaderArgs } from "@remix-run/node";
-import type { Asset } from "@webstudio-is/site-data";
+import type { Asset } from "@webstudio-is/sdk";
 import { MaxAssets } from "@webstudio-is/asset-uploader";
 import {
   loadAssetsByProject,

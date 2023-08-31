@@ -1,4 +1,4 @@
-import type { FontAsset } from "@webstudio-is/site-data";
+import type { FontAsset } from "@webstudio-is/sdk";
 
 export const isSupportedFontWeight = (
   asset: FontAsset,

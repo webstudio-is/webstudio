@@ -9,7 +9,7 @@ import {
 } from "@webstudio-is/design-system";
 import { GearIcon, gearIconCssVars } from "@webstudio-is/icons";
 import { cssVars } from "@webstudio-is/css-vars";
-import type { Asset } from "@webstudio-is/site-data";
+import type { Asset } from "@webstudio-is/sdk";
 import { theme } from "@webstudio-is/design-system";
 import { ImageInfo } from "./image-info";
 

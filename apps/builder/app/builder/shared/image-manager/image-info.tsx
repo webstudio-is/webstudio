@@ -14,7 +14,7 @@ import {
   SizeIcon,
   TrashIcon,
 } from "@webstudio-is/icons";
-import type { Asset } from "@webstudio-is/site-data";
+import type { Asset } from "@webstudio-is/sdk";
 import { Filename } from "./filename";
 import { getFormattedAspectRatio } from "./utils";
 import { useAuthPermit } from "~/shared/nano-states";

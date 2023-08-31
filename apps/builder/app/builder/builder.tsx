@@ -2,7 +2,7 @@ import { useCallback, useEffect } from "react";
 import { useUnmount } from "react-use";
 import { TooltipProvider } from "@radix-ui/react-tooltip";
 import { type Publish, usePublish } from "~/shared/pubsub";
-import type { Asset } from "@webstudio-is/site-data";
+import type { Asset } from "@webstudio-is/sdk";
 import type { Build } from "@webstudio-is/project-build";
 import type { Project } from "@webstudio-is/project";
 import { theme, Box, type CSS, Flex, Grid } from "@webstudio-is/design-system";

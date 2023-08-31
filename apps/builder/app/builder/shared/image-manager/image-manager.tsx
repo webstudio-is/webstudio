@@ -5,7 +5,7 @@ import {
   Grid,
   theme,
 } from "@webstudio-is/design-system";
-import type { ImageAsset } from "@webstudio-is/site-data";
+import type { ImageAsset } from "@webstudio-is/sdk";
 import {
   acceptToMimePatterns,
   doesAssetMatchMimePatterns,

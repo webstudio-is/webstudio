@@ -2,7 +2,7 @@ import { useMemo } from "react";
 import { useStore } from "@nanostores/react";
 import warnOnce from "warn-once";
 import store from "immerhin";
-import type { Asset } from "@webstudio-is/site-data";
+import type { Asset } from "@webstudio-is/sdk";
 import type { AssetType } from "@webstudio-is/asset-uploader";
 import { toast } from "@webstudio-is/design-system";
 import { sanitizeS3Key } from "@webstudio-is/asset-uploader";
