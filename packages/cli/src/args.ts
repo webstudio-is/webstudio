@@ -56,7 +56,7 @@ export const CLI_ARGS_OPTIONS = {
 export type File = {
   name: string;
   content: string;
-  encoding: "utf-8";
+  encoding: "utf-8" | "base64";
 };
 
 export type Folder = {

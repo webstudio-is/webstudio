@@ -2,6 +2,7 @@ import { join } from "node:path";
 import { createWriteStream } from "node:fs";
 import { rm, mkdir, access, mkdtemp, rename } from "node:fs/promises";
 import { tmpdir } from "node:os";
+import { cwd } from "node:process";
 import {
   generateCssText,
   generateUtilsExport,
@@ -24,9 +25,16 @@ import type { Asset, FontAsset } from "@webstudio-is/asset-uploader";
 import pLimit from "p-limit";
 import ora from "ora";
 
+import { templates } from "./__generated__/templates";
+import { assets } from "./__generated__/assets";
 import { getRouteTemplate } from "./__generated__/router";
 import { ASSETS_BASE, LOCAL_DATA_FILE } from "./config";
-import { ensureFileInPath, ensureFolderExists, loadJSONFile } from "./fs-utils";
+import {
+  ensureFileInPath,
+  ensureFolderExists,
+  loadJSONFile,
+  parseFolderAndWriteFiles,
+} from "./fs-utils";
 import { getImageAttributes, createImageLoader } from "@webstudio-is/image";
 import { pipeline } from "node:stream/promises";
 
@@ -89,9 +97,15 @@ export const downloadAsset = async (
 
 export const prebuild = async () => {
   const spinner = ora("Scaffolding the project files");
-  const appRoot = "app";
-
   spinner.start();
+
+  spinner.text = "Generating default files";
+  await parseFolderAndWriteFiles(templates["defaults"], cwd());
+
+  spinner.text = "Generating assets";
+  await parseFolderAndWriteFiles(assets, cwd());
+
+  const appRoot = "app";
   const routesDir = join(appRoot, "routes");
   await rm(routesDir, { recursive: true, force: true });
   await mkdir(routesDir, { recursive: true });
