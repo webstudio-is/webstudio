@@ -1,0 +1,36 @@
+{
+  "name": "@webstudio-is/sdk",
+  "version": "0.91.0",
+  "description": "Webstudio site data schema",
+  "author": "Webstudio <github@webstudio.is>",
+  "homepage": "https://webstudio.is",
+  "license": "AGPL-3.0-or-later",
+  "type": "module",
+  "exports": {
+    "source": "./src/index.ts",
+    "types": "./lib/types/index.d.ts",
+    "import": "./lib/index.js",
+    "require": "./lib/cjs/index.js"
+  },
+  "files": [
+    "lib/*",
+    "src/*",
+    "!*.test.*"
+  ],
+  "sideEffects": false,
+  "scripts": {
+    "typecheck": "tsc",
+    "checks": "pnpm typecheck",
+    "dev": "build-package --watch",
+    "build": "build-package",
+    "dts": "tsc --project tsconfig.dts.json"
+  },
+  "dependencies": {
+    "@webstudio-is/fonts": "workspace:^",
+    "zod": "^3.21.4"
+  },
+  "devDependencies": {
+    "@webstudio-is/scripts": "workspace:^",
+    "@webstudio-is/tsconfig": "workspace:^"
+  }
+}

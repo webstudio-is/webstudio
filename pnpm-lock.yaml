@@ -162,6 +162,9 @@ importers:
       '@webstudio-is/react-sdk':
         specifier: workspace:^
         version: link:../../packages/react-sdk
+      '@webstudio-is/sdk':
+        specifier: workspace:^
+        version: link:../../packages/sdk
       '@webstudio-is/sdk-components-react':
         specifier: workspace:^
         version: link:../../packages/sdk-components-react
@@ -367,6 +370,9 @@ importers:
       '@webstudio-is/prisma-client':
         specifier: workspace:^
         version: link:../prisma-client
+      '@webstudio-is/sdk':
+        specifier: workspace:^
+        version: link:../sdk
       '@webstudio-is/trpc-interface':
         specifier: workspace:^
         version: link:../trpc-interface
@@ -435,9 +441,6 @@ importers:
 
   packages/cli:
     dependencies:
-      '@webstudio-is/asset-uploader':
-        specifier: workspace:^
-        version: link:../asset-uploader
       '@webstudio-is/http-client':
         specifier: workspace:^
         version: link:../http-client
@@ -450,6 +453,9 @@ importers:
       '@webstudio-is/react-sdk':
         specifier: workspace:^
         version: link:../react-sdk
+      '@webstudio-is/sdk':
+        specifier: workspace:^
+        version: link:../sdk
       '@webstudio-is/sdk-components-react':
         specifier: workspace:^
         version: link:../sdk-components-react
@@ -1227,9 +1233,6 @@ importers:
       '@nanostores/react':
         specifier: ^0.7.1
         version: 0.7.1(nanostores@0.9.3)(react@18.2.0)
-      '@webstudio-is/asset-uploader':
-        specifier: workspace:^
-        version: link:../asset-uploader
       '@webstudio-is/css-data':
         specifier: workspace:^
         version: link:../css-data
@@ -1242,6 +1245,9 @@ importers:
       '@webstudio-is/project-build':
         specifier: workspace:^
         version: link:../project-build
+      '@webstudio-is/sdk':
+        specifier: workspace:^
+        version: link:../sdk
       html-tags:
         specifier: ^3.3.1
         version: 3.3.1
@@ -1325,6 +1331,22 @@ importers:
       typescript:
         specifier: 5.1.6
         version: 5.1.6
+
+  packages/sdk:
+    dependencies:
+      '@webstudio-is/fonts':
+        specifier: workspace:^
+        version: link:../fonts
+      zod:
+        specifier: ^3.21.4
+        version: 3.21.4
+    devDependencies:
+      '@webstudio-is/scripts':
+        specifier: workspace:^
+        version: link:../scripts
+      '@webstudio-is/tsconfig':
+        specifier: workspace:^
+        version: link:../tsconfig
 
   packages/sdk-components-react:
     dependencies:

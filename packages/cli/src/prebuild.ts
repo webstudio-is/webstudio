@@ -17,10 +17,10 @@ import {
   type Page,
   DataSource,
 } from "@webstudio-is/project-build";
+import type { Asset, FontAsset } from "@webstudio-is/sdk";
 import * as baseComponentMetas from "@webstudio-is/sdk-components-react/metas";
 import * as remixComponentMetas from "@webstudio-is/sdk-components-react-remix/metas";
 import * as radixComponentMetas from "@webstudio-is/sdk-components-react-radix/metas";
-import type { Asset, FontAsset } from "@webstudio-is/asset-uploader";
 import pLimit from "p-limit";
 import ora from "ora";
 

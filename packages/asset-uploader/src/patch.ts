@@ -4,7 +4,7 @@ import {
   type AppContext,
   authorizeProject,
 } from "@webstudio-is/trpc-interface/index.server";
-import { type Asset, Assets } from "./schema";
+import { type Asset, Assets } from "@webstudio-is/sdk";
 import { deleteAssets } from "./delete";
 import { loadAssetsByProject } from "./db/load";
 

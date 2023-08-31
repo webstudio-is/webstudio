@@ -1,4 +1,4 @@
-import type { Asset } from "@webstudio-is/asset-uploader";
+import type { Asset } from "@webstudio-is/sdk";
 
 type PreviewAsset = Pick<
   Asset,

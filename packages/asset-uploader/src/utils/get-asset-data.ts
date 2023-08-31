@@ -2,7 +2,7 @@ import { z } from "zod";
 import sharp from "sharp";
 import { FontMeta } from "@webstudio-is/fonts";
 import { getFontData } from "@webstudio-is/fonts/index.server";
-import { ImageMeta } from "../schema";
+import { ImageMeta } from "@webstudio-is/sdk";
 
 export const AssetData = z.object({
   size: z.number(),

@@ -1,13 +1,6 @@
 import { z } from "zod";
-import { FontFormat, FontMeta } from "@webstudio-is/fonts";
 import { MAX_UPLOAD_SIZE } from "./constants";
 import { toBytes } from "./utils/to-bytes";
-
-export const ImageMeta = z.object({
-  width: z.number(),
-  height: z.number(),
-});
-export type ImageMeta = z.infer<typeof ImageMeta>;
 
 export const MaxSize = z
   .string()
@@ -16,34 +9,3 @@ export const MaxSize = z
   .transform(toBytes);
 
 export const MaxAssets = z.string().default("50").transform(Number.parseFloat);
-
-const AssetId = z.string();
-
-const BaseAsset = z.object({
-  id: AssetId,
-  projectId: z.string(),
-  format: z.string(),
-  size: z.number(),
-  name: z.string(),
-  description: z.union([z.string(), z.null()]),
-  createdAt: z.string(),
-});
-
-export const FontAsset = BaseAsset.omit({ format: true }).extend({
-  format: FontFormat,
-  meta: FontMeta,
-  type: z.literal("font"),
-});
-export type FontAsset = z.infer<typeof FontAsset>;
-
-export const ImageAsset = BaseAsset.extend({
-  meta: ImageMeta,
-  type: z.literal("image"),
-});
-export type ImageAsset = z.infer<typeof ImageAsset>;
-
-export const Asset = z.union([FontAsset, ImageAsset]);
-export type Asset = z.infer<typeof Asset>;
-
-export const Assets = z.map(AssetId, Asset);
-export type Assets = z.infer<typeof Assets>;

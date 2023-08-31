@@ -1,5 +1,5 @@
 import { useStore } from "@nanostores/react";
-import type { Assets } from "@webstudio-is/asset-uploader";
+import type { Assets } from "@webstudio-is/sdk";
 import {
   Image as WebstudioImage,
   createImageLoader,

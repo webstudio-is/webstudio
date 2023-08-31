@@ -58,6 +58,7 @@
     "@webstudio-is/sdk-components-react": "workspace:^",
     "@webstudio-is/sdk-components-react-radix": "workspace:^",
     "@webstudio-is/sdk-components-react-remix": "workspace:^",
+    "@webstudio-is/sdk": "workspace:^",
     "@webstudio-is/trpc-interface": "workspace:^",
     "colord": "^2.9.3",
     "date-fns": "^2.30.0",

@@ -18,6 +18,7 @@
     "@smithy/signature-v4": "^2.0.2",
     "@webstudio-is/fonts": "workspace:^",
     "@webstudio-is/prisma-client": "workspace:^",
+    "@webstudio-is/sdk": "workspace:^",
     "@webstudio-is/trpc-interface": "workspace:^",
     "immer": "^10.0.2",
     "nanoid": "^4.0.2",

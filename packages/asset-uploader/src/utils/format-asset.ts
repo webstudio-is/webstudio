@@ -1,7 +1,6 @@
 import type { File as DbFile } from "@webstudio-is/prisma-client";
-import { type FontFormat, FONT_FORMATS } from "@webstudio-is/fonts";
-import { FontMeta } from "@webstudio-is/fonts";
-import { type Asset, ImageMeta } from "../schema";
+import { type FontFormat, FontMeta, FONT_FORMATS } from "@webstudio-is/fonts";
+import { type Asset, ImageMeta } from "@webstudio-is/sdk";
 
 export const formatAsset = ({
   assetId,

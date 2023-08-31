@@ -1,5 +1,5 @@
 import type { ActionArgs } from "@remix-run/node";
-import type { Asset } from "@webstudio-is/asset-uploader";
+import type { Asset } from "@webstudio-is/sdk";
 import { uploadFile } from "@webstudio-is/asset-uploader/index.server";
 import type { ActionData } from "~/builder/shared/assets";
 import { sentryException } from "~/shared/sentry";

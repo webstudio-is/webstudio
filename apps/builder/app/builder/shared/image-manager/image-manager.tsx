@@ -1,9 +1,15 @@
 import { useState, useMemo } from "react";
+import { matchSorter } from "match-sorter";
 import {
   deprecatedFindNextListIndex,
   Grid,
   theme,
 } from "@webstudio-is/design-system";
+import type { ImageAsset } from "@webstudio-is/sdk";
+import {
+  acceptToMimePatterns,
+  doesAssetMatchMimePatterns,
+} from "@webstudio-is/asset-uploader";
 import {
   AssetsShell,
   type AssetContainer,
@@ -12,12 +18,6 @@ import {
   deleteAssets,
 } from "../assets";
 import { ImageThumbnail } from "./image-thumbnail";
-import { matchSorter } from "match-sorter";
-import {
-  acceptToMimePatterns,
-  doesAssetMatchMimePatterns,
-  type ImageAsset,
-} from "@webstudio-is/asset-uploader";
 
 const useLogic = ({
   onChange,

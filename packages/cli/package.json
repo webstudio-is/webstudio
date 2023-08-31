@@ -14,7 +14,6 @@
   },
   "license": "MIT",
   "dependencies": {
-    "@webstudio-is/asset-uploader": "workspace:^",
     "@webstudio-is/http-client": "workspace:^",
     "@webstudio-is/image": "workspace:^",
     "@webstudio-is/project-build": "workspace:^",
@@ -22,6 +21,7 @@
     "@webstudio-is/sdk-components-react": "workspace:^",
     "@webstudio-is/sdk-components-react-radix": "workspace:^",
     "@webstudio-is/sdk-components-react-remix": "workspace:^",
+    "@webstudio-is/sdk": "workspace:^",
     "env-paths": "^3.0.0",
     "ora": "^7.0.1",
     "p-limit": "^4.0.0",

@@ -2,7 +2,7 @@ import { useContext, useMemo } from "react";
 import { computed } from "nanostores";
 import { useStore } from "@nanostores/react";
 import type { Instance, Page, Prop, Props } from "@webstudio-is/project-build";
-import type { Asset, Assets } from "@webstudio-is/asset-uploader";
+import type { Asset, Assets } from "@webstudio-is/sdk";
 import { ReactSdkContext } from "./context";
 import { idAttribute, indexAttribute } from "./tree/webstudio-component";
 

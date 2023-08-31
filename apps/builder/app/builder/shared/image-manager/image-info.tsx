@@ -1,4 +1,6 @@
+import prettyBytes from "pretty-bytes";
 import {
+  theme,
   Box,
   Flex,
   Grid,
@@ -6,17 +8,15 @@ import {
   Button,
   Tooltip,
 } from "@webstudio-is/design-system";
-import { getFormattedAspectRatio } from "./utils";
 import {
   CloudIcon,
   AspectRatioIcon,
   SizeIcon,
   TrashIcon,
 } from "@webstudio-is/icons";
-import prettyBytes from "pretty-bytes";
-import type { Asset } from "@webstudio-is/asset-uploader";
+import type { Asset } from "@webstudio-is/sdk";
 import { Filename } from "./filename";
-import { theme } from "@webstudio-is/design-system";
+import { getFormattedAspectRatio } from "./utils";
 import { useAuthPermit } from "~/shared/nano-states";
 
 type ImageInfoProps = {

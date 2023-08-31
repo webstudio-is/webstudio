@@ -1,5 +1,5 @@
 import { createCssEngine, type TransformValue } from "@webstudio-is/css-engine";
-import type { Asset, Assets } from "@webstudio-is/asset-uploader";
+import type { Asset, Assets } from "@webstudio-is/sdk";
 import type { Build } from "@webstudio-is/project-build";
 import type { WsComponentMeta } from "../components/component-meta";
 import { idAttribute } from "../tree";

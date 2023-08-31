@@ -2,7 +2,7 @@ import { useContext, useEffect, useMemo } from "react";
 import { useIsomorphicLayoutEffect } from "react-use";
 import { computed } from "nanostores";
 import { useStore } from "@nanostores/react";
-import type { Assets } from "@webstudio-is/asset-uploader";
+import type { Assets } from "@webstudio-is/sdk";
 import {
   collapsedAttribute,
   idAttribute,

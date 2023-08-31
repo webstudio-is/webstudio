@@ -3,7 +3,7 @@ import { atom, computed, type WritableAtom } from "nanostores";
 import { useStore } from "@nanostores/react";
 import { nanoid } from "nanoid";
 import type { AuthPermit } from "@webstudio-is/trpc-interface/index.server";
-import type { Asset, Assets } from "@webstudio-is/asset-uploader";
+import type { Asset, Assets } from "@webstudio-is/sdk";
 import type { ItemDropTarget, Placement } from "@webstudio-is/design-system";
 import type {
   Breakpoint,

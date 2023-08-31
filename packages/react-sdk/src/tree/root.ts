@@ -12,7 +12,7 @@ import {
   type WritableAtom,
 } from "nanostores";
 import { type Build, type Page } from "@webstudio-is/project-build";
-import type { Asset } from "@webstudio-is/asset-uploader";
+import type { Asset } from "@webstudio-is/sdk";
 import { createElementsTree } from "./create-elements-tree";
 import {
   WebstudioComponent,

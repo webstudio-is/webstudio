@@ -8,10 +8,10 @@ import {
   DeprecatedPopoverHeader,
 } from "@webstudio-is/design-system";
 import { GearIcon, gearIconCssVars } from "@webstudio-is/icons";
-import { ImageInfo } from "./image-info";
 import { cssVars } from "@webstudio-is/css-vars";
-import type { Asset } from "@webstudio-is/asset-uploader";
+import type { Asset } from "@webstudio-is/sdk";
 import { theme } from "@webstudio-is/design-system";
+import { ImageInfo } from "./image-info";
 
 const triggerVisibilityVar = cssVars.define("trigger-visibility");
 
