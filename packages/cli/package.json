@@ -1,5 +1,5 @@
 {
-  "name": "webstudio",
+  "name": "@webstudio/cli",
   "version": "0.91.0",
   "description": "Webstudio CLI",
   "author": "Webstudio <github@webstudio.is>",
