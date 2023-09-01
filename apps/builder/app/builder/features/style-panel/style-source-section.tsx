@@ -57,35 +57,6 @@ const getOrCreateStyleSourceSelectionMutable = (
   return styleSourceSelection;
 };
 
-const createLocalStyleSourceIfNotExists = (
-  styleSourceId: StyleSource["id"]
-) => {
-  const selectedInstanceSelector = selectedInstanceSelectorStore.get();
-  if (selectedInstanceSelector === undefined) {
-    return;
-  }
-  const [selectedInstanceId] = selectedInstanceSelector;
-  store.createTransaction(
-    [styleSourceSelectionsStore, styleSourcesStore],
-    (styleSourceSelections, styleSources) => {
-      const styleSourceSelection = getOrCreateStyleSourceSelectionMutable(
-        styleSourceSelections,
-        selectedInstanceId
-      );
-      if (styleSourceSelection.values.includes(styleSourceId) === false) {
-        // local should be put first by default
-        styleSourceSelection.values.unshift(styleSourceId);
-      }
-      if (styleSources.has(styleSourceId) === false) {
-        styleSources.set(styleSourceId, {
-          type: "local",
-          id: styleSourceId,
-        });
-      }
-    }
-  );
-};
-
 const $baseBreakpointId = computed(breakpointsStore, (breakpoints) => {
   const breakpointValues = Array.from(breakpoints.values());
   const baseBreakpoint = breakpointValues.find(isBaseBreakpoint);
@@ -314,9 +285,9 @@ const convertLocalStyleSourceToToken = (styleSourceId: StyleSource["id"]) => {
         styleSourceSelections,
         selectedInstanceId
       );
-      // generated local style source was not applied so put first
+      // generated local style source was not applied so put last
       if (styleSourceSelection.values.includes(newStyleSource.id) === false) {
-        styleSourceSelection.values.unshift(newStyleSource.id);
+        styleSourceSelection.values.push(newStyleSource.id);
       }
       styleSources.set(newStyleSource.id, newStyleSource);
     }
@@ -331,24 +302,14 @@ const reorderStyleSources = (styleSourceIds: StyleSource["id"][]) => {
   }
   const [selectedInstanceId] = selectedInstanceSelector;
   store.createTransaction(
-    [styleSourcesStore, styleSourceSelectionsStore],
-    (styleSources, styleSourceSelections) => {
+    [styleSourceSelectionsStore],
+    (styleSourceSelections) => {
       const styleSourceSelection =
         styleSourceSelections.get(selectedInstanceId);
       if (styleSourceSelection === undefined) {
         return;
       }
       styleSourceSelection.values = styleSourceIds;
-      // reoder may affect temporary generated and not yet applied
-      // local style source so add one when not found in style sources
-      for (const styleSourceId of styleSourceIds) {
-        if (styleSources.has(styleSourceId) === false) {
-          styleSources.set(styleSourceId, {
-            type: "local",
-            id: styleSourceId,
-          });
-        }
-      }
     }
   );
 };
@@ -515,7 +476,6 @@ export const StyleSourcesSection = () => {
           reorderStyleSources(items.map((item) => item.id));
         }}
         onSelectItem={(styleSourceSelector) => {
-          createLocalStyleSourceIfNotExists(styleSourceSelector.styleSourceId);
           selectedStyleSourceSelectorStore.set(styleSourceSelector);
         }}
         // style source renaming
