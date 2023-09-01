@@ -29,6 +29,17 @@
     "p-limit": "^4.0.0",
     "strip-indent": "^4.0.0"
   },
+  "exports": {
+    "source": "./src/cli.ts",
+    "link": "./lib/commands/link.js",
+    "build": "./lib/commands/build.js",
+    "sync": "./lib/commands/sync.js"
+  },
+  "files": [
+    "lib/*",
+    "src/*",
+    "!*.test.*"
+  ],
   "devDependencies": {
     "@types/node": "^18.13.0",
     "@webstudio-is/scripts": "workspace:^",
