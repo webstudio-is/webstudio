@@ -101,7 +101,7 @@ writeFileSync(TEMPLATES_JSON_PATH, content, "utf-8");
   Building route template
 */
 const routeTemplateFile = readFileSync(
-  new URL("./route-template.ts", import.meta.url).pathname,
+  new URL("./route-template.tsx", import.meta.url).pathname,
   "utf-8"
 );
 const routeTemplateContent = `/*
