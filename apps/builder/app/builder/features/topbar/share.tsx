@@ -7,6 +7,7 @@ import {
   FloatingPanelAnchor,
   theme,
   Tooltip,
+  rawTheme,
 } from "@webstudio-is/design-system";
 import type { Project } from "@webstudio-is/prisma-client";
 import { ShareProjectContainer } from "~/shared/share-project";
@@ -37,8 +38,13 @@ export const ShareButton = ({ projectId }: { projectId: Project["id"] }) => {
           </FloatingPanelPopoverTrigger>
         </Tooltip>
       </FloatingPanelAnchor>
-
-      <FloatingPanelPopoverContent css={{ zIndex: theme.zIndices[1] }}>
+      <FloatingPanelPopoverContent
+        sideOffset={parseFloat(rawTheme.spacing[8])}
+        css={{
+          marginRight: theme.spacing[3],
+          zIndex: theme.zIndices[1],
+        }}
+      >
         <ShareProjectContainer projectId={projectId} />
         <FloatingPanelPopoverTitle>Share</FloatingPanelPopoverTitle>
       </FloatingPanelPopoverContent>
