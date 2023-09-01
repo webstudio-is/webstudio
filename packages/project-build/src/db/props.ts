@@ -1,16 +1,11 @@
-import { Props, PropsList } from "../schema/props";
+import { Props, Prop } from "../schema/props";
 
-export const parseProps = (
-  propsString: string,
-  skipValidation = false
-): Props => {
-  const propsList = skipValidation
-    ? (JSON.parse(propsString) as PropsList)
-    : PropsList.parse(JSON.parse(propsString));
+export const parseProps = (propsString: string): Props => {
+  const propsList = JSON.parse(propsString) as Prop[];
   return new Map(propsList.map((prop) => [prop.id, prop]));
 };
 
 export const serializeProps = (props: Props) => {
-  const propsList: PropsList = Array.from(props.values());
+  const propsList: Prop[] = Array.from(props.values());
   return JSON.stringify(propsList);
 };

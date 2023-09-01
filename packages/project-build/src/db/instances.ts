@@ -1,16 +1,11 @@
-import { Instances, InstancesList } from "../schema/instances";
+import { Instances, Instance } from "../schema/instances";
 
-export const parseInstances = (
-  instancesString: string,
-  skipValidation = false
-): Instances => {
-  const instancesList = skipValidation
-    ? (JSON.parse(instancesString) as InstancesList)
-    : InstancesList.parse(JSON.parse(instancesString));
+export const parseInstances = (instancesString: string): Instances => {
+  const instancesList = JSON.parse(instancesString) as Instance[];
   return new Map(instancesList.map((prop) => [prop.id, prop]));
 };
 
 export const serializeInstances = (instances: Instances) => {
-  const instancesList: InstancesList = Array.from(instances.values());
+  const instancesList: Instance[] = Array.from(instances.values());
   return JSON.stringify(instancesList);
 };

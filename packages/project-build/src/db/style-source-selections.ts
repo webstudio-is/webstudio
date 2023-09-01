@@ -1,15 +1,14 @@
-import {
-  StyleSourceSelectionsList,
+import type {
   StyleSourceSelections,
+  StyleSourceSelection,
 } from "../schema/style-source-selections";
 
 export const parseStyleSourceSelections = (
-  styleSourceSelectionsString: string,
-  skipValidation = false
+  styleSourceSelectionsString: string
 ): StyleSourceSelections => {
-  const styleSourceSelectionsList = skipValidation
-    ? (JSON.parse(styleSourceSelectionsString) as StyleSourceSelectionsList)
-    : StyleSourceSelectionsList.parse(JSON.parse(styleSourceSelectionsString));
+  const styleSourceSelectionsList = JSON.parse(
+    styleSourceSelectionsString
+  ) as StyleSourceSelection[];
 
   return new Map(
     styleSourceSelectionsList.map((item) => [item.instanceId, item])
@@ -19,7 +18,7 @@ export const parseStyleSourceSelections = (
 export const serializeStyleSourceSelections = (
   styleSourceSelectionsMap: StyleSourceSelections
 ) => {
-  const styleSourceSelectionsList: StyleSourceSelectionsList = Array.from(
+  const styleSourceSelectionsList: StyleSourceSelection[] = Array.from(
     styleSourceSelectionsMap.values()
   );
   return JSON.stringify(styleSourceSelectionsList);

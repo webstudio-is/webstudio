@@ -9,8 +9,6 @@ import {
   Pages,
   Props,
   DataSources,
-  parseDataSources,
-  serializeDataSources,
   StyleSourceSelections,
   StyleSources,
   Styles,
@@ -23,6 +21,7 @@ import {
   parseStyles,
   parseProps,
   parseBreakpoints,
+  parseDataSources,
   serializePages,
   serializeBreakpoints,
   serializeInstances,
@@ -30,6 +29,7 @@ import {
   serializeStyleSources,
   serializeStyleSourceSelections,
   serializeStyles,
+  serializeDataSources,
 } from "@webstudio-is/project-build/index.server";
 import { patchAssets } from "@webstudio-is/asset-uploader/index.server";
 import type { Project } from "@webstudio-is/project";
@@ -94,8 +94,6 @@ export const action = async ({ request }: ActionArgs) => {
       styles?: Styles;
     } = {};
 
-    const skipValidation = true;
-
     // Used to optimize by validating only changed styles, as they accounted for 99% of validation time
     const patchedStyleDeclKeysSet = new Set<string>();
 
@@ -108,16 +106,14 @@ export const action = async ({ request }: ActionArgs) => {
 
         if (namespace === "pages") {
           // lazily parse build data before patching
-          const pages =
-            buildData.pages ?? parsePages(build.pages, skipValidation);
+          const pages = buildData.pages ?? parsePages(build.pages);
           buildData.pages = applyPatches(pages, patches);
           continue;
         }
 
         if (namespace === "instances") {
           const instances =
-            buildData.instances ??
-            parseInstances(build.instances, skipValidation);
+            buildData.instances ?? parseInstances(build.instances);
           buildData.instances = applyPatches(instances, patches);
           continue;
         }
@@ -125,10 +121,7 @@ export const action = async ({ request }: ActionArgs) => {
         if (namespace === "styleSourceSelections") {
           const styleSourceSelections =
             buildData.styleSourceSelections ??
-            parseStyleSourceSelections(
-              build.styleSourceSelections,
-              skipValidation
-            );
+            parseStyleSourceSelections(build.styleSourceSelections);
           buildData.styleSourceSelections = applyPatches(
             styleSourceSelections,
             patches
@@ -138,8 +131,7 @@ export const action = async ({ request }: ActionArgs) => {
 
         if (namespace === "styleSources") {
           const styleSources =
-            buildData.styleSources ??
-            parseStyleSources(build.styleSources, skipValidation);
+            buildData.styleSources ?? parseStyleSources(build.styleSources);
           buildData.styleSources = applyPatches(styleSources, patches);
           continue;
         }
@@ -150,15 +142,13 @@ export const action = async ({ request }: ActionArgs) => {
             patchedStyleDeclKeysSet.add(`${patch.path[0]}`);
           }
 
-          const styles =
-            buildData.styles ?? parseStyles(build.styles, skipValidation);
+          const styles = buildData.styles ?? parseStyles(build.styles);
           buildData.styles = applyPatches(styles, patches);
           continue;
         }
 
         if (namespace === "props") {
-          const props =
-            buildData.props ?? parseProps(build.props, skipValidation);
+          const props = buildData.props ?? parseProps(build.props);
           buildData.props = applyPatches(props, patches);
           continue;
         }
@@ -172,8 +162,7 @@ export const action = async ({ request }: ActionArgs) => {
 
         if (namespace === "breakpoints") {
           const breakpoints =
-            buildData.breakpoints ??
-            parseBreakpoints(build.breakpoints, skipValidation);
+            buildData.breakpoints ?? parseBreakpoints(build.breakpoints);
           buildData.breakpoints = applyPatches(breakpoints, patches);
           continue;
         }

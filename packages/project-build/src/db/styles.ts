@@ -1,17 +1,11 @@
-import { Styles, StylesList, getStyleDeclKey } from "../schema/styles";
+import { type Styles, type StyleDecl, getStyleDeclKey } from "../schema/styles";
 
-export const parseStyles = (
-  stylesString: string,
-  skipValidation = false
-): Styles => {
-  const stylesList = skipValidation
-    ? (JSON.parse(stylesString) as StylesList)
-    : StylesList.parse(JSON.parse(stylesString));
-
+export const parseStyles = (stylesString: string): Styles => {
+  const stylesList = JSON.parse(stylesString) as StyleDecl[];
   return new Map(stylesList.map((item) => [getStyleDeclKey(item), item]));
 };
 
 export const serializeStyles = (stylesMap: Styles) => {
-  const stylesList: StylesList = Array.from(stylesMap.values());
+  const stylesList: StyleDecl[] = Array.from(stylesMap.values());
   return JSON.stringify(stylesList);
 };

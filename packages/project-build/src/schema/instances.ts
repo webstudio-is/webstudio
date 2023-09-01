@@ -25,10 +25,6 @@ export const Instance = z.object({
 
 export type Instance = z.infer<typeof Instance>;
 
-export const InstancesList = z.array(Instance);
-
-export type InstancesList = z.infer<typeof InstancesList>;
-
 export const Instances = z.map(InstanceId, Instance);
 
 export type Instances = z.infer<typeof Instances>;

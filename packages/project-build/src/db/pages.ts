@@ -1,12 +1,7 @@
-import { Pages } from "../schema/pages";
+import type { Pages } from "../schema/pages";
 
-export const parsePages = (
-  pagesString: string,
-  skipValidation = false
-): Pages => {
-  return skipValidation
-    ? (JSON.parse(pagesString) as Pages)
-    : Pages.parse(JSON.parse(pagesString));
+export const parsePages = (pagesString: string): Pages => {
+  return JSON.parse(pagesString) as Pages;
 };
 
 export const serializePages = (pages: Pages) => {

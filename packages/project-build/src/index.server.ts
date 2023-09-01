@@ -6,3 +6,4 @@ export * from "./db/style-sources";
 export * from "./db/instances";
 export * from "./db/props";
 export * from "./db/style-source-selections";
+export * from "./db/data-sources";

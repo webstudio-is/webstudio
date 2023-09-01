@@ -7,7 +7,6 @@ import {
   type Instance,
   type Instances,
   type StyleDecl,
-  type StylesList,
 } from "@webstudio-is/project-build";
 import {
   breakpointsStore,
@@ -250,7 +249,7 @@ test("compute styles from previous sources", () => {
   const selectedStyleSourceSelector = {
     styleSourceId: "3",
   };
-  const stylesByInstanceId = new Map<Instance["id"], StylesList>([
+  const stylesByInstanceId = new Map<Instance["id"], StyleDecl[]>([
     [
       "3",
       [
@@ -317,7 +316,7 @@ test("compute styles from next sources", () => {
   const selectedStyleSourceSelector = {
     styleSourceId: "3",
   };
-  const stylesByInstanceId = new Map<Instance["id"], StylesList>([
+  const stylesByInstanceId = new Map<Instance["id"], StyleDecl[]>([
     [
       "3",
       [

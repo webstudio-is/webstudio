@@ -2,13 +2,12 @@ import { z } from "zod";
 import { nanoid } from "nanoid";
 import { titleCase } from "title-case";
 import { noCase } from "no-case";
-import {
+import type {
   Instance,
-  type InstancesList,
-  PropsList,
-  StyleSourceSelectionsList,
-  StyleSourcesList,
-  StylesList,
+  Prop,
+  StyleSourceSelection,
+  StyleSource,
+  StyleDecl,
   Breakpoint,
   DataSource,
 } from "@webstudio-is/project-build";
@@ -151,12 +150,12 @@ const getDataSourceValue = (
 
 const createInstancesFromTemplate = (
   treeTemplate: WsEmbedTemplate,
-  instances: InstancesList,
-  props: PropsList,
+  instances: Instance[],
+  props: Prop[],
   dataSourceByRef: Map<string, DataSource>,
-  styleSourceSelections: StyleSourceSelectionsList,
-  styleSources: StyleSourcesList,
-  styles: StylesList,
+  styleSourceSelections: StyleSourceSelection[],
+  styleSources: StyleSource[],
+  styles: StyleDecl[],
   metas: Map<Instance["component"], WsComponentMeta>,
   defaultBreakpointId: Breakpoint["id"]
 ) => {
@@ -346,12 +345,12 @@ export const generateDataFromEmbedTemplate = (
   metas: Map<Instance["component"], WsComponentMeta>,
   defaultBreakpointId: Breakpoint["id"]
 ) => {
-  const instances: InstancesList = [];
-  const props: PropsList = [];
+  const instances: Instance[] = [];
+  const props: Prop[] = [];
   const dataSourceByRef = new Map<string, DataSource>();
-  const styleSourceSelections: StyleSourceSelectionsList = [];
-  const styleSources: StyleSourcesList = [];
-  const styles: StylesList = [];
+  const styleSourceSelections: StyleSourceSelection[] = [];
+  const styleSources: StyleSource[] = [];
+  const styles: StyleDecl[] = [];
 
   const children = createInstancesFromTemplate(
     treeTemplate,

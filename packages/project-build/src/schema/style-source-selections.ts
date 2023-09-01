@@ -11,12 +11,6 @@ export const StyleSourceSelection = z.object({
 
 export type StyleSourceSelection = z.infer<typeof StyleSourceSelection>;
 
-export const StyleSourceSelectionsList = z.array(StyleSourceSelection);
-
-export type StyleSourceSelectionsList = z.infer<
-  typeof StyleSourceSelectionsList
->;
-
 export const StyleSourceSelections = z.map(InstanceId, StyleSourceSelection);
 
 export type StyleSourceSelections = z.infer<typeof StyleSourceSelections>;

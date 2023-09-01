@@ -1,16 +1,11 @@
-import { Deployment } from "../schema/deployment";
+import type { Deployment } from "../schema/deployment";
 
-export const parseDeployment = (
-  deployment: string | null,
-  skipValidation = false
-) => {
+export const parseDeployment = (deployment: string | null) => {
   if (deployment === null) {
     return;
   }
 
-  return skipValidation
-    ? (JSON.parse(deployment) as Deployment)
-    : Deployment.parse(JSON.parse(deployment));
+  return JSON.parse(deployment) as Deployment;
 };
 
 export const serializeDeployment = (deployment: Deployment) => {

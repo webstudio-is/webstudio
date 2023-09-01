@@ -67,10 +67,6 @@ export const Prop = z.union([
 
 export type Prop = z.infer<typeof Prop>;
 
-export const PropsList = z.array(Prop);
-
-export type PropsList = z.infer<typeof PropsList>;
-
 export const Props = z.map(PropId, Prop);
 
 export type Props = z.infer<typeof Props>;

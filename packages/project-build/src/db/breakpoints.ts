@@ -1,25 +1,17 @@
 import { nanoid } from "nanoid";
 import {
   type Breakpoint,
-  Breakpoints,
-  BreakpointsList,
+  type Breakpoints,
   initialBreakpoints,
 } from "../schema/breakpoints";
 
-export const parseBreakpoints = (
-  breakpointsString: string,
-  skipValidation = false
-): Breakpoints => {
-  const breakpointssList = skipValidation
-    ? (JSON.parse(breakpointsString) as BreakpointsList)
-    : BreakpointsList.parse(JSON.parse(breakpointsString));
+export const parseBreakpoints = (breakpointsString: string): Breakpoints => {
+  const breakpointssList = JSON.parse(breakpointsString) as Breakpoint[];
   return new Map(breakpointssList.map((item) => [item.id, item]));
 };
 
 export const serializeBreakpoints = (breakpointssMap: Breakpoints) => {
-  const breakpointssList: BreakpointsList = Array.from(
-    breakpointssMap.values()
-  );
+  const breakpointssList: Breakpoint[] = Array.from(breakpointssMap.values());
   return JSON.stringify(breakpointssList);
 };
 
