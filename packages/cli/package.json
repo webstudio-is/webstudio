@@ -1,5 +1,5 @@
 {
-  "name": "@webstudio-is/cli",
+  "name": "webstudio",
   "version": "0.91.0",
   "description": "Webstudio CLI",
   "author": "Webstudio <github@webstudio.is>",
@@ -14,7 +14,7 @@
     "build:templates": "tsx ./templates/build.ts",
     "build": "build-package"
   },
-  "license": "MIT",
+  "license": "AGPL-3.0-or-later",
   "dependencies": {
     "@webstudio-is/http-client": "workspace:^",
     "@webstudio-is/image": "workspace:^",
