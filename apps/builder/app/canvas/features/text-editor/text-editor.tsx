@@ -19,11 +19,7 @@ import { OnChangePlugin } from "@lexical/react/LexicalOnChangePlugin";
 import { LinkPlugin } from "@lexical/react/LexicalLinkPlugin";
 import { nanoid } from "nanoid";
 import { createCssEngine } from "@webstudio-is/css-engine";
-import type {
-  Instance,
-  Instances,
-  InstancesList,
-} from "@webstudio-is/project-build";
+import type { Instance, Instances } from "@webstudio-is/project-build";
 import { idAttribute } from "@webstudio-is/react-sdk";
 import type { InstanceSelector } from "~/shared/tree-utils";
 import { ToolbarConnectorPlugin } from "./toolbar-connector";
@@ -179,7 +175,7 @@ type TextEditorProps = {
   rootInstanceSelector: InstanceSelector;
   instances: Instances;
   contentEditable: JSX.Element;
-  onChange: (instancesList: InstancesList) => void;
+  onChange: (instancesList: Instance[]) => void;
   onSelectInstance: (instanceId: Instance["id"]) => void;
 };
 

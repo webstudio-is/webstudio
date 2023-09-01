@@ -22,38 +22,27 @@ import { parseStyles } from "./styles";
 import { parseStyleSources } from "./style-sources";
 import { parseStyleSourceSelections } from "./style-source-selections";
 import { parseProps } from "./props";
-import { parseDataSources } from "../schema/data-sources";
+import { parseDataSources } from "./data-sources";
 import { parseInstances, serializeInstances } from "./instances";
 import { parseDeployment, serializeDeployment } from "./deployment";
 import type { Deployment } from "../schema/deployment";
 
 const parseBuild = async (build: DbBuild): Promise<Build> => {
-  // Hardcode skipValidation to true for now
-  const skipValidation = true;
   // eslint-disable-next-line no-console
   console.time("parseBuild");
   try {
-    const pages = skipValidation
-      ? (JSON.parse(build.pages) as Pages)
-      : Pages.parse(JSON.parse(build.pages));
-
-    const breakpoints = Array.from(
-      parseBreakpoints(build.breakpoints, skipValidation)
-    );
-    const styles = Array.from(parseStyles(build.styles, skipValidation));
-    const styleSources = Array.from(
-      parseStyleSources(build.styleSources, skipValidation)
-    );
+    const pages = JSON.parse(build.pages) as Pages;
+    const breakpoints = Array.from(parseBreakpoints(build.breakpoints));
+    const styles = Array.from(parseStyles(build.styles));
+    const styleSources = Array.from(parseStyleSources(build.styleSources));
     const styleSourceSelections = Array.from(
-      parseStyleSourceSelections(build.styleSourceSelections, skipValidation)
+      parseStyleSourceSelections(build.styleSourceSelections)
     );
-    const props = Array.from(parseProps(build.props, skipValidation));
+    const props = Array.from(parseProps(build.props));
     const dataSources = Array.from(parseDataSources(build.dataSources));
-    const instances = Array.from(
-      parseInstances(build.instances, skipValidation)
-    );
+    const instances = Array.from(parseInstances(build.instances));
 
-    const deployment = parseDeployment(build.deployment, skipValidation);
+    const deployment = parseDeployment(build.deployment);
 
     return {
       id: build.id,

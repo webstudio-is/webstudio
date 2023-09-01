@@ -28,10 +28,6 @@ export const getStyleDeclKey = (
   }:${styleDecl.state ?? ""}`;
 };
 
-export const StylesList = z.array(StyleDecl);
-
-export type StylesList = z.infer<typeof StylesList>;
-
 export const Styles = z.map(z.string(), StyleDecl);
 
 export type Styles = Map<string, StyleDecl>;

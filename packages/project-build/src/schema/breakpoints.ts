@@ -21,10 +21,6 @@ export const Breakpoint = z
 
 export type Breakpoint = z.infer<typeof Breakpoint>;
 
-export const BreakpointsList = z.array(Breakpoint);
-
-export type BreakpointsList = z.infer<typeof BreakpointsList>;
-
 export const Breakpoints = z.map(BreakpointId, Breakpoint);
 
 export type Breakpoints = z.infer<typeof Breakpoints>;
