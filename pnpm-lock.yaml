@@ -490,6 +490,9 @@ importers:
       tsx:
         specifier: ^3.12.6
         version: 3.12.6
+      typescript:
+        specifier: 5.1.6
+        version: 5.1.6
 
   packages/css-data:
     dependencies:

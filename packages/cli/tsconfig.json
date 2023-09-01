@@ -1,5 +1,6 @@
 {
   "extends": "@webstudio-is/tsconfig/base.json",
+  "exclude": ["./templates/*"],
   "compilerOptions": {
     "module": "esnext"
   }
