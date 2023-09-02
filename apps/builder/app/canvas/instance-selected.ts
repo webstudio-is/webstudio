@@ -116,7 +116,7 @@ const subscribeSelectedInstance = (
     }
 
     // Synchronously execute setDataCollapsed to calculate right outline
-    // This fixes an issue, when new element outline was calulated before collapsed elements calculations
+    // This fixes an issue, when new element outline was calculated before collapsed elements calculations
     setDataCollapsed(instanceId, true);
   };
 
