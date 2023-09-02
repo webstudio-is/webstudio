@@ -429,20 +429,7 @@ export const StyleSourceInput = (
     },
   });
 
-  const inputProps = getInputProps({
-    onKeyDown(event) {
-      if (
-        event.key === "Backspace" &&
-        label === "" &&
-        props.editingItemId === undefined
-      ) {
-        const item = value[value.length - 1];
-        if (item.source !== "local") {
-          props.onRemoveItem?.(item.id);
-        }
-      }
-    },
-  });
+  const inputProps = getInputProps();
 
   let hasNewTokenItem = false;
   let hasGlobalTokenItem = false;
