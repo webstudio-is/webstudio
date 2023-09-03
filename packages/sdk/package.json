@@ -27,6 +27,7 @@
   },
   "dependencies": {
     "@webstudio-is/fonts": "workspace:^",
+    "@webstudio-is/css-data": "workspace:^",
     "zod": "^3.21.4"
   },
   "devDependencies": {

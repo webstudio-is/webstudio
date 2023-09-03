@@ -1,4 +1,4 @@
-import type { Breakpoint } from "@webstudio-is/project-build";
+import type { Breakpoint } from "@webstudio-is/sdk";
 import { theme, Button, Flex, Text } from "@webstudio-is/design-system";
 
 type ConfirmationDialogProps = {

@@ -5,7 +5,7 @@ import type {
   Styles,
   StyleSource,
   StyleSourceSelections,
-} from "@webstudio-is/project-build";
+} from "@webstudio-is/sdk";
 import type { PresetStyle } from "../components/component-meta";
 import { componentAttribute } from "../tree";
 

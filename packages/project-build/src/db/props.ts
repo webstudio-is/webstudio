@@ -1,4 +1,4 @@
-import { Props, Prop } from "../schema/props";
+import { Props, Prop } from "@webstudio-is/sdk";
 
 export const parseProps = (propsString: string): Props => {
   const propsList = JSON.parse(propsString) as Prop[];

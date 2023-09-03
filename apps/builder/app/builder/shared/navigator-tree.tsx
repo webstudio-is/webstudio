@@ -2,7 +2,7 @@ import { useCallback, useMemo } from "react";
 import { useStore } from "@nanostores/react";
 import { shallowEqual } from "shallow-equal";
 import { toast } from "@webstudio-is/design-system";
-import type { Instance } from "@webstudio-is/project-build";
+import type { Instance } from "@webstudio-is/sdk";
 import {
   hoveredInstanceSelectorStore,
   instancesStore,

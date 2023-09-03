@@ -1,3 +1,4 @@
+import { nanoid } from "nanoid";
 import {
   type TextNode,
   type ElementNode,
@@ -11,8 +12,7 @@ import {
   $isLineBreakNode,
 } from "lexical";
 import { $createLinkNode, $isLinkNode } from "@lexical/link";
-import type { Instance, Instances } from "@webstudio-is/project-build";
-import { nanoid } from "nanoid";
+import type { Instance, Instances } from "@webstudio-is/sdk";
 import { $isSpanNode, $setNodeSpan } from "./toolbar-connector";
 
 // Map<nodeKey, instanceId>

@@ -12,7 +12,7 @@ import {
   type AppContext,
 } from "@webstudio-is/trpc-interface/index.server";
 import type { Build } from "../types";
-import { Pages } from "../schema/pages";
+import { Pages, type Deployment } from "@webstudio-is/sdk";
 import {
   createInitialBreakpoints,
   parseBreakpoints,
@@ -25,7 +25,6 @@ import { parseProps } from "./props";
 import { parseDataSources } from "./data-sources";
 import { parseInstances, serializeInstances } from "./instances";
 import { parseDeployment, serializeDeployment } from "./deployment";
-import type { Deployment } from "../schema/deployment";
 
 const parseBuild = async (build: DbBuild): Promise<Build> => {
   // eslint-disable-next-line no-console

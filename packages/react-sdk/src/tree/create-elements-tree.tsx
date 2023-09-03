@@ -5,8 +5,7 @@ import {
   type ReactNode,
 } from "react";
 import type { ReadableAtom } from "nanostores";
-import type { Assets } from "@webstudio-is/sdk";
-import type { Instance, Instances } from "@webstudio-is/project-build";
+import type { Instance, Instances, Assets } from "@webstudio-is/sdk";
 import type { Components } from "../components/components-utils";
 import {
   type Params,

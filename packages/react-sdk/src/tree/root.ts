@@ -11,8 +11,8 @@ import {
   type ReadableAtom,
   type WritableAtom,
 } from "nanostores";
-import { type Build, type Page } from "@webstudio-is/project-build";
-import type { Asset } from "@webstudio-is/sdk";
+import type { Build } from "@webstudio-is/project-build";
+import type { Page, Asset } from "@webstudio-is/sdk";
 import { createElementsTree } from "./create-elements-tree";
 import {
   WebstudioComponent,

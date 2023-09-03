@@ -3,18 +3,18 @@ import { nanoid } from "nanoid";
 import store from "immerhin";
 import { z } from "zod";
 import { toast } from "@webstudio-is/design-system";
+import { findTreeInstanceIds } from "@webstudio-is/project-build";
 import {
+  Asset,
   Breakpoint,
   DataSource,
-  findTreeInstanceIds,
   Instance,
   Prop,
   StyleDecl,
   StyleSource,
   StyleSourceSelection,
   StyleSourceSelections,
-} from "@webstudio-is/project-build";
-import { Asset } from "@webstudio-is/sdk";
+} from "@webstudio-is/sdk";
 import {
   encodeDataSourceVariable,
   validateExpression,

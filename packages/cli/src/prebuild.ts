@@ -10,14 +10,8 @@ import {
   type Data,
   type WsComponentMeta,
 } from "@webstudio-is/react-sdk";
-import {
-  findTreeInstanceIds,
-  type Instance,
-  type Prop,
-  type Build,
-  type Page,
-  DataSource,
-} from "@webstudio-is/project-build";
+import type { Instance, Prop, Page, DataSource } from "@webstudio-is/sdk";
+import { findTreeInstanceIds, type Build } from "@webstudio-is/project-build";
 import type { Asset, FontAsset } from "@webstudio-is/sdk";
 import * as baseComponentMetas from "@webstudio-is/sdk-components-react/metas";
 import * as remixComponentMetas from "@webstudio-is/sdk-components-react-remix/metas";

@@ -3,7 +3,7 @@ import {
   type Breakpoint,
   type Breakpoints,
   initialBreakpoints,
-} from "../schema/breakpoints";
+} from "@webstudio-is/sdk";
 
 export const parseBreakpoints = (breakpointsString: string): Breakpoints => {
   const breakpointssList = JSON.parse(breakpointsString) as Breakpoint[];

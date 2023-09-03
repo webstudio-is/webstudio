@@ -1,4 +1,4 @@
-import type { Pages } from "../schema/pages";
+import type { Pages } from "@webstudio-is/sdk";
 
 export const parsePages = (pagesString: string): Pages => {
   return JSON.parse(pagesString) as Pages;

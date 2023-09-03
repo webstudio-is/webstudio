@@ -9,11 +9,8 @@ import { Suspense, lazy } from "react";
 import { useStore } from "@nanostores/react";
 import { useLexicalComposerContext } from "@lexical/react/LexicalComposerContext";
 import store from "immerhin";
-import {
-  type Instance,
-  findTreeInstanceIds,
-  Instances,
-} from "@webstudio-is/project-build";
+import type { Instance, Instances } from "@webstudio-is/sdk";
+import { findTreeInstanceIds } from "@webstudio-is/project-build";
 import {
   type Components,
   renderWebstudioComponentChildren,

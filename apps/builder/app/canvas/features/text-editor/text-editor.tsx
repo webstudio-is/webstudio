@@ -19,7 +19,7 @@ import { OnChangePlugin } from "@lexical/react/LexicalOnChangePlugin";
 import { LinkPlugin } from "@lexical/react/LexicalLinkPlugin";
 import { nanoid } from "nanoid";
 import { createCssEngine } from "@webstudio-is/css-engine";
-import type { Instance, Instances } from "@webstudio-is/project-build";
+import type { Instance, Instances } from "@webstudio-is/sdk";
 import { idAttribute } from "@webstudio-is/react-sdk";
 import type { InstanceSelector } from "~/shared/tree-utils";
 import { ToolbarConnectorPlugin } from "./toolbar-connector";

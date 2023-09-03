@@ -1196,6 +1196,9 @@ importers:
       '@webstudio-is/prisma-client':
         specifier: workspace:^
         version: link:../prisma-client
+      '@webstudio-is/sdk':
+        specifier: workspace:^
+        version: link:../sdk
       '@webstudio-is/trpc-interface':
         specifier: workspace:^
         version: link:../trpc-interface
@@ -1337,6 +1340,9 @@ importers:
 
   packages/sdk:
     dependencies:
+      '@webstudio-is/css-data':
+        specifier: workspace:^
+        version: link:../css-data
       '@webstudio-is/fonts':
         specifier: workspace:^
         version: link:../fonts

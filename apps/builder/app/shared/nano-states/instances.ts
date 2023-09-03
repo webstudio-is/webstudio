@@ -1,5 +1,5 @@
 import { atom, computed } from "nanostores";
-import type { Instance, Instances } from "@webstudio-is/project-build";
+import type { Instance, Instances } from "@webstudio-is/sdk";
 import type { InstanceSelector } from "../tree-utils";
 import type { ItemId } from "node_modules/@webstudio-is/design-system/src/components/tree/item-utils";
 import { useMount } from "~/shared/hook-utils/use-mount";

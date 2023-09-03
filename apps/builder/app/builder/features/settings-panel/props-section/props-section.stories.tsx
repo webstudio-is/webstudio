@@ -1,8 +1,7 @@
 import { useState } from "react";
-import type { Instance, Prop } from "@webstudio-is/project-build";
+import type { Instance, Prop, Asset } from "@webstudio-is/sdk";
 import type { PropMeta } from "@webstudio-is/react-sdk";
 import { textVariants } from "@webstudio-is/design-system";
-import type { Asset } from "@webstudio-is/sdk";
 import { PropsSection } from "./props-section";
 import { usePropsLogic } from "./use-props-logic";
 import {

@@ -10,7 +10,7 @@ import type {
   StyleDecl,
   Breakpoint,
   DataSource,
-} from "@webstudio-is/project-build";
+} from "@webstudio-is/sdk";
 import { StyleValue, type StyleProperty } from "@webstudio-is/css-data";
 import type { Simplify } from "type-fest";
 import { encodeDataSourceVariable, validateExpression } from "./expression";

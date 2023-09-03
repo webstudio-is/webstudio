@@ -1,5 +1,5 @@
 import { atom, computed } from "nanostores";
-import type { Instance, Instances } from "@webstudio-is/project-build";
+import type { Instance, Instances } from "@webstudio-is/sdk";
 import { instancesStore } from "./instances";
 
 export type TextToolbarState = {

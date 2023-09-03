@@ -1,7 +1,8 @@
+import { z } from "zod";
 import { Fragment, useEffect, useRef, useState } from "react";
 import { nanoid } from "nanoid";
 import store from "immerhin";
-import type { Breakpoint } from "@webstudio-is/project-build";
+import type { Breakpoint } from "@webstudio-is/sdk";
 import {
   theme,
   Flex,
@@ -16,10 +17,9 @@ import {
   toast,
 } from "@webstudio-is/design-system";
 import { MinusIcon, PlusIcon } from "@webstudio-is/icons";
-import { breakpointsStore } from "~/shared/nano-states";
 import { useStore } from "@nanostores/react";
+import { breakpointsStore } from "~/shared/nano-states";
 import { groupBreakpoints, isBaseBreakpoint } from "~/shared/breakpoints";
-import { z } from "zod";
 
 type BreakpointEditorItemProps = {
   breakpoint: Breakpoint;

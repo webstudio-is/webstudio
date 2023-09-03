@@ -7,7 +7,7 @@ import {
   type Instance,
   type Instances,
   type StyleDecl,
-} from "@webstudio-is/project-build";
+} from "@webstudio-is/sdk";
 import {
   breakpointsStore,
   instancesStore,

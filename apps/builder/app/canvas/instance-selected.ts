@@ -1,4 +1,4 @@
-import type { Instance } from "@webstudio-is/project-build";
+import type { Instance } from "@webstudio-is/sdk";
 import { idAttribute, selectorIdAttribute } from "@webstudio-is/react-sdk";
 import { subscribeWindowResize } from "~/shared/dom-hooks";
 import {

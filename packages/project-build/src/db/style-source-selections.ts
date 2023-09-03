@@ -1,7 +1,7 @@
 import type {
   StyleSourceSelections,
   StyleSourceSelection,
-} from "../schema/style-source-selections";
+} from "@webstudio-is/sdk";
 
 export const parseStyleSourceSelections = (
   styleSourceSelectionsString: string

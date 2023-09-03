@@ -20,7 +20,7 @@ import type {
   Breakpoints,
   StyleSource,
   StyleSources,
-} from "@webstudio-is/project-build";
+} from "@webstudio-is/sdk";
 import { toProperty } from "@webstudio-is/css-engine";
 import {
   breakpointsStore,

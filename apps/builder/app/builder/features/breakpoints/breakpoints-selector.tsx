@@ -1,3 +1,5 @@
+import { useCallback, useRef } from "react";
+import type { Breakpoint, Breakpoints } from "@webstudio-is/sdk";
 import {
   EnhancedTooltip,
   Text,
@@ -5,13 +7,11 @@ import {
   ToolbarToggleGroup,
   ToolbarToggleItem,
 } from "@webstudio-is/design-system";
-import { useCallback, useRef } from "react";
-import { CascadeIndicator } from "./cascade-indicator";
 import { BpStarOffIcon, BpStarOnIcon } from "@webstudio-is/icons";
+import { CascadeIndicator } from "./cascade-indicator";
 import { useSetInitialCanvasWidth } from ".";
 import { selectedBreakpointIdStore } from "~/shared/nano-states";
 import { groupBreakpoints, isBaseBreakpoint } from "~/shared/breakpoints";
-import type { Breakpoint, Breakpoints } from "@webstudio-is/project-build";
 
 const getTooltipContent = (breakpoint: Breakpoint) => {
   if (isBaseBreakpoint(breakpoint)) {

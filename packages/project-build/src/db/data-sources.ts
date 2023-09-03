@@ -1,4 +1,4 @@
-import type { DataSource, DataSources } from "../schema/data-sources";
+import type { DataSource, DataSources } from "@webstudio-is/sdk";
 
 export const parseDataSources = (dataSourcesString: string): DataSources => {
   const dataSourcesList = JSON.parse(dataSourcesString) as DataSource[];

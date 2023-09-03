@@ -4,7 +4,7 @@ import type {
   Instances,
   Page,
   Props,
-} from "@webstudio-is/project-build";
+} from "@webstudio-is/sdk";
 import type { WsComponentMeta } from "./components/component-meta";
 import {
   getIndexesWithinAncestors,

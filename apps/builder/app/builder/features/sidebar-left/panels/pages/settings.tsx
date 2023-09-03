@@ -13,12 +13,12 @@ import slugify from "slugify";
 import {
   type Page,
   type Pages,
-  findPageByIdOrPath,
   PageName,
   HomePagePath,
   PageTitle,
   PagePath,
-} from "@webstudio-is/project-build";
+} from "@webstudio-is/sdk";
+import { findPageByIdOrPath } from "@webstudio-is/project-build";
 import {
   theme,
   Button,

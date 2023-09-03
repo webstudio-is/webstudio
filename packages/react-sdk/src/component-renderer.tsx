@@ -1,6 +1,6 @@
 import type { ExoticComponent } from "react";
-import type { Instance } from "@webstudio-is/project-build";
-import { getStyleDeclKey } from "@webstudio-is/project-build";
+import type { Instance } from "@webstudio-is/sdk";
+import { getStyleDeclKey } from "@webstudio-is/sdk";
 import type { WsComponentMeta } from "./components/component-meta";
 import {
   WsEmbedTemplate,
