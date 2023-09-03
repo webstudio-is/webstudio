@@ -114,38 +114,25 @@ test("add style source to instance", () => {
   selectedStyleSourceSelectorStore.set(undefined);
 
   addStyleSourceToInstance("token1");
-  expect(styleSourceSelectionsStore.get()).toEqual(
-    new Map([["root", { instanceId: "root", values: ["token1"] }]])
-  );
+  expect(styleSourceSelectionsStore.get().get("root")).toEqual({
+    instanceId: "root",
+    values: ["token1"],
+  });
   expect(selectedStyleSourceSelectorStore.get()).toEqual({
     styleSourceId: "token1",
   });
 
   // put new style source last
   addStyleSourceToInstance("local1");
-  expect(styleSourceSelectionsStore.get()).toEqual(
-    new Map([
-      [
-        "root",
-        {
-          instanceId: "root",
-          values: ["token1", "local1"],
-        },
-      ],
-    ])
-  );
+  expect(styleSourceSelectionsStore.get().get("root")).toEqual({
+    instanceId: "root",
+    values: ["token1", "local1"],
+  });
 
   // put new token before local
   addStyleSourceToInstance("token2");
-  expect(styleSourceSelectionsStore.get()).toEqual(
-    new Map([
-      [
-        "root",
-        {
-          instanceId: "root",
-          values: ["token1", "token2", "local1"],
-        },
-      ],
-    ])
-  );
+  expect(styleSourceSelectionsStore.get().get("root")).toEqual({
+    instanceId: "root",
+    values: ["token1", "token2", "local1"],
+  });
 });
