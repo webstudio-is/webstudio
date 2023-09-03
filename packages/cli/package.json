@@ -34,6 +34,6 @@
     "@webstudio-is/scripts": "workspace:^",
     "@webstudio-is/tsconfig": "workspace:^",
     "tsx": "^3.12.6",
-    "typescript": "5.1.6"
+    "typescript": "5.2.2"
   }
 }
