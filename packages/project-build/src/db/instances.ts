@@ -1,4 +1,4 @@
-import { Instances, Instance } from "../schema/instances";
+import { Instances, Instance } from "@webstudio-is/sdk";
 
 export const parseInstances = (instancesString: string): Instances => {
   const instancesList = JSON.parse(instancesString) as Instance[];

@@ -8,15 +8,15 @@ import {
   type StyleValue,
 } from "@webstudio-is/css-data";
 import { properties } from "@webstudio-is/css-data";
-import {
+import type {
   StyleSourceSelections,
-  type Breakpoints,
-  type Instance,
-  type Instances,
-  type StyleDecl,
-  type StyleSource as StyleSourceType,
+  Breakpoints,
+  Instance,
+  Instances,
+  StyleDecl,
+  StyleSource as StyleSourceType,
   Breakpoint,
-} from "@webstudio-is/project-build";
+} from "@webstudio-is/sdk";
 import { compareMedia } from "@webstudio-is/css-engine";
 import {
   type StyleSourceSelector,

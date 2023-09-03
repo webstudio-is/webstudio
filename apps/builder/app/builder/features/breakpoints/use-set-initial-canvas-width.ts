@@ -1,6 +1,6 @@
 import { useStore } from "@nanostores/react";
 import { useCallback, useEffect } from "react";
-import type { Breakpoint } from "@webstudio-is/project-build";
+import type { Breakpoint } from "@webstudio-is/sdk";
 import {
   useCanvasWidth,
   workspaceRectStore,

@@ -1,7 +1,6 @@
 import { type ReadableAtom, atom } from "nanostores";
 import { createContext } from "react";
-import type { Assets } from "@webstudio-is/sdk";
-import type { DataSource, Instance, Prop } from "@webstudio-is/project-build";
+import type { DataSource, Instance, Prop, Assets } from "@webstudio-is/sdk";
 import type { Pages, PropsByInstanceId } from "./props";
 import type { IndexesWithinAncestors } from "./instance-utils";
 

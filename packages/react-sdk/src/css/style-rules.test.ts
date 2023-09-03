@@ -1,10 +1,10 @@
 import { test, expect } from "@jest/globals";
 import {
+  type StyleDecl,
+  type Styles,
+  type StyleSourceSelections,
   getStyleDeclKey,
-  StyleDecl,
-  Styles,
-  StyleSourceSelections,
-} from "@webstudio-is/project-build";
+} from "@webstudio-is/sdk";
 import { getStyleRules } from "./style-rules";
 
 const createStyleDeclPair = (styleDecl: StyleDecl) => {

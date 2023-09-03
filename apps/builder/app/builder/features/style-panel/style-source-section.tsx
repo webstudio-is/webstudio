@@ -8,9 +8,9 @@ import {
   type StyleSource,
   type StyleSourceToken,
   type StyleSourceSelections,
+  type StyleDecl,
   getStyleDeclKey,
-  StyleDecl,
-} from "@webstudio-is/project-build";
+} from "@webstudio-is/sdk";
 import {
   Flex,
   Dialog,

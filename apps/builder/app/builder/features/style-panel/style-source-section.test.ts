@@ -1,5 +1,5 @@
 import { expect, test } from "@jest/globals";
-import type { Breakpoint } from "@webstudio-is/project-build";
+import type { Breakpoint } from "@webstudio-is/sdk";
 import type { WsComponentMeta } from "@webstudio-is/react-sdk";
 import {
   breakpointsStore,

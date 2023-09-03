@@ -1,5 +1,5 @@
 import { Fragment, forwardRef } from "react";
-import type { Instance } from "@webstudio-is/project-build";
+import type { Instance } from "@webstudio-is/sdk";
 import type { Components } from "../components/components-utils";
 import { useInstanceProps } from "../props";
 

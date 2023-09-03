@@ -1,6 +1,6 @@
 import { useRef, useState } from "react";
 import { useStore } from "@nanostores/react";
-import type { Instance } from "@webstudio-is/project-build";
+import type { Instance } from "@webstudio-is/sdk";
 import {
   theme,
   PanelTabs,

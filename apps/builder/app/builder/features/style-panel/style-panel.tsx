@@ -6,7 +6,7 @@ import {
   Separator,
   ScrollArea,
 } from "@webstudio-is/design-system";
-import type { Instance } from "@webstudio-is/project-build";
+import type { Instance } from "@webstudio-is/sdk";
 import type { Publish } from "~/shared/pubsub";
 
 import { useStyleData } from "./shared/use-style-data";

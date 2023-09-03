@@ -2,7 +2,7 @@ import { useContext, useEffect, useMemo } from "react";
 import { useIsomorphicLayoutEffect } from "react-use";
 import { computed } from "nanostores";
 import { useStore } from "@nanostores/react";
-import type { Assets } from "@webstudio-is/sdk";
+import type { Assets, Instance, StyleDecl } from "@webstudio-is/sdk";
 import {
   collapsedAttribute,
   idAttribute,
@@ -12,7 +12,6 @@ import {
   type Params,
   ReactSdkContext,
 } from "@webstudio-is/react-sdk";
-import type { Instance, StyleDecl } from "@webstudio-is/project-build";
 import {
   type StyleValue,
   type StyleProperty,

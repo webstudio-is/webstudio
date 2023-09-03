@@ -3,7 +3,6 @@ import type { ActionArgs } from "@remix-run/node";
 import type { SyncItem } from "immerhin";
 import { prisma } from "@webstudio-is/prisma-client";
 import {
-  type Build,
   Breakpoints,
   Instances,
   Pages,
@@ -12,7 +11,8 @@ import {
   StyleSourceSelections,
   StyleSources,
   Styles,
-} from "@webstudio-is/project-build";
+} from "@webstudio-is/sdk";
+import type { Build } from "@webstudio-is/project-build";
 import {
   parsePages,
   parseInstances,

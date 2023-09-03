@@ -3,8 +3,6 @@ import {
   Breakpoint,
   Breakpoints,
   DataSource,
-  findTreeInstanceIds,
-  findTreeInstanceIdsExcludingSlotDescendants,
   getStyleDeclKey,
   Instance,
   Instances,
@@ -16,6 +14,10 @@ import {
   StyleSources,
   StyleSourceSelection,
   StyleSourceSelections,
+} from "@webstudio-is/sdk";
+import {
+  findTreeInstanceIds,
+  findTreeInstanceIdsExcludingSlotDescendants,
 } from "@webstudio-is/project-build";
 import { equalMedia } from "@webstudio-is/css-engine";
 import type { WsComponentMeta } from "@webstudio-is/react-sdk";

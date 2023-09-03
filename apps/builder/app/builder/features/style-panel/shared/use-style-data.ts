@@ -5,7 +5,7 @@ import {
   type Breakpoint,
   type Instance,
   getStyleDeclKey,
-} from "@webstudio-is/project-build";
+} from "@webstudio-is/sdk";
 import type { StyleProperty, StyleValue } from "@webstudio-is/css-data";
 import type { Publish } from "~/shared/pubsub";
 import {

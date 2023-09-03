@@ -1,4 +1,4 @@
-import type { Instance, Prop } from "@webstudio-is/project-build";
+import type { Instance, Prop } from "@webstudio-is/sdk";
 import type { IndexesWithinAncestors } from "./instance-utils";
 
 /**

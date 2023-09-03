@@ -1,7 +1,7 @@
 import { useCallback, useState } from "react";
 import { useStore } from "@nanostores/react";
 import { styled, type Rect } from "@webstudio-is/design-system";
-import type { Instance } from "@webstudio-is/project-build";
+import type { Instance } from "@webstudio-is/sdk";
 import { theme } from "@webstudio-is/design-system";
 import { MetaIcon } from "~/builder/shared/meta-icon";
 import { registeredComponentMetasStore } from "~/shared/nano-states";

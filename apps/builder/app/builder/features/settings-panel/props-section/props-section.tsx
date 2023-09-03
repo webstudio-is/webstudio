@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { useStore } from "@nanostores/react";
 import store from "immerhin";
-import type { Instance } from "@webstudio-is/project-build";
+import type { Instance } from "@webstudio-is/sdk";
 import {
   theme,
   useCombobox,

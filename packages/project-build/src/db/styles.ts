@@ -1,4 +1,8 @@
-import { type Styles, type StyleDecl, getStyleDeclKey } from "../schema/styles";
+import {
+  type Styles,
+  type StyleDecl,
+  getStyleDeclKey,
+} from "@webstudio-is/sdk";
 
 export const parseStyles = (stylesString: string): Styles => {
   const stylesList = JSON.parse(stylesString) as StyleDecl[];

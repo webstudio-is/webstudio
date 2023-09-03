@@ -1,4 +1,4 @@
-import type { StyleSource, StyleSources } from "../schema/style-sources";
+import type { StyleSource, StyleSources } from "@webstudio-is/sdk";
 
 export const parseStyleSources = (styleSourceString: string): StyleSources => {
   const styleSourcesList = JSON.parse(styleSourceString) as StyleSource[];

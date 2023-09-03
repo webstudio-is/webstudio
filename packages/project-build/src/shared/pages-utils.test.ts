@@ -1,5 +1,5 @@
 import { describe, test, expect } from "@jest/globals";
-import type { Page } from "../schema/pages";
+import type { Page } from "@webstudio-is/sdk";
 import { findPageByIdOrPath } from "./pages-utils";
 
 const pages = {

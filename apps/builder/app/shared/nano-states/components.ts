@@ -9,7 +9,7 @@ import {
   namespaceMeta,
   getIndexesWithinAncestors,
 } from "@webstudio-is/react-sdk";
-import type { Instance } from "@webstudio-is/project-build";
+import type { Instance } from "@webstudio-is/sdk";
 import type { InstanceSelector } from "../tree-utils";
 import { dataSourceVariablesStore, propsStore } from "./nano-states";
 import { instancesStore, selectedInstanceSelectorStore } from "./instances";

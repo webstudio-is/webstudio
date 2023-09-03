@@ -4,9 +4,9 @@ import {
   type Instance,
   type Instances,
   type StyleSource,
-  findTreeInstanceIdsExcludingSlotDescendants,
   getStyleDeclKey,
-} from "@webstudio-is/project-build";
+} from "@webstudio-is/sdk";
+import { findTreeInstanceIdsExcludingSlotDescendants } from "@webstudio-is/project-build";
 import {
   type WsComponentMeta,
   generateDataFromEmbedTemplate,

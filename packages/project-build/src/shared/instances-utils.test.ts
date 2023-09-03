@@ -1,5 +1,5 @@
 import { expect, test } from "@jest/globals";
-import type { Instance, Instances } from "../schema/instances";
+import type { Instance, Instances } from "@webstudio-is/sdk";
 import {
   findTreeInstanceIds,
   findTreeInstanceIdsExcludingSlotDescendants,
