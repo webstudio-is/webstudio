@@ -9,6 +9,7 @@ import {
   type StyleSourceToken,
   type StyleSourceSelections,
   type StyleDecl,
+  type StyleSources,
   getStyleDeclKey,
 } from "@webstudio-is/sdk";
 import {
@@ -55,35 +56,6 @@ const getOrCreateStyleSourceSelectionMutable = (
     styleSourceSelections.set(selectedInstanceId, styleSourceSelection);
   }
   return styleSourceSelection;
-};
-
-const createLocalStyleSourceIfNotExists = (
-  styleSourceId: StyleSource["id"]
-) => {
-  const selectedInstanceSelector = selectedInstanceSelectorStore.get();
-  if (selectedInstanceSelector === undefined) {
-    return;
-  }
-  const [selectedInstanceId] = selectedInstanceSelector;
-  store.createTransaction(
-    [styleSourceSelectionsStore, styleSourcesStore],
-    (styleSourceSelections, styleSources) => {
-      const styleSourceSelection = getOrCreateStyleSourceSelectionMutable(
-        styleSourceSelections,
-        selectedInstanceId
-      );
-      if (styleSourceSelection.values.includes(styleSourceId) === false) {
-        // local should be put first by default
-        styleSourceSelection.values.unshift(styleSourceId);
-      }
-      if (styleSources.has(styleSourceId) === false) {
-        styleSources.set(styleSourceId, {
-          type: "local",
-          id: styleSourceId,
-        });
-      }
-    }
-  );
 };
 
 const $baseBreakpointId = computed(breakpointsStore, (breakpoints) => {
@@ -139,6 +111,31 @@ export const $presetTokens = computed(
   }
 );
 
+const addStyleSourceToInstaceMutable = (
+  styleSourceSelections: StyleSourceSelections,
+  styleSources: StyleSources,
+  instanceId: Instance["id"],
+  newStyleSourceId: StyleSource["id"]
+) => {
+  const styleSourceSelection = getOrCreateStyleSourceSelectionMutable(
+    styleSourceSelections,
+    instanceId
+  );
+  if (styleSourceSelection.values.includes(newStyleSourceId) === false) {
+    const lastStyleSourceId = styleSourceSelection.values.at(-1);
+    const lastStyleSource =
+      lastStyleSourceId === undefined
+        ? undefined
+        : styleSources.get(lastStyleSourceId);
+    // when local style source exists insert before it
+    if (lastStyleSource?.type === "local") {
+      styleSourceSelection.values.splice(-1, 0, newStyleSourceId);
+    } else {
+      styleSourceSelection.values.push(newStyleSourceId);
+    }
+  }
+};
+
 const createStyleSource = (id: StyleSource["id"], name: string) => {
   const selectedInstanceSelector = selectedInstanceSelectorStore.get();
   if (selectedInstanceSelector === undefined) {
@@ -154,13 +151,13 @@ const createStyleSource = (id: StyleSource["id"], name: string) => {
   store.createTransaction(
     [styleSourcesStore, stylesStore, styleSourceSelectionsStore],
     (styleSources, styles, styleSourceSelections) => {
-      const styleSourceSelection = getOrCreateStyleSourceSelectionMutable(
-        styleSourceSelections,
-        selectedInstanceId
-      );
-      styleSourceSelection.values.push(newStyleSource.id);
       styleSources.set(newStyleSource.id, newStyleSource);
-
+      addStyleSourceToInstaceMutable(
+        styleSourceSelections,
+        styleSources,
+        selectedInstanceId,
+        newStyleSource.id
+      );
       // populate preset token styles
       const presetToken = presetTokens.get(id);
       if (presetToken) {
@@ -173,22 +170,23 @@ const createStyleSource = (id: StyleSource["id"], name: string) => {
   selectedStyleSourceSelectorStore.set({ styleSourceId: newStyleSource.id });
 };
 
-const addStyleSourceToInstace = (newStyleSourceId: StyleSource["id"]) => {
+export const addStyleSourceToInstance = (
+  newStyleSourceId: StyleSource["id"]
+) => {
   const selectedInstanceSelector = selectedInstanceSelectorStore.get();
   if (selectedInstanceSelector === undefined) {
     return;
   }
   const [selectedInstanceId] = selectedInstanceSelector;
   store.createTransaction(
-    [styleSourceSelectionsStore],
-    (styleSourceSelections) => {
-      const styleSourceSelection = getOrCreateStyleSourceSelectionMutable(
+    [styleSourceSelectionsStore, styleSourcesStore],
+    (styleSourceSelections, styleSources) => {
+      addStyleSourceToInstaceMutable(
         styleSourceSelections,
-        selectedInstanceId
+        styleSources,
+        selectedInstanceId,
+        newStyleSourceId
       );
-      if (styleSourceSelection.values.includes(newStyleSourceId) === false) {
-        styleSourceSelection.values.push(newStyleSourceId);
-      }
     }
   );
   selectedStyleSourceSelectorStore.set({ styleSourceId: newStyleSourceId });
@@ -314,9 +312,9 @@ const convertLocalStyleSourceToToken = (styleSourceId: StyleSource["id"]) => {
         styleSourceSelections,
         selectedInstanceId
       );
-      // generated local style source was not applied so put first
+      // generated local style source was not applied so put last
       if (styleSourceSelection.values.includes(newStyleSource.id) === false) {
-        styleSourceSelection.values.unshift(newStyleSource.id);
+        styleSourceSelection.values.push(newStyleSource.id);
       }
       styleSources.set(newStyleSource.id, newStyleSource);
     }
@@ -331,24 +329,14 @@ const reorderStyleSources = (styleSourceIds: StyleSource["id"][]) => {
   }
   const [selectedInstanceId] = selectedInstanceSelector;
   store.createTransaction(
-    [styleSourcesStore, styleSourceSelectionsStore],
-    (styleSources, styleSourceSelections) => {
+    [styleSourceSelectionsStore],
+    (styleSourceSelections) => {
       const styleSourceSelection =
         styleSourceSelections.get(selectedInstanceId);
       if (styleSourceSelection === undefined) {
         return;
       }
       styleSourceSelection.values = styleSourceIds;
-      // reoder may affect temporary generated and not yet applied
-      // local style source so add one when not found in style sources
-      for (const styleSourceId of styleSourceIds) {
-        if (styleSources.has(styleSourceId) === false) {
-          styleSources.set(styleSourceId, {
-            type: "local",
-            id: styleSourceId,
-          });
-        }
-      }
     }
   );
 };
@@ -488,7 +476,7 @@ export const StyleSourcesSection = () => {
         componentStates={componentStates}
         onCreateItem={createStyleSource}
         onSelectAutocompleteItem={({ id }) => {
-          addStyleSourceToInstace(id);
+          addStyleSourceToInstance(id);
         }}
         onDuplicateItem={(id) => {
           const newId = duplicateStyleSource(id);
@@ -515,7 +503,6 @@ export const StyleSourcesSection = () => {
           reorderStyleSources(items.map((item) => item.id));
         }}
         onSelectItem={(styleSourceSelector) => {
-          createLocalStyleSourceIfNotExists(styleSourceSelector.styleSourceId);
           selectedStyleSourceSelectorStore.set(styleSourceSelector);
         }}
         // style source renaming
