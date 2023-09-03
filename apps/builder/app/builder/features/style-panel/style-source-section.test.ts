@@ -1,11 +1,23 @@
+import { enableMapSet } from "immer";
 import { expect, test } from "@jest/globals";
 import type { Breakpoint } from "@webstudio-is/sdk";
 import type { WsComponentMeta } from "@webstudio-is/react-sdk";
+import { registerContainers } from "~/shared/sync";
 import {
   breakpointsStore,
   registeredComponentMetasStore,
+  selectedInstanceSelectorStore,
+  selectedStyleSourceSelectorStore,
+  styleSourceSelectionsStore,
+  styleSourcesStore,
 } from "~/shared/nano-states";
-import { $presetTokens } from "./style-source-section";
+import {
+  $presetTokens,
+  addStyleSourceToInstance,
+} from "./style-source-section";
+
+enableMapSet();
+registerContainers();
 
 test("generate Styles from preset tokens", () => {
   breakpointsStore.set(
@@ -89,6 +101,49 @@ test("generate Styles from preset tokens", () => {
               value: { type: "keyword", value: "black" },
             },
           ],
+        },
+      ],
+    ])
+  );
+});
+
+test("add style source to instance", () => {
+  selectedInstanceSelectorStore.set(["root"]);
+  styleSourcesStore.set(new Map([["local1", { id: "local1", type: "local" }]]));
+  styleSourceSelectionsStore.set(new Map());
+  selectedStyleSourceSelectorStore.set(undefined);
+
+  addStyleSourceToInstance("token1");
+  expect(styleSourceSelectionsStore.get()).toEqual(
+    new Map([["root", { instanceId: "root", values: ["token1"] }]])
+  );
+  expect(selectedStyleSourceSelectorStore.get()).toEqual({
+    styleSourceId: "token1",
+  });
+
+  // put new style source last
+  addStyleSourceToInstance("local1");
+  expect(styleSourceSelectionsStore.get()).toEqual(
+    new Map([
+      [
+        "root",
+        {
+          instanceId: "root",
+          values: ["token1", "local1"],
+        },
+      ],
+    ])
+  );
+
+  // put new token before local
+  addStyleSourceToInstance("token2");
+  expect(styleSourceSelectionsStore.get()).toEqual(
+    new Map([
+      [
+        "root",
+        {
+          instanceId: "root",
+          values: ["token1", "token2", "local1"],
         },
       ],
     ])

@@ -9,6 +9,7 @@ import {
   type StyleSourceToken,
   type StyleSourceSelections,
   type StyleDecl,
+  type StyleSources,
   getStyleDeclKey,
 } from "@webstudio-is/sdk";
 import {
@@ -110,6 +111,31 @@ export const $presetTokens = computed(
   }
 );
 
+const addStyleSourceToInstaceMutable = (
+  styleSourceSelections: StyleSourceSelections,
+  styleSources: StyleSources,
+  instanceId: Instance["id"],
+  newStyleSourceId: StyleSource["id"]
+) => {
+  const styleSourceSelection = getOrCreateStyleSourceSelectionMutable(
+    styleSourceSelections,
+    instanceId
+  );
+  if (styleSourceSelection.values.includes(newStyleSourceId) === false) {
+    const lastStyleSourceId = styleSourceSelection.values.at(-1);
+    const lastStyleSource =
+      lastStyleSourceId === undefined
+        ? undefined
+        : styleSources.get(lastStyleSourceId);
+    // when local style source exists insert before it
+    if (lastStyleSource?.type === "local") {
+      styleSourceSelection.values.splice(-1, 0, newStyleSourceId);
+    } else {
+      styleSourceSelection.values.push(newStyleSourceId);
+    }
+  }
+};
+
 const createStyleSource = (id: StyleSource["id"], name: string) => {
   const selectedInstanceSelector = selectedInstanceSelectorStore.get();
   if (selectedInstanceSelector === undefined) {
@@ -125,13 +151,13 @@ const createStyleSource = (id: StyleSource["id"], name: string) => {
   store.createTransaction(
     [styleSourcesStore, stylesStore, styleSourceSelectionsStore],
     (styleSources, styles, styleSourceSelections) => {
-      const styleSourceSelection = getOrCreateStyleSourceSelectionMutable(
-        styleSourceSelections,
-        selectedInstanceId
-      );
-      styleSourceSelection.values.push(newStyleSource.id);
       styleSources.set(newStyleSource.id, newStyleSource);
-
+      addStyleSourceToInstaceMutable(
+        styleSourceSelections,
+        styleSources,
+        selectedInstanceId,
+        newStyleSource.id
+      );
       // populate preset token styles
       const presetToken = presetTokens.get(id);
       if (presetToken) {
@@ -144,22 +170,23 @@ const createStyleSource = (id: StyleSource["id"], name: string) => {
   selectedStyleSourceSelectorStore.set({ styleSourceId: newStyleSource.id });
 };
 
-const addStyleSourceToInstace = (newStyleSourceId: StyleSource["id"]) => {
+export const addStyleSourceToInstance = (
+  newStyleSourceId: StyleSource["id"]
+) => {
   const selectedInstanceSelector = selectedInstanceSelectorStore.get();
   if (selectedInstanceSelector === undefined) {
     return;
   }
   const [selectedInstanceId] = selectedInstanceSelector;
   store.createTransaction(
-    [styleSourceSelectionsStore],
-    (styleSourceSelections) => {
-      const styleSourceSelection = getOrCreateStyleSourceSelectionMutable(
+    [styleSourceSelectionsStore, styleSourcesStore],
+    (styleSourceSelections, styleSources) => {
+      addStyleSourceToInstaceMutable(
         styleSourceSelections,
-        selectedInstanceId
+        styleSources,
+        selectedInstanceId,
+        newStyleSourceId
       );
-      if (styleSourceSelection.values.includes(newStyleSourceId) === false) {
-        styleSourceSelection.values.push(newStyleSourceId);
-      }
     }
   );
   selectedStyleSourceSelectorStore.set({ styleSourceId: newStyleSourceId });
@@ -449,7 +476,7 @@ export const StyleSourcesSection = () => {
         componentStates={componentStates}
         onCreateItem={createStyleSource}
         onSelectAutocompleteItem={({ id }) => {
-          addStyleSourceToInstace(id);
+          addStyleSourceToInstance(id);
         }}
         onDuplicateItem={(id) => {
           const newId = duplicateStyleSource(id);
