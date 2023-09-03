@@ -104,7 +104,7 @@ export const useSortable = <Item extends { id: string; source: ItemSource }>({
     onStart({ data: itemId }) {
       const item = items.find((item) => item.id === itemId);
       if (items.at(-1) === item && item?.source === "local") {
-        toast.error("Local token is always last and can not be moved");
+        toast.error("Local style source is always last and can not be moved");
         useDragHandlers.cancelCurrentDrag();
         return;
       }
