@@ -28,16 +28,6 @@ import type { Components } from "../components/components-utils";
 import type { Params, DataSourceValues } from "../context";
 import type { GeneratedUtils } from "../generator";
 
-/*
-export type Data = {
-  page: Page;
-  pages: Array<Page>;
-  build: Build;
-  assets: Array<Asset>;
-  params?: Params;
-};
-*/
-
 export type RootPropsData = {
   params?: Params;
   page: Page;
