@@ -11,6 +11,8 @@
   "files": [
     "lib/*",
     "src/*",
+    "templates/*",
+    "bin.js",
     "!*.test.*"
   ],
   "scripts": {
