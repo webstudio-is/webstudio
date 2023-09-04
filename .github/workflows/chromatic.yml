@@ -34,7 +34,7 @@ jobs:
           ]
         include:
           - project: builder-app
-            chromaticSecretKey: aed47de034e6
+            chromaticSecretKey: bea8dc1981d4
             workingDir: apps/builder
 
           - project: css-engine
@@ -109,7 +109,7 @@ jobs:
         id: chromatic
         uses: chromaui/action@v1
         with:
-          projectToken: ${{ secrets.CHROMATIC_ROOT }}
+          projectToken: aed47de034e6
           buildScriptName: storybook:build
         env:
           DEPLOYED_URLS: ${{ toJSON(needs.chromatic.outputs) }}
