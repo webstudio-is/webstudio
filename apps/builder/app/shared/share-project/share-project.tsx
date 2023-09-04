@@ -16,8 +16,9 @@ import {
   useId,
   Collapsible,
   keyframes,
+  Text,
 } from "@webstudio-is/design-system";
-import { CopyIcon, InfoIcon, MenuIcon, PlusIcon } from "@webstudio-is/icons";
+import { CopyIcon, MenuIcon, PlusIcon, HelpIcon } from "@webstudio-is/icons";
 import { Fragment, useState, type ComponentProps } from "react";
 import { isFeatureEnabled } from "@webstudio-is/feature-flags";
 
@@ -44,12 +45,19 @@ const Permission = ({
 }: PermissionProps) => {
   const id = useId();
 
+  const tooltipContent = (
+    <Flex direction="column" gap="2" css={{ maxWidth: theme.spacing[28] }}>
+      <Text variant="titles">{title}</Text>
+      <Text>{info}</Text>
+    </Flex>
+  );
+
   return (
     <Flex align="center" gap="1">
       <Switch checked={checked} id={id} onCheckedChange={onCheckedChange} />
       <Label htmlFor={id}>{title}</Label>
-      <Tooltip content={info} variant="wrapped">
-        <InfoIcon color={rawTheme.colors.foregroundSubtle} tabIndex={0} />
+      <Tooltip content={tooltipContent} variant="wrapped">
+        <HelpIcon color={rawTheme.colors.foregroundSubtle} tabIndex={0} />
       </Tooltip>
     </Flex>
   );
