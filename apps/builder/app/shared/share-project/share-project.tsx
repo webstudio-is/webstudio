@@ -125,7 +125,7 @@ const Menu = ({
             onCheckedChange={handleCheckedChange("builders")}
             checked={relation === "builders"}
             title="Build"
-            info="Recipients can view the site and edit content like text and images and change the styles or structure of your site."
+            info="Recipients can make any changes but can not publish the site."
           />
 
           {isFeatureEnabled("adminRole") && (
@@ -133,7 +133,7 @@ const Menu = ({
               onCheckedChange={handleCheckedChange("administrators")}
               checked={relation === "administrators"}
               title="Admin"
-              info="Recipients can view the site and edit content like text and images and change the styles or structure of your site. Can publish."
+              info="Recipients can make any changes and can also publish the site."
             />
           )}
         </Item>
