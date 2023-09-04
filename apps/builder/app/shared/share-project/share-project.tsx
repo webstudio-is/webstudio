@@ -10,13 +10,13 @@ import {
   rawTheme,
   Separator,
   Switch,
-  DeprecatedTextField,
   theme,
   Tooltip,
   useId,
   Collapsible,
   keyframes,
   Text,
+  InputField,
 } from "@webstudio-is/design-system";
 import { CopyIcon, MenuIcon, PlusIcon, HelpIcon } from "@webstudio-is/icons";
 import { Fragment, useState, type ComponentProps } from "react";
@@ -25,7 +25,7 @@ import { isFeatureEnabled } from "@webstudio-is/feature-flags";
 const Item = (props: ComponentProps<typeof Flex>) => (
   <Flex
     direction="column"
-    css={{ padding: theme.spacing[7] }}
+    css={{ px: theme.spacing[7], py: theme.spacing[5] }}
     gap="1"
     {...props}
   />
@@ -94,11 +94,17 @@ const Menu = ({
           aria-label="Menu Button for options"
         ></Button>
       </PopoverTrigger>
-      <PopoverContent css={{ zIndex: theme.zIndices[1] }}>
+      <PopoverContent
+        css={{
+          zIndex: theme.zIndices[1],
+          padding: 0,
+          width: theme.spacing[24],
+        }}
+        sideOffset={0}
+      >
         <Item>
           <Label>Name</Label>
-          <DeprecatedTextField
-            autoFocus
+          <InputField
             value={name}
             onChange={(event) => {
               onChangeName(event.target.value);
@@ -108,6 +114,9 @@ const Menu = ({
                 setIsOpen(false);
               }
             }}
+            placeholder="Breakpoint name"
+            name="Name"
+            autoFocus
           />
         </Item>
         <Separator />

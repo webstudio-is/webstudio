@@ -43,6 +43,7 @@ export const PopoverContent = forwardRef(
       className,
       css,
       hideArrow,
+      sideOffset,
       ...props
     }: ComponentProps<typeof Primitive.Content> & {
       hideArrow?: boolean;
@@ -52,7 +53,7 @@ export const PopoverContent = forwardRef(
   ) => (
     <Primitive.Portal>
       <Primitive.Content
-        sideOffset={4}
+        sideOffset={sideOffset ?? 4}
         collisionPadding={4}
         className={contentStyle({ className, css })}
         {...props}
