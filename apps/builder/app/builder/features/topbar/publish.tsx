@@ -476,7 +476,7 @@ export const PublishButton = ({ projectId }: PublishProps) => {
 
   const tooltipContent = isPublishEnabled
     ? undefined
-    : "Only owner can publish projects";
+    : "Only owner or admin can publish projects";
 
   return (
     <FloatingPanelPopover modal open={isOpen} onOpenChange={setIsOpen}>
