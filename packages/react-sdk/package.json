@@ -14,18 +14,18 @@
     "checks": "pnpm typecheck && pnpm test"
   },
   "devDependencies": {
-    "@jest/globals": "^29.6.2",
+    "@jest/globals": "^29.6.4",
     "@remix-run/react": "^1.19.2",
     "@types/react": "^18.2.20",
     "@types/react-dom": "^18.2.7",
     "@webstudio-is/jest-config": "workspace:^",
     "@webstudio-is/scripts": "workspace:^",
     "@webstudio-is/tsconfig": "workspace:^",
-    "jest": "^29.6.2",
+    "jest": "^29.6.4",
     "react": "^18.2.0",
     "react-dom": "^18.2.0",
-    "type-fest": "^4.2.0",
-    "typescript": "5.1.6",
+    "type-fest": "^4.3.1",
+    "typescript": "5.2.2",
     "zod": "^3.21.4"
   },
   "peerDependencies": {

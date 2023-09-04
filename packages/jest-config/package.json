@@ -3,8 +3,8 @@
   "version": "1.0.7",
   "license": "AGPL-3.0-or-later",
   "dependencies": {
-    "@jest/types": "^29.6.1",
+    "@jest/types": "^29.6.3",
     "esbuild": "^0.18.18",
-    "jest": "^29.6.2"
+    "jest": "^29.6.4"
   }
 }
