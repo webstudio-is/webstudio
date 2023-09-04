@@ -17,6 +17,7 @@ import {
   Separator,
   ScrollArea,
   Box,
+  rawTheme,
 } from "@webstudio-is/design-system";
 import { useIsPublishDialogOpen } from "../../shared/nano-states";
 import { validateProjectDomain, type Project } from "@webstudio-is/project";
@@ -491,10 +492,12 @@ export const PublishButton = ({ projectId }: PublishProps) => {
       </FloatingPanelAnchor>
 
       <FloatingPanelPopoverContent
+        sideOffset={parseFloat(rawTheme.spacing[8])}
         css={{
           zIndex: theme.zIndices[1],
           width: theme.spacing[33],
           maxWidth: theme.spacing[33],
+          marginRight: theme.spacing[3],
         }}
       >
         <FloatingPanelPopoverTitle>Publish</FloatingPanelPopoverTitle>
