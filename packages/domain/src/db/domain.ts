@@ -93,7 +93,7 @@ export const create = async (
   const { userId: ownerId } = project;
 
   if (ownerId === null) {
-    throw new AuthorizationError("Project must have userid defined");
+    throw new AuthorizationError("Project must have project userId defined");
   }
 
   // Query amount of domains
