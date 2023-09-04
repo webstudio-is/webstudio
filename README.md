@@ -25,4 +25,4 @@
 - [Wishlist](https://github.com/webstudio-is/webstudio-community/discussions/categories/wishlist)
 - [Builder Issues tracker](https://github.com/webstudio-is/webstudio/issues)
 - [Roadmap](https://github.com/orgs/webstudio-is/projects)
-- [Design Assets and docs](https://github.com/webstudio-is/webstudio-design)
+- [Design Assets and docs](https://github.com/webstudio-is/webstudio-design).
