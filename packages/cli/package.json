@@ -1,5 +1,5 @@
 {
-  "name": "webstudio",
+  "name": "@webstudio/cli",
   "version": "0.91.0",
   "description": "Webstudio CLI",
   "author": "Webstudio <github@webstudio.is>",
@@ -8,6 +8,13 @@
   "bin": {
     "webstudio": "./bin.js"
   },
+  "files": [
+    "lib/*",
+    "src/*",
+    "templates/*",
+    "bin.js",
+    "!*.test.*"
+  ],
   "scripts": {
     "typecheck": "tsc",
     "checks": "pnpm typecheck",
