@@ -5,7 +5,12 @@ import { db } from "../db";
 
 const { router, procedure } = initTRPC.context<AppContext>().create();
 
-const TokenProjectRelation = z.enum(["viewers", "editors", "builders"]);
+const TokenProjectRelation = z.enum([
+  "viewers",
+  "editors",
+  "builders",
+  "administrators",
+]);
 
 export const authorizationTokenRouter = router({
   findMany: procedure

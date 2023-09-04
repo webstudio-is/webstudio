@@ -472,17 +472,18 @@ export const PublishButton = ({ projectId }: PublishProps) => {
   const [isOpen, setIsOpen] = useIsPublishDialogOpen();
   const [authPermit] = useAuthPermit();
 
-  const isPublishDisabled = authPermit !== "own";
-  const tooltipContent = isPublishDisabled
-    ? "Only owner can publish projects"
-    : undefined;
+  const isPublishEnabled = authPermit === "own" || authPermit === "admin";
+
+  const tooltipContent = isPublishEnabled
+    ? undefined
+    : "Only owner or admin can publish projects";
 
   return (
     <FloatingPanelPopover modal open={isOpen} onOpenChange={setIsOpen}>
       <FloatingPanelAnchor>
         <Tooltip side="bottom" content={tooltipContent}>
           <FloatingPanelPopoverTrigger asChild>
-            <Button disabled={isPublishDisabled} color="positive">
+            <Button disabled={isPublishEnabled === false} color="positive">
               Publish
             </Button>
           </FloatingPanelPopoverTrigger>
