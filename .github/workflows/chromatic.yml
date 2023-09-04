@@ -34,31 +34,31 @@ jobs:
           ]
         include:
           - project: builder-app
-            chromaticSecretKey: CHROMATIC_DESIGNER_APP_TOKEN
+            chromaticSecretKey: aed47de034e6
             workingDir: apps/builder
 
           - project: css-engine
-            chromaticSecretKey: CHROMATIC_CSS_ENGINE_TOKEN
+            chromaticSecretKey: 4c9027c284cd
             workingDir: packages/css-engine
 
           - project: design-system
-            chromaticSecretKey: CHROMATIC_DESIGN_SYSTEM_TOKEN
+            chromaticSecretKey: 1e6cb506d54c
             workingDir: packages/design-system
 
           - project: icons
-            chromaticSecretKey: CHROMATIC_ICONS_TOKEN
+            chromaticSecretKey: a65a9a61b5eb
             workingDir: packages/icons
 
           - project: image
-            chromaticSecretKey: CHROMATIC_IMAGE_TOKEN
+            chromaticSecretKey: 45e26b79ab8a
             workingDir: packages/image
 
           - project: sdk-components-react
-            chromaticSecretKey: CHROMATIC_REACT_SDK_TOKEN
+            chromaticSecretKey: 04114b467b2b
             workingDir: packages/sdk-components-react
 
           - project: sdk-components-react-radix
-            chromaticSecretKey: CHROMATIC_REACT_SDK_TOKEN
+            chromaticSecretKey: 04114b467b2b
             workingDir: packages/sdk-components-react-radix
 
     outputs:
@@ -82,7 +82,7 @@ jobs:
         id: chromatic
         uses: chromaui/action@v1
         with:
-          projectToken: ${{ secrets[matrix.chromaticSecretKey] }}
+          projectToken: ${{ matrix.chromaticSecretKey }}
           workingDir: ${{ matrix.workingDir }}
           buildScriptName: storybook:build
 
