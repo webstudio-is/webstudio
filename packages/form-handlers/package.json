@@ -13,7 +13,7 @@
     "dts": "tsc --project tsconfig.dts.json"
   },
   "dependencies": {
-    "@webstudio-is/project-build": "workspace:^"
+    "@webstudio-is/sdk": "workspace:^"
   },
   "devDependencies": {
     "@webstudio-is/scripts": "workspace:^",

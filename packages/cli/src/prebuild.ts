@@ -7,12 +7,18 @@ import {
   generateCssText,
   generateUtilsExport,
   type Params,
-  type Data,
   type WsComponentMeta,
 } from "@webstudio-is/react-sdk";
-import type { Instance, Prop, Page, DataSource } from "@webstudio-is/sdk";
-import { findTreeInstanceIds, type Build } from "@webstudio-is/project-build";
+import type {
+  Instance,
+  Prop,
+  Page,
+  DataSource,
+  Deployment,
+} from "@webstudio-is/sdk";
+import { findTreeInstanceIds } from "@webstudio-is/sdk";
 import type { Asset, FontAsset } from "@webstudio-is/sdk";
+import type { Data } from "@webstudio-is/http-client";
 import * as baseComponentMetas from "@webstudio-is/sdk-components-react/metas";
 import * as remixComponentMetas from "@webstudio-is/sdk-components-react-remix/metas";
 import * as radixComponentMetas from "@webstudio-is/sdk-components-react-radix/metas";
@@ -42,7 +48,12 @@ type ComponentsByPage = {
 type SiteDataByPage = {
   [path: string]: {
     page: Page;
-    build: Pick<Build, "props" | "instances" | "dataSources" | "deployment">;
+    build: {
+      props: [Prop["id"], Prop][];
+      instances: [Instance["id"], Instance][];
+      dataSources: [DataSource["id"], DataSource][];
+      deployment?: Deployment | undefined;
+    };
     assets: Array<Asset>;
     params?: Params;
     pages: Array<Page>;

@@ -18,12 +18,11 @@
   "dependencies": {
     "@webstudio-is/http-client": "workspace:^",
     "@webstudio-is/image": "workspace:^",
-    "@webstudio-is/project-build": "workspace:^",
     "@webstudio-is/react-sdk": "workspace:^",
+    "@webstudio-is/sdk": "workspace:^",
     "@webstudio-is/sdk-components-react": "workspace:^",
     "@webstudio-is/sdk-components-react-radix": "workspace:^",
     "@webstudio-is/sdk-components-react-remix": "workspace:^",
-    "@webstudio-is/sdk": "workspace:^",
     "env-paths": "^3.0.0",
     "ora": "^7.0.1",
     "p-limit": "^4.0.0",
@@ -31,6 +30,7 @@
   },
   "devDependencies": {
     "@types/node": "^18.13.0",
+    "@webstudio-is/form-handlers": "workspace:^",
     "@webstudio-is/scripts": "workspace:^",
     "@webstudio-is/tsconfig": "workspace:^",
     "tsx": "^3.12.6",

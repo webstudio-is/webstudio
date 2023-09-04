@@ -3,7 +3,7 @@ import { nanoid } from "nanoid";
 import store from "immerhin";
 import { z } from "zod";
 import { toast } from "@webstudio-is/design-system";
-import { findTreeInstanceIds } from "@webstudio-is/project-build";
+import { findTreeInstanceIds } from "@webstudio-is/sdk";
 import {
   Asset,
   Breakpoint,

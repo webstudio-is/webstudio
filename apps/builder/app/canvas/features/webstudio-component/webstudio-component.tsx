@@ -10,7 +10,7 @@ import { useStore } from "@nanostores/react";
 import { useLexicalComposerContext } from "@lexical/react/LexicalComposerContext";
 import store from "immerhin";
 import type { Instance, Instances } from "@webstudio-is/sdk";
-import { findTreeInstanceIds } from "@webstudio-is/project-build";
+import { findTreeInstanceIds } from "@webstudio-is/sdk";
 import {
   type Components,
   renderWebstudioComponentChildren,

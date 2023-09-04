@@ -20,7 +20,8 @@
   "sideEffects": false,
   "scripts": {
     "typecheck": "tsc",
-    "checks": "pnpm typecheck",
+    "test": "NODE_OPTIONS=--experimental-vm-modules jest",
+    "checks": "pnpm typecheck && pnpm test",
     "dev": "build-package --watch",
     "build": "build-package",
     "dts": "tsc --project tsconfig.dts.json"
@@ -31,7 +32,10 @@
     "zod": "^3.21.4"
   },
   "devDependencies": {
+    "@jest/globals": "^29.6.2",
+    "@webstudio-is/jest-config": "workspace:^",
     "@webstudio-is/scripts": "workspace:^",
-    "@webstudio-is/tsconfig": "workspace:^"
+    "@webstudio-is/tsconfig": "workspace:^",
+    "jest": "^29.6.2"
   }
 }

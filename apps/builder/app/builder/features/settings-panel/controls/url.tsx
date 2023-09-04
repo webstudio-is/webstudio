@@ -19,7 +19,7 @@ import {
   PhoneIcon,
 } from "@webstudio-is/icons";
 import type { Instance, Page } from "@webstudio-is/sdk";
-import { findTreeInstanceIds } from "@webstudio-is/project-build";
+import { findTreeInstanceIds } from "@webstudio-is/sdk";
 import { instancesStore, pagesStore, propsStore } from "~/shared/nano-states";
 import {
   type ControlProps,

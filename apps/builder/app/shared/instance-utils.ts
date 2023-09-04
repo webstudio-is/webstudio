@@ -6,7 +6,7 @@ import {
   type StyleSource,
   getStyleDeclKey,
 } from "@webstudio-is/sdk";
-import { findTreeInstanceIdsExcludingSlotDescendants } from "@webstudio-is/project-build";
+import { findTreeInstanceIdsExcludingSlotDescendants } from "@webstudio-is/sdk";
 import {
   type WsComponentMeta,
   generateDataFromEmbedTemplate,
