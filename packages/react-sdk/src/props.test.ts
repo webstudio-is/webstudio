@@ -1,7 +1,6 @@
 import { describe, test, expect } from "@jest/globals";
+import type { Page, Prop, Asset, Assets } from "@webstudio-is/sdk";
 import { resolveUrlProp, type Pages, type PropsByInstanceId } from "./props";
-import type { Page, Prop } from "@webstudio-is/project-build";
-import type { Asset, Assets } from "@webstudio-is/sdk";
 
 const unique = () => Math.random().toString();
 

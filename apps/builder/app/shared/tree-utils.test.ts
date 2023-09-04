@@ -8,8 +8,8 @@ import type {
   Styles,
   StyleSource,
   StyleSourceSelection,
-} from "@webstudio-is/project-build";
-import { getStyleDeclKey } from "@webstudio-is/project-build";
+} from "@webstudio-is/sdk";
+import { getStyleDeclKey } from "@webstudio-is/sdk";
 import * as baseMetas from "@webstudio-is/sdk-components-react/metas";
 import {
   type InstanceSelector,

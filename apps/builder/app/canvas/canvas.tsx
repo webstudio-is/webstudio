@@ -2,7 +2,7 @@ import { useMemo, useEffect } from "react";
 import { useStore } from "@nanostores/react";
 import { computed } from "nanostores";
 import { Scripts, ScrollRestoration } from "@remix-run/react";
-import type { DataSource, Instances, Page } from "@webstudio-is/project-build";
+import type { DataSource, Instances, Page } from "@webstudio-is/sdk";
 import {
   type Params,
   type Components,

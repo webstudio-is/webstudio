@@ -8,7 +8,9 @@ import {
   useDrop,
   type DropTarget,
   computeIndicatorPlacement,
+  toast,
 } from "@webstudio-is/design-system";
+import type { ItemSource } from "./style-source";
 
 type UseSortable<Item> = {
   items: Array<Item>;
@@ -27,7 +29,7 @@ const sharedDropOptions = {
   childrenOrientation: { type: "horizontal", reverse: false },
 } as const;
 
-export const useSortable = <Item extends { id: string }>({
+export const useSortable = <Item extends { id: string; source: ItemSource }>({
   items,
   onSort,
 }: UseSortable<Item>) => {
@@ -58,6 +60,17 @@ export const useSortable = <Item extends { id: string }>({
       if (dropTarget === undefined) {
         setPlacementIndicator(undefined);
       } else {
+        // when local style source is last always drop before it
+        if (items.at(-1)?.source === "local") {
+          const lastIndex = items.length - 1;
+          const { placement } = dropTarget;
+          const { indexAdjustment, closestChildIndex } = placement;
+          placement.indexAdjustment = Math.min(indexAdjustment, lastIndex - 1);
+          placement.closestChildIndex = Math.min(
+            closestChildIndex,
+            lastIndex - 1
+          );
+        }
         setPlacementIndicator(
           computeIndicatorPlacement({
             ...sharedDropOptions,
@@ -81,10 +94,22 @@ export const useSortable = <Item extends { id: string }>({
         return false;
       }
 
-      return getItemId(closest) || false;
+      const itemId = getItemId(closest);
+      if (itemId === undefined) {
+        return false;
+      }
+
+      return itemId;
     },
-    onStart({ data }) {
-      setDragItemId(data);
+    onStart({ data: itemId }) {
+      const item = items.find((item) => item.id === itemId);
+      if (items.at(-1) === item && item?.source === "local") {
+        toast.error("Local style source is always last and can not be moved");
+        useDragHandlers.cancelCurrentDrag();
+        return;
+      }
+
+      setDragItemId(itemId);
       useDropHandlers.handleStart();
     },
     onMove: (point) => {
@@ -108,6 +133,11 @@ export const useSortable = <Item extends { id: string }>({
         // we need to do this to account for it.
         if (oldIndex < newIndex) {
           newIndex = Math.max(0, newIndex - 1);
+        }
+        // when local style source is last always drop before it
+        if (items.at(-1)?.source === "local") {
+          const lastIndex = items.length - 1;
+          newIndex = Math.min(newIndex, lastIndex - 1);
         }
 
         if (oldIndex !== newIndex) {

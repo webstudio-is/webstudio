@@ -101,14 +101,15 @@ export const Menu = ({ publish }: MenuProps) => {
   const [isPreviewMode, setIsPreviewMode] = useIsPreviewMode();
   const [authPermit] = useAuthPermit();
 
-  const isPublishDisabled = authPermit !== "own";
+  const isPublishEnabled = authPermit === "own" || authPermit === "admin";
+
   const isShareDisabled = authPermit !== "own";
 
-  const disabledPublishTooltipContent = isPublishDisabled
-    ? "Only owner can publish projects"
-    : undefined;
+  const disabledPublishTooltipContent = isPublishEnabled
+    ? undefined
+    : "Only owner or admin can publish projects";
 
-  const disabledShareTooltipContent = isPublishDisabled
+  const disabledShareTooltipContent = isShareDisabled
     ? "Only owner can share projects"
     : undefined;
 
@@ -210,7 +211,7 @@ export const Menu = ({ publish }: MenuProps) => {
               onSelect={() => {
                 setIsPublishOpen(true);
               }}
-              disabled={isPublishDisabled}
+              disabled={isPublishEnabled === false}
             >
               Publish
             </DropdownMenuItem>

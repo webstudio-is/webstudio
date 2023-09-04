@@ -1,4 +1,4 @@
-import type { Build } from "@webstudio-is/project-build";
+import type { Instance, Prop } from "@webstudio-is/sdk";
 
 export const formHiddenFieldPrefix = "ws--form";
 export const formIdFieldName = `${formHiddenFieldPrefix}-id`;
@@ -114,7 +114,7 @@ export const getErrors = (
 /** Checks that `formData` corresponds to a form in the `instances` tree */
 export const hasMatchingForm = (
   formData: FormData,
-  instances: Build["instances"]
+  instances: [Instance["id"], Instance][]
 ) => {
   const formId = getFormId(formData);
 
@@ -133,8 +133,8 @@ export const hasMatchingForm = (
 
 export const getFormProperties = (
   formData: FormData,
-  instances: Build["instances"],
-  props: Build["props"]
+  instances: [Instance["id"], Instance][],
+  props: [Prop["id"], Prop][]
 ) => {
   const formId = getFormId(formData);
 

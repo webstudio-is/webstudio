@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { nanoid } from "nanoid";
-import type { Instance, Prop } from "@webstudio-is/project-build";
+import type { Instance, Prop } from "@webstudio-is/sdk";
 import {
   type PropMeta,
   type WsComponentPropsMeta,

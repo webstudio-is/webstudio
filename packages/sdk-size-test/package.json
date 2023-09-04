@@ -38,6 +38,6 @@
     "@types/react-dom": "^18.2.7",
     "@webstudio-is/tsconfig": "workspace:^",
     "size-limit": "^8.2.6",
-    "typescript": "5.1.6"
+    "typescript": "5.2.2"
   }
 }

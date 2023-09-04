@@ -1,7 +1,7 @@
+import { useEffect, useState } from "react";
 import { useStore } from "@nanostores/react";
 import { css, theme } from "@webstudio-is/design-system";
-import { useEffect, useState } from "react";
-import type { Breakpoint, Breakpoints } from "@webstudio-is/project-build";
+import type { Breakpoint, Breakpoints } from "@webstudio-is/sdk";
 import { breakpointsStore } from "~/shared/nano-states";
 import { isBaseBreakpoint } from "~/shared/breakpoints";
 

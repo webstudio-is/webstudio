@@ -1,5 +1,5 @@
 import { compareMedia } from "@webstudio-is/css-engine";
-import type { Breakpoint } from "@webstudio-is/project-build";
+import type { Breakpoint } from "@webstudio-is/sdk";
 import { groupBreakpoints, isBaseBreakpoint } from "~/shared/breakpoints";
 
 const defaultWidth = 320;

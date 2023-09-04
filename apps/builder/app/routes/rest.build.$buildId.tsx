@@ -1,5 +1,5 @@
 import { json, type LoaderArgs } from "@remix-run/node";
-import type { Data } from "@webstudio-is/react-sdk";
+import type { Data } from "@webstudio-is/http-client";
 import { db as projectDb } from "@webstudio-is/project/index.server";
 import { sentryException } from "~/shared/sentry";
 import { loadProductionCanvasData } from "~/shared/db";

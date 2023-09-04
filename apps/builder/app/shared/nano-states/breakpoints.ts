@@ -1,5 +1,5 @@
 import { atom, computed } from "nanostores";
-import type { Breakpoint, Breakpoints } from "@webstudio-is/project-build";
+import type { Breakpoint, Breakpoints } from "@webstudio-is/sdk";
 import { isBaseBreakpoint } from "../breakpoints";
 
 export const breakpointsStore = atom<Breakpoints>(new Map());

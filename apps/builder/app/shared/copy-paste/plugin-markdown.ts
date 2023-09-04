@@ -2,7 +2,7 @@ import { nanoid } from "nanoid";
 import { fromMarkdown } from "mdast-util-from-markdown";
 import { gfmFromMarkdown } from "mdast-util-gfm";
 import { gfm } from "micromark-extension-gfm";
-import type { Breakpoint, Instance } from "@webstudio-is/project-build";
+import type { Breakpoint, Instance } from "@webstudio-is/sdk";
 import type { EmbedTemplateData } from "@webstudio-is/react-sdk";
 import {
   computeInstancesConstraints,

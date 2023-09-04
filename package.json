@@ -30,12 +30,12 @@
     "@types/css-tree": "^2.3.1",
     "@webstudio-is/eslint-config-custom": "workspace:^",
     "nano-staged": "^0.8.0",
-    "prettier": "3.0.1",
+    "prettier": "3.0.3",
     "simple-git-hooks": "^2.9.0",
     "storybook": "^7.2.1",
     "tsx": "^3.12.6",
     "turbo": "^1.8.6",
-    "typescript": "5.1.6"
+    "typescript": "5.2.2"
   },
   "engines": {
     "node": "18",

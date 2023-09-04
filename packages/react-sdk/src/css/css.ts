@@ -1,6 +1,13 @@
 import { createCssEngine, type TransformValue } from "@webstudio-is/css-engine";
-import type { Asset, Assets } from "@webstudio-is/sdk";
-import type { Build } from "@webstudio-is/project-build";
+import type {
+  Asset,
+  Assets,
+  Breakpoint,
+  Instance,
+  StyleDecl,
+  StyleDeclKey,
+  StyleSourceSelection,
+} from "@webstudio-is/sdk";
 import type { WsComponentMeta } from "../components/component-meta";
 import { idAttribute } from "../tree";
 import { addGlobalRules } from "./global-rules";
@@ -8,9 +15,9 @@ import { getPresetStyleRules, getStyleRules } from "./style-rules";
 
 type Data = {
   assets: Asset[];
-  breakpoints?: Build["breakpoints"];
-  styles?: Build["styles"];
-  styleSourceSelections?: Build["styleSourceSelections"];
+  breakpoints: [Breakpoint["id"], Breakpoint][];
+  styles: [StyleDeclKey, StyleDecl][];
+  styleSourceSelections: [Instance["id"], StyleSourceSelection][];
   componentMetas: Map<string, WsComponentMeta>;
 };
 

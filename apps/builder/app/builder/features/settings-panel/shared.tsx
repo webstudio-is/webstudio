@@ -7,8 +7,7 @@ import {
 } from "react";
 import equal from "fast-deep-equal";
 import type { PropMeta } from "@webstudio-is/react-sdk";
-import type { Prop } from "@webstudio-is/project-build";
-import type { Asset } from "@webstudio-is/sdk";
+import type { Prop, Asset } from "@webstudio-is/sdk";
 import { SubtractIcon } from "@webstudio-is/icons";
 import {
   SmallIconButton,

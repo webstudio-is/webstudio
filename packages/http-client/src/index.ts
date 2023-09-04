@@ -1,4 +1,38 @@
-import type { Data } from "@webstudio-is/react-sdk";
+import type {
+  Asset,
+  Breakpoint,
+  DataSource,
+  Deployment,
+  Instance,
+  Page,
+  Pages,
+  Prop,
+  StyleDecl,
+  StyleDeclKey,
+  StyleSource,
+  StyleSourceSelection,
+} from "@webstudio-is/sdk";
+
+export type Data = {
+  page: Page;
+  pages: Array<Page>;
+  build: {
+    id: string;
+    projectId: string;
+    version: number;
+    createdAt: string;
+    pages: Pages;
+    breakpoints: [Breakpoint["id"], Breakpoint][];
+    styles: [StyleDeclKey, StyleDecl][];
+    styleSources: [StyleSource["id"], StyleSource][];
+    styleSourceSelections: [Instance["id"], StyleSourceSelection][];
+    props: [Prop["id"], Prop][];
+    instances: [Instance["id"], Instance][];
+    dataSources: [DataSource["id"], DataSource][];
+    deployment?: Deployment | undefined;
+  };
+  assets: Array<Asset>;
+};
 
 interface DefaultArgs {
   host: string;

@@ -131,7 +131,10 @@ export const useDrag = <DragItemData>(
         state.current.dragItemData !== undefined
       ) {
         onStart({ data: state.current.dragItemData });
-        state.current.status = "dragging";
+        // onStart may call cancel and reset state
+        if (state.current.status === "pending") {
+          state.current.status = "dragging";
+        }
       }
 
       if (state.current.status === "dragging") {

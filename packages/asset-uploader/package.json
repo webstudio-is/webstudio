@@ -20,20 +20,22 @@
     "@webstudio-is/prisma-client": "workspace:^",
     "@webstudio-is/sdk": "workspace:^",
     "@webstudio-is/trpc-interface": "workspace:^",
+    "fontkit": "^2.0.2",
     "immer": "^10.0.2",
     "nanoid": "^4.0.2",
     "sharp": "^0.30.7",
     "warn-once": "^0.1.1"
   },
   "devDependencies": {
-    "@jest/globals": "^29.6.2",
+    "@jest/globals": "^29.6.4",
+    "@types/fontkit": "^2.0.3",
     "@types/node": "^18.11.18",
     "@types/sharp": "^0.30.4",
     "@webstudio-is/jest-config": "workspace:^",
     "@webstudio-is/scripts": "workspace:^",
     "@webstudio-is/tsconfig": "workspace:^",
-    "jest": "^29.6.2",
-    "typescript": "5.1.6",
+    "jest": "^29.6.4",
+    "typescript": "5.2.2",
     "zod": "^3.21.4"
   },
   "exports": {

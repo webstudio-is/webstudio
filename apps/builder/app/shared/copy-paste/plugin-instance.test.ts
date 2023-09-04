@@ -8,7 +8,7 @@ import type {
   DataSource,
   DataSources,
   Page,
-} from "@webstudio-is/project-build";
+} from "@webstudio-is/sdk";
 import type { Project } from "@webstudio-is/project";
 import { encodeDataSourceVariable } from "@webstudio-is/react-sdk";
 import * as baseComponentMetas from "@webstudio-is/sdk-components-react/metas";

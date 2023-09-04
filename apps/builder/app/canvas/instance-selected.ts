@@ -1,4 +1,4 @@
-import type { Instance } from "@webstudio-is/project-build";
+import type { Instance } from "@webstudio-is/sdk";
 import { idAttribute, selectorIdAttribute } from "@webstudio-is/react-sdk";
 import { subscribeWindowResize } from "~/shared/dom-hooks";
 import {
@@ -116,7 +116,7 @@ const subscribeSelectedInstance = (
     }
 
     // Synchronously execute setDataCollapsed to calculate right outline
-    // This fixes an issue, when new element outline was calulated before collapsed elements calculations
+    // This fixes an issue, when new element outline was calculated before collapsed elements calculations
     setDataCollapsed(instanceId, true);
   };
 

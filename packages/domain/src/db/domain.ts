@@ -11,6 +11,7 @@ import {
   type AppContext,
   AuthorizationError,
 } from "@webstudio-is/trpc-interface/index.server";
+import { db as projectDb } from "@webstudio-is/project/index.server";
 import { validateDomain } from "./validate";
 import { cnameFromUserId } from "./cname-from-user-id";
 
@@ -75,9 +76,9 @@ export const create = async (
   },
   context: AppContext
 ): Promise<Result> => {
-  // Only owner of the project can create domains
+  // Only owner or admin of the project can create domains
   const canCreateDomain = await authorizeProject.hasProjectPermit(
-    { projectId: props.projectId, permit: "own" },
+    { projectId: props.projectId, permit: "admin" },
     context
   );
 
@@ -87,16 +88,18 @@ export const create = async (
     );
   }
 
-  const { userId } = context.authorization;
+  const project = await projectDb.project.loadById(props.projectId, context);
 
-  if (userId === undefined) {
-    throw new AuthorizationError("User must be logged in to create domain");
+  const { userId: ownerId } = project;
+
+  if (ownerId === null) {
+    throw new AuthorizationError("Project must have project userId defined");
   }
 
   // Query amount of domains
   const projectDomainsCount = await prisma.projectWithDomain.count({
     where: {
-      userId: context.authorization.userId,
+      userId: ownerId,
     },
   });
 
@@ -137,7 +140,7 @@ export const create = async (
       domainId: dbDomain.id,
       projectId: props.projectId,
       txtRecord,
-      cname: await cnameFromUserId(userId),
+      cname: await cnameFromUserId(ownerId),
     },
   });
 
@@ -154,9 +157,9 @@ export const verify = async (
   },
   context: AppContext
 ): Promise<Result> => {
-  // Only owner of the project can register domains
+  // Only owner or admin of the project can register domains
   const canRegisterDomain = await authorizeProject.hasProjectPermit(
-    { projectId: props.projectId, permit: "own" },
+    { projectId: props.projectId, permit: "admin" },
     context
   );
 
@@ -217,9 +220,9 @@ export const remove = async (
   },
   context: AppContext
 ): Promise<Result> => {
-  // Only owner of the project can register domains
+  // Only owner or admin of the project can register domains
   const canDeleteDomain = await authorizeProject.hasProjectPermit(
-    { projectId: props.projectId, permit: "own" },
+    { projectId: props.projectId, permit: "admin" },
     context
   );
 
@@ -270,9 +273,9 @@ export const updateStatus = async (
   },
   context: AppContext
 ): Promise<RefreshResult> => {
-  // Only owner of the project can register domains
+  // Only owner or admin of the project can register domains
   const canRefreshDomain = await authorizeProject.hasProjectPermit(
-    { projectId: props.projectId, permit: "own" },
+    { projectId: props.projectId, permit: "admin" },
     context
   );
 

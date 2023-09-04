@@ -3,9 +3,10 @@ import { atom, computed, type WritableAtom } from "nanostores";
 import { useStore } from "@nanostores/react";
 import { nanoid } from "nanoid";
 import type { AuthPermit } from "@webstudio-is/trpc-interface/index.server";
-import type { Asset, Assets } from "@webstudio-is/sdk";
 import type { ItemDropTarget, Placement } from "@webstudio-is/design-system";
 import type {
+  Asset,
+  Assets,
   Breakpoint,
   DataSource,
   DataSources,
@@ -19,7 +20,7 @@ import type {
   StyleSources,
   StyleSourceSelection,
   StyleSourceSelections,
-} from "@webstudio-is/project-build";
+} from "@webstudio-is/sdk";
 import {
   executeComputingExpressions,
   encodeDataSourceVariable,
@@ -327,7 +328,8 @@ export const selectedInstanceStyleSourcesStore = computed(
     // generate style source when selection has not local style sources
     // it is synchronized whenever styles are updated
     if (hasLocal === false) {
-      selectedInstanceStyleSources.unshift({
+      // always put local style source last
+      selectedInstanceStyleSources.push({
         type: "local",
         id: nanoid(),
       });

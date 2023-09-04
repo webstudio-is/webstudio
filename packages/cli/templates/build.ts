@@ -20,7 +20,7 @@ const DEFUALT_ASSETS_PATH = new URL(
 ).pathname;
 
 console.info("Building Templates...");
-await rm(new URL("../src/__generated__", import.meta.url).pathname, {
+await rm(new URL("../src/__generated__", import.meta.url), {
   recursive: true,
   force: true,
 });
@@ -101,7 +101,7 @@ writeFileSync(TEMPLATES_JSON_PATH, content, "utf-8");
   Building route template
 */
 const routeTemplateFile = readFileSync(
-  new URL("./route-template.ts", import.meta.url).pathname,
+  new URL("./route-template.tsx", import.meta.url),
   "utf-8"
 );
 const routeTemplateContent = `/*

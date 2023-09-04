@@ -3,8 +3,6 @@ import {
   Breakpoint,
   Breakpoints,
   DataSource,
-  findTreeInstanceIds,
-  findTreeInstanceIdsExcludingSlotDescendants,
   getStyleDeclKey,
   Instance,
   Instances,
@@ -16,9 +14,11 @@ import {
   StyleSources,
   StyleSourceSelection,
   StyleSourceSelections,
-  StyleSourceSelectionsList,
-  StyleSourcesList,
-} from "@webstudio-is/project-build";
+} from "@webstudio-is/sdk";
+import {
+  findTreeInstanceIds,
+  findTreeInstanceIdsExcludingSlotDescendants,
+} from "@webstudio-is/sdk";
 import { equalMedia } from "@webstudio-is/css-engine";
 import type { WsComponentMeta } from "@webstudio-is/react-sdk";
 
@@ -306,10 +306,10 @@ export const cloneStyles = (
 };
 
 export const findLocalStyleSourcesWithinInstances = (
-  styleSources: IterableIterator<StyleSource> | StyleSourcesList,
+  styleSources: IterableIterator<StyleSource> | StyleSource[],
   styleSourceSelections:
     | IterableIterator<StyleSourceSelection>
-    | StyleSourceSelectionsList,
+    | StyleSourceSelection[],
   instanceIds: Set<Instance["id"]>
 ) => {
   const localStyleSourceIds = new Set<StyleSource["id"]>();

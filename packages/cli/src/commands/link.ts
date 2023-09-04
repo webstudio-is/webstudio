@@ -44,8 +44,8 @@ export const link: Command = async () => {
       join(cwd(), LOCAL_CONFIG_FILE),
       JSON.stringify({ projectId }, null, 2)
     );
-  } catch (error) {
-    if (error.code === "ENONET") {
+  } catch (error: unknown) {
+    if (error instanceof Error && "code" in error && error.code === "ENONET") {
       throw new Error(`Global config file is not found`);
     }
 

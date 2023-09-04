@@ -31,7 +31,11 @@ export const useSharedShortcuts = ({
     // safari use cmd+z to reopen closed tabs so fallback to ctrl
     "meta+z, ctrl+z",
     () => store.undo(),
-    { enableOnFormTags: true, enableOnContentEditable: false },
+    {
+      // prevents undoing when user is editing text in a control on style panel etc.
+      enableOnFormTags: source === "canvas",
+      enableOnContentEditable: false,
+    },
     []
   );
 
@@ -39,7 +43,11 @@ export const useSharedShortcuts = ({
     // safari use cmd+shift+z to close reopened tabs so fallback to ctrl
     "meta+shift+z, ctrl+shift+z",
     () => store.redo(),
-    { enableOnFormTags: true, enableOnContentEditable: false },
+    {
+      // prevents undoing when user is editing text in a control on style panel etc.
+      enableOnFormTags: source === "canvas",
+      enableOnContentEditable: false,
+    },
     []
   );
 

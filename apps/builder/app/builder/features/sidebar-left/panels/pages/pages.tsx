@@ -20,7 +20,7 @@ import {
   PageIcon,
   PlusIcon,
 } from "@webstudio-is/icons";
-import type { Page, Pages } from "@webstudio-is/project-build";
+import type { Page, Pages } from "@webstudio-is/sdk";
 import type { Publish } from "~/shared/pubsub";
 import type { TabName } from "../../types";
 import { CloseButton, Header } from "../../header";

@@ -25,7 +25,7 @@
     "react-dom": "^18.2.0",
     "svgo": "^3.0.2",
     "tsx": "^3.12.6",
-    "typescript": "5.1.6"
+    "typescript": "5.2.2"
   },
   "peerDependencies": {
     "react": "^18.2.0",

@@ -60,11 +60,17 @@ export const subscribeInterceptedEvents = () => {
     }
   };
   document.documentElement.addEventListener("click", handleClick);
-  document.documentElement.addEventListener("submit", handleSubmit);
+  // preventDefault in form submit event does not work inside dialog
+  // in bubble mode, capture solves the issue
+  document.documentElement.addEventListener("submit", handleSubmit, {
+    capture: true,
+  });
   document.documentElement.addEventListener("keydown", handleKeydown);
   return () => {
     document.documentElement.removeEventListener("click", handleClick);
-    document.documentElement.removeEventListener("submit", handleSubmit);
+    document.documentElement.removeEventListener("submit", handleSubmit, {
+      capture: true,
+    });
     document.documentElement.removeEventListener("keydown", handleKeydown);
   };
 };

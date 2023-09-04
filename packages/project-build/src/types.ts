@@ -1,12 +1,15 @@
-import type { Pages } from "./schema/pages";
-import type { Breakpoint } from "./schema/breakpoints";
-import type { StyleDecl, StyleDeclKey } from "./schema/styles";
-import type { StyleSource } from "./schema/style-sources";
-import type { Instance } from "./schema/instances";
-import type { Prop } from "./schema/props";
-import type { StyleSourceSelection } from "./schema/style-source-selections";
-import type { Deployment } from "./schema/deployment";
-import type { DataSource } from "./schema/data-sources";
+import type {
+  Pages,
+  Breakpoint,
+  StyleDecl,
+  StyleDeclKey,
+  StyleSource,
+  Instance,
+  Prop,
+  StyleSourceSelection,
+  Deployment,
+  DataSource,
+} from "@webstudio-is/sdk";
 
 export type Build = {
   id: string;

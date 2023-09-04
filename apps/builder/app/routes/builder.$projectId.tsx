@@ -42,7 +42,7 @@ export const loader = async ({
           projectId: project.id,
           // At this point we already knew that if project loaded we have at least "view" permit
           // having that getProjectPermit is heavy operation we can skip check "view" permit
-          permits: ["own", "build"] as const,
+          permits: ["own", "admin", "build"] as const,
         },
         context
       )) ?? "view";

@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { useStore } from "@nanostores/react";
 import { createPortal } from "react-dom";
-import type { Instance } from "@webstudio-is/project-build";
+import type { Instance } from "@webstudio-is/sdk";
 import type { WsComponentMeta } from "@webstudio-is/react-sdk";
 import {
   type Point,

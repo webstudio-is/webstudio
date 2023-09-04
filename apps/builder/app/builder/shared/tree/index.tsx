@@ -9,7 +9,7 @@ import {
   styled,
   theme,
 } from "@webstudio-is/design-system";
-import type { Instance } from "@webstudio-is/project-build";
+import type { Instance } from "@webstudio-is/sdk";
 import store from "immerhin";
 import {
   editingItemIdStore,

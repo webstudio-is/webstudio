@@ -49,16 +49,17 @@
     "@webstudio-is/error-utils": "workspace:^",
     "@webstudio-is/feature-flags": "workspace:^",
     "@webstudio-is/fonts": "workspace:^",
+    "@webstudio-is/http-client": "workspace:^",
     "@webstudio-is/icons": "workspace:^",
     "@webstudio-is/image": "workspace:^",
     "@webstudio-is/prisma-client": "workspace:^",
     "@webstudio-is/project": "workspace:^",
     "@webstudio-is/project-build": "workspace:^",
     "@webstudio-is/react-sdk": "workspace:^",
+    "@webstudio-is/sdk": "workspace:^",
     "@webstudio-is/sdk-components-react": "workspace:^",
     "@webstudio-is/sdk-components-react-radix": "workspace:^",
     "@webstudio-is/sdk-components-react-remix": "workspace:^",
-    "@webstudio-is/sdk": "workspace:^",
     "@webstudio-is/trpc-interface": "workspace:^",
     "colord": "^2.9.3",
     "date-fns": "^2.30.0",
@@ -101,7 +102,7 @@
     "zod": "^3.21.4"
   },
   "devDependencies": {
-    "@jest/globals": "^29.6.2",
+    "@jest/globals": "^29.6.4",
     "@remix-run/dev": "^1.19.2",
     "@storybook/react": "^7.2.1",
     "@testing-library/react-hooks": "^8.0.1",
@@ -117,10 +118,10 @@
     "@webstudio-is/tsconfig": "workspace:^",
     "dotenv": "^16.3.1",
     "html-tags": "^3.3.1",
-    "jest": "^29.6.2",
+    "jest": "^29.6.4",
     "react-test-renderer": "^18.2.0",
-    "type-fest": "^4.2.0",
-    "typescript": "5.1.6"
+    "type-fest": "^4.3.1",
+    "typescript": "5.2.2"
   },
   "sideEffects": false,
   "license": "AGPL-3.0-or-later"

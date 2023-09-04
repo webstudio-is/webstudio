@@ -1,5 +1,5 @@
 import { useLayoutEffect, useRef } from "react";
-import type { Instance } from "@webstudio-is/project-build";
+import type { Instance } from "@webstudio-is/sdk";
 import {
   type Point,
   type Placement,

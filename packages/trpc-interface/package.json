@@ -26,12 +26,13 @@
     "@webstudio-is/jest-config": "workspace:^",
     "@webstudio-is/scripts": "workspace:^",
     "@webstudio-is/tsconfig": "workspace:^",
-    "typescript": "5.1.6"
+    "typescript": "5.2.2"
   },
   "exports": {
     "./index.server": {
       "source": "./src/index.server.ts",
-      "import": "./lib/index.server.js"
+      "import": "./lib/index.server.js",
+      "types": "./lib/types/index.server.d.ts"
     }
   },
   "files": [

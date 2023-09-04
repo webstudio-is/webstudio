@@ -15,6 +15,7 @@ import {
 import { getAncestorInstanceSelector } from "~/shared/tree-utils";
 import { textEditingInstanceSelectorStore } from "~/shared/nano-states";
 import { getInstanceLabel } from "~/shared/instance-utils";
+import { Fragment } from "react";
 
 export const Breadcrumbs = () => {
   const instances = useStore(instancesStore);
@@ -47,7 +48,7 @@ export const Breadcrumbs = () => {
               return;
             }
             return (
-              <>
+              <Fragment key={index}>
                 <DeprecatedButton
                   ghost
                   css={{
@@ -72,7 +73,7 @@ export const Breadcrumbs = () => {
                 {index < selectedInstanceSelector.length - 1 ? (
                   <ChevronRightIcon />
                 ) : null}
-              </>
+              </Fragment>
             );
           })
       )}
