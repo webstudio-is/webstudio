@@ -13,11 +13,13 @@
     "typecheck": "tsc",
     "checks": "pnpm typecheck"
   },
+  "dependencies": {
+    "@webstudio-is/sdk": "workspace:^"
+  },
   "devDependencies": {
     "@jest/globals": "^29.6.2",
     "@webstudio-is/jest-config": "workspace:^",
     "@webstudio-is/prisma-client": "workspace:^",
-    "@webstudio-is/react-sdk": "workspace:^",
     "@webstudio-is/scripts": "workspace:^",
     "@webstudio-is/tsconfig": "workspace:^",
     "jest": "^29.6.2",

@@ -11,8 +11,13 @@ import {
   type ReadableAtom,
   type WritableAtom,
 } from "nanostores";
-import type { Build } from "@webstudio-is/project-build";
-import type { Page, Asset } from "@webstudio-is/sdk";
+import type {
+  Page,
+  Asset,
+  DataSource,
+  Instance,
+  Prop,
+} from "@webstudio-is/sdk";
 import { createElementsTree } from "./create-elements-tree";
 import {
   WebstudioComponent,
@@ -23,16 +28,16 @@ import type { Components } from "../components/components-utils";
 import type { Params, DataSourceValues } from "../context";
 import type { GeneratedUtils } from "../generator";
 
-export type Data = {
+export type RootPropsData = {
+  params?: Params;
   page: Page;
   pages: Array<Page>;
-  build: Build;
   assets: Array<Asset>;
-  params?: Params;
-};
-
-export type RootPropsData = Omit<Data, "build"> & {
-  build: Pick<Data["build"], "instances" | "props" | "dataSources">;
+  build: {
+    instances: [Instance["id"], Instance][];
+    dataSources: [DataSource["id"], DataSource][];
+    props: [Prop["id"], Prop][];
+  };
 };
 
 type RootProps = {

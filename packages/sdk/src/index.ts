@@ -8,3 +8,5 @@ export * from "./schema/style-sources";
 export * from "./schema/style-source-selections";
 export * from "./schema/styles";
 export * from "./schema/deployment";
+
+export * from "./instances-utils";

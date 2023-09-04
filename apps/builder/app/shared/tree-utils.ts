@@ -18,7 +18,7 @@ import {
 import {
   findTreeInstanceIds,
   findTreeInstanceIdsExcludingSlotDescendants,
-} from "@webstudio-is/project-build";
+} from "@webstudio-is/sdk";
 import { equalMedia } from "@webstudio-is/css-engine";
 import type { WsComponentMeta } from "@webstudio-is/react-sdk";
 

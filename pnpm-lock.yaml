@@ -144,6 +144,9 @@ importers:
       '@webstudio-is/fonts':
         specifier: workspace:^
         version: link:../../packages/fonts
+      '@webstudio-is/http-client':
+        specifier: workspace:^
+        version: link:../../packages/http-client
       '@webstudio-is/icons':
         specifier: workspace:^
         version: link:../../packages/icons
@@ -447,9 +450,6 @@ importers:
       '@webstudio-is/image':
         specifier: workspace:^
         version: link:../image
-      '@webstudio-is/project-build':
-        specifier: workspace:^
-        version: link:../project-build
       '@webstudio-is/react-sdk':
         specifier: workspace:^
         version: link:../react-sdk
@@ -481,6 +481,9 @@ importers:
       '@types/node':
         specifier: ^18.13.0
         version: 18.13.0
+      '@webstudio-is/form-handlers':
+        specifier: workspace:^
+        version: link:../form-handlers
       '@webstudio-is/scripts':
         specifier: workspace:^
         version: link:../scripts
@@ -913,9 +916,9 @@ importers:
 
   packages/form-handlers:
     dependencies:
-      '@webstudio-is/project-build':
+      '@webstudio-is/sdk':
         specifier: workspace:^
-        version: link:../project-build
+        version: link:../sdk
     devDependencies:
       '@webstudio-is/scripts':
         specifier: workspace:^
@@ -987,6 +990,10 @@ importers:
         version: link:../tsconfig
 
   packages/http-client:
+    dependencies:
+      '@webstudio-is/sdk':
+        specifier: workspace:^
+        version: link:../sdk
     devDependencies:
       '@jest/globals':
         specifier: ^29.6.2
@@ -997,9 +1004,6 @@ importers:
       '@webstudio-is/prisma-client':
         specifier: workspace:^
         version: link:../prisma-client
-      '@webstudio-is/react-sdk':
-        specifier: workspace:^
-        version: link:../react-sdk
       '@webstudio-is/scripts':
         specifier: workspace:^
         version: link:../scripts
@@ -1248,9 +1252,6 @@ importers:
       '@webstudio-is/fonts':
         specifier: workspace:^
         version: link:../fonts
-      '@webstudio-is/project-build':
-        specifier: workspace:^
-        version: link:../project-build
       '@webstudio-is/sdk':
         specifier: workspace:^
         version: link:../sdk
@@ -1350,12 +1351,21 @@ importers:
         specifier: ^3.21.4
         version: 3.21.4
     devDependencies:
+      '@jest/globals':
+        specifier: ^29.6.2
+        version: 29.6.2
+      '@webstudio-is/jest-config':
+        specifier: workspace:^
+        version: link:../jest-config
       '@webstudio-is/scripts':
         specifier: workspace:^
         version: link:../scripts
       '@webstudio-is/tsconfig':
         specifier: workspace:^
         version: link:../tsconfig
+      jest:
+        specifier: ^29.6.2
+        version: 29.6.2(@types/node@18.13.0)
 
   packages/sdk-components-react:
     dependencies:

@@ -1,4 +1,4 @@
-import type { Instance, Instances } from "@webstudio-is/sdk";
+import type { Instance, Instances } from "./schema/instances";
 
 const traverseInstances = (
   instances: Instances,
