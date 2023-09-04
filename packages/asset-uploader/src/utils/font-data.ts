@@ -1,6 +1,12 @@
-import type { FontFormat, VariationAxes } from "./schema";
 import { create as createFontKit } from "fontkit";
-import { type FontWeight, fontWeights } from "./font-weights";
+import {
+  fontWeights,
+  FONT_STYLES,
+  type FontFormat,
+  type FontWeight,
+  type VariationAxes,
+  type FontStyle,
+} from "@webstudio-is/fonts";
 
 // @todo sumbit this to definitely typed, they are not up to date
 declare module "fontkit" {
@@ -11,13 +17,10 @@ declare module "fontkit" {
   }
 }
 
-export const styles = ["normal", "italic", "oblique"] as const;
-type Style = (typeof styles)[number];
-
 export const parseSubfamily = (subfamily: string) => {
   const subfamilyLow = subfamily.toLowerCase();
-  let style: Style = "normal";
-  for (const possibleStyle of styles) {
+  let style: FontStyle = "normal";
+  for (const possibleStyle of FONT_STYLES) {
     if (subfamilyLow.includes(possibleStyle)) {
       style = possibleStyle;
       break;
@@ -53,7 +56,7 @@ export const normalizeFamily = (family: string, subfamily: string) => {
 type FontDataStatic = {
   format: FontFormat;
   family: string;
-  style: Style;
+  style: FontStyle;
   weight: number;
 };
 type FontDataVariable = {

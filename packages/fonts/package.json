@@ -13,13 +13,8 @@
     "build": "build-package",
     "dts": "tsc --project tsconfig.dts.json"
   },
-  "dependencies": {
-    "fontkit": "^2.0.2"
-  },
   "devDependencies": {
     "@jest/globals": "^29.6.4",
-    "@types/fontkit": "^2.0.1",
-    "@webstudio-is/design-system": "workspace:^",
     "@webstudio-is/jest-config": "workspace:^",
     "@webstudio-is/scripts": "workspace:^",
     "@webstudio-is/tsconfig": "workspace:^",
@@ -31,17 +26,10 @@
     "zod": "^3.19.1"
   },
   "exports": {
-    ".": {
-      "source": "./src/index.ts",
-      "types": "./lib/types/index.d.ts",
-      "import": "./lib/index.js",
-      "require": "./lib/cjs/index.js"
-    },
-    "./index.server": {
-      "source": "./src/index.server.ts",
-      "types": "./lib/types/index.server.d.ts",
-      "import": "./lib/index.server.js"
-    }
+    "source": "./src/index.ts",
+    "types": "./lib/types/index.d.ts",
+    "import": "./lib/index.js",
+    "require": "./lib/cjs/index.js"
   },
   "files": [
     "lib/*",
