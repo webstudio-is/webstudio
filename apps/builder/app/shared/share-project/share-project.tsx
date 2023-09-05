@@ -228,6 +228,7 @@ type ShareProjectProps = {
   onDelete: (link: LinkOptions) => void;
   onCreate: () => void;
   builderUrl: SharedLinkItemType["builderUrl"];
+  isPending: boolean;
 };
 
 const animateCollapsibleHeight = keyframes({
@@ -253,6 +254,7 @@ export const ShareProject = ({
   onDelete,
   onCreate,
   builderUrl,
+  isPending,
 }: ShareProjectProps) => {
   const items = links.map((link) => (
     <Fragment key={link.token}>
@@ -277,7 +279,10 @@ export const ShareProject = ({
     <Box className={itemStyle({ css: { py: theme.spacing["9"] } })}>
       <Button
         color="neutral"
-        prefix={<PlusIcon />}
+        state={isPending ? "pending" : undefined}
+        prefix={
+          isPending ? <Flex css={{ width: theme.spacing[9] }} /> : <PlusIcon />
+        }
         onClick={() => {
           onCreate();
         }}
