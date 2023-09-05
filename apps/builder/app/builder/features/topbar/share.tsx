@@ -42,7 +42,6 @@ export const ShareButton = ({ projectId }: { projectId: Project["id"] }) => {
         sideOffset={parseFloat(rawTheme.spacing[8])}
         css={{
           marginRight: theme.spacing[3],
-          zIndex: theme.zIndices[1],
         }}
       >
         <ShareProjectContainer projectId={projectId} />
