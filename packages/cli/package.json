@@ -6,7 +6,7 @@
   "homepage": "https://webstudio.is",
   "type": "module",
   "bin": {
-    "webstudio": "./bin.js"
+    "webstudio": "./lib/bin.js"
   },
   "files": [
     "lib/*",
