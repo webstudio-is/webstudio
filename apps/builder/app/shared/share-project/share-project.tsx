@@ -10,21 +10,23 @@ import {
   rawTheme,
   Separator,
   Switch,
-  DeprecatedTextField,
   theme,
   Tooltip,
   useId,
   Collapsible,
   keyframes,
+  Text,
+  InputField,
+  PopoverPortal,
 } from "@webstudio-is/design-system";
-import { CopyIcon, InfoIcon, MenuIcon, PlusIcon } from "@webstudio-is/icons";
+import { CopyIcon, MenuIcon, PlusIcon, HelpIcon } from "@webstudio-is/icons";
 import { Fragment, useState, type ComponentProps } from "react";
 import { isFeatureEnabled } from "@webstudio-is/feature-flags";
 
 const Item = (props: ComponentProps<typeof Flex>) => (
   <Flex
     direction="column"
-    css={{ padding: theme.spacing[7] }}
+    css={{ px: theme.spacing[7], py: theme.spacing[5] }}
     gap="1"
     {...props}
   />
@@ -44,12 +46,19 @@ const Permission = ({
 }: PermissionProps) => {
   const id = useId();
 
+  const tooltipContent = (
+    <Flex direction="column" gap="2" css={{ maxWidth: theme.spacing[28] }}>
+      <Text variant="titles">{title}</Text>
+      <Text>{info}</Text>
+    </Flex>
+  );
+
   return (
     <Flex align="center" gap="1">
       <Switch checked={checked} id={id} onCheckedChange={onCheckedChange} />
       <Label htmlFor={id}>{title}</Label>
-      <Tooltip content={info} variant="wrapped">
-        <InfoIcon color={rawTheme.colors.foregroundSubtle} tabIndex={0} />
+      <Tooltip content={tooltipContent} variant="wrapped">
+        <HelpIcon color={rawTheme.colors.foregroundSubtle} tabIndex={0} />
       </Tooltip>
     </Flex>
   );
@@ -86,32 +95,41 @@ const Menu = ({
           aria-label="Menu Button for options"
         ></Button>
       </PopoverTrigger>
-      <PopoverContent css={{ zIndex: theme.zIndices[1] }}>
-        <Item>
-          <Label>Name</Label>
-          <DeprecatedTextField
-            autoFocus
-            value={name}
-            onChange={(event) => {
-              onChangeName(event.target.value);
-            }}
-            onKeyDown={(event) => {
-              if (event.key === "Enter") {
-                setIsOpen(false);
-              }
-            }}
-          />
-        </Item>
-        <Separator />
-        <Item>
-          <Label>Permissions</Label>
-          <Permission
-            checked={relation === "viewers"}
-            onCheckedChange={handleCheckedChange("viewers")}
-            title="View"
-            info="Recipients can only view the site"
-          />
-          {/*
+      <PopoverPortal>
+        <PopoverContent
+          css={{
+            padding: 0,
+            width: theme.spacing[24],
+          }}
+          sideOffset={0}
+        >
+          <Item>
+            <Label>Name</Label>
+            <InputField
+              value={name}
+              onChange={(event) => {
+                onChangeName(event.target.value);
+              }}
+              onKeyDown={(event) => {
+                if (event.key === "Enter") {
+                  setIsOpen(false);
+                }
+              }}
+              placeholder="Breakpoint name"
+              name="Name"
+              autoFocus
+            />
+          </Item>
+          <Separator />
+          <Item>
+            <Label>Permissions</Label>
+            <Permission
+              checked={relation === "viewers"}
+              onCheckedChange={handleCheckedChange("viewers")}
+              title="View"
+              info="Recipients can only view the site"
+            />
+            {/*
            Hide temporarily until we have a way to allow edit content but not edit tree, etc.
 
           <Permission
@@ -121,35 +139,36 @@ const Menu = ({
             info="Recipients can view the site and edit content like text and images, but they will not be able to change the styles or structure of your site."
           />
           */}
-          <Permission
-            onCheckedChange={handleCheckedChange("builders")}
-            checked={relation === "builders"}
-            title="Build"
-            info="Recipients can make any changes but can not publish the site."
-          />
-
-          {isFeatureEnabled("adminRole") && (
             <Permission
-              onCheckedChange={handleCheckedChange("administrators")}
-              checked={relation === "administrators"}
-              title="Admin"
-              info="Recipients can make any changes and can also publish the site."
+              onCheckedChange={handleCheckedChange("builders")}
+              checked={relation === "builders"}
+              title="Build"
+              info="Recipients can make any changes but can not publish the site."
             />
-          )}
-        </Item>
-        <Separator />
-        <Item>
-          {/* @todo need a menu item that looks like one from dropdown but without DropdownMenu */}
-          <Button
-            color="destructive"
-            onClick={() => {
-              onDelete();
-            }}
-          >
-            Delete Link
-          </Button>
-        </Item>
-      </PopoverContent>
+
+            {isFeatureEnabled("adminRole") && (
+              <Permission
+                onCheckedChange={handleCheckedChange("administrators")}
+                checked={relation === "administrators"}
+                title="Admin"
+                info="Recipients can make any changes and can also publish the site."
+              />
+            )}
+          </Item>
+          <Separator />
+          <Item>
+            {/* @todo need a menu item that looks like one from dropdown but without DropdownMenu */}
+            <Button
+              color="destructive"
+              onClick={() => {
+                onDelete();
+              }}
+            >
+              Delete Link
+            </Button>
+          </Item>
+        </PopoverContent>
+      </PopoverPortal>
     </Popover>
   );
 };
