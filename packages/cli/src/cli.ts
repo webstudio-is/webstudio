@@ -7,7 +7,7 @@ import { link } from "./commands/link";
 import { sync } from "./commands/sync";
 import { build, buildOptions } from "./commands/build";
 import makeCLI from "yargs";
-import { version } from "../package.json" assert { type: "json" };
+import packageJson from "../package.json" assert { type: "json" };
 import type { CommonYargsArgv } from "./commands/yargs-types";
 
 export const main = async () => {
@@ -41,7 +41,7 @@ export const main = async () => {
       .scriptName("webstudio")
       .demandCommand(1, "Command is required");
 
-    cmd.version(version).alias("v", "version");
+    cmd.version(packageJson.version).alias("v", "version");
 
     cmd.command(["build"], "build the project", buildOptions, build);
     cmd.command(["link"], "link the project from your workspace", {}, link);
