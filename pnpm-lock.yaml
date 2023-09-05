@@ -499,6 +499,9 @@ importers:
       '@webstudio-is/tsconfig':
         specifier: workspace:^
         version: link:../tsconfig
+      esbuild:
+        specifier: ^0.18.18
+        version: 0.18.18
       tsx:
         specifier: ^3.12.6
         version: 3.12.6
