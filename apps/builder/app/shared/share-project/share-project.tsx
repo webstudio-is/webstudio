@@ -17,6 +17,7 @@ import {
   keyframes,
   Text,
   InputField,
+  PopoverPortal,
 } from "@webstudio-is/design-system";
 import { CopyIcon, MenuIcon, PlusIcon, HelpIcon } from "@webstudio-is/icons";
 import { Fragment, useState, type ComponentProps } from "react";
@@ -94,41 +95,41 @@ const Menu = ({
           aria-label="Menu Button for options"
         ></Button>
       </PopoverTrigger>
-      <PopoverContent
-        css={{
-          zIndex: theme.zIndices[1],
-          padding: 0,
-          width: theme.spacing[24],
-        }}
-        sideOffset={0}
-      >
-        <Item>
-          <Label>Name</Label>
-          <InputField
-            value={name}
-            onChange={(event) => {
-              onChangeName(event.target.value);
-            }}
-            onKeyDown={(event) => {
-              if (event.key === "Enter") {
-                setIsOpen(false);
-              }
-            }}
-            placeholder="Breakpoint name"
-            name="Name"
-            autoFocus
-          />
-        </Item>
-        <Separator />
-        <Item>
-          <Label>Permissions</Label>
-          <Permission
-            checked={relation === "viewers"}
-            onCheckedChange={handleCheckedChange("viewers")}
-            title="View"
-            info="Recipients can only view the site"
-          />
-          {/*
+      <PopoverPortal>
+        <PopoverContent
+          css={{
+            padding: 0,
+            width: theme.spacing[24],
+          }}
+          sideOffset={0}
+        >
+          <Item>
+            <Label>Name</Label>
+            <InputField
+              value={name}
+              onChange={(event) => {
+                onChangeName(event.target.value);
+              }}
+              onKeyDown={(event) => {
+                if (event.key === "Enter") {
+                  setIsOpen(false);
+                }
+              }}
+              placeholder="Breakpoint name"
+              name="Name"
+              autoFocus
+            />
+          </Item>
+          <Separator />
+          <Item>
+            <Label>Permissions</Label>
+            <Permission
+              checked={relation === "viewers"}
+              onCheckedChange={handleCheckedChange("viewers")}
+              title="View"
+              info="Recipients can only view the site"
+            />
+            {/*
            Hide temporarily until we have a way to allow edit content but not edit tree, etc.
 
           <Permission
@@ -138,35 +139,36 @@ const Menu = ({
             info="Recipients can view the site and edit content like text and images, but they will not be able to change the styles or structure of your site."
           />
           */}
-          <Permission
-            onCheckedChange={handleCheckedChange("builders")}
-            checked={relation === "builders"}
-            title="Build"
-            info="Recipients can make any changes but can not publish the site."
-          />
-
-          {isFeatureEnabled("adminRole") && (
             <Permission
-              onCheckedChange={handleCheckedChange("administrators")}
-              checked={relation === "administrators"}
-              title="Admin"
-              info="Recipients can make any changes and can also publish the site."
+              onCheckedChange={handleCheckedChange("builders")}
+              checked={relation === "builders"}
+              title="Build"
+              info="Recipients can make any changes but can not publish the site."
             />
-          )}
-        </Item>
-        <Separator />
-        <Item>
-          {/* @todo need a menu item that looks like one from dropdown but without DropdownMenu */}
-          <Button
-            color="destructive"
-            onClick={() => {
-              onDelete();
-            }}
-          >
-            Delete Link
-          </Button>
-        </Item>
-      </PopoverContent>
+
+            {isFeatureEnabled("adminRole") && (
+              <Permission
+                onCheckedChange={handleCheckedChange("administrators")}
+                checked={relation === "administrators"}
+                title="Admin"
+                info="Recipients can make any changes and can also publish the site."
+              />
+            )}
+          </Item>
+          <Separator />
+          <Item>
+            {/* @todo need a menu item that looks like one from dropdown but without DropdownMenu */}
+            <Button
+              color="destructive"
+              onClick={() => {
+                onDelete();
+              }}
+            >
+              Delete Link
+            </Button>
+          </Item>
+        </PopoverContent>
+      </PopoverPortal>
     </Popover>
   );
 };
