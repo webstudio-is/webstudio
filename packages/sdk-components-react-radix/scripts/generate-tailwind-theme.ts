@@ -45,7 +45,8 @@ const invokeResolvable = (
   values?: ResolvableTo<Record<string, string>> | Record<string, string>
 ) => {
   if (typeof values === "function") {
-    // @ts-ignore
+    // eslint-disable-next-line @typescript-eslint/ban-ts-comment
+    // @ts-ignore stub empty because no need to return anything
     return values({ theme: () => {}, breakpoints: () => ({}) });
   }
   return values;
