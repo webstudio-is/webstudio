@@ -19,13 +19,15 @@ export const build = async (
 ) => {
   try {
     await access(LOCAL_DATA_FILE);
-    await prebuild();
   } catch (error: unknown) {
-    if (error instanceof Error && "code" in error && error.code === "ENONET") {
+    if (error instanceof Error && "code" in error && error.code === "ENOENT") {
       throw new Error(
         `You need to link a webstudio project before building it. Run \`webstudio link\` to link a project.`
       );
     }
+
     throw error;
   }
+
+  await prebuild();
 };
