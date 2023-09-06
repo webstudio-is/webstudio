@@ -17,4 +17,5 @@ pnpm webstudio sync
 # data.json generated
 
 pnpm webstudio build --preview && pnpm prettier --write ./app/
+# now you can see your site buit running `pnpm run dev`
 ```

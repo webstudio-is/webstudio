@@ -6,7 +6,7 @@
     "dev": "remix dev",
     "start": "remix-serve build",
     "typecheck": "tsc",
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "checks": "pnpm typecheck"
   },
   "dependencies": {
     "@remix-run/node": "^1.19.2",
