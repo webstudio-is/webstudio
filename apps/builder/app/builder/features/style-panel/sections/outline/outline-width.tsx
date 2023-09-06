@@ -1,4 +1,4 @@
-import type { StyleProperty } from "@webstudio-is/css-data";
+import type { StyleProperty } from "@webstudio-is/css-engine";
 import { Grid, theme } from "@webstudio-is/design-system";
 import type { RenderCategoryProps } from "../../style-sections";
 import { PropertyName } from "../../shared/property-name";

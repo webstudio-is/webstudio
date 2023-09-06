@@ -1,8 +1,8 @@
 import type { htmlTags as HtmlTag } from "html-tags";
 import { Grid } from "@webstudio-is/design-system";
 import { toValue } from "@webstudio-is/css-engine";
+import type { StyleProperty } from "@webstudio-is/css-engine";
 import { styleConfigByName } from "./shared/configs";
-import type { StyleProperty } from "@webstudio-is/css-data";
 import type {
   SetProperty,
   DeleteProperty,

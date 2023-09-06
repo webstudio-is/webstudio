@@ -2,7 +2,7 @@ import type {
   StyleProperty,
   StyleValue,
   InvalidValue,
-} from "@webstudio-is/css-data";
+} from "@webstudio-is/css-engine";
 import type { IntermediateStyleValue } from "./css-value-input";
 import { evaluateMath } from "./evaluate-math";
 import { units, parseCssValue } from "@webstudio-is/css-data";

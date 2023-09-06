@@ -1,11 +1,11 @@
 import * as csstree from "css-tree";
-import { parseCssValue } from "../parse-css-value";
 import type {
   InvalidValue,
   LayersValue,
   RgbValue,
   UnparsedValue,
-} from "../schema";
+} from "@webstudio-is/css-engine";
+import { parseCssValue } from "../parse-css-value";
 
 export const gradientNames = [
   "conic-gradient",

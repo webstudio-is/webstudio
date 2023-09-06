@@ -43,7 +43,7 @@ import {
 import { BackgroundContent } from "./background-content";
 import { getLayerName, LayerThumbnail } from "./background-thumbnail";
 import { useMemo } from "react";
-import type { RgbValue, StyleProperty } from "@webstudio-is/css-data";
+import type { RgbValue, StyleProperty } from "@webstudio-is/css-engine";
 import {
   CollapsibleSectionBase,
   useOpenState,

@@ -1,4 +1,4 @@
-import type { InvalidValue, RgbValue } from "@webstudio-is/css-data";
+import type { InvalidValue, RgbValue } from "@webstudio-is/css-engine";
 import { parseCssValue, parseBackground } from "@webstudio-is/css-data";
 import { TextArea, textVariants, theme } from "@webstudio-is/design-system";
 import { useEffect, useRef, useState } from "react";

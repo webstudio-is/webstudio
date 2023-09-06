@@ -1,9 +1,7 @@
 import { useState, type ReactElement, type ReactNode } from "react";
 import { useStore } from "@nanostores/react";
-import {
-  type StyleProperty,
-  propertyDescriptions,
-} from "@webstudio-is/css-data";
+import type { StyleProperty } from "@webstudio-is/css-engine";
+import { propertyDescriptions } from "@webstudio-is/css-data";
 import {
   theme,
   Button,

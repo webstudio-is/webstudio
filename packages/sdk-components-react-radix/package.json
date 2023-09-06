@@ -66,7 +66,7 @@
     "@radix-ui/react-switch": "^1.0.3",
     "@radix-ui/react-tabs": "^1.0.4",
     "@radix-ui/react-tooltip": "^1.0.6",
-    "@webstudio-is/css-data": "workspace:^",
+    "@webstudio-is/css-engine": "workspace:^",
     "@webstudio-is/icons": "workspace:^",
     "@webstudio-is/react-sdk": "workspace:^"
   },
@@ -74,6 +74,7 @@
     "@storybook/react": "^7.2.1",
     "@types/react": "^18.2.20",
     "@types/react-dom": "^18.2.7",
+    "@webstudio-is/css-data": "workspace:^",
     "@webstudio-is/generate-arg-types": "workspace:^",
     "@webstudio-is/scripts": "workspace:^",
     "@webstudio-is/sdk-components-react": "workspace:^",

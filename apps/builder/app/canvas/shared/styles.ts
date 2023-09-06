@@ -16,7 +16,7 @@ import {
   type StyleValue,
   type StyleProperty,
   isValidStaticStyleValue,
-} from "@webstudio-is/css-data";
+} from "@webstudio-is/css-engine";
 import {
   assetsStore,
   breakpointsStore,

@@ -1,6 +1,6 @@
-import type { StyleValue } from "@webstudio-is/css-data";
 import { captureError } from "@webstudio-is/error-utils";
 import { DEFAULT_FONT_FALLBACK, SYSTEM_FONTS } from "@webstudio-is/fonts";
+import type { StyleValue } from "../schema";
 
 export type TransformValue = (styleValue: StyleValue) => undefined | StyleValue;
 

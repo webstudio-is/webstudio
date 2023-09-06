@@ -1,4 +1,4 @@
-import type { LayersValue } from "@webstudio-is/css-data";
+import type { LayersValue } from "@webstudio-is/css-engine";
 import {
   CssValueListArrowFocus,
   Flex,

@@ -1,5 +1,5 @@
 import { z } from "zod";
-import { type StyleProperty, StyleValue } from "@webstudio-is/css-data";
+import { type StyleProperty, StyleValue } from "@webstudio-is/css-engine";
 import type { Simplify } from "type-fest";
 
 const StyleDeclRaw = z.object({

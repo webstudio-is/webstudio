@@ -4,7 +4,7 @@ import type {
   StyleProperty,
   StyleValue,
   TupleValue,
-} from "@webstudio-is/css-data";
+} from "@webstudio-is/css-engine";
 import type { CreateBatchUpdate } from "../../shared/use-style-data";
 import {
   addBoxShadow,
