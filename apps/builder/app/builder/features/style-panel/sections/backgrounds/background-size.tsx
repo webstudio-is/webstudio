@@ -9,7 +9,7 @@ import {
   type StyleValue,
   TupleValue,
   TupleValueItem,
-} from "@webstudio-is/css-data";
+} from "@webstudio-is/css-engine";
 import type { SetValue } from "../../shared/use-style-data";
 import { NonResetablePropertyName } from "../../shared/property-name";
 

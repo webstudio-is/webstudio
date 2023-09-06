@@ -34,7 +34,6 @@
     "dts": "tsc --project tsconfig.dts.json"
   },
   "dependencies": {
-    "@webstudio-is/css-data": "workspace:^",
     "@webstudio-is/prisma-client": "workspace:^",
     "@webstudio-is/sdk": "workspace:^",
     "@webstudio-is/trpc-interface": "workspace:^",

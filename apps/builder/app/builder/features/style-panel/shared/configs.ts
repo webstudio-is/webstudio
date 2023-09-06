@@ -1,4 +1,4 @@
-import type { StyleProperty, AppliesTo } from "@webstudio-is/css-data";
+import type { StyleProperty } from "@webstudio-is/css-engine";
 import { keywordValues, properties } from "@webstudio-is/css-data";
 import { humanizeString } from "~/shared/string-utils";
 import {
@@ -29,6 +29,7 @@ import {
   GapHorizontalIcon,
   GapVerticalIcon,
 } from "@webstudio-is/icons";
+import type { AppliesTo } from "./dependencies";
 import type * as Controls from "../controls";
 
 type BaseStyleConfig = {

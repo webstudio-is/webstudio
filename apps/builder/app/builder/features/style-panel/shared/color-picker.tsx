@@ -8,7 +8,7 @@ import type {
   RgbValue,
   StyleProperty,
   StyleValue,
-} from "@webstudio-is/css-data";
+} from "@webstudio-is/css-engine";
 import {
   Popover,
   PopoverTrigger,

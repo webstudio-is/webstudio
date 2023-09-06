@@ -1,4 +1,4 @@
-import type { LayersValue } from "@webstudio-is/css-data";
+import type { LayersValue } from "@webstudio-is/css-engine";
 import { styled, theme } from "@webstudio-is/design-system";
 import { setEnv } from "@webstudio-is/feature-flags";
 import { useRef, useState } from "react";

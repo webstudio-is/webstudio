@@ -1,8 +1,12 @@
 import * as csstree from "css-tree";
+import {
+  StyleValue,
+  type Style as S,
+  type StyleProperty,
+} from "@webstudio-is/css-engine";
 import { parseCssValue as parseCssValueLonghand } from "./parse-css-value";
 import * as parsers from "./property-parsers/parsers";
 import * as toLonghand from "./property-parsers/to-longhand";
-import { StyleValue, type Style as S, type StyleProperty } from "./schema";
 
 type Selector = string;
 type Style = {

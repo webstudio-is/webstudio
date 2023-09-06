@@ -1,4 +1,5 @@
-import { parseBoxShadow, type LayersValue } from "@webstudio-is/css-data";
+import type { LayersValue } from "@webstudio-is/css-engine";
+import { parseBoxShadow } from "@webstudio-is/css-data";
 import type { RenderCategoryProps } from "../../style-sections";
 import type { StyleInfo } from "../../shared/style-info";
 import type { CreateBatchUpdate } from "../../shared/use-style-data";

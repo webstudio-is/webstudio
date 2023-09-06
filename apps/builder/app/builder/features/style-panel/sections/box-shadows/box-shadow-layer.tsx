@@ -1,4 +1,4 @@
-import type { LayersValue, TupleValue } from "@webstudio-is/css-data";
+import type { LayersValue, TupleValue } from "@webstudio-is/css-engine";
 import {
   Label,
   SmallIconButton,

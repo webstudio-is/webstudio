@@ -10,7 +10,7 @@
     "checks": "pnpm typecheck",
     "dev": "build-package --watch",
     "build": "build-package",
-    "build:mdn-data": "tsx ./bin/mdn-data.ts ./src/__generated__ &&  prettier --write \"./src/__generated__/**/*.ts\"",
+    "build:mdn-data": "tsx ./bin/mdn-data.ts ./src/__generated__ &&  prettier --write \"./src/__generated__/\" \"../css-engine/src/__generated__/\"",
     "build:descriptions": "tsx ./bin/property-value-descriptions.ts",
     "dts": "tsc --project tsconfig.dts.json",
     "test": "NODE_OPTIONS=--experimental-vm-modules jest"
@@ -47,6 +47,7 @@
   "private": false,
   "sideEffects": false,
   "dependencies": {
+    "@webstudio-is/css-engine": "workspace:^",
     "colord": "^2.9.3",
     "css-tree": "^2.3.1",
     "hyphenate-style-name": "^1.0.4",

@@ -7,7 +7,7 @@ import type {
   StyleProperty,
   TupleValue,
   TupleValueItem,
-} from "@webstudio-is/css-data";
+} from "@webstudio-is/css-engine";
 import * as theme from "./__generated__/tailwind-theme";
 
 export const property = (

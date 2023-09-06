@@ -1,4 +1,4 @@
-import type { StyleValue } from "./schema";
+import type { StyleValue } from "@webstudio-is/css-engine";
 import { popularityIndex } from "./popularity-index";
 
 // Data type used before we generate a the constants.

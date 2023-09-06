@@ -1,5 +1,5 @@
 import { type ComponentProps, useState } from "react";
-import type { StyleValue, StyleProperty } from "@webstudio-is/css-data";
+import type { StyleValue, StyleProperty } from "@webstudio-is/css-engine";
 import { Box, EnhancedTooltip } from "@webstudio-is/design-system";
 import {
   CssValueInput,

@@ -6,7 +6,7 @@ import {
   type Instance,
   getStyleDeclKey,
 } from "@webstudio-is/sdk";
-import type { StyleProperty, StyleValue } from "@webstudio-is/css-data";
+import type { StyleProperty, StyleValue } from "@webstudio-is/css-engine";
 import type { Publish } from "~/shared/pubsub";
 import {
   selectedBreakpointStore,

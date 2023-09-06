@@ -1,4 +1,4 @@
-import type { StyleProperty } from "@webstudio-is/css-data";
+import type { StyleProperty } from "@webstudio-is/css-engine";
 import type { RenderCategoryProps } from "../../style-sections";
 import { renderProperty } from "../../style-sections";
 import { CollapsibleSection } from "../../shared/collapsible-section";
