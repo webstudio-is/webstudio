@@ -9,6 +9,15 @@ import {
 import { join } from "node:path";
 import type { Folder } from "./args";
 
+export const isFileExists = async (filePath: string) => {
+  try {
+    await access(filePath, constants.F_OK);
+    return true;
+  } catch {
+    return false;
+  }
+};
+
 export const ensureFileInPath = async (filePath: string, content?: string) => {
   const dir = dirname(filePath);
 
