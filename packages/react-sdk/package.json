@@ -16,7 +16,7 @@
   "devDependencies": {
     "@jest/globals": "^29.6.4",
     "@remix-run/react": "^1.19.2",
-    "@types/react": "^18.2.20",
+    "@types/react": "^18.2.21",
     "@types/react-dom": "^18.2.7",
     "@webstudio-is/jest-config": "workspace:^",
     "@webstudio-is/scripts": "workspace:^",
