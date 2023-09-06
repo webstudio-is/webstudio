@@ -340,8 +340,7 @@ import { ${Array.from(componentsSet)
       dataSources: new Map(pageData.build.dataSources),
     });
 
-    const pageExports = `/* eslint-disable camelcase */
-/* eslint-disable prefer-const */
+    const pageExports = `/* eslint-disable */
 /* This is a auto generated file for building the project */ \n
 import * as sdk from "@webstudio-is/react-sdk";
 import type { PageData } from "~/routes/_index";

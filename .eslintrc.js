@@ -7,6 +7,5 @@ module.exports = {
     "/packages/prisma-client/prisma/migrations",
     "/codemod",
     "packages/cli/templates/",
-    "fixtures/*",
   ],
 };

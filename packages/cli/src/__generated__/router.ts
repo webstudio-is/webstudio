@@ -8,7 +8,8 @@ If needed to make any changes. Add them to ./templates folder and run pnpm run b
 import { ASSETS_BASE } from "../config";
 
 export const getRouteTemplate = () => {
-  return `import {
+  return `/* eslint-disable camelcase */
+import {
   V2_MetaFunction,
   LinksFunction,
   LinkDescriptor,

@@ -1,5 +1,4 @@
-/* eslint-disable camelcase */
-/* eslint-disable prefer-const */
+/* eslint-disable */
 /* This is a auto generated file for building the project */
 
 import * as sdk from "@webstudio-is/react-sdk";

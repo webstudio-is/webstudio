@@ -1,3 +1,4 @@
+/* eslint-disable camelcase */
 import {
   V2_MetaFunction,
   LinksFunction,
