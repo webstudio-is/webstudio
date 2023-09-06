@@ -8,7 +8,6 @@
     "typecheck": "tsc"
   },
   "dependencies": {
-    "@remix-run/css-bundle": "^1.19.2",
     "@remix-run/node": "^1.19.2",
     "@remix-run/react": "^1.19.2",
     "@webstudio-is/react-sdk": "^0.91.0",
@@ -23,7 +22,6 @@
   "devDependencies": {
     "@remix-run/serve": "^1.19.2",
     "@remix-run/dev": "^1.19.2",
-    "@remix-run/eslint-config": "^1.19.2",
     "@types/react": "^18.2.20",
     "@types/react-dom": "^18.2.7",
     "eslint": "^8.48.0",
