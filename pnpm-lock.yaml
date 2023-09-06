@@ -362,6 +362,12 @@ importers:
         specifier: 5.2.2
         version: 5.2.2
 
+  fixtures/webstudio-remix-vercel:
+    devDependencies:
+      '@webstudio-is/cli':
+        specifier: workspace:^
+        version: link:../../packages/cli
+
   packages/asset-uploader:
     dependencies:
       '@aws-crypto/sha256-js':

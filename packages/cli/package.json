@@ -20,7 +20,8 @@
     "checks": "pnpm typecheck",
     "build:templates": "tsx ./templates/build.ts",
     "build": "rm -rf ./lib && esbuild ./src/**/*.ts --outdir=./lib",
-    "local-run": "tsx --no-warnings ./src/bin.ts"
+    "local-run": "tsx --no-warnings ./src/bin.ts",
+    "dev": "esbuild ./src/**/*.ts --watch --outdir=./lib"
   },
   "license": "AGPL-3.0-or-later",
   "dependencies": {
