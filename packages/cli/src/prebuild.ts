@@ -6,6 +6,7 @@ import { cwd } from "node:process";
 import {
   generateCssText,
   generateUtilsExport,
+  namespaceMeta,
   type Params,
   type WsComponentMeta,
 } from "@webstudio-is/react-sdk";
@@ -214,7 +215,12 @@ export const prebuild = async (options: {
     radixComponentMetas
   ).reduce(
     (r, [name, meta]) => {
-      r[`@webstudio-is/sdk-components-react-radix:${name}`] = meta;
+      const namespace = "@webstudio-is/sdk-components-react-radix";
+      r[`${namespace}:${name}`] = namespaceMeta(
+        meta,
+        namespace,
+        new Set(Object.keys(radixComponentMetas))
+      );
       return r;
     },
     {} as Record<string, WsComponentMeta>
