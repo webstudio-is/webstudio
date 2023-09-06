@@ -15,7 +15,9 @@ export const buildOptions = (yargs: CommonYargsArgv) =>
 
 // @todo: use options.assets to define if we need to download assets
 export const build = async (
-  options: StrictYargsOptionsToInterface<typeof buildOptions>
+  options:
+    | StrictYargsOptionsToInterface<typeof buildOptions>
+    | { assets?: boolean }
 ) => {
   try {
     await access(LOCAL_DATA_FILE);

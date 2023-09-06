@@ -4,10 +4,31 @@ import * as readline from "node:readline/promises";
 import { readFile, writeFile } from "node:fs/promises";
 import { GLOBAL_CONFIG_FILE, LOCAL_CONFIG_FILE } from "../config";
 import { ensureFileInPath } from "../fs-utils";
+import type {
+  CommonYargsArgv,
+  StrictYargsOptionsToInterface,
+} from "./yargs-types";
 
-export const link = async () => {
-  const rl = readline.createInterface({ input: stdin, output: stdout });
-  const shareLink = await rl.question(`Paste share link (with build access): `);
+export const linkOptions = (yargs: CommonYargsArgv) =>
+  yargs.option("link", {
+    alias: "l",
+    type: "string",
+    describe: "Link to a webstudio project",
+  });
+
+export const link = async (
+  options: StrictYargsOptionsToInterface<typeof linkOptions> | { link?: string }
+) => {
+  let shareLink: string;
+  if (options.link) {
+    shareLink = options.link;
+  } else {
+    const rl = readline.createInterface({ input: stdin, output: stdout });
+    shareLink = await rl.question(
+      `Please paste a link from the Share Dialog in the builder: `
+    );
+    rl.close();
+  }
 
   const shareLinkUrl = new URL(shareLink);
   const host = shareLinkUrl.origin;
@@ -34,7 +55,6 @@ export const link = async () => {
     };
 
     await writeFile(GLOBAL_CONFIG_FILE, JSON.stringify(newConfig, null, 2));
-    rl.close();
     console.info(`Saved credentials for project ${projectId}.
   You can find your config at ${GLOBAL_CONFIG_FILE}
         `);

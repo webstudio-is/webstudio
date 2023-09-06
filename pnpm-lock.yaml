@@ -480,6 +480,9 @@ importers:
       p-limit:
         specifier: ^4.0.0
         version: 4.0.0
+      prompts:
+        specifier: ^2.4.2
+        version: 2.4.2
       strip-indent:
         specifier: ^4.0.0
         version: 4.0.0
@@ -490,6 +493,9 @@ importers:
       '@types/node':
         specifier: ^18.13.0
         version: 18.13.0
+      '@types/prompts':
+        specifier: ^2.4.4
+        version: 2.4.4
       '@webstudio-is/form-handlers':
         specifier: workspace:^
         version: link:../form-handlers
@@ -7577,6 +7583,13 @@ packages:
 
   /@types/prismjs@1.26.0:
     resolution: {integrity: sha512-ZTaqn/qSqUuAq1YwvOFQfVW1AR/oQJlLSZVustdjwI+GZ8kr0MSHBj0tsXPW1EqHubx50gtBEjbPGsdZwQwCjQ==}
+    dev: true
+
+  /@types/prompts@2.4.4:
+    resolution: {integrity: sha512-p5N9uoTH76lLvSAaYSZtBCdEXzpOOufsRjnhjVSrZGXikVGHX9+cc9ERtHRV4hvBKHyZb1bg4K+56Bd2TqUn4A==}
+    dependencies:
+      '@types/node': 18.17.1
+      kleur: 3.0.3
     dev: true
 
   /@types/prop-types@15.7.5:
