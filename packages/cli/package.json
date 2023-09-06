@@ -6,7 +6,7 @@
   "homepage": "https://webstudio.is",
   "type": "module",
   "bin": {
-    "webstudio": "./bin.js"
+    "webstudio": "./lib/bin.js"
   },
   "files": [
     "lib/*",
@@ -19,7 +19,8 @@
     "typecheck": "tsc",
     "checks": "pnpm typecheck",
     "build:templates": "tsx ./templates/build.ts",
-    "build": "build-package"
+    "build": "rm -rf ./lib && esbuild ./src/**/*.ts --outdir=./lib",
+    "local-run": "tsx --no-warnings ./src/bin.ts"
   },
   "license": "AGPL-3.0-or-later",
   "dependencies": {
@@ -33,13 +34,15 @@
     "env-paths": "^3.0.0",
     "ora": "^7.0.1",
     "p-limit": "^4.0.0",
-    "strip-indent": "^4.0.0"
+    "strip-indent": "^4.0.0",
+    "yargs": "^17.7.2"
   },
   "devDependencies": {
     "@types/node": "^18.13.0",
     "@webstudio-is/form-handlers": "workspace:^",
     "@webstudio-is/scripts": "workspace:^",
     "@webstudio-is/tsconfig": "workspace:^",
+    "esbuild": "^0.18.18",
     "tsx": "^3.12.6",
     "typescript": "5.2.2"
   }

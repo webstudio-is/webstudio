@@ -4,7 +4,6 @@ import { join } from "node:path";
 import ora from "ora";
 import { loadProjectDataById } from "@webstudio-is/http-client";
 
-import type { Command } from "../args";
 import { ensureFileInPath, loadJSONFile } from "../fs-utils";
 import {
   GLOBAL_CONFIG_FILE,
@@ -14,7 +13,7 @@ import {
   LOCAL_DATA_FILE,
 } from "../config";
 
-export const sync: Command = async () => {
+export const sync = async () => {
   const spinner = ora("Syncing project data").start();
 
   spinner.text = "Loading project data from config file";

@@ -483,6 +483,9 @@ importers:
       strip-indent:
         specifier: ^4.0.0
         version: 4.0.0
+      yargs:
+        specifier: ^17.7.2
+        version: 17.7.2
     devDependencies:
       '@types/node':
         specifier: ^18.13.0
@@ -496,6 +499,9 @@ importers:
       '@webstudio-is/tsconfig':
         specifier: workspace:^
         version: link:../tsconfig
+      esbuild:
+        specifier: ^0.18.18
+        version: 0.18.18
       tsx:
         specifier: ^3.12.6
         version: 3.12.6
@@ -6260,7 +6266,7 @@ packages:
       '@sentry/utils': 7.47.0
       react: 18.2.0
       tslib: 1.14.1
-      yargs: 17.7.1
+      yargs: 17.7.2
     transitivePeerDependencies:
       - encoding
       - supports-color
@@ -11508,7 +11514,7 @@ packages:
       jest-util: 29.6.3
       jest-validate: 29.6.3
       prompts: 2.4.2
-      yargs: 17.7.1
+      yargs: 17.7.2
     transitivePeerDependencies:
       - '@types/node'
       - babel-plugin-macros
@@ -15782,7 +15788,7 @@ packages:
     resolution: {integrity: sha512-DINP+5T3ruZwOWMNd5mJMiM3h5YvwZEoRL+NAKZf+e93/5Vy1P0R5eWeaynCWcqprPNm4ceV5CPgjqo1u48big==}
     hasBin: true
     dependencies:
-      yargs: 17.7.1
+      yargs: 17.7.2
     dev: false
 
   /toml@3.0.0:
@@ -16751,8 +16757,8 @@ packages:
       y18n: 5.0.8
       yargs-parser: 20.2.9
 
-  /yargs@17.7.1:
-    resolution: {integrity: sha512-cwiTb08Xuv5fqF4AovYacTFNxk62th7LKJ6BL9IGUpTJrWoU7/7WdQGTP2SjKf1dUNBGzDd28p/Yfs/GI6JrLw==}
+  /yargs@17.7.2:
+    resolution: {integrity: sha512-7dSzzRQ++CKnNI/krKnYRV7JKKPUXMEh61soaHKg9mrWEhzFWhFnxPxGl+69cD1Ou63C13NUPCnmIcrvqCuM6w==}
     engines: {node: '>=12'}
     dependencies:
       cliui: 8.0.1
