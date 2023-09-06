@@ -17,14 +17,14 @@
   },
   "devDependencies": {
     "@svgo/jsx": "^0.4.2",
-    "@types/react": "^18.2.20",
+    "@types/react": "^18.2.21",
     "@webstudio-is/scripts": "workspace:^",
     "@webstudio-is/storybook-config": "workspace:^",
     "@webstudio-is/tsconfig": "workspace:^",
     "react": "^18.2.0",
     "react-dom": "^18.2.0",
     "svgo": "^3.0.2",
-    "tsx": "^3.12.6",
+    "tsx": "^3.12.8",
     "typescript": "5.2.2"
   },
   "peerDependencies": {

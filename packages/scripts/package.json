@@ -14,13 +14,13 @@
     "checks": "tsc --noEmit --emitDeclarationOnly false"
   },
   "dependencies": {
-    "esbuild": "^0.18.18",
+    "esbuild": "^0.19.2",
     "totalist": "^3.0.1"
   },
   "devDependencies": {
     "@types/node": "^18.11.18",
     "@webstudio-is/tsconfig": "workspace:^",
-    "tsx": "^3.12.6",
+    "tsx": "^3.12.8",
     "typescript": "5.2.2"
   }
 }

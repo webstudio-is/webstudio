@@ -44,8 +44,8 @@
     "@webstudio-is/form-handlers": "workspace:^",
     "@webstudio-is/scripts": "workspace:^",
     "@webstudio-is/tsconfig": "workspace:^",
-    "esbuild": "^0.18.18",
-    "tsx": "^3.12.6",
+    "esbuild": "^0.19.2",
+    "tsx": "^3.12.8",
     "typescript": "5.2.2"
   }
 }
