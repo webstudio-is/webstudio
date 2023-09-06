@@ -1,4 +1,4 @@
-import type { InvalidValue, LayersValue } from "@webstudio-is/css-data";
+import type { InvalidValue, LayersValue } from "@webstudio-is/css-engine";
 import { parseBoxShadow } from "@webstudio-is/css-data";
 import {
   Flex,

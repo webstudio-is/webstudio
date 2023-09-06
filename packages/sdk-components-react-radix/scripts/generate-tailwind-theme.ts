@@ -2,12 +2,8 @@ import { writeFile, mkdir } from "node:fs/promises";
 // Imported theme https://github.com/tailwindlabs/tailwindcss/blob/e0c52a9332a64ef7eb0ba23d2a0fd5a16fe57ab7/stubs/config.full.js
 // eslint-disable-next-line import/no-internal-modules
 import defaultTheme from "tailwindcss/defaultTheme";
-import {
-  StyleValue,
-  parseCssValue,
-  type StyleProperty,
-  parseBoxShadow,
-} from "@webstudio-is/css-data";
+import type { StyleValue, StyleProperty } from "@webstudio-is/css-engine";
+import { parseCssValue, parseBoxShadow } from "@webstudio-is/css-data";
 import type { ResolvableTo } from "tailwindcss/types/config";
 import { colors as colorOverrides } from "../src/theme/tailwind-colors";
 
@@ -204,7 +200,7 @@ const generatedThemeData: GeneratedThemeItem[] = [
 ];
 
 let generatedTheme = "";
-generatedTheme += `import type { StyleValue } from '@webstudio-is/css-data';\n\n`;
+generatedTheme += `import type { StyleValue } from '@webstudio-is/css-engine';\n\n`;
 for (const item of generatedThemeData) {
   const enumItems = Object.keys(item.values).map((key) => JSON.stringify(key));
   let jsonString = JSON.stringify(item.values);

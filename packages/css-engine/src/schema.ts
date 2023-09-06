@@ -1,31 +1,14 @@
-import { units } from "./__generated__/units";
-import type { properties } from "./__generated__/properties";
 import { z } from "zod";
+import type {
+  Property as GeneratedProperty,
+  Unit as GeneratedUnit,
+} from "./__generated__/types";
 
-type Properties = typeof properties & {
-  [custom: CustomProperty]: {
-    appliesTo: "allElements";
-    initial: string;
-    inherited: boolean;
-  };
-};
+export type CustomProperty = `--${string}`;
 
-export type StyleProperty = keyof Properties;
+export type StyleProperty = GeneratedProperty | CustomProperty;
 
-type CustomProperty = `--${string}`;
-
-export type AppliesTo = Properties[StyleProperty]["appliesTo"];
-
-export type UnitGroup = keyof typeof units;
-
-type UnitEnum = (typeof units)[UnitGroup][number];
-
-const Unit = z.union([
-  // expected tuple with at least single element
-  // so cast to tuple with single union element to get correct inference
-  z.enum(Object.values(units).flat() as [UnitEnum]),
-  z.literal("number"),
-]);
+const Unit = z.string() as z.ZodType<GeneratedUnit | "number">;
 
 export type Unit = z.infer<typeof Unit>;
 

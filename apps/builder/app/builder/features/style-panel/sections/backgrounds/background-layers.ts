@@ -1,4 +1,4 @@
-import type { LayersValue, StyleValue } from "@webstudio-is/css-data";
+import type { LayersValue, StyleValue } from "@webstudio-is/css-engine";
 import {
   type StyleInfo,
   type StyleValueInfo,

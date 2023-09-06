@@ -511,6 +511,9 @@ importers:
 
   packages/css-data:
     dependencies:
+      '@webstudio-is/css-engine':
+        specifier: workspace:^
+        version: link:../css-engine
       colord:
         specifier: ^2.9.3
         version: 2.9.3
@@ -566,9 +569,6 @@ importers:
 
   packages/css-engine:
     dependencies:
-      '@webstudio-is/css-data':
-        specifier: workspace:^
-        version: link:../css-data
       '@webstudio-is/error-utils':
         specifier: workspace:^
         version: link:../error-utils
@@ -578,12 +578,6 @@ importers:
       hyphenate-style-name:
         specifier: ^1.0.4
         version: 1.0.4
-      react:
-        specifier: ^18.2.0
-        version: 18.2.0
-      react-dom:
-        specifier: ^18.2.0
-        version: 18.2.0(react@18.2.0)
     devDependencies:
       '@jest/globals':
         specifier: ^29.6.4
@@ -612,6 +606,12 @@ importers:
       jest:
         specifier: ^29.6.4
         version: 29.6.4(@types/node@18.13.0)
+      react:
+        specifier: ^18.2.0
+        version: 18.2.0
+      react-dom:
+        specifier: ^18.2.0
+        version: 18.2.0(react@18.2.0)
       typescript:
         specifier: 5.2.2
         version: 5.2.2
@@ -1196,9 +1196,6 @@ importers:
 
   packages/project-build:
     dependencies:
-      '@webstudio-is/css-data':
-        specifier: workspace:^
-        version: link:../css-data
       '@webstudio-is/prisma-client':
         specifier: workspace:^
         version: link:../prisma-client
@@ -1245,9 +1242,6 @@ importers:
       '@nanostores/react':
         specifier: ^0.7.1
         version: 0.7.1(nanostores@0.9.3)(react@18.2.0)
-      '@webstudio-is/css-data':
-        specifier: workspace:^
-        version: link:../css-data
       '@webstudio-is/css-engine':
         specifier: workspace:^
         version: link:../css-engine
@@ -1343,9 +1337,9 @@ importers:
 
   packages/sdk:
     dependencies:
-      '@webstudio-is/css-data':
+      '@webstudio-is/css-engine':
         specifier: workspace:^
-        version: link:../css-data
+        version: link:../css-engine
       '@webstudio-is/fonts':
         specifier: workspace:^
         version: link:../fonts
@@ -1462,9 +1456,9 @@ importers:
       '@radix-ui/react-tooltip':
         specifier: ^1.0.6
         version: 1.0.6(@types/react-dom@18.2.7)(@types/react@18.2.20)(react-dom@18.2.0)(react@18.2.0)
-      '@webstudio-is/css-data':
+      '@webstudio-is/css-engine':
         specifier: workspace:^
-        version: link:../css-data
+        version: link:../css-engine
       '@webstudio-is/icons':
         specifier: workspace:^
         version: link:../icons
@@ -1481,6 +1475,9 @@ importers:
       '@types/react-dom':
         specifier: ^18.2.7
         version: 18.2.7
+      '@webstudio-is/css-data':
+        specifier: workspace:^
+        version: link:../css-data
       '@webstudio-is/generate-arg-types':
         specifier: workspace:^
         version: link:../generate-arg-types

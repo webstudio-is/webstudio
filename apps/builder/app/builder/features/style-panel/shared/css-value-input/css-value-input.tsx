@@ -18,7 +18,7 @@ import type {
   StyleProperty,
   StyleValue,
   Unit,
-} from "@webstudio-is/css-data";
+} from "@webstudio-is/css-engine";
 import {
   type KeyboardEventHandler,
   type KeyboardEvent,

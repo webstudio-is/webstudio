@@ -11,7 +11,7 @@ import type {
   Breakpoint,
   DataSource,
 } from "@webstudio-is/sdk";
-import { StyleValue, type StyleProperty } from "@webstudio-is/css-data";
+import { StyleValue, type StyleProperty } from "@webstudio-is/css-engine";
 import type { Simplify } from "type-fest";
 import { encodeDataSourceVariable, validateExpression } from "./expression";
 import type { WsComponentMeta } from "./components/component-meta";

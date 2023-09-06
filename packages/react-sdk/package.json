@@ -37,7 +37,6 @@
   "dependencies": {
     "@jsep-plugin/assignment": "^1.2.1",
     "@nanostores/react": "^0.7.1",
-    "@webstudio-is/css-data": "workspace:^",
     "@webstudio-is/css-engine": "workspace:^",
     "@webstudio-is/fonts": "workspace:^",
     "@webstudio-is/sdk": "workspace:^",

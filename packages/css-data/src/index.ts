@@ -9,7 +9,6 @@ export {
   properties as propertyDescriptions,
   declarations as declarationDescriptions,
 } from "./__generated__/property-value-descriptions";
-export * from "./schema";
 
 // longhand property parsers
 export * from "./property-parsers/index";

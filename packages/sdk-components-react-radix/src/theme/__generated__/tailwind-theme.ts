@@ -1,4 +1,4 @@
-import type { StyleValue } from "@webstudio-is/css-data";
+import type { StyleValue } from "@webstudio-is/css-engine";
 
 export const spacing: Record<
   | "0"

@@ -2,7 +2,7 @@ import type {
   StyleProperty,
   StyleValue,
   UnitValue,
-} from "@webstudio-is/css-data";
+} from "@webstudio-is/css-engine";
 import { numericScrubControl } from "@webstudio-is/design-system";
 import { useState, useEffect, useRef } from "react";
 import { useModifierKeys } from "../../shared/modifier-keys";

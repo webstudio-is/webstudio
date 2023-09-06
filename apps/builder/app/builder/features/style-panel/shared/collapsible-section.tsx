@@ -1,4 +1,4 @@
-import type { StyleProperty } from "@webstudio-is/css-data";
+import type { StyleProperty } from "@webstudio-is/css-engine";
 import { SectionTitle, SectionTitleLabel } from "@webstudio-is/design-system";
 import type { ReactNode } from "react";
 import {

@@ -3,7 +3,7 @@
  * as of now just implement feature parity with old backgrounds section
  **/
 
-import type { RgbValue, StyleValue } from "@webstudio-is/css-data";
+import type { RgbValue, StyleValue } from "@webstudio-is/css-engine";
 import {
   theme,
   Flex,
