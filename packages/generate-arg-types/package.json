@@ -24,9 +24,7 @@
   },
   "files": [
     "lib/*",
-    "src/*",
-    "README.md",
-    "!*.test.*"
+    "!*.{test,stories}.*"
   ],
   "bin": {
     "generate-arg-types": "./src/cli.ts"
