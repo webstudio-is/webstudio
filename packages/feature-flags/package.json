@@ -8,13 +8,12 @@
   "scripts": {
     "typecheck": "tsc",
     "checks": "pnpm typecheck",
-    "dev": "build-package --watch",
-    "build": "build-package",
+    "dev": "pnpm build --watch",
+    "build": "rm -rf lib && esbuild 'src/**/*.ts' 'src/**/*.tsx' --outdir=lib",
     "dts": "tsc --project tsconfig.dts.json"
   },
   "dependencies": {},
   "devDependencies": {
-    "@webstudio-is/scripts": "workspace:^",
     "@webstudio-is/tsconfig": "workspace:^"
   },
   "exports": {

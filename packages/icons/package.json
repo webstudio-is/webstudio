@@ -6,8 +6,8 @@
   "homepage": "https://webstudio.is",
   "type": "module",
   "scripts": {
-    "dev": "build-package --watch",
-    "build": "build-package",
+    "dev": "pnpm build --watch",
+    "build": "rm -rf lib && esbuild 'src/**/*.ts' 'src/**/*.tsx' --outdir=lib",
     "dts": "tsc --declarationDir lib/types",
     "generate": "rm -fr src/__generated__ && NODE_OPTIONS='--loader=tsx' svgo-jsx svgo-jsx.config.ts && tsx svg-string.ts && prettier --write src/__generated__",
     "typecheck": "tsc",
@@ -18,7 +18,6 @@
   "devDependencies": {
     "@svgo/jsx": "^0.4.2",
     "@types/react": "^18.2.21",
-    "@webstudio-is/scripts": "workspace:^",
     "@webstudio-is/storybook-config": "workspace:^",
     "@webstudio-is/tsconfig": "workspace:^",
     "react": "^18.2.0",
@@ -38,14 +37,12 @@
     ".": {
       "source": "./src/index.ts",
       "types": "./lib/types/index.d.ts",
-      "import": "./lib/index.js",
-      "require": "./lib/cjs/index.js"
+      "import": "./lib/index.js"
     },
     "./svg": {
       "source": "./src/__generated__/svg/index.ts",
       "types": "./lib/types/__generated__/svg/index.d.ts",
-      "import": "./lib/__generated__/svg/index.js",
-      "require": "./lib/cjs/__generated__/svg/index.js"
+      "import": "./lib/__generated__/svg/index.js"
     }
   },
   "files": [

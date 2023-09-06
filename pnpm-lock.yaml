@@ -24,6 +24,9 @@ importers:
       '@webstudio-is/eslint-config-custom':
         specifier: workspace:^
         version: link:packages/eslint-config-custom
+      esbuild:
+        specifier: ^0.19.2
+        version: 0.19.2
       nano-staged:
         specifier: ^0.8.0
         version: 0.8.0
@@ -410,9 +413,6 @@ importers:
       '@webstudio-is/jest-config':
         specifier: workspace:^
         version: link:../jest-config
-      '@webstudio-is/scripts':
-        specifier: workspace:^
-        version: link:../scripts
       '@webstudio-is/tsconfig':
         specifier: workspace:^
         version: link:../tsconfig
@@ -438,9 +438,6 @@ importers:
         specifier: ^3.21.4
         version: 3.21.4
     devDependencies:
-      '@webstudio-is/scripts':
-        specifier: workspace:^
-        version: link:../scripts
       '@webstudio-is/tsconfig':
         specifier: workspace:^
         version: link:../tsconfig
@@ -499,15 +496,9 @@ importers:
       '@webstudio-is/form-handlers':
         specifier: workspace:^
         version: link:../form-handlers
-      '@webstudio-is/scripts':
-        specifier: workspace:^
-        version: link:../scripts
       '@webstudio-is/tsconfig':
         specifier: workspace:^
         version: link:../tsconfig
-      esbuild:
-        specifier: ^0.19.2
-        version: 0.19.2
       tsx:
         specifier: ^3.12.8
         version: 3.12.8
@@ -542,9 +533,6 @@ importers:
       '@webstudio-is/jest-config':
         specifier: workspace:^
         version: link:../jest-config
-      '@webstudio-is/scripts':
-        specifier: workspace:^
-        version: link:../scripts
       '@webstudio-is/tsconfig':
         specifier: workspace:^
         version: link:../tsconfig
@@ -600,9 +588,6 @@ importers:
       '@webstudio-is/jest-config':
         specifier: workspace:^
         version: link:../jest-config
-      '@webstudio-is/scripts':
-        specifier: workspace:^
-        version: link:../scripts
       '@webstudio-is/storybook-config':
         specifier: workspace:^
         version: link:../storybook-config
@@ -624,15 +609,9 @@ importers:
 
   packages/css-vars:
     devDependencies:
-      '@webstudio-is/scripts':
-        specifier: workspace:^
-        version: link:../scripts
       '@webstudio-is/tsconfig':
         specifier: workspace:^
         version: link:../tsconfig
-      typescript:
-        specifier: 5.2.2
-        version: 5.2.2
 
   packages/dashboard:
     dependencies:
@@ -649,9 +628,6 @@ importers:
         specifier: ^3.21.4
         version: 3.21.4
     devDependencies:
-      '@webstudio-is/scripts':
-        specifier: workspace:^
-        version: link:../scripts
       '@webstudio-is/tsconfig':
         specifier: workspace:^
         version: link:../tsconfig
@@ -797,9 +773,6 @@ importers:
       '@webstudio-is/jest-config':
         specifier: workspace:^
         version: link:../jest-config
-      '@webstudio-is/scripts':
-        specifier: workspace:^
-        version: link:../scripts
       '@webstudio-is/storybook-config':
         specifier: workspace:^
         version: link:../storybook-config
@@ -840,9 +813,6 @@ importers:
         specifier: ^3.21.4
         version: 3.21.4
     devDependencies:
-      '@webstudio-is/scripts':
-        specifier: workspace:^
-        version: link:../scripts
       '@webstudio-is/tsconfig':
         specifier: workspace:^
         version: link:../tsconfig
@@ -852,15 +822,9 @@ importers:
 
   packages/error-utils:
     devDependencies:
-      '@webstudio-is/scripts':
-        specifier: workspace:^
-        version: link:../scripts
       '@webstudio-is/tsconfig':
         specifier: workspace:^
         version: link:../tsconfig
-      typescript:
-        specifier: 5.2.2
-        version: 5.2.2
 
   packages/eslint-config-custom:
     dependencies:
@@ -891,9 +855,6 @@ importers:
 
   packages/feature-flags:
     devDependencies:
-      '@webstudio-is/scripts':
-        specifier: workspace:^
-        version: link:../scripts
       '@webstudio-is/tsconfig':
         specifier: workspace:^
         version: link:../tsconfig
@@ -906,9 +867,6 @@ importers:
       '@webstudio-is/jest-config':
         specifier: workspace:^
         version: link:../jest-config
-      '@webstudio-is/scripts':
-        specifier: workspace:^
-        version: link:../scripts
       '@webstudio-is/tsconfig':
         specifier: workspace:^
         version: link:../tsconfig
@@ -928,15 +886,9 @@ importers:
         specifier: workspace:^
         version: link:../sdk
     devDependencies:
-      '@webstudio-is/scripts':
-        specifier: workspace:^
-        version: link:../scripts
       '@webstudio-is/tsconfig':
         specifier: workspace:^
         version: link:../tsconfig
-      typescript:
-        specifier: 5.2.2
-        version: 5.2.2
 
   packages/form-handlers-mailchannels-test:
     dependencies:
@@ -975,9 +927,6 @@ importers:
         specifier: ^3.21.4
         version: 3.21.4
     devDependencies:
-      '@webstudio-is/scripts':
-        specifier: workspace:^
-        version: link:../scripts
       '@webstudio-is/tsconfig':
         specifier: workspace:^
         version: link:../tsconfig
@@ -990,9 +939,6 @@ importers:
 
   packages/html-data:
     devDependencies:
-      '@webstudio-is/scripts':
-        specifier: workspace:^
-        version: link:../scripts
       '@webstudio-is/tsconfig':
         specifier: workspace:^
         version: link:../tsconfig
@@ -1009,12 +955,6 @@ importers:
       '@webstudio-is/jest-config':
         specifier: workspace:^
         version: link:../jest-config
-      '@webstudio-is/prisma-client':
-        specifier: workspace:^
-        version: link:../prisma-client
-      '@webstudio-is/scripts':
-        specifier: workspace:^
-        version: link:../scripts
       '@webstudio-is/tsconfig':
         specifier: workspace:^
         version: link:../tsconfig
@@ -1037,9 +977,6 @@ importers:
       '@types/react':
         specifier: ^18.2.21
         version: 18.2.21
-      '@webstudio-is/scripts':
-        specifier: workspace:^
-        version: link:../scripts
       '@webstudio-is/storybook-config':
         specifier: workspace:^
         version: link:../storybook-config
@@ -1083,9 +1020,6 @@ importers:
       '@webstudio-is/jest-config':
         specifier: workspace:^
         version: link:../jest-config
-      '@webstudio-is/scripts':
-        specifier: workspace:^
-        version: link:../scripts
       '@webstudio-is/storybook-config':
         specifier: workspace:^
         version: link:../storybook-config
@@ -1190,9 +1124,6 @@ importers:
       '@types/uuid':
         specifier: ^8.3.4
         version: 8.3.4
-      '@webstudio-is/scripts':
-        specifier: workspace:^
-        version: link:../scripts
       '@webstudio-is/tsconfig':
         specifier: workspace:^
         version: link:../tsconfig
@@ -1224,9 +1155,6 @@ importers:
       '@webstudio-is/jest-config':
         specifier: workspace:^
         version: link:../jest-config
-      '@webstudio-is/scripts':
-        specifier: workspace:^
-        version: link:../scripts
       '@webstudio-is/tsconfig':
         specifier: workspace:^
         version: link:../tsconfig
@@ -1294,9 +1222,6 @@ importers:
       '@webstudio-is/jest-config':
         specifier: workspace:^
         version: link:../jest-config
-      '@webstudio-is/scripts':
-        specifier: workspace:^
-        version: link:../scripts
       '@webstudio-is/tsconfig':
         specifier: workspace:^
         version: link:../tsconfig
@@ -1359,9 +1284,6 @@ importers:
       '@webstudio-is/jest-config':
         specifier: workspace:^
         version: link:../jest-config
-      '@webstudio-is/scripts':
-        specifier: workspace:^
-        version: link:../scripts
       '@webstudio-is/tsconfig':
         specifier: workspace:^
         version: link:../tsconfig
@@ -1405,9 +1327,6 @@ importers:
       '@webstudio-is/generate-arg-types':
         specifier: workspace:^
         version: link:../generate-arg-types
-      '@webstudio-is/scripts':
-        specifier: workspace:^
-        version: link:../scripts
       '@webstudio-is/storybook-config':
         specifier: workspace:^
         version: link:../storybook-config
@@ -1487,9 +1406,6 @@ importers:
       '@webstudio-is/generate-arg-types':
         specifier: workspace:^
         version: link:../generate-arg-types
-      '@webstudio-is/scripts':
-        specifier: workspace:^
-        version: link:../scripts
       '@webstudio-is/sdk-components-react':
         specifier: workspace:^
         version: link:../sdk-components-react
@@ -1539,9 +1455,6 @@ importers:
       '@webstudio-is/generate-arg-types':
         specifier: workspace:^
         version: link:../generate-arg-types
-      '@webstudio-is/scripts':
-        specifier: workspace:^
-        version: link:../scripts
       '@webstudio-is/tsconfig':
         specifier: workspace:^
         version: link:../tsconfig
@@ -1667,9 +1580,6 @@ importers:
       '@webstudio-is/jest-config':
         specifier: workspace:^
         version: link:../jest-config
-      '@webstudio-is/scripts':
-        specifier: workspace:^
-        version: link:../scripts
       '@webstudio-is/tsconfig':
         specifier: workspace:^
         version: link:../tsconfig

@@ -8,8 +8,8 @@
   "scripts": {
     "typecheck": "tsc",
     "checks": "pnpm typecheck",
-    "dev": "build-package --watch",
-    "build": "build-package",
+    "dev": "pnpm build --watch",
+    "build": "rm -rf lib && esbuild 'src/**/*.ts' 'src/**/*.tsx' --outdir=lib",
     "dts": "tsc --project tsconfig.dts.json"
   },
   "dependencies": {
@@ -20,7 +20,6 @@
     "zod": "^3.21.4"
   },
   "devDependencies": {
-    "@webstudio-is/scripts": "workspace:^",
     "@webstudio-is/tsconfig": "workspace:^",
     "typescript": "5.2.2"
   },
@@ -28,7 +27,6 @@
     ".": {
       "source": "./src/index.ts",
       "import": "./lib/index.js",
-      "require": "./lib/cjs/index.js",
       "types": "./lib/types/index.d.ts"
     },
     "./index.server": {

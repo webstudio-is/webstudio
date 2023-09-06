@@ -16,25 +16,22 @@
     ".": {
       "source": "./src/components.ts",
       "types": "./lib/types/components.d.ts",
-      "import": "./lib/components.js",
-      "require": "./lib/cjs/components.js"
+      "import": "./lib/components.js"
     },
     "./metas": {
       "source": "./src/metas.ts",
       "types": "./lib/types/metas.d.ts",
-      "import": "./lib/metas.js",
-      "require": "./lib/cjs/metas.js"
+      "import": "./lib/metas.js"
     },
     "./props": {
       "source": "./src/props.ts",
       "types": "./lib/types/props.d.ts",
-      "import": "./lib/props.js",
-      "require": "./lib/cjs/props.js"
+      "import": "./lib/props.js"
     }
   },
   "scripts": {
-    "dev": "build-package --watch",
-    "build": "build-package",
+    "dev": "pnpm build --watch",
+    "build": "rm -rf lib && esbuild 'src/**/*.ts' 'src/**/*.tsx' --outdir=lib",
     "build:args": "NODE_OPTIONS=--conditions=source generate-arg-types './src/*.tsx !./src/**/*.stories.tsx !./src/**/*.ws.tsx' && prettier --write \"**/*.props.ts\"",
     "dts": "tsc --project tsconfig.dts.json",
     "typecheck": "tsc",
@@ -56,7 +53,6 @@
     "@types/react": "^18.2.21",
     "@types/react-dom": "^18.2.7",
     "@webstudio-is/generate-arg-types": "workspace:^",
-    "@webstudio-is/scripts": "workspace:^",
     "@webstudio-is/tsconfig": "workspace:^",
     "react": "^18.2.0",
     "react-dom": "^18.2.0",

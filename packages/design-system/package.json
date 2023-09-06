@@ -6,8 +6,8 @@
   "homepage": "https://webstudio.is",
   "type": "module",
   "scripts": {
-    "dev": "build-package --watch",
-    "build": "build-package",
+    "dev": "pnpm build --watch",
+    "build": "rm -rf lib && esbuild 'src/**/*.ts' 'src/**/*.tsx' --outdir=lib",
     "build-figma-tokens": "tsx ./bin/transform-figma-tokens.ts",
     "dts": "tsc --project tsconfig.dts.json",
     "typecheck": "tsc",
@@ -23,7 +23,6 @@
     "@types/react": "^18.2.21",
     "@types/react-dom": "^18.2.7",
     "@webstudio-is/jest-config": "workspace:^",
-    "@webstudio-is/scripts": "workspace:^",
     "@webstudio-is/storybook-config": "workspace:^",
     "@webstudio-is/tsconfig": "workspace:^",
     "jest": "^29.6.4",

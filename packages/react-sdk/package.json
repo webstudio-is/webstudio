@@ -6,8 +6,8 @@
   "homepage": "https://webstudio.is",
   "type": "module",
   "scripts": {
-    "dev": "build-package --watch",
-    "build": "build-package",
+    "dev": "pnpm build --watch",
+    "build": "rm -rf lib && esbuild 'src/**/*.ts' 'src/**/*.tsx' --outdir=lib",
     "dts": "tsc --project tsconfig.dts.json",
     "typecheck": "tsc",
     "test": "NODE_OPTIONS=--experimental-vm-modules jest --passWithNoTests",
@@ -19,7 +19,6 @@
     "@types/react": "^18.2.21",
     "@types/react-dom": "^18.2.7",
     "@webstudio-is/jest-config": "workspace:^",
-    "@webstudio-is/scripts": "workspace:^",
     "@webstudio-is/tsconfig": "workspace:^",
     "jest": "^29.6.4",
     "react": "^18.2.0",
@@ -52,14 +51,12 @@
     ".": {
       "source": "./src/index.ts",
       "types": "./lib/types/index.d.ts",
-      "import": "./lib/index.js",
-      "require": "./lib/cjs/index.js"
+      "import": "./lib/index.js"
     },
     "./css-normalize": {
       "source": "./src/css/normalize.ts",
       "types": "./lib/types/css/normalize.d.ts",
-      "import": "./lib/css/normalize.js",
-      "require": "./lib/cjs/css/normalize.js"
+      "import": "./lib/css/normalize.js"
     }
   },
   "files": [
