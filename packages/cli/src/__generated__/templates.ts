@@ -25,6 +25,20 @@ export const templates: Record<ProjectTarget, Folder> = {
         encoding: "utf-8",
         merge: false,
       },
+      {
+        name: "remix.env.d.ts",
+        content:
+          '/// <reference types="@remix-run/dev" />\n/// <reference types="@remix-run/node" />\n',
+        encoding: "utf-8",
+        merge: false,
+      },
+      {
+        name: "tsconfig.json",
+        content:
+          '{\n  "include": ["remix.env.d.ts", "**/*.ts", "**/*.tsx"],\n  "compilerOptions": {\n    "lib": ["DOM", "DOM.Iterable", "ES2019"],\n    "isolatedModules": true,\n    "esModuleInterop": true,\n    "jsx": "react-jsx",\n    "moduleResolution": "bundler",\n    "resolveJsonModule": true,\n    "target": "ES2019",\n    "strict": true,\n    "allowJs": true,\n    "forceConsistentCasingInFileNames": true,\n    "allowImportingTsExtensions": true,\n    "baseUrl": ".",\n    "paths": {\n      "~/*": ["./app/*"]\n    },\n    "customConditions": ["source"],\n\n    // Remix takes care of building everything in `remix build`.\n    "noEmit": true\n  }\n}\n',
+        encoding: "utf-8",
+        merge: false,
+      },
     ],
     subFolders: [
       {
