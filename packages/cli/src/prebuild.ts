@@ -101,7 +101,16 @@ export const downloadAsset = async (
   }
 };
 
-export const prebuild = async () => {
+export const prebuild = async (options: {
+  /**
+   * Use preview (opensource) version of the project
+   **/
+  preview: boolean;
+  /**
+   * Do we need download assets
+   **/
+  assets: boolean;
+}) => {
   const spinner = ora("Scaffolding the project files");
   spinner.start();
 
@@ -221,7 +230,9 @@ export const prebuild = async () => {
 
   const assetsToDownload: Promise<void>[] = [];
   const fontAssets: FontAsset[] = [];
-  const assetBuildUrl = `https://${domain}.wstd.io/cgi/asset/`;
+
+  const appDomain = options.preview ? "wstd.work" : "wstd.io";
+  const assetBuildUrl = `https://${domain}.${appDomain}/cgi/asset/`;
 
   for (const asset of siteData.assets) {
     if (asset.type === "image") {

@@ -16,5 +16,5 @@ pnpm webstudio link
 pnpm webstudio sync
 # data.json generated
 
-pnpm webstudio build && pnpm prettier --write ./app/
+pnpm webstudio build --preview && pnpm prettier --write ./app/
 ```
