@@ -19,7 +19,7 @@ export const getRouteTemplate = () => {
 import {
   InstanceRoot,
   type RootPropsData,
-  type Data,
+  type Params,
 } from "@webstudio-is/react-sdk";
 import { n8nHandler, hasMatchingForm } from "@webstudio-is/form-handlers";
 import { Scripts, ScrollRestoration } from "@remix-run/react";
@@ -32,6 +32,7 @@ import {
   utils,
 } from "../__generated__/index";
 import css from "../__generated__/index.css";
+import type { Data } from "@webstudio-is/http-client";
 
 export type PageData = Omit<Data, "build"> & {
   build: Pick<Data["build"], "props" | "instances" | "dataSources">;
@@ -124,7 +125,7 @@ const Outlet = () => {
   const assetBaseUrl = "${ASSETS_BASE}";
   const imageBaseUrl = "${ASSETS_BASE}";
 
-  const params: Data["params"] = {
+  const params: Params = {
     assetBaseUrl,
     imageBaseUrl,
   };

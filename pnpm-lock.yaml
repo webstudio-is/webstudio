@@ -410,6 +410,9 @@ importers:
       '@webstudio-is/cli':
         specifier: workspace:^
         version: link:../../packages/cli
+      '@webstudio-is/http-client':
+        specifier: workspace:^
+        version: link:../../packages/http-client
       eslint:
         specifier: ^8.48.0
         version: 8.48.0
