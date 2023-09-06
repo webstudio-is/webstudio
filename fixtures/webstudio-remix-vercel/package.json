@@ -25,10 +25,10 @@
     "@remix-run/serve": "^1.19.2",
     "@remix-run/dev": "^1.19.2",
     "@remix-run/eslint-config": "^1.19.2",
-    "@types/react": "^18.0.35",
-    "@types/react-dom": "^18.0.11",
-    "eslint": "^8.38.0",
-    "typescript": "^5.0.4",
+    "@types/react": "^18.2.20",
+    "@types/react-dom": "^18.2.7",
+    "eslint": "^8.48.0",
+    "typescript": "5.2.2",
     "@webstudio-is/cli": "workspace:^"
   },
   "engines": {
