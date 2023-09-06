@@ -24,7 +24,9 @@ export const link = async (
     shareLink = options.link;
   } else {
     const rl = readline.createInterface({ input: stdin, output: stdout });
-    shareLink = await rl.question(`Paste share link (with build access): `);
+    shareLink = await rl.question(
+      `Please paste a link from the Share Dialog in the builder: `
+    );
     rl.close();
   }
 

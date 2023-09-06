@@ -6,7 +6,7 @@ import { ensureFileInPath } from "./fs-utils";
 import { link, linkOptions } from "./commands/link";
 import { sync } from "./commands/sync";
 import { build, buildOptions } from "./commands/build";
-import { flow } from "./commands/flow";
+import { initFlow } from "./commands/init-flow";
 import makeCLI from "yargs";
 import packageJson from "../package.json" assert { type: "json" };
 import type { CommonYargsArgv } from "./commands/yargs-types";
@@ -51,7 +51,7 @@ export const main = async () => {
       link
     );
     cmd.command(["sync"], "sync your project", {}, sync);
-    cmd.command("$0", "setup the project", {}, flow);
+    cmd.command("$0", "setup the project", {}, initFlow);
 
     await cmd.parse();
   } catch (error) {

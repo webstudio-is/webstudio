@@ -6,11 +6,11 @@ import { link } from "./link";
 import { sync } from "./sync";
 import { build } from "./build";
 
-export const flow = async () => {
-  const isProjectCofnigured = await isFileExists(".webstudio/config.json");
+export const initFlow = async () => {
+  const isProjectConfigured = await isFileExists(".webstudio/config.json");
   const prompsList: PromptObject[] = [];
 
-  if (isProjectCofnigured === false) {
+  if (isProjectConfigured === false) {
     prompsList.push(
       {
         type: "confirm",
