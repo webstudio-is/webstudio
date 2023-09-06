@@ -3,8 +3,9 @@
 /* This is a auto generated file for building the project */
 
 import * as sdk from "@webstudio-is/react-sdk";
-import type { PageData } from "~/routes/template";
+import type { PageData } from "~/routes/_index";
 import type { Components } from "@webstudio-is/react-sdk";
+import type { Asset } from "@webstudio-is/sdk";
 
 import {
   Body as Body_0,
@@ -28,7 +29,7 @@ export const components = new Map(
     )
   )
 ) as Components;
-export const fontAssets = [];
+export const fontAssets: Asset[] = [];
 export const pageData: PageData = {
   build: {
     props: [

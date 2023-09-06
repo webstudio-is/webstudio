@@ -376,6 +376,9 @@ importers:
       '@webstudio-is/react-sdk':
         specifier: workspace:^
         version: link:../../packages/react-sdk
+      '@webstudio-is/sdk':
+        specifier: workspace:^
+        version: link:../../packages/sdk
       '@webstudio-is/sdk-components-react':
         specifier: workspace:^
         version: link:../../packages/sdk-components-react

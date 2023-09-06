@@ -344,12 +344,13 @@ import { ${Array.from(componentsSet)
 /* eslint-disable prefer-const */
 /* This is a auto generated file for building the project */ \n
 import * as sdk from "@webstudio-is/react-sdk";
-import type { PageData } from "~/routes/template";
+import type { PageData } from "~/routes/_index";
 import type { Components } from "@webstudio-is/react-sdk";
+import type { Asset } from "@webstudio-is/sdk";
 ${componentImports}
 import * as remixComponents from "@webstudio-is/sdk-components-react-remix";
 export const components = new Map(Object.entries(Object.assign({ ${assignComponent} }, remixComponents ))) as Components;
-export const fontAssets = ${JSON.stringify(fontAssets)}
+export const fontAssets: Asset[] = ${JSON.stringify(fontAssets)}
 export const pageData: PageData = ${JSON.stringify(pageData)};
 export const user: { email: string | null } | undefined = ${JSON.stringify(
       siteData.user
