@@ -101,7 +101,16 @@ export const downloadAsset = async (
   }
 };
 
-export const prebuild = async () => {
+export const prebuild = async (options: {
+  /**
+   * Use preview (opensource) version of the project
+   **/
+  preview: boolean;
+  /**
+   * Do we need download assets
+   **/
+  assets: boolean;
+}) => {
   const spinner = ora("Scaffolding the project files");
   spinner.start();
 
@@ -221,7 +230,9 @@ export const prebuild = async () => {
 
   const assetsToDownload: Promise<void>[] = [];
   const fontAssets: FontAsset[] = [];
-  const assetBuildUrl = `https://${domain}.wstd.io/cgi/asset/`;
+
+  const appDomain = options.preview ? "wstd.work" : "wstd.io";
+  const assetBuildUrl = `https://${domain}.${appDomain}/cgi/asset/`;
 
   for (const asset of siteData.assets) {
     if (asset.type === "image") {
@@ -329,16 +340,16 @@ import { ${Array.from(componentsSet)
       dataSources: new Map(pageData.build.dataSources),
     });
 
-    const pageExports = `/* eslint-disable camelcase */
-/* eslint-disable prefer-const */
+    const pageExports = `/* eslint-disable */
 /* This is a auto generated file for building the project */ \n
 import * as sdk from "@webstudio-is/react-sdk";
-import type { PageData } from "~/routes/template";
+import type { PageData } from "~/routes/_index";
 import type { Components } from "@webstudio-is/react-sdk";
+import type { Asset } from "@webstudio-is/sdk";
 ${componentImports}
 import * as remixComponents from "@webstudio-is/sdk-components-react-remix";
 export const components = new Map(Object.entries(Object.assign({ ${assignComponent} }, remixComponents ))) as Components;
-export const fontAssets = ${JSON.stringify(fontAssets)}
+export const fontAssets: Asset[] = ${JSON.stringify(fontAssets)}
 export const pageData: PageData = ${JSON.stringify(pageData)};
 export const user: { email: string | null } | undefined = ${JSON.stringify(
       siteData.user

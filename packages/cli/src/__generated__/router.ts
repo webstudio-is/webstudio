@@ -8,7 +8,8 @@ If needed to make any changes. Add them to ./templates folder and run pnpm run b
 import { ASSETS_BASE } from "../config";
 
 export const getRouteTemplate = () => {
-  return `import {
+  return `/* eslint-disable camelcase */
+import {
   V2_MetaFunction,
   LinksFunction,
   LinkDescriptor,
@@ -19,9 +20,9 @@ export const getRouteTemplate = () => {
 import {
   InstanceRoot,
   type RootPropsData,
-  type Data,
+  type Params,
 } from "@webstudio-is/react-sdk";
-import { n8nHandler, hasMatchingForm } from "@webstudio-is/form-handlers";
+import { n8nHandler, getFormProperties } from "@webstudio-is/form-handlers";
 import { Scripts, ScrollRestoration } from "@remix-run/react";
 import {
   fontAssets,
@@ -32,6 +33,7 @@ import {
   utils,
 } from "../__generated__/index";
 import css from "../__generated__/index.css";
+import type { Data } from "@webstudio-is/http-client";
 
 export type PageData = Omit<Data, "build"> & {
   build: Pick<Data["build"], "props" | "instances" | "dataSources">;
@@ -69,14 +71,35 @@ export const links: LinksFunction = () => {
 const getRequestHost = (request: Request): string =>
   request.headers.get("x-forwarded-host") || request.headers.get("host") || "";
 
+const getMethod = (value: string | undefined) => {
+  if (value === undefined) {
+    return "post";
+  }
+
+  switch (value.toLowerCase()) {
+    case "get":
+      return "get";
+    default:
+      return "post";
+  }
+};
+
 export const action = async ({ request, context }: ActionArgs) => {
   const formData = await request.formData();
 
-  // We're throwing rather than returning \`{ success: false }\`
-  // because this isn't supposed to happen normally: bug or malicious user
-  if (hasMatchingForm(formData, pageData.build.instances) === false) {
+  const formProperties = getFormProperties(
+    formData,
+    pageData.build.instances,
+    pageData.build.props
+  );
+
+  if (formProperties === undefined) {
+    // We're throwing rather than returning { success: false }
+    // because this isn't supposed to happen normally: bug or malicious user
     throw json("Form not found", { status: 404 });
   }
+
+  const { action, method } = formProperties;
 
   const email = user?.email;
 
@@ -84,7 +107,7 @@ export const action = async ({ request, context }: ActionArgs) => {
     return { success: false };
   }
 
-  // wrapped in try/catch just in cases \`new URL()\` throws
+  // wrapped in try/catch just in cases new URL() throws
   // (should not happen)
   let pageUrl: URL;
   try {
@@ -94,13 +117,30 @@ export const action = async ({ request, context }: ActionArgs) => {
     return { success: false };
   }
 
+  if (action !== undefined) {
+    try {
+      // Test that action is full URL
+      new URL(action);
+    } catch {
+      return json(
+        {
+          success: false,
+          error: "Invalid action URL, must be valid http/https protocol",
+        },
+        { status: 200 }
+      );
+    }
+  }
+
   const formInfo = {
     formData,
     projectId,
+    action: action ?? null,
+    method: getMethod(method),
     pageUrl: pageUrl.toString(),
     toEmail: email,
     fromEmail: pageUrl.hostname + "@webstudio.email",
-  };
+  } as const;
 
   const result = await n8nHandler({
     formInfo,
@@ -124,7 +164,7 @@ const Outlet = () => {
   const assetBaseUrl = "${ASSETS_BASE}";
   const imageBaseUrl = "${ASSETS_BASE}";
 
-  const params: Data["params"] = {
+  const params: Params = {
     assetBaseUrl,
     imageBaseUrl,
   };

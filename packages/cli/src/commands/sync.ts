@@ -38,7 +38,7 @@ export const sync = async () => {
 
   const { host, token } = globalConfig[localConfig.projectId];
 
-  spinner.text = "Loading project data from webstudio";
+  spinner.text = "Loading project data from webstudio\n";
   const project = await loadProjectDataById({
     projectId: localConfig.projectId,
     authToken: token,

@@ -51,7 +51,7 @@ export const main = async () => {
       link
     );
     cmd.command(["sync"], "sync your project", {}, sync);
-    cmd.command("$0", "setup the project", {}, initFlow);
+    cmd.command("$0", "setup the project", buildOptions, initFlow);
 
     await cmd.parse();
   } catch (error) {

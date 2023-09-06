@@ -21,7 +21,7 @@ import {
   user,
   projectId,
   utils,
-} from "../__generated__/index";
+} from "../__generated__/_index.tsx";
 import css from "../__generated__/index.css";
 import type { Data } from "@webstudio-is/http-client";
 
@@ -46,7 +46,7 @@ export const links: LinksFunction = () => {
     if (asset.type === "font") {
       result.push({
         rel: "preload",
-        href: ASSETS_BASE + asset.name,
+        href: "/assets/" + asset.name,
         as: "font",
         crossOrigin: "anonymous",
         // @todo add mimeType
@@ -151,8 +151,8 @@ const Outlet = () => {
     });
   }
 
-  const assetBaseUrl = ASSETS_BASE;
-  const imageBaseUrl = ASSETS_BASE;
+  const assetBaseUrl = "/assets/";
+  const imageBaseUrl = "/assets/";
 
   const params: Params = {
     assetBaseUrl,

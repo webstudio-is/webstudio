@@ -2,6 +2,7 @@ export type File = {
   name: string;
   content: string;
   encoding: "utf-8" | "base64";
+  merge: boolean;
 };
 
 export type Folder = {
