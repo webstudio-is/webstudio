@@ -9,14 +9,13 @@
     "typecheck": "tsc",
     "test": "NODE_OPTIONS=--experimental-vm-modules jest",
     "checks": "pnpm typecheck && pnpm test",
-    "dev": "build-package --watch",
-    "build": "build-package",
+    "dev": "pnpm build --watch",
+    "build": "rm -rf lib && esbuild 'src/**/*.ts' 'src/**/*.tsx' --outdir=lib",
     "dts": "tsc --project tsconfig.dts.json"
   },
   "devDependencies": {
     "@jest/globals": "^29.6.4",
     "@webstudio-is/jest-config": "workspace:^",
-    "@webstudio-is/scripts": "workspace:^",
     "@webstudio-is/tsconfig": "workspace:^",
     "jest": "^29.6.4",
     "typescript": "5.2.2",
@@ -28,8 +27,7 @@
   "exports": {
     "source": "./src/index.ts",
     "types": "./lib/types/index.d.ts",
-    "import": "./lib/index.js",
-    "require": "./lib/cjs/index.js"
+    "import": "./lib/index.js"
   },
   "files": [
     "lib/*",

@@ -6,8 +6,6 @@
   "homepage": "https://webstudio.is",
   "type": "module",
   "scripts": {
-    "dev": "build-package --watch",
-    "build": "build-package",
     "dts": "tsc --project tsconfig.dts.json",
     "typecheck": "tsc",
     "checks": "pnpm typecheck"
@@ -20,7 +18,6 @@
     "zod": "^3.21.4"
   },
   "devDependencies": {
-    "@webstudio-is/scripts": "workspace:^",
     "@webstudio-is/tsconfig": "workspace:^",
     "tsx": "^3.12.8",
     "typescript": "5.2.2"

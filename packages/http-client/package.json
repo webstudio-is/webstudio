@@ -6,8 +6,8 @@
   "homepage": "https://webstudio.is",
   "type": "module",
   "scripts": {
-    "dev": "build-package --watch",
-    "build": "build-package",
+    "dev": "pnpm build --watch",
+    "build": "rm -rf lib && esbuild 'src/**/*.ts' 'src/**/*.tsx' --outdir=lib",
     "dts": "tsc --project tsconfig.dts.json",
     "test": "NODE_OPTIONS=--experimental-vm-modules jest",
     "typecheck": "tsc",
@@ -19,8 +19,6 @@
   "devDependencies": {
     "@jest/globals": "^29.6.4",
     "@webstudio-is/jest-config": "workspace:^",
-    "@webstudio-is/prisma-client": "workspace:^",
-    "@webstudio-is/scripts": "workspace:^",
     "@webstudio-is/tsconfig": "workspace:^",
     "jest": "^29.6.4",
     "typescript": "5.2.2"
