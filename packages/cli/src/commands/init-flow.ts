@@ -1,4 +1,3 @@
-import prompts from "prompts";
 import { ensureFolderExists, isFileExists } from "../fs-utils";
 import { chdir, cwd, stdout as shellOutput } from "node:process";
 import { spawn } from "node:child_process";
@@ -7,6 +6,7 @@ import ora from "ora";
 import { link } from "./link";
 import { sync } from "./sync";
 import { build, buildOptions } from "./build";
+import { prompt } from "../prompts";
 import type { StrictYargsOptionsToInterface } from "./yargs-types";
 
 export const initFlow = async (
@@ -16,37 +16,19 @@ export const initFlow = async (
   let shouldInstallDeps = false;
 
   if (isProjectConfigured === false) {
-    const { createFolder } = await prompts([
-      {
-        type: "confirm",
-        name: "createFolder",
-        message: "Do you want to create a folder",
-        initial: true,
-        onState: (state) => {
-          if (state.aborted) {
-            process.nextTick(() => {
-              process.exit(0);
-            });
-          }
-        },
-      },
-    ]);
+    const { shouldCreateFolder } = await prompt({
+      type: "confirm",
+      name: "shouldCreateFolder",
+      message: "Do you want to create a folder",
+      initial: true,
+    });
 
-    if (createFolder === true) {
-      const { folderName } = await prompts([
-        {
-          type: "text",
-          name: "folderName",
-          message: "Enter a project name",
-          onState: (state) => {
-            if (state.aborted) {
-              process.nextTick(() => {
-                process.exit(0);
-              });
-            }
-          },
-        },
-      ]);
+    if (shouldCreateFolder === true) {
+      const { folderName } = await prompt({
+        type: "text",
+        name: "folderName",
+        message: "Enter a project name",
+      });
 
       if (folderName === undefined) {
         throw new Error("Folder name is required");
@@ -55,34 +37,23 @@ export const initFlow = async (
       chdir(join(cwd(), folderName));
     }
 
-    const { projectLink } = await prompts([
-      {
-        type: "text",
-        name: "projectLink",
-        message: "Enter a project link",
-        onState: (state) => {
-          if (state.aborted) {
-            process.nextTick(() => {
-              process.exit(0);
-            });
-          }
-        },
-      },
-    ]);
+    const { projectLink } = await prompt({
+      type: "text",
+      name: "projectLink",
+      message: "Enter a project link",
+    });
 
     if (projectLink === undefined) {
       throw new Error(`Project Link is required`);
     }
     await link({ link: projectLink });
 
-    const { installDeps } = await prompts([
-      {
-        type: "confirm",
-        name: "installDeps",
-        message: "Do you want to install dependencies",
-        initial: true,
-      },
-    ]);
+    const { installDeps } = await prompt({
+      type: "confirm",
+      name: "installDeps",
+      message: "Do you want to install dependencies",
+      initial: true,
+    });
     shouldInstallDeps = installDeps;
   }
 
