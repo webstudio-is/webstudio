@@ -553,7 +553,15 @@ const ExportContent = () => {
             Step 3
           </Text>
           <Text color="subtle">
-            Use the Vercel CLI to publish your project on Vercel.
+            Use the{" "}
+            <StyledLink
+              href="https://vercel.com/docs/cli"
+              target="_blank"
+              rel="noreferrer"
+            >
+              Vercel CLI
+            </StyledLink>{" "}
+            to publish your project on Vercel.
           </Text>
         </Grid>
 
