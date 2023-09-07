@@ -1,4 +1,4 @@
-import type { Instance, Prop } from "@webstudio-is/sdk";
+import type { Prop } from "@webstudio-is/sdk";
 
 export const formHiddenFieldPrefix = "ws--form";
 export const formIdFieldName = `${formHiddenFieldPrefix}-id`;
@@ -111,42 +111,13 @@ export const getErrors = (
   }
 };
 
-/** Checks that `formData` corresponds to a form in the `instances` tree */
-export const hasMatchingForm = (
-  formData: FormData,
-  instances: [Instance["id"], Instance][]
-) => {
-  const formId = getFormId(formData);
-
-  if (formId === undefined) {
-    return false;
-  }
-
-  return instances.some(
-    ([, instance]) => instance.id === formId && instance.component === "Form"
-  );
-
-  // @todo:
-  // We could also check that each entry in formData has a corresponding input control in the tree,
-  // but that seem like an overkill for now.
-};
-
 export const getFormProperties = (
   formData: FormData,
-  instances: [Instance["id"], Instance][],
   props: [Prop["id"], Prop][]
 ) => {
   const formId = getFormId(formData);
 
   if (formId === undefined) {
-    return undefined;
-  }
-
-  const hasForm = instances.some(
-    ([, instance]) => instance.id === formId && instance.component === "Form"
-  );
-
-  if (hasForm === false) {
     return undefined;
   }
 
