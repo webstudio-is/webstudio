@@ -1,4 +1,3 @@
-import prompts, { type PromptObject } from "prompts";
 import { ensureFolderExists, isFileExists } from "../fs-utils";
 import { chdir, cwd, stdout as shellOutput } from "node:process";
 import { spawn } from "node:child_process";
@@ -7,64 +6,68 @@ import ora from "ora";
 import { link } from "./link";
 import { sync } from "./sync";
 import { build, buildOptions } from "./build";
+import { prompt } from "../prompts";
 import type { StrictYargsOptionsToInterface } from "./yargs-types";
 
 export const initFlow = async (
   options: StrictYargsOptionsToInterface<typeof buildOptions>
 ) => {
   const isProjectConfigured = await isFileExists(".webstudio/config.json");
-  const prompsList: PromptObject[] = [];
-  const spinner = ora().start();
+  let shouldInstallDeps = false;
 
   if (isProjectConfigured === false) {
-    prompsList.push(
-      {
-        type: "confirm",
-        name: "folder",
-        message: "Do you want to create a folder",
-        initial: true,
-      },
-      {
-        type: (prev) => (prev === true ? "text" : null),
+    const { shouldCreateFolder } = await prompt({
+      type: "confirm",
+      name: "shouldCreateFolder",
+      message: "Do you want to create a folder",
+      initial: true,
+    });
+
+    if (shouldCreateFolder === true) {
+      const { folderName } = await prompt({
+        type: "text",
         name: "folderName",
         message: "Enter a project name",
-      },
-      {
-        type: (prev) => (prev === undefined ? null : "text"),
-        name: "projectLink",
-        message: "Enter a project link",
+      });
+
+      if (folderName === undefined) {
+        throw new Error("Folder name is required");
       }
-    );
+      await ensureFolderExists(join(cwd(), folderName));
+      chdir(join(cwd(), folderName));
+    }
+
+    const { projectLink } = await prompt({
+      type: "text",
+      name: "projectLink",
+      message: "Enter a project link",
+    });
+
+    if (projectLink === undefined) {
+      throw new Error(`Project Link is required`);
+    }
+    await link({ link: projectLink });
+
+    const { installDeps } = await prompt({
+      type: "confirm",
+      name: "installDeps",
+      message: "Do you want to install dependencies",
+      initial: true,
+    });
+    shouldInstallDeps = installDeps;
   }
 
-  const response = await prompts(prompsList);
-
-  /*
-    If users wanted to create a folder, we need to create it and link the project.
-  */
-  if (response.folderName) {
-    await ensureFolderExists(join(cwd(), response.folderName));
-    chdir(join(cwd(), response.folderName));
-    await link({ link: response.projectLink });
-  }
-
-  /*
-    If the project is already set up, we can sync and build it.
-  */
   await sync();
   await build(options);
 
-  spinner.text = "Installing dependencies";
-  const { stderr } = await exec("npm", ["install"]);
-  if (stderr) {
-    throw stderr;
-  }
-
-  spinner.text = "Starting dev server";
-  spinner.stop();
-  const { stderr: devServerError } = await exec("npm", ["run", "dev"]);
-  if (devServerError) {
-    throw devServerError;
+  if (shouldInstallDeps === true) {
+    const spinner = ora().start();
+    spinner.text = "Installing dependencies";
+    const { stderr } = await exec("npm", ["install"]);
+    if (stderr) {
+      throw stderr;
+    }
+    spinner.succeed("Installed Dependencies");
   }
 };
 
