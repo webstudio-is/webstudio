@@ -3,7 +3,6 @@ export {
   formIdFieldName,
   formHiddenFieldPrefix,
   getFormId,
-  hasMatchingForm,
   getFormProperties,
   type EmailInfo,
   type FormInfo,

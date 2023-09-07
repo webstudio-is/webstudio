@@ -87,11 +87,7 @@ const getMethod = (value: string | undefined) => {
 export const action = async ({ request, context }: ActionArgs) => {
   const formData = await request.formData();
 
-  const formProperties = getFormProperties(
-    formData,
-    pageData.build.instances,
-    pageData.build.props
-  );
+  const formProperties = getFormProperties(formData, pageData.build.props);
 
   if (formProperties === undefined) {
     // We're throwing rather than returning { success: false }
