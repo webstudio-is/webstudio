@@ -5,24 +5,24 @@ import * as sdk from "@webstudio-is/react-sdk";
 import type { PageData } from "~/routes/_index";
 import type { Components } from "@webstudio-is/react-sdk";
 import type { Asset } from "@webstudio-is/sdk";
-
 import {
-  Body as Body_0,
-  Heading as Heading_0,
-  Box as Box_0,
-  Paragraph as Paragraph_0,
-  Image as Image_0,
+  Body as Body,
+  Heading as Heading,
+  Box as Box,
+  Paragraph as Paragraph,
+  Image as Image,
 } from "@webstudio-is/sdk-components-react";
+
 import * as remixComponents from "@webstudio-is/sdk-components-react-remix";
 export const components = new Map(
   Object.entries(
     Object.assign(
       {
-        Body: Body_0,
-        Heading: Heading_0,
-        Box: Box_0,
-        Paragraph: Paragraph_0,
-        Image: Image_0,
+        Body: Body,
+        Heading: Heading,
+        Box: Box,
+        Paragraph: Paragraph,
+        Image: Image,
       },
       remixComponents
     )

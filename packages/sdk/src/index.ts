@@ -10,3 +10,4 @@ export * from "./schema/styles";
 export * from "./schema/deployment";
 
 export * from "./instances-utils";
+export * from "./scope";
