@@ -13,6 +13,7 @@ export const initFlow = async (
   options: StrictYargsOptionsToInterface<typeof buildOptions>
 ) => {
   const isProjectConfigured = await isFileExists(".webstudio/config.json");
+  let shouldInstallDeps = false;
 
   if (isProjectConfigured === false) {
     const { createFolder } = await prompts([
@@ -31,7 +32,7 @@ export const initFlow = async (
       },
     ]);
 
-    if (createFolder) {
+    if (createFolder === true) {
       const { folderName } = await prompts([
         {
           type: "text",
@@ -73,23 +74,29 @@ export const initFlow = async (
       throw new Error(`Project Link is required`);
     }
     await link({ link: projectLink });
+
+    const { installDeps } = await prompts([
+      {
+        type: "confirm",
+        name: "installDeps",
+        message: "Do you want to install dependencies",
+        initial: true,
+      },
+    ]);
+    shouldInstallDeps = installDeps;
   }
 
   await sync();
   await build(options);
-  const spinner = ora().start();
 
-  spinner.text = "Installing dependencies";
-  const { stderr } = await exec("npm", ["install"]);
-  if (stderr) {
-    throw stderr;
-  }
-
-  spinner.text = "Starting dev server";
-  spinner.stop();
-  const { stderr: devServerError } = await exec("npm", ["run", "dev"]);
-  if (devServerError) {
-    throw devServerError;
+  if (shouldInstallDeps === true) {
+    const spinner = ora().start();
+    spinner.text = "Installing dependencies";
+    const { stderr } = await exec("npm", ["install"]);
+    if (stderr) {
+      throw stderr;
+    }
+    spinner.succeed("Installed Dependencies");
   }
 };
 
