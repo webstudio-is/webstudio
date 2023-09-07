@@ -71,8 +71,8 @@ export const initFlow = async (
     spinner.succeed("Installed dependencies");
   }
 
-  console.log(pc.bold(pc.green(`\nYour project was successfully synced 🎉`)));
-  console.log(`Now you can:
+  console.info(pc.bold(pc.green(`\nYour project was successfully synced 🎉`)));
+  console.info(`Now you can:
 Run ${pc.dim("npm dev")} to preview your site on a local server.
 Run ${pc.dim("npx vercel")} to publish on Vercel.`);
 };
