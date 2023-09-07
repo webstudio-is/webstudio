@@ -1,4 +1,4 @@
-import prompts, { type PromptObject } from "prompts";
+import prompts from "prompts";
 import { ensureFolderExists, isFileExists } from "../fs-utils";
 import { chdir, cwd, stdout as shellOutput } from "node:process";
 import { spawn } from "node:child_process";
@@ -13,13 +13,12 @@ export const initFlow = async (
   options: StrictYargsOptionsToInterface<typeof buildOptions>
 ) => {
   const isProjectConfigured = await isFileExists(".webstudio/config.json");
-  const prompsList: PromptObject[] = [];
 
   if (isProjectConfigured === false) {
-    prompsList.push(
+    const { createFolder } = await prompts([
       {
         type: "confirm",
-        name: "folder",
+        name: "createFolder",
         message: "Do you want to create a folder",
         initial: true,
         onState: (state) => {
@@ -30,20 +29,34 @@ export const initFlow = async (
           }
         },
       },
-      {
-        type: (prev) => (prev === true ? "text" : null),
-        name: "folderName",
-        message: "Enter a project name",
-        onState: (state) => {
-          if (state.aborted) {
-            process.nextTick(() => {
-              process.exit(0);
-            });
-          }
+    ]);
+
+    if (createFolder) {
+      const { folderName } = await prompts([
+        {
+          type: "text",
+          name: "folderName",
+          message: "Enter a project name",
+          onState: (state) => {
+            if (state.aborted) {
+              process.nextTick(() => {
+                process.exit(0);
+              });
+            }
+          },
         },
-      },
+      ]);
+
+      if (folderName === undefined) {
+        throw new Error("Folder name is required");
+      }
+      await ensureFolderExists(join(cwd(), folderName));
+      chdir(join(cwd(), folderName));
+    }
+
+    const { projectLink } = await prompts([
       {
-        type: (prev) => (prev === undefined ? null : "text"),
+        type: "text",
         name: "projectLink",
         message: "Enter a project link",
         onState: (state) => {
@@ -53,14 +66,13 @@ export const initFlow = async (
             });
           }
         },
-      }
-    );
-    const response = await prompts(prompsList);
-    if (response.folderName) {
-      await ensureFolderExists(join(cwd(), response.folderName));
-      chdir(join(cwd(), response.folderName));
+      },
+    ]);
+
+    if (projectLink === undefined) {
+      throw new Error(`Project Link is required`);
     }
-    await link({ link: response.projectLink });
+    await link({ link: projectLink });
   }
 
   await sync();
