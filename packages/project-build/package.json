@@ -5,6 +5,7 @@
   "author": "Webstudio <github@webstudio.is>",
   "homepage": "https://webstudio.is",
   "license": "AGPL-3.0-or-later",
+  "private": true,
   "type": "module",
   "exports": {
     ".": {
