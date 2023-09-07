@@ -17,7 +17,7 @@ import type {
   DataSource,
   Deployment,
 } from "@webstudio-is/sdk";
-import { findTreeInstanceIds } from "@webstudio-is/sdk";
+import { createScope, findTreeInstanceIds } from "@webstudio-is/sdk";
 import type { Asset, FontAsset } from "@webstudio-is/sdk";
 import type { Data } from "@webstudio-is/http-client";
 import * as baseComponentMetas from "@webstudio-is/sdk-components-react/metas";
@@ -284,11 +284,32 @@ export const prebuild = async (options: {
 
   spinner.text = "Generating routes and pages";
   for (const [pathName, pageComponents] of Object.entries(componentsByPage)) {
+    const scope = createScope([
+      // manually maintained list of occupied identifiers
+      "sdk",
+      "PageData",
+      "Components",
+      "Asset",
+      "remixComponents",
+      "components",
+      "fontAssets",
+      "pageData",
+      "user",
+      "projectId",
+      "indexesWithinAncestors",
+      "rawExecuteComputingExpressions",
+      "executeComputingExpressions",
+      "generatedEffectfulExpressions",
+      "rawExecuteEffectfulExpression",
+      "executeEffectfulExpression",
+      "utils",
+    ]);
     const components = Array.from(pageComponents);
-    const namespaces = new Map<string, Set<string>>();
+    const namespaces = new Map<
+      string,
+      Set<[importName: string, componentName: string]>
+    >();
     const DEFAULT_NAMESPACE = "@webstudio-is/sdk-components-react";
-    let namespaceId = 0;
-    const namespaceToId = new Map<string, number>();
 
     for (const component of components) {
       const nameArr = component.split(":");
@@ -296,44 +317,33 @@ export const prebuild = async (options: {
         nameArr.length === 1 ? [undefined, nameArr[0]] : nameArr;
 
       if (namespaces.has(namespace ?? DEFAULT_NAMESPACE) === false) {
-        namespaces.set(namespace ?? DEFAULT_NAMESPACE, new Set<string>());
-        namespaceToId.set(namespace ?? DEFAULT_NAMESPACE, namespaceId);
-        namespaceId++;
+        namespaces.set(
+          namespace ?? DEFAULT_NAMESPACE,
+          new Set<[importName: string, componentName: string]>()
+        );
       }
 
-      namespaces.get(namespace ?? DEFAULT_NAMESPACE)?.add(name);
+      namespaces.get(namespace ?? DEFAULT_NAMESPACE)?.add([name, component]);
     }
 
     let componentImports = "";
     let assignComponent = "";
     for (const [namespace, componentsSet] of namespaces.entries()) {
-      componentImports = `${componentImports}
-import { ${Array.from(componentsSet)
+      const specifiers = Array.from(componentsSet)
         .map(
-          (component) =>
-            `${component} as ${component}_${namespaceToId.get(namespace)}`
+          ([importName, component]) =>
+            `${component} as ${scope.getName(component, importName)}`
         )
-        .join(", ")} } from "${namespace}";`;
+        .join(", ");
+      componentImports += `import { ${specifiers} } from "${namespace}";\n`;
 
-      if (namespace === DEFAULT_NAMESPACE) {
-        assignComponent = `${assignComponent}
-          ${Array.from(componentsSet)
-            .map(
-              (component) =>
-                `"${component}": ${component}_${namespaceToId.get(namespace)}`
-            )
-            .join(",")},`;
-      } else {
-        assignComponent = `${assignComponent}
-          ${Array.from(componentsSet)
-            .map(
-              (component) =>
-                `"${namespace}:${component}": ${component}_${namespaceToId.get(
-                  namespace
-                )}`
-            )
-            .join(",")},`;
-      }
+      const fields = Array.from(componentsSet)
+        .map(
+          ([importName, component]) =>
+            `"${component}": ${scope.getName(component, importName)}`
+        )
+        .join(",");
+      assignComponent += `${fields},\n`;
     }
 
     const pageData = siteDataByPage[pathName];
