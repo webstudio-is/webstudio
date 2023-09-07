@@ -485,6 +485,7 @@ const StyledLink = styled("a", {
 
 const ExportContent = () => {
   const npxCommand = "npx @webstudio-is/cli";
+  const npxVercelCommand = "npx vercel";
   return (
     <Grid
       columns={1}
@@ -518,6 +519,7 @@ const ExportContent = () => {
           .
         </Text>
       </Grid>
+
       <Grid columns={1} gap={2}>
         <Grid columns={1} gap={1}>
           <Text color="main" variant="labelsTitleCase">
@@ -537,6 +539,32 @@ const ExportContent = () => {
               color="neutral"
               onClick={() => {
                 navigator.clipboard.writeText(npxCommand);
+              }}
+              prefix={<CopyIcon />}
+            >
+              Copy
+            </Button>
+          </Tooltip>
+        </Flex>
+      </Grid>
+      <Grid columns={1} gap={2}>
+        <Grid columns={1} gap={1}>
+          <Text color="main" variant="labelsTitleCase">
+            Step 3
+          </Text>
+          <Text color="subtle">
+            Use the Vercel CLI to publish your project on Vercel.
+          </Text>
+        </Grid>
+
+        <Flex gap={2}>
+          <InputField css={{ flex: 1 }} readOnly value={npxVercelCommand} />
+
+          <Tooltip content={"Copy to clipboard"}>
+            <Button
+              color="neutral"
+              onClick={() => {
+                navigator.clipboard.writeText(npxVercelCommand);
               }}
               prefix={<CopyIcon />}
             >
