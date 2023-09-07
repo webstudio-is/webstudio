@@ -15,6 +15,7 @@ export const initFlow = async (
 ) => {
   const isProjectConfigured = await isFileExists(".webstudio/config.json");
   let shouldInstallDeps = false;
+  let folderName;
 
   if (isProjectConfigured === false) {
     const { shouldCreateFolder } = await prompt({
@@ -25,11 +26,13 @@ export const initFlow = async (
     });
 
     if (shouldCreateFolder === true) {
-      const { folderName } = await prompt({
-        type: "text",
-        name: "folderName",
-        message: "Please enter a project name",
-      });
+      folderName = (
+        await prompt({
+          type: "text",
+          name: "folderName",
+          message: "Please enter a project name",
+        })
+      ).folderName;
 
       if (folderName === undefined) {
         throw new Error("Folder name is required");
@@ -72,9 +75,16 @@ export const initFlow = async (
   }
 
   console.info(pc.bold(pc.green(`\nYour project was successfully synced 🎉`)));
-  console.info(`Now you can:
-Run ${pc.dim("npm run dev")} to preview your site on a local server.
-Run ${pc.dim("npx vercel")} to publish on Vercel.`);
+  console.info(
+    [
+      "Now you can:",
+      folderName && `Go to your project: ${pc.dim(`cd ${folderName}`)}`,
+      `Run ${pc.dim("npm run dev")} to preview your site on a local server.`,
+      `Run ${pc.dim("npx vercel")} to publish on Vercel.`,
+    ]
+      .filter(Boolean)
+      .join("\n")
+  );
 };
 
 const exec = (
