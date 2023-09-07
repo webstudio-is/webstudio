@@ -7,8 +7,11 @@ import { cwd } from "node:process";
 import pLimit from "p-limit";
 import ora from "ora";
 import {
+  createComponentVariableName,
   generateCssText,
+  generatePageComponent,
   generateUtilsExport,
+  getIndexesWithinAncestors,
   namespaceMeta,
   type Params,
   type WsComponentMeta,
@@ -28,6 +31,7 @@ import {
 import type { Asset, FontAsset } from "@webstudio-is/sdk";
 import type { Data } from "@webstudio-is/http-client";
 import * as baseComponentMetas from "@webstudio-is/sdk-components-react/metas";
+import * as remixComponentComponents from "@webstudio-is/sdk-components-react-remix";
 import * as remixComponentMetas from "@webstudio-is/sdk-components-react-remix/metas";
 import * as radixComponentMetas from "@webstudio-is/sdk-components-react-radix/metas";
 
@@ -359,22 +363,37 @@ export const prebuild = async (options: {
 
     const pageData = siteDataByPage[pathName];
 
+    const instances = new Map(pageData.build.instances);
+
+    const props = new Map(pageData.build.props);
+
     const utilsExport = generateUtilsExport({
       page: pageData.page,
       metas: componentMetas,
-      instances: new Map(pageData.build.instances),
-      props: new Map(pageData.build.props),
+      instances,
+      props,
       dataSources: new Map(pageData.build.dataSources),
+    });
+
+    const pageComponent = generatePageComponent({
+      rootInstanceId: pageData.page.rootInstanceId,
+      instances,
+      props,
+      indexesWithinAncestors: getIndexesWithinAncestors(
+        componentMetas,
+        instances,
+        [siteData.page.rootInstanceId]
+      ),
     });
 
     const pageExports = `/* eslint-disable */
 /* This is a auto generated file for building the project */ \n
+import { type ReactNode, useContext } from 'react';
+import { useStore } from '@nanostores/react';
 import * as sdk from "@webstudio-is/react-sdk";
 import type { PageData } from "~/routes/_index";
-import type { Components } from "@webstudio-is/react-sdk";
+import { ReactSdkContext } from "@webstudio-is/react-sdk";
 import type { Asset } from "@webstudio-is/sdk";
-${componentImports}
-export const components = new Map(Object.entries({ ${componentEntries} })) as Components;
 export const fontAssets: Asset[] = ${JSON.stringify(fontAssets)}
 export const pageData: PageData = ${JSON.stringify(pageData)};
 export const user: { email: string | null } | undefined = ${JSON.stringify(
@@ -383,6 +402,8 @@ export const user: { email: string | null } | undefined = ${JSON.stringify(
 export const projectId = "${siteData.build.projectId}";
 
 ${utilsExport}
+
+${pageComponent}
 `;
 
     const fileName =
