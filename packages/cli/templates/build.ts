@@ -59,10 +59,16 @@ const parseFolder = (folderPath: string): Folder | undefined => {
 
     if (isFile) {
       const content = readFileSync(filePath, "utf-8");
+      let merge = false;
+      if (file === "package.json") {
+        merge = true;
+      }
+
       folder.files.push({
         name: file,
         content,
         encoding: "utf-8",
+        merge,
       });
     }
   }
@@ -155,6 +161,7 @@ const parseAssets = (folderPath: string): Folder | undefined => {
         name: file,
         content,
         encoding: "base64",
+        merge: false,
       });
     }
   }

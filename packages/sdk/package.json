@@ -13,8 +13,7 @@
   },
   "files": [
     "lib/*",
-    "src/*",
-    "!*.test.*"
+    "!*.{test,stories}.*"
   ],
   "sideEffects": false,
   "scripts": {

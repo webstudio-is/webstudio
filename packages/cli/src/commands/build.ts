@@ -7,17 +7,21 @@ import type {
 } from "./yargs-types";
 
 export const buildOptions = (yargs: CommonYargsArgv) =>
-  yargs.option("assets", {
-    type: "boolean",
-    default: true,
-    describe: "Download assets",
-  });
+  yargs
+    .option("assets", {
+      type: "boolean",
+      default: true,
+      describe: "Download assets",
+    })
+    .option("preview", {
+      type: "boolean",
+      default: false,
+      describe: "use preview (opensource) version of the project",
+    });
 
 // @todo: use options.assets to define if we need to download assets
 export const build = async (
-  options:
-    | StrictYargsOptionsToInterface<typeof buildOptions>
-    | { assets?: boolean }
+  options: StrictYargsOptionsToInterface<typeof buildOptions>
 ) => {
   try {
     await access(LOCAL_DATA_FILE);
@@ -31,5 +35,5 @@ export const build = async (
     throw error;
   }
 
-  await prebuild();
+  await prebuild(options);
 };

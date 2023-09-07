@@ -42,9 +42,9 @@
   },
   "files": [
     "lib/*",
-    "src/*"
+    "!*.{test,stories}.*"
   ],
   "license": "AGPL-3.0-or-later",
-  "private": false,
+  "private": true,
   "sideEffects": false
 }

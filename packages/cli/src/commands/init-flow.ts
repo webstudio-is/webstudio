@@ -6,9 +6,12 @@ import { join } from "node:path";
 import ora from "ora";
 import { link } from "./link";
 import { sync } from "./sync";
-import { build } from "./build";
+import { build, buildOptions } from "./build";
+import type { StrictYargsOptionsToInterface } from "./yargs-types";
 
-export const initFlow = async () => {
+export const initFlow = async (
+  options: StrictYargsOptionsToInterface<typeof buildOptions>
+) => {
   const isProjectConfigured = await isFileExists(".webstudio/config.json");
   const prompsList: PromptObject[] = [];
   const spinner = ora().start();
@@ -49,7 +52,7 @@ export const initFlow = async () => {
     If the project is already set up, we can sync and build it.
   */
   await sync();
-  await build({ assets: true });
+  await build(options);
 
   spinner.text = "Installing dependencies";
   const { stderr } = await exec("npm", ["install"]);

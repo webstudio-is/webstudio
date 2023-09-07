@@ -8,6 +8,7 @@ import {
 } from "node:fs/promises";
 import { join } from "node:path";
 import type { Folder } from "./args";
+import merge from "deepmerge";
 
 export const isFileExists = async (filePath: string) => {
   try {
@@ -54,7 +55,24 @@ export const parseFolderAndWriteFiles = async (
   for (const file of folder.files) {
     const filePath = join(path, file.name);
     await ensureFileInPath(filePath);
-    await writeFile(filePath, file.content, file.encoding);
+
+    let content = file.content;
+
+    if (file.merge) {
+      let existingContent = await readFile(filePath, "utf8");
+
+      if (existingContent === "") {
+        existingContent = "{}";
+      }
+
+      content = JSON.stringify(
+        merge(JSON.parse(file.content), JSON.parse(existingContent)),
+        null,
+        "  "
+      );
+    }
+
+    await writeFile(filePath, content, file.encoding);
   }
 
   for (const subFolder of folder.subFolders) {
