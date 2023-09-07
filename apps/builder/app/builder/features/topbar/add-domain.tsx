@@ -141,7 +141,6 @@ export const AddDomain = ({
               isPublishing || сreateState !== "idle" || domainState !== "idle"
             }
             color={isOpen ? "primary" : "neutral"}
-            // css={{ width: "100%", flexShrink: 0 }}
             onClick={() => {
               if (isOpen === false) {
                 setIsOpen(true);
@@ -156,7 +155,6 @@ export const AddDomain = ({
 
           <Button
             color={"dark"}
-            // css={{ width: "100%", flexShrink: 0 }}
             prefix={<CustomCodeIcon />}
             onClick={onExportClick}
           >
