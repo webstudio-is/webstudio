@@ -18,6 +18,7 @@ import {
   ScrollArea,
   Box,
   rawTheme,
+  styled,
 } from "@webstudio-is/design-system";
 import { useIsPublishDialogOpen } from "../../shared/nano-states";
 import { validateProjectDomain, type Project } from "@webstudio-is/project";
@@ -471,6 +472,17 @@ const Content = (props: {
   );
 };
 
+/**
+ * @todo change colors on theme colors when tokens will be ready
+ * https://discord.com/channels/955905230107738152/1149380442315825212/1149408306671128666
+ **/
+const StyledLink = styled("a", {
+  color: "#006ADC", // @todo theme.colors.foregroundLink,
+  "&:visited": {
+    color: "#793AAF", // @todo theme.colors.foregroundLinkVisited,
+  },
+});
+
 const ExportContent = () => {
   const npxCommand = "npx @webstudio-is/cli";
   return (
@@ -488,17 +500,21 @@ const ExportContent = () => {
         </Text>
         <Text color="subtle">
           Download and install node v18+ from{" "}
-          <a href="https://nodejs.org/" target="_blank" rel="noreferrer">
+          <StyledLink
+            href="https://nodejs.org/"
+            target="_blank"
+            rel="noreferrer"
+          >
             nodejs.org
-          </a>{" "}
+          </StyledLink>{" "}
           or with{" "}
-          <a
+          <StyledLink
             href="https://nodejs.org/en/download/package-manager"
             target="_blank"
             rel="noreferrer"
           >
             a package manager
-          </a>
+          </StyledLink>
           .
         </Text>
       </Grid>
