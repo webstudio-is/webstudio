@@ -64,6 +64,7 @@ export * from "./collapsible";
 export * from "./commit";
 export * from "./content";
 export * from "./copy";
+export * from "./custom-code";
 export * from "./dash-border";
 export * from "./dash";
 export * from "./dashed-border";

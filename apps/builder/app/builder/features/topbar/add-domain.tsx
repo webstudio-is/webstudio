@@ -6,6 +6,7 @@ import {
   Separator,
   theme,
   Text,
+  Grid,
 } from "@webstudio-is/design-system";
 import type { DomainRouter } from "@webstudio-is/domain/index.server";
 import { validateDomain } from "@webstudio-is/domain";
@@ -13,12 +14,14 @@ import type { Project } from "@webstudio-is/project";
 import { useId, useState } from "react";
 import { createTrpcFetchProxy } from "~/shared/remix/trpc-remix-proxy";
 import { builderDomainsPath } from "~/shared/router-utils";
+import { CustomCodeIcon } from "@webstudio-is/icons";
 
 const trpc = createTrpcFetchProxy<DomainRouter>(builderDomainsPath);
 
 type DomainsAddProps = {
   projectId: Project["id"];
   onCreate: (domain: string) => void;
+  onExportClick: () => void;
   refreshDomainResult: (
     input: { projectId: Project["id"] },
     onSuccess: () => void
@@ -33,6 +36,7 @@ export const AddDomain = ({
   refreshDomainResult,
   domainState,
   isPublishing,
+  onExportClick,
 }: DomainsAddProps) => {
   const id = useId();
   const {
@@ -131,23 +135,32 @@ export const AddDomain = ({
           </>
         )}
 
-        <Button
-          disabled={
-            isPublishing || сreateState !== "idle" || domainState !== "idle"
-          }
-          color={isOpen ? "primary" : "neutral"}
-          css={{ width: "100%", flexShrink: 0 }}
-          onClick={() => {
-            if (isOpen === false) {
-              setIsOpen(true);
-              return;
+        <Grid gap={2} columns={2}>
+          <Button
+            disabled={
+              isPublishing || сreateState !== "idle" || domainState !== "idle"
             }
+            color={isOpen ? "primary" : "neutral"}
+            onClick={() => {
+              if (isOpen === false) {
+                setIsOpen(true);
+                return;
+              }
 
-            handleCreate();
-          }}
-        >
-          {isOpen ? "Add domain" : "Add a new domain"}
-        </Button>
+              handleCreate();
+            }}
+          >
+            {isOpen ? "Add domain" : "Add a new domain"}
+          </Button>
+
+          <Button
+            color={"dark"}
+            prefix={<CustomCodeIcon />}
+            onClick={onExportClick}
+          >
+            Export
+          </Button>
+        </Grid>
       </Flex>
       {isOpen && <Separator css={{ mb: theme.spacing[5] }} />}
     </>
