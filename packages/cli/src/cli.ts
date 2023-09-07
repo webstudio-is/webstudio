@@ -31,7 +31,6 @@ export const main = async () => {
       .wrap(null)
       .option("v", {
         describe: "Show version number",
-        alias: "version",
         type: "boolean",
       })
       .option("h", {
@@ -39,19 +38,17 @@ export const main = async () => {
         alias: "help",
         type: "boolean",
       })
-      .scriptName("webstudio");
+      .scriptName("webstudio")
+      .usage(
+        `Webstudio CLI (${packageJson.version}) allows you to setup, sync, build and preview your project.`
+      );
 
     cmd.version(packageJson.version).alias("v", "version");
 
-    cmd.command(["build"], "build the project", buildOptions, build);
-    cmd.command(
-      ["link"],
-      "link the project from your workspace",
-      linkOptions,
-      link
-    );
-    cmd.command(["sync"], "sync your project", {}, sync);
-    cmd.command("$0", "setup the project", buildOptions, initFlow);
+    cmd.command(["build"], "Build the project", buildOptions, build);
+    cmd.command(["link"], "Link the project with the cloud", linkOptions, link);
+    cmd.command(["sync"], "Sync your project", {}, sync);
+    cmd.command(["$0", "init"], "Setup the project", buildOptions, initFlow);
 
     await cmd.parse();
   } catch (error) {

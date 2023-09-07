@@ -67,7 +67,12 @@ export const initFlow = async (
     if (stderr) {
       throw stderr;
     }
-    spinner.succeed("Installed dependencies");
+    spinner.succeed("Installed dependencies, starting dev server");
+
+    const { stderr: devServerError } = await exec("npm", ["run", "dev"]);
+    if (devServerError) {
+      throw devServerError;
+    }
   }
 };
 
