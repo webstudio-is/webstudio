@@ -541,6 +541,9 @@ importers:
       p-limit:
         specifier: ^4.0.0
         version: 4.0.0
+      picocolors:
+        specifier: ^1.0.0
+        version: 1.0.0
       prompts:
         specifier: ^2.4.2
         version: 2.4.2

@@ -8,6 +8,7 @@ import { sync } from "./sync";
 import { build, buildOptions } from "./build";
 import { prompt } from "../prompts";
 import type { StrictYargsOptionsToInterface } from "./yargs-types";
+import pc from "picocolors";
 
 export const initFlow = async (
   options: StrictYargsOptionsToInterface<typeof buildOptions>
@@ -67,13 +68,13 @@ export const initFlow = async (
     if (stderr) {
       throw stderr;
     }
-    spinner.succeed("Installed dependencies, starting dev server");
-
-    const { stderr: devServerError } = await exec("npm", ["run", "dev"]);
-    if (devServerError) {
-      throw devServerError;
-    }
+    spinner.succeed("Installed dependencies");
   }
+
+  console.info(pc.bold(pc.green(`\nYour project was successfully synced 🎉`)));
+  console.info(`Now you can:
+Run ${pc.dim("npm dev")} to preview your site on a local server.
+Run ${pc.dim("npx vercel")} to publish on Vercel.`);
 };
 
 const exec = (

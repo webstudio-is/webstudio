@@ -35,6 +35,7 @@
     "env-paths": "^3.0.0",
     "ora": "^7.0.1",
     "p-limit": "^4.0.0",
+    "picocolors": "^1.0.0",
     "prompts": "^2.4.2",
     "strip-indent": "^4.0.0",
     "yargs": "^17.7.2"
