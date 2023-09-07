@@ -10,10 +10,9 @@
   },
   "files": [
     "lib/*",
-    "src/*",
     "templates/*",
     "bin.js",
-    "!*.test.*"
+    "!*.{test,stories}.*"
   ],
   "scripts": {
     "typecheck": "tsc",

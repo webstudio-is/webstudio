@@ -9,7 +9,7 @@
   "type": "module",
   "files": [
     "lib/*",
-    "src/*"
+    "!*.{test,stories}.*"
   ],
   "sideEffects": false,
   "exports": {
