@@ -62,12 +62,12 @@ export const initFlow = async (
 
   if (shouldInstallDeps === true) {
     const spinner = ora().start();
-    spinner.text = "Installing Dependencies";
+    spinner.text = "Installing dependencies";
     const { stderr } = await exec("npm", ["install"]);
     if (stderr) {
       throw stderr;
     }
-    spinner.succeed("Installed Dependencies");
+    spinner.succeed("Installed dependencies");
   }
 };
 
