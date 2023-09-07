@@ -38,3 +38,4 @@ export { renderComponentTemplate } from "./component-renderer";
 export { getIndexesWithinAncestors } from "./instance-utils";
 export * from "./hook";
 export { generateUtilsExport } from "./generator";
+export { generatePageComponent } from "./component-generator";
