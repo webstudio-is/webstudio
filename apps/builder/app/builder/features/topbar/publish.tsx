@@ -36,6 +36,7 @@ import {
   CheckCircleIcon,
   ExternalLinkIcon,
   AlertIcon,
+  CopyIcon,
 } from "@webstudio-is/icons";
 import { createTrpcFetchProxy } from "~/shared/remix/trpc-remix-proxy";
 import { builderDomainsPath } from "~/shared/router-utils";
@@ -338,7 +339,10 @@ const ErrorText = ({ children }: { children: string }) => (
   </Flex>
 );
 
-const Content = (props: { projectId: Project["id"] }) => {
+const Content = (props: {
+  projectId: Project["id"];
+  onExportClick: () => void;
+}) => {
   const [newDomains, setNewDomains] = useState(new Set<string>());
   const {
     data: domainsResult,
@@ -446,6 +450,7 @@ const Content = (props: { projectId: Project["id"] }) => {
           });
         }}
         isPublishing={isPublishing}
+        onExportClick={props.onExportClick}
       />
 
       {projectData?.success === true ? (
@@ -466,12 +471,77 @@ const Content = (props: { projectId: Project["id"] }) => {
   );
 };
 
+const ExportContent = () => {
+  const npxCommand = "npx @webstudio-is/cli";
+  return (
+    <Grid
+      columns={1}
+      gap={3}
+      css={{
+        margin: theme.spacing[9],
+        marginTop: theme.spacing[5],
+      }}
+    >
+      <Grid columns={1} gap={1}>
+        <Text color="main" variant="labelsTitleCase">
+          Step 1
+        </Text>
+        <Text color="subtle">
+          Download and install node v18+ from{" "}
+          <a href="https://nodejs.org/" target="_blank" rel="noreferrer">
+            nodejs.org
+          </a>{" "}
+          or using{" "}
+          <a
+            href="https://nodejs.org/en/download/package-manager"
+            target="_blank"
+            rel="noreferrer"
+          >
+            a package manager
+          </a>
+        </Text>
+      </Grid>
+      <Grid columns={1} gap={2}>
+        <Grid columns={1} gap={1}>
+          <Text color="main" variant="labelsTitleCase">
+            Step 2
+          </Text>
+          <Text color="subtle">
+            Open your Terminal and run this command. It will install Webstudio
+            CLI and sync our project.
+          </Text>
+        </Grid>
+
+        <Flex gap={2}>
+          <InputField css={{ flex: 1 }} readOnly value={npxCommand} />
+
+          <Tooltip content={"Copy to clipboard"}>
+            <Button
+              color="neutral"
+              onClick={() => {
+                navigator.clipboard.writeText(npxCommand);
+              }}
+              prefix={<CopyIcon />}
+            >
+              Copy
+            </Button>
+          </Tooltip>
+        </Flex>
+      </Grid>
+    </Grid>
+  );
+};
+
 type PublishProps = {
   projectId: Project["id"];
 };
+
 export const PublishButton = ({ projectId }: PublishProps) => {
   const [isOpen, setIsOpen] = useIsPublishDialogOpen();
   const [authPermit] = useAuthPermit();
+  const [dialogContentType, setDialogContentType] = useState<
+    "publish" | "export"
+  >("publish");
 
   const isPublishEnabled = authPermit === "own" || authPermit === "admin";
 
@@ -479,8 +549,19 @@ export const PublishButton = ({ projectId }: PublishProps) => {
     ? undefined
     : "Only owner or admin can publish projects";
 
+  const handleExportClick = () => {
+    setDialogContentType("export");
+  };
+
+  const handleOpenChange = (isOpen: boolean) => {
+    if (isOpen === false) {
+      setDialogContentType("publish");
+    }
+    setIsOpen(isOpen);
+  };
+
   return (
-    <FloatingPanelPopover modal open={isOpen} onOpenChange={setIsOpen}>
+    <FloatingPanelPopover modal open={isOpen} onOpenChange={handleOpenChange}>
       <FloatingPanelAnchor>
         <Tooltip side="bottom" content={tooltipContent}>
           <FloatingPanelPopoverTrigger asChild>
@@ -500,8 +581,19 @@ export const PublishButton = ({ projectId }: PublishProps) => {
           marginRight: theme.spacing[3],
         }}
       >
-        <FloatingPanelPopoverTitle>Publish</FloatingPanelPopoverTitle>
-        <Content projectId={projectId} />
+        {dialogContentType === "export" && (
+          <>
+            <FloatingPanelPopoverTitle>Export</FloatingPanelPopoverTitle>
+            <ExportContent />
+          </>
+        )}
+
+        {dialogContentType === "publish" && (
+          <>
+            <FloatingPanelPopoverTitle>Publish</FloatingPanelPopoverTitle>
+            <Content projectId={projectId} onExportClick={handleExportClick} />
+          </>
+        )}
       </FloatingPanelPopoverContent>
     </FloatingPanelPopover>
   );
