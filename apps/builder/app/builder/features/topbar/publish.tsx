@@ -491,7 +491,7 @@ const ExportContent = () => {
           <a href="https://nodejs.org/" target="_blank" rel="noreferrer">
             nodejs.org
           </a>{" "}
-          or using{" "}
+          or with{" "}
           <a
             href="https://nodejs.org/en/download/package-manager"
             target="_blank"
@@ -499,6 +499,7 @@ const ExportContent = () => {
           >
             a package manager
           </a>
+          .
         </Text>
       </Grid>
       <Grid columns={1} gap={2}>
@@ -507,8 +508,8 @@ const ExportContent = () => {
             Step 2
           </Text>
           <Text color="subtle">
-            Open your Terminal and run this command. It will install Webstudio
-            CLI and sync our project.
+            Run this command in your Terminal to install Webstudio CLI and sync
+            your project.
           </Text>
         </Grid>
 
