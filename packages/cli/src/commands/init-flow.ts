@@ -14,7 +14,6 @@ export const initFlow = async (
 ) => {
   const isProjectConfigured = await isFileExists(".webstudio/config.json");
   const prompsList: PromptObject[] = [];
-  const spinner = ora().start();
 
   if (isProjectConfigured === false) {
     prompsList.push(
@@ -53,6 +52,7 @@ export const initFlow = async (
   */
   await sync();
   await build(options);
+  const spinner = ora().start();
 
   spinner.text = "Installing dependencies";
   const { stderr } = await exec("npm", ["install"]);
