@@ -19,7 +19,7 @@ export const initFlow = async (
     const { shouldCreateFolder } = await prompt({
       type: "confirm",
       name: "shouldCreateFolder",
-      message: "Do you want to create a folder",
+      message: "Would you like to create a folder?",
       initial: true,
     });
 
@@ -27,7 +27,7 @@ export const initFlow = async (
       const { folderName } = await prompt({
         type: "text",
         name: "folderName",
-        message: "Enter a project name",
+        message: "Please enter a project name",
       });
 
       if (folderName === undefined) {
@@ -40,7 +40,7 @@ export const initFlow = async (
     const { projectLink } = await prompt({
       type: "text",
       name: "projectLink",
-      message: "Enter a project link",
+      message: "Please paste a link from the share dialog in the builder",
     });
 
     if (projectLink === undefined) {
@@ -51,7 +51,7 @@ export const initFlow = async (
     const { installDeps } = await prompt({
       type: "confirm",
       name: "installDeps",
-      message: "Do you want to install dependencies",
+      message: "Would you like to install dependencies?",
       initial: true,
     });
     shouldInstallDeps = installDeps;
@@ -62,7 +62,7 @@ export const initFlow = async (
 
   if (shouldInstallDeps === true) {
     const spinner = ora().start();
-    spinner.text = "Installing dependencies";
+    spinner.text = "Installing Dependencies";
     const { stderr } = await exec("npm", ["install"]);
     if (stderr) {
       throw stderr;
