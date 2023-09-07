@@ -11,12 +11,12 @@ export const buildOptions = (yargs: CommonYargsArgv) =>
     .option("assets", {
       type: "boolean",
       default: true,
-      describe: "Download assets",
+      describe: "[Experimental] Download assets",
     })
     .option("preview", {
       type: "boolean",
       default: false,
-      describe: "use preview (opensource) version of the project",
+      describe: "[Experimental] Use preview version of the project",
     });
 
 // @todo: use options.assets to define if we need to download assets
