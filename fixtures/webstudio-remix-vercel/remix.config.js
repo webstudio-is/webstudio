@@ -7,7 +7,6 @@ module.exports = {
     "nanoid",
     "nanostores",
     "@nanostores/react",
-    "nanoid",
     "@jsep-plugin/assignment",
   ],
   future: {
