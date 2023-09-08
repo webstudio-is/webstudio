@@ -1,5 +1,5 @@
-import type { Instances, Instance, Props } from "@webstudio-is/sdk";
-import { findTreeInstanceIds } from "@webstudio-is/sdk";
+import type { Instances, Instance, Props, Scope } from "@webstudio-is/sdk";
+import { findTreeInstanceIds, parseComponentName } from "@webstudio-is/sdk";
 import {
   componentAttribute,
   idAttribute,
@@ -9,31 +9,19 @@ import {
 import { encodeDataSourceVariable } from "./expression";
 import type { IndexesWithinAncestors } from "./instance-utils";
 
-/**
- * Namespaced components contain a lot of invalid characters for
- * js identifier
- * here normalized something like @webstudio-is/library:Box
- * to __webstudio__is__library__Box
- */
-export const createComponentVariableName = (componentName: string) => {
-  let normalized = componentName.replaceAll(/[^a-zA-Z0-9]/g, "__");
-  if (normalized.startsWith("__") === false) {
-    normalized = `__${normalized}`;
-  }
-  return normalized;
-};
-
 const encodePropVariable = (id: string) => {
   const encoded = id.replaceAll("-", "__DASH__");
   return `$ws$prop$${encoded}`;
 };
 
 export const generateJsxElement = ({
+  scope,
   instance,
   props,
   indexesWithinAncestors,
   children,
 }: {
+  scope: Scope;
   instance: Instance;
   props: Props;
   indexesWithinAncestors: IndexesWithinAncestors;
@@ -104,7 +92,8 @@ export const generateJsxElement = ({
     generatedElement += `{${conditionVariableName} &&\n`;
   }
 
-  const componentVariable = createComponentVariableName(instance.component);
+  const [_namespace, shortName] = parseComponentName(instance.component);
+  const componentVariable = scope.getName(instance.component, shortName);
   if (instance.children.length === 0) {
     generatedElement += `<${componentVariable}${generatedProps} />\n`;
   } else {
@@ -125,11 +114,13 @@ export const generateJsxElement = ({
  * to inject some scripts into Body if necessary
  */
 export const generateJsxChildren = ({
+  scope,
   children,
   instances,
   props,
   indexesWithinAncestors,
 }: {
+  scope: Scope;
   children: Instance["children"];
   instances: Instances;
   props: Props;
@@ -153,10 +144,12 @@ export const generateJsxChildren = ({
         continue;
       }
       generatedChildren += generateJsxElement({
+        scope,
         instance,
         props,
         indexesWithinAncestors,
         children: generateJsxChildren({
+          scope,
           children: instance.children,
           instances,
           props,
@@ -227,11 +220,13 @@ const generateDataSources = ({
 };
 
 export const generatePageComponent = ({
+  scope,
   rootInstanceId,
   instances,
   props,
   indexesWithinAncestors,
 }: {
+  scope: Scope;
   rootInstanceId: Instance["id"];
   instances: Instances;
   props: Props;
@@ -247,11 +242,13 @@ export const generatePageComponent = ({
     props,
   });
   const generatedJsx = generateJsxElement({
+    scope,
     instance,
     props,
     indexesWithinAncestors,
     children:
       generateJsxChildren({
+        scope,
         children: instance.children,
         instances,
         props,

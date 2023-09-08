@@ -1,6 +1,6 @@
 import { expect, test } from "@jest/globals";
 import stripIndent from "strip-indent";
-import type { Instance, Prop } from "@webstudio-is/sdk";
+import { createScope, type Instance, type Prop } from "@webstudio-is/sdk";
 import { showAttribute } from "./tree/webstudio-component";
 import {
   generateJsxChildren,
@@ -34,6 +34,7 @@ const createPropPair = (prop: Prop): [Prop["id"], Prop] => {
 test("generate jsx element with children and without them", () => {
   expect(
     generateJsxElement({
+      scope: createScope(),
       instance: createInstance("body", "Body", [
         { type: "id", value: "childId" },
       ]),
@@ -43,15 +44,16 @@ test("generate jsx element with children and without them", () => {
     })
   ).toEqual(
     clear(`
-      <__Body
+      <Body
       data-ws-id="body"
       data-ws-component="Body">
       Children
-      </__Body>
+      </Body>
     `)
   );
   expect(
     generateJsxElement({
+      scope: createScope(),
       instance: createInstance("image", "Image", []),
       props: new Map(),
       indexesWithinAncestors: new Map(),
@@ -59,7 +61,7 @@ test("generate jsx element with children and without them", () => {
     })
   ).toEqual(
     clear(`
-      <__Image
+      <Image
       data-ws-id="image"
       data-ws-component="Image" />
     `)
@@ -69,6 +71,7 @@ test("generate jsx element with children and without them", () => {
 test("generate jsx element with namespaces components", () => {
   expect(
     generateJsxElement({
+      scope: createScope(),
       instance: createInstance("body", "@webstudio-is/library:Body", [
         { type: "id", value: "childId" },
       ]),
@@ -78,15 +81,16 @@ test("generate jsx element with namespaces components", () => {
     })
   ).toEqual(
     clear(`
-      <__webstudio__is__library__Body
+      <Body
       data-ws-id="body"
       data-ws-component="@webstudio-is/library:Body">
       Children
-      </__webstudio__is__library__Body>
+      </Body>
     `)
   );
   expect(
     generateJsxElement({
+      scope: createScope(),
       instance: createInstance("image", "@webstudio-is/library:Image", []),
       props: new Map(),
       indexesWithinAncestors: new Map(),
@@ -94,7 +98,7 @@ test("generate jsx element with namespaces components", () => {
     })
   ).toEqual(
     clear(`
-      <__webstudio__is__library__Image
+      <Image
       data-ws-id="image"
       data-ws-component="@webstudio-is/library:Image" />
     `)
@@ -134,6 +138,7 @@ test("generate jsx element with literal props", () => {
   ]);
   expect(
     generateJsxElement({
+      scope: createScope(),
       instance: createInstance("body", "Body", [
         { type: "id", value: "image" },
       ]),
@@ -143,17 +148,18 @@ test("generate jsx element with literal props", () => {
     })
   ).toEqual(
     clear(`
-      <__Body
+      <Body
       data-ws-id="body"
       data-ws-component="Body"
       string={"string"}
       number={0}>
       Children
-      </__Body>
+      </Body>
     `)
   );
   expect(
     generateJsxElement({
+      scope: createScope(),
       instance: createInstance("image", "Image", []),
       props,
       indexesWithinAncestors: new Map(),
@@ -161,7 +167,7 @@ test("generate jsx element with literal props", () => {
     })
   ).toEqual(
     clear(`
-      <__Image
+      <Image
       data-ws-id="image"
       data-ws-component="Image"
       boolean={true}
@@ -173,6 +179,7 @@ test("generate jsx element with literal props", () => {
 test("ignore asset and page props", () => {
   expect(
     generateJsxElement({
+      scope: createScope(),
       instance: createInstance("box", "Box", []),
       props: new Map([
         createPropPair({
@@ -195,7 +202,7 @@ test("ignore asset and page props", () => {
     })
   ).toEqual(
     clear(`
-      <__Box
+      <Box
       data-ws-id="box"
       data-ws-component="Box" />
     `)
@@ -205,6 +212,7 @@ test("ignore asset and page props", () => {
 test("generate jsx element with data sources and action", () => {
   expect(
     generateJsxElement({
+      scope: createScope(),
       instance: createInstance("box", "Box", []),
       props: new Map([
         createPropPair({
@@ -244,7 +252,7 @@ test("generate jsx element with data sources and action", () => {
     })
   ).toEqual(
     clear(`
-      <__Box
+      <Box
       data-ws-id="box"
       data-ws-component="Box"
       variable={$ws$dataSource$variableId}
@@ -258,6 +266,7 @@ test("generate jsx element with data sources and action", () => {
 test("generate jsx element with condition based on show prop", () => {
   expect(
     generateJsxElement({
+      scope: createScope(),
       instance: createInstance("box", "Box", []),
       props: new Map([
         createPropPair({
@@ -273,13 +282,14 @@ test("generate jsx element with condition based on show prop", () => {
     })
   ).toEqual(
     clear(`
-      <__Box
+      <Box
       data-ws-id="box"
       data-ws-component="Box" />
     `)
   );
   expect(
     generateJsxElement({
+      scope: createScope(),
       instance: createInstance("box", "Box", []),
       props: new Map([
         createPropPair({
@@ -296,6 +306,7 @@ test("generate jsx element with condition based on show prop", () => {
   ).toEqual("");
   expect(
     generateJsxElement({
+      scope: createScope(),
       instance: createInstance("box", "Box", []),
       props: new Map([
         createPropPair({
@@ -312,7 +323,7 @@ test("generate jsx element with condition based on show prop", () => {
   ).toEqual(
     clear(`
       {$ws$dataSource$condition &&
-      <__Box
+      <Box
       data-ws-id="box"
       data-ws-component="Box" />
       }
@@ -323,6 +334,7 @@ test("generate jsx element with condition based on show prop", () => {
 test("generate jsx element with index prop", () => {
   expect(
     generateJsxElement({
+      scope: createScope(),
       instance: createInstance("box", "Box", []),
       props: new Map(),
       indexesWithinAncestors: new Map([["box", 5]]),
@@ -330,7 +342,7 @@ test("generate jsx element with index prop", () => {
     })
   ).toEqual(
     clear(`
-      <__Box
+      <Box
       data-ws-id="box"
       data-ws-component="Box"
       data-ws-index="5" />
@@ -341,6 +353,7 @@ test("generate jsx element with index prop", () => {
 test("generate jsx children with text", () => {
   expect(
     generateJsxChildren({
+      scope: createScope(),
       children: [
         { type: "text", value: "Some\ntext" },
         { type: "text", value: 'Escaped "text"' },
@@ -362,6 +375,7 @@ test("generate jsx children with text", () => {
 test("generate jsx children with nested instances", () => {
   expect(
     generateJsxChildren({
+      scope: createScope(),
       children: [{ type: "id", value: "form" }],
       instances: new Map([
         createInstancePair("form", "Form", [
@@ -384,17 +398,48 @@ test("generate jsx children with nested instances", () => {
     })
   ).toEqual(
     clear(`
-    <__Form
+    <Form
     data-ws-id="form"
     data-ws-component="Form"
     prop={"value"}>
-    <__Input
+    <Input
     data-ws-id="input"
     data-ws-component="Input" />
-    <__Button
+    <Button
     data-ws-id="button"
     data-ws-component="Button" />
-    </__Form>
+    </Form>
+    `)
+  );
+});
+
+test("deduplicate base and namespaced components with same short name", () => {
+  expect(
+    generateJsxChildren({
+      scope: createScope(),
+      children: [
+        { type: "id", value: "button1" },
+        { type: "id", value: "button2" },
+      ],
+      instances: new Map([
+        createInstancePair("button1", "Button", []),
+        createInstancePair(
+          "button2",
+          "@webstudio-is/sdk-component-react-radix:Button",
+          []
+        ),
+      ]),
+      props: new Map(),
+      indexesWithinAncestors: new Map(),
+    })
+  ).toEqual(
+    clear(`
+    <Button
+    data-ws-id="button1"
+    data-ws-component="Button" />
+    <Button_1
+    data-ws-id="button2"
+    data-ws-component="@webstudio-is/sdk-component-react-radix:Button" />
     `)
   );
 });
@@ -402,6 +447,7 @@ test("generate jsx children with nested instances", () => {
 test("generate page component", () => {
   expect(
     generatePageComponent({
+      scope: createScope(),
       rootInstanceId: "body",
       instances: new Map([
         createInstancePair("body", "Body", [{ type: "id", value: "input" }]),
@@ -445,17 +491,17 @@ test("generate page component", () => {
       );
       setDataSourceValues(newValues);
       };
-      return <__Body
+      return <Body
       data-ws-id="body"
       data-ws-component="Body">
-      <__Input
+      <Input
       data-ws-id="input"
       data-ws-component="Input"
       data-ws-index="0"
       value={$ws$dataSource$variable}
       onChange={$ws$prop$2} />
       {props.scripts}
-      </__Body>
+      </Body>
       };
     `)
   );
