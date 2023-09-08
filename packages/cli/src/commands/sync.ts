@@ -3,6 +3,7 @@ import { cwd } from "node:process";
 import { join } from "node:path";
 import ora from "ora";
 import { loadProjectDataById } from "@webstudio-is/http-client";
+import pc from "picocolors";
 
 import { ensureFileInPath, loadJSONFile } from "../fs-utils";
 import {
@@ -36,7 +37,16 @@ export const sync = async () => {
     return;
   }
 
-  const { host, token } = globalConfig[localConfig.projectId];
+  const projectConfig = globalConfig[localConfig.projectId];
+
+  if (projectConfig === undefined) {
+    spinner.fail(
+      `Project config is not found, please run ${pc.dim("webstudio-cli link")}`
+    );
+    return;
+  }
+
+  const { host, token } = projectConfig;
 
   spinner.text = "Loading project data from webstudio\n";
   const project = await loadProjectDataById({
