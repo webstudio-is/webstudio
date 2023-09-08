@@ -9,11 +9,6 @@ import {
 import { encodeDataSourceVariable } from "./expression";
 import type { IndexesWithinAncestors } from "./instance-utils";
 
-const encodePropVariable = (id: string) => {
-  const encoded = id.replaceAll("-", "__DASH__");
-  return `$ws$prop$${encoded}`;
-};
-
 export const generateJsxElement = ({
   scope,
   instance,
@@ -78,7 +73,7 @@ export const generateJsxElement = ({
       continue;
     }
     if (prop.type === "action") {
-      const propVariable = encodePropVariable(prop.id);
+      const propVariable = scope.getName(prop.id, prop.name);
       generatedProps += `\n${prop.name}={${propVariable}}`;
       continue;
     }
@@ -164,10 +159,12 @@ export const generateJsxChildren = ({
 };
 
 const generateDataSources = ({
+  scope,
   rootInstanceId,
   instances,
   props,
 }: {
+  scope: Scope;
   rootInstanceId: Instance["id"];
   instances: Instances;
   props: Props;
@@ -185,7 +182,7 @@ const generateDataSources = ({
       generatedDataSources += `const ${variableName} = dataSourceValues.get(${key});\n`;
     }
     if (prop.type === "action") {
-      const propVariable = encodePropVariable(prop.id);
+      const propVariable = scope.getName(prop.id, prop.name);
       let args = "";
       for (const value of prop.value) {
         const newArgs = value.args.map((arg) => `${arg}: unknown`).join(", ");
@@ -237,6 +234,7 @@ export const generatePageComponent = ({
     return "";
   }
   const generatedDataSources = generateDataSources({
+    scope,
     rootInstanceId,
     instances,
     props,

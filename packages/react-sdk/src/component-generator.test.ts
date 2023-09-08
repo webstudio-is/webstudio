@@ -257,8 +257,8 @@ test("generate jsx element with data sources and action", () => {
       data-ws-component="Box"
       variable={$ws$dataSource$variableId}
       expression={$ws$dataSource$expressionId}
-      onClick={$ws$prop$3}
-      onChange={$ws$prop$4} />
+      onClick={onClick}
+      onChange={onChange} />
     `)
   );
 });
@@ -483,7 +483,7 @@ test("generate page component", () => {
       const { dataSourceValuesStore, setDataSourceValues, executeEffectfulExpression } = useContext(ReactSdkContext);
       const dataSourceValues = useStore(dataSourceValuesStore);
       const $ws$dataSource$variable = dataSourceValues.get("variable");
-      const $ws$prop$2 = (value: unknown) => {
+      const onChange = (value: unknown) => {
       const newValues = executeEffectfulExpression(
       value.code,
       new Map([["value", value]]),
@@ -499,7 +499,77 @@ test("generate page component", () => {
       data-ws-component="Input"
       data-ws-index="0"
       value={$ws$dataSource$variable}
-      onChange={$ws$prop$2} />
+      onChange={onChange} />
+      {props.scripts}
+      </Body>
+      };
+    `)
+  );
+});
+
+test("deduplicate action names", () => {
+  expect(
+    generatePageComponent({
+      scope: createScope(),
+      rootInstanceId: "body",
+      instances: new Map([
+        createInstancePair("body", "Body", [
+          { type: "id", value: "button1" },
+          { type: "id", value: "button2" },
+        ]),
+        createInstancePair("button1", "Button", []),
+        createInstancePair("button2", "Button", []),
+      ]),
+      props: new Map([
+        createPropPair({
+          id: "1",
+          instanceId: "button1",
+          name: "onChange",
+          type: "action",
+          value: [{ type: "execute", args: [], code: "" }],
+        }),
+        createPropPair({
+          id: "2",
+          instanceId: "button2",
+          name: "onChange",
+          type: "action",
+          value: [{ type: "execute", args: [], code: "" }],
+        }),
+      ]),
+      indexesWithinAncestors: new Map([["input", 0]]),
+    })
+  ).toEqual(
+    clear(`
+      export const Page = (props: { scripts: ReactNode }) => {
+      const { dataSourceValuesStore, setDataSourceValues, executeEffectfulExpression } = useContext(ReactSdkContext);
+      const dataSourceValues = useStore(dataSourceValuesStore);
+      const onChange = () => {
+      const newValues = executeEffectfulExpression(
+      value.code,
+      new Map([]),
+      dataSourceValues
+      );
+      setDataSourceValues(newValues);
+      };
+      const onChange_1 = () => {
+      const newValues = executeEffectfulExpression(
+      value.code,
+      new Map([]),
+      dataSourceValues
+      );
+      setDataSourceValues(newValues);
+      };
+      return <Body
+      data-ws-id="body"
+      data-ws-component="Body">
+      <Button
+      data-ws-id="button1"
+      data-ws-component="Button"
+      onChange={onChange} />
+      <Button
+      data-ws-id="button2"
+      data-ws-component="Button"
+      onChange={onChange_1} />
       {props.scripts}
       </Body>
       };
