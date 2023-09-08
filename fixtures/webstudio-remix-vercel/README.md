@@ -1,4 +1,4 @@
-# Fixture to test/play with @webstudio/cli
+# Fixture to test/play with webstudio-cli
 
 ## How to develop
 

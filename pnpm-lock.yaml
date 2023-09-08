@@ -413,9 +413,6 @@ importers:
       '@types/react-dom':
         specifier: ^18.2.7
         version: 18.2.7
-      '@webstudio-is/cli':
-        specifier: workspace:^
-        version: link:../../packages/cli
       '@webstudio-is/http-client':
         specifier: workspace:^
         version: link:../../packages/http-client
@@ -425,6 +422,9 @@ importers:
       typescript:
         specifier: 5.2.2
         version: 5.2.2
+      webstudio-cli:
+        specifier: workspace:^
+        version: link:../../packages/cli
 
   packages/asset-uploader:
     dependencies:

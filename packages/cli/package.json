@@ -1,12 +1,12 @@
 {
-  "name": "@webstudio-is/cli",
+  "name": "webstudio-cli",
   "version": "0.94.0",
   "description": "Webstudio CLI",
   "author": "Webstudio <github@webstudio.is>",
   "homepage": "https://webstudio.is",
   "type": "module",
   "bin": {
-    "webstudio": "./lib/bin.js"
+    "webstudio-cli": "./lib/bin.js"
   },
   "files": [
     "lib/*",
