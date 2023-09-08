@@ -3,6 +3,7 @@ import { cwd } from "node:process";
 import { join } from "node:path";
 import ora from "ora";
 import { loadProjectDataById } from "@webstudio-is/http-client";
+import pc from "picocolors";
 
 import { ensureFileInPath, loadJSONFile } from "../fs-utils";
 import {
@@ -40,7 +41,7 @@ export const sync = async () => {
 
   if (projectConfig === undefined) {
     spinner.fail(
-      `Project config is not found. Please make sure the project is linked. \n Use webstudio link command to link your project`
+      `Project config is not found, please run ${pc.dim("webstudio-cli link")}`
     );
     return;
   }
