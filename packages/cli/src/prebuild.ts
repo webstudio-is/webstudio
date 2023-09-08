@@ -343,7 +343,7 @@ export const prebuild = async (options: {
       const specifiers = Array.from(componentsSet)
         .map(
           ([shortName, component]) =>
-            `${component} as ${scope.getName(component, shortName)}`
+            `${shortName} as ${scope.getName(component, shortName)}`
         )
         .join(", ");
       componentImports += `import { ${specifiers} } from "${namespace}";\n`;

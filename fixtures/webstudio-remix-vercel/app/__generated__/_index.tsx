@@ -166,6 +166,14 @@ export const pageData: PageData = {
       rootInstanceId: "On9cvWCxr5rdZtY9O1Bv0",
       path: "",
     },
+    {
+      id: "xfvB4UThQXmQ_OubPYrkg",
+      name: "radix",
+      title: "radix",
+      meta: { description: "" },
+      rootInstanceId: "uKWGyE9JY3cPwY-xI9vk6",
+      path: "/radix",
+    },
   ],
   page: {
     id: "7Db64ZXgYiRqKSQNR-qTQ",
