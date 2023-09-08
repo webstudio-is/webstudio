@@ -36,7 +36,16 @@ export const sync = async () => {
     return;
   }
 
-  const { host, token } = globalConfig[localConfig.projectId];
+  const projectConfig = globalConfig[localConfig.projectId];
+
+  if (projectConfig === undefined) {
+    spinner.fail(
+      `Project config is not found. Please make sure the project is linked. \n Use webstudio link command to link your project`
+    );
+    return;
+  }
+
+  const { host, token } = projectConfig;
 
   spinner.text = "Loading project data from webstudio\n";
   const project = await loadProjectDataById({
