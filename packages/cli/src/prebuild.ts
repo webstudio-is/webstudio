@@ -7,7 +7,6 @@ import { cwd } from "node:process";
 import pLimit from "p-limit";
 import ora from "ora";
 import {
-  createComponentVariableName,
   generateCssText,
   generatePageComponent,
   generateUtilsExport,
@@ -31,7 +30,6 @@ import {
 import type { Asset, FontAsset } from "@webstudio-is/sdk";
 import type { Data } from "@webstudio-is/http-client";
 import * as baseComponentMetas from "@webstudio-is/sdk-components-react/metas";
-import * as remixComponentComponents from "@webstudio-is/sdk-components-react-remix";
 import * as remixComponentMetas from "@webstudio-is/sdk-components-react-remix/metas";
 import * as radixComponentMetas from "@webstudio-is/sdk-components-react-radix/metas";
 
@@ -295,10 +293,12 @@ export const prebuild = async (options: {
     const scope = createScope([
       // manually maintained list of occupied identifiers
       "sdk",
+      "ReactSdkContext",
       "PageData",
-      "Components",
       "Asset",
-      "components",
+      "ReactNode",
+      "useContext",
+      "useStore",
       "fontAssets",
       "pageData",
       "user",
@@ -310,6 +310,8 @@ export const prebuild = async (options: {
       "rawExecuteEffectfulExpression",
       "executeEffectfulExpression",
       "utils",
+      "Page",
+      "props",
     ]);
     const namespaces = new Map<
       string,
@@ -342,7 +344,6 @@ export const prebuild = async (options: {
     }
 
     let componentImports = "";
-    let componentEntries = "";
     for (const [namespace, componentsSet] of namespaces.entries()) {
       const specifiers = Array.from(componentsSet)
         .map(
@@ -351,14 +352,6 @@ export const prebuild = async (options: {
         )
         .join(", ");
       componentImports += `import { ${specifiers} } from "${namespace}";\n`;
-
-      const fields = Array.from(componentsSet)
-        .map(
-          ([shortName, component]) =>
-            `"${component}": ${scope.getName(component, shortName)}`
-        )
-        .join(",");
-      componentEntries += `${fields},\n`;
     }
 
     const pageData = siteDataByPage[pathName];
@@ -376,6 +369,7 @@ export const prebuild = async (options: {
     });
 
     const pageComponent = generatePageComponent({
+      scope,
       rootInstanceId: pageData.page.rootInstanceId,
       instances,
       props,
@@ -394,6 +388,7 @@ import * as sdk from "@webstudio-is/react-sdk";
 import type { PageData } from "~/routes/_index";
 import { ReactSdkContext } from "@webstudio-is/react-sdk";
 import type { Asset } from "@webstudio-is/sdk";
+${componentImports}
 export const fontAssets: Asset[] = ${JSON.stringify(fontAssets)}
 export const pageData: PageData = ${JSON.stringify(pageData)};
 export const user: { email: string | null } | undefined = ${JSON.stringify(

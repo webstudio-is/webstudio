@@ -1,9 +1,11 @@
 /* eslint-disable */
 /* This is a auto generated file for building the project */
 
+import { type ReactNode, useContext } from "react";
+import { useStore } from "@nanostores/react";
 import * as sdk from "@webstudio-is/react-sdk";
 import type { PageData } from "~/routes/_index";
-import type { Components } from "@webstudio-is/react-sdk";
+import { ReactSdkContext } from "@webstudio-is/react-sdk";
 import type { Asset } from "@webstudio-is/sdk";
 import {
   Body as Body,
@@ -14,16 +16,6 @@ import {
 } from "@webstudio-is/sdk-components-react";
 import { Link as Link } from "@webstudio-is/sdk-components-react-remix";
 
-export const components = new Map(
-  Object.entries({
-    Body: Body,
-    Heading: Heading,
-    Box: Box,
-    Paragraph: Paragraph,
-    Image: Image,
-    Link: Link,
-  })
-) as Components;
 export const fontAssets: Asset[] = [];
 export const pageData: PageData = {
   build: {
@@ -247,3 +239,48 @@ export const utils = {
 };
 
 /* eslint-enable */
+
+export const Page = (props: { scripts: ReactNode }) => {
+  const {
+    dataSourceValuesStore,
+    setDataSourceValues,
+    executeEffectfulExpression,
+  } = useContext(ReactSdkContext);
+  const dataSourceValues = useStore(dataSourceValuesStore);
+  return (
+    <Body data-ws-id="On9cvWCxr5rdZtY9O1Bv0" data-ws-component="Body">
+      <Heading data-ws-id="nVMWvMsaLCcb0o1wuNQgg" data-ws-component="Heading">
+        {"DO NOT TOUCH THIS PROJECT, IT'S USED FOR FIXTURES"}
+      </Heading>
+      <Box data-ws-id="f0kF-WmL7DQg7MSyRvqY1" data-ws-component="Box">
+        <Box data-ws-id="5XDbqPrZDeCwq4YJ3CHsc" data-ws-component="Box">
+          <Heading
+            data-ws-id="oLXYe1UQiVMhVnZGvJSMr"
+            data-ws-component="Heading"
+          >
+            {"Heading"}
+          </Heading>
+          <Paragraph
+            data-ws-id="p34JHWcU6UNrd9FVnY80Q"
+            data-ws-component="Paragraph"
+          >
+            {
+              "a little kitten painted in black and white gouache with a thick brush"
+            }
+          </Paragraph>
+          <Link
+            data-ws-id="l9AI_pShC-BH4ibxK6kNT"
+            data-ws-component="Link"
+            href={"https://github.com/"}
+          >
+            {"Click here to adore more kittens"}
+          </Link>
+        </Box>
+        <Box data-ws-id="qPnkiFGDj8dITWb1kmpGl" data-ws-component="Box">
+          <Image data-ws-id="pX1ovPI7NdC0HRjkw6Kpw" data-ws-component="Image" />
+        </Box>
+      </Box>
+      {props.scripts}
+    </Body>
+  );
+};
