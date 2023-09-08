@@ -93,7 +93,7 @@ export const SidebarLeft = ({ publish }: SidebarLeftProps) => {
               aria-label="Report bug"
               onClick={() => {
                 window.open(
-                  "https://github.com/webstudio-is/webstudio/discussions/new?category=q-a&labels=bug&title=[Bug]"
+                  "https://github.com/webstudio-is/webstudio-community/discussions/new?category=q-a&labels=bug&title=[Bug]"
                 );
               }}
             >
