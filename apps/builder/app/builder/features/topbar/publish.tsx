@@ -484,7 +484,7 @@ const StyledLink = styled("a", {
 });
 
 const ExportContent = () => {
-  const npxCommand = "npx @webstudio-is/cli";
+  const npxCommand = "npx webstudio-cli";
   const npxVercelCommand = "npx vercel";
   return (
     <Grid

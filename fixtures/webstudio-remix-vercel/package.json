@@ -29,7 +29,7 @@
     "@webstudio-is/http-client": "workspace:^",
     "eslint": "^8.48.0",
     "typescript": "5.2.2",
-    "@webstudio-is/cli": "workspace:^"
+    "webstudio-cli": "workspace:^"
   },
   "engines": {
     "node": ">=18.0.0"
