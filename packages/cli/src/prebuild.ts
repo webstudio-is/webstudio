@@ -388,7 +388,10 @@ ${utilsExport}
     const fileName =
       pathName === "main" || pathName === "index"
         ? "_index.tsx"
-        : `${pathName.split("/").join(".")}._index.tsx`;
+        : `${pathName
+            .split("/")
+            .map((route) => `[${route}]`)
+            .join(".")}._index.tsx`;
 
     let routeFile = getRouteTemplate();
 
