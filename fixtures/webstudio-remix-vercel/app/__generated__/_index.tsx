@@ -12,21 +12,17 @@ import {
   Paragraph as Paragraph,
   Image as Image,
 } from "@webstudio-is/sdk-components-react";
+import { Link as Link } from "@webstudio-is/sdk-components-react-remix";
 
-import * as remixComponents from "@webstudio-is/sdk-components-react-remix";
 export const components = new Map(
-  Object.entries(
-    Object.assign(
-      {
-        Body: Body,
-        Heading: Heading,
-        Box: Box,
-        Paragraph: Paragraph,
-        Image: Image,
-      },
-      remixComponents
-    )
-  )
+  Object.entries({
+    Body: Body,
+    Heading: Heading,
+    Box: Box,
+    Paragraph: Paragraph,
+    Image: Image,
+    Link: Link,
+  })
 ) as Components;
 export const fontAssets: Asset[] = [];
 export const pageData: PageData = {
@@ -40,6 +36,16 @@ export const pageData: PageData = {
           name: "src",
           type: "asset",
           value: "cd939c56-bcdd-4e64-bd9c-567a9bccd3da",
+        },
+      ],
+      [
+        "SYK4hpLQ9tHnESKDtPvI9",
+        {
+          id: "SYK4hpLQ9tHnESKDtPvI9",
+          instanceId: "l9AI_pShC-BH4ibxK6kNT",
+          name: "href",
+          type: "string",
+          value: "https://github.com/",
         },
       ],
     ],
@@ -91,6 +97,7 @@ export const pageData: PageData = {
           children: [
             { type: "id", value: "oLXYe1UQiVMhVnZGvJSMr" },
             { type: "id", value: "p34JHWcU6UNrd9FVnY80Q" },
+            { type: "id", value: "l9AI_pShC-BH4ibxK6kNT" },
           ],
         },
       ],
@@ -134,6 +141,17 @@ export const pageData: PageData = {
           id: "pX1ovPI7NdC0HRjkw6Kpw",
           component: "Image",
           children: [],
+        },
+      ],
+      [
+        "l9AI_pShC-BH4ibxK6kNT",
+        {
+          type: "instance",
+          id: "l9AI_pShC-BH4ibxK6kNT",
+          component: "Link",
+          children: [
+            { type: "text", value: "Click here to adore more kittens" },
+          ],
         },
       ],
     ],

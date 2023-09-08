@@ -1,9 +1,9 @@
 {
   "build": {
-    "id": "d8e941cb-835b-4f1f-bf8b-4d546a2a67d8",
+    "id": "c067c0f9-d5f2-47a4-9fac-fa4755e0175a",
     "projectId": "cddc1d44-af37-4cb6-a430-d300cf6f932d",
-    "version": 41,
-    "createdAt": "2023-09-06T11:37:11.556Z",
+    "version": 58,
+    "createdAt": "2023-09-08T10:02:53.659Z",
     "pages": {
       "homePage": {
         "id": "7Db64ZXgYiRqKSQNR-qTQ",
@@ -366,6 +366,16 @@
           "type": "asset",
           "value": "cd939c56-bcdd-4e64-bd9c-567a9bccd3da"
         }
+      ],
+      [
+        "SYK4hpLQ9tHnESKDtPvI9",
+        {
+          "id": "SYK4hpLQ9tHnESKDtPvI9",
+          "instanceId": "l9AI_pShC-BH4ibxK6kNT",
+          "name": "href",
+          "type": "string",
+          "value": "https://github.com/"
+        }
       ]
     ],
     "dataSources": [],
@@ -434,6 +444,10 @@
             {
               "type": "id",
               "value": "p34JHWcU6UNrd9FVnY80Q"
+            },
+            {
+              "type": "id",
+              "value": "l9AI_pShC-BH4ibxK6kNT"
             }
           ]
         }
@@ -487,6 +501,20 @@
           "id": "pX1ovPI7NdC0HRjkw6Kpw",
           "component": "Image",
           "children": []
+        }
+      ],
+      [
+        "l9AI_pShC-BH4ibxK6kNT",
+        {
+          "type": "instance",
+          "id": "l9AI_pShC-BH4ibxK6kNT",
+          "component": "Link",
+          "children": [
+            {
+              "type": "text",
+              "value": "Click here to adore more kittens"
+            }
+          ]
         }
       ]
     ],

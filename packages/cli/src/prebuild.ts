@@ -1,8 +1,11 @@
 import { join } from "node:path";
 import { createWriteStream } from "node:fs";
 import { rm, mkdir, access, mkdtemp, rename } from "node:fs/promises";
+import { pipeline } from "node:stream/promises";
 import { tmpdir } from "node:os";
 import { cwd } from "node:process";
+import pLimit from "p-limit";
+import ora from "ora";
 import {
   generateCssText,
   generateUtilsExport,
@@ -17,14 +20,16 @@ import type {
   DataSource,
   Deployment,
 } from "@webstudio-is/sdk";
-import { createScope, findTreeInstanceIds } from "@webstudio-is/sdk";
+import {
+  createScope,
+  findTreeInstanceIds,
+  parseComponentName,
+} from "@webstudio-is/sdk";
 import type { Asset, FontAsset } from "@webstudio-is/sdk";
 import type { Data } from "@webstudio-is/http-client";
 import * as baseComponentMetas from "@webstudio-is/sdk-components-react/metas";
 import * as remixComponentMetas from "@webstudio-is/sdk-components-react-remix/metas";
 import * as radixComponentMetas from "@webstudio-is/sdk-components-react-radix/metas";
-import pLimit from "p-limit";
-import ora from "ora";
 
 import { templates } from "./__generated__/templates";
 import { assets } from "./__generated__/assets";
@@ -38,7 +43,6 @@ import {
   parseFolderAndWriteAssets,
 } from "./fs-utils";
 import { getImageAttributes, createImageLoader } from "@webstudio-is/image";
-import { pipeline } from "node:stream/promises";
 
 const limit = pLimit(10);
 
@@ -290,7 +294,6 @@ export const prebuild = async (options: {
       "PageData",
       "Components",
       "Asset",
-      "remixComponents",
       "components",
       "fontAssets",
       "pageData",
@@ -304,46 +307,54 @@ export const prebuild = async (options: {
       "executeEffectfulExpression",
       "utils",
     ]);
-    const components = Array.from(pageComponents);
     const namespaces = new Map<
       string,
-      Set<[importName: string, componentName: string]>
+      Set<[shortName: string, componentName: string]>
     >();
-    const DEFAULT_NAMESPACE = "@webstudio-is/sdk-components-react";
+    const BASE_NAMESPACE = "@webstudio-is/sdk-components-react";
+    const REMIX_NAMESPACE = "@webstudio-is/sdk-components-react-remix";
 
-    for (const component of components) {
-      const nameArr = component.split(":");
-      const [namespace, name] =
-        nameArr.length === 1 ? [undefined, nameArr[0]] : nameArr;
+    for (const component of pageComponents) {
+      const parsed = parseComponentName(component);
+      let [namespace] = parsed;
+      const [_namespace, shortName] = parsed;
 
-      if (namespaces.has(namespace ?? DEFAULT_NAMESPACE) === false) {
-        namespaces.set(
-          namespace ?? DEFAULT_NAMESPACE,
-          new Set<[importName: string, componentName: string]>()
-        );
+      if (namespace === undefined) {
+        // use base as fallback namespace and consider remix overrides
+        if (shortName in remixComponentMetas) {
+          namespace = REMIX_NAMESPACE;
+        } else {
+          namespace = BASE_NAMESPACE;
+        }
       }
 
-      namespaces.get(namespace ?? DEFAULT_NAMESPACE)?.add([name, component]);
+      if (namespaces.has(namespace) === false) {
+        namespaces.set(
+          namespace,
+          new Set<[shortName: string, componentName: string]>()
+        );
+      }
+      namespaces.get(namespace)?.add([shortName, component]);
     }
 
     let componentImports = "";
-    let assignComponent = "";
+    let componentEntries = "";
     for (const [namespace, componentsSet] of namespaces.entries()) {
       const specifiers = Array.from(componentsSet)
         .map(
-          ([importName, component]) =>
-            `${component} as ${scope.getName(component, importName)}`
+          ([shortName, component]) =>
+            `${component} as ${scope.getName(component, shortName)}`
         )
         .join(", ");
       componentImports += `import { ${specifiers} } from "${namespace}";\n`;
 
       const fields = Array.from(componentsSet)
         .map(
-          ([importName, component]) =>
-            `"${component}": ${scope.getName(component, importName)}`
+          ([shortName, component]) =>
+            `"${component}": ${scope.getName(component, shortName)}`
         )
         .join(",");
-      assignComponent += `${fields},\n`;
+      componentEntries += `${fields},\n`;
     }
 
     const pageData = siteDataByPage[pathName];
@@ -363,8 +374,7 @@ import type { PageData } from "~/routes/_index";
 import type { Components } from "@webstudio-is/react-sdk";
 import type { Asset } from "@webstudio-is/sdk";
 ${componentImports}
-import * as remixComponents from "@webstudio-is/sdk-components-react-remix";
-export const components = new Map(Object.entries(Object.assign({ ${assignComponent} }, remixComponents ))) as Components;
+export const components = new Map(Object.entries({ ${componentEntries} })) as Components;
 export const fontAssets: Asset[] = ${JSON.stringify(fontAssets)}
 export const pageData: PageData = ${JSON.stringify(pageData)};
 export const user: { email: string | null } | undefined = ${JSON.stringify(

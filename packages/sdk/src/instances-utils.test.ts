@@ -3,6 +3,7 @@ import type { Instance, Instances } from "./schema/instances";
 import {
   findTreeInstanceIds,
   findTreeInstanceIdsExcludingSlotDescendants,
+  parseComponentName,
 } from "./instances-utils";
 
 const createInstance = (
@@ -67,4 +68,9 @@ test("find all tree instances excluding slot descendants", () => {
   expect(
     findTreeInstanceIdsExcludingSlotDescendants(instances, "box1")
   ).toEqual(new Set(["box1", "box12", "slot11"]));
+});
+
+test("extract short name and namespace from component name", () => {
+  expect(parseComponentName("Box")).toEqual([undefined, "Box"]);
+  expect(parseComponentName("radix:Box")).toEqual(["radix", "Box"]);
 });

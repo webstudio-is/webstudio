@@ -44,3 +44,15 @@ export const findTreeInstanceIdsExcludingSlotDescendants = (
   });
   return ids;
 };
+
+export const parseComponentName = (componentName: string) => {
+  const parts = componentName.split(":");
+  let namespace: undefined | string;
+  let name: string;
+  if (parts.length === 1) {
+    [name] = parts;
+  } else {
+    [namespace, name] = parts;
+  }
+  return [namespace, name] as const;
+};
