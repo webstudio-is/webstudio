@@ -21,7 +21,7 @@ export const templates: Record<ProjectTarget, Folder> = {
       {
         name: "remix.config.js",
         content:
-          '/** @type {import(\'@remix-run/dev\').AppConfig} */\nmodule.exports = {\n  ignoredRouteFiles: ["**/.*"],\n  serverModuleFormat: "cjs",\n  serverDependenciesToBundle: [\n    /@webstudio-is\\/(?!prisma-client)/,\n    "nanoevents",\n    "nanostores",\n    "@nanostores/react",\n    "nanoid",\n    "@jsep-plugin/assignment",\n  ],\n  future: {\n    v2_errorBoundary: true,\n    v2_headers: true,\n    v2_meta: true,\n    v2_normalizeFormMethod: true,\n    v2_routeConvention: true,\n    v2_dev: true,\n  },\n};\n',
+          '/** @type {import(\'@remix-run/dev\').AppConfig} */\nmodule.exports = {\n  ignoredRouteFiles: ["**/.*"],\n  serverModuleFormat: "cjs",\n  serverDependenciesToBundle: [\n    /@webstudio-is\\//,\n    "nanoid",\n    "nanostores",\n    "@nanostores/react",\n    "nanoid",\n    "@jsep-plugin/assignment",\n  ],\n  future: {\n    v2_errorBoundary: true,\n    v2_headers: true,\n    v2_meta: true,\n    v2_normalizeFormMethod: true,\n    v2_routeConvention: true,\n    v2_dev: true,\n  },\n};\n',
         encoding: "utf-8",
         merge: false,
       },

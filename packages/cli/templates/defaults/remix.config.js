@@ -3,8 +3,8 @@ module.exports = {
   ignoredRouteFiles: ["**/.*"],
   serverModuleFormat: "cjs",
   serverDependenciesToBundle: [
-    /@webstudio-is\/(?!prisma-client)/,
-    "nanoevents",
+    /@webstudio-is\//,
+    "nanoid",
     "nanostores",
     "@nanostores/react",
     "nanoid",

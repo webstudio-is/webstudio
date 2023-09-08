@@ -1,6 +1,5 @@
 export * from "./css";
 export * from "./tree";
-export * from "./pubsub";
 export * from "./app";
 export * from "./components/components-utils";
 export { PropMeta } from "./prop-meta";
