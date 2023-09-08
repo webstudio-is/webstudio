@@ -9,7 +9,7 @@
     "dts": "turbo run dts",
     "size-test": "turbo run size-test",
     "checks": "turbo run checks",
-    "dev": "pnpm run --parallel --recursive dev",
+    "dev": "pnpm --filter='!./fixtures/*' run --parallel --recursive dev",
     "lint": "pnpm eslint . --ext .ts,.tsx --max-warnings 0",
     "format": "prettier --write \"**/*.{ts,tsx,md}\"",
     "storybook": "pnpm run --parallel --recursive storybook:dev",
