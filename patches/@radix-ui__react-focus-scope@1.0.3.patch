@@ -1,0 +1,24 @@
+diff --git a/dist/index.js b/dist/index.js
+index 0a98b8ec8f2a6d1160d035174c8979a4d0445863..6793b5290ece1c13cfb2af565899d9da810f9ede 100644
+--- a/dist/index.js
++++ b/dist/index.js
+@@ -76,6 +76,7 @@ const $2bc01e66e04aa9ed$export$20e40289641fbbb6 = /*#__PURE__*/ $buum9$react.for
+             // to keep focus trapped correctly.
+             function handleMutations(mutations) {
+                 const focusedElement = document.activeElement;
++                if (focusedElement !== document.body) return;
+                 for (const mutation of mutations){
+                     if (mutation.removedNodes.length > 0) {
+                         if (!(container1 !== null && container1 !== void 0 && container1.contains(focusedElement))) $2bc01e66e04aa9ed$var$focus(container1);
+diff --git a/dist/index.mjs b/dist/index.mjs
+index 4a8b11cc2eb38b397590f20f819b6599e4d78e7d..f30c37a232e93be17e4247ada404d5160a916cc3 100644
+--- a/dist/index.mjs
++++ b/dist/index.mjs
+@@ -67,6 +67,7 @@ const $d3863c46a17e8a28$export$20e40289641fbbb6 = /*#__PURE__*/ $45QHv$forwardRe
+             // to keep focus trapped correctly.
+             function handleMutations(mutations) {
+                 const focusedElement = document.activeElement;
++                if (focusedElement !== document.body) return;
+                 for (const mutation of mutations){
+                     if (mutation.removedNodes.length > 0) {
+                         if (!(container1 !== null && container1 !== void 0 && container1.contains(focusedElement))) $d3863c46a17e8a28$var$focus(container1);
