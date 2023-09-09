@@ -14,14 +14,14 @@ export const templates: Record<ProjectTarget, Folder> = {
       {
         name: "package.json",
         content:
-          '{\n  "private": true,\n  "sideEffects": false,\n  "scripts": {\n    "build": "remix build",\n    "dev": "remix dev",\n    "start": "remix-serve build",\n    "typecheck": "tsc"\n  },\n  "dependencies": {\n    "@remix-run/node": "^1.19.2",\n    "@remix-run/react": "^1.19.2",\n    "@webstudio-is/react-sdk": "^0.95.0",\n    "@webstudio-is/sdk-components-react-radix": "^0.95.0",\n    "@webstudio-is/sdk-components-react-remix": "^0.95.0",\n    "@webstudio-is/sdk-components-react": "^0.95.0",\n    "@webstudio-is/form-handlers": "^0.95.0",\n    "@webstudio-is/sdk": "^0.95.0",\n    "isbot": "^3.6.8",\n    "react": "^18.2.0",\n    "react-dom": "^18.2.0"\n  },\n  "devDependencies": {\n    "@remix-run/serve": "^1.19.2",\n    "@remix-run/dev": "^1.19.2",\n    "@types/react": "^18.2.20",\n    "@types/react-dom": "^18.2.7",\n    "@webstudio-is/http-client": "^0.95.0",\n    "eslint": "^8.48.0",\n    "typescript": "5.2.2"\n  },\n  "engines": {\n    "node": ">=18.0.0"\n  }\n}\n',
+          '{\n  "private": true,\n  "sideEffects": false,\n  "scripts": {\n    "build": "remix build",\n    "dev": "remix dev",\n    "start": "remix-serve build",\n    "typecheck": "tsc"\n  },\n  "dependencies": {\n    "@remix-run/node": "^1.19.2",\n    "@remix-run/react": "^1.19.2",\n    "@webstudio-is/react-sdk": "^0.96.0",\n    "@webstudio-is/sdk-components-react-radix": "^0.96.0",\n    "@webstudio-is/sdk-components-react-remix": "^0.96.0",\n    "@webstudio-is/sdk-components-react": "^0.96.0",\n    "@webstudio-is/form-handlers": "^0.96.0",\n    "@webstudio-is/sdk": "^0.96.0",\n    "isbot": "^3.6.8",\n    "react": "^18.2.0",\n    "react-dom": "^18.2.0"\n  },\n  "devDependencies": {\n    "@remix-run/serve": "^1.19.2",\n    "@remix-run/dev": "^1.19.2",\n    "@types/react": "^18.2.20",\n    "@types/react-dom": "^18.2.7",\n    "@webstudio-is/http-client": "^0.96.0",\n    "eslint": "^8.48.0",\n    "typescript": "5.2.2"\n  },\n  "engines": {\n    "node": ">=18.0.0"\n  }\n}\n',
         encoding: "utf-8",
         merge: true,
       },
       {
         name: "remix.config.js",
         content:
-          '/** @type {import(\'@remix-run/dev\').AppConfig} */\nmodule.exports = {\n  ignoredRouteFiles: ["**/.*"],\n  serverModuleFormat: "cjs",\n  serverDependenciesToBundle: [\n    /@webstudio-is\\//,\n    "nanoid",\n    "nanostores",\n    "@nanostores/react",\n    "nanoid",\n    "@jsep-plugin/assignment",\n  ],\n  future: {\n    v2_errorBoundary: true,\n    v2_headers: true,\n    v2_meta: true,\n    v2_normalizeFormMethod: true,\n    v2_routeConvention: true,\n    v2_dev: true,\n  },\n};\n',
+          '/** @type {import(\'@remix-run/dev\').AppConfig} */\nmodule.exports = {\n  ignoredRouteFiles: ["**/.*"],\n  serverModuleFormat: "cjs",\n  serverDependenciesToBundle: [\n    /@webstudio-is\\//,\n    "nanoid",\n    "nanostores",\n    "@nanostores/react",\n    "@jsep-plugin/assignment",\n  ],\n  future: {\n    v2_errorBoundary: true,\n    v2_headers: true,\n    v2_meta: true,\n    v2_normalizeFormMethod: true,\n    v2_routeConvention: true,\n    v2_dev: true,\n  },\n};\n',
         encoding: "utf-8",
         merge: false,
       },
