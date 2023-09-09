@@ -23,6 +23,36 @@
           },
           "rootInstanceId": "uKWGyE9JY3cPwY-xI9vk6",
           "path": "/radix"
+        },
+        {
+          "id": "w9Qwfu1HOP397jLNtq-hc",
+          "name": "Blog",
+          "title": "Blog",
+          "meta": {
+            "description": ""
+          },
+          "rootInstanceId": "xDnAIGJjaOVjOfMU6bbxQ",
+          "path": "/blog"
+        },
+        {
+          "id": "hd6G3bz113YtoxD-3lNAI",
+          "name": "Page",
+          "title": "Page",
+          "meta": {
+            "description": ""
+          },
+          "rootInstanceId": "nEyRUCIYmfkBYUb-MSdDd",
+          "path": "/blog/page"
+        },
+        {
+          "id": "FGakc6C75caW7hRRn_0lZ",
+          "name": "deep-nested-page",
+          "title": "deep-nested-page",
+          "meta": {
+            "description": ""
+          },
+          "rootInstanceId": "P_qm1M69qwe6M2aaNBzOH",
+          "path": "/blog/page/deep-nested-page"
         }
       ]
     },
@@ -2191,6 +2221,144 @@
             }
           ]
         }
+      ],
+      [
+        "xDnAIGJjaOVjOfMU6bbxQ",
+        {
+          "type": "instance",
+          "id": "xDnAIGJjaOVjOfMU6bbxQ",
+          "component": "Body",
+          "children": [
+            {
+              "type": "id",
+              "value": "JemPdaC7WmuopS5GTRaRZ"
+            },
+            {
+              "type": "id",
+              "value": "FZ3JS5mYbAWT3EyQexnaS"
+            }
+          ]
+        }
+      ],
+      [
+        "JemPdaC7WmuopS5GTRaRZ",
+        {
+          "type": "instance",
+          "id": "JemPdaC7WmuopS5GTRaRZ",
+          "component": "Heading",
+          "children": [
+            {
+              "type": "text",
+              "value": "Blog"
+            }
+          ]
+        }
+      ],
+      [
+        "FZ3JS5mYbAWT3EyQexnaS",
+        {
+          "type": "instance",
+          "id": "FZ3JS5mYbAWT3EyQexnaS",
+          "component": "Link",
+          "children": [
+            {
+              "type": "text",
+              "value": "Link text you can edit"
+            }
+          ]
+        }
+      ],
+      [
+        "nEyRUCIYmfkBYUb-MSdDd",
+        {
+          "type": "instance",
+          "id": "nEyRUCIYmfkBYUb-MSdDd",
+          "component": "Body",
+          "children": [
+            {
+              "type": "id",
+              "value": "oX13CSOxZaPn94ukbUaW3"
+            },
+            {
+              "type": "id",
+              "value": "M4cBN9R79h4ZxP8IlqmFp"
+            }
+          ]
+        }
+      ],
+      [
+        "oX13CSOxZaPn94ukbUaW3",
+        {
+          "type": "instance",
+          "id": "oX13CSOxZaPn94ukbUaW3",
+          "component": "Heading",
+          "children": [
+            {
+              "type": "text",
+              "value": "Page"
+            }
+          ]
+        }
+      ],
+      [
+        "M4cBN9R79h4ZxP8IlqmFp",
+        {
+          "type": "instance",
+          "id": "M4cBN9R79h4ZxP8IlqmFp",
+          "component": "Link",
+          "children": [
+            {
+              "type": "text",
+              "value": "Link text you can edit"
+            }
+          ]
+        }
+      ],
+      [
+        "P_qm1M69qwe6M2aaNBzOH",
+        {
+          "type": "instance",
+          "id": "P_qm1M69qwe6M2aaNBzOH",
+          "component": "Body",
+          "children": [
+            {
+              "type": "id",
+              "value": "UG0MSNfRWyyac4KR3fFyg"
+            },
+            {
+              "type": "id",
+              "value": "Zh_5yzptz6BB60Va6TlVv"
+            }
+          ]
+        }
+      ],
+      [
+        "UG0MSNfRWyyac4KR3fFyg",
+        {
+          "type": "instance",
+          "id": "UG0MSNfRWyyac4KR3fFyg",
+          "component": "Heading",
+          "children": [
+            {
+              "type": "text",
+              "value": "Deep nested"
+            }
+          ]
+        }
+      ],
+      [
+        "Zh_5yzptz6BB60Va6TlVv",
+        {
+          "type": "instance",
+          "id": "Zh_5yzptz6BB60Va6TlVv",
+          "component": "Link",
+          "children": [
+            {
+              "type": "text",
+              "value": "Link text you can edit"
+            }
+          ]
+        }
       ]
     ],
     "deployment": {
@@ -2224,6 +2392,36 @@
       },
       "rootInstanceId": "uKWGyE9JY3cPwY-xI9vk6",
       "path": "/radix"
+    },
+    {
+      "id": "w9Qwfu1HOP397jLNtq-hc",
+      "name": "Blog",
+      "title": "Blog",
+      "meta": {
+        "description": ""
+      },
+      "rootInstanceId": "xDnAIGJjaOVjOfMU6bbxQ",
+      "path": "/blog"
+    },
+    {
+      "id": "hd6G3bz113YtoxD-3lNAI",
+      "name": "Page",
+      "title": "Page",
+      "meta": {
+        "description": ""
+      },
+      "rootInstanceId": "nEyRUCIYmfkBYUb-MSdDd",
+      "path": "/blog/page"
+    },
+    {
+      "id": "FGakc6C75caW7hRRn_0lZ",
+      "name": "deep-nested-page",
+      "title": "deep-nested-page",
+      "meta": {
+        "description": ""
+      },
+      "rootInstanceId": "P_qm1M69qwe6M2aaNBzOH",
+      "path": "/blog/page/deep-nested-page"
     }
   ],
   "assets": [
