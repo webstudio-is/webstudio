@@ -385,10 +385,25 @@ export const projectId = "${siteData.build.projectId}";
 ${utilsExport}
 `;
 
+    /*
+      The _index is mandatory.
+      Let's say there is a route /test.one.tsx and then there is a /test.tsx route.
+      Remix doesn't pick the /test.tsx by default unless we mention the _index at the end.
+
+      Or else it picks the first route that matches the /test as a layout and not a independent route.
+      So, we need to mark the pages as _index at the end. So deep nested routes works as expected.
+
+      Details:
+      https://remix.run/docs/en/main/file-conventions/route-files-v2#nested-urls-without-layout-nesting
+    */
+
     const fileName =
       pathName === "main" || pathName === "index"
         ? "_index.tsx"
-        : `${pathName.split("/").join(".")}._index.tsx`;
+        : `${pathName
+            .split("/")
+            .map((route) => `[${route}]`)
+            .join(".")}._index.tsx`;
 
     let routeFile = getRouteTemplate();
 

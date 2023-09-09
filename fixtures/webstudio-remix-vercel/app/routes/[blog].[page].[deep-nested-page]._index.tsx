@@ -21,7 +21,7 @@ import {
   user,
   projectId,
   utils,
-} from "../__generated__/radix._index.tsx";
+} from "../__generated__/[blog].[page].[deep-nested-page]._index.tsx";
 import css from "../__generated__/index.css";
 import type { Data } from "@webstudio-is/http-client";
 

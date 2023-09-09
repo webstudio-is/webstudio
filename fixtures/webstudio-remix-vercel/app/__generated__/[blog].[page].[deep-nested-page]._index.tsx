@@ -8,150 +8,45 @@ import type { Asset } from "@webstudio-is/sdk";
 import {
   Body as Body,
   Heading as Heading,
-  Box as Box,
-  Paragraph as Paragraph,
-  Image as Image,
 } from "@webstudio-is/sdk-components-react";
 import { Link as Link } from "@webstudio-is/sdk-components-react-remix";
 
 export const components = new Map(
-  Object.entries({
-    Body: Body,
-    Heading: Heading,
-    Box: Box,
-    Paragraph: Paragraph,
-    Image: Image,
-    Link: Link,
-  })
+  Object.entries({ Body: Body, Heading: Heading, Link: Link })
 ) as Components;
 export const fontAssets: Asset[] = [];
 export const pageData: PageData = {
   build: {
-    props: [
-      [
-        "rTRZFZEd03RBH4gUWj9LW",
-        {
-          id: "rTRZFZEd03RBH4gUWj9LW",
-          instanceId: "pX1ovPI7NdC0HRjkw6Kpw",
-          name: "src",
-          type: "asset",
-          value: "cd939c56-bcdd-4e64-bd9c-567a9bccd3da",
-        },
-      ],
-      [
-        "SYK4hpLQ9tHnESKDtPvI9",
-        {
-          id: "SYK4hpLQ9tHnESKDtPvI9",
-          instanceId: "l9AI_pShC-BH4ibxK6kNT",
-          name: "href",
-          type: "string",
-          value: "https://github.com/",
-        },
-      ],
-    ],
+    props: [],
     instances: [
       [
-        "On9cvWCxr5rdZtY9O1Bv0",
+        "P_qm1M69qwe6M2aaNBzOH",
         {
           type: "instance",
-          id: "On9cvWCxr5rdZtY9O1Bv0",
+          id: "P_qm1M69qwe6M2aaNBzOH",
           component: "Body",
           children: [
-            { type: "id", value: "nVMWvMsaLCcb0o1wuNQgg" },
-            { type: "id", value: "f0kF-WmL7DQg7MSyRvqY1" },
+            { type: "id", value: "UG0MSNfRWyyac4KR3fFyg" },
+            { type: "id", value: "Zh_5yzptz6BB60Va6TlVv" },
           ],
         },
       ],
       [
-        "nVMWvMsaLCcb0o1wuNQgg",
+        "UG0MSNfRWyyac4KR3fFyg",
         {
           type: "instance",
-          id: "nVMWvMsaLCcb0o1wuNQgg",
+          id: "UG0MSNfRWyyac4KR3fFyg",
           component: "Heading",
-          children: [
-            {
-              type: "text",
-              value: "DO NOT TOUCH THIS PROJECT, IT'S USED FOR FIXTURES",
-            },
-          ],
+          children: [{ type: "text", value: "Deep nested" }],
         },
       ],
       [
-        "f0kF-WmL7DQg7MSyRvqY1",
+        "Zh_5yzptz6BB60Va6TlVv",
         {
           type: "instance",
-          id: "f0kF-WmL7DQg7MSyRvqY1",
-          component: "Box",
-          children: [
-            { type: "id", value: "5XDbqPrZDeCwq4YJ3CHsc" },
-            { type: "id", value: "qPnkiFGDj8dITWb1kmpGl" },
-          ],
-        },
-      ],
-      [
-        "5XDbqPrZDeCwq4YJ3CHsc",
-        {
-          type: "instance",
-          id: "5XDbqPrZDeCwq4YJ3CHsc",
-          component: "Box",
-          children: [
-            { type: "id", value: "oLXYe1UQiVMhVnZGvJSMr" },
-            { type: "id", value: "p34JHWcU6UNrd9FVnY80Q" },
-            { type: "id", value: "l9AI_pShC-BH4ibxK6kNT" },
-          ],
-        },
-      ],
-      [
-        "qPnkiFGDj8dITWb1kmpGl",
-        {
-          type: "instance",
-          id: "qPnkiFGDj8dITWb1kmpGl",
-          component: "Box",
-          children: [{ type: "id", value: "pX1ovPI7NdC0HRjkw6Kpw" }],
-        },
-      ],
-      [
-        "oLXYe1UQiVMhVnZGvJSMr",
-        {
-          type: "instance",
-          id: "oLXYe1UQiVMhVnZGvJSMr",
-          component: "Heading",
-          children: [{ type: "text", value: "Heading" }],
-        },
-      ],
-      [
-        "p34JHWcU6UNrd9FVnY80Q",
-        {
-          type: "instance",
-          id: "p34JHWcU6UNrd9FVnY80Q",
-          component: "Paragraph",
-          children: [
-            {
-              type: "text",
-              value:
-                "a little kitten painted in black and white gouache with a thick brush",
-            },
-          ],
-        },
-      ],
-      [
-        "pX1ovPI7NdC0HRjkw6Kpw",
-        {
-          type: "instance",
-          id: "pX1ovPI7NdC0HRjkw6Kpw",
-          component: "Image",
-          children: [],
-        },
-      ],
-      [
-        "l9AI_pShC-BH4ibxK6kNT",
-        {
-          type: "instance",
-          id: "l9AI_pShC-BH4ibxK6kNT",
+          id: "Zh_5yzptz6BB60Va6TlVv",
           component: "Link",
-          children: [
-            { type: "text", value: "Click here to adore more kittens" },
-          ],
+          children: [{ type: "text", value: "Link text you can edit" }],
         },
       ],
     ],
@@ -200,12 +95,12 @@ export const pageData: PageData = {
     },
   ],
   page: {
-    id: "7Db64ZXgYiRqKSQNR-qTQ",
-    name: "Home",
-    title: "Home",
-    meta: {},
-    rootInstanceId: "On9cvWCxr5rdZtY9O1Bv0",
-    path: "",
+    id: "FGakc6C75caW7hRRn_0lZ",
+    name: "deep-nested-page",
+    title: "deep-nested-page",
+    meta: { description: "" },
+    rootInstanceId: "P_qm1M69qwe6M2aaNBzOH",
+    path: "/blog/page/deep-nested-page",
   },
   assets: [
     {
