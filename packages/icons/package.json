@@ -6,8 +6,8 @@
   "homepage": "https://webstudio.is",
   "type": "module",
   "scripts": {
-    "dev": "pnpm build --watch",
-    "build": "rm -rf lib && esbuild 'src/**/*.ts' 'src/**/*.tsx' --outdir=lib",
+    "dev": "rm -rf lib && esbuild 'src/**/*.ts' 'src/**/*.tsx' --outdir=lib --watch",
+    "build": "rm -rf lib && esbuild src/index.ts src/__generated__/svg/index.ts --outdir=lib --bundle --format=esm --packages=external",
     "dts": "tsc --declarationDir lib/types",
     "generate": "rm -fr src/__generated__ && NODE_OPTIONS='--loader=tsx' svgo-jsx svgo-jsx.config.ts && tsx svg-string.ts && prettier --write src/__generated__",
     "typecheck": "tsc",

@@ -33,8 +33,8 @@
     }
   },
   "scripts": {
-    "dev": "pnpm build --watch",
-    "build": "rm -rf lib && esbuild 'src/**/*.ts' 'src/**/*.tsx' --outdir=lib",
+    "dev": "rm -rf lib && esbuild 'src/**/*.ts' 'src/**/*.tsx' --outdir=lib --watch",
+    "build": "rm -rf lib && esbuild src/components.ts src/metas.ts src/props.ts --outdir=lib --bundle --format=esm --packages=external",
     "build:args": "NODE_OPTIONS=--conditions=source generate-arg-types './src/*.tsx !./src/*.stories.tsx !./src/*.ws.tsx' && prettier --write \"**/*.props.ts\"",
     "dts": "tsc --project tsconfig.dts.json",
     "typecheck": "tsc",
