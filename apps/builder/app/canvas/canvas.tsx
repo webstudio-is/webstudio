@@ -59,6 +59,7 @@ import { useHashLinkSync } from "~/shared/pages";
 import { useMount } from "~/shared/hook-utils/use-mount";
 import { useSelectedInstance } from "./instance-selected-react";
 import { subscribeInterceptedEvents } from "./interceptor";
+import type { ImageLoader } from "@webstudio-is/image";
 
 registerContainers();
 
@@ -85,7 +86,8 @@ const onDataSourceUpdate = (newValues: Map<DataSource["id"], unknown>) => {
 const useElementsTree = (
   components: Components,
   instances: Instances,
-  params: Params
+  params: Params,
+  imageLoader: ImageLoader
 ) => {
   const metas = useStore(registeredComponentMetasStore);
   const page = useStore(selectedPageStore);
@@ -128,6 +130,7 @@ const useElementsTree = (
       renderer: isPreviewMode ? "preview" : "canvas",
       imageBaseUrl: params.imageBaseUrl,
       assetBaseUrl: params.assetBaseUrl,
+      imageLoader,
       instances,
       rootInstanceId,
       indexesWithinAncestors,
@@ -157,6 +160,7 @@ const useElementsTree = (
     pagesMapStore,
     isPreviewMode,
     indexesWithinAncestors,
+    imageLoader,
   ]);
 };
 
@@ -178,9 +182,13 @@ const DesignMode = ({ params }: { params: Params }) => {
 
 type CanvasProps = {
   params: Params;
+  imageLoader: ImageLoader;
 };
 
-export const Canvas = ({ params }: CanvasProps): JSX.Element | null => {
+export const Canvas = ({
+  params,
+  imageLoader,
+}: CanvasProps): JSX.Element | null => {
   const handshaken = useStore(handshakenStore);
   useCanvasStore(publish);
   const [isPreviewMode] = useIsPreviewMode();
@@ -234,7 +242,7 @@ export const Canvas = ({ params }: CanvasProps): JSX.Element | null => {
 
   const components = useStore(registeredComponentsStore);
   const instances = useStore(instancesStore);
-  const elements = useElementsTree(components, instances, params);
+  const elements = useElementsTree(components, instances, params, imageLoader);
 
   if (components.size === 0 || instances.size === 0) {
     return (

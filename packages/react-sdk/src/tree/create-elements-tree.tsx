@@ -15,13 +15,15 @@ import {
 import type { Pages, PropsByInstanceId } from "../props";
 import type { WebstudioComponentProps } from "./webstudio-component";
 import type { IndexesWithinAncestors } from "../instance-utils";
+import type { ImageLoader } from "@webstudio-is/image";
 
 type InstanceSelector = Instance["id"][];
 
 export const createElementsTree = ({
   renderer,
-  imageBaseUrl,
   assetBaseUrl,
+  imageBaseUrl,
+  imageLoader,
   instances,
   rootInstanceId,
   propsByInstanceIdStore,
@@ -36,6 +38,7 @@ export const createElementsTree = ({
   scripts,
 }: Params & {
   instances: Instances;
+  imageLoader: ImageLoader;
   rootInstanceId: Instance["id"];
   propsByInstanceIdStore: ReadableAtom<PropsByInstanceId>;
   assetsStore: ReadableAtom<Assets>;
@@ -88,8 +91,9 @@ export const createElementsTree = ({
         pagesStore,
         dataSourceValuesStore,
         renderer,
-        imageBaseUrl,
+        imageLoader,
         assetBaseUrl,
+        imageBaseUrl,
         indexesWithinAncestors,
         executeEffectfulExpression,
         setDataSourceValues: onDataSourceUpdate,
