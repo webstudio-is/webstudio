@@ -45,6 +45,13 @@ export const templates: Record<ProjectTarget, Folder> = {
         name: "app",
         files: [
           {
+            name: "constants.ts",
+            content:
+              'export const assetBaseUrl = "/assets/";\nexport const imageBaseUrl = "/assets/";\n',
+            encoding: "utf-8",
+            merge: false,
+          },
+          {
             name: "root.tsx",
             content:
               'export { Root as default } from "@webstudio-is/react-sdk";\n',

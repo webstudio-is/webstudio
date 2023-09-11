@@ -1,9 +1,9 @@
 /* eslint-disable camelcase */
 import {
-  V2_MetaFunction,
-  LinksFunction,
-  LinkDescriptor,
-  ActionArgs,
+  type V2_MetaFunction,
+  type LinksFunction,
+  type LinkDescriptor,
+  type ActionArgs,
   json,
 } from "@remix-run/node";
 
@@ -24,6 +24,7 @@ import {
 } from "../__generated__/_index.tsx";
 import css from "../__generated__/index.css";
 import type { Data } from "@webstudio-is/http-client";
+import { assetBaseUrl, imageBaseUrl } from "~/constants.ts";
 
 export type PageData = Omit<Data, "build"> & {
   build: Pick<Data["build"], "props" | "instances" | "dataSources">;
@@ -46,7 +47,7 @@ export const links: LinksFunction = () => {
     if (asset.type === "font") {
       result.push({
         rel: "preload",
-        href: "/assets/" + asset.name,
+        href: assetBaseUrl + asset.name,
         as: "font",
         crossOrigin: "anonymous",
         // @todo add mimeType
@@ -146,9 +147,6 @@ const Outlet = () => {
       status: 404,
     });
   }
-
-  const assetBaseUrl = "/assets/";
-  const imageBaseUrl = "/assets/";
 
   const params: Params = {
     assetBaseUrl,

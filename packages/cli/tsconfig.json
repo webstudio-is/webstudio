@@ -1,7 +1,9 @@
 {
   "extends": "@webstudio-is/tsconfig/base.json",
-  "exclude": ["./templates/*"],
   "compilerOptions": {
-    "module": "esnext"
+    "module": "esnext",
+    "paths": {
+      "~/constants.ts": ["./templates/defaults/app/constants.ts"]
+    }
   }
 }
