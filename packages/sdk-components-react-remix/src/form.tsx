@@ -4,14 +4,10 @@ import {
   forwardRef,
   useRef,
   useEffect,
-  useContext,
 } from "react";
 import { useFetcher, type Fetcher, type FormProps } from "@remix-run/react";
 import { formIdFieldName } from "@webstudio-is/form-handlers";
-import {
-  ReactSdkContext,
-  getInstanceIdFromComponentProps,
-} from "@webstudio-is/react-sdk";
+import { getInstanceIdFromComponentProps } from "@webstudio-is/react-sdk";
 
 export const defaultTag = "form";
 
@@ -41,19 +37,26 @@ export const Form = forwardRef<
   ElementRef<typeof defaultTag>,
   ComponentProps<typeof defaultTag> & {
     /** Use this property to reveal the Success and Error states on the canvas so they can be styled. The Initial state is displayed when the page first opens. The Success and Error states are displayed depending on whether the Form submits successfully or unsuccessfully. */
-    state?: State;
+    state: State;
     encType?: FormProps["encType"];
+    onStateChange?: (state: State) => void;
   }
->(({ children, action, method, state = "initial", ...rest }, ref) => {
-  const { setBoundDataSourceValue } = useContext(ReactSdkContext);
-
+>((props, ref) => {
+  const {
+    children,
+    action,
+    method,
+    state = "initial",
+    onStateChange,
+    ...rest
+  } = props;
   const fetcher = useFetcher();
 
   const instanceId = getInstanceIdFromComponentProps(rest);
 
   useOnFetchEnd(fetcher, (data) => {
     const state: State = data?.success === true ? "success" : "error";
-    setBoundDataSourceValue(instanceId, "state", state);
+    onStateChange?.(state);
   });
 
   return (

@@ -1,6 +1,6 @@
 import { type ReadableAtom, atom } from "nanostores";
 import { createContext } from "react";
-import type { DataSource, Instance, Prop, Assets } from "@webstudio-is/sdk";
+import type { DataSource, Assets } from "@webstudio-is/sdk";
 import type { Pages, PropsByInstanceId } from "./props";
 import type { IndexesWithinAncestors } from "./instance-utils";
 
@@ -45,11 +45,6 @@ export const ReactSdkContext = createContext<
       values: DataSourceValues
     ) => DataSourceValues;
     setDataSourceValues: (newValues: DataSourceValues) => void;
-    setBoundDataSourceValue: (
-      instanceId: Instance["id"],
-      prop: Prop["name"],
-      value: unknown
-    ) => void;
     indexesWithinAncestors: IndexesWithinAncestors;
   }
 >({
@@ -63,10 +58,7 @@ export const ReactSdkContext = createContext<
     throw Error("React SDK executeEffectfulExpression is not implemented");
   },
   setDataSourceValues: () => {
-    throw Error("React SDK setBoundDataSourceValue is not implemented");
-  },
-  setBoundDataSourceValue: () => {
-    throw Error("React SDK setBoundDataSourceValue is not implemented");
+    throw Error("React SDK setDataSourceValues is not implemented");
   },
   indexesWithinAncestors: new Map(),
 });
