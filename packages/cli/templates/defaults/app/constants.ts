@@ -11,7 +11,7 @@ export const imageLoader: ImageLoader = ({ quality, src, width }) => {
   // https://vercel.com/blog/build-your-own-web-framework#automatic-image-optimization
   return (
     "/_vercel/image?url=" +
-    encodeURIComponent(src) +
+    encodeURIComponent(imageBaseUrl + src) +
     "&w=" +
     width +
     "&q=" +

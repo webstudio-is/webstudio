@@ -54,7 +54,7 @@ export const templates: Record<ProjectTarget, Folder> = {
           {
             name: "constants.ts",
             content:
-              'import type { ImageLoader } from "@webstudio-is/image";\n\nexport const assetBaseUrl = "/assets/";\nexport const imageBaseUrl = "/assets/";\n\nexport const imageLoader: ImageLoader = ({ quality, src, width }) => {\n  if (process.env.NODE_ENV !== "production") {\n    return imageBaseUrl + src;\n  }\n\n  const searchParams = new URLSearchParams();\n  searchParams.set("w", width.toString());\n  searchParams.set("q", quality.toString());\n\n  // https://vercel.com/blog/build-your-own-web-framework#automatic-image-optimization\n  return (\n    "/_vercel/image?url=" +\n    encodeURIComponent(src) +\n    "&w=" +\n    width +\n    "&q=" +\n    quality\n  );\n};\n',
+              'import type { ImageLoader } from "@webstudio-is/image";\n\nexport const assetBaseUrl = "/assets/";\nexport const imageBaseUrl = "/assets/";\n\nexport const imageLoader: ImageLoader = ({ quality, src, width }) => {\n  if (process.env.NODE_ENV !== "production") {\n    return imageBaseUrl + src;\n  }\n\n  // https://vercel.com/blog/build-your-own-web-framework#automatic-image-optimization\n  return (\n    "/_vercel/image?url=" +\n    encodeURIComponent(imageBaseUrl + src) +\n    "&w=" +\n    width +\n    "&q=" +\n    quality\n  );\n};\n',
             encoding: "utf-8",
             merge: false,
           },

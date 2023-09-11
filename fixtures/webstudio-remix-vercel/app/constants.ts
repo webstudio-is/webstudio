@@ -8,14 +8,10 @@ export const imageLoader: ImageLoader = ({ quality, src, width }) => {
     return imageBaseUrl + src;
   }
 
-  const searchParams = new URLSearchParams();
-  searchParams.set("w", width.toString());
-  searchParams.set("q", quality.toString());
-
   // https://vercel.com/blog/build-your-own-web-framework#automatic-image-optimization
   return (
     "/_vercel/image?url=" +
-    encodeURIComponent(src) +
+    encodeURIComponent(imageBaseUrl + src) +
     "&w=" +
     width +
     "&q=" +
