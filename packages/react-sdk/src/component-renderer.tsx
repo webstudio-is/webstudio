@@ -16,18 +16,21 @@ import {
   executeEffectfulExpression,
 } from "./expression";
 import { getIndexesWithinAncestors } from "./instance-utils";
+import type { ImageLoader } from "@webstudio-is/image";
 
 export const renderComponentTemplate = ({
   name,
   metas: metasRecord,
   components,
   props,
+  imageLoader,
 }: {
   name: Instance["component"];
   metas: Record<string, WsComponentMeta>;
   props?: Record<string, unknown>;
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   components: Record<string, ExoticComponent<any>>;
+  imageLoader?: ImageLoader;
 }) => {
   const metas = new Map(Object.entries(metasRecord));
 
@@ -140,6 +143,7 @@ export const renderComponentTemplate = ({
         }}
         Component={WebstudioComponent}
         components={new Map(Object.entries(components))}
+        imageLoader={imageLoader ?? (({ src }) => src)}
       />
     </>
   );

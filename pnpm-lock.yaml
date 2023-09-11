@@ -376,6 +376,9 @@ importers:
       '@webstudio-is/form-handlers':
         specifier: workspace:^
         version: link:../../packages/form-handlers
+      '@webstudio-is/image':
+        specifier: workspace:^
+        version: link:../../packages/image
       '@webstudio-is/react-sdk':
         specifier: workspace:^
         version: link:../../packages/react-sdk
@@ -1252,6 +1255,9 @@ importers:
       '@webstudio-is/fonts':
         specifier: workspace:^
         version: link:../fonts
+      '@webstudio-is/image':
+        specifier: workspace:^
+        version: link:../image
       '@webstudio-is/sdk':
         specifier: workspace:^
         version: link:../sdk

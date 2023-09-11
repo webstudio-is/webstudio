@@ -14,7 +14,7 @@ export const templates: Record<ProjectTarget, Folder> = {
       {
         name: "package.json",
         content:
-          '{\n  "private": true,\n  "sideEffects": false,\n  "scripts": {\n    "build": "remix build",\n    "dev": "remix dev",\n    "start": "remix-serve build",\n    "typecheck": "tsc"\n  },\n  "dependencies": {\n    "@remix-run/node": "^1.19.2",\n    "@remix-run/react": "^1.19.2",\n    "@webstudio-is/react-sdk": "^0.96.0",\n    "@webstudio-is/sdk-components-react-radix": "^0.96.0",\n    "@webstudio-is/sdk-components-react-remix": "^0.96.0",\n    "@webstudio-is/sdk-components-react": "^0.96.0",\n    "@webstudio-is/form-handlers": "^0.96.0",\n    "@webstudio-is/sdk": "^0.96.0",\n    "isbot": "^3.6.8",\n    "react": "^18.2.0",\n    "react-dom": "^18.2.0"\n  },\n  "devDependencies": {\n    "@remix-run/serve": "^1.19.2",\n    "@remix-run/dev": "^1.19.2",\n    "@types/react": "^18.2.20",\n    "@types/react-dom": "^18.2.7",\n    "@webstudio-is/http-client": "^0.96.0",\n    "eslint": "^8.48.0",\n    "typescript": "5.2.2"\n  },\n  "engines": {\n    "node": ">=18.0.0"\n  }\n}\n',
+          '{\n  "private": true,\n  "sideEffects": false,\n  "scripts": {\n    "build": "remix build",\n    "dev": "remix dev",\n    "start": "remix-serve build",\n    "typecheck": "tsc"\n  },\n  "dependencies": {\n    "@remix-run/node": "^1.19.2",\n    "@remix-run/react": "^1.19.2",\n    "@webstudio-is/react-sdk": "^0.96.0",\n    "@webstudio-is/sdk-components-react-radix": "^0.96.0",\n    "@webstudio-is/sdk-components-react-remix": "^0.96.0",\n    "@webstudio-is/sdk-components-react": "^0.96.0",\n    "@webstudio-is/form-handlers": "^0.96.0",\n    "@webstudio-is/image": "^0.96.0",\n    "@webstudio-is/sdk": "^0.96.0",\n    "isbot": "^3.6.8",\n    "react": "^18.2.0",\n    "react-dom": "^18.2.0"\n  },\n  "devDependencies": {\n    "@remix-run/serve": "^1.19.2",\n    "@remix-run/dev": "^1.19.2",\n    "@types/react": "^18.2.20",\n    "@types/react-dom": "^18.2.7",\n    "@webstudio-is/http-client": "^0.96.0",\n    "eslint": "^8.48.0",\n    "typescript": "5.2.2"\n  },\n  "engines": {\n    "node": ">=18.0.0"\n  }\n}\n',
         encoding: "utf-8",
         merge: true,
       },
@@ -39,6 +39,13 @@ export const templates: Record<ProjectTarget, Folder> = {
         encoding: "utf-8",
         merge: false,
       },
+      {
+        name: "vercel.json",
+        content:
+          '{\n  "images": {\n    "domains": [],\n    "sizes": [\n      16, 32, 48, 64, 96, 128, 256, 384, 640, 750, 828, 1080, 1200, 1920, 2048,\n      3840\n    ],\n    "minimumCacheTTL": 60,\n    "formats": ["image/webp", "image/avif"]\n  }\n}\n',
+        encoding: "utf-8",
+        merge: false,
+      },
     ],
     subFolders: [
       {
@@ -47,7 +54,7 @@ export const templates: Record<ProjectTarget, Folder> = {
           {
             name: "constants.ts",
             content:
-              'export const assetBaseUrl = "/assets/";\nexport const imageBaseUrl = "/assets/";\n',
+              'import type { ImageLoader } from "@webstudio-is/image";\n\nexport const assetBaseUrl = "/assets/";\nexport const imageBaseUrl = "/assets/";\n\nexport const imageLoader: ImageLoader = ({ quality, src, width }) => {\n  if (process.env.NODE_ENV !== "production") {\n    return imageBaseUrl + src;\n  }\n\n  // https://vercel.com/blog/build-your-own-web-framework#automatic-image-optimization\n  return (\n    "/_vercel/image?url=" +\n    encodeURIComponent(imageBaseUrl + src) +\n    "&w=" +\n    width +\n    "&q=" +\n    quality\n  );\n};\n',
             encoding: "utf-8",
             merge: false,
           },

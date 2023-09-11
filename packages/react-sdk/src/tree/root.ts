@@ -27,6 +27,7 @@ import { getPropsByInstanceId } from "../props";
 import type { Components } from "../components/components-utils";
 import type { Params, DataSourceValues } from "../context";
 import type { GeneratedUtils } from "../generator";
+import type { ImageLoader } from "@webstudio-is/image";
 
 export type RootPropsData = {
   params?: Params;
@@ -48,6 +49,7 @@ type RootProps = {
   >;
   components: Components;
   scripts?: ReactNode;
+  imageLoader: ImageLoader;
 };
 
 export const InstanceRoot = ({
@@ -56,6 +58,7 @@ export const InstanceRoot = ({
   Component,
   components,
   scripts,
+  imageLoader,
 }: RootProps): JSX.Element | null => {
   const {
     indexesWithinAncestors,
@@ -116,6 +119,7 @@ export const InstanceRoot = ({
   );
 
   return createElementsTree({
+    imageLoader,
     imageBaseUrl: data.params?.imageBaseUrl ?? "/",
     assetBaseUrl: data.params?.assetBaseUrl ?? "/",
     instances: new Map(data.build.instances),

@@ -3,6 +3,7 @@ import { createContext } from "react";
 import type { DataSource, Instance, Prop, Assets } from "@webstudio-is/sdk";
 import type { Pages, PropsByInstanceId } from "./props";
 import type { IndexesWithinAncestors } from "./instance-utils";
+import type { ImageLoader } from "@webstudio-is/image";
 
 export type Params = {
   renderer?: "canvas" | "preview";
@@ -35,6 +36,7 @@ export type DataSourceValues = Map<DataSource["id"], unknown>;
 
 export const ReactSdkContext = createContext<
   Params & {
+    imageLoader: ImageLoader;
     propsByInstanceIdStore: ReadableAtom<PropsByInstanceId>;
     assetsStore: ReadableAtom<Assets>;
     pagesStore: ReadableAtom<Pages>;
@@ -53,8 +55,9 @@ export const ReactSdkContext = createContext<
     indexesWithinAncestors: IndexesWithinAncestors;
   }
 >({
-  imageBaseUrl: "/",
   assetBaseUrl: "/",
+  imageBaseUrl: "/",
+  imageLoader: ({ src }) => src,
   propsByInstanceIdStore: atom(new Map()),
   assetsStore: atom(new Map()),
   pagesStore: atom(new Map()),

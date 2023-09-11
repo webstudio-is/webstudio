@@ -11,6 +11,7 @@ import { sentryException } from "~/shared/sentry";
 import { Canvas } from "~/canvas";
 import { ErrorMessage } from "~/shared/error";
 import { getBuildParams, dashboardPath } from "~/shared/router-utils";
+import { createImageLoader } from "@webstudio-is/image";
 
 export const loader = async ({ request }: LoaderArgs) => {
   const url = new URL(request.url);
@@ -52,7 +53,10 @@ export const ErrorBoundary = () => {
 
 const Outlet = () => {
   const { params } = useLoaderData<typeof loader>();
-  return <Canvas params={params} />;
+  const imageLoader = createImageLoader({
+    imageBaseUrl: params.imageBaseUrl,
+  });
+  return <Canvas params={params} imageLoader={imageLoader} />;
 };
 
 /**

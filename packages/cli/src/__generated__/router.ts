@@ -32,7 +32,7 @@ import {
 } from "../__generated__/index";
 import css from "../__generated__/index.css";
 import type { Data } from "@webstudio-is/http-client";
-import { assetBaseUrl, imageBaseUrl } from "~/constants.ts";
+import { assetBaseUrl, imageBaseUrl, imageLoader } from "~/constants.ts";
 
 export type PageData = Omit<Data, "build"> & {
   build: Pick<Data["build"], "props" | "instances" | "dataSources">;
@@ -171,6 +171,7 @@ const Outlet = () => {
 
   return (
     <InstanceRoot
+      imageLoader={imageLoader}
       data={data}
       components={components}
       utils={utils}

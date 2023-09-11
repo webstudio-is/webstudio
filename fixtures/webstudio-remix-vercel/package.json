@@ -16,6 +16,7 @@
     "@webstudio-is/sdk-components-react-remix": "workspace:^",
     "@webstudio-is/sdk-components-react": "workspace:^",
     "@webstudio-is/form-handlers": "workspace:^",
+    "@webstudio-is/image": "workspace:^",
     "@webstudio-is/sdk": "workspace:^",
     "isbot": "^3.6.8",
     "react": "^18.2.0",

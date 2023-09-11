@@ -2,13 +2,9 @@ import {
   type ComponentPropsWithoutRef,
   type ElementRef,
   forwardRef,
-  useMemo,
   useContext,
 } from "react";
-import {
-  Image as WebstudioImage,
-  createImageLoader,
-} from "@webstudio-is/image";
+import { Image as WebstudioImage } from "@webstudio-is/image";
 import {
   usePropAsset,
   getInstanceIdFromComponentProps,
@@ -45,16 +41,12 @@ type Props = Omit<ComponentPropsWithoutRef<typeof WebstudioImage>, "loader">;
 
 export const Image = forwardRef<ElementRef<typeof defaultTag>, Props>(
   ({ loading = "lazy", ...props }, ref) => {
-    const { imageBaseUrl } = useContext(ReactSdkContext);
+    const { imageLoader } = useContext(ReactSdkContext);
     const asset = usePropAsset(getInstanceIdFromComponentProps(props), "src");
-
-    const loader = useMemo(() => {
-      return createImageLoader({ imageBaseUrl });
-    }, [imageBaseUrl]);
 
     const src = asset?.name ?? props.src;
 
-    if (asset == null || loader == null) {
+    if (asset == null) {
       return (
         <img
           key={src}
@@ -80,7 +72,7 @@ export const Image = forwardRef<ElementRef<typeof defaultTag>, Props>(
         key={src}
         loading={loading}
         {...props}
-        loader={loader}
+        loader={imageLoader}
         src={src}
         ref={ref}
       />
