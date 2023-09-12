@@ -2,7 +2,6 @@ import { basename, dirname, join, normalize } from "node:path";
 import { createWriteStream } from "node:fs";
 import {
   rm,
-  mkdir,
   access,
   mkdtemp,
   rename,
@@ -79,6 +78,7 @@ export const downloadAsset = async (
 ) => {
   const assetPath = join("public", ASSETS_BASE, name);
   const tempAssetPath = join(temporaryDir, name);
+
   try {
     await access(assetPath);
   } catch {
@@ -317,11 +317,9 @@ export const prebuild = async (options: {
 
   const generatedDir = join(appRoot, "__generated__");
   await rm(generatedDir, { recursive: true, force: true });
-  await mkdir(generatedDir, { recursive: true });
 
   const routesDir = join(appRoot, "routes");
   await rm(routesDir, { recursive: true, force: true });
-  await mkdir(routesDir, { recursive: true });
 
   const routeFileTemplate = await readFile(
     normalize(
