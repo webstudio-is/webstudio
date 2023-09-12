@@ -1,8 +1,8 @@
 ## Webstudio CLI
 
-The Webstudio CLI helps you to `link`, `sync`, and `build` projects from your Webstudio Builder workspace. This README will guide you through the process of setting up a Webstudio project in your local machine and continually sync it with all the changes that are made to it.
+The Webstudio CLI helps you to `link`, `sync`, and `build` projects from your Webstudio Builder workspace. This README will guide you through the process of setting up a Webstudio project on your local machine and continually sync it with the cloud.
 
-## \***\*Prerequisites: Installing Node.js\*\***
+## Prerequisites: Installing Node.js
 
 You need Node.js to use the Webstudio CLI. If Node.js is already installed in your system, you can skip ahead to the section on installing the Webstudio CLI.
 
@@ -18,7 +18,7 @@ Once NVM is installed, you can install Node.js version 18 by running:
 nvm install 18
 ```
 
-After installation, you can check the version of Node.js by running:
+Verify your Node.js installation by checking its version:
 
 ```bash
 node --version
@@ -42,7 +42,7 @@ webstudio-cli --version
 
 1. To keep your CLI updated, use the same command used for installation whenever a new release is available.
 
-### \***\*Initiating a Webstudio Project\*\***
+## Initiating a Webstudio Project
 
 Now, you can run a Webstudio project on your local machine using this command:
 
@@ -64,12 +64,12 @@ Here is the list of independent commands:
 
 ### link
 
-The “link” command syncs your local Webstudio project with the project from the workspace. This means that any changes made in the workspace project can be synced to the local project, once they are published.
+The **`link`** command syncs your local Webstudio project with the project from the workspace. This means that any changes made in the workspace project can be synced to the local project, once they are published.
 
 You can link a project from your workspace with the following command:
 
 ```bash
-webstudio link
+webstudio-cli link
 ```
 
 This command will prompt you to paste a link which you can create using the S*hare* option in your project.
@@ -81,7 +81,7 @@ Make sure to provide B*uild* access when generating the link in Webstudio Cloud.
 Once the project is linked, use the **`sync`** command to sync it with the workspace project:
 
 ```bash
-webstudio sync
+webstudio-cli sync
 ```
 
 Make sure to publish the project in the workspace before running the **`sync`** command in your local Webstudio project.
@@ -91,7 +91,7 @@ Make sure to publish the project in the workspace before running the **`sync`** 
 Now, you can build your project with the **`build`** command:
 
 ```bash
-webstudio build
+webstudio-cli build
 ```
 
 During this phase, the CLI establishes the necessary routes and pages, scaffolding the entire application using the default Remix template. Additionally, all assets, such as images and fonts are downloaded to the **`assets`** folder inside the **`public`** directory.
@@ -110,7 +110,7 @@ vercel deploy
 
 Follow the instructions [here](https://vercel.com/docs/cli) to install the `vercel` CLI.
 
-## \***\*Important Notes\*\***
+## Important Notes
 
 If you use `vercel build` before `vercel deploy`, make sure to clean your `app` folder in the project afterward.
 
