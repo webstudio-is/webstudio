@@ -74,8 +74,6 @@ webstudio-cli link
 
 This command will prompt you to paste a link which you can create using the S*hare* option in your project.
 
-Make sure to provide B*uild* access when generating the link in Webstudio Cloud.
-
 ### sync
 
 Once the project is linked, use the **`sync`** command to sync it with the workspace project:
