@@ -27,7 +27,8 @@ export const initFlow = async (
     const { shouldCreateFolder } = await prompt({
       type: "confirm",
       name: "shouldCreateFolder",
-      message: "Would you like to create a folder?",
+      message:
+        "Would you like to create a project folder? (no to use current folder)",
       initial: true,
     });
 
@@ -61,7 +62,7 @@ export const initFlow = async (
     const { installDeps } = await prompt({
       type: "confirm",
       name: "installDeps",
-      message: "Would you like to install dependencies?",
+      message: "Would you like to install dependencies? (recommended)",
       initial: true,
     });
     shouldInstallDeps = installDeps;
