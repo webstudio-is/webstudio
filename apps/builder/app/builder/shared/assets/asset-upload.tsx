@@ -44,8 +44,17 @@ const useUpload = (type: AssetType) => {
   return { inputRef, onChange };
 };
 
+// https://developers.cloudflare.com/images/image-resizing/format-limitations/
+const imageMimeTypes = [
+  "image/jpeg",
+  "image/png",
+  "image/gif",
+  "image/webp",
+  "image/svg+xml",
+];
+
 const acceptMap = {
-  image: "image/*",
+  image: imageMimeTypes.join(", "),
   font: FONT_MIME_TYPES,
 };
 
