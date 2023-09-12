@@ -7,46 +7,45 @@ import type { Components } from "@webstudio-is/react-sdk";
 import type { Asset } from "@webstudio-is/sdk";
 import {
   Body as Body,
-  Heading as Heading,
+  Image as Image,
 } from "@webstudio-is/sdk-components-react";
-import { Link as Link } from "@webstudio-is/sdk-components-react-remix";
 
 export const components = new Map(
-  Object.entries({ Body: Body, Heading: Heading, Link: Link })
+  Object.entries({ Body: Body, Image: Image })
 ) as Components;
 export const fontAssets: Asset[] = [];
 export const pageData: PageData = {
   build: {
-    props: [],
+    props: [
+      [
+        "HNaXZUvlg14jFvxc29n9T",
+        {
+          id: "HNaXZUvlg14jFvxc29n9T",
+          instanceId: "AdXSAYCx4QDo5QN6nLoGs",
+          name: "src",
+          type: "asset",
+          value: "9a8bc926-7804-4d3f-af81-69196b1d2ed8",
+        },
+      ],
+    ],
     instances: [
       [
-        "xDnAIGJjaOVjOfMU6bbxQ",
+        "EDEfpMPRqDejthtwkH7ws",
         {
           type: "instance",
-          id: "xDnAIGJjaOVjOfMU6bbxQ",
+          id: "EDEfpMPRqDejthtwkH7ws",
           component: "Body",
-          children: [
-            { type: "id", value: "JemPdaC7WmuopS5GTRaRZ" },
-            { type: "id", value: "FZ3JS5mYbAWT3EyQexnaS" },
-          ],
+          children: [{ type: "id", value: "AdXSAYCx4QDo5QN6nLoGs" }],
         },
       ],
       [
-        "JemPdaC7WmuopS5GTRaRZ",
+        "AdXSAYCx4QDo5QN6nLoGs",
         {
           type: "instance",
-          id: "JemPdaC7WmuopS5GTRaRZ",
-          component: "Heading",
-          children: [{ type: "text", value: "Blog" }],
-        },
-      ],
-      [
-        "FZ3JS5mYbAWT3EyQexnaS",
-        {
-          type: "instance",
-          id: "FZ3JS5mYbAWT3EyQexnaS",
-          component: "Link",
-          children: [{ type: "text", value: "Link text you can edit" }],
+          id: "AdXSAYCx4QDo5QN6nLoGs",
+          component: "Image",
+          label: "webp image, used to test raw image uploads",
+          children: [],
         },
       ],
     ],
@@ -70,39 +69,34 @@ export const pageData: PageData = {
       path: "/radix",
     },
     {
-      id: "w9Qwfu1HOP397jLNtq-hc",
-      name: "Blog",
-      title: "Blog",
+      id: "szYLvBduHPmbtqQKCDY0b",
+      name: "RouteWithSymbols",
+      title: "RouteWithSymbols",
       meta: { description: "" },
-      rootInstanceId: "xDnAIGJjaOVjOfMU6bbxQ",
-      path: "/blog",
-    },
-    {
-      id: "hd6G3bz113YtoxD-3lNAI",
-      name: "Page",
-      title: "Page",
-      meta: { description: "" },
-      rootInstanceId: "nEyRUCIYmfkBYUb-MSdDd",
-      path: "/blog/page",
-    },
-    {
-      id: "FGakc6C75caW7hRRn_0lZ",
-      name: "deep-nested-page",
-      title: "deep-nested-page",
-      meta: { description: "" },
-      rootInstanceId: "P_qm1M69qwe6M2aaNBzOH",
-      path: "/blog/page/deep-nested-page",
+      rootInstanceId: "EDEfpMPRqDejthtwkH7ws",
+      path: "/_route_with_symbols_",
     },
   ],
   page: {
-    id: "w9Qwfu1HOP397jLNtq-hc",
-    name: "Blog",
-    title: "Blog",
+    id: "szYLvBduHPmbtqQKCDY0b",
+    name: "RouteWithSymbols",
+    title: "RouteWithSymbols",
     meta: { description: "" },
-    rootInstanceId: "xDnAIGJjaOVjOfMU6bbxQ",
-    path: "/blog",
+    rootInstanceId: "EDEfpMPRqDejthtwkH7ws",
+    path: "/_route_with_symbols_",
   },
   assets: [
+    {
+      id: "9a8bc926-7804-4d3f-af81-69196b1d2ed8",
+      name: "small-avif-kitty_FnabJsioMWpBtXZSGf4DR.webp",
+      description: null,
+      projectId: "cddc1d44-af37-4cb6-a430-d300cf6f932d",
+      size: 2906,
+      type: "image",
+      format: "webp",
+      createdAt: "2023-09-12T09:44:22.120Z",
+      meta: { width: 100, height: 100 },
+    },
     {
       id: "cd939c56-bcdd-4e64-bd9c-567a9bccd3da",
       name: "_937084ed-a798-49fe-8664-df93a2af605e_uiBk3o6UWdqolyakMvQJ9.jpeg",
