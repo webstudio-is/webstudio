@@ -251,7 +251,7 @@ export const prebuild = async (options: {
   for (const asset of siteData.assets) {
     if (asset.type === "image") {
       const imageSrc = imageLoader({
-        width: 1,
+        width: 16,
         quality: 100,
         src: asset.name,
         format: "raw",
