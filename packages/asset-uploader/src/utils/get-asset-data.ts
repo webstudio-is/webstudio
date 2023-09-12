@@ -37,7 +37,9 @@ export const getAssetData = async (
           height: parsed.height,
         };
       }
-    } catch {}
+    } catch {
+      // empty block
+    }
     if (image === undefined) {
       throw new Error("Unknown image format");
     }
