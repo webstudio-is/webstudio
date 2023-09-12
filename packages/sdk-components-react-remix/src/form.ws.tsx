@@ -42,6 +42,13 @@ export const meta: WsComponentMeta = {
           name: "state",
           dataSourceName: "formState",
         },
+        {
+          type: "action",
+          name: "onStateChange",
+          value: [
+            { type: "execute", args: ["state"], code: `formState = state` },
+          ],
+        },
       ],
       children: [
         {

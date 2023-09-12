@@ -97,18 +97,6 @@ export const createElementsTree = ({
         indexesWithinAncestors,
         executeEffectfulExpression,
         setDataSourceValues: onDataSourceUpdate,
-        setBoundDataSourceValue: (instanceId, propName, value) => {
-          const propsByInstanceId = propsByInstanceIdStore.get();
-          const props = propsByInstanceId.get(instanceId);
-          const prop = props?.find((prop) => prop.name === propName);
-          if (prop?.type !== "dataSource") {
-            throw Error(`${propName} is not data source`);
-          }
-          const dataSourceId = prop.value;
-          const newValues = new Map();
-          newValues.set(dataSourceId, value);
-          onDataSourceUpdate(newValues);
-        },
       }}
     >
       {root}
