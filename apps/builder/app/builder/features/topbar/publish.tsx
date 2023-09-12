@@ -500,7 +500,7 @@ const ExportContent = () => {
           Step 1
         </Text>
         <Text color="subtle">
-          Download and install node v18+ from{" "}
+          Download and install Node v18+ from{" "}
           <StyledLink
             href="https://nodejs.org/"
             target="_blank"
@@ -564,10 +564,8 @@ const ExportContent = () => {
             to publish your project on Vercel.
           </Text>
         </Grid>
-
         <Flex gap={2}>
           <InputField css={{ flex: 1 }} readOnly value={npxVercelCommand} />
-
           <Tooltip content={"Copy to clipboard"}>
             <Button
               color="neutral"
@@ -580,6 +578,18 @@ const ExportContent = () => {
             </Button>
           </Tooltip>
         </Flex>
+      </Grid>
+      <Grid columns={1} gap={1}>
+        <Text color="subtle">
+          Read the detailed documentation{" "}
+          <StyledLink
+            href="https://github.com/webstudio-is/webstudio/tree/main/packages/cli"
+            target="_blank"
+            rel="noreferrer"
+          >
+            here
+          </StyledLink>
+        </Text>
       </Grid>
     </Grid>
   );
