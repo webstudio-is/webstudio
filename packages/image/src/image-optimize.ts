@@ -90,6 +90,7 @@ export type ImageLoader = (props: {
   width: number;
   quality: number;
   src: string;
+  format?: "auto" | "raw";
 }) => string;
 
 /**

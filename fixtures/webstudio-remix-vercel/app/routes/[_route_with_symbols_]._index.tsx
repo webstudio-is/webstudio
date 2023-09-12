@@ -21,7 +21,7 @@ import {
   user,
   projectId,
   utils,
-} from "../__generated__/[blog]._index.tsx";
+} from "../__generated__/[_route_with_symbols_]._index.tsx";
 import css from "../__generated__/index.css";
 import type { Data } from "@webstudio-is/http-client";
 import { assetBaseUrl, imageBaseUrl, imageLoader } from "~/constants.ts";

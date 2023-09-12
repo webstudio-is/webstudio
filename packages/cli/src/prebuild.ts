@@ -42,7 +42,7 @@ import {
   parseFolderAndWriteFiles,
   parseFolderAndWriteAssets,
 } from "./fs-utils";
-import { getImageAttributes, createImageLoader } from "@webstudio-is/image";
+import { createImageLoader } from "@webstudio-is/image";
 
 const limit = pLimit(10);
 
@@ -244,32 +244,22 @@ export const prebuild = async (options: {
   const appDomain = options.preview ? "wstd.work" : "wstd.io";
   const assetBuildUrl = `https://${domain}.${appDomain}/cgi/asset/`;
 
+  const imageLoader = createImageLoader({
+    imageBaseUrl: assetBuildUrl,
+  });
+
   for (const asset of siteData.assets) {
     if (asset.type === "image") {
-      const image = getImageAttributes({
-        /*
-          TODO:
-          https://github.com/webstudio-is/webstudio/issues/2135
-          There should be a option in the loader, that allows to download
-          original image instead of the processed one. Right now, we are using
-          the width from the asset meta
-        */
-        width: asset.meta.width,
-        optimize: true,
-        src: asset.name,
+      const imageSrc = imageLoader({
+        width: 1,
         quality: 100,
-        srcSet: undefined,
-        sizes: undefined,
-        loader: createImageLoader({
-          imageBaseUrl: assetBuildUrl,
-        }),
+        src: asset.name,
+        format: "raw",
       });
 
-      if (image?.src) {
-        assetsToDownload.push(
-          limit(() => downloadAsset(image.src, asset.name, temporaryDir))
-        );
-      }
+      assetsToDownload.push(
+        limit(() => downloadAsset(imageSrc, asset.name, temporaryDir))
+      );
     }
 
     if (asset.type === "font") {
