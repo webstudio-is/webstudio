@@ -13,12 +13,6 @@ import pc from "picocolors";
 export const initFlow = async (
   options: StrictYargsOptionsToInterface<typeof buildOptions>
 ) => {
-  await prompt({
-    type: "text",
-    name: "folderName",
-    message: "Please enter a project name",
-  });
-
   const isProjectConfigured = await isFileExists(".webstudio/config.json");
   let shouldInstallDeps = false;
   let folderName;
