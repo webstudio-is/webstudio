@@ -30,15 +30,15 @@ To get started with the Webstudio CLI:
 
 1. Download and install the CLI using the following command:
 
-```bash
-npm install -g webstudio-cli
-```
+   ```bash
+   npm install -g webstudio-cli
+   ```
 
 1. Confirm the installation by checking the CLI version:
 
-```bash
-webstudio-cli --version
-```
+   ```bash
+   webstudio-cli --version
+   ```
 
 1. To keep your CLI updated, use the same command used for installation whenever a new release is available.
 
