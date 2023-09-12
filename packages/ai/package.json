@@ -1,0 +1,45 @@
+{
+  "private": true,
+  "name": "@webstudio-is/ai",
+  "version": "0.1.0",
+  "description": "Webstudio AI Tools",
+  "author": "Webstudio <github@webstudio.is>",
+  "homepage": "https://webstudio.is",
+  "type": "module",
+  "scripts": {
+    "typecheck": "tsc",
+    "test": "NODE_OPTIONS=--experimental-vm-modules jest --passWithNoTests",
+    "checks": "pnpm typecheck && pnpm test",
+    "dev": "pnpm build --watch",
+    "build": "rm -rf lib && pnpm build:prompts && esbuild 'src/**/*.ts' --outdir=lib",
+    "build:prompts": "tsx ./bin/build-prompts.ts \"./src/chains/**/*.prompt.md\"",
+    "dts": "tsc --project tsconfig.dts.json"
+  },
+  "devDependencies": {
+    "@webstudio-is/jest-config": "workspace:^",
+    "@webstudio-is/scripts": "workspace:^",
+    "@webstudio-is/tsconfig": "workspace:^",
+    "fast-glob": "^3.2.12",
+    "jest": "^29.6.4",
+    "type-fest": "^4.3.1",
+    "typescript": "5.2.2"
+  },
+  "exports": {
+    "source": "./src/index.ts",
+    "import": "./lib/index.js",
+    "types": "lib/types/index.d.ts"
+  },
+  "files": [
+    "lib/*",
+    "!*.test.*"
+  ],
+  "license": "MIT",
+  "sideEffects": false,
+  "dependencies": {
+    "@webstudio-is/sdk": "workspace:^",
+    "ai": "^2.2.12",
+    "escape-string-regexp": "^5.0.0",
+    "openai": "4.2.0",
+    "zod": "^3.21.4"
+  }
+}
