@@ -22,6 +22,9 @@ jobs:
 
     steps:
       - uses: actions/checkout@v3
+        with:
+          ref: ${{ github.event.pull_request.head.sha || github.sha }} # HEAD commit instead of merge commit
+
       - uses: ./.github/actions/ci-setup
 
       - name: Creating .npmrc
@@ -34,7 +37,7 @@ jobs:
 
       # compute short sha
       - id: short_sha
-        run: echo "value=$(echo ${{ github.sha }} | cut -c1-7)" >> $GITHUB_OUTPUT
+        run: echo "value=$(echo ${{ github.event.pull_request.head.sha || github.sha }} | cut -c1-7)" >> $GITHUB_OUTPUT
 
       - id: tag
         run: echo "value=$(echo ${{ github.event.label.name }} | cut -d ':' -f2)" >> $GITHUB_OUTPUT
