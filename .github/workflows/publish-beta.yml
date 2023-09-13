@@ -1,0 +1,38 @@
+name: Publish beta packages on NPM 📦
+
+on:
+  pull_request:
+    types:
+      - labeled
+
+jobs:
+  publish:
+    if: github.event.label.name == 'publish:beta'
+
+    timeout-minutes: 20
+
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v3
+      - uses: ./.github/actions/ci-setup
+
+      - run: pnpm turbo run build dts
+
+      - name: Creating .npmrc
+        run: |
+          cat << EOF > "$HOME/.npmrc"
+            //registry.npmjs.org/:_authToken=$NPM_TOKEN
+          EOF
+        env:
+          NPM_TOKEN: ${{ secrets.NPM_TOKEN }}
+
+      # compute short sha
+      - id: short_sha
+        run: echo "value=$(echo ${{ github.sha }} | cut -c1-7)" >> $GITHUB_OUTPUT
+      - run: echo short_sha=${{ steps.short_sha.outputs.value }}
+
+      - name: Creating beta version
+        run: pnpm -r exec pnpm version prepatch --preid ${{ steps.short_sha.outputs.value }}
+
+      - run: pnpm -r publish --tag beta --no-git-checks --dry-run --access public
