@@ -1,3 +1,7 @@
+<a href="https://wstd.us/cli-vid">
+   <img src="https://img.youtube.com/vi/eoyB9DfWdT8/0.jpg" style="width:100%;">
+</a>
+
 ## Webstudio CLI
 
 The Webstudio CLI helps you to `link`, `sync`, and `build` projects from your Webstudio Builder workspace. This README will guide you through the process of setting up a Webstudio project on your local machine and continually sync it with the cloud.
