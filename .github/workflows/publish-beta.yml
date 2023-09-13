@@ -10,7 +10,7 @@ jobs:
     # prevents this action from running on forks
     if: |
       github.repository_owner == 'webstudio-is' &&
-      github.event.label.name == 'publish:beta'
+      startsWith(github.event.label.name, 'publish:')
 
     timeout-minutes: 20
 
@@ -37,9 +37,12 @@ jobs:
       # compute short sha
       - id: short_sha
         run: echo "value=$(echo ${{ github.sha }} | cut -c1-7)" >> $GITHUB_OUTPUT
-      - run: echo short_sha=${{ steps.short_sha.outputs.value }}
 
-      - name: Creating beta version
+      - id: tag
+        run: echo "value=$(echo ${{ github.event.label.name }} | cut -d ':' -f2)" >> $GITHUB_OUTPUT
+
+      - name: Creating version using ${{ steps.short_sha.outputs.value }} sha
         run: pnpm -r exec pnpm version prepatch --preid ${{ steps.short_sha.outputs.value }}
 
-      - run: pnpm -r publish --tag beta --no-git-checks --access public
+      - name: Publishing ${{ steps.tag.outputs.value }} tag with sha ${{ steps.short_sha.outputs.value }}
+        run: pnpm -r publish --dry-run --tag "${{ steps.tag.outputs.value }}" --no-git-checks --access public
