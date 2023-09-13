@@ -1,6 +1,14 @@
-import { join } from "node:path";
+import { basename, dirname, join, normalize } from "node:path";
 import { createWriteStream } from "node:fs";
-import { rm, mkdir, access, mkdtemp, rename } from "node:fs/promises";
+import {
+  rm,
+  access,
+  mkdtemp,
+  rename,
+  cp,
+  readFile,
+  writeFile,
+} from "node:fs/promises";
 import { pipeline } from "node:stream/promises";
 import { tmpdir } from "node:os";
 import { cwd } from "node:process";
@@ -30,18 +38,9 @@ import type { Data } from "@webstudio-is/http-client";
 import * as baseComponentMetas from "@webstudio-is/sdk-components-react/metas";
 import * as remixComponentMetas from "@webstudio-is/sdk-components-react-remix/metas";
 import * as radixComponentMetas from "@webstudio-is/sdk-components-react-radix/metas";
-
-import { templates } from "./__generated__/templates";
-import { assets } from "./__generated__/assets";
-import { getRouteTemplate } from "./__generated__/router";
 import { ASSETS_BASE, LOCAL_DATA_FILE } from "./config";
-import {
-  ensureFileInPath,
-  ensureFolderExists,
-  loadJSONFile,
-  parseFolderAndWriteFiles,
-  parseFolderAndWriteAssets,
-} from "./fs-utils";
+import { ensureFileInPath, ensureFolderExists, loadJSONFile } from "./fs-utils";
+import merge from "deepmerge";
 import { createImageLoader } from "@webstudio-is/image";
 
 const limit = pLimit(10);
@@ -79,6 +78,7 @@ export const downloadAsset = async (
 ) => {
   const assetPath = join("public", ASSETS_BASE, name);
   const tempAssetPath = join(temporaryDir, name);
+
   try {
     await access(assetPath);
   } catch {
@@ -99,11 +99,59 @@ export const downloadAsset = async (
         writableStream
       );
 
+      await ensureFolderExists(dirname(assetPath));
       await rename(tempAssetPath, assetPath);
     } catch (error) {
       console.error(`Error in downloading file ${name} \n ${error}`);
     }
   }
+};
+
+const mergeJsonFiles = async (sourcePath: string, destinationPath: string) => {
+  const sourceJson = await readFile(sourcePath, "utf8");
+  const destinationJson = await readFile(destinationPath, "utf8").catch(
+    (error) => {
+      if (
+        error instanceof Error &&
+        "code" in error &&
+        error.code === "ENOENT"
+      ) {
+        return "{}";
+      }
+
+      throw new Error(error);
+    }
+  );
+  const content = JSON.stringify(
+    merge(JSON.parse(sourceJson), JSON.parse(destinationJson)),
+    null,
+    "  "
+  );
+
+  await writeFile(destinationPath, content, "utf8");
+};
+
+const copyTemplates = async () => {
+  const templatesPath = normalize(
+    join(
+      dirname(new URL(import.meta.url).pathname),
+      "..",
+      "templates",
+      "defaults"
+    )
+  );
+
+  await cp(templatesPath, cwd(), {
+    recursive: true,
+    filter: (source) => {
+      return basename(source) !== "package.json";
+    },
+  });
+
+  await mergeJsonFiles(
+    join(templatesPath, "package.json"),
+    join(cwd(), "package.json")
+  );
 };
 
 export const prebuild = async (options: {
@@ -119,24 +167,9 @@ export const prebuild = async (options: {
   const spinner = ora("Scaffolding the project files");
   spinner.start();
 
-  spinner.text = "Generating default files";
-  await parseFolderAndWriteFiles(templates["defaults"], cwd());
+  spinner.text = "Generating files";
 
-  spinner.text = "Generating assets";
-  await parseFolderAndWriteAssets(assets, cwd());
-
-  const appRoot = "app";
-  const routesDir = join(appRoot, "routes");
-  await rm(routesDir, { recursive: true, force: true });
-  await mkdir(routesDir, { recursive: true });
-
-  const temporaryDir = await mkdtemp(join(tmpdir(), "webstudio-"));
-
-  const generatedDir = join(appRoot, "__generated__");
-  await rm(generatedDir, { recursive: true, force: true });
-  await mkdir(generatedDir, { recursive: true });
-
-  await ensureFolderExists(join("public", ASSETS_BASE));
+  await copyTemplates();
 
   const siteData = await loadJSONFile<
     Data & { user?: { email: string | null } }
@@ -244,6 +277,8 @@ export const prebuild = async (options: {
   const appDomain = options.preview ? "wstd.work" : "wstd.io";
   const assetBuildUrl = `https://${domain}.${appDomain}/cgi/asset/`;
 
+  const temporaryDir = await mkdtemp(join(tmpdir(), "webstudio-"));
+
   const imageLoader = createImageLoader({
     imageBaseUrl: assetBuildUrl,
   });
@@ -277,6 +312,27 @@ export const prebuild = async (options: {
   }
 
   spinner.text = "Generating routes and pages";
+
+  const appRoot = "app";
+
+  const generatedDir = join(appRoot, "__generated__");
+  await rm(generatedDir, { recursive: true, force: true });
+
+  const routesDir = join(appRoot, "routes");
+  await rm(routesDir, { recursive: true, force: true });
+
+  const routeFileTemplate = await readFile(
+    normalize(
+      join(
+        dirname(new URL(import.meta.url).pathname),
+        "..",
+        "templates",
+        "route-template.tsx"
+      )
+    ),
+    "utf8"
+  );
+
   for (const [pathName, pageComponents] of Object.entries(componentsByPage)) {
     const scope = createScope([
       // manually maintained list of occupied identifiers
@@ -395,14 +451,12 @@ ${utilsExport}
             .map((route) => `[${route}]`)
             .join(".")}._index.tsx`;
 
-    let routeFile = getRouteTemplate();
-
-    routeFile = routeFile.replace(
+    const routeFileContent = routeFileTemplate.replace(
       "../__generated__/index",
       join("../__generated__", fileName)
     );
 
-    await ensureFileInPath(join(routesDir, fileName), routeFile);
+    await ensureFileInPath(join(routesDir, fileName), routeFileContent);
     await ensureFileInPath(join(generatedDir, fileName), pageExports);
   }
 
