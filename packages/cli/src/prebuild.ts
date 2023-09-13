@@ -174,7 +174,7 @@ export const prebuild = async (options: {
   await copyTemplates();
 
   const constantsJson =
-    await $`node --experimental-specifier-resolution=node --input-type=module --eval ${`import * as consts from '${join(
+    await $`node --input-type=module --eval ${`import * as consts from '${join(
       cwd(),
       "app/constants.mjs"
     )}'; console.log(JSON.stringify(consts))`}`;
