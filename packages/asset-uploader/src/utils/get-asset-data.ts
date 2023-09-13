@@ -1,5 +1,5 @@
 import { z } from "zod";
-import sharp from "sharp";
+import { imageSize } from "image-size";
 import { FontMeta } from "@webstudio-is/fonts";
 import { ImageMeta } from "@webstudio-is/sdk";
 import { getFontData } from "./font-data";
@@ -27,15 +27,24 @@ export const getAssetData = async (
   options: AssetOptions
 ): Promise<AssetData> => {
   if (options.type === "image") {
-    const sharpImage = sharp(options.data);
-    const { width, height, format } = await sharpImage.metadata();
-    if (format === undefined) {
+    let image: undefined | { format: string; width: number; height: number };
+    try {
+      const parsed = imageSize(Buffer.from(options.data));
+      if (parsed.type && parsed.width && parsed.height) {
+        image = {
+          format: parsed.type,
+          width: parsed.width,
+          height: parsed.height,
+        };
+      }
+    } catch {
+      // empty block
+    }
+    if (image === undefined) {
       throw new Error("Unknown image format");
     }
-    if (width === undefined || height === undefined) {
-      throw new Error("Unknown image dimensions");
-    }
 
+    const { format, width, height } = image;
     return {
       size: options.size,
       format,
