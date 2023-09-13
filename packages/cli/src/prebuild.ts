@@ -465,7 +465,7 @@ ${utilsExport}
 
     const routeFileContent = routeFileTemplate.replace(
       "../__generated__/index",
-      join("../__generated__", fileName)
+      `../__generated__/${fileName}`
     );
 
     await ensureFileInPath(join(routesDir, fileName), routeFileContent);
