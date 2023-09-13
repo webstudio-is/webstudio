@@ -143,6 +143,19 @@ const copyTemplates = async () => {
     )
   );
 
+  console.log("\n1: ", dirname(new URL(import.meta.url).pathname));
+  console.log(
+    "\n2: ",
+    normalize(
+      join(
+        dirname(new URL(import.meta.url).pathname),
+        "..",
+        "templates",
+        "defaults"
+      )
+    )
+  );
+
   await cp(templatesPath, cwd(), {
     recursive: true,
     filter: (source) => {
