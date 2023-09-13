@@ -43,6 +43,7 @@ import { ensureFileInPath, ensureFolderExists, loadJSONFile } from "./fs-utils";
 import merge from "deepmerge";
 import { createImageLoader } from "@webstudio-is/image";
 import { $ } from "execa";
+import { fileURLToPath } from "node:url";
 
 const limit = pLimit(10);
 
@@ -134,18 +135,11 @@ const mergeJsonFiles = async (sourcePath: string, destinationPath: string) => {
 };
 
 const copyTemplates = async () => {
-  const templatesPath = normalize(
-    join(
-      dirname(new URL(import.meta.url).pathname),
-      "..",
-      "templates",
-      "defaults"
-    )
-  );
+  const currentPath = fileURLToPath(new URL(import.meta.url));
 
-  console.log("\n0", import.meta.url);
-  console.log("\n1: ", dirname(new URL(import.meta.url).pathname));
-  console.log("\n2: ", templatesPath);
+  const templatesPath = normalize(
+    join(dirname(currentPath), "..", "templates", "defaults")
+  );
 
   await cp(templatesPath, cwd(), {
     recursive: true,
@@ -345,7 +339,7 @@ export const prebuild = async (options: {
   const routeFileTemplate = await readFile(
     normalize(
       join(
-        dirname(new URL(import.meta.url).pathname),
+        dirname(fileURLToPath(new URL(import.meta.url))),
         "..",
         "templates",
         "route-template.tsx"
