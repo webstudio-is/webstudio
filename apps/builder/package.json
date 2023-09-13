@@ -98,6 +98,7 @@
     "slugify": "^1.6.6",
     "strip-indent": "^4.0.0",
     "title-case": "^3.0.3",
+    "untruncate-json": "^0.0.1",
     "use-debounce": "^9.0.4",
     "uuid": "^9.0.0",
     "warn-once": "^0.1.1",
