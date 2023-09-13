@@ -39,4 +39,4 @@ jobs:
       - name: Creating beta version
         run: pnpm -r exec pnpm version prepatch --preid ${{ steps.short_sha.outputs.value }}
 
-      - run: pnpm -r publish --tag beta --no-git-checks --dry-run --access public
+      - run: pnpm -r publish --tag beta --no-git-checks --access public
