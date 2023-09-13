@@ -38,10 +38,11 @@ import type { Data } from "@webstudio-is/http-client";
 import * as baseComponentMetas from "@webstudio-is/sdk-components-react/metas";
 import * as remixComponentMetas from "@webstudio-is/sdk-components-react-remix/metas";
 import * as radixComponentMetas from "@webstudio-is/sdk-components-react-radix/metas";
-import { ASSETS_BASE, LOCAL_DATA_FILE } from "./config";
+import { LOCAL_DATA_FILE } from "./config";
 import { ensureFileInPath, ensureFolderExists, loadJSONFile } from "./fs-utils";
 import merge from "deepmerge";
 import { createImageLoader } from "@webstudio-is/image";
+import { $ } from "execa";
 
 const limit = pLimit(10);
 
@@ -74,9 +75,10 @@ type RemixRoutes = {
 export const downloadAsset = async (
   url: string,
   name: string,
+  assetBaseUrl: string,
   temporaryDir: string
 ) => {
-  const assetPath = join("public", ASSETS_BASE, name);
+  const assetPath = join("public", assetBaseUrl, name);
   const tempAssetPath = join(temporaryDir, name);
 
   try {
@@ -170,6 +172,18 @@ export const prebuild = async (options: {
   spinner.text = "Generating files";
 
   await copyTemplates();
+
+  const constantsJson =
+    await $`node --experimental-specifier-resolution=node --input-type=module --eval ${`import * as consts from '${join(
+      cwd(),
+      "app/constants.mjs"
+    )}'; console.log(JSON.stringify(consts))`}`;
+
+  const constants = JSON.parse(constantsJson.stdout);
+  const assetBaseUrl =
+    "assetBaseUrl" in constants
+      ? (constants.assetBaseUrl as string)
+      : "/assets";
 
   const siteData = await loadJSONFile<
     Data & { user?: { email: string | null } }
@@ -293,7 +307,9 @@ export const prebuild = async (options: {
       });
 
       assetsToDownload.push(
-        limit(() => downloadAsset(imageSrc, asset.name, temporaryDir))
+        limit(() =>
+          downloadAsset(imageSrc, asset.name, assetBaseUrl, temporaryDir)
+        )
       );
     }
 
@@ -303,6 +319,7 @@ export const prebuild = async (options: {
           downloadAsset(
             `${assetBuildUrl}${asset.name}`,
             asset.name,
+            assetBaseUrl,
             temporaryDir
           )
         )
@@ -470,7 +487,7 @@ ${utilsExport}
       componentMetas,
     },
     {
-      assetBaseUrl: ASSETS_BASE,
+      assetBaseUrl,
     }
   );
   await ensureFileInPath(join(generatedDir, "index.css"), cssText);

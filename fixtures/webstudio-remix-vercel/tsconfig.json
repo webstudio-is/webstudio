@@ -1,5 +1,5 @@
 {
-  "include": ["remix.env.d.ts", "**/*.ts", "**/*.tsx"],
+  "include": ["remix.env.d.ts", "**/*.ts", "**/*.tsx", "**/*.mjs"],
   "compilerOptions": {
     "lib": ["DOM", "DOM.Iterable", "ES2022"],
     "isolatedModules": true,
@@ -10,6 +10,7 @@
     "target": "ES2022",
     "strict": true,
     "allowJs": true,
+    "checkJs": true,
     "forceConsistentCasingInFileNames": true,
     "allowImportingTsExtensions": true,
     "baseUrl": ".",

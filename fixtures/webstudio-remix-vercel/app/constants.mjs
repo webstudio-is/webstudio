@@ -1,9 +1,10 @@
-import type { ImageLoader } from "@webstudio-is/image";
-
 export const assetBaseUrl = "/assets/";
 export const imageBaseUrl = "/assets/";
 
-export const imageLoader: ImageLoader = ({ quality, src, width }) => {
+/**
+ * @type {import("@webstudio-is/image").ImageLoader}
+ */
+export const imageLoader = ({ quality, src, width }) => {
   if (process.env.NODE_ENV !== "production") {
     return imageBaseUrl + src;
   }

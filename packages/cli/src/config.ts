@@ -11,9 +11,6 @@ export const GLOBAL_CONFIG_FILE = join(
 export const LOCAL_CONFIG_FILE = ".webstudio/config.json";
 export const LOCAL_DATA_FILE = ".webstudio/data.json";
 
-// @todo remove
-export const ASSETS_BASE = "/assets/";
-
 export type LocalConfig = {
   projectId: string;
 };
