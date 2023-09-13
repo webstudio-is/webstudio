@@ -7,7 +7,10 @@ on:
 
 jobs:
   publish:
-    if: github.event.label.name == 'publish:beta'
+    # prevents this action from running on forks
+    if: |
+      github.repository_owner == 'webstudio-is' &&
+      github.event.label.name == 'publish:beta'
 
     timeout-minutes: 20
 
