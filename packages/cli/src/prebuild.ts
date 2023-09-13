@@ -172,10 +172,7 @@ export const prebuild = async (options: {
   await copyTemplates();
 
   const constantsJson =
-    await $`node --input-type=module --eval ${`import * as consts from '${join(
-      cwd(),
-      "app/constants.mjs"
-    )}'; console.log(JSON.stringify(consts))`}`;
+    await $`node --input-type=module --eval ${`import * as consts from './app/constants.mjs'; console.log(JSON.stringify(consts))`}`;
 
   const constants = JSON.parse(constantsJson.stdout);
   const assetBaseUrl =
