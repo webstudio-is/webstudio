@@ -7,11 +7,7 @@ import {
 import type { ReadableAtom } from "nanostores";
 import type { Instance, Instances, Assets } from "@webstudio-is/sdk";
 import type { Components } from "../components/components-utils";
-import {
-  type Params,
-  type DataSourceValues,
-  ReactSdkContext,
-} from "../context";
+import { type Params, ReactSdkContext } from "../context";
 import type { Pages, PropsByInstanceId } from "../props";
 import type { WebstudioComponentProps } from "./webstudio-component";
 import type { IndexesWithinAncestors } from "../instance-utils";
@@ -29,9 +25,7 @@ export const createElementsTree = ({
   propsByInstanceIdStore,
   assetsStore,
   pagesStore,
-  dataSourceValuesStore,
-  executeEffectfulExpression,
-  onDataSourceUpdate,
+  dataSourcesLogicStore,
   indexesWithinAncestors,
   Component,
   components,
@@ -43,13 +37,7 @@ export const createElementsTree = ({
   propsByInstanceIdStore: ReadableAtom<PropsByInstanceId>;
   assetsStore: ReadableAtom<Assets>;
   pagesStore: ReadableAtom<Pages>;
-  executeEffectfulExpression: (
-    expression: string,
-    args: DataSourceValues,
-    values: DataSourceValues
-  ) => DataSourceValues;
-  dataSourceValuesStore: ReadableAtom<DataSourceValues>;
-  onDataSourceUpdate: (newValues: DataSourceValues) => void;
+  dataSourcesLogicStore: ReadableAtom<Map<string, unknown>>;
   indexesWithinAncestors: IndexesWithinAncestors;
 
   Component: ForwardRefExoticComponent<
@@ -89,14 +77,12 @@ export const createElementsTree = ({
         propsByInstanceIdStore,
         assetsStore,
         pagesStore,
-        dataSourceValuesStore,
+        dataSourcesLogicStore,
         renderer,
         imageLoader,
         assetBaseUrl,
         imageBaseUrl,
         indexesWithinAncestors,
-        executeEffectfulExpression,
-        setDataSourceValues: onDataSourceUpdate,
       }}
     >
       {root}

@@ -35,22 +35,11 @@ export const projectId = "project-id";
 
 const indexesWithinAncestors = new Map<string, number>([]);
 
-const executeComputingExpressions = (
-  variables: Map<string, unknown>
-): Map<string, unknown> => {
-  return new Map();
-};
-
-const executeEffectfulExpression = (
-  code: string,
-  args: Map<string, unknown>,
-  variables: Map<string, unknown>
-): Map<string, unknown> => {
+const getDataSourcesLogic = () => {
   return new Map();
 };
 
 export const utils = {
   indexesWithinAncestors,
-  executeComputingExpressions,
-  executeEffectfulExpression,
+  getDataSourcesLogic,
 };

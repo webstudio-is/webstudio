@@ -1,6 +1,6 @@
 import { type ReadableAtom, atom } from "nanostores";
 import { createContext } from "react";
-import type { DataSource, Assets } from "@webstudio-is/sdk";
+import type { Assets } from "@webstudio-is/sdk";
 import type { Pages, PropsByInstanceId } from "./props";
 import type { IndexesWithinAncestors } from "./instance-utils";
 import type { ImageLoader } from "@webstudio-is/image";
@@ -32,21 +32,13 @@ export type Params = {
   assetBaseUrl: string;
 };
 
-export type DataSourceValues = Map<DataSource["id"], unknown>;
-
 export const ReactSdkContext = createContext<
   Params & {
     imageLoader: ImageLoader;
     propsByInstanceIdStore: ReadableAtom<PropsByInstanceId>;
     assetsStore: ReadableAtom<Assets>;
     pagesStore: ReadableAtom<Pages>;
-    dataSourceValuesStore: ReadableAtom<DataSourceValues>;
-    executeEffectfulExpression: (
-      expression: string,
-      args: DataSourceValues,
-      values: DataSourceValues
-    ) => DataSourceValues;
-    setDataSourceValues: (newValues: DataSourceValues) => void;
+    dataSourcesLogicStore: ReadableAtom<Map<string, unknown>>;
     indexesWithinAncestors: IndexesWithinAncestors;
   }
 >({
@@ -56,12 +48,6 @@ export const ReactSdkContext = createContext<
   propsByInstanceIdStore: atom(new Map()),
   assetsStore: atom(new Map()),
   pagesStore: atom(new Map()),
-  dataSourceValuesStore: atom(new Map()),
-  executeEffectfulExpression: () => {
-    throw Error("React SDK executeEffectfulExpression is not implemented");
-  },
-  setDataSourceValues: () => {
-    throw Error("React SDK setDataSourceValues is not implemented");
-  },
+  dataSourcesLogicStore: atom(new Map()),
   indexesWithinAncestors: new Map(),
 });

@@ -34,16 +34,14 @@ export const getPropsByInstanceId = (props: Props) => {
 export const useInstanceProps = (instanceId: Instance["id"]) => {
   const {
     propsByInstanceIdStore,
-    dataSourceValuesStore,
-    executeEffectfulExpression,
-    setDataSourceValues,
+    dataSourcesLogicStore,
     indexesWithinAncestors,
   } = useContext(ReactSdkContext);
   const index = indexesWithinAncestors.get(instanceId);
   const instancePropsObjectStore = useMemo(() => {
     return computed(
-      [propsByInstanceIdStore, dataSourceValuesStore],
-      (propsByInstanceId, dataSourceValues) => {
+      [propsByInstanceIdStore, dataSourcesLogicStore],
+      (propsByInstanceId, dataSourcesLogic) => {
         const instancePropsObject: Record<Prop["name"], unknown> = {};
         if (index !== undefined) {
           instancePropsObject[indexAttribute] = index.toString();
@@ -58,29 +56,17 @@ export const useInstanceProps = (instanceId: Instance["id"]) => {
           }
           if (prop.type === "dataSource") {
             const dataSourceId = prop.value;
-            const value = dataSourceValues.get(dataSourceId);
+            const value = dataSourcesLogic.get(dataSourceId);
             if (value !== undefined) {
               instancePropsObject[prop.name] = value;
             }
             continue;
           }
           if (prop.type === "action") {
-            instancePropsObject[prop.name] = (...args: unknown[]) => {
-              for (const value of prop.value) {
-                if (value.type === "execute") {
-                  const argsMap = new Map<string, unknown>();
-                  for (const [i, name] of value.args.entries()) {
-                    argsMap.set(name, args[i]);
-                  }
-                  const newValues = executeEffectfulExpression(
-                    value.code,
-                    argsMap,
-                    dataSourceValues
-                  );
-                  setDataSourceValues(newValues);
-                }
-              }
-            };
+            const action = dataSourcesLogic.get(prop.id);
+            if (typeof action === "function") {
+              instancePropsObject[prop.name] = action;
+            }
             continue;
           }
           instancePropsObject[prop.name] = prop.value;
@@ -88,14 +74,7 @@ export const useInstanceProps = (instanceId: Instance["id"]) => {
         return instancePropsObject;
       }
     );
-  }, [
-    propsByInstanceIdStore,
-    dataSourceValuesStore,
-    instanceId,
-    executeEffectfulExpression,
-    setDataSourceValues,
-    index,
-  ]);
+  }, [propsByInstanceIdStore, dataSourcesLogicStore, instanceId, index]);
   const instancePropsObject = useStore(instancePropsObjectStore);
   return instancePropsObject;
 };

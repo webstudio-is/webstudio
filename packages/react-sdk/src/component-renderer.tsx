@@ -1,6 +1,6 @@
 import type { ExoticComponent } from "react";
 import type { Instance } from "@webstudio-is/sdk";
-import { getStyleDeclKey } from "@webstudio-is/sdk";
+import { createScope, getStyleDeclKey } from "@webstudio-is/sdk";
 import type { WsComponentMeta } from "./components/component-meta";
 import {
   WsEmbedTemplate,
@@ -8,13 +8,7 @@ import {
 } from "./embed-template";
 import { generateCssText } from "./css";
 import { InstanceRoot, WebstudioComponent } from "./tree";
-import {
-  decodeVariablesMap,
-  encodeDataSourceVariable,
-  encodeVariablesMap,
-  executeComputingExpressions,
-  executeEffectfulExpression,
-} from "./expression";
+import { generateDataSources } from "./expression";
 import { getIndexesWithinAncestors } from "./instance-utils";
 import type { ImageLoader } from "@webstudio-is/image";
 
@@ -120,25 +114,43 @@ export const renderComponentTemplate = ({
             new Map(instances),
             ["root"]
           ),
-          executeComputingExpressions: (values) => {
-            const expressions = new Map<string, string>();
-            for (const dataSource of data.dataSources) {
-              const name = encodeDataSourceVariable(dataSource.id);
-              if (dataSource.type === "expression") {
-                expressions.set(name, dataSource.code);
-              }
+          getDataSourcesLogic(getVariable, setVariable) {
+            const { variables, body, output } = generateDataSources({
+              scope: createScope(["_getVariable", "_setVariable", "_output"]),
+              props: new Map(data.props.map((prop) => [prop.id, prop])),
+              dataSources: new Map(
+                data.dataSources.map((dataSource) => [
+                  dataSource.id,
+                  dataSource,
+                ])
+              ),
+            });
+            let generatedCode = "";
+            for (const [dataSourceId, variable] of variables) {
+              const { valueName, setterName } = variable;
+              const initialValue = JSON.stringify(variable.initialValue);
+              generatedCode += `let ${valueName} = _getVariable("${dataSourceId}") ?? ${initialValue};\n`;
+              generatedCode += `let ${setterName} = (value) => _setVariable("${dataSourceId}", value);\n`;
             }
-            return decodeVariablesMap(
-              executeComputingExpressions(
-                expressions,
-                encodeVariablesMap(values)
-              )
-            );
-          },
-          executeEffectfulExpression: (code, args, values) => {
-            return decodeVariablesMap(
-              executeEffectfulExpression(code, args, encodeVariablesMap(values))
-            );
+            generatedCode += body;
+            generatedCode += `let _output = new Map();\n`;
+            for (const [dataSourceId, variableName] of output) {
+              generatedCode += `_output.set('${dataSourceId}', ${variableName})\n`;
+            }
+            generatedCode += `return _output\n`;
+
+            try {
+              const executeFn = new Function(
+                "_getVariable",
+                "_setVariable",
+                generatedCode
+              );
+              return executeFn(getVariable, setVariable);
+            } catch (error) {
+              // eslint-disable-next-line no-console
+              console.error(error);
+            }
+            return new Map();
           },
         }}
         Component={WebstudioComponent}

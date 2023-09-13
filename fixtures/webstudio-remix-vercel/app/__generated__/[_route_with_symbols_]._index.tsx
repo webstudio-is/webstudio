@@ -1,7 +1,6 @@
 /* eslint-disable */
 /* This is a auto generated file for building the project */
 
-import * as sdk from "@webstudio-is/react-sdk";
 import type { PageData } from "~/routes/_index";
 import type { Components } from "@webstudio-is/react-sdk";
 import type { Asset } from "@webstudio-is/sdk";
@@ -119,52 +118,17 @@ export const projectId = "cddc1d44-af37-4cb6-a430-d300cf6f932d";
 
 const indexesWithinAncestors = new Map<string, number>([]);
 
-const rawExecuteComputingExpressions = (
-  _variables: Map<string, unknown>
-): Map<string, unknown> => {
-  return new Map([]);
-};
-const executeComputingExpressions = (variables: Map<string, unknown>) => {
-  const encodedvariables = sdk.encodeVariablesMap(variables);
-  const encodedResult = rawExecuteComputingExpressions(encodedvariables);
-  return sdk.decodeVariablesMap(encodedResult);
-};
-
-const generatedEffectfulExpressions = new Map<
-  string,
-  (args: Map<string, any>, variables: Map<string, any>) => Map<string, unknown>
->([]);
-
-const rawExecuteEffectfulExpression = (
-  code: string,
-  args: Map<string, unknown>,
-  variables: Map<string, unknown>
-): Map<string, unknown> => {
-  if (generatedEffectfulExpressions.has(code)) {
-    return generatedEffectfulExpressions.get(code)!(args, variables);
-  }
-  console.error("Effectful expression not found", code);
-  throw new Error("Effectful expression not found");
-};
-
-const executeEffectfulExpression = (
-  code: string,
-  args: Map<string, unknown>,
-  variables: Map<string, unknown>
+const getDataSourcesLogic = (
+  _getVariable: (id: string) => unknown,
+  _setVariable: (id: string, value: unknown) => void
 ) => {
-  const encodedvariables = sdk.encodeVariablesMap(variables);
-  const encodedResult = rawExecuteEffectfulExpression(
-    code,
-    args,
-    encodedvariables
-  );
-  return sdk.decodeVariablesMap(encodedResult);
+  let _output = new Map();
+  return _output;
 };
 
 export const utils = {
   indexesWithinAncestors,
-  executeComputingExpressions,
-  executeEffectfulExpression,
+  getDataSourcesLogic,
 };
 
 /* eslint-enable */
