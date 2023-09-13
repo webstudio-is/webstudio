@@ -1,5 +1,6 @@
-
-[![name](https://github.com/webstudio-is/webstudio/assets/52824/70a318ca-6d23-4ee2-bb60-fab6c480574b)](https://wstd.us/cli-vid)
+<a href="https://wstd.us/cli-vid">
+   <img src="https://img.youtube.com/vi/eoyB9DfWdT8/0.jpg" style="width:100%;">
+</a>
 
 ## Webstudio CLI
 
