@@ -100,29 +100,45 @@ export const collectTextInstances = ({
     return textInstances;
   }
 
-  rootInstance.children.forEach((child, index) => {
-    if (child.type === "text") {
-      if (textComponents.has(rootInstance.component)) {
-        const nodeType =
-          rootInstance.component === "Heading" ? "Heading" : "Paragraph";
+  // Instances can have a number of text child nodes without interleaving components.
+  // When this is the case we treat the child nodes as a single text node,
+  // otherwise the AI would generate children.length chunks of separate text.
+  // To signal that a textInstance is "joint" we set the index to -1.
+  if (rootInstance.children.every((child) => child.type === "text")) {
+    const nodeType =
+      rootInstance.component === "Heading" ? "Heading" : "Paragraph";
 
-        textInstances.push({
-          instanceId: rootInstanceId,
-          index,
-          type: nodeType,
-          text: child.value,
-        });
+    textInstances.push({
+      instanceId: rootInstanceId,
+      index: -1,
+      type: nodeType,
+      text: rootInstance.children.map((child) => child.value).join(" "),
+    });
+  } else {
+    rootInstance.children.forEach((child, index) => {
+      if (child.type === "text") {
+        if (textComponents.has(rootInstance.component)) {
+          const nodeType =
+            rootInstance.component === "Heading" ? "Heading" : "Paragraph";
+
+          textInstances.push({
+            instanceId: rootInstanceId,
+            index,
+            type: nodeType,
+            text: child.value,
+          });
+        }
+      } else if (child.type === "id") {
+        textInstances.push(
+          ...collectTextInstances({
+            instances,
+            rootInstanceId: child.value,
+            textComponents,
+          })
+        );
       }
-    } else if (child.type === "id") {
-      textInstances.push(
-        ...collectTextInstances({
-          instances,
-          rootInstanceId: child.value,
-          textComponents,
-        })
-      );
-    }
-  });
+    });
+  }
 
   return textInstances;
 };
