@@ -26,6 +26,7 @@ import {
   executeComputingExpressions,
   encodeDataSourceVariable,
   decodeDataSourceVariable,
+  generateDataSources,
 } from "@webstudio-is/react-sdk";
 import type { Style } from "@webstudio-is/css-engine";
 import type { DragStartPayload } from "~/canvas/shared/use-drag-drop";
@@ -38,7 +39,6 @@ import { instancesStore, selectedInstanceSelectorStore } from "./instances";
 import { selectedPageStore } from "./pages";
 import type { UnitSizes } from "~/builder/features/style-panel/shared/css-value-input/convert-units";
 import type { Project } from "@webstudio-is/project";
-import { generateDataSources } from "node_modules/@webstudio-is/react-sdk/src/expression";
 
 const useValue = <T>(atom: WritableAtom<T>) => {
   const value = useStore(atom);
