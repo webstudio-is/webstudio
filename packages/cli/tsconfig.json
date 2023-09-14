@@ -1,9 +1,12 @@
 {
   "extends": "@webstudio-is/tsconfig/base.json",
+  "include": ["**/*.ts", "**/*.tsx", "**/*.mjs"],
   "compilerOptions": {
     "module": "esnext",
+    "allowJs": true,
+    "checkJs": true,
     "paths": {
-      "~/constants.ts": ["./templates/defaults/app/constants.ts"]
+      "~/constants.mjs": ["./templates/defaults/app/constants.mjs"]
     }
   }
 }

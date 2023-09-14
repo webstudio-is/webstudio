@@ -1,6 +1,5 @@
 import { ensureFolderExists, isFileExists } from "../fs-utils";
-import { chdir, cwd, stdout as shellOutput } from "node:process";
-import { spawn } from "node:child_process";
+import { chdir, cwd } from "node:process";
 import { join } from "node:path";
 import ora from "ora";
 import { link } from "./link";
@@ -9,6 +8,7 @@ import { build, buildOptions } from "./build";
 import { prompt } from "../prompts";
 import type { StrictYargsOptionsToInterface } from "./yargs-types";
 import pc from "picocolors";
+import { $ } from "execa";
 
 export const initFlow = async (
   options: StrictYargsOptionsToInterface<typeof buildOptions>
@@ -68,10 +68,7 @@ export const initFlow = async (
   if (shouldInstallDeps === true) {
     const spinner = ora().start();
     spinner.text = "Installing dependencies";
-    const { stderr } = await exec("npm", ["install"]);
-    if (stderr) {
-      throw stderr;
-    }
+    await $`npm install`;
     spinner.succeed("Installed dependencies");
   }
 
@@ -86,31 +83,4 @@ export const initFlow = async (
       .filter(Boolean)
       .join("\n")
   );
-};
-
-const exec = (
-  command: string,
-  args?: ReadonlyArray<string>
-): Promise<{ stdout: string; stderr: string }> => {
-  return new Promise((resolve, reject) => {
-    const process = spawn(command, args);
-    let stdout = "";
-    let stderr = "";
-    process.on("error", reject);
-    process.on("exit", (code) => {
-      if (code !== 0) {
-        reject({ stdout, stderr });
-      } else {
-        resolve({ stdout, stderr });
-      }
-    });
-
-    process.stderr.setEncoding("utf8");
-    process.stdout.setEncoding("utf8");
-    process.stdout.on("data", (data) => {
-      stdout += data;
-      shellOutput.write(data);
-    });
-    process.stderr.on("error", (error) => (stderr += error));
-  });
 };
