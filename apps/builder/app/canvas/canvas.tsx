@@ -2,14 +2,11 @@ import { useMemo, useEffect } from "react";
 import { useStore } from "@nanostores/react";
 import { computed } from "nanostores";
 import { Scripts, ScrollRestoration } from "@remix-run/react";
-import type { DataSource, Instances, Page } from "@webstudio-is/sdk";
+import type { Instances, Page } from "@webstudio-is/sdk";
 import {
   type Params,
   type Components,
   createElementsTree,
-  executeEffectfulExpression,
-  encodeVariablesMap,
-  decodeVariablesMap,
   getIndexesWithinAncestors,
 } from "@webstudio-is/react-sdk";
 import * as baseComponents from "@webstudio-is/sdk-components-react";
@@ -43,11 +40,10 @@ import {
   useIsPreviewMode,
   selectedPageStore,
   registerComponentLibrary,
-  dataSourceValuesStore,
-  dataSourceVariablesStore,
   registeredComponentsStore,
   registeredComponentMetasStore,
   subscribeComponentHooks,
+  dataSourcesLogicStore,
 } from "~/shared/nano-states";
 import { useDragAndDrop } from "./shared/use-drag-drop";
 import { useCopyPaste } from "~/shared/copy-paste";
@@ -67,21 +63,6 @@ const propsByInstanceIdStore = computed(
   propsIndexStore,
   (propsIndex) => propsIndex.propsByInstanceId
 );
-
-const executeEffectfulExpressionWithDecodedVariables: typeof executeEffectfulExpression =
-  (code, args, values) => {
-    return decodeVariablesMap(
-      executeEffectfulExpression(code, args, encodeVariablesMap(values))
-    );
-  };
-
-const onDataSourceUpdate = (newValues: Map<DataSource["id"], unknown>) => {
-  const dataSourceVariables = new Map(dataSourceVariablesStore.get());
-  for (const [dataSourceId, value] of newValues) {
-    dataSourceVariables.set(dataSourceId, value);
-  }
-  dataSourceVariablesStore.set(dataSourceVariables);
-};
 
 const useElementsTree = (
   components: Components,
@@ -137,10 +118,7 @@ const useElementsTree = (
       propsByInstanceIdStore,
       assetsStore,
       pagesStore: pagesMapStore,
-      dataSourceValuesStore,
-      executeEffectfulExpression:
-        executeEffectfulExpressionWithDecodedVariables,
-      onDataSourceUpdate,
+      dataSourcesLogicStore,
       Component: isPreviewMode
         ? WebstudioComponentPreview
         : WebstudioComponentCanvas,

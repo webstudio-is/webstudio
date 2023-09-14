@@ -1,21 +1,17 @@
-import type {
-  DataSources,
-  Instance,
-  Instances,
-  Page,
-  Props,
+import {
+  createScope,
+  type DataSources,
+  type Instance,
+  type Instances,
+  type Page,
+  type Props,
 } from "@webstudio-is/sdk";
 import type { WsComponentMeta } from "./components/component-meta";
 import {
   getIndexesWithinAncestors,
   type IndexesWithinAncestors,
 } from "./instance-utils";
-import {
-  encodeDataSourceVariable,
-  generateComputingExpressions,
-  generateEffectfulExpression,
-} from "./expression";
-import type { DataSourceValues } from "./context";
+import { generateDataSources } from "./expression";
 
 type PageData = {
   page: Page;
@@ -27,12 +23,10 @@ type PageData = {
 
 export type GeneratedUtils = {
   indexesWithinAncestors: IndexesWithinAncestors;
-  executeComputingExpressions: (values: DataSourceValues) => DataSourceValues;
-  executeEffectfulExpression: (
-    expression: string,
-    args: DataSourceValues,
-    values: DataSourceValues
-  ) => DataSourceValues;
+  getDataSourcesLogic: (
+    getVariable: (id: string) => unknown,
+    setVariable: (id: string, value: unknown) => void
+  ) => Map<string, unknown>;
 };
 
 /**
@@ -58,88 +52,41 @@ export const generateUtilsExport = (siteData: PageData) => {
   ]);
   `;
 
-  const variables = new Set<string>();
-  const expressions = new Map<string, string>();
-  for (const dataSource of siteData.dataSources.values()) {
-    if (dataSource.type === "variable") {
-      variables.add(encodeDataSourceVariable(dataSource.id));
-    }
-    if (dataSource.type === "expression") {
-      expressions.set(encodeDataSourceVariable(dataSource.id), dataSource.code);
-    }
+  const { variables, body, output } = generateDataSources({
+    scope: createScope(["_getVariable", "_setVariable", "_output"]),
+    typed: true,
+    dataSources: siteData.dataSources,
+    props: siteData.props,
+  });
+  let generatedDataSources = "";
+  generatedDataSources += `const getDataSourcesLogic = (\n`;
+  generatedDataSources += `  _getVariable: (id: string) => unknown,\n`;
+  generatedDataSources += `  _setVariable: (id: string, value: unknown) => void\n`;
+  generatedDataSources += `) => {\n`;
+  for (const [dataSourceId, variable] of variables) {
+    const { valueName, setterName } = variable;
+    const initialValue = JSON.stringify(variable.initialValue);
+    generatedDataSources += `let ${valueName} = _getVariable("${dataSourceId}") ?? ${initialValue};\n`;
+    generatedDataSources += `let ${setterName} = (value: unknown) => _setVariable("${dataSourceId}", value);\n`;
   }
-  const generatedExecuteComputingExpressions = `
-  const rawExecuteComputingExpressions = (
-    _variables: Map<string, unknown>
-  ): Map<string, unknown> => {
-    ${generateComputingExpressions(expressions, variables)}
-  };
-  const executeComputingExpressions = (variables: Map<string, unknown>) => {
-    const encodedvariables = sdk.encodeVariablesMap(variables);
-    const encodedResult = rawExecuteComputingExpressions(encodedvariables);
-    return sdk.decodeVariablesMap(encodedResult);
-  };
-  `;
-
-  let effectfulExpressionsEntries = "";
-  for (const prop of siteData.props.values()) {
-    if (prop.type === "action") {
-      for (const executableValue of prop.value) {
-        const codeString = JSON.stringify(executableValue.code);
-        const generatedCode = generateEffectfulExpression(
-          executableValue.code,
-          new Set(executableValue.args),
-          variables
-        );
-        const generatedFunction = `(_args: Map<string, any>, _variables: Map<string, any>) => { ${generatedCode} }`;
-
-        effectfulExpressionsEntries += `[${codeString}, ${generatedFunction}],\n`;
-      }
-    }
+  generatedDataSources += body;
+  generatedDataSources += `let _output = new Map();\n`;
+  for (const [dataSourceId, variableName] of output) {
+    generatedDataSources += `_output.set('${dataSourceId}', ${variableName})\n`;
   }
-  const generatedExecuteEffectfulExpression = `const generatedEffectfulExpressions = new Map<
-    string,
-    (args: Map<string, any>, variables: Map<string, any>) => Map<string, unknown>
-  >([
-  ${effectfulExpressionsEntries}
-  ]);
-
-  const rawExecuteEffectfulExpression = (
-    code: string,
-    args: Map<string, unknown>,
-    variables: Map<string, unknown>
-  ): Map<string, unknown> => {
-    if(generatedEffectfulExpressions.has(code)) {
-      return generatedEffectfulExpressions.get(code)!(args, variables);
-    }
-    console.error("Effectful expression not found", code);
-    throw new Error("Effectful expression not found");
-  };
-
-  const executeEffectfulExpression = (
-    code: string,
-    args: Map<string, unknown>,
-    variables: Map<string, unknown>
-  ) => {
-    const encodedvariables = sdk.encodeVariablesMap(variables);
-    const encodedResult = rawExecuteEffectfulExpression(code, args, encodedvariables);
-    return sdk.decodeVariablesMap(encodedResult);
-  };
-  `;
+  generatedDataSources += `return _output\n`;
+  generatedDataSources += `}\n`;
 
   return `
   /* eslint-disable */
 
   ${generatedIndexesWithinAncestors.trim()}
 
-  ${generatedExecuteComputingExpressions.trim()}
-
-  ${generatedExecuteEffectfulExpression.trim()}
+  ${generatedDataSources}
 
   export const utils = {
     indexesWithinAncestors,
-    executeComputingExpressions,
-    executeEffectfulExpression,
+    getDataSourcesLogic,
   };
 
   /* eslint-enable */

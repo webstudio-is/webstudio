@@ -348,7 +348,6 @@ export const prebuild = async (options: {
   for (const [pathName, pageComponents] of Object.entries(componentsByPage)) {
     const scope = createScope([
       // manually maintained list of occupied identifiers
-      "sdk",
       "PageData",
       "Components",
       "Asset",
@@ -427,7 +426,6 @@ export const prebuild = async (options: {
 
     const pageExports = `/* eslint-disable */
 /* This is a auto generated file for building the project */ \n
-import * as sdk from "@webstudio-is/react-sdk";
 import type { PageData } from "~/routes/_index";
 import type { Components } from "@webstudio-is/react-sdk";
 import type { Asset } from "@webstudio-is/sdk";

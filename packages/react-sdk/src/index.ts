@@ -32,6 +32,7 @@ export {
   encodeVariablesMap,
   decodeDataSourceVariable,
   decodeVariablesMap,
+  generateDataSources,
 } from "./expression";
 export { renderComponentTemplate } from "./component-renderer";
 export { getIndexesWithinAncestors } from "./instance-utils";

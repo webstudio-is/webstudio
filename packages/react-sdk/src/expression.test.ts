@@ -8,7 +8,9 @@ import {
   generateComputingExpressions,
   generateEffectfulExpression,
   validateExpression,
+  generateDataSources,
 } from "./expression";
+import { createScope } from "@webstudio-is/sdk";
 
 test("allow literals and array expressions", () => {
   expect(
@@ -304,6 +306,176 @@ test("handle cyclic dependencies", () => {
     new Map([
       ["exp2", new Set(["var1", "exp1", "exp2"])],
       ["exp1", new Set(["var1", "exp1", "exp2"])],
+    ])
+  );
+});
+
+test("generate variables with actions", () => {
+  const generated = generateDataSources({
+    scope: createScope(),
+    dataSources: new Map([
+      [
+        "dataSource1",
+        {
+          id: "dataSource1",
+          scopeInstanceId: "instance1",
+          type: "variable",
+          name: "myVar",
+          value: { type: "string", value: "initial" },
+        },
+      ],
+      [
+        "dataSource2",
+        {
+          id: "dataSource2",
+          scopeInstanceId: "instance1",
+          type: "variable",
+          name: "myVar",
+          value: { type: "string", value: "initial" },
+        },
+      ],
+    ]),
+    props: new Map([
+      [
+        "prop1",
+        {
+          id: "prop1",
+          instanceId: "instance1",
+          type: "action",
+          name: "onChange",
+          value: [
+            {
+              type: "execute",
+              args: ["value"],
+              code: `$ws$dataSource$dataSource1 = value`,
+            },
+            {
+              type: "execute",
+              args: ["value"],
+              code: `$ws$dataSource$dataSource1 = 'success'`,
+            },
+          ],
+        },
+      ],
+      [
+        "prop2",
+        {
+          id: "prop2",
+          instanceId: "instance1",
+          type: "action",
+          name: "onSelect",
+          value: [
+            {
+              type: "execute",
+              args: [],
+              code: `$ws$dataSource$dataSource2 = 'error'`,
+            },
+          ],
+        },
+      ],
+    ]),
+  });
+  expect(generated.body).toMatchInlineSnapshot(`
+    "let onChange = (value) => {
+    myVar = value
+    myVar = 'success'
+    set$myVar(myVar)
+    }
+    let onSelect = () => {
+    myVar_1 = 'error'
+    set$myVar_1(myVar_1)
+    }
+    "
+  `);
+  expect(generated.variables).toEqual(
+    new Map([
+      [
+        "dataSource1",
+        {
+          initialValue: "initial",
+          setterName: "set$myVar",
+          valueName: "myVar",
+        },
+      ],
+      [
+        "dataSource2",
+        {
+          initialValue: "initial",
+          setterName: "set$myVar_1",
+          valueName: "myVar_1",
+        },
+      ],
+    ])
+  );
+  expect(generated.output).toEqual(
+    new Map([
+      ["dataSource1", "myVar"],
+      ["dataSource2", "myVar_1"],
+      ["prop1", "onChange"],
+      ["prop2", "onSelect"],
+    ])
+  );
+});
+
+test("generate variables with sorted expressions", () => {
+  const generated = generateDataSources({
+    scope: createScope(),
+    dataSources: new Map([
+      [
+        "dataSource1",
+        {
+          id: "dataSource1",
+          scopeInstanceId: "instance1",
+          type: "variable",
+          name: "myVar",
+          value: { type: "string", value: "initial" },
+        },
+      ],
+      [
+        "dataSource2",
+        {
+          id: "dataSource2",
+          scopeInstanceId: "instance1",
+          type: "expression",
+          name: "myExp",
+          code: `$ws$dataSource$dataSource3 + "Name"`,
+        },
+      ],
+      [
+        "dataSource3",
+        {
+          id: "dataSource3",
+          scopeInstanceId: "instance1",
+          type: "expression",
+          name: "myExp",
+          code: `$ws$dataSource$dataSource1 + "Value"`,
+        },
+      ],
+    ]),
+    props: new Map(),
+  });
+  expect(generated.body).toMatchInlineSnapshot(`
+"let myExp = (myVar + "Value");
+let myExp_1 = (myExp + "Name");
+"
+`);
+  expect(generated.variables).toEqual(
+    new Map([
+      [
+        "dataSource1",
+        {
+          initialValue: "initial",
+          setterName: "set$myVar",
+          valueName: "myVar",
+        },
+      ],
+    ])
+  );
+  expect(generated.output).toEqual(
+    new Map([
+      ["dataSource1", "myVar"],
+      ["dataSource2", "myExp_1"],
+      ["dataSource3", "myExp"],
     ])
   );
 });

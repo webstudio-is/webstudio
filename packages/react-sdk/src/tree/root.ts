@@ -1,6 +1,5 @@
 import {
   useRef,
-  useCallback,
   type ForwardRefExoticComponent,
   type RefAttributes,
   type ReactNode,
@@ -25,9 +24,11 @@ import {
 } from "./webstudio-component";
 import { getPropsByInstanceId } from "../props";
 import type { Components } from "../components/components-utils";
-import type { Params, DataSourceValues } from "../context";
+import type { Params } from "../context";
 import type { GeneratedUtils } from "../generator";
 import type { ImageLoader } from "@webstudio-is/image";
+
+type DataSourceValues = Map<DataSource["id"], unknown>;
 
 export type RootPropsData = {
   params?: Params;
@@ -60,11 +61,7 @@ export const InstanceRoot = ({
   scripts,
   imageLoader,
 }: RootProps): JSX.Element | null => {
-  const {
-    indexesWithinAncestors,
-    executeComputingExpressions,
-    executeEffectfulExpression,
-  } = utils;
+  const { indexesWithinAncestors, getDataSourcesLogic } = utils;
   const dataSourceVariablesStoreRef = useRef<
     undefined | WritableAtom<DataSourceValues>
   >(undefined);
@@ -73,50 +70,33 @@ export const InstanceRoot = ({
   }
   const dataSourceVariablesStore = dataSourceVariablesStoreRef.current;
 
-  const dataSourceValuesStoreRef = useRef<
+  const dataSourcesLogicStoreRef = useRef<
     undefined | ReadableAtom<DataSourceValues>
   >(undefined);
-  if (dataSourceValuesStoreRef.current === undefined) {
-    dataSourceValuesStoreRef.current = computed(
+  if (dataSourcesLogicStoreRef.current === undefined) {
+    dataSourcesLogicStoreRef.current = computed(
       dataSourceVariablesStore,
       (dataSourceVariables) => {
-        // set vriables with defaults
-        const dataSourceValues: DataSourceValues = new Map();
-        for (const [dataSourceId, dataSource] of data.build.dataSources) {
-          if (dataSource.type === "variable") {
-            const value =
-              dataSourceVariables.get(dataSourceId) ?? dataSource.value.value;
-            dataSourceValues.set(dataSourceId, value);
-          }
-        }
-
-        // set expression values
         try {
-          const result = executeComputingExpressions(dataSourceValues);
-          for (const [id, value] of result) {
-            dataSourceValues.set(id, value);
-          }
+          const getVariable = (id: string) => {
+            return dataSourceVariables.get(id);
+          };
+          const setVariable = (id: string, value: unknown) => {
+            const dataSourceVariables = new Map(dataSourceVariablesStore.get());
+            dataSourceVariables.set(id, value);
+            dataSourceVariablesStore.set(dataSourceVariables);
+          };
+          return getDataSourcesLogic(getVariable, setVariable);
         } catch (error) {
           // eslint-disable-next-line no-console
           console.error(error);
         }
 
-        return dataSourceValues;
+        return new Map();
       }
     );
   }
-  const dataSourceValuesStore = dataSourceValuesStoreRef.current;
-
-  const onDataSourceUpdate = useCallback(
-    (newValues: DataSourceValues) => {
-      const dataSourceVariables = new Map(dataSourceVariablesStore.get());
-      for (const [dataSourceId, value] of newValues) {
-        dataSourceVariables.set(dataSourceId, value);
-      }
-      dataSourceVariablesStore.set(dataSourceVariables);
-    },
-    [dataSourceVariablesStore]
-  );
+  const dataSourcesLogicStore = dataSourcesLogicStoreRef.current;
 
   return createElementsTree({
     imageLoader,
@@ -130,9 +110,7 @@ export const InstanceRoot = ({
     assetsStore: atom(new Map(data.assets.map((asset) => [asset.id, asset]))),
     pagesStore: atom(new Map(data.pages.map((page) => [page.id, page]))),
     indexesWithinAncestors,
-    executeEffectfulExpression,
-    dataSourceValuesStore,
-    onDataSourceUpdate,
+    dataSourcesLogicStore,
     Component: Component ?? WebstudioComponent,
     components,
     scripts,

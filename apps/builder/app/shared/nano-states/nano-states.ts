@@ -4,27 +4,29 @@ import { useStore } from "@nanostores/react";
 import { nanoid } from "nanoid";
 import type { AuthPermit } from "@webstudio-is/trpc-interface/index.server";
 import type { ItemDropTarget, Placement } from "@webstudio-is/design-system";
-import type {
-  Asset,
-  Assets,
-  Breakpoint,
-  DataSource,
-  DataSources,
-  Instance,
-  Prop,
-  Props,
-  StyleDecl,
-  StyleDeclKey,
-  Styles,
-  StyleSource,
-  StyleSources,
-  StyleSourceSelection,
-  StyleSourceSelections,
+import {
+  createScope,
+  type Asset,
+  type Assets,
+  type Breakpoint,
+  type DataSource,
+  type DataSources,
+  type Instance,
+  type Prop,
+  type Props,
+  type StyleDecl,
+  type StyleDeclKey,
+  type Styles,
+  type StyleSource,
+  type StyleSources,
+  type StyleSourceSelection,
+  type StyleSourceSelections,
 } from "@webstudio-is/sdk";
 import {
   executeComputingExpressions,
   encodeDataSourceVariable,
   decodeDataSourceVariable,
+  generateDataSources,
 } from "@webstudio-is/react-sdk";
 import type { Style } from "@webstudio-is/css-engine";
 import type { DragStartPayload } from "~/canvas/shared/use-drag-drop";
@@ -136,6 +138,53 @@ export const useSetProps = (props: [Prop["id"], Prop][]) => {
     propsStore.set(new Map(props));
   });
 };
+
+// result of executing generated code
+// includes variables, computed expressions and action callbacks
+export const dataSourcesLogicStore = computed(
+  [dataSourcesStore, dataSourceVariablesStore, propsStore],
+  (dataSources, dataSourceVariables, props) => {
+    const { variables, body, output } = generateDataSources({
+      scope: createScope(["_getVariable", "_setVariable", "_output"]),
+      dataSources,
+      props,
+    });
+    let generatedCode = "";
+    for (const [dataSourceId, variable] of variables) {
+      const { valueName, setterName } = variable;
+      const initialValue = JSON.stringify(variable.initialValue);
+      generatedCode += `let ${valueName} = _getVariable("${dataSourceId}") ?? ${initialValue};\n`;
+      generatedCode += `let ${setterName} = (value) => _setVariable("${dataSourceId}", value);\n`;
+    }
+    generatedCode += body;
+    generatedCode += `let _output = new Map();\n`;
+    for (const [dataSourceId, variableName] of output) {
+      generatedCode += `_output.set('${dataSourceId}', ${variableName})\n`;
+    }
+    generatedCode += `return _output\n`;
+
+    try {
+      const executeFn = new Function(
+        "_getVariable",
+        "_setVariable",
+        generatedCode
+      );
+      const getVariable = (id: string) => {
+        return dataSourceVariables.get(id);
+      };
+      const setVariable = (id: string, value: unknown) => {
+        const dataSourceVariables = new Map(dataSourceVariablesStore.get());
+        dataSourceVariables.set(id, value);
+        dataSourceVariablesStore.set(dataSourceVariables);
+      };
+      return executeFn(getVariable, setVariable);
+    } catch (error) {
+      // eslint-disable-next-line no-console
+      console.error(error);
+    }
+    return new Map();
+  }
+);
 
 export const stylesStore = atom<Styles>(new Map());
 
