@@ -33,8 +33,8 @@ import {
   assetsStore,
   projectStore,
   registeredComponentMetasStore,
-  dataSourceValuesStore,
   dataSourcesStore,
+  dataSourcesLogicStore,
 } from "../nano-states";
 import {
   type InstanceSelector,
@@ -246,7 +246,7 @@ const getTreeData = (targetInstanceSelector: InstanceSelector) => {
     treeDataSources.map((dataSource) => dataSource.id)
   );
 
-  const dataSourceValues = dataSourceValuesStore.get();
+  const dataSourcesLogic = dataSourcesLogicStore.get();
   const treeProps = getMapValuesBy(propsStore.get(), (prop) =>
     treeInstanceIds.has(prop.instanceId)
   ).map((prop) => {
@@ -258,7 +258,7 @@ const getTreeData = (targetInstanceSelector: InstanceSelector) => {
       }
       // convert data source prop to typed prop
       // when data source is not scoped to one of copied instances
-      const value = dataSourceValues.get(dataSourceId);
+      const value = dataSourcesLogic.get(dataSourceId);
       return {
         id: prop.id,
         instanceId: prop.instanceId,

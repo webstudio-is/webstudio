@@ -23,15 +23,9 @@ export {
 export { type Params, ReactSdkContext } from "./context";
 export {
   validateExpression,
-  generateComputingExpressions,
-  executeComputingExpressions,
-  generateEffectfulExpression,
-  executeEffectfulExpression,
   computeExpressionsDependencies,
   encodeDataSourceVariable,
-  encodeVariablesMap,
   decodeDataSourceVariable,
-  decodeVariablesMap,
   generateDataSources,
 } from "./expression";
 export { renderComponentTemplate } from "./component-renderer";
