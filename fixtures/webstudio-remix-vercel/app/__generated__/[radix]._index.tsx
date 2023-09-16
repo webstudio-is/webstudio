@@ -2,6 +2,7 @@
 /* This is a auto generated file for building the project */
 
 import type { PageData } from "~/routes/_index";
+import * as sdk from "@webstudio-is/react-sdk";
 import type { Components } from "@webstudio-is/react-sdk";
 import type { Asset } from "@webstudio-is/sdk";
 import {
@@ -460,21 +461,61 @@ const indexesWithinAncestors = new Map<string, number>([
   ["65djoTmSBGemZ2L5izQ5M", 2],
 ]);
 
-const getDataSourcesLogic = (
-  _getVariable: (id: string) => unknown,
-  _setVariable: (id: string, value: unknown) => void
+const rawExecuteComputingExpressions = (
+  _variables: Map<string, unknown>
+): Map<string, unknown> => {
+  return new Map([]);
+};
+const executeComputingExpressions = (variables: Map<string, unknown>) => {
+  const encodedvariables = sdk.encodeVariablesMap(variables);
+  const encodedResult = rawExecuteComputingExpressions(encodedvariables);
+  return sdk.decodeVariablesMap(encodedResult);
+};
+
+const generatedEffectfulExpressions = new Map<
+  string,
+  (args: Map<string, any>, variables: Map<string, any>) => Map<string, unknown>
+>([
+  [
+    "$ws$dataSource$RR_FthRebEUcAKUJIXl0j = value",
+    (_args: Map<string, any>, _variables: Map<string, any>) => {
+      let value = _args.get("value");
+      let $ws$dataSource$RR_FthRebEUcAKUJIXl0j;
+      $ws$dataSource$RR_FthRebEUcAKUJIXl0j = value;
+      return new Map([
+        [
+          "$ws$dataSource$RR_FthRebEUcAKUJIXl0j",
+          $ws$dataSource$RR_FthRebEUcAKUJIXl0j,
+        ],
+      ]);
+    },
+  ],
+]);
+
+const rawExecuteEffectfulExpression = (
+  code: string,
+  args: Map<string, unknown>,
+  variables: Map<string, unknown>
+): Map<string, unknown> => {
+  if (generatedEffectfulExpressions.has(code)) {
+    return generatedEffectfulExpressions.get(code)!(args, variables);
+  }
+  console.error("Effectful expression not found", code);
+  throw new Error("Effectful expression not found");
+};
+
+const executeEffectfulExpression = (
+  code: string,
+  args: Map<string, unknown>,
+  variables: Map<string, unknown>
 ) => {
-  let accordionValue = _getVariable("RR_FthRebEUcAKUJIXl0j") ?? "0";
-  let set$accordionValue = (value: unknown) =>
-    _setVariable("RR_FthRebEUcAKUJIXl0j", value);
-  let onValueChange = (value: any) => {
-    accordionValue = value;
-    set$accordionValue(accordionValue);
-  };
-  let _output = new Map();
-  _output.set("RR_FthRebEUcAKUJIXl0j", accordionValue);
-  _output.set("UZg-1PcrNODgUo94IvnGC", onValueChange);
-  return _output;
+  const encodedvariables = sdk.encodeVariablesMap(variables);
+  const encodedResult = rawExecuteEffectfulExpression(
+    code,
+    args,
+    encodedvariables
+  );
+  return sdk.decodeVariablesMap(encodedResult);
 };
 
 export const formsProperties = new Map<
@@ -484,7 +525,8 @@ export const formsProperties = new Map<
 
 export const utils = {
   indexesWithinAncestors,
-  getDataSourcesLogic,
+  executeComputingExpressions,
+  executeEffectfulExpression,
 };
 
 /* eslint-enable */
