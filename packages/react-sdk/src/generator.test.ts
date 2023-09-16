@@ -86,6 +86,39 @@ test("generates utils", () => {
             ],
           },
         ],
+
+        [
+          "method1Id",
+          {
+            id: "method1Id",
+            instanceId: "1",
+            name: "method",
+            type: "string",
+            value: "post",
+          },
+        ],
+
+        [
+          "method2Id",
+          {
+            id: "method2Id",
+            instanceId: "2",
+            name: "method",
+            type: "string",
+            value: "get",
+          },
+        ],
+
+        [
+          "action1Id",
+          {
+            id: "action1Id",
+            instanceId: "2",
+            name: "action",
+            type: "string",
+            value: "/index.php",
+          },
+        ],
       ]),
       dataSources: new Map([
         [
@@ -126,6 +159,8 @@ test("generates utils", () => {
   return _output
   }
 
+
+    export const formsProperties = new Map<string, { method?: string, action?: string }>([["1",{"method":"post"}],["2",{"method":"get","action":"/index.php"}]])
 
     export const utils = {
       indexesWithinAncestors,

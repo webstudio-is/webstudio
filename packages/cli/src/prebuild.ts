@@ -356,6 +356,7 @@ export const prebuild = async (options: {
       "pageData",
       "user",
       "projectId",
+      "formsProperties",
       "indexesWithinAncestors",
       "getDataSourcesLogic",
       "utils",

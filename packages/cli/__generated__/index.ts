@@ -39,6 +39,11 @@ const getDataSourcesLogic = () => {
   return new Map();
 };
 
+export const formsProperties = new Map<
+  string,
+  { method?: string; action?: string }
+>([]);
+
 export const utils = {
   indexesWithinAncestors,
   getDataSourcesLogic,

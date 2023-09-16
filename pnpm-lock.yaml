@@ -954,10 +954,6 @@ importers:
         version: 3.21.4
 
   packages/form-handlers:
-    dependencies:
-      '@webstudio-is/sdk':
-        specifier: workspace:^
-        version: link:../sdk
     devDependencies:
       '@webstudio-is/tsconfig':
         specifier: workspace:^
