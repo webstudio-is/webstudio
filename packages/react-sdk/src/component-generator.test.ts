@@ -1,6 +1,11 @@
 import { expect, test } from "@jest/globals";
 import stripIndent from "strip-indent";
-import { createScope, type Instance, type Prop } from "@webstudio-is/sdk";
+import {
+  createScope,
+  type DataSource,
+  type Instance,
+  type Prop,
+} from "@webstudio-is/sdk";
 import { showAttribute } from "./tree/webstudio-component";
 import {
   generateJsxChildren,
@@ -31,6 +36,12 @@ const createPropPair = (prop: Prop): [Prop["id"], Prop] => {
   return [prop.id, prop];
 };
 
+const createDataSourcePair = (
+  dataSource: DataSource
+): [DataSource["id"], DataSource] => {
+  return [dataSource.id, dataSource];
+};
+
 test("generate jsx element with children and without them", () => {
   expect(
     generateJsxElement({
@@ -39,6 +50,7 @@ test("generate jsx element with children and without them", () => {
         { type: "id", value: "childId" },
       ]),
       props: new Map(),
+      dataSources: new Map(),
       indexesWithinAncestors: new Map(),
       children: "Children\n",
     })
@@ -56,6 +68,7 @@ test("generate jsx element with children and without them", () => {
       scope: createScope(),
       instance: createInstance("image", "Image", []),
       props: new Map(),
+      dataSources: new Map(),
       indexesWithinAncestors: new Map(),
       children: "Children\n",
     })
@@ -76,6 +89,7 @@ test("generate jsx element with namespaces components", () => {
         { type: "id", value: "childId" },
       ]),
       props: new Map(),
+      dataSources: new Map(),
       indexesWithinAncestors: new Map(),
       children: "Children\n",
     })
@@ -93,6 +107,7 @@ test("generate jsx element with namespaces components", () => {
       scope: createScope(),
       instance: createInstance("image", "@webstudio-is/library:Image", []),
       props: new Map(),
+      dataSources: new Map(),
       indexesWithinAncestors: new Map(),
       children: "Children\n",
     })
@@ -143,6 +158,7 @@ test("generate jsx element with literal props", () => {
         { type: "id", value: "image" },
       ]),
       props,
+      dataSources: new Map(),
       indexesWithinAncestors: new Map(),
       children: "Children\n",
     })
@@ -162,6 +178,7 @@ test("generate jsx element with literal props", () => {
       scope: createScope(),
       instance: createInstance("image", "Image", []),
       props,
+      dataSources: new Map(),
       indexesWithinAncestors: new Map(),
       children: "",
     })
@@ -197,6 +214,7 @@ test("ignore asset and page props", () => {
           value: "assetId",
         }),
       ]),
+      dataSources: new Map(),
       indexesWithinAncestors: new Map(),
       children: "",
     })
@@ -247,6 +265,20 @@ test("generate jsx element with data sources and action", () => {
           ],
         }),
       ]),
+      dataSources: new Map([
+        createDataSourcePair({
+          type: "variable",
+          id: "variableId",
+          name: "variableName",
+          value: { type: "number", value: 0 },
+        }),
+        createDataSourcePair({
+          type: "expression",
+          id: "expressionId",
+          name: "expressionName",
+          code: `$ws$dataSource$variableId + 1`,
+        }),
+      ]),
       indexesWithinAncestors: new Map(),
       children: "",
     })
@@ -255,8 +287,8 @@ test("generate jsx element with data sources and action", () => {
       <Box
       data-ws-id="box"
       data-ws-component="Box"
-      variable={$ws$dataSource$variableId}
-      expression={$ws$dataSource$expressionId}
+      variable={variableName}
+      expression={expressionName}
       onClick={onClick}
       onChange={onChange} />
     `)
@@ -277,6 +309,7 @@ test("generate jsx element with condition based on show prop", () => {
           value: true,
         }),
       ]),
+      dataSources: new Map(),
       indexesWithinAncestors: new Map(),
       children: "",
     })
@@ -300,6 +333,7 @@ test("generate jsx element with condition based on show prop", () => {
           value: false,
         }),
       ]),
+      dataSources: new Map(),
       indexesWithinAncestors: new Map(),
       children: "",
     })
@@ -314,7 +348,15 @@ test("generate jsx element with condition based on show prop", () => {
           instanceId: "box",
           type: "dataSource",
           name: showAttribute,
-          value: "condition",
+          value: "conditionId",
+        }),
+      ]),
+      dataSources: new Map([
+        createDataSourcePair({
+          type: "variable",
+          id: "conditionId",
+          name: "conditionName",
+          value: { type: "boolean", value: false },
         }),
       ]),
       indexesWithinAncestors: new Map(),
@@ -322,7 +364,7 @@ test("generate jsx element with condition based on show prop", () => {
     })
   ).toEqual(
     clear(`
-      {$ws$dataSource$condition &&
+      {conditionName &&
       <Box
       data-ws-id="box"
       data-ws-component="Box" />
@@ -337,6 +379,7 @@ test("generate jsx element with index prop", () => {
       scope: createScope(),
       instance: createInstance("box", "Box", []),
       props: new Map(),
+      dataSources: new Map(),
       indexesWithinAncestors: new Map([["box", 5]]),
       children: "",
     })
@@ -360,6 +403,7 @@ test("generate jsx children with text", () => {
       ],
       instances: new Map(),
       props: new Map(),
+      dataSources: new Map(),
       indexesWithinAncestors: new Map(),
     })
   ).toEqual(
@@ -394,6 +438,7 @@ test("generate jsx children with nested instances", () => {
           value: "value",
         }),
       ]),
+      dataSources: new Map(),
       indexesWithinAncestors: new Map(),
     })
   ).toEqual(
@@ -430,6 +475,7 @@ test("deduplicate base and namespaced components with same short name", () => {
         ),
       ]),
       props: new Map(),
+      dataSources: new Map(),
       indexesWithinAncestors: new Map(),
     })
   ).toEqual(
@@ -444,7 +490,7 @@ test("deduplicate base and namespaced components with same short name", () => {
   );
 });
 
-test("generate page component", () => {
+test("generate page component with data sources", () => {
   expect(
     generatePageComponent({
       scope: createScope(),
@@ -453,13 +499,21 @@ test("generate page component", () => {
         createInstancePair("body", "Body", [{ type: "id", value: "input" }]),
         createInstancePair("input", "Input", []),
       ]),
+      dataSources: new Map([
+        createDataSourcePair({
+          type: "variable",
+          id: "variableId",
+          name: "variableName",
+          value: { type: "string", value: "initial" },
+        }),
+      ]),
       props: new Map([
         createPropPair({
           id: "1",
           instanceId: "input",
           name: "value",
           type: "dataSource",
-          value: "variable",
+          value: "variableId",
         }),
         createPropPair({
           id: "2",
@@ -470,7 +524,7 @@ test("generate page component", () => {
             {
               type: "execute",
               args: ["value"],
-              code: `$ws$dataSource$variable = value`,
+              code: `$ws$dataSource$variableId = value`,
             },
           ],
         }),
@@ -480,17 +534,11 @@ test("generate page component", () => {
   ).toEqual(
     clear(`
       export const Page = (props: { scripts: ReactNode }) => {
-      const { dataSourceValuesStore, setDataSourceValues, executeEffectfulExpression } = useContext(ReactSdkContext);
-      const dataSourceValues = useStore(dataSourceValuesStore);
-      const $ws$dataSource$variable = dataSourceValues.get("variable");
-      const onChange = (value: unknown) => {
-      const newValues = executeEffectfulExpression(
-      value.code,
-      new Map([["value", value]]),
-      dataSourceValues
-      );
-      setDataSourceValues(newValues);
-      };
+      let [variableName, set$variableName] = useState("initial")
+      let onChange = (value) => {
+      variableName = value
+      set$variableName(variableName)
+      }
       return <Body
       data-ws-id="body"
       data-ws-component="Body">
@@ -498,81 +546,11 @@ test("generate page component", () => {
       data-ws-id="input"
       data-ws-component="Input"
       data-ws-index="0"
-      value={$ws$dataSource$variable}
+      value={variableName}
       onChange={onChange} />
       {props.scripts}
       </Body>
-      };
-    `)
-  );
-});
-
-test("deduplicate action names", () => {
-  expect(
-    generatePageComponent({
-      scope: createScope(),
-      rootInstanceId: "body",
-      instances: new Map([
-        createInstancePair("body", "Body", [
-          { type: "id", value: "button1" },
-          { type: "id", value: "button2" },
-        ]),
-        createInstancePair("button1", "Button", []),
-        createInstancePair("button2", "Button", []),
-      ]),
-      props: new Map([
-        createPropPair({
-          id: "1",
-          instanceId: "button1",
-          name: "onChange",
-          type: "action",
-          value: [{ type: "execute", args: [], code: "" }],
-        }),
-        createPropPair({
-          id: "2",
-          instanceId: "button2",
-          name: "onChange",
-          type: "action",
-          value: [{ type: "execute", args: [], code: "" }],
-        }),
-      ]),
-      indexesWithinAncestors: new Map([["input", 0]]),
-    })
-  ).toEqual(
-    clear(`
-      export const Page = (props: { scripts: ReactNode }) => {
-      const { dataSourceValuesStore, setDataSourceValues, executeEffectfulExpression } = useContext(ReactSdkContext);
-      const dataSourceValues = useStore(dataSourceValuesStore);
-      const onChange = () => {
-      const newValues = executeEffectfulExpression(
-      value.code,
-      new Map([]),
-      dataSourceValues
-      );
-      setDataSourceValues(newValues);
-      };
-      const onChange_1 = () => {
-      const newValues = executeEffectfulExpression(
-      value.code,
-      new Map([]),
-      dataSourceValues
-      );
-      setDataSourceValues(newValues);
-      };
-      return <Body
-      data-ws-id="body"
-      data-ws-component="Body">
-      <Button
-      data-ws-id="button1"
-      data-ws-component="Button"
-      onChange={onChange} />
-      <Button
-      data-ws-id="button2"
-      data-ws-component="Button"
-      onChange={onChange_1} />
-      {props.scripts}
-      </Body>
-      };
+      }
     `)
   );
 });

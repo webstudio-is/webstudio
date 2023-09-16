@@ -1,24 +1,32 @@
-import type { Instances, Instance, Props, Scope } from "@webstudio-is/sdk";
-import { findTreeInstanceIds, parseComponentName } from "@webstudio-is/sdk";
+import type {
+  Instances,
+  Instance,
+  Props,
+  Scope,
+  DataSources,
+} from "@webstudio-is/sdk";
+import { parseComponentName } from "@webstudio-is/sdk";
 import {
   componentAttribute,
   idAttribute,
   indexAttribute,
   showAttribute,
 } from "./tree/webstudio-component";
-import { encodeDataSourceVariable } from "./expression";
+import { generateDataSources } from "./expression";
 import type { IndexesWithinAncestors } from "./instance-utils";
 
 export const generateJsxElement = ({
   scope,
   instance,
   props,
+  dataSources,
   indexesWithinAncestors,
   children,
 }: {
   scope: Scope;
   instance: Instance;
   props: Props;
+  dataSources: DataSources;
   indexesWithinAncestors: IndexesWithinAncestors;
   children: string;
 }) => {
@@ -48,7 +56,11 @@ export const generateJsxElement = ({
       }
       if (prop.type === "dataSource") {
         const dataSourceId = prop.value;
-        conditionVariableName = encodeDataSourceVariable(dataSourceId);
+        const dataSource = dataSources.get(dataSourceId);
+        if (dataSource === undefined) {
+          continue;
+        }
+        conditionVariableName = scope.getName(dataSource.id, dataSource.name);
       }
       // ignore any other values
       continue;
@@ -68,7 +80,11 @@ export const generateJsxElement = ({
     }
     if (prop.type === "dataSource") {
       const dataSourceId = prop.value;
-      const dataSourceVariable = encodeDataSourceVariable(dataSourceId);
+      const dataSource = dataSources.get(dataSourceId);
+      if (dataSource === undefined) {
+        continue;
+      }
+      const dataSourceVariable = scope.getName(dataSource.id, dataSource.name);
       generatedProps += `\n${prop.name}={${dataSourceVariable}}`;
       continue;
     }
@@ -113,12 +129,14 @@ export const generateJsxChildren = ({
   children,
   instances,
   props,
+  dataSources,
   indexesWithinAncestors,
 }: {
   scope: Scope;
   children: Instance["children"];
   instances: Instances;
   props: Props;
+  dataSources: DataSources;
   indexesWithinAncestors: IndexesWithinAncestors;
 }) => {
   let generatedChildren = "";
@@ -142,12 +160,14 @@ export const generateJsxChildren = ({
         scope,
         instance,
         props,
+        dataSources,
         indexesWithinAncestors,
         children: generateJsxChildren({
           scope,
           children: instance.children,
           instances,
           props,
+          dataSources,
           indexesWithinAncestors,
         }),
       });
@@ -158,88 +178,42 @@ export const generateJsxChildren = ({
   return generatedChildren;
 };
 
-const generateDataSources = ({
-  scope,
-  rootInstanceId,
-  instances,
-  props,
-}: {
-  scope: Scope;
-  rootInstanceId: Instance["id"];
-  instances: Instances;
-  props: Props;
-}) => {
-  let generatedDataSources = "";
-  generatedDataSources += `const { dataSourceValuesStore, setDataSourceValues, executeEffectfulExpression } = useContext(ReactSdkContext);\n`;
-  generatedDataSources +=
-    "const dataSourceValues = useStore(dataSourceValuesStore);\n";
-  const usedInstanceIds = findTreeInstanceIds(instances, rootInstanceId);
-  for (const prop of props.values()) {
-    if (prop.type === "dataSource" && usedInstanceIds.has(prop.instanceId)) {
-      const dataSourceId = prop.value;
-      const variableName = encodeDataSourceVariable(dataSourceId);
-      const key = JSON.stringify(dataSourceId);
-      generatedDataSources += `const ${variableName} = dataSourceValues.get(${key});\n`;
-    }
-    if (prop.type === "action") {
-      const propVariable = scope.getName(prop.id, prop.name);
-      let args = "";
-      for (const value of prop.value) {
-        const newArgs = value.args.map((arg) => `${arg}: unknown`).join(", ");
-        // skip execution when arguments do not match
-        if (args !== "" && newArgs !== args) {
-          continue;
-        }
-        args = newArgs;
-      }
-      generatedDataSources += `const ${propVariable} = (${args}) => {\n`;
-      for (const value of prop.value) {
-        if (value.type === "execute") {
-          generatedDataSources += `const newValues = executeEffectfulExpression(\n`;
-          generatedDataSources += `value.code,\n`;
-          generatedDataSources += `new Map([`;
-          generatedDataSources += value.args
-            .map((arg) => `[${JSON.stringify(arg)}, ${arg}]`)
-            .join(", ");
-          generatedDataSources += `]),\n`;
-          generatedDataSources += `dataSourceValues\n`;
-          generatedDataSources += `);\n`;
-          generatedDataSources += `setDataSourceValues(newValues);\n`;
-        }
-      }
-      generatedDataSources += `};\n`;
-    }
-  }
-  return generatedDataSources;
-};
-
 export const generatePageComponent = ({
   scope,
   rootInstanceId,
   instances,
   props,
+  dataSources,
   indexesWithinAncestors,
 }: {
   scope: Scope;
   rootInstanceId: Instance["id"];
   instances: Instances;
   props: Props;
+  dataSources: DataSources;
   indexesWithinAncestors: IndexesWithinAncestors;
 }) => {
   const instance = instances.get(rootInstanceId);
   if (instance === undefined) {
     return "";
   }
-  const generatedDataSources = generateDataSources({
+  const { variables, body: dataSourcesBody } = generateDataSources({
     scope,
-    rootInstanceId,
-    instances,
+    dataSources,
     props,
   });
+  let generatedDataSources = "";
+  for (const { valueName, setterName, initialValue } of variables.values()) {
+    const initialValueString = JSON.stringify(initialValue);
+    generatedDataSources += `let [${valueName}, ${setterName}] = useState(${initialValueString})\n`;
+  }
+  generatedDataSources += dataSourcesBody;
+
   const generatedJsx = generateJsxElement({
     scope,
     instance,
     props,
+    dataSources,
     indexesWithinAncestors,
     children:
       generateJsxChildren({
@@ -247,6 +221,7 @@ export const generatePageComponent = ({
         children: instance.children,
         instances,
         props,
+        dataSources,
         indexesWithinAncestors,
       }) + "{props.scripts}\n",
   });
@@ -255,6 +230,6 @@ export const generatePageComponent = ({
   generatedComponent += `export const Page = (props: { scripts: ReactNode }) => {\n`;
   generatedComponent += `${generatedDataSources}`;
   generatedComponent += `return ${generatedJsx}`;
-  generatedComponent += `};\n`;
+  generatedComponent += `}\n`;
   return generatedComponent;
 };
