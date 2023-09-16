@@ -8,6 +8,7 @@ import {
   cp,
   readFile,
   writeFile,
+  readdir,
 } from "node:fs/promises";
 import { pipeline } from "node:stream/promises";
 import { tmpdir } from "node:os";
@@ -134,12 +135,29 @@ const mergeJsonFiles = async (sourcePath: string, destinationPath: string) => {
   await writeFile(destinationPath, content, "utf8");
 };
 
-const copyTemplates = async () => {
+const isCliTemplate = async (template: string) => {
   const currentPath = fileURLToPath(new URL(import.meta.url));
 
   const templatesPath = normalize(
-    join(dirname(currentPath), "..", "templates", "defaults")
+    join(dirname(currentPath), "..", "templates")
   );
+
+  const dirents = await readdir(templatesPath, { withFileTypes: true });
+
+  for (const dirent of dirents) {
+    if (dirent.isDirectory() && dirent.name === template) {
+      return true;
+    }
+  }
+  return false;
+};
+
+const copyTemplates = async (template: string = "defaults") => {
+  const currentPath = fileURLToPath(new URL(import.meta.url));
+
+  const templatesPath = (await isCliTemplate(template))
+    ? normalize(join(dirname(currentPath), "..", "templates", template))
+    : template;
 
   await cp(templatesPath, cwd(), {
     recursive: true,

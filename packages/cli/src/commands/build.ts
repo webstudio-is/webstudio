@@ -17,6 +17,10 @@ export const buildOptions = (yargs: CommonYargsArgv) =>
       type: "boolean",
       default: false,
       describe: "[Experimental] Use preview version of the project",
+    })
+    .option("template", {
+      type: "string",
+      describe: "[Experimental] Template to use for the build",
     });
 
 // @todo: use options.assets to define if we need to download assets
