@@ -24,7 +24,10 @@ export const syncOptions = (yargs: CommonYargsArgv) =>
       type: "string",
       describe: "[Experimental] Project build id to sync",
     })
-    .option("host", { type: "string", describe: "Host to sync with" });
+    .option("origin", {
+      type: "string",
+      describe: "[Experimental] Remote origin to sync with",
+    });
 
 export const sync = async (
   options: StrictYargsOptionsToInterface<typeof syncOptions>

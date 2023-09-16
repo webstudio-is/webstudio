@@ -62,7 +62,7 @@ export const initFlow = async (
     shouldInstallDeps = installDeps;
   }
 
-  await sync({ buildId: undefined, host: undefined });
+  await sync({ buildId: undefined, origin: undefined });
   await build(options);
 
   if (shouldInstallDeps === true) {
