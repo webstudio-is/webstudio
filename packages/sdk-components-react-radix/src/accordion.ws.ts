@@ -281,6 +281,7 @@ export const propsMetaAccordion: WsComponentPropsMeta = {
 
 export const propsMetaAccordionItem: WsComponentPropsMeta = {
   props: propsAccordionItem,
+  initialProps: ["value"],
 };
 
 export const propsMetaAccordionHeader: WsComponentPropsMeta = {

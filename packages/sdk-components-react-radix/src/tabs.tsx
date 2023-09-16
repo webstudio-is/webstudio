@@ -22,18 +22,18 @@ export const TabsList = List;
 
 export const TabsTrigger = forwardRef<
   HTMLButtonElement,
-  ComponentPropsWithoutRef<typeof Trigger>
+  Omit<ComponentPropsWithoutRef<typeof Trigger>, "value"> & { value?: string }
 >(({ value, ...props }, ref) => {
   const index = getIndexWithinAncestorFromComponentProps(props);
-  return <Trigger ref={ref} value={value ?? index} {...props} />;
+  return <Trigger ref={ref} value={value ?? index ?? ""} {...props} />;
 });
 
 export const TabsContent = forwardRef<
   HTMLDivElement,
-  ComponentPropsWithoutRef<typeof Content>
+  Omit<ComponentPropsWithoutRef<typeof Content>, "value"> & { value?: string }
 >(({ value, ...props }, ref) => {
   const index = getIndexWithinAncestorFromComponentProps(props);
-  return <Content ref={ref} value={value ?? index} {...props} />;
+  return <Content ref={ref} value={value ?? index ?? ""} {...props} />;
 });
 
 /* BUILDER HOOKS */

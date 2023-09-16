@@ -76,6 +76,7 @@
     "@types/react-dom": "^18.2.7",
     "@webstudio-is/css-data": "workspace:^",
     "@webstudio-is/generate-arg-types": "workspace:^",
+    "@webstudio-is/sdk-cli": "workspace:^",
     "@webstudio-is/sdk-components-react": "workspace:^",
     "@webstudio-is/storybook-config": "workspace:^",
     "@webstudio-is/tsconfig": "workspace:^",

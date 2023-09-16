@@ -157,12 +157,13 @@ const createInstancesFromTemplate = (
   styleSources: StyleSource[],
   styles: StyleDecl[],
   metas: Map<Instance["component"], WsComponentMeta>,
-  defaultBreakpointId: Breakpoint["id"]
+  defaultBreakpointId: Breakpoint["id"],
+  generateId: () => string
 ) => {
   const parentChildren: Instance["children"] = [];
   for (const item of treeTemplate) {
     if (item.type === "instance") {
-      const instanceId = nanoid();
+      const instanceId = generateId();
 
       if (item.dataSources) {
         for (const [name, dataSource] of Object.entries(item.dataSources)) {
@@ -172,7 +173,7 @@ const createInstancesFromTemplate = (
           if (dataSource.type === "variable") {
             dataSourceByRef.set(name, {
               type: "variable",
-              id: nanoid(),
+              id: generateId(),
               scopeInstanceId: instanceId,
               name,
               value: getDataSourceValue(dataSource.initialValue),
@@ -181,7 +182,7 @@ const createInstancesFromTemplate = (
           if (dataSource.type === "expression") {
             dataSourceByRef.set(name, {
               type: "expression",
-              id: nanoid(),
+              id: generateId(),
               scopeInstanceId: instanceId,
               name,
               // replace all references with variable names
@@ -199,7 +200,7 @@ const createInstancesFromTemplate = (
       // populate props
       if (item.props) {
         for (const prop of item.props) {
-          const propId = nanoid();
+          const propId = generateId();
           // action cannot be bound to data source
           if (prop.type === "action") {
             props.push({
@@ -279,7 +280,7 @@ const createInstancesFromTemplate = (
 
       // populate styles
       if (item.styles) {
-        const styleSourceId = nanoid();
+        const styleSourceId = generateId();
         styleSources.push({
           type: "local",
           id: styleSourceId,
@@ -323,7 +324,8 @@ const createInstancesFromTemplate = (
         styleSources,
         styles,
         metas,
-        defaultBreakpointId
+        defaultBreakpointId,
+        generateId
       );
       parentChildren.push({
         type: "id",
@@ -344,7 +346,8 @@ const createInstancesFromTemplate = (
 export const generateDataFromEmbedTemplate = (
   treeTemplate: WsEmbedTemplate,
   metas: Map<Instance["component"], WsComponentMeta>,
-  defaultBreakpointId: Breakpoint["id"]
+  defaultBreakpointId: Breakpoint["id"],
+  generateId: () => string = nanoid
 ) => {
   const instances: Instance[] = [];
   const props: Prop[] = [];
@@ -362,7 +365,8 @@ export const generateDataFromEmbedTemplate = (
     styleSources,
     styles,
     metas,
-    defaultBreakpointId
+    defaultBreakpointId,
+    generateId
   );
 
   return {
