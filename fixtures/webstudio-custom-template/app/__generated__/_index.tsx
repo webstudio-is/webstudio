@@ -2,6 +2,7 @@
 /* This is a auto generated file for building the project */
 
 import type { PageData } from "~/routes/_index";
+import * as sdk from "@webstudio-is/react-sdk";
 import type { Components } from "@webstudio-is/react-sdk";
 import type { Asset } from "@webstudio-is/sdk";
 import {

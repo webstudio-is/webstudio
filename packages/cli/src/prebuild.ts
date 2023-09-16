@@ -450,6 +450,7 @@ export const prebuild = async (options: {
     const pageExports = `/* eslint-disable */
 /* This is a auto generated file for building the project */ \n
 import type { PageData } from "~/routes/_index";
+import * as sdk from "@webstudio-is/react-sdk";
 import type { Components } from "@webstudio-is/react-sdk";
 import type { Asset } from "@webstudio-is/sdk";
 ${componentImports}
