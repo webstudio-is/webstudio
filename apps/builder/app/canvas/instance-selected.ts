@@ -10,7 +10,7 @@ import {
   stylesIndexStore,
   instancesStore,
   propsStore,
-  dataSourceValuesStore,
+  dataSourcesLogicStore,
   selectedInstanceSelectorStore,
   dataSourceVariablesStore,
 } from "~/shared/nano-states";
@@ -228,8 +228,8 @@ const subscribeSelectedInstance = (
   const unsubscribeStylesIndexStore = stylesIndexStore.subscribe(update);
   const unsubscribeInstancesStore = instancesStore.subscribe(update);
   const unsubscribePropsStore = propsStore.subscribe(update);
-  const unsubscribeDataSourceValuesStore =
-    dataSourceValuesStore.subscribe(update);
+  const unsubscribeDataSourcesLogicStore =
+    dataSourcesLogicStore.subscribe(update);
 
   const unsubscribeDataSourceVariablesStore =
     dataSourceVariablesStore.subscribe(update);
@@ -276,7 +276,7 @@ const subscribeSelectedInstance = (
     unsubscribeStylesIndexStore();
     unsubscribeInstancesStore();
     unsubscribePropsStore();
-    unsubscribeDataSourceValuesStore();
+    unsubscribeDataSourcesLogicStore();
     unsubscribeDataSourceVariablesStore();
   };
 };
