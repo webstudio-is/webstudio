@@ -181,6 +181,10 @@ export const prebuild = async (options: {
    * Do we need download assets
    **/
   assets: boolean;
+  /**
+   * Template to use for the build in addition to defaults template
+   **/
+  template?: string;
 }) => {
   const spinner = ora("Scaffolding the project files");
   spinner.start();
@@ -188,6 +192,10 @@ export const prebuild = async (options: {
   spinner.text = "Generating files";
 
   await copyTemplates();
+
+  if (options.template !== undefined) {
+    await copyTemplates(options.template);
+  }
 
   const constantsJson =
     await $`node --input-type=module --eval ${`import * as consts from './app/constants.mjs'; console.log(JSON.stringify(consts))`}`;
