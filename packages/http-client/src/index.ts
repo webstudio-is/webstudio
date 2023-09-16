@@ -35,7 +35,7 @@ export type Data = {
 };
 
 interface DefaultArgs {
-  host: string;
+  origin: string;
   authToken?: string;
 }
 
@@ -50,7 +50,7 @@ export const loadProjectDataById: ResourceFactory<
     throw new Error(``);
   }
 
-  const url = new URL(params.host);
+  const url = new URL(params.origin);
   url.pathname = `/rest/build/${result.buildId}`;
   if (params.authToken) {
     url.searchParams.append("authToken", params.authToken);
@@ -70,7 +70,7 @@ export const getLatestBuildUsingProjectId: ResourceFactory<
   { projectId: string },
   { buildId: string }
 > = async (params) => {
-  const { host, projectId, authToken } = params;
+  const { origin: host, projectId, authToken } = params;
   const url = new URL(host);
   url.pathname = `/rest/buildId/${projectId}`;
   if (authToken) {
