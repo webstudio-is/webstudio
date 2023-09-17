@@ -318,34 +318,36 @@ export const prebuild = async (options: {
     imageBaseUrl: assetBuildUrl,
   });
 
-  for (const asset of siteData.assets) {
-    if (asset.type === "image") {
-      const imageSrc = imageLoader({
-        width: 16,
-        quality: 100,
-        src: asset.name,
-        format: "raw",
-      });
+  if (options.assets === true) {
+    for (const asset of siteData.assets) {
+      if (asset.type === "image") {
+        const imageSrc = imageLoader({
+          width: 16,
+          quality: 100,
+          src: asset.name,
+          format: "raw",
+        });
 
-      assetsToDownload.push(
-        limit(() =>
-          downloadAsset(imageSrc, asset.name, assetBaseUrl, temporaryDir)
-        )
-      );
-    }
-
-    if (asset.type === "font") {
-      assetsToDownload.push(
-        limit(() =>
-          downloadAsset(
-            `${assetBuildUrl}${asset.name}`,
-            asset.name,
-            assetBaseUrl,
-            temporaryDir
+        assetsToDownload.push(
+          limit(() =>
+            downloadAsset(imageSrc, asset.name, assetBaseUrl, temporaryDir)
           )
-        )
-      );
-      fontAssets.push(asset);
+        );
+      }
+
+      if (asset.type === "font") {
+        assetsToDownload.push(
+          limit(() =>
+            downloadAsset(
+              `${assetBuildUrl}${asset.name}`,
+              asset.name,
+              assetBaseUrl,
+              temporaryDir
+            )
+          )
+        );
+        fontAssets.push(asset);
+      }
     }
   }
 
