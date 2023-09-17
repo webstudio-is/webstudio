@@ -80,16 +80,16 @@ export const action = async ({ request, context }: ActionArgs) => {
   const formData = await request.formData();
 
   const formId = getFormId(formData);
-  const formProperties =
-    formId === undefined ? undefined : formsProperties.get(formId);
-
-  if (formProperties === undefined) {
+  if (formId === undefined) {
     // We're throwing rather than returning { success: false }
     // because this isn't supposed to happen normally: bug or malicious user
     throw json("Form not found", { status: 404 });
   }
 
-  const { action, method } = formProperties;
+  const formProperties = formsProperties.get(formId);
+
+  // form properties are not defined when defaults are used
+  const { action, method } = formProperties ?? {};
 
   const email = user?.email;
 
