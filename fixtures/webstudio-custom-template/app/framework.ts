@@ -1,3 +1,5 @@
+/* eslint-disable camelcase */
+
 export {
   type V2_MetaFunction,
   type LinksFunction,
