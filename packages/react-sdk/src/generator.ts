@@ -77,12 +77,34 @@ export const generateUtilsExport = (siteData: PageData) => {
   generatedDataSources += `return _output\n`;
   generatedDataSources += `}\n`;
 
+  const formsProperties = new Map<
+    string,
+    { method?: string; action?: string }
+  >();
+  for (const prop of siteData.props.values()) {
+    if (prop.type === "string") {
+      if (prop.name === "action" || prop.name === "method") {
+        let properties = formsProperties.get(prop.instanceId);
+        if (properties === undefined) {
+          properties = {};
+        }
+        properties[prop.name] = prop.value;
+        formsProperties.set(prop.instanceId, properties);
+      }
+    }
+  }
+  const generatedFormsProperties = `export const formsProperties = new Map<string, { method?: string, action?: string }>(${JSON.stringify(
+    Array.from(formsProperties.entries())
+  )})`;
+
   return `
   /* eslint-disable */
 
   ${generatedIndexesWithinAncestors.trim()}
 
   ${generatedDataSources}
+
+  ${generatedFormsProperties}
 
   export const utils = {
     indexesWithinAncestors,
