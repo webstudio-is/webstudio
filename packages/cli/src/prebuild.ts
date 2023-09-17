@@ -356,12 +356,9 @@ export const prebuild = async (options: {
       "pageData",
       "user",
       "projectId",
+      "formsProperties",
       "indexesWithinAncestors",
-      "rawExecuteComputingExpressions",
-      "executeComputingExpressions",
-      "generatedEffectfulExpressions",
-      "rawExecuteEffectfulExpression",
-      "executeEffectfulExpression",
+      "getDataSourcesLogic",
       "utils",
     ]);
     const namespaces = new Map<

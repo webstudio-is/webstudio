@@ -12,9 +12,6 @@
     "build": "rm -rf lib && esbuild src/index.ts --outdir=lib --bundle --format=esm --packages=external",
     "dts": "tsc --project tsconfig.dts.json"
   },
-  "dependencies": {
-    "@webstudio-is/sdk": "workspace:^"
-  },
   "devDependencies": {
     "@webstudio-is/tsconfig": "workspace:^"
   },

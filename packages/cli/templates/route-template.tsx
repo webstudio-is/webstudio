@@ -12,7 +12,7 @@ import {
   type RootPropsData,
   type Params,
 } from "@webstudio-is/react-sdk";
-import { n8nHandler, getFormProperties } from "@webstudio-is/form-handlers";
+import { n8nHandler, getFormId } from "@webstudio-is/form-handlers";
 import { Scripts, ScrollRestoration } from "@remix-run/react";
 import {
   fontAssets,
@@ -21,6 +21,7 @@ import {
   user,
   projectId,
   utils,
+  formsProperties,
 } from "../__generated__/index";
 import css from "../__generated__/index.css";
 import type { Data } from "@webstudio-is/http-client";
@@ -78,7 +79,9 @@ const getMethod = (value: string | undefined) => {
 export const action = async ({ request, context }: ActionArgs) => {
   const formData = await request.formData();
 
-  const formProperties = getFormProperties(formData, pageData.build.props);
+  const formId = getFormId(formData);
+  const formProperties =
+    formId === undefined ? undefined : formsProperties.get(formId);
 
   if (formProperties === undefined) {
     // We're throwing rather than returning { success: false }

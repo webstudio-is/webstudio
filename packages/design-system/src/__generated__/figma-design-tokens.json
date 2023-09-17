@@ -956,6 +956,16 @@
         "type": "color",
         "description": "color for hidden item element within navigator item component"
       },
+      "link": {
+        "value": "#006ADC",
+        "type": "color",
+        "description": "color for link text"
+      },
+      "link-visited": {
+        "value": "#793AAF",
+        "type": "color",
+        "description": "color for visited links"
+      },
       "flex-ui": {
         "main": {
           "value": "#c7c7c7",

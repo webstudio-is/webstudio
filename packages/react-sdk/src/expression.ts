@@ -181,142 +181,6 @@ const sortTopologically = (
   return sorted;
 };
 
-/**
- * Generates a function body expecting map as _variables argument
- * and outputing map of results
- */
-export const generateComputingExpressions = (
-  expressions: Map<string, string>,
-  allowedVariables: Set<string>
-) => {
-  const depsById = new Map<string, Set<string>>();
-  const inputVariables = new Set<string>();
-  for (const [id, code] of expressions) {
-    const deps = new Set<string>();
-    validateExpression(code, {
-      transformIdentifier: (identifier) => {
-        if (allowedVariables.has(identifier)) {
-          inputVariables.add(identifier);
-          return identifier;
-        }
-        if (expressions.has(identifier)) {
-          deps.add(identifier);
-          return identifier;
-        }
-        throw Error(`Unknown dependency "${identifier}"`);
-      },
-    });
-    depsById.set(id, deps);
-  }
-
-  const sortedExpressions = sortTopologically(
-    new Set(expressions.keys()),
-    depsById
-  );
-
-  // generate code computing all expressions
-  let generatedCode = "";
-
-  for (const id of inputVariables) {
-    generatedCode += `const ${id} = _variables.get('${id}');\n`;
-  }
-
-  for (const id of sortedExpressions) {
-    const code = expressions.get(id);
-    if (code === undefined) {
-      continue;
-    }
-    generatedCode += `const ${id} = (${code});\n`;
-  }
-
-  generatedCode += `return new Map([\n`;
-  for (const id of sortedExpressions) {
-    generatedCode += `  ['${id}', ${id}],\n`;
-  }
-  generatedCode += `]);`;
-
-  return generatedCode;
-};
-
-export const executeComputingExpressions = (
-  expressions: Map<string, string>,
-  variables: Map<string, unknown>
-) => {
-  const generatedCode = generateComputingExpressions(
-    expressions,
-    new Set(variables.keys())
-  );
-  const executeFn = new Function("_variables", generatedCode);
-  const values = executeFn(variables) as Map<string, unknown>;
-  return values;
-};
-
-export const generateEffectfulExpression = (
-  code: string,
-  args: Set<string>,
-  allowedVariables: Set<string>
-) => {
-  const inputVariables = new Set<string>();
-  const outputVariables = new Set<string>();
-  validateExpression(code, {
-    effectful: true,
-    transformIdentifier: (identifier, assignee) => {
-      if (args.has(identifier)) {
-        return identifier;
-      }
-      if (allowedVariables.has(identifier)) {
-        if (assignee) {
-          outputVariables.add(identifier);
-        } else {
-          inputVariables.add(identifier);
-        }
-        return identifier;
-      }
-      throw Error(`Unknown dependency "${identifier}"`);
-    },
-  });
-
-  // generate code computing all expressions
-  let generatedCode = "";
-
-  for (const id of args) {
-    generatedCode += `let ${id} = _args.get('${id}');\n`;
-  }
-  for (const id of inputVariables) {
-    generatedCode += `let ${id} = _variables.get('${id}');\n`;
-  }
-  for (const id of outputVariables) {
-    if (inputVariables.has(id) === false) {
-      generatedCode += `let ${id};\n`;
-    }
-  }
-
-  generatedCode += `${code};\n`;
-
-  generatedCode += `return new Map([\n`;
-  for (const id of outputVariables) {
-    generatedCode += `  ['${id}', ${id}],\n`;
-  }
-  generatedCode += `]);`;
-
-  return generatedCode;
-};
-
-export const executeEffectfulExpression = (
-  code: string,
-  args: Map<string, unknown>,
-  variables: Map<string, unknown>
-) => {
-  const generatedCode = generateEffectfulExpression(
-    code,
-    new Set(args.keys()),
-    new Set(variables.keys())
-  );
-  const executeFn = new Function("_variables", "_args", generatedCode);
-  const values = executeFn(variables, args) as Map<string, unknown>;
-  return values;
-};
-
 const computeExpressionDependencies = (
   expressions: Map<string, string>,
   expressionId: string,
@@ -361,8 +225,6 @@ export const computeExpressionsDependencies = (
   return dependencies;
 };
 
-type Values = Map<string, unknown>;
-
 const dataSourceVariablePrefix = "$ws$dataSource$";
 
 // data source id is generated with nanoid which has "-" in alphabeta
@@ -374,31 +236,12 @@ export const encodeDataSourceVariable = (id: string) => {
   return `${dataSourceVariablePrefix}${encoded}`;
 };
 
-export const encodeVariablesMap = (values: Values) => {
-  const encodedValues: Values = new Map();
-  for (const [id, value] of values) {
-    encodedValues.set(encodeDataSourceVariable(id), value);
-  }
-  return encodedValues;
-};
-
 export const decodeDataSourceVariable = (name: string) => {
   if (name.startsWith(dataSourceVariablePrefix)) {
     const encoded = name.slice(dataSourceVariablePrefix.length);
     return encoded.replaceAll("__DASH__", "-");
   }
   return;
-};
-
-export const decodeVariablesMap = (values: Values) => {
-  const decodedValues: Values = new Map();
-  for (const [name, value] of values) {
-    const id = decodeDataSourceVariable(name);
-    if (id !== undefined) {
-      decodedValues.set(id, value);
-    }
-  }
-  return decodedValues;
 };
 
 /*

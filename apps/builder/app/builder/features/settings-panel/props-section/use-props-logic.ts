@@ -9,7 +9,7 @@ import {
 import type { PropValue } from "../shared";
 import { useStore } from "@nanostores/react";
 import {
-  dataSourceValuesStore,
+  dataSourcesLogicStore,
   dataSourcesStore,
   registeredComponentPropsMetasStore,
 } from "~/shared/nano-states";
@@ -173,7 +173,7 @@ export const usePropsLogic = ({
     instance.component
   );
   const dataSources = useStore(dataSourcesStore);
-  const dataSourceValues = useStore(dataSourceValuesStore);
+  const dataSourcesLogic = useStore(dataSourcesLogicStore);
 
   if (meta === undefined) {
     throw new Error(`Could not get meta for component "${instance.component}"`);
@@ -186,7 +186,7 @@ export const usePropsLogic = ({
     // convert data source prop to typed prop
     const dataSourceId = prop.value;
     const dataSource = dataSources.get(dataSourceId);
-    const dataSourceValue = dataSourceValues.get(dataSourceId);
+    const dataSourceValue = dataSourcesLogic.get(dataSourceId);
     if (dataSource === undefined) {
       return [];
     }
