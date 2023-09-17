@@ -1363,6 +1363,28 @@ importers:
         specifier: ^29.6.4
         version: 29.6.4(@types/node@18.13.0)
 
+  packages/sdk-cli:
+    dependencies:
+      '@webstudio-is/react-sdk':
+        specifier: workspace:^
+        version: link:../react-sdk
+      '@webstudio-is/sdk':
+        specifier: workspace:^
+        version: link:../sdk
+      '@webstudio-is/sdk-components-react':
+        specifier: workspace:^
+        version: link:../sdk-components-react
+      param-case:
+        specifier: ^3.0.4
+        version: 3.0.4
+    devDependencies:
+      '@types/node':
+        specifier: ^18.11.18
+        version: 18.13.0
+      '@webstudio-is/tsconfig':
+        specifier: workspace:^
+        version: link:../tsconfig
+
   packages/sdk-components-react:
     dependencies:
       '@react-aria/utils':
@@ -1478,6 +1500,9 @@ importers:
       '@webstudio-is/generate-arg-types':
         specifier: workspace:^
         version: link:../generate-arg-types
+      '@webstudio-is/sdk-cli':
+        specifier: workspace:^
+        version: link:../sdk-cli
       '@webstudio-is/sdk-components-react':
         specifier: workspace:^
         version: link:../sdk-components-react
@@ -9262,6 +9287,13 @@ packages:
       domhandler: 5.0.3
     dev: true
 
+  /dot-case@3.0.4:
+    resolution: {integrity: sha512-Kv5nKlh6yRrdrGvxeJ2e5y2eRUpkUosIW4A2AS38zwSz27zu7ufDwQPi5Jhs3XAlGNetl3bmnGhQsMtkKJnj3w==}
+    dependencies:
+      no-case: 3.0.4
+      tslib: 2.6.0
+    dev: false
+
   /dotenv-expand@10.0.0:
     resolution: {integrity: sha512-GopVGCpVS1UKH75VKHGuQFqS1Gusej0z4FyQkPdwjil2gNIv+LNsqBlboOzpJFZKVT95GkCyWJbBSdFEFUWI2A==}
     engines: {node: '>=12'}
@@ -13631,6 +13663,13 @@ packages:
 
   /pako@0.2.9:
     resolution: {integrity: sha512-NUcwaKxUxWrZLpDG+z/xZaCgQITkA/Dv4V/T6bw7VON6l1Xz/VnrBqrYjZQ12TamKHzITTfOEIYUj48y2KXImA==}
+
+  /param-case@3.0.4:
+    resolution: {integrity: sha512-RXlj7zCYokReqWpOPH9oYivUzLYZ5vAPIfEmCTNViosC78F8F0H9y7T7gG2M39ymgutxF5gcFEsyZQSph9Bp3A==}
+    dependencies:
+      dot-case: 3.0.4
+      tslib: 2.6.0
+    dev: false
 
   /parent-module@1.0.1:
     resolution: {integrity: sha512-GQ2EWRpQV8/o+Aw8YqtfZZPfNRWZYkbidE9k5rpl/hC3vtHHBfGm2Ifi6qWV+coDGkrUKZAxE3Lot5kcsRlh+g==}

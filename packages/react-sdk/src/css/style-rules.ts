@@ -7,7 +7,7 @@ import type {
   StyleSourceSelections,
 } from "@webstudio-is/sdk";
 import type { PresetStyle } from "../components/component-meta";
-import { componentAttribute } from "../tree";
+import { componentAttribute } from "../tree/index";
 
 type StyleRule = {
   instanceId: string;

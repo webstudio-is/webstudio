@@ -23,7 +23,7 @@ import {
 export const Accordion = forwardRef<
   HTMLDivElement,
   Omit<
-    ComponentPropsWithoutRef<typeof Root>,
+    Extract<ComponentPropsWithoutRef<typeof Root>, { type: "single" }>,
     "type" | "asChild" | "defaultValue" | "value" | "onValueChange"
   > & {
     value: string;
@@ -35,10 +35,10 @@ export const Accordion = forwardRef<
 
 export const AccordionItem = forwardRef<
   HTMLDivElement,
-  Omit<ComponentPropsWithoutRef<typeof Item>, "asChild">
+  Omit<ComponentPropsWithoutRef<typeof Item>, "value"> & { value?: string }
 >(({ value, ...props }, ref) => {
   const index = getIndexWithinAncestorFromComponentProps(props);
-  return <Item ref={ref} value={value ?? index} {...props} />;
+  return <Item ref={ref} value={value ?? index ?? ""} {...props} />;
 });
 
 export const AccordionHeader: ForwardRefExoticComponent<
