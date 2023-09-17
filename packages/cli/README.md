@@ -76,9 +76,9 @@ You can link a project from Webstudio Cloud with the following command:
 webstudio-cli link
 ```
 
-This command will prompt you to paste a link which you can create using the *Share* option in your project. 
+This command will prompt you to paste a link which you can create using the _Share_ option in your project.
 
-Make sure to provide *Build* access when generating the link in Webstudio Cloud.
+Make sure to provide _Build_ access when generating the link in Webstudio Cloud.
 
 ### sync
 
