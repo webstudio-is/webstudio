@@ -16,24 +16,22 @@ type LabelRefCallback = (element: HTMLElement | null) => void;
  * - else if instance height is more than 250px - bottom
  * - else inside-top - last resort because it covers a bit of the instance content
  */
-const useLabelPosition = (
-  instanceRect: Rect
-): [LabelRefCallback, LabelPosition] => {
+const useLabelPosition = (rect: Rect): [LabelRefCallback, LabelPosition] => {
   const [position, setPosition] = useState<LabelPosition>("top");
 
   const ref = useCallback(
     (element: null | HTMLElement) => {
-      if (element === null || instanceRect === undefined) {
+      if (element === null || rect === undefined) {
         return;
       }
       const labelRect = element.getBoundingClientRect();
       let nextPosition: LabelPosition = "top";
-      if (labelRect.height > instanceRect.top) {
-        nextPosition = instanceRect.height < 250 ? "bottom" : "inside";
+      if (labelRect.height > rect.top) {
+        nextPosition = rect.height < 250 ? "bottom" : "inside";
       }
       setPosition(nextPosition);
     },
-    [instanceRect]
+    [rect]
   );
 
   return [ref, position];

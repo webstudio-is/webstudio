@@ -7,14 +7,16 @@ import { textEditingInstanceSelectorStore } from "~/shared/nano-states";
 import { areInstanceSelectorsEqual } from "~/shared/tree-utils";
 import { Outline } from "./outline";
 import { Label } from "./label";
-import { useOutline } from "./use-outline";
+import { applyScale } from "./apply-scale";
+import { scaleStore } from "~/builder/shared/nano-states";
 
 export const SelectedInstanceOutline = () => {
   const selectedInstanceSelector = useStore(selectedInstanceSelectorStore);
   const textEditingInstanceSelector = useStore(
     textEditingInstanceSelectorStore
   );
-  const outline = useOutline(selectedInstanceOutlineAndInstanceStore);
+  const outline = useStore(selectedInstanceOutlineAndInstanceStore);
+  const scale = useStore(scaleStore);
   const isEditingCurrentInstance =
     textEditingInstanceSelector !== undefined &&
     areInstanceSelectorsEqual(
@@ -25,10 +27,10 @@ export const SelectedInstanceOutline = () => {
   if (isEditingCurrentInstance || outline === undefined) {
     return null;
   }
-
+  const rect = applyScale(outline.rect, scale);
   return (
-    <Outline rect={outline.rect}>
-      <Label instance={outline.instance} instanceRect={outline.rect} />
+    <Outline rect={rect}>
+      <Label instance={outline.instance} instanceRect={rect} />
     </Outline>
   );
 };
