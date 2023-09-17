@@ -5,7 +5,7 @@ import {
   type LinkDescriptor,
   type ActionArgs,
   json,
-} from "@remix-run/node";
+} from "~/framework.ts";
 
 import {
   InstanceRoot,

@@ -6,7 +6,8 @@
     "allowJs": true,
     "checkJs": true,
     "paths": {
-      "~/constants.mjs": ["./templates/defaults/app/constants.mjs"]
+      "~/constants.mjs": ["./templates/defaults/app/constants.mjs"],
+      "~/framework.ts": ["./templates/defaults/app/framework.ts"]
     }
   }
 }
