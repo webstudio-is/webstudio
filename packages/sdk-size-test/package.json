@@ -23,10 +23,10 @@
     "@remix-run/cloudflare": "^1.19.2",
     "@remix-run/cloudflare-pages": "^1.19.2",
     "@remix-run/react": "^1.19.2",
-    "@webstudio-is/project": "workspace:^",
-    "@webstudio-is/project-build": "workspace:^",
-    "@webstudio-is/react-sdk": "workspace:^",
-    "@webstudio-is/sdk-components-react": "workspace:^",
+    "@webstudio-is/project": "workspace:*",
+    "@webstudio-is/project-build": "workspace:*",
+    "@webstudio-is/react-sdk": "workspace:*",
+    "@webstudio-is/sdk-components-react": "workspace:*",
     "isbot": "^3.6.13",
     "react": "^18.2.0",
     "react-dom": "^18.2.0"
@@ -36,7 +36,7 @@
     "@size-limit/file": "^8.2.6",
     "@types/react": "^18.2.21",
     "@types/react-dom": "^18.2.7",
-    "@webstudio-is/tsconfig": "workspace:^",
+    "@webstudio-is/tsconfig": "workspace:*",
     "size-limit": "^8.2.6",
     "typescript": "5.2.2"
   }

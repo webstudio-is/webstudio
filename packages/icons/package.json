@@ -18,8 +18,8 @@
   "devDependencies": {
     "@svgo/jsx": "^0.4.2",
     "@types/react": "^18.2.21",
-    "@webstudio-is/storybook-config": "workspace:^",
-    "@webstudio-is/tsconfig": "workspace:^",
+    "@webstudio-is/storybook-config": "workspace:*",
+    "@webstudio-is/tsconfig": "workspace:*",
     "react": "^18.2.0",
     "react-dom": "^18.2.0",
     "svgo": "^3.0.2",
@@ -31,7 +31,7 @@
     "react-dom": "^18.2.0"
   },
   "dependencies": {
-    "@webstudio-is/css-vars": "workspace:^"
+    "@webstudio-is/css-vars": "workspace:*"
   },
   "exports": {
     ".": {

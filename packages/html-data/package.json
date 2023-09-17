@@ -14,7 +14,7 @@
     "test": "NODE_OPTIONS=--experimental-vm-modules jest"
   },
   "devDependencies": {
-    "@webstudio-is/tsconfig": "workspace:^"
+    "@webstudio-is/tsconfig": "workspace:*"
   },
   "peerDependencies": {},
   "exports": {
