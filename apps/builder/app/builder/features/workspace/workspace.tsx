@@ -117,8 +117,8 @@ export const Workspace = ({
         onTransitionEnd={onTransitionEnd}
       >
         {children}
-        <CanvasTools publish={publish} />
       </div>
+      <CanvasTools publish={publish} />
       <Toaster />
     </div>
   );

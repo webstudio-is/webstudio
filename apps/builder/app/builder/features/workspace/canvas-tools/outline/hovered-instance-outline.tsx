@@ -1,18 +1,19 @@
 import { useStore } from "@nanostores/react";
 import {
+  hoveredInstanceOutlineAndInstanceStore,
   hoveredInstanceSelectorStore,
   selectedInstanceSelectorStore,
   textEditingInstanceSelectorStore,
-  hoveredInstanceOutlineAndInstanceStore,
 } from "~/shared/nano-states";
 import { areInstanceSelectorsEqual } from "~/shared/tree-utils";
 import { Outline } from "./outline";
 import { Label } from "./label";
+import { useOutline } from "./use-outline";
 
 export const HoveredInstanceOutline = () => {
   const selectedInstanceSelector = useStore(selectedInstanceSelectorStore);
   const hoveredInstanceSelector = useStore(hoveredInstanceSelectorStore);
-  const outline = useStore(hoveredInstanceOutlineAndInstanceStore);
+  const outline = useOutline(hoveredInstanceOutlineAndInstanceStore);
   const textEditingInstanceSelector = useStore(
     textEditingInstanceSelectorStore
   );
