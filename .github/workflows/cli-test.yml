@@ -1,0 +1,65 @@
+name: Cli tests
+
+on:
+  push:
+    branches:
+      - main
+  pull_request:
+
+# cancel in-progress runs on new commits to same PR (gitub.event.number)
+concurrency:
+  group: cli-${{ github.workflow }}-${{ github.event.number || github.sha }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read # to fetch code (actions/checkout)
+
+jobs:
+  checks:
+    timeout-minutes: 20
+
+    strategy:
+      matrix:
+        os: [ubuntu-latest, windows-latest, macos-latest]
+
+    runs-on: ${{ matrix.os }}
+
+    env:
+      DATABASE_URL: postgres://
+      AUTH_SECRET: test
+
+    steps:
+      - uses: actions/checkout@v3
+        with:
+          ref: ${{ github.event.pull_request.head.sha || github.sha }} # HEAD commit instead of merge commit
+
+      - uses: ./.github/actions/ci-setup
+
+      - name: Build cli
+        run: pnpm turbo run build --filter='webstudio-cli'
+
+      - name: Test cli --help flag
+        working-directory: ./fixtures/webstudio-remix-vercel
+        run: pnpm webstudio-cli --help
+
+      - name: Test cli link command
+        working-directory: ./fixtures/webstudio-remix-vercel
+        run: pnpm webstudio-cli link --link 'https://webstudio-builder-git-main-webstudio-is.vercel.app/builder/cddc1d44-af37-4cb6-a430-d300cf6f932d?authToken=1cdc6026-dd5b-4624-b89b-9bd45e9bcc3d'
+
+      - name: Test cli sync command
+        working-directory: ./fixtures/webstudio-remix-vercel
+        run: pnpm webstudio-cli sync && pnpm prettier --write ./.webstudio/
+
+      - name: Test cli build command
+        working-directory: ./fixtures/webstudio-remix-vercel
+        run: pnpm webstudio-cli build --preview && pnpm prettier --write ./app/ ./package.json
+
+      - name: Test git diff
+        # This command will fail if there are uncommitted changes, i.e something has broken
+        run: git diff --name-only HEAD --exit-code
+
+      - name: Show changed files
+        if: ${{ failure() }}
+        run: |
+          echo "Changed files are:"
+          git diff --name-only HEAD
