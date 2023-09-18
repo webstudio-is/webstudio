@@ -201,6 +201,9 @@ export const prebuild = async (options: {
     await $`node --input-type=module --eval ${`import * as consts from './app/constants.mjs'; console.log(JSON.stringify(consts))`}`;
 
   const constants = JSON.parse(constantsJson.stdout);
+
+  console.log(await import(join(cwd(), "/app/constants.mjs")));
+
   const assetBaseUrl =
     "assetBaseUrl" in constants
       ? (constants.assetBaseUrl as string)
