@@ -16,25 +16,40 @@ export const SelectControl = ({
   const setValue = setProperty(property);
   const options = (items ?? defaultItems).map(({ name }) => name);
   const value = toValue(styleValue);
-  // append selected value when not present in the list of options
-  // because radix requires values to always be in the list
+  // Append selected value when not present in the list of options
+  // because radix requires values to always be in the list.
   if (options.includes(value) === false) {
     options.push(value);
   }
 
   return (
     <Select
-      // show empty field instead of radix placeholder
-      // like css value input does
+      // Show empty field instead of radix placeholder like css value input does.
       placeholder=""
       options={options}
-      getLabel={(name) => {
-        return toPascalCase(name);
-      }}
+      getLabel={toPascalCase}
       value={value}
       onChange={(name) => {
-        const value = parseCssValue(property, name);
-        setValue(value);
+        const nextValue = parseCssValue(property, name);
+        setValue(nextValue);
+      }}
+      onItemHighlight={(name) => {
+        // Remove preview when mouse leaves the item.
+        if (name === undefined) {
+          if (styleValue !== undefined) {
+            setValue(styleValue, { isEphemeral: true });
+          }
+          return;
+        }
+        // Preview on mouse enter or focus.
+        const nextValue = parseCssValue(property, name);
+        setValue(nextValue, { isEphemeral: true });
+      }}
+      onOpenChange={(isOpen) => {
+        // Remove ephemeral changes when closing the menu.
+        if (isOpen === false && styleValue !== undefined) {
+          setValue(styleValue, { isEphemeral: true });
+        }
       }}
     />
   );
