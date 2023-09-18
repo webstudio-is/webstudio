@@ -33,16 +33,16 @@
     "dts": "tsc --project tsconfig.dts.json"
   },
   "dependencies": {
-    "@webstudio-is/prisma-client": "workspace:^",
-    "@webstudio-is/sdk": "workspace:^",
-    "@webstudio-is/trpc-interface": "workspace:^",
+    "@webstudio-is/prisma-client": "workspace:*",
+    "@webstudio-is/sdk": "workspace:*",
+    "@webstudio-is/trpc-interface": "workspace:*",
     "nanoid": "^4.0.2",
     "zod": "^3.21.4"
   },
   "devDependencies": {
     "@jest/globals": "^29.6.4",
-    "@webstudio-is/jest-config": "workspace:^",
-    "@webstudio-is/tsconfig": "workspace:^",
+    "@webstudio-is/jest-config": "workspace:*",
+    "@webstudio-is/tsconfig": "workspace:*",
     "jest": "^29.6.4",
     "type-fest": "^4.3.1",
     "typescript": "5.2.2"

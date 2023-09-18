@@ -17,8 +17,8 @@
   },
   "devDependencies": {
     "@types/css-tree": "^2.3.1",
-    "@webstudio-is/jest-config": "workspace:^",
-    "@webstudio-is/tsconfig": "workspace:^",
+    "@webstudio-is/jest-config": "workspace:*",
+    "@webstudio-is/tsconfig": "workspace:*",
     "camelcase": "^7.0.1",
     "html-tags": "^3.3.1",
     "jest": "^29.6.4",
@@ -44,7 +44,7 @@
   "private": true,
   "sideEffects": false,
   "dependencies": {
-    "@webstudio-is/css-engine": "workspace:^",
+    "@webstudio-is/css-engine": "workspace:*",
     "colord": "^2.9.3",
     "css-tree": "^2.3.1",
     "hyphenate-style-name": "^1.0.4",

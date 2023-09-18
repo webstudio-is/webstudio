@@ -13,7 +13,7 @@
     "dts": "tsc --project tsconfig.dts.json"
   },
   "devDependencies": {
-    "@webstudio-is/tsconfig": "workspace:^"
+    "@webstudio-is/tsconfig": "workspace:*"
   },
   "exports": {
     "source": "./src/index.ts",

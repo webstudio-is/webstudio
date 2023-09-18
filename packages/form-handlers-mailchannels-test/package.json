@@ -7,11 +7,11 @@
     "local-dev": "wrangler dev src/index.ts"
   },
   "dependencies": {
-    "@webstudio-is/form-handlers": "workspace:^"
+    "@webstudio-is/form-handlers": "workspace:*"
   },
   "devDependencies": {
     "@cloudflare/workers-types": "^3.0.0",
-    "@webstudio-is/tsconfig": "workspace:^",
+    "@webstudio-is/tsconfig": "workspace:*",
     "typescript": "5.2.2",
     "wrangler": "^2.18.0"
   }

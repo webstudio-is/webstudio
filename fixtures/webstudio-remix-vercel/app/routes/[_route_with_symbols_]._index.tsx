@@ -1,11 +1,11 @@
 /* eslint-disable camelcase */
 import {
-  type V2_MetaFunction,
+  type V2_ServerRuntimeMetaFunction,
   type LinksFunction,
   type LinkDescriptor,
   type ActionArgs,
   json,
-} from "@remix-run/node";
+} from "@remix-run/server-runtime";
 
 import {
   InstanceRoot,
@@ -31,7 +31,7 @@ export type PageData = Omit<Data, "build"> & {
   build: Pick<Data["build"], "props" | "instances" | "dataSources">;
 };
 
-export const meta: V2_MetaFunction = () => {
+export const meta: V2_ServerRuntimeMetaFunction = () => {
   const { page } = pageData;
   return [{ title: page?.title || "Webstudio", ...page?.meta }];
 };
