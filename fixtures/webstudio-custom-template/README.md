@@ -16,6 +16,6 @@ pnpm webstudio-cli link
 pnpm webstudio-cli sync && pnpm prettier --write ./.webstudio/
 # data.json generated
 
-pnpm webstudio-cli build --preview --template ./custom-template && pnpm prettier --write ./app/
+pnpm webstudio-cli build --preview --template ./custom-template && pnpm prettier --write ./app/ ./package.json
 # exec `pnpm run dev` to see result
 ```
