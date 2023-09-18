@@ -5,7 +5,6 @@ import { useMemo } from "react";
 import { useAssets } from "~/builder/shared/assets";
 import type { ControlProps } from "../../style-sections";
 import { isSupportedFontWeight } from "./is-supported-font-weight";
-import { SelectControl } from "..";
 
 type FontWeightItem = {
   label: string;
