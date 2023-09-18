@@ -27,9 +27,7 @@ export const SelectControl = ({
       // Show empty field instead of radix placeholder like css value input does.
       placeholder=""
       options={options}
-      getLabel={(name) => {
-        return toPascalCase(name);
-      }}
+      getLabel={toPascalCase}
       value={value}
       onChange={(name) => {
         const nextValue = parseCssValue(property, name);

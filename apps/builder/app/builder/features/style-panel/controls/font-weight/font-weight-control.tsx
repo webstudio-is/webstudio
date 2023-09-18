@@ -5,6 +5,7 @@ import { useMemo } from "react";
 import { useAssets } from "~/builder/shared/assets";
 import type { ControlProps } from "../../style-sections";
 import { isSupportedFontWeight } from "./is-supported-font-weight";
+import { SelectControl } from "..";
 
 type FontWeightItem = {
   label: string;
@@ -101,6 +102,15 @@ export const FontWeightControl = ({
 
   const setValue = setProperty(property);
 
+  const setFontWeight = (label: string, options?: { isEphemeral: boolean }) => {
+    const selected = availableFontWeights.find(
+      (option) => option.label === label
+    );
+    if (selected) {
+      setValue({ type: "keyword", value: selected.weight }, options);
+    }
+  };
+
   return (
     <Select
       // show empty field instead of radix placeholder
@@ -109,12 +119,22 @@ export const FontWeightControl = ({
       options={labels}
       // We use a weight as a value, because there are only 9 weights and they are unique.
       value={selectedLabel}
-      onChange={(label) => {
-        const selected = availableFontWeights.find(
-          (option) => option.label === label
-        );
-        if (selected) {
-          setValue({ type: "keyword", value: selected.weight });
+      onChange={setFontWeight}
+      onItemHighlight={(label) => {
+        // Remove preview when mouse leaves the item.
+        if (label === undefined) {
+          if (fontWeight !== undefined) {
+            setValue(fontWeight, { isEphemeral: true });
+          }
+          return;
+        }
+        // Preview on mouse enter or focus.
+        setFontWeight(label, { isEphemeral: true });
+      }}
+      onOpenChange={(isOpen) => {
+        // Remove ephemeral changes when closing the menu.
+        if (isOpen === false && fontWeight !== undefined) {
+          setValue(fontWeight, { isEphemeral: true });
         }
       }}
     />
