@@ -14,12 +14,12 @@
     "checks": "pnpm typecheck"
   },
   "dependencies": {
-    "@webstudio-is/sdk": "workspace:^"
+    "@webstudio-is/sdk": "workspace:*"
   },
   "devDependencies": {
     "@jest/globals": "^29.6.4",
-    "@webstudio-is/jest-config": "workspace:^",
-    "@webstudio-is/tsconfig": "workspace:^",
+    "@webstudio-is/jest-config": "workspace:*",
+    "@webstudio-is/tsconfig": "workspace:*",
     "jest": "^29.6.4",
     "typescript": "5.2.2"
   },

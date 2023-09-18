@@ -11,7 +11,7 @@ const host = "http://localhost:3000";
 describe("getProjectDetails", () => {
   test("include pages", async () => {
     const response = await loadProjectDataById({
-      host,
+      origin: host,
       projectId: morePagesProjectId,
     });
 
@@ -22,7 +22,7 @@ describe("getProjectDetails", () => {
   });
   test("does not include pages", async () => {
     const response = await loadProjectDataById({
-      host,
+      origin: host,
       projectId: onlyHomeProjectId,
     });
     if (typeof response === "object") {
@@ -32,14 +32,14 @@ describe("getProjectDetails", () => {
   });
   test("loads existing project", async () => {
     const response = await loadProjectDataById({
-      host,
+      origin: host,
       projectId: existingProjectId,
     });
     expect(response).toBeTruthy();
   });
   test("loads not published project", async () => {
     const response = await loadProjectDataById({
-      host,
+      origin: host,
       projectId: notPublishedProjectId,
     });
     if (response instanceof Error) {

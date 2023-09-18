@@ -46,17 +46,17 @@
     "react-dom": "^18.2.0"
   },
   "dependencies": {
-    "@webstudio-is/form-handlers": "workspace:^",
-    "@webstudio-is/icons": "workspace:^",
-    "@webstudio-is/react-sdk": "workspace:^",
-    "@webstudio-is/sdk-components-react": "workspace:^"
+    "@webstudio-is/form-handlers": "workspace:*",
+    "@webstudio-is/icons": "workspace:*",
+    "@webstudio-is/react-sdk": "workspace:*",
+    "@webstudio-is/sdk-components-react": "workspace:*"
   },
   "devDependencies": {
     "@remix-run/react": "^1.19.2",
     "@types/react": "^18.2.21",
     "@types/react-dom": "^18.2.7",
-    "@webstudio-is/generate-arg-types": "workspace:^",
-    "@webstudio-is/tsconfig": "workspace:^",
+    "@webstudio-is/generate-arg-types": "workspace:*",
+    "@webstudio-is/tsconfig": "workspace:*",
     "react": "^18.2.0",
     "react-dom": "^18.2.0",
     "typescript": "5.2.2"

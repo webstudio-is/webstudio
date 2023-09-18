@@ -3,6 +3,7 @@ import { Header } from "./header";
 import { Projects } from "./projects";
 import type { User } from "~/shared/db/user.server";
 import type { DashboardProject } from "@webstudio-is/dashboard";
+import { TooltipProvider } from "@radix-ui/react-tooltip";
 
 const globalStyles = globalCss({
   body: {
@@ -24,13 +25,13 @@ export const Dashboard = ({
 }: DashboardProps) => {
   globalStyles();
   return (
-    <>
+    <TooltipProvider>
       <Header user={user} />
       <main>
         <Flex justify="center" as="section" css={{ minWidth: "min-content" }}>
           <Projects projects={projects} projectTemplates={projectTemplates} />
         </Flex>
       </main>
-    </>
+    </TooltipProvider>
   );
 };

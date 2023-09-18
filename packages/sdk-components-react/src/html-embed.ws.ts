@@ -30,5 +30,5 @@ export const propsMeta: WsComponentPropsMeta = {
       rows: 10,
     },
   },
-  initialProps: [],
+  initialProps: ["executeScriptOnCanvas"],
 };

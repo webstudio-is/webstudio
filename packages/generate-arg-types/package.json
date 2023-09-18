@@ -11,14 +11,14 @@
     "checks": "pnpm typecheck"
   },
   "dependencies": {
-    "@webstudio-is/html-data": "workspace:^",
-    "@webstudio-is/react-sdk": "workspace:^",
+    "@webstudio-is/html-data": "workspace:*",
+    "@webstudio-is/react-sdk": "workspace:*",
     "fast-glob": "^3.2.12",
     "react-docgen-typescript": "^2.2.2",
     "zod": "^3.21.4"
   },
   "devDependencies": {
-    "@webstudio-is/tsconfig": "workspace:^",
+    "@webstudio-is/tsconfig": "workspace:*",
     "tsx": "^3.12.8",
     "typescript": "5.2.2"
   },

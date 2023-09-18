@@ -1,0 +1,144 @@
+{
+  "build": {
+    "id": "d1e8a55b-972b-46f9-bcfd-a8b67c4846f6",
+    "projectId": "0d856812-61d8-4014-a20a-82e01c0eb8ee",
+    "version": 1,
+    "createdAt": "2023-09-17T07:56:30.814Z",
+    "pages": {
+      "homePage": {
+        "id": "nfzls_SkTc9jKYyxcZ8Lw",
+        "name": "Home",
+        "title": "Home",
+        "meta": {},
+        "rootInstanceId": "ibXgMoi9_ipHx1gVrvii0",
+        "path": ""
+      },
+      "pages": []
+    },
+    "breakpoints": [
+      [
+        "mIDIDBHsdlix3RVZAVmv7",
+        {
+          "id": "mIDIDBHsdlix3RVZAVmv7",
+          "label": "Base"
+        }
+      ],
+      [
+        "i96QYeYTHXPxfB_HOc1Yy",
+        {
+          "id": "i96QYeYTHXPxfB_HOc1Yy",
+          "label": "Tablet",
+          "maxWidth": 991
+        }
+      ],
+      [
+        "Khs__QBlUTJw8v4GU1-6R",
+        {
+          "id": "Khs__QBlUTJw8v4GU1-6R",
+          "label": "Mobile landscape",
+          "maxWidth": 767
+        }
+      ],
+      [
+        "RX7bPMPNIiqEdG__-RcTL",
+        {
+          "id": "RX7bPMPNIiqEdG__-RcTL",
+          "label": "Mobile portrait",
+          "maxWidth": 479
+        }
+      ]
+    ],
+    "styles": [
+      [
+        "NfeivFkbA_acBLVg7dn9P:mIDIDBHsdlix3RVZAVmv7:fontSize:",
+        {
+          "styleSourceId": "NfeivFkbA_acBLVg7dn9P",
+          "breakpointId": "mIDIDBHsdlix3RVZAVmv7",
+          "property": "fontSize",
+          "value": {
+            "type": "unit",
+            "unit": "em",
+            "value": 4
+          }
+        }
+      ]
+    ],
+    "styleSources": [
+      [
+        "NfeivFkbA_acBLVg7dn9P",
+        {
+          "type": "local",
+          "id": "NfeivFkbA_acBLVg7dn9P"
+        }
+      ]
+    ],
+    "styleSourceSelections": [
+      [
+        "7pwqBSgrfuuOfk1JblWcL",
+        {
+          "instanceId": "7pwqBSgrfuuOfk1JblWcL",
+          "values": ["NfeivFkbA_acBLVg7dn9P"]
+        }
+      ]
+    ],
+    "props": [],
+    "dataSources": [],
+    "instances": [
+      [
+        "ibXgMoi9_ipHx1gVrvii0",
+        {
+          "type": "instance",
+          "id": "ibXgMoi9_ipHx1gVrvii0",
+          "component": "Body",
+          "children": [
+            {
+              "type": "id",
+              "value": "7pwqBSgrfuuOfk1JblWcL"
+            }
+          ]
+        }
+      ],
+      [
+        "7pwqBSgrfuuOfk1JblWcL",
+        {
+          "type": "instance",
+          "id": "7pwqBSgrfuuOfk1JblWcL",
+          "component": "Heading",
+          "children": [
+            {
+              "type": "text",
+              "value": "DO NOT TOUCH THIS PROJECT, IT'S USED FOR FIXTURES"
+            }
+          ]
+        }
+      ]
+    ],
+    "deployment": {
+      "domains": [],
+      "projectDomain": "webstudio-custom-template-cochj"
+    }
+  },
+  "page": {
+    "id": "nfzls_SkTc9jKYyxcZ8Lw",
+    "name": "Home",
+    "title": "Home",
+    "meta": {},
+    "rootInstanceId": "ibXgMoi9_ipHx1gVrvii0",
+    "path": ""
+  },
+  "pages": [
+    {
+      "id": "nfzls_SkTc9jKYyxcZ8Lw",
+      "name": "Home",
+      "title": "Home",
+      "meta": {},
+      "rootInstanceId": "ibXgMoi9_ipHx1gVrvii0",
+      "path": ""
+    }
+  ],
+  "assets": [],
+  "user": {
+    "email": "hello@webstudio.is"
+  },
+  "projectDomain": "webstudio-custom-template-cochj"
+}

@@ -48,10 +48,10 @@
   },
   "dependencies": {
     "@react-aria/utils": "^3.19.0",
-    "@webstudio-is/css-vars": "workspace:^",
-    "@webstudio-is/icons": "workspace:^",
-    "@webstudio-is/image": "workspace:^",
-    "@webstudio-is/react-sdk": "workspace:^",
+    "@webstudio-is/css-vars": "workspace:*",
+    "@webstudio-is/icons": "workspace:*",
+    "@webstudio-is/image": "workspace:*",
+    "@webstudio-is/react-sdk": "workspace:*",
     "colord": "^2.9.3",
     "shallow-equal": "^3.1.0"
   },
@@ -59,9 +59,9 @@
     "@storybook/react": "^7.4.0",
     "@types/react": "^18.2.21",
     "@types/react-dom": "^18.2.7",
-    "@webstudio-is/generate-arg-types": "workspace:^",
-    "@webstudio-is/storybook-config": "workspace:^",
-    "@webstudio-is/tsconfig": "workspace:^",
+    "@webstudio-is/generate-arg-types": "workspace:*",
+    "@webstudio-is/storybook-config": "workspace:*",
+    "@webstudio-is/tsconfig": "workspace:*",
     "react": "^18.2.0",
     "react-dom": "^18.2.0",
     "typescript": "5.2.2"

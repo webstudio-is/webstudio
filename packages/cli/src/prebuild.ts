@@ -8,6 +8,7 @@ import {
   cp,
   readFile,
   writeFile,
+  readdir,
 } from "node:fs/promises";
 import { pipeline } from "node:stream/promises";
 import { tmpdir } from "node:os";
@@ -134,12 +135,29 @@ const mergeJsonFiles = async (sourcePath: string, destinationPath: string) => {
   await writeFile(destinationPath, content, "utf8");
 };
 
-const copyTemplates = async () => {
+const isCliTemplate = async (template: string) => {
   const currentPath = fileURLToPath(new URL(import.meta.url));
 
   const templatesPath = normalize(
-    join(dirname(currentPath), "..", "templates", "defaults")
+    join(dirname(currentPath), "..", "templates")
   );
+
+  const dirents = await readdir(templatesPath, { withFileTypes: true });
+
+  for (const dirent of dirents) {
+    if (dirent.isDirectory() && dirent.name === template) {
+      return true;
+    }
+  }
+  return false;
+};
+
+const copyTemplates = async (template: string = "defaults") => {
+  const currentPath = fileURLToPath(new URL(import.meta.url));
+
+  const templatesPath = (await isCliTemplate(template))
+    ? normalize(join(dirname(currentPath), "..", "templates", template))
+    : template;
 
   await cp(templatesPath, cwd(), {
     recursive: true,
@@ -163,6 +181,10 @@ export const prebuild = async (options: {
    * Do we need download assets
    **/
   assets: boolean;
+  /**
+   * Template to use for the build in addition to defaults template
+   **/
+  template?: string;
 }) => {
   const spinner = ora("Scaffolding the project files");
   spinner.start();
@@ -170,6 +192,10 @@ export const prebuild = async (options: {
   spinner.text = "Generating files";
 
   await copyTemplates();
+
+  if (options.template !== undefined) {
+    await copyTemplates(options.template);
+  }
 
   const constantsJson =
     await $`node --input-type=module --eval ${`import * as consts from './app/constants.mjs'; console.log(JSON.stringify(consts))`}`;
@@ -292,34 +318,36 @@ export const prebuild = async (options: {
     imageBaseUrl: assetBuildUrl,
   });
 
-  for (const asset of siteData.assets) {
-    if (asset.type === "image") {
-      const imageSrc = imageLoader({
-        width: 16,
-        quality: 100,
-        src: asset.name,
-        format: "raw",
-      });
+  if (options.assets === true) {
+    for (const asset of siteData.assets) {
+      if (asset.type === "image") {
+        const imageSrc = imageLoader({
+          width: 16,
+          quality: 100,
+          src: asset.name,
+          format: "raw",
+        });
 
-      assetsToDownload.push(
-        limit(() =>
-          downloadAsset(imageSrc, asset.name, assetBaseUrl, temporaryDir)
-        )
-      );
-    }
-
-    if (asset.type === "font") {
-      assetsToDownload.push(
-        limit(() =>
-          downloadAsset(
-            `${assetBuildUrl}${asset.name}`,
-            asset.name,
-            assetBaseUrl,
-            temporaryDir
+        assetsToDownload.push(
+          limit(() =>
+            downloadAsset(imageSrc, asset.name, assetBaseUrl, temporaryDir)
           )
-        )
-      );
-      fontAssets.push(asset);
+        );
+      }
+
+      if (asset.type === "font") {
+        assetsToDownload.push(
+          limit(() =>
+            downloadAsset(
+              `${assetBuildUrl}${asset.name}`,
+              asset.name,
+              assetBaseUrl,
+              temporaryDir
+            )
+          )
+        );
+        fontAssets.push(asset);
+      }
     }
   }
 

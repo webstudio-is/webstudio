@@ -2,7 +2,13 @@ import { stdin, stdout, cwd } from "node:process";
 import { join } from "node:path";
 import * as readline from "node:readline/promises";
 import { readFile, writeFile } from "node:fs/promises";
-import { GLOBAL_CONFIG_FILE, LOCAL_CONFIG_FILE } from "../config";
+import {
+  GLOBAL_CONFIG_FILE,
+  LOCAL_CONFIG_FILE,
+  type GlobalConfig,
+  jsonToGlobalConfig,
+  type LocalConfig,
+} from "../config";
 import { ensureFileInPath } from "../fs-utils";
 import type {
   CommonYargsArgv,
@@ -31,25 +37,28 @@ export const link = async (
   }
 
   const shareLinkUrl = new URL(shareLink);
-  const host = shareLinkUrl.origin;
+  const origin = shareLinkUrl.origin;
   const token = shareLinkUrl.searchParams.get("authToken");
   const paths = shareLinkUrl.pathname.split("/").slice(1);
 
   if (paths[0] !== "builder" || paths.length !== 2) {
     throw new Error("Invalid share link.");
   }
+
   const projectId = paths[1];
-  if (token === undefined || projectId === undefined || host === undefined) {
+
+  if (token == null) {
     throw new Error("Invalid share link.");
   }
 
   try {
     const currentConfig = await readFile(GLOBAL_CONFIG_FILE, "utf-8");
-    const currentConfigJson = JSON.parse(currentConfig);
-    const newConfig = {
+    const currentConfigJson = jsonToGlobalConfig(JSON.parse(currentConfig));
+
+    const newConfig: GlobalConfig = {
       ...currentConfigJson,
       [projectId]: {
-        host,
+        origin,
         token,
       },
     };
@@ -59,9 +68,13 @@ export const link = async (
   You can find your config at ${GLOBAL_CONFIG_FILE}
         `);
 
+    const localConfig: LocalConfig = {
+      projectId,
+    };
+
     await ensureFileInPath(
       join(cwd(), LOCAL_CONFIG_FILE),
-      JSON.stringify({ projectId }, null, 2)
+      JSON.stringify(localConfig, null, 2)
     );
   } catch (error: unknown) {
     if (error instanceof Error && "code" in error && error.code === "ENONET") {

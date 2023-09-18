@@ -10,7 +10,7 @@ import { ReactSdkContext } from "@webstudio-is/react-sdk";
 
 type Props = {
   code: string;
-  executeScriptOnCanvas: boolean;
+  executeScriptOnCanvas?: boolean;
 };
 
 type ChildProps = {

@@ -198,6 +198,7 @@ export const generatePageComponent = ({
     return "";
   }
   const { variables, body: dataSourcesBody } = generateDataSources({
+    typed: true,
     scope,
     dataSources,
     props,
@@ -227,7 +228,7 @@ export const generatePageComponent = ({
   });
 
   let generatedComponent = "";
-  generatedComponent += `export const Page = (props: { scripts: ReactNode }) => {\n`;
+  generatedComponent += `const Page = (props: { scripts?: ReactNode }) => {\n`;
   generatedComponent += `${generatedDataSources}`;
   generatedComponent += `return ${generatedJsx}`;
   generatedComponent += `}\n`;

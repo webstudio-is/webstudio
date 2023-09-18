@@ -14,10 +14,10 @@
   },
   "dependencies": {
     "@trpc/server": "^10.38.1",
-    "@webstudio-is/asset-uploader": "workspace:^",
-    "@webstudio-is/prisma-client": "workspace:^",
-    "@webstudio-is/project-build": "workspace:^",
-    "@webstudio-is/trpc-interface": "workspace:^",
+    "@webstudio-is/asset-uploader": "workspace:*",
+    "@webstudio-is/prisma-client": "workspace:*",
+    "@webstudio-is/project-build": "workspace:*",
+    "@webstudio-is/trpc-interface": "workspace:*",
     "nanoid": "^4.0.2",
     "slugify": "^1.6.6",
     "uuid": "^9.0.0",
@@ -25,7 +25,7 @@
   },
   "devDependencies": {
     "@types/uuid": "^8.3.4",
-    "@webstudio-is/tsconfig": "workspace:^",
+    "@webstudio-is/tsconfig": "workspace:*",
     "typescript": "5.2.2"
   },
   "exports": {
