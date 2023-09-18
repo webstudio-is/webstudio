@@ -38,6 +38,21 @@ jobs:
       - name: Build cli
         run: pnpm turbo run build --filter='webstudio-cli'
 
-      - name: Test cli help
+      - name: Test cli --help flag
         working-directory: ./fixtures/webstudio-remix-vercel
         run: pnpm webstudio-cli --help
+
+      - name: Test cli link command
+        working-directory: ./fixtures/webstudio-remix-vercel
+        run: pnpm webstudio-cli --link https://webstudio-builder-git-main-webstudio-is.vercel.app/builder/cddc1d44-af37-4cb6-a430-d300cf6f932d?authToken=1cdc6026-dd5b-4624-b89b-9bd45e9bcc3d&mode=preview
+
+      - name: Test cli sync command
+        working-directory: ./fixtures/webstudio-remix-vercel
+        run: pnpm webstudio-cli sync && pnpm prettier --write ./.webstudio/
+
+      - name: Test cli build command
+        working-directory: ./fixtures/webstudio-remix-vercel
+        run: pnpm webstudio-cli build --preview && pnpm prettier --write ./app/ ./package.json
+
+      - name: Test git diff
+        run: git diff-index --name-only HEAD --exit-code
