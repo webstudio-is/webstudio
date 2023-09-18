@@ -1,0 +1,40 @@
+name: Main workflow
+
+on:
+  push:
+    branches:
+      - main
+  pull_request:
+
+# cancel in-progress runs on new commits to same PR (gitub.event.number)
+concurrency:
+  group: ${{ github.workflow }}-${{ github.event.number || github.sha }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read # to fetch code (actions/checkout)
+
+jobs:
+  checks:
+    timeout-minutes: 20
+
+    strategy:
+      matrix:
+        os: [ubuntu-latest, windows-latest]
+
+    runs-on: ${{ matrix.os }}
+
+    env:
+      DATABASE_URL: postgres://
+      AUTH_SECRET: test
+
+    steps:
+      - uses: actions/checkout@v3
+        with:
+          ref: ${{ github.event.pull_request.head.sha || github.sha }} # HEAD commit instead of merge commit
+
+      - uses: ./.github/actions/ci-setup
+
+      - name: Test cli help
+        working-directory: ./fixtures/webstudio-remix-vercel
+        run: pnpm webstudio-cli --help
