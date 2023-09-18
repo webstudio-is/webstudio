@@ -39,7 +39,5 @@ export const build = async (
     throw error;
   }
 
-  throw new Error("Not implemented yet");
-
   await prebuild(options);
 };
