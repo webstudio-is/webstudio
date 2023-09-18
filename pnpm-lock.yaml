@@ -367,6 +367,9 @@ importers:
 
   fixtures/webstudio-custom-template:
     dependencies:
+      '@remix-run/node':
+        specifier: ^1.19.2
+        version: 1.19.2
       '@remix-run/react':
         specifier: ^1.19.2
         version: 1.19.2(react-dom@18.2.0)(react@18.2.0)
@@ -431,6 +434,9 @@ importers:
 
   fixtures/webstudio-remix-vercel:
     dependencies:
+      '@remix-run/node':
+        specifier: ^1.19.2
+        version: 1.19.2
       '@remix-run/react':
         specifier: ^1.19.2
         version: 1.19.2(react-dom@18.2.0)(react@18.2.0)
