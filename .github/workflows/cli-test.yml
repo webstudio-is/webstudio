@@ -36,7 +36,7 @@ jobs:
       - uses: ./.github/actions/ci-setup
 
       - name: Build cli
-        run: pnpm build
+        run: pnpm turbo run build --filter='webstudio-cli'
 
       - name: Test cli help
         working-directory: ./fixtures/webstudio-remix-vercel
