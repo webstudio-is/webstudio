@@ -8,7 +8,7 @@ on:
 
 # cancel in-progress runs on new commits to same PR (gitub.event.number)
 concurrency:
-  group: ${{ github.workflow }}-${{ github.event.number || github.sha }}
+  group: cli-${{ github.workflow }}-${{ github.event.number || github.sha }}
   cancel-in-progress: true
 
 permissions:
@@ -55,4 +55,9 @@ jobs:
         run: pnpm webstudio-cli build --preview && pnpm prettier --write ./app/ ./package.json
 
       - name: Test git diff
+        # This command will fail if there are uncommitted changes, i.e something has broken
         run: git diff-index --name-only HEAD --exit-code
+
+      - name: Show changed files
+        if: ${{ failure() }}
+        run: git diff-index --name-only HEAD
