@@ -44,7 +44,7 @@ jobs:
 
       - name: Test cli link command
         working-directory: ./fixtures/webstudio-remix-vercel
-        run: pnpm webstudio-cli link --link https://webstudio-builder-git-main-webstudio-is.vercel.app/builder/cddc1d44-af37-4cb6-a430-d300cf6f932d?authToken=1cdc6026-dd5b-4624-b89b-9bd45e9bcc3d&mode=preview
+        run: pnpm webstudio-cli link --link 'https://webstudio-builder-git-main-webstudio-is.vercel.app/builder/cddc1d44-af37-4cb6-a430-d300cf6f932d?authToken=1cdc6026-dd5b-4624-b89b-9bd45e9bcc3d&mode=preview'
 
       - name: Test cli sync command
         working-directory: ./fixtures/webstudio-remix-vercel
@@ -52,7 +52,7 @@ jobs:
 
       - name: Test cli build command
         working-directory: ./fixtures/webstudio-remix-vercel
-        run: pnpm webstudio-cli build --preview && pnpm prettier --write ./app/
+        run: pnpm webstudio-cli build --preview && pnpm prettier --write ./app/ ./package.json
 
       - name: Test git diff
         # This command will fail if there are uncommitted changes, i.e something has broken
@@ -60,4 +60,6 @@ jobs:
 
       - name: Show changed files
         if: ${{ failure() }}
-        run: git diff --name-only HEAD
+        run: |
+          echo "Changed files are:"
+          git diff --name-only HEAD
