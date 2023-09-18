@@ -1,4 +1,4 @@
-name: Main workflow
+name: Cli tests
 
 on:
   push:
