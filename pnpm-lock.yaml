@@ -367,12 +367,12 @@ importers:
 
   fixtures/webstudio-custom-template:
     dependencies:
-      '@remix-run/node':
-        specifier: ^1.19.2
-        version: 1.19.2
       '@remix-run/react':
         specifier: ^1.19.2
         version: 1.19.2(react-dom@18.2.0)(react@18.2.0)
+      '@remix-run/server-runtime':
+        specifier: ^1.19.2
+        version: 1.19.2
       '@webstudio-is/form-handlers':
         specifier: workspace:*
         version: link:../../packages/form-handlers
@@ -431,12 +431,12 @@ importers:
 
   fixtures/webstudio-remix-vercel:
     dependencies:
-      '@remix-run/node':
-        specifier: ^1.19.2
-        version: 1.19.2
       '@remix-run/react':
         specifier: ^1.19.2
         version: 1.19.2(react-dom@18.2.0)(react@18.2.0)
+      '@remix-run/server-runtime':
+        specifier: ^1.19.2
+        version: 1.19.2
       '@webstudio-is/form-handlers':
         specifier: workspace:*
         version: link:../../packages/form-handlers
