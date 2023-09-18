@@ -52,7 +52,7 @@ jobs:
 
       - name: Test cli build command
         working-directory: ./fixtures/webstudio-remix-vercel
-        run: pnpm webstudio-cli build --preview && pnpm prettier --write ./app/ ./package.json
+        run: pnpm webstudio-cli build --preview && pnpm prettier --write ./app/
 
       - name: Test git diff
         # This command will fail if there are uncommitted changes, i.e something has broken
