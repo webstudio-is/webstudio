@@ -86,15 +86,36 @@ export const BackgroundSize = (
           options={selectOptions}
           getLabel={toPascalCase}
           value={selectValue}
-          onChange={(name) => {
+          onChange={(name: string) => {
             if (name === "custom") {
-              setValue({
+              return setValue({
                 type: "tuple",
                 value: [StyleKeywordAuto, StyleKeywordAuto],
               });
-            } else {
-              const cssValue = parseCssValue(property, name);
-              setValue(cssValue);
+            }
+            const cssValue = parseCssValue(property, name);
+            setValue(cssValue);
+          }}
+          onItemHighlight={(name) => {
+            // No need to preview custom size as it needs additional user input.
+            if (name === "custom") {
+              return;
+            }
+            // Remove preview when mouse leaves the item.
+            if (name === undefined) {
+              if (styleValue !== undefined) {
+                setValue(styleValue, { isEphemeral: true });
+              }
+              return;
+            }
+            // Preview on mouse enter or focus.
+            const cssValue = parseCssValue(property, name);
+            setValue(cssValue, { isEphemeral: true });
+          }}
+          onOpenChange={(isOpen) => {
+            // Remove ephemeral changes when closing the menu.
+            if (isOpen === false && styleValue !== undefined) {
+              setValue(styleValue, { isEphemeral: true });
             }
           }}
         />
