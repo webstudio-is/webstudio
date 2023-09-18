@@ -37,7 +37,8 @@ export const Form = forwardRef<
   ElementRef<typeof defaultTag>,
   ComponentProps<typeof defaultTag> & {
     /** Use this property to reveal the Success and Error states on the canvas so they can be styled. The Initial state is displayed when the page first opens. The Success and Error states are displayed depending on whether the Form submits successfully or unsuccessfully. */
-    state?: State;
+    // cast to string to not fail with generated output
+    state?: string;
     encType?: FormProps["encType"];
     onStateChange?: (state: State) => void;
   }

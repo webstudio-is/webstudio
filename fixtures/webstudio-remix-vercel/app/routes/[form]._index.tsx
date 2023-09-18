@@ -5,6 +5,7 @@ import {
   type LinkDescriptor,
   type ActionArgs,
   json,
+<<<<<<< HEAD
 } from "@remix-run/server-runtime";
 
 import {
@@ -12,23 +13,27 @@ import {
   type RootPropsData,
   type Params,
 } from "@webstudio-is/react-sdk";
+=======
+} from "@remix-run/node";
+import { atom } from "nanostores";
+import { ReactSdkContext, getPropsByInstanceId } from "@webstudio-is/react-sdk";
+>>>>>>> 4a8ec8cb6 (Switch CLI to jsx component generator)
 import { n8nHandler, getFormId } from "@webstudio-is/form-handlers";
 import { Scripts, ScrollRestoration } from "@remix-run/react";
 import {
   fontAssets,
-  components,
   pageData,
   user,
   projectId,
-  utils,
   formsProperties,
+  Page,
 } from "../__generated__/[form]._index.tsx";
 import css from "../__generated__/index.css";
 import type { Data } from "@webstudio-is/http-client";
 import { assetBaseUrl, imageBaseUrl, imageLoader } from "~/constants.mjs";
 
 export type PageData = Omit<Data, "build"> & {
-  build: Pick<Data["build"], "props" | "instances" | "dataSources">;
+  build: Pick<Data["build"], "props">;
 };
 
 export const meta: V2_ServerRuntimeMetaFunction = () => {
@@ -159,9 +164,7 @@ export const action = async ({ request, context }: ActionArgs) => {
 };
 
 const Outlet = () => {
-  const pagesCanvasData: PageData = pageData;
-
-  const page = pagesCanvasData.page;
+  const page = pageData.page;
 
   if (page === undefined) {
     throw json("Page not found", {
@@ -169,32 +172,34 @@ const Outlet = () => {
     });
   }
 
-  const params: Params = {
-    assetBaseUrl,
-    imageBaseUrl,
-  };
-
-  const data: RootPropsData = {
-    build: pagesCanvasData.build,
-    assets: pagesCanvasData.assets,
-    page,
-    pages: pagesCanvasData.pages,
-    params,
-  };
-
   return (
-    <InstanceRoot
-      imageLoader={imageLoader}
-      data={data}
-      components={components}
-      utils={utils}
-      scripts={
-        <>
-          <Scripts />
-          <ScrollRestoration />
-        </>
-      }
-    />
+    <ReactSdkContext.Provider
+      value={{
+        propsByInstanceIdStore: atom(
+          getPropsByInstanceId(new Map(pageData.build.props))
+        ),
+        assetsStore: atom(
+          new Map(pageData.assets.map((asset) => [asset.id, asset]))
+        ),
+        pagesStore: atom(
+          new Map(pageData.pages.map((page) => [page.id, page]))
+        ),
+        dataSourcesLogicStore: atom(new Map()),
+        imageLoader,
+        assetBaseUrl,
+        imageBaseUrl,
+        indexesWithinAncestors: new Map(),
+      }}
+    >
+      <Page
+        scripts={
+          <>
+            <Scripts />
+            <ScrollRestoration />
+          </>
+        }
+      />
+    </ReactSdkContext.Provider>
   );
 };
 
