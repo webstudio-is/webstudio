@@ -1,18 +1,18 @@
 /* eslint-disable camelcase */
 import {
-  type V2_MetaFunction,
+  type V2_ServerRuntimeMetaFunction,
   type LinksFunction,
   type LinkDescriptor,
   type ActionArgs,
   json,
-} from "@remix-run/node";
+} from "@remix-run/server-runtime";
 
 import {
   InstanceRoot,
   type RootPropsData,
   type Params,
 } from "@webstudio-is/react-sdk";
-import { n8nHandler, getFormProperties } from "@webstudio-is/form-handlers";
+import { n8nHandler, getFormId } from "@webstudio-is/form-handlers";
 import { Scripts, ScrollRestoration } from "@remix-run/react";
 import {
   fontAssets,
@@ -21,6 +21,7 @@ import {
   user,
   projectId,
   utils,
+  formsProperties,
 } from "../__generated__/[radix]._index.tsx";
 import css from "../__generated__/index.css";
 import type { Data } from "@webstudio-is/http-client";
@@ -30,7 +31,7 @@ export type PageData = Omit<Data, "build"> & {
   build: Pick<Data["build"], "props" | "instances" | "dataSources">;
 };
 
-export const meta: V2_MetaFunction = () => {
+export const meta: V2_ServerRuntimeMetaFunction = () => {
   const { page } = pageData;
   return [{ title: page?.title || "Webstudio", ...page?.meta }];
 };
@@ -78,15 +79,17 @@ const getMethod = (value: string | undefined) => {
 export const action = async ({ request, context }: ActionArgs) => {
   const formData = await request.formData();
 
-  const formProperties = getFormProperties(formData, pageData.build.props);
-
-  if (formProperties === undefined) {
+  const formId = getFormId(formData);
+  if (formId === undefined) {
     // We're throwing rather than returning { success: false }
     // because this isn't supposed to happen normally: bug or malicious user
     throw json("Form not found", { status: 404 });
   }
 
-  const { action, method } = formProperties;
+  const formProperties = formsProperties.get(formId);
+
+  // form properties are not defined when defaults are used
+  const { action, method } = formProperties ?? {};
 
   const email = user?.email;
 

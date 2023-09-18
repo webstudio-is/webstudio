@@ -61,5 +61,5 @@ type RemoveIndex<T> = {
 export type StrictYargsOptionsToInterface<
   T extends (yargs: CommonYargsArgv) => Argv,
 > = T extends (yargs: CommonYargsArgv) => Argv<infer P>
-  ? RemoveIndex<ArgumentsCamelCase<P>>
+  ? Omit<RemoveIndex<ArgumentsCamelCase<P>>, "v" | "h" | "$0" | "_">
   : never;

@@ -3,7 +3,6 @@ export {
   formIdFieldName,
   formHiddenFieldPrefix,
   getFormId,
-  getFormProperties,
   type EmailInfo,
   type FormInfo,
 } from "./shared";

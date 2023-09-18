@@ -19,8 +19,8 @@
   "devDependencies": {
     "@prisma/client": "^4.14.0",
     "@types/node": "^18.11.18",
-    "@webstudio-is/scripts": "workspace:^",
-    "@webstudio-is/tsconfig": "workspace:^",
+    "@webstudio-is/scripts": "workspace:*",
+    "@webstudio-is/tsconfig": "workspace:*",
     "prisma": "^4.14.0",
     "tsx": "^3.12.8",
     "typescript": "5.2.2",

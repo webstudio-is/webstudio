@@ -211,6 +211,14 @@ export const pageData: PageData = {
       rootInstanceId: "EDEfpMPRqDejthtwkH7ws",
       path: "/_route_with_symbols_",
     },
+    {
+      id: "U1tRJl2ERr8_OFe0g9cN_",
+      name: "form",
+      title: "form",
+      meta: { description: "" },
+      rootInstanceId: "a-4nDFkaWy4px1fn38XWJ",
+      path: "/form",
+    },
   ],
   page: {
     id: "7Db64ZXgYiRqKSQNR-qTQ",
@@ -261,6 +269,11 @@ const getDataSourcesLogic = (
   let _output = new Map();
   return _output;
 };
+
+export const formsProperties = new Map<
+  string,
+  { method?: string; action?: string }
+>([]);
 
 export const utils = {
   indexesWithinAncestors,

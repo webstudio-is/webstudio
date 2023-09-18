@@ -9,15 +9,16 @@
     "checks": "pnpm typecheck"
   },
   "dependencies": {
-    "@remix-run/node": "^1.19.2",
     "@remix-run/react": "^1.19.2",
-    "@webstudio-is/react-sdk": "workspace:^",
-    "@webstudio-is/sdk-components-react-radix": "workspace:^",
-    "@webstudio-is/sdk-components-react-remix": "workspace:^",
-    "@webstudio-is/sdk-components-react": "workspace:^",
-    "@webstudio-is/form-handlers": "workspace:^",
-    "@webstudio-is/image": "workspace:^",
-    "@webstudio-is/sdk": "workspace:^",
+    "@remix-run/server-runtime": "^1.19.2",
+    "@remix-run/node": "^1.19.2",
+    "@webstudio-is/react-sdk": "workspace:*",
+    "@webstudio-is/sdk-components-react-radix": "workspace:*",
+    "@webstudio-is/sdk-components-react-remix": "workspace:*",
+    "@webstudio-is/sdk-components-react": "workspace:*",
+    "@webstudio-is/form-handlers": "workspace:*",
+    "@webstudio-is/image": "workspace:*",
+    "@webstudio-is/sdk": "workspace:*",
     "isbot": "^3.6.8",
     "react": "^18.2.0",
     "react-dom": "^18.2.0"
@@ -27,10 +28,10 @@
     "@remix-run/dev": "^1.19.2",
     "@types/react": "^18.2.20",
     "@types/react-dom": "^18.2.7",
-    "@webstudio-is/http-client": "workspace:^",
+    "@webstudio-is/http-client": "workspace:*",
     "eslint": "^8.48.0",
     "typescript": "5.2.2",
-    "webstudio-cli": "workspace:^"
+    "webstudio-cli": "workspace:*"
   },
   "engines": {
     "node": ">=18.0.0"

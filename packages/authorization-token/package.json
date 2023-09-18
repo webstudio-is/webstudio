@@ -13,12 +13,12 @@
     "dts": "tsc --project tsconfig.dts.json"
   },
   "dependencies": {
-    "@webstudio-is/prisma-client": "workspace:^",
-    "@webstudio-is/trpc-interface": "workspace:^",
+    "@webstudio-is/prisma-client": "workspace:*",
+    "@webstudio-is/trpc-interface": "workspace:*",
     "zod": "^3.21.4"
   },
   "devDependencies": {
-    "@webstudio-is/tsconfig": "workspace:^",
+    "@webstudio-is/tsconfig": "workspace:*",
     "typescript": "5.2.2"
   },
   "exports": {

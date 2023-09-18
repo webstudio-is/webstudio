@@ -1,5 +1,3 @@
-import type { Prop } from "@webstudio-is/sdk";
-
 export const formHiddenFieldPrefix = "ws--form";
 export const formIdFieldName = `${formHiddenFieldPrefix}-id`;
 
@@ -109,33 +107,4 @@ export const getErrors = (
   ) {
     return json.errors;
   }
-};
-
-export const getFormProperties = (
-  formData: FormData,
-  props: [Prop["id"], Prop][]
-) => {
-  const formId = getFormId(formData);
-
-  if (formId === undefined) {
-    return undefined;
-  }
-
-  const objectProps = Object.fromEntries(
-    props
-      .filter(([_, value]) => value.instanceId === formId)
-      .map(([_, value]) => [value.name, value])
-  );
-
-  const action =
-    objectProps.action?.type === "string"
-      ? objectProps.action.value
-      : undefined;
-
-  const method =
-    objectProps.method?.type === "string"
-      ? objectProps.method.value
-      : undefined;
-
-  return { action, method };
 };

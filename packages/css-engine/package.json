@@ -16,8 +16,8 @@
     "storybook:build": "storybook build"
   },
   "dependencies": {
-    "@webstudio-is/error-utils": "workspace:^",
-    "@webstudio-is/fonts": "workspace:^",
+    "@webstudio-is/error-utils": "workspace:*",
+    "@webstudio-is/fonts": "workspace:*",
     "hyphenate-style-name": "^1.0.4"
   },
   "devDependencies": {
@@ -25,9 +25,9 @@
     "@types/hyphenate-style-name": "^1.0.0",
     "@types/react": "^18.2.21",
     "@types/react-dom": "^18.2.7",
-    "@webstudio-is/jest-config": "workspace:^",
-    "@webstudio-is/storybook-config": "workspace:^",
-    "@webstudio-is/tsconfig": "workspace:^",
+    "@webstudio-is/jest-config": "workspace:*",
+    "@webstudio-is/storybook-config": "workspace:*",
+    "@webstudio-is/tsconfig": "workspace:*",
     "jest": "^29.6.4",
     "react": "^18.2.0",
     "react-dom": "^18.2.0",
