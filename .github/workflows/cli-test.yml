@@ -64,5 +64,9 @@ jobs:
           echo "Changed files are:"
           git diff --name-only HEAD
 
+      - name: Install expect
+        if: matrix.os == 'ubuntu-latest'
+        run: sudo apt-get install -y expect
+
       - name: Test cli via expect
         run: expect -h
