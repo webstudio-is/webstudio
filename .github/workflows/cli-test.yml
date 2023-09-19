@@ -69,4 +69,4 @@ jobs:
         run: sudo apt-get install -y expect
 
       - name: Test cli via expect
-        run: expect -h
+        run: NODE_DISABLE_COLORS=1 NO_COLOR=1 expect ./scripts/test-cli.exp
