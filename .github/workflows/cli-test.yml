@@ -63,3 +63,6 @@ jobs:
         run: |
           echo "Changed files are:"
           git diff --name-only HEAD
+
+      - name: Test cli via expect
+        run: expect -h
