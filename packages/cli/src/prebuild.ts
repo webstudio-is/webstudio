@@ -198,7 +198,7 @@ export const prebuild = async (options: {
   }
 
   const constants: typeof sharedConstants = await import(
-    pathToFileURL(join(cwd(), "/app/constants.mjs")).href
+    pathToFileURL(join(cwd(), "app/constants.mjs")).href
   );
 
   const { assetBaseUrl } = constants;
