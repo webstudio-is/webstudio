@@ -19,6 +19,11 @@ jobs:
     steps:
       - uses: amannn/action-semantic-pull-request@v5
         id: lint_pr_title
+        with:
+          # Configure which types are allowed (newline-delimited).
+          # Default: https://github.com/commitizen/conventional-commit-types
+          types: |
+            experimental
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
