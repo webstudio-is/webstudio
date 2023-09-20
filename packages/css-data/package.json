@@ -32,7 +32,7 @@
     "zod": "^3.19.1"
   },
   "exports": {
-    "source": "./src/index.ts",
+    "webstudio": "./src/index.ts",
     "types": "./lib/types/index.d.ts",
     "import": "./lib/index.js"
   },

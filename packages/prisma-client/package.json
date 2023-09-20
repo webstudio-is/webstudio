@@ -27,7 +27,7 @@
     "zod": "^3.21.4"
   },
   "exports": {
-    "source": "./src/index.ts",
+    "webstudio": "./src/index.ts",
     "types": "./lib/index.d.ts",
     "import": "./lib/index.js",
     "require": "./lib/cjs/index.js"

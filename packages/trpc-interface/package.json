@@ -29,7 +29,7 @@
   },
   "exports": {
     "./index.server": {
-      "source": "./src/index.server.ts",
+      "webstudio": "./src/index.server.ts",
       "import": "./lib/index.server.js",
       "types": "./lib/types/index.server.d.ts"
     }

@@ -77,7 +77,7 @@
     "warn-once": "^0.1.1"
   },
   "exports": {
-    "source": "./src/index.ts",
+    "webstudio": "./src/index.ts",
     "import": "./lib/index.js",
     "types": "./lib/types/index.d.ts"
   },
