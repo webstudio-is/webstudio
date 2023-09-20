@@ -404,6 +404,14 @@ export const propsAccordion: Record<string, PropMeta> = {
   },
   autoSave: { required: false, control: "text", type: "string" },
   className: { required: false, control: "text", type: "string" },
+  collapsible: {
+    description:
+      "Whether an accordion item can be collapsed after it has been opened.",
+    required: false,
+    control: "boolean",
+    type: "boolean",
+    defaultValue: false,
+  },
   color: {
     required: false,
     control: "color",
@@ -1168,11 +1176,11 @@ export const propsAccordionItem: Record<string, PropMeta> = {
     options: ["on", "off"],
   },
   value: {
-    description:
-      "A string value for the accordion item. All items within an accordion should use a unique value.",
-    required: true,
+    required: false,
     control: "text",
     type: "string",
+    description:
+      "Defines a default value which will be displayed in the element on pageload.",
   },
   vocab: { required: false, control: "text", type: "string" },
 };

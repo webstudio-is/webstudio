@@ -37,34 +37,31 @@ export const Form = forwardRef<
   ElementRef<typeof defaultTag>,
   ComponentProps<typeof defaultTag> & {
     /** Use this property to reveal the Success and Error states on the canvas so they can be styled. The Initial state is displayed when the page first opens. The Success and Error states are displayed depending on whether the Form submits successfully or unsuccessfully. */
-    state: State;
+    state?: State;
     encType?: FormProps["encType"];
     onStateChange?: (state: State) => void;
   }
->((props, ref) => {
-  const {
-    children,
-    action,
-    method,
-    state = "initial",
-    onStateChange,
-    ...rest
-  } = props;
-  const fetcher = useFetcher();
+>(
+  (
+    { children, action, method, state = "initial", onStateChange, ...rest },
+    ref
+  ) => {
+    const fetcher = useFetcher();
 
-  const instanceId = getInstanceIdFromComponentProps(rest);
+    const instanceId = getInstanceIdFromComponentProps(rest);
 
-  useOnFetchEnd(fetcher, (data) => {
-    const state: State = data?.success === true ? "success" : "error";
-    onStateChange?.(state);
-  });
+    useOnFetchEnd(fetcher, (data) => {
+      const state: State = data?.success === true ? "success" : "error";
+      onStateChange?.(state);
+    });
 
-  return (
-    <fetcher.Form {...rest} method="post" data-state={state} ref={ref}>
-      <input type="hidden" name={formIdFieldName} value={instanceId} />
-      {children}
-    </fetcher.Form>
-  );
-});
+    return (
+      <fetcher.Form {...rest} method="post" data-state={state} ref={ref}>
+        <input type="hidden" name={formIdFieldName} value={instanceId} />
+        {children}
+      </fetcher.Form>
+    );
+  }
+);
 
 Form.displayName = "Form";
