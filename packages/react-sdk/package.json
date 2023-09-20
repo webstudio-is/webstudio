@@ -50,13 +50,13 @@
   },
   "exports": {
     ".": {
-      "source": "./src/index.ts",
+      "webstudio": "./src/index.ts",
       "types": "./lib/types/index.d.ts",
       "import": "./lib/index.js",
       "require": "./lib/index.js"
     },
     "./css-normalize": {
-      "source": "./src/css/normalize.ts",
+      "webstudio": "./src/css/normalize.ts",
       "types": "./lib/types/css/normalize.d.ts",
       "import": "./lib/css/normalize.js",
       "require": "./lib/css/normalize.js"

@@ -14,19 +14,19 @@
   ],
   "exports": {
     ".": {
-      "source": "./src/components.ts",
+      "webstudio": "./src/components.ts",
       "types": "./lib/types/components.d.ts",
       "import": "./lib/components.js",
       "require": "./lib/components.js"
     },
     "./metas": {
-      "source": "./src/metas.ts",
+      "webstudio": "./src/metas.ts",
       "types": "./lib/types/metas.d.ts",
       "import": "./lib/metas.js",
       "require": "./lib/metas.js"
     },
     "./props": {
-      "source": "./src/props.ts",
+      "webstudio": "./src/props.ts",
       "types": "./lib/types/props.d.ts",
       "import": "./lib/props.js",
       "require": "./lib/props.js"
@@ -35,7 +35,7 @@
   "scripts": {
     "dev": "rm -rf lib && esbuild 'src/**/*.ts' 'src/**/*.tsx' --outdir=lib --watch",
     "build": "rm -rf lib && esbuild src/components.ts src/metas.ts src/props.ts --outdir=lib --bundle --format=esm --packages=external",
-    "build:args": "NODE_OPTIONS=--conditions=source generate-arg-types './src/*.tsx !./src/*.stories.tsx !./src/*.ws.tsx' && prettier --write \"**/*.props.ts\"",
+    "build:args": "NODE_OPTIONS=--conditions=webstudio generate-arg-types './src/*.tsx !./src/*.stories.tsx !./src/*.ws.tsx' && prettier --write \"**/*.props.ts\"",
     "dts": "tsc --project tsconfig.dts.json",
     "typecheck": "tsc",
     "checks": "pnpm typecheck",

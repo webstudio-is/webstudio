@@ -35,13 +35,13 @@
   },
   "exports": {
     ".": {
-      "source": "./src/index.ts",
+      "webstudio": "./src/index.ts",
       "types": "./lib/types/index.d.ts",
       "import": "./lib/index.js",
       "require": "./lib/index.js"
     },
     "./svg": {
-      "source": "./src/__generated__/svg/index.ts",
+      "webstudio": "./src/__generated__/svg/index.ts",
       "types": "./lib/types/__generated__/svg/index.d.ts",
       "import": "./lib/__generated__/svg/index.js",
       "require": "./lib/__generated__/svg/index.js"

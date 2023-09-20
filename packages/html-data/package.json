@@ -10,15 +10,14 @@
     "checks": "pnpm typecheck",
     "dev": "pnpm build --watch",
     "build": "rm -rf lib && esbuild 'src/**/*.ts' 'src/**/*.tsx' --outdir=lib",
-    "dts": "tsc --project tsconfig.dts.json",
-    "test": "NODE_OPTIONS=--experimental-vm-modules jest"
+    "dts": "tsc --project tsconfig.dts.json"
   },
   "devDependencies": {
     "@webstudio-is/tsconfig": "workspace:*"
   },
   "peerDependencies": {},
   "exports": {
-    "source": "./src/index.ts",
+    "webstudio": "./src/index.ts",
     "types": "./lib/types/index.d.ts",
     "import": "./lib/index.js"
   },

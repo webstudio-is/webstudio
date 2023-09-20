@@ -16,7 +16,7 @@ export default {
       },
       resolve: {
         ...config.resolve,
-        conditions: ["source", "import", "module", "browser", "default"],
+        conditions: ["webstudio", "import", "module", "browser", "default"],
         alias: [
           {
             find: "~",
