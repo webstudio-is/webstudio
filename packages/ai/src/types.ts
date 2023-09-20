@@ -64,6 +64,11 @@ export type ErrorResponse = {
   message: string;
 };
 
+export type SuccessResponse<ResponseData> = {
+  success: true;
+  data: ResponseData;
+};
+
 export type ChainResponseSuccess<ResponseData> = {
   success: true;
   tokens: number;
