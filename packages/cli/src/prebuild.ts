@@ -126,8 +126,15 @@ const mergeJsonFiles = async (sourcePath: string, destinationPath: string) => {
       throw new Error(error);
     }
   );
+
+  /*
+    Merge destination onto the source.
+    If the template has a dependency on a package that is already in the project.
+    It will not overwrite if it is the other way around.
+  */
+
   const content = JSON.stringify(
-    merge(JSON.parse(sourceJson), JSON.parse(destinationJson)),
+    merge(JSON.parse(destinationJson), JSON.parse(sourceJson)),
     null,
     "  "
   );
