@@ -290,16 +290,18 @@ export const insertTemplateData = (
   store.createTransaction(
     [
       instancesStore,
-      propsStore,
+      // insert data sources before props to avoid error
+      // about missing data source when compute data source logic
       dataSourcesStore,
+      propsStore,
       styleSourceSelectionsStore,
       styleSourcesStore,
       stylesStore,
     ],
     (
       instances,
-      props,
       dataSources,
+      props,
       styleSourceSelections,
       styleSources,
       styles

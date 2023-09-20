@@ -41,17 +41,30 @@ export const getArgType = (propItem: PropItem): PropMeta | undefined => {
   const { type, name, description, defaultValue } = propItem;
 
   // eslint-disable-next-line @typescript-eslint/ban-types
-  const makePropMeta = (type: string, control: string, extra?: {}) =>
-    PropMeta.parse({
+  const makePropMeta = (type: string, control: string, extra?: {}) => {
+    let value = defaultValue?.value;
+    // react-docgen-typescript incorrectly parse jsdoc default values as strings
+    // to fix check and cast to correct type
+    if (type === "boolean") {
+      if (value === "true") {
+        value = true;
+      }
+      if (value === "false") {
+        value = false;
+      }
+    }
+    if (type === "number" && typeof value === "string") {
+      value = Number(value);
+    }
+    return PropMeta.parse({
       type,
       required: propItem.required,
       control,
-      ...(defaultValue?.value == null
-        ? {}
-        : { defaultValue: defaultValue.value }),
+      ...(value == null ? {} : { defaultValue: value }),
       ...(description ? { description } : {}),
       ...extra,
     });
+  };
 
   // args that end with background or color e.g. iconColor
   if (matchers.color.test(name) && type.name === "string") {
