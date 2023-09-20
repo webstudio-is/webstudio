@@ -14,3 +14,4 @@ export * from "./utils/request";
 
 /** Types */
 export * from "./types";
+export * from "./utils/request";
