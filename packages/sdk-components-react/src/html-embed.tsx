@@ -11,6 +11,7 @@ import { ReactSdkContext } from "@webstudio-is/react-sdk";
 type Props = {
   code: string;
   executeScriptOnCanvas?: boolean;
+  clientOnly?: boolean;
 };
 
 type ChildProps = {
@@ -79,7 +80,7 @@ const Placeholder = (props: ChildProps) => {
 
 export const HtmlEmbed = forwardRef<HTMLDivElement, Props>((props, ref) => {
   const { renderer } = useContext(ReactSdkContext);
-  const { code, executeScriptOnCanvas, ...rest } = props;
+  const { code, executeScriptOnCanvas, clientOnly, ...rest } = props;
 
   // code can be actually undefined when prop is not provided
   if (code === undefined || code.trim().length === 0) {
@@ -88,7 +89,8 @@ export const HtmlEmbed = forwardRef<HTMLDivElement, Props>((props, ref) => {
 
   if (
     (renderer === "canvas" && executeScriptOnCanvas === true) ||
-    renderer === "preview"
+    renderer === "preview" ||
+    clientOnly
   ) {
     return <ExecutableHtml innerRef={ref} code={code} {...rest} />;
   }
