@@ -1,0 +1,4937 @@
+{
+  "inputs": {
+    "../../node_modules/react/cjs/react.production.min.js": {
+      "bytes": 6913,
+      "imports": [],
+      "format": "cjs"
+    },
+    "../../node_modules/react/index.js": {
+      "bytes": 190,
+      "imports": [
+        {
+          "path": "../../node_modules/react/cjs/react.production.min.js",
+          "kind": "require-call",
+          "original": "./cjs/react.production.min.js"
+        }
+      ],
+      "format": "cjs"
+    },
+    "../../node_modules/@remix-run/router/dist/router.js": {
+      "bytes": 155422,
+      "imports": [],
+      "format": "esm"
+    },
+    "../../node_modules/react-router/dist/index.js": {
+      "bytes": 53301,
+      "imports": [
+        {
+          "path": "../../node_modules/react/index.js",
+          "kind": "import-statement",
+          "original": "react"
+        },
+        {
+          "path": "../../node_modules/@remix-run/router/dist/router.js",
+          "kind": "import-statement",
+          "original": "@remix-run/router"
+        },
+        {
+          "path": "../../node_modules/@remix-run/router/dist/router.js",
+          "kind": "import-statement",
+          "original": "@remix-run/router"
+        }
+      ],
+      "format": "esm"
+    },
+    "../../node_modules/react-router-dom/dist/index.js": {
+      "bytes": 41295,
+      "imports": [
+        {
+          "path": "../../node_modules/react/index.js",
+          "kind": "import-statement",
+          "original": "react"
+        },
+        {
+          "path": "../../node_modules/react-router/dist/index.js",
+          "kind": "import-statement",
+          "original": "react-router"
+        },
+        {
+          "path": "../../node_modules/react-router/dist/index.js",
+          "kind": "import-statement",
+          "original": "react-router"
+        },
+        {
+          "path": "../../node_modules/@remix-run/router/dist/router.js",
+          "kind": "import-statement",
+          "original": "@remix-run/router"
+        }
+      ],
+      "format": "esm"
+    },
+    "../../node_modules/@remix-run/react/dist/esm/_virtual/_rollupPluginBabelHelpers.js": {
+      "bytes": 662,
+      "imports": [],
+      "format": "esm"
+    },
+    "../../node_modules/@remix-run/react/dist/esm/errorBoundaries.js": {
+      "bytes": 6523,
+      "imports": [
+        {
+          "path": "../../node_modules/react/index.js",
+          "kind": "import-statement",
+          "original": "react"
+        },
+        {
+          "path": "../../node_modules/react-router-dom/dist/index.js",
+          "kind": "import-statement",
+          "original": "react-router-dom"
+        }
+      ],
+      "format": "esm"
+    },
+    "../../node_modules/@remix-run/react/dist/esm/invariant.js": {
+      "bytes": 409,
+      "imports": [],
+      "format": "esm"
+    },
+    "../../node_modules/@remix-run/react/dist/esm/routeModules.js": {
+      "bytes": 2742,
+      "imports": [],
+      "format": "esm"
+    },
+    "../../node_modules/@remix-run/react/dist/esm/links.js": {
+      "bytes": 8381,
+      "imports": [
+        {
+          "path": "../../node_modules/react-router-dom/dist/index.js",
+          "kind": "import-statement",
+          "original": "react-router-dom"
+        },
+        {
+          "path": "../../node_modules/@remix-run/react/dist/esm/routeModules.js",
+          "kind": "import-statement",
+          "original": "./routeModules.js"
+        }
+      ],
+      "format": "esm"
+    },
+    "../../node_modules/@remix-run/react/dist/esm/markup.js": {
+      "bytes": 962,
+      "imports": [],
+      "format": "esm"
+    },
+    "../../node_modules/@remix-run/react/dist/esm/transition.js": {
+      "bytes": 886,
+      "imports": [],
+      "format": "esm"
+    },
+    "../../node_modules/@remix-run/react/dist/esm/warnings.js": {
+      "bytes": 473,
+      "imports": [],
+      "format": "esm"
+    },
+    "../../node_modules/@remix-run/react/dist/esm/components.js": {
+      "bytes": 53209,
+      "imports": [
+        {
+          "path": "../../node_modules/@remix-run/react/dist/esm/_virtual/_rollupPluginBabelHelpers.js",
+          "kind": "import-statement",
+          "original": "./_virtual/_rollupPluginBabelHelpers.js"
+        },
+        {
+          "path": "../../node_modules/react/index.js",
+          "kind": "import-statement",
+          "original": "react"
+        },
+        {
+          "path": "../../node_modules/react-router-dom/dist/index.js",
+          "kind": "import-statement",
+          "original": "react-router-dom"
+        },
+        {
+          "path": "../../node_modules/@remix-run/react/dist/esm/errorBoundaries.js",
+          "kind": "import-statement",
+          "original": "./errorBoundaries.js"
+        },
+        {
+          "path": "../../node_modules/@remix-run/react/dist/esm/invariant.js",
+          "kind": "import-statement",
+          "original": "./invariant.js"
+        },
+        {
+          "path": "../../node_modules/@remix-run/react/dist/esm/links.js",
+          "kind": "import-statement",
+          "original": "./links.js"
+        },
+        {
+          "path": "../../node_modules/@remix-run/react/dist/esm/markup.js",
+          "kind": "import-statement",
+          "original": "./markup.js"
+        },
+        {
+          "path": "../../node_modules/@remix-run/react/dist/esm/transition.js",
+          "kind": "import-statement",
+          "original": "./transition.js"
+        },
+        {
+          "path": "../../node_modules/@remix-run/react/dist/esm/warnings.js",
+          "kind": "import-statement",
+          "original": "./warnings.js"
+        }
+      ],
+      "format": "esm"
+    },
+    "../../node_modules/@remix-run/react/dist/esm/errors.js": {
+      "bytes": 1727,
+      "imports": [
+        {
+          "path": "../../node_modules/@remix-run/router/dist/router.js",
+          "kind": "import-statement",
+          "original": "@remix-run/router"
+        }
+      ],
+      "format": "esm"
+    },
+    "../../node_modules/@remix-run/react/dist/esm/data.js": {
+      "bytes": 9906,
+      "imports": [
+        {
+          "path": "../../node_modules/@remix-run/router/dist/router.js",
+          "kind": "import-statement",
+          "original": "@remix-run/router"
+        }
+      ],
+      "format": "esm"
+    },
+    "../../node_modules/@remix-run/react/dist/esm/routes.js": {
+      "bytes": 6264,
+      "imports": [
+        {
+          "path": "../../node_modules/react/index.js",
+          "kind": "import-statement",
+          "original": "react"
+        },
+        {
+          "path": "../../node_modules/react-router-dom/dist/index.js",
+          "kind": "import-statement",
+          "original": "react-router-dom"
+        },
+        {
+          "path": "../../node_modules/@remix-run/react/dist/esm/routeModules.js",
+          "kind": "import-statement",
+          "original": "./routeModules.js"
+        },
+        {
+          "path": "../../node_modules/@remix-run/react/dist/esm/data.js",
+          "kind": "import-statement",
+          "original": "./data.js"
+        },
+        {
+          "path": "../../node_modules/@remix-run/react/dist/esm/links.js",
+          "kind": "import-statement",
+          "original": "./links.js"
+        },
+        {
+          "path": "../../node_modules/@remix-run/react/dist/esm/invariant.js",
+          "kind": "import-statement",
+          "original": "./invariant.js"
+        },
+        {
+          "path": "../../node_modules/@remix-run/react/dist/esm/components.js",
+          "kind": "import-statement",
+          "original": "./components.js"
+        }
+      ],
+      "format": "esm"
+    },
+    "../../node_modules/@remix-run/react/dist/esm/browser.js": {
+      "bytes": 7735,
+      "imports": [
+        {
+          "path": "../../node_modules/react/index.js",
+          "kind": "import-statement",
+          "original": "react"
+        },
+        {
+          "path": "../../node_modules/react-router-dom/dist/index.js",
+          "kind": "import-statement",
+          "original": "react-router-dom"
+        },
+        {
+          "path": "../../node_modules/@remix-run/react/dist/esm/components.js",
+          "kind": "import-statement",
+          "original": "./components.js"
+        },
+        {
+          "path": "../../node_modules/@remix-run/react/dist/esm/errorBoundaries.js",
+          "kind": "import-statement",
+          "original": "./errorBoundaries.js"
+        },
+        {
+          "path": "../../node_modules/@remix-run/react/dist/esm/errors.js",
+          "kind": "import-statement",
+          "original": "./errors.js"
+        },
+        {
+          "path": "../../node_modules/@remix-run/react/dist/esm/routes.js",
+          "kind": "import-statement",
+          "original": "./routes.js"
+        }
+      ],
+      "format": "esm"
+    },
+    "../../node_modules/@remix-run/react/dist/esm/scroll-restoration.js": {
+      "bytes": 2446,
+      "imports": [
+        {
+          "path": "../../node_modules/@remix-run/react/dist/esm/_virtual/_rollupPluginBabelHelpers.js",
+          "kind": "import-statement",
+          "original": "./_virtual/_rollupPluginBabelHelpers.js"
+        },
+        {
+          "path": "../../node_modules/react/index.js",
+          "kind": "import-statement",
+          "original": "react"
+        },
+        {
+          "path": "../../node_modules/react-router-dom/dist/index.js",
+          "kind": "import-statement",
+          "original": "react-router-dom"
+        },
+        {
+          "path": "../../node_modules/@remix-run/react/dist/esm/components.js",
+          "kind": "import-statement",
+          "original": "./components.js"
+        }
+      ],
+      "format": "esm"
+    },
+    "../../node_modules/react-router-dom/server.js": {
+      "bytes": 9366,
+      "imports": [
+        {
+          "path": "../../node_modules/react/index.js",
+          "kind": "require-call",
+          "original": "react"
+        },
+        {
+          "path": "../../node_modules/@remix-run/router/dist/router.js",
+          "kind": "require-call",
+          "original": "@remix-run/router"
+        },
+        {
+          "path": "../../node_modules/react-router/dist/index.js",
+          "kind": "require-call",
+          "original": "react-router"
+        },
+        {
+          "path": "../../node_modules/react-router-dom/dist/index.js",
+          "kind": "require-call",
+          "original": "react-router-dom"
+        }
+      ],
+      "format": "cjs"
+    },
+    "../../node_modules/@remix-run/react/dist/esm/server.js": {
+      "bytes": 1637,
+      "imports": [
+        {
+          "path": "../../node_modules/react/index.js",
+          "kind": "import-statement",
+          "original": "react"
+        },
+        {
+          "path": "../../node_modules/react-router-dom/server.js",
+          "kind": "import-statement",
+          "original": "react-router-dom/server"
+        },
+        {
+          "path": "../../node_modules/@remix-run/react/dist/esm/components.js",
+          "kind": "import-statement",
+          "original": "./components.js"
+        },
+        {
+          "path": "../../node_modules/@remix-run/react/dist/esm/errorBoundaries.js",
+          "kind": "import-statement",
+          "original": "./errorBoundaries.js"
+        },
+        {
+          "path": "../../node_modules/@remix-run/react/dist/esm/routes.js",
+          "kind": "import-statement",
+          "original": "./routes.js"
+        }
+      ],
+      "format": "esm"
+    },
+    "../../node_modules/@remix-run/react/dist/esm/index.js": {
+      "bytes": 1116,
+      "imports": [
+        {
+          "path": "../../node_modules/@remix-run/react/dist/esm/browser.js",
+          "kind": "import-statement",
+          "original": "./browser.js"
+        },
+        {
+          "path": "../../node_modules/react-router-dom/dist/index.js",
+          "kind": "import-statement",
+          "original": "react-router-dom"
+        },
+        {
+          "path": "../../node_modules/@remix-run/react/dist/esm/components.js",
+          "kind": "import-statement",
+          "original": "./components.js"
+        },
+        {
+          "path": "../../node_modules/@remix-run/react/dist/esm/errorBoundaries.js",
+          "kind": "import-statement",
+          "original": "./errorBoundaries.js"
+        },
+        {
+          "path": "../../node_modules/@remix-run/react/dist/esm/scroll-restoration.js",
+          "kind": "import-statement",
+          "original": "./scroll-restoration.js"
+        },
+        {
+          "path": "../../node_modules/@remix-run/react/dist/esm/server.js",
+          "kind": "import-statement",
+          "original": "./server.js"
+        }
+      ],
+      "format": "esm"
+    },
+    "../../node_modules/react-dom/cjs/react-dom-server-legacy.browser.production.min.js": {
+      "bytes": 35019,
+      "imports": [
+        {
+          "path": "../../node_modules/react/index.js",
+          "kind": "require-call",
+          "original": "react"
+        }
+      ],
+      "format": "cjs"
+    },
+    "../../node_modules/react-dom/cjs/react-dom-server.browser.production.min.js": {
+      "bytes": 35597,
+      "imports": [
+        {
+          "path": "../../node_modules/react/index.js",
+          "kind": "require-call",
+          "original": "react"
+        }
+      ],
+      "format": "cjs"
+    },
+    "../../node_modules/react-dom/server.browser.js": {
+      "bytes": 658,
+      "imports": [
+        {
+          "path": "../../node_modules/react-dom/cjs/react-dom-server-legacy.browser.production.min.js",
+          "kind": "require-call",
+          "original": "./cjs/react-dom-server-legacy.browser.production.min.js"
+        },
+        {
+          "path": "../../node_modules/react-dom/cjs/react-dom-server.browser.production.min.js",
+          "kind": "require-call",
+          "original": "./cjs/react-dom-server.browser.production.min.js"
+        }
+      ],
+      "format": "cjs"
+    },
+    "../../node_modules/react/cjs/react-jsx-runtime.production.min.js": {
+      "bytes": 859,
+      "imports": [
+        {
+          "path": "../../node_modules/react/index.js",
+          "kind": "require-call",
+          "original": "react"
+        }
+      ],
+      "format": "cjs"
+    },
+    "../../node_modules/react/jsx-runtime.js": {
+      "bytes": 214,
+      "imports": [
+        {
+          "path": "../../node_modules/react/cjs/react-jsx-runtime.production.min.js",
+          "kind": "require-call",
+          "original": "./cjs/react-jsx-runtime.production.min.js"
+        }
+      ],
+      "format": "cjs"
+    },
+    "app/entry.server.tsx": {
+      "bytes": 578,
+      "imports": [
+        {
+          "path": "../../node_modules/@remix-run/react/dist/esm/index.js",
+          "kind": "import-statement",
+          "original": "@remix-run/react"
+        },
+        {
+          "path": "../../node_modules/react-dom/server.browser.js",
+          "kind": "import-statement",
+          "original": "react-dom/server"
+        },
+        {
+          "path": "../../node_modules/react/jsx-runtime.js",
+          "kind": "import-statement",
+          "original": "react/jsx-runtime"
+        }
+      ],
+      "format": "esm"
+    },
+    "../../node_modules/zod/lib/index.mjs": {
+      "bytes": 136925,
+      "imports": [],
+      "format": "esm"
+    },
+    "../../packages/fonts/lib/index.js": {
+      "bytes": 3658,
+      "imports": [
+        {
+          "path": "../../node_modules/zod/lib/index.mjs",
+          "kind": "import-statement",
+          "original": "zod"
+        }
+      ],
+      "format": "esm"
+    },
+    "../../node_modules/nanostores/task/index.js": {
+      "bytes": 539,
+      "imports": [],
+      "format": "esm"
+    },
+    "../../node_modules/nanostores/action/index.js": {
+      "bytes": 1174,
+      "imports": [
+        {
+          "path": "../../node_modules/nanostores/task/index.js",
+          "kind": "import-statement",
+          "original": "../task/index.js"
+        }
+      ],
+      "format": "esm"
+    },
+    "../../node_modules/nanostores/clean-stores/index.js": {
+      "bytes": 427,
+      "imports": [
+        {
+          "path": "../../node_modules/nanostores/task/index.js",
+          "kind": "import-statement",
+          "original": "../task/index.js"
+        }
+      ],
+      "format": "esm"
+    },
+    "../../node_modules/nanostores/atom/index.js": {
+      "bytes": 2142,
+      "imports": [
+        {
+          "path": "../../node_modules/nanostores/clean-stores/index.js",
+          "kind": "import-statement",
+          "original": "../clean-stores/index.js"
+        }
+      ],
+      "format": "esm"
+    },
+    "../../node_modules/nanostores/lifecycle/index.js": {
+      "bytes": 5034,
+      "imports": [
+        {
+          "path": "../../node_modules/nanostores/clean-stores/index.js",
+          "kind": "import-statement",
+          "original": "../clean-stores/index.js"
+        }
+      ],
+      "format": "esm"
+    },
+    "../../node_modules/nanostores/computed/index.js": {
+      "bytes": 704,
+      "imports": [
+        {
+          "path": "../../node_modules/nanostores/atom/index.js",
+          "kind": "import-statement",
+          "original": "../atom/index.js"
+        },
+        {
+          "path": "../../node_modules/nanostores/lifecycle/index.js",
+          "kind": "import-statement",
+          "original": "../lifecycle/index.js"
+        }
+      ],
+      "format": "esm"
+    },
+    "../../node_modules/nanostores/deep-map/path.js": {
+      "bytes": 1378,
+      "imports": [],
+      "format": "esm"
+    },
+    "../../node_modules/nanostores/deep-map/index.js": {
+      "bytes": 386,
+      "imports": [
+        {
+          "path": "../../node_modules/nanostores/atom/index.js",
+          "kind": "import-statement",
+          "original": "../atom/index.js"
+        },
+        {
+          "path": "../../node_modules/nanostores/deep-map/path.js",
+          "kind": "import-statement",
+          "original": "./path.js"
+        },
+        {
+          "path": "../../node_modules/nanostores/deep-map/path.js",
+          "kind": "import-statement",
+          "original": "./path.js"
+        }
+      ],
+      "format": "esm"
+    },
+    "../../node_modules/nanostores/keep-mount/index.js": {
+      "bytes": 61,
+      "imports": [],
+      "format": "esm"
+    },
+    "../../node_modules/nanostores/listen-keys/index.js": {
+      "bytes": 218,
+      "imports": [],
+      "format": "esm"
+    },
+    "../../node_modules/nanostores/map/index.js": {
+      "bytes": 507,
+      "imports": [
+        {
+          "path": "../../node_modules/nanostores/atom/index.js",
+          "kind": "import-statement",
+          "original": "../atom/index.js"
+        }
+      ],
+      "format": "esm"
+    },
+    "../../node_modules/nanostores/index.js": {
+      "bytes": 613,
+      "imports": [
+        {
+          "path": "../../node_modules/nanostores/action/index.js",
+          "kind": "import-statement",
+          "original": "./action/index.js"
+        },
+        {
+          "path": "../../node_modules/nanostores/atom/index.js",
+          "kind": "import-statement",
+          "original": "./atom/index.js"
+        },
+        {
+          "path": "../../node_modules/nanostores/clean-stores/index.js",
+          "kind": "import-statement",
+          "original": "./clean-stores/index.js"
+        },
+        {
+          "path": "../../node_modules/nanostores/computed/index.js",
+          "kind": "import-statement",
+          "original": "./computed/index.js"
+        },
+        {
+          "path": "../../node_modules/nanostores/deep-map/index.js",
+          "kind": "import-statement",
+          "original": "./deep-map/index.js"
+        },
+        {
+          "path": "../../node_modules/nanostores/keep-mount/index.js",
+          "kind": "import-statement",
+          "original": "./keep-mount/index.js"
+        },
+        {
+          "path": "../../node_modules/nanostores/lifecycle/index.js",
+          "kind": "import-statement",
+          "original": "./lifecycle/index.js"
+        },
+        {
+          "path": "../../node_modules/nanostores/listen-keys/index.js",
+          "kind": "import-statement",
+          "original": "./listen-keys/index.js"
+        },
+        {
+          "path": "../../node_modules/nanostores/map/index.js",
+          "kind": "import-statement",
+          "original": "./map/index.js"
+        },
+        {
+          "path": "../../node_modules/nanostores/task/index.js",
+          "kind": "import-statement",
+          "original": "./task/index.js"
+        }
+      ],
+      "format": "esm"
+    },
+    "../../node_modules/@nanostores/react/index.js": {
+      "bytes": 406,
+      "imports": [
+        {
+          "path": "../../node_modules/nanostores/index.js",
+          "kind": "import-statement",
+          "original": "nanostores"
+        },
+        {
+          "path": "../../node_modules/react/index.js",
+          "kind": "import-statement",
+          "original": "react"
+        }
+      ],
+      "format": "esm"
+    },
+    "../../packages/error-utils/lib/index.js": {
+      "bytes": 180,
+      "imports": [],
+      "format": "esm"
+    },
+    "../../node_modules/hyphenate-style-name/index.js": {
+      "bytes": 452,
+      "imports": [],
+      "format": "esm"
+    },
+    "../../packages/css-engine/lib/index.js": {
+      "bytes": 14234,
+      "imports": [
+        {
+          "path": "../../packages/error-utils/lib/index.js",
+          "kind": "import-statement",
+          "original": "@webstudio-is/error-utils"
+        },
+        {
+          "path": "../../packages/fonts/lib/index.js",
+          "kind": "import-statement",
+          "original": "@webstudio-is/fonts"
+        },
+        {
+          "path": "../../node_modules/hyphenate-style-name/index.js",
+          "kind": "import-statement",
+          "original": "hyphenate-style-name"
+        },
+        {
+          "path": "../../node_modules/zod/lib/index.mjs",
+          "kind": "import-statement",
+          "original": "zod"
+        },
+        { "path": "<runtime>", "kind": "import-statement", "external": true }
+      ],
+      "format": "esm"
+    },
+    "node-modules-polyfills-empty:crypto": {
+      "bytes": 19,
+      "imports": [],
+      "format": "cjs"
+    },
+    "../../node_modules/nanoid/url-alphabet/index.js": {
+      "bytes": 96,
+      "imports": [],
+      "format": "esm"
+    },
+    "../../node_modules/nanoid/index.js": {
+      "bytes": 1306,
+      "imports": [
+        {
+          "path": "node-modules-polyfills-empty:crypto",
+          "kind": "import-statement",
+          "original": "crypto"
+        },
+        {
+          "path": "../../node_modules/nanoid/url-alphabet/index.js",
+          "kind": "import-statement",
+          "original": "./url-alphabet/index.js"
+        }
+      ],
+      "format": "esm"
+    },
+    "../../node_modules/title-case/dist.es2015/index.js": {
+      "bytes": 1265,
+      "imports": [],
+      "format": "esm"
+    },
+    "../../node_modules/lower-case/dist.es2015/index.js": {
+      "bytes": 1141,
+      "imports": [],
+      "format": "esm"
+    },
+    "../../node_modules/no-case/dist.es2015/index.js": {
+      "bytes": 1490,
+      "imports": [
+        {
+          "path": "../../node_modules/lower-case/dist.es2015/index.js",
+          "kind": "import-statement",
+          "original": "lower-case"
+        }
+      ],
+      "format": "esm"
+    },
+    "../../node_modules/jsep/dist/jsep.js": {
+      "bytes": 28024,
+      "imports": [],
+      "format": "esm"
+    },
+    "../../node_modules/@jsep-plugin/assignment/dist/index.js": {
+      "bytes": 2360,
+      "imports": [],
+      "format": "esm"
+    },
+    "../../packages/sdk/lib/index.js": {
+      "bytes": 10161,
+      "imports": [
+        {
+          "path": "../../node_modules/zod/lib/index.mjs",
+          "kind": "import-statement",
+          "original": "zod"
+        },
+        {
+          "path": "../../packages/fonts/lib/index.js",
+          "kind": "import-statement",
+          "original": "@webstudio-is/fonts"
+        },
+        {
+          "path": "../../node_modules/zod/lib/index.mjs",
+          "kind": "import-statement",
+          "original": "zod"
+        },
+        {
+          "path": "../../node_modules/zod/lib/index.mjs",
+          "kind": "import-statement",
+          "original": "zod"
+        },
+        {
+          "path": "../../node_modules/zod/lib/index.mjs",
+          "kind": "import-statement",
+          "original": "zod"
+        },
+        {
+          "path": "../../node_modules/zod/lib/index.mjs",
+          "kind": "import-statement",
+          "original": "zod"
+        },
+        {
+          "path": "../../node_modules/zod/lib/index.mjs",
+          "kind": "import-statement",
+          "original": "zod"
+        },
+        {
+          "path": "../../node_modules/zod/lib/index.mjs",
+          "kind": "import-statement",
+          "original": "zod"
+        },
+        {
+          "path": "../../node_modules/zod/lib/index.mjs",
+          "kind": "import-statement",
+          "original": "zod"
+        },
+        {
+          "path": "../../node_modules/zod/lib/index.mjs",
+          "kind": "import-statement",
+          "original": "zod"
+        },
+        {
+          "path": "../../packages/css-engine/lib/index.js",
+          "kind": "import-statement",
+          "original": "@webstudio-is/css-engine"
+        },
+        {
+          "path": "../../node_modules/zod/lib/index.mjs",
+          "kind": "import-statement",
+          "original": "zod"
+        }
+      ],
+      "format": "esm"
+    },
+    "../../packages/react-sdk/lib/index.js": {
+      "bytes": 52391,
+      "imports": [
+        {
+          "path": "../../packages/fonts/lib/index.js",
+          "kind": "import-statement",
+          "original": "@webstudio-is/fonts"
+        },
+        {
+          "path": "../../node_modules/react/index.js",
+          "kind": "import-statement",
+          "original": "react"
+        },
+        {
+          "path": "../../node_modules/nanostores/index.js",
+          "kind": "import-statement",
+          "original": "nanostores"
+        },
+        {
+          "path": "../../node_modules/react/index.js",
+          "kind": "import-statement",
+          "original": "react"
+        },
+        {
+          "path": "../../node_modules/react/jsx-runtime.js",
+          "kind": "import-statement",
+          "original": "react/jsx-runtime"
+        },
+        {
+          "path": "../../node_modules/react/index.js",
+          "kind": "import-statement",
+          "original": "react"
+        },
+        {
+          "path": "../../node_modules/nanostores/index.js",
+          "kind": "import-statement",
+          "original": "nanostores"
+        },
+        {
+          "path": "../../node_modules/react/index.js",
+          "kind": "import-statement",
+          "original": "react"
+        },
+        {
+          "path": "../../node_modules/react/index.js",
+          "kind": "import-statement",
+          "original": "react"
+        },
+        {
+          "path": "../../node_modules/nanostores/index.js",
+          "kind": "import-statement",
+          "original": "nanostores"
+        },
+        {
+          "path": "../../node_modules/@nanostores/react/index.js",
+          "kind": "import-statement",
+          "original": "@nanostores/react"
+        },
+        {
+          "path": "../../node_modules/react/jsx-runtime.js",
+          "kind": "import-statement",
+          "original": "react/jsx-runtime"
+        },
+        {
+          "path": "../../packages/css-engine/lib/index.js",
+          "kind": "import-statement",
+          "original": "@webstudio-is/css-engine"
+        },
+        {
+          "path": "../../node_modules/@remix-run/react/dist/esm/index.js",
+          "kind": "import-statement",
+          "original": "@remix-run/react"
+        },
+        {
+          "path": "../../node_modules/react/jsx-runtime.js",
+          "kind": "import-statement",
+          "original": "react/jsx-runtime"
+        },
+        {
+          "path": "../../node_modules/zod/lib/index.mjs",
+          "kind": "import-statement",
+          "original": "zod"
+        },
+        {
+          "path": "../../node_modules/zod/lib/index.mjs",
+          "kind": "import-statement",
+          "original": "zod"
+        },
+        {
+          "path": "../../node_modules/zod/lib/index.mjs",
+          "kind": "import-statement",
+          "original": "zod"
+        },
+        {
+          "path": "../../node_modules/nanoid/index.js",
+          "kind": "import-statement",
+          "original": "nanoid"
+        },
+        {
+          "path": "../../node_modules/title-case/dist.es2015/index.js",
+          "kind": "import-statement",
+          "original": "title-case"
+        },
+        {
+          "path": "../../node_modules/no-case/dist.es2015/index.js",
+          "kind": "import-statement",
+          "original": "no-case"
+        },
+        {
+          "path": "../../packages/css-engine/lib/index.js",
+          "kind": "import-statement",
+          "original": "@webstudio-is/css-engine"
+        },
+        {
+          "path": "../../node_modules/jsep/dist/jsep.js",
+          "kind": "import-statement",
+          "original": "jsep"
+        },
+        {
+          "path": "../../node_modules/@jsep-plugin/assignment/dist/index.js",
+          "kind": "import-statement",
+          "original": "@jsep-plugin/assignment"
+        },
+        {
+          "path": "../../packages/sdk/lib/index.js",
+          "kind": "import-statement",
+          "original": "@webstudio-is/sdk"
+        },
+        {
+          "path": "../../packages/sdk/lib/index.js",
+          "kind": "import-statement",
+          "original": "@webstudio-is/sdk"
+        }
+      ],
+      "format": "esm"
+    },
+    "app/root.tsx": {
+      "bytes": 59,
+      "imports": [
+        {
+          "path": "../../packages/react-sdk/lib/index.js",
+          "kind": "import-statement",
+          "original": "@webstudio-is/react-sdk"
+        }
+      ],
+      "format": "esm"
+    },
+    "../../node_modules/cookie/index.js": {
+      "bytes": 4047,
+      "imports": [],
+      "format": "cjs"
+    },
+    "../../node_modules/@remix-run/server-runtime/dist/esm/warnings.js": {
+      "bytes": 439,
+      "imports": [],
+      "format": "esm"
+    },
+    "../../node_modules/@remix-run/server-runtime/dist/esm/cookies.js": {
+      "bytes": 4989,
+      "imports": [
+        {
+          "path": "../../node_modules/cookie/index.js",
+          "kind": "import-statement",
+          "original": "cookie"
+        },
+        {
+          "path": "../../node_modules/@remix-run/server-runtime/dist/esm/warnings.js",
+          "kind": "import-statement",
+          "original": "./warnings.js"
+        }
+      ],
+      "format": "esm"
+    },
+    "../../node_modules/@web3-storage/multipart-parser/esm/src/utils.js": {
+      "bytes": 722,
+      "imports": [],
+      "format": "esm"
+    },
+    "../../node_modules/@web3-storage/multipart-parser/esm/src/search.js": {
+      "bytes": 6918,
+      "imports": [
+        {
+          "path": "../../node_modules/@web3-storage/multipart-parser/esm/src/utils.js",
+          "kind": "import-statement",
+          "original": "./utils.js"
+        }
+      ],
+      "format": "esm"
+    },
+    "../../node_modules/@web3-storage/multipart-parser/esm/src/index.js": {
+      "bytes": 6352,
+      "imports": [
+        {
+          "path": "../../node_modules/@web3-storage/multipart-parser/esm/src/search.js",
+          "kind": "import-statement",
+          "original": "./search.js"
+        },
+        {
+          "path": "../../node_modules/@web3-storage/multipart-parser/esm/src/utils.js",
+          "kind": "import-statement",
+          "original": "./utils.js"
+        }
+      ],
+      "format": "esm"
+    },
+    "../../node_modules/@remix-run/server-runtime/dist/esm/formData.js": {
+      "bytes": 1699,
+      "imports": [
+        {
+          "path": "../../node_modules/@web3-storage/multipart-parser/esm/src/index.js",
+          "kind": "import-statement",
+          "original": "@web3-storage/multipart-parser"
+        }
+      ],
+      "format": "esm"
+    },
+    "../../node_modules/@remix-run/server-runtime/dist/esm/mode.js": {
+      "bytes": 667,
+      "imports": [],
+      "format": "esm"
+    },
+    "../../node_modules/@remix-run/server-runtime/dist/esm/errors.js": {
+      "bytes": 4577,
+      "imports": [
+        {
+          "path": "../../node_modules/@remix-run/router/dist/router.js",
+          "kind": "import-statement",
+          "original": "@remix-run/router"
+        },
+        {
+          "path": "../../node_modules/@remix-run/server-runtime/dist/esm/mode.js",
+          "kind": "import-statement",
+          "original": "./mode.js"
+        }
+      ],
+      "format": "esm"
+    },
+    "../../node_modules/@remix-run/server-runtime/dist/esm/responses.js": {
+      "bytes": 4092,
+      "imports": [
+        {
+          "path": "../../node_modules/@remix-run/router/dist/router.js",
+          "kind": "import-statement",
+          "original": "@remix-run/router"
+        },
+        {
+          "path": "../../node_modules/@remix-run/server-runtime/dist/esm/errors.js",
+          "kind": "import-statement",
+          "original": "./errors.js"
+        }
+      ],
+      "format": "esm"
+    },
+    "../../node_modules/@remix-run/server-runtime/dist/esm/entry.js": {
+      "bytes": 452,
+      "imports": [],
+      "format": "esm"
+    },
+    "../../node_modules/set-cookie-parser/lib/set-cookie.js": {
+      "bytes": 6374,
+      "imports": [],
+      "format": "cjs"
+    },
+    "../../node_modules/@remix-run/server-runtime/dist/esm/headers.js": {
+      "bytes": 3410,
+      "imports": [
+        {
+          "path": "../../node_modules/set-cookie-parser/lib/set-cookie.js",
+          "kind": "import-statement",
+          "original": "set-cookie-parser"
+        }
+      ],
+      "format": "esm"
+    },
+    "../../node_modules/@remix-run/server-runtime/dist/esm/invariant.js": {
+      "bytes": 547,
+      "imports": [],
+      "format": "esm"
+    },
+    "../../node_modules/@remix-run/server-runtime/dist/esm/routeMatching.js": {
+      "bytes": 561,
+      "imports": [
+        {
+          "path": "../../node_modules/@remix-run/router/dist/router.js",
+          "kind": "import-statement",
+          "original": "@remix-run/router"
+        }
+      ],
+      "format": "esm"
+    },
+    "../../node_modules/@remix-run/server-runtime/dist/esm/data.js": {
+      "bytes": 2657,
+      "imports": [
+        {
+          "path": "../../node_modules/@remix-run/server-runtime/dist/esm/responses.js",
+          "kind": "import-statement",
+          "original": "./responses.js"
+        }
+      ],
+      "format": "esm"
+    },
+    "../../node_modules/@remix-run/server-runtime/dist/esm/routes.js": {
+      "bytes": 2564,
+      "imports": [
+        {
+          "path": "../../node_modules/@remix-run/server-runtime/dist/esm/data.js",
+          "kind": "import-statement",
+          "original": "./data.js"
+        }
+      ],
+      "format": "esm"
+    },
+    "../../node_modules/@remix-run/server-runtime/dist/esm/markup.js": {
+      "bytes": 896,
+      "imports": [],
+      "format": "esm"
+    },
+    "../../node_modules/@remix-run/server-runtime/dist/esm/serverHandoff.js": {
+      "bytes": 628,
+      "imports": [
+        {
+          "path": "../../node_modules/@remix-run/server-runtime/dist/esm/markup.js",
+          "kind": "import-statement",
+          "original": "./markup.js"
+        }
+      ],
+      "format": "esm"
+    },
+    "../../node_modules/@remix-run/server-runtime/dist/esm/server.js": {
+      "bytes": 11634,
+      "imports": [
+        {
+          "path": "../../node_modules/@remix-run/router/dist/router.js",
+          "kind": "import-statement",
+          "original": "@remix-run/router"
+        },
+        {
+          "path": "../../node_modules/@remix-run/server-runtime/dist/esm/entry.js",
+          "kind": "import-statement",
+          "original": "./entry.js"
+        },
+        {
+          "path": "../../node_modules/@remix-run/server-runtime/dist/esm/errors.js",
+          "kind": "import-statement",
+          "original": "./errors.js"
+        },
+        {
+          "path": "../../node_modules/@remix-run/server-runtime/dist/esm/headers.js",
+          "kind": "import-statement",
+          "original": "./headers.js"
+        },
+        {
+          "path": "../../node_modules/@remix-run/server-runtime/dist/esm/invariant.js",
+          "kind": "import-statement",
+          "original": "./invariant.js"
+        },
+        {
+          "path": "../../node_modules/@remix-run/server-runtime/dist/esm/mode.js",
+          "kind": "import-statement",
+          "original": "./mode.js"
+        },
+        {
+          "path": "../../node_modules/@remix-run/server-runtime/dist/esm/routeMatching.js",
+          "kind": "import-statement",
+          "original": "./routeMatching.js"
+        },
+        {
+          "path": "../../node_modules/@remix-run/server-runtime/dist/esm/routes.js",
+          "kind": "import-statement",
+          "original": "./routes.js"
+        },
+        {
+          "path": "../../node_modules/@remix-run/server-runtime/dist/esm/responses.js",
+          "kind": "import-statement",
+          "original": "./responses.js"
+        },
+        {
+          "path": "../../node_modules/@remix-run/server-runtime/dist/esm/serverHandoff.js",
+          "kind": "import-statement",
+          "original": "./serverHandoff.js"
+        }
+      ],
+      "format": "esm"
+    },
+    "../../node_modules/@remix-run/server-runtime/dist/esm/sessions.js": {
+      "bytes": 4441,
+      "imports": [
+        {
+          "path": "../../node_modules/@remix-run/server-runtime/dist/esm/cookies.js",
+          "kind": "import-statement",
+          "original": "./cookies.js"
+        },
+        {
+          "path": "../../node_modules/@remix-run/server-runtime/dist/esm/warnings.js",
+          "kind": "import-statement",
+          "original": "./warnings.js"
+        }
+      ],
+      "format": "esm"
+    },
+    "../../node_modules/@remix-run/server-runtime/dist/esm/sessions/cookieStorage.js": {
+      "bytes": 1811,
+      "imports": [
+        {
+          "path": "../../node_modules/@remix-run/server-runtime/dist/esm/cookies.js",
+          "kind": "import-statement",
+          "original": "../cookies.js"
+        },
+        {
+          "path": "../../node_modules/@remix-run/server-runtime/dist/esm/sessions.js",
+          "kind": "import-statement",
+          "original": "../sessions.js"
+        }
+      ],
+      "format": "esm"
+    },
+    "../../node_modules/@remix-run/server-runtime/dist/esm/sessions/memoryStorage.js": {
+      "bytes": 1441,
+      "imports": [],
+      "format": "esm"
+    },
+    "../../node_modules/@remix-run/server-runtime/dist/esm/upload/errors.js": {
+      "bytes": 488,
+      "imports": [],
+      "format": "esm"
+    },
+    "../../node_modules/@remix-run/server-runtime/dist/esm/upload/memoryUploadHandler.js": {
+      "bytes": 1061,
+      "imports": [
+        {
+          "path": "../../node_modules/@remix-run/server-runtime/dist/esm/upload/errors.js",
+          "kind": "import-statement",
+          "original": "./errors.js"
+        }
+      ],
+      "format": "esm"
+    },
+    "../../node_modules/@remix-run/server-runtime/dist/esm/dev.js": {
+      "bytes": 1051,
+      "imports": [],
+      "format": "esm"
+    },
+    "../../node_modules/@remix-run/server-runtime/dist/esm/index.js": {
+      "bytes": 1040,
+      "imports": [
+        {
+          "path": "../../node_modules/@remix-run/server-runtime/dist/esm/cookies.js",
+          "kind": "import-statement",
+          "original": "./cookies.js"
+        },
+        {
+          "path": "../../node_modules/@remix-run/server-runtime/dist/esm/formData.js",
+          "kind": "import-statement",
+          "original": "./formData.js"
+        },
+        {
+          "path": "../../node_modules/@remix-run/server-runtime/dist/esm/responses.js",
+          "kind": "import-statement",
+          "original": "./responses.js"
+        },
+        {
+          "path": "../../node_modules/@remix-run/server-runtime/dist/esm/server.js",
+          "kind": "import-statement",
+          "original": "./server.js"
+        },
+        {
+          "path": "../../node_modules/@remix-run/server-runtime/dist/esm/sessions.js",
+          "kind": "import-statement",
+          "original": "./sessions.js"
+        },
+        {
+          "path": "../../node_modules/@remix-run/server-runtime/dist/esm/sessions/cookieStorage.js",
+          "kind": "import-statement",
+          "original": "./sessions/cookieStorage.js"
+        },
+        {
+          "path": "../../node_modules/@remix-run/server-runtime/dist/esm/sessions/memoryStorage.js",
+          "kind": "import-statement",
+          "original": "./sessions/memoryStorage.js"
+        },
+        {
+          "path": "../../node_modules/@remix-run/server-runtime/dist/esm/upload/memoryUploadHandler.js",
+          "kind": "import-statement",
+          "original": "./upload/memoryUploadHandler.js"
+        },
+        {
+          "path": "../../node_modules/@remix-run/server-runtime/dist/esm/upload/errors.js",
+          "kind": "import-statement",
+          "original": "./upload/errors.js"
+        },
+        {
+          "path": "../../node_modules/@remix-run/server-runtime/dist/esm/dev.js",
+          "kind": "import-statement",
+          "original": "./dev.js"
+        }
+      ],
+      "format": "esm"
+    },
+    "../../packages/form-handlers/lib/index.js": {
+      "bytes": 4572,
+      "imports": [],
+      "format": "esm"
+    },
+    "../../node_modules/@react-stately/utils/dist/import.mjs": {
+      "bytes": 6613,
+      "imports": [
+        {
+          "path": "../../node_modules/react/index.js",
+          "kind": "import-statement",
+          "original": "react"
+        }
+      ],
+      "format": "esm"
+    },
+    "../../node_modules/@react-aria/ssr/dist/import.mjs": {
+      "bytes": 10037,
+      "imports": [
+        {
+          "path": "../../node_modules/react/index.js",
+          "kind": "import-statement",
+          "original": "react"
+        }
+      ],
+      "format": "esm"
+    },
+    "../../node_modules/clsx/dist/clsx.m.js": {
+      "bytes": 374,
+      "imports": [],
+      "format": "esm"
+    },
+    "../../node_modules/@react-aria/utils/dist/import.mjs": {
+      "bytes": 56668,
+      "imports": [
+        {
+          "path": "../../node_modules/@react-stately/utils/dist/import.mjs",
+          "kind": "import-statement",
+          "original": "@react-stately/utils"
+        },
+        {
+          "path": "../../node_modules/react/index.js",
+          "kind": "import-statement",
+          "original": "react"
+        },
+        {
+          "path": "../../node_modules/@react-aria/ssr/dist/import.mjs",
+          "kind": "import-statement",
+          "original": "@react-aria/ssr"
+        },
+        {
+          "path": "../../node_modules/clsx/dist/clsx.m.js",
+          "kind": "import-statement",
+          "original": "clsx"
+        }
+      ],
+      "format": "esm"
+    },
+    "../../node_modules/warn-once/index.js": {
+      "bytes": 314,
+      "imports": [],
+      "format": "cjs"
+    },
+    "../../packages/image/lib/index.js": {
+      "bytes": 4924,
+      "imports": [
+        {
+          "path": "../../node_modules/react/index.js",
+          "kind": "import-statement",
+          "original": "react"
+        },
+        {
+          "path": "../../node_modules/react/jsx-runtime.js",
+          "kind": "import-statement",
+          "original": "react/jsx-runtime"
+        },
+        {
+          "path": "../../node_modules/warn-once/index.js",
+          "kind": "import-statement",
+          "original": "warn-once"
+        }
+      ],
+      "format": "esm"
+    },
+    "../../node_modules/colord/index.mjs": {
+      "bytes": 5868,
+      "imports": [],
+      "format": "esm"
+    },
+    "../../node_modules/shallow-equal/dist/index.modern.mjs": {
+      "bytes": 1164,
+      "imports": [],
+      "format": "esm"
+    },
+    "../../packages/sdk-components-react/lib/components.js": {
+      "bytes": 21335,
+      "imports": [
+        {
+          "path": "../../node_modules/react/index.js",
+          "kind": "import-statement",
+          "original": "react"
+        },
+        {
+          "path": "../../node_modules/react/jsx-runtime.js",
+          "kind": "import-statement",
+          "original": "react/jsx-runtime"
+        },
+        {
+          "path": "../../node_modules/react/index.js",
+          "kind": "import-statement",
+          "original": "react"
+        },
+        {
+          "path": "../../node_modules/react/jsx-runtime.js",
+          "kind": "import-statement",
+          "original": "react/jsx-runtime"
+        },
+        {
+          "path": "../../node_modules/react/index.js",
+          "kind": "import-statement",
+          "original": "react"
+        },
+        {
+          "path": "../../node_modules/@react-aria/utils/dist/import.mjs",
+          "kind": "import-statement",
+          "original": "@react-aria/utils"
+        },
+        {
+          "path": "../../packages/react-sdk/lib/index.js",
+          "kind": "import-statement",
+          "original": "@webstudio-is/react-sdk"
+        },
+        {
+          "path": "../../node_modules/react/jsx-runtime.js",
+          "kind": "import-statement",
+          "original": "react/jsx-runtime"
+        },
+        {
+          "path": "../../node_modules/react/index.js",
+          "kind": "import-statement",
+          "original": "react"
+        },
+        {
+          "path": "../../node_modules/react/jsx-runtime.js",
+          "kind": "import-statement",
+          "original": "react/jsx-runtime"
+        },
+        {
+          "path": "../../node_modules/react/index.js",
+          "kind": "import-statement",
+          "original": "react"
+        },
+        {
+          "path": "../../node_modules/react/index.js",
+          "kind": "import-statement",
+          "original": "react"
+        },
+        {
+          "path": "../../node_modules/react/index.js",
+          "kind": "import-statement",
+          "original": "react"
+        },
+        {
+          "path": "../../node_modules/react/index.js",
+          "kind": "import-statement",
+          "original": "react"
+        },
+        {
+          "path": "../../node_modules/react/jsx-runtime.js",
+          "kind": "import-statement",
+          "original": "react/jsx-runtime"
+        },
+        {
+          "path": "../../node_modules/react/index.js",
+          "kind": "import-statement",
+          "original": "react"
+        },
+        {
+          "path": "../../packages/react-sdk/lib/index.js",
+          "kind": "import-statement",
+          "original": "@webstudio-is/react-sdk"
+        },
+        {
+          "path": "../../node_modules/react/jsx-runtime.js",
+          "kind": "import-statement",
+          "original": "react/jsx-runtime"
+        },
+        {
+          "path": "../../node_modules/react/index.js",
+          "kind": "import-statement",
+          "original": "react"
+        },
+        {
+          "path": "../../node_modules/react/jsx-runtime.js",
+          "kind": "import-statement",
+          "original": "react/jsx-runtime"
+        },
+        {
+          "path": "../../node_modules/react/index.js",
+          "kind": "import-statement",
+          "original": "react"
+        },
+        {
+          "path": "../../node_modules/react/jsx-runtime.js",
+          "kind": "import-statement",
+          "original": "react/jsx-runtime"
+        },
+        {
+          "path": "../../node_modules/react/index.js",
+          "kind": "import-statement",
+          "original": "react"
+        },
+        {
+          "path": "../../node_modules/react/jsx-runtime.js",
+          "kind": "import-statement",
+          "original": "react/jsx-runtime"
+        },
+        {
+          "path": "../../node_modules/react/index.js",
+          "kind": "import-statement",
+          "original": "react"
+        },
+        {
+          "path": "../../node_modules/react/jsx-runtime.js",
+          "kind": "import-statement",
+          "original": "react/jsx-runtime"
+        },
+        {
+          "path": "../../node_modules/react/index.js",
+          "kind": "import-statement",
+          "original": "react"
+        },
+        {
+          "path": "../../node_modules/react/jsx-runtime.js",
+          "kind": "import-statement",
+          "original": "react/jsx-runtime"
+        },
+        {
+          "path": "../../node_modules/react/index.js",
+          "kind": "import-statement",
+          "original": "react"
+        },
+        {
+          "path": "../../node_modules/react/jsx-runtime.js",
+          "kind": "import-statement",
+          "original": "react/jsx-runtime"
+        },
+        {
+          "path": "../../node_modules/react/index.js",
+          "kind": "import-statement",
+          "original": "react"
+        },
+        {
+          "path": "../../node_modules/react/jsx-runtime.js",
+          "kind": "import-statement",
+          "original": "react/jsx-runtime"
+        },
+        {
+          "path": "../../node_modules/react/index.js",
+          "kind": "import-statement",
+          "original": "react"
+        },
+        {
+          "path": "../../node_modules/react/jsx-runtime.js",
+          "kind": "import-statement",
+          "original": "react/jsx-runtime"
+        },
+        {
+          "path": "../../node_modules/react/index.js",
+          "kind": "import-statement",
+          "original": "react"
+        },
+        {
+          "path": "../../node_modules/react/jsx-runtime.js",
+          "kind": "import-statement",
+          "original": "react/jsx-runtime"
+        },
+        {
+          "path": "../../node_modules/react/index.js",
+          "kind": "import-statement",
+          "original": "react"
+        },
+        {
+          "path": "../../packages/image/lib/index.js",
+          "kind": "import-statement",
+          "original": "@webstudio-is/image"
+        },
+        {
+          "path": "../../packages/react-sdk/lib/index.js",
+          "kind": "import-statement",
+          "original": "@webstudio-is/react-sdk"
+        },
+        {
+          "path": "../../node_modules/react/jsx-runtime.js",
+          "kind": "import-statement",
+          "original": "react/jsx-runtime"
+        },
+        {
+          "path": "../../node_modules/react/index.js",
+          "kind": "import-statement",
+          "original": "react"
+        },
+        {
+          "path": "../../node_modules/react/index.js",
+          "kind": "import-statement",
+          "original": "react"
+        },
+        {
+          "path": "../../node_modules/react/index.js",
+          "kind": "import-statement",
+          "original": "react"
+        },
+        {
+          "path": "../../node_modules/react/index.js",
+          "kind": "import-statement",
+          "original": "react"
+        },
+        {
+          "path": "../../node_modules/react/index.js",
+          "kind": "import-statement",
+          "original": "react"
+        },
+        {
+          "path": "../../node_modules/react/index.js",
+          "kind": "import-statement",
+          "original": "react"
+        },
+        {
+          "path": "../../node_modules/react/jsx-runtime.js",
+          "kind": "import-statement",
+          "original": "react/jsx-runtime"
+        },
+        {
+          "path": "../../node_modules/react/index.js",
+          "kind": "import-statement",
+          "original": "react"
+        },
+        {
+          "path": "../../node_modules/react/jsx-runtime.js",
+          "kind": "import-statement",
+          "original": "react/jsx-runtime"
+        },
+        {
+          "path": "../../node_modules/react/index.js",
+          "kind": "import-statement",
+          "original": "react"
+        },
+        {
+          "path": "../../node_modules/react/jsx-runtime.js",
+          "kind": "import-statement",
+          "original": "react/jsx-runtime"
+        },
+        {
+          "path": "../../node_modules/react/index.js",
+          "kind": "import-statement",
+          "original": "react"
+        },
+        {
+          "path": "../../node_modules/react/jsx-runtime.js",
+          "kind": "import-statement",
+          "original": "react/jsx-runtime"
+        },
+        {
+          "path": "../../node_modules/colord/index.mjs",
+          "kind": "import-statement",
+          "original": "colord"
+        },
+        {
+          "path": "../../node_modules/react/index.js",
+          "kind": "import-statement",
+          "original": "react"
+        },
+        {
+          "path": "../../packages/react-sdk/lib/index.js",
+          "kind": "import-statement",
+          "original": "@webstudio-is/react-sdk"
+        },
+        {
+          "path": "../../node_modules/shallow-equal/dist/index.modern.mjs",
+          "kind": "import-statement",
+          "original": "shallow-equal"
+        },
+        {
+          "path": "../../node_modules/react/jsx-runtime.js",
+          "kind": "import-statement",
+          "original": "react/jsx-runtime"
+        },
+        {
+          "path": "../../node_modules/react/index.js",
+          "kind": "import-statement",
+          "original": "react"
+        },
+        {
+          "path": "../../node_modules/react/jsx-runtime.js",
+          "kind": "import-statement",
+          "original": "react/jsx-runtime"
+        },
+        {
+          "path": "../../node_modules/react/index.js",
+          "kind": "import-statement",
+          "original": "react"
+        },
+        {
+          "path": "../../node_modules/react/jsx-runtime.js",
+          "kind": "import-statement",
+          "original": "react/jsx-runtime"
+        },
+        {
+          "path": "../../node_modules/react/index.js",
+          "kind": "import-statement",
+          "original": "react"
+        },
+        {
+          "path": "../../node_modules/react/jsx-runtime.js",
+          "kind": "import-statement",
+          "original": "react/jsx-runtime"
+        }
+      ],
+      "format": "esm"
+    },
+    "app/__generated__/[_route_with_symbols_]._index.tsx": {
+      "bytes": 3717,
+      "imports": [
+        {
+          "path": "../../packages/sdk-components-react/lib/components.js",
+          "kind": "import-statement",
+          "original": "@webstudio-is/sdk-components-react"
+        }
+      ],
+      "format": "esm"
+    },
+    "app/__generated__/index.css": { "bytes": 22672, "imports": [] },
+    "app/constants.mjs": { "bytes": 224, "imports": [], "format": "esm" },
+    "app/image-loader.mjs": {
+      "bytes": 184,
+      "imports": [
+        {
+          "path": "app/constants.mjs",
+          "kind": "import-statement",
+          "original": "./constants.mjs"
+        }
+      ],
+      "format": "esm"
+    },
+    "app/routes/[_route_with_symbols_]._index.tsx": {
+      "bytes": 4084,
+      "imports": [
+        {
+          "path": "../../node_modules/@remix-run/server-runtime/dist/esm/index.js",
+          "kind": "import-statement",
+          "original": "@remix-run/server-runtime"
+        },
+        {
+          "path": "../../packages/react-sdk/lib/index.js",
+          "kind": "import-statement",
+          "original": "@webstudio-is/react-sdk"
+        },
+        {
+          "path": "../../packages/form-handlers/lib/index.js",
+          "kind": "import-statement",
+          "original": "@webstudio-is/form-handlers"
+        },
+        {
+          "path": "../../node_modules/@remix-run/react/dist/esm/index.js",
+          "kind": "import-statement",
+          "original": "@remix-run/react"
+        },
+        {
+          "path": "app/__generated__/[_route_with_symbols_]._index.tsx",
+          "kind": "import-statement",
+          "original": "../__generated__/[_route_with_symbols_]._index.tsx"
+        },
+        {
+          "path": "app/__generated__/index.css",
+          "kind": "import-statement",
+          "original": "../__generated__/index.css"
+        },
+        {
+          "path": "app/constants.mjs",
+          "kind": "import-statement",
+          "original": "~/constants.mjs"
+        },
+        {
+          "path": "app/image-loader.mjs",
+          "kind": "import-statement",
+          "original": "~/image-loader.mjs"
+        },
+        {
+          "path": "../../node_modules/react/jsx-runtime.js",
+          "kind": "import-statement",
+          "original": "react/jsx-runtime"
+        }
+      ],
+      "format": "esm"
+    },
+    "../../node_modules/@babel/runtime/helpers/esm/extends.js": {
+      "bytes": 416,
+      "imports": [],
+      "format": "esm"
+    },
+    "../../node_modules/@radix-ui/primitive/dist/index.mjs": {
+      "bytes": 603,
+      "imports": [],
+      "format": "esm"
+    },
+    "../../node_modules/@radix-ui/react-context/dist/index.mjs": {
+      "bytes": 6116,
+      "imports": [
+        {
+          "path": "../../node_modules/react/index.js",
+          "kind": "import-statement",
+          "original": "react"
+        }
+      ],
+      "format": "esm"
+    },
+    "../../node_modules/@radix-ui/react-use-callback-ref/dist/index.mjs": {
+      "bytes": 898,
+      "imports": [
+        {
+          "path": "../../node_modules/react/index.js",
+          "kind": "import-statement",
+          "original": "react"
+        }
+      ],
+      "format": "esm"
+    },
+    "../../node_modules/@radix-ui/react-use-controllable-state/dist/index.mjs": {
+      "bytes": 1843,
+      "imports": [
+        {
+          "path": "../../node_modules/react/index.js",
+          "kind": "import-statement",
+          "original": "react"
+        },
+        {
+          "path": "../../node_modules/@radix-ui/react-use-callback-ref/dist/index.mjs",
+          "kind": "import-statement",
+          "original": "@radix-ui/react-use-callback-ref"
+        }
+      ],
+      "format": "esm"
+    },
+    "../../node_modules/@radix-ui/react-use-layout-effect/dist/index.mjs": {
+      "bytes": 680,
+      "imports": [
+        {
+          "path": "../../node_modules/react/index.js",
+          "kind": "import-statement",
+          "original": "react"
+        }
+      ],
+      "format": "esm"
+    },
+    "../../node_modules/@radix-ui/react-compose-refs/dist/index.mjs": {
+      "bytes": 1091,
+      "imports": [
+        {
+          "path": "../../node_modules/react/index.js",
+          "kind": "import-statement",
+          "original": "react"
+        }
+      ],
+      "format": "esm"
+    },
+    "../../node_modules/scheduler/cjs/scheduler.production.min.js": {
+      "bytes": 4235,
+      "imports": [],
+      "format": "cjs"
+    },
+    "../../node_modules/scheduler/index.js": {
+      "bytes": 198,
+      "imports": [
+        {
+          "path": "../../node_modules/scheduler/cjs/scheduler.production.min.js",
+          "kind": "require-call",
+          "original": "./cjs/scheduler.production.min.js"
+        }
+      ],
+      "format": "cjs"
+    },
+    "../../node_modules/react-dom/cjs/react-dom.production.min.js": {
+      "bytes": 131737,
+      "imports": [
+        {
+          "path": "../../node_modules/react/index.js",
+          "kind": "require-call",
+          "original": "react"
+        },
+        {
+          "path": "../../node_modules/scheduler/index.js",
+          "kind": "require-call",
+          "original": "scheduler"
+        }
+      ],
+      "format": "cjs"
+    },
+    "../../node_modules/react-dom/index.js": {
+      "bytes": 1363,
+      "imports": [
+        {
+          "path": "../../node_modules/react-dom/cjs/react-dom.production.min.js",
+          "kind": "require-call",
+          "original": "./cjs/react-dom.production.min.js"
+        }
+      ],
+      "format": "cjs"
+    },
+    "../../node_modules/@radix-ui/react-slot/dist/index.mjs": {
+      "bytes": 4960,
+      "imports": [
+        {
+          "path": "../../node_modules/@babel/runtime/helpers/esm/extends.js",
+          "kind": "import-statement",
+          "original": "@babel/runtime/helpers/esm/extends"
+        },
+        {
+          "path": "../../node_modules/react/index.js",
+          "kind": "import-statement",
+          "original": "react"
+        },
+        {
+          "path": "../../node_modules/@radix-ui/react-compose-refs/dist/index.mjs",
+          "kind": "import-statement",
+          "original": "@radix-ui/react-compose-refs"
+        }
+      ],
+      "format": "esm"
+    },
+    "../../node_modules/@radix-ui/react-primitive/dist/index.mjs": {
+      "bytes": 4287,
+      "imports": [
+        {
+          "path": "../../node_modules/@babel/runtime/helpers/esm/extends.js",
+          "kind": "import-statement",
+          "original": "@babel/runtime/helpers/esm/extends"
+        },
+        {
+          "path": "../../node_modules/react/index.js",
+          "kind": "import-statement",
+          "original": "react"
+        },
+        {
+          "path": "../../node_modules/react-dom/index.js",
+          "kind": "import-statement",
+          "original": "react-dom"
+        },
+        {
+          "path": "../../node_modules/@radix-ui/react-slot/dist/index.mjs",
+          "kind": "import-statement",
+          "original": "@radix-ui/react-slot"
+        }
+      ],
+      "format": "esm"
+    },
+    "../../node_modules/@radix-ui/react-presence/dist/index.mjs": {
+      "bytes": 6566,
+      "imports": [
+        {
+          "path": "../../node_modules/react/index.js",
+          "kind": "import-statement",
+          "original": "react"
+        },
+        {
+          "path": "../../node_modules/react-dom/index.js",
+          "kind": "import-statement",
+          "original": "react-dom"
+        },
+        {
+          "path": "../../node_modules/@radix-ui/react-compose-refs/dist/index.mjs",
+          "kind": "import-statement",
+          "original": "@radix-ui/react-compose-refs"
+        },
+        {
+          "path": "../../node_modules/@radix-ui/react-use-layout-effect/dist/index.mjs",
+          "kind": "import-statement",
+          "original": "@radix-ui/react-use-layout-effect"
+        }
+      ],
+      "format": "esm"
+    },
+    "../../node_modules/@radix-ui/react-id/dist/index.mjs": {
+      "bytes": 864,
+      "imports": [
+        {
+          "path": "../../node_modules/react/index.js",
+          "kind": "import-statement",
+          "original": "react"
+        },
+        {
+          "path": "../../node_modules/@radix-ui/react-use-layout-effect/dist/index.mjs",
+          "kind": "import-statement",
+          "original": "@radix-ui/react-use-layout-effect"
+        }
+      ],
+      "format": "esm"
+    },
+    "../../node_modules/@radix-ui/react-collapsible/dist/index.mjs": {
+      "bytes": 9325,
+      "imports": [
+        {
+          "path": "../../node_modules/@babel/runtime/helpers/esm/extends.js",
+          "kind": "import-statement",
+          "original": "@babel/runtime/helpers/esm/extends"
+        },
+        {
+          "path": "../../node_modules/react/index.js",
+          "kind": "import-statement",
+          "original": "react"
+        },
+        {
+          "path": "../../node_modules/@radix-ui/primitive/dist/index.mjs",
+          "kind": "import-statement",
+          "original": "@radix-ui/primitive"
+        },
+        {
+          "path": "../../node_modules/@radix-ui/react-context/dist/index.mjs",
+          "kind": "import-statement",
+          "original": "@radix-ui/react-context"
+        },
+        {
+          "path": "../../node_modules/@radix-ui/react-use-controllable-state/dist/index.mjs",
+          "kind": "import-statement",
+          "original": "@radix-ui/react-use-controllable-state"
+        },
+        {
+          "path": "../../node_modules/@radix-ui/react-use-layout-effect/dist/index.mjs",
+          "kind": "import-statement",
+          "original": "@radix-ui/react-use-layout-effect"
+        },
+        {
+          "path": "../../node_modules/@radix-ui/react-compose-refs/dist/index.mjs",
+          "kind": "import-statement",
+          "original": "@radix-ui/react-compose-refs"
+        },
+        {
+          "path": "../../node_modules/@radix-ui/react-primitive/dist/index.mjs",
+          "kind": "import-statement",
+          "original": "@radix-ui/react-primitive"
+        },
+        {
+          "path": "../../node_modules/@radix-ui/react-presence/dist/index.mjs",
+          "kind": "import-statement",
+          "original": "@radix-ui/react-presence"
+        },
+        {
+          "path": "../../node_modules/@radix-ui/react-id/dist/index.mjs",
+          "kind": "import-statement",
+          "original": "@radix-ui/react-id"
+        }
+      ],
+      "format": "esm"
+    },
+    "../../node_modules/@radix-ui/react-use-escape-keydown/dist/index.mjs": {
+      "bytes": 911,
+      "imports": [
+        {
+          "path": "../../node_modules/react/index.js",
+          "kind": "import-statement",
+          "original": "react"
+        },
+        {
+          "path": "../../node_modules/@radix-ui/react-use-callback-ref/dist/index.mjs",
+          "kind": "import-statement",
+          "original": "@radix-ui/react-use-callback-ref"
+        }
+      ],
+      "format": "esm"
+    },
+    "../../node_modules/@radix-ui/react-dismissable-layer/dist/index.mjs": {
+      "bytes": 14629,
+      "imports": [
+        {
+          "path": "../../node_modules/@babel/runtime/helpers/esm/extends.js",
+          "kind": "import-statement",
+          "original": "@babel/runtime/helpers/esm/extends"
+        },
+        {
+          "path": "../../node_modules/react/index.js",
+          "kind": "import-statement",
+          "original": "react"
+        },
+        {
+          "path": "../../node_modules/@radix-ui/primitive/dist/index.mjs",
+          "kind": "import-statement",
+          "original": "@radix-ui/primitive"
+        },
+        {
+          "path": "../../node_modules/@radix-ui/react-primitive/dist/index.mjs",
+          "kind": "import-statement",
+          "original": "@radix-ui/react-primitive"
+        },
+        {
+          "path": "../../node_modules/@radix-ui/react-compose-refs/dist/index.mjs",
+          "kind": "import-statement",
+          "original": "@radix-ui/react-compose-refs"
+        },
+        {
+          "path": "../../node_modules/@radix-ui/react-use-callback-ref/dist/index.mjs",
+          "kind": "import-statement",
+          "original": "@radix-ui/react-use-callback-ref"
+        },
+        {
+          "path": "../../node_modules/@radix-ui/react-use-escape-keydown/dist/index.mjs",
+          "kind": "import-statement",
+          "original": "@radix-ui/react-use-escape-keydown"
+        }
+      ],
+      "format": "esm"
+    },
+    "../../node_modules/@radix-ui/react-focus-scope/dist/index.mjs": {
+      "bytes": 15229,
+      "imports": [
+        {
+          "path": "../../node_modules/@babel/runtime/helpers/esm/extends.js",
+          "kind": "import-statement",
+          "original": "@babel/runtime/helpers/esm/extends"
+        },
+        {
+          "path": "../../node_modules/react/index.js",
+          "kind": "import-statement",
+          "original": "react"
+        },
+        {
+          "path": "../../node_modules/@radix-ui/react-compose-refs/dist/index.mjs",
+          "kind": "import-statement",
+          "original": "@radix-ui/react-compose-refs"
+        },
+        {
+          "path": "../../node_modules/@radix-ui/react-primitive/dist/index.mjs",
+          "kind": "import-statement",
+          "original": "@radix-ui/react-primitive"
+        },
+        {
+          "path": "../../node_modules/@radix-ui/react-use-callback-ref/dist/index.mjs",
+          "kind": "import-statement",
+          "original": "@radix-ui/react-use-callback-ref"
+        }
+      ],
+      "format": "esm"
+    },
+    "../../node_modules/@radix-ui/react-portal/dist/index.mjs": {
+      "bytes": 1657,
+      "imports": [
+        {
+          "path": "../../node_modules/@babel/runtime/helpers/esm/extends.js",
+          "kind": "import-statement",
+          "original": "@babel/runtime/helpers/esm/extends"
+        },
+        {
+          "path": "../../node_modules/react/index.js",
+          "kind": "import-statement",
+          "original": "react"
+        },
+        {
+          "path": "../../node_modules/react-dom/index.js",
+          "kind": "import-statement",
+          "original": "react-dom"
+        },
+        {
+          "path": "../../node_modules/@radix-ui/react-primitive/dist/index.mjs",
+          "kind": "import-statement",
+          "original": "@radix-ui/react-primitive"
+        }
+      ],
+      "format": "esm"
+    },
+    "../../node_modules/@radix-ui/react-focus-guards/dist/index.mjs": {
+      "bytes": 1870,
+      "imports": [
+        {
+          "path": "../../node_modules/react/index.js",
+          "kind": "import-statement",
+          "original": "react"
+        }
+      ],
+      "format": "esm"
+    },
+    "../../node_modules/tslib/tslib.es6.mjs": {
+      "bytes": 16218,
+      "imports": [],
+      "format": "esm"
+    },
+    "../../node_modules/react-remove-scroll-bar/dist/es2015/constants.js": {
+      "bytes": 375,
+      "imports": [],
+      "format": "esm"
+    },
+    "../../node_modules/use-callback-ref/dist/es2015/assignRef.js": {
+      "bytes": 556,
+      "imports": [],
+      "format": "esm"
+    },
+    "../../node_modules/use-callback-ref/dist/es2015/useRef.js": {
+      "bytes": 1211,
+      "imports": [
+        {
+          "path": "../../node_modules/react/index.js",
+          "kind": "import-statement",
+          "original": "react"
+        }
+      ],
+      "format": "esm"
+    },
+    "../../node_modules/use-callback-ref/dist/es2015/createRef.js": {
+      "bytes": 549,
+      "imports": [],
+      "format": "esm"
+    },
+    "../../node_modules/use-callback-ref/dist/es2015/mergeRef.js": {
+      "bytes": 735,
+      "imports": [
+        {
+          "path": "../../node_modules/use-callback-ref/dist/es2015/assignRef.js",
+          "kind": "import-statement",
+          "original": "./assignRef"
+        },
+        {
+          "path": "../../node_modules/use-callback-ref/dist/es2015/createRef.js",
+          "kind": "import-statement",
+          "original": "./createRef"
+        }
+      ],
+      "format": "esm"
+    },
+    "../../node_modules/use-callback-ref/dist/es2015/useMergeRef.js": {
+      "bytes": 840,
+      "imports": [
+        {
+          "path": "../../node_modules/use-callback-ref/dist/es2015/assignRef.js",
+          "kind": "import-statement",
+          "original": "./assignRef"
+        },
+        {
+          "path": "../../node_modules/use-callback-ref/dist/es2015/useRef.js",
+          "kind": "import-statement",
+          "original": "./useRef"
+        }
+      ],
+      "format": "esm"
+    },
+    "../../node_modules/use-callback-ref/dist/es2015/useTransformRef.js": {
+      "bytes": 725,
+      "imports": [
+        {
+          "path": "../../node_modules/use-callback-ref/dist/es2015/assignRef.js",
+          "kind": "import-statement",
+          "original": "./assignRef"
+        },
+        {
+          "path": "../../node_modules/use-callback-ref/dist/es2015/useRef.js",
+          "kind": "import-statement",
+          "original": "./useRef"
+        }
+      ],
+      "format": "esm"
+    },
+    "../../node_modules/use-callback-ref/dist/es2015/transformRef.js": {
+      "bytes": 449,
+      "imports": [
+        {
+          "path": "../../node_modules/use-callback-ref/dist/es2015/assignRef.js",
+          "kind": "import-statement",
+          "original": "./assignRef"
+        },
+        {
+          "path": "../../node_modules/use-callback-ref/dist/es2015/createRef.js",
+          "kind": "import-statement",
+          "original": "./createRef"
+        }
+      ],
+      "format": "esm"
+    },
+    "../../node_modules/use-callback-ref/dist/es2015/refToCallback.js": {
+      "bytes": 1233,
+      "imports": [],
+      "format": "esm"
+    },
+    "../../node_modules/use-callback-ref/dist/es2015/index.js": {
+      "bytes": 449,
+      "imports": [
+        {
+          "path": "../../node_modules/use-callback-ref/dist/es2015/assignRef.js",
+          "kind": "import-statement",
+          "original": "./assignRef"
+        },
+        {
+          "path": "../../node_modules/use-callback-ref/dist/es2015/useRef.js",
+          "kind": "import-statement",
+          "original": "./useRef"
+        },
+        {
+          "path": "../../node_modules/use-callback-ref/dist/es2015/createRef.js",
+          "kind": "import-statement",
+          "original": "./createRef"
+        },
+        {
+          "path": "../../node_modules/use-callback-ref/dist/es2015/mergeRef.js",
+          "kind": "import-statement",
+          "original": "./mergeRef"
+        },
+        {
+          "path": "../../node_modules/use-callback-ref/dist/es2015/useMergeRef.js",
+          "kind": "import-statement",
+          "original": "./useMergeRef"
+        },
+        {
+          "path": "../../node_modules/use-callback-ref/dist/es2015/useTransformRef.js",
+          "kind": "import-statement",
+          "original": "./useTransformRef"
+        },
+        {
+          "path": "../../node_modules/use-callback-ref/dist/es2015/transformRef.js",
+          "kind": "import-statement",
+          "original": "./transformRef"
+        },
+        {
+          "path": "../../node_modules/use-callback-ref/dist/es2015/refToCallback.js",
+          "kind": "import-statement",
+          "original": "./refToCallback"
+        }
+      ],
+      "format": "esm"
+    },
+    "../../node_modules/detect-node-es/esm/node.js": {
+      "bytes": 191,
+      "imports": [],
+      "format": "esm"
+    },
+    "../../node_modules/use-sidecar/dist/es2015/env.js": {
+      "bytes": 106,
+      "imports": [
+        {
+          "path": "../../node_modules/detect-node-es/esm/node.js",
+          "kind": "import-statement",
+          "original": "detect-node-es"
+        }
+      ],
+      "format": "esm"
+    },
+    "../../node_modules/use-sidecar/dist/es2015/hook.js": {
+      "bytes": 1790,
+      "imports": [
+        {
+          "path": "../../node_modules/react/index.js",
+          "kind": "import-statement",
+          "original": "react"
+        },
+        {
+          "path": "../../node_modules/use-sidecar/dist/es2015/env.js",
+          "kind": "import-statement",
+          "original": "./env"
+        }
+      ],
+      "format": "esm"
+    },
+    "../../node_modules/use-sidecar/dist/es2015/hoc.js": {
+      "bytes": 599,
+      "imports": [
+        {
+          "path": "../../node_modules/tslib/tslib.es6.mjs",
+          "kind": "import-statement",
+          "original": "tslib"
+        },
+        {
+          "path": "../../node_modules/react/index.js",
+          "kind": "import-statement",
+          "original": "react"
+        },
+        {
+          "path": "../../node_modules/use-sidecar/dist/es2015/hook.js",
+          "kind": "import-statement",
+          "original": "./hook"
+        }
+      ],
+      "format": "esm"
+    },
+    "../../node_modules/use-sidecar/dist/es2015/config.js": {
+      "bytes": 158,
+      "imports": [],
+      "format": "esm"
+    },
+    "../../node_modules/use-sidecar/dist/es2015/medium.js": {
+      "bytes": 2579,
+      "imports": [
+        {
+          "path": "../../node_modules/tslib/tslib.es6.mjs",
+          "kind": "import-statement",
+          "original": "tslib"
+        }
+      ],
+      "format": "esm"
+    },
+    "../../node_modules/use-sidecar/dist/es2015/renderProp.js": {
+      "bytes": 1592,
+      "imports": [
+        {
+          "path": "../../node_modules/tslib/tslib.es6.mjs",
+          "kind": "import-statement",
+          "original": "tslib"
+        },
+        {
+          "path": "../../node_modules/react/index.js",
+          "kind": "import-statement",
+          "original": "react"
+        },
+        {
+          "path": "../../node_modules/react/index.js",
+          "kind": "import-statement",
+          "original": "react"
+        }
+      ],
+      "format": "esm"
+    },
+    "../../node_modules/use-sidecar/dist/es2015/exports.js": {
+      "bytes": 597,
+      "imports": [
+        {
+          "path": "../../node_modules/tslib/tslib.es6.mjs",
+          "kind": "import-statement",
+          "original": "tslib"
+        },
+        {
+          "path": "../../node_modules/react/index.js",
+          "kind": "import-statement",
+          "original": "react"
+        }
+      ],
+      "format": "esm"
+    },
+    "../../node_modules/use-sidecar/dist/es2015/index.js": {
+      "bytes": 255,
+      "imports": [
+        {
+          "path": "../../node_modules/use-sidecar/dist/es2015/hoc.js",
+          "kind": "import-statement",
+          "original": "./hoc"
+        },
+        {
+          "path": "../../node_modules/use-sidecar/dist/es2015/hook.js",
+          "kind": "import-statement",
+          "original": "./hook"
+        },
+        {
+          "path": "../../node_modules/use-sidecar/dist/es2015/config.js",
+          "kind": "import-statement",
+          "original": "./config"
+        },
+        {
+          "path": "../../node_modules/use-sidecar/dist/es2015/medium.js",
+          "kind": "import-statement",
+          "original": "./medium"
+        },
+        {
+          "path": "../../node_modules/use-sidecar/dist/es2015/renderProp.js",
+          "kind": "import-statement",
+          "original": "./renderProp"
+        },
+        {
+          "path": "../../node_modules/use-sidecar/dist/es2015/exports.js",
+          "kind": "import-statement",
+          "original": "./exports"
+        }
+      ],
+      "format": "esm"
+    },
+    "../../node_modules/react-remove-scroll/dist/es2015/medium.js": {
+      "bytes": 97,
+      "imports": [
+        {
+          "path": "../../node_modules/use-sidecar/dist/es2015/index.js",
+          "kind": "import-statement",
+          "original": "use-sidecar"
+        }
+      ],
+      "format": "esm"
+    },
+    "../../node_modules/react-remove-scroll/dist/es2015/UI.js": {
+      "bytes": 2117,
+      "imports": [
+        {
+          "path": "../../node_modules/tslib/tslib.es6.mjs",
+          "kind": "import-statement",
+          "original": "tslib"
+        },
+        {
+          "path": "../../node_modules/react/index.js",
+          "kind": "import-statement",
+          "original": "react"
+        },
+        {
+          "path": "../../node_modules/react-remove-scroll-bar/dist/es2015/constants.js",
+          "kind": "import-statement",
+          "original": "react-remove-scroll-bar/constants"
+        },
+        {
+          "path": "../../node_modules/use-callback-ref/dist/es2015/index.js",
+          "kind": "import-statement",
+          "original": "use-callback-ref"
+        },
+        {
+          "path": "../../node_modules/react-remove-scroll/dist/es2015/medium.js",
+          "kind": "import-statement",
+          "original": "./medium"
+        }
+      ],
+      "format": "esm"
+    },
+    "../../node_modules/get-nonce/dist/es2015/index.js": {
+      "bytes": 300,
+      "imports": [],
+      "format": "esm"
+    },
+    "../../node_modules/react-style-singleton/dist/es2015/singleton.js": {
+      "bytes": 1120,
+      "imports": [
+        {
+          "path": "../../node_modules/get-nonce/dist/es2015/index.js",
+          "kind": "import-statement",
+          "original": "get-nonce"
+        }
+      ],
+      "format": "esm"
+    },
+    "../../node_modules/react-style-singleton/dist/es2015/hook.js": {
+      "bytes": 630,
+      "imports": [
+        {
+          "path": "../../node_modules/react/index.js",
+          "kind": "import-statement",
+          "original": "react"
+        },
+        {
+          "path": "../../node_modules/react-style-singleton/dist/es2015/singleton.js",
+          "kind": "import-statement",
+          "original": "./singleton"
+        }
+      ],
+      "format": "esm"
+    },
+    "../../node_modules/react-style-singleton/dist/es2015/component.js": {
+      "bytes": 602,
+      "imports": [
+        {
+          "path": "../../node_modules/react-style-singleton/dist/es2015/hook.js",
+          "kind": "import-statement",
+          "original": "./hook"
+        }
+      ],
+      "format": "esm"
+    },
+    "../../node_modules/react-style-singleton/dist/es2015/index.js": {
+      "bytes": 142,
+      "imports": [
+        {
+          "path": "../../node_modules/react-style-singleton/dist/es2015/component.js",
+          "kind": "import-statement",
+          "original": "./component"
+        },
+        {
+          "path": "../../node_modules/react-style-singleton/dist/es2015/singleton.js",
+          "kind": "import-statement",
+          "original": "./singleton"
+        },
+        {
+          "path": "../../node_modules/react-style-singleton/dist/es2015/hook.js",
+          "kind": "import-statement",
+          "original": "./hook"
+        }
+      ],
+      "format": "esm"
+    },
+    "../../node_modules/react-remove-scroll-bar/dist/es2015/utils.js": {
+      "bytes": 998,
+      "imports": [],
+      "format": "esm"
+    },
+    "../../node_modules/react-remove-scroll-bar/dist/es2015/component.js": {
+      "bytes": 2600,
+      "imports": [
+        {
+          "path": "../../node_modules/react/index.js",
+          "kind": "import-statement",
+          "original": "react"
+        },
+        {
+          "path": "../../node_modules/react-style-singleton/dist/es2015/index.js",
+          "kind": "import-statement",
+          "original": "react-style-singleton"
+        },
+        {
+          "path": "../../node_modules/react-remove-scroll-bar/dist/es2015/constants.js",
+          "kind": "import-statement",
+          "original": "./constants"
+        },
+        {
+          "path": "../../node_modules/react-remove-scroll-bar/dist/es2015/utils.js",
+          "kind": "import-statement",
+          "original": "./utils"
+        }
+      ],
+      "format": "esm"
+    },
+    "../../node_modules/react-remove-scroll-bar/dist/es2015/index.js": {
+      "bytes": 332,
+      "imports": [
+        {
+          "path": "../../node_modules/react-remove-scroll-bar/dist/es2015/component.js",
+          "kind": "import-statement",
+          "original": "./component"
+        },
+        {
+          "path": "../../node_modules/react-remove-scroll-bar/dist/es2015/constants.js",
+          "kind": "import-statement",
+          "original": "./constants"
+        },
+        {
+          "path": "../../node_modules/react-remove-scroll-bar/dist/es2015/utils.js",
+          "kind": "import-statement",
+          "original": "./utils"
+        }
+      ],
+      "format": "esm"
+    },
+    "../../node_modules/react-remove-scroll/dist/es2015/aggresiveCapture.js": {
+      "bytes": 568,
+      "imports": [],
+      "format": "esm"
+    },
+    "../../node_modules/react-remove-scroll/dist/es2015/handleScroll.js": {
+      "bytes": 3962,
+      "imports": [],
+      "format": "esm"
+    },
+    "../../node_modules/react-remove-scroll/dist/es2015/SideEffect.js": {
+      "bytes": 7176,
+      "imports": [
+        {
+          "path": "../../node_modules/tslib/tslib.es6.mjs",
+          "kind": "import-statement",
+          "original": "tslib"
+        },
+        {
+          "path": "../../node_modules/react/index.js",
+          "kind": "import-statement",
+          "original": "react"
+        },
+        {
+          "path": "../../node_modules/react-remove-scroll-bar/dist/es2015/index.js",
+          "kind": "import-statement",
+          "original": "react-remove-scroll-bar"
+        },
+        {
+          "path": "../../node_modules/react-style-singleton/dist/es2015/index.js",
+          "kind": "import-statement",
+          "original": "react-style-singleton"
+        },
+        {
+          "path": "../../node_modules/react-remove-scroll/dist/es2015/aggresiveCapture.js",
+          "kind": "import-statement",
+          "original": "./aggresiveCapture"
+        },
+        {
+          "path": "../../node_modules/react-remove-scroll/dist/es2015/handleScroll.js",
+          "kind": "import-statement",
+          "original": "./handleScroll"
+        }
+      ],
+      "format": "esm"
+    },
+    "../../node_modules/react-remove-scroll/dist/es2015/sidecar.js": {
+      "bytes": 197,
+      "imports": [
+        {
+          "path": "../../node_modules/use-sidecar/dist/es2015/index.js",
+          "kind": "import-statement",
+          "original": "use-sidecar"
+        },
+        {
+          "path": "../../node_modules/react-remove-scroll/dist/es2015/SideEffect.js",
+          "kind": "import-statement",
+          "original": "./SideEffect"
+        },
+        {
+          "path": "../../node_modules/react-remove-scroll/dist/es2015/medium.js",
+          "kind": "import-statement",
+          "original": "./medium"
+        }
+      ],
+      "format": "esm"
+    },
+    "../../node_modules/react-remove-scroll/dist/es2015/Combination.js": {
+      "bytes": 392,
+      "imports": [
+        {
+          "path": "../../node_modules/tslib/tslib.es6.mjs",
+          "kind": "import-statement",
+          "original": "tslib"
+        },
+        {
+          "path": "../../node_modules/react/index.js",
+          "kind": "import-statement",
+          "original": "react"
+        },
+        {
+          "path": "../../node_modules/react-remove-scroll/dist/es2015/UI.js",
+          "kind": "import-statement",
+          "original": "./UI"
+        },
+        {
+          "path": "../../node_modules/react-remove-scroll/dist/es2015/sidecar.js",
+          "kind": "import-statement",
+          "original": "./sidecar"
+        }
+      ],
+      "format": "esm"
+    },
+    "../../node_modules/react-remove-scroll/dist/es2015/index.js": {
+      "bytes": 67,
+      "imports": [
+        {
+          "path": "../../node_modules/react-remove-scroll/dist/es2015/Combination.js",
+          "kind": "import-statement",
+          "original": "./Combination"
+        }
+      ],
+      "format": "esm"
+    },
+    "../../node_modules/aria-hidden/dist/es2015/index.js": {
+      "bytes": 3097,
+      "imports": [],
+      "format": "esm"
+    },
+    "../../node_modules/@radix-ui/react-dialog/dist/index.mjs": {
+      "bytes": 22763,
+      "imports": [
+        {
+          "path": "../../node_modules/@babel/runtime/helpers/esm/extends.js",
+          "kind": "import-statement",
+          "original": "@babel/runtime/helpers/esm/extends"
+        },
+        {
+          "path": "../../node_modules/react/index.js",
+          "kind": "import-statement",
+          "original": "react"
+        },
+        {
+          "path": "../../node_modules/@radix-ui/primitive/dist/index.mjs",
+          "kind": "import-statement",
+          "original": "@radix-ui/primitive"
+        },
+        {
+          "path": "../../node_modules/@radix-ui/react-compose-refs/dist/index.mjs",
+          "kind": "import-statement",
+          "original": "@radix-ui/react-compose-refs"
+        },
+        {
+          "path": "../../node_modules/@radix-ui/react-context/dist/index.mjs",
+          "kind": "import-statement",
+          "original": "@radix-ui/react-context"
+        },
+        {
+          "path": "../../node_modules/@radix-ui/react-id/dist/index.mjs",
+          "kind": "import-statement",
+          "original": "@radix-ui/react-id"
+        },
+        {
+          "path": "../../node_modules/@radix-ui/react-use-controllable-state/dist/index.mjs",
+          "kind": "import-statement",
+          "original": "@radix-ui/react-use-controllable-state"
+        },
+        {
+          "path": "../../node_modules/@radix-ui/react-dismissable-layer/dist/index.mjs",
+          "kind": "import-statement",
+          "original": "@radix-ui/react-dismissable-layer"
+        },
+        {
+          "path": "../../node_modules/@radix-ui/react-focus-scope/dist/index.mjs",
+          "kind": "import-statement",
+          "original": "@radix-ui/react-focus-scope"
+        },
+        {
+          "path": "../../node_modules/@radix-ui/react-portal/dist/index.mjs",
+          "kind": "import-statement",
+          "original": "@radix-ui/react-portal"
+        },
+        {
+          "path": "../../node_modules/@radix-ui/react-presence/dist/index.mjs",
+          "kind": "import-statement",
+          "original": "@radix-ui/react-presence"
+        },
+        {
+          "path": "../../node_modules/@radix-ui/react-primitive/dist/index.mjs",
+          "kind": "import-statement",
+          "original": "@radix-ui/react-primitive"
+        },
+        {
+          "path": "../../node_modules/@radix-ui/react-focus-guards/dist/index.mjs",
+          "kind": "import-statement",
+          "original": "@radix-ui/react-focus-guards"
+        },
+        {
+          "path": "../../node_modules/react-remove-scroll/dist/es2015/index.js",
+          "kind": "import-statement",
+          "original": "react-remove-scroll"
+        },
+        {
+          "path": "../../node_modules/aria-hidden/dist/es2015/index.js",
+          "kind": "import-statement",
+          "original": "aria-hidden"
+        },
+        {
+          "path": "../../node_modules/@radix-ui/react-slot/dist/index.mjs",
+          "kind": "import-statement",
+          "original": "@radix-ui/react-slot"
+        }
+      ],
+      "format": "esm"
+    },
+    "../../node_modules/@floating-ui/utils/dist/floating-ui.utils.mjs": {
+      "bytes": 3915,
+      "imports": [],
+      "format": "esm"
+    },
+    "../../node_modules/@floating-ui/core/dist/floating-ui.core.mjs": {
+      "bytes": 33693,
+      "imports": [
+        {
+          "path": "../../node_modules/@floating-ui/utils/dist/floating-ui.utils.mjs",
+          "kind": "import-statement",
+          "original": "@floating-ui/utils"
+        },
+        {
+          "path": "../../node_modules/@floating-ui/utils/dist/floating-ui.utils.mjs",
+          "kind": "import-statement",
+          "original": "@floating-ui/utils"
+        }
+      ],
+      "format": "esm"
+    },
+    "../../node_modules/@floating-ui/utils/dom/dist/floating-ui.utils.dom.mjs": {
+      "bytes": 4850,
+      "imports": [],
+      "format": "esm"
+    },
+    "../../node_modules/@floating-ui/dom/dist/floating-ui.dom.mjs": {
+      "bytes": 20299,
+      "imports": [
+        {
+          "path": "../../node_modules/@floating-ui/core/dist/floating-ui.core.mjs",
+          "kind": "import-statement",
+          "original": "@floating-ui/core"
+        },
+        {
+          "path": "../../node_modules/@floating-ui/core/dist/floating-ui.core.mjs",
+          "kind": "import-statement",
+          "original": "@floating-ui/core"
+        },
+        {
+          "path": "../../node_modules/@floating-ui/utils/dist/floating-ui.utils.mjs",
+          "kind": "import-statement",
+          "original": "@floating-ui/utils"
+        },
+        {
+          "path": "../../node_modules/@floating-ui/utils/dom/dist/floating-ui.utils.dom.mjs",
+          "kind": "import-statement",
+          "original": "@floating-ui/utils/dom"
+        },
+        {
+          "path": "../../node_modules/@floating-ui/utils/dom/dist/floating-ui.utils.dom.mjs",
+          "kind": "import-statement",
+          "original": "@floating-ui/utils/dom"
+        }
+      ],
+      "format": "esm"
+    },
+    "../../node_modules/@floating-ui/react-dom/dist/floating-ui.react-dom.mjs": {
+      "bytes": 7143,
+      "imports": [
+        {
+          "path": "../../node_modules/@floating-ui/dom/dist/floating-ui.dom.mjs",
+          "kind": "import-statement",
+          "original": "@floating-ui/dom"
+        },
+        {
+          "path": "../../node_modules/@floating-ui/dom/dist/floating-ui.dom.mjs",
+          "kind": "import-statement",
+          "original": "@floating-ui/dom"
+        },
+        {
+          "path": "../../node_modules/react/index.js",
+          "kind": "import-statement",
+          "original": "react"
+        },
+        {
+          "path": "../../node_modules/react/index.js",
+          "kind": "import-statement",
+          "original": "react"
+        },
+        {
+          "path": "../../node_modules/react-dom/index.js",
+          "kind": "import-statement",
+          "original": "react-dom"
+        }
+      ],
+      "format": "esm"
+    },
+    "../../node_modules/@radix-ui/react-arrow/dist/index.mjs": {
+      "bytes": 1576,
+      "imports": [
+        {
+          "path": "../../node_modules/@babel/runtime/helpers/esm/extends.js",
+          "kind": "import-statement",
+          "original": "@babel/runtime/helpers/esm/extends"
+        },
+        {
+          "path": "../../node_modules/react/index.js",
+          "kind": "import-statement",
+          "original": "react"
+        },
+        {
+          "path": "../../node_modules/@radix-ui/react-primitive/dist/index.mjs",
+          "kind": "import-statement",
+          "original": "@radix-ui/react-primitive"
+        }
+      ],
+      "format": "esm"
+    },
+    "../../node_modules/@radix-ui/react-use-size/dist/index.mjs": {
+      "bytes": 2160,
+      "imports": [
+        {
+          "path": "../../node_modules/react/index.js",
+          "kind": "import-statement",
+          "original": "react"
+        },
+        {
+          "path": "../../node_modules/@radix-ui/react-use-layout-effect/dist/index.mjs",
+          "kind": "import-statement",
+          "original": "@radix-ui/react-use-layout-effect"
+        }
+      ],
+      "format": "esm"
+    },
+    "../../node_modules/@radix-ui/react-popper/dist/index.mjs": {
+      "bytes": 17911,
+      "imports": [
+        {
+          "path": "../../node_modules/@babel/runtime/helpers/esm/extends.js",
+          "kind": "import-statement",
+          "original": "@babel/runtime/helpers/esm/extends"
+        },
+        {
+          "path": "../../node_modules/react/index.js",
+          "kind": "import-statement",
+          "original": "react"
+        },
+        {
+          "path": "../../node_modules/@floating-ui/react-dom/dist/floating-ui.react-dom.mjs",
+          "kind": "import-statement",
+          "original": "@floating-ui/react-dom"
+        },
+        {
+          "path": "../../node_modules/@radix-ui/react-arrow/dist/index.mjs",
+          "kind": "import-statement",
+          "original": "@radix-ui/react-arrow"
+        },
+        {
+          "path": "../../node_modules/@radix-ui/react-compose-refs/dist/index.mjs",
+          "kind": "import-statement",
+          "original": "@radix-ui/react-compose-refs"
+        },
+        {
+          "path": "../../node_modules/@radix-ui/react-context/dist/index.mjs",
+          "kind": "import-statement",
+          "original": "@radix-ui/react-context"
+        },
+        {
+          "path": "../../node_modules/@radix-ui/react-primitive/dist/index.mjs",
+          "kind": "import-statement",
+          "original": "@radix-ui/react-primitive"
+        },
+        {
+          "path": "../../node_modules/@radix-ui/react-use-callback-ref/dist/index.mjs",
+          "kind": "import-statement",
+          "original": "@radix-ui/react-use-callback-ref"
+        },
+        {
+          "path": "../../node_modules/@radix-ui/react-use-layout-effect/dist/index.mjs",
+          "kind": "import-statement",
+          "original": "@radix-ui/react-use-layout-effect"
+        },
+        {
+          "path": "../../node_modules/@radix-ui/react-use-size/dist/index.mjs",
+          "kind": "import-statement",
+          "original": "@radix-ui/react-use-size"
+        }
+      ],
+      "format": "esm"
+    },
+    "../../node_modules/@radix-ui/react-popover/dist/index.mjs": {
+      "bytes": 20010,
+      "imports": [
+        {
+          "path": "../../node_modules/@babel/runtime/helpers/esm/extends.js",
+          "kind": "import-statement",
+          "original": "@babel/runtime/helpers/esm/extends"
+        },
+        {
+          "path": "../../node_modules/react/index.js",
+          "kind": "import-statement",
+          "original": "react"
+        },
+        {
+          "path": "../../node_modules/@radix-ui/primitive/dist/index.mjs",
+          "kind": "import-statement",
+          "original": "@radix-ui/primitive"
+        },
+        {
+          "path": "../../node_modules/@radix-ui/react-compose-refs/dist/index.mjs",
+          "kind": "import-statement",
+          "original": "@radix-ui/react-compose-refs"
+        },
+        {
+          "path": "../../node_modules/@radix-ui/react-context/dist/index.mjs",
+          "kind": "import-statement",
+          "original": "@radix-ui/react-context"
+        },
+        {
+          "path": "../../node_modules/@radix-ui/react-dismissable-layer/dist/index.mjs",
+          "kind": "import-statement",
+          "original": "@radix-ui/react-dismissable-layer"
+        },
+        {
+          "path": "../../node_modules/@radix-ui/react-focus-guards/dist/index.mjs",
+          "kind": "import-statement",
+          "original": "@radix-ui/react-focus-guards"
+        },
+        {
+          "path": "../../node_modules/@radix-ui/react-focus-scope/dist/index.mjs",
+          "kind": "import-statement",
+          "original": "@radix-ui/react-focus-scope"
+        },
+        {
+          "path": "../../node_modules/@radix-ui/react-id/dist/index.mjs",
+          "kind": "import-statement",
+          "original": "@radix-ui/react-id"
+        },
+        {
+          "path": "../../node_modules/@radix-ui/react-popper/dist/index.mjs",
+          "kind": "import-statement",
+          "original": "@radix-ui/react-popper"
+        },
+        {
+          "path": "../../node_modules/@radix-ui/react-portal/dist/index.mjs",
+          "kind": "import-statement",
+          "original": "@radix-ui/react-portal"
+        },
+        {
+          "path": "../../node_modules/@radix-ui/react-presence/dist/index.mjs",
+          "kind": "import-statement",
+          "original": "@radix-ui/react-presence"
+        },
+        {
+          "path": "../../node_modules/@radix-ui/react-primitive/dist/index.mjs",
+          "kind": "import-statement",
+          "original": "@radix-ui/react-primitive"
+        },
+        {
+          "path": "../../node_modules/@radix-ui/react-slot/dist/index.mjs",
+          "kind": "import-statement",
+          "original": "@radix-ui/react-slot"
+        },
+        {
+          "path": "../../node_modules/@radix-ui/react-use-controllable-state/dist/index.mjs",
+          "kind": "import-statement",
+          "original": "@radix-ui/react-use-controllable-state"
+        },
+        {
+          "path": "../../node_modules/aria-hidden/dist/es2015/index.js",
+          "kind": "import-statement",
+          "original": "aria-hidden"
+        },
+        {
+          "path": "../../node_modules/react-remove-scroll/dist/es2015/index.js",
+          "kind": "import-statement",
+          "original": "react-remove-scroll"
+        }
+      ],
+      "format": "esm"
+    },
+    "../../node_modules/@radix-ui/react-visually-hidden/dist/index.mjs": {
+      "bytes": 1710,
+      "imports": [
+        {
+          "path": "../../node_modules/@babel/runtime/helpers/esm/extends.js",
+          "kind": "import-statement",
+          "original": "@babel/runtime/helpers/esm/extends"
+        },
+        {
+          "path": "../../node_modules/react/index.js",
+          "kind": "import-statement",
+          "original": "react"
+        },
+        {
+          "path": "../../node_modules/@radix-ui/react-primitive/dist/index.mjs",
+          "kind": "import-statement",
+          "original": "@radix-ui/react-primitive"
+        }
+      ],
+      "format": "esm"
+    },
+    "../../node_modules/@radix-ui/react-tooltip/dist/index.mjs": {
+      "bytes": 28253,
+      "imports": [
+        {
+          "path": "../../node_modules/@babel/runtime/helpers/esm/extends.js",
+          "kind": "import-statement",
+          "original": "@babel/runtime/helpers/esm/extends"
+        },
+        {
+          "path": "../../node_modules/react/index.js",
+          "kind": "import-statement",
+          "original": "react"
+        },
+        {
+          "path": "../../node_modules/@radix-ui/primitive/dist/index.mjs",
+          "kind": "import-statement",
+          "original": "@radix-ui/primitive"
+        },
+        {
+          "path": "../../node_modules/@radix-ui/react-compose-refs/dist/index.mjs",
+          "kind": "import-statement",
+          "original": "@radix-ui/react-compose-refs"
+        },
+        {
+          "path": "../../node_modules/@radix-ui/react-context/dist/index.mjs",
+          "kind": "import-statement",
+          "original": "@radix-ui/react-context"
+        },
+        {
+          "path": "../../node_modules/@radix-ui/react-dismissable-layer/dist/index.mjs",
+          "kind": "import-statement",
+          "original": "@radix-ui/react-dismissable-layer"
+        },
+        {
+          "path": "../../node_modules/@radix-ui/react-id/dist/index.mjs",
+          "kind": "import-statement",
+          "original": "@radix-ui/react-id"
+        },
+        {
+          "path": "../../node_modules/@radix-ui/react-popper/dist/index.mjs",
+          "kind": "import-statement",
+          "original": "@radix-ui/react-popper"
+        },
+        {
+          "path": "../../node_modules/@radix-ui/react-portal/dist/index.mjs",
+          "kind": "import-statement",
+          "original": "@radix-ui/react-portal"
+        },
+        {
+          "path": "../../node_modules/@radix-ui/react-presence/dist/index.mjs",
+          "kind": "import-statement",
+          "original": "@radix-ui/react-presence"
+        },
+        {
+          "path": "../../node_modules/@radix-ui/react-primitive/dist/index.mjs",
+          "kind": "import-statement",
+          "original": "@radix-ui/react-primitive"
+        },
+        {
+          "path": "../../node_modules/@radix-ui/react-slot/dist/index.mjs",
+          "kind": "import-statement",
+          "original": "@radix-ui/react-slot"
+        },
+        {
+          "path": "../../node_modules/@radix-ui/react-use-controllable-state/dist/index.mjs",
+          "kind": "import-statement",
+          "original": "@radix-ui/react-use-controllable-state"
+        },
+        {
+          "path": "../../node_modules/@radix-ui/react-visually-hidden/dist/index.mjs",
+          "kind": "import-statement",
+          "original": "@radix-ui/react-visually-hidden"
+        }
+      ],
+      "format": "esm"
+    },
+    "../../node_modules/@radix-ui/react-collection/dist/index.mjs": {
+      "bytes": 5030,
+      "imports": [
+        {
+          "path": "../../node_modules/react/index.js",
+          "kind": "import-statement",
+          "original": "react"
+        },
+        {
+          "path": "../../node_modules/@radix-ui/react-context/dist/index.mjs",
+          "kind": "import-statement",
+          "original": "@radix-ui/react-context"
+        },
+        {
+          "path": "../../node_modules/@radix-ui/react-compose-refs/dist/index.mjs",
+          "kind": "import-statement",
+          "original": "@radix-ui/react-compose-refs"
+        },
+        {
+          "path": "../../node_modules/@radix-ui/react-slot/dist/index.mjs",
+          "kind": "import-statement",
+          "original": "@radix-ui/react-slot"
+        }
+      ],
+      "format": "esm"
+    },
+    "../../node_modules/@radix-ui/react-direction/dist/index.mjs": {
+      "bytes": 1305,
+      "imports": [
+        {
+          "path": "../../node_modules/react/index.js",
+          "kind": "import-statement",
+          "original": "react"
+        }
+      ],
+      "format": "esm"
+    },
+    "../../node_modules/@radix-ui/react-roving-focus/dist/index.mjs": {
+      "bytes": 13373,
+      "imports": [
+        {
+          "path": "../../node_modules/@babel/runtime/helpers/esm/extends.js",
+          "kind": "import-statement",
+          "original": "@babel/runtime/helpers/esm/extends"
+        },
+        {
+          "path": "../../node_modules/react/index.js",
+          "kind": "import-statement",
+          "original": "react"
+        },
+        {
+          "path": "../../node_modules/@radix-ui/primitive/dist/index.mjs",
+          "kind": "import-statement",
+          "original": "@radix-ui/primitive"
+        },
+        {
+          "path": "../../node_modules/@radix-ui/react-collection/dist/index.mjs",
+          "kind": "import-statement",
+          "original": "@radix-ui/react-collection"
+        },
+        {
+          "path": "../../node_modules/@radix-ui/react-compose-refs/dist/index.mjs",
+          "kind": "import-statement",
+          "original": "@radix-ui/react-compose-refs"
+        },
+        {
+          "path": "../../node_modules/@radix-ui/react-context/dist/index.mjs",
+          "kind": "import-statement",
+          "original": "@radix-ui/react-context"
+        },
+        {
+          "path": "../../node_modules/@radix-ui/react-id/dist/index.mjs",
+          "kind": "import-statement",
+          "original": "@radix-ui/react-id"
+        },
+        {
+          "path": "../../node_modules/@radix-ui/react-primitive/dist/index.mjs",
+          "kind": "import-statement",
+          "original": "@radix-ui/react-primitive"
+        },
+        {
+          "path": "../../node_modules/@radix-ui/react-use-callback-ref/dist/index.mjs",
+          "kind": "import-statement",
+          "original": "@radix-ui/react-use-callback-ref"
+        },
+        {
+          "path": "../../node_modules/@radix-ui/react-use-controllable-state/dist/index.mjs",
+          "kind": "import-statement",
+          "original": "@radix-ui/react-use-controllable-state"
+        },
+        {
+          "path": "../../node_modules/@radix-ui/react-direction/dist/index.mjs",
+          "kind": "import-statement",
+          "original": "@radix-ui/react-direction"
+        }
+      ],
+      "format": "esm"
+    },
+    "../../node_modules/@radix-ui/react-tabs/dist/index.mjs": {
+      "bytes": 10112,
+      "imports": [
+        {
+          "path": "../../node_modules/@babel/runtime/helpers/esm/extends.js",
+          "kind": "import-statement",
+          "original": "@babel/runtime/helpers/esm/extends"
+        },
+        {
+          "path": "../../node_modules/react/index.js",
+          "kind": "import-statement",
+          "original": "react"
+        },
+        {
+          "path": "../../node_modules/@radix-ui/primitive/dist/index.mjs",
+          "kind": "import-statement",
+          "original": "@radix-ui/primitive"
+        },
+        {
+          "path": "../../node_modules/@radix-ui/react-context/dist/index.mjs",
+          "kind": "import-statement",
+          "original": "@radix-ui/react-context"
+        },
+        {
+          "path": "../../node_modules/@radix-ui/react-roving-focus/dist/index.mjs",
+          "kind": "import-statement",
+          "original": "@radix-ui/react-roving-focus"
+        },
+        {
+          "path": "../../node_modules/@radix-ui/react-presence/dist/index.mjs",
+          "kind": "import-statement",
+          "original": "@radix-ui/react-presence"
+        },
+        {
+          "path": "../../node_modules/@radix-ui/react-primitive/dist/index.mjs",
+          "kind": "import-statement",
+          "original": "@radix-ui/react-primitive"
+        },
+        {
+          "path": "../../node_modules/@radix-ui/react-direction/dist/index.mjs",
+          "kind": "import-statement",
+          "original": "@radix-ui/react-direction"
+        },
+        {
+          "path": "../../node_modules/@radix-ui/react-use-controllable-state/dist/index.mjs",
+          "kind": "import-statement",
+          "original": "@radix-ui/react-use-controllable-state"
+        },
+        {
+          "path": "../../node_modules/@radix-ui/react-id/dist/index.mjs",
+          "kind": "import-statement",
+          "original": "@radix-ui/react-id"
+        }
+      ],
+      "format": "esm"
+    },
+    "../../node_modules/@radix-ui/react-label/dist/index.mjs": {
+      "bytes": 1599,
+      "imports": [
+        {
+          "path": "../../node_modules/@babel/runtime/helpers/esm/extends.js",
+          "kind": "import-statement",
+          "original": "@babel/runtime/helpers/esm/extends"
+        },
+        {
+          "path": "../../node_modules/react/index.js",
+          "kind": "import-statement",
+          "original": "react"
+        },
+        {
+          "path": "../../node_modules/@radix-ui/react-primitive/dist/index.mjs",
+          "kind": "import-statement",
+          "original": "@radix-ui/react-primitive"
+        }
+      ],
+      "format": "esm"
+    },
+    "../../node_modules/@radix-ui/react-accordion/dist/index.mjs": {
+      "bytes": 18641,
+      "imports": [
+        {
+          "path": "../../node_modules/@babel/runtime/helpers/esm/extends.js",
+          "kind": "import-statement",
+          "original": "@babel/runtime/helpers/esm/extends"
+        },
+        {
+          "path": "../../node_modules/react/index.js",
+          "kind": "import-statement",
+          "original": "react"
+        },
+        {
+          "path": "../../node_modules/@radix-ui/react-context/dist/index.mjs",
+          "kind": "import-statement",
+          "original": "@radix-ui/react-context"
+        },
+        {
+          "path": "../../node_modules/@radix-ui/react-collection/dist/index.mjs",
+          "kind": "import-statement",
+          "original": "@radix-ui/react-collection"
+        },
+        {
+          "path": "../../node_modules/@radix-ui/react-compose-refs/dist/index.mjs",
+          "kind": "import-statement",
+          "original": "@radix-ui/react-compose-refs"
+        },
+        {
+          "path": "../../node_modules/@radix-ui/primitive/dist/index.mjs",
+          "kind": "import-statement",
+          "original": "@radix-ui/primitive"
+        },
+        {
+          "path": "../../node_modules/@radix-ui/react-use-controllable-state/dist/index.mjs",
+          "kind": "import-statement",
+          "original": "@radix-ui/react-use-controllable-state"
+        },
+        {
+          "path": "../../node_modules/@radix-ui/react-primitive/dist/index.mjs",
+          "kind": "import-statement",
+          "original": "@radix-ui/react-primitive"
+        },
+        {
+          "path": "../../node_modules/@radix-ui/react-collapsible/dist/index.mjs",
+          "kind": "import-statement",
+          "original": "@radix-ui/react-collapsible"
+        },
+        {
+          "path": "../../node_modules/@radix-ui/react-id/dist/index.mjs",
+          "kind": "import-statement",
+          "original": "@radix-ui/react-id"
+        },
+        {
+          "path": "../../node_modules/@radix-ui/react-direction/dist/index.mjs",
+          "kind": "import-statement",
+          "original": "@radix-ui/react-direction"
+        }
+      ],
+      "format": "esm"
+    },
+    "../../node_modules/@radix-ui/react-use-previous/dist/index.mjs": {
+      "bytes": 746,
+      "imports": [
+        {
+          "path": "../../node_modules/react/index.js",
+          "kind": "import-statement",
+          "original": "react"
+        }
+      ],
+      "format": "esm"
+    },
+    "../../node_modules/@radix-ui/react-navigation-menu/dist/index.mjs": {
+      "bytes": 49893,
+      "imports": [
+        {
+          "path": "../../node_modules/@babel/runtime/helpers/esm/extends.js",
+          "kind": "import-statement",
+          "original": "@babel/runtime/helpers/esm/extends"
+        },
+        {
+          "path": "../../node_modules/react/index.js",
+          "kind": "import-statement",
+          "original": "react"
+        },
+        {
+          "path": "../../node_modules/react-dom/index.js",
+          "kind": "import-statement",
+          "original": "react-dom"
+        },
+        {
+          "path": "../../node_modules/@radix-ui/react-context/dist/index.mjs",
+          "kind": "import-statement",
+          "original": "@radix-ui/react-context"
+        },
+        {
+          "path": "../../node_modules/@radix-ui/primitive/dist/index.mjs",
+          "kind": "import-statement",
+          "original": "@radix-ui/primitive"
+        },
+        {
+          "path": "../../node_modules/@radix-ui/react-primitive/dist/index.mjs",
+          "kind": "import-statement",
+          "original": "@radix-ui/react-primitive"
+        },
+        {
+          "path": "../../node_modules/@radix-ui/react-use-controllable-state/dist/index.mjs",
+          "kind": "import-statement",
+          "original": "@radix-ui/react-use-controllable-state"
+        },
+        {
+          "path": "../../node_modules/@radix-ui/react-compose-refs/dist/index.mjs",
+          "kind": "import-statement",
+          "original": "@radix-ui/react-compose-refs"
+        },
+        {
+          "path": "../../node_modules/@radix-ui/react-direction/dist/index.mjs",
+          "kind": "import-statement",
+          "original": "@radix-ui/react-direction"
+        },
+        {
+          "path": "../../node_modules/@radix-ui/react-presence/dist/index.mjs",
+          "kind": "import-statement",
+          "original": "@radix-ui/react-presence"
+        },
+        {
+          "path": "../../node_modules/@radix-ui/react-id/dist/index.mjs",
+          "kind": "import-statement",
+          "original": "@radix-ui/react-id"
+        },
+        {
+          "path": "../../node_modules/@radix-ui/react-collection/dist/index.mjs",
+          "kind": "import-statement",
+          "original": "@radix-ui/react-collection"
+        },
+        {
+          "path": "../../node_modules/@radix-ui/react-dismissable-layer/dist/index.mjs",
+          "kind": "import-statement",
+          "original": "@radix-ui/react-dismissable-layer"
+        },
+        {
+          "path": "../../node_modules/@radix-ui/react-use-previous/dist/index.mjs",
+          "kind": "import-statement",
+          "original": "@radix-ui/react-use-previous"
+        },
+        {
+          "path": "../../node_modules/@radix-ui/react-use-layout-effect/dist/index.mjs",
+          "kind": "import-statement",
+          "original": "@radix-ui/react-use-layout-effect"
+        },
+        {
+          "path": "../../node_modules/@radix-ui/react-use-callback-ref/dist/index.mjs",
+          "kind": "import-statement",
+          "original": "@radix-ui/react-use-callback-ref"
+        },
+        {
+          "path": "../../node_modules/@radix-ui/react-visually-hidden/dist/index.mjs",
+          "kind": "import-statement",
+          "original": "@radix-ui/react-visually-hidden"
+        }
+      ],
+      "format": "esm"
+    },
+    "../../node_modules/@radix-ui/number/dist/index.mjs": {
+      "bytes": 222,
+      "imports": [],
+      "format": "esm"
+    },
+    "../../node_modules/@radix-ui/react-select/dist/index.mjs": {
+      "bytes": 73489,
+      "imports": [
+        {
+          "path": "../../node_modules/@babel/runtime/helpers/esm/extends.js",
+          "kind": "import-statement",
+          "original": "@babel/runtime/helpers/esm/extends"
+        },
+        {
+          "path": "../../node_modules/react/index.js",
+          "kind": "import-statement",
+          "original": "react"
+        },
+        {
+          "path": "../../node_modules/react-dom/index.js",
+          "kind": "import-statement",
+          "original": "react-dom"
+        },
+        {
+          "path": "../../node_modules/@radix-ui/number/dist/index.mjs",
+          "kind": "import-statement",
+          "original": "@radix-ui/number"
+        },
+        {
+          "path": "../../node_modules/@radix-ui/primitive/dist/index.mjs",
+          "kind": "import-statement",
+          "original": "@radix-ui/primitive"
+        },
+        {
+          "path": "../../node_modules/@radix-ui/react-collection/dist/index.mjs",
+          "kind": "import-statement",
+          "original": "@radix-ui/react-collection"
+        },
+        {
+          "path": "../../node_modules/@radix-ui/react-compose-refs/dist/index.mjs",
+          "kind": "import-statement",
+          "original": "@radix-ui/react-compose-refs"
+        },
+        {
+          "path": "../../node_modules/@radix-ui/react-context/dist/index.mjs",
+          "kind": "import-statement",
+          "original": "@radix-ui/react-context"
+        },
+        {
+          "path": "../../node_modules/@radix-ui/react-direction/dist/index.mjs",
+          "kind": "import-statement",
+          "original": "@radix-ui/react-direction"
+        },
+        {
+          "path": "../../node_modules/@radix-ui/react-dismissable-layer/dist/index.mjs",
+          "kind": "import-statement",
+          "original": "@radix-ui/react-dismissable-layer"
+        },
+        {
+          "path": "../../node_modules/@radix-ui/react-focus-guards/dist/index.mjs",
+          "kind": "import-statement",
+          "original": "@radix-ui/react-focus-guards"
+        },
+        {
+          "path": "../../node_modules/@radix-ui/react-focus-scope/dist/index.mjs",
+          "kind": "import-statement",
+          "original": "@radix-ui/react-focus-scope"
+        },
+        {
+          "path": "../../node_modules/@radix-ui/react-id/dist/index.mjs",
+          "kind": "import-statement",
+          "original": "@radix-ui/react-id"
+        },
+        {
+          "path": "../../node_modules/@radix-ui/react-popper/dist/index.mjs",
+          "kind": "import-statement",
+          "original": "@radix-ui/react-popper"
+        },
+        {
+          "path": "../../node_modules/@radix-ui/react-portal/dist/index.mjs",
+          "kind": "import-statement",
+          "original": "@radix-ui/react-portal"
+        },
+        {
+          "path": "../../node_modules/@radix-ui/react-primitive/dist/index.mjs",
+          "kind": "import-statement",
+          "original": "@radix-ui/react-primitive"
+        },
+        {
+          "path": "../../node_modules/@radix-ui/react-slot/dist/index.mjs",
+          "kind": "import-statement",
+          "original": "@radix-ui/react-slot"
+        },
+        {
+          "path": "../../node_modules/@radix-ui/react-use-callback-ref/dist/index.mjs",
+          "kind": "import-statement",
+          "original": "@radix-ui/react-use-callback-ref"
+        },
+        {
+          "path": "../../node_modules/@radix-ui/react-use-controllable-state/dist/index.mjs",
+          "kind": "import-statement",
+          "original": "@radix-ui/react-use-controllable-state"
+        },
+        {
+          "path": "../../node_modules/@radix-ui/react-use-layout-effect/dist/index.mjs",
+          "kind": "import-statement",
+          "original": "@radix-ui/react-use-layout-effect"
+        },
+        {
+          "path": "../../node_modules/@radix-ui/react-use-previous/dist/index.mjs",
+          "kind": "import-statement",
+          "original": "@radix-ui/react-use-previous"
+        },
+        {
+          "path": "../../node_modules/@radix-ui/react-visually-hidden/dist/index.mjs",
+          "kind": "import-statement",
+          "original": "@radix-ui/react-visually-hidden"
+        },
+        {
+          "path": "../../node_modules/aria-hidden/dist/es2015/index.js",
+          "kind": "import-statement",
+          "original": "aria-hidden"
+        },
+        {
+          "path": "../../node_modules/react-remove-scroll/dist/es2015/index.js",
+          "kind": "import-statement",
+          "original": "react-remove-scroll"
+        }
+      ],
+      "format": "esm"
+    },
+    "../../node_modules/@radix-ui/react-switch/dist/index.mjs": {
+      "bytes": 7259,
+      "imports": [
+        {
+          "path": "../../node_modules/@babel/runtime/helpers/esm/extends.js",
+          "kind": "import-statement",
+          "original": "@babel/runtime/helpers/esm/extends"
+        },
+        {
+          "path": "../../node_modules/react/index.js",
+          "kind": "import-statement",
+          "original": "react"
+        },
+        {
+          "path": "../../node_modules/@radix-ui/primitive/dist/index.mjs",
+          "kind": "import-statement",
+          "original": "@radix-ui/primitive"
+        },
+        {
+          "path": "../../node_modules/@radix-ui/react-compose-refs/dist/index.mjs",
+          "kind": "import-statement",
+          "original": "@radix-ui/react-compose-refs"
+        },
+        {
+          "path": "../../node_modules/@radix-ui/react-context/dist/index.mjs",
+          "kind": "import-statement",
+          "original": "@radix-ui/react-context"
+        },
+        {
+          "path": "../../node_modules/@radix-ui/react-use-controllable-state/dist/index.mjs",
+          "kind": "import-statement",
+          "original": "@radix-ui/react-use-controllable-state"
+        },
+        {
+          "path": "../../node_modules/@radix-ui/react-use-previous/dist/index.mjs",
+          "kind": "import-statement",
+          "original": "@radix-ui/react-use-previous"
+        },
+        {
+          "path": "../../node_modules/@radix-ui/react-use-size/dist/index.mjs",
+          "kind": "import-statement",
+          "original": "@radix-ui/react-use-size"
+        },
+        {
+          "path": "../../node_modules/@radix-ui/react-primitive/dist/index.mjs",
+          "kind": "import-statement",
+          "original": "@radix-ui/react-primitive"
+        }
+      ],
+      "format": "esm"
+    },
+    "../../node_modules/@radix-ui/react-checkbox/dist/index.mjs": {
+      "bytes": 8885,
+      "imports": [
+        {
+          "path": "../../node_modules/@babel/runtime/helpers/esm/extends.js",
+          "kind": "import-statement",
+          "original": "@babel/runtime/helpers/esm/extends"
+        },
+        {
+          "path": "../../node_modules/react/index.js",
+          "kind": "import-statement",
+          "original": "react"
+        },
+        {
+          "path": "../../node_modules/@radix-ui/react-compose-refs/dist/index.mjs",
+          "kind": "import-statement",
+          "original": "@radix-ui/react-compose-refs"
+        },
+        {
+          "path": "../../node_modules/@radix-ui/react-context/dist/index.mjs",
+          "kind": "import-statement",
+          "original": "@radix-ui/react-context"
+        },
+        {
+          "path": "../../node_modules/@radix-ui/primitive/dist/index.mjs",
+          "kind": "import-statement",
+          "original": "@radix-ui/primitive"
+        },
+        {
+          "path": "../../node_modules/@radix-ui/react-use-controllable-state/dist/index.mjs",
+          "kind": "import-statement",
+          "original": "@radix-ui/react-use-controllable-state"
+        },
+        {
+          "path": "../../node_modules/@radix-ui/react-use-previous/dist/index.mjs",
+          "kind": "import-statement",
+          "original": "@radix-ui/react-use-previous"
+        },
+        {
+          "path": "../../node_modules/@radix-ui/react-use-size/dist/index.mjs",
+          "kind": "import-statement",
+          "original": "@radix-ui/react-use-size"
+        },
+        {
+          "path": "../../node_modules/@radix-ui/react-presence/dist/index.mjs",
+          "kind": "import-statement",
+          "original": "@radix-ui/react-presence"
+        },
+        {
+          "path": "../../node_modules/@radix-ui/react-primitive/dist/index.mjs",
+          "kind": "import-statement",
+          "original": "@radix-ui/react-primitive"
+        }
+      ],
+      "format": "esm"
+    },
+    "../../node_modules/@radix-ui/react-radio-group/dist/index.mjs": {
+      "bytes": 14476,
+      "imports": [
+        {
+          "path": "../../node_modules/@babel/runtime/helpers/esm/extends.js",
+          "kind": "import-statement",
+          "original": "@babel/runtime/helpers/esm/extends"
+        },
+        {
+          "path": "../../node_modules/react/index.js",
+          "kind": "import-statement",
+          "original": "react"
+        },
+        {
+          "path": "../../node_modules/@radix-ui/primitive/dist/index.mjs",
+          "kind": "import-statement",
+          "original": "@radix-ui/primitive"
+        },
+        {
+          "path": "../../node_modules/@radix-ui/react-compose-refs/dist/index.mjs",
+          "kind": "import-statement",
+          "original": "@radix-ui/react-compose-refs"
+        },
+        {
+          "path": "../../node_modules/@radix-ui/react-context/dist/index.mjs",
+          "kind": "import-statement",
+          "original": "@radix-ui/react-context"
+        },
+        {
+          "path": "../../node_modules/@radix-ui/react-primitive/dist/index.mjs",
+          "kind": "import-statement",
+          "original": "@radix-ui/react-primitive"
+        },
+        {
+          "path": "../../node_modules/@radix-ui/react-roving-focus/dist/index.mjs",
+          "kind": "import-statement",
+          "original": "@radix-ui/react-roving-focus"
+        },
+        {
+          "path": "../../node_modules/@radix-ui/react-use-controllable-state/dist/index.mjs",
+          "kind": "import-statement",
+          "original": "@radix-ui/react-use-controllable-state"
+        },
+        {
+          "path": "../../node_modules/@radix-ui/react-direction/dist/index.mjs",
+          "kind": "import-statement",
+          "original": "@radix-ui/react-direction"
+        },
+        {
+          "path": "../../node_modules/@radix-ui/react-use-size/dist/index.mjs",
+          "kind": "import-statement",
+          "original": "@radix-ui/react-use-size"
+        },
+        {
+          "path": "../../node_modules/@radix-ui/react-use-previous/dist/index.mjs",
+          "kind": "import-statement",
+          "original": "@radix-ui/react-use-previous"
+        },
+        {
+          "path": "../../node_modules/@radix-ui/react-presence/dist/index.mjs",
+          "kind": "import-statement",
+          "original": "@radix-ui/react-presence"
+        }
+      ],
+      "format": "esm"
+    },
+    "../../packages/sdk-components-react-radix/lib/components.js": {
+      "bytes": 10137,
+      "imports": [
+        {
+          "path": "../../node_modules/react/index.js",
+          "kind": "import-statement",
+          "original": "react"
+        },
+        {
+          "path": "../../node_modules/@radix-ui/react-collapsible/dist/index.mjs",
+          "kind": "import-statement",
+          "original": "@radix-ui/react-collapsible"
+        },
+        {
+          "path": "../../packages/react-sdk/lib/index.js",
+          "kind": "import-statement",
+          "original": "@webstudio-is/react-sdk"
+        },
+        {
+          "path": "../../node_modules/react/jsx-runtime.js",
+          "kind": "import-statement",
+          "original": "react/jsx-runtime"
+        },
+        {
+          "path": "../../node_modules/react/index.js",
+          "kind": "import-statement",
+          "original": "react"
+        },
+        {
+          "path": "../../node_modules/@radix-ui/react-dialog/dist/index.mjs",
+          "kind": "import-statement",
+          "original": "@radix-ui/react-dialog"
+        },
+        {
+          "path": "../../packages/react-sdk/lib/index.js",
+          "kind": "import-statement",
+          "original": "@webstudio-is/react-sdk"
+        },
+        {
+          "path": "../../node_modules/react/jsx-runtime.js",
+          "kind": "import-statement",
+          "original": "react/jsx-runtime"
+        },
+        {
+          "path": "../../node_modules/react/index.js",
+          "kind": "import-statement",
+          "original": "react"
+        },
+        {
+          "path": "../../node_modules/@radix-ui/react-popover/dist/index.mjs",
+          "kind": "import-statement",
+          "original": "@radix-ui/react-popover"
+        },
+        {
+          "path": "../../packages/react-sdk/lib/index.js",
+          "kind": "import-statement",
+          "original": "@webstudio-is/react-sdk"
+        },
+        {
+          "path": "../../node_modules/react/jsx-runtime.js",
+          "kind": "import-statement",
+          "original": "react/jsx-runtime"
+        },
+        {
+          "path": "../../node_modules/@radix-ui/react-tooltip/dist/index.mjs",
+          "kind": "import-statement",
+          "original": "@radix-ui/react-tooltip"
+        },
+        {
+          "path": "../../packages/react-sdk/lib/index.js",
+          "kind": "import-statement",
+          "original": "@webstudio-is/react-sdk"
+        },
+        {
+          "path": "../../node_modules/react/index.js",
+          "kind": "import-statement",
+          "original": "react"
+        },
+        {
+          "path": "../../node_modules/react/jsx-runtime.js",
+          "kind": "import-statement",
+          "original": "react/jsx-runtime"
+        },
+        {
+          "path": "../../node_modules/react/index.js",
+          "kind": "import-statement",
+          "original": "react"
+        },
+        {
+          "path": "../../node_modules/@radix-ui/react-tabs/dist/index.mjs",
+          "kind": "import-statement",
+          "original": "@radix-ui/react-tabs"
+        },
+        {
+          "path": "../../packages/react-sdk/lib/index.js",
+          "kind": "import-statement",
+          "original": "@webstudio-is/react-sdk"
+        },
+        {
+          "path": "../../node_modules/react/jsx-runtime.js",
+          "kind": "import-statement",
+          "original": "react/jsx-runtime"
+        },
+        {
+          "path": "../../node_modules/react/index.js",
+          "kind": "import-statement",
+          "original": "react"
+        },
+        {
+          "path": "../../node_modules/@radix-ui/react-label/dist/index.mjs",
+          "kind": "import-statement",
+          "original": "@radix-ui/react-label"
+        },
+        {
+          "path": "../../node_modules/react/jsx-runtime.js",
+          "kind": "import-statement",
+          "original": "react/jsx-runtime"
+        },
+        {
+          "path": "../../node_modules/react/index.js",
+          "kind": "import-statement",
+          "original": "react"
+        },
+        {
+          "path": "../../node_modules/@radix-ui/react-accordion/dist/index.mjs",
+          "kind": "import-statement",
+          "original": "@radix-ui/react-accordion"
+        },
+        {
+          "path": "../../packages/react-sdk/lib/index.js",
+          "kind": "import-statement",
+          "original": "@webstudio-is/react-sdk"
+        },
+        {
+          "path": "../../node_modules/react/jsx-runtime.js",
+          "kind": "import-statement",
+          "original": "react/jsx-runtime"
+        },
+        {
+          "path": "../../node_modules/@radix-ui/react-navigation-menu/dist/index.mjs",
+          "kind": "import-statement",
+          "original": "@radix-ui/react-navigation-menu"
+        },
+        {
+          "path": "../../packages/react-sdk/lib/index.js",
+          "kind": "import-statement",
+          "original": "@webstudio-is/react-sdk"
+        },
+        {
+          "path": "../../node_modules/react/index.js",
+          "kind": "import-statement",
+          "original": "react"
+        },
+        {
+          "path": "../../node_modules/react/jsx-runtime.js",
+          "kind": "import-statement",
+          "original": "react/jsx-runtime"
+        },
+        {
+          "path": "../../node_modules/react/index.js",
+          "kind": "import-statement",
+          "original": "react"
+        },
+        {
+          "path": "../../node_modules/@radix-ui/react-select/dist/index.mjs",
+          "kind": "import-statement",
+          "original": "@radix-ui/react-select"
+        },
+        {
+          "path": "../../packages/react-sdk/lib/index.js",
+          "kind": "import-statement",
+          "original": "@webstudio-is/react-sdk"
+        },
+        {
+          "path": "../../node_modules/react/jsx-runtime.js",
+          "kind": "import-statement",
+          "original": "react/jsx-runtime"
+        },
+        {
+          "path": "../../node_modules/@radix-ui/react-switch/dist/index.mjs",
+          "kind": "import-statement",
+          "original": "@radix-ui/react-switch"
+        },
+        {
+          "path": "../../node_modules/react/index.js",
+          "kind": "import-statement",
+          "original": "react"
+        },
+        {
+          "path": "../../node_modules/@radix-ui/react-checkbox/dist/index.mjs",
+          "kind": "import-statement",
+          "original": "@radix-ui/react-checkbox"
+        },
+        {
+          "path": "../../node_modules/react/jsx-runtime.js",
+          "kind": "import-statement",
+          "original": "react/jsx-runtime"
+        },
+        {
+          "path": "../../node_modules/react/index.js",
+          "kind": "import-statement",
+          "original": "react"
+        },
+        {
+          "path": "../../node_modules/@radix-ui/react-radio-group/dist/index.mjs",
+          "kind": "import-statement",
+          "original": "@radix-ui/react-radio-group"
+        }
+      ],
+      "format": "esm"
+    },
+    "app/__generated__/[radix]._index.tsx": {
+      "bytes": 14182,
+      "imports": [
+        {
+          "path": "../../packages/sdk-components-react/lib/components.js",
+          "kind": "import-statement",
+          "original": "@webstudio-is/sdk-components-react"
+        },
+        {
+          "path": "../../packages/sdk-components-react-radix/lib/components.js",
+          "kind": "import-statement",
+          "original": "@webstudio-is/sdk-components-react-radix"
+        }
+      ],
+      "format": "esm"
+    },
+    "app/routes/[radix]._index.tsx": {
+      "bytes": 4069,
+      "imports": [
+        {
+          "path": "../../node_modules/@remix-run/server-runtime/dist/esm/index.js",
+          "kind": "import-statement",
+          "original": "@remix-run/server-runtime"
+        },
+        {
+          "path": "../../packages/react-sdk/lib/index.js",
+          "kind": "import-statement",
+          "original": "@webstudio-is/react-sdk"
+        },
+        {
+          "path": "../../packages/form-handlers/lib/index.js",
+          "kind": "import-statement",
+          "original": "@webstudio-is/form-handlers"
+        },
+        {
+          "path": "../../node_modules/@remix-run/react/dist/esm/index.js",
+          "kind": "import-statement",
+          "original": "@remix-run/react"
+        },
+        {
+          "path": "app/__generated__/[radix]._index.tsx",
+          "kind": "import-statement",
+          "original": "../__generated__/[radix]._index.tsx"
+        },
+        {
+          "path": "app/__generated__/index.css",
+          "kind": "import-statement",
+          "original": "../__generated__/index.css"
+        },
+        {
+          "path": "app/constants.mjs",
+          "kind": "import-statement",
+          "original": "~/constants.mjs"
+        },
+        {
+          "path": "app/image-loader.mjs",
+          "kind": "import-statement",
+          "original": "~/image-loader.mjs"
+        },
+        {
+          "path": "../../node_modules/react/jsx-runtime.js",
+          "kind": "import-statement",
+          "original": "react/jsx-runtime"
+        }
+      ],
+      "format": "esm"
+    },
+    "../../packages/sdk-components-react-remix/lib/components.js": {
+      "bytes": 2767,
+      "imports": [
+        {
+          "path": "../../packages/sdk-components-react/lib/components.js",
+          "kind": "import-statement",
+          "original": "@webstudio-is/sdk-components-react"
+        },
+        {
+          "path": "../../node_modules/react/index.js",
+          "kind": "import-statement",
+          "original": "react"
+        },
+        {
+          "path": "../../node_modules/@remix-run/react/dist/esm/index.js",
+          "kind": "import-statement",
+          "original": "@remix-run/react"
+        },
+        {
+          "path": "../../packages/react-sdk/lib/index.js",
+          "kind": "import-statement",
+          "original": "@webstudio-is/react-sdk"
+        },
+        {
+          "path": "../../node_modules/react/jsx-runtime.js",
+          "kind": "import-statement",
+          "original": "react/jsx-runtime"
+        },
+        {
+          "path": "../../packages/sdk-components-react/lib/components.js",
+          "kind": "import-statement",
+          "original": "@webstudio-is/sdk-components-react"
+        },
+        {
+          "path": "../../node_modules/react/index.js",
+          "kind": "import-statement",
+          "original": "react"
+        },
+        {
+          "path": "../../node_modules/@remix-run/react/dist/esm/index.js",
+          "kind": "import-statement",
+          "original": "@remix-run/react"
+        },
+        {
+          "path": "../../packages/form-handlers/lib/index.js",
+          "kind": "import-statement",
+          "original": "@webstudio-is/form-handlers"
+        },
+        {
+          "path": "../../packages/react-sdk/lib/index.js",
+          "kind": "import-statement",
+          "original": "@webstudio-is/react-sdk"
+        },
+        {
+          "path": "../../node_modules/react/jsx-runtime.js",
+          "kind": "import-statement",
+          "original": "react/jsx-runtime"
+        }
+      ],
+      "format": "esm"
+    },
+    "app/__generated__/[form]._index.tsx": {
+      "bytes": 17934,
+      "imports": [
+        {
+          "path": "../../packages/sdk-components-react/lib/components.js",
+          "kind": "import-statement",
+          "original": "@webstudio-is/sdk-components-react"
+        },
+        {
+          "path": "../../packages/sdk-components-react-remix/lib/components.js",
+          "kind": "import-statement",
+          "original": "@webstudio-is/sdk-components-react-remix"
+        }
+      ],
+      "format": "esm"
+    },
+    "app/routes/[form]._index.tsx": {
+      "bytes": 4068,
+      "imports": [
+        {
+          "path": "../../node_modules/@remix-run/server-runtime/dist/esm/index.js",
+          "kind": "import-statement",
+          "original": "@remix-run/server-runtime"
+        },
+        {
+          "path": "../../packages/react-sdk/lib/index.js",
+          "kind": "import-statement",
+          "original": "@webstudio-is/react-sdk"
+        },
+        {
+          "path": "../../packages/form-handlers/lib/index.js",
+          "kind": "import-statement",
+          "original": "@webstudio-is/form-handlers"
+        },
+        {
+          "path": "../../node_modules/@remix-run/react/dist/esm/index.js",
+          "kind": "import-statement",
+          "original": "@remix-run/react"
+        },
+        {
+          "path": "app/__generated__/[form]._index.tsx",
+          "kind": "import-statement",
+          "original": "../__generated__/[form]._index.tsx"
+        },
+        {
+          "path": "app/__generated__/index.css",
+          "kind": "import-statement",
+          "original": "../__generated__/index.css"
+        },
+        {
+          "path": "app/constants.mjs",
+          "kind": "import-statement",
+          "original": "~/constants.mjs"
+        },
+        {
+          "path": "app/image-loader.mjs",
+          "kind": "import-statement",
+          "original": "~/image-loader.mjs"
+        },
+        {
+          "path": "../../node_modules/react/jsx-runtime.js",
+          "kind": "import-statement",
+          "original": "react/jsx-runtime"
+        }
+      ],
+      "format": "esm"
+    },
+    "app/__generated__/_index.tsx": {
+      "bytes": 7089,
+      "imports": [
+        {
+          "path": "../../packages/sdk-components-react/lib/components.js",
+          "kind": "import-statement",
+          "original": "@webstudio-is/sdk-components-react"
+        },
+        {
+          "path": "../../packages/sdk-components-react-remix/lib/components.js",
+          "kind": "import-statement",
+          "original": "@webstudio-is/sdk-components-react-remix"
+        }
+      ],
+      "format": "esm"
+    },
+    "app/routes/_index.tsx": {
+      "bytes": 4061,
+      "imports": [
+        {
+          "path": "../../node_modules/@remix-run/server-runtime/dist/esm/index.js",
+          "kind": "import-statement",
+          "original": "@remix-run/server-runtime"
+        },
+        {
+          "path": "../../packages/react-sdk/lib/index.js",
+          "kind": "import-statement",
+          "original": "@webstudio-is/react-sdk"
+        },
+        {
+          "path": "../../packages/form-handlers/lib/index.js",
+          "kind": "import-statement",
+          "original": "@webstudio-is/form-handlers"
+        },
+        {
+          "path": "../../node_modules/@remix-run/react/dist/esm/index.js",
+          "kind": "import-statement",
+          "original": "@remix-run/react"
+        },
+        {
+          "path": "app/__generated__/_index.tsx",
+          "kind": "import-statement",
+          "original": "../__generated__/_index.tsx"
+        },
+        {
+          "path": "app/__generated__/index.css",
+          "kind": "import-statement",
+          "original": "../__generated__/index.css"
+        },
+        {
+          "path": "app/constants.mjs",
+          "kind": "import-statement",
+          "original": "~/constants.mjs"
+        },
+        {
+          "path": "app/image-loader.mjs",
+          "kind": "import-statement",
+          "original": "~/image-loader.mjs"
+        },
+        {
+          "path": "../../node_modules/react/jsx-runtime.js",
+          "kind": "import-statement",
+          "original": "react/jsx-runtime"
+        }
+      ],
+      "format": "esm"
+    },
+    "server-assets-manifest:@remix-run/dev/assets-manifest": {
+      "bytes": 1848,
+      "imports": [],
+      "format": "esm"
+    },
+    "server-entry-module:@remix-run/dev/server-build": {
+      "bytes": 1798,
+      "imports": [
+        {
+          "path": "app/entry.server.tsx",
+          "kind": "import-statement",
+          "original": "/Users/jk/Documents/webstudio/webstudio-builder/fixtures/webstudio-remix-netlify-edge-functions/app/entry.server.tsx"
+        },
+        {
+          "path": "app/root.tsx",
+          "kind": "import-statement",
+          "original": "./root.tsx"
+        },
+        {
+          "path": "app/routes/[_route_with_symbols_]._index.tsx",
+          "kind": "import-statement",
+          "original": "./routes/[_route_with_symbols_]._index.tsx"
+        },
+        {
+          "path": "app/routes/[radix]._index.tsx",
+          "kind": "import-statement",
+          "original": "./routes/[radix]._index.tsx"
+        },
+        {
+          "path": "app/routes/[form]._index.tsx",
+          "kind": "import-statement",
+          "original": "./routes/[form]._index.tsx"
+        },
+        {
+          "path": "app/routes/_index.tsx",
+          "kind": "import-statement",
+          "original": "./routes/_index.tsx"
+        },
+        {
+          "path": "server-assets-manifest:@remix-run/dev/assets-manifest",
+          "kind": "import-statement",
+          "original": "@remix-run/dev/assets-manifest"
+        }
+      ],
+      "format": "esm"
+    },
+    "../../node_modules/@netlify/remix-edge-adapter/build/src/globals.js": {
+      "bytes": 165,
+      "imports": []
+    },
+    "../../node_modules/@netlify/remix-runtime/build/src/crypto.js": {
+      "bytes": 1359,
+      "imports": [],
+      "format": "cjs"
+    },
+    "../../node_modules/@netlify/remix-runtime/build/src/implementations.js": {
+      "bytes": 774,
+      "imports": [
+        {
+          "path": "../../node_modules/@remix-run/server-runtime/dist/esm/index.js",
+          "kind": "require-call",
+          "original": "@remix-run/server-runtime"
+        },
+        {
+          "path": "../../node_modules/@netlify/remix-runtime/build/src/crypto.js",
+          "kind": "require-call",
+          "original": "./crypto"
+        }
+      ],
+      "format": "cjs"
+    },
+    "../../node_modules/@netlify/remix-runtime/build/src/index.js": {
+      "bytes": 2637,
+      "imports": [
+        {
+          "path": "../../node_modules/@netlify/remix-runtime/build/src/implementations.js",
+          "kind": "require-call",
+          "original": "./implementations"
+        },
+        {
+          "path": "../../node_modules/@remix-run/server-runtime/dist/esm/index.js",
+          "kind": "require-call",
+          "original": "@remix-run/server-runtime"
+        }
+      ],
+      "format": "cjs"
+    },
+    "../../node_modules/@netlify/remix-edge-adapter/build/src/server.js": {
+      "bytes": 1552,
+      "imports": [
+        {
+          "path": "../../node_modules/@netlify/remix-runtime/build/src/index.js",
+          "kind": "require-call",
+          "original": "@netlify/remix-runtime"
+        }
+      ],
+      "format": "cjs"
+    },
+    "../../node_modules/@netlify/remix-edge-adapter/build/src/defaultRemixConfig.js": {
+      "bytes": 557,
+      "imports": [],
+      "format": "cjs"
+    },
+    "../../node_modules/@netlify/remix-edge-adapter/build/src/index.js": {
+      "bytes": 511,
+      "imports": [
+        {
+          "path": "../../node_modules/@netlify/remix-edge-adapter/build/src/globals.js",
+          "kind": "require-call",
+          "original": "./globals"
+        },
+        {
+          "path": "../../node_modules/@netlify/remix-edge-adapter/build/src/server.js",
+          "kind": "require-call",
+          "original": "./server"
+        },
+        {
+          "path": "../../node_modules/@netlify/remix-edge-adapter/build/src/defaultRemixConfig.js",
+          "kind": "require-call",
+          "original": "./defaultRemixConfig"
+        }
+      ],
+      "format": "cjs"
+    },
+    "server.js": {
+      "bytes": 606,
+      "imports": [
+        {
+          "path": "server-entry-module:@remix-run/dev/server-build",
+          "kind": "import-statement",
+          "original": "@remix-run/dev/server-build"
+        },
+        {
+          "path": "../../node_modules/@netlify/remix-edge-adapter/build/src/index.js",
+          "kind": "import-statement",
+          "original": "@netlify/remix-edge-adapter"
+        }
+      ],
+      "format": "esm"
+    }
+  },
+  "outputs": {
+    ".netlify/edge-functions/_assets/index-XQ764N4P.css": {
+      "imports": [],
+      "exports": [],
+      "inputs": { "app/__generated__/index.css": { "bytesInOutput": 22672 } },
+      "bytes": 22672
+    },
+    ".netlify/edge-functions/server.js": {
+      "imports": [
+        {
+          "path": ".netlify/edge-functions/_assets/index-XQ764N4P.css",
+          "kind": "file-loader"
+        }
+      ],
+      "exports": ["config", "default"],
+      "entryPoint": "server.js",
+      "inputs": {
+        "../../node_modules/react/cjs/react.production.min.js": {
+          "bytesInOutput": 9909
+        },
+        "../../node_modules/react/index.js": { "bytesInOutput": 169 },
+        "../../node_modules/@remix-run/router/dist/router.js": {
+          "bytesInOutput": 107060
+        },
+        "../../node_modules/react-router/dist/index.js": {
+          "bytesInOutput": 30400
+        },
+        "../../node_modules/react-router-dom/dist/index.js": {
+          "bytesInOutput": 28856
+        },
+        "../../node_modules/react-router-dom/server.js": {
+          "bytesInOutput": 8912
+        },
+        "../../node_modules/react-dom/cjs/react-dom-server-legacy.browser.production.min.js": {
+          "bytesInOutput": 55149
+        },
+        "../../node_modules/react-dom/cjs/react-dom-server.browser.production.min.js": {
+          "bytesInOutput": 56634
+        },
+        "../../node_modules/react-dom/server.browser.js": {
+          "bytesInOutput": 599
+        },
+        "../../node_modules/react/cjs/react-jsx-runtime.production.min.js": {
+          "bytesInOutput": 1009
+        },
+        "../../node_modules/react/jsx-runtime.js": { "bytesInOutput": 193 },
+        "../../node_modules/cookie/index.js": { "bytesInOutput": 3021 },
+        "../../node_modules/@remix-run/server-runtime/dist/esm/warnings.js": {
+          "bytesInOutput": 288
+        },
+        "../../node_modules/@remix-run/server-runtime/dist/esm/cookies.js": {
+          "bytesInOutput": 3928
+        },
+        "../../node_modules/@web3-storage/multipart-parser/esm/src/utils.js": {
+          "bytesInOutput": 772
+        },
+        "../../node_modules/@web3-storage/multipart-parser/esm/src/search.js": {
+          "bytesInOutput": 5496
+        },
+        "../../node_modules/@web3-storage/multipart-parser/esm/src/index.js": {
+          "bytesInOutput": 5542
+        },
+        "../../node_modules/@remix-run/server-runtime/dist/esm/formData.js": {
+          "bytesInOutput": 1064
+        },
+        "../../node_modules/@remix-run/server-runtime/dist/esm/mode.js": {
+          "bytesInOutput": 455
+        },
+        "../../node_modules/@remix-run/server-runtime/dist/esm/errors.js": {
+          "bytesInOutput": 1684
+        },
+        "../../node_modules/@remix-run/server-runtime/dist/esm/responses.js": {
+          "bytesInOutput": 2768
+        },
+        "../../node_modules/@remix-run/server-runtime/dist/esm/entry.js": {
+          "bytesInOutput": 263
+        },
+        "../../node_modules/set-cookie-parser/lib/set-cookie.js": {
+          "bytesInOutput": 4686
+        },
+        "../../node_modules/@remix-run/server-runtime/dist/esm/headers.js": {
+          "bytesInOutput": 2439
+        },
+        "../../node_modules/@remix-run/server-runtime/dist/esm/invariant.js": {
+          "bytesInOutput": 367
+        },
+        "../../node_modules/@remix-run/server-runtime/dist/esm/routeMatching.js": {
+          "bytesInOutput": 375
+        },
+        "../../node_modules/@remix-run/server-runtime/dist/esm/data.js": {
+          "bytesInOutput": 1795
+        },
+        "../../node_modules/@remix-run/server-runtime/dist/esm/routes.js": {
+          "bytesInOutput": 1934
+        },
+        "../../node_modules/@remix-run/server-runtime/dist/esm/markup.js": {
+          "bytesInOutput": 427
+        },
+        "../../node_modules/@remix-run/server-runtime/dist/esm/serverHandoff.js": {
+          "bytesInOutput": 246
+        },
+        "../../node_modules/@remix-run/server-runtime/dist/esm/server.js": {
+          "bytesInOutput": 8297
+        },
+        "../../node_modules/@remix-run/server-runtime/dist/esm/sessions.js": {
+          "bytesInOutput": 2777
+        },
+        "../../node_modules/@remix-run/server-runtime/dist/esm/sessions/cookieStorage.js": {
+          "bytesInOutput": 1196
+        },
+        "../../node_modules/@remix-run/server-runtime/dist/esm/sessions/memoryStorage.js": {
+          "bytesInOutput": 1098
+        },
+        "../../node_modules/@remix-run/server-runtime/dist/esm/upload/errors.js": {
+          "bytesInOutput": 369
+        },
+        "../../node_modules/@remix-run/server-runtime/dist/esm/upload/memoryUploadHandler.js": {
+          "bytesInOutput": 811
+        },
+        "../../node_modules/@remix-run/server-runtime/dist/esm/dev.js": {
+          "bytesInOutput": 830
+        },
+        "../../node_modules/@remix-run/server-runtime/dist/esm/index.js": {
+          "bytesInOutput": 1206
+        },
+        "../../node_modules/warn-once/index.js": { "bytesInOutput": 189 },
+        "../../node_modules/scheduler/cjs/scheduler.production.min.js": {
+          "bytesInOutput": 6857
+        },
+        "../../node_modules/scheduler/index.js": { "bytesInOutput": 181 },
+        "../../node_modules/react-dom/cjs/react-dom.production.min.js": {
+          "bytesInOutput": 223616
+        },
+        "../../node_modules/react-dom/index.js": { "bytesInOutput": 486 },
+        "../../node_modules/@netlify/remix-edge-adapter/build/src/globals.js": {
+          "bytesInOutput": 216
+        },
+        "../../node_modules/@netlify/remix-runtime/build/src/crypto.js": {
+          "bytesInOutput": 1406
+        },
+        "../../node_modules/@netlify/remix-runtime/build/src/implementations.js": {
+          "bytesInOutput": 933
+        },
+        "../../node_modules/@netlify/remix-runtime/build/src/index.js": {
+          "bytesInOutput": 2924
+        },
+        "../../node_modules/@netlify/remix-edge-adapter/build/src/server.js": {
+          "bytesInOutput": 1376
+        },
+        "../../node_modules/@netlify/remix-edge-adapter/build/src/defaultRemixConfig.js": {
+          "bytesInOutput": 741
+        },
+        "../../node_modules/@netlify/remix-edge-adapter/build/src/index.js": {
+          "bytesInOutput": 668
+        },
+        "server-entry-module:@remix-run/dev/server-build": {
+          "bytesInOutput": 1454
+        },
+        "app/entry.server.tsx": { "bytesInOutput": 626 },
+        "../../node_modules/@remix-run/react/dist/esm/_virtual/_rollupPluginBabelHelpers.js": {
+          "bytesInOutput": 374
+        },
+        "../../node_modules/@remix-run/react/dist/esm/components.js": {
+          "bytesInOutput": 31654
+        },
+        "../../node_modules/@remix-run/react/dist/esm/errorBoundaries.js": {
+          "bytesInOutput": 4985
+        },
+        "../../node_modules/@remix-run/react/dist/esm/invariant.js": {
+          "bytesInOutput": 130
+        },
+        "../../node_modules/@remix-run/react/dist/esm/links.js": {
+          "bytesInOutput": 5028
+        },
+        "../../node_modules/@remix-run/react/dist/esm/routeModules.js": {
+          "bytesInOutput": 388
+        },
+        "../../node_modules/@remix-run/react/dist/esm/markup.js": {
+          "bytesInOutput": 324
+        },
+        "../../node_modules/@remix-run/react/dist/esm/transition.js": {
+          "bytesInOutput": 214
+        },
+        "../../node_modules/@remix-run/react/dist/esm/routes.js": {
+          "bytesInOutput": 1375
+        },
+        "../../node_modules/@remix-run/react/dist/esm/index.js": {
+          "bytesInOutput": 14
+        },
+        "../../node_modules/@remix-run/react/dist/esm/scroll-restoration.js": {
+          "bytesInOutput": 1390
+        },
+        "../../node_modules/@remix-run/react/dist/esm/server.js": {
+          "bytesInOutput": 987
+        },
+        "app/root.tsx": { "bytesInOutput": 74 },
+        "../../node_modules/zod/lib/index.mjs": { "bytesInOutput": 96737 },
+        "../../packages/fonts/lib/index.js": { "bytesInOutput": 1155 },
+        "../../packages/react-sdk/lib/index.js": { "bytesInOutput": 19849 },
+        "../../node_modules/nanostores/atom/index.js": {
+          "bytesInOutput": 1775
+        },
+        "../../node_modules/nanostores/index.js": { "bytesInOutput": 0 },
+        "../../node_modules/nanostores/lifecycle/index.js": {
+          "bytesInOutput": 1554
+        },
+        "../../node_modules/nanostores/computed/index.js": {
+          "bytesInOutput": 576
+        },
+        "../../node_modules/nanostores/listen-keys/index.js": {
+          "bytesInOutput": 211
+        },
+        "../../node_modules/@nanostores/react/index.js": {
+          "bytesInOutput": 362
+        },
+        "../../packages/error-utils/lib/index.js": { "bytesInOutput": 57 },
+        "../../node_modules/hyphenate-style-name/index.js": {
+          "bytesInOutput": 415
+        },
+        "../../packages/css-engine/lib/index.js": { "bytesInOutput": 14268 },
+        "../../node_modules/jsep/dist/jsep.js": { "bytesInOutput": 25291 },
+        "../../node_modules/@jsep-plugin/assignment/dist/index.js": {
+          "bytesInOutput": 1981
+        },
+        "app/routes/[_route_with_symbols_]._index.tsx": {
+          "bytesInOutput": 3041
+        },
+        "../../packages/form-handlers/lib/index.js": { "bytesInOutput": 3290 },
+        "../../packages/sdk-components-react/lib/components.js": {
+          "bytesInOutput": 19945
+        },
+        "../../node_modules/@react-aria/utils/dist/import.mjs": {
+          "bytesInOutput": 1951
+        },
+        "../../packages/image/lib/index.js": { "bytesInOutput": 4168 },
+        "../../node_modules/colord/index.mjs": { "bytesInOutput": 7899 },
+        "../../node_modules/shallow-equal/dist/index.modern.mjs": {
+          "bytesInOutput": 909
+        },
+        "app/__generated__/[_route_with_symbols_]._index.tsx": {
+          "bytesInOutput": 3018
+        },
+        "app/__generated__/index.css": { "bytesInOutput": 61 },
+        "app/constants.mjs": { "bytesInOutput": 58 },
+        "app/image-loader.mjs": { "bytesInOutput": 51 },
+        "app/routes/[radix]._index.tsx": { "bytesInOutput": 3037 },
+        "../../packages/sdk-components-react-radix/lib/components.js": {
+          "bytesInOutput": 8192
+        },
+        "../../node_modules/@babel/runtime/helpers/esm/extends.js": {
+          "bytesInOutput": 374
+        },
+        "../../node_modules/@radix-ui/react-collapsible/dist/index.mjs": {
+          "bytesInOutput": 5652
+        },
+        "../../node_modules/@radix-ui/primitive/dist/index.mjs": {
+          "bytesInOutput": 367
+        },
+        "../../node_modules/@radix-ui/react-context/dist/index.mjs": {
+          "bytesInOutput": 3788
+        },
+        "../../node_modules/@radix-ui/react-use-controllable-state/dist/index.mjs": {
+          "bytesInOutput": 1324
+        },
+        "../../node_modules/@radix-ui/react-use-callback-ref/dist/index.mjs": {
+          "bytesInOutput": 529
+        },
+        "../../node_modules/@radix-ui/react-use-layout-effect/dist/index.mjs": {
+          "bytesInOutput": 199
+        },
+        "../../node_modules/@radix-ui/react-compose-refs/dist/index.mjs": {
+          "bytesInOutput": 503
+        },
+        "../../node_modules/@radix-ui/react-primitive/dist/index.mjs": {
+          "bytesInOutput": 1079
+        },
+        "../../node_modules/@radix-ui/react-slot/dist/index.mjs": {
+          "bytesInOutput": 2933
+        },
+        "../../node_modules/@radix-ui/react-presence/dist/index.mjs": {
+          "bytesInOutput": 3778
+        },
+        "../../node_modules/@radix-ui/react-id/dist/index.mjs": {
+          "bytesInOutput": 563
+        },
+        "../../node_modules/@radix-ui/react-dialog/dist/index.mjs": {
+          "bytesInOutput": 5803
+        },
+        "../../node_modules/@radix-ui/react-dismissable-layer/dist/index.mjs": {
+          "bytesInOutput": 8093
+        },
+        "../../node_modules/@radix-ui/react-use-escape-keydown/dist/index.mjs": {
+          "bytesInOutput": 609
+        },
+        "../../node_modules/@radix-ui/react-focus-scope/dist/index.mjs": {
+          "bytesInOutput": 8493
+        },
+        "../../node_modules/@radix-ui/react-portal/dist/index.mjs": {
+          "bytesInOutput": 702
+        },
+        "../../node_modules/@radix-ui/react-focus-guards/dist/index.mjs": {
+          "bytesInOutput": 1180
+        },
+        "../../node_modules/tslib/tslib.es6.mjs": { "bytesInOutput": 1078 },
+        "../../node_modules/react-remove-scroll/dist/es2015/Combination.js": {
+          "bytesInOutput": 313
+        },
+        "../../node_modules/react-remove-scroll/dist/es2015/UI.js": {
+          "bytesInOutput": 1640
+        },
+        "../../node_modules/react-remove-scroll-bar/dist/es2015/constants.js": {
+          "bytesInOutput": 212
+        },
+        "../../node_modules/use-callback-ref/dist/es2015/assignRef.js": {
+          "bytesInOutput": 119
+        },
+        "../../node_modules/use-callback-ref/dist/es2015/useRef.js": {
+          "bytesInOutput": 580
+        },
+        "../../node_modules/use-callback-ref/dist/es2015/useMergeRef.js": {
+          "bytesInOutput": 206
+        },
+        "../../node_modules/use-callback-ref/dist/es2015/index.js": {
+          "bytesInOutput": 0
+        },
+        "../../node_modules/use-sidecar/dist/es2015/medium.js": {
+          "bytesInOutput": 1836
+        },
+        "../../node_modules/use-sidecar/dist/es2015/index.js": {
+          "bytesInOutput": 0
+        },
+        "../../node_modules/use-sidecar/dist/es2015/exports.js": {
+          "bytesInOutput": 512
+        },
+        "../../node_modules/react-remove-scroll/dist/es2015/medium.js": {
+          "bytesInOutput": 39
+        },
+        "../../node_modules/react-remove-scroll/dist/es2015/SideEffect.js": {
+          "bytesInOutput": 5780
+        },
+        "../../node_modules/react-remove-scroll-bar/dist/es2015/component.js": {
+          "bytesInOutput": 1860
+        },
+        "../../node_modules/react-style-singleton/dist/es2015/hook.js": {
+          "bytesInOutput": 304
+        },
+        "../../node_modules/get-nonce/dist/es2015/index.js": {
+          "bytesInOutput": 162
+        },
+        "../../node_modules/react-style-singleton/dist/es2015/singleton.js": {
+          "bytesInOutput": 904
+        },
+        "../../node_modules/react-style-singleton/dist/es2015/component.js": {
+          "bytesInOutput": 217
+        },
+        "../../node_modules/react-style-singleton/dist/es2015/index.js": {
+          "bytesInOutput": 0
+        },
+        "../../node_modules/react-remove-scroll-bar/dist/es2015/utils.js": {
+          "bytesInOutput": 869
+        },
+        "../../node_modules/react-remove-scroll/dist/es2015/aggresiveCapture.js": {
+          "bytesInOutput": 410
+        },
+        "../../node_modules/react-remove-scroll/dist/es2015/handleScroll.js": {
+          "bytesInOutput": 3037
+        },
+        "../../node_modules/react-remove-scroll/dist/es2015/sidecar.js": {
+          "bytesInOutput": 69
+        },
+        "../../node_modules/aria-hidden/dist/es2015/index.js": {
+          "bytesInOutput": 2355
+        },
+        "../../node_modules/@radix-ui/react-popover/dist/index.mjs": {
+          "bytesInOutput": 10828
+        },
+        "../../node_modules/@radix-ui/react-popper/dist/index.mjs": {
+          "bytesInOutput": 10333
+        },
+        "../../node_modules/@floating-ui/utils/dist/floating-ui.utils.mjs": {
+          "bytesInOutput": 3215
+        },
+        "../../node_modules/@floating-ui/core/dist/floating-ui.core.mjs": {
+          "bytesInOutput": 19458
+        },
+        "../../node_modules/@floating-ui/dom/dist/floating-ui.dom.mjs": {
+          "bytesInOutput": 15851
+        },
+        "../../node_modules/@floating-ui/utils/dom/dist/floating-ui.utils.dom.mjs": {
+          "bytesInOutput": 3960
+        },
+        "../../node_modules/@floating-ui/react-dom/dist/floating-ui.react-dom.mjs": {
+          "bytesInOutput": 5781
+        },
+        "../../node_modules/@radix-ui/react-use-size/dist/index.mjs": {
+          "bytesInOutput": 1137
+        },
+        "../../node_modules/@radix-ui/react-tooltip/dist/index.mjs": {
+          "bytesInOutput": 19538
+        },
+        "../../node_modules/@radix-ui/react-visually-hidden/dist/index.mjs": {
+          "bytesInOutput": 735
+        },
+        "../../node_modules/@radix-ui/react-tabs/dist/index.mjs": {
+          "bytesInOutput": 4330
+        },
+        "../../node_modules/@radix-ui/react-roving-focus/dist/index.mjs": {
+          "bytesInOutput": 4711
+        },
+        "../../node_modules/@radix-ui/react-collection/dist/index.mjs": {
+          "bytesInOutput": 2815
+        },
+        "../../node_modules/@radix-ui/react-direction/dist/index.mjs": {
+          "bytesInOutput": 346
+        },
+        "../../node_modules/@radix-ui/react-label/dist/index.mjs": {
+          "bytesInOutput": 666
+        },
+        "../../node_modules/@radix-ui/react-accordion/dist/index.mjs": {
+          "bytesInOutput": 13103
+        },
+        "../../node_modules/@radix-ui/react-navigation-menu/dist/index.mjs": {
+          "bytesInOutput": 17726
+        },
+        "../../node_modules/@radix-ui/react-use-previous/dist/index.mjs": {
+          "bytesInOutput": 377
+        },
+        "../../node_modules/@radix-ui/react-select/dist/index.mjs": {
+          "bytesInOutput": 27474
+        },
+        "../../node_modules/@radix-ui/number/dist/index.mjs": {
+          "bytesInOutput": 124
+        },
+        "../../node_modules/@radix-ui/react-checkbox/dist/index.mjs": {
+          "bytesInOutput": 4622
+        },
+        "app/__generated__/[radix]._index.tsx": { "bytesInOutput": 13016 },
+        "app/routes/[form]._index.tsx": { "bytesInOutput": 3033 },
+        "../../packages/sdk-components-react-remix/lib/components.js": {
+          "bytesInOutput": 2281
+        },
+        "app/__generated__/[form]._index.tsx": { "bytesInOutput": 16909 },
+        "app/routes/_index.tsx": { "bytesInOutput": 3013 },
+        "app/__generated__/_index.tsx": { "bytesInOutput": 6240 },
+        "server-assets-manifest:@remix-run/dev/assets-manifest": {
+          "bytesInOutput": 1792
+        },
+        "server.js": { "bytesInOutput": 522 }
+      },
+      "bytes": 1171655
+    }
+  }
+}
