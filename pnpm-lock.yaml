@@ -432,6 +432,85 @@ importers:
         specifier: workspace:*
         version: link:../../packages/cli
 
+  fixtures/webstudio-remix-netlify-edge-functions:
+    dependencies:
+      '@netlify/edge-functions':
+        specifier: ^2.0.0
+        version: 2.0.0
+      '@netlify/functions':
+        specifier: ^1.3.0
+        version: 1.3.0
+      '@netlify/remix-edge-adapter':
+        specifier: 1.2.0
+        version: 1.2.0
+      '@remix-run/node':
+        specifier: ^1.19.2
+        version: 1.19.2
+      '@remix-run/react':
+        specifier: ^1.19.2
+        version: 1.19.2(react-dom@18.2.0)(react@18.2.0)
+      '@remix-run/server-runtime':
+        specifier: ^1.19.2
+        version: 1.19.2
+      '@webstudio-is/form-handlers':
+        specifier: ^0.100.0
+        version: link:../../packages/form-handlers
+      '@webstudio-is/image':
+        specifier: ^0.100.0
+        version: link:../../packages/image
+      '@webstudio-is/react-sdk':
+        specifier: ^0.100.0
+        version: link:../../packages/react-sdk
+      '@webstudio-is/sdk':
+        specifier: ^0.100.0
+        version: link:../../packages/sdk
+      '@webstudio-is/sdk-components-react':
+        specifier: ^0.100.0
+        version: link:../../packages/sdk-components-react
+      '@webstudio-is/sdk-components-react-radix':
+        specifier: ^0.100.0
+        version: link:../../packages/sdk-components-react-radix
+      '@webstudio-is/sdk-components-react-remix':
+        specifier: ^0.100.0
+        version: link:../../packages/sdk-components-react-remix
+      cross-env:
+        specifier: ^7.0.3
+        version: 7.0.3
+      isbot:
+        specifier: ^3.6.8
+        version: 3.6.13
+      react:
+        specifier: ^18.2.0
+        version: 18.2.0
+      react-dom:
+        specifier: ^18.2.0
+        version: 18.2.0(react@18.2.0)
+    devDependencies:
+      '@remix-run/dev':
+        specifier: ^1.19.2
+        version: 1.19.2(@remix-run/serve@1.19.2)
+      '@remix-run/serve':
+        specifier: ^1.19.2
+        version: 1.19.2
+      '@types/react':
+        specifier: ^18.2.20
+        version: 18.2.21
+      '@types/react-dom':
+        specifier: ^18.2.7
+        version: 18.2.7
+      '@webstudio-is/http-client':
+        specifier: ^0.100.0
+        version: link:../../packages/http-client
+      eslint:
+        specifier: ^8.48.0
+        version: 8.48.0
+      rimraf:
+        specifier: ^4.1.4
+        version: 4.1.4
+      typescript:
+        specifier: 5.2.2
+        version: 5.2.2
+
   fixtures/webstudio-remix-netlify-functions:
     dependencies:
       '@netlify/functions':
@@ -3163,6 +3242,17 @@ packages:
     requiresBuild: true
     optional: true
 
+  /@deno/shim-deno-test@0.3.3:
+    resolution: {integrity: sha512-Ge0Tnl7zZY0VvEfgsyLhjid8DzI1d0La0dgm+3m0/A8gZXgp5xwlyIyue5e4SCUuVB/3AH/0lun9LcJhhTwmbg==}
+    dev: false
+
+  /@deno/shim-deno@0.10.0:
+    resolution: {integrity: sha512-E7rQ0Hk33V45xQXKEnCxizdSP5C+hhqw1H3xWXsct3kYFWgG93B5gN3LKlyvcxbckt8d67jVa6s+y5duRYawvg==}
+    dependencies:
+      '@deno/shim-deno-test': 0.3.3
+      which: 2.0.2
+    dev: false
+
   /@discoveryjs/json-ext@0.5.7:
     resolution: {integrity: sha512-dBVuXR082gk3jsFp7Rd/JI4kytwGHecnCoTtXFb7DB6CNHp4rg5k1bhg0nWdLGLnOV71lmDzGQaLMy8iPLY0pw==}
     engines: {node: '>=10.0.0'}
@@ -4829,6 +4919,13 @@ packages:
       pump: 3.0.0
       tar-fs: 2.1.1
 
+  /@netlify/edge-functions@2.0.0:
+    resolution: {integrity: sha512-mRVGnPNA4YayDLPwnO1ZrcWwBODPj5BQPbx3/FUlQtZ5ow2D+PjMPQr8IcFm0HfMJQgtHZS39p9VS6PRSi1ePw==}
+    engines: {node: ^14.16.0 || >=16.0.0}
+    dependencies:
+      '@deno/shim-deno': 0.10.0
+    dev: false
+
   /@netlify/functions@1.3.0:
     resolution: {integrity: sha512-hN/Fgpz8XIOBfsBPLYUMxVKBlCopgeqGB0popayicnmkFLnvKByTTMYgF01wcF9DBtBQdV0H2h1kPFpMl34I8w==}
     engines: {node: '>=8.3.0'}
@@ -4844,6 +4941,18 @@ packages:
     dependencies:
       '@netlify/functions': 1.3.0
       '@remix-run/node': 1.19.2
+    dev: false
+
+  /@netlify/remix-edge-adapter@1.2.0:
+    resolution: {integrity: sha512-tviSW+Bu+Z56aCr4TnEYNaUgDUhDZOyimYoigGzFmjQhq3yGmOpSTkkp2WBNR+JuRIFH2MsqV+eCFoBVrAy/7g==}
+    dependencies:
+      '@netlify/remix-runtime': 1.1.0
+    dev: false
+
+  /@netlify/remix-runtime@1.1.0:
+    resolution: {integrity: sha512-9v/j6kEvsnaD3uStLVng2HJhWBVjZ78SmiWMpgUVbOJyStrhz5ivqsoU54m47kCwviKXhWt36U8RYczgMgkG+w==}
+    dependencies:
+      '@remix-run/server-runtime': 1.19.2
     dev: false
 
   /@nodelib/fs.scandir@2.1.5:
