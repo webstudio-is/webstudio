@@ -25,7 +25,8 @@ import {
 } from "../__generated__/_index.tsx";
 import css from "../__generated__/index.css";
 import type { Data } from "@webstudio-is/http-client";
-import { assetBaseUrl, imageBaseUrl, imageLoader } from "~/constants.mjs";
+import { assetBaseUrl, imageBaseUrl } from "~/constants.mjs";
+import { imageLoader } from "~/image-loader.mjs";
 
 export type PageData = Omit<Data, "build"> & {
   build: Pick<Data["build"], "props" | "instances" | "dataSources">;

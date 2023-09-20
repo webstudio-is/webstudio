@@ -1,0 +1,43 @@
+{
+  "private": true,
+  "sideEffects": false,
+  "scripts": {
+    "build": "remix build",
+    "dev": "remix dev",
+    "start": "netlify serve",
+    "typecheck": "tsc -b",
+    "predev": "rimraf ./public/_redirects"
+  },
+  "dependencies": {
+    "@remix-run/react": "^1.19.2",
+    "@remix-run/server-runtime": "^1.19.2",
+    "@remix-run/node": "^1.19.2",
+    "@webstudio-is/react-sdk": "^0.100.0",
+    "@webstudio-is/sdk-components-react-radix": "^0.100.0",
+    "@webstudio-is/sdk-components-react-remix": "^0.100.0",
+    "@webstudio-is/sdk-components-react": "^0.100.0",
+    "@webstudio-is/form-handlers": "^0.100.0",
+    "@webstudio-is/image": "^0.100.0",
+    "@webstudio-is/sdk": "^0.100.0",
+    "isbot": "^3.6.8",
+    "react": "^18.2.0",
+    "react-dom": "^18.2.0",
+    "@netlify/functions": "^1.3.0",
+    "@netlify/edge-functions": "^2.0.0",
+    "@netlify/remix-edge-adapter": "1.2.0",
+    "cross-env": "^7.0.3"
+  },
+  "devDependencies": {
+    "@remix-run/serve": "^1.19.2",
+    "@remix-run/dev": "^1.19.2",
+    "@types/react": "^18.2.20",
+    "@types/react-dom": "^18.2.7",
+    "@webstudio-is/http-client": "^0.100.0",
+    "eslint": "^8.48.0",
+    "typescript": "5.2.2",
+    "rimraf": "^4.1.4"
+  },
+  "engines": {
+    "node": ">=18.0.0"
+  }
+}

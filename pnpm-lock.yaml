@@ -432,6 +432,82 @@ importers:
         specifier: workspace:*
         version: link:../../packages/cli
 
+  fixtures/webstudio-remix-netlify-functions:
+    dependencies:
+      '@netlify/functions':
+        specifier: ^1.3.0
+        version: 1.3.0
+      '@netlify/remix-adapter':
+        specifier: ^1.0.0
+        version: 1.0.0(@netlify/functions@1.3.0)
+      '@remix-run/node':
+        specifier: ^1.19.2
+        version: 1.19.2
+      '@remix-run/react':
+        specifier: ^1.19.2
+        version: 1.19.2(react-dom@18.2.0)(react@18.2.0)
+      '@remix-run/server-runtime':
+        specifier: ^1.19.2
+        version: 1.19.2
+      '@webstudio-is/form-handlers':
+        specifier: ^0.100.0
+        version: link:../../packages/form-handlers
+      '@webstudio-is/image':
+        specifier: ^0.100.0
+        version: link:../../packages/image
+      '@webstudio-is/react-sdk':
+        specifier: ^0.100.0
+        version: link:../../packages/react-sdk
+      '@webstudio-is/sdk':
+        specifier: ^0.100.0
+        version: link:../../packages/sdk
+      '@webstudio-is/sdk-components-react':
+        specifier: ^0.100.0
+        version: link:../../packages/sdk-components-react
+      '@webstudio-is/sdk-components-react-radix':
+        specifier: ^0.100.0
+        version: link:../../packages/sdk-components-react-radix
+      '@webstudio-is/sdk-components-react-remix':
+        specifier: ^0.100.0
+        version: link:../../packages/sdk-components-react-remix
+      cross-env:
+        specifier: ^7.0.3
+        version: 7.0.3
+      isbot:
+        specifier: ^3.6.8
+        version: 3.6.13
+      react:
+        specifier: ^18.2.0
+        version: 18.2.0
+      react-dom:
+        specifier: ^18.2.0
+        version: 18.2.0(react@18.2.0)
+    devDependencies:
+      '@remix-run/dev':
+        specifier: ^1.19.2
+        version: 1.19.2(@remix-run/serve@1.19.2)
+      '@remix-run/serve':
+        specifier: ^1.19.2
+        version: 1.19.2
+      '@types/react':
+        specifier: ^18.2.20
+        version: 18.2.21
+      '@types/react-dom':
+        specifier: ^18.2.7
+        version: 18.2.7
+      '@webstudio-is/http-client':
+        specifier: ^0.100.0
+        version: link:../../packages/http-client
+      eslint:
+        specifier: ^8.48.0
+        version: 8.48.0
+      rimraf:
+        specifier: ^4.1.4
+        version: 4.1.4
+      typescript:
+        specifier: 5.2.2
+        version: 5.2.2
+
   fixtures/webstudio-remix-vercel:
     dependencies:
       '@remix-run/node':
@@ -4753,6 +4829,23 @@ packages:
       pump: 3.0.0
       tar-fs: 2.1.1
 
+  /@netlify/functions@1.3.0:
+    resolution: {integrity: sha512-hN/Fgpz8XIOBfsBPLYUMxVKBlCopgeqGB0popayicnmkFLnvKByTTMYgF01wcF9DBtBQdV0H2h1kPFpMl34I8w==}
+    engines: {node: '>=8.3.0'}
+    dependencies:
+      is-promise: 4.0.0
+    dev: false
+
+  /@netlify/remix-adapter@1.0.0(@netlify/functions@1.3.0):
+    resolution: {integrity: sha512-4lI6cPybkXvElk1Wn8FbowxH6xWOX9rG9e963YFIzpyCTV61pu7JA+MDNPw18tZCOkzBfXqTFP/qqdm7Uleudg==}
+    engines: {node: '>=14'}
+    peerDependencies:
+      '@netlify/functions': ^1.0.0
+    dependencies:
+      '@netlify/functions': 1.3.0
+      '@remix-run/node': 1.19.2
+    dev: false
+
   /@nodelib/fs.scandir@2.1.5:
     resolution: {integrity: sha512-vq24Bq3ym5HEQm2NKCr3yXDwjc7vTsEThRDnkp2DK9p1uqLR+DHurm/NOTo0KG7HYHU7eppKZj3MyqYuMBf62g==}
     engines: {node: '>= 8'}
@@ -9007,6 +9100,14 @@ packages:
     resolution: {integrity: sha512-izfGgKyzzIyLaeb1EtZ3KbglkS6AKp9cv7LxmiyoOu+fXfol1tQDC0Cof0enVZGNtudTHW+3lfuW9ZkLQss4Wg==}
     dev: true
 
+  /cross-env@7.0.3:
+    resolution: {integrity: sha512-+/HKd6EgcQCJGh2PSjZuUitQBQynKor4wrFbRg4DtAgS1aWO+gU52xpH7M9ScGgXSYmAVS9bIJ8EzuaGw0oNAw==}
+    engines: {node: '>=10.14', npm: '>=6', yarn: '>=1'}
+    hasBin: true
+    dependencies:
+      cross-spawn: 7.0.3
+    dev: false
+
   /cross-spawn@7.0.3:
     resolution: {integrity: sha512-iRDPJKUPVEND7dHPO8rkbOnPpyDygcDFtWjpeWNCgy8WP2rXcxXL8TskReQl6OrB2G7+UJrags1q15Fudc7G6w==}
     engines: {node: '>= 8'}
@@ -11271,6 +11372,10 @@ packages:
   /is-plain-object@5.0.0:
     resolution: {integrity: sha512-VRSzKkbMm5jMDoKLbltAkFQ5Qr7VDiTFGXxYFXXowVj387GeGNOCsOH6Msy00SGZ3Fp84b1Naa1psqgcCIEP5Q==}
     engines: {node: '>=0.10.0'}
+
+  /is-promise@4.0.0:
+    resolution: {integrity: sha512-hvpoI6korhJMnej285dSg6nu1+e6uxs7zG3BYAm5byqDsgJNWwxzM6z6iZiAgQR4TJ30JmBTOwqZUw3WlyH3AQ==}
+    dev: false
 
   /is-reference@3.0.1:
     resolution: {integrity: sha512-baJJdQLiYaJdvFbJqXrcGv3WU3QCzBlUcI5QhbesIm6/xPsvmO+2CDoi/GMOFBQEQm+PXkwOPrp9KK5ozZsp2w==}
@@ -14901,6 +15006,13 @@ packages:
     hasBin: true
     dependencies:
       glob: 7.2.3
+
+  /rimraf@4.1.4:
+    resolution: {integrity: sha512-CoUTSckPOFgu0m8PzkXWlp/e0IHxxv3fUxOivMspXfxcm1rPaNtj6lkkbi5NnFVoGDFj6kX7jPKVccafEf9HoA==}
+    engines: {node: '>=14'}
+    deprecated: Please upgrade to 4.3.1 or higher to fix a potentially damaging issue regarding symbolic link following. See https://github.com/isaacs/rimraf/issues/259 for details.
+    hasBin: true
+    dev: true
 
   /rollup-plugin-inject@3.0.2:
     resolution: {integrity: sha512-ptg9PQwzs3orn4jkgXJ74bfs5vYz1NCZlSQMBUA0wKcGp5i5pA1AO3fOUEte8enhGUC+iapTCzEWw2jEFFUO/w==}
