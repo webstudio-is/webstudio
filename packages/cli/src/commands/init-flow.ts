@@ -16,6 +16,7 @@ export const initFlow = async (
   const isProjectConfigured = await isFileExists(".webstudio/config.json");
   let shouldInstallDeps = false;
   let folderName;
+  let projectTemplate;
 
   if (isProjectConfigured === false) {
     const { shouldCreateFolder } = await prompt({
@@ -53,6 +54,36 @@ export const initFlow = async (
     }
     await link({ link: projectLink });
 
+    const { shouldSetupDeployTarget } = await prompt({
+      type: "confirm",
+      name: "shouldSetupDeployTarget",
+      message: "Would you like to setup a deploy target?",
+      initial: false,
+    });
+
+    if (shouldSetupDeployTarget === true) {
+      const { deployTarget } = await prompt({
+        type: "select",
+        name: "deployTarget",
+        message: "Where would you like to deploy your project?",
+        choices: [
+          {
+            title: "Vercel",
+            value: "vercel",
+          },
+          {
+            title: "Netlify Functions",
+            value: "netlify-functions",
+          },
+          {
+            title: "Netlify Edge Functions",
+            value: "netlify-edge-functions",
+          },
+        ],
+      });
+      projectTemplate = deployTarget;
+    }
+
     const { installDeps } = await prompt({
       type: "confirm",
       name: "installDeps",
@@ -63,7 +94,11 @@ export const initFlow = async (
   }
 
   await sync({ buildId: undefined, origin: undefined, authToken: undefined });
-  await build(options);
+
+  await build({
+    ...options,
+    ...(projectTemplate && { template: projectTemplate }),
+  });
 
   if (shouldInstallDeps === true) {
     const spinner = ora().start();

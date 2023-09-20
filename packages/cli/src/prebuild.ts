@@ -40,7 +40,12 @@ import * as baseComponentMetas from "@webstudio-is/sdk-components-react/metas";
 import * as remixComponentMetas from "@webstudio-is/sdk-components-react-remix/metas";
 import * as radixComponentMetas from "@webstudio-is/sdk-components-react-radix/metas";
 import { LOCAL_DATA_FILE } from "./config";
-import { ensureFileInPath, ensureFolderExists, loadJSONFile } from "./fs-utils";
+import {
+  ensureFileInPath,
+  ensureFolderExists,
+  isFileExists,
+  loadJSONFile,
+} from "./fs-utils";
 import merge from "deepmerge";
 import { createImageLoader } from "@webstudio-is/image";
 import { fileURLToPath, pathToFileURL } from "node:url";
@@ -173,10 +178,13 @@ const copyTemplates = async (template: string = "defaults") => {
     },
   });
 
-  await mergeJsonFiles(
-    join(templatesPath, "package.json"),
-    join(cwd(), "package.json")
-  );
+  const templatesPackageJSON = join(templatesPath, "package.json");
+  if ((await isFileExists(templatesPackageJSON)) === true) {
+    await mergeJsonFiles(
+      join(templatesPath, "package.json"),
+      join(cwd(), "package.json")
+    );
+  }
 };
 
 export const prebuild = async (options: {
