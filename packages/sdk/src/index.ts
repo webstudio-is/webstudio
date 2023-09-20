@@ -9,5 +9,7 @@ export * from "./schema/style-source-selections";
 export * from "./schema/styles";
 export * from "./schema/deployment";
 
+export * from "./schema/prop-meta";
+
 export * from "./instances-utils";
 export * from "./scope";

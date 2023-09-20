@@ -2,7 +2,6 @@ export * from "./css/index";
 export * from "./tree/index";
 export * from "./app/index";
 export * from "./components/components-utils";
-export { PropMeta } from "./prop-meta";
 export {
   type WsComponentPropsMeta,
   type ComponentState,
