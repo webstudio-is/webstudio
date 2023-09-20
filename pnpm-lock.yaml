@@ -1056,9 +1056,9 @@ importers:
       '@webstudio-is/html-data':
         specifier: workspace:*
         version: link:../html-data
-      '@webstudio-is/react-sdk':
+      '@webstudio-is/sdk':
         specifier: workspace:*
-        version: link:../react-sdk
+        version: link:../sdk
       fast-glob:
         specifier: ^3.2.12
         version: 3.2.12
