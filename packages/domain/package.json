@@ -1,6 +1,6 @@
 {
   "name": "@webstudio-is/domain",
-  "version": "0.99.0",
+  "version": "0.100.0",
   "description": "Webstudio Domain",
   "author": "Webstudio <github@webstudio.is>",
   "homepage": "https://webstudio.is",
@@ -25,12 +25,12 @@
   },
   "exports": {
     ".": {
-      "source": "./src/index.ts",
+      "webstudio": "./src/index.ts",
       "import": "./lib/index.js",
       "types": "./lib/types/index.d.ts"
     },
     "./index.server": {
-      "source": "./src/index.server.ts",
+      "webstudio": "./src/index.server.ts",
       "import": "./lib/index.server.js",
       "types": "./lib/types/index.server.d.ts"
     }

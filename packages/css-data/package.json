@@ -1,6 +1,6 @@
 {
   "name": "@webstudio-is/css-data",
-  "version": "0.99.0",
+  "version": "0.100.0",
   "description": "CSS Data",
   "author": "Webstudio <github@webstudio.is>",
   "homepage": "https://webstudio.is",
@@ -32,7 +32,7 @@
     "zod": "^3.19.1"
   },
   "exports": {
-    "source": "./src/index.ts",
+    "webstudio": "./src/index.ts",
     "types": "./lib/types/index.d.ts",
     "import": "./lib/index.js"
   },

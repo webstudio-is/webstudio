@@ -1,6 +1,6 @@
 {
   "name": "@webstudio-is/design-system",
-  "version": "0.99.0",
+  "version": "0.100.0",
   "description": "Webstudio Design System",
   "author": "Webstudio <github@webstudio.is>",
   "homepage": "https://webstudio.is",
@@ -77,7 +77,7 @@
     "warn-once": "^0.1.1"
   },
   "exports": {
-    "source": "./src/index.ts",
+    "webstudio": "./src/index.ts",
     "import": "./lib/index.js",
     "types": "./lib/types/index.d.ts"
   },

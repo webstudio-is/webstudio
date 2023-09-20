@@ -43,8 +43,8 @@ import { LOCAL_DATA_FILE } from "./config";
 import { ensureFileInPath, ensureFolderExists, loadJSONFile } from "./fs-utils";
 import merge from "deepmerge";
 import { createImageLoader } from "@webstudio-is/image";
-import { $ } from "execa";
-import { fileURLToPath } from "node:url";
+import { fileURLToPath, pathToFileURL } from "node:url";
+import type * as sharedConstants from "~/constants.mjs";
 
 const limit = pLimit(10);
 
@@ -197,14 +197,11 @@ export const prebuild = async (options: {
     await copyTemplates(options.template);
   }
 
-  const constantsJson =
-    await $`node --input-type=module --eval ${`import * as consts from './app/constants.mjs'; console.log(JSON.stringify(consts))`}`;
+  const constants: typeof sharedConstants = await import(
+    pathToFileURL(join(cwd(), "app/constants.mjs")).href
+  );
 
-  const constants = JSON.parse(constantsJson.stdout);
-  const assetBaseUrl =
-    "assetBaseUrl" in constants
-      ? (constants.assetBaseUrl as string)
-      : "/assets";
+  const { assetBaseUrl } = constants;
 
   const siteData = await loadJSONFile<
     Data & { user?: { email: string | null } }

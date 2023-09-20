@@ -1,6 +1,6 @@
 {
   "name": "@webstudio-is/trpc-interface",
-  "version": "0.99.0",
+  "version": "0.100.0",
   "description": "Webstudio TRPC Interface",
   "author": "Webstudio <github@webstudio.is>",
   "homepage": "https://webstudio.is",
@@ -29,7 +29,7 @@
   },
   "exports": {
     "./index.server": {
-      "source": "./src/index.server.ts",
+      "webstudio": "./src/index.server.ts",
       "import": "./lib/index.server.js",
       "types": "./lib/types/index.server.d.ts"
     }

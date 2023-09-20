@@ -1799,7 +1799,7 @@ export const propsTabsTrigger: Record<string, PropMeta> = {
     options: ["on", "off"],
   },
   value: {
-    required: true,
+    required: false,
     control: "text",
     type: "string",
     description:
@@ -2376,7 +2376,7 @@ export const propsTabsContent: Record<string, PropMeta> = {
     options: ["on", "off"],
   },
   value: {
-    required: true,
+    required: false,
     control: "text",
     type: "string",
     description:
