@@ -3,7 +3,7 @@ import * as fs from "node:fs";
 import * as path from "node:path";
 
 const GENERATED_FILES_DIR = "__generated__";
-const globs = process.argv.pop();
+const [globs] = process.argv.slice(2);
 
 if (!globs || !globs.trim()) {
   throw new Error(
@@ -20,9 +20,7 @@ if (prompts.length === 0) {
 prompts.forEach((filePath) => {
   const generatedDir = path.join(path.dirname(filePath), GENERATED_FILES_DIR);
 
-  if (!fs.existsSync(generatedDir)) {
-    fs.mkdirSync(generatedDir, { recursive: true });
-  }
+  fs.mkdirSync(generatedDir, { recursive: true });
 
   const generatedFile = `${path.basename(filePath, ".md")}.ts`;
   const generatedPath = path.join(generatedDir, generatedFile);

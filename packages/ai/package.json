@@ -25,9 +25,9 @@
     "typescript": "5.2.2"
   },
   "exports": {
-    "source": "./src/index.ts",
-    "import": "./lib/index.js",
-    "types": "lib/types/index.d.ts"
+    "webstudio": "./src/index.ts",
+    "types": "./lib/types/index.d.ts",
+    "import": "./lib/index.js"
   },
   "files": [
     "lib/*",
@@ -39,7 +39,7 @@
     "@webstudio-is/sdk": "workspace:^",
     "ai": "^2.2.12",
     "escape-string-regexp": "^5.0.0",
-    "openai": "4.2.0",
+    "openai": "^4.8.0",
     "zod": "^3.21.4"
   }
 }

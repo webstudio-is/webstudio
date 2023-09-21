@@ -22,7 +22,8 @@ export const request = function request<ResponseData>(
       return res.json();
     })
     .catch((error) => {
-      const isAborted = error.name === "AbortError";
+      const signal = fetchArgs[1]?.signal;
+      const isAborted = signal?.aborted === true;
 
       if (
         isAborted === false &&
@@ -36,7 +37,7 @@ export const request = function request<ResponseData>(
       }
       return {
         success: false,
-        type: error.name === "AbortError" ? "aborted" : "generic_error",
+        type: isAborted ? "aborted" : "generic_error",
         status: 500,
         message: "",
       } as ErrorResponse;
@@ -54,7 +55,7 @@ export const requestStream = async function requestStream(
     retry: 0,
   }
 ): Promise<string | ErrorResponse> {
-  let isAborted = false;
+  const signal = fetchArgs[1]?.signal;
   return fetch(...fetchArgs)
     .then(async (response) => {
       if (response.ok === false || response.body == null) {
@@ -90,7 +91,7 @@ export const requestStream = async function requestStream(
           options.onChunk(completion);
         }
 
-        if (isAborted) {
+        if (signal?.aborted === true) {
           reader.cancel();
           break;
         }
@@ -99,7 +100,7 @@ export const requestStream = async function requestStream(
       return completion;
     })
     .catch((error) => {
-      isAborted = error.name === "AbortError";
+      const isAborted = signal?.aborted === true;
 
       if (
         isAborted === false &&
@@ -114,7 +115,7 @@ export const requestStream = async function requestStream(
 
       return {
         success: false,
-        type: error.name === "AbortError" ? "aborted" : "generic_error",
+        type: isAborted ? "aborted" : "generic_error",
         status: 500,
         message: "",
       } as ErrorResponse;

@@ -7,7 +7,7 @@ import type {
 import { formatPrompt } from "../../utils/format-prompt";
 import { prompt as promptSystemTemplate } from "./__generated__/copy.system.prompt";
 import { prompt as promptUserTemplate } from "./__generated__/copy.user.prompt";
-import type { Instance } from "@webstudio-is/sdk";
+import type { Instance, Instances } from "@webstudio-is/sdk";
 
 /**
  * Copywriter chain.
@@ -86,9 +86,9 @@ export const createChain = <ModelMessageFormat>(): ChainStream<
 export const collectTextInstances = ({
   instances,
   rootInstanceId,
-  textComponents = new Set(["Heading", "Paragraph", "Text", "p"]),
+  textComponents = new Set(["Heading", "Paragraph", "Text"]),
 }: {
-  instances: Map<Instance["id"], Instance>;
+  instances: Instances;
   rootInstanceId: Instance["id"];
   textComponents?: Set<string>;
 }) => {
@@ -113,7 +113,7 @@ export const collectTextInstances = ({
           text: child.value,
         });
       }
-    } else {
+    } else if (child.type === "id") {
       textInstances.push(
         ...collectTextInstances({
           instances,

@@ -118,7 +118,7 @@ importers:
         specifier: ^1.19.2
         version: 1.19.2(react-dom@18.2.0)(react@18.2.0)
       '@webstudio-is/ai':
-        specifier: workspace:^
+        specifier: workspace:*
         version: link:../../packages/ai
       '@webstudio-is/asset-uploader':
         specifier: workspace:*
@@ -657,8 +657,8 @@ importers:
         specifier: ^5.0.0
         version: 5.0.0
       openai:
-        specifier: 4.2.0
-        version: 4.2.0
+        specifier: ^4.8.0
+        version: 4.8.0
       zod:
         specifier: ^3.21.4
         version: 3.21.4
@@ -13992,6 +13992,22 @@ packages:
 
   /openai@4.2.0:
     resolution: {integrity: sha512-zfvpO2eITIxIjTG8T6Cek7NB2dMvP/LW0TRUJ4P9E8+qbBNKw00DrtfF64b+fAV2+wUYCVyynT6iSycJ//TtbA==}
+    hasBin: true
+    dependencies:
+      '@types/node': 18.17.1
+      '@types/node-fetch': 2.6.4
+      abort-controller: 3.0.0
+      agentkeepalive: 4.5.0
+      digest-fetch: 1.3.0
+      form-data-encoder: 1.7.2
+      formdata-node: 4.4.1
+      node-fetch: 2.6.9
+    transitivePeerDependencies:
+      - encoding
+    dev: false
+
+  /openai@4.8.0:
+    resolution: {integrity: sha512-CnLZvHi2x4pIoGAWCaj3jHi1a6NA4oFBL6mJDSXkIR5A/wv6lven7uL2gxMevjGBLA7OqYqis3Z2PMluiGauVw==}
     hasBin: true
     dependencies:
       '@types/node': 18.17.1
