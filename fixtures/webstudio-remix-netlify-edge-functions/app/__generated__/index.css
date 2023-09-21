@@ -4,19 +4,6 @@ html {
   min-height: 100%;
 }
 @media all {
-  blockquote:where([data-ws-component="Blockquote"]) {
-    margin-top: 0;
-    margin-right: 0;
-    margin-bottom: 10px;
-    margin-left: 0;
-    padding-top: 10px;
-    padding-bottom: 10px;
-    padding-left: 20px;
-    padding-right: 20px;
-    border-left-width: 5px;
-    border-left-style: solid;
-    border-left-color: rgba(226, 226, 226, 1);
-  }
   body:where([data-ws-component="Body"]) {
     margin-top: 0;
     margin-right: 0;
@@ -33,13 +20,53 @@ html {
     -webkit-font-smoothing: antialiased;
     -moz-osx-font-smoothing: grayscale;
   }
-  b:where([data-ws-component="Bold"]) {
-    font-weight: 700;
+  h1:where([data-ws-component="Heading"]) {
     box-sizing: border-box;
     border-top-width: 1px;
     border-right-width: 1px;
     border-bottom-width: 1px;
     border-left-width: 1px;
+    outline-width: 1px;
+  }
+  h2:where([data-ws-component="Heading"]) {
+    box-sizing: border-box;
+    border-top-width: 1px;
+    border-right-width: 1px;
+    border-bottom-width: 1px;
+    border-left-width: 1px;
+    outline-width: 1px;
+  }
+  h3:where([data-ws-component="Heading"]) {
+    box-sizing: border-box;
+    border-top-width: 1px;
+    border-right-width: 1px;
+    border-bottom-width: 1px;
+    border-left-width: 1px;
+    outline-width: 1px;
+  }
+  h4:where([data-ws-component="Heading"]) {
+    box-sizing: border-box;
+    border-top-width: 1px;
+    border-right-width: 1px;
+    border-bottom-width: 1px;
+    border-left-width: 1px;
+    outline-width: 1px;
+  }
+  h5:where([data-ws-component="Heading"]) {
+    box-sizing: border-box;
+    border-top-width: 1px;
+    border-right-width: 1px;
+    border-bottom-width: 1px;
+    border-left-width: 1px;
+    outline-width: 1px;
+  }
+  h6:where([data-ws-component="Heading"]) {
+    box-sizing: border-box;
+    border-top-width: 1px;
+    border-right-width: 1px;
+    border-bottom-width: 1px;
+    border-left-width: 1px;
+    outline-width: 1px;
   }
   div:where([data-ws-component="Box"]) {
     box-sizing: border-box;
@@ -121,100 +148,7 @@ html {
     border-left-width: 1px;
     outline-width: 1px;
   }
-  button:where([data-ws-component="Button"]) {
-    font-family: inherit;
-    font-size: 100%;
-    line-height: 1.15;
-    margin-top: 0;
-    margin-right: 0;
-    margin-bottom: 0;
-    margin-left: 0;
-    box-sizing: border-box;
-    border-top-width: 1px;
-    border-right-width: 1px;
-    border-bottom-width: 1px;
-    border-left-width: 1px;
-    text-transform: none;
-  }
-  input:where([data-ws-component="Checkbox"]) {
-    font-family: inherit;
-    font-size: 100%;
-    line-height: 1.15;
-    margin-top: 0;
-    margin-right: 0.5em;
-    margin-bottom: 0;
-    margin-left: 0;
-    box-sizing: border-box;
-    border-top-width: 1px;
-    border-right-width: 1px;
-    border-bottom-width: 1px;
-    border-left-width: 1px;
-  }
-  code:where([data-ws-component="CodeText"]) {
-    font-family: ui-monospace, SFMono-Regular, Consolas, "Liberation Mono",
-      Menlo, monospace;
-    font-size: 1em;
-    box-sizing: border-box;
-    border-top-width: 1px;
-    border-right-width: 1px;
-    border-bottom-width: 1px;
-    border-left-width: 1px;
-    display: block;
-    white-space: pre-wrap;
-    padding-left: 0.2em;
-    padding-right: 0.2em;
-    background-color: rgba(238, 238, 238, 1);
-  }
-  form:where([data-ws-component="Form"]) {
-    box-sizing: border-box;
-    border-top-width: 1px;
-    border-right-width: 1px;
-    border-bottom-width: 1px;
-    border-left-width: 1px;
-    outline-width: 1px;
-    min-height: 20px;
-  }
-  h1:where([data-ws-component="Heading"]) {
-    box-sizing: border-box;
-    border-top-width: 1px;
-    border-right-width: 1px;
-    border-bottom-width: 1px;
-    border-left-width: 1px;
-    outline-width: 1px;
-  }
-  h2:where([data-ws-component="Heading"]) {
-    box-sizing: border-box;
-    border-top-width: 1px;
-    border-right-width: 1px;
-    border-bottom-width: 1px;
-    border-left-width: 1px;
-    outline-width: 1px;
-  }
-  h3:where([data-ws-component="Heading"]) {
-    box-sizing: border-box;
-    border-top-width: 1px;
-    border-right-width: 1px;
-    border-bottom-width: 1px;
-    border-left-width: 1px;
-    outline-width: 1px;
-  }
-  h4:where([data-ws-component="Heading"]) {
-    box-sizing: border-box;
-    border-top-width: 1px;
-    border-right-width: 1px;
-    border-bottom-width: 1px;
-    border-left-width: 1px;
-    outline-width: 1px;
-  }
-  h5:where([data-ws-component="Heading"]) {
-    box-sizing: border-box;
-    border-top-width: 1px;
-    border-right-width: 1px;
-    border-bottom-width: 1px;
-    border-left-width: 1px;
-    outline-width: 1px;
-  }
-  h6:where([data-ws-component="Heading"]) {
+  p:where([data-ws-component="Paragraph"]) {
     box-sizing: border-box;
     border-top-width: 1px;
     border-right-width: 1px;
@@ -232,39 +166,6 @@ html {
     max-width: 100%;
     display: block;
   }
-  input:where([data-ws-component="Input"]) {
-    font-family: inherit;
-    font-size: 100%;
-    line-height: 1.15;
-    margin-top: 0;
-    margin-right: 0;
-    margin-bottom: 0;
-    margin-left: 0;
-    box-sizing: border-box;
-    border-top-width: 1px;
-    border-right-width: 1px;
-    border-bottom-width: 1px;
-    border-left-width: 1px;
-    display: block;
-  }
-  i:where([data-ws-component="Italic"]) {
-    box-sizing: border-box;
-    border-top-width: 1px;
-    border-right-width: 1px;
-    border-bottom-width: 1px;
-    border-left-width: 1px;
-    outline-width: 1px;
-    font-style: italic;
-  }
-  label:where([data-ws-component="Label"]) {
-    box-sizing: border-box;
-    border-top-width: 1px;
-    border-right-width: 1px;
-    border-bottom-width: 1px;
-    border-left-width: 1px;
-    outline-width: 1px;
-    display: block;
-  }
   a:where([data-ws-component="Link"]) {
     box-sizing: border-box;
     border-top-width: 1px;
@@ -274,180 +175,6 @@ html {
     outline-width: 1px;
     min-height: 1em;
     display: inline-block;
-  }
-  ol:where([data-ws-component="List"]) {
-    box-sizing: border-box;
-    border-top-width: 1px;
-    border-right-width: 1px;
-    border-bottom-width: 1px;
-    border-left-width: 1px;
-    outline-width: 1px;
-    margin-top: 0;
-    margin-bottom: 10px;
-    padding-left: 40px;
-  }
-  ul:where([data-ws-component="List"]) {
-    box-sizing: border-box;
-    border-top-width: 1px;
-    border-right-width: 1px;
-    border-bottom-width: 1px;
-    border-left-width: 1px;
-    outline-width: 1px;
-    margin-top: 0;
-    margin-bottom: 10px;
-    padding-left: 40px;
-  }
-  li:where([data-ws-component="ListItem"]) {
-    box-sizing: border-box;
-    border-top-width: 1px;
-    border-right-width: 1px;
-    border-bottom-width: 1px;
-    border-left-width: 1px;
-    outline-width: 1px;
-  }
-  p:where([data-ws-component="Paragraph"]) {
-    box-sizing: border-box;
-    border-top-width: 1px;
-    border-right-width: 1px;
-    border-bottom-width: 1px;
-    border-left-width: 1px;
-    outline-width: 1px;
-  }
-  input:where([data-ws-component="RadioButton"]) {
-    font-family: inherit;
-    font-size: 100%;
-    line-height: 1.15;
-    margin-top: 0;
-    margin-right: 0.5em;
-    margin-bottom: 0;
-    margin-left: 0;
-    box-sizing: border-box;
-    border-top-width: 1px;
-    border-right-width: 1px;
-    border-bottom-width: 1px;
-    border-left-width: 1px;
-  }
-  a:where([data-ws-component="RichTextLink"]) {
-    box-sizing: border-box;
-    border-top-width: 1px;
-    border-right-width: 1px;
-    border-bottom-width: 1px;
-    border-left-width: 1px;
-    outline-width: 1px;
-    min-height: 1em;
-    display: inline-block;
-  }
-  hr:where([data-ws-component="Separator"]) {
-    height: 1px;
-    color: inherit;
-    box-sizing: border-box;
-    border-top-width: 1px;
-    border-right-width: 1px;
-    border-bottom-width: 1px;
-    border-left-width: 1px;
-    background-color: gray;
-    border-top-style: none;
-    border-right-style: none;
-    border-left-style: none;
-    border-bottom-style: none;
-  }
-  span:where([data-ws-component="Span"]) {
-    box-sizing: border-box;
-    border-top-width: 1px;
-    border-right-width: 1px;
-    border-bottom-width: 1px;
-    border-left-width: 1px;
-    outline-width: 1px;
-  }
-  sub:where([data-ws-component="Subscript"]) {
-    font-size: 75%;
-    line-height: 0;
-    position: relative;
-    vertical-align: baseline;
-    box-sizing: border-box;
-    border-top-width: 1px;
-    border-right-width: 1px;
-    border-bottom-width: 1px;
-    border-left-width: 1px;
-    bottom: -0.25em;
-  }
-  sup:where([data-ws-component="Superscript"]) {
-    font-size: 75%;
-    line-height: 0;
-    position: relative;
-    vertical-align: baseline;
-    box-sizing: border-box;
-    border-top-width: 1px;
-    border-right-width: 1px;
-    border-bottom-width: 1px;
-    border-left-width: 1px;
-    top: -0.5em;
-  }
-  div:where([data-ws-component="Text"]) {
-    box-sizing: border-box;
-    border-top-width: 1px;
-    border-right-width: 1px;
-    border-bottom-width: 1px;
-    border-left-width: 1px;
-    outline-width: 1px;
-    min-height: 1em;
-  }
-  textarea:where([data-ws-component="Textarea"]) {
-    font-family: inherit;
-    font-size: 100%;
-    line-height: 1.15;
-    margin-top: 0;
-    margin-right: 0;
-    margin-bottom: 0;
-    margin-left: 0;
-    box-sizing: border-box;
-    border-top-width: 1px;
-    border-right-width: 1px;
-    border-bottom-width: 1px;
-    border-left-width: 1px;
-    resize: none;
-    display: block;
-  }
-  div:where([data-ws-component="Vimeo"]) {
-    box-sizing: border-box;
-    border-top-width: 1px;
-    border-right-width: 1px;
-    border-bottom-width: 1px;
-    border-left-width: 1px;
-    outline-width: 1px;
-  }
-  button:where([data-ws-component="VimeoPlayButton"]) {
-    font-family: inherit;
-    font-size: 100%;
-    line-height: 1.15;
-    margin-top: 0;
-    margin-right: 0;
-    margin-bottom: 0;
-    margin-left: 0;
-    box-sizing: border-box;
-    border-top-width: 1px;
-    border-right-width: 1px;
-    border-bottom-width: 1px;
-    border-left-width: 1px;
-    text-transform: none;
-  }
-  img:where([data-ws-component="VimeoPreviewImage"]) {
-    box-sizing: border-box;
-    border-top-width: 1px;
-    border-right-width: 1px;
-    border-bottom-width: 1px;
-    border-left-width: 1px;
-    outline-width: 1px;
-    max-width: 100%;
-    display: block;
-  }
-  div:where([data-ws-component="VimeoSpinner"]) {
-    box-sizing: border-box;
-    border-top-width: 1px;
-    border-right-width: 1px;
-    border-bottom-width: 1px;
-    border-left-width: 1px;
-    outline-width: 1px;
   }
   div:where(
       [data-ws-component="@webstudio-is/sdk-components-react-radix:Accordion"]
@@ -460,7 +187,7 @@ html {
     outline-width: 1px;
   }
   div:where(
-      [data-ws-component="@webstudio-is/sdk-components-react-radix:AccordionContent"]
+      [data-ws-component="@webstudio-is/sdk-components-react-radix:AccordionItem"]
     ) {
     box-sizing: border-box;
     border-top-width: 1px;
@@ -480,16 +207,6 @@ html {
     outline-width: 1px;
     margin-top: 0px;
     margin-bottom: 0px;
-  }
-  div:where(
-      [data-ws-component="@webstudio-is/sdk-components-react-radix:AccordionItem"]
-    ) {
-    box-sizing: border-box;
-    border-top-width: 1px;
-    border-right-width: 1px;
-    border-bottom-width: 1px;
-    border-left-width: 1px;
-    outline-width: 1px;
   }
   button:where(
       [data-ws-component="@webstudio-is/sdk-components-react-radix:AccordionTrigger"]
@@ -522,9 +239,44 @@ html {
     padding-top: 0px;
     padding-bottom: 0px;
   }
-  button:where(
-      [data-ws-component="@webstudio-is/sdk-components-react-radix:Checkbox"]
+  div:where([data-ws-component="Text"]) {
+    box-sizing: border-box;
+    border-top-width: 1px;
+    border-right-width: 1px;
+    border-bottom-width: 1px;
+    border-left-width: 1px;
+    outline-width: 1px;
+    min-height: 1em;
+  }
+  div:where(
+      [data-ws-component="@webstudio-is/sdk-components-react-radix:AccordionContent"]
     ) {
+    box-sizing: border-box;
+    border-top-width: 1px;
+    border-right-width: 1px;
+    border-bottom-width: 1px;
+    border-left-width: 1px;
+    outline-width: 1px;
+  }
+  form:where([data-ws-component="Form"]) {
+    box-sizing: border-box;
+    border-top-width: 1px;
+    border-right-width: 1px;
+    border-bottom-width: 1px;
+    border-left-width: 1px;
+    outline-width: 1px;
+    min-height: 20px;
+  }
+  label:where([data-ws-component="Label"]) {
+    box-sizing: border-box;
+    border-top-width: 1px;
+    border-right-width: 1px;
+    border-bottom-width: 1px;
+    border-left-width: 1px;
+    outline-width: 1px;
+    display: block;
+  }
+  input:where([data-ws-component="Input"]) {
     font-family: inherit;
     font-size: 100%;
     line-height: 1.15;
@@ -533,311 +285,13 @@ html {
     margin-bottom: 0;
     margin-left: 0;
     box-sizing: border-box;
-    border-top-width: 0px;
-    border-right-width: 0px;
-    border-bottom-width: 0px;
-    border-left-width: 0px;
-    text-transform: none;
-    background-color: transparent;
-    background-image: none;
-    border-top-style: solid;
-    border-right-style: solid;
-    border-bottom-style: solid;
-    border-left-style: solid;
-    border-top-color: rgba(226, 232, 240, 1);
-    border-right-color: rgba(226, 232, 240, 1);
-    border-bottom-color: rgba(226, 232, 240, 1);
-    border-left-color: rgba(226, 232, 240, 1);
-    padding-left: 0px;
-    padding-right: 0px;
-    padding-top: 0px;
-    padding-bottom: 0px;
-  }
-  span:where(
-      [data-ws-component="@webstudio-is/sdk-components-react-radix:CheckboxIndicator"]
-    ) {
-    box-sizing: border-box;
     border-top-width: 1px;
     border-right-width: 1px;
     border-bottom-width: 1px;
     border-left-width: 1px;
-    outline-width: 1px;
+    display: block;
   }
-  div:where(
-      [data-ws-component="@webstudio-is/sdk-components-react-radix:Collapsible"]
-    ) {
-    box-sizing: border-box;
-    border-top-width: 1px;
-    border-right-width: 1px;
-    border-bottom-width: 1px;
-    border-left-width: 1px;
-    outline-width: 1px;
-  }
-  div:where(
-      [data-ws-component="@webstudio-is/sdk-components-react-radix:CollapsibleContent"]
-    ) {
-    box-sizing: border-box;
-    border-top-width: 1px;
-    border-right-width: 1px;
-    border-bottom-width: 1px;
-    border-left-width: 1px;
-    outline-width: 1px;
-  }
-  button:where(
-      [data-ws-component="@webstudio-is/sdk-components-react-radix:DialogClose"]
-    ) {
-    background-color: transparent;
-    background-image: none;
-    border-top-style: solid;
-    border-right-style: solid;
-    border-bottom-style: solid;
-    border-left-style: solid;
-    border-top-color: rgba(226, 232, 240, 1);
-    border-right-color: rgba(226, 232, 240, 1);
-    border-bottom-color: rgba(226, 232, 240, 1);
-    border-left-color: rgba(226, 232, 240, 1);
-    border-top-width: 1px;
-    border-right-width: 1px;
-    border-bottom-width: 1px;
-    border-left-width: 1px;
-    padding-left: 0px;
-    padding-right: 0px;
-    padding-top: 0px;
-    padding-bottom: 0px;
-    font-family: inherit;
-    font-size: 100%;
-    line-height: 1.15;
-    margin-top: 0;
-    margin-right: 0;
-    margin-bottom: 0;
-    margin-left: 0;
-    box-sizing: border-box;
-    text-transform: none;
-  }
-  div:where(
-      [data-ws-component="@webstudio-is/sdk-components-react-radix:DialogContent"]
-    ) {
-    box-sizing: border-box;
-    border-top-width: 1px;
-    border-right-width: 1px;
-    border-bottom-width: 1px;
-    border-left-width: 1px;
-    outline-width: 1px;
-  }
-  p:where(
-      [data-ws-component="@webstudio-is/sdk-components-react-radix:DialogDescription"]
-    ) {
-    box-sizing: border-box;
-    border-top-width: 1px;
-    border-right-width: 1px;
-    border-bottom-width: 1px;
-    border-left-width: 1px;
-    outline-width: 1px;
-  }
-  div:where(
-      [data-ws-component="@webstudio-is/sdk-components-react-radix:DialogOverlay"]
-    ) {
-    box-sizing: border-box;
-    border-top-width: 1px;
-    border-right-width: 1px;
-    border-bottom-width: 1px;
-    border-left-width: 1px;
-    outline-width: 1px;
-  }
-  h2:where(
-      [data-ws-component="@webstudio-is/sdk-components-react-radix:DialogTitle"]
-    ) {
-    box-sizing: border-box;
-    border-top-width: 1px;
-    border-right-width: 1px;
-    border-bottom-width: 1px;
-    border-left-width: 1px;
-    outline-width: 1px;
-  }
-  label:where(
-      [data-ws-component="@webstudio-is/sdk-components-react-radix:Label"]
-    ) {
-    box-sizing: border-box;
-    border-top-width: 1px;
-    border-right-width: 1px;
-    border-bottom-width: 1px;
-    border-left-width: 1px;
-    outline-width: 1px;
-  }
-  div:where(
-      [data-ws-component="@webstudio-is/sdk-components-react-radix:NavigationMenu"]
-    ) {
-    box-sizing: border-box;
-    border-top-width: 1px;
-    border-right-width: 1px;
-    border-bottom-width: 1px;
-    border-left-width: 1px;
-    outline-width: 1px;
-  }
-  div:where(
-      [data-ws-component="@webstudio-is/sdk-components-react-radix:NavigationMenuContent"]
-    ) {
-    box-sizing: border-box;
-    border-top-width: 1px;
-    border-right-width: 1px;
-    border-bottom-width: 1px;
-    border-left-width: 1px;
-    outline-width: 1px;
-  }
-  div:where(
-      [data-ws-component="@webstudio-is/sdk-components-react-radix:NavigationMenuItem"]
-    ) {
-    box-sizing: border-box;
-    border-top-width: 1px;
-    border-right-width: 1px;
-    border-bottom-width: 1px;
-    border-left-width: 1px;
-    outline-width: 1px;
-  }
-  div:where(
-      [data-ws-component="@webstudio-is/sdk-components-react-radix:NavigationMenuLink"]
-    ) {
-    box-sizing: border-box;
-    border-top-width: 1px;
-    border-right-width: 1px;
-    border-bottom-width: 1px;
-    border-left-width: 1px;
-    outline-width: 1px;
-  }
-  div:where(
-      [data-ws-component="@webstudio-is/sdk-components-react-radix:NavigationMenuList"]
-    ) {
-    box-sizing: border-box;
-    border-top-width: 1px;
-    border-right-width: 1px;
-    border-bottom-width: 1px;
-    border-left-width: 1px;
-    outline-width: 1px;
-  }
-  div:where(
-      [data-ws-component="@webstudio-is/sdk-components-react-radix:NavigationMenuTrigger"]
-    ) {
-    box-sizing: border-box;
-    border-top-width: 1px;
-    border-right-width: 1px;
-    border-bottom-width: 1px;
-    border-left-width: 1px;
-    outline-width: 1px;
-  }
-  div:where(
-      [data-ws-component="@webstudio-is/sdk-components-react-radix:NavigationMenuViewport"]
-    ) {
-    box-sizing: border-box;
-    border-top-width: 1px;
-    border-right-width: 1px;
-    border-bottom-width: 1px;
-    border-left-width: 1px;
-    outline-width: 1px;
-  }
-  div:where(
-      [data-ws-component="@webstudio-is/sdk-components-react-radix:PopoverContent"]
-    ) {
-    box-sizing: border-box;
-    border-top-width: 1px;
-    border-right-width: 1px;
-    border-bottom-width: 1px;
-    border-left-width: 1px;
-    outline-width: 1px;
-  }
-  div:where(
-      [data-ws-component="@webstudio-is/sdk-components-react-radix:RadioGroup"]
-    ) {
-    box-sizing: border-box;
-    border-top-width: 1px;
-    border-right-width: 1px;
-    border-bottom-width: 1px;
-    border-left-width: 1px;
-    outline-width: 1px;
-  }
-  span:where(
-      [data-ws-component="@webstudio-is/sdk-components-react-radix:RadioGroupIndicator"]
-    ) {
-    box-sizing: border-box;
-    border-top-width: 1px;
-    border-right-width: 1px;
-    border-bottom-width: 1px;
-    border-left-width: 1px;
-    outline-width: 1px;
-  }
-  button:where(
-      [data-ws-component="@webstudio-is/sdk-components-react-radix:RadioGroupItem"]
-    ) {
-    font-family: inherit;
-    font-size: 100%;
-    line-height: 1.15;
-    margin-top: 0;
-    margin-right: 0;
-    margin-bottom: 0;
-    margin-left: 0;
-    box-sizing: border-box;
-    border-top-width: 0px;
-    border-right-width: 0px;
-    border-bottom-width: 0px;
-    border-left-width: 0px;
-    text-transform: none;
-    background-color: transparent;
-    background-image: none;
-    border-top-style: solid;
-    border-right-style: solid;
-    border-bottom-style: solid;
-    border-left-style: solid;
-    border-top-color: rgba(226, 232, 240, 1);
-    border-right-color: rgba(226, 232, 240, 1);
-    border-bottom-color: rgba(226, 232, 240, 1);
-    border-left-color: rgba(226, 232, 240, 1);
-    padding-left: 0px;
-    padding-right: 0px;
-    padding-top: 0px;
-    padding-bottom: 0px;
-  }
-  div:where(
-      [data-ws-component="@webstudio-is/sdk-components-react-radix:SelectContent"]
-    ) {
-    box-sizing: border-box;
-    border-top-width: 1px;
-    border-right-width: 1px;
-    border-bottom-width: 1px;
-    border-left-width: 1px;
-    outline-width: 1px;
-  }
-  div:where(
-      [data-ws-component="@webstudio-is/sdk-components-react-radix:SelectItem"]
-    ) {
-    box-sizing: border-box;
-    border-top-width: 1px;
-    border-right-width: 1px;
-    border-bottom-width: 1px;
-    border-left-width: 1px;
-    outline-width: 1px;
-  }
-  span:where(
-      [data-ws-component="@webstudio-is/sdk-components-react-radix:SelectItemIndicator"]
-    ) {
-    box-sizing: border-box;
-    border-top-width: 1px;
-    border-right-width: 1px;
-    border-bottom-width: 1px;
-    border-left-width: 1px;
-    outline-width: 1px;
-  }
-  span:where(
-      [data-ws-component="@webstudio-is/sdk-components-react-radix:SelectItemText"]
-    ) {
-    box-sizing: border-box;
-    border-top-width: 1px;
-    border-right-width: 1px;
-    border-bottom-width: 1px;
-    border-left-width: 1px;
-    outline-width: 1px;
-  }
-  button:where(
-      [data-ws-component="@webstudio-is/sdk-components-react-radix:SelectTrigger"]
-    ) {
+  button:where([data-ws-component="Button"]) {
     font-family: inherit;
     font-size: 100%;
     line-height: 1.15;
@@ -851,138 +305,6 @@ html {
     border-bottom-width: 1px;
     border-left-width: 1px;
     text-transform: none;
-  }
-  span:where(
-      [data-ws-component="@webstudio-is/sdk-components-react-radix:SelectValue"]
-    ) {
-    box-sizing: border-box;
-    border-top-width: 1px;
-    border-right-width: 1px;
-    border-bottom-width: 1px;
-    border-left-width: 1px;
-    outline-width: 1px;
-  }
-  div:where(
-      [data-ws-component="@webstudio-is/sdk-components-react-radix:SelectViewport"]
-    ) {
-    box-sizing: border-box;
-    border-top-width: 1px;
-    border-right-width: 1px;
-    border-bottom-width: 1px;
-    border-left-width: 1px;
-    outline-width: 1px;
-  }
-  button:where(
-      [data-ws-component="@webstudio-is/sdk-components-react-radix:Switch"]
-    ) {
-    font-family: inherit;
-    font-size: 100%;
-    line-height: 1.15;
-    margin-top: 0;
-    margin-right: 0;
-    margin-bottom: 0;
-    margin-left: 0;
-    box-sizing: border-box;
-    border-top-width: 0px;
-    border-right-width: 0px;
-    border-bottom-width: 0px;
-    border-left-width: 0px;
-    text-transform: none;
-    background-color: transparent;
-    background-image: none;
-    border-top-style: solid;
-    border-right-style: solid;
-    border-bottom-style: solid;
-    border-left-style: solid;
-    border-top-color: rgba(226, 232, 240, 1);
-    border-right-color: rgba(226, 232, 240, 1);
-    border-bottom-color: rgba(226, 232, 240, 1);
-    border-left-color: rgba(226, 232, 240, 1);
-    padding-left: 0px;
-    padding-right: 0px;
-    padding-top: 0px;
-    padding-bottom: 0px;
-  }
-  span:where(
-      [data-ws-component="@webstudio-is/sdk-components-react-radix:SwitchThumb"]
-    ) {
-    box-sizing: border-box;
-    border-top-width: 1px;
-    border-right-width: 1px;
-    border-bottom-width: 1px;
-    border-left-width: 1px;
-    outline-width: 1px;
-  }
-  div:where(
-      [data-ws-component="@webstudio-is/sdk-components-react-radix:Tabs"]
-    ) {
-    box-sizing: border-box;
-    border-top-width: 1px;
-    border-right-width: 1px;
-    border-bottom-width: 1px;
-    border-left-width: 1px;
-    outline-width: 1px;
-  }
-  div:where(
-      [data-ws-component="@webstudio-is/sdk-components-react-radix:TabsContent"]
-    ) {
-    box-sizing: border-box;
-    border-top-width: 1px;
-    border-right-width: 1px;
-    border-bottom-width: 1px;
-    border-left-width: 1px;
-    outline-width: 1px;
-  }
-  div:where(
-      [data-ws-component="@webstudio-is/sdk-components-react-radix:TabsList"]
-    ) {
-    box-sizing: border-box;
-    border-top-width: 1px;
-    border-right-width: 1px;
-    border-bottom-width: 1px;
-    border-left-width: 1px;
-    outline-width: 1px;
-  }
-  button:where(
-      [data-ws-component="@webstudio-is/sdk-components-react-radix:TabsTrigger"]
-    ) {
-    font-family: inherit;
-    font-size: 100%;
-    line-height: 1.15;
-    margin-top: 0;
-    margin-right: 0;
-    margin-bottom: 0;
-    margin-left: 0;
-    box-sizing: border-box;
-    border-top-width: 0px;
-    border-right-width: 0px;
-    border-bottom-width: 0px;
-    border-left-width: 0px;
-    text-transform: none;
-    background-color: transparent;
-    background-image: none;
-    border-top-style: solid;
-    border-right-style: solid;
-    border-bottom-style: solid;
-    border-left-style: solid;
-    border-top-color: rgba(226, 232, 240, 1);
-    border-right-color: rgba(226, 232, 240, 1);
-    border-bottom-color: rgba(226, 232, 240, 1);
-    border-left-color: rgba(226, 232, 240, 1);
-    padding-left: 0px;
-    padding-right: 0px;
-    padding-top: 0px;
-    padding-bottom: 0px;
-  }
-  div:where(
-      [data-ws-component="@webstudio-is/sdk-components-react-radix:TooltipContent"]
-    ) {
-    box-sizing: border-box;
-    border-top-width: 1px;
-    border-right-width: 1px;
-    border-bottom-width: 1px;
-    border-left-width: 1px;
-    outline-width: 1px;
   }
 }
 @media all {
