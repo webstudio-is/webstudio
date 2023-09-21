@@ -49,6 +49,7 @@
     "@webstudio-is/form-handlers": "workspace:*",
     "@webstudio-is/icons": "workspace:*",
     "@webstudio-is/react-sdk": "workspace:*",
+    "@webstudio-is/sdk": "workspace:*",
     "@webstudio-is/sdk-components-react": "workspace:*"
   },
   "devDependencies": {

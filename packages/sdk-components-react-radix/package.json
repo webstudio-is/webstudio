@@ -69,7 +69,8 @@
     "@radix-ui/react-tooltip": "^1.0.6",
     "@webstudio-is/css-engine": "workspace:*",
     "@webstudio-is/icons": "workspace:*",
-    "@webstudio-is/react-sdk": "workspace:*"
+    "@webstudio-is/react-sdk": "workspace:*",
+    "@webstudio-is/sdk": "workspace:*"
   },
   "devDependencies": {
     "@storybook/react": "^7.4.0",

@@ -1491,6 +1491,9 @@ importers:
       '@webstudio-is/react-sdk':
         specifier: workspace:*
         version: link:../react-sdk
+      '@webstudio-is/sdk':
+        specifier: workspace:*
+        version: link:../sdk
       colord:
         specifier: ^2.9.3
         version: 2.9.3
@@ -1573,6 +1576,9 @@ importers:
       '@webstudio-is/react-sdk':
         specifier: workspace:*
         version: link:../react-sdk
+      '@webstudio-is/sdk':
+        specifier: workspace:*
+        version: link:../sdk
     devDependencies:
       '@storybook/react':
         specifier: ^7.4.0
@@ -1625,6 +1631,9 @@ importers:
       '@webstudio-is/react-sdk':
         specifier: workspace:*
         version: link:../react-sdk
+      '@webstudio-is/sdk':
+        specifier: workspace:*
+        version: link:../sdk
       '@webstudio-is/sdk-components-react':
         specifier: workspace:*
         version: link:../sdk-components-react
