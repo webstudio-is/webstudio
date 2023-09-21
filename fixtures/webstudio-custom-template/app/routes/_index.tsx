@@ -33,7 +33,26 @@ export type PageData = Omit<Data, "build"> & {
 
 export const meta: V2_ServerRuntimeMetaFunction = () => {
   const { page } = pageData;
-  return [{ title: page?.title || "Webstudio", ...page?.meta }];
+  const metas: ReturnType<V2_ServerRuntimeMetaFunction> = [
+    { title: page?.title || "Webstudio" },
+  ];
+  for (const [name, value] of Object.entries(page?.meta ?? [])) {
+    // i.e. og:*
+    if (name.includes(":")) {
+      metas.push({
+        property: name,
+        content: value,
+      });
+      continue;
+    }
+
+    metas.push({
+      name,
+      content: value,
+    });
+  }
+
+  return metas;
 };
 
 export const links: LinksFunction = () => {
