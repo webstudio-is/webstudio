@@ -1,4 +1,4 @@
-import type { PropMeta } from "@webstudio-is/react-sdk";
+import type { PropMeta } from "@webstudio-is/sdk";
 
 export const props: Record<string, PropMeta> = {
   clientOnly: { required: false, control: "boolean", type: "boolean" },

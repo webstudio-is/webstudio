@@ -1,4 +1,4 @@
-import type { PropMeta } from "@webstudio-is/react-sdk";
+import type { PropMeta } from "@webstudio-is/sdk";
 
 export const propsDialog: Record<string, PropMeta> = {
   open: {
