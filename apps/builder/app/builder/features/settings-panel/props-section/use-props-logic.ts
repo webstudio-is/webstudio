@@ -1,8 +1,7 @@
 import { useState } from "react";
 import { nanoid } from "nanoid";
-import type { Instance, Prop } from "@webstudio-is/sdk";
+import type { Instance, Prop, PropMeta } from "@webstudio-is/sdk";
 import {
-  type PropMeta,
   type WsComponentPropsMeta,
   showAttribute,
 } from "@webstudio-is/react-sdk";
