@@ -1,6 +1,6 @@
 {
   "scripts": {
-    "predev": "rm ./public/_redirects",
+    "predev": "node -e \"fs.rmSync('./public/_redirects', { recursive: true, force: true })\"",
     "start": "netlify serve"
   },
   "dependencies": {

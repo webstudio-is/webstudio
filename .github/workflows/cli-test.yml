@@ -53,7 +53,7 @@ jobs:
 
       - name: Test cli build command for vercel
         working-directory: ./fixtures/webstudio-remix-vercel
-        run: pnpm webstudio-cli build --template vercel --preview && pnpm prettier --write ./app/ ./package.json
+        run: pnpm webstudio-cli build --preview && pnpm prettier --write ./app/ ./package.json
 
         # Testing fixtures for netlify-functions template
       - name: Test cli link command for netlify-functions
