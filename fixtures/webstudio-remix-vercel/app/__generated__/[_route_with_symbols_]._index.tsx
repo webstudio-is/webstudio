@@ -1,17 +1,14 @@
 /* eslint-disable */
 /* This is a auto generated file for building the project */
 
+import { type ReactNode, useState } from "react";
 import type { PageData } from "~/routes/_index";
-import type { Components } from "@webstudio-is/react-sdk";
 import type { Asset } from "@webstudio-is/sdk";
 import {
   Body as Body,
   Image as Image,
 } from "@webstudio-is/sdk-components-react";
 
-export const components = new Map(
-  Object.entries({ Body: Body, Image: Image })
-) as Components;
 export const fontAssets: Asset[] = [];
 export const pageData: PageData = {
   build: {
@@ -27,28 +24,6 @@ export const pageData: PageData = {
         },
       ],
     ],
-    instances: [
-      [
-        "EDEfpMPRqDejthtwkH7ws",
-        {
-          type: "instance",
-          id: "EDEfpMPRqDejthtwkH7ws",
-          component: "Body",
-          children: [{ type: "id", value: "AdXSAYCx4QDo5QN6nLoGs" }],
-        },
-      ],
-      [
-        "AdXSAYCx4QDo5QN6nLoGs",
-        {
-          type: "instance",
-          id: "AdXSAYCx4QDo5QN6nLoGs",
-          component: "Image",
-          label: "webp image, used to test raw image uploads",
-          children: [],
-        },
-      ],
-    ],
-    dataSources: [],
   },
   pages: [
     {
@@ -122,26 +97,18 @@ export const user: { email: string | null } | undefined = {
 };
 export const projectId = "cddc1d44-af37-4cb6-a430-d300cf6f932d";
 
-/* eslint-disable */
-
-const indexesWithinAncestors = new Map<string, number>([]);
-
-const getDataSourcesLogic = (
-  _getVariable: (id: string) => unknown,
-  _setVariable: (id: string, value: unknown) => void
-) => {
-  let _output = new Map();
-  return _output;
+const Page = (props: { scripts?: ReactNode }) => {
+  return (
+    <Body data-ws-id="EDEfpMPRqDejthtwkH7ws" data-ws-component="Body">
+      <Image data-ws-id="AdXSAYCx4QDo5QN6nLoGs" data-ws-component="Image" />
+      {props.scripts}
+    </Body>
+  );
 };
+
+export { Page };
 
 export const formsProperties = new Map<
   string,
   { method?: string; action?: string }
 >([]);
-
-export const utils = {
-  indexesWithinAncestors,
-  getDataSourcesLogic,
-};
-
-/* eslint-enable */

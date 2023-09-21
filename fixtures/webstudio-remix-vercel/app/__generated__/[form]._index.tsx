@@ -1,8 +1,8 @@
 /* eslint-disable */
 /* This is a auto generated file for building the project */
 
+import { type ReactNode, useState } from "react";
 import type { PageData } from "~/routes/_index";
-import type { Components } from "@webstudio-is/react-sdk";
 import type { Asset } from "@webstudio-is/sdk";
 import {
   Body as Body,
@@ -14,17 +14,6 @@ import {
 } from "@webstudio-is/sdk-components-react";
 import { Form as Form } from "@webstudio-is/sdk-components-react-remix";
 
-export const components = new Map(
-  Object.entries({
-    Body: Body,
-    Box: Box,
-    Label: Label,
-    Input: Input,
-    Button: Button,
-    Heading: Heading,
-    Form: Form,
-  })
-) as Components;
 export const fontAssets: Asset[] = [];
 export const pageData: PageData = {
   build: {
@@ -222,318 +211,6 @@ export const pageData: PageData = {
         },
       ],
     ],
-    instances: [
-      [
-        "a-4nDFkaWy4px1fn38XWJ",
-        {
-          type: "instance",
-          id: "a-4nDFkaWy4px1fn38XWJ",
-          component: "Body",
-          children: [
-            { type: "id", value: "-1RvizaBcVpHsjvnYxn1c" },
-            { type: "id", value: "isNSM3wXcnHFikwNPlEOL" },
-          ],
-        },
-      ],
-      [
-        "isNSM3wXcnHFikwNPlEOL",
-        {
-          type: "instance",
-          id: "isNSM3wXcnHFikwNPlEOL",
-          component: "Form",
-          label: "Form with custom props",
-          children: [
-            { type: "id", value: "a5YPRc19IJyhTrjjasA_R" },
-            { type: "id", value: "Gw-ta0R4FNFAGBTVRWKep" },
-            { type: "id", value: "ewk_WKpu4syHLPABMmvUz" },
-          ],
-        },
-      ],
-      [
-        "a5YPRc19IJyhTrjjasA_R",
-        {
-          type: "instance",
-          id: "a5YPRc19IJyhTrjjasA_R",
-          component: "Box",
-          label: "Form Content",
-          children: [
-            { type: "id", value: "y4pceTmziuBRIDgUBQNLD" },
-            { type: "id", value: "_gLjS0enBOV8KW9Ykz_es" },
-            { type: "id", value: "ydR5B_9uMS4PXFS76TmBh" },
-            { type: "id", value: "8RU1FyL2QRyqhNUKELGrb" },
-            { type: "id", value: "TsqGP49hjgEW41ReCwrpZ" },
-            { type: "id", value: "5GWjwVdapuGdn443GIKDW" },
-          ],
-        },
-      ],
-      [
-        "_gLjS0enBOV8KW9Ykz_es",
-        {
-          type: "instance",
-          id: "_gLjS0enBOV8KW9Ykz_es",
-          component: "Label",
-          children: [{ type: "text", value: "Name" }],
-        },
-      ],
-      [
-        "ydR5B_9uMS4PXFS76TmBh",
-        {
-          type: "instance",
-          id: "ydR5B_9uMS4PXFS76TmBh",
-          component: "Input",
-          children: [],
-        },
-      ],
-      [
-        "8RU1FyL2QRyqhNUKELGrb",
-        {
-          type: "instance",
-          id: "8RU1FyL2QRyqhNUKELGrb",
-          component: "Label",
-          children: [{ type: "text", value: "Email" }],
-        },
-      ],
-      [
-        "TsqGP49hjgEW41ReCwrpZ",
-        {
-          type: "instance",
-          id: "TsqGP49hjgEW41ReCwrpZ",
-          component: "Input",
-          children: [],
-        },
-      ],
-      [
-        "5GWjwVdapuGdn443GIKDW",
-        {
-          type: "instance",
-          id: "5GWjwVdapuGdn443GIKDW",
-          component: "Button",
-          children: [{ type: "text", value: "Submit" }],
-        },
-      ],
-      [
-        "Gw-ta0R4FNFAGBTVRWKep",
-        {
-          type: "instance",
-          id: "Gw-ta0R4FNFAGBTVRWKep",
-          component: "Box",
-          label: "Success Message",
-          children: [
-            { type: "text", value: "Thank you for getting in touch!" },
-          ],
-        },
-      ],
-      [
-        "ewk_WKpu4syHLPABMmvUz",
-        {
-          type: "instance",
-          id: "ewk_WKpu4syHLPABMmvUz",
-          component: "Box",
-          label: "Error Message",
-          children: [{ type: "text", value: "Sorry, something went wrong." }],
-        },
-      ],
-      [
-        "-1RvizaBcVpHsjvnYxn1c",
-        {
-          type: "instance",
-          id: "-1RvizaBcVpHsjvnYxn1c",
-          component: "Form",
-          label: "Default form",
-          children: [
-            { type: "id", value: "qhnVrmYGlyrMZi3UzqSQA" },
-            { type: "id", value: "966cjxuqP_T99N27-mqWE" },
-            { type: "id", value: "SYG5hhOz31xFJUN_v9zq6" },
-          ],
-        },
-      ],
-      [
-        "qhnVrmYGlyrMZi3UzqSQA",
-        {
-          type: "instance",
-          id: "qhnVrmYGlyrMZi3UzqSQA",
-          component: "Box",
-          label: "Form Content",
-          children: [
-            { type: "id", value: "YdHHf4u3jrdbRIWpB_VfH" },
-            { type: "id", value: "A0RNI1WVwOGGDbwYnoZia" },
-            { type: "id", value: "e035xi9fcwYtrn9La49Eh" },
-            { type: "id", value: "LImtuVzw5R9yQsG4faiGV" },
-            { type: "id", value: "dcHjdeW_HXPkyQlx3ZiL7" },
-            { type: "id", value: "ZAtG6JgK4sbTnOAZlp2rU" },
-          ],
-        },
-      ],
-      [
-        "A0RNI1WVwOGGDbwYnoZia",
-        {
-          type: "instance",
-          id: "A0RNI1WVwOGGDbwYnoZia",
-          component: "Label",
-          children: [{ type: "text", value: "Name" }],
-        },
-      ],
-      [
-        "e035xi9fcwYtrn9La49Eh",
-        {
-          type: "instance",
-          id: "e035xi9fcwYtrn9La49Eh",
-          component: "Input",
-          children: [],
-        },
-      ],
-      [
-        "LImtuVzw5R9yQsG4faiGV",
-        {
-          type: "instance",
-          id: "LImtuVzw5R9yQsG4faiGV",
-          component: "Label",
-          children: [{ type: "text", value: "Email" }],
-        },
-      ],
-      [
-        "dcHjdeW_HXPkyQlx3ZiL7",
-        {
-          type: "instance",
-          id: "dcHjdeW_HXPkyQlx3ZiL7",
-          component: "Input",
-          children: [],
-        },
-      ],
-      [
-        "ZAtG6JgK4sbTnOAZlp2rU",
-        {
-          type: "instance",
-          id: "ZAtG6JgK4sbTnOAZlp2rU",
-          component: "Button",
-          children: [{ type: "text", value: "Submit" }],
-        },
-      ],
-      [
-        "966cjxuqP_T99N27-mqWE",
-        {
-          type: "instance",
-          id: "966cjxuqP_T99N27-mqWE",
-          component: "Box",
-          label: "Success Message",
-          children: [
-            { type: "text", value: "Thank you for getting in touch!" },
-          ],
-        },
-      ],
-      [
-        "SYG5hhOz31xFJUN_v9zq6",
-        {
-          type: "instance",
-          id: "SYG5hhOz31xFJUN_v9zq6",
-          component: "Box",
-          label: "Error Message",
-          children: [{ type: "text", value: "Sorry, something went wrong." }],
-        },
-      ],
-      [
-        "y4pceTmziuBRIDgUBQNLD",
-        {
-          type: "instance",
-          id: "y4pceTmziuBRIDgUBQNLD",
-          component: "Heading",
-          children: [
-            { type: "text", value: "Form with custom action and method" },
-          ],
-        },
-      ],
-      [
-        "YdHHf4u3jrdbRIWpB_VfH",
-        {
-          type: "instance",
-          id: "YdHHf4u3jrdbRIWpB_VfH",
-          component: "Heading",
-          children: [{ type: "text", value: "Default form" }],
-        },
-      ],
-    ],
-    dataSources: [
-      [
-        "KvfuNNCNslj7nAGsD69Fl",
-        {
-          type: "variable",
-          id: "KvfuNNCNslj7nAGsD69Fl",
-          scopeInstanceId: "isNSM3wXcnHFikwNPlEOL",
-          name: "formState",
-          value: { type: "string", value: "initial" },
-        },
-      ],
-      [
-        "ezyBm7JGcDokMP8DZVzrD",
-        {
-          type: "expression",
-          id: "ezyBm7JGcDokMP8DZVzrD",
-          scopeInstanceId: "a5YPRc19IJyhTrjjasA_R",
-          name: "formInitial",
-          code: "$ws$dataSource$KvfuNNCNslj7nAGsD69Fl === 'initial' || $ws$dataSource$KvfuNNCNslj7nAGsD69Fl === 'error'",
-        },
-      ],
-      [
-        "_NmOL-v4PZhCcmj2vaDy_",
-        {
-          type: "expression",
-          id: "_NmOL-v4PZhCcmj2vaDy_",
-          scopeInstanceId: "Gw-ta0R4FNFAGBTVRWKep",
-          name: "formSuccess",
-          code: "$ws$dataSource$KvfuNNCNslj7nAGsD69Fl === 'success'",
-        },
-      ],
-      [
-        "VeQ-Tiya3whVhWHbJVHID",
-        {
-          type: "expression",
-          id: "VeQ-Tiya3whVhWHbJVHID",
-          scopeInstanceId: "ewk_WKpu4syHLPABMmvUz",
-          name: "formError",
-          code: "$ws$dataSource$KvfuNNCNslj7nAGsD69Fl === 'error'",
-        },
-      ],
-      [
-        "Ip0FRY7L24QrIMdtuMN5j",
-        {
-          type: "variable",
-          id: "Ip0FRY7L24QrIMdtuMN5j",
-          scopeInstanceId: "-1RvizaBcVpHsjvnYxn1c",
-          name: "formState",
-          value: { type: "string", value: "initial" },
-        },
-      ],
-      [
-        "DUDDZM-QmYH_zBgbIODiu",
-        {
-          type: "expression",
-          id: "DUDDZM-QmYH_zBgbIODiu",
-          scopeInstanceId: "qhnVrmYGlyrMZi3UzqSQA",
-          name: "formInitial",
-          code: "$ws$dataSource$Ip0FRY7L24QrIMdtuMN5j === 'initial' || $ws$dataSource$Ip0FRY7L24QrIMdtuMN5j === 'error'",
-        },
-      ],
-      [
-        "F72Gu_6DnbW9CGp_747xa",
-        {
-          type: "expression",
-          id: "F72Gu_6DnbW9CGp_747xa",
-          scopeInstanceId: "966cjxuqP_T99N27-mqWE",
-          name: "formSuccess",
-          code: "$ws$dataSource$Ip0FRY7L24QrIMdtuMN5j === 'success'",
-        },
-      ],
-      [
-        "XhDObB85P8I_uDZ_CzGDt",
-        {
-          type: "expression",
-          id: "XhDObB85P8I_uDZ_CzGDt",
-          scopeInstanceId: "SYG5hhOz31xFJUN_v9zq6",
-          name: "formError",
-          code: "$ws$dataSource$Ip0FRY7L24QrIMdtuMN5j === 'error'",
-        },
-      ],
-    ],
   },
   pages: [
     {
@@ -607,20 +284,9 @@ export const user: { email: string | null } | undefined = {
 };
 export const projectId = "cddc1d44-af37-4cb6-a430-d300cf6f932d";
 
-/* eslint-disable */
-
-const indexesWithinAncestors = new Map<string, number>([]);
-
-const getDataSourcesLogic = (
-  _getVariable: (id: string) => unknown,
-  _setVariable: (id: string, value: unknown) => void
-) => {
-  let formState = _getVariable("KvfuNNCNslj7nAGsD69Fl") ?? "initial";
-  let set$formState = (value: unknown) =>
-    _setVariable("KvfuNNCNslj7nAGsD69Fl", value);
-  let formState_1 = _getVariable("Ip0FRY7L24QrIMdtuMN5j") ?? "initial";
-  let set$formState_1 = (value: unknown) =>
-    _setVariable("Ip0FRY7L24QrIMdtuMN5j", value);
+const Page = (props: { scripts?: ReactNode }) => {
+  let [formState, set$formState] = useState<any>("initial");
+  let [formState_1, set$formState_1] = useState<any>("initial");
   let formInitial = formState === "initial" || formState === "error";
   let formSuccess = formState === "success";
   let formError = formState === "error";
@@ -635,28 +301,118 @@ const getDataSourcesLogic = (
     formState_1 = state;
     set$formState_1(formState_1);
   };
-  let _output = new Map();
-  _output.set("KvfuNNCNslj7nAGsD69Fl", formState);
-  _output.set("ezyBm7JGcDokMP8DZVzrD", formInitial);
-  _output.set("_NmOL-v4PZhCcmj2vaDy_", formSuccess);
-  _output.set("VeQ-Tiya3whVhWHbJVHID", formError);
-  _output.set("Ip0FRY7L24QrIMdtuMN5j", formState_1);
-  _output.set("DUDDZM-QmYH_zBgbIODiu", formInitial_1);
-  _output.set("F72Gu_6DnbW9CGp_747xa", formSuccess_1);
-  _output.set("XhDObB85P8I_uDZ_CzGDt", formError_1);
-  _output.set("RHHw5ACTgdDO751J8CgWB", onStateChange);
-  _output.set("E2n44qWixMBKO6m8kg1wp", onStateChange_1);
-  return _output;
+  return (
+    <Body data-ws-id="a-4nDFkaWy4px1fn38XWJ" data-ws-component="Body">
+      <Form
+        data-ws-id="-1RvizaBcVpHsjvnYxn1c"
+        data-ws-component="Form"
+        state={formState_1}
+        onStateChange={onStateChange_1}
+      >
+        {formInitial_1 && (
+          <Box data-ws-id="qhnVrmYGlyrMZi3UzqSQA" data-ws-component="Box">
+            <Heading
+              data-ws-id="YdHHf4u3jrdbRIWpB_VfH"
+              data-ws-component="Heading"
+              tag={"h3"}
+            >
+              {"Default form"}
+            </Heading>
+            <Label data-ws-id="A0RNI1WVwOGGDbwYnoZia" data-ws-component="Label">
+              {"Name"}
+            </Label>
+            <Input
+              data-ws-id="e035xi9fcwYtrn9La49Eh"
+              data-ws-component="Input"
+              name={"name"}
+            />
+            <Label data-ws-id="LImtuVzw5R9yQsG4faiGV" data-ws-component="Label">
+              {"Email"}
+            </Label>
+            <Input
+              data-ws-id="dcHjdeW_HXPkyQlx3ZiL7"
+              data-ws-component="Input"
+              name={"email"}
+            />
+            <Button
+              data-ws-id="ZAtG6JgK4sbTnOAZlp2rU"
+              data-ws-component="Button"
+            >
+              {"Submit"}
+            </Button>
+          </Box>
+        )}
+        {formSuccess_1 && (
+          <Box data-ws-id="966cjxuqP_T99N27-mqWE" data-ws-component="Box">
+            {"Thank you for getting in touch!"}
+          </Box>
+        )}
+        {formError_1 && (
+          <Box data-ws-id="SYG5hhOz31xFJUN_v9zq6" data-ws-component="Box">
+            {"Sorry, something went wrong."}
+          </Box>
+        )}
+      </Form>
+      <Form
+        data-ws-id="isNSM3wXcnHFikwNPlEOL"
+        data-ws-component="Form"
+        state={formState}
+        onStateChange={onStateChange}
+        method={"get"}
+        action={"/custom"}
+      >
+        {formInitial && (
+          <Box data-ws-id="a5YPRc19IJyhTrjjasA_R" data-ws-component="Box">
+            <Heading
+              data-ws-id="y4pceTmziuBRIDgUBQNLD"
+              data-ws-component="Heading"
+              tag={"h3"}
+            >
+              {"Form with custom action and method"}
+            </Heading>
+            <Label data-ws-id="_gLjS0enBOV8KW9Ykz_es" data-ws-component="Label">
+              {"Name"}
+            </Label>
+            <Input
+              data-ws-id="ydR5B_9uMS4PXFS76TmBh"
+              data-ws-component="Input"
+              name={"name"}
+            />
+            <Label data-ws-id="8RU1FyL2QRyqhNUKELGrb" data-ws-component="Label">
+              {"Email"}
+            </Label>
+            <Input
+              data-ws-id="TsqGP49hjgEW41ReCwrpZ"
+              data-ws-component="Input"
+              name={"email"}
+            />
+            <Button
+              data-ws-id="5GWjwVdapuGdn443GIKDW"
+              data-ws-component="Button"
+            >
+              {"Submit"}
+            </Button>
+          </Box>
+        )}
+        {formSuccess && (
+          <Box data-ws-id="Gw-ta0R4FNFAGBTVRWKep" data-ws-component="Box">
+            {"Thank you for getting in touch!"}
+          </Box>
+        )}
+        {formError && (
+          <Box data-ws-id="ewk_WKpu4syHLPABMmvUz" data-ws-component="Box">
+            {"Sorry, something went wrong."}
+          </Box>
+        )}
+      </Form>
+      {props.scripts}
+    </Body>
+  );
 };
+
+export { Page };
 
 export const formsProperties = new Map<
   string,
   { method?: string; action?: string }
 >([["isNSM3wXcnHFikwNPlEOL", { method: "get", action: "/custom" }]]);
-
-export const utils = {
-  indexesWithinAncestors,
-  getDataSourcesLogic,
-};
-
-/* eslint-enable */

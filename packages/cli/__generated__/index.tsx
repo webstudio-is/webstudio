@@ -1,19 +1,15 @@
 /**
  * The only intent of this file is to support typings inside ../templates/route-template for easier development.
  **/
+import type { ReactNode } from "react";
 import type { PageData } from "../templates/route-template";
-import type { Components } from "@webstudio-is/react-sdk";
 import type { Asset } from "@webstudio-is/sdk";
-
-export const components = new Map() as Components;
 
 export const fontAssets: Asset[] = [];
 
 export const pageData: PageData = {
   build: {
     props: [],
-    instances: [],
-    dataSources: [],
   },
   pages: [],
 
@@ -33,18 +29,13 @@ export const user: { email: string | null } | undefined = {
 };
 export const projectId = "project-id";
 
-const indexesWithinAncestors = new Map<string, number>([]);
-
-const getDataSourcesLogic = () => {
-  return new Map();
+const Page = (_props: { scripts: ReactNode }) => {
+  return <></>;
 };
+
+export { Page };
 
 export const formsProperties = new Map<
   string,
   { method?: string; action?: string }
 >([]);
-
-export const utils = {
-  indexesWithinAncestors,
-  getDataSourcesLogic,
-};
