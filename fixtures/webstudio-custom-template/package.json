@@ -3,8 +3,8 @@
     "custom-template-script": "echo \"This is a custom template script\"",
     "build": "remix build",
     "dev": "remix dev",
-    "start": "remix-serve build",
-    "typecheck": "tsc"
+    "typecheck": "tsc",
+    "start": "remix-serve build"
   },
   "private": true,
   "sideEffects": false,

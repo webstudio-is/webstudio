@@ -440,6 +440,9 @@ importers:
       '@netlify/functions':
         specifier: ^1.3.0
         version: 1.3.0
+      '@netlify/remix-adapter':
+        specifier: ^1.0.0
+        version: 1.0.0(@netlify/functions@1.3.0)
       '@netlify/remix-edge-adapter':
         specifier: 1.2.0
         version: 1.2.0
