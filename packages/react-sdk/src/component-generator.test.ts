@@ -534,7 +534,7 @@ test("generate page component with data sources", () => {
   ).toEqual(
     clear(`
       const Page = (props: { scripts?: ReactNode }) => {
-      let [variableName, set$variableName] = useState("initial")
+      let [variableName, set$variableName] = useState<any>("initial")
       let onChange = (value: any) => {
       variableName = value
       set$variableName(variableName)
