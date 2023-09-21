@@ -1,17 +1,10 @@
 {
   "scripts": {
-    "build": "remix build",
-    "predev": "rimraf ./public/_redirects",
-    "dev": "remix dev",
-    "start": "netlify serve",
-    "typecheck": "tsc -b"
+    "predev": "rm ./public/_redirects",
+    "start": "netlify serve"
   },
   "dependencies": {
     "@netlify/functions": "^1.3.0",
-    "@netlify/remix-adapter": "^1.0.0",
-    "cross-env": "^7.0.3"
-  },
-  "devDependencies": {
-    "rimraf": "^4.1.4"
+    "@netlify/remix-adapter": "^1.0.0"
   }
 }

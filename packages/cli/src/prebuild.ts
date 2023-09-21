@@ -131,14 +131,13 @@ const mergeJsonFiles = async (sourcePath: string, destinationPath: string) => {
       throw new Error(error);
     }
   );
-
   const content = JSON.stringify(
     merge(JSON.parse(sourceJson), JSON.parse(destinationJson)),
     null,
     "  "
   );
 
-  return content;
+  await writeFile(destinationPath, content, "utf8");
 };
 
 const isCliTemplate = async (template: string) => {
@@ -158,9 +157,7 @@ const isCliTemplate = async (template: string) => {
   return false;
 };
 
-const copyTemplates = async (
-  template: string = "defaults"
-): Promise<string> => {
+const copyTemplates = async (template: string = "defaults") => {
   const currentPath = fileURLToPath(new URL(import.meta.url));
 
   const templatesPath = (await isCliTemplate(template))
@@ -174,7 +171,12 @@ const copyTemplates = async (
     },
   });
 
-  return templatesPath;
+  if ((await isFileExists(join(templatesPath, "package.json"))) === true) {
+    await mergeJsonFiles(
+      join(templatesPath, "package.json"),
+      join(cwd(), "package.json")
+    );
+  }
 };
 
 export const prebuild = async (options: {
@@ -196,48 +198,11 @@ export const prebuild = async (options: {
 
   spinner.text = "Generating files";
 
-  const defaultTemplatePath = await copyTemplates();
-  let packageJSONContent: string;
-
-  /*
-    We use the package.json under `defaults/package.json` to keep
-    all the common depdnencies across all templates.
-    So, before writing the final json to the destination. We should merge the
-    default package.json and the package.json from the template
-  */
+  await copyTemplates();
 
   if (options.template !== undefined) {
-    const customTemplatePath = await copyTemplates(options.template);
-    packageJSONContent = await mergeJsonFiles(
-      join(defaultTemplatePath, "package.json"),
-      join(customTemplatePath, "package.json")
-    );
-  } else {
-    packageJSONContent = await readFile(
-      join(defaultTemplatePath, "package.json"),
-      "utf8"
-    );
+    await copyTemplates(options.template);
   }
-
-  const packageJSONAlreadyExistsInDirectory = await isFileExists(
-    join(cwd(), "package.json")
-  );
-
-  if (packageJSONAlreadyExistsInDirectory === true) {
-    const packageJSONFromDestination = await readFile(
-      join(cwd(), "package.json"),
-      "utf8"
-    );
-    packageJSONContent = JSON.stringify(
-      merge(
-        JSON.parse(packageJSONContent),
-        JSON.parse(packageJSONFromDestination)
-      ),
-      null,
-      "  "
-    );
-  }
-  await writeFile(join(cwd(), "package.json"), packageJSONContent, "utf8");
 
   const constants: typeof sharedConstants = await import(
     pathToFileURL(join(cwd(), "app/constants.mjs")).href

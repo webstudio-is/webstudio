@@ -6,8 +6,7 @@
     "allowJs": true,
     "checkJs": true,
     "paths": {
-      "~/constants.mjs": ["./templates/defaults/app/constants.mjs"],
-      "~/image-loader.mjs": ["./templates/defaults/app/image-loader.mjs"]
+      "~/constants.mjs": ["./templates/defaults/app/constants.mjs"]
     }
   }
 }
