@@ -1,10 +1,13 @@
-import { useLoaderData } from "@remix-run/react";
-import { InstanceRoot, Root } from "@webstudio-is/react-sdk";
-import { components } from "../page-components/page-main";
+import { Root } from "@webstudio-is/react-sdk";
+import { Box, Button, Body } from "@webstudio-is/sdk-components-react";
 
 export default function Index() {
-  const data = useLoaderData<unknown>();
-
-  const Outlet = () => <InstanceRoot data={data} components={components} />;
+  const Outlet = () => (
+    <Body>
+      <Box>
+        <Button></Button>
+      </Box>
+    </Body>
+  );
   return <Root Outlet={Outlet} />;
 }
