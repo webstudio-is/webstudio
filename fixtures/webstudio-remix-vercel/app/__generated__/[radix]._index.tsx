@@ -166,7 +166,7 @@ export const user: { email: string | null } | undefined = {
 export const projectId = "cddc1d44-af37-4cb6-a430-d300cf6f932d";
 
 const Page = (props: { scripts?: ReactNode }) => {
-  let [accordionValue, set$accordionValue] = useState("0");
+  let [accordionValue, set$accordionValue] = useState<any>("0");
   let onValueChange = (value: any) => {
     accordionValue = value;
     set$accordionValue(accordionValue);

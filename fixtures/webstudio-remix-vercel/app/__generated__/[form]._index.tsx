@@ -285,8 +285,8 @@ export const user: { email: string | null } | undefined = {
 export const projectId = "cddc1d44-af37-4cb6-a430-d300cf6f932d";
 
 const Page = (props: { scripts?: ReactNode }) => {
-  let [formState, set$formState] = useState("initial");
-  let [formState_1, set$formState_1] = useState("initial");
+  let [formState, set$formState] = useState<any>("initial");
+  let [formState_1, set$formState_1] = useState<any>("initial");
   let formInitial = formState === "initial" || formState === "error";
   let formSuccess = formState === "success";
   let formError = formState === "error";

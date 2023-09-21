@@ -206,7 +206,7 @@ export const generatePageComponent = ({
   let generatedDataSources = "";
   for (const { valueName, setterName, initialValue } of variables.values()) {
     const initialValueString = JSON.stringify(initialValue);
-    generatedDataSources += `let [${valueName}, ${setterName}] = useState(${initialValueString})\n`;
+    generatedDataSources += `let [${valueName}, ${setterName}] = useState<any>(${initialValueString})\n`;
   }
   generatedDataSources += dataSourcesBody;
 
