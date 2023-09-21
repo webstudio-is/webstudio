@@ -21,8 +21,7 @@
     "@webstudio-is/sdk": "workspace:*",
     "isbot": "^3.6.8",
     "react": "^18.2.0",
-    "react-dom": "^18.2.0",
-    "cross-env": "^7.0.3"
+    "react-dom": "^18.2.0"
   },
   "private": true,
   "sideEffects": false,
@@ -32,9 +31,7 @@
     "@types/react": "^18.2.20",
     "@types/react-dom": "^18.2.7",
     "@webstudio-is/http-client": "workspace:*",
-    "eslint": "^8.48.0",
     "typescript": "5.2.2",
-    "rimraf": "^4.1.4",
     "webstudio-cli": "workspace:*"
   },
   "engines": {
