@@ -36,7 +36,7 @@ export const meta: V2_ServerRuntimeMetaFunction = () => {
   const metas: ReturnType<V2_ServerRuntimeMetaFunction> = [
     { title: page?.title || "Webstudio" },
   ];
-  for (const [name, value] of Object.entries(page?.meta ?? [])) {
+  for (const [name, value] of Object.entries(page?.meta ?? {})) {
     // i.e. og:*
     if (name.includes(":")) {
       metas.push({
