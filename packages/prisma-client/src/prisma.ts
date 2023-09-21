@@ -22,21 +22,20 @@ const logPrisma = process.env.NODE_ENV === "production";
  * getPgBouncerUrl() can be moved as a default fallback for db url at apps/builder/app/env/env.server.ts
  **/
 const getPgBouncerUrl = () => {
-  // The URL constructor does not support the "postgresql" protocol, so we replace it with "https"
-  // to ensure that the connection is made over HTTPS instead of plain text.
-  const databaseUrl = new URL(
-    process.env.DATABASE_URL!.replace("postgresql://", "https://")
-  );
-
-  if (databaseUrl.hostname.endsWith("supabase.co")) {
-    // https://supabase.com/docs/guides/database/connecting-to-postgres#connection-pooler
-    databaseUrl.port = "6543";
-    // https://www.prisma.io/docs/guides/performance-and-optimization/connection-management/configure-pg-bouncer
-    databaseUrl.searchParams.set("pgbouncer", "true");
+  if (process.env.PGBOUNCER !== "true") {
+    return process.env.DATABASE_URL;
   }
 
-  // Convert protocol back to "postgresql"
-  return databaseUrl.href.replace("https://", "postgresql://");
+  const databaseUrl = new URL(
+    process.env.DATABASE_URL ?? "postgresql://localhost:5432/postgres"
+  );
+
+  // https://supabase.com/docs/guides/database/connecting-to-postgres#connection-pooler
+  databaseUrl.port = "6543";
+  // https://www.prisma.io/docs/guides/performance-and-optimization/connection-management/configure-pg-bouncer
+  databaseUrl.searchParams.set("pgbouncer", "true");
+
+  return databaseUrl.href;
 };
 
 // this fixes the issue with `warn(prisma-client) There are already 10 instances of Prisma Client actively running.`
