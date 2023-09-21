@@ -229,6 +229,30 @@ export const prebuild = async (options: {
     routes: [],
   };
 
+  const radixComponentNamespacedMetas = Object.entries(
+    radixComponentMetas
+  ).reduce(
+    (r, [name, meta]) => {
+      const namespace = "@webstudio-is/sdk-components-react-radix";
+      r[`${namespace}:${name}`] = namespaceMeta(
+        meta,
+        namespace,
+        new Set(Object.keys(radixComponentMetas))
+      );
+      return r;
+    },
+    {} as Record<string, WsComponentMeta>
+  );
+
+  const metas = new Map(
+    Object.entries({
+      ...baseComponentMetas,
+      ...radixComponentNamespacedMetas,
+      ...remixComponentMetas,
+    })
+  );
+
+  const projectMetas = new Map<Instance["component"], WsComponentMeta>();
   const componentsByPage: ComponentsByPage = {};
   const siteDataByPage: SiteDataByPage = {};
 
@@ -283,32 +307,13 @@ export const prebuild = async (options: {
     for (const [_instanceId, instance] of instances) {
       if (instance.component) {
         componentsByPage[path].add(instance.component);
+        const meta = metas.get(instance.component);
+        if (meta) {
+          projectMetas.set(instance.component, meta);
+        }
       }
     }
   }
-
-  const radixComponentNamespacedMetas = Object.entries(
-    radixComponentMetas
-  ).reduce(
-    (r, [name, meta]) => {
-      const namespace = "@webstudio-is/sdk-components-react-radix";
-      r[`${namespace}:${name}`] = namespaceMeta(
-        meta,
-        namespace,
-        new Set(Object.keys(radixComponentMetas))
-      );
-      return r;
-    },
-    {} as Record<string, WsComponentMeta>
-  );
-
-  const componentMetas = new Map(
-    Object.entries({
-      ...baseComponentMetas,
-      ...radixComponentNamespacedMetas,
-      ...remixComponentMetas,
-    })
-  );
 
   const assetsToDownload: Promise<void>[] = [];
   const fontAssets: FontAsset[] = [];
@@ -447,7 +452,7 @@ export const prebuild = async (options: {
 
     const utilsExport = generateUtilsExport({
       page: pageData.page,
-      metas: componentMetas,
+      metas: projectMetas,
       instances: new Map(pageData.build.instances),
       props: new Map(pageData.build.props),
       dataSources: new Map(pageData.build.dataSources),
@@ -506,7 +511,8 @@ ${utilsExport}
       breakpoints: siteData.build?.breakpoints,
       styles: siteData.build?.styles,
       styleSourceSelections: siteData.build?.styleSourceSelections,
-      componentMetas,
+      // pass only used metas to not generate unused preset styles
+      componentMetas: projectMetas,
     },
     {
       assetBaseUrl,

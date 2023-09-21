@@ -48,7 +48,9 @@ export const pageData: PageData = {
       id: "nfzls_SkTc9jKYyxcZ8Lw",
       name: "Home",
       title: "Home",
-      meta: {},
+      meta: {
+        description: "Page description f511c297-b44f-4e4b-96bd-d013da06bada",
+      },
       rootInstanceId: "ibXgMoi9_ipHx1gVrvii0",
       path: "",
     },
@@ -57,7 +59,9 @@ export const pageData: PageData = {
     id: "nfzls_SkTc9jKYyxcZ8Lw",
     name: "Home",
     title: "Home",
-    meta: {},
+    meta: {
+      description: "Page description f511c297-b44f-4e4b-96bd-d013da06bada",
+    },
     rootInstanceId: "ibXgMoi9_ipHx1gVrvii0",
     path: "",
   },

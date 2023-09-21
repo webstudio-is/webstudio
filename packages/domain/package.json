@@ -25,12 +25,12 @@
   },
   "exports": {
     ".": {
-      "source": "./src/index.ts",
+      "webstudio": "./src/index.ts",
       "import": "./lib/index.js",
       "types": "./lib/types/index.d.ts"
     },
     "./index.server": {
-      "source": "./src/index.server.ts",
+      "webstudio": "./src/index.server.ts",
       "import": "./lib/index.server.js",
       "types": "./lib/types/index.server.d.ts"
     }

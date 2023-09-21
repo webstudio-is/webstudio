@@ -4,7 +4,7 @@
 module.exports = {
   testEnvironment: "node",
   testEnvironmentOptions: {
-    customExportConditions: ["source"],
+    customExportConditions: ["webstudio"],
   },
   testMatch: ["<rootDir>/src/**/*.test.ts"],
   transform: {

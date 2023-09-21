@@ -373,7 +373,7 @@ export const DeleteProjectDialog = ({
             >
               {` ${title} `}
             </Text>
-            below
+            below.
           </Label>
         }
         description="This project and its styles, pages and images will be deleted permanently."

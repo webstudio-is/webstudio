@@ -38,12 +38,12 @@
   },
   "exports": {
     ".": {
-      "source": "./src/index.ts",
+      "webstudio": "./src/index.ts",
       "types": "./lib/types/index.d.ts",
       "import": "./lib/index.js"
     },
     "./index.server": {
-      "source": "./src/index.server.ts",
+      "webstudio": "./src/index.server.ts",
       "types": "./lib/types/index.server.d.ts",
       "import": "./lib/index.server.js"
     }
