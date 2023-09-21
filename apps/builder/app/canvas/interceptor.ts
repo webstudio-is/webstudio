@@ -59,15 +59,23 @@ export const subscribeInterceptedEvents = () => {
       event.preventDefault();
     }
   };
-  document.documentElement.addEventListener("click", handleClick);
-  // preventDefault in form submit event does not work inside dialog
-  // in bubble mode, capture solves the issue
+
+  // Note: Event handlers behave unexpectedly when used inside a dialog component.
+  // In Dialogs, React intercepts and processes events before they reach our handlers.
+  // To ensure consistent behavior across all components, we're using event capturing.
+  // This allows us to intercept events before React gets a chance to handle them.
+  document.documentElement.addEventListener("click", handleClick, {
+    capture: true,
+  });
   document.documentElement.addEventListener("submit", handleSubmit, {
     capture: true,
   });
+
   document.documentElement.addEventListener("keydown", handleKeydown);
   return () => {
-    document.documentElement.removeEventListener("click", handleClick);
+    document.documentElement.removeEventListener("click", handleClick, {
+      capture: true,
+    });
     document.documentElement.removeEventListener("submit", handleSubmit, {
       capture: true,
     });
