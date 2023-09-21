@@ -94,7 +94,7 @@ const useOutlineStyle = () => {
     ...style,
     pointerEvents: "none",
     width: (canvasWidth ?? 0) * (scale / 100),
-  };
+  } as const;
 };
 
 type WorkspaceProps = {
