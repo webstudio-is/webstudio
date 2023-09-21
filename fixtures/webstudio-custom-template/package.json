@@ -1,14 +1,14 @@
 {
+  "private": true,
+  "sideEffects": false,
   "scripts": {
-    "custom-template-script": "echo \"This is a custom template script\"",
     "build": "remix build",
     "dev": "remix dev",
     "start": "remix-serve build",
     "typecheck": "tsc",
+    "custom-template-script": "echo \"This is a custom template script\"",
     "checks": "pnpm typecheck"
   },
-  "private": true,
-  "sideEffects": false,
   "dependencies": {
     "@remix-run/react": "^1.19.2",
     "@remix-run/server-runtime": "^1.19.2",

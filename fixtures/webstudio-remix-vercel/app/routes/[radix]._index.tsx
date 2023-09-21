@@ -5,19 +5,9 @@ import {
   type LinkDescriptor,
   type ActionArgs,
   json,
-<<<<<<< HEAD
 } from "@remix-run/server-runtime";
-
-import {
-  InstanceRoot,
-  type RootPropsData,
-  type Params,
-} from "@webstudio-is/react-sdk";
-=======
-} from "@remix-run/node";
 import { atom } from "nanostores";
 import { ReactSdkContext, getPropsByInstanceId } from "@webstudio-is/react-sdk";
->>>>>>> 4a8ec8cb6 (Switch CLI to jsx component generator)
 import { n8nHandler, getFormId } from "@webstudio-is/form-handlers";
 import { Scripts, ScrollRestoration } from "@remix-run/react";
 import {
