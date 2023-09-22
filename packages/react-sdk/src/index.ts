@@ -17,9 +17,9 @@ export {
   normalizeProps,
   useInstanceProps,
   getPropsByInstanceId,
-  usePropUrl,
   getInstanceIdFromComponentProps,
   getIndexWithinAncestorFromComponentProps,
+  usePages,
 } from "./props";
 export { type Params, ReactSdkContext } from "./context";
 export {
