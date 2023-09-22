@@ -176,6 +176,15 @@ html {
     min-height: 1em;
     display: inline-block;
   }
+  div:where([data-ws-component="Text"]) {
+    box-sizing: border-box;
+    border-top-width: 1px;
+    border-right-width: 1px;
+    border-bottom-width: 1px;
+    border-left-width: 1px;
+    outline-width: 1px;
+    min-height: 1em;
+  }
   div:where(
       [data-ws-component="@webstudio-is/sdk-components-react-radix:Accordion"]
     ) {
@@ -238,15 +247,6 @@ html {
     padding-right: 0px;
     padding-top: 0px;
     padding-bottom: 0px;
-  }
-  div:where([data-ws-component="Text"]) {
-    box-sizing: border-box;
-    border-top-width: 1px;
-    border-right-width: 1px;
-    border-bottom-width: 1px;
-    border-left-width: 1px;
-    outline-width: 1px;
-    min-height: 1em;
   }
   div:where(
       [data-ws-component="@webstudio-is/sdk-components-react-radix:AccordionContent"]

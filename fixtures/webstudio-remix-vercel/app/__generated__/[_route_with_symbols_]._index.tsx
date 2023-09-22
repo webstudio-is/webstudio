@@ -17,10 +17,10 @@ export const pageData: PageData = {
         "HNaXZUvlg14jFvxc29n9T",
         {
           id: "HNaXZUvlg14jFvxc29n9T",
-          instanceId: "AdXSAYCx4QDo5QN6nLoGs",
           name: "src",
-          type: "asset",
-          value: "9a8bc926-7804-4d3f-af81-69196b1d2ed8",
+          instanceId: "AdXSAYCx4QDo5QN6nLoGs",
+          type: "string",
+          value: "/assets/small-avif-kitty_FnabJsioMWpBtXZSGf4DR.webp",
         },
       ],
     ],
@@ -100,7 +100,11 @@ export const projectId = "cddc1d44-af37-4cb6-a430-d300cf6f932d";
 const Page = (props: { scripts?: ReactNode }) => {
   return (
     <Body data-ws-id="EDEfpMPRqDejthtwkH7ws" data-ws-component="Body">
-      <Image data-ws-id="AdXSAYCx4QDo5QN6nLoGs" data-ws-component="Image" />
+      <Image
+        data-ws-id="AdXSAYCx4QDo5QN6nLoGs"
+        data-ws-component="Image"
+        src={"/assets/small-avif-kitty_FnabJsioMWpBtXZSGf4DR.webp"}
+      />
       {props.scripts}
     </Body>
   );
