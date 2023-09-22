@@ -10,6 +10,7 @@ import {
   Box as Box,
   Paragraph as Paragraph,
   Image as Image,
+  Text as Text,
 } from "@webstudio-is/sdk-components-react";
 import { Link as Link } from "@webstudio-is/sdk-components-react-remix";
 
@@ -21,10 +22,11 @@ export const pageData: PageData = {
         "rTRZFZEd03RBH4gUWj9LW",
         {
           id: "rTRZFZEd03RBH4gUWj9LW",
-          instanceId: "pX1ovPI7NdC0HRjkw6Kpw",
           name: "src",
-          type: "asset",
-          value: "cd939c56-bcdd-4e64-bd9c-567a9bccd3da",
+          instanceId: "pX1ovPI7NdC0HRjkw6Kpw",
+          type: "string",
+          value:
+            "/assets/_937084ed-a798-49fe-8664-df93a2af605e_uiBk3o6UWdqolyakMvQJ9.jpeg",
         },
       ],
       [
@@ -45,6 +47,26 @@ export const pageData: PageData = {
           name: "href",
           type: "page",
           value: "szYLvBduHPmbtqQKCDY0b",
+        },
+      ],
+      [
+        "qk_m-CJJD4kY_F07wADHU",
+        {
+          id: "qk_m-CJJD4kY_F07wADHU",
+          instanceId: "D8wLZzLWQfxH9uaKsn-0L",
+          name: "tag",
+          type: "string",
+          value: "span",
+        },
+      ],
+      [
+        "GmWaLJTu_cVzrs8-chvQ4",
+        {
+          id: "GmWaLJTu_cVzrs8-chvQ4",
+          name: "href",
+          instanceId: "8AXawjUE3fJoOH_1qOAoq",
+          type: "string",
+          value: "/assets/small-avif-kitty_FnabJsioMWpBtXZSGf4DR.webp",
         },
       ],
     ],
@@ -150,13 +172,33 @@ const Page = (props: { scripts?: ReactNode }) => {
           >
             {"Click here to adore more kittens"}
           </Link>
+          <Text
+            data-ws-id="D8wLZzLWQfxH9uaKsn-0L"
+            data-ws-component="Text"
+            tag={"span"}
+          >
+            {" or "}
+          </Text>
+          <Link
+            data-ws-id="8AXawjUE3fJoOH_1qOAoq"
+            data-ws-component="Link"
+            href={"/assets/small-avif-kitty_FnabJsioMWpBtXZSGf4DR.webp"}
+          >
+            {"go download this little kitten"}
+          </Link>
           <Box data-ws-id="82HYqzxZeahPxSDFNWem5" data-ws-component="Box" />
           <Link data-ws-id="9I4GRU1sev48hREkQcKQ-" data-ws-component="Link">
             {"Symbols in path"}
           </Link>
         </Box>
         <Box data-ws-id="qPnkiFGDj8dITWb1kmpGl" data-ws-component="Box">
-          <Image data-ws-id="pX1ovPI7NdC0HRjkw6Kpw" data-ws-component="Image" />
+          <Image
+            data-ws-id="pX1ovPI7NdC0HRjkw6Kpw"
+            data-ws-component="Image"
+            src={
+              "/assets/_937084ed-a798-49fe-8664-df93a2af605e_uiBk3o6UWdqolyakMvQJ9.jpeg"
+            }
+          />
         </Box>
       </Box>
       {props.scripts}

@@ -25,6 +25,7 @@ import {
   namespaceMeta,
   type Params,
   type WsComponentMeta,
+  normalizeProps,
 } from "@webstudio-is/react-sdk";
 import type {
   Instance,
@@ -436,10 +437,17 @@ export const prebuild = async (options: {
     }
 
     const pageData = siteDataByPage[pathName];
+    const props = new Map(
+      normalizeProps({
+        props: pageData.build.props.map(([_id, prop]) => prop),
+        assetBaseUrl,
+        assets: new Map(pageData.assets.map((asset) => [asset.id, asset])),
+      }).map((prop) => [prop.id, prop])
+    );
     // serialize data only used in runtime
     const renderedPageData: PageData = {
       build: {
-        props: pageData.build.props,
+        props: Array.from(props.entries()),
       },
       pages: pageData.pages,
       page: pageData.page,
@@ -448,10 +456,9 @@ export const prebuild = async (options: {
 
     const rootInstanceId = pageData.page.rootInstanceId;
     const instances = new Map(pageData.build.instances);
-    const props = new Map(pageData.build.props);
     const dataSources = new Map(pageData.build.dataSources);
     const utilsExport = generateUtilsExport({
-      props: new Map(pageData.build.props),
+      props,
     });
     const pageComponent = generatePageComponent({
       scope,

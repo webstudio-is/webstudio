@@ -14,10 +14,10 @@ export {
 } from "./components/component-meta";
 export * from "./embed-template";
 export {
+  normalizeProps,
   useInstanceProps,
   getPropsByInstanceId,
   usePropUrl,
-  usePropAsset,
   getInstanceIdFromComponentProps,
   getIndexWithinAncestorFromComponentProps,
 } from "./props";
