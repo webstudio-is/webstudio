@@ -105,7 +105,7 @@ const useElementsTree = (
 
   const propsByInstanceIdStore = useMemo(() => {
     return computed(
-      [propsStore, assetsStore, pagesStore],
+      [propsStore, assetsStore, pagesMapStore],
       (props, assets, pages) => {
         if (pages === undefined) {
           return new Map();
@@ -114,16 +114,14 @@ const useElementsTree = (
           props: Array.from(props.values()),
           assetBaseUrl: params.assetBaseUrl,
           assets,
-          pages: new Map(
-            [pages.homePage, ...pages.pages].map((page) => [page.id, page])
-          ),
+          pages: pages,
         });
         return getPropsByInstanceId(
           new Map(normalizedProps.map((prop) => [prop.id, prop]))
         );
       }
     );
-  }, [params.assetBaseUrl]);
+  }, [params.assetBaseUrl, pagesMapStore]);
 
   return useMemo(() => {
     return createElementsTree({
@@ -155,6 +153,7 @@ const useElementsTree = (
     rootInstanceId,
     components,
     pagesMapStore,
+    propsByInstanceIdStore,
     isPreviewMode,
     indexesWithinAncestors,
     imageLoader,
