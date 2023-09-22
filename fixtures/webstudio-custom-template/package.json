@@ -5,7 +5,8 @@
     "dev": "remix dev",
     "start": "remix-serve build",
     "typecheck": "tsc",
-    "checks": "pnpm typecheck"
+    "checks": "pnpm typecheck",
+    "size-test": "rm -rf ./public && remix build && size-limit"
   },
   "private": true,
   "sideEffects": false,
@@ -22,7 +23,9 @@
     "@webstudio-is/sdk": "workspace:*",
     "isbot": "^3.6.8",
     "react": "^18.2.0",
-    "react-dom": "^18.2.0"
+    "react-dom": "^18.2.0",
+    "@size-limit/file": "^9.0.0",
+    "size-limit": "^9.0.0"
   },
   "devDependencies": {
     "@remix-run/serve": "^1.19.2",
@@ -37,6 +40,13 @@
   "engines": {
     "node": ">=18.0.0"
   },
+  "size-limit": [
+    {
+      "path": "public/build/*.js",
+      "limit": "136 kB",
+      "gzip": false
+    }
+  ],
   "name": "webstudio-custom-template",
   "version": "0.0.1",
   "description": "",

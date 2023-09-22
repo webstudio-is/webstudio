@@ -1,16 +1,7 @@
 import type { Props } from "@webstudio-is/sdk";
-import type { IndexesWithinAncestors } from "./instance-utils";
 
 type PageData = {
   props: Props;
-};
-
-export type GeneratedUtils = {
-  indexesWithinAncestors: IndexesWithinAncestors;
-  getDataSourcesLogic: (
-    getVariable: (id: string) => unknown,
-    setVariable: (id: string, value: unknown) => void
-  ) => Map<string, unknown>;
 };
 
 /**
