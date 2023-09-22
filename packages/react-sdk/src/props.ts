@@ -110,6 +110,7 @@ export const useInstanceProps = (instanceId: Instance["id"]) => {
     );
   }, [
     propsByInstanceIdStore,
+    assetsStore,
     dataSourcesLogicStore,
     instanceId,
     index,
