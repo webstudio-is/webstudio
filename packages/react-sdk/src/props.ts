@@ -108,7 +108,13 @@ export const useInstanceProps = (instanceId: Instance["id"]) => {
         return instancePropsObject;
       }
     );
-  }, [propsByInstanceIdStore, dataSourcesLogicStore, instanceId, index]);
+  }, [
+    propsByInstanceIdStore,
+    dataSourcesLogicStore,
+    instanceId,
+    index,
+    assetBaseUrl,
+  ]);
   const instancePropsObject = useStore(instancePropsObjectStore);
   return instancePropsObject;
 };
@@ -218,7 +224,14 @@ export const usePropUrl = (instanceId: Instance["id"], name: string) => {
             assets,
           })
       ),
-    [propsByInstanceIdStore, pagesStore, assetsStore, instanceId, name]
+    [
+      propsByInstanceIdStore,
+      pagesStore,
+      assetsStore,
+      instanceId,
+      name,
+      assetBaseUrl,
+    ]
   );
   return useStore(store);
 };
