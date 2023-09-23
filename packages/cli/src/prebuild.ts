@@ -46,7 +46,7 @@ import { createImageLoader } from "@webstudio-is/image";
 import * as baseComponentMetas from "@webstudio-is/sdk-components-react/metas";
 import * as remixComponentMetas from "@webstudio-is/sdk-components-react-remix/metas";
 import * as radixComponentMetas from "@webstudio-is/sdk-components-react-radix/metas";
-import { LOCAL_DATA_FILE } from "./config";
+import { LOCAL_DATA_FILE, PROJECT_TEMPALTES } from "./config";
 import {
   ensureFileInPath,
   ensureFolderExists,
@@ -198,6 +198,15 @@ export const prebuild = async (options: {
    **/
   template?: string;
 }) => {
+  if (
+    options.template !== undefined &&
+    PROJECT_TEMPALTES.includes(options.template) === false
+  ) {
+    throw Error(
+      `\n Template ${options.template} is not available \n Please check webstudio-cli --help`
+    );
+  }
+
   const spinner = ora("Scaffolding the project files");
   spinner.start();
 

@@ -1,6 +1,6 @@
 import { access } from "node:fs/promises";
 import { prebuild } from "../prebuild";
-import { LOCAL_DATA_FILE } from "../config";
+import { LOCAL_DATA_FILE, PROJECT_TEMPALTES } from "../config";
 import type {
   CommonYargsArgv,
   StrictYargsOptionsToInterface,
@@ -21,7 +21,9 @@ export const buildOptions = (yargs: CommonYargsArgv) =>
     .option("template", {
       type: "string",
       default: "vercel",
-      describe: "[Experimental] Template to use for the build",
+      describe: `[Experimental] Template to use for the build
+Templates Available
+${PROJECT_TEMPALTES.join(`\n`)}`,
     });
 
 // @todo: use options.assets to define if we need to download assets
