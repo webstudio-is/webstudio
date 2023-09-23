@@ -1,8 +1,54 @@
 import { describe, test, expect } from "@jest/globals";
 import type { Page, Prop, Asset, Assets } from "@webstudio-is/sdk";
-import { resolveUrlProp, type Pages, type PropsByInstanceId } from "./props";
+import {
+  resolveUrlProp,
+  type Pages,
+  type PropsByInstanceId,
+  normalizeProps,
+} from "./props";
 
 const unique = () => Math.random().toString();
+
+test("normalize asset prop into string", () => {
+  expect(
+    normalizeProps({
+      props: [
+        {
+          id: "prop1",
+          instanceId: "instance1",
+          name: "src",
+          type: "asset",
+          value: "asset1",
+        },
+      ],
+      assetBaseUrl: "/assets/",
+      assets: new Map([
+        [
+          "asset1",
+          {
+            id: "asset1",
+            type: "image",
+            name: "my-asset.jpg",
+            format: "jpg",
+            meta: { width: 0, height: 0 },
+            projectId: "",
+            size: 0,
+            description: "",
+            createdAt: "",
+          },
+        ],
+      ]),
+    })
+  ).toEqual([
+    {
+      id: "prop1",
+      instanceId: "instance1",
+      name: "src",
+      type: "string",
+      value: "/assets/my-asset.jpg",
+    },
+  ]);
+});
 
 describe("resolveUrlProp", () => {
   const instanceId = unique();
@@ -127,7 +173,12 @@ describe("resolveUrlProp", () => {
 
   const assets: Assets = new Map([[asset1.id, asset1]]);
 
-  const stores = { props, pages, assets };
+  const stores = {
+    assetBaseUrl: "/assets/",
+    props,
+    pages,
+    assets,
+  };
 
   test("if instanceId is unknown returns undefined", () => {
     expect(
@@ -141,8 +192,8 @@ describe("resolveUrlProp", () => {
 
   test("asset by id", () => {
     expect(resolveUrlProp(instanceId, assetProp.name, stores)).toEqual({
-      type: "asset",
-      asset: asset1,
+      type: "string",
+      url: `/assets/${asset1.name}`,
     });
   });
 

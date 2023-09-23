@@ -1,20 +1,45 @@
 import { useContext, useMemo } from "react";
 import { computed } from "nanostores";
 import { useStore } from "@nanostores/react";
-import type {
-  Instance,
-  Page,
-  Prop,
-  Props,
-  Asset,
-  Assets,
-} from "@webstudio-is/sdk";
+import type { Instance, Page, Prop, Props, Assets } from "@webstudio-is/sdk";
 import { ReactSdkContext } from "./context";
 import { idAttribute, indexAttribute } from "./tree/webstudio-component";
 
 export type PropsByInstanceId = Map<Instance["id"], Prop[]>;
 
 export type Pages = Map<Page["id"], Page>;
+
+export const normalizeProps = ({
+  props,
+  assetBaseUrl,
+  assets,
+}: {
+  props: Prop[];
+  assetBaseUrl: string;
+  assets: Assets;
+}) => {
+  const newProps: Prop[] = [];
+  for (const prop of props) {
+    if (prop.type === "asset") {
+      const assetId = prop.value;
+      const asset = assets.get(assetId);
+      if (asset === undefined) {
+        continue;
+      }
+      newProps.push({
+        id: prop.id,
+        name: prop.name,
+        required: prop.required,
+        instanceId: prop.instanceId,
+        type: "string",
+        value: `${assetBaseUrl}${asset.name}`,
+      });
+      continue;
+    }
+    newProps.push(prop);
+  }
+  return newProps;
+};
 
 export const getPropsByInstanceId = (props: Props) => {
   const propsByInstanceId: PropsByInstanceId = new Map();
@@ -35,13 +60,15 @@ export const useInstanceProps = (instanceId: Instance["id"]) => {
   const {
     propsByInstanceIdStore,
     dataSourcesLogicStore,
+    assetBaseUrl,
+    assetsStore,
     indexesWithinAncestors,
   } = useContext(ReactSdkContext);
   const index = indexesWithinAncestors.get(instanceId);
   const instancePropsObjectStore = useMemo(() => {
     return computed(
-      [propsByInstanceIdStore, dataSourcesLogicStore],
-      (propsByInstanceId, dataSourcesLogic) => {
+      [propsByInstanceIdStore, dataSourcesLogicStore, assetsStore],
+      (propsByInstanceId, dataSourcesLogic, assets) => {
         const instancePropsObject: Record<Prop["name"], unknown> = {};
         if (index !== undefined) {
           instancePropsObject[indexAttribute] = index.toString();
@@ -50,7 +77,14 @@ export const useInstanceProps = (instanceId: Instance["id"]) => {
         if (instanceProps === undefined) {
           return instancePropsObject;
         }
-        for (const prop of instanceProps) {
+        const normalizedProps = normalizeProps({
+          props: instanceProps,
+          assetBaseUrl,
+          assets,
+        });
+        for (const prop of normalizedProps) {
+          // asset is normalized to string
+          // page is handled internally
           if (prop.type === "asset" || prop.type === "page") {
             continue;
           }
@@ -74,44 +108,32 @@ export const useInstanceProps = (instanceId: Instance["id"]) => {
         return instancePropsObject;
       }
     );
-  }, [propsByInstanceIdStore, dataSourcesLogicStore, instanceId, index]);
+  }, [
+    propsByInstanceIdStore,
+    assetsStore,
+    dataSourcesLogicStore,
+    instanceId,
+    index,
+    assetBaseUrl,
+  ]);
   const instancePropsObject = useStore(instancePropsObjectStore);
   return instancePropsObject;
-};
-
-// this utility is used for image component in both builder and preview
-// so need to optimize rerenders with computed
-export const usePropAsset = (instanceId: Instance["id"], name: string) => {
-  const { propsByInstanceIdStore, assetsStore } = useContext(ReactSdkContext);
-  const assetStore = useMemo(() => {
-    return computed(
-      [propsByInstanceIdStore, assetsStore],
-      (propsByInstanceId, assets) => {
-        const instanceProps = propsByInstanceId.get(instanceId);
-        if (instanceProps === undefined) {
-          return;
-        }
-        for (const prop of instanceProps) {
-          if (prop.type === "asset" && prop.name === name) {
-            const assetId = prop.value;
-            return assets.get(assetId);
-          }
-        }
-      }
-    );
-  }, [propsByInstanceIdStore, assetsStore, instanceId, name]);
-  const asset = useStore(assetStore);
-  return asset;
 };
 
 export const resolveUrlProp = (
   instanceId: Instance["id"],
   name: string,
   {
+    assetBaseUrl,
     props,
     pages,
     assets,
-  }: { props: PropsByInstanceId; pages: Pages; assets: Assets }
+  }: {
+    assetBaseUrl: string;
+    props: PropsByInstanceId;
+    pages: Pages;
+    assets: Assets;
+  }
 ):
   | {
       type: "page";
@@ -119,7 +141,6 @@ export const resolveUrlProp = (
       instanceId?: Instance["id"];
       hash?: string;
     }
-  | { type: "asset"; asset: Asset }
   | { type: "string"; url: string }
   | undefined => {
   const instanceProps = props.get(instanceId);
@@ -129,13 +150,19 @@ export const resolveUrlProp = (
 
   let prop = undefined;
 
+  const normalizedProps = normalizeProps({
+    props: instanceProps,
+    assetBaseUrl,
+    assets,
+  });
+
   // We had a bug that some props were duplicated https://github.com/webstudio-is/webstudio/pull/2170
   // Use the latest prop to ensure consistency with the builder settings panel.
-  for (const intanceProp of instanceProps) {
-    if (intanceProp.name !== name) {
+  for (const instanceProp of normalizedProps) {
+    if (instanceProp.name !== name) {
       continue;
     }
-    prop = intanceProp;
+    prop = instanceProp;
   }
 
   if (prop === undefined) {
@@ -178,27 +205,34 @@ export const resolveUrlProp = (
     return { type: "string", url: prop.value };
   }
 
-  if (prop.type === "asset") {
-    const asset = assets.get(prop.value);
-    return asset && { type: "asset", asset };
-  }
-
   return;
 };
 
 // this utility is used for link component in both builder and preview
 // so need to optimize rerenders with computed
 export const usePropUrl = (instanceId: Instance["id"], name: string) => {
-  const { propsByInstanceIdStore, pagesStore, assetsStore } =
+  const { assetBaseUrl, propsByInstanceIdStore, pagesStore, assetsStore } =
     useContext(ReactSdkContext);
   const store = useMemo(
     () =>
       computed(
         [propsByInstanceIdStore, pagesStore, assetsStore],
         (props, pages, assets) =>
-          resolveUrlProp(instanceId, name, { props, pages, assets })
+          resolveUrlProp(instanceId, name, {
+            assetBaseUrl,
+            props,
+            pages,
+            assets,
+          })
       ),
-    [propsByInstanceIdStore, pagesStore, assetsStore, instanceId, name]
+    [
+      propsByInstanceIdStore,
+      pagesStore,
+      assetsStore,
+      instanceId,
+      name,
+      assetBaseUrl,
+    ]
   );
   return useStore(store);
 };

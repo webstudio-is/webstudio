@@ -22,10 +22,11 @@ export const pageData: PageData = {
         "rTRZFZEd03RBH4gUWj9LW",
         {
           id: "rTRZFZEd03RBH4gUWj9LW",
-          instanceId: "pX1ovPI7NdC0HRjkw6Kpw",
           name: "src",
-          type: "asset",
-          value: "cd939c56-bcdd-4e64-bd9c-567a9bccd3da",
+          instanceId: "pX1ovPI7NdC0HRjkw6Kpw",
+          type: "string",
+          value:
+            "/assets/_937084ed-a798-49fe-8664-df93a2af605e_uiBk3o6UWdqolyakMvQJ9.jpeg",
         },
       ],
       [
@@ -62,10 +63,10 @@ export const pageData: PageData = {
         "GmWaLJTu_cVzrs8-chvQ4",
         {
           id: "GmWaLJTu_cVzrs8-chvQ4",
-          instanceId: "8AXawjUE3fJoOH_1qOAoq",
           name: "href",
-          type: "asset",
-          value: "9a8bc926-7804-4d3f-af81-69196b1d2ed8",
+          instanceId: "8AXawjUE3fJoOH_1qOAoq",
+          type: "string",
+          value: "/assets/small-avif-kitty_FnabJsioMWpBtXZSGf4DR.webp",
         },
       ],
       [
@@ -199,7 +200,11 @@ const Page = (props: { scripts?: ReactNode }) => {
           >
             {" or "}
           </Text>
-          <Link data-ws-id="8AXawjUE3fJoOH_1qOAoq" data-ws-component="Link">
+          <Link
+            data-ws-id="8AXawjUE3fJoOH_1qOAoq"
+            data-ws-component="Link"
+            href={"/assets/small-avif-kitty_FnabJsioMWpBtXZSGf4DR.webp"}
+          >
             {"go download this little kitten"}
           </Link>
           <Box data-ws-id="82HYqzxZeahPxSDFNWem5" data-ws-component="Box" />
@@ -211,7 +216,13 @@ const Page = (props: { scripts?: ReactNode }) => {
           </Link>
         </Box>
         <Box data-ws-id="qPnkiFGDj8dITWb1kmpGl" data-ws-component="Box">
-          <Image data-ws-id="pX1ovPI7NdC0HRjkw6Kpw" data-ws-component="Image" />
+          <Image
+            data-ws-id="pX1ovPI7NdC0HRjkw6Kpw"
+            data-ws-component="Image"
+            src={
+              "/assets/_937084ed-a798-49fe-8664-df93a2af605e_uiBk3o6UWdqolyakMvQJ9.jpeg"
+            }
+          />
         </Box>
       </Box>
       {props.scripts}
