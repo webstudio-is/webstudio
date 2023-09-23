@@ -1,13 +1,12 @@
 {
-  "private": true,
-  "sideEffects": false,
   "scripts": {
+    "start": "remix-serve build",
     "build": "remix build",
     "dev": "remix dev",
-    "start": "remix-serve build",
-    "typecheck": "tsc",
-    "checks": "pnpm typecheck"
+    "typecheck": "tsc"
   },
+  "private": true,
+  "sideEffects": false,
   "dependencies": {
     "@remix-run/react": "^1.19.2",
     "@remix-run/server-runtime": "^1.19.2",
@@ -29,7 +28,6 @@
     "@types/react": "^18.2.20",
     "@types/react-dom": "^18.2.7",
     "@webstudio-is/http-client": "workspace:*",
-    "eslint": "^8.48.0",
     "typescript": "5.2.2",
     "webstudio-cli": "workspace:*"
   },

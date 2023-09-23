@@ -69,6 +69,19 @@ export const pageData: PageData = {
           value: "/assets/small-avif-kitty_FnabJsioMWpBtXZSGf4DR.webp",
         },
       ],
+      [
+        "z8GMy7HFi_j_felIKxGP5",
+        {
+          id: "z8GMy7HFi_j_felIKxGP5",
+          instanceId: "81ejLVXyFEV1SxiJrWhyw",
+          name: "href",
+          type: "page",
+          value: {
+            pageId: "-J9I4Oo6mONfQlf_3-OqG",
+            instanceId: "qmxnOlSxUGpuhuonVArWJ",
+          },
+        },
+      ],
     ],
   },
   pages: [
@@ -103,6 +116,14 @@ export const pageData: PageData = {
       meta: { description: "" },
       rootInstanceId: "a-4nDFkaWy4px1fn38XWJ",
       path: "/form",
+    },
+    {
+      id: "-J9I4Oo6mONfQlf_3-OqG",
+      name: "heading-with-id",
+      title: "heading-with-id",
+      meta: { description: "" },
+      rootInstanceId: "O-ljaGZQ0iRNTlEshMkgE",
+      path: "/heading-with-id",
     },
   ],
   page: {
@@ -189,6 +210,9 @@ const Page = (props: { scripts?: ReactNode }) => {
           <Box data-ws-id="82HYqzxZeahPxSDFNWem5" data-ws-component="Box" />
           <Link data-ws-id="9I4GRU1sev48hREkQcKQ-" data-ws-component="Link">
             {"Symbols in path"}
+          </Link>
+          <Link data-ws-id="81ejLVXyFEV1SxiJrWhyw" data-ws-component="Link">
+            {"Link to instance"}
           </Link>
         </Box>
         <Box data-ws-id="qPnkiFGDj8dITWb1kmpGl" data-ws-component="Box">

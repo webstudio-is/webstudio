@@ -4,7 +4,6 @@
   "scripts": {
     "build": "remix build",
     "dev": "remix dev",
-    "start": "remix-serve build",
     "typecheck": "tsc"
   },
   "dependencies": {
@@ -28,7 +27,6 @@
     "@types/react": "^18.2.20",
     "@types/react-dom": "^18.2.7",
     "@webstudio-is/http-client": "^0.100.0",
-    "eslint": "^8.48.0",
     "typescript": "5.2.2"
   },
   "engines": {

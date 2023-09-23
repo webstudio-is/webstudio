@@ -47,7 +47,12 @@ import * as baseComponentMetas from "@webstudio-is/sdk-components-react/metas";
 import * as remixComponentMetas from "@webstudio-is/sdk-components-react-remix/metas";
 import * as radixComponentMetas from "@webstudio-is/sdk-components-react-radix/metas";
 import { LOCAL_DATA_FILE } from "./config";
-import { ensureFileInPath, ensureFolderExists, loadJSONFile } from "./fs-utils";
+import {
+  ensureFileInPath,
+  ensureFolderExists,
+  loadJSONFile,
+  isFileExists,
+} from "./fs-utils";
 import type * as sharedConstants from "~/constants.mjs";
 import type { PageData } from "../templates/route-template";
 
@@ -171,10 +176,12 @@ const copyTemplates = async (template: string = "defaults") => {
     },
   });
 
-  await mergeJsonFiles(
-    join(templatesPath, "package.json"),
-    join(cwd(), "package.json")
-  );
+  if ((await isFileExists(join(templatesPath, "package.json"))) === true) {
+    await mergeJsonFiles(
+      join(templatesPath, "package.json"),
+      join(cwd(), "package.json")
+    );
+  }
 };
 
 export const prebuild = async (options: {
