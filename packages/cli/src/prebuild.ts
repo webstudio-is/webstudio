@@ -200,6 +200,7 @@ export const prebuild = async (options: {
 }) => {
   if (
     options.template !== undefined &&
+    options.template.startsWith("./") === false &&
     PROJECT_TEMPALTES.includes(options.template) === false
   ) {
     throw Error(
