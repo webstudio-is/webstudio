@@ -5,6 +5,7 @@
     "dev": "remix dev",
     "typecheck": "tsc",
     "start": "remix-serve build",
+    "checks": "pnpm typecheck",
     "size-test": "rm -rf ./public && remix build && size-limit"
   },
   "private": true,

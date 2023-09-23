@@ -10,6 +10,7 @@ import {
   Box as Box,
   Paragraph as Paragraph,
   Image as Image,
+  Text as Text,
 } from "@webstudio-is/sdk-components-react";
 import { Link as Link } from "@webstudio-is/sdk-components-react-remix";
 
@@ -47,6 +48,39 @@ export const pageData: PageData = {
           value: "szYLvBduHPmbtqQKCDY0b",
         },
       ],
+      [
+        "qk_m-CJJD4kY_F07wADHU",
+        {
+          id: "qk_m-CJJD4kY_F07wADHU",
+          instanceId: "D8wLZzLWQfxH9uaKsn-0L",
+          name: "tag",
+          type: "string",
+          value: "span",
+        },
+      ],
+      [
+        "GmWaLJTu_cVzrs8-chvQ4",
+        {
+          id: "GmWaLJTu_cVzrs8-chvQ4",
+          instanceId: "8AXawjUE3fJoOH_1qOAoq",
+          name: "href",
+          type: "asset",
+          value: "9a8bc926-7804-4d3f-af81-69196b1d2ed8",
+        },
+      ],
+      [
+        "z8GMy7HFi_j_felIKxGP5",
+        {
+          id: "z8GMy7HFi_j_felIKxGP5",
+          instanceId: "81ejLVXyFEV1SxiJrWhyw",
+          name: "href",
+          type: "page",
+          value: {
+            pageId: "-J9I4Oo6mONfQlf_3-OqG",
+            instanceId: "qmxnOlSxUGpuhuonVArWJ",
+          },
+        },
+      ],
     ],
   },
   pages: [
@@ -81,6 +115,14 @@ export const pageData: PageData = {
       meta: { description: "" },
       rootInstanceId: "a-4nDFkaWy4px1fn38XWJ",
       path: "/form",
+    },
+    {
+      id: "-J9I4Oo6mONfQlf_3-OqG",
+      name: "heading-with-id",
+      title: "heading-with-id",
+      meta: { description: "" },
+      rootInstanceId: "O-ljaGZQ0iRNTlEshMkgE",
+      path: "/heading-with-id",
     },
   ],
   page: {
@@ -150,9 +192,22 @@ const Page = (props: { scripts?: ReactNode }) => {
           >
             {"Click here to adore more kittens"}
           </Link>
+          <Text
+            data-ws-id="D8wLZzLWQfxH9uaKsn-0L"
+            data-ws-component="Text"
+            tag={"span"}
+          >
+            {" or "}
+          </Text>
+          <Link data-ws-id="8AXawjUE3fJoOH_1qOAoq" data-ws-component="Link">
+            {"go download this little kitten"}
+          </Link>
           <Box data-ws-id="82HYqzxZeahPxSDFNWem5" data-ws-component="Box" />
           <Link data-ws-id="9I4GRU1sev48hREkQcKQ-" data-ws-component="Link">
             {"Symbols in path"}
+          </Link>
+          <Link data-ws-id="81ejLVXyFEV1SxiJrWhyw" data-ws-component="Link">
+            {"Link to instance"}
           </Link>
         </Box>
         <Box data-ws-id="qPnkiFGDj8dITWb1kmpGl" data-ws-component="Box">

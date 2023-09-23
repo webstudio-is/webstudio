@@ -6,7 +6,7 @@ import type { PageData } from "~/routes/_index";
 import type { Asset } from "@webstudio-is/sdk";
 import {
   Body as Body,
-  Image as Image,
+  Heading as Heading,
 } from "@webstudio-is/sdk-components-react";
 
 export const fontAssets: Asset[] = [];
@@ -14,13 +14,13 @@ export const pageData: PageData = {
   build: {
     props: [
       [
-        "HNaXZUvlg14jFvxc29n9T",
+        "bCTT4ssGpfxQfmKk3mONc",
         {
-          id: "HNaXZUvlg14jFvxc29n9T",
-          instanceId: "AdXSAYCx4QDo5QN6nLoGs",
-          name: "src",
-          type: "asset",
-          value: "9a8bc926-7804-4d3f-af81-69196b1d2ed8",
+          id: "bCTT4ssGpfxQfmKk3mONc",
+          instanceId: "qmxnOlSxUGpuhuonVArWJ",
+          name: "id",
+          type: "string",
+          value: "my-heading",
         },
       ],
     ],
@@ -68,12 +68,12 @@ export const pageData: PageData = {
     },
   ],
   page: {
-    id: "szYLvBduHPmbtqQKCDY0b",
-    name: "RouteWithSymbols",
-    title: "RouteWithSymbols",
+    id: "-J9I4Oo6mONfQlf_3-OqG",
+    name: "heading-with-id",
+    title: "heading-with-id",
     meta: { description: "" },
-    rootInstanceId: "EDEfpMPRqDejthtwkH7ws",
-    path: "/_route_with_symbols_",
+    rootInstanceId: "O-ljaGZQ0iRNTlEshMkgE",
+    path: "/heading-with-id",
   },
   assets: [
     {
@@ -107,8 +107,14 @@ export const projectId = "cddc1d44-af37-4cb6-a430-d300cf6f932d";
 
 const Page = (props: { scripts?: ReactNode }) => {
   return (
-    <Body data-ws-id="EDEfpMPRqDejthtwkH7ws" data-ws-component="Body">
-      <Image data-ws-id="AdXSAYCx4QDo5QN6nLoGs" data-ws-component="Image" />
+    <Body data-ws-id="O-ljaGZQ0iRNTlEshMkgE" data-ws-component="Body">
+      <Heading
+        data-ws-id="qmxnOlSxUGpuhuonVArWJ"
+        data-ws-component="Heading"
+        id={"my-heading"}
+      >
+        {"Heading you can edit"}
+      </Heading>
       {props.scripts}
     </Body>
   );
