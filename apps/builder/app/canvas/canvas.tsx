@@ -32,6 +32,7 @@ import { useCanvasShortcuts } from "./canvas-shortcuts";
 import { useManageDesignModeStyles, GlobalStyles } from "./shared/styles";
 import {
   WebstudioComponentCanvas,
+  WebstudioComponentContext,
   WebstudioComponentPreview,
 } from "./features/webstudio-component";
 import {
@@ -124,28 +125,32 @@ const useElementsTree = (
   }, [params.assetBaseUrl, pagesMapStore]);
 
   return useMemo(() => {
-    return createElementsTree({
-      renderer: isPreviewMode ? "preview" : "canvas",
-      imageBaseUrl: params.imageBaseUrl,
-      assetBaseUrl: params.assetBaseUrl,
-      imageLoader,
-      instances,
-      rootInstanceId,
-      indexesWithinAncestors,
-      propsByInstanceIdStore,
-      assetsStore,
-      dataSourcesLogicStore,
-      Component: isPreviewMode
-        ? WebstudioComponentPreview
-        : WebstudioComponentCanvas,
-      components,
-      scripts: (
-        <>
-          <ScrollRestoration />
-          <Scripts />
-        </>
-      ),
-    });
+    return (
+      <WebstudioComponentContext.Provider value={{ propsByInstanceIdStore }}>
+        {createElementsTree({
+          renderer: isPreviewMode ? "preview" : "canvas",
+          imageBaseUrl: params.imageBaseUrl,
+          assetBaseUrl: params.assetBaseUrl,
+          imageLoader,
+          instances,
+          rootInstanceId,
+          indexesWithinAncestors,
+          propsByInstanceIdStore,
+          assetsStore,
+          dataSourcesLogicStore,
+          Component: isPreviewMode
+            ? WebstudioComponentPreview
+            : WebstudioComponentCanvas,
+          components,
+          scripts: (
+            <>
+              <ScrollRestoration />
+              <Scripts />
+            </>
+          ),
+        })}
+      </WebstudioComponentContext.Provider>
+    );
   }, [
     params,
     instances,
