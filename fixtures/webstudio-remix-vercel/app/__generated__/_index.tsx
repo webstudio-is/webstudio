@@ -73,20 +73,10 @@ export const pageData: PageData = {
         "z8GMy7HFi_j_felIKxGP5",
         {
           id: "z8GMy7HFi_j_felIKxGP5",
-<<<<<<< HEAD
-          instanceId: "81ejLVXyFEV1SxiJrWhyw",
-          name: "href",
-          type: "page",
-          value: {
-            pageId: "-J9I4Oo6mONfQlf_3-OqG",
-            instanceId: "qmxnOlSxUGpuhuonVArWJ",
-          },
-=======
           name: "href",
           instanceId: "81ejLVXyFEV1SxiJrWhyw",
           type: "string",
           value: "/heading-with-id#my-heading",
->>>>>>> cc73fb384 (perf: generate page prop for links)
         },
       ],
     ],
@@ -222,15 +212,11 @@ const Page = (props: { scripts?: ReactNode }) => {
           >
             {"Symbols in path"}
           </Link>
-<<<<<<< HEAD
-          <Link data-ws-id="81ejLVXyFEV1SxiJrWhyw" data-ws-component="Link">
-=======
           <Link
             data-ws-id="81ejLVXyFEV1SxiJrWhyw"
             data-ws-component="Link"
             href={"/heading-with-id#my-heading"}
           >
->>>>>>> cc73fb384 (perf: generate page prop for links)
             {"Link to instance"}
           </Link>
         </Box>
