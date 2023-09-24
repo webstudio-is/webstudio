@@ -19,7 +19,6 @@ export {
   getPropsByInstanceId,
   getInstanceIdFromComponentProps,
   getIndexWithinAncestorFromComponentProps,
-  usePages,
 } from "./props";
 export { type Params, ReactSdkContext } from "./context";
 export {

@@ -1,6 +1,7 @@
-import type { Props } from "@webstudio-is/sdk";
+import type { Pages, Props } from "@webstudio-is/sdk";
 
 type PageData = {
+  pages: Pages;
   props: Props;
 };
 
@@ -8,6 +9,17 @@ type PageData = {
  * Generates data based utilities at build time
  */
 export const generateUtilsExport = (siteData: PageData) => {
+  // list of paths from pages to use framework link component
+  // for ui routes
+  const pagesPaths: string[] = [siteData.pages.homePage.path];
+  for (const page of siteData.pages.pages) {
+    pagesPaths.push(page.path);
+  }
+  const generatedPagesPaths = `export const pagesPaths = new Set(${JSON.stringify(
+    pagesPaths
+  )})`;
+
+  // method and action per instance extracted from props
   const formsProperties = new Map<
     string,
     { method?: string; action?: string }
@@ -29,6 +41,8 @@ export const generateUtilsExport = (siteData: PageData) => {
   )})`;
 
   return `
+  ${generatedPagesPaths}
+
   ${generatedFormsProperties}
   `;
 };

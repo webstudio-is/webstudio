@@ -9,12 +9,6 @@ export type PropsByInstanceId = Map<Instance["id"], Prop[]>;
 
 export type Pages = Map<Page["id"], Page>;
 
-export const usePages = (): Pages => {
-  const { pagesStore } = useContext(ReactSdkContext);
-  const pages = useStore(pagesStore);
-  return pages;
-};
-
 export const normalizeProps = ({
   props,
   assetBaseUrl,
