@@ -22,7 +22,7 @@ export const wrapLinkComponent = (BaseLink: typeof Link) => {
     // use remix link when url references webstudio page
     if (href !== undefined) {
       const url = new URL(href, "https://any-valid.url");
-      if (pagesPaths.has(url.pathname)) {
+      if (pagesPaths.has(url.pathname === "/" ? "" : url.pathname)) {
         return <RemixLink {...props} to={href} ref={ref} />;
       }
     }
