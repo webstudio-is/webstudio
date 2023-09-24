@@ -281,8 +281,15 @@ export const prebuild = async (options: {
       siteData.build.instances.filter(([id]) => pageInstanceSet.has(id));
     const dataSources: [DataSource["id"], DataSource][] = [];
 
+    // use whole project props to access id props from other pages
+    const normalizedProps = normalizeProps({
+      props: siteData.build.props.map(([_id, prop]) => prop),
+      assetBaseUrl,
+      assets: new Map(siteData.assets.map((asset) => [asset.id, asset])),
+      pages: new Map(siteData.pages.map((page) => [page.id, page])),
+    });
     const props: [Prop["id"], Prop][] = [];
-    for (const [_propId, prop] of siteData.build.props) {
+    for (const prop of normalizedProps) {
       if (pageInstanceSet.has(prop.instanceId)) {
         props.push([prop.id, prop]);
       }
@@ -444,17 +451,10 @@ export const prebuild = async (options: {
     }
 
     const pageData = siteDataByPage[pathName];
-    const props = new Map(
-      normalizeProps({
-        props: pageData.build.props.map(([_id, prop]) => prop),
-        assetBaseUrl,
-        assets: new Map(pageData.assets.map((asset) => [asset.id, asset])),
-      }).map((prop) => [prop.id, prop])
-    );
     // serialize data only used in runtime
     const renderedPageData: PageData = {
       build: {
-        props: Array.from(props.entries()),
+        props: pageData.build.props,
       },
       pages: pageData.pages,
       page: pageData.page,
@@ -463,6 +463,7 @@ export const prebuild = async (options: {
 
     const rootInstanceId = pageData.page.rootInstanceId;
     const instances = new Map(pageData.build.instances);
+    const props = new Map(pageData.build.props);
     const dataSources = new Map(pageData.build.dataSources);
     const utilsExport = generateUtilsExport({
       props,

@@ -43,10 +43,10 @@ export const pageData: PageData = {
         "tUn-hTQ0dKjsaRZ4q3m21",
         {
           id: "tUn-hTQ0dKjsaRZ4q3m21",
-          instanceId: "9I4GRU1sev48hREkQcKQ-",
           name: "href",
-          type: "page",
-          value: "szYLvBduHPmbtqQKCDY0b",
+          instanceId: "9I4GRU1sev48hREkQcKQ-",
+          type: "string",
+          value: "/_route_with_symbols_",
         },
       ],
       [
@@ -73,13 +73,10 @@ export const pageData: PageData = {
         "z8GMy7HFi_j_felIKxGP5",
         {
           id: "z8GMy7HFi_j_felIKxGP5",
-          instanceId: "81ejLVXyFEV1SxiJrWhyw",
           name: "href",
-          type: "page",
-          value: {
-            pageId: "-J9I4Oo6mONfQlf_3-OqG",
-            instanceId: "qmxnOlSxUGpuhuonVArWJ",
-          },
+          instanceId: "81ejLVXyFEV1SxiJrWhyw",
+          type: "string",
+          value: "/heading-with-id#my-heading",
         },
       ],
     ],
@@ -208,10 +205,18 @@ const Page = (props: { scripts?: ReactNode }) => {
             {"go download this little kitten"}
           </Link>
           <Box data-ws-id="82HYqzxZeahPxSDFNWem5" data-ws-component="Box" />
-          <Link data-ws-id="9I4GRU1sev48hREkQcKQ-" data-ws-component="Link">
+          <Link
+            data-ws-id="9I4GRU1sev48hREkQcKQ-"
+            data-ws-component="Link"
+            href={"/_route_with_symbols_"}
+          >
             {"Symbols in path"}
           </Link>
-          <Link data-ws-id="81ejLVXyFEV1SxiJrWhyw" data-ws-component="Link">
+          <Link
+            data-ws-id="81ejLVXyFEV1SxiJrWhyw"
+            data-ws-component="Link"
+            href={"/heading-with-id#my-heading"}
+          >
             {"Link to instance"}
           </Link>
         </Box>
