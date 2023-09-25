@@ -114,7 +114,7 @@ const useElementsTree = (
           props: Array.from(props.values()),
           assetBaseUrl: params.assetBaseUrl,
           assets,
-          pages: pages,
+          pages,
         });
         return getPropsByInstanceId(
           new Map(normalizedProps.map((prop) => [prop.id, prop]))
@@ -134,7 +134,6 @@ const useElementsTree = (
       indexesWithinAncestors,
       propsByInstanceIdStore,
       assetsStore,
-      pagesStore: pagesMapStore,
       dataSourcesLogicStore,
       Component: isPreviewMode
         ? WebstudioComponentPreview
@@ -152,7 +151,6 @@ const useElementsTree = (
     instances,
     rootInstanceId,
     components,
-    pagesMapStore,
     propsByInstanceIdStore,
     isPreviewMode,
     indexesWithinAncestors,

@@ -8,7 +8,7 @@ import type { ReadableAtom } from "nanostores";
 import type { Instance, Instances, Assets } from "@webstudio-is/sdk";
 import type { Components } from "../components/components-utils";
 import { type Params, ReactSdkContext } from "../context";
-import type { Pages, PropsByInstanceId } from "../props";
+import type { PropsByInstanceId } from "../props";
 import type { WebstudioComponentProps } from "./webstudio-component";
 import type { IndexesWithinAncestors } from "../instance-utils";
 import type { ImageLoader } from "@webstudio-is/image";
@@ -24,7 +24,6 @@ export const createElementsTree = ({
   rootInstanceId,
   propsByInstanceIdStore,
   assetsStore,
-  pagesStore,
   dataSourcesLogicStore,
   indexesWithinAncestors,
   Component,
@@ -36,7 +35,6 @@ export const createElementsTree = ({
   rootInstanceId: Instance["id"];
   propsByInstanceIdStore: ReadableAtom<PropsByInstanceId>;
   assetsStore: ReadableAtom<Assets>;
-  pagesStore: ReadableAtom<Pages>;
   dataSourcesLogicStore: ReadableAtom<Map<string, unknown>>;
   indexesWithinAncestors: IndexesWithinAncestors;
 
@@ -76,10 +74,10 @@ export const createElementsTree = ({
       value={{
         propsByInstanceIdStore,
         assetsStore,
-        pagesStore,
         dataSourcesLogicStore,
         renderer,
         imageLoader,
+        pagesPaths: new Set(),
         assetBaseUrl,
         imageBaseUrl,
         indexesWithinAncestors,

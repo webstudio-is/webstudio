@@ -237,6 +237,14 @@ const Page = (props: { scripts?: ReactNode }) => {
 
 export { Page };
 
+export const pagesPaths = new Set([
+  "",
+  "/radix",
+  "/_route_with_symbols_",
+  "/form",
+  "/heading-with-id",
+]);
+
 export const formsProperties = new Map<
   string,
   { method?: string; action?: string }

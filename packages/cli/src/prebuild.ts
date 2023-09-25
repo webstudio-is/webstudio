@@ -466,6 +466,7 @@ export const prebuild = async (options: {
     const props = new Map(pageData.build.props);
     const dataSources = new Map(pageData.build.dataSources);
     const utilsExport = generateUtilsExport({
+      pages: siteData.build.pages,
       props,
     });
     const pageComponent = generatePageComponent({
