@@ -4,7 +4,10 @@
     "start": "netlify serve",
     "build": "remix build",
     "dev": "remix dev",
-    "typecheck": "tsc"
+    "typecheck": "tsc",
+    "fixtures:link": "webstudio-cli link --link 'https://webstudio-builder-git-main-webstudio-is.vercel.app/builder/d845c167-ea07-4875-b08d-83e97c09dcce?authToken=e9d1343f-9298-4fd3-a66e-f89a5af2dd93'",
+    "fixtures:sync": "webstudio-cli sync && pnpm prettier --write ./.webstudio/",
+    "fixtures:build": "webstudio-cli build --template netlify-functions --preview && pnpm prettier --write ./app/ ./package.json"
   },
   "dependencies": {
     "@netlify/functions": "^1.3.0",
