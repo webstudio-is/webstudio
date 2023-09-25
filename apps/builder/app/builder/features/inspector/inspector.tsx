@@ -1,4 +1,5 @@
 import { useRef, useState } from "react";
+import { computed } from "nanostores";
 import { useStore } from "@nanostores/react";
 import type { Instance } from "@webstudio-is/sdk";
 import {
@@ -20,8 +21,8 @@ import { SettingsPanelContainer } from "~/builder/features/settings-panel";
 import { FloatingPanelProvider } from "~/builder/shared/floating-panel";
 import {
   selectedInstanceStore,
-  isDraggingStore,
   registeredComponentMetasStore,
+  $dragAndDropState,
 } from "~/shared/nano-states";
 import { NavigatorTree } from "~/builder/shared/navigator-tree";
 import type { Settings } from "~/builder/shared/client-settings";
@@ -66,11 +67,13 @@ const contentStyle = {
   overflow: "auto",
 };
 
+const $isDragging = computed([$dragAndDropState], (state) => state.isDragging);
+
 export const Inspector = ({ publish, navigatorLayout }: InspectorProps) => {
   const selectedInstance = useStore(selectedInstanceStore);
   const tabsRef = useRef<HTMLDivElement>(null);
   const [tab, setTab] = useState("style");
-  const isDragging = useStore(isDraggingStore);
+  const isDragging = useStore($isDragging);
   const metas = useStore(registeredComponentMetasStore);
 
   if (navigatorLayout === "docked" && isDragging) {

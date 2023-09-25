@@ -3,9 +3,9 @@ import type { Publish } from "~/shared/pubsub";
 import { css } from "@webstudio-is/design-system";
 import { PlacementIndicator } from "@webstudio-is/design-system";
 import {
-  useDragAndDropState,
   instancesStore,
   $isPreviewMode,
+  $dragAndDropState,
 } from "~/shared/nano-states";
 import { HoveredInstanceOutline, SelectedInstanceOutline } from "./outline";
 import { TextToolbar } from "./text-toolbar";
@@ -39,7 +39,7 @@ export const CanvasTools = ({ publish }: CanvasToolsProps) => {
   useSubscribeDragAndDropState();
 
   const isPreviewMode = useStore($isPreviewMode);
-  const [dragAndDropState] = useDragAndDropState();
+  const dragAndDropState = useStore($dragAndDropState);
   const instances = useStore(instancesStore);
   const scale = useStore(scaleStore);
   if (
