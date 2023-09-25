@@ -438,7 +438,7 @@ importers:
         specifier: workspace:*
         version: link:../../packages/cli
 
-  fixtures/webstudio-remix-netlify:
+  fixtures/webstudio-remix-netlify-edge-functions:
     dependencies:
       '@netlify/edge-functions':
         specifier: ^2.0.0
