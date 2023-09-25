@@ -3,9 +3,9 @@ import type { Publish } from "~/shared/pubsub";
 import { css } from "@webstudio-is/design-system";
 import { PlacementIndicator } from "@webstudio-is/design-system";
 import {
-  useIsPreviewMode,
   useDragAndDropState,
   instancesStore,
+  $isPreviewMode,
 } from "~/shared/nano-states";
 import { HoveredInstanceOutline, SelectedInstanceOutline } from "./outline";
 import { TextToolbar } from "./text-toolbar";
@@ -38,7 +38,7 @@ export const CanvasTools = ({ publish }: CanvasToolsProps) => {
   // @todo try to setup cross-frame atoms to avoid this
   useSubscribeDragAndDropState();
 
-  const [isPreviewMode] = useIsPreviewMode();
+  const isPreviewMode = useStore($isPreviewMode);
   const [dragAndDropState] = useDragAndDropState();
   const instances = useStore(instancesStore);
   const scale = useStore(scaleStore);

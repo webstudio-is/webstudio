@@ -1,5 +1,5 @@
 import { findPageByIdOrPath } from "@webstudio-is/project-build";
-import { isPreviewModeStore, pagesStore } from "~/shared/nano-states";
+import { $isPreviewMode, pagesStore } from "~/shared/nano-states";
 import { switchPage } from "~/shared/pages";
 
 const isAbsoluteUrl = (href: string) => {
@@ -37,7 +37,7 @@ export const subscribeInterceptedEvents = () => {
       const a = event.target.closest("a");
       if (a) {
         event.preventDefault();
-        if (isPreviewModeStore.get()) {
+        if ($isPreviewMode.get()) {
           handleLinkClick(a);
         }
       }
@@ -48,7 +48,7 @@ export const subscribeInterceptedEvents = () => {
     event.preventDefault();
   };
   const handleKeydown = (event: KeyboardEvent) => {
-    if (isPreviewModeStore.get()) {
+    if ($isPreviewMode.get()) {
       return;
     }
     // prevent typing in inputs only in canvas mode

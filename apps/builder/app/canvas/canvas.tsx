@@ -39,7 +39,6 @@ import {
   assetsStore,
   pagesStore,
   instancesStore,
-  useIsPreviewMode,
   selectedPageStore,
   registerComponentLibrary,
   registeredComponentsStore,
@@ -47,6 +46,7 @@ import {
   subscribeComponentHooks,
   dataSourcesLogicStore,
   propsStore,
+  $isPreviewMode,
 } from "~/shared/nano-states";
 import { useDragAndDrop } from "./shared/use-drag-drop";
 import { useCopyPaste } from "~/shared/copy-paste";
@@ -70,7 +70,7 @@ const useElementsTree = (
 ) => {
   const metas = useStore(registeredComponentMetasStore);
   const page = useStore(selectedPageStore);
-  const [isPreviewMode] = useIsPreviewMode();
+  const isPreviewMode = useStore($isPreviewMode);
   const rootInstanceId = page?.rootInstanceId ?? "";
 
   if (typeof window === "undefined") {
@@ -190,7 +190,7 @@ export const Canvas = ({
 }: CanvasProps): JSX.Element | null => {
   const handshaken = useStore(handshakenStore);
   useCanvasStore(publish);
-  const [isPreviewMode] = useIsPreviewMode();
+  const isPreviewMode = useStore($isPreviewMode);
 
   useMount(() => {
     registerComponentLibrary({

@@ -22,7 +22,7 @@ import {
   selectedInstanceIntanceToTagStore,
   selectedInstanceRenderStateStore,
   hoveredInstanceSelectorStore,
-  isPreviewModeStore,
+  $isPreviewMode,
   synchronizedCanvasStores,
   synchronizedInstancesStores,
   synchronizedBreakpointsStores,
@@ -94,7 +94,7 @@ export const registerContainers = () => {
     selectedInstanceRenderStateStore
   );
   clientStores.set("hoveredInstanceSelector", hoveredInstanceSelectorStore);
-  clientStores.set("isPreviewMode", isPreviewModeStore);
+  clientStores.set("isPreviewMode", $isPreviewMode);
   clientStores.set(
     "selectedStyleSourceSelector",
     selectedStyleSourceSelectorStore
