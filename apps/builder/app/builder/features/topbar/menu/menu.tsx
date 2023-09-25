@@ -28,10 +28,11 @@ import {
 } from "~/shared/theme";
 import { useClientSettings } from "~/builder/shared/client-settings";
 import { dashboardPath } from "~/shared/router-utils";
-import { useIsPreviewMode } from "~/shared/nano-states";
+import { $isPreviewMode } from "~/shared/nano-states";
 import { deleteSelectedInstance } from "~/shared/instance-utils";
 import { MenuButton } from "./menu-button";
 import { useAuthPermit } from "~/shared/nano-states";
+import { useStore } from "@nanostores/react";
 
 const ThemeMenuItem = () => {
   if (isFeatureEnabled("dark") === false) {
@@ -98,7 +99,7 @@ export const Menu = ({ publish }: MenuProps) => {
   const navigate = useNavigate();
   const [, setIsShareOpen] = useIsShareDialogOpen();
   const [, setIsPublishOpen] = useIsPublishDialogOpen();
-  const [isPreviewMode, setIsPreviewMode] = useIsPreviewMode();
+  const isPreviewMode = useStore($isPreviewMode);
   const [authPermit] = useAuthPermit();
 
   const isPublishEnabled = authPermit === "own" || authPermit === "admin";
@@ -186,7 +187,7 @@ export const Menu = ({ publish }: MenuProps) => {
           <ViewMenuItem />
           <DropdownMenuItem
             onSelect={() => {
-              setIsPreviewMode(!isPreviewMode);
+              $isPreviewMode.set(isPreviewMode === false);
             }}
           >
             Preview

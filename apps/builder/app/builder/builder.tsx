@@ -1,4 +1,5 @@
 import { useCallback, useEffect } from "react";
+import { useStore } from "@nanostores/react";
 import { useUnmount } from "react-use";
 import { TooltipProvider } from "@radix-ui/react-tooltip";
 import { type Publish, usePublish } from "~/shared/pubsub";
@@ -30,19 +31,18 @@ import {
   breakpointsStore,
   dataSourcesStore,
   instancesStore,
+  $isPreviewMode,
   pagesStore,
   projectStore,
   propsStore,
   styleSourceSelectionsStore,
   styleSourcesStore,
   stylesStore,
-  useIsPreviewMode,
 } from "~/shared/nano-states";
 import { type Settings, useClientSettings } from "./shared/client-settings";
 import { getBuildUrl } from "~/shared/router-utils";
 import { useCopyPaste } from "~/shared/copy-paste";
 import { BlockingAlerts } from "./features/blocking-alerts";
-import { useStore } from "@nanostores/react";
 import { useSyncPageUrl } from "~/shared/pages";
 import { useMount } from "~/shared/hook-utils/use-mount";
 
@@ -270,7 +270,7 @@ export const Builder = ({
   });
   useSharedShortcuts({ source: "builder" });
 
-  const [isPreviewMode] = useIsPreviewMode();
+  const isPreviewMode = useStore($isPreviewMode);
   usePublishShortcuts(publish);
   const { onRef: onRefReadCanvas, onTransitionEnd } = useReadCanvasRect();
   // We need to initialize this in both canvas and builder,

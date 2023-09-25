@@ -328,8 +328,7 @@ export const hoveredInstanceSelectorStore = atom<undefined | InstanceSelector>(
   undefined
 );
 
-export const isPreviewModeStore = atom<boolean>(false);
-export const useIsPreviewMode = () => useValue(isPreviewModeStore);
+export const $isPreviewMode = atom<boolean>(false);
 
 export const authPermitStore = atom<AuthPermit>("view");
 export const useAuthPermit = () => useValue(authPermitStore);

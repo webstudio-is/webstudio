@@ -12,7 +12,7 @@ import {
   selectedPageIdStore,
   selectedPageHashStore,
   selectedInstanceSelectorStore,
-  isPreviewModeStore,
+  $isPreviewMode,
 } from "~/shared/nano-states";
 import { builderPath } from "~/shared/router-utils";
 
@@ -39,7 +39,7 @@ const setPageStateFromUrl = () => {
   const pageId = searchParams.get("pageId") ?? pages?.homePage.id;
   const pageHash = searchParams.get("pageHash") ?? "";
 
-  isPreviewModeStore.set(searchParams.get("mode") === "preview");
+  $isPreviewMode.set(searchParams.get("mode") === "preview");
 
   switchPage(pageId, pageHash);
 };
@@ -57,7 +57,7 @@ export const useSyncPageUrl = () => {
   const navigate = useNavigate();
   const page = useStore(selectedPageStore);
   const pageHash = useStore(selectedPageHashStore);
-  const isPreviewMode = useStore(isPreviewModeStore);
+  const isPreviewMode = useStore($isPreviewMode);
 
   // Get pageId and pageHash from URL
   useMount(() => {
