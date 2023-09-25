@@ -54,6 +54,8 @@ const Page = (props: { scripts?: ReactNode }) => {
 
 export { Page };
 
+export const pagesPaths = new Set([""]);
+
 export const formsProperties = new Map<
   string,
   { method?: string; action?: string }

@@ -1,9 +1,22 @@
 import { expect, test } from "@jest/globals";
 import { generateUtilsExport } from "./generator";
 
-test("generates utils", () => {
+const createPage = (path: string) => ({
+  id: "",
+  path,
+  name: "",
+  title: "",
+  rootInstanceId: "",
+  meta: {},
+});
+
+test("generates forms properties", () => {
   expect(
     generateUtilsExport({
+      pages: {
+        homePage: createPage("1"),
+        pages: [],
+      },
       props: new Map([
         [
           "method1Id",
@@ -41,7 +54,27 @@ test("generates utils", () => {
     })
   ).toMatchInlineSnapshot(`
   "
+    export const pagesPaths = new Set(["1"])
+
     export const formsProperties = new Map<string, { method?: string, action?: string }>([["1",{"method":"post"}],["2",{"method":"get","action":"/index.php"}]])
+    "
+  `);
+});
+
+test("generates list of pages paths", () => {
+  expect(
+    generateUtilsExport({
+      pages: {
+        homePage: createPage("/path1"),
+        pages: [createPage("/path2"), createPage("/path3")],
+      },
+      props: new Map(),
+    })
+  ).toMatchInlineSnapshot(`
+  "
+    export const pagesPaths = new Set(["/path1","/path2","/path3"])
+
+    export const formsProperties = new Map<string, { method?: string, action?: string }>([])
     "
   `);
 });

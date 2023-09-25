@@ -1,7 +1,7 @@
 import { type ReadableAtom, atom } from "nanostores";
 import { createContext } from "react";
-import type { Assets } from "@webstudio-is/sdk";
-import type { Pages, PropsByInstanceId } from "./props";
+import type { Assets, Page } from "@webstudio-is/sdk";
+import type { PropsByInstanceId } from "./props";
 import type { IndexesWithinAncestors } from "./instance-utils";
 import type { ImageLoader } from "@webstudio-is/image";
 
@@ -35,9 +35,14 @@ export type Params = {
 export const ReactSdkContext = createContext<
   Params & {
     imageLoader: ImageLoader;
+    /**
+     * List of pages paths for link component
+     * to navigate without reloading on published sites
+     * always empty for builder which handle anchor clicks globally
+     */
+    pagesPaths: Set<Page["path"]>;
     propsByInstanceIdStore: ReadableAtom<PropsByInstanceId>;
     assetsStore: ReadableAtom<Assets>;
-    pagesStore: ReadableAtom<Pages>;
     dataSourcesLogicStore: ReadableAtom<Map<string, unknown>>;
     indexesWithinAncestors: IndexesWithinAncestors;
   }
@@ -45,9 +50,9 @@ export const ReactSdkContext = createContext<
   assetBaseUrl: "/",
   imageBaseUrl: "/",
   imageLoader: ({ src }) => src,
+  pagesPaths: new Set(),
   propsByInstanceIdStore: atom(new Map()),
   assetsStore: atom(new Map()),
-  pagesStore: atom(new Map()),
   dataSourcesLogicStore: atom(new Map()),
   indexesWithinAncestors: new Map(),
 });

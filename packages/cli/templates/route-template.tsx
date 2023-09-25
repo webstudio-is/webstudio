@@ -15,6 +15,7 @@ import {
   pageData,
   user,
   projectId,
+  pagesPaths,
   formsProperties,
   Page,
 } from "../__generated__/index";
@@ -171,13 +172,11 @@ const Outlet = () => {
         assetsStore: atom(
           new Map(pageData.assets.map((asset) => [asset.id, asset]))
         ),
-        pagesStore: atom(
-          new Map(pageData.pages.map((page) => [page.id, page]))
-        ),
         dataSourcesLogicStore: atom(new Map()),
         imageLoader,
         assetBaseUrl,
         imageBaseUrl,
+        pagesPaths,
         indexesWithinAncestors: new Map(),
       }}
     >

@@ -4,7 +4,7 @@
   "version": "0.0.0",
   "private": true,
   "scripts": {
-    "build": "turbo run build",
+    "build": "turbo run build --filter='!./fixtures/*'",
     "build-packages": "turbo run build --filter=\"!@webstudio-is/builder\"",
     "dts": "turbo run dts",
     "size-test": "turbo run size-test",

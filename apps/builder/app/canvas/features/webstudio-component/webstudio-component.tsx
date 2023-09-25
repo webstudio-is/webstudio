@@ -4,12 +4,17 @@ import {
   type ForwardedRef,
   useRef,
   useLayoutEffect,
+  useContext,
+  useMemo,
+  createContext,
 } from "react";
 import { Suspense, lazy } from "react";
+import { computed, type Atom, atom } from "nanostores";
 import { useStore } from "@nanostores/react";
 import { useLexicalComposerContext } from "@lexical/react/LexicalComposerContext";
+import { mergeRefs } from "@react-aria/utils";
 import store from "immerhin";
-import type { Instance, Instances } from "@webstudio-is/sdk";
+import type { Instance, Instances, Prop } from "@webstudio-is/sdk";
 import { findTreeInstanceIds } from "@webstudio-is/sdk";
 import {
   type Components,
@@ -17,13 +22,17 @@ import {
   idAttribute,
   componentAttribute,
   showAttribute,
-  useInstanceProps,
   selectorIdAttribute,
+  indexAttribute,
+  getIndexesWithinAncestors,
 } from "@webstudio-is/react-sdk";
 import {
+  dataSourcesLogicStore,
   instancesStore,
+  registeredComponentMetasStore,
   selectedInstanceRenderStateStore,
   selectedInstanceSelectorStore,
+  selectedPageStore,
   selectedStyleSourceSelectorStore,
   useInstanceStyles,
 } from "~/shared/nano-states";
@@ -33,7 +42,6 @@ import {
   type InstanceSelector,
   areInstanceSelectorsEqual,
 } from "~/shared/tree-utils";
-import { mergeRefs } from "@react-aria/utils";
 import { setDataCollapsed } from "~/canvas/collapsed";
 import { getIsVisuallyHidden } from "~/shared/visually-hidden";
 
@@ -117,6 +125,68 @@ const getInstanceSelector = (
     }
   }
   return undefined;
+};
+
+const $indexesWithinAncestors = computed(
+  [registeredComponentMetasStore, instancesStore, selectedPageStore],
+  (metas, instances, page) => {
+    return getIndexesWithinAncestors(
+      metas,
+      instances,
+      page ? [page.rootInstanceId] : []
+    );
+  }
+);
+
+export const WebstudioComponentContext = createContext<{
+  propsByInstanceIdStore: Atom<Map<Instance["id"], Prop[]>>;
+}>({
+  propsByInstanceIdStore: atom(new Map()),
+});
+
+const useInstanceProps = (instanceId: Instance["id"]) => {
+  const { propsByInstanceIdStore } = useContext(WebstudioComponentContext);
+  const instancePropsObjectStore = useMemo(() => {
+    return computed(
+      [propsByInstanceIdStore, dataSourcesLogicStore, $indexesWithinAncestors],
+      (propsByInstanceId, dataSourcesLogic, indexesWithinAncestors) => {
+        const instancePropsObject: Record<Prop["name"], unknown> = {};
+        const index = indexesWithinAncestors.get(instanceId);
+        if (index !== undefined) {
+          instancePropsObject[indexAttribute] = index.toString();
+        }
+        const instanceProps = propsByInstanceId.get(instanceId);
+        if (instanceProps === undefined) {
+          return instancePropsObject;
+        }
+        for (const prop of instanceProps) {
+          // asset and page are normalized to string
+          if (prop.type === "asset" || prop.type === "page") {
+            continue;
+          }
+          if (prop.type === "dataSource") {
+            const dataSourceId = prop.value;
+            const value = dataSourcesLogic.get(dataSourceId);
+            if (value !== undefined) {
+              instancePropsObject[prop.name] = value;
+            }
+            continue;
+          }
+          if (prop.type === "action") {
+            const action = dataSourcesLogic.get(prop.id);
+            if (typeof action === "function") {
+              instancePropsObject[prop.name] = action;
+            }
+            continue;
+          }
+          instancePropsObject[prop.name] = prop.value;
+        }
+        return instancePropsObject;
+      }
+    );
+  }, [propsByInstanceIdStore, instanceId]);
+  const instancePropsObject = useStore(instancePropsObjectStore);
+  return instancePropsObject;
 };
 
 type WebstudioComponentProps = {

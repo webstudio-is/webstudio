@@ -1,13 +1,6 @@
-import { describe, test, expect } from "@jest/globals";
-import type { Page, Prop, Asset, Assets } from "@webstudio-is/sdk";
-import {
-  resolveUrlProp,
-  type Pages,
-  type PropsByInstanceId,
-  normalizeProps,
-} from "./props";
-
-const unique = () => Math.random().toString();
+import { test, expect } from "@jest/globals";
+import type { Prop } from "@webstudio-is/sdk";
+import { normalizeProps } from "./props";
 
 test("normalize asset prop into string", () => {
   expect(
@@ -38,6 +31,7 @@ test("normalize asset prop into string", () => {
           },
         ],
       ]),
+      pages: new Map(),
     })
   ).toEqual([
     {
@@ -50,189 +44,92 @@ test("normalize asset prop into string", () => {
   ]);
 });
 
-describe("resolveUrlProp", () => {
-  const instanceId = unique();
-  const projectId = unique();
-
-  const page1: Page = {
-    id: unique(),
-    path: `/${unique()}`,
-    name: "",
-    title: "",
-    meta: {},
-    rootInstanceId: "0",
-  };
-
-  const page2: Page = {
-    id: unique(),
-    path: `/${unique()}`,
-    name: "",
-    title: "",
-    meta: {},
-    rootInstanceId: "0",
-  };
-
-  const asset1: Asset = {
-    id: unique(),
-    name: unique(),
-    type: "image",
-    projectId,
-    format: "png",
-    size: 100000,
-    createdAt: new Date().toISOString(),
-    description: null,
-    meta: { width: 128, height: 180 },
-  };
-
-  const assetProp: Prop = {
-    type: "asset",
-    id: unique(),
-    instanceId,
-    name: unique(),
-    value: asset1.id,
-  };
-
-  const pageByIdProp: Prop = {
-    type: "page",
-    id: unique(),
-    instanceId,
-    name: unique(),
-    value: page1.id,
-  };
-
-  const instnaceIdProp: Prop = {
-    type: "string",
-    id: unique(),
-    instanceId: unique(),
-    name: "id",
-    value: unique(),
-  };
-
-  const pageSectionProp: Prop = {
-    type: "page",
-    id: unique(),
-    instanceId,
-    name: unique(),
-    value: { pageId: page1.id, instanceId: instnaceIdProp.instanceId },
-  };
-
-  const pageByPathProp: Prop = {
-    type: "string",
-    id: unique(),
-    instanceId,
-    name: unique(),
-    value: page2.path,
-  };
-
-  const arbitraryUrlProp: Prop = {
-    type: "string",
-    id: unique(),
-    instanceId,
-    name: unique(),
-    value: unique(),
-  };
-
-  const duplicatePropName = unique();
-
-  const duplicateUrlPropFirst: Prop = {
-    type: "string",
-    id: unique(),
-    instanceId,
-    name: duplicatePropName,
-    value: unique(),
-  };
-
-  const duplicateUrlPropSecond: Prop = {
-    type: "string",
-    id: unique(),
-    instanceId,
-    name: duplicatePropName,
-    value: unique(),
-  };
-
-  const props: PropsByInstanceId = new Map([
-    [
-      instanceId,
-      [
-        pageByIdProp,
-        pageByPathProp,
-        arbitraryUrlProp,
-        assetProp,
-        pageSectionProp,
-        duplicateUrlPropFirst,
-        duplicateUrlPropSecond,
+test("normalize page prop with path into string", () => {
+  expect(
+    normalizeProps({
+      props: [
+        {
+          id: "prop1",
+          instanceId: "instance1",
+          name: "href",
+          type: "page",
+          value: "page1Id",
+        },
       ],
-    ],
-    [instnaceIdProp.instanceId, [instnaceIdProp]],
+      assetBaseUrl: "",
+      assets: new Map(),
+      pages: new Map([
+        [
+          "page1Id",
+          {
+            id: "page1Id",
+            path: "page1",
+            rootInstanceId: "",
+            name: "",
+            title: "",
+            meta: {},
+          },
+        ],
+      ]),
+    })
+  ).toEqual([
+    {
+      id: "prop1",
+      instanceId: "instance1",
+      name: "href",
+      type: "string",
+      value: "/page1",
+    },
   ]);
+});
 
-  const pages: Pages = new Map([
-    [page1.id, page1],
-    [page2.id, page2],
-  ]);
-
-  const assets: Assets = new Map([[asset1.id, asset1]]);
-
-  const stores = {
-    assetBaseUrl: "/assets/",
-    props,
-    pages,
-    assets,
+test("normalize page prop with path and hash into string", () => {
+  const idProp: Prop = {
+    id: "prop1",
+    instanceId: "instance1",
+    name: "id",
+    type: "string",
+    value: "my anchor",
   };
-
-  test("if instanceId is unknown returns undefined", () => {
-    expect(
-      resolveUrlProp("unknown", pageByIdProp.name, stores)
-    ).toBeUndefined();
-  });
-
-  test("if prop name is unknown returns undefined", () => {
-    expect(resolveUrlProp(instanceId, "unknown", stores)).toBeUndefined();
-  });
-
-  test("asset by id", () => {
-    expect(resolveUrlProp(instanceId, assetProp.name, stores)).toEqual({
+  expect(
+    normalizeProps({
+      props: [
+        {
+          id: "prop1",
+          instanceId: "instance1",
+          name: "href",
+          type: "page",
+          value: {
+            pageId: "page1Id",
+            instanceId: "instance1",
+          },
+        },
+        idProp,
+      ],
+      assetBaseUrl: "",
+      assets: new Map(),
+      pages: new Map([
+        [
+          "page1Id",
+          {
+            id: "page1Id",
+            path: "page1",
+            rootInstanceId: "",
+            name: "",
+            title: "",
+            meta: {},
+          },
+        ],
+      ]),
+    })
+  ).toEqual([
+    {
+      id: "prop1",
+      instanceId: "instance1",
+      name: "href",
       type: "string",
-      url: `/assets/${asset1.name}`,
-    });
-  });
-
-  test("page by id", () => {
-    expect(resolveUrlProp(instanceId, pageByIdProp.name, stores)).toEqual({
-      type: "page",
-      page: page1,
-    });
-  });
-
-  test("page by path", () => {
-    expect(resolveUrlProp(instanceId, pageByPathProp.name, stores)).toEqual({
-      type: "page",
-      page: page2,
-    });
-  });
-
-  test("section on a page", () => {
-    expect(resolveUrlProp(instanceId, pageSectionProp.name, stores)).toEqual({
-      type: "page",
-      page: page1,
-      instanceId: instnaceIdProp.instanceId,
-      hash: instnaceIdProp.value,
-    });
-  });
-
-  test("arbitrary url", () => {
-    expect(resolveUrlProp(instanceId, arbitraryUrlProp.name, stores)).toEqual({
-      type: "string",
-      url: arbitraryUrlProp.value,
-    });
-  });
-
-  // We had a bug that some props were duplicated https://github.com/webstudio-is/webstudio/pull/2170
-  // Use the latest prop to ensure consistency with the builder settings panel.
-  test("duplicate prop name", () => {
-    expect(resolveUrlProp(instanceId, duplicatePropName, stores)).toEqual({
-      type: "string",
-      url: duplicateUrlPropSecond.value,
-    });
-  });
+      value: "/page1#my%20anchor",
+    },
+    idProp,
+  ]);
 });
