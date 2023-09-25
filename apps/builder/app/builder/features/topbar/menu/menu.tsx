@@ -1,4 +1,5 @@
 import { useNavigate } from "@remix-run/react";
+import { useStore } from "@nanostores/react";
 import store from "immerhin";
 import { isFeatureEnabled } from "@webstudio-is/feature-flags";
 import {
@@ -28,11 +29,9 @@ import {
 } from "~/shared/theme";
 import { useClientSettings } from "~/builder/shared/client-settings";
 import { dashboardPath } from "~/shared/router-utils";
-import { $isPreviewMode } from "~/shared/nano-states";
+import { $isPreviewMode, $authPermit } from "~/shared/nano-states";
 import { deleteSelectedInstance } from "~/shared/instance-utils";
 import { MenuButton } from "./menu-button";
-import { useAuthPermit } from "~/shared/nano-states";
-import { useStore } from "@nanostores/react";
 
 const ThemeMenuItem = () => {
   if (isFeatureEnabled("dark") === false) {
@@ -100,7 +99,7 @@ export const Menu = ({ publish }: MenuProps) => {
   const [, setIsShareOpen] = useIsShareDialogOpen();
   const [, setIsPublishOpen] = useIsPublishDialogOpen();
   const isPreviewMode = useStore($isPreviewMode);
-  const [authPermit] = useAuthPermit();
+  const authPermit = useStore($authPermit);
 
   const isPublishEnabled = authPermit === "own" || authPermit === "admin";
 

@@ -2,7 +2,7 @@ import type { AUTH_PROVIDERS } from "~/shared/session";
 import type { Project } from "@webstudio-is/project";
 import type { ThemeSetting } from "~/shared/theme";
 import env from "~/shared/env";
-import { authTokenStore } from "../nano-states";
+import { $authToken } from "../nano-states";
 
 const searchParams = (params: Record<string, string | undefined | null>) => {
   const searchParams = new URLSearchParams();
@@ -61,7 +61,7 @@ export const dashboardPath = () => {
 };
 
 export const builderDomainsPath = (method: string) => {
-  const authToken = authTokenStore.get();
+  const authToken = $authToken.get();
   const urlSearchParams = new URLSearchParams();
   if (authToken !== undefined) {
     urlSearchParams.set("authToken", authToken);

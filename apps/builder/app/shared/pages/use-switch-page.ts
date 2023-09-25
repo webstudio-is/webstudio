@@ -5,7 +5,7 @@ import type { Page } from "@webstudio-is/sdk";
 import { findPageByIdOrPath } from "@webstudio-is/project-build";
 import { useMount } from "~/shared/hook-utils/use-mount";
 import {
-  authTokenStore,
+  $authToken,
   pagesStore,
   projectStore,
   selectedPageStore,
@@ -98,7 +98,7 @@ export const useSyncPageUrl = () => {
       builderPath({
         projectId: project.id,
         pageId: page.id === pages.homePage.id ? undefined : page.id,
-        authToken: authTokenStore.get(),
+        authToken: $authToken.get(),
         pageHash: pageHash === "" ? undefined : pageHash,
         mode: isPreviewMode ? "preview" : undefined,
       })
