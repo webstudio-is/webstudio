@@ -129,7 +129,7 @@ export const parseCssValue = (
       if (index > -1) {
         return {
           type: "keyword",
-          value: values[index],
+          value: values[index]!,
         };
       }
     }

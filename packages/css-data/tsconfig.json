@@ -1,3 +1,6 @@
 {
-  "extends": "@webstudio-is/tsconfig/base.json"
+  "extends": "@webstudio-is/tsconfig/base.json",
+  "compilerOptions": {
+    "noUncheckedIndexedAccess": true
+  }
 }
