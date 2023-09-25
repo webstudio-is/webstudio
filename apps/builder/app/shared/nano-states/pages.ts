@@ -1,13 +1,7 @@
 import { atom, computed } from "nanostores";
 import type { Page, Pages } from "@webstudio-is/sdk";
-import { useMount } from "~/shared/hook-utils/use-mount";
 
 export const pagesStore = atom<undefined | Pages>(undefined);
-export const useSetPages = (pages: Pages) => {
-  useMount(() => {
-    pagesStore.set(pages);
-  });
-};
 
 export const selectedPageIdStore = atom<undefined | Page["id"]>(undefined);
 export const selectedPageHashStore = atom<string>("");

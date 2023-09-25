@@ -1,4 +1,5 @@
 import { useRef, useState } from "react";
+import { computed } from "nanostores";
 import { useStore } from "@nanostores/react";
 import type { Instance } from "@webstudio-is/sdk";
 import {
@@ -20,13 +21,14 @@ import { SettingsPanelContainer } from "~/builder/features/settings-panel";
 import { FloatingPanelProvider } from "~/builder/shared/floating-panel";
 import {
   selectedInstanceStore,
-  isDraggingStore,
   registeredComponentMetasStore,
+  $dragAndDropState,
 } from "~/shared/nano-states";
 import { NavigatorTree } from "~/builder/shared/navigator-tree";
 import type { Settings } from "~/builder/shared/client-settings";
 import { MetaIcon } from "~/builder/shared/meta-icon";
 import { getInstanceLabel } from "~/shared/instance-utils";
+import { isFeatureEnabled } from "@webstudio-is/feature-flags";
 
 const InstanceInfo = ({ instance }: { instance: Instance }) => {
   const metas = useStore(registeredComponentMetasStore);
@@ -65,11 +67,13 @@ const contentStyle = {
   overflow: "auto",
 };
 
+const $isDragging = computed([$dragAndDropState], (state) => state.isDragging);
+
 export const Inspector = ({ publish, navigatorLayout }: InspectorProps) => {
   const selectedInstance = useStore(selectedInstanceStore);
   const tabsRef = useRef<HTMLDivElement>(null);
   const [tab, setTab] = useState("style");
-  const isDragging = useStore(isDraggingStore);
+  const isDragging = useStore($isDragging);
   const metas = useStore(registeredComponentMetasStore);
 
   if (navigatorLayout === "docked" && isDragging) {
@@ -95,6 +99,7 @@ export const Inspector = ({ publish, navigatorLayout }: InspectorProps) => {
   const availableTabs = [
     isStyleTabVisible ? "style" : undefined,
     "settings",
+    isFeatureEnabled("ai") ? "ai" : undefined,
   ].filter((tab) => tab);
 
   return (
@@ -116,6 +121,9 @@ export const Inspector = ({ publish, navigatorLayout }: InspectorProps) => {
                 <PanelTabsTrigger value="style">Style</PanelTabsTrigger>
               )}
               <PanelTabsTrigger value="settings">Settings</PanelTabsTrigger>
+              {isFeatureEnabled("ai") && (
+                <PanelTabsTrigger value="ai">AI</PanelTabsTrigger>
+              )}
             </PanelTabsList>
             <PanelTabsContent value="style" css={contentStyle} tabIndex={-1}>
               <InstanceInfo instance={selectedInstance} />
@@ -136,6 +144,13 @@ export const Inspector = ({ publish, navigatorLayout }: InspectorProps) => {
                 />
               </ScrollArea>
             </PanelTabsContent>
+            {isFeatureEnabled("ai") ? (
+              <PanelTabsContent
+                value="ai"
+                css={contentStyle}
+                tabIndex={-1}
+              ></PanelTabsContent>
+            ) : null}
           </Flex>
         </PanelTabs>
       </FloatingPanelProvider>

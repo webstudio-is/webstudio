@@ -1,4 +1,5 @@
 import { type ChangeEvent, useRef } from "react";
+import { useStore } from "@nanostores/react";
 import { Button, Flex, Tooltip, toast } from "@webstudio-is/design-system";
 import { UploadIcon } from "@webstudio-is/icons";
 import {
@@ -8,7 +9,7 @@ import {
 } from "@webstudio-is/asset-uploader";
 import { FONT_MIME_TYPES } from "@webstudio-is/fonts";
 import { useUploadAsset } from "./use-assets";
-import { useAuthPermit } from "~/shared/nano-states";
+import { $authPermit } from "~/shared/nano-states";
 
 const maxSize = toBytes(MAX_UPLOAD_SIZE);
 
@@ -91,7 +92,7 @@ const EnabledAssetUpload = ({ accept, type }: AssetUploadProps) => {
 };
 
 export const AssetUpload = ({ type }: AssetUploadProps) => {
-  const [authPermit] = useAuthPermit();
+  const authPermit = useStore($authPermit);
 
   if (authPermit !== "view") {
     // Split into a separate component to avoid using `useUpload` hook unnecessarily

@@ -1,4 +1,5 @@
 import { useNavigate } from "@remix-run/react";
+import { useStore } from "@nanostores/react";
 import store from "immerhin";
 import { isFeatureEnabled } from "@webstudio-is/feature-flags";
 import {
@@ -28,10 +29,9 @@ import {
 } from "~/shared/theme";
 import { useClientSettings } from "~/builder/shared/client-settings";
 import { dashboardPath } from "~/shared/router-utils";
-import { useIsPreviewMode } from "~/shared/nano-states";
+import { $isPreviewMode, $authPermit } from "~/shared/nano-states";
 import { deleteSelectedInstance } from "~/shared/instance-utils";
 import { MenuButton } from "./menu-button";
-import { useAuthPermit } from "~/shared/nano-states";
 
 const ThemeMenuItem = () => {
   if (isFeatureEnabled("dark") === false) {
@@ -98,8 +98,8 @@ export const Menu = ({ publish }: MenuProps) => {
   const navigate = useNavigate();
   const [, setIsShareOpen] = useIsShareDialogOpen();
   const [, setIsPublishOpen] = useIsPublishDialogOpen();
-  const [isPreviewMode, setIsPreviewMode] = useIsPreviewMode();
-  const [authPermit] = useAuthPermit();
+  const isPreviewMode = useStore($isPreviewMode);
+  const authPermit = useStore($authPermit);
 
   const isPublishEnabled = authPermit === "own" || authPermit === "admin";
 
@@ -186,7 +186,7 @@ export const Menu = ({ publish }: MenuProps) => {
           <ViewMenuItem />
           <DropdownMenuItem
             onSelect={() => {
-              setIsPreviewMode(!isPreviewMode);
+              $isPreviewMode.set(isPreviewMode === false);
             }}
           >
             Preview

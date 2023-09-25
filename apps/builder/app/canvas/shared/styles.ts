@@ -20,7 +20,7 @@ import {
 import {
   assetsStore,
   breakpointsStore,
-  isPreviewModeStore,
+  $isPreviewMode,
   registeredComponentMetasStore,
   selectedInstanceSelectorStore,
   selectedStyleSourceSelectorStore,
@@ -94,7 +94,7 @@ const helperStyles = [
 const subscribePreviewMode = () => {
   let isRendered = false;
 
-  const unsubscribe = isPreviewModeStore.subscribe((isPreviewMode) => {
+  const unsubscribe = $isPreviewMode.subscribe((isPreviewMode) => {
     helpersCssEngine.setAttribute("media", isPreviewMode ? "not all" : "all");
     if (isRendered === false) {
       for (const style of helperStyles) {
