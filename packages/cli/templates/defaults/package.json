@@ -26,7 +26,6 @@
     "@remix-run/dev": "^1.19.2",
     "@types/react": "^18.2.20",
     "@types/react-dom": "^18.2.7",
-    "@webstudio-is/http-client": "^0.102.0",
     "typescript": "5.2.2"
   },
   "engines": {

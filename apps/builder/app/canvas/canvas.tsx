@@ -7,7 +7,6 @@ import {
   type Params,
   type Components,
   createElementsTree,
-  getIndexesWithinAncestors,
   normalizeProps,
   getPropsByInstanceId,
 } from "@webstudio-is/react-sdk";
@@ -42,9 +41,7 @@ import {
   selectedPageStore,
   registerComponentLibrary,
   registeredComponentsStore,
-  registeredComponentMetasStore,
   subscribeComponentHooks,
-  dataSourcesLogicStore,
   propsStore,
   $isPreviewMode,
 } from "~/shared/nano-states";
@@ -68,7 +65,6 @@ const useElementsTree = (
   params: Params,
   imageLoader: ImageLoader
 ) => {
-  const metas = useStore(registeredComponentMetasStore);
   const page = useStore(selectedPageStore);
   const isPreviewMode = useStore($isPreviewMode);
   const rootInstanceId = page?.rootInstanceId ?? "";
@@ -95,14 +91,6 @@ const useElementsTree = (
       }),
     []
   );
-
-  const indexesWithinAncestors = useMemo(() => {
-    return getIndexesWithinAncestors(
-      metas,
-      instances,
-      page ? [page.rootInstanceId] : []
-    );
-  }, [metas, instances, page]);
 
   const propsByInstanceIdStore = useMemo(() => {
     return computed(
@@ -134,10 +122,6 @@ const useElementsTree = (
           imageLoader,
           instances,
           rootInstanceId,
-          indexesWithinAncestors,
-          propsByInstanceIdStore,
-          assetsStore,
-          dataSourcesLogicStore,
           Component: isPreviewMode
             ? WebstudioComponentPreview
             : WebstudioComponentCanvas,
@@ -158,7 +142,6 @@ const useElementsTree = (
     components,
     propsByInstanceIdStore,
     isPreviewMode,
-    indexesWithinAncestors,
     imageLoader,
   ]);
 };

@@ -11,19 +11,6 @@ import {
 
 export const fontAssets: Asset[] = [];
 export const pageData: PageData = {
-  build: { props: [] },
-  pages: [
-    {
-      id: "nfzls_SkTc9jKYyxcZ8Lw",
-      name: "Home",
-      title: "Home",
-      meta: {
-        description: "Page description f511c297-b44f-4e4b-96bd-d013da06bada",
-      },
-      rootInstanceId: "ibXgMoi9_ipHx1gVrvii0",
-      path: "",
-    },
-  ],
   page: {
     id: "nfzls_SkTc9jKYyxcZ8Lw",
     name: "Home",
@@ -34,7 +21,6 @@ export const pageData: PageData = {
     rootInstanceId: "ibXgMoi9_ipHx1gVrvii0",
     path: "",
   },
-  assets: [],
 };
 export const user: { email: string | null } | undefined = {
   email: "hello@webstudio.is",

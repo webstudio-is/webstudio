@@ -16,8 +16,6 @@ module.exports = {
   serverDependenciesToBundle: [
     /@webstudio-is\//,
     "nanoid",
-    "nanostores",
-    "@nanostores/react",
     "@jsep-plugin/assignment",
   ],
   future: {
