@@ -44,13 +44,13 @@ jobs:
         run: pnpm webstudio-cli --help
 
       - name: Testing cli link command
-        run: pnpm --filter='./fixtures/*' run --parallel fixtures:link
+        run: pnpm --filter='./fixtures/*' run fixtures:link
 
       - name: Testing cli sync command
-        run: pnpm --filter='./fixtures/*' run --parallel fixtures:sync
+        run: pnpm --filter='./fixtures/*' run fixtures:sync
 
       - name: Testing cli build command
-        run: pnpm --filter='./fixtures/*' run --parallel fixtures:build
+        run: pnpm --filter='./fixtures/*' run fixtures:build
 
       - name: Test git diff
         # This command will fail if there are uncommitted changes, i.e something has broken
