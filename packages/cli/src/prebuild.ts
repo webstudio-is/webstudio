@@ -46,7 +46,7 @@ import { createImageLoader } from "@webstudio-is/image";
 import * as baseComponentMetas from "@webstudio-is/sdk-components-react/metas";
 import * as remixComponentMetas from "@webstudio-is/sdk-components-react-remix/metas";
 import * as radixComponentMetas from "@webstudio-is/sdk-components-react-radix/metas";
-import { LOCAL_DATA_FILE, PROJECT_TEMPALTES } from "./config";
+import { LOCAL_DATA_FILE } from "./config";
 import {
   ensureFileInPath,
   ensureFolderExists,
@@ -200,11 +200,11 @@ export const prebuild = async (options: {
 }) => {
   if (
     options.template !== undefined &&
-    options.template.startsWith("./") === false &&
-    PROJECT_TEMPALTES.includes(options.template) === false
+    (await isCliTemplate(options.template)) === false &&
+    options.template.startsWith(".") === false
   ) {
     throw Error(
-      `\n Template ${options.template} is not available \n Please check webstudio-cli --help`
+      `\n Template ${options.template} is not available \n Please check webstudio-cli --help for more details`
     );
   }
 

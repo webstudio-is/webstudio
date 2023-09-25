@@ -21,9 +21,7 @@ export const buildOptions = (yargs: CommonYargsArgv) =>
     .option("template", {
       type: "string",
       default: "vercel",
-      describe: `[Experimental] Template to use for the build
-Templates Available
-${PROJECT_TEMPALTES.join(`\n`)}`,
+      describe: `[Experimental] Template to use for the build [choices: ${PROJECT_TEMPALTES.toString()}]`,
     });
 
 // @todo: use options.assets to define if we need to download assets
