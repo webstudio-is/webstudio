@@ -27,6 +27,7 @@ import { NavigatorTree } from "~/builder/shared/navigator-tree";
 import type { Settings } from "~/builder/shared/client-settings";
 import { MetaIcon } from "~/builder/shared/meta-icon";
 import { getInstanceLabel } from "~/shared/instance-utils";
+import { isFeatureEnabled } from "@webstudio-is/feature-flags";
 
 const InstanceInfo = ({ instance }: { instance: Instance }) => {
   const metas = useStore(registeredComponentMetasStore);
@@ -95,6 +96,7 @@ export const Inspector = ({ publish, navigatorLayout }: InspectorProps) => {
   const availableTabs = [
     isStyleTabVisible ? "style" : undefined,
     "settings",
+    isFeatureEnabled("ai") ? "ai" : undefined,
   ].filter((tab) => tab);
 
   return (
@@ -116,6 +118,9 @@ export const Inspector = ({ publish, navigatorLayout }: InspectorProps) => {
                 <PanelTabsTrigger value="style">Style</PanelTabsTrigger>
               )}
               <PanelTabsTrigger value="settings">Settings</PanelTabsTrigger>
+              {isFeatureEnabled("ai") && (
+                <PanelTabsTrigger value="ai">AI</PanelTabsTrigger>
+              )}
             </PanelTabsList>
             <PanelTabsContent value="style" css={contentStyle} tabIndex={-1}>
               <InstanceInfo instance={selectedInstance} />
@@ -136,6 +141,13 @@ export const Inspector = ({ publish, navigatorLayout }: InspectorProps) => {
                 />
               </ScrollArea>
             </PanelTabsContent>
+            {isFeatureEnabled("ai") ? (
+              <PanelTabsContent
+                value="ai"
+                css={contentStyle}
+                tabIndex={-1}
+              ></PanelTabsContent>
+            ) : null}
           </Flex>
         </PanelTabs>
       </FloatingPanelProvider>
