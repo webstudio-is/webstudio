@@ -38,7 +38,7 @@
   "engines": {
     "node": ">=18.0.0"
   },
-  "name": "webstudio-remix-netlify-edge-functions",
+  "name": "webstudio-remix-netlify",
   "version": "0.0.1",
   "description": "",
   "main": "index.js",
