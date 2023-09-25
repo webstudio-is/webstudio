@@ -10,6 +10,7 @@ import type { StrictYargsOptionsToInterface } from "./yargs-types";
 import pc from "picocolors";
 import { $ } from "execa";
 import { PROJECT_TEMPALTES } from "../config";
+import { titleCase } from "title-case";
 
 export const initFlow = async (
   options: StrictYargsOptionsToInterface<typeof buildOptions>
@@ -69,7 +70,7 @@ export const initFlow = async (
         message: "Where would you like to deploy your project?",
         choices: PROJECT_TEMPALTES.map((template) => {
           return {
-            title: convertToTitleCase(template),
+            title: titleCase(template),
             value: template,
           };
         }),
@@ -111,8 +112,4 @@ export const initFlow = async (
       .filter(Boolean)
       .join("\n")
   );
-};
-
-export const convertToTitleCase = (str: string) => {
-  return str.replace(/-/g, " ").replace(/\b\w/g, (word) => word.toUpperCase());
 };
