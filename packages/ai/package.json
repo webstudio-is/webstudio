@@ -33,7 +33,7 @@
     "lib/*",
     "!*.test.*"
   ],
-  "license": "MIT",
+  "license": "AGPL-3.0-or-later",
   "sideEffects": false,
   "dependencies": {
     "@webstudio-is/sdk": "workspace:^",
