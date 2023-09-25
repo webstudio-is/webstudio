@@ -15,7 +15,7 @@ import {
   Flex,
   ScrollArea,
 } from "@webstudio-is/design-system";
-import { publish, type Publish } from "~/shared/pubsub";
+import type { Publish } from "~/shared/pubsub";
 import { StylePanel } from "~/builder/features/style-panel";
 import { SettingsPanelContainer } from "~/builder/features/settings-panel";
 import { FloatingPanelProvider } from "~/builder/shared/floating-panel";

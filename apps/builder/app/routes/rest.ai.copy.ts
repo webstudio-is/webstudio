@@ -39,7 +39,7 @@ export const action = async function action({ request }: ActionArgs) {
   ) {
     return {
       success: false,
-      type: "invalid_org",
+      type: "invalidOrg",
       status: 401,
       message: "",
     };
