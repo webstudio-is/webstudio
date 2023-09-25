@@ -2,8 +2,8 @@ import { idAttribute } from "@webstudio-is/react-sdk";
 import {
   hoveredInstanceSelectorStore,
   instancesStore,
-} from "~/shared/nano-states";
-import { hoveredInstanceOutlineStore } from "~/shared/nano-states";
+} from "@webstudio-is/sdk-plugin";
+import { hoveredInstanceOutlineStore } from "@webstudio-is/sdk-plugin";
 import {
   getAllElementsBoundingBox,
   getElementsByInstanceSelector,

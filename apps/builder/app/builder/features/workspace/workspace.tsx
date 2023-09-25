@@ -5,12 +5,12 @@ import {
   useCanvasWidth,
   workspaceRectStore,
 } from "~/builder/shared/nano-states";
-import type { Publish } from "~/shared/pubsub";
+import type { Publish } from "@webstudio-is/sdk-plugin";
 import {
   selectedInstanceSelectorStore,
   selectedStyleSourceSelectorStore,
-} from "~/shared/nano-states";
-import { textEditingInstanceSelectorStore } from "~/shared/nano-states";
+} from "@webstudio-is/sdk-plugin";
+import { textEditingInstanceSelectorStore } from "@webstudio-is/sdk-plugin";
 import { CanvasTools } from "./canvas-tools";
 import { useEffect, useRef } from "react";
 import { useSetCanvasWidth } from "../breakpoints";

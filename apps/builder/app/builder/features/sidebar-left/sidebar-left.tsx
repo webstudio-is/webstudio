@@ -7,8 +7,8 @@ import {
   SidebarTabsTrigger,
   Tooltip,
 } from "@webstudio-is/design-system";
-import { useSubscribe, type Publish } from "~/shared/pubsub";
-import { useDragAndDropState } from "~/shared/nano-states";
+import { useSubscribe, type Publish } from "@webstudio-is/sdk-plugin";
+import { useDragAndDropState } from "@webstudio-is/sdk-plugin";
 import { panels } from "./panels";
 import type { TabName } from "./types";
 import { useClientSettings } from "~/builder/shared/client-settings";

@@ -18,7 +18,7 @@ import {
   styleSourceSelectionsStore,
   styleSourcesStore,
   stylesStore,
-} from "~/shared/nano-states";
+} from "@webstudio-is/sdk-plugin";
 import {
   getCascadedBreakpointIds,
   getCascadedInfo,

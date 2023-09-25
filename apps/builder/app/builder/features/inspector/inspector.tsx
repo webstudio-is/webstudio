@@ -14,7 +14,7 @@ import {
   Flex,
   ScrollArea,
 } from "@webstudio-is/design-system";
-import type { Publish } from "~/shared/pubsub";
+import type { Publish } from "@webstudio-is/sdk-plugin";
 import { StylePanel } from "~/builder/features/style-panel";
 import { SettingsPanelContainer } from "~/builder/features/settings-panel";
 import { FloatingPanelProvider } from "~/builder/shared/floating-panel";
@@ -22,7 +22,7 @@ import {
   selectedInstanceStore,
   isDraggingStore,
   registeredComponentMetasStore,
-} from "~/shared/nano-states";
+} from "@webstudio-is/sdk-plugin";
 import { NavigatorTree } from "~/builder/shared/navigator-tree";
 import type { Settings } from "~/builder/shared/client-settings";
 import { MetaIcon } from "~/builder/shared/meta-icon";

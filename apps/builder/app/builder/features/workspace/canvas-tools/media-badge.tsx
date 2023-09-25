@@ -1,6 +1,6 @@
 import { useStore } from "@nanostores/react";
 import { Flex, Text, css, theme } from "@webstudio-is/design-system";
-import { selectedBreakpointStore } from "~/shared/nano-states";
+import { selectedBreakpointStore } from "@webstudio-is/sdk-plugin";
 
 const labelStyle = css({
   position: "absolute",

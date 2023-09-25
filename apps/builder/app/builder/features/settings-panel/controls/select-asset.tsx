@@ -7,7 +7,7 @@ import {
   SmallIconButton,
   Text,
 } from "@webstudio-is/design-system";
-import { assetsStore } from "~/shared/nano-states";
+import { assetsStore } from "@webstudio-is/sdk-plugin";
 import { FloatingPanel } from "~/builder/shared/floating-panel";
 import { ImageManager } from "~/builder/shared/image-manager";
 import { type ControlProps } from "../shared";

@@ -5,7 +5,7 @@ import {
   createImageLoader,
 } from "@webstudio-is/image";
 import { styled, theme } from "@webstudio-is/design-system";
-import { assetsStore } from "~/shared/nano-states";
+import { assetsStore } from "@webstudio-is/sdk-plugin";
 import type { StyleInfo } from "../../shared/style-info";
 import brokenImage from "~/shared/images/broken-image-placeholder.svg";
 import env from "~/shared/env";

@@ -9,7 +9,7 @@ import {
 import {
   breakpointsStore,
   selectedBreakpointStore,
-} from "~/shared/nano-states";
+} from "@webstudio-is/sdk-plugin";
 import { findInitialWidth } from "./find-initial-width";
 
 // Set canvas width based on workspace width, breakpoints and passed breakpoint id.

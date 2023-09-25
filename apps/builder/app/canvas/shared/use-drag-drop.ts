@@ -1,8 +1,6 @@
 import { useLayoutEffect, useRef } from "react";
-import type { Instance } from "@webstudio-is/sdk";
+
 import {
-  type Point,
-  type Placement,
   type ItemDropTarget,
   useAutoScroll,
   useDrag,
@@ -12,8 +10,9 @@ import {
 import {
   instancesStore,
   registeredComponentMetasStore,
-} from "~/shared/nano-states";
-import { publish, useSubscribe } from "~/shared/pubsub";
+  type PubsubMap,
+} from "@webstudio-is/sdk-plugin";
+import { publish, useSubscribe } from "@webstudio-is/sdk-plugin";
 import {
   computeInstancesConstraints,
   findClosestDroppableComponentIndex,
@@ -33,31 +32,7 @@ import {
   areInstanceSelectorsEqual,
 } from "~/shared/tree-utils";
 
-declare module "~/shared/pubsub" {
-  export interface PubsubMap {
-    dragEnd: DragEndPayload;
-    dragMove: DragMovePayload;
-    dragStart: DragStartPayload;
-    dropTargetChange: undefined | ItemDropTarget;
-    placementIndicatorChange: undefined | Placement;
-  }
-}
-
-type Origin = "canvas" | "panel";
-
-export type DragStartPayload =
-  | { origin: Origin; type: "insert"; dragComponent: Instance["component"] }
-  | {
-      origin: Origin;
-      type: "reparent";
-      dragInstanceSelector: InstanceSelector;
-    };
-
-export type DragEndPayload = {
-  isCanceled: boolean;
-};
-
-export type DragMovePayload = { canvasCoordinates: Point };
+type DragStartPayload = PubsubMap["dragStart"];
 
 const findClosestDroppableInstanceSelector = (
   instanceSelector: InstanceSelector,

@@ -24,7 +24,7 @@ import {
   registeredComponentMetasStore,
   selectedInstanceSelectorStore,
   selectedStyleSourceSelectorStore,
-} from "~/shared/nano-states";
+} from "@webstudio-is/sdk-plugin";
 import {
   type StyleRule,
   type PlaintextRule,
@@ -32,7 +32,7 @@ import {
   toValue,
   compareMedia,
 } from "@webstudio-is/css-engine";
-import { useSubscribe } from "~/shared/pubsub";
+import { useSubscribe } from "@webstudio-is/sdk-plugin";
 
 const userCssEngine = createCssEngine({ name: "user-styles" });
 const helpersCssEngine = createCssEngine({ name: "helpers" });

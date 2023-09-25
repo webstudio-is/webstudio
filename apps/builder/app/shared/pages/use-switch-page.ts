@@ -13,7 +13,7 @@ import {
   selectedPageHashStore,
   selectedInstanceSelectorStore,
   isPreviewModeStore,
-} from "~/shared/nano-states";
+} from "@webstudio-is/sdk-plugin";
 import { builderPath } from "~/shared/router-utils";
 
 export const switchPage = (pageId?: Page["id"], pageHash?: string) => {

@@ -15,7 +15,7 @@ import {
   editingItemIdStore,
   instancesStore,
   registeredComponentMetasStore,
-} from "~/shared/nano-states";
+} from "@webstudio-is/sdk-plugin";
 import { MetaIcon } from "../meta-icon";
 import { useContentEditable } from "~/shared/dom-hooks";
 import { getInstanceLabel } from "~/shared/instance-utils";

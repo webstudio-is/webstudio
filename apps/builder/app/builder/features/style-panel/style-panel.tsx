@@ -7,13 +7,13 @@ import {
   ScrollArea,
 } from "@webstudio-is/design-system";
 import type { Instance } from "@webstudio-is/sdk";
-import type { Publish } from "~/shared/pubsub";
+import type { Publish } from "@webstudio-is/sdk-plugin";
 
 import { useStyleData } from "./shared/use-style-data";
 import { StyleSettings } from "./style-settings";
 
 import { StyleSourcesSection } from "./style-source-section";
-import { selectedInstanceRenderStateStore } from "~/shared/nano-states";
+import { selectedInstanceRenderStateStore } from "@webstudio-is/sdk-plugin";
 import { useStore } from "@nanostores/react";
 
 type StylePanelProps = {

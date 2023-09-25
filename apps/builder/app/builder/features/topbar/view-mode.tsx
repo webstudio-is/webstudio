@@ -5,7 +5,7 @@ import {
   Tooltip,
 } from "@webstudio-is/design-system";
 import { CloudIcon } from "@webstudio-is/icons";
-import { useAuthPermit } from "~/shared/nano-states";
+import { useAuthPermit } from "@webstudio-is/sdk-plugin";
 
 export const ViewMode = () => {
   const [authPermit] = useAuthPermit();

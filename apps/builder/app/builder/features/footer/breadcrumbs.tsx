@@ -11,9 +11,9 @@ import {
   registeredComponentMetasStore,
   selectedInstanceSelectorStore,
   selectedStyleSourceSelectorStore,
-} from "~/shared/nano-states";
+} from "@webstudio-is/sdk-plugin";
 import { getAncestorInstanceSelector } from "~/shared/tree-utils";
-import { textEditingInstanceSelectorStore } from "~/shared/nano-states";
+import { textEditingInstanceSelectorStore } from "@webstudio-is/sdk-plugin";
 import { getInstanceLabel } from "~/shared/instance-utils";
 import { Fragment } from "react";
 

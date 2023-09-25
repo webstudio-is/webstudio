@@ -13,14 +13,14 @@ import {
   dataSourcesLogicStore,
   selectedInstanceSelectorStore,
   dataSourceVariablesStore,
-} from "~/shared/nano-states";
+} from "@webstudio-is/sdk-plugin";
 import htmlTags, { type htmlTags as HtmlTags } from "html-tags";
 import {
   getAllElementsBoundingBox,
   getElementsByInstanceSelector,
 } from "~/shared/dom-utils";
 import { subscribeScrollState } from "~/canvas/shared/scroll-state";
-import { selectedInstanceOutlineStore } from "~/shared/nano-states";
+import { selectedInstanceOutlineStore } from "@webstudio-is/sdk-plugin";
 import type { UnitSizes } from "~/builder/features/style-panel/shared/css-value-input/convert-units";
 import { setDataCollapsed } from "~/canvas/collapsed";
 import { getBrowserStyle } from "./features/webstudio-component/get-browser-style";

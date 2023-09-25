@@ -13,8 +13,8 @@ import { $getNearestNodeOfType } from "@lexical/utils";
 import { $patchStyleText } from "@lexical/selection";
 import { LinkNode, TOGGLE_LINK_COMMAND } from "@lexical/link";
 import { useLexicalComposerContext } from "@lexical/react/LexicalComposerContext";
-import { useSubscribe } from "~/shared/pubsub";
-import { textToolbarStore } from "~/shared/nano-states";
+import { useSubscribe } from "@webstudio-is/sdk-plugin";
+import { textToolbarStore } from "@webstudio-is/sdk-plugin";
 import { subscribeScrollState } from "~/canvas/shared/scroll-state";
 
 const spanTriggerName = "--style-node-trigger";

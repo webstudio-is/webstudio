@@ -15,7 +15,7 @@ import {
   DropdownMenuPortal,
   Tooltip,
 } from "@webstudio-is/design-system";
-import type { Publish } from "~/shared/pubsub";
+import type { Publish } from "@webstudio-is/sdk-plugin";
 import { ShortcutHint } from "./shortcut-hint";
 import {
   useIsShareDialogOpen,
@@ -28,10 +28,10 @@ import {
 } from "~/shared/theme";
 import { useClientSettings } from "~/builder/shared/client-settings";
 import { dashboardPath } from "~/shared/router-utils";
-import { useIsPreviewMode } from "~/shared/nano-states";
+import { useIsPreviewMode } from "@webstudio-is/sdk-plugin";
 import { deleteSelectedInstance } from "~/shared/instance-utils";
 import { MenuButton } from "./menu-button";
-import { useAuthPermit } from "~/shared/nano-states";
+import { useAuthPermit } from "@webstudio-is/sdk-plugin";
 
 const ThemeMenuItem = () => {
   if (isFeatureEnabled("dark") === false) {

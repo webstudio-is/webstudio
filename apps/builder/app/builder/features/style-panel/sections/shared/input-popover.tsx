@@ -13,11 +13,10 @@ import {
   type IntermediateStyleValue,
 } from "../../shared/css-value-input";
 import type { StyleSource } from "../../shared/style-info";
-import type {
-  StyleUpdate,
-  StyleUpdateOptions,
-} from "../../shared/use-style-data";
+
+import type { StyleUpdateOptions } from "../../shared/use-style-data";
 import { theme } from "@webstudio-is/design-system";
+import type { StyleUpdate } from "@webstudio-is/sdk-plugin";
 
 const slideUpAndFade = keyframes({
   "0%": { opacity: 0, transform: "scale(0.8)" },

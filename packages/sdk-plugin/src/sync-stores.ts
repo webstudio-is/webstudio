@@ -1,8 +1,8 @@
-import store, { type Change } from "immerhin";
+import store from "immerhin";
 import { enableMapSet } from "immer";
 import { atom, type WritableAtom } from "nanostores";
 import { useEffect } from "react";
-import { type Publish, subscribe } from "~/shared/pubsub";
+import { type Publish, subscribe, type SyncEventSource } from "./pubsub";
 import {
   projectStore,
   pagesStore,
@@ -29,33 +29,9 @@ import {
   selectedStyleSourceSelectorStore,
   synchronizedComponentsMetaStores,
   dataSourceVariablesStore,
-} from "~/shared/nano-states";
+} from "./nano-states";
 
 enableMapSet();
-
-type StoreData = {
-  namespace: string;
-  value: unknown;
-};
-
-type SyncEventSource = "canvas" | "builder";
-
-declare module "~/shared/pubsub" {
-  export interface PubsubMap {
-    handshake: { source: SyncEventSource };
-
-    sendStoreData: {
-      // distinct source to avoid infinite loop
-      source: SyncEventSource;
-      data: StoreData[];
-    };
-    sendStoreChanges: {
-      // distinct source to avoid infinite loop
-      source: SyncEventSource;
-      changes: Change[];
-    };
-  }
-}
 
 const clientStores = new Map<string, WritableAtom<unknown>>();
 const initializedStores = new Set<string>();
@@ -241,7 +217,7 @@ const handshakeAndSyncStores = (
     if (destinationReady) {
       return publish(action);
     }
-    actions.push(action);
+    actions.push({ payload: undefined, ...action });
   };
 
   const unsubscribe = sync(publishAction);

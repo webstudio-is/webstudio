@@ -11,7 +11,7 @@ import {
   propsStore,
   registerComponentLibrary,
   selectedPageIdStore,
-} from "~/shared/nano-states";
+} from "@webstudio-is/sdk-plugin";
 import { setMockEnv } from "~/shared/env";
 // eslint-disable-next-line import/no-internal-modules
 import catPath from "./props-panel.stories.assets/cat.jpg";

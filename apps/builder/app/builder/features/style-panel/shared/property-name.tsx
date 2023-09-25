@@ -28,7 +28,7 @@ import {
   selectedInstanceStore,
   selectedStyleSourceStore,
   styleSourcesStore,
-} from "~/shared/nano-states";
+} from "@webstudio-is/sdk-plugin";
 import {
   type StyleInfo,
   getStyleSource,

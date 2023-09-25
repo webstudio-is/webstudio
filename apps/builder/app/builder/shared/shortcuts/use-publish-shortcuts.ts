@@ -1,16 +1,8 @@
 import { useHotkeys } from "react-hotkeys-hook";
 import { shortcuts, options, instanceTreeShortcuts } from "~/shared/shortcuts";
-import type { Publish } from "~/shared/pubsub";
+import type { Publish } from "@webstudio-is/sdk-plugin";
 import { mergeRefs } from "@react-aria/utils";
 import type { Ref } from "react";
-
-declare module "~/shared/pubsub" {
-  export interface PubsubMap {
-    shortcut:
-      | { name: keyof typeof shortcuts }
-      | { name: keyof typeof instanceTreeShortcuts };
-  }
-}
 
 const names = Object.keys(shortcuts) as Array<keyof typeof shortcuts>;
 

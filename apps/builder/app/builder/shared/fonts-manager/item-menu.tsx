@@ -12,7 +12,7 @@ import {
 import { MenuIcon } from "@webstudio-is/icons";
 import { type FocusEventHandler, useState, useRef, useEffect } from "react";
 import { theme } from "@webstudio-is/design-system";
-import { useAuthPermit } from "~/shared/nano-states";
+import { useAuthPermit } from "@webstudio-is/sdk-plugin";
 
 const MenuButton = styled(DeprecatedIconButton, {
   color: theme.colors.hint,

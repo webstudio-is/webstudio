@@ -2,7 +2,7 @@ import { enableMapSet } from "immer";
 import { expect, test } from "@jest/globals";
 import type { Breakpoint } from "@webstudio-is/sdk";
 import type { WsComponentMeta } from "@webstudio-is/react-sdk";
-import { registerContainers } from "~/shared/sync";
+import { registerContainers } from "@webstudio-is/sdk-plugin";
 import {
   breakpointsStore,
   registeredComponentMetasStore,
@@ -10,7 +10,7 @@ import {
   selectedStyleSourceSelectorStore,
   styleSourceSelectionsStore,
   styleSourcesStore,
-} from "~/shared/nano-states";
+} from "@webstudio-is/sdk-plugin";
 import {
   $presetTokens,
   addStyleSourceToInstance,

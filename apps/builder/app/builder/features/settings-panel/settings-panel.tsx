@@ -1,5 +1,5 @@
 import type { Instance } from "@webstudio-is/sdk";
-import type { Publish } from "~/shared/pubsub";
+import type { Publish } from "@webstudio-is/sdk-plugin";
 import { SettingsSection } from "./settings-section/settings-section";
 import { PropsSectionContainer } from "./props-section/props-section";
 

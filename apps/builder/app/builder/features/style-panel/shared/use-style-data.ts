@@ -1,13 +1,9 @@
 import { useCallback } from "react";
 import { useStore } from "@nanostores/react";
 import store from "immerhin";
-import {
-  type Breakpoint,
-  type Instance,
-  getStyleDeclKey,
-} from "@webstudio-is/sdk";
+import { type Instance, getStyleDeclKey } from "@webstudio-is/sdk";
 import type { StyleProperty, StyleValue } from "@webstudio-is/css-engine";
-import type { Publish } from "~/shared/pubsub";
+import type { Publish, StyleUpdates } from "@webstudio-is/sdk-plugin";
 import {
   selectedBreakpointStore,
   selectedOrLastStyleSourceSelectorStore,
@@ -15,33 +11,8 @@ import {
   styleSourceSelectionsStore,
   styleSourcesStore,
   stylesStore,
-} from "~/shared/nano-states";
+} from "@webstudio-is/sdk-plugin";
 import { useStyleInfo } from "./style-info";
-
-export type StyleUpdate =
-  | {
-      operation: "delete";
-      property: StyleProperty;
-    }
-  | {
-      operation: "set";
-      property: StyleProperty;
-      value: StyleValue;
-    };
-
-export type StyleUpdates = {
-  id: Instance["id"];
-  updates: Array<StyleUpdate>;
-  breakpoint: Breakpoint;
-  state: undefined | string;
-};
-
-declare module "~/shared/pubsub" {
-  export interface PubsubMap {
-    updateStyle: StyleUpdates;
-    previewStyle: StyleUpdates;
-  }
-}
 
 type UseStyleData = {
   publish: Publish;

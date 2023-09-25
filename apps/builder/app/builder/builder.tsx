@@ -1,13 +1,13 @@
 import { useCallback, useEffect } from "react";
 import { useUnmount } from "react-use";
 import { TooltipProvider } from "@radix-ui/react-tooltip";
-import { type Publish, usePublish } from "~/shared/pubsub";
+import { type Publish, usePublish } from "@webstudio-is/sdk-plugin";
 import type { Asset } from "@webstudio-is/sdk";
 import type { Build } from "@webstudio-is/project-build";
 import type { Project } from "@webstudio-is/project";
 import { theme, Box, type CSS, Flex, Grid } from "@webstudio-is/design-system";
 import type { AuthPermit } from "@webstudio-is/trpc-interface/index.server";
-import { registerContainers, useBuilderStore } from "~/shared/sync";
+import { registerContainers, useBuilderStore } from "@webstudio-is/sdk-plugin";
 import { useSyncServer } from "./shared/sync/sync-server";
 import { useSharedShortcuts } from "~/shared/shortcuts";
 import { SidebarLeft, Navigator } from "./features/sidebar-left";
@@ -38,7 +38,7 @@ import {
   useSetStyles,
   useSetStyleSources,
   useSetStyleSourceSelections,
-} from "~/shared/nano-states";
+} from "@webstudio-is/sdk-plugin";
 import { type Settings, useClientSettings } from "./shared/client-settings";
 import { getBuildUrl } from "~/shared/router-utils";
 import { useCopyPaste } from "~/shared/copy-paste";

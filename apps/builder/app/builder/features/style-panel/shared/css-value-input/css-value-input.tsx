@@ -37,7 +37,7 @@ import { isValidDeclaration } from "@webstudio-is/css-data";
 import {
   selectedInstanceBrowserStyleStore,
   selectedInstanceUnitSizesStore,
-} from "~/shared/nano-states";
+} from "@webstudio-is/sdk-plugin";
 import { convertUnits } from "./convert-units";
 
 const useScrub = ({

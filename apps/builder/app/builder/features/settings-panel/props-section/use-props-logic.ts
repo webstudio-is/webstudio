@@ -12,7 +12,7 @@ import {
   dataSourcesLogicStore,
   dataSourcesStore,
   registeredComponentPropsMetasStore,
-} from "~/shared/nano-states";
+} from "@webstudio-is/sdk-plugin";
 
 type PropOrName = { prop?: Prop; propName: string };
 export type PropAndMeta = { prop?: Prop; propName: string; meta: PropMeta };

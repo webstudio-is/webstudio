@@ -1,15 +1,8 @@
 import { useHotkeys } from "react-hotkeys-hook";
 import { shortcuts, instanceTreeShortcuts, options } from "~/shared/shortcuts";
-import { publish, useSubscribe } from "~/shared/pubsub";
-import { isPreviewModeStore } from "~/shared/nano-states";
+import { publish, useSubscribe } from "@webstudio-is/sdk-plugin";
+import { isPreviewModeStore } from "@webstudio-is/sdk-plugin";
 import { enterEditingMode, escapeSelection } from "~/shared/instance-utils";
-
-declare module "~/shared/pubsub" {
-  export interface PubsubMap {
-    cancelCurrentDrag: undefined;
-    openBreakpointsMenu: undefined;
-  }
-}
 
 const togglePreviewMode = () => {
   isPreviewModeStore.set(!isPreviewModeStore.get());

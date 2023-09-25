@@ -27,8 +27,8 @@ import {
   breakpointsStore,
   styleSourceSelectionsStore,
   registeredComponentMetasStore,
-} from "~/shared/nano-states";
-import { selectedBreakpointStore } from "~/shared/nano-states";
+} from "@webstudio-is/sdk-plugin";
+import { selectedBreakpointStore } from "@webstudio-is/sdk-plugin";
 import type { InstanceSelector } from "~/shared/tree-utils";
 import type { WsComponentMeta } from "@webstudio-is/react-sdk";
 

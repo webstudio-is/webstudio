@@ -10,7 +10,7 @@ import {
 import { BpStarOffIcon, BpStarOnIcon } from "@webstudio-is/icons";
 import { CascadeIndicator } from "./cascade-indicator";
 import { useSetInitialCanvasWidth } from ".";
-import { selectedBreakpointIdStore } from "~/shared/nano-states";
+import { selectedBreakpointIdStore } from "@webstudio-is/sdk-plugin";
 import { groupBreakpoints, isBaseBreakpoint } from "~/shared/breakpoints";
 
 const getTooltipContent = (breakpoint: Breakpoint) => {

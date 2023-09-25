@@ -13,7 +13,7 @@ import {
   breakpointsStore,
   isResizingCanvasStore,
   selectedBreakpointIdStore,
-} from "~/shared/nano-states";
+} from "@webstudio-is/sdk-plugin";
 
 const handlesContainerStyle = css({
   position: "absolute",

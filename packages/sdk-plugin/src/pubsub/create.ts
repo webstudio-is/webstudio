@@ -4,9 +4,15 @@ import { batchUpdate } from "./raf-queue";
 
 export const createPubsub = <PublishMap>() => {
   type Action<Type extends keyof PublishMap> =
-    undefined extends PublishMap[Type]
-      ? { type: Type; payload?: PublishMap[Type] }
-      : { type: Type; payload: PublishMap[Type] };
+    PublishMap[Type] extends undefined
+      ? {
+          type: Type;
+          payload?: undefined;
+        }
+      : {
+          type: Type;
+          payload: PublishMap[Type];
+        };
 
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const emitter = createNanoEvents<Record<any, any>>();

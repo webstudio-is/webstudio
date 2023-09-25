@@ -15,7 +15,7 @@ import {
   registeredComponentMetasStore,
   selectedInstanceSelectorStore,
   selectedPageStore,
-} from "../nano-states";
+} from "@webstudio-is/sdk-plugin";
 import { isBaseBreakpoint } from "../breakpoints";
 
 const micromarkOptions = {

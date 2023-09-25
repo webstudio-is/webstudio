@@ -10,11 +10,12 @@ import {
   getIndexesWithinAncestors,
 } from "@webstudio-is/react-sdk";
 import type { Instance } from "@webstudio-is/sdk";
-import type { InstanceSelector } from "../tree-utils";
 import { dataSourceVariablesStore, propsStore } from "./nano-states";
 import { instancesStore, selectedInstanceSelectorStore } from "./instances";
 import { selectedPageStore } from "./pages";
 import { shallowEqual } from "shallow-equal";
+
+type InstanceSelector = Instance["id"][];
 
 const createHookContext = (): HookContext => {
   const metas = registeredComponentMetasStore.get();

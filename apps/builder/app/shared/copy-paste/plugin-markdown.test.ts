@@ -1,6 +1,6 @@
 import { describe, test, expect } from "@jest/globals";
 import { parse } from "./plugin-markdown";
-import { breakpointsStore } from "../nano-states";
+import { breakpointsStore } from "@webstudio-is/sdk-plugin";
 
 const options = { generateId: () => "123" };
 
@@ -403,7 +403,7 @@ describe("Plugin Markdown", () => {
   test("hard line break", () => {
     expect(
       parse(
-        `foo  
+        `foo
       baz`,
         options
       )
