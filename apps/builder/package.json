@@ -38,6 +38,7 @@
     "@sentry/types": "7.47.0",
     "@trpc/server": "^10.38.1",
     "@vercel/remix": "^1.19.2",
+    "@webstudio-is/ai": "workspace:*",
     "@webstudio-is/asset-uploader": "workspace:*",
     "@webstudio-is/authorization-token": "workspace:*",
     "@webstudio-is/css-data": "workspace:*",

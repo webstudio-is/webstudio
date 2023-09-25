@@ -162,3 +162,5 @@ export const getPublishedUrl = (domain: string) => {
 
   return `${protocol}//${domain}.${host}`;
 };
+
+export const restAiCopy = () => `/rest/ai/copy`;
