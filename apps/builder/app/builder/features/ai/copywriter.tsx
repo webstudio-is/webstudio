@@ -9,7 +9,6 @@ import {
   InputField,
   Label,
   Text,
-  TextArea,
 } from "@webstudio-is/design-system";
 import {
   instancesStore,
@@ -18,7 +17,8 @@ import {
 } from "~/shared/nano-states";
 import { useStore } from "@nanostores/react";
 import { collectTextInstances } from "node_modules/@webstudio-is/ai/src/chains/copywriter";
-import { useMemo, useRef, useState } from "react";
+import { useRef, useState } from "react";
+import { computed } from "nanostores";
 
 const patchTextInstance = (textInstance: copywriter.TextInstance) => {
   store.createTransaction([instancesStore], (instances) => {
@@ -45,7 +45,6 @@ const patchTextInstance = (textInstance: copywriter.TextInstance) => {
 
     if (currentInstance.children[textInstance.index].type === "text") {
       currentInstance.children[textInstance.index].value = textInstance.text;
-      instances.set(textInstance.instanceId, currentInstance);
     }
   });
 };
@@ -73,23 +72,27 @@ export const Copywriter = () => {
   const abort = useRef<AbortController | null>(null);
 
   const project = useStore(projectStore);
-  const instance = useStore(selectedInstanceStore);
 
-  const textInstances = useMemo(() => {
-    if (instance) {
-      return collectTextInstances({
-        instances: instancesStore.get(),
-        rootInstanceId: instance.id,
-      }).map((instance) => {
-        if (instance.text === "Text you can edit") {
-          instance.text = "";
-        }
+  const textInstances = computed(
+    [instancesStore, selectedInstanceStore],
+    (instances, selectedInstance) => {
+      if (selectedInstance) {
+        return collectTextInstances({
+          instances: instancesStore.get(),
+          rootInstanceId: selectedInstance.id,
+        }).map((instance) => {
+          if (instance.text === "Text you can edit") {
+            instance.text = "";
+          }
 
-        return instance;
-      });
+          return instance;
+        });
+      }
+      return [];
     }
-    return [];
-  }, [instance]);
+  );
+
+  const textInstancesCount = textInstances.get().length;
 
   return (
     <Box>
@@ -97,11 +100,11 @@ export const Copywriter = () => {
         Generate copy for all the text nodes contained in the selected instance.
         Found{" "}
         <Text css={{ fontWeight: "bold", display: "inline" }}>
-          {textInstances.length}
+          {textInstancesCount}
         </Text>{" "}
         text instances.
       </Text>
-      {textInstances.length > 0 ? (
+      {textInstancesCount > 0 ? (
         <>
           <form
             onSubmit={(event) => {
@@ -165,7 +168,7 @@ export const Copywriter = () => {
             <input
               type="hidden"
               name="textInstances"
-              value={JSON.stringify(textInstances)}
+              value={JSON.stringify(textInstances.get())}
             />
 
             <Button type="submit" disabled={isLoading}>

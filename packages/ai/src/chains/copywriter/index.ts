@@ -46,7 +46,7 @@ export const createChain = <ModelMessageFormat>(): ChainStream<
     if (textInstances.length === 0) {
       return {
         success: false,
-        type: "generic_error",
+        type: "genericError",
         status: 404,
         message: "No text nodes found for the instance",
       };
@@ -57,7 +57,7 @@ export const createChain = <ModelMessageFormat>(): ChainStream<
     } catch (error) {
       return {
         success: false,
-        type: "parsing_error",
+        type: "parseError",
         status: 500,
         message: "Invalid text nodes list",
       };

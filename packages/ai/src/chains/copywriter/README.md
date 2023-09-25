@@ -41,26 +41,15 @@ export async function handler({ request }) {
 Client side:
 
 ```tsx
-import { useCompletion } from "ai/react";
-import { copywriter, type ErrorResponse } from "@webstudio-is/ai";
+import { copywriter, requestStream, type ErrorResponse } from "@webstudio-is/ai";
 
 function UiComponent() {
   const [error, setError] = useState(null);
-  const { completion, complete, stop, isLoading } = useCompletion({
-    api: "/rest/ai/copy",
-    onResponse: (response) => {
-      if (response.headers.get("Content-Type")?.includes("application/json")) {
-        const json: ErrorResponse = await response.json();
-        if (json.success === false) {
-          setError(json.message);
-        }
-      }
-    },
-  });
+  const [copy, setCopy] = useState([]);
 
   useEffect(() => {
-    console.log(completion);
-  }, [completion]);
+    console.log(copy);
+  }, [copy]);
 
   return (
     <form
@@ -84,11 +73,29 @@ function UiComponent() {
           return;
         }
 
-        complete(prompt, {
-          body: {
-            projectId,
-            textInstances: JSON.parse(textInstances),
-          },
+        requestStream(
+          [
+            '/rest/ai/copy',
+            {
+              method: "POST",
+              body: JSON.stringify({
+                prompt,
+                projectId,
+                textInstances: JSON.parse(textInstances),
+              }),
+              signal: abort.current.signal,
+            },
+          ],
+          {
+            onChunk,
+          }
+        ).then((result) => {
+          abort.current = null;
+          if (typeof result !== "string") {
+            alert("Error " + result.type);
+          }
+          setCopy(parseResult(result));
+          setIsLoading(false);
         });
       }}
     >
