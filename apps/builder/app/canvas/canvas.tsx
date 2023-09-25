@@ -21,12 +21,12 @@ import * as radixComponents from "@webstudio-is/sdk-components-react-radix";
 import * as radixComponentMetas from "@webstudio-is/sdk-components-react-radix/metas";
 import * as radixComponentPropsMetas from "@webstudio-is/sdk-components-react-radix/props";
 import { hooks as radixComponentHooks } from "@webstudio-is/sdk-components-react-radix/hooks";
-import { publish } from "~/shared/pubsub";
+import { publish } from "@webstudio-is/sdk-plugin";
 import {
   handshakenStore,
   registerContainers,
   useCanvasStore,
-} from "~/shared/sync";
+} from "@webstudio-is/sdk-plugin";
 import { useSharedShortcuts } from "~/shared/shortcuts";
 import { useCanvasShortcuts } from "./canvas-shortcuts";
 import { useManageDesignModeStyles, GlobalStyles } from "./shared/styles";
@@ -47,7 +47,7 @@ import {
   subscribeComponentHooks,
   dataSourcesLogicStore,
   propsStore,
-} from "~/shared/nano-states";
+} from "@webstudio-is/sdk-plugin";
 import { useDragAndDrop } from "./shared/use-drag-drop";
 import { useCopyPaste } from "~/shared/copy-paste";
 import { setDataCollapsed, subscribeCollapsedToPubSub } from "./collapsed";
