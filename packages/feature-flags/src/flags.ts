@@ -5,4 +5,6 @@ export const displayContents = false;
 export const radix = false;
 // @todo this should be pro users check
 export const adminRole = false;
-export const aiCopy = process.env.NODE_ENV !== "production";
+// A general flag to enable/disable all the AI features.
+export const ai = process.env.NODE_ENV !== "production";
+export const aiCopy = ai && process.env.NODE_ENV !== "production";

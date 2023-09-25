@@ -1,4 +1,5 @@
 import { useCallback, useEffect } from "react";
+import { useStore } from "@nanostores/react";
 import { useUnmount } from "react-use";
 import { TooltipProvider } from "@radix-ui/react-tooltip";
 import { type Publish, usePublish } from "~/shared/pubsub";
@@ -24,27 +25,26 @@ import {
 } from "./features/workspace";
 import { usePublishShortcuts } from "./shared/shortcuts";
 import {
+  assetsStore,
+  $authPermit,
+  $authToken,
+  breakpointsStore,
+  dataSourcesStore,
+  instancesStore,
+  $isPreviewMode,
   pagesStore,
   projectStore,
-  useIsPreviewMode,
-  useSetAssets,
-  useSetAuthPermit,
-  useSetAuthToken,
-  useSetBreakpoints,
-  useSetDataSources,
-  useSetInstances,
-  useSetPages,
-  useSetProps,
-  useSetStyles,
-  useSetStyleSources,
-  useSetStyleSourceSelections,
+  propsStore,
+  styleSourceSelectionsStore,
+  styleSourcesStore,
+  stylesStore,
 } from "~/shared/nano-states";
 import { type Settings, useClientSettings } from "./shared/client-settings";
 import { getBuildUrl } from "~/shared/router-utils";
 import { useCopyPaste } from "~/shared/copy-paste";
 import { BlockingAlerts } from "./features/blocking-alerts";
-import { useStore } from "@nanostores/react";
 import { useSyncPageUrl } from "~/shared/pages";
+import { useMount } from "~/shared/hook-utils/use-mount";
 
 registerContainers();
 
@@ -54,12 +54,6 @@ export const links = () => {
     { rel: "stylesheet", href: builderStyles },
     { rel: "stylesheet", href: prismStyles },
   ];
-};
-
-const useSetProject = (project: Project) => {
-  useEffect(() => {
-    projectStore.set(project);
-  }, [project]);
 };
 
 const useNavigatorLayout = () => {
@@ -240,25 +234,30 @@ export const Builder = ({
   authToken,
   authPermit,
 }: BuilderProps) => {
-  useSetProject(project);
-  useSetPages(build.pages);
-  useSetBreakpoints(build.breakpoints);
-  useSetProps(build.props);
-  useSetDataSources(build.dataSources);
-  useSetStyles(build.styles);
-  useSetStyleSources(build.styleSources);
-  useSetStyleSourceSelections(build.styleSourceSelections);
-  useSetInstances(build.instances);
+  useMount(() => {
+    // additional data stores
+    projectStore.set(project);
+    $authPermit.set(authPermit);
+    $authToken.set(authToken);
+
+    // set initial containers value
+    assetsStore.set(new Map(assets));
+    instancesStore.set(new Map(build.instances));
+    dataSourcesStore.set(new Map(build.dataSources));
+    // props should be after data sources to compute logic
+    propsStore.set(new Map(build.props));
+    pagesStore.set(build.pages);
+    styleSourcesStore.set(new Map(build.styleSources));
+    styleSourceSelectionsStore.set(new Map(build.styleSourceSelections));
+    breakpointsStore.set(new Map(build.breakpoints));
+    stylesStore.set(new Map(build.styles));
+  });
 
   useUnmount(() => {
     pagesStore.set(undefined);
   });
 
   useSyncPageUrl();
-
-  useSetAssets(assets);
-  useSetAuthToken(authToken);
-  useSetAuthPermit(authPermit);
 
   const [publish, publishRef] = usePublish();
   useBuilderStore(publish);
@@ -271,7 +270,7 @@ export const Builder = ({
   });
   useSharedShortcuts({ source: "builder" });
 
-  const [isPreviewMode] = useIsPreviewMode();
+  const isPreviewMode = useStore($isPreviewMode);
   usePublishShortcuts(publish);
   const { onRef: onRefReadCanvas, onTransitionEnd } = useReadCanvasRect();
   // We need to initialize this in both canvas and builder,
