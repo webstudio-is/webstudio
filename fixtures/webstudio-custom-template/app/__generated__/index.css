@@ -68,9 +68,405 @@ html {
     border-left-width: 1px;
     outline-width: 1px;
   }
+  div:where([data-ws-component="Box"]) {
+    box-sizing: border-box;
+    border-top-width: 1px;
+    border-right-width: 1px;
+    border-bottom-width: 1px;
+    border-left-width: 1px;
+    outline-width: 1px;
+  }
+  address:where([data-ws-component="Box"]) {
+    box-sizing: border-box;
+    border-top-width: 1px;
+    border-right-width: 1px;
+    border-bottom-width: 1px;
+    border-left-width: 1px;
+    outline-width: 1px;
+  }
+  article:where([data-ws-component="Box"]) {
+    box-sizing: border-box;
+    border-top-width: 1px;
+    border-right-width: 1px;
+    border-bottom-width: 1px;
+    border-left-width: 1px;
+    outline-width: 1px;
+  }
+  aside:where([data-ws-component="Box"]) {
+    box-sizing: border-box;
+    border-top-width: 1px;
+    border-right-width: 1px;
+    border-bottom-width: 1px;
+    border-left-width: 1px;
+    outline-width: 1px;
+  }
+  figure:where([data-ws-component="Box"]) {
+    box-sizing: border-box;
+    border-top-width: 1px;
+    border-right-width: 1px;
+    border-bottom-width: 1px;
+    border-left-width: 1px;
+    outline-width: 1px;
+  }
+  footer:where([data-ws-component="Box"]) {
+    box-sizing: border-box;
+    border-top-width: 1px;
+    border-right-width: 1px;
+    border-bottom-width: 1px;
+    border-left-width: 1px;
+    outline-width: 1px;
+  }
+  header:where([data-ws-component="Box"]) {
+    box-sizing: border-box;
+    border-top-width: 1px;
+    border-right-width: 1px;
+    border-bottom-width: 1px;
+    border-left-width: 1px;
+    outline-width: 1px;
+  }
+  main:where([data-ws-component="Box"]) {
+    box-sizing: border-box;
+    border-top-width: 1px;
+    border-right-width: 1px;
+    border-bottom-width: 1px;
+    border-left-width: 1px;
+    outline-width: 1px;
+  }
+  nav:where([data-ws-component="Box"]) {
+    box-sizing: border-box;
+    border-top-width: 1px;
+    border-right-width: 1px;
+    border-bottom-width: 1px;
+    border-left-width: 1px;
+    outline-width: 1px;
+  }
+  section:where([data-ws-component="Box"]) {
+    box-sizing: border-box;
+    border-top-width: 1px;
+    border-right-width: 1px;
+    border-bottom-width: 1px;
+    border-left-width: 1px;
+    outline-width: 1px;
+  }
+  p:where([data-ws-component="Paragraph"]) {
+    box-sizing: border-box;
+    border-top-width: 1px;
+    border-right-width: 1px;
+    border-bottom-width: 1px;
+    border-left-width: 1px;
+    outline-width: 1px;
+  }
+  img:where([data-ws-component="Image"]) {
+    box-sizing: border-box;
+    border-top-width: 1px;
+    border-right-width: 1px;
+    border-bottom-width: 1px;
+    border-left-width: 1px;
+    outline-width: 1px;
+    max-width: 100%;
+    display: block;
+  }
+  a:where([data-ws-component="Link"]) {
+    box-sizing: border-box;
+    border-top-width: 1px;
+    border-right-width: 1px;
+    border-bottom-width: 1px;
+    border-left-width: 1px;
+    outline-width: 1px;
+    min-height: 1em;
+    display: inline-block;
+  }
+  div:where([data-ws-component="Text"]) {
+    box-sizing: border-box;
+    border-top-width: 1px;
+    border-right-width: 1px;
+    border-bottom-width: 1px;
+    border-left-width: 1px;
+    outline-width: 1px;
+    min-height: 1em;
+  }
+  div:where(
+      [data-ws-component="@webstudio-is/sdk-components-react-radix:Accordion"]
+    ) {
+    box-sizing: border-box;
+    border-top-width: 1px;
+    border-right-width: 1px;
+    border-bottom-width: 1px;
+    border-left-width: 1px;
+    outline-width: 1px;
+  }
+  div:where(
+      [data-ws-component="@webstudio-is/sdk-components-react-radix:AccordionItem"]
+    ) {
+    box-sizing: border-box;
+    border-top-width: 1px;
+    border-right-width: 1px;
+    border-bottom-width: 1px;
+    border-left-width: 1px;
+    outline-width: 1px;
+  }
+  h3:where(
+      [data-ws-component="@webstudio-is/sdk-components-react-radix:AccordionHeader"]
+    ) {
+    box-sizing: border-box;
+    border-top-width: 1px;
+    border-right-width: 1px;
+    border-bottom-width: 1px;
+    border-left-width: 1px;
+    outline-width: 1px;
+    margin-top: 0px;
+    margin-bottom: 0px;
+  }
+  button:where(
+      [data-ws-component="@webstudio-is/sdk-components-react-radix:AccordionTrigger"]
+    ) {
+    font-family: inherit;
+    font-size: 100%;
+    line-height: 1.15;
+    margin-top: 0;
+    margin-right: 0;
+    margin-bottom: 0;
+    margin-left: 0;
+    box-sizing: border-box;
+    border-top-width: 0px;
+    border-right-width: 0px;
+    border-bottom-width: 0px;
+    border-left-width: 0px;
+    text-transform: none;
+    background-color: transparent;
+    background-image: none;
+    border-top-style: solid;
+    border-right-style: solid;
+    border-bottom-style: solid;
+    border-left-style: solid;
+    border-top-color: rgba(226, 232, 240, 1);
+    border-right-color: rgba(226, 232, 240, 1);
+    border-bottom-color: rgba(226, 232, 240, 1);
+    border-left-color: rgba(226, 232, 240, 1);
+    padding-left: 0px;
+    padding-right: 0px;
+    padding-top: 0px;
+    padding-bottom: 0px;
+  }
+  div:where(
+      [data-ws-component="@webstudio-is/sdk-components-react-radix:AccordionContent"]
+    ) {
+    box-sizing: border-box;
+    border-top-width: 1px;
+    border-right-width: 1px;
+    border-bottom-width: 1px;
+    border-left-width: 1px;
+    outline-width: 1px;
+  }
+  form:where([data-ws-component="Form"]) {
+    box-sizing: border-box;
+    border-top-width: 1px;
+    border-right-width: 1px;
+    border-bottom-width: 1px;
+    border-left-width: 1px;
+    outline-width: 1px;
+    min-height: 20px;
+  }
+  label:where([data-ws-component="Label"]) {
+    box-sizing: border-box;
+    border-top-width: 1px;
+    border-right-width: 1px;
+    border-bottom-width: 1px;
+    border-left-width: 1px;
+    outline-width: 1px;
+    display: block;
+  }
+  input:where([data-ws-component="Input"]) {
+    font-family: inherit;
+    font-size: 100%;
+    line-height: 1.15;
+    margin-top: 0;
+    margin-right: 0;
+    margin-bottom: 0;
+    margin-left: 0;
+    box-sizing: border-box;
+    border-top-width: 1px;
+    border-right-width: 1px;
+    border-bottom-width: 1px;
+    border-left-width: 1px;
+    display: block;
+  }
+  button:where([data-ws-component="Button"]) {
+    font-family: inherit;
+    font-size: 100%;
+    line-height: 1.15;
+    margin-top: 0;
+    margin-right: 0;
+    margin-bottom: 0;
+    margin-left: 0;
+    box-sizing: border-box;
+    border-top-width: 1px;
+    border-right-width: 1px;
+    border-bottom-width: 1px;
+    border-left-width: 1px;
+    text-transform: none;
+  }
 }
 @media all {
-  [data-ws-id="7pwqBSgrfuuOfk1JblWcL"] {
+  [data-ws-id="nVMWvMsaLCcb0o1wuNQgg"] {
     font-size: 4em;
+  }
+  [data-ws-id="f0kF-WmL7DQg7MSyRvqY1"] {
+    display: flex;
+    justify-content: center;
+    align-items: start;
+  }
+  [data-ws-id="5XDbqPrZDeCwq4YJ3CHsc"] {
+    min-width: 0px;
+    flex-grow: 1;
+    flex-shrink: 0;
+    flex-basis: 0px;
+  }
+  [data-ws-id="qPnkiFGDj8dITWb1kmpGl"] {
+    min-width: 0px;
+    flex-grow: 1;
+    flex-shrink: 0;
+    flex-basis: 0px;
+  }
+  [data-ws-id="pX1ovPI7NdC0HRjkw6Kpw"] {
+    aspect-ratio: 1;
+  }
+  [data-ws-id="On9cvWCxr5rdZtY9O1Bv0"] {
+    padding-top: 16px;
+    padding-right: 16px;
+    padding-left: 16px;
+    padding-bottom: 16px;
+  }
+  [data-ws-id="zJ927zk9txwUbYycKB7QA"] {
+    border-bottom-width: 1px;
+    border-bottom-style: solid;
+    border-bottom-color: rgba(226, 232, 240, 1);
+  }
+  [data-ws-id="sMxg7xT1hwYt05hbOvoPL"] {
+    display: flex;
+  }
+  [data-ws-id="qQSA4NoyKC88O68mBiQe2"] {
+    display: flex;
+    flex-grow: 1;
+    flex-shrink: 1;
+    flex-basis: 0%;
+    align-items: center;
+    justify-content: space-between;
+    padding-top: 1rem;
+    padding-bottom: 1rem;
+    font-weight: 500;
+    --accordion-trigger-icon-transform: 0deg;
+  }
+  [data-ws-id="qQSA4NoyKC88O68mBiQe2"]:hover {
+    text-decoration-line: underline;
+  }
+  [data-ws-id="qQSA4NoyKC88O68mBiQe2"][data-state="open"] {
+    --accordion-trigger-icon-transform: 180deg;
+  }
+  [data-ws-id="RSk81lLj2IGXgchTuXF7V"] {
+    rotate: var(--accordion-trigger-icon-transform);
+    height: 1rem;
+    width: 1rem;
+    flex-grow: 0;
+    transition-property: all;
+    transition-timing-function: cubic-bezier(0.4, 0, 0.2, 1);
+    transition-duration: 200ms;
+  }
+  [data-ws-id="IUftdfjK-ilSzfOTdIx1u"] {
+    overflow: hidden;
+    font-size: 0.875rem;
+    line-height: 1.25rem;
+    padding-bottom: 1rem;
+  }
+  [data-ws-id="C838wkvIcA1BQu30Xu2G8"] {
+    border-bottom-width: 1px;
+    border-bottom-style: solid;
+    border-bottom-color: rgba(226, 232, 240, 1);
+  }
+  [data-ws-id="fYUOB_brm6s0Ky68lzMfU"] {
+    display: flex;
+  }
+  [data-ws-id="dfd4gonev_AX6BpuCsxjb"] {
+    display: flex;
+    flex-grow: 1;
+    flex-shrink: 1;
+    flex-basis: 0%;
+    align-items: center;
+    justify-content: space-between;
+    padding-top: 1rem;
+    padding-bottom: 1rem;
+    font-weight: 500;
+    --accordion-trigger-icon-transform: 0deg;
+  }
+  [data-ws-id="dfd4gonev_AX6BpuCsxjb"]:hover {
+    text-decoration-line: underline;
+  }
+  [data-ws-id="dfd4gonev_AX6BpuCsxjb"][data-state="open"] {
+    --accordion-trigger-icon-transform: 180deg;
+  }
+  [data-ws-id="wRw75kuvFzl5NWD8IGJoI"] {
+    rotate: var(--accordion-trigger-icon-transform);
+    height: 1rem;
+    width: 1rem;
+    flex-grow: 0;
+    transition-property: all;
+    transition-timing-function: cubic-bezier(0.4, 0, 0.2, 1);
+    transition-duration: 200ms;
+  }
+  [data-ws-id="wNRVuu0L5E8TVufKdswp1"] {
+    overflow: hidden;
+    font-size: 0.875rem;
+    line-height: 1.25rem;
+    padding-bottom: 1rem;
+  }
+  [data-ws-id="65djoTmSBGemZ2L5izQ5M"] {
+    border-bottom-width: 1px;
+    border-bottom-style: solid;
+    border-bottom-color: rgba(226, 232, 240, 1);
+  }
+  [data-ws-id="UJYfe6kH7HqhH0YYeJwe7"] {
+    display: flex;
+  }
+  [data-ws-id="600nGddaNxGGdsuGgpxJR"] {
+    display: flex;
+    flex-grow: 1;
+    flex-shrink: 1;
+    flex-basis: 0%;
+    align-items: center;
+    justify-content: space-between;
+    padding-top: 1rem;
+    padding-bottom: 1rem;
+    font-weight: 500;
+    --accordion-trigger-icon-transform: 0deg;
+  }
+  [data-ws-id="600nGddaNxGGdsuGgpxJR"]:hover {
+    text-decoration-line: underline;
+  }
+  [data-ws-id="600nGddaNxGGdsuGgpxJR"][data-state="open"] {
+    --accordion-trigger-icon-transform: 180deg;
+  }
+  [data-ws-id="Ta70VqUb_fGJXBT_zsnxQ"] {
+    rotate: var(--accordion-trigger-icon-transform);
+    height: 1rem;
+    width: 1rem;
+    flex-grow: 0;
+    transition-property: all;
+    transition-timing-function: cubic-bezier(0.4, 0, 0.2, 1);
+    transition-duration: 200ms;
+  }
+  [data-ws-id="mOVPnIrlt6IwVAzI_i2Fc"] {
+    overflow: hidden;
+    font-size: 0.875rem;
+    line-height: 1.25rem;
+    padding-bottom: 1rem;
+  }
+  [data-ws-id="AdXSAYCx4QDo5QN6nLoGs"] {
+    aspect-ratio: 1;
+  }
+  [data-ws-id="9I4GRU1sev48hREkQcKQ-"] {
+    display: block;
+  }
+  [data-ws-id="81ejLVXyFEV1SxiJrWhyw"] {
+    display: block;
   }
 }
