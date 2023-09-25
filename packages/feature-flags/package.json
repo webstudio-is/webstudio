@@ -12,7 +12,12 @@
     "build": "rm -rf lib && esbuild 'src/**/*.ts' 'src/**/*.tsx' --outdir=lib",
     "dts": "tsc --project tsconfig.dts.json"
   },
-  "dependencies": {},
+  "dependencies": {
+    "@babel/parser": "^7.23.0",
+    "@babel/types": "^7.23.0",
+    "json5": "^2.2.3",
+    "type-fest": "^4.3.1"
+  },
   "devDependencies": {
     "@webstudio-is/tsconfig": "workspace:*"
   },

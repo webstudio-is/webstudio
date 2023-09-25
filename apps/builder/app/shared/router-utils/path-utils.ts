@@ -164,3 +164,5 @@ export const getPublishedUrl = (domain: string) => {
 };
 
 export const restAiCopy = () => `/rest/ai/copy`;
+export const restAiSections = () => `/rest/ai/sections`;
+export const restAiTemplateGenerator = () => `/rest/ai/template-generator`;

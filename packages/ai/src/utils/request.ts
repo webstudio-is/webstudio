@@ -14,7 +14,7 @@ export const request = function request<ResponseData>(
       if (res.ok === false) {
         return {
           success: false,
-          type: "generic_error",
+          type: "genericError",
           status: res.status,
           message: res.statusText,
         } as ErrorResponse;
@@ -37,7 +37,7 @@ export const request = function request<ResponseData>(
       }
       return {
         success: false,
-        type: isAborted ? "aborted" : "generic_error",
+        type: isAborted ? "aborted" : "genericError",
         status: 500,
         message: "",
       } as ErrorResponse;
@@ -115,7 +115,7 @@ export const requestStream = async function requestStream(
 
       return {
         success: false,
-        type: isAborted ? "aborted" : "generic_error",
+        type: isAborted ? "aborted" : "genericError",
         status: 500,
         message: "",
       } as ErrorResponse;

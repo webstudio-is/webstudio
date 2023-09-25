@@ -1,21 +1,18 @@
 import type { ActionArgs } from "@remix-run/node";
 import {
-  copywriter,
+  sections,
   createGptModel,
   type GPTModelMessageFormat,
 } from "@webstudio-is/ai";
 import { isFeatureEnabled } from "@webstudio-is/feature-flags";
-import { authorizeProject } from "@webstudio-is/trpc-interface/index.server";
-import { z } from "zod";
+
 import env from "~/env/env.server";
 import { createContext } from "~/shared/context.server";
 
-const RequestSchema = copywriter.ContextSchema.extend({
-  projectId: z.string(),
-});
+const RequestSchema = sections.ContextSchema;
 
 export const action = async function action({ request }: ActionArgs) {
-  if (isFeatureEnabled("aiCopy") === false) {
+  if (isFeatureEnabled("aiSections") === false) {
     return {
       success: false,
       type: "featureDisabled",
@@ -59,19 +56,11 @@ export const action = async function action({ request }: ActionArgs) {
     };
   }
 
-  const { projectId, prompt, textInstances } = parsed.data;
+  const { prompt } = parsed.data;
 
-  // Permissions check
   const requestContext = await createContext(request);
-  const canEdit =
-    requestContext.authorization.userId === undefined
-      ? false
-      : await authorizeProject.hasProjectPermit(
-          { projectId: projectId, permit: "edit" },
-          requestContext
-        );
 
-  if (canEdit === false) {
+  if (requestContext.authorization.userId === undefined) {
     return {
       success: false,
       type: "unauthorized",
@@ -79,7 +68,6 @@ export const action = async function action({ request }: ActionArgs) {
       message: "You don't have edit access to this project",
     };
   }
-  // End of Permissions check
 
   // @todo add rate limiting
 
@@ -90,13 +78,21 @@ export const action = async function action({ request }: ActionArgs) {
     model: "gpt-3.5-turbo",
   });
 
-  const chain = copywriter.createChain<GPTModelMessageFormat>();
+  const chain = sections.createChain<GPTModelMessageFormat>();
 
-  return chain({
+  const response = await chain({
     model,
     context: {
       prompt,
-      textInstances,
     },
   });
+
+  if (response.success === false) {
+    return response;
+  }
+
+  return {
+    success: true,
+    data: response.data,
+  };
 };
