@@ -6,30 +6,24 @@ import type { AuthPermit } from "@webstudio-is/trpc-interface/index.server";
 import type { ItemDropTarget, Placement } from "@webstudio-is/design-system";
 import {
   createScope,
-  type Asset,
   type Assets,
-  type Breakpoint,
   type DataSource,
   type DataSources,
   type Instance,
   type Prop,
   type Props,
   type StyleDecl,
-  type StyleDeclKey,
   type Styles,
   type StyleSource,
   type StyleSources,
-  type StyleSourceSelection,
   type StyleSourceSelections,
 } from "@webstudio-is/sdk";
 import { generateDataSources } from "@webstudio-is/react-sdk";
 import type { Style } from "@webstudio-is/css-engine";
 import type { DragStartPayload } from "~/canvas/shared/use-drag-drop";
-import { useMount } from "~/shared/hook-utils/use-mount";
 import { shallowComputed } from "../store-utils";
 import { type InstanceSelector } from "../tree-utils";
 import type { htmlTags as HtmlTags } from "html-tags";
-import { breakpointsStore } from "./breakpoints";
 import { instancesStore, selectedInstanceSelectorStore } from "./instances";
 import { selectedPageStore } from "./pages";
 import type { UnitSizes } from "~/builder/features/style-panel/shared/css-value-input/convert-units";
@@ -68,13 +62,6 @@ export const dataSourcesStore = atom<DataSources>(new Map());
 export const dataSourceVariablesStore = atom<Map<DataSource["id"], unknown>>(
   new Map()
 );
-export const useSetDataSources = (
-  dataSources: [DataSource["id"], DataSource][]
-) => {
-  useMount(() => {
-    dataSourcesStore.set(new Map(dataSources));
-  });
-};
 
 export const propsStore = atom<Props>(new Map());
 export const propsIndexStore = computed(propsStore, (props) => {
@@ -92,11 +79,6 @@ export const propsIndexStore = computed(propsStore, (props) => {
     propsByInstanceId,
   };
 });
-export const useSetProps = (props: [Prop["id"], Prop][]) => {
-  useMount(() => {
-    propsStore.set(new Map(props));
-  });
-};
 
 // result of executing generated code
 // includes variables, computed expressions and action callbacks
@@ -147,11 +129,6 @@ export const dataSourcesLogicStore = computed(
 
 export const stylesStore = atom<Styles>(new Map());
 
-export const useSetStyles = (styles: [StyleDeclKey, StyleDecl][]) => {
-  useMount(() => {
-    stylesStore.set(new Map(styles));
-  });
-};
 export const useInstanceStyles = (instanceId: undefined | Instance["id"]) => {
   const instanceStylesStore = useMemo(() => {
     return shallowComputed([stylesIndexStore], (stylesIndex) => {
@@ -167,24 +144,9 @@ export const useInstanceStyles = (instanceId: undefined | Instance["id"]) => {
 
 export const styleSourcesStore = atom<StyleSources>(new Map());
 
-export const useSetStyleSources = (
-  styleSources: [StyleSource["id"], StyleSource][]
-) => {
-  useMount(() => {
-    styleSourcesStore.set(new Map(styleSources));
-  });
-};
-
 export const styleSourceSelectionsStore = atom<StyleSourceSelections>(
   new Map()
 );
-export const useSetStyleSourceSelections = (
-  styleSourceSelections: [Instance["id"], StyleSourceSelection][]
-) => {
-  useMount(() => {
-    styleSourceSelectionsStore.set(new Map(styleSourceSelections));
-  });
-};
 
 export type StyleSourceSelector = {
   styleSourceId: StyleSource["id"];
@@ -237,20 +199,7 @@ export const stylesIndexStore = computed(
   }
 );
 
-export const useSetBreakpoints = (
-  breakpoints: [Breakpoint["id"], Breakpoint][]
-) => {
-  useMount(() => {
-    breakpointsStore.set(new Map(breakpoints));
-  });
-};
-
 export const assetsStore = atom<Assets>(new Map());
-export const useSetAssets = (assets: [Asset["id"], Asset][]) => {
-  useMount(() => {
-    assetsStore.set(new Map(assets));
-  });
-};
 
 export const selectedInstanceBrowserStyleStore = atom<undefined | Style>();
 
@@ -382,21 +331,11 @@ export const hoveredInstanceSelectorStore = atom<undefined | InstanceSelector>(
 export const isPreviewModeStore = atom<boolean>(false);
 export const useIsPreviewMode = () => useValue(isPreviewModeStore);
 
-const authPermitStore = atom<AuthPermit>("view");
+export const authPermitStore = atom<AuthPermit>("view");
 export const useAuthPermit = () => useValue(authPermitStore);
-export const useSetAuthPermit = (authPermit: AuthPermit) => {
-  useMount(() => {
-    authPermitStore.set(authPermit);
-  });
-};
 
 export const authTokenStore = atom<string | undefined>(undefined);
 export const useAuthToken = () => useValue(authTokenStore);
-export const useSetAuthToken = (authToken: string | undefined) => {
-  useMount(() => {
-    authTokenStore.set(authToken);
-  });
-};
 
 export type DragAndDropState = {
   isDragging: boolean;
