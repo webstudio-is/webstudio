@@ -24,20 +24,19 @@ import {
 } from "./features/workspace";
 import { usePublishShortcuts } from "./shared/shortcuts";
 import {
+  assetsStore,
+  authPermitStore,
+  authTokenStore,
+  breakpointsStore,
+  dataSourcesStore,
+  instancesStore,
   pagesStore,
   projectStore,
+  propsStore,
+  styleSourceSelectionsStore,
+  styleSourcesStore,
+  stylesStore,
   useIsPreviewMode,
-  useSetAssets,
-  useSetAuthPermit,
-  useSetAuthToken,
-  useSetBreakpoints,
-  useSetDataSources,
-  useSetInstances,
-  useSetPages,
-  useSetProps,
-  useSetStyles,
-  useSetStyleSources,
-  useSetStyleSourceSelections,
 } from "~/shared/nano-states";
 import { type Settings, useClientSettings } from "./shared/client-settings";
 import { getBuildUrl } from "~/shared/router-utils";
@@ -45,6 +44,7 @@ import { useCopyPaste } from "~/shared/copy-paste";
 import { BlockingAlerts } from "./features/blocking-alerts";
 import { useStore } from "@nanostores/react";
 import { useSyncPageUrl } from "~/shared/pages";
+import { useMount } from "~/shared/hook-utils/use-mount";
 
 registerContainers();
 
@@ -54,12 +54,6 @@ export const links = () => {
     { rel: "stylesheet", href: builderStyles },
     { rel: "stylesheet", href: prismStyles },
   ];
-};
-
-const useSetProject = (project: Project) => {
-  useEffect(() => {
-    projectStore.set(project);
-  }, [project]);
 };
 
 const useNavigatorLayout = () => {
@@ -240,25 +234,30 @@ export const Builder = ({
   authToken,
   authPermit,
 }: BuilderProps) => {
-  useSetProject(project);
-  useSetPages(build.pages);
-  useSetBreakpoints(build.breakpoints);
-  useSetProps(build.props);
-  useSetDataSources(build.dataSources);
-  useSetStyles(build.styles);
-  useSetStyleSources(build.styleSources);
-  useSetStyleSourceSelections(build.styleSourceSelections);
-  useSetInstances(build.instances);
+  useMount(() => {
+    // additional data stores
+    projectStore.set(project);
+    authPermitStore.set(authPermit);
+    authTokenStore.set(authToken);
+
+    // set initial containers value
+    assetsStore.set(new Map(assets));
+    instancesStore.set(new Map(build.instances));
+    dataSourcesStore.set(new Map(build.dataSources));
+    // props should be after data sources to compute logic
+    propsStore.set(new Map(build.props));
+    pagesStore.set(build.pages);
+    styleSourcesStore.set(new Map(build.styleSources));
+    styleSourceSelectionsStore.set(new Map(build.styleSourceSelections));
+    breakpointsStore.set(new Map(build.breakpoints));
+    stylesStore.set(new Map(build.styles));
+  });
 
   useUnmount(() => {
     pagesStore.set(undefined);
   });
 
   useSyncPageUrl();
-
-  useSetAssets(assets);
-  useSetAuthToken(authToken);
-  useSetAuthPermit(authPermit);
 
   const [publish, publishRef] = usePublish();
   useBuilderStore(publish);
