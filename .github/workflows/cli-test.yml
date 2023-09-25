@@ -47,10 +47,10 @@ jobs:
         run: pnpm --filter='./fixtures/*' run fixtures:link
 
       - name: Testing cli sync command
-        run: pnpm --filter='./fixtures/*' run fixtures:sync
+        run: pnpm --filter='./fixtures/*' run --parallel fixtures:sync
 
       - name: Testing cli build command
-        run: pnpm --filter='./fixtures/*' run fixtures:build
+        run: pnpm --filter='./fixtures/*' run --parallel fixtures:build
 
       - name: Test git diff
         # This command will fail if there are uncommitted changes, i.e something has broken
