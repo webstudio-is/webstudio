@@ -15,7 +15,6 @@ export {
 export * from "./embed-template";
 export {
   normalizeProps,
-  useInstanceProps,
   getPropsByInstanceId,
   getInstanceIdFromComponentProps,
   getIndexWithinAncestorFromComponentProps,
