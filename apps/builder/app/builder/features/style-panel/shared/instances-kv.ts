@@ -1,7 +1,7 @@
 import { useStore } from "@nanostores/react";
 import { map } from "nanostores";
 import { useCallback } from "react";
-import { selectedInstanceSelectorStore } from "~/shared/nano-states";
+import { selectedInstanceSelectorStore } from "@webstudio-is/sdk-plugin";
 
 const instancesKv = map<Record<string, unknown>>({});
 

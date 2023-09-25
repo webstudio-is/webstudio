@@ -11,9 +11,9 @@ import {
   registeredComponentMetasStore,
   selectedPageStore,
   stylesIndexStore,
-} from "~/shared/nano-states";
-import { selectedBreakpointStore } from "~/shared/nano-states";
-import { subscribe } from "~/shared/pubsub";
+} from "@webstudio-is/sdk-plugin";
+import { selectedBreakpointStore } from "@webstudio-is/sdk-plugin";
+import { subscribe } from "@webstudio-is/sdk-plugin";
 import htmlTags, { type htmlTags as HtmlTags } from "html-tags";
 
 const isHtmlTag = (tag: string): tag is HtmlTags =>

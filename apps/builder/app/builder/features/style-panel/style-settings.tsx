@@ -12,7 +12,7 @@ import { useStore } from "@nanostores/react";
 import {
   selectedInstanceIntanceToTagStore,
   selectedInstanceSelectorStore,
-} from "~/shared/nano-states";
+} from "@webstudio-is/sdk-plugin";
 import { computed } from "nanostores";
 import { useParentStyle } from "./parent-style";
 

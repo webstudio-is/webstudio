@@ -5,15 +5,9 @@ import {
   registeredComponentMetasStore,
   selectedInstanceSelectorStore,
   selectedStyleSourceSelectorStore,
-} from "~/shared/nano-states";
-import { textEditingInstanceSelectorStore } from "~/shared/nano-states";
-import { publish } from "~/shared/pubsub";
-
-declare module "~/shared/pubsub" {
-  export interface PubsubMap {
-    clickCanvas: undefined;
-  }
-}
+} from "@webstudio-is/sdk-plugin";
+import { textEditingInstanceSelectorStore } from "@webstudio-is/sdk-plugin";
+import { publish } from "@webstudio-is/sdk-plugin";
 
 export const subscribeInstanceSelection = () => {
   let pointerDownElement: undefined | Element = undefined;

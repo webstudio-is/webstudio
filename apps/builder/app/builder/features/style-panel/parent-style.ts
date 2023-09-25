@@ -4,7 +4,7 @@ import {
   instancesStore,
   registeredComponentMetasStore,
   selectedInstanceSelectorStore,
-} from "~/shared/nano-states";
+} from "@webstudio-is/sdk-plugin";
 
 /**
  * Gets styleable parent style

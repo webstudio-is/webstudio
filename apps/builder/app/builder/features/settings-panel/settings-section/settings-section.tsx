@@ -3,7 +3,7 @@ import { InputField, useId } from "@webstudio-is/design-system";
 import {
   registeredComponentMetasStore,
   selectedInstanceStore,
-} from "~/shared/nano-states";
+} from "@webstudio-is/sdk-plugin";
 import { useSettingsLogic } from "./use-settings-logic";
 import { HorizontalLayout, Label, Row } from "../shared";
 import { getInstanceLabel } from "~/shared/instance-utils";

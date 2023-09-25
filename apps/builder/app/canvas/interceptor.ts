@@ -1,5 +1,5 @@
 import { findPageByIdOrPath } from "@webstudio-is/project-build";
-import { isPreviewModeStore, pagesStore } from "~/shared/nano-states";
+import { isPreviewModeStore, pagesStore } from "@webstudio-is/sdk-plugin";
 import { switchPage } from "~/shared/pages";
 
 const isAbsoluteUrl = (href: string) => {

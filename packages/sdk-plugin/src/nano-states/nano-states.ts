@@ -24,16 +24,21 @@ import {
 } from "@webstudio-is/sdk";
 import { generateDataSources } from "@webstudio-is/react-sdk";
 import type { Style } from "@webstudio-is/css-engine";
-import type { DragStartPayload } from "~/canvas/shared/use-drag-drop";
-import { useMount } from "~/shared/hook-utils/use-mount";
+import type { DragStartPayload } from "../pubsub";
+import { useMount } from "../hook-utils/use-mount";
 import { shallowComputed } from "../store-utils";
-import { type InstanceSelector } from "../tree-utils";
 import type { htmlTags as HtmlTags } from "html-tags";
 import { breakpointsStore } from "./breakpoints";
 import { instancesStore, selectedInstanceSelectorStore } from "./instances";
 import { selectedPageStore } from "./pages";
-import type { UnitSizes } from "~/builder/features/style-panel/shared/css-value-input/convert-units";
+// import type { UnitSizes } from "~/builder/features/style-panel/shared/css-value-input/convert-units";
 import type { Project } from "@webstudio-is/project";
+
+type InstanceSelector = Instance["id"][];
+
+const convertibleUnits = ["px", "ch", "vw", "vh", "em", "rem"] as const;
+type ConvertibleUnit = (typeof convertibleUnits)[number];
+type UnitSizes = Record<ConvertibleUnit, number>;
 
 const useValue = <T>(atom: WritableAtom<T>) => {
   const value = useStore(atom);
@@ -52,6 +57,7 @@ const useValue = <T>(atom: WritableAtom<T>) => {
   return [value, set] as const;
 };
 
+// SHARED
 export const projectStore = atom<Project | undefined>();
 
 export const rootInstanceStore = computed(

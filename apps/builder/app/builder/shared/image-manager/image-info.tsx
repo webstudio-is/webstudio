@@ -17,7 +17,7 @@ import {
 import type { Asset } from "@webstudio-is/sdk";
 import { Filename } from "./filename";
 import { getFormattedAspectRatio } from "./utils";
-import { useAuthPermit } from "~/shared/nano-states";
+import { useAuthPermit } from "@webstudio-is/sdk-plugin";
 
 type ImageInfoProps = {
   asset: Asset;

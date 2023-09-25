@@ -22,7 +22,7 @@ import {
   PopoverMenuItemContainer,
   PopoverMenuItemRightSlot,
 } from "@webstudio-is/design-system";
-import { useSubscribe } from "~/shared/pubsub";
+import { useSubscribe } from "@webstudio-is/sdk-plugin";
 import { BreakpointsEditor } from "./breakpoints-editor";
 import { BreakpointsPopoverToolbarButton } from "./breakpoints-popover-toolbar-button";
 import { WidthInput } from "./width-input";
@@ -32,7 +32,7 @@ import {
   stylesStore,
   selectedBreakpointIdStore,
   selectedBreakpointStore,
-} from "~/shared/nano-states";
+} from "@webstudio-is/sdk-plugin";
 import {
   groupBreakpoints,
   isBaseBreakpoint,

@@ -8,7 +8,7 @@ import {
 } from "@webstudio-is/asset-uploader";
 import { FONT_MIME_TYPES } from "@webstudio-is/fonts";
 import { useUploadAsset } from "./use-assets";
-import { useAuthPermit } from "~/shared/nano-states";
+import { useAuthPermit } from "@webstudio-is/sdk-plugin";
 
 const maxSize = toBytes(MAX_UPLOAD_SIZE);
 

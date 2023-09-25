@@ -12,7 +12,7 @@ import type {
 import type { Project } from "@webstudio-is/project";
 import { encodeDataSourceVariable } from "@webstudio-is/react-sdk";
 import * as baseComponentMetas from "@webstudio-is/sdk-components-react/metas";
-import { registerContainers } from "../sync";
+import { registerContainers } from "@webstudio-is/sdk-plugin";
 import {
   dataSourcesStore,
   instancesStore,
@@ -22,7 +22,7 @@ import {
   registeredComponentMetasStore,
   selectedInstanceSelectorStore,
   selectedPageIdStore,
-} from "../nano-states";
+} from "@webstudio-is/sdk-plugin";
 import { onCopy, onPaste } from "./plugin-instance";
 
 enableMapSet();

@@ -5,7 +5,10 @@ import {
   useEffect,
   useCallback,
 } from "react";
-import { instancesStore, selectedInstanceStore } from "~/shared/nano-states";
+import {
+  instancesStore,
+  selectedInstanceStore,
+} from "@webstudio-is/sdk-plugin";
 
 type Setting = "label";
 type Value = string;

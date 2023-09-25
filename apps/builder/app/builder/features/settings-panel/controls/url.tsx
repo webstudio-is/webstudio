@@ -20,7 +20,11 @@ import {
 } from "@webstudio-is/icons";
 import type { Instance, Page } from "@webstudio-is/sdk";
 import { findTreeInstanceIds } from "@webstudio-is/sdk";
-import { instancesStore, pagesStore, propsStore } from "~/shared/nano-states";
+import {
+  instancesStore,
+  pagesStore,
+  propsStore,
+} from "@webstudio-is/sdk-plugin";
 import {
   type ControlProps,
   getLabel,

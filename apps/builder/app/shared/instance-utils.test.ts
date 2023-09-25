@@ -16,8 +16,8 @@ import {
   styleSourceSelectionsStore,
   styleSourcesStore,
   stylesStore,
-} from "./nano-states";
-import { registerContainers } from "./sync";
+} from "@webstudio-is/sdk-plugin";
+import { registerContainers } from "@webstudio-is/sdk-plugin";
 
 enableMapSet();
 registerContainers();

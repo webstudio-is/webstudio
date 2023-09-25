@@ -1,5 +1,8 @@
 import { groupBreakpoints } from ".";
-import { selectedBreakpointIdStore, breakpointsStore } from "../nano-states";
+import {
+  selectedBreakpointIdStore,
+  breakpointsStore,
+} from "@webstudio-is/sdk-plugin";
 
 /**
  * Order number starts with 1 and covers all existing breakpoints

@@ -35,8 +35,8 @@ import {
   selectedPageStore,
   selectedStyleSourceSelectorStore,
   useInstanceStyles,
-} from "~/shared/nano-states";
-import { textEditingInstanceSelectorStore } from "~/shared/nano-states";
+} from "@webstudio-is/sdk-plugin";
+import { textEditingInstanceSelectorStore } from "@webstudio-is/sdk-plugin";
 import { useCssRules } from "~/canvas/shared/styles";
 import {
   type InstanceSelector,

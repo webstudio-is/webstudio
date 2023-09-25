@@ -24,7 +24,7 @@ import { useIsPublishDialogOpen } from "../../shared/nano-states";
 import { validateProjectDomain, type Project } from "@webstudio-is/project";
 import { getPublishedUrl } from "~/shared/router-utils";
 import { theme } from "@webstudio-is/design-system";
-import { useAuthPermit } from "~/shared/nano-states";
+import { useAuthPermit } from "@webstudio-is/sdk-plugin";
 import {
   Domains,
   getPublishStatusAndText,

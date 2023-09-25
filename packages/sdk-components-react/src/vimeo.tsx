@@ -191,7 +191,7 @@ const getVideoId = (url: string) => {
   } catch {}
 };
 
-const loadPreviewImage = async (element: HTMLElement, videoUrl: string) => {
+const loadPreviewImage = async (_element: HTMLElement, videoUrl: string) => {
   const videoId = getVideoId(videoUrl);
   // API is the video-id based
   // http://vimeo.com/api/v2/video/364402896.json

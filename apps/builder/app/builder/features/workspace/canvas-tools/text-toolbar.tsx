@@ -11,25 +11,13 @@ import {
   LinkIcon,
   PaintBrushIcon,
 } from "@webstudio-is/icons";
-import { selectedInstanceSelectorStore } from "~/shared/nano-states";
-import { type TextToolbarState, textToolbarStore } from "~/shared/nano-states";
-import type { Publish } from "~/shared/pubsub";
+import { selectedInstanceSelectorStore } from "@webstudio-is/sdk-plugin";
+import {
+  type TextToolbarState,
+  textToolbarStore,
+} from "@webstudio-is/sdk-plugin";
+import type { Format, Publish } from "@webstudio-is/sdk-plugin";
 import { scaleStore } from "~/builder/shared/nano-states";
-
-type Format =
-  | "bold"
-  | "italic"
-  | "superscript"
-  | "subscript"
-  | "link"
-  | "span"
-  | "clear";
-
-declare module "~/shared/pubsub" {
-  export interface PubsubMap {
-    formatTextToolbar: Format;
-  }
-}
 
 const getRectForRelativeRect = (
   parent: DOMRect,

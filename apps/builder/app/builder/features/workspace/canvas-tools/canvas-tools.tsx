@@ -1,12 +1,12 @@
 import { useStore } from "@nanostores/react";
-import type { Publish } from "~/shared/pubsub";
+import type { Publish } from "@webstudio-is/sdk-plugin";
 import { css } from "@webstudio-is/design-system";
 import { PlacementIndicator } from "@webstudio-is/design-system";
 import {
   useIsPreviewMode,
   useDragAndDropState,
   instancesStore,
-} from "~/shared/nano-states";
+} from "@webstudio-is/sdk-plugin";
 import { HoveredInstanceOutline, SelectedInstanceOutline } from "./outline";
 import { TextToolbar } from "./text-toolbar";
 import { Label } from "./outline/label";

@@ -1,0 +1,3 @@
+{
+  "extends": "@webstudio-is/tsconfig/base.json"
+}

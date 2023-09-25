@@ -12,11 +12,14 @@ import {
   handleNumericInputArrowKeys,
 } from "@webstudio-is/design-system";
 import { useCanvasWidth } from "~/builder/shared/nano-states";
-import { breakpointsStore, isResizingCanvasStore } from "~/shared/nano-states";
+import {
+  breakpointsStore,
+  isResizingCanvasStore,
+} from "@webstudio-is/sdk-plugin";
 import {
   selectedBreakpointIdStore,
   selectedBreakpointStore,
-} from "~/shared/nano-states";
+} from "@webstudio-is/sdk-plugin";
 import {
   useState,
   type ChangeEvent,

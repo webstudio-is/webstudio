@@ -9,7 +9,7 @@ import {
   selectedPageStore,
   registeredComponentMetasStore,
   breakpointsStore,
-} from "../nano-states";
+} from "@webstudio-is/sdk-plugin";
 import {
   computeInstancesConstraints,
   findClosestDroppableTarget,

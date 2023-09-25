@@ -5,7 +5,7 @@ import { selectBreakpointByOrder } from "../breakpoints";
 import {
   editingItemIdStore,
   selectedInstanceSelectorStore,
-} from "../nano-states";
+} from "@webstudio-is/sdk-plugin";
 import { onCopy, onPaste } from "../copy-paste/plugin-instance";
 
 export const shortcuts = {

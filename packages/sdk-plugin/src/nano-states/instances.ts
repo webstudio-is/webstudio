@@ -1,8 +1,14 @@
 import { atom, computed } from "nanostores";
 import type { Instance, Instances } from "@webstudio-is/sdk";
-import type { InstanceSelector } from "../tree-utils";
-import type { ItemId } from "node_modules/@webstudio-is/design-system/src/components/tree/item-utils";
-import { useMount } from "~/shared/hook-utils/use-mount";
+import { type EffectCallback, useEffect } from "react";
+
+export const useMount = (effect: EffectCallback) => {
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  useEffect(effect, []);
+};
+
+type ItemId = string;
+type InstanceSelector = Instance["id"][];
 
 export const isResizingCanvasStore = atom(false);
 

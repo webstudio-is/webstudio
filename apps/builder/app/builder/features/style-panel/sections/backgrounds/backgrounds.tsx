@@ -22,7 +22,7 @@ import {
   SubtractIcon,
   PlusIcon,
 } from "@webstudio-is/icons";
-import { assetsStore } from "~/shared/nano-states";
+import { assetsStore } from "@webstudio-is/sdk-plugin";
 import { PropertyName } from "../../shared/property-name";
 import type { StyleInfo } from "../../shared/style-info";
 import { ColorControl } from "../../controls/color/color-control";

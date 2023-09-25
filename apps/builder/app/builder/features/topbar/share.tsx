@@ -11,7 +11,7 @@ import {
 } from "@webstudio-is/design-system";
 import type { Project } from "@webstudio-is/prisma-client";
 import { ShareProjectContainer } from "~/shared/share-project";
-import { useAuthPermit } from "~/shared/nano-states";
+import { useAuthPermit } from "@webstudio-is/sdk-plugin";
 import { useIsShareDialogOpen } from "~/builder/shared/nano-states";
 
 export const ShareButton = ({ projectId }: { projectId: Project["id"] }) => {

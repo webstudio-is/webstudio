@@ -2,7 +2,7 @@ import { forwardRef, type ComponentProps } from "react";
 import { useStore } from "@nanostores/react";
 import { Flex, theme } from "@webstudio-is/design-system";
 import { scaleStore, useCanvasWidth } from "~/builder/shared/nano-states";
-import { selectedBreakpointStore } from "~/shared/nano-states";
+import { selectedBreakpointStore } from "@webstudio-is/sdk-plugin";
 
 const Value = ({
   children,

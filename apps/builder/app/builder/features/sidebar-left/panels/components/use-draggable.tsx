@@ -16,8 +16,8 @@ import {
   registeredComponentMetasStore,
   selectedInstanceSelectorStore,
   selectedPageStore,
-} from "~/shared/nano-states";
-import { useSubscribe, type Publish } from "~/shared/pubsub";
+} from "@webstudio-is/sdk-plugin";
+import { useSubscribe, type Publish } from "@webstudio-is/sdk-plugin";
 import { $canvasRect, scaleStore } from "~/builder/shared/nano-states";
 import {
   computeInstancesConstraints,

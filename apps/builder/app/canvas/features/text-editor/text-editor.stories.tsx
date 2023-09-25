@@ -5,8 +5,8 @@ import { action } from "@storybook/addon-actions";
 import { Box } from "@webstudio-is/design-system";
 import { theme } from "@webstudio-is/design-system";
 import type { Instance, Instances } from "@webstudio-is/sdk";
-import { publish } from "~/shared/pubsub";
-import { textToolbarStore } from "~/shared/nano-states";
+import { publish } from "@webstudio-is/sdk-plugin";
+import { textToolbarStore } from "@webstudio-is/sdk-plugin";
 import { TextEditor } from "./text-editor";
 
 export default {

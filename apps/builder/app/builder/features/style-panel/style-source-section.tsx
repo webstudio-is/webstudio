@@ -36,7 +36,7 @@ import {
   styleSourceSelectionsStore,
   styleSourcesStore,
   stylesStore,
-} from "~/shared/nano-states";
+} from "@webstudio-is/sdk-plugin";
 import { removeByMutable } from "~/shared/array-utils";
 import { cloneStyles } from "~/shared/tree-utils";
 import { humanizeString } from "~/shared/string-utils";

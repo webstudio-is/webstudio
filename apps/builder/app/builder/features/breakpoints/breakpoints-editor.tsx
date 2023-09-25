@@ -18,7 +18,7 @@ import {
 } from "@webstudio-is/design-system";
 import { MinusIcon, PlusIcon } from "@webstudio-is/icons";
 import { useStore } from "@nanostores/react";
-import { breakpointsStore } from "~/shared/nano-states";
+import { breakpointsStore } from "@webstudio-is/sdk-plugin";
 import { groupBreakpoints, isBaseBreakpoint } from "~/shared/breakpoints";
 
 type BreakpointEditorItemProps = {

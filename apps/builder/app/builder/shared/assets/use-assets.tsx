@@ -17,7 +17,7 @@ import {
   assetsStore,
   authTokenStore,
   projectStore,
-} from "~/shared/nano-states";
+} from "@webstudio-is/sdk-plugin";
 import { atom, computed } from "nanostores";
 
 export const deleteAssets = (assetIds: Asset["id"][]) => {

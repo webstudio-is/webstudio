@@ -21,12 +21,12 @@ import {
   PlusIcon,
 } from "@webstudio-is/icons";
 import type { Page, Pages } from "@webstudio-is/sdk";
-import type { Publish } from "~/shared/pubsub";
+import type { Publish } from "@webstudio-is/sdk-plugin";
 import type { TabName } from "../../types";
 import { CloseButton, Header } from "../../header";
 import { SettingsPanel } from "./settings-panel";
 import { NewPageSettings, PageSettings } from "./settings";
-import { pagesStore, selectedPageIdStore } from "~/shared/nano-states";
+import { pagesStore, selectedPageIdStore } from "@webstudio-is/sdk-plugin";
 import { switchPage } from "~/shared/pages";
 
 type TabContentProps = {

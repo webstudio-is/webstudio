@@ -8,8 +8,8 @@ import {
   ToolbarToggleGroup,
 } from "@webstudio-is/design-system";
 import type { Project } from "@webstudio-is/project";
-import type { Publish } from "~/shared/pubsub";
-import { selectedPageStore } from "~/shared/nano-states";
+import type { Publish } from "@webstudio-is/sdk-plugin";
+import { selectedPageStore } from "@webstudio-is/sdk-plugin";
 import { PreviewButton } from "./preview";
 import { ShareButton } from "./share";
 import { PublishButton } from "./publish";

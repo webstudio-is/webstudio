@@ -1,0 +1,43 @@
+{
+  "name": "@webstudio-is/sdk-plugin",
+  "version": "0.100.0",
+  "description": "Webstudio site data schema",
+  "author": "Webstudio <github@webstudio.is>",
+  "homepage": "https://webstudio.is",
+  "license": "AGPL-3.0-or-later",
+  "type": "module",
+  "exports": {
+    "webstudio": "./src/index.ts",
+    "types": "./lib/types/index.d.ts",
+    "import": "./lib/index.js",
+    "require": "./lib/index.js"
+  },
+  "files": [
+    "lib/*",
+    "!*.{test,stories}.*"
+  ],
+  "sideEffects": false,
+  "scripts": {
+    "typecheck": "tsc",
+    "test": "NODE_OPTIONS=--experimental-vm-modules jest",
+    "checks": "pnpm typecheck && pnpm test",
+    "dev": "rm -rf lib && esbuild 'src/**/*.ts' 'src/**/*.tsx' --outdir=lib --watch",
+    "build": "rm -rf lib && esbuild src/index.ts --outdir=lib --bundle --format=esm --packages=external",
+    "dts": "tsc --project tsconfig.dts.json"
+  },
+  "dependencies": {
+    "@webstudio-is/sdk": "workspace:*",
+    "@webstudio-is/react-sdk": "workspace:*",
+    "zod": "^3.21.4"
+  },
+  "devDependencies": {
+    "@jest/globals": "^29.6.4",
+    "@webstudio-is/jest-config": "workspace:*",
+    "@webstudio-is/tsconfig": "workspace:*",
+    "@webstudio-is/trpc-interface": "workspace:*",
+    "@webstudio-is/design-system": "workspace:*",
+    "@webstudio-is/project": "workspace:*",
+    "@webstudio-is/css-engine": "workspace:*",
+    "jest": "^29.6.4"
+  }
+}

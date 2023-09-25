@@ -1,5 +1,5 @@
-import { useSubscribe } from "~/shared/pubsub";
-import { useDragAndDropState } from "~/shared/nano-states";
+import { useSubscribe } from "@webstudio-is/sdk-plugin";
+import { useDragAndDropState } from "@webstudio-is/sdk-plugin";
 
 export const useSubscribeDragAndDropState = () => {
   const [, setState] = useDragAndDropState();

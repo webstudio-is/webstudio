@@ -35,7 +35,7 @@ import {
   registeredComponentMetasStore,
   dataSourcesStore,
   dataSourcesLogicStore,
-} from "../nano-states";
+} from "@webstudio-is/sdk-plugin";
 import {
   type InstanceSelector,
   insertInstancesCopyMutable,

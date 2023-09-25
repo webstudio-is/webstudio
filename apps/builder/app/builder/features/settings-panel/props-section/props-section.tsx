@@ -15,12 +15,12 @@ import {
   InputField,
   NestedInputButton,
 } from "@webstudio-is/design-system";
-import type { Publish } from "~/shared/pubsub";
+import type { Publish } from "@webstudio-is/sdk-plugin";
 import {
   dataSourceVariablesStore,
   propsIndexStore,
   propsStore,
-} from "~/shared/nano-states";
+} from "@webstudio-is/sdk-plugin";
 import { CollapsibleSectionWithAddButton } from "~/builder/shared/collapsible-section";
 import {
   useStyleData,

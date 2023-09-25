@@ -1,12 +1,6 @@
 import { PlayIcon } from "@webstudio-is/icons";
 import { ToolbarToggleItem } from "@webstudio-is/design-system";
-import { useIsPreviewMode } from "~/shared/nano-states";
-
-declare module "~/shared/pubsub" {
-  export interface PubsubMap {
-    previewMode: boolean;
-  }
-}
+import { useIsPreviewMode } from "@webstudio-is/sdk-plugin";
 
 export const PreviewButton = () => {
   const [isPreviewMode, setIsPreviewMode] = useIsPreviewMode();

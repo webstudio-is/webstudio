@@ -2,7 +2,7 @@ import { useStore } from "@nanostores/react";
 import {
   breakpointsStore,
   selectedBreakpointStore,
-} from "~/shared/nano-states";
+} from "@webstudio-is/sdk-plugin";
 import { BreakpointsSelector } from "./breakpoints-selector";
 
 export const BreakpointsSelectorContainer = () => {

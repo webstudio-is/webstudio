@@ -4,7 +4,7 @@ import {
   hoveredInstanceSelectorStore,
   selectedInstanceSelectorStore,
   textEditingInstanceSelectorStore,
-} from "~/shared/nano-states";
+} from "@webstudio-is/sdk-plugin";
 import { areInstanceSelectorsEqual } from "~/shared/tree-utils";
 import { Outline } from "./outline";
 import { Label } from "./label";
