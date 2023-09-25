@@ -87,8 +87,6 @@ export const getPropsByInstanceId = (props: Props) => {
   return propsByInstanceId;
 };
 
-// this utility is be used only for preview with static props
-// so there is no need to use computed to optimize rerenders
 export const getInstanceIdFromComponentProps = (
   props: Record<string, unknown>
 ) => {
