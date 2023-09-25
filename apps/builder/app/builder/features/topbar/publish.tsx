@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
+import { useStore } from "@nanostores/react";
 import {
   Button,
   useId,
@@ -24,7 +25,7 @@ import { useIsPublishDialogOpen } from "../../shared/nano-states";
 import { validateProjectDomain, type Project } from "@webstudio-is/project";
 import { getPublishedUrl } from "~/shared/router-utils";
 import { theme } from "@webstudio-is/design-system";
-import { useAuthPermit } from "~/shared/nano-states";
+import { $authPermit } from "~/shared/nano-states";
 import {
   Domains,
   getPublishStatusAndText,
@@ -601,7 +602,7 @@ type PublishProps = {
 
 export const PublishButton = ({ projectId }: PublishProps) => {
   const [isOpen, setIsOpen] = useIsPublishDialogOpen();
-  const [authPermit] = useAuthPermit();
+  const authPermit = useStore($authPermit);
   const [dialogContentType, setDialogContentType] = useState<
     "publish" | "export"
   >("publish");

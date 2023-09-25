@@ -26,8 +26,8 @@ import {
 import { usePublishShortcuts } from "./shared/shortcuts";
 import {
   assetsStore,
-  authPermitStore,
-  authTokenStore,
+  $authPermit,
+  $authToken,
   breakpointsStore,
   dataSourcesStore,
   instancesStore,
@@ -237,8 +237,8 @@ export const Builder = ({
   useMount(() => {
     // additional data stores
     projectStore.set(project);
-    authPermitStore.set(authPermit);
-    authTokenStore.set(authToken);
+    $authPermit.set(authPermit);
+    $authToken.set(authToken);
 
     // set initial containers value
     assetsStore.set(new Map(assets));

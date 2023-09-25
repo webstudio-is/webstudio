@@ -330,11 +330,9 @@ export const hoveredInstanceSelectorStore = atom<undefined | InstanceSelector>(
 
 export const $isPreviewMode = atom<boolean>(false);
 
-export const authPermitStore = atom<AuthPermit>("view");
-export const useAuthPermit = () => useValue(authPermitStore);
+export const $authPermit = atom<AuthPermit>("view");
 
-export const authTokenStore = atom<string | undefined>(undefined);
-export const useAuthToken = () => useValue(authTokenStore);
+export const $authToken = atom<string | undefined>(undefined);
 
 export type DragAndDropState = {
   isDragging: boolean;

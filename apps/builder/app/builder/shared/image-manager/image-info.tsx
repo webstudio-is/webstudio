@@ -1,3 +1,4 @@
+import { useStore } from "@nanostores/react";
 import prettyBytes from "pretty-bytes";
 import {
   theme,
@@ -17,7 +18,7 @@ import {
 import type { Asset } from "@webstudio-is/sdk";
 import { Filename } from "./filename";
 import { getFormattedAspectRatio } from "./utils";
-import { useAuthPermit } from "~/shared/nano-states";
+import { $authPermit } from "~/shared/nano-states";
 
 type ImageInfoProps = {
   asset: Asset;
@@ -26,7 +27,7 @@ type ImageInfoProps = {
 
 export const ImageInfo = ({ asset, onDelete }: ImageInfoProps) => {
   const { size, meta, id, name } = asset;
-  const [authPermit] = useAuthPermit();
+  const authPermit = useStore($authPermit);
 
   const isDeleteDisabled = authPermit === "view";
   const tooltipContent = isDeleteDisabled
