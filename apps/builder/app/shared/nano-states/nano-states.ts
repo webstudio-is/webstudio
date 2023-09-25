@@ -1,5 +1,5 @@
-import { useCallback, useMemo } from "react";
-import { atom, computed, type WritableAtom } from "nanostores";
+import { useMemo } from "react";
+import { atom, computed } from "nanostores";
 import { useStore } from "@nanostores/react";
 import { nanoid } from "nanoid";
 import type { AuthPermit } from "@webstudio-is/trpc-interface/index.server";
@@ -28,23 +28,6 @@ import { instancesStore, selectedInstanceSelectorStore } from "./instances";
 import { selectedPageStore } from "./pages";
 import type { UnitSizes } from "~/builder/features/style-panel/shared/css-value-input/convert-units";
 import type { Project } from "@webstudio-is/project";
-
-const useValue = <T>(atom: WritableAtom<T>) => {
-  const value = useStore(atom);
-
-  const set = useCallback(
-    (value: T | ((current: T) => T)) => {
-      if (typeof value === "function") {
-        atom.set((value as (current: T) => T)(atom.get()));
-      } else {
-        atom.set(value);
-      }
-    },
-    [atom]
-  );
-
-  return [value, set] as const;
-};
 
 export const projectStore = atom<Project | undefined>();
 
@@ -341,12 +324,6 @@ export type DragAndDropState = {
   placementIndicator?: Placement;
 };
 
-const dragAndDropStateContainer = atom<DragAndDropState>({
+export const $dragAndDropState = atom<DragAndDropState>({
   isDragging: false,
 });
-export const useDragAndDropState = () => useValue(dragAndDropStateContainer);
-
-export const isDraggingStore = computed(
-  [dragAndDropStateContainer],
-  (state) => state.isDragging
-);
