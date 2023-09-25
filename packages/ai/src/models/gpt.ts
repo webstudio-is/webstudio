@@ -1,5 +1,8 @@
 import OpenAI from "openai";
-import { OpenAIStream, StreamingTextResponse } from "ai";
+import {
+  OpenAIStream,
+  StreamingTextResponse as _StreamingTextResponse,
+} from "ai";
 import type {
   Model as BaseModel,
   ErrorResponse,
@@ -123,6 +126,21 @@ const createRequestStream = (
         organization: config.organization,
       });
 
+      // Use polyfilled TransformStream because in Webstudio Builder
+      // globalThis.fetch is overriden to @remix-run/web-fetch.
+      //
+      // @remix-run/web-fetch uses @remix-run/web-stream which polyfills ReadableStream
+      // which has a runtime check on a private polyfill (web-streams-polyfill) property in .pipeThrough
+      // Since `ai`'s OpenAIStream passes a non-polyfilled TransformStream the check above fails.
+      //
+      // To temporarily fix this we override TransformStream to use the web-streams-polyfill one which is
+      // compatible with the one returned by @remix-run/web-fetch.
+      //
+      // @todo Remove this when https://github.com/remix-run/web-std-io/pull/42 is merged and
+      // and Webstudio upgrades to that version.
+      const { TransformStream } = await import("web-streams-polyfill");
+      globalThis.TransformStream = TransformStream;
+
       const response = await openai.chat.completions.create({
         stream: true,
         model: config.model ?? "gpt-3.5-turbo",
@@ -135,7 +153,14 @@ const createRequestStream = (
     } catch (error) {
       let response = new Response(null, {
         status: 500,
-        statusText: "",
+        statusText:
+          process.env.NODE_ENV === "development" &&
+          error != null &&
+          typeof error === "object" &&
+          "message" in error &&
+          typeof error.message === "string"
+            ? error.message
+            : "",
       });
 
       if (error instanceof OpenAI.APIError) {
@@ -149,3 +174,37 @@ const createRequestStream = (
       return errorResponse(response);
     }
   };
+
+// vercel/ai's StreamingTextResponse does not include request.headers.raw()
+// which @vercel/remix uses when deployed on vercel.
+// Therefore we use a custom one.
+export class StreamingTextResponse extends _StreamingTextResponse {
+  constructor(res: ReadableStream, init?: ResponseInit) {
+    super(res, init);
+    this.getRequestHeaders();
+  }
+
+  getRequestHeaders() {
+    return addRawHeaders(this.headers);
+  }
+}
+
+const addRawHeaders = function addRawHeaders(headers: Headers) {
+  // eslint-disable-next-line @typescript-eslint/ban-ts-comment
+  // @ts-ignore
+  headers.raw = function () {
+    const rawHeaders: { [k in string]: string[] } = {};
+    const headerEntries = headers.entries();
+    for (const [key, value] of headerEntries) {
+      const headerKey = key.toLowerCase();
+      // eslint-disable-next-line no-prototype-builtins
+      if (rawHeaders.hasOwnProperty(headerKey)) {
+        rawHeaders[headerKey].push(value);
+      } else {
+        rawHeaders[headerKey] = [value];
+      }
+    }
+    return rawHeaders;
+  };
+  return headers;
+};
