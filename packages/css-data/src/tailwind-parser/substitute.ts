@@ -2,7 +2,8 @@ import * as csstree from "css-tree";
 import warnOnce from "warn-once";
 
 /**
- * Substitute CSS variables with their values
+ * Resolves CSS variables by replacing their references with actual values.
+ * Transforms `.class { --property: 1px; margin: var(--property); }` into `.class { margin: 1px; }`.
  **/
 export const substituteVariables = (css: string, warn = warnOnce) => {
   const ast = csstree.parse(css);
@@ -119,7 +120,7 @@ export const substituteVariables = (css: string, warn = warnOnce) => {
                   true,
                   `Variable ${csstree.generate(
                     childNode
-                  )} cannot be resolved be resolved for property "${csstree.generate(
+                  )} cannot be resolved for property "${csstree.generate(
                     node
                   )}" in selector "${
                     lastKnownRule !== undefined
