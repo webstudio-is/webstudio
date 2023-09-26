@@ -93,7 +93,7 @@ describe("expandTailwindShorthand", () => {
     expect(warn).toHaveBeenCalledTimes(1);
     expect(warn).toHaveBeenCalledWith(
       true,
-      'Variable var(--var-not-existed) cannot be resolved be resolved for property "background:linear-gradient(var(--var-not-existed),rgba(222,222,222,0.5))" in selector ".class"'
+      'Variable var(--var-not-existed) cannot be resolved for property "background:linear-gradient(var(--var-not-existed),rgba(222,222,222,0.5))" in selector ".class"'
     );
   });
 
