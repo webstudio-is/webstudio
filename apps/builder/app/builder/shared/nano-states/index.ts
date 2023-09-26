@@ -9,7 +9,7 @@ const useValue = <T>(atom: WritableAtom<T>) => {
 const isShareDialogOpenStore = atom<boolean>(false);
 export const useIsShareDialogOpen = () => useValue(isShareDialogOpenStore);
 
-const isPublishDialogOpenStore = atom<boolean>(false);
+const isPublishDialogOpenStore = atom<boolean>(true);
 export const useIsPublishDialogOpen = () => useValue(isPublishDialogOpenStore);
 
 export const canvasWidthStore = atom<number | undefined>();

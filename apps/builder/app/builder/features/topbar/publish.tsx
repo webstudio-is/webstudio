@@ -20,6 +20,7 @@ import {
   Box,
   rawTheme,
   styled,
+  Select,
 } from "@webstudio-is/design-system";
 import { useIsPublishDialogOpen } from "../../shared/nano-states";
 import { validateProjectDomain, type Project } from "@webstudio-is/project";
@@ -44,6 +45,9 @@ import { createTrpcFetchProxy } from "~/shared/remix/trpc-remix-proxy";
 import { builderDomainsPath } from "~/shared/router-utils";
 import type { DomainRouter } from "@webstudio-is/domain/index.server";
 import { AddDomain } from "./add-domain";
+import { zIndex } from "node_modules/@webstudio-is/sdk-components-react-radix/src/theme/__generated__/tailwind-theme";
+import { getThemeData } from "~/shared/theme";
+import { humanizeString } from "~/shared/string-utils";
 
 const trpc = createTrpcFetchProxy<DomainRouter>(builderDomainsPath);
 
@@ -484,9 +488,24 @@ const StyledLink = styled("a", {
   },
 });
 
+type DeployTarget = "vercel" | "netlify";
+
+const DeployTargets: Record<DeployTarget, string> = {
+  vercel: "npx vercel",
+  netlify: "npx netlify",
+};
+
+const DeployTargetDocs: Record<DeployTarget, string> = {
+  vercel: "https://vercel.com/docs/cli",
+  netlify: "https://docs.netlify.com/cli/get-started/",
+};
+
 const ExportContent = () => {
+  const id = useId();
   const npxCommand = "npx webstudio-cli";
-  const npxVercelCommand = "npx vercel";
+  const [deployTarget, selectDeployTarget] =
+    useState<keyof typeof DeployTargets>("vercel");
+
   return (
     <Grid
       columns={1}
@@ -554,24 +573,40 @@ const ExportContent = () => {
             Step 3
           </Text>
           <Text color="subtle">
-            Use the{" "}
+            Run this command to publish to{" "}
             <StyledLink
-              href="https://vercel.com/docs/cli"
+              href={DeployTargetDocs[deployTarget]}
               target="_blank"
               rel="noreferrer"
             >
-              Vercel CLI
+              {humanizeString(deployTarget)}
             </StyledLink>{" "}
-            to publish your project on Vercel.
           </Text>
         </Grid>
+
+        <Select
+          fullWidth
+          css={{ zIndex: Number.MAX_SAFE_INTEGER.toString() }}
+          id={id}
+          value={deployTarget}
+          options={Object.keys(DeployTargets)}
+          getLabel={(value) => humanizeString(value as string)}
+          onChange={(value) =>
+            selectDeployTarget(value as keyof typeof DeployTargets)
+          }
+        />
+
         <Flex gap={2}>
-          <InputField css={{ flex: 1 }} readOnly value={npxVercelCommand} />
+          <InputField
+            css={{ flex: 1 }}
+            readOnly
+            value={DeployTargets[deployTarget]}
+          />
           <Tooltip content={"Copy to clipboard"}>
             <Button
               color="neutral"
               onClick={() => {
-                navigator.clipboard.writeText(npxVercelCommand);
+                navigator.clipboard.writeText(DeployTargets[deployTarget]);
               }}
               prefix={<CopyIcon />}
             >
