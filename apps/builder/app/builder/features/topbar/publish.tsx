@@ -20,11 +20,12 @@ import {
   Box,
   rawTheme,
   styled,
+  Select,
+  theme,
 } from "@webstudio-is/design-system";
 import { useIsPublishDialogOpen } from "../../shared/nano-states";
 import { validateProjectDomain, type Project } from "@webstudio-is/project";
 import { getPublishedUrl } from "~/shared/router-utils";
-import { theme } from "@webstudio-is/design-system";
 import { $authPermit } from "~/shared/nano-states";
 import {
   Domains,
@@ -44,6 +45,7 @@ import { createTrpcFetchProxy } from "~/shared/remix/trpc-remix-proxy";
 import { builderDomainsPath } from "~/shared/router-utils";
 import type { DomainRouter } from "@webstudio-is/domain/index.server";
 import { AddDomain } from "./add-domain";
+import { humanizeString } from "~/shared/string-utils";
 
 const trpc = createTrpcFetchProxy<DomainRouter>(builderDomainsPath);
 
@@ -484,9 +486,26 @@ const StyledLink = styled("a", {
   },
 });
 
+const deployTargets = {
+  vercel: {
+    command: "npx vercel",
+    docs: "https://vercel.com/docs/cli",
+  },
+  netlify: {
+    command: "npx netlify-cli",
+    docs: "https://docs.netlify.com/cli/get-started/",
+  },
+} as const;
+
+type DeployTargets = keyof typeof deployTargets;
+
+const isDeployTargets = (value: string): value is DeployTargets =>
+  Object.keys(deployTargets).includes(value);
+
 const ExportContent = () => {
   const npxCommand = "npx webstudio-cli";
-  const npxVercelCommand = "npx vercel";
+  const [deployTarget, setDeployTarget] = useState<DeployTargets>("vercel");
+
   return (
     <Grid
       columns={1}
@@ -554,24 +573,43 @@ const ExportContent = () => {
             Step 3
           </Text>
           <Text color="subtle">
-            Use the{" "}
+            Run this command to publish to{" "}
             <StyledLink
-              href="https://vercel.com/docs/cli"
+              href={deployTargets[deployTarget].command}
               target="_blank"
               rel="noreferrer"
             >
-              Vercel CLI
+              {humanizeString(deployTarget)}
             </StyledLink>{" "}
-            to publish your project on Vercel.
           </Text>
         </Grid>
+
+        <Select
+          fullWidth
+          css={{ zIndex: theme.zIndices[2] }}
+          value={deployTarget}
+          options={Object.keys(deployTargets)}
+          getLabel={(value) => humanizeString(value)}
+          onChange={(value) => {
+            if (isDeployTargets(value)) {
+              setDeployTarget(value);
+            }
+          }}
+        />
+
         <Flex gap={2}>
-          <InputField css={{ flex: 1 }} readOnly value={npxVercelCommand} />
+          <InputField
+            css={{ flex: 1 }}
+            readOnly
+            value={deployTargets[deployTarget].command}
+          />
           <Tooltip content={"Copy to clipboard"}>
             <Button
               color="neutral"
               onClick={() => {
-                navigator.clipboard.writeText(npxVercelCommand);
+                navigator.clipboard.writeText(
+                  deployTargets[deployTarget].command
+                );
               }}
               prefix={<CopyIcon />}
             >
