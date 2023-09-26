@@ -499,6 +499,9 @@ const deployTargets = {
 
 type DeployTargets = keyof typeof deployTargets;
 
+const isDeployTargets = (value: string): value is DeployTargets =>
+  Object.keys(deployTargets).includes(value);
+
 const ExportContent = () => {
   const id = useId();
   const npxCommand = "npx webstudio-cli";
@@ -589,7 +592,11 @@ const ExportContent = () => {
           value={deployTarget}
           options={Object.keys(deployTargets)}
           getLabel={(value) => humanizeString(value)}
-          onChange={(value) => setDeployTarget(value as DeployTargets)}
+          onChange={(value) => {
+            if (isDeployTargets(value)) {
+              setDeployTarget(value);
+            }
+          }}
         />
 
         <Flex gap={2}>
