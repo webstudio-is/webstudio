@@ -24,6 +24,7 @@ import {
   theme,
   TextArea,
 } from "@webstudio-is/design-system";
+import stripIndent from "strip-indent";
 import { useIsPublishDialogOpen } from "../../shared/nano-states";
 import { validateProjectDomain, type Project } from "@webstudio-is/project";
 import { getPublishedUrl } from "~/shared/router-utils";
@@ -493,7 +494,10 @@ const deployTargets = {
     docs: "https://vercel.com/docs/cli",
   },
   netlify: {
-    command: `npx netlify-cli login\nnpx netlify-cli sites:create\nnpx netlify-cli build\nnpx netlify-cli deploy`,
+    command: `npx netlify-cli login
+npx netlify-cli sites:create
+npx netlify-cli build
+npx netlify-cli deploy`,
     docs: "https://docs.netlify.com/cli/get-started/",
   },
 } as const;
@@ -602,7 +606,7 @@ const ExportContent = () => {
           <TextArea
             css={{ flex: 1 }}
             readOnly
-            value={deployTargets[deployTarget].command}
+            value={stripIndent(deployTargets[deployTarget].command)}
           />
           <Tooltip content={"Copy to clipboard"}>
             <Button

@@ -125,13 +125,12 @@ const getDeploymentInstructions = (
     case "netlify-functions":
     case "netlify-edge-functions":
       return [
+        `To deploy to Netlify, run the following commands: `,
         `Run ${pc.dim("npx netlify-cli login")} to login to Netlify.`,
         `Run ${pc.dim("npx netlify-cli sites:create")} to create a new site.`,
         `Run ${pc.dim("npx netlify-cli build")} to build the site`,
         `Run ${pc.dim("npx netlify-cli deploy")} to deploy on Netlify.`,
-      ]
-        .filter(Boolean)
-        .join("\n");
+      ].join("\n");
     default:
       return undefined;
   }
