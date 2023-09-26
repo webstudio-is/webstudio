@@ -13,7 +13,7 @@ You need Node.js to use the Webstudio CLI. If Node.js is already installed in yo
 To install Node.js using NVM, first install NVM by running:
 
 ```bash
-curl -o- <https://raw.githubusercontent.com/nvm-sh/nvm/v0.39.0/install.sh> | bash
+curl -o- https://raw.githubusercontent.com/nvm-sh/nvm/v0.39.5/install.sh | bash
 ```
 
 Once NVM is installed, you can install Node.js version 18 by running:
