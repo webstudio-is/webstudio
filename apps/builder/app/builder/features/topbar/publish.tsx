@@ -21,11 +21,11 @@ import {
   rawTheme,
   styled,
   Select,
+  theme,
 } from "@webstudio-is/design-system";
 import { useIsPublishDialogOpen } from "../../shared/nano-states";
 import { validateProjectDomain, type Project } from "@webstudio-is/project";
 import { getPublishedUrl } from "~/shared/router-utils";
-import { theme } from "@webstudio-is/design-system";
 import { $authPermit } from "~/shared/nano-states";
 import {
   Domains,
@@ -486,23 +486,23 @@ const StyledLink = styled("a", {
   },
 });
 
-type DeployTarget = "vercel" | "netlify";
+const deployTargets = {
+  vercel: {
+    command: "npx vercel",
+    docs: "https://vercel.com/docs/cli",
+  },
+  netlify: {
+    command: "npx netlify",
+    docs: "https://docs.netlify.com/cli/get-started/",
+  },
+} as const;
 
-const DeployTargets: Record<DeployTarget, string> = {
-  vercel: "npx vercel",
-  netlify: "npx netlify",
-};
-
-const DeployTargetDocs: Record<DeployTarget, string> = {
-  vercel: "https://vercel.com/docs/cli",
-  netlify: "https://docs.netlify.com/cli/get-started/",
-};
+type DeployTargets = keyof typeof deployTargets;
 
 const ExportContent = () => {
   const id = useId();
   const npxCommand = "npx webstudio-cli";
-  const [deployTarget, selectDeployTarget] =
-    useState<keyof typeof DeployTargets>("vercel");
+  const [deployTarget, setDeployTarget] = useState<DeployTargets>("vercel");
 
   return (
     <Grid
@@ -573,7 +573,7 @@ const ExportContent = () => {
           <Text color="subtle">
             Run this command to publish to{" "}
             <StyledLink
-              href={DeployTargetDocs[deployTarget]}
+              href={deployTargets[deployTarget].command}
               target="_blank"
               rel="noreferrer"
             >
@@ -584,27 +584,27 @@ const ExportContent = () => {
 
         <Select
           fullWidth
-          css={{ zIndex: Number.MAX_SAFE_INTEGER.toString() }}
+          css={{ zIndex: theme.zIndices[2] }}
           id={id}
           value={deployTarget}
-          options={Object.keys(DeployTargets)}
-          getLabel={(value) => humanizeString(value as string)}
-          onChange={(value) =>
-            selectDeployTarget(value as keyof typeof DeployTargets)
-          }
+          options={Object.keys(deployTargets)}
+          getLabel={(value) => humanizeString(value)}
+          onChange={(value) => setDeployTarget(value as DeployTargets)}
         />
 
         <Flex gap={2}>
           <InputField
             css={{ flex: 1 }}
             readOnly
-            value={DeployTargets[deployTarget]}
+            value={deployTargets[deployTarget].command}
           />
           <Tooltip content={"Copy to clipboard"}>
             <Button
               color="neutral"
               onClick={() => {
-                navigator.clipboard.writeText(DeployTargets[deployTarget]);
+                navigator.clipboard.writeText(
+                  deployTargets[deployTarget].command
+                );
               }}
               prefix={<CopyIcon />}
             >
