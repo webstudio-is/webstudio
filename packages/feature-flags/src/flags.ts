@@ -8,4 +8,4 @@ export const adminRole = false;
 export const ai = process.env.NODE_ENV !== "production";
 export const aiCopy = ai;
 export const aiSections = ai;
-export const aiTemplateGenerator = ai;
+export const aiTemplateGenerator = aiSections;

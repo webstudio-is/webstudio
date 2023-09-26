@@ -29,6 +29,7 @@ import type { Settings } from "~/builder/shared/client-settings";
 import { MetaIcon } from "~/builder/shared/meta-icon";
 import { getInstanceLabel } from "~/shared/instance-utils";
 import { isFeatureEnabled } from "@webstudio-is/feature-flags";
+import { AiGeneration } from "../ai";
 
 const InstanceInfo = ({ instance }: { instance: Instance }) => {
   const metas = useStore(registeredComponentMetasStore);
@@ -145,11 +146,11 @@ export const Inspector = ({ publish, navigatorLayout }: InspectorProps) => {
               </ScrollArea>
             </PanelTabsContent>
             {isFeatureEnabled("ai") ? (
-              <PanelTabsContent
-                value="ai"
-                css={contentStyle}
-                tabIndex={-1}
-              ></PanelTabsContent>
+              <PanelTabsContent value="ai" css={contentStyle} tabIndex={-1}>
+                {isFeatureEnabled("aiTemplateGenerator") ? (
+                  <AiGeneration />
+                ) : null}
+              </PanelTabsContent>
             ) : null}
           </Flex>
         </PanelTabs>
