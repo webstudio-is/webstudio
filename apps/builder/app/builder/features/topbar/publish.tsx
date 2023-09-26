@@ -494,7 +494,8 @@ const deployTargets = {
     docs: "https://vercel.com/docs/cli",
   },
   netlify: {
-    command: `npx netlify-cli login
+    command: `
+npx netlify-cli login
 npx netlify-cli sites:create
 npx netlify-cli build
 npx netlify-cli deploy`,
@@ -606,7 +607,9 @@ const ExportContent = () => {
           <TextArea
             css={{ flex: 1 }}
             readOnly
-            value={stripIndent(deployTargets[deployTarget].command)}
+            value={stripIndent(deployTargets[deployTarget].command)
+              .trimStart()
+              .replace(/ +$/, "")}
           />
           <Tooltip content={"Copy to clipboard"}>
             <Button

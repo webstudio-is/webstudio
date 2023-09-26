@@ -131,7 +131,5 @@ const getDeploymentInstructions = (
         `Run ${pc.dim("npx netlify-cli build")} to build the site`,
         `Run ${pc.dim("npx netlify-cli deploy")} to deploy on Netlify.`,
       ].join("\n");
-    default:
-      return undefined;
   }
 };
