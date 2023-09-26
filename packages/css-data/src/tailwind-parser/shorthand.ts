@@ -64,6 +64,8 @@ const conflictingClassGroups: Record<string, string[]> = {
   "border-w": ["border-w-t", "border-w-r", "border-w-b", "border-w-l"],
   "border-w-x": ["border-w-r", "border-w-l"],
   "border-w-y": ["border-w-t", "border-w-b"],
+  /*
+  We are supporting shorthand for border-color
   "border-color": [
     "border-color-t",
     "border-color-r",
@@ -72,4 +74,5 @@ const conflictingClassGroups: Record<string, string[]> = {
   ],
   "border-color-x": ["border-color-r", "border-color-l"],
   "border-color-y": ["border-color-t", "border-color-b"],
+  */
 };
