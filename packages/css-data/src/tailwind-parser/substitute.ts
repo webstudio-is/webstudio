@@ -23,65 +23,75 @@ export const substituteVariables = (css: string, warn = warnOnce) => {
     },
   });
 
-  const variables: Record<string, string> = {};
+  const rawProperties: Record<string, string> = {};
 
   // Extract all variables and remove them
   csstree.walk(ast, {
     enter: (node, item, list) => {
       if (node.type === "Declaration" && node.property.startsWith("--")) {
-        const propName = node.property.trim();
-        const propValue = csstree.generate(node.value);
-        variables[propName] = propValue;
+        const propertyName = node.property.trim();
+        const propertValue = csstree.generate(node.value);
+        rawProperties[propertyName] = propertValue;
         list.remove(item);
       }
     },
   });
 
+  /**
+   * Iteratively resolve CSS variables within custom properties.
+   * Custom properties treat variables as strings, making direct resolution impossible.
+   * We perform multiple iterations to substitute these variables with their actual values.
+   *
+   * Example:
+   * Initial: .class { --var: var(--margin-y) var(--margin-x); margin: var(--var); }
+   * Iteration 1: .class { margin: var(--margin-y) var(--margin-x); }
+   * Iteration 2: .class { margin: 1px 2px; }
+   */
   const MAX_NESTED_DEPENDENCIES_DEPTH = 5;
   for (let i = 0; i !== MAX_NESTED_DEPENDENCIES_DEPTH; ++i) {
     csstree.walk(ast, {
       enter: (node, item, list) => {
         if (node.type === "Function") {
-          const funcName = node.name;
+          const functionName = node.name;
+          if (functionName !== "var") {
+            return;
+          }
 
-          if (funcName === "var") {
-            const firstArg = node.children.first;
-            if (firstArg === null) {
+          const firstArgument = node.children.first;
+
+          if (firstArgument === null) {
+            throw new Error("Should never happen");
+          }
+
+          const propertyName = csstree.generate(firstArgument).trim();
+          const propertyValue = rawProperties[propertyName];
+          const fallbackArg =
+            node.children.last === node.children.first
+              ? null
+              : node.children.last;
+
+          const fallback =
+            fallbackArg !== null ? csstree.generate(fallbackArg).trim() : null;
+
+          if (propertyValue) {
+            const astVariable = csstree.parse(propertyValue, {
+              context: "value",
+            });
+
+            if ("children" in astVariable && astVariable.children !== null) {
+              list.replace(item, astVariable.children);
               return;
             }
+          }
 
-            const varName = csstree.generate(firstArg).trim();
-            const varValue = variables[varName];
-            const fallbackArg =
-              node.children.last === node.children.first
-                ? null
-                : node.children.last;
+          if (fallback) {
+            const astVariable = csstree.parse(fallback, {
+              context: "value",
+            });
 
-            const fallback =
-              fallbackArg !== null
-                ? csstree.generate(fallbackArg).trim()
-                : null;
-
-            if (varValue) {
-              const astVariable = csstree.parse(varValue, {
-                context: "value",
-              });
-
-              if ("children" in astVariable && astVariable.children !== null) {
-                list.replace(item, astVariable.children);
-                return;
-              }
-            }
-
-            if (fallback) {
-              const astVariable = csstree.parse(fallback, {
-                context: "value",
-              });
-
-              if ("children" in astVariable && astVariable.children !== null) {
-                list.replace(item, astVariable.children);
-                return;
-              }
+            if ("children" in astVariable && astVariable.children !== null) {
+              list.replace(item, astVariable.children);
+              return;
             }
           }
         }

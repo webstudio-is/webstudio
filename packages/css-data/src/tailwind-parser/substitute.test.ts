@@ -110,4 +110,20 @@ describe("expandTailwindShorthand", () => {
       `"@media (min-width:640px){.sm\\:shadow-md{background:linear-gradient(rgba(111,111,111,0.5),rgba(222,222,222,0.5))}}"`
     );
   });
+
+  it("doesn't respect non * and class selectors i.e. ::backdrop", () => {
+    const css = `
+      ${cssPreflight}
+      ::backdrop {
+        --var-a: rgba(2, 2, 2, 0.5);
+      }
+      .class {
+          color: var(--var-a);
+      }
+    `;
+
+    expect(substituteVariables(css)).toMatchInlineSnapshot(
+      `".class{color:rgba(111,111,111,0.5)}"`
+    );
+  });
 });
