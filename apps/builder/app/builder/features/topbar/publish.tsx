@@ -492,7 +492,7 @@ const deployTargets = {
     docs: "https://vercel.com/docs/cli",
   },
   netlify: {
-    command: "npx netlify",
+    command: "npx netlify-cli",
     docs: "https://docs.netlify.com/cli/get-started/",
   },
 } as const;
