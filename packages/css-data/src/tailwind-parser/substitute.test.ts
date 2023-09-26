@@ -1,4 +1,4 @@
-import { describe, expect, it, jest } from "@jest/globals";
+import { describe, expect, test, jest } from "@jest/globals";
 
 import { substituteVariables } from "./substitute"; // Import the function
 
@@ -12,7 +12,7 @@ const cssPreflight = `
 `;
 
 describe("expandTailwindShorthand", () => {
-  it("resolves simple variable", () => {
+  test("resolve simple variable", () => {
     const css = `
       ${cssPreflight}
       .class {
@@ -25,7 +25,7 @@ describe("expandTailwindShorthand", () => {
     );
   });
 
-  it("substitutes latest defined variable value", () => {
+  test("substitute latest defined variable value", () => {
     const css = `
       ${cssPreflight}
       .class {
@@ -41,7 +41,7 @@ describe("expandTailwindShorthand", () => {
     );
   });
 
-  it("supports variable fallback", () => {
+  test("support variable fallback", () => {
     const css = `
       ${cssPreflight}
       .class {
@@ -54,7 +54,7 @@ describe("expandTailwindShorthand", () => {
     );
   });
 
-  it("resolves variables inside functions", () => {
+  test("resolve variables inside functions", () => {
     const css = `
       ${cssPreflight}
       .class {
@@ -66,7 +66,7 @@ describe("expandTailwindShorthand", () => {
     );
   });
 
-  it("resolves nested dependencies", () => {
+  test("resolve nested dependencies", () => {
     const css = `
       ${cssPreflight}
       .class {
@@ -79,7 +79,7 @@ describe("expandTailwindShorthand", () => {
     );
   });
 
-  it("warns if variable is not defined and omits property and empty selectors", () => {
+  test("warn if variable is not defined and omits property and empty selectors", () => {
     const css = `
       ${cssPreflight}
       .class {
@@ -97,7 +97,7 @@ describe("expandTailwindShorthand", () => {
     );
   });
 
-  it("works with media queries", () => {
+  test("work with media queries", () => {
     const css = `
     ${cssPreflight}
     @media (min-width: 640px) {
@@ -111,7 +111,7 @@ describe("expandTailwindShorthand", () => {
     );
   });
 
-  it("doesn't respect non * and class selectors i.e. ::backdrop", () => {
+  test("don't respect non * and class selectors i.e. ::backdrop", () => {
     const css = `
       ${cssPreflight}
       ::backdrop {
