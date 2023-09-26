@@ -12,7 +12,7 @@ const cssPreflight = `
 `;
 
 describe("expandTailwindShorthand", () => {
-  it("should resolve simple variable", () => {
+  it("resolves simple variable", () => {
     const css = `
       ${cssPreflight}
       .class {
@@ -25,7 +25,7 @@ describe("expandTailwindShorthand", () => {
     );
   });
 
-  it("should substitute latest defined variable value", () => {
+  it("substitutes latest defined variable value", () => {
     const css = `
       ${cssPreflight}
       .class {
@@ -41,7 +41,7 @@ describe("expandTailwindShorthand", () => {
     );
   });
 
-  it("should support variable fallback", () => {
+  it("supports variable fallback", () => {
     const css = `
       ${cssPreflight}
       .class {
@@ -54,7 +54,7 @@ describe("expandTailwindShorthand", () => {
     );
   });
 
-  it("should resolve variables inside functions", () => {
+  it("resolves variables inside functions", () => {
     const css = `
       ${cssPreflight}
       .class {
@@ -66,7 +66,7 @@ describe("expandTailwindShorthand", () => {
     );
   });
 
-  it("should resolve nested dependencies", () => {
+  it("resolves nested dependencies", () => {
     const css = `
       ${cssPreflight}
       .class {
@@ -79,7 +79,7 @@ describe("expandTailwindShorthand", () => {
     );
   });
 
-  it("should warn if variable is not defined and omit property and empty selectors", () => {
+  it("warns if variable is not defined and omits property and empty selectors", () => {
     const css = `
       ${cssPreflight}
       .class {
