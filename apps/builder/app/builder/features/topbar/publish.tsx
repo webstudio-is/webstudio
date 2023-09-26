@@ -45,8 +45,6 @@ import { createTrpcFetchProxy } from "~/shared/remix/trpc-remix-proxy";
 import { builderDomainsPath } from "~/shared/router-utils";
 import type { DomainRouter } from "@webstudio-is/domain/index.server";
 import { AddDomain } from "./add-domain";
-import { zIndex } from "node_modules/@webstudio-is/sdk-components-react-radix/src/theme/__generated__/tailwind-theme";
-import { getThemeData } from "~/shared/theme";
 import { humanizeString } from "~/shared/string-utils";
 
 const trpc = createTrpcFetchProxy<DomainRouter>(builderDomainsPath);
