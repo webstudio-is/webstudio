@@ -56,4 +56,4 @@ export const PROJECT_TEMPALTES = [
   "vercel",
   "netlify-functions",
   "netlify-edge-functions",
-];
+] as const;

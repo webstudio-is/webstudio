@@ -1,6 +1,6 @@
 {
   "name": "@webstudio-is/builder",
-  "version": "0.101.0",
+  "version": "0.102.0",
   "private": true,
   "description": "Webstudio Builder UI as a service",
   "scripts": {
@@ -96,6 +96,7 @@
     "remix-island": "^0.1.2",
     "shallow-equal": "^3.1.0",
     "slugify": "^1.6.6",
+    "strip-indent": "^4.0.0",
     "title-case": "^3.0.3",
     "use-debounce": "^9.0.4",
     "uuid": "^9.0.0",
