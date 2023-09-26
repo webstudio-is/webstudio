@@ -22,6 +22,7 @@ import {
   styled,
   Select,
   theme,
+  TextArea,
 } from "@webstudio-is/design-system";
 import { useIsPublishDialogOpen } from "../../shared/nano-states";
 import { validateProjectDomain, type Project } from "@webstudio-is/project";
@@ -492,7 +493,7 @@ const deployTargets = {
     docs: "https://vercel.com/docs/cli",
   },
   netlify: {
-    command: "npx netlify-cli",
+    command: `npx netlify-cli login\nnpx netlify-cli sites:create\nnpx netlify-cli build\nnpx netlify-cli deploy`,
     docs: "https://docs.netlify.com/cli/get-started/",
   },
 } as const;
@@ -575,7 +576,7 @@ const ExportContent = () => {
           <Text color="subtle">
             Run this command to publish to{" "}
             <StyledLink
-              href={deployTargets[deployTarget].command}
+              href={deployTargets[deployTarget].docs}
               target="_blank"
               rel="noreferrer"
             >
@@ -597,8 +598,8 @@ const ExportContent = () => {
           }}
         />
 
-        <Flex gap={2}>
-          <InputField
+        <Flex gap={2} align="end">
+          <TextArea
             css={{ flex: 1 }}
             readOnly
             value={deployTargets[deployTarget].command}
