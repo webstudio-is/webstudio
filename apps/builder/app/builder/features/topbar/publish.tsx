@@ -503,7 +503,6 @@ const isDeployTargets = (value: string): value is DeployTargets =>
   Object.keys(deployTargets).includes(value);
 
 const ExportContent = () => {
-  const id = useId();
   const npxCommand = "npx webstudio-cli";
   const [deployTarget, setDeployTarget] = useState<DeployTargets>("vercel");
 
@@ -588,7 +587,6 @@ const ExportContent = () => {
         <Select
           fullWidth
           css={{ zIndex: theme.zIndices[2] }}
-          id={id}
           value={deployTarget}
           options={Object.keys(deployTargets)}
           getLabel={(value) => humanizeString(value)}
