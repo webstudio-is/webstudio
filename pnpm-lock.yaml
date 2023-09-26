@@ -815,6 +815,9 @@ importers:
       strip-indent:
         specifier: ^4.0.0
         version: 4.0.0
+      title-case:
+        specifier: ^3.0.3
+        version: 3.0.3
       yargs:
         specifier: ^17.7.2
         version: 17.7.2

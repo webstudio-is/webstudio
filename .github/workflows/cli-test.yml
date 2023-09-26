@@ -43,56 +43,14 @@ jobs:
         working-directory: ./fixtures/webstudio-remix-vercel
         run: pnpm webstudio-cli --help
 
-      - name: Test cli link command for vercel
-        working-directory: ./fixtures/webstudio-remix-vercel
-        run: pnpm webstudio-cli link --link 'https://webstudio-builder-git-main-webstudio-is.vercel.app/builder/cddc1d44-af37-4cb6-a430-d300cf6f932d?authToken=1cdc6026-dd5b-4624-b89b-9bd45e9bcc3d'
+      - name: Testing cli link command
+        run: pnpm --filter='./fixtures/*' run fixtures:link
 
-      - name: Test cli sync command for vercel
-        working-directory: ./fixtures/webstudio-remix-vercel
-        run: pnpm webstudio-cli sync && pnpm prettier --write ./.webstudio/
+      - name: Testing cli sync command
+        run: pnpm --filter='./fixtures/*' run --parallel fixtures:sync
 
-      - name: Test cli build command for vercel
-        working-directory: ./fixtures/webstudio-remix-vercel
-        run: pnpm webstudio-cli build --preview && pnpm prettier --write ./app/ ./package.json
-
-        # Testing fixtures for netlify-functions template
-      - name: Test cli link command for netlify-functions
-        working-directory: ./fixtures/webstudio-remix-netlify-functions
-        run: pnpm webstudio-cli link --link 'https://webstudio-builder-git-main-webstudio-is.vercel.app/builder/d845c167-ea07-4875-b08d-83e97c09dcce?authToken=e9d1343f-9298-4fd3-a66e-f89a5af2dd93'
-
-      - name: Test cli sync command for netlify-functions
-        working-directory: ./fixtures/webstudio-remix-netlify-functions
-        run: pnpm webstudio-cli sync && pnpm prettier --write ./.webstudio/
-
-      - name: Test cli build command for netlify-functions
-        working-directory: ./fixtures/webstudio-remix-netlify-functions
-        run: pnpm webstudio-cli build --template netlify-functions --preview && pnpm prettier --write ./app/ ./package.json
-
-        # Testing fixtures for netlify-edge-functions template
-      - name: Test cli link command for netlify-edge-functions
-        working-directory: ./fixtures/webstudio-remix-netlify-edge-functions
-        run: pnpm webstudio-cli link --link 'https://webstudio-builder-git-main-webstudio-is.vercel.app/builder/d845c167-ea07-4875-b08d-83e97c09dcce?authToken=e9d1343f-9298-4fd3-a66e-f89a5af2dd93&'
-
-      - name: Test cli sync command for netlify-edge-functions
-        working-directory: ./fixtures/webstudio-remix-netlify-edge-functions
-        run: pnpm webstudio-cli sync && pnpm prettier --write ./.webstudio/
-
-      - name: Test cli build command for netlify-edge-functions
-        working-directory: ./fixtures/webstudio-remix-netlify-edge-functions
-        run: pnpm webstudio-cli build --template netlify-edge-functions --preview && pnpm prettier --write ./app/ ./package.json
-
-        # Testing fixtures for custom template
-      - name: Test cli link command for custom template
-        working-directory: ./fixtures/webstudio-custom-template
-        run: pnpm webstudio-cli link --link 'https://webstudio-builder-git-main-webstudio-is.vercel.app/builder/cddc1d44-af37-4cb6-a430-d300cf6f932d?authToken=1cdc6026-dd5b-4624-b89b-9bd45e9bcc3d'
-
-      - name: Test cli sync command for custom template
-        working-directory: ./fixtures/webstudio-custom-template
-        run: pnpm webstudio-cli sync && pnpm prettier --write ./.webstudio/
-
-      - name: Test cli build command for custom template
-        working-directory: ./fixtures/webstudio-custom-template
-        run: pnpm webstudio-cli build --template ./custom-template --preview && pnpm prettier --write ./app/ ./package.json
+      - name: Testing cli build command
+        run: pnpm --filter='./fixtures/*' run --parallel fixtures:build
 
       - name: Test git diff
         # This command will fail if there are uncommitted changes, i.e something has broken

@@ -3,7 +3,10 @@
     "start": "remix-serve build",
     "build": "remix build",
     "dev": "remix dev",
-    "typecheck": "tsc"
+    "typecheck": "tsc",
+    "fixtures:link": "webstudio-cli link --link 'https://webstudio-builder-git-main-webstudio-is.vercel.app/builder/cddc1d44-af37-4cb6-a430-d300cf6f932d?authToken=1cdc6026-dd5b-4624-b89b-9bd45e9bcc3d&mode=preview'",
+    "fixtures:sync": "webstudio-cli sync && pnpm prettier --write ./.webstudio/",
+    "fixtures:build": "webstudio-cli build --preview && pnpm prettier --write ./app/ ./package.json"
   },
   "private": true,
   "sideEffects": false,

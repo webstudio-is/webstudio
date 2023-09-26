@@ -198,6 +198,16 @@ export const prebuild = async (options: {
    **/
   template?: string;
 }) => {
+  if (
+    options.template !== undefined &&
+    (await isCliTemplate(options.template)) === false &&
+    options.template.startsWith(".") === false
+  ) {
+    throw Error(
+      `\n Template ${options.template} is not available \n Please check webstudio-cli --help for more details`
+    );
+  }
+
   const spinner = ora("Scaffolding the project files");
   spinner.start();
 
