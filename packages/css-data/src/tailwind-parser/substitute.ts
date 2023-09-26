@@ -49,7 +49,7 @@ export const substituteVariables = (css: string, warn = warnOnce) => {
    * Iteration 2: .class { margin: 1px 2px; }
    */
   const MAX_NESTED_DEPENDENCIES_DEPTH = 5;
-  for (let i = 0; i !== MAX_NESTED_DEPENDENCIES_DEPTH; ++i) {
+  for (let depth = 0; depth !== MAX_NESTED_DEPENDENCIES_DEPTH; ++depth) {
     csstree.walk(ast, {
       enter: (node, item, list) => {
         if (node.type === "Function") {
