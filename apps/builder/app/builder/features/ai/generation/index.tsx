@@ -1,52 +1,121 @@
-import { Box } from "@webstudio-is/design-system";
+import { Box, Button } from "@webstudio-is/design-system";
 import { Prompt } from "./prompt";
-import { useState } from "react";
-import type { Sections } from "./types";
+import { useEffect, useRef, useState } from "react";
+import type { SectionId, Sections } from "./types";
 import type { sections } from "@webstudio-is/ai";
 import { SectionsEditor } from "./sections-editor";
+import type { DroppableTarget, InstanceSelector } from "~/shared/tree-utils";
+import {
+  breakpointsStore,
+  registeredComponentMetasStore,
+  selectedInstanceSelectorStore,
+} from "~/shared/nano-states";
+import {
+  WsEmbedTemplate,
+  generateDataFromEmbedTemplate,
+} from "@webstudio-is/react-sdk";
+import { isBaseBreakpoint } from "~/shared/breakpoints";
+import { insertTemplateData } from "~/shared/instance-utils";
 
-export const AiGeneration = () => {
+export const AiGeneration = ({
+  rootInstanceSelector,
+}: {
+  rootInstanceSelector: InstanceSelector;
+}) => {
   const [sections, setSections] = useState<Sections | undefined>();
+
+  // calculateInsertionPosition should always work with the latest sections state.
+  const calculateInsertionPositionRef = useRef((id: SectionId) =>
+    sections ? calculateInsertionPosition(id, sections) : -1
+  );
+  useEffect(() => {
+    calculateInsertionPositionRef.current = (id: SectionId) =>
+      sections ? calculateInsertionPosition(id, sections) : -1;
+  }, [sections]);
 
   return (
     <Box>
       {sections ? (
-        <SectionsEditor
-          sections={Object.entries(sections)}
-          onInput={(id, key, value) => {
-            setSections((sections) => {
-              if (sections) {
-                return {
-                  ...sections,
-                  [id]: {
-                    ...sections[id],
-                    [key]: value,
-                  },
-                };
-              }
-            });
-          }}
-          onStateChange={(id, state) => {
-            // eslint-disable-next-line no-console
-            console.log({ id, state });
-            if (state.status === "done") {
+        <Box>
+          {sections !== undefined ? (
+            <Button
+              onClick={() => {
+                setSections(undefined);
+              }}
+            >
+              Clear
+            </Button>
+          ) : null}
+          <SectionsEditor
+            sections={Object.entries(sections)}
+            onInput={(id, key, value) => {
+              setSections((sections) => {
+                if (sections) {
+                  return {
+                    ...sections,
+                    [id]: {
+                      ...sections[id],
+                      [key]: value,
+                    },
+                  };
+                }
+              });
+            }}
+            onStateChange={(id, state) => {
               // eslint-disable-next-line no-console
-              console.log(JSON.stringify(state.data, null, 2));
-            }
+              // console.log({ id, state });
+              if (state.status === "done") {
+                // eslint-disable-next-line no-console
+                // console.log(JSON.stringify(state.data, null, 2));
+                selectedInstanceSelectorStore.set(rootInstanceSelector);
 
-            setSections((sections) => {
-              if (sections) {
-                return {
-                  ...sections,
-                  [id]: {
-                    ...sections[id],
-                    state,
-                  },
+                const position = calculateInsertionPositionRef.current(id);
+
+                const dropTarget: DroppableTarget = {
+                  parentSelector: rootInstanceSelector,
+                  position: position === -1 ? "end" : position,
                 };
+
+                if (state.data[0].type === "instance") {
+                  state.data[0].label = sections[id].name;
+                }
+
+                if (insertTemplate(state.data, dropTarget) === false) {
+                  alert("Error");
+                  setSections((sections) => {
+                    if (sections) {
+                      return {
+                        ...sections,
+                        [id]: {
+                          ...sections[id],
+                          state: {
+                            status: "error",
+                            message: "Something went wrong",
+                          },
+                        },
+                      };
+                    }
+                  });
+                  return;
+                }
+
+                selectedInstanceSelectorStore.set(rootInstanceSelector);
               }
-            });
-          }}
-        />
+
+              setSections((sections) => {
+                if (sections) {
+                  return {
+                    ...sections,
+                    [id]: {
+                      ...sections[id],
+                      state,
+                    },
+                  };
+                }
+              });
+            }}
+          />
+        </Box>
       ) : (
         <Prompt
           onSections={(sections) => {
@@ -60,6 +129,73 @@ export const AiGeneration = () => {
       )}
     </Box>
   );
+};
+
+const insertTemplate = (
+  template: WsEmbedTemplate,
+  dropTarget: DroppableTarget
+) => {
+  const breakpoints = breakpointsStore.get();
+  const breakpointValues = Array.from(breakpoints.values());
+  const baseBreakpoint = breakpointValues.find(isBaseBreakpoint);
+  if (baseBreakpoint === undefined) {
+    return false;
+  }
+  const metas = registeredComponentMetasStore.get();
+  const templateData = generateDataFromEmbedTemplate(
+    template,
+    metas,
+    baseBreakpoint.id
+  );
+
+  const rootInstanceIds = templateData.children
+    .filter((child) => child.type === "id")
+    .map((child) => child.value);
+
+  insertTemplateData(templateData, dropTarget);
+  return rootInstanceIds;
+};
+
+const calculateInsertionPosition = (
+  sectionId: SectionId,
+  sections: Sections
+) => {
+  const entries = Object.entries(sections);
+
+  let sectionIndex = -1;
+  const insertedIndices = [];
+
+  for (let index = 0; index < entries.length; index++) {
+    const [id, section] = entries[index];
+
+    // The index of the current section in the sections list.
+    if (id === sectionId) {
+      sectionIndex = index;
+      continue;
+    }
+
+    // Collect the indices of the inserted templates.
+    if (section.state.status === "done") {
+      insertedIndices.push(index);
+    }
+  }
+
+  if (sectionIndex === -1) {
+    return -1;
+  }
+
+  let insertionPosition = 1;
+
+  // Find the position for the current sectionIndex.
+  for (const index of insertedIndices) {
+    if (sectionIndex > index) {
+      insertionPosition++;
+    } else {
+      break;
+    }
+  }
+
+  return insertionPosition > insertedIndices.length ? -1 : insertionPosition;
 };
 
 const responseDataToSections = (data: sections.Sections): Sections => {

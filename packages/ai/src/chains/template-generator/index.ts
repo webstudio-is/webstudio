@@ -68,7 +68,10 @@ export const createChain = <ModelMessageFormat>(): Chain<
     }
 
     // Validate parsed completion.
-    if (WsEmbedTemplate.safeParse(template).success === false) {
+    if (
+      template.length === 0 ||
+      WsEmbedTemplate.safeParse(template).success === false
+    ) {
       return {
         success: false,
         type: "parseError",

@@ -23,6 +23,7 @@ import {
   selectedInstanceStore,
   registeredComponentMetasStore,
   $dragAndDropState,
+  selectedInstanceSelectorStore,
 } from "~/shared/nano-states";
 import { NavigatorTree } from "~/builder/shared/navigator-tree";
 import type { Settings } from "~/builder/shared/client-settings";
@@ -72,6 +73,7 @@ const $isDragging = computed([$dragAndDropState], (state) => state.isDragging);
 
 export const Inspector = ({ publish, navigatorLayout }: InspectorProps) => {
   const selectedInstance = useStore(selectedInstanceStore);
+  const selectedInstanceSelector = useStore(selectedInstanceSelectorStore);
   const tabsRef = useRef<HTMLDivElement>(null);
   const [tab, setTab] = useState("style");
   const isDragging = useStore($isDragging);
@@ -81,7 +83,10 @@ export const Inspector = ({ publish, navigatorLayout }: InspectorProps) => {
     return <NavigatorTree />;
   }
 
-  if (selectedInstance === undefined) {
+  if (
+    selectedInstance === undefined ||
+    selectedInstanceSelector === undefined
+  ) {
     return (
       <Box css={{ p: theme.spacing[5], flexBasis: "100%" }}>
         {/* @todo: use this space for something more usefull: a-la figma's no instance selected sate, maybe create an issue with a more specific proposal? */}
@@ -148,7 +153,9 @@ export const Inspector = ({ publish, navigatorLayout }: InspectorProps) => {
             {isFeatureEnabled("ai") ? (
               <PanelTabsContent value="ai" css={contentStyle} tabIndex={-1}>
                 {isFeatureEnabled("aiTemplateGenerator") ? (
-                  <AiGeneration />
+                  <AiGeneration
+                    rootInstanceSelector={selectedInstanceSelector}
+                  />
                 ) : null}
               </PanelTabsContent>
             ) : null}

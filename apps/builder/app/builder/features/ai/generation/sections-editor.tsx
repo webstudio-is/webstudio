@@ -32,7 +32,7 @@ const generate = ({
   signal: AbortSignal;
 }) => {
   const metas = registeredComponentMetasStore.get();
-  const exclude = ["Body", "Slot"];
+  const exclude = ["Body", "Slot", "Fragment"];
 
   const components = [...metas.keys()].filter(
     (name) => !exclude.includes(name)

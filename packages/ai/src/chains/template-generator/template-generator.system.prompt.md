@@ -11,7 +11,11 @@ The design system components:
 Follow the rules below:
 
 - Don't import or use any dependency or external library
+- Exclusively use the design system components provided above
+- Don't use JSX Fragments
 - Don't use JSX comments
+- Don't use CSS grid for layout, use flexbox instead
+- Only use valid Tailwind CSS classes
 - Don't add any props to components
 - For images leave the `src` prop empty and add a good on-topic description as `alt` attribute for screen readers. Additionally set a `width` and `height` props for the image size
 - Titles and subtitles should pop and be interesting, bold and very creative
