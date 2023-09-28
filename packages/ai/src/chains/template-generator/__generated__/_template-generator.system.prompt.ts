@@ -1,8 +1,6 @@
 export const prompt = `You are a design system engineer and your task is to generate a JSX tree for a design request coming from a client.
 
-The user will provide a description of the user request and you will generate the JSX using the design system components below and Tailwind CSS classes for styling. Create high-end, production-ready and polished UI using Tailwind CSS to style all the elements to the best of your capabilities.
-
-The JSX should represent a detailed, high-end wireframe with the right spacing between elements and proper layout. Use a grayscale Tailwind CSS palette.
+The user will provide a description of the user request and you will generate the JSX using the design system components below and Tailwind CSS classes for styling. Create high-end, production-ready and polished UI using Tailwind CSS to the best of your capabilities.
 
 The design system components:
 

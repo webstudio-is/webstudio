@@ -6,6 +6,7 @@ import { prompt as promptUserTemplate } from "./__generated__/template-generator
 import { WsEmbedTemplate } from "@webstudio-is/react-sdk";
 import { jsxToWSEmbedTemplate } from "../../utils/jsx";
 import { tailwindToWebstudio } from "../../utils/tw-to-ws";
+import { traverseTemplate } from "../../utils/traverse-template";
 
 /**
  * Template Generator Chain.
@@ -33,7 +34,19 @@ export const createChain = <ModelMessageFormat>(): Chain<
 
     const systemMessage: ModelMessage = [
       "system",
-      formatPrompt({ components: components.join(", ") }, promptSystemTemplate),
+      formatPrompt(
+        {
+          components: components
+            .map((name) =>
+              name.replace(
+                "@webstudio-is/sdk-components-react-radix:",
+                "Radix."
+              )
+            )
+            .join(", "),
+        },
+        promptSystemTemplate
+      ),
     ];
 
     const userMessage: ModelMessage = [
@@ -57,7 +70,6 @@ export const createChain = <ModelMessageFormat>(): Chain<
 
     try {
       template = jsxToWSEmbedTemplate(completionText);
-      await tailwindToWebstudio(template);
     } catch (error) {
       return {
         success: false,
@@ -66,6 +78,26 @@ export const createChain = <ModelMessageFormat>(): Chain<
         message: "Failed to parse the completion",
       };
     }
+
+    try {
+      await tailwindToWebstudio(template);
+    } catch (error) {
+      return {
+        success: false,
+        type: "parseError",
+        status: 500,
+        message: "Failed to parse styles",
+      };
+    }
+
+    traverseTemplate(template, (node) => {
+      if (node.type === "instance" && node.component.startsWith("Radix.")) {
+        node.component = node.component.replace(
+          "Radix.",
+          "@webstudio-is/sdk-components-react-radix:"
+        );
+      }
+    });
 
     // Validate parsed completion.
     if (
