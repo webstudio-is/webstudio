@@ -849,6 +849,12 @@ importers:
 
   packages/css-data:
     dependencies:
+      '@unocss/core':
+        specifier: ^0.56.4
+        version: 0.56.4
+      '@unocss/preset-uno':
+        specifier: ^0.56.4
+        version: 0.56.4
       '@webstudio-is/css-engine':
         specifier: workspace:*
         version: link:../css-engine
@@ -8020,6 +8026,48 @@ packages:
     dependencies:
       '@typescript-eslint/types': 6.5.0
       eslint-visitor-keys: 3.4.3
+    dev: false
+
+  /@unocss/core@0.56.4:
+    resolution: {integrity: sha512-9DL+2adfjWWnFWp2QOJTq2OcfKKo++agaXnCX7CzeD8KgfWCBqxs2RDoxP3HrDbTflhDHdbjz23B+vJoVykhZw==}
+    dev: false
+
+  /@unocss/extractor-arbitrary-variants@0.56.4:
+    resolution: {integrity: sha512-Q93Bu3wZld+Vj5dqfJYH6phcmjm7fy6mEul64RexLWF00As9WrRzWEXbLVYmmVwUm9e5xcxZO6s98gKq1nTH6Q==}
+    dependencies:
+      '@unocss/core': 0.56.4
+    dev: false
+
+  /@unocss/preset-mini@0.56.4:
+    resolution: {integrity: sha512-FCKs3sUUiHLXQ/ON/ZCQc2JZQox4tv0W8Du+8Y1mRZ6w1yazqqBhR2yDPaEZ51yKcHmDf6ndiTvcJ2tPIz/o8g==}
+    dependencies:
+      '@unocss/core': 0.56.4
+      '@unocss/extractor-arbitrary-variants': 0.56.4
+      '@unocss/rule-utils': 0.56.4
+    dev: false
+
+  /@unocss/preset-uno@0.56.4:
+    resolution: {integrity: sha512-E4VbUe1nIeJ7D1en84osGzwP79IBJ1P9v37Pcx2PvaRAQTKf6WRF7EXzmzEm6HPF+skyGOX9RWuXs9QFODsW8A==}
+    dependencies:
+      '@unocss/core': 0.56.4
+      '@unocss/preset-mini': 0.56.4
+      '@unocss/preset-wind': 0.56.4
+      '@unocss/rule-utils': 0.56.4
+    dev: false
+
+  /@unocss/preset-wind@0.56.4:
+    resolution: {integrity: sha512-llQYQxrA531kl1juYMyaDEEl/IVdHoIPXaaJTdNHbGkSbMqrpZSRzLPsGE+CpaOBKTNqa93UyU1qlUGSr9ZB+A==}
+    dependencies:
+      '@unocss/core': 0.56.4
+      '@unocss/preset-mini': 0.56.4
+      '@unocss/rule-utils': 0.56.4
+    dev: false
+
+  /@unocss/rule-utils@0.56.4:
+    resolution: {integrity: sha512-pZmTPqi/Tb+vbwjNXu9+PwxEh7PVe+FwP+pzUbfNSUpE5Hg9CCbl8hpsXRE/r8kdaoKhmw2ryxvjocOgKXG/ag==}
+    engines: {node: '>=14'}
+    dependencies:
+      '@unocss/core': 0.56.4
     dev: false
 
   /@vanilla-extract/babel-plugin-debug-ids@1.0.2:
