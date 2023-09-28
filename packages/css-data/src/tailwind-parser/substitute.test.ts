@@ -97,7 +97,8 @@ describe("expandTailwindShorthand", () => {
     );
   });
 
-  test("work with media queries", () => {
+  // @todo add support
+  test("remove media queries", () => {
     const css = `
     ${cssPreflight}
     @media (min-width: 640px) {
@@ -106,9 +107,24 @@ describe("expandTailwindShorthand", () => {
       background: linear-gradient(var(--var-c));
     }
     `;
-    expect(substituteVariables(css)).toMatchInlineSnapshot(
-      `"@media (min-width:640px){.sm\\:shadow-md{background:linear-gradient(rgba(111,111,111,0.5),rgba(222,222,222,0.5))}}"`
-    );
+    expect(substituteVariables(css)).toMatchInlineSnapshot(`""`);
+  });
+
+  // @todo add support
+  test("remove pseudo selectors", () => {
+    const css = `
+    ${cssPreflight}
+    .test {
+      margin: 0;
+    }
+    .test:hover {
+      margin: 0;
+    }
+    .test:focus {
+      margin: 0;
+    }
+    `;
+    expect(substituteVariables(css)).toMatchInlineSnapshot(`".test{margin:0}"`);
   });
 
   test("don't respect non * and class selectors i.e. ::backdrop", () => {

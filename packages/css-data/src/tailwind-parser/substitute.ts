@@ -11,6 +11,25 @@ export const substituteVariables = (css: string, warn = warnOnce) => {
   // Cleanup
   csstree.walk(ast, {
     enter(node, item, list) {
+      // @todo media queries support (needs specificity calculations)
+      if (node.type === "Atrule") {
+        list.remove(item);
+        return;
+      }
+
+      // @todo pseudo class selectors support (needs specificity calculations)
+      if (node.type === "Rule") {
+        if (
+          csstree.find(
+            node,
+            (childNode) => childNode.type === "PseudoClassSelector"
+          )
+        ) {
+          list.remove(item);
+          return;
+        }
+      }
+
       // Remove selectors not startings with * or .
       if (node.type === "Rule") {
         const selectors = csstree.generate(node.prelude);
@@ -19,7 +38,10 @@ export const substituteVariables = (css: string, warn = warnOnce) => {
           selectors.startsWith(".") === false
         ) {
           list.remove(item);
+          return;
         }
+
+        // Try find pseudo class selectors
       }
     },
   });
@@ -27,6 +49,7 @@ export const substituteVariables = (css: string, warn = warnOnce) => {
   const rawProperties: Record<string, string> = {};
 
   // Extract all variables and remove them
+  // As of now it doesn't work with :hover etc selectors, same with media queries
   csstree.walk(ast, {
     enter: (node, item, list) => {
       if (node.type === "Declaration" && node.property.startsWith("--")) {
@@ -109,35 +132,30 @@ export const substituteVariables = (css: string, warn = warnOnce) => {
       }
 
       if (node.type === "Declaration") {
-        let hasVariables = false;
-        csstree.walk(node.value, {
-          enter: (childNode) => {
-            if (childNode.type === "Function") {
-              const funcName = childNode.name;
+        const varNode = csstree.find(
+          node,
+          (childNode) =>
+            childNode.type === "Function" && childNode.name === "var"
+        );
 
-              if (funcName === "var") {
-                warn(
-                  true,
-                  `Variable ${csstree.generate(
-                    childNode
-                  )} cannot be resolved for property "${csstree.generate(
-                    node
-                  )}" in selector "${
-                    lastKnownRule !== undefined
-                      ? csstree.generate(lastKnownRule.prelude)
-                      : "unknown"
-                  }"`
-                );
-                hasVariables = true;
-              }
-            }
-          },
-        });
-
-        if (hasVariables) {
-          // Remove declaration if it still contains variables
-          list.remove(item);
+        if (varNode === null) {
+          return;
         }
+
+        warn(
+          true,
+          `Variable ${csstree.generate(
+            varNode
+          )} cannot be resolved for property "${csstree.generate(
+            node
+          )}" in selector "${
+            lastKnownRule !== undefined
+              ? csstree.generate(lastKnownRule.prelude)
+              : "unknown"
+          }"`
+        );
+
+        list.remove(item);
       }
     },
   });
