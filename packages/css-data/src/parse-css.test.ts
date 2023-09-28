@@ -55,7 +55,7 @@ describe("Parse CSS", () => {
   });
 
   test("parses unsupported shorthand values", () => {
-    expect(parseCss(`.test { padding: 4px }`).test[0]).toMatchInlineSnapshot(`
+    expect(parseCss(`.test { padding: 4px }`).test?.[0]).toMatchInlineSnapshot(`
       {
         "property": "padding",
         "value": {

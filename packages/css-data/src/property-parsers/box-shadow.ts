@@ -74,6 +74,10 @@ export const parseBoxShadow = (
           for (let index = 0; index < layer.length; index++) {
             const item = layer[index];
 
+            if (item === undefined) {
+              throw new Error(`Layer at index ${index} is undefined`);
+            }
+
             if (item.type === "Identifier") {
               shadow.push({
                 type: "keyword",
