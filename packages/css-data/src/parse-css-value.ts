@@ -2,7 +2,12 @@ import { colord } from "colord";
 import * as csstree from "css-tree";
 import hyphenate from "hyphenate-style-name";
 import warnOnce from "warn-once";
-import type { StyleProperty, StyleValue, Unit } from "@webstudio-is/css-engine";
+import {
+  TupleValue,
+  type StyleProperty,
+  type StyleValue,
+  type Unit,
+} from "@webstudio-is/css-engine";
 import { keywordValues } from "./__generated__/keyword-values";
 import { units } from "./__generated__/units";
 
@@ -147,6 +152,27 @@ export const parseCssValue = (
         g: rgb.g,
         b: rgb.b,
       };
+    }
+  }
+
+  // Probably a tuple like background-position
+  if (ast != null && ast.type === "Value" && ast.children.size === 2) {
+    const tupleFirst = parseCssValue(
+      property,
+      csstree.generate(ast.children.first!)
+    );
+    const tupleLast = parseCssValue(
+      property,
+      csstree.generate(ast.children.last!)
+    );
+
+    const tupleResult = TupleValue.safeParse({
+      type: "tuple",
+      value: [tupleFirst, tupleLast],
+    });
+
+    if (tupleResult.success) {
+      return tupleResult.data;
     }
   }
 
