@@ -17,7 +17,7 @@ Quick Validation of Generated CSS in WebStudio:
       ],
       "styles": [
         {
-          "property": "background-image",
+          "property": "backgroundImage",
           "value": {
             "type": "unparsed",
             "value": "linear-gradient(to right,rgba(99,102,241,1) 0%,rgba(99,102,241,0) 100%)"
@@ -39,7 +39,7 @@ describe("parseTailwindToWebstudio", () => {
       .toMatchInlineSnapshot(`
 [
   {
-    "property": "margin-bottom",
+    "property": "marginBottom",
     "value": {
       "type": "unit",
       "unit": "rem",
@@ -47,7 +47,7 @@ describe("parseTailwindToWebstudio", () => {
     },
   },
   {
-    "property": "margin-left",
+    "property": "marginLeft",
     "value": {
       "type": "unit",
       "unit": "rem",
@@ -55,7 +55,7 @@ describe("parseTailwindToWebstudio", () => {
     },
   },
   {
-    "property": "margin-right",
+    "property": "marginRight",
     "value": {
       "type": "unit",
       "unit": "rem",
@@ -63,7 +63,7 @@ describe("parseTailwindToWebstudio", () => {
     },
   },
   {
-    "property": "margin-top",
+    "property": "marginTop",
     "value": {
       "type": "unit",
       "unit": "rem",
@@ -81,7 +81,7 @@ describe("parseTailwindToWebstudio", () => {
       .toMatchInlineSnapshot(`
 [
   {
-    "property": "background-image",
+    "property": "backgroundImage",
     "value": {
       "type": "unparsed",
       "value": "linear-gradient(to right,rgba(99,102,241,1) 0%,rgba(99,102,241,0) 100%)",

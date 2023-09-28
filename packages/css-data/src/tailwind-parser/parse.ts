@@ -1,4 +1,5 @@
 import * as csstree from "css-tree";
+import camelCase from "camelcase";
 import { UnoGenerator, createGenerator } from "@unocss/core";
 import { type Theme, presetUno } from "@unocss/preset-uno";
 import type { EmbedTemplateStyleDecl } from "@webstudio-is/react-sdk";
@@ -38,7 +39,7 @@ const parseCssToWebstudio = (css: string) => {
   csstree.walk(ast, {
     enter: (node, item, list) => {
       if (node.type === "Declaration") {
-        const property = node.property.trim();
+        const property = camelCase(node.property.trim());
         const cssValue = csstree.generate(node.value);
 
         const style: EmbedTemplateStyleDecl = {
