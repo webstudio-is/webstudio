@@ -30,6 +30,8 @@ export const jsxToWSEmbedTemplate = (code: string): WsEmbedTemplate => {
   return [];
 };
 
+const ignoredProps = new Set(["style"]);
+
 const transform = function transform(
   node: JSXElement | JSXText,
   code: string
@@ -49,7 +51,9 @@ const transform = function transform(
     const element = node.openingElement;
     // const styles = getProps(code, element.attributes, ["style"]);
     const props = parseProps(
-      getProps(code, element.attributes).filter((prop) => prop.name !== "style")
+      getProps(code, element.attributes).filter(
+        (prop) => ignoredProps.has(prop.name) === false
+      )
     );
 
     return {

@@ -8,7 +8,7 @@
   "type": "module",
   "scripts": {
     "typecheck": "tsc",
-    "test": "NODE_OPTIONS=--experimental-vm-modules jest --passWithNoTests",
+    "test": "NODE_OPTIONS=--experimental-vm-modules jest",
     "checks": "pnpm typecheck && pnpm test",
     "dev": "pnpm build --watch",
     "build": "rm -rf lib && pnpm build:prompts && esbuild 'src/**/*.ts' --outdir=lib",
@@ -36,6 +36,7 @@
   "license": "AGPL-3.0-or-later",
   "sideEffects": false,
   "dependencies": {
+    "@webstudio-is/css-data": "workspace:*",
     "@webstudio-is/sdk": "workspace:*",
     "@webstudio-is/react-sdk": "workspace:*",
     "ai": "^2.2.12",

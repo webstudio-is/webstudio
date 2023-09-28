@@ -7,6 +7,7 @@ import {
 import { parseCssValue as parseCssValueLonghand } from "./parse-css-value";
 import * as parsers from "./property-parsers/parsers";
 import * as toLonghand from "./property-parsers/to-longhand";
+import camelcase from "camelcase";
 
 type Selector = string;
 type Style = {
@@ -99,7 +100,7 @@ export const parseCss = function cssToWS(css: string) {
       const stringValue = csstree.generate(node.value);
 
       const parsedCss = parseCssValue(
-        node.property as Longhand | StyleProperty,
+        camelcase(node.property) as Longhand | StyleProperty,
         stringValue
       );
 

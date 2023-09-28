@@ -650,6 +650,9 @@ importers:
 
   packages/ai:
     dependencies:
+      '@webstudio-is/css-data':
+        specifier: workspace:*
+        version: link:../css-data
       '@webstudio-is/react-sdk':
         specifier: workspace:*
         version: link:../react-sdk

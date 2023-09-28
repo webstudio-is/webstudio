@@ -5,6 +5,7 @@ import { prompt as promptSystemTemplate } from "./__generated__/template-generat
 import { prompt as promptUserTemplate } from "./__generated__/template-generator.user.prompt";
 import { WsEmbedTemplate } from "@webstudio-is/react-sdk";
 import { jsxToWSEmbedTemplate } from "../../utils/jsx";
+import { tailwindToWebstudio } from "../../utils/tw-to-ws";
 
 /**
  * Template Generator Chain.
@@ -56,6 +57,7 @@ export const createChain = <ModelMessageFormat>(): Chain<
 
     try {
       template = jsxToWSEmbedTemplate(completionText);
+      await tailwindToWebstudio(template);
     } catch (error) {
       return {
         success: false,
