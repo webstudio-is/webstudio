@@ -1,6 +1,6 @@
 import type { WsEmbedTemplate } from "@webstudio-is/react-sdk";
 import { traverseTemplateAsync } from "./traverse-template";
-import { parseCss, parseTailwindToCss } from "@webstudio-is/css-data";
+import { parseTailwindToWebstudio } from "@webstudio-is/css-data";
 
 export const tailwindToWebstudio = async (template: WsEmbedTemplate) => {
   return traverseTemplateAsync(template, async (node, parent) => {
@@ -9,8 +9,7 @@ export const tailwindToWebstudio = async (template: WsEmbedTemplate) => {
         (prop) => prop.name === "className"
       );
       if (classNameProp && classNameProp.type === "string") {
-        const css = await parseTailwindToCss(classNameProp.value);
-        const styles = Object.values(parseCss(css)).flat();
+        const styles = await parseTailwindToWebstudio(classNameProp.value);
 
         if (Array.isArray(node.styles)) {
           // Merge with existing styles

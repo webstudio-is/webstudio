@@ -16,7 +16,10 @@ export * from "./property-parsers/index";
 export * from "./parse-css-value";
 export * from "./parse-css";
 
-export { parseTailwindToCss } from "./tailwind-parser/parse";
+export {
+  parseTailwindToCss,
+  parseTailwindToWebstudio,
+} from "./tailwind-parser/parse";
 
 import { properties as generatedProperties } from "./__generated__/properties";
 
