@@ -119,6 +119,116 @@ describe("parseTailwindToWebstudio", () => {
 ]
 `);
   });
+
+  test("border", async () => {
+    const tailwindClasses = `border border-sky-500`;
+
+    expect(await parseTailwindToWebstudio(tailwindClasses))
+      .toMatchInlineSnapshot(`
+[
+  {
+    "property": "borderBottomWidth",
+    "value": {
+      "type": "unit",
+      "unit": "px",
+      "value": 1,
+    },
+  },
+  {
+    "property": "borderLeftWidth",
+    "value": {
+      "type": "unit",
+      "unit": "px",
+      "value": 1,
+    },
+  },
+  {
+    "property": "borderRightWidth",
+    "value": {
+      "type": "unit",
+      "unit": "px",
+      "value": 1,
+    },
+  },
+  {
+    "property": "borderTopWidth",
+    "value": {
+      "type": "unit",
+      "unit": "px",
+      "value": 1,
+    },
+  },
+  {
+    "property": "borderBottomColor",
+    "value": {
+      "alpha": 1,
+      "b": 233,
+      "g": 165,
+      "r": 14,
+      "type": "rgb",
+    },
+  },
+  {
+    "property": "borderLeftColor",
+    "value": {
+      "alpha": 1,
+      "b": 233,
+      "g": 165,
+      "r": 14,
+      "type": "rgb",
+    },
+  },
+  {
+    "property": "borderRightColor",
+    "value": {
+      "alpha": 1,
+      "b": 233,
+      "g": 165,
+      "r": 14,
+      "type": "rgb",
+    },
+  },
+  {
+    "property": "borderTopColor",
+    "value": {
+      "alpha": 1,
+      "b": 233,
+      "g": 165,
+      "r": 14,
+      "type": "rgb",
+    },
+  },
+  {
+    "property": "borderTopStyle",
+    "value": {
+      "type": "keyword",
+      "value": "solid",
+    },
+  },
+  {
+    "property": "borderRightStyle",
+    "value": {
+      "type": "keyword",
+      "value": "solid",
+    },
+  },
+  {
+    "property": "borderBottomStyle",
+    "value": {
+      "type": "keyword",
+      "value": "solid",
+    },
+  },
+  {
+    "property": "borderLeftStyle",
+    "value": {
+      "type": "keyword",
+      "value": "solid",
+    },
+  },
+]
+`);
+  });
 });
 
 describe("parseTailwindToCss", () => {

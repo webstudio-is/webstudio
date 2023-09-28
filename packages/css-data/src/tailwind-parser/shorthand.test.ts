@@ -17,7 +17,9 @@ describe("expandTailwindShorthand", () => {
   });
 
   test("handle classes without a modifier", () => {
-    expect(expandTailwindShorthand("none")).toBe("grow-0 shrink-0 basis-auto");
+    expect(expandTailwindShorthand("flex-none")).toBe(
+      "grow-0 shrink-0 basis-auto"
+    );
   });
 
   test("handle dynamic values", () => {
@@ -26,5 +28,17 @@ describe("expandTailwindShorthand", () => {
 
   test("expand inset-x-4 to right-4 left-4", () => {
     expect(expandTailwindShorthand("inset-x-4")).toBe("right-4 left-4");
+  });
+
+  test("do not expand border color", () => {
+    expect(expandTailwindShorthand("border-sky-500")).toBe(
+      "border-t-sky-500 border-r-sky-500 border-b-sky-500 border-l-sky-500"
+    );
+  });
+
+  test("expand border width", () => {
+    expect(expandTailwindShorthand("border border-sky-500")).toBe(
+      "border-t border-r border-b border-l border-t-sky-500 border-r-sky-500 border-b-sky-500 border-l-sky-500"
+    );
   });
 });
