@@ -10,7 +10,6 @@ import { onCopy, onPaste } from "../copy-paste/plugin-instance";
 
 export const shortcuts = {
   esc: "esc",
-  preview: "meta+shift+p, ctrl+shift+p",
   breakpointsMenu: "meta+b, ctrl+b",
 } as const;
 
