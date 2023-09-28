@@ -44,6 +44,8 @@
   "private": true,
   "sideEffects": false,
   "dependencies": {
+    "@unocss/core": "^0.56.4",
+    "@unocss/preset-uno": "^0.56.4",
     "@webstudio-is/css-engine": "workspace:*",
     "colord": "^2.9.3",
     "css-tree": "^2.3.1",
