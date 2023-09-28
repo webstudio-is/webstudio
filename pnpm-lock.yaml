@@ -880,6 +880,9 @@ importers:
       '@webstudio-is/jest-config':
         specifier: workspace:*
         version: link:../jest-config
+      '@webstudio-is/react-sdk':
+        specifier: workspace:*
+        version: link:../react-sdk
       '@webstudio-is/tsconfig':
         specifier: workspace:*
         version: link:../tsconfig

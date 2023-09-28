@@ -1,6 +1,96 @@
 import { describe, expect, it as test, jest } from "@jest/globals";
 
-import { parseTailwindToCss } from "./parse";
+import { parseTailwindToCss, parseTailwindToWebstudio } from "./parse";
+
+/*
+Quick Validation of Generated CSS in WebStudio:
+1. Customize the example JSON below with your desired styles (from snapshots).
+2. Copy and paste it into your project at https://apps.webstudio.is/
+
+```json
+{
+  "@webstudio/template": [
+    {
+      "type": "instance",
+      "component": "Box",
+      "props": [
+      ],
+      "styles": [
+        {
+          "property": "backgroundImage",
+          "value": {
+            "type": "unparsed",
+            "value": "linear-gradient(to right,rgba(99,102,241,1) 0%,rgba(99,102,241,0) 100%)"
+          }
+        }
+      ],
+      "children": [{ "type": "text", "value": "-" }]
+    }
+  ]
+}
+```
+*/
+
+describe("parseTailwindToWebstudio", () => {
+  test("expand margins", async () => {
+    const tailwindClasses = `m-4`;
+
+    expect(await parseTailwindToWebstudio(tailwindClasses))
+      .toMatchInlineSnapshot(`
+[
+  {
+    "property": "marginBottom",
+    "value": {
+      "type": "unit",
+      "unit": "rem",
+      "value": 1,
+    },
+  },
+  {
+    "property": "marginLeft",
+    "value": {
+      "type": "unit",
+      "unit": "rem",
+      "value": 1,
+    },
+  },
+  {
+    "property": "marginRight",
+    "value": {
+      "type": "unit",
+      "unit": "rem",
+      "value": 1,
+    },
+  },
+  {
+    "property": "marginTop",
+    "value": {
+      "type": "unit",
+      "unit": "rem",
+      "value": 1,
+    },
+  },
+]
+`);
+  });
+
+  test("substitute variables - gradient", async () => {
+    const tailwindClasses = `bg-gradient-to-r from-indigo-500`;
+
+    expect(await parseTailwindToWebstudio(tailwindClasses))
+      .toMatchInlineSnapshot(`
+[
+  {
+    "property": "backgroundImage",
+    "value": {
+      "type": "unparsed",
+      "value": "linear-gradient(to right,rgba(99,102,241,1) 0%,rgba(99,102,241,0) 100%)",
+    },
+  },
+]
+`);
+  });
+});
 
 describe("parseTailwindToCss", () => {
   test("expand margins", async () => {
