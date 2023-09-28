@@ -7,6 +7,7 @@ import { WsEmbedTemplate } from "@webstudio-is/react-sdk";
 import { jsxToWSEmbedTemplate } from "../../utils/jsx";
 import { tailwindToWebstudio } from "../../utils/tw-to-ws";
 import { traverseTemplate } from "../../utils/traverse-template";
+import { getIcon } from "../../utils/get-icon";
 
 /**
  * Template Generator Chain.
@@ -91,11 +92,54 @@ export const createChain = <ModelMessageFormat>(): Chain<
     }
 
     traverseTemplate(template, (node) => {
-      if (node.type === "instance" && node.component.startsWith("Radix.")) {
-        node.component = node.component.replace(
-          "Radix.",
-          "@webstudio-is/sdk-components-react-radix:"
-        );
+      if (node.type === "instance") {
+        if (node.component.startsWith("Radix.")) {
+          node.component = node.component.replace(
+            "Radix.",
+            "@webstudio-is/sdk-components-react-radix:"
+          );
+        }
+
+        if (node.component === "Heroicon") {
+          if (Array.isArray(node.props)) {
+            const nameProp = node.props.find((prop) => prop.name === "name");
+            const typeProp = node.props.find((prop) => prop.name === "type");
+
+            const name =
+              nameProp && nameProp.type === "string" ? nameProp.value : null;
+
+            const type =
+              typeProp &&
+              typeProp.type === "string" &&
+              (typeProp.value === "outline" || typeProp.value === "solid")
+                ? typeProp.value
+                : "solid";
+
+            const icon = name ? getIcon(name, type) : null;
+
+            if (icon === null) {
+              node.component = "Text";
+              node.children = [
+                { type: "text", value: name ? `Icon ${name}` : "Icon" },
+              ];
+            } else {
+              node.component = "HtmlEmbed";
+
+              node.label = `${name} icon`;
+
+              node.props = [
+                {
+                  type: "string",
+                  name: "code",
+                  value: icon || "",
+                },
+              ];
+            }
+          } else {
+            node.component = "Text";
+            node.children = [{ type: "text", value: "Icon" }];
+          }
+        }
       }
     });
 

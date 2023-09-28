@@ -207,6 +207,17 @@ const responseDataToSections = (data: sections.Sections): Sections => {
   );
 };
 
+// const vPrompts = responseDataToSections({
+//   _tweet: "give me a tweet with a profile picture and good icons",
+//   _hero_email: "A hero component for an email client",
+//   _login: "A login screen with email, google, and apple login.",
+//   _term: "a terminal UI looks like iterm2",
+//   _setting: "Make the popover triggers wider",
+//   _admin: "An admin user management form",
+//   _hn: "build a hacker news ui",
+//   _cookie: "cookie preferences form",
+// });
+
 // const testSections = responseDataToSections({
 //   Header: "A vintage-inspired header for the JazzJams festival page",
 //   Navigation:

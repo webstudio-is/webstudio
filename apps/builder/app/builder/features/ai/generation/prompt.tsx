@@ -1,5 +1,11 @@
 import { request, type sections } from "@webstudio-is/ai";
-import { Label, InputField, Button } from "@webstudio-is/design-system";
+import {
+  Label,
+  InputField,
+  Button,
+  Checkbox,
+  Text,
+} from "@webstudio-is/design-system";
 import { useState, useRef } from "react";
 import { restAiSections } from "~/shared/router-utils";
 
@@ -24,6 +30,12 @@ export const Prompt = ({
         const prompt = formData.get("prompt");
 
         if (typeof prompt !== "string") {
+          return;
+        }
+
+        const breakIntoSections = formData.get("break");
+        if (breakIntoSections == null) {
+          onSections({ section: prompt });
           return;
         }
 
@@ -65,6 +77,12 @@ export const Prompt = ({
           defaultValue={`A vintige-inspired page for a Jazz festival in Austin Texas called "JazzJams" The page should use lots of background textures and shadows!`}
         />
       </Label>
+
+      <Label css={{ display: "flex" }}>
+        <Checkbox defaultChecked={true} name="break" />
+        <Text>Break into sections</Text>
+      </Label>
+
       <Button type="submit" disabled={isLoading}>
         Scaffold
       </Button>

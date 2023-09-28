@@ -74,7 +74,7 @@ export const action = async function action({ request }: ActionArgs) {
   const model = createGptModel({
     apiKey: env.OPENAI_KEY,
     organization: env.OPENAI_ORG,
-    temperature: 0.5,
+    temperature: 0.2,
     model: "gpt-4",
   });
 
