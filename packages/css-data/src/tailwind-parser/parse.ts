@@ -56,8 +56,7 @@ const parseCssToWebstudio = (css: string) => {
 };
 
 /**
- * We use specific "layer" type for the background related properties in Webstudio.
- * Just convert if possible.
+ * In WebStudio, background-related properties are managed using a specialized "layer" type.
  **/
 const postprocessBackgrounds = (
   styles: EmbedTemplateStyleDecl[],
