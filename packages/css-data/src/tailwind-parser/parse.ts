@@ -7,7 +7,7 @@ import { expandTailwindShorthand } from "./shorthand";
 import { substituteVariables } from "./substitute";
 import warnOnce from "warn-once";
 import { parseCssValue } from "../parse-css-value";
-import { type StyleProperty } from "@webstudio-is/css-engine";
+import { LayersValue, type StyleProperty } from "@webstudio-is/css-engine";
 
 let unoLazy: UnoGenerator<Theme> | undefined = undefined;
 
@@ -56,6 +56,48 @@ const parseCssToWebstudio = (css: string) => {
 };
 
 /**
+ * In WebStudio, background-related properties are managed using a specialized "layer" type.
+ **/
+const postprocessBackgrounds = (
+  styles: EmbedTemplateStyleDecl[],
+  warn = warnOnce
+) => {
+  const backgroundProps = [
+    "backgroundAttachment",
+    "backgroundClip",
+    "backgroundBlendMode",
+    "backgroundImage",
+    "backgroundOrigin",
+    "backgroundPosition",
+    "backgroundRepeat",
+    "backgroundSize",
+  ];
+
+  return styles.map((style) => {
+    if (backgroundProps.includes(style.property)) {
+      const layersResult = LayersValue.safeParse({
+        type: "layers",
+        value: [style.value],
+      });
+
+      if (layersResult.success) {
+        return {
+          property: style.property,
+          value: layersResult.data,
+        };
+      }
+      warn(
+        true,
+        `Failed to convert background property ${
+          style.property
+        } with value ${JSON.stringify(style.value)} to layers`
+      );
+    }
+    return style;
+  });
+};
+
+/**
  * Parses Tailwind classes to webstudio template format.
  */
 export const parseTailwindToWebstudio = async (
@@ -63,6 +105,9 @@ export const parseTailwindToWebstudio = async (
   warn = warnOnce
 ) => {
   const css = await parseTailwindToCss(classes, warn);
-  const styles = parseCssToWebstudio(css);
+  let styles = parseCssToWebstudio(css);
+  // postprocessing
+  styles = postprocessBackgrounds(styles, warn);
+
   return styles;
 };

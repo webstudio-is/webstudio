@@ -19,8 +19,11 @@ Quick Validation of Generated CSS in WebStudio:
         {
           "property": "backgroundImage",
           "value": {
-            "type": "unparsed",
-            "value": "linear-gradient(to right,rgba(99,102,241,1) 0%,rgba(99,102,241,0) 100%)"
+            "type": "layers",
+            "value": [{
+              type: "unparsed",
+              value: "linear-gradient(to right,rgba(99,102,241,1) 0%,rgba(99,102,241,0) 100%)"
+            }]
           }
         }
       ],
@@ -75,7 +78,7 @@ describe("parseTailwindToWebstudio", () => {
   });
 
   test("substitute variables - gradient", async () => {
-    const tailwindClasses = `bg-gradient-to-r from-indigo-500`;
+    const tailwindClasses = `bg-left-top bg-gradient-to-r from-indigo-500 from-10% via-sky-500 via-30% to-emerald-500 to-90%`;
 
     expect(await parseTailwindToWebstudio(tailwindClasses))
       .toMatchInlineSnapshot(`
@@ -83,8 +86,34 @@ describe("parseTailwindToWebstudio", () => {
   {
     "property": "backgroundImage",
     "value": {
-      "type": "unparsed",
-      "value": "linear-gradient(to right,rgba(99,102,241,1) 0%,rgba(99,102,241,0) 100%)",
+      "type": "layers",
+      "value": [
+        {
+          "type": "unparsed",
+          "value": "linear-gradient(to right,rgba(99,102,241,1) 10%,rgba(14,165,233,1) 30%,rgba(16,185,129,1) 90%)",
+        },
+      ],
+    },
+  },
+  {
+    "property": "backgroundPosition",
+    "value": {
+      "type": "layers",
+      "value": [
+        {
+          "type": "tuple",
+          "value": [
+            {
+              "type": "keyword",
+              "value": "left",
+            },
+            {
+              "type": "keyword",
+              "value": "top",
+            },
+          ],
+        },
+      ],
     },
   },
 ]
