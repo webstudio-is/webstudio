@@ -264,7 +264,7 @@ export const Builder = ({
 
   const [publish, publishRef] = usePublish();
   useEffect(() => {
-    $publisher.set({ source: "builder", publish });
+    $publisher.set({ publish });
   }, [publish]);
 
   useBuilderStore(publish);

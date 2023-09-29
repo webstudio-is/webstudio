@@ -28,8 +28,10 @@ type Command<CommandName extends string> = CommandMeta<CommandName> & {
 export const $commandMetas = atom(new Map<string, CommandMeta<string>>());
 
 export const createCommandsEmitter = <CommandName extends string>({
+  source,
   commands,
 }: {
+  source: string;
   // type only input to describe available commands from builder or other plugins
   externalCommands?: CommandName[];
   commands: Command<CommandName>[];
@@ -52,7 +54,7 @@ export const createCommandsEmitter = <CommandName extends string>({
   }
 
   const emitCommand = (name: CommandName) => {
-    const { source, publish } = $publisher.get();
+    const { publish } = $publisher.get();
     publish({
       type: "command",
       payload: {

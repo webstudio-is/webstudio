@@ -218,7 +218,7 @@ export const Canvas = ({
   useEffect(subscribeCommands, []);
 
   useEffect(() => {
-    $publisher.set({ source: "canvas", publish });
+    $publisher.set({ publish });
   }, []);
 
   // e.g. toggling preview is still needed in both modes

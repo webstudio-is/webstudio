@@ -2,6 +2,7 @@ import { createCommandsEmitter } from "~/shared/commands-emitter";
 import { $isPreviewMode } from "~/shared/nano-states";
 
 export const { emitCommand, subscribeCommands } = createCommandsEmitter({
+  source: "builder",
   commands: [
     {
       name: "togglePreview",
