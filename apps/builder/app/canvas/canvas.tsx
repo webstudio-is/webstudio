@@ -20,7 +20,7 @@ import * as radixComponents from "@webstudio-is/sdk-components-react-radix";
 import * as radixComponentMetas from "@webstudio-is/sdk-components-react-radix/metas";
 import * as radixComponentPropsMetas from "@webstudio-is/sdk-components-react-radix/props";
 import { hooks as radixComponentHooks } from "@webstudio-is/sdk-components-react-radix/hooks";
-import { publish } from "~/shared/pubsub";
+import { $publisher, publish } from "~/shared/pubsub";
 import {
   handshakenStore,
   registerContainers,
@@ -56,6 +56,7 @@ import { useMount } from "~/shared/hook-utils/use-mount";
 import { useSelectedInstance } from "./instance-selected-react";
 import { subscribeInterceptedEvents } from "./interceptor";
 import type { ImageLoader } from "@webstudio-is/image";
+import { subscribeCommands } from "~/canvas/shared/commands";
 
 registerContainers();
 
@@ -196,6 +197,12 @@ export const Canvas = ({
   });
 
   useEffect(subscribeComponentHooks, []);
+
+  useEffect(subscribeCommands, []);
+
+  useEffect(() => {
+    $publisher.set({ publish });
+  }, []);
 
   // e.g. toggling preview is still needed in both modes
   useCanvasShortcuts();

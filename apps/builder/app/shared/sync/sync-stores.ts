@@ -30,6 +30,7 @@ import {
   synchronizedComponentsMetaStores,
   dataSourceVariablesStore,
 } from "~/shared/nano-states";
+import { $commandMetas } from "~/shared/commands-emitter";
 
 enableMapSet();
 
@@ -72,6 +73,7 @@ export const registerContainers = () => {
   store.register("dataSources", dataSourcesStore);
   store.register("assets", assetsStore);
   // synchronize whole states
+  clientStores.set("commandMetas", $commandMetas);
   clientStores.set("project", projectStore);
   clientStores.set("dataSourceVariables", dataSourceVariablesStore);
   clientStores.set("selectedPageId", selectedPageIdStore);
@@ -241,7 +243,7 @@ const handshakeAndSyncStores = (
     if (destinationReady) {
       return publish(action);
     }
-    actions.push(action);
+    actions.push({ payload: undefined, ...action });
   };
 
   const unsubscribe = sync(publishAction);

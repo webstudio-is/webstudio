@@ -29,8 +29,9 @@ import {
 } from "~/shared/theme";
 import { useClientSettings } from "~/builder/shared/client-settings";
 import { dashboardPath } from "~/shared/router-utils";
-import { $isPreviewMode, $authPermit } from "~/shared/nano-states";
+import { $authPermit } from "~/shared/nano-states";
 import { deleteSelectedInstance } from "~/shared/instance-utils";
+import { emitCommand } from "~/builder/shared/commands";
 import { MenuButton } from "./menu-button";
 
 const ThemeMenuItem = () => {
@@ -98,7 +99,6 @@ export const Menu = ({ publish }: MenuProps) => {
   const navigate = useNavigate();
   const [, setIsShareOpen] = useIsShareDialogOpen();
   const [, setIsPublishOpen] = useIsPublishDialogOpen();
-  const isPreviewMode = useStore($isPreviewMode);
   const authPermit = useStore($authPermit);
 
   const isPublishEnabled = authPermit === "own" || authPermit === "admin";
@@ -184,11 +184,7 @@ export const Menu = ({ publish }: MenuProps) => {
           <DropdownMenuSeparator />
           <ThemeMenuItem />
           <ViewMenuItem />
-          <DropdownMenuItem
-            onSelect={() => {
-              $isPreviewMode.set(isPreviewMode === false);
-            }}
-          >
+          <DropdownMenuItem onSelect={() => emitCommand("togglePreview")}>
             Preview
             <DropdownMenuItemRightSlot>
               <ShortcutHint value={["cmd", "shift", "p"]} />

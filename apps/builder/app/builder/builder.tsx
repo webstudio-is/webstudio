@@ -2,7 +2,7 @@ import { useCallback, useEffect } from "react";
 import { useStore } from "@nanostores/react";
 import { useUnmount } from "react-use";
 import { TooltipProvider } from "@radix-ui/react-tooltip";
-import { type Publish, usePublish } from "~/shared/pubsub";
+import { type Publish, usePublish, $publisher } from "~/shared/pubsub";
 import type { Asset } from "@webstudio-is/sdk";
 import type { Build } from "@webstudio-is/project-build";
 import type { Project } from "@webstudio-is/project";
@@ -45,6 +45,7 @@ import { useCopyPaste } from "~/shared/copy-paste";
 import { BlockingAlerts } from "./features/blocking-alerts";
 import { useSyncPageUrl } from "~/shared/pages";
 import { useMount } from "~/shared/hook-utils/use-mount";
+import { subscribeCommands } from "~/builder/shared/commands";
 
 registerContainers();
 
@@ -253,6 +254,8 @@ export const Builder = ({
     stylesStore.set(new Map(build.styles));
   });
 
+  useEffect(subscribeCommands, []);
+
   useUnmount(() => {
     pagesStore.set(undefined);
   });
@@ -260,6 +263,10 @@ export const Builder = ({
   useSyncPageUrl();
 
   const [publish, publishRef] = usePublish();
+  useEffect(() => {
+    $publisher.set({ publish });
+  }, [publish]);
+
   useBuilderStore(publish);
   useSyncServer({
     buildId: build.id,

@@ -1,7 +1,6 @@
 import { useHotkeys } from "react-hotkeys-hook";
 import { shortcuts, instanceTreeShortcuts, options } from "~/shared/shortcuts";
 import { publish, useSubscribe } from "~/shared/pubsub";
-import { $isPreviewMode } from "~/shared/nano-states";
 import { enterEditingMode, escapeSelection } from "~/shared/instance-utils";
 
 declare module "~/shared/pubsub" {
@@ -10,10 +9,6 @@ declare module "~/shared/pubsub" {
     openBreakpointsMenu: undefined;
   }
 }
-
-const togglePreviewMode = () => {
-  $isPreviewMode.set(!$isPreviewMode.get());
-};
 
 const publishOpenBreakpointsMenu = () => {
   publish({ type: "openBreakpointsMenu" });
@@ -25,7 +20,6 @@ const publishCancelCurrentDrag = () => {
 
 export const useCanvasShortcuts = () => {
   const shortcutHandlerMap = {
-    preview: togglePreviewMode,
     breakpointsMenu: publishOpenBreakpointsMenu,
     esc: publishCancelCurrentDrag,
     enter: enterEditingMode,
@@ -33,8 +27,6 @@ export const useCanvasShortcuts = () => {
     keyof typeof shortcuts | keyof typeof instanceTreeShortcuts,
     unknown
   >;
-
-  useHotkeys(shortcuts.preview, shortcutHandlerMap.preview, options, []);
 
   useHotkeys(
     shortcuts.breakpointsMenu,
