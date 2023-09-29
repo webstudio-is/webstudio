@@ -8,6 +8,7 @@ import { substituteVariables } from "./substitute";
 import warnOnce from "warn-once";
 import { parseCssValue } from "../parse-css-value";
 import { LayersValue, type StyleProperty } from "@webstudio-is/css-engine";
+import { parseBoxShadow } from "../property-parsers/box-shadow";
 
 let unoLazy: UnoGenerator<Theme> | undefined = undefined;
 
@@ -98,6 +99,56 @@ const postprocessBackgrounds = (
 };
 
 /**
+ * Tailwind by default has border-style: solid, but WebStudio doesn't.
+ * Provide boder-style: solid if border-width is provided.
+ **/
+const postprocessBorder = (styles: EmbedTemplateStyleDecl[]) => {
+  const borderPairs = [
+    ["borderTopWidth", "borderTopStyle"],
+    ["borderRightWidth", "borderRightStyle"],
+    ["borderBottomWidth", "borderBottomStyle"],
+    ["borderLeftWidth", "borderLeftStyle"],
+  ] as const;
+
+  const resultStyles = [...styles];
+
+  for (const [borderWidthProperty, borderStyleProperty] of borderPairs) {
+    const hasWidth = styles.some(
+      (style) => style.property === borderWidthProperty
+    );
+    const hasStyle = styles.some(
+      (style) => style.property === borderStyleProperty
+    );
+    if (hasWidth && hasStyle === false) {
+      resultStyles.push({
+        property: borderStyleProperty,
+        value: {
+          type: "keyword",
+          value: "solid",
+        },
+      });
+    }
+  }
+  return resultStyles;
+};
+
+/**
+ * In WebStudio, box-shadow property is managed using a specialized "layer" type.
+ **/
+const postprocessBoxShadows = (styles: EmbedTemplateStyleDecl[]) => {
+  return styles.map((style) => {
+    if (style.property === "boxShadow" && style.value.type === "unparsed") {
+      const shadowStyle = parseBoxShadow(style.value.value);
+      return {
+        property: style.property,
+        value: shadowStyle,
+      };
+    }
+    return style;
+  });
+};
+
+/**
  * Parses Tailwind classes to webstudio template format.
  */
 export const parseTailwindToWebstudio = async (
@@ -108,6 +159,8 @@ export const parseTailwindToWebstudio = async (
   let styles = parseCssToWebstudio(css);
   // postprocessing
   styles = postprocessBackgrounds(styles, warn);
+  styles = postprocessBorder(styles);
+  styles = postprocessBoxShadows(styles);
 
   return styles;
 };

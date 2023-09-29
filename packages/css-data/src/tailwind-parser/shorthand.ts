@@ -4,24 +4,36 @@ export const expandShorthand = (property: string) => {};
  * Expands shorthand CSS properties into their long-form equivalents.
  * For example, 'mx' is expanded to 'mr' (margin-right) and 'ml' (margin-left).
  **/
-export const expandTailwindShorthand = (classname: string) => {
-  let expanded = conflictingClassGroups[classname];
+export const expandTailwindShorthand = (classnames: string) => {
+  return classnames
+    .trim()
+    .split(/\s+/)
+    .map((classname) => {
+      const groupKey = Object.keys(conflictingClassGroups).find((key) =>
+        classname.startsWith(key)
+      );
+      if (groupKey === undefined) {
+        return classname;
+      }
 
-  if (expanded) {
-    return expanded.join(" ");
-  }
+      const group = conflictingClassGroups[groupKey];
+      const modifier = classname.substring(groupKey.length);
+      const expanded = group.map((cls) => `${cls}${modifier}`);
 
-  const parts = classname.split("-");
-  const modifier = parts.pop();
-  const base = parts.join("-");
+      return expanded.join(" ");
+    })
+    .join(" ");
+};
 
-  expanded = conflictingClassGroups[base];
-
-  if (expanded) {
-    return expanded.map((cls) => `${cls}-${modifier}`).join(" ");
-  }
-
-  return classname;
+const orderByKeysDesc = (obj: Record<string, string[]>) => {
+  const ordered: Record<string, string[]> = {};
+  Object.keys(obj)
+    .sort()
+    .reverse()
+    .forEach((key) => {
+      ordered[key] = obj[key];
+    });
+  return ordered;
 };
 
 /**
@@ -32,7 +44,7 @@ export const expandTailwindShorthand = (classname: string) => {
  * MIT License
  * Copyright (c) 2021 Dany Castillo
  **/
-const conflictingClassGroups: Record<string, string[]> = {
+const conflictingClassGroups: Record<string, string[]> = orderByKeysDesc({
   overflow: ["overflow-x", "overflow-y"],
   overscroll: ["overscroll-x", "overscroll-y"],
   inset: ["top", "right", "bottom", "left"],
@@ -41,7 +53,7 @@ const conflictingClassGroups: Record<string, string[]> = {
 
   "flex-initial": ["grow-0", "shrink", "basis-auto"], // 0 1 auto
   "flex-auto": ["grow", "shrink", "basis-auto"], // 1 1 auto
-  none: ["grow-0", "shrink-0", "basis-auto"], // 0 0 auto,
+  "flex-none": ["grow-0", "shrink-0", "basis-auto"], // 0 0 auto,
   "flex-1": ["grow", "shrink", "basis-[0%]"], // 1 1 0%,
 
   gap: ["gap-x", "gap-y"],
@@ -61,18 +73,8 @@ const conflictingClassGroups: Record<string, string[]> = {
 
   "border-spacing": ["border-spacing-x", "border-spacing-y"],
 
-  "border-w": ["border-w-t", "border-w-r", "border-w-b", "border-w-l"],
-  "border-w-x": ["border-w-r", "border-w-l"],
-  "border-w-y": ["border-w-t", "border-w-b"],
-  /*
-  We are supporting shorthand for border-color
-  "border-color": [
-    "border-color-t",
-    "border-color-r",
-    "border-color-b",
-    "border-color-l",
-  ],
-  "border-color-x": ["border-color-r", "border-color-l"],
-  "border-color-y": ["border-color-t", "border-color-b"],
-  */
-};
+  "border-x": ["border-r", "border-l"],
+  "border-y": ["border-t", "border-b"],
+
+  border: ["border-t", "border-r", "border-b", "border-l"],
+});
