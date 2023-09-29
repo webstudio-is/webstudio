@@ -463,12 +463,7 @@ export const prebuild = async (options: {
     const pageData = siteDataByPage[pathName];
     // serialize data only used in runtime
     const renderedPageData: PageData = {
-      build: {
-        props: pageData.build.props,
-      },
-      pages: pageData.pages,
       page: pageData.page,
-      assets: pageData.assets,
     };
 
     const rootInstanceId = pageData.page.rootInstanceId;

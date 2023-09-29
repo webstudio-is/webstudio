@@ -8,8 +8,6 @@ const baseConfig =
         serverDependenciesToBundle: [
           /@webstudio-is\//,
           "nanoid",
-          "nanostores",
-          "@nanostores/react",
           "@jsep-plugin/assignment",
         ],
       };

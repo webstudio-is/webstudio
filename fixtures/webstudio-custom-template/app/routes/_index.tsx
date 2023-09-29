@@ -6,8 +6,8 @@ import {
   type ActionArgs,
   json,
 } from "@remix-run/server-runtime";
-import { atom } from "nanostores";
-import { ReactSdkContext, getPropsByInstanceId } from "@webstudio-is/react-sdk";
+import type { Page as PageType } from "@webstudio-is/sdk";
+import { ReactSdkContext } from "@webstudio-is/react-sdk";
 import { n8nHandler, getFormId } from "@webstudio-is/form-handlers";
 import { Scripts, ScrollRestoration } from "@remix-run/react";
 import {
@@ -20,11 +20,10 @@ import {
   Page,
 } from "../__generated__/_index.tsx";
 import css from "../__generated__/index.css";
-import type { Data } from "@webstudio-is/http-client";
 import { assetBaseUrl, imageBaseUrl, imageLoader } from "~/constants.mjs";
 
-export type PageData = Omit<Data, "build"> & {
-  build: Pick<Data["build"], "props">;
+export type PageData = {
+  page: PageType;
 };
 
 export const meta: V2_ServerRuntimeMetaFunction = () => {
@@ -155,29 +154,13 @@ export const action = async ({ request, context }: ActionArgs) => {
 };
 
 const Outlet = () => {
-  const page = pageData.page;
-
-  if (page === undefined) {
-    throw json("Page not found", {
-      status: 404,
-    });
-  }
-
   return (
     <ReactSdkContext.Provider
       value={{
-        propsByInstanceIdStore: atom(
-          getPropsByInstanceId(new Map(pageData.build.props))
-        ),
-        assetsStore: atom(
-          new Map(pageData.assets.map((asset) => [asset.id, asset]))
-        ),
-        dataSourcesLogicStore: atom(new Map()),
         imageLoader,
         assetBaseUrl,
         imageBaseUrl,
         pagesPaths,
-        indexesWithinAncestors: new Map(),
       }}
     >
       <Page

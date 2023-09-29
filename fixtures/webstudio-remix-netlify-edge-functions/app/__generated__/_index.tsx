@@ -12,17 +12,6 @@ import {
 
 export const fontAssets: Asset[] = [];
 export const pageData: PageData = {
-  build: { props: [] },
-  pages: [
-    {
-      id: "9di_L14CzctvSruIoKVvE",
-      name: "Home",
-      title: "Home",
-      meta: {},
-      rootInstanceId: "MMimeobf_zi4ZkRGXapju",
-      path: "",
-    },
-  ],
   page: {
     id: "9di_L14CzctvSruIoKVvE",
     name: "Home",
@@ -31,7 +20,6 @@ export const pageData: PageData = {
     rootInstanceId: "MMimeobf_zi4ZkRGXapju",
     path: "",
   },
-  assets: [],
 };
 export const user: { email: string | null } | undefined = {
   email: "hello@webstudio.is",

@@ -4,13 +4,10 @@ import {
   type RefAttributes,
   type ReactNode,
 } from "react";
-import type { ReadableAtom } from "nanostores";
-import type { Instance, Instances, Assets } from "@webstudio-is/sdk";
+import type { Instance, Instances } from "@webstudio-is/sdk";
 import type { Components } from "../components/components-utils";
 import { type Params, ReactSdkContext } from "../context";
-import type { PropsByInstanceId } from "../props";
 import type { WebstudioComponentProps } from "./webstudio-component";
-import type { IndexesWithinAncestors } from "../instance-utils";
 import type { ImageLoader } from "@webstudio-is/image";
 
 type InstanceSelector = Instance["id"][];
@@ -22,10 +19,6 @@ export const createElementsTree = ({
   imageLoader,
   instances,
   rootInstanceId,
-  propsByInstanceIdStore,
-  assetsStore,
-  dataSourcesLogicStore,
-  indexesWithinAncestors,
   Component,
   components,
   scripts,
@@ -33,10 +26,6 @@ export const createElementsTree = ({
   instances: Instances;
   imageLoader: ImageLoader;
   rootInstanceId: Instance["id"];
-  propsByInstanceIdStore: ReadableAtom<PropsByInstanceId>;
-  assetsStore: ReadableAtom<Assets>;
-  dataSourcesLogicStore: ReadableAtom<Map<string, unknown>>;
-  indexesWithinAncestors: IndexesWithinAncestors;
 
   Component: ForwardRefExoticComponent<
     WebstudioComponentProps & RefAttributes<HTMLElement>
@@ -72,15 +61,11 @@ export const createElementsTree = ({
   return (
     <ReactSdkContext.Provider
       value={{
-        propsByInstanceIdStore,
-        assetsStore,
-        dataSourcesLogicStore,
         renderer,
         imageLoader,
         pagesPaths: new Set(),
         assetBaseUrl,
         imageBaseUrl,
-        indexesWithinAncestors,
       }}
     >
       {root}

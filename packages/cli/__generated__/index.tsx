@@ -8,11 +8,6 @@ import type { Asset } from "@webstudio-is/sdk";
 export const fontAssets: Asset[] = [];
 
 export const pageData: PageData = {
-  build: {
-    props: [],
-  },
-  pages: [],
-
   page: {
     id: "",
     name: "",
@@ -21,7 +16,6 @@ export const pageData: PageData = {
     rootInstanceId: "",
     path: "",
   },
-  assets: [],
 };
 
 export const user: { email: string | null } | undefined = {
