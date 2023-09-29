@@ -164,3 +164,4 @@ export const getPublishedUrl = (domain: string) => {
 };
 
 export const restAiCopy = () => `/rest/ai/copy`;
+export const restAiOperations = () => `/rest/ai/op`;
