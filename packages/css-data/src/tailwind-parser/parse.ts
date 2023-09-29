@@ -132,6 +132,9 @@ const postprocessBorder = (styles: EmbedTemplateStyleDecl[]) => {
   return resultStyles;
 };
 
+/**
+ * In WebStudio, box-shadow property is managed using a specialized "layer" type.
+ **/
 const postprocessBoxShadows = (styles: EmbedTemplateStyleDecl[]) => {
   return styles.map((style) => {
     if (style.property === "boxShadow" && style.value.type === "unparsed") {
