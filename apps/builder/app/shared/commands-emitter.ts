@@ -45,7 +45,9 @@ export const createCommandsEmitter = <CommandName extends string>({
 
   if (commands.length > 0) {
     onMount($commandMetas, () => {
-      // use the next tick after subscription started
+      // listener from sync-stores is called after onMount callback
+      // schedule store.set to the next tick
+      // so store.listen is executed after store.set below
       Promise.resolve().then(() => {
         // @todo use patches to avoid race when both builder and canvas send commands
         $commandMetas.set(commandMetas);
@@ -65,7 +67,8 @@ export const createCommandsEmitter = <CommandName extends string>({
   };
 
   /**
-   * Execute handlers in app where defined whenever command is emitted
+   * subscribe to keydown in every app and emit command globally
+   * actual handlers are executed in app where defined
    */
   const subscribeCommands = () => {
     const unsubscribePubsub = subscribe("command", ({ name }) => {
@@ -75,19 +78,23 @@ export const createCommandsEmitter = <CommandName extends string>({
       const commandMetas = $commandMetas.get();
       let emitted = false;
       for (const commandMeta of commandMetas.values()) {
-        if (
-          commandMeta.defaultHotkeys?.some((hotkey) =>
-            isHotkeyPressed(hotkey.split("+"))
-          )
-        ) {
-          emitted = true;
-          emitCommand(commandMeta.name as CommandName);
+        if (commandMeta.defaultHotkeys === undefined) {
+          continue;
         }
+        if (
+          commandMeta.defaultHotkeys.some((hotkey) =>
+            isHotkeyPressed(hotkey.split("+"))
+          ) === false
+        ) {
+          continue;
+        }
+        emitted = true;
+        emitCommand(commandMeta.name as CommandName);
       }
       // command can redefine browser hotkeys
       // always prevent to avoid unexpected behavior
       if (emitted) {
-        event?.preventDefault();
+        event.preventDefault();
       }
     };
     document.addEventListener("keydown", handleKeyDown);
