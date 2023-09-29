@@ -121,6 +121,132 @@ describe("parseTailwindToWebstudio", () => {
   });
 
   test("border", async () => {
+    const tailwindClasses = `shadow-md`;
+
+    expect(await parseTailwindToWebstudio(tailwindClasses))
+      .toMatchInlineSnapshot(`
+[
+  {
+    "property": "boxShadow",
+    "value": {
+      "type": "layers",
+      "value": [
+        {
+          "type": "tuple",
+          "value": [
+            {
+              "type": "unit",
+              "unit": "number",
+              "value": 0,
+            },
+            {
+              "type": "unit",
+              "unit": "number",
+              "value": 0,
+            },
+            {
+              "alpha": 0,
+              "b": 0,
+              "g": 0,
+              "r": 0,
+              "type": "rgb",
+            },
+          ],
+        },
+        {
+          "type": "tuple",
+          "value": [
+            {
+              "type": "unit",
+              "unit": "number",
+              "value": 0,
+            },
+            {
+              "type": "unit",
+              "unit": "number",
+              "value": 0,
+            },
+            {
+              "alpha": 0,
+              "b": 0,
+              "g": 0,
+              "r": 0,
+              "type": "rgb",
+            },
+          ],
+        },
+        {
+          "type": "tuple",
+          "value": [
+            {
+              "type": "unit",
+              "unit": "number",
+              "value": 0,
+            },
+            {
+              "type": "unit",
+              "unit": "px",
+              "value": 4,
+            },
+            {
+              "type": "unit",
+              "unit": "px",
+              "value": 6,
+            },
+            {
+              "type": "unit",
+              "unit": "px",
+              "value": -1,
+            },
+            {
+              "alpha": 0.1,
+              "b": 0,
+              "g": 0,
+              "r": 0,
+              "type": "rgb",
+            },
+          ],
+        },
+        {
+          "type": "tuple",
+          "value": [
+            {
+              "type": "unit",
+              "unit": "number",
+              "value": 0,
+            },
+            {
+              "type": "unit",
+              "unit": "px",
+              "value": 2,
+            },
+            {
+              "type": "unit",
+              "unit": "px",
+              "value": 4,
+            },
+            {
+              "type": "unit",
+              "unit": "px",
+              "value": -2,
+            },
+            {
+              "alpha": 0.1,
+              "b": 0,
+              "g": 0,
+              "r": 0,
+              "type": "rgb",
+            },
+          ],
+        },
+      ],
+    },
+  },
+]
+`);
+  });
+
+  test("border", async () => {
     const tailwindClasses = `border border-sky-500`;
 
     expect(await parseTailwindToWebstudio(tailwindClasses))

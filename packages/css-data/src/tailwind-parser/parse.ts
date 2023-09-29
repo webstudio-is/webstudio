@@ -8,6 +8,7 @@ import { substituteVariables } from "./substitute";
 import warnOnce from "warn-once";
 import { parseCssValue } from "../parse-css-value";
 import { LayersValue, type StyleProperty } from "@webstudio-is/css-engine";
+import { parseBoxShadow } from "../property-parsers/box-shadow";
 
 let unoLazy: UnoGenerator<Theme> | undefined = undefined;
 
@@ -131,6 +132,19 @@ const postprocessBorder = (styles: EmbedTemplateStyleDecl[]) => {
   return resultStyles;
 };
 
+const postprocessBoxShadows = (styles: EmbedTemplateStyleDecl[]) => {
+  return styles.map((style) => {
+    if (style.property === "boxShadow" && style.value.type === "unparsed") {
+      const shadowStyle = parseBoxShadow(style.value.value);
+      return {
+        property: style.property,
+        value: shadowStyle,
+      };
+    }
+    return style;
+  });
+};
+
 /**
  * Parses Tailwind classes to webstudio template format.
  */
@@ -143,6 +157,7 @@ export const parseTailwindToWebstudio = async (
   // postprocessing
   styles = postprocessBackgrounds(styles, warn);
   styles = postprocessBorder(styles);
+  styles = postprocessBoxShadows(styles);
 
   return styles;
 };
