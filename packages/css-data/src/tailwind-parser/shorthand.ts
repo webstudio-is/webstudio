@@ -6,7 +6,8 @@ export const expandShorthand = (property: string) => {};
  **/
 export const expandTailwindShorthand = (classnames: string) => {
   return classnames
-    .split(/\s+/g)
+    .trim()
+    .split(/\s+/)
     .map((classname) => {
       const groupKey = Object.keys(conflictingClassGroups).find((key) =>
         classname.startsWith(key)
