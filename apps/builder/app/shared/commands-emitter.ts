@@ -9,7 +9,7 @@ type CommandMeta<CommandName extends string> = {
   defaultHotkeys?: string[];
 };
 
-type CommandHandler = (source: string) => void;
+type CommandHandler = () => void;
 
 /**
  * Command can be registered by builder, canvas or plugin
@@ -68,8 +68,8 @@ export const createCommandsEmitter = <CommandName extends string>({
    * Execute handlers in app where defined whenever command is emitted
    */
   const subscribeCommands = () => {
-    const unsubscribePubsub = subscribe("command", ({ source, name }) => {
-      commandHandlers.get(name)?.(source);
+    const unsubscribePubsub = subscribe("command", ({ name }) => {
+      commandHandlers.get(name)?.();
     });
     const handleKeyDown = (event: KeyboardEvent) => {
       const commandMetas = $commandMetas.get();
