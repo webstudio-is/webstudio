@@ -120,7 +120,7 @@ describe("parseTailwindToWebstudio", () => {
 `);
   });
 
-  test("border", async () => {
+  test("shadow", async () => {
     const tailwindClasses = `shadow-md`;
 
     expect(await parseTailwindToWebstudio(tailwindClasses))
