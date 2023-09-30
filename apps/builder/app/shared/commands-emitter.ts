@@ -1,5 +1,6 @@
 import { isHotkeyPressed } from "react-hotkeys-hook";
 import { atom, onMount } from "nanostores";
+import store from "immerhin";
 import { $publisher, subscribe } from "~/shared/pubsub";
 
 type CommandMeta<CommandName extends string> = {
@@ -7,6 +8,8 @@ type CommandMeta<CommandName extends string> = {
   name: CommandName;
   // default because hotkeys can be customized from ui
   defaultHotkeys?: string[];
+  // listen hotkeys only locally without sharing with other apps
+  disableHotkeyOutsideApp?: boolean;
 };
 
 type CommandHandler = () => void;
@@ -36,10 +39,8 @@ export const createCommandsEmitter = <CommandName extends string>({
   externalCommands?: CommandName[];
   commands: Command<CommandName>[];
 }) => {
-  const commandMetas = new Map($commandMetas.get());
   const commandHandlers = new Map<string, CommandHandler>();
   for (const { handler, ...meta } of commands) {
-    commandMetas.set(meta.name, meta);
     commandHandlers.set(meta.name, handler);
   }
 
@@ -49,8 +50,11 @@ export const createCommandsEmitter = <CommandName extends string>({
       // schedule store.set to the next tick
       // so store.listen is executed after store.set below
       Promise.resolve().then(() => {
-        // @todo use patches to avoid race when both builder and canvas send commands
-        $commandMetas.set(commandMetas);
+        store.createTransaction([$commandMetas], (commandMetas) => {
+          for (const { handler, ...meta } of commands) {
+            commandMetas.set(meta.name, meta);
+          }
+        });
       });
     });
   }
@@ -85,6 +89,12 @@ export const createCommandsEmitter = <CommandName extends string>({
           commandMeta.defaultHotkeys.some((hotkey) =>
             isHotkeyPressed(hotkey.split("+"))
           ) === false
+        ) {
+          continue;
+        }
+        if (
+          commandMeta.disableHotkeyOutsideApp &&
+          commandHandlers.has(commandMeta.name) === false
         ) {
           continue;
         }

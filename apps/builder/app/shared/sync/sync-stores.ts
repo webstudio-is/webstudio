@@ -72,8 +72,8 @@ export const registerContainers = () => {
   store.register("props", propsStore);
   store.register("dataSources", dataSourcesStore);
   store.register("assets", assetsStore);
+  store.register("commandMetas", $commandMetas);
   // synchronize whole states
-  clientStores.set("commandMetas", $commandMetas);
   clientStores.set("project", projectStore);
   clientStores.set("dataSourceVariables", dataSourceVariablesStore);
   clientStores.set("selectedPageId", selectedPageIdStore);

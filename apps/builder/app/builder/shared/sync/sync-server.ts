@@ -25,6 +25,37 @@ const MAX_ALLOWED_API_ERRORS = 5;
 const INTERVAL_ERROR = 5000;
 const MAX_INTERVAL_ERROR = 2 * 60000;
 
+const persistedNamespaces = new Set([
+  "pages",
+  "breakpoints",
+  "instances",
+  "styles",
+  "styleSources",
+  "styleSourceSelections",
+  "props",
+  "dataSources",
+  "assets",
+]);
+
+const filterTransactions = (
+  transactions: ReturnType<typeof sync>,
+  namespaces: Set<string>
+) => {
+  const filteredTransactions: ReturnType<typeof sync> = [];
+  for (const transaction of transactions) {
+    const filteredChanges = transaction.changes.filter((change) =>
+      namespaces.has(change.namespace)
+    );
+    if (filteredChanges.length !== 0) {
+      filteredTransactions.push({
+        ...transaction,
+        changes: filteredChanges,
+      });
+    }
+  }
+  return filteredTransactions;
+};
+
 const pause = (timeout: number) => {
   return new Promise((resolve) => setTimeout(resolve, timeout));
 };
@@ -269,7 +300,7 @@ const useSyncProject = async ({
     });
 
     const updateProjectTransactions = () => {
-      const transactions = sync();
+      const transactions = filterTransactions(sync(), persistedNamespaces);
       if (transactions.length === 0) {
         return;
       }
