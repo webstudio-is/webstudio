@@ -13,10 +13,6 @@ export const shortcuts = {
   breakpointsMenu: "meta+b, ctrl+b",
 } as const;
 
-export const instanceTreeShortcuts = {
-  enter: "enter",
-} as const;
-
 export const options: Options = {
   enableOnFormTags: true,
 };

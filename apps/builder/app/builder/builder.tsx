@@ -2,7 +2,7 @@ import { useCallback, useEffect } from "react";
 import { useStore } from "@nanostores/react";
 import { useUnmount } from "react-use";
 import { TooltipProvider } from "@radix-ui/react-tooltip";
-import { type Publish, usePublish, $publisher } from "~/shared/pubsub";
+import { usePublish, $publisher } from "~/shared/pubsub";
 import type { Asset } from "@webstudio-is/sdk";
 import type { Build } from "@webstudio-is/project-build";
 import type { Project } from "@webstudio-is/project";
@@ -191,13 +191,11 @@ const ChromeWrapper = ({ children, isPreviewMode }: ChromeWrapperProps) => {
 type NavigatorPanelProps = {
   isPreviewMode: boolean;
   navigatorLayout: "docked" | "undocked";
-  publish: Publish;
 };
 
 const NavigatorPanel = ({
   isPreviewMode,
   navigatorLayout,
-  publish,
 }: NavigatorPanelProps) => {
   if (navigatorLayout === "docked") {
     return null;
@@ -212,7 +210,7 @@ const NavigatorPanel = ({
           height: "100%",
         }}
       >
-        <Navigator isClosable={false} publish={publish} />
+        <Navigator isClosable={false} />
       </Box>
     </SidePanel>
   );
@@ -323,7 +321,6 @@ export const Builder = ({
         <NavigatorPanel
           isPreviewMode={isPreviewMode}
           navigatorLayout={navigatorLayout}
-          publish={publish}
         />
         <SidePanel
           gridArea="inspector"

@@ -3,6 +3,7 @@ import { $isPreviewMode } from "~/shared/nano-states";
 
 export const { emitCommand, subscribeCommands } = createCommandsEmitter({
   source: "builder",
+  externalCommands: ["editInstanceText"],
   commands: [
     {
       name: "togglePreview",

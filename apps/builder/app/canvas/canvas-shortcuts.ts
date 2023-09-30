@@ -1,7 +1,6 @@
 import { useHotkeys } from "react-hotkeys-hook";
-import { shortcuts, instanceTreeShortcuts, options } from "~/shared/shortcuts";
+import { shortcuts, options } from "~/shared/shortcuts";
 import { publish, useSubscribe } from "~/shared/pubsub";
-import { enterEditingMode, escapeSelection } from "~/shared/instance-utils";
 
 declare module "~/shared/pubsub" {
   export interface PubsubMap {
@@ -22,11 +21,7 @@ export const useCanvasShortcuts = () => {
   const shortcutHandlerMap = {
     breakpointsMenu: publishOpenBreakpointsMenu,
     esc: publishCancelCurrentDrag,
-    enter: enterEditingMode,
-  } as const satisfies Record<
-    keyof typeof shortcuts | keyof typeof instanceTreeShortcuts,
-    unknown
-  >;
+  } as const satisfies Record<keyof typeof shortcuts, unknown>;
 
   useHotkeys(
     shortcuts.breakpointsMenu,
@@ -39,14 +34,10 @@ export const useCanvasShortcuts = () => {
     shortcuts.esc,
     () => {
       shortcutHandlerMap.esc();
-      // Reset selection for local canvas escape, but not for the Builder escape via useSubscribe
-      escapeSelection();
     },
     options,
     []
   );
-
-  useHotkeys(instanceTreeShortcuts.enter, shortcutHandlerMap.enter, {}, []);
 
   // Shortcuts from the parent window
   useSubscribe("shortcut", ({ name }) => {
