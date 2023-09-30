@@ -34,6 +34,7 @@ import {
   selectedBreakpointStore,
 } from "~/shared/nano-states";
 import {
+  $breakpointsMenuView,
   groupBreakpoints,
   isBaseBreakpoint,
   minCanvasWidth,
@@ -42,9 +43,7 @@ import { scaleStore } from "~/builder/shared/nano-states";
 import { useSetInitialCanvasWidth } from "./use-set-initial-canvas-width";
 
 export const BreakpointsPopover = () => {
-  const [view, setView] = useState<
-    "initial" | "editor" | "confirmation" | undefined
-  >();
+  const view = useStore($breakpointsMenuView);
   const [breakpointToDelete, setBreakpointToDelete] = useState<
     Breakpoint | undefined
   >();
@@ -53,12 +52,8 @@ export const BreakpointsPopover = () => {
   const scale = useStore(scaleStore);
   const setInitialCanvasWidth = useSetInitialCanvasWidth();
 
-  useSubscribe("openBreakpointsMenu", () => {
-    setView("initial");
-  });
-
   useSubscribe("clickCanvas", () => {
-    setView(undefined);
+    $breakpointsMenuView.set(undefined);
   });
 
   if (selectedBreakpoint === undefined) {
@@ -90,14 +85,14 @@ export const BreakpointsPopover = () => {
       setInitialCanvasWidth(base.id);
     }
     setBreakpointToDelete(undefined);
-    setView("editor");
+    $breakpointsMenuView.set("editor");
   };
 
   return (
     <Popover
       open={view !== undefined}
       onOpenChange={(isOpen) => {
-        setView(isOpen ? "initial" : undefined);
+        $breakpointsMenuView.set(isOpen ? "initial" : undefined);
       }}
     >
       <PopoverTrigger aria-label="Show breakpoints" asChild>
@@ -119,7 +114,7 @@ export const BreakpointsPopover = () => {
               breakpoint={breakpointToDelete}
               onAbort={() => {
                 setBreakpointToDelete(undefined);
-                setView("editor");
+                $breakpointsMenuView.set("editor");
               }}
               onConfirm={handleDelete}
             />
@@ -128,7 +123,7 @@ export const BreakpointsPopover = () => {
             <BreakpointsEditor
               onDelete={(breakpoint) => {
                 setBreakpointToDelete(breakpoint);
-                setView("confirmation");
+                $breakpointsMenuView.set("confirmation");
               }}
             />
           )}
@@ -210,7 +205,9 @@ export const BreakpointsPopover = () => {
                   css={{ flexGrow: 1 }}
                   onClick={(event) => {
                     event.preventDefault();
-                    setView(view === "initial" ? "editor" : "initial");
+                    $breakpointsMenuView.set(
+                      view === "initial" ? "editor" : "initial"
+                    );
                   }}
                 >
                   {view === "editor" ? "Done" : "Edit breakpoints"}

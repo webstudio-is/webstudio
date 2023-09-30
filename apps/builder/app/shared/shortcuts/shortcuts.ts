@@ -1,7 +1,6 @@
 import { type Options, useHotkeys } from "react-hotkeys-hook";
 import store from "immerhin";
 import { deleteSelectedInstance } from "../instance-utils";
-import { selectBreakpointByOrder } from "../breakpoints";
 import {
   editingItemIdStore,
   selectedInstanceSelectorStore,
@@ -10,7 +9,6 @@ import { onCopy, onPaste } from "../copy-paste/plugin-instance";
 
 export const shortcuts = {
   esc: "esc",
-  breakpointsMenu: "meta+b, ctrl+b",
 } as const;
 
 export const options: Options = {
@@ -80,18 +78,6 @@ export const useSharedShortcuts = ({
       editingItemIdStore.set(targetInstanceId);
     },
     {},
-    []
-  );
-
-  const breakpointShortcuts = Array.from(new Array(9))
-    .map((_, index) => `meta+${index + 1}, ctrl+${index + 1}`)
-    .join(", ");
-  useHotkeys(
-    breakpointShortcuts,
-    (event) => {
-      selectBreakpointByOrder(Number.parseInt(event.key, 10));
-    },
-    { enableOnFormTags: true, enableOnContentEditable: true },
     []
   );
 };

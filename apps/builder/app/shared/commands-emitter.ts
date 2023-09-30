@@ -17,7 +17,7 @@ type CommandHandler = () => void;
 /**
  * Command can be registered by builder, canvas or plugin
  */
-type Command<CommandName extends string> = CommandMeta<CommandName> & {
+export type Command<CommandName extends string> = CommandMeta<CommandName> & {
   /**
    * Command handler accepting source where was triggered
    * which is builder, canvas or plugin name

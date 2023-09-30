@@ -5,13 +5,8 @@ import { publish, useSubscribe } from "~/shared/pubsub";
 declare module "~/shared/pubsub" {
   export interface PubsubMap {
     cancelCurrentDrag: undefined;
-    openBreakpointsMenu: undefined;
   }
 }
-
-const publishOpenBreakpointsMenu = () => {
-  publish({ type: "openBreakpointsMenu" });
-};
 
 const publishCancelCurrentDrag = () => {
   publish({ type: "cancelCurrentDrag" });
@@ -19,16 +14,8 @@ const publishCancelCurrentDrag = () => {
 
 export const useCanvasShortcuts = () => {
   const shortcutHandlerMap = {
-    breakpointsMenu: publishOpenBreakpointsMenu,
     esc: publishCancelCurrentDrag,
   } as const satisfies Record<keyof typeof shortcuts, unknown>;
-
-  useHotkeys(
-    shortcuts.breakpointsMenu,
-    shortcutHandlerMap.breakpointsMenu,
-    options,
-    []
-  );
 
   useHotkeys(
     shortcuts.esc,

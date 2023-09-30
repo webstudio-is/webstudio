@@ -300,7 +300,7 @@ export const Builder = ({
   return (
     <TooltipProvider>
       <ChromeWrapper isPreviewMode={isPreviewMode}>
-        <Topbar gridArea="header" project={project} publish={publish} />
+        <Topbar gridArea="header" project={project} />
         <Main>
           <Workspace onTransitionEnd={onTransitionEnd} publish={publish}>
             <CanvasIframe
