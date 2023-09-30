@@ -1,4 +1,4 @@
-import { groupBreakpoints } from ".";
+import { groupBreakpoints } from "./group-breakpoints";
 import { selectedBreakpointIdStore, breakpointsStore } from "../nano-states";
 
 /**

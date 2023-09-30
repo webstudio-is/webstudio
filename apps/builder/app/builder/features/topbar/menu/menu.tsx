@@ -16,7 +16,6 @@ import {
   DropdownMenuPortal,
   Tooltip,
 } from "@webstudio-is/design-system";
-import type { Publish } from "~/shared/pubsub";
 import { ShortcutHint } from "./shortcut-hint";
 import {
   useIsShareDialogOpen,
@@ -91,11 +90,7 @@ const ViewMenuItem = () => {
   );
 };
 
-type MenuProps = {
-  publish: Publish;
-};
-
-export const Menu = ({ publish }: MenuProps) => {
+export const Menu = () => {
   const navigate = useNavigate();
   const [, setIsShareOpen] = useIsShareDialogOpen();
   const [, setIsPublishOpen] = useIsPublishDialogOpen();
@@ -171,11 +166,7 @@ export const Menu = ({ publish }: MenuProps) => {
             </DropdownMenuItemRightSlot>
           </DropdownMenuItem>
           <DropdownMenuSeparator />
-          <DropdownMenuItem
-            onSelect={() => {
-              publish({ type: "openBreakpointsMenu" });
-            }}
-          >
+          <DropdownMenuItem onSelect={() => emitCommand("openBreakpointsMenu")}>
             Breakpoints
             <DropdownMenuItemRightSlot>
               <ShortcutHint value={["cmd", "b"]} />
