@@ -1,9 +1,4 @@
-import {
-  createElement,
-  forwardRef,
-  type ElementRef,
-  type ComponentProps,
-} from "react";
+import { forwardRef, type ElementRef, type ComponentProps } from "react";
 
 export const defaultTag = "div";
 
@@ -14,8 +9,12 @@ type Props = ComponentProps<typeof defaultTag> & {
 };
 
 export const Text = forwardRef<ElementRef<typeof defaultTag>, Props>(
-  ({ tag = defaultTag, ...props }, ref) => {
-    return createElement(tag, { ...props, ref });
+  ({ tag: Tag = defaultTag, children, ...props }, ref) => {
+    return (
+      <Tag {...props} ref={ref}>
+        {children}
+      </Tag>
+    );
   }
 );
 

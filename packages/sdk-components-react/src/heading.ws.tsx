@@ -31,13 +31,6 @@ export const meta: WsComponentMeta = {
   invalidAncestors: ["Heading"],
   states: defaultStates,
   presetStyle,
-  template: [
-    {
-      type: "instance",
-      component: "Heading",
-      children: [{ type: "text", value: "Heading you can edit" }],
-    },
-  ],
   order: 1,
 };
 

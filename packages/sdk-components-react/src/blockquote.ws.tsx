@@ -68,13 +68,6 @@ export const meta: WsComponentMeta = {
   icon: BlockquoteIcon,
   states: defaultStates,
   presetStyle,
-  template: [
-    {
-      type: "instance",
-      component: "Blockquote",
-      children: [{ type: "text", value: "Blockquote you can edit" }],
-    },
-  ],
   order: 3,
 };
 
