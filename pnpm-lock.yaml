@@ -6317,7 +6317,7 @@ packages:
     engines: {node: '>=14.0.0'}
     dependencies:
       '@remix-run/server-runtime': 1.19.2
-      '@remix-run/web-fetch': 4.4.1
+      '@remix-run/web-fetch': 4.3.6
       '@remix-run/web-file': 3.0.3
       '@remix-run/web-stream': 1.0.4
       '@web3-storage/multipart-parser': 1.0.0
@@ -6373,20 +6373,13 @@ packages:
       '@remix-run/web-stream': 1.0.4
       web-encoding: 1.1.5
 
-  /@remix-run/web-blob@3.1.0:
-    resolution: {integrity: sha512-owGzFLbqPH9PlKb8KvpNJ0NO74HWE2euAn61eEiyCXX/oteoVzTVSN8mpLgDjaxBf2btj5/nUllSUgpyd6IH6g==}
-    dependencies:
-      '@remix-run/web-stream': 1.1.0
-      web-encoding: 1.1.5
-
-  /@remix-run/web-fetch@4.4.1:
-    resolution: {integrity: sha512-xMceEGn2kvfeWS91nHSOhEQHPGgjFnmDVpWFZrbWPVdiTByMZIn421/tdSF6Kd1RsNsY+5Iwt3JFEKZHAcMQHw==}
+  /@remix-run/web-fetch@4.3.6:
+    resolution: {integrity: sha512-ifadyJS+/7W6LhKyA8tIR9fBIPwLCFVpl1YCYg5i0ikykiXxE3IWtPVB1G51AJFghc1YgR7rq8BRJLsJeUbE5Q==}
     engines: {node: ^10.17 || >=12.3}
     dependencies:
-      '@remix-run/web-blob': 3.1.0
-      '@remix-run/web-file': 3.1.0
-      '@remix-run/web-form-data': 3.1.0
-      '@remix-run/web-stream': 1.1.0
+      '@remix-run/web-blob': 3.0.5
+      '@remix-run/web-form-data': 3.0.5
+      '@remix-run/web-stream': 1.0.4
       '@web3-storage/multipart-parser': 1.0.0
       abort-controller: 3.0.0
       data-uri-to-buffer: 3.0.1
@@ -6397,23 +6390,13 @@ packages:
     dependencies:
       '@remix-run/web-blob': 3.0.5
 
-  /@remix-run/web-file@3.1.0:
-    resolution: {integrity: sha512-dW2MNGwoiEYhlspOAXFBasmLeYshyAyhIdrlXBi06Duex5tDr3ut2LFKVj7tyHLmn8nnNwFf1BjNbkQpygC2aQ==}
-    dependencies:
-      '@remix-run/web-blob': 3.1.0
-
-  /@remix-run/web-form-data@3.1.0:
-    resolution: {integrity: sha512-NdeohLMdrb+pHxMQ/Geuzdp0eqPbea+Ieo8M8Jx2lGC6TBHsgHzYcBvr0LyPdPVycNRDEpWpiDdCOdCryo3f9A==}
+  /@remix-run/web-form-data@3.0.5:
+    resolution: {integrity: sha512-txXJDzjDuTxF8MFvEp9AA2HF3oPcvmlE1I/6HIxeGpX3vpBtrCPw5KQ/nzgBZNuAxyxEm8ps6Ds/UZwoDyfGsQ==}
     dependencies:
       web-encoding: 1.1.5
 
   /@remix-run/web-stream@1.0.4:
     resolution: {integrity: sha512-SVO42pH21I1sAhksGEM8ZBV/jc1mz6knZSg6Qo/2HPy9JTvtUykm3QMHtF2OMCTUXxdRW+4E/rphkPRyGc8WKw==}
-    dependencies:
-      web-streams-polyfill: 3.2.1
-
-  /@remix-run/web-stream@1.1.0:
-    resolution: {integrity: sha512-KRJtwrjRV5Bb+pM7zxcTJkhIqWWSy+MYsIxHK+0m5atcznsf15YwUBWHWulZerV2+vvHH1Lp1DD7pw6qKW8SgA==}
     dependencies:
       web-streams-polyfill: 3.2.1
 

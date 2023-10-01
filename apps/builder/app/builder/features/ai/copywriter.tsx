@@ -16,7 +16,6 @@ import {
   selectedInstanceStore,
 } from "~/shared/nano-states";
 import { useStore } from "@nanostores/react";
-import { collectTextInstances } from "node_modules/@webstudio-is/ai/src/chains/copywriter";
 import { useRef, useState } from "react";
 import { computed } from "nanostores";
 
@@ -77,16 +76,18 @@ export const Copywriter = () => {
     [instancesStore, selectedInstanceStore],
     (instances, selectedInstance) => {
       if (selectedInstance) {
-        return collectTextInstances({
-          instances: instancesStore.get(),
-          rootInstanceId: selectedInstance.id,
-        }).map((instance) => {
-          if (instance.text === "Text you can edit") {
-            instance.text = "";
-          }
+        return copywriter
+          .collectTextInstances({
+            instances: instancesStore.get(),
+            rootInstanceId: selectedInstance.id,
+          })
+          .map((instance) => {
+            if (instance.text === "Text you can edit") {
+              instance.text = "";
+            }
 
-          return instance;
-        });
+            return instance;
+          });
       }
       return [];
     }
