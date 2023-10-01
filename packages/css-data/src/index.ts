@@ -16,6 +16,8 @@ export * from "./property-parsers/index";
 export * from "./parse-css-value";
 export * from "./parse-css";
 
+export { parseTailwindToWebstudio } from "./tailwind-parser/parse";
+
 import { properties as generatedProperties } from "./__generated__/properties";
 
 // convert to writable to avoid conflicts with schema type
