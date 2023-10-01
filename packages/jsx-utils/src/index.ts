@@ -1,3 +1,4 @@
-export { jsxToWSEmbedTemplate } from "./jsx";
 export * from "./traverse-template";
-export * from "./tw-to-webstudio";
+export { jsxToWSEmbedTemplate } from "./jsx";
+export { heroiconsToSvgEmbed } from "./heroicons";
+export { tailwindToWebstudio } from "./tw-to-webstudio";
