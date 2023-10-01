@@ -1,9 +1,4 @@
-import {
-  forwardRef,
-  createElement,
-  type ElementRef,
-  type ComponentProps,
-} from "react";
+import { forwardRef, type ElementRef, type ComponentProps } from "react";
 
 const defaultTag = "h1";
 
@@ -13,8 +8,12 @@ type Props = ComponentProps<typeof defaultTag> & {
 };
 
 export const Heading = forwardRef<ElementRef<typeof defaultTag>, Props>(
-  ({ tag = defaultTag, ...props }, ref) => {
-    return createElement(tag, { ...props, ref });
+  ({ tag: Tag = defaultTag, children, ...props }, ref) => {
+    return (
+      <Tag {...props} ref={ref}>
+        {children ?? "Heading you can edit"}
+      </Tag>
+    );
   }
 );
 
