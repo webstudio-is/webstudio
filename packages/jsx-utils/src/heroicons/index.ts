@@ -1,5 +1,5 @@
 import type { WsEmbedTemplate } from "@webstudio-is/react-sdk";
-import { traverseTemplate } from "..";
+import { traverseTemplate } from "../traverse-template";
 import { getIcon } from "./get-icon";
 
 export const heroiconsToSvgEmbed = (

@@ -100,6 +100,9 @@ const getProps = function getProps(
         (pickProps === undefined || pickProps.includes(attr.name.name))
       ) {
         const name = attr.name.name;
+
+        // @todo #2398 Replace the parsing logic below with advanced parsing to include and return a EmbedTemplateProp instead.
+
         let value: string | JsonObject = code.slice(
           attr.value.start + 1,
           attr.value.end - 1
