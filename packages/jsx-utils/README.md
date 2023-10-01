@@ -21,3 +21,4 @@ await jsxToWSEmbedTemplate("<Box>hello</Box>");
 Other utils:
 
 - `traverseTemplate` and `traverseTemplateAsync` to traverse a WsEmbedTemplate and work with nodes
+- `tailwindToWebstudio` converts a template `className` prop to Webstudio local styles

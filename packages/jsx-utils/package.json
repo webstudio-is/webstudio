@@ -39,6 +39,7 @@
     "@babel/types": "^7.23.0",
     "@webstudio-is/react-sdk": "workspace:*",
     "@webstudio-is/sdk": "workspace:*",
+    "@webstudio-is/css-data": "workspace:*",
     "json5": "^2.2.3",
     "zod": "^3.21.4"
   }
