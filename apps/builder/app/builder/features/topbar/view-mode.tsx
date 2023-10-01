@@ -1,3 +1,4 @@
+import { useStore } from "@nanostores/react";
 import {
   Flex,
   AccessibleIcon,
@@ -5,10 +6,10 @@ import {
   Tooltip,
 } from "@webstudio-is/design-system";
 import { CloudIcon } from "@webstudio-is/icons";
-import { useAuthPermit } from "~/shared/nano-states";
+import { $authPermit } from "~/shared/nano-states";
 
 export const ViewMode = () => {
-  const [authPermit] = useAuthPermit();
+  const authPermit = useStore($authPermit);
 
   if (authPermit !== "view") {
     return null;

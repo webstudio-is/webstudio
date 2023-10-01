@@ -6,34 +6,47 @@ import {
   type ActionArgs,
   json,
 } from "@remix-run/server-runtime";
-
-import {
-  InstanceRoot,
-  type RootPropsData,
-  type Params,
-} from "@webstudio-is/react-sdk";
+import type { Page as PageType } from "@webstudio-is/sdk";
+import { ReactSdkContext } from "@webstudio-is/react-sdk";
 import { n8nHandler, getFormId } from "@webstudio-is/form-handlers";
 import { Scripts, ScrollRestoration } from "@remix-run/react";
 import {
   fontAssets,
-  components,
   pageData,
   user,
   projectId,
-  utils,
+  pagesPaths,
   formsProperties,
+  Page,
 } from "../__generated__/[_route_with_symbols_]._index.tsx";
 import css from "../__generated__/index.css";
-import type { Data } from "@webstudio-is/http-client";
 import { assetBaseUrl, imageBaseUrl, imageLoader } from "~/constants.mjs";
 
-export type PageData = Omit<Data, "build"> & {
-  build: Pick<Data["build"], "props" | "instances" | "dataSources">;
+export type PageData = {
+  page: PageType;
 };
 
 export const meta: V2_ServerRuntimeMetaFunction = () => {
   const { page } = pageData;
-  return [{ title: page?.title || "Webstudio", ...page?.meta }];
+  const metas: ReturnType<V2_ServerRuntimeMetaFunction> = [
+    { title: page?.title || "Webstudio" },
+  ];
+  for (const [name, value] of Object.entries(page?.meta ?? {})) {
+    if (name.startsWith("og:")) {
+      metas.push({
+        property: name,
+        content: value,
+      });
+      continue;
+    }
+
+    metas.push({
+      name,
+      content: value,
+    });
+  }
+
+  return metas;
 };
 
 export const links: LinksFunction = () => {
@@ -141,42 +154,24 @@ export const action = async ({ request, context }: ActionArgs) => {
 };
 
 const Outlet = () => {
-  const pagesCanvasData: PageData = pageData;
-
-  const page = pagesCanvasData.page;
-
-  if (page === undefined) {
-    throw json("Page not found", {
-      status: 404,
-    });
-  }
-
-  const params: Params = {
-    assetBaseUrl,
-    imageBaseUrl,
-  };
-
-  const data: RootPropsData = {
-    build: pagesCanvasData.build,
-    assets: pagesCanvasData.assets,
-    page,
-    pages: pagesCanvasData.pages,
-    params,
-  };
-
   return (
-    <InstanceRoot
-      imageLoader={imageLoader}
-      data={data}
-      components={components}
-      utils={utils}
-      scripts={
-        <>
-          <Scripts />
-          <ScrollRestoration />
-        </>
-      }
-    />
+    <ReactSdkContext.Provider
+      value={{
+        imageLoader,
+        assetBaseUrl,
+        imageBaseUrl,
+        pagesPaths,
+      }}
+    >
+      <Page
+        scripts={
+          <>
+            <Scripts />
+            <ScrollRestoration />
+          </>
+        }
+      />
+    </ReactSdkContext.Provider>
   );
 };
 

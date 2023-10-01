@@ -1,20 +1,78 @@
-import { useContext, useMemo } from "react";
-import { computed } from "nanostores";
-import { useStore } from "@nanostores/react";
-import type {
-  Instance,
-  Page,
-  Prop,
-  Props,
-  Asset,
-  Assets,
-} from "@webstudio-is/sdk";
-import { ReactSdkContext } from "./context";
+import type { Instance, Page, Prop, Props, Assets } from "@webstudio-is/sdk";
 import { idAttribute, indexAttribute } from "./tree/webstudio-component";
 
 export type PropsByInstanceId = Map<Instance["id"], Prop[]>;
 
 export type Pages = Map<Page["id"], Page>;
+
+export const normalizeProps = ({
+  props,
+  assetBaseUrl,
+  assets,
+  pages,
+}: {
+  props: Prop[];
+  assetBaseUrl: string;
+  assets: Assets;
+  pages: Pages;
+}) => {
+  const newProps: Prop[] = [];
+  for (const prop of props) {
+    if (prop.type === "asset") {
+      const assetId = prop.value;
+      const asset = assets.get(assetId);
+      if (asset === undefined) {
+        continue;
+      }
+      newProps.push({
+        id: prop.id,
+        name: prop.name,
+        required: prop.required,
+        instanceId: prop.instanceId,
+        type: "string",
+        value: `${assetBaseUrl}${asset.name}`,
+      });
+      continue;
+    }
+
+    if (prop.type === "page") {
+      let page: undefined | Page;
+      let idProp: undefined | Prop;
+      if (typeof prop.value === "string") {
+        const pageId = prop.value;
+        page = pages.get(pageId);
+      } else {
+        const { pageId, instanceId } = prop.value;
+        page = pages.get(pageId);
+        idProp = props.find(
+          (prop) => prop.instanceId === instanceId && prop.name === "id"
+        );
+      }
+      if (page === undefined) {
+        continue;
+      }
+      const url = new URL(page.path, "https://any-valid.url");
+      let value = url.pathname;
+      if (idProp?.type === "string") {
+        const hash = idProp.value;
+        url.hash = encodeURIComponent(hash);
+        value = `${url.pathname}${url.hash}`;
+      }
+      newProps.push({
+        id: prop.id,
+        name: prop.name,
+        required: prop.required,
+        instanceId: prop.instanceId,
+        type: "string",
+        value,
+      });
+      continue;
+    }
+
+    newProps.push(prop);
+  }
+  return newProps;
+};
 
 export const getPropsByInstanceId = (props: Props) => {
   const propsByInstanceId: PropsByInstanceId = new Map();
@@ -27,180 +85,6 @@ export const getPropsByInstanceId = (props: Props) => {
     instanceProps.push(prop);
   }
   return propsByInstanceId;
-};
-
-// this utility is be used only for preview with static props
-// so there is no need to use computed to optimize rerenders
-export const useInstanceProps = (instanceId: Instance["id"]) => {
-  const {
-    propsByInstanceIdStore,
-    dataSourcesLogicStore,
-    indexesWithinAncestors,
-  } = useContext(ReactSdkContext);
-  const index = indexesWithinAncestors.get(instanceId);
-  const instancePropsObjectStore = useMemo(() => {
-    return computed(
-      [propsByInstanceIdStore, dataSourcesLogicStore],
-      (propsByInstanceId, dataSourcesLogic) => {
-        const instancePropsObject: Record<Prop["name"], unknown> = {};
-        if (index !== undefined) {
-          instancePropsObject[indexAttribute] = index.toString();
-        }
-        const instanceProps = propsByInstanceId.get(instanceId);
-        if (instanceProps === undefined) {
-          return instancePropsObject;
-        }
-        for (const prop of instanceProps) {
-          if (prop.type === "asset" || prop.type === "page") {
-            continue;
-          }
-          if (prop.type === "dataSource") {
-            const dataSourceId = prop.value;
-            const value = dataSourcesLogic.get(dataSourceId);
-            if (value !== undefined) {
-              instancePropsObject[prop.name] = value;
-            }
-            continue;
-          }
-          if (prop.type === "action") {
-            const action = dataSourcesLogic.get(prop.id);
-            if (typeof action === "function") {
-              instancePropsObject[prop.name] = action;
-            }
-            continue;
-          }
-          instancePropsObject[prop.name] = prop.value;
-        }
-        return instancePropsObject;
-      }
-    );
-  }, [propsByInstanceIdStore, dataSourcesLogicStore, instanceId, index]);
-  const instancePropsObject = useStore(instancePropsObjectStore);
-  return instancePropsObject;
-};
-
-// this utility is used for image component in both builder and preview
-// so need to optimize rerenders with computed
-export const usePropAsset = (instanceId: Instance["id"], name: string) => {
-  const { propsByInstanceIdStore, assetsStore } = useContext(ReactSdkContext);
-  const assetStore = useMemo(() => {
-    return computed(
-      [propsByInstanceIdStore, assetsStore],
-      (propsByInstanceId, assets) => {
-        const instanceProps = propsByInstanceId.get(instanceId);
-        if (instanceProps === undefined) {
-          return;
-        }
-        for (const prop of instanceProps) {
-          if (prop.type === "asset" && prop.name === name) {
-            const assetId = prop.value;
-            return assets.get(assetId);
-          }
-        }
-      }
-    );
-  }, [propsByInstanceIdStore, assetsStore, instanceId, name]);
-  const asset = useStore(assetStore);
-  return asset;
-};
-
-export const resolveUrlProp = (
-  instanceId: Instance["id"],
-  name: string,
-  {
-    props,
-    pages,
-    assets,
-  }: { props: PropsByInstanceId; pages: Pages; assets: Assets }
-):
-  | {
-      type: "page";
-      page: Page;
-      instanceId?: Instance["id"];
-      hash?: string;
-    }
-  | { type: "asset"; asset: Asset }
-  | { type: "string"; url: string }
-  | undefined => {
-  const instanceProps = props.get(instanceId);
-  if (instanceProps === undefined) {
-    return;
-  }
-
-  let prop = undefined;
-
-  // We had a bug that some props were duplicated https://github.com/webstudio-is/webstudio/pull/2170
-  // Use the latest prop to ensure consistency with the builder settings panel.
-  for (const intanceProp of instanceProps) {
-    if (intanceProp.name !== name) {
-      continue;
-    }
-    prop = intanceProp;
-  }
-
-  if (prop === undefined) {
-    return;
-  }
-
-  if (prop.type === "page") {
-    if (typeof prop.value === "string") {
-      const page = pages.get(prop.value);
-      return page && { type: "page", page };
-    }
-
-    const { instanceId, pageId } = prop.value;
-
-    const page = pages.get(pageId);
-
-    if (page === undefined) {
-      return;
-    }
-
-    const idProp = props.get(instanceId)?.find((prop) => prop.name === "id");
-
-    return {
-      type: "page",
-      page,
-      instanceId,
-      hash:
-        idProp === undefined || idProp.type !== "string"
-          ? undefined
-          : idProp.value,
-    };
-  }
-
-  if (prop.type === "string") {
-    for (const page of pages.values()) {
-      if (page.path === prop.value) {
-        return { type: "page", page };
-      }
-    }
-    return { type: "string", url: prop.value };
-  }
-
-  if (prop.type === "asset") {
-    const asset = assets.get(prop.value);
-    return asset && { type: "asset", asset };
-  }
-
-  return;
-};
-
-// this utility is used for link component in both builder and preview
-// so need to optimize rerenders with computed
-export const usePropUrl = (instanceId: Instance["id"], name: string) => {
-  const { propsByInstanceIdStore, pagesStore, assetsStore } =
-    useContext(ReactSdkContext);
-  const store = useMemo(
-    () =>
-      computed(
-        [propsByInstanceIdStore, pagesStore, assetsStore],
-        (props, pages, assets) =>
-          resolveUrlProp(instanceId, name, { props, pages, assets })
-      ),
-    [propsByInstanceIdStore, pagesStore, assetsStore, instanceId, name]
-  );
-  return useStore(store);
 };
 
 export const getInstanceIdFromComponentProps = (

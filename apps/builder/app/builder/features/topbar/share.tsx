@@ -1,3 +1,4 @@
+import { useStore } from "@nanostores/react";
 import {
   Button,
   FloatingPanelPopover,
@@ -11,12 +12,12 @@ import {
 } from "@webstudio-is/design-system";
 import type { Project } from "@webstudio-is/prisma-client";
 import { ShareProjectContainer } from "~/shared/share-project";
-import { useAuthPermit } from "~/shared/nano-states";
+import { $authPermit } from "~/shared/nano-states";
 import { useIsShareDialogOpen } from "~/builder/shared/nano-states";
 
 export const ShareButton = ({ projectId }: { projectId: Project["id"] }) => {
   const [isShareOpen, setIsShareOpen] = useIsShareDialogOpen();
-  const [authPermit] = useAuthPermit();
+  const authPermit = useStore($authPermit);
 
   const isShareDisabled = authPermit !== "own";
   const tooltipContent = isShareDisabled

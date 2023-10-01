@@ -1,4 +1,5 @@
 import { useNavigate } from "@remix-run/react";
+import { useStore } from "@nanostores/react";
 import store from "immerhin";
 import { isFeatureEnabled } from "@webstudio-is/feature-flags";
 import {
@@ -15,7 +16,6 @@ import {
   DropdownMenuPortal,
   Tooltip,
 } from "@webstudio-is/design-system";
-import type { Publish } from "~/shared/pubsub";
 import { ShortcutHint } from "./shortcut-hint";
 import {
   useIsShareDialogOpen,
@@ -28,10 +28,10 @@ import {
 } from "~/shared/theme";
 import { useClientSettings } from "~/builder/shared/client-settings";
 import { dashboardPath } from "~/shared/router-utils";
-import { useIsPreviewMode } from "~/shared/nano-states";
+import { $authPermit } from "~/shared/nano-states";
 import { deleteSelectedInstance } from "~/shared/instance-utils";
+import { emitCommand } from "~/builder/shared/commands";
 import { MenuButton } from "./menu-button";
-import { useAuthPermit } from "~/shared/nano-states";
 
 const ThemeMenuItem = () => {
   if (isFeatureEnabled("dark") === false) {
@@ -90,16 +90,11 @@ const ViewMenuItem = () => {
   );
 };
 
-type MenuProps = {
-  publish: Publish;
-};
-
-export const Menu = ({ publish }: MenuProps) => {
+export const Menu = () => {
   const navigate = useNavigate();
   const [, setIsShareOpen] = useIsShareDialogOpen();
   const [, setIsPublishOpen] = useIsPublishDialogOpen();
-  const [isPreviewMode, setIsPreviewMode] = useIsPreviewMode();
-  const [authPermit] = useAuthPermit();
+  const authPermit = useStore($authPermit);
 
   const isPublishEnabled = authPermit === "own" || authPermit === "admin";
 
@@ -171,11 +166,7 @@ export const Menu = ({ publish }: MenuProps) => {
             </DropdownMenuItemRightSlot>
           </DropdownMenuItem>
           <DropdownMenuSeparator />
-          <DropdownMenuItem
-            onSelect={() => {
-              publish({ type: "openBreakpointsMenu" });
-            }}
-          >
+          <DropdownMenuItem onSelect={() => emitCommand("openBreakpointsMenu")}>
             Breakpoints
             <DropdownMenuItemRightSlot>
               <ShortcutHint value={["cmd", "b"]} />
@@ -184,11 +175,7 @@ export const Menu = ({ publish }: MenuProps) => {
           <DropdownMenuSeparator />
           <ThemeMenuItem />
           <ViewMenuItem />
-          <DropdownMenuItem
-            onSelect={() => {
-              setIsPreviewMode(!isPreviewMode);
-            }}
-          >
+          <DropdownMenuItem onSelect={() => emitCommand("togglePreview")}>
             Preview
             <DropdownMenuItemRightSlot>
               <ShortcutHint value={["cmd", "shift", "p"]} />

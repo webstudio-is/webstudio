@@ -13,7 +13,7 @@ You need Node.js to use the Webstudio CLI. If Node.js is already installed in yo
 To install Node.js using NVM, first install NVM by running:
 
 ```bash
-curl -o- <https://raw.githubusercontent.com/nvm-sh/nvm/v0.39.0/install.sh> | bash
+curl -o- https://raw.githubusercontent.com/nvm-sh/nvm/v0.39.5/install.sh | bash
 ```
 
 Once NVM is installed, you can install Node.js version 18 by running:
@@ -106,6 +106,8 @@ If you want to build a production version of the app, you can run `npm run build
 
 ## Deployment
 
+### Vercel
+
 Once you've built the project locally, you can use the [Vercel CLI](https://vercel.com/docs/cli) to deploy your site directly to [Vercel](https://vercel.com):
 
 ```bash
@@ -113,6 +115,28 @@ vercel deploy
 ```
 
 Follow the instructions [here](https://vercel.com/docs/cli) to install the `vercel` CLI. We plan to add more deployment targets in future.
+
+### Netlify
+
+If you want to deploy to netlify, you can use [Netlify CLI](https://docs.netlify.com/cli/get-started/) to deploy your site directly to [Netlify](https://netlify.com/):
+
+```bash
+netlify deploy
+```
+
+You can configure the project to support netlify serverless/edge-functions respectively, as deployment target at the time of initially setting up your project. Please check the [initiating-a-webstudio-project](#initiating-a-webstudio-project) section.
+
+You can manually change it using the `build` command. For serverless functions:
+
+```bash
+webstudio-cli build --template netlify-functions
+```
+
+and for edge functions:
+
+```bash
+webstudio-cli build --template netlify-edge-functions
+```
 
 ## Important Notes
 

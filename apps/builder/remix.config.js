@@ -35,6 +35,7 @@ module.exports = {
     "longest-streak",
     "node-fetch",
     "immerhin",
+    "strip-indent",
   ],
   // appDirectory: "app",
   // assetsBuildDirectory: "public/build",

@@ -85,6 +85,17 @@ const env = {
     process.env.PROJECT_TEMPLATES?.split(",").map((projectId) =>
       projectId.trim()
     ) ?? [],
+
+  /**
+   * OpenAI secrets for AI features
+   *
+   * OPENAI_KEY is a personal API key that you should generate here https://platform.openai.com/account/api-keys
+   * OPENAI_ORG can be found at https://platform.openai.com/account/org-settings
+   *
+   * Both are mandatory as OpenAI will bill OPENAI_ORG
+   */
+  OPENAI_KEY: process.env.OPENAI_KEY,
+  OPENAI_ORG: process.env.OPENAI_ORG,
 };
 
 export type ServerEnv = typeof env;

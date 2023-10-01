@@ -38,21 +38,19 @@ jobs:
       - name: Build cli
         run: pnpm turbo run build --filter='webstudio-cli'
 
+        # Testing fixtures for vercel template
       - name: Test cli --help flag
         working-directory: ./fixtures/webstudio-remix-vercel
         run: pnpm webstudio-cli --help
 
-      - name: Test cli link command
-        working-directory: ./fixtures/webstudio-remix-vercel
-        run: pnpm webstudio-cli link --link 'https://webstudio-builder-git-main-webstudio-is.vercel.app/builder/cddc1d44-af37-4cb6-a430-d300cf6f932d?authToken=1cdc6026-dd5b-4624-b89b-9bd45e9bcc3d'
+      - name: Testing cli link command
+        run: pnpm --filter='./fixtures/*' run fixtures:link
 
-      - name: Test cli sync command
-        working-directory: ./fixtures/webstudio-remix-vercel
-        run: pnpm webstudio-cli sync && pnpm prettier --write ./.webstudio/
+      - name: Testing cli sync command
+        run: pnpm --filter='./fixtures/*' run --parallel fixtures:sync
 
-      - name: Test cli build command
-        working-directory: ./fixtures/webstudio-remix-vercel
-        run: pnpm webstudio-cli build --preview && pnpm prettier --write ./app/ ./package.json
+      - name: Testing cli build command
+        run: pnpm --filter='./fixtures/*' run --parallel fixtures:build
 
       - name: Test git diff
         # This command will fail if there are uncommitted changes, i.e something has broken

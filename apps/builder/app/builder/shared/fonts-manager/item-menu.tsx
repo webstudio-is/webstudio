@@ -1,3 +1,4 @@
+import { useStore } from "@nanostores/react";
 import {
   DropdownMenu,
   DropdownMenuTrigger,
@@ -12,7 +13,7 @@ import {
 import { MenuIcon } from "@webstudio-is/icons";
 import { type FocusEventHandler, useState, useRef, useEffect } from "react";
 import { theme } from "@webstudio-is/design-system";
-import { useAuthPermit } from "~/shared/nano-states";
+import { $authPermit } from "~/shared/nano-states";
 
 const MenuButton = styled(DeprecatedIconButton, {
   color: theme.colors.hint,
@@ -44,7 +45,7 @@ const ItemMenu = ({
     };
   }, []);
 
-  const [authPermit] = useAuthPermit();
+  const authPermit = useStore($authPermit);
 
   const isDeleteDisabled = authPermit === "view";
   const tooltipContent = isDeleteDisabled

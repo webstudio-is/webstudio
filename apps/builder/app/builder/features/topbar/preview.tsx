@@ -1,15 +1,11 @@
+import { useStore } from "@nanostores/react";
 import { PlayIcon } from "@webstudio-is/icons";
 import { ToolbarToggleItem } from "@webstudio-is/design-system";
-import { useIsPreviewMode } from "~/shared/nano-states";
-
-declare module "~/shared/pubsub" {
-  export interface PubsubMap {
-    previewMode: boolean;
-  }
-}
+import { $isPreviewMode } from "~/shared/nano-states";
+import { emitCommand } from "~/builder/shared/commands";
 
 export const PreviewButton = () => {
-  const [isPreviewMode, setIsPreviewMode] = useIsPreviewMode();
+  const isPreviewMode = useStore($isPreviewMode);
 
   return (
     <ToolbarToggleItem
@@ -17,7 +13,7 @@ export const PreviewButton = () => {
       aria-label="Toggle Preview"
       variant="preview"
       data-state={isPreviewMode ? "on" : "off"}
-      onClick={() => setIsPreviewMode(isPreviewMode === false)}
+      onClick={() => emitCommand("togglePreview")}
       tabIndex={0}
     >
       <PlayIcon />

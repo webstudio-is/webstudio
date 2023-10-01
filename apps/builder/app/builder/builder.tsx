@@ -1,7 +1,8 @@
 import { useCallback, useEffect } from "react";
+import { useStore } from "@nanostores/react";
 import { useUnmount } from "react-use";
 import { TooltipProvider } from "@radix-ui/react-tooltip";
-import { type Publish, usePublish } from "~/shared/pubsub";
+import { usePublish, $publisher } from "~/shared/pubsub";
 import type { Asset } from "@webstudio-is/sdk";
 import type { Build } from "@webstudio-is/project-build";
 import type { Project } from "@webstudio-is/project";
@@ -24,27 +25,27 @@ import {
 } from "./features/workspace";
 import { usePublishShortcuts } from "./shared/shortcuts";
 import {
+  assetsStore,
+  $authPermit,
+  $authToken,
+  breakpointsStore,
+  dataSourcesStore,
+  instancesStore,
+  $isPreviewMode,
   pagesStore,
   projectStore,
-  useIsPreviewMode,
-  useSetAssets,
-  useSetAuthPermit,
-  useSetAuthToken,
-  useSetBreakpoints,
-  useSetDataSources,
-  useSetInstances,
-  useSetPages,
-  useSetProps,
-  useSetStyles,
-  useSetStyleSources,
-  useSetStyleSourceSelections,
+  propsStore,
+  styleSourceSelectionsStore,
+  styleSourcesStore,
+  stylesStore,
 } from "~/shared/nano-states";
 import { type Settings, useClientSettings } from "./shared/client-settings";
 import { getBuildUrl } from "~/shared/router-utils";
 import { useCopyPaste } from "~/shared/copy-paste";
 import { BlockingAlerts } from "./features/blocking-alerts";
-import { useStore } from "@nanostores/react";
 import { useSyncPageUrl } from "~/shared/pages";
+import { useMount } from "~/shared/hook-utils/use-mount";
+import { subscribeCommands } from "~/builder/shared/commands";
 
 registerContainers();
 
@@ -54,12 +55,6 @@ export const links = () => {
     { rel: "stylesheet", href: builderStyles },
     { rel: "stylesheet", href: prismStyles },
   ];
-};
-
-const useSetProject = (project: Project) => {
-  useEffect(() => {
-    projectStore.set(project);
-  }, [project]);
 };
 
 const useNavigatorLayout = () => {
@@ -196,13 +191,11 @@ const ChromeWrapper = ({ children, isPreviewMode }: ChromeWrapperProps) => {
 type NavigatorPanelProps = {
   isPreviewMode: boolean;
   navigatorLayout: "docked" | "undocked";
-  publish: Publish;
 };
 
 const NavigatorPanel = ({
   isPreviewMode,
   navigatorLayout,
-  publish,
 }: NavigatorPanelProps) => {
   if (navigatorLayout === "docked") {
     return null;
@@ -217,7 +210,7 @@ const NavigatorPanel = ({
           height: "100%",
         }}
       >
-        <Navigator isClosable={false} publish={publish} />
+        <Navigator isClosable={false} />
       </Box>
     </SidePanel>
   );
@@ -240,15 +233,26 @@ export const Builder = ({
   authToken,
   authPermit,
 }: BuilderProps) => {
-  useSetProject(project);
-  useSetPages(build.pages);
-  useSetBreakpoints(build.breakpoints);
-  useSetProps(build.props);
-  useSetDataSources(build.dataSources);
-  useSetStyles(build.styles);
-  useSetStyleSources(build.styleSources);
-  useSetStyleSourceSelections(build.styleSourceSelections);
-  useSetInstances(build.instances);
+  useMount(() => {
+    // additional data stores
+    projectStore.set(project);
+    $authPermit.set(authPermit);
+    $authToken.set(authToken);
+
+    // set initial containers value
+    assetsStore.set(new Map(assets));
+    instancesStore.set(new Map(build.instances));
+    dataSourcesStore.set(new Map(build.dataSources));
+    // props should be after data sources to compute logic
+    propsStore.set(new Map(build.props));
+    pagesStore.set(build.pages);
+    styleSourcesStore.set(new Map(build.styleSources));
+    styleSourceSelectionsStore.set(new Map(build.styleSourceSelections));
+    breakpointsStore.set(new Map(build.breakpoints));
+    stylesStore.set(new Map(build.styles));
+  });
+
+  useEffect(subscribeCommands, []);
 
   useUnmount(() => {
     pagesStore.set(undefined);
@@ -256,11 +260,11 @@ export const Builder = ({
 
   useSyncPageUrl();
 
-  useSetAssets(assets);
-  useSetAuthToken(authToken);
-  useSetAuthPermit(authPermit);
-
   const [publish, publishRef] = usePublish();
+  useEffect(() => {
+    $publisher.set({ publish });
+  }, [publish]);
+
   useBuilderStore(publish);
   useSyncServer({
     buildId: build.id,
@@ -271,7 +275,7 @@ export const Builder = ({
   });
   useSharedShortcuts({ source: "builder" });
 
-  const [isPreviewMode] = useIsPreviewMode();
+  const isPreviewMode = useStore($isPreviewMode);
   usePublishShortcuts(publish);
   const { onRef: onRefReadCanvas, onTransitionEnd } = useReadCanvasRect();
   // We need to initialize this in both canvas and builder,
@@ -296,7 +300,7 @@ export const Builder = ({
   return (
     <TooltipProvider>
       <ChromeWrapper isPreviewMode={isPreviewMode}>
-        <Topbar gridArea="header" project={project} publish={publish} />
+        <Topbar gridArea="header" project={project} />
         <Main>
           <Workspace onTransitionEnd={onTransitionEnd} publish={publish}>
             <CanvasIframe
@@ -317,7 +321,6 @@ export const Builder = ({
         <NavigatorPanel
           isPreviewMode={isPreviewMode}
           navigatorLayout={navigatorLayout}
-          publish={publish}
         />
         <SidePanel
           gridArea="inspector"

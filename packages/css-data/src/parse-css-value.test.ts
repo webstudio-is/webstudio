@@ -105,6 +105,27 @@ describe("Parse CSS value", () => {
     });
   });
 
+  describe("Tuples", () => {
+    test("backgroundPosition", () => {
+      expect(parseCssValue("backgroundPosition", "left top"))
+        .toMatchInlineSnapshot(`
+{
+  "type": "tuple",
+  "value": [
+    {
+      "type": "keyword",
+      "value": "left",
+    },
+    {
+      "type": "keyword",
+      "value": "top",
+    },
+  ],
+}
+`);
+    });
+  });
+
   describe("Colors", () => {
     test("Color rgba values", () => {
       expect(parseCssValue("backgroundColor", "rgba(0,0,0,0)")).toEqual({

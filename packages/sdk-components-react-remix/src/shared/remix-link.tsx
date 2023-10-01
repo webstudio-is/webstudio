@@ -1,9 +1,6 @@
-import { forwardRef, type ComponentPropsWithoutRef } from "react";
+import { forwardRef, type ComponentPropsWithoutRef, useContext } from "react";
 import { NavLink as RemixLink } from "@remix-run/react";
-import {
-  usePropUrl,
-  getInstanceIdFromComponentProps,
-} from "@webstudio-is/react-sdk";
+import { ReactSdkContext } from "@webstudio-is/react-sdk";
 import type { Link } from "@webstudio-is/sdk-components-react";
 
 type Props = Omit<ComponentPropsWithoutRef<typeof Link>, "target"> & {
@@ -19,19 +16,15 @@ type Props = Omit<ComponentPropsWithoutRef<typeof Link>, "target"> & {
 
 export const wrapLinkComponent = (BaseLink: typeof Link) => {
   const Component = forwardRef<HTMLAnchorElement, Props>((props, ref) => {
-    const href = usePropUrl(getInstanceIdFromComponentProps(props), "href");
+    const { pagesPaths } = useContext(ReactSdkContext);
+    const href = props.href;
 
-    if (href?.type === "page") {
-      let to = href.page.path === "" ? "/" : href.page.path;
-      const urlTo = new URL(to, "https://any-valid.url");
-      to = urlTo.pathname;
-
-      if (href.hash !== undefined) {
-        urlTo.hash = encodeURIComponent(href.hash);
-        to = `${urlTo.pathname}${urlTo.hash}`;
+    // use remix link when url references webstudio page
+    if (href !== undefined) {
+      const url = new URL(href, "https://any-valid.url");
+      if (pagesPaths.has(url.pathname === "/" ? "" : url.pathname)) {
+        return <RemixLink {...props} to={href} ref={ref} />;
       }
-
-      return <RemixLink {...props} to={to} ref={ref} />;
     }
 
     const { prefetch, reloadDocument, replace, preventScrollReset, ...rest } =
