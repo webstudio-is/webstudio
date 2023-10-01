@@ -1,11 +1,5 @@
 import { type Options, useHotkeys } from "react-hotkeys-hook";
 import store from "immerhin";
-import { deleteSelectedInstance } from "../instance-utils";
-import {
-  editingItemIdStore,
-  selectedInstanceSelectorStore,
-} from "../nano-states";
-import { onCopy, onPaste } from "../copy-paste/plugin-instance";
 
 export const shortcuts = {
   esc: "esc",
@@ -41,43 +35,6 @@ export const useSharedShortcuts = ({
       enableOnFormTags: source === "canvas",
       enableOnContentEditable: false,
     },
-    []
-  );
-
-  useHotkeys(
-    "backspace, delete",
-    deleteSelectedInstance,
-    {
-      // When in builder, we don't want to delete instances,
-      // when user edits text in a control on style panel etc.
-      // But when a form control on canvas has focus, we want the shortcut to work.
-      enableOnFormTags: source === "canvas",
-      enableOnContentEditable: false,
-    },
-    []
-  );
-
-  useHotkeys(
-    "meta+d, ctrl+d",
-    (event) => {
-      event.preventDefault();
-      onPaste(onCopy() ?? "");
-    },
-    {},
-    []
-  );
-
-  useHotkeys(
-    "meta+e, 'ctrl+e",
-    () => {
-      const selectedInstanceSelector = selectedInstanceSelectorStore.get();
-      if (selectedInstanceSelector === undefined) {
-        return;
-      }
-      const targetInstanceId = selectedInstanceSelector[0];
-      editingItemIdStore.set(targetInstanceId);
-    },
-    {},
     []
   );
 };
