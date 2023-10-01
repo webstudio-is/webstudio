@@ -17,3 +17,7 @@ import { jsxToWSEmbedTemplate } from "@webstudio-is/jsx-utils";
 
 await jsxToWSEmbedTemplate("<Box>hello</Box>");
 ```
+
+Other utils:
+
+- `traverseTemplate` and `traverseTemplateAsync` to traverse a WsEmbedTemplate and work with nodes
