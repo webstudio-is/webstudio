@@ -70,8 +70,8 @@ const onChunk = (completion: string) => {
 export const Copywriter = () => {
   const [isLoading, setIsLoading] = useState(false);
   const abort = useRef<AbortController | null>(null);
-  const [prompt, setPrompt] = useState("");
-  const formRef = useRef(null);
+  const formRef = useRef<HTMLFormElement>(null);
+  const promptRef = useRef<HTMLInputElement>(null);
   const project = useStore(projectStore);
 
   const send = (formData: FormData) => {
@@ -151,10 +151,11 @@ export const Copywriter = () => {
         <VoiceRecorder
           projectId={project?.id}
           onText={(text) => {
-            setPrompt(text);
-            const formData = new FormData(formRef.current ?? undefined);
-            formData.set("prompt", prompt);
-            send(formData);
+            if (promptRef.current && formRef.current) {
+              promptRef.current.value = text;
+              const formData = new FormData(formRef.current ?? undefined);
+              send(formData);
+            }
           }}
         />
       </Flex>
@@ -178,11 +179,8 @@ export const Copywriter = () => {
                 type="text"
                 placeholder=""
                 name="prompt"
-                value={prompt}
+                inputRef={promptRef}
                 maxLength={1200}
-                onChange={(event) => {
-                  setPrompt(event.target.value);
-                }}
               />
             </Label>
 
