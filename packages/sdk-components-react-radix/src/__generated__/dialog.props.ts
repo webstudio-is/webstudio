@@ -2327,6 +2327,13 @@ export const propsDialogTitle: Record<string, PropMeta> = {
     description:
       "Overrides the browser's default tab order and follows the one specified instead.",
   },
+  tag: {
+    required: false,
+    control: "select",
+    type: "string",
+    defaultValue: "h1",
+    options: ["h2", "h3", "h1", "h4", "h5", "h6"],
+  },
   title: {
     required: false,
     control: "text",

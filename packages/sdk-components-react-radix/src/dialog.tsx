@@ -53,12 +53,13 @@ export const DialogContent = DialogPrimitive.Content;
 export const DialogClose = DialogPrimitive.Close;
 
 type Tag = "h1" | "h2" | "h3" | "h4" | "h5" | "h6";
+const defaultTag = "h1";
 export const DialogTitle = forwardRef<
   HTMLHeadingElement,
   React.ComponentProps<typeof DialogPrimitive.DialogTitle> & { tag?: Tag }
->((props, ref) => (
+>(({ tag = defaultTag, ...props }, ref) => (
   <DialogPrimitive.DialogTitle asChild>
-    {createElement(props.tag ?? "h1", { ...props, ref })}
+    {createElement(tag, { ...props, ref })}
   </DialogPrimitive.DialogTitle>
 ));
 
