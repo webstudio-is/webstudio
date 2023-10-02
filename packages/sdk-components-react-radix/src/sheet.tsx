@@ -13,8 +13,7 @@ export const SheetOverlay = Dialog.DialogOverlay;
 export const SheetClose = Dialog.DialogClose;
 export const SheetTitle = forwardRef<
   HTMLHeadingElement,
-  React.ComponentProps<typeof Dialog.DialogTitle> &
-    React.ComponentProps<typeof Heading>
+  React.ComponentProps<typeof Dialog.DialogTitle & typeof Heading>
 >((props, ref) => (
   <Dialog.DialogTitle asChild>
     <Heading {...props} ref={ref} />

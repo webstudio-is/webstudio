@@ -53,8 +53,7 @@ export const DialogContent = DialogPrimitive.Content;
 export const DialogClose = DialogPrimitive.Close;
 export const DialogTitle = forwardRef<
   HTMLHeadingElement,
-  React.ComponentProps<typeof DialogPrimitive.DialogTitle> &
-    React.ComponentProps<typeof Heading>
+  React.ComponentProps<typeof DialogPrimitive.DialogTitle & typeof Heading>
 >((props, ref) => (
   <DialogPrimitive.DialogTitle asChild>
     <Heading {...props} ref={ref} />
