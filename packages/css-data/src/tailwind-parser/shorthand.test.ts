@@ -14,6 +14,7 @@ describe("expandTailwindShorthand", () => {
 
   test("return the original class if not a shorthand", () => {
     expect(expandTailwindShorthand("bg-red-500")).toBe("bg-red-500");
+    expect(expandTailwindShorthand("mb-4")).toBe("mb-4");
   });
 
   test("handle classes without a modifier", () => {
