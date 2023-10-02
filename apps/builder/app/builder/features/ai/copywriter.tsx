@@ -4,8 +4,8 @@ import untruncateJson from "untruncate-json";
 import { copywriter, requestStream } from "@webstudio-is/ai";
 import { restAiCopy } from "~/shared/router-utils";
 import {
-  Box,
   Button,
+  Flex,
   InputField,
   Label,
   Text,
@@ -18,6 +18,7 @@ import {
 import { useStore } from "@nanostores/react";
 import { useRef, useState } from "react";
 import { computed } from "nanostores";
+import { VoiceRecorder } from "./voice-recorder";
 
 const patchTextInstance = (textInstance: copywriter.TextInstance) => {
   store.createTransaction([instancesStore], (instances) => {
@@ -69,8 +70,49 @@ const onChunk = (completion: string) => {
 export const Copywriter = () => {
   const [isLoading, setIsLoading] = useState(false);
   const abort = useRef<AbortController | null>(null);
-
+  const [prompt, setPrompt] = useState("");
+  const formRef = useRef(null);
   const project = useStore(projectStore);
+
+  const send = (formData: FormData) => {
+    const prompt = formData.get("prompt");
+    const projectId = formData.get("projectId");
+    const textInstances = formData.get("textInstances");
+
+    if (
+      typeof prompt !== "string" ||
+      typeof projectId !== "string" ||
+      typeof textInstances !== "string"
+    ) {
+      return;
+    }
+    // @todo abort also on unmount
+    abort.current = new AbortController();
+    setIsLoading(true);
+    requestStream(
+      [
+        restAiCopy(),
+        {
+          method: "POST",
+          body: JSON.stringify({
+            prompt,
+            projectId,
+            textInstances: JSON.parse(textInstances),
+          }),
+          signal: abort.current.signal,
+        },
+      ],
+      {
+        onChunk,
+      }
+    ).then((result) => {
+      abort.current = null;
+      if (typeof result !== "string") {
+        alert("Error " + result.type);
+      }
+      setIsLoading(false);
+    });
+  };
 
   const textInstances = computed(
     [instancesStore, selectedInstanceStore],
@@ -96,7 +138,7 @@ export const Copywriter = () => {
   const textInstancesCount = textInstances.get().length;
 
   return (
-    <Box>
+    <Flex gap="2" direction="column">
       <Text>
         Generate copy for all the text nodes contained in the selected instance.
         Found{" "}
@@ -105,54 +147,29 @@ export const Copywriter = () => {
         </Text>{" "}
         text instances.
       </Text>
+      <Flex align="center" gap="1">
+        <VoiceRecorder
+          projectId={project?.id}
+          onText={(text) => {
+            setPrompt(text);
+            const formData = new FormData(formRef.current ?? undefined);
+            formData.set("prompt", prompt);
+            send(formData);
+          }}
+        />
+      </Flex>
       {textInstancesCount > 0 ? (
         <>
           <form
+            ref={formRef}
             onSubmit={(event) => {
               event.preventDefault();
 
               if (isLoading) {
                 return;
               }
-
               const formData = new FormData(event.currentTarget);
-              const prompt = formData.get("prompt");
-              const projectId = formData.get("projectId");
-              const textInstances = formData.get("textInstances");
-
-              if (
-                typeof prompt !== "string" ||
-                typeof projectId !== "string" ||
-                typeof textInstances !== "string"
-              ) {
-                return;
-              }
-
-              abort.current = new AbortController();
-              setIsLoading(true);
-              requestStream(
-                [
-                  restAiCopy(),
-                  {
-                    method: "POST",
-                    body: JSON.stringify({
-                      prompt,
-                      projectId,
-                      textInstances: JSON.parse(textInstances),
-                    }),
-                    signal: abort.current.signal,
-                  },
-                ],
-                {
-                  onChunk,
-                }
-              ).then((result) => {
-                abort.current = null;
-                if (typeof result !== "string") {
-                  alert("Error " + result.type);
-                }
-                setIsLoading(false);
-              });
+              send(formData);
             }}
           >
             <Label>
@@ -161,7 +178,11 @@ export const Copywriter = () => {
                 type="text"
                 placeholder=""
                 name="prompt"
+                value={prompt}
                 maxLength={1200}
+                onChange={(event) => {
+                  setPrompt(event.target.value);
+                }}
               />
             </Label>
 
@@ -187,6 +208,6 @@ export const Copywriter = () => {
           </form>
         </>
       ) : null}
-    </Box>
+    </Flex>
   );
 };
