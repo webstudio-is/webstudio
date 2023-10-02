@@ -5,6 +5,10 @@ export const defaultTag = "p";
 export const Paragraph = forwardRef<
   ElementRef<typeof defaultTag>,
   ComponentProps<typeof defaultTag>
->((props, ref) => <p {...props} ref={ref} />);
+>(({ children, ...props }, ref) => (
+  <p {...props} ref={ref}>
+    {children ?? "Paragraph you can edit"}
+  </p>
+));
 
 Paragraph.displayName = "Paragraph";

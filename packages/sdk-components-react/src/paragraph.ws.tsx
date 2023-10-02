@@ -22,13 +22,6 @@ export const meta: WsComponentMeta = {
   invalidAncestors: ["Paragraph"],
   states: defaultStates,
   presetStyle,
-  template: [
-    {
-      type: "instance",
-      component: "Paragraph",
-      children: [{ type: "text", value: "Paragraph you can edit" }],
-    },
-  ],
   order: 2,
 };
 
