@@ -6,9 +6,9 @@ import {
   type ReactNode,
   forwardRef,
   Children,
+  createElement,
 } from "react";
 import * as DialogPrimitive from "@radix-ui/react-dialog";
-import { Heading } from "@webstudio-is/sdk-components-react";
 import { getClosestInstance, type Hook } from "@webstudio-is/react-sdk";
 
 // wrap in forwardRef because Root is functional component without ref
@@ -51,14 +51,17 @@ export const DialogOverlay = forwardRef<
 
 export const DialogContent = DialogPrimitive.Content;
 export const DialogClose = DialogPrimitive.Close;
+
+type Tag = "h1" | "h2" | "h3" | "h4" | "h5" | "h6";
 export const DialogTitle = forwardRef<
   HTMLHeadingElement,
-  React.ComponentProps<typeof DialogPrimitive.DialogTitle & typeof Heading>
+  React.ComponentProps<typeof DialogPrimitive.DialogTitle> & { tag?: Tag }
 >((props, ref) => (
   <DialogPrimitive.DialogTitle asChild>
-    <Heading {...props} ref={ref} />
+    {createElement(props.tag ?? "h1", { ...props, ref })}
   </DialogPrimitive.DialogTitle>
 ));
+
 export const DialogDescription = DialogPrimitive.Description;
 
 /* BUILDER HOOKS */
