@@ -23,10 +23,7 @@ const patchTextInstance = (textInstance: copywriter.TextInstance) => {
   store.createTransaction([instancesStore], (instances) => {
     const currentInstance = instances.get(textInstance.instanceId);
 
-    if (
-      currentInstance === undefined ||
-      currentInstance.children.length === 0
-    ) {
+    if (currentInstance === undefined) {
       return;
     }
 
@@ -61,10 +58,23 @@ const onChunk = (completion: string) => {
     }
 
     patchTextInstance(currenTextInstance);
-  } catch (error) {
+  } catch {
     /**/
   }
 };
+
+const $textInstances = computed(
+  [instancesStore, selectedInstanceStore],
+  (instances, selectedInstance) => {
+    if (selectedInstance) {
+      return copywriter.collectTextInstances({
+        instances: instancesStore.get(),
+        rootInstanceId: selectedInstance.id,
+      });
+    }
+    return [];
+  }
+);
 
 export const Copywriter = () => {
   const [isLoading, setIsLoading] = useState(false);
@@ -72,20 +82,8 @@ export const Copywriter = () => {
 
   const project = useStore(projectStore);
 
-  const textInstances = computed(
-    [instancesStore, selectedInstanceStore],
-    (instances, selectedInstance) => {
-      if (selectedInstance) {
-        return copywriter.collectTextInstances({
-          instances: instancesStore.get(),
-          rootInstanceId: selectedInstance.id,
-        });
-      }
-      return [];
-    }
-  );
-
-  const textInstancesCount = textInstances.get().length;
+  const textInstances = useStore($textInstances);
+  const textInstancesCount = textInstances.length;
 
   return (
     <Box>
@@ -161,7 +159,7 @@ export const Copywriter = () => {
             <input
               type="hidden"
               name="textInstances"
-              value={JSON.stringify(textInstances.get())}
+              value={JSON.stringify(textInstances)}
             />
 
             <Button type="submit" disabled={isLoading}>

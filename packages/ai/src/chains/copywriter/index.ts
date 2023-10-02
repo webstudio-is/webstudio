@@ -19,7 +19,11 @@ import type { Instance, Instances } from "@webstudio-is/sdk";
 export const TextInstanceSchema = z.object({
   instanceId: z.string(),
   index: z.number(),
-  type: z.union([z.literal("Heading"), z.literal("Paragraph")]),
+  type: z.union([
+    z.literal("Heading"),
+    z.literal("Paragraph"),
+    z.literal("Text"),
+  ]),
   text: z.string(),
 });
 
@@ -100,14 +104,17 @@ export const collectTextInstances = ({
     return textInstances;
   }
 
+  const nodeType =
+    rootInstance.component === "Heading" ||
+    rootInstance.component === "Paragraph"
+      ? rootInstance.component
+      : "Text";
+
   // Instances can have a number of text child nodes without interleaving components.
   // When this is the case we treat the child nodes as a single text node,
   // otherwise the AI would generate children.length chunks of separate text.
   // To signal that a textInstance is "joint" we set the index to -1.
   if (rootInstance.children.every((child) => child.type === "text")) {
-    const nodeType =
-      rootInstance.component === "Heading" ? "Heading" : "Paragraph";
-
     textInstances.push({
       instanceId: rootInstanceId,
       index: -1,
@@ -118,9 +125,6 @@ export const collectTextInstances = ({
     rootInstance.children.forEach((child, index) => {
       if (child.type === "text") {
         if (textComponents.has(rootInstance.component)) {
-          const nodeType =
-            rootInstance.component === "Heading" ? "Heading" : "Paragraph";
-
           textInstances.push({
             instanceId: rootInstanceId,
             index,
