@@ -1,9 +1,15 @@
 import { createCommandsEmitter, type Command } from "~/shared/commands-emitter";
-import { $isPreviewMode } from "~/shared/nano-states";
+import {
+  $isPreviewMode,
+  editingItemIdStore,
+  selectedInstanceSelectorStore,
+} from "~/shared/nano-states";
 import {
   $breakpointsMenuView,
   selectBreakpointByOrder,
 } from "~/shared/breakpoints";
+import { onCopy, onPaste } from "~/shared/copy-paste/plugin-instance";
+import { deleteSelectedInstance } from "~/shared/instance-utils";
 
 const makeBreakpointCommand = <CommandName extends string>(
   name: CommandName,
@@ -20,6 +26,8 @@ export const { emitCommand, subscribeCommands } = createCommandsEmitter({
   source: "builder",
   externalCommands: ["editInstanceText"],
   commands: [
+    // ui
+
     {
       name: "togglePreview",
       defaultHotkeys: ["meta+shift+p", "ctrl+shift+p"],
@@ -43,5 +51,38 @@ export const { emitCommand, subscribeCommands } = createCommandsEmitter({
     makeBreakpointCommand("selectBreakpoint7", 7),
     makeBreakpointCommand("selectBreakpoint8", 8),
     makeBreakpointCommand("selectBreakpoint9", 9),
+
+    // instances
+
+    {
+      name: "deleteInstance",
+      defaultHotkeys: ["backspace", "delete"],
+      disableHotkeyOnContentEditable: true,
+      // this disables hotkey for inputs on style panel
+      // but still work for input on canvas which call event.preventDefault() in keydown handler
+      disableHotkeyOnFormTags: true,
+      handler: () => {
+        deleteSelectedInstance();
+      },
+    },
+    {
+      name: "duplicateInstance",
+      defaultHotkeys: ["meta+d", "ctrl+d"],
+      handler: () => {
+        onPaste(onCopy() ?? "");
+      },
+    },
+    {
+      name: "editInstanceLabel",
+      defaultHotkeys: ["meta+e", "ctrl+e"],
+      handler: () => {
+        const selectedInstanceSelector = selectedInstanceSelectorStore.get();
+        if (selectedInstanceSelector === undefined) {
+          return;
+        }
+        const [targetInstanceId] = selectedInstanceSelector;
+        editingItemIdStore.set(targetInstanceId);
+      },
+    },
   ],
 });
