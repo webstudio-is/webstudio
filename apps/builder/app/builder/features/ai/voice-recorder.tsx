@@ -4,20 +4,10 @@
 // Code https://github.com/mdn/dom-examples/blob/main/media/web-dictaphone/scripts/app.js
 // Demo https://mdn.github.io/dom-examples/media/web-dictaphone/
 
-import { z } from "zod";
-import store from "immerhin";
-import untruncateJson from "untruncate-json";
 import { requestStream } from "@webstudio-is/ai";
 import { restAiWhisper } from "~/shared/router-utils";
 import { Button } from "@webstudio-is/design-system";
-import {
-  instancesStore,
-  projectStore,
-  selectedInstanceStore,
-} from "~/shared/nano-states";
-import { useStore } from "@nanostores/react";
 import { useEffect, useMemo, useRef, useState } from "react";
-import { computed } from "nanostores";
 
 const createRecorder = ({
   onStart,
@@ -28,9 +18,8 @@ const createRecorder = ({
   onStart: (recorder: MediaRecorder) => void;
   onStop: (event: Event) => void;
   onError: (error: Error) => void;
-  onData: (data: string) => void;
+  onData: (data: Blob) => void;
 }) => {
-  const audioContext = new AudioContext();
   let recorder: MediaRecorder | undefined;
   let state: "idle" | "started" = "idle";
   let chunks: Array<Blob> = [];
@@ -39,24 +28,6 @@ const createRecorder = ({
     state = "idle";
     recorder = undefined;
     chunks = [];
-  };
-
-  const blobToBase64 = (blob: Blob) => {
-    return new Promise<string>((resolve, reject) => {
-      const reader = new FileReader();
-      reader.readAsDataURL(blob);
-      reader.onloadend = () => {
-        const base64data = reader.result;
-        if (typeof base64data !== "string") {
-          return;
-        }
-        // Only send the base64 string
-        const base64String = base64data.split(",")[1];
-        resolve(base64String);
-        resolve(reader.result as string);
-      };
-      reader.onerror = reject;
-    });
   };
 
   const start = () => {
@@ -76,7 +47,7 @@ const createRecorder = ({
         recorder.onstop = async (event) => {
           console.info("Recorder stopped: ", event);
           const blob = new Blob(chunks, { type: "audio/ogg; codecs=opus" });
-          onData(await blobToBase64(blob));
+          onData(blob);
           onStop(event);
           reset();
         };
@@ -101,6 +72,8 @@ const createRecorder = ({
     reset();
   };
 
+  // @todo figure out if it can improve sound quality
+  // right now it adds weird noises
   const createFilter = (audioContext: AudioContext) => {
     const filter = audioContext.createBiquadFilter();
     filter.frequency.setValueAtTime(1000, audioContext.currentTime);
@@ -119,12 +92,18 @@ const createRecorder = ({
   };
 
   const createRecorder = (stream: MediaStream) => {
-    const input = audioContext.createMediaStreamSource(stream);
-    const filter = createFilter(audioContext);
-    const output = audioContext.createMediaStreamDestination();
-    input.connect(filter);
-    filter.connect(output);
-    return new MediaRecorder(output.stream);
+    // Creating a filter could help us provide better audio, this example is taken from here
+    // I have no idea what I am doing there, so I commented it out for now
+    // Code https://github.com/mozdevs/MediaRecorder-examples/blob/gh-pages/filter-and-record-live-audio.js
+    // Demo https://mozdevs.github.io/MediaRecorder-examples/record-live-audio.html
+
+    //const audioContext = new AudioContext();
+    //const input = audioContext.createMediaStreamSource(stream);
+    // const filter = createFilter(audioContext);
+    //const output = audioContext.createMediaStreamDestination();
+    //input.connect(filter);
+    //filter.connect(output);
+    return new MediaRecorder(stream);
   };
 
   return {
@@ -133,12 +112,29 @@ const createRecorder = ({
   };
 };
 
-const createWriteStream = (
+const createRequest = async (
   projectId: string,
-  audio: string,
+  blob: Blob,
   onText: (text: string) => void
 ) => {
   const abort = new AbortController();
+
+  const blobToBase64 = (blob: Blob) => {
+    return new Promise<string>((resolve, reject) => {
+      const reader = new FileReader();
+      reader.readAsDataURL(blob);
+      reader.onloadend = () => {
+        const base64data = reader.result;
+        if (typeof base64data !== "string") {
+          return;
+        }
+        // Only send the base64 string
+        const base64String = base64data.split(",")[1];
+        resolve(base64String);
+      };
+      reader.onerror = reject;
+    });
+  };
 
   requestStream([
     restAiWhisper(),
@@ -146,7 +142,7 @@ const createWriteStream = (
       method: "POST",
       body: JSON.stringify({
         projectId,
-        audio,
+        audio: await blobToBase64(blob),
       }),
       signal: abort.signal,
     },
@@ -170,6 +166,8 @@ export const VoiceRecorder = ({ projectId, onText }: VoiceRecorderProps) => {
     "idle" | "blocked" | "recording" | "loading"
   >("idle");
   const abortRef = useRef<AbortController>();
+  const [blob, setBlob] = useState<Blob>();
+
   const recorder = useMemo(() => {
     if (projectId === undefined) {
       return;
@@ -181,8 +179,9 @@ export const VoiceRecorder = ({ projectId, onText }: VoiceRecorderProps) => {
       onStop() {
         setStatus("idle");
       },
-      onData(audio) {
-        abortRef.current = createWriteStream(projectId, audio, onText);
+      onData(blob) {
+        abortRef.current = createRequest(projectId, blob, onText);
+        setBlob(blob);
       },
       onError(error) {
         console.error(error);
@@ -196,25 +195,47 @@ export const VoiceRecorder = ({ projectId, onText }: VoiceRecorderProps) => {
     };
   }, []);
 
-  const handleStart = () => {
-    recorder?.start();
-  };
-
-  const handleStop = () => {
-    recorder?.stop();
-  };
-
   // @todo when blocked add a tooltip explaining why
   return (
+    <>
+      <Button
+        state={
+          status === "recording" || status === "loading" ? "pending" : undefined
+        }
+        disabled={status === "blocked"}
+        onPointerDown={recorder?.start}
+        onPointerUp={recorder?.stop}
+      >
+        Record Voice Prompt
+      </Button>
+      <Player blob={blob} />
+    </>
+  );
+};
+
+const Player = ({ blob }: { blob?: Blob }) => {
+  if (blob === undefined) {
+    return;
+  }
+
+  const play = (blob: Blob) => {
+    const audio = document.createElement("audio");
+    audio.onended = () => {
+      document.body.removeChild(audio);
+    };
+    const audioURL = URL.createObjectURL(blob);
+    audio.src = audioURL;
+    document.body.appendChild(audio);
+    audio.play();
+  };
+
+  return (
     <Button
-      state={
-        status === "recording" || status === "loading" ? "pending" : undefined
-      }
-      disabled={status === "blocked"}
-      onPointerDown={handleStart}
-      onPointerUp={handleStop}
+      onClick={() => {
+        play(blob);
+      }}
     >
-      Record Voice Prompt
+      Play
     </Button>
   );
 };
