@@ -4,22 +4,13 @@ import {
   type ComponentPropsWithoutRef,
 } from "react";
 import { getClosestInstance, type Hook } from "@webstudio-is/react-sdk";
-import { Heading } from "@webstudio-is/sdk-components-react";
 import * as Dialog from "./dialog";
 
 export const Sheet = Dialog.Dialog;
 export const SheetTrigger = Dialog.DialogTrigger;
 export const SheetOverlay = Dialog.DialogOverlay;
 export const SheetClose = Dialog.DialogClose;
-export const SheetTitle = forwardRef<
-  HTMLHeadingElement,
-  React.ComponentProps<typeof Dialog.DialogTitle & typeof Heading>
->((props, ref) => (
-  <Dialog.DialogTitle asChild>
-    <Heading {...props} ref={ref} />
-  </Dialog.DialogTitle>
-));
-SheetTitle.displayName = "SheetTitle";
+export const SheetTitle = Dialog.DialogTitle;
 export const SheetDescription = Dialog.DialogDescription;
 
 // eslint-disable-next-line react/display-name
