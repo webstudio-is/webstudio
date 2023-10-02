@@ -179,8 +179,8 @@ export const VoiceRecorder = ({ projectId, onText }: VoiceRecorderProps) => {
       onStop() {
         setStatus("idle");
       },
-      onData(blob) {
-        abortRef.current = createRequest(projectId, blob, onText);
+      async onData(blob) {
+        abortRef.current = await createRequest(projectId, blob, onText);
         setBlob(blob);
       },
       onError(error) {
