@@ -76,18 +76,10 @@ export const Copywriter = () => {
     [instancesStore, selectedInstanceStore],
     (instances, selectedInstance) => {
       if (selectedInstance) {
-        return copywriter
-          .collectTextInstances({
-            instances: instancesStore.get(),
-            rootInstanceId: selectedInstance.id,
-          })
-          .map((instance) => {
-            if (instance.text === "Text you can edit") {
-              instance.text = "";
-            }
-
-            return instance;
-          });
+        return copywriter.collectTextInstances({
+          instances: instancesStore.get(),
+          rootInstanceId: selectedInstance.id,
+        });
       }
       return [];
     }
