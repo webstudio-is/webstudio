@@ -29,7 +29,6 @@ import {
 import { useClientSettings } from "~/builder/shared/client-settings";
 import { dashboardPath } from "~/shared/router-utils";
 import { $authPermit } from "~/shared/nano-states";
-import { deleteSelectedInstance } from "~/shared/instance-utils";
 import { emitCommand } from "~/builder/shared/commands";
 import { MenuButton } from "./menu-button";
 
@@ -159,7 +158,7 @@ export const Menu = () => {
           </DropdownMenuItem>
 
           */}
-          <DropdownMenuItem onSelect={deleteSelectedInstance}>
+          <DropdownMenuItem onSelect={() => emitCommand("deleteInstance")}>
             Delete
             <DropdownMenuItemRightSlot>
               <ShortcutHint value={["backspace"]} />

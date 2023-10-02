@@ -6,10 +6,21 @@ import { $publisher, subscribe } from "~/shared/pubsub";
 type CommandMeta<CommandName extends string> = {
   // @todo category, description
   name: CommandName;
-  // default because hotkeys can be customized from ui
+  /** default because hotkeys can be customized from ui */
   defaultHotkeys?: string[];
-  // listen hotkeys only locally without sharing with other apps
+  /** listen hotkeys only locally without sharing with other apps */
   disableHotkeyOutsideApp?: boolean;
+  /**
+   * input, select and textarea will not invoke command when hotkey is hit
+   * with the exception when default event behavior is prevented
+   **/
+  disableHotkeyOnFormTags?: boolean;
+  /**
+   * element with contenteditable=true will not invoke command
+   * when hotkey is hit with the exception when default
+   * event behavior is prevented
+   **/
+  disableHotkeyOnContentEditable?: boolean;
 };
 
 type CommandHandler = () => void;
@@ -95,6 +106,30 @@ export const createCommandsEmitter = <CommandName extends string>({
         if (
           commandMeta.disableHotkeyOutsideApp &&
           commandHandlers.has(commandMeta.name) === false
+        ) {
+          continue;
+        }
+        const element = event.target as HTMLElement;
+        const tagName = element.tagName.toLowerCase();
+        const isOnFormTags = ["input", "select", "textarea"].includes(tagName);
+        const isOnContentEditable = element.isContentEditable;
+        const { disableHotkeyOnFormTags, disableHotkeyOnContentEditable } =
+          commandMeta;
+        // in some cases hotkey override default behavior
+        // on form tags and contentEditable
+        // though still proceed when default behavior is prevented
+        // this hack makes hotkeys work on canvas instances of input etc.
+        if (
+          isOnFormTags &&
+          disableHotkeyOnFormTags &&
+          event.defaultPrevented === false
+        ) {
+          continue;
+        }
+        if (
+          isOnContentEditable &&
+          disableHotkeyOnContentEditable &&
+          event.defaultPrevented === false
         ) {
           continue;
         }
