@@ -5,17 +5,20 @@
     "remix.env.d.ts",
     "**/*.ts",
     "**/*.tsx",
-    "../../@types/**/*.d.ts"
+    "../../@types/**/*.d.ts",
+    "./middleware.js"
   ],
+
   "compilerOptions": {
     "paths": {
       "~/*": ["app/*"]
     },
     "baseUrl": ".",
-    "rootDir": "./app",
     "declaration": false,
     "emitDeclarationOnly": false,
     "declarationDir": null,
-    "noEmit": true
+    "noEmit": true,
+    "allowJs": true,
+    "checkJs": true
   }
 }
