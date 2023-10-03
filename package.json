@@ -66,7 +66,7 @@
       "css-tree@2.3.1": "patches/css-tree@2.3.1.patch",
       "@types/css-tree@2.3.1": "patches/@types__css-tree@2.3.1.patch",
       "@radix-ui/react-focus-scope@1.0.3": "patches/@radix-ui__react-focus-scope@1.0.3.patch",
-      "@cloudflare/workers-types@4.20230922.0": "patches/@cloudflare__workers-types@4.20230922.0.patch"
+      "@cloudflare/workers-types@3.19.0": "patches/@cloudflare__workers-types@3.19.0.patch"
     }
   }
 }
