@@ -46,6 +46,12 @@ describe("expandTailwindShorthand", () => {
     );
   });
 
+  test("expand rounded-lg", () => {
+    expect(expandTailwindShorthand("rounded-lg")).toBe(
+      "rounded-tl-lg rounded-tr-lg rounded-br-lg rounded-bl-lg"
+    );
+  });
+
   test("do not expand rounded-tl-lg", () => {
     expect(expandTailwindShorthand("rounded-tl-lg")).toBe("rounded-tl-lg");
   });
