@@ -22,7 +22,7 @@
     "@webstudio-is/trpc-interface": "workspace:*",
     "fontkit": "^2.0.2",
     "image-size": "^1.0.2",
-    "immer": "^10.0.2",
+    "immer": "^10.0.3",
     "nanoid": "^4.0.2",
     "warn-once": "^0.1.1"
   },

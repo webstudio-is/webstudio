@@ -1,6 +1,5 @@
 import { useCallback } from "react";
 import { useStore } from "@nanostores/react";
-import store from "immerhin";
 import {
   type Breakpoint,
   type Instance,
@@ -17,6 +16,7 @@ import {
   stylesStore,
 } from "~/shared/nano-states";
 import { useStyleInfo } from "./style-info";
+import { serverSyncStore } from "~/shared/sync";
 
 export type StyleUpdate =
   | {
@@ -100,7 +100,7 @@ export const useStyleData = ({ selectedInstance, publish }: UseStyleData) => {
         return;
       }
 
-      store.createTransaction(
+      serverSyncStore.createTransaction(
         [styleSourceSelectionsStore, styleSourcesStore, stylesStore],
         (styleSourceSelections, styleSources, styles) => {
           const instanceId = selectedInstance.id;

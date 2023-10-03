@@ -6,6 +6,10 @@ describe("expandTailwindShorthand", () => {
     expect(expandTailwindShorthand("mx-4")).toBe("mr-4 ml-4");
   });
 
+  test("do not expand mb-4", () => {
+    expect(expandTailwindShorthand("mb-4")).toBe("mb-4");
+  });
+
   test("expand flex-initial to grow-0 shrink basis-auto", () => {
     expect(expandTailwindShorthand("flex-initial")).toBe(
       "grow-0 shrink basis-auto"
@@ -40,5 +44,19 @@ describe("expandTailwindShorthand", () => {
     expect(expandTailwindShorthand("border border-sky-500")).toBe(
       "border-t border-r border-b border-l border-t-sky-500 border-r-sky-500 border-b-sky-500 border-l-sky-500"
     );
+  });
+
+  test("expand rounded-lg", () => {
+    expect(expandTailwindShorthand("rounded-lg")).toBe(
+      "rounded-tl-lg rounded-tr-lg rounded-br-lg rounded-bl-lg"
+    );
+  });
+
+  test("do not expand rounded-tl-lg", () => {
+    expect(expandTailwindShorthand("rounded-tl-lg")).toBe("rounded-tl-lg");
+  });
+
+  test("do not expand border-r", () => {
+    expect(expandTailwindShorthand("border-r")).toBe("border-r");
   });
 });

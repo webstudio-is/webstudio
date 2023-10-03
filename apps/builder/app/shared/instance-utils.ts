@@ -1,4 +1,3 @@
-import store from "immerhin";
 import { toast } from "@webstudio-is/design-system";
 import {
   type Instance,
@@ -37,6 +36,7 @@ import {
 import { removeByMutable } from "./array-utils";
 import { isBaseBreakpoint } from "./breakpoints";
 import { humanizeString } from "./string-utils";
+import { serverSyncStore } from "./sync";
 
 const getLabelFromComponentName = (component: Instance["component"]) => {
   if (component.includes(":")) {
@@ -286,7 +286,7 @@ export const insertTemplateData = (
     dataSources: insertedDataSources,
   } = templateData;
   const rootInstanceId = insertedInstances[0].id;
-  store.createTransaction(
+  serverSyncStore.createTransaction(
     [
       instancesStore,
       // insert data sources before props to avoid error
@@ -374,15 +374,18 @@ export const reparentInstance = (
   targetInstanceSelector: InstanceSelector,
   dropTarget: DroppableTarget
 ) => {
-  store.createTransaction([instancesStore, propsStore], (instances, props) => {
-    reparentInstanceMutable(
-      instances,
-      props,
-      registeredComponentMetasStore.get(),
-      targetInstanceSelector,
-      dropTarget
-    );
-  });
+  serverSyncStore.createTransaction(
+    [instancesStore, propsStore],
+    (instances, props) => {
+      reparentInstanceMutable(
+        instances,
+        props,
+        registeredComponentMetasStore.get(),
+        targetInstanceSelector,
+        dropTarget
+      );
+    }
+  );
   selectedInstanceSelectorStore.set(targetInstanceSelector);
   selectedStyleSourceSelectorStore.set(undefined);
 };
@@ -394,7 +397,7 @@ export const deleteInstance = (instanceSelector: InstanceSelector) => {
     );
     return;
   }
-  store.createTransaction(
+  serverSyncStore.createTransaction(
     [
       instancesStore,
       propsStore,
