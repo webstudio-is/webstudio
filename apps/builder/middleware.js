@@ -182,17 +182,24 @@ const checkRateLimit = async (ctx, ratelimitName, key) => {
     ctx.executionCtx.waitUntil(pending);
   }
 
+  // @todo: remove after testing
+  // eslint-disable-next-line no-console
+  console.info(
+    `ratelimit params: [${ratelimitName}] limit=${limit}, reset=${reset}, remaining=${remaining}, key=${key}`
+  );
+
   if (success === false) {
     // eslint-disable-next-line no-console
-    console.info(
-      `ratelimit triggered: [${ratelimitName}] limit=${limit}, reset=${reset}, remaining=${remaining}`
+    console.warn(
+      `ratelimit triggered: [${ratelimitName}] limit=${limit}, reset=${reset}, remaining=${remaining}, key=${key}`
     );
+
     throw new HTTPException(429, {
       res: ctx.json(
         {
           errors: [
             {
-              message: `ratelimit triggered: [${ratelimitName}] limit=${limit}, reset=${reset}, remaining=${remaining}`,
+              message: `ratelimit triggered: [${ratelimitName}] limit=${limit}, reset=${reset}, remaining=${remaining}, key=${key}`,
               code: 429,
               meta: {
                 limit,
