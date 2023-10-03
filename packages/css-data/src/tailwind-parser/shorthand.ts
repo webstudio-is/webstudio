@@ -9,9 +9,10 @@ export const expandTailwindShorthand = (classnames: string) => {
     .trim()
     .split(/\s+/)
     .map((classname) => {
-      const groupKey = Object.keys(conflictingClassGroups).find((key) =>
-        classname.startsWith(key)
+      const groupKey = Object.keys(conflictingClassGroups).find(
+        (key) => classname.startsWith(`${key}-`) || classname === key
       );
+
       if (groupKey === undefined) {
         return classname;
       }
@@ -71,10 +72,19 @@ const conflictingClassGroups: Record<string, string[]> = orderByKeysDesc({
   "rounded-b": ["rounded-br", "rounded-bl"],
   "rounded-l": ["rounded-tl", "rounded-bl"],
 
+  "rounded-tl": ["rounded-tl"],
+  "rounded-tr": ["rounded-tr"],
+  "rounded-br": ["rounded-br"],
+  "rounded-bl": ["rounded-bl"],
+
   "border-spacing": ["border-spacing-x", "border-spacing-y"],
 
   "border-x": ["border-r", "border-l"],
   "border-y": ["border-t", "border-b"],
+  "border-r": ["border-r"],
+  "border-l": ["border-l"],
+  "border-b": ["border-b"],
+  "border-t": ["border-t"],
 
   border: ["border-t", "border-r", "border-b", "border-l"],
 });
