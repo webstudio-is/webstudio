@@ -1,5 +1,12 @@
 /**
  * To test middleware locally:
+ * ```shell
+ * # At project root:
+ * pnpx vercel link
+ * pnpx vercel dev
+ * ```
+ *
+ * OR
  *
  * ```shell
  * # Link vercel project
@@ -61,7 +68,7 @@ import { createCookieSessionStorage } from "@remix-run/cloudflare";
 let passthrough = async (req) => passthroughRaw();
 
 /** @type {typeof envHono<Environment, import('hono').Context<ContextEnv>>} */
-const env = envHono;
+const env = (ctx) => envHono(ctx);
 
 const getRateLimitMemoized = memoize(
   /**
@@ -124,6 +131,18 @@ const getRateLimitMemoized = memoize(
 /** @param {import('hono').Context<ContextEnv>} ctx */
 const getRateLimits = (ctx) => {
   const { KV_RATE_LIMIT_REST_API_TOKEN, KV_RATE_LIMIT_REST_API_URL } = env(ctx);
+  if (KV_RATE_LIMIT_REST_API_TOKEN === undefined) {
+    throw new HTTPException(500, {
+      message: "KV_RATE_LIMIT_REST_API_TOKEN env variable is undefined",
+    });
+  }
+
+  if (KV_RATE_LIMIT_REST_API_URL === undefined) {
+    throw new HTTPException(500, {
+      message: "KV_RATE_LIMIT_REST_API_URL env variable is undefined",
+    });
+  }
+
   return getRateLimitMemoized(
     KV_RATE_LIMIT_REST_API_TOKEN,
     KV_RATE_LIMIT_REST_API_URL
@@ -154,6 +173,13 @@ const getSessionStorageMemozied = memoize(
 /** @param {import('hono').Context<ContextEnv>} ctx */
 const getSessionStorage = (ctx) => {
   const { AUTH_SECRET } = env(ctx);
+
+  if (AUTH_SECRET === undefined) {
+    throw new HTTPException(500, {
+      message: "AUTH_SECRET env variable is undefined",
+    });
+  }
+
   return getSessionStorageMemozied(AUTH_SECRET);
 };
 
@@ -179,14 +205,12 @@ const checkRateLimit = async (ctx, ratelimitName, key) => {
     await ratelimit.limit(key);
 
   if (getRuntimeKey() !== "node") {
-    ctx.executionCtx.waitUntil(pending);
+    try {
+      ctx.executionCtx.waitUntil(pending);
+    } catch {
+      /**/
+    }
   }
-
-  // @todo: remove after testing
-  // eslint-disable-next-line no-console
-  console.info(
-    `ratelimit params: [${ratelimitName}] limit=${limit}, reset=${reset}, remaining=${remaining}, key=${key}`
-  );
 
   if (success === false) {
     // eslint-disable-next-line no-console
@@ -304,6 +328,12 @@ app.use("*", async (ctx, next) => {
 
   const { TRPC_SERVER_API_TOKEN } = env(ctx);
 
+  if (TRPC_SERVER_API_TOKEN === undefined) {
+    throw new HTTPException(500, {
+      message: "TRPC_SERVER_API_TOKEN env variable is undefined",
+    });
+  }
+
   const isServiceCall =
     TRPC_SERVER_API_TOKEN !== undefined &&
     ctx.req.header("Authorization") === TRPC_SERVER_API_TOKEN;
@@ -369,6 +399,9 @@ app.onError(async (err, ctx) => {
     return err.getResponse();
   }
 
+  // eslint-disable-next-line no-console
+  console.error(err.stack ?? err);
+
   return ctx.json({ cause: err.cause, message: err.message });
 });
 
@@ -382,7 +415,12 @@ export default handle(app);
 
 if (process.env.NODE_ENV !== "production") {
   if (getRuntimeKey() === "node") {
-    import("@hono/node-server").then(({ serve }) => {
+    // To avoid vercel dev errors on build
+    const modulePath = "" + "@hono/node-server";
+    /** @type {Promise<import("@hono/node-server")>} */
+    const importedModule = import(modulePath);
+
+    importedModule.then(({ serve }) => {
       serve({ ...app, port: 3002 }, (info) => {
         // eslint-disable-next-line no-console
         console.info(`Listening on http://localhost:${info.port}`);
