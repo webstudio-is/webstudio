@@ -24,7 +24,11 @@ const uno = () => {
  */
 export const parseTailwindToCss = async (classes: string, warn = warnOnce) => {
   const expandedClasses = expandTailwindShorthand(classes);
-  const generated = await uno().generate(expandedClasses, { preflights: true });
+  // BUG in uno, if expandedClasses === "[text-decoration-line:none]" then css is not generated
+  // so we add space before classes
+  const generated = await uno().generate(` ${expandedClasses}`, {
+    preflights: true,
+  });
 
   const cssWithClasses = substituteVariables(generated.css, warn);
   return cssWithClasses;

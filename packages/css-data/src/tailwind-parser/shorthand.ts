@@ -87,4 +87,5 @@ const conflictingClassGroups: Record<string, string[]> = orderByKeysDesc({
   "border-t": ["border-t"],
 
   border: ["border-t", "border-r", "border-b", "border-l"],
+  "no-underline": ["[text-decoration-line:none]"],
 });
