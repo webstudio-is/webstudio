@@ -13,7 +13,6 @@ import { computed, type Atom, atom } from "nanostores";
 import { useStore } from "@nanostores/react";
 import { useLexicalComposerContext } from "@lexical/react/LexicalComposerContext";
 import { mergeRefs } from "@react-aria/utils";
-import store from "immerhin";
 import type { Instance, Instances, Prop } from "@webstudio-is/sdk";
 import { findTreeInstanceIds } from "@webstudio-is/sdk";
 import {
@@ -44,6 +43,7 @@ import {
 } from "~/shared/tree-utils";
 import { setDataCollapsed } from "~/canvas/collapsed";
 import { getIsVisuallyHidden } from "~/shared/visually-hidden";
+import { serverSyncStore } from "~/shared/sync";
 
 const TextEditor = lazy(() => import("../text-editor"));
 
@@ -353,7 +353,7 @@ export const WebstudioComponentCanvas = forwardRef<
           />
         }
         onChange={(instancesList) => {
-          store.createTransaction([instancesStore], (instances) => {
+          serverSyncStore.createTransaction([instancesStore], (instances) => {
             const deletedTreeIds = findTreeInstanceIds(instances, instance.id);
             for (const updatedInstance of instancesList) {
               instances.set(updatedInstance.id, updatedInstance);

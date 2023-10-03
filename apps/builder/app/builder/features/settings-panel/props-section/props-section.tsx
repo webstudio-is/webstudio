@@ -1,6 +1,5 @@
 import { useState } from "react";
 import { useStore } from "@nanostores/react";
-import store from "immerhin";
 import type { Instance } from "@webstudio-is/sdk";
 import {
   theme,
@@ -33,6 +32,7 @@ import {
   type PropAndMeta,
 } from "./use-props-logic";
 import { Row, getLabel } from "../shared";
+import { serverSyncStore } from "~/shared/sync";
 
 const itemToString = (item: NameAndLabel | null) =>
   item ? getLabel(item, item.name) : "";
@@ -216,7 +216,7 @@ export const PropsSectionContainer = ({
         dataSourceVariables.set(dataSourceId, update.value);
         dataSourceVariablesStore.set(dataSourceVariables);
       } else {
-        store.createTransaction([propsStore], (props) => {
+        serverSyncStore.createTransaction([propsStore], (props) => {
           const istanceProps = propsByInstanceId.get(instance.id) ?? [];
           // Fixing a bug that caused some props to be duplicated on unmount by removing duplicates.
           // see for details https://github.com/webstudio-is/webstudio/pull/2170
@@ -233,7 +233,7 @@ export const PropsSectionContainer = ({
       }
     },
     deleteProp: (propId) => {
-      store.createTransaction([propsStore], (props) => {
+      serverSyncStore.createTransaction([propsStore], (props) => {
         props.delete(propId);
       });
     },

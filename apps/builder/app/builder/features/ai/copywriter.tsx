@@ -1,5 +1,4 @@
 import { z } from "zod";
-import store from "immerhin";
 import untruncateJson from "untruncate-json";
 import { copywriter, requestStream } from "@webstudio-is/ai";
 import { restAiCopy } from "~/shared/router-utils";
@@ -18,9 +17,10 @@ import {
 import { useStore } from "@nanostores/react";
 import { useRef, useState } from "react";
 import { computed } from "nanostores";
+import { serverSyncStore } from "~/shared/sync";
 
 const patchTextInstance = (textInstance: copywriter.TextInstance) => {
-  store.createTransaction([instancesStore], (instances) => {
+  serverSyncStore.createTransaction([instancesStore], (instances) => {
     const currentInstance = instances.get(textInstance.instanceId);
 
     if (currentInstance === undefined) {
@@ -68,7 +68,7 @@ const $textInstances = computed(
   (instances, selectedInstance) => {
     if (selectedInstance) {
       return copywriter.collectTextInstances({
-        instances: instancesStore.get(),
+        instances,
         rootInstanceId: selectedInstance.id,
       });
     }

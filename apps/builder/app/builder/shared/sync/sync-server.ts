@@ -1,13 +1,13 @@
 import { useEffect } from "react";
 import { useBeforeUnload } from "react-use";
 import { atom } from "nanostores";
-import store, { sync } from "immerhin";
 import { Project } from "@webstudio-is/project";
 import type { Build } from "@webstudio-is/project-build";
 import type { AuthPermit } from "@webstudio-is/trpc-interface/index.server";
 import * as commandQueue from "./command-queue";
 import { restPatchPath } from "~/shared/router-utils";
 import { toast } from "@webstudio-is/design-system";
+import { serverSyncStore } from "~/shared/sync";
 
 // Periodic check for new entries to group them into one job/call in sync queue.
 const NEW_ENTRIES_INTERVAL = 1000;
@@ -24,22 +24,6 @@ const MAX_ALLOWED_API_ERRORS = 5;
 // When we reached max failed attempts we will slow down the attempts interval.
 const INTERVAL_ERROR = 5000;
 const MAX_INTERVAL_ERROR = 2 * 60000;
-
-const filterServerTransactions = (transactions: ReturnType<typeof sync>) => {
-  const filteredTransactions: ReturnType<typeof sync> = [];
-  for (const transaction of transactions) {
-    const filteredChanges = transaction.changes.filter((change) =>
-      store.containers.has(change.namespace)
-    );
-    if (filteredChanges.length !== 0) {
-      filteredTransactions.push({
-        ...transaction,
-        changes: filteredChanges,
-      });
-    }
-  }
-  return filteredTransactions;
-};
 
 const pause = (timeout: number) => {
   return new Promise((resolve) => setTimeout(resolve, timeout));
@@ -285,7 +269,7 @@ const useSyncProject = async ({
     });
 
     const updateProjectTransactions = () => {
-      const transactions = filterServerTransactions(sync());
+      const transactions = serverSyncStore.popAll();
       if (transactions.length === 0) {
         return;
       }

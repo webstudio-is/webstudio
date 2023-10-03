@@ -1,6 +1,5 @@
 import { useNavigate } from "@remix-run/react";
 import { useStore } from "@nanostores/react";
-import store from "immerhin";
 import { isFeatureEnabled } from "@webstudio-is/feature-flags";
 import {
   theme,
@@ -31,6 +30,7 @@ import { dashboardPath } from "~/shared/router-utils";
 import { $authPermit } from "~/shared/nano-states";
 import { emitCommand } from "~/builder/shared/commands";
 import { MenuButton } from "./menu-button";
+import { serverSyncStore } from "~/shared/sync";
 
 const ThemeMenuItem = () => {
   if (isFeatureEnabled("dark") === false) {
@@ -125,13 +125,13 @@ export const Menu = () => {
             Dashboard
           </DropdownMenuItem>
           <DropdownMenuSeparator />
-          <DropdownMenuItem onSelect={() => store.undo()}>
+          <DropdownMenuItem onSelect={() => serverSyncStore.undo()}>
             Undo
             <DropdownMenuItemRightSlot>
               <ShortcutHint value={["cmd", "z"]} />
             </DropdownMenuItemRightSlot>
           </DropdownMenuItem>
-          <DropdownMenuItem onSelect={() => store.redo()}>
+          <DropdownMenuItem onSelect={() => serverSyncStore.redo()}>
             Redo
             <DropdownMenuItemRightSlot>
               <ShortcutHint value={["shift", "cmd", "z"]} />
