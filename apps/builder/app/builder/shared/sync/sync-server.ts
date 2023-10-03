@@ -1,7 +1,7 @@
 import { useEffect } from "react";
 import { useBeforeUnload } from "react-use";
 import { atom } from "nanostores";
-import { sync } from "immerhin";
+import store, { sync } from "immerhin";
 import { Project } from "@webstudio-is/project";
 import type { Build } from "@webstudio-is/project-build";
 import type { AuthPermit } from "@webstudio-is/trpc-interface/index.server";
@@ -25,26 +25,11 @@ const MAX_ALLOWED_API_ERRORS = 5;
 const INTERVAL_ERROR = 5000;
 const MAX_INTERVAL_ERROR = 2 * 60000;
 
-const persistedNamespaces = new Set([
-  "pages",
-  "breakpoints",
-  "instances",
-  "styles",
-  "styleSources",
-  "styleSourceSelections",
-  "props",
-  "dataSources",
-  "assets",
-]);
-
-const filterTransactions = (
-  transactions: ReturnType<typeof sync>,
-  namespaces: Set<string>
-) => {
+const filterServerTransactions = (transactions: ReturnType<typeof sync>) => {
   const filteredTransactions: ReturnType<typeof sync> = [];
   for (const transaction of transactions) {
     const filteredChanges = transaction.changes.filter((change) =>
-      namespaces.has(change.namespace)
+      store.containers.has(change.namespace)
     );
     if (filteredChanges.length !== 0) {
       filteredTransactions.push({
@@ -300,7 +285,7 @@ const useSyncProject = async ({
     });
 
     const updateProjectTransactions = () => {
-      const transactions = filterTransactions(sync(), persistedNamespaces);
+      const transactions = filterServerTransactions(sync());
       if (transactions.length === 0) {
         return;
       }

@@ -44,7 +44,7 @@ jobs:
         run: pnpm webstudio-cli --help
 
       - name: Testing cli link command
-        run: pnpm --filter='./fixtures/*' run fixtures:link
+        run: pnpm --filter='./fixtures/*' --sequential run fixtures:link
 
       - name: Testing cli sync command
         run: pnpm --filter='./fixtures/*' run --parallel fixtures:sync

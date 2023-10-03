@@ -1,4 +1,4 @@
-import store, { type Change } from "immerhin";
+import store, { Store, type Change } from "immerhin";
 import { enableMapSet } from "immer";
 import { atom, type WritableAtom } from "nanostores";
 import { useEffect } from "react";
@@ -53,11 +53,13 @@ declare module "~/shared/pubsub" {
     sendStoreChanges: {
       // distinct source to avoid infinite loop
       source: SyncEventSource;
+      namespace: "client" | "server";
       changes: Change[];
     };
   }
 }
 
+export const clientImmerhinStore = new Store();
 const clientStores = new Map<string, WritableAtom<unknown>>();
 const initializedStores = new Set<string>();
 
@@ -72,7 +74,7 @@ export const registerContainers = () => {
   store.register("props", propsStore);
   store.register("dataSources", dataSourcesStore);
   store.register("assets", assetsStore);
-  store.register("commandMetas", $commandMetas);
+  clientImmerhinStore.register("commandMetas", $commandMetas);
   // synchronize whole states
   clientStores.set("project", projectStore);
   clientStores.set("dataSourceVariables", dataSourceVariablesStore);
@@ -131,12 +133,17 @@ export const registerContainers = () => {
 const syncStoresChanges = (name: SyncEventSource, publish: Publish) => {
   const unsubscribeRemoteChanges = subscribe(
     "sendStoreChanges",
-    ({ source, changes }) => {
+    ({ source, namespace, changes }) => {
       /// prevent reapplying own changes
       if (source === name) {
         return;
       }
-      store.createTransactionFromChanges(changes, "remote");
+      if (namespace === "server") {
+        store.createTransactionFromChanges(changes, "remote");
+      }
+      if (namespace === "client") {
+        clientImmerhinStore.createTransactionFromChanges(changes, "remote");
+      }
     }
   );
 
@@ -151,6 +158,25 @@ const syncStoresChanges = (name: SyncEventSource, publish: Publish) => {
         type: "sendStoreChanges",
         payload: {
           source: name,
+          namespace: "server",
+          changes,
+        },
+      });
+    }
+  );
+
+  const unsubscribeClientImmerhinStoreChanges = clientImmerhinStore.subscribe(
+    (_transactionId, changes, source) => {
+      // prevent sending remote patches back
+      if (source === "remote") {
+        return;
+      }
+
+      publish({
+        type: "sendStoreChanges",
+        payload: {
+          source: name,
+          namespace: "client",
           changes,
         },
       });
@@ -160,6 +186,7 @@ const syncStoresChanges = (name: SyncEventSource, publish: Publish) => {
   return () => {
     unsubscribeRemoteChanges();
     unsubscribeStoreChanges();
+    unsubscribeClientImmerhinStoreChanges();
   };
 };
 
@@ -178,6 +205,10 @@ const syncStoresState = (name: SyncEventSource, publish: Publish) => {
         const container = store.containers.get(namespace);
         if (container) {
           container.set(value);
+        }
+        const clientContainer = clientImmerhinStore.containers.get(namespace);
+        if (clientContainer) {
+          clientContainer.set(value);
         }
         // apply state stores data
         const stateStore = clientStores.get(namespace);
