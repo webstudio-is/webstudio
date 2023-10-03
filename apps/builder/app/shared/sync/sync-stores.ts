@@ -53,7 +53,7 @@ declare module "~/shared/pubsub" {
     sendStoreChanges: {
       // distinct source to avoid infinite loop
       source: SyncEventSource;
-      storeType: "client" | "server";
+      namespace: "client" | "server";
       changes: Change[];
     };
   }
@@ -133,15 +133,15 @@ export const registerContainers = () => {
 const syncStoresChanges = (name: SyncEventSource, publish: Publish) => {
   const unsubscribeRemoteChanges = subscribe(
     "sendStoreChanges",
-    ({ source, storeType, changes }) => {
+    ({ source, namespace, changes }) => {
       /// prevent reapplying own changes
       if (source === name) {
         return;
       }
-      if (storeType === "server") {
+      if (namespace === "server") {
         store.createTransactionFromChanges(changes, "remote");
       }
-      if (storeType === "client") {
+      if (namespace === "client") {
         clientImmerhinStore.createTransactionFromChanges(changes, "remote");
       }
     }
@@ -158,7 +158,7 @@ const syncStoresChanges = (name: SyncEventSource, publish: Publish) => {
         type: "sendStoreChanges",
         payload: {
           source: name,
-          storeType: "server",
+          namespace: "server",
           changes,
         },
       });
@@ -176,7 +176,7 @@ const syncStoresChanges = (name: SyncEventSource, publish: Publish) => {
         type: "sendStoreChanges",
         payload: {
           source: name,
-          storeType: "client",
+          namespace: "client",
           changes,
         },
       });
