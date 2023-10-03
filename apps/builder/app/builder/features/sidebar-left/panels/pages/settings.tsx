@@ -1,5 +1,4 @@
 import { z } from "zod";
-import store from "immerhin";
 import {
   useState,
   useCallback,
@@ -43,6 +42,7 @@ import {
 } from "~/shared/nano-states";
 import { nanoid } from "nanoid";
 import { removeByMutable } from "~/shared/array-utils";
+import { serverSyncStore } from "~/shared/sync";
 
 const Group = styled(Flex, {
   marginBottom: theme.spacing[9],
@@ -271,7 +271,7 @@ export const NewPageSettings = ({
   const handleSubmit = () => {
     if (Object.keys(errors).length === 0) {
       const pageId = nanoid();
-      store.createTransaction(
+      serverSyncStore.createTransaction(
         [pagesStore, instancesStore],
         (pages, instances) => {
           if (pages === undefined) {
@@ -402,7 +402,7 @@ const updatePage = (pageId: Page["id"], values: Partial<Values>) => {
       page.meta.description = values.description;
     }
   };
-  store.createTransaction([pagesStore], (pages) => {
+  serverSyncStore.createTransaction([pagesStore], (pages) => {
     if (pages === undefined) {
       return;
     }
@@ -430,7 +430,7 @@ const deletePage = (pageId: Page["id"]) => {
   if (rootInstanceId !== undefined) {
     deleteInstance([rootInstanceId]);
   }
-  store.createTransaction([pagesStore], (pages) => {
+  serverSyncStore.createTransaction([pagesStore], (pages) => {
     if (pages === undefined) {
       return;
     }

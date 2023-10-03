@@ -1,7 +1,6 @@
 import { z } from "zod";
 import { Fragment, useEffect, useRef, useState } from "react";
 import { nanoid } from "nanoid";
-import store from "immerhin";
 import type { Breakpoint } from "@webstudio-is/sdk";
 import {
   theme,
@@ -20,6 +19,7 @@ import { MinusIcon, PlusIcon } from "@webstudio-is/icons";
 import { useStore } from "@nanostores/react";
 import { breakpointsStore } from "~/shared/nano-states";
 import { groupBreakpoints, isBaseBreakpoint } from "~/shared/breakpoints";
+import { serverSyncStore } from "~/shared/sync";
 
 type BreakpointEditorItemProps = {
   breakpoint: Breakpoint;
@@ -178,7 +178,7 @@ export const BreakpointsEditor = ({ onDelete }: BreakpointsEditorProps) => {
   ].filter((breakpoint) => isBaseBreakpoint(breakpoint) === false);
 
   const handleChangeComplete = (breakpoint: Breakpoint) => {
-    store.createTransaction([breakpointsStore], (breakpoints) => {
+    serverSyncStore.createTransaction([breakpointsStore], (breakpoints) => {
       breakpoints.set(breakpoint.id, breakpoint);
     });
   };

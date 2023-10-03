@@ -1,5 +1,9 @@
 lockfileVersion: '6.0'
 
+settings:
+  autoInstallPeers: true
+  excludeLinksFromLockfile: false
+
 patchedDependencies:
   '@radix-ui/react-focus-scope@1.0.3':
     hash: vwkv6fgcyenwdrasskh5q6guyu
@@ -208,11 +212,11 @@ importers:
         specifier: ^1.0.4
         version: 1.0.4
       immer:
-        specifier: ^10.0.2
-        version: 10.0.2
+        specifier: ^10.0.3
+        version: 10.0.3
       immerhin:
-        specifier: ^0.7.0
-        version: 0.7.0
+        specifier: ^0.8.1
+        version: 0.8.1
       jose:
         specifier: ^4.11.2
         version: 4.11.2
@@ -709,8 +713,8 @@ importers:
         specifier: ^1.0.2
         version: 1.0.2
       immer:
-        specifier: ^10.0.2
-        version: 10.0.2
+        specifier: ^10.0.3
+        version: 10.0.3
       nanoid:
         specifier: ^4.0.2
         version: 4.0.2
@@ -1078,8 +1082,8 @@ importers:
         specifier: ^6.1.7
         version: 6.1.7(react@18.2.0)
       immer:
-        specifier: ^10.0.2
-        version: 10.0.2
+        specifier: ^10.0.3
+        version: 10.0.3
       match-sorter:
         specifier: ^6.3.1
         version: 6.3.1
@@ -8831,6 +8835,7 @@ packages:
 
   /bindings@1.5.0:
     resolution: {integrity: sha512-p2q/t/mhvuOj/UeLlV6566GD/guowlr0hHxClI0W9m7MWYkL1F0hLo+0Aexs9HSPCtR1SXQ0TD3MMKrXZajbiQ==}
+    requiresBuild: true
     dependencies:
       file-uri-to-path: 1.0.0
     dev: true
@@ -10691,6 +10696,7 @@ packages:
 
   /file-uri-to-path@1.0.0:
     resolution: {integrity: sha512-0Zt+s3L7Vf1biwWZ29aARiVYLx7iMGnEUl9x33fbB/j3jR81u/O2LbqK+Bm1CDSNDKVtJ/YjwY7TUd5SkeLQLw==}
+    requiresBuild: true
     dev: true
     optional: true
 
@@ -11412,14 +11418,14 @@ packages:
       queue: 6.0.2
     dev: false
 
-  /immer@10.0.2:
-    resolution: {integrity: sha512-Rx3CqeqQ19sxUtYV9CU911Vhy8/721wRFnJv3REVGWUmoAcIwzifTsdmJte/MV+0/XpM35LZdQMBGkRIoLPwQA==}
+  /immer@10.0.3:
+    resolution: {integrity: sha512-pwupu3eWfouuaowscykeckFmVTpqbzW+rXFCX8rQLkZzM9ftBmU/++Ra+o+L27mz03zJTlyV4UUr+fdKNffo4A==}
     dev: false
 
-  /immerhin@0.7.0:
-    resolution: {integrity: sha512-nzaOZY6PqssWqxi+NVWD5EuWUJlD7NrrD/cPq6kCahJCQ6LMUXG7oP+CeRNNEOvDULYidoBxfJ7mDtA0bRqTSQ==}
+  /immerhin@0.8.1:
+    resolution: {integrity: sha512-pQrkWwkPj7/UHL7qVU7hTjTxN8uGy6ewhyfEiooY0lkT00h7i+HbV0cvKud6mZzcz5o2iAMiKiq55twxON4+QQ==}
     dependencies:
-      immer: 10.0.2
+      immer: 10.0.3
       nanoid: 4.0.2
     dev: false
 
@@ -13858,6 +13864,7 @@ packages:
 
   /node-addon-api@1.7.2:
     resolution: {integrity: sha512-ibPK3iA+vaY1eEjESkQkM0BbCqFOaZMiXRTtdB0u7b4djtY6JnsjvPdUHVMg6xQt3B8fpTTWHI9A+ADjM9frzg==}
+    requiresBuild: true
     dev: true
     optional: true
 

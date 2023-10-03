@@ -1,7 +1,7 @@
 import { isHotkeyPressed } from "react-hotkeys-hook";
 import { atom, onMount } from "nanostores";
 import { $publisher, subscribe } from "~/shared/pubsub";
-import { clientImmerhinStore } from "~/shared/sync";
+import { clientSyncStore } from "~/shared/sync";
 
 type CommandMeta<CommandName extends string> = {
   // @todo category, description
@@ -61,14 +61,11 @@ export const createCommandsEmitter = <CommandName extends string>({
       // schedule store.set to the next tick
       // so store.listen is executed after store.set below
       Promise.resolve().then(() => {
-        clientImmerhinStore.createTransaction(
-          [$commandMetas],
-          (commandMetas) => {
-            for (const { handler, ...meta } of commands) {
-              commandMetas.set(meta.name, meta);
-            }
+        clientSyncStore.createTransaction([$commandMetas], (commandMetas) => {
+          for (const { handler, ...meta } of commands) {
+            commandMetas.set(meta.name, meta);
           }
-        );
+        });
       });
     });
   }

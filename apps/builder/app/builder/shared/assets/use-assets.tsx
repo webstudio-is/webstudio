@@ -1,7 +1,6 @@
 import { useMemo } from "react";
 import { useStore } from "@nanostores/react";
 import warnOnce from "warn-once";
-import store from "immerhin";
 import type { Asset } from "@webstudio-is/sdk";
 import type { AssetType } from "@webstudio-is/asset-uploader";
 import { toast } from "@webstudio-is/design-system";
@@ -15,9 +14,10 @@ import type {
 import type { ActionData } from "~/builder/shared/assets";
 import { assetsStore, $authToken, projectStore } from "~/shared/nano-states";
 import { atom, computed } from "nanostores";
+import { serverSyncStore } from "~/shared/sync";
 
 export const deleteAssets = (assetIds: Asset["id"][]) => {
-  store.createTransaction([assetsStore], (assets) => {
+  serverSyncStore.createTransaction([assetsStore], (assets) => {
     for (const assetId of assetIds) {
       assets.delete(assetId);
     }
@@ -25,7 +25,7 @@ export const deleteAssets = (assetIds: Asset["id"][]) => {
 };
 
 const setAsset = (asset: Asset) => {
-  store.createTransaction([assetsStore], (assets) => {
+  serverSyncStore.createTransaction([assetsStore], (assets) => {
     assets.set(asset.id, asset);
   });
 };

@@ -10,7 +10,6 @@ import {
   theme,
 } from "@webstudio-is/design-system";
 import type { Instance } from "@webstudio-is/sdk";
-import store from "immerhin";
 import {
   editingItemIdStore,
   instancesStore,
@@ -19,6 +18,7 @@ import {
 import { MetaIcon } from "../meta-icon";
 import { useContentEditable } from "~/shared/dom-hooks";
 import { getInstanceLabel } from "~/shared/instance-utils";
+import { serverSyncStore } from "~/shared/sync";
 
 export const InstanceTree = (
   props: Omit<
@@ -67,7 +67,7 @@ export const InstanceTree = (
 
   const updateInstanceLabel = useCallback(
     (instanceId: string, value: string) => {
-      store.createTransaction([instancesStore], (instances) => {
+      serverSyncStore.createTransaction([instancesStore], (instances) => {
         const instance = instances.get(instanceId);
         if (instance === undefined) {
           return;
