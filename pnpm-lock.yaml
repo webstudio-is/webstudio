@@ -297,6 +297,9 @@ importers:
       title-case:
         specifier: ^3.0.3
         version: 3.0.3
+      untruncate-json:
+        specifier: ^0.0.1
+        version: 0.0.1
       use-debounce:
         specifier: ^9.0.4
         version: 9.0.4(react@18.2.0)
@@ -639,7 +642,7 @@ importers:
   packages/ai:
     dependencies:
       '@webstudio-is/sdk':
-        specifier: workspace:^
+        specifier: workspace:*
         version: link:../sdk
       ai:
         specifier: ^2.2.12
@@ -16765,6 +16768,10 @@ packages:
   /untildify@4.0.0:
     resolution: {integrity: sha512-KK8xQ1mkzZeg9inewmFVDNkg3l5LUhoq9kN6iWYB/CC9YMG8HA+c1Q8HwDe6dEX7kErrEVNVBO3fWsVq5iDgtw==}
     engines: {node: '>=8'}
+
+  /untruncate-json@0.0.1:
+    resolution: {integrity: sha512-4W9enDK4X1y1s2S/Rz7ysw6kDuMS3VmRjMFg7GZrNO+98OSe+x5Lh7PKYoVjy3lW/1wmhs6HW0lusnQRHgMarA==}
+    dev: false
 
   /update-browserslist-db@1.0.11(browserslist@4.21.9):
     resolution: {integrity: sha512-dCwEFf0/oT85M1fHBg4F0jtLwJrutGoHSQXCh7u4o2t1drG+c0a9Flnqww6XUKSfQMPpJBRjU8d4RXB09qtvaA==}

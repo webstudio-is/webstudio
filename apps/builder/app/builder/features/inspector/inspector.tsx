@@ -28,6 +28,7 @@ import { NavigatorTree } from "~/builder/shared/navigator-tree";
 import type { Settings } from "~/builder/shared/client-settings";
 import { MetaIcon } from "~/builder/shared/meta-icon";
 import { getInstanceLabel } from "~/shared/instance-utils";
+import { Copywriter } from "../ai";
 import { isFeatureEnabled } from "@webstudio-is/feature-flags";
 
 const InstanceInfo = ({ instance }: { instance: Instance }) => {
@@ -145,11 +146,9 @@ export const Inspector = ({ publish, navigatorLayout }: InspectorProps) => {
               </ScrollArea>
             </PanelTabsContent>
             {isFeatureEnabled("ai") ? (
-              <PanelTabsContent
-                value="ai"
-                css={contentStyle}
-                tabIndex={-1}
-              ></PanelTabsContent>
+              <PanelTabsContent value="ai" css={contentStyle} tabIndex={-1}>
+                {isFeatureEnabled("aiCopy") ? <Copywriter /> : null}
+              </PanelTabsContent>
             ) : null}
           </Flex>
         </PanelTabs>
